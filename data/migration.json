@@ -1,0 +1,833 @@
+{
+  "original_markdown": 162,
+  "reader_notes": 159,
+  "operational_markdown": 3,
+  "backups": 165,
+  "files": [
+    {
+      "original": "Archive/Automation Config Before Magazine V2/2026-08-24/tech-ai-briefing-00.automation.toml",
+      "sha256": "e559ebca257382577dccd228c36d58a7afc59ff78dd15ba3d8b122bddb36e619",
+      "destination": null
+    },
+    {
+      "original": "Archive/Automation Config Before Magazine V2/2026-08-24/tech-ai-briefing-08.automation.toml",
+      "sha256": "96694f6a8c769b4e13f7805fd0557ac3e8aaabc161b1fc29337692b14ff562ac",
+      "destination": null
+    },
+    {
+      "original": "Archive/Automation Config Before Magazine V2/2026-08-24/tech-ai-briefing-16.automation.toml",
+      "sha256": "ab3234836950c897fe2166782b7cef3a2511a35fe623f556739a622b2dee25b7",
+      "destination": null
+    },
+    {
+      "original": "Archive/Briefing Before Magazine V2/2026-08-24/2026-08-23_0800_Tech_AI_Briefing.md",
+      "sha256": "9dc1420c2285973ba54c7c47f17c136abc5557b5fcb2e126625882eb6730c97b",
+      "destination": "vault/Archive/Briefing Before Magazine V2/2026-08-24/2026-08-23_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/AI Technology Knowledge Map.md",
+      "sha256": "0cb91f2d2084bad37558478e78861baa499e5811c735d3fdff02755bdd87fb91",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/AI Technology Knowledge Map.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Agent Security and Governance.md",
+      "sha256": "c6d9663f2b946a8cabbe40e284bd39ffd4f4b04cb1d834c8888e064da597a68c",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Agent Security and Governance.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Agents.md",
+      "sha256": "2f3b3f31870880ee52c594d50ccd81e3db7ba13737b6c65f363f28bd7b284a53",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Agents.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Content Access and Monetization.md",
+      "sha256": "047f3e871207137404c897c347e692d24b8a2213749317e0fd7725eac3627955",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Content Access and Monetization.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Governance and Conformity Assessment.md",
+      "sha256": "56246f93d2536873d7e78254d32fc2c22839474a2cf156ff6752ed60c2529836",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Governance and Conformity Assessment.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Inference Infrastructure.md",
+      "sha256": "0b8d044c129faf8529c92dd2984bca59cc91df37efefdae2e0cf8e027284f88c",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Inference Infrastructure.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Medical Imaging and Wellness Devices.md",
+      "sha256": "3cf81e8c17f6338998889eda5d13de55c625e73bb7db82ceac075a4f414afc80",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI Medical Imaging and Wellness Devices.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI for Scientific Discovery.md",
+      "sha256": "153a610b396adb45fbecbceb6663bac2a5eeed698b73d127cf0ad1f7635c75b0",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/AI for Scientific Discovery.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Agent Evaluation and Observability.md",
+      "sha256": "77c39dc98645186b578b85e2a9786583809e8dd6f90d5f9bc78cff40fe911ddd",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Agent Evaluation and Observability.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Conversational Voice AI.md",
+      "sha256": "41d21a961349a4531f090e5ad1c8fcd22af4e119b62a3cc6d6c3087dfccdcb21",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Conversational Voice AI.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Enterprise AI Operating Model.md",
+      "sha256": "65cb832446830e594dd30da719b904cd446822c1c02899e1e21976284e417830",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Enterprise AI Operating Model.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Model Context Protocol.md",
+      "sha256": "01b3af43c6416c2fd5aca8690a1c0f3af620fc5d1716ef1890bcaa57c7332bb7",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Model Context Protocol.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Retrieval-Augmented Generation.md",
+      "sha256": "517878f46eecb29f29c304977121393c917eb01641163894f36bafe71e3c1e02",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Retrieval-Augmented Generation.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Vision-Language-Action Models.md",
+      "sha256": "7bd272ef56bf91252b29a7fb8a37a27a108f0e545c3923b1cca946517002ccaa",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/AI Systems/Vision-Language-Action Models.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/Software Engineering/AI-Assisted Security Engineering.md",
+      "sha256": "803df2df721849ac7db40ac518b7ad4bb2fb6a1d8e0d6a369f8c07da1d962c18",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/Software Engineering/AI-Assisted Security Engineering.md"
+    },
+    {
+      "original": "Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/Software Engineering/Software Supply Chain Security.md",
+      "sha256": "cc01e46efee612cd2bad7a0ae0fd4e932226ae1fde40192fd88a40d3d0acf3b7",
+      "destination": "vault/Archive/Knowledge Before Encyclopedia V2/2026-08-24/Knowledge/Software Engineering/Software Supply Chain Security.md"
+    },
+    {
+      "original": "Automation/2026-08-24 Magazine V2 Migration and Validation.md",
+      "sha256": "a4cd6b1e401f578f6728d25e5d22d8c2369cc2aa3979bc699875dee002ecbd0e",
+      "destination": null
+    },
+    {
+      "original": "Automation/Daily Tech AI Magazine V2 Guide.md",
+      "sha256": "9b6320df17ac0d1b51138a371a12bfd6a916c18814b3f5f679d81725bd415d23",
+      "destination": null
+    },
+    {
+      "original": "Automation/Examples/2026-08-11_Tech_AI_Magazine_v2_SAMPLE.md",
+      "sha256": "c24fd7e568f4c7039160bc66ea102c1bc667e9108cca0341f2d7bd38bfc15d26",
+      "destination": null
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md",
+      "sha256": "0f0d0d6fee1dbbdfe1060d467860447483458d4dd32c5535ea70660ab700b410",
+      "destination": "vault/Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing.md",
+      "sha256": "5da8a9cf6751041a1fe37a85700c101534447e2693ec53d43d1d8601452f799a",
+      "destination": "vault/Editions/2026/06/2026-06-24_0700_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing.md",
+      "sha256": "4eec0067f6561313237e716c9cd58f28e6c117269fa23d2b38f24e279f04d00d",
+      "destination": "vault/Editions/2026/06/2026-06-26_0005_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-26_0601_Tech_AI_Briefing.md",
+      "sha256": "f621a8ed65b8870624bb79c84b2d957cc35dd2719feda775b772968475218b7d",
+      "destination": "vault/Editions/2026/06/2026-06-26_0601_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-26_1204_Tech_AI_Briefing.md",
+      "sha256": "fd35f58be3a3458571f3b8ac1306f10d8709f99da47365d6627f9c94cc10bfae",
+      "destination": "vault/Editions/2026/06/2026-06-26_1204_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-26_1802_Tech_AI_Briefing.md",
+      "sha256": "bbb610539a8c0bbb6715b6f5b4dbd00ddb1460c52694825a4b2d1ee2eae43751",
+      "destination": "vault/Editions/2026/06/2026-06-26_1802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-27_0004_Tech_AI_Briefing.md",
+      "sha256": "bf476862178ad8e1086acd5f95c512f97d3e660ae3e7d1f48ccb9f18a74ca2fd",
+      "destination": "vault/Editions/2026/06/2026-06-27_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-27_0601_Tech_AI_Briefing.md",
+      "sha256": "9b14a05d5193324e444af6167d732780d95ef0da9ef1908c1067d298ac0f3743",
+      "destination": "vault/Editions/2026/06/2026-06-27_0601_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-27_1204_Tech_AI_Briefing.md",
+      "sha256": "8293168c766c58be88d13de3b3d8a7f5fff60fd6664d2ae6b40278a728f3b4ca",
+      "destination": "vault/Editions/2026/06/2026-06-27_1204_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-27_1802_Tech_AI_Briefing.md",
+      "sha256": "f301d639806f86caafe3d0605ecdcf93e9a9841e2998f54380bc0a9c60b73a87",
+      "destination": "vault/Editions/2026/06/2026-06-27_1802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-28_0004_Tech_AI_Briefing.md",
+      "sha256": "831f9851e82377e5cdff4c89dcff34581bd474c1e97d0fa9fbeaf0d8ffab2476",
+      "destination": "vault/Editions/2026/06/2026-06-28_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-28_0604_Tech_AI_Briefing.md",
+      "sha256": "7ee0454c09dcd798af23e55be9292d47956fa99a4f9d2fcd328de7495a6fca04",
+      "destination": "vault/Editions/2026/06/2026-06-28_0604_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-28_1204_Tech_AI_Briefing.md",
+      "sha256": "b46cb272c68703c7b719ac8c0b0dfb142d48fe881a22ca899a2a594bb24b4276",
+      "destination": "vault/Editions/2026/06/2026-06-28_1204_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-28_1802_Tech_AI_Briefing.md",
+      "sha256": "7a0cf2728a61df1ab600229a39b20fdfcc4dfb106ed2c84c0d844a718763ebd3",
+      "destination": "vault/Editions/2026/06/2026-06-28_1802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-29_0005_Tech_AI_Briefing.md",
+      "sha256": "60a654b2506eb6e651d14c6b95866e69d3be36f90830346f9614df7c9309b5a1",
+      "destination": "vault/Editions/2026/06/2026-06-29_0005_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-29_0602_Tech_AI_Briefing.md",
+      "sha256": "6d7ed6b958e48906e39033506b9ba6317984723a4914682f0d8c4b5658f3bc9e",
+      "destination": "vault/Editions/2026/06/2026-06-29_0602_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-29_1204_Tech_AI_Briefing.md",
+      "sha256": "fb94e2c524e22c5450ec610de92172498f83b205770fcdf8a4c04d5fef097590",
+      "destination": "vault/Editions/2026/06/2026-06-29_1204_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-29_1803_Tech_AI_Briefing.md",
+      "sha256": "1ace3e4eed77dd586e030760133c7c4be99dfde1c9ad204a4a6d73b62425a7d1",
+      "destination": "vault/Editions/2026/06/2026-06-29_1803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-30_0004_Tech_AI_Briefing.md",
+      "sha256": "305c743dc22916af34b2a76885ff529034092ac4fde333e86bfbfd276b5f1c3c",
+      "destination": "vault/Editions/2026/06/2026-06-30_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-30_0602_Tech_AI_Briefing.md",
+      "sha256": "8b8df2e0c720c679dfd5ec2dc31e84a226a954b0c878db966b9cb06e9dd6d8b7",
+      "destination": "vault/Editions/2026/06/2026-06-30_0602_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/06/2026-06-30_1605_Tech_AI_Briefing.md",
+      "sha256": "cddb132fb9f70c0d0441280b7259afe67dd46187077a25ef963bb83da9971fea",
+      "destination": "vault/Editions/2026/06/2026-06-30_1605_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-01_0004_Tech_AI_Briefing.md",
+      "sha256": "ce0beb89856dd933860a39f8d2c4f2dd9dec5c0a0bd231d3fe8ec1b05f8a8966",
+      "destination": "vault/Editions/2026/07/2026-07-01_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-01_0805_Tech_AI_Briefing.md",
+      "sha256": "44e766971ad43e409f3b69bbe419e55583832df22dca74b7a6d148952e4a306c",
+      "destination": "vault/Editions/2026/07/2026-07-01_0805_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-01_1605_Tech_AI_Briefing.md",
+      "sha256": "81765cae715ccfdb3c4dcc46914ff34694019184a98f449bcd5a5676e88e555b",
+      "destination": "vault/Editions/2026/07/2026-07-01_1605_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-02_0004_Tech_AI_Briefing.md",
+      "sha256": "9f319adadad5e108ce7e0a7a25f8b1bc4a1c1b5340f53147e706b5b1b2555048",
+      "destination": "vault/Editions/2026/07/2026-07-02_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-02_0805_Tech_AI_Briefing.md",
+      "sha256": "3b30b9c134754cd8c64e87ffed4f11cd5ed06a799ab9b8f73ac6eab59da345a3",
+      "destination": "vault/Editions/2026/07/2026-07-02_0805_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-02_1603_Tech_AI_Briefing.md",
+      "sha256": "672b65618ca7ecaecbac1a9db9cecca23f7f9bcfeb8230eff7c57556b9e04e07",
+      "destination": "vault/Editions/2026/07/2026-07-02_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-03_0004_Tech_AI_Briefing.md",
+      "sha256": "797d3359eff2ebe20b3db87914a6ac7846fcfeb141857c429ecf875e63573c8f",
+      "destination": "vault/Editions/2026/07/2026-07-03_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-03_0805_Tech_AI_Briefing.md",
+      "sha256": "99a47b2d3689b51b1311853f78730f30b00eaa61e7b01e7e7a367122f3e96bd2",
+      "destination": "vault/Editions/2026/07/2026-07-03_0805_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-03_1604_Tech_AI_Briefing.md",
+      "sha256": "6bbf5e2790e1a6c0e5dbc7761d454a767f2a3782aabc7f37d0040dba47d2459c",
+      "destination": "vault/Editions/2026/07/2026-07-03_1604_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-04_0005_Tech_AI_Briefing.md",
+      "sha256": "65f03f47b369bd8329ba3e9e2e98579de72f192244737f0875c5951a459816a2",
+      "destination": "vault/Editions/2026/07/2026-07-04_0005_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-04_0802_Tech_AI_Briefing.md",
+      "sha256": "28e52d619191eff0a92e31dd73fe59033ab665be49e09702c335af6907bfecde",
+      "destination": "vault/Editions/2026/07/2026-07-04_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-04_1603_Tech_AI_Briefing.md",
+      "sha256": "ee7510367f9a62ec9b9d78a7597b81b813e69b88527fae3f736691def11b3f85",
+      "destination": "vault/Editions/2026/07/2026-07-04_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-05_0004_Tech_AI_Briefing.md",
+      "sha256": "dcddd722712a15b1ecf7973edce8c8fff0df5cb36212aa46c948bfd783b2c33f",
+      "destination": "vault/Editions/2026/07/2026-07-05_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-05_0802_Tech_AI_Briefing.md",
+      "sha256": "cc0824c28420b982db9f95df889fad3d16279e8d969db226311b59149bc3b881",
+      "destination": "vault/Editions/2026/07/2026-07-05_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-05_1603_Tech_AI_Briefing.md",
+      "sha256": "1bd02f2bbfc07af2819e7ba51936631ffe150a60b4c8f580a3684768bfa83d86",
+      "destination": "vault/Editions/2026/07/2026-07-05_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-06_0004_Tech_AI_Briefing.md",
+      "sha256": "2c69ba1f03ea5f4937fce555c52dc3891e33425e0516205594ce953d8bdae905",
+      "destination": "vault/Editions/2026/07/2026-07-06_0004_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-06_0802_Tech_AI_Briefing.md",
+      "sha256": "2fee6090667a83bb563b26200ccf58bcbc1f20315f3723b7c67c26bbc6d6d33c",
+      "destination": "vault/Editions/2026/07/2026-07-06_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-06_1603_Tech_AI_Briefing.md",
+      "sha256": "cddc0b6cbdb17b5602a14af372f4e6d03fd55b5e364e088847cad2540e8d943d",
+      "destination": "vault/Editions/2026/07/2026-07-06_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-07_0003_Tech_AI_Briefing.md",
+      "sha256": "6241136df289e006d73f8d2b54ac16efb9623f0c9fddf1cd4ec02a58c45cb336",
+      "destination": "vault/Editions/2026/07/2026-07-07_0003_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-07_0804_Tech_AI_Briefing.md",
+      "sha256": "48321e0028a3eca9fb6dd3e99afc4c2c810308a67bd542d6cdf327a3090c573e",
+      "destination": "vault/Editions/2026/07/2026-07-07_0804_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-10_0802_Tech_AI_Briefing.md",
+      "sha256": "8cb78f72d4475f2a3df469553b6d514de822603294189bcc8cc7bc7038c5f1eb",
+      "destination": "vault/Editions/2026/07/2026-07-10_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-10_1603_Tech_AI_Briefing.md",
+      "sha256": "1816f29882676d5864ab1da97a04458835b80020d89853f9a617c9c47d2c1ac1",
+      "destination": "vault/Editions/2026/07/2026-07-10_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-11_0000_Tech_AI_Briefing.md",
+      "sha256": "867bcf2bc5ecd0b73027eec6dcee902c58ce7fdd3fe66f610f00d29975e869b8",
+      "destination": "vault/Editions/2026/07/2026-07-11_0000_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-11_0803_Tech_AI_Briefing.md",
+      "sha256": "1001322fc5b899eeb281d58e635828210644b04c77615570893ea20d4a2761e6",
+      "destination": "vault/Editions/2026/07/2026-07-11_0803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-11_1603_Tech_AI_Briefing.md",
+      "sha256": "50de2def4bc81aad715f796782f758ebe740cfa5509779c995de4eb4684c35d8",
+      "destination": "vault/Editions/2026/07/2026-07-11_1603_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-12_0003_Tech_AI_Briefing.md",
+      "sha256": "d7acff11323160a18cdace233070b57d6bb800c0cf5bbe8d67429d0f9d5fb955",
+      "destination": "vault/Editions/2026/07/2026-07-12_0003_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-12_0802_Tech_AI_Briefing.md",
+      "sha256": "f466c9694de028118d55d15c97e351e5c8f447bd85eb3c07ca3fcd13947da935",
+      "destination": "vault/Editions/2026/07/2026-07-12_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-12_1602_Tech_AI_Briefing.md",
+      "sha256": "b26e7ec4698bf9741fc8dc1c699c71de042edec708649354e5a37977c5383f2b",
+      "destination": "vault/Editions/2026/07/2026-07-12_1602_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-13_0002_Tech_AI_Briefing.md",
+      "sha256": "dc83eaf87a5737177ac8556b90c0a257b55b1ccc8c42880dd92e30d6809b04bd",
+      "destination": "vault/Editions/2026/07/2026-07-13_0002_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-13_0802_Tech_AI_Briefing.md",
+      "sha256": "eb1718d8a6c1e3c9f6340b67960d35e8ec456b38ed4c9b62b5345f0916b68f75",
+      "destination": "vault/Editions/2026/07/2026-07-13_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-13_1602_Tech_AI_Briefing.md",
+      "sha256": "9e9f305d8cdc6f4236430f4f1e488b4f4f2243f14a6bbc9c39b55c50594c5563",
+      "destination": "vault/Editions/2026/07/2026-07-13_1602_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-14_0002_Tech_AI_Briefing.md",
+      "sha256": "57621320e122a7c7600bf649d8cf3de1f8a559e749c1e53900204890d518ac26",
+      "destination": "vault/Editions/2026/07/2026-07-14_0002_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-14_0801_Tech_AI_Briefing.md",
+      "sha256": "0d9c2ba88c91dfbfc271f10c8472d8c87fc58be27873c7c2afb790d618b8657e",
+      "destination": "vault/Editions/2026/07/2026-07-14_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-14_1604_Tech_AI_Briefing.md",
+      "sha256": "3d3fa56fc36216659f955bbabad29d8302f4a3247d993dac2276b8b1f72e731b",
+      "destination": "vault/Editions/2026/07/2026-07-14_1604_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-15_0802_Tech_AI_Briefing.md",
+      "sha256": "3fb84786164027ad42b9237c7e3b25fa974536fc265bd959a0b1c44fdd8d1906",
+      "destination": "vault/Editions/2026/07/2026-07-15_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-16_0802_Tech_AI_Briefing.md",
+      "sha256": "a78f1f5eb0eaafcd7c93f975b17c924a730702cd6e9b469372d385abcd5a6211",
+      "destination": "vault/Editions/2026/07/2026-07-16_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-17_0801_Tech_AI_Briefing.md",
+      "sha256": "0674b1e7b9c7a4165b4039d118098d832da08afbe9dd16d1bfdb9a7ef955f0a6",
+      "destination": "vault/Editions/2026/07/2026-07-17_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-18_0801_Tech_AI_Briefing.md",
+      "sha256": "ee13084ee1fd1a6008b0d59e2eabbeb77b3f39aa0969eee0ee4438ebf53079b4",
+      "destination": "vault/Editions/2026/07/2026-07-18_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-19_0802_Tech_AI_Briefing.md",
+      "sha256": "f6aa1e0b14bc2aad673ce0858442bba2e9cd37dc88351e3f19a9d1e1fbf7a4f6",
+      "destination": "vault/Editions/2026/07/2026-07-19_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-20_0802_Tech_AI_Briefing.md",
+      "sha256": "f6aa1e0b14bc2aad673ce0858442bba2e9cd37dc88351e3f19a9d1e1fbf7a4f6",
+      "destination": "vault/Editions/2026/07/2026-07-20_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-21_0801_Tech_AI_Briefing.md",
+      "sha256": "4aa92656b5825ddbefb1a138e37160caada5cea78a1c917667ce4f67b813fc5d",
+      "destination": "vault/Editions/2026/07/2026-07-21_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-22_0801_Tech_AI_Briefing.md",
+      "sha256": "719aecc12f199e5190e34f899b64c72ef2a095f3d67118c32324bbb598066833",
+      "destination": "vault/Editions/2026/07/2026-07-22_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-23_0803_Tech_AI_Briefing.md",
+      "sha256": "963e092e21e88b1d02b6a5feb83d869d8e887f624cae5ca623075f838abf9222",
+      "destination": "vault/Editions/2026/07/2026-07-23_0803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-24_0800_Tech_AI_Briefing.md",
+      "sha256": "abe5fb27280bdd23736291673d73c1a0e08f41f5bceaf246fb5898d5f2d14e5c",
+      "destination": "vault/Editions/2026/07/2026-07-24_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-25_0801_Tech_AI_Briefing.md",
+      "sha256": "67c65f6ad4e7c20df18fec202140eb097832d0aedf80cbb3345d82f21cfbd7fc",
+      "destination": "vault/Editions/2026/07/2026-07-25_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-26_0801_Tech_AI_Briefing.md",
+      "sha256": "249fd422746ff6000d5697ef198d965d37a4fd8be42d69c798fe4d6af464bb25",
+      "destination": "vault/Editions/2026/07/2026-07-26_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-27_0800_Tech_AI_Briefing.md",
+      "sha256": "4546fdc340faa0240a24fd24e0acb2981845ee80f8a73a101e376ad5be54f22a",
+      "destination": "vault/Editions/2026/07/2026-07-27_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-28_0805_Tech_AI_Briefing.md",
+      "sha256": "607f0d2ba8b5a3e561f606697b53412c3b3fc9b987c6f4b18c9e119ad0c10c45",
+      "destination": "vault/Editions/2026/07/2026-07-28_0805_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-29_0801_Tech_AI_Briefing.md",
+      "sha256": "a9b964d08c38ce02e52f0b68ad83347af06f397ec5308cbc3aa7e92e1266e638",
+      "destination": "vault/Editions/2026/07/2026-07-29_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-30_0803_Tech_AI_Briefing.md",
+      "sha256": "5441a1f60d081af09276a385cc414220281807bf4460f63215eeb8f461a84fac",
+      "destination": "vault/Editions/2026/07/2026-07-30_0803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/07/2026-07-31_0801_Tech_AI_Briefing.md",
+      "sha256": "729e1e973ee07e48680a9ab87f413a19a848147779862e0d06f18f1f5d0d7878",
+      "destination": "vault/Editions/2026/07/2026-07-31_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-01_0801_Tech_AI_Briefing.md",
+      "sha256": "f873a2f024fca88a7b2e259139eadfe545de303ced3b69a83cbeeaac18cc65b0",
+      "destination": "vault/Editions/2026/08/2026-08-01_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-02_0801_Tech_AI_Briefing.md",
+      "sha256": "f20cb49d3baee26ca3f4471783bdab67e9234d916da940fb601fa01e6a6a2edf",
+      "destination": "vault/Editions/2026/08/2026-08-02_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-03_0801_Tech_AI_Briefing.md",
+      "sha256": "f25440d4e7db9b2d2ffd32862c530a7c5772715a8b3573c77c9cf4d219209bba",
+      "destination": "vault/Editions/2026/08/2026-08-03_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-04_0803_Tech_AI_Briefing.md",
+      "sha256": "e0abe941b895fdd8d2956fcd33071deb1a164a62b58107e64ba5c75f5b36383c",
+      "destination": "vault/Editions/2026/08/2026-08-04_0803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-05_0801_Tech_AI_Briefing.md",
+      "sha256": "1301831f3856370d41f7ec6717953867b7748bd70a625f545bf4bade470d2daf",
+      "destination": "vault/Editions/2026/08/2026-08-05_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-06_0802_Tech_AI_Briefing.md",
+      "sha256": "33d2aeccd4f755155176964311bc088c6b301868091bfb707cfc787293cfbe5c",
+      "destination": "vault/Editions/2026/08/2026-08-06_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-07_0802_Tech_AI_Briefing.md",
+      "sha256": "994bbb1ac5ff081301af673990e92c4387594c9b4657b250c8595e87076374ec",
+      "destination": "vault/Editions/2026/08/2026-08-07_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-09_0800_Tech_AI_Briefing.md",
+      "sha256": "cf447a5792fe405d4faff0cb09e14919a960b4a9f4f27a3e8889fffc60b6b5b0",
+      "destination": "vault/Editions/2026/08/2026-08-09_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-10_0801_Tech_AI_Briefing.md",
+      "sha256": "4e2a3d07032ad964482fec499ae7f7921020b1460c0b3f70d49592976d6baecd",
+      "destination": "vault/Editions/2026/08/2026-08-10_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-11_0801_Tech_AI_Briefing.md",
+      "sha256": "2e94c4b6f1b6d3d1755f9b2c8e34fcef859d6d74f03ba76049f0fb29cfd691e2",
+      "destination": "vault/Editions/2026/08/2026-08-11_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-12_0801_Tech_AI_Briefing.md",
+      "sha256": "779c2ef4e3f3a767dc36c74f3254684018358ad719548d6d735523cebd8b40c1",
+      "destination": "vault/Editions/2026/08/2026-08-12_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-13_0801_Tech_AI_Briefing.md",
+      "sha256": "535e465f024c5e72fd605f2a6939031df9f64aeff42747f855d4c790c94a9f2b",
+      "destination": "vault/Editions/2026/08/2026-08-13_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-14_0802_Tech_AI_Briefing.md",
+      "sha256": "3a0b1a6da9bb4673ace7e98d7e8068dfde3cc230996db416e7df43fcef56d97f",
+      "destination": "vault/Editions/2026/08/2026-08-14_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-15_0802_Tech_AI_Briefing.md",
+      "sha256": "7f664e7ebd4a5d035c00eed09ce22e704b20fa731d5dce57ac5af51dd49f0dd5",
+      "destination": "vault/Editions/2026/08/2026-08-15_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-16_0801_Tech_AI_Briefing.md",
+      "sha256": "ce1db06187516fe18a45998bce60da37f85d407487183d3c566f79e849750dfd",
+      "destination": "vault/Editions/2026/08/2026-08-16_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-17_0802_Tech_AI_Briefing.md",
+      "sha256": "ba3707de75349aa1734dc6724306916bf2169f786264d73c7f0a8a28b6abeab3",
+      "destination": "vault/Editions/2026/08/2026-08-17_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-18_0801_Tech_AI_Briefing.md",
+      "sha256": "f1d8d7be493672af538012ae8f97fe25cc38882438bb91912f36c227fc025a66",
+      "destination": "vault/Editions/2026/08/2026-08-18_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-19_0801_Tech_AI_Briefing.md",
+      "sha256": "f86e9d886bf51d64e7c809c3d3cac31fc7a7bc8da891132a55698c3c38925215",
+      "destination": "vault/Editions/2026/08/2026-08-19_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-21_0800_Tech_AI_Briefing.md",
+      "sha256": "6fa605d5b199505cc3e470f204261b75d4452df7c6a7b221d49aad8b403e2247",
+      "destination": "vault/Editions/2026/08/2026-08-21_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-23_0205_Tech_AI_Briefing.md",
+      "sha256": "63564dbc4cae58cdc55f03c8d8bedbb21814341a677991148b307310e9c40065",
+      "destination": "vault/Editions/2026/08/2026-08-23_0205_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-23_0800_Tech_AI_Briefing.md",
+      "sha256": "508ad37c0e50030586276ed5c2a3ed362add73a4800871a77901b907d8183c7a",
+      "destination": "vault/Editions/2026/08/2026-08-23_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-24_0801_Tech_AI_Briefing.md",
+      "sha256": "5039775b565b011a6bba1a80de4ec8a492ca4f381e1012da779d3e747a775e52",
+      "destination": "vault/Editions/2026/08/2026-08-24_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-25_0801_Tech_AI_Briefing.md",
+      "sha256": "fad7e9f88a9c2bbcba10c76655b89667527110571737a5a3bd5956ac90fd1a3a",
+      "destination": "vault/Editions/2026/08/2026-08-25_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-26_0802_Tech_AI_Briefing.md",
+      "sha256": "2f0ac1ac07a34a688c4852ece1cc090f23275daea5094036c23f94066d8e027b",
+      "destination": "vault/Editions/2026/08/2026-08-26_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-27_0802_Tech_AI_Briefing.md",
+      "sha256": "69efdb4c09a1529ee8a89b3d4e7154215dfcd9bea7de852e2229c66c693b46eb",
+      "destination": "vault/Editions/2026/08/2026-08-27_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-28_0802_Tech_AI_Briefing.md",
+      "sha256": "d91fb0ae08f0ce65460bdde1d75f12068102fe50bc0b446f579d79e98d7f9c22",
+      "destination": "vault/Editions/2026/08/2026-08-28_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-29_0800_Tech_AI_Briefing.md",
+      "sha256": "7f776e983c8ccee310bba57d006483084508d82bd8a17d1490238bdc6f373b1d",
+      "destination": "vault/Editions/2026/08/2026-08-29_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-30_0801_Tech_AI_Briefing.md",
+      "sha256": "483c3f342c6aa8465c194e9f9fbc3a02cacb69b7e8666089a23c5a238e1debc9",
+      "destination": "vault/Editions/2026/08/2026-08-30_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/08/2026-08-31_0801_Tech_AI_Briefing.md",
+      "sha256": "686d7b427779db9283e0173f1f34acb85fa0b1e3bfbcf2c56fe1c7f6a85a2587",
+      "destination": "vault/Editions/2026/08/2026-08-31_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-01_0801_Tech_AI_Briefing.md",
+      "sha256": "dce9a63cbb4c8cd7fe1a9f8aea49f1c3fd90caaaf1cc6ad308f43467cc89f334",
+      "destination": "vault/Editions/2026/09/2026-09-01_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-02_0801_Tech_AI_Briefing.md",
+      "sha256": "4cece332b8212bec05564c6a7ecb28bb6cfbceafde6bd739a6c4b21dc2e4b465",
+      "destination": "vault/Editions/2026/09/2026-09-02_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-03_0803_Tech_AI_Briefing.md",
+      "sha256": "4a393d9735dd150c32e36916ef1c429262132623885fea72fa5799608b4cfc0d",
+      "destination": "vault/Editions/2026/09/2026-09-03_0803_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing.md",
+      "sha256": "40eb177e8564c7f34c324322e707a809c350bfd23f2a6f4860ca3902d45a799b",
+      "destination": "vault/Editions/2026/09/2026-09-04_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-05_0801_Tech_AI_Briefing.md",
+      "sha256": "fd11da1f839556eda17b66428ef6eba58aa59975e75a26c9385a7a33a955bc20",
+      "destination": "vault/Editions/2026/09/2026-09-05_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-06_0802_Tech_AI_Briefing.md",
+      "sha256": "759bda4b4d3c0efc0f2d676dd4e4869712e0968f01f2e8478d2c98bf3fa60837",
+      "destination": "vault/Editions/2026/09/2026-09-06_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-07_0801_Tech_AI_Briefing.md",
+      "sha256": "1d19daee9df4114578c00699eb56a1dcff486689a8eb4a13b0e380ef4d5f49d9",
+      "destination": "vault/Editions/2026/09/2026-09-07_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-08_0801_Tech_AI_Briefing.md",
+      "sha256": "d681ad09cc7ca675c83701e9c22389b9e068aa9cccb1012045412fb762dad9c8",
+      "destination": "vault/Editions/2026/09/2026-09-08_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-09_0802_Tech_AI_Briefing.md",
+      "sha256": "ca6cebf788a66693099505b41eb6b9004d9d430039b00cbfabbe4d329d87b982",
+      "destination": "vault/Editions/2026/09/2026-09-09_0802_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing.md",
+      "sha256": "7df72507332a238691c6887553d586645f284e91d5c97c79c7d9d15baa6639de",
+      "destination": "vault/Editions/2026/09/2026-09-10_0801_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing.md",
+      "sha256": "a77ab299b56efb5670f43458073ef012fc80fc2ca81d12332e665c513f0ea1e3",
+      "destination": "vault/Editions/2026/09/2026-09-11_0800_Tech_AI_Briefing.md"
+    },
+    {
+      "original": "Knowledge Maps/AI Technology Knowledge Map.md",
+      "sha256": "f925522aa549a5dca045e71f30078b8867911b86c85fe9177ad1bdf59bc83434",
+      "destination": "vault/Knowledge Maps/AI Technology Knowledge Map.md"
+    },
+    {
+      "original": "Knowledge/00 Tech Encyclopedia Index.md",
+      "sha256": "75a6f6db3fe91a513a2600b81ef037ec76044e5cf181c9dddc34c8289f1363aa",
+      "destination": "vault/Knowledge/00 Tech Encyclopedia Index.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Agent Governance.md",
+      "sha256": "d4572e6ee9182d70fb4b3cb85d2542a5e78aff62db47725c09f45065f1af2cb4",
+      "destination": "vault/Knowledge/AI Systems/AI Agent Governance.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Agent Security and Governance.md",
+      "sha256": "9fea5d9153bfbee6b352da479ae53bad6a31f86ab1d3a4109c319f998eb70dc7",
+      "destination": "vault/Knowledge/AI Systems/AI Agent Security and Governance.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Agent Security.md",
+      "sha256": "d6ffda83e99371ba36089fbd180cbd6c2a1d4b6ebc278f8ed7758d8c64bc8e88",
+      "destination": "vault/Knowledge/AI Systems/AI Agent Security.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Agents.md",
+      "sha256": "8d2a07d3038bcc2592ca2c04445c97c8a5045a22bdfc66ab67eaf9f326c0a411",
+      "destination": "vault/Knowledge/AI Systems/AI Agents.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Conformity Assessment.md",
+      "sha256": "d9cca1c5245bdd72c83e3c34ca80a1229b5df33f5ed6681c3641d15cd4f7a9c4",
+      "destination": "vault/Knowledge/AI Systems/AI Conformity Assessment.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Content Access and Monetization.md",
+      "sha256": "ffd83fa946c38d7a2516549e1395a58c13ff5ae38763344ffbfe906349fba2c9",
+      "destination": "vault/Knowledge/AI Systems/AI Content Access and Monetization.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Content Access.md",
+      "sha256": "6fa50acc9de27f2351bf5f59153dd6e06980002e7f0a22a7094604937a5b2d4b",
+      "destination": "vault/Knowledge/AI Systems/AI Content Access.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Content Monetization.md",
+      "sha256": "98248b766b54162fd75f0bfe0b4fae02bde2fcce7cff82343c12e69bd0203a3e",
+      "destination": "vault/Knowledge/AI Systems/AI Content Monetization.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Governance and Conformity Assessment.md",
+      "sha256": "fc0921c87d2251e5e4afcf22c2e0a096a8391ad3401c857628731748650b5e5a",
+      "destination": "vault/Knowledge/AI Systems/AI Governance and Conformity Assessment.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Governance.md",
+      "sha256": "a08625693f68b12b0f06004dffbf207379f41f4e1f5720637278536677700890",
+      "destination": "vault/Knowledge/AI Systems/AI Governance.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Inference Infrastructure.md",
+      "sha256": "57177ebb5fbd351f380288d08402302a6e2596ad66663b2b18282cccacac59be",
+      "destination": "vault/Knowledge/AI Systems/AI Inference Infrastructure.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Medical Imaging and Wellness Devices.md",
+      "sha256": "3ec375ffc3b8976e97fe0647256ca6f12510edc534f6b66b22dadc8dbfd92139",
+      "destination": "vault/Knowledge/AI Systems/AI Medical Imaging and Wellness Devices.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Medical Imaging.md",
+      "sha256": "eac9ac55e21642d40590e507e14c5f2091807e3f90f374c9cfcd2e8ac1e74b26",
+      "destination": "vault/Knowledge/AI Systems/AI Medical Imaging.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI Wellness Devices.md",
+      "sha256": "5b05cb0e73884de6616411bf9fbbcc8e2e84c5899842a022f4b696ea4afde99f",
+      "destination": "vault/Knowledge/AI Systems/AI Wellness Devices.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/AI for Scientific Discovery.md",
+      "sha256": "f34d03ff6f173a04e4961d0e01c777fa2299139da11aec563d4b377d6aaf4d75",
+      "destination": "vault/Knowledge/AI Systems/AI for Scientific Discovery.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Agent Evaluation and Observability.md",
+      "sha256": "ad987a357232d757fc6cb94a870817b061331f2bfd9e60851c2b167c5d22fa01",
+      "destination": "vault/Knowledge/AI Systems/Agent Evaluation and Observability.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Agent Evaluation.md",
+      "sha256": "f4ffddea27169430be600d42c64a5f179beb54b2e6146fdec94205f3bfe0839b",
+      "destination": "vault/Knowledge/AI Systems/Agent Evaluation.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Agent Observability.md",
+      "sha256": "2cb6399dfd99795fc2ed14e1f65b8281421f1070951e57f3e2d503395774c27f",
+      "destination": "vault/Knowledge/AI Systems/Agent Observability.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Conversational Voice AI.md",
+      "sha256": "f2bbf985978749912635953527647c36f2b57c06508209ed8fe1654ca620021e",
+      "destination": "vault/Knowledge/AI Systems/Conversational Voice AI.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Enterprise AI Operating Model.md",
+      "sha256": "6abbf2e92b0358e39a60954abcaee7370e10629223cfce907e9c21e72de29d6b",
+      "destination": "vault/Knowledge/AI Systems/Enterprise AI Operating Model.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Model Context Protocol.md",
+      "sha256": "034fce94d2f3be95633d497ef55c482ff22bfe4cc7bfed0958f2b22572ba2cbe",
+      "destination": "vault/Knowledge/AI Systems/Model Context Protocol.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Retrieval-Augmented Generation.md",
+      "sha256": "4584e61efe52f0b11327a6c47672ed03b1c935059b004417679a178726535063",
+      "destination": "vault/Knowledge/AI Systems/Retrieval-Augmented Generation.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Time-Series Foundation Models.md",
+      "sha256": "ee2c0141b496b49bddadc97cdce625a14600a1fac8c7a2addd406a12de4d37cc",
+      "destination": "vault/Knowledge/AI Systems/Time-Series Foundation Models.md"
+    },
+    {
+      "original": "Knowledge/AI Systems/Vision-Language-Action Models.md",
+      "sha256": "fcd6afe098b62dc51e2c5bddd9519143ddc681a999495c06a398eb3cb4eaf81b",
+      "destination": "vault/Knowledge/AI Systems/Vision-Language-Action Models.md"
+    },
+    {
+      "original": "Knowledge/Data Systems/Aggregate Metrics.md",
+      "sha256": "bcf35f1d3bf4549d8122dbe806b931813eb1e36d34dc1b172b34210d1a39479c",
+      "destination": "vault/Knowledge/Data Systems/Aggregate Metrics.md"
+    },
+    {
+      "original": "Knowledge/Security/Zero-Knowledge Proofs.md",
+      "sha256": "f9e11903a3122814c20a247b323c7fcdc441ead695ed9111fe18b646c3bb81e7",
+      "destination": "vault/Knowledge/Security/Zero-Knowledge Proofs.md"
+    },
+    {
+      "original": "Knowledge/Software Engineering/AI-Assisted Security Engineering.md",
+      "sha256": "3986f1e79b8188740b9910a861d33c7eb48c9ae818f62e395b5be4244bd1cab5",
+      "destination": "vault/Knowledge/Software Engineering/AI-Assisted Security Engineering.md"
+    },
+    {
+      "original": "Knowledge/Software Engineering/Software Supply Chain Security.md",
+      "sha256": "fb463569168e8d122e850c47403979fe6f40e7a66eee711d77a673eb0e324e35",
+      "destination": "vault/Knowledge/Software Engineering/Software Supply Chain Security.md"
+    }
+  ]
+}
