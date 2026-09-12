@@ -6,92 +6,99 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-09-02
+updated: 2026-09-13
 aliases:
   - 에이전트 거버넌스
 parent_concepts:
-  - "[[Knowledge/AI Systems/AI Governance|AI Governance]]"
+  - "[[Knowledge/AI Systems/AI Governance|AI 거버넌스]]"
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/Agent Observability|Agent Observability]]"
+  - "[[Knowledge/AI Systems/AI Agent Security|에이전트 보안]]"
 tags:
   - AI
   - Agent
   - Governance
+last_reviewed: 2026-09-13
+concept_id: agent-governance
+label: 에이전트 거버넌스
+group: 위험과 책임
+keywords:
+  - 위임
+  - 승인
+  - 중단
+  - 책임
+  - 인가
+verified_sources:
+  - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+  - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
+relations:
+  - target: governance
+    type: scope
+    reason: 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다.
+    basis: inference
+    evidence:
+      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+      - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
+  - target: agent-security
+    type: informs
+    reason: 책임과 허용 범위를 신원·인가 통제의 운영 기준으로 연결한다.
+    basis: inference
+    evidence:
+      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+      - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
 ---
 
 # AI Agent Governance
 
 ## 한 문장 정의
 
-AI Agent Governance는 에이전트가 어떤 목적과 권한으로 행동하며 누가 승인·감독·책임지는지를 생애주기 전체에서 정하고 증거로 남기는 운영 체계입니다.
+에이전트가 맡을 목표·위임 범위·승인·중단·책임을 정하고 운영 중 검토하는 거버넌스의 적용 범위다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | AI 에이전트 거버넌스 |
-| 영어 이름 | AI Agent Governance |
-| 핵심 질문 | 무엇을 맡기고, 어디서 사람이 개입하며, 누가 책임지는가 |
-| 상위 개념 | [[Knowledge/AI Systems/AI Governance|AI Governance]] |
+| 한국어 | 에이전트 거버넌스 |
+| 영어 | AI Agent Governance |
+| 키워드 | 위임 · 승인 · 중단 · 책임 · 인가 |
 
 ## 범위
 
-**포함:** 목적·책임자·사용 범위, 권한 정책, 승인 지점, 품질 문턱, 변경 승인, 사고 대응, 감사 증거와 폐기 기준입니다.
+**포함:** 조직의 AI 위험 관리를 에이전트의 자율 행동과 권한 위임에 적용하는 정책.
 
-**포함하지 않음:** 취약점·프롬프트 주입·자격증명 보호의 기술 구현은 [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]], 개별 결과의 측정법은 [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]입니다.
+**포함하지 않음:** 특정 신원 규격 하나만 도입하면 완성되는 통제.
 
 ## 왜 중요한가
 
-같은 에이전트라도 읽기 전용 조사와 외부 전송·결제 업무의 위험은 다릅니다. 모델의 능력만 보고 도입하면 누가 어떤 실패를 받아들였는지, 새 도구나 모델을 누가 승인했는지, 사고 뒤 무엇을 중단해야 하는지 알기 어렵습니다.
+행동을 위임할수록 목적과 권한이 일치하는지, 사람이 언제 개입할지 운영 기준이 필요해진다.
 
 ## 핵심 구성 요소
 
-| 요소 | 질문 |
-|---|---|
-| 목적과 소유권 | 이 에이전트가 해결할 일과 책임자는 누구인가 |
-| 권한 정책 | 읽기·쓰기·외부 전송·결제 중 무엇을 허용하는가 |
-| 사람 개입 | 어떤 조건에서 승인·검토·이관하는가 |
-| 품질 문턱 | 어떤 평가를 통과해야 배포·변경할 수 있는가 |
-| 변경 관리 | 모델·도구·프롬프트 변경을 누가 승인하는가 |
-| 증거와 보존 | 실행·승인·오류 기록을 얼마나 보관하는가 |
+- 위임
+- 승인
+- 중단
+- 책임
+- 인가
 
 ## 작동 원리
 
-1. 목적, 사용자, 데이터, 도구, 영향 범위를 등록합니다.
-2. 위험 등급에 맞춰 행동별 허용·차단·승인 규칙을 정합니다.
-3. 배포 전 [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]으로 품질 문턱을 확인합니다.
-4. 운영 중 [[Knowledge/AI Systems/Agent Observability|Agent Observability]]로 실제 행동과 이관을 추적합니다.
-5. 사고와 피드백을 검토해 정책을 바꾸되 승인 없는 자동 승격은 막습니다.
+업무 책임과 허용 행동을 정한 뒤 신원·권한 통제와 실행 기록으로 연결한다. 문제가 생기면 권한 회수와 사람 이관을 수행하도록 운영한다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
 
 ## 실제 예시
 
-- 브리핑 에이전트는 `Tech Knowledge` 안에서만 쓰고, 파일 삭제·메일 발송·계정 변경은 금지합니다.
-- 예약 에이전트는 좌석 확보까지 허용하되 결제와 취소는 사람만 할 수 있게 합니다.
-- 새 모델을 도입할 때 정확도뿐 아니라 비용, 데이터 보존, 실패 회귀 검사를 승인 자료로 남깁니다.
+문서 작성은 자동화하되 외부 전송은 지정 담당자가 승인하도록 정하는 운영 정책.
 
 ## 한계와 실패 조건
 
-- 정책이 문서에만 있고 실제 도구 권한에서 강제되지 않으면 효과가 없습니다.
-- 모든 행동에 승인을 요구하면 자동화 가치가 사라지고 승인 피로가 생깁니다.
-- 평균 성공률만 보면 드물지만 큰 피해를 내는 실패를 놓칠 수 있습니다.
-- 책임자가 불분명하면 사고 때 중단·복구 결정이 늦어집니다.
+NIST의 에이전트 신원 문서는 개념·의견 수렴 문서다. 이를 의무 인증이나 완성된 표준으로 취급하면 안 된다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]] | 거버넌스는 책임·정책·승인 운영이고, 보안은 공격과 권한 오용을 줄이는 기술 통제입니다. |
-| [[Knowledge/AI Systems/AI Governance|AI Governance]] | AI 거버넌스는 조직 전체 AI를 다루고, 에이전트 거버넌스는 도구를 사용해 행동하는 시스템에 초점을 둡니다. |
-| [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]] | 평가는 품질을 측정하는 수단이며, 거버넌스는 그 결과로 무엇을 허용할지 결정합니다. |
+에이전트 보안은 기술적 공격·권한 오용을 다루고, 거버넌스는 목적과 책임을 함께 정한다.
 
 ## 관련 개념
 
-- 상위: [[Knowledge/AI Systems/AI Governance|AI Governance]]
-- 하위: 행동 승인 정책, 에이전트 인벤토리, 변경 관리
-- 함께 쓰임: [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]], [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]], [[Knowledge/AI Systems/Agent Observability|Agent Observability]]
-- 대비: 단순 모델 사용 정책
+- → 하위 범위: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
+- → 근거 제공: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 책임과 허용 범위를 신원·인가 통제의 운영 기준으로 연결한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
 
 ## 최근 변화
 
@@ -102,9 +109,5 @@ AI Agent Governance는 에이전트가 어떤 목적과 권한으로 행동하�
 
 ## 출처
 
-- https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-playbook
-- https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
-- https://www.nist.gov/news-events/news/2026/01/caisi-issues-request-information-about-securing-ai-agent-systems
-- https://www.nist.gov/news-events/news/2026/02/announcing-ai-agent-standards-initiative-interoperable-and-secure
-- https://openai.com/index/path-to-astra/
-- https://www.anthropic.com/news/enterprise-frontier-safeguards
+- [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
+- [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)

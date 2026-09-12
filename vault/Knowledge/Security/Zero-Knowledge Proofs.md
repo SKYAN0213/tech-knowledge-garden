@@ -6,88 +6,91 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Security
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-13
 aliases:
   - 영지식 증명
   - ZKP
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Governance|AI Governance]]"
+  - "[[Knowledge/AI Systems/AI Governance|AI 거버넌스]]"
 tags:
   - Security
   - Privacy
   - Cryptography
+last_reviewed: 2026-09-13
+concept_id: zkp
+label: 영지식 증명
+group: 위험과 책임
+keywords:
+  - ZKP
+  - 증명자
+  - 검증자
+  - 비공개 증거
+  - 명제
+verified_sources:
+  - https://csrc.nist.gov/glossary/term/zero_knowledge_proof
+  - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+relations:
+  - target: governance
+    type: informs
+    reason: 원본 정보 공개를 줄이는 증명은 데이터 최소화 설계의 한 선택지다. 거버넌스 전체를 대체하지 않는다.
+    basis: inference
+    evidence:
+      - https://csrc.nist.gov/glossary/term/zero_knowledge_proof
+      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
 ---
 
 # Zero-Knowledge Proofs
 
 ## 한 문장 정의
 
-Zero-Knowledge Proofs는 증명자가 비밀 자체를 공개하지 않고도 특정 명제가 참이거나 그 비밀을 알고 있음을 검증자에게 입증하는 암호학적 방법입니다.
+증명자가 비밀 내용 자체를 추가로 공개하지 않고 검증자에게 어떤 명제가 참임을 보이는 암호학적 방식이다. [NIST · Zero-Knowledge Proof](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 영지식 증명 |
-| 영어 이름 | Zero-Knowledge Proofs |
-| 약어 | ZKP |
-| 핵심 참여자 | 증명자, 검증자 |
+| 한국어 | 영지식 증명 |
+| 영어 | Zero-Knowledge Proofs |
+| 키워드 | ZKP · 증명자 · 검증자 · 비공개 증거 · 명제 |
 
 ## 범위
 
-**포함:** 명제와 비밀 증거의 정의, 증명 생성, 공개 입력을 이용한 검증, 완전성·건전성·영지식성, 선택적 속성 공개입니다.
+**포함:** 명제·증거·검증 알고리즘과 공개 정보의 경계.
 
-**포함하지 않음:** 원본 자격증명의 발급자 신뢰, 기기 인증, 철회 확인, 계정 추적 방지 전체를 자동으로 보장하는 것은 아닙니다.
+**포함하지 않음:** 네트워크 식별이나 발급자 신뢰까지 자동으로 없애는 익명성 보증.
 
 ## 왜 중요한가
 
-서비스가 나이·회원 자격·권한 같은 조건만 확인하면 될 때 전체 신원 정보나 원본 비밀을 복사하지 않아도 됩니다. 검증에 필요한 정보 노출을 줄여 데이터 유출 범위와 불필요한 수집을 낮출 수 있습니다.
+검증에 필요한 조건만 입증하고 원본 정보 공개를 줄일 수 있다. 정보 최소화와 검증을 함께 설계하는 선택지를 제공한다.
 
 ## 핵심 구성 요소
 
-| 요소 | 역할 |
-|---|---|
-| 명제 | 검증하려는 조건 |
-| 증거 또는 witness | 명제를 참으로 만드는 비공개 정보 |
-| 증명 시스템 | 증거를 드러내지 않는 증명값 생성 규칙 |
-| 검증기 | 공개 입력과 증명값으로 명제의 유효성을 판정 |
-| 매개변수·회로 | 허용할 명제와 암호 연산을 고정 |
+- ZKP
+- 증명자
+- 검증자
+- 비공개 증거
+- 명제
 
 ## 작동 원리
 
-1. 확인할 조건과 공개해도 되는 입력을 명제로 표현합니다.
-2. 증명자는 비밀 증거를 이용해 영지식 증명값을 만듭니다.
-3. 검증자는 비밀을 받지 않고 공개 입력과 증명값만 검사합니다.
-4. 시스템은 올바른 증거는 통과시키고 거짓 증거는 통과하기 어렵게 하면서, 증명값에서 추가 비밀을 알아내지 못하도록 설계합니다.
+증명자는 비공개 증거를 이용해 증명을 만든다. 검증자는 공개된 명제와 증명으로 참인지 확인하며 비밀 증거를 직접 받지 않는다. [NIST · Zero-Knowledge Proof](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
 
 ## 실제 예시
 
-- 디지털 신분증의 생년월일 전체를 보내지 않고 만 18세 이상이라는 속성만 증명합니다.
-- 비밀키를 공개하지 않고 해당 공개키에 대응하는 비밀키를 알고 있음을 증명합니다.
-- 거래 세부값을 모두 공개하지 않고 정해진 규칙을 만족한다는 사실만 검증합니다.
+생년월일 전체를 공개하지 않고 나이 조건을 만족한다는 명제를 입증하는 적용 예.
 
 ## 한계와 실패 조건
 
-- 회로·구현·매개변수에 결함이 있으면 이론적 보장과 실제 보안이 달라집니다.
-- 증명 생성 비용, 증명 크기, 검증 지연이 사용 환경에 맞지 않을 수 있습니다.
-- 발급, 기기 인증, 철회 확인, 네트워크 식별자가 남으면 전체 시스템은 여전히 사용자를 추적할 수 있습니다.
-- 특정 시스템이 양자 공격에 안전한지는 사용한 암호 가정과 구현을 별도로 검토해야 합니다.
+무엇을 증명하는지와 원천 정보의 신뢰가 별도 문제다. 공개 입력이나 사용 방식에서 정보가 드러날 수 있다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| 암호화 | 암호화는 데이터를 키로 숨겼다가 복호화하며, ZKP는 비밀을 전달하지 않고 명제의 참을 증명합니다. |
-| 선택적 공개 자격증명 | 공개할 속성을 줄이는 자격증명 방식이며, 구현에 ZKP를 쓸 수 있지만 둘은 같은 개념이 아닙니다. |
-| 익명성 | ZKP는 증명 내용의 노출을 줄이지만 네트워크·계정·기기 식별까지 자동으로 익명화하지 않습니다. |
+암호화는 내용을 감추고, 영지식 증명은 내용을 드러내지 않은 검증을 다룬다.
 
 ## 관련 개념
 
-- 상위: 개인정보 보호 강화 암호
-- 하위: 영지식 지식 증명, 비대화형 영지식 증명
-- 함께 쓰임: 디지털 자격증명, 선택적 공개, [[Knowledge/AI Systems/AI Governance|AI Governance]]
-- 대비: 일반 암호화
+- → 근거 제공: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 원본 정보 공개를 줄이는 증명은 데이터 최소화 설계의 한 선택지다. 거버넌스 전체를 대체하지 않는다. (해석; [근거](https://csrc.nist.gov/glossary/term/zero_knowledge_proof) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
 
 ## 최근 변화
 
@@ -95,7 +98,5 @@ Zero-Knowledge Proofs는 증명자가 비밀 자체를 공개하지 않고도 �
 
 ## 출처
 
-- https://csrc.nist.gov/glossary/term/zero_knowledge_proof
-- https://csrc.nist.gov/projects/pec/zkproof
-- https://github.com/google/longfellow-zk
-- https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/
+- [NIST · Zero-Knowledge Proof](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
+- [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)

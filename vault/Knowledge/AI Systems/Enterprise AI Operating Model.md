@@ -6,91 +6,106 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-07-11
-updated: 2026-09-10
+updated: 2026-09-13
 aliases:
   - 기업 AI 운영 모델
-parent_concepts:
-  - "[[Knowledge/AI Systems/AI Governance|AI Governance]]"
+parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI Governance|AI 거버넌스]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]"
+  - "[[Knowledge/Data Systems/Aggregate Metrics|집계 지표]]"
 tags:
   - AI
   - EnterpriseAI
   - OperatingModel
+last_reviewed: 2026-09-13
+concept_id: enterprise
+label: 기업 AI 운영 모델
+group: 평가와 운영
+keywords:
+  - 업무 설계
+  - 책임자
+  - 성과 기준
+  - 사람 이관
+verified_sources:
+  - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+  - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+  - https://prometheus.io/docs/practices/histograms/
+relations:
+  - target: governance
+    type: uses
+    reason: 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다.
+    basis: inference
+    evidence:
+      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+  - target: evaluation
+    type: uses
+    reason: 도입 범위를 정할 때 실제 업무 결과를 평가한다.
+    basis: inference
+    evidence:
+      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+      - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+  - target: metrics
+    type: uses
+    reason: 성과를 볼 때 사용량과 과제 성공 기준을 구분해 집계한다.
+    basis: inference
+    evidence:
+      - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+      - https://prometheus.io/docs/practices/histograms/
 ---
 
 # Enterprise AI Operating Model
 
 ## 한 문장 정의
 
-Enterprise AI Operating Model은 기업이 AI를 개별 도구가 아니라 업무 설계, 역할, 데이터, 보안, 비용, 평가, 고객 경험을 함께 바꾸는 지속 가능한 운영 방식으로 정착시키는 구조입니다.
+AI를 업무에 도입하고 유지하기 위해 역할·의사결정·성과 기준·위험 관리 책임을 배분하는 운영 구조다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 기업 AI 운영 모델 |
-| 영어 이름 | Enterprise AI Operating Model |
-| 중심 단위 | 모델이나 좌석이 아니라 업무 결과 |
-| 상위 개념 | [[Knowledge/AI Systems/AI Governance|AI Governance]], 기업 운영 모델 |
+| 한국어 | 기업 AI 운영 모델 |
+| 영어 | Enterprise AI Operating Model |
+| 키워드 | 업무 설계 · 책임자 · 성과 기준 · 사람 이관 |
 
 ## 범위
 
-**포함:** AI 적용 포트폴리오, 업무 재설계, 역할·역량, 데이터·도구 접근, 플랫폼, 평가, 비용 귀속, 사람 이관, 변화 관리입니다.
+**포함:** 업무 선택, 사람과 AI의 역할, 평가와 운영 피드백.
 
-**포함하지 않음:** 모델 API 배포만 하는 기술 아키텍처, AI 사용 교육만 하는 프로그램, 조직 전체 거버넌스와 완전히 같은 개념은 아닙니다.
+**포함하지 않음:** 단순한 모델 구매나 사용자 계정 수 확대.
 
 ## 왜 중요한가
 
-좌석과 모델을 배포해도 실제 업무가 바뀌지 않으면 작은 편의 개선에 그칩니다. 기업은 어떤 일을 AI와 사람이 나누고, 성공을 어떻게 측정하며, 실패와 비용을 누가 책임지는지 운영 단위로 설계해야 합니다.
+실험용 AI 기능을 반복 가능한 업무로 옮길 때 책임·성과·운영 피드백이 빠지지 않게 한다.
 
 ## 핵심 구성 요소
 
-- 우선순위가 있는 업무 포트폴리오
-- 사람·AI 역할과 책임 재설계
-- 데이터·도구·권한 플랫폼
-- 공통 평가와 배포 문턱
-- 비용센터와 사용량·가치 측정
-- 사람 이관, 승인, 사고 대응
-- 교육, 채택, 피드백, 변경 관리
+- 업무 설계
+- 책임자
+- 성과 기준
+- 사람 이관
 
 ## 작동 원리
 
-1. 반복량과 가치, 위험이 큰 업무를 선택합니다.
-2. 현재 흐름과 실패 비용을 측정합니다.
-3. AI와 사람이 맡을 단계·승인·이관을 다시 설계합니다.
-4. 공통 플랫폼과 정책 안에서 작은 운영 실험을 합니다.
-5. 성공 업무당 비용, 품질 통과율, 수정·이관 비율을 비교합니다.
-6. 기준을 통과한 방식만 확대하고 조직 역할과 교육을 갱신합니다.
+업무 목적과 책임자를 정하고 성공 기준을 만든다. 실제 결과와 위험을 측정해 권한·업무 흐름·운영 정책을 수정한다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 
 ## 실제 예시
 
-- 고객 지원에서 답변 생성률이 아니라 해결률·재문의·사람 이관·총비용을 함께 봅니다.
-- 코딩 도구의 활성 사용자 수보다 실제 PR 활동, 병합 속도, 회귀와 보안 실패를 연결합니다.
-- 연구 조직이 문헌·시뮬레이션·실험 자원을 공통 에이전트 플랫폼에 연결하되 전문가 승인을 유지합니다.
+자동 처리 성공과 사람 재작업을 함께 측정해 고객 지원 업무 범위를 조정하는 운영 설계.
 
 ## 한계와 실패 조건
 
-- 사용량을 성과로 착각하면 품질과 책임 비용을 숨깁니다.
-- 현업 소유자 없이 중앙 AI 팀만 운영하면 실제 흐름과 맞지 않습니다.
-- 사람 검토를 비용으로만 보면 고위험 업무의 안전 장치를 약화시킵니다.
-- 작은 시범 성공을 조직 전체로 바로 일반화하면 데이터·역할 차이를 놓칩니다.
+호출량과 사용량은 업무 성과의 대체 지표가 될 수 없다. 팀마다 다른 과제를 같은 기준 없이 비교하면 왜곡된다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| [[Knowledge/AI Systems/AI Governance|AI Governance]] | 거버넌스는 책임·위험 규칙 전체이고 운영 모델은 가치가 나는 업무와 역할·플랫폼 배치를 구체화합니다. |
-| AI 전략 | 전략은 방향과 선택을 정하고 운영 모델은 반복 실행 구조를 만듭니다. |
-| AI 플랫폼 | 플랫폼은 기술 기반이며 운영 모델은 조직·업무·성과·책임까지 포함합니다. |
+AI 거버넌스는 위험·책임 체계이고 운영 모델은 업무·역할·성과 운영까지 포함하는 편집상 묶음이다.
 
 ## 관련 개념
 
-- 상위: [[Knowledge/AI Systems/AI Governance|AI Governance]], 기업 운영 모델
-- 하위: AI 포트폴리오 운영, 업무 재설계, AI 비용 귀속
-- 함께 쓰임: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]], [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]
-- 대비: 도구 좌석 배포 중심 접근
+- → 활용: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
+- → 활용: [[Knowledge/AI Systems/Agent Evaluation#한 문장 정의|에이전트 평가]] — 도입 범위를 정할 때 실제 업무 결과를 평가한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents))
+- → 활용: [[Knowledge/Data Systems/Aggregate Metrics#한 문장 정의|집계 지표]] — 성과를 볼 때 사용량과 과제 성공 기준을 구분해 집계한다. (해석; [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [근거](https://prometheus.io/docs/practices/histograms/))
 
 ## 최근 변화
 
@@ -106,12 +121,6 @@ Enterprise AI Operating Model은 기업이 AI를 개별 도구가 아니라 업�
 
 ## 출처
 
-- https://openai.com/index/how-ai-is-expanding-what-people-do-at-work/
-- https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf
-- https://openai.com/index/a-scorecard-for-the-ai-age/
-- https://github.blog/changelog/2026-07-22-new-copilot-usage-metrics-impact-dashboard/
-- https://openai.com/index/introducing-admin-plugin/
-- https://www.microsoft.com/en-us/microsoft-cloud/blog/us-government/2026/09/02/microsoft-fabric-in-gcc-high-building-the-data-foundation-for-ai/
-- https://github.blog/changelog/2026-09-04-gpt-6-astra-is-generally-available-in-github-copilot/
-- https://github.blog/changelog/2026-09-08-github-enterprise-server-3-22-is-now-generally-available/
-- https://openai.com/index/gpt-6-astra-next-generation-work/
+- [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
+- [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
+- [Prometheus · Histograms and summaries](https://prometheus.io/docs/practices/histograms/)

@@ -6,90 +6,83 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Software Engineering
 created: 2026-06-26
-updated: 2026-09-11
+updated: 2026-09-13
 aliases:
   - 소프트웨어 공급망 보안
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]"
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
+  - "[[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI 보조 보안
+    개발]]"
 tags:
   - SoftwareEngineering
   - Security
   - SupplyChain
+last_reviewed: 2026-09-13
+concept_id: supply-chain
+label: 소프트웨어 공급망 보안
+group: 위험과 책임
+keywords:
+  - provenance
+  - 의존성
+  - 빌드
+  - 산출물
+  - 무결성
+verified_sources:
+  - https://slsa.dev/spec/v1.1/levels
+relations: []
 ---
 
 # Software Supply Chain Security
 
 ## 한 문장 정의
 
-Software Supply Chain Security는 소스 코드와 의존성이 선택되고 빌드·서명·배포·업데이트되어 사용자에게 도달하는 전체 경로의 무결성, 출처, 권한, 재현 가능성을 보호하는 분야입니다.
+소스·의존성·빌드·배포에 이르는 소프트웨어 전달 경로의 무결성과 출처를 보호하는 활동이다. [SLSA · Build levels v1.1](https://slsa.dev/spec/v1.1/levels)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 소프트웨어 공급망 보안 |
-| 영어 이름 | Software Supply Chain Security |
-| 보호 경로 | source → dependency → build → artifact → signature → release |
-| 대표 자산 | 패키지 계정, CI token, lockfile, artifact, 서명 인증서 |
+| 한국어 | 소프트웨어 공급망 보안 |
+| 영어 | Software Supply Chain Security |
+| 키워드 | provenance · 의존성 · 빌드 · 산출물 · 무결성 |
 
 ## 범위
 
-**포함:** 패키지 출처·악성 의존성, lockfile, 빌드 격리, CI/CD 권한, provenance, artifact 검증, 서명·공증, 릴리스 계정, 업데이트·회수입니다.
+**포함:** 빌드 입력, 실행 주체, 산출물과 provenance의 검증.
 
-**포함하지 않음:** 애플리케이션 코드 취약점 전반, AI 모델 출력의 안전, 개별 런타임 권한만을 뜻하지 않습니다.
+**포함하지 않음:** 서명된 프로그램에는 취약점이나 악성 동작이 없다는 보증.
 
 ## 왜 중요한가
 
-좋은 소스 코드도 의존성 계정, CI workflow, 서명 인증서, 배포 채널 중 한 곳이 오염되면 사용자의 장비에 악성 결과가 전달될 수 있습니다. AI 코딩 도구와 플러그인은 더 많은 패키지·MCP server·credential을 연결해 경계를 넓힙니다.
+패키지 이름이나 서명만 신뢰하지 않고, 실제 산출물이 기대한 소스와 빌드 경로에서 왔는지 확인하게 한다.
 
 ## 핵심 구성 요소
 
-- 저장소와 maintainer 계정 보호
-- 의존성 출처, 버전 고정, 악성 패키지 탐지
-- 격리·재현 가능한 빌드와 최소 CI 권한
-- SBOM과 provenance
-- artifact 해시·서명·공증
-- 승인된 배포 채널과 업데이트
-- incident response, credential 회수, 버전 차단
+- provenance
+- 의존성
+- 빌드
+- 산출물
+- 무결성
 
 ## 작동 원리
 
-1. 소스·패키지·빌드·서명·배포의 소유자와 경계를 목록화합니다.
-2. 버전과 출처를 고정하고 새 패키지에는 관찰 시간을 둡니다.
-3. CI 권한을 최소화하고 검증되지 않은 workflow 실행을 보류합니다.
-4. 빌드 결과에 provenance와 서명을 붙입니다.
-5. 설치·업데이트 전 해시와 서명을 확인합니다.
-6. 사고 시 토큰·인증서를 회수하고 오염 버전을 차단합니다.
+SLSA는 산출물을 누가 어떤 입력과 과정으로 만들었는지 기록하고 그 기록과 빌드를 위변조로부터 보호하는 수준을 구분한다. [SLSA · Build levels v1.1](https://slsa.dev/spec/v1.1/levels)
 
 ## 실제 예시
 
-- 새 패키지 릴리스 직후 자동 업데이트하지 않고 cooldown 뒤 검증합니다.
-- 처음 보는 GitHub Actions workflow는 실행 전에 사람 승인을 요구합니다.
-- macOS 앱은 코드 서명과 notarization을 검증하고 오염된 인증서 버전을 차단합니다.
+배포 전에 패키지의 빌드 출처가 기대한 저장소와 과정에 맞는지 확인하는 단계.
 
 ## 한계와 실패 조건
 
-- SBOM이 있어도 패키지가 안전하거나 빌드가 재현된다는 보장은 없습니다.
-- 서명 키가 탈취되면 악성 artifact도 정상처럼 보일 수 있습니다.
-- lockfile만 믿으면 maintainer 계정 탈취와 빌드 스크립트 위험을 놓칩니다.
-- 경보가 늦거나 회수 경로가 없으면 알려진 오염 버전이 계속 배포됩니다.
+낮은 수준의 provenance는 존재해도 위조가 쉬울 수 있다. 출처 확인과 코드 동작의 안전성 검증을 혼동하면 안 된다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| 애플리케이션 보안 | 애플리케이션 로직의 취약점을 다루며 공급 경로의 출처·무결성과 초점이 다릅니다. |
-| SBOM | 구성요소 목록은 한 증거이며 공급망 보안 전체 통제와 같지 않습니다. |
-| [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]] | AI 보조 보안은 분석·패치 업무 방식이고 공급망 보안은 출하 경로 자체를 보호합니다. |
+취약점 검사는 코드 결함을 찾고 공급망 보안은 제작·전달 경로의 신뢰를 다룬다.
 
 ## 관련 개념
 
-- 상위: 사이버보안, 소프트웨어 배포
-- 하위: SBOM, provenance, artifact signing, dependency security
-- 함께 쓰임: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]], [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]
-- 대비: 출처 검증 없는 자동 업데이트
+- ← 활용: [[Knowledge/Software Engineering/AI-Assisted Security Engineering#한 문장 정의|AI 보조 보안 개발]] — AI가 제안한 코드도 기존 빌드·배포 출처 검증을 거쳐 전달한다. (해석; [근거](https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features) · [근거](https://slsa.dev/spec/v1.1/levels))
 
 ## 최근 변화
 
@@ -105,14 +98,4 @@ Software Supply Chain Security는 소스 코드와 의존성이 선택되고 빌
 
 ## 출처
 
-- https://github.com/ossf/malicious-packages
-- https://docs.github.com/en/code-security/concepts/supply-chain-security/malware-alerts
-- https://docs.github.com/en/organizations/managing-organization-settings/actions-policies/workflow-execution-protections
-- https://openai.com/index/our-response-to-the-tanstack-npm-supply-chain-attack/
-- https://github.blog/changelog/2026-07-14-dependabot-version-updates-introduce-default-package-cooldown/
-- https://github.blog/changelog/2026-09-03-multiple-trusted-publishing-configurations-for-npm/
-- https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/
-- https://github.blog/changelog/2026-09-03-codeql-2-26-4-improves-github-actions-security-detections/
-- https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries/
-- https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/
-- https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/
+- [SLSA · Build levels v1.1](https://slsa.dev/spec/v1.1/levels)

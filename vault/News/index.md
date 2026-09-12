@@ -1,5 +1,5 @@
 ---
-title: 소식 상세
+title: 뉴스
 type: index
 date: 2026-09-13
 cssclasses:
@@ -7,9 +7,7 @@ cssclasses:
 generated_by: tech-knowledge-garden
 ---
 
-# 소식 상세
-
-42개의 원문 발표를 기사로 연결했습니다. 같은 원문을 다룬 후속 브리핑은 한 기사에 함께 연결됩니다.
+# 뉴스
 
 - [[News/f5b7434d849eacf1|Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리]] · 2026-09-13
 - [[News/28ba300194033bae|Copilot 사용량에 VS Code Agents 전용 창 지표 추가]] · 2026-09-13

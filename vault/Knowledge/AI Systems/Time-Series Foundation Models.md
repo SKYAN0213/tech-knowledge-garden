@@ -6,91 +6,101 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-09-01
-updated: 2026-09-01
+updated: 2026-09-13
 aliases:
   - 시계열 파운데이션 모델
   - Time Series Foundation Models
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/Data Systems/Aggregate Metrics|집계 지표]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]]"
 tags:
   - AI
   - Forecasting
   - TimeSeries
+last_reviewed: 2026-09-13
+concept_id: timeseries
+label: 시계열 파운데이션 모델
+group: 과학과 물리 세계
+keywords:
+  - 시계열
+  - zero-shot
+  - 확률 예측
+  - 토큰화
+  - 시간 분할
+verified_sources:
+  - https://arxiv.org/abs/2403.07815
+  - https://prometheus.io/docs/practices/histograms/
+  - https://docs.vllm.ai/en/latest/
+relations:
+  - target: metrics
+    type: uses
+    reason: 시간 분할과 예측 평가 지표의 계산 조건을 맞춰 비교한다.
+    basis: inference
+    evidence:
+      - https://arxiv.org/abs/2403.07815
+      - https://prometheus.io/docs/practices/histograms/
+  - target: inference
+    type: uses
+    reason: 예측 모델도 실행 자원과 요청 처리 기반 위에서 동작한다.
+    basis: inference
+    evidence:
+      - https://arxiv.org/abs/2403.07815
+      - https://docs.vllm.ai/en/latest/
 ---
 
 # Time-Series Foundation Models
 
 ## 한 문장 정의
 
-Time-Series Foundation Model은 다양한 시계열 데이터로 미리 학습해 새 데이터셋에서도 추가 학습을 최소화하거나 생략하고 미래 값과 불확실성을 예측하는 범용 모델입니다.
+여러 시계열에서 사전학습한 패턴을 이용해 새로운 시계열의 예측 등에 전이하는 모델이다. [Ansari et al. · Chronos](https://arxiv.org/abs/2403.07815)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 시계열 파운데이션 모델 |
-| 영어 이름 | Time-Series Foundation Model |
-| 약어 | TSFM |
-| 상위 개념 | 시계열 예측, 파운데이션 모델 |
+| 한국어 | 시계열 파운데이션 모델 |
+| 영어 | Time-Series Foundation Models |
+| 키워드 | 시계열 · zero-shot · 확률 예측 · 토큰화 · 시간 분할 |
 
 ## 범위
 
-**포함:** 단변량·다변량 시계열의 zero-shot 또는 few-shot 예측, 과거·미래 공변량 사용, 점·확률 예측, 시계열 패치와 사전학습 표현입니다.
+**포함:** 다양한 시간순 관측의 사전학습과 zero-shot 또는 적응 예측.
 
-**포함하지 않음:** 미래의 원인을 증명하는 인과 추론, 모든 데이터셋에 자동으로 맞는 운영 의사결정, 범용 언어 모델의 텍스트 예측 자체입니다.
+**포함하지 않음:** 관측 순서를 무시한 일반 텍스트 분류나 모든 시계열의 우월 성능 보증.
 
 ## 왜 중요한가
 
-전통적 예측은 데이터셋과 업무마다 모델 선택·특징 설계·학습을 반복합니다. 시계열 파운데이션 모델은 여러 분야에서 학습한 패턴을 새 시계열에 전이해 강한 초기 기준선을 빠르게 만들 수 있습니다. 특히 관련 변수와 알려진 미래 일정을 함께 다루면 단일 시계열만으로 놓치던 신호를 사용할 수 있습니다.
+다양한 과거 시계열에서 얻은 패턴을 새로운 예측 문제에 활용해 데이터별 학습 부담을 줄이는 접근이다.
 
 ## 핵심 구성 요소
 
-| 요소 | 역할 |
-|---|---|
-| 사전학습 말뭉치 | 여러 주기·빈도·분야의 공통 패턴 학습 |
-| 스케일 정규화 | 단위와 크기가 다른 시계열 비교 |
-| 패치·토큰화 | 연속 관측값을 모델 입력 단위로 변환 |
-| 시간축 모델링 | 과거 순서와 장단기 의존성 처리 |
-| 변수축 모델링 | 여러 목표와 공변량 사이의 관계 처리 |
-| 확률 출력 | 점 예측 외에 분위수·분포로 불확실성 표현 |
+- 시계열
+- zero-shot
+- 확률 예측
+- 토큰화
+- 시간 분할
 
 ## 작동 원리
 
-1. 관측값을 정규화하고 일정 길이의 패치나 토큰으로 바꿉니다.
-2. 모델은 여러 데이터셋의 시간 패턴을 사전학습합니다.
-3. 새 예측에서는 목표 시계열, 과거 공변량, 예측 시점에 알려진 미래 공변량을 구분해 넣습니다.
-4. 자기회귀적으로 다음 값을 반복 생성하거나, 마스킹한 미래 구간을 한 번에 복원합니다.
-5. 예측값과 분위수·분포를 출력하고 실제 관측값으로 오차와 보정을 평가합니다.
+Chronos는 값을 스케일링·양자화해 토큰으로 표현하고 확률적 예측을 학습한다. 학습에 포함되지 않은 데이터셋에서도 예측을 평가한다. [Ansari et al. · Chronos](https://arxiv.org/abs/2403.07815)
 
 ## 실제 예시
 
-- 여러 매장의 판매량과 프로모션·휴일 일정을 함께 넣어 다음 달 수요를 예측합니다.
-- 서버 부하, 요청량, 장애 신호를 함께 사용해 용량 수요의 범위를 예측합니다.
-- 설비 센서 여러 개의 과거 변화를 이용해 향후 상태를 추정합니다.
+신규 수요 시계열에 사전학습 모델을 적용하고 해당 업무의 단순 기준선과 비교하는 사용 예.
 
 ## 한계와 실패 조건
 
-- 학습 데이터와 운영 데이터의 주기·분포가 다르면 zero-shot 성능이 급격히 낮아질 수 있습니다.
-- 예측 시점에 알 수 없던 정보를 미래 공변량으로 넣으면 데이터 누수가 생깁니다.
-- 상관관계를 학습하므로 예측 반응이 원인 관계를 증명하지 않습니다.
-- 희귀 사건, 구조 변화, 결측·불규칙 간격은 공개 벤치마크보다 어려울 수 있습니다.
-- 공급자 평균 순위는 개별 업무의 단순 기준선보다 낫다는 보장이 아닙니다.
+분포 변화와 학습 데이터 중복이 평가를 왜곡할 수 있다. 시간 순서에 맞춘 분할과 불확실성 점검이 필요하다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| 전통적 시계열 모델 | ARIMA·ETS 같은 모델은 보통 특정 시계열에 맞춰 추정하며, 파운데이션 모델은 여러 데이터셋의 사전학습을 재사용합니다. |
-| 회귀 모델 | 회귀는 변수 관계를 추정하는 넓은 방법이고, 시계열 파운데이션 모델은 시간 순서와 여러 예측 구간의 전이를 중심으로 사전학습합니다. |
-| 인과 추론 | 예측은 미래 값을 잘 맞추는 것이 목적이며, 개입의 원인 효과를 식별하는 작업과 다릅니다. |
+시계열 전용 사전학습 모델과 특정 한 데이터에 맞춘 예측 모델은 학습 범위가 다르다.
 
 ## 관련 개념
 
-- 상위: 시계열 예측, 파운데이션 모델
-- 하위: 단변량 예측, 다변량 예측, 확률 예측
-- 함께 쓰임: [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]], 수요 계획, 이상 탐지
-- 대비: 데이터셋별 전용 예측 모델, 인과 추론
+- → 활용: [[Knowledge/Data Systems/Aggregate Metrics#한 문장 정의|집계 지표]] — 시간 분할과 예측 평가 지표의 계산 조건을 맞춰 비교한다. (해석; [근거](https://arxiv.org/abs/2403.07815) · [근거](https://prometheus.io/docs/practices/histograms/))
+- → 활용: [[Knowledge/AI Systems/AI Inference Infrastructure#한 문장 정의|AI 추론 인프라]] — 예측 모델도 실행 자원과 요청 처리 기반 위에서 동작한다. (해석; [근거](https://arxiv.org/abs/2403.07815) · [근거](https://docs.vllm.ai/en/latest/))
 
 ## 최근 변화
 
@@ -98,5 +108,6 @@ Time-Series Foundation Model은 다양한 시계열 데이터로 미리 학습�
 
 ## 출처
 
-- https://www.research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/
-- https://github.com/google-research/timesfm
+- [Ansari et al. · Chronos](https://arxiv.org/abs/2403.07815)
+- [Prometheus · Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [vLLM · Serving](https://docs.vllm.ai/en/latest/)

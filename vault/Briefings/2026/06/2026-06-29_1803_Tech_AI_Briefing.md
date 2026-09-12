@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-06-29
 created: 2026-06-29
 modified: 2026-06-29
-description: 이전 형식의 브리핑 원문을 보관했습니다.
+description: 2026-06-29 IT · AI · 로보틱스
 coverage_start: 2026-06-29T12:04:53+09:00
 coverage_end: 2026-06-29T18:03:13+09:00
 item_count: 0
@@ -15,16 +15,52 @@ generated_by: tech-knowledge-garden
 
 # 2026-06-29 · 아침 브리핑
 
-[[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
+## Executive Summary
 
-> 이전 형식의 브리핑 원문을 보관했습니다.
+- 2026-06-29 12:04 KST 이후 18:03 KST까지 확인한 공식 발표, 허용 매체, 논문·릴리스 소스에서 새로운 Major News, Important Papers, Open Source & Tools 항목으로 올릴 만한 고신뢰 업데이트는 확인되지 않았습니다.
+- 유일한 post-cutoff 릴리스는 OpenAI Codex `rust-v0.142.4`였지만, 릴리스 노트가 "No user-facing changes"로 표시해 실무적으로 다룰 변경 사항이 없었습니다.
+- 기존 지식 노트나 AI Technology Knowledge Map에 추가할 새 재사용 개념도 확인되지 않았습니다.
 
-## 헤드라인
+## Major News
 
-새로 확인한 소식 없음. 취재 범위와 점검 기록은 아래 매거진 원문에서 확인합니다.
+없음
 
-## 매거진 원문
+## Important Papers
 
-[[Editions/2026/06/2026-06-29_1803_Tech_AI_Briefing|전체 원고 · 적용 아이디어 · 취재 출처]]
+없음
 
-취재 구간: 2026-06-29T12:04:53+09:00 → 2026-06-29T18:03:13+09:00
+## Open Source & Tools
+
+없음
+
+## Industry Analysis
+
+없음
+
+## Actionable Insights
+
+없음
+
+## Source List
+
+- https://openai.com/news/rss.xml
+- https://github.blog/changelog/feed/
+- https://huggingface.co/blog/feed.xml
+- https://aws.amazon.com/blogs/machine-learning/feed/
+- https://blog.google/innovation-and-ai/technology/ai/rss/
+- https://www.microsoft.com/en-us/research/blog/feed/
+- https://mistral.ai/rss.xml
+- https://blogs.nvidia.com/feed/
+- https://www.theverge.com/rss/index.xml
+- https://techcrunch.com/category/artificial-intelligence/feed/
+- https://www.nature.com/subjects/machine-learning.rss
+- https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
+- https://github.blog/wp-json/wp/v2/posts?per_page=8
+- https://github.blog/wp-json/wp/v2/posts?per_page=8&search=Copilot
+- https://api.github.com/repos/openai/codex/releases?per_page=5
+- https://api.github.com/repos/openai/codex/releases/tags/rust-v0.142.4
+- https://github.com/openai/codex/releases/tag/rust-v0.142.4
+- https://api.github.com/repos/anthropics/claude-code/releases?per_page=5
+- https://api.github.com/repos/microsoft/vscode/releases?per_page=5
+- https://api.github.com/repos/modelcontextprotocol/typescript-sdk/releases?per_page=5
+- https://api.github.com/repos/modelcontextprotocol/python-sdk/releases?per_page=5

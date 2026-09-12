@@ -1,53 +1,46 @@
-# 기술의 다음 장 · Tech Knowledge Garden
+# Tech Knowledge
 
-GPT가 조사한 IT · AI · 로보틱스 소식을 Obsidian에 쌓고 공유하는 전용 프로젝트입니다.
+GPT가 조사한 IT·AI·로보틱스 소식을 Obsidian에 축적하고 웹으로 공유합니다.
 
-- **웹:** https://skyan0213.github.io/tech-knowledge-garden/
-- **아침 브리핑 RSS:** https://skyan0213.github.io/tech-knowledge-garden/briefing.xml
-- **Obsidian:** 이 저장소의 `vault/` 폴더를 별도 보관함으로 엽니다.
+- [뉴스](https://skyan0213.github.io/tech-knowledge-garden/)
+- [RSS 구독](https://skyan0213.github.io/tech-knowledge-garden/rss)
+- [지식 지도](https://skyan0213.github.io/tech-knowledge-garden/knowledge-maps/ai-technology-knowledge-map)
 
-## 읽기와 축적
+기존 `옵시디언_iCloudSync` 프로젝트의 오전 8시 예약 작업을 이어 사용합니다. 새 프로젝트 등록은 필요 없습니다. 소스 저장소의 경로는 `/Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden`, 현재 Obsidian 보관함은 이 저장소의 `vault/`입니다.
 
-`헤드라인 → 기사 상세 → 개념 사전 → 주간 흐름`을 링크로 연결합니다. 사이트에서 제목·본문 검색, 백링크와 지식 지도를 사용할 수 있습니다. 전체 vault가 공유 대상이므로 노트별 공개 플래그를 관리할 필요가 없습니다.
+웹의 기본 메뉴는 뉴스·브리핑입니다. 기사에서 개념 설명과 지식 지도로 이어집니다. Vault 폴더, 보관 원고와 작업 안내를 웹 화면이나 검색에 노출하지 않습니다. 별도 공개 체크 없이 콘텐츠 유형에 따라 화면을 생성합니다.
 
-| 위치 | 역할 | 작성 주체 |
-|---|---|---|
-| `vault/Editions/` | 출처와 취재 구간을 갖춘 원본 매거진 | GPT + 사용자 |
-| `vault/Briefings/` | 짧은 헤드라인과 상세 링크 | 로컬 프로그램 |
-| `vault/News/` | 사건별 기사, 후속 브리핑 연결 | 로컬 프로그램 |
-| `vault/Knowledge/` | 한 개념씩 축적하는 사전 | GPT + 사용자 |
-| `vault/Knowledge Maps/` | 개념 관계 지도 | GPT + 사용자 |
-| `vault/Trends/` | 주간 개념별 기사 관측 | 로컬 프로그램 |
-| `.local/` | 취재 로그, 복구 사본, 검증 증거 | 공개·Git 저장 제외 |
-
-## 사용
+| 원본 위치                         | 역할                           | 웹                     |
+| --------------------------------- | ------------------------------ | ---------------------- |
+| `vault/Editions/`                 | 출처·취재 구간을 가진 원고     | 브리핑과 기사로 변환   |
+| `vault/Briefings/`                | 날짜별 헤드라인·흐름           | 브리핑                 |
+| `vault/News/`                     | 발표별 상세 기사               | 뉴스                   |
+| `vault/Knowledge/`                | 정의·키워드·근거·관계          | 맥락으로 연결되는 개념 |
+| `vault/Knowledge Maps/`           | 같은 관계를 담은 Obsidian 지도 | 관계 기반 자동 배치    |
+| `vault/Archive/`, `vault/Trends/` | 보관과 개인 참고               | 출력 제외              |
+| `.local/`                         | 조사 기록·복구 사본            | Git·웹 제외            |
 
 Node.js 24 이상과 Python 3를 사용합니다.
 
 ```sh
 npm ci
-npm run context        # 다음 취재 cutoff와 기존 원문 목록
-npm run refresh        # 원고에서 기사·브리핑·주간 기록 재생성
-npm run validate       # 원문 마커, 연결, 매거진·개념 형식 검사
-npm run build          # 공유 사이트 생성
-npm run dev            # http://localhost:8088
-npm run publish        # 검증 → 콘텐츠 커밋 → GitHub Pages 발행 시작
+npm run context
+npm run refresh
+npm run validate
+npm run build
+node scripts/verify-site.mjs
+npm run dev        # http://127.0.0.1:8088/tech-knowledge-garden/
+npm run publish
 ```
 
-조사와 집필의 상세 규칙은 [BRIEFING_WORKFLOW.md](docs/BRIEFING_WORKFLOW.md)에 있습니다. `create-tech-ai-briefing` 스킬은 이 프로젝트를 사용하도록 연결되어 있습니다. 기존 오전 8시 예약 작업을 이어 사용하며 별도 중복 예약은 만들지 않습니다.
+`npm run dev`는 마지막으로 빌드한 결과를 미리 봅니다. 수정 후 다시 빌드합니다. `npm run publish`는 콘텐츠만 커밋하며, 코드 변경은 별도로 검토·커밋합니다.
 
-## 비용과 실행 조건
+정의와 키워드는 원문으로 확인합니다. 관계의 `target`, `type`, `reason`, `basis`, `evidence`를 개념 노트에 저장하면 Obsidian 지도와 웹 그래프가 같은 데이터를 사용합니다. 단순 동시 언급을 의미 관계로 승격하지 않습니다. 그래프는 연결·반발력·라벨 충돌을 계산하고 관계가 없는 컴포넌트는 분리합니다. 검색, 선택, 연결 필터, 이동·확대·노드 드래그와 자동 배치를 지원합니다.
 
-정리 도구, Obsidian 로컬 사용, Quartz와 공개 GitHub Pages를 사용합니다. 별도 AI API 키와 유료 자동화 서비스는 필요하지 않습니다. GPT 조사는 기존 ChatGPT/Codex 계정의 사용량 한도에 따르며 구독 자체를 무료로 바꾸지는 않습니다. 로컬 예약 실행에는 Mac과 Codex 앱이 켜져 있어야 합니다. 휴대폰에서는 웹으로 읽을 수 있으며, Obsidian 기기 간 편집 동기화는 별도입니다.
+[운영 규칙](docs/BRIEFING_WORKFLOW.md) · [원문 재검토 기록](data/knowledge-review-2026-09-13.json) · [구현 상태](docs/IMPLEMENTATION_STATUS.md)
 
-## 이전과 검증
+별도 AI API와 유료 자동화 서비스는 사용하지 않습니다. GPT 조사는 기존 ChatGPT/Codex 구독의 사용량 한도에 따릅니다. 로컬 예약에는 Mac과 Codex 앱이 켜져 있어야 합니다. 기기 간 편집 동기화는 별도입니다.
 
-기존 문서 162개 중 독자용 159개를 이전했습니다. 운영 가이드 3개와 과거 자동화 설정은 원본 복구 사본으로 보존했습니다. 원본 보관함은 삭제하지 않았습니다. 파일별 해시·대응 경로는 `data/migration.json`, 복구 사본은 `.local/migration/`에 있습니다.
+원본 보관함과 165개 파일의 복구 사본은 보존했습니다. 기존 날짜별 뉴스 이력은 당시 기록이며 이번 정의 재검토가 모든 과거 보도를 재검증한 것은 아닙니다. 공개 저장소에서 웹 출력 제외는 비공개 보관을 의미하지 않습니다.
 
-구형 원고 11개에는 원래 취재 cutoff가 없습니다. 날짜 탐색에는 파일명을 사용하고 최신 조사 cutoff는 검증된 원고 값만 사용합니다. 개인 보관함으로 향한 링크 1개는 텍스트 참조로 보존했습니다. 모든 과거 기사를 현재 사실로 재검증한 것은 아닙니다.
-
-`npm test`는 Quartz와 이 프로젝트의 테스트를 실행합니다. `node scripts/verify-site.mjs`는 빌드 결과의 페이지·자산 링크, 제목, 검색 색인과 RSS 도착 주소를 검사합니다.
-
-## 기반 프로젝트
-
-[Quartz v5](https://github.com/jackyzha0/quartz), MIT License. 초기 기반 커밋: `f1fba3fc55cbf60a60a5d09c95a49c042cdab63a`. 원본 라이선스는 [LICENSE.txt](LICENSE.txt)에 보존합니다.
+Markdown 변환 기반은 [Quartz v5](https://github.com/jackyzha0/quartz), MIT License입니다. 원본 [LICENSE.txt](LICENSE.txt)를 보존합니다.

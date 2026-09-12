@@ -6,89 +6,86 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-23
-updated: 2026-08-24
+updated: 2026-09-13
 aliases:
   - MCP
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
+  - "[[Knowledge/AI Systems/AI Agents|AI 에이전트]]"
+  - "[[Knowledge/AI Systems/AI Agent Security|에이전트 보안]]"
 tags:
   - AI
   - MCP
   - Protocol
+last_reviewed: 2026-09-13
+concept_id: mcp
+label: MCP
+group: 지식과 연결
+keywords:
+  - MCP
+  - 호스트
+  - 클라이언트
+  - 서버
+  - JSON-RPC
+  - 도구
+verified_sources:
+  - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+relations: []
 ---
 
 # Model Context Protocol
 
 ## 한 문장 정의
 
-Model Context Protocol, MCP는 AI 애플리케이션이 외부 도구, 데이터, 프롬프트 같은 기능을 공통 메시지와 생애주기로 발견하고 호출하도록 정한 개방형 연결 프로토콜입니다.
+AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트를 교환하는 프로토콜이다. [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 모델 컨텍스트 프로토콜 |
-| 영어 이름 | Model Context Protocol |
-| 약어 | MCP |
-| 연결 주체 | host, client, server |
+| 한국어 | MCP |
+| 영어 | Model Context Protocol |
+| 키워드 | MCP · 호스트 · 클라이언트 · 서버 · JSON-RPC · 도구 |
 
 ## 범위
 
-**포함:** 연결 초기화, 기능 협상, tools·resources·prompts 노출, 요청·응답·알림, 전송 방식, HTTP authorization입니다.
+**포함:** 호스트가 관리하는 클라이언트와 서버 간 능력 협상, 메시지 교환, 보안 경계.
 
-**포함하지 않음:** 에이전트의 계획·판단 전체, 서버가 제공하는 도구의 안전성 보증, 검색 결과를 답변에 넣는 [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]] 자체는 별개입니다.
+**포함하지 않음:** 에이전트의 계획 능력이나 연결된 도구의 정확성 보증.
 
 ## 왜 중요한가
 
-도구마다 독자적인 연결 코드를 만들면 재사용과 보안 검토가 어렵습니다. MCP는 연결 표면을 표준화해 여러 AI 앱이 같은 서버를 사용할 수 있게 하지만, 연결이 표준이라는 사실이 서버와 도구를 신뢰해도 된다는 뜻은 아닙니다.
+도구 제공자와 AI 호스트가 공통 인터페이스를 쓰면 연결을 재사용할 수 있다. 동시에 권한과 문맥을 어느 주체가 관리하는지 명확해진다.
 
 ## 핵심 구성 요소
 
-- Host: 사용자가 쓰는 AI 애플리케이션
-- Client: 한 MCP server와 연결을 관리하는 구성 요소
-- Server: tools, resources, prompts를 제공하는 프로세스
-- Capability negotiation: 지원 기능 합의
-- Transport: stdio 또는 HTTP 기반 통신
-- Authorization: 제한된 원격 자원 접근 권한
-- Schema: 도구 입력과 출력의 구조
+- MCP
+- 호스트
+- 클라이언트
+- 서버
+- JSON-RPC
+- 도구
 
 ## 작동 원리
 
-1. client와 server가 연결하고 프로토콜 버전·기능을 합의합니다.
-2. client가 사용할 수 있는 도구·자료를 조회합니다.
-3. 모델 또는 애플리케이션이 구조화된 인자로 기능을 요청합니다.
-4. server가 권한을 확인하고 실행 결과 또는 오류를 반환합니다.
-5. host가 결과를 다음 모델 호출이나 사용자 화면에 반영합니다.
+호스트가 서버별 클라이언트를 만들고 연결 권한을 관리한다. 서버는 기능을 노출하고 클라이언트가 요청과 응답을 중계한다. [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 실제 예시
 
-- Obsidian MCP server가 지정 vault의 문서를 읽기 도구로 제공합니다.
-- GitHub MCP server가 이슈 조회와 PR 검토 도구를 노출합니다.
-- 사내 데이터 server가 tenant별 읽기 권한을 확인한 뒤 자료를 반환합니다.
+문서 서버의 검색 도구를 AI 호스트가 발견하고 호출하는 연결.
 
 ## 한계와 실패 조건
 
-- 악성·오구성 server는 표준 형식을 사용해도 위험합니다.
-- tool description과 schema가 바뀌면 검토한 권한 표면과 달라질 수 있습니다.
-- HTTP authorization은 선택적이므로 transport별 보안 경계를 따로 봐야 합니다.
-- 너무 많은 도구를 한꺼번에 노출하면 선택 오류와 공격면이 커집니다.
+규격을 준수해도 서버를 신뢰할 수 있다는 뜻은 아니다. 동의·인가와 다른 서버의 정보 격리는 호스트가 관리한다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]] | RAG는 찾은 지식을 생성에 쓰는 방식이고 MCP는 도구·데이터를 연결하는 프로토콜입니다. |
-| REST API | REST는 일반 서비스 API 방식이고 MCP는 AI host가 기능을 발견·호출하는 공통 의미 구조를 더합니다. |
-| [[Knowledge/AI Systems/AI Agents|AI Agents]] | 에이전트는 목표를 수행하는 시스템이고 MCP는 사용할 수 있는 연결 수단 중 하나입니다. |
+API 자체와 달리 AI 문맥 교환의 공통 인터페이스를 정의한다. RAG는 검색과 생성 방식이다.
 
 ## 관련 개념
 
-- 상위: 애플리케이션 프로토콜, 도구 통합
-- 하위: MCP tools, MCP resources, MCP authorization
-- 함께 쓰임: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]], [[Knowledge/AI Systems/Agent Observability|Agent Observability]]
-- 대비: 도구별 전용 플러그인 API
+- ← 활용: [[Knowledge/AI Systems/AI Agents#한 문장 정의|AI 에이전트]] — 외부 도구 연결에 MCP를 사용할 수 있다. MCP 사용은 에이전트의 필수 조건이 아니다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
+- ← 통제: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 호스트가 연결별 동의·권한과 서버 사이의 경계를 유지한다. (해석; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
 
 ## 최근 변화
 
@@ -96,7 +93,4 @@ Model Context Protocol, MCP는 AI 애플리케이션이 외부 도구, 데이터
 
 ## 출처
 
-- https://modelcontextprotocol.io/specification/2025-06-18
-- https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
-- https://github.com/modelcontextprotocol/specification
-- https://blog.cloudflare.com/mcp-v2/
+- [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)

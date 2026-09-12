@@ -4,6 +4,7 @@ import crypto from "node:crypto"
 import { fileURLToPath } from "node:url"
 import { spawnSync } from "node:child_process"
 import YAML from "yaml"
+import { makeResolver } from "./links.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 
 export const walk = (dir) =>
@@ -44,7 +45,7 @@ const strip = (s) =>
     .replace(/\[S\d+\]/g, "")
     .replace(/[*`]/g, "")
     .trim()
-const escapeXML = (s) =>
+export const escapeXML = (s) =>
   String(s).replace(
     /[<>&"']/g,
     (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c],
@@ -178,35 +179,29 @@ export function refresh(vault = "vault") {
         item.sources,
       )
         .map(([k, v]) => `- [${k}] ${v}`)
-        .join(
-          "\n",
-        )}\n\n기사는 기존 취재 원고에서 옮겼습니다. 원문 게시 시각과 취재 시각은 해당 ${wiki(issue.slug, "매거진 원고")}에서 확인할 수 있습니다.`,
+        .join("\n")}`,
     )
   }
   for (const issue of all) {
     const items = issueArticles.get(issue.slug),
       date = String(issue.meta.date || path.basename(issue.file).slice(0, 10))
     const line = issue.body.match(/\*\*한 줄 편집:\*\*\s*(.+)/)?.[1]
-    const heading = line
-      ? strip(line)
-      : items.length
-        ? "오늘의 핵심 소식과 연결된 개념을 읽습니다."
-        : "이전 형식의 브리핑 원문을 보관했습니다."
-    let body = `${wiki("index", "← 홈")} · ${wiki("Briefings/index", "브리핑 전체")} · ${wiki("Trends/index", "주간 흐름")}\n\n> ${heading}\n\n## 헤드라인\n\n`
+    const heading = line ? strip(line) : `${date} IT · AI · 로보틱스`
+    let body = line ? `> ${heading}\n\n` : ""
     body += items.length
-      ? items
-          .map(
-            (a, i) =>
-              `### ${String(i + 1).padStart(2, "0")} · ${wiki("News/" + a.id, a.title)}\n\n${a.summary}\n\n${a.concepts.map((c) => wiki(c, path.basename(c))).join(" · ")}`,
-          )
-          .join("\n\n")
-      : issue.meta.new_items_count === 0
-        ? "새로 확인한 소식 없음. 취재 범위와 점검 기록은 아래 매거진 원문에서 확인합니다."
-        : "이 시기의 원고는 이전 형식으로 작성되었습니다. 전체 내용과 출처는 아래 매거진 원문에서 읽을 수 있습니다."
-    const flow = sections(issue.body).find((s) => s.title === "흐름 읽기")?.body
-    if (flow && flow !== "없음")
-      body += `\n\n## 오늘의 흐름\n\n${flow}\n\n${sections(issue.body).find((s) => s.title === "Source List")?.body || ""}`
-    body += `\n\n## 매거진 원문\n\n${wiki(issue.slug, "전체 원고 · 적용 아이디어 · 취재 출처")}\n\n취재 구간: ${issue.meta.coverage_start || "원문 참조"} → ${issue.meta.coverage_end || "원문 참조"}`
+      ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
+      : ""
+    if (issue.meta.schema_version === "tech-ai-magazine/v2") {
+      for (const sec of sections(issue.body).filter(
+        (s) => ["흐름 읽기", "오늘의 적용"].includes(s.title) && s.body !== "없음",
+      ))
+        body += `\n\n## ${sec.title}\n\n${sec.body}`
+      const sources = sections(issue.body).find((s) => s.title === "Source List")?.body
+      if (sources) body += `\n\n## 출처\n\n${sources}`
+      if (!items.length) body = "새로 확인한 소식 없음.\n\n" + body
+    } else {
+      body += issue.body.replace(/^# (.+)$/gm, "## $1").replace(/ {2,}$/gm, "<br>")
+    }
     emit(
       briefSlug(issue),
       {
@@ -281,7 +276,7 @@ export function refresh(vault = "vault") {
   )
   emit(
     "Briefings/index",
-    { title: "브리핑 보관함", type: "index", date },
+    { title: "브리핑", type: "index", date },
     `${all.length}개의 취재 원고가 날짜순으로 연결되어 있습니다.\n\n${all
       .toReversed()
       .map(
@@ -299,30 +294,23 @@ export function refresh(vault = "vault") {
   )
   emit(
     "News/index",
-    { title: "소식 상세", type: "index", date },
-    `${articles.size}개의 원문 발표를 기사로 연결했습니다. 같은 원문을 다룬 후속 브리핑은 한 기사에 함께 연결됩니다.\n\n${[
-      ...articles.values(),
-    ]
+    { title: "뉴스", type: "index", date },
+    `${[...articles.values()]
       .reverse()
       .map((a) => "- " + wiki("News/" + a.id, a.title) + " · " + String(a.edition.meta.date))
       .join("\n")}`,
   )
   emit(
     "index",
-    {
-      title: "기술의 다음 장",
-      type: "home",
-      cssclasses: ["garden-home"],
-      date,
-      description: "IT · AI · 로보틱스. 오늘의 변화를 읽고, 내일의 지식으로 연결합니다.",
-    },
-    `<div class="masthead-label">TECH KNOWLEDGE GARDEN · IT / AI / ROBOTICS</div>\n\n<div class="garden-deck">오늘의 변화를 읽고,<br>내일의 지식으로 연결합니다.</div>\n\n${wiki("Briefings/index", "브리핑 보관함")} · ${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전")} · ${wiki("Trends/index", "주간 흐름")} · ${wiki("Knowledge Maps/AI Technology Knowledge Map", "지식 지도")} · [RSS 구독](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)\n\n---\n\n## ${date.replaceAll("-", ".")} · 최신 브리핑\n\n${latestItems.length ? latestItems.map((a, i) => `### ${String(i + 1).padStart(2, "0")}\n\n#### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}\n\n${a.concepts.map((c) => wiki(c, path.basename(c))).join(" · ")}`).join("\n\n---\n\n") : "새 항목이 없는 회차입니다. 취재 기록은 오늘의 브리핑에서 확인합니다."}\n\n${wiki(briefSlug(latest), "브리핑 전체 읽기 →")}\n\n---\n\n## 축적된 지식\n\n**${all.length}회** 브리핑 · **${articles.size}개** 사건 · **${concepts.length}개** 개념\n\n${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전 펼치기 →")}\n\n## 최근 브리핑\n\n${all
-      .slice(-6)
+    { title: "뉴스", type: "home", date, description: latestItems.map((a) => a.title).join(" · ") },
+    `## ${date.replaceAll("-", ".")}\n\n${latestItems.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}\n\n${a.concepts.map((c) => wiki(c, path.basename(c))).join(" · ")}`).join("\n\n---\n\n")}\n\n${wiki(briefSlug(latest), "브리핑 읽기 →")}\n\n## 최근 뉴스\n\n${[
+      ...articles.values(),
+    ]
       .reverse()
-      .map((i) => "- " + wiki(briefSlug(i), String(i.meta.date) + " 아침 브리핑"))
-      .join(
-        "\n",
-      )}\n\n## 읽고, 연결하고, 공유하기\n\n이곳의 기사와 개념 노트는 하나의 Obsidian vault에서 이어집니다. 기사에서 원문을 확인하고, 연결된 개념과 주간 기록으로 생각을 넓혀보세요.\n\n${wiki("About", "이 공간 소개 · 읽는 방법")}`,
+      .filter((a) => !latestItems.some((x) => x.id === a.id))
+      .slice(0, 15)
+      .map((a) => `- ${wiki("News/" + a.id, a.title)} · ${a.edition.meta.date}`)
+      .join("\n")}\n\n${wiki("News/index", "뉴스 전체 →")}`,
   )
   fs.mkdirSync("data", { recursive: true })
   write(
@@ -369,13 +357,22 @@ export function validate(vault = "vault") {
   const files = noteFiles(vault),
     slugs = new Set(files.map((f) => path.relative(vault, f).replace(/\.md$/, ""))),
     errors = []
+  const resolveLink = makeResolver(
+    files.map((f) => ({
+      path: path.relative(vault, f).replace(/\.md$/, ""),
+      ...parseNote(fs.readFileSync(f, "utf8")),
+    })),
+  )
   for (const f of files) {
     const { meta, body } = parseNote(fs.readFileSync(f, "utf8"))
     for (const key of ["publish", "draft", "unlisted", "password"])
       if (key in meta) errors.push(`${f}: ${key} is unsupported; this is a wholly public vault`)
     for (const target of wikiTargets(body))
-      if (!slugs.has(target.replace(/\.md$/, "")))
-        errors.push(`${f}: unresolved wikilink ${target}`)
+      try {
+        resolveLink(target, path.relative(vault, f).replace(/\.md$/, ""))
+      } catch (e) {
+        errors.push(`${f}: ${e.message}`)
+      }
     if (/(?:sk-proj-|ghp_)[a-zA-Z0-9]{20,}/.test(body)) errors.push(`${f}: credential-like text`)
   }
   const all = editions(vault),
@@ -438,7 +435,10 @@ export function feeds(vault = "vault", output = "public") {
     .join("\n")
   write(
     path.join(output, "briefing.xml"),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>기술의 다음 장 · 아침 브리핑</title><link>${base}</link><description>IT, AI, 로보틱스의 변화와 연결된 지식</description><language>ko-kr</language>${items}</channel></rss>\n`,
+    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><atom:link href="${base}/briefing.xml" rel="self" type="application/rss+xml"/><title>아침 브리핑</title><link>${base}</link><description>IT, AI, 로보틱스의 변화와 연결된 지식</description><language>ko-kr</language>${items}</channel></rss>\n`.replace(
+      /[^\x00-\x7F]/gu,
+      (c) => `&#${c.codePointAt(0)};`,
+    ),
   )
   console.log("Wrote daily-only RSS: " + path.join(output, "briefing.xml"))
 }

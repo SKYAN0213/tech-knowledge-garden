@@ -1,8 +1,8 @@
 configuration:
-  pageTitle: 기술의 다음 장
-  pageTitleSuffix: " · Tech Knowledge"
-  enableSPA: true
-  enablePopovers: true
+  pageTitle: 뉴스
+  pageTitleSuffix: ""
+  enableSPA: false
+  enablePopovers: false
   analytics: null
   locale: ko-KR
   baseUrl: skyan0213.github.io/tech-knowledge-garden
@@ -64,7 +64,7 @@ plugins:
     enabled: true
     order: 40
   - source: "@quartz-community/table-of-contents"
-    enabled: true
+    enabled: false
     order: 50
     layout:
       position: right
@@ -106,7 +106,7 @@ plugins:
   - source: "@quartz-community/explicit-publish"
     enabled: false
   - source: "@quartz-community/alias-redirects"
-    enabled: true
+    enabled: false
   - source: "@quartz-community/content-index"
     enabled: true
     options:
@@ -125,14 +125,14 @@ plugins:
   - source: "@quartz-community/folder-page"
     enabled: true
   - source: "@quartz-community/tag-page"
-    enabled: true
+    enabled: false
   - source: "@quartz-community/explorer"
-    enabled: true
+    enabled: false
     layout:
       position: left
       priority: 50
   - source: "@quartz-community/graph"
-    enabled: true
+    enabled: false
     layout:
       position: right
       priority: 10
@@ -146,7 +146,7 @@ plugins:
       globalGraph:
         showTags: false
   - source: "@quartz-community/search"
-    enabled: true
+    enabled: false
     layout:
       position: left
       priority: 20
@@ -154,7 +154,7 @@ plugins:
       groupOptions:
         grow: true
   - source: "@quartz-community/backlinks"
-    enabled: true
+    enabled: false
     layout:
       position: right
       priority: 50
@@ -165,7 +165,7 @@ plugins:
       position: beforeBody
       priority: 10
   - source: "@quartz-community/content-meta"
-    enabled: true
+    enabled: false
     layout:
       position: beforeBody
       priority: 20
@@ -175,12 +175,12 @@ plugins:
       position: beforeBody
       priority: 30
   - source: "@quartz-community/page-title"
-    enabled: true
+    enabled: false
     layout:
       position: left
       priority: 10
   - source: "@quartz-community/darkmode"
-    enabled: true
+    enabled: false
     layout:
       position: left
       priority: 30
@@ -192,7 +192,7 @@ plugins:
       priority: 35
       group: toolbar
   - source: "@quartz-community/breadcrumbs"
-    enabled: true
+    enabled: false
     layout:
       position: beforeBody
       priority: 5
@@ -206,7 +206,7 @@ plugins:
       position: afterBody
       priority: 10
   - source: "@quartz-community/footer"
-    enabled: true
+    enabled: false
     options:
       links:
         홈: https://skyan0213.github.io/tech-knowledge-garden
@@ -217,7 +217,7 @@ plugins:
   - source: "@quartz-community/recent-notes"
     enabled: false
   - source: "@quartz-community/spacer"
-    enabled: true
+    enabled: false
     options: {}
     order: 25
     layout:

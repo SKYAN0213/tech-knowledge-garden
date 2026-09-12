@@ -1,30 +1,18 @@
-# Tech Knowledge Garden
+# 2026-09-13 Reader and knowledge revision
 
-목표: 기존 Tech Knowledge를 전용 Obsidian vault와 무료 정적 웹사이트로 대체한다. GPT가 조사하고, 로컬 프로그램이 헤드라인·기사·개념·주간 흐름을 연결한다.
+Objective: make the daily briefing site information-first, repair RSS and Obsidian web links, and rebuild the 23-concept knowledge layer with sourced relationships and automatic graph layout.
 
-## 범위와 완료 기준
+The existing 08:00 automation stays in the registered 옵시디언_iCloudSync project. Original iCloud notes, migrated source editions, citations and verified research cutoff are protected. No paid API or new service. Preserve the Sep 13 briefing written by the existing automation (baseline 77f5010).
 
-- `vault/` 자체가 공유 경계다. 노트별 공개 플래그나 선별 과정은 두지 않는다.
-- 기존 독자용 Markdown, 지식 관계, 출처, 조사 기준 시각을 이전한다. 기존 vault와 개인 비서 저장소는 보존한다.
-- 원본 매거진은 `Editions/`, 짧은 아침 브리핑은 `Briefings/`, 사건 상세는 `News/`, 재사용 개념은 `Knowledge/`, 주간 관측은 `Trends/`에 둔다.
-- 동일 입력을 다시 처리해도 파일·기사·날짜가 늘거나 변하지 않아야 한다. 알려진 원문 URL과 마지막 cutoff를 다음 조사에 제공한다.
-- 사이트에서 헤드라인 → 기사 → 개념, 원문 출처, 검색, 모바일 탐색, RSS를 실제 검증한다.
-- 새 저장 경로에서 기존 오전 8시 예약 작업을 이어간다. 별도 OpenAI API를 만들거나 유료 서비스를 구매하지 않는다.
+## Milestones and acceptance
 
-## 마일스톤
+1. Reader and RSS: only News and Briefings in primary navigation; remove folder tree, slogans and editorial bookkeeping. Exclude archives, source editions and operational notes from output/search. Concepts and map remain contextual destinations. RSS must parse, preserve Korean, advertise discovery, contain valid links and have an explicit copyable subscription URL.
+2. Knowledge: re-read primary sources and rebuild definitions/keywords/typed relationships for all 23 canonical concepts. Keep Obsidian paths/aliases stable, retain dated news evidence, and publish sourced graph data. Distinguish editorial relationships from explicit source assertions.
+3. Graph and links: automatic force layout based on actual typed edges, label collision handling, pan/zoom, drag, search, neighbor focus, accessible concept and source links. Resolve aliases, Unicode, headings and block references consistently; reject unknown or ambiguous targets.
+4. Verification: focused regressions, full tests/typecheck, publication build, all emitted local links/fragments and graph edges, desktop/mobile reading and map interactions, actual RSS click/copy, then existing GitHub Pages deployment and live checks.
 
-1. 원본 해시와 이전 manifest, 전용 vault, 재실행 가능한 정리 도구.
-2. 한국어 읽기 화면, 검색·연결·주간 기록·RSS, 문서 검증과 브라우저 검증.
-3. 공유 저장소와 발행, 기존 스킬·예약 작업 경로 전환.
+## Current status
 
-## 검증 및 복구
+Milestones 1–3 complete. Local verification passed: 179 tests, TypeScript, 184 HTML pages and their links/fragments, 182 search entries, 23 concepts, 31 sourced relations and 40 RSS items. Desktop/mobile browser checks cover reading, aliases, definition anchors, copyable RSS, search, graph selection, neighbor filtering, pan/zoom, node drag and deterministic reset. GitHub Pages rollout is the final step; its result is tracked by the Publish Garden workflow for the release commit.
 
-원본은 수정하지 않고 `.local/migration/`에 복구 사본을 둔다. 작업 설정·과거 자동화 TOML은 vault 밖에 보존한다. 전체 독자용 vault를 빌드하며 모든 내부 링크와 원문 마커를 점검한다. 생성물 변경은 재생성할 수 있고, 수집 원고와 개념 원문은 그대로 유지한다.
-
-## 현재 확인한 제약
-
-Codex는 현재 대화를 다른 프로젝트로 옮기거나 새 로컬 프로젝트를 등록하는 도구를 제공하지 않는다. 앱 자체의 컴퓨터 제어도 차단됐다. 실제 구현은 이 저장소에서 진행하며, 예약 작업의 프로젝트 연결은 등록 상태를 확인한 뒤 전환한다.
-
-## 구현 결과
-
-마일스톤 1·2 및 웹 발행·스킬·예약 프롬프트 전환을 완료했습니다. 앱의 새 프로젝트 ID 연결은 등록 대기입니다. 세부 증거와 이어 할 작업은 [구현 상태](docs/IMPLEMENTATION_STATUS.md)에 기록합니다.
+The app API cannot reassign the current conversation to a saved project; the daily job already belongs to the requested project. No new project registration is pending. Source repository remains at its stable local path, referenced explicitly by the existing project workflow.

@@ -1,0 +1,239 @@
+{
+  "reviewed": "2026-09-13",
+  "method": "Primary documents reread; definitions and keyword scope rewritten; semantic relationships are explicitly editorial inferences. Existing dated news history retained, not re-certified by this review.",
+  "sources": {
+    "agents": {
+      "title": "OpenAI Agents SDK · Agents",
+      "url": "https://openai.github.io/openai-agents-python/agents/",
+      "evidence": "모델·지시·도구·handoff·guardrail을 결합한 에이전트 실행 구성."
+    },
+    "trace": {
+      "title": "OpenAI Agents SDK · Tracing",
+      "url": "https://openai.github.io/openai-agents-python/tracing/",
+      "evidence": "실행 trace와 span, 도구 호출·handoff·guardrail 기록."
+    },
+    "eval": {
+      "title": "Anthropic · Demystifying evals for AI agents",
+      "url": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "evidence": "task, trial, grader, transcript, outcome을 구분한 평가 설계."
+    },
+    "guard": {
+      "title": "OpenAI Agents SDK · Guardrails",
+      "url": "https://openai.github.io/openai-agents-python/guardrails/",
+      "evidence": "병렬 입력 검사에서 취소 전에 도구 부작용이 발생할 수 있는 경계."
+    },
+    "mcp": {
+      "title": "MCP · Architecture (2025-11-25)",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/architecture",
+      "evidence": "host-client-server, 1:1 연결, resources/tools/prompts, 호스트의 동의·권한 통제."
+    },
+    "rag": {
+      "title": "Lewis et al. · Retrieval-Augmented Generation",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "evidence": "파라미터 기억과 검색 가능한 외부 기억을 결합한 생성."
+    },
+    "rmf": {
+      "title": "NIST · AI RMF Core 1.0",
+      "url": "https://airc.nist.gov/airmf-resources/airmf/5-sec-core/",
+      "evidence": "GOVERN/MAP/MEASURE/MANAGE, 생애주기 위험 관리와 책임 배분."
+    },
+    "identity": {
+      "title": "NIST · Identity and Authority of Software Agents",
+      "url": "https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents",
+      "evidence": "에이전트 신원과 인가에 대한 개념 문서·의견 수렴. 의무 표준으로 해석하지 않음."
+    },
+    "crawl": {
+      "title": "Cloudflare · AI Crawl Control",
+      "url": "https://blog.cloudflare.com/introducing-ai-crawl-control/",
+      "evidence": "크롤러별 접근 통제와 허용·차단, 라이선스 조건 전달."
+    },
+    "pay": {
+      "title": "Cloudflare · Pay per crawl",
+      "url": "https://blog.cloudflare.com/introducing-pay-per-crawl/",
+      "evidence": "HTTP 402와 가격 헤더, 지불 의사 및 접근 처리."
+    },
+    "vllm": {
+      "title": "vLLM · Serving",
+      "url": "https://docs.vllm.ai/en/latest/",
+      "evidence": "KV 메모리, 연속 배치, 양자화, 분산 추론 기능."
+    },
+    "voice": {
+      "title": "OpenAI Agents SDK · Voice pipeline",
+      "url": "https://openai.github.io/openai-agents-python/voice/pipeline/",
+      "evidence": "음성 인식 → 업무 코드 → 음성 합성 파이프라인."
+    },
+    "fda": {
+      "title": "FDA · AI-enabled medical devices",
+      "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-enabled-medical-devices",
+      "evidence": "기기별 사용 목적과 안전성·유효성 심사; 목록은 포괄적이지 않음."
+    },
+    "wellness": {
+      "title": "FDA · General Wellness (January 2026)",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-wellness-policy-low-risk-devices",
+      "evidence": "건강한 생활습관을 지원하는 저위험 제품에 대한 정책 범위."
+    },
+    "eu": {
+      "title": "EU AI Act · Article 43",
+      "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng",
+      "evidence": "고위험 시스템의 적합성 평가 경로와 중대한 변경 시 재평가. 시행 일정 일반화 제외."
+    },
+    "science": {
+      "title": "Jumper et al. · AlphaFold",
+      "url": "https://www.nature.com/articles/s41586-021-03819-2",
+      "evidence": "서열·물리/생물 지식을 활용한 구조 예측과 CASP14 검증."
+    },
+    "vla": {
+      "title": "Brohan et al. · RT-2",
+      "url": "https://arxiv.org/abs/2307.15818",
+      "evidence": "로봇 행동을 토큰으로 표현하고 웹 시각언어·로봇 궤적을 공동 학습."
+    },
+    "timeseries": {
+      "title": "Ansari et al. · Chronos",
+      "url": "https://arxiv.org/abs/2403.07815",
+      "evidence": "시계열 스케일링·양자화·사전학습과 미관측 데이터셋의 zero-shot 평가."
+    },
+    "metrics": {
+      "title": "Prometheus · Histograms and summaries",
+      "url": "https://prometheus.io/docs/practices/histograms/",
+      "evidence": "분포 집계와 분위수 계산. 사전 계산된 분위수 평균의 오류."
+    },
+    "otel": {
+      "title": "OpenTelemetry · Metrics",
+      "url": "https://opentelemetry.io/docs/concepts/signals/metrics/",
+      "evidence": "런타임 측정, 집계, instrumentation의 관계."
+    },
+    "zkp": {
+      "title": "NIST · Zero-Knowledge Proof",
+      "url": "https://csrc.nist.gov/glossary/term/zero_knowledge_proof",
+      "evidence": "비밀 내용을 추가로 공개하지 않고 명제의 참을 입증하는 암호학적 방식."
+    },
+    "secure": {
+      "title": "GitHub · Security and quality AI features",
+      "url": "https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features",
+      "evidence": "CodeQL 발견에 대한 Autofix 수정 제안과 사람의 검토, 불완전 탐지 한계."
+    },
+    "slsa": {
+      "title": "SLSA · Build levels v1.1",
+      "url": "https://slsa.dev/spec/v1.1/levels",
+      "evidence": "빌드 주체·과정·입력의 provenance와 위변조 방지 수준; L1은 위조 방지를 보장하지 않음."
+    }
+  },
+  "concepts": [
+    {
+      "id": "agents",
+      "title": "AI Agents",
+      "primary_sources": ["agents"]
+    },
+    {
+      "id": "mcp",
+      "title": "Model Context Protocol",
+      "primary_sources": ["mcp"]
+    },
+    {
+      "id": "rag",
+      "title": "Retrieval-Augmented Generation",
+      "primary_sources": ["rag"]
+    },
+    {
+      "id": "evaluation",
+      "title": "Agent Evaluation",
+      "primary_sources": ["eval"]
+    },
+    {
+      "id": "observability",
+      "title": "Agent Observability",
+      "primary_sources": ["trace"]
+    },
+    {
+      "id": "governance",
+      "title": "AI Governance",
+      "primary_sources": ["rmf"]
+    },
+    {
+      "id": "agent-governance",
+      "title": "AI Agent Governance",
+      "primary_sources": ["rmf", "identity"]
+    },
+    {
+      "id": "agent-security",
+      "title": "AI Agent Security",
+      "primary_sources": ["identity", "guard", "mcp"]
+    },
+    {
+      "id": "conformity",
+      "title": "AI Conformity Assessment",
+      "primary_sources": ["eu"]
+    },
+    {
+      "id": "content-access",
+      "title": "AI Content Access",
+      "primary_sources": ["crawl", "mcp"]
+    },
+    {
+      "id": "content-monetization",
+      "title": "AI Content Monetization",
+      "primary_sources": ["pay"]
+    },
+    {
+      "id": "inference",
+      "title": "AI Inference Infrastructure",
+      "primary_sources": ["vllm"]
+    },
+    {
+      "id": "voice",
+      "title": "Conversational Voice AI",
+      "primary_sources": ["voice", "trace"]
+    },
+    {
+      "id": "enterprise",
+      "title": "Enterprise AI Operating Model",
+      "primary_sources": ["rmf", "eval"]
+    },
+    {
+      "id": "metrics",
+      "title": "Aggregate Metrics",
+      "primary_sources": ["metrics", "otel"]
+    },
+    {
+      "id": "science",
+      "title": "AI for Scientific Discovery",
+      "primary_sources": ["science"]
+    },
+    {
+      "id": "medical",
+      "title": "AI Medical Imaging",
+      "primary_sources": ["fda"]
+    },
+    {
+      "id": "wellness",
+      "title": "AI Wellness Devices",
+      "primary_sources": ["wellness"]
+    },
+    {
+      "id": "vla",
+      "title": "Vision-Language-Action Models",
+      "primary_sources": ["vla"]
+    },
+    {
+      "id": "timeseries",
+      "title": "Time-Series Foundation Models",
+      "primary_sources": ["timeseries"]
+    },
+    {
+      "id": "zkp",
+      "title": "Zero-Knowledge Proofs",
+      "primary_sources": ["zkp"]
+    },
+    {
+      "id": "ai-security-engineering",
+      "title": "AI-Assisted Security Engineering",
+      "primary_sources": ["secure"]
+    },
+    {
+      "id": "supply-chain",
+      "title": "Software Supply Chain Security",
+      "primary_sources": ["slsa"]
+    }
+  ],
+  "relations": 31
+}

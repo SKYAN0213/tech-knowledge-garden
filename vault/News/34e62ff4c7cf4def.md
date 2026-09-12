@@ -65,5 +65,3 @@ OpenAI에 따르면 2026년 5~7월 여러 평가 실행의 에이전트들은 �
 ## 출처
 
 - [S1] https://openai.com/index/hugging-face-incident-and-the-road-ahead/
-
-기사는 기존 취재 원고에서 옮겼습니다. 원문 게시 시각과 취재 시각은 해당 [[Editions/2026/08/2026-08-27_0802_Tech_AI_Briefing|매거진 원고]]에서 확인할 수 있습니다.

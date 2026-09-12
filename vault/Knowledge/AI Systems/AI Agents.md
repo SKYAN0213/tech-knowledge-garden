@@ -6,90 +6,116 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-23
-updated: 2026-09-11
+updated: 2026-09-13
 aliases:
   - AI Agent
   - AI 에이전트
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
+  - "[[Knowledge/AI Systems/Model Context Protocol|MCP]]"
+  - "[[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]]"
+  - "[[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]]"
+  - "[[Knowledge/AI Systems/Agent Observability|에이전트 관측성]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]]"
+  - "[[Knowledge/AI Systems/AI Agent Security|에이전트 보안]]"
 tags:
   - AI
   - Agent
+last_reviewed: 2026-09-13
+concept_id: agents
+label: AI 에이전트
+group: 에이전트
+keywords:
+  - 도구 호출
+  - 실행 루프
+  - 상태
+  - handoff
+verified_sources:
+  - https://openai.github.io/openai-agents-python/agents/
+  - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+  - https://arxiv.org/abs/2005.11401
+  - https://docs.vllm.ai/en/latest/
+relations:
+  - target: mcp
+    type: uses
+    reason: 외부 도구 연결에 MCP를 사용할 수 있다. MCP 사용은 에이전트의 필수 조건이 아니다.
+    basis: inference
+    evidence:
+      - https://openai.github.io/openai-agents-python/agents/
+      - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+  - target: rag
+    type: uses
+    reason: 외부 문서를 근거로 삼는 작업에는 검색-생성 경로를 조합할 수 있다.
+    basis: inference
+    evidence:
+      - https://openai.github.io/openai-agents-python/agents/
+      - https://arxiv.org/abs/2005.11401
+  - target: inference
+    type: uses
+    reason: 모델 호출을 수행하려면 해당 모델의 추론 실행 기반을 사용한다.
+    basis: inference
+    evidence:
+      - https://openai.github.io/openai-agents-python/agents/
+      - https://docs.vllm.ai/en/latest/
 ---
 
 # AI Agents
 
 ## 한 문장 정의
 
-AI Agent는 목표를 받아 상황을 해석하고, 필요한 도구와 정보를 선택하며, 여러 단계를 실행하고, 결과를 확인해 다음 행동을 정하는 AI 시스템입니다.
+모델이 지시와 현재 상태를 바탕으로 도구를 선택하고 결과를 받아 다음 행동을 정하는 실행 시스템이다. [OpenAI Agents SDK · Agents](https://openai.github.io/openai-agents-python/agents/)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | AI 에이전트 |
-| 영어 이름 | AI Agent |
-| 핵심 차이 | 답변 생성에 그치지 않고 상태를 바꾸는 행동 수행 |
-| 기본 구성 | 지시, 모델, 도구, 실행 루프, 상태, 제어 |
+| 한국어 | AI 에이전트 |
+| 영어 | AI Agents |
+| 키워드 | 도구 호출 · 실행 루프 · 상태 · handoff |
 
 ## 범위
 
-**포함:** 목표 해석, 계획, 검색·도구 호출, handoff, 상태·메모리 사용, 결과 확인, 중단과 사람 이관을 갖춘 시스템입니다.
+**포함:** 모델·도구·상태·반복 실행·종료 조건을 연결하는 런타임.
 
-**포함하지 않음:** 한 번의 질문에 텍스트만 답하는 일반 챗봇, 단순한 고정 순서 자동화, 특정 연결 규격인 [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]] 자체는 별개입니다.
+**포함하지 않음:** 고정 순서로 호출만 이어 붙인 모든 프로그램을 에이전트라고 부르지는 않는다.
 
 ## 왜 중요한가
 
-에이전트는 자연어를 실제 업무 흐름과 연결합니다. 그래서 모델 성능뿐 아니라 도구 권한, 실행 상태, 실패 복구, 평가, 관측, 사람 승인까지 제품 품질의 일부가 됩니다.
+자연어 목표를 외부 시스템의 행동으로 이어 주므로, 모델의 답변 품질뿐 아니라 실행 결과와 권한 경계가 중요해진다.
 
 ## 핵심 구성 요소
 
-- 목표와 지시
-- 언어·추론 모델
-- 검색, 코드, 파일, API 같은 도구
-- 다음 행동을 정하는 실행 루프
-- 세션 상태와 필요한 메모리
-- guardrail, 승인, 중단, 이관
-- 결과를 판정하는 [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]
+- 도구 호출
+- 실행 루프
+- 상태
+- handoff
 
 ## 작동 원리
 
-1. 목표와 현재 상태를 입력받습니다.
-2. 모델이 다음 단계와 필요한 도구를 고릅니다.
-3. 런타임이 권한을 확인하고 도구를 실행합니다.
-4. 결과를 상태에 반영하고 완료·재시도·이관을 결정합니다.
-5. 완료 조건이나 중단 조건에 도달할 때까지 반복합니다.
+목표와 관측을 입력하고 모델이 행동을 선택한다. 런타임이 도구를 실행해 결과를 돌려주고, 완료·재시도·이관 조건을 판단한다. [OpenAI Agents SDK · Agents](https://openai.github.io/openai-agents-python/agents/)
 
 ## 실제 예시
 
-- 최신 원문을 찾아 중복을 제거하고 Obsidian에 브리핑을 저장합니다.
-- 저장소를 읽고 코드를 수정한 뒤 테스트 결과로 완료 여부를 판단합니다.
-- 일정 후보를 찾고 충돌을 확인한 뒤 사람의 승인을 받아 예약합니다.
+검색 도구로 근거를 찾고 파일 도구로 브리핑을 저장한 뒤 결과를 확인하는 조사 에이전트.
 
 ## 한계와 실패 조건
 
-- 목표가 모호하면 그럴듯하지만 다른 일을 끝낼 수 있습니다.
-- 도구 오류와 외부 상태 변화 때문에 같은 입력도 결과가 달라질 수 있습니다.
-- 긴 실행에서 비용·지연·상태 불일치·무한 반복이 커집니다.
-- 권한이 크면 프롬프트 주입과 잘못된 판단이 실제 피해로 이어집니다.
+긴 실행에서 오류가 누적된다. 도구 성공과 목표 달성이 다를 수 있어 종료 조건과 실제 결과 검증이 필요하다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| 챗봇 | 챗봇은 대화 응답이 중심이고 에이전트는 도구로 실제 행동을 수행합니다. |
-| 워크플로 자동화 | 고정 워크플로는 경로가 미리 정해지고, 에이전트는 상황에 따라 경로를 선택할 수 있습니다. |
-| [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]] | MCP는 도구 연결 규격이고 에이전트는 목표를 수행하는 전체 시스템입니다. |
+MCP는 연결 규격이고, 에이전트는 그 규격을 사용할 수 있는 실행 주체다.
 
 ## 관련 개념
 
-- 상위: 지능형 시스템, 업무 자동화
-- 하위: 단일 에이전트, 다중 에이전트, 코딩 에이전트
-- 함께 쓰임: [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]], [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]], [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]], [[Knowledge/AI Systems/Agent Observability|Agent Observability]]
-- 대비: 고정 규칙 자동화
+- → 활용: [[Knowledge/AI Systems/Model Context Protocol#한 문장 정의|MCP]] — 외부 도구 연결에 MCP를 사용할 수 있다. MCP 사용은 에이전트의 필수 조건이 아니다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
+- → 활용: [[Knowledge/AI Systems/Retrieval-Augmented Generation#한 문장 정의|검색 증강 생성]] — 외부 문서를 근거로 삼는 작업에는 검색-생성 경로를 조합할 수 있다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://arxiv.org/abs/2005.11401))
+- ← 활용: [[Knowledge/AI Systems/Conversational Voice AI#한 문장 정의|대화형 음성 AI]] — 음성 파이프라인의 업무 처리 단계에 에이전트를 연결할 수 있다. (해석; [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) · [근거](https://openai.github.io/openai-agents-python/agents/))
+- ← 관측: [[Knowledge/AI Systems/Agent Observability#한 문장 정의|에이전트 관측성]] — 모델 호출·도구 사용·이관으로 구성된 실행을 추적한다. (해석; [근거](https://openai.github.io/openai-agents-python/tracing/) · [근거](https://openai.github.io/openai-agents-python/agents/))
+- ← 평가: [[Knowledge/AI Systems/Agent Evaluation#한 문장 정의|에이전트 평가]] — 에이전트와 실행 환경의 최종 결과를 성공 기준으로 채점한다. (해석; [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents))
+- → 활용: [[Knowledge/AI Systems/AI Inference Infrastructure#한 문장 정의|AI 추론 인프라]] — 모델 호출을 수행하려면 해당 모델의 추론 실행 기반을 사용한다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://docs.vllm.ai/en/latest/))
+- ← 통제: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 모델과 도구 실행의 신원·권한·검사 경계를 보호한다. (해석; [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [근거](https://openai.github.io/openai-agents-python/guardrails/))
 
 ## 최근 변화
 
@@ -99,8 +125,7 @@ AI Agent는 목표를 받아 상황을 해석하고, 필요한 도구와 정보�
 
 ## 출처
 
-- https://openai.github.io/openai-agents-python/agents/
-- https://openai.github.io/openai-agents-python/running_agents/
-- https://openai.github.io/openai-agents-python/tools/
-- https://openai.github.io/openai-agents-python/multi_agent/
-- https://openai.com/index/introducing-the-agents-api/
+- [OpenAI Agents SDK · Agents](https://openai.github.io/openai-agents-python/agents/)
+- [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+- [Lewis et al. · Retrieval-Augmented Generation](https://arxiv.org/abs/2005.11401)
+- [vLLM · Serving](https://docs.vllm.ai/en/latest/)

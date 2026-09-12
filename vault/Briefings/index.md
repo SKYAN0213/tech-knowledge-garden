@@ -1,5 +1,5 @@
 ---
-title: 브리핑 보관함
+title: 브리핑
 type: index
 date: 2026-09-13
 cssclasses:
@@ -7,7 +7,7 @@ cssclasses:
 generated_by: tech-knowledge-garden
 ---
 
-# 브리핑 보관함
+# 브리핑
 
 113개의 취재 원고가 날짜순으로 연결되어 있습니다.
 

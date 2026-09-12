@@ -48,5 +48,3 @@ generated_by: tech-knowledge-garden
 ## 출처
 
 - [S2] https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf
-
-기사는 기존 취재 원고에서 옮겼습니다. 원문 게시 시각과 취재 시각은 해당 [[Editions/2026/08/2026-08-28_0802_Tech_AI_Briefing|매거진 원고]]에서 확인할 수 있습니다.

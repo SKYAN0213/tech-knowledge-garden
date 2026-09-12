@@ -6,84 +6,89 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-09-13
 aliases:
   - AI 거버넌스
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Conformity Assessment|AI Conformity Assessment]]"
-  - "[[Knowledge/AI Systems/AI Agent Governance|AI Agent Governance]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|기업 AI 운영 모델]]"
+  - "[[Knowledge/AI Systems/AI Conformity Assessment|AI 적합성 평가]]"
+  - "[[Knowledge/AI Systems/AI Wellness Devices|AI 웰니스 기기]]"
+  - "[[Knowledge/Security/Zero-Knowledge Proofs|영지식 증명]]"
 tags:
   - AI
   - Governance
   - RiskManagement
+last_reviewed: 2026-09-13
+concept_id: governance
+label: AI 거버넌스
+group: 위험과 책임
+keywords:
+  - GOVERN
+  - MAP
+  - MEASURE
+  - MANAGE
+  - 책임
+verified_sources:
+  - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+relations: []
 ---
 
 # AI Governance
 
 ## 한 문장 정의
 
-AI Governance는 조직이 AI의 목적, 책임, 위험 허용 수준, 데이터와 모델 사용, 평가, 배포, 감시, 중단을 일관된 규칙과 증거로 관리하는 체계입니다.
+AI의 목적·책임·위험 허용 범위와 관리 절차를 조직의 생애주기 활동에 연결하는 체계다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | AI 거버넌스 |
-| 영어 이름 | AI Governance |
-| 적용 범위 | 조직의 AI 생애주기 전체 |
-| 대표 틀 | NIST AI RMF의 Govern·Map·Measure·Manage |
+| 한국어 | AI 거버넌스 |
+| 영어 | AI Governance |
+| 키워드 | GOVERN · MAP · MEASURE · MANAGE · 책임 |
 
 ## 범위
 
-**포함:** AI 인벤토리, 책임 배분, 위험 분류, 데이터·모델 정책, 평가와 승인, 운영 감시, 사고 대응, 외부 요구사항 연결입니다.
+**포함:** 역할, 감독, 위험 관리, 운영 정책과 재검토.
 
-**포함하지 않음:** 특정 규정 충족 여부를 판정하는 절차는 [[Knowledge/AI Systems/AI Conformity Assessment|AI Conformity Assessment]], 도구 행동 중심 운영은 [[Knowledge/AI Systems/AI Agent Governance|AI Agent Governance]]입니다.
+**포함하지 않음:** 특정 제품의 법적 적합성을 자동 인정하는 인증서.
 
 ## 왜 중요한가
 
-AI 위험은 모델 정확도만으로 설명되지 않습니다. 같은 모델도 의료, 채용, 코드 수정처럼 쓰임과 영향이 달라지면 요구되는 검증과 책임이 바뀝니다. 거버넌스는 이 차이를 조직의 반복 가능한 결정 과정으로 바꿉니다.
+위험을 누가 판단하고 대응할지 정해 기술적 검사와 조직의 책임이 이어지게 한다.
 
 ## 핵심 구성 요소
 
-- AI 시스템과 사용 사례 인벤토리
-- 역할·책임·의사결정 권한
-- 맥락과 영향에 따른 위험 분류
-- 정량·정성 평가와 배포 문턱
-- 데이터·보안·개인정보·공급망 정책
-- 운영 감시, 사고 대응, 개선 기록
+- GOVERN
+- MAP
+- MEASURE
+- MANAGE
+- 책임
 
 ## 작동 원리
 
-NIST AI RMF의 대표 흐름은 조직의 책임 기반을 세우는 `Govern`, 쓰임과 영향을 파악하는 `Map`, 위험을 평가하는 `Measure`, 우선순위를 정해 대응하는 `Manage`입니다. 네 기능은 한 번 끝나는 순서가 아니라 운영 중 반복됩니다.
+NIST AI RMF의 GOVERN은 MAP·MEASURE·MANAGE 전반에 걸친 기능이다. 네 기능은 고정된 일회성 순서가 아니라 반복 관리에 사용된다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
 
 ## 실제 예시
 
-- 고객 상담 AI와 설계 계산 AI를 서로 다른 위험 등급과 검토 주기로 관리합니다.
-- 새 모델을 배포하기 전 품질·보안·데이터 보존·비용 자료를 같은 승인 기록에 묶습니다.
-- 사고가 발생하면 해당 모델만이 아니라 연결된 데이터·도구·사용 사례를 인벤토리에서 추적합니다.
+담당자·사용 목적·점검 기준을 정하고 배포 후 위험을 주기적으로 재검토하는 조직 운영.
 
 ## 한계와 실패 조건
 
-- 체크리스트 완료 자체를 안전의 증거로 착각할 수 있습니다.
-- 책임·권한 없이 원칙만 적으면 실제 배포 결정을 바꾸지 못합니다.
-- 모든 사용 사례에 같은 기준을 적용하면 과잉 통제와 사각지대가 함께 생깁니다.
-- 공급자 증거를 그대로 믿으면 실제 적용 환경의 위험을 놓칠 수 있습니다.
+정책 문서만 있고 실행 책임과 피드백이 없으면 통제가 작동하지 않는다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| [[Knowledge/AI Systems/AI Conformity Assessment|AI Conformity Assessment]] | 거버넌스는 지속적인 운영 체계이고, 적합성 평가는 정해진 요구사항 충족 여부를 판정하는 절차입니다. |
-| AI 윤리 | 윤리는 가치와 원칙을 다루며, 거버넌스는 이를 역할·통제·증거로 운영합니다. |
-| AI 위험 관리 | 위험 관리는 거버넌스의 핵심 기능이지만 조직 책임과 의사결정 구조 전체와 같지는 않습니다. |
+거버넌스는 지속적 운영 체계이며 적합성 평가는 특정 요구사항의 충족 여부를 확인하는 절차다.
 
 ## 관련 개념
 
-- 상위: 조직 거버넌스, 위험 관리
-- 하위: [[Knowledge/AI Systems/AI Agent Governance|AI Agent Governance]], 모델 거버넌스, 데이터 거버넌스
-- 함께 쓰임: [[Knowledge/AI Systems/AI Conformity Assessment|AI Conformity Assessment]], [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]], [[Knowledge/AI Systems/Agent Observability|Agent Observability]]
-- 대비: 원칙 선언만 있는 AI 윤리 문서
+- ← 하위 범위: [[Knowledge/AI Systems/AI Agent Governance#한 문장 정의|에이전트 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
+- ← 활용: [[Knowledge/AI Systems/Enterprise AI Operating Model#한 문장 정의|기업 AI 운영 모델]] — 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
+- ← 활용: [[Knowledge/AI Systems/AI Conformity Assessment#한 문장 정의|AI 적합성 평가]] — 책임·문서·위험 관리 증거를 적용 요구사항의 충족 여부와 대응시킨다. (해석; [근거](https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
+- ← 활용: [[Knowledge/AI Systems/AI Wellness Devices#한 문장 정의|AI 웰니스 기기]] — 건강 지원 주장과 사용 목적을 책임 있는 운영 범위로 관리한다. (해석; [근거](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-wellness-policy-low-risk-devices) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
+- ← 근거 제공: [[Knowledge/Security/Zero-Knowledge Proofs#한 문장 정의|영지식 증명]] — 원본 정보 공개를 줄이는 증명은 데이터 최소화 설계의 한 선택지다. 거버넌스 전체를 대체하지 않는다. (해석; [근거](https://csrc.nist.gov/glossary/term/zero_knowledge_proof) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
 
 ## 최근 변화
 
@@ -91,7 +96,4 @@ NIST AI RMF의 대표 흐름은 조직의 책임 기반을 세우는 `Govern`, �
 
 ## 출처
 
-- https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10
-- https://airc.nist.gov/airmf-resources/airmf/
-- https://www.nist.gov/itl/ai-risk-management-framework/nist-ai-rmf-playbook
-- https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf
+- [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)

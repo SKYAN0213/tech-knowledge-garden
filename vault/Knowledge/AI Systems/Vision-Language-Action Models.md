@@ -6,90 +6,92 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-26
-updated: 2026-08-24
+updated: 2026-09-13
 aliases:
   - VLA
   - 시각-언어-행동 모델
+  - 시각·언어·행동 모델
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]"
 tags:
   - AI
   - Robotics
   - VLA
+last_reviewed: 2026-09-13
+concept_id: vla
+label: 시각·언어·행동 모델
+group: 과학과 물리 세계
+keywords:
+  - VLA
+  - 로봇 정책
+  - 행동 토큰
+  - 시각언어
+  - 궤적
+verified_sources:
+  - https://arxiv.org/abs/2307.15818
+  - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+relations:
+  - target: evaluation
+    type: uses
+    reason: 로봇 행동은 지시 수행 결과와 실환경 조건에 맞춰 평가해야 한다.
+    basis: inference
+    evidence:
+      - https://arxiv.org/abs/2307.15818
+      - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
 ---
 
 # Vision-Language-Action Models
 
 ## 한 문장 정의
 
-Vision-Language-Action Models, VLA는 시각 관측과 언어 지시를 받아 로봇이 실행할 수 있는 시간 순서의 행동을 생성하는 모델입니다.
+영상과 언어 지시를 입력으로 받아 로봇 행동을 출력하도록 학습한 모델 계열이다. [Brohan et al. · RT-2](https://arxiv.org/abs/2307.15818)
 
 ## 용어 카드
 
 | 항목 | 내용 |
 |---|---|
-| 한국어 이름 | 시각-언어-행동 모델 |
-| 영어 이름 | Vision-Language-Action Model |
-| 약어 | VLA |
-| 출력 | 관절·그리퍼·이동 명령 또는 행동 토큰 |
+| 한국어 | 시각·언어·행동 모델 |
+| 영어 | Vision-Language-Action Models |
+| 키워드 | VLA · 로봇 정책 · 행동 토큰 · 시각언어 · 궤적 |
 
 ## 범위
 
-**포함:** 이미지·비디오·센서와 언어 지시의 결합, 행동 표현, 로봇 제어 정책, cross-embodiment 전이, 시뮬레이션·실환경 평가입니다.
+**포함:** 로봇 관측·언어 목표·행동 표현을 연결한 정책 학습.
 
-**포함하지 않음:** 시각과 언어만 이해하는 VLM, 자연어 계획만 만드는 에이전트, 저수준 안전 제어 전체를 대신하지 않습니다.
+**포함하지 않음:** 그림을 설명할 수 있다는 이유만으로 가능한 물리 제어.
 
 ## 왜 중요한가
 
-로봇은 “무엇이 보이는가”를 답하는 데서 끝나지 않고 시간에 따라 물리 행동을 내야 합니다. 행동 공간은 로봇 형태와 센서, 환경에 따라 달라지므로 데이터와 안전 평가가 언어 모델보다 더 강하게 현실 조건에 묶입니다.
+시각·언어 사전학습의 지식을 로봇 행동 학습과 연결하는 접근이다. 말의 이해가 물리적 수행으로 전이되는 조건을 연구할 수 있다.
 
 ## 핵심 구성 요소
 
-- 카메라·센서 관측 인코더
-- 언어 지시 표현
-- 시각·언어 융합 모델
-- 행동 토큰 또는 연속 제어 출력
-- 로봇 embodiment와 좌표 변환
-- 안전 제약과 저수준 제어기
-- 시뮬레이션·실환경 평가
+- VLA
+- 로봇 정책
+- 행동 토큰
+- 시각언어
+- 궤적
 
 ## 작동 원리
 
-1. 현재 장면과 로봇 상태, 언어 목표를 입력받습니다.
-2. 모델이 목표와 관련된 물체·공간 관계를 표현합니다.
-3. 다음 행동 또는 짧은 행동 묶음을 생성합니다.
-4. 저수준 제어기와 안전 장치가 실행 가능성을 확인합니다.
-5. 새 관측을 받아 행동을 수정하며 목표까지 반복합니다.
+RT-2는 로봇 궤적과 웹 시각언어 과제를 공동 학습하고 행동을 텍스트 토큰으로 표현한다. 생성한 행동을 로봇 제어 입력으로 변환한다. [Brohan et al. · RT-2](https://arxiv.org/abs/2307.15818)
 
 ## 실제 예시
 
-- “빨간 컵을 집어 오른쪽 선반에 놓아라”는 지시를 카메라 관측과 연결합니다.
-- 다른 로봇 팔에서 배운 집기 패턴을 새 형태의 로봇에 맞게 전이합니다.
-- 시뮬레이션에서 희귀 결함 이미지를 만들고 실제 검사 로봇의 인식·행동을 평가합니다.
+영상 속 물체를 보고 자연어 지시가 가리키는 대상을 집는 로봇 정책.
 
 ## 한계와 실패 조건
 
-- 학습 환경과 실제 조명·마찰·물체 차이가 행동 실패로 이어집니다.
-- 언어적으로 맞는 계획도 로봇의 관절 한계와 충돌할 수 있습니다.
-- 드문 위험 상황 데이터가 부족해 평균 성공률이 안전을 보장하지 못합니다.
-- 다른 로봇으로 옮길 때 행동 표현과 좌표계가 맞지 않을 수 있습니다.
+웹 지식 전이가 새로운 환경의 안전한 행동을 보장하지 않는다. 센서·기구·접촉 조건과 실제 로봇 평가가 필요하다.
 
 ## 혼동하기 쉬운 개념
 
-| 개념 | 차이 |
-|---|---|
-| Vision-Language Model | VLM은 시각·언어 이해가 중심이고 VLA는 실행 가능한 행동 출력을 포함합니다. |
-| [[Knowledge/AI Systems/AI Agents|AI Agents]] | 에이전트는 도구·업무 전반을 다루며 VLA는 물리 로봇 행동 모델에 초점을 둡니다. |
-| 로봇 제어기 | 제어기는 안정적인 저수준 명령을 실행하고 VLA는 높은 수준 관측·지시를 행동으로 연결합니다. |
+VLM은 시각과 언어를 다루고 VLA는 행동 출력을 학습 목표에 포함한다.
 
 ## 관련 개념
 
-- 상위: embodied AI, 로보틱스
-- 하위: action tokenization, cross-embodiment learning
-- 함께 쓰임: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]], 시뮬레이션
-- 대비: Vision-Language Model
+- → 활용: [[Knowledge/AI Systems/Agent Evaluation#한 문장 정의|에이전트 평가]] — 로봇 행동은 지시 수행 결과와 실환경 조건에 맞춰 평가해야 한다. (해석; [근거](https://arxiv.org/abs/2307.15818) · [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents))
 
 ## 최근 변화
 
@@ -97,6 +99,5 @@ Vision-Language-Action Models, VLA는 시각 관측과 언어 지시를 받아 �
 
 ## 출처
 
-- https://arxiv.org/abs/2606.26095
-- https://deepmind.google/discover/blog/rt-2-new-model-translates-vision-and-language-into-action/
-- https://blogs.nvidia.com/blog/vision-ai-agent-skills-omniverse-metropolis/
+- [Brohan et al. · RT-2](https://arxiv.org/abs/2307.15818)
+- [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)

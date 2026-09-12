@@ -1,9 +1,13 @@
 # Tech Knowledge Garden
 
-Work from this repository. The user chose a separate, wholly shareable Obsidian vault: every reader note in `vault/` is published, without `publish: true` or a note selection step. Operational data and backups belong outside the vault.
+Work from this repository within the existing 옵시디언_iCloudSync daily-briefing project (c9d65b6f-2fcd-49ba-a120-3fce98a14cf3). Do not require another Codex project registration. The dedicated Obsidian vault is the content authority; no per-note publication selection.
 
-For a briefing, read `docs/BRIEFING_WORKFLOW.md` and `docs/magazine-and-encyclopedia-contract.md`. GPT performs live research using the signed-in account. No paid API integration is configured. Author magazine v2 editions under `vault/Editions/` and concept v2 entries under `vault/Knowledge/`. Run `npm run refresh`, `npm run validate`, and `npm run build` before publication. Generated Briefings, News, Trends and navigation indexes are maintained by `scripts/garden.mjs`; edit their sources instead.
+The website presents news and briefings with contextual concept pages and a semantic knowledge map. Do not expose the vault tree, archive, source editions, operational notes or bookkeeping copy. Build a type-based projection. Reader text is factual and concise, without slogans or descriptions of the UI.
 
-Preserve original material and citations. Last saved coverage end is the next exclusive cutoff. Empty or inaccessible search results are not evidence that no news exists. Review primary sources across IT, AI and robotics and record coverage gaps. No padding or invented news.
+Read docs/BRIEFING_WORKFLOW.md and docs/magazine-and-encyclopedia-contract.md before authoring. GPT performs live research using the signed-in account; no paid API is configured. Save v2 editions under vault/Editions and concepts under vault/Knowledge. Definitions, keywords and typed relationships require primary-source evidence. Distinguish editorial inference from explicit source claims. Preserve stable note paths and Obsidian links.
 
-The public website is built from `vault/` only. Keep `.local/`, credentials, local automation exports and backups out of Git. Use `npm run publish` only for this project's validated content; it never stages unrelated paths or force-pushes.
+Run npm run refresh, npm run validate, npm run build and node scripts/verify-site.mjs. Generated Briefings, News, Trends and indexes come from scripts/garden.mjs; edit sources instead. Validate web fragments and graph destinations too.
+
+Preserve source material and citations. Last saved coverage end is the next exclusive cutoff. Inaccessible searches are not evidence of no news. Review primary sources across IT, AI and robotics; record coverage gaps without padding.
+
+Keep .local, credentials and backups out of Git. The repository is public; presentation exclusions do not make committed files private. npm run publish only stages validated content and never force-pushes.
