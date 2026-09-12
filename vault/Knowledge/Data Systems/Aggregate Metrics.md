@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Data Systems
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-09-13
 aliases:
   - 집계 지표
 parent_concepts: []
@@ -82,9 +82,13 @@ tags:
 
 ## 최근 변화
 
+- 2026-09-11 — GitHub는 VS Code Agents 전용 창 지표를 다른 Agent Mode와 분리하고 결측은 생략 또는 null로 유지한다고 명시했습니다. 집계 대상과 결측 규칙을 보존해야 비교가 성립합니다. [source](https://github.blog/changelog/2026-09-11-add-vs-code-agents-to-copilot-usage-metrics/) [관련 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
+
 - 2026-09-04 — GitHub가 개인 stargazer 신원 없이 별 이력을 제공하는 API를 발표했습니다. 개별 신원 공개와 시간별 관심도 관찰을 분리한 구현 사례입니다. [source](https://github.blog/changelog/2026-09-04-new-api-endpoint-provides-privacy-safe-star-history-data/)
 
 ## 출처
 
 - https://github.blog/changelog/2026-09-04-new-api-endpoint-provides-privacy-safe-star-history-data/
 - https://docs.github.com/en/rest/activity/starring?apiVersion=2026-03-10
+
+- https://github.blog/changelog/2026-09-11-add-vs-code-agents-to-copilot-usage-metrics/

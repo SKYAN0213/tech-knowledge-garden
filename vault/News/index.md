@@ -1,7 +1,7 @@
 ---
 title: 소식 상세
 type: index
-date: 2026-09-11
+date: 2026-09-13
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,8 +9,11 @@ generated_by: tech-knowledge-garden
 
 # 소식 상세
 
-39개의 원문 발표를 기사로 연결했습니다. 같은 원문을 다룬 후속 브리핑은 한 기사에 함께 연결됩니다.
+42개의 원문 발표를 기사로 연결했습니다. 같은 원문을 다룬 후속 브리핑은 한 기사에 함께 연결됩니다.
 
+- [[News/f5b7434d849eacf1|Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리]] · 2026-09-13
+- [[News/28ba300194033bae|Copilot 사용량에 VS Code Agents 전용 창 지표 추가]] · 2026-09-13
+- [[News/46fcf5bb7b99520f|OpenAI가 공개한 저장소 확장 경험: 평균보다 느린 요청을 추적한다]] · 2026-09-13
 - [[News/688d14b85e07a8db|GitHub Actions, 캐시 읽기와 쓰기 권한을 명시]] · 2026-09-11
 - [[News/b8a75fb67d817922|GPT‑Live‑1, 듣고 말하는 음성 계층을 API로 제공]] · 2026-09-11
 - [[News/b32e9b8471353987|Agents API, 긴 작업의 실행 관리를 서비스로 제공]] · 2026-09-11

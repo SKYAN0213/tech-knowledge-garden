@@ -1,7 +1,7 @@
 ---
 title: 브리핑 보관함
 type: index
-date: 2026-09-11
+date: 2026-09-13
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,8 +9,9 @@ generated_by: tech-knowledge-garden
 
 # 브리핑 보관함
 
-112개의 취재 원고가 날짜순으로 연결되어 있습니다.
+113개의 취재 원고가 날짜순으로 연결되어 있습니다.
 
+- [[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|2026-09-13 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|2026-09-11 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|2026-09-10 · 0801 브리핑]]
 - [[Briefings/2026/09/2026-09-09_0802_Tech_AI_Briefing|2026-09-09 · 0802 브리핑]]

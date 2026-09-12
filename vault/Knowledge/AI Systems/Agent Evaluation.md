@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-09-07
+updated: 2026-09-13
 aliases:
   - 에이전트 평가
 parent_concepts:
@@ -95,6 +95,8 @@ Agent Evaluation은 에이전트가 주어진 과제를 얼마나 정확하고 �
 
 ## 최근 변화
 
+- 2026-09-11 — GitHub 코드 리뷰가 셸 도구와 Lite 다중 에이전트 분석을 도입했습니다. 자동 종료된 지적과 실제 결함 해결은 별도 확인 대상입니다. [source](https://github.blog/changelog/2026-09-11-auto-resolution-and-analysis-updates-in-copilot-code-review/) [관련 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
+
 - 2026-09-06 — OpenAI 내부 연구 보고서는 성공한 장시간 과제에도 사람 개입이 흔하며 불확실한 판정은 성공률 분석에서 제외한다고 설명했습니다. 성공률과 개입량, 판정 가능한 표본의 범위를 함께 보고해야 한다는 평가 경계를 보여줍니다. [source](https://openai.com/index/research-acceleration-view-inside-openai/)
 - 2026-09-02 — Google은 Gemini 3.8 Flash Cyber의 공개·내부 취약점 탐지, 외부 패치 벤치마크, Chrome·Wiz 내부 결과를 함께 제시했습니다. 서로 다른 과제의 점수를 한 일반 성능으로 합치지 않고 공개 재현 가능성, 비교 모델, 실제 배포 조건을 각각 확인해야 합니다. [source](https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/)
 - 2026-08-29 — Microsoft의 현장 프레임워크는 에이전트 출력 검증을 검사 주체·비용·실제로 입증하는 범위·행동 가능한 산출물로 층화했습니다. 빌드·린트 통과와 점검자의 전반적 인상을 실제 업무 정확성의 증거로 과대해석하지 말아야 한다는 경계가 명확해졌습니다. [source](https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/)
@@ -114,3 +116,5 @@ Agent Evaluation은 에이전트가 주어진 과제를 얼마나 정확하고 �
 - https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/
 - https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/
 - https://openai.com/index/research-acceleration-view-inside-openai/
+
+- https://github.blog/changelog/2026-09-11-auto-resolution-and-analysis-updates-in-copilot-code-review/

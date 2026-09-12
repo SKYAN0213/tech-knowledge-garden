@@ -4,7 +4,7 @@ type: home
 cssclasses:
   - garden-home
   - garden-generated
-date: 2026-09-11
+date: 2026-09-13
 description: IT · AI · 로보틱스. 오늘의 변화를 읽고, 내일의 지식으로 연결합니다.
 generated_by: tech-knowledge-garden
 ---
@@ -19,54 +19,54 @@ generated_by: tech-knowledge-garden
 
 ---
 
-## 2026.09.11 · 최신 브리핑
+## 2026.09.13 · 최신 브리핑
 
 ### 01
 
-#### [[News/b32e9b8471353987|Agents API, 긴 작업의 실행 관리를 서비스로 제공]]
+#### [[News/46fcf5bb7b99520f|OpenAI가 공개한 저장소 확장 경험: 평균보다 느린 요청을 추적한다]]
 
-OpenAI가 Codex의 실행 관리 기반을 제공하는 Agents API를 공개 베타로 출시했다. 개발자는 도구와 작업 환경을 선택하고 긴 세션의 문맥 관리 등을 맡길 수 있다.
+OpenAI가 온라인 저장소 계층 Habitat의 운영 경험을 공개했다. 데이터베이스가 빨라도 응답을 처리할 실행 순서를 기다리면 사용자 요청은 느려질 수 있다.
 
-[[Knowledge/AI Systems/AI Agents|AI Agents]]
+[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]
 
 ---
 
 ### 02
 
-#### [[News/b8a75fb67d817922|GPT‑Live‑1, 듣고 말하는 음성 계층을 API로 제공]]
+#### [[News/28ba300194033bae|Copilot 사용량에 VS Code Agents 전용 창 지표 추가]]
 
-공식 RSS 기준 9월 10일 00:00 UTC 게시. 동시에 듣고 말하는 음성 모델을 API에 제공하며, 깊은 추론과 도구 호출은 별도 텍스트 모델에 맡길 수 있다. 말투·속도·스타일도 지시로 조정한다.
+GitHub가 1일·28일 보고서에 전용 Agents 창의 활성 사용자, 세션·메시지 집계를 정식 제공한다. 사용자별 사용 여부도 선택 필드로 포함된다.
 
-[[Knowledge/AI Systems/Conversational Voice AI|Conversational Voice AI]]
+[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]
 
 ---
 
 ### 03
 
-#### [[News/688d14b85e07a8db|GitHub Actions, 캐시 읽기와 쓰기 권한을 명시]]
+#### [[News/f5b7434d849eacf1|Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리]]
 
-cache-mode로 workflow 또는 job의 캐시 접근을 read, write, write-only, none으로 정한다. write는 읽기와 쓰기를 모두 허용한다.
+후속 커밋이 지적을 해결하면 재검토 중 해당 댓글을 닫고, 수정 제안을 적용할 때 변경 내용에 맞는 커밋 메시지를 제안한다.
 
-[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
+[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]
 
-[[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|브리핑 전체 읽기 →]]
+[[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|브리핑 전체 읽기 →]]
 
 ---
 
 ## 축적된 지식
 
-**112회** 브리핑 · **39개** 사건 · **23개** 개념
+**113회** 브리핑 · **42개** 사건 · **23개** 개념
 
 [[Knowledge/00 Tech Encyclopedia Index|개념 사전 펼치기 →]]
 
 ## 최근 브리핑
 
+- [[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|2026-09-13 아침 브리핑]]
 - [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|2026-09-11 아침 브리핑]]
 - [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|2026-09-10 아침 브리핑]]
 - [[Briefings/2026/09/2026-09-09_0802_Tech_AI_Briefing|2026-09-09 아침 브리핑]]
 - [[Briefings/2026/09/2026-09-08_0801_Tech_AI_Briefing|2026-09-08 아침 브리핑]]
 - [[Briefings/2026/09/2026-09-07_0801_Tech_AI_Briefing|2026-09-07 아침 브리핑]]
-- [[Briefings/2026/09/2026-09-06_0802_Tech_AI_Briefing|2026-09-06 아침 브리핑]]
 
 ## 읽고, 연결하고, 공유하기
 
