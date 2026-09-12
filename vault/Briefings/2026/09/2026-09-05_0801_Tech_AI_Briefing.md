@@ -8,8 +8,12 @@ description: Copilot에 Astra가 들어왔고, 저장소 관심도는 개인 명
 coverage_start: 2026-09-04T08:02:54+09:00
 coverage_end: 2026-09-05T08:01:29+09:00
 item_count: 2
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-05 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

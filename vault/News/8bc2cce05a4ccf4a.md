@@ -13,8 +13,12 @@ concepts:
   - Knowledge/AI Systems/AI for Scientific Discovery
 description: Enhancing materials discovery with valence-constrained design in
   generative modeling
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다
 
 [[index|← 오늘의 헤드라인]] · 리서치 노트 · 처음 수록 2026-08-27
 

@@ -8,8 +8,12 @@ description: 에이전트 추론 경쟁의 기준이 단일 칩 속도에서 긴
 coverage_start: 2026-08-24T08:01:11+09:00
 coverage_end: 2026-08-25T08:01:47+09:00
 item_count: 1
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-25 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

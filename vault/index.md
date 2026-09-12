@@ -3,16 +3,19 @@ title: 기술의 다음 장
 type: home
 cssclasses:
   - garden-home
+  - garden-generated
 date: 2026-09-11
 description: IT · AI · 로보틱스. 오늘의 변화를 읽고, 내일의 지식으로 연결합니다.
 generated_by: tech-knowledge-garden
 ---
 
+# 기술의 다음 장
+
 <div class="masthead-label">TECH KNOWLEDGE GARDEN · IT / AI / ROBOTICS</div>
 
 <div class="garden-deck">오늘의 변화를 읽고,<br>내일의 지식으로 연결합니다.</div>
 
-[[Briefings/index|브리핑 보관함]] · [[Knowledge/00 Tech Encyclopedia Index|개념 사전]] · [[Trends/index|주간 흐름]] · [[Knowledge Maps/AI Technology Knowledge Map|지식 지도]] · [RSS 구독](./briefing.xml)
+[[Briefings/index|브리핑 보관함]] · [[Knowledge/00 Tech Encyclopedia Index|개념 사전]] · [[Trends/index|주간 흐름]] · [[Knowledge Maps/AI Technology Knowledge Map|지식 지도]] · [RSS 구독](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
 ---
 

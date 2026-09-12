@@ -8,8 +8,12 @@ description: AI 검증은 “좋아 본인다”가 아니라 각 검사가 무�
 coverage_start: 2026-08-29T08:00:51+09:00
 coverage_end: 2026-08-30T08:01:32+09:00
 item_count: 1
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-30 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

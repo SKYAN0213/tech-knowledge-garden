@@ -2,8 +2,12 @@
 title: 주간 흐름
 type: index
 date: 2026-09-11
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 주간 흐름
 
 매일의 소식을 개념별로 연결해 변화가 쌓이는 방향을 살펴봅니다.
 

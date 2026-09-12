@@ -142,7 +142,17 @@ export function refresh(vault = "vault") {
   const generated = []
   const emit = (slug, meta, body) => {
     const f = path.join(vault, slug + ".md")
-    write(f, noteText({ ...meta, generated_by: "tech-knowledge-garden" }, body))
+    write(
+      f,
+      noteText(
+        {
+          ...meta,
+          cssclasses: unique([...(meta.cssclasses || []), "garden-generated"]),
+          generated_by: "tech-knowledge-garden",
+        },
+        `# ${meta.title}\n\n${body}`,
+      ),
+    )
     generated.push(slug)
   }
   const briefSlug = (issue) => issue.slug.replace(/^Editions\//, "Briefings/")
@@ -306,7 +316,7 @@ export function refresh(vault = "vault") {
       date,
       description: "IT · AI · 로보틱스. 오늘의 변화를 읽고, 내일의 지식으로 연결합니다.",
     },
-    `<div class="masthead-label">TECH KNOWLEDGE GARDEN · IT / AI / ROBOTICS</div>\n\n<div class="garden-deck">오늘의 변화를 읽고,<br>내일의 지식으로 연결합니다.</div>\n\n${wiki("Briefings/index", "브리핑 보관함")} · ${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전")} · ${wiki("Trends/index", "주간 흐름")} · ${wiki("Knowledge Maps/AI Technology Knowledge Map", "지식 지도")} · [RSS 구독](./briefing.xml)\n\n---\n\n## ${date.replaceAll("-", ".")} · 최신 브리핑\n\n${latestItems.length ? latestItems.map((a, i) => `### ${String(i + 1).padStart(2, "0")}\n\n#### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}\n\n${a.concepts.map((c) => wiki(c, path.basename(c))).join(" · ")}`).join("\n\n---\n\n") : "새 항목이 없는 회차입니다. 취재 기록은 오늘의 브리핑에서 확인합니다."}\n\n${wiki(briefSlug(latest), "브리핑 전체 읽기 →")}\n\n---\n\n## 축적된 지식\n\n**${all.length}회** 브리핑 · **${articles.size}개** 사건 · **${concepts.length}개** 개념\n\n${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전 펼치기 →")}\n\n## 최근 브리핑\n\n${all
+    `<div class="masthead-label">TECH KNOWLEDGE GARDEN · IT / AI / ROBOTICS</div>\n\n<div class="garden-deck">오늘의 변화를 읽고,<br>내일의 지식으로 연결합니다.</div>\n\n${wiki("Briefings/index", "브리핑 보관함")} · ${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전")} · ${wiki("Trends/index", "주간 흐름")} · ${wiki("Knowledge Maps/AI Technology Knowledge Map", "지식 지도")} · [RSS 구독](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)\n\n---\n\n## ${date.replaceAll("-", ".")} · 최신 브리핑\n\n${latestItems.length ? latestItems.map((a, i) => `### ${String(i + 1).padStart(2, "0")}\n\n#### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}\n\n${a.concepts.map((c) => wiki(c, path.basename(c))).join(" · ")}`).join("\n\n---\n\n") : "새 항목이 없는 회차입니다. 취재 기록은 오늘의 브리핑에서 확인합니다."}\n\n${wiki(briefSlug(latest), "브리핑 전체 읽기 →")}\n\n---\n\n## 축적된 지식\n\n**${all.length}회** 브리핑 · **${articles.size}개** 사건 · **${concepts.length}개** 개념\n\n${wiki("Knowledge/00 Tech Encyclopedia Index", "개념 사전 펼치기 →")}\n\n## 최근 브리핑\n\n${all
       .slice(-6)
       .reverse()
       .map((i) => "- " + wiki(briefSlug(i), String(i.meta.date) + " 아침 브리핑"))

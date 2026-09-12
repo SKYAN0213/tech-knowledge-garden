@@ -8,8 +8,12 @@ description: AI 실행 도구의 신뢰성은 빠른 시작보다 정확한 소�
 coverage_start: 2026-08-28T08:02:09+09:00
 coverage_end: 2026-08-29T08:00:51+09:00
 item_count: 2
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-29 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

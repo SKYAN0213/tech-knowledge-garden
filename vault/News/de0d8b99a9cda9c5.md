@@ -12,8 +12,12 @@ sources:
 concepts:
   - Knowledge/AI Systems/Agent Evaluation
 description: Training novices to think, or giving them LLMs? Evidence from an RCT
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다
 
 [[index|← 오늘의 헤드라인]] · 리서치 노트 · 처음 수록 2026-08-28
 

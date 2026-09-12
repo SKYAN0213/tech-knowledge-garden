@@ -8,8 +8,12 @@ description: 에이전트 실행 기반은 API로, 음성 대화와 캐시 권�
 coverage_start: 2026-09-10T08:01:46+09:00
 coverage_end: 2026-09-11T08:00:52+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-11 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

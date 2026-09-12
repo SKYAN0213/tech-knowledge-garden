@@ -2,8 +2,12 @@
 title: 소식 상세
 type: index
 date: 2026-09-11
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 소식 상세
 
 39개의 원문 발표를 기사로 연결했습니다. 같은 원문을 다룬 후속 브리핑은 한 기사에 함께 연결됩니다.
 

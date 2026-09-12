@@ -8,8 +8,12 @@ description: AI 경쟁이 전용 추론 칩의 전력·지연 최적화와 권�
 coverage_start: 2026-08-25T08:01:47+09:00
 coverage_end: 2026-08-26T08:02:26+09:00
 item_count: 2
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-26 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

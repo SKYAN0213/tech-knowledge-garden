@@ -8,8 +8,12 @@ description: 검증된 새 소식 없음.
 coverage_start: 2026-08-30T08:01:32+09:00
 coverage_end: 2026-08-31T08:01:30+09:00
 item_count: 0
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-31 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

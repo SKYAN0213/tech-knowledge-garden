@@ -6,8 +6,12 @@ created: 2026-07-23
 modified: 2026-07-23
 description: 이전 형식의 브리핑 원문을 보관했습니다.
 item_count: 0
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-07-23 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

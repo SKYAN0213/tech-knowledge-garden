@@ -14,8 +14,12 @@ concepts:
 description: Actions의 GITHUB_TOKEN에 Dependabot alert 읽기 전용 vulnerability-alerts
   권한이 추가됐다. 재사용 workflow에는 실제 정의 파일의 ref·SHA·저장소·경로를 나타내는 job.workflow_ context가
   생겼고, runner version의 등록·실행 지원 종료일을 조회하는 REST API도 제공된다.
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출
 
 [[index|← 오늘의 헤드라인]] · 뉴스 데스크 · 처음 수록 2026-09-04
 

@@ -8,8 +8,12 @@ description: 강해진 에이전트의 배포 조건이 모델 거부율에서 �
 coverage_start: 2026-09-01T08:01:37+09:00
 coverage_end: 2026-09-02T08:01:50+09:00
 item_count: 4
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-02 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

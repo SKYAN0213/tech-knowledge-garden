@@ -8,8 +8,12 @@ description: 이전 형식의 브리핑 원문을 보관했습니다.
 coverage_start: 2026-06-29T12:04:53+09:00
 coverage_end: 2026-06-29T18:03:13+09:00
 item_count: 0
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-06-29 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

@@ -8,8 +8,12 @@ description: 패키지 배포와 CI 보안이 장기 토큰·넓은 권한에서
 coverage_start: 2026-09-03T08:03:00+09:00
 coverage_end: 2026-09-04T08:02:54+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-04 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

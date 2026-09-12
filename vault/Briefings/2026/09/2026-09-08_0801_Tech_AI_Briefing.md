@@ -8,8 +8,12 @@ description: AI의 현장 성과는 추정치와 외부 검증의 경계를 함�
 coverage_start: 2026-09-07T08:01:13+09:00
 coverage_end: 2026-09-08T08:01:15+09:00
 item_count: 2
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-08 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

@@ -8,8 +8,12 @@ description: 좋은 AI 평가는 점수뿐 아니라 시험의 비밀, 평가 �
 coverage_start: 2026-08-27T08:02:22+09:00
 coverage_end: 2026-08-28T08:02:09+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-28 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

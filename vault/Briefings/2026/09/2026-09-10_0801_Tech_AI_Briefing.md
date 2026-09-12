@@ -8,8 +8,12 @@ description: 업무 AI의 접근 권한과 코드 병합 조건을 관리자가 
 coverage_start: 2026-09-09T08:02:08+09:00
 coverage_end: 2026-09-10T08:01:46+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-10 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

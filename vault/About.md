@@ -23,6 +23,6 @@ IT, AI, 로보틱스의 변화를 읽고 오래 쓸 지식으로 연결하는 �
 
 ## 공유와 구독
 
-페이지 주소를 복사해 바로 공유할 수 있습니다. [아침 브리핑 RSS](./briefing.xml)를 RSS 리더에 등록하면 새 회차가 발행될 때 확인할 수 있습니다. 열람에는 Obsidian이 필요하지 않습니다.
+페이지 주소를 복사해 바로 공유할 수 있습니다. [아침 브리핑 RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)를 RSS 리더에 등록하면 새 회차가 발행될 때 확인할 수 있습니다. 열람에는 Obsidian이 필요하지 않습니다.
 
 이 공간은 별도 Obsidian vault 전체를 발행합니다. 이 vault 안에 저장한 노트와 첨부파일은 모두 공개 자료로 취급합니다.

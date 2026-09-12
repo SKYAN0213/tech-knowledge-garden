@@ -8,8 +8,12 @@ description: 강한 에이전트일수록 평가 격리와 현실 제약을 결�
 coverage_start: 2026-08-26T08:02:26+09:00
 coverage_end: 2026-08-27T08:02:22+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-08-27 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

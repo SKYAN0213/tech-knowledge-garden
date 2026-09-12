@@ -8,8 +8,12 @@ description: 고성능 사이버 모델의 경쟁이 점수에서 제한 접근�
 coverage_start: 2026-09-02T08:01:50+09:00
 coverage_end: 2026-09-03T08:03:00+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-03 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 

@@ -8,8 +8,12 @@ description: AI의 수학 증명 제안은 검토 대상으로, 기업 개발 �
 coverage_start: 2026-09-08T08:01:15+09:00
 coverage_end: 2026-09-09T08:02:08+09:00
 item_count: 3
+cssclasses:
+  - garden-generated
 generated_by: tech-knowledge-garden
 ---
+
+# 2026-09-09 · 아침 브리핑
 
 [[index|← 홈]] · [[Briefings/index|브리핑 전체]] · [[Trends/index|주간 흐름]]
 
