@@ -25,8 +25,8 @@ generated_by: tech-knowledge-garden
 - [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]] · 2026-09-08
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 - [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · 2026-09-07
-- [[News/c96e7378059165d6|GitHub star history API: 누가 눌렀는지 대신 언제 얼마나 늘었는지]] · 2026-09-05
-- [[News/cf45e2be25e062a0|Astra의 Copilot 진입, 팀의 모델 허용 정책부터 확인할 때]] · 2026-09-05
+- [[News/c96e7378059165d6|GitHub, 사용자 신원 없이 저장소 스타 이력을 조회하는 API 공개]] · 2026-09-05
+- [[News/cf45e2be25e062a0|GitHub Copilot, GPT-6 Astra를 유료 플랜에 순차 제공]] · 2026-09-05
 - [[News/13cebc4d5ec60b11|CodeQL 2.26.4, Go 1.27과 GitHub Actions 보안 탐지 개선]] · 2026-09-04
 - [[News/473fea8bb1cbf9cb|GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가]] · 2026-09-04
 - [[News/322b7c88af36f3ac|npm, 패키지 하나에 여러 OIDC 배포 설정 지원]] · 2026-09-04
