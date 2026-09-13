@@ -49,6 +49,6 @@ Publication follow-up: live/local comparison found a pre-existing timezone diffe
 목표: 새 원고의 육하원칙 기사, 일일 심층 1건, 국내외 균등 조사, 전략·연구·사업화 근거 축적을 기존 웹/RSS/GitHub로 연결한다. 보호: 과거 4개 Drive 원본, 기사 ID·RSS GUID, 전문용어 지도 규칙, 기존 예약.
 
 - 완료: 형식·검증·생성 연결, 공식 추적 목록 48개(접근 확인38/실패10), 작성 지침 및 기존08시 예약 갱신·읽기 검증.
-- 통과: 새3종 통합 fixture, 누락/중복/초록·창업근거 제한, DOI/arXiv 버전 충돌, Python 원고 계약, 전체 테스트268개, tsc, 빌드·192개HTML/40개RSS 링크. 모바일390px 가로 넘침·지도 없음, 미리보기 제목1개. 과거 원본·생성물 변경 없음, Drive160개 원본 해시 보존.
-- 배포: 구현 커밋 후 GitHub Pages 성공과 실제 공개 파일 일치 검증 예정.
+- 통과: 새3종 통합 fixture, 누락/중복/초록·창업근거 제한, DOI/arXiv 버전 충돌, Python 원고 계약, 전체 테스트269개, tsc, 빌드·192개HTML/40개RSS 링크. 모바일390px 가로 넘침·지도 없음, 미리보기 제목1개. 과거 원본·생성물 변경 없음, Drive160개 원본 해시 보존.
+- 배포: 구현 커밋9e391e5, GitHub Pages 실행34760456726 성공. 공개 파일 검증 영수증은 `.local/editorial-rollout/live-verification.json`에 저장한다. 후속 검증 수정은 동일 URL을 유지하며 CI에서 재검증한다.
 - 첫 7회 운영 실증은 실제 다음 발행부터 집계한다. 설정 변경은 완료 회차가 아니다.

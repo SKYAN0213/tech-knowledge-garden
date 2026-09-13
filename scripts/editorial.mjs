@@ -62,7 +62,7 @@ export function applyEditorial(issue, articles) {
         rel.evidence_urls.some((u) => !a.urls.includes(u))
       )
         fail("relationship evidence missing")
-      if (["창업", "공동창업"].includes(rel.role) && rel.evidence_urls.length < 2)
+      if (["창업", "공동창업"].includes(rel.role) && new Set(rel.evidence_urls).size < 2)
         fail("founder needs university and company evidence")
     }
     if (

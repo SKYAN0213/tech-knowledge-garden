@@ -296,3 +296,10 @@ test("legacy Python source contract accepts factual six-w cover headings", async
     fs.rmSync(dir, { recursive: true })
   }
 })
+
+test("a repeated URL is not independent founder confirmation", () => {
+  const i = fixture("연구 사업화")
+  const r = i.meta.article_records[0].relations[0]
+  r.evidence_urls = [r.evidence_urls[0], r.evidence_urls[0]]
+  assert.throws(() => extractArticles(i), /founder/)
+})
