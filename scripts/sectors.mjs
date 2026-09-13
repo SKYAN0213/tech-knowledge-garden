@@ -28,5 +28,11 @@ export function sectorGroups(issue, articles) {
 export function sectorMarkdown(issue, articles, render) {
   const groups = sectorGroups(issue, articles)
   if (!groups) return null
-  return `## 분야별 브리핑\n\n${groups.map((g) => `### ${g.name} · ${g.items.length}건\n\n${g.items.length ? g.items.map(render).join("\n\n") : "수록 없음"}`).join("\n\n")}`
+  return `## 분야별 브리핑\n\n${groups
+    .filter((g) => !issue.meta.article_reviews || g.items.length)
+    .map(
+      (g) =>
+        `### ${g.name} · ${g.items.length}건\n\n${g.items.length ? g.items.map(render).join("\n\n") : "수록 없음"}`,
+    )
+    .join("\n\n")}`
 }

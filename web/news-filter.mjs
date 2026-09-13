@@ -5,7 +5,11 @@ const normalize = (text) =>
     .trim()
 
 // Conjunction across dimensions; either reviewed theme may satisfy the theme filter.
-export function matchesNews(article, { query = "", sector = "", theme = "", entity = "" } = {}) {
+export function matchesNews(
+  article,
+  { query = "", sector = "", theme = "", entity = "", kind = "" } = {},
+) {
+  if (kind === "deep" && !article.deep) return false
   const exact = (a, b) => normalize(a) === normalize(b)
   if (sector && !exact(article.sector, sector)) return false
   if (theme && !(article.themes || []).some((t) => exact(t, theme))) return false

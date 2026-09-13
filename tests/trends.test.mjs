@@ -184,7 +184,10 @@ test("Real daily RSS retains stable permalinks and carries originals, reviewed c
   assert.ok(feed.items[0].content.includes(githubIssue(lib.latest.key)))
   for (const a of lib.latest.items)
     for (const url of a.urls) assert.ok(feed.items[0].content.includes(url))
-  if (lib.latest.snapshot.today.length) assert.match(feed.items[0].content, /다음 확인/)
+  if (lib.latest.original.meta.article_reviews) {
+    assert.doesNotMatch(feed.items[0].content, /다음 확인|트렌드 기록 미정리|수록 없음/)
+    for (const a of lib.latest.items) assert.ok(feed.items[0].content.includes(a.summary))
+  } else if (lib.latest.snapshot.today.length) assert.match(feed.items[0].content, /다음 확인/)
   assert.ok(lib.latest.snapshot.topics.length > 0)
   for (const issue of lib.issues)
     assert.doesNotMatch(fs.readFileSync(digestPath(issue.key), "utf8"), /\[\[/)

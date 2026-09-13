@@ -115,10 +115,13 @@ export function buildGraph(vault = "vault") {
     .map((n) => {
       const m = n.meta,
         text = articleSearchText(n.body)
+      for (const id of m.concept_ids || [])
+        if (!knowledge.nodes.some((n) => n.id === id))
+          throw Error("Unresolved reviewed concept: " + id)
       return {
         id: "news:" + m.event_id,
         title: m.title,
-        date: m.date,
+        date: m.published_at || m.date,
         description: m.description || "",
         slug: slug(path.relative(vault, n.file).replace(/\.md$/, "")),
         conceptIds: (m.concepts || []).map((p) => {

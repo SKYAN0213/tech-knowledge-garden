@@ -1,3 +1,4 @@
+import { articleReview, excludedEventIds, assertPublicArticles } from "./article-review.mjs"
 import {
   applyEditorial,
   requireEditorial,
@@ -130,7 +131,8 @@ export function extractArticles(edition) {
           throw new Error(`Unresolved article sources: ${edition.file}: ${part.title}`)
         const urls = unique(markers.map((m) => sources.get(m)))
         // The original announcement identifies an event. Follow-up editions reuse the same note.
-        const id = digest(canonicalURL(urls[0]))
+        const review = articleReview(edition, strip(part.title), digest(canonicalURL(urls[0])))
+        const id = review.event_id
         const concepts = wikiTargets(part.body).filter((p) => p.startsWith("Knowledge/"))
         const classification = themed ? classifyArticle(part.body, part.title) : undefined
         const leadLines = part.body
@@ -147,6 +149,7 @@ export function extractArticles(edition) {
           .slice(0, 240)
         return {
           id,
+          review,
           title: strip(part.title),
           body: part.body,
           summary,
@@ -168,10 +171,12 @@ export function refresh(vault = "vault") {
   vault = path.resolve(vault)
   const all = editions(vault)
   if (!all.length) throw new Error("No editions found. Migrate or author an edition first.")
+  const excluded = excludedEventIds(all)
   const articles = new Map(),
     issueArticles = new Map()
   for (const issue of all) {
     const current = extractArticles(issue)
+    assertPublicArticles(current, excluded)
     issueArticles.set(issue.slug, current)
     for (const item of current) {
       const prev = articles.get(item.id)
@@ -205,6 +210,12 @@ export function refresh(vault = "vault") {
     )
     generated.push(slug)
   }
+  for (const id of excluded)
+    emit(
+      `News/${id}`,
+      { title: "비공개 기사", type: "withdrawn", event_id: id, review_status: "excluded" },
+      "",
+    )
   const briefSlug = (issue) => issue.slug.replace(/^Editions\//, "Briefings/")
   for (const item of articles.values()) {
     const issue = item.edition,
@@ -218,6 +229,7 @@ export function refresh(vault = "vault") {
         date: last,
         created: item.first_seen,
         updated: last,
+        ...item.review,
         event_id: item.id,
         source_url: item.urls[0],
         sources: item.urls,
@@ -278,7 +290,8 @@ export function refresh(vault = "vault") {
           (a) =>
             `### ${wiki("News/" + a.id, a.title)}\n\n${a.editorial.analysis_summary}\n\n${a.editorial.topic_ids.map((id) => wiki("Briefings/Topics/" + id, "누적 기록")).join(" · ")}`,
         )
-    if (issue.meta.editorial_format) body += issueTrendsMarkdown(model)
+    if (issue.meta.editorial_format && !issue.meta.article_reviews)
+      body += issueTrendsMarkdown(model)
     if (issue.meta.schema_version === "tech-ai-magazine/v2") {
       for (const sec of sections(issue.body).filter(
         (s) => ["흐름 읽기", "오늘의 적용"].includes(s.title) && s.body !== "없음",

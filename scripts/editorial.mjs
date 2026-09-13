@@ -73,7 +73,7 @@ export function applyEditorial(issue, articles) {
     if (r.kind !== "사건 뉴스") {
       if (
         !text(r.analysis_summary) ||
-        !text(r.next_check) ||
+        (!issue.meta.article_reviews && !text(r.next_check)) ||
         !r.topic_ids.length ||
         !/분석/.test(a.body)
       )
@@ -85,7 +85,7 @@ export function applyEditorial(issue, articles) {
   }
   const deep = articles.filter((a) => a.editorial.kind !== "사건 뉴스")
   if (deep.length > 1) fail("maximum one deep analysis")
-  if (!deep.length && !text(issue.meta.deep_skip_reason))
+  if (!deep.length && !issue.meta.article_reviews && !text(issue.meta.deep_skip_reason))
     fail("record why deep analysis was skipped")
   const headlines = issue.meta.headlines
   if (

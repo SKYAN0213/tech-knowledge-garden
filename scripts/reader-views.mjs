@@ -1,3 +1,4 @@
+import { articleCard, sectorTabs } from "./reader-cards.mjs"
 import { topArticles } from "./editorial.mjs"
 import {
   esc,
@@ -38,23 +39,8 @@ export function newsView(articles, latest, href) {
         THEMES.map((t) => t.name),
       )}${select("entity", "기업·기관", entities)}<button type="button" id="news-reset">초기화</button></div>`
     : ""
-  const row = (a) => {
-    const c = a.classification
-    const themes = c ? [c.theme, c.secondary_theme].filter(Boolean) : []
-    const data = esc(
-      JSON.stringify({
-        sector: a.sector || "",
-        themes,
-        tags: c?.event_tags || [],
-        entities: c?.entities || [],
-      }),
-    )
-    const labels = c
-      ? `<div class="news-labels">${[a.sector, ...themes].map((t) => `<span>${esc(t)}</span>`).join("")}</div>`
-      : ""
-    return `<article class="news-row" data-news-row data-classification="${data}"><div class="news-source">${esc(publisher(a.urls[0]))} <span>${esc(a.desk)}</span></div>${labels}<h3>${link(href("News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p>${c?.entities.length ? `<div class="news-entities">${esc(c.entities.join(" · "))}</div>` : ""}<div class="news-actions">${link(href("News/" + a.id), "상세 읽기")}${a.urls.map((u, j) => link(u, j ? `추가 원문 ${j + 1} ↗` : "원문 ↗")).join("")}</div></article>`
-  }
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2><time datetime="${date}">${dateLabel(date)}</time></h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  const row = (a) => articleCard(a, href)
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2><time datetime="${date}">${dateLabel(date)}</time></h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review)
@@ -80,7 +66,7 @@ export function briefingHub(library, href, base) {
           )
           .join("")}</ol>`
       : changeRows(i, href)
-  }${publicationLinks(i, href, base)}<p class="provenance">${esc(reviewText(snap.review))}</p></div></section><section id="ongoing-topics"><div class="section-heading"><h2>누적 주제</h2><span>${snap.topics.reduce((n, t) => n + t.lessons.length, 0)}개 판단 원칙</span></div><p class="section-note">수집한 서로 다른 원문 수 · 최근 7일 / 이전 7일. 최근 7일 브리핑 ${snap.coverage.total}회 중 ${snap.coverage.reviewed}회 정리.</p><div class="topic-grid">${snap.topics.map((t) => `<article class="topic-card"><div class="topic-stats"><time>${t.latest.date.slice(5)} 갱신</time><span>${t.recent}건 / ${t.previous}건</span></div><h3>${link(href(topicPath(t.id)), t.title)}</h3><p>${esc(t.reviewed <= i.date ? t.thesis : t.latest.meaning)}</p><div class="topic-footer"><span>${t.days}일 · 누적 ${t.events}건${t.lessons.length ? ` · 원칙 ${t.lessons.length}개` : ""}</span>${link(href(topicPath(t.id)), "기록 읽기 →")}</div></article>`).join("") || "<p>아직 정리된 주제 없음</p>"}</div></section><section id="briefing-archive"><h2>지난 브리핑</h2>${[
+  }${publicationLinks(i, href, base)}</div></section><section id="ongoing-topics"><div class="section-heading"><h2>누적 주제</h2><span>${snap.topics.reduce((n, t) => n + t.lessons.length, 0)}개 판단 원칙</span></div><div class="topic-grid">${snap.topics.map((t) => `<article class="topic-card"><div class="topic-stats"><time>${t.latest.date.slice(5)} 갱신</time><span>${t.recent}건 / ${t.previous}건</span></div><h3>${link(href(topicPath(t.id)), t.title)}</h3><p>${esc(t.reviewed <= i.date ? t.thesis : t.latest.meaning)}</p><div class="topic-footer"><span>${t.days}일 · 누적 ${t.events}건${t.lessons.length ? ` · 원칙 ${t.lessons.length}개` : ""}</span>${link(href(topicPath(t.id)), "기록 읽기 →")}</div></article>`).join("") || "<p>아직 정리된 주제 없음</p>"}</div></section><section id="briefing-archive"><h2>지난 브리핑</h2>${[
     ...months,
   ]
     .map(
@@ -104,5 +90,19 @@ export function briefingHub(library, href, base) {
     .join("")}</section>`
 }
 export function issueView(i, href, base, renderedArticle) {
+  if (i.original.meta.article_reviews) {
+    const heading = `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time></div><h1>${esc(i.date)} 아침 브리핑</h1><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
+    const highlights = topArticles(i)
+    const top = highlights.length
+      ? `<section class="issue-highlights"><h2>주요 소식</h2><ul>${highlights.map((a) => `<li>${link(href("News/" + a.id), a.title)}</li>`).join("")}</ul></section>`
+      : ""
+    const stream = newsView(i.items, i, href)
+      .replace(/^<div class="page-heading">[\s\S]*?<\/a><\/div>/, "")
+      .replace(
+        /<nav class="sector-tabs"[\s\S]*?<\/nav>/,
+        sectorTabs(i.items, href(briefPath(i.key))),
+      )
+    return heading + top + stream
+  }
   return `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time> · 뉴스 ${i.items.length}건</div><h1>${esc(i.date)} 아침 브리핑</h1><p class="reading-lead">${esc(i.lead)}</p><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>${i.snapshot.review && !i.original.meta.editorial_format ? `<section class="daily-changes"><h2 id="오늘의-변화">오늘의 변화</h2>${changeRows(i, href, true)}<p class="provenance">${esc(reviewText(i.snapshot.review))}</p></section>` : ""}${renderedArticle}`
 }

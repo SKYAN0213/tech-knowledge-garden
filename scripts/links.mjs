@@ -1,7 +1,14 @@
 import path from "node:path"
 const MAP = "Knowledge Maps/AI Technology Knowledge Map"
+const decode = (s) => {
+  try {
+    return decodeURIComponent(s)
+  } catch {
+    return s
+  }
+}
 const normalize = (s) =>
-  decodeURIComponent(s).normalize("NFC").replace(/\.md$/, "").replace(/^\.\//, "").toLowerCase()
+  decode(s).normalize("NFC").replace(/\.md$/, "").replace(/^\.\//, "").toLowerCase()
 export function makeResolver(notes) {
   const byPath = new Map(notes.map((n) => [normalize(n.path), n]))
   const aliases = new Map()

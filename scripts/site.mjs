@@ -11,6 +11,7 @@ import YAML from "yaml"
 import { walk, parseNote, noteText, editions, extractArticles, sections } from "./garden.mjs"
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 import { briefingLibrary, publisher } from "./briefings.mjs"
+import { articleTags } from "./reader-cards.mjs"
 import { newsView, briefingHub, issueView } from "./reader-views.mjs"
 import { coverageDate } from "./time.mjs"
 
@@ -230,19 +231,19 @@ export async function finish(output = "public", input = staging) {
         .filter(
           (x) =>
             x.meta.type === "news" &&
-            (matchingArticles.has(x.slug) || (x.meta.concepts || []).includes(n.path)),
+            x.meta.review_status === "verified" &&
+            (x.meta.concept_ids || []).includes(n.meta.concept_id),
         )
-        .sort((a, b) => String(b.meta.date).localeCompare(String(a.meta.date)))
-        .slice(0, 8)
+        .sort((a, b) => String(b.meta.published_at).localeCompare(String(a.meta.published_at)))
       if (related.length)
-        body += `<section class="related-news"><h2>관련 뉴스</h2>${related.map((x) => `<p><time>${esc(x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a></p>`).join("")}</section>`
+        body += `<section class="related-news"><h2>변화 이력</h2>${related.map((x) => `<p><time>${esc(x.meta.published_at || x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a> ${x.meta.sources.map((u) => `<a href="${esc(u)}">원문</a>`).join(" · ")}</p>`).join("")}</section>`
     }
     if (n.path === "index" || n.path === "News/index")
       body = newsView(newsArticles, library.latest, href)
     else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
-      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${toHtml(article)}`
+      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${articleTags({ sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
       meta.title,
@@ -251,6 +252,10 @@ export async function finish(output = "public", input = staging) {
       meta.description || "",
     )
     write(file, html)
+    if (n.meta.type === "withdrawn") {
+      write(file, shell("비공개 기사", "<h1>비공개 기사</h1>", "withdrawn", ""))
+      continue
+    }
     rows.push({
       slug: n.slug,
       url: href(n.path),

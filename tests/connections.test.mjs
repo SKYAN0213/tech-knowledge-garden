@@ -253,12 +253,9 @@ test("Published map contains reviewed terms with definitions, and genuine articl
     ["latency-percentiles", "46fcf5bb7b99520f"],
   ])
     assert.ok(data.articles.find((a) => a.id === "news:" + articleId).termIds.includes(term), term)
-  assert.equal(relatedNews(data, "agents")[0].id, "news:b32e9b8471353987")
-  assert.ok(
-    relatedNews(data, "mcp")
-      .slice(0, 3)
-      .some((n) => n.id === "news:b32e9b8471353987"),
-  )
+  assert.ok(relatedNews(data, "agents")[0].termIds.includes("agents"))
+  // The revised article omits the old explicit MCP assignment; do not retain stale links.
+  assert.ok(!data.articles.find((a) => a.id === "news:b32e9b8471353987").termIds.includes("mcp"))
   assert.equal(data.counts.news, data.articles.length)
   assert.equal(data.counts.linkedNews, data.articles.filter((a) => a.termIds.length).length)
 })

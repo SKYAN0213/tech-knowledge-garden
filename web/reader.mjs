@@ -100,13 +100,22 @@ for (const root of roots) {
 
 const newsQuery = document.querySelector("#news-query")
 const newsControls = Object.fromEntries(
-  ["sector", "theme", "entity"].map((key) => [key, document.querySelector(`#news-${key}`)]),
+  ["sector", "theme", "entity", "kind"].map((key) => [key, document.querySelector(`#news-${key}`)]),
 )
 function filterNews(updateURL = true) {
   const url = new URL(location.href)
   const filters = { query: newsQuery.value }
   for (const [key, control] of Object.entries(newsControls))
     filters[key] = control?.value ?? url.searchParams.get(key) ?? ""
+  for (const tab of document.querySelectorAll("[data-sector-tab]")) {
+    if (!filters.kind && tab.dataset.sectorTab === filters.sector)
+      tab.setAttribute("aria-current", "page")
+    else tab.removeAttribute("aria-current")
+  }
+  for (const tab of document.querySelectorAll("[data-deep-tab]")) {
+    if (filters.kind === "deep") tab.setAttribute("aria-current", "page")
+    else tab.removeAttribute("aria-current")
+  }
   let visible = 0
   for (const row of document.querySelectorAll("[data-news-row]")) {
     const data = JSON.parse(row.dataset.classification || "{}")
@@ -123,10 +132,11 @@ function filterNews(updateURL = true) {
       sector: filters.sector,
       theme: filters.theme,
       entity: filters.entity,
+      kind: filters.kind,
     }))
       if (value) url.searchParams.set(key, value)
       else url.searchParams.delete(key)
-    history.replaceState(null, "", url)
+    if (url.href !== location.href) history.pushState(null, "", url)
   }
 }
 function restoreNewsFilters() {
@@ -143,6 +153,23 @@ function restoreNewsFilters() {
   filterNews(false)
 }
 if (newsQuery) {
+  for (const tab of document.querySelectorAll("[data-sector-tab]"))
+    tab.addEventListener("click", (e) => {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
+      if (!newsControls.sector) return
+      e.preventDefault()
+      newsControls.sector.value = tab.dataset.sectorTab
+      if (newsControls.kind) newsControls.kind.value = ""
+      filterNews()
+    })
+  for (const tab of document.querySelectorAll("[data-deep-tab]"))
+    tab.addEventListener("click", (e) => {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !newsControls.kind) return
+      e.preventDefault()
+      newsControls.kind.value = "deep"
+      if (newsControls.sector) newsControls.sector.value = ""
+      filterNews()
+    })
   newsQuery.addEventListener("input", () => filterNews())
   for (const control of Object.values(newsControls))
     control?.addEventListener("change", () => filterNews())

@@ -167,7 +167,8 @@ export function digestMarkdown(i, base) {
     (a) =>
       `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.editorial.analysis_summary}\n\n${a.editorial.topic_ids.map((id) => mdLink("누적 기록", siteURL(base, topicPath(id)))).join(" · ")}`,
   )
-  if (i.original?.meta?.editorial_format) body += issueTrendsMarkdown(i) + "\n\n"
+  if (i.original?.meta?.editorial_format && !i.original?.meta?.article_reviews)
+    body += issueTrendsMarkdown(i) + "\n\n"
   const sources = new Map(
     [...i.original.body.matchAll(/\[(S\d+)\][^\n]*?(https?:\/\/[^\s<>\)]+)/g)].map((m) => [
       m[1],
@@ -193,7 +194,13 @@ export function feedDescription(i, base) {
     html += `<h2>오늘의 변화</h2><p>${esc(reviewText(snap.review))}</p>${snap.today.length ? snap.today.map((s) => `<h3>${esc(s.change)}</h3><p>${esc(s.meaning)}</p><p>한계: ${esc(s.limit)}</p><p>다음 확인: ${esc(s.next_check)}</p><p>${link(siteURL(base, topicPath(s.topic_id)), "누적 기록")} · ${s.article.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>새로 기록할 트렌드 변화 없음.</p>"}`
   const groups = sectorGroups(i.original, i.items)
   if (groups) {
-    html += `<h2>분야별 브리핑</h2>${groups.map((g) => `<h3>${esc(g.name)} · ${g.items.length}건</h3>${g.items.length ? g.items.map((a) => `<h4>${link(siteURL(base, "News/" + a.id), a.title)}</h4>${a.classification ? `<p>${esc(classificationText(a))}</p>` : ""}<p>${esc(a.summary)}</p><p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>수록 없음</p>"}`).join("")}`
+    html += `<h2>분야별 브리핑</h2>${groups
+      .filter((g) => !i.original?.meta?.article_reviews || g.items.length)
+      .map(
+        (g) =>
+          `<h3>${esc(g.name)} · ${g.items.length}건</h3>${g.items.length ? g.items.map((a) => `<h4>${link(siteURL(base, "News/" + a.id), a.title)}</h4>${a.classification ? `<p>${esc(classificationText(a))}</p>` : ""}<p>${esc(a.summary)}</p><p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>수록 없음</p>"}`,
+      )
+      .join("")}`
   } else if (i.items.length)
     html += `<h2>헤드라인</h2>${i.items.map((a) => `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p><p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("")}`
   for (const a of i.items.filter((a) => a.editorial && a.editorial.kind !== "사건 뉴스"))
