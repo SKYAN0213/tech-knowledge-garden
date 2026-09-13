@@ -662,6 +662,30 @@ dialog input {
   padding: 32px;
   max-width: 420px;
 }
+.connections[data-engine="list"] .connection-layout {
+  display: block;
+}
+.connections[data-engine="list"] .connection-stage {
+  height: auto;
+  min-height: 0;
+  border: 0;
+}
+.connections[data-engine="list"] .connection-canvas {
+  position: relative;
+  cursor: default;
+  touch-action: auto;
+}
+.connections[data-engine="list"] .graph-fallback {
+  max-width: 760px;
+  padding: 0 0 20px;
+}
+.connections[data-engine="list"] .connection-controls {
+  display: none;
+}
+.connections[data-engine="list"] .connection-detail {
+  max-width: 760px;
+  max-height: none;
+}
 .graph-search-results {
   display: flex;
   flex-wrap: wrap;

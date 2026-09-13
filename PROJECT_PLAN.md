@@ -14,7 +14,7 @@ Sigma.js 3 + Graphology/ForceAtlas2 replace the SVG renderer. Graphology Louvain
 
 1. Complete — Association data and engine: preserved legacy evidence, added confirmed target/reason connections, generated 166 real nodes and 323 undirected links, ranked related news within two documented steps. Excluded boilerplate keyword matches and tested canonical alias deduplication and isolated nodes.
 2. Complete — Web experience: Sigma WebGL point graph, home/article embeds and direct navigation, news on click, search, neighbor focus, zoom, drag, worker re-layout, responsive and keyboard alternatives. Actual WebGL-disabled Chromium falls back to usable node search and news links.
-3. In progress — Verification passed: 188 tests, typecheck, build, all internal links/RSS, actual desktop and 390px browser interactions with no errors. Layout-only benchmark: 166 nodes in 58ms; synthetic 1,000 nodes in 1,262ms, all finite. Existing briefing skill and 08:00 automation updated. Commit/push and verify Actions plus public home/map/news next.
+3. Complete — 188 tests, typecheck, build, all internal links/RSS, actual desktop and 390px browser interactions passed. Layout-only benchmark: 166 nodes in 58ms; synthetic 1,000 nodes in 1,262ms, all finite. Existing briefing skill and 08:00 automation updated. Code commit 06ab001 deployed successfully in run 34732605328. Public home/map render WebGL; a real node click opens 10 relevant stories, article navigation/back and worker re-layout pass without console errors. Public RSS contains 40 entries and excluded source paths return 404. Evidence: .local/evidence/connections-live.json and docs/IMPLEMENTATION_STATUS.md.
 
 ## Acceptance
 

@@ -29,6 +29,8 @@
 
 이전 독자 화면 정리의 공개 검증: [배포 실행 34726929373](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34726929373)이 코드 커밋 `7136cb3`으로 성공했습니다. 당시 홈·RSS·최신 회차·개념·지도는 HTTP 200, 제외한 Archive·Editions 경로는 404를 반환했습니다. 이 기록은 새 WebGL 연결 지도의 배포 증거와 구분합니다. 상세 응답은 `.local/evidence/revision-live.json`에 있습니다.
 
+WebGL 연결 지도 공개 검증: 코드 커밋 `06ab001`의 [배포 실행 34732605328](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34732605328)이 성공했습니다. 공개 홈의 지도, 실제 점 선택 → 에이전트 보안 관련 뉴스 10개 → Copilot 기사 열기 → 지도 복귀, Worker 재배치를 확인했습니다. 공개 그래프는 166개 노드·323개 연결, RSS는 한글 제목을 가진 40개 항목이며, 홈·지도·기사·최신 브리핑·Worker·RSS는 200, Archive·Editions는 404였습니다. 콘솔 오류·경고는 없었습니다. HTTP 응답 기록은 `.local/evidence/connections-live.json`입니다. 그래픽 미지원 목록 화면은 빈 캔버스 공간을 접어 검색과 기사가 바로 이어지도록 다듬었습니다.
+
 ## 검증 범위
 
 기존 오전 8시 자동화가 작성한 9월 13일 원고를 보존했고, 다음 취재는 마지막 cutoff `2026-09-13T08:01:40+09:00` 이후부터 이어집니다. 새 운영 지시를 예약에 반영했지만 다음 예약 시간이 실행된 것은 아닙니다. 이번 개념 재검토가 모든 과거 뉴스를 재검증한 것은 아닙니다.
