@@ -35,7 +35,7 @@ Google Drive `Projects / Tech Knowledge`가 작성 원본이다. GitHub는 검�
 1. 집필 전에 Drive의 원본 수정과 GitHub 최신 변경을 확인한다. 로컬에 미반영 수정이 있으면 비교·병합한다. Git 변경이 없는 상태에서만 `git pull --ff-only`를 사용한다.
 2. 기존 취재·집필·검증 절차를 유지한다. 로컬 생성 결과를 먼저 GitHub에 올리지 않는다.
 3. `prepare-drive.py --collect`로 저장 목록을 준비하고, 네 원본 폴더의 변경 파일을 먼저 Drive에 업로드·검증한다. 취재·원문 수집 자료는 기존 개인 Drive 경로에 저장한다.
-4. 상시 연결이 설정돼 있으면 `gh workflow run drive-sync.yaml --ref main`으로 즉시 반영을 요청한다. 실제 실행 결과와 공개 브리핑을 확인한다. Google 상시 연결이 아직 없고 Codex가 실행 중이면, 연결된 Drive 도구로 네 원본 폴더를 새로 읽어 완전한 스냅샷을 만들고 `pull-drive.py --snapshot <실제 스냅샷 경로> --apply`로 적용한 다음 `npm run publish`로 단발성 배포할 수 있다. 실제 최신 Drive 읽기 없이 로컬 사본을 대신 발행하지 않는다. 단발성 배포와 상시 자동 반영 미연결을 구분해서 보고한다.
+4. 상시 연결이 설정돼 있으면 `gh workflow run drive-sync.yaml --repo SKYAN0213/tech-knowledge-garden --ref main`으로 즉시 반영을 요청한다. 실제 실행 결과와 공개 브리핑을 확인한다. Google 상시 연결이 아직 없고 Codex가 실행 중이면, 연결된 Drive 도구로 네 원본 폴더를 새로 읽어 완전한 스냅샷을 만들고 `pull-drive.py --snapshot <실제 스냅샷 경로> --apply`로 적용한 다음 `npm run publish`로 단발성 배포할 수 있다. 실제 최신 Drive 읽기 없이 로컬 사본을 대신 발행하지 않는다. 단발성 배포와 상시 자동 반영 미연결을 구분해서 보고한다.
 5. 웹 배포가 확인된 뒤 `export-website-data.py`를 실행하여 `WebsiteData`를 갱신·업로드한다. 공개 사이트가 새 원고를 반영하기 전의 데이터를 최신 원고 데이터로 표시하지 않는다.
 
 ## 검증 및 현재 상태

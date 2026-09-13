@@ -12,6 +12,7 @@ import { walk, parseNote, noteText, editions, extractArticles, sections } from "
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 import { briefingLibrary, publisher } from "./briefings.mjs"
 import { newsView, briefingHub, issueView } from "./reader-views.mjs"
+import { coverageDate } from "./time.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
 const staging = ".local/site-content"
@@ -203,7 +204,7 @@ export async function finish(output = "public", input = staging) {
     const isConcept = n.meta.entry_type === "concept"
     const focus = resolveFocus(graph, isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
     const date = n.meta.coverage_end
-      ? new Date(n.meta.coverage_end)
+      ? coverageDate(n.meta.coverage_end)
           .toLocaleString("sv-SE", { timeZone: "Asia/Seoul" })
           .slice(0, 16)
       : n.meta.date || n.meta.updated || ""

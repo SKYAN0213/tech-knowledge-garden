@@ -1,4 +1,5 @@
 import { sectorGroups, sectorMarkdown } from "./sectors.mjs"
+import { coverageDate } from "./time.mjs"
 import {
   usesThemes,
   classifyArticle,
@@ -524,7 +525,7 @@ export function feeds(vault = "vault", output = "public") {
         String(i.meta.date) +
         " 아침 브리핑" +
         (i.body.includes("**한 줄 편집:**") ? " · " + library.byKey.get(i.slug).lead : "")
-      return `<item><title>${escapeXML(title)}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><pubDate>${new Date(i.meta.coverage_end).toUTCString()}</pubDate><description>${escapeXML(feedDescription(library.byKey.get(i.slug), base))}</description></item>`
+      return `<item><title>${escapeXML(title)}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><pubDate>${coverageDate(i.meta.coverage_end).toUTCString()}</pubDate><description>${escapeXML(feedDescription(library.byKey.get(i.slug), base))}</description></item>`
     })
     .join("\n")
   write(

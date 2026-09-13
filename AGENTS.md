@@ -14,6 +14,8 @@ Preserve source material and citations. Last saved coverage end is the next excl
 
 Keep .local, credentials and backups out of Git. The repository is public; presentation exclusions do not make committed files private. npm run publish only stages validated content and never force-pushes.
 
+Scope GitHub CLI operations with `--repo SKYAN0213/tech-knowledge-garden`; this checkout also has a Quartz upstream remote. The daily publication and verification target is the user's garden repository.
+
 ## Google Drive 최종 보관 (2026-09-13 사용자 지정)
 
 최종 자료 저장 위치는 Google Drive `Projects / Tech Knowledge`(폴더 ID `1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD`)다. 로컬 vault는 작업·검증·웹 생성용 사본으로 유지한다. 과거의 로컬 전용 저장 설명보다 이 규칙이 우선한다. 매회 `docs/DRIVE_STORAGE.md`를 읽고 원문 수집 상태·취재 기록·관련 노트를 함께 Drive에 업로드하고 원격 메타데이터를 검증한다. 로컬 저장만으로 작업 완료를 보고하지 않는다.
