@@ -106,7 +106,7 @@
       "route_check": {
         "date": "2026-09-14",
         "method": "gpt-web",
-        "status": "search-listed",
+        "status": "read",
         "scope": "Entry page only; review individual dated originals before publication."
       }
     },

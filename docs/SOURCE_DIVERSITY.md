@@ -39,4 +39,4 @@
 
 ## 이번 경로 점검에서 확인한 사례
 
-2026-09-14에 확인한 [FANUC 일본어 발표 목록](https://www.fanuc.co.jp/ja/profile/pr/newsrelease/)에는 9월 11일 AI 용접 에이전트·휴대형 협동로봇 발표가 있었다. 검색으로 확인한 [영문 목록](https://www.fanuc.co.jp/en/profile/pr/newsrelease/)에는 이 항목들이 보이지 않았다. 현지어 목록과 개별 원문을 함께 확인해야 하는 실제 예다. 목록이나 이 문서의 사례를 새 회차 기사로 자동 등록하지 않는다.
+2026-09-14에 [FANUC 일본어 발표 목록](https://www.fanuc.co.jp/ja/profile/pr/newsrelease/)에서 9월 11일 AI 용접 에이전트·휴대형 협동로봇 발표를 확인했다. 최초 영문 검색 결과에는 이 항목들이 보이지 않았지만, [영문 목록 원문](https://www.fanuc.co.jp/en/profile/pr/newsrelease/)을 직접 열자 같은 발표가 있었다. 검색 노출의 누락과 실제 자료 부재를 구분해야 한다. 언어판의 동일 사건은 한 번만 집계한다. 이 사례를 새 회차 기사로 자동 등록하지 않는다.
