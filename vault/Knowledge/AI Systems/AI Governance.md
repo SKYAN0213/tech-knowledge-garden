@@ -84,7 +84,7 @@ NIST AI RMF의 GOVERN은 MAP·MEASURE·MANAGE 전반에 걸친 기능이다. 네
 
 ## 관련 개념
 
-- ← 하위 범위: [[Knowledge/AI Systems/AI Agent Governance#한 문장 정의|에이전트 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
+- ← 속함: [[Knowledge/AI Systems/AI Agent Governance#한 문장 정의|에이전트 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
 - ← 활용: [[Knowledge/AI Systems/Enterprise AI Operating Model#한 문장 정의|기업 AI 운영 모델]] — 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
 - ← 활용: [[Knowledge/AI Systems/AI Conformity Assessment#한 문장 정의|AI 적합성 평가]] — 책임·문서·위험 관리 증거를 적용 요구사항의 충족 여부와 대응시킨다. (해석; [근거](https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
 - ← 활용: [[Knowledge/AI Systems/AI Wellness Devices#한 문장 정의|AI 웰니스 기기]] — 건강 지원 주장과 사용 목적을 책임 있는 운영 범위로 관리한다. (해석; [근거](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-wellness-policy-low-risk-devices) · [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))

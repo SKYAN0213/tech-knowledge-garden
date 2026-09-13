@@ -97,7 +97,7 @@ NIST의 에이전트 신원 문서는 개념·의견 수렴 문서다. 이를 �
 
 ## 관련 개념
 
-- → 하위 범위: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
+- → 속함: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 조직 AI 거버넌스를 자율 행동과 위임 권한에 적용하는 하위 범위다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
 - → 근거 제공: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 책임과 허용 범위를 신원·인가 통제의 운영 기준으로 연결한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
 
 ## 최근 변화

@@ -92,6 +92,11 @@ export function syncKnowledgeMap(vault = "vault") {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv[2] === "sync") {
     syncKnowledgeMap()
+  } else if (process.argv[2] === "check") {
+    const graph = buildGraph()
+    console.log(
+      `PASS: ${graph.nodes.length} concepts and ${graph.edges.length} evidenced relationships.`,
+    )
   } else {
     const graph = buildGraph()
     fs.writeFileSync("public/knowledge-graph.json", JSON.stringify(graph))

@@ -193,6 +193,26 @@ def add_warning(findings: list[Finding], path: Path, message: str) -> None:
     findings.append(Finding("WARN", path, message))
 
 
+def validate_relationships(related: str, typed: bool, path: Path, findings: list[Finding]) -> None:
+    if not typed:
+        for label in ("상위:", "하위:", "함께 쓰임:", "대비:"):
+            if label not in related:
+                add_error(findings, path, f"관련 개념 missing relationship label: {label}")
+        return
+    # Reviewed concepts describe actual edges; empty taxonomy placeholders are not required.
+    lines = [line.strip() for line in related.splitlines() if line.strip()]
+    pattern = re.compile(
+        r"^- [→←] (?:활용|구현|평가|관측|통제|속함|대비|근거 제공): "
+        r"\[\[[^\]]+\]\] — .+ \((?:해석|원문); "
+        r"\[근거\]\(https://[^\s)]+\)(?: · \[근거\]\(https://[^\s)]+\))*\)$"
+    )
+    if not lines:
+        add_error(findings, path, "관련 개념 must describe its evidenced relationships")
+    for line in lines:
+        if not pattern.fullmatch(line):
+            add_error(findings, path, "관련 개념 requires direction, type, concept, reason and evidence")
+
+
 def require_fields(
     metadata: dict[str, object], required: Iterable[str], path: Path, findings: list[Finding]
 ) -> None:
@@ -386,9 +406,7 @@ def validate_knowledge_file(
         if "**포함:**" not in scope or "**포함하지 않음:**" not in scope:
             add_error(findings, path, "범위 must state both 포함 and 포함하지 않음")
         related = section_map.get("관련 개념", "")
-        for label in ("상위:", "하위:", "함께 쓰임:", "대비:"):
-            if label not in related:
-                add_error(findings, path, f"관련 개념 missing relationship label: {label}")
+        validate_relationships(related, bool(metadata.get("concept_id")), path, findings)
         if not unique_urls(section_map.get("출처", "")):
             add_error(findings, path, "canonical concept must include at least one source URL")
     validate_links(body, path, catalog, entry_types, findings, require_atomic=False)

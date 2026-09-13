@@ -13,6 +13,6 @@ The existing 08:00 automation stays in the registered 옵시디언_iCloudSync pr
 
 ## Current status
 
-Milestones 1–3 complete. Local verification passed: 179 tests, TypeScript, 184 HTML pages and their links/fragments, 182 search entries, 23 concepts, 31 sourced relations and 40 RSS items. Desktop/mobile browser checks cover reading, aliases, definition anchors, copyable RSS, search, graph selection, neighbor filtering, pan/zoom, node drag and deterministic reset. GitHub Pages rollout is the final step; its result is tracked by the Publish Garden workflow for the release commit.
+Milestones 1–3 complete. Local verification passed: 181 tests, TypeScript, 184 HTML pages and their links/fragments, 182 search entries, 23 concepts, 31 sourced relations and 40 RSS items. Desktop/mobile browser checks cover reading, aliases, definition anchors, copyable RSS, search, graph selection, neighbor filtering, pan/zoom, node drag and deterministic reset. GitHub Pages rollout is the final step; its result is tracked by the Publish Garden workflow for the release commit.
 
 The app API cannot reassign the current conversation to a saved project; the daily job already belongs to the requested project. No new project registration is pending. Source repository remains at its stable local path, referenced explicitly by the existing project workflow.

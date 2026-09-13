@@ -21,7 +21,7 @@
     "install-plugins": "npx tsx ./quartz/plugins/loader/install-plugins.ts",
     "prebuild": "npm run install-plugins",
     "refresh": "node scripts/garden.mjs refresh && node scripts/knowledge.mjs sync",
-    "validate": "node scripts/garden.mjs validate",
+    "validate": "node scripts/knowledge.mjs check && node scripts/garden.mjs validate",
     "test:garden": "node --test tests/*.test.mjs",
     "build": "npm run refresh && npm run validate && node scripts/build-site.mjs",
     "dev": "node scripts/serve.mjs",

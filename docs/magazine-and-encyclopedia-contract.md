@@ -6,12 +6,12 @@ This reference is mandatory for every run of `create-tech-ai-briefing`.
 
 The system publishes two different artifacts with different jobs:
 
-| Artifact | Job | Authority |
-|---|---|---|
-| Daily magazine issue | Explain what changed inside one research window | Time-bounded reporting |
-| Encyclopedia concept entry | Explain one reusable concept independently of a daily event | Evergreen knowledge |
-| Concept index | Route readers among several atomic entries | Navigation only |
-| Knowledge map | Show how canonical concepts relate and flow | Curated relationship view |
+| Artifact                   | Job                                                         | Authority                 |
+| -------------------------- | ----------------------------------------------------------- | ------------------------- |
+| Daily magazine issue       | Explain what changed inside one research window             | Time-bounded reporting    |
+| Encyclopedia concept entry | Explain one reusable concept independently of a daily event | Evergreen knowledge       |
+| Concept index              | Route readers among several atomic entries                  | Navigation only           |
+| Knowledge map              | Show how canonical concepts relate and flow                 | Curated relationship view |
 
 Do not copy a whole news story into an encyclopedia definition. Do not bury reusable definitions inside a daily issue.
 
@@ -182,10 +182,10 @@ A conjunction in a title (`and`, `&`, `와`, `과`, slash) is a strong split sig
 
 Examples:
 
-| Mixed page | Canonical split |
-|---|---|
-| Agent Evaluation and Observability | `Agent Evaluation`, `Agent Observability` |
-| AI Agent Security and Governance | `AI Agent Security`, `AI Agent Governance` |
+| Mixed page                         | Canonical split                                |
+| ---------------------------------- | ---------------------------------------------- |
+| Agent Evaluation and Observability | `Agent Evaluation`, `Agent Observability`      |
+| AI Agent Security and Governance   | `AI Agent Security`, `AI Agent Governance`     |
 | AI Content Access and Monetization | `AI Content Access`, `AI Content Monetization` |
 
 Keep an old combined filename as `entry_type: index` when existing Obsidian links depend on it. The index must say it is navigation-only and point to the canonical atomic entries.
@@ -224,7 +224,7 @@ Use these level-2 headings exactly and in this order:
 11. `## 최근 변화`
 12. `## 출처`
 
-The definition must stand on its own and must not depend on a company announcement. `범위` states what is included and excluded. `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` labels parent, child, sibling, dependency, or contrast relationships.
+The definition must stand on its own and must not depend on a company announcement. `범위` states what is included and excluded. `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` labels actual relationships. Reviewed concepts with `concept_id` use directed, typed links with a reason, source URLs, and an explicit source/inference distinction. Empty parent/child/contrast placeholders are not required. Historical entries without `concept_id` retain their original taxonomy format.
 
 `최근 변화` is a short evidence ledger, not a news dump. Keep only signals that changed how the concept is understood or implemented. Format each as `YYYY-MM-DD — fact and why it changes the concept. [source]`. Daily product details remain in the issue.
 

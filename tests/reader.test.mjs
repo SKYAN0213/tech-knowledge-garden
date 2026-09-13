@@ -1,6 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
+import { spawnSync } from "node:child_process"
 import { makeResolver, projectLinks } from "../scripts/site.mjs"
 import { layoutGraph } from "../web/layout.mjs"
 import { buildGraph } from "../scripts/knowledge.mjs"
@@ -14,6 +15,30 @@ const notes = [
   { path: "Archive/old", meta: { title: "기록" } },
   { path: "Editions/2026/09/issue", meta: { title: "원고" } },
 ]
+test("Reviewed concepts satisfy the publication validator without empty taxonomy placeholders", () => {
+  const result = spawnSync(
+    "python3",
+    ["scripts/validate_encyclopedia.py", "--vault-root", "vault", "--all-knowledge"],
+    { encoding: "utf8" },
+  )
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+})
+test("Typed concept relationships must include a valid type and source evidence", () => {
+  const result = spawnSync("python3", ["-"], {
+    encoding: "utf8",
+    input: `import sys
+from pathlib import Path
+sys.path.insert(0, 'scripts')
+from validate_encyclopedia import validate_relationships
+valid = '- → 활용: [[MCP#한 문장 정의|MCP]] — 외부 도구 연결 규격이다. (해석; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))'
+for text, should_fail in [(valid, False), (valid.replace('활용:', '같은 날 보도:'), True), (valid.split(' (해석;')[0], True), ('- 상위: 독립 개념', True)]:
+    findings = []
+    validate_relationships(text, True, Path('concept.md'), findings)
+    assert bool(findings) == should_fail, (text, findings)
+`,
+  })
+  assert.equal(result.status, 0, result.stdout + result.stderr)
+})
 test("Obsidian aliases, Unicode normalization, relative paths and section/block targets resolve", () => {
   const r = makeResolver(notes)
   for (const target of [
