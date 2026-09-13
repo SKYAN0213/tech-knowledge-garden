@@ -7,7 +7,7 @@ export function articleTags(a, href) {
     ["theme", c.secondary_theme],
     ...(c.entities || []).map((v) => ["entity", v]),
   ].filter(([, v]) => v)
-  return `<div class="news-labels">${entries.map(([key, v]) => `<a href="${esc(href("News/index") + "?" + new URLSearchParams({ [key]: v }))}">#${esc(v.replaceAll(" ", ""))}</a>`).join("")}${(c.event_tags || []).map((v) => `<span>#${esc(v.replaceAll(" ", ""))}</span>`).join("")}</div>`
+  return `<div class="news-labels">${entries.map(([key, v]) => `<a href="${esc(href("News/index") + "?" + new URLSearchParams({ [key]: v }))}">#${esc(v.replaceAll(" ", ""))}</a>`).join("")}${(c.event_tags || []).map((v) => `<span>#${esc(v.replaceAll(" ", ""))}</span>`).join("")}${(a.conceptLinks || []).map((k) => `<a href="${esc(href(k.path))}">#${esc(k.label.replaceAll(" ", ""))}</a>`).join("")}</div>`
 }
 export function articleCard(a, href) {
   const c = a.classification || {}

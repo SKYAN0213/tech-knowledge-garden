@@ -49,6 +49,8 @@ export function prepare(vault = "vault", target = staging) {
   fs.mkdirSync(target, { recursive: true })
   for (const n of selected) {
     let body = n.body
+    if (n.meta.entry_type === "concept")
+      body = body.replace(/^## [^\n]+\n\n(?:없음|해당 없음)\s*(?=^## |$(?![\s\S]))/gm, "")
     if (n.path === MAP) body = '# 지식 지도\n\n<div id="knowledge-map"></div>'
     // Convert Obsidian block IDs to explicit HTML IDs so both platforms keep the same target.
     body = body.replace(/\s+\^([\w-]+)\s*$/gm, (_, id) => ` <span id="block-${id}"></span>`)
@@ -91,6 +93,15 @@ export async function finish(output = "public", input = staging) {
     ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
   ]
   const knowledge = notes.filter((n) => n.meta.entry_type === "concept")
+  const conceptLinks = (ids = []) =>
+    ids.map((id) => {
+      const k = knowledge.find((k) => k.meta.concept_id === id)
+      if (!k) throw Error("Missing reviewed keyword " + id)
+      return { path: k.path, label: k.meta.label || k.meta.title }
+    })
+  for (const items of issueArticles.values())
+    for (const a of items) a.conceptLinks = conceptLinks(a.review?.concept_ids)
+
   const graph = JSON.parse(fs.readFileSync(path.join(output, "knowledge-graph.json")))
   const learningTerms = new Set(graph.nodes.map((n) => n.id))
   const bySlug = new Map(notes.map((n) => [n.slug, n]))
@@ -243,7 +254,7 @@ export async function finish(output = "public", input = staging) {
     else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
-      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${articleTags({ sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
+      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
       meta.title,
