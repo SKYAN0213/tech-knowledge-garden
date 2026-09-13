@@ -1,3 +1,4 @@
+import { sectorMarkdown, sectorGroups } from "./sectors.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import { slug as headingSlug } from "github-slugger"
 import { loadTrends, trendSnapshot, stanceLabel } from "./trends.mjs"
@@ -135,9 +136,17 @@ export function githubMarkdown(markdown, base) {
 export function digestMarkdown(i, base) {
   let body = `# ${i.date} 아침 브리핑\n\n${i.lead}\n\n${mdLink("웹 브리핑", siteURL(base, briefPath(i.key)))} · ${mdLink("브리핑 모음", GITHUB + "digest/README.md")} · ${mdLink("RSS", base + "/briefing.xml")}\n\n`
   if (i.snapshot.review) body += issueTrendsMarkdown(i) + "\n\n"
-  body += i.items.length
-    ? `## 헤드라인과 원문\n\n${i.items.map((a) => `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.summary}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`).join("\n\n")}\n\n`
-    : mdLink("당일 브리핑 전문", siteURL(base, briefPath(i.key))) + "\n\n"
+  body +=
+    sectorMarkdown(
+      i.original,
+      i.items,
+      (a) =>
+        `#### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.summary}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`,
+    ) ??
+    (i.items.length
+      ? `## 헤드라인과 원문\n\n${i.items.map((a) => `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.summary}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`).join("\n\n")}\n\n`
+      : mdLink("당일 브리핑 전문", siteURL(base, briefPath(i.key))) + "\n\n")
+  if (sectorGroups(i.original, i.items)) body += "\n\n"
   const sources = new Map(
     [...i.original.body.matchAll(/\[(S\d+)\][^\n]*?(https?:\/\/[^\s<>\)]+)/g)].map((m) => [
       m[1],
@@ -155,7 +164,10 @@ export function feedDescription(i, base) {
   let html = `<p>${esc(i.lead)}</p><p>${link(siteURL(base, briefPath(i.key)), "웹 브리핑")} · ${link(githubIssue(i.key), "GitHub 정리")}</p>`
   if (snap.review)
     html += `<h2>오늘의 변화</h2><p>${esc(reviewText(snap.review))}</p>${snap.today.length ? snap.today.map((s) => `<h3>${esc(s.change)}</h3><p>${esc(s.meaning)}</p><p>한계: ${esc(s.limit)}</p><p>다음 확인: ${esc(s.next_check)}</p><p>${link(siteURL(base, topicPath(s.topic_id)), "누적 기록")} · ${s.article.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>새로 기록할 트렌드 변화 없음.</p>"}`
-  if (i.items.length)
+  const groups = sectorGroups(i.original, i.items)
+  if (groups) {
+    html += `<h2>분야별 브리핑</h2>${groups.map((g) => `<h3>${esc(g.name)} · ${g.items.length}건</h3>${g.items.length ? g.items.map((a) => `<h4>${link(siteURL(base, "News/" + a.id), a.title)}</h4><p>${esc(a.summary)}</p><p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>수록 없음</p>"}`).join("")}`
+  } else if (i.items.length)
     html += `<h2>헤드라인</h2>${i.items.map((a) => `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p><p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("")}`
   return html
 }

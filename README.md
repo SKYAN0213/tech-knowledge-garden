@@ -51,3 +51,5 @@ npm run publish
 원본 보관함과 165개 파일의 복구 사본은 보존했습니다. 기존 날짜별 뉴스 이력은 당시 기록이며 이번 정의 재검토가 모든 과거 보도를 재검증한 것은 아닙니다. 공개 저장소에서 웹 출력 제외는 비공개 보관을 의미하지 않습니다.
 
 Markdown 변환 기반은 [Quartz v5](https://github.com/jackyzha0/quartz), MIT License입니다. 원본 [LICENSE.txt](LICENSE.txt)를 보존합니다.
+
+오전 8시에는 [8개 분야별 브리핑](docs/SECTOR_BRIEFING.md)을 분야당 최대 5건으로 정리하고 Drive 저장부터 웹 배포 검증까지 함께 수행합니다. 과거 회차는 기존 내용과 주소를 유지합니다.

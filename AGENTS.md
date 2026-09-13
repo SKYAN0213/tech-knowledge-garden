@@ -17,3 +17,7 @@ Keep .local, credentials and backups out of Git. The repository is public; prese
 최종 자료 저장 위치는 Google Drive `Projects / Tech Knowledge`(폴더 ID `1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD`)다. 로컬 vault는 작업·검증·웹 생성용 사본으로 유지한다. 과거의 로컬 전용 저장 설명보다 이 규칙이 우선한다. 매회 `docs/DRIVE_STORAGE.md`를 읽고 원문 수집 상태·취재 기록·관련 노트를 함께 Drive에 업로드하고 원격 메타데이터를 검증한다. 로컬 저장만으로 작업 완료를 보고하지 않는다.
 
 Drive 원본에서 GitHub 사이트를 갱신하는 규칙은 `docs/DRIVE_GITHUB_SYNC.md`를 따른다. 작성 원본 네 폴더를 Drive에 먼저 저장·검증한 뒤 사이트를 배포한다. `npm run publish`는 검증된 Drive 스냅샷과 다른 로컬 원본의 발행을 거부한다. 상시 연결이 설정되기 전의 단발성 읽기·배포를 자동 연동 완료로 보고하지 않는다.
+
+## 분야별 5건과 8시 일괄 검증 (2026-09-13)
+
+`docs/SECTOR_BRIEFING.md`를 매회 읽고 따른다. 8개 분야를 각각 취재하고 분야별 최대 5건으로 요약한다. 새로운 회차에는 `briefing_format: sector-five/v1` 및 기사별 `**분야:**`를 작성한다. 기존 8시 예약에서 Drive 저장·사이트 배포·공개 결과 검증을 함께 수행한다. 이 사용자 요청이 이전의 5분 간격 상시 연결 지침보다 우선한다.

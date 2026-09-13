@@ -81,3 +81,7 @@ observations:
 `Briefings/`, `News/`, `Trends/`, `digest/`는 생성 결과다. 작성 원본을 수정한다. `npm run publish`는 검증한 vault, catalog와 digest를 함께 커밋한다. 뉴스 홈·목록·상세와 브리핑에는 지도 위젯을 넣지 않는다. 지도는 전용 경로와 관련 전문 개념에서 읽는다. `Signals`, `TrendTopics`, Editions, Archive, 운영 폴더는 웹·검색에서 제외하지만 공개 Git 저장소에 있는 파일은 공개 자료다.
 
 RSS 2.0의 description에는 entity-encoded HTML로 제목·요약·변화·한계·다음 확인·원문·GitHub 링크를 담는다. item link/GUID는 브리핑 주소이며 channel link는 브리핑 모음이다. 기사 원문은 HTML 링크로 제공하고 RSS feed를 뜻하는 source 요소로 오용하지 않는다. [RSS 2.0 규격](https://www.rssboard.org/rss-specification)
+
+## 분야별 5건과 8시 일괄 검증 (2026-09-13)
+
+`docs/SECTOR_BRIEFING.md`를 매회 읽고 따른다. 8개 분야를 각각 취재하고 분야별 최대 5건으로 요약한다. 새로운 회차에는 `briefing_format: sector-five/v1` 및 기사별 `**분야:**`를 작성한다. 기존 8시 예약에서 Drive 저장·사이트 배포·공개 결과 검증을 함께 수행한다. 이 사용자 요청이 이전의 5분 간격 상시 연결 지침보다 우선한다.

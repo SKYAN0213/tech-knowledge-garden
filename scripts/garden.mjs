@@ -1,3 +1,4 @@
+import { sectorGroups, sectorMarkdown } from "./sectors.mjs"
 import fs from "node:fs"
 import path from "node:path"
 import crypto from "node:crypto"
@@ -101,7 +102,7 @@ export function editions(vault) {
 export function extractArticles(edition) {
   if (edition.meta.schema_version !== "tech-ai-magazine/v2") return []
   const sources = sourceMap(edition.body)
-  return sections(edition.body)
+  const articles = sections(edition.body)
     .filter((s) => ["커버 스토리", "뉴스 데스크", "리서치 노트", "도구 상자"].includes(s.title))
     .flatMap((desk) =>
       sections(desk.body, 2).map((part) => {
@@ -116,7 +117,8 @@ export function extractArticles(edition) {
           .split("\n")
           .map((l) => l.replace(/^>\s?/, "").trim())
           .filter(
-            (l) => l && !/^\[!|^#{1,6} |^\*\*(?:개념|근거|공식 변경|프로젝트:|논문:)|^\[\[/.test(l),
+            (l) =>
+              l && !/^\[!|^#{1,6} |^\*\*(?:분야|개념|근거|공식 변경|프로젝트:|논문:)|^\[\[/.test(l),
           )
         const summary = strip(leadLines[0] || part.title)
           .replace(/^[^:：]{1,20}[:：]\s*/, "")
@@ -127,6 +129,7 @@ export function extractArticles(edition) {
           body: part.body,
           summary,
           desk: desk.title,
+          sector: part.body.match(/^\*\*분야:\*\*\s*(.+)$/m)?.[1]?.trim(),
           urls,
           markers,
           sources: Object.fromEntries(markers.map((m) => [m, sources.get(m)])),
@@ -135,6 +138,8 @@ export function extractArticles(edition) {
         }
       }),
     )
+  sectorGroups(edition, articles)
+  return articles
 }
 export function refresh(vault = "vault") {
   vault = path.resolve(vault)
@@ -210,9 +215,15 @@ export function refresh(vault = "vault") {
     const heading = line ? strip(line) : `${date} IT · AI · 로보틱스`
     const model = library.byKey.get(issue.slug)
     let body = (line ? `> ${heading}\n\n` : "") + issueTrendsMarkdown(model) + "\n\n"
-    body += items.length
-      ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
-      : ""
+    body +=
+      sectorMarkdown(
+        issue,
+        items,
+        (a) => `#### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`,
+      ) ??
+      (items.length
+        ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
+        : "")
     if (issue.meta.schema_version === "tech-ai-magazine/v2") {
       for (const sec of sections(issue.body).filter(
         (s) => ["흐름 읽기", "오늘의 적용"].includes(s.title) && s.body !== "없음",

@@ -181,8 +181,8 @@ Google Drive의 Projects / Tech Knowledge가 최종 보관 위치입니다. 로�
 
 source-register의 captured_unreviewed는 HTTP 응답 저장만 확인한 상태입니다. 내용의 유효성·게시 시각·과거 기사와의 동일성을 검토했다는 뜻은 아닙니다. 실패·차단·용량 초과는 별도로 남기며, 저장된 현재 응답을 과거 취재 당시 원문으로 표시하지 않습니다. 원문 수집물은 개인 Drive 보관용이며 웹 공개 산출물에 넣지 않습니다.
 ''')
-    if (ROOT / 'docs/DRIVE_STORAGE.md').exists():
-        shutil.copy2(ROOT / 'docs/DRIVE_STORAGE.md', STAGE / 'Operations/DRIVE_STORAGE.md')
+    for name in ('DRIVE_STORAGE.md', 'DRIVE_GITHUB_SYNC.md', 'SECTOR_BRIEFING.md'):
+        shutil.copy2(ROOT / 'docs' / name, STAGE / 'Operations' / name)
     subprocess.run([sys.executable, str(ROOT / 'scripts/export-website-data.py')], check=True)
     inventory = []
     for p in files(STAGE):
