@@ -18,18 +18,18 @@ generated_by: tech-knowledge-garden
 - [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · 2026-09-10
 - [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · 2026-09-10
 - [[News/333ccaae81484d3a|Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다]] · 2026-09-10
-- [[News/33eecf1d106431d9|Dependabot, GitHub Packages 접근을 PAT 없이 다시 지원]] · 2026-09-09
-- [[News/5024ef0cc7b0b963|GHES 3.22 정식 출시, 폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
-- [[News/2c827cba158d2f26|OpenAI가 나비에–스토크스 문제의 증명안을 공개했다]] · 2026-09-09
+- [[News/33eecf1d106431d9|Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원]] · 2026-09-09
+- [[News/5024ef0cc7b0b963|GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
+- [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]] · 2026-09-09
 - [[News/6e376a02cbe3c1ab|초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다]] · 2026-09-08
 - [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]] · 2026-09-08
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 - [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · 2026-09-07
 - [[News/c96e7378059165d6|GitHub star history API: 누가 눌렀는지 대신 언제 얼마나 늘었는지]] · 2026-09-05
 - [[News/cf45e2be25e062a0|Astra의 Copilot 진입, 팀의 모델 허용 정책부터 확인할 때]] · 2026-09-05
-- [[News/13cebc4d5ec60b11|CodeQL 2.26.4]] · 2026-09-04
-- [[News/473fea8bb1cbf9cb|GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출]] · 2026-09-04
-- [[News/322b7c88af36f3ac|npm trusted publishing, 한 패키지에 여러 OIDC 배포 경로를 열다]] · 2026-09-04
+- [[News/13cebc4d5ec60b11|CodeQL 2.26.4, Go 1.27과 GitHub Actions 보안 탐지 개선]] · 2026-09-04
+- [[News/473fea8bb1cbf9cb|GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가]] · 2026-09-04
+- [[News/322b7c88af36f3ac|npm, 패키지 하나에 여러 OIDC 배포 설정 지원]] · 2026-09-04
 - [[News/bcb54aceb5f739d9|Longfellow Zero-Knowledge Proof 라이브러리]] · 2026-09-03
 - [[News/fe8d5b0d3b3b1415|Microsoft Fabric, 미국 정부용 GCC High에서 공개 미리보기]] · 2026-09-03
 - [[News/ef239918f16e1482|Gemini 3.8 Flash Cyber, 제한 접근 안에서 탐지부터 패치까지 묶다]] · 2026-09-03

@@ -1,41 +1,63 @@
 ---
-title: GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출
+title: GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가
 type: news
 schema_version: tech-news/v1
 date: 2026-09-04
 created: 2026-09-04
 updated: 2026-09-04
 event_id: 473fea8bb1cbf9cb
-review_status: unreviewed
+review_status: verified
 concept_ids: []
+published_at: 2026-09-03
+reviewed_at: 2026-09-13
 source_url: https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/
 sources:
   - https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/
-concepts:
-  - Knowledge/Software Engineering/Software Supply Chain Security
-description: Actions의 GITHUB_TOKEN에 Dependabot alert 읽기 전용 vulnerability-alerts
-  권한이 추가됐다. 재사용 workflow에는 실제 정의 파일의 ref·SHA·저장소·경로를 나타내는 job.workflow_ context가
-  생겼고, runner version의 등록·실행 지원 종료일을 조회하는 REST API도 제공된다.
+concepts: []
+description: GitHub는 9월 3일 Actions 실행기의 버전별 등록·실행 지원 종료일을 조회하는 REST API를 추가했다.
+  GITHUB_TOKEN에는 Dependabot 경보를 읽기 전용으로 조회하는 vulnerability-alerts 권한이 생겼다. 재사용
+  워크플로는 새 job 속성으로 해당 작업을 정의한 파일·저장소·커밋을 확인할 수 있으며, 이 속성은 GitHub Enterprise
+  Server에서는 제공하지 않는다.
+theme_format: news-themes/v1
+sector: 사이버보안
+theme: 제품·서비스
+secondary_theme: null
+event_tags:
+  - 기능 추가
+entities:
+  - GitHub
+tags:
+  - sector/cybersecurity
+  - theme/products
+  - event/기능-추가
+editorial_format: six-w/v1
+kind: 사건 뉴스
+region: 해외
+lead: GitHub는 9월 3일 Actions 실행기의 버전별 등록·실행 지원 종료일을 조회하는 REST API를 추가했다.
+  GITHUB_TOKEN에는 Dependabot 경보를 읽기 전용으로 조회하는 vulnerability-alerts 권한이 생겼다. 재사용
+  워크플로는 새 job 속성으로 해당 작업을 정의한 파일·저장소·커밋을 확인할 수 있으며, 이 속성은 GitHub Enterprise
+  Server에서는 제공하지 않는다.
+facts:
+  who: GitHub
+  when: 2026-09-03 발표
+  where: 공식 웹사이트
+  what: GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가
+  how: 실행기 버전 API·최소 토큰 권한·재사용 워크플로 신원 속성 추가
+  why: 발표에 별도 배경 설명 없음
+papers: []
+relations: []
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
-# GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출
+# GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가
 
-**핵심:** Actions의 `GITHUB_TOKEN`에 Dependabot alert 읽기 전용 `vulnerability-alerts` 권한이 추가됐다. 재사용 workflow에는 실제 정의 파일의 ref·SHA·저장소·경로를 나타내는 `job.workflow_*` context가 생겼고, runner version의 등록·실행 지원 종료일을 조회하는 REST API도 제공된다. [S2]
 
-**의미:** 넓은 token scope 없이 취약점 정보를 읽고, 호출한 workflow가 아니라 실제 실행 정의의 신원을 감사하며, runner 지원 종료를 자동 점검할 수 있다.
+GitHub는 9월 3일 Actions 실행기의 버전별 등록·실행 지원 종료일을 조회하는 REST API를 추가했다. GITHUB_TOKEN에는 Dependabot 경보를 읽기 전용으로 조회하는 vulnerability-alerts 권한이 생겼다. 재사용 워크플로는 새 job 속성으로 해당 작업을 정의한 파일·저장소·커밋을 확인할 수 있으며, 이 속성은 GitHub Enterprise Server에서는 제공하지 않는다. [S2]
 
-**확인할 점:** 새 context는 GitHub Enterprise Server에서 아직 제공되지 않는다. 값의 노출만으로 workflow 무결성이 보장되는 것은 아니므로 SHA 고정과 권한 검토가 함께 필요하다.
 
-**개념:** [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-**근거:** [S2]
-
-## 이어 읽기
-
-- [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
 
 ## 이 소식을 다룬 브리핑
 

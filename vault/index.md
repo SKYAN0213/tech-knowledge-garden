@@ -45,9 +45,9 @@ GitHub는 9월 11일 Copilot 코드 리뷰에서 개발자가 수정한 내용�
 - [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · 2026-09-10
 - [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · 2026-09-10
 - [[News/333ccaae81484d3a|Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다]] · 2026-09-10
-- [[News/33eecf1d106431d9|Dependabot, GitHub Packages 접근을 PAT 없이 다시 지원]] · 2026-09-09
-- [[News/5024ef0cc7b0b963|GHES 3.22 정식 출시, 폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
-- [[News/2c827cba158d2f26|OpenAI가 나비에–스토크스 문제의 증명안을 공개했다]] · 2026-09-09
+- [[News/33eecf1d106431d9|Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원]] · 2026-09-09
+- [[News/5024ef0cc7b0b963|GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
+- [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]] · 2026-09-09
 - [[News/6e376a02cbe3c1ab|초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다]] · 2026-09-08
 - [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]] · 2026-09-08
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07

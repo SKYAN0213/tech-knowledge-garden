@@ -1,38 +1,51 @@
 # 2026-09-09 아침 브리핑
 
-AI의 수학 증명 제안은 검토 대상으로, 기업 개발 도구는 권한과 출시 단계로 읽는다.
+나비에–스토크스 증명안 공개 · GHES 3.22 출시 · Dependabot 패키지 인증
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-09_0802_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
-## 헤드라인과 원문
+## 주요 소식
 
-### [OpenAI가 나비에–스토크스 문제의 증명안을 공개했다](https://skyan0213.github.io/tech-knowledge-garden/news/2c827cba158d2f26)
+### [OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개](https://skyan0213.github.io/tech-knowledge-garden/news/2c827cba158d2f26)
 
-OpenAI는 내부 AI가 만든 증명 설명과 Lean 형식화 자료를 공개했다. 회사의 해결 주장이며, 이번 취재에서 독립 검증 완료를 확인한 것은 아니다.
+OpenAI는 9월 8일 나비에–스토크스 존재성과 매끄러움 문제에 대한 증명안과 Lean 형식화를 공개했다. 회사는 매끄러운 외력이 작용하는 유체에서 에너지가 유한하게 유지되면서도 유한 시간 안에 특이점이 생기는 구성을 제시했다고 밝혔다. 내부 모델을 활용한 다중 에이전트 탐색으로 증명안을 만들고 GPT-6 Astra로 형식화와 검증을 진행했다고 설명했다.
 
-[OpenAI 원문](https://openai.com/index/navier-stokes-solution/)
+### [GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기](https://skyan0213.github.io/tech-knowledge-garden/news/5024ef0cc7b0b963)
 
-### [GHES 3.22 정식 출시, 폐쇄망 Copilot CLI는 기술 미리보기](https://skyan0213.github.io/tech-knowledge-garden/news/5024ef0cc7b0b963)
+GitHub는 9월 8일 Enterprise Server 3.22를 정식 출시했다. 기업 팀을 통한 사용자·접근 관리가 정식 기능이 됐고, 저장소 규칙에 특정 팀의 검토 요구와 개별 사용자의 우회 권한 설정이 추가됐다. GitHub Cloud에 연결되지 않은 환경에서 자체 모델 제공자를 설정해 Copilot CLI를 사용하는 기능은 기술 미리보기로 제공한다.
 
-9월 8일 21:52:42 UTC 게시된 발표에서 GitHub Enterprise Server 3.22가 정식 출시됐다. GitHub Cloud 연결 없이 운영하는 환경의 Copilot CLI 연동은 기술 미리보기이며, 관리자가 GHES에 모델 공급자를 설정하는 방식이다. Enterprise teams는 정식 제공으로 전환됐다.
+### [Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원](https://skyan0213.github.io/tech-knowledge-garden/news/33eecf1d106431d9)
+
+GitHub는 9월 8일 Dependabot이 개인 액세스 토큰 없이 비공개 GitHub Packages를 읽는 기능을 다시 활성화했다고 공지했다. 패키지 설정에서 저장소에 부여한 읽기 권한을 Dependabot의 GITHUB_TOKEN이 재사용한다. 6월 최초 제공 후 npm 패키지 경로 충돌로 철회했던 기능으로, 재활성화 버전에서는 명시적인 레지스트리 인증과 기존 경로를 우선하고 자동 인증을 보조 수단으로 사용한다.
+
+## 분야별 브리핑
+
+### 소프트웨어·클라우드 · 1건
+
+#### [GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기](https://skyan0213.github.io/tech-knowledge-garden/news/5024ef0cc7b0b963)
+
+제품·서비스 · 신제품 · GitHub
+
+GitHub는 9월 8일 Enterprise Server 3.22를 정식 출시했다. 기업 팀을 통한 사용자·접근 관리가 정식 기능이 됐고, 저장소 규칙에 특정 팀의 검토 요구와 개별 사용자의 우회 권한 설정이 추가됐다. GitHub Cloud에 연결되지 않은 환경에서 자체 모델 제공자를 설정해 Copilot CLI를 사용하는 기능은 기술 미리보기로 제공한다.
 
 [GitHub 원문](https://github.blog/changelog/2026-09-08-github-enterprise-server-3-22-is-now-generally-available/)
 
-### [Dependabot, GitHub Packages 접근을 PAT 없이 다시 지원](https://skyan0213.github.io/tech-knowledge-garden/news/33eecf1d106431d9)
+### 사이버보안 · 1건
 
-패키지의 ‘Manage Actions access’에서 저장소에 Read 권한을 주면 Dependabot이 그 권한을 재사용해 비공개 패키지를 읽는다.
+#### [Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원](https://skyan0213.github.io/tech-knowledge-garden/news/33eecf1d106431d9)
+
+제품·서비스 · 기능 추가 · GitHub
+
+GitHub는 9월 8일 Dependabot이 개인 액세스 토큰 없이 비공개 GitHub Packages를 읽는 기능을 다시 활성화했다고 공지했다. 패키지 설정에서 저장소에 부여한 읽기 권한을 Dependabot의 GITHUB_TOKEN이 재사용한다. 6월 최초 제공 후 npm 패키지 경로 충돌로 철회했던 기능으로, 재활성화 버전에서는 명시적인 레지스트리 인증과 기존 경로를 우선하고 자동 인증을 보조 수단으로 사용한다.
 
 [GitHub 원문](https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries/)
 
-## 흐름 읽기
+### 우주·기초과학 · 1건
 
-> **확인된 사실**
-> OpenAI는 증명 자료를 공개했고, GitHub는 정식 서버와 기술 미리보기 기능을 구분했으며, Dependabot은 인증 우선순위를 명시해 기능을 다시 활성화했다. [S1](https://openai.com/index/navier-stokes-solution/), [S2](https://github.blog/changelog/2026-09-08-github-enterprise-server-3-22-is-now-generally-available/), [S3](https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries/)
+#### [OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개](https://skyan0213.github.io/tech-knowledge-garden/news/2c827cba158d2f26)
 
-> **분석**
-> 발표를 읽을 때 ‘무엇이 공개됐는가’, ‘어느 단계까지 지원되는가’, ‘어떤 조건에서 작동하는가’를 따로 기록하면 연구 주장과 운영 가능성을 혼동할 가능성이 줄어든다.
+제품·서비스 · 기능 추가 · OpenAI
 
-## 오늘의 적용
+OpenAI는 9월 8일 나비에–스토크스 존재성과 매끄러움 문제에 대한 증명안과 Lean 형식화를 공개했다. 회사는 매끄러운 외력이 작용하는 유체에서 에너지가 유한하게 유지되면서도 유한 시간 안에 특이점이 생기는 구성을 제시했다고 밝혔다. 내부 모델을 활용한 다중 에이전트 탐색으로 증명안을 만들고 GPT-6 Astra로 형식화와 검증을 진행했다고 설명했다.
 
-- **대상:** 사내 AI 개발 도구 관리자. **행동:** GHES 시험 환경에서 모델 공급자·접근 권한·데이터 경로를 기록한다. **가드레일:** 기술 미리보기 결과만으로 전체 조직 배포를 결정하지 않는다. [S2](https://github.blog/changelog/2026-09-08-github-enterprise-server-3-22-is-now-generally-available/)
-- **대상:** GitHub Packages 운영자. **행동:** 시험 저장소에 필요한 패키지 Read 권한을 부여하고 Dependabot의 비공개·공개 패키지 해석 경로를 확인한다. **가드레일:** 성공 확인 뒤 해당 패키지용 PAT 설정만 정리하고 외부 레지스트리 인증은 유지한다. [S3](https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries/)
+[OpenAI 원문](https://openai.com/index/navier-stokes-solution/)

@@ -94,7 +94,7 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 
 - 한계: 신원 값 노출만으로 무결성이 보장되지 않으며 GHES 제공 범위도 다르다.
 - 다음 확인: SHA 고정과 권한 검토, runner 지원 종료 점검.
-- [[News/473fea8bb1cbf9cb|GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/) · [[Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing|당일 브리핑]]
+- [[News/473fea8bb1cbf9cb|GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/) · [[Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="permissions-oidc"></span>
@@ -107,7 +107,7 @@ stable·prerelease 경로마다 저장소·workflow·환경 신원을 검토할 
 
 - 한계: 여러 구성은 추가적으로 작동하고 direct publishing은 사람 승인 경계를 없앨 수 있다.
 - 다음 확인: 각 경로의 opt-in과 예외, 변경 감사·회수 절차.
-- [[News/322b7c88af36f3ac|npm trusted publishing, 한 패키지에 여러 OIDC 배포 경로를 열다]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-multiple-trusted-publishing-configurations-for-npm/) · [[Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing|당일 브리핑]]
+- [[News/322b7c88af36f3ac|npm, 패키지 하나에 여러 OIDC 배포 설정 지원]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-multiple-trusted-publishing-configurations-for-npm/) · [[Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 ## 관련 개념
