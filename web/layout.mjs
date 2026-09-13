@@ -1,110 +1,67 @@
-import { forceSimulation, forceManyBody, forceLink, forceX, forceY, forceCollide } from "d3-force"
-function rectangleCollision(nodes) {
-  return () => {
-    for (let i = 0; i < nodes.length; i++)
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i],
-          b = nodes[j],
-          dx = b.x + b.vx - a.x - a.vx,
-          dy = b.y + b.vy - a.y - a.vy
-        const ox = (a.width + b.width) / 2 + 24 - Math.abs(dx),
-          oy = 84 - Math.abs(dy)
-        if (ox > 0 && oy > 0) {
-          if (ox < oy) {
-            const d = ox * 0.45 * (dx < 0 ? -1 : 1)
-            a.vx -= d
-            b.vx += d
-          } else {
-            const d = oy * 0.45 * (dy < 0 ? -1 : 1)
-            a.vy -= d
-            b.vy += d
-          }
-        }
-      }
-  }
-}
-export function layoutGraph(input, iterations = 700) {
-  const nodes = input.nodes
-    .map((n) => ({ ...n, x: undefined, y: undefined, width: n.width || 220, height: 58 }))
-    .sort((a, b) => a.id.localeCompare(b.id))
-  const known = new Set(nodes.map((n) => n.id))
-  const links = input.edges.map((e) => {
-    if (!known.has(e.source) || !known.has(e.target)) throw Error("Unknown graph endpoint")
-    return { ...e }
+import { UndirectedGraph } from "graphology"
+import forceAtlas2 from "graphology-layout-forceatlas2"
+import louvain from "graphology-communities-louvain"
+export const palette = [
+  "#e7ce82",
+  "#82c7b4",
+  "#86badd",
+  "#beabc9",
+  "#b4c882",
+  "#dca783",
+  "#94bebf",
+  "#cfb2ba",
+  "#a7b4da",
+  "#bdd3a6",
+]
+export function toGraph(input, seedPositions = false) {
+  const graph = new UndirectedGraph({ allowSelfLoops: false })
+  const nodes = [...input.nodes].sort((a, b) => a.id.localeCompare(b.id, "en"))
+  nodes.forEach((n, i) => {
+    const angle = i * Math.PI * (3 - Math.sqrt(5)),
+      radius = Math.sqrt(i + 1) * 8
+    graph.addNode(n.id, {
+      ...n,
+      x: seedPositions || !Number.isFinite(n.x) ? Math.cos(angle) * radius : n.x,
+      y: seedPositions || !Number.isFinite(n.y) ? Math.sin(angle) * radius : n.y,
+      size: n.size || 2,
+    })
   })
-  const adjacency = new Map(nodes.map((n) => [n.id, []]))
-  for (const e of links) {
-    adjacency.get(e.source).push(e.target)
-    adjacency.get(e.target).push(e.source)
+  for (const e of input.edges) {
+    if (!graph.hasNode(e.source) || !graph.hasNode(e.target)) throw Error("Unknown graph endpoint")
+    if (e.source === e.target) throw Error("Self association")
+    if (!graph.hasEdge(e.source, e.target))
+      graph.addEdge(e.source, e.target, { ...e, weight: e.weight || 1 })
   }
-  const components = [],
-    membership = new Map()
-  for (const n of nodes)
-    if (!membership.has(n.id)) {
-      const queue = [n.id],
-        group = []
-      membership.set(n.id, components.length)
-      while (queue.length) {
-        const id = queue.pop()
-        group.push(id)
-        for (const other of adjacency.get(id))
-          if (!membership.has(other)) {
-            membership.set(other, components.length)
-            queue.push(other)
-          }
-      }
-      components.push(group)
-    }
-  const centers = components.map((c, i) =>
-    components.length === 1
-      ? [0, 0]
-      : [
-          Math.cos((i * 2 * Math.PI) / components.length) * Math.max(600, components.length * 90),
-          Math.sin((i * 2 * Math.PI) / components.length) * Math.max(600, components.length * 90),
-        ],
-  )
-  const sim = forceSimulation(nodes)
-    .stop()
-    .force("charge", forceManyBody().strength(-450))
-    .force(
-      "links",
-      forceLink(links)
-        .id((n) => n.id)
-        .distance((e) => (e.type === "scope" ? 150 : e.type === "contrast" ? 240 : 180))
-        .strength((e) => (e.type === "contrast" ? 0.08 : 0.28)),
-    )
-    .force("collision", rectangleCollision(nodes))
-    .force("x", forceX((n) => centers[membership.get(n.id)][0]).strength(0.08))
-    .force("y", forceY((n) => centers[membership.get(n.id)][1]).strength(0.08))
-  for (let i = 0; i < iterations; i++) sim.tick()
-  // Final rectangle separation protects labels, even when adding disconnected concepts.
-  for (let k = 0; k < 120; k++) {
-    let moved = false
-    for (let i = 0; i < nodes.length; i++)
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i],
-          b = nodes[j],
-          dx = b.x - a.x,
-          dy = b.y - a.y
-        const ox = (a.width + b.width) / 2 + 20 - Math.abs(dx),
-          oy = (a.height + b.height) / 2 + 24 - Math.abs(dy)
-        if (ox > 0 && oy > 0) {
-          moved = true
-          if (ox < oy) {
-            const d = ((ox + 0.1) / 2) * (dx < 0 ? -1 : 1)
-            a.x -= d
-            b.x += d
-          } else {
-            const d = ((oy + 0.1) / 2) * (dy < 0 ? -1 : 1)
-            a.y -= d
-            b.y += d
-          }
-        }
-      }
-    if (!moved) break
-  }
-  return nodes.map(({ vx, vy, index, ...n }) => n)
+  return graph
 }
+export function layoutGraph(input, iterations = 600) {
+  const graph = toGraph(input, true)
+  if (graph.order > 1)
+    forceAtlas2.assign(graph, {
+      iterations,
+      settings: {
+        ...forceAtlas2.inferSettings(graph),
+        barnesHutOptimize: graph.order > 300,
+        adjustSizes: true,
+        gravity: 0.3,
+        scalingRatio: 6,
+        slowDown: 3,
+        strongGravityMode: false,
+        linLogMode: false,
+      },
+    })
+  const communities = graph.order ? louvain(graph, { randomWalk: false, resolution: 0.85 }) : {}
+  return graph.nodes().map((id) => {
+    const n = graph.getNodeAttributes(id)
+    if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) throw Error("Non-finite graph layout")
+    return {
+      ...n,
+      community: communities[id] || 0,
+      color: palette[(communities[id] || 0) % palette.length],
+    }
+  })
+}
+// Historical types remain readable in Obsidian, while the website uses undirected associations.
 export const edgeLabels = {
   uses: "활용",
   implements: "구현",

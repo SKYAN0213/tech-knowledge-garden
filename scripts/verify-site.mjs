@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { fromHtml } from "hast-util-from-html"
 import RSSParser from "rss-parser"
 import { walk } from "./garden.mjs"
+import { relatedNews } from "../web/graph-model.mjs"
 export const collect = (node, pred, acc = []) => {
   if (pred(node)) acc.push(node)
   for (const c of node.children || []) collect(c, pred, acc)
@@ -82,7 +83,42 @@ export async function verifySite(
       errors.push("Invalid search entry " + row.slug)
   }
   const graph = JSON.parse(fs.readFileSync(path.join(root, "knowledge-graph.json")))
-  for (const n of graph.nodes) resolve(base + n.slug, path.join(root, "index.html"))
+  const ids = new Set(graph.nodes.map((n) => n.id)),
+    articleIds = new Set(graph.articles.map((n) => n.id)),
+    pairs = new Set()
+  if (graph.schema !== "news-connections/v2" || ids.size !== graph.nodes.length)
+    errors.push("Invalid connection graph identity")
+  for (const n of graph.nodes) {
+    if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) errors.push("Invalid node position " + n.id)
+    if (n.slug) resolve(base + n.slug, path.join(root, "index.html"))
+    else if (
+      n.kind !== "keyword" ||
+      !n.conceptIds.length ||
+      !n.conceptIds.every((id) => ids.has(id))
+    )
+      errors.push("Keyword has no concept provenance " + n.id)
+    for (const article of relatedNews(graph, n.id))
+      if (!articleIds.has(article.id) || article.distance > 2)
+        errors.push("Unrelated news destination " + n.id)
+  }
+  for (const article of graph.articles) resolve(base + article.slug, path.join(root, "index.html"))
+  for (const e of graph.edges) {
+    const pair = [e.source, e.target].sort().join("|")
+    if (
+      !ids.has(e.source) ||
+      !ids.has(e.target) ||
+      e.source === e.target ||
+      pairs.has(pair) ||
+      !e.connections?.every((c) => c.reason)
+    )
+      errors.push("Invalid undirected connection " + e.id)
+    pairs.add(pair)
+  }
+  for (const match of fs
+    .readFileSync(path.join(root, "reader.js"), "utf8")
+    .matchAll(/import\(["']([^"']+)["']\)/g))
+    resolve(match[1], path.join(root, "reader.js"))
+  resolve(base + "map-layout.worker.js", path.join(root, "index.html"))
   const rss = fs.readFileSync(path.join(root, "briefing.xml"), "utf8"),
     feed = await new RSSParser().parseString(rss)
   if (!feed.title.includes("브리핑") || feed.items.length === 0)
@@ -97,6 +133,7 @@ export async function verifySite(
   if (files.some((f) => /\/(?:archive|editions|trends|automation|\.obsidian|\.local)\//i.test(f)))
     errors.push("Excluded material emitted")
   const homepage = fs.readFileSync(path.join(root, "index.html"), "utf8")
+  if (!homepage.includes("data-connections")) errors.push("Home connection map missing")
   if (
     /오늘의 변화를 읽고|TECH KNOWLEDGE GARDEN|읽고, 연결하고|축적된 지식|class="explorer"|generated_by:/.test(
       homepage,
@@ -107,7 +144,10 @@ export async function verifySite(
   return {
     html: html.length,
     search: index.length,
-    concepts: graph.nodes.length,
+    concepts: graph.counts.concepts,
+    news: graph.counts.news,
+    keywords: graph.counts.keywords,
+    nodes: graph.nodes.length,
     relations: graph.edges.length,
     rss: feed.items.length,
   }

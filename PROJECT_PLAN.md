@@ -1,18 +1,27 @@
-# 2026-09-13 Reader and knowledge revision
+# 2026-09-13 News connection map
 
-Objective: make the daily briefing site information-first, repair RSS and Obsidian web links, and rebuild the 23-concept knowledge layer with sourced relationships and automatic graph layout.
+Objective: show a reference-inspired, dark constellation of actual concepts, keywords and news on the website; selecting a node reveals related news. Confirmed association is sufficient: relationships need not be directed references.
 
-The existing 08:00 automation stays in the registered 옵시디언_iCloudSync project. Original iCloud notes, migrated source editions, citations and verified research cutoff are protected. No paid API or new service. Preserve the Sep 13 briefing written by the existing automation (baseline 77f5010).
+Baseline: clean main at 7695994; published reader contains 42 news articles, 23 reviewed concepts and 111 keyword memberships. Preserve the source editions, original dated research/cutoff, concept definitions, RSS, and existing 08:00 Obsidian project. Continue the authorized existing-site publication. No paid API or service.
 
-## Milestones and acceptance
+## Direction
 
-1. Reader and RSS: only News and Briefings in primary navigation; remove folder tree, slogans and editorial bookkeeping. Exclude archives, source editions and operational notes from output/search. Concepts and map remain contextual destinations. RSS must parse, preserve Korean, advertise discovery, contain valid links and have an explicit copyable subscription URL.
-2. Knowledge: re-read primary sources and rebuild definitions/keywords/typed relationships for all 23 canonical concepts. Keep Obsidian paths/aliases stable, retain dated news evidence, and publish sourced graph data. Distinguish editorial relationships from explicit source assertions.
-3. Graph and links: automatic force layout based on actual typed edges, label collision handling, pan/zoom, drag, search, neighbor focus, accessible concept and source links. Resolve aliases, Unicode, headings and block references consistently; reject unknown or ambiguous targets.
-4. Verification: focused regressions, full tests/typecheck, publication build, all emitted local links/fragments and graph edges, desktop/mobile reading and map interactions, actual RSS click/copy, then existing GitHub Pages deployment and live checks.
+Small colored points, fine undirected lines, clustered structure on a dark background. Labels appear by importance, hover or selection. The graph is the visual focus; selected news remains readable, keyboard reachable, and usable on mobile. No image slogans, fake graph nodes or decorative connections. Reading pages retain their existing white editorial design.
 
-## Current status
+Sigma.js 3 + Graphology/ForceAtlas2 replace the SVG renderer. Graphology Louvain colors actual communities. Build-time deterministic coordinates give an immediately usable graph; a worker handles requested recalculation. The graph and news list must remain usable when WebGL is unavailable.
 
-Milestones 1–3 complete. Local verification passed: 181 tests, TypeScript, 184 HTML pages and their links/fragments, 182 search entries, 23 concepts, 31 sourced relations and 40 RSS items. Desktop/mobile browser checks cover reading, aliases, definition anchors, copyable RSS, search, graph selection, neighbor filtering, pan/zoom, node drag and deterministic reset. Milestone 4 is complete: GitHub Pages run 34726929373 succeeded for release 7136cb3. Live checks confirmed the reader, RSS, latest issue, concepts and graph; excluded archive/edition routes return 404. The public browser verified RSS copying and map-to-concept navigation. Evidence is saved in .local/evidence/revision-live.json.
+## Milestones
 
-The app API cannot reassign the current conversation to a saved project; the daily job already belongs to the requested project. No new project registration is pending. Source repository remains at its stable local path, referenced explicitly by the existing project workflow.
+1. Complete — Association data and engine: preserved legacy evidence, added confirmed target/reason connections, generated 166 real nodes and 323 undirected links, ranked related news within two documented steps. Excluded boilerplate keyword matches and tested canonical alias deduplication and isolated nodes.
+2. Complete — Web experience: Sigma WebGL point graph, home/article embeds and direct navigation, news on click, search, neighbor focus, zoom, drag, worker re-layout, responsive and keyboard alternatives. Actual WebGL-disabled Chromium falls back to usable node search and news links.
+3. In progress — Verification passed: 188 tests, typecheck, build, all internal links/RSS, actual desktop and 390px browser interactions with no errors. Layout-only benchmark: 166 nodes in 58ms; synthetic 1,000 nodes in 1,262ms, all finite. Existing briefing skill and 08:00 automation updated. Commit/push and verify Actions plus public home/map/news next.
+
+## Acceptance
+
+- No arrows or required reference types in the connection visualization; source-backed legacy data remains intact.
+- Every node and edge comes from existing editorial data or a documented association rule; no density padding.
+- Any selected node shows its related-news list, with explicit empty state where the current archive has no associated story.
+- News dates, URLs and selection basis are accurate; hidden vault folders remain excluded.
+- The website home visibly embeds the graph and exposes the full map directly.
+- Interactive render is backed by Sigma/WebGL with an accessible news/list fallback; layout work cannot freeze the reading UI.
+- Existing RSS, briefing and wiki link contracts continue to pass.

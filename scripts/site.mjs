@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { createHash } from "node:crypto"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { fromHtml } from "hast-util-from-html"
@@ -53,7 +54,7 @@ export function prepare(vault = "vault", target = staging) {
     const meta = { ...n.meta, aliases: [], cssclasses: [] }
     if (n.meta.entry_type === "concept")
       meta.title = n.meta.label || n.meta.aliases?.find((a) => /[가-힣]/.test(a)) || n.meta.title
-    if (n.path === MAP) meta.title = "지식 지도"
+    if (n.path === MAP) meta.title = "연결 지도"
     write(path.join(target, n.path + ".md"), noteText(meta, body))
   }
   write(
@@ -81,8 +82,20 @@ export async function finish(output = "public", input = staging) {
   const knowledge = notes.filter((n) => n.meta.entry_type === "concept")
   const bySlug = new Map(notes.map((n) => [n.slug, n]))
   const rows = []
+  const assets = createHash("sha256")
+    .update(
+      walk("web")
+        .sort()
+        .map((f) => fs.readFileSync(f, "utf8"))
+        .join(""),
+    )
+    .update(fs.readFileSync("package-lock.json"))
+    .digest("hex")
+    .slice(0, 12)
+  const embed = (focus = "", className = "article-connections") =>
+    `<section class="${className}"><h2><a href="${href(MAP)}${focus ? "?focus=" + encodeURIComponent(focus) : ""}">연결 지도</a></h2><div class="connections compact" data-connections data-mode="compact" data-focus="${esc(focus)}"><p class="graph-loading">연결 지도를 불러오는 중…</p></div></section>`
   const shell = (title, body, kind = "article", description = "") =>
-    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css"><script type="module" src="${prefix}/reader.js"></script></head><body data-base="${prefix}"><a class="skip" href="#main">본문으로</a><header class="site-header"><nav aria-label="주요 메뉴"><a href="${href("index")}" ${kind === "home" || kind === "news" ? 'aria-current="page"' : ""}>뉴스</a><a href="${href("Briefings/index")}" ${kind === "briefing-index" ? 'aria-current="page"' : ""}>브리핑</a></nav><div class="utilities"><button id="search-open" aria-label="검색">검색</button><a href="${prefix}/rss">RSS</a></div></header><main id="main" class="${kind}">${body}</main><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="뉴스 · 브리핑 · 키워드" autocomplete="off"><div id="search-results" aria-live="polite"></div></dialog></body></html>`
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><nav aria-label="주요 메뉴"><a href="${href("index")}" ${kind === "home" || kind === "news" ? 'aria-current="page"' : ""}>뉴스</a><a href="${href("Briefings/index")}" ${kind === "briefing-index" ? 'aria-current="page"' : ""}>브리핑</a><a href="${href(MAP)}" ${kind === "map-page" ? 'aria-current="page"' : ""}>연결 지도</a></nav><div class="utilities"><button id="search-open" aria-label="검색">검색</button><a href="${prefix}/rss">RSS</a></div></header><main id="main" class="${kind}">${body}</main><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="뉴스 · 브리핑 · 키워드" autocomplete="off"><div id="search-results" aria-live="polite"></div></dialog></body></html>`
   for (const n of notes) {
     const file = path.join(output, n.slug + ".html")
     const tree = fromHtml(fs.readFileSync(file, "utf8"))
@@ -139,7 +152,7 @@ export async function finish(output = "public", input = staging) {
       ? `<a href="${href(MAP)}?focus=${encodeURIComponent(n.meta.concept_id || n.slug)}">지식 지도</a>`
       : ""
     if (n.path === MAP)
-      body = `<section id="knowledge-map" aria-label="지식 관계 지도"></section><noscript><ul>${knowledge.map((k) => `<li><a href="${href(k.path)}">${esc(k.meta.label || k.meta.title)}</a></li>`).join("")}</ul></noscript>`
+      body = `<section id="knowledge-map" class="connections" data-connections data-mode="full" aria-label="개념과 뉴스 연결 지도"><p class="graph-loading">연결 지도를 불러오는 중…</p></section><noscript><ul>${knowledge.map((k) => `<li><a href="${href(k.path)}">${esc(k.meta.label || k.meta.title)}</a></li>`).join("")}</ul></noscript>`
     body = `${n.path === "index" ? "" : `<div class="article-meta">${esc(date)}${links ? " · " + links : ""}</div><h1>${esc(meta.title)}</h1>`}${body}`
     if (isConcept) {
       const related = notes
@@ -149,6 +162,10 @@ export async function finish(output = "public", input = staging) {
       if (related.length)
         body += `<section class="related-news"><h2>관련 뉴스</h2>${related.map((x) => `<p><time>${esc(x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a></p>`).join("")}</section>`
     }
+    if (n.path === "index")
+      body = `<div class="home-layout"><div class="home-feed">${body}</div>${embed("", "home-map")}</div>`
+    else if (isConcept || type === "news")
+      body += embed(isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
     const html = shell(
       meta.title,
       body,
@@ -200,7 +217,16 @@ export async function finish(output = "public", input = staging) {
     entryPoints: ["web/reader.mjs"],
     bundle: true,
     format: "esm",
-    outfile: path.join(output, "reader.js"),
+    outdir: output,
+    splitting: true,
+    chunkNames: "chunks/[name]-[hash]",
+    minify: true,
+  })
+  await build({
+    entryPoints: ["web/layout.worker.mjs"],
+    bundle: true,
+    format: "esm",
+    outfile: path.join(output, "map-layout.worker.js"),
     minify: true,
   })
   console.log(`Rendered ${notes.length} information-first pages.`)

@@ -200,6 +200,8 @@ def validate_relationships(related: str, typed: bool, path: Path, findings: list
                 add_error(findings, path, f"관련 개념 missing relationship label: {label}")
         return
     # Reviewed concepts describe actual edges; empty taxonomy placeholders are not required.
+    if related.strip() == "없음":
+        return
     lines = [line.strip() for line in related.splitlines() if line.strip()]
     pattern = re.compile(
         r"^- [→←] (?:활용|구현|평가|관측|통제|속함|대비|근거 제공): "
@@ -207,10 +209,11 @@ def validate_relationships(related: str, typed: bool, path: Path, findings: list
         r"\[근거\]\(https://[^\s)]+\)(?: · \[근거\]\(https://[^\s)]+\))*\)$"
     )
     if not lines:
-        add_error(findings, path, "관련 개념 must describe its evidenced relationships")
+        add_error(findings, path, "관련 개념 must describe confirmed connections or state 없음")
+    simple = re.compile(r"^- \[\[[^\]]+\]\] — \S.+$")
     for line in lines:
-        if not pattern.fullmatch(line):
-            add_error(findings, path, "관련 개념 requires direction, type, concept, reason and evidence")
+        if not pattern.fullmatch(line) and not simple.fullmatch(line):
+            add_error(findings, path, "관련 개념 requires a linked concept and confirmed reason; typed entries also retain their evidence")
 
 
 def require_fields(

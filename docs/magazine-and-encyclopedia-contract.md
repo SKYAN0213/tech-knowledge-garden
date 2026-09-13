@@ -224,7 +224,7 @@ Use these level-2 headings exactly and in this order:
 11. `## 최근 변화`
 12. `## 출처`
 
-The definition must stand on its own and must not depend on a company announcement. `범위` states what is included and excluded. `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` labels actual relationships. Reviewed concepts with `concept_id` use directed, typed links with a reason, source URLs, and an explicit source/inference distinction. Empty parent/child/contrast placeholders are not required. Historical entries without `concept_id` retain their original taxonomy format.
+The definition must stand on its own and must not depend on a company announcement. `범위` states what is included and excluded. `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` records confirmed associations as `- [[Knowledge/…|Concept]] — a concrete reason`. Direction, reference type and citation are not mandatory for connections. Reviewed concepts preserve `concept_id`, Korean `label`, `group`, source-reviewed `keywords`, `verified_sources` and `last_reviewed`; new `connections` contain the target concept ID and reason, plus optional evidence URLs. Preserve historical typed `relations` with their source/inference distinction and evidence. See [CONNECTION_MAP.md](CONNECTION_MAP.md). Empty parent/child/contrast placeholders are not required. Historical entries without `concept_id` retain their original taxonomy format.
 
 `최근 변화` is a short evidence ledger, not a news dump. Keep only signals that changed how the concept is understood or implemented. Format each as `YYYY-MM-DD — fact and why it changes the concept. [source]`. Daily product details remain in the issue.
 

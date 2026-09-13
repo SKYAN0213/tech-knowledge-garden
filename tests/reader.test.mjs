@@ -4,7 +4,7 @@ import fs from "node:fs"
 import { spawnSync } from "node:child_process"
 import { makeResolver, projectLinks } from "../scripts/site.mjs"
 import { layoutGraph } from "../web/layout.mjs"
-import { buildGraph } from "../scripts/knowledge.mjs"
+import { buildGraph, readKnowledge } from "../scripts/knowledge.mjs"
 import RSSParser from "rss-parser"
 const notes = [
   {
@@ -23,7 +23,7 @@ test("Reviewed concepts satisfy the publication validator without empty taxonomy
   )
   assert.equal(result.status, 0, result.stdout + result.stderr)
 })
-test("Typed concept relationships must include a valid type and source evidence", () => {
+test("Confirmed connections allow reasons or explicit none while typed relationships retain evidence", () => {
   const result = spawnSync("python3", ["-"], {
     encoding: "utf8",
     input: `import sys
@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, 'scripts')
 from validate_encyclopedia import validate_relationships
 valid = '- → 활용: [[MCP#한 문장 정의|MCP]] — 외부 도구 연결 규격이다. (해석; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))'
-for text, should_fail in [(valid, False), (valid.replace('활용:', '같은 날 보도:'), True), (valid.split(' (해석;')[0], True), ('- 상위: 독립 개념', True)]:
+for text, should_fail in [(valid, False), ('- [[MCP]] — 함께 사용하는 기술이다.', False), ('없음', False), ('', True), (valid.replace('활용:', '같은 날 보도:'), True), (valid.split(' (해석;')[0], True), ('- 상위: 독립 개념', True)]:
     findings = []
     validate_relationships(text, True, Path('concept.md'), findings)
     assert bool(findings) == should_fail, (text, findings)
@@ -90,7 +90,7 @@ test("Publication maps source editions to briefings and excludes archive referen
     "```\n[[unknown]]\n```",
   )
 })
-test("Semantic layout is deterministic, preserves disconnected nodes and prevents label overlaps", () => {
+test("ForceAtlas2 layout is deterministic, preserves disconnected nodes and separates node circles", () => {
   const graph = buildGraph(),
     first = layoutGraph({
       ...graph,
@@ -110,9 +110,9 @@ test("Semantic layout is deterministic, preserves disconnected nodes and prevent
   for (let i = 0; i < first.length; i++)
     for (let j = i + 1; j < first.length; j++)
       assert.ok(
-        Math.abs(first[i].x - first[j].x) >= (first[i].width + first[j].width) / 2 ||
-          Math.abs(first[i].y - first[j].y) >= 58,
-        "Overlapping labels",
+        Math.hypot(first[i].x - first[j].x, first[i].y - first[j].y) >=
+          first[i].size + first[j].size,
+        "Overlapping node circles",
       )
 })
 test("Layout responds to relationships instead of sorting nodes into a fixed grid", () => {
@@ -127,14 +127,21 @@ test("Layout responds to relationships instead of sorting nodes into a fixed gri
   const distance = (n, i, j) => Math.hypot(n[i].x - n[j].x, n[i].y - n[j].y)
   assert.ok(distance(a, 0, 1) < distance(a, 0, 7))
 })
-test("All concepts have primary-source evidence and every relation links existing nodes", () => {
-  const graph = buildGraph()
-  assert.ok(graph.nodes.length >= 23)
-  assert.ok(graph.edges.length > 0)
-  assert.ok(graph.nodes.every((n) => n.keywords.length >= 3 && n.sources.length > 0))
-  const ids = new Set(graph.nodes.map((n) => n.id))
-  for (const e of graph.edges)
-    assert.ok(ids.has(e.source) && ids.has(e.target) && e.evidence.length && e.reason && e.basis)
+test("Reviewed concept evidence is retained while publication connections are undirected", () => {
+  const knowledge = readKnowledge(),
+    graph = buildGraph()
+  assert.ok(knowledge.nodes.length >= 23)
+  assert.ok(knowledge.nodes.every((n) => n.keywords.length >= 3 && n.sources.length > 0))
+  assert.ok(knowledge.associations.every((e) => e.reason && e.evidence.length))
+  const ids = new Set(graph.nodes.map((n) => n.id)),
+    pairs = new Set()
+  for (const e of graph.edges) {
+    assert.ok(ids.has(e.source) && ids.has(e.target) && e.source !== e.target)
+    assert.ok(e.connections.every((c) => c.reason))
+    const pair = [e.source, e.target].sort().join("|")
+    assert.ok(!pairs.has(pair))
+    pairs.add(pair)
+  }
 })
 test("RSS readers decode Korean titles and stable permalinks from encoding-neutral XML", async () => {
   const xml = fs.readFileSync("vault/briefing.xml", "utf8")

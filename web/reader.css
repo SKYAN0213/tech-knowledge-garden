@@ -80,7 +80,7 @@ p {
   overflow-wrap: anywhere;
 }
 .site-header {
-  max-width: 1060px;
+  max-width: 1320px;
   margin: auto;
   height: 84px;
   border-bottom: 1px solid #202522;
@@ -132,7 +132,7 @@ main {
 .home {
   max-width: 880px;
 }
-.home h2:first-of-type {
+.home-feed h2:first-of-type {
   margin: 0 0 30px;
   font-size: 14px;
   color: #617068;
@@ -319,179 +319,6 @@ dialog input {
   color: #6f7d73;
   font-size: 12px;
 }
-.map-page {
-  max-width: 1400px;
-  padding: 30px 28px 70px;
-}
-.map-page h1 {
-  margin-bottom: 22px;
-}
-.map-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-.map-toolbar input {
-  flex: 1;
-  max-width: 320px;
-}
-.map-results {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.map-results:not(:empty) {
-  padding: 0 0 14px;
-}
-.map-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 22px;
-}
-.map-stage {
-  height: 650px;
-  border: 1px solid #dde5df;
-  border-radius: 8px;
-  position: relative;
-  background: #fafcfb;
-  overflow: hidden;
-  background-image: radial-gradient(#dbe4de 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.map-stage svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  touch-action: none;
-  cursor: grab;
-  user-select: none;
-}
-.map-stage svg:active {
-  cursor: grabbing;
-}
-.map-detail {
-  max-height: 650px;
-  overflow: auto;
-  padding: 0 12px 0 0;
-  font-size: 13px;
-}
-.map-detail h2 {
-  margin: 0 0 14px;
-  font-size: 20px;
-}
-.map-detail h3 {
-  font-size: 12px;
-  color: #7b877f;
-  margin: 22px 0 8px;
-}
-.map-detail > a {
-  color: #256646;
-  text-decoration: underline;
-}
-.map-detail p {
-  margin: 8px 0 14px;
-}
-.concept-pick {
-  display: block;
-  border: 0;
-  padding: 4px 0;
-  text-align: left;
-  font-size: 14px;
-  width: 100%;
-  min-height: 32px;
-}
-.map-zoom {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  display: flex;
-  gap: 4px;
-}
-.map-zoom button {
-  min-width: 38px;
-  font-size: 14px;
-  box-shadow: 0 2px 6px #203c2010;
-}
-.graph-edge {
-  stroke: #bdcbc3;
-  stroke-width: 1.8;
-  fill: none;
-}
-.graph-edge[data-type="contrast"] {
-  stroke-dasharray: 7 5;
-  stroke: #9686a5;
-}
-.graph-edge[data-type="scope"] {
-  stroke-width: 3;
-}
-.graph-edge.active {
-  stroke: #20694b;
-  stroke-width: 3;
-}
-.dim {
-  opacity: 0.15;
-}
-.graph-node {
-  cursor: pointer;
-}
-.graph-node rect {
-  fill: white;
-  stroke: #adc5b7;
-  stroke-width: 1.4;
-}
-.graph-node text {
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 550;
-  fill: #213b2a;
-  pointer-events: none;
-}
-.graph-node.selected rect {
-  fill: #205d43;
-  stroke: #205d43;
-  stroke-width: 3;
-}
-.graph-node.selected text {
-  fill: #fff;
-}
-.graph-node:hover rect,
-.graph-node:focus rect {
-  stroke: #205d43;
-  stroke-width: 3;
-}
-.graph-node:focus {
-  outline: 0;
-}
-.keywords {
-  font-size: 12px;
-  color: #688271;
-}
-.relation {
-  padding: 14px 0;
-  border-top: 1px solid #e0e8e2;
-}
-.relation button {
-  font-size: 13px;
-  text-align: left;
-  border: 0;
-  padding: 0;
-  min-height: 28px;
-  font-weight: 600;
-  color: #285c40;
-}
-.relation .evidence {
-  font-size: 11px;
-  color: #718277;
-}
-.evidence a {
-  text-decoration: underline;
-}
-.map-toolbar [aria-pressed="true"] {
-  background: #205d43;
-  color: white;
-}
 @media (max-width: 750px) {
   .site-header {
     height: 68px;
@@ -516,32 +343,6 @@ dialog input {
   }
   .home article p {
     font-size: 15px;
-  }
-  .map-page {
-    padding: 24px 16px;
-  }
-  .map-layout {
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
-  .map-stage {
-    height: 470px;
-  }
-  .map-detail {
-    max-height: none;
-    padding: 0 4px;
-  }
-  .map-toolbar input {
-    width: 100%;
-    max-width: none;
-    flex-basis: 100%;
-  }
-  .map-toolbar button {
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-  .map-toolbar {
-    gap: 6px;
   }
   .feed-url {
     flex-wrap: wrap;
@@ -573,5 +374,453 @@ dialog input {
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
+  }
+}
+/* Connections: real data becomes a constellation; articles retain the reader's paper surface. */
+.home {
+  max-width: 1320px;
+}
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  gap: 48px;
+  align-items: start;
+}
+.home-feed {
+  min-width: 0;
+}
+.home .home-feed h3 {
+  font-size: 27px;
+}
+.home-map {
+  position: sticky;
+  top: 22px;
+  background: #0b1117;
+  border-radius: 10px;
+  padding: 20px;
+  color: #e3e9e7;
+  min-width: 0;
+}
+.home .home-map > h2 {
+  color: #e3e9e7;
+  font-size: 18px;
+  font-weight: 550;
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+.article-connections {
+  margin-top: 64px;
+  padding: 24px;
+  background: #0b1117;
+  border-radius: 10px;
+  color: #e3e9e7;
+}
+.article-connections > h2 {
+  margin: 0 0 18px;
+  font-size: 22px;
+}
+.page-map-page {
+  background: #0b1117;
+  color: #dfe6e6;
+}
+.page-map-page .site-header {
+  border-color: #28343b;
+}
+.page-map-page .utilities {
+  color: #a1b3b5;
+}
+.page-map-page .utilities button {
+  background: transparent;
+  color: inherit;
+}
+.page-map-page nav a[aria-current] {
+  box-shadow: inset 0 -2px #d6c58d;
+}
+.page-map-page dialog {
+  background: #fff;
+  color: #202522;
+}
+.map-page {
+  max-width: 1480px;
+  padding: 26px 30px 50px;
+}
+.map-page .article-meta {
+  color: #869da2;
+  font-size: 12px;
+}
+.map-page h1 {
+  margin: 6px 0 20px;
+  font-size: 30px;
+  font-weight: 600;
+}
+.connections {
+  color: #dfe6e6;
+  background: #0b1117;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.connections button,
+.connections input,
+.map-expand {
+  background: #111b23;
+  color: #cad8d9;
+  border: 1px solid #2b3b44;
+  border-radius: 5px;
+  min-height: 40px;
+  font-size: 12px;
+}
+.connections button:hover,
+.map-expand:hover {
+  background: #1e303b;
+  text-decoration: none;
+}
+.connections button:focus-visible,
+.connections input:focus-visible,
+.connections a:focus-visible,
+.connection-canvas:focus-visible,
+.node-directory summary:focus-visible {
+  outline: 2px solid #d6c58d;
+  outline-offset: 3px;
+}
+.connections [aria-pressed="true"] {
+  color: #f0dfab;
+  border-color: #ad985a;
+  background: #332d20;
+}
+.connection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.connection-toolbar .graph-query {
+  flex: 1;
+  width: 220px;
+  max-width: 420px;
+  padding: 8px 12px;
+}
+.connections input::placeholder {
+  color: #90a3a7;
+}
+.map-expand {
+  padding: 9px 10px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.connection-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 22px;
+}
+.connection-stage {
+  position: relative;
+  height: min(70vh, 780px);
+  min-height: 500px;
+  border: 1px solid #1e2b34;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b1117;
+}
+.connection-canvas {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+  touch-action: none;
+  outline-offset: -3px;
+}
+.connection-canvas:active {
+  cursor: grabbing;
+}
+.connection-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+}
+.connection-controls button {
+  min-width: 35px;
+  padding: 5px 9px;
+  background: #0d1720ed;
+}
+.connection-controls output {
+  min-width: 46px;
+  padding: 8px;
+  color: #9cafb1;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.connection-detail {
+  max-height: min(70vh, 780px);
+  overflow-y: auto;
+  padding: 2px 14px 2px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #354b55 transparent;
+}
+.connection-detail h2 {
+  margin: 4px 0 16px;
+  color: #eff1e9;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.connection-detail h3 {
+  font-size: 12px;
+  font-weight: 500;
+  color: #a6b9bc;
+  margin: 26px 0 12px;
+}
+.selected-kind {
+  color: #d6c58d;
+  font-size: 11px;
+}
+.node-definition {
+  color: #a0b3b8;
+  font-size: 13px;
+}
+.concept-reading {
+  font-size: 12px;
+  color: #9ecdc0;
+}
+.map-story {
+  padding: 17px 0;
+  border-bottom: 1px solid #22313a;
+}
+.map-story time {
+  display: block;
+  color: #8fa5ac;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.map-story > a {
+  color: #dde6e7;
+  font-weight: 550;
+  font-size: 14px;
+  line-height: 1.65;
+  display: block;
+}
+.map-story p {
+  color: #9cafb5;
+  font-size: 12px;
+  line-height: 1.75;
+  margin: 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.story-via {
+  color: #a0c5b4;
+  font-size: 11px;
+}
+.connection-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #95aab0;
+  font-size: 11px;
+  padding-top: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.connection-legend span[data-kind]::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: #bad0c6;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.connection-legend span[data-kind="concept"]::before {
+  width: 9px;
+  height: 9px;
+}
+.connection-legend span[data-kind="keyword"]::before {
+  width: 3px;
+  height: 3px;
+}
+.edge-count {
+  margin-left: auto;
+}
+.graph-status:empty {
+  display: none;
+}
+.graph-status,
+.graph-loading,
+.graph-fallback,
+.empty-news {
+  color: #a3b8bb;
+  font-size: 12px;
+}
+.graph-fallback {
+  padding: 32px;
+  max-width: 420px;
+}
+.graph-search-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.graph-search-results:not(:empty) {
+  padding-bottom: 16px;
+}
+.graph-search-results button {
+  text-align: left;
+}
+.related-node-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.related-node-links button {
+  font-size: 11px;
+  padding: 5px 9px;
+  min-height: 34px;
+}
+.node-directory {
+  margin-top: 20px;
+  border-top: 1px solid #22313a;
+  padding-top: 12px;
+  color: #94aeb4;
+  font-size: 12px;
+}
+.node-directory summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.node-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+  max-height: 310px;
+  overflow: auto;
+}
+.node-list button {
+  text-align: left;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.compact .connection-toolbar .graph-query {
+  width: 100%;
+  max-width: none;
+  flex-basis: 100%;
+}
+.compact .connection-layout {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+.compact .connection-stage {
+  height: 350px;
+  min-height: 0;
+}
+.compact .connection-detail {
+  max-height: 380px;
+  border-top: 1px solid #24343d;
+  margin-top: 18px;
+  padding: 18px 8px 0 0;
+}
+.compact[data-selected-node=""] .connection-detail {
+  display: none;
+}
+.compact .connection-legend {
+  gap: 10px;
+}
+.compact .node-directory {
+  margin-top: 10px;
+}
+@media (max-width: 1100px) {
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 28px;
+  }
+  .home .home-feed h3 {
+    font-size: 24px;
+  }
+  .home-map {
+    padding: 16px;
+  }
+  .connection-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 18px;
+  }
+}
+@media (max-width: 850px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+  .home-map {
+    position: static;
+    order: -1;
+  }
+  .home-map .connection-stage {
+    height: 280px;
+  }
+  .home .home-feed h3 {
+    font-size: 24px;
+  }
+  .connection-layout {
+    grid-template-columns: 1fr;
+  }
+  .connection-detail {
+    max-height: none;
+    padding-right: 0;
+  }
+  .connection-stage {
+    height: 55vh;
+    min-height: 360px;
+  }
+}
+@media (max-width: 550px) {
+  .site-header {
+    padding: 0 16px;
+  }
+  .site-header nav {
+    gap: 16px;
+    font-size: 14px;
+  }
+  .utilities {
+    gap: 12px;
+    font-size: 12px;
+  }
+  .map-page {
+    padding: 24px 16px 40px;
+  }
+  .map-page h1 {
+    font-size: 26px;
+  }
+  .connection-toolbar .graph-query {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .connections button,
+  .connections input {
+    min-height: 42px;
+  }
+  .connection-stage {
+    height: 420px;
+    min-height: 0;
+  }
+  .connection-legend {
+    gap: 12px;
+  }
+  .article-connections {
+    margin-top: 40px;
+    padding: 16px;
+  }
+  .compact .connection-stage {
+    height: 320px;
+  }
+  .connection-detail h2 {
+    font-size: 21px;
+  }
+  .node-list {
+    grid-template-columns: 1fr;
   }
 }
