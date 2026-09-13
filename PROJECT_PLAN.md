@@ -15,7 +15,7 @@ RSS retains existing issue GUIDs and URLs, but includes readable headlines and o
 1. Complete — Implement topic/observation validation and time-bounded aggregation. Seed a small, explicitly retrospective set from saved primary-source coverage. Preserve Editions, Archive and concept definitions.
 2. Complete — Generate cumulative topic pages, briefing summaries, GitHub Markdown and full briefing RSS. Keep source links and stable issue identity. Make reruns idempotent.
 3. Complete — Remove news embeds; implement readable news, briefing hub and topic history views. Verify desktop/mobile reading, navigation, filters, RSS and graph separation.
-4. In progress — Update daily authoring instructions and the existing 08:00 prompt. Run focused tests, full tests, TypeScript, build/link/feed checks, then publish and verify live Pages and GitHub summaries. No paid API or new job.
+4. Complete — Update daily authoring instructions and the existing 08:00 prompt. Run focused tests, full tests, TypeScript, build/link/feed checks, then publish and verify live Pages and GitHub summaries. No paid API or new job.
 
 ## Risks to check
 
@@ -25,4 +25,4 @@ RSS retains existing issue GUIDs and URLs, but includes readable headlines and o
 - Projection must continue to exclude source editions, raw observation/topic source files and operational folders; public Git remains public.
 - Automated publication must include the generated GitHub summaries and reject a missing latest trend review once topics are configured.
 
-Local checks: 204 tests, TypeScript, skill validation and 4 skill tests passed. Web validation: 192 HTML, 190 search entries, 16 map terms/17 edges, 42 articles, RSS 40. Preserved 163 source/archive/knowledge files. Desktop and 390px browser checks passed. Deployment verification remains before completion.
+Local checks: 204 tests, TypeScript, skill validation and 4 skill tests passed. Web validation: 192 HTML, 190 search entries, 16 map terms/17 edges, 42 articles, RSS 40. Preserved 163 source/archive/knowledge files. Desktop and 390px browser checks passed. Published and verified via successful Actions 34737722632 (9120edf). Live Pages, RSS and GitHub summaries match the local build; asset 4f4a9cb22f16.

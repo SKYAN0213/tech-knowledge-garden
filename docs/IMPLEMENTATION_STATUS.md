@@ -29,4 +29,8 @@
 
 `main` 변경은 [Publish Garden](https://github.com/SKYAN0213/tech-knowledge-garden/actions/workflows/publish.yaml)이 검사하고 GitHub Pages로 배포한다. 발행은 Actions 성공과 실제 공개 페이지·RSS·GitHub 요약을 확인한 뒤 판정한다. 로컬 검증과 실제 발행은 구분한다.
 
+이번 변경은 `f540173`에 구현됐고, 범위 정리 커밋 `9120edf`의 [배포 34737722632](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34737722632)가 성공했다. 공개 경로 17개의 정상·제외 응답, RSS 40회, 전문 용어 16개·연결 17개, GitHub 요약 6개 표본을 확인했다. 공개 자산 `4f4a9cb22f16`와 요약 원문이 로컬 결과와 일치한다. 최신 원문 3개 중 GitHub 두 주소는 HTTP 200, OpenAI 주소는 자동 요청에 403이었지만 실제 브라우저에서 원문 제목·본문·게시일을 정상 확인했다. 기록은 `.local/briefing-redesign/live.json`과 `original-links.json`에 있다.
+
+동시에 작업 중이던 Drive 문서·스크립트 두 개가 구현 커밋에 섞여, 후속 커밋에서 최신 Git 트리에서 제외했다. 해당 로컬 파일을 보존했으며 중간 커밋 기록은 남아 있다.
+
 별도 AI API나 유료 서비스는 추가하지 않았다. GPT 조사는 기존 ChatGPT/Codex 사용량을 사용한다. 로컬 예약에는 Mac과 Codex 앱이 켜져 있어야 한다. 공개 저장소의 웹 출력 제외 파일도 공개 자료다.
