@@ -1,4 +1,5 @@
 import { articleReview, excludedEventIds, assertPublicArticles } from "./article-review.mjs"
+import { sourceDiversity } from "./source-diversity.mjs"
 import {
   applyEditorial,
   requireEditorial,
@@ -619,6 +620,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
             watchlist: JSON.parse(
               fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url), "utf8"),
             ),
+            discovery_sources: JSON.parse(
+              fs.readFileSync(
+                new URL("../data/research-source-channels.json", import.meta.url),
+                "utf8",
+              ),
+            ),
+            source_diversity: sourceDiversity(all, extractArticles, library.latest.date),
             research_policy: {
               theme_format: THEME_FORMAT,
               channels: ["기술·제품", "기업·운영"],

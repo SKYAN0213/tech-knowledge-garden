@@ -45,6 +45,14 @@
 
 {{SOURCE_REVIEWS}}
 
+각 검토에 출처 종류(기업/전문지/공시·IR/고객·공급망/협회·정책/연구/사업화), 발견 URL, 최종 근거 URL, 언어, 원문 발표일과 시각 근거, 실제 확인 시점, 판정을 남긴다. 발견 페이지와 원문을 구분하고 재전재가 동일 발표를 반복하는지 확인한다. `docs/SOURCE_DIVERSITY.md`의 현지어·명단 밖 탐색도 포함한다.
+
+## 출처 편중 점검
+
+{{SOURCE_DIVERSITY_AND_ADDITIONAL_DISCOVERY}}
+
+7일·30일 출처 분포, 각 분야·지역의 실제 조사 기록, 추가 탐색한 경로와 결과를 기록한다. 등록된 목록을 그대로 복사하여 조사 완료로 표시하지 않는다. 이 기록은 비공개 Research에만 보관한다.
+
 ## 누적 판단 검토
 
 {{PRIOR_COMPARISON_LIMITS_NEXT_CHECKS}}

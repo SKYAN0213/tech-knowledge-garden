@@ -1,0 +1,388 @@
+{
+  "schema_version": "research-source-channels/v1",
+  "policy": "docs/SOURCE_DIVERSITY.md",
+  "role": "Additional discovery routes; neither a source allowlist nor evidence of completed article review. Existing watchlist and all eight sectors remain active.",
+  "channels": [
+    {
+      "id": "irobotnews",
+      "name": "로봇신문",
+      "kind": "industry-press",
+      "language": "ko",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.irobotnews.com/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "thelec",
+      "name": "디일렉",
+      "kind": "industry-press",
+      "language": "ko",
+      "sectors": ["반도체·컴퓨팅", "에너지·기후기술", "로봇·제조"],
+      "url": "https://www.thelec.kr/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "kipost",
+      "name": "KIPOST",
+      "kind": "industry-press",
+      "language": "ko",
+      "sectors": ["반도체·컴퓨팅", "에너지·기후기술", "로봇·제조"],
+      "url": "https://www.kipost.net/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "etnews",
+      "name": "전자신문",
+      "kind": "industry-press",
+      "language": "ko",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "url": "https://www.etnews.com/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "robot-report",
+      "name": "The Robot Report",
+      "kind": "industry-press",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.therobotreport.com/category/industrial-robots/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "fetch-failed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "fanuc-ja",
+      "name": "FANUC 일본어 발표",
+      "kind": "company",
+      "language": "ja",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "fanuc-en",
+      "name": "FANUC 영문 발표",
+      "kind": "company",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.fanuc.co.jp/en/profile/pr/newsrelease/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "search-listed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "fanuc-ir",
+      "name": "FANUC 결산 자료",
+      "kind": "filing-ir",
+      "language": "ja",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.fanuc.co.jp/ja/ir/announce/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "kuka-en",
+      "name": "KUKA Press",
+      "kind": "company",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.kuka.com/en-us/company/press",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "kuka-de",
+      "name": "KUKA Presse",
+      "kind": "company",
+      "language": "de",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.kuka.com/de-de/unternehmen/presse",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "search-listed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "abb-robotics",
+      "name": "ABB Robotics",
+      "kind": "company",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.abb.com/global/en/areas/robotics",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "hd-robotics",
+      "name": "HD현대로보틱스",
+      "kind": "company",
+      "language": "ko",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.hd-hyundairobotics.com/ko/main",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "search-listed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "ifr",
+      "name": "International Federation of Robotics",
+      "kind": "industry-body",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://ifr.org/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "a3",
+      "name": "A3 Automation News",
+      "kind": "industry-body",
+      "language": "en",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.automate.org/automation-news-center/news",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "kind",
+      "name": "한국거래소 KIND",
+      "kind": "filing-ir",
+      "language": "ko",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "url": "https://kind.krx.co.kr/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "no-readable-body",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "dart",
+      "name": "DART",
+      "kind": "filing-ir",
+      "language": "ko",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "url": "https://dart.fss.or.kr/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "fetch-failed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "mit-robotics",
+      "name": "MIT News Robotics",
+      "kind": "research",
+      "language": "en",
+      "sectors": ["로봇·제조", "AI"],
+      "url": "https://news.mit.edu/topic/robotics",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "mit-startups",
+      "name": "MIT Technology Licensing Office",
+      "kind": "commercialization",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "url": "https://tlo.mit.edu/industry-entrepreneurs/startups",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "kaist-news",
+      "name": "KAIST News",
+      "kind": "research",
+      "language": "ko",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "url": "https://news.kaist.ac.kr/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "no-readable-body",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "arxiv-robotics",
+      "name": "arXiv Robotics",
+      "kind": "research",
+      "language": "en",
+      "sectors": ["로봇·제조", "AI"],
+      "url": "https://arxiv.org/list/cs.RO/recent",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "iea",
+      "name": "International Energy Agency",
+      "kind": "industry-body",
+      "language": "en",
+      "sectors": ["에너지·기후기술"],
+      "url": "https://www.iea.org/news",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "nih",
+      "name": "NIH News Releases",
+      "kind": "research",
+      "language": "en",
+      "sectors": ["바이오·의료기술"],
+      "url": "https://www.nih.gov/news-events/news-releases",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "nasa",
+      "name": "NASA News",
+      "kind": "research",
+      "language": "en",
+      "sectors": ["우주·기초과학"],
+      "url": "https://www.nasa.gov/news/recently-published/",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "read",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "cisa",
+      "name": "CISA Advisories",
+      "kind": "regulator",
+      "language": "en",
+      "sectors": ["사이버보안", "소프트웨어·클라우드"],
+      "url": "https://www.cisa.gov/news-events/cybersecurity-advisories",
+      "route_check": {
+        "date": "2026-09-14",
+        "method": "gpt-web",
+        "status": "fetch-failed",
+        "scope": "Entry page only; review individual dated originals before publication."
+      }
+    }
+  ]
+}
