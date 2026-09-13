@@ -27,7 +27,7 @@
 
 [뉴스 사이트](https://skyan0213.github.io/tech-knowledge-garden/) · [연결 지도](https://skyan0213.github.io/tech-knowledge-garden/knowledge-maps/ai-technology-knowledge-map) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/rss)
 
-`main`의 변경은 [Publish Garden](https://github.com/SKYAN0213/tech-knowledge-garden/actions/workflows/publish.yaml)이 검사하고 배포합니다. 이번 전문 용어 변경은 로컬 검증을 완료했으며 해당 커밋의 배포와 공개 페이지 확인을 이어 진행합니다. 공개 검증 결과는 `.local/learning-term-review/live.json`에 기록합니다.
+`main`의 변경은 [Publish Garden](https://github.com/SKYAN0213/tech-knowledge-garden/actions/workflows/publish.yaml)이 검사하고 배포합니다. 전문 용어 변경 커밋 `f96df97`의 [배포 실행 34735593588](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34735593588)이 성공했습니다. 공개 그래프의 용어 16개·연결 17개·기사 데이터와 자산 버전 `3e2e464e1db5`가 검증한 로컬 결과와 일치합니다. 홈·지도·새 설명 문서 4개·기사·최신 브리핑·Worker·RSS는 200, 제외한 Archive·Editions는 404였습니다. 공개 브라우저에서도 일반어 가격의 검색 결과 없음, KV 캐시 선택 → 정의 → 실제 기사 열기 → 지도 복귀를 확인했습니다. 콘솔 오류·경고는 없었습니다. 공개 검증 기록은 `.local/learning-term-review/live.json`에 있습니다.
 
 이전 버전의 배포 기록: 독자 화면 정리는 `7136cb3`의 [34726929373](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34726929373), WebGL 엔진 도입은 `06ab001`의 [34732605328](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34732605328), 후속 문서·대체 화면 정리는 `05b03bc`의 [34732837878](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/34732837878)에서 성공했습니다. 당시 166개 노드 검증은 새 전문 용어 선별의 검증과 구분합니다.
 
