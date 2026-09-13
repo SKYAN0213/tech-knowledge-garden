@@ -68,7 +68,7 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 
 - 한계: 일부 고객 대상 공개 미리보기이며 탐지 패턴과 우회 권한에 따라 범위가 달라진다.
 - 다음 확인: 최신 커밋의 검사 완료, 경보 처리, 우회·패턴 설정.
-- [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/) · [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|당일 브리핑]]
+- [[News/0ef68bd8a0105dab|GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/) · [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="permissions-agent"></span>
@@ -81,7 +81,7 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 
 - 한계: 발표에 명시된 Copilot 앱·CLI·Agent Host 사용 세션 범위다.
 - 다음 확인: 실제 조직 정책과 사용자 설정 충돌 시 차단 결과.
-- [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/) · [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|당일 브리핑]]
+- [[News/faa37362568657fb|Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/) · [[Briefings/2026/09/2026-09-10_0801_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="permissions-workflow"></span>

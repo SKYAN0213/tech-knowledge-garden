@@ -8,99 +8,131 @@ coverage_start: 2026-09-09T08:02:08+09:00
 coverage_end: 2026-09-10T08:01:46+09:00
 source_count: 3
 new_items_count: 3
-linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
-    Operating Model]]"
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
-    Supply Chain Security]]"
+linked_knowledge_notes: []
 knowledge_notes_created: []
-knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
-    Operating Model]]"
-  - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
-    Supply Chain Security]]"
+knowledge_notes_updated: []
 article_reviews:
-  - title: Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다
+  - title: Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어
     event_id: 333ccaae81484d3a
-    review_status: unreviewed
+    review_status: verified
+    published_at: 2026-09-09
+    reviewed_at: 2026-09-14
     concept_ids: []
-  - title: Copilot, 조직 정책으로 에이전트 작업 권한을 고정
+  - title: Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리
     event_id: faa37362568657fb
-    review_status: unreviewed
+    review_status: verified
+    published_at: 2026-09-09
+    reviewed_at: 2026-09-14
     concept_ids: []
-  - title: 비밀정보 경보를 해결해야 PR을 병합하는 규칙
+  - title: GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개
     event_id: 0ef68bd8a0105dab
-    review_status: unreviewed
+    review_status: verified
+    published_at: 2026-09-09
+    reviewed_at: 2026-09-14
     concept_ids: []
+editorial_format: six-w/v1
+theme_format: news-themes/v1
+briefing_format: sector-five/v1
+headlines:
+  - Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어
+  - Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리
+  - GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개
+article_records:
+  - title: Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어
+    kind: 사건 뉴스
+    region: 해외
+    lead: OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고
+      업로드·다운로드와 브라우징 기록을 관리할 수 있다. 회사는 업무 시스템 접근 범위를 제한한 구성에서 시작할 수 있도록 했으며,
+      Enterprise 접근은 출시 당시 기본 비활성화 상태로 계약에 따라 관리자가 활성화한다고 밝혔다.
+    facts:
+      who: OpenAI
+      when: 2026-09-09 발표
+      where: OpenAI 공식 웹사이트
+      what: 기업용 Astra의 접근 제한·파일 전송·브라우징 기록 관리 기능 소개
+      how: 관리자 통제로 허용 웹사이트·앱과 업로드·다운로드를 설정
+      why: 업무 시스템 접근 범위를 조직이 단계적으로 정하도록 지원
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리
+    kind: 사건 뉴스
+    region: 해외
+    lead: GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 셸 명령, 파일 읽기·편집, 네트워크 도메인의
+      이용 권한을 중앙에서 정하는 기능을 정식 제공한다고 발표했다. 작업별로 차단·사람 승인·자동 허용을 지정할 수 있으며,
+      사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를
+      사용하는 VS Code 세션이다.
+    facts:
+      who: GitHub
+      when: 2026-09-09 발표
+      where: GitHub 공식 웹사이트
+      what: Copilot 에이전트 작업의 조직 관리 권한 정식 제공
+      how: 셸·파일·네트워크 작업에 차단·승인·자동 허용 정책 적용; 조직 제한 우선
+      why: 에이전트 작업을 끄지 않고 민감한 작업의 권한을 세분화
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개
+    kind: 사건 뉴스
+    region: 해외
+    lead: GitHub는 9월 9일 비밀정보 경보가 남아 있는 풀 리퀘스트(PR)의 병합을 차단하는 저장소 규칙을 공개 미리보기로 제공한다고
+      발표했다. GitHub Secret Protection 또는 Advanced Security 고객이 규칙을 켜면 최신 커밋의 비밀정보
+      검사가 완료되고 해당 PR이 도입한 비밀정보의 열린 경보가 없어야 병합할 수 있다. 기본 탐지 대상은 서비스 제공자 패턴이며, 사용자
+      정의·일반 패턴은 추가로 설정할 수 있고 우회 권한이 없는 개발자는 경보를 해결해야 차단을 해제할 수 있다.
+    facts:
+      who: GitHub
+      when: 2026-09-09 발표
+      where: GitHub 공식 웹사이트
+      what: PR 병합 단계의 비밀정보 검사 규칙 공개 미리보기
+      how: 최신 커밋 검사 완료와 PR 도입 비밀정보의 열린 경보 여부 확인
+      why: 푸시 단계 보호가 잡지 못하거나 설정상 검사하지 않은 경우에도 병합 단계 보호 추가
+    papers: []
+    relations: []
+    topic_ids: []
 ---
 
 # 이번 호 표지
 
-> [!abstract] 2026년 9월 10일 · 데일리 Tech & AI
-> **한 줄 편집:** 업무 AI의 접근 권한과 코드 병합 조건을 관리자가 구체적으로 정한다.
-> **취재 범위:** 2026-09-09 08:02:08 → 2026-09-10 08:01:46 KST
-> **이번 호:** 새 항목 3건 · 원문 3개 · 새 개념 0개 · 갱신 개념 3개
+> **한 줄 편집:** Astra의 기업 접근 관리와 GitHub의 실행·병합 권한 기능
 
 # 차례
 
-| 섹션 | 상태 |
-|---|---|
-| 커버 스토리 | 커버 |
-| 뉴스 데스크 | 1건 |
-| 리서치 노트 | 없음 |
-| 도구 상자 | 1건 |
-| 흐름 읽기 | 1건 |
-| 오늘의 적용 | 2건 |
-| 개념 색인 | 3건 |
+뉴스 데스크
 
 # 커버 스토리
 
-## Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다
-
-> [!summary] 30초 요약
-> OpenAI가 기업용 Astra의 접근 통제와 활성화 조건을 설명했다. 이번 호는 기존 모델 출시를 재보도하지 않고 새 기업 운영 안내에 초점을 맞춘다. [S1]
-
-### 무엇이 바뀌었나
-
-9월 9일 11:00 UTC 게시된 안내다. 새 관리자 통제로 허용 웹사이트·데스크톱 앱, 업로드·다운로드와 브라우징 기록을 관리할 수 있다고 밝혔다. Enterprise 접근은 출시 시 기본 비활성화이며 계약에 따라 관리자가 활성화한다. [S1]
-
-### 왜 중요한가
-
-**분석:** 모델을 사용할 수 있는지와 업무 시스템에 어디까지 접근시킬지는 별도의 운영 결정이다.
-
-### 독자에게 미치는 영향
-
-기업 관리자는 좁은 접근 범위에서 시작할 수 있다. 발표는 승인 정책과 자동 도구 호출 검토도 설명한다. [S1]
-
-### 아직 모르는 것
-
-내부 안전성 평가 결과는 회사 측 측정이며, 개별 조직의 무사고 운영을 보증하지 않는다. 실제 계정의 통제 제공 여부와 정책 적용 결과는 이번 취재에서 시험하지 않았다.
-
-### 다음에 볼 것
-
-시험 계정에서 허용·차단 앱과 파일 전송 정책이 실제로 적용되는지 확인한다.
-
-### 개념 더 읽기
-
-[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]
-
-**근거:** [S1]
+없음
 
 # 뉴스 데스크
 
-## Copilot, 조직 정책으로 에이전트 작업 권한을 고정
+## Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어
 
-**핵심:** 9월 9일 20:08:14 UTC 발표. Business·Enterprise 관리자가 셸 명령, 파일 읽기·편집, 네트워크 도메인을 차단·사람 승인·자동 허용으로 제어한다. 사용자·워크스페이스 설정과 과거 승인이 관리 제한을 완화할 수 없다. [S2]
+**분야:** AI
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** OpenAI
 
-**의미 — 분석:** 작업별 권한을 개인의 승인 습관에만 맡기지 않고 조직 정책으로 집행할 수 있다.
+OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고 업로드·다운로드와 브라우징 기록을 관리할 수 있다. 회사는 업무 시스템 접근 범위를 제한한 구성에서 시작할 수 있도록 했으며, Enterprise 접근은 출시 당시 기본 비활성화 상태로 계약에 따라 관리자가 활성화한다고 밝혔다. [S1]
 
-**확인할 점:** 정식 제공 범위는 Copilot 앱·CLI와 Agent Host를 쓰는 VS Code 세션이다. 모든 IDE에 동일하게 적용된다고 확대하지 않는다. [S2]
+## Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리
 
-**개념:** [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-**근거:** [S2]
+GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 셸 명령, 파일 읽기·편집, 네트워크 도메인의 이용 권한을 중앙에서 정하는 기능을 정식 제공한다고 발표했다. 작업별로 차단·사람 승인·자동 허용을 지정할 수 있으며, 사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를 사용하는 VS Code 세션이다. [S2]
+
+## GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개
+
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 9월 9일 비밀정보 경보가 남아 있는 풀 리퀘스트(PR)의 병합을 차단하는 저장소 규칙을 공개 미리보기로 제공한다고 발표했다. GitHub Secret Protection 또는 Advanced Security 고객이 규칙을 켜면 최신 커밋의 비밀정보 검사가 완료되고 해당 PR이 도입한 비밀정보의 열린 경보가 없어야 병합할 수 있다. 기본 탐지 대상은 서비스 제공자 패턴이며, 사용자 정의·일반 패턴은 추가로 설정할 수 있고 우회 권한이 없는 개발자는 경보를 해결해야 차단을 해제할 수 있다. [S3]
 
 # 리서치 노트
 
@@ -108,40 +140,19 @@ article_reviews:
 
 # 도구 상자
 
-## 비밀정보 경보를 해결해야 PR을 병합하는 규칙
-
-**프로젝트·쉬운 설명:** GitHub 저장소 ruleset에 비밀정보 검사 조건이 추가됐다. PR의 최신 커밋 검사가 완료되고 해당 PR이 도입한 비밀정보의 열린 경보가 없어야 병합할 수 있다. [S3]
-
-**상태:** 9월 9일 17:14:02 UTC 발표. Secret Protection 또는 Advanced Security 고객 대상 공개 미리보기다.
-
-**용도:** 코드 푸시 단계 보호에 PR 병합 단계 검사를 더한다.
-
-**한계:** 우회 권한과 탐지 패턴 설정을 확인해야 한다. 기본은 공급자 패턴이며 사용자 정의·일반 패턴은 추가 설정 대상이다. 경보 없음이 모든 비밀정보의 부재를 보증하지 않는다. 스타 추세는 추세 확인 불가.
-
-**개념:** [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-**공식 변경 문서·근거:** [S3]
+없음
 
 # 흐름 읽기
 
-> [!info] 확인된 사실
-> Astra 기업 안내는 접근 통제를, Copilot은 중앙 권한 정책을, GitHub ruleset은 병합 전 검사 조건을 제시했다. [S1], [S2], [S3]
-
-> [!tip] 분석
-> 세 변화는 각각 도구 접근, 작업 실행, 코드 병합에서 정책을 적용한다. 한 단계의 승인만으로 이후 단계까지 검증됐다고 보지 않는 운영 설계에 도움이 된다.
+없음
 
 # 오늘의 적용
 
-- **대상:** Copilot 관리자. **행동:** 시험 팀에서 필요한 명령·파일·도메인의 권한을 설정하고 차단 사례를 확인한다. **가드레일:** 지원 클라이언트에서 먼저 검증한다. [S2]
-- **대상:** 저장소 관리자. **행동:** 시험 저장소의 ruleset에서 비밀정보 검사 규칙과 우회 대상을 검토한다. **가드레일:** 공개 미리보기이며 탐지 범위가 설정에 좌우됨을 기록한다. [S3]
+없음
 
 # 개념 색인
 
-| 개념 | 이 기사에서 필요한 이유 | 문서 상태 |
-|---|---|---|
-| [[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]] | 모델 접근과 업무 자원 통제를 함께 설계 | 기존 concept 갱신 |
-| [[Knowledge/AI Systems/AI Agent Security|AI Agent Security]] | 작업별 권한과 정책 우선순위 이해 | 기존 concept 갱신 |
-| [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]] | 출하 경로에 병합 전 검사 조건 추가 | 기존 concept 갱신 |
+없음
 
 # Source List
 

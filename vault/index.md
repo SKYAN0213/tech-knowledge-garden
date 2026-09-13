@@ -36,9 +36,9 @@ NASA는 9월 13일 오전 8시 3분(미국 산악 하계시간) 뉴멕시코주 
 - [[News/688d14b85e07a8db|GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원]] · 2026-09-11
 - [[News/b8a75fb67d817922|OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공]] · 2026-09-11
 - [[News/b32e9b8471353987|OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시]] · 2026-09-11
-- [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · 2026-09-10
-- [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · 2026-09-10
-- [[News/333ccaae81484d3a|Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다]] · 2026-09-10
+- [[News/0ef68bd8a0105dab|GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개]] · 2026-09-10
+- [[News/faa37362568657fb|Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리]] · 2026-09-10
+- [[News/333ccaae81484d3a|Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어]] · 2026-09-10
 - [[News/33eecf1d106431d9|Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원]] · 2026-09-09
 - [[News/5024ef0cc7b0b963|GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
 - [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]] · 2026-09-09
