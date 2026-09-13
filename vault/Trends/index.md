@@ -1,7 +1,7 @@
 ---
 title: 주간 흐름
 type: index
-date: 2026-09-13
+date: 2026-09-14
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,6 +11,7 @@ generated_by: tech-knowledge-garden
 
 매일의 소식을 개념별로 연결해 변화가 쌓이는 방향을 살펴봅니다.
 
+- [[Trends/2026-09-14|2026-09-14 주간 관측]]
 - [[Trends/2026-09-07|2026-09-07 주간 관측]]
 - [[Trends/2026-08-31|2026-08-31 주간 관측]]
 - [[Trends/2026-08-24|2026-08-24 주간 관측]]

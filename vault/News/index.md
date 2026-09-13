@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-09-13
+date: 2026-09-14
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,8 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/845ee65994660acf|NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험]] · 2026-09-14
+- [[News/18ebc7c21cf04849|삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진]] · 2026-09-14
 - [[News/f5b7434d849eacf1|Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리]] · 2026-09-13
 - [[News/28ba300194033bae|VS Code Agents 전용 창의 사용량을 별도로 집계]] · 2026-09-13
 - [[News/46fcf5bb7b99520f|OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리]] · 2026-09-13

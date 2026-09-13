@@ -2,7 +2,7 @@
 title: AI 사용량과 성과를 분리해 측정
 type: briefing-topic
 topic_id: evaluation
-date: 2026-09-13
+date: 2026-09-14
 description: 도입·활동 지표와 결과의 정확성·사람 개입량은 다른 질문에 답한다. 사용량, 자동 종료된 댓글, 최종 성공을 하나의 품질
   점수로 합치기 전에 각 지표의 판정 범위를 정해야 한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/evaluation.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 도입·활동 지표와 결과의 정확성·사람 개입량은 다른 질문에 답한다. 사용량, 자동 종료된 댓글, 최종 성공을 하나의 품질 점수로 합치기 전에 각 지표의 판정 범위를 정해야 한다.
 
-2026-09-13까지 서로 다른 원문 4건 · 3일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-14까지 서로 다른 원문 4건 · 3일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
