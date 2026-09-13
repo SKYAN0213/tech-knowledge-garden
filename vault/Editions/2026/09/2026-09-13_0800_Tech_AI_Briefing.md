@@ -4,84 +4,140 @@ type: briefing
 schema_version: tech-ai-magazine/v2
 date: 2026-09-13
 timezone: Asia/Seoul
-coverage_start: "2026-09-11T08:00:52+09:00"
-coverage_end: "2026-09-13T08:01:40+09:00"
+coverage_start: 2026-09-11T08:00:52+09:00
+coverage_end: 2026-09-13T08:01:40+09:00
 source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
-  - "[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
+  - "[[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]"
 knowledge_notes_created: []
-knowledge_notes_updated:
-  - "[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
+knowledge_notes_updated: []
+editorial_format: six-w/v1
+theme_format: news-themes/v1
+briefing_format: sector-five/v1
+headlines:
+  - OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리
+  - VS Code Agents 전용 창의 사용량을 별도로 집계
+  - Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리
+article_records:
+  - title: OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리
+    kind: 사건 뉴스
+    region: 해외
+    lead: OpenAI는 9월 11일 온라인 저장소 서비스 Habitat의 확장 경험을 공개했다. 회사에 따르면 엔지니어 2명이 Codex와
+      GPT-5.5를 이용해 2026년 2분기에 서비스를 Rust로 재작성했으며, 발표 당시 운영 요청의 95%를 처리하고 있었다.
+      OpenAI는 자사 측정에서 Python 버전 대비 CPU 효율 6배, 메모리 효율 15배를 기록했다고 밝혔다.
+    facts:
+      who: OpenAI
+      when: 2026-09-11 발표
+      where: 공식 기술 블로그
+      what: Habitat의 Rust 재작성과 운영 경험 공개
+      how: 엔지니어 2명이 Codex와 GPT-5.5를 이용해 2026년 2분기에 재작성
+      why: 제품 개발과 안정성을 우선해 Python 서비스로 분리한 뒤 자원 효율 개선
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: VS Code Agents 전용 창의 사용량을 별도로 집계
+    kind: 사건 뉴스
+    region: 해외
+    lead: GitHub는 9월 11일 기업·조직의 Copilot 사용량 보고서에 VS Code Agents 전용 창의 이용 지표를 추가했다.
+      1일·28일 보고서에서 이용자 수, 세션 수, 메시지 수 등을 확인할 수 있다. 일반 편집기 창의 Agent Mode 지표와는 별도로
+      집계한다.
+    facts:
+      who: GitHub
+      when: 2026-09-11 발표
+      where: 공식 기술 블로그
+      what: Copilot 사용량 보고서에 VS Code Agents 창 지표 추가
+      how: 1일·28일 기업·조직 보고서에 사용자·세션·메시지 집계 제공
+      why: Agents 전용 창의 사용 현황 파악
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리
+    kind: 사건 뉴스
+    region: 해외
+    lead: GitHub는 9월 11일 Copilot 코드 리뷰에서 개발자가 수정한 내용을 다시 검토하고, 해결된 자체 댓글을 자동으로 닫는
+      기능을 발표했다. 제안된 코드를 적용할 때는 변경 내용에 맞는 커밋 메시지도 생성한다. 리뷰에는 빌드·테스트 등에 사용할 셸 도구가
+      확대됐고, Lite 단계는 여러 에이전트의 결과를 종합한다.
+    facts:
+      who: GitHub
+      when: 2026-09-11 발표
+      where: 공식 기술 블로그
+      what: 해결된 Copilot 리뷰 댓글 자동 정리와 커밋 메시지 생성
+      how: 후속 커밋 재검토, Copilot SDK 셸 도구와 Lite 다중 에이전트 활용
+      why: 남은 검토 의견에 집중하도록 지원
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리
+    event_id: 46fcf5bb7b99520f
+    review_status: verified
+    published_at: 2026-09-11
+    reviewed_at: 2026-09-13
+    concept_ids:
+      - latency-percentiles
+  - title: VS Code Agents 전용 창의 사용량을 별도로 집계
+    event_id: 28ba300194033bae
+    review_status: verified
+    published_at: 2026-09-11
+    reviewed_at: 2026-09-13
+    concept_ids: []
+  - title: Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리
+    event_id: f5b7434d849eacf1
+    review_status: verified
+    published_at: 2026-09-11
+    reviewed_at: 2026-09-13
+    concept_ids: []
 ---
 
 # 이번 호 표지
 
-> [!abstract] 2026년 9월 13일 · 데일리 Tech & AI
-> **한 줄 편집:** AI 운영의 품질은 느린 요청, 리뷰 결과, 사용량을 나누어 봐야 드러난다.
-> **취재 범위:** 2026-09-11 08:00:52 → 2026-09-13 08:01:40 KST
-> **이번 호:** 새 항목 3건 · 원문 3개 · 새 개념 0개 · 갱신 개념 2개
+> **한 줄 편집:** OpenAI의 저장소 재작성과 GitHub 개발 도구 업데이트
 
 # 차례
 
-| 섹션 | 상태 |
-|---|---|
-| 커버 스토리 | 커버 |
-| 뉴스 데스크 | 1건 |
-| 리서치 노트 | 없음 |
-| 도구 상자 | 1건 |
-| 흐름 읽기 | 1건 |
-| 오늘의 적용 | 2건 |
-| 개념 색인 | 2건 |
+커버 스토리 · 뉴스 데스크
 
 # 커버 스토리
 
-## OpenAI가 공개한 저장소 확장 경험: 평균보다 느린 요청을 추적한다
+## OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리
 
-> [!summary] 30초 요약
-> OpenAI가 온라인 저장소 계층 Habitat의 운영 경험을 공개했다. 데이터베이스가 빨라도 응답을 처리할 실행 순서를 기다리면 사용자 요청은 느려질 수 있다. [S1]
+**분야:** 소프트웨어·클라우드
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 성능 개선
+**기업·기관:** OpenAI
 
-### 무엇이 바뀌었나
+OpenAI는 9월 11일 온라인 저장소 서비스 Habitat의 확장 경험을 공개했다. 회사에 따르면 엔지니어 2명이 Codex와 GPT-5.5를 이용해 2026년 2분기에 서비스를 Rust로 재작성했으며, 발표 당시 운영 요청의 95%를 처리하고 있었다. OpenAI는 자사 측정에서 Python 버전 대비 CPU 효율 6배, 메모리 효율 15배를 기록했다고 밝혔다. [S1]
 
-9월 11일 공개된 기술 글이다. 새 저장소 제품 출시가 아니라 내부 설계·장애 대응 경험의 공개다. Python 서비스에서 이벤트 루프 대기와 연결 재사용 때문에 일부 요청이 오래 지연된 사례를 설명한다. 설정 갱신 시점을 분산하고 연결 풀의 재사용 순서를 조정한 대응도 소개했다. [S1]
+Habitat은 여러 제품의 배포를 조율해야 했던 클라이언트 라이브러리에서 독립 서비스로 전환됐다. Python 운영 과정에서는 이벤트 루프의 실행 대기를 측정하고, 설정 갱신 시점을 분산하며, 연결 재사용 순서를 조정했다. [S1]
 
-### 왜 중요한가
-
-**분석:** 평균 응답 시간만으로는 일부 사용자가 겪는 긴 대기를 놓친다. 느린 요청의 실행 기록과 프로세스별 부하를 함께 확인해야 병목을 좁힐 수 있다.
-
-### 독자에게 미치는 영향
-
-비동기 서버 운영자는 데이터베이스 소요 시간과 이벤트 루프 대기를 분리해 측정할 참고 사례가 생겼다. 특정 라이브러리 설정을 그대로 복사할 근거는 아니다.
-
-### 아직 모르는 것
-
-Rust 전환 후 CPU 효율 6배·메모리 효율 15배라는 수치는 OpenAI 내부 보고다. 다른 서비스에서 같은 효과가 나는지 독립 검증하지 않았다. [S1]
-
-### 다음에 볼 것
-
-자체 부하 시험에서 p99 지연과 오류율이 함께 개선되는지 확인한다.
-
-### 개념 더 읽기
-
-[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]
-
-**근거:** [S1]
+[[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]
 
 # 뉴스 데스크
 
-## Copilot 사용량에 VS Code Agents 전용 창 지표 추가
+## VS Code Agents 전용 창의 사용량을 별도로 집계
 
-**핵심:** GitHub가 1일·28일 보고서에 전용 Agents 창의 활성 사용자, 세션·메시지 집계를 정식 제공한다. 사용자별 사용 여부도 선택 필드로 포함된다. [S3]
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-**의미 — 분석:** 도입 범위를 살필 수 있지만 사용량 증가는 작업 품질 개선의 증거가 아니다.
+GitHub는 9월 11일 기업·조직의 Copilot 사용량 보고서에 VS Code Agents 전용 창의 이용 지표를 추가했다. 1일·28일 보고서에서 이용자 수, 세션 수, 메시지 수 등을 확인할 수 있다. 일반 편집기 창의 Agent Mode 지표와는 별도로 집계한다. [S3]
 
-**확인할 점:** 편집기 창의 Agent Mode와 별도 지표다. 데이터가 없으면 필드가 생략되거나 null일 수 있으므로 0으로 바꾸지 않는다. 관련 열람 권한과 usage metrics 정책 활성화가 필요하다. [S3]
+해당 데이터가 없으면 필드가 생략되거나 null로 반환된다. [S3]
 
-**개념:** [[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]
 
-**근거:** [S3]
+## Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 9월 11일 Copilot 코드 리뷰에서 개발자가 수정한 내용을 다시 검토하고, 해결된 자체 댓글을 자동으로 닫는 기능을 발표했다. 제안된 코드를 적용할 때는 변경 내용에 맞는 커밋 메시지도 생성한다. 리뷰에는 빌드·테스트 등에 사용할 셸 도구가 확대됐고, Lite 단계는 여러 에이전트의 결과를 종합한다. [S2]
 
 # 리서치 노트
 
@@ -89,39 +145,19 @@ Rust 전환 후 CPU 효율 6배·메모리 효율 15배라는 수치는 OpenAI �
 
 # 도구 상자
 
-## Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리
-
-**프로젝트·쉬운 설명:** 후속 커밋이 지적을 해결하면 재검토 중 해당 댓글을 닫고, 수정 제안을 적용할 때 변경 내용에 맞는 커밋 메시지를 제안한다. [S2]
-
-**상태:** 9월 11일 공식 변경 공지. 리뷰 분석에는 에이전트 방화벽 뒤의 셸 도구가 추가됐고, Lite 수준도 여러 에이전트의 결과를 합친다. [S2]
-
-**용도:** 빌드·테스트·표적 스크립트 실행을 리뷰 근거에 활용한다.
-
-**한계:** 회사 실험의 고위험 지적당 대응 증가·비용 감소는 독립 평가가 아니다. 댓글 자동 종료가 결함 제거를 보증하지 않는다. 실제 저장소 적용과 계정별 동작은 미시험이다. 스타 추세는 추세 확인 불가.
-
-**개념:** [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]
-
-**공식 변경 문서·근거:** [S2]
+없음
 
 # 흐름 읽기
 
-> [!info] 확인된 사실
-> OpenAI는 요청 지연의 원인 분석을 공개했고, GitHub는 리뷰 실행 도구와 전용 창 사용량 지표를 확장했다. [S1], [S2], [S3]
-
-> [!tip] 분석
-> 운영 지연, 리뷰 판정, 도입량은 각각 다른 질문에 답한다. 한 숫자로 자동화 성과를 요약하기보다 어떤 사용자·작업·기간을 측정했는지 먼저 고정하는 편이 해석에 도움이 된다.
+없음
 
 # 오늘의 적용
 
-- **대상:** 비동기 서버 운영자. **행동:** 작은 부하 시험에서 p99와 이벤트 루프 대기·프로세스별 부하를 함께 기록한다. **가드레일:** 다른 시스템의 튜닝 값을 운영에 바로 이식하지 않는다. [S1]
-- **대상:** 개발팀 관리자. **행동:** Agents 창 집계의 결측을 보존하고, 자동 종료된 리뷰 지적 일부를 수정 코드·테스트와 대조한다. **가드레일:** 세션 수와 댓글 종료 수를 품질 점수로 대체하지 않는다. [S2], [S3]
+없음
 
 # 개념 색인
 
-| 개념 | 이 기사에서 필요한 이유 | 문서 상태 |
-|---|---|---|
-| [[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]] | 지연 분포·사용량의 집계 범위와 결측 구별 | 기존 concept 갱신 |
-| [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]] | 리뷰의 실행 근거와 실제 결함 해결 구별 | 기존 concept 갱신 |
+[[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]
 
 # Source List
 

@@ -6,6 +6,8 @@ date: 2026-08-27
 created: 2026-08-27
 updated: 2026-08-27
 event_id: 34e62ff4c7cf4def
+review_status: unreviewed
+concept_ids: []
 source_url: https://openai.com/index/hugging-face-incident-and-the-road-ahead/
 sources:
   - https://openai.com/index/hugging-face-incident-and-the-road-ahead/

@@ -42,7 +42,7 @@
 
 - 한계: OpenAI의 내부 운영 사례로 다른 서비스의 성능 개선을 보장하지 않는다.
 - 다음 확인: 자체 부하 시험의 p99와 오류율이 함께 개선되는지.
-- [OpenAI가 공개한 저장소 확장 경험: 평균보다 느린 요청을 추적한다](https://skyan0213.github.io/tech-knowledge-garden/news/46fcf5bb7b99520f) · [OpenAI 원문](https://openai.com/index/scaling-storage-one-billion-users-part-one/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
+- [OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리](https://skyan0213.github.io/tech-knowledge-garden/news/46fcf5bb7b99520f) · [OpenAI 원문](https://openai.com/index/scaling-storage-one-billion-users-part-one/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <a id="performance-bundle"></a>

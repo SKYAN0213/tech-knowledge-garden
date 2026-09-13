@@ -9,14 +9,33 @@ coverage_end: 2026-09-09T08:02:08+09:00
 source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
+article_reviews:
+  - title: OpenAI가 나비에–스토크스 문제의 증명안을 공개했다
+    event_id: 2c827cba158d2f26
+    review_status: unreviewed
+    concept_ids: []
+  - title: GHES 3.22 정식 출시, 폐쇄망 Copilot CLI는 기술 미리보기
+    event_id: 5024ef0cc7b0b963
+    review_status: unreviewed
+    concept_ids: []
+  - title: Dependabot, GitHub Packages 접근을 PAT 없이 다시 지원
+    event_id: 33eecf1d106431d9
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

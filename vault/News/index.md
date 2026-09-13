@@ -9,12 +9,12 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
-- [[News/f5b7434d849eacf1|Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리]] · 2026-09-13
-- [[News/28ba300194033bae|Copilot 사용량에 VS Code Agents 전용 창 지표 추가]] · 2026-09-13
-- [[News/46fcf5bb7b99520f|OpenAI가 공개한 저장소 확장 경험: 평균보다 느린 요청을 추적한다]] · 2026-09-13
-- [[News/688d14b85e07a8db|GitHub Actions, 캐시 읽기와 쓰기 권한을 명시]] · 2026-09-11
-- [[News/b8a75fb67d817922|GPT‑Live‑1, 듣고 말하는 음성 계층을 API로 제공]] · 2026-09-11
-- [[News/b32e9b8471353987|Agents API, 긴 작업의 실행 관리를 서비스로 제공]] · 2026-09-11
+- [[News/f5b7434d849eacf1|Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리]] · 2026-09-13
+- [[News/28ba300194033bae|VS Code Agents 전용 창의 사용량을 별도로 집계]] · 2026-09-13
+- [[News/46fcf5bb7b99520f|OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리]] · 2026-09-13
+- [[News/688d14b85e07a8db|GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원]] · 2026-09-11
+- [[News/b8a75fb67d817922|OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공]] · 2026-09-11
+- [[News/b32e9b8471353987|OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시]] · 2026-09-11
 - [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · 2026-09-10
 - [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · 2026-09-10
 - [[News/333ccaae81484d3a|Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다]] · 2026-09-10

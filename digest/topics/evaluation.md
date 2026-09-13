@@ -42,7 +42,7 @@
 
 - 한계: 필드 생략·null은 0이 아니며 편집기 Agent Mode와도 다른 집계다.
 - 다음 확인: 측정 권한·누락률을 확인한 뒤 동일 업무의 성공률과 나란히 비교.
-- [Copilot 사용량에 VS Code Agents 전용 창 지표 추가](https://skyan0213.github.io/tech-knowledge-garden/news/28ba300194033bae) · [GitHub 원문](https://github.blog/changelog/2026-09-11-add-vs-code-agents-to-copilot-usage-metrics/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
+- [VS Code Agents 전용 창의 사용량을 별도로 집계](https://skyan0213.github.io/tech-knowledge-garden/news/28ba300194033bae) · [GitHub 원문](https://github.blog/changelog/2026-09-11-add-vs-code-agents-to-copilot-usage-metrics/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <a id="evaluation-review"></a>
@@ -55,7 +55,7 @@
 
 - 한계: 댓글 종료가 결함 제거를 보증하지 않으며 회사 실험은 독립 평가가 아니다.
 - 다음 확인: 자동 종료된 지적의 실제 수정 여부와 결함 재발률.
-- [Copilot 코드 리뷰, 재검토 때 해결된 댓글 정리](https://skyan0213.github.io/tech-knowledge-garden/news/f5b7434d849eacf1) · [GitHub 원문](https://github.blog/changelog/2026-09-11-auto-resolution-and-analysis-updates-in-copilot-code-review/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
+- [Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리](https://skyan0213.github.io/tech-knowledge-garden/news/f5b7434d849eacf1) · [GitHub 원문](https://github.blog/changelog/2026-09-11-auto-resolution-and-analysis-updates-in-copilot-code-review/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-13_0800_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <a id="evaluation-research"></a>

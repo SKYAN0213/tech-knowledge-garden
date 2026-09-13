@@ -9,12 +9,23 @@ coverage_end: 2026-09-08T08:01:15+09:00
 source_count: 2
 new_items_count: 2
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
   - "[[Knowledge/AI Systems/AI Medical Imaging|AI Medical Imaging]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
   - "[[Knowledge/AI Systems/AI Medical Imaging|AI Medical Imaging]]"
+article_reviews:
+  - title: 비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다
+    event_id: 1908c6027b69920e
+    review_status: unreviewed
+    concept_ids: []
+  - title: 초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다
+    event_id: 6e376a02cbe3c1ab
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

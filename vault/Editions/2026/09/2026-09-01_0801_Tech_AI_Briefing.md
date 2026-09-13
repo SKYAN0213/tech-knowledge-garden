@@ -9,12 +9,23 @@ coverage_end: 2026-09-01T08:01:37+09:00
 source_count: 2
 new_items_count: 2
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation Models]]"
+  - "[[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation
+    Models]]"
   - "[[Knowledge/AI Systems/AI Content Access|AI Content Access]]"
 knowledge_notes_created:
-  - "[[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation Models]]"
+  - "[[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation
+    Models]]"
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/AI Content Access|AI Content Access]]"
+article_reviews:
+  - title: TimesFM-3, 여러 시계열과 미래 단서를 한 번에 예측한다
+    event_id: 09a390c59d8969e0
+    review_status: unreviewed
+    concept_ids: []
+  - title: Google, 생성형 검색 노출 제어와 Search Console 인사이트를 전 세계로 확대
+    event_id: 89b2997d0ccfa477
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

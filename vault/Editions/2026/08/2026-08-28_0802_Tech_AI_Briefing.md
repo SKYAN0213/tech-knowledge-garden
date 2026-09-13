@@ -10,11 +10,26 @@ source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
+article_reviews:
+  - title: 시험 문제도 모델 가중치도 숨긴 채 평가한다
+    event_id: 7a7d38500197da71
+    review_status: unreviewed
+    concept_ids: []
+  - title: ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다
+    event_id: de0d8b99a9cda9c5
+    review_status: unreviewed
+    concept_ids: []
+  - title: 지리공간 예측의 데이터 찾기부터 모델 평가까지 자동화했다
+    event_id: 068cf5b2747d434f
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

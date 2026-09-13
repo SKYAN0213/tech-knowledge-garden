@@ -49,7 +49,7 @@ generated_by: tech-knowledge-garden
 
 - 한계: 공급자 평가이며 한국어·소음 조건의 품질과 전체 업무 비용은 따로 확인해야 한다.
 - 다음 확인: 음성 지연·침묵 처리·도구 실행을 포함한 전체 비용.
-- [[News/b8a75fb67d817922|GPT‑Live‑1, 듣고 말하는 음성 계층을 API로 제공]] · [OpenAI 원문](https://openai.com/index/introducing-gpt-live-1-in-the-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
+- [[News/b8a75fb67d817922|OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공]] · [OpenAI 원문](https://openai.com/index/introducing-gpt-live-1-in-the-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="runtime-service"></span>
@@ -62,7 +62,7 @@ generated_by: tech-knowledge-garden
 
 - 한계: 공개 베타이며 계정 호출·문맥 보존·실패율을 직접 시험하지 않았다.
 - 다음 확인: 같은 과제의 완료율·복구 결과·총비용 비교.
-- [[News/b32e9b8471353987|Agents API, 긴 작업의 실행 관리를 서비스로 제공]] · [OpenAI 원문](https://openai.com/index/introducing-the-agents-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
+- [[News/b32e9b8471353987|OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시]] · [OpenAI 원문](https://openai.com/index/introducing-the-agents-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="runtime-recovery"></span>

@@ -36,7 +36,7 @@
 
 - 한계: 공급자 평가이며 한국어·소음 조건의 품질과 전체 업무 비용은 따로 확인해야 한다.
 - 다음 확인: 음성 지연·침묵 처리·도구 실행을 포함한 전체 비용.
-- [GPT‑Live‑1, 듣고 말하는 음성 계층을 API로 제공](https://skyan0213.github.io/tech-knowledge-garden/news/b8a75fb67d817922) · [OpenAI 원문](https://openai.com/index/introducing-gpt-live-1-in-the-api/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-11_0800_tech_ai_briefing)
+- [OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공](https://skyan0213.github.io/tech-knowledge-garden/news/b8a75fb67d817922) · [OpenAI 원문](https://openai.com/index/introducing-gpt-live-1-in-the-api/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-11_0800_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <a id="runtime-service"></a>
@@ -49,7 +49,7 @@
 
 - 한계: 공개 베타이며 계정 호출·문맥 보존·실패율을 직접 시험하지 않았다.
 - 다음 확인: 같은 과제의 완료율·복구 결과·총비용 비교.
-- [Agents API, 긴 작업의 실행 관리를 서비스로 제공](https://skyan0213.github.io/tech-knowledge-garden/news/b32e9b8471353987) · [OpenAI 원문](https://openai.com/index/introducing-the-agents-api/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-11_0800_tech_ai_briefing)
+- [OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시](https://skyan0213.github.io/tech-knowledge-garden/news/b32e9b8471353987) · [OpenAI 원문](https://openai.com/index/introducing-the-agents-api/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-11_0800_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <a id="runtime-recovery"></a>

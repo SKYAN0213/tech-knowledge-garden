@@ -9,14 +9,31 @@ coverage_end: 2026-09-10T08:01:46+09:00
 source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
+article_reviews:
+  - title: Astra 기업 도입, 허용할 앱과 웹사이트부터 정한다
+    event_id: 333ccaae81484d3a
+    review_status: unreviewed
+    concept_ids: []
+  - title: Copilot, 조직 정책으로 에이전트 작업 권한을 고정
+    event_id: faa37362568657fb
+    review_status: unreviewed
+    concept_ids: []
+  - title: 비밀정보 경보를 해결해야 PR을 병합하는 규칙
+    event_id: 0ef68bd8a0105dab
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

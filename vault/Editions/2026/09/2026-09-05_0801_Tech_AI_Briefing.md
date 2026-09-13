@@ -9,12 +9,23 @@ coverage_end: 2026-09-05T08:01:29+09:00
 source_count: 3
 new_items_count: 2
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
   - "[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]"
 knowledge_notes_created:
   - "[[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]"
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+article_reviews:
+  - title: Astra의 Copilot 진입, 팀의 모델 허용 정책부터 확인할 때
+    event_id: cf45e2be25e062a0
+    review_status: unreviewed
+    concept_ids: []
+  - title: "GitHub star history API: 누가 눌렀는지 대신 언제 얼마나 늘었는지"
+    event_id: c96e7378059165d6
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

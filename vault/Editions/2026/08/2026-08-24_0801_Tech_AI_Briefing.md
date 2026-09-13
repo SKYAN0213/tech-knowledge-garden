@@ -11,6 +11,7 @@ new_items_count: 0
 linked_knowledge_notes: []
 knowledge_notes_created: []
 knowledge_notes_updated: []
+article_reviews: []
 ---
 
 # 이번 호 표지

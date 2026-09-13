@@ -10,11 +10,22 @@ source_count: 2
 new_items_count: 2
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+article_reviews:
+  - title: 에이전트 샌드박스가 실패를 성공처럼 보이지 않게 했다
+    event_id: bab0e1718e7e0799
+    review_status: unreviewed
+    concept_ids: []
+  - title: TensorRT Model Connect가 체크포인트와 C++ 실행 사이를 묶었다
+    event_id: a0eed0f62d0dd240
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

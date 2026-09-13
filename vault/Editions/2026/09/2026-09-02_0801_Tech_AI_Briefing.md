@@ -11,12 +11,30 @@ new_items_count: 4
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
   - "[[Knowledge/AI Systems/AI Agent Governance|AI Agent Governance]]"
-  - "[[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]]"
+  - "[[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented
+    Generation]]"
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
   - "[[Knowledge/AI Systems/AI Agent Governance|AI Agent Governance]]"
+article_reviews:
+  - title: OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정
+    event_id: f2694bfa96c49e91
+    review_status: unreviewed
+    concept_ids: []
+  - title: Anthropic EFS, 안전 모니터링 데이터는 고객 클라우드에 둔다
+    event_id: b085c7f1762bfee8
+    review_status: unreviewed
+    concept_ids: []
+  - title: ChatGPT for Healthcare, Epic 환자 기록과 9개 공공 데이터원을 연결
+    event_id: c0364833b41073ca
+    review_status: unreviewed
+    concept_ids: []
+  - title: Gemini Agentic Video Understanding
+    event_id: 5cd085900610be52
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

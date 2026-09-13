@@ -55,7 +55,7 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 
 - 한계: 낮은 신뢰 이벤트에 쓰기를 명시하면 기존 읽기 전용 기본값을 덮어쓸 수 있다.
 - 다음 확인: 신뢰 수준별 캐시 쓰기 허용과 경고 이후 실제 권한.
-- [[News/688d14b85e07a8db|GitHub Actions, 캐시 읽기와 쓰기 권한을 명시]] · [GitHub 원문](https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
+- [[News/688d14b85e07a8db|GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원]] · [GitHub 원문](https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 <span id="permissions-secrets"></span>

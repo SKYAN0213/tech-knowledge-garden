@@ -9,10 +9,25 @@ coverage_end: 2026-09-04T08:02:54+09:00
 source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
+article_reviews:
+  - title: npm trusted publishing, 한 패키지에 여러 OIDC 배포 경로를 열다
+    event_id: 322b7c88af36f3ac
+    review_status: unreviewed
+    concept_ids: []
+  - title: GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출
+    event_id: 473fea8bb1cbf9cb
+    review_status: unreviewed
+    concept_ids: []
+  - title: CodeQL 2.26.4
+    event_id: 13cebc4d5ec60b11
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

@@ -9,12 +9,25 @@ coverage_end: 2026-08-26T08:02:26+09:00
 source_count: 2
 new_items_count: 2
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+article_reviews:
+  - title: OpenAI의 첫 추론 칩, 속도와 전력 효율을 함께 겨눈다
+    event_id: b9406ae170bd9133
+    review_status: unreviewed
+    concept_ids: []
+  - title: 관리 대화가 조회에서 권한 있는 변경까지 이어진다
+    event_id: 33eae878317d27dc
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

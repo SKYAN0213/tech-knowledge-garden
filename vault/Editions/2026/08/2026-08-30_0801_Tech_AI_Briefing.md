@@ -13,6 +13,11 @@ linked_knowledge_notes:
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
+article_reviews:
+  - title: 에이전트 검증을 ‘통과 가능한 층’으로 나눈다
+    event_id: fd584d5c829c999d
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

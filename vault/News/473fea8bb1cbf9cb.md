@@ -6,6 +6,8 @@ date: 2026-09-04
 created: 2026-09-04
 updated: 2026-09-04
 event_id: 473fea8bb1cbf9cb
+review_status: unreviewed
+concept_ids: []
 source_url: https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/
 sources:
   - https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/

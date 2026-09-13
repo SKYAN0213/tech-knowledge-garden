@@ -10,13 +10,24 @@ source_count: 2
 new_items_count: 2
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
   - "[[Knowledge/AI Systems/Agent Observability|Agent Observability]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
   - "[[Knowledge/AI Systems/Agent Observability|Agent Observability]]"
+article_reviews:
+  - title: 연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다
+    event_id: 3784d7aba9718af9
+    review_status: unreviewed
+    concept_ids: []
+  - title: OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명
+    event_id: e0f75446731d598c
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

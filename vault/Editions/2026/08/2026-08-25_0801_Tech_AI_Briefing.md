@@ -9,10 +9,17 @@ coverage_end: 2026-08-25T08:01:47+09:00
 source_count: 2
 new_items_count: 1
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+article_reviews:
+  - title: 에이전트 추론, 칩 하나보다 전체 경로를 재설계한다
+    event_id: 19af374b78b369cd
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

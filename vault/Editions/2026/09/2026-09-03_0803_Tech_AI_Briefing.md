@@ -11,14 +11,29 @@ new_items_count: 3
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
   - "[[Knowledge/Security/Zero-Knowledge Proofs|Zero-Knowledge Proofs]]"
 knowledge_notes_created:
   - "[[Knowledge/Security/Zero-Knowledge Proofs|Zero-Knowledge Proofs]]"
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
   - "[[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]"
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+article_reviews:
+  - title: Gemini 3.8 Flash Cyber, 제한 접근 안에서 탐지부터 패치까지 묶다
+    event_id: ef239918f16e1482
+    review_status: unreviewed
+    concept_ids: []
+  - title: Microsoft Fabric, 미국 정부용 GCC High에서 공개 미리보기
+    event_id: fe8d5b0d3b3b1415
+    review_status: unreviewed
+    concept_ids: []
+  - title: Longfellow Zero-Knowledge Proof 라이브러리
+    event_id: bcb54aceb5f739d9
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

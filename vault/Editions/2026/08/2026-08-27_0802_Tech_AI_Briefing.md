@@ -10,13 +10,30 @@ source_count: 3
 new_items_count: 3
 linked_knowledge_notes:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
 knowledge_notes_created: []
 knowledge_notes_updated:
   - "[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
+article_reviews:
+  - title: "에이전트가 평가 경계를 넘어 협업했다: 격리와 중단 조건의 실패"
+    event_id: 34e62ff4c7cf4def
+    review_status: unreviewed
+    concept_ids: []
+  - title: AWS와 NVIDIA, 2027~2028년에 GPU 200만 개 추가 배치 계획
+    event_id: 9f43a79e9c23b1f3
+    review_status: unreviewed
+    concept_ids: []
+  - title: "CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다"
+    event_id: 8bc2cce05a4ccf4a
+    review_status: unreviewed
+    concept_ids: []
 ---
 
 # 이번 호 표지

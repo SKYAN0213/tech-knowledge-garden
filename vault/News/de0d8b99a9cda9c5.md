@@ -6,6 +6,8 @@ date: 2026-08-28
 created: 2026-08-28
 updated: 2026-08-28
 event_id: de0d8b99a9cda9c5
+review_status: unreviewed
+concept_ids: []
 source_url: https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf
 sources:
   - https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf
