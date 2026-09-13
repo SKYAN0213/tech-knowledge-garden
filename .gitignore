@@ -11,3 +11,4 @@ prof/
 .env.*
 quartz/cli/tui/dist/
 .turbo/
+__pycache__/

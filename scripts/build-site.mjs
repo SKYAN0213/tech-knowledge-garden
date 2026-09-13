@@ -13,6 +13,19 @@ try {
   feeds()
   fs.writeFileSync("public/knowledge-graph.json", JSON.stringify(buildGraph()))
   await finish("public", input)
+  if (fs.existsSync("data/drive-source-state.json")) {
+    const state = JSON.parse(fs.readFileSync("data/drive-source-state.json", "utf8"))
+    fs.writeFileSync(
+      "public/drive-sync.json",
+      JSON.stringify({
+        source: state.source,
+        transport: state.transport,
+        snapshot_sha256: state.snapshot_sha256,
+        source_files: state.source_files,
+        exported_at: state.exported_at,
+      }),
+    )
+  }
 } finally {
   fs.rmSync(input, { recursive: true, force: true })
 }

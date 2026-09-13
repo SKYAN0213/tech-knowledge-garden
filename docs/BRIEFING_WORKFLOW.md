@@ -29,3 +29,11 @@ Obsidian의 **다른 보관함 열기 → 폴더를 보관함으로 열기**에�
 ## 웹 검증
 
 `npm run build`는 임시 폴더에 독자용 콘텐츠만 투영하고 Quartz로 Obsidian 문법을 변환한 뒤 독자 화면을 생성한다. `node scripts/verify-site.mjs`는 모든 출력 링크·문단 ID·검색 범위·그래프 목적지·RSS를 검사한다. 지도는 Sigma.js의 WebGL과 ForceAtlas2 배치를 사용한다. 용어를 선택하면 명시적 기사 지정, 정확한 이름·별칭의 기사 등장, 확인된 이웃 용어의 기사 순서로 보여 준다. 일반 키워드는 기사 연결에 사용하지 않으며 이웃의 이웃까지 확장하지 않는다. 섹션명·안내·출처 목록은 제외하고 간접 연결의 경유 용어를 표시한다. 원본 뉴스 이력은 날짜별 기록이며 개념 정의의 재검토와 구분한다. `scripts/rebuild-knowledge-20260913.mjs`는 완료한 일회성 이전이므로 예약 실행에서 재실행하지 않는다.
+
+## Google Drive 최종 보관 (2026-09-13 사용자 지정)
+
+최종 자료 저장 위치는 Google Drive `Projects / Tech Knowledge`(폴더 ID `1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD`)다. 로컬 vault는 작업·검증·웹 생성용 사본으로 유지한다. 과거의 로컬 전용 저장 설명보다 이 규칙이 우선한다. 매회 `docs/DRIVE_STORAGE.md`를 읽고 원문 수집 상태·취재 기록·관련 노트를 함께 Drive에 업로드하고 원격 메타데이터를 검증한다. 로컬 저장만으로 작업 완료를 보고하지 않는다.
+
+## Drive 원본 우선 발행 순서
+
+발행 전 `docs/DRIVE_GITHUB_SYNC.md`를 읽는다. Drive 원고·개념을 먼저 저장·검증한 뒤 GitHub 사이트를 갱신하고 마지막에 WebsiteData를 갱신한다. 위 문서의 과거 로컬 선발행 순서보다 이 순서를 우선한다. 집필 전 Drive와 GitHub의 최신 변경을 작업 사본에 반영한다. 검증한 Drive 스냅샷과 로컬 원본이 다르면 `npm run publish`가 중단된다.

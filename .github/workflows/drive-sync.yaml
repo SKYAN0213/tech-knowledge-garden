@@ -1,0 +1,72 @@
+name: Sync Drive and Publish Garden
+on:
+  schedule:
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.DRIVE_EXPORT_URL != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    outputs:
+      changed: ${{ steps.pull.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -p 'test_drive_sync.py' -v
+      - name: Read and validate the authoritative Drive sources
+        id: pull
+        env:
+          DRIVE_EXPORT_URL: ${{ vars.DRIVE_EXPORT_URL }}
+        run: python scripts/pull-drive.py --apply
+      - uses: actions/setup-node@v6
+        if: steps.pull.outputs.changed == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - if: steps.pull.outputs.changed == 'true'
+        run: npm ci
+      - if: steps.pull.outputs.changed == 'true'
+        run: npm run test:garden
+      - if: steps.pull.outputs.changed == 'true'
+        run: npm run build
+      - if: steps.pull.outputs.changed == 'true'
+        run: node scripts/verify-site.mjs
+      - name: Preserve validated Drive changes in GitHub
+        if: steps.pull.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- vault data/catalog.json data/drive-source-state.json digest
+          git diff --cached --quiet || git commit -m 'Sync website source from Google Drive'
+          git push origin HEAD:main
+      - uses: actions/configure-pages@v5
+        if: steps.pull.outputs.changed == 'true'
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.pull.outputs.changed == 'true'
+        with:
+          path: public
+  deploy:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

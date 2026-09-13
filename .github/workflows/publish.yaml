@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - run: python -m unittest discover -s tests -p 'test_drive_sync.py' -v
       - run: npm ci
       - run: npm run test:garden
       - run: npm run build

@@ -1,12 +1,15 @@
 # Tech Knowledge
 
-GPT가 조사한 IT·AI·로보틱스 소식을 Obsidian에 축적하고 웹으로 공유합니다.
+GPT가 조사한 IT·AI·로보틱스 소식을 Google Drive에 축적하고, 검증된 자료를 GitHub와 웹사이트로 보여줍니다. 이 저장소의 `vault/`는 Drive 작성 원본의 작업·배포 사본입니다.
 
 - [뉴스](https://skyan0213.github.io/tech-knowledge-garden/)
 - [브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/index)
 - [GitHub 브리핑 모음](digest/README.md)
 - [RSS 구독](https://skyan0213.github.io/tech-knowledge-garden/rss)
 - [연결 지도](https://skyan0213.github.io/tech-knowledge-garden/knowledge-maps/ai-technology-knowledge-map)
+- [Drive → GitHub 연결 및 운영](docs/DRIVE_GITHUB_SYNC.md)
+
+Drive의 `Editions`, `Knowledge`, `Signals`, `TrendTopics`를 작성 원본으로 사용합니다. GitHub의 동기화 작업은 Google 읽기 연결을 설정한 뒤 5분 간격으로 변경을 확인하고 검증·생성·배포합니다. 로컬 단발성 Drive 읽기와 상시 연결 상태는 구분합니다. 원문 수집물·취재 기록은 개인 Drive에 보관하며 이 동기화의 공개 입력에서 제외합니다.
 
 기존 `옵시디언_iCloudSync` 프로젝트의 오전 8시 예약 작업을 이어 사용합니다. 새 프로젝트 등록은 필요 없습니다. 소스 저장소의 경로는 `/Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden`, 현재 Obsidian 보관함은 이 저장소의 `vault/`입니다.
 
@@ -37,7 +40,7 @@ npm run dev        # http://127.0.0.1:8088/tech-knowledge-garden/
 npm run publish
 ```
 
-`npm run dev`는 마지막으로 빌드한 결과를 미리 봅니다. 수정 후 다시 빌드합니다. `npm run publish`는 콘텐츠만 커밋하며, 코드 변경은 별도로 검토·커밋합니다.
+`npm run dev`는 마지막으로 빌드한 결과를 미리 봅니다. 수정 후 다시 빌드합니다. `npm run publish`는 검증된 Drive 입력과 로컬 원본이 같은지 확인한 뒤 콘텐츠를 커밋합니다. 원고를 Drive에 먼저 저장하고 읽기 검증을 마쳐야 하며, 코드 변경은 별도로 검토·커밋합니다.
 
 정의와 키워드는 원문으로 확인합니다. 연결은 `connections`의 `target`과 `reason`으로 기록합니다. 확인한 연관성이면 충분하며 방향·참조 유형·인용은 필수가 아닙니다. 기존 관계의 원문 근거는 보존합니다. 지도에는 별도 설명을 배워야 하는 전문 용어만 `map_review` 검토를 거쳐 표시합니다. 정의·설명 노트·일차 자료·구체적인 학습 이유가 필요합니다. 일반어·기사 제목·단순 키워드는 노드로 만들지 않습니다. 뉴스는 용어의 정확한 이름·별칭 또는 명시적 기사 지정으로 연결하고, 선택하면 관련 기사 목록을 보여 줍니다. Sigma.js의 WebGL과 ForceAtlas2가 연결을 고려해 자동 배치하며, 검색·연결 필터·이동·확대·드래그·재배치를 지원합니다. WebGL이 없으면 검색과 노드 목록으로 관련 뉴스를 읽을 수 있습니다.
 

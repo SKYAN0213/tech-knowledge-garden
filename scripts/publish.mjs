@@ -17,9 +17,10 @@ try {
     throw new Error(
       "Review the existing staged changes before publishing; they will not be committed automatically.",
     )
+  run("python3", ["scripts/pull-drive.py", "--verify-working-copy"], { stdio: "inherit" })
   run("npm", ["run", "build"], { stdio: "inherit" })
   run("node", ["scripts/verify-site.mjs"], { stdio: "inherit" })
-  run("git", ["add", "--", "vault", "data/catalog.json", "digest"])
+  run("git", ["add", "--", "vault", "data/catalog.json", "data/drive-source-state.json", "digest"])
   const changed = run("git", ["diff", "--cached", "--name-only"])
   if (changed)
     run(
