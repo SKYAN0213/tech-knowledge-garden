@@ -1,5 +1,7 @@
 # Tech Knowledge Garden
 
+From the 2026-09-14 issue, read `docs/NEWS_THEMES.md` on every run. Independently check technology/products and corporate operations in every sector, including financials, capital, people and supply. Use `theme_format: news-themes/v1` alongside `sector-five/v1`; every article needs a primary theme, an optional secondary theme, controlled event tags and named entities. Preserve these in news, briefings, RSS and digest. Follow the 16-row research coverage template and existing 08:00 schedule. Classification metadata must never create graph nodes or term matches. Do not infer tags for historical articles.
+
 Work from this repository within the existing 옵시디언_iCloudSync daily-briefing project (c9d65b6f-2fcd-49ba-a120-3fce98a14cf3). Do not require another Codex project registration. The dedicated Obsidian vault is the content authority; no per-note publication selection.
 
 The website presents news and briefings, a dedicated connection map in navigation, and contextual concept pages. Do not expose the vault tree, archive, source editions, operational notes or bookkeeping copy. Build a type-based projection. News home/list/detail and briefing pages must not embed a map. The briefing hub owns daily changes, cumulative topic histories and reviewed lessons; RSS links to full briefings, original sources and digest Markdown in GitHub. Reader text is factual and concise, without slogans or descriptions of the UI.

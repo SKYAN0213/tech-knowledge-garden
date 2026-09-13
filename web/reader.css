@@ -846,6 +846,55 @@ dialog input {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.news-tools:has(+ .news-filters) {
+  margin-bottom: 16px;
+}
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.news-filters label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  flex: 1 1 170px;
+  color: #58655e;
+  font-size: 12px;
+}
+.news-filters select {
+  width: 100%;
+  min-height: 44px;
+  font: inherit;
+  font-size: 14px;
+  color: #253d31;
+  background: #fafbf9;
+  border: 1px solid #c8d2cb;
+  border-radius: 5px;
+  padding: 8px;
+}
+.news-filters button {
+  min-height: 44px;
+}
+.news-filters :focus-visible {
+  outline: 2px solid #397954;
+  outline-offset: 3px;
+}
+.news-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 8px 0;
+  color: #456155;
+  font-size: 12px;
+}
+.news-entities {
+  color: #58655e;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
 .news-day {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);

@@ -258,6 +258,15 @@ export async function finish(output = "public", input = staging) {
       date,
       keywords: n.meta.keywords || [],
       aliases: n.meta.aliases || [],
+      ...(n.meta.theme_format
+        ? {
+            sector: n.meta.sector,
+            theme: n.meta.theme,
+            secondary_theme: n.meta.secondary_theme,
+            event_tags: n.meta.event_tags,
+            entities: n.meta.entities,
+          }
+        : {}),
       text: textContent(fromHtml(body, { fragment: true })).slice(0, 16000),
     })
   }

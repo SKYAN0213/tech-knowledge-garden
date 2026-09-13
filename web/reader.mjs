@@ -1,3 +1,5 @@
+import { matchesNews } from "./news-filter.mjs"
+
 const base = document.body.dataset.base || ""
 const el = (tag, attrs = {}, text) => {
   const e = document.createElement(tag)
@@ -97,16 +99,58 @@ for (const root of roots) {
 }
 
 const newsQuery = document.querySelector("#news-query")
-newsQuery?.addEventListener("input", () => {
-  const terms = newsQuery.value.normalize("NFC").toLowerCase().trim().split(/\s+/).filter(Boolean)
+const newsControls = Object.fromEntries(
+  ["sector", "theme", "entity"].map((key) => [key, document.querySelector(`#news-${key}`)]),
+)
+function filterNews(updateURL = true) {
+  const url = new URL(location.href)
+  const filters = { query: newsQuery.value }
+  for (const [key, control] of Object.entries(newsControls))
+    filters[key] = control?.value ?? url.searchParams.get(key) ?? ""
   let visible = 0
   for (const row of document.querySelectorAll("[data-news-row]")) {
-    const text = row.textContent.normalize("NFC").toLowerCase()
-    row.hidden = !terms.every((term) => text.includes(term))
+    const data = JSON.parse(row.dataset.classification || "{}")
+    row.hidden = !matchesNews({ ...data, text: row.textContent }, filters)
     if (!row.hidden) visible++
   }
   for (const group of document.querySelectorAll("[data-news-day]"))
     group.hidden = ![...group.querySelectorAll("[data-news-row]")].some((row) => !row.hidden)
   document.querySelector("#news-count").textContent = `${visible}건`
   document.querySelector("#news-empty").hidden = visible > 0
-})
+  if (updateURL) {
+    for (const [key, value] of Object.entries({
+      q: filters.query,
+      sector: filters.sector,
+      theme: filters.theme,
+      entity: filters.entity,
+    }))
+      if (value) url.searchParams.set(key, value)
+      else url.searchParams.delete(key)
+    history.replaceState(null, "", url)
+  }
+}
+function restoreNewsFilters() {
+  const params = new URL(location.href).searchParams
+  newsQuery.value = params.get("q") || ""
+  for (const [key, control] of Object.entries(newsControls)) {
+    if (!control) continue
+    const value = params.get(key) || ""
+    // A stale shared filter must show zero matches, not silently become "all".
+    if (value && ![...control.options].some((o) => o.value === value))
+      control.add(new Option(value, value))
+    control.value = value
+  }
+  filterNews(false)
+}
+if (newsQuery) {
+  newsQuery.addEventListener("input", () => filterNews())
+  for (const control of Object.values(newsControls))
+    control?.addEventListener("change", () => filterNews())
+  document.querySelector("#news-reset")?.addEventListener("click", () => {
+    newsQuery.value = ""
+    for (const control of Object.values(newsControls)) if (control) control.value = ""
+    filterNews()
+  })
+  window.addEventListener("popstate", restoreNewsFilters)
+  restoreNewsFilters()
+}

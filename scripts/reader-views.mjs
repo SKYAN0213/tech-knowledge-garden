@@ -8,6 +8,8 @@ import {
   reviewText,
 } from "./briefings.mjs"
 import { stanceLabel } from "./trends.mjs"
+import { THEMES } from "./themes.mjs"
+import { SECTORS } from "./sectors.mjs"
 
 const link = (url, label, attrs = "") => `<a href="${esc(url)}" ${attrs}>${esc(label)}</a>`
 const dateLabel = (date) => date.replaceAll("-", ".")
@@ -23,7 +25,35 @@ export function newsView(articles, latest, href) {
     if (!groups.has(date)) groups.set(date, [])
     groups.get(date).push(a)
   }
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2><time datetime="${date}">${dateLabel(date)}</time></h2><div>${items.map((a) => `<article class="news-row" data-news-row><div class="news-source">${esc(publisher(a.urls[0]))} <span>${esc(a.desk)}</span></div><h3>${link(href("News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p><div class="news-actions">${link(href("News/" + a.id), "상세 읽기")}${a.urls.map((u, j) => link(u, j ? `추가 원문 ${j + 1} ↗` : "원문 ↗")).join("")}</div></article>`).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  const entities = [...new Set(articles.flatMap((a) => a.classification?.entities || []))].sort(
+    (a, b) => a.localeCompare(b, "ko"),
+  )
+  const select = (id, label, values) =>
+    `<label>${label}<select id="news-${id}"><option value="">전체</option>${values.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("")}</select></label>`
+  const filters = articles.some((a) => a.classification)
+    ? `<div class="news-filters">${select("sector", "분야", SECTORS)}${select(
+        "theme",
+        "테마",
+        THEMES.map((t) => t.name),
+      )}${select("entity", "기업·기관", entities)}<button type="button" id="news-reset">초기화</button></div>`
+    : ""
+  const row = (a) => {
+    const c = a.classification
+    const themes = c ? [c.theme, c.secondary_theme].filter(Boolean) : []
+    const data = esc(
+      JSON.stringify({
+        sector: a.sector || "",
+        themes,
+        tags: c?.event_tags || [],
+        entities: c?.entities || [],
+      }),
+    )
+    const labels = c
+      ? `<div class="news-labels">${[a.sector, ...themes].map((t) => `<span>${esc(t)}</span>`).join("")}</div>`
+      : ""
+    return `<article class="news-row" data-news-row data-classification="${data}"><div class="news-source">${esc(publisher(a.urls[0]))} <span>${esc(a.desk)}</span></div>${labels}<h3>${link(href("News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p>${c?.entities.length ? `<div class="news-entities">${esc(c.entities.join(" · "))}</div>` : ""}<div class="news-actions">${link(href("News/" + a.id), "상세 읽기")}${a.urls.map((u, j) => link(u, j ? `추가 원문 ${j + 1} ↗` : "원문 ↗")).join("")}</div></article>`
+  }
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2><time datetime="${date}">${dateLabel(date)}</time></h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review)

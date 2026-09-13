@@ -1,4 +1,14 @@
 import { sectorGroups, sectorMarkdown } from "./sectors.mjs"
+import {
+  usesThemes,
+  classifyArticle,
+  classificationMeta,
+  classificationMarkdown,
+  classificationHistory,
+  isClassificationLine,
+  THEMES,
+  THEME_FORMAT,
+} from "./themes.mjs"
 import fs from "node:fs"
 import path from "node:path"
 import crypto from "node:crypto"
@@ -101,6 +111,7 @@ export function editions(vault) {
 }
 export function extractArticles(edition) {
   if (edition.meta.schema_version !== "tech-ai-magazine/v2") return []
+  const themed = usesThemes(edition)
   const sources = sourceMap(edition.body)
   const articles = sections(edition.body)
     .filter((s) => ["커버 스토리", "뉴스 데스크", "리서치 노트", "도구 상자"].includes(s.title))
@@ -113,12 +124,15 @@ export function extractArticles(edition) {
         // The original announcement identifies an event. Follow-up editions reuse the same note.
         const id = digest(canonicalURL(urls[0]))
         const concepts = wikiTargets(part.body).filter((p) => p.startsWith("Knowledge/"))
+        const classification = themed ? classifyArticle(part.body, part.title) : undefined
         const leadLines = part.body
           .split("\n")
           .map((l) => l.replace(/^>\s?/, "").trim())
           .filter(
             (l) =>
-              l && !/^\[!|^#{1,6} |^\*\*(?:분야|개념|근거|공식 변경|프로젝트:|논문:)|^\[\[/.test(l),
+              l &&
+              !isClassificationLine(l) &&
+              !/^\[!|^#{1,6} |^\*\*(?:개념|근거|공식 변경|프로젝트:|논문:)|^\[\[/.test(l),
           )
         const summary = strip(leadLines[0] || part.title)
           .replace(/^[^:：]{1,20}[:：]\s*/, "")
@@ -130,6 +144,7 @@ export function extractArticles(edition) {
           summary,
           desk: desk.title,
           sector: part.body.match(/^\*\*분야:\*\*\s*(.+)$/m)?.[1]?.trim(),
+          ...(classification ? { classification } : {}),
           urls,
           markers,
           sources: Object.fromEntries(markers.map((m) => [m, sources.get(m)])),
@@ -200,6 +215,7 @@ export function refresh(vault = "vault") {
         sources: item.urls,
         concepts: item.concepts,
         description: item.summary,
+        ...classificationMeta(item),
       },
       `${item.body}\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
         item.sources,
@@ -219,7 +235,7 @@ export function refresh(vault = "vault") {
       sectorMarkdown(
         issue,
         items,
-        (a) => `#### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`,
+        (a) => `#### ${wiki("News/" + a.id, a.title)}\n\n${classificationMarkdown(a)}${a.summary}`,
       ) ??
       (items.length
         ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
@@ -541,6 +557,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
             latest_cutoff: c.latest_cutoff,
             known_source_count: c.known_sources.length,
             known_sources: c.known_sources,
+            ...classificationHistory(library.issues),
+            research_policy: {
+              theme_format: THEME_FORMAT,
+              channels: ["기술·제품", "기업·운영"],
+              themes: THEMES,
+              workflow: "docs/NEWS_THEMES.md",
+            },
             latest_issue: {
               edition: library.latest.key,
               date: library.latest.date,
@@ -549,6 +572,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
                 event_id: a.id,
                 title: a.title,
                 urls: a.urls,
+                sector: a.sector,
+                ...classificationMeta(a),
               })),
             },
             trend_topics: library.latest.snapshot.topics.map((t) => ({

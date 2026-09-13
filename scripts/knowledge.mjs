@@ -5,6 +5,7 @@ import { walk, parseNote, sections, noteText } from "./garden.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import { layoutGraph, edgeLabels } from "../web/layout.mjs"
 import { assembleGraph, isLearningTerm } from "../web/graph-model.mjs"
+import { articleProse } from "./themes.mjs"
 const slug = (p) => slugifyFilePath(p + ".md")
 export function readKnowledge(vault = "vault") {
   const notes = walk(path.join(vault, "Knowledge"))
@@ -95,7 +96,7 @@ export function readKnowledge(vault = "vault") {
   }
 }
 export function articleSearchText(body) {
-  return body
+  return articleProse(body)
     .split(/^## (?:이어 읽기|이 소식을 다룬 브리핑|출처)/m)[0]
     .replace(/^\[\[index\|.*$/gm, "")
     .replace(/^#{1,6} .*$/gm, "")

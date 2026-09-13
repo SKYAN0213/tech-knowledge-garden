@@ -1,5 +1,9 @@
 # Magazine and encyclopedia contract
 
+## Garden sector and theme extension (effective 2026-09-14)
+
+For Tech Knowledge Garden, read the current repository docs/SECTOR_BRIEFING.md and docs/NEWS_THEMES.md. New issues require briefing_format: sector-five/v1 and theme_format: news-themes/v1. Every cover/news/research/tool card begins with **분야:**, **테마:**, **보조 테마:**, **세부 태그:** and **기업·기관:**. Use exactly one primary sector and theme, up to one distinct secondary theme, and 1–3 event tags belonging to those themes. The secondary theme and entity list may be explicitly 없음. Investigate technology/products and corporate operations independently in each sector, including financials, funding/deals, workforce and supply. Keep the total five-event sector cap. Use the repository research coverage template to record checked sources, times, exclusions and failures in all 16 sector/channel combinations. Preserve historical editions without guessed classifications. Classification tags and entity metadata never create specialist map nodes or news-to-term associations.
+
 This reference is mandatory for every run of `create-tech-ai-briefing`.
 
 ## 1. Publication model

@@ -26,3 +26,17 @@ RSS retains existing issue GUIDs and URLs, but includes readable headlines and o
 - Automated publication must include the generated GitHub summaries and reject a missing latest trend review once topics are configured.
 
 Local checks: 204 tests, TypeScript, skill validation and 4 skill tests passed. Web validation: 192 HTML, 190 search entries, 16 map terms/17 edges, 42 articles, RSS 40. Preserved 163 source/archive/knowledge files. Desktop and 390px browser checks passed. Published and verified via successful Actions 34737722632 (9120edf). Live Pages, RSS and GitHub summaries match the local build; asset 4f4a9cb22f16.
+
+## Sector and theme research · 2026-09-13
+
+Objective: from the next daily run, investigate both technology/products and corporate operations in each of the eight sectors; preserve a reviewed primary theme, optional secondary theme, event tags and named entities through news, briefings, RSS and GitHub summaries. Baseline: clean main at 302a3e8; all 45 garden tests pass.
+
+Scope: authoring rules/template, versioned classification validation and publication, compact news filters, existing 08:00 automation. Keep the five-event sector cap, stable event IDs/feed GUIDs, Drive source authority and specialist-only graph. Preserve original historical issues, concepts and judgments. Do not fabricate a new research issue or retrospectively classify old articles. No additional job, paid API or source migration.
+
+1. Complete — Define the ten themes and two-channel research checklist; implement strict new-issue classification with explicit legacy compatibility.
+2. Complete — Carry classifications into news metadata, context, web filters, briefings, digest and RSS; test real source-to-output behavior and malformed inputs.
+3. In progress — The existing daily automation and maintained skill assets are updated. Full Node tests, TypeScript, 7 Drive tests, 4 skill tests, build and site validation pass. Scheduler prompt readback matches; schedule, project, model and status are preserved. Publishing the verified code is the remaining step.
+
+Acceptance: missing/unknown/duplicate or excessive themes fail for the new format; metadata never becomes a headline or graph association; both research channels are explicitly recorded for all sectors, including access failures; old editions remain readable without inferred tags. New classifications survive every output and combined filters. A configured future run is reported separately from actual research execution.
+
+Verification: eight classification tests include source-to-news/briefing/digest/RSS propagation and repeat-run equality. Browser fixture checks pass for secondary themes, combined zero-result filters, exact entity selection, URL restoration and reset; 390px layout has no horizontal overflow and filter targets are at least 44px. Desktop screenshot reviewed. The mobile screenshot command stalled in the browser tool; DOM/layout checks passed. All 178 protected source/state files are byte-identical. Existing site projection remains 192 HTML pages, 190 search entries, 42 events, 16 graph terms/17 relationships and 40 RSS issues. No new research issue was authored; the new requirements start with the 2026-09-14 daily run.
