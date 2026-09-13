@@ -8,6 +8,8 @@ description: 업무 AI의 접근 권한과 코드 병합 조건을 관리자가 
 coverage_start: 2026-09-09T08:02:08+09:00
 coverage_end: 2026-09-10T08:01:46+09:00
 item_count: 3
+edition: Editions/2026/09/2026-09-10_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-10_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,30 @@ generated_by: tech-knowledge-garden
 # 2026-09-10 · 아침 브리핑
 
 > 업무 AI의 접근 권한과 코드 병합 조건을 관리자가 구체적으로 정한다.
+
+## 오늘의 변화
+
+기존 수록 기사 재정리 · 2026-09-13 검토
+
+### 조직 정책으로 에이전트의 셸·파일·도메인 권한을 집행한다.
+
+개인의 승인 이력 외에 조직이 허용 범위를 정하는 통제 지점이 생겼다.
+
+- 판단: 관측
+- 한계: 발표에 명시된 Copilot 앱·CLI·Agent Host 사용 세션 범위다.
+- 다음 확인: 실제 조직 정책과 사용자 설정 충돌 시 차단 결과.
+- 근거: [[News/faa37362568657fb|Copilot, 조직 정책으로 에이전트 작업 권한을 고정]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/)
+- 누적 기록: [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]]
+
+### 비밀정보 경보가 남은 PR의 병합을 막는 규칙이 추가됐다.
+
+푸시 이후 병합 시점에도 검사 결과를 통제 조건으로 쓸 수 있다.
+
+- 판단: 관측
+- 한계: 일부 고객 대상 공개 미리보기이며 탐지 패턴과 우회 권한에 따라 범위가 달라진다.
+- 다음 확인: 최신 커밋의 검사 완료, 경보 처리, 우회·패턴 설정.
+- 근거: [[News/0ef68bd8a0105dab|비밀정보 경보를 해결해야 PR을 병합하는 규칙]] · [GitHub 원문](https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/)
+- 누적 기록: [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]]
 
 ## 헤드라인
 

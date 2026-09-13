@@ -1,23 +1,28 @@
-# 2026-09-13 Learning term selection
+# News reading and cumulative briefings · 2026-09-13
 
-Objective: make the connection map useful for learning technical news. Nodes must be specialist terms worth explaining, not every keyword or article title.
+Baseline: main at 885f103, clean. 113 issues, 42 source events, 27 concepts, 16 reviewed map terms. News home and details embed maps; RSS contains only a one-line introduction. The existing repository, vault, daily 08:00 job and GitHub Pages remain the publishing path.
 
-Baseline: clean main at 05b03bc; 166 nodes = 23 concepts + 101 automatic keyword nodes + 42 article nodes. Generic words such as 책임, 상태, 가격, 근거, 허용 gained nodes and became noisy news bridges. Keep the Sigma/ForceAtlas2 engine and confirmed undirected relationships.
+## Intended result
 
-## Selection contract
+News home/list/detail contain no connection map. Use a quiet editorial layout: a clear date, readable headline and summary, named source, generous line spacing and a narrow reading measure. Keep the dedicated map and specialist-term selection intact. The briefing hub is distinct from the news stream, with an issue lead, specific changes, accumulated topics and a compact issue archive. No decorative slogans or vault navigation.
 
-- Audience: readers of IT/AI/robotics news who need explanations of specialist mechanisms, protocols, architectures, evaluation methods and technical metrics.
-- A node needs a reviewed inclusion decision, a concrete learning reason, a standalone definition, an existing explanation note and primary sources. Frequency, English spelling and abbreviation alone do not qualify a term.
-- General words, broad application/business buckets, product/release titles and unreviewed keywords do not become nodes. Existing notes remain readable; this is graph selection, not per-note publication approval.
-- Articles are attached to terms and shown on selection. Exact canonical names/aliases and editorial assignments attach news; generic keywords cannot create nodes or article bridges.
-- Keep confirmed relationships between admitted terms. No shared-article edges, no rewiring through excluded notes, and no expansion beyond one confirmed neighboring term.
+The content chain is source event → dated observation → topic history → reviewed reusable lesson → specialist explanation. GPT writes the observations and lessons; local code validates provenance, deduplicates and publishes them. Topic buckets never become graph nodes. Counts describe this collection, not industry growth. Missing reviews are unknown, not zero. Historical briefings use observations available in that issue; initial retrospective records visibly state when they were reviewed.
 
-## Work
+RSS retains existing issue GUIDs and URLs, but includes readable headlines and observations, with links to the web briefing, original sources and standard Markdown summaries in this repository's digest directory. GitHub summaries and web views derive from the same source records.
 
-1. Complete — Audit all concepts; add map_review metadata and source-backed atomic terms needed by existing articles (KV cache, OIDC, zero-shot inference, latency percentiles). Preserve original definitions, Editions, Archive, dates and research cutoff.
-2. Complete — Replace keyword/article node generation with reviewed term-only projection. Retain direct article matches and explained one-step related concepts. Update contextual embeds, search and labels for a small readable map.
-3. Complete — Test common-word exclusion, metadata validation, alias matching, ranking and isolated terms. Validate notes, links, RSS, tests/typecheck/build, desktop/mobile browser, briefing skill/08:00 automation, and actual deployment. No paid service or new project.
+## Milestones and completion checks
 
-## Local verification
+1. Complete — Implement topic/observation validation and time-bounded aggregation. Seed a small, explicitly retrospective set from saved primary-source coverage. Preserve Editions, Archive and concept definitions.
+2. Complete — Generate cumulative topic pages, briefing summaries, GitHub Markdown and full briefing RSS. Keep source links and stable issue identity. Make reruns idempotent.
+3. Complete — Remove news embeds; implement readable news, briefing hub and topic history views. Verify desktop/mobile reading, navigation, filters, RSS and graph separation.
+4. In progress — Update daily authoring instructions and the existing 08:00 prompt. Run focused tests, full tests, TypeScript, build/link/feed checks, then publish and verify live Pages and GitHub summaries. No paid API or new job.
 
-192 tests and TypeScript pass. Skill validation and 4 skill tests pass. Build: 188 HTML, 186 search entries, 16 terms, 17 confirmed edges, 42 articles, 30 with direct term links, RSS 40. Preserved 173 original source files and all 23 original concept bodies/metadata. Real desktop/mobile UI and WebGL fallback verified. Published code f96df97 via successful Actions run 34735593588. Live nodes, edges, articles and asset version match the local build; 4 new explanation pages resolve. Public browser confirms generic-word exclusion and KV cache selection through article navigation. Evidence: `.local/learning-term-review/`.
+## Risks to check
+
+- Repeated source URLs must not inflate trend counts; old issue views must not reveal later observations or lessons.
+- No unsupported trend or lesson should be inferred by term frequency. Preserve limitations and opposing evidence.
+- Old pre-v2 issues remain readable and subscribed; unreviewed history is not silently upgraded.
+- Projection must continue to exclude source editions, raw observation/topic source files and operational folders; public Git remains public.
+- Automated publication must include the generated GitHub summaries and reject a missing latest trend review once topics are configured.
+
+Local checks: 204 tests, TypeScript, skill validation and 4 skill tests passed. Web validation: 192 HTML, 190 search entries, 16 map terms/17 edges, 42 articles, RSS 40. Preserved 163 source/archive/knowledge files. Desktop and 390px browser checks passed. Deployment verification remains before completion.

@@ -10,6 +10,8 @@ import { build } from "esbuild"
 import YAML from "yaml"
 import { walk, parseNote, noteText, editions, extractArticles, sections } from "./garden.mjs"
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
+import { briefingLibrary, publisher } from "./briefings.mjs"
+import { newsView, briefingHub, issueView } from "./reader-views.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
 const staging = ".local/site-content"
@@ -80,6 +82,12 @@ export async function finish(output = "public", input = staging) {
   const prefix = new URL(base).pathname.replace(/\/$/, "")
   const href = (p) => prefix + "/" + (p === "index" ? "" : slug(p))
   const notes = JSON.parse(fs.readFileSync(".local/site-notes.json"))
+  const allIssues = editions("vault")
+  const issueArticles = new Map(allIssues.map((i) => [i.slug, extractArticles(i)]))
+  const library = briefingLibrary("vault", allIssues, issueArticles)
+  const newsArticles = [
+    ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
+  ]
   const knowledge = notes.filter((n) => n.meta.entry_type === "concept")
   const graph = JSON.parse(fs.readFileSync(path.join(output, "knowledge-graph.json")))
   const learningTerms = new Set(graph.nodes.map((n) => n.id))
@@ -98,7 +106,7 @@ export async function finish(output = "public", input = staging) {
   const embed = (focus = "", className = "article-connections") =>
     `<section class="${className}"><h2><a href="${href(MAP)}${focus ? "?focus=" + encodeURIComponent(focus) : ""}">연결 지도</a></h2><div class="connections compact" data-connections data-mode="compact" data-focus="${esc(focus)}"><p class="graph-loading">연결 지도를 불러오는 중…</p></div></section>`
   const shell = (title, body, kind = "article", description = "") =>
-    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><nav aria-label="주요 메뉴"><a href="${href("index")}" ${kind === "home" || kind === "news" ? 'aria-current="page"' : ""}>뉴스</a><a href="${href("Briefings/index")}" ${kind === "briefing-index" ? 'aria-current="page"' : ""}>브리핑</a><a href="${href(MAP)}" ${kind === "map-page" ? 'aria-current="page"' : ""}>연결 지도</a></nav><div class="utilities"><button id="search-open" aria-label="검색">검색</button><a href="${prefix}/rss">RSS</a></div></header><main id="main" class="${kind}">${body}</main><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="뉴스 · 브리핑 · 키워드" autocomplete="off"><div id="search-results" aria-live="polite"></div></dialog></body></html>`
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><nav aria-label="주요 메뉴"><a href="${href("index")}" ${["home", "news", "news-index"].includes(kind) ? 'aria-current="page"' : ""}>뉴스</a><a href="${href("Briefings/index")}" ${kind.startsWith("briefing-") ? 'aria-current="page"' : ""}>브리핑</a><a href="${href(MAP)}" ${kind === "map-page" ? 'aria-current="page"' : ""}>연결 지도</a></nav><div class="utilities"><button id="search-open" aria-label="검색">검색</button><a href="${prefix}/rss">RSS</a></div></header><main id="main" class="${kind}">${body}</main><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="뉴스 · 브리핑 · 키워드" autocomplete="off"><div id="search-results" aria-live="polite"></div></dialog></body></html>`
   for (const n of notes) {
     const file = path.join(output, n.slug + ".html")
     const tree = fromHtml(fs.readFileSync(file, "utf8"))
@@ -126,6 +134,7 @@ export async function finish(output = "public", input = staging) {
     })
     // Generated notes carry an H1 for Obsidian. All web pages receive exactly one reading title.
     traverse(article, (node) => {
+      if (n.meta.type === "news" && node.tagName === "h3") node.tagName = "h2"
       if (node.children)
         node.children = node.children.flatMap((c) =>
           c.tagName !== "h1"
@@ -143,8 +152,54 @@ export async function finish(output = "public", input = staging) {
         )
     })
     const meta = parseNote(fs.readFileSync(path.join(input, n.path + ".md"), "utf8")).meta
+    const issue = library.byKey.get(n.meta.edition)
+    if (issue && issue.original.meta.schema_version === "tech-ai-magazine/v2") {
+      // The compact overview and disclosure below use exactly the same reviewed observations.
+      const children = (
+        find(article, (x) => x.properties?.className?.includes("markdown-rendered")) || article
+      ).children
+      const firstQuote = children.findIndex((c) => c.tagName === "blockquote")
+      const firstHeading = children.findIndex((c) => c.tagName === "h2")
+      if (firstQuote >= 0 && (firstHeading < 0 || firstQuote < firstHeading))
+        children.splice(firstQuote, 1)
+      const changes = children.findIndex(
+        (c) => c.tagName === "h2" && textContent(c) === "오늘의 변화",
+      )
+      if (changes >= 0) {
+        let end = changes + 1
+        while (end < children.length && children[end].tagName !== "h2") end++
+        children.splice(changes, end - changes)
+      }
+      const headlines = children.findIndex(
+        (c) => c.tagName === "h2" && textContent(c) === "헤드라인",
+      )
+      if (headlines >= 0 && issue.snapshot.review) {
+        let end = headlines + 1
+        while (end < children.length && children[end].tagName !== "h2") end++
+        const section = children.splice(headlines, end - headlines)
+        children.splice(headlines, 0, {
+          type: "element",
+          tagName: "details",
+          properties: { className: ["headline-details"] },
+          children: [
+            {
+              type: "element",
+              tagName: "summary",
+              properties: { id: section[0].properties?.id },
+              children: [{ type: "text", value: `헤드라인 ${issue.items.length}건 읽기` }],
+            },
+            ...section.slice(1),
+          ],
+        })
+      }
+    }
     let body = toHtml(article)
-    const type = n.meta.type || "article"
+    const type =
+      n.path === "Briefings/index"
+        ? "briefing-hub"
+        : n.path === "News/index"
+          ? "news-index"
+          : n.meta.type || "article"
     const isConcept = n.meta.entry_type === "concept"
     const focus = resolveFocus(graph, isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
     const date = n.meta.coverage_end
@@ -181,9 +236,13 @@ export async function finish(output = "public", input = staging) {
       if (related.length)
         body += `<section class="related-news"><h2>관련 뉴스</h2>${related.map((x) => `<p><time>${esc(x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a></p>`).join("")}</section>`
     }
-    if (n.path === "index")
-      body = `<div class="home-layout"><div class="home-feed">${body}</div>${embed("", "home-map")}</div>`
-    else if ((isConcept || type === "news") && focus) body += embed(focus)
+    if (n.path === "index" || n.path === "News/index")
+      body = newsView(newsArticles, library.latest, href)
+    else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
+    else if (issue) body = issueView(issue, href, prefix, toHtml(article))
+    else if (type === "news")
+      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${toHtml(article)}`
+    else if (isConcept && focus) body += embed(focus)
     const html = shell(
       meta.title,
       body,
@@ -195,11 +254,11 @@ export async function finish(output = "public", input = staging) {
       slug: n.slug,
       url: href(n.path),
       title: meta.title,
-      type: isConcept ? "지식" : type === "news" ? "뉴스" : "브리핑",
+      type: isConcept ? "지식" : ["news", "news-index", "home"].includes(type) ? "뉴스" : "브리핑",
       date,
       keywords: n.meta.keywords || [],
       aliases: n.meta.aliases || [],
-      text: textContent(article).slice(0, 12000),
+      text: textContent(fromHtml(body, { fragment: true })).slice(0, 16000),
     })
   }
   const issues = editions("vault")

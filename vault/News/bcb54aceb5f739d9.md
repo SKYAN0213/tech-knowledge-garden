@@ -11,15 +11,13 @@ sources:
   - https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/
 concepts:
   - Knowledge/Security/Zero-Knowledge Proofs
-description: 기존 디지털 신원 규격의 속성을 원문 전체 공개 없이 증명하도록 돕는 공개 ZKP 구현.
+description: 신분증의 생년월일을 넘기지 않고 “18세 이상” 같은 조건만 증명하는 암호 도구다.
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # Longfellow Zero-Knowledge Proof 라이브러리
-
-[[index|← 오늘의 헤드라인]] · 도구 상자 · 처음 수록 2026-09-03
 
 **프로젝트:** 기존 디지털 신원 규격의 속성을 원문 전체 공개 없이 증명하도록 돕는 공개 ZKP 구현. [S4]
 

@@ -72,7 +72,9 @@ test("Refresh is idempotent and keeps hand-written notes", () => {
     }
     refresh()
     const bytes = () =>
-      Object.fromEntries(walk("vault").map((f) => [f, fs.readFileSync(f, "utf8")]))
+      Object.fromEntries(
+        [...walk("vault"), ...walk("digest")].map((f) => [f, fs.readFileSync(f, "utf8")]),
+      )
     const first = bytes()
     refresh()
     assert.deepEqual(bytes(), first)

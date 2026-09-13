@@ -8,12 +8,16 @@ description: 2026-06-23 IT · AI · 로보틱스
 coverage_start: 2026-06-23 07:00
 coverage_end: 2026-06-23 17:00
 item_count: 0
+edition: Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # 2026-06-23 · 아침 브리핑
+
+
 
 ## Tech & AI Briefing Sample - 17:00
 

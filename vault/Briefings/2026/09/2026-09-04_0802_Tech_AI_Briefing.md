@@ -8,6 +8,8 @@ description: 패키지 배포와 CI 보안이 장기 토큰·넓은 권한에서
 coverage_start: 2026-09-03T08:03:00+09:00
 coverage_end: 2026-09-04T08:02:54+09:00
 item_count: 3
+edition: Editions/2026/09/2026-09-04_0802_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-04_0802_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,30 @@ generated_by: tech-knowledge-garden
 # 2026-09-04 · 아침 브리핑
 
 > 패키지 배포와 CI 보안이 장기 토큰·넓은 권한에서 단계별 승인과 검증 가능한 실행 신원으로 이동했다.
+
+## 오늘의 변화
+
+기존 수록 기사 재정리 · 2026-09-13 검토
+
+### npm 배포 신원을 여러 OIDC 경로로 나눌 수 있게 됐다.
+
+stable·prerelease 경로마다 저장소·workflow·환경 신원을 검토할 수 있다.
+
+- 판단: 관측
+- 한계: 여러 구성은 추가적으로 작동하고 direct publishing은 사람 승인 경계를 없앨 수 있다.
+- 다음 확인: 각 경로의 opt-in과 예외, 변경 감사·회수 절차.
+- 근거: [[News/322b7c88af36f3ac|npm trusted publishing, 한 패키지에 여러 OIDC 배포 경로를 열다]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-multiple-trusted-publishing-configurations-for-npm/)
+- 누적 기록: [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]]
+
+### 재사용 workflow의 실제 정의 신원과 읽기 권한이 세분화됐다.
+
+실행 정의의 ref·SHA·저장소를 감사하고 불필요한 token scope를 줄일 수 있다.
+
+- 판단: 관측
+- 한계: 신원 값 노출만으로 무결성이 보장되지 않으며 GHES 제공 범위도 다르다.
+- 다음 확인: SHA 고정과 권한 검토, runner 지원 종료 점검.
+- 근거: [[News/473fea8bb1cbf9cb|GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출]] · [GitHub 원문](https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/)
+- 누적 기록: [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]]
 
 ## 헤드라인
 
@@ -29,7 +55,7 @@ Actions의 GITHUB_TOKEN에 Dependabot alert 읽기 전용 vulnerability-alerts �
 
 ### [[News/13cebc4d5ec60b11|CodeQL 2.26.4]]
 
-GitHub code scanning의 정적 분석 엔진 CodeQL 최신 릴리스.
+코드와 workflow의 데이터 흐름을 따라가며 취약할 수 있는 경로를 규칙으로 찾는다.
 
 ## 흐름 읽기
 

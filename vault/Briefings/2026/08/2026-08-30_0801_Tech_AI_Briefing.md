@@ -8,6 +8,8 @@ description: AI 검증은 “좋아 본인다”가 아니라 각 검사가 무�
 coverage_start: 2026-08-29T08:00:51+09:00
 coverage_end: 2026-08-30T08:01:32+09:00
 item_count: 1
+edition: Editions/2026/08/2026-08-30_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/08/2026-08-30_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,20 @@ generated_by: tech-knowledge-garden
 # 2026-08-30 · 아침 브리핑
 
 > AI 검증은 “좋아 본인다”가 아니라 각 검사가 무엇을 입증하고 어떤 산출물을 남기는지로 설계해야 합니다.
+
+## 오늘의 변화
+
+기존 수록 기사 재정리 · 2026-09-13 검토
+
+### 검사마다 입증 범위와 산출물을 나누는 검증 틀이 제안됐다.
+
+빌드 통과, 업무 정확성, 운영 동등성을 별도 증거로 다루는 참고 틀이다.
+
+- 판단: 참고
+- 한계: 현장 전문가의 의견 프레임워크이며 효과를 입증한 독립 실험은 아니다.
+- 다음 확인: 층별 결함 발견률과 검증 구축·유지 비용.
+- 근거: [[News/fd584d5c829c999d|에이전트 검증을 ‘통과 가능한 층’으로 나눈다]] · [Microsoft 원문](https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/)
+- 누적 기록: [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]]
 
 ## 헤드라인
 

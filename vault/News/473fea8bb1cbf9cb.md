@@ -21,8 +21,6 @@ generated_by: tech-knowledge-garden
 
 # GitHub Actions, 최소 권한과 재사용 workflow 신원을 더 세밀하게 노출
 
-[[index|← 오늘의 헤드라인]] · 뉴스 데스크 · 처음 수록 2026-09-04
-
 **핵심:** Actions의 `GITHUB_TOKEN`에 Dependabot alert 읽기 전용 `vulnerability-alerts` 권한이 추가됐다. 재사용 workflow에는 실제 정의 파일의 ref·SHA·저장소·경로를 나타내는 `job.workflow_*` context가 생겼고, runner version의 등록·실행 지원 종료일을 조회하는 REST API도 제공된다. [S2]
 
 **의미:** 넓은 token scope 없이 취약점 정보를 읽고, 호출한 workflow가 아니라 실제 실행 정의의 신원을 감사하며, runner 지원 종료를 자동 점검할 수 있다.

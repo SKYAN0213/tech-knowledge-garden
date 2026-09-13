@@ -8,6 +8,8 @@ description: 고성능 사이버 모델의 경쟁이 점수에서 제한 접근�
 coverage_start: 2026-09-02T08:01:50+09:00
 coverage_end: 2026-09-03T08:03:00+09:00
 item_count: 3
+edition: Editions/2026/09/2026-09-03_0803_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-03_0803_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,8 @@ generated_by: tech-knowledge-garden
 # 2026-09-03 · 아침 브리핑
 
 > 고성능 사이버 모델의 경쟁이 점수에서 제한 접근과 검증된 패치 운영으로 옮겨가고 있다.
+
+
 
 ## 헤드라인
 
@@ -29,7 +33,7 @@ Microsoft는 Fabric을 GCC High 고객에게 공개 미리보기로 제공하기
 
 ### [[News/bcb54aceb5f739d9|Longfellow Zero-Knowledge Proof 라이브러리]]
 
-기존 디지털 신원 규격의 속성을 원문 전체 공개 없이 증명하도록 돕는 공개 ZKP 구현.
+신분증의 생년월일을 넘기지 않고 “18세 이상” 같은 조건만 증명하는 암호 도구다.
 
 ## 흐름 읽기
 

@@ -3,7 +3,8 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { fromHtml } from "hast-util-from-html"
 import RSSParser from "rss-parser"
-import { walk } from "./garden.mjs"
+import { walk, editions, extractArticles } from "./garden.mjs"
+import { briefingLibrary, githubIssue, digestPath, GITHUB } from "./briefings.mjs"
 import { relatedNews, learningKinds } from "../web/graph-model.mjs"
 export const collect = (node, pred, acc = []) => {
   if (pred(node)) acc.push(node)
@@ -55,6 +56,8 @@ export async function verifySite(
     return file
   }
   for (const [f, tree] of trees) {
+    if (collect(tree, (n) => n.tagName === "h1").length !== 1)
+      errors.push(f + ": reading page needs one H1")
     const ids = collect(tree, (n) => n.properties?.id).map((n) => n.properties.id)
     if (new Set(ids).size !== ids.length) errors.push(f + ": duplicate HTML IDs")
     for (const n of collect(tree, (n) => n.properties?.href || n.properties?.src)) {
@@ -79,7 +82,7 @@ export async function verifySite(
   const index = JSON.parse(fs.readFileSync(path.join(root, "reader-index.json")))
   for (const row of index) {
     resolve(row.url, path.join(root, "index.html"))
-    if (!row.title || /^(archive|editions|trends)\//i.test(row.slug))
+    if (!row.title || /^(archive|editions|trends|signals|trendtopics)\//i.test(row.slug))
       errors.push("Invalid search entry " + row.slug)
   }
   const graph = JSON.parse(fs.readFileSync(path.join(root, "knowledge-graph.json")))
@@ -155,13 +158,50 @@ export async function verifySite(
     resolve(i.link, path.join(root, "index.html"))
     if (!i.guid || !i.pubDate || Number.isNaN(Date.parse(i.pubDate)))
       errors.push("Invalid RSS item " + i.title)
+    const anchors = collect(fromHtml(i.content || "", { fragment: true }), (n) => n.tagName === "a")
+    if (!anchors.some((a) => String(a.properties.href).startsWith(GITHUB + "digest/")))
+      errors.push("RSS GitHub summary missing " + i.title)
+    for (const a of anchors) {
+      const url = String(a.properties.href)
+      if (url.startsWith(base)) resolve(url, path.join(root, "briefing.xml"))
+      if (url.startsWith(GITHUB) && !fs.existsSync(decodeURIComponent(url.slice(GITHUB.length))))
+        errors.push("RSS missing GitHub export " + url)
+    }
   }
   if (/[^\x00-\x7f]/.test(rss))
     errors.push("RSS must be encoding-independent ASCII with numeric entities")
-  if (files.some((f) => /\/(?:archive|editions|trends|automation|\.obsidian|\.local)\//i.test(f)))
+  if (
+    files.some((f) =>
+      /\/(?:archive|editions|trends|signals|trendtopics|automation|\.obsidian|\.local)\//i.test(f),
+    )
+  )
     errors.push("Excluded material emitted")
   const homepage = fs.readFileSync(path.join(root, "index.html"), "utf8")
-  if (!homepage.includes("data-connections")) errors.push("Home connection map missing")
+  for (const [f, tree] of trees) {
+    const relative = path.relative(root, f)
+    if (
+      (relative === "index.html" || /^(news|briefings)\//.test(relative)) &&
+      collect(tree, (n) => n.properties?.dataConnections !== undefined).length
+    )
+      errors.push("Map embedded in news or briefings " + relative)
+  }
+  if (
+    !fs
+      .readFileSync(path.join(root, "knowledge-maps/ai-technology-knowledge-map.html"), "utf8")
+      .includes('data-mode="full"')
+  )
+    errors.push("Dedicated map missing")
+  const all = editions("vault"),
+    library = briefingLibrary("vault", all, new Map(all.map((i) => [i.slug, extractArticles(i)])))
+  for (const issue of library.issues) {
+    const exported = fs.readFileSync(digestPath(issue.key), "utf8")
+    if (/\[\[[^\]]+\]\]/.test(exported) || !exported.includes("웹 브리핑"))
+      errors.push("Invalid GitHub Markdown " + issue.key)
+  }
+  for (const a of library.latest.items)
+    for (const url of a.urls)
+      if (!feed.items[0].content?.includes(url.replaceAll("&", "&amp;")))
+        errors.push("Latest RSS original source missing " + url)
   if (
     /오늘의 변화를 읽고|TECH KNOWLEDGE GARDEN|읽고, 연결하고|축적된 지식|class="explorer"|generated_by:/.test(
       homepage,

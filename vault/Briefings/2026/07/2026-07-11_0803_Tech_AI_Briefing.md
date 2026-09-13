@@ -8,12 +8,16 @@ description: 2026-07-11 IT · AI · 로보틱스
 coverage_start: 2026-07-11T00:00:59+09:00
 coverage_end: 2026-07-11T08:03:40+09:00
 item_count: 0
+edition: Editions/2026/07/2026-07-11_0803_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/07/2026-07-11_0803_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # 2026-07-11 · 아침 브리핑
+
+
 
 ## 한눈에 보기
 

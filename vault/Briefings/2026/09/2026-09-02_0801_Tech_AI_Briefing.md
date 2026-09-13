@@ -8,6 +8,8 @@ description: 강해진 에이전트의 배포 조건이 모델 거부율에서 �
 coverage_start: 2026-09-01T08:01:37+09:00
 coverage_end: 2026-09-02T08:01:50+09:00
 item_count: 4
+edition: Editions/2026/09/2026-09-02_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-02_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -17,9 +19,11 @@ generated_by: tech-knowledge-garden
 
 > 강해진 에이전트의 배포 조건이 모델 거부율에서 실행 중 감시와 데이터 통제까지 넓어졌다.
 
+
+
 ## 헤드라인
 
-### [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 `Critical` 사이버 역량 모델로 판정]]
+### [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]]
 
 OpenAI는 출시 전 모델 Astra가 자사 Preparedness Framework의 최고 사이버 역량 문턱인 Critical에 도달했다고 판정했다. 제한된 평가 구성에서 알려지지 않은 취약점과 작동하는 공격 체인을 찾았고, 배포에는 제한 접근과 실행 중 자동 중단을 결합한다.
 
@@ -33,7 +37,7 @@ Enterprise Frontier Safeguards(EFS)는 여러 세션·계정에 걸친 오용 �
 
 ### [[News/5cd085900610be52|Gemini Agentic Video Understanding]]
 
-Gemini 3.7 Flash, 3.6 Flash, 3.5 Flash-Lite의 동적 영상 분석 모드.
+영상을 고정 프레임률로 전부 넣는 대신 모델이 시각 프레임·오디오·자막에서 필요한 구간을 검색하고 다시 살핀다.
 
 ## 흐름 읽기
 

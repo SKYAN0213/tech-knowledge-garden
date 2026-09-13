@@ -269,3 +269,8 @@ Before completion, the validator must confirm:
 - no unresolved links in the changed canonical entries.
 
 Passing structural validation is necessary but not sufficient. Also inspect the rendered Markdown for hierarchy, skimmability, factual/analysis separation, and whether each concept really has a distinct boundary.
+
+
+## Garden cumulative briefing extension
+
+In Tech Knowledge Garden, follow the repository docs/TREND_WORKFLOW.md after saving the v2 issue. Write an explicit issue review in vault/Signals and maintain source-event-backed topic judgments in vault/TrendTopics. Record change, meaning, limitation, next check, opposing evidence and actual review provenance. Reusable lessons need reviewed evidence from different events and dates. Broad trend buckets never become map nodes. News pages contain no embedded map. Briefings, cumulative topic pages, GitHub digest Markdown and rich daily RSS are generated together from these source records; preserve existing issue URLs and feed GUIDs.

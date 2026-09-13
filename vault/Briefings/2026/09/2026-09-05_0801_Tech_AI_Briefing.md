@@ -8,6 +8,8 @@ description: Copilot에 Astra가 들어왔고, 저장소 관심도는 개인 명
 coverage_start: 2026-09-04T08:02:54+09:00
 coverage_end: 2026-09-05T08:01:29+09:00
 item_count: 2
+edition: Editions/2026/09/2026-09-05_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-05_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -17,6 +19,8 @@ generated_by: tech-knowledge-garden
 
 > Copilot에 Astra가 들어왔고, 저장소 관심도는 개인 명단 없이 이력으로 조회할 수 있게 됐다.
 
+
+
 ## 헤드라인
 
 ### [[News/cf45e2be25e062a0|Astra의 Copilot 진입, 팀의 모델 허용 정책부터 확인할 때]]
@@ -25,7 +29,7 @@ GitHub가 GPT-6 Astra를 Copilot에서 정식 제공한다. 조직에서는 새 
 
 ### [[News/c96e7378059165d6|GitHub star history API: 누가 눌렀는지 대신 언제 얼마나 늘었는지]]
 
-GitHub REST API의 새 저장소 별 이력 endpoint. 개인 stargazer 정보 없이 timestamp가 있는 과거 집계치를 조회한다.
+개별 이용자 명단을 모으지 않고 저장소 관심도의 시간별 변화를 조사하는 인터페이스다.
 
 ## 흐름 읽기
 

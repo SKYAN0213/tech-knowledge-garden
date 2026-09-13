@@ -36,7 +36,7 @@ generated_by: tech-knowledge-garden
 - [[News/5cd085900610be52|Gemini Agentic Video Understanding]] · 2026-09-02
 - [[News/c0364833b41073ca|ChatGPT for Healthcare, Epic 환자 기록과 9개 공공 데이터원을 연결]] · 2026-09-02
 - [[News/b085c7f1762bfee8|Anthropic EFS, 안전 모니터링 데이터는 고객 클라우드에 둔다]] · 2026-09-02
-- [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 `Critical` 사이버 역량 모델로 판정]] · 2026-09-02
+- [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]] · 2026-09-02
 - [[News/89b2997d0ccfa477|Google, 생성형 검색 노출 제어와 Search Console 인사이트를 전 세계로 확대]] · 2026-09-01
 - [[News/09a390c59d8969e0|TimesFM-3, 여러 시계열과 미래 단서를 한 번에 예측한다]] · 2026-09-01
 - [[News/fd584d5c829c999d|에이전트 검증을 ‘통과 가능한 층’으로 나눈다]] · 2026-08-30

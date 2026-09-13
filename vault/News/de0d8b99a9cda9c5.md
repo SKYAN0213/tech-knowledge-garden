@@ -11,15 +11,14 @@ sources:
   - https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf
 concepts:
   - Knowledge/AI Systems/Agent Evaluation
-description: Training novices to think, or giving them LLMs? Evidence from an RCT
+description: 잘 다듬어진 답과 다양한 생각은 같은 능력이 아니었습니다. ChatGPT 접근은 표준 평가 점수와 논리적 정돈을 높였고,
+  인과 추론 훈련은 기제와 반증 조건을 더 쓰게 하고 집단의 아이디어 다양성을 넓혔습니다.
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다
-
-[[index|← 오늘의 헤드라인]] · 리서치 노트 · 처음 수록 2026-08-28
 
 **논문:** *Training novices to think, or giving them LLMs? Evidence from an RCT*
 

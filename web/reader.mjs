@@ -95,3 +95,18 @@ for (const root of roots) {
     observer.observe(root)
   }
 }
+
+const newsQuery = document.querySelector("#news-query")
+newsQuery?.addEventListener("input", () => {
+  const terms = newsQuery.value.normalize("NFC").toLowerCase().trim().split(/\s+/).filter(Boolean)
+  let visible = 0
+  for (const row of document.querySelectorAll("[data-news-row]")) {
+    const text = row.textContent.normalize("NFC").toLowerCase()
+    row.hidden = !terms.every((term) => text.includes(term))
+    if (!row.hidden) visible++
+  }
+  for (const group of document.querySelectorAll("[data-news-day]"))
+    group.hidden = ![...group.querySelectorAll("[data-news-row]")].some((row) => !row.hidden)
+  document.querySelector("#news-count").textContent = `${visible}건`
+  document.querySelector("#news-empty").hidden = visible > 0
+})

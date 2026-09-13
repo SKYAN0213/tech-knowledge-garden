@@ -8,6 +8,8 @@ description: 검증된 새 소식 없음.
 coverage_start: 2026-09-05T08:01:29+09:00
 coverage_end: 2026-09-06T08:02:37+09:00
 item_count: 0
+edition: Editions/2026/09/2026-09-06_0802_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-06_0802_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -18,6 +20,8 @@ generated_by: tech-knowledge-garden
 새로 확인한 소식 없음.
 
 > 검증된 새 소식 없음.
+
+
 
 
 

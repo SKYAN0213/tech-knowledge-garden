@@ -8,12 +8,16 @@ description: 2026-06-26 IT · AI · 로보틱스
 coverage_start: 2026-06-26T12:04:47+09:00
 coverage_end: 2026-06-26T18:02:04+09:00
 item_count: 0
+edition: Editions/2026/06/2026-06-26_1802_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/06/2026-06-26_1802_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # 2026-06-26 · 아침 브리핑
+
+
 
 ## Executive Summary
 

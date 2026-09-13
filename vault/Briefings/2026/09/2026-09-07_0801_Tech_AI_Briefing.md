@@ -8,6 +8,8 @@ description: 연구 자동화의 성과를 읽을 때 사람 개입과 감시의
 coverage_start: 2026-09-06T08:02:37+09:00
 coverage_end: 2026-09-07T08:01:13+09:00
 item_count: 2
+edition: Editions/2026/09/2026-09-07_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-07_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,20 @@ generated_by: tech-knowledge-garden
 # 2026-09-07 · 아침 브리핑
 
 > 연구 자동화의 성과를 읽을 때 사람 개입과 감시의 빈틈도 함께 본다.
+
+## 오늘의 변화
+
+기존 수록 기사 재정리 · 2026-09-13 검토
+
+### 연구 에이전트의 최종 성공 옆에 사람 개입량이 드러났다.
+
+도움을 받아 끝낸 과제와 자율 완료를 분리해야 자동화의 범위를 판단할 수 있다.
+
+- 판단: 관측
+- 한계: 내부 관찰이며 불확실한 결과를 제외했고 자원 확대의 영향도 분리되지 않았다.
+- 다음 확인: 개입 시간과 불확실 결과 비율, 다른 조직의 재현.
+- 근거: [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · [OpenAI 원문](https://openai.com/index/research-acceleration-view-inside-openai/)
+- 누적 기록: [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]]
 
 ## 헤드라인
 

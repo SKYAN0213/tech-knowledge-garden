@@ -8,6 +8,8 @@ description: AI의 수학 증명 제안은 검토 대상으로, 기업 개발 �
 coverage_start: 2026-09-08T08:01:15+09:00
 coverage_end: 2026-09-09T08:02:08+09:00
 item_count: 3
+edition: Editions/2026/09/2026-09-09_0802_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-09_0802_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,8 @@ generated_by: tech-knowledge-garden
 # 2026-09-09 · 아침 브리핑
 
 > AI의 수학 증명 제안은 검토 대상으로, 기업 개발 도구는 권한과 출시 단계로 읽는다.
+
+
 
 ## 헤드라인
 

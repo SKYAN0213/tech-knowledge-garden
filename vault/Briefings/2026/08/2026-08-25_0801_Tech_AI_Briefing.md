@@ -8,6 +8,8 @@ description: 에이전트 추론 경쟁의 기준이 단일 칩 속도에서 긴
 coverage_start: 2026-08-24T08:01:11+09:00
 coverage_end: 2026-08-25T08:01:47+09:00
 item_count: 1
+edition: Editions/2026/08/2026-08-25_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/08/2026-08-25_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,20 @@ generated_by: tech-knowledge-garden
 # 2026-08-25 · 아침 브리핑
 
 > 에이전트 추론 경쟁의 기준이 단일 칩 속도에서 긴 문맥의 생성 지연·전력·비용을 함께 다루는 시스템 설계로 넓어졌습니다.
+
+## 오늘의 변화
+
+기존 수록 기사 재정리 · 2026-09-13 검토
+
+### 칩·캐시·네트워크를 묶은 추론 최적화가 제시됐다.
+
+NVIDIA 사례는 긴 문맥 처리와 토큰 생성의 병목을 전체 경로에서 나누어 보는 근거다.
+
+- 판단: 관측
+- 한계: 회사 자체 측정이며 핵심 성능 수치 일부는 외부 검토 전이다.
+- 다음 확인: 동일 품질·지연 조건의 독립 재현과 실제 업무당 비용.
+- 근거: [[News/19af374b78b369cd|에이전트 추론, 칩 하나보다 전체 경로를 재설계한다]] · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [원문 2](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
+- 누적 기록: [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]]
 
 ## 헤드라인
 

@@ -1,0 +1,39 @@
+# 2026-08-28 아침 브리핑
+
+좋은 AI 평가는 점수뿐 아니라 시험의 비밀, 평가 기준의 폭, 데이터 누출까지 함께 지켜야 합니다.
+
+[웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-28_0802_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
+
+## 헤드라인과 원문
+
+### [시험 문제도 모델 가중치도 숨긴 채 평가한다](https://skyan0213.github.io/tech-knowledge-garden/news/7a7d38500197da71)
+
+Google DeepMind와 외부 기관들이 기밀 벤치마크와 독점 모델을 암호학적으로 격리한 채 시험하는 이중맹검 평가 파일럿을 시작했습니다. 평가자는 모델 가중치를, 모델 제공자는 시험 문항을 볼 수 없게 해 오염과 지식재산 노출을 함께 줄이는 시도입니다.
+
+[storage.googleapis.com 원문](https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/piloting-the-worlds-first-double-blind-ai-evaluations/double-blind-evaluations-technical-report.pdf)
+
+### [ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다](https://skyan0213.github.io/tech-knowledge-garden/news/de0d8b99a9cda9c5)
+
+잘 다듬어진 답과 다양한 생각은 같은 능력이 아니었습니다. ChatGPT 접근은 표준 평가 점수와 논리적 정돈을 높였고, 인과 추론 훈련은 기제와 반증 조건을 더 쓰게 하고 집단의 아이디어 다양성을 넓혔습니다.
+
+[OpenAI 원문](https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf)
+
+### [지리공간 예측의 데이터 찾기부터 모델 평가까지 자동화했다](https://skyan0213.github.io/tech-knowledge-garden/news/068cf5b2747d434f)
+
+Planetary Prediction Engine(PPE)은 자연어로 예측 질문을 받으면 지리·시간 범위를 정하고, 관련 데이터를 찾고 정리해 모델을 학습·평가하고 보고서까지 만드는 실험적 연구 시스템입니다.
+
+[arXiv 원문](https://arxiv.org/abs/2608.26088)
+
+## 흐름 읽기
+
+> **확인된 사실**
+> 이중맹검 파일럿은 시험 데이터와 모델 가중치의 상호 비공개를 기술 통제로 옮겼습니다. 학생 실험은 표준 점수와 아이디어 다양성이 다른 평가 축임을 보였고, PPE는 지리공간 모델링에서 목표 누출과 과적합 검사를 자동 파이프라인 안에 넣었습니다. [S1](https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/piloting-the-worlds-first-double-blind-ai-evaluations/double-blind-evaluations-technical-report.pdf) [S2](https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf) [S3](https://arxiv.org/abs/2608.26088)
+
+> **분석**
+> 세 사례의 공통점은 높은 최종 점수만으로 신뢰를 만들 수 없다는 것입니다. 무엇을 숨겨야 하는지, 무엇을 별도 축으로 측정할지, 어떤 누출을 실행 전에 막을지를 평가 설계에 명시해야 합니다.
+
+## 오늘의 적용
+
+- **대상:** 모델 평가·조달팀 · **행동:** 기밀 벤치마크를 외부 모델에 돌릴 때 원격 증명, 격리 실행, 허용 출력, 키 폐기 절차를 계약과 시험 계획에 넣습니다. · **가드레일:** enclave 사용만으로 독립성·무결성이 증명됐다고 간주하지 말고 구현과 운영 감사를 별도로 요구합니다.
+- **대상:** 교육·채용 평가 설계자 · **행동:** 결과 품질, 아이디어 다양성, 기제 설명, 반증 가능성을 분리한 루브릭으로 같은 표본을 다시 채점합니다. · **가드레일:** 한 과제의 실험 효과를 장기 학습이나 모든 직무의 효과로 일반화하지 않습니다.
+- **대상:** 지리공간 데이터팀 · **행동:** 자동 파이프라인의 각 특성에 출처 시점, 공간 단위, 목표와의 시간 관계를 기록하고 수동 기준선과 비교합니다. · **가드레일:** 예측 성능을 인과 설명이나 현장 개입 효과로 승격하지 않습니다.

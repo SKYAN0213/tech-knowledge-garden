@@ -6,6 +6,18 @@ import { spawnSync } from "node:child_process"
 import YAML from "yaml"
 import { makeResolver } from "./links.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
+import {
+  briefingLibrary,
+  issueTrendsMarkdown,
+  topicMarkdown,
+  digestMarkdown,
+  githubMarkdown,
+  digestPath,
+  githubIssue,
+  githubTopic,
+  topicPath,
+  feedDescription,
+} from "./briefings.mjs"
 
 export const walk = (dir) =>
   fs.existsSync(dir)
@@ -103,13 +115,15 @@ export function extractArticles(edition) {
         const leadLines = part.body
           .split("\n")
           .map((l) => l.replace(/^>\s?/, "").trim())
-          .filter((l) => l && !/^\[!|^#{1,6} |^\*\*(?:개념|근거|공식 변경)|^\[\[/.test(l))
+          .filter(
+            (l) => l && !/^\[!|^#{1,6} |^\*\*(?:개념|근거|공식 변경|프로젝트:|논문:)|^\[\[/.test(l),
+          )
         const summary = strip(leadLines[0] || part.title)
           .replace(/^[^:：]{1,20}[:：]\s*/, "")
           .slice(0, 240)
         return {
           id,
-          title: part.title,
+          title: strip(part.title),
           body: part.body,
           summary,
           desk: desk.title,
@@ -140,6 +154,13 @@ export function refresh(vault = "vault") {
       })
     }
   }
+  const library = briefingLibrary(vault, all, issueArticles)
+  const base =
+    "https://" +
+    YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8")).configuration.baseUrl.replace(
+      /\/$/,
+      "",
+    )
   const generated = []
   const emit = (slug, meta, body) => {
     const f = path.join(vault, slug + ".md")
@@ -175,7 +196,7 @@ export function refresh(vault = "vault") {
         concepts: item.concepts,
         description: item.summary,
       },
-      `${wiki("index", "← 오늘의 헤드라인")} · ${item.desk} · 처음 수록 ${item.first_seen}\n\n${item.body}\n\n## 이어 읽기\n\n${item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") || "연결된 개념 없음"}\n\n## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
+      `${item.body}\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
         item.sources,
       )
         .map(([k, v]) => `- [${k}] ${v}`)
@@ -187,7 +208,8 @@ export function refresh(vault = "vault") {
       date = String(issue.meta.date || path.basename(issue.file).slice(0, 10))
     const line = issue.body.match(/\*\*한 줄 편집:\*\*\s*(.+)/)?.[1]
     const heading = line ? strip(line) : `${date} IT · AI · 로보틱스`
-    let body = line ? `> ${heading}\n\n` : ""
+    const model = library.byKey.get(issue.slug)
+    let body = (line ? `> ${heading}\n\n` : "") + issueTrendsMarkdown(model) + "\n\n"
     body += items.length
       ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
       : ""
@@ -214,10 +236,42 @@ export function refresh(vault = "vault") {
         coverage_start: issue.meta.coverage_start,
         coverage_end: issue.meta.coverage_end,
         item_count: items.length,
+        edition: issue.slug,
+        github_url: githubIssue(issue.slug),
       },
       body,
     )
+    write(digestPath(issue.slug), digestMarkdown(model, base))
   }
+  for (const t of library.latest.snapshot.topics) {
+    const body = topicMarkdown(t, library.latest.date)
+    emit(
+      topicPath(t.id),
+      {
+        title: t.title,
+        type: "briefing-topic",
+        topic_id: t.id,
+        date: library.latest.date,
+        description: t.thesis,
+        github_url: githubTopic(t.id),
+      },
+      body,
+    )
+    write(
+      "digest/topics/" + t.id + ".md",
+      githubMarkdown("# " + t.title + "\n\n" + body, base) + "\n",
+    )
+  }
+  write(
+    "digest/README.md",
+    `# 아침 브리핑\n\n[웹 브리핑](${base}/briefings/index) · [RSS](${base}/briefing.xml)\n\n## 누적 주제\n\n${library.latest.snapshot.topics.map((t) => `- [${t.title}](topics/${t.id}.md) — 원문 ${t.events}건 · ${t.lessons.length}개 원칙`).join("\n")}\n\n## 날짜별 브리핑\n\n${library.issues
+      .toReversed()
+      .map(
+        (i) =>
+          `- [${i.date} · ${path.basename(i.key).slice(11, 15)}](${digestPath(i.key).replace(/^digest\//, "")}) — ${i.lead}`,
+      )
+      .join("\n")}\n`,
+  )
   const latest = all.at(-1),
     date = String(latest.meta.date),
     latestItems = issueArticles.get(latest.slug)
@@ -277,7 +331,7 @@ export function refresh(vault = "vault") {
   emit(
     "Briefings/index",
     { title: "브리핑", type: "index", date },
-    `${all.length}개의 취재 원고가 날짜순으로 연결되어 있습니다.\n\n${all
+    `## 누적 주제\n\n${library.latest.snapshot.topics.map((t) => `- ${wiki(topicPath(t.id), t.title)} · ${t.events}건 · 원칙 ${t.lessons.length}개`).join("\n")}\n\n## 날짜별 브리핑\n\n${all
       .toReversed()
       .map(
         (i) =>
@@ -377,6 +431,11 @@ export function validate(vault = "vault") {
   }
   const all = editions(vault),
     dates = []
+  try {
+    briefingLibrary(vault, all, new Map(all.map((i) => [i.slug, extractArticles(i)])))
+  } catch (e) {
+    errors.push(e.message)
+  }
   for (const issue of all) {
     if (!issue.meta.coverage_end && issue.meta.schema_version === "tech-ai-magazine/v2")
       errors.push(`${issue.file}: missing cutoff`)
@@ -415,9 +474,13 @@ export function validate(vault = "vault") {
   )
 }
 export function feeds(vault = "vault", output = "public") {
-  const all = editions(vault)
-    .toReversed()
-    .filter((i) => i.meta.coverage_end)
+  const original = editions(vault)
+  const library = briefingLibrary(
+    vault,
+    original,
+    new Map(original.map((i) => [i.slug, extractArticles(i)])),
+  )
+  const all = original.toReversed().filter((i) => i.meta.coverage_end)
   const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
   const base = "https://" + config.configuration.baseUrl.replace(/\/$/, "")
   const items = all
@@ -430,12 +493,16 @@ export function feeds(vault = "vault", output = "public") {
           .split("/")
           .map(encodeURIComponent)
           .join("/")
-      return `<item><title>${escapeXML(String(i.meta.date) + " 아침 브리핑")}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><pubDate>${new Date(i.meta.coverage_end).toUTCString()}</pubDate><description>${escapeXML(i.body.match(/\*\*한 줄 편집:\*\*\s*(.+)/)?.[1] || "IT · AI · 로보틱스 브리핑")}</description></item>`
+      const title =
+        String(i.meta.date) +
+        " 아침 브리핑" +
+        (i.body.includes("**한 줄 편집:**") ? " · " + library.byKey.get(i.slug).lead : "")
+      return `<item><title>${escapeXML(title)}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><pubDate>${new Date(i.meta.coverage_end).toUTCString()}</pubDate><description>${escapeXML(feedDescription(library.byKey.get(i.slug), base))}</description></item>`
     })
     .join("\n")
   write(
     path.join(output, "briefing.xml"),
-    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><atom:link href="${base}/briefing.xml" rel="self" type="application/rss+xml"/><title>아침 브리핑</title><link>${base}</link><description>IT, AI, 로보틱스의 변화와 연결된 지식</description><language>ko-kr</language>${items}</channel></rss>\n`.replace(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><atom:link href="${base}/briefing.xml" rel="self" type="application/rss+xml"/><title>아침 브리핑</title><link>${base}/briefings/index</link><description>IT, AI, 로보틱스의 변화와 연결된 지식</description><language>ko-kr</language>${items}</channel></rss>\n`.replace(
       /[^\x00-\x7F]/gu,
       (c) => `&#${c.codePointAt(0)};`,
     ),
@@ -450,12 +517,43 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     else if (command === "feeds") feeds()
     else if (command === "context") {
       const c = JSON.parse(fs.readFileSync("data/catalog.json", "utf8"))
+      const all = editions("vault")
+      const library = briefingLibrary(
+        "vault",
+        all,
+        new Map(all.map((i) => [i.slug, extractArticles(i)])),
+        { requireLatest: false },
+      )
       console.log(
         JSON.stringify(
           {
             latest_cutoff: c.latest_cutoff,
             known_source_count: c.known_sources.length,
             known_sources: c.known_sources,
+            latest_issue: {
+              edition: library.latest.key,
+              date: library.latest.date,
+              trend_review_exists: Boolean(library.latest.snapshot.review),
+              articles: library.latest.items.map((a) => ({
+                event_id: a.id,
+                title: a.title,
+                urls: a.urls,
+              })),
+            },
+            trend_topics: library.latest.snapshot.topics.map((t) => ({
+              id: t.id,
+              title: t.title,
+              thesis: t.thesis,
+              watch_for: t.watch_for,
+              disconfirming: t.disconfirming,
+              latest_observations: t.history.slice(-3).map((s) => ({
+                id: s.id,
+                date: s.date,
+                change: s.change,
+                next_check: s.next_check,
+              })),
+              lessons: t.lessons,
+            })),
           },
           null,
           2,

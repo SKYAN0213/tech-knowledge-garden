@@ -11,16 +11,14 @@ sources:
   - https://www.nature.com/articles/s43588-026-01037-2
 concepts:
   - Knowledge/AI Systems/AI for Scientific Discovery
-description: Enhancing materials discovery with valence-constrained design in
-  generative modeling
+description: CrysVCD는 결정 구조를 대량 생성한 뒤 불안정 후보를 버리는 대신, 먼저 원자가 균형을 만족하는 조성을 만들고 그
+  조성으로 구조를 생성합니다.
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
 # CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다
-
-[[index|← 오늘의 헤드라인]] · 리서치 노트 · 처음 수록 2026-08-27
 
 **논문:** *Enhancing materials discovery with valence-constrained design in generative modeling*
 

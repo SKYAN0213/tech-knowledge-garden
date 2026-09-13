@@ -8,6 +8,8 @@ description: AI의 현장 성과는 추정치와 외부 검증의 경계를 함�
 coverage_start: 2026-09-07T08:01:13+09:00
 coverage_end: 2026-09-08T08:01:15+09:00
 item_count: 2
+edition: Editions/2026/09/2026-09-08_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-08_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -17,6 +19,8 @@ generated_by: tech-knowledge-garden
 
 > AI의 현장 성과는 추정치와 외부 검증의 경계를 함께 읽는다.
 
+
+
 ## 헤드라인
 
 ### [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]]
@@ -25,7 +29,7 @@ Google이 Cathay Pacific과 비행운 회피 시험 확대를 발표했다. 초�
 
 ### [[News/6e376a02cbe3c1ab|초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다]]
 
-A multitask framework for automated multi-frame right upper quadrant ultrasound interpretation and clinical decision support. Nature Communications, 9월 7일 게재. 원문 메타데이터의 게시일은 2026-09-07T00:00:00Z다.
+우상복부 초음파 여러 프레임과 언어 정보를 연결해 소견 분류, 보고서 생성, 수술 관련 판단 보조를 연구했다.
 
 ## 흐름 읽기
 

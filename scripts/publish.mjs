@@ -19,7 +19,7 @@ try {
     )
   run("npm", ["run", "build"], { stdio: "inherit" })
   run("node", ["scripts/verify-site.mjs"], { stdio: "inherit" })
-  run("git", ["add", "--", "vault", "data/catalog.json"])
+  run("git", ["add", "--", "vault", "data/catalog.json", "digest"])
   const changed = run("git", ["diff", "--cached", "--name-only"])
   if (changed)
     run(

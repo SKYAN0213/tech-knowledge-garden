@@ -2,7 +2,7 @@
 
 ## 저장과 역할
 
-이 저장소의 `vault/`가 유일한 현재 Tech Knowledge다. 노트별 선별 없이 유형별 웹 화면을 만든다. 뉴스·브리핑·연결 지도를 기본 메뉴로 두고, 홈에도 지도를 표시한다. 개념은 기사와 지도에서 연결한다. 보관용 원고·Archive·Trends·폴더 페이지는 웹 출력과 검색에서 제외한다. GPT는 조사·검증·집필을 맡고, 무료 로컬 스크립트는 기사 중복 연결, 헤드라인, 주간 관측과 RSS를 만든다. 별도 OpenAI API나 자동화 구독은 사용하지 않는다. Codex의 기존 ChatGPT 사용량 한도는 적용된다.
+이 저장소의 `vault/`가 유일한 현재 Tech Knowledge다. 노트별 선별 없이 유형별 웹 화면을 만든다. 뉴스·브리핑·연결 지도를 기본 메뉴로 두고, 지도는 전용 경로와 관련 전문 개념에서 읽는다. 뉴스 홈·목록·상세와 브리핑에는 지도를 넣지 않는다. 개념은 기사와 지도에서 연결한다. 보관용 원고·Archive·Trends·Signals·TrendTopics·폴더 페이지는 웹 출력과 검색에서 제외한다. GPT는 조사·검증·집필을 맡고, 무료 로컬 스크립트는 기사 중복 연결, 헤드라인, 누적 주제·GitHub 요약과 상세 RSS를 만든다. 별도 OpenAI API나 자동화 구독은 사용하지 않는다. Codex의 기존 ChatGPT 사용량 한도는 적용된다.
 
 1. `npm run context`로 마지막 취재 cutoff와 기존 원문 URL을 읽는다. 최신 원고와 관련 개념 노트도 읽는다.
 2. 웹 검색을 **live**로 사용해 cutoff 이후 발표·실질적 업데이트를 조사한다. IT/소프트웨어, AI, 로보틱스/반도체를 각각 점검한다. 일차 자료의 원문과 게시·갱신 시각을 확인한다. 접근 실패를 새 소식 없음으로 해석하지 않는다.
@@ -10,8 +10,9 @@
 4. 정확한 조사 시각을 사용해 원고를 `vault/Editions/YYYY/MM/YYYY-MM-DD_0800_Tech_AI_Briefing.md`에 작성한다. 날짜에 해당하는 원고가 이미 있으면 읽고 갱신하며 중복 파일을 만들지 않는다. 새 항목이 없으면 substantive section은 `없음`으로 둔다.
 5. 일일 사건은 원고에, 재사용 정의는 기존 `vault/Knowledge/`의 canonical concept에 기록한다. 개념의 `최근 변화`에서 해당 기사·원문을 연결한다. 원고의 연결은 `[[Knowledge/AI Systems/AI Agents|AI Agents]]`처럼 vault 기준 경로를 사용한다. 새 개념을 만들었으면 사전 색인을 갱신한다. 모든 개념에는 concept_id(고정 ID), label(한글), group(의미 범주), keywords, verified_sources, last_reviewed를 작성한다. 정의·키워드는 실제 읽은 일차 자료로 확인한다. 새 연결은 `connections` 목록에 `target`(기존 concept_id), `reason`(확인한 연관성)을 기록하고 원문 URL이 있으면 `evidence`를 추가한다. 방향·참조 유형·인용은 연결의 필수 조건이 아니다. 기존 `relations`의 유형·근거·source/inference 구분은 보존한다. 관련 개념 본문에는 `- [[Knowledge/…|개념]] — 확인한 이유`로 동일한 연결을 적는다. 빈 분류나 추측을 채워 넣지 않는다. 지도 노드는 일반 독자가 별도 설명을 배워야 하는 전문 용어만 선정한다. `map_review`에 include/exclude 결정, kind, 구체적인 학습 이유와 검토일을 기록한다. 정의·설명 문서·일차 자료가 없는 노드는 포함하지 않으며 미검토 노트는 제외된다. 일반어·넓은 사업/응용 분류·기사 제목·단순 키워드는 노드가 아니다. 별칭에는 같은 용어의 이름·약어만 기록한다. Obsidian과 웹은 같은 선정 용어와 확인된 관계를 사용한다. 뉴스는 별도 목록으로 연결한다. 규칙은 [연결 지도](CONNECTION_MAP.md)를 따른다.
 6. 취재 범위와 누락을 `.local/research/YYYY-MM-DD.md`에 기록한다. 원문 URL별 확인 시각, 게시 시각의 증거, 제외 이유, IT·AI·로봇별 확인 채널, 접근 실패를 남긴다. 비어 있는 브리핑도 이 확인 기록이 있어야 한다.
-7. `npm run refresh && npm run validate && npm run build`를 실행한다. 생성된 `Briefings/`, `News/`, `Trends/`, `index.md`는 직접 편집하지 않는다. 자동 검사는 형식과 링크의 증거이며 취재 완전성을 대신하지 않는다.
-8. 공유를 업데이트할 때 `npm run publish`를 실행한다. 배포 실행의 성공과 실제 사이트의 새 회차를 확인한 뒤에만 웹 발행 성공을 보고한다. 로컬 저장, Git push, 배포 성공은 각각 구분한다.
+7. [트렌드 운영 규칙](TREND_WORKFLOW.md)에 따라 원고별 `vault/Signals/`와 주제별 `vault/TrendTopics/`를 작성한다. 원고 저장 후 `npm run context`의 사건 ID를 사용한다. 관측·제약·다음 확인을 기록하고, 여러 날짜의 근거에서 검토한 재사용 원칙을 축적한다. 검토한 빈 결과와 미정리는 구분한다.
+8. `npm run refresh && npm run validate && npm run build`를 실행한다. 생성된 `Briefings/`, `News/`, `Trends/`, `index.md`, `digest/`는 직접 편집하지 않는다. 자동 검사는 형식과 링크의 증거이며 취재 완전성을 대신하지 않는다.
+9. 공유를 업데이트할 때 `npm run publish`를 실행한다. 배포 실행의 성공과 실제 사이트의 새 회차를 확인한 뒤에만 웹 발행 성공을 보고한다. 로컬 저장, Git push, 배포 성공은 각각 구분한다.
 
 ## 중복과 사건 경계
 

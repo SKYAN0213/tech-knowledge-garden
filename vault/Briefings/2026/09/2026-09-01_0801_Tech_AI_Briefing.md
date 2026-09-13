@@ -8,6 +8,8 @@ description: 범용 모델의 무대가 문장에서 여러 시계열의 동시 
 coverage_start: 2026-08-31T08:01:30+09:00
 coverage_end: 2026-09-01T08:01:37+09:00
 item_count: 2
+edition: Editions/2026/09/2026-09-01_0801_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-01_0801_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -16,6 +18,8 @@ generated_by: tech-knowledge-garden
 # 2026-09-01 · 아침 브리핑
 
 > 범용 모델의 무대가 문장에서 여러 시계열의 동시 예측으로 넓어졌다.
+
+
 
 ## 헤드라인
 

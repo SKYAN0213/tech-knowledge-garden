@@ -8,6 +8,8 @@ description: 좋은 AI 평가는 점수뿐 아니라 시험의 비밀, 평가 �
 coverage_start: 2026-08-27T08:02:22+09:00
 coverage_end: 2026-08-28T08:02:09+09:00
 item_count: 3
+edition: Editions/2026/08/2026-08-28_0802_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/08/2026-08-28_0802_Tech_AI_Briefing.md
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -17,6 +19,8 @@ generated_by: tech-knowledge-garden
 
 > 좋은 AI 평가는 점수뿐 아니라 시험의 비밀, 평가 기준의 폭, 데이터 누출까지 함께 지켜야 합니다.
 
+
+
 ## 헤드라인
 
 ### [[News/7a7d38500197da71|시험 문제도 모델 가중치도 숨긴 채 평가한다]]
@@ -25,11 +29,11 @@ Google DeepMind와 외부 기관들이 기밀 벤치마크와 독점 모델을 �
 
 ### [[News/de0d8b99a9cda9c5|ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다]]
 
-Training novices to think, or giving them LLMs? Evidence from an RCT
+잘 다듬어진 답과 다양한 생각은 같은 능력이 아니었습니다. ChatGPT 접근은 표준 평가 점수와 논리적 정돈을 높였고, 인과 추론 훈련은 기제와 반증 조건을 더 쓰게 하고 집단의 아이디어 다양성을 넓혔습니다.
 
 ### [[News/068cf5b2747d434f|지리공간 예측의 데이터 찾기부터 모델 평가까지 자동화했다]]
 
-Planetary Prediction Engine: Autonomous Geospatial Prediction via Intelligent Data Selection and Foundation Model Embeddings
+Planetary Prediction Engine(PPE)은 자연어로 예측 질문을 받으면 지리·시간 범위를 정하고, 관련 데이터를 찾고 정리해 모델을 학습·평가하고 보고서까지 만드는 실험적 연구 시스템입니다.
 
 ## 흐름 읽기
 
