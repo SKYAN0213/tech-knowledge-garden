@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 import { walk, parseNote, sections, noteText } from "./garden.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import { layoutGraph, edgeLabels } from "../web/layout.mjs"
-import { assembleGraph } from "../web/graph-model.mjs"
+import { assembleGraph, isLearningTerm } from "../web/graph-model.mjs"
 const slug = (p) => slugifyFilePath(p + ".md")
 export function readKnowledge(vault = "vault") {
   const notes = walk(path.join(vault, "Knowledge"))
@@ -33,6 +33,7 @@ export function readKnowledge(vault = "vault") {
         .replace(/[\s·]+$/, "")
         .trim(),
       sources: m.verified_sources,
+      mapReview: m.map_review,
     }
   })
   const ids = new Set(nodes.map((n) => n.id)),
@@ -133,25 +134,28 @@ export function buildGraph(vault = "vault") {
     reviewed: knowledge.reviewed,
     engine: "sigma-webgl-forceatlas2",
     counts: {
-      concepts: knowledge.nodes.length,
+      concepts: graph.nodes.length,
+      excludedConcepts: knowledge.nodes.length - graph.nodes.length,
       news: articles.length,
-      keywords: graph.nodes.filter((n) => n.kind === "keyword").length,
+      linkedNews: graph.articles.filter((a) => a.termIds.length).length,
       associations: graph.edges.length,
     },
   }
 }
 export function syncKnowledgeMap(vault = "vault") {
   const graph = readKnowledge(vault),
-    lookup = new Map(graph.nodes.map((n) => [n.id, n]))
+    admitted = graph.nodes.filter(isLearningTerm),
+    lookup = new Map(admitted.map((n) => [n.id, n]))
   const link = (id) => `[[${lookup.get(id).path}|${lookup.get(id).label}]]`
   const file = path.join(vault, "Knowledge Maps/AI Technology Knowledge Map.md"),
     old = parseNote(fs.readFileSync(file, "utf8"))
   const pairs = new Map()
   for (const a of graph.associations) {
+    if (!lookup.has(a.source) || !lookup.has(a.target)) continue
     const key = [a.source, a.target].sort().join("|")
     if (!pairs.has(key)) pairs.set(key, a)
   }
-  const body = `# AI Technology Knowledge Map\n\n## 개념\n\n${graph.nodes.map((n) => "- " + link(n.id)).join("\n")}\n\n## 연결 관계\n\n| 개념 | 연결된 개념 | 연결 이유 |\n|---|---|---|\n${[...pairs.values()].map((e) => `| ${link(e.source)} | ${link(e.target)} | ${e.reason}${e.evidence.length ? " " + e.evidence.map((u) => `[근거](${u})`).join(" · ") : ""} |`).join("\n")}\n`
+  const body = `# AI Technology Knowledge Map\n\n## 전문 용어\n\n${admitted.map((n) => "- " + link(n.id)).join("\n")}\n\n## 연결 관계\n\n| 용어 | 연결된 용어 | 연결 이유 |\n|---|---|---|\n${[...pairs.values()].map((e) => `| ${link(e.source)} | ${link(e.target)} | ${e.reason}${e.evidence.length ? " " + e.evidence.map((u) => `[근거](${u})`).join(" · ") : ""} |`).join("\n")}\n`
   fs.writeFileSync(
     file,
     noteText({ ...old.meta, updated: graph.reviewed, last_reviewed: graph.reviewed }, body),

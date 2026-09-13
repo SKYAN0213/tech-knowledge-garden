@@ -1,4 +1,4 @@
-// An edge means association, never causation or a required citation direction.
+// The map contains reviewed learning terms. News is attached data, never another node.
 export const normalizeTerm = (value) =>
   String(value).normalize("NFC").toLocaleLowerCase("en-US").replace(/\s+/g, " ").trim()
 export function mentions(text, phrase) {
@@ -9,90 +9,91 @@ export function mentions(text, phrase) {
   while (index !== -1) {
     const before = haystack[index - 1] || "",
       after = haystack[index + needle.length] || ""
-    const firstLatin = /^[a-z0-9]/.test(needle),
-      lastLatin = /[a-z0-9]$/.test(needle)
-    if ((!firstLatin || !/[a-z0-9_]/.test(before)) && (!lastLatin || !/[a-z0-9_]/.test(after)))
+    if (
+      (!/^[a-z0-9]/.test(needle) || !/[a-z0-9_]/.test(before)) &&
+      (!/[a-z0-9]$/.test(needle) || !/[a-z0-9_]/.test(after))
+    )
       return true
     index = haystack.indexOf(needle, index + 1)
   }
   return false
 }
+export const learningKinds = [
+  "mechanism",
+  "protocol",
+  "architecture",
+  "model",
+  "evaluation",
+  "metric",
+  "security",
+]
+export function isLearningTerm(node) {
+  const review = node.mapReview
+  if (!review) return false
+  if (
+    !["include", "exclude"].includes(review.decision) ||
+    typeof review.reason !== "string" ||
+    review.reason.trim().length < 10 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(review.reviewed || "")
+  )
+    throw Error("Invalid learning-term review: " + node.id)
+  if (review.decision === "exclude") return false
+  if (
+    !learningKinds.includes(review.kind) ||
+    !node.definition?.trim() ||
+    !node.slug ||
+    !node.sources?.length ||
+    !node.sources.every((u) => /^https:\/\//.test(u))
+  )
+    throw Error("Learning term needs a definition, reading page and source review: " + node.id)
+  return true
+}
 export function assembleGraph(concepts, articles, associations = []) {
-  const nodes = concepts.map((n) => ({ ...n, kind: "concept", conceptIds: [n.id] })),
-    byId = new Map(nodes.map((n) => [n.id, n]))
-  if (byId.size !== nodes.length) throw Error("Duplicate concept identity")
-  const aliases = new Map()
+  const all = new Map(concepts.map((n) => [n.id, n]))
+  if (all.size !== concepts.length) throw Error("Duplicate concept identity")
+  const selected = concepts.filter(isLearningTerm)
+  const nodes = selected.map(({ path, keywords, mapReview, ...n }) => ({
+    ...n,
+    kind: "concept",
+    learningKind: mapReview.kind,
+    learningReason: mapReview.reason,
+  }))
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const termNames = new Map()
   for (const n of nodes)
-    for (const a of [n.label, n.title, ...(n.aliases || [])]) {
-      const key = normalizeTerm(a)
-      if (aliases.has(key) && aliases.get(key) !== n.id) aliases.set(key, null)
-      else if (!aliases.has(key)) aliases.set(key, n.id)
+    for (const name of [n.label, n.title, ...n.aliases]) {
+      const key = normalizeTerm(name)
+      if (termNames.has(key) && termNames.get(key) !== n.id)
+        throw Error("Ambiguous learning term: " + name)
+      termNames.set(key, n.id)
     }
-  const pairs = new Map(),
-    keywords = new Map()
-  const connect = (a, b, kind, reason, weight = 1, evidence = []) => {
-    if (a === b) return
-    if (!byId.has(a) || !byId.has(b)) throw Error("Unknown association endpoint: " + a + " / " + b)
-    if (!reason?.trim()) throw Error("Association requires a confirmed reason")
-    const [source, target] = [a, b].sort(),
+  const pairs = new Map()
+  for (const a of associations) {
+    if (!all.has(a.source) || !all.has(a.target)) throw Error("Unknown association endpoint")
+    if (!a.reason?.trim()) throw Error("Association requires a confirmed reason")
+    if (a.source === a.target || !byId.has(a.source) || !byId.has(a.target)) continue
+    const [source, target] = [a.source, a.target].sort(),
       key = source + "\u0000" + target
-    if (!pairs.has(key)) pairs.set(key, { source, target, weight: 0, connections: [] })
+    if (!pairs.has(key)) pairs.set(key, { source, target, weight: 2, connections: [] })
     const edge = pairs.get(key)
-    if (!edge.connections.some((c) => c.kind === kind && c.reason === reason)) {
-      edge.connections.push({ kind, reason, evidence })
-      edge.weight = Math.min(5, edge.weight + weight)
-    }
+    if (!edge.connections.some((c) => c.reason === a.reason))
+      edge.connections.push({ kind: "confirmed", reason: a.reason, evidence: a.evidence || [] })
   }
-  for (const n of concepts)
-    for (const word of n.keywords) {
-      const key = normalizeTerm(word)
-      if (!key) continue
-      const id = aliases.get(key) || "keyword:" + key
-      if (!byId.has(id)) {
-        const keyword = {
-          id,
-          label: word,
-          title: word,
-          kind: "keyword",
-          keywords: [word],
-          aliases: [],
-          conceptIds: [],
-          sources: [],
-        }
-        nodes.push(keyword)
-        byId.set(id, keyword)
+  const articleIds = new Set()
+  const publicArticles = articles.map(({ text, conceptIds, ...article }) => {
+    if (articleIds.has(article.id)) throw Error("Duplicate article identity")
+    articleIds.add(article.id)
+    if (conceptIds.some((id) => !all.has(id))) throw Error("Unknown article concept")
+    const matches = []
+    for (const n of nodes) {
+      if (conceptIds.includes(n.id)) matches.push({ termId: n.id, basis: "editorial" })
+      else {
+        const name = [n.label, n.title, ...n.aliases].find((name) => mentions(text, name))
+        if (name) matches.push({ termId: n.id, basis: "mention", matched: name })
       }
-      const node = byId.get(id)
-      if (!node.conceptIds.includes(n.id)) node.conceptIds.push(n.id)
-      if (!keywords.has(key)) keywords.set(key, { id, word })
-      connect(n.id, id, "concept-keyword", n.label + "의 키워드: " + word, 0.7)
     }
-  for (const a of associations)
-    connect(a.source, a.target, "confirmed", a.reason, 2, a.evidence || [])
-  const publicArticles = articles.map(({ text, ...article }) => article)
-  for (const article of articles) {
-    if (byId.has(article.id)) throw Error("Duplicate article identity")
-    for (const id of article.conceptIds)
-      if (!byId.has(id) || byId.get(id).kind !== "concept")
-        throw Error("Unknown article concept " + id)
-    const node = {
-      id: article.id,
-      kind: "news",
-      slug: article.slug,
-      label: article.title,
-      title: article.title,
-      date: article.date,
-      keywords: [],
-      aliases: [],
-      conceptIds: article.conceptIds,
-    }
-    nodes.push(node)
-    byId.set(node.id, node)
-    for (const id of article.conceptIds)
-      connect(node.id, id, "article-concept", byId.get(id).label, 1.7)
-    for (const { id, word } of keywords.values())
-      if (mentions(article.text, word)) connect(node.id, id, "article-keyword", word, 0.65)
-  }
+    return { ...article, termIds: matches.map((m) => m.termId), matches }
+  })
   const edges = [...pairs.values()]
     .sort((a, b) =>
       (a.source + "\u0000" + a.target).localeCompare(b.source + "\u0000" + b.target, "en"),
@@ -100,51 +101,56 @@ export function assembleGraph(concepts, articles, associations = []) {
     .map((e, i) => ({ ...e, id: "edge:" + i }))
   for (const n of nodes) {
     n.degree = edges.filter((e) => e.source === n.id || e.target === n.id).length
-    n.size = n.kind === "concept" ? 4 + Math.sqrt(n.degree) * 0.55 : n.kind === "news" ? 2.5 : 1.8
+    n.size = 4 + Math.sqrt(n.degree) * 0.65
   }
   return {
-    schema: "news-connections/v2",
+    schema: "learning-connections/v3",
     nodes: nodes.sort((a, b) => a.id.localeCompare(b.id, "en")),
     edges,
     articles: publicArticles,
   }
 }
-// Related stories are reachable in at most two documented association steps.
-// The intermediate label is returned so a shared keyword never masquerades as a direct editorial link.
-export function relatedNews(data, selectedId) {
-  const nodes = new Map(data.nodes.map((n) => [n.id, n])),
-    articles = new Map(data.articles.map((n) => [n.id, n])),
-    adjacency = new Map(data.nodes.map((n) => [n.id, []]))
-  if (!nodes.has(selectedId)) return []
-  for (const edge of data.edges) {
-    adjacency.get(edge.source).push({ id: edge.target, edge })
-    adjacency.get(edge.target).push({ id: edge.source, edge })
-  }
-  const found = new Map(),
-    hasKind = (edge, kind) => edge.connections.some((c) => c.kind === kind)
-  const add = (id, distance, via, rank) => {
-    if (articles.has(id) && (!found.has(id) || found.get(id).rank > rank))
-      found.set(id, { ...articles.get(id), distance, via, rank })
-  }
-  add(selectedId, 0, "", 0)
-  for (const neighbor of adjacency.get(selectedId)) {
-    add(
-      neighbor.id,
-      1,
-      nodes.get(selectedId).label,
-      hasKind(neighbor.edge, "article-concept") ? 10 : 20,
+export function resolveFocus(data, id) {
+  if (!id) return null
+  if (data.nodes.some((n) => n.id === id)) return id
+  const article = data.articles.find((a) => a.id === id)
+  if (article) return article.termIds[0] || null
+  if (id.startsWith("keyword:")) {
+    const name = normalizeTerm(id.slice(8))
+    return (
+      data.nodes.find((n) =>
+        [n.label, n.title, ...n.aliases].some((a) => normalizeTerm(a) === name),
+      )?.id || null
     )
-    const bridge = nodes.get(neighbor.id)
-    if (bridge.kind === "news") continue
-    for (const target of adjacency.get(neighbor.id)) {
-      let rank = bridge.kind === "concept" ? 35 : 55
-      if (hasKind(neighbor.edge, "article-concept") && hasKind(target.edge, "article-concept"))
-        rank = 25
-      if (bridge.kind === "keyword") rank += Math.log2(adjacency.get(neighbor.id).length + 1)
-      add(target.id, 2, bridge.label, rank)
+  }
+  return null
+}
+export function relatedNews(data, selectedId) {
+  const nodes = new Map(data.nodes.map((n) => [n.id, n]))
+  if (!nodes.has(selectedId)) return []
+  const neighbors = new Set(
+    data.edges
+      .filter((e) => e.connections.some((c) => c.kind === "confirmed"))
+      .flatMap((e) =>
+        e.source === selectedId ? [e.target] : e.target === selectedId ? [e.source] : [],
+      ),
+  )
+  const found = []
+  for (const article of data.articles) {
+    const direct = article.matches.find((m) => m.termId === selectedId)
+    if (direct)
+      found.push({
+        ...article,
+        distance: 1,
+        via: nodes.get(selectedId).label,
+        rank: direct.basis === "editorial" ? 10 : 20,
+      })
+    else {
+      const bridge = article.termIds.find((id) => neighbors.has(id))
+      if (bridge) found.push({ ...article, distance: 2, via: nodes.get(bridge).label, rank: 30 })
     }
   }
-  return [...found.values()].sort(
+  return found.sort(
     (a, b) =>
       a.rank - b.rank || String(b.date).localeCompare(String(a.date)) || a.id.localeCompare(b.id),
   )

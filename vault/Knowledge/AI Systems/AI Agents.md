@@ -58,6 +58,11 @@ relations:
     evidence:
       - https://openai.github.io/openai-agents-python/agents/
       - https://docs.vllm.ai/en/latest/
+map_review:
+  decision: include
+  kind: mechanism
+  reason: 챗봇 응답과 구별되는 도구 선택·실행 루프를 이해해야 기사 내용을 해석할 수 있다.
+  reviewed: 2026-09-13
 ---
 
 # AI Agents

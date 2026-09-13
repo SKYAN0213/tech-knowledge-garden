@@ -9,6 +9,7 @@ import { slug as headingSlug } from "github-slugger"
 import { build } from "esbuild"
 import YAML from "yaml"
 import { walk, parseNote, noteText, editions, extractArticles, sections } from "./garden.mjs"
+import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
 const staging = ".local/site-content"
@@ -80,6 +81,8 @@ export async function finish(output = "public", input = staging) {
   const href = (p) => prefix + "/" + (p === "index" ? "" : slug(p))
   const notes = JSON.parse(fs.readFileSync(".local/site-notes.json"))
   const knowledge = notes.filter((n) => n.meta.entry_type === "concept")
+  const graph = JSON.parse(fs.readFileSync(path.join(output, "knowledge-graph.json")))
+  const learningTerms = new Set(graph.nodes.map((n) => n.id))
   const bySlug = new Map(notes.map((n) => [n.slug, n]))
   const rows = []
   const assets = createHash("sha256")
@@ -143,20 +146,36 @@ export async function finish(output = "public", input = staging) {
     let body = toHtml(article)
     const type = n.meta.type || "article"
     const isConcept = n.meta.entry_type === "concept"
+    const focus = resolveFocus(graph, isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
     const date = n.meta.coverage_end
       ? new Date(n.meta.coverage_end)
           .toLocaleString("sv-SE", { timeZone: "Asia/Seoul" })
           .slice(0, 16)
       : n.meta.date || n.meta.updated || ""
-    const links = isConcept
-      ? `<a href="${href(MAP)}?focus=${encodeURIComponent(n.meta.concept_id || n.slug)}">지식 지도</a>`
-      : ""
+    const links =
+      isConcept && focus
+        ? `<a href="${href(MAP)}?focus=${encodeURIComponent(focus)}">연결 지도</a>`
+        : ""
     if (n.path === MAP)
-      body = `<section id="knowledge-map" class="connections" data-connections data-mode="full" aria-label="개념과 뉴스 연결 지도"><p class="graph-loading">연결 지도를 불러오는 중…</p></section><noscript><ul>${knowledge.map((k) => `<li><a href="${href(k.path)}">${esc(k.meta.label || k.meta.title)}</a></li>`).join("")}</ul></noscript>`
+      body = `<section id="knowledge-map" class="connections" data-connections data-mode="full" aria-label="전문 용어 연결 지도"><p class="graph-loading">연결 지도를 불러오는 중…</p></section><noscript><ul>${knowledge
+        .filter((k) => learningTerms.has(k.meta.concept_id))
+        .map((k) => `<li><a href="${href(k.path)}">${esc(k.meta.label || k.meta.title)}</a></li>`)
+        .join("")}</ul></noscript>`
     body = `${n.path === "index" ? "" : `<div class="article-meta">${esc(date)}${links ? " · " + links : ""}</div><h1>${esc(meta.title)}</h1>`}${body}`
     if (isConcept) {
+      const matchingArticles = new Set(
+        focus
+          ? relatedNews(graph, focus)
+              .filter((a) => a.distance === 1)
+              .map((a) => a.slug)
+          : [],
+      )
       const related = notes
-        .filter((x) => x.meta.type === "news" && (x.meta.concepts || []).includes(n.path))
+        .filter(
+          (x) =>
+            x.meta.type === "news" &&
+            (matchingArticles.has(x.slug) || (x.meta.concepts || []).includes(n.path)),
+        )
         .sort((a, b) => String(b.meta.date).localeCompare(String(a.meta.date)))
         .slice(0, 8)
       if (related.length)
@@ -164,8 +183,7 @@ export async function finish(output = "public", input = staging) {
     }
     if (n.path === "index")
       body = `<div class="home-layout"><div class="home-feed">${body}</div>${embed("", "home-map")}</div>`
-    else if (isConcept || type === "news")
-      body += embed(isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
+    else if ((isConcept || type === "news") && focus) body += embed(focus)
     const html = shell(
       meta.title,
       body,

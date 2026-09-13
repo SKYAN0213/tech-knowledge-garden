@@ -1,0 +1,267 @@
+{
+  "schema": "learning-term-review/v1",
+  "reviewed": "2026-09-13",
+  "audience": "IT·AI·로봇 뉴스를 읽으며 전문 용어를 배우려는 일반 독자",
+  "policy": "전문적 정의와 작동 원리·구분 기준을 배울 가치가 있고 원문과 설명 노트가 있는 용어만 노드로 선정한다. 빈도·영문 표기·일반 키워드·기사 제목은 선정 근거가 아니다.",
+  "records": [
+    {
+      "id": "agent-governance",
+      "label": "에이전트 거버넌스",
+      "path": "Knowledge/AI Systems/AI Agent Governance",
+      "decision": "exclude",
+      "reason": "현재 문서는 위임·승인·책임의 운영 범주다. 신원 검증이나 실행 통제 같은 구체적 기술 용어를 우선한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "agent-security",
+      "label": "에이전트 보안",
+      "path": "Knowledge/AI Systems/AI Agent Security",
+      "decision": "include",
+      "kind": "security",
+      "reason": "모델 입력의 신뢰 경계와 도구 실행 권한을 구분하는 기술 지식이 필요하다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "agents",
+      "label": "AI 에이전트",
+      "path": "Knowledge/AI Systems/AI Agents",
+      "decision": "include",
+      "kind": "mechanism",
+      "reason": "챗봇 응답과 구별되는 도구 선택·실행 루프를 이해해야 기사 내용을 해석할 수 있다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "conformity",
+      "label": "AI 적합성 평가",
+      "path": "Knowledge/AI Systems/AI Conformity Assessment",
+      "decision": "exclude",
+      "reason": "현재 문서는 요구사항 충족을 다루는 포괄적 제도 범위다. 특정 판정 절차를 설명하는 기술 용어로 좁혀질 때 재검토한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "content-access",
+      "label": "AI 콘텐츠 접근",
+      "path": "Knowledge/AI Systems/AI Content Access",
+      "decision": "exclude",
+      "reason": "콘텐츠 접근이라는 넓은 활동 범위로, 특정 접근 제어나 통신 규격을 설명하는 용어가 아니다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "content-monetization",
+      "label": "AI 콘텐츠 수익화",
+      "path": "Knowledge/AI Systems/AI Content Monetization",
+      "decision": "exclude",
+      "reason": "콘텐츠 수익화라는 사업 주제다. HTTP 402 같은 구체적 규격은 별도 정의와 검토 후 추가한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "governance",
+      "label": "AI 거버넌스",
+      "path": "Knowledge/AI Systems/AI Governance",
+      "decision": "exclude",
+      "reason": "현재 문서는 조직의 책임과 위험 관리라는 넓은 주제다. 학습 지도에는 개별 기술이나 평가 방법을 우선한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "inference",
+      "label": "AI 추론 인프라",
+      "path": "Knowledge/AI Systems/AI Inference Infrastructure",
+      "decision": "include",
+      "kind": "architecture",
+      "reason": "학습과 추론을 구별하고 서빙의 계산·메모리·스케줄링 구조를 이해해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "medical",
+      "label": "AI 의료 영상",
+      "path": "Knowledge/AI Systems/AI Medical Imaging",
+      "decision": "exclude",
+      "reason": "의료 영상이라는 응용 분야를 묶은 문서다. 영상 모델의 구체적 구조나 기법을 학습 노드로 우선한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "wellness",
+      "label": "AI 웰니스 기기",
+      "path": "Knowledge/AI Systems/AI Wellness Devices",
+      "decision": "exclude",
+      "reason": "생활습관 지원 기기라는 제품 분류다. 기사 분류에는 유용하지만 독립된 기술 원리를 뜻하지 않는다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "science",
+      "label": "과학 발견 AI",
+      "path": "Knowledge/AI Systems/AI for Scientific Discovery",
+      "decision": "exclude",
+      "reason": "과학 연구 활용이라는 넓은 응용 분야다. 개별 예측·탐색 기법을 설명하는 학습 용어를 우선한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "evaluation",
+      "label": "에이전트 평가",
+      "path": "Knowledge/AI Systems/Agent Evaluation",
+      "decision": "include",
+      "kind": "evaluation",
+      "reason": "과제·반복 시도·채점기·최종 환경 상태를 구분하는 평가 방법을 배울 필요가 있다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "observability",
+      "label": "에이전트 관측성",
+      "path": "Knowledge/AI Systems/Agent Observability",
+      "decision": "include",
+      "kind": "architecture",
+      "reason": "로그만 읽는 것과 실행 추적의 trace·span 구조로 원인을 찾는 것을 구분해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "voice",
+      "label": "대화형 음성 AI",
+      "path": "Knowledge/AI Systems/Conversational Voice AI",
+      "decision": "include",
+      "kind": "architecture",
+      "reason": "음성 인식·업무 처리·음성 합성으로 이어지는 대화 파이프라인을 이해해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "enterprise",
+      "label": "기업 AI 운영 모델",
+      "path": "Knowledge/AI Systems/Enterprise AI Operating Model",
+      "decision": "exclude",
+      "reason": "기업 도입과 책임 배분이라는 운영 범주다. 단일 기술의 작동 원리를 설명하는 용어가 아니다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "mcp",
+      "label": "MCP",
+      "path": "Knowledge/AI Systems/Model Context Protocol",
+      "decision": "include",
+      "kind": "protocol",
+      "reason": "AI 호스트와 외부 도구 서버의 통신 역할과 메시지 규격을 별도로 익혀야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "rag",
+      "label": "검색 증강 생성",
+      "path": "Knowledge/AI Systems/Retrieval-Augmented Generation",
+      "decision": "include",
+      "kind": "mechanism",
+      "reason": "모델 재학습과 구별되는 검색 후 생성 방식과 근거 전달 원리를 이해해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "timeseries",
+      "label": "시계열 파운데이션 모델",
+      "path": "Knowledge/AI Systems/Time-Series Foundation Models",
+      "decision": "include",
+      "kind": "model",
+      "reason": "시계열 사전학습과 새 데이터로의 전이가 일반적인 개별 예측 모델과 어떻게 다른지 배워야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "vla",
+      "label": "시각·언어·행동 모델",
+      "path": "Knowledge/AI Systems/Vision-Language-Action Models",
+      "decision": "include",
+      "kind": "model",
+      "reason": "영상·언어 입력이 로봇 행동 출력으로 이어지는 모델의 표현과 학습 방식을 이해해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "metrics",
+      "label": "집계 지표",
+      "path": "Knowledge/Data Systems/Aggregate Metrics",
+      "decision": "exclude",
+      "reason": "집계 지표라는 포괄적 범주다. 기사 이해에 필요한 p95·p99 지연 같은 구체적인 측정 개념을 우선한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "zkp",
+      "label": "영지식 증명",
+      "path": "Knowledge/Security/Zero-Knowledge Proofs",
+      "decision": "include",
+      "kind": "security",
+      "reason": "비밀을 공개하지 않고 명제의 참을 보이는 암호학적 증명 원리를 따로 익혀야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "ai-security-engineering",
+      "label": "AI 보조 보안 개발",
+      "path": "Knowledge/Software Engineering/AI-Assisted Security Engineering",
+      "decision": "exclude",
+      "reason": "보안 업무에 AI를 활용한다는 넓은 활동 범주다. 정적 분석 등 구체적 기법을 설명하는 용어로 좁혀 검토한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "supply-chain",
+      "label": "소프트웨어 공급망 보안",
+      "path": "Knowledge/Software Engineering/Software Supply Chain Security",
+      "decision": "include",
+      "kind": "security",
+      "reason": "빌드 출처와 산출물 무결성을 검증하는 기술이 일반적인 코드 보안 검토와 어떻게 다른지 배워야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "review-existing"
+    },
+    {
+      "id": "kv-cache",
+      "label": "KV 캐시",
+      "path": "Knowledge/AI Systems/KV Cache",
+      "decision": "include",
+      "kind": "mechanism",
+      "reason": "문맥이 길어질 때 추론 메모리와 속도가 달라지는 이유를 어텐션의 키·값 재사용으로 설명하는 기술이다.",
+      "reviewed": "2026-09-13",
+      "action": "create-atomic-term"
+    },
+    {
+      "id": "oidc",
+      "label": "OIDC",
+      "path": "Knowledge/Security/OpenID Connect",
+      "decision": "include",
+      "kind": "protocol",
+      "reason": "OAuth 2.0의 권한 위임과 신원 확인을 구별하고 배포 작업이 장기 비밀 없이 인증하는 원리를 이해해야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "create-atomic-term"
+    },
+    {
+      "id": "zero-shot",
+      "label": "제로샷 추론",
+      "path": "Knowledge/AI Systems/Zero-Shot Inference",
+      "decision": "include",
+      "kind": "evaluation",
+      "reason": "추가 학습 없이 새 데이터에 적용한다는 조건을 모델의 정확도나 학습 데이터 부재와 혼동하지 않도록 익혀야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "create-atomic-term"
+    },
+    {
+      "id": "latency-percentiles",
+      "label": "p95·p99 지연",
+      "path": "Knowledge/Data Systems/Latency Percentiles",
+      "decision": "include",
+      "kind": "metric",
+      "reason": "평균이 숨기는 느린 요청을 백분위수로 해석하고 서로 다른 집계의 p95·p99를 잘못 평균 내지 않도록 배워야 한다.",
+      "reviewed": "2026-09-13",
+      "action": "create-atomic-term"
+    }
+  ]
+}

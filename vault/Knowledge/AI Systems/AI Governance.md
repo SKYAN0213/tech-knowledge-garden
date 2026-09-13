@@ -32,6 +32,10 @@ keywords:
 verified_sources:
   - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
 relations: []
+map_review:
+  decision: exclude
+  reason: 현재 문서는 조직의 책임과 위험 관리라는 넓은 주제다. 학습 지도에는 개별 기술이나 평가 방법을 우선한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Governance

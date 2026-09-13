@@ -36,6 +36,10 @@ relations:
     evidence:
       - https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-wellness-policy-low-risk-devices
       - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+map_review:
+  decision: exclude
+  reason: 생활습관 지원 기기라는 제품 분류다. 기사 분류에는 유용하지만 독립된 기술 원리를 뜻하지 않는다.
+  reviewed: 2026-09-13
 ---
 
 # AI Wellness Devices

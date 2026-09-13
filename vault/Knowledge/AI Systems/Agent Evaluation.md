@@ -55,6 +55,11 @@ relations:
     evidence:
       - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
       - https://prometheus.io/docs/practices/histograms/
+map_review:
+  decision: include
+  kind: evaluation
+  reason: 과제·반복 시도·채점기·최종 환경 상태를 구분하는 평가 방법을 배울 필요가 있다.
+  reviewed: 2026-09-13
 ---
 
 # Agent Evaluation

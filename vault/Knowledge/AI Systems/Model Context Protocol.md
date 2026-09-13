@@ -31,6 +31,11 @@ keywords:
 verified_sources:
   - https://modelcontextprotocol.io/specification/2025-11-25/architecture
 relations: []
+map_review:
+  decision: include
+  kind: protocol
+  reason: AI 호스트와 외부 도구 서버의 통신 역할과 메시지 규격을 별도로 익혀야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Model Context Protocol

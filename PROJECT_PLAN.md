@@ -1,27 +1,23 @@
-# 2026-09-13 News connection map
+# 2026-09-13 Learning term selection
 
-Objective: show a reference-inspired, dark constellation of actual concepts, keywords and news on the website; selecting a node reveals related news. Confirmed association is sufficient: relationships need not be directed references.
+Objective: make the connection map useful for learning technical news. Nodes must be specialist terms worth explaining, not every keyword or article title.
 
-Baseline: clean main at 7695994; published reader contains 42 news articles, 23 reviewed concepts and 111 keyword memberships. Preserve the source editions, original dated research/cutoff, concept definitions, RSS, and existing 08:00 Obsidian project. Continue the authorized existing-site publication. No paid API or service.
+Baseline: clean main at 05b03bc; 166 nodes = 23 concepts + 101 automatic keyword nodes + 42 article nodes. Generic words such as 책임, 상태, 가격, 근거, 허용 gained nodes and became noisy news bridges. Keep the Sigma/ForceAtlas2 engine and confirmed undirected relationships.
 
-## Direction
+## Selection contract
 
-Small colored points, fine undirected lines, clustered structure on a dark background. Labels appear by importance, hover or selection. The graph is the visual focus; selected news remains readable, keyboard reachable, and usable on mobile. No image slogans, fake graph nodes or decorative connections. Reading pages retain their existing white editorial design.
+- Audience: readers of IT/AI/robotics news who need explanations of specialist mechanisms, protocols, architectures, evaluation methods and technical metrics.
+- A node needs a reviewed inclusion decision, a concrete learning reason, a standalone definition, an existing explanation note and primary sources. Frequency, English spelling and abbreviation alone do not qualify a term.
+- General words, broad application/business buckets, product/release titles and unreviewed keywords do not become nodes. Existing notes remain readable; this is graph selection, not per-note publication approval.
+- Articles are attached to terms and shown on selection. Exact canonical names/aliases and editorial assignments attach news; generic keywords cannot create nodes or article bridges.
+- Keep confirmed relationships between admitted terms. No shared-article edges, no rewiring through excluded notes, and no expansion beyond one confirmed neighboring term.
 
-Sigma.js 3 + Graphology/ForceAtlas2 replace the SVG renderer. Graphology Louvain colors actual communities. Build-time deterministic coordinates give an immediately usable graph; a worker handles requested recalculation. The graph and news list must remain usable when WebGL is unavailable.
+## Work
 
-## Milestones
+1. Complete — Audit all concepts; add map_review metadata and source-backed atomic terms needed by existing articles (KV cache, OIDC, zero-shot inference, latency percentiles). Preserve original definitions, Editions, Archive, dates and research cutoff.
+2. Complete — Replace keyword/article node generation with reviewed term-only projection. Retain direct article matches and explained one-step related concepts. Update contextual embeds, search and labels for a small readable map.
+3. In progress — Test common-word exclusion, metadata validation, alias matching, ranking and isolated terms. Validate notes, links, RSS, tests/typecheck/build, desktop/mobile browser, briefing skill/08:00 automation, and actual deployment. No paid service or new project.
 
-1. Complete — Association data and engine: preserved legacy evidence, added confirmed target/reason connections, generated 166 real nodes and 323 undirected links, ranked related news within two documented steps. Excluded boilerplate keyword matches and tested canonical alias deduplication and isolated nodes.
-2. Complete — Web experience: Sigma WebGL point graph, home/article embeds and direct navigation, news on click, search, neighbor focus, zoom, drag, worker re-layout, responsive and keyboard alternatives. Actual WebGL-disabled Chromium falls back to usable node search and news links.
-3. Complete — 188 tests, typecheck, build, all internal links/RSS, actual desktop and 390px browser interactions passed. Layout-only benchmark: 166 nodes in 58ms; synthetic 1,000 nodes in 1,262ms, all finite. Existing briefing skill and 08:00 automation updated. Code commit 06ab001 deployed successfully in run 34732605328. Public home/map render WebGL; a real node click opens 10 relevant stories, article navigation/back and worker re-layout pass without console errors. Public RSS contains 40 entries and excluded source paths return 404. Evidence: .local/evidence/connections-live.json and docs/IMPLEMENTATION_STATUS.md.
+## Local verification
 
-## Acceptance
-
-- No arrows or required reference types in the connection visualization; source-backed legacy data remains intact.
-- Every node and edge comes from existing editorial data or a documented association rule; no density padding.
-- Any selected node shows its related-news list, with explicit empty state where the current archive has no associated story.
-- News dates, URLs and selection basis are accurate; hidden vault folders remain excluded.
-- The website home visibly embeds the graph and exposes the full map directly.
-- Interactive render is backed by Sigma/WebGL with an accessible news/list fallback; layout work cannot freeze the reading UI.
-- Existing RSS, briefing and wiki link contracts continue to pass.
+192 tests and TypeScript pass. Skill validation and 4 skill tests pass. Build: 188 HTML, 186 search entries, 16 terms, 17 confirmed edges, 42 articles, 30 with direct term links, RSS 40. Preserved 173 original source files and all 23 original concept bodies/metadata. Real desktop/mobile UI and WebGL fallback verified. Only normal publication and live verification remain. Evidence: `.local/learning-term-review/`.

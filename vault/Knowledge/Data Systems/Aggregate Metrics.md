@@ -34,6 +34,10 @@ verified_sources:
   - https://prometheus.io/docs/practices/histograms/
   - https://opentelemetry.io/docs/concepts/signals/metrics/
 relations: []
+map_review:
+  decision: exclude
+  reason: 집계 지표라는 포괄적 범주다. 기사 이해에 필요한 p95·p99 지연 같은 구체적인 측정 개념을 우선한다.
+  reviewed: 2026-09-13
 ---
 
 # Aggregate Metrics

@@ -46,6 +46,11 @@ relations:
     basis: inference
     evidence:
       - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+map_review:
+  decision: include
+  kind: security
+  reason: 모델 입력의 신뢰 경계와 도구 실행 권한을 구분하는 기술 지식이 필요하다.
+  reviewed: 2026-09-13
 ---
 
 # AI Agent Security

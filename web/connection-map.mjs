@@ -1,13 +1,13 @@
 import Sigma from "sigma"
 import { UndirectedGraph } from "graphology"
-import { relatedNews, normalizeTerm } from "./graph-model.mjs"
+import { relatedNews, normalizeTerm, resolveFocus } from "./graph-model.mjs"
 const el = (tag, attrs = {}, text) => {
   const node = document.createElement(tag)
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v)
   if (text !== undefined) node.textContent = text
   return node
 }
-const kindName = { concept: "개념", keyword: "키워드", news: "뉴스" }
+const kindName = { concept: "전문 용어" }
 let graphRequest
 export async function mountConnections(root) {
   const base = document.body.dataset.base || "",
@@ -43,8 +43,8 @@ export async function mountConnections(root) {
     query = el("input", {
       type: "search",
       class: "graph-query",
-      "aria-label": "지도 노드 검색",
-      placeholder: "개념 · 키워드 · 뉴스 검색",
+      "aria-label": "전문 용어 검색",
+      placeholder: "전문 용어 검색",
       autocomplete: "off",
     })
   const results = el("div", { class: "graph-search-results", "aria-label": "지도 검색 결과" })
@@ -53,7 +53,7 @@ export async function mountConnections(root) {
       class: "connection-canvas",
       tabindex: "0",
       role: "img",
-      "aria-label": "개념과 뉴스 연결 지도. 방향키로 이동하고 더하기와 빼기로 확대를 조절합니다.",
+      "aria-label": "전문 용어 연결 지도. 방향키로 이동하고 더하기와 빼기로 확대를 조절합니다.",
     })
   const detail = el("aside", {
     class: "connection-detail",
@@ -63,7 +63,7 @@ export async function mountConnections(root) {
   const status = el("p", { class: "graph-status", role: "status" }),
     directory = el("details", { class: "node-directory" }),
     directoryList = el("div", { class: "node-list" })
-  directory.append(el("summary", {}, "노드 목록 · " + data.nodes.length), directoryList)
+  directory.append(el("summary", {}, "용어 목록 · " + data.nodes.length), directoryList)
   const button = (label, fn, parent = toolbar) => {
     const b = el("button", { type: "button" }, label)
     b.addEventListener("click", fn)
@@ -107,14 +107,7 @@ export async function mountConnections(root) {
   stage.append(canvas, controls)
   layout.append(stage, detail)
   const legend = el("div", { class: "connection-legend" })
-  for (const kind of ["concept", "keyword", "news"])
-    legend.append(
-      el(
-        "span",
-        { "data-kind": kind },
-        `${kindName[kind]} ${data.nodes.filter((n) => n.kind === kind).length}`,
-      ),
-    )
+  legend.append(el("span", { "data-kind": "concept" }, "전문 용어 " + data.nodes.length))
   legend.append(el("span", { class: "edge-count" }, "연결 " + data.edges.length))
   root.replaceChildren(toolbar, results, layout, legend, status, directory)
   function refresh() {
@@ -179,10 +172,9 @@ export async function mountConnections(root) {
         el("h2", {}, node.label),
       )
       if (node.definition) detail.append(el("p", { class: "node-definition" }, node.definition))
-      if (node.kind === "concept")
-        detail.append(
-          el("a", { class: "concept-reading", href: base + "/" + node.slug }, "개념 읽기 ↗"),
-        )
+      detail.append(
+        el("a", { class: "concept-reading", href: base + "/" + node.slug }, "용어 읽기 ↗"),
+      )
       detail.append(el("h3", {}, "관련 뉴스 · " + stories.length))
     } else detail.append(el("h2", {}, "최근 뉴스"))
     for (const article of stories.slice(0, newsLimit)) detail.append(story(article, !!node))
@@ -198,13 +190,10 @@ export async function mountConnections(root) {
         detail,
       )
     if (node) {
-      const related = graph
-        .neighbors(selected)
-        .map((id) => byId.get(id))
-        .filter((n) => n.kind !== "news")
+      const related = graph.neighbors(selected).map((id) => byId.get(id))
       if (related.length) {
         const links = el("div", { class: "related-node-links" })
-        detail.append(el("h3", {}, "연결된 개념 · 키워드"), links)
+        detail.append(el("h3", {}, "연결된 용어"), links)
         for (const n of related) button(n.label, () => select(n.id, true), links)
       }
     }
@@ -230,9 +219,7 @@ export async function mountConnections(root) {
     const q = normalizeTerm(query.value)
     if (!q) return
     const rows = data.nodes
-      .filter((n) =>
-        normalizeTerm([n.label, n.title, ...n.keywords, ...n.aliases].join(" ")).includes(q),
-      )
+      .filter((n) => normalizeTerm([n.label, n.title, ...n.aliases].join(" ")).includes(q))
       .sort(
         (a, b) =>
           Number(normalizeTerm(b.label) === q) - Number(normalizeTerm(a.label) === q) ||
@@ -286,9 +273,9 @@ export async function mountConnections(root) {
       labelFont: '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif',
       labelSize: 12,
       labelColor: { color: "#d9e4e4" },
-      labelDensity: 0.7,
+      labelDensity: 1,
       labelGridCellSize: 90,
-      labelRenderedSizeThreshold: full ? 6.2 : 7,
+      labelRenderedSizeThreshold: 0,
       defaultEdgeType: "line",
       defaultNodeType: "circle",
       renderEdgeLabels: false,
@@ -421,7 +408,7 @@ export async function mountConnections(root) {
       el(
         "p",
         { class: "graph-fallback" },
-        "이 브라우저에서는 그래픽 지도를 표시할 수 없습니다. 노드 목록에서 관련 뉴스를 볼 수 있습니다.",
+        "이 브라우저에서는 그래픽 지도를 표시할 수 없습니다. 용어 목록에서 관련 뉴스를 볼 수 있습니다.",
       ),
     )
     root.dataset.engine = "list"
@@ -466,9 +453,12 @@ export async function mountConnections(root) {
     }
     worker.postMessage(data)
   }
-  const initial = full ? new URLSearchParams(location.search).get("focus") : root.dataset.focus
-  select(initial && byId.has(initial) ? initial : null)
-  if (initial && byId.has(initial)) focusNode(initial)
+  const initial = resolveFocus(
+    data,
+    full ? new URLSearchParams(location.search).get("focus") : root.dataset.focus,
+  )
+  select(initial)
+  if (initial) focusNode(initial)
   root.dataset.ready = "true"
   window.addEventListener("pagehide", (event) => {
     worker?.terminate()

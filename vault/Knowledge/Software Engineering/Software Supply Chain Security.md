@@ -30,6 +30,11 @@ keywords:
 verified_sources:
   - https://slsa.dev/spec/v1.1/levels
 relations: []
+map_review:
+  decision: include
+  kind: security
+  reason: 빌드 출처와 산출물 무결성을 검증하는 기술이 일반적인 코드 보안 검토와 어떻게 다른지 배워야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Software Supply Chain Security

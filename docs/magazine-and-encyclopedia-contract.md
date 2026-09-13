@@ -228,6 +228,12 @@ The definition must stand on its own and must not depend on a company announceme
 
 `최근 변화` is a short evidence ledger, not a news dump. Keep only signals that changed how the concept is understood or implemented. Format each as `YYYY-MM-DD — fact and why it changes the concept. [source]`. Daily product details remain in the issue.
 
+### Learning map selection
+
+An encyclopedia entry is not automatically a map node. For the Tech Knowledge Garden, GPT reviews whether a general IT/AI/robotics news reader needs a separate explanation of a specialist mechanism, protocol, architecture, model, evaluation method, technical metric or security principle. A node needs a standalone definition, a complete reading page, reviewed primary sources and a specific learning reason. Frequency, English spelling, acronyms, broad business/application categories and general words do not establish learning value.
+
+Record `map_review: {decision: include|exclude, kind: ..., reason: ..., reviewed: YYYY-MM-DD}`. An included term's kind is one of `mechanism`, `protocol`, `architecture`, `model`, `evaluation`, `metric`, `security`; excluded terms need a reason and review date. Missing review means no map inclusion. This is editorial curation, not user approval or a per-note publication flag. Preserve excluded notes and their historical links. `keywords` never generate nodes or article links. `aliases` contain only exact names and abbreviations of the same term, not broadly related words. News remains separate data shown when a term is selected. The repository's `docs/CONNECTION_MAP.md` defines matching, confirmed connections and one-neighbor article expansion.
+
 ### Concept index metadata and sections
 
 An index uses `type: knowledge-index`, `entry_type: index`, and the same schema version. It contains these headings:

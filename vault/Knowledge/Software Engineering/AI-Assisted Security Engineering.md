@@ -46,6 +46,10 @@ relations:
     evidence:
       - https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features
       - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
+map_review:
+  decision: exclude
+  reason: 보안 업무에 AI를 활용한다는 넓은 활동 범주다. 정적 분석 등 구체적 기법을 설명하는 용어로 좁혀 검토한다.
+  reviewed: 2026-09-13
 ---
 
 # AI-Assisted Security Engineering

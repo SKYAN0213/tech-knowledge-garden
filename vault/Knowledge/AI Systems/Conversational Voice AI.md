@@ -46,6 +46,11 @@ relations:
     evidence:
       - https://openai.github.io/openai-agents-python/voice/pipeline/
       - https://openai.github.io/openai-agents-python/tracing/
+map_review:
+  decision: include
+  kind: architecture
+  reason: 음성 인식·업무 처리·음성 합성으로 이어지는 대화 파이프라인을 이해해야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Conversational Voice AI

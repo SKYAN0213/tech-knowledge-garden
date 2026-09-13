@@ -36,6 +36,10 @@ relations:
     evidence:
       - https://www.nature.com/articles/s41586-021-03819-2
       - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+map_review:
+  decision: exclude
+  reason: 과학 연구 활용이라는 넓은 응용 분야다. 개별 예측·탐색 기법을 설명하는 학습 용어를 우선한다.
+  reviewed: 2026-09-13
 ---
 
 # AI for Scientific Discovery

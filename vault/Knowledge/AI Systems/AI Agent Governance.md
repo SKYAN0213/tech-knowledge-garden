@@ -45,6 +45,10 @@ relations:
     evidence:
       - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
       - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
+map_review:
+  decision: exclude
+  reason: 현재 문서는 위임·승인·책임의 운영 범주다. 신원 검증이나 실행 통제 같은 구체적 기술 용어를 우선한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Agent Governance

@@ -31,6 +31,10 @@ verified_sources:
   - https://blog.cloudflare.com/introducing-ai-crawl-control/
   - https://modelcontextprotocol.io/specification/2025-11-25/architecture
 relations: []
+map_review:
+  decision: exclude
+  reason: 콘텐츠 접근이라는 넓은 활동 범위로, 특정 접근 제어나 통신 규격을 설명하는 용어가 아니다.
+  reviewed: 2026-09-13
 ---
 
 # AI Content Access

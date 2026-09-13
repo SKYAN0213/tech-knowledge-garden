@@ -45,6 +45,10 @@ relations:
     evidence:
       - https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-enabled-medical-devices
       - https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng
+map_review:
+  decision: exclude
+  reason: 의료 영상이라는 응용 분야를 묶은 문서다. 영상 모델의 구체적 구조나 기법을 학습 노드로 우선한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Medical Imaging

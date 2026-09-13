@@ -52,6 +52,10 @@ relations:
     evidence:
       - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
       - https://prometheus.io/docs/practices/histograms/
+map_review:
+  decision: exclude
+  reason: 기업 도입과 책임 배분이라는 운영 범주다. 단일 기술의 작동 원리를 설명하는 용어가 아니다.
+  reviewed: 2026-09-13
 ---
 
 # Enterprise AI Operating Model

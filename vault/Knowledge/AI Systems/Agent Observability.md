@@ -48,6 +48,11 @@ relations:
     evidence:
       - https://openai.github.io/openai-agents-python/tracing/
       - https://opentelemetry.io/docs/concepts/signals/metrics/
+map_review:
+  decision: include
+  kind: architecture
+  reason: 로그만 읽는 것과 실행 추적의 trace·span 구조로 원인을 찾는 것을 구분해야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Agent Observability

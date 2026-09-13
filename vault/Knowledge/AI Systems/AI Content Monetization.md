@@ -36,6 +36,10 @@ relations:
     evidence:
       - https://blog.cloudflare.com/introducing-pay-per-crawl/
       - https://blog.cloudflare.com/introducing-ai-crawl-control/
+map_review:
+  decision: exclude
+  reason: 콘텐츠 수익화라는 사업 주제다. HTTP 402 같은 구체적 규격은 별도 정의와 검토 후 추가한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Content Monetization

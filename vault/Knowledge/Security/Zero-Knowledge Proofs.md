@@ -38,6 +38,11 @@ relations:
     evidence:
       - https://csrc.nist.gov/glossary/term/zero_knowledge_proof
       - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+map_review:
+  decision: include
+  kind: security
+  reason: 비밀을 공개하지 않고 명제의 참을 보이는 암호학적 증명 원리를 따로 익혀야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Zero-Knowledge Proofs

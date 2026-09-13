@@ -37,6 +37,10 @@ relations:
     evidence:
       - https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng
       - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+map_review:
+  decision: exclude
+  reason: 현재 문서는 요구사항 충족을 다루는 포괄적 제도 범위다. 특정 판정 절차를 설명하는 기술 용어로 좁혀질 때 재검토한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Conformity Assessment

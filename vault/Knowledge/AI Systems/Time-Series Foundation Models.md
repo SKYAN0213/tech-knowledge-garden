@@ -47,6 +47,11 @@ relations:
     evidence:
       - https://arxiv.org/abs/2403.07815
       - https://docs.vllm.ai/en/latest/
+map_review:
+  decision: include
+  kind: model
+  reason: 시계열 사전학습과 새 데이터로의 전이가 일반적인 개별 예측 모델과 어떻게 다른지 배워야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Time-Series Foundation Models

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 import { fromHtml } from "hast-util-from-html"
 import RSSParser from "rss-parser"
 import { walk } from "./garden.mjs"
-import { relatedNews } from "../web/graph-model.mjs"
+import { relatedNews, learningKinds } from "../web/graph-model.mjs"
 export const collect = (node, pred, acc = []) => {
   if (pred(node)) acc.push(node)
   for (const c of node.children || []) collect(c, pred, acc)
@@ -86,22 +86,49 @@ export async function verifySite(
   const ids = new Set(graph.nodes.map((n) => n.id)),
     articleIds = new Set(graph.articles.map((n) => n.id)),
     pairs = new Set()
-  if (graph.schema !== "news-connections/v2" || ids.size !== graph.nodes.length)
+  if (
+    graph.schema !== "learning-connections/v3" ||
+    ids.size !== graph.nodes.length ||
+    articleIds.size !== graph.articles.length
+  )
     errors.push("Invalid connection graph identity")
   for (const n of graph.nodes) {
     if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) errors.push("Invalid node position " + n.id)
-    if (n.slug) resolve(base + n.slug, path.join(root, "index.html"))
-    else if (
-      n.kind !== "keyword" ||
-      !n.conceptIds.length ||
-      !n.conceptIds.every((id) => ids.has(id))
+    if (
+      n.kind !== "concept" ||
+      /^(news|keyword):/.test(n.id) ||
+      !n.slug ||
+      !n.definition?.trim() ||
+      !n.learningReason?.trim() ||
+      !learningKinds.includes(n.learningKind) ||
+      !n.sources?.length ||
+      !n.sources.every((u) => /^https:\/\//.test(u))
     )
-      errors.push("Keyword has no concept provenance " + n.id)
+      errors.push("Node is not a reviewed learning term " + n.id)
+    else resolve(base + n.slug, path.join(root, "index.html"))
     for (const article of relatedNews(graph, n.id))
       if (!articleIds.has(article.id) || article.distance > 2)
         errors.push("Unrelated news destination " + n.id)
   }
-  for (const article of graph.articles) resolve(base + article.slug, path.join(root, "index.html"))
+  for (const article of graph.articles) {
+    resolve(base + article.slug, path.join(root, "index.html"))
+    if (
+      new Set(article.termIds).size !== article.termIds.length ||
+      article.termIds.length !== article.matches.length ||
+      !article.termIds.every((id) => ids.has(id)) ||
+      !article.matches.every(
+        (m) =>
+          article.termIds.includes(m.termId) &&
+          (m.basis === "editorial" || (m.basis === "mention" && m.matched)),
+      )
+    )
+      errors.push("Invalid article term association " + article.id)
+  }
+  for (const [f, tree] of trees)
+    for (const n of collect(tree, (n) => n.properties?.dataConnections !== undefined)) {
+      const focus = n.properties.dataFocus
+      if (focus && !ids.has(focus)) errors.push(f + ": unknown embedded learning term " + focus)
+    }
   for (const e of graph.edges) {
     const pair = [e.source, e.target].sort().join("|")
     if (
@@ -109,7 +136,8 @@ export async function verifySite(
       !ids.has(e.target) ||
       e.source === e.target ||
       pairs.has(pair) ||
-      !e.connections?.every((c) => c.reason)
+      !e.connections?.length ||
+      !e.connections.every((c) => c.kind === "confirmed" && c.reason)
     )
       errors.push("Invalid undirected connection " + e.id)
     pairs.add(pair)
@@ -146,7 +174,7 @@ export async function verifySite(
     search: index.length,
     concepts: graph.counts.concepts,
     news: graph.counts.news,
-    keywords: graph.counts.keywords,
+    linkedNews: graph.counts.linkedNews,
     nodes: graph.nodes.length,
     relations: graph.edges.length,
     rss: feed.items.length,

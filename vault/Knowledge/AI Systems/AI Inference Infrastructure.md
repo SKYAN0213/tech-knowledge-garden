@@ -39,6 +39,11 @@ relations:
     evidence:
       - https://docs.vllm.ai/en/latest/
       - https://prometheus.io/docs/practices/histograms/
+map_review:
+  decision: include
+  kind: architecture
+  reason: 학습과 추론을 구별하고 서빙의 계산·메모리·스케줄링 구조를 이해해야 한다.
+  reviewed: 2026-09-13
 ---
 
 # AI Inference Infrastructure

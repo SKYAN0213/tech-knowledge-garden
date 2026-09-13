@@ -39,6 +39,11 @@ relations:
     evidence:
       - https://arxiv.org/abs/2005.11401
       - https://blog.cloudflare.com/introducing-ai-crawl-control/
+map_review:
+  decision: include
+  kind: mechanism
+  reason: 모델 재학습과 구별되는 검색 후 생성 방식과 근거 전달 원리를 이해해야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Retrieval-Augmented Generation

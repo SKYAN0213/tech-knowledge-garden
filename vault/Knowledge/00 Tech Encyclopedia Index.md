@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-09-05
+updated: 2026-09-13
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -35,6 +35,8 @@ tags:
 - [[Knowledge/AI Systems/Vision-Language-Action Models|Vision-Language-Action Models]]
 - [[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation Models]]
 
+- [[Knowledge/AI Systems/Zero-Shot Inference|Zero-Shot Inference]]
+
 ### 운영·평가·인프라
 
 - [[Knowledge/Data Systems/Aggregate Metrics|Aggregate Metrics]]
@@ -43,6 +45,9 @@ tags:
 - [[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]
 - [[Knowledge/AI Systems/Agent Evaluation|Agent Evaluation]]
 - [[Knowledge/AI Systems/Agent Observability|Agent Observability]]
+
+- [[Knowledge/AI Systems/KV Cache|KV Cache]]
+- [[Knowledge/Data Systems/Latency Percentiles|Latency Percentiles]]
 
 ### 보안·거버넌스
 
@@ -53,6 +58,8 @@ tags:
 - [[Knowledge/AI Systems/AI Conformity Assessment|AI Conformity Assessment]]
 - [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]
 - [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
+
+- [[Knowledge/Security/OpenID Connect|OpenID Connect]]
 
 ### 콘텐츠·지식
 

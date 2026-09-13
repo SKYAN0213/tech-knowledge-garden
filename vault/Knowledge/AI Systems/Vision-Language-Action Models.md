@@ -39,6 +39,11 @@ relations:
     evidence:
       - https://arxiv.org/abs/2307.15818
       - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
+map_review:
+  decision: include
+  kind: model
+  reason: 영상·언어 입력이 로봇 행동 출력으로 이어지는 모델의 표현과 학습 방식을 이해해야 한다.
+  reviewed: 2026-09-13
 ---
 
 # Vision-Language-Action Models
