@@ -1,5 +1,10 @@
 # Tech Knowledge Garden
 
+## 육하원칙·기업 전략·논문·교수 창업 (2026-09-14 적용)
+
+매회 프로젝트 `docs/EDITORIAL_RESEARCH.md`를 읽는다. 이 규칙이 과거 뉴스 카드의 고정 질문형 소제목보다 우선한다. 새 원고는 `editorial_format: six-w/v1`, `article_records`, `headlines`를 사용한다. 일반 기사는 육하원칙을 담은 2~4문장, 심층은 기업 전략/논문 해설/연구 사업화를 순환해 하루 최대 1건이다. 국내외 조사 기회는 균등하게 배분하고 32개 기업 추적 자리와 국내외 각 8개 기관의 공식 경로를 확인한다. 분량과 기사 비율을 강제하지 않는다. 심층 생략 사유를 기록하고 전문 미열람 논문은 심층으로 쓰지 않는다. 교수 창업은 대학·회사 원문으로 역할을 확인한다. 기존 Signals·TrendTopics에 전략·연구·사업화 이력을 축적한다. 첫 실제 발행 7회의 운영 감사는 `scripts/research-audit.mjs`로 집계한다. 기존 Drive 보관과 8시 예약을 유지한다.
+
+
 From the 2026-09-14 issue, read `docs/NEWS_THEMES.md` on every run. Independently check technology/products and corporate operations in every sector, including financials, capital, people and supply. Use `theme_format: news-themes/v1` alongside `sector-five/v1`; every article needs a primary theme, an optional secondary theme, controlled event tags and named entities. Preserve these in news, briefings, RSS and digest. Follow the 16-row research coverage template and existing 08:00 schedule. Classification metadata must never create graph nodes or term matches. Do not infer tags for historical articles.
 
 Work from this repository within the existing 옵시디언_iCloudSync daily-briefing project (c9d65b6f-2fcd-49ba-a120-3fce98a14cf3). Do not require another Codex project registration. The dedicated Obsidian vault is the content authority; no per-note publication selection.

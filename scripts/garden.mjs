@@ -1,3 +1,10 @@
+import {
+  applyEditorial,
+  requireEditorial,
+  editorialMeta,
+  editorialMarkdown,
+  editorialContext,
+} from "./editorial.mjs"
 import { sectorGroups, sectorMarkdown } from "./sectors.mjs"
 import { coverageDate } from "./time.mjs"
 import {
@@ -155,7 +162,7 @@ export function extractArticles(edition) {
       }),
     )
   sectorGroups(edition, articles)
-  return articles
+  return applyEditorial(edition, articles)
 }
 export function refresh(vault = "vault") {
   vault = path.resolve(vault)
@@ -217,8 +224,20 @@ export function refresh(vault = "vault") {
         concepts: item.concepts,
         description: item.summary,
         ...classificationMeta(item),
+        ...editorialMeta(item),
       },
-      `${item.body}\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
+      `${
+        item.editorial
+          ? item.body
+              .split("\n")
+              .filter((l) => !isClassificationLine(l))
+              .join("\n") +
+            "\n\n" +
+            item.editorial.topic_ids
+              .map((id) => wiki("Briefings/Topics/" + id, "누적 기록"))
+              .join(" · ")
+          : item.body
+      }\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
         item.sources,
       )
         .map(([k, v]) => `- [${k}] ${v}`)
@@ -231,7 +250,16 @@ export function refresh(vault = "vault") {
     const line = issue.body.match(/\*\*한 줄 편집:\*\*\s*(.+)/)?.[1]
     const heading = line ? strip(line) : `${date} IT · AI · 로보틱스`
     const model = library.byKey.get(issue.slug)
-    let body = (line ? `> ${heading}\n\n` : "") + issueTrendsMarkdown(model) + "\n\n"
+    let body =
+      (line && !issue.meta.editorial_format ? `> ${heading}\n\n` : "") +
+      (issue.meta.editorial_format ? "" : issueTrendsMarkdown(model)) +
+      "\n\n"
+    body =
+      editorialMarkdown(
+        model,
+        "top",
+        (a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`,
+      ) + body
     body +=
       sectorMarkdown(
         issue,
@@ -241,6 +269,16 @@ export function refresh(vault = "vault") {
       (items.length
         ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`
         : "")
+    if (issue.meta.editorial_format)
+      body +=
+        "\n\n" +
+        editorialMarkdown(
+          model,
+          "deep",
+          (a) =>
+            `### ${wiki("News/" + a.id, a.title)}\n\n${a.editorial.analysis_summary}\n\n${a.editorial.topic_ids.map((id) => wiki("Briefings/Topics/" + id, "누적 기록")).join(" · ")}`,
+        )
+    if (issue.meta.editorial_format) body += issueTrendsMarkdown(model)
     if (issue.meta.schema_version === "tech-ai-magazine/v2") {
       for (const sec of sections(issue.body).filter(
         (s) => ["흐름 읽기", "오늘의 적용"].includes(s.title) && s.body !== "없음",
@@ -465,6 +503,11 @@ export function validate(vault = "vault") {
     errors.push(e.message)
   }
   for (const issue of all) {
+    try {
+      requireEditorial(issue)
+    } catch (e) {
+      errors.push(e.message)
+    }
     if (!issue.meta.coverage_end && issue.meta.schema_version === "tech-ai-magazine/v2")
       errors.push(`${issue.file}: missing cutoff`)
     else if (issue.meta.coverage_end && isNaN(Date.parse(issue.meta.coverage_end)))
@@ -559,6 +602,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
             known_source_count: c.known_sources.length,
             known_sources: c.known_sources,
             ...classificationHistory(library.issues),
+            editorial: editorialContext(library.issues),
+            watchlist: JSON.parse(
+              fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url), "utf8"),
+            ),
             research_policy: {
               theme_format: THEME_FORMAT,
               channels: ["기술·제품", "기업·운영"],

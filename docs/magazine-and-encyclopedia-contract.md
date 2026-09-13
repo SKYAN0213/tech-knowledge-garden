@@ -1,5 +1,10 @@
 # Magazine and encyclopedia contract
 
+## 육하원칙·기업 전략·논문·교수 창업 (2026-09-14 적용)
+
+매회 프로젝트 `docs/EDITORIAL_RESEARCH.md`를 읽는다. 이 규칙이 과거 뉴스 카드의 고정 질문형 소제목보다 우선한다. 새 원고는 `editorial_format: six-w/v1`, `article_records`, `headlines`를 사용한다. 일반 기사는 육하원칙을 담은 2~4문장, 심층은 기업 전략/논문 해설/연구 사업화를 순환해 하루 최대 1건이다. 국내외 조사 기회는 균등하게 배분하고 32개 기업 추적 자리와 국내외 각 8개 기관의 공식 경로를 확인한다. 분량과 기사 비율을 강제하지 않는다. 심층 생략 사유를 기록하고 전문 미열람 논문은 심층으로 쓰지 않는다. 교수 창업은 대학·회사 원문으로 역할을 확인한다. 기존 Signals·TrendTopics에 전략·연구·사업화 이력을 축적한다. 첫 실제 발행 7회의 운영 감사는 `scripts/research-audit.mjs`로 집계한다. 기존 Drive 보관과 8시 예약을 유지한다.
+
+
 ## Garden sector and theme extension (effective 2026-09-14)
 
 For Tech Knowledge Garden, read the current repository docs/SECTOR_BRIEFING.md and docs/NEWS_THEMES.md. New issues require briefing_format: sector-five/v1 and theme_format: news-themes/v1. Every cover/news/research/tool card begins with **분야:**, **테마:**, **보조 테마:**, **세부 태그:** and **기업·기관:**. Use exactly one primary sector and theme, up to one distinct secondary theme, and 1–3 event tags belonging to those themes. The secondary theme and entity list may be explicitly 없음. Investigate technology/products and corporate operations independently in each sector, including financials, funding/deals, workforce and supply. Keep the total five-event sector cap. Use the repository research coverage template to record checked sources, times, exclusions and failures in all 16 sector/channel combinations. Preserve historical editions without guessed classifications. Classification tags and entity metadata never create specialist map nodes or news-to-term associations.
@@ -74,7 +79,7 @@ When no item qualifies, use `**한 줄 편집:** 검증된 새 소식 없음.` D
 
 The contents table lists each substantive section and one of `커버`, `N건`, or `없음`. It is navigation, not another summary.
 
-### Cover story card
+### Historical cover story card (without six-w/v1)
 
 Use at most one cover story. A cover story must have enough evidence and consequence to justify the space.
 
@@ -111,7 +116,7 @@ Atomic Obsidian links such as `[[Agent Evaluation]]`.
 **근거:** [S1], [S2]
 ```
 
-### News desk card
+### Historical news desk card (without six-w/v1)
 
 Use for verified items that do not need cover-story depth:
 

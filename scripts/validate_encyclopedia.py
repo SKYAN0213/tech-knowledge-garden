@@ -356,7 +356,7 @@ def validate_briefing(
                 "개념 더 읽기",
             ]
             cover_h3 = headings(cover, 3)
-            if cover_h3 != required_cover:
+            if metadata.get("editorial_format") != "six-w/v1" and cover_h3 != required_cover:
                 add_error(findings, path, f"cover story subheading order mismatch: {cover_h3}")
         if source_count <= 0:
             add_error(findings, path, "non-empty issue must contain at least one source")

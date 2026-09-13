@@ -90,6 +90,19 @@ export function loadTrends(vault, issues, { requireLatest = true } = {}) {
     }
     byReview.set(r.edition, r)
   }
+  for (const issue of issues)
+    for (const a of issue.items) {
+      for (const id of a.editorial?.topic_ids || []) {
+        if (!byTopic.has(id)) fail("missing editorial topic " + id)
+        if (
+          requireLatest &&
+          ![...bySignal.values()].some(
+            (s) => s.issue === issue.key && s.event_id === a.id && s.topic_id === id,
+          )
+        )
+          fail("deep analysis requires same-issue observation " + id)
+      }
+    }
   for (const t of topics) {
     const lessonIds = new Set()
     for (const l of t.lessons) {

@@ -166,7 +166,7 @@ export async function finish(output = "public", input = staging) {
       const changes = children.findIndex(
         (c) => c.tagName === "h2" && textContent(c) === "오늘의 변화",
       )
-      if (changes >= 0) {
+      if (changes >= 0 && !issue.original.meta.editorial_format) {
         let end = changes + 1
         while (end < children.length && children[end].tagName !== "h2") end++
         children.splice(changes, end - changes)
@@ -257,6 +257,15 @@ export async function finish(output = "public", input = staging) {
       title: meta.title,
       type: isConcept ? "지식" : ["news", "news-index", "home"].includes(type) ? "뉴스" : "브리핑",
       date,
+      ...(n.meta.editorial_format
+        ? {
+            article_kind: n.meta.kind,
+            region: n.meta.region,
+            papers: n.meta.papers,
+            relations: n.meta.relations,
+            topic_ids: n.meta.topic_ids,
+          }
+        : {}),
       keywords: n.meta.keywords || [],
       aliases: n.meta.aliases || [],
       ...(n.meta.theme_format
