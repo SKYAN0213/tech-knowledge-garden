@@ -2,7 +2,8 @@
 title: 뉴스
 type: home
 date: 2026-09-14
-description: 삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진 · NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험
+description: 현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시 · 삼성자산운용, 생성형 AI 정보 유출
+  감시 시스템 구축 추진 · NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,6 +12,14 @@ generated_by: tech-knowledge-garden
 # 뉴스
 
 ## 2026.09.14
+
+### [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]]
+
+현대자동차그룹은 9월 13일 자율주행 전략을 공개하며 엔비디아 솔루션 기반 차량은 2028년, 자체 Atria AI 기반 차량은 2029년 하반기 양산을 목표로 제시했다. AVP본부와 42dot은 실제 주행 데이터를 수집해 학습·검증한 뒤 차량에 반영하는 개발 체계를 운영하며, 현재 약 40대의 전용 수집 차량을 운행한다고 밝혔다. 양산 기술 개발과 함께 연말 광주에서 Atria AI를 탑재한 차량의 레벨 4 실증을 추진한다.
+
+[[Knowledge/AI Systems/Vision-Language-Action Models|Vision-Language-Action Models]]
+
+---
 
 ### [[News/18ebc7c21cf04849|삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진]]
 
@@ -30,20 +39,20 @@ NASA는 9월 13일 오전 8시 3분(미국 산악 하계시간) 뉴멕시코주 
 
 ## 최근 뉴스
 
+- [[News/67402935155ca6d3|RubyGems, 5월 악성 패키지 500개 이상 제거한 사건의 조사 결과 공개]] · 2026-09-13
+- [[News/eb739a02acad3ab9|FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표]] · 2026-09-13
+- [[News/902d86854fec2b7d|HD현대로보틱스, 에이딘에 130억 원 투자…로봇손·표면가공 공동 개발]] · 2026-09-13
 - [[News/f5b7434d849eacf1|Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리]] · 2026-09-13
 - [[News/28ba300194033bae|VS Code Agents 전용 창의 사용량을 별도로 집계]] · 2026-09-13
 - [[News/46fcf5bb7b99520f|OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리]] · 2026-09-13
+- [[News/6a886414536a09e3|OpenAI, 회사 데이터와 지표 정의를 연결하는 ChatGPT Work Data agent 공개]] · 2026-09-11
+- [[News/c705d902c5bf7a4a|NVIDIA·Palantir, 엔비디아 공급망에 맞춤형 AI와 제약 최적화 도입]] · 2026-09-11
+- [[News/90208487c77211d8|DeepSeek V4.1-Flash, 입력·출력 계산을 나눈 5,520억 매개변수 모델 공개]] · 2026-09-11
+- [[News/2fa2d03292bbcc0d|KUKA, 1.5톤 자율 지게차 KMF 1500P-CB 공개…12월 인도 예정]] · 2026-09-11
 - [[News/688d14b85e07a8db|GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원]] · 2026-09-11
 - [[News/b8a75fb67d817922|OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공]] · 2026-09-11
 - [[News/b32e9b8471353987|OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시]] · 2026-09-11
 - [[News/0ef68bd8a0105dab|GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개]] · 2026-09-10
 - [[News/faa37362568657fb|Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리]] · 2026-09-10
-- [[News/333ccaae81484d3a|Astra 기업용 관리 기능, 허용 앱·웹사이트와 파일 전송을 제어]] · 2026-09-10
-- [[News/33eecf1d106431d9|Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원]] · 2026-09-09
-- [[News/5024ef0cc7b0b963|GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
-- [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]] · 2026-09-09
-- [[News/6e376a02cbe3c1ab|초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다]] · 2026-09-08
-- [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]] · 2026-09-08
-- [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 
 [[News/index|뉴스 전체 →]]

@@ -5,6 +5,7 @@
 ## 누적 주제
 
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
+- [현대차그룹의 자율주행 양산과 자체 AI 개발](topics/company-hyundai-motor-group.md) — 원문 1건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 4건 · 1개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 4건 · 1개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 5건 · 1개 원칙
@@ -12,9 +13,9 @@
 
 ## 날짜별 브리핑
 
-- [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 삼성자산운용의 AI 정보 유출 감시 체계와 NASA의 탐사 장비 비행 시험
-- [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — OpenAI의 저장소 재작성과 GitHub 개발 도구 업데이트
-- [2026-09-11 · 0800](2026/09/2026-09-11_0800_Tech_AI_Briefing.md) — OpenAI 에이전트·음성 API와 GitHub 캐시 권한 업데이트
+- [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접
+- [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — HD현대로보틱스의 감각 센서 투자와 FANUC의 AI 용접 프로그램 생성
+- [2026-09-11 · 0800](2026/09/2026-09-11_0800_Tech_AI_Briefing.md) — DeepSeek의 비대칭 모델 구조, KUKA의 자율 지게차, NVIDIA·Palantir의 공급망 AI
 - [2026-09-10 · 0801](2026/09/2026-09-10_0801_Tech_AI_Briefing.md) — Astra의 기업 접근 관리와 GitHub의 실행·병합 권한 기능
 - [2026-09-09 · 0802](2026/09/2026-09-09_0802_Tech_AI_Briefing.md) — 나비에–스토크스 증명안 공개 · GHES 3.22 출시 · Dependabot 패키지 인증
 - [2026-09-08 · 0801](2026/09/2026-09-08_0801_Tech_AI_Briefing.md) — AI의 현장 성과는 추정치와 외부 검증의 경계를 함께 읽는다.

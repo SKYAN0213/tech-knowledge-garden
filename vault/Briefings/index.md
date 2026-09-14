@@ -12,6 +12,7 @@ generated_by: tech-knowledge-garden
 ## 누적 주제
 
 - [[Briefings/Topics/company-samsung-asset-management|삼성자산운용의 생성형 AI 이용 감시 체계]] · 1건 · 원칙 0개
+- [[Briefings/Topics/company-hyundai-motor-group|현대차그룹의 자율주행 양산과 자체 AI 개발]] · 1건 · 원칙 0개
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 4건 · 원칙 1개
 - [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 4건 · 원칙 1개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 5건 · 원칙 1개
