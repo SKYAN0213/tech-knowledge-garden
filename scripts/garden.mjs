@@ -1,5 +1,6 @@
 import { articleReview, excludedEventIds, assertPublicArticles } from "./article-review.mjs"
 import { sourceDiversity } from "./source-diversity.mjs"
+import { readBacklog, researchWindow } from "./research-window.mjs"
 import {
   applyEditorial,
   requireEditorial,
@@ -627,6 +628,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
               ),
             ),
             source_diversity: sourceDiversity(all, extractArticles, library.latest.date),
+            discovery_window: researchWindow(
+              library.latest.cutoff,
+              new Date().toISOString(),
+              readBacklog(),
+              library.issues,
+            ),
             research_policy: {
               theme_format: THEME_FORMAT,
               channels: ["기술·제품", "기업·운영"],

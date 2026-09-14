@@ -1326,6 +1326,25 @@ summary:focus-visible {
 .news-row p {
   text-wrap: pretty;
 }
+.news-explanation {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e6ebe7;
+}
+.news-explanation h4 {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 10px;
+  color: #294d3e;
+}
+.news-explanation p {
+  line-height: 1.9;
+  margin: 0 0 12px;
+}
+.news-actions {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
 .sector-tabs a:focus-visible,
 .news-labels a:focus-visible {
   outline: 3px solid #8bab9b;
@@ -1338,4 +1357,12 @@ summary:focus-visible {
   .sector-tabs a {
     padding: 8px 11px;
   }
+}
+
+.announcement-date {
+  display: block;
+  color: #5b6861;
+  font-size: 0.78rem;
+  font-weight: 400;
+  margin-top: 0.2rem;
 }

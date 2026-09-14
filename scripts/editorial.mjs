@@ -29,6 +29,25 @@ export function applyEditorial(issue, articles) {
       if (!text(r.facts?.[k])) fail("missing six-w fact: " + k)
     if (!text(r.lead) || r.lead.length > 900 || /[<>\n]/.test(r.lead)) fail("invalid lead")
     if (!a.body.includes(r.lead)) fail("lead must occur verbatim in article prose")
+    if (r.explanations !== undefined) {
+      if (!Array.isArray(r.explanations)) fail("explanations must be an array")
+      for (const s of r.explanations) {
+        if (
+          !text(s.heading) ||
+          !Array.isArray(s.paragraphs) ||
+          !s.paragraphs.length ||
+          s.paragraphs.some((p) => !text(p) || /[<>\n]/.test(p) || !a.body.includes(p))
+        )
+          fail("explanation paragraphs must occur in source prose")
+        if (
+          !a.body.includes("### " + s.heading) ||
+          !Array.isArray(s.source_urls) ||
+          !s.source_urls.length ||
+          s.source_urls.some((u) => !a.urls.includes(u))
+        )
+          fail("explanation heading and article sources required")
+      }
+    }
     if (/^(?:### (?:무엇이 바뀌었나|왜 중요한가)|\*\*(?:핵심|의미|확인할 점):)/m.test(a.body))
       fail("replace generic news prompts with factual prose")
     if (!Array.isArray(r.papers) || !Array.isArray(r.relations) || !Array.isArray(r.topic_ids))
@@ -101,6 +120,7 @@ export function applyEditorial(issue, articles) {
 export const editorialMeta = (a) =>
   a.editorial ? { editorial_format: EDITORIAL_FORMAT, ...a.editorial, title: a.title } : {}
 export const topArticles = (i) =>
+  i.highlights ||
   (i.original.meta.headlines || []).map((t) => i.items.find((a) => a.title === t)).filter(Boolean)
 export function editorialMarkdown(i, position, render) {
   if (i.original.meta.editorial_format !== EDITORIAL_FORMAT) return ""

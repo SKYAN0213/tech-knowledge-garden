@@ -15,10 +15,14 @@ import { SECTORS } from "./sectors.mjs"
 
 const link = (url, label, attrs = "") => `<a href="${esc(url)}" ${attrs}>${esc(label)}</a>`
 const dateLabel = (date) => date.replaceAll("-", ".")
+const announcementDate = (a) =>
+  a.review?.published_at
+    ? `<small class="announcement-date">발표 <time datetime="${esc(a.review.published_at)}">${dateLabel(a.review.published_at)}</time></small>`
+    : ""
 export const publicationLinks = (i, href, base) =>
   `<div class="publication-links">${link(href(briefPath(i.key)), "브리핑 읽기 →")} ${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
 
-export function newsView(articles, latest, href) {
+export function newsView(articles, latest, href, { expanded = false, recentItems = [] } = {}) {
   const groups = new Map()
   for (const a of [...articles].sort((a, b) =>
     String(b.edition.meta.date).localeCompare(String(a.edition.meta.date)),
@@ -27,6 +31,8 @@ export function newsView(articles, latest, href) {
     if (!groups.has(date)) groups.set(date, [])
     groups.get(date).push(a)
   }
+  if (recentItems.length) groups.set("지난 7일 주요 발표", recentItems)
+  articles = [...articles, ...recentItems]
   const entities = [...new Set(articles.flatMap((a) => a.classification?.entities || []))].sort(
     (a, b) => a.localeCompare(b, "ko"),
   )
@@ -39,8 +45,8 @@ export function newsView(articles, latest, href) {
         THEMES.map((t) => t.name),
       )}${select("entity", "기업·기관", entities)}<button type="button" id="news-reset">초기화</button></div>`
     : ""
-  const row = (a) => articleCard(a, href)
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2><time datetime="${date}">${dateLabel(date)}</time></h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  const row = (a) => articleCard(a, href, expanded)
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2>${/^\d{4}-/.test(date) ? `<time datetime="${date}">${dateLabel(date)}</time>` : esc(date)}</h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review)
@@ -62,7 +68,7 @@ export function briefingHub(library, href, base) {
       ? `<ol class="change-list">${topArticles(i)
           .map(
             (a) =>
-              `<li><h3>${link(href("News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p></li>`,
+              `<li><h3>${link(href("News/" + a.id), a.title)}</h3>${announcementDate(a)}<p>${esc(a.summary)}</p></li>`,
           )
           .join("")}</ol>`
       : changeRows(i, href)
@@ -94,13 +100,13 @@ export function issueView(i, href, base, renderedArticle) {
     const heading = `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time></div><h1>${esc(i.date)} 아침 브리핑</h1><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
     const highlights = topArticles(i)
     const top = highlights.length
-      ? `<section class="issue-highlights"><h2>주요 소식</h2><ul>${highlights.map((a) => `<li>${link(href("News/" + a.id), a.title)}</li>`).join("")}</ul></section>`
+      ? `<section class="issue-highlights"><h2>주요 소식</h2><ul>${highlights.map((a) => `<li>${link(href("News/" + a.id), a.title)} ${announcementDate(a)}</li>`).join("")}</ul></section>`
       : ""
-    const stream = newsView(i.items, i, href)
+    const stream = newsView(i.items, i, href, { expanded: true, recentItems: i.recentItems || [] })
       .replace(/^<div class="page-heading">[\s\S]*?<\/a><\/div>/, "")
       .replace(
         /<nav class="sector-tabs"[\s\S]*?<\/nav>/,
-        sectorTabs(i.items, href(briefPath(i.key))),
+        sectorTabs([...i.items, ...(i.recentItems || [])], href(briefPath(i.key))),
       )
     return heading + top + stream
   }
