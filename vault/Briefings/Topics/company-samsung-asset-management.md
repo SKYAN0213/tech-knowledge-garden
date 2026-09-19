@@ -2,7 +2,7 @@
 title: 삼성자산운용의 생성형 AI 이용 감시 체계
 type: briefing-topic
 topic_id: company-samsung-asset-management
-date: 2026-09-14
+date: 2026-09-20
 description: 2026년 9월 13일 회사 관계자를 인용한 보도는 스플렁크 도입 결정과 시스템 구축 추진을 확인했다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-samsung-asset-management.md
 cssclasses:
@@ -20,7 +20,7 @@ generated_by: tech-knowledge-garden
 
 2026년 9월 13일 회사 관계자를 인용한 보도는 스플렁크 도입 결정과 시스템 구축 추진을 확인했다.
 
-2026-09-14까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-20까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

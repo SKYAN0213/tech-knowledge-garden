@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-07-10
-updated: 2026-09-13
+updated: 2026-09-20
 aliases:
   - 대화형 음성 AI
 parent_concepts: []
@@ -107,6 +107,8 @@ map_review:
 - → 활용: [[Knowledge/AI Systems/Agent Observability#한 문장 정의|에이전트 관측성]] — 음성 처리와 업무 실행의 단계를 추적으로 연결한다. (해석; [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) · [근거](https://openai.github.io/openai-agents-python/tracing/))
 
 ## 최근 변화
+
+- 2026-09-15 — Google은 대화 중 배경 도구를 실행하는 Gemini 3.8 Live와 추론·발화를 병행하는 Extended Thinking을 공개했다. 기존 음성 파이프라인과 별도로 음성을 직접 처리하는 모델의 제공 사례다. [Google 발표](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/)
 
 - 2026-09-10 — GPT‑Live‑1 API가 동시 청취·발화와 별도 모델로의 추론·도구 위임을 제공합니다. 음성 인터페이스와 배경 업무 경로를 분리하는 구현 선택지가 늘었으며, 언어별 대화 품질은 별도 검증이 필요합니다. [source](https://openai.com/index/introducing-gpt-live-1-in-the-api/)
 

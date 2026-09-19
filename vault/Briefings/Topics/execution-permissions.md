@@ -2,7 +2,7 @@
 title: 실행·배포 권한을 경로별로 세분화
 type: briefing-topic
 topic_id: execution-permissions
-date: 2026-09-14
+date: 2026-09-20
 description: npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제
   설정이 안전하게 적용된 것은 구분해야 한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/execution-permissions.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다.
 
-2026-09-14까지 서로 다른 원문 5건 · 3일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-20까지 서로 다른 원문 5건 · 3일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

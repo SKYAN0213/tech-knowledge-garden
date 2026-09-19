@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-09-14
+date: 2026-09-20
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,15 +11,17 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/company-teradyne-robotics|Teradyne Robotics의 신제품과 영업 조직]] · 2건 · 원칙 0개
+- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 6건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-asset-management|삼성자산운용의 생성형 AI 이용 감시 체계]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-hyundai-motor-group|현대차그룹의 자율주행 양산과 자체 AI 개발]] · 1건 · 원칙 0개
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 4건 · 원칙 1개
 - [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 4건 · 원칙 1개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 5건 · 원칙 1개
-- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 4건 · 원칙 0개
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|2026-09-20 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-14_0800_Tech_AI_Briefing|2026-09-14 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|2026-09-13 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|2026-09-11 · 0800 브리핑]]

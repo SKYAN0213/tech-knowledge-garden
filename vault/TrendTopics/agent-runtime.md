@@ -1,7 +1,7 @@
 ---
 schema_version: tech-trend/v1
 type: trend-topic-source
-reviewed: 2026-09-13
+reviewed: 2026-09-20
 id: agent-runtime
 title: 에이전트의 실행 계층을 분리
 question: 모델 밖의 실행·복구·대화 계층은 무엇을 책임지는가?
@@ -19,3 +19,5 @@ lessons: []
 # 에이전트의 실행 계층을 분리
 
 기존 수록 원문 기반 기사에서 검토한 편집 판단이다. 관측 이력과 근거는 [[Briefings/Topics/agent-runtime|누적 기록]]에서 읽는다.
+
+2026-09-20: Gemini의 음성·배경 도구 병행과 AgentCore V2의 세션 메모리·시작 경로를 추가 검토했다. 제공 기능과 전체 업무 성공률을 구분하는 기존 판단을 유지한다.

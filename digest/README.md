@@ -4,15 +4,17 @@
 
 ## 누적 주제
 
+- [Teradyne Robotics의 신제품과 영업 조직](topics/company-teradyne-robotics.md) — 원문 2건 · 0개 원칙
+- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 6건 · 0개 원칙
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
 - [현대차그룹의 자율주행 양산과 자체 AI 개발](topics/company-hyundai-motor-group.md) — 원문 1건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 4건 · 1개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 4건 · 1개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 5건 · 1개 원칙
-- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 4건 · 0개 원칙
 
 ## 날짜별 브리핑
 
+- [2026-09-20 · 0800](2026/09/2026-09-20_0800_Tech_AI_Briefing.md) — 센서를 품은 협동로봇, 대화로 연결되는 예약, 데이터센터의 장기 전력 조달
 - [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접
 - [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — HD현대로보틱스의 감각 센서 투자와 FANUC의 AI 용접 프로그램 생성
 - [2026-09-11 · 0800](2026/09/2026-09-11_0800_Tech_AI_Briefing.md) — DeepSeek의 비대칭 모델 구조, KUKA의 자율 지게차, NVIDIA·Palantir의 공급망 AI

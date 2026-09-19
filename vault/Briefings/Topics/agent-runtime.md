@@ -2,7 +2,7 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-09-14
+date: 2026-09-20
 description: 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과
   격리·중단 조건은 업무에 맞게 검증해야 한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/agent-runtime.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다.
 
-2026-09-14까지 서로 다른 원문 4건 · 3일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-20까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -38,6 +38,32 @@ generated_by: tech-knowledge-garden
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20260920-gemini-live"></span>
+
+### 2026-09-20 · 관측
+
+**음성 대화 중 도구 실행과 추론을 이어 가는 Live 모델 두 종류가 제공되기 시작했다.**
+
+기존 음성·업무 실행 분리 관측에 Google 제품의 구체적 제공 경로가 추가됐다.
+
+- 한계: 회사 제공 기능이며 실제 업무 성공률을 재현한 비교는 아니다.
+- 다음 확인: 대화 중 도구 실패·권한 확인·결과 전달을 같은 과제로 검증한 자료.
+- [[News/25823e681aab7b46|Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개]] · [Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/) · [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-20 원문 검토
+
+<span id="20260920-agentcore-v2"></span>
+
+### 2026-09-20 · 관측
+
+**AgentCore V2가 세션 메모리 회수와 실행 환경 스냅샷 복원을 제공한다.**
+
+모델 응답과 별도로 세션 자원·시작 경로를 관리하는 구현 변화다.
+
+- 한계: P75는 회사 시험의 시작 지연이며 전체 업무시간·운영비 절감을 그대로 뜻하지 않는다.
+- 다음 확인: 동일 업무의 전체 세션 비용과 복구·실패 결과.
+- [[News/14a53f7d72ef9b9b|AWS, 메모리를 회수하고 실행 환경을 복원하는 AgentCore Runtime V2 제공]] · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/) · [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-20 원문 검토
 
 <span id="runtime-voice"></span>
 
