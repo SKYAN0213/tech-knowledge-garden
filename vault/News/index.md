@@ -43,8 +43,8 @@ generated_by: tech-knowledge-garden
 - [[News/33eecf1d106431d9|Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원]] · 2026-09-09
 - [[News/5024ef0cc7b0b963|GitHub Enterprise Server 3.22 출시…폐쇄망 Copilot CLI는 기술 미리보기]] · 2026-09-09
 - [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]] · 2026-09-09
-- [[News/6e376a02cbe3c1ab|초음파 여러 장을 함께 읽는 AI, 외부 병원에서 성능을 시험하다]] · 2026-09-08
-- [[News/1908c6027b69920e|비행운을 피하는 AI, 아시아·태평양 시험을 넓힌다]] · 2026-09-08
+- [[News/6e376a02cbe3c1ab|초음파 다중 프레임 AI, 외부 두 기관에서 분류 성능 평가]] · 2026-09-08
+- [[News/1908c6027b69920e|Google·Cathay Pacific, 비행운 회피 2단계 시험 확대]] · 2026-09-08
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 - [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · 2026-09-07
 - [[News/c96e7378059165d6|GitHub, 사용자 신원 없이 저장소 스타 이력을 조회하는 API 공개]] · 2026-09-05
