@@ -4,6 +4,7 @@
 
 ## 누적 주제
 
+- [CXMT의 메모리 공정과 양산 제품](topics/company-cxmt.md) — 원문 1건 · 0개 원칙
 - [Teradyne Robotics의 신제품과 영업 조직](topics/company-teradyne-robotics.md) — 원문 2건 · 0개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 6건 · 0개 원칙
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
@@ -14,6 +15,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-09-21 · 0800](2026/09/2026-09-21_0800_Tech_AI_Briefing.md) — 2026-09-21 IT · AI · 로보틱스
 - [2026-09-20 · 0800](2026/09/2026-09-20_0800_Tech_AI_Briefing.md) — 센서를 품은 협동로봇, 대화로 연결되는 예약, 데이터센터의 장기 전력 조달
 - [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접
 - [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — HD현대로보틱스의 감각 센서 투자와 FANUC의 AI 용접 프로그램 생성

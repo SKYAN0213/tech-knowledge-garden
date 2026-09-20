@@ -2,7 +2,7 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-09-20
+date: 2026-09-21
 description: 가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와
   비용을 함께 비교할 필요가 있다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/performance-path.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다.
 
-2026-09-20까지 서로 다른 원문 4건 · 4일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-21까지 서로 다른 원문 4건 · 4일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

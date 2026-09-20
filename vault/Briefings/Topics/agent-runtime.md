@@ -2,7 +2,7 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-09-20
+date: 2026-09-21
 description: 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과
   격리·중단 조건은 업무에 맞게 검증해야 한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/agent-runtime.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다.
 
-2026-09-20까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-21까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

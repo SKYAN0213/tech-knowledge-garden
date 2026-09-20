@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-09-20
+date: 2026-09-21
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,6 +11,7 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/company-cxmt|CXMT의 메모리 공정과 양산 제품]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-teradyne-robotics|Teradyne Robotics의 신제품과 영업 조직]] · 2건 · 원칙 0개
 - [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 6건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-asset-management|삼성자산운용의 생성형 AI 이용 감시 체계]] · 1건 · 원칙 0개
@@ -21,6 +22,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/09/2026-09-21_0800_Tech_AI_Briefing|2026-09-21 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|2026-09-20 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-14_0800_Tech_AI_Briefing|2026-09-14 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|2026-09-13 · 0800 브리핑]]
