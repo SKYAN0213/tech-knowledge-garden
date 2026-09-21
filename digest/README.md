@@ -4,17 +4,22 @@
 
 ## 누적 주제
 
+- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 6건 · 1개 원칙
+- [Magnachip의 SiC 기술 이전과 사업화](topics/company-magnachip-sic.md) — 원문 1건 · 0개 원칙
+- [RamanOmics의 조직 분석과 외부 검증](topics/research-ramanomics.md) — 원문 1건 · 0개 원칙
+- [가정용 배터리의 전력망 공급 실적](topics/grid-home-batteries.md) — 원문 1건 · 0개 원칙
+- [삼성전자 공조 생산거점 확대](topics/company-samsung-hvac.md) — 원문 1건 · 0개 원칙
+- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 6건 · 1개 원칙
 - [CXMT의 메모리 공정과 양산 제품](topics/company-cxmt.md) — 원문 1건 · 0개 원칙
 - [Teradyne Robotics의 신제품과 영업 조직](topics/company-teradyne-robotics.md) — 원문 2건 · 0개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 6건 · 0개 원칙
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
 - [현대차그룹의 자율주행 양산과 자체 AI 개발](topics/company-hyundai-motor-group.md) — 원문 1건 · 0개 원칙
-- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 4건 · 1개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 4건 · 1개 원칙
-- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 5건 · 1개 원칙
 
 ## 날짜별 브리핑
 
+- [2026-09-22 · 0800](2026/09/2026-09-22_0800_Tech_AI_Briefing.md) — 2026-09-22 IT · AI · 로보틱스
 - [2026-09-21 · 0800](2026/09/2026-09-21_0800_Tech_AI_Briefing.md) — 2026-09-21 IT · AI · 로보틱스
 - [2026-09-20 · 0800](2026/09/2026-09-20_0800_Tech_AI_Briefing.md) — 센서를 품은 협동로봇, 대화로 연결되는 예약, 데이터센터의 장기 전력 조달
 - [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접

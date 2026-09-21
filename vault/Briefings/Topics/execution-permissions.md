@@ -2,9 +2,10 @@
 title: 실행·배포 권한을 경로별로 세분화
 type: briefing-topic
 topic_id: execution-permissions
-date: 2026-09-21
+date: 2026-09-22
 description: npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제
-  설정이 안전하게 적용된 것은 구분해야 한다.
+  설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한
+  적용은 별도 조치다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/execution-permissions.md
 cssclasses:
   - garden-generated
@@ -19,9 +20,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다.
+npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다.
 
-2026-09-21까지 서로 다른 원문 5건 · 3일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-22까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -44,6 +45,19 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20260922-github-execution-permissions"></span>
+
+### 2026-09-22 · 참고
+
+**GitHub Enterprise, 토큰·SSH 키 목록을 CSV와 API로 제공**
+
+기업 접근 권한의 목록화와 감사
+
+- 한계: Enterprise Server 지원은 향후 제공 예정이다. 목록을 얻는 것만으로 오래된 토큰이 폐기되지는 않으므로, 실제 권한 축소와 자격증명 정리는 별도 운영 조치다.
+- 다음 확인: 기업 설정 적용, 토큰 폐기·권한 축소 여부.
+- [[News/f631d543deb02b09|GitHub Enterprise, 토큰·SSH 키 목록을 CSV와 API로 제공]] · [GitHub 원문](https://github.blog/changelog/2026-09-21-github-enterprise-adds-credential-inventory-exports/) · [[Briefings/2026/09/2026-09-22_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-22 원문 검토
 
 <span id="permissions-cache"></span>
 

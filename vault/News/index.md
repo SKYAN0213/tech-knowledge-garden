@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-09-21
+date: 2026-09-22
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,15 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/b429bf3b4fabcc12|NASA, 화성 제제로 암석에서 최소 세 차례 물의 작용 구분]] · 2026-09-22
+- [[News/a79face44324947c|MIT, 위장관에서 분해되는 1.84V 배터리 실험 공개]] · 2026-09-22
+- [[News/12d7d589a995c908|RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류]] · 2026-09-22
+- [[News/8980fabc70784290|60개 기관, 5년 내 저자원 언어 AI 접근성 확대 공동 목표]] · 2026-09-22
+- [[News/10538c022345675d|OpenAI, AI 능력·감독·사고 보고의 국제 공통 기준 제안]] · 2026-09-22
+- [[News/4db79fe713e8de1c|Sunrun·Tesla, 캘리포니아 가정용 배터리 580MW 공급 실적 공개]] · 2026-09-22
+- [[News/f631d543deb02b09|GitHub Enterprise, 토큰·SSH 키 목록을 CSV와 API로 제공]] · 2026-09-22
+- [[News/a49bfbd297aaeae9|Navitas, Magnachip에 500만달러 지분 투자 계약]] · 2026-09-22
+- [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · 2026-09-22
 - [[News/43924fdd4d64f158|CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표]] · 2026-09-21
 - [[News/c8c055684e1b9e3a|Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료]] · 2026-09-20
 - [[News/21e5701b8e5bea51|Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표]] · 2026-09-20

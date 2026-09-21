@@ -2,7 +2,7 @@
 title: 현대차그룹의 자율주행 양산과 자체 AI 개발
 type: briefing-topic
 topic_id: company-hyundai-motor-group
-date: 2026-09-21
+date: 2026-09-22
 description: 3월 발표가 엔비디아 기술의 선제 적용과 데이터 기반 구축에 초점을 뒀다면, 9월에는 외부 솔루션과 자체 모델의 양산
   시점을 나눠 제시했다. 실제 운영 중인 데이터 수집 차량과 개발 조직을 두 경로의 공통 기반으로 둔 전략이다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-hyundai-motor-group.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 3월 발표가 엔비디아 기술의 선제 적용과 데이터 기반 구축에 초점을 뒀다면, 9월에는 외부 솔루션과 자체 모델의 양산 시점을 나눠 제시했다. 실제 운영 중인 데이터 수집 차량과 개발 조직을 두 경로의 공통 기반으로 둔 전략이다.
 
-2026-09-21까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-22까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
