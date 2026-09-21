@@ -9,7 +9,7 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "e1c16a359c6e77a074b549b00f4dec2e1cc6511558b2696d981bf107cebfa8b3",
+  "snapshot_sha256": "f5f9f2ac236d60f34ac791b6e96030b80900cf87711cfd461e5fd1168d8c050d",
   "source_files": 176,
   "exported_at": null,
   "hashes": {
@@ -129,7 +129,7 @@
     "Editions/2026/09/2026-09-14_0800_Tech_AI_Briefing.md": "40d2662b44d145ea41af5e06aa5ee8c2b38d43cd02bdb3bf4221ab3cfa7c6d5e",
     "Editions/2026/09/2026-09-20_0800_Tech_AI_Briefing.md": "f16a270d4acaf9514c5411f1d6a9dea37a5806850d9fffa5fe339009783cc459",
     "Editions/2026/09/2026-09-21_0800_Tech_AI_Briefing.md": "1f694cc99b947a72d4595126c7a130313a2ea2aaf8448494074d31cedcc9f549",
-    "Editions/2026/09/2026-09-22_0800_Tech_AI_Briefing.md": "cab17ab1526e158f0c98a9c3647ac85902f660c665b311aa663a78bf4a9574f6",
+    "Editions/2026/09/2026-09-22_0800_Tech_AI_Briefing.md": "9c3544d7ef7795a98abe14cb359a44e6d6c42671c575fc57af9f2dc33df4d6e2",
     "Knowledge/00 Tech Encyclopedia Index.md": "be579c07f1f137a339110b167612b0647b4793eacc6b7e84e94d403719ad9140",
     "Knowledge/AI Systems/AI Agent Governance.md": "ba624eb69c47cb2ad56a745aeca3e12d5985b20fa96bfad4e7637997cefb7e16",
     "Knowledge/AI Systems/AI Agent Security and Governance.md": "9cd8628bb437c04bcc9ca353b2858dfabf806a238ef500970855c6293fd70948",
