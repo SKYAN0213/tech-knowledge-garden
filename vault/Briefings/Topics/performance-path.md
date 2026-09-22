@@ -2,9 +2,10 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-09-22
+date: 2026-09-23
 description: 가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와
-  비용을 함께 비교할 필요가 있다.
+  비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의
+  성공률·총비용으로 운영 효과를 확인한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/performance-path.md
 cssclasses:
   - garden-generated
@@ -19,9 +20,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다.
+가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의 성공률·총비용으로 운영 효과를 확인한다.
 
-2026-09-22까지 서로 다른 원문 4건 · 4일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 5건 · 5일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -44,6 +45,19 @@ generated_by: tech-knowledge-garden
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20260923-sol-performance-path"></span>
+
+### 2026-09-23 · 참고
+
+**OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하**
+
+에이전트 작업의 성능·비용 개선이라는 회사 설명
+
+- 한계: 이는 토큰 단가와 캐시 정책의 변화다. 실제 작업 비용은 입력·출력 길이, 추론량, 캐시 적중률과 재시도 횟수에 따라 달라지므로 같은 과제의 성공률·총비용으로 비교해야 한다.
+- 다음 확인: 같은 작업·품질 기준의 총비용과 캐시 적중률.
+- [[News/73461b3e97af0d93|OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하]] · [OpenAI 원문](https://openai.com/index/introducing-gpt-6-sol-and-luna/) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-23 원문 검토
 
 <span id="performance-habitat"></span>
 

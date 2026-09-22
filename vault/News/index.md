@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-09-22
+date: 2026-09-23
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,19 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]] · 2026-09-23
+- [[News/6bbcd64185c1cd83|우주항공청, 제2우주센터 설계에 민간 발사 수요 의견 수렴]] · 2026-09-23
+- [[News/66c52fd129c04f36|Roche, enicepatide 2상에서 48주 혈당·체중 결과 공개]] · 2026-09-23
+- [[News/fbfa93226b6339d4|Pila·Brooklyn SolarWorks, 뉴욕 옥상 태양광과 플러그형 배터리 실증]] · 2026-09-23
+- [[News/8eef4c45f7f30411|LG에너지솔루션 ESS, NVIDIA DSX Ready 요건 충족]] · 2026-09-23
+- [[News/3742191de5126dd0|Cadence, 설계 사양을 RTL로 만드는 에이전트 공개…4분기 제한 제공]] · 2026-09-23
+- [[News/c2d62bc474a75d21|Intrinsic 로봇 경진대회, 실제 케이블 삽입 시험에서 두 팀 성공률 100%]] · 2026-09-23
+- [[News/94d03e7f8181fafd|LS일렉트릭, 부산 변압기 공장에 사족보행 로봇 Spot 도입]] · 2026-09-23
+- [[News/c2a48879e9e88507|네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시]] · 2026-09-23
+- [[News/f73f3c73e2cee66d|Proofpoint, 데이터·AI 보안을 묶는 세 가지 에이전트 발표]] · 2026-09-23
+- [[News/48f3b502c43f955e|VAST, 데이터·모델을 보호하는 DataEnclave 공개…출하는 내년 1분기]] · 2026-09-23
+- [[News/299dfd60a92b85ff|Nutanix, 프랑스 AI 연산 조율 기업 Ryax 인수]] · 2026-09-23
+- [[News/73461b3e97af0d93|OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하]] · 2026-09-23
 - [[News/b429bf3b4fabcc12|NASA, 화성 제제로 암석에서 최소 세 차례 물의 작용 구분]] · 2026-09-22
 - [[News/a79face44324947c|MIT, 위장관에서 분해되는 1.84V 배터리 실험 공개]] · 2026-09-22
 - [[News/12d7d589a995c908|RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류]] · 2026-09-22

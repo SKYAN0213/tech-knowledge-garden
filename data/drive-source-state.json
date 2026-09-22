@@ -9,8 +9,8 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "190b28cd00a2c6c5831de27d922dcf7f6541e289274f221c1f0d59cb3c60c002",
-  "source_files": 177,
+  "snapshot_sha256": "bc3b1985a2175d7f6e8069f00ecb710e078ad07abfcc216050ef8a389345153e",
+  "source_files": 180,
   "exported_at": null,
   "hashes": {
     "Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md": "27f7cbb5d767ff47ef76a3cef2ff488730c20bae3a3a4a3e03f7e43634ac9c0b",
@@ -130,6 +130,7 @@
     "Editions/2026/09/2026-09-20_0800_Tech_AI_Briefing.md": "f16a270d4acaf9514c5411f1d6a9dea37a5806850d9fffa5fe339009783cc459",
     "Editions/2026/09/2026-09-21_0800_Tech_AI_Briefing.md": "1f694cc99b947a72d4595126c7a130313a2ea2aaf8448494074d31cedcc9f549",
     "Editions/2026/09/2026-09-22_0800_Tech_AI_Briefing.md": "9c3544d7ef7795a98abe14cb359a44e6d6c42671c575fc57af9f2dc33df4d6e2",
+    "Editions/2026/09/2026-09-23_0800_Tech_AI_Briefing.md": "dcef839992f03972d595dfdd26d261fb333d110a0a19b897ddf9c576ed125600",
     "Knowledge/00 Tech Encyclopedia Index.md": "be579c07f1f137a339110b167612b0647b4793eacc6b7e84e94d403719ad9140",
     "Knowledge/AI Systems/AI Agent Governance.md": "ba624eb69c47cb2ad56a745aeca3e12d5985b20fa96bfad4e7637997cefb7e16",
     "Knowledge/AI Systems/AI Agent Security and Governance.md": "9cd8628bb437c04bcc9ca353b2858dfabf806a238ef500970855c6293fd70948",
@@ -178,17 +179,19 @@
     "Signals/2026-09-20_0800_Tech_AI_Briefing.md": "2d4d3ee6cc55e83a35698ffa727d859bb8835e253af9e9a773da746407cab22b",
     "Signals/2026-09-21_0800_Tech_AI_Briefing.md": "25304227a719fdb20f94e5309eec1bf0e9c9a56b94f8f39915683104caddece3",
     "Signals/2026-09-22_0800_Tech_AI_Briefing.md": "0fc5489e2afb7d380b07187ca1d5e56ea58e92ff8a4dab25d65cd4ac7847290e",
-    "TrendTopics/agent-runtime.md": "94842ac439dd0c4c2941cb1a6d3ba21dcd0406fee74dbe7b00e7304ce29152eb",
+    "Signals/2026-09-23_0800_Tech_AI_Briefing.md": "466db931078cd6e78417155790a28986016e66bdebb6d346c8801d5ab1e0cfe6",
+    "TrendTopics/agent-runtime.md": "820eafd839e43da77c39c6f8a46df85c95b372b5f0d3553fa1efdc4489de82b5",
     "TrendTopics/company-cxmt.md": "90ec6fcc675e1934f7f1bb3af1ec3a74059c437c375d941cba9123885811f66b",
     "TrendTopics/company-hyundai-motor-group.md": "d15ef0a9224474674d287047e02ff570eb53eaa5c0fb4e8610ce3bdafe680899",
     "TrendTopics/company-magnachip-sic.md": "f7c9037f1d3fc961730516f64269e21d9b87d03fe766c11541c946f47d2f4a79",
     "TrendTopics/company-samsung-asset-management.md": "97bb28d95cc9c939dbd8a2b7b23fe3d21e293e8bb1cccdcb505684d2e9ae999d",
     "TrendTopics/company-samsung-hvac.md": "db525fc40b186042036733fe48950cb583edc49699fe1b7146ae54c9c6d48bdc",
     "TrendTopics/company-teradyne-robotics.md": "e69344c30b8611f943d1050094d34a020adf2689d3287030668b8a593c6f76b5",
-    "TrendTopics/evaluation.md": "2bfbda6349eb8b6d950d98e323b0c72f998366ce9558f2db4c7c516843c80be1",
-    "TrendTopics/execution-permissions.md": "09cc87915c0fef02b24d9a231deaf48d8a4d101e3d5677f18ab6281b40020010",
-    "TrendTopics/grid-home-batteries.md": "4c3d9f642eae40222fad1be95e0055dbd2ac1f8f9051ee5f8b00290263b1d840",
-    "TrendTopics/performance-path.md": "79c4bf7e0f711f4442b9ce3ea616957e1cf06eb875f33fab6034ecd4cada19f2",
-    "TrendTopics/research-ramanomics.md": "5d099755e64750daf9eeab42ffce5ea0f6ac06830a47a258e3e41dc5f8d8c88a"
+    "TrendTopics/evaluation.md": "9460a53da7c7e38dda3c3fd0e80cc847378bc8b1575c18b92e1d0f6187e266fd",
+    "TrendTopics/execution-permissions.md": "d9f77a65d3deb7b539cbadddec1521d49c37b9b6e8875e52487fda3a41cab1af",
+    "TrendTopics/grid-home-batteries.md": "8444a8ef740b6174bc9fb88ab7a516ecf0d09ea3f0e34e72469255da1d5c7586",
+    "TrendTopics/performance-path.md": "b124a5281ec56c5694d01c21085412fd519de6d249f34bd71b4f644478d748a0",
+    "TrendTopics/research-ramanomics.md": "5d099755e64750daf9eeab42ffce5ea0f6ac06830a47a258e3e41dc5f8d8c88a",
+    "TrendTopics/venture-envisagenics.md": "efa173f2287c26e1e4ca5610b6157f80a8950f95700b411f1a5048409aa880dc"
   }
 }

@@ -2,10 +2,11 @@
 title: 실행·배포 권한을 경로별로 세분화
 type: briefing-topic
 topic_id: execution-permissions
-date: 2026-09-22
+date: 2026-09-23
 description: npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제
   설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한
-  적용은 별도 조치다.
+  적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인
+  적용은 별도 운영 검증이 필요하다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/execution-permissions.md
 cssclasses:
   - garden-generated
@@ -20,9 +21,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다.
+npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.
 
-2026-09-22까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 8건 · 5일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -45,6 +46,32 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20260923-proofpoint-execution-permissions"></span>
+
+### 2026-09-23 · 참고
+
+**Proofpoint, 데이터·AI 보안을 묶는 세 가지 에이전트 발표**
+
+데이터 유출과 AI 사용 위험의 통합 관리
+
+- 한계: 공통 그래프와 자동 대응은 제품 설계 설명이다. 실제 오탐률, 대응 지연과 사람이 승인해야 하는 범위는 도입 환경에서 별도로 확인할 사항이다.
+- 다음 확인: 실제 제공 범위, 오탐률, 사람 승인 정책.
+- [[News/f73f3c73e2cee66d|Proofpoint, 데이터·AI 보안을 묶는 세 가지 에이전트 발표]] · [proofpoint.com 원문](https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-23 원문 검토
+
+<span id="20260923-naver-execution-permissions"></span>
+
+### 2026-09-23 · 참고
+
+**네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시**
+
+DB·서버 접근과 감사 기록의 통합
+
+- 한계: 접근 통제 도구의 제공과 조직의 정책 준수는 별개다. 사용자 권한·예외 정책·경보 후 대응을 실제 업무에 맞게 설정해야 하며, 제품 도입만으로 규정 준수가 보장되지는 않는다.
+- 다음 확인: 실제 권한·예외 설정과 경보 대응 결과.
+- [[News/c2a48879e9e88507|네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시]] · [navercorp.com 원문](https://navercorp.com/media/pressReleasesDetail?seq=10034680) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-23 원문 검토
 
 <span id="20260922-github-execution-permissions"></span>
 

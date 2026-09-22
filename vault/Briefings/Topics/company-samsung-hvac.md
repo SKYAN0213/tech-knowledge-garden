@@ -2,7 +2,7 @@
 title: 삼성전자 공조 생산거점 확대
 type: briefing-topic
 topic_id: company-samsung-hvac
-date: 2026-09-22
+date: 2026-09-23
 description: 광주 생산라인은 2026-09-21 착공했고 가동은 2028년 초 계획이다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-samsung-hvac.md
 cssclasses:
@@ -20,7 +20,7 @@ generated_by: tech-knowledge-garden
 
 광주 생산라인은 2026-09-21 착공했고 가동은 2028년 초 계획이다.
 
-2026-09-22까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

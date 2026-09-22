@@ -2,8 +2,10 @@
 title: 가정용 배터리의 전력망 공급 실적
 type: briefing-topic
 topic_id: grid-home-batteries
-date: 2026-09-22
+date: 2026-09-23
 description: 9월21일 공개된 캘리포니아 9월9일 최대580MW 실적은 특정일 집계다. 공급 에너지나 연중 신뢰도와 구분한다.
+  9월22일 Pila의 뉴욕 태양광 연계 시범사업은 가구별 저장·백업 적용이다. Sunrun의 계통 공급 최대출력과 같은 성과 단위로 합산하지
+  않는다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/grid-home-batteries.md
 cssclasses:
   - garden-generated
@@ -18,9 +20,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-9월21일 공개된 캘리포니아 9월9일 최대580MW 실적은 특정일 집계다. 공급 에너지나 연중 신뢰도와 구분한다.
+9월21일 공개된 캘리포니아 9월9일 최대580MW 실적은 특정일 집계다. 공급 에너지나 연중 신뢰도와 구분한다. 9월22일 Pila의 뉴욕 태양광 연계 시범사업은 가구별 저장·백업 적용이다. Sunrun의 계통 공급 최대출력과 같은 성과 단위로 합산하지 않는다.
 
-2026-09-22까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 2건 · 2일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -35,6 +37,19 @@ generated_by: tech-knowledge-garden
 여러 날짜의 근거와 적용 한계를 더 확인하는 중이다.
 
 ## 관측 기록
+
+<span id="20260923-pila-grid-home-batteries"></span>
+
+### 2026-09-23 · 참고
+
+**Pila·Brooklyn SolarWorks, 뉴욕 옥상 태양광과 플러그형 배터리 실증**
+
+정전 대비 및 시간대별 전력 사용 조절
+
+- 한계: 시범사업의 가구 수, 실제 절감액과 장시간 정전 시험 결과는 공개되지 않았다. 제품에 연결된 기기의 백업 기능을 주택 전체에 전력을 공급하는 설비와 동일하게 해석할 수 없다.
+- 다음 확인: 참여 가구·저장량·실제 절감액과 정전 시험.
+- [[News/fbfa93226b6339d4|Pila·Brooklyn SolarWorks, 뉴욕 옥상 태양광과 플러그형 배터리 실증]] · [prweb.com 원문](https://www.prweb.com/releases/pila-energy-launches-first-plug-in-path-to-home-battery-storage-in-new-york-city-302886178.html) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-23 원문 검토
 
 <span id="20260922-sunrun-grid-home-batteries"></span>
 

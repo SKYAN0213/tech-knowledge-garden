@@ -2,7 +2,7 @@
 title: CXMT의 메모리 공정과 양산 제품
 type: briefing-topic
 topic_id: company-cxmt
-date: 2026-09-22
+date: 2026-09-23
 description: CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세대 대비 웨이퍼당 다이 수
   개선은 8Gb 환산 기준이며 양품 수율이나 출하 증가와 구분한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-cxmt.md
@@ -21,7 +21,7 @@ generated_by: tech-knowledge-garden
 
 CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세대 대비 웨이퍼당 다이 수 개선은 8Gb 환산 기준이며 양품 수율이나 출하 증가와 구분한다.
 
-2026-09-22까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

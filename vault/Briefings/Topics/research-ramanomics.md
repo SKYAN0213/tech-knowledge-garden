@@ -2,7 +2,7 @@
 title: RamanOmics의 조직 분석과 외부 검증
 type: briefing-topic
 topic_id: research-ramanomics
-date: 2026-09-22
+date: 2026-09-23
 description: 쥐 폐·피부의 세포 분할 시험에서 결합 모델의 정확도가 개선됐다. 사람 진단과 독립 집단 일반화는 미확인이다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/research-ramanomics.md
 cssclasses:
@@ -20,7 +20,7 @@ generated_by: tech-knowledge-garden
 
 쥐 폐·피부의 세포 분할 시험에서 결합 모델의 정확도가 개선됐다. 사람 진단과 독립 집단 일반화는 미확인이다.
 
-2026-09-22까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

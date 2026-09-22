@@ -2,9 +2,10 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-09-22
+date: 2026-09-23
 description: 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과
-  격리·중단 조건은 업무에 맞게 검증해야 한다.
+  격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선
+  실적과 구분한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/agent-runtime.md
 cssclasses:
   - garden-generated
@@ -19,9 +20,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다.
+긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다.
 
-2026-09-22까지 서로 다른 원문 6건 · 4일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-23까지 서로 다른 원문 7건 · 5일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -38,6 +39,19 @@ generated_by: tech-knowledge-garden
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20260923-nutanix-agent-runtime"></span>
+
+### 2026-09-23 · 참고
+
+**Nutanix, 프랑스 AI 연산 조율 기업 Ryax 인수**
+
+기업 AI 작업의 자원 배치 효율 개선
+
+- 한계: 이번 발표로 확인되는 것은 회사 인수다. 통합 제품의 기능·성능과 제공 시점은 개발 계획이며, 특정 출시일이나 고객의 절감 실적은 제시되지 않았다.
+- 다음 확인: 통합 제품 출시와 고객 운영 결과.
+- [[News/299dfd60a92b85ff|Nutanix, 프랑스 AI 연산 조율 기업 Ryax 인수]] · [nutanix.com 원문](https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-23 원문 검토
 
 <span id="20260920-gemini-live"></span>
 

@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-09-22
+date: 2026-09-23
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,21 +11,23 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
-- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 6건 · 원칙 1개
+- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 7건 · 원칙 1개
+- [[Briefings/Topics/venture-envisagenics|Envisagenics의 RNA 표적 연구 사업화]] · 1건 · 원칙 0개
+- [[Briefings/Topics/grid-home-batteries|가정용 배터리의 전력망 공급 실적]] · 2건 · 원칙 0개
+- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 5건 · 원칙 1개
+- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 8건 · 원칙 1개
+- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 7건 · 원칙 0개
 - [[Briefings/Topics/company-magnachip-sic|Magnachip의 SiC 기술 이전과 사업화]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-ramanomics|RamanOmics의 조직 분석과 외부 검증]] · 1건 · 원칙 0개
-- [[Briefings/Topics/grid-home-batteries|가정용 배터리의 전력망 공급 실적]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-hvac|삼성전자 공조 생산거점 확대]] · 1건 · 원칙 0개
-- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 6건 · 원칙 1개
 - [[Briefings/Topics/company-cxmt|CXMT의 메모리 공정과 양산 제품]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-teradyne-robotics|Teradyne Robotics의 신제품과 영업 조직]] · 2건 · 원칙 0개
-- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 6건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-asset-management|삼성자산운용의 생성형 AI 이용 감시 체계]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-hyundai-motor-group|현대차그룹의 자율주행 양산과 자체 AI 개발]] · 1건 · 원칙 0개
-- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 4건 · 원칙 1개
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|2026-09-23 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-22_0800_Tech_AI_Briefing|2026-09-22 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-21_0800_Tech_AI_Briefing|2026-09-21 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|2026-09-20 · 0800 브리핑]]
