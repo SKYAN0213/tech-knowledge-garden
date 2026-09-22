@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-02
 created: 2026-09-02
 modified: 2026-09-02
-description: 강해진 에이전트의 배포 조건이 모델 거부율에서 실행 중 감시와 데이터 통제까지 넓어졌다.
+description: 2026-09-02 IT · AI · 로보틱스
 coverage_start: 2026-09-01T08:01:37+09:00
 coverage_end: 2026-09-02T08:01:50+09:00
 item_count: 4
@@ -17,40 +17,59 @@ generated_by: tech-knowledge-garden
 
 # 2026-09-02 · 아침 브리핑
 
-> 강해진 에이전트의 배포 조건이 모델 거부율에서 실행 중 감시와 데이터 통제까지 넓어졌다.
-
-
-
-## 헤드라인
+## 주요 소식
 
 ### [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]]
 
-OpenAI는 출시 전 모델 Astra가 자사 Preparedness Framework의 최고 사이버 역량 문턱인 Critical에 도달했다고 판정했다. 제한된 평가 구성에서 알려지지 않은 취약점과 작동하는 공격 체인을 찾았고, 배포에는 제한 접근과 실행 중 자동 중단을 결합한다.
+OpenAI는 9월 1일 출시 전 모델 Astra가 자사 Preparedness Framework의 Critical 사이버 역량 기준에 도달했다고 발표했다. 회사는 자동 벤치마크와 전문가 평가를 결합해 판정했으며, 고급 사이버 기능은 초기 시험자와 Daybreak Blue를 통한 제한 접근으로 제공할 계획이라고 밝혔다. 발표 당시 일반 출시 완료를 뜻하는 평가는 아니다.
 
 ### [[News/b085c7f1762bfee8|Anthropic EFS, 안전 모니터링 데이터는 고객 클라우드에 둔다]]
 
-Enterprise Frontier Safeguards(EFS)는 여러 세션·계정에 걸친 오용 신호를 자동 분석하되 활동 데이터는 고객의 S3·Azure Blob·Google Cloud Storage와 고객 키·정책 아래 저장한다. 경고는 고객에게 전달되고 Anthropic 사람의 검토는 기본적으로 필요하지 않다. 단계적 제공은 2026년 가을 시작 예정이다.
+Anthropic은 9월 1일 고객이 관리하는 클라우드에 활동 데이터를 보관하면서 오용을 감지하는 Enterprise Frontier Safeguards를 발표했다. 여러 세션과 계정에 걸친 신호를 자동 분석하고, 경보를 고객에게 보내 고객 담당자가 검토하는 구조다. 고객별 단계적 제공은 그해 가을부터 시작할 계획이라고 밝혔다.
 
 ### [[News/c0364833b41073ca|ChatGPT for Healthcare, Epic 환자 기록과 9개 공공 데이터원을 연결]]
 
-의료기관은 허가된 Epic 환자 기록을 ChatGPT for Healthcare에서 요약·추적하고, 새 플러그인으로 PubMed·DailyMed·ClinicalTrials.gov·CMS Coverage 등 9개 공식 데이터원을 구조적으로 조회할 수 있다. 답변은 근거가 된 차트 정보로 되돌아간다.
+OpenAI는 9월 1일 ChatGPT for Healthcare에 Epic 전자의무기록 연동과 Healthcare Public Data 플러그인을 발표했다. 의료기관은 접근이 허용된 환자 기록을 요약하고 근거 차트로 되돌아갈 수 있으며, 플러그인은 PubMed·DailyMed 등을 포함한 9개 공식 데이터원에 구조적으로 접근한다. 개인 계정에는 전자의무기록 연동을 제공하지 않는다고 밝혔다.
 
 ### [[News/5cd085900610be52|Gemini Agentic Video Understanding]]
 
-영상을 고정 프레임률로 전부 넣는 대신 모델이 시각 프레임·오디오·자막에서 필요한 구간을 검색하고 다시 살핀다.
+Google은 9월 1일 Gemini 3.7 Flash·3.6 Flash·3.5 Flash-Lite에 필요한 영상 구간을 찾아 분석하는 기능을 제공한다고 발표했다. 모델이 프레임·오디오·자막 중 필요한 신호와 구간을 선택해 다시 읽는 방식이다. 영상 업로드와 YouTube 입력을 Gemini API의 Google AI Studio 및 Gemini Enterprise Agent Platform에서 지원한다.
 
-## 흐름 읽기
 
-> [!info] 확인된 사실
-> 고위험 에이전트 배포는 모델 내부 거부, 계정 위험도, 실행 중 무단 행동 감시, 고객 소유 로그의 장기 상관 분석을 여러 층으로 결합하기 시작했다. 동시에 의료 기록과 긴 영상에서는 모든 입력을 한 번에 평평하게 넣기보다 권한·출처·필요 구간을 좁히는 연결 방식이 제품화됐다. [S1], [S2], [S3], [S4]
 
-> [!tip] 분석
-> 공통 변화는 더 강한 모델 자체보다 “무엇을 볼 수 있고, 누가 로그를 보관하며, 어떤 조건에서 멈추는가”가 실제 배포 단위가 되고 있다는 점이다. 공급자 벤치마크가 좋아도 권한 누락, 기록 공백, 오탐 중단 같은 시스템 실패는 별도로 평가해야 한다.
+## 분야별 브리핑
 
-## 오늘의 적용
+### AI · 1건
 
-- **대상:** 고권한 에이전트를 운영하는 보안·플랫폼 팀. **행동:** 사용자 오용과 모델 무단 행동을 두 위협 경로로 나누고, 세션 간 탐지에 필요한 최소 로그·보관 주체·중단 권한을 표로 만든다. **가드레일:** 민감 원문을 공급자 로그에 자동 복제하지 말고 정상 작업 오탐률을 배포 문턱에 포함한다.
-- **대상:** 의료 검색 또는 장시간 영상 분석을 도입하는 팀. **행동:** 고정된 업무 표본에서 근거 링크 완전성, 누락률, 비용, 사람이 수정한 비율을 기존 방식과 비교한다. **가드레일:** 공급자 평균 수치를 기관·콘텐츠별 안전성으로 간주하지 않고 고위험 판단은 전문가 확인을 유지한다.
+#### [[News/5cd085900610be52|Gemini Agentic Video Understanding]]
+
+제품·서비스 · 기능 추가 · Google
+
+Google은 9월 1일 Gemini 3.7 Flash·3.6 Flash·3.5 Flash-Lite에 필요한 영상 구간을 찾아 분석하는 기능을 제공한다고 발표했다. 모델이 프레임·오디오·자막 중 필요한 신호와 구간을 선택해 다시 읽는 방식이다. 영상 업로드와 YouTube 입력을 Gemini API의 Google AI Studio 및 Gemini Enterprise Agent Platform에서 지원한다.
+
+### 사이버보안 · 2건
+
+#### [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]]
+
+연구·기술 · 실증·재현 · OpenAI
+
+OpenAI는 9월 1일 출시 전 모델 Astra가 자사 Preparedness Framework의 Critical 사이버 역량 기준에 도달했다고 발표했다. 회사는 자동 벤치마크와 전문가 평가를 결합해 판정했으며, 고급 사이버 기능은 초기 시험자와 Daybreak Blue를 통한 제한 접근으로 제공할 계획이라고 밝혔다. 발표 당시 일반 출시 완료를 뜻하는 평가는 아니다.
+
+#### [[News/b085c7f1762bfee8|Anthropic EFS, 안전 모니터링 데이터는 고객 클라우드에 둔다]]
+
+제품·서비스 · 기능 추가 · Anthropic
+
+Anthropic은 9월 1일 고객이 관리하는 클라우드에 활동 데이터를 보관하면서 오용을 감지하는 Enterprise Frontier Safeguards를 발표했다. 여러 세션과 계정에 걸친 신호를 자동 분석하고, 경보를 고객에게 보내 고객 담당자가 검토하는 구조다. 고객별 단계적 제공은 그해 가을부터 시작할 계획이라고 밝혔다.
+
+### 바이오·의료기술 · 1건
+
+#### [[News/c0364833b41073ca|ChatGPT for Healthcare, Epic 환자 기록과 9개 공공 데이터원을 연결]]
+
+제품·서비스 · 기능 추가 · OpenAI
+
+OpenAI는 9월 1일 ChatGPT for Healthcare에 Epic 전자의무기록 연동과 Healthcare Public Data 플러그인을 발표했다. 의료기관은 접근이 허용된 환자 기록을 요약하고 근거 차트로 되돌아갈 수 있으며, 플러그인은 PubMed·DailyMed 등을 포함한 9개 공식 데이터원에 구조적으로 접근한다. 개인 계정에는 전자의무기록 연동을 제공하지 않는다고 밝혔다.
+
+
 
 ## 출처
 

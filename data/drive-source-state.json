@@ -9,8 +9,8 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "bc3b1985a2175d7f6e8069f00ecb710e078ad07abfcc216050ef8a389345153e",
-  "source_files": 180,
+  "snapshot_sha256": "505a788ec077770d83fa21d1b68405020b46c696df68b9a970c15b02d0d2f508",
+  "source_files": 181,
   "exported_at": null,
   "hashes": {
     "Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md": "27f7cbb5d767ff47ef76a3cef2ff488730c20bae3a3a4a3e03f7e43634ac9c0b",
@@ -115,7 +115,7 @@
     "Editions/2026/08/2026-08-30_0801_Tech_AI_Briefing.md": "8aac152b0a86e09a2e4a52df113c3c30c1a23503a91b9472db3bc9cb98d8c6b4",
     "Editions/2026/08/2026-08-31_0801_Tech_AI_Briefing.md": "0efb738fa984bd3902e902f50b6e29560f32116f15afb09e56b5a2b9b17d8340",
     "Editions/2026/09/2026-09-01_0801_Tech_AI_Briefing.md": "0604a4bf3588e5ec7e4f82973730d99d0212e2b7ebd35ce11f41520357e16e27",
-    "Editions/2026/09/2026-09-02_0801_Tech_AI_Briefing.md": "7380864ad4ecdb046cccad234ed9ab2cbc27025bd8886bd63669c25e5fa9d71b",
+    "Editions/2026/09/2026-09-02_0801_Tech_AI_Briefing.md": "21b770b67d2dd4f7872df98f0846c6e718167abd5003cbcb91af402c3369f2dd",
     "Editions/2026/09/2026-09-03_0803_Tech_AI_Briefing.md": "8120ecbe772d3dfeb70d7ade90fadfbe54a34de29e8d0852a6d7cbb5efabfaee",
     "Editions/2026/09/2026-09-04_0802_Tech_AI_Briefing.md": "fcd52c6f3644d7f4e084c636612f187607698e52adfd2cf3365c624ec29f4d06",
     "Editions/2026/09/2026-09-05_0801_Tech_AI_Briefing.md": "80d5e231c8d1ddff45cc94f44b48c3d3a6a8e1a99bf3a2cfb15d5405b009f269",
@@ -169,6 +169,7 @@
     "Signals/2026-08-27_0802_Tech_AI_Briefing.md": "5c8cdabc278578d59123dd4f21daaa72b65ce54c25f3d42014e6893338feea74",
     "Signals/2026-08-29_0800_Tech_AI_Briefing.md": "245ec1dc4aa8223de4918b6cf57aef3edfd1c75c086158bb65cdc8fd8e374a52",
     "Signals/2026-08-30_0801_Tech_AI_Briefing.md": "346e57df65e4b66dc5337989cf9abf914bc1f3c6745e962cc448cd096493a5c3",
+    "Signals/2026-09-02_0801_Tech_AI_Briefing.md": "d9415a18f4b2610561d6beab74a52fe2d667815c3e4c9d7b2d477d58f0e4b0aa",
     "Signals/2026-09-03_0803_Tech_AI_Briefing.md": "e801e99cd53b8b208bad446d4c25c9a7193d6d37b390c5bcbd5ec74d9a80b1b0",
     "Signals/2026-09-04_0802_Tech_AI_Briefing.md": "068ebd8a884f081c48b3ae55f360e216767d97221af34bb9f8612fcc4bde7830",
     "Signals/2026-09-07_0801_Tech_AI_Briefing.md": "a4f75a9d6c709b544f5947ca86fd635bad44beeae9055d0e1f9ea16d20bc5783",
