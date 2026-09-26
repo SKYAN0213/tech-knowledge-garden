@@ -19,10 +19,10 @@ jobs:
     outputs:
       changed: ${{ steps.pull.outputs.changed }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: main
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python -m unittest discover -s tests -p 'test_drive_sync.py' -v
@@ -31,7 +31,7 @@ jobs:
         env:
           DRIVE_EXPORT_URL: ${{ vars.DRIVE_EXPORT_URL }}
         run: python scripts/pull-drive.py --apply
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         if: steps.pull.outputs.changed == 'true'
         with:
           node-version: 24
@@ -52,9 +52,9 @@ jobs:
           git add -- vault data/catalog.json data/drive-source-state.json digest
           git diff --cached --quiet || git commit -m 'Sync website source from Google Drive'
           git push origin HEAD:main
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: steps.pull.outputs.changed == 'true'
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         if: steps.pull.outputs.changed == 'true'
         with:
           path: public
@@ -66,5 +66,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         id: deployment
