@@ -3,7 +3,9 @@
 import csv
 import hashlib
 import json
+import os
 from pathlib import Path
+import re
 import shutil
 import tempfile
 from datetime import datetime, timezone
@@ -13,6 +15,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/drive-sync'
+STAGE = Path(os.environ.get('TECH_GARDEN_DRIVE_STAGE_DIR', WORK / 'staging')).expanduser()
 BASE = 'https://skyan0213.github.io/tech-knowledge-garden/'
 ASSETS = ['reader-index.json', 'knowledge-graph.json', 'static/contentIndex.json', 'briefing.xml']
 
@@ -26,9 +29,26 @@ def table(path, columns, rows):
         for row in rows:
             writer.writerow([json.dumps(v, ensure_ascii=False) if isinstance(v, (list, dict)) else v for v in row])
 
+def drive_links(receipt):
+    links = {}
+    for file in receipt['files']:
+        path = file['path']
+        if path in links:
+            raise ValueError('Duplicate Drive receipt path: ' + path)
+        url = file.get('url')
+        if not url:
+            file_id = file.get('id')
+            if not isinstance(file_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]+', file_id):
+                raise ValueError('Drive receipt lacks a usable link or file ID: ' + path)
+            url = f'https://drive.google.com/file/d/{file_id}/view?usp=drivesdk'
+        links[path] = url
+    return links
+
 def main():
     WORK.mkdir(parents=True, exist_ok=True)
-    destination = WORK / 'staging/WebsiteData'
+    if not STAGE.is_absolute() or (STAGE != WORK / 'staging' and STAGE.resolve().is_relative_to(ROOT)):
+        raise ValueError('TECH_GARDEN_DRIVE_STAGE_DIR must be an absolute path outside the repository')
+    destination = STAGE / 'WebsiteData'
     with tempfile.TemporaryDirectory(dir=WORK) as temporary:
         output = Path(temporary)
         provenance = []
@@ -68,7 +88,7 @@ def main():
         assert all(a['slug'] in content for a in articles)
         assert all(n['slug'] in content for n in nodes)
         receipt = json.loads((WORK / 'receipt.json').read_text())
-        drive = {f['path']: f['url'] for f in receipt['files']}
+        drive = drive_links(receipt)
         local_notes = json.loads((ROOT / '.local/site-notes.json').read_text())
         paths = {n['slug']: n['path'] + '.md' for n in local_notes}
         def note(slug):

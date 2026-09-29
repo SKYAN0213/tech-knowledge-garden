@@ -7,6 +7,7 @@ import hashlib
 import io
 import ipaddress
 import json
+import os
 import re
 from pathlib import Path
 import shutil
@@ -21,7 +22,7 @@ from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/drive-sync'
-STAGE = WORK / 'staging'
+STAGE = Path(os.environ.get('TECH_GARDEN_DRIVE_STAGE_DIR', WORK / 'staging')).expanduser()
 DEST = '1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD'
 
 def now():
@@ -36,6 +37,11 @@ def write_json(path, data):
 
 def files(base):
     return sorted(p for p in base.rglob('*') if p.is_file() and not p.is_symlink() and p.name != '.DS_Store')
+
+def evidence_files(base):
+    # Generated preview workspaces repeat site code and pages in many research runs.
+    # Keep their receipts and screenshots, but archive original inputs only once.
+    return [p for p in files(base) if 'preview-workspace' not in p.parts]
 
 def public_url(url):
     u = urlsplit(url)
@@ -110,6 +116,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--collect', action='store_true')
     args = parser.parse_args()
+    if not STAGE.is_absolute() or (STAGE != WORK / 'staging' and STAGE.resolve().is_relative_to(ROOT)):
+        raise ValueError('TECH_GARDEN_DRIVE_STAGE_DIR must be an absolute path outside the repository')
     STAGE.mkdir(parents=True, exist_ok=True)
     local_ai = ROOT / '.local/research/local-ai'
     local_runtime = local_ai / 'runtime'
@@ -117,7 +125,7 @@ def main():
         target = STAGE / p.relative_to(ROOT / 'vault')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, target)
-    for p in files(ROOT / '.local/research'):
+    for p in evidence_files(ROOT / '.local/research'):
         if local_runtime in p.parents:
             continue
         target = STAGE / 'Research' / p.relative_to(ROOT / '.local/research')
@@ -130,7 +138,7 @@ def main():
     elif len(legacy) > 1:
         raise RuntimeError('Multiple legacy vaults; disambiguation required')
     # Runtime environments/browser binaries are reproducible dependencies, not research evidence.
-    historical = [p for p in files(ROOT / '.local') if WORK not in p.parents and local_runtime not in p.parents]
+    historical = [p for p in evidence_files(ROOT / '.local') if WORK not in p.parents and local_runtime not in p.parents]
     archive(STAGE / 'Archive/Imports/local-research-and-migration-evidence.zip', ROOT / '.local', historical)
     archive(STAGE / 'Exports/github-digest.zip', ROOT / 'digest')
     archive(STAGE / 'Operations/project-documentation.zip', ROOT, files(ROOT / 'docs') + [ROOT / 'AGENTS.md', ROOT / 'README.md'])
@@ -138,7 +146,7 @@ def main():
     if (local_ai / 'documents').exists():
         local_ai_receipt = prepare_local_ai_sources(local_ai, STAGE)
     if (local_ai / 'runs').exists():
-        archive(STAGE / 'Research/LocalAI/research-runs.zip', local_ai / 'runs')
+        archive(STAGE / 'Research/LocalAI/research-runs.zip', local_ai / 'runs', evidence_files(local_ai / 'runs'))
     catalog = json.loads((ROOT / 'data/catalog.json').read_text())
     notes = [(p.relative_to(STAGE).as_posix(), p.read_text(errors='replace')) for p in files(STAGE) if p.suffix == '.md']
     if len(legacy) == 1:

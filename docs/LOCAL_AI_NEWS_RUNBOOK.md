@@ -74,6 +74,8 @@ Node worker 어댑터는 기본적으로 `<root>/runtime/venv/bin/python`을 찾
 
 GitHub Pages의 두 workflow는 private `.local/` venv를 checkout하지 않는다. HTML 파서 통합 시험을 실행할 때만 Python 3.12에 `trafilatura==2.2.0`을 설치하고 `RESEARCH_PYTHON=python`으로 그 실행파일을 명시한다. 이 설치는 실제 PDF·OCR·브라우저 수집 환경을 구성하거나 일일 기사를 발행했다는 뜻이 아니다.
 
+Drive 인계의 `staging`은 기본적으로 `.local/drive-sync/staging`이다. 로컬 여유 공간이 부족하면 절대 경로이며 저장소 밖인 `TECH_GARDEN_DRIVE_STAGE_DIR`을 `prepare-drive.py`와 `export-website-data.py`에 함께 전달한다. 원문·판정·영수증과 화면 검증 자료는 보존하되 여러 실행에 중복된 `preview-workspace` 생성 사본은 인계 파일과 ZIP에서 제외한다. `--collect`의 원문 응답 캐시는 여전히 `.local/drive-sync/source-cache`이므로 실행 전 그 경로의 여유 공간도 확인한다. 2026-09-29 외부 staging 시험은 `--collect` 없이 인계 목록 12,826개를 생성했으며 출처 등록의 미해결 메타데이터 1건은 남아 있다. 이 시험은 Drive 업로드나 예약 실행이 아니다.
+
 ### 2.2 로컬 검색 서비스의 현재 수명주기
 
 `search` 명령은 `SEARXNG_URL`이 없으면 자신이 소유하는 SearXNG 프로세스를 필요할 때 시작하고 실행 뒤 종료한다. 영구 서비스나 새 예약을 등록하지 않는다. 외부 인터넷에는 검색 질의와 원문 요청이 전송되지만 기사 작성의 모델 호출은 로컬 Ollama로 전달한다. 로컬 추론과 네트워크 없는 뉴스 탐색은 다른 개념이다.
