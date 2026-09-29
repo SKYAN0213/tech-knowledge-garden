@@ -465,6 +465,19 @@
       }
     },
     {
+      "id": "samsung-global-press-release-v1",
+      "url_pattern": "^https://news\\.samsung\\.com/global/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main//div[contains(concat(' ', normalize-space(@class), ' '), ' single_contents ')]",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote][normalize-space(.)]",
+        "publication_date_xpath": "//main//p[contains(concat(' ', normalize-space(@class), ' '), ' single-date ')]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
       "id": "nvidia-newsroom-press-release-v1",
       "url_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
       "options": {
@@ -602,6 +615,20 @@
       "max_items": 100,
       "guid_is_permalink": true,
       "scope": "The official RSS feed must include an older item than the requested window; each selected permalink must match a dated full article."
+    }
+  },
+  "samsung-global-press-releases": {
+    "publisher_id": "news.samsung.com",
+    "allowed_hosts": ["news.samsung.com"],
+    "item_pattern": "^https://news\\.samsung\\.com/global/[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "samsung-global-press-rss-v1",
+      "feed_title": "Press Releases – Samsung Global Newsroom",
+      "max_items": 50,
+      "guid_is_permalink": false,
+      "scope": "Official press-release RSS; use its UTC calendar date and verify full article titles and printed publication dates before accepting a window."
     }
   },
   "nvidia-press-releases": {

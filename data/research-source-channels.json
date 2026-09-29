@@ -438,6 +438,23 @@
       }
     },
     {
+      "id": "samsung-global-press-releases",
+      "name": "Samsung Global Newsroom Press Releases",
+      "kind": "company",
+      "language": "en",
+      "region": "국내",
+      "axis": "기업·운영",
+      "sectors": ["AI"],
+      "method": "rss",
+      "url": "https://news.samsung.com/global/category/press-release/feed",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "September 23–30 bounded RSS window had 3 dated full releases and an older boundary; stored source bytes and article dates passed verification. Editorial review remains separate."
+      }
+    },
+    {
       "id": "nvidia-press-releases",
       "name": "NVIDIA Newsroom Press Releases",
       "kind": "company",

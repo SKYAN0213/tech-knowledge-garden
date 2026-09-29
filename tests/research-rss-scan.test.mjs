@@ -79,6 +79,59 @@ test("stored RSS bytes become immutable parse evidence and a dated discovery lis
   }
 })
 
+test("RSS with short GUIDs preserves its stated UTC date across the boundary", async () => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-short-guid-"))
+  const samsung = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      feed_title: "Press Releases – Samsung Global Newsroom",
+      guid_is_permalink: false,
+    },
+  }
+  try {
+    const xml = `<rss version="2.0"><channel><title>Press Releases – Samsung Global Newsroom</title>
+      <item><title>Current release</title><link>https://example.com/articles/current/</link><guid>https://bit.ly/current</guid><pubDate>Tue, 29 Sep 2026 08:00:00 +0000</pubDate></item>
+      <item><title>Midnight release</title><link>https://example.com/articles/midnight/</link><guid>https://bit.ly/midnight</guid><pubDate>Wed, 23 Sep 2026 22:00:00 +0000</pubDate></item>
+      <item><title>Older release</title><link>https://example.com/articles/older/</link><guid>https://bit.ly/older</guid><pubDate>Wed, 16 Sep 2026 08:00:00 +0000</pubDate></item>
+      </channel></rss>`
+    const raw = Buffer.from(xml)
+    fs.writeFileSync(path.join(root, "feed.xml"), raw)
+    const document = {
+      fetch_status: "captured",
+      original_url: channel.url,
+      source_id: sourceId(channel.url),
+      body_path: "feed.xml",
+      body_sha256: sha256(raw),
+      observed_at: "2026-09-29T12:00:00Z",
+    }
+    document.source_version_id = `${document.source_id}:${document.body_sha256}`
+    const result = await parseStoredRSSFeed(root, document, samsung)
+    assert.deepEqual(
+      result.links.map((link) => link.published_at),
+      ["2026-09-29", "2026-09-23", "2026-09-16"],
+    )
+    assert.equal(
+      assessBoundedRSSFeed(result, samsung, "2026-09-23", "2026-09-30").status,
+      "window_covered",
+    )
+    assert.equal(
+      assessBoundedRSSFeed(
+        {
+          ...result,
+          links: [{ ...result.links[0], published_at: "2026-09-28" }, ...result.links.slice(1)],
+        },
+        samsung,
+        "2026-09-23",
+        "2026-09-30",
+      ).reason,
+      "feed_item_identity_or_date_invalid",
+    )
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test("RSS window coverage needs a valid older boundary and unique dated article identities", () => {
   const complete = assessBoundedRSSFeed(parse, channel, "2026-09-22", "2026-09-29")
   assert.equal(complete.status, "window_covered")

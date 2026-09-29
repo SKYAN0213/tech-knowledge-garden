@@ -2267,3 +2267,9 @@ SkinAxis HTML은 서론·방법·결과·논의까지 **136개 텍스트 블록*
 등록 출처를 지정한 검색으로 발견한 [AI 안전성 평가 협약](https://www.kakaocorp.com/page/detail/12150)과 [카나나 상담매니저 업데이트](https://www.kakaocorp.com/page/detail/12151)를 `20260929-kakao-official-v1`에서 공통 `SourceFetcher` 정책을 거쳐 원 HTML로 각각 보존했다. `kakao-press-detail-v1`은 `www.kakaocorp.com/page/detail/<숫자>`만 대상으로 `main article`의 제목, `wrap_title`의 `text_date`, 중첩된 `wrap_cont`의 문단을 읽고 주변 관련 기사 카드는 제외한다. 2026-09-29 저장 원문을 새 profile로 재파싱한 `20260929-kakao-profile-v2`는 두 건의 명시적 발표일 **2026-09-29**와 본문 12·9블록을 추출했다. 협약 보도자료는 체결 시점을 **9월 28일**이라고 별도로 밝히므로 기사에서 발표일과 체결일을 합치지 않는다.
 
 첫 `20260929-kakao-profile-v1` 재파싱은 실제 DOM의 중간 `div`를 건너뛰지 못해 본문 선택자 0개로 실패했고, 그 기록을 보존했다. 현재 선택자는 축소 HTML 회귀와 저장된 두 실물 원문에서 확인했다. 이 두 개별 페이지의 성공은 보도자료 **목록의 페이지네이션·이전 날짜 경계**나 일일 전체 창을 검증하지 않는다. 회사의 계획·서비스 설명은 회사에 귀속하고, 독립 성과·고객 도입으로 자동 승격하지 않는다. 원문 검토와 기사 승인·Drive 보관·공개는 별도 단계다.
+
+## 42. Samsung Global Newsroom 공식 보도자료 RSS
+
+[Samsung Global Newsroom 보도자료 RSS](https://news.samsung.com/global/category/press-release/feed)를 `samsung-global-press-releases` 경로로 등록한다. 국내 기업의 AI/기업·운영 탐색 경로이며, 같은 발표를 다른 분야에 수록할지는 기사 원문을 읽고 결정한다. 목록의 GUID는 `bit.ly` 단축 주소이고 원문 링크가 아니므로 permalink 일치 검사는 적용하지 않는다. 대신 GUID의 존재·중복, `news.samsung.com` 원문 URL, 목록의 UTC 날짜·순서와 오래된 경계, 상세 제목·인쇄된 발표일·본문을 모두 검사한다. 목록 시각을 임의로 한국 날짜로 바꾸지 않는다. 실제 2026년 9월 23일 AI RAN 발표는 RSS의 UTC 날짜와 본문 표시일이 9월 23일로 일치했고, 시간대를 변환하면 하루 밀렸다.
+
+`samsung-global-press-release-v1`은 `main h1`, `single-date`, `single_contents`의 기사 본문만 읽는다. `[2026-09-23, 2026-09-30)` 실물 실행 `20260929-samsung-global-press-window-v2`는 피드 50건에서 기간 안 3건과 이전 47건의 경계를 확인했고, 상세 3건 모두 `source_parsed_unreviewed`로 종료했다. 저장한 목록·상세 원문 SHA, parse, 후보와 발표일을 `verifyStoredListScan`으로 다시 대조했다. 앞선 v1의 날짜 충돌은 서울 시간대 변환 가정 때문에 발생했으며 성공으로 바꾸지 않고 보존했다. 이 창의 수집 완료는 하루 전체 취재나 세 기사 편집 승인·발행을 의미하지 않는다. 피드 항목 수가 50건을 넘어 경계가 사라지면 해당 창을 미완료로 두고 공식 이전 페이지 경로를 확인한다.
