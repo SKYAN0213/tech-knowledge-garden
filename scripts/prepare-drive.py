@@ -25,6 +25,17 @@ WORK = ROOT / '.local/drive-sync'
 STAGE = Path(os.environ.get('TECH_GARDEN_DRIVE_STAGE_DIR', WORK / 'staging')).expanduser()
 DEST = '1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD'
 
+def source_cache_dir():
+    configured = os.environ.get('TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR')
+    cache = Path(configured).expanduser() if configured else WORK / 'source-cache'
+    if configured:
+        if not cache.is_absolute() or cache.resolve().is_relative_to(ROOT):
+            raise ValueError('TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR must be an absolute path outside the repository')
+        stage, resolved_cache = STAGE.resolve(), cache.resolve()
+        if stage == resolved_cache or stage in resolved_cache.parents or resolved_cache in stage.parents:
+            raise ValueError('Source cache and Drive staging directories must be separate')
+    return cache
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -59,7 +70,7 @@ class PublicRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, 307 if code == 308 else code, msg, headers, newurl)
 
 def collect(row):
-    cache = WORK / 'source-cache'
+    cache = source_cache_dir()
     cache.mkdir(parents=True, exist_ok=True)
     meta = cache / (row['source_id'] + '.json')
     if meta.exists():
@@ -118,6 +129,7 @@ def main():
     args = parser.parse_args()
     if not STAGE.is_absolute() or (STAGE != WORK / 'staging' and STAGE.resolve().is_relative_to(ROOT)):
         raise ValueError('TECH_GARDEN_DRIVE_STAGE_DIR must be an absolute path outside the repository')
+    cache = source_cache_dir()
     STAGE.mkdir(parents=True, exist_ok=True)
     local_ai = ROOT / '.local/research/local-ai'
     local_runtime = local_ai / 'runtime'
@@ -162,7 +174,7 @@ def main():
             rows = list(pool.map(collect, rows))
     else:
         for row in rows:
-            cached = WORK / 'source-cache' / (row['source_id'] + '.json')
+            cached = cache / (row['source_id'] + '.json')
             if cached.exists():
                 row.update(json.loads(cached.read_text()))
     write_json(STAGE / 'Sources/source-register.json', {'generated_at': now(), 'capture_is_current_not_historical': True, 'sources': rows})
@@ -185,8 +197,8 @@ def main():
         writer.writeheader()
         for row in rows:
             writer.writerow({**row, 'referenced_by': '; '.join(row['referenced_by'])})
-    if (WORK / 'source-cache').exists():
-        archive(STAGE / 'Sources/source-snapshots.zip', WORK / 'source-cache')
+    if cache.exists():
+        archive(STAGE / 'Sources/source-snapshots.zip', cache)
     (STAGE / '00 START HERE.md').write_text('''# Tech Knowledge 자료실
 
 Google Drive의 Projects / Tech Knowledge가 최종 보관 위치입니다. 로컬 vault는 편집·검증·웹 생성용 작업 사본입니다. Drive에서 수정한 파일은 로컬에 먼저 반영하고, 충돌을 해결한 뒤 업로드합니다. 자동 양방향 동기화는 아닙니다.

@@ -74,7 +74,7 @@ Node worker 어댑터는 기본적으로 `<root>/runtime/venv/bin/python`을 찾
 
 GitHub Pages의 두 workflow는 private `.local/` venv를 checkout하지 않는다. HTML 파서 통합 시험을 실행할 때만 Python 3.12에 `trafilatura==2.2.0`을 설치하고 `RESEARCH_PYTHON=python`으로 그 실행파일을 명시한다. 이 설치는 실제 PDF·OCR·브라우저 수집 환경을 구성하거나 일일 기사를 발행했다는 뜻이 아니다.
 
-Drive 인계의 `staging`은 기본적으로 `.local/drive-sync/staging`이다. 로컬 여유 공간이 부족하면 절대 경로이며 저장소 밖인 `TECH_GARDEN_DRIVE_STAGE_DIR`을 `prepare-drive.py`와 `export-website-data.py`에 함께 전달한다. 원문·판정·영수증과 화면 검증 자료는 보존하되 여러 실행에 중복된 `preview-workspace` 생성 사본은 인계 파일과 ZIP에서 제외한다. `--collect`의 원문 응답 캐시는 여전히 `.local/drive-sync/source-cache`이므로 실행 전 그 경로의 여유 공간도 확인한다. 2026-09-29 외부 staging 시험은 `--collect` 없이 인계 목록 12,826개를 생성했으며 출처 등록의 미해결 메타데이터 1건은 남아 있다. 이 시험은 Drive 업로드나 예약 실행이 아니다.
+Drive 인계의 `staging`은 기본적으로 `.local/drive-sync/staging`이다. 로컬 여유 공간이 부족하면 절대 경로이며 저장소 밖인 `TECH_GARDEN_DRIVE_STAGE_DIR`을 `prepare-drive.py`와 `export-website-data.py`에 함께 전달한다. `--collect`의 원문 응답 캐시는 기본적으로 `.local/drive-sync/source-cache`이며, 별도의 외부 절대 경로가 필요하면 `TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR`을 지정한다. 이때 기존 캐시를 자동 이전하지 않는다. 파일별 SHA-256 대조로 복사를 검증하고 기존 사본은 보존한다. staging과 캐시 경로는 겹치지 않아야 한다. 원문·판정·영수증과 화면 검증 자료는 보존하되 여러 실행에 중복된 `preview-workspace` 생성 사본은 인계 파일과 ZIP에서 제외한다. 2026-09-29 외부 staging의 첫 시험은 `--collect` 없이 인계 목록 12,826개를 생성했다. 기존 캐시 2,594파일을 외부에 파일별 SHA-256 일치로 복사한 뒤 별도 외부 staging에서 `--collect`를 실행해 등록 URL 1,215개 중 1,132개 응답을 보관하고 83개 접근 실패를 구분했다. 결과 manifest는 12,828파일, `source-snapshots.zip`은 2,907개 파일과 보관 응답 1,132개의 해시가 모두 일치했다. 출처 등록의 미해결 메타데이터 1건은 남아 있으며, 이 시험은 Drive 업로드나 예약 실행이 아니다.
 
 ### 2.2 로컬 검색 서비스의 현재 수명주기
 

@@ -21,7 +21,7 @@
 
 `scripts/prepare-drive.py`가 `scripts/export-website-data.py`를 호출하므로 기존 예약의 Drive 저장 목록에도 포함된다. 사이트 배포 후 실행하며, 배포 데이터 수집이나 색인 일관성 검사가 실패하면 저장 준비를 중단한다. 이것은 배포 데이터 보관 절차이며 Drive 파일 수정이 웹사이트에 실시간 반영되는 기능은 아니다.
 
-로컬 `staging` 공간이 부족하면 두 스크립트에 동일한 `TECH_GARDEN_DRIVE_STAGE_DIR` 절대 경로를 지정한다. 경로는 저장소 밖이어야 한다. 이 설정은 수집 캐시 위치를 바꾸지 않는다. 반복 생성되는 `preview-workspace` 사본은 보관 목록에서 빼되 원문·검토 기록과 미리보기 영수증은 유지한다.
+로컬 `staging` 공간이 부족하면 두 스크립트에 동일한 `TECH_GARDEN_DRIVE_STAGE_DIR` 절대 경로를 지정한다. `--collect`의 응답 캐시 공간도 부족하면 `TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR`에 별도의 저장소 밖 절대 경로를 지정한다. 이 변수는 기존 캐시를 자동 이전하지 않으므로, 이전 캐시를 파일별 SHA-256으로 검증해 복사한 뒤 실행해야 성공 응답을 재사용한다. staging과 캐시 경로는 겹칠 수 없다. 기존 캐시는 검증 전 삭제하지 않는다. 반복 생성되는 `preview-workspace` 사본은 보관 목록에서 빼되 원문·검토 기록과 미리보기 영수증은 유지한다.
 
 ## 기존 자료 이전 기준
 
