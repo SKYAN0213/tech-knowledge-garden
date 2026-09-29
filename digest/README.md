@@ -17,6 +17,7 @@
 - [Teradyne Robotics의 신제품과 영업 조직](topics/company-teradyne-robotics.md) — 원문 2건 · 0개 원칙
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
 - [현대차그룹의 자율주행 양산과 자체 AI 개발](topics/company-hyundai-motor-group.md) — 원문 1건 · 0개 원칙
+- [AGIBOT 생산 규모와 산업 현장 배치](topics/company-agibot.md) — 원문 1건 · 0개 원칙
 
 ## 날짜별 브리핑
 
@@ -123,7 +124,7 @@
 - [2026-06-29 · 1803](2026/06/2026-06-29_1803_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
 - [2026-06-29 · 1204](2026/06/2026-06-29_1204_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
 - [2026-06-29 · 0602](2026/06/2026-06-29_0602_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
-- [2026-06-29 · 0005](2026/06/2026-06-29_0005_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
+- [2026-06-29 · 0005](2026/06/2026-06-29_0005_Tech_AI_Briefing.md) — AGIBOT이 15,000번째 로봇 생산 이정표와 G2의 공장 검사 사례를 발표했다.
 - [2026-06-28 · 1802](2026/06/2026-06-28_1802_Tech_AI_Briefing.md) — 2026-06-28 IT · AI · 로보틱스
 - [2026-06-28 · 1204](2026/06/2026-06-28_1204_Tech_AI_Briefing.md) — 2026-06-28 IT · AI · 로보틱스
 - [2026-06-28 · 0604](2026/06/2026-06-28_0604_Tech_AI_Briefing.md) — 2026-06-28 IT · AI · 로보틱스

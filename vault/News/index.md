@@ -100,5 +100,6 @@ generated_by: tech-knowledge-garden
 - [[News/bb0b51006dee6853|Semtech, 셀룰러 모듈 사업 Compal 매각 계약…현금 6,200만 달러]] · 2026-08-14
 - [[News/72f164fe85756954|Nauticus Robotics, ToolKITT 통합 ROV를 고객 운영에 배치]] · 2026-08-13
 - [[News/45c58985be6c34bb|IonQ, SkyWater Technology 인수 완료]] · 2026-08-01
+- [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
 - [[News/bef8ee041d7dc1a0|DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개]] · 2026-06-26

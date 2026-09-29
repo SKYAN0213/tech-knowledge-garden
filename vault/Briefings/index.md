@@ -24,6 +24,7 @@ generated_by: tech-knowledge-garden
 - [[Briefings/Topics/company-teradyne-robotics|Teradyne Robotics의 신제품과 영업 조직]] · 2건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-asset-management|삼성자산운용의 생성형 AI 이용 감시 체계]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-hyundai-motor-group|현대차그룹의 자율주행 양산과 자체 AI 개발]] · 1건 · 원칙 0개
+- [[Briefings/Topics/company-agibot|AGIBOT 생산 규모와 산업 현장 배치]] · 1건 · 원칙 0개
 
 ## 날짜별 브리핑
 
@@ -130,7 +131,7 @@ generated_by: tech-knowledge-garden
 - [[Briefings/2026/06/2026-06-29_1803_Tech_AI_Briefing|2026-06-29 · 18:03 브리핑]]
 - [[Briefings/2026/06/2026-06-29_1204_Tech_AI_Briefing|2026-06-29 · 12:04 브리핑]]
 - [[Briefings/2026/06/2026-06-29_0602_Tech_AI_Briefing|2026-06-29 · 06:02 브리핑]]
-- [[Briefings/2026/06/2026-06-29_0005_Tech_AI_Briefing|2026-06-29 · 00:05 브리핑]]
+- [[Briefings/2026/06/2026-06-29_0005_Tech_AI_Briefing|2026-06-29 · 0005 브리핑]]
 - [[Briefings/2026/06/2026-06-28_1802_Tech_AI_Briefing|2026-06-28 · 18:02 브리핑]]
 - [[Briefings/2026/06/2026-06-28_1204_Tech_AI_Briefing|2026-06-28 · 12:04 브리핑]]
 - [[Briefings/2026/06/2026-06-28_0604_Tech_AI_Briefing|2026-06-28 · 06:04 브리핑]]

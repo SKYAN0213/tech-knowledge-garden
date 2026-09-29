@@ -4,10 +4,10 @@ type: briefing-index
 date: 2026-06-29
 created: 2026-06-29
 modified: 2026-06-29
-description: 2026-06-29 IT · AI · 로보틱스
+description: AGIBOT이 15,000번째 로봇 생산 이정표와 G2의 공장 검사 사례를 발표했다.
 coverage_start: 2026-06-28T18:02:08+09:00
 coverage_end: 2026-06-29T00:05:57+09:00
-item_count: 0
+item_count: 1
 edition: Editions/2026/06/2026-06-29_0005_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/06/2026-06-29_0005_Tech_AI_Briefing.md
 cssclasses:
@@ -17,49 +17,35 @@ generated_by: tech-knowledge-garden
 
 # 2026-06-29 · 아침 브리핑
 
+## 주요 소식
+
+### [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]]
+
+AGIBOT은 2026년 6월 28일 중국 표준시 19시 10분, 15,000번째 로봇이 생산라인에서 나왔다고 발표했다. 회사는 해당 기체가 산업용 작업 로봇 G2라고 밝혔고, 6월 하순 G2가 전자제품 공장의 태블릿 품질검사 공정에서 누적 약 100시간 라이브 운영됐다고 설명했다. 이 수치는 회사 발표이며 15,000대의 출하·고객 인도량이나 독립적으로 검증된 공장 가동 실적을 뜻하지 않는다.
 
 
-## Executive Summary
 
-- 이번 window에서는 `2026-06-28T18:02:08+09:00` 이후 게시 또는 실질 수정 시각이 확인되는 고신뢰 Major News, Important Papers, Open Source & Tools 항목을 찾지 못했습니다. 왜 중요한가: 공식 feed/API와 허용 매체에서 확인한 최신 항목들이 모두 cutoff 이전이거나 주제 범위 밖이었습니다. 실무 영향: 다음 run은 `2026-06-29T00:05:57+09:00` 이후의 공식 게시/수정 시각을 기준으로 이어가면 됩니다.
-- OpenAI Codex 최신 GitHub release는 `rust-v0.143.0-alpha.29`로 확인했지만 `2026-06-28T00:30:41Z` 공개라 이번 window 전 항목입니다. Anthropic 뉴스룸의 Fable/Mythos 접근 중단 성명도 `2026-06-12` 게시라 제외했습니다.
+## 분야별 브리핑
 
-## Major News
+### 로봇·제조 · 1건
 
-없음
+#### [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]]
 
-## Important Papers
+생산·공급망 · 양산 · AGIBOT · Longcheer Technology
 
-없음
+AGIBOT은 2026년 6월 28일 중국 표준시 19시 10분, 15,000번째 로봇이 생산라인에서 나왔다고 발표했다. 회사는 해당 기체가 산업용 작업 로봇 G2라고 밝혔고, 6월 하순 G2가 전자제품 공장의 태블릿 품질검사 공정에서 누적 약 100시간 라이브 운영됐다고 설명했다. 이 수치는 회사 발표이며 15,000대의 출하·고객 인도량이나 독립적으로 검증된 공장 가동 실적을 뜻하지 않는다.
 
-## Open Source & Tools
 
-없음
 
-## Industry Analysis
+## 흐름 읽기
 
-없음
+> [!fact] 확인된 사실
+> 회사 발표는 15,000번째 생산 기체를 산업용 G2로 특정하고, 별도로 공장 품질검사 공정에서 누적 약 100시간 라이브 운영 사례를 소개했다. [S1]
 
-## Actionable Insights
+> [!analysis] 분석
+> 생산라인 이탈 수치는 제조사의 생산 규모를 보여 주지만 판매·출하·가동 설치 기반과는 다른 지표다. 업계 전반의 보급이나 시장점유율을 판단하려면 같은 기준의 복수 제조사 출하량과 고객 현장 운영 자료가 필요하다.
 
-없음
+## 출처
 
-## Source List
-
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://huggingface.co/blog/feed.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI%20OR%20cat:cs.LG%20OR%20cat:cs.CL%20OR%20cat:cs.CV%20OR%20cat:stat.ML&start=0&max_results=10&sortBy=submittedDate&sortOrder=descending
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://mistral.ai/rss.xml
-- https://blogs.nvidia.com/feed/
-- https://www.theverge.com/rss/index.xml
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://www.nature.com/subjects/machine-learning.rss
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://github.com/openai/codex/releases/tag/rust-v0.143.0-alpha.29
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=5
-- https://www.anthropic.com/news
-- https://www.anthropic.com/news/fable-mythos-access
+- [S1] https://agibot.com/article/231/detail/82.html
+- [S2] https://www.prnewswire.com/apac/news-releases/agibots-15-000th-robot-rolls-off-the-production-line-marking-a-new-milestone-in-embodied-ai-deployment-302812695.html
