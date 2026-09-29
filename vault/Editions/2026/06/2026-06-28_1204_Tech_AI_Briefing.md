@@ -1,61 +1,113 @@
 ---
-title: Tech & AI Briefing - 12:04
+title: 2026-06-28 데일리 Tech & AI 매거진
+type: briefing
+schema_version: tech-ai-magazine/v2
 date: 2026-06-28
-time: 12:04
 timezone: Asia/Seoul
 coverage_start: 2026-06-28T06:04:47+09:00
 coverage_end: 2026-06-28T12:04:01+09:00
-type: briefing
-source_count: 17
-new_items_count: 0
+source_count: 1
+new_items_count: 1
 linked_knowledge_notes: []
-tags:
-  - AI
-  - TechBriefing
-  - Obsidian
+knowledge_notes_created: []
+knowledge_notes_updated: []
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+headlines:
+  - 吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개
+article_records:
+  - title: 吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 吉林省吉翼具身智能机器人有限公司(吉翼智能)
+      when: 2026-06-27 제품 발표; 원문 게시 2026-06-28 07:12 중국 표준시
+      where: 중국 창춘
+      what: 산업용 검사 로봇, 약국 서비스 로봇, Z-1 체화지능 모델 공개
+      how: 7축 로봇 팔·산업 비전, 약국 안내 모델, 로봇 의사결정용 모델로 구성
+      why: 제조 검사와 상업 서비스에 로봇 제품을 적용하려는 회사의 첫 제품군 발표
+    lead: 吉林省人民政府가 전한 발표에 따르면 吉林省吉翼具身智能机器人有限公司(吉翼智能)는 6월 27일 창춘에서 자동차 배선 하네스 검사 산업용 로봇 ‘质检家’, 약국 안내·판매 서비스 로봇 ‘小睦’, 두 로봇의 의사결정 중추로 제시한 ‘Z-1’ 체화지능 모델을 공개했다. 정부 페이지의 게시 시각은 6월 28일 07:12(중국 표준시)로, 기존 회차의 06:04:47~12:04:01 KST 구간 안이다.
+    papers: []
+    relations: []
+    topic_ids:
+      - company-jiyi-robotics
+    explanations:
+      - heading: 제품과 회사 성능 주장의 구분
+        paragraphs:
+          - 정부 보도는 ‘质检家’가 현장 대결에서 사람보다 3배 이상 효율을 보였다는 회사 발표, ‘小睦’의 10만 종 초과 약품 데이터베이스와 지역 약국 체인 협업, Z-1 학습 효율 300% 향상 주장을 함께 전했다. 시험 설계·비교 조건·독립 재현 자료는 해당 보도에 제시되지 않았다.
+          - 2030년 수십만 대 생산능력은 회사가 제시한 목표이지 현재 생산량이나 가동 능력이 아니다.
+        source_urls:
+          - https://www.jl.gov.cn/szfzt/gzlfz/gzdt/202606/t20260628_3645561.html
+article_reviews:
+  - title: 吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개
+    event_id: e9d913994a1de60c
+    review_status: verified
+    published_at: 2026-06-28
+    reviewed_at: 2026-09-30
+    concept_ids: []
 ---
 
-# Executive Summary
+# 이번 호 표지
 
-- 이번 window에서는 `2026-06-28T06:04:47+09:00` 이후 게시 또는 실질 수정 시각이 확인되는 고신뢰 Major News, Important Papers, Open Source & Tools 항목을 찾지 못했습니다. 왜 중요한가: 공식 feed와 주요 허용 매체에서 새 AI/개발도구/반도체/보안 기술 발표가 비어 있어 중복 또는 비기술 항목을 억지로 넣지 않는 편이 정확합니다. 실무 영향: 다음 run은 `2026-06-28T12:04:01+09:00` 이후의 공식 게시/수정 시각을 기준으로 이어가면 됩니다.
-- OpenAI Codex `0.143.0-alpha.29` release는 cutoff 이후 게시되었지만 release body가 version 문자열 수준이라 실질 변경 내용을 확인할 수 없어 항목화하지 않았습니다. The Verge의 post-cutoff feed 항목은 음악 장비 업데이트로 Tech & AI briefing 범위 밖입니다.
+> [!abstract] 2026년 6월 28일 · 데일리 Tech & AI
+> **한 줄 편집:** 吉翼智能이 검사·약국 서비스 로봇 두 종과 체화지능 모델을 공개했다.
+> **취재 범위:** 2026-06-28 06:04 KST → 2026-06-28 12:04 KST
+> **이번 호:** 새 항목 1건 · 원문 1개 · 새 개념 0개 · 갱신 개념 0개
 
-# Major News
+# 차례
+
+| 구역 | 내용 |
+| --- | --- |
+| 커버 스토리 | 없음 |
+| 뉴스 데스크 | 1건 |
+| 리서치 노트 | 없음 |
+| 도구 상자 | 없음 |
+| 흐름 읽기 | 없음 |
+| 오늘의 적용 | 없음 |
+| 개념 색인 | 없음 |
+
+# 커버 스토리
 
 없음
 
-# Important Papers
+# 뉴스 데스크
+
+## 吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개
+
+**분야:** 로봇·제조  
+**테마:** 제품·서비스  
+**보조 테마:** 사업·고객  
+**세부 태그:** 신제품, 고객 도입  
+**기업·기관:** 吉翼智能
+
+吉林省人民政府가 전한 발표에 따르면 吉林省吉翼具身智能机器人有限公司(吉翼智能)는 6월 27일 창춘에서 자동차 배선 하네스 검사 산업용 로봇 ‘质检家’, 약국 안내·판매 서비스 로봇 ‘小睦’, 두 로봇의 의사결정 중추로 제시한 ‘Z-1’ 체화지능 모델을 공개했다. 정부 페이지의 게시 시각은 6월 28일 07:12(중국 표준시)로, 기존 회차의 06:04:47~12:04:01 KST 구간 안이다. [S1]
+
+### 제품과 회사 성능 주장의 구분
+
+정부 보도는 ‘质检家’가 현장 대결에서 사람보다 3배 이상 효율을 보였다는 회사 발표, ‘小睦’의 10만 종 초과 약품 데이터베이스와 지역 약국 체인 협업, Z-1 학습 효율 300% 향상 주장을 함께 전했다. 시험 설계·비교 조건·독립 재현 자료는 해당 보도에 제시되지 않았다. [S1]
+
+2030년 수십만 대 생산능력은 회사가 제시한 목표이지 현재 생산량이나 가동 능력이 아니다. [S1]
+
+# 리서치 노트
 
 없음
 
-# Open Source & Tools
+# 도구 상자
 
 없음
 
-# Industry Analysis
+# 흐름 읽기
 
 없음
 
-# Actionable Insights
+# 오늘의 적용
+
+없음
+
+# 개념 색인
 
 없음
 
 # Source List
 
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://huggingface.co/blog/feed.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI%20OR%20cat:cs.LG%20OR%20cat:cs.CL%20OR%20cat:cs.CV%20OR%20cat:stat.ML&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://mistral.ai/rss.xml
-- https://blogs.nvidia.com/feed/
-- https://www.theverge.com/rss/index.xml
-- https://www.theverge.com/entertainment/958723/teenage-engineering-os-25-ep-133-ko-ii-sampler
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://www.nature.com/subjects/machine-learning.rss
-- https://github.com/openai/codex/releases.atom
-- https://api.github.com/repos/openai/codex/releases/tags/rust-v0.143.0-alpha.29
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://github.com/openai/codex/releases/tag/rust-v0.143.0-alpha.29
+- [S1] https://www.jl.gov.cn/szfzt/gzlfz/gzdt/202606/t20260628_3645561.html

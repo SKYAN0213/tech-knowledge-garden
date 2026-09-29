@@ -4,10 +4,10 @@ type: briefing-index
 date: 2026-06-28
 created: 2026-06-28
 modified: 2026-06-28
-description: 2026-06-28 IT · AI · 로보틱스
+description: 吉翼智能이 검사·약국 서비스 로봇 두 종과 체화지능 모델을 공개했다.
 coverage_start: 2026-06-28T06:04:47+09:00
 coverage_end: 2026-06-28T12:04:01+09:00
-item_count: 0
+item_count: 1
 edition: Editions/2026/06/2026-06-28_1204_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/06/2026-06-28_1204_Tech_AI_Briefing.md
 cssclasses:
@@ -17,49 +17,32 @@ generated_by: tech-knowledge-garden
 
 # 2026-06-28 · 아침 브리핑
 
+> 吉翼智能이 검사·약국 서비스 로봇 두 종과 체화지능 모델을 공개했다.
 
+## 오늘의 변화
 
-## Executive Summary
+기존 수록 기사 재정리 · 2026-09-30 검토
 
-- 이번 window에서는 `2026-06-28T06:04:47+09:00` 이후 게시 또는 실질 수정 시각이 확인되는 고신뢰 Major News, Important Papers, Open Source & Tools 항목을 찾지 못했습니다. 왜 중요한가: 공식 feed와 주요 허용 매체에서 새 AI/개발도구/반도체/보안 기술 발표가 비어 있어 중복 또는 비기술 항목을 억지로 넣지 않는 편이 정확합니다. 실무 영향: 다음 run은 `2026-06-28T12:04:01+09:00` 이후의 공식 게시/수정 시각을 기준으로 이어가면 됩니다.
-- OpenAI Codex `0.143.0-alpha.29` release는 cutoff 이후 게시되었지만 release body가 version 문자열 수준이라 실질 변경 내용을 확인할 수 없어 항목화하지 않았습니다. The Verge의 post-cutoff feed 항목은 음악 장비 업데이트로 Tech & AI briefing 범위 밖입니다.
+### 吉翼智能가 자동차 부품 검사 로봇, 약국 서비스 로봇, 두 제품의 의사결정 모델을 첫 제품군으로 공개했다.
 
-## Major News
+산업 공정과 상업 서비스라는 두 적용 경로를 회사가 제품으로 제시한 첫 공개 사례다.
 
-없음
+- 판단: 관측
+- 한계: 제품 사양·성능 비교·협업 상황과 생산 목표는 정부 보도에 실린 회사 설명이며 독립 시험 결과, 유상 고객 인도량 및 반복 가동 기록은 제시되지 않았다.
+- 다음 확인: 자동차 하네스 검사 정확도·처리량의 시험 조건, 약국 체인의 고객 확인 및 야간 운용 기록, 실제 수주·인도·양산 자료.
+- 근거: [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · [jl.gov.cn 원문](https://www.jl.gov.cn/szfzt/gzlfz/gzdt/202606/t20260628_3645561.html)
+- 누적 기록: [[Briefings/Topics/company-jiyi-robotics|吉翼智能의 로봇 제품 발표와 실제 현장 배치]]
 
-## Important Papers
+## 분야별 브리핑
 
-없음
+### 로봇·제조 · 1건
 
-## Open Source & Tools
+#### [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]]
 
-없음
+제품·서비스 · 사업·고객 · 신제품 · 고객 도입 · 吉翼智能
 
-## Industry Analysis
+吉林省人民政府가 전한 발표에 따르면 吉林省吉翼具身智能机器人有限公司(吉翼智能)는 6월 27일 창춘에서 자동차 배선 하네스 검사 산업용 로봇 ‘质检家’, 약국 안내·판매 서비스 로봇 ‘小睦’, 두 로봇의 의사결정 중추로 제시한 ‘Z-1’ 체화지능 모델을 공개했다. 정부 페이지의 게시 시각은 6월 28일 07:12(중국 표준시)로, 기존 회차의 06:04:47~12:04:01 KST 구간 안이다.
 
-없음
+## 출처
 
-## Actionable Insights
-
-없음
-
-## Source List
-
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://huggingface.co/blog/feed.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI%20OR%20cat:cs.LG%20OR%20cat:cs.CL%20OR%20cat:cs.CV%20OR%20cat:stat.ML&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://mistral.ai/rss.xml
-- https://blogs.nvidia.com/feed/
-- https://www.theverge.com/rss/index.xml
-- https://www.theverge.com/entertainment/958723/teenage-engineering-os-25-ep-133-ko-ii-sampler
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://www.nature.com/subjects/machine-learning.rss
-- https://github.com/openai/codex/releases.atom
-- https://api.github.com/repos/openai/codex/releases/tags/rust-v0.143.0-alpha.29
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://github.com/openai/codex/releases/tag/rust-v0.143.0-alpha.29
+- [S1] https://www.jl.gov.cn/szfzt/gzlfz/gzdt/202606/t20260628_3645561.html
