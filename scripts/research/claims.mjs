@@ -170,7 +170,14 @@ export function planExtractionBatches(parses, options = {}) {
   const input = parses.map((p, n) => ({
     document: n + 1,
     title: p.title,
-    dates: p.dates,
+    // Date provenance can contain an entire embedded page script. The model
+    // needs the parsed dates; the stored parse retains the full evidence.
+    dates: {
+      published_at: p.dates?.published_at ?? null,
+      modified_at: p.dates?.modified_at ?? null,
+      precision: p.dates?.precision ?? null,
+      observed_at: p.dates?.observed_at ?? null,
+    },
     blocks: p.blocks.map((b, i) => {
       const block_key = `d${n + 1}b${i + 1}`
       blocks.set(block_key, {

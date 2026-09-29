@@ -87,6 +87,21 @@ test("long multi-document extraction covers each original block once within the 
   assert.equal(JSON.stringify(sources), before)
 })
 
+test("large date evidence stays in the stored parse without exhausting model context", () => {
+  const source = parse("abb", 1, 800)
+  source.dates.basis = { dom_path: "/html/head/script[3]", text: "dynamic page data ".repeat(1000) }
+  source.dates.precision = "day"
+  const before = JSON.stringify(source)
+  const plan = planExtractionBatches([source], { input_char_budget: 8000 })
+  assert.equal(plan.batches.length, 1)
+  const document = JSON.parse(plan.batches[0].request.messages[1].content)[0]
+  assert.equal(document.dates.published_at, "2026-09-21")
+  assert.equal(document.dates.observed_at, "2026-09-27T00:00:00Z")
+  assert.equal(document.dates.precision, "day")
+  assert.equal(document.dates.basis, undefined)
+  assert.equal(JSON.stringify(source), before)
+})
+
 test("short source runs keep one request and exact evidence identities", async () => {
   const sources = [parse("short")],
     requests = []
