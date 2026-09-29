@@ -14,7 +14,7 @@ generated_by: tech-knowledge-garden
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 7건 · 원칙 1개
 - [[Briefings/Topics/venture-envisagenics|Envisagenics의 RNA 표적 연구 사업화]] · 1건 · 원칙 0개
 - [[Briefings/Topics/grid-home-batteries|가정용 배터리의 전력망 공급 실적]] · 2건 · 원칙 0개
-- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 5건 · 원칙 1개
+- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 7건 · 원칙 1개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 8건 · 원칙 1개
 - [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 7건 · 원칙 0개
 - [[Briefings/Topics/company-magnachip-sic|Magnachip의 SiC 기술 이전과 사업화]] · 1건 · 원칙 0개
@@ -134,12 +134,12 @@ generated_by: tech-knowledge-garden
 - [[Briefings/2026/06/2026-06-28_1802_Tech_AI_Briefing|2026-06-28 · 18:02 브리핑]]
 - [[Briefings/2026/06/2026-06-28_1204_Tech_AI_Briefing|2026-06-28 · 12:04 브리핑]]
 - [[Briefings/2026/06/2026-06-28_0604_Tech_AI_Briefing|2026-06-28 · 06:04 브리핑]]
-- [[Briefings/2026/06/2026-06-28_0004_Tech_AI_Briefing|2026-06-28 · 00:04 브리핑]]
+- [[Briefings/2026/06/2026-06-28_0004_Tech_AI_Briefing|2026-06-28 · 0004 브리핑]]
 - [[Briefings/2026/06/2026-06-27_1802_Tech_AI_Briefing|2026-06-27 · 18:02 브리핑]]
 - [[Briefings/2026/06/2026-06-27_1204_Tech_AI_Briefing|2026-06-27 · 12:04 브리핑]]
 - [[Briefings/2026/06/2026-06-27_0601_Tech_AI_Briefing|2026-06-27 · 06:01 브리핑]]
 - [[Briefings/2026/06/2026-06-27_0004_Tech_AI_Briefing|2026-06-27 · 00:04 브리핑]]
-- [[Briefings/2026/06/2026-06-26_1802_Tech_AI_Briefing|2026-06-26 · 18:02 브리핑]]
+- [[Briefings/2026/06/2026-06-26_1802_Tech_AI_Briefing|2026-06-26 · 1802 브리핑]]
 - [[Briefings/2026/06/2026-06-26_1204_Tech_AI_Briefing|2026-06-26 · 12:04 브리핑]]
 - [[Briefings/2026/06/2026-06-26_0601_Tech_AI_Briefing|2026-06-26 · 06:01 브리핑]]
 - [[Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing|2026-06-26 · 00:05 브리핑]]

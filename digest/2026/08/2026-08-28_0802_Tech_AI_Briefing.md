@@ -10,17 +10,23 @@
 
 Google DeepMind와 외부 기관들이 기밀 벤치마크와 독점 모델을 암호학적으로 격리한 채 시험하는 이중맹검 평가 파일럿을 시작했습니다. 평가자는 모델 가중치를, 모델 제공자는 시험 문항을 볼 수 없게 해 오염과 지식재산 노출을 함께 줄이는 시도입니다.
 
+
+
 [storage.googleapis.com 원문](https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/piloting-the-worlds-first-double-blind-ai-evaluations/double-blind-evaluations-technical-report.pdf)
 
 ### [ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다](https://skyan0213.github.io/tech-knowledge-garden/news/de0d8b99a9cda9c5)
 
 잘 다듬어진 답과 다양한 생각은 같은 능력이 아니었습니다. ChatGPT 접근은 표준 평가 점수와 논리적 정돈을 높였고, 인과 추론 훈련은 기제와 반증 조건을 더 쓰게 하고 집단의 아이디어 다양성을 넓혔습니다.
 
+
+
 [OpenAI 원문](https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf)
 
 ### [지리공간 예측의 데이터 찾기부터 모델 평가까지 자동화했다](https://skyan0213.github.io/tech-knowledge-garden/news/068cf5b2747d434f)
 
 Planetary Prediction Engine(PPE)은 자연어로 예측 질문을 받으면 지리·시간 범위를 정하고, 관련 데이터를 찾고 정리해 모델을 학습·평가하고 보고서까지 만드는 실험적 연구 시스템입니다.
+
+
 
 [arXiv 원문](https://arxiv.org/abs/2608.26088)
 

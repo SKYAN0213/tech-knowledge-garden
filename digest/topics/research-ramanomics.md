@@ -34,7 +34,7 @@
 
 - 한계: MIT는 현재 약 1㎟ 조직 촬영에 30시간이 걸린다고 설명했다. 다음 확인은 독립 집단 검증, 다른 노화 표지자와의 비교, 촬영 속도 개선이다.
 - 다음 확인: 독립 동물·사람 조직 검증, 다중 노화 표지자 및 영상 취득 속도.
-- [RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류](https://skyan0213.github.io/tech-knowledge-garden/news/12d7d589a995c908) · [Nature 원문](https://www.nature.com/articles/s43587-026-01219-7) · [원문 2](https://news.mit.edu/2026/unmasking-zombie-cells-aging-tissue-ai-powered-barcode-0921) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-22_0800_tech_ai_briefing)
+- [RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류](https://skyan0213.github.io/tech-knowledge-garden/news/12d7d589a995c908) · [Nature 원문](https://www.nature.com/articles/s43587-026-01219-7) · [news.mit.edu 원문](https://news.mit.edu/2026/unmasking-zombie-cells-aging-tissue-ai-powered-barcode-0921) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-22_0800_tech_ai_briefing)
 - 2026-09-22 원문 검토
 
 ## 관련 개념

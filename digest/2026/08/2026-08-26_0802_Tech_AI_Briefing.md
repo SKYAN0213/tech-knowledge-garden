@@ -24,11 +24,15 @@ AI 경쟁이 전용 추론 칩의 전력·지연 최적화와 권한을 지키�
 
 OpenAI는 첫 자체 추론 칩 Jalapeño가 세 공개 모델의 회사 측 시험에서 비교 시스템보다 전력당 처리량과 지연의 조합이 앞섰다고 발표했습니다. 공개 벤치마크를 사용했지만 결과와 비교 조건은 아직 공급업체 발표 단계입니다.
 
+
+
 [OpenAI 원문](https://openai.com/index/jalapeno-first-results/)
 
 ### [관리 대화가 조회에서 권한 있는 변경까지 이어진다](https://skyan0213.github.io/tech-knowledge-garden/news/33eae878317d27dc)
 
 OpenAI는 ChatGPT Work와 Codex용 Admin plugin을 발표했습니다. 관리자는 사용량·권한을 조회하고 구성원, 그룹, 접근, 사용 한도를 지원되는 범위에서 변경하며, 반복 점검과 승인 요청을 자동화할 수 있습니다.
+
+
 
 [OpenAI 원문](https://openai.com/index/introducing-admin-plugin/)
 

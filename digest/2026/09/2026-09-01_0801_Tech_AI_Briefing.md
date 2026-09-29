@@ -10,11 +10,15 @@
 
 Google Research가 다변량 시계열을 별도 미세조정 없이 예측하는 3억 3천만 매개변수 모델 TimesFM-3를 공개했다. 여러 목표값과 과거 변수, 미리 아는 미래 일정까지 함께 넣고 전체 예측 구간을 한 번의 순전파로 계산한다.
 
+
+
 [Google 원문](https://www.research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/)
 
 ### [Google, 생성형 검색 노출 제어와 Search Console 인사이트를 전 세계로 확대](https://skyan0213.github.io/tech-knowledge-garden/news/89b2997d0ccfa477)
 
 Google은 8월 31일 업데이트에서 사이트가 AI Overviews·AI Mode 등 생성형 검색의 근거와 링크로 쓰일지 선택하는 제어와, 노출 페이지·국가·impression 인사이트를 모든 웹사이트로 확대했다고 밝혔다. 생성형 검색에서 빠져도 일반 검색 순위 신호에는 쓰지 않는다고 명시했다.
+
+
 
 [Google 원문](https://blog.google/products-and-platforms/products/search/new-controls-website-owners/)
 

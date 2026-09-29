@@ -55,14 +55,10 @@ generated_by: tech-knowledge-garden
 # GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가
 
 
-GitHub는 9월 3일 Actions 실행기의 버전별 등록·실행 지원 종료일을 조회하는 REST API를 추가했다. GITHUB_TOKEN에는 Dependabot 경보를 읽기 전용으로 조회하는 vulnerability-alerts 권한이 생겼다. 재사용 워크플로는 새 job 속성으로 해당 작업을 정의한 파일·저장소·커밋을 확인할 수 있으며, 이 속성은 GitHub Enterprise Server에서는 제공하지 않는다. [S2]
+GitHub는 9월 3일 Actions 실행기의 버전별 등록·실행 지원 종료일을 조회하는 REST API를 추가했다. GITHUB_TOKEN에는 Dependabot 경보를 읽기 전용으로 조회하는 vulnerability-alerts 권한이 생겼다. 재사용 워크플로는 새 job 속성으로 해당 작업을 정의한 파일·저장소·커밋을 확인할 수 있으며, 이 속성은 GitHub Enterprise Server에서는 제공하지 않는다. [원문 1](<https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/>)
 
 
 
 ## 이 소식을 다룬 브리핑
 
 - [[Briefings/2026/09/2026-09-04_0802_Tech_AI_Briefing|2026-09-04 브리핑]]
-
-## 출처
-
-- [S2] https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates/

@@ -34,11 +34,15 @@ AI 실행 도구의 신뢰성은 빠른 시작보다 정확한 소유권, 실패
 
 NVIDIA NemoClaw v0.0.115는 샌드박스 복구와 변경을 정확히 소유한 컨테이너·이미지·자격증명에 묶고, 불완전한 온보딩이나 오래된 상태를 성공으로 처리하지 않도록 강화했습니다. 에이전트 운영에서 “무엇을 고칠 수 있는가”와 “언제 실패로 멈출 것인가”를 코드로 좁힌 변화입니다.
 
+
+
 [NVIDIA 원문](https://docs.nvidia.com/nemoclaw/user-guide/pi/release-notes/2026/8/28)
 
 ### [TensorRT Model Connect가 체크포인트와 C++ 실행 사이를 묶었다](https://skyan0213.github.io/tech-knowledge-garden/news/a0eed0f62d0dd240)
 
 지원되는 Hugging Face 모델 ID나 로컬 체크포인트를 Python CLI로 배포 번들로 만든 뒤, PyTorch나 Python 인터프리터 없이 네이티브 C++ 애플리케이션에서 불러 실행하는 공개 참조 구현 모음입니다.
+
+
 
 [NVIDIA 원문](https://developer.nvidia.com/blog/deploy-an-open-model-from-checkpoint-to-inference-in-two-commands-with-nvidia-tensorrt-model-connect/)
 

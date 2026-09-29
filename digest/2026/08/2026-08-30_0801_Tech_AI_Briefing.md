@@ -24,6 +24,8 @@ AI 검증은 “좋아 본인다”가 아니라 각 검사가 무엇을 입증�
 
 Microsoft의 현장 프레임워크는 사람·AI·결정적 도구를 하나의 막연한 “리뷰”로 묶지 않고, 각 검사가 무엇을 입증하며 무슨 결과물을 남기는지를 층별로 정하라고 제안합니다.
 
+
+
 [Microsoft 원문](https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/)
 
 ## 흐름 읽기

@@ -6,9 +6,9 @@
 
 ## 현재 판단
 
-가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의 성공률·총비용으로 운영 효과를 확인한다.
+가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의 성공률·총비용으로 운영 효과를 확인한다. DEEPX·Sixfab의 Raspberry Pi NPU 보드와 TITA의 온보드 AI 사양은 엣지 연산 제품 사례지만 실제 성능 비교는 아직 확인되지 않았다.
 
-2026-09-23까지 서로 다른 원문 5건 · 5일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-30까지 서로 다른 원문 7건 · 7일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -94,8 +94,34 @@ NVIDIA 사례는 긴 문맥 처리와 토큰 생성의 병목을 전체 경로�
 
 - 한계: 회사 자체 측정이며 핵심 성능 수치 일부는 외부 검토 전이다.
 - 다음 확인: 동일 품질·지연 조건의 독립 재현과 실제 업무당 비용.
-- [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [원문 2](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-25_0801_tech_ai_briefing)
+- [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-25_0801_tech_ai_briefing)
 - 기존 수록 기사 재정리 · 2026-09-13 검토
+
+<a id="20260930-tita-edge-robot-computing"></a>
+
+### 2026-06-28 · 참고
+
+**Direct Drive Tech가 배송·점검용 TITA 로봇에 온보드 AI 100 TOPS를 포함한 설계 사양을 소개했다.**
+
+엣지 연산 사양이 서비스 로봇의 통합 구성으로 제시된 사례이며 실제 작업 성능 비교의 출발점은 아니다.
+
+- 한계: 100 TOPS는 제조사 발표 수치다. 동일 모델·작업·품질·전력 조건의 결과나 현장 운용 자료는 원문에 없다.
+- 다음 확인: 판매·실증 여부와 실제 작업에서의 지연, 성공률, 전력·가동시간을 함께 공개하는 자료.
+- [Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개](https://skyan0213.github.io/tech-knowledge-garden/news/ef404a41d1e5901f) · [globenewswire.com 원문](https://www.globenewswire.com/news-release/2026/06/27/3318546/0/en/direct-drive-tech-highlights-tita-wheeled-legged-robot-for-delivery-inspection-and-public-service-applications.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/06/2026-06-28_0004_tech_ai_briefing)
+- 2026-09-30 원문 검토
+
+<a id="20260930-deepx-edge-npu"></a>
+
+### 2026-06-26 · 참고
+
+**DEEPX와 Sixfab이 Raspberry Pi 5용 NPU 보드와 모델 컴파일·배포 SDK를 발표했다.**
+
+엣지 추론용 가속기와 개발 도구를 한 보드 경로에 묶는 제품 사례가 추가됐다.
+
+- 한계: 회사 발표는 제품 설계·제공 계획이며, 독립 성능·전력·비용 측정이나 일반 유통 개시를 입증하지 않는다.
+- 다음 확인: 공식 판매 시점·가격과 동일 모델·작업·품질 조건의 지연·전력·비용 측정.
+- [DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개](https://skyan0213.github.io/tech-knowledge-garden/news/bef8ee041d7dc1a0) · [prnewswire.com 원문](https://www.prnewswire.com/news-releases/deepx-and-sixfab-launch-deepx-ai-hat-to-drive-edge-physical-ai-on-raspberry-pi-302811628.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/06/2026-06-26_1802_tech_ai_briefing)
+- 2026-09-30 원문 검토
 
 ## 관련 개념
 

@@ -34,7 +34,7 @@ CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세
 
 - 한계: 회사 양산 발표이며 수율·출하량·고객별 도입 수치로 확대하지 않는다. 이전 회차에 같은 기업의 검토된 관측이 없어 시계열 성과 비교는 하지 않는다.
 - 다음 확인: 제품별 고객 도입과 실제 출하, 동일 기준의 공정 수율과 생산량.
-- [CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표](https://skyan0213.github.io/tech-knowledge-garden/news/43924fdd4d64f158) · [cxmt.com 원문](https://www.cxmt.com/en/news/info_22.html) · [원문 2](https://www.cxmt.com/news/info_97.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-21_0800_tech_ai_briefing)
+- [CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표](https://skyan0213.github.io/tech-knowledge-garden/news/43924fdd4d64f158) · [cxmt.com 원문](https://www.cxmt.com/en/news/info_22.html) · [cxmt.com 원문](https://www.cxmt.com/news/info_97.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-21_0800_tech_ai_briefing)
 - 2026-09-21 원문 검토
 
 ## 관련 개념

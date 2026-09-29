@@ -34,7 +34,7 @@
 
 - 한계: 이번 계약은 연구용 표적 발굴 플랫폼이 제약사의 후속 개발로 이어질 수 있는 경로를 마련한다. 다만 10억달러 이상은 조건부 미래 지급을 포함한 잠재 합계이며 지금 받은 현금이나 확정 매출이 아니다. 표적 검증의 성공, 독점 옵션 행사와 후속 임상 진입이 실제 사업화 진척을 가를 단계다.
 - 다음 확인: 표적 검증 결과, 독점 옵션 행사, 후속 임상 진입과 실제 지급 공시.
-- [Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약](https://skyan0213.github.io/tech-knowledge-garden/news/cab7656fd9930f79) · [envisagenics.com 원문](https://envisagenics.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers) · [원문 2](https://www.cshl.edu/envisagenics-and-biogen-partner-for-rna-splicing-research/) · [원문 3](https://envisagenics.com/about) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-23_0800_tech_ai_briefing)
+- [Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약](https://skyan0213.github.io/tech-knowledge-garden/news/cab7656fd9930f79) · [envisagenics.com 원문](https://envisagenics.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers) · [cshl.edu 원문](https://www.cshl.edu/envisagenics-and-biogen-partner-for-rna-splicing-research/) · [envisagenics.com 원문](https://envisagenics.com/about) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-23_0800_tech_ai_briefing)
 - 2026-09-23 원문 검토
 
 ## 관련 개념

@@ -96,3 +96,8 @@ generated_by: tech-knowledge-garden
 - [[News/33eae878317d27dc|관리 대화가 조회에서 권한 있는 변경까지 이어진다]] · 2026-08-26
 - [[News/b9406ae170bd9133|OpenAI의 첫 추론 칩, 속도와 전력 효율을 함께 겨눈다]] · 2026-08-26
 - [[News/19af374b78b369cd|에이전트 추론, 칩 하나보다 전체 경로를 재설계한다]] · 2026-08-25
+- [[News/fe30a02568cd33cb|AirJoule, Kubota와 주택용 대기 물 생산 시스템 판매 계약]] · 2026-08-14
+- [[News/bb0b51006dee6853|Semtech, 셀룰러 모듈 사업 Compal 매각 계약…현금 6,200만 달러]] · 2026-08-14
+- [[News/72f164fe85756954|Nauticus Robotics, ToolKITT 통합 ROV를 고객 운영에 배치]] · 2026-08-13
+- [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
+- [[News/bef8ee041d7dc1a0|DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개]] · 2026-06-26

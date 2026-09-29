@@ -7,7 +7,7 @@
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 7건 · 1개 원칙
 - [Envisagenics의 RNA 표적 연구 사업화](topics/venture-envisagenics.md) — 원문 1건 · 0개 원칙
 - [가정용 배터리의 전력망 공급 실적](topics/grid-home-batteries.md) — 원문 2건 · 0개 원칙
-- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 5건 · 1개 원칙
+- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 7건 · 1개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 8건 · 1개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 7건 · 0개 원칙
 - [Magnachip의 SiC 기술 이전과 사업화](topics/company-magnachip-sic.md) — 원문 1건 · 0개 원칙
@@ -53,7 +53,7 @@
 - [2026-08-17 · 0802](2026/08/2026-08-17_0802_Tech_AI_Briefing.md) — 2026-08-17 IT · AI · 로보틱스
 - [2026-08-16 · 0801](2026/08/2026-08-16_0801_Tech_AI_Briefing.md) — 2026-08-16 IT · AI · 로보틱스
 - [2026-08-15 · 0802](2026/08/2026-08-15_0802_Tech_AI_Briefing.md) — 2026-08-15 IT · AI · 로보틱스
-- [2026-08-14 · 0802](2026/08/2026-08-14_0802_Tech_AI_Briefing.md) — 2026-08-14 IT · AI · 로보틱스
+- [2026-08-14 · 0802](2026/08/2026-08-14_0802_Tech_AI_Briefing.md) — 반도체 연결 사업의 매각 계약과 물 생산 기술의 주거 현장 판매 경로가 발표됐다.
 - [2026-08-13 · 0801](2026/08/2026-08-13_0801_Tech_AI_Briefing.md) — 2026-08-13 IT · AI · 로보틱스
 - [2026-08-12 · 0801](2026/08/2026-08-12_0801_Tech_AI_Briefing.md) — 2026-08-12 IT · AI · 로보틱스
 - [2026-08-11 · 0801](2026/08/2026-08-11_0801_Tech_AI_Briefing.md) — 2026-08-11 IT · AI · 로보틱스

@@ -68,13 +68,13 @@ generated_by: tech-knowledge-garden
 # FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표
 
 
-FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를 발표했다. 설계 도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다. [S6]
+FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를 발표했다. 설계 도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
 
 ### 도면 입력부터 프로그램 생성까지
 
-CRX의 태블릿 조작기 내장 카메라로 부품 도면을 입력하면 AI가 재료와 형상을 읽어 용접 조건과 로봇 동작을 만든다는 구조다. 여기서 교시는 로봇이 움직일 경로와 작업을 지정하는 과정이며, 회사가 제시한 자동화 범위는 이 프로그램 작성과 조건 설정이다. [S6]
+CRX의 태블릿 조작기 내장 카메라로 부품 도면을 입력하면 AI가 재료와 형상을 읽어 용접 조건과 로봇 동작을 만든다는 구조다. 여기서 교시는 로봇이 움직일 경로와 작업을 지정하는 과정이며, 회사가 제시한 자동화 범위는 이 프로그램 작성과 조건 설정이다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
 
-FANUC은 기존 계약을 통한 구독 방식으로 제공하며 Google Cloud와 별도 기업 계약을 반드시 체결할 필요는 없다고 설명했다. 연결된 특정 용접 전원에 종속되지 않도록 지원한다는 점도 발표에 포함됐다. [S6]
+FANUC은 기존 계약을 통한 구독 방식으로 제공하며 Google Cloud와 별도 기업 계약을 반드시 체결할 필요는 없다고 설명했다. 연결된 특정 용접 전원에 종속되지 않도록 지원한다는 점도 발표에 포함됐다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
 
 **개념:** [[Knowledge/AI Systems/AI Agents|AI 에이전트]]
 
@@ -87,7 +87,3 @@ FANUC은 기존 계약을 통한 구독 방식으로 제공하며 Google Cloud�
 ## 이 소식을 다룬 브리핑
 
 - [[Briefings/2026/09/2026-09-13_0800_Tech_AI_Briefing|2026-09-13 브리핑]]
-
-## 출처
-
-- [S6] https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html

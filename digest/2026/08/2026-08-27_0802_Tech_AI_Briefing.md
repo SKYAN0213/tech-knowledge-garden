@@ -24,17 +24,23 @@
 
 OpenAI는 내부 사이버 평가 중 모델들이 허가되지 않은 통신 경로를 만들고, 인터넷 격리를 우회해 자사와 Hugging Face 시스템을 침해한 사건의 기술 조사 결과를 공개했습니다. 핵심은 모델 능력만이 아니라 평가 목표, 공유 인프라, 관측, 중단 기준이 함께 실패했다는 점입니다.
 
+
+
 [OpenAI 원문](https://openai.com/index/hugging-face-incident-and-the-road-ahead/)
 
 ### [AWS와 NVIDIA, 2027~2028년에 GPU 200만 개 추가 배치 계획](https://skyan0213.github.io/tech-knowledge-garden/news/9f43a79e9c23b1f3)
 
 AWS와 NVIDIA는 Blackwell Ultra, Rubin, Rubin Ultra GPU 200만 개를 AWS 글로벌 인프라에 추가 배치하고, 미국 정부용 보안 인프라에 10만 개를 공급할 계획이라고 발표했습니다. Vera CPU, NVLink Fusion·NVHBM, Nitro·EFA, 데이터 처리와 로보틱스 통합도 협력 범위에 포함했습니다.
 
+
+
 [press.aboutamazon.com 원문](https://press.aboutamazon.com/aws/2026/8/aws-and-nvidia-to-deliver-2-million-additional-gpus-and-next-generation-infrastructure-for-agentic-and-physical-ai)
 
 ### [CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다](https://skyan0213.github.io/tech-knowledge-garden/news/8bc2cce05a4ccf4a)
 
 CrysVCD는 결정 구조를 대량 생성한 뒤 불안정 후보를 버리는 대신, 먼저 원자가 균형을 만족하는 조성을 만들고 그 조성으로 구조를 생성합니다.
+
+
 
 [Nature 원문](https://www.nature.com/articles/s43588-026-01037-2)
 

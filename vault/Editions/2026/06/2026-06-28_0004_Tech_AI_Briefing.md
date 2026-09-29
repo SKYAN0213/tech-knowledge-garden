@@ -1,71 +1,115 @@
 ---
 title: Tech & AI Briefing - 00:04
+type: briefing
+schema_version: tech-ai-magazine/v2
 date: 2026-06-28
-time: 00:04
 timezone: Asia/Seoul
 coverage_start: 2026-06-27T18:02:01+09:00
 coverage_end: 2026-06-28T00:04:28+09:00
-type: briefing
-source_count: 27
-new_items_count: 0
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 1
+new_items_count: 1
 linked_knowledge_notes: []
-tags:
-  - AI
-  - TechBriefing
-  - Obsidian
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
+article_records:
+  - title: Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Direct Drive Tech
+      when: 2026-06-27 13:29:23 UTC (09:29:23 ET)
+      where: 베이징에서 배포된 보도자료
+      what: 바퀴·다리형 TITA 서비스 로봇의 목적과 제조사 제시 설계·사양 소개
+      how: 바퀴 이동과 다리형 적응성, 준직구동 관절, 온보드 AI 연산 및 개방형 개발 인터페이스를 결합
+      why: 평탄한 실내 경로 밖의 배송·점검·공공 서비스 작업 지원을 목표로 함
+    lead: Direct Drive Tech는 2026년 6월 27일 배송·점검·공공 서비스에 쓰일 바퀴·다리형 로봇 TITA의 설계와 사양을
+      소개했다. 회사 발표에 따르면 TITA는 온보드 AI 연산 100 TOPS, 동적 적재량 최대 10 kg, 8개 준직구동 모듈 기반
+      8자유도와 최대 토크 120 N·m를 갖췄다. 또 오픈 Linux 커널 소스와 API·모터 수준 인터페이스, ROS 2 호환성을
+      개발자용 기능으로 제시했으며, 보도자료는 독립 성능시험이나 현장 운용 결과를 제시하지 않았다.
+    explanations:
+      - heading: 이동·구동 설계와 제시 사양
+        paragraphs:
+          - 바퀴와 다리를 함께 쓰는 구조는 평지에서 바퀴의 이동 효율을, 턱·경사·불균일 지면에서 다리의 적응성을 활용하려는 설계다.
+            회사는 8개 준직구동 관절 모듈, 8자유도, 최대 120 N·m 토크를 제시했지만 각 수치의 시험 조건이나 제3자 검증은
+            보도자료에서 확인되지 않는다.
+        source_urls:
+          - https://www.globenewswire.com/news-release/2026/06/27/3318546/0/en/direct-drive-tech-highlights-tita-wheeled-legged-robot-for-delivery-inspection-and-public-service-applications.html
+      - heading: 개발자 인터페이스
+        paragraphs:
+          - Linux 커널 소스, API, 모터 수준 인터페이스, ROS 2 호환성은 외부 개발자와 시스템 통합 업체가 기능을
+            확장하거나 기존 로봇 소프트웨어와 연결하는 데 쓰일 수 있는 접근 경로다. 회사가 열거한 적용 분야는 배송·물류, 산업
+            검사, 디지털 농업, 연구개발, 공공 서비스이며 실제 도입 고객이나 운용 성과는 발표에 기재되지 않았다.
+        source_urls:
+          - https://www.globenewswire.com/news-release/2026/06/27/3318546/0/en/direct-drive-tech-highlights-tita-wheeled-legged-robot-for-delivery-inspection-and-public-service-applications.html
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
+    event_id: ef404a41d1e5901f
+    review_status: verified
+    published_at: 2026-06-27
+    reviewed_at: 2026-09-30
+    concept_ids: []
 ---
 
-# Executive Summary
+# 이번 호 표지
 
-- 이번 window에서는 `2026-06-27T18:02:01+09:00` 이후 게시 또는 실질 수정 시각이 확인되는 고신뢰 Major News, Important Papers, Open Source & Tools 항목을 찾지 못했습니다. 왜 중요한가: 주말 구간의 공식 발표와 논문 feed가 비어 있어 중복 보도보다 `없음` 처리가 더 정확합니다. 실무 영향: 다음 run은 `2026-06-28T00:04:28+09:00` 이후의 공식 게시/수정 시각을 기준으로 이어가면 됩니다.
-- TechCrunch의 Mythos 관련 아시아 모델 후속 보도는 이번 cutoff 이후 게시되었지만, 핵심 제품 출시 시점은 이전 window로 확인되어 새 기술 발표로 포함하지 않았습니다. Hugging Face의 DukaanBench 글은 post-cutoff timestamp가 있으나 공식 회사 발표나 검증된 논문/오픈소스 release가 아니어서 제외했습니다.
+Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
 
-# Major News
+# 차례
 
-없음
+- Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
 
-# Important Papers
-
-없음
-
-# Open Source & Tools
+# 커버 스토리
 
 없음
 
-# Industry Analysis
+# 뉴스 데스크
+
+## Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개
+
+**분야:** 로봇·제조
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품
+**기업·기관:** Direct Drive Tech
+
+Direct Drive Tech는 2026년 6월 27일 배송·점검·공공 서비스에 쓰일 바퀴·다리형 로봇 TITA의 설계와 사양을 소개했다. 회사 발표에 따르면 TITA는 온보드 AI 연산 100 TOPS, 동적 적재량 최대 10 kg, 8개 준직구동 모듈 기반 8자유도와 최대 토크 120 N·m를 갖췄다. 또 오픈 Linux 커널 소스와 API·모터 수준 인터페이스, ROS 2 호환성을 개발자용 기능으로 제시했으며, 보도자료는 독립 성능시험이나 현장 운용 결과를 제시하지 않았다. [S1]
+
+### 이동·구동 설계와 제시 사양
+
+바퀴와 다리를 함께 쓰는 구조는 평지에서 바퀴의 이동 효율을, 턱·경사·불균일 지면에서 다리의 적응성을 활용하려는 설계다. 회사는 8개 준직구동 관절 모듈, 8자유도, 최대 120 N·m 토크를 제시했지만 각 수치의 시험 조건이나 제3자 검증은 보도자료에서 확인되지 않는다. [S1]
+
+### 개발자 인터페이스
+
+Linux 커널 소스, API, 모터 수준 인터페이스, ROS 2 호환성은 외부 개발자와 시스템 통합 업체가 기능을 확장하거나 기존 로봇 소프트웨어와 연결하는 데 쓰일 수 있는 접근 경로다. 회사가 열거한 적용 분야는 배송·물류, 산업 검사, 디지털 농업, 연구개발, 공공 서비스이며 실제 도입 고객이나 운용 성과는 발표에 기재되지 않았다. [S1]
+
+# 리서치 노트
 
 없음
 
-# Actionable Insights
+# 도구 상자
+
+없음
+
+# 흐름 읽기
+
+없음
+
+# 오늘의 적용
+
+없음
+
+# 개념 색인
 
 없음
 
 # Source List
 
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://huggingface.co/blog/feed.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI%20OR%20cat:cs.LG%20OR%20cat:cs.CL%20OR%20cat:cs.CV%20OR%20cat:stat.ML&start=0&max_results=50&sortBy=submittedDate&sortOrder=descending
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://mistral.ai/rss.xml
-- https://www.theverge.com/rss/index.xml
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://blogs.nvidia.com/feed/
-- https://www.nature.com/subjects/machine-learning.rss
-- https://techcrunch.com/2026/06/27/asian-ai-startups-launch-mythos-like-models-as-anthropics-export-ban-drags-on/
-- https://techcrunch.com/wp-json/wp/v2/posts?slug=asian-ai-startups-launch-mythos-like-models-as-anthropics-export-ban-drags-on
-- https://techcrunch.com/2026/06/27/the-fittest-founder-in-the-room-got-cancer-heres-how-he-used-ai-to-fight-back/
-- https://techcrunch.com/wp-json/wp/v2/posts?slug=the-fittest-founder-in-the-room-got-cancer-heres-how-he-used-ai-to-fight-back
-- https://www.theverge.com/report/958678/apple-consumer-price-increase-ai-big-tech
-- https://huggingface.co/blog/77ethers/dukaanbench
-- https://github.com/openai/codex/releases.atom
-- https://github.com/modelcontextprotocol/servers/releases.atom
-- https://github.com/vllm-project/vllm/releases.atom
-- https://github.com/huggingface/transformers/releases.atom
-- https://api.github.com/repos/vllm-project/vllm
-- https://api.github.com/repos/cline/cline
-- https://api.github.com/repos/langchain-ai/langchain
-- https://api.github.com/repos/openai/codex
-- https://api.github.com/repos/anthropics/claude-code
+- [S1] https://www.globenewswire.com/news-release/2026/06/27/3318546/0/en/direct-drive-tech-highlights-tita-wheeled-legged-robot-for-delivery-inspection-and-public-service-applications.html

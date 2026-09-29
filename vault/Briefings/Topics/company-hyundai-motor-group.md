@@ -47,7 +47,7 @@ generated_by: tech-knowledge-garden
 
 - 한계: 양산 일정은 목표이며 수집 차량 운영 수와 판매 차량 규모를 구분한다.
 - 다음 확인: 2028년 엔비디아 기반 양산, 2029년 Atria AI 양산, 광주 실증과 실제 적용 차종 발표.
-- [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]] · [org.hyundai.com 원문](https://org.hyundai.com/worldwide/en/newsroom/detail/0000001273) · [원문 2](https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion) · [[Briefings/2026/09/2026-09-14_0800_Tech_AI_Briefing|당일 브리핑]]
+- [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]] · [org.hyundai.com 원문](https://org.hyundai.com/worldwide/en/newsroom/detail/0000001273) · [hyundaimotorgroup.com 원문](https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion) · [[Briefings/2026/09/2026-09-14_0800_Tech_AI_Briefing|당일 브리핑]]
 - 2026-09-14 원문 검토
 
 ## 관련 개념

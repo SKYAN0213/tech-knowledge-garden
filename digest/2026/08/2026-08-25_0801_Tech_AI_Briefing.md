@@ -15,7 +15,7 @@ NVIDIA 사례는 긴 문맥 처리와 토큰 생성의 병목을 전체 경로�
 - 판단: 관측
 - 한계: 회사 자체 측정이며 핵심 성능 수치 일부는 외부 검토 전이다.
 - 다음 확인: 동일 품질·지연 조건의 독립 재현과 실제 업무당 비용.
-- 근거: [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [원문 2](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
+- 근거: [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
 - 누적 기록: [성능 평가를 전체 실행 경로로](https://skyan0213.github.io/tech-knowledge-garden/briefings/topics/performance-path)
 
 ## 헤드라인과 원문
@@ -23,6 +23,8 @@ NVIDIA 사례는 긴 문맥 처리와 토큰 생성의 병목을 전체 경로�
 ### [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd)
 
 NVIDIA는 Vera Rubin 랙 시스템에 지연 민감형 토큰 생성을 맡는 Groq 3 LPX를 결합하고, GPU·LPU·네트워크·캐시·런타임을 함께 최적화하는 구성을 공개했습니다. 회사 자체 측정은 큰 효율 향상을 주장하지만 일부 수치는 외부 검토 전입니다.
+
+
 
 [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
 
