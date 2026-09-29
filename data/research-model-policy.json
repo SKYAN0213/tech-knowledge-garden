@@ -1,0 +1,48 @@
+{
+  "schema": "model-execution-policy/v1",
+  "roles": {
+    "search_plan": {
+      "model": "qwen3.8:27b",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 1800000
+    },
+    "fact_extract": {
+      "model": "qwen3.8:27b",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 900000,
+      "input_char_budget": 20000,
+      "facts_per_batch": 6,
+      "extraction_timeout_ms": 900000
+    },
+    "article_write": {
+      "model": "qwen3.8:27b",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 600000
+    },
+    "concept_write": {
+      "model": "qwen3.8:27b",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 600000
+    },
+    "evidence_compare": {
+      "model": "qwen3.8:27b",
+      "think": "medium",
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 900000
+    }
+  }
+}

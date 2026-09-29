@@ -690,5 +690,497 @@
       "resolved_url": "https://enterprise.nus.edu.sg/",
       "review_scope": "채널 접근만 확인; 내용 취재·창업 관계 검증 아님"
     }
+  ],
+  "robot_manufacturers": [
+    {
+      "id": "hd-robotics",
+      "name": "HD현대로보틱스",
+      "aliases": ["HD Hyundai Robotics", "HD HYUNDAI ROBOTICS", "현대로보틱스"],
+      "sector": "로봇·제조",
+      "region": "국내",
+      "research_languages": ["ko", "en"],
+      "source_urls": [
+        "https://www.hd-hyundairobotics.com/company/news?type=90010001",
+        "https://www.hd-hyundairobotics.com/company/disclosure"
+      ],
+      "source_routes": [
+        {
+          "route_id": "hd-news-ko",
+          "url": "https://www.hd-hyundairobotics.com/company/news?type=90010001",
+          "language": "ko",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.hd-hyundairobotics.com"]
+        },
+        {
+          "route_id": "hd-disclosure-ko",
+          "url": "https://www.hd-hyundairobotics.com/company/disclosure",
+          "language": "ko",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.hd-hyundairobotics.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "doosan-robotics",
+      "name": "두산로보틱스",
+      "aliases": ["Doosan Robotics"],
+      "sector": "로봇·제조",
+      "region": "국내",
+      "research_languages": ["ko", "en"],
+      "source_urls": [
+        "https://www.doosanrobotics.com/en/about/promotion/news/",
+        "https://www.doosanrobotics.com/en/investment/ir/irdata/"
+      ],
+      "source_routes": [
+        {
+          "route_id": "doosan-news-en",
+          "url": "https://www.doosanrobotics.com/en/about/promotion/news/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.doosanrobotics.com"]
+        },
+        {
+          "route_id": "doosan-ir-en",
+          "url": "https://www.doosanrobotics.com/en/investment/ir/irdata/",
+          "language": "en",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.doosanrobotics.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "fanuc",
+      "name": "FANUC",
+      "aliases": ["ファナック", "화낙"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["ja", "en"],
+      "source_urls": [
+        "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/",
+        "https://www.fanuc.co.jp/en/profile/pr/newsrelease/",
+        "https://www.fanuc.co.jp/ja/ir/announce/",
+        "https://www.fanuc.co.jp/ja/ir/announce_other/"
+      ],
+      "source_routes": [
+        {
+          "route_id": "fanuc-news-ja",
+          "url": "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/",
+          "language": "ja",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.fanuc.co.jp"]
+        },
+        {
+          "route_id": "fanuc-news-en",
+          "url": "https://www.fanuc.co.jp/en/profile/pr/newsrelease/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.fanuc.co.jp"]
+        },
+        {
+          "route_id": "fanuc-ir-ja",
+          "url": "https://www.fanuc.co.jp/ja/ir/announce/",
+          "language": "ja",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.fanuc.co.jp"]
+        },
+        {
+          "route_id": "fanuc-ir-disclosures-ja",
+          "url": "https://www.fanuc.co.jp/ja/ir/announce_other/",
+          "language": "ja",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.fanuc.co.jp"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "kuka",
+      "name": "KUKA",
+      "aliases": [],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["de", "en"],
+      "source_urls": [
+        "https://www.kuka.com/de-de/unternehmen/presse",
+        "https://www.kuka.com/en-us/company/press",
+        "https://www.kuka.com/de-de/unternehmen/presse/news",
+        "https://www.kuka.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte"
+      ],
+      "source_routes": [
+        {
+          "route_id": "kuka-press-de",
+          "url": "https://www.kuka.com/de-de/unternehmen/presse",
+          "language": "de",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.kuka.com"]
+        },
+        {
+          "route_id": "kuka-press-en",
+          "url": "https://www.kuka.com/en-us/company/press",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.kuka.com"]
+        },
+        {
+          "route_id": "kuka-news-de",
+          "url": "https://www.kuka.com/de-de/unternehmen/presse/news",
+          "language": "de",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.kuka.com"]
+        },
+        {
+          "route_id": "kuka-ir-de",
+          "url": "https://www.kuka.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte",
+          "language": "de",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.kuka.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "abb-robotics",
+      "name": "ABB Robotics",
+      "aliases": ["ABB 로보틱스"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["en"],
+      "source_urls": [
+        "https://www.abb.com/global/en/areas/robotics",
+        "https://www.abb.com/global/en/areas/robotics/news-and-media/news-archive"
+      ],
+      "source_routes": [
+        {
+          "route_id": "abb-robotics-en",
+          "url": "https://www.abb.com/global/en/areas/robotics/news-and-media/news-archive",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.abb.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "yaskawa",
+      "name": "야스카와",
+      "aliases": ["Yaskawa", "安川電機"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["ja", "en"],
+      "source_urls": [
+        "https://www.yaskawa.co.jp/news",
+        "https://www.yaskawa-global.com/newsrelease"
+      ],
+      "source_routes": [
+        {
+          "route_id": "yaskawa-news-ja",
+          "url": "https://www.yaskawa.co.jp/news",
+          "language": "ja",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.yaskawa.co.jp"]
+        },
+        {
+          "route_id": "yaskawa-news-en",
+          "url": "https://www.yaskawa-global.com/newsrelease",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.yaskawa-global.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "kawasaki-robotics",
+      "name": "Kawasaki Robotics",
+      "aliases": ["가와사키 로보틱스", "川崎重工"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["ja", "en"],
+      "source_urls": ["https://kawasakirobotics.com/jp/news/", "https://kawasakirobotics.com/"],
+      "source_routes": [
+        {
+          "route_id": "kawasaki-news-ja",
+          "url": "https://kawasakirobotics.com/jp/news/",
+          "language": "ja",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["kawasakirobotics.com"]
+        },
+        {
+          "route_id": "kawasaki-robotics-en",
+          "url": "https://kawasakirobotics.com/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["kawasakirobotics.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "nachi",
+      "name": "나치",
+      "aliases": ["NACHI", "Nachi-Fujikoshi", "不二越"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["ja", "en"],
+      "source_urls": [
+        "https://www.nachi-fujikoshi.co.jp/eng/news.html",
+        "https://www.nachi-fujikoshi.co.jp/"
+      ],
+      "source_routes": [
+        {
+          "route_id": "nachi-news-en",
+          "url": "https://www.nachi-fujikoshi.co.jp/eng/news.html",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.nachi-fujikoshi.co.jp"]
+        },
+        {
+          "route_id": "nachi-start-ja",
+          "url": "https://www.nachi-fujikoshi.co.jp/",
+          "language": "ja",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.nachi-fujikoshi.co.jp"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "universal-robots",
+      "name": "Universal Robots",
+      "aliases": ["유니버설로봇"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["en"],
+      "source_urls": ["https://www.universal-robots.com/news-and-media/news-center/"],
+      "source_routes": [
+        {
+          "route_id": "ur-news-en",
+          "url": "https://www.universal-robots.com/news-and-media/news-center/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.universal-robots.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "techman",
+      "name": "Techman Robot",
+      "aliases": ["테크맨 로봇", "達明機器人"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["zh", "en"],
+      "source_urls": [
+        "https://www2.tm-robot.com/en/tm-news/",
+        "https://www2.tm-robot.com/zh-hant/tm-news/"
+      ],
+      "source_routes": [
+        {
+          "route_id": "techman-news-en",
+          "url": "https://www2.tm-robot.com/en/tm-news/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www2.tm-robot.com"]
+        },
+        {
+          "route_id": "techman-news-zh",
+          "url": "https://www2.tm-robot.com/zh-hant/tm-news/",
+          "language": "zh",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www2.tm-robot.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "rainbow-robotics",
+      "name": "레인보우로보틱스",
+      "aliases": ["Rainbow Robotics"],
+      "sector": "로봇·제조",
+      "region": "국내",
+      "research_languages": ["ko", "en"],
+      "source_urls": ["https://www.rainbowrobotics.com/en_main?_l=en"],
+      "source_routes": [
+        {
+          "route_id": "rainbow-start-en",
+          "url": "https://www.rainbowrobotics.com/en_main?_l=en",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.rainbowrobotics.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "estun",
+      "name": "ESTUN",
+      "aliases": ["埃斯顿"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["zh", "en"],
+      "source_urls": ["https://www.estun.com/", "https://en.estun.com/"],
+      "source_routes": [
+        {
+          "route_id": "estun-start-zh",
+          "url": "https://www.estun.com/",
+          "language": "zh",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.estun.com"]
+        },
+        {
+          "route_id": "estun-start-en",
+          "url": "https://en.estun.com/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["en.estun.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "efort",
+      "name": "EFORT",
+      "aliases": ["埃夫特"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["zh", "en"],
+      "source_urls": ["https://www.efort.com.cn/"],
+      "source_routes": [
+        {
+          "route_id": "efort-start-zh",
+          "url": "https://www.efort.com.cn/",
+          "language": "zh",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.efort.com.cn"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "jaka",
+      "name": "JAKA Robotics",
+      "aliases": ["JAKA", "节卡机器人"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["zh", "en"],
+      "source_urls": ["https://www.jaka.com/en_eu"],
+      "source_routes": [
+        {
+          "route_id": "jaka-start-en",
+          "url": "https://www.jaka.com/en_eu",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.jaka.com"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    },
+    {
+      "id": "aubo",
+      "name": "AUBO Robotics",
+      "aliases": ["AUBO", "遨博", "아우보"],
+      "sector": "로봇·제조",
+      "region": "해외",
+      "research_languages": ["zh", "en"],
+      "source_urls": ["https://www.aubo-robotics.cn/news"],
+      "source_routes": [
+        {
+          "route_id": "aubo-news-zh",
+          "url": "https://www.aubo-robotics.cn/news",
+          "language": "zh",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.aubo-robotics.cn"]
+        }
+      ],
+      "status": "registered",
+      "registered_at": "2026-09-27",
+      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+    }
   ]
 }

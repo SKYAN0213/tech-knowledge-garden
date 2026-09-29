@@ -47,6 +47,8 @@ knowledge_notes_updated: []
 
 `source_count` counts unique full URLs in `Source List`. `new_items_count` counts accepted news, paper, and tool items; it does not count analysis or action bullets.
 
+In a partial retrospective before 2026-09-14, reviewed articles may replace an original source while unreviewed article bytes retain their existing citations. Remove sources no longer cited by the projected body. When this leaves gaps in numbering, set `source_marker_format: preserved-retrospective/v1`; keep the remaining source IDs unique, positive and ordered. The marker applies only to a historical issue without `editorial_format`, with explicit `article_records` and `article_reviews`. Undefined markers, duplicate URLs, unused sources and mismatched counts remain errors. New issues and complete six-w conversions use consecutive IDs from S1.
+
 ### Required order
 
 Use these level-1 headings exactly and in this order:

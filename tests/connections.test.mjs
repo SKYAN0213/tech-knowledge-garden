@@ -38,6 +38,74 @@ const article = (id, conceptIds, text = "", date = "2026-09-13") => ({
   conceptIds,
   text,
 })
+test("verified fixed concept IDs reach map news without promoting excluded terms", (t) => {
+  const vault = fs.mkdtempSync(path.join(os.tmpdir(), "map-assignments-"))
+  t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
+  fs.mkdirSync(path.join(vault, "Knowledge"))
+  fs.mkdirSync(path.join(vault, "News"))
+  for (const id of ["explicit", "legacy", "excluded"]) {
+    const term = concept(id)
+    fs.writeFileSync(
+      path.join(vault, "Knowledge", id + ".md"),
+      noteText(
+        {
+          entry_type: "concept",
+          concept_id: id,
+          title: term.title,
+          label: term.label,
+          keywords: term.keywords,
+          verified_sources: term.sources,
+          map_review:
+            id === "excluded"
+              ? {
+                  decision: "exclude",
+                  reason: "일반적인 활동 범위다.",
+                  reviewed: "2026-09-27",
+                }
+              : term.mapReview,
+        },
+        "## 한 문장 정의\n\n" + term.definition,
+      ),
+    )
+  }
+  const write = (id, review_status, concept_ids, concepts = []) =>
+    fs.writeFileSync(
+      path.join(vault, "News", id + ".md"),
+      noteText(
+        {
+          type: "news",
+          event_id: id,
+          title: "발표",
+          description: "새 방법을 발표했다.",
+          date: "2026-09-01",
+          published_at: "2026-08-31",
+          review_status,
+          concept_ids,
+          concepts,
+        },
+        "본문에 용어명이 없어도 검토된 개념 연결은 유지한다.",
+      ),
+    )
+  write("verified", "verified", ["explicit", "excluded"], ["Knowledge/legacy"])
+  write("pending", "unreviewed", ["explicit"])
+  write("removed", "excluded", ["explicit"])
+  const graph = buildGraph(vault)
+  const verified = graph.articles.find((a) => a.id === "news:verified")
+  assert.deepEqual(new Set(verified.termIds), new Set(["explicit", "legacy"]))
+  assert.deepEqual(
+    verified.matches.map((m) => m.basis),
+    ["editorial", "editorial"],
+  )
+  assert.deepEqual(graph.articles.find((a) => a.id === "news:pending").termIds, [])
+  assert.ok(!graph.nodes.some((n) => n.id === "excluded"))
+  assert.ok(!graph.articles.some((a) => a.id === "news:removed"))
+  assert.equal(relatedNews(graph, "explicit")[0].id, "news:verified")
+  assert.equal(relatedNews(graph, "explicit")[0].rank, 10)
+  write("verified", "verified", ["explicit"], ["Knowledge/explicit", "Knowledge/legacy"])
+  assert.equal(buildGraph(vault).articles.find((a) => a.id === "news:verified").matches.length, 2)
+  write("verified", "verified", ["unknown"])
+  assert.throws(() => buildGraph(vault), /Unresolved reviewed concept/)
+})
 test("Confirmed association needs a known target and reason, without direction or citation type", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "garden-connections-"))
   try {

@@ -71,6 +71,10 @@ test("Refresh is idempotent and keeps hand-written notes", () => {
       fs.writeFileSync(`vault/Editions/${date}.md`, noteText(a.meta, a.body))
     }
     refresh()
+    const articleId = extractArticles(issue("2026-09-11"))[0].id
+    const readerNote = fs.readFileSync(`vault/News/${articleId}.md`, "utf8")
+    assert.match(readerNote, /\[원문 1\]\(<https:\/\/example\.org\/release\/>\)/)
+    assert.doesNotMatch(readerNote, /\[S1\]|## 출처/)
     const bytes = () =>
       Object.fromEntries(
         [...walk("vault"), ...walk("digest")].map((f) => [f, fs.readFileSync(f, "utf8")]),

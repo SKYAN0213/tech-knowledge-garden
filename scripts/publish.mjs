@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process"
 import fs from "node:fs"
+import { nonContentChanges, publicationContentPaths } from "./publication-state.mjs"
 
 function run(cmd, args, options = {}) {
   const r = spawnSync(cmd, args, { encoding: "utf8", ...options })
@@ -17,10 +18,14 @@ try {
     throw new Error(
       "Review the existing staged changes before publishing; they will not be committed automatically.",
     )
+  if (nonContentChanges())
+    throw new Error(
+      "Uncommitted source, configuration, or documentation changes must be reviewed and committed before publishing content.",
+    )
   run("python3", ["scripts/pull-drive.py", "--verify-working-copy"], { stdio: "inherit" })
   run("npm", ["run", "build"], { stdio: "inherit" })
   run("node", ["scripts/verify-site.mjs"], { stdio: "inherit" })
-  run("git", ["add", "--", "vault", "data/catalog.json", "data/drive-source-state.json", "digest"])
+  run("git", ["add", "--", ...publicationContentPaths])
   const changed = run("git", ["diff", "--cached", "--name-only"])
   if (changed)
     run(

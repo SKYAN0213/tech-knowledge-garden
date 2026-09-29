@@ -12,12 +12,13 @@ import {
 import { stanceLabel } from "./trends.mjs"
 import { THEMES } from "./themes.mjs"
 import { SECTORS } from "./sectors.mjs"
+import { articleDateLabel } from "./article-review.mjs"
 
 const link = (url, label, attrs = "") => `<a href="${esc(url)}" ${attrs}>${esc(label)}</a>`
 const dateLabel = (date) => date.replaceAll("-", ".")
 const announcementDate = (a) =>
   a.review?.published_at
-    ? `<small class="announcement-date">발표 <time datetime="${esc(a.review.published_at)}">${dateLabel(a.review.published_at)}</time></small>`
+    ? `<small class="announcement-date">${articleDateLabel(a.review)} <time datetime="${esc(a.review.published_at)}">${dateLabel(a.review.published_at)}</time></small>`
     : ""
 export const publicationLinks = (i, href, base) =>
   `<div class="publication-links">${link(href(briefPath(i.key)), "브리핑 읽기 →")} ${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
@@ -56,7 +57,7 @@ function changeRows(i, href, detailed = false) {
 }
 export function briefingHub(library, href, base) {
   const i = library.latest,
-    snap = i.snapshot
+    snap = library.current || i.snapshot
   const months = new Map()
   for (const row of library.issues.toReversed()) {
     const month = row.date.slice(0, 7)
@@ -72,7 +73,7 @@ export function briefingHub(library, href, base) {
           )
           .join("")}</ol>`
       : changeRows(i, href)
-  }${publicationLinks(i, href, base)}</div></section><section id="ongoing-topics"><div class="section-heading"><h2>누적 주제</h2><span>${snap.topics.reduce((n, t) => n + t.lessons.length, 0)}개 판단 원칙</span></div><div class="topic-grid">${snap.topics.map((t) => `<article class="topic-card"><div class="topic-stats"><time>${t.latest.date.slice(5)} 갱신</time><span>${t.recent}건 / ${t.previous}건</span></div><h3>${link(href(topicPath(t.id)), t.title)}</h3><p>${esc(t.reviewed <= i.date ? t.thesis : t.latest.meaning)}</p><div class="topic-footer"><span>${t.days}일 · 누적 ${t.events}건${t.lessons.length ? ` · 원칙 ${t.lessons.length}개` : ""}</span>${link(href(topicPath(t.id)), "기록 읽기 →")}</div></article>`).join("") || "<p>아직 정리된 주제 없음</p>"}</div></section><section id="briefing-archive"><h2>지난 브리핑</h2>${[
+  }${publicationLinks(i, href, base)}</div></section><section id="ongoing-topics"><div class="section-heading"><h2>누적 주제</h2></div><div class="topic-grid">${snap.topics.map((t) => `<article class="topic-card"><div class="topic-stats"><time>${(t.reader_format === "source-events/v1" ? t.reviewed : t.latest.date).slice(5)} 갱신</time></div><h3>${link(href(topicPath(t.id)), t.title)}</h3><p>${esc(t.reviewed <= snap.date ? t.thesis : t.latest.meaning)}</p><div class="topic-footer"><span>누적 ${t.events}건${t.lessons.length ? ` · 원칙 ${t.lessons.length}개` : ""}</span>${link(href(topicPath(t.id)), "기록 읽기 →")}</div></article>`).join("")}</div></section><section id="briefing-archive"><h2>지난 브리핑</h2>${[
     ...months,
   ]
     .map(

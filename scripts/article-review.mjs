@@ -1,4 +1,7 @@
 // Public review metadata contains no private review notes or reasoning.
+export const articleDateLabel = (review) =>
+  review?.date_kind === "dated-update" ? "업데이트" : "발표"
+
 export function articleReview(edition, title, fallbackId) {
   const records = edition.meta.article_reviews
   if (records === undefined)
@@ -28,12 +31,21 @@ export function articleReview(edition, title, fallbackId) {
     throw Error("Invalid concept IDs")
   if (r.review_status !== "verified" && r.concept_ids.length)
     throw Error("Only verified articles may add concept evidence")
+  if (r.date_kind !== undefined || r.source_published_at !== undefined)
+    if (
+      r.review_status !== "verified" ||
+      r.date_kind !== "dated-update" ||
+      !day(r.source_published_at) ||
+      r.source_published_at >= r.published_at
+    )
+      throw Error("Dated update needs a verified event date and an earlier source publication date")
   return {
     event_id: r.event_id,
     review_status: r.review_status,
     concept_ids: r.concept_ids,
     ...(r.published_at ? { published_at: r.published_at } : {}),
     ...(r.reviewed_at ? { reviewed_at: r.reviewed_at } : {}),
+    ...(r.date_kind ? { date_kind: r.date_kind, source_published_at: r.source_published_at } : {}),
   }
 }
 

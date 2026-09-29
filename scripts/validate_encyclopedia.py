@@ -246,6 +246,19 @@ def build_knowledge_catalog(knowledge_root: Path) -> tuple[dict[str, Path], dict
             candidate = candidate.strip()
             if candidate:
                 names.setdefault(candidate, path)
+    news_root = knowledge_root.parent / "News"
+    if news_root.exists():
+        for path in sorted(news_root.glob("*.md")):
+            if not re.fullmatch(r"[a-f0-9]{16}", path.stem) or path.is_symlink():
+                continue
+            metadata, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+            if (metadata.get("type") == "news"
+                    and metadata.get("schema_version") == "tech-news/v1"
+                    and metadata.get("review_status") == "verified"
+                    and str(metadata.get("event_id")) == path.stem):
+                # News is linked by its fixed event path, never a concept alias.
+                names[f"News/{path.stem}"] = path
+                entry_types[path] = "news"
     return names, entry_types
 
 
@@ -258,7 +271,8 @@ def validate_links(
     require_atomic: bool,
 ) -> None:
     for raw in WIKILINK_RE.findall(text):
-        target = wiki_target(raw)
+        explicit = raw.split("|", 1)[0].split("#", 1)[0].strip()
+        target = explicit.removesuffix(".md") if explicit.startswith("News/") else wiki_target(raw)
         resolved = catalog.get(target)
         if resolved is None:
             add_error(findings, path, f"unresolved knowledge link: [[{raw}]]")
@@ -319,7 +333,20 @@ def validate_briefing(
         if len(set(source_urls)) != len(source_urls):
             add_error(findings, path, "Source List contains duplicate URLs")
         expected_ids = list(range(1, len(source_ids) + 1))
-        if source_ids != expected_ids:
+        preserved_markers = metadata.get("source_marker_format") == "preserved-retrospective/v1"
+        if preserved_markers and (
+            metadata.get("editorial_format") is not None
+            or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(metadata.get("date", "")))
+            or str(metadata.get("date", "")) >= "2026-09-14"
+            or not metadata.get("article_records")
+            or not metadata.get("article_reviews")
+        ):
+            add_error(findings, path, "preserved source markers require a partial historical review")
+        if preserved_markers and (
+            source_ids != sorted(set(source_ids)) or any(value <= 0 for value in source_ids)
+        ):
+            add_error(findings, path, "preserved source IDs must be unique, positive and ordered")
+        if not preserved_markers and source_ids != expected_ids:
             add_error(findings, path, "source IDs must be consecutive from S1")
         body_without_sources = body[: body.find("# Source List")]
         used_ids = {int(value) for value in SOURCE_MARKER_RE.findall(body_without_sources)}

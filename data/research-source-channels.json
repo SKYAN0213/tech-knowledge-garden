@@ -259,13 +259,33 @@
       "name": "MIT News Robotics",
       "kind": "research",
       "language": "en",
-      "sectors": ["로봇·제조", "AI"],
-      "url": "https://news.mit.edu/topic/robotics",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "method": "rss",
+      "url": "https://news.mit.edu/topic/mitrobotics-rss.xml",
       "route_check": {
-        "date": "2026-09-14",
-        "method": "gpt-web",
-        "status": "read",
-        "scope": "Entry page only; review individual dated originals before publication."
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "September 22–29 had no feed item and an older boundary; September 29 observation captured one dated full article. Stored source evidence passed verification. Editorial review pending."
+      }
+    },
+    {
+      "id": "mit-ai-research",
+      "name": "MIT News Artificial Intelligence",
+      "kind": "research",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["AI"],
+      "method": "rss",
+      "url": "https://news.mit.edu/topic/mitartificial-intelligence2-rss.xml",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "September 22–29 captured six dated full articles and an older boundary; September 29 observation captured two more. Stored source evidence passed verification. Topic tags are discovery hints, not final article classification."
       }
     },
     {
@@ -382,6 +402,105 @@
         "method": "gpt-web",
         "status": "fetch-failed",
         "scope": "Entry page only; review individual dated originals before publication."
+      }
+    },
+    {
+      "id": "github-changelog",
+      "name": "GitHub Changelog",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["소프트웨어·클라우드"],
+      "url": "https://github.blog/changelog/",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "September archive and August/September boundary windows completed with stored detail bytes and dates; editorial review pending."
+      }
+    },
+    {
+      "id": "google-cloud-threat-intelligence",
+      "name": "Google Cloud Threat Intelligence",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["사이버보안"],
+      "method": "rss",
+      "url": "https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official RSS feed and two full articles completed a September 22–29 window; a later empty window also had a stored older boundary. Editorial review is pending."
+      }
+    },
+    {
+      "id": "nvidia-press-releases",
+      "name": "NVIDIA Newsroom Press Releases",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기업·운영",
+      "sectors": ["AI"],
+      "method": "rss",
+      "url": "https://nvidianews.nvidia.com/cats/press_release.xml",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official press RSS and two dated full releases completed September 22–29; a separate empty September 15–22 window had an older feed boundary. Both runs passed source-policy fetching and stored-source verification. Editorial review is pending."
+      }
+    },
+    {
+      "id": "fda-press-announcements",
+      "name": "FDA Press Announcements",
+      "kind": "regulator",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["바이오·의료기술"],
+      "url": "https://www.fda.gov/news-events/newsroom/press-announcements",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official September 22–29 press list and three dated full articles completed a window; the later observed empty window also has an older listing boundary. Editorial review is pending."
+      }
+    },
+    {
+      "id": "nasa-technology-rss",
+      "name": "NASA Technology RSS",
+      "kind": "research",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["우주·기초과학"],
+      "method": "rss",
+      "url": "https://www.nasa.gov/technology/feed/",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "Official Technology RSS completed a September 22–29 window with four dated full articles and an older feed boundary; a later empty window also completed. Editorial review is pending."
+      }
+    },
+    {
+      "id": "frontiers-robotics-papers",
+      "name": "Frontiers in Robotics and AI Articles",
+      "kind": "research",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.frontiersin.org/journals/robotics-and-ai/articles",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "Official journal index completed September 22–29 and observed September 29 windows. Published cards and dated full HTML matched; accepted cards were excluded. Paper claims and formula/table fidelity remain editorial review items."
       }
     }
   ]

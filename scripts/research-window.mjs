@@ -20,19 +20,24 @@ export function readBacklog(file = BACKLOG_PATH) {
 }
 
 // Discovery overlaps prior runs. Seen URLs and downloaded pages are not publication evidence.
-export function researchWindow(cutoff, now, backlog, issues) {
+export function researchWindow(cutoff, now, backlog, issues, { includeUnverified = false } = {}) {
   const end = Date.parse(now),
     start = Date.parse(cutoff)
   if (!Number.isFinite(end) || !Number.isFinite(start) || start > end)
     throw Error("Invalid research window")
-  const published = new Map(),
+  const publishedByUrl = new Map(),
     publishedIds = new Map()
   for (const i of issues)
     for (const a of i.items) {
       if (a.review?.review_status === "excluded") continue
+      if (!includeUnverified && a.review?.review_status !== "verified") continue
       const entry = { event_id: a.id, edition: i.key, published_at: a.review?.published_at }
       if (!publishedIds.has(a.id)) publishedIds.set(a.id, entry)
-      for (const u of a.urls) if (!published.has(canonical(u))) published.set(canonical(u), entry)
+      for (const u of a.urls) {
+        const url = canonical(u)
+        if (!publishedByUrl.has(url)) publishedByUrl.set(url, new Map())
+        if (!publishedByUrl.get(url).has(a.id)) publishedByUrl.get(url).set(a.id, entry)
+      }
     }
   const keys = new Set()
   const candidates = (backlog?.candidates || []).map((c) => {
@@ -53,26 +58,42 @@ export function researchWindow(cutoff, now, backlog, issues) {
       throw Error("Candidate review metadata required: " + c.key)
     if (["deferred", "rejected"].includes(c.review_status) && !c.reason?.trim())
       throw Error("Candidate disposition needs a private reason: " + c.key)
-    const matches = [
-      publishedIds.get(c.event_id),
-      ...c.source_urls.map((u) => published.get(canonical(u))),
-    ].filter(Boolean)
-    if (new Set(matches.map((m) => m.event_id)).size > 1)
+    const publication = c.event_id ? publishedIds.get(c.event_id) || null : null
+    const urlMatches = c.source_urls.map((u) => publishedByUrl.get(canonical(u)))
+    if (
+      publication &&
+      urlMatches.some((matches) => matches?.size && !matches.has(publication.event_id))
+    )
       throw Error("Candidate combines different published events: " + c.key)
-    const publication = matches[0] || null
+    const possible_publications =
+      publication || c.review_status === "rejected"
+        ? []
+        : [
+            ...new Map(
+              urlMatches
+                .flatMap((matches) => [...(matches?.values() || [])])
+                .map((entry) => [entry.event_id, entry]),
+            ).values(),
+          ]
     return {
       ...c,
       publication,
-      next_route: publication
-        ? "already-published"
-        : c.review_status === "rejected"
-          ? "closed"
-          : !c.source_published_at
-            ? "verify-original-date"
-            : c.source_published_at.slice(0, 10) <
-                new Date(start + 9 * 3600000).toISOString().slice(0, 10)
-              ? "historical-review"
-              : "review-publication-time",
+      possible_publications,
+      next_route:
+        c.source_revision_alert && publication
+          ? "review-source-revision"
+          : publication
+            ? "already-published"
+            : c.review_status === "rejected"
+              ? "closed"
+              : possible_publications.length
+                ? "review-existing-identity"
+                : !c.source_published_at
+                  ? "verify-original-date"
+                  : c.source_published_at.slice(0, 10) <
+                      new Date(start + 9 * 3600000).toISOString().slice(0, 10)
+                    ? "historical-review"
+                    : "review-publication-time",
     }
   })
   return {
@@ -81,12 +102,12 @@ export function researchWindow(cutoff, now, backlog, issues) {
     discovery_end: new Date(end).toISOString(),
     backlog_state: backlog ? "loaded" : "missing",
     pending: candidates
-      .filter((c) => !c.publication && c.review_status !== "rejected")
+      .filter((c) => !["already-published", "closed"].includes(c.next_route))
       .sort(
         (a, b) =>
           Number(b.priority === "high") - Number(a.priority === "high") ||
           a.discovered_at.localeCompare(b.discovered_at),
       ),
-    resolved: candidates.filter((c) => c.publication || c.review_status === "rejected"),
+    resolved: candidates.filter((c) => ["already-published", "closed"].includes(c.next_route)),
   }
 }

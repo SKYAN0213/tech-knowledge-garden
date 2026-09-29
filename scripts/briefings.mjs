@@ -3,18 +3,22 @@ import {
   topArticles,
   EDITORIAL_FORMAT,
   validateIdentities,
+  hasDeepAnalysis,
 } from "./editorial.mjs"
 import { sectorMarkdown, sectorGroups } from "./sectors.mjs"
 import { classificationMarkdown, classificationText } from "./themes.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import { slug as headingSlug } from "github-slugger"
-import { loadTrends, trendSnapshot, stanceLabel } from "./trends.mjs"
+import { loadTrends, trendSnapshot, currentTrendSnapshot, stanceLabel } from "./trends.mjs"
 import { attachRecentEvents } from "./recent-events.mjs"
-import { explanationHTML, explanationMarkdown } from "./explanations.mjs"
+import { explanationHTML, explanationMarkdown, markdownProse } from "./explanations.mjs"
+import { articleDateLabel } from "./article-review.mjs"
 
 export const GITHUB = "https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/"
 export const briefPath = (key) => key.replace(/^Editions\//, "Briefings/")
 export const topicPath = (id) => "Briefings/Topics/" + id
+export const topicAsOf = (topic, latestEditionDate) =>
+  [topic.reviewed, latestEditionDate].sort().at(-1)
 export const digestPath = (key) => key.replace(/^Editions\//, "digest/") + ".md"
 export const githubIssue = (key) => GITHUB + digestPath(key)
 export const githubTopic = (id) => GITHUB + "digest/topics/" + id + ".md"
@@ -59,8 +63,8 @@ export const publisher = (url) => {
 }
 const wiki = (p, s) => `[[${p}|${s}]]`
 const mdLink = (s, url) => `[${s.replace(/[\[\]]/g, "")}](${url})`
-const sourceLinks = (s) =>
-  s.article.urls.map((u, i) => mdLink(i ? `원문 ${i + 1}` : publisher(u) + " 원문", u)).join(" · ")
+export const sourceLinks = (s) =>
+  s.article.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")
 export const reviewText = (r) =>
   !r
     ? "트렌드 기록 미정리"
@@ -89,7 +93,13 @@ export function briefingLibrary(vault, all, issueArticles, options) {
   attachRecentEvents(issues)
   const trends = loadTrends(vault, issues, options)
   for (const i of issues) i.snapshot = trendSnapshot(trends, i.key)
-  return { issues, trends, latest: issues.at(-1), byKey: new Map(issues.map((i) => [i.key, i])) }
+  return {
+    issues,
+    trends,
+    current: currentTrendSnapshot(trends),
+    latest: issues.at(-1),
+    byKey: new Map(issues.map((i) => [i.key, i])),
+  }
 }
 
 export function observationMarkdown(s) {
@@ -101,6 +111,31 @@ export function issueTrendsMarkdown(i) {
   return `## 오늘의 변화\n\n${reviewText(snap.review)}\n\n${snap.today.length ? snap.today.map((s) => `${observationMarkdown(s)}\n- 누적 기록: ${wiki(topicPath(s.topic_id), snap.topics.find((t) => t.id === s.topic_id).title)}`).join("\n\n") : "새로 기록할 트렌드 변화 없음."}`
 }
 export function topicMarkdown(t, date) {
+  if (t.reader_format === "source-events/v1") {
+    const history = [
+      ...new Map(
+        t.history
+          .filter((s) => s.article.review?.review_status === "verified")
+          .map((s) => [s.event_id, s]),
+      ).values(),
+    ].sort(
+      (a, b) =>
+        String(b.article.review.published_at).localeCompare(
+          String(a.article.review.published_at),
+        ) || b.order - a.order,
+    )
+    return `${t.reviewed <= date ? t.thesis : t.latest.meaning}\n\n${wiki("Briefings/index", "← 브리핑")} · ${mdLink("GitHub 정리", githubTopic(t.id))}${
+      history.length
+        ? "\n\n## 사건 이력\n\n" +
+          history
+            .map(
+              (s) =>
+                `<span id="${s.id}"></span>\n\n### ${s.article.review.published_at} · ${wiki("News/" + s.event_id, s.article.title)}\n\n${markdownProse(s.article.summary)}\n\n${sourceLinks(s)} · ${wiki(briefPath(s.issue), "당일 브리핑")}`,
+            )
+            .join("\n\n")
+        : ""
+    }${t.knowledge_notes.length ? "\n\n## 관련 개념\n\n" + t.knowledge_notes.map((p) => "- " + wiki(p, p.split("/").pop())).join("\n") : ""}`
+  }
   const provenance = [
     ...new Set(t.history.filter((s) => s.review_basis === "saved-coverage").map((s) => s.reviewed)),
   ]
@@ -145,12 +180,12 @@ export function githubMarkdown(markdown, base) {
     .replace(/<span id="([^"]+)"><\/span>/g, '<a id="$1"></a>')
 }
 export function digestMarkdown(i, base) {
-  let body = `# ${i.date} 아침 브리핑\n\n${i.lead}\n\n${mdLink("웹 브리핑", siteURL(base, briefPath(i.key)))} · ${mdLink("브리핑 모음", GITHUB + "digest/README.md")} · ${mdLink("RSS", base + "/briefing.xml")}\n\n`
+  let body = `# ${i.date} 아침 브리핑\n\n${markdownProse(i.lead)}\n\n${mdLink("웹 브리핑", siteURL(base, briefPath(i.key)))} · ${mdLink("브리핑 모음", GITHUB + "digest/README.md")} · ${mdLink("RSS", base + "/briefing.xml")}\n\n`
   body += editorialMarkdown(
     i,
     "top",
     (a) =>
-      `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.review?.published_at ? `발표 ${a.review.published_at}\n\n` : ""}${a.summary}`,
+      `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.review?.published_at ? `${articleDateLabel(a.review)} ${a.review.published_at}\n\n` : ""}${markdownProse(a.summary)}`,
   )
   if (i.snapshot.review && !i.original?.meta?.editorial_format)
     body += issueTrendsMarkdown(i) + "\n\n"
@@ -159,24 +194,24 @@ export function digestMarkdown(i, base) {
       i.original,
       i.items,
       (a) =>
-        `#### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.review?.published_at ? `발표 ${a.review.published_at}\n\n` : ""}${classificationMarkdown(a)}${a.summary}\n\n${explanationMarkdown(a)}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`,
+        `#### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.review?.published_at ? `${articleDateLabel(a.review)} ${a.review.published_at}\n\n` : ""}${classificationMarkdown(a)}${markdownProse(a.summary)}\n\n${explanationMarkdown(a)}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`,
     ) ??
     (i.items.length
-      ? `## 헤드라인과 원문\n\n${i.items.map((a) => `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.summary}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`).join("\n\n")}\n\n`
+      ? `## 헤드라인과 원문\n\n${i.items.map((a) => `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.review?.published_at ? `${articleDateLabel(a.review)} ${a.review.published_at}\n\n` : ""}${classificationMarkdown(a)}${markdownProse(a.summary)}\n\n${explanationMarkdown(a)}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`).join("\n\n")}\n\n`
       : mdLink("당일 브리핑 전문", siteURL(base, briefPath(i.key))) + "\n\n")
   if (sectorGroups(i.original, i.items)) body += "\n\n"
   if (i.recentItems?.length)
     body += `## 지난 7일 주요 발표\n\n${i.recentItems
       .map(
         (a) =>
-          `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n발표 ${a.review.published_at}\n\n${classificationMarkdown(a)}${a.summary}\n\n${explanationMarkdown(a)}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`,
+          `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${articleDateLabel(a.review)} ${a.review.published_at}\n\n${classificationMarkdown(a)}${markdownProse(a.summary)}\n\n${explanationMarkdown(a)}\n\n${a.urls.map((u) => mdLink(publisher(u) + " 원문", u)).join(" · ")}`,
       )
       .join("\n\n")}\n\n`
   body += editorialMarkdown(
     i,
     "deep",
     (a) =>
-      `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${a.editorial.analysis_summary}\n\n${a.editorial.topic_ids.map((id) => mdLink("누적 기록", siteURL(base, topicPath(id)))).join(" · ")}`,
+      `### ${mdLink(a.title, siteURL(base, "News/" + a.id))}\n\n${markdownProse(a.editorial.analysis_summary)}\n\n${a.editorial.topic_ids.map((id) => mdLink("누적 기록", siteURL(base, topicPath(id)))).join(" · ")}`,
   )
   if (i.original?.meta?.editorial_format && !i.original?.meta?.article_reviews)
     body += issueTrendsMarkdown(i) + "\n\n"
@@ -199,7 +234,7 @@ export function feedDescription(i, base) {
     html += `<h2>주요 소식</h2>${topArticles(i)
       .map(
         (a) =>
-          `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3>${a.review?.published_at ? `<p>발표 ${esc(a.review.published_at)}</p>` : ""}<p>${esc(a.summary)}</p>`,
+          `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3>${a.review?.published_at ? `<p>${articleDateLabel(a.review)} ${esc(a.review.published_at)}</p>` : ""}<p>${esc(a.summary)}</p>`,
       )
       .join("")}`
   if (snap.review && !i.original?.meta?.editorial_format)
@@ -210,19 +245,19 @@ export function feedDescription(i, base) {
       .filter((g) => !i.original?.meta?.article_reviews || g.items.length)
       .map(
         (g) =>
-          `<h3>${esc(g.name)} · ${g.items.length}건</h3>${g.items.length ? g.items.map((a) => `<h4>${link(siteURL(base, "News/" + a.id), a.title)}</h4>${a.review?.published_at ? `<p>발표 ${esc(a.review.published_at)}</p>` : ""}${a.classification ? `<p>${esc(classificationText(a))}</p>` : ""}<p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>수록 없음</p>"}`,
+          `<h3>${esc(g.name)} · ${g.items.length}건</h3>${g.items.length ? g.items.map((a) => `<h4>${link(siteURL(base, "News/" + a.id), a.title)}</h4>${a.review?.published_at ? `<p>${articleDateLabel(a.review)} ${esc(a.review.published_at)}</p>` : ""}${a.classification ? `<p>${esc(classificationText(a))}</p>` : ""}<p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("") : "<p>수록 없음</p>"}`,
       )
       .join("")}`
   } else if (i.items.length)
-    html += `<h2>헤드라인</h2>${i.items.map((a) => `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("")}`
+    html += `<h2>헤드라인</h2>${i.items.map((a) => `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3>${a.review?.published_at ? `<p>${articleDateLabel(a.review)} ${esc(a.review.published_at)}</p>` : ""}${a.classification ? `<p>${esc(classificationText(a))}</p>` : ""}<p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`).join("")}`
   if (i.recentItems?.length)
     html += `<h2>지난 7일 주요 발표</h2>${i.recentItems
       .map(
         (a) =>
-          `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>발표 ${esc(a.review.published_at)}</p><p>${esc(classificationText(a))}</p><p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`,
+          `<h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>${articleDateLabel(a.review)} ${esc(a.review.published_at)}</p><p>${esc(classificationText(a))}</p><p>${esc(a.summary)}</p>${explanationHTML(a)}<p>${a.urls.map((u) => link(u, publisher(u) + " 원문")).join(" · ")}</p>`,
       )
       .join("")}`
-  for (const a of i.items.filter((a) => a.editorial && a.editorial.kind !== "사건 뉴스"))
+  for (const a of i.items.filter(hasDeepAnalysis))
     html += `<h2>오늘의 심층 분석</h2><h3>${link(siteURL(base, "News/" + a.id), a.title)}</h3><p>${esc(a.editorial.analysis_summary)}</p><p>${a.editorial.topic_ids.map((id) => link(siteURL(base, topicPath(id)), "누적 기록")).join(" · ")}</p>`
   return html
 }

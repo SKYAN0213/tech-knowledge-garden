@@ -111,7 +111,7 @@ export function buildGraph(vault = "vault") {
   const articles = walk(path.join(vault, "News"))
     .filter((f) => f.endsWith(".md"))
     .map((f) => ({ file: f, ...parseNote(fs.readFileSync(f, "utf8")) }))
-    .filter((n) => n.meta.type === "news")
+    .filter((n) => n.meta.type === "news" && n.meta.review_status !== "excluded")
     .map((n) => {
       const m = n.meta,
         text = articleSearchText(n.body)
@@ -124,10 +124,15 @@ export function buildGraph(vault = "vault") {
         date: m.published_at || m.date,
         description: m.description || "",
         slug: slug(path.relative(vault, n.file).replace(/\.md$/, "")),
-        conceptIds: (m.concepts || []).map((p) => {
-          if (!pathToId.has(p)) throw Error("Unresolved article concept: " + p)
-          return pathToId.get(p)
-        }),
+        conceptIds: [
+          ...new Set([
+            ...(m.review_status === "verified" ? m.concept_ids || [] : []),
+            ...(m.concepts || []).map((p) => {
+              if (!pathToId.has(p)) throw Error("Unresolved article concept: " + p)
+              return pathToId.get(p)
+            }),
+          ]),
+        ],
         text: m.title + "\n" + (m.description || "") + "\n" + text,
       }
     })

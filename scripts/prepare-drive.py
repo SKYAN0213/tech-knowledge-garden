@@ -96,16 +96,30 @@ def archive(destination, base, selected=None):
     with zipfile.ZipFile(destination) as z:
         assert z.testzip() is None
 
+def prepare_local_ai_sources(local_ai, stage, run_id=None):
+    """Stage verified source metadata and preserved originals without uploading."""
+    run_id = run_id or 'drive-source-register-' + datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')
+    result = subprocess.run(['node', str(ROOT / 'scripts/research.mjs'), 'source-register', '--root', str(local_ai), '--run', run_id], cwd=ROOT, check=True, capture_output=True, text=True)
+    receipt = json.loads(result.stdout)
+    source_register = json.loads(Path(receipt['path']).read_text())
+    write_json(stage / 'Sources/LocalAI/source-register.json', source_register)
+    archive(stage / 'Sources/LocalAI/source-versions.zip', local_ai / 'documents')
+    return receipt
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--collect', action='store_true')
     args = parser.parse_args()
     STAGE.mkdir(parents=True, exist_ok=True)
+    local_ai = ROOT / '.local/research/local-ai'
+    local_runtime = local_ai / 'runtime'
     for p in files(ROOT / 'vault'):
         target = STAGE / p.relative_to(ROOT / 'vault')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, target)
     for p in files(ROOT / '.local/research'):
+        if local_runtime in p.parents:
+            continue
         target = STAGE / 'Research' / p.relative_to(ROOT / '.local/research')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(p, target)
@@ -115,10 +129,16 @@ def main():
         archive(STAGE / 'Archive/Imports/legacy-icloud-tech-knowledge.zip', legacy[0])
     elif len(legacy) > 1:
         raise RuntimeError('Multiple legacy vaults; disambiguation required')
-    historical = [p for p in files(ROOT / '.local') if WORK not in p.parents]
+    # Runtime environments/browser binaries are reproducible dependencies, not research evidence.
+    historical = [p for p in files(ROOT / '.local') if WORK not in p.parents and local_runtime not in p.parents]
     archive(STAGE / 'Archive/Imports/local-research-and-migration-evidence.zip', ROOT / '.local', historical)
     archive(STAGE / 'Exports/github-digest.zip', ROOT / 'digest')
     archive(STAGE / 'Operations/project-documentation.zip', ROOT, files(ROOT / 'docs') + [ROOT / 'AGENTS.md', ROOT / 'README.md'])
+    local_ai_receipt = None
+    if (local_ai / 'documents').exists():
+        local_ai_receipt = prepare_local_ai_sources(local_ai, STAGE)
+    if (local_ai / 'runs').exists():
+        archive(STAGE / 'Research/LocalAI/research-runs.zip', local_ai / 'runs')
     catalog = json.loads((ROOT / 'data/catalog.json').read_text())
     notes = [(p.relative_to(STAGE).as_posix(), p.read_text(errors='replace')) for p in files(STAGE) if p.suffix == '.md']
     if len(legacy) == 1:
@@ -186,6 +206,8 @@ source-register의 captured_unreviewed는 HTTP 응답 저장만 확인한 상태
     subprocess.run([sys.executable, str(ROOT / 'scripts/export-website-data.py')], check=True)
     inventory = []
     for p in files(STAGE):
+        if (STAGE / 'Research/local-ai/runtime') in p.parents:
+            continue
         if p.name in ('upload-manifest.json', 'migration-receipt.json'):
             continue
         data = p.read_bytes()
@@ -193,7 +215,7 @@ source-register의 captured_unreviewed는 HTTP 응답 저장만 확인한 상태
     manifest = {'schema': 'tech-drive-handoff/v1', 'generated_at': now(), 'destination_folder_id': DEST, 'files': inventory}
     write_json(WORK / 'upload-manifest.json', manifest)
     write_json(STAGE / 'Operations/upload-manifest.json', manifest)
-    print(json.dumps({'files': len(inventory), 'sources': len(rows), 'captured': sum(r['status'] == 'captured_unreviewed' for r in rows), 'manifest': str(WORK / 'upload-manifest.json')}, ensure_ascii=False))
+    print(json.dumps({'files': len(inventory), 'sources': len(rows), 'captured': sum(r['status'] == 'captured_unreviewed' for r in rows), 'local_ai_sources': local_ai_receipt, 'manifest': str(WORK / 'upload-manifest.json')}, ensure_ascii=False))
 
 if __name__ == '__main__':
     main()

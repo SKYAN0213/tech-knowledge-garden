@@ -1,0 +1,865 @@
+{
+  "article_profiles": [
+    {
+      "id": "google-research-timesfm3-20260831",
+      "url_pattern": "^https://www\\.research\\.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//h1|.//div[contains(@class, 'rich-text')]//p|.//div[contains(@class, 'rich-text')]//h2|.//div[contains(@class, 'rich-text')]//h3|.//div[contains(@class, 'rich-text')]//li|.//div[contains(@class, 'basic-hero--blog-detail__description')]/p",
+        "publication_date_xpath": "//main//div[contains(@class, 'basic-hero--blog-detail__description')]/p[1]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "google-search-controls-20260831-update",
+      "url_pattern": "^https://blog\\.google/products-and-platforms/products/search/new-controls-website-owners/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/article//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//article//h1|.//article/section[2]//p|.//article/section[2]//h2|.//article/section[2]//h3|.//article/section[2]//li|.//uni-footnotes//p",
+        "modification_date_xpath": "//main/article//p/i[starts-with(normalize-space(.), 'Updated:')]",
+        "modification_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "modification_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "siemens-vacuum-interrupter-de-20260906",
+      "url_pattern": "^https://www\\.siemens-energy\\.com/de/de/home/stories/breaking-boundaries\\.html$",
+      "options": {
+        "language": "de",
+        "title_xpath": "//h1",
+        "publication_date_xpath": "//div[contains(@class, 'aem-story-header__wrapper--inside-grid')]//div[@class='aem-information-details-template__first-item']",
+        "publication_date_pattern": "[0-9]{1,2}\\. September [0-9]{4}",
+        "publication_date_format": "%d. %B %Y"
+      }
+    },
+    {
+      "id": "cxmt-g5-zh-20260920",
+      "url_pattern": "^https://www\\.cxmt\\.com/news/info_97\\.html$",
+      "options": {
+        "language": "zh-CN",
+        "title_xpath": "//main/h2[@class='title']",
+        "content_xpath": "//main/div[@class='cont']/div[@class='txt']",
+        "publication_date_xpath": "//main/p[@class='title-day']",
+        "publication_date_pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "esa-cesar-cebreros-first-light-20260921",
+      "url_pattern": "^https://cesar\\.esa\\.int/index\\.php\\?Id=368&Section=News$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[@class='Content']/div/table/tr/td[2]/span",
+        "content_xpath": "//div[@class='Content']/div",
+        "publication_date_xpath": "//div[@class='Content']/div/table/tr/td[1]/table/tr/td",
+        "publication_date_pattern": "[0-9]{1,2} [A-Z][a-z]+ [0-9]{4}",
+        "publication_date_format": "%d %B %Y"
+      }
+    },
+    {
+      "id": "etri-embodied-ai-20260920-viewer",
+      "url_pattern": "^https://www\\.etri\\.re\\.kr/preview/1789949416957/index\\.html$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//p[normalize-space(.)='ETRI, 피지컬 AI 국제표준화 주도한다']",
+        "content_xpath": "/html/body/div[2]",
+        "publication_date_xpath": "//span[starts-with(normalize-space(.), '배포일자 :')]",
+        "publication_date_pattern": "[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}",
+        "publication_date_format": "%Y.%m.%d"
+      }
+    },
+    {
+      "id": "envisagenics-about-person-roles",
+      "url_pattern": "^https://envisagenics\\.com/about/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//p|.//h1|.//h2|.//h3|.//h4|.//li|.//div[h4 and span]"
+      }
+    },
+    {
+      "id": "fanuc-en-release",
+      "url_pattern": "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/20\\d\\d/notice\\d{8}",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//*[@id='main']/div[2]/p[1]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "fanuc-ja-release",
+      "url_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/profile/pr/newsrelease/20\\d\\d/news\\d{8}",
+      "options": {
+        "language": "ja",
+        "publication_date_xpath": "//*[@id='main']/div[2]/p[1]",
+        "publication_date_pattern": "[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日",
+        "publication_date_format": "%Y年%m月%d日"
+      }
+    },
+    {
+      "id": "fanuc-ja-quarterly-financial-202606",
+      "url_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce/pdf/2026/financialresult202606\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^2027年3月期 第1四半期決算短信.*",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日",
+        "publication_date_format": "%Y年%m月%d日"
+      }
+    },
+    {
+      "id": "fanuc-ja-ir-buyback-resolution-20260424",
+      "url_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce_other/pdf/2026/notice20260424-01\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^自己株式取得に係る事項の決定に関するお知らせ",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9]{4} 年[0-9]{1,2} 月[0-9]{1,2} 日",
+        "publication_date_format": "%Y 年%m 月%d 日"
+      }
+    },
+    {
+      "id": "fanuc-ja-ir-disclosure-buyback-202609",
+      "url_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce_other/pdf/2026/notice202609(?:03|18)\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^自己株式の取得状況(?:および取得終了)?に関するお知らせ",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9]{4} 年[0-9]{1,2} 月[0-9]{1,2} 日",
+        "publication_date_format": "%Y 年%m 月%d 日"
+      }
+    },
+    {
+      "id": "kuka-en-news-detail",
+      "url_pattern": "^https://www\\.kuka\\.com/en-[a-z]{2}/company/press/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//section[contains(@class, 'mod-page-intro')]//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//section[contains(@class,'mod-page-intro')]//h1|.//section[contains(@class,'mod-page-intro')]//p[contains(concat(' ',normalize-space(@class),' '),' intro ')]|.//article[contains(@class,'mod-text')]//h2|.//article[contains(@class,'mod-text')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//section[contains(@class,'mod-text-image')]//h2|.//section[contains(@class,'mod-text-image')]//div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' mod-text ')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(@class,'mod-quote')]//blockquote/p",
+        "publication_date_xpath": "//main//section[contains(@class, 'mod-page-intro')]//p[contains(@class, 'mod-page-intro__date')]",
+        "publication_date_pattern": "^[0-9]{1,2} [A-Z][a-z]+ [0-9]{4}$",
+        "publication_date_format": "%d %B %Y"
+      }
+    },
+    {
+      "id": "kuka-de-news-detail",
+      "url_pattern": "^https://www\\.kuka\\.com/de-de/unternehmen/presse/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
+      "options": {
+        "language": "de",
+        "title_xpath": "//main//section[contains(@class, 'mod-page-intro')]//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//section[contains(@class,'mod-page-intro')]//h1|.//section[contains(@class,'mod-page-intro')]//p[contains(concat(' ',normalize-space(@class),' '),' intro ')]|.//article[contains(@class,'mod-text')]//h2|.//article[contains(@class,'mod-text')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//section[contains(@class,'mod-text-image')]//h2|.//section[contains(@class,'mod-text-image')]//div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' mod-text ')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(@class,'mod-quote')]//blockquote/p",
+        "publication_date_xpath": "//main//section[contains(@class, 'mod-page-intro')]//p[contains(@class, 'mod-page-intro__date')]",
+        "publication_date_pattern": "^[0-9]{1,2}\\. [A-ZÄÖÜ][a-zäöü]+ [0-9]{4}$",
+        "publication_date_format": "%d. %B %Y"
+      }
+    },
+    {
+      "id": "hd-robotics-news-detail",
+      "url_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/news/[0-9]+/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//section[contains(@class, 'board-wrap')]/div[contains(@class, 'subTitle')]/h3",
+        "content_xpath": "//section[contains(@class, 'board-wrap')]/div[contains(@class, 'content') and contains(@class, 'line')]/div[contains(@class, 'cont-detail')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//table|.//figcaption",
+        "publication_date_xpath": "//section[contains(@class, 'board-wrap')]/div[contains(@class, 'subTitle')]/span[@class='date']",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d %H:%M:%S"
+      }
+    },
+    {
+      "id": "abb-global-en-news-detail",
+      "url_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' pressrelease ')]//div[contains(concat(' ',normalize-space(@class),' '),' aot-visually-hidden ')]/h1",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' pressrelease ')]//div[contains(concat(' ',normalize-space(@class),' '),' aot-visually-hidden ')]",
+        "publication_date_xpath": "//script[contains(text(), '\"scheduledPublishDate\"')]",
+        "publication_date_pattern": "(?<=\"scheduledPublishDate\" : \")[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "doosan-en-news-slug",
+      "url_pattern": "^https://www\\.doosanrobotics\\.com/en/about/promotion/news/[a-z0-9][a-z0-9-]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-head ')]/h2",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-cont ')]",
+        "content_block_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' key-list ')]/div|.//div[contains(concat(' ',normalize-space(@class),' '),' content ')]/div",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-head ')]/p",
+        "publication_date_pattern": "^[0-9]{4}\\. [0-9]{2}\\. [0-9]{2}$",
+        "publication_date_format": "%Y. %m. %d"
+      }
+    },
+    {
+      "id": "doosan-en-news-view",
+      "url_pattern": "^https://www\\.doosanrobotics\\.com/en/about/promotion/news/view/[0-9]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-head ')]/h2",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-cont ')]",
+        "content_block_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' key-list ')]/div|.//div[contains(concat(' ',normalize-space(@class),' '),' content ')]/p",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-head ')]/p",
+        "publication_date_pattern": "^[0-9]{4}\\. [0-9]{2}\\. [0-9]{2}$",
+        "publication_date_format": "%Y. %m. %d"
+      }
+    },
+    {
+      "id": "universal-robots-gen7-release",
+      "url_pattern": "^https://www\\.universal-robots\\.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//p[starts-with(normalize-space(.), 'Chicago, IL, USA,')]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "envisagenics-boehringer-20260922",
+      "url_pattern": "^https://envisagenics\\.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/article/header//h1",
+        "content_xpath": "//main/article",
+        "publication_date_xpath": "//main/article/header/div/span",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "nature-ramanomics-20260921",
+      "url_pattern": "^https://www\\.nature\\.com/articles/s43587-026-01219-7(?:\\?.*)?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@data-test='article-title']",
+        "content_xpath": "//main/article",
+        "publication_date_xpath": "//article//header//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "hyundai-data-flywheel-20260913",
+      "url_pattern": "^https://org\\.hyundai\\.com/worldwide/en/newsroom/detail/0000001273/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@class='ir_hidden']",
+        "content_xpath": "//div[@class='news-detail-view']",
+        "publication_date_xpath": "//div[@class='news-detail-view']//p[starts-with(normalize-space(.), 'SEOUL,')]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "hyundai-nvidia-partnership-20260317",
+      "url_pattern": "^https://www\\.hyundaimotorgroup\\.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//*[@id='title']",
+        "content_xpath": "//*[@id='contentsForm']/div[1]",
+        "publication_date_xpath": "//*[@id='contents']//li[3]",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d"
+      }
+    },
+    {
+      "id": "arxiv-ppe-v1-20260826",
+      "url_pattern": "^https://arxiv\\.org/abs/2608\\.26088v1/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' dateline ')]",
+        "publication_date_pattern": "[0-9]{1,2} [A-Z][a-z]{2} [0-9]{4}",
+        "publication_date_format": "%d %b %Y"
+      }
+    },
+    {
+      "id": "nature-materials-vcd-20260826",
+      "url_pattern": "^https://www\\.nature\\.com/articles/s43588-026-01037-2(?:\\?.*)?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@data-test='article-title']",
+        "content_xpath": "//main/article",
+        "publication_date_xpath": "//article//header//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "deepmind-double-blind-evaluations-20260827",
+      "url_pattern": "^https://deepmind\\.google/blog/piloting-the-worlds-first-double-blind-ai-evaluations/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main[@id='page-content']//h1",
+        "content_xpath": "//main[@id='page-content']",
+        "content_block_xpath": ".//h1 | .//div[contains(concat(' ',normalize-space(@class),' '),' rich-text ')]//*[self::p or self::h2 or self::h3 or self::li]",
+        "publication_date_xpath": "//main[@id='page-content']//span[contains(concat(' ',normalize-space(@class),' '),' cover__text--date ')]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "deepmind-double-blind-report-20260827",
+      "url_pattern": "^https://storage\\.googleapis\\.com/deepmind-media/DeepMind\\.com/Blog/piloting-the-worlds-first-double-blind-ai-evaluations/double-blind-evaluations-technical-report\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^Double Blind Evals: Resolving the Dual Confidentiality Dilemma in AI Safety Auditing$"
+      }
+    },
+    {
+      "id": "openai-novices-rct-202608",
+      "url_pattern": "^https://cdn\\.openai\\.com/pdf/novices-and-llm-august-2026\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^Training novices to think, or giving them LLMs\\? Evidence from an RCT$"
+      }
+    },
+    {
+      "id": "anthropic-demystifying-agent-evals",
+      "url_pattern": "^https://www\\.anthropic\\.com/engineering/demystifying-evals-for-ai-agents/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/section//h1",
+        "content_xpath": "//main/div/article/div/div[contains(@class,'Body-module-')]",
+        "content_block_xpath": ".//p | .//h2 | .//h3 | .//h4 | .//li | .//table | .//pre"
+      }
+    },
+    {
+      "id": "bocconi-novices-rct-20260827",
+      "url_pattern": "^https://www\\.unibocconi\\.it/en/news/better-evaluations-chatgpt-critical-thinking-broadens-ideas/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/article[contains(concat(' ',normalize-space(@class),' '),' node--news ')]/article[contains(concat(' ',normalize-space(@class),' '),' bds-pl-news ')]//h1",
+        "content_xpath": "//main/article[contains(concat(' ',normalize-space(@class),' '),' node--news ')]//article[contains(concat(' ',normalize-space(@class),' '),' c-text ')]",
+        "content_block_xpath": ".//p | .//h2 | .//h3 | .//li",
+        "publication_date_xpath": "//main/article[contains(concat(' ',normalize-space(@class),' '),' node--news ')]/article[contains(concat(' ',normalize-space(@class),' '),' bds-pl-news ')]//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%SZ"
+      }
+    },
+    {
+      "id": "nemoclaw-github-v0-0-115-release",
+      "url_pattern": "^https://github\\.com/NVIDIA/NemoClaw/releases/tag/v0\\.0\\.115/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//main//relative-time[contains(concat(' ',normalize-space(@class),' '),' no-wrap ')][@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%SZ"
+      }
+    },
+    {
+      "id": "arxiv-ppe-html-v1",
+      "url_pattern": "^https://arxiv\\.org/html/2608\\.26088v1/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' ltx_document ')]//h1",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' ltx_document ')]",
+        "content_block_xpath": ".//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6 | .//p | .//table | .//li | .//figcaption | .//div[contains(concat(' ',normalize-space(@class),' '),' ltx_authors ')]"
+      }
+    },
+    {
+      "id": "aws-nvidia-two-million-gpus-20260826",
+      "url_pattern": "^https://press\\.aboutamazon\\.com/aws/2026/8/aws-and-nvidia-to-deliver-2-million-additional-gpus-and-next-generation-infrastructure-for-agentic-and-physical-ai/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' PressReleasePage-dates ')]/div[contains(concat(' ',normalize-space(@class),' '),' PressReleasePage-datePublished ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "metr-hf-investigation-20260826",
+      "url_pattern": "^https://metr\\.org/blog/2026-08-26-openai-hugging-face-incident-investigation/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' header-title ')]",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' header-date ')]/span[contains(concat(' ',normalize-space(@class),' '),' post-date ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "openai-admin-plugin-20260825",
+      "url_pattern": "^https://openai\\.com/index/introducing-admin-plugin/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article//h1",
+        "content_xpath": "//article/div[2]/div",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//figcaption",
+        "publication_date_xpath": "//article/div[1]/div[1]/div/div/div/div[1]/p",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "openai-jalapeno-first-results-20260825",
+      "url_pattern": "^https://openai\\.com/index/jalapeno-first-results/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article//h1",
+        "content_xpath": "//article/div[2]/div",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//figcaption",
+        "publication_date_xpath": "//article/div[1]/div[1]/div/div/div/div[1]/p",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "newspim-news-article",
+      "url_pattern": "^https://www\\.newspim\\.com/news/view/[0-9]+/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' bodynews ')]/div[1]/h1",
+        "content_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' bodynews ')]/section[contains(concat(' ', normalize-space(@class), ' '), ' contents ')]/div[@id='news-contents']",
+        "content_block_xpath": ".//p[not(contains(normalize-space(.), '@newspim.com'))]",
+        "publication_date_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' bodynews ')]/div[1]//time[@id='send-time' and @datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%S%z",
+        "publication_date_preserve_time": true
+      }
+    },
+    {
+      "id": "github-changelog-article",
+      "url_pattern": "^https://github\\.blog/changelog/[0-9]{4}-[0-9]{2}-[0-9]{2}-[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article//header//h1",
+        "content_xpath": "//article//div[contains(concat(' ', normalize-space(@class), ' '), ' PostContent-main ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li",
+        "publication_date_xpath": "//article//header//div[contains(concat(' ', normalize-space(@class), ' '), ' ChangelogHeader-single-meta ')]/time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "google-cloud-threat-intelligence-article",
+      "url_pattern": "^https://cloud\\.google\\.com/blog/topics/threat-intelligence/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article//h1",
+        "content_xpath": "//article",
+        "content_block_xpath": ".//section[contains(concat(' ', normalize-space(@class), ' '), ' Wy08Ac ')]//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote]",
+        "publication_date_xpath": "//script[@type='application/ld+json' and contains(., 'datePublished')]",
+        "publication_date_pattern": "(?<=\"datePublished\":\")[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "nvidia-newsroom-press-release-v1",
+      "url_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' article ')]/h1[contains(concat(' ', normalize-space(@class), ' '), ' article-title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' article ')]",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote][normalize-space(.)]",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' article-date ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "fda-press-announcement-article-v1",
+      "url_pattern": "^https://www\\.fda\\.gov/news-events/press-announcements/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[@id='main-content']//h1",
+        "content_xpath": "//article[@id='main-content']//div[@role='main'][hr]",
+        "content_block_xpath": "./p[not(preceding-sibling::hr)]|./h2[not(preceding-sibling::hr)]|./h3[not(preceding-sibling::hr)]|./ul[not(preceding-sibling::hr)]/li|./ol[not(preceding-sibling::hr)]/li|./table[not(preceding-sibling::hr)]",
+        "publication_date_xpath": "//article[@id='main-content']//dl[contains(concat(' ', normalize-space(@class), ' '), ' lcds-description-list--grid ')]//dd/time[@datetime]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "nasa-technology-article-v1",
+      "url_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?:[^/?#]+/)+[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main[@id='primary']/article//h1",
+        "content_xpath": "//main[@id='primary']/article//div[contains(concat(' ', normalize-space(@class), ' '), ' usa-article-content ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' entry-content ')]",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote]",
+        "publication_date_xpath": "//meta[@property='article:published_time']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "mit-news-article-v1",
+      "url_pattern": "^https://news\\.mit\\.edu/20\\d\\d/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main[@id='main']//h1",
+        "content_xpath": "//article[not(@class)]//div[contains(concat(' ', normalize-space(@class), ' '), ' news-article--content--body--inner ')]",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote][normalize-space(.)]",
+        "publication_date_xpath": "//article[not(@class)]//div[contains(concat(' ', normalize-space(@class), ' '), ' news-article--publication-date ')]//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "frontiers-frobt-paper-v1",
+      "url_pattern": "^https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/full$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[contains(concat(' ', normalize-space(@class), ' '), ' ArticleDetailsV4__main__title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' ArticleContent ')]",
+        "content_block_xpath": "./div[not(preceding-sibling::h2)]//*[self::h2 or self::h3 or self::h4 or self::p or self::table or self::figcaption][normalize-space(.)]",
+        "publication_date_xpath": "//meta[@name='citation_publication_date']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}/[0-9]{2}/[0-9]{2}$",
+        "publication_date_format": "%Y/%m/%d"
+      }
+    },
+    {
+      "id": "kakao-press-detail-v1",
+      "url_pattern": "^https://www\\.kakaocorp\\.com/page/detail/[0-9]+/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//main//article/div[contains(concat(' ', normalize-space(@class), ' '), ' wrap_title ')]//h3[contains(concat(' ', normalize-space(@class), ' '), ' tit_detail ')]",
+        "content_xpath": "//main//article//div[contains(concat(' ', normalize-space(@class), ' '), ' wrap_cont ')]",
+        "content_block_xpath": ".//p[normalize-space(.)]",
+        "publication_date_xpath": "//main//article/div[contains(concat(' ', normalize-space(@class), ' '), ' wrap_title ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' text_date ')]",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d"
+      }
+    }
+  ],
+  "fda-press-announcements": {
+    "publisher_id": "fda.gov",
+    "allowed_hosts": ["www.fda.gov"],
+    "item_pattern": "^https://www\\.fda\\.gov/news-events/press-announcements/[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "fda-press-announcements-dated-v1",
+      "scope": "Current official press-announcement page. A window is complete only when this page reaches an older dated item; otherwise the route is incomplete."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//main//h1",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' view-press-announcements ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' view-content ')]",
+      "content_block_xpath": ".//h2|.//li",
+      "listing_link_rules": [
+        {
+          "id": "fda-press-announcements-dated-v1",
+          "item_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' view-press-announcements ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' view-content ')]//li/div/span/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/news-events/press-announcements/[^/?#]+)",
+          "title_xpath": "text()[last()]",
+          "title_pattern": "^-\\s*(?P<title>.+)$",
+          "date_xpath": ".//time[@datetime]",
+          "date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+          "date_format": "%B %d, %Y"
+        }
+      ]
+    }
+  },
+  "nasa-technology-rss": {
+    "publisher_id": "nasa.gov",
+    "allowed_hosts": ["www.nasa.gov", "science.nasa.gov"],
+    "item_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?:[^/?#]+/)+[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "nasa-technology-rss-v1",
+      "feed_title": "Technology – NASA",
+      "max_items": 100,
+      "guid_is_permalink": false,
+      "scope": "Official Technology feed; WordPress GUID may differ from permalink. Each selected item needs a dated full original and the feed needs an older date boundary."
+    }
+  },
+  "google-cloud-threat-intelligence": {
+    "publisher_id": "cloud.google.com",
+    "allowed_hosts": ["feeds.feedburner.com", "cloud.google.com"],
+    "item_pattern": "^https://cloud\\.google\\.com/blog/topics/threat-intelligence/[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "google-cloud-threat-intelligence-rss-v1",
+      "feed_title": "Threat Intelligence",
+      "max_items": 100,
+      "guid_is_permalink": true,
+      "scope": "The official RSS feed must include an older item than the requested window; each selected permalink must match a dated full article."
+    }
+  },
+  "nvidia-press-releases": {
+    "publisher_id": "nvidianews.nvidia.com",
+    "allowed_hosts": ["nvidianews.nvidia.com"],
+    "item_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "nvidia-newsroom-press-rss-v1",
+      "feed_title": "Press Release - NVIDIA Newsroom",
+      "max_items": 20,
+      "guid_is_permalink": true,
+      "scope": "Official press-release RSS feed. A window is complete only with an older feed item and dated full originals whose titles match the feed."
+    }
+  },
+  "fanuc-en": {
+    "item_pattern": "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/20\\d\\d/(?:notice|news)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html$",
+    "allowed_hosts": ["www.fanuc.co.jp"],
+    "verification": "local-fixture-2026-09-27",
+    "listing_profile": {
+      "rule_id": "fanuc-en-dated-index-v1",
+      "pagination": "single-page",
+      "scope": "FANUC News Release index with dated year/day headings; confirms this index window only."
+    },
+    "parse_options": {
+      "language": "en",
+      "listing_link_rules": [
+        {
+          "id": "fanuc-en-dated-index-v1",
+          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>20\\d\\d/(?:notice|news)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html)",
+          "title_xpath": ".",
+          "date_xpath": "concat(normalize-space(../../preceding-sibling::h2[1]), ' ', normalize-space(../../preceding-sibling::h3[1]))",
+          "date_pattern": "^20\\d\\d [A-Z][a-z]+ [0-9]{1,2}$",
+          "date_format": "%Y %B %d"
+        }
+      ]
+    }
+  },
+  "fanuc-ja": {
+    "item_pattern": "/ja/profile/pr/newsrelease/20\\d\\d/news\\d{8}",
+    "allowed_hosts": ["www.fanuc.co.jp"],
+    "verification": "local-fixture-2026-09-27"
+  },
+  "route-fanuc-ir-disclosures-ja": {
+    "item_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce_other/pdf/[0-9]{4}/[A-Za-z0-9_-]+\\.pdf$",
+    "allowed_hosts": ["www.fanuc.co.jp"],
+    "scan_max_details": 12,
+    "listing_profile": {
+      "rule_id": "fanuc-ja-dated-ir-disclosures-v1",
+      "pagination": "single-page",
+      "scope": "FANUC dated other-disclosures archive; document dates must match the day headings."
+    },
+    "parse_options": {
+      "language": "ja",
+      "title_xpath": "//*[@id='main']//h1",
+      "content_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]",
+      "listing_link_rules": [
+        {
+          "id": "fanuc-ja-dated-ir-disclosures-v1",
+          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[starts-with(@href,'pdf/') and contains(@href,'.pdf')]",
+          "url_attribute": "href",
+          "url_pattern": "^(?P<url>pdf/[0-9]{4}/[A-Za-z0-9_-]+\\.pdf)$",
+          "title_xpath": ".",
+          "date_xpath": "concat(normalize-space(../../preceding-sibling::h2[1]), ' ', normalize-space(../../preceding-sibling::h3[1]))",
+          "date_pattern": "^[0-9]{4}年 [0-9]{1,2}月[0-9]{1,2}日$",
+          "date_format": "%Y年 %m月%d日"
+        }
+      ]
+    },
+    "verification": "captured-index-and-two-pdfs-2026-09-28"
+  },
+  "mit-robotics": {
+    "publisher_id": "news.mit.edu",
+    "item_pattern": "^https://news\\.mit\\.edu/20\\d\\d/[^/?#]+/?$",
+    "allowed_hosts": ["news.mit.edu"],
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "mit-robotics-rss-v1",
+      "feed_title": "MIT News - Robotics",
+      "max_items": 50,
+      "guid_is_permalink": true,
+      "scope": "Official MIT Robotics topic feed; selected dated full originals and an older feed item are required for window completion."
+    }
+  },
+  "mit-ai-research": {
+    "publisher_id": "news.mit.edu",
+    "item_pattern": "^https://news\\.mit\\.edu/20\\d\\d/[^/?#]+/?$",
+    "allowed_hosts": ["news.mit.edu"],
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "mit-ai-rss-v1",
+      "feed_title": "MIT News - Artificial intelligence",
+      "max_items": 50,
+      "guid_is_permalink": true,
+      "scope": "Official MIT AI topic feed; selected dated full originals and an older feed item are required for window completion. Topic labels are not publication approval."
+    }
+  },
+  "frontiers-robotics-papers": {
+    "publisher_id": "frontiersin.org",
+    "allowed_hosts": ["www.frontiersin.org"],
+    "item_pattern": "^https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/full$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "frontiers-frobt-published-v1",
+      "ignored_rule_ids": ["frontiers-frobt-accepted-v1"],
+      "require_title_match": true,
+      "scope": "Official most-recent journal cards. Accepted manuscripts are accounted for but excluded. A published article older than the requested window and dated full articles are required for completion."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//title",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//article[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle ')]//h2[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__title ')]",
+      "listing_link_rules": [
+        {
+          "id": "frontiers-frobt-published-v1",
+          "item_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle ')]/a[.//p[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__date ') and starts-with(normalize-space(.), 'Published on ')]]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/full)",
+          "title_xpath": ".//h2[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__title ')]",
+          "date_xpath": "substring-after(normalize-space(.//p[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__date ')]), 'Published on ')",
+          "date_pattern": "^[0-9]{1,2} [A-Z][a-z]+ [0-9]{4}$",
+          "date_format": "%d %b %Y"
+        },
+        {
+          "id": "frontiers-frobt-accepted-v1",
+          "item_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle ')]/a[.//p[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__date ') and starts-with(normalize-space(.), 'Accepted on ')]]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/full)",
+          "title_xpath": ".//h2[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__title ')]",
+          "date_xpath": "substring-after(normalize-space(.//p[contains(concat(' ', normalize-space(@class), ' '), ' CardArticle__date ')]), 'Accepted on ')",
+          "date_pattern": "^[0-9]{1,2} [A-Z][a-z]+ [0-9]{4}$",
+          "date_format": "%d %b %Y"
+        }
+      ]
+    }
+  },
+  "github-changelog": {
+    "item_pattern": "^https://github\\.blog/changelog/20[0-9]{2}-[0-9]{2}-[0-9]{2}-[^/?#]+/?$",
+    "allowed_hosts": ["github.blog"],
+    "scan_max_details": 40,
+    "listing_profile": {
+      "rule_id": "github-changelog-month-v1",
+      "pagination": "calendar-month",
+      "url_template": "https://github.blog/changelog/{year}/{month}/",
+      "max_items_per_month": 500,
+      "scope": "Official calendar-month archive with a month marker and all dated article cards."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//h2[contains(concat(' ', normalize-space(@class), ' '), ' ChangelogMonthHeading ')]/button",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//h2[contains(concat(' ', normalize-space(@class), ' '), ' ChangelogMonthHeading ')]",
+      "listing_link_rules": [
+        {
+          "id": "github-changelog-month-v1",
+          "item_xpath": "//article//div[contains(concat(' ', normalize-space(@class), ' '), ' ChangelogItem-content-inner ')]/a[contains(@href, '/changelog/20')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://github\\.blog/changelog/20[0-9]{2}-[0-9]{2}-[0-9]{2}-[^/?#]+/?$)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::article[1]//time/@datetime",
+          "date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d"
+        }
+      ]
+    },
+    "verification": "completed-september-and-month-boundary-windows-2026-09-29"
+  },
+  "route-kuka-news-de": {
+    "item_pattern": "^https://www\\.kuka\\.com/de-de/unternehmen/presse/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
+    "api_profile": {
+      "id": "kuka-news-form-pages-v1",
+      "endpoint": "https://www.kuka.com/api/news/GetPublications",
+      "sc_lang": "de-DE",
+      "context_id": "8EB48479F62C4292AC0D890B766155AD",
+      "captions_facet_id": "891D284932A749069DF2E148B255CA6D",
+      "page_size": 20,
+      "max_pages": 15,
+      "max_details": 25
+    },
+    "verification": "captured-form-profile-2026-09-28"
+  },
+  "route-doosan-news-en": {
+    "item_pattern": "^https://www\\.doosanrobotics\\.com/en/about/promotion/news/(?:[a-z0-9][a-z0-9-]+|view/[0-9]+)/?$",
+    "allowed_hosts": ["www.doosanrobotics.com"],
+    "listing_profile": {
+      "rule_id": "doosan-en-dated-index-v1",
+      "pagination": "single-page",
+      "require_complete_count": true,
+      "scope": "English Doosan Robotics News list; Total and [1/1] must equal all dated links."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' sub-head ')][div[contains(concat(' ',normalize-space(@class),' '),' total ')]]/div[contains(concat(' ',normalize-space(@class),' '),' sub-tit ')]/h2",
+      "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' news-list ')]",
+      "content_block_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' title ')]",
+      "listing_page_summary_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' sub-head ')]/div[contains(concat(' ',normalize-space(@class),' '),' total ')]",
+      "listing_page_summary_pattern": "^Total\\. (?P<total>[0-9]+) \\[(?P<page>[0-9]+)/(?P<pages>[0-9]+)\\]$",
+      "listing_link_rules": [
+        {
+          "id": "doosan-en-dated-index-v1",
+          "item_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' news-list ')]/ul/li/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/en/about/promotion/news/(?:[a-z0-9][a-z0-9-]+|view/[0-9]+))",
+          "title_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' title ')]",
+          "date_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' date ')]",
+          "date_pattern": "^[0-9]{4}\\. [0-9]{2}\\. [0-9]{2}$",
+          "date_format": "%Y. %m. %d"
+        }
+      ]
+    },
+    "verification": "captured-single-page-profile-2026-09-28"
+  },
+  "route-abb-robotics-en": {
+    "item_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
+    "allowed_hosts": ["www.abb.com"],
+    "api_profile": {
+      "id": "abb-newsbank-json-pages-v1",
+      "endpoint": "https://www.abb.com/conf/abbcommon/services/newsbank.json",
+      "feed_id": "cbcceb45d7e74cfe9a4601cee01344df",
+      "culture_info": "en",
+      "page_size": 20,
+      "max_pages": 30,
+      "max_details": 25
+    },
+    "verification": "captured-news-list-component-and-page-2026-09-28"
+  },
+  "route-hd-news-ko": {
+    "item_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/news/[0-9]+$",
+    "api_profile": {
+      "id": "hd-press-json-pages-v1",
+      "endpoint": "https://www.hd-hyundairobotics.com/api/v1/company/page",
+      "page_size": 8,
+      "max_pages": 30,
+      "max_details": 25,
+      "query": {
+        "compIntrSubTypeCd": "90010001",
+        "bdSeq": "51"
+      }
+    },
+    "parse_options": {
+      "listing_link_rules": [
+        {
+          "id": "hd-news-onclick-v1",
+          "item_xpath": "//li[starts-with(@onclick, 'view.utils.href(')]",
+          "url_attribute": "onclick",
+          "url_pattern": "view\\.utils\\.href\\('(?P<url>/company/news/[0-9]+)'\\)",
+          "title_xpath": ".//h3",
+          "date_xpath": ".//span[@class='date']"
+        }
+      ]
+    },
+    "verification": "captured-list-profile-2026-09-27"
+  }
+}

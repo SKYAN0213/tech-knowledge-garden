@@ -1,0 +1,7 @@
+# Python 3.12; isolated .local/research/local-ai/runtime/venv
+trafilatura==2.2.0
+markdown-it-py==4.2.0
+PyMuPDF==1.27.2.3
+playwright==1.63.0
+rapidocr==3.9.2
+onnxruntime==1.30.0

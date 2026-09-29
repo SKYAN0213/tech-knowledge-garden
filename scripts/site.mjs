@@ -11,18 +11,36 @@ import YAML from "yaml"
 import { walk, parseNote, noteText, editions, extractArticles, sections } from "./garden.mjs"
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 import { briefingLibrary, publisher } from "./briefings.mjs"
-import { articleTags } from "./reader-cards.mjs"
+import { articleTags, sourceLinkLabel } from "./reader-cards.mjs"
 import { newsView, briefingHub, issueView } from "./reader-views.mjs"
 import { coverageDate } from "./time.mjs"
+import { articleDateLabel } from "./article-review.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
 const staging = ".local/site-content"
 export const slug = (p) => slugifyFilePath(p.replace(/\.md$/, "") + ".md")
+export const readerDate = (meta) =>
+  meta.type === "news" && meta.published_at
+    ? meta.published_at
+    : meta.coverage_end
+      ? coverageDate(meta.coverage_end)
+          .toLocaleString("sv-SE", { timeZone: "Asia/Seoul" })
+          .slice(0, 16)
+      : meta.date || meta.updated || ""
 export const esc = (s) =>
   String(s ?? "").replace(
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   )
+export const articleSourceLinks = (sources) => {
+  const samePublisher = sources.length > 1 && new Set(sources.map(publisher)).size === 1
+  return sources
+    .map((url, index) => {
+      const label = sourceLinkLabel(url, index, sources)
+      return `<a href="${esc(url)}"${samePublisher ? ` aria-label="${esc(label)}"` : ""}>${esc(samePublisher ? `원문 ${index + 1} ↗` : label)}</a>`
+    })
+    .join("")
+}
 const write = (p, s) => {
   fs.mkdirSync(path.dirname(p), { recursive: true })
   fs.writeFileSync(p, s)
@@ -215,11 +233,7 @@ export async function finish(output = "public", input = staging) {
           : n.meta.type || "article"
     const isConcept = n.meta.entry_type === "concept"
     const focus = resolveFocus(graph, isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
-    const date = n.meta.coverage_end
-      ? coverageDate(n.meta.coverage_end)
-          .toLocaleString("sv-SE", { timeZone: "Asia/Seoul" })
-          .slice(0, 16)
-      : n.meta.date || n.meta.updated || ""
+    const date = readerDate(n.meta)
     const links =
       isConcept && focus
         ? `<a href="${href(MAP)}?focus=${encodeURIComponent(focus)}">연결 지도</a>`
@@ -254,7 +268,7 @@ export async function finish(output = "public", input = staging) {
     else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
-      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · <time>${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${n.meta.sources.map((u, j) => `<a href="${esc(u)}">${esc(publisher(u))} 원문${j ? " " + (j + 1) : ""} ↗</a>`).join("")}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
+      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
       meta.title,

@@ -129,6 +129,9 @@ main {
   margin: auto;
   min-height: 80vh;
 }
+main a[href^="http"] {
+  overflow-wrap: anywhere;
+}
 .home {
   max-width: 880px;
 }

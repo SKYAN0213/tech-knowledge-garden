@@ -38,6 +38,7 @@ import {
   githubIssue,
   githubTopic,
   topicPath,
+  topicAsOf,
   feedDescription,
 } from "./briefings.mjs"
 
@@ -136,7 +137,15 @@ export function extractArticles(edition) {
         const review = articleReview(edition, strip(part.title), digest(canonicalURL(urls[0])))
         const id = review.event_id
         const concepts = wikiTargets(part.body).filter((p) => p.startsWith("Knowledge/"))
-        const classification = themed ? classifyArticle(part.body, part.title) : undefined
+        // A reviewed replacement in a legacy edition carries its own explicit
+        // classification. Unreviewed siblings keep their original metadata.
+        const reviewedRecord =
+          edition.meta.editorial_format === undefined &&
+          review.review_status === "verified" &&
+          Array.isArray(edition.meta.article_records) &&
+          edition.meta.article_records.some((r) => r.title === strip(part.title))
+        const classification =
+          themed || reviewedRecord ? classifyArticle(part.body, part.title) : undefined
         const leadLines = part.body
           .split("\n")
           .map((l) => l.replace(/^>\s?/, "").trim())
@@ -219,9 +228,25 @@ export function refresh(vault = "vault") {
       "",
     )
   const briefSlug = (issue) => issue.slug.replace(/^Editions\//, "Briefings/")
+  const readerCitations = (item, body) =>
+    body.replace(/\[S\d+\]/g, (marker) => {
+      const url = item.sources[marker.slice(1, -1)]
+      if (!url) throw new Error(`Unresolved reader citation: ${item.id}: ${marker}`)
+      return `[원문 ${item.urls.indexOf(url) + 1}](<${url}>)`
+    })
   for (const item of articles.values()) {
     const issue = item.edition,
       last = String(issue.meta.date)
+    const articleBody = item.editorial
+      ? item.body
+          .split("\n")
+          .filter((line) => !isClassificationLine(line))
+          .join("\n") +
+        "\n\n" +
+        item.editorial.topic_ids
+          .map((id) => wiki("Briefings/Topics/" + id, "누적 기록"))
+          .join(" · ")
+      : item.body
     emit(
       `News/${item.id}`,
       {
@@ -240,22 +265,7 @@ export function refresh(vault = "vault") {
         ...classificationMeta(item),
         ...editorialMeta(item),
       },
-      `${
-        item.editorial
-          ? item.body
-              .split("\n")
-              .filter((l) => !isClassificationLine(l))
-              .join("\n") +
-            "\n\n" +
-            item.editorial.topic_ids
-              .map((id) => wiki("Briefings/Topics/" + id, "누적 기록"))
-              .join(" · ")
-          : item.body
-      }\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}\n\n## 출처\n\n${Object.entries(
-        item.sources,
-      )
-        .map(([k, v]) => `- [${k}] ${v}`)
-        .join("\n")}`,
+      `${readerCitations(item, articleBody)}\n\n${item.concepts.length ? "## 이어 읽기\n\n" + item.concepts.map((c) => "- " + wiki(c, path.basename(c))).join("\n") + "\n\n" : ""}## 이 소식을 다룬 브리핑\n\n${item.appearances.map((s) => "- " + wiki(s.replace(/^Editions\//, "Briefings/"), path.basename(s).slice(0, 10) + " 브리핑")).join("\n")}`,
     )
   }
   for (const issue of all) {
@@ -324,15 +334,16 @@ export function refresh(vault = "vault") {
     )
     write(digestPath(issue.slug), digestMarkdown(model, base))
   }
-  for (const t of library.latest.snapshot.topics) {
-    const body = topicMarkdown(t, library.latest.date)
+  for (const t of library.current.topics) {
+    const date = topicAsOf(t, library.latest.date)
+    const body = topicMarkdown(t, date)
     emit(
       topicPath(t.id),
       {
         title: t.title,
         type: "briefing-topic",
         topic_id: t.id,
-        date: library.latest.date,
+        date,
         description: t.thesis,
         github_url: githubTopic(t.id),
       },
@@ -345,7 +356,7 @@ export function refresh(vault = "vault") {
   }
   write(
     "digest/README.md",
-    `# 아침 브리핑\n\n[웹 브리핑](${base}/briefings/index) · [RSS](${base}/briefing.xml)\n\n## 누적 주제\n\n${library.latest.snapshot.topics.map((t) => `- [${t.title}](topics/${t.id}.md) — 원문 ${t.events}건 · ${t.lessons.length}개 원칙`).join("\n")}\n\n## 날짜별 브리핑\n\n${library.issues
+    `# 아침 브리핑\n\n[웹 브리핑](${base}/briefings/index) · [RSS](${base}/briefing.xml)\n\n## 누적 주제\n\n${library.current.topics.map((t) => `- [${t.title}](topics/${t.id}.md) — 원문 ${t.events}건 · ${t.lessons.length}개 원칙`).join("\n")}\n\n## 날짜별 브리핑\n\n${library.issues
       .toReversed()
       .map(
         (i) =>

@@ -63,8 +63,11 @@ test("seven-day discovery retains unresolved old candidates and distinguishes se
   const after = researchWindow("2026-09-13T23:00:00Z", "2026-09-14T02:00:00Z", b, [
     issue("2026-09-11", [a]),
   ])
-  assert.equal(after.pending.length, 0)
-  assert.equal(after.resolved[0].publication.event_id, a.id)
+  assert.equal(after.pending.length, 1)
+  assert.equal(after.resolved.length, 0)
+  assert.equal(after.pending[0].next_route, "review-existing-identity")
+  assert.equal(after.pending[0].publication, null)
+  assert.equal(after.pending[0].possible_publications[0].event_id, a.id)
   assert.equal(
     researchWindow("2026-09-01T00:00:00Z", "2026-09-14T02:00:00Z", null, []).discovery_start,
     "2026-09-01T00:00:00.000Z",

@@ -42,6 +42,8 @@ export function loadTrends(vault, issues, { requireLatest = true } = {}) {
     for (const k of ["title", "question", "thesis", "watch_for", "disconfirming"])
       if (!text(t[k])) fail(`${t.id}: missing ${k}`)
     if (!day(t.reviewed)) fail(t.id + ": invalid review date")
+    if (t.reader_format !== undefined && t.reader_format !== "source-events/v1")
+      fail(t.id + ": unsupported public topic format")
     if (!Array.isArray(t.knowledge_notes) || !Array.isArray(t.lessons))
       fail(t.id + ": missing knowledge_notes/lessons")
     for (const k of t.knowledge_notes) {
@@ -186,3 +188,25 @@ export function trendSnapshot(data, issueKey) {
 }
 
 export const stanceLabel = (s) => ({ support: "관측", challenge: "반대·제약", context: "참고" })[s]
+
+// Current knowledge pages may be re-reviewed after the latest news edition.
+// Historical edition snapshots keep their original date boundary.
+export function currentTrendSnapshot(data) {
+  const latest = [...data.issues.values()].at(-1)
+  if (!latest) return { date: "", topics: [] }
+  const snapshot = trendSnapshot(data, latest.key)
+  const asOf = [latest.date, ...data.topics.map((t) => t.reviewed)].sort().at(-1)
+  return {
+    ...snapshot,
+    date: asOf,
+    topics: snapshot.topics.map((t) => ({
+      ...t,
+      lessons: data.topics
+        .find((n) => n.id === t.id)
+        .lessons.filter(
+          (l) =>
+            l.reviewed <= asOf && l.signal_ids.every((id) => t.history.some((s) => s.id === id)),
+        ),
+    })),
+  }
+}

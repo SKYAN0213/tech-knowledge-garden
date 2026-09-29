@@ -12,6 +12,14 @@ Google Drive `Projects / Tech Knowledge`가 작성 원본이다. GitHub는 검�
 - Apps Script는 고정된 폴더 네 개의 자료만 읽는다. 요청자가 다른 폴더를 지정할 수 없으며 OAuth 토큰을 응답하지 않는다. HTTP 응답으로 제공되는 원본은 위 공개용 Markdown이다.
 - 사용자의 2026-09-13 후속 요청에 따라 기존 오전 8시 Codex 실행에서 변경 확인·발행·검증을 한 번에 수행한다. 별도 5분 GitHub 예약은 제거했다. 기존 Drive 연결로 최신 스냅샷을 읽는 방식이 기본이며 Mac과 Codex가 실행 중이어야 한다. Apps Script 방식은 선택적 수동 실행 경로로 남기고 추가 권한 연결은 필수로 요구하지 않는다.
 
+## 연결 도구로 최신 원본을 수집 계획에 고정
+
+2026-09-29에 연결된 Google Drive의 고정 `Tech Knowledge` 루트 아래 네 작성 폴더를 끝까지 열거하고 Markdown 181개의 원격 **raw bytes**를 각각 읽었다. 하위 폴더 9개와 파일별 ID·부모·크기·수정 시각을 기록했으며 181개 모두 로컬 `vault/`의 같은 상대경로·bytes와 일치했다. 원문 조회 후 목록을 다시 열거해 메타데이터 변화가 없음을 확인했다. 이 사실의 비공개 입력 영수증과 생성 스냅샷의 경로·해시·재현 명령은 [일일 수집 명세 4.9절](DAILY_NEWS_INGESTION_IMPLEMENTATION.md#49-연결된-drive-전체-원본의-실제-읽기와-신뢰-경계), 운영 순서는 [런북 74절](LOCAL_AI_NEWS_RUNBOOK.md#74-연결된-drive-원문-전체-읽기와-비공개-수집-입력-만들기)에 있다.
+
+새 실행에서는 같은 자료를 다시 쓸 수 없다. 연결 도구의 인증된 새 조회로 원본 전체를 확인한 뒤 비공개 `tech-drive-connector-readback/v1` 영수증을 만들고, [`build-connector-snapshot.py`](../scripts/build-connector-snapshot.py)로 로컬 전체 목록·해시·부모 체인·10분 시각을 검증해 `tech-drive-source/v1`을 조립한다. 이어 `pull-drive.py --verify-source-snapshot`을 통과한 **같은 파일**을 `research-daily.mjs --drive-snapshot`에 전달한다. 영수증만 조작해 로컬 원고와 일치시킨 경우 원격에서 읽었다는 증거가 아니므로 connector 조회 기록과 두 번째 목록 확인이 필요하다. 조회 중 원격 내용·구조가 바뀌면 이 입력을 폐기하고 다시 조회한다.
+
+이 경로는 수집 시작의 Drive/로컬 일치만 확인한다. 기존 회차·후보의 사건 판정, 새 원고의 Drive 업로드와 원격 재읽기, GitHub 생성, 실제 웹/RSS 공개는 각각 별도 관문이다. 수집 계획의 `provided_drive_snapshot_matched`를 `drive_verified`나 배포 성공으로 해석하지 않는다. 2026-09-29에 기존 오전 8시 예약 **하나의 지침**에 원격 전수 조회→스냅샷 검증→일일 계획·수집·실패 처리 순서를 추가했다. 예약 시각·모델·프로젝트·시작 폴더는 그대로이며 다음 실제 예약 실행의 도구 접근·수집 결과·발행 관문은 아직 검증되지 않았다.
+
 ## 선택적 Google 내보내기 연결
 
 1. Drive 소유 계정으로 Google Apps Script에 로그인한다. `integrations/google-drive/Code.gs`와 `appsscript.json`으로 사용자 소유 프로젝트를 준비한다.
@@ -37,6 +45,8 @@ Google Drive `Projects / Tech Knowledge`가 작성 원본이다. GitHub는 검�
 3. `prepare-drive.py --collect`로 저장 목록을 준비하고, 네 원본 폴더의 변경 파일을 먼저 Drive에 업로드·검증한다. 취재·원문 수집 자료는 기존 개인 Drive 경로에 저장한다.
 4. 상시 연결이 설정돼 있으면 `gh workflow run drive-sync.yaml --repo SKYAN0213/tech-knowledge-garden --ref main`으로 즉시 반영을 요청한다. 실제 실행 결과와 공개 브리핑을 확인한다. Google 상시 연결이 아직 없고 Codex가 실행 중이면, 연결된 Drive 도구로 네 원본 폴더를 새로 읽어 완전한 스냅샷을 만들고 `pull-drive.py --snapshot <실제 스냅샷 경로> --apply`로 적용한 다음 `npm run publish`로 단발성 배포할 수 있다. 실제 최신 Drive 읽기 없이 로컬 사본을 대신 발행하지 않는다. 단발성 배포와 상시 자동 반영 미연결을 구분해서 보고한다.
 5. 웹 배포가 확인된 뒤 `export-website-data.py`를 실행하여 `WebsiteData`를 갱신·업로드한다. 공개 사이트가 새 원고를 반영하기 전의 데이터를 최신 원고 데이터로 표시하지 않는다.
+
+`npm run publish`는 콘텐츠 외 코드·설정·문서의 미커밋 변경이 있으면 Drive 적용이나 Git push 전에 중단한다. 생성 코드로 만든 결과만 콘텐츠 커밋에 담아 원격의 예전 코드로 배포하는 상황을 막기 위한 관문이다. 코드 변경은 별도로 검토·검증해 발행할 판본에 먼저 반영한다. 로컬 발행과 GitHub 동기화가 Git에 추가하는 경로는 공개용 네 작성 원본, 생성된 `Briefings`·`News`·`Trends`·`Knowledge Maps`와 RSS·공개 진입 페이지, `digest` 및 두 상태 JSON으로 제한한다. `vault/Archive`나 새로운 비공개 폴더는 자동 추가하지 않는다.
 
 ## 검증 및 현재 상태
 

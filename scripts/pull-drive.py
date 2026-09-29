@@ -120,15 +120,48 @@ def verify_working_copy(repository):
         raise ValueError('Local source differs from the verified Drive snapshot; save to Drive and read back first')
     return {'verified_source_files': len(actual), 'snapshot_sha256': state['snapshot_sha256']}
 
+def verify_source_snapshot(snapshot, repository, snapshot_bytes, now=None, max_age_seconds=600):
+    """Check a full Drive export against the local authoring tree without changing it."""
+    try:
+        exported = datetime.fromisoformat(snapshot.get('exported_at', '').replace('Z', '+00:00'))
+    except (TypeError, ValueError) as error:
+        raise ValueError('Drive export has no valid timestamp') from error
+    if exported.tzinfo is None:
+        raise ValueError('Drive export timestamp must include a timezone')
+    if max_age_seconds is not None:
+        current = now or datetime.now(timezone.utc)
+        if abs((current - exported).total_seconds()) > max_age_seconds:
+            raise ValueError('Drive export is stale; no daily plan created')
+    result = synchronize(snapshot, repository, apply=False)
+    if result['updated'] or result['deleted']:
+        raise ValueError('Local source differs from the supplied Drive export')
+    return {
+        'source_files': result['source_files'],
+        'snapshot_sha256': result['snapshot_sha256'],
+        'snapshot_file_sha256': digest(snapshot_bytes),
+        'exported_at': snapshot['exported_at'],
+    }
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--snapshot', type=Path)
     parser.add_argument('--repository', type=Path, default=Path.cwd())
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--verify-working-copy', action='store_true')
+    parser.add_argument('--verify-source-snapshot', action='store_true')
+    parser.add_argument('--allow-stale-snapshot', action='store_true')
     args = parser.parse_args()
     if args.verify_working_copy:
         print(json.dumps(verify_working_copy(args.repository)))
+        return
+    if args.verify_source_snapshot:
+        if not args.snapshot:
+            raise ValueError('A complete Drive snapshot file is required')
+        raw = args.snapshot.read_bytes()
+        print(json.dumps(verify_source_snapshot(
+            json.loads(raw), args.repository, raw,
+            max_age_seconds=None if args.allow_stale_snapshot else 600,
+        ), ensure_ascii=False))
         return
     if args.snapshot:
         snapshot = json.loads(args.snapshot.read_text())
@@ -152,4 +185,7 @@ def main():
             output.write('changed=' + str(result['changed']).lower() + '\n')
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except ValueError as error:
+        raise SystemExit(str(error)) from error

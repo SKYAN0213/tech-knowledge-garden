@@ -2,10 +2,37 @@ import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import { spawnSync } from "node:child_process"
-import { makeResolver, projectLinks } from "../scripts/site.mjs"
+import { makeResolver, projectLinks, readerDate } from "../scripts/site.mjs"
 import { layoutGraph } from "../web/layout.mjs"
 import { buildGraph, readKnowledge } from "../scripts/knowledge.mjs"
 import RSSParser from "rss-parser"
+import YAML from "yaml"
+import { unified } from "unified"
+import remarkParse from "remark-parse"
+import { GitHubFlavoredMarkdown } from "@quartz-community/github-flavored-markdown"
+
+test("production Markdown preserves command flags, quotes and numeric punctuation", async () => {
+  const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
+  const options = config.plugins.find(
+    (p) => p.source === "@quartz-community/github-flavored-markdown",
+  ).options
+  const processor = unified()
+    .use(remarkParse)
+    .use(GitHubFlavoredMarkdown(options).markdownPlugins())
+  const source =
+    'upgrade-sandboxes --check\n\n"0.1.0" ... 1--2\n\n| 명령 | 상태 |\n|---|---|\n| --check | 0 |'
+  const tree = await processor.run(processor.parse(source))
+  const texts = []
+  function visit(node) {
+    if (node.type === "text") texts.push(node.value)
+    for (const child of node.children || []) visit(child)
+  }
+  visit(tree)
+  assert.ok(texts.includes("upgrade-sandboxes --check"))
+  assert.ok(texts.includes('"0.1.0" ... 1--2'))
+  assert.ok(texts.includes("--check"))
+  assert.ok(tree.children.some((node) => node.type === "table"))
+})
 const notes = [
   {
     path: "Knowledge/AI/MCP",
@@ -15,6 +42,25 @@ const notes = [
   { path: "Archive/old", meta: { title: "기록" } },
   { path: "Editions/2026/09/issue", meta: { title: "원고" } },
 ]
+test("news reader dates retain the original announcement date after retrospective correction", () => {
+  assert.equal(
+    readerDate({
+      type: "news",
+      date: "2026-09-22",
+      updated: "2026-09-27",
+      published_at: "2026-09-21",
+    }),
+    "2026-09-21",
+  )
+  assert.equal(
+    readerDate({ type: "news", date: "2026-09-22", updated: "2026-09-27" }),
+    "2026-09-22",
+  )
+  assert.equal(
+    readerDate({ type: "briefing", date: "2026-09-22", coverage_end: "2026-09-21T23:18:19.442Z" }),
+    "2026-09-22 08:18",
+  )
+})
 test("Reviewed concepts satisfy the publication validator without empty taxonomy placeholders", () => {
   const result = spawnSync(
     "python3",

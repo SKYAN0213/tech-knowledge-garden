@@ -1,4 +1,6 @@
 // Editorial evidence is author-reviewed metadata, never graph-matching prose.
+import { paperKey } from "./paper-identifiers.mjs"
+
 export const EDITORIAL_FORMAT = "six-w/v1"
 export const DEEP_KINDS = ["기업 전략", "논문 해설", "연구 사업화"]
 const text = (s) => typeof s === "string" && s.trim().length > 0
@@ -10,25 +12,40 @@ export function requireEditorial(issue) {
     fail("new editions require editorial_format: six-w/v1")
 }
 export function applyEditorial(issue, articles) {
-  if (issue.meta.editorial_format === undefined) return articles
-  if (issue.meta.editorial_format !== EDITORIAL_FORMAT) fail("unknown editorial_format")
   const records = issue.meta.article_records
-  if (!Array.isArray(records) || records.length !== articles.length)
+  const partial = issue.meta.editorial_format === undefined && records !== undefined
+  if (issue.meta.editorial_format === undefined && !partial) return articles
+  if (partial && String(issue.meta.date) >= "2026-09-14")
+    fail("partial records are only allowed in historical editions")
+  if (!partial && issue.meta.editorial_format !== EDITORIAL_FORMAT) fail("unknown editorial_format")
+  if (
+    !Array.isArray(records) ||
+    (partial && !records.length) ||
+    (!partial && records.length !== articles.length) ||
+    records.length > articles.length ||
+    records.some((r) => !articles.some((a) => a.title === r.title))
+  )
     fail("article_records must match articles")
   const titles = new Set(),
     works = new Set()
   for (const a of articles) {
     const matches = records.filter((r) => r.title === a.title)
-    if (matches.length !== 1 || titles.has(a.title))
+    if ((!partial && matches.length !== 1) || matches.length > 1 || titles.has(a.title))
       fail("unique matching title required: " + a.title)
     titles.add(a.title)
+    if (partial && !matches.length) continue
+    if (partial && a.review?.review_status !== "verified")
+      fail("partial historical records require a verified article review")
     const r = matches[0]
     if (!["사건 뉴스", ...DEEP_KINDS].includes(r.kind)) fail("invalid article kind")
     if (!["국내", "해외", "국제 공동"].includes(r.region)) fail("invalid region")
+    // The projection escapes literal tildes so GFM does not strike through
+    // numeric ranges. Compare the resulting prose, not the Markdown escape.
+    const bodyProse = a.body.replace(/\\~/g, "~")
     for (const k of ["who", "when", "where", "what", "how", "why"])
       if (!text(r.facts?.[k])) fail("missing six-w fact: " + k)
     if (!text(r.lead) || r.lead.length > 900 || /[<>\n]/.test(r.lead)) fail("invalid lead")
-    if (!a.body.includes(r.lead)) fail("lead must occur verbatim in article prose")
+    if (!bodyProse.includes(r.lead)) fail("lead must occur verbatim in article prose")
     if (r.explanations !== undefined) {
       if (!Array.isArray(r.explanations)) fail("explanations must be an array")
       for (const s of r.explanations) {
@@ -36,7 +53,7 @@ export function applyEditorial(issue, articles) {
           !text(s.heading) ||
           !Array.isArray(s.paragraphs) ||
           !s.paragraphs.length ||
-          s.paragraphs.some((p) => !text(p) || /[<>\n]/.test(p) || !a.body.includes(p))
+          s.paragraphs.some((p) => !text(p) || /[<>\n]/.test(p) || !bodyProse.includes(p))
         )
           fail("explanation paragraphs must occur in source prose")
         if (
@@ -56,13 +73,12 @@ export function applyEditorial(issue, articles) {
       if (!text(p.work_id) || !/^[a-z0-9-]+$/.test(p.work_id) || works.has(p.work_id))
         fail("duplicate or invalid paper work_id")
       works.add(p.work_id)
+      if (!Array.isArray(p.identifiers) || !p.identifiers.length) fail("invalid paper identifiers")
+      for (const identifier of p.identifiers) paperKey(identifier)
       if (
-        !Array.isArray(p.identifiers) ||
-        !p.identifiers.length ||
-        p.identifiers.some((v) => !/^(doi:10\.\S+|arxiv:\d{4}\.\d{4,5}(v\d+)?)$/i.test(v))
+        !["초록", "전문"].includes(p.access) ||
+        !["사전공개", "동료심사", null].includes(p.status)
       )
-        fail("invalid paper identifiers")
-      if (!["초록", "전문"].includes(p.access) || !["사전공개", "동료심사"].includes(p.status))
         fail("paper access/status required")
       if (!a.urls.includes(p.evidence_url)) fail("paper evidence must be an article source")
     }
@@ -90,11 +106,12 @@ export function applyEditorial(issue, articles) {
     )
       fail("commercialization requires verified relationship")
     if (r.kind !== "사건 뉴스") {
+      const reviewed = a.review?.review_status === "verified"
       if (
-        !text(r.analysis_summary) ||
-        (!issue.meta.article_reviews && !text(r.next_check)) ||
+        ((!reviewed || r.analysis_summary !== undefined) && !text(r.analysis_summary)) ||
+        (!reviewed && !text(r.next_check)) ||
         !r.topic_ids.length ||
-        !/분석/.test(a.body)
+        (text(r.analysis_summary) && !/분석/.test(a.body))
       )
         fail("deep analysis needs summary, next check, topic and labeled analysis")
     }
@@ -102,7 +119,7 @@ export function applyEditorial(issue, articles) {
     a.editorial = r
     a.summary = r.lead
   }
-  const deep = articles.filter((a) => a.editorial.kind !== "사건 뉴스")
+  const deep = articles.filter((a) => a.editorial && a.editorial.kind !== "사건 뉴스")
   if (deep.length > 1) fail("maximum one deep analysis")
   if (!deep.length && !issue.meta.article_reviews && !text(issue.meta.deep_skip_reason))
     fail("record why deep analysis was skipped")
@@ -122,10 +139,14 @@ export const editorialMeta = (a) =>
 export const topArticles = (i) =>
   i.highlights ||
   (i.original.meta.headlines || []).map((t) => i.items.find((a) => a.title === t)).filter(Boolean)
+export const hasDeepAnalysis = (a) =>
+  !!a.editorial &&
+  a.editorial.kind !== "사건 뉴스" &&
+  typeof a.editorial.analysis_summary === "string" &&
+  !!a.editorial.analysis_summary.trim()
 export function editorialMarkdown(i, position, render) {
   if (i.original.meta.editorial_format !== EDITORIAL_FORMAT) return ""
-  const articles =
-    position === "top" ? topArticles(i) : i.items.filter((a) => a.editorial?.kind !== "사건 뉴스")
+  const articles = position === "top" ? topArticles(i) : i.items.filter(hasDeepAnalysis)
   if (!articles.length) return ""
   return (
     `## ${position === "top" ? "주요 소식" : "오늘의 심층 분석"}\n\n` +
@@ -134,10 +155,10 @@ export function editorialMarkdown(i, position, render) {
   )
 }
 export function editorialContext(issues) {
-  const editions = issues.filter((i) => i.original.meta.editorial_format === EDITORIAL_FORMAT)
+  const editions = issues.filter((i) => i.items.some((a) => a.editorial))
   const deep = editions.flatMap((i) =>
     i.items
-      .filter((a) => a.editorial?.kind !== "사건 뉴스")
+      .filter((a) => a.editorial && a.editorial.kind !== "사건 뉴스")
       .map((a) => ({ date: i.date, event_id: a.id, ...a.editorial })),
   )
   const last = deep.at(-1)
@@ -145,7 +166,9 @@ export function editorialContext(issues) {
     next_deep_kind: DEEP_KINDS[(DEEP_KINDS.indexOf(last?.kind) + 1) % 3],
     recent_deep: deep.slice(-30),
     article_evidence: editions.flatMap((i) =>
-      i.items.map((a) => ({ date: i.date, event_id: a.id, ...a.editorial })),
+      i.items
+        .filter((a) => a.editorial)
+        .map((a) => ({ date: i.date, event_id: a.id, ...a.editorial })),
     ),
   }
 }
@@ -157,7 +180,7 @@ export function validateIdentities(issues) {
     for (const a of i.items) {
       for (const p of a.editorial?.papers || [])
         for (const raw of p.identifiers) {
-          const key = raw.toLowerCase().replace(/^(arxiv:.*)v\d+$/, "$1")
+          const key = paperKey(raw)
           if (papers.has(key) && papers.get(key) !== p.work_id)
             fail("paper identifier assigned to different works: " + raw)
           papers.set(key, p.work_id)

@@ -1,6 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import { articleCard, sectorTabs } from "../scripts/reader-cards.mjs"
+import { articleSourceLinks } from "../scripts/site.mjs"
 const a = {
   id: "1234567890abcdef",
   title: "기사",
@@ -19,6 +20,21 @@ test("cards preserve publication date, sources and escaped filter links", () => 
   assert.ok(s.indexOf("<h3>") < s.indexOf("<time"))
   assert.match(s, /https:\/\/example.com\/news/)
 })
+test("multiple originals have distinct labels in cards and article headers", () => {
+  const urls = ["https://example.com/a.pdf", "https://example.com/b.pdf"]
+  const card = articleCard({ ...a, urls }, (p) => "/" + p)
+  const header = articleSourceLinks(urls)
+  assert.match(card, /example\.com 원문 1 ↗/)
+  assert.match(card, /example\.com 원문 2 ↗/)
+  assert.match(header, /aria-label="example\.com 원문 1 ↗">원문 1 ↗/)
+  assert.match(header, /aria-label="example\.com 원문 2 ↗">원문 2 ↗/)
+  assert.match(articleSourceLinks(a.urls), /example\.com 원문 ↗/)
+  assert.doesNotMatch(articleSourceLinks(a.urls), /원문 1/)
+  assert.match(
+    articleSourceLinks(["https://example.com/a.pdf", "https://another.example/b.pdf"]),
+    /another\.example 원문 ↗/,
+  )
+})
 test("tabs include only populated sectors without inventing analysis", () => {
   assert.equal(sectorTabs([], "/news"), "")
   const s = sectorTabs([a, a], "/news")
@@ -32,8 +48,18 @@ test("literal percent in article titles remains a valid alias", () => {
 })
 import { matchesNews } from "../web/news-filter.mjs"
 test("deep navigation only appears for authored analysis and composes with other filters", () => {
-  const deep = { ...a, editorial: { kind: "기업 전략" } }
+  const deep = {
+    ...a,
+    editorial: {
+      kind: "기업 전략",
+      analysis_summary: "앞선 계획과 이번 계약의 집행 단계를 비교한다.",
+    },
+  }
   assert.match(sectorTabs([deep], "/news"), /data-deep-tab/)
+  assert.doesNotMatch(
+    sectorTabs([{ ...deep, editorial: { kind: "기업 전략" } }], "/news"),
+    /data-deep-tab/,
+  )
   assert.equal(matchesNews({ deep: false }, { kind: "deep" }), false)
   assert.equal(
     matchesNews({ deep: true, sector: a.sector }, { kind: "deep", sector: a.sector }),

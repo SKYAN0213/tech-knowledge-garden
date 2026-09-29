@@ -4,17 +4,18 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import RSSParser from "rss-parser"
-import { loadTrends, trendSnapshot } from "../scripts/trends.mjs"
+import { loadTrends, trendSnapshot, currentTrendSnapshot } from "../scripts/trends.mjs"
 import { noteText, editions, extractArticles, feeds } from "../scripts/garden.mjs"
 import {
   briefingLibrary,
   topicMarkdown,
+  topicAsOf,
   feedDescription,
   githubIssue,
   digestPath,
   githubMarkdown,
 } from "../scripts/briefings.mjs"
-import { newsView } from "../scripts/reader-views.mjs"
+import { newsView, briefingHub } from "../scripts/reader-views.mjs"
 const fixture = (t) => {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), "trend-test-"))
   t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
@@ -98,6 +99,108 @@ test("Earlier issues, including morning snapshots, exclude later events and less
   )
   assert.equal(trendSnapshot(data, f.issues[2].key).topics[0].events, 3)
   assert.equal(trendSnapshot(data, f.issues[3].key).topics[0].events, 4)
+})
+test("current knowledge re-review does not change historical edition judgments", (t) => {
+  const f = fixture(t)
+  f.topic.reviewed = "2026-09-27"
+  f.topic.thesis = "NEW SOURCE-REVIEWED CURRENT JUDGMENT"
+  f.save()
+  const data = loadTrends(f.vault, f.issues)
+  const old = trendSnapshot(data, f.issues[1].key)
+  assert.doesNotMatch(topicMarkdown(old.topics[0], old.date), /NEW SOURCE-REVIEWED/)
+  const current = currentTrendSnapshot(data)
+  assert.equal(current.date, "2026-09-27")
+  assert.match(topicMarkdown(current.topics[0], current.date), /NEW SOURCE-REVIEWED/)
+  assert.equal(current.topics[0].events, trendSnapshot(data, f.issues.at(-1).key).topics[0].events)
+})
+test("re-reviewing one topic does not advance an unrelated topic page date", (t) => {
+  const f = fixture(t)
+  f.topic.reviewed = "2026-09-27"
+  f.put("TrendTopics/unchanged.md", { ...f.topic, id: "unchanged", reviewed: "2026-09-09" })
+  f.reviews[0].observations.push({ ...f.signal("untouched", "event-a"), topic_id: "unchanged" })
+  f.save()
+  const current = currentTrendSnapshot(loadTrends(f.vault, f.issues))
+  assert.equal(current.date, "2026-09-27")
+  assert.equal(
+    topicAsOf(
+      current.topics.find((t) => t.id === "systems"),
+      f.issues.at(-1).date,
+    ),
+    "2026-09-27",
+  )
+  assert.equal(
+    topicAsOf(
+      current.topics.find((t) => t.id === "unchanged"),
+      f.issues.at(-1).date,
+    ),
+    "2026-09-09",
+  )
+})
+test("briefing hub shows current reviewed topic text while retaining the latest edition date", (t) => {
+  const f = fixture(t)
+  f.topic.reviewed = "2026-09-27"
+  f.topic.reader_format = "source-events/v1"
+  f.topic.thesis = "CURRENT REVIEWED SOURCE SUMMARY"
+  f.save()
+  const data = loadTrends(f.vault, f.issues)
+  const latest = {
+    ...f.issues.at(-1),
+    snapshot: trendSnapshot(data, f.issues.at(-1).key),
+    original: { meta: {} },
+    lead: "Latest briefing",
+  }
+  const current = currentTrendSnapshot(data)
+  const html = briefingHub(
+    { latest, issues: [latest], current },
+    (p) => "/" + p,
+    "https://example.org",
+  )
+  assert.match(html, /CURRENT REVIEWED SOURCE SUMMARY/)
+  assert.match(html, /09-27 갱신/)
+  assert.match(html, /datetime="2026-09-09"/)
+  assert.equal(latest.snapshot.date, "2026-09-09")
+  assert.doesNotMatch(html, /0개 판단 원칙/)
+})
+test("source-event topic pages show reviewed events once and hide private follow-up and empty sections", () => {
+  const article = {
+    title: "Verified article",
+    summary: "Actual source fact: 1.5~1.9.",
+    urls: ["https://example.org/original"],
+    review: { review_status: "verified", published_at: "2026-09-21" },
+  }
+  const signal = {
+    id: "same-event",
+    event_id: "abc",
+    issue: "Editions/2026/09/2026-09-22_0800_Tech_AI_Briefing",
+    article,
+    order: 1,
+    meaning: "PRIVATE INTERPRETATION",
+    limit: "PRIVATE LIMIT",
+    next_check: "PRIVATE NEXT",
+  }
+  const topic = {
+    id: "topic",
+    reader_format: "source-events/v1",
+    reviewed: "2026-09-27",
+    thesis: "Reviewed factual summary.",
+    knowledge_notes: [],
+    latest: signal,
+    history: [
+      signal,
+      { ...signal, order: 2 },
+      {
+        ...signal,
+        event_id: "unchecked",
+        article: { ...article, review: { review_status: "unreviewed" } },
+      },
+    ],
+  }
+  const output = topicMarkdown(topic, "2026-09-27")
+  assert.equal(output.match(/Actual source fact:/g).length, 1)
+  assert.match(output, /1\.5\\~1\.9/)
+  assert.match(output, /2026-09-21/)
+  assert.match(output, /https:\/\/example.org\/original/)
+  assert.doesNotMatch(output, /PRIVATE|다음 확인|재사용할 원칙|관련 개념|확인하는 중/)
 })
 test("Missing review is unknown; an explicit empty review is a reviewed zero", (t) => {
   const f = fixture(t)

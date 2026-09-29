@@ -8,7 +8,9 @@ import { feeds } from "./garden.mjs"
 const input = fs.mkdtempSync(path.join(os.tmpdir(), "tech-garden-reader-"))
 try {
   prepare("vault", input)
-  const r = spawnSync("npx", ["quartz", "build", "-d", input], { stdio: "inherit" })
+  const r = spawnSync(process.execPath, ["quartz/bootstrap-cli.mjs", "build", "-d", input], {
+    stdio: "inherit",
+  })
   if (r.status !== 0) throw Error("Quartz rendering failed")
   feeds()
   fs.writeFileSync("public/knowledge-graph.json", JSON.stringify(buildGraph()))

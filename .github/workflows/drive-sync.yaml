@@ -49,7 +49,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- vault data/catalog.json data/drive-source-state.json digest
+          git add -- vault/Editions vault/Knowledge vault/Signals vault/TrendTopics vault/Briefings vault/News vault/Trends 'vault/Knowledge Maps' vault/About.md vault/index.md vault/briefing.xml digest data/catalog.json data/drive-source-state.json
           git diff --cached --quiet || git commit -m 'Sync website source from Google Drive'
           git push origin HEAD:main
       - uses: actions/configure-pages@v5

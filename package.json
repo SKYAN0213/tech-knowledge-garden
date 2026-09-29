@@ -26,7 +26,9 @@
     "build": "npm run refresh && npm run validate && node scripts/build-site.mjs",
     "dev": "node scripts/serve.mjs",
     "publish": "node scripts/publish.mjs",
-    "context": "node scripts/garden.mjs context"
+    "context": "node scripts/garden.mjs context",
+    "research": "node scripts/research.mjs",
+    "research:daily": "node scripts/research-daily.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",

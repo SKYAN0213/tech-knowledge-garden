@@ -123,6 +123,19 @@ test("Every approved theme is usable and metadata cannot attach an article to a 
   assert.match(text, /조달 완료/)
 })
 
+test("treasury share purchases use the capital theme without implying an operating result", () => {
+  const text = body
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "자기주식 취득")
+  const result = classifyArticle(text, "FANUC 자기주식 취득")
+  assert.equal(result.theme, "투자·기업거래")
+  assert.deepEqual(result.event_tags, ["자기주식 취득"])
+  assert.throws(
+    () => classifyArticle(text.replace("**테마:** 투자·기업거래", "**테마:** 실적·재무"), "wrong"),
+    /tags/,
+  )
+})
+
 test("Combined news filters match secondary themes and exact entities, with Unicode-safe tag search", () => {
   const a = {
     text: "투자 발표",

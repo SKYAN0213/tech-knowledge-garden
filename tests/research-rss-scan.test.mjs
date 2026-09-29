@@ -1,0 +1,239 @@
+import test from "node:test"
+import assert from "node:assert/strict"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
+import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
+import { candidatesFromLinks } from "../scripts/research/discovery.mjs"
+import { collectWindowDetails } from "../scripts/research/list-scan.mjs"
+import { assertStoredEvidence } from "../scripts/research/parser.mjs"
+import {
+  assessBoundedRSSFeed,
+  parseStoredRSSFeed,
+  scanBoundedRSSRoute,
+} from "../scripts/research/rss-scan.mjs"
+
+const channel = {
+  channel_id: "official-feed",
+  method: "rss",
+  url: "https://feeds.example.com/news.xml",
+  language: "en",
+  allowed_hosts: ["feeds.example.com", "example.com"],
+  item_pattern: "^https://example\\.com/articles/[^/?#]+/?$",
+  scan_max_details: 10,
+  listing_profile: {
+    pagination: "bounded-feed",
+    rule_id: "official-feed-v1",
+    feed_title: "Official Feed",
+    max_items: 20,
+    guid_is_permalink: true,
+  },
+}
+const item = (date, slug) => ({
+  url: `https://example.com/articles/${slug}/`,
+  guid: `https://example.com/articles/${slug}/`,
+  text: `Verified article ${slug}`,
+  listed_date_text: date + " 12:00:00 GMT",
+  published_at: date,
+  published_timestamp: date + "T12:00:00.000Z",
+})
+const links = [item("2026-09-25", "recent"), item("2026-09-08", "older")]
+const parse = {
+  status: "extracted",
+  title: "Official Feed",
+  quality: { required_fields_present: true },
+  links,
+}
+
+test("stored RSS bytes become immutable parse evidence and a dated discovery list", async () => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-"))
+  try {
+    const xml = `<rss version="2.0"><channel><title>Official Feed</title><link>https://example.com/</link><description>News</description>
+      <item><title>Verified article recent</title><link>https://example.com/articles/recent/</link><guid>https://example.com/articles/recent/</guid><pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate></item>
+      <item><title>Verified article older</title><link>https://example.com/articles/older/</link><guid>https://example.com/articles/older/</guid><pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate></item>
+      </channel></rss>`
+    const raw = Buffer.from(xml)
+    fs.writeFileSync(path.join(root, "feed.xml"), raw)
+    const document = {
+      fetch_status: "captured",
+      original_url: channel.url,
+      source_id: sourceId(channel.url),
+      body_path: "feed.xml",
+      body_sha256: sha256(raw),
+      observed_at: "2026-09-29T00:00:00Z",
+    }
+    document.source_version_id = `${document.source_id}:${document.body_sha256}`
+    const result = await parseStoredRSSFeed(root, document, channel)
+    assert.equal(result.title, "Official Feed")
+    assert.equal(result.links.length, 2)
+    assert.equal(result.links[0].published_at, "2026-09-25")
+    assert.equal(
+      assessBoundedRSSFeed(result, channel, "2026-09-22", "2026-09-29").status,
+      "window_covered",
+    )
+    assertStoredEvidence(root, [document], [result])
+    fs.writeFileSync(path.join(root, "feed.xml"), "changed")
+    await assert.rejects(() => parseStoredRSSFeed(root, document, channel), /hash mismatch/)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test("RSS window coverage needs a valid older boundary and unique dated article identities", () => {
+  const complete = assessBoundedRSSFeed(parse, channel, "2026-09-22", "2026-09-29")
+  assert.equal(complete.status, "window_covered")
+  assert.equal(complete.window_items, 1)
+  assert.equal(complete.older_items, 1)
+  assert.deepEqual(complete.links, [links[0]])
+  assert.equal(
+    assessBoundedRSSFeed(parse, channel, "2026-09-01", "2026-09-29").reason,
+    "feed_cutoff_not_reached",
+  )
+  assert.equal(assessBoundedRSSFeed(parse, channel, "2026-09-27", "2026-09-29").window_items, 0)
+  for (const badLinks of [
+    [links[0], { ...links[0] }],
+    [links[0], { ...links[1], guid: "not-a-url" }],
+    [links[0], { ...links[1], published_at: null }],
+    [links[1], links[0]],
+  ])
+    assert.equal(
+      assessBoundedRSSFeed({ ...parse, links: badLinks }, channel, "2026-09-22", "2026-09-29")
+        .status,
+      "incomplete",
+    )
+  const crowded = { ...parse, links: [links[0], item("2026-09-24", "second"), links[1]] }
+  assert.equal(
+    assessBoundedRSSFeed(crowded, { ...channel, scan_max_details: 1 }, "2026-09-22", "2026-09-29")
+      .reason,
+    "detail_budget_exceeded",
+  )
+})
+
+test("an article nested below a topics path remains a discovery candidate", () => {
+  const nested = {
+    ...channel,
+    item_pattern: "^https://example\\.com/blog/topics/security/[^/?#]+/?$",
+    sectors: ["사이버보안"],
+    region: "해외",
+    axis: "기술·제품",
+    publisher_id: "example.com",
+  }
+  const found = candidatesFromLinks(
+    [
+      {
+        ...item("2026-09-25", "article"),
+        url: "https://example.com/blog/topics/security/article/",
+      },
+    ],
+    nested,
+    "2026-09-29T00:00:00Z",
+  )
+  assert.equal(found.length, 1)
+})
+
+test("RSS scan keeps detail failures incomplete and only accepts a fully checked empty window", async () => {
+  const root = "unused"
+  const document = {
+    fetch_status: "captured",
+    source_version_id: "feed-version",
+    observed_at: "2026-09-29T00:00:00Z",
+  }
+  const run = { stage: (_name, _input, operation) => operation() }
+  const fetchPolicy = async () => document
+  const parseFeed = async () => ({ ...parse, parse_id: "feed-parse" })
+  const failed = await scanBoundedRSSRoute(
+    root,
+    run,
+    {},
+    channel,
+    [],
+    { since: "2026-09-22", until: "2026-09-29" },
+    {
+      fetchPolicy,
+      parseFeed,
+      collectDetails: async () => ({
+        documents: [],
+        parses: [],
+        candidates: [],
+        details: [{ status: "date_conflict" }],
+      }),
+    },
+  )
+  assert.equal(failed.summary.status, "incomplete")
+  assert.equal(failed.summary.reason, "detail_incomplete")
+  assert.deepEqual(failed.candidates, [])
+  const empty = await scanBoundedRSSRoute(
+    root,
+    run,
+    {},
+    channel,
+    [],
+    { since: "2026-09-27", until: "2026-09-29" },
+    {
+      fetchPolicy,
+      parseFeed,
+      collectDetails: async () => ({ documents: [], parses: [], candidates: [], details: [] }),
+    },
+  )
+  assert.equal(empty.summary.status, "window_scanned")
+  assert.equal(empty.summary.assessment.older_items, 2)
+  assert.equal(empty.candidates.length, 0)
+})
+
+test("RSS detail title conflict cannot become a candidate, while whitespace differences can", async () => {
+  const link = {
+    ...item("2026-09-25", "recent"),
+    listing_source_version_id: "feed:v1",
+    listing_parse_id: "feed-parse",
+    discovered_at: "2026-09-29T00:00:00Z",
+  }
+  const document = {
+    source_version_id: "article:v1",
+    final_url: link.url,
+    original_url: link.url,
+    fetch_status: "captured",
+    observed_at: "2026-09-29T00:00:00Z",
+  }
+  const articleProfiles = [
+    { id: "test-article", url_pattern: "^https://example\\.com/articles/", options: {} },
+  ]
+  const run = { stage: (_name, _input, operation) => operation() }
+  const parse = async (_root, _document, _options) => ({
+    status: "extracted",
+    quality: { required_fields_present: true },
+    title: "A different article",
+    dates: { published_at: "2026-09-25" },
+    blocks: [{ text: "Article body" }],
+    parse_id: "article-parse",
+  })
+  const options = {
+    fetchPolicy: async () => document,
+    parse,
+  }
+  const rejected = await collectWindowDetails(
+    "unused",
+    run,
+    {},
+    channel,
+    articleProfiles,
+    [link],
+    options,
+  )
+  assert.equal(rejected.details[0].status, "title_conflict")
+  assert.equal(rejected.candidates.length, 0)
+
+  const accepted = await collectWindowDetails(
+    "unused",
+    run,
+    {},
+    { ...channel, publisher_id: "example.com", sectors: ["AI"], region: "해외", axis: "기술·제품" },
+    articleProfiles,
+    [link],
+    {
+      ...options,
+      parse: async () => ({ ...(await parse()), title: " Verified\u00a0article   recent " }),
+    },
+  )
+  assert.equal(accepted.details[0].status, "source_parsed_unreviewed")
+  assert.equal(accepted.candidates.length, 1)
+})

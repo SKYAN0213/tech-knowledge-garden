@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from datetime import datetime, timezone, timedelta
 
 spec = importlib.util.spec_from_file_location('drive_sync', Path(__file__).parents[1] / 'scripts/pull-drive.py')
 sync = importlib.util.module_from_spec(spec)
@@ -71,5 +72,33 @@ class DriveSyncTests(unittest.TestCase):
             repo = Path(t); (repo / 'vault').mkdir()
             (repo / 'vault/Knowledge').symlink_to(other, target_is_directory=True)
             with self.assertRaises(ValueError): sync.synchronize(snapshot(), repo, True)
+
+    def test_fresh_export_must_match_entire_local_source_tree(self):
+        with tempfile.TemporaryDirectory() as t:
+            repo = Path(t)
+            exported = snapshot()
+            sync.synchronize(exported, repo, True)
+            now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+            exported['exported_at'] = (now - timedelta(minutes=2)).isoformat()
+            raw = json.dumps(exported).encode()
+            proof = sync.verify_source_snapshot(exported, repo, raw, now=now)
+            self.assertEqual(proof['source_files'], 4)
+            self.assertEqual(proof['snapshot_file_sha256'], sync.digest(raw))
+            exported['exported_at'] = (now - timedelta(minutes=11)).isoformat()
+            with self.assertRaisesRegex(ValueError, 'stale'):
+                sync.verify_source_snapshot(exported, repo, json.dumps(exported).encode(), now=now)
+            exported['exported_at'] = now.isoformat()
+            (repo / 'vault/Knowledge/sample.md').write_text('unsaved local change')
+            with self.assertRaisesRegex(ValueError, 'differs'):
+                sync.verify_source_snapshot(exported, repo, json.dumps(exported).encode(), now=now)
+
+    def test_stored_export_still_requires_valid_timestamp(self):
+        with tempfile.TemporaryDirectory() as t:
+            repo = Path(t)
+            exported = snapshot()
+            sync.synchronize(exported, repo, True)
+            exported.pop('exported_at')
+            with self.assertRaisesRegex(ValueError, 'timestamp'):
+                sync.verify_source_snapshot(exported, repo, json.dumps(exported).encode(), max_age_seconds=None)
 
 if __name__ == '__main__': unittest.main()

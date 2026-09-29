@@ -1,0 +1,77 @@
+{
+  "schema": "research-daily-routes/v1",
+  "lookback_days": 7,
+  "max_window_days": 7,
+  "routes": [
+    {
+      "channel_id": "fanuc-en",
+      "enabled": true,
+      "baseline_run": "20260928-fanuc-en-window-20260901-v2"
+    },
+    {
+      "channel_id": "route-fanuc-ir-disclosures-ja",
+      "enabled": true,
+      "baseline_run": "20260928-fanuc-ir-disclosures-sep-window-v2"
+    },
+    {
+      "channel_id": "route-hd-news-ko",
+      "enabled": true,
+      "baseline_run": "20260928-hd-press-window-20260901-v1"
+    },
+    {
+      "channel_id": "route-kuka-news-de",
+      "enabled": true,
+      "baseline_run": "20260928-kuka-de-sep-window-v2"
+    },
+    {
+      "channel_id": "route-doosan-news-en",
+      "enabled": true,
+      "baseline_run": "20260928-doosan-en-sep-window-v2"
+    },
+    {
+      "channel_id": "route-abb-robotics-en",
+      "enabled": true,
+      "baseline_run": "20260928-abb-en-sep-window-v2"
+    },
+    {
+      "channel_id": "github-changelog",
+      "enabled": true,
+      "baseline_run": "20260929-github-changelog-window-20260927-v1"
+    },
+    {
+      "channel_id": "google-cloud-threat-intelligence",
+      "enabled": true,
+      "baseline_run": "20260929-google-cloud-threat-window-v2"
+    },
+    {
+      "channel_id": "nvidia-press-releases",
+      "enabled": true,
+      "baseline_run": "20260929-nvidia-press-window-v1"
+    },
+    {
+      "channel_id": "mit-ai-research",
+      "enabled": true,
+      "baseline_run": "20260929-mit-ai-window-v1"
+    },
+    {
+      "channel_id": "mit-robotics",
+      "enabled": true,
+      "baseline_run": "20260929-mit-robotics-window-v1"
+    },
+    {
+      "channel_id": "frontiers-robotics-papers",
+      "enabled": true,
+      "baseline_run": "20260929-frontiers-robotics-window-v1"
+    },
+    {
+      "channel_id": "nasa-technology-rss",
+      "enabled": true,
+      "baseline_run": "20260929-nasa-technology-window-v1"
+    },
+    {
+      "channel_id": "fda-press-announcements",
+      "enabled": true,
+      "baseline_run": "20260929-fda-press-sep-window-v2"
+    }
+  ]
+}

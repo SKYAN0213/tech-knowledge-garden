@@ -1,5 +1,12 @@
 import { esc, publisher } from "./briefings.mjs"
 import { explanationHTML } from "./explanations.mjs"
+import { hasDeepAnalysis } from "./editorial.mjs"
+import { articleDateLabel } from "./article-review.mjs"
+export const sourceLinkLabel = (url, index, sources) => {
+  const name = publisher(url)
+  const repeated = sources.filter((source) => publisher(source) === name).length > 1
+  return `${name} 원문${repeated ? ` ${index + 1}` : ""} ↗`
+}
 export function articleTags(a, href) {
   const c = a.classification || {}
   const entries = [
@@ -17,13 +24,13 @@ export function articleCard(a, href, expanded = false) {
     themes: [c.theme, c.secondary_theme].filter(Boolean),
     tags: c.event_tags || [],
     entities: c.entities || [],
-    deep: !!a.editorial && a.editorial.kind !== "사건 뉴스",
+    deep: hasDeepAnalysis(a),
   }
-  return `<article class="news-row" data-news-row data-classification="${esc(JSON.stringify(data))}"><h3><a href="${esc(href("News/" + a.id))}">${esc(a.title)}</a></h3>${a.review?.published_at ? `<time datetime="${a.review.published_at}">발표 ${a.review.published_at.replaceAll("-", ".")}</time>` : ""}${articleTags(a, href)}<p>${esc(a.summary)}</p>${expanded ? explanationHTML(a) : ""}<div class="news-actions">${a.urls.map((u) => `<a href="${esc(u)}">${esc(publisher(u))} 원문 ↗</a>`).join("")}</div></article>`
+  return `<article class="news-row" data-news-row data-classification="${esc(JSON.stringify(data))}"><h3><a href="${esc(href("News/" + a.id))}">${esc(a.title)}</a></h3>${a.review?.published_at ? `<time datetime="${a.review.published_at}">${articleDateLabel(a.review)} ${a.review.published_at.replaceAll("-", ".")}</time>` : ""}${articleTags(a, href)}<p>${esc(a.summary)}</p>${expanded ? explanationHTML(a) : ""}<div class="news-actions">${a.urls.map((u, i) => `<a href="${esc(u)}">${esc(sourceLinkLabel(u, i, a.urls))}</a>`).join("")}</div></article>`
 }
 export function sectorTabs(articles, href) {
   const sectors = [...new Set(articles.map((a) => a.sector).filter(Boolean))]
-  const deep = articles.some((a) => a.editorial && a.editorial.kind !== "사건 뉴스")
+  const deep = articles.some(hasDeepAnalysis)
   if (!sectors.length && !deep) return ""
   return `<nav class="sector-tabs" aria-label="기사 분야"><a href="${esc(href)}" data-sector-tab="" aria-current="page">전체</a>${sectors.map((s) => `<a href="${esc(href + "?" + new URLSearchParams({ sector: s }))}" data-sector-tab="${esc(s)}">${esc(s)}</a>`).join("")}${deep ? `<a href="${esc(href + "?kind=deep")}" data-deep-tab>심층 분석</a>` : ""}</nav>`
 }
