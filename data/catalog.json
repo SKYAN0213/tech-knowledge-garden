@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-09-22T23:17:13.068Z",
   "edition_count": 118,
-  "news_count": 92,
+  "news_count": 93,
   "concept_count": 27,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -531,6 +531,7 @@
     "https://www.graphistry.com/blog/glm-5-2-cybersecurity-open-model",
     "https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion",
     "https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge",
+    "https://www.ionq.com/news/ionq-completes-acquisition-of-skywater-technology",
     "https://www.jetbrains.com/acp",
     "https://www.jetbrains.com/ai",
     "https://www.kasa.go.kr/prog/plcyBrf/brief/kor/sub01_01_04/view.do?plcyBrfNo=498",
@@ -589,6 +590,7 @@
   "generated": [
     "News/bef8ee041d7dc1a0",
     "News/ef404a41d1e5901f",
+    "News/45c58985be6c34bb",
     "News/72f164fe85756954",
     "News/bb0b51006dee6853",
     "News/fe30a02568cd33cb",
