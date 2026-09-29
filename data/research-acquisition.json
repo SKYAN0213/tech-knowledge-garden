@@ -491,6 +491,19 @@
       }
     },
     {
+      "id": "skhynix-newsroom-en-article-v1",
+      "url_pattern": "^https://news\\.skhynix\\.com/en/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' type-post ')]//h2[contains(concat(' ', normalize-space(@class), ' '), ' post-title ')]",
+        "content_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' type-post ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' post-contents ')]",
+        "content_block_xpath": ".//h3[contains(concat(' ', normalize-space(@class), ' '), ' sub-title ')]|.//p[normalize-space(.) and not(contains(concat(' ', normalize-space(@class), ' '), ' caption ')) and not(.//img)]",
+        "publication_date_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' type-post ')]//ul[contains(concat(' ', normalize-space(@class), ' '), ' post-info ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
       "id": "nvidia-newsroom-press-release-v1",
       "url_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
       "options": {
@@ -673,6 +686,20 @@
       "max_items": 50,
       "guid_is_permalink": false,
       "scope": "Official press-release RSS; use its UTC calendar date and verify full article titles and printed publication dates before accepting a window."
+    }
+  },
+  "skhynix-newsroom-en": {
+    "publisher_id": "news.skhynix.com",
+    "allowed_hosts": ["news.skhynix.com"],
+    "item_pattern": "^https://news\\.skhynix\\.com/en/[^/?#]+/?$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "skhynix-newsroom-en-rss-v1",
+      "feed_title": "SK hynix Newsroom",
+      "max_items": 10,
+      "guid_is_permalink": false,
+      "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. A seven-day window is complete only when an older feed item and every selected dated full article match."
     }
   },
   "nvidia-press-releases": {

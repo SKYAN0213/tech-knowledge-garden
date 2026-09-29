@@ -82,6 +82,11 @@
       "channel_id": "kaist-robotics-research",
       "enabled": true,
       "baseline_run": "20260929-kaist-robotics-sep22-window-v4"
+    },
+    {
+      "channel_id": "skhynix-newsroom-en",
+      "enabled": true,
+      "baseline_run": "20260930-skhynix-sep23-window-v1"
     }
   ]
 }

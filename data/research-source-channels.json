@@ -471,6 +471,23 @@
       }
     },
     {
+      "id": "skhynix-newsroom-en",
+      "name": "SK hynix Newsroom English",
+      "kind": "company",
+      "language": "en",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["반도체·컴퓨팅"],
+      "method": "rss",
+      "url": "https://news.skhynix.com/en/feed/",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "Official 10-item WordPress feed. September 23–30 reached an older item and one dated full article; a separate September 30 observation was empty. Stored feed, detail and candidate evidence passed verification. Editorial review is separate."
+      }
+    },
+    {
       "id": "nvidia-press-releases",
       "name": "NVIDIA Newsroom Press Releases",
       "kind": "company",
