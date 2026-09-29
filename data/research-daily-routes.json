@@ -72,6 +72,11 @@
       "channel_id": "fda-press-announcements",
       "enabled": true,
       "baseline_run": "20260929-fda-press-sep-window-v2"
+    },
+    {
+      "channel_id": "samsung-global-press-releases",
+      "enabled": true,
+      "baseline_run": "20260929-samsung-global-press-window-v2"
     }
   ]
 }

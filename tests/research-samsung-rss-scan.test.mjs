@@ -6,13 +6,15 @@ import path from "node:path"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { registry } from "../scripts/research/discovery.mjs"
 import { scanBoundedRSSRoute } from "../scripts/research/rss-scan.mjs"
+import { validateDailyRoutes } from "../scripts/research/daily-plan.mjs"
 
 const acquisition = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
-const route = registry(
+const routes = registry(
   JSON.parse(fs.readFileSync("data/research-source-channels.json", "utf8")),
   JSON.parse(fs.readFileSync("data/research-watchlist.json", "utf8")),
   acquisition,
-).find((entry) => entry.channel_id === "samsung-global-press-releases")
+)
+const route = routes.find((entry) => entry.channel_id === "samsung-global-press-releases")
 const profile = acquisition.article_profiles.find(
   (entry) => entry.id === "samsung-global-press-release-v1",
 )
@@ -37,6 +39,18 @@ function stored(root, url, body, extension) {
 }
 
 test("Samsung press RSS checks short GUID, article date and full body before accepting a window", async (t) => {
+  const daily = JSON.parse(fs.readFileSync("data/research-daily-routes.json", "utf8"))
+  assert.deepEqual(
+    validateDailyRoutes(daily, routes).find(
+      (entry) => entry.channel_id === "samsung-global-press-releases",
+    ),
+    {
+      channel_id: "samsung-global-press-releases",
+      enabled: true,
+      baseline_run: "20260929-samsung-global-press-window-v2",
+      route,
+    },
+  )
   assert.equal(route.region, "국내")
   assert.equal(route.axis, "기업·운영")
   assert.equal(route.method, "rss")
