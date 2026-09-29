@@ -478,6 +478,19 @@
       }
     },
     {
+      "id": "kaist-research-news-article-v1",
+      "url_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?(?:mode=V&mng_no=[0-9]+&GotoPage=[0-9]+|GotoPage=[0-9]+&mng_no=[0-9]+&mode=V)$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_view ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_tit ')]/strong",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_view ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' txt_box ')]",
+        "content_block_xpath": "./p[normalize-space(.) and not(.//img)]",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_view ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_tit ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+        "publication_date_pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
       "id": "nvidia-newsroom-press-release-v1",
       "url_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
       "options": {
@@ -585,6 +598,37 @@
           "date_xpath": ".//time[@datetime]",
           "date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
           "date_format": "%B %d, %Y"
+        }
+      ]
+    }
+  },
+  "kaist-robotics-research": {
+    "publisher_id": "news.kaist.ac.kr",
+    "allowed_hosts": ["news.kaist.ac.kr"],
+    "item_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?GotoPage=[0-9]+&mng_no=[0-9]+&mode=V$",
+    "scan_max_details": 12,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "kaist-robotics-dated-v1",
+      "require_title_match": true,
+      "article_identity_query_parameter": "mng_no",
+      "scope": "Official keyword-filtered research list. The page must reach an older dated item; a busy period without that boundary remains incomplete."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_list ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' board ')]",
+      "content_block_xpath": "./ul/li",
+      "listing_link_rules": [
+        {
+          "id": "kaist-robotics-dated-v1",
+          "item_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_list ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' board ')]/ul/li/a[contains(concat(' ', normalize-space(@class), ' '), ' lay ')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>\\?mode=V&mng_no=[0-9]+&GotoPage=[0-9]+)(?:&skey=keyword&sval=[^&#]+)?",
+          "title_xpath": ".//strong[contains(concat(' ', normalize-space(@class), ' '), ' tis ')]",
+          "date_xpath": ".//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
         }
       ]
     }

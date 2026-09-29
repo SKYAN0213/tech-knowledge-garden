@@ -14,6 +14,14 @@ export function validDay(value) {
   )
 }
 
+function comparableTitle(value) {
+  return String(value || "")
+    .normalize("NFC")
+    .replace(/[\u200b-\u200d\ufeff]/gu, "")
+    .replace(/\s+/gu, " ")
+    .trim()
+}
+
 export function assessSinglePageIndex(parse, channel, since, until) {
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("List scan requires an increasing [since, until) day window")
@@ -192,12 +200,7 @@ export async function collectWindowDetails(
       }
       if (
         (channel.method === "rss" || channel.listing_profile?.require_title_match) &&
-        String(parsed.title || "")
-          .replace(/\s+/gu, " ")
-          .trim() !==
-          String(link.text || "")
-            .replace(/\s+/gu, " ")
-            .trim()
+        comparableTitle(parsed.title) !== comparableTitle(link.text)
       ) {
         detail.status = "title_conflict"
         continue

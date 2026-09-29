@@ -152,13 +152,20 @@ export function candidatesFromLinks(links, channel, now) {
     } catch {
       continue
     }
+    const parsedURL = new URL(url)
+    const queryIdentity = channel.listing_profile?.article_identity_query_parameter
+    const articleOnIndexPath =
+      Boolean(channel.item_pattern) &&
+      typeof queryIdentity === "string" &&
+      Boolean(parsedURL.searchParams.get(queryIdentity))
     if (
       seen.has(url) ||
       canonicalURL(channel.url) === url ||
       /\/(?:index\.html?|topics?|categories|tag)\/?$/i.test(url) ||
-      /\/(?:news-center|newsroom|press-room|press-releases?|news|publications)\/?$/i.test(
-        new URL(url).pathname,
-      ) ||
+      (!articleOnIndexPath &&
+        /\/(?:news-center|newsroom|press-room|press-releases?|news|publications)\/?$/i.test(
+          parsedURL.pathname,
+        )) ||
       !pattern.test(url)
     )
       continue

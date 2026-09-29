@@ -335,6 +335,22 @@
       }
     },
     {
+      "id": "kaist-robotics-research",
+      "name": "KAIST Robotics Research News",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "url": "https://news.kaist.ac.kr/researchnews/html/news/?skey=keyword&sval=%EB%A1%9C%EB%B4%87",
+      "route_check": {
+        "date": "2026-09-29",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "Official Korean robotics-keyword research list reached an older dated item for September 22–29. The selected full article matched its printed date and title; editorial review is pending."
+      }
+    },
+    {
       "id": "arxiv-robotics",
       "name": "arXiv Robotics",
       "kind": "research",
