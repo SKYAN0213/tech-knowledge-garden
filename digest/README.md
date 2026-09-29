@@ -17,7 +17,6 @@
 - [Teradyne Robotics의 신제품과 영업 조직](topics/company-teradyne-robotics.md) — 원문 2건 · 0개 원칙
 - [삼성자산운용의 생성형 AI 이용 감시 체계](topics/company-samsung-asset-management.md) — 원문 1건 · 0개 원칙
 - [현대차그룹의 자율주행 양산과 자체 AI 개발](topics/company-hyundai-motor-group.md) — 원문 1건 · 0개 원칙
-- [WIRobotics ALLEX 시뮬레이션 공개와 외부 재현](topics/company-wirobotics.md) — 원문 1건 · 0개 원칙
 - [AGIBOT 생산 규모와 산업 현장 배치](topics/company-agibot.md) — 원문 1건 · 0개 원칙
 - [吉翼智能의 로봇 제품 발표와 실제 현장 배치](topics/company-jiyi-robotics.md) — 원문 1건 · 0개 원칙
 
@@ -123,7 +122,7 @@
 - [2026-06-30 · 1605](2026/06/2026-06-30_1605_Tech_AI_Briefing.md) — 2026-06-30 IT · AI · 로보틱스
 - [2026-06-30 · 0602](2026/06/2026-06-30_0602_Tech_AI_Briefing.md) — 2026-06-30 IT · AI · 로보틱스
 - [2026-06-30 · 0004](2026/06/2026-06-30_0004_Tech_AI_Briefing.md) — 2026-06-30 IT · AI · 로보틱스
-- [2026-06-29 · 1803](2026/06/2026-06-29_1803_Tech_AI_Briefing.md) — WIRobotics가 ALLEX의 연구용 시뮬레이션 모델과 실기기 검증을 공개했다.
+- [2026-06-29 · 1803](2026/06/2026-06-29_1803_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
 - [2026-06-29 · 1204](2026/06/2026-06-29_1204_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
 - [2026-06-29 · 0602](2026/06/2026-06-29_0602_Tech_AI_Briefing.md) — 2026-06-29 IT · AI · 로보틱스
 - [2026-06-29 · 0005](2026/06/2026-06-29_0005_Tech_AI_Briefing.md) — AGIBOT이 15,000번째 로봇 생산 이정표와 G2의 공장 검사 사례를 발표했다.
