@@ -4676,4 +4676,14 @@ SK하이닉스 새 피드 판본은 10항목 중 5개가 `Media` 분류의 이�
 
 기존 coverage의 baseline `20260930-skhynix-sep23-window-v1`을 새 원본으로 바꾸면서 처음에는 `Daily route baseline changed`로 안전하게 중단됐다. `bootstrapCoverage()`에 이전·새 baseline의 **같은 날짜 창**, 양쪽 저장 원본의 무결성, 기존 baseline 구간 하나를 확인한 후에만 교체하는 공통 절차를 추가했다. 다른 창이나 손상 원본은 여전히 거부한다. `daily-20260930-skhynix-mixed-v1`의 `--plan-only`는 두 창, `--execute`는 2/2 `window_scanned`, `--resume`은 receipt 2개를 유지했다. SK coverage의 미해결 구간은 0개가 됐고 이전 실패 run은 그대로 보존한다. 최신 20경로 설정의 `daily-20260930-main20-reconciled-plan-v2 --plan-only`는 40창을 생성했을 뿐이다. 이번 로컬 수집의 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`이며, 39+별도 2창을 단일 40/40 완료로 합산하지 않는다.
 
-앞으로 출처 확장은 `source-policy`·원본 보관·공통 목록/RSS·상세 파서·기간/본문 대조·후보 장부·일일 실행을 먼저 적용하고, 실물 원본에서 확인된 시간대·분류·GUID·본문 포맷 같은 차이만 별도 옵션과 회귀 시험으로 수용한다. 재사용 가능한 옵션으로도 표현할 수 없는 형식에만 adapter를 추가한다. NLR의 날짜 약어/feature 본문과 DOE·ESA의 날짜/비기사 충돌은 아직 수용 전이므로 완료 칸에 넣지 않는다.
+앞으로 출처 확장은 `source-policy`·원본 보관·공통 목록/RSS·상세 파서·기간/본문 대조·후보 장부·일일 실행을 먼저 적용하고, 실물 원본에서 확인된 시간대·분류·GUID·본문 포맷 같은 차이만 별도 옵션과 회귀 시험으로 수용한다. 재사용 가능한 옵션으로도 표현할 수 없는 형식에만 adapter를 추가한다. 이 시점에는 NLR의 날짜 약어/feature 본문과 DOE·ESA의 날짜/비기사 충돌이 수용 전이어서 완료 칸에 넣지 않았다.
+
+## 88. NLR 해외 에너지 뉴스의 공통 경로 수용
+
+86절의 NLR 실물 원본을 주 코드의 기존 날짜 목록·HTML 상세 파서에 대입했다. `news-card` 10건은 전부 링크·날짜로 인식됐다. `detail/program` 두 건과 `detail/press` 한 건은 같은 `generic-content` profile로 제목·본문을 읽었고, `news/feature` 한 건은 `main` 안의 여러 `sf-Long-text`와 `parallax-hero`를 순서대로 읽었다. 영문 월 약어 `Sept.`와 `Aug.`를 공통 `%B` 날짜 정규화에서 처리하고, 상세에서 표시 날짜 문단·사진 설명·말미 구독 안내는 본문 블록에서 제외한다. `research-nlr-news-scan.test.mjs`는 세 형식의 정상·빈 창, 제목·날짜 충돌, 잘못된 목록 날짜, 미지원 상세 유형을 시험한다. 각 형식의 실제 선택자와 URL 범위는 [출처 명세 48절](SOURCE_ACQUISITION_SPEC.md#48-nlr-뉴스-공통-날짜-목록과-기사-형식별-상세-설정)에 있다.
+
+주 체크아웃의 새 실물 run `20260930-nlr-energy-sep16-window-v1`(후보 2), `20260930-nlr-energy-sep03-window-v1`(후보 3), `20260930-nlr-energy-sep23-window-v1`(후보 0)은 모두 `window_scanned`이고 저장된 목록·상세·후보 증거 재검사를 통과했다. `20260930-nlr-feature-profile-v1`은 9월 2일 특집의 직접 수집·파싱만 수행했다. 같은 오래된 기간의 목록 시도 `20260930-nlr-energy-sep02-boundary-v1`은 오래된 항목에 닿지 못해 `cutoff_not_reached`로 남겼다. 따라서 페이지네이션 없이 9월 2일 창의 수집 완료를 주장하지 않는다.
+
+활성 기준선은 `20260930-nlr-energy-sep16-window-v1`이다. `.local/research/local-ai/daily-routes-nlr-only.json`의 단일 경로 `daily-20260930-nlr-only-v1`은 세 창을 계획하고 3/3 `window_scanned`로 실행했다. 재개 뒤 계획·요약·세 receipt·인계 **6개 JSON의 SHA가 같았다**. 해외 에너지/기술 조사 칸 한 곳만 `partial`이며 승인 기사나 분야 전체 완료가 아니다. 특집의 같은 저장 원문을 `20260930-nlr-feature-no-cta-v1`에서 재파싱해 구독 안내를 제외한 40개 본문 블록을 확인했다.
+
+주 체크아웃의 `daily-20260930-main21-integrated-v1`은 21경로/42창 모두 `window_scanned`, 미완료 창 0개로 끝났다. 동일 계획의 `--resume`은 영수증 42개를 유지했고 계획·요약·coverage·후보 장부·인계와 영수증을 포함한 JSON **47개 SHA가 모두 같았다**. 비공개 인계 `pending` 85건 중 이번 실행 관측은 56건이다. 32개 조사 칸은 15개 `partial`·17개 `not_attempted`이며, 로컬 작성 원본만 사용한 이 실행의 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. Drive 최신 작성 원본 대조와 새 경로를 포함한 정규 발행은 아직 수행하지 않았다. 다음 확장은 같은 공통 수집기 수용 절차를 적용하되, 페이지 2가 필요한 NLR 과거 기간과 DOE·ESA의 남은 날짜/비기사 차이는 별도 검증한다.

@@ -629,6 +629,32 @@
       }
     },
     {
+      "id": "nlr-news-detail-article-v1",
+      "url_pattern": "^https://www\\.nlr\\.gov/news/detail/(?:program|press)/[0-9]{4}/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//div[contains(concat(' ', normalize-space(@class), ' '), ' generic-content ')]/h1",
+        "content_xpath": "//main//div[contains(concat(' ', normalize-space(@class), ' '), ' generic-content ')]",
+        "content_block_xpath": ".//*[self::p or self::h2 or self::h3 or self::table or self::blockquote][not(contains(concat(' ', normalize-space(@class), ' '), ' caption '))]",
+        "publication_date_xpath": "//main//div[contains(concat(' ', normalize-space(@class), ' '), ' generic-content ')]/div[@id='byline']/div[contains(concat(' ', normalize-space(@class), ' '), ' col-md-8 ')]",
+        "publication_date_pattern": "[A-Z][a-z]{2,8}\\.? [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "nlr-news-feature-article-v1",
+      "url_pattern": "^https://www\\.nlr\\.gov/news/feature/[0-9]{4}/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/section[contains(concat(' ', normalize-space(@class), ' '), ' parallax-hero ')][1]//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//section[contains(concat(' ', normalize-space(@class), ' '), ' parallax-hero ')]//p | .//div[contains(concat(' ', normalize-space(@class), ' '), ' sf-Long-text ')]/*[self::p or self::h2 or self::h3 or self::table or self::blockquote][not(contains(concat(' ', normalize-space(@class), ' '), ' caption '))][not(starts-with(normalize-space(.), 'Interested in learning more?'))]",
+        "publication_date_xpath": "//main/div[contains(concat(' ', normalize-space(@class), ' '), ' sf_colsIn ')][1]//div[contains(concat(' ', normalize-space(@class), ' '), ' sf-Long-text ')]/p[1]",
+        "publication_date_pattern": "[A-Z][a-z]{2,8}\\.? [0-9]{1,2}, [0-9]{4}",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
       "id": "kakao-press-detail-v1",
       "url_pattern": "^https://www\\.kakaocorp\\.com/page/detail/[0-9]+/?$",
       "options": {
@@ -760,6 +786,36 @@
           "date_xpath": "ancestor::tr[1]/td[contains(concat(' ', normalize-space(@class), ' '), ' icon-date ')]",
           "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
           "date_format": "%Y.%m.%d"
+        }
+      ]
+    }
+  },
+  "nlr-energy-news": {
+    "publisher_id": "nlr.gov",
+    "allowed_hosts": ["www.nlr.gov"],
+    "item_pattern": "^https://www\\.nlr\\.gov/news/(?:detail/[a-z-]+|feature)/[0-9]{4}/[^/?#]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "nlr-news-dated-v1",
+      "require_title_match": true,
+      "scope": "The first official news page mixes program, press and feature articles. A window is complete only when the page reaches an older dated item; otherwise pagination is required."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//title",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//div[contains(concat(' ', normalize-space(@class), ' '), ' news-card ')]",
+      "listing_link_rules": [
+        {
+          "id": "nlr-news-dated-v1",
+          "item_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' news-card ')]/h3/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>(?:https://www\\.nlr\\.gov)?/news/(?:detail/[a-z-]+|feature)/[0-9]{4}/[^/?#]+)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' news-card ')][1]/span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+          "date_pattern": "^[A-Z][a-z]{2,8}\\.? [0-9]{1,2}, [0-9]{4}$",
+          "date_format": "%B %d, %Y"
         }
       ]
     }

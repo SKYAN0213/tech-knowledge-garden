@@ -40,6 +40,17 @@ def known_date(value):
 
 def date_for_strptime(value, fmt, language):
     """Normalize publisher month names without relying on the host locale."""
+    if isinstance(language, str) and language.split("-", 1)[0].lower() == "en" and "%B" in fmt:
+        months = {
+            "Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April",
+            "May": "May", "Jun": "June", "Jul": "July", "Aug": "August",
+            "Sep": "September", "Sept": "September", "Oct": "October",
+            "Nov": "November", "Dec": "December",
+        }
+        value = re.sub(
+            r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.?(?=\s+\d{1,2}\b)",
+            lambda match: months[match.group(0).rstrip(".")], value,
+        )
     if not isinstance(language, str) or language.split("-", 1)[0].lower() != "de" or "%B" not in fmt:
         return value
     months = {
@@ -337,12 +348,14 @@ def html_parse(raw, url, options):
     explicit_date = options.get("publication_date_xpath")
     date_basis = None
     date_profile_status = "not-configured"
+    explicit_date_node = None
     if explicit_date:
         chosen = dom.xpath(explicit_date)
         date_profile_status = "missing" if not chosen else "ambiguous" if len(chosen) != 1 else "no-match"
         if len(chosen) == 1:
             if not isinstance(chosen[0], etree._Element):
                 raise ValueError("Publication date selector must return an element")
+            explicit_date_node = chosen[0]
             date_attribute = options.get("publication_date_attribute")
             value = clean(chosen[0].get(date_attribute)) if date_attribute else clean(" ".join(chosen[0].itertext()))
             match = re.search(options["publication_date_pattern"], value)
@@ -500,6 +513,8 @@ def html_parse(raw, url, options):
                 raise ValueError("Block profile selected non-reader content")
     blocks = []
     for node in selected_blocks if selected_blocks is not None else container.iter():
+        if node is explicit_date_node:
+            continue
         tag = etree.QName(node).localname if isinstance(node.tag, str) else ""
         if selected_blocks is None and tag not in ("p", "head", "h1", "h2", "h3", "h4", "h5", "h6", "table", "item", "li", "quote", "blockquote"):
             continue

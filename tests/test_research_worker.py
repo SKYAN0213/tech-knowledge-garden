@@ -1110,6 +1110,42 @@ echo 'source command only'
             with self.subTest(broken=broken[2:5]):
                 self.assertEqual(self.invoke(document(broken), options, url="https://example.com/posts/837")["worker_status"], "failed")
 
+    def test_english_sept_date_is_shared_by_list_and_article_parsing(self):
+        pattern = r"[A-Z][a-z]{2,8}\.? [0-9]{1,2}, [0-9]{4}"
+        listing = b'''<html lang="en"><head><title>Research news</title></head><body><main>
+        <div class="news-card"><span class="date">Sept. 22, 2026</span><h3><a href="/news/first">First story</a></h3></div>
+        <p>Research updates.</p></main></body></html>'''
+        listing_options = {
+            "language": "en", "content_xpath": "//main", "content_block_xpath": ".//p",
+            "listing_link_rules": [{
+                "id": "dated-news", "item_xpath": "//div[@class='news-card']/h3/a",
+                "url_attribute": "href", "url_pattern": r"(?P<url>/news/[^/?#]+)",
+                "title_xpath": ".", "date_xpath": "ancestor::div[@class='news-card']/span[@class='date']",
+                "date_pattern": "^" + pattern + "$", "date_format": "%B %d, %Y",
+            }],
+        }
+        parsed = self.invoke(listing, listing_options)["result"]
+        self.assertEqual(parsed["links"][0]["published_at"], "2026-09-22")
+        invalid = self.invoke(listing.replace(b"Sept. 22", b"Sept. 32"), listing_options)["result"]
+        self.assertIsNone(invalid["links"][0]["published_at"])
+
+        article = b'''<html lang="en"><head><title>Research news</title></head><body><main>
+        <h1>First story</h1><div class="sf-Long-text"><p class="byline">Sept. 22, 2026 | By Researcher</p>
+        <p>Researchers completed a field test.</p><p class="caption">Photo of the lab.</p></div>
+        </main></body></html>'''
+        options = {
+            "language": "en", "content_xpath": "//main", "title_xpath": "//main/h1",
+            "content_block_xpath": ".//div[@class='sf-Long-text']/p[not(@class='caption')]",
+            "publication_date_xpath": "//p[@class='byline']",
+            "publication_date_pattern": pattern, "publication_date_format": "%B %d, %Y",
+        }
+        parsed = self.invoke(article, options)["result"]
+        self.assertEqual(parsed["dates"]["published_at"], "2026-09-22")
+        self.assertEqual([block["text"] for block in parsed["blocks"]], ["Researchers completed a field test."])
+        invalid = self.invoke(article.replace(b"Sept. 22", b"Sept. 32"), options)["result"]
+        self.assertIsNone(invalid["dates"]["published_at"])
+        self.assertEqual(invalid["dates"]["profile_status"], "invalid-date")
+
 
 if __name__ == "__main__":
     unittest.main()

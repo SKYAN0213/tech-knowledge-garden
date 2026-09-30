@@ -383,6 +383,23 @@
       }
     },
     {
+      "id": "nlr-energy-news",
+      "name": "National Laboratory of the Rockies News",
+      "kind": "research",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["에너지·기후기술"],
+      "method": "html-list",
+      "url": "https://www.nlr.gov/news/news",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official mixed news list reused the shared single-page scanner. September 16–23 had two full program articles and an older boundary, September 3–10 had three program/press articles, and the observed September 23–30 window was empty. All completed windows passed stored-source verification. One feature article parsed directly, while September 2–3 remains incomplete because the first list page has no older item; pagination is still needed for that historical window. Article-level editorial classification is separate."
+      }
+    },
+    {
       "id": "arxiv-robotics",
       "name": "arXiv Robotics",
       "kind": "research",

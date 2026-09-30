@@ -102,6 +102,11 @@
       "channel_id": "kier-energy-press",
       "enabled": true,
       "baseline_run": "20260930-kier-energy-sep23-window-v1"
+    },
+    {
+      "channel_id": "nlr-energy-news",
+      "enabled": true,
+      "baseline_run": "20260930-nlr-energy-sep16-window-v1"
     }
   ]
 }
