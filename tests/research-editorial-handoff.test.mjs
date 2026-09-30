@@ -4,9 +4,11 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { buildEditorialHandoff } from "../scripts/research/editorial-handoff.mjs"
+import { main } from "../scripts/research.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { dailyScan, storedListScan } from "../scripts/research/daily-scan.mjs"
+import { articleContentFingerprint, storeParseArtifact } from "../scripts/research/parser.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 
 const candidate = (key, date, more = {}) => ({
@@ -64,9 +66,13 @@ const backlog = {
       review_status: "deferred",
       reason: "Changed original",
       article_source_version_id: "later-source-version",
+      article_parse_id: "later-parse",
+      article_content_sha256: "later-content",
     }),
     candidate("new", "2026-09-28", {
       article_source_version_id: "source-version-new",
+      article_parse_id: "parse-new",
+      article_content_sha256: "content-new",
     }),
     candidate("unverified", "2026-09-28"),
     candidate("old", "2026-09-19"),
@@ -201,6 +207,8 @@ test("editorial handoff routes only exact published identities and keeps failed 
   assert.equal(handoff.counts.existing_unverified, 1)
   assert.equal(handoff.counts.existing_identity, 1)
   assert.equal(handoff.counts.historical_review, 1)
+  assert.equal(handoff.counts.review_publication_time, 1)
+  assert.equal(handoff.counts.approved_unpublished, 0)
   const byKey = new Map(
     [...handoff.pending, ...handoff.observed_resolved].map((item) => [item.key, item]),
   )
@@ -211,6 +219,7 @@ test("editorial handoff routes only exact published identities and keeps failed 
   assert.equal(byKey.get("revision").next_route, "review-source-revision")
   assert.equal(byKey.get("revision").publication.event_id, "published-id")
   assert.equal(byKey.get("revision").current_source_version_observed_in_run, false)
+  assert.equal(byKey.get("revision").source_evidence_state, "changed")
   assert.equal(byKey.get("new").next_route, "review-publication-time")
   assert.equal(byKey.get("new").publication, null)
   assert.equal(byKey.get("unverified").next_route, "review-existing-unverified")
@@ -218,13 +227,55 @@ test("editorial handoff routes only exact published identities and keeps failed 
   assert.equal(byKey.get("unverified").possible_publications[0].event_id, "local-unverified-id")
   assert.equal(byKey.get("old").next_route, "historical-review")
   assert.equal(byKey.get("old").observed_in_run, false)
+  assert.equal(byKey.get("old").source_evidence_state, "not_observed")
   assert.deepEqual(byKey.get("old").source_attempts, [])
   assert.deepEqual(byKey.get("new").source_attempts, [
     observations.find((item) => item.key === "new"),
   ])
   assert.equal(byKey.get("new").current_source_version_observed_in_run, true)
+  assert.equal(byKey.get("new").source_evidence_state, "exact")
+  assert.deepEqual(
+    handoff.review_workstreams.map((group) => [group.route, group.candidate_keys]),
+    [
+      ["review-source-revision", ["revision"]],
+      ["review-existing-identity", ["url-only"]],
+      ["review-existing-unverified", ["unverified"]],
+      ["review-publication-time", ["new"]],
+      ["historical-review", ["old"]],
+    ],
+  )
+  assert.equal(
+    handoff.review_workstreams.find((group) => group.route === "review-publication-time")
+      .exact_source_available,
+    1,
+  )
   assert.equal(byKey.get("rejected").next_route, "closed")
   assert.equal(handoff.candidate_published, false)
+})
+
+test("an approved but unpublished candidate is handed to edition assembly without repeating source review", () => {
+  const approvedBacklog = structuredClone(backlog)
+  const candidate = approvedBacklog.candidates.find((item) => item.key === "new")
+  candidate.review_status = "verified"
+  candidate.event_id = "abcdef0123456789"
+  candidate.approval = {
+    approved_run: "private-article",
+    article_sha256: "a".repeat(64),
+  }
+  const handoff = buildEditorialHandoff({
+    plan,
+    receipts,
+    observations,
+    backlog: approvedBacklog,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+  })
+  const entry = handoff.pending.find((item) => item.key === "new")
+  assert.equal(entry.next_route, "approved-unpublished")
+  assert.deepEqual(entry.approval, candidate.approval)
+  assert.equal(handoff.counts.approved_unpublished, 1)
+  assert.equal(handoff.counts.review_publication_time, 0)
+  assert.deepEqual(handoff.review_workstreams[1].candidate_keys, ["new"])
 })
 
 test("editorial handoff refuses a completed candidate missing from the current backlog", () => {
@@ -269,6 +320,78 @@ function storedEmptyScan(root, runId, window) {
     documents: [],
     parses: [],
     candidates: [],
+  }
+  for (const [file, value] of Object.entries({
+    "list-scan.json": scan.summary,
+    "list-pages.json": scan.indexDocuments,
+    "documents.json": scan.documents,
+    "parses.json": scan.parses,
+    "candidates.json": scan.candidates,
+  }))
+    atomicWrite(root, `runs/${runId}/${file}`, value)
+  return storedListScan(root, runId)
+}
+
+function storedArticleScan(root, runId, window) {
+  const originalURL = "https://example.com/chip?mode=V&id=1"
+  const candidateURL = "https://example.com/chip?id=1&mode=V"
+  const body = "A dated official chip announcement"
+  const id = sourceId(originalURL)
+  const bodySha = sha256(body)
+  const version = `${id}:${bodySha}`
+  const bodyPath = `sources/${id}/${bodySha}.html`
+  atomicWrite(root, bodyPath, body)
+  const document = {
+    original_url: originalURL,
+    final_url: originalURL,
+    source_id: id,
+    source_version_id: version,
+    fetch_status: "captured",
+    body_path: bodyPath,
+    body_sha256: bodySha,
+    observed_at: "2026-09-29T01:00:00Z",
+  }
+  const parseId = sha256(version + ":article")
+  const parse = storeParseArtifact(root, {
+    schema_version: "source-parse/v1",
+    status: "extracted",
+    title: "Official chip announcement",
+    source_id: id,
+    source_version_id: version,
+    parse_id: parseId,
+    dates: { published_at: "2026-09-27", observed_at: document.observed_at },
+    blocks: [
+      {
+        block_id: parseId + ":b1",
+        text: body,
+        locator: { text_hash: sha256(body) },
+      },
+    ],
+    quality: { required_fields_present: true, missing_pages: [] },
+  })
+  const candidate = {
+    key: "source-" + sourceId(candidateURL),
+    title: parse.title,
+    source_urls: [candidateURL],
+    source_published_at: parse.dates.published_at,
+    discovered_at: document.observed_at,
+    priority: "normal",
+    review_status: "unreviewed",
+    article_source_version_id: version,
+    article_parse_id: parseId,
+    article_content_sha256: articleContentFingerprint(parse),
+  }
+  const scan = {
+    summary: {
+      status: "window_scanned",
+      channel_id: window.channel_id,
+      window: { since: window.since, until_exclusive: window.until_exclusive },
+      candidate_count: 1,
+    },
+    indexDocuments: [document],
+    documents: [document],
+    parses: [parse],
+    candidates: [candidate],
   }
   for (const [file, value] of Object.entries({
     "list-scan.json": scan.summary,
@@ -389,5 +512,101 @@ test("daily execution creates a private handoff and resume leaves it unchanged",
   assert.deepEqual(
     fs.readFileSync(path.join(root, driveResult.editorial_handoff.path)),
     originalHandoff,
+  )
+})
+
+test("a daily candidate selects its exact stored source without rediscovery or publication", async (t) => {
+  const directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-candidate-")))
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
+  const root = path.join(directory, "research")
+  const vault = path.join(directory, "vault")
+  const backlogFile = path.join(directory, "candidate-backlog.json")
+  const configFile = path.join(directory, "routes.json")
+  fs.mkdirSync(path.join(vault, "Editions"), { recursive: true })
+  fs.writeFileSync(
+    path.join(vault, "Editions", "2026-09-29.md"),
+    "---\ndate: 2026-09-29\ncoverage_end: 2026-09-28T23:00:00Z\n---\n\n# Sources\n",
+  )
+  fs.writeFileSync(
+    configFile,
+    JSON.stringify({
+      schema: "research-daily-routes/v1",
+      lookback_days: 7,
+      max_window_days: 7,
+      routes: [{ channel_id: "fanuc-en", enabled: true, baseline_run: "baseline" }],
+    }),
+  )
+  storedEmptyScan(root, "baseline", {
+    channel_id: "fanuc-en",
+    since: "2026-09-22",
+    until_exclusive: "2026-09-29",
+  })
+  let requests = 0
+  const daily = await dailyScan({
+    runId: "daily-20260929-candidate",
+    mode: "execute",
+    root,
+    vault,
+    configFile,
+    backlogFile,
+    now: "2026-09-29T01:00:00Z",
+    scan: async (window, id) => {
+      requests++
+      return window.since === "2026-09-22"
+        ? storedArticleScan(root, id, window)
+        : storedEmptyScan(root, id, window)
+    },
+    merge: async (scan) => {
+      if (scan.candidates.length)
+        fs.writeFileSync(
+          backlogFile,
+          JSON.stringify({ schema: "research-candidates/v1", candidates: scan.candidates }),
+        )
+      return { status: "merged", changed: Boolean(scan.candidates.length) }
+    },
+  })
+  assert.equal(daily.status, "configured_routes_scanned")
+  const handoff = readJSON(root, daily.editorial_handoff.path)
+  const key = handoff.pending[0].key
+  assert.equal(handoff.pending[0].source_evidence_state, "exact")
+  const args = [
+    "select-candidate",
+    "--root",
+    root,
+    "--run",
+    "selected-candidate",
+    "--daily-run",
+    "daily-20260929-candidate",
+    "--candidate-key",
+    key,
+    "--vault",
+    vault,
+    "--backlog",
+    backlogFile,
+  ]
+  const result = await main(args)
+  assert.equal(result.candidate_key, key)
+  assert.equal(result.sources, 1)
+  assert.equal(result.candidate_published, false)
+  const selected = readJSON(root, "runs/selected-candidate/source-selection.json")
+  assert.equal(selected.candidate_key, key)
+  assert.equal(selected.selected_urls[0], "https://example.com/chip?mode=V&id=1")
+  assert.equal(selected.daily_run, "daily-20260929-candidate")
+  assert.equal(selected.candidate_published, false)
+  const before = fs.readFileSync(path.join(root, "runs/selected-candidate/source-selection.json"))
+  assert.deepEqual(await main(args), result)
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, "runs/selected-candidate/source-selection.json")),
+    before,
+  )
+  assert.equal(requests, 2)
+  fs.writeFileSync(
+    backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [] }),
+  )
+  await assert.rejects(() => main(args), /absent from the current backlog/)
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, "runs/selected-candidate/source-selection.json")),
+    before,
   )
 })

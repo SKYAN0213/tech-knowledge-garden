@@ -190,6 +190,7 @@ test("a bounded RSS route retains dated media items but only inspects article ca
       guid_is_permalink: false,
       date_timezone: "Asia/Seoul",
       ignored_categories: ["Media"],
+      required_categories: ["TECH"],
     },
   }
   const xml = `<rss version="2.0"><channel><title>Official Feed</title>
@@ -252,6 +253,34 @@ test("a bounded RSS route retains dated media items but only inspects article ca
       "2026-09-30",
     ).reason,
     "feed_item_identity_or_date_invalid",
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      {
+        ...parsed,
+        links: parsed.links.map((link, index) =>
+          index === 2 ? { ...link, categories: ["OTHER"] } : link,
+        ),
+      },
+      mixedChannel,
+      "2026-09-23",
+      "2026-09-30",
+    ).reason,
+    "feed_item_category_unexpected",
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      {
+        ...parsed,
+        links: parsed.links.map((link, index) =>
+          index === 2 ? { ...link, categories: ["TECH", "Media"] } : link,
+        ),
+      },
+      mixedChannel,
+      "2026-09-23",
+      "2026-09-30",
+    ).reason,
+    "feed_item_category_conflict",
   )
 })
 

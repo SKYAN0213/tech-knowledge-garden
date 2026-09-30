@@ -528,6 +528,20 @@
       }
     },
     {
+      "id": "asec-public-ko-article-v1",
+      "url_pattern": "^https://asec\\.ahnlab\\.com/ko/[0-9]+/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' post-single ')]//h1[contains(concat(' ', normalize-space(@class), ' '), ' post-title ')]",
+        "content_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' post-single ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' entry-content ')]",
+        "content_block_xpath": ".//*[self::h1 or self::h2 or self::h3 or self::h4 or self::p or self::li or self::table][normalize-space(.) and not(ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' post-footer ') or contains(concat(' ', normalize-space(@class), ' '), ' CONTENT_AD_PLACE ')])]",
+        "publication_date_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' post-single ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' slider-meta-left-content ')]",
+        "publication_date_pattern": "^[0-9]{1,2}월 [0-9]{1,2} [0-9]{4}$",
+        "publication_date_format": "%m월 %d %Y",
+        "publication_date_timezone": "Asia/Seoul"
+      }
+    },
+    {
       "id": "nvidia-newsroom-press-release-v1",
       "url_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
       "options": {
@@ -875,6 +889,23 @@
       "max_items": 100,
       "guid_is_permalink": true,
       "scope": "The official RSS feed must include an older item than the requested window; each selected permalink must match a dated full article."
+    }
+  },
+  "asec-public-ko": {
+    "publisher_id": "asec.ahnlab.com",
+    "allowed_hosts": ["asec.ahnlab.com"],
+    "item_pattern": "^https://asec\\.ahnlab\\.com/ko/[0-9]+/?$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "asec-public-ko-rss-v1",
+      "feed_title": "ASEC",
+      "max_items": 30,
+      "guid_is_permalink": false,
+      "date_timezone": "Asia/Seoul",
+      "ignored_categories": ["Private"],
+      "required_categories": ["Public"],
+      "scope": "The official WordPress feed uses a language-neutral GUID and contains Public and member-only Private categories. Retain all dated items for the older boundary, collect only Public full articles, and compare the Korean displayed publication day with UTC metadata in the declared Korea calendar."
     }
   },
   "samsung-global-press-releases": {

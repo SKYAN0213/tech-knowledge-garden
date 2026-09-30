@@ -1,11 +1,21 @@
 import fs from "node:fs"
 import path from "node:path"
-import { editions, extractArticles, parseNote } from "../garden.mjs"
+import { canonicalURL, editions, extractArticles, parseNote } from "../garden.mjs"
 import { readBacklog, researchWindow } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
+import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { readDailyReceipts, storedListScan, verifyDailyReceipts } from "./daily-scan.mjs"
 
+const REVIEW_ROUTES = [
+  "review-source-revision",
+  "approved-unpublished",
+  "review-existing-identity",
+  "review-existing-unverified",
+  "verify-original-date",
+  "review-publication-time",
+  "historical-review",
+]
 const sameWindow = (a, b) =>
   a.channel_id === b.channel_id && a.since === b.since && a.until_exclusive === b.until_exclusive
 
@@ -15,6 +25,17 @@ function queueEntry(candidate, observedAttempts) {
         (attempt) => attempt.article_source_version_id === candidate.article_source_version_id,
       )
     : null
+  const exactSource =
+    candidate.article_source_version_id &&
+    candidate.article_parse_id &&
+    candidate.article_content_sha256
+      ? observedAttempts.some(
+          (attempt) =>
+            attempt.article_source_version_id === candidate.article_source_version_id &&
+            attempt.article_parse_id === candidate.article_parse_id &&
+            attempt.article_content_sha256 === candidate.article_content_sha256,
+        )
+      : false
   return {
     key: candidate.key,
     title: candidate.title,
@@ -28,13 +49,95 @@ function queueEntry(candidate, observedAttempts) {
     article_parse_id: candidate.article_parse_id || null,
     article_content_sha256: candidate.article_content_sha256 || null,
     source_revision_alert: Boolean(candidate.source_revision_alert),
+    approval: candidate.approval
+      ? {
+          approved_run: candidate.approval.approved_run,
+          article_sha256: candidate.approval.article_sha256,
+        }
+      : null,
     publication: candidate.publication,
     possible_publications: candidate.possible_publications || [],
     next_route: candidate.next_route,
     observed_in_run: observedAttempts.length > 0,
     source_attempts: observedAttempts,
     current_source_version_observed_in_run: versionMatches,
+    source_evidence_state: !observedAttempts.length
+      ? "not_observed"
+      : !candidate.article_source_version_id ||
+          !candidate.article_parse_id ||
+          !candidate.article_content_sha256
+        ? "unversioned"
+        : exactSource
+          ? "exact"
+          : "changed",
   }
+}
+
+function reviewWorkstreams(pending) {
+  const routes = [
+    ...REVIEW_ROUTES,
+    ...[...new Set(pending.map((entry) => entry.next_route))]
+      .filter((route) => !REVIEW_ROUTES.includes(route))
+      .sort(),
+  ]
+  const compare = (a, b) =>
+    Number(b.priority === "high") - Number(a.priority === "high") ||
+    (b.source_published_at || "").localeCompare(a.source_published_at || "") ||
+    a.discovered_at.localeCompare(b.discovered_at) ||
+    a.key.localeCompare(b.key)
+  return routes
+    .map((route) => {
+      const entries = pending.filter((entry) => entry.next_route === route).sort(compare)
+      return {
+        route,
+        candidate_keys: entries.map((entry) => entry.key),
+        high_priority: entries.filter((entry) => entry.priority === "high").length,
+        exact_source_available: entries.filter((entry) => entry.source_evidence_state === "exact")
+          .length,
+      }
+    })
+    .filter((group) => group.candidate_keys.length)
+}
+
+// The worklist is routing metadata. Exact stored source selection is not a
+// fact review, same-event decision, or permission to publish.
+export function selectCandidateSource(root, handoff, candidateKey) {
+  if (handoff?.schema !== "research-editorial-handoff/v1" || !candidateKey)
+    throw Error("Stored editorial handoff and candidate key required")
+  const matches = handoff.pending.filter((entry) => entry.key === candidateKey)
+  if (matches.length !== 1) throw Error("Candidate is not uniquely pending in the handoff")
+  const candidate = matches[0]
+  if (candidate.next_route === "approved-unpublished")
+    throw Error("Candidate already has an approved article awaiting publication")
+  if (candidate.source_evidence_state !== "exact")
+    throw Error("Current candidate source version and parse were not observed in this daily run")
+  const attempts = candidate.source_attempts.filter(
+    (attempt) =>
+      attempt.article_source_version_id === candidate.article_source_version_id &&
+      attempt.article_parse_id === candidate.article_parse_id &&
+      attempt.article_content_sha256 === candidate.article_content_sha256,
+  )
+  if (!attempts.length) throw Error("Candidate has no exact completed source attempt")
+  const attempt = attempts.at(-1)
+  const documents = readJSON(root, `runs/${attempt.attempt_id}/documents.json`)
+  const matchedDocuments = documents?.filter(
+    (document) =>
+      document.source_version_id === candidate.article_source_version_id &&
+      candidate.source_urls.some(
+        (url) => canonicalURL(url) === canonicalURL(document.original_url),
+      ),
+  )
+  if (matchedDocuments?.length !== 1) throw Error("Candidate has no unique exact stored source URL")
+  const selected = selectStoredSources(root, attempt.attempt_id, [matchedDocuments[0].original_url])
+  const [document] = selected.documents
+  const [parse] = selected.parses
+  if (
+    document.source_version_id !== candidate.article_source_version_id ||
+    parse.parse_id !== candidate.article_parse_id ||
+    articleContentFingerprint(parse) !== candidate.article_content_sha256
+  )
+    throw Error("Selected source differs from the candidate evidence")
+  return { candidate, source_attempt_id: attempt.attempt_id, selected }
 }
 
 // This is a private routing artifact, not a model judgment or publication approval.
@@ -134,6 +237,9 @@ export function buildEditorialHandoff({
       source_revision: pending.filter(
         (candidate) => candidate.next_route === "review-source-revision",
       ).length,
+      approved_unpublished: pending.filter(
+        (candidate) => candidate.next_route === "approved-unpublished",
+      ).length,
       existing_unverified: pending.filter(
         (candidate) => candidate.next_route === "review-existing-unverified",
       ).length,
@@ -145,8 +251,12 @@ export function buildEditorialHandoff({
       verify_original_date: pending.filter(
         (candidate) => candidate.next_route === "verify-original-date",
       ).length,
+      review_publication_time: pending.filter(
+        (candidate) => candidate.next_route === "review-publication-time",
+      ).length,
     },
     pending,
+    review_workstreams: reviewWorkstreams(pending),
     observed_resolved,
     candidate_published: false,
     drive_verified: false,

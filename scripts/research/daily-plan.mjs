@@ -94,8 +94,9 @@ export function validateDailyRoutes(config, routes) {
           throw Error("Daily RSS publication time zone is invalid: " + entry.channel_id)
         }
       }
-      if (route.method === "rss" && route.listing_profile?.ignored_categories !== undefined) {
-        const categories = route.listing_profile.ignored_categories
+      for (const option of ["ignored_categories", "required_categories"]) {
+        if (route.method !== "rss" || route.listing_profile?.[option] === undefined) continue
+        const categories = route.listing_profile[option]
         if (
           !Array.isArray(categories) ||
           !categories.length ||
@@ -103,7 +104,7 @@ export function validateDailyRoutes(config, routes) {
           categories.some((category) => typeof category !== "string" || !category.trim()) ||
           new Set(categories).size !== categories.length
         )
-          throw Error("Daily RSS ignored categories are invalid: " + entry.channel_id)
+          throw Error(`Daily RSS ${option.replace("_", " ")} are invalid: ` + entry.channel_id)
       }
       if (
         route.listing_profile?.pagination === "calendar-month" &&

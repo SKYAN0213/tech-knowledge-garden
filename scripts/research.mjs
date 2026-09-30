@@ -24,7 +24,7 @@ import {
 } from "./research/run-state.mjs"
 import { canonicalURL, editions, extractArticles } from "./garden.mjs"
 import { briefingLibrary } from "./briefings.mjs"
-import { readBacklog, researchWindow } from "./research-window.mjs"
+import { BACKLOG_PATH, readBacklog, researchWindow } from "./research-window.mjs"
 import { sourceId } from "./research/contracts.mjs"
 import { sha256 } from "./research/contracts.mjs"
 import {
@@ -61,8 +61,40 @@ import { scanPaginatedKUKARoute } from "./research/kuka-scan.mjs"
 import { scanPaginatedABBRoute } from "./research/abb-scan.mjs"
 import { recordCandidateDisposition } from "./research/candidate-disposition.mjs"
 import { recordCandidateIdentity } from "./research/candidate-identity.mjs"
+import { recordCandidateApproval } from "./research/candidate-approval.mjs"
 import { mergeCompletedScan } from "./research/scan-completion.mjs"
 import { loadDailySearchBasis } from "./research/daily-search-basis.mjs"
+import { generateDailyHandoff, selectCandidateSource } from "./research/editorial-handoff.mjs"
+
+async function saveSourceSelection(root, runId, selected, context = {}) {
+  return withLock(root, "run-" + runId, async () => {
+    const manifest = {
+      schema: "research-source-selection/v1",
+      ...selected.identity,
+      ...context,
+      candidate_published: false,
+    }
+    const existing = readJSON(root, `runs/${runId}/source-selection.json`)
+    if (existing && sha256(JSON.stringify(existing)) !== sha256(JSON.stringify(manifest)))
+      throw Error("Source selection input changed; use a new run")
+    if (existing) {
+      const current = loadStoredSourceRun(root, runId)
+      if (
+        current.identity.documents_sha256 !== selected.identity.documents_sha256 ||
+        current.identity.parses_sha256 !== selected.identity.parses_sha256
+      )
+        throw Error("Stored source selection changed after creation")
+    }
+    atomicWrite(root, `runs/${runId}/documents.json`, selected.documents)
+    atomicWrite(root, `runs/${runId}/parses.json`, selected.parses)
+    atomicWrite(root, `runs/${runId}/source-selection.json`, manifest)
+    return {
+      sources: selected.documents.length,
+      parses: selected.parses.length,
+      candidate_published: false,
+    }
+  })
+}
 
 export async function main(argv = process.argv.slice(2)) {
   const { values: v, positionals } = parseArgs({
@@ -83,6 +115,8 @@ export async function main(argv = process.argv.slice(2)) {
       query: { type: "string" },
       date: { type: "string" },
       "daily-run": { type: "string" },
+      "candidate-key": { type: "string" },
+      backlog: { type: "string" },
       "source-run": { type: "string" },
       "published-source-run": { type: "string" },
       "candidate-run": { type: "string" },
@@ -129,6 +163,8 @@ export async function main(argv = process.argv.slice(2)) {
       "reparse",
       "bundle",
       "select-source",
+      "select-candidate",
+      "candidate-approval",
       "source-register",
       "import-capture",
       "candidate-disposition",
@@ -136,7 +172,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|discover|scan-list|collect|reparse|bundle|select-source|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|source-register --run ID [--url URL --source-run ID --published-source-run ID --candidate-run ID --additional-source-run ID --review JSON --channel ID --since DAY --until DAY --provisional --deep --approved-run ID --knowledge-run ID]; preview --review accepts a private new-edition specification",
+      "Usage: research.mjs baseline|inventory|discover|scan-list|collect|reparse|bundle|select-source|select-candidate|candidate-approval|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|source-register --run ID [--url URL --source-run ID --daily-run ID --candidate-key KEY --backlog FILE --published-source-run ID --candidate-run ID --additional-source-run ID --review JSON --channel ID --since DAY --until DAY --provisional --deep --approved-run ID --knowledge-run ID]; preview --review accepts a private new-edition specification",
     )
   const budgetFields = [
     "num-ctx",
@@ -169,12 +205,31 @@ export async function main(argv = process.argv.slice(2)) {
   if (v.deep && command !== "draft") throw Error("--deep is only supported for draft")
   if (command !== "scan-list" && (v.since || v.until))
     throw Error("--since and --until are only supported for scan-list")
-  if (v["daily-run"] && command !== "queries")
-    throw Error("--daily-run is only supported for queries")
+  if (v["daily-run"] && !["queries", "select-candidate"].includes(command))
+    throw Error("--daily-run is only supported for queries or select-candidate")
+  if (
+    (v["candidate-key"] || v.backlog) &&
+    !["select-candidate", "candidate-approval"].includes(command)
+  )
+    throw Error(
+      "--candidate-key and --backlog are only supported for candidate selection or approval",
+    )
   if (command !== "preview" && (v["approved-run"] || v["knowledge-run"]))
     throw Error("--approved-run and --knowledge-run are only supported for preview")
-  if (!["preview", "note-review", "inventory", "knowledge-draft"].includes(command) && v.vault)
-    throw Error("--vault is only supported for preview, note-review, inventory or knowledge-draft")
+  if (
+    ![
+      "preview",
+      "note-review",
+      "inventory",
+      "knowledge-draft",
+      "select-candidate",
+      "candidate-approval",
+    ].includes(command) &&
+    v.vault
+  )
+    throw Error(
+      "--vault is only supported for preview, note-review, inventory, knowledge-draft, select-candidate or candidate-approval",
+    )
   if (
     v["source-run"] &&
     ![
@@ -183,13 +238,14 @@ export async function main(argv = process.argv.slice(2)) {
       "reparse",
       "bundle",
       "select-source",
+      "candidate-approval",
       "import-capture",
       "candidate-disposition",
       "candidate-identity",
     ].includes(command)
   )
     throw Error(
-      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, import-capture, candidate-disposition or candidate-identity",
+      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, import-capture, candidate-disposition or candidate-identity",
     )
   if (v["published-source-run"] && command !== "candidate-identity")
     throw Error("--published-source-run is only supported for candidate-identity")
@@ -202,6 +258,72 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "model-info") return ollama.metadata(v.model)
   if (!v.run) throw Error("Explicit --run ID required")
   if (!/^[a-zA-Z0-9_-]+$/.test(v.run)) throw Error("Invalid run id")
+  if (command === "select-candidate") {
+    if (
+      !v["daily-run"] ||
+      !/^[a-zA-Z0-9_-]+$/.test(v["daily-run"]) ||
+      !v["candidate-key"] ||
+      v.run === v["daily-run"] ||
+      v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error("Select candidate requires one daily run, candidate key and new output run")
+    const handoffRef = await withLock(root, "daily-acquisition", () =>
+      generateDailyHandoff({
+        root,
+        runId: v["daily-run"],
+        vault: v.vault || "vault",
+        backlogFile: v.backlog || BACKLOG_PATH,
+      }),
+    )
+    const handoff = readJSON(root, handoffRef.path)
+    const { candidate, source_attempt_id, selected } = selectCandidateSource(
+      root,
+      handoff,
+      v["candidate-key"],
+    )
+    if (v.run === source_attempt_id) throw Error("Output run must differ from source attempt")
+    const result = await saveSourceSelection(root, v.run, selected, {
+      candidate_key: candidate.key,
+      candidate_source_version_id: candidate.article_source_version_id,
+      candidate_parse_id: candidate.article_parse_id,
+      next_route: candidate.next_route,
+      daily_run: v["daily-run"],
+      handoff_path: handoffRef.path,
+      handoff_sha256: sha256(fs.readFileSync(safePath(root, handoffRef.path))),
+    })
+    return { ...result, candidate_key: candidate.key, source_attempt_id }
+  }
+  if (command === "candidate-approval") {
+    if (
+      !v["source-run"] ||
+      !v["candidate-key"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error("Candidate approval requires an approved --source-run and candidate key")
+    const publishedArticles = editions(v.vault || "vault").flatMap((edition) =>
+      extractArticles(edition).map((article) => ({
+        event_id: article.id,
+        source_urls: article.urls,
+      })),
+    )
+    return recordCandidateApproval({
+      root,
+      runId: v.run,
+      approvedRunId: v["source-run"],
+      candidateKey: v["candidate-key"],
+      backlogFile: v.backlog || BACKLOG_PATH,
+      publishedArticles,
+    })
+  }
   if (command === "candidate-disposition") {
     if (
       !v["source-run"] ||
@@ -289,33 +411,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "select-source") {
     if (!v["source-run"] || v["source-run"] === v.run || !v.url?.length)
       throw Error("Select source requires a different --source-run and one or more --url values")
-    return withLock(root, "run-" + v.run, async () => {
-      const selected = selectStoredSources(root, v["source-run"], v.url)
-      const manifest = {
-        schema: "research-source-selection/v1",
-        ...selected.identity,
-        candidate_published: false,
-      }
-      const existing = readJSON(root, `runs/${v.run}/source-selection.json`)
-      if (existing && sha256(JSON.stringify(existing)) !== sha256(JSON.stringify(manifest)))
-        throw Error("Source selection input changed; use a new run")
-      if (existing) {
-        const current = loadStoredSourceRun(root, v.run)
-        if (
-          current.identity.documents_sha256 !== selected.identity.documents_sha256 ||
-          current.identity.parses_sha256 !== selected.identity.parses_sha256
-        )
-          throw Error("Stored source selection changed after creation")
-      }
-      atomicWrite(root, `runs/${v.run}/documents.json`, selected.documents)
-      atomicWrite(root, `runs/${v.run}/parses.json`, selected.parses)
-      atomicWrite(root, `runs/${v.run}/source-selection.json`, manifest)
-      return {
-        sources: selected.documents.length,
-        parses: selected.parses.length,
-        candidate_published: false,
-      }
-    })
+    return saveSourceSelection(root, v.run, selectStoredSources(root, v["source-run"], v.url))
   }
   if (command === "import-capture") {
     if (!v.review || !v["source-run"] || v["source-run"] === v.run)

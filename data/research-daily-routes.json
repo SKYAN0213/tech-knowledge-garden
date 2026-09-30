@@ -44,6 +44,11 @@
       "baseline_run": "20260929-google-cloud-threat-window-v2"
     },
     {
+      "channel_id": "asec-public-ko",
+      "enabled": true,
+      "baseline_run": "20260930-asec-public-strict-sep23-v2"
+    },
+    {
       "channel_id": "nvidia-press-releases",
       "enabled": true,
       "baseline_run": "20260929-nvidia-press-window-v1"

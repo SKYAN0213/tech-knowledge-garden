@@ -196,4 +196,21 @@ test("bounded RSS routes need an explicit item, identity, and detail budget cont
         ]),
       /ignored categories are invalid/,
     )
+  assert.equal(
+    validateDailyRoutes(rssConfig, [
+      {
+        ...rssRoute,
+        listing_profile: { ...rssRoute.listing_profile, required_categories: ["Public"] },
+      },
+    ]).length,
+    1,
+  )
+  for (const required_categories of [[], ["Public", "Public"], [7]])
+    assert.throws(
+      () =>
+        validateDailyRoutes(rssConfig, [
+          { ...rssRoute, listing_profile: { ...rssRoute.listing_profile, required_categories } },
+        ]),
+      /required categories are invalid/,
+    )
 })

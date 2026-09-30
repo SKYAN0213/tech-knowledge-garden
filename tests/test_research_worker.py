@@ -78,6 +78,49 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["profile_status"], "conflict")
         self.assertEqual(result["dates"]["basis"]["text"], "August 26, 2026")
 
+    def test_declared_publisher_calendar_reconciles_offset_metadata_at_day_boundary(self):
+        raw = '''<html lang="ko"><head><title>ASEC</title>
+        <meta property="article:published_time" content="2026-09-27T15:00:00+00:00">
+        </head><body><article><header><h1>공격 사례</h1><div class="published">9월 28 2026</div></header>
+        <div class="entry-content"><p>확인된 공격 경로와 대응 방안을 설명한다.</p></div></article></body></html>'''.encode()
+        options = {
+            "title_xpath": "//article/header/h1", "content_xpath": "//article/div[@class='entry-content']",
+            "publication_date_xpath": "//article/header/div[@class='published']",
+            "publication_date_pattern": "^[0-9]{1,2}월 [0-9]{1,2} [0-9]{4}$",
+            "publication_date_format": "%m월 %d %Y",
+        }
+        unresolved = self.invoke(raw, options)["result"]
+        self.assertIsNone(unresolved["dates"]["published_at"])
+        self.assertEqual(unresolved["dates"]["profile_status"], "conflict")
+        resolved = self.invoke(raw, {**options, "publication_date_timezone": "Asia/Seoul"})["result"]
+        self.assertEqual(resolved["dates"]["published_at"], "2026-09-28")
+        self.assertEqual(resolved["dates"]["profile_status"], "matched")
+        self.assertEqual(resolved["dates"]["candidates"], ["2026-09-27T15:00:00+00:00", "2026-09-28"])
+        self.assertEqual(resolved["dates"]["basis"]["text"], "9월 28 2026")
+        self.assertEqual(self.invoke(raw, {**options, "publication_date_timezone": "Not/AZone"})["worker_status"], "failed")
+
+    def test_asec_public_profile_keeps_article_and_excludes_subscription_ui(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "asec-public-ko-article-v1")
+        self.assertIsNotNone(re.fullmatch(profile["url_pattern"], "https://asec.ahnlab.com/ko/95560/"))
+        self.assertIsNone(re.fullmatch(profile["url_pattern"], "https://asec.ahnlab.com/en/95560/"))
+        page = '''<html lang="ko"><head><title>ASEC</title>
+        <meta property="article:published_time" content="2026-09-27T15:00:00+00:00"></head><body>
+        <article class="post-content post-single"><header><h1 class="post-title">공격 사례</h1>
+        <div class="slider-meta-left-content">9월 28 2026</div></header>
+        <div class="entry-content"><p>국내 서버의 공격 경로를 확인했다.</p>
+        <div class="CONTENT_AD_PLACE"><p>회원 서비스 구독 안내</p></div>
+        <div class="post-footer"><h4>Tags:</h4></div></div></article></body></html>'''
+        result = self.invoke(page.encode(), profile["options"], url="https://asec.ahnlab.com/ko/95560/")["result"]
+        self.assertEqual(result["title"], "공격 사례")
+        self.assertEqual(result["dates"]["published_at"], "2026-09-28")
+        self.assertEqual(result["dates"]["profile_status"], "matched")
+        self.assertEqual([block["text"] for block in result["blocks"]], ["국내 서버의 공격 경로를 확인했다."])
+        conflicting = page.replace("9월 28 2026", "9월 27 2026")
+        result = self.invoke(conflicting.encode(), profile["options"], url="https://asec.ahnlab.com/ko/95560/")["result"]
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["profile_status"], "conflict")
+
     def test_timezone_less_html_metadata_dates_remain_candidates(self):
         result = self.invoke(self.aws_date_fixture(), {"content_xpath": "//article"})["result"]
         self.assertIsNone(result["dates"]["published_at"])

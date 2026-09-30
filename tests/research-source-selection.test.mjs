@@ -11,11 +11,12 @@ import {
 } from "../scripts/research/parser.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { selectCandidateSource } from "../scripts/research/editorial-handoff.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-select-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  const urls = ["https://example.org/admin", "https://example.org/chip"]
+  const urls = ["https://example.org/admin", "https://example.org/chip?mode=V&id=1"]
   const documents = [],
     parses = []
   for (const [index, url] of urls.entries()) {
@@ -94,6 +95,60 @@ test("exact source selection isolates one article without refetching or changing
   assert.equal(readJSON(root, "runs/chip-only/source-selection.json").selected_urls[0], urls[1])
   assert.deepEqual(fs.readFileSync(path.join(root, "runs/source/documents.json")), before)
   assert.equal(readJSON(root, "runs/chip-only/claims.json"), null)
+})
+
+test("editorial candidate selection uses only the exact observed source and parse", (t) => {
+  const { root, urls, documents, parses } = fixture(t)
+  const key = `source-${documents[1].source_id}`
+  const content = articleContentFingerprint(parses[1])
+  const candidate = {
+    key,
+    source_urls: ["https://example.org/chip?id=1&mode=V"],
+    article_source_version_id: documents[1].source_version_id,
+    article_parse_id: parses[1].parse_id,
+    article_content_sha256: content,
+    source_evidence_state: "exact",
+    source_attempts: [
+      {
+        attempt_id: "source",
+        article_source_version_id: documents[1].source_version_id,
+        article_parse_id: parses[1].parse_id,
+        article_content_sha256: content,
+      },
+    ],
+  }
+  const handoff = { schema: "research-editorial-handoff/v1", pending: [candidate] }
+  const selected = selectCandidateSource(root, handoff, key)
+  assert.equal(selected.source_attempt_id, "source")
+  assert.deepEqual(selected.selected.documents, [documents[1]])
+  assert.deepEqual(selected.selected.parses, [parses[1]])
+  assert.throws(() => selectCandidateSource(root, handoff, "missing"), /not uniquely pending/)
+  assert.throws(
+    () =>
+      selectCandidateSource(
+        root,
+        {
+          ...handoff,
+          pending: [{ ...candidate, source_evidence_state: "changed" }],
+        },
+        key,
+      ),
+    /were not observed/,
+  )
+  assert.throws(
+    () =>
+      selectCandidateSource(
+        root,
+        {
+          ...handoff,
+          pending: [{ ...candidate, article_parse_id: "different" }],
+        },
+        key,
+      ),
+    /no exact completed source attempt/,
+  )
+  fs.writeFileSync(path.join(root, documents[1].body_path), "corrupted")
+  assert.throws(() => selectCandidateSource(root, handoff, key), /body hash mismatch/)
 })
 
 test("selection fails on a missing, duplicate, changed or corrupted source", async (t) => {

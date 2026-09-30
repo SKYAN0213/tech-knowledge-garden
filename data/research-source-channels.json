@@ -520,6 +520,23 @@
       }
     },
     {
+      "id": "asec-public-ko",
+      "name": "AhnLab ASEC Public Research",
+      "kind": "company",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["사이버보안"],
+      "method": "rss",
+      "url": "https://asec.ahnlab.com/ko/feed/",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official 30-item feed and four Public full articles completed September 23–30; two member-only Private items remained dated boundary evidence without detail collection. The common RSS adapter now requires Public on every selected article and rejects an unexpected category. The observed September 30 empty window retained an older boundary. Stored feed, full article dates and bytes passed verification. Editorial review remains separate."
+      }
+    },
+    {
       "id": "samsung-global-press-releases",
       "name": "Samsung Global Newsroom Press Releases",
       "kind": "company",

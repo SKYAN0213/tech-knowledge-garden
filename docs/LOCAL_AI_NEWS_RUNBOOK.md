@@ -4692,6 +4692,90 @@ SK하이닉스 새 피드 판본은 10항목 중 5개가 `Media` 분류의 이�
 
 해외 반도체·컴퓨팅/기업·운영의 미시도 칸을 위해 [AMD 투자자관계실 공식 RSS](https://ir.amd.com/news-events/press-releases/rss)를 선택했다. Intel IR의 공식 RSS는 이번 환경에서 robots 정책 확인이 실패했으므로 우회하거나 빈 뉴스로 간주하지 않았다. AMD RSS는 `source-policy`의 robots 검사와 원문 저장을 통과했고, 기존 `bounded-feed` 스캐너에서 GUID/permalink, `America/New_York` 날짜, 오래된 항목 경계를 검사했다. 상세는 공통 HTML 파서의 URL별 article profile만 추가했다. 날짜/제목 충돌과 GUID 불일치, 경계가 없는 피드는 `window_scanned`가 될 수 없다. 정확한 선택자와 세 종류의 원문 검토는 [출처 명세 49절](SOURCE_ACQUISITION_SPEC.md#49-amd-ir-공통-rss로-해외-반도체-기업-동향-수집)에 있다.
 
-실물 `20260930-amd-ir-sep23-window-v1`은 RSS 10항목 가운데 기간 내 1건·이전 9건의 전체 원문을 확인했고, `20260930-amd-ir-today-window-v1`은 관측 시점의 후보 0건·이전 10건을 확인했다. 두 창은 `window_scanned`이고 저장 원본 재검증을 통과했다. `.local/research/local-ai/daily-routes-amd-only.json`의 `daily-20260930-amd-only-v1`은 2/2 `window_scanned`, 미완료 0개로 끝났으며 `--resume`은 영수증 2개와 계획·요약·coverage·후보 장부·인계의 JSON 7개 SHA를 유지했다. 새 경로는 `data/research-daily-routes.json`에 활성화했다. 전체 22경로 설정의 `daily-20260930-main22-plan-v1 --plan-only`는 44창을 만들었지만 **22경로 단일 실행은 수행하지 않았다**.
+실물 `20260930-amd-ir-sep23-window-v1`은 RSS 10항목 가운데 기간 내 1건·이전 9건의 전체 원문을 확인했고, `20260930-amd-ir-today-window-v1`은 관측 시점의 후보 0건·이전 10건을 확인했다. 두 창은 `window_scanned`이고 저장 원본 재검증을 통과했다. `.local/research/local-ai/daily-routes-amd-only.json`의 `daily-20260930-amd-only-v1`은 2/2 `window_scanned`, 미완료 0개로 끝났으며 `--resume`은 영수증 2개와 계획·요약·coverage·후보 장부·인계의 JSON 7개 SHA를 유지했다. 새 경로는 `data/research-daily-routes.json`에 활성화했다. 이 단계의 `daily-20260930-main22-plan-v1 --plan-only`는 44창을 만들었지만 당시에는 **22경로 단일 실행을 수행하지 않았다**. 뒤이은 통합 실행은 92절에 기록한다.
 
 이번 별도 일일 실행의 비공개 인계는 새 원문 후보 1건을 관측했다. 9월 28일 발표는 인수 계약과 예정된 거래 종결을 구분해 편집 검토해야 한다. 이 후보는 승인 기사나 9월 30일 새 사건이 아니다. 기존 21경로 단일 실행은 32칸 중 15개 부분 확인·17개 미실시였고, AMD 별도 실행은 해외 반도체 기업·운영 **한 칸**의 부분 확인 근거다. 두 실행을 합쳐 단일 22경로/44창 완료나 32칸 전수 조사로 표시하지 않는다. 새 후보의 Drive 저장과 공개 발행은 이 실행에서 하지 않았다.
+
+## 90. 후보 인계를 검토 경로별로 나누고 정확한 저장 원문 선택
+
+`editorial-handoff.mjs`의 기존 후보·사건 대조를 유지하면서 `review_workstreams[]`를 추가했다. 현재 `pending[]`의 각 후보를 `next_route`별로 묶고 high 우선순위·발표일 최신순으로 정렬한다. `source_evidence_state`는 이번 완료 창의 저장 원문 판본·parse·본문 지문과 후보 장부가 모두 일치하면 `exact`, 시도는 있었으나 다르면 `changed`, 이번 창에서 못 봤으면 `not_observed`, 판본 정보가 없으면 `unversioned`다. 이 상태는 검토 편의를 위한 근거 위치이지 사실 승인이나 기사 가치 점수가 아니다.
+
+실제 21경로 run을 코드 변경 뒤 `--handoff`로 **재인계만** 했다. 현재 장부에는 뒤이은 AMD 별도 수집 후보가 추가되어 pending **86건**이고, 이번 21경로 실행에서 관측한 후보는 여전히 **56건**이다. workstream은 `review-existing-identity` 1건(exact 1), `review-publication-time` 3건(exact 2), `historical-review` 82건(exact 53)으로 갈렸다. 과거 후보가 하나 늘어난 이유는 장부 입력 변경이며 21경로 당시 수집 결과를 바꾼 것이 아니다. 최신 handoff는 `.local/research/local-ai/daily/runs/daily-20260930-main21-integrated-v1/handoffs/`에 입력 SHA별로 보존한다. 수집 코드 fingerprint가 달라진 과거 run의 `--resume`을 시도하지 않는다.
+
+저장 원문을 다시 검색·다운로드하지 않고 후보 키로 선택할 때에는 다음 명령을 쓴다. 명령은 현재 후보 장부·로컬 회차를 다시 대조하고, 완료 receipt의 원문 bytes와 parse를 검증한 뒤 **새 비공개 선택 run**만 만든다. 정규화된 후보 URL과 원래 저장 URL의 쿼리 파라미터 순서가 다른 KAIST 기사에서도 정확한 source version을 선택하는 것을 실제 확인했다.
+
+```sh
+node scripts/research-daily.mjs --run daily-20260930-main21-integrated-v1 --handoff
+node scripts/research.mjs select-candidate --run 20260930-kaist-robot-hand-candidate-v2 --daily-run daily-20260930-main21-integrated-v1 --candidate-key source-8bbce2ffd63bf26a19f6
+```
+
+`runs/20260930-kaist-robot-hand-candidate-v2/`에는 `source-selection.json`, 선택한 `documents.json` 1건과 `parses.json` 1건이 있다. manifest는 후보 키·원 handoff 경로/해시·완료 시도·정확한 원 URL을 보존하고 `candidate_published:false`다. 같은 후보를 새 원문 판본으로 바꿔 넣거나 원본 bytes를 훼손하면 선택이 실패한다. 저장 원문은 재수집 없이 기존 추출 경로로 넘겼다.
+
+```sh
+node scripts/research.mjs extract --run 20260930-kaist-robot-hand-extract-v1 --source-run 20260930-kaist-robot-hand-candidate-v2 --model-policy data/research-model-policy.json
+```
+
+로컬 `qwen3.8:27b`는 사실 후보 6개를 만들었고 구조 검사 4개 항목을 통과했다. 비공개 `runs/20260930-kaist-robot-hand-extract-v1/`의 `claims.json`은 `requires_fact_review:true`, `state.json`은 `candidate_published:false`다. 구조 검사는 사실 승인과 다르다. 이 선택·추출 단계에서는 원문 대조, 기사 작성, Drive 원격 저장과 공개 발행을 진행하지 않았다. 후속 검토와 승인 결과는 91절에 기록한다.
+
+## 91. KAIST 원문 검토부터 승인 후보 인계까지
+
+[KAIST 이오노그래스퍼 발표](https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67710&GotoPage=1)의 저장 본문 17블록과 모델 주장 6개를 직접 대조했다. 10분 유지 주장의 조건 메타데이터는 원문에 있는 `빛을 끈 뒤에도 잡은 형태를`로 정정했다. 모델이 빠뜨린 이온 재배열에 따른 무바이어스 접근 감지와 자외선·수분 변화에 따른 굽힘 시연은 블록 7·8에서 별도 검토해 2개 사실로 추가했다. 검증 7개·보류 1개다. [Wiley 공식 논문 서지](https://advanced.onlinelibrary.wiley.com/doi/abs/10.1002/adma.74981)는 9월 14일 공개된 Early View로 표시한다. KAIST 발표문의 ‘62호지 표지논문’을 결합한 모델 주장 하나는 이 표시와 충돌하므로 기사에 사용하지 않았다. Wiley URL의 `collect` 결과는 `blocked`이고 저장 원문 확보로 계산하지 않는다.
+
+```sh
+node scripts/research.mjs review --run 20260930-kaist-robot-hand-extract-v1 --review .local/research/local-ai/runs/20260930-kaist-robot-hand-extract-v1/fact-review-input-v1.json
+node scripts/research.mjs draft --run 20260930-kaist-robot-hand-extract-v1 --model-policy data/research-model-policy.json
+node scripts/research.mjs correct --run 20260930-kaist-robot-hand-extract-v1 --review .local/research/local-ai/runs/20260930-kaist-robot-hand-extract-v1/draft-correction-input-v1.json
+node scripts/research.mjs approve --run 20260930-kaist-robot-hand-extract-v1 --review .local/research/local-ai/runs/20260930-kaist-robot-hand-extract-v1/editorial-approval-input-v1.json
+node scripts/research.mjs candidate-approval --run 20260930-kaist-robot-hand-candidate-link-v1 --source-run 20260930-kaist-robot-hand-extract-v1 --candidate-key source-8bbce2ffd63bf26a19f6
+```
+
+모델 원고는 분야를 AI로 오분류하고 `KAIST` entity를 인용 근거와 정확히 맞추지 못했다. `correct`에서 **로봇·제조/연구·기술**로 고치고 독립 근거 없는 entity 태그를 제거했다. 최종 원고는 KAIST의 9월 30일 발표, 전하를 띤 물체의 감지, 자외선 집기 시연, 빛을 끈 뒤 10분 이상 형태 유지, 아직 계획인 성능 개선을 구분한다. 사건 ID는 `8bbce2ffd63bf26a`이고 `approved-article.json`은 비공개다. 첫 관측이 기존 9월 30일 오전 8시 회차의 취재 종료 뒤였으므로 그 회차를 소급 변경하지 않았다. 실제 발표 시각은 확인하지 않았다.
+
+후보 장부의 직전 bytes는 `.local/research/candidate-backlog-before-kaist-approval-20260930.json`에 SHA-256 `f354f857af72543851d356449c37413ef38e2631463b3e4246a225896583f2b6`로 보존했다. 공통 `candidate-approval` 명령은 승인 원고를 원본 bytes·parse·review·draft에서 다시 계산하고 후보의 원문 판본·내용 지문·발표일을 대조한 뒤, 이 한 건만 `verified`로 연결했다. 재실행 결과의 장부 SHA는 `43a2f8eefc10dcbe08a68450a207a5132d51bc48499f9e7c47a2000c2361bc0a`로 동일했다. 현재 장부 136건 중 verified 55/deferred 13/rejected 1/unreviewed 67이다.
+
+`daily-20260930-main21-integrated-v1 --handoff`를 다시 계산하면 pending 86건 중 KAIST 한 건이 `approved-unpublished`로 나타나며 승인 run과 기사 SHA를 포함한다. `review-publication-time`은 2건, `historical-review`는 82건이다. 이는 **다음 회차 편성 후보**이고 Drive 보관·회차 편성·웹/RSS/GitHub 공개 결과가 아니다. 새 원문 판본이 나타나면 승인 사실을 자동 재사용하지 않고 다시 검토한다.
+
+## 92. 22경로 통합 일일 수집과 공통 예외 판정
+
+비공개 후보 장부의 실행 전 bytes를 `.local/research/candidate-backlog-before-main22-integrated-20260930.json`에 보존했다. SHA-256은 `484a967bf62d00477050bd7ed0cfdfc596dbb14e21c4a2f5ce08b90491e7ffb4`다. 등록된 활성 22경로를 한 계획에서 다음 순서로 실행했다. 첫 `plan-only`는 44개 날짜 창을 만들었고, `execute`는 44개 receipt를 남겼다. `resume`은 저장 원본과 계획을 재검사하며 추가 요청 없이 끝났다.
+
+```sh
+node scripts/research-daily.mjs --run daily-20260930-main22-integrated-v1 --plan-only
+node scripts/research-daily.mjs --run daily-20260930-main22-integrated-v1 --execute
+node scripts/research-daily.mjs --run daily-20260930-main22-integrated-v1 --resume
+```
+
+`.local/research/local-ai/daily/runs/daily-20260930-main22-integrated-v1/`의 summary는 `configured_routes_scanned`, receipt 44개 모두 `window_scanned`, 미완료 창 0개다. 32칸은 `partial` 16개, `not_attempted` 16개다. KAIST 비공개 승인 후보는 verified 상태를 유지했다. 후보 장부는 137건(verified 55, deferred 13, rejected 1, unreviewed 68)이며, 인계는 pending 87건·이번 실행 관측 58건·`approved-unpublished` 1건이다. 같은 계획 재개 전후의 계획·요약·receipt·coverage·장부·인계 JSON 49개의 manifest SHA-256은 `3a4567d2750a1323e6cf53e1055c7f841623ebd447f5758d4e3ccc275ea823eb`로 같았다.
+
+44창의 시작~종료는 약 859초였다. FDA 경로 약 304초, GitHub Changelog 약 124초, HD현대로보틱스 약 117초가 가장 오래 걸렸다. 이는 실제 상세 요청과 저장 단계의 관측값이며 요청 간격·robots 정책을 완화하지 않았다. 앞으로 새 출처는 [수집 구현 명세 3.2절](DAILY_NEWS_INGESTION_IMPLEMENTATION.md#32-새-출처를-활성화하는-체크리스트)의 공통 scanner/profile을 먼저 적용한다. 그다음 GUID·시간대·본문 위치·첨부·페이지 종료 등 **실물 원본에서 확인된 차이만** route/profile 설정, 필요할 때의 재사용 옵션, 해당 차이의 정상·실패 회귀로 기록한다. 이번 통합 실행을 위해 출처별 새 crawler를 만들지 않았다.
+
+이 실행의 계획 권위는 `local_vault_unreconciled`이고 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. 로컬 22경로 완주는 최신 Drive 작성 원본 대조나 기존 08시 예약에서의 실행, 기사 발행·공개 검증을 대신하지 않는다.
+
+## 93. ASEC 공개 RSS와 23경로 통합 실행
+
+[안랩 ASEC 한국어 사이트](https://asec.ahnlab.com/ko/)의 공식 RSS를 기존 bounded RSS 수집기로 읽었다. 최초 원본 30항목은 `Public` 18개·`Private` 12개이며 `Private` 2개가 9월 23~29일 창에 들어왔다. GUID는 한국어 permalink와 다르고, 메타데이터의 UTC 날짜와 화면의 한국 날짜가 자정 경계에서 달라진다. `Private`는 오래된 날짜 경계 증거로 남기고 상세 요청을 하지 않았으며, 기존 HTML 파서에 `publication_date_timezone: Asia/Seoul`을 추가해 원문 표시일과 UTC 메타데이터를 같은 달력에서 비교했다. 최초 두 직접 scan은 4건·0건으로 완료됐고, `daily-20260930-asec-only-v1`은 2/2창을 완료·무변경 재개했다. 실행 전 후보 장부의 사본은 `.local/research/candidate-backlog-before-asec-daily-20260930.json`, SHA-256 `bf1be3622650d86c49a4495d361f394f831c30abb34a1115805df048bb704514`다.
+
+이후 한 계획에서 ASEC를 포함한 활성 23경로를 실행했다. 실행 전 장부 사본은 `.local/research/candidate-backlog-before-main23-integrated-20260930.json`, SHA-256 `cc3db203426e94bf1fe8398c4852da040c0cdbd36bc4dcb4ceab05fb9cb53abf`다.
+
+```sh
+node scripts/research-daily.mjs --run daily-20260930-main23-integrated-v1 --plan-only
+node scripts/research-daily.mjs --run daily-20260930-main23-integrated-v1 --execute
+node scripts/research-daily.mjs --run daily-20260930-main23-integrated-v1 --resume
+```
+
+46창의 receipt가 모두 `window_scanned`, 미완료 0개다. 32칸 중 17개 `partial`·15개 `not_attempted`다. 장부는 141건(verified 55, deferred 13, rejected 1, unreviewed 72), 비공개 인계는 pending 91건·이번 실행 관측 62건·승인 미발행 1건이다. 재개 전후의 계획·요약·receipt·coverage·후보 장부·인계 JSON 51개 manifest SHA-256은 `c906df606aeb83a353c6f1b71f1f3b7a9bb27e95446cb4cd40c2baaaf2ac48fe`로 같았다. 이 통합 실행은 `Private` 제외 규칙을 적용한 시점의 증거다.
+
+실물 30개가 모두 `Public` 또는 `Private`인 점을 확인한 뒤, 공통 RSS adapter에 `required_categories` 옵션을 추가했다. `Private`를 제외한 뒤 `Public`이 없는 항목, 두 분류가 상충하는 항목, 분류가 없는 항목은 각기 명시적인 미완료 이유로 남긴다. 공통 경로의 정상·시간대·분류 예외와 옵션을 사용하지 않는 경로를 회귀 시험했다. 다른 22개 경로를 다시 네트워크로 읽는 대신 변경된 ASEC만 아래처럼 재수용했다.
+
+```sh
+node scripts/research.mjs scan-list --run 20260930-asec-public-strict-sep23-v2 --channel asec-public-ko --since 2026-09-23 --until 2026-09-30
+node scripts/research.mjs scan-list --run 20260930-asec-public-strict-today-v2 --channel asec-public-ko --since 2026-09-30 --until 2026-10-01
+node scripts/research-daily.mjs --run daily-20260930-asec-strict-only-v2 --config .local/research/local-ai/daily-routes-asec-only-strict.json --plan-only
+node scripts/research-daily.mjs --run daily-20260930-asec-strict-only-v2 --config .local/research/local-ai/daily-routes-asec-only-strict.json --execute
+node scripts/research-daily.mjs --run daily-20260930-asec-strict-only-v2 --config .local/research/local-ai/daily-routes-asec-only-strict.json --resume
+node scripts/research-daily.mjs --run daily-20260930-main23-strict-plan-v2 --plan-only
+```
+
+강화된 직접 scan은 공개 원문 4건·빈 창 0건으로 `window_scanned`이며 두 창의 저장 원본 재검증을 통과했다. ASEC 전용 일일 실행은 2/2창, 재개 전후 JSON 7개 manifest SHA-256 `5c35353f825c264f66dbe7751d0798c5df02bf8e733e376ff605e378e7a154e0`로 동일했다. 강화된 전체 설정의 계획은 23경로·46창을 산출했으나 **그 계획의 전체 수집을 실행하지 않았다**. 기존 23경로 전체 실행의 원본 증거와 강화된 한 경로 시험을 별도로 보존한다.
+
+모든 이번 로컬 실행의 `candidate_published`, `drive_verified`, `public_verified`는 `false`다. 신규 네 후보는 편집 대기이며 기사 승인, Drive 원격 보관, 기존 08시 예약 변경, 웹/RSS/GitHub 공개 검증은 수행하지 않았다. 다음 출처도 공통 scanner/profile을 먼저 선택하고, 각 출처에서만 나타나는 GUID·분류·시간대·본문·페이지 종료·정정 차이를 실물 원본과 실패 회귀로 좁혀 추가한다.

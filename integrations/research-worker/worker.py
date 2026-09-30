@@ -10,6 +10,7 @@ import re
 import sys
 from urllib.parse import urljoin, urlparse
 from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 VERSION = "research-worker/1"
 
@@ -22,9 +23,12 @@ def clean(value):
     return re.sub(r"\s+", " ", value or "").strip()
 
 
-def known_date(value):
+def known_date(value, calendar_zone=None):
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).date().isoformat()
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if calendar_zone is not None and parsed.tzinfo is not None:
+            parsed = parsed.astimezone(calendar_zone)
+        return parsed.date().isoformat()
     except (ValueError, TypeError, AttributeError):
         pass
     # Drupal's press metadata uses a local wall time without an offset. Only
@@ -339,6 +343,15 @@ def html_parse(raw, url, options):
         decoded = str(guess)
     dom = html.fromstring(decoded)
     domtree = dom.getroottree()
+    calendar_name = options.get("publication_date_timezone")
+    calendar_zone = None
+    if calendar_name is not None:
+        if not isinstance(calendar_name, str) or not calendar_name or len(calendar_name) > 64:
+            raise ValueError("Invalid publication calendar time zone")
+        try:
+            calendar_zone = ZoneInfo(calendar_name)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError("Invalid publication calendar time zone") from error
     if options.get("embedded_article"):
         return indexed_json_article(dom, url, options)
     title = clean(" ".join(dom.xpath("//title/text()"))) or None
@@ -538,7 +551,7 @@ def html_parse(raw, url, options):
         if kind == "table":
             b["rows"] = [[clean(" ".join(c.itertext())) for c in row if c.tag in ("td", "th", "cell")] for row in node.iter() if row.tag in ("tr", "row")]
         blocks.append(b)
-    days = [known_date(value) for value in date_nodes]
+    days = [known_date(value, calendar_zone) for value in date_nodes]
     valid_dates = bool(days) and all(days) and len(set(days)) == 1
     published = (date_nodes[0] if len(set(date_nodes)) == 1 else days[0]) if valid_dates else None
     if date_nodes and not valid_dates:
@@ -548,7 +561,7 @@ def html_parse(raw, url, options):
     if published and source_date_value(published) is None:
         published = None
         date_profile_status = "invalid-date"
-    modified_days = [known_date(value) for value in modified_nodes]
+    modified_days = [known_date(value, calendar_zone) for value in modified_nodes]
     valid_modified = bool(modified_days) and all(modified_days) and len(set(modified_days)) == 1
     modified = (modified_nodes[0] if len(set(modified_nodes)) == 1 else modified_days[0]) if valid_modified else None
     if modified_nodes and not valid_modified:
@@ -558,7 +571,7 @@ def html_parse(raw, url, options):
     if modified and source_date_value(modified) is None:
         modified = None
         modified_profile_status = "invalid-date"
-    if modified and published and known_date(modified) < known_date(published):
+    if modified and published and known_date(modified, calendar_zone) < known_date(published, calendar_zone):
         modified = None
         modified_profile_status = "before-publication"
     dates = {"published_at": published, "modified_at": modified, "precision": "timestamp" if published and "T" in published else "day" if published else "unknown", "candidates": date_nodes, "basis": date_basis, "profile_status": date_profile_status, "modified_candidates": modified_nodes, "modified_basis": modified_basis, "modified_profile_status": modified_profile_status}

@@ -80,20 +80,22 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
       publication,
       possible_publications,
       next_route:
-        c.source_revision_alert && publication
+        c.source_revision_alert && (publication || c.approval)
           ? "review-source-revision"
           : publication
             ? "already-published"
             : c.review_status === "rejected"
               ? "closed"
-              : possible_publications.length
-                ? "review-existing-identity"
-                : !c.source_published_at
-                  ? "verify-original-date"
-                  : c.source_published_at.slice(0, 10) <
-                      new Date(start + 9 * 3600000).toISOString().slice(0, 10)
-                    ? "historical-review"
-                    : "review-publication-time",
+              : c.review_status === "verified" && c.approval
+                ? "approved-unpublished"
+                : possible_publications.length
+                  ? "review-existing-identity"
+                  : !c.source_published_at
+                    ? "verify-original-date"
+                    : c.source_published_at.slice(0, 10) <
+                        new Date(start + 9 * 3600000).toISOString().slice(0, 10)
+                      ? "historical-review"
+                      : "review-publication-time",
     }
   })
   return {

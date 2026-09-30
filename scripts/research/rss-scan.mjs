@@ -36,8 +36,8 @@ function publicationTimeZone(channel) {
   return timeZone
 }
 
-function ignoredFeedCategories(channel) {
-  const categories = channel.listing_profile?.ignored_categories
+function feedCategories(channel, option) {
+  const categories = channel.listing_profile?.[option]
   if (categories === undefined) return []
   if (
     !Array.isArray(categories) ||
@@ -46,7 +46,7 @@ function ignoredFeedCategories(channel) {
     categories.some((category) => typeof category !== "string" || !category.trim()) ||
     new Set(categories).size !== categories.length
   )
-    throw Error("Invalid RSS ignored categories")
+    throw Error(`Invalid RSS ${option}`)
   return categories
 }
 
@@ -62,7 +62,8 @@ export async function parseStoredRSSFeed(
   if (sha256(raw) !== document.body_sha256) throw Error("RSS feed original body hash mismatch")
   const feed = await parser.parseString(raw.toString("utf8"))
   const timeZone = publicationTimeZone(channel)
-  const ignoredCategories = ignoredFeedCategories(channel)
+  const ignoredCategories = feedCategories(channel, "ignored_categories")
+  const requiredCategories = feedCategories(channel, "required_categories")
   const settings = {
     rule_id: channel.listing_profile?.rule_id,
     feed_title: channel.listing_profile?.feed_title,
@@ -70,6 +71,9 @@ export async function parseStoredRSSFeed(
     guid_is_permalink: channel.listing_profile?.guid_is_permalink,
     date_timezone: channel.listing_profile?.date_timezone,
     ignored_categories: ignoredCategories,
+    ...(channel.listing_profile?.required_categories === undefined
+      ? {}
+      : { required_categories: requiredCategories }),
   }
   const parserIdentity = {
     id: "rss-parser",
@@ -163,7 +167,8 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
     return { ...result, reason: "feed_identity_or_size_invalid" }
   const pattern = new RegExp(channel.item_pattern)
   const timeZone = publicationTimeZone(channel)
-  const ignoredCategories = ignoredFeedCategories(channel)
+  const ignoredCategories = feedCategories(channel, "ignored_categories")
+  const requiredCategories = feedCategories(channel, "required_categories")
   const urls = new Set(),
     guids = new Set()
   for (const link of links) {
@@ -183,13 +188,18 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
       }
     }
     if (
-      ignoredCategories.length &&
+      (ignoredCategories.length || requiredCategories.length) &&
       (!Array.isArray(link.categories) ||
         !link.categories.length ||
         link.categories.some((category) => typeof category !== "string" || !category.trim()))
     )
       return { ...result, reason: "feed_item_category_missing" }
     const ignored = link.categories?.some((category) => ignoredCategories.includes(category))
+    const required = link.categories?.some((category) => requiredCategories.includes(category))
+    if (requiredCategories.length && ignored && required)
+      return { ...result, reason: "feed_item_category_conflict" }
+    if (requiredCategories.length && !ignored && !required)
+      return { ...result, reason: "feed_item_category_unexpected" }
     if (
       (!ignored && !pattern.test(url)) ||
       urls.has(url) ||
