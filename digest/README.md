@@ -4,12 +4,13 @@
 
 ## 누적 주제
 
-- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 7건 · 1개 원칙
+- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙
+- [삼성 계열사의 AI 인프라 투자와 공급 참여](topics/company-samsung-ai-infrastructure.md) — 원문 1건 · 0개 원칙
+- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 8건 · 0개 원칙
 - [Envisagenics의 RNA 표적 연구 사업화](topics/venture-envisagenics.md) — 원문 1건 · 0개 원칙
 - [가정용 배터리의 전력망 공급 실적](topics/grid-home-batteries.md) — 원문 2건 · 0개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 7건 · 1개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 8건 · 1개 원칙
-- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 7건 · 0개 원칙
 - [Magnachip의 SiC 기술 이전과 사업화](topics/company-magnachip-sic.md) — 원문 1건 · 0개 원칙
 - [RamanOmics의 조직 분석과 외부 검증](topics/research-ramanomics.md) — 원문 1건 · 0개 원칙
 - [삼성전자 공조 생산거점 확대](topics/company-samsung-hvac.md) — 원문 1건 · 0개 원칙
@@ -22,6 +23,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-09-30 · 0800](2026/09/2026-09-30_0800_Tech_AI_Briefing.md) — 2026-09-30 IT · AI · 로보틱스
 - [2026-09-23 · 0800](2026/09/2026-09-23_0800_Tech_AI_Briefing.md) — 2026-09-23 IT · AI · 로보틱스
 - [2026-09-22 · 0800](2026/09/2026-09-22_0800_Tech_AI_Briefing.md) — 2026-09-22 IT · AI · 로보틱스
 - [2026-09-21 · 0800](2026/09/2026-09-21_0800_Tech_AI_Briefing.md) — 2026-09-21 IT · AI · 로보틱스

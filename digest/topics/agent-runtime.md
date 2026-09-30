@@ -6,9 +6,9 @@
 
 ## 현재 판단
 
-긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다.
+긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한 통제는 아직 검증 대상이다.
 
-2026-09-23까지 서로 다른 원문 7건 · 5일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-09-30까지 서로 다른 원문 8건 · 6일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -25,6 +25,19 @@
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<a id="20260930-copilot-agent-runtime"></a>
+
+### 2026-09-30 · 참고
+
+**Microsoft가 Copilot에 장시간 작업 위임 기능 Autopilot을 발표하고 제한적 프리뷰 확대를 예고했다.**
+
+업무 실행 계층이 파일 편집과 앱 제작을 한 환경으로 모으려는 방향을 보강한다.
+
+- 한계: 배포는 Frontier 단계와 비공개 프리뷰 계획이다. 완료 품질·중단 복구·권한 경계에 대한 운영 결과는 아직 제시되지 않았다.
+- 다음 확인: 실제 제공 범위와 에이전트 실행의 승인·중단·복구 동작, 작업 완료 품질을 확인한다.
+- [Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표](https://skyan0213.github.io/tech-knowledge-garden/news/295f6ca27b06224b) · [Microsoft 원문](https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-30_0800_tech_ai_briefing)
+- 2026-09-30 원문 검토
 
 <a id="20260923-nutanix-agent-runtime"></a>
 

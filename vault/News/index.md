@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-09-23
+date: 2026-09-30
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,19 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
+- [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
+- [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
+- [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]] · 2026-09-30
+- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
+- [[News/8a3306a5bb75996e|미 에너지부, 26개 주 송전망 개선 31개 사업에 52억5천만달러 선정]] · 2026-09-30
+- [[News/bad3d5636979c1ec|IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파]] · 2026-09-30
+- [[News/783ed5a89f40a298|SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시]] · 2026-09-30
+- [[News/280289462980857d|Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대]] · 2026-09-30
+- [[News/461333ec2270a664|Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정]] · 2026-09-30
+- [[News/295f6ca27b06224b|Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표]] · 2026-09-30
+- [[News/ef1b3a4772eab837|Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고]] · 2026-09-30
+- [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]] · 2026-09-30
 - [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]] · 2026-09-23
 - [[News/6bbcd64185c1cd83|우주항공청, 제2우주센터 설계에 민간 발사 수요 의견 수렴]] · 2026-09-23
 - [[News/66c52fd129c04f36|Roche, enicepatide 2상에서 48주 혈당·체중 결과 공개]] · 2026-09-23
