@@ -582,9 +582,9 @@
       "url": "https://news.skhynix.com/en/feed/",
       "route_check": {
         "date": "2026-09-30",
-        "method": "local-source-fetch",
+        "method": "local-source-fetch-with-archive-fallback",
         "status": "window-scanned",
-        "scope": "Official 10-item WordPress feed. September 23–30 reached an older item and one dated full article after retaining five Media-category items as dated boundary evidence without opening them as articles. The September 30 observation found one full article by the publisher's Korea calendar day. Both stored feeds, details and candidate evidence passed verification. Editorial review is separate."
+        "scope": "The official 10-item WordPress feed did not reach the September 23 boundary. The shared route fell back to the official paginated All archive, verified the older boundary on page 1, and captured the September 28 article for the [September 23, 30) window. It did not open Media-category cards. The exact article URL and event ID match an existing approved and published candidate, so this scan was not merged as a duplicate. The September 30 item is outside this half-open window. Stored feed, archive, detail and parse evidence passed verification; this targeted route scan does not count as a full 23-route run."
       }
     },
     {

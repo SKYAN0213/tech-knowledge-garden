@@ -1,5 +1,6 @@
 import path from "node:path"
 import { canonicalURL } from "../garden.mjs"
+import { titleDayKey } from "../article-identity.mjs"
 import { BACKLOG_PATH } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
 import { samePublicationDate } from "./dates.mjs"
@@ -93,19 +94,57 @@ async function linkCandidateApproval({
       if (
         publishedArticles.some((existing) =>
           existing.source_urls?.some((sourceURL) => canonicalURL(sourceURL) === url),
-        ) ||
-        backlog.candidates.some(
-          (other) => other.key !== candidateKey && other.event_id === article.event_id,
         )
       )
-        throw Error("Candidate source already appears in an edition or event belongs elsewhere")
+        throw Error("Candidate source already appears in an edition")
+      const candidateTitleDay = titleDayKey(candidate.title, candidate.source_published_at)
+      if (
+        candidateTitleDay &&
+        publishedArticles.some(
+          (existing) =>
+            existing.event_id !== article.event_id &&
+            titleDayKey(existing.title, existing.published_at) === candidateTitleDay,
+        )
+      )
+        throw Error("Published article has the same title and original day; review event identity")
+
+      const articleHash = sha256(JSON.stringify(article))
+      for (const other of backlog.candidates.filter((item) => item.key !== candidateKey)) {
+        const sameExtractedContent =
+          candidate.article_content_sha256 &&
+          other.article_content_sha256 === candidate.article_content_sha256 &&
+          samePublicationDate(other.source_published_at, candidate.source_published_at)
+        const sameTitleDay =
+          candidateTitleDay &&
+          titleDayKey(other.title, other.source_published_at) === candidateTitleDay
+        if (
+          (sameExtractedContent || sameTitleDay) &&
+          other.event_id &&
+          other.event_id !== article.event_id
+        )
+          throw Error(
+            "Matching source content or title/day belongs to another event; review identity",
+          )
+        if (other.event_id === article.event_id) {
+          if (
+            other.approval?.approved_run !== approvedRunId ||
+            other.approval?.article_sha256 !== articleHash ||
+            !other.source_urls?.some((sourceURL) =>
+              article.source_urls.some(
+                (articleURL) => canonicalURL(articleURL) === canonicalURL(sourceURL),
+              ),
+            )
+          )
+            throw Error("Event belongs to another candidate approval; review identity")
+        }
+      }
 
       const receipt = {
         schema: "research-candidate-approval/v1",
         candidate_key: candidateKey,
         event_id: article.event_id,
         approved_run: approvedRunId,
-        article_sha256: sha256(JSON.stringify(article)),
+        article_sha256: articleHash,
         source_version_id: document.source_version_id,
         parse_id: parse.parse_id,
         article_content_sha256: contentSha,

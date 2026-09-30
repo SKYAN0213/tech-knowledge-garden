@@ -4,6 +4,7 @@
   "companies": [
     {
       "id": "naver",
+      "source_kind": "company",
       "name": "NAVER",
       "aliases": [],
       "sector": "AI",
@@ -17,6 +18,7 @@
     },
     {
       "id": "kakao",
+      "source_kind": "company",
       "name": "카카오",
       "aliases": [],
       "sector": "AI",
@@ -30,6 +32,7 @@
     },
     {
       "id": "microsoft",
+      "source_kind": "filing-ir",
       "name": "Microsoft",
       "aliases": [],
       "sector": "AI",
@@ -42,6 +45,7 @@
     },
     {
       "id": "alphabet",
+      "source_kind": "filing-ir",
       "name": "Alphabet",
       "aliases": [],
       "sector": "AI",
@@ -55,6 +59,7 @@
     },
     {
       "id": "samsung-sds",
+      "source_kind": "company",
       "name": "삼성SDS",
       "aliases": [],
       "sector": "소프트웨어·클라우드",
@@ -68,6 +73,7 @@
     },
     {
       "id": "douzone",
+      "source_kind": "company",
       "name": "더존비즈온",
       "aliases": [],
       "sector": "소프트웨어·클라우드",
@@ -81,6 +87,7 @@
     },
     {
       "id": "amazon",
+      "source_kind": "filing-ir",
       "name": "Amazon",
       "aliases": [],
       "sector": "소프트웨어·클라우드",
@@ -93,6 +100,7 @@
     },
     {
       "id": "oracle",
+      "source_kind": "filing-ir",
       "name": "Oracle",
       "aliases": [],
       "sector": "소프트웨어·클라우드",
@@ -105,6 +113,7 @@
     },
     {
       "id": "ahnlab",
+      "source_kind": "company",
       "name": "안랩",
       "aliases": [],
       "sector": "사이버보안",
@@ -118,6 +127,7 @@
     },
     {
       "id": "s1",
+      "source_kind": "company",
       "name": "에스원",
       "aliases": [],
       "sector": "사이버보안",
@@ -131,6 +141,7 @@
     },
     {
       "id": "palo-alto",
+      "source_kind": "filing-ir",
       "name": "Palo Alto Networks",
       "aliases": [],
       "sector": "사이버보안",
@@ -143,6 +154,7 @@
     },
     {
       "id": "crowdstrike",
+      "source_kind": "filing-ir",
       "name": "CrowdStrike",
       "aliases": [],
       "sector": "사이버보안",
@@ -155,6 +167,7 @@
     },
     {
       "id": "samsung-electronics",
+      "source_kind": "filing-ir",
       "name": "삼성전자",
       "aliases": [],
       "sector": "반도체·컴퓨팅",
@@ -168,6 +181,7 @@
     },
     {
       "id": "sk-hynix",
+      "source_kind": "company",
       "name": "SK하이닉스",
       "aliases": [],
       "sector": "반도체·컴퓨팅",
@@ -181,6 +195,7 @@
     },
     {
       "id": "nvidia",
+      "source_kind": "filing-ir",
       "name": "NVIDIA",
       "aliases": [],
       "sector": "반도체·컴퓨팅",
@@ -193,6 +208,7 @@
     },
     {
       "id": "tsmc",
+      "source_kind": "filing-ir",
       "name": "TSMC",
       "aliases": [],
       "sector": "반도체·컴퓨팅",
@@ -205,6 +221,7 @@
     },
     {
       "id": "hyundai-motor",
+      "source_kind": "company",
       "name": "현대자동차",
       "aliases": [],
       "sector": "로봇·제조",
@@ -218,6 +235,7 @@
     },
     {
       "id": "doosan-robotics",
+      "source_kind": "company",
       "name": "두산로보틱스",
       "aliases": [],
       "sector": "로봇·제조",
@@ -231,6 +249,7 @@
     },
     {
       "id": "siemens",
+      "source_kind": "company",
       "name": "Siemens",
       "aliases": [],
       "sector": "로봇·제조",
@@ -244,6 +263,7 @@
     },
     {
       "id": "fanuc",
+      "source_kind": "company",
       "name": "FANUC",
       "aliases": [],
       "sector": "로봇·제조",
@@ -257,6 +277,7 @@
     },
     {
       "id": "lg-energy",
+      "source_kind": "company",
       "name": "LG에너지솔루션",
       "aliases": [],
       "sector": "에너지·기후기술",
@@ -270,6 +291,7 @@
     },
     {
       "id": "samsung-sdi",
+      "source_kind": "company",
       "name": "삼성SDI",
       "aliases": [],
       "sector": "에너지·기후기술",
@@ -283,6 +305,7 @@
     },
     {
       "id": "tesla",
+      "source_kind": "filing-ir",
       "name": "Tesla",
       "aliases": [],
       "sector": "에너지·기후기술",
@@ -295,6 +318,7 @@
     },
     {
       "id": "vestas",
+      "source_kind": "company",
       "name": "Vestas",
       "aliases": [],
       "sector": "에너지·기후기술",
@@ -308,6 +332,7 @@
     },
     {
       "id": "samsung-biologics",
+      "source_kind": "company",
       "name": "삼성바이오로직스",
       "aliases": [],
       "sector": "바이오·의료기술",
@@ -321,6 +346,7 @@
     },
     {
       "id": "celltrion",
+      "source_kind": "company",
       "name": "셀트리온",
       "aliases": [],
       "sector": "바이오·의료기술",
@@ -334,6 +360,7 @@
     },
     {
       "id": "roche",
+      "source_kind": "company",
       "name": "Roche",
       "aliases": [],
       "sector": "바이오·의료기술",
@@ -347,6 +374,7 @@
     },
     {
       "id": "thermo-fisher",
+      "source_kind": "filing-ir",
       "name": "Thermo Fisher Scientific",
       "aliases": [],
       "sector": "바이오·의료기술",
@@ -359,6 +387,7 @@
     },
     {
       "id": "hanwha-aerospace",
+      "source_kind": "company",
       "name": "한화에어로스페이스",
       "aliases": [],
       "sector": "우주·기초과학",
@@ -372,6 +401,7 @@
     },
     {
       "id": "kai",
+      "source_kind": "company",
       "name": "한국항공우주산업",
       "aliases": [],
       "sector": "우주·기초과학",
@@ -385,6 +415,7 @@
     },
     {
       "id": "airbus",
+      "source_kind": "company",
       "name": "Airbus",
       "aliases": [],
       "sector": "우주·기초과학",
@@ -398,6 +429,7 @@
     },
     {
       "id": "lockheed-martin",
+      "source_kind": "company",
       "name": "Lockheed Martin",
       "aliases": [],
       "sector": "우주·기초과학",
@@ -413,6 +445,7 @@
   "institutions": [
     {
       "id": "kaist",
+      "source_kind": "commercialization",
       "name": "KAIST",
       "aliases": [],
       "region": "국내",
@@ -435,6 +468,7 @@
     },
     {
       "id": "snu",
+      "source_kind": "research",
       "name": "서울대학교",
       "aliases": [],
       "region": "국내",
@@ -456,6 +490,7 @@
     },
     {
       "id": "postech",
+      "source_kind": "research",
       "name": "POSTECH",
       "aliases": [],
       "region": "국내",
@@ -478,6 +513,7 @@
     },
     {
       "id": "unist",
+      "source_kind": "research",
       "name": "UNIST",
       "aliases": [],
       "region": "국내",
@@ -491,6 +527,7 @@
     },
     {
       "id": "gist",
+      "source_kind": "research",
       "name": "GIST",
       "aliases": [],
       "region": "국내",
@@ -504,6 +541,7 @@
     },
     {
       "id": "kist",
+      "source_kind": "research",
       "name": "KIST",
       "aliases": [],
       "region": "국내",
@@ -517,6 +555,7 @@
     },
     {
       "id": "yonsei",
+      "source_kind": "research",
       "name": "연세대학교",
       "aliases": [],
       "region": "국내",
@@ -530,6 +569,7 @@
     },
     {
       "id": "hanyang",
+      "source_kind": "research",
       "name": "한양대학교",
       "aliases": [],
       "region": "국내",
@@ -565,6 +605,7 @@
     },
     {
       "id": "stanford",
+      "source_kind": "commercialization",
       "name": "Stanford",
       "aliases": [],
       "region": "해외",
@@ -587,6 +628,7 @@
     },
     {
       "id": "berkeley",
+      "source_kind": "commercialization",
       "name": "UC Berkeley",
       "aliases": [],
       "region": "해외",
@@ -600,6 +642,7 @@
     },
     {
       "id": "cmu",
+      "source_kind": "commercialization",
       "name": "Carnegie Mellon",
       "aliases": [],
       "region": "해외",
@@ -613,6 +656,7 @@
     },
     {
       "id": "eth",
+      "source_kind": "commercialization",
       "name": "ETH Zurich",
       "aliases": [],
       "region": "해외",
@@ -635,6 +679,7 @@
     },
     {
       "id": "cambridge",
+      "source_kind": "commercialization",
       "name": "Cambridge",
       "aliases": [],
       "region": "해외",
@@ -657,6 +702,7 @@
     },
     {
       "id": "oxford",
+      "source_kind": "commercialization",
       "name": "Oxford",
       "aliases": [],
       "region": "해외",
@@ -679,6 +725,7 @@
     },
     {
       "id": "nus",
+      "source_kind": "commercialization",
       "name": "NUS",
       "aliases": [],
       "region": "해외",

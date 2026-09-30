@@ -13,6 +13,15 @@ import { crossrefLinks, secLinks } from "./api.mjs"
 export function registry(channels, watchlist, adapters = {}) {
   const methods = new Set(["html-list", "rss", "crossref", "sec"])
   const languages = new Set(["ko", "en", "ja", "zh", "de"])
+  const sourceKinds = new Set([
+    "company",
+    "filing-ir",
+    "research",
+    "commercialization",
+    "industry-press",
+    "industry-body",
+    "regulator",
+  ])
   const validate = (c) => {
     if (
       !/^[a-zA-Z0-9_-]+$/.test(c.channel_id) ||
@@ -20,6 +29,7 @@ export function registry(channels, watchlist, adapters = {}) {
       !methods.has(c.method) ||
       !["국내", "해외"].includes(c.region) ||
       !["기술·제품", "기업·운영"].includes(c.axis) ||
+      (c.kind && !sourceKinds.has(c.kind)) ||
       !Array.isArray(c.sectors) ||
       !c.sectors.length ||
       c.sectors.some((s) => !SECTORS.includes(s))
@@ -78,7 +88,9 @@ export function registry(channels, watchlist, adapters = {}) {
               allowed_hosts: descriptor.allowed_hosts,
               region: c.region,
             }
-          : {}
+          : c.source_kind
+            ? { kind: c.source_kind }
+            : {}
         if (existing) {
           if (descriptor) Object.assign(existing, metadata)
           existing.entity_ids = [...new Set([...existing.entity_ids, c.id])]
@@ -193,6 +205,13 @@ export function candidatesFromLinks(links, channel, now) {
           ...(l.profile_id ? { profile_id: l.profile_id } : {}),
           ...(channel.search_scope ? { search_scope: channel.search_scope } : {}),
           ...(channel.search_entity_id ? { search_entity_id: channel.search_entity_id } : {}),
+          ...(channel.query_slot_id ? { query_slot_id: channel.query_slot_id } : {}),
+          ...(channel.target_source_channel_id
+            ? { target_source_channel_id: channel.target_source_channel_id }
+            : {}),
+          ...(channel.target_source_url ? { target_source_url: channel.target_source_url } : {}),
+          ...(channel.target_source_type ? { target_source_type: channel.target_source_type } : {}),
+          ...(l.text ? { result_title: l.text.slice(0, 400) } : {}),
         },
       ],
       sectors: channel.sectors,
@@ -291,6 +310,16 @@ export async function mergeBacklog(file, candidates) {
       const old = matches[0]
       if (old) {
         const before = JSON.stringify(old)
+        if (
+          old.review_status === "unreviewed" &&
+          c.article_source_version_id &&
+          c.article_parse_id &&
+          c.article_content_sha256 &&
+          typeof c.title === "string" &&
+          c.title.trim() &&
+          old.title !== c.title
+        )
+          old.title = c.title
         old.discovery = [...(old.discovery || []), ...(c.discovery || [])].filter(
           (v, n, a) => a.findIndex((x) => JSON.stringify(x) === JSON.stringify(v)) === n,
         )

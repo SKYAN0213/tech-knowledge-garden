@@ -4,6 +4,7 @@ import { canonicalURL, editions, extractArticles, parseNote } from "../garden.mj
 import { readBacklog, researchWindow } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
 import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
+import { projectIntakeOntology, relatedCandidateKeys } from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { readDailyReceipts, storedListScan, verifyDailyReceipts } from "./daily-scan.mjs"
 
@@ -11,6 +12,7 @@ const REVIEW_ROUTES = [
   "review-source-revision",
   "approved-unpublished",
   "review-existing-identity",
+  "review-related-candidate",
   "review-existing-unverified",
   "verify-original-date",
   "review-publication-time",
@@ -57,6 +59,7 @@ function queueEntry(candidate, observedAttempts) {
       : null,
     publication: candidate.publication,
     possible_publications: candidate.possible_publications || [],
+    related_candidates: candidate.related_candidates || [],
     next_route: candidate.next_route,
     observed_in_run: observedAttempts.length > 0,
     source_attempts: observedAttempts,
@@ -180,6 +183,10 @@ export function buildEditorialHandoff({
   const localMatches = new Map(
     [...allLocal.pending, ...allLocal.resolved].map((candidate) => [candidate.key, candidate]),
   )
+  const intakeOntology = projectIntakeOntology(backlog?.candidates || [])
+  const candidateByKey = new Map(
+    (backlog?.candidates || []).map((candidate) => [candidate.key, candidate]),
+  )
   const entry = (candidate) =>
     queueEntry(
       candidate,
@@ -189,13 +196,15 @@ export function buildEditorialHandoff({
     )
   const pending = window.pending.map((candidate) => {
     const local = localMatches.get(candidate.key)
+    const related = relatedCandidateKeys(intakeOntology, candidate.key)
+    const relatedReviewed = related.some((key) => candidateByKey.get(key)?.event_id)
     const unverifiedPossibilities = (local?.possible_publications || []).filter(
       (entry) =>
         !(candidate.possible_publications || []).some(
           (verified) => verified.event_id === entry.event_id,
         ),
     )
-    return entry(
+    const routed =
       !candidate.publication && local?.publication
         ? {
             ...candidate,
@@ -210,8 +219,15 @@ export function buildEditorialHandoff({
               possible_publications: unverifiedPossibilities,
               next_route: "review-existing-unverified",
             }
-          : candidate,
-    )
+          : candidate
+    return entry({
+      ...routed,
+      related_candidates: related,
+      ...(relatedReviewed &&
+      ["review-publication-time", "historical-review"].includes(routed.next_route)
+        ? { next_route: "review-related-candidate" }
+        : {}),
+    })
   })
   const observed_resolved = window.resolved
     .filter((candidate) => attemptsByKey.has(candidate.key))
@@ -256,6 +272,7 @@ export function buildEditorialHandoff({
       ).length,
     },
     pending,
+    intake_ontology: intakeOntology,
     review_workstreams: reviewWorkstreams(pending),
     observed_resolved,
     candidate_published: false,
@@ -333,6 +350,8 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
       [
         fs.readFileSync(new URL(import.meta.url)),
         fs.readFileSync(new URL("../research-window.mjs", import.meta.url)),
+        fs.readFileSync(new URL("./intake-ontology.mjs", import.meta.url)),
+        fs.readFileSync(new URL("../article-identity.mjs", import.meta.url)),
       ]
         .map((bytes) => sha256(bytes))
         .join("\n"),

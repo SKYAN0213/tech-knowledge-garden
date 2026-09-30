@@ -94,6 +94,32 @@ export function validateDailyRoutes(config, routes) {
           throw Error("Daily RSS publication time zone is invalid: " + entry.channel_id)
         }
       }
+      const fallback = route.listing_profile?.fallback_archive
+      if (fallback !== undefined) {
+        let fallbackURL
+        try {
+          fallbackURL = new URL(fallback.url_template.replace("{page}", "1"))
+        } catch {
+          throw Error("Daily fallback archive URL is invalid: " + entry.channel_id)
+        }
+        const listingRules = fallback.parse_options?.listing_link_rules
+        if (
+          route.method !== "rss" ||
+          fallback.pagination !== "path-pages" ||
+          (fallback.url_template.match(/\{page\}/g) || []).length !== 1 ||
+          !Number.isInteger(fallback.max_pages) ||
+          fallback.max_pages < 1 ||
+          fallback.max_pages > 100 ||
+          !fallback.rule_id ||
+          !route.allowed_hosts?.includes(fallbackURL.hostname) ||
+          !route.item_pattern ||
+          !Array.isArray(fallback.excluded_categories) ||
+          !fallback.excluded_categories.length ||
+          !Array.isArray(listingRules) ||
+          !listingRules.some((rule) => rule.id === fallback.rule_id && rule.category_xpath)
+        )
+          throw Error("Daily fallback archive profile is incomplete: " + entry.channel_id)
+      }
       for (const option of ["ignored_categories", "required_categories"]) {
         if (route.method !== "rss" || route.listing_profile?.[option] === undefined) continue
         const categories = route.listing_profile[option]

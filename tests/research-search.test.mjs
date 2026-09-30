@@ -615,3 +615,115 @@ test("registered-source discovery keeps only links from the targeted host", asyn
     /must target its source host/,
   )
 })
+
+test("search results deduplicate repeated source URLs while retaining every query provenance", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-search-dedupe-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const queries = [
+    {
+      slot_id: "target-cloud-company",
+      scope: "registered-source",
+      source_url: "https://ir.example.com/",
+      source_channel_id: "example-ir",
+      source_type: "company",
+      query: "site:ir.example.com cloud earnings 2026",
+      sector: "소프트웨어·클라우드",
+      region: "해외",
+      axis: "기업·운영",
+      language: "en",
+    },
+    {
+      slot_id: "target-ai-company",
+      scope: "registered-source",
+      source_url: "https://ir.example.com/",
+      source_channel_id: "example-ir",
+      source_type: "company",
+      query: "site:ir.example.com artificial intelligence investment 2026",
+      sector: "AI",
+      region: "해외",
+      axis: "기업·운영",
+      language: "en",
+    },
+  ]
+  const service = {
+    search: async () => ({
+      links: [
+        {
+          url: "https://ir.example.com/news/2026/company-expands-ai.html?utm_source=search",
+          text: "Company expands artificial intelligence investment in 2026",
+        },
+      ],
+      failures: [],
+      engine_count: 2,
+    }),
+  }
+
+  const result = await discoverSearch(root, "run", service, queries)
+
+  assert.equal(result.records.length, 2)
+  assert.deepEqual(
+    result.records.map((record) => record.source_channel_id),
+    ["example-ir", "example-ir"],
+  )
+  assert.equal(result.candidates.length, 1)
+  assert.equal(result.candidates[0].discovery.length, 2)
+  assert.deepEqual(
+    result.candidates[0].discovery.map((entry) => entry.query_slot_id),
+    ["target-cloud-company", "target-ai-company"],
+  )
+  assert.ok(
+    result.candidates[0].discovery.every(
+      (entry) => entry.target_source_channel_id === "example-ir",
+    ),
+  )
+  assert.ok(
+    result.candidates[0].discovery.every((entry) => entry.result_title.includes("Company expands")),
+  )
+  const stored = JSON.parse(fs.readFileSync(path.join(root, "runs/run/search.json"), "utf8"))
+  assert.equal(stored.candidates.length, 1)
+})
+
+test("failed searches retain the engines and counts that caused the failure", async () => {
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "research-search-failure-detail-")),
+  )
+  try {
+    const query = {
+      slot_id: "target-failed",
+      scope: "registered-source",
+      source_url: "https://example.org/news",
+      source_channel_id: "example-source",
+      query: "site:example.org robotics investment 2026",
+      sector: "로봇·제조",
+      region: "해외",
+      axis: "기업·운영",
+      language: "en",
+    }
+    const result = await discoverSearch(
+      root,
+      "run",
+      {
+        search: async () => ({
+          links: [],
+          failures: [
+            ["google", "blocked"],
+            ["bing", "timeout"],
+          ],
+          engine_count: 2,
+        }),
+      },
+      [query],
+    )
+
+    assert.equal(result.records[0].status, "failed")
+    assert.equal(result.records[0].candidate_count, 0)
+    assert.equal(result.records[0].result_count, 0)
+    assert.equal(result.records[0].engine_count, 2)
+    assert.deepEqual(result.records[0].failures, [
+      ["google", "blocked"],
+      ["bing", "timeout"],
+    ])
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})

@@ -17,6 +17,9 @@ const route = registry(
 const articleProfile = acquisition.article_profiles.find(
   (entry) => entry.id === "frontiers-frobt-paper-v1",
 )
+const jatsProfile = acquisition.article_profiles.find(
+  (entry) => entry.id === "frontiers-frobt-jats-v1",
+)
 
 function temporary(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-frontiers-")))
@@ -112,6 +115,17 @@ test("Frontiers full-text profile keeps published date and methods but excludes 
     parsed.blocks.map((block) => block.text),
     ["Abstract", "A robot was evaluated.", "Methods", "Researchers compared two control methods."],
   )
+})
+
+test("Frontiers JATS profile is exact and separate from the HTML article profile", () => {
+  const xmlUrl =
+    "https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1937934/xml"
+  const htmlUrl = xmlUrl.replace(/\/xml$/, "/full")
+  assert.ok(jatsProfile)
+  assert.equal(jatsProfile.options.format, "jats")
+  assert.match(xmlUrl, new RegExp(jatsProfile.url_pattern))
+  assert.doesNotMatch(htmlUrl, new RegExp(jatsProfile.url_pattern))
+  assert.match(htmlUrl, new RegExp(articleProfile.url_pattern))
 })
 
 test("Frontiers title disagreement prevents a candidate even when the publication date matches", async () => {

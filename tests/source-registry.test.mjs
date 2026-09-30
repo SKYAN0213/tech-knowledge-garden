@@ -199,6 +199,42 @@ test("the additive robot registry preserves eight-sector companies and instituti
     )
 })
 
+test("company and institution watchlist sources retain their editorial source kind", () => {
+  const watchlist = JSON.parse(
+    fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url)),
+  )
+  const channels = JSON.parse(
+    fs.readFileSync(new URL("../data/research-source-channels.json", import.meta.url)),
+  )
+  const routes = registry(channels, watchlist)
+  const byOwner = (id) => routes.find((route) => route.publisher_id === id)
+
+  assert.equal(routes.length, 110)
+  assert.ok(routes.every((route) => route.kind))
+  assert.equal(byOwner("microsoft").kind, "filing-ir")
+  assert.equal(byOwner("kaist").kind, "commercialization")
+  assert.equal(byOwner("snu").kind, "research")
+  assert.equal(byOwner("naver").kind, "company")
+  assert.throws(
+    () =>
+      registry(
+        { channels: [] },
+        {
+          companies: [
+            {
+              id: "unknown-kind",
+              name: "Unknown Kind",
+              source_kind: "maybe-news",
+              region: "해외",
+              source_urls: ["https://example.org/"],
+            },
+          ],
+        },
+      ),
+    /Invalid source route contract/,
+  )
+})
+
 test("FANUC dated IR disclosures are distinct from its undated quarterly archive", () => {
   const watchlist = JSON.parse(
     fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url)),

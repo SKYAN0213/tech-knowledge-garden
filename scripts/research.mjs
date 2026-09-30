@@ -53,7 +53,7 @@ import { approveNoteReview } from "./research/note-review.mjs"
 import { saveRetrospectiveInventory } from "./research/retrospective.mjs"
 import { writeKnowledgeDraft } from "./research/knowledge-editor.mjs"
 import { prepareRoleOllama } from "./research/model-policy.mjs"
-import { scanSinglePageRoute } from "./research/list-scan.mjs"
+import { scanPathPagesRoute, scanSinglePageRoute } from "./research/list-scan.mjs"
 import { scanCalendarMonthRoute } from "./research/monthly-scan.mjs"
 import { scanBoundedRSSRoute } from "./research/rss-scan.mjs"
 import { scanPaginatedHDRoute } from "./research/api-scan.mjs"
@@ -65,36 +65,15 @@ import { recordCandidateApproval } from "./research/candidate-approval.mjs"
 import { mergeCompletedScan } from "./research/scan-completion.mjs"
 import { loadDailySearchBasis } from "./research/daily-search-basis.mjs"
 import { generateDailyHandoff, selectCandidateSource } from "./research/editorial-handoff.mjs"
-
-async function saveSourceSelection(root, runId, selected, context = {}) {
-  return withLock(root, "run-" + runId, async () => {
-    const manifest = {
-      schema: "research-source-selection/v1",
-      ...selected.identity,
-      ...context,
-      candidate_published: false,
-    }
-    const existing = readJSON(root, `runs/${runId}/source-selection.json`)
-    if (existing && sha256(JSON.stringify(existing)) !== sha256(JSON.stringify(manifest)))
-      throw Error("Source selection input changed; use a new run")
-    if (existing) {
-      const current = loadStoredSourceRun(root, runId)
-      if (
-        current.identity.documents_sha256 !== selected.identity.documents_sha256 ||
-        current.identity.parses_sha256 !== selected.identity.parses_sha256
-      )
-        throw Error("Stored source selection changed after creation")
-    }
-    atomicWrite(root, `runs/${runId}/documents.json`, selected.documents)
-    atomicWrite(root, `runs/${runId}/parses.json`, selected.parses)
-    atomicWrite(root, `runs/${runId}/source-selection.json`, manifest)
-    return {
-      sources: selected.documents.length,
-      parses: selected.parses.length,
-      candidate_published: false,
-    }
-  })
-}
+import { buildDeliveryStatus, renderDeliveryStatusHTML } from "./research/delivery-status.mjs"
+import {
+  intakeSearchCandidate,
+  selectIntakenSearchCandidate,
+} from "./research/search-candidate-intake.mjs"
+import { intakeSearchCandidateBatch } from "./research/search-candidate-batch-intake.mjs"
+import { collectSearchCandidates } from "./research/search-candidate-collection.mjs"
+import { processSearchCandidates } from "./research/search-candidate-workflow.mjs"
+import { saveSourceSelection } from "./research/source-selection.mjs"
 
 export async function main(argv = process.argv.slice(2)) {
   const { values: v, positionals } = parseArgs({
@@ -116,7 +95,9 @@ export async function main(argv = process.argv.slice(2)) {
       date: { type: "string" },
       "daily-run": { type: "string" },
       "candidate-key": { type: "string" },
+      "candidate-keys": { type: "string", multiple: true },
       backlog: { type: "string" },
+      "batch-manifest": { type: "string" },
       "source-run": { type: "string" },
       "published-source-run": { type: "string" },
       "candidate-run": { type: "string" },
@@ -133,6 +114,7 @@ export async function main(argv = process.argv.slice(2)) {
       "approved-run": { type: "string", multiple: true },
       "knowledge-run": { type: "string", multiple: true },
       vault: { type: "string" },
+      format: { type: "string", default: "json" },
     },
   })
   const command = positionals[0],
@@ -165,14 +147,20 @@ export async function main(argv = process.argv.slice(2)) {
       "select-source",
       "select-candidate",
       "candidate-approval",
+      "intake-search-candidate",
+      "intake-search-batch",
+      "collect-search-candidates",
+      "process-search-candidates",
+      "select-search-candidate",
       "source-register",
       "import-capture",
       "candidate-disposition",
       "candidate-identity",
+      "status",
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|discover|scan-list|collect|reparse|bundle|select-source|select-candidate|candidate-approval|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|source-register --run ID [--url URL --source-run ID --daily-run ID --candidate-key KEY --backlog FILE --published-source-run ID --candidate-run ID --additional-source-run ID --review JSON --channel ID --since DAY --until DAY --provisional --deep --approved-run ID --knowledge-run ID]; preview --review accepts a private new-edition specification",
+      "Usage: research.mjs baseline|inventory|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|source-register --run ID [--url URL --source-run ID --daily-run ID --candidate-run ID --candidate-key KEY --candidate-keys KEY --batch-manifest PATH --backlog FILE --published-source-run ID --additional-source-run ID --review JSON --channel ID --since DAY --until DAY --provisional --deep --approved-run ID --knowledge-run ID]; preview --review accepts a private new-edition specification",
     )
   const budgetFields = [
     "num-ctx",
@@ -209,7 +197,14 @@ export async function main(argv = process.argv.slice(2)) {
     throw Error("--daily-run is only supported for queries or select-candidate")
   if (
     (v["candidate-key"] || v.backlog) &&
-    !["select-candidate", "candidate-approval"].includes(command)
+    ![
+      "select-candidate",
+      "candidate-approval",
+      "intake-search-candidate",
+      "intake-search-batch",
+      "process-search-candidates",
+      "select-search-candidate",
+    ].includes(command)
   )
     throw Error(
       "--candidate-key and --backlog are only supported for candidate selection or approval",
@@ -224,6 +219,9 @@ export async function main(argv = process.argv.slice(2)) {
       "knowledge-draft",
       "select-candidate",
       "candidate-approval",
+      "intake-search-candidate",
+      "intake-search-batch",
+      "select-search-candidate",
     ].includes(command) &&
     v.vault
   )
@@ -239,25 +237,96 @@ export async function main(argv = process.argv.slice(2)) {
       "bundle",
       "select-source",
       "candidate-approval",
+      "intake-search-candidate",
+      "select-search-candidate",
       "import-capture",
       "candidate-disposition",
       "candidate-identity",
     ].includes(command)
   )
     throw Error(
-      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, import-capture, candidate-disposition or candidate-identity",
+      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, intake-search-candidate, select-search-candidate, import-capture, candidate-disposition or candidate-identity",
     )
   if (v["published-source-run"] && command !== "candidate-identity")
     throw Error("--published-source-run is only supported for candidate-identity")
   if (v["additional-source-run"] && command !== "bundle")
     throw Error("--additional-source-run is only supported for bundle")
-  if (v["candidate-run"] && !["candidate-disposition", "candidate-identity"].includes(command))
-    throw Error("--candidate-run is only supported for candidate-disposition or candidate-identity")
+  if (
+    v["candidate-run"] &&
+    ![
+      "candidate-disposition",
+      "candidate-identity",
+      "intake-search-candidate",
+      "intake-search-batch",
+      "collect-search-candidates",
+      "process-search-candidates",
+      "select-search-candidate",
+    ].includes(command)
+  )
+    throw Error(
+      "--candidate-run is only supported for candidate-disposition, candidate-identity, intake-search-candidate, intake-search-batch, collect-search-candidates, process-search-candidates or select-search-candidate",
+    )
+  if (v["batch-manifest"] && command !== "intake-search-batch")
+    throw Error("--batch-manifest is only supported for intake-search-batch")
+  if (
+    v["candidate-keys"] &&
+    !["collect-search-candidates", "process-search-candidates"].includes(command)
+  )
+    throw Error("--candidate-keys is only supported for search candidate collection workflows")
+  if (command !== "status" && v.format !== "json")
+    throw Error("--format is only supported for status")
   if (v["source-run"] && (v.channel?.length || (v.url?.length && command !== "select-source")))
     throw Error("Stored source input cannot be combined with live URLs or channels")
   if (command === "model-info") return ollama.metadata(v.model)
+  if (command === "status") {
+    if (!["json", "html"].includes(v.format)) throw Error("Status accepts --format json|html")
+    const status = buildDeliveryStatus({ root })
+    if (v.format === "html") {
+      const html = renderDeliveryStatusHTML(status)
+      const receipt = atomicWrite(root, "delivery-status.html", html)
+      return { path: receipt.path, sha256: receipt.sha256, access: "local_private" }
+    }
+    return status
+  }
   if (!v.run) throw Error("Explicit --run ID required")
   if (!/^[a-zA-Z0-9_-]+$/.test(v.run)) throw Error("Invalid run id")
+  if (command === "collect-search-candidates" || command === "process-search-candidates") {
+    if (
+      !v["candidate-run"] ||
+      !v["candidate-keys"]?.length ||
+      v["candidate-key"] ||
+      (v.backlog && command === "collect-search-candidates") ||
+      v["batch-manifest"] ||
+      v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error(
+        "Search candidate collection requires --candidate-run and one to twelve --candidate-keys",
+      )
+    const profiles = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
+      .article_profiles || []
+    if (command === "process-search-candidates")
+      return processSearchCandidates({
+        root,
+        runId: v.run,
+        searchRunId: v["candidate-run"],
+        candidateKeys: v["candidate-keys"],
+        articleProfiles: profiles,
+        backlogFile: v.backlog || BACKLOG_PATH,
+        saveSelection: saveSourceSelection,
+      })
+    return collectSearchCandidates({
+      root,
+      runId: v.run,
+      searchRunId: v["candidate-run"],
+      candidateKeys: v["candidate-keys"],
+      articleProfiles: profiles,
+    })
+  }
   if (command === "select-candidate") {
     if (
       !v["daily-run"] ||
@@ -312,6 +381,8 @@ export async function main(argv = process.argv.slice(2)) {
     const publishedArticles = editions(v.vault || "vault").flatMap((edition) =>
       extractArticles(edition).map((article) => ({
         event_id: article.id,
+        title: article.title,
+        published_at: article.review?.published_at,
         source_urls: article.urls,
       })),
     )
@@ -323,6 +394,83 @@ export async function main(argv = process.argv.slice(2)) {
       backlogFile: v.backlog || BACKLOG_PATH,
       publishedArticles,
     })
+  }
+  if (command === "intake-search-candidate") {
+    if (
+      !v["candidate-run"] ||
+      !v["source-run"] ||
+      !v["candidate-key"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error(
+        "Search candidate intake requires --candidate-run, --source-run and --candidate-key",
+      )
+    return intakeSearchCandidate({
+      root,
+      runId: v.run,
+      searchRunId: v["candidate-run"],
+      sourceRunId: v["source-run"],
+      candidateKey: v["candidate-key"],
+      backlogFile: v.backlog || BACKLOG_PATH,
+    })
+  }
+  if (command === "intake-search-batch") {
+    if (
+      !v["candidate-run"] ||
+      !v["batch-manifest"] ||
+      v["candidate-key"] ||
+      v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error("Search candidate batch intake requires --candidate-run and --batch-manifest")
+    const manifest = readJSON(root, v["batch-manifest"])
+    if (!manifest) throw Error("Private search candidate batch manifest not found")
+    return intakeSearchCandidateBatch({
+      root,
+      runId: v.run,
+      searchRunId: v["candidate-run"],
+      manifest,
+      backlogFile: v.backlog || BACKLOG_PATH,
+    })
+  }
+  if (command === "select-search-candidate") {
+    if (
+      !v["candidate-run"] ||
+      !v["source-run"] ||
+      !v["candidate-key"] ||
+      v.run === v["candidate-run"] ||
+      v.run === v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error(
+        "Search candidate selection requires distinct output, intake and source runs plus --candidate-key",
+      )
+    const { candidate, selected } = selectIntakenSearchCandidate({
+      root,
+      intakeRunId: v["candidate-run"],
+      sourceRunId: v["source-run"],
+      candidateKey: v["candidate-key"],
+      backlogFile: v.backlog || BACKLOG_PATH,
+    })
+    return saveSourceSelection(root, v.run, selected, {
+      candidate_key: candidate.key,
+      candidate_source_version_id: candidate.article_source_version_id,
+      candidate_parse_id: candidate.article_parse_id,
+      intake_run: v["candidate-run"],
+      selection_basis: "exact_search_intake",
+    }).then((result) => ({ ...result, candidate_key: candidate.key }))
   }
   if (command === "candidate-disposition") {
     if (
@@ -933,10 +1081,48 @@ export async function main(argv = process.argv.slice(2)) {
                       ? scanSinglePageRoute
                       : null
       if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
-      const result = await scanner(root, run, fetcher, channel, profiles, {
+      let result = await scanner(root, run, fetcher, channel, profiles, {
         since: v.since,
         until: v.until,
       })
+      const archive = channel.listing_profile?.fallback_archive
+      if (
+        channel.method === "rss" &&
+        result.summary?.reason === "feed_cutoff_not_reached" &&
+        archive
+      ) {
+        const archiveChannel = {
+          ...channel,
+          method: "html-list",
+          url: archive.url_template.replace("{page}", "1"),
+          parse_options: archive.parse_options,
+          listing_profile: {
+            pagination: archive.pagination,
+            url_template: archive.url_template,
+            max_pages: archive.max_pages,
+            rule_id: archive.rule_id,
+            excluded_categories: archive.excluded_categories || [],
+            require_title_match: true,
+          },
+        }
+        const fallback = await scanPathPagesRoute(root, run, fetcher, archiveChannel, profiles, {
+          since: v.since,
+          until: v.until,
+        })
+        fallback.summary.fallback = {
+          source: "bounded-feed",
+          reason: result.summary.reason,
+          archive_status: fallback.summary.status,
+          archive_reason: fallback.summary.reason,
+        }
+        result = {
+          ...fallback,
+          indexDocuments: [...(result.indexDocuments || []), ...(fallback.indexDocuments || [])],
+          documents: [...result.documents, ...fallback.documents],
+          parses: [...result.parses, ...fallback.parses],
+          candidates: fallback.candidates,
+        }
+      }
       atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
       if (result.indexDocuments)
         atomicWrite(root, `runs/${v.run}/list-pages.json`, result.indexDocuments)

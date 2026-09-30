@@ -540,6 +540,117 @@ test("discovery backlog retains reviewed IDs and never expires older pending can
   )
 })
 
+test("a complete current article parse refreshes an unreviewed candidate title only", async (t) => {
+  const root = temporary(t)
+  const file = path.join(root, "candidate-backlog.json")
+  const url = "https://example.com/news/materials"
+  const id = sourceId(url)
+  const sourceVersion = `${id}:${sha256("current source bytes")}`
+  const previousObservation = "2026-09-30T08:00:00.000Z"
+  const observedAt = "2026-09-30T09:00:00.000Z"
+  atomicWrite(root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [
+      {
+        key: `source-${id}`,
+        title: "Project 자제 purchase request",
+        source_urls: [url],
+        source_published_at: "2026-09-29",
+        discovered_at: previousObservation,
+        review_status: "unreviewed",
+        article_source_version_id: sourceVersion,
+        article_parse_id: "old-parse",
+        article_observed_at: previousObservation,
+        article_content_sha256: sha256("old extracted article"),
+      },
+    ],
+  })
+
+  await mergeBacklog(file, [
+    {
+      key: `source-${id}`,
+      title: "Project 자재 purchase request",
+      source_urls: [url],
+      source_published_at: "2026-09-29",
+      discovered_at: observedAt,
+      review_status: "unreviewed",
+      article_source_version_id: sourceVersion,
+      article_parse_id: "current-parse",
+      article_observed_at: observedAt,
+      article_content_sha256: sha256("current extracted article"),
+    },
+  ])
+
+  let backlog = readJSON(root, "candidate-backlog.json")
+  assert.equal(backlog.candidates.length, 1)
+  assert.equal(backlog.candidates[0].title, "Project 자재 purchase request")
+  assert.equal(backlog.candidates[0].review_status, "unreviewed")
+  assert.equal(backlog.candidates[0].event_id, undefined)
+  const afterFirstMerge = fs.readFileSync(file)
+  await mergeBacklog(file, [
+    {
+      key: `source-${id}`,
+      title: "Project 자재 purchase request",
+      source_urls: [url],
+      source_published_at: "2026-09-29",
+      discovered_at: observedAt,
+      review_status: "unreviewed",
+      article_source_version_id: sourceVersion,
+      article_parse_id: "current-parse",
+      article_observed_at: observedAt,
+      article_content_sha256: sha256("current extracted article"),
+    },
+  ])
+  assert.deepEqual(fs.readFileSync(file), afterFirstMerge)
+})
+
+test("a complete current article parse does not replace a reviewed candidate title", async (t) => {
+  const root = temporary(t)
+  const file = path.join(root, "candidate-backlog.json")
+  const url = "https://example.com/news/reviewed"
+  const id = sourceId(url)
+  const observedAt = "2026-09-30T09:00:00.000Z"
+  const sourceVersion = `${id}:${sha256("reviewed current source bytes")}`
+  atomicWrite(root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [
+      {
+        key: `source-${id}`,
+        title: "Editorially reviewed title",
+        source_urls: [url],
+        source_published_at: "2026-09-29",
+        discovered_at: observedAt,
+        review_status: "verified",
+        event_id: "abcdef0123456789",
+        article_source_version_id: sourceVersion,
+        article_parse_id: "old-parse",
+        article_observed_at: observedAt,
+        article_content_sha256: sha256("current extracted article"),
+      },
+    ],
+  })
+
+  await mergeBacklog(file, [
+    {
+      key: `source-${id}`,
+      title: "New source title",
+      source_urls: [url],
+      source_published_at: "2026-09-29",
+      discovered_at: observedAt,
+      review_status: "unreviewed",
+      article_source_version_id: sourceVersion,
+      article_parse_id: "current-parse",
+      article_observed_at: observedAt,
+      article_content_sha256: sha256("current extracted article"),
+    },
+  ])
+
+  const candidate = readJSON(root, "candidate-backlog.json").candidates[0]
+  assert.equal(candidate.title, "Editorially reviewed title")
+  assert.equal(candidate.review_status, "verified")
+  assert.equal(candidate.event_id, "abcdef0123456789")
+})
+
 test("a changed article body reopens a rejected candidate while listing-only changes do not", async (t) => {
   const root = temporary(t)
   const file = path.join(root, "candidate-backlog.json")

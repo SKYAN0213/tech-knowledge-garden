@@ -188,6 +188,41 @@ test("unverified local articles are not publication evidence in a research windo
   assert.deepEqual(result.pending[0].possible_publications, [])
 })
 
+test("daily handoff connects matching source content without declaring a shared event", () => {
+  const shared = "a".repeat(64)
+  const input = {
+    candidates: [
+      candidate("first", "2026-09-28", {
+        article_content_sha256: shared,
+        event_id: "abcdef0123456789",
+        review_status: "verified",
+      }),
+      candidate("second", "2026-09-28", { article_content_sha256: shared }),
+    ],
+  }
+  const handoff = buildEditorialHandoff({
+    plan: { ...plan, windows: [plan.windows[0]] },
+    receipts: [{ ...receipts[0], candidate_keys: ["first", "second"] }],
+    observations: [
+      { attempt_id: "complete-a1", key: "first", article_content_sha256: shared },
+      { attempt_id: "complete-a1", key: "second", article_content_sha256: shared },
+    ],
+    backlog: input,
+    issues: [],
+    observedAt: "2026-09-29T02:00:00Z",
+  })
+  const second = handoff.pending.find((entry) => entry.key === "second")
+  assert.deepEqual(second.related_candidates, ["first"])
+  assert.equal(second.next_route, "review-related-candidate")
+  assert.equal(second.event_id, null)
+  assert.equal(
+    handoff.intake_ontology.relations.find(
+      (relation) => relation.type === "sameExtractedContentCandidate",
+    ).decision,
+    "review_required",
+  )
+})
+
 test("editorial handoff routes only exact published identities and keeps failed attempts out of today's observations", () => {
   const handoff = buildEditorialHandoff({
     plan,

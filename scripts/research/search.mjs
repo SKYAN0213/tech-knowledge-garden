@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import { SECTORS } from "../sectors.mjs"
+import { canonicalURL } from "../garden.mjs"
 import { atomicWrite, readJSON, RunState, withLock } from "./run-state.mjs"
 import { candidatesFromLinks } from "./discovery.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
@@ -648,7 +649,8 @@ export class SearxSearch {
 export async function discoverSearch(root, run, search, queries, { state } = {}) {
   validateSearchQueries(queries)
   const records = [],
-    candidates = []
+    candidatesByKey = new Map(),
+    candidatesByURL = new Map()
   for (const [n, query] of queries.entries()) {
     try {
       const action = async () => {
@@ -666,10 +668,19 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
           search_entity_id: query.entity_id || null,
           allowed_hosts:
             query.scope === "registered-source" ? [new URL(query.source_url).hostname] : undefined,
+          query_slot_id: query.slot_id,
+          target_source_channel_id: query.source_channel_id || null,
+          target_source_url: query.source_url || null,
+          target_source_type: query.source_type || null,
           item_pattern: ".+",
         }
-        if (!result.links.length && result.failures.length)
-          throw Error("No usable search results; engines reported failures")
+        if (!result.links.length && result.failures.length) {
+          const error = Error("No usable search results; engines reported failures")
+          error.engine_failures = result.failures
+          error.engine_count = result.engine_count
+          error.result_count = result.links.length
+          throw error
+        }
         const found = candidatesFromLinks(result.links, channel, new Date().toISOString())
         return {
           candidates: found,
@@ -679,6 +690,9 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
             status: "partial",
             query: query.query,
             slot_id: query.slot_id,
+            source_channel_id: query.source_channel_id || null,
+            source_url: query.source_url || null,
+            source_type: query.source_type || null,
             failures: result.failures,
             engine_count: result.engine_count,
             candidate_count: found.length,
@@ -689,12 +703,45 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
       const result = state
         ? await state.stage("query-" + query.slot_id, query, action)
         : await action()
-      candidates.push(...result.candidates)
+      for (const candidate of result.candidates) {
+        const canonicalUrls = candidate.source_urls.map(canonicalURL)
+        if (canonicalUrls.length !== 1)
+          throw Error("Search candidate must have exactly one canonical source URL")
+        const canonical = canonicalUrls[0]
+        const byKey = candidatesByKey.get(candidate.key)
+        const byURL = candidatesByURL.get(canonical)
+        if (byKey && byURL && byKey !== byURL)
+          throw Error("Search candidate identity conflicts between key and canonical URL")
+        const existing = byKey || byURL
+        if (!existing) {
+          candidatesByKey.set(candidate.key, candidate)
+          candidatesByURL.set(canonical, candidate)
+          continue
+        }
+        if (
+          existing.key !== candidate.key ||
+          existing.source_urls.map(canonicalURL).join("\n") !== canonical
+        )
+          throw Error("Duplicate search URL has conflicting candidate identity")
+        existing.discovery = [...(existing.discovery || []), ...(candidate.discovery || [])].filter(
+          (entry, index, all) =>
+            all.findIndex((item) => JSON.stringify(item) === JSON.stringify(entry)) === index,
+        )
+      }
       records.push(result.record)
     } catch (e) {
-      records.push({ ...query, status: "failed", error: e.message })
+      records.push({
+        ...query,
+        status: "failed",
+        error: e.message,
+        ...(Array.isArray(e.engine_failures) ? { failures: e.engine_failures } : {}),
+        ...(Number.isInteger(e.engine_count) ? { engine_count: e.engine_count } : {}),
+        ...(Number.isInteger(e.result_count) ? { result_count: e.result_count } : {}),
+        candidate_count: 0,
+      })
     }
   }
+  const candidates = [...candidatesByKey.values()]
   atomicWrite(root, `runs/${run}/search.json`, { records, candidates })
   return { records, candidates }
 }

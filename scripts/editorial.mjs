@@ -1,5 +1,6 @@
 // Editorial evidence is author-reviewed metadata, never graph-matching prose.
 import { paperKey } from "./paper-identifiers.mjs"
+import { titleDayKey } from "./article-identity.mjs"
 
 export const EDITORIAL_FORMAT = "six-w/v1"
 export const DEEP_KINDS = ["기업 전략", "논문 해설", "연구 사업화"]
@@ -175,9 +176,17 @@ export function editorialContext(issues) {
 
 export function validateIdentities(issues) {
   const papers = new Map(),
-    people = new Map()
+    people = new Map(),
+    eventTitles = new Map()
   for (const i of issues)
     for (const a of i.items) {
+      const titleKey = titleDayKey(a.title, a.review?.published_at)
+      if (titleKey && a.id) {
+        const existing = eventTitles.get(titleKey)
+        if (existing && existing !== a.id)
+          fail("matching title and original day assigned to different published events")
+        eventTitles.set(titleKey, a.id)
+      }
       for (const p of a.editorial?.papers || [])
         for (const raw of p.identifiers) {
           const key = paperKey(raw)

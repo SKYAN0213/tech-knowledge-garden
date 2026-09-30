@@ -1189,6 +1189,132 @@ echo 'source command only'
         self.assertIsNone(invalid["dates"]["published_at"])
         self.assertEqual(invalid["dates"]["profile_status"], "invalid-date")
 
+    def test_frontiers_jats_preserves_provenance_tables_math_and_supplements(self):
+        xml = b'''<?xml version="1.0" encoding="UTF-8"?>
+        <article xmlns="http://jats.nlm.nih.gov" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article" xml:lang="en">
+          <front><journal-meta><journal-title>Robotics and AI</journal-title></journal-meta><article-meta>
+            <article-id pub-id-type="doi">10.3389/frobt.2026.1937934</article-id>
+            <title-group><article-title>SkinAxis tactile sensing for robotic manipulation</article-title></title-group>
+            <pub-date pub-type="epub" iso-8601-date="2026-09-22"><year>2026</year><month>09</month><day>22</day></pub-date>
+            <pub-date pub-type="updated"><year>2026</year><month>09</month><day>25</day></pub-date>
+            <contrib-group><contrib contrib-type="author"><name><surname>Kim</surname><given-names>Jane</given-names></name><xref ref-type="aff" rid="aff1"/><ext-link href="https://orcid.org/0000-0000-0000-0001">ORCID</ext-link></contrib></contrib-group>
+            <aff id="aff1">Robotics Laboratory</aff><kwd-group><kwd>tactile sensing</kwd><kwd>robot manipulation</kwd></kwd-group>
+            <abstract><p>We evaluated tactile feedback in a robotic manipulation task.</p></abstract>
+          </article-meta></front>
+          <body><sec><title>Methods</title><p>We measured contact force in <inline-formula><tex-math><![CDATA[$F=ma$]]></tex-math><math><semantics><mrow><mi>F</mi><mo>=</mo><mi>m</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">F=ma</annotation></semantics></math></inline-formula> during the trial. The index <inline-formula><math><msub><mi mathvariant="script">D</mi><mi>val</mi></msub></math></inline-formula> covers <inline-formula><math><mfenced open="[" close="]"><mrow><mi>x</mi><mspace width="0.3333em"/><mi>y</mi></mrow></mfenced></math></inline-formula> with model <inline-formula><math><mi mathvariant="bold">D</mi></math></inline-formula>.</p>
+            <table-wrap><label>Table 1</label><caption><p>Measured force by condition</p></caption><table><tbody><tr><th>Condition</th><th>Force (N)</th></tr><tr><td>Baseline</td><td>2.4 N</td></tr></tbody></table><table-wrap-foot><fn><label>a</label><p>Calibrated before each trial.</p></fn></table-wrap-foot></table-wrap>
+            <fig><label>Figure 1</label><caption><p>Sensor placement</p></caption><graphic xlink:href="figures/sensor.png"/></fig>
+            <list list-type="order"><list-item><label>1.</label><p>Calibrate the sensor before the trial.</p></list-item></list>
+          </sec><sec><title>Results</title><p>Median force was 2.4 N.</p></sec></body>
+          <back><supplementary-material xlink:href="supplementary/data.csv"><label>Supplementary data</label></supplementary-material></back>
+        </article>'''
+        result = self.invoke(xml, {"format": "jats"}, url="https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1937934/xml")["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertEqual(result["parser"]["id"], "jats-xml")
+        self.assertEqual(result["metadata"]["doi"], "10.3389/frobt.2026.1937934")
+        self.assertEqual(result["metadata"]["article_type"], "research-article")
+        self.assertEqual(result["metadata"]["authors"][0]["name"], "Jane Kim")
+        self.assertEqual(result["metadata"]["affiliations"][0]["text"], "Robotics Laboratory")
+        self.assertEqual(result["metadata"]["authors"][0]["orcid"], "https://orcid.org/0000-0000-0000-0001")
+        self.assertEqual(result["dates"]["published_at"], "2026-09-22")
+        self.assertEqual(result["dates"]["modified_at"], "2026-09-25")
+        table = next(block for block in result["blocks"] if block["kind"] == "table")
+        self.assertEqual(table["rows"], [["Condition", "Force (N)"], ["Baseline", "2.4 N"]])
+        self.assertEqual(table["locator"]["type"], "jats")
+        self.assertEqual(table["footnotes"][0]["text"], "a Calibrated before each trial.")
+        list_item = next(block for block in result["blocks"] if block.get("list_label") == "1.")
+        self.assertEqual(list_item["text"], "Calibrate the sensor before the trial.")
+        self.assertEqual(next(block for block in result["blocks"] if block["kind"] == "figure")["media_urls"], ["https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1937934/figures/sensor.png"])
+        self.assertIn("https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1937934/supplementary/data.csv", [link["url"] for link in result["links"]])
+        expression = result["math_expressions"][0]
+        self.assertEqual(expression["tex"], "$F=ma$")
+        self.assertTrue(expression["mathml_sha256"])
+        paragraph = next(block for block in result["blocks"] if block["kind"] == "paragraph" and "contact force" in block["text"])
+        self.assertIn("$F=ma$", paragraph["text"])
+        self.assertIn("\\mathcal{D}", paragraph["text"])
+        self.assertIn("\\left[x\\;y\\right]", paragraph["text"])
+        self.assertIn("\\mathbf{D}", paragraph["text"])
+        self.assertEqual(paragraph["locator"]["text_hash"], hashlib.sha256(paragraph["text"].encode()).hexdigest())
+
+    def test_jats_table_expands_spans_and_resolves_scoped_footnotes(self):
+        xml = b'''<article article-type="research-article"><front><article-meta>
+          <title-group><article-title>Grouped table</article-title></title-group>
+          <pub-date pub-type="epub" iso-8601-date="2026-09-22"/><abstract><p>Abstract.</p></abstract>
+        </article-meta></front><body><sec><title>Results</title><p>Result.</p>
+          <table-wrap><label>Table 2</label><caption><p>Measurements by design.</p></caption>
+            <table><thead>
+              <tr><th rowspan="2">Model</th><th colspan="2">D1-gel</th><th colspan="2">D1-dragon</th></tr>
+              <tr><th>Force</th><th>Energy</th><th>Force</th><th>Energy</th></tr>
+            </thead><tbody><tr><th>Peak</th><td>4.2 N<xref ref-type="table-fn" rid="TF1">a</xref><xref ref-type="fn" rid="GF1">b</xref></td><td>3.1 J</td><td>5.0 N</td><td>4.0 J</td></tr></tbody></table>
+            <table-wrap-foot><fn id="TF1"><label>a</label><p>Measured at 1.0 m/s.</p><table><tr><td>nested note table</td></tr></table></fn></table-wrap-foot>
+          </table-wrap>
+        </sec></body><back><fn-group><fn id="GF1"><label>b</label><p>General protocol detail.</p></fn></fn-group></back></article>'''
+        result = self.invoke(xml, {"format": "jats"})["result"]
+        self.assertEqual(result["status"], "extracted")
+        table = next(block for block in result["blocks"] if block["kind"] == "table")
+        self.assertEqual(len(table["rows"]), 3)
+        self.assertEqual(table["grid"], [
+            ["Model", "D1-gel", "D1-gel", "D1-dragon", "D1-dragon"],
+            ["Model", "Force", "Energy", "Force", "Energy"],
+            ["Peak", "4.2 N a b", "3.1 J", "5.0 N", "4.0 J"],
+        ])
+        self.assertEqual(table["cell_layout"][0][1]["colspan"], 2)
+        self.assertEqual(table["cell_layout"][1][0]["origin_row"], 0)
+        self.assertTrue(table["cell_layout"][1][0]["continuation"])
+        self.assertTrue(table["cell_layout"][0][1]["xml_path"].endswith("/th[2]"))
+        self.assertEqual(table["footnotes"][0]["id"], "TF1")
+        self.assertEqual(table["footnotes"][0]["paragraphs"][0]["text"], "Measured at 1.0 m/s.")
+        self.assertEqual(table["footnote_refs"][0]["rid"], "TF1")
+        self.assertEqual(table["footnote_refs"][0]["status"], "resolved")
+        self.assertEqual(table["footnote_refs"][1]["target_scope"], "document")
+        self.assertEqual(table["footnote_refs"][1]["status"], "resolved")
+        self.assertEqual(result["quality"]["table_layout_issues"], [])
+        self.assertEqual(result["quality"]["unresolved_table_footnotes"], [])
+
+    def test_jats_unresolved_table_footnote_and_invalid_span_are_partial(self):
+        xml = b'''<article article-type="research-article"><front><article-meta>
+          <title-group><article-title>Malformed table</article-title></title-group>
+          <pub-date pub-type="epub" iso-8601-date="2026-09-22"/><abstract><p>Abstract.</p></abstract>
+        </article-meta></front><body><sec><title>Results</title><p>Result.</p>
+          <table-wrap><table><tr><th colspan="not-a-number">Value<xref ref-type="table-fn" rid="MISSING">b</xref></th></tr></table></table-wrap>
+        </sec></body></article>'''
+        result = self.invoke(xml, {"format": "jats"})["result"]
+        self.assertEqual(result["status"], "partial")
+        self.assertFalse(result["quality"]["required_fields_present"])
+        self.assertEqual(len(result["quality"]["table_layout_issues"]), 1)
+        self.assertEqual(result["quality"]["table_layout_issues"][0]["reason"], "invalid-span")
+        self.assertEqual(len(result["quality"]["unresolved_table_footnotes"]), 1)
+        table = next(block for block in result["blocks"] if block["kind"] == "table")
+        self.assertEqual(table["footnote_refs"][0]["status"], "unresolved")
+
+    def test_jats_does_not_guess_partial_dates_or_hide_unsupported_math(self):
+        xml = b'''<article article-type="research-article"><front><article-meta><article-id pub-id-type="doi">10.1/example</article-id>
+          <title-group><article-title>Partial metadata</article-title></title-group><pub-date pub-type="epub"><year>2026</year><month>09</month></pub-date>
+          <abstract><p>Abstract.</p></abstract></article-meta></front><body><sec><title>Results</title><p>Result <inline-formula><math><mystery/></math></inline-formula>.</p></sec></body></article>'''
+        result = self.invoke(xml, {"format": "jats"})["result"]
+        self.assertEqual(result["status"], "partial")
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["profile_status"], "insufficient-precision")
+        self.assertEqual(result["dates"]["candidates"], ["2026-09"])
+        self.assertEqual(len(result["quality"]["missing_math"]), 1)
+        missing_math = result["quality"]["missing_math"][0]
+        self.assertIn("<mystery", missing_math["source_xml"])
+        self.assertEqual(missing_math["source_xml_sha256"], hashlib.sha256(missing_math["source_xml"].encode()).hexdigest())
+        self.assertTrue(missing_math["xml_path"].endswith("/inline-formula"))
+        result_paragraph = next(block["text"] for block in result["blocks"] if block["kind"] == "paragraph" and block["text"].startswith("Result"))
+        self.assertIn("[수식 원문 확인 필요]", result_paragraph)
+
+    def test_jats_external_entities_are_not_expanded(self):
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as secret:
+            secret.write("EXTERNAL_ENTITY_MUST_NOT_BE_READ")
+            secret.flush()
+            xml = f'''<!DOCTYPE article [<!ENTITY secret SYSTEM "file://{secret.name}">]>
+            <article article-type="research-article"><front><article-meta><title-group><article-title>Entity test</article-title></title-group>
+            <pub-date pub-type="epub" iso-8601-date="2026-09-22"/><abstract><p>Abstract.</p></abstract></article-meta></front>
+            <body><sec><title>Results</title><p>&secret;</p></sec></body></article>'''.encode()
+            result = self.invoke(xml, {"format": "jats"})["result"]
+            self.assertNotIn("EXTERNAL_ENTITY_MUST_NOT_BE_READ", " ".join(block["text"] for block in result["blocks"]))
+
 
 if __name__ == "__main__":
     unittest.main()

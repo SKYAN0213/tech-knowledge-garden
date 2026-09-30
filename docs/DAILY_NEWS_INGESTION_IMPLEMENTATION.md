@@ -338,6 +338,28 @@ ASEC 한국어 공식 RSS는 기존 공통 `bounded-feed`와 HTML 상세 파서�
 
 현재 활성 경로는 RSS 10개, 단일 페이지 날짜 목록 9개, 월별 아카이브 1개, 공개 JSON·폼 3개다. 이 로컬 증거의 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. 명령과 해시는 [런북 93절](LOCAL_AI_NEWS_RUNBOOK.md#93-asec-공개-rss와-23경로-통합-실행)에 기록한다.
 
+### 4.24 승인 전 원문 관계 투영과 중복 발행 관문
+
+일일 편집 인계는 기존 후보 장부에서 비공개 `research-intake-ontology/v1`을 투영한다. `Candidate`, `Source`, `SourceVersion`, 기존 사건 ID가 명시된 `Event`를 연결하고, 동일 정규 URL·추출 본문 지문/발표일·정규화 제목/발표일의 후보 관계를 `review_required`로 표시한다. 관계 제안은 사실 승인이나 사건 병합이 아니다. 이미 사건 ID가 있는 후보와 관계가 발견되면 `review-related-candidate` 경로로 보내며, 원문 판본의 정확한 선택과 편집 검토를 계속 요구한다. 장부가 이 투영의 입력이며 별도 중복 지식 저장소는 만들지 않는다.
+
+`candidate-approval`은 승인 원고를 원문 bytes·parse·검토 사실·최종 draft에서 재계산한다. 같은 내용 또는 같은 제목/발표일의 다른 후보가 **다른 사건 ID**로 승인돼 있거나, 기존 공개 기사와 같은 제목/발표일을 가지면 충돌을 거부한다. 여러 원문이 동일 승인 원고에 실제로 인용되어 있고 승인 run·기사 SHA·사건 ID가 모두 같으면 각 후보를 한 사건에 연결할 수 있다. 같은 내용이라는 이유로 자동 병합하지 않으며 관계 판단은 원문에 근거해 별도로 기록한다. 공개 생성은 같은 제목/원 발표일의 서로 다른 사건 ID를 거부한다. 이 검사는 다른 제목으로 보도한 동일 사건의 의미 판정을 대신하지 않으므로 GPT 편집자는 신규 승인 전에 기존 사건·원문 언어판·전재·후속 발표를 대조한다.
+
+육하원칙 2~4문장은 상세 기사 리드이며 정보가 필요한 사건은 `explanations`의 원문 근거 문단을 유지한다. 브리핑·RSS·GitHub는 승인 기사에서 투영하며 요약 때문에 원고의 사실·조건을 삭제하지 않는다. 2026-09-30 저장 회차에는 `article_records.explanations`가 없으므로 형식 통과를 상세 설명의 충분성으로 간주하지 않고 다음 정규 편집에서 직접 읽어 확인한다. 이번 변경은 기존 원고·Drive·공개 사이트를 수정하지 않는다.
+
+### 4.25 검색 발견 후보의 exact-source 확인과 비공개 intake
+
+검색은 원문 탐색이 아니라 발견 단계다. 새 [`intake-search-candidate`](../scripts/research/search-candidate-intake.mjs) 명령은 고정 search run의 후보 key, 한 개의 canonical URL, exact URL을 담은 별도 source run을 요구한다. source run은 기존 `loadStoredSourceRun` 경로로 원문 bytes와 parse artifact를 재검증한다. 정확히 한 문서·한 extracted parse·명시적 `published_at`이 모두 있어야 본문 지문과 source version·parse ID를 장부에 연결한다. 날짜가 없으면 `source_date_missing` receipt만 남기고 장부는 쓰지 않는다. 기존 날짜와 새 parse의 날짜가 충돌하거나 검색 키와 URL identity가 다르면 실패한다.
+
+연결 결과는 기존 후보 key로 병합하고 `review_status: unreviewed`를 유지한다. 원 검색의 query slot provenance와 원문 intake provenance는 함께 보존한다. 별도 intake receipt는 search/source 입력 지문·source version·parse·본문 지문을 묶으며 재실행은 장부를 변경하지 않는다. `select-search-candidate`는 이 성공 receipt와 현재 후보 장부의 미검토 상태를 다시 대조한 뒤 동일 원문 한 건만 새 비공개 source-selection run에 전달한다. 승인 상태가 바뀌었거나 intake·source·output run이 혼동되면 선택을 거부한다. 이 단계는 사실 검토·편집 승인·기존 발행 대조·Drive 저장·웹/RSS/GitHub 공개를 하지 않는다. 선택 결과는 기존 `extract → review → draft → correct → approve` 흐름에 바로 입력할 수 있다.
+
+이미 수집·재파싱한 후보 여러 건은 `intake-search-batch` manifest로 동일한 계약을 반복 적용한다. 각 항목 receipt를 바로 기록해 부분 실패 뒤 같은 manifest로 재개할 수 있고, 성공 항목은 저장 원문과 현재 후보를 재검증해 중복 변경 없이 처리한다. 이 batch 단계는 URL 수집·날짜 추정·편집 승인을 수행하지 않는다. manifest와 사용법은 [런북 103절](LOCAL_AI_NEWS_RUNBOOK.md#103-exact-source-검색-후보-일괄-intake와-실패-항목-재개)에 기록한다.
+
+`collect-search-candidates`는 exact candidate key 목록에 포함된 URL만 기존 공통 source fetcher·robots 정책·저장 bytes·profile parser에 전달한다. 후보별 fetch/parse checkpoint와 부분 결과를 저장해 중단 뒤 완료 단계는 재사용한다. HTTP 실패나 parse 실패를 성공으로 바꾸지 않으며, 제한 묶음 전체가 모두 `source_parsed`가 아니면 run은 `partial`이다. 결과는 [런북 104절](LOCAL_AI_NEWS_RUNBOOK.md#104-검색-후보의-공통-원문-수집파싱과-exact-source-선택)처럼 검토 전 후보 상태에서 exact-source intake·selection에 넘길 수 있다.
+
+`process-search-candidates`는 이 수집, exact batch intake, 성공 항목별 source selection을 같은 검색 지문·후보 key에 묶어 한 번에 재개한다. 단계별 run과 receipt를 유지하며 후보별 상태를 최종 workflow receipt에 모은다. 한 후보의 실패가 성공한 다른 후보의 selection을 취소하지 않는다. 어떤 단계도 기사 승인이나 공개 발행을 수행하지 않는다. 실제 한 건의 결과와 command는 [런북 105절](LOCAL_AI_NEWS_RUNBOOK.md#105-검색-후보-발견에서-exact-source-선택까지-한-명령으로-실행)에 기록한다.
+
+실제 삼성SDS Helix 투자 발표는 원문 capture의 generic parse에서 발행일이 빠져 있었다. 저장 HTML을 직접 조사해 `span[itemprop=datePublished][content]`에 `2026-09-30`이 명시된 것을 확인하고, 이 exact URL만 대상으로 제목·본문·발행일 XPath를 추가했다. 동일 저장 bytes를 `reparse`해 제목과 발행일을 확인한 뒤 `20260930-main23-targeted-v1`의 검색 후보 1건을 후보 원장에 연결하고, 새 선택 run에서 같은 원문 1건을 다음 편집 파이프라인 입력으로 선택했다. 결과는 `2026-09-30`/`unreviewed`이며 event ID·approval·publication은 만들지 않았다. 후보 장부는 145→146건, URL 중복은 0건이다. 동일 intake 재실행은 `backlog_changed:false`다. profile·저장 판본·intake receipt·선택 결과는 [런북 101절](LOCAL_AI_NEWS_RUNBOOK.md#101-검색-발견-후보의-원문-발행일-검증과-비공개-연결)에 기록한다.
+
 ## 5. 로컬 모델과 편집 단계의 정확한 역할
 
 현행 [`data/research-model-policy.json`](../data/research-model-policy.json)은 `qwen3.8:27b`를 다섯 역할의 시작점으로 둔다. `search_plan`, `fact_extract`, `article_write`, `concept_write`는 `think:false`; 상충하는 **이미 검토된 근거**의 비교 후보인 `evidence_compare`만 `think:medium`이다. 문맥 16,384·최대 출력 4,096토큰, 사실 추출은 20,000자/묶음 6사실/전체 900초로 제한한다. 이는 **현재 실행 설정**이지 모든 분야에서 품질이 입증된 최종 모델 선정이 아니다. 검색·웹 요청·원문 날짜 판정·기사 발행은 모델이 직접 하지 않는다.

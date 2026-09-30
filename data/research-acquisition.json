@@ -1,6 +1,20 @@
 {
   "article_profiles": [
     {
+      "id": "samsung-sds-helix-investment-20260930",
+      "url_pattern": "^https://www\\.samsungsds\\.com/kr/news/sds20260930\\.html$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//h1[@itemprop='headline']",
+        "content_xpath": "//div[@class='txt_wrap' and @data-section='posted']",
+        "content_block_xpath": ".//p[@class='txt']",
+        "publication_date_xpath": "//span[@itemprop='datePublished' and @content]",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
       "id": "doe-spark-grid-investment-20260924",
       "url_pattern": "^https://www\\.energy\\.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity/?$",
       "options": {
@@ -516,7 +530,7 @@
     },
     {
       "id": "skhynix-newsroom-en-article-v1",
-      "url_pattern": "^https://news\\.skhynix\\.com/en/[^/?#]+/?$",
+      "url_pattern": "^https://news\\.skhynix\\.com/en/(?!all(?:/|$)|category(?:/|$)|page(?:/|$)|tag(?:/|$))[^/?#]+/?$",
       "options": {
         "language": "en",
         "title_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' type-post ')]//h2[contains(concat(' ', normalize-space(@class), ' '), ' post-title ')]",
@@ -607,6 +621,14 @@
         "publication_date_attribute": "content",
         "publication_date_pattern": "^[0-9]{4}/[0-9]{2}/[0-9]{2}$",
         "publication_date_format": "%Y/%m/%d"
+      }
+    },
+    {
+      "id": "frontiers-frobt-jats-v1",
+      "url_pattern": "^https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/xml$",
+      "options": {
+        "format": "jats",
+        "language": "en"
       }
     },
     {
@@ -940,7 +962,7 @@
   "skhynix-newsroom-en": {
     "publisher_id": "news.skhynix.com",
     "allowed_hosts": ["news.skhynix.com"],
-    "item_pattern": "^https://news\\.skhynix\\.com/en/[^/?#]+/?$",
+    "item_pattern": "^https://news\\.skhynix\\.com/en/(?!all(?:/|$)|category(?:/|$)|page(?:/|$)|tag(?:/|$))[^/?#]+/?$",
     "scan_max_details": 10,
     "listing_profile": {
       "pagination": "bounded-feed",
@@ -950,7 +972,33 @@
       "guid_is_permalink": false,
       "date_timezone": "Asia/Seoul",
       "ignored_categories": ["Media"],
-      "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. Retain dated Media items as boundary evidence, but inspect full article categories only. Compare article dates in the publisher's Korea calendar day."
+      "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. Retain dated Media items as boundary evidence, but inspect full article categories only. Compare article dates in the publisher's Korea calendar day. If the bounded feed cannot reach the requested older boundary, use the configured official paginated All archive; never treat an incomplete feed as an empty window.",
+      "fallback_archive": {
+        "pagination": "path-pages",
+        "url_template": "https://news.skhynix.com/en/all/page/{page}/",
+        "max_pages": 10,
+        "rule_id": "skhynix-newsroom-en-archive-v1",
+        "excluded_categories": ["MEDIA"],
+        "parse_options": {
+          "language": "en",
+          "title_xpath": "//title[starts-with(normalize-space(.), 'All')]",
+          "content_xpath": "//main",
+          "content_block_xpath": ".//article[contains(concat(' ', normalize-space(@class), ' '), ' item ')]",
+          "listing_link_rules": [
+            {
+              "id": "skhynix-newsroom-en-archive-v1",
+              "item_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' item ')]/a[contains(concat(' ', normalize-space(@class), ' '), ' item-link ')][@href]",
+              "url_attribute": "href",
+              "url_pattern": "(?P<url>https://news\\.skhynix\\.com/en/(?!all(?:/|$)|category(?:/|$)|page(?:/|$)|tag(?:/|$))[^/?#]+/?)",
+              "title_xpath": ".//div[contains(concat(' ', normalize-space(@class), ' '), ' title ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' text-inner ')]",
+              "date_xpath": ".//div[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+              "date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+              "date_format": "%B %d, %Y",
+              "category_xpath": "ancestor::article[1]//div[contains(concat(' ', normalize-space(@class), ' '), ' category ')]/a"
+            }
+          ]
+        }
+      }
     }
   },
   "nvidia-press-releases": {

@@ -95,24 +95,48 @@ def math_local_name(node):
     return node.tag.rsplit("}", 1)[-1].split(":")[-1].lower() if isinstance(node.tag, str) else ""
 
 
-def presentation_math_text(node):
+def presentation_math_text(node, preserve_bold=False):
     """Serialize supported MathML structures without evaluating or flattening them."""
     tag = math_local_name(node)
     children = [child for child in node if isinstance(child.tag, str)]
     # Unsupported layout attributes can change a symbol's meaning (e.g. bold
     # vectors or a barless fraction). Prefer publisher TeX; do not guess them.
-    if any(attribute in node.attrib for attribute in ("mathvariant", "linethickness", "bevelled")):
+    if any(attribute in node.attrib for attribute in ("linethickness", "bevelled")):
         return None
+    variant = node.get("mathvariant")
+    variant_commands = {
+        "normal": "mathrm",
+        "italic": "mathit",
+        "script": "mathcal",
+    }
+    if preserve_bold:
+        variant_commands["bold"] = "mathbf"
+    if variant and variant not in variant_commands:
+        return None
+    if tag == "mspace":
+        width = node.get("width", "")
+        match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)em", width)
+        if not match:
+            return None
+        size = float(match.group(1))
+        return "" if size == 0 else "\\," if size < 0.25 else "\\:" if size < 0.30 else "\\;" if size < 0.5 else "\\quad" if size <= 1.5 else "\\qquad" if size <= 2 else None
     if tag in ("mi", "mn", "mo", "mtext"):
-        return clean(node.text) if not children and clean(node.text) else None
+        value = clean(node.text)
+        if children:
+            return None
+        if not value:
+            if tag == "mtext" and (node.text or "").strip() == "":
+                return "\\,"
+            return None
+        return f"\\{variant_commands[variant]}{{{value}}}" if variant else value
     if tag == "semantics":
         presentation = [child for child in children if math_local_name(child) not in ("annotation", "annotation-xml")]
-        return presentation_math_text(presentation[0]) if len(presentation) == 1 else None
+        return presentation_math_text(presentation[0], preserve_bold=preserve_bold) if len(presentation) == 1 else None
     if not children:
         return None
     if clean(node.text) or any(clean(child.tail) for child in children):
         return None
-    values = [presentation_math_text(child) for child in children]
+    values = [presentation_math_text(child, preserve_bold=preserve_bold) for child in children]
     if any(value is None for value in values):
         return None
     if tag in ("math", "mrow", "mstyle", "mtd"):
@@ -130,6 +154,15 @@ def presentation_math_text(node):
         return "\\sqrt{" + "".join(values) + "}"
     if tag == "mroot" and len(values) == 2:
         return f"\\sqrt[{values[1]}]{{{values[0]}}}"
+    if tag == "mfenced":
+        opening, closing = node.get("open", "("), node.get("close", ")")
+        separators = node.get("separators", ",")
+        if not separators:
+            separators = [""]
+        else:
+            separators = list(separators)
+        body = "".join(value + (separators[min(index, len(separators) - 1)] if index < len(values) - 1 else "") for index, value in enumerate(values))
+        return f"\\left{opening}{body}\\right{closing}"
     if tag == "mover" and len(values) == 2:
         return f"\\overset{{{values[1]}}}{{{values[0]}}}"
     if tag == "munder" and len(values) == 2:
@@ -440,6 +473,8 @@ def html_parse(raw, url, options):
     for rule in rules:
         if not isinstance(rule, dict) or not all(isinstance(rule.get(k), str) and 0 < len(rule[k]) <= 512 for k in ("id", "item_xpath", "url_attribute", "url_pattern", "title_xpath")):
             raise ValueError("Incomplete listing link rule")
+        if rule.get("category_xpath") is not None and (not isinstance(rule["category_xpath"], str) or not 0 < len(rule["category_xpath"]) <= 512):
+            raise ValueError("Invalid listing category selector")
         if bool(rule.get("date_pattern")) != bool(rule.get("date_format")) or (rule.get("date_pattern") and not rule.get("date_xpath")):
             raise ValueError("Listing date pattern and format require one date selector")
         if rule.get("title_pattern") and (not isinstance(rule["title_pattern"], str) or len(rule["title_pattern"]) > 512 or "title" not in re.compile(rule["title_pattern"]).groupindex):
@@ -471,7 +506,13 @@ def html_parse(raw, url, options):
                     listed_day = datetime.strptime(date_for_strptime(date_match.group(0), rule["date_format"], language), rule["date_format"]).strftime("%Y-%m-%d") if date_match else None
                 except ValueError:
                     listed_day = None
-            links.append({"url": href, "text": item_title, "dom_path": domtree.getpath(item), "published_at": listed_day, "listed_date_text": listed_date or None, "profile_id": rule["id"]})
+            categories = []
+            if rule.get("category_xpath"):
+                categories = [clean(" ".join(n.itertext())) for n in item.xpath(rule["category_xpath"]) if isinstance(n, etree._Element)]
+            link = {"url": href, "text": item_title, "dom_path": domtree.getpath(item), "published_at": listed_day, "listed_date_text": listed_date or None, "profile_id": rule["id"]}
+            if rule.get("category_xpath"):
+                link["categories"] = categories
+            links.append(link)
             matched += 1
         link_profiles.append({"id": rule["id"], "status": "matched" if matched else "no-match", "selected_items": len(items), "matched_links": matched, "truncated": len(items) > 5000})
     for a in dom.xpath("//a[@href]")[:5000]:
@@ -585,6 +626,454 @@ def html_parse(raw, url, options):
     if math_expressions:
         result["math_expressions"] = math_expressions
         result["quality"]["missing_math"] = missing_math
+    return result
+
+
+def jats_parse(raw, url, options):
+    from lxml import etree
+
+    if not isinstance(options, dict) or options.get("format") != "jats":
+        raise ValueError("Explicit JATS parser profile required")
+    if len(raw) > 40 * 1024 * 1024:
+        raise ValueError("JATS byte budget exceeded")
+    parser = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False, huge_tree=False)
+    root = etree.fromstring(raw, parser=parser)
+    if math_local_name(root) != "article":
+        raise ValueError("JATS root must be an article")
+    tree = root.getroottree()
+    elements = list(root.iter())
+    if len(elements) > 100000:
+        raise ValueError("JATS element budget exceeded")
+
+    def children(node, name):
+        return [item for item in node if math_local_name(item) == name]
+
+    def descendants(node, name):
+        return [item for item in node.iter() if math_local_name(item) == name]
+
+    def first_text(node, names):
+        for name in names:
+            selected = descendants(node, name)
+            if selected:
+                value = clean(" ".join("".join(item.itertext()) for item in selected[:1]))
+                if value:
+                    return value
+        return None
+
+    metadata = {
+        "article_type": clean(root.get("article-type")) or None,
+        "language": root.get("{http://www.w3.org/XML/1998/namespace}lang") or options.get("language"),
+    }
+    front = next((item for item in children(root, "front")), None)
+    article_meta = next((item for item in descendants(front, "article-meta")), None) if front is not None else None
+    title_node = next((item for item in descendants(article_meta, "article-title")), None) if article_meta is not None else None
+    title = clean(" ".join(title_node.itertext())) if title_node is not None else None
+
+    identifiers = []
+    if article_meta is not None:
+        for item in descendants(article_meta, "article-id")[:100]:
+            value = clean(" ".join(item.itertext()))
+            if value:
+                identifiers.append({"type": clean(item.get("pub-id-type")) or "unknown", "value": value})
+    doi_values = [item["value"].lower() for item in identifiers if item["type"].lower() == "doi"]
+    if len(set(doi_values)) == 1:
+        metadata["doi"] = doi_values[0]
+    elif doi_values:
+        metadata["doi_candidates"] = doi_values
+    metadata["identifiers"] = identifiers
+
+    journal_meta = next((item for item in descendants(front, "journal-meta")), None) if front is not None else None
+    if journal_meta is not None:
+        metadata["journal"] = first_text(journal_meta, ["journal-title"])
+
+    authors = []
+    affiliations = []
+    if article_meta is not None:
+        for item in descendants(article_meta, "aff")[:500]:
+            value = clean(" ".join(item.itertext()))
+            if value:
+                affiliations.append({"id": clean(item.get("id")) or None, "text": value})
+        for contributor in descendants(article_meta, "contrib"):
+            if contributor.get("contrib-type") != "author":
+                continue
+            name_node = next((item for item in contributor if math_local_name(item) in ("name", "string-name")), None)
+            if name_node is None:
+                continue
+            given = next((clean(" ".join(item.itertext())) for item in children(name_node, "given-names") if clean(" ".join(item.itertext()))), None)
+            surname = next((clean(" ".join(item.itertext())) for item in children(name_node, "surname") if clean(" ".join(item.itertext()))), None)
+            name = clean(" ".join(value for value in (given, surname) if value)) or clean(" ".join(name_node.itertext()))
+            if not name:
+                continue
+            authors.append({
+                "name": name,
+                "affiliation_refs": [clean(item.get("rid")) for item in descendants(contributor, "xref") if item.get("ref-type") == "aff" and item.get("rid")],
+                "orcid": next((clean(item.get("href")) for item in descendants(contributor, "ext-link") if "orcid.org" in item.get("href", "")), None),
+            })
+            if len(authors) >= 500:
+                break
+    metadata["authors"] = authors
+    metadata["affiliations"] = affiliations
+
+    keywords = []
+    if article_meta is not None:
+        for item in descendants(article_meta, "kwd")[:500]:
+            value = clean(" ".join(item.itertext()))
+            if value:
+                keywords.append(value)
+    metadata["keywords"] = list(dict.fromkeys(keywords))
+
+    history_dates = []
+    history = next((item for item in descendants(article_meta, "history")), None) if article_meta is not None else None
+    if history is not None:
+        for item in children(history, "date")[:50]:
+            history_dates.append({"type": clean(item.get("date-type")) or "unknown", "date": None, "date_candidate": None, "precision": "unknown", "xml_path": tree.getpath(item)})
+    metadata["history_dates"] = history_dates
+
+    publication_nodes = []
+    if article_meta is not None:
+        publication_nodes = descendants(article_meta, "pub-date")
+    preferred = [item for item in publication_nodes if item.get("pub-type", "").lower() in ("epub", "electronic")]
+    if not preferred:
+        preferred = [item for item in publication_nodes if item.get("date-type", "").lower() in ("pub", "publication")]
+    if not preferred:
+        preferred = [item for item in publication_nodes if item.get("publication-format", "").lower() == "electronic"]
+    if not preferred:
+        preferred = publication_nodes
+
+    def jats_day(node):
+        iso_date = clean(node.get("iso-8601-date"))
+        if iso_date:
+            try:
+                parsed = datetime.strptime(iso_date, "%Y-%m-%d")
+                return (parsed.strftime("%Y-%m-%d"), "day")
+            except ValueError:
+                return None
+        def part(names):
+            selected = [clean(" ".join(item.itertext())) for name in names for item in descendants(node, name)]
+            selected = [value for value in selected if value]
+            return selected[0] if selected and len(set(selected)) == 1 else None
+        year, month, day = part(["year"]), part(["month"]), part(["day"])
+        if not year:
+            return None
+        if not month or not day:
+            return (year + ("-" + month.zfill(2) if month else ""), "month" if month else "year")
+        candidate = "-".join((year, month.zfill(2), day.zfill(2)))
+        try:
+            parsed = datetime.strptime(candidate, "%Y-%m-%d")
+        except ValueError:
+            return None
+        return (parsed.strftime("%Y-%m-%d"), "day" if day else "month" if month else "year")
+
+    if history is not None:
+        for entry, item in zip(history_dates, children(history, "date")):
+            value = jats_day(item)
+            entry.update({"date": value[0] if value and value[1] == "day" else None, "date_candidate": value[0] if value else None, "precision": value[1] if value else "unknown"})
+
+    date_candidates = []
+    date_basis = []
+    for item in preferred[:20]:
+        value = jats_day(item)
+        if value:
+            date_candidates.append(value)
+            date_basis.append({"xml_path": tree.getpath(item), "text": clean(" ".join(item.itertext())), "pub_type": item.get("pub-type"), "publication_format": item.get("publication-format")})
+    precise_dates = {item[0] for item in date_candidates if item[1] == "day"}
+    partial_dates = {item[0] for item in date_candidates if item[1] != "day"}
+    published = next(iter(precise_dates)) if len(precise_dates) == 1 else None
+    date_precision = "day" if published else date_candidates[0][1] if len(partial_dates) == 1 and not precise_dates else "unknown"
+    date_status = "matched" if published else "conflict" if len(precise_dates) > 1 or (precise_dates and any(value.split("-")[0] != next(iter(precise_dates)).split("-")[0] for value in partial_dates)) else "insufficient-precision" if date_candidates else "missing"
+
+    modified_nodes = descendants(article_meta, "pub-date") if article_meta is not None else []
+    modified_nodes = [item for item in modified_nodes if item.get("pub-type", "").lower() in ("updated", "modified", "revised")]
+    modified_candidates = [jats_day(item) for item in modified_nodes[:20]]
+    modified_candidates = [item for item in modified_candidates if item]
+    modified_values = {item[0] for item in modified_candidates}
+    modified_precise = {item[0] for item in modified_candidates if item[1] == "day"}
+    modified = next(iter(modified_precise)) if len(modified_values) == 1 and len(modified_precise) == 1 else None
+    modified_status = "matched" if modified else "insufficient-precision" if modified_candidates and len(modified_values) == 1 else "conflict" if modified_candidates else "not-present"
+
+    math_expressions = []
+    missing_math = []
+
+    def inline_text(node, block_path):
+        values = [node.text or ""]
+        for child in node:
+            name = math_local_name(child)
+            formula = name in ("inline-formula", "disp-formula", "math")
+            if formula:
+                math_nodes = [child] if name == "math" else descendants(child, "math")
+                tex_nodes = descendants(child, "tex-math")
+                tex = clean(" ".join("".join(item.itertext()) for item in tex_nodes)) or None
+                rendered = None
+                if math_nodes:
+                    rendered = presentation_math_text(math_nodes[0], preserve_bold=True)
+                selected = tex or rendered
+                record = {
+                    "xml_path": tree.getpath(child),
+                    "block_xml_path": block_path,
+                    "tex": tex,
+                    "mathml_sha256": digest(etree.tostring(math_nodes[0], encoding="utf-8")) if math_nodes else None,
+                    "text": selected,
+                }
+                if selected:
+                    math_expressions.append(record)
+                    values.append(" " + selected + " ")
+                else:
+                    record["reason"] = "unsupported-or-empty-math"
+                    record["source_xml"] = etree.tostring(child, encoding="unicode", with_tail=False)
+                    record["source_xml_sha256"] = digest(record["source_xml"])
+                    missing_math.append(record)
+                    math_expressions.append(record)
+                    values.append(" [수식 원문 확인 필요] ")
+            else:
+                child_text = inline_text(child, block_path)
+                if name == "xref" and child.get("ref-type", "").lower() in ("fn", "table-fn"):
+                    values.append(" " + child_text + " ")
+                else:
+                    values.append(child_text)
+            values.append(child.tail or "")
+        return "".join(values)
+
+    blocks = []
+    table_layout_issues = []
+    unresolved_table_footnotes = []
+    document_footnotes_by_id = {
+        clean(item.get("id")): item
+        for item in descendants(root, "fn")
+        if clean(item.get("id"))
+    }
+
+    def add_block(node, kind, section_path=None, extra=None):
+        path_value = tree.getpath(node)
+        value = inline_text(node, path_value) if kind not in ("table", "figure", "supplement") else clean(" ".join(node.itertext()))
+        if not value and not extra:
+            return
+        block = {
+            "kind": kind,
+            "text": value or (extra or {}).get("title") or kind,
+            "locator": {"type": "jats", "xml_path": path_value, "text_hash": digest(value or (extra or {}).get("title") or kind)},
+        }
+        if section_path:
+            block["section_path"] = section_path
+        if extra:
+            block.update(extra)
+        if len(blocks) >= 5000:
+            raise ValueError("JATS block budget exceeded")
+        blocks.append(block)
+
+    abstract_nodes = descendants(article_meta, "abstract") if article_meta is not None else []
+    def add_table(node, section_path):
+        label = first_text(node, ["label"])
+        caption = next((item for item in children(node, "caption")), None)
+        caption_text = clean(" ".join(caption.itertext())) if caption is not None else ""
+        rows = []
+        grids = []
+        cell_layout = []
+        table_nodes = []
+        for table_node in descendants(node, "table"):
+            ancestors = list(table_node.iterancestors())
+            if any(math_local_name(item) == "table-wrap-foot" for item in ancestors):
+                continue
+            if any(math_local_name(item) == "table" for item in ancestors):
+                continue
+            table_nodes.append(table_node)
+        for table_node in table_nodes:
+            physical_rows = []
+            for row_node in descendants(table_node, "tr"):
+                if next((item for item in row_node.iterancestors() if math_local_name(item) == "table"), None) is not table_node:
+                    continue
+                cells = [cell for cell in row_node if math_local_name(cell) in ("td", "th")]
+                if not cells:
+                    continue
+                cell_values = []
+                for cell in cells:
+                    cell_path = tree.getpath(cell)
+                    cell_values.append({"text": clean(inline_text(cell, cell_path)), "xml_path": cell_path, "rowspan": cell.get("rowspan", "1"), "colspan": cell.get("colspan", "1")})
+                physical_rows.append(cell_values)
+                rows.append([cell["text"] for cell in cell_values])
+                if len(rows) > 1000 or sum(map(len, rows)) > 10000:
+                    raise ValueError("JATS table budget exceeded")
+
+            grid = []
+            layout_rows = []
+            table_cell_budget = 0
+
+            def parsed_span(value, row_index, cell_path, attribute):
+                try:
+                    span = int(value)
+                except (TypeError, ValueError):
+                    span = 0
+                if span < 1 or span > 1000:
+                    table_layout_issues.append({"table_xml_path": tree.getpath(node), "cell_xml_path": cell_path, "reason": "invalid-span", "attribute": attribute, "value": value})
+                    return 1
+                if attribute == "rowspan" and row_index + span > len(physical_rows):
+                    table_layout_issues.append({"table_xml_path": tree.getpath(node), "cell_xml_path": cell_path, "reason": "rowspan-exceeds-rows", "attribute": attribute, "value": value})
+                    return 1
+                return span
+
+            for row_index, source_cells in enumerate(physical_rows):
+                while len(grid) <= row_index:
+                    grid.append([])
+                    layout_rows.append([])
+                column = 0
+                for cell in source_cells:
+                    while column < len(grid[row_index]) and grid[row_index][column] is not None:
+                        column += 1
+                    rowspan = parsed_span(cell["rowspan"], row_index, cell["xml_path"], "rowspan")
+                    colspan = parsed_span(cell["colspan"], row_index, cell["xml_path"], "colspan")
+                    if (len(grid) + max(0, rowspan - 1)) * (column + colspan) > 20000 or table_cell_budget + rowspan * colspan > 20000:
+                        table_layout_issues.append({"table_xml_path": tree.getpath(node), "cell_xml_path": cell["xml_path"], "reason": "expanded-cell-budget"})
+                        rowspan, colspan = 1, 1
+                    table_cell_budget += rowspan * colspan
+                    origin_row, origin_column = row_index, column
+                    for row_offset in range(rowspan):
+                        target_row = row_index + row_offset
+                        while len(grid) <= target_row:
+                            grid.append([])
+                            layout_rows.append([])
+                        for column_offset in range(colspan):
+                            target_column = column + column_offset
+                            while len(grid[target_row]) <= target_column:
+                                grid[target_row].append(None)
+                                layout_rows[target_row].append(None)
+                            if grid[target_row][target_column] is not None:
+                                table_layout_issues.append({"table_xml_path": tree.getpath(node), "cell_xml_path": cell["xml_path"], "reason": "overlapping-spans"})
+                                continue
+                            grid[target_row][target_column] = cell["text"]
+                            layout_rows[target_row][target_column] = {
+                                "text": cell["text"], "xml_path": cell["xml_path"], "origin_row": origin_row,
+                                "origin_column": origin_column, "rowspan": rowspan, "colspan": colspan,
+                                "continuation": row_offset > 0 or column_offset > 0,
+                            }
+                    column += colspan
+            width = max((len(row) for row in grid), default=0)
+            for row_index, row in enumerate(grid):
+                row.extend([None] * (width - len(row)))
+                layout_rows[row_index].extend([None] * (width - len(layout_rows[row_index])))
+            grids.extend([[cell for cell in row] for row in grid])
+            cell_layout.extend(layout_rows)
+
+        footnotes = []
+        footnote_nodes = [item for item in descendants(node, "fn") if any(math_local_name(parent) == "table-wrap-foot" for parent in item.iterancestors())][:100]
+        footnotes_by_id = {}
+        for footnote in footnote_nodes:
+            footnote_label = first_text(footnote, ["label"])
+            paragraph_records = [{"text": clean(inline_text(item, tree.getpath(item))), "xml_path": tree.getpath(item)} for item in descendants(footnote, "p")[:20]]
+            paragraph_records = [item for item in paragraph_records if item["text"]]
+            footnote_text = clean(" ".join(value for value in [footnote_label, *(item["text"] for item in paragraph_records)] if value))
+            if footnote_text:
+                footnote_record = {"id": clean(footnote.get("id")) or None, "label": footnote_label, "text": footnote_text, "paragraphs": paragraph_records, "xml_path": tree.getpath(footnote)}
+                footnotes.append(footnote_record)
+                if footnote_record["id"]:
+                    footnotes_by_id[footnote_record["id"]] = footnote_record
+        footnote_refs = []
+        for xref in descendants(node, "xref"):
+            if any(math_local_name(parent) == "fn" for parent in xref.iterancestors()):
+                continue
+            if xref.get("ref-type", "").lower() not in ("fn", "table-fn"):
+                continue
+            for rid in clean(xref.get("rid", "")).split():
+                target = footnotes_by_id.get(rid)
+                document_target = document_footnotes_by_id.get(rid) if xref.get("ref-type", "").lower() == "fn" else None
+                target_path = target["xml_path"] if target else tree.getpath(document_target) if document_target is not None else None
+                reference = {"rid": rid, "text": clean(" ".join(xref.itertext())), "xml_path": tree.getpath(xref), "status": "resolved" if target_path else "unresolved", "target_scope": "table" if target else "document" if document_target is not None else None, "target_xml_path": target_path}
+                footnote_refs.append(reference)
+                if not target_path:
+                    unresolved_table_footnotes.append({"table_xml_path": tree.getpath(node), **reference})
+        text_rows = [" | ".join(value or "" for value in row) for row in grids]
+        text = " ".join(value for value in [label, caption_text, *text_rows, *(item["text"] for item in footnotes)] if value)
+        if not text:
+            return
+        locator_path = tree.getpath(node)
+        blocks.append({"kind": "table", "text": text, "rows": rows, "grid": grids, "cell_layout": cell_layout, "label": label, "caption": caption_text or None, "footnotes": footnotes, "footnote_refs": footnote_refs, "section_path": section_path, "locator": {"type": "jats", "xml_path": locator_path, "text_hash": digest(text)}})
+
+    def add_figure(node, section_path):
+        label = first_text(node, ["label"])
+        caption = next((item for item in children(node, "caption")), None)
+        caption_text = clean(" ".join(caption.itertext())) if caption is not None else ""
+        media = []
+        for graphic in descendants(node, "graphic") + descendants(node, "inline-graphic"):
+            href = graphic.get("{http://www.w3.org/1999/xlink}href") or graphic.get("href")
+            if href:
+                target = urljoin(url, href)
+                media.append(target)
+                if len(media) > 50:
+                    raise ValueError("JATS figure media budget exceeded")
+        text = " ".join(value for value in [label, caption_text, *media] if value)
+        if text:
+            blocks.append({"kind": "figure", "text": text, "label": label, "caption": caption_text or None, "media_urls": media, "section_path": section_path, "locator": {"type": "jats", "xml_path": tree.getpath(node), "text_hash": digest(text)}})
+
+    def add_jats_content(container, section_path, list_label=None):
+        for item in container:
+            name = math_local_name(item)
+            if name == "sec":
+                add_jats_section(item, section_path)
+            elif name == "p":
+                extra = {"list_label": list_label} if list_label else None
+                add_block(item, "paragraph", section_path, extra)
+            elif name == "table-wrap":
+                add_table(item, section_path)
+            elif name == "fig":
+                add_figure(item, section_path)
+            elif name == "disp-formula":
+                add_block(item, "paragraph", section_path)
+            elif name in ("list", "list-item", "boxed-text", "disp-quote", "def-list", "def-item", "statement", "ack", "app"):
+                item_label = first_text(item, ["label"]) if name == "list-item" else list_label
+                add_jats_content(item, section_path, item_label)
+
+    def add_jats_section(section, parents):
+        title_item = next((item for item in children(section, "title")), None)
+        title_value = clean(" ".join(title_item.itertext())) if title_item is not None else None
+        current = [*parents, title_value] if title_value else parents
+        if title_item is not None:
+            add_block(title_item, "heading", current)
+        add_jats_content(section, current)
+
+    for abstract in abstract_nodes[:10]:
+        abstract_title = next((item for item in descendants(abstract, "title")), None)
+        if abstract_title is not None:
+            add_block(abstract_title, "heading", ["Abstract"])
+        else:
+            blocks.append({"kind": "heading", "text": "Abstract", "locator": {"type": "jats", "xml_path": tree.getpath(abstract), "text_hash": digest("Abstract")}, "section_path": ["Abstract"]})
+        for child in abstract:
+            if math_local_name(child) in ("p", "sec"):
+                if math_local_name(child) == "p":
+                    add_block(child, "paragraph", ["Abstract"])
+                else:
+                    add_jats_section(child, ["Abstract"])
+
+    body = next((item for item in children(root, "body")), None)
+    if body is not None:
+        add_jats_content(body, [])
+
+    links = []
+    for item in descendants(root, "supplementary-material") + descendants(root, "media"):
+        href = item.get("{http://www.w3.org/1999/xlink}href") or item.get("href")
+        if not href:
+            continue
+        target = urljoin(url, href)
+        links.append({"url": target, "text": clean(" ".join(item.itertext())) or target, "role": "supplementary-material", "locator": {"type": "jats", "xml_path": tree.getpath(item), "text_hash": digest(clean(" ".join(item.itertext())) or target)}})
+        if len(links) > 1000:
+            raise ValueError("JATS link budget exceeded")
+
+    abstract_present = bool(abstract_nodes)
+    content_present = body is not None and any(block["kind"] in ("paragraph", "table", "figure") and block.get("section_path", []) != ["Abstract"] for block in blocks)
+    complete = bool(title and metadata.get("article_type") and published and abstract_present and content_present and not missing_math and not table_layout_issues and not unresolved_table_footnotes)
+    status = "extracted" if complete else "partial"
+    metadata["abstract_present"] = abstract_present
+    metadata["body_present"] = content_present
+    result = {
+        "status": status,
+        "title": title,
+        "title_basis": {"type": "jats", "xml_path": tree.getpath(title_node), "text": title, "text_hash": digest(title)} if title_node is not None and title else None,
+        "title_profile_status": "matched" if title else "missing",
+        "language": metadata["language"],
+        "dates": {"published_at": published, "modified_at": modified, "precision": date_precision, "candidates": [item[0] for item in date_candidates], "basis": date_basis if date_basis else None, "profile_status": date_status, "modified_candidates": [item[0] for item in modified_candidates], "modified_basis": [{"xml_path": tree.getpath(item), "text": clean(" ".join(item.itertext())), "pub_type": item.get("pub-type")} for item in modified_nodes[:20]], "modified_profile_status": modified_status},
+        "blocks": blocks,
+        "links": links,
+        "metadata": metadata,
+        "math_expressions": math_expressions,
+        "quality": {"required_fields_present": complete, "missing_pages": [], "missing_math": missing_math, "table_layout_issues": table_layout_issues, "unresolved_table_footnotes": unresolved_table_footnotes, "reviewed": False},
+    }
     return result
 
 
@@ -779,6 +1268,9 @@ def run(request, root):
     if raw.startswith(b"%PDF-"):
         parsed = pdf_parse(raw, options)
         parser = {"id": "pymupdf", "version": importlib.metadata.version("PyMuPDF")}
+    elif options.get("format") == "jats":
+        parsed = jats_parse(raw, request["url"], options)
+        parser = {"id": "jats-xml", "version": "frontiers-jats/v1"}
     elif html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
         parsed = html_parse(raw, request["url"], options)
         parser = (

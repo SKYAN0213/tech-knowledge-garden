@@ -4779,3 +4779,274 @@ node scripts/research-daily.mjs --run daily-20260930-main23-strict-plan-v2 --pla
 강화된 직접 scan은 공개 원문 4건·빈 창 0건으로 `window_scanned`이며 두 창의 저장 원본 재검증을 통과했다. ASEC 전용 일일 실행은 2/2창, 재개 전후 JSON 7개 manifest SHA-256 `5c35353f825c264f66dbe7751d0798c5df02bf8e733e376ff605e378e7a154e0`로 동일했다. 강화된 전체 설정의 계획은 23경로·46창을 산출했으나 **그 계획의 전체 수집을 실행하지 않았다**. 기존 23경로 전체 실행의 원본 증거와 강화된 한 경로 시험을 별도로 보존한다.
 
 모든 이번 로컬 실행의 `candidate_published`, `drive_verified`, `public_verified`는 `false`다. 신규 네 후보는 편집 대기이며 기사 승인, Drive 원격 보관, 기존 08시 예약 변경, 웹/RSS/GitHub 공개 검증은 수행하지 않았다. 다음 출처도 공통 scanner/profile을 먼저 선택하고, 각 출처에서만 나타나는 GUID·분류·시간대·본문·페이지 종료·정정 차이를 실물 원본과 실패 회귀로 좁혀 추가한다.
+
+## 94. 최신 23경로 실행, SK하이닉스 피드 경계와 FANUC–Hitachi 비공개 편집
+
+`daily-20260930-main23-current-v1`은 현재 23경로 설정 지문 `a956c8b8f495cc4f834554874f3d4d2de12c77fdc97f1ba0bdc8c9c96a044312`으로 46개 날짜 창을 실행했다. 22경로의 창은 완료됐고 SK하이닉스 9월 23~30일 창 하나는 미완료다. receipt reason은 `feed_cutoff_not_reached`다. 9월 30일 당일 창은 완료했으나, 10개 항목짜리 순환 RSS에서 9월 23일보다 오래된 경계 항목을 확인할 수 없었다. 이는 기사 없음이 아니라 해당 기간 수집의 불완전이다. 실행 summary의 조사 범위는 16 `partial`·15 `not_attempted`·1 `failed`이고 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. 이 동일 RSS 창을 반복 요청하지 않는다.
+
+공식 대체 목록으로 [SK hynix 전체 뉴스 목록](https://news.skhynix.com/en/all/)과 [보도자료 목록](https://news.skhynix.com/en/category/press/)을 확인했다. 현재 전체 목록은 날짜순 기사 카드와 페이지 이동 링크가 함께 있는 구조다. 다음 수집 변경은 등록 출처에 임의 HTML 수집기를 덧붙이지 않고 공통 단일 페이지/페이지네이션 계약을 우선 검토한다. 우선순위는 날짜·제목·원문 URL을 모두 추출하고, 날짜 경계 전까지 실제 페이지를 넘기며, 게시물 유형(Media 등)을 구분하고, RSS와 동일한 원문 ID·URL·내용 지문으로 중복을 걸러내는 것이다. 해당 구현과 저장 원문 회귀가 완료되기 전까지 SK의 RSS 미완료 표시는 유지한다.
+
+같은 수집 실행의 FANUC 후보 `source-28543c78d1a0a3ece7fc`는 [FANUC 공식 발표](https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html)의 저장 본문에서 제휴 발표일, HMAX Industry, 양사의 공동 검증 계획, 이바라키 Customer Zero, 회계연도 2027년 고객 배치 계획, 로봇 작업·평가 항목과 택트 타임 정의를 대조했다. Hitachi 회사 소개 통계는 사건 설명에 불필요해 공개 원고에서 제외했다. 로컬 `qwen3.8:27b`의 분류와 초안을 직접 정정하고, 근거가 연결된 최종 원고에 편집 승인을 기록했다. 승인 사건 ID는 `28543c78d1a0a3ec`, 최종 draft ID는 `e5a3948cdb1bae5ff86b48cb7a51cca7a2e8b0602bac2953d82ff730bd450bf4`다. 후보 장부는 145건(verified 56/deferred 13/rejected 1/unreviewed 75), 승인 receipt 연결 2건이다. 편집 전 장부는 `.local/research/local-ai/backups/20260930-candidate-backlog-before-fanuc-hitachi.json`에 SHA-256 `fcaff1c67cfb005669baeeb2a4ebcf38d2aa3d4955ad136f5d11f86f3d4e6a23`로 보존했고, 승인 연결 뒤 현재 장부 지문은 `254beca30878c3aec5b1488ac4db6b1bd2e33260668df1678d5a029ee6d25bf5`다.
+
+관측 시각은 2026-09-30 16:52 KST로 기존 08시 회차 마감 뒤다. 해당 회차를 수정하거나 새 공개 회차를 만들지 않았다. 이 결과는 로컬 비공개 승인 후보까지만이며 Drive 작성 원본, 웹, RSS, GitHub digest에는 반영하지 않았다. 동일 후보를 다시 선택하려 한 명령은 승인 대기 상태 guard에 의해 거부됐고, 이를 반복하지 않았다. 이 작업에서 같은 장애가 1시간 이상 진행을 막은 일은 없었다. 따라서 별도 장시간 장애 기록을 만들지 않았다.
+
+## 95. SK하이닉스 RSS 경계 실패의 공식 아카이브 대체
+
+SK하이닉스 RSS는 한도 10개 항목 안에서 9월 23일보다 오래된 날짜를 찾지 못했다. 기존처럼 미완료로 끝내되, 해당 사유(`feed_cutoff_not_reached`)일 때만 공식 `/en/all/page/{page}/` 목록으로 이어지는 공통 `path-pages` 수집 경로를 추가했다. `/en/all/`, `/category/`, `/page/`, `/tag/`가 기존 광범위한 기사 URL 정규식에 잘못 매칭되어 일반 기사 파서를 호출하던 문제도 기사 profile과 후보 URL 패턴에서 제외했다. 아카이브 HTML은 중복 `<title>` 중 고유한 `All` 제목을 선택하고 카드별 `TECH&AI`·`PRESS`·`STORY` 등 분류를 저장한다. 날짜 카드의 `MEDIA` 분류는 경계 판단에만 사용하고 상세 페이지를 열지 않는다.
+
+`20260930-skhynix-archive-fallback-v2`는 `[2026-09-23, 2026-09-30)` 범위에서 RSS 경계 실패 뒤 공식 아카이브 1페이지를 읽었다. 12개 카드가 날짜순으로 파싱됐고 9월 21일 카드에서 과거 경계를 확인했다. 기간 안의 9월 28일 TSMC OIP 기사만 상세 수집해 원문 게시일과 제목을 목록과 대조했다. `verifyStoredListScan`은 저장된 RSS·아카이브·상세 bytes 및 parse를 검증했고 `true`를 반환했다. 결과는 `window_scanned`·후보 1건·`candidate_published:false`다. 검색된 후보 `source-783ed5a89f40a298a4d3`는 후보 장부의 기존 사건 `783ed5a89f40a298` 및 9월 30일 회차의 같은 원문 URL과 일치한다. 따라서 직접 경로 시험에서는 후보 장부를 쓰지 않았고 새 공개 기사도 만들지 않았다. 기존 daily merge도 source URL/key 기준 기존 후보를 갱신하므로 별도 후보를 만들지 않는다.
+
+최초 아카이브 파싱 시도는 페이지 안의 두 `<title>` 때문에 목록 parse가 불완전했다. 저장된 해당 실패 결과를 보존하고 제목 XPath를 하나로 좁힌 새 run에서 성공했다. 같은 원인을 반복해서 1시간 이상 막힌 상황은 아니어서 장시간 장애 기록은 만들지 않았다. 아래 통합 실행 전에는 새 scanner·설정을 포함한 23경로·46창 계획만 생성된 상태였다.
+
+관련 코드와 계약은 `scripts/research/list-scan.mjs`, `scripts/research.mjs`, `scripts/research/daily-plan.mjs`, `integrations/research-worker/worker.py`, `data/research-acquisition.json`의 `skhynix-newsroom-en` profile이다. 실행 원본은 `.local/research/local-ai/runs/20260930-skhynix-archive-fallback-v2/`에 보존했다.
+
+## 96. 현재 23경로·46창 통합 수집 완료
+
+`daily-20260930-main23-archive-plan-v2`는 SK 아카이브 fallback을 포함한 현재 23개 활성 경로를 같은 계획에서 실행했다. 46개 날짜 창의 receipt가 모두 `window_scanned`이고, 23개 경로의 `last_contiguous_until`은 `2026-09-30`이다. summary 상태는 `configured_routes_scanned`; 미완료 receipt나 failed coverage 칸은 없다. 32칸 중 17칸은 등록 경로가 있어 `partial`, 15칸은 여전히 `not_attempted`다. 경로 수집 완료를 조사 범위 전체 충족으로 간주하지 않는다.
+
+SK하이닉스의 `[2026-09-23, 2026-09-30)` 창은 RSS가 `feed_cutoff_not_reached`를 반환한 뒤 등록된 공식 아카이브 페이지 경로로 이어져 완료됐다. 실행 전 장부 사본은 `.local/research/local-ai/backups/before-main23-fallback-candidate-backlog.json`에 SHA-256 `4a75a54d0de885e891b3b2a02950a4f329c1fb3bf923ba2d684207a079dd520d`로 보존됐다. 기존 후보 145건에 신규 행은 없고 URL 중복도 0건이다. 수집 merge는 70개 후보의 원문 판본·parse·관측 정보를 갱신했으며 검토 상태와 사건 ID는 유지했다. 이 중 ASEC 기사 `source-0782f7f5194305753591`은 본문에 포함된 ‘자제’를 ‘자재’로 고친 최신 원문 판본을 갖고 있었다. 원본 두 판본의 29개 본문 블록을 대조했고, 수정된 날짜와 최신 제목을 확인했다. 비공개 후보 사본을 별도 백업한 뒤 공통 merge로 제목을 최신 parse에 맞췄다. 후보는 계속 `unreviewed`이며 새 사건·승인·발행은 만들지 않았다. 두 승인 대기 후보를 포함해 `candidate_published:false`; Drive와 공개 사이트 확인도 모두 `false`다.
+
+`--resume`은 새 수집 없이 기존 46개 receipt를 재검사해 같은 `configured_routes_scanned` 결과를 반환했다. 상세 실행 증거는 `.local/research/local-ai/daily/runs/daily-20260930-main23-archive-plan-v2/` 아래 plan, summary, receipts와 handoff에 있다. 반복한 원인으로 1시간 이상 진행이 정체된 구간은 없으므로 장시간 장애 기록은 만들지 않았다. 아직 남은 독립 작업은 미시도 15칸의 출처 보강과 95건의 비공개 편집 인계 처리다.
+
+## 98. 변경된 미검토 후보 제목의 출처 동기화
+
+`mergeBacklog`는 후보 사건 키와 원문 URL을 유지하면서 완전한 기사 상세 판본이 연결된 `unreviewed` 후보의 제목을 최신 parse 제목으로 갱신한다. RSS 제목만 들어온 관측이나 `verified`·`deferred`·`rejected` 후보는 제목을 덮지 않는다. 회귀 시험은 현재 원문 parse의 제목 변경이 후보 1건의 제목만 바꾸고, 검토 상태와 이벤트 ID를 바꾸지 않으며, 같은 입력 재적용이 멱등인지를 확인한다.
+
+저장 원문 비교에서 ASEC `https://asec.ahnlab.com/ko/95596`의 두 source version은 발표일은 같고 수정 시각은 최신 판본에만 존재했다. 29개 추출 블록에서 ‘자제’가 ‘자재’로 정정됐고, 최신 제목은 `프로젝트 자재 구매 요청서로 위장한 피싱 메일 주의`다. `.local/research/local-ai/edits/20260930-asec-title-refresh-v1.json`은 원문 판본·parse·본문 지문·전후 제목을 보존하며, 직전 후보 장부는 `.local/research/local-ai/backups/20260930-asec-title-refresh-before.json`에 남겼다. 최종 후보는 `unreviewed`, `event_id` 없음이다. 편집 내용을 사실 승인이나 공개 기사로 승격하지 않았다.
+
+## 97. 비공개 진행 화면의 후보 온톨로지 감사
+
+`scripts/research/intake-ontology.mjs`의 읽기 전용 투영을 `scripts/research/delivery-status.mjs`의 후보·발행 감사에 연결했다. 화면의 `승인·발행` 탭에 후보·원문·원문 판본·사건 노드와 `sharedCanonicalSourceCandidate`, `sameExtractedContentCandidate`, `sameTitleDayCandidate` 검토 관계를 표시한다. 관계가 생기면 후보 키와 근거를 확인할 수 있으며, 이를 자동 중복 판정이나 승인으로 취급하지 않는다. 후보 장부 원본 bytes와 SHA-256을 유지하고 투영 결과는 화면 생성 시 메모리에서 계산하므로 별도 지식 사본은 만들지 않는다.
+
+현재 `.local/research/candidate-backlog.json`은 후보 145건에서 후보 노드 145·정규화 출처 노드 147·사건 노드 55·원문 판본 노드 89, 관계 292개다. 연결 사건 관계는 56개(하나의 사건에 후보 2건), 검토 필요 관계는 0개다. 검토 관계가 0이라는 점은 현재 후보 간 URL/본문/제목-날짜 충돌이 없다는 뜻이며, 발행물이나 기사 내용의 사실 검토 완료를 뜻하지 않는다. 테스트는 canonical URL 별칭·동일 본문·동일 제목/날짜 세 관계를 대시보드 집계가 함께 보이고, 입력 장부 bytes가 변하지 않는지 확인한다.
+
+## 99. 전체 등록 출처의 개발 상태 현황판
+
+`npm run research -- status --format html`은 `registry(channelConfig, watchlist, acquisition)`의 전체 등록 출처와 활성 일일 경로를 ID로 결합한다. 출처 등록부는 활성 경로에만 제한하지 않고 110개 전체 행을 표시한다. 출처 ID가 명시되지 않은 기존 watchlist 항목은 `channel_id`를 식별자로 사용한다. 출처가 일일 설정에 없는 사실은 수집 실패가 아니라 `registered_only` / 일일 범위 밖으로 표현한다.
+
+2026-09-30 현재 계산 결과는 등록 110개, 일일 활성 23개, 일일 범위 밖 87개, 기준선 또는 실제 수집 영수증이 연결된 출처 23개, 등록만 된 출처 87개, 출처 종류 미분류 47개다. 출처별 표에는 URL, 검증·수집 방식, 분야·지역·축, 종류·언어, 활성 및 기준선, 개발 상태, 최신 일일 실행, 최신 개별 scan을 함께 표시한다. 이는 목록과 저장된 영수증을 읽어 만든 로컬 상태 화면이며 새 수집·공개 발행을 수행하지 않는다.
+
+회귀 검증은 등록 ID와 `channel_id`만 있는 항목을 모두 보존하고, 활성 경로와 기준선 유무를 등록 상태와 별도로 표현하며, 같은 ID의 활성 항목을 우선 정렬하는지 확인한다. 상세 구현은 `scripts/research/delivery-status.mjs`의 `buildSourceInventory`와 `source_inventory_counts`, 시험은 `tests/research-delivery-status.test.mjs`에 있다. 전체 수집 범위와 WBS 완료율은 별도 지표이며 이번 표 확장으로 달라지지 않는다.
+
+## 100. 미시도 15칸의 보완 검색과 후보 중복 보존
+
+기존 `20260930-sector-search-v1` 전체 모델 질의 생성은 5분 시간제한으로 실패했다. 이를 같은 모델 요청으로 재시도하지 않고, 완료된 `daily-20260930-main23-archive-plan-v2`의 15개 `not_attempted` coverage slot에 등록된 공식 도메인 보완 검색을 만들었다. `20260930-main23-targeted-v1`은 29질의를 실행하고 각 query receipt를 `targeted-queries.json`·`search.json`·`search/state.json`에 남겼다. 결과는 17 `partial`·12 `failed`, 후보 81행·고유 canonical URL 79개·중복 URL 2행, unresolved slot 0개다. 15개 query가 후보를 반환했다. 검색 receipt에는 엔진 실패 상세 25건이 남았고, 결과가 없었던 12개 실패 receipt는 예외 변환 때 개별 엔진 상세가 빠졌음을 확인했다. 이 오류는 후속 검색에서 실패 상세를 receipt에 보존하게 고쳤다. 12개 `failed`는 결과 없는 조사 실패이지 뉴스 없음이 아니다.
+
+발견 후보에는 날짜와 저장 원문 본문이 없다. 따라서 후보 장부의 145건에 합치지 않았고 기사 승인·발행도 하지 않았다. 중복 두 쌍은 같은 검색 대상에서 반복 노출된 [DART 5%·임원보고 목록](https://dart.fss.or.kr/dsac001/mainO.do)과 쿼리 매개변수만 다른 같은 목록 주소다. 서로 다른 URL의 기사 사건을 공동저자로 병합하지 않는다.
+
+이 실행에서 확인한 검색 artifact 중복은 다음 실행부터 고친다. `discoverSearch`는 canonical source URL과 후보 key를 함께 검사해 충돌 identity는 거부하고, 동일 원문은 한 후보 row에 합치며 query slot·대상 출처 ID/URL/유형·검색 결과 제목을 discovery provenance에 보존한다. 기존 run의 결과 파일은 재작성하지 않는다. `loadTargetedSearchRuns`는 계획의 slot과 실제 search record를 출처 ID로 연결해 출처 등록부와 조사 범위 탭에 질의/엔진 실패/후보/URL 중복 수를 보여준다. 검색 후보는 수집·검증·승인과 구분한다.
+
+## 101. 검색 발견 후보의 원문·발행일 검증과 비공개 연결
+
+검색 후보는 원문 URL을 찾은 결과일 뿐, 기사 본문·발표일·사건 신원이 검증된 기사가 아니다. `intake-search-candidate`는 기존 search run의 정확한 `candidate_key`와 exact URL을 요구하며, 별도 source run을 `loadStoredSourceRun`으로 검증한다. 그 안의 원문 bytes hash와 저장 parse identity가 일치하고, 같은 canonical URL의 문서 1개 및 `extracted` parse 1개, 유효한 원문 `published_at`이 있어야 원문 판본·parse·본문 지문을 후보 장부에 연결한다. source 날짜가 없으면 `source_date_missing` receipt만 쓰고 장부를 바꾸지 않는다. 날짜 충돌·URL/key mismatch·원문 중복은 쓰기 전에 거부한다.
+
+이번 삼성SDS 공식 발표의 정확한 selector는 `data/research-acquisition.json`의 `samsung-sds-helix-investment-20260930`이다. 수집 run `20260930-samsung-sds-candidate-v1`의 저장 HTML에서 `span[itemprop="datePublished"][content]`가 `2026-09-30`을 가리킴을 확인했다. 최초 generic parse를 고치거나 덮지 않고, 새 parse run `20260930-samsung-sds-candidate-reparse-v1`을 같은 source run에서 만들어 제목, 발표일, parse ID를 보존했다. 저장 원문 본문은 한 개의 큰 `<p class="txt">`로 들어 있어 현재 1 block이다. 이 block 수는 parse 구조 특성이며 본문 누락이나 신뢰도 점수로 해석하지 않는다.
+
+다음 명령은 `20260930-main23-targeted-v1`의 검색 후보 한 건만 재파싱된 공식 원문으로 intake한다.
+
+```sh
+node scripts/research.mjs intake-search-candidate \
+  --run 20260930-samsung-sds-intake-v1 \
+  --candidate-run 20260930-main23-targeted-v1 \
+  --source-run 20260930-samsung-sds-candidate-reparse-v1 \
+  --candidate-key source-46ed94332d3207862b56 \
+  --root .local/research/local-ai \
+  --backlog .local/research/candidate-backlog.json
+```
+
+첫 결과는 `source_verified_unreviewed`, `backlog_changed:true`, `candidate_published:false`이며, 두 번째 실행은 같은 receipt를 확인하고 `backlog_changed:false`로 종료했다. 후보 장부는 145→146건(verified 56, deferred 13, rejected 1, unreviewed 76)이고 기존 후보 키와 URL은 하나만 남는다. private intake receipt는 `.local/research/local-ai/runs/20260930-samsung-sds-intake-v1/search-candidate-intake.json`이다. 새 행에는 event ID·approval·publication이 없다. 검색 기록·후보 장부는 비공개이며 Drive, 브리핑, RSS, GitHub에는 전달하지 않았다.
+
+이 exact 원문은 다음 명령으로 편집 사실 추출 단계의 `--source-run` 입력으로 선택할 수 있다. intake receipt와 후보 장부의 현재 상태, source version·parse·본문 지문을 모두 다시 비교한다.
+
+```sh
+node scripts/research.mjs select-search-candidate \
+  --run 20260930-samsung-sds-select-v1 \
+  --candidate-run 20260930-samsung-sds-intake-v1 \
+  --source-run 20260930-samsung-sds-candidate-reparse-v1 \
+  --candidate-key source-46ed94332d3207862b56 \
+  --root .local/research/local-ai \
+  --backlog .local/research/candidate-backlog.json
+```
+
+`20260930-samsung-sds-select-v1`은 문서 1건·parse 1건과 `selection_basis: exact_search_intake`를 보존하며 원 후보는 계속 `unreviewed`다. 이후 `extract`는 같은 선택 run을 `--source-run`으로 읽는다. 이 선택은 사실 검토나 승인 단계가 아니다.
+
+회귀 테스트 `tests/research-search-candidate-intake.test.mjs`는 exact source 연결, 누락 날짜의 no-write, 다른 원문 URL 거부, 무변경 멱등 재실행을 검사한다. 이 연결 이후 다음 단계는 후보를 기존 발행 사건·언어판·전재·정정과 대조하고, 필요하면 원문 claim 검토 및 편집 승인을 개별 수행하는 것이다.
+
+## 102. 삼성SDS 검색 후보에서 로컬 편집 초안까지의 수직 슬라이스
+
+앞 절의 exact source-selection을 입력으로 사용해 실제 `qwen3.8:27b` 로컬 실행을 연결했다. 추출 run `20260930-samsung-sds-extract-v1`은 약 3분 32초가 걸렸고 claim 6개를 만들었다. 직접 원문 대조에서 “다른 5개사도 각 5억 달러”라는 잘못된 모델 주장을 발견해 거부했다. 총액·투자 주체·Helix 사업·경영진·FlaktGroup 관련 원문 사실은 조건과 귀속을 점검했다. 이 오류를 그대로 넘기지 않고 새 기사 run `20260930-samsung-sds-article-v2`에 원문 문장으로 투자 배분 claim을 보강해 다시 fact review를 했다. 그 결과 6개 claim verified, 1개 claim rejected이며 모두 비공개다.
+
+동일 run에서 `draft`를 실행하는 데 122.3초가 걸렸다. 생성 결과는 `editorial_review`, 구조상 문제 0개, `candidate_published:false`, `public_approved:false`다. 초안은 삼성전자 5억 달러와 나머지 5개사 합산 5억 달러를 구별하고, 거부된 회사별 오배분 주장을 포함하지 않는다. 요약·설명은 승인된 사실 ID에 연결돼 있다. 결과 파일은 `.local/research/local-ai/runs/20260930-samsung-sds-article-v2/preview.md`와 `draft.json`이며, 편집 대기 샘플이다.
+
+재현은 앞 절의 `intake-search-candidate`와 `select-search-candidate`를 먼저 수행한 후 아래 순서로 실행한다. 추출·초안은 Ollama 모델이 실제로 응답하는 만큼 수분이 걸릴 수 있으며, 시간 초과 시 같은 run을 무작정 재실행하지 말고 run 상태·저장 응답을 먼저 검사한다.
+
+```sh
+node scripts/research.mjs extract \
+  --run 20260930-samsung-sds-extract-v1 \
+  --source-run 20260930-samsung-sds-select-v1 \
+  --model-policy data/research-model-policy.json \
+  --root .local/research/local-ai
+
+node scripts/research.mjs draft \
+  --run 20260930-samsung-sds-article-v2 \
+  --model-policy data/research-model-policy.json \
+  --root .local/research/local-ai
+```
+
+이 예시의 처리 시간과 오류는 독립 성능 평가나 승인 근거가 아니다. 모델 claim은 원문과 직접 대조해야 한다. 이 작업은 source discovery부터 exact bytes 재파싱, 후보 intake·선택, 사실 추출·검토, 편집 초안까지 연결했으며 승인·Drive·웹·RSS·GitHub 발행은 수행하지 않았다. 한 원고에서 반복 오류로 1시간 이상 멈춘 일은 없으므로 별도 장시간 장애 기록은 없다.
+
+## 103. exact-source 검색 후보 일괄 intake와 실패 항목 재개
+
+검색 후보별 원문 수집·재파싱이 끝난 뒤 `intake-search-batch`로 여러 후보를 한 묶음으로 원장에 연결할 수 있다. 이 명령은 새 원문을 가져오거나 날짜를 추측하지 않는다. 각 manifest 항목은 검색 run에 있는 정확한 `candidate_key`와 이미 저장·재파싱한 `source_run`을 지정한다. 단일 intake와 같은 원문 bytes·URL·parse·발표일 검증을 적용하고, 미검토 후보만 연결한다.
+
+비공개 manifest 형식:
+
+```json
+{
+  "schema": "search-candidate-intake-batch/v1",
+  "candidates": [
+    {
+      "candidate_key": "source-...",
+      "source_run": "stored-source-reparse-v1"
+    }
+  ]
+}
+```
+
+manifest는 research root 아래에 저장하고 다음처럼 실행한다.
+
+```sh
+node scripts/research.mjs intake-search-batch \
+  --run 20260930-example-intake-batch-v1 \
+  --candidate-run 20260930-main23-targeted-v1 \
+  --batch-manifest batches/example-intake.json \
+  --root .local/research/local-ai \
+  --backlog .local/research/candidate-backlog.json
+```
+
+각 항목은 별도 intake receipt로 저장되고 batch receipt는 항목별 진행을 즉시 기록한다. 실패가 있으면 전체는 `partial`로 남으며 같은 run ID·같은 manifest로 다시 실행하면 성공 항목은 기존 receipt와 장부 상태를 검증하고, 실패 항목은 다시 시도한다. 입력을 바꾸려면 새 run ID가 필요하다. 중복 키와 바뀐 manifest는 장부를 수정하기 전에 거부한다. 발표일이 없는 원문은 `source_date_missing`으로 receipt만 남기며 후보 장부에 넣지 않는다.
+
+회귀 `tests/research-search-candidate-intake.test.mjs` 9개는 단일 exact intake, 배치의 부분 완료 후 복구, 멱등 재개, 중복 키·입력 변경 거부, CLI 연결을 검증한다. 실제 삼성SDS 후보 1건을 `20260930-samsung-sds-batch-intake-v1`으로 실행했고 `complete`, 실패 0, `candidate_published:false`를 확인했다. 이미 연결된 원장을 추가 변경하지 않았다. 다음 절은 이 앞단의 검색 후보 URL 수집·파싱을 공통 경로에 연결한다.
+
+## 104. 검색 후보의 공통 원문 수집·파싱과 exact-source 선택
+
+`collect-search-candidates`는 저장된 검색 run에서 지정한 1~12개의 후보 key만 읽어 후보 URL을 가져온다. URL이 후보의 단일 canonical identity와 일치해야 하고 중복 identity는 네트워크 요청 전에 거부한다. 수집은 기존 `fetchWithPolicy`와 `SourceFetcher`를 사용해 robots 확인, 공개 IP 고정, 리다이렉트·요청·본문 크기 정책, ETag/Last-Modified 조건부 요청, 원문 bytes와 SHA 보관을 적용한다. 등록된 기사 profile이 있으면 그 선택자로 파싱하고, 없으면 공통 parser를 사용한다. 새 crawler는 만들지 않는다.
+
+각 후보별 fetch·parse는 `RunState` checkpoint로 저장한다. 실행이 중단되면 같은 run·같은 검색 지문·같은 후보 key로 재개하고 완료된 단계는 저장 결과 hash를 검사해 재사용한다. failed/blocked/parse 실패 항목은 결과 manifest에 남겨 성공 후보를 막지 않는다. 하나라도 추출 완료가 아니면 수집 run은 `partial`이며 후보를 장부에 넣지 않는다. 재시도 입력이나 파서를 바꿀 때는 새 run ID를 사용한다. 최대 12개를 한 run에 넣으므로 공통 host throttling은 유지하면서 소규모 묶음으로 확인한다.
+
+실제 실행 `20260930-samsung-sds-live-collection-v1`은 `20260930-main23-targeted-v1`의 `source-46ed94332d3207862b56` 후보 하나를 처리했다. 공식 삼성SDS 주소가 HTTP 304를 반환했고 기존에 보관된 40,331 bytes를 동일 SHA-256으로 재사용했다. parser는 `2026-09-30` 게시일과 제목을 추출하고 `extracted` parse를 만들었다. 이는 새 200 응답 본문을 받은 시험이 아니라 실물 조건부 요청·캐시 원문 재사용 경로의 검증이다. `20260930-samsung-sds-live-intake-v1`의 exact-source batch intake는 검증된 미검토 후보 1건·실패 0건이고, `20260930-samsung-sds-live-selection-v1`은 이 후보의 문서·parse 1건을 선택했다. 기존 발행 사건 ID나 승인·공개 상태는 만들지 않았다.
+
+단일 검색 후보 intake와 selection은 배치 원문 run 안에 다른 blocked 후보가 있어도 그 실패를 무시한 채 성공 처리하지 않는다. source run의 전체 receipt·원본 bytes·parse를 검증하되, 선택·intake 대상으로 지정한 exact URL이 실제 `captured`/`not_modified`인지 다시 확인한다. batch intake receipt는 성공한 항목의 item receipt와 같은 source run·search run인지 대조한 뒤 selection에 사용할 수 있다. `tests/research-search-candidate-collection.test.mjs` 2개는 정상 후보 옆의 blocked 이웃 격리, batch intake→selection 연계, 같은 run의 완료 checkpoint 재사용과 잘못된 후보 identity의 네트워크 전 차단을 검사한다.
+
+## 105. 검색 후보 발견에서 exact-source 선택까지 한 명령으로 실행
+
+`process-search-candidates`는 검색 run과 1~12개 exact candidate key를 받아 아래 단계를 하나의 재개 가능한 workflow로 실행한다.
+
+```sh
+node scripts/research.mjs process-search-candidates \
+  --run 20260930-example-search-workflow-v1 \
+  --candidate-run 20260930-main23-targeted-v1 \
+  --candidate-keys source-... \
+  --root .local/research/local-ai \
+  --backlog .local/research/candidate-backlog.json
+```
+
+이 명령은 derived ID로 source collection → exact batch intake → 성공 후보별 source selection을 수행한다. 각 단계는 별도 run/receipt로 보존하고 workflow receipt에는 후보별 `collection_status`, `intake_status`, `selection_status`, 생성된 run ID를 기록한다. 모두 정확히 선택되면 `complete`, 차단·날짜 누락·파싱 실패·검토 상태 충돌·selection 실패가 있으면 `partial`이다. 부분 실행이어도 정상 후보의 selection은 저장하며, 같은 workflow ID와 같은 검색 지문·후보 key로 재개할 수 있다. 입력을 바꾸려면 새 workflow ID를 사용한다.
+
+실제 실행 `20260930-samsung-sds-pipeline-v1`은 `20260930-main23-targeted-v1`의 삼성SDS 후보 1건을 처리해 `complete`, collection `source_parsed`, intake `source_verified_unreviewed`, selection `selected`를 기록했다. 최종 selection은 문서 1건·parse 1건이고 `candidate_published:false`다. 실제 receipt는 `.local/research/local-ai/runs/20260930-samsung-sds-pipeline-v1/search-candidate-workflow.json`이다. 편집 사실 검토·기사 초안 작성·승인·Drive·웹/RSS/GitHub 발행은 다음 단계이며 이 명령에 포함되지 않는다.
+
+## 106. 등록 출처 유형 누락 해소
+
+`research-watchlist.json`의 기업·기관 47개에는 출처 URL은 있었지만 출처 유형이 없어, 현황판에서 등록 경로를 기업·IR·연구·기술사업화 가운데 어디에 속하는지 볼 수 없었다. 각 항목의 공식 URL 역할을 기준으로 `source_kind`를 추가했다. 기업 본사·공식 제품/뉴스 채널은 `company`, 투자자 관계 페이지와 IR은 `filing-ir`, 대학의 연구 채널은 `research`, 대학 기술이전·창업 조직은 `commercialization`으로 분류한다. 수집 여부나 내용 검증을 의미하지 않는다.
+
+`discovery.mjs`는 명시된 `source_kind`를 경로의 `kind`로 전달하고 지원 목록 밖의 값은 등록 시 거부한다. 명시 유형을 추가한 뒤 등록 110개 모두 분류됐으며 현황판 종류 분포는 기업 54, IR 18, 연구 19, 사업화 9, 산업언론 5, 협회 3, 규제기관 2다. 이는 메타데이터 완결성 개선이며, 일일 활성 경로 23개·수집 증거 23개·미시도 조사칸 15개는 바꾸지 않는다.
+
+검증: `node --test tests/source-registry.test.mjs`와 `npm run research -- status --format json`을 실행한다. 별칭이나 URL을 근거 없이 유형화하지 말고, 새 watchlist source를 추가할 때도 `source_kind`를 명시한다.
+
+## 107. Frontiers JATS XML 원문 파싱과 HTML 대조
+
+Frontiers의 동일 논문 `/full` HTML만으로는 구조화된 출판 메타데이터와 수식 원문 처리가 안정적이지 않아 정확한 `/xml` profile을 추가했다. `data/research-acquisition.json`의 `frontiers-frobt-jats-v1`은 Frontiers Robotics and AI의 `10.3389/frobt.{year}.{id}/xml`만 매칭하고 `{ "format": "jats", "language": "en" }`을 worker에 전달한다. 기존 `frontiers-frobt-paper-v1` `/full` profile은 유지한다.
+
+실제 논문 [SkinAxis: 3D force-sensing soft robotic skins](https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1937934/full)의 XML은 기존 fetcher/출처 정책으로 `frontiers-jats-20260930-skinaxis-v1`에서 수집했다. 원문 파일은 `.local/research/local-ai/runs/frontiers-jats-20260930-skinaxis-v1/documents.json`에 기록된 body path에 있으며, SHA-256은 문서 장부의 `body_sha256`과 일치한다. 최종 worker 코드로 같은 source version bytes를 재파싱한 `frontiers-jats-20260930-skinaxis-reparse-v6`는 JATS parse `extracted`를 만들었다. DOI·제목·발표일 2026-09-23이 기존 `daily-20260929-v17_frontiers-robotics-papers_20260922_20260929_a1`의 HTML parse와 맞는다. JATS 결과에는 저자 10명과 기관 연결, `received`/`rev-recd`/`accepted` 날짜, Abstract·본문 74개 block, 표 5개, 그림 10개, 수식 224개가 있다. 표는 행/셀·번호·캡션·XML locator를 보존한다. 핵심 결과 44.66% peak-force 감소, 18.95% transmitted-energy 감소, 최대 압력 1.11 MPa가 HTML 및 JATS 원문 문맥에서 모두 확인된다.
+
+첫 실제 XML parse에서 전자출판일과 연도만 표기된 collection date를 서로 충돌한다고 처리한 것을 확인했다. 공식 `date-type=pub`/전자출판 날짜를 우선하고 불완전 날짜에는 임의의 월·일을 채우지 않도록 수정했다. MathML의 정상·기울임·script·굵은 기호, `mfenced`, publisher `mspace`를 기존 serializer가 의미를 유지하는 범위에서 지원했다. 표 행·셀뿐 아니라 표 각주와 중첩 목록 문단도 XML 위치와 함께 보존한다. 보관 XML을 다시 읽은 v6 parse는 미지원 수식 0개다. 외부 entity 해석과 네트워크는 끄고, XML 크기·요소·본문 block·표 cell·링크 수에 상한을 둔다. 미지원 `mathvariant` 등 의미가 바뀔 수 있는 구조는 `[수식 원문 확인 필요]`와 partial 상태로 남긴다.
+
+회귀는 Python worker의 JATS fixture와 기존 수식 보존 시험, `tests/research-frontiers-scan.test.mjs`, `tests/source-registry.test.mjs`에서 실행했다. 이 구현은 private source parse이며 후보 생성·승인·편집·Drive·웹/RSS/GitHub 발행은 수행하지 않았다. 최초와 중간 partial 실물 parse는 별도 run ID·parse ID로 보존되고 최종 v6가 current worker의 추출 결과다. 같은 실패를 반복하며 한 시간 이상 멈춘 항목은 없다. 남은 P2-02는 복잡한 각주/표 변형과 다국어 OCR·메모리 구간 재개다.
+
+## 108. SkinAxis 수치 주장의 HTML/JATS 교차 검토
+
+계획 19.46의 다음 단위인 숫자·단위·비교군 세 사례를 저장 원문 locator와 연결하고, 기존 claim 검토기를 통해 사실 검토 상태까지 재현했다. 기사 초안이나 공개 발행은 이 작업에 포함하지 않았다.
+
+### 정확한 입력
+
+- HTML 선택 run: `skinaxis-html-source-20260930-v1` (원 수집 run `daily-20260929-v17_frontiers-robotics-papers_20260922_20260929_a1`에서 정확한 `/full` URL만 선택)
+- JATS 선택 run: `skinaxis-jats-source-20260930-v1` (XML parse run `frontiers-jats-20260930-skinaxis-reparse-v6`에서 정확한 `/xml` URL만 선택)
+- 합본·검토 run: `skinaxis-numeric-review-20260930-v1`, source 2개/parse 2개
+- DOI: `10.3389/frobt.2026.1937934`; 양쪽 제목과 발표일 `2026-09-23` 일치
+- HTML source version/parse: `7e9388511237ac7c5447:b0ad4b7bb47aac5903b5b00a6c597643b7cddad850bd0c5e66ee52ee6aec1a1e` / `6592012385c23361cebd805d9f3f7baad3d3235a0932af3b4a2f0157712a1631`; 근거 block `block-0118`, DOM path `/html/body/div[1]/div[1]/div/main/div[4]/div[1]/div[4]/p[7]`
+- JATS source version/parse: `fa18a6cf2e5202a1af91:923e55d563950480bc7a776e00ff28a90151de39d53f221d68f3daf31bb8276a` / `ebeb2d5131a8c91aa84dbd05c844666dbd4bc88bc2366544f8ada3568846613e`; 근거 block `block-0062`, XML path `/article/body/sec[3]/sec[4]/table-wrap[1]`
+
+### 검토된 비교 사례
+
+| Claim                        | JATS Table 4의 조건부 값                               | HTML 본문 교차 확인                                                     |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Peak-force reduction         | 1.0 m/s: D2 `44.66±2.45%`, D1-gel `44.79±2.66%`        | 본문 값 배열에 두 점추정치가 있음                                       |
+| Transmitted-energy reduction | 1.0 m/s: D2 `18.95±1.25%`, D1-gel `31.60±2.43%`        | 본문 값 배열에 두 점추정치가 있음                                       |
+| Maximum pressure             | 1.0 m/s: D2 `1.11±0.02 MPa`, D1-dragon `1.93±0.03 MPa` | 서술 블록에서 D2 `1.11 MPa`를 확인; D1-dragon 비교값은 JATS 표에서 확인 |
+
+표준편차와 속도 열은 JATS table-wrap의 머리글·caption을 기준으로 한다. HTML 추출은 행/열 구조와 일부 수식·조건을 잃으므로 표준편차나 속도의 독립 근거가 아니라 narrative point estimate의 교차 확인에만 쓴다. 세 비교 claim은 비공개 `review` 입력의 direct-source additions로 기존 사실 검토기를 거쳤고 모두 `verified`다. 각 claim에는 양쪽 parse의 정확한 source version/parse/block ID가 연결되어 있다.
+
+### 재검증 명령과 경계
+
+```sh
+node scripts/research.mjs review \
+  --run skinaxis-numeric-review-20260930-v1 \
+  --review .local/research/local-ai/inputs/skinaxis-numeric-review-20260930-v1.json \
+  --root .local/research/local-ai
+```
+
+원문 bytes·immutable parse·claim fingerprint를 `loadStoredSourceRun`과 `assertVerifiedClaim`으로 다시 검사했다. 기대 결과는 verified 3, deferred/rejected 0, `candidate_published:false`다. 같은 문제를 반복하며 한 시간 이상 멈춘 항목은 없다. 연구 성능 해석, 논문 deep-dive/기사 초안, 승인 사건 ID, Drive, 뉴스/RSS/GitHub 갱신은 수행하지 않았다. 전체 WBS P2-02는 미지원 표/수식·OCR·구간 재개가 남아 `부분`이다.
+
+## 109. SkinAxis 논문 해설의 비공개 작성과 검증
+
+108절에서 Table 4의 숫자 claim 세 건을 확인한 뒤, 같은 논문 원문만 사용해 전문 해설을 기존 deep-review→draft→correct 경로로 수행했다. 논문은 DOI `10.3389/frobt.2026.1937934`, 원 발표일 `2026-09-23`인 동일한 `/full` HTML과 `/xml` JATS다. 원문 bytes 재수집 대신 앞서 byte-verified한 exact-source selection 두 건을 합본했다.
+
+### 증거와 심층 검토
+
+- Run: `skinaxis-paper-deep-dive-20260930-v1`; source 2개·parse 2개이며 기존 108절 numeric-review run은 변경하지 않았다.
+- Claim 7건은 추출 출력을 그대로 채택한 게 아니라 저장 원문 locator에서 직접 추가·검토했다. 내용은 연구 문제, D2 구조, 충격시험 조건, 피크힘 비교, 에너지 전달 비교, 최대 압력 비교, 동적 유한요소 모델 적용 범위다. 모두 `verified`다.
+- 원문 연결은 HTML abstract `block-0002`, JATS abstract `block-0002`, 방법 `block-0012`, 충격시험 `block-0058`, Table 4 `block-0062`, 모델 범위 `block-0070`이다. 각 claim의 evidence에는 정확한 source version·parse ID·block ID·quote가 들어간다.
+- Deep basis의 6개 역할은 `problem`, `method`, `conditions`, `comparison`, `results`, `constraints`다. 논문 식별자 DOI, 전문 접근, 전체 문서 판독 범위, JATS full-text source version과 source 역할 확인을 검토 입력에 고정했다. Deep-review 결과는 `basis_reviewed`다.
+
+### 로컬 작성과 정정
+
+`qwen3.8:27b`(27.3B, Q4_K_M)는 `think=false`, `num_ctx=16384`, `num_predict=4096`으로 호출됐다. 원 모델 응답은 약 196.96초, 1,210 generated tokens였다. 첫 draft는 방법·조건·비교·결과·제약은 설명했지만 필수 `problem` 역할을 explanations에 연결하지 않아 `missing_deep_basis_explanation`과 `missing_deep_basis_fact`가 나왔다. 이를 editorial-ready로 통과시키지 않았다.
+
+모델 원출력과 실패 상태를 보존하고, 검토한 problem claim을 별도의 `연구 배경` 설명에 연결했다. 동시에 숫자 단위 띄어쓰기와 시험 조건, 역할별 claim ID를 직접 재점검·정정했다. `correct` 이후 draft ID는 `82c8b6acbca156be6235a0a7aecbfd1af397090dea03acbf7015feb8fd3d48f4`, problems는 빈 배열이다. 최종 원고는 3문장 육하원칙 리드, 연구 배경, D2 구조와 시험 방법, 1.0 m/s 비교 결과, 모델의 적용 범위를 담는다. 정보 가치가 있는 추가 추론은 없어 `analysis:null`이다.
+
+최종 상태는 `editorial_review`; 공개 승인 false, 후보 미발행이다. `claims.json`, `reviewed-claims.json`, `deep-context.json`, 원모델 `drafts/` 사본, `corrections/`, `preview.md`와 입력 manifest는 모두 private research root에 둔다. 원고 초안에서 RSS·GitHub·Drive·웹 기사나 기사 ID를 만들지 않았다. 다음 관문은 독립 편집 검토와 기존 기사 중복·회차 연결 판단이다. 이는 전 논문 자동 분석 검증·P3-03 완료나 전체 WBS 완료 증거가 아니다.
+
+## 110. JATS 병합 셀 격자와 표 각주 추적
+
+JATS 표에서 열 병합·행 병합 정보를 평탄화하면 수치가 어느 조건에 속하는지 읽기 어렵다. `integrations/research-worker/worker.py`의 JATS parser는 기존 `rows`를 유지하면서 논리 열을 펼친 `grid` 및 provenance가 포함된 `cell_layout`을 생성한다. 표 바깥의 별도 table-wrap-foot 안에 있는 중첩 표는 본문 셀로 가져오지 않는다. 행/열 span을 펼친 반복 슬롯은 origin 행·열, 원본 셀 XML 경로, rowspan/colspan, continuation 여부를 가진다.
+
+`table-wrap-foot/fn`은 id·label·문단별 본문과 XML 경로로 저장한다. 표 셀 또는 caption의 `xref ref-type="fn|table-fn"`는 `rid`별로 로컬 표 각주에 연결한다. 각주 marker는 셀 텍스트에서도 본문과 구분된다. 잘못되거나 과도한 span, rowspan 범위 초과, 겹치는 슬롯, 펼친 셀 수 초과, 미해결 각주 ID는 품질 문제로 남기고 `required_fields_present=false` 및 parse `partial`을 만든다. 임의의 정상 격자로 조용히 승인하지 않는다.
+
+### 검증 결과
+
+- 합성 회귀 fixture는 다중 행·열 병합과 그룹 머리글, 5개 열 정렬, 원문 셀 locator, 각주 문단 locator 및 참조 해소를 확인한다. 두 번째 fixture는 잘못된 colspan과 없는 `rid`가 모두 미해결 품질 문제로 남고 parse가 `partial`인지 확인한다.
+- 실제 Frontiers SkinAxis XML은 재취득하지 않고 `frontiers-jats-20260930-skinaxis-v1`의 byte-verified source를 다시 사용했다. 새 parse run은 `frontiers-jats-20260930-skinaxis-complex-tables-v1`, parse ID는 `4b6fa793891ea8a75dff98db7b478f324908a454bc780b49a5f1e534f610b4c8`이다. 원문 source version은 `fa18a6cf2e5202a1af91:923e55d563950480bc7a776e00ff28a90151de39d53f221d68f3daf31bb8276a`이며 body SHA도 기존 값과 일치한다.
+- 결과는 74 blocks, 5 tables, 논리 행 폭 3/7/6/9/7, span 오류 0, 미해결 각주 참조 0, parse `extracted`다. Table 2의 2행 Model과 3개 2열 그룹, Table 4의 2개 3열 지표 그룹이 펼쳐진 header로 각 비교값에 정렬된다. 실제 원문에는 표 각주 대상과 참조가 없어, 각주 연결은 fixture에서 확인했다.
+- `.local/research/local-ai/runtime/venv/bin/python -m unittest discover -s tests -p 'test_research_worker.py'`: 65/65 통과.
+
+같은 문제로 1시간 이상 막힌 뒤 재시도한 건은 없다. 기존 parse를 수정하거나 덮지 않았고 후보 승인, 기사 발행, Drive, 웹, RSS, GitHub 쓰기는 하지 않았다. P2-02의 복합 JATS 표 항목은 이번 구현으로 처리했으며 미지원 MathML, 장문 메모리/구간 재개, 다국어 OCR은 계속 남는다.
+
+## 111. 미지원 MathML 원형 보존과 안전한 표시
+
+지원하지 않는 JATS MathML을 임의로 텍스트화하지 않는다. worker 본문에는 `[수식 원문 확인 필요]`를 유지하고 parse 상태를 `partial`로 낮춘다. `quality.missing_math`와 `math_expressions`에는 식을 감싼 원본 XML 문자열·SHA-256·XML locator를 추가한다. 이는 비공개 source parse에만 저장되며 공개 기사/브리핑 문장이나 렌더링된 HTML로 승격하지 않는다. 원본 다운로드 bytes는 기존 immutable source version에서 그대로 확인할 수 있다.
+
+회귀 입력 `<inline-formula><math><mystery/></math></inline-formula>`는 parse partial, placeholder 유지, `source_xml`에 `mystery` 구조 보존, 계산된 SHA와 기록된 SHA 일치, `xml_path`가 inline-formula 위치를 가리키는 것을 검증했다. 회귀 파일은 `tests/test_research_worker.py::test_jats_does_not_guess_partial_dates_or_hide_unsupported_math`다.
+
+지원 식이 실제 추출을 바꾸지 않는지 확인하려고 저장된 Frontiers XML source run을 최신 코드로 한 번 더 재파싱했다. Run `frontiers-jats-20260930-skinaxis-safe-math-v2`, parse ID `a2b1862556b54d16525c2081914b5185068ed26cb3539113d6852d312188d336`; 74 blocks, `extracted`, missing math 0이며 원문 수식 224개가 유지된다. 원문은 재수집하지 않았고 과거 parse를 수정하지 않았다.
+
+다음 P2-02 작업은 장문 입력 메모리 예산·구간 재개, 다국어 OCR과 숫자·표 구조 검증이다. 1시간 이상 동일 문제로 막힌 작업은 없다. 전용 Python worker 전체 회귀는 65/65 통과했고 `python -m py_compile integrations/research-worker/worker.py`도 통과했다. 연동 영향 경로인 `research-frontiers-scan`·`source-registry` Node 시험은 11/11 통과했다.

@@ -326,3 +326,210 @@ export async function scanSinglePageRoute(
   summary.candidate_count = candidates.length
   return { summary, documents, parses, candidates }
 }
+
+function pathPageURL(channel, page) {
+  const profile = channel.listing_profile
+  const template = profile?.url_template
+  if (
+    channel.method !== "html-list" ||
+    profile?.pagination !== "path-pages" ||
+    typeof template !== "string" ||
+    (template.match(/\{page\}/g) || []).length !== 1 ||
+    !Number.isInteger(profile.max_pages) ||
+    profile.max_pages < 1 ||
+    profile.max_pages > 100 ||
+    !profile.rule_id ||
+    !channel.item_pattern
+  )
+    throw Error("Route needs an explicit bounded path-pages listing profile")
+  const url = template.replace("{page}", String(page))
+  if (/[{}]/.test(url)) throw Error("Archive URL template has an unknown placeholder")
+  assertURL(url, channel.allowed_hosts)
+  return url
+}
+
+export function assessPathPage(parse, channel) {
+  const profileId = channel.listing_profile?.rule_id
+  const profile = parse.link_profiles?.find((entry) => entry.id === profileId)
+  const links = (parse.links || []).filter((entry) => entry.profile_id === profileId)
+  const result = { status: "incomplete", reason: null, links }
+  if (parse.status !== "extracted" || !parse.quality?.required_fields_present)
+    return { ...result, reason: "archive_listing_parse_incomplete" }
+  if (
+    !profile ||
+    profile.status !== "matched" ||
+    profile.truncated ||
+    profile.selected_items < 1 ||
+    profile.selected_items !== profile.matched_links ||
+    profile.matched_links !== links.length
+  )
+    return { ...result, reason: "archive_listing_profile_incomplete" }
+
+  const pattern = new RegExp(channel.item_pattern)
+  const seen = new Set()
+  for (const link of links) {
+    let url
+    try {
+      url = canonicalURL(link.url)
+      assertURL(url, channel.allowed_hosts)
+    } catch {
+      return { ...result, reason: "archive_article_url_outside_policy" }
+    }
+    if (
+      !pattern.test(url) ||
+      seen.has(url) ||
+      !link.text?.trim() ||
+      !validDay(link.published_at) ||
+      !link.listed_date_text
+    )
+      return { ...result, reason: "archive_article_identity_or_date_invalid" }
+    seen.add(url)
+  }
+  if (links.some((link, index) => index && link.published_at > links[index - 1].published_at))
+    return { ...result, reason: "archive_not_newest_first" }
+  const excluded = channel.listing_profile.excluded_categories || []
+  if (
+    !Array.isArray(excluded) ||
+    new Set(excluded).size !== excluded.length ||
+    excluded.some((category) => typeof category !== "string" || !category.trim())
+  )
+    return { ...result, reason: "archive_excluded_categories_invalid" }
+  if (excluded.length && links.some((link) => !Array.isArray(link.categories)))
+    return { ...result, reason: "archive_categories_missing" }
+  return {
+    status: "page_scanned",
+    reason: null,
+    links,
+    selected_items: links.length,
+    first_date: links[0]?.published_at || null,
+    last_date: links.at(-1)?.published_at || null,
+  }
+}
+
+export async function scanPathPagesRoute(
+  root,
+  run,
+  fetcher,
+  channel,
+  articleProfiles,
+  { since, until },
+  {
+    fetchPolicy = fetchWithPolicy,
+    parse = parseDocument,
+    collectDetails = collectWindowDetails,
+  } = {},
+) {
+  if (!validDay(since) || !validDay(until) || since >= until)
+    throw Error("Path-pages scan requires an increasing [since, until) day window")
+  const documents = [],
+    indexDocuments = [],
+    parses = [],
+    candidates = [],
+    pages = [],
+    selected = [],
+    seenURLs = new Set()
+  const excludedCategories = new Set(
+    (channel.listing_profile.excluded_categories || []).map((value) =>
+      value.normalize("NFC").trim().toLocaleUpperCase("en-US"),
+    ),
+  )
+  const summary = {
+    schema: "research-list-scan/v1",
+    channel_id: channel.channel_id,
+    listing_url: channel.listing_profile.url_template,
+    window: { since, until_exclusive: until },
+    pagination: "path-pages",
+    status: "incomplete",
+    reason: null,
+    pages,
+    details: [],
+    candidate_published: false,
+  }
+  let previousDate = null,
+    reachedBoundary = false
+  for (let pageNumber = 1; pageNumber <= channel.listing_profile.max_pages; pageNumber++) {
+    const url = pathPageURL(channel, pageNumber)
+    const page = { page: pageNumber, url, status: "incomplete" }
+    pages.push(page)
+    const document = await run.stage(`listing-fetch-page-${pageNumber}`, { channel, url }, () =>
+      fetchPolicy(root, fetcher, url, { allowed_hosts: channel.allowed_hosts }),
+    )
+    page.fetch_status = document.fetch_status
+    if (!["captured", "not_modified"].includes(document.fetch_status)) {
+      summary.reason = "archive_listing_" + document.fetch_status
+      return { summary, indexDocuments, documents, parses, candidates }
+    }
+    indexDocuments.push(document)
+    documents.push(document)
+    const parsed = await run.stage(
+      `listing-parse-page-${pageNumber}`,
+      { document, options: channel.parse_options },
+      () => parse(root, document, { language: channel.language, ...(channel.parse_options || {}) }),
+    )
+    parses.push(parsed)
+    page.parse_id = parsed.parse_id
+    const assessment = assessPathPage(parsed, channel)
+    page.status = assessment.status
+    page.reason = assessment.reason
+    page.selected_items = assessment.selected_items || 0
+    if (assessment.status !== "page_scanned") {
+      summary.reason = assessment.reason
+      return { summary, indexDocuments, documents, parses, candidates }
+    }
+    const links = assessment.links
+    if (previousDate && links[0]?.published_at > previousDate) {
+      page.reason = "archive_not_newest_first_across_pages"
+      summary.reason = page.reason
+      return { summary, indexDocuments, documents, parses, candidates }
+    }
+    for (const link of links) {
+      const urlKey = canonicalURL(link.url)
+      if (seenURLs.has(urlKey)) {
+        page.reason = "archive_duplicate_across_pages"
+        summary.reason = page.reason
+        return { summary, indexDocuments, documents, parses, candidates }
+      }
+      seenURLs.add(urlKey)
+      const excluded = (link.categories || []).some((category) =>
+        excludedCategories.has(category.normalize("NFC").trim().toLocaleUpperCase("en-US")),
+      )
+      if (link.published_at >= since && link.published_at < until && !excluded)
+        selected.push({
+          ...link,
+          listing_source_version_id: document.source_version_id,
+          listing_parse_id: parsed.parse_id,
+          discovered_at: document.observed_at,
+        })
+      if (link.published_at < since) reachedBoundary = true
+    }
+    previousDate = links.at(-1)?.published_at || previousDate
+    if (reachedBoundary) {
+      page.status = "window_boundary_reached"
+      break
+    }
+  }
+  if (!reachedBoundary) {
+    summary.reason = "archive_cutoff_not_reached"
+    return { summary, indexDocuments, documents, parses, candidates }
+  }
+  if (selected.length > (channel.scan_max_details || 25)) {
+    summary.reason = "detail_budget_exceeded"
+    return { summary, indexDocuments, documents, parses, candidates }
+  }
+  const inspected = await collectDetails(root, run, fetcher, channel, articleProfiles, selected, {
+    fetchPolicy,
+    parse,
+  })
+  documents.push(...inspected.documents)
+  parses.push(...inspected.parses)
+  candidates.push(...inspected.candidates)
+  summary.details = inspected.details
+  summary.candidate_count = candidates.length
+  summary.status =
+    inspected.details.length === selected.length &&
+    inspected.details.every((detail) => detail.status === "source_parsed_unreviewed")
+      ? "window_scanned"
+      : "incomplete"
+  summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
+  return { summary, indexDocuments, documents, parses, candidates }
+}
