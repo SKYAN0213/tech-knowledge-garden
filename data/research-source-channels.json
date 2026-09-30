@@ -383,6 +383,23 @@
       }
     },
     {
+      "id": "amd-ir-press",
+      "name": "AMD Investor Relations Press Releases",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기업·운영",
+      "sectors": ["반도체·컴퓨팅"],
+      "method": "rss",
+      "url": "https://ir.amd.com/news-events/press-releases/rss",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official 10-item RSS feed and three full press releases were captured. The shared bounded RSS scanner completed September 23–30 with one full article and nine older items, then the observed September 30 window with no new items and ten older items. Both passed stored-source verification. The feed mixes business and product announcements, so article-level classification remains separate."
+      }
+    },
+    {
       "id": "nlr-energy-news",
       "name": "National Laboratory of the Rockies News",
       "kind": "research",

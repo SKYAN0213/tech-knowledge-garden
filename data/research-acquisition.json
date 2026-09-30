@@ -629,6 +629,20 @@
       }
     },
     {
+      "id": "amd-ir-press-article-v1",
+      "url_pattern": "^https://ir\\.amd\\.com/news-events/press-releases/detail/[0-9]+/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//article[contains(concat(' ', normalize-space(@class), ' '), ' full-news-article ')]/h1",
+        "content_xpath": "//main//article[contains(concat(' ', normalize-space(@class), ' '), ' full-news-article ')]",
+        "content_block_xpath": "./*[self::h2 or self::h3 or self::p or self::table][not(self::p and (contains(concat(' ', normalize-space(@class), ' '), ' spr-ir-news-article-date ') or contains(normalize-space(.), '@')))] | ./ul/li",
+        "publication_date_xpath": "//main//article[contains(concat(' ', normalize-space(@class), ' '), ' full-news-article ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' related-documents-line ')]//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%S"
+      }
+    },
+    {
       "id": "nlr-news-detail-article-v1",
       "url_pattern": "^https://www\\.nlr\\.gov/news/detail/(?:program|press)/[0-9]{4}/[^/?#]+$",
       "options": {
@@ -818,6 +832,21 @@
           "date_format": "%B %d, %Y"
         }
       ]
+    }
+  },
+  "amd-ir-press": {
+    "publisher_id": "ir.amd.com",
+    "allowed_hosts": ["ir.amd.com"],
+    "item_pattern": "^https://ir\\.amd\\.com/news-events/press-releases/detail/[0-9]+/[^/?#]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "amd-ir-press-rss-v1",
+      "feed_title": "Advanced Micro Devices, Inc. (AMD) Press Releases",
+      "max_items": 20,
+      "guid_is_permalink": true,
+      "date_timezone": "America/New_York",
+      "scope": "The official investor-relations feed mixes earnings, acquisitions, partnerships and product releases. The route discovers company operations; each article's actual subject and announced-versus-completed status require separate review."
     }
   },
   "nasa-technology-rss": {

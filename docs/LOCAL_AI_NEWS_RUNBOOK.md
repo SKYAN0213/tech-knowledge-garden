@@ -4687,3 +4687,11 @@ SK하이닉스 새 피드 판본은 10항목 중 5개가 `Media` 분류의 이�
 활성 기준선은 `20260930-nlr-energy-sep16-window-v1`이다. `.local/research/local-ai/daily-routes-nlr-only.json`의 단일 경로 `daily-20260930-nlr-only-v1`은 세 창을 계획하고 3/3 `window_scanned`로 실행했다. 재개 뒤 계획·요약·세 receipt·인계 **6개 JSON의 SHA가 같았다**. 해외 에너지/기술 조사 칸 한 곳만 `partial`이며 승인 기사나 분야 전체 완료가 아니다. 특집의 같은 저장 원문을 `20260930-nlr-feature-no-cta-v1`에서 재파싱해 구독 안내를 제외한 40개 본문 블록을 확인했다.
 
 주 체크아웃의 `daily-20260930-main21-integrated-v1`은 21경로/42창 모두 `window_scanned`, 미완료 창 0개로 끝났다. 동일 계획의 `--resume`은 영수증 42개를 유지했고 계획·요약·coverage·후보 장부·인계와 영수증을 포함한 JSON **47개 SHA가 모두 같았다**. 비공개 인계 `pending` 85건 중 이번 실행 관측은 56건이다. 32개 조사 칸은 15개 `partial`·17개 `not_attempted`이며, 로컬 작성 원본만 사용한 이 실행의 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. Drive 최신 작성 원본 대조와 새 경로를 포함한 정규 발행은 아직 수행하지 않았다. 다음 확장은 같은 공통 수집기 수용 절차를 적용하되, 페이지 2가 필요한 NLR 과거 기간과 DOE·ESA의 남은 날짜/비기사 차이는 별도 검증한다.
+
+## 89. AMD IR 공식 RSS의 공통 수집과 기업 동향 칸 추가
+
+해외 반도체·컴퓨팅/기업·운영의 미시도 칸을 위해 [AMD 투자자관계실 공식 RSS](https://ir.amd.com/news-events/press-releases/rss)를 선택했다. Intel IR의 공식 RSS는 이번 환경에서 robots 정책 확인이 실패했으므로 우회하거나 빈 뉴스로 간주하지 않았다. AMD RSS는 `source-policy`의 robots 검사와 원문 저장을 통과했고, 기존 `bounded-feed` 스캐너에서 GUID/permalink, `America/New_York` 날짜, 오래된 항목 경계를 검사했다. 상세는 공통 HTML 파서의 URL별 article profile만 추가했다. 날짜/제목 충돌과 GUID 불일치, 경계가 없는 피드는 `window_scanned`가 될 수 없다. 정확한 선택자와 세 종류의 원문 검토는 [출처 명세 49절](SOURCE_ACQUISITION_SPEC.md#49-amd-ir-공통-rss로-해외-반도체-기업-동향-수집)에 있다.
+
+실물 `20260930-amd-ir-sep23-window-v1`은 RSS 10항목 가운데 기간 내 1건·이전 9건의 전체 원문을 확인했고, `20260930-amd-ir-today-window-v1`은 관측 시점의 후보 0건·이전 10건을 확인했다. 두 창은 `window_scanned`이고 저장 원본 재검증을 통과했다. `.local/research/local-ai/daily-routes-amd-only.json`의 `daily-20260930-amd-only-v1`은 2/2 `window_scanned`, 미완료 0개로 끝났으며 `--resume`은 영수증 2개와 계획·요약·coverage·후보 장부·인계의 JSON 7개 SHA를 유지했다. 새 경로는 `data/research-daily-routes.json`에 활성화했다. 전체 22경로 설정의 `daily-20260930-main22-plan-v1 --plan-only`는 44창을 만들었지만 **22경로 단일 실행은 수행하지 않았다**.
+
+이번 별도 일일 실행의 비공개 인계는 새 원문 후보 1건을 관측했다. 9월 28일 발표는 인수 계약과 예정된 거래 종결을 구분해 편집 검토해야 한다. 이 후보는 승인 기사나 9월 30일 새 사건이 아니다. 기존 21경로 단일 실행은 32칸 중 15개 부분 확인·17개 미실시였고, AMD 별도 실행은 해외 반도체 기업·운영 **한 칸**의 부분 확인 근거다. 두 실행을 합쳐 단일 22경로/44창 완료나 32칸 전수 조사로 표시하지 않는다. 새 후보의 Drive 저장과 공개 발행은 이 실행에서 하지 않았다.
