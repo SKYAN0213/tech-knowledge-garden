@@ -351,6 +351,38 @@
       }
     },
     {
+      "id": "kaist-ai-research",
+      "name": "KAIST AI Research News",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["AI"],
+      "url": "https://news.kaist.ac.kr/researchnews/html/news/?skey=keyword&sval=AI",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The AI-keyword list reused KAIST's dated-list scanner and article profile. September 22–30 had one full dated article and an older boundary; the observed September 30 window was empty. This is a discovery filter, not complete AI coverage."
+      }
+    },
+    {
+      "id": "kier-energy-press",
+      "name": "Korea Institute of Energy Research Press Releases",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["에너지·기후기술"],
+      "url": "https://energium.kier.re.kr/sub040101",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "The official dated press list reused the shared single-page scanner. September 23–30 had one full dated article and an older boundary; September 16–23 had two, and the observed September 30 window had none. The mixed-topic list requires article-level editorial classification."
+      }
+    },
+    {
       "id": "arxiv-robotics",
       "name": "arXiv Robotics",
       "kind": "research",
@@ -471,6 +503,23 @@
       }
     },
     {
+      "id": "kakao-tech-blog",
+      "name": "Kakao Tech Blog",
+      "kind": "company",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["소프트웨어·클라우드"],
+      "method": "rss",
+      "url": "https://tech.kakao.com/feed",
+      "route_check": {
+        "date": "2026-09-30",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "September 23–30 had one full article and an older RSS boundary; the observed September 30 window was empty. Stored feed, article, dates and candidate evidence passed verification. Editorial classification is independent of route scope."
+      }
+    },
+    {
       "id": "skhynix-newsroom-en",
       "name": "SK hynix Newsroom English",
       "kind": "company",
@@ -484,7 +533,7 @@
         "date": "2026-09-30",
         "method": "local-source-fetch",
         "status": "window-scanned",
-        "scope": "Official 10-item WordPress feed. September 23–30 reached an older item and one dated full article; a separate September 30 observation was empty. Stored feed, detail and candidate evidence passed verification. Editorial review is separate."
+        "scope": "Official 10-item WordPress feed. September 23–30 reached an older item and one dated full article after retaining five Media-category items as dated boundary evidence without opening them as articles. The September 30 observation found one full article by the publisher's Korea calendar day. Both stored feeds, details and candidate evidence passed verification. Editorial review is separate."
       }
     },
     {

@@ -447,6 +447,116 @@ test("a new plan rejects old coverage when its completed source run has lost evi
   assert.throws(() => bootstrapCoverage(root, routes, coverage), /hash mismatch/)
 })
 
+test("a verified baseline can replace the same window without losing daily evidence or failures", (t) => {
+  const root = temporary(t)
+  const previous = "baseline-previous"
+  const replacement = "baseline-replacement"
+  const base = {
+    channel_id: "fanuc-en",
+    since: "2026-09-23",
+    until_exclusive: "2026-09-30",
+  }
+  const oldDocument = writeStoredEmptyScan(root, previous, {
+    ...base,
+    url: "https://example.com/previous",
+  })
+  writeStoredEmptyScan(root, replacement, {
+    ...base,
+    url: "https://example.com/replacement",
+  })
+  const daily = "daily-20260930_fanuc-en_20260923_20260930_a1"
+  writeStoredEmptyScan(root, daily, { ...base, url: "https://example.com/daily" })
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      "fanuc-en": {
+        baseline_run: previous,
+        anchor_since: base.since,
+        covered: [
+          {
+            since: base.since,
+            until_exclusive: base.until_exclusive,
+            source_run: previous,
+            kind: "verified_baseline",
+          },
+          {
+            since: base.since,
+            until_exclusive: base.until_exclusive,
+            source_run: daily,
+            kind: "daily_scan",
+          },
+        ],
+        unresolved: [
+          { since: base.since, until_exclusive: base.until_exclusive, reason: "detail_incomplete" },
+        ],
+      },
+    },
+  }
+  const next = bootstrapCoverage(
+    root,
+    [{ channel_id: "fanuc-en", baseline_run: replacement }],
+    coverage,
+  )
+  const state = next.routes["fanuc-en"]
+  assert.equal(state.baseline_run, replacement)
+  assert.equal(state.last_contiguous_until, base.until_exclusive)
+  assert.deepEqual(
+    state.covered.map((span) => span.source_run),
+    [replacement, daily],
+  )
+  assert.deepEqual(state.unresolved, coverage.routes["fanuc-en"].unresolved)
+  assert.equal(coverage.routes["fanuc-en"].baseline_run, previous)
+  fs.writeFileSync(path.join(root, oldDocument.body_path), "corrupted")
+  assert.throws(
+    () =>
+      bootstrapCoverage(root, [{ channel_id: "fanuc-en", baseline_run: replacement }], coverage),
+    /hash mismatch/,
+  )
+})
+
+test("baseline replacement rejects a different window", (t) => {
+  const root = temporary(t)
+  writeStoredEmptyScan(root, "baseline-previous", {
+    channel_id: "fanuc-en",
+    since: "2026-09-23",
+    until_exclusive: "2026-09-30",
+    url: "https://example.com/previous",
+  })
+  writeStoredEmptyScan(root, "baseline-replacement", {
+    channel_id: "fanuc-en",
+    since: "2026-09-24",
+    until_exclusive: "2026-09-30",
+    url: "https://example.com/replacement",
+  })
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      "fanuc-en": {
+        baseline_run: "baseline-previous",
+        anchor_since: "2026-09-23",
+        covered: [
+          {
+            since: "2026-09-23",
+            until_exclusive: "2026-09-30",
+            source_run: "baseline-previous",
+            kind: "verified_baseline",
+          },
+        ],
+        unresolved: [],
+      },
+    },
+  }
+  assert.throws(
+    () =>
+      bootstrapCoverage(
+        root,
+        [{ channel_id: "fanuc-en", baseline_run: "baseline-replacement" }],
+        coverage,
+      ),
+    /baseline changed/,
+  )
+})
+
 test("a failed overlap scan stays unresolved even when an older baseline covers that date", () => {
   const coverage = initialCoverage()
   coverage.routes["fanuc-en"].covered[0].until_exclusive = "2026-09-28"

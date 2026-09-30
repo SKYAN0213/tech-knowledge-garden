@@ -2296,8 +2296,32 @@ KAIST 기사의 등록일은 9월 28일, 본문에서 밝힌 대학 발표일은
 
 실제 `20260930-skhynix-sep23-window-v1`은 `[2026-09-23, 2026-09-30)` 피드 **10개 항목 중 기간 안 1건과 이전 9건**의 경계를 확인하고 상세 1건의 저장 원본·표시 날짜·본문을 검사했다. `20260930-skhynix-observation-v1`의 `[9월 30일, 10월 1일)` 관측 창에는 후보 0건과 이전 항목 경계가 있다. 두 창은 `window_scanned`이며 `verifyStoredListScan`도 통과했다. 관측 시점은 9월 30일 00시 전후 한국 시간이므로 그날 전체의 뉴스가 없었다는 뜻이 아니다. `daily-20260930-skhynix-plan-v1 --plan-only`는 17경로/34창을 계산했지만 원문 재수집·Drive 대조·정규 발행은 하지 않았다.
 
+같은 날 뒤의 피드 판본에는 `Media` 분류의 이미지 전용 항목 5개와 한국 달력으로 9월 30일인 정규 기사가 함께 들어왔다. 첫 20경로 통합 시도 `daily-20260930-main20-plan-v1`의 이 경로는 이미지 URL을 기사 상세로 파싱하려다 `detail_incomplete`로 남았다. 공통 RSS 스캐너에 `ignored_categories`와 `date_timezone` 옵션을 추가했다. 이미지 항목도 URL·GUID·날짜·순서와 이전 날짜 경계에는 포함하며, `Media`로 명시된 항목만 상세 기사 후보에서 뺀다. 분류 정보가 빠졌거나 잘못되면 창을 완료하지 않는다. 새 실물 run `20260930-skhynix-mixed-feed-sep23-v1`은 10항목 중 정규 기사 1건·이전 3건·이후 1건·기간 안 `Media` 5건을 검사했다. `20260930-skhynix-mixed-feed-today-v1`은 정규 기사 1건과 이전 9건을 검사했다. 두 run은 `window_scanned`이고 원본 재검증도 통과했다. 이후 `daily-20260930-skhynix-mixed-v1`에서 이 경로의 두 창을 공통 일일 실행기로 다시 수집해 완료했으며, 새 baseline으로 변경할 때는 이전·새 baseline의 동일한 기간과 원본 무결성을 검사한다. 기존 실패 영수증은 수정하지 않는다.
+
 [TSMC OIP 행사 기사](https://news.skhynix.com/en/tsmc-oip-conference-2026/)의 원문 게시일은 **9월 28일**, 행사일은 현지시간 **9월 23일**이다. 저장된 본문 20블록과 파싱 결과를 대조해 모델 사실 6개 중 **4개를 승인, 2개를 보류**했다. 수상·HBM5 CoWoS 검증 협력은 회사 발표에 귀속하고, HBM4·SOCAMM2는 행사 전시로, PCIe 6·7세대 칩렛 기반 SSD는 준비 단계로 썼다. 비교 조건이 없는 ‘업계 최대’ 표현과 출처가 특정되지 않은 시장 규모 전망은 원고에서 제외했다. 원고는 비공개 사건 `783ed5a89f40a298`로 승인하고, 같은 본문 fingerprint를 가진 RSS 후보 1건에 이 ID를 연결했다. 후보 장부는 120건(verified 51 / deferred 13 / rejected 1 / unreviewed 55)이다.
 
 피드·상세의 원본 판본, parse, 사실·편집 검토, 후보 연결 기록을 담은 **60파일 ZIP 251,621바이트**를 Drive 비공개 `Research` 파일 `1MNSxxHggZgpY-CX-p9IVvvAHEmuJqGpm`에 보관했다. 원격 raw bytes SHA-256 `d81c727d4927a5ba407685f24a13e7450a67f96105bb36b0944a68320a7f2ddf`가 로컬과 일치했다. 이는 원본 검토 자료 보관이며 Drive `Editions`/`Signals` 작성 원본이나 공개 웹·RSS·GitHub 발행이 아니다.
 
 32칸의 고정 검색 시도 `20260930-sector-search-reused-v1`은 기존 검증된 32분야·30제조사 질의를 재사용해 62건을 실행했으나, **62건 모두 검색 서비스 접근 차단/부분 결과**였고 발표일이 확인된 후보가 없었다. 원래 Qwen 검색 질의 생성도 로컬 300초 제한을 넘겨 실패했다. 검색 결과 945개를 새 기사 또는 완료 조사 칸으로 승격하지 않았다. 이 실패는 다른 공식 RSS·목록 경로를 계속 확보해야 한다는 운영 근거다.
+
+## 45. KAIST AI 연구뉴스: 같은 목록·상세 엔진, 다른 검색 필터
+
+[KAIST 연구뉴스의 `AI` 검색 목록](https://news.kaist.ac.kr/researchnews/html/news/?skey=keyword&sval=AI)을 `kaist-ai-research`로 등록했다. `kaist-robotics-research`와 같은 `scanSinglePageRoute`, 날짜 카드 선택자, `mng_no` 기사 신원 정규화, `kaist-research-news-article-v1` 상세 profile을 사용한다. 다른 것은 검색 URL, 목록 규칙 ID, 분야 표지뿐이다. 두 필터에서 같은 기사가 잡혀도 별개 사건이나 독립 출처로 세지 않는다.
+
+실제 `20260930-kaist-ai-sep22-window-v1`은 `[2026-09-22, 2026-09-30)` 카드 12건 중 기간 안 **1건**과 이전 **11건**을 확인했다. [AI 반도체 연구 기사](https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67670&GotoPage=1)의 목록·상세 표시일은 **9월 29일**로 맞았고 본문을 수집했다. `20260930-kaist-ai-today-window-v1`은 관측 시점의 `[9월 30일, 10월 1일)`에서 0건과 이전 12건을 확인했다. 두 run의 저장 원본·parse·후보 연결은 `verifyStoredListScan`을 통과했다. 이는 AI 검색 결과의 개별 기간 수집이지 국내 AI 연구 전체 조사나 논문 전문 검토가 아니다.
+
+## 46. 카카오 기술 블로그: 공통 RSS 수집과 두 가지 출처별 규칙
+
+[카카오 기술 블로그 공식 피드](https://tech.kakao.com/feed)는 현재 관측에서 RSS 10항목을 제공했다. `/rss`와 `/rss.xml`은 404였으므로 실제 200 응답을 받은 `/feed`를 등록했다. 목록은 기존 `scanBoundedRSSRoute`를 그대로 사용한다. 출처별 차이 중 하나는 날짜다. [9월 23일 게시 글](https://tech.kakao.com/posts/837)의 RSS `pubDate`는 **9월 22일 15:00 UTC**, 상세 화면의 `releaseDate`는 **9월 23일**이다. `listing_profile.date_timezone: Asia/Seoul`로 RSS 날짜를 발행처 달력일로 바꿔 비교한다. 이 옵션이 없는 다른 RSS 경로는 기존 UTC 비교를 유지한다. 피드 GUID는 permalink와 일치하는지 검사한다.
+
+두 번째 차이는 본문 위치다. 최초 HTML의 표시 본문 영역은 비어 있고 기사 전체가 `__NUXT_DATA__`의 indexed JSON 배열에 들어 있다. 공통 파서에 `embedded_article.format: indexed-json-array`를 추가해 URL 숫자 ID와 유일한 record를 맞추고, 그 record의 제목·`releaseDate`·HTML 본문만 추출한다. 원본 script DOM 경로, record index, 본문 fragment 경로와 블록 해시를 남긴다. 누락·복수 record, 잘못된 ID·날짜·본문은 성공으로 바꾸지 않는다. 이는 다른 출처에도 같은 배열 형식일 때 설정으로 재사용할 수 있는 규칙이며, 카카오 전용 crawler가 아니다.
+
+최종 parser identity로 다시 수집한 `20260930-kakao-tech-sep23-window-v2`는 `[2026-09-23, 2026-09-30)`의 피드 **10건 중 기간 안 1건과 이전 9건**을 확인했다. 상세 제목·발행일·본문 **63블록**이 목록과 맞아 `source_parsed_unreviewed` 후보 1건을 남겼다. 별도 `20260930-kakao-tech-today-v1`은 당시의 `[9월 30일, 10월 1일)`에서 후보 0건·이전 10건 경계를 확인했다. 두 run의 원본 SHA·parse·후보는 `verifyStoredListScan`으로 다시 확인했다. 이후 격리 일일 실행 `daily-20260930-common-full-plan-v3`에서도 KAIST AI와 카카오 기술 블로그를 포함한 **19경로/38창이 모두 `window_scanned`**로 끝났고, 무변경 재개를 확인했다. 관측 뒤의 당일 게시물을 부정하는 결과는 아니며, 후보의 사실 검토·기사 승인·Drive 작성 원본·공개 발행은 아직 수행하지 않았다. 이 단일 실행은 로컬 작성 원본을 사용해 Drive 대조를 증명하지 않는다.
+
+## 47. 한국에너지기술연구원 보도자료: 공통 날짜 목록의 재사용
+
+[한국에너지기술연구원 보도자료](https://energium.kier.re.kr/sub040101)는 에너지·기후기술/국내 조사 경로다. 별도 crawler 없이 `scanSinglePageRoute`와 공통 HTML 상세 파서를 쓴다. 첫 목록의 `board-list`/`board_table`에는 최신순 20개의 제목 링크와 `icon-date`의 `YYYY.MM.DD` 날짜가 있다. `/sub040101/articles/view/tableid/news/category/2/id/<숫자>`를 기사 신원으로 삼고, 상세 `board_view`의 `th_stitle`, `basic_info` 첫 항목의 작성일, `view_content` 문단을 읽는다. 상세 화면에 목록이 다시 포함돼도 기사 본문 선택자는 그 목록을 제외한다. 목록 제목·날짜와 상세 제목·작성일이 다르거나 본문이 비면 창 전체를 미완료로 둔다. 첫 페이지에 시작일보다 오래된 항목이 없을 때에는 페이지 2를 생략한 성공으로 처리하지 않고 페이지네이션을 추가 검증한다.
+
+실물 `20260930-kier-energy-sep23-window-v1`은 `[2026-09-23, 2026-09-30)` 목록 20건에서 기간 안 1건·이전 19건을 확인했다. [9월 23일 원장 취임 기사](https://energium.kier.re.kr/sub040101/articles/view/tableid/news/category/2/id/6809)의 상세는 제목·작성일이 맞고 본문 7블록을 추출했다. `20260930-kier-energy-sep16-window-v1`은 `[9월 16일, 23일)`에 [태양광 산업 간담회](https://energium.kier.re.kr/sub040101/articles/view/tableid/news/category/2/id/6806)와 [수소 생산 전극 연구](https://energium.kier.re.kr/sub040101/articles/view/tableid/news/category/2/id/6805) 2건, 이전 17건, 이후 1건을 확인했다. `20260930-kier-energy-today-v2`는 관측 시점의 `[9월 30일, 10월 1일)` 후보 0건·이전 20건이다. 세 성공 run의 원본 bytes·parse·후보 연결은 `verifyStoredListScan`으로 재검증했다. 같은 host의 두 창을 동시에 요청한 첫 today 시도는 lock 충돌로 `listing_blocked`였으며 뉴스 0건의 근거가 아니다. 순차 실행한 v2만 빈 창 기준으로 사용한다.
+
+이 목록에는 연구 성과뿐 아니라 인사·행사·산업 간담회도 함께 있다. 경로의 에너지 분야 표지는 탐색 기준이며, 취임 기사를 기술 성과로 자동 분류하지 않는다. 기사 원문에서 사건 유형과 시점, 연구의 검증 조건을 별도 판정한다. 현재 후보는 모두 `source_parsed_unreviewed`이고 Drive 작성 원본이나 공개 기사로 발행하지 않았다. `research-kier-energy-scan.test.mjs`는 공통 경로의 정상·빈 기간·경계 미도달·날짜·제목 충돌과 일일 설정 연결을 확인한다.

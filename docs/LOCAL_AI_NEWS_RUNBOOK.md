@@ -4620,3 +4620,60 @@ DOE `20260930-doe-spark-extract-fast-v1`은 모델 주장 6개 중 4개를 원�
 추가 승인·11기사 회차까지 담은 126파일 ZIP은 `.local/research/2026-09-30-eleven-article-private-slice.zip`에 있다. ZIP CRC와 내부 파일별 SHA를 검사했고 로컬 크기 544,559바이트, SHA-256 `5518fcaf1e055e2d150e6faf1377c50cc0f3aefeb82fb9db46a8984fd5837192`다. Drive 비공개 `Research` 파일 `1SzBWVhm529dnOwxzLQiaDPp0sERGHOkM`에 올려 부모·크기·raw fetch를 확인했다. 원격 SHA는 커넥터가 노출하지 않아 미검증이며 영수증은 `.local/research/2026-09-30-eleven-article-drive-readback.json`에 있다. 이 보관도 `Editions`·`Signals` 작성 원본 설치나 공개 발행이 아니다.
 
 코드 검증은 Node 372/372, Python 82/82, `npx tsc --noEmit`, 새 JSON·테스트의 Prettier, `git diff --check`가 통과했다. 다음은 21개 미시도 조사 칸의 실제 출처 확인, 첫 정규호의 시간 범위·분야·Drive 작성 원본 대조와 공개 웹·RSS·GitHub readback이다. 첫 실제 08시 실행 후부터만 7회 운영 점검의 완료 횟수를 센다.
+
+## 81. 공통 수집기 재사용: KAIST AI와 카카오 기술 블로그
+
+새 출처의 기본 순서는 [일일 구현 명세 3.2절](DAILY_NEWS_INGESTION_IMPLEMENTATION.md#32-새-출처를-활성화하는-체크리스트)로 고정했다. KAIST AI 검색은 로봇 검색의 `single-page` 날짜 목록과 같은 상세 profile을 재사용한다. 카카오 기술 블로그는 기존 `bounded-feed` RSS와 상세 대조를 재사용하고, 발행처의 한국 날짜와 Nuxt indexed JSON 본문이라는 실제 차이만 profile 옵션으로 추가했다. 원문·날짜·실패 수용 범위는 [출처 명세 45~46절](SOURCE_ACQUISITION_SPEC.md#45-kaist-ai-연구뉴스-같은-목록상세-엔진-다른-검색-필터)에 있다.
+
+비공개 저장 run `20260930-kaist-ai-sep22-window-v1`, `20260930-kaist-ai-today-window-v1`, `20260930-kakao-tech-sep23-window-v2`, `20260930-kakao-tech-today-v1`은 각기 지정 창의 `window_scanned`다. 정상 창 후보는 각각 1건, 관측 빈 창은 각각 0건이다. 네 run의 원본·parse·후보 연결은 `storedListScan`과 `verifyStoredListScan`으로 검사했다. 활성 설정은 19경로이고 `daily-20260930-common-first-plan-v2 --plan-only`는 38창을 계산했다. 이 결과는 새 네 창의 개별 수용과 일일 계획이며 19경로 통합 실행, 32칸 전체 취재, 기사 승인, Drive 작성 원본, 공개 발행의 완료 증거가 아니다.
+
+## 82. 신규 두 경로의 격리 일일 실행
+
+기존 08시 실행이 사용 중인 main checkout과 별도인 `codex/common-source-ingestion` 작업 트리에 baseline 원본·parse·run 기록 231개를 byte SHA로 대조해 복사했다. `.local/research/local-ai/daily-routes-new2.json`은 KAIST AI와 카카오 기술 블로그 두 경로만 켠 임시 비공개 설정이다. `daily-20260930-common-new2-v1`의 `--plan-only`는 네 날짜 창을 만들었고, `--execute`는 4/4개 `window_scanned`, 신규 후보 2건의 비공개 인계, 미완료 창 0개를 기록했다. 즉 두 신규 경로가 개별 `scan-list`뿐 아니라 공통 일일 계획·수집·원본 재검증·후보 인계까지 통과했다. 같은 계획의 `--resume`은 receipt 4개를 유지했다.
+
+이 실행의 `coverage_grid`에서 AI/국내/기술과 소프트웨어·클라우드/국내/기술 두 칸만 `partial`이다. 나머지 30칸은 이 **두 경로 설정**에서 `not_attempted`로 표시된 것이다. 분리 작업 트리의 로컬 `vault/`를 기준으로 했고 새 인증 Drive 스냅샷을 입력하지 않았으므로 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. 기존 오전 8시 실행·원격 Drive·공개 사이트에는 이 리허설 결과를 적용하지 않았다. 두 경로를 포함한 단일 19경로 실행 결과는 83절에 별도로 기록한다.
+
+## 83. 공통 일일 수집기의 19경로 단일 실행
+
+`daily-20260930-common-full-plan-v3`은 격리 작업 트리에서 현재 활성 설정 19경로의 날짜 창 38개를 고정하고 `--execute`로 전부 `window_scanned`까지 진행했다. 영수증 38개에는 실패·미완료가 없고 32칸 조사 표는 **13칸 `partial`·19칸 `not_attempted`**다. 비공개 인계는 `pending` 68건·이번 실행 관측 68건·과거 회차 검토 위치 11건·미완료 창 0건이다. 이는 조사 후보의 라우팅 수이지 신규 기사 68건이 아니다.
+
+같은 run의 `--resume`은 1초 안에 종료됐고 새 영수증·HTTP 수집을 만들지 않았다. 실행 전후 계획·요약·38개 receipt·handoff·coverage·후보 장부의 **JSON 43개 파일 경로와 SHA-256이 동일**했다. 원본 자료와 파싱의 검증은 각 창의 `verifyStoredListScan`에서 수행됐다. 이 실행은 별도 작업 트리의 로컬 `vault/`를 사용했고 최신 인증 Drive snapshot을 붙이지 않았다. `candidate_published:false`, `drive_verified:false`, `public_verified:false`이며 오전 8시 예약의 승인·Drive 저장·웹/RSS/GitHub 배포를 대신하지 않는다. 다음 재개점은 오전 8시 작업 종료 후 주 체크아웃·Drive·공개 결과를 대조하고, 그 판본에 이번 코드 변경을 통합하는 것이다.
+
+## 84. 다음 출처 후보와 주 체크아웃 통합 대기
+
+에너지·기후기술/해외/기술 칸의 공통 날짜 목록 후보로 Berkeley Lab Energy Technologies Area의 `https://eta.lbl.gov/news`를 `20260930-berkeley-eta-list-inspect-v1`에서 시험했다. robots 허용을 확인한 뒤 원문 요청은 HTTP 403 `blocked`를 반환했다. 따라서 목록 종료·상세 날짜를 수용하지 못했고 활성 경로·완료 칸에 넣지 않았다. 같은 차단 요청을 반복하지 않고 접근 가능한 공식 대체 원천을 찾는다.
+
+오전 8시 작업이 주 체크아웃에서 원고를 수정 중인 동안, 격리 작업 트리의 **추적 파일 변경**만 패치로 생성해 주 체크아웃에서 `git apply --check`를 실행했다. 현재 시점에는 충돌 없이 적용 가능하고 새 테스트 파일 경로도 비어 있다. 이는 읽기 전용 사전 검사이며 패치를 적용·커밋·배포했다는 뜻이 아니다. 오전 8시 작업이 끝난 뒤 주 체크아웃의 Git/Drive/공개 상태를 다시 확인하고 패치와 새 테스트 파일을 통합해야 한다.
+
+재개 시에는 먼저 현재 checkout·다른 08시 작업·Drive 작성 원본 상태를 확인한다. 새 parser 또는 설정을 바꾼 뒤에는 기존 run ID를 재사용하지 말고 새로운 ID로 실물 기간을 수집하며, `verifyStoredListScan`과 회귀 시험을 통과한 run만 baseline으로 바꾼다. 피드가 바빠져 지정 `since`보다 오래된 항목이 사라지면 `feed_cutoff_not_reached`로 남기고 공식 아카이브/페이지네이션을 확인한다. 카카오 글의 embedded state가 바뀌면 표시 제목·날짜·본문을 추측하거나 빈 성공으로 처리하지 않는다.
+
+## 85. KIER 공식 보도자료의 공통 목록 수집과 별도 일일 검증
+
+에너지·기후기술/국내의 공식 경로 후보로 KIER 보도자료를 확인했다. Berkeley ETA는 84절의 HTTP 403 상태를 유지하고 재요청하지 않았다. KIER는 기존 `single-page` 날짜 목록 규칙과 공통 HTML 기사 profile만 추가했으며 새 crawler·parser 분기는 없다. 정확한 선택자·기사 URL·한계는 [출처 명세 47절](SOURCE_ACQUISITION_SPEC.md#47-한국에너지기술연구원-보도자료-공통-날짜-목록의-재사용)에 있다.
+
+| 저장 run                               | 날짜 창과 실물 결과                                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `20260930-kier-energy-sep23-window-v1` | `[2026-09-23, 2026-09-30)`; 목록 20, 후보 1, 이전 19, 상세 1. `window_scanned`와 원본 검증 통과. 일일 baseline.   |
+| `20260930-kier-energy-sep16-window-v1` | `[2026-09-16, 2026-09-23)`; 후보 2, 이전 17, 이후 1, 상세 2. `window_scanned`와 원본 검증 통과.                   |
+| `20260930-kier-energy-today-v1`        | 같은 host 동시 요청의 수집 잠금 충돌. `listing_blocked`; 빈 창의 근거로 사용하지 않음.                            |
+| `20260930-kier-energy-today-v2`        | 순차 재실행 `[2026-09-30, 2026-10-01)`; 후보 0, 이전 20. `window_scanned`와 원본 검증 통과. 관측 시점까지만 해석. |
+
+20경로의 `daily-20260930-common20-plan-v1 --plan-only`는 **40개 창**을 산출했다. 20경로 동시 통합 실행의 완료 증거는 아니다. 기존 19경로 단일 실행을 그대로 보존하고, `.local/research/local-ai/daily-routes-kier-only.json`에서 KIER만 활성화한 `daily-20260930-kier-only-v1`을 순차 실행했다. 두 창 모두 `window_scanned`, receipt 2개, 비공개 `pending` 1건, 미완료 창 0건이며 `--resume`은 같은 receipt 2개를 보존했다. 이는 KIER가 개별 `scan-list`와 일일 계획·원본 검증·후보 인계까지 통과한 증거다. `candidate_published:false`, `drive_verified:false`, `public_verified:false`이며 당일 전체 뉴스 수나 새 공개 기사 수를 뜻하지 않는다. 이 별도 실행의 조사 표는 에너지·기후기술/국내/기술 한 칸만 `partial`이다.
+
+최신 08시 예약이 주 체크아웃과 Drive 작성 원본을 수정하는 동안 위 설정·코드·시험은 격리 작업 트리에 있다. 주 작업이 종료한 뒤 변경 충돌과 권위 원본을 다시 대조해 통합한다. 다음 경로도 공통 수집기를 먼저 적용하고 실제 URL 신원, 날짜 시간대, 목록 경계, 제목·본문 선택자, 첨부·정정 차이만 별도 수용한다.
+
+## 86. NLR 해외 에너지 경로의 공통 수집 가능성과 예외 확인
+
+[National Laboratory of the Rockies의 공식 뉴스 목록](https://www.nlr.gov/news/news)을 `20260930-nlr-news-list-inspect-v1`에서 안전 요청으로 저장했다. 화면의 `news-card`에는 날짜와 원문 링크가 최신순으로 있고, 관측한 10개 항목은 9월 22일부터 2일까지다. `20260930-nlr-news-detail-inspect-v1`에서 9월 22일·21일 `detail/program` 기사 두 건의 원문도 저장했다. 이 두 유형의 페이지는 `generic-content`와 `byline`이 공통이어서 기존 날짜 목록/HTML 상세 파서를 설정으로 적용할 가능성이 있다.
+
+다만 목록에는 `detail/press`와 `news/feature` 주소도 함께 있다. `20260930-nlr-article-types-inspect-v1`에서 각각 한 건을 저장해 비교한 결과, press는 `generic-content`를 쓰지만 feature는 여러 본문 구역과 다른 날짜 위치를 사용했다. 목록·상세의 `Sept.` 월 표기도 현재 `%b` 날짜 파서에서 그대로 해석되지 않는다. 한 유형만 성공시키고 나머지를 조용히 건너뛰지 않기 위해 **일일 경로를 아직 등록하지 않았다**. 다음 단계는 공통 영문 날짜 정규화와 feature 본문의 범위/사진 설명 분리 가능성을 검증하고, 정상·빈 기간·형식 혼합·날짜 충돌을 시험하는 것이다. 84절 Berkeley ETA HTTP 403을 NLR 접근 성공으로 대체해서 기록하지 않는다.
+
+## 87. 주 체크아웃 통합과 SK하이닉스 혼합 피드 재수용
+
+9월 30일 오전 8시 작업이 끝난 뒤 주 체크아웃의 `main`은 `3657e1e`이고 깨끗했다. 이 작업은 기사 13건을 Drive 작성 원본 193개와 대조해 저장하고 웹·RSS·GitHub digest 공개를 확인했다. 첫 7회 운영 감사는 완료 6회다. 격리 작업 트리의 공통 수집 변경과 KIER 원본·parse를 주 체크아웃으로 옮긴 뒤, 기존 20경로 설정으로 `daily-20260930-main20-plan-v1`을 실행했다. 40창 중 39개가 `window_scanned`, SK하이닉스 `[2026-09-23, 2026-09-30)` 한 창이 `detail_incomplete`였다. 이 실행은 `partial`이고 32칸은 13 `partial`·18 `not_attempted`·1 `failed`다. 실패 영수증과 피드/상세 원본은 `.local/research/local-ai/daily/runs/daily-20260930-main20-plan-v1/`에 보존했다. KIER의 두 창은 이 실행에서도 완료됐다.
+
+SK하이닉스 새 피드 판본은 10항목 중 5개가 `Media` 분류의 이미지 전용 URL이다. 기존 RSS 경로는 이를 기사로 상세 파싱하려다 실패했다. 공통 `bounded-feed` 스캐너에 `ignored_categories`를 추가하고 `date_timezone: Asia/Seoul`을 설정했다. `Media`도 피드 항목 수, URL·GUID·날짜·정렬, 이전 항목 경계 검증에는 남긴다. 분류 없는 항목을 임의로 기사 또는 비기사로 판정하지 않고 `feed_item_category_missing`으로 중단한다. `20260930-skhynix-mixed-feed-sep23-v1`은 기사 후보 1건·기간 내 Media 5건·이전 3건·이후 1건, `20260930-skhynix-mixed-feed-today-v1`은 기사 후보 1건·이전 9건이다. 둘 다 저장 원본·상세·후보의 `verifyStoredListScan`을 통과했다.
+
+기존 coverage의 baseline `20260930-skhynix-sep23-window-v1`을 새 원본으로 바꾸면서 처음에는 `Daily route baseline changed`로 안전하게 중단됐다. `bootstrapCoverage()`에 이전·새 baseline의 **같은 날짜 창**, 양쪽 저장 원본의 무결성, 기존 baseline 구간 하나를 확인한 후에만 교체하는 공통 절차를 추가했다. 다른 창이나 손상 원본은 여전히 거부한다. `daily-20260930-skhynix-mixed-v1`의 `--plan-only`는 두 창, `--execute`는 2/2 `window_scanned`, `--resume`은 receipt 2개를 유지했다. SK coverage의 미해결 구간은 0개가 됐고 이전 실패 run은 그대로 보존한다. 최신 20경로 설정의 `daily-20260930-main20-reconciled-plan-v2 --plan-only`는 40창을 생성했을 뿐이다. 이번 로컬 수집의 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`이며, 39+별도 2창을 단일 40/40 완료로 합산하지 않는다.
+
+앞으로 출처 확장은 `source-policy`·원본 보관·공통 목록/RSS·상세 파서·기간/본문 대조·후보 장부·일일 실행을 먼저 적용하고, 실물 원본에서 확인된 시간대·분류·GUID·본문 포맷 같은 차이만 별도 옵션과 회귀 시험으로 수용한다. 재사용 가능한 옵션으로도 표현할 수 없는 형식에만 adapter를 추가한다. NLR의 날짜 약어/feature 본문과 DOE·ESA의 날짜/비기사 충돌은 아직 수용 전이므로 완료 칸에 넣지 않는다.

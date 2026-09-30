@@ -162,4 +162,38 @@ test("bounded RSS routes need an explicit item, identity, and detail budget cont
     { ...rssRoute, listing_profile: { ...rssRoute.listing_profile, max_items: 0 } },
   ])
     assert.throws(() => validateDailyRoutes(rssConfig, [broken]), /bounded RSS route is incomplete/)
+  assert.equal(
+    validateDailyRoutes(rssConfig, [
+      {
+        ...rssRoute,
+        listing_profile: { ...rssRoute.listing_profile, date_timezone: "Asia/Seoul" },
+      },
+    ]).length,
+    1,
+  )
+  for (const date_timezone of ["Not/AZone", 7])
+    assert.throws(
+      () =>
+        validateDailyRoutes(rssConfig, [
+          { ...rssRoute, listing_profile: { ...rssRoute.listing_profile, date_timezone } },
+        ]),
+      /publication time zone is invalid/,
+    )
+  assert.equal(
+    validateDailyRoutes(rssConfig, [
+      {
+        ...rssRoute,
+        listing_profile: { ...rssRoute.listing_profile, ignored_categories: ["Media"] },
+      },
+    ]).length,
+    1,
+  )
+  for (const ignored_categories of [[], ["Media", "Media"], [7]])
+    assert.throws(
+      () =>
+        validateDailyRoutes(rssConfig, [
+          { ...rssRoute, listing_profile: { ...rssRoute.listing_profile, ignored_categories } },
+        ]),
+      /ignored categories are invalid/,
+    )
 })

@@ -15,6 +15,9 @@ const watchlist = JSON.parse(fs.readFileSync("data/research-watchlist.json", "ut
 const route = registry(channels, watchlist, acquisition).find(
   (entry) => entry.channel_id === "kaist-robotics-research",
 )
+const aiRoute = registry(channels, watchlist, acquisition).find(
+  (entry) => entry.channel_id === "kaist-ai-research",
+)
 const profile = acquisition.article_profiles.find(
   (entry) => entry.id === "kaist-research-news-article-v1",
 )
@@ -154,4 +157,58 @@ test("KAIST full article date and title must agree before a candidate is accepte
   const wrongTitle = await scan()
   assert.equal(wrongTitle.summary.status, "incomplete")
   assert.equal(wrongTitle.summary.details[0].status, "title_conflict")
+})
+
+test("KAIST AI keyword route reuses the dated-list scanner and shared article profile", async (t) => {
+  const root = temporary(t)
+  const aiArticleURL =
+    "https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67670&GotoPage=1"
+  const aiListing = `<html><head><title>연구뉴스</title></head><body>
+    <div class="prog_bord prog_bord_list"><div class="board"><ul>
+      <li><a class="lay" href="?mode=V&amp;mng_no=67670&amp;GotoPage=1&amp;skey=keyword&amp;sval=AI">
+        <strong class="tis">움직임의 흐름 읽는 AI 반도체 개발</strong><span class="date">2026.09.29</span></a></li>
+      <li><a class="lay" href="?mode=V&amp;mng_no=67310&amp;GotoPage=1&amp;skey=keyword&amp;sval=AI">
+        <strong class="tis">이전 AI 연구</strong><span class="date">2026.09.21</span></a></li>
+    </ul></div></div></body></html>`
+  const aiDetail = `<html><head><title>연구뉴스</title></head><body>
+    <div class="prog_bord prog_bord_view"><div class="prog_tit">
+      <strong>움직임의 흐름 읽는 AI 반도체 개발&#8203;</strong>
+      <span class="date">등록일 : 2026-09-29</span></div>
+      <div class="prog_contents"><div class="txt_box">
+        <p>KAIST 연구팀이 새로운 AI 반도체 연구 결과를 발표했다.</p>
+      </div></div></div></body></html>`
+  const documents = new Map([
+    [aiRoute.url, stored(root, aiRoute.url, aiListing)],
+    [aiArticleURL, stored(root, aiArticleURL, aiDetail)],
+  ])
+  const daily = JSON.parse(fs.readFileSync("data/research-daily-routes.json", "utf8"))
+  assert.equal(aiRoute.region, "국내")
+  assert.deepEqual(aiRoute.sectors, ["AI"])
+  assert.equal(aiRoute.listing_profile.pagination, "single-page")
+  assert.equal(
+    validateDailyRoutes(daily, registry(channels, watchlist, acquisition)).find(
+      (entry) => entry.channel_id === aiRoute.channel_id,
+    ).baseline_run,
+    "20260930-kaist-ai-sep22-window-v1",
+  )
+  assert.match(aiArticleURL, new RegExp(profile.url_pattern))
+  const scan = (since, until) =>
+    scanSinglePageRoute(
+      root,
+      { stage: (_name, _input, action) => action() },
+      {},
+      aiRoute,
+      [profile],
+      { since, until },
+      { fetchPolicy: async (_root, _fetcher, url) => documents.get(url) },
+    )
+  const covered = await scan("2026-09-22", "2026-09-30")
+  assert.equal(covered.summary.status, "window_scanned")
+  assert.equal(covered.summary.assessment.older_items, 1)
+  assert.equal(covered.candidates.length, 1)
+  assert.equal(covered.candidates[0].source_published_at, "2026-09-29")
+  assert.equal(covered.parses.at(-1).blocks.length, 1)
+  const empty = await scan("2026-09-30", "2026-10-01")
+  assert.equal(empty.summary.status, "window_scanned")
+  assert.equal(empty.candidates.length, 0)
 })

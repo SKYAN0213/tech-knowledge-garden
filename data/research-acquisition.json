@@ -596,6 +596,39 @@
       }
     },
     {
+      "id": "kakao-tech-blog-article-v1",
+      "url_pattern": "^https://tech\\.kakao\\.com/posts/[0-9]+$",
+      "options": {
+        "language": "ko",
+        "embedded_article": {
+          "format": "indexed-json-array",
+          "script_xpath": "//script[@id='__NUXT_DATA__' and @type='application/json']",
+          "url_id_pattern": "^https://tech\\.kakao\\.com/posts/(?P<id>[0-9]+)$",
+          "record_fields": {
+            "id": "id",
+            "title": "title",
+            "published_at": "releaseDate",
+            "content_html": "content"
+          },
+          "publication_date_format": "%Y.%m.%d",
+          "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote or self::pre]"
+        }
+      }
+    },
+    {
+      "id": "kier-energy-press-article-v1",
+      "url_pattern": "^https://energium\\.kier\\.re\\.kr/sub040101/articles/view/tableid/news/category/2/id/[0-9]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_view ')]/h2[contains(concat(' ', normalize-space(@class), ' '), ' th_stitle ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_view ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' view_content ')]",
+        "content_block_xpath": ".//p[normalize-space(.)]",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_view ')]/ul[contains(concat(' ', normalize-space(@class), ' '), ' basic_info ')]/li[1]",
+        "publication_date_pattern": "[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}",
+        "publication_date_format": "%Y.%m.%d"
+      }
+    },
+    {
       "id": "kakao-press-detail-v1",
       "url_pattern": "^https://www\\.kakaocorp\\.com/page/detail/[0-9]+/?$",
       "options": {
@@ -670,6 +703,67 @@
       ]
     }
   },
+  "kaist-ai-research": {
+    "publisher_id": "news.kaist.ac.kr",
+    "allowed_hosts": ["news.kaist.ac.kr"],
+    "item_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?GotoPage=[0-9]+&mng_no=[0-9]+&mode=V$",
+    "scan_max_details": 12,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "kaist-ai-dated-v1",
+      "require_title_match": true,
+      "article_identity_query_parameter": "mng_no",
+      "scope": "Official AI-keyword research list. The page must reach an older dated item; a busy period without that boundary remains incomplete."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_list ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' board ')]",
+      "content_block_xpath": "./ul/li",
+      "listing_link_rules": [
+        {
+          "id": "kaist-ai-dated-v1",
+          "item_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_list ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' board ')]/ul/li/a[contains(concat(' ', normalize-space(@class), ' '), ' lay ')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>\\?mode=V&mng_no=[0-9]+&GotoPage=[0-9]+)(?:&skey=keyword&sval=[^&#]+)?",
+          "title_xpath": ".//strong[contains(concat(' ', normalize-space(@class), ' '), ' tis ')]",
+          "date_xpath": ".//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
+        }
+      ]
+    }
+  },
+  "kier-energy-press": {
+    "publisher_id": "energium.kier.re.kr",
+    "allowed_hosts": ["energium.kier.re.kr"],
+    "item_pattern": "^https://energium\\.kier\\.re\\.kr/sub040101/articles/view/tableid/news/category/2/id/[0-9]+$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "kier-energy-press-dated-v1",
+      "require_title_match": true,
+      "scope": "The first official press list has 20 newest-first dated rows. A window is complete only when this page reaches an older item; otherwise pagination must be added."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board-list ')]//table[contains(concat(' ', normalize-space(@class), ' '), ' board_table ')]",
+      "content_block_xpath": ".//tr[td[contains(concat(' ', normalize-space(@class), ' '), ' icon-date ')]]",
+      "listing_link_rules": [
+        {
+          "id": "kier-energy-press-dated-v1",
+          "item_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board-list ')]//table[contains(concat(' ', normalize-space(@class), ' '), ' board_table ')]//tr[td[contains(concat(' ', normalize-space(@class), ' '), ' icon-date ')]]/td[1]//a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/sub040101/articles/view/tableid/news/category/2/id/[0-9]+)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::tr[1]/td[contains(concat(' ', normalize-space(@class), ' '), ' icon-date ')]",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
+        }
+      ]
+    }
+  },
   "nasa-technology-rss": {
     "publisher_id": "nasa.gov",
     "allowed_hosts": ["www.nasa.gov", "science.nasa.gov"],
@@ -712,6 +806,21 @@
       "scope": "Official press-release RSS; use its UTC calendar date and verify full article titles and printed publication dates before accepting a window."
     }
   },
+  "kakao-tech-blog": {
+    "publisher_id": "tech.kakao.com",
+    "allowed_hosts": ["tech.kakao.com"],
+    "item_pattern": "^https://tech\\.kakao\\.com/posts/[0-9]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "kakao-tech-blog-rss-v1",
+      "feed_title": "tech.kakao.com",
+      "max_items": 10,
+      "guid_is_permalink": true,
+      "date_timezone": "Asia/Seoul",
+      "scope": "Official feed timestamps are UTC while the article releaseDate uses Korea local calendar days. The shared RSS scanner checks an older boundary and every selected full Nuxt article."
+    }
+  },
   "skhynix-newsroom-en": {
     "publisher_id": "news.skhynix.com",
     "allowed_hosts": ["news.skhynix.com"],
@@ -723,7 +832,9 @@
       "feed_title": "SK hynix Newsroom",
       "max_items": 10,
       "guid_is_permalink": false,
-      "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. A seven-day window is complete only when an older feed item and every selected dated full article match."
+      "date_timezone": "Asia/Seoul",
+      "ignored_categories": ["Media"],
+      "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. Retain dated Media items as boundary evidence, but inspect full article categories only. Compare article dates in the publisher's Korea calendar day."
     }
   },
   "nvidia-press-releases": {

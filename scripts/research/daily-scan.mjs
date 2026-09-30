@@ -302,8 +302,32 @@ export function bootstrapCoverage(root, activeRoutes, previous = null) {
       kind: "verified_baseline",
     }
     const current = coverage.routes[entry.channel_id]
-    if (current?.baseline_run && current.baseline_run !== entry.baseline_run)
-      throw Error("Daily route baseline changed; reconcile coverage before continuing")
+    if (current?.baseline_run && current.baseline_run !== entry.baseline_run) {
+      const previousScan = storedListScan(root, current.baseline_run)
+      const previousWindow = previousScan.summary.window
+      verifyStoredListScan(
+        root,
+        previousScan,
+        {
+          channel_id: entry.channel_id,
+          ...previousWindow,
+        },
+        { allowLegacyCandidates: true },
+      )
+      const previousSpans = current.covered.filter(
+        (span) => span.kind === "verified_baseline" && span.source_run === current.baseline_run,
+      )
+      if (
+        previousSpans.length !== 1 ||
+        previousWindow.since !== expected.since ||
+        previousWindow.until_exclusive !== expected.until_exclusive ||
+        previousSpans[0].since !== expected.since ||
+        previousSpans[0].until_exclusive !== expected.until_exclusive
+      )
+        throw Error("Daily route baseline changed; reconcile coverage before continuing")
+      current.covered = current.covered.map((span) => (span === previousSpans[0] ? baseline : span))
+      current.baseline_run = entry.baseline_run
+    }
     const state = current || {
       baseline_run: entry.baseline_run,
       anchor_since: expected.since,

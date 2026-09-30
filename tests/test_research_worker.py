@@ -13,11 +13,11 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
-    def invoke(self, data, options=None, operation="parse", expected_hash=None, mime_type=None):
+    def invoke(self, data, options=None, operation="parse", expected_hash=None, mime_type=None, url="https://example.com/news"):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()
             (root / "input.bin").write_bytes(data)
-            req = {"schema_version": "research-worker/v1", "request_id": "fixture", "operation": operation, "input_path": "input.bin", "input_sha256": expected_hash or hashlib.sha256(data).hexdigest(), "source_id": "fixture", "source_version_id": "fixture:v1", "url": "https://example.com/news", "options": options or {}}
+            req = {"schema_version": "research-worker/v1", "request_id": "fixture", "operation": operation, "input_path": "input.bin", "input_sha256": expected_hash or hashlib.sha256(data).hexdigest(), "source_id": "fixture", "source_version_id": "fixture:v1", "url": url, "options": options or {}}
             if mime_type:
                 req["mime_type"] = mime_type
             import sys
@@ -1071,6 +1071,44 @@ echo 'source command only'
                 result = self.invoke(self.openai_announcement_fixture(b"Admin plugin", date), options)["result"]
                 self.assertIsNone(result["dates"]["published_at"])
                 self.assertEqual(result["dates"]["profile_status"], expected)
+
+    def test_indexed_json_article_extracts_source_bound_content_and_date(self):
+        options = {
+            "language": "ko",
+            "embedded_article": {
+                "format": "indexed-json-array",
+                "script_xpath": "//script[@id='__NUXT_DATA__' and @type='application/json']",
+                "url_id_pattern": r"^https://example\.com/posts/(?P<id>[0-9]+)$",
+                "record_fields": {"id": "id", "title": "title", "published_at": "releaseDate", "content_html": "content"},
+                "publication_date_format": "%Y.%m.%d",
+                "content_block_xpath": ".//*[self::p or self::h2 or self::li or self::table]",
+            },
+        }
+        record = {"id": 2, "title": 3, "releaseDate": 4, "content": 5}
+        values = [None, record, 837, "개인화 랭킹 모델", "2026.09.23", "<p>첫 문단입니다.</p><h2>구조</h2><ul><li>피처 파이프라인</li></ul><table><tr><th>구분</th><td>값</td></tr></table>"]
+        def document(items):
+            return ("<html lang='ko'><head><title>페이지 셸</title></head><body><nav>관련 기사</nav>"
+                    "<script id='__NUXT_DATA__' type='application/json'>" + json.dumps(items, ensure_ascii=False) + "</script>"
+                    "</body></html>").encode()
+        parsed = self.invoke(document(values), options, url="https://example.com/posts/837")["result"]
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertEqual(parsed["title"], "개인화 랭킹 모델")
+        self.assertEqual(parsed["dates"]["published_at"], "2026-09-23")
+        self.assertEqual(parsed["dates"]["profile_status"], "matched")
+        self.assertEqual(parsed["parser"]["id"], "indexed-json-array")
+        self.assertEqual([b["text"] for b in parsed["blocks"]],
+                         ["첫 문단입니다.", "구조", "피처 파이프라인", "구분 값"])
+        self.assertTrue(all(b["locator"]["type"] == "embedded-html" for b in parsed["blocks"]))
+        self.assertTrue(all(b["locator"]["script_dom_path"] for b in parsed["blocks"]))
+        self.assertTrue(all(b["locator"]["text_hash"] == hashlib.sha256(b["text"].encode()).hexdigest() for b in parsed["blocks"]))
+        for broken in (
+            [None, record, 999, *values[3:]],
+            [None, record, 837, values[3], "2026.09.32", values[5]],
+            [None, record, 837, values[3], values[4], ""],
+            [None, record, 837, values[3], values[4], values[5], record],
+        ):
+            with self.subTest(broken=broken[2:5]):
+                self.assertEqual(self.invoke(document(broken), options, url="https://example.com/posts/837")["worker_status"], "failed")
 
 
 if __name__ == "__main__":

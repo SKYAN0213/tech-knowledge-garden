@@ -13,6 +13,43 @@ const require = createRequire(import.meta.url)
 const parserVersion = require("rss-parser/package.json").version
 const adapterSha = sha256(fs.readFileSync(new URL(import.meta.url)))
 
+function publicationDay(timestamp, timeZone = "UTC") {
+  if (!timestamp || !Number.isFinite(Date.parse(timestamp))) return null
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(timestamp))
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+function publicationTimeZone(channel) {
+  const timeZone = channel.listing_profile?.date_timezone ?? "UTC"
+  if (typeof timeZone !== "string") throw Error("Invalid RSS publication time zone")
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone })
+  } catch {
+    throw Error("Invalid RSS publication time zone")
+  }
+  return timeZone
+}
+
+function ignoredFeedCategories(channel) {
+  const categories = channel.listing_profile?.ignored_categories
+  if (categories === undefined) return []
+  if (
+    !Array.isArray(categories) ||
+    !categories.length ||
+    categories.length > 20 ||
+    categories.some((category) => typeof category !== "string" || !category.trim()) ||
+    new Set(categories).size !== categories.length
+  )
+    throw Error("Invalid RSS ignored categories")
+  return categories
+}
+
 export async function parseStoredRSSFeed(
   root,
   document,
@@ -24,11 +61,15 @@ export async function parseStoredRSSFeed(
   const raw = fs.readFileSync(safePath(root, document.body_path))
   if (sha256(raw) !== document.body_sha256) throw Error("RSS feed original body hash mismatch")
   const feed = await parser.parseString(raw.toString("utf8"))
+  const timeZone = publicationTimeZone(channel)
+  const ignoredCategories = ignoredFeedCategories(channel)
   const settings = {
     rule_id: channel.listing_profile?.rule_id,
     feed_title: channel.listing_profile?.feed_title,
     item_pattern: channel.item_pattern,
     guid_is_permalink: channel.listing_profile?.guid_is_permalink,
+    date_timezone: channel.listing_profile?.date_timezone,
+    ignored_categories: ignoredCategories,
   }
   const parserIdentity = {
     id: "rss-parser",
@@ -44,8 +85,9 @@ export async function parseStoredRSSFeed(
     text: item.title || null,
     guid: item.guid || null,
     listed_date_text: item.pubDate || null,
-    published_at: item.isoDate?.slice(0, 10) || null,
+    published_at: publicationDay(item.isoDate, timeZone),
     published_timestamp: item.isoDate || null,
+    categories: Array.isArray(item.categories) ? item.categories : [],
     profile_id: channel.listing_profile?.rule_id,
     item_index: index,
     discovery_method: "rss",
@@ -120,6 +162,8 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
   )
     return { ...result, reason: "feed_identity_or_size_invalid" }
   const pattern = new RegExp(channel.item_pattern)
+  const timeZone = publicationTimeZone(channel)
+  const ignoredCategories = ignoredFeedCategories(channel)
   const urls = new Set(),
     guids = new Set()
   for (const link of links) {
@@ -139,7 +183,15 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
       }
     }
     if (
-      !pattern.test(url) ||
+      ignoredCategories.length &&
+      (!Array.isArray(link.categories) ||
+        !link.categories.length ||
+        link.categories.some((category) => typeof category !== "string" || !category.trim()))
+    )
+      return { ...result, reason: "feed_item_category_missing" }
+    const ignored = link.categories?.some((category) => ignoredCategories.includes(category))
+    if (
+      (!ignored && !pattern.test(url)) ||
       urls.has(url) ||
       !link.text?.trim() ||
       !link.guid ||
@@ -147,7 +199,7 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
       !link.listed_date_text ||
       !validDay(link.published_at) ||
       !Number.isFinite(Date.parse(link.published_timestamp || "")) ||
-      new Date(link.published_timestamp).toISOString().slice(0, 10) !== link.published_at ||
+      publicationDay(link.published_timestamp, timeZone) !== link.published_at ||
       !guidMatches
     )
       return { ...result, reason: "feed_item_identity_or_date_invalid" }
@@ -162,7 +214,13 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
     return { ...result, reason: "feed_not_newest_first" }
   const older = links.filter((link) => link.published_at < since)
   const later = links.filter((link) => link.published_at >= until)
-  const selected = links.filter((link) => link.published_at >= since && link.published_at < until)
+  const datedWindow = links.filter(
+    (link) => link.published_at >= since && link.published_at < until,
+  )
+  const selected = datedWindow.filter(
+    (link) => !link.categories?.some((category) => ignoredCategories.includes(category)),
+  )
+  result.ignored_in_window = datedWindow.length - selected.length
   if (!older.length)
     return {
       ...result,

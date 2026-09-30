@@ -84,6 +84,27 @@ export function validateDailyRoutes(config, routes) {
           route.scan_max_details < 1)
       )
         throw Error("Daily bounded RSS route is incomplete: " + entry.channel_id)
+      if (route.method === "rss" && route.listing_profile?.date_timezone !== undefined) {
+        const timeZone = route.listing_profile.date_timezone
+        if (typeof timeZone !== "string")
+          throw Error("Daily RSS publication time zone is invalid: " + entry.channel_id)
+        try {
+          new Intl.DateTimeFormat("en-US", { timeZone })
+        } catch {
+          throw Error("Daily RSS publication time zone is invalid: " + entry.channel_id)
+        }
+      }
+      if (route.method === "rss" && route.listing_profile?.ignored_categories !== undefined) {
+        const categories = route.listing_profile.ignored_categories
+        if (
+          !Array.isArray(categories) ||
+          !categories.length ||
+          categories.length > 20 ||
+          categories.some((category) => typeof category !== "string" || !category.trim()) ||
+          new Set(categories).size !== categories.length
+        )
+          throw Error("Daily RSS ignored categories are invalid: " + entry.channel_id)
+      }
       if (
         route.listing_profile?.pagination === "calendar-month" &&
         (!route.listing_profile.rule_id ||

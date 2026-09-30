@@ -84,9 +84,24 @@
       "baseline_run": "20260929-kaist-robotics-sep22-window-v4"
     },
     {
+      "channel_id": "kaist-ai-research",
+      "enabled": true,
+      "baseline_run": "20260930-kaist-ai-sep22-window-v1"
+    },
+    {
       "channel_id": "skhynix-newsroom-en",
       "enabled": true,
-      "baseline_run": "20260930-skhynix-sep23-window-v1"
+      "baseline_run": "20260930-skhynix-mixed-feed-sep23-v1"
+    },
+    {
+      "channel_id": "kakao-tech-blog",
+      "enabled": true,
+      "baseline_run": "20260930-kakao-tech-sep23-window-v2"
+    },
+    {
+      "channel_id": "kier-energy-press",
+      "enabled": true,
+      "baseline_run": "20260930-kier-energy-sep23-window-v1"
     }
   ]
 }

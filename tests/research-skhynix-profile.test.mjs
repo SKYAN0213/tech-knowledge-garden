@@ -28,17 +28,21 @@ test("SK hynix official RSS reaches an older date and remains a verified daily r
   assert.equal(route.axis, "기술·제품")
   assert.deepEqual(route.sectors, ["반도체·컴퓨팅"])
   assert.equal(route.listing_profile.guid_is_permalink, false)
+  assert.equal(route.listing_profile.date_timezone, "Asia/Seoul")
+  assert.deepEqual(route.listing_profile.ignored_categories, ["Media"])
   const active = validateDailyRoutes(
     JSON.parse(fs.readFileSync("data/research-daily-routes.json", "utf8")),
     routes,
   )
   assert.equal(
     active.find((item) => item.channel_id === route.channel_id).baseline_run,
-    "20260930-skhynix-sep23-window-v1",
+    "20260930-skhynix-mixed-feed-sep23-v1",
   )
   const feed = `<rss version="2.0"><channel><title>SK hynix Newsroom</title><link>https://news.skhynix.com/en/</link>
-    <item><title>SK hynix presents memory portfolio</title><link>${url}</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=13363</guid><pubDate>Mon, 28 Sep 2026 05:23:44 +0000</pubDate></item>
-    <item><title>Older news</title><link>https://news.skhynix.com/en/older-news/</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=10000</guid><pubDate>Tue, 22 Sep 2026 02:36:18 +0000</pubDate></item>
+    <item><title>Morning article</title><link>https://news.skhynix.com/en/morning-article/</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=13364</guid><pubDate>Tue, 29 Sep 2026 23:59:07 +0000</pubDate><category>TECH&amp;AI</category></item>
+    <item><title>Article image</title><link>https://news.skhynix.com/en/article-image/</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=13365</guid><pubDate>Mon, 28 Sep 2026 06:00:00 +0000</pubDate><category>Media</category></item>
+    <item><title>SK hynix presents memory portfolio</title><link>${url}</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=13363</guid><pubDate>Mon, 28 Sep 2026 05:23:44 +0000</pubDate><category>TECH&amp;AI</category></item>
+    <item><title>Older news</title><link>https://news.skhynix.com/en/older-news/</link><guid isPermaLink="false">https://news.skhynix.com/en/?p=10000</guid><pubDate>Tue, 22 Sep 2026 02:36:18 +0000</pubDate><category>TECH&amp;AI</category></item>
   </channel></rss>`
   const bytes = Buffer.from(feed)
   fs.writeFileSync(path.join(root, "feed.xml"), bytes)
@@ -61,6 +65,18 @@ test("SK hynix official RSS reaches an older date and remains a verified daily r
   assert.equal(scanned.status, "window_covered")
   assert.equal(scanned.window_items, 1)
   assert.equal(scanned.older_items, 1)
+  assert.equal(scanned.later_items, 1)
+  assert.equal(scanned.ignored_in_window, 1)
+  assert.deepEqual(
+    scanned.links.map((link) => link.url),
+    [url],
+  )
+  const today = assessBoundedRSSFeed(parsed, route, "2026-09-30", "2026-10-01")
+  assert.equal(today.status, "window_covered")
+  assert.deepEqual(
+    today.links.map((link) => link.url),
+    ["https://news.skhynix.com/en/morning-article/"],
+  )
   assert.equal(
     assessBoundedRSSFeed(parsed, route, "2026-09-22", "2026-09-30").reason,
     "feed_cutoff_not_reached",

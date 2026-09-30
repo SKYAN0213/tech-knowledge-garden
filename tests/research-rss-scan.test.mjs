@@ -132,6 +132,129 @@ test("RSS with short GUIDs preserves its stated UTC date across the boundary", a
   }
 })
 
+test("a bounded RSS route can compare publication days in the publisher timezone", async (t) => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-timezone-"))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const localChannel = {
+    ...channel,
+    listing_profile: { ...channel.listing_profile, date_timezone: "Asia/Seoul" },
+  }
+  const xml = `<rss version="2.0"><channel><title>Official Feed</title>
+    <item><title>Local morning article</title><link>https://example.com/articles/morning/</link><guid>https://example.com/articles/morning/</guid><pubDate>Tue, 22 Sep 2026 15:00:00 GMT</pubDate></item>
+    <item><title>Older article</title><link>https://example.com/articles/older/</link><guid>https://example.com/articles/older/</guid><pubDate>Sun, 20 Sep 2026 09:00:00 GMT</pubDate></item>
+  </channel></rss>`
+  const raw = Buffer.from(xml)
+  fs.writeFileSync(path.join(root, "feed.xml"), raw)
+  const document = {
+    fetch_status: "captured",
+    original_url: channel.url,
+    source_id: sourceId(channel.url),
+    body_path: "feed.xml",
+    body_sha256: sha256(raw),
+    observed_at: "2026-09-29T00:00:00Z",
+  }
+  document.source_version_id = `${document.source_id}:${document.body_sha256}`
+  const parsed = await parseStoredRSSFeed(root, document, localChannel)
+  assert.equal(parsed.links[0].published_at, "2026-09-23")
+  assert.equal(parsed.links[0].published_timestamp, "2026-09-22T15:00:00.000Z")
+  assert.equal(
+    assessBoundedRSSFeed(parsed, localChannel, "2026-09-23", "2026-09-30").status,
+    "window_covered",
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      { ...parsed, links: [{ ...parsed.links[0], published_at: "2026-09-22" }, parsed.links[1]] },
+      localChannel,
+      "2026-09-23",
+      "2026-09-30",
+    ).reason,
+    "feed_item_identity_or_date_invalid",
+  )
+  await assert.rejects(
+    () =>
+      parseStoredRSSFeed(root, document, {
+        ...localChannel,
+        listing_profile: { ...localChannel.listing_profile, date_timezone: "Not/AZone" },
+      }),
+    /time zone/i,
+  )
+})
+
+test("a bounded RSS route retains dated media items but only inspects article categories", async (t) => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-categories-"))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const mixedChannel = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      guid_is_permalink: false,
+      date_timezone: "Asia/Seoul",
+      ignored_categories: ["Media"],
+    },
+  }
+  const xml = `<rss version="2.0"><channel><title>Official Feed</title>
+    <item><title>Morning article</title><link>https://example.com/articles/morning/</link><guid>post-1</guid><pubDate>Tue, 29 Sep 2026 23:59:07 GMT</pubDate><category>TECH</category></item>
+    <item><title>Article illustration</title><link>https://example.com/media/illustration/</link><guid>post-2</guid><pubDate>Mon, 28 Sep 2026 00:31:11 GMT</pubDate><category>Media</category></item>
+    <item><title>Full article</title><link>https://example.com/articles/full/</link><guid>post-3</guid><pubDate>Mon, 28 Sep 2026 00:21:24 GMT</pubDate><category>TECH</category></item>
+    <item><title>Older article</title><link>https://example.com/articles/older/</link><guid>post-4</guid><pubDate>Tue, 22 Sep 2026 02:35:04 GMT</pubDate><category>TECH</category></item>
+  </channel></rss>`
+  const raw = Buffer.from(xml)
+  fs.writeFileSync(path.join(root, "feed.xml"), raw)
+  const document = {
+    fetch_status: "captured",
+    original_url: channel.url,
+    source_id: sourceId(channel.url),
+    body_path: "feed.xml",
+    body_sha256: sha256(raw),
+    observed_at: "2026-09-30T00:00:00Z",
+  }
+  document.source_version_id = `${document.source_id}:${document.body_sha256}`
+  const parsed = await parseStoredRSSFeed(root, document, mixedChannel)
+  assert.deepEqual(parsed.links[1].categories, ["Media"])
+  const prior = assessBoundedRSSFeed(parsed, mixedChannel, "2026-09-23", "2026-09-30")
+  assert.equal(prior.status, "window_covered")
+  assert.equal(prior.feed_items, 4)
+  assert.equal(prior.ignored_in_window, 1)
+  assert.deepEqual(
+    prior.links.map((link) => link.url),
+    ["https://example.com/articles/full/"],
+  )
+  const today = assessBoundedRSSFeed(parsed, mixedChannel, "2026-09-30", "2026-10-01")
+  assert.equal(today.status, "window_covered")
+  assert.deepEqual(
+    today.links.map((link) => link.url),
+    ["https://example.com/articles/morning/"],
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      {
+        ...parsed,
+        links: parsed.links.map((link, index) =>
+          index === 1 ? { ...link, categories: [] } : link,
+        ),
+      },
+      mixedChannel,
+      "2026-09-23",
+      "2026-09-30",
+    ).reason,
+    "feed_item_category_missing",
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      {
+        ...parsed,
+        links: parsed.links.map((link, index) =>
+          index === 1 ? { ...link, categories: ["TECH"] } : link,
+        ),
+      },
+      mixedChannel,
+      "2026-09-23",
+      "2026-09-30",
+    ).reason,
+    "feed_item_identity_or_date_invalid",
+  )
+})
+
 test("RSS window coverage needs a valid older boundary and unique dated article identities", () => {
   const complete = assessBoundedRSSFeed(parse, channel, "2026-09-22", "2026-09-29")
   assert.equal(complete.status, "window_covered")

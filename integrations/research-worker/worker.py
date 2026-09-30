@@ -164,6 +164,155 @@ def preserve_html_math(dom):
     return expressions
 
 
+def indexed_json_article(dom, url, options):
+    """Read an article from an indexed JSON state, retaining its script locator."""
+    from lxml import etree, html
+
+    profile = options["embedded_article"]
+    fields = profile.get("record_fields")
+    required = ("id", "title", "published_at", "content_html")
+    if profile.get("format") != "indexed-json-array" or not isinstance(fields, dict) or any(
+        not isinstance(fields.get(name), str) or not fields[name] for name in required
+    ):
+        raise ValueError("Invalid indexed article profile")
+    selector = profile.get("script_xpath")
+    block_selector = profile.get("content_block_xpath")
+    pattern = profile.get("url_id_pattern")
+    date_format = profile.get("publication_date_format")
+    if any(
+        not isinstance(value, str) or not value or len(value) > 1024
+        for value in (selector, block_selector, pattern, date_format)
+    ):
+        raise ValueError("Incomplete indexed article profile")
+    match = re.fullmatch(pattern, url)
+    if not match or "id" not in match.groupdict():
+        raise ValueError("Indexed article URL identity missing")
+    scripts = dom.xpath(selector)
+    if len(scripts) != 1 or not isinstance(scripts[0], etree._Element) or scripts[0].tag != "script":
+        raise ValueError("Indexed article script must be unique")
+    script = scripts[0]
+    serialized = script.text or ""
+    if not serialized or len(serialized) > 2_000_000:
+        raise ValueError("Indexed article script absent or too large")
+    values = json.loads(serialized)
+    if not isinstance(values, list) or not 1 <= len(values) <= 100_000:
+        raise ValueError("Indexed article state must be a bounded array")
+
+    def scalar(record, name):
+        index = record[fields[name]]
+        if type(index) is not int or index < 0 or index >= len(values):
+            raise ValueError("Indexed article field reference invalid")
+        return values[index]
+
+    matches = []
+    for index, record in enumerate(values):
+        if not isinstance(record, dict) or not all(fields[name] in record for name in required):
+            continue
+        if str(scalar(record, "id")) == match.group("id"):
+            matches.append((index, record))
+    if len(matches) != 1:
+        raise ValueError("Indexed article record missing or ambiguous")
+    record_index, record = matches[0]
+    title, printed_date, content = (
+        scalar(record, name) for name in ("title", "published_at", "content_html")
+    )
+    if (
+        not isinstance(title, str) or not clean(title)
+        or not isinstance(printed_date, str)
+        or not isinstance(content, str) or not content.strip()
+        or len(content) > 1_000_000
+    ):
+        raise ValueError("Indexed article fields incomplete")
+    try:
+        parsed_date = datetime.strptime(printed_date, date_format)
+        if parsed_date.strftime(date_format) != printed_date:
+            raise ValueError("Date format changed")
+    except ValueError as error:
+        raise ValueError("Indexed article date invalid") from error
+    fragment = html.fragment_fromstring(content, create_parent=True)
+    math_expressions = preserve_html_math(fragment)
+    nodes = fragment.xpath(block_selector)
+    if not nodes or any(not isinstance(node, etree._Element) or node is fragment for node in nodes):
+        raise ValueError("Indexed article block selector failed")
+    script_path = dom.getroottree().getpath(script)
+    fragment_tree = fragment.getroottree()
+    blocks = []
+    for node in nodes:
+        if any(parent in nodes for parent in node.iterancestors()):
+            continue
+        if any(parent.tag in ("script", "style", "noscript") for parent in [node, *node.iterancestors()]):
+            raise ValueError("Indexed article selected non-reader content")
+        value = clean(" ".join(node.itertext()))
+        if not value:
+            continue
+        tag = etree.QName(node).localname
+        kind = (
+            "table" if tag == "table"
+            else "heading" if tag in ("h1", "h2", "h3", "h4", "h5", "h6")
+            else "paragraph"
+        )
+        block = {
+            "kind": kind,
+            "text": value,
+            "locator": {
+                "type": "embedded-html", "script_dom_path": script_path,
+                "record_index": record_index, "content_key": fields["content_html"],
+                "fragment_dom_path": fragment_tree.getpath(node),
+                "extracted_order": len(blocks), "text_hash": digest(value),
+            },
+        }
+        if kind == "table":
+            block["rows"] = [
+                [clean(" ".join(cell.itertext())) for cell in row if cell.tag in ("td", "th")]
+                for row in node.iter() if row.tag == "tr"
+            ]
+        blocks.append(block)
+    if not blocks:
+        raise ValueError("Indexed article body empty")
+    links = []
+    for node in fragment.xpath(".//a[@href]"):
+        href = urljoin(url, node.get("href"))
+        if urlparse(href).scheme in ("http", "https"):
+            links.append({
+                "url": href, "text": clean(node.text_content()),
+                "script_dom_path": script_path, "record_index": record_index,
+                "fragment_dom_path": fragment_tree.getpath(node),
+            })
+    missing_math = [
+        {"dom_path": item["dom_path"], "reason": item["reason"]}
+        for item in math_expressions if item["reason"]
+    ]
+    complete = not missing_math
+    result = {
+        "status": "extracted" if complete else "partial",
+        "title": clean(title),
+        "title_basis": {
+            "type": "indexed-json", "script_dom_path": script_path,
+            "record_index": record_index, "field": fields["title"],
+            "text_hash": digest(clean(title)),
+        },
+        "title_profile_status": "matched",
+        "language": dom.get("lang") or options.get("language"),
+        "dates": {
+            "published_at": parsed_date.date().isoformat(), "modified_at": None,
+            "precision": "day", "candidates": [printed_date],
+            "basis": {
+                "type": "indexed-json", "script_dom_path": script_path,
+                "record_index": record_index, "field": fields["published_at"],
+                "text": printed_date,
+            },
+            "profile_status": "matched", "modified_candidates": [],
+            "modified_basis": None, "modified_profile_status": "not-configured",
+        },
+        "blocks": blocks, "links": links, "link_profiles": [],
+        "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False},
+    }
+    if math_expressions:
+        result["math_expressions"] = math_expressions
+        result["quality"]["missing_math"] = missing_math
+    return result
+
+
 def html_parse(raw, url, options):
     import trafilatura
     from lxml import html, etree
@@ -179,6 +328,8 @@ def html_parse(raw, url, options):
         decoded = str(guess)
     dom = html.fromstring(decoded)
     domtree = dom.getroottree()
+    if options.get("embedded_article"):
+        return indexed_json_article(dom, url, options)
     title = clean(" ".join(dom.xpath("//title/text()"))) or None
     language = dom.get("lang") or options.get("language")
     date_nodes = dom.xpath('//meta[@property="article:published_time" or @name="date" or @name="pubdate"]/@content')
@@ -602,7 +753,11 @@ def run(request, root):
         parser = {"id": "pymupdf", "version": importlib.metadata.version("PyMuPDF")}
     elif html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
         parsed = html_parse(raw, request["url"], options)
-        parser = {"id": "trafilatura", "version": importlib.metadata.version("trafilatura")}
+        parser = (
+            {"id": "indexed-json-array", "version": VERSION}
+            if options.get("embedded_article")
+            else {"id": "trafilatura", "version": importlib.metadata.version("trafilatura")}
+        )
     elif markdown_mime:
         parsed = markdown_parse(raw, request["url"], options)
         parser = {"id": "markdown-it-py", "version": importlib.metadata.version("markdown-it-py")}
