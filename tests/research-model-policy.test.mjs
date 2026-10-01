@@ -9,6 +9,7 @@ import { sha256 } from "../scripts/research/contracts.mjs"
 import {
   validateModelPolicy,
   resolveRolePolicy,
+  prepareRoleProvider,
   prepareRoleOllama,
 } from "../scripts/research/model-policy.mjs"
 
@@ -205,6 +206,109 @@ test("prior settled cost survives restart and blocks new inference when exhauste
     /budget/i,
   )
   assert.equal(r.requests.filter((r) => r.endpoint === "/api/chat").length, 1)
+})
+test("an explicit local budget extension resumes from cached work without repeating it", async (t) => {
+  const root = temporary(t),
+    clock = { value: 0 },
+    r = runtime({ clock }),
+    p = policy({ total_timeout_ms: 200 })
+  let scoped = await prepareRoleOllama(r.api, p, "article_write", {
+    root,
+    run: "extend",
+    now: () => clock.value,
+  })
+  const first = await scoped.structured(request)
+  scoped = await prepareRoleOllama(r.api, p, "article_write", {
+    root,
+    run: "extend",
+    additionalBudgetMs: 200,
+    extensionReason: "Finish remaining work after the configured local budget expired.",
+    now: () => clock.value,
+  })
+  assert.deepEqual(await scoped.structured(request), first)
+  await scoped.structured({
+    ...request,
+    messages: [{ role: "user", content: "remaining source section" }],
+  })
+  const ledger = readJSON(root, "runs/extend/model-policy/article_write/budget.json")
+  assert.equal(ledger.schema, "model-budget/v2")
+  assert.equal(ledger.extensions.length, 1)
+  assert.equal(ledger.extensions[0].additional_ms, 200)
+  assert.equal(ledger.attempts.length, 2)
+  assert.equal(r.requests.filter((r) => r.endpoint === "/api/chat").length, 2)
+})
+test("budget extension requires a reason and cannot extend API provider runs", async (t) => {
+  const root = temporary(t),
+    r = runtime()
+  await assert.rejects(
+    () =>
+      prepareRoleOllama(r.api, policy(), "article_write", {
+        root,
+        run: "reason",
+        additionalBudgetMs: 100,
+      }),
+    /reason/i,
+  )
+  const apiPolicy = policy({ provider: "openai", model: "gpt-4.1-mini", total_timeout_ms: 3000 })
+  let metadataCalls = 0
+  const api = {
+    metadata: async (name) => {
+      metadataCalls++
+      return {
+        model: name,
+        digest: "c".repeat(64),
+        runtime: "openai-responses/v1",
+        capabilities: ["completion"],
+        thinking: { values: [false, "medium"] },
+      }
+    },
+    structured: async () => ({ output: { ok: true }, provenance: {} }),
+  }
+  await assert.rejects(
+    () =>
+      prepareRoleProvider(api, apiPolicy, "article_write", {
+        root,
+        run: "api",
+        additionalBudgetMs: 100,
+        extensionReason: "No API budget extensions in this workflow.",
+      }),
+    /only available for local Ollama/i,
+  )
+  assert.equal(metadataCalls, 0)
+})
+test("budget extension can resume a ledger from the immediately previous implementation", async (t) => {
+  const root = temporary(t),
+    r = runtime(),
+    scoped = await prepareRoleOllama(r.api, policy(), "article_write", {
+      root,
+      run: "legacy-budget",
+    })
+  const { fingerprint: _fingerprint, ...identity } = scoped.executionPolicy
+  const previousIdentity = {
+    ...identity,
+    implementation_sha256: "ee4340ca6445b140f02b74cbfcb3c8bfd6532ab7a4f5ff7591a65d7339f46260",
+  }
+  const previousBinding = {
+    ...previousIdentity,
+    fingerprint: sha256(JSON.stringify(previousIdentity)),
+  }
+  const ledger = { schema: "model-budget/v1", binding: previousBinding, attempts: [] }
+  atomicWrite(root, "runs/legacy-budget/model-policy/article_write/budget.json", {
+    ...ledger,
+    sha256: sha256(JSON.stringify(ledger)),
+  })
+  const resumed = await prepareRoleOllama(r.api, policy(), "article_write", {
+    root,
+    run: "legacy-budget",
+    additionalBudgetMs: 100,
+    extensionReason: "Preserve exact prior run checkpoints.",
+  })
+  assert.equal(resumed.executionPolicy.fingerprint, previousBinding.fingerprint)
+  assert.equal(
+    readJSON(root, "runs/legacy-budget/model-policy/article_write/budget.json").binding
+      .implementation_sha256,
+    previousBinding.implementation_sha256,
+  )
 })
 test("unfinished reserved attempts are charged on restart and never counted as success", async (t) => {
   const root = temporary(t),

@@ -138,6 +138,7 @@ export async function main(argv = process.argv.slice(2)) {
       "call-timeout-ms": { type: "string" },
       "extraction-timeout-ms": { type: "string" },
       "facts-per-batch": { type: "string" },
+      "resume-local-budget-ms": { type: "string" },
       "approved-run": { type: "string", multiple: true },
       "knowledge-run": { type: "string", multiple: true },
       vault: { type: "string" },
@@ -205,6 +206,16 @@ export async function main(argv = process.argv.slice(2)) {
     "extraction-timeout-ms",
     "facts-per-batch",
   ]
+  if (v["resume-local-budget-ms"] !== undefined) {
+    if (command !== "extract") throw Error("--resume-local-budget-ms is only supported for extract")
+    if (!/^\d+$/.test(v["resume-local-budget-ms"]))
+      throw Error("Local resume budget must be an integer")
+    const value = Number(v["resume-local-budget-ms"])
+    if (!Number.isInteger(value) || value < 1 || value > 3600000)
+      throw Error("Local resume budget must be between 1 and 3600000 ms")
+    if (!v["model-policy"])
+      throw Error("--resume-local-budget-ms requires an explicit --model-policy")
+  }
   if (command !== "extract" && budgetFields.some((field) => v[field] !== undefined))
     throw Error("Extraction budgets are only supported for extract")
   if (command !== "evaluation-review" && v["case-id"] !== undefined)
@@ -763,6 +774,13 @@ export async function main(argv = process.argv.slice(2)) {
       root,
       run: v.run,
       overrides,
+      ...(v["resume-local-budget-ms"]
+        ? {
+            additionalBudgetMs: Number(v["resume-local-budget-ms"]),
+            extensionReason:
+              "Resume preserved extraction checkpoints after the configured local inference budget expired.",
+          }
+        : {}),
     })
     const settings = ollama.executionPolicy.settings
     v.model = settings.model

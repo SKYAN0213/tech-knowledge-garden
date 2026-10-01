@@ -235,6 +235,28 @@ test("explicit extraction CLI overrides remain typed and participate in reuse id
   await assert.rejects(main(args(f, "override", ["--think", "false"])), /changed/i)
   assert.equal(r.calls.filter((x) => x.endpoint === "/api/chat").length, 1)
 })
+test("local resume budget requires a model policy and is limited to extract", async () => {
+  await assert.rejects(
+    main(["extract", "--run", "resume", "--resume-local-budget-ms", "100"]),
+    /requires an explicit --model-policy/i,
+  )
+  await assert.rejects(
+    main(["draft", "--run", "resume", "--resume-local-budget-ms", "100"]),
+    /only supported for extract/i,
+  )
+  await assert.rejects(
+    main([
+      "extract",
+      "--run",
+      "resume",
+      "--model-policy",
+      "missing.json",
+      "--resume-local-budget-ms",
+      "3600001",
+    ]),
+    /between 1 and 3600000/i,
+  )
+})
 test("policy or installed runtime changes cannot return an old extraction stage", async (t) => {
   const f = fixture(t),
     r = localRuntime(t, factOutput),

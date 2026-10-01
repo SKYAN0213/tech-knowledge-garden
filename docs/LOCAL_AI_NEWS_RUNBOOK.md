@@ -309,6 +309,14 @@ node scripts/research.mjs extract --run 20260927-paper-bounded-full-qwen-false-v
 
 전체 예산이 끝나면 새 모델 호출을 시작하지 않고 완료 checkpoint를 보존한다. 현재 요청에는 남은 전체 시간과 호출별 한도 중 작은 값을 준다. 같은 입력으로 재개하면 완료 묶음은 해시 검증 후 재사용하고 남은 묶음만 새 시도의 시간 예산으로 처리한다. CLI 시작 전 수집·파싱, 반복 재개 전체를 합친 일일 예산, OS 메모리 상한은 이 옵션의 범위 밖이다. 새 어댑터의 `wall_ms`에는 metadata 확인 시간이 포함되므로 이전 metadata 제외 측정과 단순 속도 비교하지 않는다.
 
+같은 실패 extract run을 이어갈 때만 `--resume-local-budget-ms <추가밀리초>`를 함께 쓸 수 있다. `--model-policy`가 필요하며 추가량은 최대 3,600,000ms, role 총합은 7,200,000ms 이하다. 이 값은 로컬 Ollama aggregate budget만 연장하며 call timeout·모델·prompt·source identity는 바꾸지 않는다. 확장은 private model-budget ledger에 이유와 시각을 남기고 API provider에서는 거부된다. 예:
+
+```bash
+node scripts/research.mjs extract --run paper-extract-v1 --source-run paper-source-v1 --model-policy data/research-model-policy.json --resume-local-budget-ms 360000
+```
+
+이 옵션은 무제한 재시도 지시가 아니다. 완료 체크포인트는 재사용하고 미완료 배치만 실행하며, 남은 역할 예산에 도달하면 다시 중단한다. 이어받기를 반복하기 전에 생성 소요 시간과 입력 구간을 조정해야 한다.
+
 ### 7.4 근거 직접 검토
 
 ```bash
@@ -6596,3 +6604,11 @@ handoff는 미검토·기존 후보를 포함해 118개 고유 key를 유지했�
 저장소에는 OpenAI Responses API adapter와 역할별 provider 선택이 있으나, 이 실행 환경의 `OPENAI_API_KEY`는 설정되지 않아 API 실호출·속도/품질 비교는 하지 않았다. ChatGPT 이용권과 API billing은 분리되며 원문을 API에 전송하면 사용량 과금 및 데이터 전송이 발생할 수 있다. API 비교는 같은 보존 원문·claim schema·prompt로 `fact_extract` 또는 `article_write` 하나를 고정해 수행해야 한다. source discovery, URL fetch, robots 정책 대기, 원문 검증은 모델 교체만으로 빨라지지 않는다. API 비용과 외부 전송을 선택하기 전까지 기존 로컬 결과만 비공개로 보존한다.
 
 산출물은 `.local/research/local-ai/runs/abb-gofa-editorial-extract-20261002-v1/` 아래 비공개 preview 및 review inputs다. 이 slice는 후보 하나의 기사 작성 흐름만 확인했다. 29개 출처의 32칸 coverage, 논문/연구 사업화, 전체 후보 승인과 공개 발행을 완료로 승격시키지 않는다. 1시간 이상 정체한 부분은 없었다.
+
+## 205. Quechua TTS 논문 원문 추출의 시간 한도 중단
+
+2026-10-02 KST에 Frontiers 논문 [Enabling Quechua speech in humanoid social robots through fine-tuned neural TTS on the UBTech Walker Tienkung](https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1909076/full)을 `robotics-tts-paper-source-20261002-v1`로 선택했다. 공식 원문과 parse는 각각 1건이며 parse는 156 blocks(heading 41, paragraph 109, table 6)다. 수집은 완료됐고 사실 추출만 실패했다.
+
+`robotics-tts-paper-extract-20261002-v1`은 로컬 `qwen3.8:27b`로 5개 배치를 계획했다. 최초 실행에서 앞의 세 배치는 239,251ms·210,632ms·271,801ms로 끝났고 네 번째는 178,052ms 후 role의 900,000ms 합산 실행 한도에 걸려 중단됐다. role ledger에 기록된 누적 시간은 899,736ms다. 완료 배치 세 건은 개별 체크포인트와 원시 응답으로 남아 있으나 상위 `claims` stage는 실패했고 `claims.json`은 없다. 따라서 전체 논문 추출·사실 검토·기사 초안·승인은 생성되지 않았고 후보 공개 여부도 바뀌지 않았다.
+
+이 정체는 1시간 이상 반복된 차단이 아니라 설정된 15분 추출 예산을 한 번 소진한 실패다. 원문 재수집이나 완료 배치의 재추론은 하지 않았다. `extract --resume-local-budget-ms`를 추가해 기존 완료 배치는 그대로 재사용하고 Ollama의 남은 로컬 배치만 명시적 추가 예산으로 재개할 수 있게 했다. 이전 모델·정책·설정과 정확히 같은 run에 한정한 구현 지문 호환 회귀를 포함해 집중 테스트 25/25 통과했다. 6분 연장에서 4번째 배치가 완료됐고 5번째 배치가 추가로 시작됐지만 남은 role 예산 77.6초 후 다시 시간 한도에 걸렸다. 완료 배치는 4/5이며 aggregate `claims.json`은 아직 없다. 전체 원문을 재추출하지 않고 이 논문 slice를 중단한다. 예산 연장은 OpenAI provider에는 허용되지 않는다. API 실호출은 비밀 키와 비용 선택이 확인되기 전까지 하지 않는다. 현재 run과 partial checkpoints는 `.local/research/local-ai/runs/robotics-tts-paper-extract-20261002-v1/`에 비공개로 보존한다.

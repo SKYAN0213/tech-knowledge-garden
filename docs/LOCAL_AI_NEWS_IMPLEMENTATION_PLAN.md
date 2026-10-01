@@ -2854,3 +2854,11 @@ ABB E-Device의 현재 승인 parse 15 blocks와 두 과거 source version parse
 2026-10-02 ABB GoFa 원문 slice의 로컬 `fact_extract`는 189,681ms, `article_write`는 128,492ms로 합계 318.173초였다. Ollama provenance에서 모델 generation은 각각 166.848초(1,531 tokens; 9.18 tokens/s), 109.926초(887 tokens; 8.07 tokens/s)로 합계 wall의 약 87%를 차지했다. 첫 호출 load는 9.139초, 입력 평가는 13.655초였고 작성 호출의 load는 0.005초, 입력 평가는 18.466초였다. 따라서 이 표본에서는 로컬 생성 속도가 주요 지연이라는 증거가 있다. 단일 기사 표본이므로 일일 전체의 병목 비율이나 API 개선 폭을 확정하지 않는다. 29개 경로 수집 8분 48초는 별도 단계에서 LLM 없이 수행됐으므로 숫자를 묶어 end-to-end benchmark로 쓰지 않는다.
 
 OpenAI Responses API adapter와 role별 provider 선택은 구현되어 있다. 다음 검증은 사용자가 API 사용을 선택하고 비밀 환경에 `OPENAI_API_KEY`가 설정된 뒤, 동일 source bytes·prompt·schema를 고정하여 로컬과 API의 한 역할을 비교한다. 응답 품질은 claim/evidence 검토로 판정하고 wall time, input/output tokens, 실제 비용을 함께 기록한다. 먼저 `article_write` 비교가 원문 전송량을 줄이며, 추출 병목까지 비교할 필요가 있을 때만 `fact_extract`를 실행한다. ChatGPT 구독은 API 이용료에 포함되지 않으므로 예산 없는 정기 전환은 하지 않는다. 상세 실행 결과는 [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안) 참조.
+
+### 19.119 긴 논문 추출 시간 한도와 다음 개선 경로
+
+2026-10-02 KST 공식 Frontiers 논문 1건은 156 parsed blocks에서 추출 요청 5개로 분할됐다. Qwen 27B 로컬 실행은 최초에 세 배치가 239.251초·210.632초·271.801초에 완료됐고 다음 배치는 178.052초 실행 후 900초 role limit을 만나 실패했다. 3개 배치 체크포인트/원출력은 보존됐으나 aggregate `claims.json`은 없으므로 검토 가능한 전체 결과로 간주하지 않는다. 원문 수집은 정상 완료되어 이 사례의 병목은 crawling이 아니라 inference budget이다.
+
+`extract --resume-local-budget-ms <추가ms>`를 구현해 명시된 로컬 예산 연장과 완료 배치 재사용을 제공한다. 실제 실행에서는 360,000ms를 추가하고 원래 3개 배치 추론을 반복하지 않은 채 4번째를 끝냈다. 5번째는 총 1,260,015ms 사용 시점에 timeout됐으므로 출력 전체를 만들지 못했고 부분 후보는 검토·승인하지 않았다. 이 기능은 Ollama 전용이며 API provider는 확장할 수 없다. 집중 모델-policy/CLI 회귀는 25/25 통과한다.
+
+남은 개선은 추가 예산이 아니라 **동일한 고정 출처 identity를 보존한 채 긴 원문을 더 작은 의미 단위로 처리하거나, 사용자가 선택한 provider와 명시한 예산으로 미완료 구간만 수행하는 경로**다. 이번 21분 작업은 1시간 blocker가 아니다. 같은 전체 원문을 재시도하지 않고 다른 slice로 이동한다. 정확한 receipts는 [런북 205절](LOCAL_AI_NEWS_RUNBOOK.md#205-quechua-tts-논문-원문-추출의-시간-한도-중단)에 있다.

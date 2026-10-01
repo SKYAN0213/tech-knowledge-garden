@@ -11,6 +11,8 @@ export const MODEL_ROLES = [
   "concept_write",
   "evidence_compare",
 ]
+const PRE_BUDGET_EXTENSION_IMPLEMENTATION_SHA256 =
+  "ee4340ca6445b140f02b74cbfcb3c8bfd6532ab7a4f5ff7591a65d7339f46260"
 const commonFields = [
   "provider",
   "model",
@@ -106,15 +108,38 @@ export function resolveRolePolicy(policy, role, overrides = {}) {
 
 function readBudget(root, file, binding) {
   const stored = readJSON(root, file)
-  if (!stored) return { schema: "model-budget/v1", binding, attempts: [] }
+  if (!stored) return { schema: "model-budget/v2", binding, attempts: [], extensions: [] }
   const { sha256: checksum, ...ledger } = stored
   if (checksum !== sha256(JSON.stringify(ledger))) throw Error("Model budget hash mismatch")
+  const { fingerprint: previousFingerprint, ...previousIdentity } = ledger.binding ?? {}
+  const { fingerprint: _requestedFingerprint, ...requestedIdentity } = binding
+  const previousIdentityCompatible =
+    previousFingerprint === sha256(JSON.stringify(previousIdentity)) &&
+    previousIdentity.implementation_sha256 === PRE_BUDGET_EXTENSION_IMPLEMENTATION_SHA256 &&
+    JSON.stringify({
+      ...previousIdentity,
+      implementation_sha256: requestedIdentity.implementation_sha256,
+    }) === JSON.stringify(requestedIdentity)
   if (
-    ledger.schema !== "model-budget/v1" ||
-    JSON.stringify(ledger.binding) !== JSON.stringify(binding)
+    !["model-budget/v1", "model-budget/v2"].includes(ledger.schema) ||
+    (JSON.stringify(ledger.binding) !== JSON.stringify(binding) && !previousIdentityCompatible)
   )
     throw Error("Model policy or installed model changed; use a new run id")
   if (!Array.isArray(ledger.attempts)) throw Error("Invalid model attempt ledger")
+  if (ledger.extensions === undefined) ledger.extensions = []
+  if (
+    !Array.isArray(ledger.extensions) ||
+    ledger.extensions.some(
+      (extension) =>
+        !extension ||
+        !Number.isInteger(extension.additional_ms) ||
+        extension.additional_ms <= 0 ||
+        typeof extension.reason !== "string" ||
+        !extension.reason.trim() ||
+        !Number.isFinite(Date.parse(extension.created_at || "")),
+    )
+  )
+    throw Error("Invalid model budget extension ledger")
   const ids = new Set()
   for (const attempt of ledger.attempts) {
     if (
@@ -145,12 +170,29 @@ export async function prepareRoleProvider(
   base,
   policy,
   role,
-  { root, run, overrides = {}, now = () => performance.now() } = {},
+  {
+    root,
+    run,
+    overrides = {},
+    additionalBudgetMs = 0,
+    extensionReason = "",
+    now = () => performance.now(),
+  } = {},
 ) {
   const settings = resolveRolePolicy(policy, role, overrides)
   if (typeof base?.metadata !== "function" || typeof base?.structured !== "function")
     throw Error("Model provider must implement metadata and structured")
   if (!root || !/^[a-zA-Z0-9_-]+$/.test(run || "")) throw Error("Policy root and run required")
+  if (
+    !Number.isInteger(additionalBudgetMs) ||
+    additionalBudgetMs < 0 ||
+    additionalBudgetMs > 3600000
+  )
+    throw Error("Model budget extension must be between 0 and 3600000 ms")
+  if (additionalBudgetMs && settings.provider !== "ollama")
+    throw Error("Explicit model budget extensions are only available for local Ollama runs")
+  if (additionalBudgetMs && (typeof extensionReason !== "string" || !extensionReason.trim()))
+    throw Error("A reason is required for a model budget extension")
   const file = `runs/${run}/model-policy/${role}/budget.json`
   safePath(root, file)
   const started = now()
@@ -181,9 +223,24 @@ export async function prepareRoleProvider(
     model_digest: metadata.digest,
     runtime: metadata.runtime,
   }
-  const executionPolicy = { ...identity, fingerprint: sha256(JSON.stringify(identity)) }
-  readBudget(root, file, executionPolicy)
-  const deadline = started + settings.total_timeout_ms
+  let executionPolicy = { ...identity, fingerprint: sha256(JSON.stringify(identity)) }
+  const ledger = readBudget(root, file, executionPolicy)
+  if (ledger.binding.fingerprint !== executionPolicy.fingerprint) executionPolicy = ledger.binding
+  if (additionalBudgetMs) {
+    const currentExtensions = ledger.extensions.reduce((n, item) => n + item.additional_ms, 0)
+    if (settings.total_timeout_ms + currentExtensions + additionalBudgetMs > 7200000)
+      throw Error("Extended model role budget exceeds the 7200000 ms maximum")
+    ledger.schema = "model-budget/v2"
+    ledger.extensions.push({
+      additional_ms: additionalBudgetMs,
+      reason: extensionReason.trim(),
+      created_at: new Date().toISOString(),
+    })
+    saveBudget(root, file, ledger)
+  }
+  const additionalBudget = ledger.extensions.reduce((n, item) => n + item.additional_ms, 0)
+  const totalBudgetMs = settings.total_timeout_ms + additionalBudget
+  const deadline = started + totalBudgetMs
   const scoped = Object.create(base)
   scoped.executionPolicy = executionPolicy
   scoped.metadata = async (model, options = {}) => {
@@ -247,7 +304,7 @@ export async function prepareRoleProvider(
       Math.min(
         settings.call_timeout_ms,
         request.timeout_ms ?? settings.call_timeout_ms,
-        settings.total_timeout_ms - spent(ledger),
+        totalBudgetMs - spent(ledger),
         deadline - now(),
       ),
     )
