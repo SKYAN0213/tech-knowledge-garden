@@ -6571,3 +6571,23 @@ Fixture에서 재사용된 목록으로 다른 날짜 창을 독립 평가하고
 handoff는 미검토·기존 후보를 포함해 118개 고유 key를 유지했고, 이 실행에서 관측한 68개 key도 모두 고유했다. 다섯 건은 기존 후보와의 관측 해결로 기록됐다. 관측 후보 68건의 article source version과 원문 URL도 각각 전부 고유했고, 값이 있는 event ID 9개에서 충돌은 없었다. 이는 이번 실행 후보 범위의 중복 확인이다. 후보 공개·Drive 검증·public 검증 플래그는 모두 false다. 이 수집은 LLM 후처리를 호출하지 않는다. 이전 계획보다 경계를 재검사한 7일 창을 포함하므로 이 결과를 신규 기사 수나 분야별 취재 완료로 해석하지 않는다.
 
 실행 후 `--resume`을 수행했다. 재개 전후 58개 receipt의 파일명·bytes 집합 SHA-256은 `aa6611fcb884e40620a35ee261ce07ca9e17ba6a547d241411bac40e6d2e4b55`로 동일했고 새 수집 receipt가 추가되지 않았다. 전체 32칸 coverage grid는 여전히 partial/not_attempted 항목이 있으므로 WBS 1/22와 P2-01 partial을 유지한다. 계획·receipt·summary·handoff는 `.local/research/local-ai/daily/runs/daily-20261002-continuation-plan-v1/`에 보존했다.
+
+## 204. 로봇업계 후보 한 건의 원문 검토와 육하원칙 기사 초안
+
+### 후보 선택과 출처
+
+`daily-20261002-continuation-plan-v1`이 관측한 68개 후보 중 ABB Robotics의 GoFa 고객 적용 사례를 선택했다. 먼저 검토한 FANUC/Hitachi 후보는 이미 공개 승인 대기 기사가 있다는 기존 중복 방지 gate에 걸려 새 기사 작업을 만들지 않았다. 이후 별도 source run `abb-gofa-editorial-source-20261002-v1`에서 정확한 후보 key `source-a0c307de02d0e03bce7f`를 선택했다. 원문은 ABB 공식 뉴스룸의 [Andover Process 광학 필터 가공 사례](https://www.abb.com/global/en/news/139120/cstmr-sharper-edges-higher-output-gofa-helps-andover-process-500-optical-filters-in-under-four-hours)다. 발표일은 2026-09-28, 보존된 source version은 `a0c307de02d0e03bce7f:194447a442e143adb8df76f92dd0e2f4e03498d7ba585eb8f63537fc76ea3ad2`, parse ID는 `24c5562918d04a76147085a21e310b6e5e2b3087b018bfbd3bc4e6cea0733711`이다.
+
+### 검토된 사실과 초안
+
+로컬 `qwen3.8:27b`, `think:false` 추출은 189,681ms에 6개 claim을 만들었고 구조 검토 초기 통과는 2개였다. 원문 대조 후 5개 사실을 검증 상태로 남겼으며 이 중 하나는 원문에 직접 근거한 누락 사실 추가다. 2개는 보류했다. 확인된 내용은 4시간 안에 약 500개 필터의 모서리를 가공했다는 ABB 설명, 45도 모따기, GoFa의 기재된 정확도, 처리 가능한 필터 크기/최소 중량, 종전 수작업 시간 및 1,000개당 8시간 이상 절감 설명이다. Andover의 월 처리량과 홍보성 인용은 초안에 넣지 않았다.
+
+`article_write`는 128,492ms였다. 최초 출력의 entity-label 문제를 교정한 뒤 최종 draft ID `3b9700ee1b23fd79ed08e0797bf6a0030b977150728ddb52b2678d1618a9d7c6`은 자동 editorial problems 0개다. 결과는 발표일과 주체·조치·수치·처리 방식·배경을 포함한 육하원칙 초안이며 공개 승인은 false다. claim 검증 결과는 5 verified / 2 deferred / 0 rejected다. 후보 장부 SHA-256 `402d277b46b8245d180ede54a308eb2b5e335b0f78e1beae9f2d4157b23537a7`는 daily handoff와 같아 바뀌지 않았다. 기사 승인 ledger, Drive, RSS, GitHub, 사이트에는 반영하지 않았다.
+
+### 실행시간 해석과 API 비교 경계
+
+이 한 건에서 로컬 추출과 작성은 합계 318,173ms(약 5분 18초)였다. 이는 모델 추론이 후처리의 눈에 띄는 지연임을 보여주지만, 한 사례라 일일 전체 수집의 지배적 병목이라고 일반화하지 않는다. 별도 29경로 source run은 8분 48초였으며 그 수집 실행은 LLM 후처리를 호출하지 않았다. 이 두 시간을 합산해 정식 end-to-end 벤치마크라고 부르지 않는다.
+
+저장소에는 OpenAI Responses API adapter와 역할별 provider 선택이 있으나, 이 실행 환경의 `OPENAI_API_KEY`는 설정되지 않아 API 실호출·속도/품질 비교는 하지 않았다. ChatGPT 이용권과 API billing은 분리되며 원문을 API에 전송하면 사용량 과금 및 데이터 전송이 발생할 수 있다. API 비교는 같은 보존 원문·claim schema·prompt로 `fact_extract` 또는 `article_write` 하나를 고정해 수행해야 한다. source discovery, URL fetch, robots 정책 대기, 원문 검증은 모델 교체만으로 빨라지지 않는다. API 비용과 외부 전송을 선택하기 전까지 기존 로컬 결과만 비공개로 보존한다.
+
+산출물은 `.local/research/local-ai/runs/abb-gofa-editorial-extract-20261002-v1/` 아래 비공개 preview 및 review inputs다. 이 slice는 후보 하나의 기사 작성 흐름만 확인했다. 29개 출처의 32칸 coverage, 논문/연구 사업화, 전체 후보 승인과 공개 발행을 완료로 승격시키지 않는다. 1시간 이상 정체한 부분은 없었다.

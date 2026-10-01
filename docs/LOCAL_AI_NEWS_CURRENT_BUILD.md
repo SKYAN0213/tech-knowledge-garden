@@ -702,3 +702,9 @@ FDA `[2026-09-30, 2026-10-01)` 실제 scan 1건 이후 `[2026-10-01, 2026-10-02)
 ## 86. 29개 출처 통합 일일 실행 및 재개 무결성
 
 2026-10-02 run `daily-20261002-continuation-plan-v1`은 활성 29개 route의 58개 window를 8분 48초 안에 모두 `window_scanned`로 완료했다. Retry queue와 incomplete window는 0이다. Editorial handoff의 118개 후보 key와 이번 실행 관측분 68개 key가 각각 고유했다. 5건은 기존 후보와 일치해 해결 관측으로 연결됐다. `--resume` 후 58개 receipt bytes SHA는 유지됐다. Candidate publication, Drive verification, public verification은 false다. 32칸 coverage grid는 부분 상태여서 전체 분야 조사 완료로 보지 않는다. [런북 203절](LOCAL_AI_NEWS_RUNBOOK.md#203-29개-출처-통합-수집에서-계획실행재개의-live-검증).
+
+## 87. 로봇업계 후보의 원문 검증·육하원칙 기사 초안
+
+29개 출처 실행이 관측한 ABB Robotics GoFa 고객 적용 후보 하나를 exact source version/parse로 분리했다. FANUC/Hitachi 후보는 이미 승인 대기 기사가 있어 중복 방지 gate가 새 작업을 막았다. ABB 원문을 직접 대조해 5개 사실을 검증하고 2개를 보류했으며, 구조 추출이 놓친 절감 수치를 출처에 직접 연결해 보강했다. 최종 초안은 `article_write` 완료 후 표기 교정까지 거쳐 automated editorial problems 0이다. 공개 승인과 발행 상태는 false다.
+
+이 실행에서 qwen3.8:27b의 추출은 189.681초, 작성은 128.492초였다. API provider는 저장소에 구현돼 있지만 키가 없어 동일 입력 비교는 수행하지 않았다. 29 route 수집의 8분48초와 별개인 모델 시간이라, 이를 합산한 전체 처리량으로 간주하지 않는다. 결과·source identity·approval boundary는 [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안)을 참조한다.

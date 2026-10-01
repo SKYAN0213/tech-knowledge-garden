@@ -2848,3 +2848,9 @@ ABB E-Device의 현재 승인 parse 15 blocks와 두 과거 source version parse
 2026-10-02 현재 활성 29개 route의 두 날짜 window씩, 총 58개 계획을 새 run ID `daily-20261002-continuation-plan-v1`로 실행했다. 58/58 receipt와 29/29 route가 `window_scanned`, retry queue와 incomplete window는 0이었다. 첫-to-마지막 receipt wall span은 8분 48초다. 실행 summary의 scan phase 합계는 811.2초이고 verify 0.198초, backlog merge 0.822초다. 이 값들은 동시 route 시간의 합이므로 실제 wall span과 구분한다.
 
 실행 handoff는 pending 118건 중 68건을 이번 run에서 관측했다고 기록한다. 118개 key 전부 고유하고 관측 key 68개도 고유했다. 기존 후보 해소 5건을 기록했으며 후보 공개·Drive·public 검증은 수행하지 않았다. 실행 후 같은 ID로 `--resume`해도 새 네트워크 receipt가 없고 receipt file-set SHA-256 `aa6611fcb884e40620a35ee261ce07ca9e17ba6a547d241411bac40e6d2e4b55`가 보존됐다. 이 실증은 29개 출처 수집·후보 병합·재개 무결성을 입증하지만 32칸 분야/지역/축 coverage 전체나 편집 승인·배포를 완료로 승격하지 않는다. WBS는 1/22, P2-01/P5-01 partial을 유지한다. 재현과 run 경로는 [런북 203절](LOCAL_AI_NEWS_RUNBOOK.md#203-29개-출처-통합-수집에서-계획실행재개의-live-검증).
+
+### 19.118 로컬 추론 지연을 같은 원문 API 벤치마크로 분리
+
+2026-10-02 ABB GoFa 원문 slice의 로컬 `fact_extract`는 189,681ms, `article_write`는 128,492ms로 합계 약 5분 18초였다. 이는 모델 단계의 지연을 확인한 한 사례이며 출처 수집 전체의 병목이나 API가 개선할 수 있는 비율을 확정하지 않는다. 29개 경로 수집 8분 48초는 별도 단계에서 LLM 없이 수행됐으므로 숫자를 묶어 end-to-end benchmark로 쓰지 않는다.
+
+OpenAI Responses API adapter와 role별 provider 선택은 구현되어 있다. 다음 검증은 사용자가 API 사용을 선택하고 비밀 환경에 `OPENAI_API_KEY`가 설정된 뒤, 동일 source bytes·prompt·schema를 고정하여 로컬과 API의 한 역할을 비교한다. 응답 품질은 claim/evidence 검토로 판정하고 wall time, input/output tokens, 실제 비용을 함께 기록한다. 먼저 `article_write` 비교가 원문 전송량을 줄이며, 추출 병목까지 비교할 필요가 있을 때만 `fact_extract`를 실행한다. ChatGPT 구독은 API 이용료에 포함되지 않으므로 예산 없는 정기 전환은 하지 않는다. 상세 실행 결과는 [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안) 참조.
