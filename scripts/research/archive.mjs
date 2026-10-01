@@ -1,6 +1,8 @@
 import fs from "node:fs"
 import path from "node:path"
 import zlib from "node:zlib"
+import { spawnSync } from "node:child_process"
+import { fileURLToPath } from "node:url"
 import { sourceId, sourceVersionId, sha256 } from "./contracts.mjs"
 import { atomicCreate, atomicWrite, safePath, readJSON } from "./run-state.mjs"
 import { parseResearchDate } from "./dates.mjs"
@@ -339,11 +341,59 @@ export function archiveManifest(root, runId) {
     }
   }
   walk(base)
+  const documentsPath = `runs/${runId}/documents.json`
+  const documents = readJSON(root, documentsPath)
+  const sourceFiles = new Map()
+  for (const document of documents || []) {
+    if (!["captured", "not_modified"].includes(document.fetch_status)) continue
+    if (
+      !/^[a-f0-9]{20}$/.test(document.source_id || "") ||
+      !/^[a-f0-9]{64}$/.test(document.body_sha256 || "") ||
+      document.source_version_id !== sourceVersionId(document.source_id, document.body_sha256) ||
+      typeof document.body_path !== "string" ||
+      !document.body_path.endsWith("/body.bin")
+    )
+      throw Error("Captured source is missing a valid immutable body reference")
+    const bodyPath = safePath(root, document.body_path)
+    const body = fs.readFileSync(bodyPath)
+    if (sha256(body) !== document.body_sha256)
+      throw Error("Captured source body hash mismatch: " + document.source_version_id)
+    const previous = sourceFiles.get(document.body_path)
+    if (previous && previous.source_version_id !== document.source_version_id)
+      throw Error("Conflicting source versions share one archive path")
+    sourceFiles.set(document.body_path, {
+      path: document.body_path,
+      bytes: body.length,
+      sha256: document.body_sha256,
+      drive_root: "Sources",
+      public: false,
+      source_id: document.source_id,
+      source_version_id: document.source_version_id,
+    })
+  }
+  results.push(...sourceFiles.values())
+  results.sort((a, b) => a.path.localeCompare(b.path))
   return {
     schema: "research-archive/v1",
     run_id: runId,
     created_at: new Date().toISOString(),
     files: results,
     drive_verified: false,
+  }
+}
+
+export function packageResearchArchive(root, runId) {
+  const script = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "package-archive.py")
+  const result = spawnSync("python3", [script, "--root", path.resolve(root), "--run", runId], {
+    encoding: "utf8",
+    maxBuffer: 1024 * 1024,
+  })
+  if (result.error) throw Error("Research archive packaging failed: " + result.error.message)
+  if (result.status !== 0)
+    throw Error("Research archive packaging failed: " + (result.stderr || "unknown error").trim())
+  try {
+    return JSON.parse(result.stdout)
+  } catch {
+    throw Error("Research archive packager returned invalid JSON")
   }
 }

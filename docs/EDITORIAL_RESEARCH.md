@@ -27,6 +27,8 @@ Research에는 분야 × 기술·제품/기업·운영 × 국내/해외 32행을
 - `relations`: 없으면 []. 각각 person_id, person_name, affiliation, organization, role, claim, as_of, evidence_urls. 역할은 공동저자/기술자문/기술이전/공동창업/창업/소속이다. 창업·공동창업은 대학과 회사의 서로 다른 원문 최소 2개로 확인한다. 동명이인은 소속·연구 주제·공식 소개를 대조한다.
 - `topic_ids`: 관련 누적 주제 ID 배열. 심층은 최소 1개. `analysis_summary`, `next_check`는 심층 필수다.
 
+`article_records`의 입력 계약은 `tests/fixtures/editorial-contract-v1.json`으로 고정하고 unknown key는 생성 단계에서 거부한다. `next_check`는 집필·후속 확인용 비공개 필드이며 공개 News frontmatter에는 복사하지 않는다. 공개 `editorialMeta` 허용 목록은 `kind`, `region`, `lead`, `facts`, `explanations`, `papers`, `relations`, `topic_ids`, `analysis_summary`와 고정 `title`·`editorial_format`뿐이다. `article_reviews`도 `articleReview`가 별도 허용 목록으로 투영한다. 기존 `reason`·`private_notes` 입력은 허용하지만 공개 결과에서는 제외하며, 그 밖의 새 필드는 계약 검토가 필요하다.
+
 논문의 사전공개·정식 출판은 내용과 저자·공식 연결을 검토한 뒤 같은 work_id에 식별자를 추가한다. 제목 유사도만으로 합치지 않는다. 새로운 사건의 URL ID는 유지하므로 후속 출판 소식과 논문 자체의 동일성은 별개다. 현재 소속을 과거 소속으로 덮어쓰지 않는다.
 
 원고의 `headlines`에는 실제 기사 제목 3~5개를 편집 순서대로 적는다. 기사가 3개 미만이면 모두, 빈 회차면 []다. 심층을 생략하면 `deep_skip_reason`에 근거 부족·접근 제한 등 실제 사유를 적는다. 사유는 취재용이며 RSS를 운영 안내로 채우지 않는다.

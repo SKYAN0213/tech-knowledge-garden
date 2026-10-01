@@ -1,4 +1,5 @@
 // Public review metadata contains no private review notes or reasoning.
+export const ARTICLE_REVIEW_STATES = ["unreviewed", "verified", "excluded"]
 export const articleDateLabel = (review) =>
   review?.date_kind === "dated-update" ? "업데이트" : "발표"
 
@@ -10,9 +11,22 @@ export function articleReview(edition, title, fallbackId) {
   const matches = records.filter((r) => r.title === title)
   if (matches.length !== 1) throw Error("Each article needs exactly one review record: " + title)
   const r = matches[0]
+  const allowedFields = new Set([
+    "title",
+    "event_id",
+    "review_status",
+    "concept_ids",
+    "published_at",
+    "reviewed_at",
+    "date_kind",
+    "source_published_at",
+    "reason",
+    "private_notes",
+  ])
+  if (Object.keys(r).some((key) => !allowedFields.has(key)))
+    throw Error("Unexpected article review field")
   if (!/^[a-f0-9]{16}$/.test(r.event_id)) throw Error("Invalid stable event ID")
-  if (!["unreviewed", "verified", "excluded"].includes(r.review_status))
-    throw Error("Invalid review status")
+  if (!ARTICLE_REVIEW_STATES.includes(r.review_status)) throw Error("Invalid review status")
   const day = (s) =>
     typeof s === "string" &&
     /^\d{4}-\d{2}-\d{2}$/.test(s) &&
@@ -34,11 +48,14 @@ export function articleReview(edition, title, fallbackId) {
   if (r.date_kind !== undefined || r.source_published_at !== undefined)
     if (
       r.review_status !== "verified" ||
-      r.date_kind !== "dated-update" ||
-      !day(r.source_published_at) ||
-      r.source_published_at >= r.published_at
+      !(
+        (r.date_kind === "dated-update" &&
+          day(r.source_published_at) &&
+          r.source_published_at < r.published_at) ||
+        (r.date_kind === "source-stated-event-date" && r.source_published_at === null)
+      )
     )
-      throw Error("Dated update needs a verified event date and an earlier source publication date")
+      throw Error("Event date metadata needs a verified, source-supported date basis")
   return {
     event_id: r.event_id,
     review_status: r.review_status,

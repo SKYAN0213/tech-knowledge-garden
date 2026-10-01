@@ -612,7 +612,7 @@
       "region": "해외",
       "axis": "기술·제품",
       "sectors": ["바이오·의료기술"],
-      "url": "https://www.fda.gov/news-events/newsroom/press-announcements",
+      "url": "https://www.fda.gov/news-events/fda-newsroom/press-announcements",
       "route_check": {
         "date": "2026-09-29",
         "method": "local-source-fetch",

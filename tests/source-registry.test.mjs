@@ -2,6 +2,7 @@ import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import { registry } from "../scripts/research/discovery.mjs"
+import { validateDailyRoutes } from "../scripts/research/daily-plan.mjs"
 
 test("manufacturer routes retain native language and role without duplicating established channels", () => {
   const channels = {
@@ -56,6 +57,28 @@ test("manufacturer routes retain native language and role without duplicating es
   assert.equal(ir.axis, "기업·운영")
   assert.equal(ir.kind, "filing-ir")
   assert.equal(ir.verification, "unverified")
+})
+
+test("ABB Destination Zukunft profile is scoped to supported article paths", () => {
+  const acquisition = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
+  const profile = acquisition.article_profiles.find(
+    (item) => item.id === "abb-destination-zukunft-nextjs-article-v1",
+  )
+  assert.ok(profile)
+  assert.equal(profile.options.embedded_article.format, "nextjs-page-data")
+  const matches = new RegExp(profile.url_pattern)
+  assert.ok(
+    matches.test(
+      "https://destination-zukunft.abb.com/robotik/schwerlastroboter-automatisieren-liebherr-saegezentrum/",
+    ),
+  )
+  assert.ok(!matches.test("https://destination-zukunft.abb.com/company/about/"))
+  assert.deepEqual(Object.keys(profile.options.embedded_article.module_text_fields), [
+    "Post_Contentmodule_Cm_CmText",
+    "Post_Contentmodule_Cm_CmPictext",
+    "Post_Contentmodule_Cm_CmTextImages",
+    "Post_Contentmodule_Cm_CmQuote",
+  ])
 })
 
 test("new manufacturer routes keep stable IDs alongside an existing company with the same ID", () => {
@@ -209,12 +232,25 @@ test("company and institution watchlist sources retain their editorial source ki
   const routes = registry(channels, watchlist)
   const byOwner = (id) => routes.find((route) => route.publisher_id === id)
 
-  assert.equal(routes.length, 110)
+  assert.equal(routes.length, 114)
   assert.ok(routes.every((route) => route.kind))
   assert.equal(byOwner("microsoft").kind, "filing-ir")
   assert.equal(byOwner("kaist").kind, "commercialization")
   assert.equal(byOwner("snu").kind, "research")
   assert.equal(byOwner("naver").kind, "company")
+  assert.ok(routes.some((route) => route.channel_id === "route-doosan-news-ko"))
+  assert.ok(routes.some((route) => route.channel_id === "route-doosan-news-en"))
+  const dailyRoutes = JSON.parse(
+    fs.readFileSync(new URL("../data/research-daily-routes.json", import.meta.url)),
+  )
+  assert.deepEqual(
+    dailyRoutes.routes.find((route) => route.channel_id === "route-doosan-news-ko"),
+    {
+      channel_id: "route-doosan-news-ko",
+      enabled: true,
+      baseline_run: "20261001-doosan-ko-today-v1",
+    },
+  )
   assert.throws(
     () =>
       registry(
@@ -232,6 +268,86 @@ test("company and institution watchlist sources retain their editorial source ki
         },
       ),
     /Invalid source route contract/,
+  )
+})
+
+test("Yaskawa keeps its original global route and adds news, product, and IR routes", () => {
+  const watchlist = JSON.parse(
+    fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url)),
+  )
+  const channels = JSON.parse(
+    fs.readFileSync(new URL("../data/research-source-channels.json", import.meta.url)),
+  )
+  const acquisition = JSON.parse(
+    fs.readFileSync(new URL("../data/research-acquisition.json", import.meta.url)),
+  )
+  const daily = JSON.parse(
+    fs.readFileSync(new URL("../data/research-daily-routes.json", import.meta.url)),
+  )
+  const routes = registry(channels, watchlist, acquisition)
+  const byId = (id) => routes.find((route) => route.channel_id === id)
+
+  assert.equal(byId("route-yaskawa-news-en").url, "https://www.yaskawa-global.com/newsrelease")
+  assert.equal(
+    byId("route-yaskawa-company-news-en").url,
+    "https://www.yaskawa-global.com/category/news",
+  )
+  assert.equal(
+    byId("route-yaskawa-product-en").url,
+    "https://www.yaskawa-global.com/category/product",
+  )
+  assert.equal(byId("route-yaskawa-ir-en").url, "https://www.yaskawa-global.com/category/ir")
+  assert.equal(byId("route-yaskawa-ir-en").kind, "filing-ir")
+  assert.equal(
+    byId("route-yaskawa-company-news-en").listing_profile.rule_id,
+    "yaskawa-global-company-news-v1",
+  )
+  assert.equal(
+    byId("route-yaskawa-product-en").listing_profile.rule_id,
+    "yaskawa-global-product-list-v1",
+  )
+  assert.equal(byId("route-yaskawa-ir-en").listing_profile.rule_id, "yaskawa-global-ir-results-v1")
+  assert.equal(
+    byId("route-yaskawa-company-news-en").item_pattern.includes("newsrelease/news/"),
+    true,
+  )
+  assert.equal(
+    byId("route-yaskawa-product-en").item_pattern.includes("/newsrelease/product/"),
+    true,
+  )
+  assert.deepEqual(
+    validateDailyRoutes(daily, routes)
+      .filter((route) => route.channel_id.startsWith("route-yaskawa-"))
+      .map((route) => route.channel_id),
+    ["route-yaskawa-company-news-en", "route-yaskawa-product-en", "route-yaskawa-ir-en"],
+  )
+  assert.ok(
+    acquisition.article_profiles
+      .filter((profile) => profile.id.startsWith("yaskawa-ir-"))
+      .every((profile) => profile.options.publication_date_from_listing === true),
+  )
+  assert.ok(
+    acquisition.article_profiles
+      .filter((profile) => !profile.id.startsWith("yaskawa-ir-"))
+      .every((profile) => profile.options.publication_date_from_listing !== true),
+  )
+  assert.ok(
+    acquisition.article_profiles.some(
+      (profile) =>
+        profile.id === "yaskawa-global-news-detail-v1" &&
+        new RegExp(profile.url_pattern).test(
+          "https://www.yaskawa-global.com/newsrelease/product/179972",
+        ),
+    ),
+  )
+  assert.ok(
+    acquisition.article_profiles.some(
+      (profile) =>
+        profile.id === "yaskawa-vision-dash-35-announcement-pdf-v1" &&
+        new RegExp(profile.url_pattern).test(
+          "https://www.yaskawa-global.com/wp-content/uploads/2026/05/20260522_en.pdf",
+        ),
+    ),
   )
 })
 

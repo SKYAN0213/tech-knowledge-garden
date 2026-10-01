@@ -1,7 +1,17 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { assessSinglePageIndex, scanSinglePageRoute } from "../scripts/research/list-scan.mjs"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
+import {
+  assessSinglePageIndex,
+  loadReusableSinglePageListing,
+  scanSinglePageRoute,
+} from "../scripts/research/list-scan.mjs"
 import { mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
+import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { storeParseArtifact } from "../scripts/research/parser.mjs"
+import { atomicWrite } from "../scripts/research/run-state.mjs"
 
 const base = "https://www.fanuc.co.jp/en/profile/pr/newsrelease/"
 const channel = {
@@ -31,6 +41,12 @@ const links = [
   link("2026-09-02", "Collaborative robot announced"),
   link("2026-08-27", "Older robot announcement"),
 ]
+
+const temporary = (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-list-scan-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  return root
+}
 const listing = {
   status: "extracted",
   quality: { required_fields_present: true },
@@ -229,6 +245,166 @@ test("the scan keeps article-date conflicts out of candidates and reuses complet
   })
   assert.equal(second.summary.status, "incomplete")
   assert.equal(calls.length, 3)
+})
+
+test("a reused single-page listing still gets an independent adjacent-window assessment", async () => {
+  const calls = []
+  const listingDocument = {
+    source_id: "listing",
+    source_version_id: "listing:v1",
+    original_url: base,
+    final_url: base,
+    fetch_status: "captured",
+    observed_at: "2026-09-28T00:00:00Z",
+  }
+  const listingParse = { ...listing, source_version_id: "listing:v1" }
+  const run = {
+    async stage(name, _input, action) {
+      return action()
+    },
+  }
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    calls.push(url)
+    return {
+      source_id: "detail",
+      source_version_id: "detail:" + url.slice(-12),
+      original_url: url,
+      final_url: url,
+      fetch_status: "captured",
+      observed_at: "2026-09-28T00:00:00Z",
+    }
+  }
+  const parse = async (_root, document) => ({
+    parse_id: document.source_version_id,
+    source_version_id: document.source_version_id,
+    status: "extracted",
+    title: "Official robot release",
+    quality: { required_fields_present: true },
+    blocks: [{ text: "Official release body" }],
+    dates: {
+      published_at: document.original_url.includes("20260911") ? "2026-09-11" : "2026-09-02",
+    },
+  })
+  const result = await scanSinglePageRoute(
+    "private",
+    run,
+    {},
+    channel,
+    [
+      {
+        id: "fanuc-release",
+        url_pattern: "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/2026/notice",
+        options: { language: "en" },
+      },
+    ],
+    { since: "2026-09-11", until: "2026-09-14" },
+    {
+      listingEvidence: { document: listingDocument, parse: listingParse, source_run: "prior-run" },
+      fetchPolicy,
+      parse,
+    },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.summary.listing_reused_from_run, "prior-run")
+  assert.equal(result.summary.assessment.window_items, 1)
+  assert.equal(result.candidates.length, 1)
+  assert.equal(calls.length, 1)
+  assert.match(calls[0], /notice20260911\.html$/u)
+})
+
+test("reusable listing requires adjacent completed window, matching config and fresh intact evidence", (t) => {
+  const root = temporary(t)
+  const runId = "prior-run"
+  const body = Buffer.from("official listing snapshot")
+  const body_sha256 = sha256(body)
+  const listingSourceId = sourceId(base)
+  const listingVersionId = `${listingSourceId}:${body_sha256}`
+  const document = {
+    original_url: base,
+    source_id: listingSourceId,
+    source_version_id: listingVersionId,
+    fetch_status: "captured",
+    body_path: `sources/${listingSourceId}/body.html`,
+    body_sha256,
+    observed_at: "2026-09-24T00:00:00Z",
+  }
+  atomicWrite(root, document.body_path, body)
+  const parse_id = sha256(listingVersionId + ":listing-parse")
+  const parsed = storeParseArtifact(root, {
+    schema_version: "source-parse/v1",
+    status: "extracted",
+    title: "FANUC news",
+    source_id: listingSourceId,
+    source_version_id: listingVersionId,
+    parse_id,
+    dates: { published_at: null, observed_at: document.observed_at },
+    links: listing.links,
+    link_profiles: listing.link_profiles,
+    quality: { required_fields_present: true, missing_pages: [] },
+    blocks: [
+      {
+        block_id: `${parse_id}:block-1`,
+        text: "FANUC news",
+        locator: { text_hash: sha256("FANUC news") },
+      },
+    ],
+  })
+  const configHash = sha256(JSON.stringify(channel))
+  atomicWrite(root, `runs/${runId}/list-scan.json`, {
+    status: "window_scanned",
+    channel_id: channel.channel_id,
+    pagination: "single-page",
+    channel_config_sha256: configHash,
+    window: { since: "2026-09-21", until_exclusive: "2026-09-24" },
+    observed_at: document.observed_at,
+    listing_source_version_id: listingVersionId,
+    listing_parse_id: parse_id,
+  })
+  atomicWrite(root, `runs/${runId}/documents.json`, [document])
+  atomicWrite(root, `runs/${runId}/parses.json`, [parsed])
+
+  const evidence = loadReusableSinglePageListing(
+    root,
+    runId,
+    channel,
+    { since: "2026-09-24", until_exclusive: "2026-09-28" },
+    { now: Date.parse("2026-09-24T00:05:00Z") },
+  )
+  assert.equal(evidence.document.source_version_id, listingVersionId)
+  assert.equal(evidence.parse.parse_id, parse_id)
+  assert.throws(
+    () =>
+      loadReusableSinglePageListing(
+        root,
+        runId,
+        channel,
+        { since: "2026-09-25", until_exclusive: "2026-09-28" },
+        { now: Date.parse("2026-09-24T00:05:00Z") },
+      ),
+    /adjacent completed/u,
+  )
+  assert.throws(
+    () =>
+      loadReusableSinglePageListing(
+        root,
+        runId,
+        { ...channel, url: `${base}changed` },
+        { since: "2026-09-24", until_exclusive: "2026-09-28" },
+        { now: Date.parse("2026-09-24T00:05:00Z") },
+      ),
+    /adjacent completed/u,
+  )
+  assert.throws(
+    () =>
+      loadReusableSinglePageListing(
+        root,
+        runId,
+        channel,
+        { since: "2026-09-24", until_exclusive: "2026-09-28" },
+        { now: Date.parse("2026-09-24T00:20:00Z") },
+      ),
+    /freshness/u,
+  )
 })
 
 test("a completed empty window may merge while an incomplete window cannot", async () => {

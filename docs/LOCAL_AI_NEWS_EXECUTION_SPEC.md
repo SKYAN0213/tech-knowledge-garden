@@ -24,6 +24,12 @@ Google Drive `Projects / Tech Knowledge`의 `Editions`, `Knowledge`, `Signals`, 
 
 `verified`는 원문을 직접 읽고 사건 사실을 판정했다는 뜻, `private preview`는 로컬 전체 사본 생성·검증, `published`는 Drive와 공개 채널을 원격에서 다시 읽었다는 뜻으로 구분한다. 현재 비공개 통합 기준은 `20260928-abb-dunia-historical-private-site-v1`이다. ABB의 고객 사례를 원문 블록과 게시 시각에 대조해 9월 3일 회차 사본에 소급했다. 최신 승인 기사 run 27개·영향 회차 13개·지식 노트 18개·공개 생성 파일 284개이며 RSS 40개 GUID/발행 시각을 보존했다([런북 63절](LOCAL_AI_NEWS_RUNBOOK.md#63-abb-dunia-고객-사례의-직접-검토와-비공개-소급)). 생성 숫자와 테스트 통과 숫자를 실제 취재·발행 품질로 바꾸어 읽지 않는다.
 
+## 2.1 상태·재시도·공개 경계
+
+상태는 계층마다 다른 뜻을 갖는다. `FETCH_STATES`는 원문 요청 결과, `PARSE_STATES`는 해당 판본의 추출 결과, `CANDIDATE_STATES`는 편집 후보의 업무 단계, 사실 검토는 `unreviewed/verified/deferred/rejected`, 독자 기사 검토는 `unreviewed/verified/excluded`다. 이 값을 서로 대입하거나 `verified` 하나로 합치지 않는다. 현재 열거값·candidate 전이는 `tests/fixtures/editorial-contract-v1.json`과 `tests/research-contracts.test.mjs`에서 런타임 정의와 대조한다.
+
+GET 원문 요청은 기본 최대 3회이며 429/5xx에서만 같은 요청 안의 재시도를 한다. `Retry-After`를 존중하되 대기는 최대 60초이고, 헤더가 없으면 지수 대기를 사용한다. POST discovery는 한 번만 요청한다. 403/404/410·파싱 실패를 즉시 같은 요청으로 반복하지 않는다. 막힘은 새 원문/대체 경로 또는 명시적 새 run으로, 파서 수정은 같은 원 bytes의 새 parse로 남긴다. 후보 `deferred`는 새 근거가 들어온 뒤 재검토할 수 있고 `rejected`는 자동 재개하지 않는다. 검토 기사의 `excluded`는 모든 공개 투영에서 제거 상태다.
+
 ## 3. 모듈 책임과 단계 사이의 계약
 
 ```mermaid
@@ -65,6 +71,8 @@ CLI `research.mjs`의 한 run은 `--run` ID, 입력 fingerprint, 단계 journal,
 
 원문 발표일, 실행/시행일, 수집 관측일, 회차 발행일, 재검토일은 서로 다른 시간이다. 연도만 표시된 목록, PDF 생성일, 관련 기사 날짜, 시간대 없는 문자열은 정밀한 원문 발표 시각으로 자동 승격하지 않는다. 검토 상태 `unreviewed`·`verified`·`excluded`와 접근 실패/보류를 구분한다. `excluded`를 결정하면 내용을 비공개로 보존하고 공개 주소에는 본문을 재노출하지 않는 상태 페이지를 두며 뉴스 목록·검색·RSS·digest·용어 이력·지도에서 모두 제거한다.
 
+상세 페이지의 게시 메타데이터가 없더라도, 본문에 명시된 사건일을 별도 근거로 검토할 수 있다. `source-stated-event-date`는 원문 게시일을 `null`로 유지하고, 날짜 문구·사건 문맥이 있는 block·연도를 명시한 같은 원문 문맥·해당 문장을 직접 인용한 verified claim을 고정한다. 이를 충족하지 못하면 추정 연도나 관측일로 보충하지 않고 승인 기사 날짜를 확정하지 않는다. `dated-update`는 명시된 과거 게시일과 이후 변경일이 확인된 별도 유형으로 유지한다.
+
 ## 5. 원문별 구현 방법과 수용 사례
 
 출처 등록은 숫자를 늘리는 작업이 아니다. 한 경로를 사용 가능하다고 판정하려면 **목록 시작→기간 또는 cursor 종료→상세 원문 bytes→날짜/본문/첨부→중복·정정·실패 재개**를 실제 자료로 시험한다. 자료 유형별 도입 순서는 다음과 같다.
@@ -90,6 +98,10 @@ HD–에이딘 사건은 9월 11일 당시 두 보도를 저장했고 뉴스핌 
 현재 운영 후보는 무료 로컬 Ollama의 [`model-execution-policy/v1`](../data/research-model-policy.json)이며 다섯 역할의 시작 모델을 `qwen3.8:27b`로 고정했다. `search_plan`, `fact_extract`, `article_write`, `concept_write`는 `think:false`; 길거나 상충하는 증거 비교 후보인 `evidence_compare`만 `think:medium`이다. 공통 context 16,384·최대 출력 4,096 토큰, 추출 입력 20,000자/배치 최대 6사실/전체 900초다. 실제 모델·digest·Ollama 버전·prompt/profile·source SHA·지연/실패를 run에 저장한다. `medium` 설정은 비교 품질이 실증되었다는 뜻이 아니다.
 
 모델은 질의 후보, 인용이 달린 주장 후보, 한국어 초안, 비교 후보를 만든다. 프로그램은 JSON 구조·인용 문자열의 실제 존재·숫자/단위/날짜 형식을 검사한다. **의미**, 주체·행위·계획과 완료·성과의 귀속, 비교 조건, 원문이 말하지 않은 인과는 사람이 확인한다. 검토자는 직접 읽은 원문 블록에서 후보 누락을 추가하거나 잘못된 후보를 보류/거부하고, 정정한 한국어 원고만 승인한다. 심층 분석은 기업 목표→자원 배분→변화→실제 성과, 논문 문제→방법→비교 조건→적용 범위, 연구 사업화 연구→확인된 창업 관계→제품/고객/투자 순서를 검토하되 근거 없는 절은 만들지 않는다.
+
+속도 비교를 위해 역할 정책의 `provider`를 `openai`로 지정하는 선택형 Responses API 경로도 제공한다. 생략하면 `ollama`가 기본값이며 운영 정책 파일도 계속 로컬 모델을 사용한다. OpenAI 경로는 해당 원문·프롬프트를 외부 API에 전송하고 토큰별 과금이 적용되므로, 명시적으로 선택하고 `OPENAI_API_KEY`가 있을 때만 동작한다. 기본 비교 후보는 고정 입력 추출·초안에 GPT-6 Luna와 reasoning `none`/`low`를 적용하는 것이며, 비용·시간·원문 누락·한국어 품질을 기존 고정 평가 자료에서 함께 비교한 뒤 선택한다. 현재 GPT-6 Luna API 요금은 입력 백만 토큰당 $0.10, 출력 백만 토큰당 $0.50다. ChatGPT 구독에는 API 사용료가 포함되지 않는다. [모델 사양·요금](https://developers.openai.com/api/docs/models), [API 과금 안내](https://help.openai.com/en/articles/9039756-managing-billing-for-chatgpt-and-the-api-platform)
+
+API 키는 저장소나 모델 정책 JSON에 넣지 않고 프로세스 환경으로만 전달한다. 서버 응답 저장은 `store:false`로 비활성화하며 키는 요청 기록·provenance에 저장하지 않는다. API 응답이 끊긴 요청은 과금 여부가 모호할 수 있으므로 동일 입력의 자동 재시도를 막고, 사용량 확인 후 새 run으로 재개한다. 실제 API 연결·속도 평가는 과금 승인을 받은 뒤에만 수행한다. 지금 저장소의 기본 정책을 변경하거나 자동으로 유료 경로를 선택하지 않는다.
 
 정식 모델 선택은 서로 다른 실물 40개 개발·20개 잠금 보류 자료로 결정한다. 분야·국내외·언어·원문 유형·장문/표/수식·회사 주장/독립 자료를 층화한다. 두 모델 또는 `think:false`/`medium`을 **같은 원문, 같은 작업, 같은 사람 기준 답안**에서 비교한다. 핵심 사건 누락, 사실·숫자·날짜·시제·귀속 오류, 불필요한 추론, 한국어 독서 품질, 총 실행시간·메모리·타임아웃/재개를 평가한다. 사람이 바로잡은 기존 기사를 잠금 보류 정답으로 재사용하지 않는다. 기준 미달이면 기사 발행을 막고 검토형 운영을 유지한다. 더 큰 모델 도입은 이 측정 결과와 장비 예산으로만 결정한다.
 
@@ -363,3 +375,19 @@ ABB HTML의 `scheduledPublishDate`는 UTC 2026-09-02 13:13:50.623이고 `Publish
 | 새 원문이 여전히 같은 사건이라고 직접 재확인                                               | 최신 source/parse/블록을 인용한 **새** 검토 run으로 `verified` 복귀, 이전 연결 이력 유지                                   |
 
 다른 사건으로 갈라진 경우에는 근거 없이 예전 ID를 새 기사에 재사용하지 않는다. 기존 출처와 원고의 수정·제외 여부, 과거 회차/의존 지식을 별도 편집 절차에서 판단한다. `source_revision_alert`와 판단 이유는 독자 페이지, RSS, digest에 투영하지 않는다. 구체적인 실제 적용은 [현재 빌드 25절](LOCAL_AI_NEWS_CURRENT_BUILD.md#25-kuka-독일어-재게시와-기존-사건의-명시적-연결), 재현 명령은 [런북 66절](LOCAL_AI_NEWS_RUNBOOK.md#66-kuka-다국어-동일-사건의-근거-연결)을 따른다.
+
+### 25.4 같은 원문 재발견의 기존 사건 연결
+
+이미 발행된 기사와 **정규화 URL이 같은** 후보가 재발견되었을 때 후보 장부에 사건 ID가 빠져 있을 수 있다. 이 경우 다른 언어판 비교인 `same_published_event`와 구분하여 `same_published_source_revision` 결정을 쓴다. 검토 JSON은 후보·발행 원문 각각의 source version·parse ID·본문 SHA·제목·게시일과 기존 검증 기사 ID·제목을 고정한다.
+
+자동 연결 조건은 canonical URL, 추출 기사 내용 fingerprint, parse 제목, 원 발표일이 모두 일치하고 현재 Edition에 해당 URL·사건 ID·기사 제목·날짜가 `verified` 상태로 존재하는 것이다. 인용 블록은 저장 parse에 실제 포함돼야 한다. 지문은 HTML wrapper나 공백 차이는 허용하지만 제목·날짜·본문 내용 변화는 승인하지 않는다. 서로 다른 URL은 이 결정 유형으로 연결할 수 없으며, 같은 URL이어도 본문 지문·제목·게시일이 다르면 쓰기 전에 중단한다.
+
+성공하면 후보의 기존 key·발견 이력·URL을 유지한 채 `review_status:verified`, 기존 `event_id`, source-bound identity receipt를 기록한다. 같은 입력 재실행은 장부 bytes를 바꾸지 않는다. 새 기사·회차·RSS GUID·Drive 파일·공개 변경은 만들지 않는다. 다른 disposition이나 더 최신 내용 지문이 이미 있으면 이 identity 연결로 덮어쓰지 않는다.
+
+### 25.5 검색 후보와 발행일이 다른 동일 사건 연결
+
+검색으로 추가된 후보는 발견 목록 `candidates.json`이 아니라 exact-source 수집 이후의 `source-selection.json`에만 존재할 수 있다. 이때도 후보 장부의 고정 key·URL·source version·parse ID가 source-selection receipt와 일치하는 단일 미검토 행인지 확인한 뒤, 기존 `candidate-identity` 명령에 넘긴다. 장부 상태를 조회해 후보를 추측하거나 URL/title만으로 연결하지 않는다.
+
+서로 다른 출처의 `published_at` 날짜가 다르면 기본적으로 동일 사건 연결을 거부한다. 예외는 비공개 검토 JSON이 `event_date`를 명시하고, 새 원문과 기존 발행 원문 양쪽의 저장 parse에서 사건 발표일을 직접 인용한 `event_date` aspect가 확인되며, 명시된 날짜가 기존 발행 출처의 날짜와 일치하는 경우뿐이다. 검토자는 양쪽 인용문이 같은 회사 행위·대상·수량을 가리키는지 읽어 확인한다. 게시일 차이는 그대로 영수증과 후보 장부에 `publication_dates_match:false`로 보존한다. 추정한 날짜, 기사 제목, 검색 snippet, 외부의 지시문은 예외 근거가 될 수 없다.
+
+실행 전 backlog를 비공개 복구본으로 보존한다. 같은 run ID의 재실행은 `event_id`, review hash, source version 및 event date가 모두 기존 receipt와 일치할 때만 멱등 성공한다. 이미 verified 처리된 동일 후보에 다른 근거를 넣거나 기존 사건 ID를 바꾸려 하면 실패한다. 이 경로도 후보 identity bookkeeping만 수행하며 기사·회차·RSS·Drive·사이트를 수정하지 않는다. 실제 삼성SDS/삼성 Global Helix 후보 적용은 [현재 빌드 27절](LOCAL_AI_NEWS_CURRENT_BUILD.md#27-삼성sds-helix-발표일-차이가-있는-동일-사건), [런북 124절](LOCAL_AI_NEWS_RUNBOOK.md#124-삼성sds-helix-발표일-차이가-있는-동일-사건)에 기록한다.

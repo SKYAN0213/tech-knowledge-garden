@@ -46,6 +46,15 @@ export function assessCalendarMonthIndex(parse, channel, archiveUrl, month) {
   const profileId = channel.listing_profile?.rule_id
   const profile = parse.link_profiles?.find((entry) => entry.id === profileId)
   const links = (parse.links || []).filter((entry) => entry.profile_id === profileId)
+  const emptyState = channel.listing_profile?.empty_state
+  const explicitEmpty =
+    emptyState &&
+    links.length === 0 &&
+    (parse.blocks || []).some((block) => {
+      const pattern = new RegExp(emptyState.text_pattern)
+      return pattern.test(block.text?.trim() || "")
+    }) &&
+    !(parse.links || []).some((entry) => new RegExp(channel.item_pattern).test(entry.url || ""))
   const monthName = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(
     new Date(`${month.key}-01T00:00:00Z`),
   )
@@ -67,9 +76,8 @@ export function assessCalendarMonthIndex(parse, channel, archiveUrl, month) {
   if (
     parse.status !== "extracted" ||
     !parse.quality?.required_fields_present ||
-    !parse.title?.includes(monthName) ||
-    !parse.title?.includes(String(month.year)) ||
-    !marker
+    (!(parse.title?.includes(monthName) && parse.title?.includes(String(month.year)) && marker) &&
+      !explicitEmpty)
   )
     return { ...result, reason: "archive_month_marker_missing" }
   if (
@@ -81,6 +89,7 @@ export function assessCalendarMonthIndex(parse, channel, archiveUrl, month) {
     profile.selected_items > (channel.listing_profile.max_items_per_month || 500)
   )
     return { ...result, reason: "archive_listing_profile_incomplete" }
+  if (explicitEmpty) return { ...result, status: "month_scanned", confirmed_empty: true, links: [] }
   const pattern = new RegExp(channel.item_pattern)
   const urls = new Set()
   for (const link of links) {
@@ -179,6 +188,7 @@ export async function scanCalendarMonthRoute(
     page.status = assessment.status
     page.reason = assessment.reason
     page.selected_items = assessment.selected_items
+    page.confirmed_empty = assessment.confirmed_empty === true
     if (assessment.status !== "month_scanned") {
       summary.reason = assessment.reason
       return { summary, indexDocuments, documents, parses, candidates }
@@ -202,10 +212,12 @@ export async function scanCalendarMonthRoute(
     summary.reason = "archive_duplicate_across_months"
     return { summary, indexDocuments, documents, parses, candidates }
   }
-  const inspected = await collectDetails(root, run, fetcher, channel, articleProfiles, selected, {
-    fetchPolicy,
-    parse,
-  })
+  const inspected = selected.length
+    ? await collectDetails(root, run, fetcher, channel, articleProfiles, selected, {
+        fetchPolicy,
+        parse,
+      })
+    : { documents: [], parses: [], candidates: [], details: [] }
   documents.push(...inspected.documents)
   parses.push(...inspected.parses)
   candidates.push(...inspected.candidates)

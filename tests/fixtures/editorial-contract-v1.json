@@ -1,0 +1,57 @@
+{
+  "schema": "article-record/six-w-v1",
+  "record": {
+    "title": "시험 기업, 연구 조직 투자 계획 발표",
+    "kind": "사건 뉴스",
+    "region": "국내",
+    "lead": "시험 기업이 9월 14일 국내 연구 조직 투자 계획을 발표했다. 회사는 제품 개발 기간 단축을 목표로 설명했으며 투자금액은 공개하지 않았다.",
+    "facts": {
+      "who": "시험 기업",
+      "when": "9월 14일 발표, 집행 시점 미공개",
+      "where": "국내",
+      "what": "투자 계획",
+      "how": "금액 미공개",
+      "why": "회사가 밝힌 제품 개발 기간 단축"
+    },
+    "papers": [],
+    "relations": [],
+    "topic_ids": ["company-example"],
+    "next_check": "집행 공시"
+  },
+  "public_fields": [
+    "editorial_format",
+    "title",
+    "kind",
+    "region",
+    "lead",
+    "facts",
+    "papers",
+    "relations",
+    "topic_ids"
+  ],
+  "private_fields": ["next_check", "private_notes", "reason", "reviewer_note"],
+  "statuses": {
+    "fetch": [
+      "captured",
+      "not_modified",
+      "blocked",
+      "not_found",
+      "rate_limited",
+      "too_large",
+      "failed"
+    ],
+    "parse": ["extracted", "partial", "blocked", "unsupported", "failed"],
+    "candidate": [
+      "discovered",
+      "acquired",
+      "parsed",
+      "fact_review",
+      "editorial_review",
+      "approved",
+      "deferred",
+      "rejected"
+    ],
+    "claim_review": ["unreviewed", "verified", "deferred", "rejected"],
+    "article_review": ["unreviewed", "verified", "excluded"]
+  }
+}

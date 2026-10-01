@@ -2,10 +2,11 @@ import http from "node:http"
 import https from "node:https"
 import dns from "node:dns/promises"
 import net from "node:net"
+import path from "node:path"
 import zlib from "node:zlib"
 import fs from "node:fs"
 import { sha256, sourceId, sourceVersionId } from "./contracts.mjs"
-import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { acquireLock, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 export function isPublicIP(raw) {
   const address = raw.replace(/^\[|\]$/g, "").toLowerCase()
@@ -134,25 +135,125 @@ function requestPinned(u, addresses, headers, budget, request = { method: "GET" 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 const hostQueues = new Map(),
   lastHostRequest = new Map()
-async function hostRequest(host, interval, action) {
-  const previous = hostQueues.get(host) || Promise.resolve()
+const sourceQueues = new Map()
+async function acquireHostLock(root, name, timeoutMs) {
+  const deadline = Date.now() + Math.max(120000, timeoutMs + 5000)
+  while (true) {
+    try {
+      return acquireLock(root, name)
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error
+      let current
+      try {
+        current = readJSON(root, `locks/${name}.json`)
+      } catch {
+        // Another process creates the lock file before it writes the owner
+        // record. Retry only this short initialization window; a persistently
+        // malformed or abandoned lock remains untouched for explicit recovery.
+        let recentlyCreated = false
+        try {
+          const lockPath = safePath(root, `locks/${name}.json`)
+          recentlyCreated = Date.now() - fs.statSync(lockPath).mtimeMs < 1000
+        } catch (statError) {
+          if (statError.code === "ENOENT") continue
+          throw statError
+        }
+        if (recentlyCreated && Date.now() < deadline) {
+          await sleep(10)
+          continue
+        }
+        throw Error("Host request lock is unreadable; preserving it")
+      }
+      if (!current) continue
+      if (!Number.isSafeInteger(current.pid) || current.pid <= 0)
+        throw Error("Host request lock is unreadable; preserving it")
+      try {
+        process.kill(current.pid, 0)
+      } catch (ownerError) {
+        if (ownerError.code === "ESRCH")
+          throw Error("Host request lock is stale; explicit recovery is required")
+        if (ownerError.code !== "EPERM") throw ownerError
+      }
+      if (Date.now() >= deadline) throw Error("Timed out waiting for host request lock")
+      await sleep(25)
+    }
+  }
+}
+async function sharedHostRequest(root, host, interval, timeoutMs, action) {
+  const digest = sha256(host),
+    lockName = `host-${digest.slice(0, 32)}`,
+    stateFile = `state/host-rate/${digest}.json`
+  const release = await acquireHostLock(root, lockName, timeoutMs)
+  try {
+    const previous = readJSON(root, stateFile)
+    if (
+      previous &&
+      (previous.schema !== "host-rate-state/v1" ||
+        previous.host !== host ||
+        !Number.isInteger(previous.interval_ms) ||
+        previous.interval_ms < 0 ||
+        !Number.isFinite(Date.parse(previous.last_request_at || "")))
+    )
+      throw Error("Host request timing record is invalid")
+    const lastRequest = previous ? Date.parse(previous.last_request_at) : 0
+    const enforcedInterval = Math.max(interval, previous?.interval_ms || 0)
+    await sleep(Math.max(0, lastRequest + enforcedInterval - Date.now()))
+    atomicWrite(root, stateFile, {
+      schema: "host-rate-state/v1",
+      host,
+      interval_ms: enforcedInterval,
+      last_request_at: new Date().toISOString(),
+    })
+    return await action()
+  } finally {
+    release()
+  }
+}
+function sourceRequest(root, id, action) {
+  const key = `${path.resolve(root)}|${id}`
+  const previous = sourceQueues.get(key) || Promise.resolve()
+  const next = previous.catch(() => {}).then(action)
+  sourceQueues.set(key, next)
+  return next.finally(() => {
+    if (sourceQueues.get(key) === next) sourceQueues.delete(key)
+  })
+}
+async function hostRequest(root, host, interval, timeoutMs, action) {
+  const key = `${path.resolve(root)}|${host}`,
+    previous = hostQueues.get(key) || Promise.resolve()
   const next = previous
     .catch(() => {})
-    .then(async () => {
-      await sleep(Math.max(0, (lastHostRequest.get(host) || 0) + interval - Date.now()))
-      lastHostRequest.set(host, Date.now())
-      return action()
+    .then(() => {
+      const lastRequest = lastHostRequest.get(key) || 0
+      return sharedHostRequest(root, host, interval, timeoutMs, async () => {
+        await sleep(Math.max(0, lastRequest + interval - Date.now()))
+        lastHostRequest.set(key, Date.now())
+        return action()
+      })
     })
-  hostQueues.set(host, next)
+  hostQueues.set(key, next)
   try {
     return await next
   } finally {
-    if (hostQueues.get(host) === next) hostQueues.delete(host)
+    if (hostQueues.get(key) === next) hostQueues.delete(key)
   }
 }
 export function retryDelay(value, attempt, now = Date.now()) {
   const explicit = /^\d+$/.test(value || "") ? Number(value) * 1000 : Date.parse(value || "") - now
   return Math.min(60000, Math.max(0, Number.isFinite(explicit) ? explicit : 1000 * 2 ** attempt))
+}
+function isRetryableTransportError(error) {
+  return (
+    error?.message === "Fetch deadline exceeded" ||
+    [
+      "EAI_AGAIN",
+      "ECONNRESET",
+      "ETIMEDOUT",
+      "ECONNREFUSED",
+      "EHOSTUNREACH",
+      "ENETUNREACH",
+    ].includes(error?.code)
+  )
 }
 export class SourceFetcher {
   constructor(root, options = {}) {
@@ -169,7 +270,10 @@ export class SourceFetcher {
     this.resolve = options.resolve || dns.lookup
     this.transport = options.transport || requestPinned
   }
-  async fetch(raw, { allowed_hosts, conditional = true, source_id, method = "GET", form } = {}) {
+  async fetch(
+    raw,
+    { allowed_hosts, authorize_redirect, conditional = true, source_id, method = "GET", form } = {},
+  ) {
     if (!["GET", "POST"].includes(method)) throw Error("Unsupported fetch method")
     if (method === "GET" && form !== undefined) throw Error("GET request cannot carry a form")
     if (method === "POST") {
@@ -196,131 +300,185 @@ export class SourceFetcher {
     if (!/^[a-f0-9]{20}$/.test(id)) throw Error("Invalid source identity")
     if (method === "POST" && id !== sourceId(raw))
       throw Error("POST source identity must include its form-bound URL")
-    return withLock(this.root, "source-" + id, async () => {
-      const cache = readJSON(this.root, `documents/${id}/latest.json`)
-      let cachedBody = null
-      if (cache?.body_path) {
-        cachedBody = fs.readFileSync(safePath(this.root, cache.body_path))
-        if (sha256(cachedBody) !== cache.body_sha256) throw Error("Cached source hash mismatch")
-      }
-      let current = request_url,
-        redirect_chain = [],
-        response
-      const observed_at = new Date().toISOString()
-      try {
-        for (let hop = 0; hop <= this.options.redirects; hop++) {
-          const u = assertURL(current, allowed_hosts)
-          const headers = {
-            "user-agent": this.options.user_agent || "TechKnowledgeGarden/1.0",
-            accept: "text/html,application/pdf,application/xml,application/json,text/plain;q=0.8",
-            "accept-encoding": "gzip, br, deflate",
-          }
-          if (method === "POST") {
-            headers.accept = "application/json"
-            headers["content-type"] = "application/x-www-form-urlencoded; charset=UTF-8"
-            headers["content-length"] = Buffer.byteLength(form)
-            headers["x-requested-with"] = "XMLHttpRequest"
-          }
-          if (method === "GET" && conditional && cachedBody && current === cache.final_url) {
-            if (cache.etag) headers["if-none-match"] = cache.etag
-            if (cache.last_modified) headers["if-modified-since"] = cache.last_modified
-          }
-          // Form endpoints are used only for read-only discovery, but a POST
-          // should still require a fresh run decision before another attempt.
-          const attempts = method === "POST" ? 1 : this.options.attempts
-          for (let attempt = 0; attempt < attempts; attempt++) {
-            const addresses = await pinnedAddresses(u.hostname, this.resolve)
-            response = await hostRequest(u.hostname, this.options.interval_ms, () =>
-              this.transport(u, addresses, headers, this.options, { method, body: form }),
-            )
-            if (response.status !== 429 && response.status < 500) break
-            if (attempt + 1 < attempts)
-              await sleep(retryDelay(response.headers["retry-after"], attempt))
-          }
-          if (![301, 302, 303, 307, 308].includes(response.status)) break
-          if (method === "POST") throw Error("POST redirect requires a new explicit source URL")
-          if (!response.headers.location || hop === this.options.redirects)
-            throw Error("Redirect limit or missing destination")
-          const next = new URL(response.headers.location, current).toString()
-          assertURL(next, allowed_hosts)
-          redirect_chain.push({ from: current, to: next, status: response.status })
-          current = next
+    return sourceRequest(this.root, id, () =>
+      withLock(this.root, "source-" + id, async () => {
+        const cache = readJSON(this.root, `documents/${id}/latest.json`)
+        let cachedBody = null
+        if (cache?.body_path) {
+          cachedBody = fs.readFileSync(safePath(this.root, cache.body_path))
+          if (sha256(cachedBody) !== cache.body_sha256) throw Error("Cached source hash mismatch")
         }
-        const status =
-          response.status === 304
-            ? "not_modified"
-            : response.status === 403
-              ? "blocked"
-              : [404, 410].includes(response.status)
-                ? "not_found"
-                : response.status === 429
-                  ? "rate_limited"
-                  : response.status >= 200 && response.status < 300
-                    ? "captured"
-                    : "failed"
-        if (status === "not_modified" && (method === "POST" || !cachedBody))
-          throw Error("304 without verified GET cache")
-        const body = status === "not_modified" ? cachedBody : response.body
-        const record = {
-          schema_version: "source-document/v1",
-          source_id: id,
-          original_url,
-          request_method: method,
-          ...(method === "POST" ? { request_body_sha256: sha256(form) } : {}),
-          final_url: current,
-          observed_at,
-          fetch_status: status,
-          http_status: response.status,
-          redirect_chain,
-          mime_type: response.headers["content-type"] || cache?.mime_type || null,
-          etag: response.headers.etag || (status === "not_modified" ? cache?.etag : null),
-          last_modified:
-            response.headers["last-modified"] ||
-            (status === "not_modified" ? cache?.last_modified : null),
-        }
-        if (["captured", "not_modified"].includes(status)) {
-          if (!body.length) throw Error("Empty source response")
-          record.body_sha256 = sha256(body)
-          record.source_version_id = sourceVersionId(id, record.body_sha256)
-          record.body_path = `documents/${id}/${record.body_sha256}/body.bin`
-          const existing = safePath(this.root, record.body_path)
-          if (fs.existsSync(existing) && sha256(fs.readFileSync(existing)) !== record.body_sha256)
-            throw Error("Stored source version corrupted")
-          if (!fs.existsSync(existing)) atomicWrite(this.root, record.body_path, body)
-          if (
-            !fs.existsSync(
-              safePath(this.root, `documents/${id}/${record.body_sha256}/document.json`),
+        let current = request_url,
+          redirect_chain = [],
+          response,
+          redirectPolicyBlocked = false
+        const observed_at = new Date().toISOString()
+        try {
+          for (let hop = 0; hop <= this.options.redirects; hop++) {
+            const u = assertURL(current, allowed_hosts)
+            const headers = {
+              "user-agent": this.options.user_agent || "TechKnowledgeGarden/1.0",
+              accept: "text/html,application/pdf,application/xml,application/json,text/plain;q=0.8",
+              "accept-encoding": "gzip, br, deflate",
+            }
+            if (method === "POST") {
+              headers.accept = "application/json"
+              headers["content-type"] = "application/x-www-form-urlencoded; charset=UTF-8"
+              headers["content-length"] = Buffer.byteLength(form)
+              headers["x-requested-with"] = "XMLHttpRequest"
+            }
+            if (method === "GET" && conditional && cachedBody && current === cache.final_url) {
+              if (cache.etag) headers["if-none-match"] = cache.etag
+              if (cache.last_modified) headers["if-modified-since"] = cache.last_modified
+            }
+            // Form endpoints are used only for read-only discovery, but a POST
+            // should still require a fresh run decision before another attempt.
+            const attempts = method === "POST" ? 1 : this.options.attempts
+            for (let attempt = 0; attempt < attempts; attempt++) {
+              try {
+                const addresses = await pinnedAddresses(u.hostname, this.resolve)
+                response = await hostRequest(
+                  this.root,
+                  u.hostname,
+                  this.options.interval_ms,
+                  this.options.timeout_ms,
+                  () => this.transport(u, addresses, headers, this.options, { method, body: form }),
+                )
+                if (response.status !== 429 && response.status < 500) break
+              } catch (error) {
+                if (!isRetryableTransportError(error) || attempt + 1 >= attempts) throw error
+              }
+              if (attempt + 1 < attempts)
+                await sleep(retryDelay(response?.headers?.["retry-after"], attempt))
+            }
+            if (![301, 302, 303, 307, 308].includes(response.status)) break
+            if (method === "POST") throw Error("POST redirect requires a new explicit source URL")
+            if (!response.headers.location || hop === this.options.redirects)
+              throw Error("Redirect limit or missing destination")
+            const next = new URL(response.headers.location, current).toString()
+            const nextURL = assertURL(next)
+            let authorization
+            if (allowed_hosts && !allowed_hosts.includes(nextURL.hostname)) {
+              authorization = {
+                allowed: false,
+                policy_status: "denied",
+                error: "Host outside channel policy",
+              }
+            } else if (authorize_redirect) {
+              authorization = await authorize_redirect({
+                from: current,
+                to: next,
+                status: response.status,
+              })
+              if (!authorization || typeof authorization.allowed !== "boolean")
+                throw Error("Redirect authorizer returned an invalid decision")
+            }
+            redirect_chain.push({
+              from: current,
+              to: next,
+              status: response.status,
+              ...(authorization
+                ? {
+                    policy_status: authorization.policy_status,
+                    ...(authorization.policy_source_id
+                      ? { policy_source_id: authorization.policy_source_id }
+                      : {}),
+                    ...(authorization.policy_source_version_id
+                      ? { policy_source_version_id: authorization.policy_source_version_id }
+                      : {}),
+                    ...(authorization.policy_observed_at
+                      ? { policy_observed_at: authorization.policy_observed_at }
+                      : {}),
+                    ...(authorization.matched_rule
+                      ? { matched_rule: authorization.matched_rule }
+                      : {}),
+                    ...(authorization.error ? { policy_error: authorization.error } : {}),
+                  }
+                : {}),
+            })
+            if (authorization && !authorization.allowed) {
+              redirectPolicyBlocked = true
+              break
+            }
+            current = next
+          }
+          const status = redirectPolicyBlocked
+            ? "blocked"
+            : response.status === 304
+              ? "not_modified"
+              : response.status === 403
+                ? "blocked"
+                : [404, 410].includes(response.status)
+                  ? "not_found"
+                  : response.status === 429
+                    ? "rate_limited"
+                    : response.status >= 200 && response.status < 300
+                      ? "captured"
+                      : "failed"
+          if (status === "not_modified" && (method === "POST" || !cachedBody))
+            throw Error("304 without verified GET cache")
+          const body = status === "not_modified" ? cachedBody : response.body
+          const record = {
+            schema_version: "source-document/v1",
+            source_id: id,
+            original_url,
+            request_method: method,
+            ...(method === "POST" ? { request_body_sha256: sha256(form) } : {}),
+            final_url: current,
+            observed_at,
+            fetch_status: status,
+            http_status: response.status,
+            redirect_chain,
+            mime_type: response.headers["content-type"] || cache?.mime_type || null,
+            etag: response.headers.etag || (status === "not_modified" ? cache?.etag : null),
+            last_modified:
+              response.headers["last-modified"] ||
+              (status === "not_modified" ? cache?.last_modified : null),
+          }
+          if (["captured", "not_modified"].includes(status)) {
+            if (!body.length) throw Error("Empty source response")
+            record.body_sha256 = sha256(body)
+            record.source_version_id = sourceVersionId(id, record.body_sha256)
+            record.body_path = `documents/${id}/${record.body_sha256}/body.bin`
+            const existing = safePath(this.root, record.body_path)
+            if (fs.existsSync(existing) && sha256(fs.readFileSync(existing)) !== record.body_sha256)
+              throw Error("Stored source version corrupted")
+            if (!fs.existsSync(existing)) atomicWrite(this.root, record.body_path, body)
+            if (
+              !fs.existsSync(
+                safePath(this.root, `documents/${id}/${record.body_sha256}/document.json`),
+              )
             )
+              atomicWrite(this.root, `documents/${id}/${record.body_sha256}/document.json`, record)
+            atomicWrite(this.root, `documents/${id}/latest.json`, record)
+          }
+          atomicWrite(
+            this.root,
+            `documents/${id}/attempts/${observed_at.replace(/[:.]/g, "-")}.json`,
+            record,
           )
-            atomicWrite(this.root, `documents/${id}/${record.body_sha256}/document.json`, record)
-          atomicWrite(this.root, `documents/${id}/latest.json`, record)
+          return record
+        } catch (e) {
+          const record = {
+            schema_version: "source-document/v1",
+            source_id: id,
+            original_url,
+            request_method: method,
+            ...(method === "POST" ? { request_body_sha256: sha256(form) } : {}),
+            final_url: current,
+            observed_at,
+            fetch_status: e.message === "BODY_TOO_LARGE" ? "too_large" : "failed",
+            error: e.message,
+            redirect_chain,
+          }
+          atomicWrite(
+            this.root,
+            `documents/${id}/attempts/${observed_at.replace(/[:.]/g, "-")}.json`,
+            record,
+          )
+          return record
         }
-        atomicWrite(
-          this.root,
-          `documents/${id}/attempts/${observed_at.replace(/[:.]/g, "-")}.json`,
-          record,
-        )
-        return record
-      } catch (e) {
-        const record = {
-          schema_version: "source-document/v1",
-          source_id: id,
-          original_url,
-          request_method: method,
-          ...(method === "POST" ? { request_body_sha256: sha256(form) } : {}),
-          final_url: current,
-          observed_at,
-          fetch_status: e.message === "BODY_TOO_LARGE" ? "too_large" : "failed",
-          error: e.message,
-          redirect_chain,
-        }
-        atomicWrite(
-          this.root,
-          `documents/${id}/attempts/${observed_at.replace(/[:.]/g, "-")}.json`,
-          record,
-        )
-        return record
-      }
-    })
+      }),
+    )
   }
 }

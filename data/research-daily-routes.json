@@ -19,6 +19,11 @@
       "baseline_run": "20260928-hd-press-window-20260901-v1"
     },
     {
+      "channel_id": "route-hd-disclosure-ko",
+      "enabled": true,
+      "baseline_run": "20261001-hd-disclosure-baseline-v2"
+    },
+    {
       "channel_id": "route-kuka-news-de",
       "enabled": true,
       "baseline_run": "20260928-kuka-de-sep-window-v2"
@@ -29,9 +34,19 @@
       "baseline_run": "20260928-doosan-en-sep-window-v2"
     },
     {
+      "channel_id": "route-doosan-news-ko",
+      "enabled": true,
+      "baseline_run": "20261001-doosan-ko-today-v1"
+    },
+    {
       "channel_id": "route-abb-robotics-en",
       "enabled": true,
       "baseline_run": "20260928-abb-en-sep-window-v2"
+    },
+    {
+      "channel_id": "route-ur-news-en",
+      "enabled": true,
+      "baseline_run": "20261001-ur-news-today-v1"
     },
     {
       "channel_id": "github-changelog",
@@ -117,6 +132,21 @@
       "channel_id": "amd-ir-press",
       "enabled": true,
       "baseline_run": "20260930-amd-ir-sep23-window-v1"
+    },
+    {
+      "channel_id": "route-yaskawa-company-news-en",
+      "enabled": true,
+      "baseline_run": "20261001-yaskawa-company-news-baseline-v7"
+    },
+    {
+      "channel_id": "route-yaskawa-product-en",
+      "enabled": true,
+      "baseline_run": "20261001-yaskawa-product-baseline-v1"
+    },
+    {
+      "channel_id": "route-yaskawa-ir-en",
+      "enabled": true,
+      "baseline_run": "20261001-yaskawa-ir-baseline-v5"
     }
   ]
 }

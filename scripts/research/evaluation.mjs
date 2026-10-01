@@ -4,7 +4,7 @@ import { assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { validateEvidence } from "./claims.mjs"
 import { assertStoredEvidence, loadStoredSourceRun } from "./parser.mjs"
-import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 import { SECTORS } from "../sectors.mjs"
 import { DEEP_KINDS } from "../editorial.mjs"
 
@@ -87,6 +87,51 @@ export const evaluationSpecSchema = {
     },
     required_explanations: { type: "array", items: explanation },
     forbidden_transformations: { type: "array", items: explanation },
+  },
+}
+
+export const evaluationAdjudicationInputSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schema",
+    "case_id",
+    "candidate_run",
+    "reviewer",
+    "reviewer_kind",
+    "independent_human_review",
+    "reviewed_at",
+    "gold_fact_coverage",
+    "manual_source_enrichment",
+    "raw_model_pass",
+    "notes",
+  ],
+  properties: {
+    schema: { type: "string", enum: ["evaluation-source-adjudication-input/v1"] },
+    case_id: identity,
+    candidate_run: identity,
+    reviewer: text,
+    reviewer_kind: { type: "string", enum: ["human", "codex"] },
+    independent_human_review: { type: "boolean" },
+    reviewed_at: text,
+    gold_fact_coverage: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["fact_id", "coverage", "candidate_claim_ids", "reason"],
+        properties: {
+          fact_id: identity,
+          coverage: { type: "string", enum: ["full", "partial", "missing"] },
+          candidate_claim_ids: { type: "array", items: identity },
+          reason: text,
+        },
+      },
+    },
+    manual_source_enrichment: { type: "boolean" },
+    raw_model_pass: { type: "boolean" },
+    notes: text,
   },
 }
 
@@ -251,4 +296,328 @@ export function loadEvaluationCase(root, caseId) {
     throw Error("Evaluation expectations changed")
   assertStoredEvidence(caseRoot, documents, parses)
   return { manifest, specification: spec, documents, parses, root: path.resolve(caseRoot) }
+}
+
+// Aggregate only case metadata and source snapshot hashes for the private delivery dashboard.
+// Multiple specification revisions over identical source bytes count as one evaluation example.
+export function auditEvaluationCases(root, targets = { development: 40, heldout: 20 }) {
+  const fixtureRoot = path.join(root, "evaluation", "fixtures")
+  const caseIds = fs.existsSync(fixtureRoot)
+    ? fs
+        .readdirSync(fixtureRoot, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+        .sort()
+    : []
+  const cases = []
+  const invalid = []
+  for (const caseId of caseIds) {
+    try {
+      const { manifest, specification, documents, parses } = loadEvaluationCase(root, caseId)
+      cases.push({ manifest, specification, documents, parses })
+    } catch (error) {
+      invalid.push({ case_id: caseId, error: String(error.message || error) })
+    }
+  }
+
+  const actual = cases.filter(({ specification }) => specification.origin === "actual-source")
+  const groups = new Map()
+  for (const item of actual) {
+    const { manifest, specification } = item
+    const snapshot = `${manifest.documents_sha256}:${manifest.parses_sha256}`
+    const group = groups.get(snapshot) || { split: new Set(), cases: [] }
+    group.split.add(specification.split)
+    group.cases.push(item)
+    groups.set(snapshot, group)
+  }
+  const conflictingSnapshots = [...groups.values()].filter((group) => group.split.size > 1).length
+  const uniqueActual = [...groups.values()].filter((group) => group.split.size === 1)
+  const splitCounts = Object.fromEntries(
+    ["development", "heldout"].map((split) => [
+      split,
+      uniqueActual.filter((group) => group.split.has(split)).length,
+    ]),
+  )
+  const countDimension = (selector) => {
+    const values = uniqueActual.flatMap((group) => selector(group.cases[0].specification))
+    return Object.fromEntries(
+      [...new Set(values)]
+        .sort()
+        .map((value) => [value, values.filter((item) => item === value).length]),
+    )
+  }
+  const sourceDocuments = new Map()
+  for (const group of uniqueActual) {
+    for (const document of group.cases[0].documents) {
+      const key = `${document.source_version_id}:${document.body_sha256}`
+      sourceDocuments.set(key, document)
+    }
+  }
+  const caseDimension = (selector) => {
+    const values = uniqueActual.flatMap((group) => selector(group.cases[0]))
+    return Object.fromEntries(
+      [...new Set(values)]
+        .sort()
+        .map((value) => [value, values.filter((item) => item === value).length]),
+    )
+  }
+  const mediaType = (document) => {
+    const mime = String(document.mime_type || "")
+      .split(";")[0]
+      .trim()
+      .toLowerCase()
+    if (mime === "application/pdf") return "pdf"
+    if (mime === "text/html" || mime === "application/xhtml+xml") return "html"
+    return mime || "unknown"
+  }
+  const hasKind = (kind) => (item) =>
+    item.parses.some((parse) => parse.blocks.some((block) => block.kind === kind))
+  const hasOcr = (item) =>
+    item.parses.some(
+      (parse) => Array.isArray(parse.quality?.ocr_pages) && parse.quality.ocr_pages.length > 0,
+    )
+  const allTargetCounts = Object.fromEntries(
+    ["development", "heldout"].map((split) => [split, targets[split]]),
+  )
+  return {
+    status:
+      invalid.length || conflictingSnapshots ? "integrity_review_required" : "read_only_audit",
+    target_cases: allTargetCounts,
+    registered_case_revisions: cases.length,
+    actual_source_case_revisions: actual.length,
+    synthetic_case_revisions: cases.length - actual.length,
+    unique_actual_source_snapshots: uniqueActual.length,
+    unique_actual_by_split: splitCounts,
+    progress_by_split: Object.fromEntries(
+      Object.entries(splitCounts).map(([split, count]) => [
+        split,
+        { count, target: targets[split], remaining: Math.max(0, targets[split] - count) },
+      ]),
+    ),
+    reviewer_kinds: Object.fromEntries(
+      ["human", "codex"].map((kind) => [
+        kind,
+        uniqueActual.filter((group) => group.cases[0].specification.review.reviewer_kind === kind)
+          .length,
+      ]),
+    ),
+    independent_human_gold: uniqueActual.filter(
+      (group) =>
+        group.split.has("development") && group.cases[0].manifest.status === "independent_gold",
+    ).length,
+    heldout_independent_human: uniqueActual.filter(
+      (group) =>
+        group.split.has("heldout") && group.cases[0].manifest.status === "independent_gold",
+    ).length,
+    dimensions: {
+      languages: countDimension((spec) => spec.languages),
+      sectors: countDimension((spec) => spec.sectors),
+      article_kinds: countDimension((spec) => [spec.article_kind]),
+      document_scopes: countDimension((spec) => [spec.document_scope]),
+      unique_documents_by_media_type: Object.fromEntries(
+        [...new Set([...sourceDocuments.values()].map(mediaType))]
+          .sort()
+          .map((value) => [
+            value,
+            [...sourceDocuments.values()].filter((document) => mediaType(document) === value)
+              .length,
+          ]),
+      ),
+      parser_engines: caseDimension((item) => [
+        ...new Set(item.parses.map((parse) => parse.parser?.id || "unknown")),
+      ]),
+      cases_with_tables: uniqueActual.filter((group) => hasKind("table")(group.cases[0])).length,
+      cases_with_headings: uniqueActual.filter((group) => hasKind("heading")(group.cases[0]))
+        .length,
+      cases_with_ocr_pages: uniqueActual.filter((group) => hasOcr(group.cases[0])).length,
+      pdf_cases: uniqueActual.filter((group) =>
+        group.cases[0].documents.some((document) => mediaType(document) === "pdf"),
+      ).length,
+    },
+    duplicate_source_snapshot_revisions:
+      actual.length -
+      new Set(
+        actual.map(({ manifest }) => `${manifest.documents_sha256}:${manifest.parses_sha256}`),
+      ).size,
+    conflicting_split_snapshots: conflictingSnapshots,
+    invalid_cases: invalid,
+    candidate_published: false,
+    public_verified: false,
+  }
+}
+
+function countBy(values) {
+  return Object.fromEntries(
+    [...new Set(values)]
+      .sort()
+      .map((value) => [value, values.filter((item) => item === value).length]),
+  )
+}
+
+export async function saveEvaluationAdjudication(root, runId, caseId, candidateRun, input) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid evaluation review run id")
+  if (!/^[a-zA-Z0-9_-]+$/.test(candidateRun || "")) throw Error("Invalid candidate run id")
+  if (caseId !== input?.case_id || candidateRun !== input?.candidate_run)
+    throw Error("Review case and candidate run must match the command inputs")
+  assertSchema(input, evaluationAdjudicationInputSchema)
+  if (input.independent_human_review && input.reviewer_kind !== "human")
+    throw Error("Independent human adjudication requires a human reviewer")
+
+  return withLock(root, `evaluation-adjudication-${runId}`, async () => {
+    const evaluationCase = loadEvaluationCase(root, caseId)
+    const { manifest, specification, parses } = evaluationCase
+    const fixtureRoot = evaluationCase.root
+    const relativeRun = `runs/${candidateRun}`
+    const runStateBytes = fs.readFileSync(safePath(fixtureRoot, `${relativeRun}/state.json`))
+    const runState = JSON.parse(runStateBytes.toString("utf8"))
+    const claimsBytes = fs.readFileSync(safePath(fixtureRoot, `${relativeRun}/claims.json`))
+    const claimsDocument = JSON.parse(claimsBytes.toString("utf8"))
+    const claims = claimsDocument.claims
+    if (
+      runState.schema !== "research-run/v1" ||
+      runState.run_id !== candidateRun ||
+      runState.candidate_published !== false ||
+      runState.stages?.claims?.status !== "complete" ||
+      runState.stages.claims.result_path !== `${relativeRun}/claims.json` ||
+      runState.stages.claims.result_hash !== sha256(JSON.stringify(claimsDocument)) ||
+      !Array.isArray(claims) ||
+      claims.length === 0
+    )
+      throw Error("Completed source-bound candidate claims run required")
+
+    const expectedFactIds = specification.facts.map((fact) => fact.fact_id).sort()
+    const reviewedFactIds = input.gold_fact_coverage.map((fact) => fact.fact_id).sort()
+    if (
+      new Set(reviewedFactIds).size !== reviewedFactIds.length ||
+      JSON.stringify(expectedFactIds) !== JSON.stringify(reviewedFactIds)
+    )
+      throw Error("Adjudication must cover each frozen gold fact exactly once")
+    const claimsById = new Map(claims.map((claim) => [claim.claim_id, claim]))
+    if (claimsById.size !== claims.length || claims.some((claim) => !claim.claim_id))
+      throw Error("Candidate claim ids must be unique and present")
+    for (const fact of input.gold_fact_coverage) {
+      if (new Set(fact.candidate_claim_ids).size !== fact.candidate_claim_ids.length)
+        throw Error(`Duplicate candidate claim mapping for gold fact ${fact.fact_id}`)
+      if (fact.candidate_claim_ids.some((id) => !claimsById.has(id)))
+        throw Error(`Unknown candidate claim mapped to gold fact ${fact.fact_id}`)
+      if (fact.coverage === "missing" && fact.candidate_claim_ids.length !== 0)
+        throw Error(`Missing gold fact ${fact.fact_id} cannot map candidate claims`)
+      if (fact.coverage !== "missing" && fact.candidate_claim_ids.length === 0)
+        throw Error(`Covered gold fact ${fact.fact_id} requires a candidate claim`)
+    }
+
+    const structuralResults = claims.map((claim) => ({
+      claim,
+      result: validateEvidence(claim, parses),
+    }))
+    const structuralFailureCodes = countBy(
+      structuralResults.flatMap(({ result }) => result.problems),
+    )
+    const semanticCoverage = {
+      full: input.gold_fact_coverage.filter((fact) => fact.coverage === "full").length,
+      partial: input.gold_fact_coverage.filter((fact) => fact.coverage === "partial").length,
+      missing: input.gold_fact_coverage.filter((fact) => fact.coverage === "missing").length,
+    }
+    if (
+      input.raw_model_pass &&
+      (structuralResults.some(({ result }) => !result.structural_pass) ||
+        semanticCoverage.partial > 0 ||
+        semanticCoverage.missing > 0)
+    )
+      throw Error("Raw model pass requires structurally supported claims and full gold coverage")
+
+    const budgetPath = `${relativeRun}/model-policy/fact_extract/budget.json`
+    const budgetBytes = fs.readFileSync(safePath(fixtureRoot, budgetPath))
+    const budget = JSON.parse(budgetBytes.toString("utf8"))
+    if (
+      budget.schema !== "model-budget/v1" ||
+      budget.binding?.role !== "fact_extract" ||
+      !Array.isArray(budget.attempts) ||
+      budget.attempts.length === 0 ||
+      budget.attempts.some(
+        (attempt) =>
+          attempt.status !== "complete" ||
+          attempt.result?.provenance?.model !== budget.binding.settings?.model ||
+          attempt.result?.provenance?.digest !== budget.binding.model_digest ||
+          !Number.isFinite(attempt.result?.provenance?.wall_ms),
+      )
+    )
+      throw Error("Complete model provenance for every extraction batch required")
+    const modelWallTimes = budget.attempts.map((attempt) => attempt.result.provenance.wall_ms)
+    const startedAt = Date.parse(runState.stages.claims.started_at)
+    const finishedAt = Date.parse(runState.stages.claims.finished_at)
+    if (!Number.isFinite(startedAt) || !Number.isFinite(finishedAt) || finishedAt < startedAt)
+      throw Error("Valid candidate extraction timestamps required")
+    assertReviewDate(input.reviewed_at, {
+      notBefore: [runState.stages.claims.finished_at],
+    })
+
+    const inputSha256 = sha256(JSON.stringify(input))
+    const receipt = {
+      schema: "evaluation-source-adjudication/v1",
+      run_id: runId,
+      case_id: caseId,
+      case_status: manifest.status,
+      case_split: manifest.split,
+      candidate_run: candidateRun,
+      reviewer: input.reviewer,
+      reviewer_kind: input.reviewer_kind,
+      independent_human_review: input.independent_human_review,
+      reviewed_at: input.reviewed_at,
+      candidate_claim_count: claims.length,
+      structural_pass_count: structuralResults.filter(({ result }) => result.structural_pass)
+        .length,
+      structural_failure_codes: structuralFailureCodes,
+      gold_fact_coverage: input.gold_fact_coverage,
+      semantic_coverage: semanticCoverage,
+      manual_source_enrichment: input.manual_source_enrichment,
+      raw_model_pass: input.raw_model_pass,
+      public_approved: false,
+      provenance: {
+        model: budget.binding.settings.model,
+        digest: budget.binding.model_digest,
+        runtime: budget.binding.runtime,
+        settings: budget.binding.settings,
+        policy_sha256: budget.binding.policy_sha256,
+        batch_count: modelWallTimes.length,
+        batch_wall_ms: modelWallTimes,
+        total_model_wall_ms: modelWallTimes.reduce((total, duration) => total + duration, 0),
+        run_elapsed_ms: finishedAt - startedAt,
+      },
+      inputs: {
+        input_sha256: inputSha256,
+        fixture_manifest_sha256: sha256(JSON.stringify(manifest)),
+        gold_sha256: manifest.gold_sha256,
+        candidate_run_state_sha256: sha256(runStateBytes),
+        candidate_claims_sha256: sha256(claimsBytes),
+        model_budget_sha256: sha256(budgetBytes),
+      },
+      notes: input.notes,
+    }
+    const output = `evaluation/runs/${runId}/source-review.json`
+    const existing = readJSON(root, output)
+    if (existing) {
+      if (JSON.stringify(existing) !== JSON.stringify(receipt))
+        throw Error("Evaluation adjudication output exists with different evidence")
+      return {
+        path: output,
+        sha256: sha256(fs.readFileSync(safePath(root, output))),
+        idempotent: true,
+        candidate_claim_count: receipt.candidate_claim_count,
+        structural_pass_count: receipt.structural_pass_count,
+        semantic_coverage: receipt.semantic_coverage,
+        public_approved: false,
+      }
+    }
+    const saved = atomicCreate(root, output, receipt)
+    return {
+      path: output,
+      sha256: saved.sha256,
+      idempotent: false,
+      candidate_claim_count: receipt.candidate_claim_count,
+      structural_pass_count: receipt.structural_pass_count,
+      semantic_coverage: receipt.semantic_coverage,
+      public_approved: false,
+    }
+  })
 }

@@ -10,8 +10,11 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import {
   applyDailyReceipts,
   bootstrapCoverage,
+  createDailySourceScanner,
   dailyPlanningBasis,
   executeDailyPlan,
+  reconcileSupplementalScan,
+  supplementalCoverageReceiptForWindow,
   repairDailyCoverageState,
   storedListScan,
   validateStoredDailyPlan,
@@ -311,6 +314,213 @@ function writeStoredEmptyScan(root, runId, { channel_id, since, until_exclusive,
   return { result, body_path }
 }
 
+test("daily receipts measure scan, verification and candidate merge time across resume", async (t) => {
+  const root = temporary(t)
+  const oneWindowPlan = { ...plan, windows: [plan.windows[0]] }
+  let scans = 0
+  const stored = new Map()
+  const args = {
+    root,
+    plan: oneWindowPlan,
+    coverage: initialCoverage(),
+    activeRoutes: [{ route: route("fanuc-en", "해외") }],
+    scan: async (window, id) => {
+      scans++
+      await new Promise((resolve) => setTimeout(resolve, 12))
+      const result = {
+        summary: { status: "window_scanned" },
+        candidates: [{ key: "candidate-one" }],
+      }
+      stored.set(id, result)
+      return result
+    },
+    verify: async () => new Promise((resolve) => setTimeout(resolve, 12)),
+    loadStored: (_, id) => stored.get(id),
+    merge: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 12))
+      return { status: "merged", changed: true }
+    },
+  }
+
+  const first = await executeDailyPlan(args)
+  const receipt = readJSON(
+    root,
+    `daily/runs/${plan.run_id}/receipts/${plan.run_id}_fanuc-en_20260921_20260928_a1.json`,
+  )
+  assert.equal(first.timing.unit, "ms")
+  assert.equal(first.timing.measured_receipts, 1)
+  assert.equal(first.timing.unmeasured_receipts, 0)
+  assert.ok(receipt.timing_ms.scan >= 8)
+  assert.ok(receipt.timing_ms.verify >= 8)
+  assert.ok(receipt.timing_ms.backlog_merge >= 8)
+  assert.ok(receipt.timing_ms.total >= receipt.timing_ms.scan)
+  assert.equal(first.timing.by_route["fanuc-en"].measured_attempts, 1)
+  assert.ok(first.timing.phases.backlog_merge_ms >= 8)
+
+  const resumed = await executeDailyPlan(args)
+  assert.equal(scans, 1)
+  assert.equal(resumed.timing.measured_receipts, 1)
+  assert.equal(resumed.timing.receipt_elapsed_ms, receipt.timing_ms.total)
+  assert.equal(resumed.timing.by_route["fanuc-en"].total_ms, receipt.timing_ms.total)
+})
+
+test("daily plan connects its successful predecessor receipt to production listing reuse", async (t) => {
+  const root = temporary(t)
+  const calls = []
+  const routeConfig = {
+    channel_id: "route-a",
+    method: "html-list",
+    listing_profile: { pagination: "single-page" },
+  }
+  const firstWindow = {
+    channel_id: routeConfig.channel_id,
+    since: "2026-09-30",
+    until_exclusive: "2026-10-01",
+  }
+  const secondWindow = {
+    channel_id: routeConfig.channel_id,
+    since: "2026-10-01",
+    until_exclusive: "2026-10-02",
+  }
+  const runId = "daily-20261002-reuse-integration"
+  const expectedFirstAttempt = `${runId}_route-a_20260930_20261001_a1`
+  const scanner = createDailySourceScanner({
+    root,
+    activeRoutes: [{ channel_id: routeConfig.channel_id, route: routeConfig }],
+    runResearch: async (args) => {
+      calls.push(args)
+      const runId = args[args.indexOf("--run") + 1]
+      const since = args[args.indexOf("--since") + 1]
+      const until = args[args.indexOf("--until") + 1]
+      const reusedAt = args.indexOf("--reuse-listing-run")
+      atomicWrite(root, `runs/${runId}/list-scan.json`, {
+        status: "window_scanned",
+        channel_id: routeConfig.channel_id,
+        window: { since, until_exclusive: until },
+        listing_source_version_id: "source-version",
+        ...(reusedAt >= 0 ? { listing_reused_from_run: args[reusedAt + 1] } : {}),
+      })
+      atomicWrite(root, `runs/${runId}/documents.json`, [])
+      atomicWrite(root, `runs/${runId}/parses.json`, [])
+      atomicWrite(root, `runs/${runId}/candidates.json`, [])
+      atomicWrite(root, `runs/${runId}/list-pages.json`, [])
+    },
+  })
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      [routeConfig.channel_id]: {
+        baseline_run: "baseline",
+        anchor_since: firstWindow.since,
+        covered: [],
+        unresolved: [],
+        last_contiguous_until: firstWindow.since,
+      },
+    },
+  }
+  const result = await executeDailyPlan({
+    root,
+    plan: { ...plan, run_id: runId, windows: [firstWindow, secondWindow] },
+    coverage,
+    activeRoutes: [{ channel_id: routeConfig.channel_id, route: routeConfig }],
+    scan: scanner,
+    verify: async () => {},
+    merge: async () => ({ status: "merged", changed: false }),
+  })
+
+  assert.equal(result.status, "configured_routes_scanned")
+  assert.equal(result.receipts, 2)
+  assert.equal(calls[0].includes("--reuse-listing-run"), false)
+  assert.deepEqual(calls[1].slice(-2), ["--reuse-listing-run", expectedFirstAttempt])
+  const second = readJSON(root, `runs/${runId}_route-a_20261001_20261002_a1/list-scan.json`)
+  assert.equal(second.listing_reused_from_run, expectedFirstAttempt)
+})
+
+test("daily scans run distinct routes concurrently, serialize each route and commit backlog in order", async (t) => {
+  const root = temporary(t)
+  const routeIds = ["route-a", "route-b", "route-c", "route-d", "route-e"]
+  const windows = [
+    { channel_id: "route-a", since: "2026-09-21", until_exclusive: "2026-09-24" },
+    { channel_id: "route-a", since: "2026-09-24", until_exclusive: "2026-09-28" },
+    ...routeIds.slice(1).map((channel_id) => ({
+      channel_id,
+      since: "2026-09-21",
+      until_exclusive: "2026-09-28",
+    })),
+  ]
+  const coverage = initialCoverage()
+  coverage.routes = Object.fromEntries(
+    routeIds.map((channel_id) => [
+      channel_id,
+      {
+        baseline_run: "baseline",
+        anchor_since: "2026-09-01",
+        covered: [{ since: "2026-09-01", until_exclusive: "2026-09-21", source_run: "baseline" }],
+        unresolved: [],
+        last_contiguous_until: "2026-09-21",
+      },
+    ]),
+  )
+  const stored = new Map()
+  const activeByRoute = new Map()
+  const completedRouteA = []
+  const reusedListingRuns = []
+  let activeScans = 0,
+    maxActiveScans = 0,
+    activeMerges = 0,
+    maxActiveMerges = 0
+  const args = {
+    root,
+    plan: { ...plan, windows },
+    coverage,
+    activeRoutes: routeIds.map((channel_id) => ({ route: route(channel_id, "해외") })),
+    scan: async (window, id, reuseListingRun) => {
+      reusedListingRuns.push([window.channel_id, window.since, reuseListingRun])
+      activeScans++
+      maxActiveScans = Math.max(maxActiveScans, activeScans)
+      activeByRoute.set(window.channel_id, (activeByRoute.get(window.channel_id) || 0) + 1)
+      assert.equal(activeByRoute.get(window.channel_id), 1)
+      await new Promise((resolve) => setTimeout(resolve, window.channel_id === "route-a" ? 20 : 8))
+      activeByRoute.set(window.channel_id, activeByRoute.get(window.channel_id) - 1)
+      activeScans--
+      if (window.channel_id === "route-a") completedRouteA.push(window.since)
+      const result = {
+        summary: { status: "window_scanned", channel_id: window.channel_id },
+        candidates: [{ key: `${window.channel_id}-${window.since}` }],
+      }
+      stored.set(id, result)
+      return result
+    },
+    verify: async () => {},
+    loadStored: (_, id) => stored.get(id),
+    merge: async () => {
+      activeMerges++
+      maxActiveMerges = Math.max(maxActiveMerges, activeMerges)
+      await new Promise((resolve) => setTimeout(resolve, 2))
+      activeMerges--
+      return { status: "merged" }
+    },
+  }
+
+  const result = await executeDailyPlan(args)
+  assert.equal(result.receipts, windows.length)
+  assert.ok(maxActiveScans > 1)
+  assert.ok(maxActiveScans <= 4)
+  assert.deepEqual(completedRouteA, ["2026-09-21", "2026-09-24"])
+  assert.deepEqual(
+    reusedListingRuns
+      .filter(([channel_id]) => channel_id === "route-a")
+      .map(([, , runId]) => runId),
+    [null, `${plan.run_id}_route-a_20260921_20260924_a1`],
+  )
+  assert.equal(maxActiveMerges, 1)
+  assert.deepEqual(result.execution, {
+    max_parallel_routes: 4,
+    route_windows_serialized: true,
+    candidate_merges_serialized: true,
+  })
+})
+
 test("a failed route is retried without rescanning a completed route or advancing its coverage", async (t) => {
   const root = temporary(t)
   const calls = [],
@@ -379,6 +589,74 @@ test("a failed route is retried without rescanning a completed route or advancin
   const third = await executeDailyPlan(args)
   assert.deepEqual(third, second)
   assert.equal(calls.length, 3)
+})
+
+test("blocked windows wait for a new observation instead of repeating the same request", async (t) => {
+  const root = temporary(t)
+  let calls = 0
+  const oneWindowPlan = {
+    ...plan,
+    windows: [plan.windows[1]],
+    retry_policy: {
+      max_attempts_per_window: 2,
+      blocked_requires_new_observation: true,
+    },
+  }
+  const args = {
+    root,
+    plan: oneWindowPlan,
+    coverage: initialCoverage(),
+    activeRoutes: [{ route: route("route-hd-news-ko", "국내") }],
+    scan: async () => {
+      calls++
+      return { summary: { status: "blocked", reason: "robots_observation_failed" }, candidates: [] }
+    },
+    verify: () => true,
+    merge: async () => ({ status: "merged" }),
+  }
+
+  const first = await executeDailyPlan(args)
+  assert.equal(first.retry_queue[0].state, "awaiting_new_observation")
+  assert.equal(first.retry_queue[0].attempts, 1)
+  const second = await executeDailyPlan(args)
+  assert.equal(second.retry_queue[0].state, "awaiting_new_observation")
+  assert.equal(second.receipts, 1)
+  assert.equal(calls, 1)
+})
+
+test("incomplete windows stop at the retry cap and remain visible in the failure queue", async (t) => {
+  const root = temporary(t)
+  let calls = 0
+  const oneWindowPlan = {
+    ...plan,
+    windows: [plan.windows[1]],
+    retry_policy: {
+      max_attempts_per_window: 2,
+      blocked_requires_new_observation: true,
+    },
+  }
+  const args = {
+    root,
+    plan: oneWindowPlan,
+    coverage: initialCoverage(),
+    activeRoutes: [{ route: route("route-hd-news-ko", "국내") }],
+    scan: async () => {
+      calls++
+      return { summary: { status: "incomplete", reason: "detail_incomplete" }, candidates: [] }
+    },
+    verify: () => true,
+    merge: async () => ({ status: "merged" }),
+  }
+
+  await executeDailyPlan(args)
+  const exhausted = await executeDailyPlan(args)
+  assert.equal(exhausted.retry_queue[0].state, "exhausted")
+  assert.equal(exhausted.retry_queue[0].attempts, 2)
+  assert.equal(exhausted.retry_queue[0].attempts_remaining, 0)
+  const resumed = await executeDailyPlan(args)
+  assert.equal(resumed.receipts, 2)
+  assert.equal(resumed.retry_queue[0].state, "exhausted")
+  assert.equal(calls, 2)
 })
 
 test("resume rejects a completed receipt whose stored listing body is corrupted", async (t) => {
@@ -574,6 +852,153 @@ test("a failed overlap scan stays unresolved even when an older baseline covers 
   const next = applyDailyReceipts(coverage, plan, [receipt])
   assert.equal(next.routes["fanuc-en"].last_contiguous_until, "2026-09-28")
   assert.equal(next.routes["fanuc-en"].unresolved.length, 1)
+})
+
+test("a verified independent scan advances only confirmed coverage and preserves its prior failure receipt", async (t) => {
+  const root = temporary(t)
+  const baseline = {
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-30",
+  }
+  const supplemental = {
+    channel_id: "fanuc-en",
+    since: "2026-09-30",
+    until_exclusive: "2026-10-02",
+  }
+  writeStoredEmptyScan(root, "baseline", { ...baseline, url: "https://example.com/base" })
+  writeStoredEmptyScan(root, "independent-scan", {
+    ...supplemental,
+    url: "https://example.com/independent",
+  })
+  const previousFailure = Buffer.from('{"status":"blocked","reason":"old failure"}')
+  atomicWrite(root, "daily/runs/old-run/receipts/old-attempt.json", previousFailure)
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      "fanuc-en": {
+        baseline_run: "baseline",
+        anchor_since: baseline.since,
+        covered: [{ ...baseline, source_run: "baseline", kind: "verified_baseline" }],
+        unresolved: [{ ...supplemental, reason: "page_blocked", last_attempt: "old-attempt" }],
+      },
+    },
+  }
+  atomicWrite(root, "daily/route-coverage.json", coverage)
+  const configFile = path.join(root, "daily-routes.json")
+  fs.writeFileSync(
+    configFile,
+    JSON.stringify({
+      schema: "research-daily-routes/v1",
+      lookback_days: 7,
+      max_window_days: 7,
+      routes: [{ channel_id: "fanuc-en", enabled: true, baseline_run: "baseline" }],
+    }),
+  )
+  let merges = 0
+  const merge = async () => {
+    merges += 1
+    return { status: "merged", changed: true }
+  }
+  const reconciled = await reconcileSupplementalScan({
+    root,
+    configFile,
+    scanRun: "independent-scan",
+    reconciliationRun: "coverage-reconcile",
+    now: "2026-10-01T00:30:00+09:00",
+    merge,
+  })
+  assert.equal(reconciled.status, "reconciled")
+  assert.equal(reconciled.coverage_until, "2026-10-01")
+  assert.equal(merges, 1)
+  const updated = readJSON(root, "daily/route-coverage.json").routes["fanuc-en"]
+  assert.equal(updated.last_contiguous_until, "2026-10-01")
+  assert.deepEqual(updated.unresolved, [
+    {
+      channel_id: "fanuc-en",
+      since: "2026-10-01",
+      until_exclusive: "2026-10-02",
+      reason: "page_blocked",
+      last_attempt: "old-attempt",
+    },
+  ])
+  const verifiedReceipt = supplementalCoverageReceiptForWindow(root, updated, {
+    channel_id: "fanuc-en",
+    since: supplemental.since,
+    until_exclusive: supplemental.until_exclusive,
+  })
+  assert.equal(verifiedReceipt.scan_run, "independent-scan")
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, "daily/runs/old-run/receipts/old-attempt.json")),
+    previousFailure,
+  )
+  assert.equal(
+    (
+      await reconcileSupplementalScan({
+        root,
+        configFile,
+        scanRun: "independent-scan",
+        reconciliationRun: "coverage-reconcile",
+        now: "2026-10-01T00:30:00+09:00",
+        merge,
+      })
+    ).status,
+    "already_reconciled",
+  )
+  assert.equal(merges, 1)
+
+  const resumePlan = {
+    schema: "research-daily-plan/v1",
+    run_id: "daily-20261001-supplemental-resume",
+    kst_day: "2026-10-01",
+    windows: [supplemental],
+  }
+  const attemptId = `${resumePlan.run_id}_fanuc-en_20260930_20261002_a1`
+  atomicWrite(root, `daily/runs/${resumePlan.run_id}/receipts/${attemptId}.json`, {
+    schema: "research-daily-receipt/v1",
+    daily_run: resumePlan.run_id,
+    attempt_id: attemptId,
+    ...supplemental,
+    started_at: "2026-10-01T00:10:00+09:00",
+    finished_at: "2026-10-01T00:11:00+09:00",
+    status: "blocked",
+    reason: "old failure",
+    candidate_published: false,
+  })
+  let scans = 0
+  const resumed = await executeDailyPlan({
+    root,
+    plan: resumePlan,
+    coverage: readJSON(root, "daily/route-coverage.json"),
+    activeRoutes: [{ route: route("fanuc-en", "해외") }],
+    scan: async () => {
+      scans += 1
+      throw Error("covered window should not be fetched again")
+    },
+    merge,
+  })
+  assert.equal(scans, 0)
+  assert.equal(resumed.status, "configured_routes_scanned")
+  assert.deepEqual(
+    readJSON(root, "daily/route-coverage.json").routes["fanuc-en"].unresolved.map((gap) => [
+      gap.since,
+      gap.until_exclusive,
+    ]),
+    [["2026-10-01", "2026-10-02"]],
+  )
+  const receiptFile = "daily/reconciliations/coverage-reconcile.json"
+  const tamperedReceipt = readJSON(root, receiptFile)
+  tamperedReceipt.candidate_keys = ["forged-candidate"]
+  atomicWrite(root, receiptFile, tamperedReceipt)
+  assert.throws(
+    () =>
+      supplementalCoverageReceiptForWindow(root, updated, {
+        channel_id: "fanuc-en",
+        since: supplemental.since,
+        until_exclusive: supplemental.until_exclusive,
+      }),
+    /does not match its completed scan window/,
+  )
 })
 
 test("a scan made today cannot confirm the rest of today's calendar day", () => {

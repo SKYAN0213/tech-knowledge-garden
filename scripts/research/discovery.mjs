@@ -8,7 +8,20 @@ import { assertURL } from "./fetch.mjs"
 import { atomicWrite, readJSON, withLock } from "./run-state.mjs"
 import { sourceId, sha256 } from "./contracts.mjs"
 import { checkRobots } from "./robots.mjs"
+import { createRedirectAuthorizer } from "./source-policy.mjs"
 import { crossrefLinks, secLinks } from "./api.mjs"
+
+export function mergeUniqueDiscovery(...groups) {
+  const seen = new Set()
+  const merged = []
+  for (const entry of groups.flat()) {
+    const fingerprint = JSON.stringify(entry)
+    if (seen.has(fingerprint)) continue
+    seen.add(fingerprint)
+    merged.push(entry)
+  }
+  return merged
+}
 
 export function registry(channels, watchlist, adapters = {}) {
   const methods = new Set(["html-list", "rss", "crossref", "sec"])
@@ -233,12 +246,20 @@ export async function discoverChannel(root, fetcher, channel) {
       candidates: [],
     }
   try {
-    const policy = await checkRobots(root, fetcher, channel.url)
+    const allowed_hosts = channel.allowed_hosts || [new URL(channel.url).hostname]
+    const policy = await checkRobots(root, fetcher, channel.url, { allowed_hosts })
     if (!policy.allowed) return { ...record, status: "policy_blocked" }
     fetcher.options.interval_ms = Math.max(fetcher.options.interval_ms, policy.delay_ms)
-    const document = await fetcher.fetch(channel.url, { allowed_hosts: channel.allowed_hosts })
+    const document = await fetcher.fetch(channel.url, {
+      allowed_hosts,
+      authorize_redirect: createRedirectAuthorizer(root, fetcher, allowed_hosts),
+    })
     record.fetch_status = document.fetch_status
     record.final_url = document.final_url
+    if (document.redirect_chain?.some((hop) => hop.policy_status !== "allowed"))
+      record.policy_status = document.redirect_chain.find(
+        (hop) => hop.policy_status !== "allowed",
+      )?.policy_status
     if (!["captured", "not_modified"].includes(document.fetch_status))
       return { ...record, status: document.fetch_status }
     let links
@@ -320,9 +341,7 @@ export async function mergeBacklog(file, candidates) {
           old.title !== c.title
         )
           old.title = c.title
-        old.discovery = [...(old.discovery || []), ...(c.discovery || [])].filter(
-          (v, n, a) => a.findIndex((x) => JSON.stringify(x) === JSON.stringify(v)) === n,
-        )
+        old.discovery = mergeUniqueDiscovery(old.discovery || [], c.discovery || [])
         const latestDiscovery = [old.last_discovered_at, old.discovered_at, c.discovered_at]
           .filter(Boolean)
           .sort()

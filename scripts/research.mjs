@@ -10,15 +10,23 @@ import {
   selectStoredSources,
 } from "./research/parser.mjs"
 import { Ollama } from "./research/ollama.mjs"
-import { extractClaims, recordFactReview, extractionBudget } from "./research/claims.mjs"
+import { OpenAIResponses } from "./research/openai.mjs"
+import {
+  extractClaims,
+  recordFactReview,
+  extractionBudget,
+  extractionCandidateKey,
+} from "./research/claims.mjs"
 import { writeDraft, draftMarkdown, correctDraft, draftFingerprint } from "./research/editor.mjs"
 import { registry, discoverChannel, mergeBacklog, coverageGrid } from "./research/discovery.mjs"
 import { saveBaseline } from "./research/baseline.mjs"
 import {
   DEFAULT_ROOT,
+  atomicCreate,
   atomicWrite,
   readJSON,
   RunState,
+  recoverLock,
   withLock,
   safePath,
 } from "./research/run-state.mjs"
@@ -37,31 +45,42 @@ import {
   validateCompleteSearchPlan,
 } from "./research/search.mjs"
 import { approvedArticle } from "./research/publish-adapter.mjs"
+import { recordArticleApproval } from "./research/article-approval.mjs"
 import {
   archiveManifest,
+  packageResearchArchive,
   buildSourceRegister,
   inspectManualCapture,
   storeManualCapture,
 } from "./research/archive.mjs"
 import { withLocalSearch } from "./research/search-runtime.mjs"
 import { fetchWithPolicy } from "./research/source-policy.mjs"
-import { saveEvaluationCase } from "./research/evaluation.mjs"
+import { saveEvaluationAdjudication, saveEvaluationCase } from "./research/evaluation.mjs"
 import { recordDeepDiveReview } from "./research/deep-dive.mjs"
 import { assertReviewDate } from "./research/dates.mjs"
 import { privatePreview } from "./research/preview.mjs"
 import { approveNoteReview } from "./research/note-review.mjs"
-import { saveRetrospectiveInventory } from "./research/retrospective.mjs"
+import { retrospectiveInventory, saveRetrospectiveInventory } from "./research/retrospective.mjs"
+import { buildApprovedInventoryReconciliation } from "./research/approved-inventory-reconcile.mjs"
+import { buildCandidateEvidenceReviewBatch } from "./research/candidate-evidence-review.mjs"
+import { buildHistoricalSourceReconciliation } from "./research/historical-source-reconciliation.mjs"
 import { writeKnowledgeDraft } from "./research/knowledge-editor.mjs"
-import { prepareRoleOllama } from "./research/model-policy.mjs"
-import { scanPathPagesRoute, scanSinglePageRoute } from "./research/list-scan.mjs"
+import { prepareRoleProvider } from "./research/model-policy.mjs"
+import {
+  loadReusableSinglePageListing,
+  scanPathPagesRoute,
+  scanSinglePageRoute,
+} from "./research/list-scan.mjs"
 import { scanCalendarMonthRoute } from "./research/monthly-scan.mjs"
 import { scanBoundedRSSRoute } from "./research/rss-scan.mjs"
 import { scanPaginatedHDRoute } from "./research/api-scan.mjs"
 import { scanPaginatedKUKARoute } from "./research/kuka-scan.mjs"
 import { scanPaginatedABBRoute } from "./research/abb-scan.mjs"
+import { scanPaginatedURRoute } from "./research/ur-scan.mjs"
 import { recordCandidateDisposition } from "./research/candidate-disposition.mjs"
 import { recordCandidateIdentity } from "./research/candidate-identity.mjs"
 import { recordCandidateApproval } from "./research/candidate-approval.mjs"
+import { recordCandidateSourceAlternative } from "./research/candidate-source-alternative.mjs"
 import { mergeCompletedScan } from "./research/scan-completion.mjs"
 import { loadDailySearchBasis } from "./research/daily-search-basis.mjs"
 import { generateDailyHandoff, selectCandidateSource } from "./research/editorial-handoff.mjs"
@@ -94,15 +113,23 @@ export async function main(argv = process.argv.slice(2)) {
       query: { type: "string" },
       date: { type: "string" },
       "daily-run": { type: "string" },
+      "drive-snapshot": { type: "string" },
+      "drive-readback": { type: "string" },
+      reconciliation: { type: "string" },
+      "review-batch": { type: "string" },
+      inventory: { type: "string" },
       "candidate-key": { type: "string" },
       "candidate-keys": { type: "string", multiple: true },
       backlog: { type: "string" },
       "batch-manifest": { type: "string" },
       "source-run": { type: "string" },
+      "source-alternative-run": { type: "string" },
       "published-source-run": { type: "string" },
       "candidate-run": { type: "string" },
+      "case-id": { type: "string" },
       since: { type: "string" },
       until: { type: "string" },
+      "reuse-listing-run": { type: "string" },
       "additional-source-run": { type: "string", multiple: true },
       deep: { type: "boolean", default: false },
       "num-ctx": { type: "string" },
@@ -115,6 +142,8 @@ export async function main(argv = process.argv.slice(2)) {
       "knowledge-run": { type: "string", multiple: true },
       vault: { type: "string" },
       format: { type: "string", default: "json" },
+      lock: { type: "string" },
+      "expected-owner": { type: "string" },
     },
   })
   const command = positionals[0],
@@ -124,6 +153,9 @@ export async function main(argv = process.argv.slice(2)) {
     ![
       "baseline",
       "inventory",
+      "reconcile-approved-inventory",
+      "prepare-identity-review-batch",
+      "reconcile-historical-source-evidence",
       "discover",
       "scan-list",
       "collect",
@@ -141,6 +173,7 @@ export async function main(argv = process.argv.slice(2)) {
       "approve",
       "archive",
       "gold-case",
+      "evaluation-review",
       "deep-review",
       "reparse",
       "bundle",
@@ -156,11 +189,13 @@ export async function main(argv = process.argv.slice(2)) {
       "import-capture",
       "candidate-disposition",
       "candidate-identity",
+      "candidate-source-alternative",
       "status",
+      "recover-lock",
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|source-register --run ID [--url URL --source-run ID --daily-run ID --candidate-run ID --candidate-key KEY --candidate-keys KEY --batch-manifest PATH --backlog FILE --published-source-run ID --additional-source-run ID --review JSON --channel ID --since DAY --until DAY --provisional --deep --approved-run ID --knowledge-run ID]; preview --review accepts a private new-edition specification",
+      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|candidate-source-alternative|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -172,6 +207,20 @@ export async function main(argv = process.argv.slice(2)) {
   ]
   if (command !== "extract" && budgetFields.some((field) => v[field] !== undefined))
     throw Error("Extraction budgets are only supported for extract")
+  if (command !== "evaluation-review" && v["case-id"] !== undefined)
+    throw Error("--case-id is only supported for evaluation-review")
+  if (
+    command !== "reconcile-approved-inventory" &&
+    ["drive-snapshot", "drive-readback", "inventory"].some((field) => v[field] !== undefined)
+  )
+    throw Error("Drive reconciliation inputs are only supported for reconcile-approved-inventory")
+  if (
+    !["prepare-identity-review-batch", "reconcile-historical-source-evidence"].includes(command) &&
+    v.reconciliation !== undefined
+  )
+    throw Error("--reconciliation is only supported for identity evidence commands")
+  if (command !== "reconcile-historical-source-evidence" && v["review-batch"] !== undefined)
+    throw Error("--review-batch is only supported for reconcile-historical-source-evidence")
   const configuredBudget = {}
   for (const field of budgetFields)
     if (v[field] !== undefined) {
@@ -193,10 +242,37 @@ export async function main(argv = process.argv.slice(2)) {
   if (v.deep && command !== "draft") throw Error("--deep is only supported for draft")
   if (command !== "scan-list" && (v.since || v.until))
     throw Error("--since and --until are only supported for scan-list")
-  if (v["daily-run"] && !["queries", "select-candidate"].includes(command))
-    throw Error("--daily-run is only supported for queries or select-candidate")
+  if (command === "discover" && v.url?.length)
+    throw Error("discover does not accept --url; use --channel to limit route discovery")
   if (
-    (v["candidate-key"] || v.backlog) &&
+    v["daily-run"] &&
+    ![
+      "queries",
+      "select-candidate",
+      "reconcile-approved-inventory",
+      "prepare-identity-review-batch",
+      "reconcile-historical-source-evidence",
+    ].includes(command)
+  )
+    throw Error(
+      "--daily-run is only supported for queries, select-candidate or identity evidence commands",
+    )
+  if (
+    v["candidate-key"] &&
+    ![
+      "extract",
+      "select-candidate",
+      "candidate-approval",
+      "intake-search-candidate",
+      "intake-search-batch",
+      "process-search-candidates",
+      "select-search-candidate",
+      "candidate-source-alternative",
+    ].includes(command)
+  )
+    throw Error("--candidate-key is only supported for extraction, candidate selection or approval")
+  if (
+    v.backlog &&
     ![
       "select-candidate",
       "candidate-approval",
@@ -204,11 +280,10 @@ export async function main(argv = process.argv.slice(2)) {
       "intake-search-batch",
       "process-search-candidates",
       "select-search-candidate",
+      "candidate-source-alternative",
     ].includes(command)
   )
-    throw Error(
-      "--candidate-key and --backlog are only supported for candidate selection or approval",
-    )
+    throw Error("--backlog is only supported for candidate selection or approval")
   if (command !== "preview" && (v["approved-run"] || v["knowledge-run"]))
     throw Error("--approved-run and --knowledge-run are only supported for preview")
   if (
@@ -216,6 +291,8 @@ export async function main(argv = process.argv.slice(2)) {
       "preview",
       "note-review",
       "inventory",
+      "reconcile-approved-inventory",
+      "prepare-identity-review-batch",
       "knowledge-draft",
       "select-candidate",
       "candidate-approval",
@@ -226,7 +303,7 @@ export async function main(argv = process.argv.slice(2)) {
     v.vault
   )
     throw Error(
-      "--vault is only supported for preview, note-review, inventory, knowledge-draft, select-candidate or candidate-approval",
+      "--vault is only supported for preview, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
     )
   if (
     v["source-run"] &&
@@ -242,13 +319,16 @@ export async function main(argv = process.argv.slice(2)) {
       "import-capture",
       "candidate-disposition",
       "candidate-identity",
+      "candidate-source-alternative",
     ].includes(command)
   )
     throw Error(
-      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, intake-search-candidate, select-search-candidate, import-capture, candidate-disposition or candidate-identity",
+      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, candidate-source-alternative, intake-search-candidate, select-search-candidate, import-capture, candidate-disposition or candidate-identity",
     )
   if (v["published-source-run"] && command !== "candidate-identity")
     throw Error("--published-source-run is only supported for candidate-identity")
+  if (v["source-alternative-run"] && command !== "candidate-approval")
+    throw Error("--source-alternative-run is only supported for candidate-approval")
   if (v["additional-source-run"] && command !== "bundle")
     throw Error("--additional-source-run is only supported for bundle")
   if (
@@ -261,10 +341,11 @@ export async function main(argv = process.argv.slice(2)) {
       "collect-search-candidates",
       "process-search-candidates",
       "select-search-candidate",
+      "evaluation-review",
     ].includes(command)
   )
     throw Error(
-      "--candidate-run is only supported for candidate-disposition, candidate-identity, intake-search-candidate, intake-search-batch, collect-search-candidates, process-search-candidates or select-search-candidate",
+      "--candidate-run is only supported for candidate-disposition, candidate-identity, intake-search-candidate, intake-search-batch, collect-search-candidates, process-search-candidates, select-search-candidate or evaluation-review",
     )
   if (v["batch-manifest"] && command !== "intake-search-batch")
     throw Error("--batch-manifest is only supported for intake-search-batch")
@@ -275,6 +356,23 @@ export async function main(argv = process.argv.slice(2)) {
     throw Error("--candidate-keys is only supported for search candidate collection workflows")
   if (command !== "status" && v.format !== "json")
     throw Error("--format is only supported for status")
+  if (command !== "recover-lock" && (v.lock !== undefined || v["expected-owner"] !== undefined))
+    throw Error("--lock and --expected-owner are only supported for recover-lock")
+  if (command === "recover-lock") {
+    if (
+      v.run ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.since ||
+      v.until ||
+      v["source-run"] ||
+      v["candidate-run"]
+    )
+      throw Error("recover-lock accepts only --root, --lock and --expected-owner")
+    if (!v.lock || !v["expected-owner"])
+      throw Error("recover-lock requires --lock NAME and --expected-owner UUID")
+    return recoverLock(root, v.lock, v["expected-owner"])
+  }
   if (v["source-run"] && (v.channel?.length || (v.url?.length && command !== "select-source")))
     throw Error("Stored source input cannot be combined with live URLs or channels")
   if (command === "model-info") return ollama.metadata(v.model)
@@ -288,8 +386,17 @@ export async function main(argv = process.argv.slice(2)) {
     }
     return status
   }
-  if (!v.run) throw Error("Explicit --run ID required")
-  if (!/^[a-zA-Z0-9_-]+$/.test(v.run)) throw Error("Invalid run id")
+  if (
+    !v.run &&
+    ![
+      "reconcile-approved-inventory",
+      "prepare-identity-review-batch",
+      "reconcile-historical-source-evidence",
+      "recover-lock",
+    ].includes(command)
+  )
+    throw Error("Explicit --run ID required")
+  if (v.run && !/^[a-zA-Z0-9_-]+$/.test(v.run)) throw Error("Invalid run id")
   if (command === "collect-search-candidates" || command === "process-search-candidates") {
     if (
       !v["candidate-run"] ||
@@ -307,8 +414,8 @@ export async function main(argv = process.argv.slice(2)) {
       throw Error(
         "Search candidate collection requires --candidate-run and one to twelve --candidate-keys",
       )
-    const profiles = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
-      .article_profiles || []
+    const profiles =
+      JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8")).article_profiles || []
     if (command === "process-search-candidates")
       return processSearchCandidates({
         root,
@@ -371,6 +478,7 @@ export async function main(argv = process.argv.slice(2)) {
     if (
       !v["source-run"] ||
       !v["candidate-key"] ||
+      (v["source-alternative-run"] && v["source-alternative-run"] === v.run) ||
       v.url?.length ||
       v.channel?.length ||
       v.review ||
@@ -391,6 +499,7 @@ export async function main(argv = process.argv.slice(2)) {
       runId: v.run,
       approvedRunId: v["source-run"],
       candidateKey: v["candidate-key"],
+      sourceAlternativeResolutionRunId: v["source-alternative-run"] || null,
       backlogFile: v.backlog || BACKLOG_PATH,
       publishedArticles,
     })
@@ -523,6 +632,29 @@ export async function main(argv = process.argv.slice(2)) {
       ),
     })
   }
+  if (command === "candidate-source-alternative") {
+    if (
+      !v["source-run"] ||
+      !v["candidate-key"] ||
+      !v.review ||
+      v.url?.length ||
+      v.channel?.length ||
+      v["candidate-run"] ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error(
+        "Candidate source alternative requires stored --source-run, --candidate-key and private --review only",
+      )
+    return recordCandidateSourceAlternative({
+      root,
+      runId: v.run,
+      sourceRunId: v["source-run"],
+      candidateKey: v["candidate-key"],
+      reviewPath: v.review,
+      backlogFile: v.backlog || BACKLOG_PATH,
+    })
+  }
   if (command === "bundle") {
     if (!v["source-run"] || !v["additional-source-run"]?.length)
       throw Error("Bundle requires --source-run and --additional-source-run")
@@ -623,12 +755,15 @@ export async function main(argv = process.argv.slice(2)) {
         ? { think: v.think === "false" ? false : v.think === "true" ? true : v.think }
         : {}),
     }
-    ollama = await prepareRoleOllama(
-      ollama,
-      JSON.parse(fs.readFileSync(v["model-policy"], "utf8")),
-      policyRole,
-      { root, run: v.run, overrides },
-    )
+    const modelPolicy = JSON.parse(fs.readFileSync(v["model-policy"], "utf8"))
+    const configuredProvider = modelPolicy.roles?.[policyRole]?.provider ?? "ollama"
+    if (configuredProvider === "openai") ollama = new OpenAIResponses()
+    else if (configuredProvider !== "ollama") throw Error("Unknown model provider")
+    ollama = await prepareRoleProvider(ollama, modelPolicy, policyRole, {
+      root,
+      run: v.run,
+      overrides,
+    })
     const settings = ollama.executionPolicy.settings
     v.model = settings.model
     v.think = settings.think
@@ -654,6 +789,243 @@ export async function main(argv = process.argv.slice(2)) {
     return withLock(root, "run-" + v.run, () =>
       saveRetrospectiveInventory(root, v.run, v.vault || "vault"),
     )
+  if (command === "reconcile-approved-inventory") {
+    const runId = v["daily-run"]
+    if (
+      !runId ||
+      !/^[a-zA-Z0-9_-]+$/.test(runId) ||
+      !v["drive-snapshot"] ||
+      !v["drive-readback"] ||
+      !v.inventory
+    )
+      throw Error(
+        "Drive reconciliation requires --daily-run --drive-snapshot --drive-readback --inventory",
+      )
+    const privateBase = path.resolve(root),
+      driveBase = path.resolve(".local/drive-sync"),
+      snapshotPath = path.resolve(v["drive-snapshot"]),
+      readbackPath = path.resolve(v["drive-readback"]),
+      inventoryPath = path.resolve(v.inventory)
+    for (const [label, file, base] of [
+      ["Drive snapshot", snapshotPath, driveBase],
+      ["Drive readback", readbackPath, driveBase],
+      ["Authoring inventory", inventoryPath, privateBase],
+    ]) {
+      if (file === base || !file.startsWith(base + path.sep))
+        throw Error(`${label} must be an existing file inside its private evidence directory`)
+      const securedPath = safePath(base, path.relative(base, file))
+      if (!fs.statSync(securedPath).isFile())
+        throw Error(`${label} must be an existing file inside its private evidence directory`)
+    }
+    return withLock(root, "daily-acquisition", async () => {
+      const currentInventory = await retrospectiveInventory(v.vault || "vault")
+      const storedInventory = JSON.parse(fs.readFileSync(inventoryPath, "utf8"))
+      const comparable = (value) => sha256(JSON.stringify({ ...value, observed_at: null }))
+      if (comparable(currentInventory) !== comparable(storedInventory))
+        throw Error("Stored authoring inventory differs from the current vault")
+
+      const handoffRef = generateDailyHandoff({
+        root,
+        runId,
+        vault: v.vault || "vault",
+        backlogFile: v.backlog || BACKLOG_PATH,
+      })
+      const handoff = readJSON(root, handoffRef.path)
+      const snapshotBytes = fs.readFileSync(snapshotPath),
+        readbackBytes = fs.readFileSync(readbackPath)
+      const snapshot = JSON.parse(snapshotBytes),
+        readback = JSON.parse(readbackBytes)
+      const reconciliation = buildApprovedInventoryReconciliation({
+        handoff,
+        inventory: storedInventory,
+        driveSnapshot: snapshot,
+        driveReadback: readback,
+        driveReadbackSha256: sha256(readbackBytes),
+      })
+      reconciliation.inputs = {
+        handoff_sha256: sha256(fs.readFileSync(safePath(root, handoffRef.path))),
+        inventory_sha256: sha256(fs.readFileSync(inventoryPath)),
+        drive_snapshot_file_sha256: sha256(snapshotBytes),
+        drive_readback_sha256: sha256(readbackBytes),
+      }
+      const receiptIdentity = sha256(JSON.stringify(reconciliation.inputs))
+      const output = `daily/runs/${runId}/drive-reconciliations/${receiptIdentity}.json`
+      const existing = readJSON(root, output)
+      if (existing && JSON.stringify(existing.inputs) !== JSON.stringify(reconciliation.inputs))
+        throw Error("Drive reconciliation input identity collision")
+      const receipt = existing
+        ? { path: output, sha256: sha256(fs.readFileSync(safePath(root, output))) }
+        : atomicCreate(root, output, reconciliation)
+      const stored = existing || reconciliation
+      return {
+        ...stored.drive_snapshot,
+        candidate_count: stored.candidate_count,
+        classification_counts: stored.classification_counts,
+        duplicate_source_groups: stored.duplicate_source_groups.length,
+        candidate_published: stored.candidate_published,
+        drive_written: stored.drive_written,
+        public_verified: stored.public_verified,
+        receipt: receipt.path,
+        receipt_sha256: receipt.sha256,
+      }
+    })
+  }
+  if (command === "prepare-identity-review-batch") {
+    const runId = v["daily-run"]
+    if (!runId || !/^[a-zA-Z0-9_-]+$/.test(runId) || !v.reconciliation)
+      throw Error("Identity review batch requires --daily-run and --reconciliation")
+    const reconciliationPath = path.resolve(v.reconciliation),
+      privateBase = path.resolve(root)
+    if (
+      reconciliationPath === privateBase ||
+      !reconciliationPath.startsWith(privateBase + path.sep)
+    )
+      throw Error(
+        "Reconciliation receipt must be an existing file inside the private research root",
+      )
+    const securedReconciliationPath = safePath(root, path.relative(privateBase, reconciliationPath))
+    if (!fs.statSync(securedReconciliationPath).isFile())
+      throw Error(
+        "Reconciliation receipt must be an existing file inside the private research root",
+      )
+
+    return withLock(root, "daily-acquisition", () => {
+      const reconciliationBytes = fs.readFileSync(securedReconciliationPath)
+      const reconciliation = JSON.parse(reconciliationBytes)
+      if (
+        reconciliation.schema !== "research-drive-approval-reconciliation/v1" ||
+        reconciliation.daily_run !== runId
+      )
+        throw Error("A reconciliation receipt for the requested daily run is required")
+      const handoffDirectory = safePath(root, `daily/runs/${runId}/handoffs`)
+      const handoffMatches = fs
+        .readdirSync(handoffDirectory)
+        .filter((name) => name.endsWith(".json"))
+        .map((name) => {
+          const relative = `daily/runs/${runId}/handoffs/${name}`,
+            bytes = fs.readFileSync(safePath(root, relative))
+          return { relative, bytes, sha256: sha256(bytes) }
+        })
+        .filter((entry) => entry.sha256 === reconciliation.inputs?.handoff_sha256)
+      if (handoffMatches.length !== 1)
+        throw Error(
+          "Pinned editorial handoff for the reconciliation receipt is missing or ambiguous",
+        )
+      const handoff = JSON.parse(handoffMatches[0].bytes)
+      const batch = buildCandidateEvidenceReviewBatch({
+        root,
+        handoff,
+        handoffSha256: handoffMatches[0].sha256,
+        reconciliation,
+        reconciliationSha256: sha256(reconciliationBytes),
+      })
+      const identity = sha256(JSON.stringify(batch.inputs))
+      const output = `daily/runs/${runId}/identity-review-batches/${identity}.json`
+      const existing = readJSON(root, output)
+      if (existing && JSON.stringify(existing.inputs) !== JSON.stringify(batch.inputs))
+        throw Error("Identity review batch input identity collision")
+      const receipt = existing
+        ? { path: output, sha256: sha256(fs.readFileSync(safePath(root, output))) }
+        : atomicCreate(root, output, batch)
+      const stored = existing || batch
+      return {
+        candidate_count: stored.candidate_count,
+        source_attempt_count: stored.source_attempt_count,
+        source_attempt_counts: stored.source_attempt_counts,
+        candidate_approved: stored.candidate_approved,
+        candidate_published: stored.candidate_published,
+        drive_written: stored.drive_written,
+        public_verified: stored.public_verified,
+        receipt: receipt.path,
+        receipt_sha256: receipt.sha256,
+      }
+    })
+  }
+  if (command === "reconcile-historical-source-evidence") {
+    const runId = v["daily-run"]
+    if (!runId || !/^[a-zA-Z0-9_-]+$/.test(runId) || !v.reconciliation || !v["review-batch"])
+      throw Error(
+        "Historical source reconciliation requires --daily-run --reconciliation --review-batch",
+      )
+    const privateBase = path.resolve(root)
+    const resolveReceipt = (inputPath, label) => {
+      const absolute = path.resolve(inputPath)
+      if (absolute === privateBase || !absolute.startsWith(privateBase + path.sep))
+        throw Error(`${label} must be an existing file inside the private research root`)
+      const secured = safePath(root, path.relative(privateBase, absolute))
+      if (!fs.statSync(secured).isFile()) throw Error(`${label} must be an existing file`)
+      return secured
+    }
+    const reconciliationPath = resolveReceipt(v.reconciliation, "Reconciliation receipt"),
+      reviewBatchPath = resolveReceipt(v["review-batch"], "Source-evidence batch")
+
+    return withLock(root, "daily-acquisition", () => {
+      const reconciliationBytes = fs.readFileSync(reconciliationPath)
+      const reconciliation = JSON.parse(reconciliationBytes)
+      const reviewBatchBytes = fs.readFileSync(reviewBatchPath)
+      const reviewBatch = JSON.parse(reviewBatchBytes)
+      if (
+        reconciliation.schema !== "research-drive-approval-reconciliation/v1" ||
+        reconciliation.daily_run !== runId ||
+        reviewBatch.schema !== "research-candidate-source-evidence-review/v1" ||
+        reviewBatch.daily_run !== runId
+      )
+        throw Error("Pinned reconciliation and source-evidence batch for the daily run required")
+
+      const handoffDirectory = safePath(root, `daily/runs/${runId}/handoffs`)
+      const handoffMatches = fs
+        .readdirSync(handoffDirectory)
+        .filter((name) => name.endsWith(".json"))
+        .map((name) => {
+          const relative = `daily/runs/${runId}/handoffs/${name}`,
+            bytes = fs.readFileSync(safePath(root, relative))
+          return { bytes, sha256: sha256(bytes) }
+        })
+        .filter((entry) => entry.sha256 === reconciliation.inputs?.handoff_sha256)
+      if (handoffMatches.length !== 1)
+        throw Error(
+          "Pinned editorial handoff for the reconciliation receipt is missing or ambiguous",
+        )
+
+      const handoff = JSON.parse(handoffMatches[0].bytes)
+      const result = buildHistoricalSourceReconciliation({
+        root,
+        handoff,
+        handoffSha256: handoffMatches[0].sha256,
+        reconciliation,
+        reconciliationSha256: sha256(reconciliationBytes),
+        reviewBatch,
+        reviewBatchSha256: sha256(reviewBatchBytes),
+        reconcilerSha256: sha256(
+          fs.readFileSync("scripts/research/historical-source-reconciliation.mjs"),
+        ),
+      })
+      const identity = sha256(JSON.stringify(result.inputs))
+      const output = `daily/runs/${runId}/historical-source-reconciliations/${identity}.json`
+      const existing = readJSON(root, output)
+      if (existing && JSON.stringify(existing.inputs) !== JSON.stringify(result.inputs))
+        throw Error("Historical source reconciliation input identity collision")
+      const receipt = existing
+        ? { path: output, sha256: sha256(fs.readFileSync(safePath(root, output))) }
+        : atomicCreate(root, output, result)
+      const stored = existing || result
+      return {
+        candidate_count: stored.candidate_count,
+        candidates_with_historical_sources: stored.candidates_with_historical_sources,
+        historical_source_version_count: stored.historical_source_version_count,
+        historical_parse_count: stored.historical_parse_count,
+        candidate_status_counts: stored.candidate_status_counts,
+        comparison_counts: stored.comparison_counts,
+        run_validation_failure_count: stored.run_validation_failure_count,
+        candidate_approved: stored.candidate_approved,
+        candidate_published: stored.candidate_published,
+        drive_written: stored.drive_written,
+        public_verified: stored.public_verified,
+        receipt: receipt.path,
+        receipt_sha256: receipt.sha256,
+      }
+    })
+  }
   if (command === "note-review")
     return withLock(root, "run-" + v.run, () => {
       if (!v.review) throw Error("Explicit canonical note review JSON required")
@@ -742,6 +1114,17 @@ export async function main(argv = process.argv.slice(2)) {
       root,
       v.run,
       v["source-run"],
+      JSON.parse(fs.readFileSync(v.review, "utf8")),
+    )
+  }
+  if (command === "evaluation-review") {
+    if (!v["case-id"] || !v["candidate-run"] || !v.review)
+      throw Error("--case-id, --candidate-run and --review required")
+    return saveEvaluationAdjudication(
+      root,
+      v.run,
+      v["case-id"],
+      v["candidate-run"],
       JSON.parse(fs.readFileSync(v.review, "utf8")),
     )
   }
@@ -846,8 +1229,29 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "archive") {
     return withLock(root, "run-" + v.run, async () => {
       const manifest = archiveManifest(root, v.run)
+      const existing = readJSON(root, `runs/${v.run}/archive-manifest.json`)
+      if (
+        existing?.schema === manifest.schema &&
+        existing.run_id === manifest.run_id &&
+        JSON.stringify(existing.files) === JSON.stringify(manifest.files)
+      )
+        manifest.created_at = existing.created_at
       atomicWrite(root, `runs/${v.run}/archive-manifest.json`, manifest)
-      return { files: manifest.files.length, drive_verified: false }
+      const packageReceipt = packageResearchArchive(root, v.run)
+      const packageReceiptPath = `archive-staging/${v.run}/package-receipt.json`
+      const existingPackageReceipt = readJSON(root, packageReceiptPath)
+      if (
+        existingPackageReceipt &&
+        JSON.stringify(existingPackageReceipt) !== JSON.stringify(packageReceipt)
+      )
+        throw Error("Research package receipt changed; use a new run ID")
+      if (!existingPackageReceipt) atomicWrite(root, packageReceiptPath, packageReceipt)
+      return {
+        files: manifest.files.length,
+        source_versions: manifest.files.filter((file) => file.drive_root === "Sources").length,
+        package: packageReceipt,
+        drive_verified: false,
+      }
     })
   }
   if (command === "baseline") {
@@ -920,9 +1324,10 @@ export async function main(argv = process.argv.slice(2)) {
         if (!draft || !reviewed) throw Error("Reviewed claims and exact draft required")
         const decision = JSON.parse(fs.readFileSync(v.review, "utf8")),
           article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
-        atomicWrite(root, `runs/${v.run}/editorial-review.json`, decision)
-        atomicWrite(root, `runs/${v.run}/approved-article.json`, article)
-        return { event_id: article.event_id, status: "approved", candidate_published: false }
+        return {
+          ...recordArticleApproval(root, v.run, decision, article),
+          candidate_published: false,
+        }
       }
       if (command === "review") {
         if (!v.review) throw Error("--review JSON decision file required")
@@ -1001,6 +1406,7 @@ export async function main(argv = process.argv.slice(2)) {
         ? {
             list_scan_sha256: sha256(fs.readFileSync("scripts/research/list-scan.mjs")),
             api_scan_sha256: sha256(fs.readFileSync("scripts/research/api-scan.mjs")),
+            ur_scan_sha256: sha256(fs.readFileSync("scripts/research/ur-scan.mjs")),
             kuka_scan_sha256: sha256(fs.readFileSync("scripts/research/kuka-scan.mjs")),
             abb_scan_sha256: sha256(fs.readFileSync("scripts/research/abb-scan.mjs")),
             rss_scan_sha256: sha256(fs.readFileSync("scripts/research/rss-scan.mjs")),
@@ -1063,28 +1469,54 @@ export async function main(argv = process.argv.slice(2)) {
       const profiles =
         JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
       const scanner =
-        channel.api_profile?.id === "hd-press-json-pages-v1"
-          ? scanPaginatedHDRoute
-          : channel.api_profile?.id === "kuka-news-form-pages-v1"
-            ? scanPaginatedKUKARoute
-            : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
-              ? scanPaginatedABBRoute
-              : channel.api_profile
-                ? null
-                : channel.listing_profile?.pagination === "calendar-month"
-                  ? scanCalendarMonthRoute
-                  : channel.method === "rss" &&
-                      channel.listing_profile?.pagination === "bounded-feed"
-                    ? scanBoundedRSSRoute
-                    : channel.method === "html-list" &&
-                        channel.listing_profile?.pagination === "single-page"
-                      ? scanSinglePageRoute
-                      : null
+        channel.api_profile?.id === "ur-news-center-json-pages-v1"
+          ? scanPaginatedURRoute
+          : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
+                channel.api_profile?.id,
+              )
+            ? scanPaginatedHDRoute
+            : channel.api_profile?.id === "kuka-news-form-pages-v1"
+              ? scanPaginatedKUKARoute
+              : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
+                ? scanPaginatedABBRoute
+                : channel.api_profile
+                  ? null
+                  : channel.listing_profile?.pagination === "calendar-month"
+                    ? scanCalendarMonthRoute
+                    : channel.method === "rss" &&
+                        channel.listing_profile?.pagination === "bounded-feed"
+                      ? scanBoundedRSSRoute
+                      : channel.method === "html-list" &&
+                          channel.listing_profile?.pagination === "single-page"
+                        ? scanSinglePageRoute
+                        : null
       if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
-      let result = await scanner(root, run, fetcher, channel, profiles, {
-        since: v.since,
-        until: v.until,
-      })
+      if (v["reuse-listing-run"] && scanner !== scanSinglePageRoute)
+        throw Error("--reuse-listing-run is only supported for single-page HTML routes")
+      let listingEvidence = null,
+        listingReuseError = null
+      if (v["reuse-listing-run"]) {
+        try {
+          listingEvidence = loadReusableSinglePageListing(root, v["reuse-listing-run"], channel, {
+            since: v.since,
+            until_exclusive: v.until,
+          })
+        } catch (error) {
+          listingReuseError = error.message
+        }
+      }
+      let result = await scanner(
+        root,
+        run,
+        fetcher,
+        channel,
+        profiles,
+        {
+          since: v.since,
+          until: v.until,
+        },
+        { listingEvidence, listingReuseError },
+      )
       const archive = channel.listing_profile?.fallback_archive
       if (
         channel.method === "rss" &&
@@ -1196,6 +1628,28 @@ export async function main(argv = process.argv.slice(2)) {
       if (documents.some((d) => !["captured", "not_modified"].includes(d.fetch_status)))
         throw Error("A source was not acquired; inspect documents.json")
       assertStoredEvidence(root, documents, parses)
+      const sourceSelection = v["source-run"]
+        ? readJSON(root, `runs/${v["source-run"]}/source-selection.json`)
+        : null
+      const sourceBundle = v["source-run"]
+        ? readJSON(root, `runs/${v["source-run"]}/source-bundle.json`)
+        : null
+      const sourceHashes = {
+        documents_sha256: sha256(JSON.stringify(documents)),
+        parses_sha256: sha256(JSON.stringify(parses)),
+      }
+      const explicitlyGrouped =
+        !v.url?.length &&
+        [sourceSelection, sourceBundle].some(
+          (manifest) =>
+            manifest &&
+            manifest.documents_sha256 === sourceHashes.documents_sha256 &&
+            manifest.parses_sha256 === sourceHashes.parses_sha256,
+        )
+      const candidateKey = extractionCandidateKey(documents, {
+        candidateKey: v["candidate-key"],
+        explicitlyGrouped,
+      })
       const metadata = await ollama.metadata(v.model)
       const claims = await run.stage(
         "claims",
@@ -1211,7 +1665,7 @@ export async function main(argv = process.argv.slice(2)) {
         () =>
           extractClaims(ollama, parses, {
             ...budget,
-            candidate_key: "source-" + sourceId(canonicalURL(documents[0].original_url)),
+            candidate_key: candidateKey,
             model: v.model,
             think: v.think === "false" ? false : v.think === "true" ? true : v.think,
             checkpoint: (id, request, action) =>
@@ -1220,7 +1674,7 @@ export async function main(argv = process.argv.slice(2)) {
                 {
                   metadata,
                   ...(ollama.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
-                  candidate_key: "source-" + sourceId(canonicalURL(documents[0].original_url)),
+                  candidate_key: candidateKey,
                   request,
                 },
                 action,

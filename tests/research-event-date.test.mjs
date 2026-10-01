@@ -150,6 +150,109 @@ test("dated update preserves source publication and requires the visible event's
   assert.deepEqual(eventDateMetadata(plain, s.claims, [s.p]), {})
 })
 
+test("source-stated event dates stay separate from unavailable page publication metadata", () => {
+  const s = fixture()
+  s.p.dates.published_at = null
+  s.p.blocks = [
+    {
+      block_id: "p1:b1",
+      text: "A direct integration was announced on 12 September during IBC.",
+      locator: {
+        text_hash: sha256("A direct integration was announced on 12 September during IBC."),
+      },
+    },
+    {
+      block_id: "p1:b2",
+      text: "IBC2026 closed on Monday.",
+      locator: { text_hash: sha256("IBC2026 closed on Monday.") },
+    },
+  ]
+  const claim = {
+    ...structuredClone(s.claims[0]),
+    statement: "A direct integration was announced on 12 September during IBC.",
+    published_at: null,
+    effective_period: null,
+    evidence: [
+      {
+        source_id: "s1",
+        source_version_id: "s1:v1",
+        parse_id: "p1",
+        block_id: "p1:b1",
+        quote: "A direct integration was announced on 12 September during IBC.",
+        support: "direct",
+      },
+    ],
+  }
+  delete claim.review
+  s.claims = recordFactReview(
+    [claim],
+    [
+      {
+        claim_id: "c1",
+        status: "verified",
+        reason: "Exact source date and event context checked",
+        source_read: true,
+        entailment_checked: true,
+        identity_checked: true,
+        numbers_checked: true,
+        time_checked: true,
+      },
+    ],
+    { reviewer: "test", reviewed_at: "2026-09-27" },
+    [s.p],
+  )
+  s.record.draft.lead = [
+    { text: "Reuters는 9월 12일 IBC에서 직접 통합을 발표했다.", claim_ids: ["c1"] },
+    { text: "이 행사는 IBC2026에서 소개됐다.", claim_ids: ["c1"] },
+  ]
+  s.record.draft_id = sha256(JSON.stringify(s.record.draft))
+  s.review.draft_id = s.record.draft_id
+  s.review.published_at = "2026-09-12"
+  s.review.event_date_basis = {
+    kind: "source-stated-event-date",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    block_id: "p1:b1",
+    claim_id: "c1",
+    date_text: "12 September",
+    event_context_text: "during IBC",
+    year_text: "IBC2026",
+    year_context_block_id: "p1:b2",
+  }
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])
+  assert.equal(article.article_review.published_at, "2026-09-12")
+  assert.equal(article.article_review.source_published_at, null)
+  assert.equal(article.article_review.date_kind, "source-stated-event-date")
+  const publicReview = articleReview(
+    { meta: { article_reviews: [article.article_review] } },
+    article.title,
+    article.event_id,
+  )
+  const card = articleCard(
+    {
+      id: article.event_id,
+      title: article.title,
+      summary: article.record.lead,
+      urls: article.source_urls,
+      review: publicReview,
+    },
+    (path) => "/" + path,
+  )
+  assert.match(card, /발표 2026\.09\.12/)
+  assert.equal(publicReview.source_published_at, null)
+
+  const invalid = structuredClone(s.review)
+  invalid.event_date_basis.year_text = "IBC2025"
+  assert.throws(() => eventDateMetadata(invalid, s.claims, [s.p]), /Source-stated event date/)
+  const falseYear = structuredClone(s.p)
+  falseYear.blocks[1].text = "IBC2025 closed on Monday."
+  assert.throws(
+    () => eventDateMetadata(s.review, s.claims, [falseYear]),
+    /Source-stated event date/,
+  )
+})
+
 test("modification metadata, unrelated dates, missing quotes and unused event claims cannot establish an update", () => {
   const s = fixture()
   const mutations = [
@@ -356,6 +459,6 @@ test("reader metadata and cards distinguish updates without disclosing review no
   const invalid = { ...a.article_review, source_published_at: "2026-09-31" }
   assert.throws(
     () => articleReview({ meta: { article_reviews: [invalid] } }, a.title, a.event_id),
-    /Dated update/,
+    /Event date metadata/,
   )
 })

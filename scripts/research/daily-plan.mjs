@@ -2,9 +2,16 @@ import { validDay } from "./list-scan.mjs"
 
 const supportedApis = new Set([
   "hd-press-json-pages-v1",
+  "hd-disclosure-json-pages-v1",
   "kuka-news-form-pages-v1",
   "abb-newsbank-json-pages-v1",
+  "ur-news-center-json-pages-v1",
 ])
+
+export const DEFAULT_DAILY_RETRY_POLICY = Object.freeze({
+  max_attempts_per_window: 2,
+  blocked_requires_new_observation: true,
+})
 
 export function shiftDay(day, amount) {
   if (!validDay(day) || !Number.isInteger(amount))
@@ -199,6 +206,7 @@ export function planDailyWindows({
     kst_day: day,
     cutoff,
     cutoff_basis: cutoffBasis,
+    retry_policy: DEFAULT_DAILY_RETRY_POLICY,
     windows,
   }
 }

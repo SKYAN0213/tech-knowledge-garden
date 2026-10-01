@@ -4,7 +4,11 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { sha256 } from "../scripts/research/contracts.mjs"
-import { planExtractionBatches, extractClaims } from "../scripts/research/claims.mjs"
+import {
+  planExtractionBatches,
+  extractClaims,
+  extractionCandidateKey,
+} from "../scripts/research/claims.mjs"
 import { RunState } from "../scripts/research/run-state.mjs"
 import { main } from "../scripts/research.mjs"
 
@@ -48,6 +52,37 @@ function response(request) {
     provenance: { model: request.model, think: request.think },
   }
 }
+
+test("claim extraction keeps an explicit speaker separate from the claim subject", () => {
+  const request = planExtractionBatches([parse("release")]).batches[0].request
+  assert.match(request.messages[0].content, /preserve the named speaker/i)
+  assert.match(request.messages[0].content, /Keep subject as the entity the claim is about/i)
+})
+
+test("multi-source extraction requires a source selection or bundle and an explicit candidate identity", () => {
+  const documents = [{ source_id: "primary" }, { source_id: "secondary" }]
+  assert.throws(() => extractionCandidateKey(documents), /Select exact sources or bundle/)
+  assert.throws(
+    () => extractionCandidateKey(documents, { explicitlyGrouped: true }),
+    /candidate key is required/,
+  )
+  assert.throws(
+    () =>
+      extractionCandidateKey(documents, {
+        explicitlyGrouped: true,
+        candidateKey: "source-unrelated",
+      }),
+    /must identify one of its acquired sources/,
+  )
+  assert.equal(
+    extractionCandidateKey(documents, {
+      explicitlyGrouped: true,
+      candidateKey: "source-secondary",
+    }),
+    "source-secondary",
+  )
+  assert.equal(extractionCandidateKey([{ source_id: "only" }]), "source-only")
+})
 
 test("long multi-document extraction covers each original block once within the real request bound", () => {
   const sources = [parse("paper", 120, 1200), parse("release", 12, 500)]

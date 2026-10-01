@@ -197,7 +197,7 @@ test("daily handoff connects matching source content without declaring a shared 
         event_id: "abcdef0123456789",
         review_status: "verified",
       }),
-      candidate("second", "2026-09-28", { article_content_sha256: shared }),
+      candidate("second", "2026-09-29", { article_content_sha256: shared }),
     ],
   }
   const handoff = buildEditorialHandoff({
@@ -288,6 +288,35 @@ test("editorial handoff routes only exact published identities and keeps failed 
   assert.equal(handoff.candidate_published, false)
 })
 
+test("editorial handoff closes only daily windows backed by reconciled supplemental scans", () => {
+  const supplemental = plan.windows[1]
+  const handoff = buildEditorialHandoff({
+    plan,
+    receipts,
+    observations,
+    backlog,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+    supplementalWindows: [supplemental],
+  })
+  assert.equal(handoff.completed_windows, 2)
+  assert.deepEqual(handoff.incomplete_windows, [])
+  assert.deepEqual(handoff.supplemental_windows, [supplemental])
+  assert.throws(
+    () =>
+      buildEditorialHandoff({
+        plan,
+        receipts,
+        observations,
+        backlog,
+        issues,
+        observedAt: "2026-09-29T02:00:00Z",
+        supplementalWindows: [{ ...supplemental, until_exclusive: "2026-09-30" }],
+      }),
+    /uniquely match the stored daily plan/,
+  )
+})
+
 test("an approved but unpublished candidate is handed to edition assembly without repeating source review", () => {
   const approvedBacklog = structuredClone(backlog)
   const candidate = approvedBacklog.candidates.find((item) => item.key === "new")
@@ -297,6 +326,12 @@ test("an approved but unpublished candidate is handed to edition assembly withou
     approved_run: "private-article",
     article_sha256: "a".repeat(64),
   }
+  approvedBacklog.candidates.push({
+    ...structuredClone(candidate),
+    key: "zz-duplicate-source",
+    title: "Same reviewed article from another source candidate",
+    source_urls: ["https://example.com/duplicate-source"],
+  })
   const handoff = buildEditorialHandoff({
     plan,
     receipts,
@@ -308,9 +343,40 @@ test("an approved but unpublished candidate is handed to edition assembly withou
   const entry = handoff.pending.find((item) => item.key === "new")
   assert.equal(entry.next_route, "approved-unpublished")
   assert.deepEqual(entry.approval, candidate.approval)
+  assert.deepEqual(entry.same_approved_event_candidate_keys, ["zz-duplicate-source"])
+  assert.equal(
+    handoff.pending.filter((item) => item.next_route === "approved-unpublished").length,
+    1,
+  )
   assert.equal(handoff.counts.approved_unpublished, 1)
   assert.equal(handoff.counts.review_publication_time, 0)
   assert.deepEqual(handoff.review_workstreams[1].candidate_keys, ["new"])
+})
+
+test("editorial handoff carries stored alternative-source attempts alongside today's observations", () => {
+  const stored = structuredClone(backlog)
+  const historical = {
+    key: "new",
+    attempt_id: "approved-alternative-source",
+    source_url: "https://example.org/official-alternative",
+    source_role: "official_alternative",
+    article_source_version_id: "alternate-version",
+    article_parse_id: "alternate-parse",
+    article_content_sha256: "alternate-content",
+  }
+  stored.candidates.find((item) => item.key === "new").source_attempts = [historical]
+  const handoff = buildEditorialHandoff({
+    plan,
+    receipts,
+    observations,
+    backlog: stored,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+  })
+  const routed = handoff.pending.find((item) => item.key === "new")
+  assert.deepEqual(routed.source_attempts[0], historical)
+  assert.equal(routed.source_attempts[1].attempt_id, "complete-a1")
+  assert.equal(routed.observed_in_run, true)
 })
 
 test("editorial handoff refuses a completed candidate missing from the current backlog", () => {

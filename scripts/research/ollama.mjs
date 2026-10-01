@@ -131,6 +131,7 @@ export class Ollama {
         wall_ms: Math.round(performance.now() - started),
         total_duration: response.total_duration,
         load_duration: response.load_duration,
+        prompt_eval_duration: response.prompt_eval_duration,
         prompt_eval_count: response.prompt_eval_count,
         eval_count: response.eval_count,
         eval_duration: response.eval_duration,

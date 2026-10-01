@@ -21,6 +21,18 @@ const updateSchema = object({
   date_text: text,
   source_published_at: date,
 })
+const statedEventDateSchema = object({
+  kind: { type: "string", enum: ["source-stated-event-date"] },
+  source_id: text,
+  source_version_id: text,
+  parse_id: text,
+  block_id: text,
+  claim_id: text,
+  date_text: text,
+  event_context_text: text,
+  year_text: text,
+  year_context_block_id: text,
+})
 const months = [
   "January",
   "February",
@@ -47,6 +59,21 @@ export function civilDate(value) {
   return parseResearchDate(day)?.day || null
 }
 
+function civilDateWithYear(value, yearText) {
+  const direct = civilDate(value)
+  if (direct) return direct
+  const monthDay = /^(\d{1,2}) ([A-Za-z]+)$/.exec(value)
+  const dayMonth = /^([A-Za-z]+) (\d{1,2})$/.exec(value)
+  const month = monthDay?.[2] || dayMonth?.[1]
+  const day = monthDay?.[1] || dayMonth?.[2]
+  const year = /\d{4}/.exec(yearText || "")?.[0]
+  if (!month || !day || !year) return null
+  const monthName = months.findIndex((value) => value.toLowerCase() === month.toLowerCase()) + 1
+  if (!monthName) return null
+  const result = `${year}-${String(monthName).padStart(2, "0")}-${String(Number(day)).padStart(2, "0")}`
+  return parseResearchDate(result)?.day || null
+}
+
 export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
   const eligible = eventClaimIds ? used.filter((c) => eventClaimIds.includes(c.claim_id)) : used
   if (!review.event_date_basis) {
@@ -61,6 +88,42 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     return {}
   }
   const b = review.event_date_basis
+  if (b?.kind === "source-stated-event-date") {
+    assertSchema(b, statedEventDateSchema)
+    const p = parses.find(
+      (p) =>
+        p.parse_id === b.parse_id &&
+        p.source_id === b.source_id &&
+        p.source_version_id === b.source_version_id,
+    )
+    const block = p?.blocks.find((block) => block.block_id === b.block_id)
+    const yearBlock = p?.blocks.find((block) => block.block_id === b.year_context_block_id)
+    const claim = eligible.find((c) => c.claim_id === b.claim_id)
+    const eventDate = civilDateWithYear(b.date_text, b.year_text)
+    if (
+      !p ||
+      p.dates?.published_at !== null ||
+      !block ||
+      !yearBlock ||
+      !claim ||
+      eventDate !== review.published_at ||
+      !block.text.includes(b.date_text) ||
+      !block.text.includes(b.event_context_text) ||
+      !yearBlock.text.includes(b.year_text) ||
+      !claim.evidence.some(
+        (e) =>
+          e.source_id === b.source_id &&
+          e.source_version_id === b.source_version_id &&
+          e.parse_id === b.parse_id &&
+          e.block_id === b.block_id &&
+          e.quote.includes(b.date_text) &&
+          e.quote.includes(b.event_context_text) &&
+          e.support === "direct",
+      )
+    )
+      throw Error("Source-stated event date requires exact reviewed date and year context")
+    return { date_kind: "source-stated-event-date", source_published_at: null }
+  }
   assertSchema(b, updateSchema)
   const p = parses.find(
     (p) =>

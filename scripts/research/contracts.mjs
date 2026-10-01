@@ -29,7 +29,7 @@ export const CANDIDATE_STATES = [
   "deferred",
   "rejected",
 ]
-const transitions = {
+export const CANDIDATE_TRANSITIONS = {
   discovered: ["acquired", "deferred", "rejected"],
   acquired: ["parsed", "deferred", "rejected"],
   parsed: ["fact_review", "deferred", "rejected"],
@@ -40,7 +40,7 @@ const transitions = {
   rejected: [],
 }
 export function assertTransition(from, to) {
-  if (!transitions[from]?.includes(to))
+  if (!CANDIDATE_TRANSITIONS[from]?.includes(to))
     throw Error(`Invalid candidate transition: ${from} -> ${to}`)
 }
 export function requireText(value, label) {

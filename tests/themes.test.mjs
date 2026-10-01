@@ -136,6 +136,21 @@ test("treasury share purchases use the capital theme without implying an operati
   )
 })
 
+test("intellectual property disputes use an explicit ecosystem event tag", () => {
+  const text = body
+    .replace("**테마:** 투자·기업거래", "**테마:** 표준·생태계")
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "지식재산권 분쟁")
+  const result = classifyArticle(text, "Teradyne Robotics와 Elite Robots의 법적 분쟁")
+  assert.equal(result.theme, "표준·생태계")
+  assert.deepEqual(result.event_tags, ["지식재산권 분쟁"])
+  const meta = classificationMeta({
+    ...extractArticles(fixture())[0],
+    classification: result,
+  })
+  assert.equal(meta.tags.at(-1), "event/지식재산권-분쟁")
+})
+
 test("Combined news filters match secondary themes and exact entities, with Unicode-safe tag search", () => {
   const a = {
     text: "투자 발표",

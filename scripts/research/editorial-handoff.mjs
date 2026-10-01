@@ -6,7 +6,12 @@ import { sha256 } from "./contracts.mjs"
 import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { projectIntakeOntology, relatedCandidateKeys } from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
-import { readDailyReceipts, storedListScan, verifyDailyReceipts } from "./daily-scan.mjs"
+import {
+  readDailyReceipts,
+  storedListScan,
+  supplementalCoverageReceiptForWindow,
+  verifyDailyReceipts,
+} from "./daily-scan.mjs"
 
 const REVIEW_ROUTES = [
   "review-source-revision",
@@ -60,9 +65,24 @@ function queueEntry(candidate, observedAttempts) {
     publication: candidate.publication,
     possible_publications: candidate.possible_publications || [],
     related_candidates: candidate.related_candidates || [],
+    same_approved_event_candidate_keys: candidate.same_approved_event_candidate_keys || [],
+    ...(candidate.primary_candidate_key
+      ? { primary_candidate_key: candidate.primary_candidate_key }
+      : {}),
     next_route: candidate.next_route,
     observed_in_run: observedAttempts.length > 0,
-    source_attempts: observedAttempts,
+    source_attempts: [
+      ...(candidate.source_attempts || []),
+      ...observedAttempts.filter(
+        (observed) =>
+          !(candidate.source_attempts || []).some(
+            (stored) =>
+              stored.attempt_id === observed.attempt_id &&
+              stored.article_source_version_id === observed.article_source_version_id &&
+              stored.article_parse_id === observed.article_parse_id,
+          ),
+      ),
+    ],
     current_source_version_observed_in_run: versionMatches,
     source_evidence_state: !observedAttempts.length
       ? "not_observed"
@@ -151,7 +171,20 @@ export function buildEditorialHandoff({
   backlog,
   issues,
   observedAt,
+  supplementalWindows = [],
 }) {
+  if (
+    !Array.isArray(supplementalWindows) ||
+    supplementalWindows.some(
+      (window) => !plan.windows.some((planned) => sameWindow(window, planned)),
+    ) ||
+    new Set(
+      supplementalWindows.map(
+        (window) => `${window.channel_id}:${window.since}:${window.until_exclusive}`,
+      ),
+    ).size !== supplementalWindows.length
+  )
+    throw Error("Supplemental windows must uniquely match the stored daily plan")
   const attemptsByKey = new Map()
   const observationByAttemptKey = new Map(
     observations.map((item) => [`${item.attempt_id}:${item.key}`, item]),
@@ -236,7 +269,7 @@ export function buildEditorialHandoff({
     (planned) =>
       !receipts.some(
         (receipt) => receipt.status === "window_scanned" && sameWindow(receipt, planned),
-      ),
+      ) && !supplementalWindows.some((window) => sameWindow(window, planned)),
   )
   return {
     schema: "research-editorial-handoff/v1",
@@ -246,6 +279,9 @@ export function buildEditorialHandoff({
     observed_at: observedAt,
     completed_windows: plan.windows.length - incomplete_windows.length,
     incomplete_windows,
+    supplemental_windows: plan.windows.filter((window) =>
+      supplementalWindows.some((supplemental) => sameWindow(window, supplemental)),
+    ),
     counts: {
       pending: pending.length,
       pending_observed_in_run: pending.filter((candidate) => candidate.observed_in_run).length,
@@ -332,6 +368,17 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
         .at(-1)
     : plan.created_at
   const issues = all.map((edition) => ({ key: edition.slug, items: extractArticles(edition) }))
+  const coverageFile = safePath(root, "daily/route-coverage.json")
+  const coverageBytes = fs.existsSync(coverageFile) ? fs.readFileSync(coverageFile) : null
+  const coverage = coverageBytes ? JSON.parse(coverageBytes.toString("utf8")) : null
+  const supplementalWindows = plan.windows.flatMap((window) => {
+    const receipt = supplementalCoverageReceiptForWindow(
+      root,
+      coverage?.routes?.[window.channel_id],
+      window,
+    )
+    return receipt ? [window] : []
+  })
   const handoff = buildEditorialHandoff({
     plan,
     receipts,
@@ -339,6 +386,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     backlog,
     issues,
     observedAt,
+    supplementalWindows,
   })
   const input = {
     plan_sha256: sha256(fs.readFileSync(safePath(root, prefix + "plan.json"))),
@@ -346,11 +394,20 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     backlog_sha256: backlogBytes ? sha256(backlogBytes) : null,
     edition_inventory_sha256: sha256(JSON.stringify(inventory)),
     issue_projection_sha256: sha256(JSON.stringify(issues)),
+    daily_coverage_sha256: coverageBytes ? sha256(coverageBytes) : null,
+    supplemental_receipts_sha256: sha256(
+      JSON.stringify(
+        supplementalWindows.map((window) =>
+          supplementalCoverageReceiptForWindow(root, coverage?.routes?.[window.channel_id], window),
+        ),
+      ),
+    ),
     routing_code_sha256: sha256(
       [
         fs.readFileSync(new URL(import.meta.url)),
         fs.readFileSync(new URL("../research-window.mjs", import.meta.url)),
         fs.readFileSync(new URL("./intake-ontology.mjs", import.meta.url)),
+        fs.readFileSync(new URL("./daily-scan.mjs", import.meta.url)),
         fs.readFileSync(new URL("../article-identity.mjs", import.meta.url)),
       ]
         .map((bytes) => sha256(bytes))

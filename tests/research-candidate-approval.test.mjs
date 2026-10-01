@@ -6,6 +6,7 @@ import path from "node:path"
 import { canonicalURL } from "../scripts/garden.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { recordCandidateApproval } from "../scripts/research/candidate-approval.mjs"
+import { recordCandidateSourceAlternative } from "../scripts/research/candidate-source-alternative.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { approvedArticle } from "../scripts/research/publish-adapter.mjs"
@@ -164,6 +165,46 @@ function link(f, more = {}) {
   })
 }
 
+async function makeAlternativeResolution(
+  f,
+  { decision = "same_event", originalPublishedAt = "2026-09-30" } = {},
+) {
+  const backlog = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+  const candidate = backlog.candidates[0]
+  candidate.source_urls = ["https://example.org/original-release"]
+  candidate.source_published_at = originalPublishedAt
+  fs.writeFileSync(f.backlogFile, JSON.stringify(backlog))
+  const reviewPath = path.join(path.dirname(f.backlogFile), "alternative-review.json")
+  fs.writeFileSync(
+    reviewPath,
+    JSON.stringify({
+      schema: "research-candidate-source-alternative-review/v1",
+      candidate_key: candidate.key,
+      original_url: candidate.source_urls[0],
+      alternative_url: f.document.original_url,
+      decision,
+      reviewer: "fixture reviewer",
+      reviewed_at: "2026-09-30",
+      reason: "The official source confirms the same event and date.",
+      claim_ids: ["c1"],
+      new_article: false,
+      candidate_published: false,
+    }),
+  )
+  await recordCandidateSourceAlternative({
+    root: f.root,
+    runId: "alternative-resolution",
+    sourceRunId: "approved",
+    candidateKey: candidate.key,
+    reviewPath,
+    backlogFile: f.backlogFile,
+  })
+  return {
+    originalURL: candidate.source_urls[0],
+    originalVersion: candidate.article_source_version_id,
+  }
+}
+
 test("exact approved article closes a candidate without publishing and is idempotent", async (t) => {
   const f = fixture(t)
   const first = await link(f)
@@ -204,6 +245,24 @@ test("exact approved article closes a candidate without publishing and is idempo
       ),
     /approved article awaiting publication/,
   )
+})
+
+test("legacy candidate with missing source identity is enriched from its exact approved source", async (t) => {
+  const f = fixture(t)
+  const original = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+  delete original.candidates[0].article_source_version_id
+  delete original.candidates[0].article_parse_id
+  delete original.candidates[0].article_content_sha256
+  fs.writeFileSync(f.backlogFile, JSON.stringify(original))
+
+  const result = await link(f)
+  const updated = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const parse = readJSON(f.root, "runs/approved/parses.json")[0]
+  assert.equal(result.candidate_published, false)
+  assert.equal(updated.article_source_version_id, f.document.source_version_id)
+  assert.equal(updated.article_parse_id, parse.parse_id)
+  assert.equal(updated.article_content_sha256, articleContentFingerprint(parse))
+  assert.equal(updated.review_status, "verified")
 })
 
 test("approval link rejects changed evidence, article and conflicting identity before writing", async (t) => {
@@ -381,4 +440,83 @@ test("two reviewed originals can link to one approved event without creating a s
     new Set(backlog.candidates.map((candidate) => candidate.approval.article_sha256)).size,
     1,
   )
+  const window = researchWindow("2026-09-29T00:00:00Z", "2026-09-30T12:00:00Z", backlog, [])
+  assert.equal(window.pending.length, 1)
+  assert.equal(window.pending[0].same_approved_event_candidate_keys.length, 1)
+  assert.notEqual(window.pending[0].key, window.pending[0].same_approved_event_candidate_keys[0])
+  assert.equal(window.resolved[0].next_route, "same-approved-event")
+  assert.equal(window.resolved[0].primary_candidate_key, window.pending[0].key)
+})
+
+test("verified alternative links to the existing event while preserving original identity", async (t) => {
+  const f = fixture(t)
+  const { originalURL, originalVersion } = await makeAlternativeResolution(f)
+  const result = await link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" })
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  assert.equal(result.candidate_published, false)
+  assert.deepEqual(candidate.source_urls, [canonicalURL(originalURL)])
+  assert.equal(candidate.article_source_version_id, originalVersion)
+  assert.equal(candidate.review_status, "verified")
+  assert.equal(candidate.event_id, f.article.event_id)
+  assert.equal(candidate.alternate_sources[0].url, canonicalURL(f.document.original_url))
+  assert.equal(candidate.source_attempts[0].source_role, "official_alternative")
+  assert.equal(candidate.approval.source_url, canonicalURL(f.document.original_url))
+  assert.equal(
+    readJSON(f.root, "runs/candidate-link/candidate-approval.json").source_alternative.decision,
+    "same_event",
+  )
+  const before = fs.readFileSync(f.backlogFile)
+  assert.deepEqual(
+    await link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" }),
+    result,
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+  const receiptPath = path.join(f.root, "runs/candidate-link/candidate-approval.json")
+  const legacyReceipt = readJSON(f.root, "runs/candidate-link/candidate-approval.json")
+  delete legacyReceipt.source_alternative.published_at
+  fs.writeFileSync(receiptPath, JSON.stringify(legacyReceipt))
+  assert.deepEqual(
+    await link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" }),
+    result,
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+})
+
+test("same-event alternate publication date can establish the event date", async (t) => {
+  const f = fixture(t)
+  await makeAlternativeResolution(f, { originalPublishedAt: "2026-10-01" })
+  const result = await link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" })
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  assert.equal(result.event_id, f.article.event_id)
+  assert.equal(candidate.source_published_at, "2026-10-01")
+  assert.equal(candidate.event_id, f.article.event_id)
+  assert.equal(candidate.approval.approved_run, "approved")
+  assert.equal(
+    readJSON(f.root, "runs/candidate-link/candidate-approval.json").source_alternative.published_at,
+    f.article.article_review.published_at,
+  )
+})
+
+test("alternative approval rejects a changed review receipt before mutating the candidate", async (t) => {
+  const f = fixture(t)
+  await makeAlternativeResolution(f)
+  const reviewPath = path.join(
+    f.root,
+    "runs/alternative-resolution/candidate-source-alternative-review.json",
+  )
+  const review = readJSON(
+    f.root,
+    "runs/alternative-resolution/candidate-source-alternative-review.json",
+  )
+  review.reason = "Changed after resolution"
+  fs.writeFileSync(reviewPath, JSON.stringify(review))
+  const before = fs.readFileSync(f.backlogFile)
+  await assert.rejects(
+    () => link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" }),
+    /review input changed|does not match this candidate approval/,
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+  assert.equal(readJSON(f.root, "runs/candidate-link/candidate-approval.json"), null)
 })

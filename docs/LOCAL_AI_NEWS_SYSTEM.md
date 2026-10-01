@@ -306,16 +306,11 @@ Node는 수집과 작업 순서를 관리하고 Python은 보관된 문서를 �
 
 ```json
 {
-  "schema": "research-claim/v1",
-  "claim_id": "fixture-claim-001",
-  "candidate_key": "fixture-candidate-001",
-  "event_id": null,
   "statement": "시험 기업이 새 장비를 2027년 1분기에 공급할 계획이라고 발표했다.",
   "claim_kind": "attributed_fact",
-  "subject_id": "fixture-company",
+  "subject": "시험 기업",
   "event_state": "planned",
   "published_at": "2026-09-27",
-  "date_precision": "day",
   "effective_period": "2027-Q1",
   "numbers": [],
   "evidence": [
@@ -323,18 +318,15 @@ Node는 수집과 작업 순서를 관리하고 Python은 보관된 문서를 �
       "source_id": "fixture-source",
       "source_version_id": "fixture-version",
       "parse_id": "fixture-parse",
-      "block_id": "paragraph-004",
+      "block_id": "fixture-parse:paragraph-004",
       "quote": "새 장비를 2027년 1분기에 공급할 계획입니다.",
       "support": "direct"
     }
-  ],
-  "review": {
-    "status": "unreviewed",
-    "checks": [],
-    "reviewed_at": null
-  }
+  ]
 }
 ```
+
+위 객체는 Ollama `extractionSchema`에 전달되는 **모델 출력**이다. 저장된 `research-claim/v1`에는 여기에 `schema`, `claim_id`, `candidate_key`, `event_id`, 계산된 `review`가 추가된다. 날짜 정밀도는 임의의 `date_precision` 필드에 복제하지 않고 parse의 날짜 근거에 둔다. 예시를 실제 런타임 schema로 검사하는 회귀는 `tests/research-contracts.test.mjs`가 담당한다.
 
 수치 레코드는 `value_raw`, 정규화 값, 단위·통화, 기간, 기준 집단, 비교 대상, 실험 조건, 원문 block을 함께 가진다. 반올림·환산·계산값은 원 수치와 계산식을 남긴다. 비교 조건이 다르면 하나의 증감률로 계산하지 않는다.
 근거의 실제 HTML/PDF 위치는 parse_id·block_id가 가리키는 불변 추출물에서 읽는다. 주장 레코드에 다른 형식의 locator를 복제해 서로 불일치하는 위치 원본을 만들지 않는다.

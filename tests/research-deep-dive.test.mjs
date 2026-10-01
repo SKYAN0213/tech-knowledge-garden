@@ -492,6 +492,13 @@ test("deep writer uses kind roles, binds its context and includes separately lab
   assert.equal(record.draft_id, draftFingerprint(s.draft, s.context))
   assert.deepEqual(record.problems, [])
   assert.equal(requests[0].schema.properties.analysis.properties.claim_ids.minItems, 2)
+  assert.match(requests[0].messages[0].content, /subject와 구분해 그 발언자에게/)
+  assert.deepEqual(
+    JSON.parse(requests[0].messages[1].content)
+      .claims.map((claim) => claim.statement)
+      .sort(),
+    s.claims.map((claim) => claim.statement).sort(),
+  )
   assert.ok(JSON.parse(requests[0].messages[1].content).deep_basis.kind === "논문 해설")
   const preview = draftMarkdown(record, s.claims, s.documents)
   assert.ok(preview.includes("## 분석"))
@@ -620,19 +627,29 @@ test("deep CLI binds source files and preserves existing news mode without start
   assert.equal(approved.status, "approved")
   assert.equal(readJSON(root, `${dir}/approved-article.json`).record.kind, "기업 전략")
   assert.equal(loadCurrentApproval(root, run).article.record.kind, "기업 전략")
+  const approvedArticleBytes = fs.readFileSync(path.join(root, dir, "approved-article.json"))
   const alteredApproval = readJSON(root, `${dir}/approved-article.json`)
   alteredApproval.record.lead = "승인 후 교체한 미검토 문장"
   atomicWrite(root, `${dir}/approved-article.json`, alteredApproval)
   assert.throws(() => loadCurrentApproval(root, run), /Saved approval differs/)
-  await main([
-    "approve",
-    "--root",
-    root,
-    "--run",
-    run,
-    "--review",
-    path.join(root, "editorial-review.json"),
-  ])
+  await assert.rejects(
+    main([
+      "approve",
+      "--root",
+      root,
+      "--run",
+      run,
+      "--review",
+      path.join(root, "editorial-review.json"),
+    ]),
+    /immutable.*new run/i,
+  )
+  assert.equal(
+    readJSON(root, `${dir}/approved-article.json`).record.lead,
+    "승인 후 교체한 미검토 문장",
+  )
+  // Restore this test's deliberate fixture tampering; production approval is create-only.
+  atomicWrite(root, `${dir}/approved-article.json`, approvedArticleBytes)
   atomicWrite(root, `${dir}/draft.json`, {
     ...record,
     draft: { ...record.draft, title: "승인 후 바뀐 제목" },

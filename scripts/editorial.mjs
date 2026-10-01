@@ -5,6 +5,13 @@ import { titleDayKey } from "./article-identity.mjs"
 export const EDITORIAL_FORMAT = "six-w/v1"
 export const DEEP_KINDS = ["기업 전략", "논문 해설", "연구 사업화"]
 const text = (s) => typeof s === "string" && s.trim().length > 0
+const assertOnlyKeys = (value, keys, label) => {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    fail(`${label} must be an object`)
+  const allowed = new Set(keys)
+  const unexpected = Object.keys(value).find((key) => !allowed.has(key))
+  if (unexpected) fail(`unexpected ${label} field: ${unexpected}`)
+}
 const fail = (s) => {
   throw Error("Editorial: " + s)
 }
@@ -38,6 +45,24 @@ export function applyEditorial(issue, articles) {
     if (partial && a.review?.review_status !== "verified")
       fail("partial historical records require a verified article review")
     const r = matches[0]
+    assertOnlyKeys(
+      r,
+      [
+        "title",
+        "kind",
+        "region",
+        "lead",
+        "facts",
+        "papers",
+        "relations",
+        "topic_ids",
+        "explanations",
+        "analysis_summary",
+        "next_check",
+      ],
+      "article record",
+    )
+    assertOnlyKeys(r.facts, ["who", "when", "where", "what", "how", "why"], "six-w facts")
     if (!["사건 뉴스", ...DEEP_KINDS].includes(r.kind)) fail("invalid article kind")
     if (!["국내", "해외", "국제 공동"].includes(r.region)) fail("invalid region")
     // The projection escapes literal tildes so GFM does not strike through
@@ -50,6 +75,7 @@ export function applyEditorial(issue, articles) {
     if (r.explanations !== undefined) {
       if (!Array.isArray(r.explanations)) fail("explanations must be an array")
       for (const s of r.explanations) {
+        assertOnlyKeys(s, ["heading", "paragraphs", "source_urls"], "explanation")
         if (
           !text(s.heading) ||
           !Array.isArray(s.paragraphs) ||
@@ -71,6 +97,7 @@ export function applyEditorial(issue, articles) {
     if (!Array.isArray(r.papers) || !Array.isArray(r.relations) || !Array.isArray(r.topic_ids))
       fail("papers, relations and topic_ids require explicit arrays")
     for (const p of r.papers) {
+      assertOnlyKeys(p, ["work_id", "identifiers", "access", "status", "evidence_url"], "paper")
       if (!text(p.work_id) || !/^[a-z0-9-]+$/.test(p.work_id) || works.has(p.work_id))
         fail("duplicate or invalid paper work_id")
       works.add(p.work_id)
@@ -86,6 +113,20 @@ export function applyEditorial(issue, articles) {
     if (r.kind === "논문 해설" && (!r.papers.length || r.papers.some((p) => p.access !== "전문")))
       fail("deep paper analysis requires full text")
     for (const rel of r.relations) {
+      assertOnlyKeys(
+        rel,
+        [
+          "person_id",
+          "person_name",
+          "affiliation",
+          "organization",
+          "role",
+          "claim",
+          "as_of",
+          "evidence_urls",
+        ],
+        "relationship",
+      )
       if (!["공동저자", "기술자문", "기술이전", "공동창업", "창업", "소속"].includes(rel.role))
         fail("invalid relationship role")
       for (const k of ["person_id", "person_name", "affiliation", "organization", "claim", "as_of"])
@@ -135,8 +176,29 @@ export function applyEditorial(issue, articles) {
     fail("choose 3-5 real headlines, or all when fewer")
   return articles
 }
+const publicEditorialFields = [
+  "kind",
+  "region",
+  "lead",
+  "facts",
+  "explanations",
+  "papers",
+  "relations",
+  "topic_ids",
+  "analysis_summary",
+]
 export const editorialMeta = (a) =>
-  a.editorial ? { editorial_format: EDITORIAL_FORMAT, ...a.editorial, title: a.title } : {}
+  a.editorial
+    ? {
+        editorial_format: EDITORIAL_FORMAT,
+        title: a.title,
+        ...Object.fromEntries(
+          publicEditorialFields
+            .filter((field) => Object.hasOwn(a.editorial, field))
+            .map((field) => [field, structuredClone(a.editorial[field])]),
+        ),
+      }
+    : {}
 export const topArticles = (i) =>
   i.highlights ||
   (i.original.meta.headlines || []).map((t) => i.items.find((a) => a.title === t)).filter(Boolean)

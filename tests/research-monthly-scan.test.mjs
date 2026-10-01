@@ -20,6 +20,7 @@ const channel = {
     rule_id: "github-changelog-month-v1",
     pagination: "calendar-month",
     url_template: "https://github.blog/changelog/{year}/{month}/",
+    empty_state: { text_pattern: "^Nothing to see here\\.\\.\\. yet!$" },
   },
 }
 const article = (day, slug) => ({
@@ -81,6 +82,50 @@ test("calendar archive requires its month marker and exact article dates", () =>
   assert.equal(
     assessCalendarMonthIndex(unseenArticle, channel, url, month).reason,
     "archive_unprofiled_article_link",
+  )
+})
+
+test("calendar archive accepts only its explicitly configured empty state", () => {
+  const month = { year: 2026, month: 10, key: "2026-10" }
+  const url = "https://github.blog/changelog/2026/10/"
+  const parsed = {
+    parse_id: "empty-2026-10",
+    status: "extracted",
+    title: "Nothing to see here... yet!",
+    quality: { required_fields_present: true },
+    blocks: [
+      { kind: "heading", text: "Nothing to see here... yet!" },
+      { kind: "paragraph", text: "Try adjusting your filters or check back later." },
+    ],
+    links: [],
+    link_profiles: [
+      {
+        id: "github-changelog-month-v1",
+        status: "no-match",
+        selected_items: 0,
+        matched_links: 0,
+        truncated: false,
+      },
+    ],
+  }
+  const accepted = assessCalendarMonthIndex(parsed, channel, url, month)
+  assert.equal(accepted.status, "month_scanned")
+  assert.equal(accepted.confirmed_empty, true)
+  assert.deepEqual(accepted.links, [])
+  const unmarked = structuredClone(parsed)
+  unmarked.blocks[0].text = "No announcements"
+  assert.equal(
+    assessCalendarMonthIndex(unmarked, channel, url, month).reason,
+    "archive_month_marker_missing",
+  )
+  const hiddenArticle = structuredClone(parsed)
+  hiddenArticle.links.push({
+    url: "https://github.blog/changelog/2026-10-01-hidden-entry",
+    text: "Unprofiled article",
+  })
+  assert.equal(
+    assessCalendarMonthIndex(hiddenArticle, channel, url, month).reason,
+    "archive_month_marker_missing",
   )
 })
 
@@ -157,4 +202,49 @@ test("a window across months reads both full archives before selecting details",
   assert.equal(incomplete.summary.status, "incomplete")
   assert.equal(incomplete.summary.reason, "archive_month_marker_missing")
   assert.equal(selected.length, 0)
+})
+
+test("calendar scan records a confirmed empty month without inventing details", async () => {
+  const url = "https://github.blog/changelog/2026/10/"
+  const document = {
+    original_url: url,
+    final_url: url,
+    fetch_status: "captured",
+    source_version_id: `${url}:empty-version`,
+    observed_at: "2026-10-01T00:00:00Z",
+  }
+  const parse = {
+    parse_id: "empty-2026-10",
+    status: "extracted",
+    title: "Nothing to see here... yet!",
+    quality: { required_fields_present: true },
+    blocks: [{ kind: "heading", text: "Nothing to see here... yet!" }],
+    links: [],
+    link_profiles: [
+      {
+        id: "github-changelog-month-v1",
+        status: "no-match",
+        selected_items: 0,
+        matched_links: 0,
+        truncated: false,
+      },
+    ],
+  }
+  const result = await scanCalendarMonthRoute(
+    "private",
+    { stage: async (_stage, _input, action) => action() },
+    {},
+    channel,
+    [],
+    { since: "2026-10-01", until: "2026-10-02" },
+    {
+      fetchPolicy: async () => document,
+      parse: async () => parse,
+      collectDetails: async () => assert.fail("empty month must not request article details"),
+    },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.summary.candidate_count, 0)
+  assert.equal(result.summary.pages[0].confirmed_empty, true)
+  assert.deepEqual(result.candidates, [])
 })

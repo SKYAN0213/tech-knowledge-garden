@@ -783,6 +783,7 @@
       "research_languages": ["ko", "en"],
       "source_urls": [
         "https://www.doosanrobotics.com/en/about/promotion/news/",
+        "https://www.doosanrobotics.com/kr/about/promotion/news/",
         "https://www.doosanrobotics.com/en/investment/ir/irdata/"
       ],
       "source_routes": [
@@ -791,6 +792,15 @@
           "url": "https://www.doosanrobotics.com/en/about/promotion/news/",
           "language": "en",
           "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.doosanrobotics.com"]
+        },
+        {
+          "route_id": "doosan-news-ko",
+          "url": "https://www.doosanrobotics.com/kr/about/promotion/news/",
+          "language": "ko",
+          "axis": "기업·운영",
           "kind": "company",
           "method": "html-list",
           "allowed_hosts": ["www.doosanrobotics.com"]
@@ -954,7 +964,10 @@
       "research_languages": ["ja", "en"],
       "source_urls": [
         "https://www.yaskawa.co.jp/news",
-        "https://www.yaskawa-global.com/newsrelease"
+        "https://www.yaskawa-global.com/newsrelease",
+        "https://www.yaskawa-global.com/category/news",
+        "https://www.yaskawa-global.com/category/product",
+        "https://www.yaskawa-global.com/category/ir"
       ],
       "source_routes": [
         {
@@ -974,11 +987,38 @@
           "kind": "company",
           "method": "html-list",
           "allowed_hosts": ["www.yaskawa-global.com"]
+        },
+        {
+          "route_id": "yaskawa-company-news-en",
+          "url": "https://www.yaskawa-global.com/category/news",
+          "language": "en",
+          "axis": "기업·운영",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.yaskawa-global.com"]
+        },
+        {
+          "route_id": "yaskawa-product-en",
+          "url": "https://www.yaskawa-global.com/category/product",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.yaskawa-global.com"]
+        },
+        {
+          "route_id": "yaskawa-ir-en",
+          "url": "https://www.yaskawa-global.com/category/ir",
+          "language": "en",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": ["www.yaskawa-global.com"]
         }
       ],
       "status": "registered",
       "registered_at": "2026-09-27",
-      "review_scope": "탐색 경로 등록; 본문 취재·파싱 활성화·제품 성능 검증 아님"
+      "review_scope": "공식 글로벌 뉴스·신제품 목록과 상세 원문을 공통 수집기로 실제 수집하고 날짜 경계 검증; 편집 승인·성능 검증은 별도"
     },
     {
       "id": "kawasaki-robotics",

@@ -6,7 +6,12 @@ import path from "node:path"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
-import { loadEvaluationCase, saveEvaluationCase } from "../scripts/research/evaluation.mjs"
+import {
+  loadEvaluationCase,
+  auditEvaluationCases,
+  saveEvaluationAdjudication,
+  saveEvaluationCase,
+} from "../scripts/research/evaluation.mjs"
 import { main } from "../scripts/research.mjs"
 
 function fixture(t) {
@@ -24,6 +29,7 @@ function fixture(t) {
     original_url: url,
     final_url: url,
     fetch_status: "captured",
+    mime_type: "text/html; charset=utf-8",
     observed_at: "2026-09-26T01:00:00Z",
     body_path: `sources/${source_id}/${sha256(body)}/body.bin`,
     body_sha256: sha256(body),
@@ -95,6 +101,69 @@ function fixture(t) {
     ],
   }
   return { root, spec, document, parse, claim }
+}
+
+function candidateRun(root, runId, claims) {
+  const relative = `evaluation/fixtures/source-plan-01/runs/${runId}`
+  const claimsFile = `${relative}/claims.json`
+  const claimsDocument = { claims }
+  atomicWrite(root, claimsFile, claimsDocument)
+  atomicWrite(root, `${relative}/state.json`, {
+    schema: "research-run/v1",
+    run_id: runId,
+    candidate_published: false,
+    stages: {
+      claims: {
+        status: "complete",
+        started_at: "2026-09-27T01:00:00.000Z",
+        finished_at: "2026-09-27T01:05:00.000Z",
+        result_path: claimsFile.slice("evaluation/fixtures/source-plan-01/".length),
+        result_hash: sha256(JSON.stringify(claimsDocument)),
+      },
+    },
+  })
+  atomicWrite(root, `${relative}/model-policy/fact_extract/budget.json`, {
+    schema: "model-budget/v1",
+    binding: {
+      role: "fact_extract",
+      settings: { model: "qwen3.8:27b", think: false },
+      model_digest: "model-digest",
+      runtime: "0.34.4",
+      policy_sha256: "policy-hash",
+    },
+    attempts: [
+      {
+        status: "complete",
+        result: {
+          provenance: { model: "qwen3.8:27b", digest: "model-digest", wall_ms: 3000 },
+        },
+      },
+    ],
+  })
+}
+
+function adjudicationInput(spec, runId, claimId, overrides = {}) {
+  return {
+    schema: "evaluation-source-adjudication-input/v1",
+    case_id: spec.case_id,
+    candidate_run: runId,
+    reviewer: "Codex source review",
+    reviewer_kind: "codex",
+    independent_human_review: false,
+    reviewed_at: "2026-09-28T00:00:00.000Z",
+    gold_fact_coverage: [
+      {
+        fact_id: spec.facts[0].fact_id,
+        coverage: "full",
+        candidate_claim_ids: [claimId],
+        reason: "Source reviewed; required number and timing are preserved.",
+      },
+    ],
+    manual_source_enrichment: false,
+    raw_model_pass: false,
+    notes: "Development fixture observation only.",
+    ...overrides,
+  }
 }
 
 test("frozen evaluation sources survive working-cache changes and replay without adding cases", async (t) => {
@@ -174,6 +243,45 @@ test("held-out cases reject synthetic or exposed criteria and false independence
     }),
     /exposed/,
   )
+})
+
+test("evaluation audit counts unique immutable source snapshots and reports split gaps", async (t) => {
+  const { root, spec } = fixture(t)
+  const actual = { ...spec, origin: "actual-source" }
+  await saveEvaluationCase(root, "import", "source", actual)
+  await saveEvaluationCase(root, "import", "source", { ...actual, case_id: "source-plan-02" })
+
+  const audit = auditEvaluationCases(root, { development: 2, heldout: 1 })
+  assert.equal(audit.status, "read_only_audit")
+  assert.equal(audit.registered_case_revisions, 2)
+  assert.equal(audit.unique_actual_source_snapshots, 1)
+  assert.equal(audit.duplicate_source_snapshot_revisions, 1)
+  assert.deepEqual(audit.progress_by_split, {
+    development: { count: 1, target: 2, remaining: 1 },
+    heldout: { count: 0, target: 1, remaining: 1 },
+  })
+  assert.equal(audit.candidate_published, false)
+  assert.equal(audit.public_verified, false)
+  assert.deepEqual(audit.dimensions.unique_documents_by_media_type, { html: 1 })
+  assert.deepEqual(audit.dimensions.parser_engines, { unknown: 1 })
+  assert.equal(audit.dimensions.pdf_cases, 0)
+  assert.equal(audit.dimensions.cases_with_ocr_pages, 0)
+
+  await saveEvaluationCase(root, "import", "source", {
+    ...actual,
+    case_id: "source-plan-heldout",
+    split: "heldout",
+    review: {
+      ...actual.review,
+      reviewer: "Independent reviewer",
+      reviewer_kind: "human",
+      independent_of_candidate_output: true,
+    },
+  })
+  const contaminated = auditEvaluationCases(root, { development: 2, heldout: 1 })
+  assert.equal(contaminated.status, "integrity_review_required")
+  assert.equal(contaminated.conflicting_split_snapshots, 1)
+  assert.equal(contaminated.unique_actual_source_snapshots, 0)
 })
 
 test("gold rejects impossible dates, unsupported facts and disconnected explanations", async (t) => {
@@ -476,5 +584,85 @@ test("case versions preserve the old criteria and require the identical source s
   await assert.rejects(
     saveEvaluationCase(root, "import", "source", { ...spec, supersedes: spec.case_id }),
     /different case/,
+  )
+})
+
+test("source adjudication recomputes evidence checks, pins provenance and is idempotent", async (t) => {
+  const { root, spec, claim } = fixture(t)
+  await saveEvaluationCase(root, "import", "source", spec)
+  const runId = "candidate-qwen-01"
+  candidateRun(root, runId, [{ ...claim, claim_id: "candidate-fact-01" }])
+  const review = adjudicationInput(spec, runId, "candidate-fact-01")
+  const first = await saveEvaluationAdjudication(
+    root,
+    "adjudication-01",
+    spec.case_id,
+    runId,
+    review,
+  )
+  assert.equal(first.idempotent, false)
+  assert.equal(first.candidate_claim_count, 1)
+  assert.equal(first.structural_pass_count, 1)
+  assert.deepEqual(first.semantic_coverage, { full: 1, partial: 0, missing: 0 })
+  const receipt = readJSON(root, "evaluation/runs/adjudication-01/source-review.json")
+  assert.equal(receipt.case_status, "synthetic")
+  assert.equal(receipt.provenance.model, "qwen3.8:27b")
+  assert.equal(receipt.provenance.total_model_wall_ms, 3000)
+  assert.equal(receipt.public_approved, false)
+  assert.deepEqual(
+    await saveEvaluationAdjudication(root, "adjudication-01", spec.case_id, runId, review),
+    { ...first, idempotent: true },
+  )
+})
+
+test("source adjudication rejects missing gold facts and claims absent from the frozen run", async (t) => {
+  const { root, spec, claim } = fixture(t)
+  await saveEvaluationCase(root, "import", "source", spec)
+  const runId = "candidate-qwen-02"
+  candidateRun(root, runId, [{ ...claim, claim_id: "candidate-fact-02" }])
+  const review = adjudicationInput(spec, runId, "candidate-fact-02")
+  await assert.rejects(
+    saveEvaluationAdjudication(root, "missing-gold", spec.case_id, runId, {
+      ...review,
+      gold_fact_coverage: [],
+    }),
+    /Missing items at \$\.gold_fact_coverage/,
+  )
+  await assert.rejects(
+    saveEvaluationAdjudication(root, "foreign-claim", spec.case_id, runId, {
+      ...review,
+      gold_fact_coverage: [
+        { ...review.gold_fact_coverage[0], candidate_claim_ids: ["not-in-run"] },
+      ],
+    }),
+    /Unknown candidate claim/,
+  )
+  assert.equal(readJSON(root, "evaluation/runs/missing-gold/source-review.json"), null)
+  assert.equal(readJSON(root, "evaluation/runs/foreign-claim/source-review.json"), null)
+})
+
+test("source adjudication cannot pass a structurally invalid or incomplete candidate", async (t) => {
+  const { root, spec, claim } = fixture(t)
+  await saveEvaluationCase(root, "import", "source", spec)
+  const runId = "candidate-qwen-03"
+  candidateRun(root, runId, [
+    {
+      ...claim,
+      claim_id: "candidate-fact-03",
+      evidence: [{ ...claim.evidence[0], quote: "not present in the source" }],
+    },
+  ])
+  const review = adjudicationInput(spec, runId, "candidate-fact-03", { raw_model_pass: true })
+  await assert.rejects(
+    saveEvaluationAdjudication(root, "raw-fail", spec.case_id, runId, review),
+    /Raw model pass requires structurally supported claims and full gold coverage/,
+  )
+  await assert.rejects(
+    saveEvaluationAdjudication(root, "codex-human", spec.case_id, runId, {
+      ...review,
+      raw_model_pass: false,
+      independent_human_review: true,
+    }),
+    /requires a human reviewer/,
   )
 })

@@ -300,11 +300,44 @@ test("search configuration is loopback-only, persistent, private and uses free e
   assert.equal(prepareSearchConfig(root, 8991).sha256, config.sha256)
   const data = JSON.parse(fs.readFileSync(config.path))
   assert.deepEqual(data.use_default_settings.engines.keep_only, SEARCH_ENGINES)
+  assert.ok(SEARCH_ENGINES.includes("mwmbl"))
+  assert.ok(SEARCH_ENGINES.includes("yahoo"))
+  assert.ok(!SEARCH_ENGINES.includes("brave"))
+  assert.ok(!SEARCH_ENGINES.includes("qwant"))
   atomicWrite(root, "runtime/search/config-8991.json", {
     ...data,
     server: { ...data.server, bind_address: "0.0.0.0" },
   })
   assert.throws(() => prepareSearchConfig(root, 8991), /private\/free policy/)
+})
+
+test("private legacy search configs add free engines while preserving secret and loopback policy", (t) => {
+  for (const [port, legacyEngines] of [
+    [8992, ["google", "bing", "duckduckgo", "naver", "wikipedia"]],
+    [8993, ["google", "bing", "duckduckgo", "naver", "wikipedia", "brave"]],
+    [8994, ["google", "bing", "duckduckgo", "naver", "wikipedia", "brave", "mwmbl"]],
+    [8995, ["google", "bing", "duckduckgo", "naver", "wikipedia", "mwmbl"]],
+  ]) {
+    const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-search-upgrade-")))
+    t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+    const initial = prepareSearchConfig(root, port)
+    const config = JSON.parse(fs.readFileSync(initial.path, "utf8"))
+    const secret = config.server.secret_key
+    config.use_default_settings.engines.keep_only = legacyEngines
+    config.engines = legacyEngines.map((name) => ({ name, disabled: false }))
+    atomicWrite(root, `runtime/search/config-${port}.json`, config)
+
+    const upgraded = prepareSearchConfig(root, port)
+    const actual = JSON.parse(fs.readFileSync(upgraded.path, "utf8"))
+    assert.deepEqual(actual.use_default_settings.engines.keep_only, SEARCH_ENGINES)
+    assert.deepEqual(
+      actual.engines.map((engine) => engine.name),
+      SEARCH_ENGINES,
+    )
+    assert.equal(actual.server.secret_key, secret)
+    assert.equal(actual.server.bind_address, "127.0.0.1")
+    assert.equal(fs.statSync(upgraded.path).mode & 0o777, 0o600)
+  }
 })
 
 test("model search plans cover both axes and regions in every sector with local languages", async () => {
@@ -537,19 +570,77 @@ test("a search response retains engine failures and never follows a redirect", a
     ],
     unresponsive_engines: [["duckduckgo", "CAPTCHA"]],
   }
-  let request
+  const requests = []
   const search = new SearxSearch({
     url: "http://127.0.0.1:8888",
     fetchImpl: async (url, options) => {
-      request = { url: url.toString(), options }
-      return { ok: true, json: async () => response }
+      requests.push({ url: new URL(url), options })
+      const q = new URL(url).searchParams.get("q")
+      const body = q.startsWith("!mwmbl ")
+        ? {
+            results: [
+              {
+                title: "Supplemental index result",
+                url: "https://example.com/mwmbl-news",
+                engines: ["mwmbl"],
+              },
+            ],
+            unresponsive_engines: [],
+          }
+        : q.startsWith("!yahoo ")
+          ? {
+              results: [
+                {
+                  title: "Yahoo supplemental result",
+                  url: "https://example.com/yahoo-news",
+                  engines: ["yahoo"],
+                },
+              ],
+              unresponsive_engines: [],
+            }
+          : response
+      return { ok: true, json: async () => body }
     },
   })
   const result = await search.search({ query: "technical news", language: "en" })
-  assert.equal(request.options.redirect, "error")
-  assert.equal(result.engine_count, 2)
+  assert.equal(requests.length, 3)
+  assert.equal(requests[0].options.redirect, "error")
+  assert.equal(requests[1].options.redirect, "error")
+  assert.match(requests[1].url.searchParams.get("q"), /^!mwmbl /)
+  assert.equal(requests[1].url.searchParams.has("time_range"), false)
+  assert.equal(requests[2].options.redirect, "error")
+  assert.match(requests[2].url.searchParams.get("q"), /^!yahoo /)
+  assert.equal(requests[2].url.searchParams.has("time_range"), false)
+  assert.equal(result.engine_count, 4)
+  assert.deepEqual(result.engines, ["bing", "google", "mwmbl", "yahoo"])
+  assert.deepEqual(result.supplemental_engines, ["mwmbl", "yahoo"])
   assert.deepEqual(result.failures, response.unresponsive_engines)
-  assert.equal(new URL(request.url).searchParams.get("format"), "json")
+  assert.equal(requests[0].url.searchParams.get("format"), "json")
+})
+
+test("an unavailable supplemental engine preserves primary search results", async () => {
+  const search = new SearxSearch({
+    url: "http://127.0.0.1:8888",
+    fetchImpl: async (url) => {
+      if (new URL(url).searchParams.get("q").startsWith("!")) return { ok: false, status: 503 }
+      return {
+        ok: true,
+        json: async () => ({
+          results: [
+            { title: "Primary result", url: "https://example.com/news", engines: ["google"] },
+          ],
+          unresponsive_engines: [],
+        }),
+      }
+    },
+  })
+  const result = await search.search({ query: "robotics investment 2026", language: "en" })
+  assert.equal(result.links.length, 1)
+  assert.deepEqual(result.engines, ["google"])
+  assert.deepEqual(result.failures, [
+    ["mwmbl", "HTTP_503"],
+    ["yahoo", "HTTP_503"],
+  ])
 })
 
 test("search results distinguish a newsroom index from an article or product source", () => {
@@ -598,12 +689,14 @@ test("registered-source discovery keeps only links from the targeted host", asyn
         { url: "https://example.com/ai/article", text: "다른 출처에서 재배포한 기사" },
       ],
       failures: [],
-      engine_count: 1,
+      engines: ["google", "mwmbl"],
+      engine_count: 2,
     }),
   }
   const result = await discoverSearch(root, "run", service, [query])
   assert.equal(result.records[0].result_count, 2)
   assert.equal(result.records[0].candidate_count, 1)
+  assert.deepEqual(result.records[0].engines, ["google", "mwmbl"])
   assert.deepEqual(
     result.candidates.map((candidate) => candidate.source_urls[0]),
     ["https://www.kakaocorp.com/page/detail/12150"],

@@ -1,18 +1,20 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
+import { spawnSync } from "node:child_process"
 import os from "node:os"
 import path from "node:path"
-import { sha256 } from "../scripts/research/contracts.mjs"
+import { sha256, sourceId, sourceVersionId } from "../scripts/research/contracts.mjs"
 import {
   assertVerifiedClaim,
   recordFactReview,
   validateEvidence,
 } from "../scripts/research/claims.mjs"
-import { archiveManifest } from "../scripts/research/archive.mjs"
+import { archiveManifest, packageResearchArchive } from "../scripts/research/archive.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
 import { coverageGrid } from "../scripts/research/discovery.mjs"
 import { fetchWithPolicy } from "../scripts/research/source-policy.mjs"
+import { SourceFetcher } from "../scripts/research/fetch.mjs"
 import {
   parseResearchDate,
   samePublicationDate,
@@ -336,6 +338,92 @@ test("a repeated research archive never includes its previous manifest", (t) => 
     assert.equal(sha256(fs.readFileSync(path.join(root, item.path))), item.sha256)
 })
 
+test("research archive binds each captured source version to its verified raw bytes", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-source-archive-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const url = "https://example.org/report.pdf",
+    body = Buffer.from("original PDF bytes"),
+    source_id = sourceId(url),
+    body_sha256 = sha256(body),
+    body_path = `documents/${source_id}/${body_sha256}/body.bin`
+  atomicWrite(root, body_path, body)
+  atomicWrite(root, "runs/sample/documents.json", [
+    {
+      fetch_status: "captured",
+      source_id,
+      source_version_id: sourceVersionId(source_id, body_sha256),
+      body_sha256,
+      body_path,
+    },
+    { fetch_status: "blocked", source_id: "blocked", body_sha256: null, body_path: null },
+  ])
+
+  const manifest = archiveManifest(root, "sample")
+  assert.deepEqual(
+    manifest.files.filter((file) => file.drive_root === "Sources"),
+    [
+      {
+        path: body_path,
+        bytes: body.length,
+        sha256: body_sha256,
+        drive_root: "Sources",
+        public: false,
+        source_id,
+        source_version_id: sourceVersionId(source_id, body_sha256),
+      },
+    ],
+  )
+  atomicWrite(root, body_path, "changed bytes")
+  assert.throws(() => archiveManifest(root, "sample"), /body hash mismatch/)
+})
+
+test("private run package is self-contained, integrity checked and immutable by run ID", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-package-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const url = "https://example.org/report.pdf",
+    body = Buffer.from("original PDF bytes"),
+    source_id = sourceId(url),
+    body_sha256 = sha256(body),
+    body_path = `documents/${source_id}/${body_sha256}/body.bin`
+  atomicWrite(root, body_path, body)
+  atomicWrite(root, "runs/sample/documents.json", [
+    {
+      fetch_status: "captured",
+      source_id,
+      source_version_id: sourceVersionId(source_id, body_sha256),
+      body_sha256,
+      body_path,
+    },
+  ])
+  atomicWrite(root, "runs/sample/state.json", { candidate_published: false })
+  const manifest = archiveManifest(root, "sample")
+  atomicWrite(root, "runs/sample/archive-manifest.json", manifest)
+
+  const first = packageResearchArchive(root, "sample")
+  const second = packageResearchArchive(root, "sample")
+  assert.deepEqual(second, first)
+  assert.equal(first.source_versions, 1)
+  assert.equal(first.drive_verified, false)
+  const packagePath = path.join(root, first.path)
+  const inspected = spawnSync(
+    "python3",
+    [
+      "-c",
+      "import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps(z.namelist())); assert z.testzip() is None",
+      packagePath,
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(inspected.status, 0, inspected.stderr)
+  const members = JSON.parse(inspected.stdout)
+  assert.ok(members.includes(`Sources/LocalAI/${source_id}/${body_sha256}/body.bin`))
+  assert.ok(members.includes("Research/LocalAI/runs/sample/state.json"))
+  assert.ok(members.includes("Research/LocalAI/runs/sample/archive-package-manifest.json"))
+
+  atomicWrite(root, body_path, "tampered PDF bytes")
+  assert.throws(() => packageResearchArchive(root, "sample"), /input changed after manifest/)
+})
+
 test("failed research routes are not classified as partial content coverage", () => {
   const route = {
     channel_id: "failed-1",
@@ -384,4 +472,113 @@ test("direct acquisition refuses forbidden or corrupt robots policy without fetc
   assert.equal(failed.fetch_status, "blocked")
   assert.match(failed.error, /hash mismatch/)
   assert.equal(calls.filter((url) => url.includes("article")).length, 0)
+})
+
+test("redirects require an allowed host and an allowed destination robots rule", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-policy-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const calls = []
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+    transport: async (url) => {
+      calls.push(url.href)
+      if (url.hostname === "source.example" && url.pathname === "/robots.txt")
+        return {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+          body: Buffer.from("User-agent: *\nAllow: /\n"),
+        }
+      if (url.hostname === "source.example")
+        return {
+          status: 302,
+          headers: { location: "https://destination.example/private/story" },
+          body: Buffer.alloc(0),
+        }
+      if (url.hostname === "destination.example" && url.pathname === "/robots.txt")
+        return {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+          body: Buffer.from("User-agent: *\nDisallow: /private\n"),
+        }
+      throw Error("destination article must not be fetched")
+    },
+  })
+  const result = await fetchWithPolicy(root, fetcher, "https://source.example/story", {
+    allowed_hosts: ["source.example", "destination.example"],
+  })
+  assert.equal(result.fetch_status, "blocked")
+  assert.equal(result.policy_status, "denied")
+  assert.equal(result.redirect_chain[0].policy_status, "denied")
+  assert.deepEqual(calls, [
+    "https://source.example/robots.txt",
+    "https://source.example/story",
+    "https://destination.example/robots.txt",
+  ])
+})
+
+test("redirect to an unregistered host is recorded as a policy denial", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-host-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const calls = []
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+    transport: async (url) => {
+      calls.push(url.href)
+      if (url.pathname === "/robots.txt")
+        return {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+          body: Buffer.from("User-agent: *\nAllow: /\n"),
+        }
+      return {
+        status: 302,
+        headers: { location: "https://unregistered.example/story" },
+        body: Buffer.alloc(0),
+      }
+    },
+  })
+  const result = await fetchWithPolicy(root, fetcher, "https://source.example/story")
+  assert.equal(result.fetch_status, "blocked")
+  assert.equal(result.policy_status, "denied")
+  assert.equal(result.redirect_chain[0].policy_error, "Host outside channel policy")
+  assert.deepEqual(calls, ["https://source.example/robots.txt", "https://source.example/story"])
+})
+
+test("redirect destination whose robots policy cannot be read is blocked", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-robots-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const calls = []
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+    transport: async (url) => {
+      calls.push(url.href)
+      if (url.hostname === "source.example" && url.pathname === "/robots.txt")
+        return {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+          body: Buffer.from("User-agent: *\nAllow: /\n"),
+        }
+      if (url.hostname === "source.example")
+        return {
+          status: 302,
+          headers: { location: "https://destination.example/story" },
+          body: Buffer.alloc(0),
+        }
+      return { status: 403, headers: {}, body: Buffer.alloc(0) }
+    },
+  })
+  const result = await fetchWithPolicy(root, fetcher, "https://source.example/story", {
+    allowed_hosts: ["source.example", "destination.example"],
+  })
+  assert.equal(result.fetch_status, "blocked")
+  assert.equal(result.policy_status, "failed")
+  assert.equal(result.redirect_chain[0].policy_status, "failed")
+  assert.deepEqual(calls, [
+    "https://source.example/robots.txt",
+    "https://source.example/story",
+    "https://destination.example/robots.txt",
+  ])
 })

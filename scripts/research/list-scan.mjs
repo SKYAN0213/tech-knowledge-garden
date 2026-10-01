@@ -1,9 +1,51 @@
 import { canonicalURL } from "../garden.mjs"
-import { sourceId } from "./contracts.mjs"
+import { sha256, sourceId } from "./contracts.mjs"
 import { candidatesFromLinks } from "./discovery.mjs"
 import { assertURL } from "./fetch.mjs"
-import { articleContentFingerprint, parseDocument } from "./parser.mjs"
+import { articleContentFingerprint, assertStoredEvidence, parseDocument } from "./parser.mjs"
+import { readJSON } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
+
+const singlePageConfigHash = (channel) => sha256(JSON.stringify(channel))
+
+export function loadReusableSinglePageListing(
+  root,
+  runId,
+  channel,
+  window,
+  { now = Date.now(), maxAgeMs = 15 * 60 * 1000 } = {},
+) {
+  const prefix = `runs/${runId}/`
+  const summary = readJSON(root, prefix + "list-scan.json")
+  const documents = readJSON(root, prefix + "documents.json")
+  const parses = readJSON(root, prefix + "parses.json")
+  if (
+    summary?.status !== "window_scanned" ||
+    summary.channel_id !== channel.channel_id ||
+    summary.pagination !== "single-page" ||
+    summary.window?.until_exclusive !== window.since ||
+    summary.channel_config_sha256 !== singlePageConfigHash(channel) ||
+    !Array.isArray(documents) ||
+    !Array.isArray(parses)
+  )
+    throw Error("Reusable listing must come from the adjacent completed single-page window")
+  const observedAt = Date.parse(summary.observed_at || "")
+  if (!Number.isFinite(observedAt) || observedAt > now || now - observedAt > maxAgeMs)
+    throw Error("Reusable listing observation is outside the freshness window")
+  const document = documents.find(
+    (item) =>
+      item.original_url === channel.url &&
+      item.source_version_id === summary.listing_source_version_id,
+  )
+  const parsed = parses.find(
+    (item) =>
+      item.source_version_id === document?.source_version_id &&
+      item.parse_id === summary.listing_parse_id,
+  )
+  if (!document || !parsed) throw Error("Reusable listing source and parse evidence are missing")
+  assertStoredEvidence(root, [document], [parsed])
+  return { document, parse: parsed, source_run: runId }
+}
 
 export function validDay(value) {
   return (
@@ -183,8 +225,18 @@ export async function collectWindowDetails(
         continue
       }
       const options = profiles[0].options
-      const parsed = await run.stage("parse-" + id, { document, options }, () =>
-        parse(root, document, options),
+      const parseOptions =
+        options.publication_date_from_listing === true
+          ? {
+              ...options,
+              listing_published_at: link.published_at,
+              listing_date_text: link.listed_date_text,
+              listing_source_url: channel.url,
+              listing_source_version_id: link.listing_source_version_id,
+            }
+          : options
+      const parsed = await run.stage("parse-" + id, { document, options: parseOptions }, () =>
+        parse(root, document, parseOptions),
       )
       parses.push(parsed)
       detail.parse_id = parsed.parse_id
@@ -246,7 +298,12 @@ export async function scanSinglePageRoute(
   channel,
   articleProfiles,
   { since, until },
-  { fetchPolicy = fetchWithPolicy, parse = parseDocument } = {},
+  {
+    fetchPolicy = fetchWithPolicy,
+    parse = parseDocument,
+    listingEvidence = null,
+    listingReuseError = null,
+  } = {},
 ) {
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("List scan requires an increasing [since, until) day window")
@@ -254,15 +311,20 @@ export async function scanSinglePageRoute(
     parses = [],
     candidates = [],
     details = []
-  const listing = await run.stage("listing-fetch", { channel }, () =>
-    fetchPolicy(root, fetcher, channel.url, { allowed_hosts: channel.allowed_hosts }),
-  )
+  const listing =
+    listingEvidence?.document ||
+    (await run.stage("listing-fetch", { channel }, () =>
+      fetchPolicy(root, fetcher, channel.url, { allowed_hosts: channel.allowed_hosts }),
+    ))
   const summary = {
     schema: "research-list-scan/v1",
     channel_id: channel.channel_id,
     listing_url: channel.url,
     listing_source_version_id: listing.source_version_id || null,
     observed_at: listing.observed_at,
+    channel_config_sha256: singlePageConfigHash(channel),
+    ...(listingEvidence?.source_run ? { listing_reused_from_run: listingEvidence.source_run } : {}),
+    ...(listingReuseError ? { listing_reuse_skipped: listingReuseError } : {}),
     window: { since, until_exclusive: until },
     pagination: channel.listing_profile?.pagination || null,
     status: "incomplete",
@@ -281,9 +343,11 @@ export async function scanSinglePageRoute(
   documents.push(listing)
   let listParse
   try {
-    listParse = await run.stage("listing-parse", { listing, options: channel.parse_options }, () =>
-      parse(root, listing, { language: channel.language, ...(channel.parse_options || {}) }),
-    )
+    listParse =
+      listingEvidence?.parse ||
+      (await run.stage("listing-parse", { listing, options: channel.parse_options }, () =>
+        parse(root, listing, { language: channel.language, ...(channel.parse_options || {}) }),
+      ))
   } catch (error) {
     return {
       summary: { ...summary, reason: "listing_parse_failed", error: error.message },

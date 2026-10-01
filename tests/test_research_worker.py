@@ -1,9 +1,12 @@
 """Parser regressions; run with the isolated worker Python runtime."""
 import hashlib
+import importlib.util
+import io
 import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 import pymupdf
@@ -130,6 +133,36 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["candidates"], ["2026-08-26T21:09:39.124"])
         self.assertEqual(result["dates"]["modified_candidates"], ["2026-08-26T21:09:49.555"])
         self.assertEqual(result["status"], "extracted")
+
+    def test_common_semantic_jsonld_published_date_is_extracted_with_provenance(self):
+        raw = b'''<html><head><title>Release</title>
+        <script type="application/ld+json">{"@graph":[{"@type":"NewsArticle","datePublished":"2026-09-08T07:00:30-0400"},{"@type":"WebPage","datePublished":"2099-01-01"},{"@type":"NewsArticle","dateModified":"2026-09-09"}]}</script>
+        </head><body><article><h1>Release</h1><p>Company announced a release.</p></article></body></html>'''
+        result = self.invoke(raw)["result"]
+        self.assertEqual(result["dates"]["published_at"], "2026-09-08T07:00:30-04:00")
+        self.assertEqual(result["dates"]["profile_status"], "matched")
+        self.assertEqual(result["dates"]["precision"], "timestamp")
+        self.assertEqual(result["dates"]["basis"]["sources"][0]["type"], "json-ld")
+        self.assertEqual(result["dates"]["basis"]["sources"][0]["attribute"], "datePublished")
+
+    def test_common_time_itemprop_date_published_is_extracted_but_arbitrary_time_is_ignored(self):
+        raw = b'''<html><head><title>Release</title></head><body><article><h1>Release</h1>
+        <time datetime="2099-01-01">Related story</time>
+        <time itemprop="datePublished" datetime="2026-09-17">17.09.2026</time>
+        <p>Company announced a release.</p></article></body></html>'''
+        result = self.invoke(raw)["result"]
+        self.assertEqual(result["dates"]["published_at"], "2026-09-17")
+        self.assertEqual(result["dates"]["basis"]["sources"][0]["type"], "time-itemprop")
+
+    def test_conflicting_common_publication_metadata_stays_unresolved(self):
+        raw = b'''<html><head><title>Release</title>
+        <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-09-08"}</script>
+        </head><body><article><h1>Release</h1><time itemprop="datePublished" datetime="2026-09-09"></time>
+        <p>Company announced a release.</p></article></body></html>'''
+        result = self.invoke(raw)["result"]
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["profile_status"], "conflict")
+        self.assertEqual(result["dates"]["candidates"], ["2026-09-09", "2026-09-08"])
 
     def test_offset_html_timestamps_and_day_metadata_are_preserved(self):
         for value in (b'2026-08-26', b'2026-08-26T21:09:39.124Z', b'2026-08-26T21:09:39+09:00'):
@@ -473,7 +506,7 @@ echo 'source command only'
         <p><i>Updated: August 31, 2026</i></p><p>Beginning with some UK websites.</p></section></article>
         <uni-footnotes><div><p><i>As of August 31, 2026, these features are available worldwide.</i></p></div></uni-footnotes>
         </main><footer><p>September 27, 2026 - unrelated footer</p></footer></body></html>'''
-        result = self.invoke(raw, options)["result"]
+        result = self.invoke(raw, options, url="https://www.doosanrobotics.com/en/about/promotion/news/")["result"]
         self.assertEqual(result["dates"]["published_at"], "2026-06-03")
         self.assertEqual(result["dates"]["modified_at"], "2026-08-31")
         self.assertEqual(result["dates"]["modified_profile_status"], "matched")
@@ -529,6 +562,142 @@ echo 'source command only'
         self.assertEqual(with_ocr["quality"]["ocr_pages"], [2])
         self.assertTrue(any("50 robots" in b["text"] for b in with_ocr["blocks"] if b["locator"].get("method") == "ocr"))
         self.assertTrue(all(b["locator"].get("bbox") for b in with_ocr["blocks"]))
+
+    def test_pdf_sparse_section_divider_requires_an_exact_profile_match(self):
+        doc = pymupdf.open()
+        doc.set_metadata({"title": "PowerPoint presentation"})
+        first = doc.new_page()
+        first.insert_text((50, 50), "2Q26 Earnings Release")
+        first.insert_text((50, 90), "Robotics business results")
+        divider = doc.new_page()
+        divider.insert_text((50, 100), "Chapter 1.")
+        divider.insert_text((50, 140), "2Q 2026 Results")
+        third = doc.new_page()
+        third.insert_text((50, 50), "Revenue by region and product segment.")
+        data = doc.tobytes()
+        options = {
+            "pdf_title_page": 1,
+            "pdf_title_pattern": "^2Q26 Earnings Release$",
+            "sparse_page_patterns": [
+                {"page": 2, "pattern": "^Chapter 1\\. 2Q 2026 Results$"}
+            ],
+        }
+
+        accepted = self.invoke(data, options)["result"]
+        self.assertEqual(accepted["status"], "extracted")
+        self.assertEqual(accepted["title"], "2Q26 Earnings Release")
+        self.assertEqual(accepted["quality"]["missing_pages"], [])
+        self.assertEqual(accepted["quality"]["profile_accepted_sparse_pages"], [2])
+        self.assertTrue(any("2Q 2026 Results" in b["text"] for b in accepted["blocks"]))
+
+        mismatch = self.invoke(
+            data,
+            {
+                **options,
+                "sparse_page_patterns": [
+                    {"page": 2, "pattern": "^Chapter 2\\. 2Q 2026 Results$"}
+                ],
+            },
+        )["result"]
+        self.assertEqual(mismatch["status"], "partial")
+        self.assertEqual(mismatch["quality"]["missing_pages"], [2])
+
+        unprofiled = self.invoke(data, {key: value for key, value in options.items() if key != "sparse_page_patterns"})["result"]
+        self.assertEqual(unprofiled["status"], "partial")
+        self.assertEqual(unprofiled["quality"]["missing_pages"], [2])
+
+    def test_doosan_2q26_pdf_profile_pins_title_and_does_not_guess_publication_date(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "doosan-robotics-2q26-earnings-release-en")
+        self.assertEqual(
+            profile["url_pattern"],
+            "^https://www\\.doosanrobotics\\.com/kr/investment/ir/irdata/irDataFile/down/85$",
+        )
+        options = profile["options"]
+        self.assertNotIn("publication_date_page", options)
+        self.assertNotIn("publication_date_from_listing", options)
+
+    def test_unsupported_ocr_language_is_reported_as_missing_not_success(self):
+        document = pymupdf.open()
+        document.new_page()
+        result = self.invoke(document.tobytes(), {"ocr": True, "language": "xx"})["result"]
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual(result["quality"]["missing_pages"], [1])
+        self.assertEqual(result["quality"]["ocr_unavailable"], "unsupported-language:xx")
+        self.assertEqual(result["quality"]["ocr_pages"], [])
+
+    def test_login_and_subscription_walls_do_not_count_as_article_content(self):
+        title_wall = b'''<html><head><title>Sign in to read this article</title></head>
+        <body><main><h1>Sign in to read this article</h1><p>Members only.</p>
+        <form action="/login"><input type="password"></form></main></body></html>'''
+        result = self.invoke(title_wall)["result"]
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["quality"]["reason"], "authentication-page")
+        self.assertEqual(result["blocks"], [])
+
+        form_wall = b'''<html><head><title>Technology update</title></head><body><main>
+        <h1>Technology update</h1><p>Sign in to continue reading this report.</p>
+        <form action="/signin"><input type="password" name="password"></form>
+        </main></body></html>'''
+        result = self.invoke(form_wall)["result"]
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["quality"]["reason"], "authentication-page")
+
+    def test_login_call_to_action_does_not_block_a_substantial_article(self):
+        article = " ".join(["The company described its robotics program and deployment results."] * 28)
+        raw = f'''<html><head><title>Technology update</title></head><body><main>
+        <article><h1>Technology update</h1><p>{article}</p>
+        <p>Sign in to continue reading other member-only updates.</p>
+        <form action="/login"><input type="password"></form></article>
+        </main></body></html>'''.encode()
+        result = self.invoke(raw)["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertTrue(result["blocks"])
+
+    @unittest.skipUnless(
+        (WORKER.parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx").is_file()
+        and Path("/System/Library/Fonts/Supplemental/AppleGothic.ttf").is_file()
+        and importlib.util.find_spec("PIL") is not None,
+        "local Korean OCR model and macOS Korean fixture font are required",
+    )
+    def test_korean_scanned_pdf_uses_pinned_korean_recognizer(self):
+        from PIL import Image, ImageDraw, ImageFont
+
+        image = Image.new("RGB", (1600, 500), "white")
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/AppleGothic.ttf", 88)
+        draw.text((70, 100), "산업용 로봇 시장 동향", font=font, fill="black")
+        draw.text((70, 250), "FANUC 2026년 신규 공장 자동화 계획", font=font, fill="black")
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format="PNG")
+
+        document = pymupdf.open()
+        page = document.new_page(width=800, height=250)
+        page.insert_image(page.rect, stream=image_bytes.getvalue())
+        raw = document.tobytes()
+        temp_base = WORKER.parents[2] / ".local/research/local-ai/tmp"
+        temp_base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=temp_base) as temp:
+            root = Path(temp)
+            (root / "input.pdf").write_bytes(raw)
+            request = {
+                "schema_version": "research-worker/v1", "request_id": "korean-ocr-fixture",
+                "operation": "parse", "input_path": "input.pdf",
+                "input_sha256": hashlib.sha256(raw).hexdigest(), "source_id": "fixture",
+                "source_version_id": "fixture:v1", "url": "https://example.com/ko-scan.pdf",
+                "mime_type": "application/pdf", "options": {"ocr": True, "language": "ko"},
+            }
+            process = subprocess.run(
+                [sys.executable, str(WORKER), "--root", temp], input=json.dumps(request) + "\n",
+                text=True, capture_output=True, timeout=120,
+            )
+        self.assertEqual(process.returncode, 0, process.stderr)
+        result = json.loads(process.stdout)["result"]
+        ocr_blocks = [block for block in result["blocks"] if block["locator"].get("method") == "ocr"]
+        self.assertEqual(result["quality"]["ocr_model"], "PP-OCRv5-korean-mobile")
+        self.assertIn("산업용 로봇 시장 동향", " ".join(block["text"] for block in ocr_blocks))
+        self.assertEqual(result["quality"]["missing_pages"], [])
+        self.assertTrue(all(block["locator"].get("bbox") for block in ocr_blocks))
 
     def test_japanese_fanuc_dateline_uses_publisher_day_not_collection_or_url(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
@@ -743,6 +912,16 @@ echo 'source command only'
             changed = raw.replace(b'<div class="total">Total. <strong>2</strong> [1/1]</div>', markup)
             self.assertEqual(self.invoke(changed, options)["result"]["listing_page_summary"]["status"], expected)
 
+        single_page = {**options, "listing_page_summary_pattern": r"^Total\. (?P<total>\d+)$", "listing_page_summary_single_page": True}
+        single_raw = b'<html><head><title>News</title></head><body><main><div class="total">Total. <strong>41</strong></div></main></body></html>'
+        single_result = self.invoke(single_raw, single_page)["result"]["listing_page_summary"]
+        self.assertEqual(single_result["status"], "matched")
+        self.assertEqual([single_result[k] for k in ("total", "page", "pages")], [41, 1, 1])
+        patterned = b'<html><head><title>News</title></head><body><main><div class="total">Total. 41 [1/1]</div></main></body></html>'
+        invalid_groups = {**single_page, "listing_page_summary_pattern": r"^Total\. (?P<total>\d+) \[(?P<page>\d+)/(?P<pages>\d+)\]$"}
+        self.assertIn("error", self.invoke(patterned, invalid_groups))
+        self.assertIn("error", self.invoke(single_raw, {**single_page, "listing_page_summary_single_page": 1}))
+
     def test_doosan_news_profiles_keep_list_and_both_detail_templates_separate(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = config["route-doosan-news-en"]["parse_options"]
@@ -752,7 +931,7 @@ echo 'source command only'
         <li><a href="/en/about/promotion/news/robot-launch"><p class="title">Robot launch</p><p class="date">2026. 06. 22</p></a></li>
         <li><a href="/en/about/promotion/news/view/116"><p class="title">CES exhibit</p><p class="date">2026. 01. 06</p></a></li>
         </ul></div><footer><p>Unrelated operating guidance.</p></footer></body></html>'''
-        result = self.invoke(raw, options)["result"]
+        result = self.invoke(raw, options, url="https://www.doosanrobotics.com/kr/about/promotion/news/")["result"]
         self.assertEqual(result["listing_page_summary"]["total"], 2)
         self.assertEqual([x["published_at"] for x in result["links"] if x.get("profile_id")], ["2026-06-22", "2026-01-06"])
         self.assertEqual([b["text"] for b in result["blocks"]], ["Robot launch", "CES exhibit"])
@@ -762,11 +941,53 @@ echo 'source command only'
         ]:
             detail_options = next(p["options"] for p in config["article_profiles"] if p["id"] == profile_id)
             article = b'<html lang="en"><head><title>Site shell</title></head><body><div class="board-head"><h2>Robot announcement</h2><p>2026. 06. 22</p></div><div class="board-cont">' + body + b'</div><footer><p>Other news on 2026. 09. 28</p></footer></body></html>'
-            parsed = self.invoke(article, detail_options)["result"]
+            response = self.invoke(article, detail_options)
+            self.assertEqual(response["worker_status"], "complete", response)
+            parsed = response["result"]
             self.assertEqual(parsed["title"], "Robot announcement")
             self.assertEqual(parsed["dates"]["published_at"], "2026-06-22")
             self.assertEqual(len(parsed["blocks"]), 2)
             self.assertFalse(any("Other news" in block["text"] for block in parsed["blocks"]))
+
+    def test_doosan_korean_news_list_and_detail_profiles_cover_slug_and_legacy_urls(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = config["route-doosan-news-ko"]["parse_options"]
+        item_pattern = re.compile(config["route-doosan-news-ko"]["item_pattern"])
+        raw = '''<html lang="ko"><head><title>Doosan Robotics</title></head><body>
+        <div class="sub-head"><div class="sub-tit"><h2>뉴스</h2></div><div class="total">Total. <strong>2</strong></div></div>
+        <div class="news-list"><ul>
+        <li><a href="/kr/about/promotion/news/ai-palletizing"><p class="title">AI 팔레타이징 솔루션 공개</p><p class="date">2026. 06. 22</p></a></li>
+        <li><a href="/kr/about/promotion/news/view/98"><p class="title">협동로봇 신제품 발표</p><p class="date">2025. 07. 28</p></a></li>
+        </ul></div><footer><p>회사 소개 및 문의</p></footer></body></html>'''.encode()
+        result = self.invoke(raw, options, url="https://www.doosanrobotics.com/kr/about/promotion/news/")["result"]
+        self.assertEqual(result["listing_page_summary"]["status"], "matched")
+        self.assertEqual([result["listing_page_summary"][k] for k in ("total", "page", "pages")], [2, 1, 1])
+        links = [link for link in result["links"] if link.get("profile_id")]
+        self.assertEqual([link["published_at"] for link in links], ["2026-06-22", "2025-07-28"])
+        self.assertEqual([link["url"] for link in links], [
+            "https://www.doosanrobotics.com/kr/about/promotion/news/ai-palletizing",
+            "https://www.doosanrobotics.com/kr/about/promotion/news/view/98",
+        ])
+        self.assertTrue(all(item_pattern.fullmatch(link["url"]) for link in links))
+        self.assertEqual([block["text"] for block in result["blocks"]], ["AI 팔레타이징 솔루션 공개", "협동로봇 신제품 발표"])
+
+        for profile_id, title, published_at, body in [
+            ("doosan-ko-news-slug", "AI 팔레타이징 솔루션 공개", "2026-06-22", "팔레타이징 자동화 솔루션을 공개했다."),
+            ("doosan-ko-news-view", "협동로봇 신제품 발표", "2025-07-28", "협동로봇 신제품을 발표했다."),
+        ]:
+            detail_options = next(p["options"] for p in config["article_profiles"] if p["id"] == profile_id)
+            article = f'''<html lang="ko"><head><title>사이트 제목</title></head><body>
+            <div class="board-head"><h2>{title}</h2><p>{published_at[:4]}. {published_at[5:7]}. {published_at[8:10]}</p></div>
+            <div class="board-cont"><div class="content"><div><span>{body}</span><br></div><div><span>추가 실행 계획을 설명했다.</span></div></div></div>
+            <footer><p>관련 기사 2026. 09. 28</p></footer></body></html>'''.encode()
+            response = self.invoke(article, detail_options)
+            self.assertEqual(response["worker_status"], "complete", response)
+            parsed = response["result"]
+            self.assertEqual(parsed["status"], "extracted")
+            self.assertEqual(parsed["title"], title)
+            self.assertEqual(parsed["dates"]["published_at"], published_at)
+            self.assertTrue(any(body in block["text"] for block in parsed["blocks"]))
+            self.assertFalse(any("관련 기사" in block["text"] for block in parsed["blocks"]))
 
     def test_hd_robotics_detail_profile_uses_article_day_and_body_only(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
@@ -801,9 +1022,31 @@ echo 'source command only'
         conflict = self.invoke(doc.tobytes(), options)["result"]
         self.assertIsNone(conflict["dates"]["published_at"])
         self.assertEqual(conflict["dates"]["profile_status"], "ambiguous")
+        listing_options = {
+            **options,
+            "publication_date_from_listing": True,
+            "listing_published_at": "2026-09-11",
+            "listing_date_text": "Sep 11, 2026",
+            "listing_source_url": "https://www.yaskawa-global.com/category/ir",
+            "listing_source_version_id": "listing:v1",
+        }
+        listed = self.invoke(doc.tobytes(), listing_options)["result"]
+        self.assertEqual(listed["dates"]["published_at"], "2026-09-11")
+        self.assertEqual(listed["dates"]["profile_status"], "official-listing")
+        self.assertEqual(listed["dates"]["basis"]["source_url"], listing_options["listing_source_url"])
+        self.assertEqual(listed["dates"]["basis"]["source_version_id"], "listing:v1")
+        self.assertEqual(listed["dates"]["basis"]["text"], "Sep 11, 2026")
         absent = self.invoke(doc.tobytes(), {**options, "publication_date_pattern": "^missing"})["result"]
         self.assertIsNone(absent["dates"]["published_at"])
         self.assertEqual(absent["dates"]["profile_status"], "missing")
+        absent_listed = self.invoke(
+            doc.tobytes(), {**listing_options, "publication_date_pattern": "^missing"}
+        )["result"]
+        self.assertEqual(absent_listed["dates"]["published_at"], "2026-09-11")
+        invalid_listing = self.invoke(
+            doc.tobytes(), {**listing_options, "listing_published_at": "2026-02-30"}
+        )
+        self.assertEqual(invalid_listing["worker_status"], "failed")
         wrong_page = self.invoke(doc.tobytes(), {**options, "publication_date_page": 2})
         self.assertEqual(wrong_page["worker_status"], "failed")
 
@@ -1152,6 +1395,69 @@ echo 'source command only'
         ):
             with self.subTest(broken=broken[2:5]):
                 self.assertEqual(self.invoke(document(broken), options, url="https://example.com/posts/837")["worker_status"], "failed")
+
+    def test_nextjs_page_data_article_extracts_source_bound_modules_and_checks_url(self):
+        options = {
+            "language": "de",
+            "embedded_article": {
+                "format": "nextjs-page-data",
+                "script_xpath": "//script[@id='__NEXT_DATA__' and @type='application/json']",
+                "record_path": "props.pageProps.data.pageData",
+                "record_uri_field": "uri",
+                "title_field": "title",
+                "publication_date_field": "date",
+                "intro_field": "content",
+                "modules_field": "contentModule.flexible",
+                "module_type_field": "fieldGroupName",
+                "ignored_module_types": ["Post_Contentmodule_Cm_CmGallery"],
+                "module_text_fields": {
+                    "Post_Contentmodule_Cm_CmTextImages": {"text_field": "cmTextImagesText", "title_field": "cmTextImagesTitle"},
+                    "Post_Contentmodule_Cm_CmQuote": {"text_field": "cmQuoteText", "speaker_field": "cmQuoteName"},
+                },
+                "content_block_xpath": ".//*[self::h2 or self::p or self::blockquote]",
+            },
+        }
+        state = {"props": {"pageProps": {"data": {"pageData": {
+            "uri": "/robotik/saw-cell/", "title": "Roboter automatisieren Sägezentrum",
+            "date": "2026-09-03T08:44:50", "content": "<p>Stahl bis neun Meter.</p>",
+            "contentModule": {"flexible": [
+                    {"fieldGroupName": "Post_Contentmodule_Cm_CmTextImages", "cmTextImagesTitle": "Zwei Roboter", "cmTextImagesText": "<p>IRB 8700 verarbeitet Langgut.</p><p>Die Last beträgt 1,2 Tonnen.</p>"},
+                    {"fieldGroupName": "Post_Contentmodule_Cm_CmQuote", "cmQuoteText": "Fehlerquote gesunken.", "cmQuoteName": "Vanessa Hartmann"},
+                    {"fieldGroupName": "Post_Contentmodule_Cm_CmGallery", "cmGalleryGallery": [{"caption": "Material"}]},
+                ]},
+        }}}}}
+        def document(data):
+            return ("<html lang='de'><head><title>Shell title</title></head><body><nav>Related</nav>"
+                    "<script id='__NEXT_DATA__' type='application/json'>" + json.dumps(data, ensure_ascii=False)
+                    + "</script></body></html>").encode()
+
+        url = "https://destination-zukunft.abb.com/robotik/saw-cell/"
+        parsed = self.invoke(document(state), options, url=url)["result"]
+        texts = [block["text"] for block in parsed["blocks"]]
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertEqual(parsed["title"], "Roboter automatisieren Sägezentrum")
+        self.assertEqual(parsed["dates"]["published_at"], "2026-09-03")
+        self.assertEqual(parsed["parser"]["id"], "nextjs-page-data")
+        self.assertEqual(parsed["quality"]["ignored_content_modules"], [
+            {"index": 2, "type": "Post_Contentmodule_Cm_CmGallery"}
+        ])
+        self.assertEqual(texts, ["Stahl bis neun Meter.", "Zwei Roboter", "IRB 8700 verarbeitet Langgut.",
+                                 "Die Last beträgt 1,2 Tonnen.", "Fehlerquote gesunken.", "Vanessa Hartmann"])
+        self.assertNotIn("Related", " ".join(texts))
+        self.assertTrue(all(block["locator"]["script_dom_path"] for block in parsed["blocks"]))
+        self.assertTrue(all(block["locator"]["text_hash"] == hashlib.sha256(block["text"].encode()).hexdigest()
+                            for block in parsed["blocks"]))
+        self.assertEqual(self.invoke(document(state), options, url=url.replace("saw-cell", "other-cell"))["worker_status"], "failed")
+        unknown_module = json.loads(json.dumps(state))
+        unknown_module["props"]["pageProps"]["data"]["pageData"]["contentModule"]["flexible"].append(
+            {"fieldGroupName": "Post_Contentmodule_Cm_CmInteractiveSpec", "body": "Unsupported source text."}
+        )
+        unknown_result = self.invoke(document(unknown_module), options, url=url)["result"]
+        self.assertEqual(unknown_result["status"], "partial")
+        self.assertEqual(unknown_result["quality"]["unmapped_content_modules"], [
+            {"index": 3, "type": "Post_Contentmodule_Cm_CmInteractiveSpec"}
+        ])
+        self.assertIn("IRB 8700 verarbeitet Langgut.", [block["text"] for block in unknown_result["blocks"]])
 
     def test_english_sept_date_is_shared_by_list_and_article_parsing(self):
         pattern = r"[A-Z][a-z]{2,8}\.? [0-9]{1,2}, [0-9]{4}"

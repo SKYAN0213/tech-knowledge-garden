@@ -12,6 +12,7 @@ export const MODEL_ROLES = [
   "evidence_compare",
 ]
 const commonFields = [
+  "provider",
   "model",
   "think",
   "num_ctx",
@@ -29,12 +30,14 @@ function roleSettings(role, input) {
     throw Error("Unknown model role setting")
   for (const key of ["model", "think", "num_ctx", "num_predict"])
     if (!Object.hasOwn(input, key)) throw Error("Required model role setting: " + key)
-  if (
-    typeof input.model !== "string" ||
-    !/^[\w./:-]{1,200}$/.test(input.model) ||
-    /:cloud$/i.test(input.model)
-  )
+  const provider = input.provider ?? "ollama"
+  if (!["ollama", "openai"].includes(provider)) throw Error("Unknown model provider")
+  if (typeof input.model !== "string" || !/^[\w./:-]{1,200}$/.test(input.model))
+    throw Error("Invalid model identifier")
+  if (provider === "ollama" && /:cloud$/i.test(input.model))
     throw Error("Installed local model required")
+  if (provider === "openai" && !/^[\w.-]{1,100}$/.test(input.model))
+    throw Error("Invalid OpenAI model identifier")
   if (
     typeof input.think !== "boolean" &&
     !(
@@ -46,6 +49,7 @@ function roleSettings(role, input) {
     throw Error("Typed think setting required")
   const settings = {
     ...input,
+    provider,
     temperature: input.temperature ?? 0,
     call_timeout_ms: input.call_timeout_ms ?? 300000,
     total_timeout_ms: input.total_timeout_ms ?? (role === "fact_extract" ? 900000 : 600000),
@@ -137,13 +141,15 @@ function saveBudget(root, file, ledger) {
 
 // The caller owns its run lock. The private budget records reservations before
 // inference so a killed process cannot reset its total allowance on restart.
-export async function prepareRoleOllama(
+export async function prepareRoleProvider(
   base,
   policy,
   role,
   { root, run, overrides = {}, now = () => performance.now() } = {},
 ) {
   const settings = resolveRolePolicy(policy, role, overrides)
+  if (typeof base?.metadata !== "function" || typeof base?.structured !== "function")
+    throw Error("Model provider must implement metadata and structured")
   if (!root || !/^[a-zA-Z0-9_-]+$/.test(run || "")) throw Error("Policy root and run required")
   const file = `runs/${run}/model-policy/${role}/budget.json`
   safePath(root, file)
@@ -200,6 +206,7 @@ export async function prepareRoleOllama(
     const configured = {
       ...request,
       model: settings.model,
+      provider: settings.provider,
       think: settings.think,
       num_ctx: settings.num_ctx,
       num_predict: settings.num_predict,
@@ -209,6 +216,7 @@ export async function prepareRoleOllama(
       JSON.stringify({
         binding: executionPolicy.fingerprint,
         model: configured.model,
+        provider: configured.provider,
         think: configured.think,
         num_ctx: configured.num_ctx,
         num_predict: configured.num_predict,
@@ -225,6 +233,16 @@ export async function prepareRoleOllama(
       await scoped.metadata(settings.model)
       return structuredClone(cached.result)
     }
+    if (
+      settings.provider === "openai" &&
+      ledger.attempts.some(
+        (attempt) =>
+          attempt.status === "failed" && attempt.request_fingerprint === requestFingerprint,
+      )
+    )
+      throw Error(
+        "OpenAI attempt previously failed; inspect API usage before retrying with a new run ID",
+      )
     const allowance = Math.floor(
       Math.min(
         settings.call_timeout_ms,
@@ -278,4 +296,10 @@ export async function prepareRoleOllama(
     }
   }
   return scoped
+}
+
+export async function prepareRoleOllama(base, policy, role, options = {}) {
+  const settings = resolveRolePolicy(policy, role, options.overrides)
+  if (settings.provider !== "ollama") throw Error("Role policy does not select Ollama")
+  return prepareRoleProvider(base, policy, role, options)
 }

@@ -185,6 +185,270 @@ test("two exact official source versions link one multilingual candidate to a fi
   assert.equal(readJSON(f.root, "runs/candidate/candidates.json")[0].event_id, undefined)
 })
 
+test("source-selection candidates can link across differing publication dates with cited event-day evidence", async (t) => {
+  const f = fixture(t)
+  const candidate = storedSource(
+    f.root,
+    "candidate",
+    f.review.candidate.source_url,
+    "Six Samsung affiliates said they committed USD 1 billion to Helix on September 10.",
+    "candidate-later-publication",
+  )
+  candidate.parse.dates.published_at = "2026-09-11"
+  atomicWrite(f.root, `parses/${candidate.parse.parse_id}/parse.json`, candidate.parse)
+  atomicWrite(f.root, "runs/candidate/parses.json", [candidate.parse])
+  const published = storedSource(
+    f.root,
+    "published",
+    "https://example.org/en/news/helix-investment",
+    "Samsung today announced a combined USD 1 billion commitment to Helix.",
+    "published-helix",
+  )
+  published.parse.dates.published_at = "2026-09-10"
+  atomicWrite(f.root, `parses/${published.parse.parse_id}/parse.json`, published.parse)
+  atomicWrite(f.root, "runs/published/parses.json", [published.parse])
+  f.review.published = {
+    source_url: published.document.original_url,
+    source_id: published.document.source_id,
+    source_version_id: published.document.source_version_id,
+    body_sha256: published.document.body_sha256,
+    parse_id: published.parse.parse_id,
+    published_at: "2026-09-10",
+    event_id: f.eventId,
+    title: "Samsung’s Helix investment",
+  }
+  f.publishedArticles = [
+    {
+      event_id: f.eventId,
+      title: f.review.published.title,
+      published_at: "2026-09-10",
+      review_status: "verified",
+      source_urls: [published.document.original_url],
+    },
+  ]
+  const selection = {
+    schema: "research-source-selection/v1",
+    source_run: { source_run: "candidate" },
+    selected_urls: [f.review.candidate.source_url],
+    candidate_key: f.originalCandidate.key,
+    candidate_source_version_id: candidate.document.source_version_id,
+    candidate_parse_id: candidate.parse.parse_id,
+    selection_basis: "exact_search_intake",
+  }
+  atomicWrite(f.root, "runs/selection/documents.json", [candidate.document])
+  atomicWrite(f.root, "runs/selection/parses.json", [candidate.parse])
+  atomicWrite(f.root, "runs/selection/source-selection.json", selection)
+  const row = {
+    ...f.originalCandidate,
+    source_published_at: "2026-09-11",
+    article_source_version_id: candidate.document.source_version_id,
+  }
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [row],
+  })
+  const review = structuredClone(f.review)
+  review.candidate = {
+    ...review.candidate,
+    source_version_id: candidate.document.source_version_id,
+    body_sha256: candidate.document.body_sha256,
+    parse_id: candidate.parse.parse_id,
+    published_at: "2026-09-11",
+  }
+  review.event_date = "2026-09-10"
+  review.matches = [
+    {
+      aspect: "identity_marker",
+      candidate_block_id: candidate.parse.blocks[0].block_id,
+      candidate_excerpt: "USD 1 billion to Helix",
+      published_block_id: published.parse.blocks[0].block_id,
+      published_excerpt: "USD 1 billion commitment to Helix",
+      conclusion: "The amount and investment target match.",
+    },
+    {
+      aspect: "event_action",
+      candidate_block_id: candidate.parse.blocks[0].block_id,
+      candidate_excerpt: "Six Samsung affiliates said they committed",
+      published_block_id: published.parse.blocks[0].block_id,
+      published_excerpt: "Samsung today announced a combined USD 1 billion commitment",
+      conclusion: "Both sources describe the same six-company investment commitment.",
+    },
+  ]
+  review.matches.push({
+    aspect: "event_date",
+    candidate_block_id: candidate.parse.blocks[0].block_id,
+    candidate_excerpt: "on September 10",
+    published_block_id: published.parse.blocks[0].block_id,
+    published_excerpt: "today announced",
+    conclusion:
+      "The later article states that the already announced event occurred on September 10.",
+  })
+  review.reviewed_at = "2026-09-28"
+  atomicWrite(f.root, "review/identity.json", review)
+  const linked = await apply(f, {
+    runId: "cross-date-identity",
+    sourceRunId: "candidate",
+    candidateRunId: "selection",
+  })
+  assert.equal(linked.event_id, f.eventId)
+  assert.equal(linked.candidate_published, false)
+  const resumed = await apply(f, {
+    runId: "cross-date-identity",
+    sourceRunId: "candidate",
+    candidateRunId: "selection",
+  })
+  assert.equal(resumed.backlog_sha256, linked.backlog_sha256)
+  const backlog = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+  assert.equal(backlog.candidates[0].identity.publication_dates_match, false)
+  assert.equal(backlog.candidates[0].identity.event_date, "2026-09-10")
+})
+
+test("different publication dates cannot link without cited event-day evidence", async (t) => {
+  const f = fixture(t)
+  const candidate = storedSource(
+    f.root,
+    "candidate",
+    f.review.candidate.source_url,
+    "A new announcement with the same product identifier.",
+    "candidate-different-day",
+  )
+  candidate.parse.dates.published_at = "2026-09-11"
+  atomicWrite(f.root, `parses/${candidate.parse.parse_id}/parse.json`, candidate.parse)
+  atomicWrite(f.root, "runs/candidate/documents.json", [candidate.document])
+  atomicWrite(f.root, "runs/candidate/parses.json", [candidate.parse])
+  const row = {
+    ...f.originalCandidate,
+    source_published_at: "2026-09-11",
+    article_source_version_id: candidate.document.source_version_id,
+  }
+  atomicWrite(f.root, "runs/candidate/candidates.json", [row])
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [row],
+  })
+  const review = structuredClone(f.review)
+  review.candidate = {
+    ...review.candidate,
+    source_version_id: candidate.document.source_version_id,
+    body_sha256: candidate.document.body_sha256,
+    parse_id: candidate.parse.parse_id,
+    published_at: "2026-09-11",
+  }
+  review.candidate.published_at = "2026-09-11"
+  review.event_date = undefined
+  atomicWrite(f.root, "review/identity.json", review)
+  await assert.rejects(
+    apply(f, { runId: "cross-date-without-event-date" }),
+    /Different publication dates require a directly evidenced event date/,
+  )
+})
+
+test("same-source rediscovery links only when source content, title, date and published event agree", async (t) => {
+  const f = fixture(t)
+  const exactURL = f.review.candidate.source_url
+  const text = "KUKA introduces the KMF 1500P-CB. Delivery starts December 2026."
+  const candidate = storedSource(f.root, "candidate", exactURL, text, "candidate-exact")
+  const published = storedSource(f.root, "published", exactURL, text, "published-exact")
+  candidate.parse.title = "KUKA product announcement"
+  published.parse.title = candidate.parse.title
+  atomicWrite(f.root, `parses/${candidate.parse.parse_id}/parse.json`, candidate.parse)
+  atomicWrite(f.root, `parses/${published.parse.parse_id}/parse.json`, published.parse)
+  atomicWrite(f.root, "runs/candidate/parses.json", [candidate.parse])
+  atomicWrite(f.root, "runs/published/parses.json", [published.parse])
+
+  const row = {
+    ...f.originalCandidate,
+    key: `source-${candidate.document.source_id}`,
+    title: candidate.parse.title,
+    source_urls: [exactURL],
+    article_source_version_id: candidate.document.source_version_id,
+  }
+  atomicWrite(f.root, "runs/candidate/candidates.json", [row])
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [row],
+  })
+  const exactReview = {
+    schema: "editorial-candidate-identity/v1",
+    decision: "same_published_source_revision",
+    reviewer: "Direct source and published article comparison",
+    reviewed_at: "2026-09-28",
+    candidate: {
+      source_url: exactURL,
+      source_id: candidate.document.source_id,
+      source_version_id: candidate.document.source_version_id,
+      body_sha256: candidate.document.body_sha256,
+      parse_id: candidate.parse.parse_id,
+      source_title: candidate.parse.title,
+      published_at: "2026-09-10",
+    },
+    published: {
+      source_url: exactURL,
+      source_id: published.document.source_id,
+      source_version_id: published.document.source_version_id,
+      body_sha256: published.document.body_sha256,
+      parse_id: published.parse.parse_id,
+      source_title: published.parse.title,
+      published_at: "2026-09-10",
+      event_id: f.eventId,
+      title: "Existing Korean article",
+    },
+    matches: [
+      {
+        aspect: "identity_marker",
+        candidate_block_id: candidate.parse.blocks[0].block_id,
+        candidate_excerpt: "KMF 1500P-CB",
+        published_block_id: published.parse.blocks[0].block_id,
+        published_excerpt: "KMF 1500P-CB",
+        conclusion: "Both stored parses preserve the same model identifier.",
+      },
+      {
+        aspect: "event_action",
+        candidate_block_id: candidate.parse.blocks[0].block_id,
+        candidate_excerpt: "Delivery starts December 2026.",
+        published_block_id: published.parse.blocks[0].block_id,
+        published_excerpt: "Delivery starts December 2026.",
+        conclusion: "Both parses preserve the same planned delivery statement.",
+      },
+    ],
+    same_event_reason:
+      "The canonical source URL, extracted content fingerprint, title and announcement day are identical to the evidence for the verified event.",
+    new_article: false,
+    candidate_published: false,
+  }
+  f.publishedArticles = [
+    {
+      event_id: f.eventId,
+      title: exactReview.published.title,
+      published_at: "2026-09-10",
+      review_status: "verified",
+      source_urls: [exactURL],
+    },
+  ]
+  atomicWrite(f.root, "review/identity.json", exactReview)
+  const linked = await apply(f, { runId: "same-source-identity" })
+  assert.equal(linked.event_id, f.eventId)
+  assert.equal(linked.candidate_published, false)
+  const backlog = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+  assert.equal(backlog.candidates[0].review_status, "verified")
+  assert.equal(backlog.candidates[0].event_id, f.eventId)
+  assert.equal(backlog.candidates[0].identity.decision, "same_published_source_revision")
+
+  const changedParse = structuredClone(published.parse)
+  changedParse.blocks[0].text = "KUKA introduces a different forklift model."
+  changedParse.blocks[0].locator.text_hash = sha256(changedParse.blocks[0].text)
+  atomicWrite(f.root, `parses/${published.parse.parse_id}/parse.json`, changedParse)
+  atomicWrite(f.root, "runs/published/parses.json", [changedParse])
+  await assert.rejects(
+    apply(f, { runId: "changed-source-identity" }),
+    /identical article content, title and exact source identity/,
+  )
+  assert.equal(
+    readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0].event_id,
+    f.eventId,
+  )
+})
+
 test("identity review rejects an unproven pair or a different published event", async (t) => {
   const f = fixture(t)
   const changed = structuredClone(f.review)

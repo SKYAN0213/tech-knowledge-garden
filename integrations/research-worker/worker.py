@@ -361,6 +361,180 @@ def indexed_json_article(dom, url, options):
     return result
 
 
+def nextjs_page_data_article(dom, url, options):
+    """Extract article HTML modules from a bounded Next.js page-data object."""
+    from lxml import etree, html
+
+    profile = options["embedded_article"]
+    required = ("script_xpath", "record_path", "record_uri_field", "title_field",
+                "publication_date_field", "intro_field", "modules_field",
+                "module_text_fields", "content_block_xpath")
+    if profile.get("format") != "nextjs-page-data" or any(
+        not isinstance(profile.get(name), str) or not profile[name]
+        for name in required if name not in ("module_text_fields",)
+    ) or not isinstance(profile.get("module_text_fields"), dict):
+        raise ValueError("Invalid Next.js article profile")
+    scripts = dom.xpath(profile["script_xpath"])
+    if len(scripts) != 1 or not isinstance(scripts[0], etree._Element) or scripts[0].tag != "script":
+        raise ValueError("Next.js article script must be unique")
+    script = scripts[0]
+    serialized = script.text or ""
+    if not serialized or len(serialized.encode("utf-8")) > 2_000_000:
+        raise ValueError("Next.js article state absent or too large")
+    state = json.loads(serialized)
+
+    def path_value(value, path):
+        if not re.fullmatch(r"[A-Za-z0-9_.-]{1,256}", path):
+            raise ValueError("Invalid Next.js article field path")
+        for part in path.split("."):
+            if not isinstance(value, dict) or part not in value:
+                raise ValueError("Next.js article field missing")
+            value = value[part]
+        return value
+
+    record = path_value(state, profile["record_path"])
+    if not isinstance(record, dict):
+        raise ValueError("Next.js article record must be an object")
+    record_uri = record.get(profile["record_uri_field"])
+    if not isinstance(record_uri, str) or record_uri.rstrip("/") != urlparse(url).path.rstrip("/"):
+        raise ValueError("Next.js article URL identity mismatch")
+    title = path_value(record, profile["title_field"])
+    published = path_value(record, profile["publication_date_field"])
+    intro = path_value(record, profile["intro_field"])
+    modules = path_value(record, profile["modules_field"])
+    if not isinstance(title, str) or not clean(title) or not isinstance(published, str):
+        raise ValueError("Next.js article title or date invalid")
+    if not isinstance(intro, str) or not isinstance(modules, list) or len(modules) > 200:
+        raise ValueError("Next.js article content modules invalid")
+    try:
+        published_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("Next.js article publication date invalid") from error
+
+    selector = profile["content_block_xpath"]
+    if len(selector) > 1024:
+        raise ValueError("Next.js article block selector too long")
+    ignored_module_types = profile.get("ignored_module_types", [])
+    if (
+        not isinstance(ignored_module_types, list)
+        or any(not isinstance(value, str) or not value for value in ignored_module_types)
+        or len(ignored_module_types) != len(set(ignored_module_types))
+    ):
+        raise ValueError("Invalid Next.js ignored module types")
+    script_path = dom.getroottree().getpath(script)
+    blocks, links, missing_math, ignored_modules, unmapped_modules = [], [], [], [], []
+
+    def add_html(content, json_path):
+        if not isinstance(content, str) or len(content) > 1_000_000:
+            raise ValueError("Next.js article HTML field invalid")
+        fragment = html.fragment_fromstring(content, create_parent=True)
+        math_items = preserve_html_math(fragment)
+        missing_math.extend({"json_path": json_path, "dom_path": item["dom_path"], "reason": item["reason"]}
+                            for item in math_items if item["reason"])
+        tree = fragment.getroottree()
+        nodes = fragment.xpath(selector)
+        if not nodes and "<" not in content and clean(content):
+            value = clean(content)
+            blocks.append({"kind": "paragraph", "text": value,
+                           "locator": {"type": "embedded-json", "script_dom_path": script_path,
+                                       "json_path": json_path, "extracted_order": len(blocks),
+                                       "text_hash": digest(value)}})
+        for node in nodes:
+            if not isinstance(node, etree._Element) or node is fragment:
+                raise ValueError("Next.js article block selector failed")
+            if any(parent in nodes for parent in node.iterancestors()):
+                continue
+            if any(parent.tag in ("script", "style", "noscript") for parent in [node, *node.iterancestors()]):
+                raise ValueError("Next.js article selected non-reader content")
+            value = clean(" ".join(node.itertext()))
+            if not value:
+                continue
+            tag = etree.QName(node).localname
+            kind = "table" if tag == "table" else "heading" if tag in ("h1", "h2", "h3", "h4", "h5", "h6") else "paragraph"
+            blocks.append({
+                "kind": kind, "text": value,
+                "locator": {"type": "embedded-json-html", "script_dom_path": script_path,
+                            "json_path": json_path, "fragment_dom_path": tree.getpath(node),
+                            "extracted_order": len(blocks), "text_hash": digest(value)},
+            })
+            if kind == "table":
+                blocks[-1]["rows"] = [[clean(" ".join(cell.itertext())) for cell in row if cell.tag in ("td", "th")]
+                                       for row in node.iter() if node is not fragment and row.tag == "tr"]
+        for node in fragment.xpath(".//a[@href]"):
+            href = urljoin(url, node.get("href"))
+            if urlparse(href).scheme in ("http", "https"):
+                links.append({"url": href, "text": clean(node.text_content()),
+                              "script_dom_path": script_path, "json_path": json_path,
+                              "fragment_dom_path": tree.getpath(node)})
+
+    add_html(intro, profile["intro_field"])
+    type_field = profile.get("module_type_field", "fieldGroupName")
+    for index, module in enumerate(modules):
+        if not isinstance(module, dict):
+            raise ValueError("Next.js article module must be an object")
+        module_type = module.get(type_field)
+        if not isinstance(module_type, str) or not module_type:
+            raise ValueError("Next.js article module type missing")
+        spec = profile["module_text_fields"].get(module_type)
+        if not spec:
+            item = {"index": index, "type": module_type}
+            if module_type in ignored_module_types:
+                ignored_modules.append(item)
+            else:
+                unmapped_modules.append(item)
+            continue
+        if not isinstance(spec, dict) or not isinstance(spec.get("text_field"), str):
+            raise ValueError("Invalid Next.js article module mapping")
+        prefix = f"{profile['modules_field']}[{index}]"
+        heading_field = spec.get("title_field")
+        if heading_field and module.get(heading_field):
+            heading = clean(module[heading_field])
+            if heading:
+                blocks.append({"kind": "heading", "text": heading,
+                               "locator": {"type": "embedded-json", "script_dom_path": script_path,
+                                           "json_path": f"{prefix}.{heading_field}",
+                                           "extracted_order": len(blocks), "text_hash": digest(heading)}})
+        text_field = spec["text_field"]
+        content = module.get(text_field)
+        if content:
+            add_html(content, f"{prefix}.{text_field}")
+        speaker_field = spec.get("speaker_field")
+        if speaker_field and module.get(speaker_field):
+            speaker = clean(module[speaker_field])
+            if speaker:
+                blocks.append({"kind": "paragraph", "text": speaker,
+                               "locator": {"type": "embedded-json", "script_dom_path": script_path,
+                                           "json_path": f"{prefix}.{speaker_field}",
+                                           "extracted_order": len(blocks), "text_hash": digest(speaker)}})
+    if not blocks:
+        raise ValueError("Next.js article body empty")
+    complete = not missing_math and not unmapped_modules
+    result = {
+        "status": "extracted" if complete else "partial", "title": clean(title),
+        "title_basis": {"type": "embedded-json", "script_dom_path": script_path,
+                        "json_path": profile["record_path"] + "." + profile["title_field"],
+                        "text_hash": digest(clean(title))},
+        "title_profile_status": "matched", "language": dom.get("lang") or options.get("language"),
+        "dates": {"published_at": published_date.date().isoformat(), "modified_at": None,
+                  "precision": "day", "candidates": [published],
+                  "basis": {"type": "embedded-json", "script_dom_path": script_path,
+                            "json_path": profile["record_path"] + "." + profile["publication_date_field"],
+                            "text": published},
+                  "profile_status": "matched", "modified_candidates": [],
+                  "modified_basis": None, "modified_profile_status": "not-configured"},
+        "blocks": blocks, "links": links, "link_profiles": [],
+        "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False},
+    }
+    if missing_math:
+        result["math_expressions"] = []
+        result["quality"]["missing_math"] = missing_math
+    if ignored_modules:
+        result["quality"]["ignored_content_modules"] = ignored_modules
+    if unmapped_modules:
+        result["quality"]["unmapped_content_modules"] = unmapped_modules
+    return result
+
+
 def html_parse(raw, url, options):
     import trafilatura
     from lxml import html, etree
@@ -386,11 +560,58 @@ def html_parse(raw, url, options):
         except (ZoneInfoNotFoundError, ValueError) as error:
             raise ValueError("Invalid publication calendar time zone") from error
     if options.get("embedded_article"):
-        return indexed_json_article(dom, url, options)
+        embedded_format = options["embedded_article"].get("format")
+        if embedded_format == "indexed-json-array":
+            return indexed_json_article(dom, url, options)
+        if embedded_format == "nextjs-page-data":
+            return nextjs_page_data_article(dom, url, options)
+        raise ValueError("Unsupported embedded article format")
     title = clean(" ".join(dom.xpath("//title/text()"))) or None
     language = dom.get("lang") or options.get("language")
     date_nodes = dom.xpath('//meta[@property="article:published_time" or @name="date" or @name="pubdate"]/@content')
     modified_nodes = dom.xpath('//meta[@property="article:modified_time"]/@content')
+    common_date_basis = []
+    # Common, semantic publication-date metadata works across publishers and
+    # keeps its provenance. Do not use arbitrary <time> elements: pages often
+    # contain dates for related stories, tickers, or update widgets.
+    for node in dom.xpath('//time[@itemprop="datePublished"][@datetime]')[:20]:
+        value = clean(node.get("datetime"))
+        if value:
+            normalized = re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", value)
+            date_nodes.append(normalized)
+            common_date_basis.append({"type": "time-itemprop", "dom_path": domtree.getpath(node), "attribute": "datetime", "text": value})
+    # Parse bounded JSON-LD Article records only. Never promote dateModified,
+    # dateCreated, or a date on a generic WebPage/Organization node.
+    jsonld_bytes = 0
+    for script_index, script in enumerate(dom.xpath('//script[translate(@type,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")="application/ld+json"]')[:32]):
+        script_text = script.text or ""
+        encoded_size = len(script_text.encode("utf-8", errors="replace"))
+        if encoded_size > 1_000_000 or jsonld_bytes + encoded_size > 2_000_000:
+            continue
+        jsonld_bytes += encoded_size
+        try:
+            structured = json.loads(script_text)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        pending = [structured]
+        visited = 0
+        while pending and visited < 500:
+            item = pending.pop()
+            visited += 1
+            if isinstance(item, list):
+                pending.extend(item[:500])
+                continue
+            if not isinstance(item, dict):
+                continue
+            types = item.get("@type", [])
+            types = [types] if isinstance(types, str) else types if isinstance(types, list) else []
+            if any(isinstance(value, str) and value.rsplit("/", 1)[-1] in {"Article", "NewsArticle", "BlogPosting", "Report"} for value in types):
+                value = item.get("datePublished")
+                if isinstance(value, str) and clean(value):
+                    value = clean(value)
+                    date_nodes.append(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", value))
+                    common_date_basis.append({"type": "json-ld", "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value})
+            pending.extend(value for value in item.values() if isinstance(value, (dict, list)))
     explicit_date = options.get("publication_date_xpath")
     date_basis = None
     date_profile_status = "not-configured"
@@ -446,8 +667,13 @@ def html_parse(raw, url, options):
     listing_page_summary = None
     summary_xpath = options.get("listing_page_summary_xpath")
     summary_pattern = options.get("listing_page_summary_pattern")
+    summary_single_page = options.get("listing_page_summary_single_page") is True
     if bool(summary_xpath) != bool(summary_pattern):
         raise ValueError("Listing page summary requires a selector and pattern")
+    if options.get("listing_page_summary_single_page") is not None and not isinstance(
+        options.get("listing_page_summary_single_page"), bool
+    ):
+        raise ValueError("Listing page single-page summary flag must be boolean")
     if summary_xpath:
         if not all(isinstance(value, str) and 0 < len(value) <= 512 for value in (summary_xpath, summary_pattern)):
             raise ValueError("Invalid listing page summary profile")
@@ -460,9 +686,14 @@ def html_parse(raw, url, options):
             value = clean(" ".join(nodes[0].itertext()))
             match = re.fullmatch(summary_pattern, value)
             if match:
-                if set(match.groupdict()) != {"total", "page", "pages"}:
-                    raise ValueError("Listing page summary pattern needs total, page and pages")
-                total, page, pages = (int(match.group(name)) for name in ("total", "page", "pages"))
+                expected_groups = {"total"} if summary_single_page else {"total", "page", "pages"}
+                if set(match.groupdict()) != expected_groups:
+                    required = "total" if summary_single_page else "total, page and pages"
+                    raise ValueError(f"Listing page summary pattern needs {required}")
+                total = int(match.group("total"))
+                page, pages = (1, 1) if summary_single_page else (
+                    int(match.group("page")), int(match.group("pages"))
+                )
                 if 0 <= total <= 5000 and 1 <= page <= pages <= 5000:
                     listing_page_summary = {"status": "matched", "total": total, "page": page, "pages": pages, "basis": {"dom_path": domtree.getpath(nodes[0]), "text": value}}
                 else:
@@ -592,6 +823,46 @@ def html_parse(raw, url, options):
         if kind == "table":
             b["rows"] = [[clean(" ".join(c.itertext())) for c in row if c.tag in ("td", "th", "cell")] for row in node.iter() if row.tag in ("tr", "row")]
         blocks.append(b)
+    title_access_wall = bool(
+        re.match(
+            r"^(?:log[\s-]?in|sign[\s-]?in|authentication required|login required|subscribe to (?:read|continue))(?:\b|[\s|:–—-])",
+            clean(title or ""),
+            re.I,
+        )
+    )
+    auth_forms = dom.xpath(
+        "//form[.//input[translate(@type, 'PASSWORD', 'password')='password'] or "
+        ".//input[translate(@name, 'LOGIN', 'login')='login'] or "
+        "contains(translate(@action, 'LOGIN', 'login'), 'login') or "
+        "contains(translate(@action, 'SIGNIN', 'signin'), 'signin')]"
+    )
+    body_text = clean(" ".join(block["text"] for block in blocks))
+    auth_copy = re.search(
+        r"\b(?:sign in|log in) (?:to (?:read|continue)|to access)|"
+        r"(?:please )?(?:sign in|log in) to (?:view|continue)|"
+        r"(?:subscription|authentication|account) required|"
+        r"members only|subscribe to (?:read|continue)",
+        body_text,
+        re.I,
+    )
+    if title_access_wall or (auth_forms and auth_copy and len(body_text) < 1000):
+        return {
+            "status": "blocked",
+            "title": title,
+            "title_basis": title_basis,
+            "title_profile_status": title_profile_status,
+            "language": language,
+            "dates": {},
+            "blocks": [],
+            "links": links,
+            "link_profiles": link_profiles,
+            "quality": {
+                "required_fields_present": False,
+                "missing_pages": [],
+                "reviewed": False,
+                "reason": "authentication-page",
+            },
+        }
     days = [known_date(value, calendar_zone) for value in date_nodes]
     valid_dates = bool(days) and all(days) and len(set(days)) == 1
     published = (date_nodes[0] if len(set(date_nodes)) == 1 else days[0]) if valid_dates else None
@@ -599,6 +870,10 @@ def html_parse(raw, url, options):
         date_profile_status = "conflict" if all(days) else "invalid-date"
     if explicit_date and date_profile_status != "matched":
         published = None
+    elif not explicit_date and common_date_basis:
+        date_basis = {"sources": common_date_basis}
+        if published:
+            date_profile_status = "matched"
     if published and source_date_value(published) is None:
         published = None
         date_profile_status = "invalid-date"
@@ -1177,33 +1452,101 @@ def pdf_parse(raw, options):
         return {"status": "blocked", "title": None, "blocks": [], "quality": {"reason": "encrypted-pdf", "missing_pages": [], "reviewed": False}}
     if len(doc) > options.get("max_pages", 200):
         raise ValueError("PDF page budget exceeded")
-    blocks, missing, ocr_pages = [], [], []
+    blocks, missing, ocr_pages, profile_accepted_sparse_pages = [], [], [], []
+    sparse_page_patterns = options.get("sparse_page_patterns", [])
     engine = None
+    ocr_model = None
+    ocr_unavailable = None
     for number, page in enumerate(doc, 1):
         text_blocks = page.get_text("blocks", sort=True)
         usable = sum(len(b[4].strip()) for b in text_blocks if b[6] == 0)
-        if usable < 30 or any("\ufffd" * 3 in b[4] for b in text_blocks if b[6] == 0):
+        page_text_parts = [clean(b[4]) for b in text_blocks if b[6] == 0]
+        page_text = " ".join(value for value in page_text_parts if value)
+        sparse_profile = next(
+            (
+                rule for rule in sparse_page_patterns
+                if rule.get("page") == number
+            ),
+            None,
+        )
+        sparse_match = False
+        if sparse_profile is not None:
+            pattern = sparse_profile.get("pattern")
+            if not isinstance(pattern, str) or not pattern:
+                raise ValueError("Invalid sparse PDF page pattern")
+            sparse_match = re.fullmatch(pattern, page_text) is not None
+            if sparse_match:
+                profile_accepted_sparse_pages.append(number)
+        if (usable < 30 and not sparse_match) or any(
+            "\ufffd" * 3 in b[4] for b in text_blocks if b[6] == 0
+        ):
             # Selective OCR: only pages whose text layer is missing/broken.
             if options.get("ocr"):
                 import numpy as np
                 from rapidocr import RapidOCR
+                skip_ocr = False
                 if engine is None:
-                    engine = RapidOCR()
-                scale = 200 / 72
-                pix = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
-                image = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
-                result = engine(image)
-                ocr_pages.append(number)
-                text_blocks = []
-                for box, value, confidence in zip(result.boxes if result.boxes is not None else [], result.txts or [], result.scores or []):
-                    value = clean(value)
-                    if not value:
-                        continue
-                    coords = box.tolist()
-                    bbox = [min(p[0] for p in coords) / scale, min(p[1] for p in coords) / scale, max(p[0] for p in coords) / scale, max(p[1] for p in coords) / scale]
-                    blocks.append({"kind": "paragraph", "text": value, "locator": {"type": "pdf", "page": number, "bbox": bbox, "text_hash": digest(value), "method": "ocr", "confidence": float(confidence)}})
-                if not result.txts or any(s < 0.90 for s in result.scores):
-                    missing.append(number)
+                    from rapidocr.utils.typings import LangDet, LangRec, ModelType, OCRVersion
+
+                    declared_language = (options.get("ocr_language") or options.get("language") or "").replace("_", "-").lower()
+                    language = declared_language.split("-", 1)[0]
+                    if declared_language.startswith("zh-tw"):
+                        language = "zh-tw"
+                    rec_languages = {
+                        "zh": LangRec.CH, "zh-cn": LangRec.CH, "zh-tw": LangRec.CHINESE_CHT,
+                        "ja": LangRec.JAPAN, "en": LangRec.EN,
+                        "de": "de", "fr": "fr", "es": "es", "it": "it", "pt": "pt", "nl": "nl",
+                    }
+                    # RapidOCR maps its PP-OCRv6 `ch` detector profile to the
+                    # bundled multi-language detector; `multi` itself is not
+                    # a valid enum value for the small model configuration.
+                    params = {"Det.lang_type": LangDet.CH}
+                    if language == "ko":
+                        # PP-OCRv6 has no Korean recognizer. Pin the supported v5
+                        # recognizer explicitly and require the locally staged model.
+                        model_path = Path(__file__).resolve().parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx"
+                        if not model_path.is_file():
+                            missing.append(number)
+                            ocr_unavailable = "korean-model-not-installed"
+                            skip_ocr = True
+                        params.update({
+                            "Rec.ocr_version": OCRVersion.PPOCRV5,
+                            "Rec.model_type": ModelType.MOBILE,
+                            "Rec.lang_type": LangRec.KOREAN,
+                            "Rec.model_path": str(model_path),
+                        })
+                        ocr_model = "PP-OCRv5-korean-mobile"
+                    elif language in rec_languages:
+                        params.update({
+                            "Rec.lang_type": rec_languages[language],
+                            "Rec.model_type": ModelType.SMALL,
+                            "Rec.ocr_version": OCRVersion.PPOCRV6,
+                        })
+                        ocr_model = f"PP-OCRv6-{language or 'multilingual'}"
+                    elif language:
+                        missing.append(number)
+                        ocr_unavailable = f"unsupported-language:{language}"
+                        skip_ocr = True
+                    else:
+                        ocr_model = "PP-OCRv6-default"
+                    if not skip_ocr:
+                        engine = RapidOCR(params=params)
+                if not skip_ocr:
+                    scale = 200 / 72
+                    pix = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
+                    image = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+                    result = engine(image)
+                    ocr_pages.append(number)
+                    text_blocks = []
+                    for box, value, confidence in zip(result.boxes if result.boxes is not None else [], result.txts or [], result.scores or []):
+                        value = clean(value)
+                        if not value:
+                            continue
+                        coords = box.tolist()
+                        bbox = [min(p[0] for p in coords) / scale, min(p[1] for p in coords) / scale, max(p[0] for p in coords) / scale, max(p[1] for p in coords) / scale]
+                        blocks.append({"kind": "paragraph", "text": value, "locator": {"type": "pdf", "page": number, "bbox": bbox, "text_hash": digest(value), "method": "ocr", "confidence": float(confidence)}})
+                    if not result.txts or any(s < 0.90 for s in result.scores):
+                        missing.append(number)
             else:
                 missing.append(number)
         for block in text_blocks:
@@ -1249,7 +1592,35 @@ def pdf_parse(raw, options):
                 dates["profile_status"] = "matched"
             except ValueError:
                 pass  # Invalid publisher dates stay explicit, never inferred from PDF metadata.
-    return {"status": "extracted" if title and blocks and not missing else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": {"required_fields_present": bool(title and blocks), "missing_pages": missing, "reviewed": False, "ocr_pages": ocr_pages}}
+    if options.get("publication_date_from_listing") is True and dates["published_at"] is None:
+        listed_day = options.get("listing_published_at")
+        listing_url = options.get("listing_source_url")
+        listing_version = options.get("listing_source_version_id")
+        listing_text = options.get("listing_date_text")
+        try:
+            normalized_day = datetime.strptime(listed_day, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except (TypeError, ValueError):
+            raise ValueError("Official listing publication date is required")
+        if not all(isinstance(value, str) and value.strip() for value in (listing_url, listing_version, listing_text)):
+            raise ValueError("Official listing publication evidence is required")
+        dates["published_at"] = normalized_day
+        dates["precision"] = "day"
+        dates["profile_status"] = "official-listing"
+        dates["basis"] = {
+            "type": "official-listing",
+            "published_at": normalized_day,
+            "text": listing_text,
+            "source_url": listing_url,
+            "source_version_id": listing_version,
+        }
+    quality = {"required_fields_present": bool(title and blocks), "missing_pages": missing, "reviewed": False, "ocr_pages": ocr_pages}
+    if profile_accepted_sparse_pages:
+        quality["profile_accepted_sparse_pages"] = profile_accepted_sparse_pages
+    if ocr_pages:
+        quality["ocr_model"] = ocr_model
+    if ocr_unavailable:
+        quality["ocr_unavailable"] = ocr_unavailable
+    return {"status": "extracted" if title and blocks and not missing else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
 
 
 def run(request, root):
@@ -1274,7 +1645,7 @@ def run(request, root):
     elif html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
         parsed = html_parse(raw, request["url"], options)
         parser = (
-            {"id": "indexed-json-array", "version": VERSION}
+            {"id": options["embedded_article"]["format"], "version": VERSION}
             if options.get("embedded_article")
             else {"id": "trafilatura", "version": importlib.metadata.version("trafilatura")}
         )

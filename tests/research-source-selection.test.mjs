@@ -71,6 +71,16 @@ test("article content fingerprint ignores raw-wrapper and parse identities but d
   assert.notEqual(articleContentFingerprint(original), articleContentFingerprint(sameText))
 })
 
+test("article content fingerprints preserve an explicitly unknown source publication date", (t) => {
+  const { parses } = fixture(t)
+  const parse = structuredClone(parses[0])
+  parse.dates.published_at = null
+  const fingerprint = articleContentFingerprint(parse)
+  assert.equal(fingerprint, articleContentFingerprint(structuredClone(parse)))
+  parse.blocks[0].text = "Changed source text"
+  assert.notEqual(fingerprint, articleContentFingerprint(parse))
+})
+
 test("exact source selection isolates one article without refetching or changing the source run", async (t) => {
   const { root, urls, documents, parses } = fixture(t)
   const before = fs.readFileSync(path.join(root, "runs/source/documents.json"))

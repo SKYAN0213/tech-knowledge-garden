@@ -1,12 +1,14 @@
+import fs from "node:fs"
 import path from "node:path"
 import { canonicalURL } from "../garden.mjs"
 import { titleDayKey } from "../article-identity.mjs"
 import { BACKLOG_PATH } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
-import { samePublicationDate } from "./dates.mjs"
+import { parseResearchDate, samePublicationDate } from "./dates.mjs"
 import { articleContentFingerprint, loadStoredSourceRun } from "./parser.mjs"
 import { approvedArticle } from "./publish-adapter.mjs"
 import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { buildCandidateSourceAlternativeResolution } from "./candidate-source-alternative.mjs"
 
 // Link an already reviewed private article to its discovery candidate. This
 // never creates an edition, changes its cutoff, or marks the article published.
@@ -15,6 +17,7 @@ export async function recordCandidateApproval({
   runId,
   approvedRunId,
   candidateKey,
+  sourceAlternativeResolutionRunId = null,
   backlogFile = BACKLOG_PATH,
   publishedArticles = [],
 }) {
@@ -23,6 +26,9 @@ export async function recordCandidateApproval({
     !/^[a-zA-Z0-9_-]+$/.test(approvedRunId || "") ||
     runId === approvedRunId ||
     !/^[a-zA-Z0-9_-]+$/.test(candidateKey || "") ||
+    (sourceAlternativeResolutionRunId &&
+      (!/^[a-zA-Z0-9_-]+$/.test(sourceAlternativeResolutionRunId) ||
+        [runId, approvedRunId].includes(sourceAlternativeResolutionRunId))) ||
     !Array.isArray(publishedArticles)
   )
     throw Error("Distinct approval link run, reviewed article run and candidate key required")
@@ -33,6 +39,7 @@ export async function recordCandidateApproval({
       runId,
       approvedRunId,
       candidateKey,
+      sourceAlternativeResolutionRunId,
       backlogFile,
       publishedArticles,
     }),
@@ -44,10 +51,12 @@ async function linkCandidateApproval({
   runId,
   approvedRunId,
   candidateKey,
+  sourceAlternativeResolutionRunId,
   backlogFile,
   publishedArticles,
 }) {
-  const { documents, parses } = loadStoredSourceRun(root, approvedRunId)
+  const stored = loadStoredSourceRun(root, approvedRunId)
+  const { documents, parses } = stored
   const draft = readJSON(root, `runs/${approvedRunId}/draft.json`)
   const reviewed = readJSON(root, `runs/${approvedRunId}/reviewed-claims.json`)
   const decision = readJSON(root, `runs/${approvedRunId}/editorial-review.json`)
@@ -65,7 +74,8 @@ async function linkCandidateApproval({
     const backlogRoot = path.dirname(backlogFile)
     const backlogName = path.basename(backlogFile)
     return withLock(backlogRoot, "candidate-backlog", async () => {
-      const backlog = readJSON(backlogRoot, backlogName)
+      const backlogBytes = fs.readFileSync(path.resolve(backlogFile))
+      const backlog = JSON.parse(backlogBytes.toString("utf8"))
       if (backlog?.schema !== "research-candidates/v1" || !Array.isArray(backlog.candidates))
         throw Error("Existing candidate backlog required")
       const matches = backlog.candidates.filter((item) => item.key === candidateKey)
@@ -73,27 +83,103 @@ async function linkCandidateApproval({
       const candidate = matches[0]
       if (candidate.source_urls?.length !== 1 || !candidate.source_published_at)
         throw Error("Dated candidate with one original URL required")
-      const url = canonicalURL(candidate.source_urls[0])
+      const originalUrl = canonicalURL(candidate.source_urls[0])
+      let sourceUrl = originalUrl
+      let sourceAlternative = null
+      if (sourceAlternativeResolutionRunId) {
+        const resolutionPath = `runs/${sourceAlternativeResolutionRunId}/candidate-source-alternative.json`
+        const reviewPath = `runs/${sourceAlternativeResolutionRunId}/candidate-source-alternative-review.json`
+        const resolutionBytes = fs.readFileSync(safePath(root, resolutionPath))
+        const resolution = JSON.parse(resolutionBytes.toString("utf8"))
+        const reviewBytes = fs.readFileSync(safePath(root, reviewPath))
+        const alternateReview = JSON.parse(reviewBytes.toString("utf8"))
+        const priorApproval = readJSON(root, receiptPath)
+        const resolutionSha256 = sha256(resolutionBytes)
+        const alreadyLinked =
+          candidate.review_status === "verified" &&
+          candidate.event_id === article.event_id &&
+          candidate.approval?.approved_run === approvedRunId &&
+          candidate.approval?.source_alternative_resolution_run ===
+            sourceAlternativeResolutionRunId &&
+          candidate.approval?.source_alternative_resolution_sha256 === resolutionSha256 &&
+          priorApproval?.candidate_key === candidateKey &&
+          priorApproval?.event_id === article.event_id &&
+          priorApproval?.source_alternative?.receipt_sha256 === resolutionSha256
+        const reviewedClaims = reviewed.claims
+        const replayed = buildCandidateSourceAlternativeResolution({
+          candidate,
+          review: alternateReview,
+          sourceRunId: approvedRunId,
+          sourceRunIdentity: stored.identity,
+          documents,
+          parses,
+          reviewedClaims,
+          reviewSha256: sha256(reviewBytes),
+          backlogSha256: alreadyLinked ? resolution.inputs?.backlog_sha256 : sha256(backlogBytes),
+          generatedAt: resolution.generated_at,
+        })
+        if (
+          sha256(reviewBytes) !== resolution.inputs?.review_sha256 ||
+          (!alreadyLinked && sha256(backlogBytes) !== resolution.inputs?.backlog_sha256) ||
+          JSON.stringify(replayed) !== JSON.stringify(resolution) ||
+          resolution.decision !== "same_event" ||
+          resolution.candidate_key !== candidateKey ||
+          resolution.original_source?.url !== originalUrl ||
+          resolution.inputs?.source_run_id !== approvedRunId
+        )
+          throw Error(
+            "Same-event alternate-source resolution does not match this candidate approval",
+          )
+        sourceUrl = canonicalURL(resolution.alternative_source.url)
+        sourceAlternative = {
+          run_id: sourceAlternativeResolutionRunId,
+          receipt_sha256: resolutionSha256,
+          original_url: originalUrl,
+          alternative_url: sourceUrl,
+          decision: resolution.decision,
+          published_at: parseResearchDate(resolution.alternative_source.published_at)?.day || null,
+          source_version_id: resolution.alternative_source.source_version_id,
+          parse_id: resolution.alternative_source.parse_id,
+          content_sha256: resolution.alternative_source.content_sha256,
+        }
+      }
       const matchedDocuments = documents.filter(
-        (document) => canonicalURL(document.original_url) === url,
+        (document) => canonicalURL(document.original_url) === sourceUrl,
       )
-      if (matchedDocuments.length !== 1) throw Error("Approved run lacks the candidate source")
+      if (matchedDocuments.length !== 1)
+        throw Error("Approved run lacks the exact candidate or reviewed alternate source")
       const document = matchedDocuments[0]
-      const parse = parses.find((item) => item.source_version_id === document.source_version_id)
+      const parse = parses.find(
+        (item) =>
+          item.source_version_id === document.source_version_id &&
+          (!sourceAlternative || item.parse_id === sourceAlternative.parse_id),
+      )
       if (!parse || parse.status !== "extracted")
         throw Error("Approved candidate needs its exact extracted parse")
       const contentSha = articleContentFingerprint(parse)
+      const alternativeConfirmsEventDate =
+        sourceAlternative?.decision === "same_event" &&
+        samePublicationDate(sourceAlternative.published_at, article.article_review.published_at)
       if (
-        !article.source_urls.some((sourceURL) => canonicalURL(sourceURL) === url) ||
-        !samePublicationDate(candidate.source_published_at, article.article_review.published_at) ||
-        candidate.article_source_version_id !== document.source_version_id ||
-        candidate.article_parse_id !== parse.parse_id ||
-        candidate.article_content_sha256 !== contentSha
+        !article.source_urls.some((articleURL) => canonicalURL(articleURL) === sourceUrl) ||
+        (!samePublicationDate(candidate.source_published_at, article.article_review.published_at) &&
+          !alternativeConfirmsEventDate) ||
+        (!sourceAlternative &&
+          candidate.article_source_version_id &&
+          candidate.article_source_version_id !== document.source_version_id) ||
+        (!sourceAlternative &&
+          candidate.article_parse_id &&
+          candidate.article_parse_id !== parse.parse_id) ||
+        (!sourceAlternative &&
+          candidate.article_content_sha256 &&
+          candidate.article_content_sha256 !== contentSha)
       )
         throw Error("Candidate and approved article differ in URL, date or source version")
       if (
         publishedArticles.some((existing) =>
-          existing.source_urls?.some((sourceURL) => canonicalURL(sourceURL) === url),
+          existing.source_urls?.some((existingURL) =>
+            [originalUrl, sourceUrl].includes(canonicalURL(existingURL)),
+          ),
         )
       )
         throw Error("Candidate source already appears in an edition")
@@ -129,11 +215,13 @@ async function linkCandidateApproval({
           if (
             other.approval?.approved_run !== approvedRunId ||
             other.approval?.article_sha256 !== articleHash ||
-            !other.source_urls?.some((sourceURL) =>
-              article.source_urls.some(
-                (articleURL) => canonicalURL(articleURL) === canonicalURL(sourceURL),
-              ),
-            )
+            ![...other.source_urls, ...(other.alternate_sources || []).map((source) => source.url)]
+              .filter(Boolean)
+              .some((sourceURL) =>
+                article.source_urls.some(
+                  (articleURL) => canonicalURL(articleURL) === canonicalURL(sourceURL),
+                ),
+              )
           )
             throw Error("Event belongs to another candidate approval; review identity")
         }
@@ -148,10 +236,22 @@ async function linkCandidateApproval({
         source_version_id: document.source_version_id,
         parse_id: parse.parse_id,
         article_content_sha256: contentSha,
+        ...(sourceAlternative ? { source_alternative: sourceAlternative } : {}),
         candidate_published: false,
       }
       const previous = readJSON(root, receiptPath)
-      if (previous && JSON.stringify(previous) !== JSON.stringify(receipt))
+      const previousWithoutAlternativeDate = previous ? structuredClone(previous) : null
+      const receiptWithoutAlternativeDate = structuredClone(receipt)
+      if (previousWithoutAlternativeDate?.source_alternative)
+        delete previousWithoutAlternativeDate.source_alternative.published_at
+      if (receiptWithoutAlternativeDate.source_alternative)
+        delete receiptWithoutAlternativeDate.source_alternative.published_at
+      if (
+        previous &&
+        JSON.stringify(previous) !== JSON.stringify(receipt) &&
+        JSON.stringify(previousWithoutAlternativeDate) !==
+          JSON.stringify(receiptWithoutAlternativeDate)
+      )
         throw Error("Candidate approval link changed; use a new run ID")
       if (candidate.approval) {
         if (
@@ -164,6 +264,13 @@ async function linkCandidateApproval({
               source_version_id: document.source_version_id,
               parse_id: parse.parse_id,
               article_content_sha256: contentSha,
+              ...(sourceAlternative
+                ? {
+                    source_url: sourceUrl,
+                    source_alternative_resolution_run: sourceAlternative.run_id,
+                    source_alternative_resolution_sha256: sourceAlternative.receipt_sha256,
+                  }
+                : {}),
             })
         )
           throw Error("Candidate has a different editorial approval")
@@ -176,6 +283,16 @@ async function linkCandidateApproval({
           candidate.source_revision_alert
         )
           throw Error("Candidate already has another editorial disposition")
+        // Legacy candidates may have an exact URL and date but no captured
+        // source identity. Backfill only missing values from this approved
+        // article's verified source; any existing conflicting value failed
+        // the checks above.
+        if (!sourceAlternative) {
+          candidate.article_source_version_id = document.source_version_id
+          candidate.article_parse_id = parse.parse_id
+          candidate.article_observed_at = document.observed_at
+          candidate.article_content_sha256 = contentSha
+        }
         candidate.review_status = "verified"
         candidate.event_id = article.event_id
         candidate.reviewed_at = article.article_review.reviewed_at
@@ -185,6 +302,46 @@ async function linkCandidateApproval({
           source_version_id: document.source_version_id,
           parse_id: parse.parse_id,
           article_content_sha256: contentSha,
+          ...(sourceAlternative
+            ? {
+                source_url: sourceUrl,
+                source_alternative_resolution_run: sourceAlternative.run_id,
+                source_alternative_resolution_sha256: sourceAlternative.receipt_sha256,
+              }
+            : {}),
+        }
+        if (sourceAlternative) {
+          candidate.alternate_sources = [
+            ...(candidate.alternate_sources || []).filter(
+              (source) => canonicalURL(source.url) !== sourceUrl,
+            ),
+            {
+              url: sourceUrl,
+              relationship: "same_event_official_alternative",
+              resolution_run: sourceAlternative.run_id,
+              resolution_sha256: sourceAlternative.receipt_sha256,
+              source_version_id: document.source_version_id,
+              parse_id: parse.parse_id,
+              article_content_sha256: contentSha,
+              observed_at: document.observed_at,
+            },
+          ]
+          candidate.source_attempts = [
+            ...(candidate.source_attempts || []).filter(
+              (attempt) =>
+                attempt.attempt_id !== approvedRunId ||
+                canonicalURL(attempt.source_url || originalUrl) !== sourceUrl,
+            ),
+            {
+              key: candidate.key,
+              attempt_id: approvedRunId,
+              source_url: sourceUrl,
+              source_role: "official_alternative",
+              article_source_version_id: document.source_version_id,
+              article_parse_id: parse.parse_id,
+              article_content_sha256: contentSha,
+            },
+          ]
         }
         delete candidate.reason
         backlog.updated_at = new Date().toISOString()

@@ -59,14 +59,15 @@ export function robotsPolicy(text, userAgent, url) {
     matched_rule: rules[0] || null,
   }
 }
-export async function checkRobots(root, fetcher, url) {
+export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
   const origin = new URL(url).origin
+  const hosts = allowed_hosts || [new URL(url).hostname]
   fetcher.robotsCache ||= new Map()
   if (!fetcher.robotsCache.has(origin)) {
     fetcher.robotsCache.set(
       origin,
       (async () => {
-        const record = await fetcher.fetch(origin + "/robots.txt")
+        const record = await fetcher.fetch(origin + "/robots.txt", { allowed_hosts: hosts })
         if (record.fetch_status === "not_found") return { text: "", record }
         if (["captured", "not_modified"].includes(record.fetch_status)) {
           const body = fs.readFileSync(safePath(root, record.body_path))

@@ -14,16 +14,24 @@ import {
   safePath,
   withLock,
 } from "./run-state.mjs"
-import { coveredFrontier, kstDay, planDailyWindows, validateDailyRoutes } from "./daily-plan.mjs"
+import {
+  DEFAULT_DAILY_RETRY_POLICY,
+  coveredFrontier,
+  kstDay,
+  planDailyWindows,
+  validateDailyRoutes,
+} from "./daily-plan.mjs"
 import { mergeCompletedScan } from "./scan-completion.mjs"
 
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
 const COVERAGE_FILE = "daily/route-coverage.json"
+const MAX_PARALLEL_DAILY_ROUTES = 4
 
 const load = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
 const sameWindow = (a, b) =>
   a.channel_id === b.channel_id && a.since === b.since && a.until_exclusive === b.until_exclusive
+const reconciliationPath = (runId) => `daily/reconciliations/${runId}.json`
 
 export function dailySources(configFile = DAILY_CONFIG) {
   const config = load(configFile)
@@ -166,7 +174,15 @@ export function validateStoredDailyPlan(plan, { runId, config, activeRoutes, con
     activeRoutes,
     coverage: plan.coverage_basis,
   })
-  for (const key of ["schema", "run_id", "kst_day", "cutoff", "cutoff_basis", "windows"]) {
+  for (const key of [
+    "schema",
+    "run_id",
+    "kst_day",
+    "cutoff",
+    "cutoff_basis",
+    "retry_policy",
+    "windows",
+  ]) {
     if (JSON.stringify(plan[key]) !== JSON.stringify(expected[key]))
       throw Error("Stored daily plan windows differ from the verified planning basis")
   }
@@ -270,6 +286,38 @@ export function repairDailyCoverageState(state) {
 
 export function verifyDailyCoverageEvidence(root, channelId, state) {
   for (const span of state.covered) {
+    if (span.kind === "verified_supplemental_scan") {
+      if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
+        throw Error("Supplemental coverage has no valid reconciliation run")
+      const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
+      const scan = storedListScan(root, receipt.scan_run)
+      const expectedUntil = scan.summary.window
+        ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
+        : null
+      if (
+        receipt?.schema !== "research-supplemental-coverage/v1" ||
+        receipt.scan_run !== span.source_run ||
+        receipt.channel_id !== channelId ||
+        receipt.since !== span.since ||
+        receipt.scan_until_exclusive !== scan.summary.window?.until_exclusive ||
+        receipt.coverage_until !== span.until_exclusive ||
+        receipt.coverage_until !== expectedUntil ||
+        receipt.backlog_merge?.status !== "merged" ||
+        receipt.candidate_published !== false ||
+        JSON.stringify(receipt.candidate_keys) !==
+          JSON.stringify(scan.candidates.map((candidate) => candidate.key))
+      )
+        throw Error("Supplemental coverage receipt does not match its interval")
+      if (
+        scan.summary.status !== "window_scanned" ||
+        scan.summary.channel_id !== channelId ||
+        scan.summary.window?.since !== span.since ||
+        scan.summary.window?.until_exclusive < span.until_exclusive
+      )
+        throw Error("Supplemental coverage disagrees with its completed scan window")
+      verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
+      continue
+    }
     if (span.kind !== "daily_scan") continue
     const scan = storedListScan(root, span.source_run)
     const window = scan.summary.window
@@ -285,6 +333,103 @@ export function verifyDailyCoverageEvidence(root, channelId, state) {
     verifyStoredListScan(root, scan, { channel_id: channelId, ...window })
   }
   return true
+}
+
+export async function reconcileSupplementalScan({
+  root = DEFAULT_ROOT,
+  configFile = DAILY_CONFIG,
+  scanRun,
+  reconciliationRun,
+  backlogFile = DAILY_BACKLOG,
+  now = new Date().toISOString(),
+  merge = mergeCompletedScan,
+}) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(scanRun || "")) throw Error("Valid stored scan run required")
+  if (!/^[a-zA-Z0-9_-]+$/.test(reconciliationRun || ""))
+    throw Error("Valid reconciliation run required")
+  return withLock(root, "daily-acquisition", async () => {
+    const { activeRoutes } = dailySources(configFile)
+    const scan = storedListScan(root, scanRun)
+    const channelId = scan.summary.channel_id
+    const route = activeRoutes.find((item) => item.channel_id === channelId)
+    if (!route) throw Error("Supplemental scan must belong to an active daily route")
+    if (scan.summary.status !== "window_scanned" || !scan.summary.window)
+      throw Error("Only a completed stored scan can supplement daily coverage")
+    verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
+    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE))
+    const state = coverage.routes[channelId]
+    const existing = state.covered.find((span) => span.source_run === scanRun)
+    const receiptFile = reconciliationPath(reconciliationRun)
+    const previousReceipt = fs.existsSync(safePath(root, receiptFile))
+      ? readJSON(root, receiptFile)
+      : null
+    const reconciledAt = previousReceipt?.reconciled_at || new Date(now).toISOString()
+    const day = kstDay(reconciledAt)
+    const coverageUntil = [scan.summary.window.until_exclusive, day].sort()[0]
+    if (scan.summary.window.since >= coverageUntil)
+      throw Error("Stored scan has no elapsed dates to add to daily coverage")
+    const expectedReceipt = {
+      schema: "research-supplemental-coverage/v1",
+      reconciliation_run: reconciliationRun,
+      scan_run: scanRun,
+      channel_id: channelId,
+      since: scan.summary.window.since,
+      scan_until_exclusive: scan.summary.window.until_exclusive,
+      coverage_until: coverageUntil,
+      reconciled_at: reconciledAt,
+      candidate_keys: scan.candidates.map((candidate) => candidate.key),
+      candidate_published: false,
+    }
+    if (
+      previousReceipt &&
+      Object.entries(expectedReceipt).some(
+        ([key, value]) => JSON.stringify(previousReceipt[key]) !== JSON.stringify(value),
+      )
+    )
+      throw Error("Reconciliation run already exists with different evidence")
+    if (existing) {
+      verifyDailyCoverageEvidence(root, channelId, state)
+      return { status: "already_reconciled", channel_id: channelId, scan_run: scanRun }
+    }
+    if (previousReceipt && !fs.existsSync(safePath(root, COVERAGE_FILE)))
+      throw Error("Reconciliation receipt exists without daily coverage state")
+    const merged = previousReceipt ? previousReceipt.backlog_merge : await merge(scan, backlogFile)
+    if (merged?.status !== "merged") throw Error("Supplemental candidates were not merged")
+    if (!previousReceipt)
+      atomicCreate(root, receiptFile, { ...expectedReceipt, backlog_merge: merged })
+    if (scan.summary.window.since < coverageUntil) {
+      state.covered.push({
+        since: scan.summary.window.since,
+        until_exclusive: coverageUntil,
+        source_run: scanRun,
+        kind: "verified_supplemental_scan",
+        reconciliation_run: reconciliationRun,
+      })
+      state.unresolved = state.unresolved.flatMap((gap) => {
+        if (gap.until_exclusive <= scan.summary.window.since || gap.since >= coverageUntil)
+          return [gap]
+        return [
+          ...(gap.since < scan.summary.window.since
+            ? [{ ...gap, until_exclusive: scan.summary.window.since }]
+            : []),
+          ...(gap.until_exclusive > coverageUntil ? [{ ...gap, since: coverageUntil }] : []),
+        ]
+      })
+      state.last_contiguous_until = coveredFrontier(state.anchor_since, state.covered)
+      verifyDailyCoverageEvidence(root, channelId, state)
+      atomicWrite(root, COVERAGE_FILE, coverage)
+    }
+    return {
+      status: "reconciled",
+      channel_id: channelId,
+      scan_run: scanRun,
+      since: scan.summary.window.since,
+      coverage_until: coverageUntil,
+      candidates: scan.candidates.length,
+      backlog_merge: merged,
+      candidate_published: false,
+    }
+  })
 }
 
 export function bootstrapCoverage(root, activeRoutes, previous = null) {
@@ -396,20 +541,117 @@ export function applyDailyReceipts(coverage, plan, receipts) {
       state.unresolved = state.unresolved.filter(
         (gap) => !(gap.since >= receipt.since && gap.until_exclusive <= receipt.until_exclusive),
       )
-    } else if (!state.unresolved.some((gap) => sameWindow(gap, receipt)))
-      state.unresolved.push({
-        since: receipt.since,
-        until_exclusive: receipt.until_exclusive,
-        reason: receipt.reason || receipt.status,
-        last_attempt: receipt.attempt_id,
+    } else {
+      const gaps = [
+        {
+          channel_id: receipt.channel_id,
+          since: receipt.since,
+          until_exclusive: receipt.until_exclusive,
+          reason: receipt.reason || receipt.status,
+          last_attempt: receipt.attempt_id,
+        },
+      ].flatMap((gap) => {
+        let remaining = [gap]
+        for (const span of state.covered.filter((item) =>
+          ["daily_scan", "verified_supplemental_scan"].includes(item.kind),
+        ))
+          remaining = remaining.flatMap((item) => {
+            if (item.until_exclusive <= span.since || item.since >= span.until_exclusive)
+              return [item]
+            return [
+              ...(item.since < span.since ? [{ ...item, until_exclusive: span.since }] : []),
+              ...(item.until_exclusive > span.until_exclusive
+                ? [{ ...item, since: span.until_exclusive }]
+                : []),
+            ]
+          })
+        return remaining
       })
+      for (const gap of gaps)
+        if (!state.unresolved.some((existing) => sameWindow(existing, gap)))
+          state.unresolved.push(gap)
+    }
     state.last_contiguous_until = coveredFrontier(state.anchor_since, state.covered)
   }
   return result
 }
 
+export function supplementalCoverageReceiptForWindow(root, state, window) {
+  for (const span of state?.covered || []) {
+    if (
+      span.kind !== "verified_supplemental_scan" ||
+      span.since !== window.since ||
+      span.until_exclusive > window.until_exclusive
+    )
+      continue
+    if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
+      throw Error("Supplemental coverage has no valid reconciliation run")
+    const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
+    const scan = storedListScan(root, receipt.scan_run)
+    const expectedUntil = scan.summary.window
+      ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
+      : null
+    if (
+      receipt?.schema !== "research-supplemental-coverage/v1" ||
+      receipt.reconciliation_run !== span.reconciliation_run ||
+      receipt.channel_id !== window.channel_id ||
+      receipt.since !== window.since ||
+      receipt.scan_until_exclusive !== window.until_exclusive ||
+      receipt.coverage_until !== span.until_exclusive ||
+      receipt.coverage_until !== expectedUntil ||
+      receipt.backlog_merge?.status !== "merged" ||
+      receipt.candidate_published !== false ||
+      JSON.stringify(receipt.candidate_keys) !==
+        JSON.stringify(scan.candidates.map((candidate) => candidate.key)) ||
+      scan.summary.status !== "window_scanned" ||
+      scan.summary.channel_id !== window.channel_id ||
+      scan.summary.window?.since !== window.since ||
+      scan.summary.window?.until_exclusive !== window.until_exclusive
+    )
+      throw Error("Supplemental coverage receipt does not match its completed scan window")
+    verifyStoredListScan(root, scan, { channel_id: window.channel_id, ...scan.summary.window })
+    return receipt
+  }
+  return null
+}
+
+function hasSupplementalResultForWindow(root, state, window) {
+  return supplementalCoverageReceiptForWindow(root, state, window) !== null
+}
+
 function attemptId(plan, window, attempt) {
   return `${plan.run_id}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a${attempt}`
+}
+
+export function dailyRetryQueue(root, plan, receipts, coverage = readJSON(root, COVERAGE_FILE)) {
+  const policy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
+  return plan.windows.flatMap((window) => {
+    const attempts = receipts.filter((receipt) => sameWindow(receipt, window))
+    if (!attempts.length || attempts.some((receipt) => receipt.status === "window_scanned"))
+      return []
+    if (hasSupplementalResultForWindow(root, coverage?.routes?.[window.channel_id], window))
+      return []
+    const last = attempts.at(-1)
+    const state =
+      last.status === "blocked" && policy.blocked_requires_new_observation
+        ? "awaiting_new_observation"
+        : attempts.length >= policy.max_attempts_per_window
+          ? "exhausted"
+          : "retryable"
+    return [
+      {
+        channel_id: window.channel_id,
+        since: window.since,
+        until_exclusive: window.until_exclusive,
+        state,
+        attempts: attempts.length,
+        attempts_remaining:
+          state === "retryable" ? policy.max_attempts_per_window - attempts.length : 0,
+        last_attempt_id: last.attempt_id,
+        reason: last.reason || last.status,
+      },
+    ]
+  })
 }
 
 export function verifyDailyReceipts(
@@ -464,72 +706,164 @@ export async function executeDailyPlan({
 }) {
   const receipts = readDailyReceipts(root, plan.run_id)
   verifyDailyReceipts(root, plan, receipts, { loadStored, verify })
+  for (const { channel_id } of activeRoutes) {
+    const state = coverage.routes[channel_id]
+    if (state) verifyDailyCoverageEvidence(root, channel_id, state)
+  }
   let current = applyDailyReceipts(coverage, plan, receipts)
+  const retryPolicy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
   atomicWrite(root, COVERAGE_FILE, current)
-  for (const window of plan.windows) {
-    if (
-      receipts.some((receipt) => sameWindow(receipt, window) && receipt.status === "window_scanned")
+  const pending = [...plan.windows]
+  while (pending.length) {
+    const batch = []
+    const selectedRoutes = new Set()
+    for (let index = 0; index < pending.length && batch.length < MAX_PARALLEL_DAILY_ROUTES;) {
+      const window = pending[index]
+      if (selectedRoutes.has(window.channel_id)) {
+        index++
+        continue
+      }
+      pending.splice(index, 1)
+      const priorAttempts = receipts.filter((receipt) => sameWindow(receipt, window))
+      const lastAttempt = priorAttempts.at(-1)
+      if (
+        priorAttempts.some((receipt) => receipt.status === "window_scanned") ||
+        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window) ||
+        priorAttempts.length >= retryPolicy.max_attempts_per_window ||
+        (lastAttempt?.status === "blocked" && retryPolicy.blocked_requires_new_observation)
+      )
+        continue
+      batch.push({ window, priorAttempts })
+      selectedRoutes.add(window.channel_id)
+    }
+    if (!batch.length) break
+
+    // Scan independent routes together; preserve route order and serialize backlog writes below.
+    const outcomes = await Promise.all(
+      batch.map(async ({ window, priorAttempts }) => {
+        const attempt = priorAttempts.length + 1
+        const id = attemptId(plan, window, attempt)
+        const started_at = new Date().toISOString()
+        const attemptStarted = performance.now()
+        let status = "failed",
+          reason = null,
+          candidates = [],
+          scanEvidence = null,
+          result = null,
+          scan_ms = 0,
+          verify_ms = null
+        try {
+          const scanStarted = performance.now()
+          const predecessor = plan.windows.find(
+            (candidate) =>
+              candidate.channel_id === window.channel_id &&
+              candidate.until_exclusive === window.since,
+          )
+          const reusableReceipt = predecessor
+            ? receipts.find(
+                (receipt) =>
+                  sameWindow(receipt, predecessor) && receipt.status === "window_scanned",
+              )
+            : null
+          result = await scan(window, id, reusableReceipt?.attempt_id || null)
+          scan_ms = Math.round(performance.now() - scanStarted)
+          scanEvidence = {
+            list_scan_run: id,
+            listing_source_version_id: result.summary.listing_source_version_id || null,
+            index_documents: result.indexDocuments?.length || 0,
+            documents: result.documents?.length || 0,
+            parses: result.parses?.length || 0,
+          }
+          if (result.summary.status === "window_scanned") {
+            const verifyStarted = performance.now()
+            try {
+              await verify(root, result, window)
+            } finally {
+              verify_ms = Math.round(performance.now() - verifyStarted)
+            }
+          } else {
+            status =
+              result.summary.status === "blocked" || result.summary.reason?.includes("blocked")
+                ? "blocked"
+                : "incomplete"
+            reason = result.summary.reason || "window_incomplete"
+            candidates = result.candidates.map((candidate) => candidate.key)
+          }
+        } catch (error) {
+          if (scanEvidence === null && scan_ms === 0)
+            scan_ms = Math.round(performance.now() - attemptStarted)
+          reason = error.message
+        }
+        return {
+          window,
+          id,
+          started_at,
+          attemptStarted,
+          status,
+          reason,
+          candidates,
+          result,
+          scanEvidence,
+          scan_ms,
+          verify_ms,
+          backlog_merge_ms: null,
+          mergeResult: null,
+        }
+      }),
     )
-      continue
-    const attempt = receipts.filter((receipt) => sameWindow(receipt, window)).length + 1
-    const id = attemptId(plan, window, attempt)
-    const started_at = new Date().toISOString()
-    let status = "failed",
-      reason = null,
-      candidates = [],
-      mergeResult = null,
-      scanEvidence = null
-    try {
-      const result = await scan(window, id)
-      scanEvidence = {
-        list_scan_run: id,
-        listing_source_version_id: result.summary.listing_source_version_id || null,
-        index_documents: result.indexDocuments?.length || 0,
-        documents: result.documents?.length || 0,
-        parses: result.parses?.length || 0,
+
+    for (const outcome of outcomes) {
+      const { window, id, started_at, attemptStarted, result, scanEvidence } = outcome
+      if (result?.summary.status === "window_scanned" && outcome.reason === null) {
+        const mergeStarted = performance.now()
+        try {
+          outcome.mergeResult = await merge(result, backlogFile)
+          if (outcome.mergeResult.status !== "merged")
+            throw Error("Completed route candidates were not merged")
+          outcome.status = "window_scanned"
+          outcome.candidates = result.candidates.map((candidate) => candidate.key)
+        } catch (error) {
+          outcome.reason = error.message
+          outcome.status = "failed"
+        } finally {
+          outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
+        }
       }
-      if (result.summary.status === "window_scanned") {
-        verify(root, result, window)
-        mergeResult = await merge(result, backlogFile)
-        if (mergeResult.status !== "merged")
-          throw Error("Completed route candidates were not merged")
-        status = "window_scanned"
-        candidates = result.candidates.map((candidate) => candidate.key)
-      } else {
-        status = result.summary.reason?.includes("blocked") ? "blocked" : "incomplete"
-        reason = result.summary.reason || "window_incomplete"
-        candidates = result.candidates.map((candidate) => candidate.key)
+      const receipt = {
+        schema: "research-daily-receipt/v1",
+        daily_run: plan.run_id,
+        attempt_id: id,
+        channel_id: window.channel_id,
+        since: window.since,
+        until_exclusive: window.until_exclusive,
+        started_at,
+        finished_at: new Date().toISOString(),
+        timing_ms: {
+          scan: outcome.scan_ms,
+          verify: outcome.verify_ms,
+          backlog_merge: outcome.backlog_merge_ms,
+          total: Math.round(performance.now() - attemptStarted),
+        },
+        status: outcome.status,
+        reason: outcome.reason,
+        candidate_keys: outcome.candidates,
+        ...(scanEvidence ? { scan_evidence: scanEvidence } : {}),
+        ...(outcome.mergeResult ? { backlog_merge: outcome.mergeResult } : {}),
+        candidate_published: false,
       }
-    } catch (error) {
-      reason = error.message
+      atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
+      receipts.push(receipt)
+      current = applyDailyReceipts(coverage, plan, receipts)
+      atomicWrite(root, COVERAGE_FILE, current)
     }
-    const receipt = {
-      schema: "research-daily-receipt/v1",
-      daily_run: plan.run_id,
-      attempt_id: id,
-      channel_id: window.channel_id,
-      since: window.since,
-      until_exclusive: window.until_exclusive,
-      started_at,
-      finished_at: new Date().toISOString(),
-      status,
-      reason,
-      candidate_keys: candidates,
-      ...(scanEvidence ? { scan_evidence: scanEvidence } : {}),
-      ...(mergeResult ? { backlog_merge: mergeResult } : {}),
-      candidate_published: false,
-    }
-    atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
-    receipts.push(receipt)
-    current = applyDailyReceipts(coverage, plan, receipts)
-    atomicWrite(root, COVERAGE_FILE, current)
   }
   const routeResults = activeRoutes.map(({ route }) => {
     const windows = plan.windows.filter((item) => item.channel_id === route.channel_id)
-    const complete = windows.every((window) =>
-      receipts.some(
-        (receipt) => sameWindow(receipt, window) && receipt.status === "window_scanned",
-      ),
+    const complete = windows.every(
+      (window) =>
+        receipts.some(
+          (receipt) => sameWindow(receipt, window) && receipt.status === "window_scanned",
+        ) || hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window),
     )
     return { ...route, status: complete ? "partial" : "failed" }
   })
@@ -546,12 +880,98 @@ export async function executeDailyPlan({
     })),
     coverage_grid: coverageGrid(routeResults),
     receipts: receipts.length,
+    retry_policy: retryPolicy,
+    execution: {
+      max_parallel_routes: MAX_PARALLEL_DAILY_ROUTES,
+      route_windows_serialized: true,
+      candidate_merges_serialized: true,
+    },
+    retry_queue: dailyRetryQueue(root, plan, receipts, current),
+    timing: summarizeDailyTiming(receipts, activeRoutes),
     candidate_published: false,
     drive_verified: false,
     public_verified: false,
   }
   atomicWrite(root, `daily/runs/${plan.run_id}/summary.json`, summary)
   return summary
+}
+
+function summarizeDailyTiming(receipts, activeRoutes) {
+  for (const receipt of receipts) {
+    if (receipt.timing_ms === undefined) continue
+    if (
+      !receipt.timing_ms ||
+      ["scan", "verify", "backlog_merge", "total"].some((key) => {
+        const value = receipt.timing_ms[key]
+        return value !== null && (!Number.isSafeInteger(value) || value < 0)
+      }) ||
+      !Number.isSafeInteger(receipt.timing_ms.scan) ||
+      !Number.isSafeInteger(receipt.timing_ms.total)
+    )
+      throw Error("Daily receipt has invalid phase timing")
+  }
+  const measured = receipts.filter(
+    (receipt) =>
+      receipt.timing_ms &&
+      ["scan", "verify", "backlog_merge", "total"].every(
+        (key) =>
+          receipt.timing_ms[key] === null ||
+          (Number.isSafeInteger(receipt.timing_ms[key]) && receipt.timing_ms[key] >= 0),
+      ),
+  )
+  const sum = (key) => measured.reduce((total, receipt) => total + (receipt.timing_ms[key] ?? 0), 0)
+  return {
+    unit: "ms",
+    receipt_elapsed_ms: sum("total"),
+    measured_receipts: measured.length,
+    unmeasured_receipts: receipts.length - measured.length,
+    phases: {
+      scan_ms: sum("scan"),
+      verify_ms: sum("verify"),
+      backlog_merge_ms: sum("backlog_merge"),
+    },
+    by_route: Object.fromEntries(
+      activeRoutes.map(({ route }) => {
+        const routeReceipts = measured.filter((receipt) => receipt.channel_id === route.channel_id)
+        return [
+          route.channel_id,
+          {
+            attempts: receipts.filter((receipt) => receipt.channel_id === route.channel_id).length,
+            measured_attempts: routeReceipts.length,
+            total_ms: routeReceipts.reduce((total, receipt) => total + receipt.timing_ms.total, 0),
+          },
+        ]
+      }),
+    ),
+  }
+}
+
+export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
+  if (typeof runResearch !== "function") throw Error("Daily source runner is required")
+  return async (window, attempt, reuseListingRun) => {
+    const args = [
+      "scan-list",
+      "--root",
+      root,
+      "--run",
+      attempt,
+      "--channel",
+      window.channel_id,
+      "--since",
+      window.since,
+      "--until",
+      window.until_exclusive,
+    ]
+    const route = activeRoutes.find((item) => item.route.channel_id === window.channel_id)?.route
+    if (
+      reuseListingRun &&
+      route?.method === "html-list" &&
+      route.listing_profile?.pagination === "single-page"
+    )
+      args.push("--reuse-listing-run", reuseListingRun)
+    await runResearch(args)
+    return storedListScan(root, attempt)
+  }
 }
 
 export async function dailyScan({
@@ -617,22 +1037,13 @@ export async function dailyScan({
       return { run_id: runId, status: "planned", windows: plan.windows.length, plan_path: planPath }
     const actualScan =
       scan ||
-      (async (window, attempt) => {
-        const { main } = await import("../research.mjs")
-        await main([
-          "scan-list",
-          "--root",
-          root,
-          "--run",
-          attempt,
-          "--channel",
-          window.channel_id,
-          "--since",
-          window.since,
-          "--until",
-          window.until_exclusive,
-        ])
-        return storedListScan(root, attempt)
+      createDailySourceScanner({
+        root,
+        activeRoutes,
+        runResearch: async (args) => {
+          const { main } = await import("../research.mjs")
+          await main(args)
+        },
       })
     const summary = await executeDailyPlan({
       root,

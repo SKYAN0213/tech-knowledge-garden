@@ -100,6 +100,25 @@ test("unsupported, duplicate and wrong-day routes cannot enter the daily plan", 
   )
 })
 
+test("Universal Robots official JSON pagination can enter the daily plan", () => {
+  const urRoute = {
+    channel_id: "route-ur-news-en",
+    method: "html-list",
+    api_profile: { id: "ur-news-center-json-pages-v1" },
+  }
+  const urConfig = {
+    ...config,
+    routes: [
+      {
+        channel_id: "route-ur-news-en",
+        enabled: true,
+        baseline_run: "20261001-ur-news-today-v1",
+      },
+    ],
+  }
+  assert.equal(validateDailyRoutes(urConfig, [urRoute])[0].channel_id, "route-ur-news-en")
+})
+
 test("calendar archive routes require an explicit complete listing contract", () => {
   const calendarConfig = {
     ...config,

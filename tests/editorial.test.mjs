@@ -10,7 +10,9 @@ import {
   requireEditorial,
   editorialContext,
   DEEP_KINDS,
+  editorialMeta,
 } from "../scripts/editorial.mjs"
+import { articleReview } from "../scripts/article-review.mjs"
 import { auditRuns } from "../scripts/research-audit.mjs"
 import { SECTORS } from "../scripts/sectors.mjs"
 
@@ -113,6 +115,63 @@ test("new editorial evidence rejects missing facts, abstract-only depth, unsuppo
   delete empty.meta.deep_skip_reason
   assert.throws(() => applyEditorial(empty, []), /skipped/)
 })
+test("editorial contract fixture validates the record and public metadata excludes private fields", () => {
+  const contract = JSON.parse(fs.readFileSync("tests/fixtures/editorial-contract-v1.json", "utf8"))
+  assert.equal(contract.schema, "article-record/six-w-v1")
+  const record = structuredClone(contract.record)
+  const issue = {
+    meta: {
+      date: "2026-10-01",
+      editorial_format: "six-w/v1",
+      headlines: [record.title],
+      article_records: [record],
+      deep_skip_reason: "근거가 충분한 심층 후보 없음",
+    },
+  }
+  const article = {
+    title: record.title,
+    body: record.lead,
+    urls: ["https://example.org/announcement"],
+  }
+  applyEditorial(issue, [article])
+  const projected = editorialMeta(article)
+  assert.deepEqual(Object.keys(projected).sort(), [...contract.public_fields].sort())
+  assert.equal(projected.next_check, undefined)
+  assert.equal(JSON.stringify(projected).includes("집행 공시"), false)
+
+  const injected = structuredClone(issue)
+  injected.meta.article_records[0].reviewer_note = "private"
+  assert.throws(
+    () => applyEditorial(injected, [structuredClone(article)]),
+    /unexpected article record/,
+  )
+  const nested = structuredClone(issue)
+  nested.meta.article_records[0].facts.reviewer_note = "private"
+  assert.throws(() => applyEditorial(nested, [structuredClone(article)]), /unexpected six-w facts/)
+})
+test("article review projection rejects operational properties instead of silently accepting them", () => {
+  const record = {
+    title: "고정 사건",
+    event_id: "0123456789abcdef",
+    review_status: "unreviewed",
+    concept_ids: [],
+  }
+  const edition = { meta: { article_reviews: [record] } }
+  assert.deepEqual(articleReview(edition, record.title, "fallback"), {
+    event_id: record.event_id,
+    review_status: "unreviewed",
+    concept_ids: [],
+  })
+  assert.throws(
+    () =>
+      articleReview(
+        { meta: { article_reviews: [{ ...record, internal_reason: "private" }] } },
+        record.title,
+        "fallback",
+      ),
+    /Unexpected article review field/,
+  )
+})
 test("three deep formats retain the same lead, evidence and topic links in News, briefing, GitHub and RSS", async () => {
   const original = process.cwd()
   for (const kind of DEEP_KINDS) {
@@ -167,6 +226,7 @@ test("three deep formats retain the same lead, evidence and topic links in News,
       assert.equal(news.meta.kind, kind)
       assert.deepEqual(news.meta.papers, a.editorial.papers)
       assert.deepEqual(news.meta.relations, a.editorial.relations)
+      assert.equal(news.meta.next_check, undefined)
       for (const f of [
         "vault/" + i.slug.replace("Editions/", "Briefings/") + ".md",
         i.slug.replace("Editions/", "digest/") + ".md",

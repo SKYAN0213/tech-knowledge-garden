@@ -7,6 +7,7 @@ import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const REQUIRED_ASPECTS = ["identity_marker", "event_action"]
+const IDENTITY_DECISIONS = new Set(["same_published_event", "same_published_source_revision"])
 
 function checkedSource(root, runId, evidence) {
   const selected = selectStoredSources(root, runId, [evidence?.source_url])
@@ -35,8 +36,9 @@ function citedText(parse, blockId, excerpt) {
   )
 }
 
-// An explicit source-bound link between two language editions of one already
-// published event. URL or company-name similarity alone is never an identity.
+// An explicit source-bound link to one already published event. Cross-source
+// links need a human comparison; exact-source re-observations also require the
+// extracted article content and announcement date to remain identical.
 export async function recordCandidateIdentity({
   root,
   runId,
@@ -57,7 +59,7 @@ export async function recordCandidateIdentity({
   const review = readJSON(root, reviewPath)
   if (
     review?.schema !== "editorial-candidate-identity/v1" ||
-    review.decision !== "same_published_event" ||
+    !IDENTITY_DECISIONS.has(review.decision) ||
     review.new_article !== false ||
     review.candidate_published !== false ||
     typeof review.reviewer !== "string" ||
@@ -73,11 +75,39 @@ export async function recordCandidateIdentity({
 
   const candidate = checkedSource(root, sourceRunId, review.candidate)
   const published = checkedSource(root, publishedSourceRunId, review.published)
-  if (
-    !samePublicationDate(review.candidate.published_at, review.published.published_at) ||
-    !/^[a-f0-9]{16,64}$/.test(review.published.event_id || "")
+  const sameSourceURL =
+    canonicalURL(review.candidate.source_url) === canonicalURL(review.published.source_url)
+  const candidateContentSha = articleContentFingerprint(candidate.parse)
+  const publishedContentSha = articleContentFingerprint(published.parse)
+  if (sameSourceURL) {
+    if (
+      review.decision !== "same_published_source_revision" ||
+      candidateContentSha !== publishedContentSha ||
+      candidate.parse.title !== published.parse.title ||
+      review.candidate.source_title !== candidate.parse.title ||
+      review.published.source_title !== published.parse.title
+    )
+      throw Error(
+        "Same-source link requires identical article content, title and exact source identity",
+      )
+  } else if (review.decision !== "same_published_event") {
+    throw Error("Cross-source identity requires a reviewed same-event comparison")
+  }
+  if (!/^[a-f0-9]{16,64}$/.test(review.published.event_id || ""))
+    throw Error("Same-event source requires a fixed published event ID")
+  const publicationDatesMatch = samePublicationDate(
+    review.candidate.published_at,
+    review.published.published_at,
   )
-    throw Error("Same-event sources require the same original announcement day and fixed event ID")
+  if (
+    !publicationDatesMatch &&
+    (review.decision !== "same_published_event" ||
+      !samePublicationDate(review.event_date, review.published.published_at) ||
+      !review.matches.some((match) => match.aspect === "event_date"))
+  )
+    throw Error(
+      "Different publication dates require a directly evidenced event date matching the published event",
+    )
   assertReviewDate(review.reviewed_at, {
     notBefore: [
       candidate.document.observed_at,
@@ -122,9 +152,6 @@ export async function recordCandidateIdentity({
     throw Error(
       "Fixed event, original URL, title and publication date need an existing verified article",
     )
-  if (canonicalURL(review.candidate.source_url) === canonicalURL(review.published.source_url))
-    throw Error("An identical source URL already resolves without a multilingual identity review")
-
   const discovery =
     candidateRunId === sourceRunId
       ? candidate
@@ -132,25 +159,51 @@ export async function recordCandidateIdentity({
   const discoveryDocument = discovery.document || discovery.documents[0]
   if (discoveryDocument.source_version_id !== candidate.document.source_version_id)
     throw Error("Discovery candidate and identity review use different source versions")
-  const candidates = readJSON(root, `runs/${candidateRunId}/candidates.json`)
   const sourceURL = canonicalURL(review.candidate.source_url)
-  const matches = candidates?.filter((item) =>
-    item.source_urls?.some((url) => canonicalURL(url) === sourceURL),
-  )
+  const candidates = readJSON(root, `runs/${candidateRunId}/candidates.json`)
+  const articleContentSha = candidateContentSha
+  const reviewHash = sha256(JSON.stringify(review))
+  let sourceCandidate
+  if (Array.isArray(candidates)) {
+    const matches = candidates.filter((item) =>
+      item.source_urls?.some((url) => canonicalURL(url) === sourceURL),
+    )
+    if (matches.length === 1) sourceCandidate = matches[0]
+  } else {
+    const selection = readJSON(root, `runs/${candidateRunId}/source-selection.json`)
+    const backlog = readJSON(path.dirname(backlogFile), path.basename(backlogFile))
+    const matches = backlog?.candidates?.filter((item) => item.key === selection?.candidate_key)
+    if (
+      selection?.schema === "research-source-selection/v1" &&
+      selection.selection_basis === "exact_search_intake" &&
+      selection.candidate_source_version_id === candidate.document.source_version_id &&
+      selection.candidate_parse_id === candidate.parse.parse_id &&
+      selection.selected_urls?.some((url) => canonicalURL(url) === sourceURL) &&
+      matches?.length === 1 &&
+      matches[0].source_urls?.length === 1 &&
+      matches[0].source_urls.some((url) => canonicalURL(url) === sourceURL)
+    )
+      sourceCandidate = matches[0]
+  }
   if (
-    matches?.length !== 1 ||
-    matches[0].key !== `source-${candidate.document.source_id}` ||
-    matches[0].review_status !== "unreviewed" ||
-    matches[0].source_urls.length !== 1 ||
-    !samePublicationDate(matches[0].source_published_at, review.candidate.published_at)
+    !sourceCandidate ||
+    sourceCandidate.key !== `source-${candidate.document.source_id}` ||
+    (sourceCandidate.review_status !== "unreviewed" &&
+      !(
+        sourceCandidate.review_status === "verified" &&
+        sourceCandidate.event_id === review.published.event_id &&
+        sourceCandidate.identity?.review_sha256 === reviewHash &&
+        sourceCandidate.identity?.source_version_id === candidate.document.source_version_id
+      )) ||
+    sourceCandidate.source_urls?.length !== 1 ||
+    (sameSourceURL && sourceCandidate.title !== candidate.parse.title) ||
+    !samePublicationDate(sourceCandidate.source_published_at, review.candidate.published_at)
   )
     throw Error("One matching, dated, unreviewed discovery candidate required")
-  const sourceCandidate = matches[0]
-  const articleContentSha = articleContentFingerprint(candidate.parse)
-  const reviewHash = sha256(JSON.stringify(review))
   const receiptPath = `runs/${runId}/candidate-identity.json`
   const receipt = {
     schema: "research-candidate-identity/v1",
+    decision: review.decision,
     candidate_key: sourceCandidate.key,
     event_id: review.published.event_id,
     candidate_run: candidateRunId,
@@ -163,6 +216,8 @@ export async function recordCandidateIdentity({
     review_path: reviewPath,
     review_sha256: reviewHash,
     candidate_published: false,
+    event_date: review.event_date || review.published.published_at,
+    publication_dates_match: publicationDatesMatch,
   }
   return withLock(root, "run-" + runId, async () => {
     const previous = readJSON(root, receiptPath)
@@ -220,6 +275,8 @@ export async function recordCandidateIdentity({
       old.article_content_sha256 = articleContentSha
       old.identity = {
         decision: review.decision,
+        event_date: review.event_date || review.published.published_at,
+        publication_dates_match: publicationDatesMatch,
         candidate_run: candidateRunId,
         source_run: sourceRunId,
         published_source_run: publishedSourceRunId,

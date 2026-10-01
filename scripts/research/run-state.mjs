@@ -101,6 +101,57 @@ export function acquireLock(root, name) {
     fs.unlinkSync(file)
   }
 }
+export function recoverLock(root, name, expectedOwner) {
+  if (!/^[a-zA-Z0-9_.-]+$/.test(name)) throw Error("Invalid lock name")
+  if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(expectedOwner || ""))
+    throw Error("Expected lock owner UUID required")
+  const relative = `locks/${name}.json`,
+    file = safePath(root, relative)
+  let current
+  try {
+    current = JSON.parse(fs.readFileSync(file, "utf8"))
+  } catch (error) {
+    if (error.code === "ENOENT") throw Error("Lock does not exist")
+    throw Error("Lock record is unreadable; preserving it")
+  }
+  if (
+    !current ||
+    current.owner !== expectedOwner ||
+    !Number.isSafeInteger(current.pid) ||
+    current.pid <= 0 ||
+    !Number.isFinite(Date.parse(current.started_at || ""))
+  )
+    throw Error("Lock identity does not match the requested owner; preserving it")
+  try {
+    process.kill(current.pid, 0)
+    throw Error("Lock owner process is still running; preserving the lock")
+  } catch (error) {
+    if (error.code === "EPERM")
+      throw Error("Lock owner process is still running; preserving the lock")
+    if (error.code !== "ESRCH") throw error
+  }
+  const latest = JSON.parse(fs.readFileSync(file, "utf8"))
+  if (
+    latest.owner !== current.owner ||
+    latest.pid !== current.pid ||
+    latest.started_at !== current.started_at
+  )
+    throw Error("Lock changed during recovery; preserving it")
+  fs.unlinkSync(file)
+  const directory = fs.openSync(path.dirname(file), "r")
+  try {
+    fs.fsyncSync(directory)
+  } finally {
+    fs.closeSync(directory)
+  }
+  return {
+    status: "recovered",
+    lock_name: name,
+    owner: current.owner,
+    pid: current.pid,
+    started_at: current.started_at,
+  }
+}
 export async function withLock(root, name, action) {
   const release = acquireLock(root, name)
   try {

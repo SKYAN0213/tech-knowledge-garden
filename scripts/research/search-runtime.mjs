@@ -6,7 +6,11 @@ import { atomicWrite, safePath, readJSON, withLock } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
 import { SearxSearch } from "./search.mjs"
 
-export const SEARCH_ENGINES = ["google", "bing", "duckduckgo", "naver", "wikipedia"]
+const LEGACY_SEARCH_ENGINES = ["google", "bing", "duckduckgo", "naver", "wikipedia"]
+const PREVIOUS_SEARCH_ENGINES = [...LEGACY_SEARCH_ENGINES, "brave"]
+const EXPERIMENTAL_SEARCH_ENGINES = [...PREVIOUS_SEARCH_ENGINES, "mwmbl"]
+const PREVIOUS_ACTIVE_SEARCH_ENGINES = [...LEGACY_SEARCH_ENGINES, "mwmbl"]
+export const SEARCH_ENGINES = [...PREVIOUS_ACTIVE_SEARCH_ENGINES, "yahoo"]
 export function prepareSearchConfig(root, port = 8888) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
     throw Error("Invalid local search port")
@@ -28,6 +32,34 @@ export function prepareSearchConfig(root, port = 8888) {
       outgoing: { request_timeout: 12.0 },
       engines: SEARCH_ENGINES.map((name) => ({ name, disabled: false })),
     }
+    atomicWrite(root, relative, config)
+  }
+  const configuredEngines = config.engines?.map((engine) => engine.name)
+  const configuredAllowlist = config.use_default_settings?.engines?.keep_only
+  const legacyEngineLists = [
+    LEGACY_SEARCH_ENGINES,
+    PREVIOUS_SEARCH_ENGINES,
+    EXPERIMENTAL_SEARCH_ENGINES,
+    PREVIOUS_ACTIVE_SEARCH_ENGINES,
+  ]
+  const isLegacyConfig = legacyEngineLists.some(
+    (engines) =>
+      JSON.stringify(configuredEngines) === JSON.stringify(engines) &&
+      JSON.stringify(configuredAllowlist) === JSON.stringify(engines),
+  )
+  if (
+    isLegacyConfig &&
+    config.server?.bind_address === "127.0.0.1" &&
+    config.server.port === port &&
+    config.server.public_instance === false &&
+    config.general?.debug === false &&
+    typeof config.server.secret_key === "string" &&
+    config.server.secret_key.length >= 32 &&
+    config.search?.formats?.includes("json") &&
+    config.engines.every((engine) => !engine.api_key && !engine.tokens)
+  ) {
+    config.use_default_settings.engines.keep_only = SEARCH_ENGINES
+    config.engines = SEARCH_ENGINES.map((name) => ({ name, disabled: false }))
     atomicWrite(root, relative, config)
   }
   if (

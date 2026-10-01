@@ -150,6 +150,53 @@ test("policy CLI rejects non-generating commands before touching a local model",
     )
   assert.equal(r.calls.length, 0)
 })
+test("explicit OpenAI policy routes the real extract CLI through Responses without publishing", async (t) => {
+  const f = fixture(t)
+  f.policy.roles.fact_extract.provider = "openai"
+  f.policy.roles.fact_extract.model = "gpt-6-luna"
+  fs.writeFileSync(f.file, JSON.stringify(f.policy))
+
+  const previousKey = process.env.OPENAI_API_KEY
+  process.env.OPENAI_API_KEY = "test-secret-key"
+  t.after(() => {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY
+    else process.env.OPENAI_API_KEY = previousKey
+  })
+  const requests = []
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    const pathname = new URL(url).pathname
+    requests.push({ pathname, options, body: options.body ? JSON.parse(options.body) : null })
+    assert.equal(options.headers.authorization, "Bearer test-secret-key")
+    if (pathname === "/v1/models/gpt-6-luna")
+      return Response.json({ id: "gpt-6-luna", created: 1790812800, owned_by: "openai" })
+    if (pathname === "/v1/responses")
+      return Response.json({
+        id: "resp_cli_fixture",
+        status: "completed",
+        output: [
+          {
+            type: "message",
+            role: "assistant",
+            content: [{ type: "output_text", text: '{"claims":[]}' }],
+          },
+        ],
+        usage: { input_tokens: 20, output_tokens: 2, total_tokens: 22 },
+      })
+    throw Error(`Unexpected API path ${pathname}`)
+  })
+
+  const result = await main(args(f, "openai-extract"))
+  assert.equal(result.claims, 0)
+  assert.equal(result.candidate_published, false)
+  const sent = requests.find((request) => request.pathname === "/v1/responses").body
+  assert.equal(sent.model, "gpt-6-luna")
+  assert.equal(sent.store, false)
+  assert.equal(sent.text.format.type, "json_schema")
+  const ledger = readJSON(f.root, "runs/openai-extract/model-policy/fact_extract/budget.json")
+  assert.equal(ledger.binding.settings.provider, "openai")
+  assert.equal(ledger.attempts[0].result.provenance.usage.total_tokens, 22)
+  assert.equal(JSON.stringify(ledger).includes("test-secret-key"), false)
+})
 test("extraction CLI applies policy false and budgets instead of parser defaults", async (t) => {
   const f = fixture(t),
     r = localRuntime(t, factOutput)

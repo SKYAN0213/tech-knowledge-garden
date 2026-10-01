@@ -76,12 +76,155 @@ test("intake ontology surfaces one canonical URL in two candidate identities", (
   )
 })
 
-test("same content on different publication days remains a separate review candidate", () => {
+test("intake ontology flags same-publisher same-day multilingual items for review only", () => {
+  const graph = projectIntakeOntology([
+    {
+      key: "english-release",
+      title: "Doosan Robotics Launches AI Palletizing at Automate 2026",
+      source_urls: ["https://www.doosanrobotics.com/en/about/promotion/news/palletizing"],
+      source_published_at: "2026-06-22",
+      review_status: "unreviewed",
+      discovery: [{ language: "en" }],
+    },
+    {
+      key: "korean-release",
+      title: "두산로보틱스, AI 팔레타이징 솔루션 공개",
+      source_urls: ["https://www.doosanrobotics.com/kr/about/promotion/news/팔레타이징"],
+      source_published_at: "2026-06-22",
+      review_status: "unreviewed",
+      discovery: [{ language: "ko" }],
+    },
+    {
+      key: "same-language-release",
+      title: "Another same-day announcement",
+      source_urls: ["https://www.doosanrobotics.com/en/about/promotion/news/other"],
+      source_published_at: "2026-06-22",
+      review_status: "unreviewed",
+      discovery: [{ language: "en" }],
+    },
+    {
+      key: "next-day-release",
+      title: "Different release",
+      source_urls: ["https://www.doosanrobotics.com/kr/about/promotion/news/other"],
+      source_published_at: "2026-06-23",
+      review_status: "unreviewed",
+      discovery: [{ language: "ko" }],
+    },
+  ])
+  const relation = graph.relations.find(
+    (item) => item.type === "samePublisherDayCrossLanguageCandidate",
+  )
+  assert.deepEqual(relation, {
+    from: "candidate:english-release",
+    type: "samePublisherDayCrossLanguageCandidate",
+    to: "candidate:korean-release",
+    basis: "doosanrobotics.com|2026-06-22",
+    decision: "review_required",
+  })
+  assert.deepEqual(relatedCandidateKeys(graph, "english-release"), ["korean-release"])
+  assert.equal(
+    graph.relations.some((item) => item.to === "candidate:next-day-release"),
+    false,
+  )
+  assert.equal(
+    graph.relations.some(
+      (item) =>
+        item.type === "samePublisherDayCrossLanguageCandidate" &&
+        [item.from, item.to].includes("candidate:english-release") &&
+        [item.from, item.to].includes("candidate:same-language-release"),
+    ),
+    false,
+  )
+})
+
+test("a shared verified approval resolves a cross-language same-day review signal", () => {
+  const approved = (key, language, url) => {
+    const item = candidate(key, url, {
+      event_id: "cd6214ef65043caa",
+      review_status: "verified",
+      source_published_at: "2026-06-22",
+      discovery: [{ language }],
+    })
+    item.title = `${key} announcement`
+    item.article_content_sha256 = `${key === "english-release" ? "a" : "b"}`.repeat(64)
+    item.article_parse_id = `${key}-parse`
+    item.approval = {
+      approved_run: "bilingual-article-v1",
+      article_sha256: "c".repeat(64),
+      source_version_id: item.article_source_version_id,
+      parse_id: item.article_parse_id,
+      article_content_sha256: item.article_content_sha256,
+    }
+    return item
+  }
+  const graph = projectIntakeOntology([
+    approved("english-release", "en", "https://www.doosanrobotics.com/en/palletizing"),
+    approved("korean-release", "ko", "https://www.doosanrobotics.com/kr/palletizing"),
+  ])
+  assert.deepEqual(
+    graph.relations.find((item) => item.type === "samePublisherDayCrossLanguageCandidate"),
+    {
+      from: "candidate:english-release",
+      type: "samePublisherDayCrossLanguageCandidate",
+      to: "candidate:korean-release",
+      basis: "doosanrobotics.com|2026-06-22",
+      decision: "same_approved_event",
+    },
+  )
+  assert.equal(
+    graph.relations.some((item) => item.decision === "review_required"),
+    false,
+  )
+})
+
+test("a shared event ID without the same exact approval remains a review lead", () => {
+  const approved = (key, language, url) => {
+    const item = candidate(key, url, {
+      event_id: "cd6214ef65043caa",
+      review_status: "verified",
+      source_published_at: "2026-06-22",
+      discovery: [{ language }],
+    })
+    item.title = `${key} announcement`
+    item.article_content_sha256 = `${key === "english-release" ? "a" : "b"}`.repeat(64)
+    item.article_parse_id = `${key}-parse`
+    item.approval = {
+      approved_run: "bilingual-article-v1",
+      article_sha256: `${key === "english-release" ? "c" : "d"}`.repeat(64),
+      source_version_id: item.article_source_version_id,
+      parse_id: item.article_parse_id,
+      article_content_sha256: item.article_content_sha256,
+    }
+    return item
+  }
+  const graph = projectIntakeOntology([
+    approved("english-release", "en", "https://www.doosanrobotics.com/en/palletizing"),
+    approved("korean-release", "ko", "https://www.doosanrobotics.com/kr/palletizing"),
+  ])
+  assert.equal(
+    graph.relations.find((item) => item.type === "samePublisherDayCrossLanguageCandidate").decision,
+    "review_required",
+  )
+})
+
+test("same extracted content on different publication days is still flagged for review", () => {
   const graph = projectIntakeOntology([
     candidate("first", "https://example.org/one"),
     candidate("second", "https://example.org/two", { source_published_at: "2026-09-30" }),
   ])
-  assert.deepEqual(relatedCandidateKeys(graph, "first"), [])
+  assert.deepEqual(relatedCandidateKeys(graph, "first"), ["second"])
+  assert.deepEqual(
+    graph.relations.filter((relation) => relation.type === "sameExtractedContentCandidate"),
+    [
+      {
+        from: "candidate:first",
+        type: "sameExtractedContentCandidate",
+        to: "candidate:second",
+        basis: "b".repeat(64),
+        decision: "review_required",
+      },
+    ],
+  )
 })
 
 test("matching title and day suggests review even when the extracted bodies differ", () => {

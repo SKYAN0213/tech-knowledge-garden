@@ -1,6 +1,34 @@
 import { canonicalURL } from "../garden.mjs"
 import { titleDayKey } from "../article-identity.mjs"
 
+function sharesReviewedApproval(a, b) {
+  const approvalA = a.approval
+  const approvalB = b.approval
+  const sha256 = /^[a-f0-9]{64}$/
+  return (
+    a.review_status === "verified" &&
+    b.review_status === "verified" &&
+    /^[a-f0-9]{16,64}$/.test(a.event_id || "") &&
+    a.event_id === b.event_id &&
+    typeof approvalA?.approved_run === "string" &&
+    approvalA.approved_run.length > 0 &&
+    approvalA.approved_run === approvalB?.approved_run &&
+    sha256.test(approvalA.article_sha256 || "") &&
+    approvalA.article_sha256 === approvalB?.article_sha256 &&
+    approvalA.source_version_id === a.article_source_version_id &&
+    approvalB.source_version_id === b.article_source_version_id &&
+    typeof approvalA.parse_id === "string" &&
+    approvalA.parse_id === a.article_parse_id &&
+    typeof approvalB.parse_id === "string" &&
+    approvalB.parse_id === b.article_parse_id &&
+    sha256.test(approvalA.article_content_sha256 || "") &&
+    approvalA.article_content_sha256 === a.article_content_sha256 &&
+    approvalB.article_content_sha256 === b.article_content_sha256 &&
+    !a.source_revision_alert &&
+    !b.source_revision_alert
+  )
+}
+
 // A private projection of the candidate ledger. Similarity is a review lead,
 // never an event identity or an editorial approval.
 export function projectIntakeOntology(candidates) {
@@ -8,13 +36,16 @@ export function projectIntakeOntology(candidates) {
   const nodes = []
   const relations = []
   const keys = new Set()
+  const candidateByKey = new Map()
   const urls = new Map()
   const content = new Map()
   const titles = new Map()
+  const crossLanguagePublisherDays = new Map()
   for (const candidate of [...candidates].sort((a, b) => a.key.localeCompare(b.key))) {
     if (!candidate.key || keys.has(candidate.key) || !Array.isArray(candidate.source_urls))
       throw Error("Unique candidate keys and source URLs required")
     keys.add(candidate.key)
+    candidateByKey.set(candidate.key, candidate)
     nodes.push({
       id: `candidate:${candidate.key}`,
       type: "Candidate",
@@ -25,6 +56,20 @@ export function projectIntakeOntology(candidates) {
     })
     for (const raw of candidate.source_urls) {
       const url = canonicalURL(raw)
+      const languages = [
+        ...new Set((candidate.discovery || []).map((item) => item.language).filter(Boolean)),
+      ]
+      const publisherDay =
+        candidate.source_published_at && languages.length
+          ? `${new URL(url).hostname.replace(/^www\./, "")}|${candidate.source_published_at}`
+          : null
+      if (publisherDay) {
+        if (!crossLanguagePublisherDays.has(publisherDay))
+          crossLanguagePublisherDays.set(publisherDay, new Map())
+        const group = crossLanguagePublisherDays.get(publisherDay)
+        if (!group.has(candidate.key)) group.set(candidate.key, new Set())
+        for (const language of languages) group.get(candidate.key).add(language)
+      }
       const prior = urls.get(url)
       if (prior && prior !== candidate.key)
         relations.push({
@@ -65,10 +110,11 @@ export function projectIntakeOntology(candidates) {
             : "existing_event_id",
       })
     }
-    const date = candidate.source_published_at?.slice(0, 10)
     const fingerprint = candidate.article_content_sha256
-    if (date && fingerprint) {
-      const group = `${date}:${fingerprint}`
+    if (fingerprint) {
+      // Identical extracted bodies remain a duplicate lead even when publishers
+      // assign different dates. The relation is review-only; it never merges events.
+      const group = fingerprint
       if (!content.has(group)) content.set(group, [])
       content.get(group).push(candidate.key)
     }
@@ -100,6 +146,31 @@ export function projectIntakeOntology(candidates) {
             basis,
             decision: "review_required",
           })
+  for (const [basis, candidatesByKey] of crossLanguagePublisherDays) {
+    const group = [...candidatesByKey].sort(([a], [b]) => a.localeCompare(b))
+    if (group.length > 1)
+      for (let i = 0; i < group.length; i++)
+        for (let j = i + 1; j < group.length; j++) {
+          const languagesA = group[i][1]
+          const languagesB = group[j][1]
+          if (
+            ![...languagesA].some((language) => [...languagesB].some((other) => other !== language))
+          )
+            continue
+          relations.push({
+            from: `candidate:${group[i][0]}`,
+            type: "samePublisherDayCrossLanguageCandidate",
+            to: `candidate:${group[j][0]}`,
+            basis,
+            decision: sharesReviewedApproval(
+              candidateByKey.get(group[i][0]),
+              candidateByKey.get(group[j][0]),
+            )
+              ? "same_approved_event"
+              : "review_required",
+          })
+        }
+  }
   return {
     schema: "research-intake-ontology/v1",
     nodes: nodes.sort((a, b) => a.id.localeCompare(b.id)),
@@ -117,6 +188,7 @@ export function relatedCandidateKeys(ontology, key) {
       (relation) =>
         [
           "sameExtractedContentCandidate",
+          "samePublisherDayCrossLanguageCandidate",
           "sameTitleDayCandidate",
           "sharedCanonicalSourceCandidate",
         ].includes(relation.type) &&

@@ -8,8 +8,10 @@ import { fetchWithPolicy } from "./source-policy.mjs"
 
 export function hdPageURL(channel, page) {
   const profile = channel.api_profile
+  const isPressProfile = profile?.id === "hd-press-json-pages-v1"
+  const isDisclosureProfile = profile?.id === "hd-disclosure-json-pages-v1"
   if (
-    profile?.id !== "hd-press-json-pages-v1" ||
+    (!isPressProfile && !isDisclosureProfile) ||
     !Number.isInteger(page) ||
     page < 0 ||
     !Number.isInteger(profile.page_size) ||
@@ -31,11 +33,19 @@ export function hdPageURL(channel, page) {
       throw Error("Unexpected HD Robotics API query")
     url.searchParams.set(key, value)
   }
-  if (
-    url.searchParams.get("compIntrSubTypeCd") !== "90010001" ||
-    url.searchParams.get("bdSeq") !== "51"
-  )
-    throw Error("HD Robotics press-release filter changed")
+  if (isPressProfile) {
+    if (
+      url.searchParams.get("compIntrSubTypeCd") !== "90010001" ||
+      url.searchParams.get("bdSeq") !== "51"
+    )
+      throw Error("HD Robotics press-release filter changed")
+  } else if (
+    url.searchParams.has("compIntrSubTypeCd") ||
+    url.searchParams.get("bdSeq") !== "54" ||
+    profile.detail_path !== "/company/disclosure/"
+  ) {
+    throw Error("HD Robotics disclosure filter changed")
+  }
   url.searchParams.set("page", String(page))
   url.searchParams.set("size", String(profile.page_size))
   return url.toString()
@@ -68,15 +78,16 @@ export function parseHDPage(payload, channel, page) {
   const items = data.content.map((item, index) => {
     const title = item?.bdContent?.bdcTitle?.replace(/\s+/g, " ").trim()
     const day = item?.bdContent?.bdcRegDtShort
+    const expectedSubtype = profile.query.compIntrSubTypeCd
     if (
       !Number.isSafeInteger(item?.bdcSeq) ||
       item.bdcSeq < 1 ||
       !title ||
       !validDay(day) ||
-      item.compIntrSubTypeCd !== profile.query.compIntrSubTypeCd
+      (expectedSubtype && item.compIntrSubTypeCd !== expectedSubtype)
     )
       throw Error("HD Robotics page item lacks title, date, type or identity")
-    const url = `${origin}/company/news/${item.bdcSeq}`
+    const url = `${origin}${profile.detail_path || "/company/news/"}${item.bdcSeq}`
     assertURL(url, channel.allowed_hosts)
     return {
       url,
@@ -180,13 +191,19 @@ export async function scanPaginatedHDRoute(
           discovery_method: "json-page",
         })
     }
+    if (expectedPages === 0) break
     if (page + 1 === expectedPages) break
   }
   summary.total_elements = expectedTotal
   summary.total_pages = expectedPages
   summary.scanned_items = scannedCount
   summary.window_items = selected.length
-  if (pages.length !== expectedPages || scannedCount !== expectedTotal)
+  if (
+    (expectedPages === 0
+      ? pages.length !== 1 || scannedCount !== 0
+      : pages.length !== expectedPages) ||
+    scannedCount !== expectedTotal
+  )
     return { ...empty, summary: { ...summary, reason: "pagination_incomplete" } }
   if (selected.length > channel.api_profile.max_details)
     return { ...empty, summary: { ...summary, reason: "detail_budget_exceeded" } }

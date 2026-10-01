@@ -21,7 +21,7 @@ export function articleContentFingerprint(parse) {
     parse?.status !== "extracted" ||
     typeof parse.title !== "string" ||
     !parse.title.trim() ||
-    typeof parse.dates?.published_at !== "string" ||
+    !(typeof parse.dates?.published_at === "string" || parse.dates?.published_at === null) ||
     !Array.isArray(parse.blocks) ||
     !parse.blocks.length ||
     parse.blocks.some((block) => typeof block.text !== "string" || !block.text.trim())

@@ -26,6 +26,21 @@ const channel = {
     query: { compIntrSubTypeCd: "90010001", bdSeq: "51" },
   },
 }
+const disclosureChannel = {
+  ...channel,
+  channel_id: "route-hd-disclosure-ko",
+  url: "https://www.hd-hyundairobotics.com/company/disclosure",
+  axis: "기업·운영",
+  api_profile: {
+    id: "hd-disclosure-json-pages-v1",
+    endpoint: "https://www.hd-hyundairobotics.com/api/v1/company/page",
+    page_size: 8,
+    max_pages: 30,
+    max_details: 25,
+    detail_path: "/company/disclosure/",
+    query: { bdSeq: "54" },
+  },
+}
 const item = (id, day) => ({
   bdcSeq: id,
   compIntrSubTypeCd: "90010001",
@@ -68,6 +83,72 @@ test("HD JSON page contract keeps exact route filters and rejects changed counts
   assert.throws(
     () => parseHDPage(pageData(0, [item(7499, "2026-09-31")]), channel, 0),
     /lacks title, date/,
+  )
+})
+
+test("HD disclosure profile uses the official board and preserves empty and item identities", () => {
+  const url = new URL(hdPageURL(disclosureChannel, 0))
+  assert.equal(url.searchParams.get("bdSeq"), "54")
+  assert.equal(url.searchParams.has("compIntrSubTypeCd"), false)
+  assert.equal(
+    parseHDPage(
+      {
+        resCd: 1,
+        data: {
+          number: 0,
+          size: 8,
+          numberOfElements: 0,
+          totalElements: 0,
+          totalPages: 0,
+          first: true,
+          last: true,
+          empty: true,
+          content: [],
+        },
+      },
+      disclosureChannel,
+      0,
+    ).items.length,
+    0,
+  )
+  const disclosure = parseHDPage(
+    {
+      resCd: 1,
+      data: {
+        number: 0,
+        size: 8,
+        numberOfElements: 1,
+        totalElements: 1,
+        totalPages: 1,
+        first: true,
+        last: true,
+        empty: false,
+        content: [
+          {
+            bdcSeq: 8501,
+            compIntrLink: null,
+            bdContent: { bdcTitle: "Official filing", bdcRegDtShort: "2026-09-30" },
+          },
+        ],
+      },
+    },
+    disclosureChannel,
+    0,
+  )
+  assert.equal(
+    disclosure.items[0].url,
+    "https://www.hd-hyundairobotics.com/company/disclosure/8501",
+  )
+  assert.throws(
+    () =>
+      hdPageURL(
+        {
+          ...disclosureChannel,
+          api_profile: { ...disclosureChannel.api_profile, query: { bdSeq: "51" } },
+        },
+        0,
+      ),
+    /disclosure filter changed/,
   )
 })
 
@@ -146,6 +227,64 @@ test("all API pages and selected originals must agree before a window is scanned
     })
     assert.equal(second.summary.status, "window_scanned")
     assert.equal(calls.length, 3)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test("a confirmed empty HD board is a complete scan after one page", async () => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "hd-empty-board-")))
+  try {
+    fs.mkdirSync(path.join(root, "pages"))
+    const calls = []
+    const run = {
+      async stage(name, _input, action) {
+        return action()
+      },
+    }
+    const result = await scanPaginatedHDRoute(
+      root,
+      run,
+      {},
+      disclosureChannel,
+      [],
+      { since: "2026-09-24", until: "2026-10-02" },
+      {
+        fetchPolicy: async (_root, _fetcher, url) => {
+          calls.push(url)
+          const body = JSON.stringify({
+            resCd: 1,
+            data: {
+              number: 0,
+              size: 8,
+              numberOfElements: 0,
+              totalElements: 0,
+              totalPages: 0,
+              first: true,
+              last: true,
+              empty: true,
+              content: [],
+            },
+          })
+          const body_path = "pages/0.json"
+          fs.writeFileSync(path.join(root, body_path), body)
+          return {
+            original_url: url,
+            final_url: url,
+            source_version_id: "empty-page:v1",
+            fetch_status: "captured",
+            mime_type: "application/json",
+            body_path,
+            body_sha256: sha256(body),
+            observed_at: "2026-10-01T00:00:00Z",
+          }
+        },
+      },
+    )
+    assert.equal(result.summary.status, "window_scanned")
+    assert.equal(result.summary.total_elements, 0)
+    assert.equal(result.summary.scanned_items, 0)
+    assert.equal(calls.length, 1)
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }

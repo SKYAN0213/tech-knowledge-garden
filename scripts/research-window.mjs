@@ -98,18 +98,67 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
                       : "review-publication-time",
     }
   })
+  const approvedGroups = new Map()
+  for (const candidate of candidates) {
+    if (
+      candidate.next_route !== "approved-unpublished" ||
+      !candidate.event_id ||
+      !candidate.approval?.approved_run ||
+      !candidate.approval?.article_sha256
+    )
+      continue
+    const groupKey = [
+      candidate.event_id,
+      candidate.approval.approved_run,
+      candidate.approval.article_sha256,
+    ].join("\u0000")
+    if (!approvedGroups.has(groupKey)) approvedGroups.set(groupKey, [])
+    approvedGroups.get(groupKey).push(candidate)
+  }
+  const primaryByKey = new Map()
+  const relatedByPrimary = new Map()
+  for (const group of approvedGroups.values()) {
+    if (group.length < 2) continue
+    group.sort(
+      (a, b) =>
+        Number(b.priority === "high") - Number(a.priority === "high") ||
+        a.discovered_at.localeCompare(b.discovered_at) ||
+        a.key.localeCompare(b.key),
+    )
+    const [primary, ...related] = group
+    relatedByPrimary.set(
+      primary.key,
+      related.map((candidate) => candidate.key),
+    )
+    for (const candidate of related) primaryByKey.set(candidate.key, primary.key)
+  }
+  const routedCandidates = candidates.map((candidate) => {
+    const primaryCandidateKey = primaryByKey.get(candidate.key)
+    if (primaryCandidateKey)
+      return {
+        ...candidate,
+        next_route: "same-approved-event",
+        primary_candidate_key: primaryCandidateKey,
+      }
+    const relatedCandidateKeys = relatedByPrimary.get(candidate.key)
+    return relatedCandidateKeys
+      ? { ...candidate, same_approved_event_candidate_keys: relatedCandidateKeys }
+      : candidate
+  })
   return {
     publication_after: cutoff,
     discovery_start: new Date(Math.min(start, end - 7 * day)).toISOString(),
     discovery_end: new Date(end).toISOString(),
     backlog_state: backlog ? "loaded" : "missing",
-    pending: candidates
-      .filter((c) => !["already-published", "closed"].includes(c.next_route))
+    pending: routedCandidates
+      .filter((c) => !["already-published", "closed", "same-approved-event"].includes(c.next_route))
       .sort(
         (a, b) =>
           Number(b.priority === "high") - Number(a.priority === "high") ||
           a.discovered_at.localeCompare(b.discovered_at),
       ),
-    resolved: candidates.filter((c) => ["already-published", "closed"].includes(c.next_route)),
+    resolved: routedCandidates.filter((c) =>
+      ["already-published", "closed", "same-approved-event"].includes(c.next_route),
+    ),
   }
 }

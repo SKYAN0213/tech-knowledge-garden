@@ -2,7 +2,7 @@ import fs from "node:fs"
 import { SECTORS } from "../sectors.mjs"
 import { canonicalURL } from "../garden.mjs"
 import { atomicWrite, readJSON, RunState, withLock } from "./run-state.mjs"
-import { candidatesFromLinks } from "./discovery.mjs"
+import { candidatesFromLinks, mergeUniqueDiscovery } from "./discovery.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
 
 export function researchSlots() {
@@ -638,11 +638,69 @@ export class SearxSearch {
     if (!response.ok) throw Error("Search service HTTP " + response.status)
     const body = await response.json()
     if (!Array.isArray(body.results)) throw Error("Invalid SearXNG response")
+    const resultLinks = (results) =>
+      results.slice(0, 25).map((r) => ({ url: r.url, text: r.title }))
+    const engines = new Set(
+      body.results.flatMap((result) => (Array.isArray(result.engines) ? result.engines : [])),
+    )
+    const failures = Array.isArray(body.unresponsive_engines) ? [...body.unresponsive_engines] : []
+    const supplemental_engines =
+      query.language === "en" && query.scope !== "registered-source" ? ["mwmbl", "yahoo"] : []
+    const links = resultLinks(body.results)
+    // Keep both providers separate from the month-scoped main query. Mwmbl
+    // has no range support; Yahoo is sampled independently with the same bound.
+    const supplementalResponses = await Promise.all(
+      supplemental_engines.map(async (engine) => {
+        const supplementalURL = new URL("/search", this.url)
+        supplementalURL.search = new URLSearchParams({
+          q: `!${engine} ${query.query}`,
+          format: "json",
+          language: "en",
+          categories: "general",
+        }).toString()
+        try {
+          const supplementalResponse = await this.fetch(supplementalURL, {
+            redirect: "error",
+            signal: AbortSignal.timeout(5000),
+          })
+          if (!supplementalResponse.ok)
+            return { engine, failures: [[engine, `HTTP_${supplementalResponse.status}`]] }
+          const supplementalBody = await supplementalResponse.json()
+          if (!Array.isArray(supplementalBody.results))
+            return { engine, failures: [[engine, "invalid response"]] }
+          return {
+            engine,
+            results: supplementalBody.results,
+            failures: Array.isArray(supplementalBody.unresponsive_engines)
+              ? supplementalBody.unresponsive_engines
+              : [],
+          }
+        } catch {
+          return { engine, failures: [[engine, "request failed"]] }
+        }
+      }),
+    )
+    for (const result of supplementalResponses) {
+      failures.push(...result.failures)
+      if (!result.results) continue
+      links.push(...resultLinks(result.results))
+      for (const engine of result.results.flatMap((entry) =>
+        Array.isArray(entry.engines) ? entry.engines : [],
+      ))
+        engines.add(engine)
+    }
+    const engineNames = [...engines].sort()
+    const uniqueFailures = failures.filter(
+      (failure, index, all) =>
+        all.findIndex((entry) => JSON.stringify(entry) === JSON.stringify(failure)) === index,
+    )
     return {
-      links: body.results.slice(0, 25).map((r) => ({ url: r.url, text: r.title })),
-      failures: body.unresponsive_engines || [],
+      links,
+      failures: uniqueFailures,
       query,
-      engine_count: new Set(body.results.flatMap((r) => r.engines || [])).size,
+      engines: engineNames,
+      supplemental_engines,
+      engine_count: engineNames.length,
     }
   }
 }
@@ -694,6 +752,10 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
             source_url: query.source_url || null,
             source_type: query.source_type || null,
             failures: result.failures,
+            engines: Array.isArray(result.engines) ? result.engines : [],
+            supplemental_engines: Array.isArray(result.supplemental_engines)
+              ? result.supplemental_engines
+              : [],
             engine_count: result.engine_count,
             candidate_count: found.length,
             result_count: result.links.length,
@@ -723,9 +785,9 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
           existing.source_urls.map(canonicalURL).join("\n") !== canonical
         )
           throw Error("Duplicate search URL has conflicting candidate identity")
-        existing.discovery = [...(existing.discovery || []), ...(candidate.discovery || [])].filter(
-          (entry, index, all) =>
-            all.findIndex((item) => JSON.stringify(item) === JSON.stringify(entry)) === index,
+        existing.discovery = mergeUniqueDiscovery(
+          existing.discovery || [],
+          candidate.discovery || [],
         )
       }
       records.push(result.record)

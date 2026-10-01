@@ -3,6 +3,8 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { spawn } from "node:child_process"
+import { pathToFileURL } from "node:url"
 import {
   SourceFetcher,
   assertURL,
@@ -25,6 +27,7 @@ import {
   readJSON,
   safePath,
   RunState,
+  recoverLock,
 } from "../scripts/research/run-state.mjs"
 import { validateEvidence, recordFactReview } from "../scripts/research/claims.mjs"
 import { Ollama } from "../scripts/research/ollama.mjs"
@@ -141,6 +144,73 @@ test("versioned fetch preserves legacy ID, body, 304 observation and source chan
     sha256("second"),
   )
 })
+test("concurrent fetches for one source serialize and reuse the first response", async (t) => {
+  const root = temporary(t),
+    requests = []
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: resolver,
+    transport: async (_url, _addresses, headers) => {
+      requests.push(headers)
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      if (requests.length === 1)
+        return {
+          status: 200,
+          headers: { etag: "shared", "content-type": "text/html" },
+          body: Buffer.from("same source"),
+        }
+      return { status: 304, headers: {}, body: Buffer.alloc(0) }
+    },
+  })
+  const url = "https://example.com/shared-news/"
+  const [first, second] = await Promise.all([fetcher.fetch(url), fetcher.fetch(url)])
+  assert.equal(requests.length, 2)
+  assert.equal(requests[1]["if-none-match"], "shared")
+  assert.equal(first.fetch_status, "captured")
+  assert.equal(second.fetch_status, "not_modified")
+  assert.equal(second.source_version_id, first.source_version_id)
+})
+test("host request spacing is shared across collector processes", async (t) => {
+  const root = temporary(t),
+    log = path.join(root, "request-times.log"),
+    moduleUrl = pathToFileURL(path.resolve("scripts/research/fetch.mjs")).href,
+    code = `
+      import fs from "node:fs";
+      import { SourceFetcher } from ${JSON.stringify(moduleUrl)};
+      const root = process.argv[1], log = process.argv[2], interval = Number(process.argv[3]);
+      const fetcher = new SourceFetcher(root, {
+        interval_ms: interval,
+        timeout_ms: 2000,
+        attempts: 1,
+        resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+        transport: async () => {
+          fs.appendFileSync(log, Date.now() + String.fromCharCode(10));
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          return { status: 200, headers: { "content-type": "text/plain" }, body: Buffer.from("source") };
+        },
+      });
+      const result = await fetcher.fetch("https://example.com/" + process.pid);
+      if (result.fetch_status !== "captured") throw new Error(JSON.stringify(result));
+    `
+  const launch = (interval) =>
+    new Promise((resolve, reject) => {
+      const child = spawn(
+        process.execPath,
+        ["--input-type=module", "-e", code, root, log, String(interval)],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      )
+      let stderr = ""
+      child.stderr.setEncoding("utf8").on("data", (chunk) => (stderr += chunk))
+      child.once("error", reject)
+      child.once("close", (status) =>
+        status === 0 ? resolve() : reject(Error(`collector child exited ${status}: ${stderr}`)),
+      )
+    })
+  await Promise.all([launch(160), launch(30)])
+  const times = fs.readFileSync(log, "utf8").trim().split(String.fromCharCode(10)).map(Number)
+  assert.equal(times.length, 2)
+  assert.ok(Math.abs(times[1] - times[0]) >= 130, `request starts were ${times.join(", ")}`)
+})
 test("fetch keeps path trailing slashes when the origin routes them differently", async (t) => {
   const requested = []
   const fetcher = new SourceFetcher(temporary(t), {
@@ -194,6 +264,45 @@ test("304 without cache and bounded Retry-After are explicit", async (t) => {
   assert.equal((await f.fetch("https://example.com")).fetch_status, "failed")
   assert.equal(retryDelay("9999", 1), 60000)
   assert.equal(retryDelay("2", 1), 2000)
+})
+test("GET retries transient transport failures but leaves permanent failures immediate", async (t) => {
+  const root = temporary(t)
+  let calls = 0
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: resolver,
+    attempts: 3,
+    transport: async () => {
+      calls++
+      if (calls === 1) throw Object.assign(Error("connection reset"), { code: "ECONNRESET" })
+      return { status: 200, headers: {}, body: Buffer.from("recovered") }
+    },
+  })
+  const captured = await fetcher.fetch("https://example.com/transient")
+  assert.equal(captured.fetch_status, "captured")
+  assert.equal(calls, 2)
+  assert.equal(fs.readFileSync(safePath(root, captured.body_path), "utf8"), "recovered")
+
+  for (const [failure, expectedStatus] of [
+    [Object.assign(Error("certificate rejected"), { code: "CERT_HAS_EXPIRED" }), "failed"],
+    [Error("BODY_TOO_LARGE"), "too_large"],
+  ]) {
+    let failedCalls = 0
+    const permanent = new SourceFetcher(temporary(t), {
+      interval_ms: 0,
+      resolve: resolver,
+      attempts: 3,
+      transport: async () => {
+        failedCalls++
+        throw failure
+      },
+    })
+    assert.equal(
+      (await permanent.fetch(`https://example.com/${failedCalls}-${failure.message}`)).fetch_status,
+      expectedStatus,
+    )
+    assert.equal(failedCalls, 1, failure.message)
+  }
 })
 test("read-only form requests bind each POST body to its public source URL", async (t) => {
   const root = temporary(t),
@@ -257,6 +366,40 @@ test("private paths reject traversal, symlinks and duplicate locks", (t) => {
   assert.throws(() => acquireLock(root, "a"), /EEXIST/)
   release()
   acquireLock(root, "a")()
+})
+test("stale lock recovery requires the exact owner and a dead PID", (t) => {
+  const root = temporary(t),
+    owner = "4c69cf8f-1185-49af-9fb8-77365cc098fa",
+    started_at = new Date().toISOString()
+  atomicWrite(root, "locks/stale.json", {
+    owner,
+    pid: 2147483647,
+    started_at,
+  })
+  assert.throws(
+    () => recoverLock(root, "stale", "d9f45acd-7794-4235-a588-f32d66b606d5"),
+    /identity/,
+  )
+  assert.equal(fs.existsSync(path.join(root, "locks/stale.json")), true)
+  assert.deepEqual(recoverLock(root, "stale", owner), {
+    status: "recovered",
+    lock_name: "stale",
+    owner,
+    pid: 2147483647,
+    started_at,
+  })
+  assert.equal(fs.existsSync(path.join(root, "locks/stale.json")), false)
+})
+test("lock recovery refuses a live owner and preserves its file", (t) => {
+  const root = temporary(t),
+    release = acquireLock(root, "active"),
+    lock = readJSON(root, "locks/active.json")
+  try {
+    assert.throws(() => recoverLock(root, "active", lock.owner), /still running/)
+    assert.equal(readJSON(root, "locks/active.json").owner, lock.owner)
+  } finally {
+    release()
+  }
 })
 test("completed stage resumes only matching input and intact checkpoint", async (t) => {
   const root = temporary(t),
@@ -430,6 +573,12 @@ test("model artifacts preserve the exact request and content without storing mod
         return Response.json({
           done: true,
           done_reason: "stop",
+          total_duration: 180_000_000,
+          load_duration: 8_000_000,
+          prompt_eval_duration: 32_000_000,
+          prompt_eval_count: 24,
+          eval_count: 8,
+          eval_duration: 120_000_000,
           message: { content, thinking: "Local internal reasoning" },
         })
       }
@@ -448,6 +597,24 @@ test("model artifacts preserve the exact request and content without storing mod
   assert.equal(result.artifacts.response_content, content)
   assert.equal(result.artifacts.response_content_sha256, sha256(content))
   assert.deepEqual(result.output, { value: 1 })
+  assert.deepEqual(
+    {
+      total_duration: result.provenance.total_duration,
+      load_duration: result.provenance.load_duration,
+      prompt_eval_duration: result.provenance.prompt_eval_duration,
+      prompt_eval_count: result.provenance.prompt_eval_count,
+      eval_count: result.provenance.eval_count,
+      eval_duration: result.provenance.eval_duration,
+    },
+    {
+      total_duration: 180_000_000,
+      load_duration: 8_000_000,
+      prompt_eval_duration: 32_000_000,
+      prompt_eval_count: 24,
+      eval_count: 8,
+      eval_duration: 120_000_000,
+    },
+  )
   assert.equal(JSON.stringify(result.artifacts).includes("Local internal reasoning"), false)
 })
 
@@ -538,6 +705,61 @@ test("discovery backlog retains reviewed IDs and never expires older pending can
     coverageGrid([]).every((c) => c.status === "not_attempted"),
     true,
   )
+})
+
+test("large repeated discovery histories merge linearly without dropping distinct observations", async (t) => {
+  const root = temporary(t)
+  const file = path.join(root, "candidate-backlog.json")
+  const previous = Array.from({ length: 2048 }, (_, index) => ({
+    channel_id: "robotics-news",
+    language: "en",
+    discovered_at: `2026-09-${String((index % 28) + 1).padStart(2, "0")}T${String(
+      Math.floor(index / 28) % 24,
+    ).padStart(2, "0")}:${String(index % 60).padStart(2, "0")}:00.000Z`,
+    source_version_id: `version-${index}`,
+  }))
+  const additions = Array.from({ length: 2048 }, (_, index) =>
+    index < 1024
+      ? previous[index]
+      : {
+          channel_id: "robotics-news",
+          language: "en",
+          discovered_at: `2026-10-01T${String(Math.floor((index - 1024) / 60)).padStart(
+            2,
+            "0",
+          )}:${String((index - 1024) % 60).padStart(2, "0")}:00.000Z`,
+          source_version_id: `new-version-${index}`,
+        },
+  )
+  atomicWrite(root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [
+      {
+        key: "large-history",
+        title: "Robotics source",
+        source_urls: ["https://example.com/robotics"],
+        discovered_at: "2026-09-01T00:00:00.000Z",
+        review_status: "unreviewed",
+        discovery: previous,
+      },
+    ],
+  })
+
+  await mergeBacklog(file, [
+    {
+      key: "large-history",
+      title: "Robotics source",
+      source_urls: ["https://example.com/robotics"],
+      discovered_at: "2026-10-01T00:00:00.000Z",
+      review_status: "unreviewed",
+      discovery: additions,
+    },
+  ])
+
+  const stored = readJSON(root, "candidate-backlog.json").candidates[0].discovery
+  assert.equal(stored.length, 3072)
+  assert.deepEqual(stored.slice(0, previous.length), previous)
+  assert.deepEqual(stored.slice(previous.length), additions.slice(1024))
 })
 
 test("a complete current article parse refreshes an unreviewed candidate title only", async (t) => {
