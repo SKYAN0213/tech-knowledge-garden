@@ -2851,6 +2851,6 @@ ABB E-Device의 현재 승인 parse 15 blocks와 두 과거 source version parse
 
 ### 19.118 로컬 추론 지연을 같은 원문 API 벤치마크로 분리
 
-2026-10-02 ABB GoFa 원문 slice의 로컬 `fact_extract`는 189,681ms, `article_write`는 128,492ms로 합계 약 5분 18초였다. 이는 모델 단계의 지연을 확인한 한 사례이며 출처 수집 전체의 병목이나 API가 개선할 수 있는 비율을 확정하지 않는다. 29개 경로 수집 8분 48초는 별도 단계에서 LLM 없이 수행됐으므로 숫자를 묶어 end-to-end benchmark로 쓰지 않는다.
+2026-10-02 ABB GoFa 원문 slice의 로컬 `fact_extract`는 189,681ms, `article_write`는 128,492ms로 합계 318.173초였다. Ollama provenance에서 모델 generation은 각각 166.848초(1,531 tokens; 9.18 tokens/s), 109.926초(887 tokens; 8.07 tokens/s)로 합계 wall의 약 87%를 차지했다. 첫 호출 load는 9.139초, 입력 평가는 13.655초였고 작성 호출의 load는 0.005초, 입력 평가는 18.466초였다. 따라서 이 표본에서는 로컬 생성 속도가 주요 지연이라는 증거가 있다. 단일 기사 표본이므로 일일 전체의 병목 비율이나 API 개선 폭을 확정하지 않는다. 29개 경로 수집 8분 48초는 별도 단계에서 LLM 없이 수행됐으므로 숫자를 묶어 end-to-end benchmark로 쓰지 않는다.
 
 OpenAI Responses API adapter와 role별 provider 선택은 구현되어 있다. 다음 검증은 사용자가 API 사용을 선택하고 비밀 환경에 `OPENAI_API_KEY`가 설정된 뒤, 동일 source bytes·prompt·schema를 고정하여 로컬과 API의 한 역할을 비교한다. 응답 품질은 claim/evidence 검토로 판정하고 wall time, input/output tokens, 실제 비용을 함께 기록한다. 먼저 `article_write` 비교가 원문 전송량을 줄이며, 추출 병목까지 비교할 필요가 있을 때만 `fact_extract`를 실행한다. ChatGPT 구독은 API 이용료에 포함되지 않으므로 예산 없는 정기 전환은 하지 않는다. 상세 실행 결과는 [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안) 참조.

@@ -352,4 +352,4 @@ HTML 200 응답에 로그인 벽이 반환되면 짧은 placeholder를 추출 �
 
 ## 2026-10-02 ABB GoFa 원문 대조와 기사 초안
 
-ABB 공식 고객 사례를 보존된 source version/parse에서 검토해 5개 claim을 확인하고 2개를 보류했다. qwen3.8:27b 추출 189.681초, 기사 작성 128.492초였으며 최종 draft는 자동 편집 검사 문제 0개다. 이미 승인 대기 중인 FANUC/Hitachi 중복 후보는 guard가 차단했다. ABB draft는 아직 공개 승인되지 않았다. OpenAI API adapter는 있으나 이 실행 환경에 `OPENAI_API_KEY`가 없어 성능 비교는 하지 않았다. API 전환은 외부 원문 전송과 별도 사용료가 수반되며, source collection 지연에는 직접 영향을 주지 않는다. [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안).
+ABB 공식 고객 사례를 보존된 source version/parse에서 검토해 5개 claim을 확인하고 2개를 보류했다. qwen3.8:27b 추출 189.681초, 기사 작성 128.492초였고 provenance상 generation 276.774초가 두 호출 wall의 약 87%다(9.18/8.07 tokens/s). 최종 draft는 자동 편집 검사 문제 0개다. 이미 승인 대기 중인 FANUC/Hitachi 중복 후보는 guard가 차단했다. ABB draft는 아직 공개 승인되지 않았다. OpenAI API adapter는 있으나 이 실행 환경에 `OPENAI_API_KEY`가 없어 성능 비교는 하지 않았다. API 전환은 외부 원문 전송과 별도 사용료가 수반되며, source collection 지연에는 직접 영향을 주지 않는다. [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안).
