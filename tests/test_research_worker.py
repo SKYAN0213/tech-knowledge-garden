@@ -81,6 +81,128 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["profile_status"], "conflict")
         self.assertEqual(result["dates"]["basis"]["text"], "August 26, 2026")
 
+    def test_html_article_can_use_exact_official_listing_date_with_provenance(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(
+            profile["options"]
+            for profile in config["article_profiles"]
+            if profile["id"] == "robotsguide-robotics-article-v1"
+        )
+        listing = {
+            "listing_published_at": "2026-09-28",
+            "listing_date_text": "September 28, 2026",
+            "listing_source_url": "https://spectrum.ieee.org/rss/robotics/fulltext",
+            "listing_source_version_id": "listing:ieee-spectrum-20261002",
+        }
+        raw = b'''<html lang="en"><head><title>A Day in the Life of a Roboticist</title>
+        <script type="application/ld+json">{"@type":"Article","datePublished":"September 28, 2026"}</script>
+        </head><body><main><article><h1>A Day in the Life of a Roboticist</h1>
+        <p>Charlie Kemp describes work on assistive robotics and research.</p></article></main></body></html>'''
+        result = self.invoke(raw, {**options, **listing}, url="https://robotsguide.com/learn/a-day-in-the-life-of-a-roboticist-charlie-kemp")["result"]
+        self.assertEqual(result["dates"]["published_at"], "2026-09-28")
+        self.assertEqual(result["dates"]["precision"], "day")
+        self.assertEqual(result["dates"]["profile_status"], "official-listing")
+        self.assertEqual(result["dates"]["basis"]["source_url"], listing["listing_source_url"])
+        self.assertEqual(result["dates"]["basis"]["source_version_id"], listing["listing_source_version_id"])
+        self.assertEqual(result["dates"]["basis"]["text"], listing["listing_date_text"])
+        missing_evidence = self.invoke(raw, {**options, "publication_date_from_listing": True})
+        self.assertEqual(missing_evidence["worker_status"], "failed")
+
+    def test_boston_dynamics_blog_profile_extracts_article_and_jsonld_publish_date(self):
+        import re
+
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "boston-dynamics-blog-article-v1")
+        url = "https://bostondynamics.com/blog/robot-hands-for-modern-ai-and-real-work"
+        self.assertRegex(url, re.compile(profile["url_pattern"]))
+        raw = b'''<html lang="en"><head><script type="application/ld+json">{"@graph":[{"@type":"Article","headline":"Robot Hands for Modern AI and Real Work","datePublished":"2026-10-01T13:10:02+00:00"}]}</script></head>
+        <body><nav><p>Related story must not enter the article.</p></nav>
+        <h1 class="fl-heading"><span class="fl-heading-text">Robot Hands for Modern AI and Real Work</span></h1>
+        <div class="post-content"><p>The Atlas hand has 13 degrees of freedom.</p><h2>Design choices</h2><p>Direct actuation supports dexterous work.</p><ul><li>Four fingers</li></ul></div></body></html>'''
+        result = self.invoke(raw, profile["options"], url=url)["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertEqual(result["title"], "Robot Hands for Modern AI and Real Work")
+        self.assertEqual(result["dates"]["published_at"], "2026-10-01T13:10:02+00:00")
+        jsonld_basis = result["dates"]["basis"]["sources"][0]
+        self.assertEqual(jsonld_basis["type"], "json-ld")
+        self.assertEqual(jsonld_basis["attribute"], "datePublished")
+        text = " ".join(block["text"] for block in result["blocks"])
+        self.assertIn("13 degrees of freedom", text)
+        self.assertIn("Four fingers", text)
+        self.assertNotIn("Related story", text)
+
+    def test_publication_date_not_applicable_suppresses_unrelated_structured_dates(self):
+        raw = b'''<html lang="de"><head><script type="application/ld+json">{"@type":"Article","datePublished":"2022-12-08T14:26:50Z"}</script></head>
+        <body><main><h1>Berichte</h1><p>Annual reports are listed by fiscal year.</p></main></body></html>'''
+        options = {
+            "language": "de",
+            "title_xpath": "//main/h1",
+            "content_xpath": "//main",
+            "content_block_xpath": ".//h1|.//p",
+            "publication_date_policy": "not_applicable",
+        }
+        result = self.invoke(raw, options, url="https://www.kuka.com/investor/reports")["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["candidates"], [])
+        self.assertIsNone(result["dates"]["basis"])
+        self.assertEqual(result["dates"]["profile_status"], "not-applicable")
+
+    def test_explicit_html_fragment_profile_parses_fragment_and_keeps_event_dates_private(self):
+        raw = '''<section class="scrarea"><table class="list"><caption>목록</caption>
+        <tbody><tr><td>1</td><td>두산로보틱스</td><td>2분기 경영실적 발표</td>
+        <td>온라인</td><td>2026-07-24</td><td>16:00</td></tr></tbody></table></section>'''.encode()
+        options = {
+            "format": "html-fragment",
+            "title_xpath": "//table[@class='list']/caption",
+            "content_xpath": "//section[@class='scrarea']",
+            "content_block_xpath": ".//table[@class='list']/tbody/tr[td]",
+            "publication_date_policy": "not_applicable",
+        }
+        result = self.invoke(raw, options, mime_type="text/html; charset=UTF-8")["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertEqual(result["title"], "목록")
+        self.assertEqual(len(result["blocks"]), 1)
+        self.assertIn("두산로보틱스", result["blocks"][0]["text"])
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["profile_status"], "not-applicable")
+        wrong_mime = self.invoke(raw, options, mime_type="application/octet-stream")
+        self.assertEqual(wrong_mime["worker_status"], "failed")
+
+    def test_html_fragment_listing_template_emits_event_date_without_publication_date(self):
+        raw = '''<section class="scrarea"><table class="list"><caption>목록</caption>
+        <tbody><tr class="first"><td>1414</td><td>두산로보틱스</td>
+        <td><a onclick="fnDetailView('45182'); return false;">2026년 2분기 경영실적 발표</a></td>
+        <td>온라인</td><td>2026-07-24</td><td>16:00</td></tr></tbody></table></section>'''.encode()
+        options = {
+            "format": "html-fragment",
+            "title_xpath": "//table[@class='list']/caption",
+            "content_xpath": "//section[@class='scrarea']",
+            "content_block_xpath": ".//table[@class='list']/tbody/tr[td]",
+            "publication_date_policy": "not_applicable",
+            "listing_link_rules": [
+                {
+                    "id": "kind-ir-schedule-event-list-ko-v1",
+                    "item_xpath": ".//table[@class='list']/tbody/tr[td]/td[3]/a",
+                    "url_attribute": "onclick",
+                    "url_pattern": r"^fnDetailView\('(?P<ir_seq>[0-9]+)'\); return false;$",
+                    "url_template": "/corpgeneral/irschedule.do?irSeq={ir_seq}&method=searchIRScheduleDetail",
+                    "title_xpath": ".",
+                    "date_xpath": "ancestor::tr/td[5]",
+                    "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                    "date_format": "%Y-%m-%d",
+                    "date_kind": "event_date",
+                    "category_xpath": "ancestor::tr/td[2]",
+                }
+            ],
+        }
+        result = self.invoke(raw, options, mime_type="text/html; charset=UTF-8", url="https://kind.krx.co.kr/corpgeneral/irschedule.do?method=searchIRScheduleSub")["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertEqual(result["links"][0]["url"], "https://kind.krx.co.kr/corpgeneral/irschedule.do?irSeq=45182&method=searchIRScheduleDetail")
+        self.assertEqual(result["links"][0]["event_date"], "2026-07-24")
+        self.assertNotIn("published_at", result["links"][0])
+        self.assertEqual(result["links"][0]["categories"], ["두산로보틱스"])
+
     def test_declared_publisher_calendar_reconciles_offset_metadata_at_day_boundary(self):
         raw = '''<html lang="ko"><head><title>ASEC</title>
         <meta property="article:published_time" content="2026-09-27T15:00:00+00:00">
@@ -837,25 +959,35 @@ echo 'source command only'
             profile["url_pattern"],
             "https://www.kuka.com/de-de/unternehmen/presse/news/2026/09/kuka-mobile-forklift-launch",
         ))
-        raw = b'''<html lang="en"><head><title>KUKA site</title></head><body>
+        raw = b'''<html lang="en"><head><title>KUKA site</title>
+        <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-09-08"}</script></head><body>
         <nav>Another product announced in 2025</nav><main>
         <section class="mod-page-intro"><h1>Autonomous Pallet Handling</h1>
         <p class="intro">KUKA introduces the KMF 1500P-CB forklift.</p>
-        <p class="mod-page-intro__date">10 September 2026</p></section>
+        <p class="mod-page-intro__date">September 10, 2026</p></section>
         <article class="mod-text"><div><h2>New forklift family</h2></div>
         <div class="copy">The machine handles loads of up to 1,500 kilograms.</div></article>
         <section class="mod-text-image"><h2>Availability</h2>
         <div class="copy">Deliveries are expected in December 2026.</div></section>
         </main></body></html>'''
-        result = self.invoke(raw, profile["options"])["result"]
+        listing_options = {
+            **profile["options"],
+            "listing_published_at": "2026-09-10",
+            "listing_source_url": "https://www.kuka.com/api/news/GetPublications",
+            "listing_source_version_id": "kuka-list:hash",
+            "listing_date_text": "September 10, 2026",
+        }
+        result = self.invoke(raw, listing_options)["result"]
         self.assertEqual(result["title"], "Autonomous Pallet Handling")
         self.assertEqual(result["dates"]["published_at"], "2026-09-10")
-        self.assertEqual(result["dates"]["basis"]["text"], "10 September 2026")
+        self.assertEqual(result["dates"]["basis"]["type"], "official-listing-and-visible-date")
+        self.assertEqual(result["dates"]["basis"]["display_text"], "September 10, 2026")
+        self.assertEqual(result["dates"]["basis"]["other_date_candidates"], ["2026-09-08"])
         content = " ".join(block["text"] for block in result["blocks"])
         self.assertIn("1,500 kilograms", content)
         self.assertIn("expected in December 2026", content)
         self.assertNotIn("Another product", content)
-        missing = self.invoke(raw.replace(b"10 September 2026", b"date unavailable"), profile["options"])["result"]
+        missing = self.invoke(raw.replace(b"September 10, 2026", b"date unavailable"), listing_options)["result"]
         self.assertIsNone(missing["dates"]["published_at"])
 
     def test_listing_onclick_profile_reads_urls_without_executing_javascript(self):

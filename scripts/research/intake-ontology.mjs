@@ -46,6 +46,15 @@ export function projectIntakeOntology(candidates) {
       throw Error("Unique candidate keys and source URLs required")
     keys.add(candidate.key)
     candidateByKey.set(candidate.key, candidate)
+    const contentFingerprintStatus =
+      candidate.article_content_sha256 == null || candidate.article_content_sha256 === ""
+        ? "missing"
+        : typeof candidate.article_content_sha256 === "string" &&
+            /^[a-f0-9]{64}$/.test(candidate.article_content_sha256)
+          ? candidate.content_fingerprint_basis === "verified_stored_source_receipt"
+            ? "verified_from_source_receipt"
+            : "valid"
+          : "invalid"
     nodes.push({
       id: `candidate:${candidate.key}`,
       type: "Candidate",
@@ -53,6 +62,7 @@ export function projectIntakeOntology(candidates) {
       review_status: candidate.review_status,
       source_revision_alert: Boolean(candidate.source_revision_alert),
       published_at: candidate.source_published_at || null,
+      content_fingerprint_status: contentFingerprintStatus,
     })
     for (const raw of candidate.source_urls) {
       const url = canonicalURL(raw)
@@ -111,7 +121,7 @@ export function projectIntakeOntology(candidates) {
       })
     }
     const fingerprint = candidate.article_content_sha256
-    if (fingerprint) {
+    if (["valid", "verified_from_source_receipt"].includes(contentFingerprintStatus)) {
       // Identical extracted bodies remain a duplicate lead even when publishers
       // assign different dates. The relation is review-only; it never merges events.
       const group = fingerprint
@@ -224,11 +234,33 @@ export function summarizeIntakeOntology(ontology) {
       to: relation.to.slice("candidate:".length),
       basis: relation.basis,
     }))
+  const candidateNodes = ontology.nodes.filter((node) => node.type === "Candidate")
+  const fingerprintedCandidateCount = candidateNodes.filter((node) =>
+    ["valid", "verified_from_source_receipt"].includes(node.content_fingerprint_status),
+  ).length
+  const receiptRecoveredCandidateCount = candidateNodes.filter(
+    (node) => node.content_fingerprint_status === "verified_from_source_receipt",
+  ).length
+  const recordedFingerprintCandidateCount = candidateNodes.filter(
+    (node) => node.content_fingerprint_status === "valid",
+  ).length
+  const missingContentFingerprintCount = candidateNodes.filter(
+    (node) => node.content_fingerprint_status === "missing",
+  ).length
+  const invalidContentFingerprintCount = candidateNodes.filter(
+    (node) => node.content_fingerprint_status === "invalid",
+  ).length
   return {
     schema: ontology.schema,
     node_counts: nodeCounts,
     relation_counts: relationCounts,
     review_required_count: reviewRelations.length,
     review_relations: reviewRelations,
+    candidate_count: candidateNodes.length,
+    fingerprinted_candidate_count: fingerprintedCandidateCount,
+    recorded_fingerprint_candidate_count: recordedFingerprintCandidateCount,
+    receipt_recovered_candidate_count: receiptRecoveredCandidateCount,
+    missing_content_fingerprint_count: missingContentFingerprintCount,
+    invalid_content_fingerprint_count: invalidContentFingerprintCount,
   }
 }

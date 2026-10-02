@@ -23,13 +23,56 @@ const months = new Map(
     "Dezember",
   ].map((name, index) => [name, index + 1]),
 )
+const englishMonths = new Map(
+  [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ].map((name, index) => [name, index + 1]),
+)
 
-export function kukaPublicationDay(value) {
-  const match = /^(\d{1,2})\. ([A-Za-zÄÖÜäöüß]+) (\d{4})$/.exec(value || "")
-  const month = months.get(match?.[2])
+export function kukaPublicationDay(value, locale = "de-DE") {
+  const match =
+    locale === "de-DE"
+      ? /^(\d{1,2})\. ([A-Za-zÄÖÜäöüß]+) (\d{4})$/.exec(value || "")
+      : locale === "en-US"
+        ? /^(\d{1,2}) ([A-Z][a-z]+) (\d{4})$/.exec(value || "")
+        : null
+  const month = (locale === "de-DE" ? months : englishMonths).get(match?.[2])
   if (!month) return null
   const day = `${match[3]}-${String(month).padStart(2, "0")}-${match[1].padStart(2, "0")}`
   return validDay(day) ? day : null
+}
+
+function kukaListingDay(row, locale) {
+  const dateISO = row?.dateISO,
+    apiMatch =
+      typeof dateISO === "string"
+        ? /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|[+-]\d{2}:\d{2})$/.exec(
+            dateISO,
+          )
+        : null,
+    apiDay = apiMatch && validDay(apiMatch[1]) ? apiMatch[1] : null,
+    labelMatch =
+      locale === "en-US"
+        ? /^([A-Z][a-z]+) (\d{1,2}), (\d{4})$/.exec(row?.date || "")
+        : null,
+    labelMonth = englishMonths.get(labelMatch?.[1]),
+    labelDay = labelMatch
+      ? `${labelMatch[3]}-${String(labelMonth || 0).padStart(2, "0")}-${String(labelMatch[2]).padStart(2, "0")}`
+      : kukaPublicationDay(row?.date, locale)
+  if (apiDay && labelDay && apiDay === labelDay) return apiDay
+  if (!dateISO) return labelDay
+  return null
 }
 
 export function kukaPageRequest(channel, offset) {
@@ -47,7 +90,7 @@ export function kukaPageRequest(channel, offset) {
     !Number.isInteger(profile.max_details) ||
     profile.max_details < 1 ||
     profile.max_details > 100 ||
-    profile.sc_lang !== "de-DE" ||
+    !["de-DE", "en-US"].includes(profile.sc_lang) ||
     !/^[A-F0-9]{32}$/.test(profile.context_id || "") ||
     !/^[A-F0-9]{32}$/.test(profile.captions_facet_id || "")
   )
@@ -81,10 +124,12 @@ export function parseKUKAPage(payload, channel, offset) {
     rows.length !== Math.min(pageSize, Math.max(0, total - offset))
   )
     throw Error("KUKA page count or items are incomplete")
-  const pattern = new RegExp(channel.item_pattern)
+  const pattern = new RegExp(channel.item_pattern),
+    seenIds = new Set()
   const items = rows.map((row, index) => {
     const title = row?.headline?.replace(/\s+/g, " ").trim(),
-      day = kukaPublicationDay(row?.date)
+      day = kukaListingDay(row, channel.api_profile.sc_lang),
+      sourceItemId = row?.itemId
     let url
     try {
       url = canonicalURL(row.href)
@@ -92,14 +137,23 @@ export function parseKUKAPage(payload, channel, offset) {
     } catch {
       throw Error("KUKA page item has an invalid article URL")
     }
-    if (!pattern.test(url) || !title || !day)
-      throw Error("KUKA page item lacks German URL, title or publication date")
+    if (
+      !pattern.test(url) ||
+      !title ||
+      !day ||
+      (sourceItemId !== undefined &&
+        (typeof sourceItemId !== "string" || sourceItemId.length < 1 || sourceItemId.length > 128)) ||
+      (sourceItemId && seenIds.has(sourceItemId))
+    )
+      throw Error("KUKA page item lacks a locale-matched URL, title or publication date")
+    if (sourceItemId) seenIds.add(sourceItemId)
     return {
       url,
       text: title,
       published_at: day,
       listed_date_text: row.date,
       profile_id: channel.api_profile.id,
+      ...(sourceItemId ? { source_item_id: sourceItemId } : {}),
       json_pointer: `/items/${index}`,
     }
   })

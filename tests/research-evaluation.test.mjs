@@ -9,6 +9,7 @@ import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
 import {
   loadEvaluationCase,
   auditEvaluationCases,
+  importEvaluationCandidate,
   saveEvaluationAdjudication,
   saveEvaluationCase,
 } from "../scripts/research/evaluation.mjs"
@@ -103,8 +104,8 @@ function fixture(t) {
   return { root, spec, document, parse, claim }
 }
 
-function candidateRun(root, runId, claims) {
-  const relative = `evaluation/fixtures/source-plan-01/runs/${runId}`
+function candidateRun(root, runId, claims, base = "evaluation/fixtures/source-plan-01") {
+  const relative = [base, "runs", runId].filter(Boolean).join("/")
   const claimsFile = `${relative}/claims.json`
   const claimsDocument = { claims }
   atomicWrite(root, claimsFile, claimsDocument)
@@ -117,7 +118,7 @@ function candidateRun(root, runId, claims) {
         status: "complete",
         started_at: "2026-09-27T01:00:00.000Z",
         finished_at: "2026-09-27T01:05:00.000Z",
-        result_path: claimsFile.slice("evaluation/fixtures/source-plan-01/".length),
+        result_path: `runs/${runId}/claims.json`,
         result_hash: sha256(JSON.stringify(claimsDocument)),
       },
     },
@@ -141,6 +142,69 @@ function candidateRun(root, runId, claims) {
     ],
   })
 }
+
+test("completed model runs import into an exact frozen source case without rerunning inference", async (t) => {
+  const { root, spec, document, parse, claim } = fixture(t)
+  await saveEvaluationCase(root, "import", "source", spec)
+  const runId = "candidate-import-01"
+  candidateRun(root, runId, [{ ...claim, claim_id: "candidate-fact-01" }], "")
+  const budgetPath = `runs/${runId}/model-policy/fact_extract/budget.json`
+  const budget = readJSON(root, budgetPath)
+  budget.schema = "model-budget/v2"
+  atomicWrite(root, budgetPath, budget)
+  atomicWrite(root, `runs/${runId}/documents.json`, [document])
+  atomicWrite(root, `runs/${runId}/parses.json`, [parse])
+
+  const imported = await main([
+    "evaluation-import-candidate",
+    "--run",
+    "import-candidate-01",
+    "--case-id",
+    spec.case_id,
+    "--candidate-run",
+    runId,
+    "--root",
+    root,
+  ])
+  assert.equal(imported.idempotent, false)
+  assert.equal(imported.candidate_published, false)
+  assert.equal(imported.claim_count, 1)
+  assert.equal(imported.model_batch_count, 1)
+  const frozenCase = loadEvaluationCase(root, spec.case_id)
+  const frozenRun = loadStoredSourceRun(frozenCase.root, runId)
+  assert.equal(frozenRun.identity.documents_sha256, frozenCase.manifest.documents_sha256)
+  assert.equal(frozenRun.identity.parses_sha256, frozenCase.manifest.parses_sha256)
+  assert.equal(
+    (await importEvaluationCandidate(root, "import-candidate-01", spec.case_id, runId)).idempotent,
+    true,
+  )
+})
+
+test("evaluation candidate import rejects a different parse of the same source bytes", async (t) => {
+  const { root, spec, document, parse, claim } = fixture(t)
+  await saveEvaluationCase(root, "import", "source", spec)
+  const runId = "candidate-import-wrong-parse"
+  candidateRun(root, runId, [{ ...claim, claim_id: "candidate-fact-02" }], "")
+  atomicWrite(root, `runs/${runId}/documents.json`, [document])
+  const changed = structuredClone(parse)
+  changed.parse_id = sha256("another-parser-output")
+  changed.blocks = changed.blocks.map((block, index) => ({
+    ...block,
+    block_id: `${changed.parse_id}:block-${String(index + 1).padStart(4, "0")}`,
+  }))
+  atomicWrite(root, `runs/${runId}/parses.json`, [changed])
+  atomicWrite(root, `parses/${changed.parse_id}/parse.json`, changed)
+  await assert.rejects(
+    importEvaluationCandidate(root, "import-candidate-wrong-parse", spec.case_id, runId),
+    /source snapshot does not match/i,
+  )
+  assert.equal(
+    fs.existsSync(
+      path.join(root, "evaluation/fixtures", spec.case_id, "runs", runId, "claims.json"),
+    ),
+    false,
+  )
+})
 
 function adjudicationInput(spec, runId, claimId, overrides = {}) {
   return {

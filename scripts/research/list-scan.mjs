@@ -1,9 +1,11 @@
+import fs from "node:fs"
 import { canonicalURL } from "../garden.mjs"
 import { sha256, sourceId } from "./contracts.mjs"
 import { candidatesFromLinks } from "./discovery.mjs"
 import { assertURL } from "./fetch.mjs"
 import { articleContentFingerprint, assertStoredEvidence, parseDocument } from "./parser.mjs"
-import { readJSON } from "./run-state.mjs"
+import { parseResearchDate } from "./dates.mjs"
+import { readJSON, safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 
 const singlePageConfigHash = (channel) => sha256(JSON.stringify(channel))
@@ -64,6 +66,14 @@ function comparableTitle(value) {
     .trim()
 }
 
+function detailTitleConfirmsTruncatedListingPrefix(detailTitle, listedTitle) {
+  const listed = comparableTitle(listedTitle)
+  const suffix = /(?:…|\.\.\.)$/u.exec(listed)
+  if (!suffix) return false
+  const prefix = listed.slice(0, -suffix[0].length).trim()
+  return prefix.length >= 24 && comparableTitle(detailTitle).startsWith(prefix)
+}
+
 export function assessSinglePageIndex(parse, channel, since, until) {
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("List scan requires an increasing [since, until) day window")
@@ -100,6 +110,12 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     profile.matched_links !== links.length
   )
     return { ...result, reason: "listing_profile_incomplete" }
+  if (
+    channel.listing_profile.title_match_policy !== undefined &&
+    channel.listing_profile.title_match_policy !== "exact" &&
+    channel.listing_profile.title_match_policy !== "truncated_prefix"
+  )
+    return { ...result, reason: "listing_title_match_policy_invalid" }
   if (
     !Array.isArray(ignoredRuleIds) ||
     new Set(ignoredRuleIds).size !== ignoredRuleIds.length ||
@@ -198,6 +214,9 @@ export async function collectWindowDetails(
   links,
   { fetchPolicy = fetchWithPolicy, parse = parseDocument } = {},
 ) {
+  const rssTitlePolicy = channel.listing_profile?.rss_title_policy || "must_match"
+  if (!new Set(["must_match", "source_title_authoritative"]).has(rssTitlePolicy))
+    throw Error("Invalid RSS title policy")
   const documents = [],
     parses = [],
     candidates = [],
@@ -206,6 +225,7 @@ export async function collectWindowDetails(
     const id = sourceId(link.url)
     const detail = { url: link.url, listed_at: link.published_at, status: "incomplete" }
     details.push(detail)
+    let supportingSources = []
     try {
       const document = await run.stage("detail-" + id, { url: link.url }, () =>
         fetchPolicy(root, fetcher, link.url, { allowed_hosts: channel.allowed_hosts }),
@@ -250,17 +270,238 @@ export async function collectWindowDetails(
         detail.status = "article_parse_incomplete"
         continue
       }
+      const exactTitleMatch = comparableTitle(parsed.title) === comparableTitle(link.text)
+      const truncatedTitleMatch =
+        !exactTitleMatch &&
+        channel.listing_profile?.title_match_policy === "truncated_prefix" &&
+        detailTitleConfirmsTruncatedListingPrefix(parsed.title, link.text)
+      const titleMatches = exactTitleMatch || truncatedTitleMatch
       if (
         (channel.method === "rss" || channel.listing_profile?.require_title_match) &&
-        comparableTitle(parsed.title) !== comparableTitle(link.text)
+        !titleMatches &&
+        rssTitlePolicy !== "source_title_authoritative"
       ) {
         detail.status = "title_conflict"
         continue
       }
-      if (parsed.dates?.published_at !== link.published_at) {
+      if (!titleMatches) {
+        detail.listed_title = link.text
+        detail.source_title = parsed.title
+        detail.title_relation = "rss_variant_source_title_authoritative"
+      } else if (truncatedTitleMatch) {
+        detail.listed_title = link.text
+        detail.source_title = parsed.title
+        detail.title_relation = "official_listing_truncated_detail_title_authoritative"
+      }
+      const articleDate = parseResearchDate(parsed.dates?.published_at)
+      const listingDate = parseResearchDate(link.published_at)
+      if (!articleDate || !listingDate || articleDate.day !== listingDate.day) {
         detail.status = "date_conflict"
         continue
       }
+      supportingSources = []
+      const supportRules = profiles[0].supporting_documents || []
+      if (
+        !Array.isArray(supportRules) ||
+        supportRules.length > 7 ||
+        new Set(supportRules.map((rule) => rule?.id)).size !== supportRules.length
+      ) {
+        detail.status = "supporting_document_policy_invalid"
+        continue
+      }
+      let supportingDocumentFailed = false
+      for (const rule of supportRules) {
+        if (
+          !rule ||
+          typeof rule.id !== "string" ||
+          !/^[a-zA-Z0-9_-]+$/.test(rule.id) ||
+          typeof rule.url_pattern !== "string" ||
+          !rule.url_pattern.length ||
+          rule.url_pattern.length > 512 ||
+          !rule.url_pattern.startsWith("^") ||
+          !rule.url_pattern.endsWith("$")
+        ) {
+          detail.status = "supporting_document_policy_invalid"
+          supportingDocumentFailed = true
+          break
+        }
+        let pattern
+        try {
+          pattern = new RegExp(rule.url_pattern)
+        } catch {
+          detail.status = "supporting_document_policy_invalid"
+          supportingDocumentFailed = true
+          break
+        }
+        const matches = (parsed.attachments || [])
+          .filter((attachment) => pattern.test(attachment.url || ""))
+          .map((attachment) => canonicalURL(attachment.url))
+        if (matches.length !== 1 || supportingSources.some((source) => source.url === matches[0])) {
+          detail.status = "supporting_document_missing_or_ambiguous"
+          supportingDocumentFailed = true
+          break
+        }
+        const url = matches[0]
+        const fallbackSources = rule.fallback_sources || []
+        if (
+          !Array.isArray(fallbackSources) ||
+          fallbackSources.length > 3 ||
+          fallbackSources.some(
+            (source) =>
+              !source ||
+              typeof source.url !== "string" ||
+              typeof source.evidence_url !== "string" ||
+              typeof source.evidence_match !== "string" ||
+              !source.url.trim() ||
+              !source.evidence_url.trim() ||
+              !source.evidence_match.trim() ||
+              source.evidence_match.length > 256,
+          ) ||
+          new Set(fallbackSources.map((source) => source.url)).size !== fallbackSources.length ||
+          fallbackSources.some((source) => source.url === url)
+        ) {
+          detail.status = "supporting_document_policy_invalid"
+          supportingDocumentFailed = true
+          break
+        }
+        for (const source of fallbackSources) {
+          try {
+            assertURL(source.url, channel.allowed_hosts)
+            assertURL(source.evidence_url, channel.allowed_hosts)
+          } catch {
+            detail.status = "supporting_document_outside_source_policy"
+            supportingDocumentFailed = true
+            break
+          }
+        }
+        if (supportingDocumentFailed) break
+        try {
+          assertURL(url, channel.allowed_hosts)
+        } catch {
+          detail.status = "supporting_document_outside_source_policy"
+          supportingDocumentFailed = true
+          break
+        }
+        const attempts = []
+        let acceptedSupport = null
+        let supportingFailure = "supporting_document_fetch_failed"
+        for (const source of [
+          { url, attachment_url: url },
+          ...fallbackSources.map((fallback) => ({ ...fallback, attachment_url: url })),
+        ]) {
+          const attempt = {
+            url: source.url,
+          }
+          if (source.evidence_url) {
+            const evidenceId = sourceId(source.evidence_url)
+            const evidence = await run.stage(
+              "supporting-evidence-" + evidenceId,
+              { url: source.evidence_url },
+              () =>
+                fetchPolicy(root, fetcher, source.evidence_url, {
+                  allowed_hosts: channel.allowed_hosts,
+                }),
+            )
+            attempt.evidence_url = source.evidence_url
+            attempt.evidence_status = evidence.fetch_status
+            if (!["captured", "not_modified"].includes(evidence.fetch_status)) {
+              attempt.status = "evidence_fetch_failed"
+              attempts.push(attempt)
+              continue
+            }
+            const evidenceBody = fs.readFileSync(safePath(root, evidence.body_path))
+            if (sha256(evidenceBody) !== evidence.body_sha256)
+              throw Error("Supporting document evidence hash mismatch")
+            if (!evidenceBody.toString("utf8").includes(source.evidence_match)) {
+              attempt.status = "evidence_mismatch"
+              attempts.push(attempt)
+              continue
+            }
+            attempt.evidence_source_version_id = evidence.source_version_id
+            attempt.evidence_body_sha256 = evidence.body_sha256
+            if (
+              !documents.some(
+                (document) => document.source_version_id === evidence.source_version_id,
+              )
+            )
+              documents.push(evidence)
+          }
+
+          const attachmentId = sourceId(source.url)
+          const attachment = await run.stage(
+            "supporting-document-" + attachmentId,
+            { url: source.url },
+            () =>
+              fetchPolicy(root, fetcher, source.url, { allowed_hosts: channel.allowed_hosts }),
+          )
+          attempt.status = attachment.fetch_status
+          attempts.push(attempt)
+          if (!["captured", "not_modified"].includes(attachment.fetch_status)) continue
+
+          const attachmentProfiles = articleProfiles.filter((profile) =>
+            new RegExp(profile.url_pattern).test(attachment.final_url),
+          )
+          if (attachmentProfiles.length !== 1) {
+            attempt.status = "profile_missing_or_ambiguous"
+            supportingFailure = "supporting_document_profile_missing_or_ambiguous"
+            continue
+          }
+          documents.push(attachment)
+          const attachmentParse = await run.stage(
+            "parse-supporting-document-" + attachmentId,
+            { document: attachment, options: attachmentProfiles[0].options },
+            () => parse(root, attachment, attachmentProfiles[0].options),
+          )
+          parses.push(attachmentParse)
+          if (
+            attachmentParse.status !== "extracted" ||
+            !attachmentParse.quality?.required_fields_present ||
+            !attachmentParse.blocks?.length
+          ) {
+            attempt.status = "parse_incomplete"
+            supportingFailure = "supporting_document_parse_incomplete"
+            continue
+          }
+          acceptedSupport = {
+            id: rule.id,
+            attachment_url: url,
+            url: source.url,
+            status: attachment.fetch_status,
+            ...(source.evidence_url ? { evidence_url: source.evidence_url } : {}),
+            ...(attempt.evidence_source_version_id
+              ? { evidence_source_version_id: attempt.evidence_source_version_id }
+              : {}),
+            ...(attempt.evidence_body_sha256
+              ? { evidence_body_sha256: attempt.evidence_body_sha256 }
+              : {}),
+            attempts,
+            source_version_id: attachment.source_version_id,
+            parse_id: attachmentParse.parse_id,
+            article_profile_id: attachmentProfiles[0].id,
+          }
+          break
+        }
+        if (!acceptedSupport) {
+          detail.status = supportingFailure
+          detail.supporting_documents = [
+            ...supportingSources,
+            {
+              id: rule.id,
+              attachment_url: url,
+              status: supportingFailure,
+              attempts,
+            },
+          ]
+          supportingDocumentFailed = true
+          break
+        }
+        supportingSources.push(acceptedSupport)
+      }
+      if (supportingDocumentFailed) {
+        detail.supporting_documents ||= supportingSources
+        continue
+      }
+      detail.supporting_documents = supportingSources
       const found = candidatesFromLinks(
         [link],
         {
@@ -277,15 +518,20 @@ export async function collectWindowDetails(
       }
       candidates.push({
         ...found[0],
+        ...(exactTitleMatch ? {} : { title: parsed.title }),
         article_source_version_id: document.source_version_id,
         article_parse_id: parsed.parse_id,
         article_observed_at: document.observed_at,
         article_content_sha256: articleContentFingerprint(parsed),
+        ...(supportingSources.length
+          ? { supporting_source_urls: supportingSources.map((source) => source.url) }
+          : {}),
       })
       detail.status = "source_parsed_unreviewed"
     } catch (error) {
       detail.status = "failed"
       detail.error = error.message
+      if (supportingSources.length) detail.supporting_documents = supportingSources
     }
   }
   return { documents, parses, candidates, details }

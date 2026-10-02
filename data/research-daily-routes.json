@@ -29,6 +29,16 @@
       "baseline_run": "20260928-kuka-de-sep-window-v2"
     },
     {
+      "channel_id": "route-kuka-news-en",
+      "enabled": true,
+      "baseline_run": "kuka-en-20260920-20260925-probe-v2"
+    },
+    {
+      "channel_id": "route-kawasaki-heavy-robot-news-en",
+      "enabled": true,
+      "baseline_run": "kawasaki-robotics-20261002-baseline-v1"
+    },
+    {
       "channel_id": "route-doosan-news-en",
       "enabled": true,
       "baseline_run": "20260928-doosan-en-sep-window-v2"
@@ -42,6 +52,11 @@
       "channel_id": "route-abb-robotics-en",
       "enabled": true,
       "baseline_run": "20260928-abb-en-sep-window-v2"
+    },
+    {
+      "channel_id": "route-abb-investor-releases-en",
+      "enabled": true,
+      "baseline_run": "abb-investor-results-20261002-evidenced-fallback-v2"
     },
     {
       "channel_id": "route-ur-news-en",
@@ -147,6 +162,21 @@
       "channel_id": "route-yaskawa-ir-en",
       "enabled": true,
       "baseline_run": "20261001-yaskawa-ir-baseline-v5"
+    },
+    {
+      "channel_id": "ieee-spectrum-robotics",
+      "enabled": true,
+      "baseline_run": "ieee-spectrum-robotics-20261002-v3"
+    },
+    {
+      "channel_id": "boston-dynamics-blog",
+      "enabled": true,
+      "baseline_run": "boston-dynamics-blog-20261002-baseline-v2"
+    },
+    {
+      "channel_id": "aws-whats-new-rss",
+      "enabled": true,
+      "baseline_run": "aws-whats-new-baseline-20261002-v1"
     }
   ]
 }

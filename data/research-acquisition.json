@@ -16,6 +16,18 @@
       }
     },
     {
+      "id": "kind-ir-schedule-detail-fragment-ko-v1",
+      "url_pattern": "^https://kind\\.krx\\.co\\.kr/corpgeneral/irschedule\\.do\\?irSeq=[0-9]+&method=searchIRScheduleDetail$",
+      "options": {
+        "format": "html-fragment",
+        "language": "ko",
+        "title_xpath": "//table[contains(concat(' ', normalize-space(@class), ' '), ' detail ')]/tbody/tr[th[normalize-space(.)='제목']]/td",
+        "content_xpath": "//table[contains(concat(' ', normalize-space(@class), ' '), ' detail ')]",
+        "content_block_xpath": "./tbody/tr[td]",
+        "publication_date_policy": "not_applicable"
+      }
+    },
+    {
       "id": "samsung-sds-helix-investment-20260930",
       "url_pattern": "^https://www\\.samsungsds\\.com/kr/news/sds20260930\\.html$",
       "options": {
@@ -201,8 +213,10 @@
         "content_xpath": "//main",
         "content_block_xpath": ".//section[contains(@class,'mod-page-intro')]//h1|.//section[contains(@class,'mod-page-intro')]//p[contains(concat(' ',normalize-space(@class),' '),' intro ')]|.//article[contains(@class,'mod-text')]//h2|.//article[contains(@class,'mod-text')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//section[contains(@class,'mod-text-image')]//h2|.//section[contains(@class,'mod-text-image')]//div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' mod-text ')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(@class,'mod-quote')]//blockquote/p",
         "publication_date_xpath": "//main//section[contains(@class, 'mod-page-intro')]//p[contains(@class, 'mod-page-intro__date')]",
-        "publication_date_pattern": "^[0-9]{1,2} [A-Z][a-z]+ [0-9]{4}$",
-        "publication_date_format": "%d %B %Y"
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y",
+        "publication_date_from_listing": true,
+        "publication_date_listing_authoritative": true
       }
     },
     {
@@ -219,6 +233,42 @@
       }
     },
     {
+      "id": "kawasaki-robotics-en-news-detail-v1",
+      "url_pattern": "^https://global\\.kawasaki\\.com/en/corp/newsroom/news/detail/\\?f=20[0-9]{6}_[0-9]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//article//h1",
+        "content_xpath": "(//main//article//div[@id='mainContentsArea']/div[contains(concat(' ',normalize-space(@class),' '),' block ')])[1]",
+        "content_block_xpath": ".//p[contains(@class,'pMargin_01')]|.//figcaption|.//h2|.//h3|.//li|.//table",
+        "publication_date_xpath": "//main//article//div[contains(concat(' ',normalize-space(@class),' '),' date ')]/p",
+        "publication_date_pattern": "^[A-Z][a-z]{2}\\. [0-9]{1,2}, 20[0-9]{2}$",
+        "publication_date_format": "%b. %d, %Y"
+      }
+    },
+    {
+      "id": "kuka-annual-report-archive-de",
+      "url_pattern": "^https://www\\.kuka\\.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte/?$",
+      "options": {
+        "language": "de",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//h1|.//table//tr",
+        "publication_date_policy": "not_applicable"
+      }
+    },
+    {
+      "id": "kuka-annual-report-2025-de",
+      "url_pattern": "^https://www\\.kuka\\.com/-/media/kuka-corporate/documents/ir/reports-and-presentations/de/geschaeftsbericht/geschaeftsbericht-2025\\.pdf\\?rev=-1&hash=25AA38894635AC9DA6D7EF18BC80C422$",
+      "options": {
+        "language": "de",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "Geschäftsbericht 2025",
+        "sparse_page_patterns": [
+          { "page": 138, "pattern": "www\\.kuka\\.com" }
+        ]
+      }
+    },
+    {
       "id": "hd-robotics-news-detail",
       "url_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/news/[0-9]+/?$",
       "options": {
@@ -232,8 +282,57 @@
       }
     },
     {
+      "id": "abb-q2-2026-results-detail",
+      "url_pattern": "^https://www\\.abb\\.com/global/en/news/137496/q2-2026-results/?$",
+      "supporting_documents": [
+        {
+          "id": "abb-q2-2026-press-release-en",
+          "url_pattern": "^https://resources\\.news\\.e\\.abb\\.com/attachments/published/137496/en-US/[A-F0-9]{12}/ABB_Q2_2026_Press_release_English\\.pdf$",
+          "fallback_sources": [
+            {
+              "url": "https://search.abb.com/library/Download.aspx?Action=Launch&DocumentID=9AKK108472A9735&DocumentPartId=&LanguageCode=en",
+              "evidence_url": "https://global.abb/group/en/investors/quarterly-results",
+              "evidence_match": "9AKK108472A9735"
+            }
+          ]
+        }
+      ],
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' pressrelease ')]//div[contains(concat(' ',normalize-space(@class),' '),' aot-visually-hidden ')]/h1",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' pressrelease ')]//div[contains(concat(' ',normalize-space(@class),' '),' aot-visually-hidden ')]",
+        "publication_date_xpath": "//script[contains(text(), '\"scheduledPublishDate\"')]",
+        "publication_date_pattern": "(?<=\"scheduledPublishDate\" : \")[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "abb-q2-2026-results-press-release-pdf",
+      "url_pattern": "^https://resources\\.news\\.e\\.abb\\.com/attachments/published/137496/en-US/[A-F0-9]{12}/ABB_Q2_2026_Press_release_English\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "(?i)Q2 2026 results",
+        "publication_date_page": 1,
+        "publication_date_pattern": "(?i)July 16, 2026",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "abb-q2-2026-results-press-release-ir-pdf",
+      "url_pattern": "^https://library\\.e\\.abb\\.com/public/c585b474e3f44783bd99eb5c5ba56039/ABB%20Q2%202026%20Press%20release%20English\\.pdf(?:\\?[^#]*)?$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "(?i)Q2 2026 results",
+        "publication_date_page": 1,
+        "publication_date_pattern": "(?i)July 16, 2026",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
       "id": "abb-global-en-news-detail",
-      "url_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
+      "url_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/(?!q2-2026-results/?$)[a-z0-9-]+/?$",
       "options": {
         "language": "en",
         "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' pressrelease ')]//div[contains(concat(' ',normalize-space(@class),' '),' aot-visually-hidden ')]/h1",
@@ -349,7 +448,7 @@
       "options": {
         "language": "en",
         "title_xpath": "//sirius-heading//h1",
-        "content_xpath": "//sirius-section[@class='text sir-default']",
+        "content_xpath": "//sirius-section[@class='text sir-default'] | //article[contains(concat(' ',normalize-space(@class),' '),' feature ')]",
         "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//table",
         "publication_date_xpath": "//time[contains(concat(' ',normalize-space(@class),' '),' sir-date ')]",
         "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
@@ -608,6 +707,16 @@
       }
     },
     {
+      "id": "kaist-www-research-article-v1",
+      "url_pattern": "^https://www\\.kaist\\.ac\\.kr/news/html/news/\\?mode=V&mng_no=[0-9]+$",
+      "options": {
+        "language": "ko",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_view ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_stit ')]/span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+        "publication_date_pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
       "id": "kaist-research-news-article-v1",
       "url_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?(?:mode=V&mng_no=[0-9]+&GotoPage=[0-9]+|GotoPage=[0-9]+&mng_no=[0-9]+&mode=V)$",
       "options": {
@@ -618,6 +727,19 @@
         "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_bord_view ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' prog_tit ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
         "publication_date_pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
         "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "navercorp-press-release-v1",
+      "url_pattern": "^https://(?:www\\.)?navercorp\\.com/media/pressReleasesDetail\\?seq=[0-9]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//h2[contains(concat(' ', normalize-space(@class), ' '), ' media-press-detail__title ')]",
+        "content_xpath": "//*[@id='one-viewer']",
+        "content_block_xpath": ".//p[normalize-space(.) and not(contains(concat(' ', normalize-space(@class), ' '), ' se-text-paragraph-align-right '))]",
+        "publication_date_xpath": "//*[@data-page='press']//div[contains(concat(' ', normalize-space(@class), ' '), ' media-detail__date ')]",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d"
       }
     },
     {
@@ -771,6 +893,31 @@
       }
     },
     {
+      "id": "ieee-spectrum-robotics-article-v1",
+      "url_pattern": "^https://spectrum\\.ieee\\.org/[^/?#]+$",
+      "options": {
+        "language": "en"
+      }
+    },
+    {
+      "id": "boston-dynamics-blog-article-v1",
+      "url_pattern": "^https://bostondynamics\\.com/blog/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[contains(concat(' ', normalize-space(@class), ' '), ' fl-heading ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' post-content ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//blockquote|.//table"
+      }
+    },
+    {
+      "id": "robotsguide-robotics-article-v1",
+      "url_pattern": "^https://robotsguide\\.com/learn/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "publication_date_from_listing": true
+      }
+    },
+    {
       "id": "nlr-news-detail-article-v1",
       "url_pattern": "^https://www\\.nlr\\.gov/news/detail/(?:program|press)/[0-9]{4}/[^/?#]+$",
       "options": {
@@ -807,6 +954,63 @@
         "publication_date_xpath": "//main//article/div[contains(concat(' ', normalize-space(@class), ' '), ' wrap_title ')]//span[contains(concat(' ', normalize-space(@class), ' '), ' text_date ')]",
         "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
         "publication_date_format": "%Y.%m.%d"
+      }
+    },
+    {
+      "id": "vestas-wind-order-register-v1",
+      "url_pattern": "^https://www\\.vestas\\.com/en/investor/announcements/wind-turbines-orders/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1[translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='wind turbine orders']",
+        "content_xpath": "(//main//div[contains(concat(' ', normalize-space(@class), ' '), ' cmp-accordion ')])[1]",
+        "content_block_xpath": ".//table"
+      }
+    },
+    {
+      "id": "roche-media-release-date-v1",
+      "url_pattern": "^https://www\\.roche\\.com/media/releases/med-cor-[0-9]{4}-[0-9]{2}-[0-9]{2}/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//meta[@name='release-date']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "aws-whats-new-article-v1",
+      "url_pattern": "^https://aws\\.amazon\\.com/about-aws/whats-new/20[0-9]{2}/(?:0?[1-9]|1[0-2])/(?:[^/?#]+/)*[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/h1[contains(concat(' ', normalize-space(@class), ' '), ' wn-title ')]",
+        "content_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' wn-body ')][2]",
+        "content_block_xpath": ".//p[normalize-space(.)]",
+        "publication_date_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' wn-body ')][1]",
+        "publication_date_pattern": "^Posted on: [A-Z][a-z]{2} [0-9]{1,2}, 20[0-9]{2}$",
+        "publication_date_format": "Posted on: %b %d, %Y"
+      }
+    },
+    {
+      "id": "intrinsic-ai-for-industry-article-v1",
+      "url_pattern": "^https://www\\.intrinsic\\.ai/blog/posts/ai-for-industry-challenge/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' intr-full-media-carousel-label ')]/p[contains(concat(' ', normalize-space(@class), ' '), ' intr-eyebrow ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "ls-electric-press-detail-v1",
+      "url_pattern": "^https://lsholdings\\.co\\.kr/ko/media/news/[A-Za-z0-9]+/?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' newsView ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' titArea ')]/h3[contains(concat(' ', normalize-space(@class), ' '), ' tit ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' newsView ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' viewCon ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' wrap_editor ')]",
+        "content_block_xpath": ".//p[normalize-space(.)]",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' newsView ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' titArea ')]/span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
       }
     },
     {
@@ -855,6 +1059,45 @@
         "publication_date_from_listing": true,
         "pdf_title_page": 1,
         "pdf_title_pattern": "^(?:FY[0-9]{4}.*Financial Results|Results Briefing.*)"
+      }
+    },
+    {
+      "id": "yaskawa-ir-annual-report-landing-v1",
+      "url_pattern": "^https://www\\.yaskawa-global\\.com/ir/materials/annual/?$",
+      "supporting_documents": [
+        {
+          "id": "vision-strategy",
+          "url_pattern": "^https://www\\.yaskawa-global\\.com/wp-content/uploads/2026/09/YR2026E_A4_03\\.pdf$"
+        },
+        {
+          "id": "business-performance-strategy",
+          "url_pattern": "^https://www\\.yaskawa-global\\.com/wp-content/uploads/2026/09/YR2026E_A4_04\\.pdf$"
+        }
+      ],
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[@id='container']/h2[1]",
+        "content_xpath": "(//div[@id='container']//div[contains(concat(' ', normalize-space(@class), ' '), ' img_txt_l_block ')])[1]",
+        "content_block_xpath": ".//h3|.//li|.//p",
+        "publication_date_from_listing": true
+      }
+    },
+    {
+      "id": "yaskawa-report-2026-vision-strategy-pdf-v1",
+      "url_pattern": "^https://www\\.yaskawa-global\\.com/wp-content/uploads/2026/09/YR2026E_A4_03\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^Vision & Strategy$"
+      }
+    },
+    {
+      "id": "yaskawa-report-2026-business-performance-pdf-v1",
+      "url_pattern": "^https://www\\.yaskawa-global\\.com/wp-content/uploads/2026/09/YR2026E_A4_04\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^Business Performance and Strategy$"
       }
     },
     {
@@ -1198,6 +1441,37 @@
       "scope": "Official press-release RSS feed. A window is complete only with an older feed item and dated full originals whose titles match the feed."
     }
   },
+  "aws-whats-new-rss": {
+    "publisher_id": "aws.amazon.com",
+    "allowed_hosts": ["aws.amazon.com"],
+    "item_pattern": "^https://aws\\.amazon\\.com/about-aws/whats-new/20[0-9]{2}/(?:0?[1-9]|1[0-2])/(?:[^/?#]+/)*[^/?#]+/?$",
+    "scan_max_details": 85,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "aws-whats-new-rss-v1",
+      "feed_title": "Recent Announcements",
+      "max_items": 100,
+      "guid_is_permalink": false,
+      "date_timezone": "UTC",
+      "scope": "Official AWS What's New RSS feed. Complete a window only after matching dated detail articles and an older feed boundary."
+    }
+  },
+  "ieee-spectrum-robotics": {
+    "publisher_id": "spectrum.ieee.org",
+    "allowed_hosts": ["spectrum.ieee.org", "robotsguide.com"],
+    "item_pattern": "^https://(?:spectrum\\.ieee\\.org/[^/?#]+|robotsguide\\.com/learn/[^/?#]+)$",
+    "scan_max_details": 12,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "ieee-spectrum-robotics-rss-v1",
+      "feed_title": "IEEE Spectrum",
+      "max_items": 30,
+      "guid_is_permalink": true,
+      "date_timezone": "UTC",
+      "rss_title_policy": "source_title_authoritative",
+      "scope": "IEEE Spectrum's official Robotics feed. Its one Robots Guide feature keeps that original host; inspect dated originals and an older feed item before completing a window."
+    }
+  },
   "fanuc-en": {
     "item_pattern": "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/20\\d\\d/(?:notice|news)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html$",
     "allowed_hosts": ["www.fanuc.co.jp"],
@@ -1373,6 +1647,111 @@
     },
     "verification": "captured-form-profile-2026-09-28"
   },
+  "route-kuka-news-en": {
+    "item_pattern": "^https://www\\.kuka\\.com/en-[a-z]{2}/company/press/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
+    "api_profile": {
+      "id": "kuka-news-form-pages-v1",
+      "endpoint": "https://www.kuka.com/api/news/GetPublications",
+      "sc_lang": "en-US",
+      "context_id": "8EB48479F62C4292AC0D890B766155AD",
+      "captions_facet_id": "891D284932A749069DF2E148B255CA6D",
+      "page_size": 20,
+      "max_pages": 15,
+      "max_details": 25
+    },
+    "verification": "english-window-and-detail-verified-2026-10-02"
+  },
+  "kind-ir-schedule-ko": {
+    "item_pattern": "^https://kind\\.krx\\.co\\.kr/corpgeneral/irschedule\\.do\\?irSeq=[0-9]+&method=searchIRScheduleDetail$",
+    "api_profile": {
+      "id": "post-html-fragment-pages-v1",
+      "endpoint": "https://kind.krx.co.kr/corpgeneral/irschedule.do",
+      "page_size": 100,
+      "max_pages": 40,
+      "page_field": "pageIndex",
+      "page_size_field": "currentPageSize",
+      "listing_link_rule_id": "kind-ir-schedule-event-list-ko-v1",
+      "item_identity_pattern": "\\?irSeq=[0-9]+&method=searchIRScheduleDetail$",
+      "form_fields": {
+        "method": "searchIRScheduleSub",
+        "paxreq": "",
+        "outsvcno": "",
+        "currentPageSize": "{page_size}",
+        "pageIndex": "{page}",
+        "orderMode": "4",
+        "orderStat": "D",
+        "searchCodeType": "",
+        "repIsuSrtCd": "",
+        "irSeq": "",
+        "forward": "searchirschedule_sub",
+        "searchCorpName": "",
+        "resoroomType": "",
+        "searchFromDate": "{since}",
+        "searchToDate": "{until}",
+        "marketType": "",
+        "searchName": "",
+        "title": "",
+        "fromDate": "{since}",
+        "toDate": "{until}"
+      },
+      "parser_options": {
+        "format": "html-fragment",
+        "language": "ko",
+        "title_xpath": "//table[contains(concat(' ', normalize-space(@class), ' '), ' list ')]/caption",
+        "content_xpath": "//section[contains(concat(' ', normalize-space(@class), ' '), ' scrarea ') and .//table[contains(concat(' ', normalize-space(@class), ' '), ' list ')]]",
+        "content_block_xpath": ".//table[contains(concat(' ', normalize-space(@class), ' '), ' list ')]/tbody/tr[td]",
+        "publication_date_policy": "not_applicable",
+        "listing_link_rules": [
+          {
+            "id": "kind-ir-schedule-event-list-ko-v1",
+            "item_xpath": ".//table[contains(concat(' ', normalize-space(@class), ' '), ' list ')]/tbody/tr[td]/td[3]/a",
+            "url_attribute": "onclick",
+            "url_pattern": "^fnDetailView\\('(?P<ir_seq>[0-9]+)'\\); return false;$",
+            "url_template": "/corpgeneral/irschedule.do?irSeq={ir_seq}&method=searchIRScheduleDetail",
+            "title_xpath": ".",
+            "date_xpath": "ancestor::tr/td[5]",
+            "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "date_format": "%Y-%m-%d",
+            "date_kind": "event_date",
+            "category_xpath": "ancestor::tr/td[2]"
+          }
+        ]
+      }
+    },
+    "verification": "kind-ir-post-fragment-captured-2026-10-02"
+  },
+  "route-kawasaki-heavy-robot-news-en": {
+    "item_pattern": "^https://global\\.kawasaki\\.com/en/corp/newsroom/news/detail/\\?f=20[0-9]{6}_[0-9]+$",
+    "allowed_hosts": ["global.kawasaki.com"],
+    "scan_max_details": 10,
+    "listing_profile": {
+      "rule_id": "kawasaki-robotics-dated-news-v1",
+      "pagination": "single-page",
+      "require_title_match": true,
+      "title_match_policy": "truncated_prefix",
+      "article_identity_query_parameter": "f",
+      "scope": "Kawasaki Heavy Industries official Robotics category. Complete only when the newest-first category page reaches an older dated item; detail titles and dates must agree with the official listing."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//main//h1",
+      "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' newsListArea ')]",
+      "content_block_xpath": ".//dl[contains(concat(' ',normalize-space(@class),' '),' line_1ofList ')]",
+      "listing_link_rules": [
+        {
+          "id": "kawasaki-robotics-dated-news-v1",
+          "item_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' newsListArea ')]/dl[contains(concat(' ',normalize-space(@class),' '),' line_1ofList ')]/dd/a[starts-with(@href,'/en/corp/newsroom/news/detail/?f=')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/en/corp/newsroom/news/detail/\\?f=20[0-9]{6}_[0-9]+)",
+          "title_xpath": ".",
+          "date_xpath": "../../dt/span",
+          "date_pattern": "^[A-Z][a-z]{2}\\.? [0-9]{1,2}, 20[0-9]{2}$",
+          "date_format": "%B %d, %Y"
+        }
+      ]
+    },
+    "verification": "captured-category-and-detail-source-probe-20261002"
+  },
   "route-doosan-news-en": {
     "item_pattern": "^https://www\\.doosanrobotics\\.com/en/about/promotion/news/(?:[a-z0-9][a-z0-9-]+|view/[0-9]+)/?$",
     "allowed_hosts": ["www.doosanrobotics.com"],
@@ -1450,6 +1829,28 @@
     },
     "verification": "captured-news-list-component-and-page-2026-09-28"
   },
+  "route-abb-investor-releases-en": {
+    "item_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
+    "allowed_hosts": [
+      "www.abb.com",
+      "resources.news.e.abb.com",
+      "search.abb.com",
+      "library.e.abb.com",
+      "global.abb"
+    ],
+    "api_profile": {
+      "id": "abb-newsbank-json-pages-v1",
+      "endpoint": "https://www.abb.com/conf/abbcommon/services/newsbank.json",
+      "api_path": "/conf/abbcommon/services/newsbank.json",
+      "archive_path": "/global/en/company/media/selected",
+      "feed_id": "8de2033e3c8e49ef84794a00bf45af69",
+      "culture_info": "en",
+      "page_size": 20,
+      "max_pages": 20,
+      "max_details": 15
+    },
+    "verification": "abb-investor-newsbank-feed-2026-10-02"
+  },
   "route-ur-news-en": {
     "item_pattern": "^https://www\\.universal-robots\\.com/news-and-media/news-center/[a-z0-9][a-z0-9-]+/?$",
     "allowed_hosts": ["www.universal-robots.com"],
@@ -1523,13 +1924,13 @@
     "verification": "window-scanned-2026-09-24-to-2026-10-01; hc12-detail-parsed-2026-09-14"
   },
   "route-yaskawa-ir-en": {
-    "item_pattern": "^https://www\\.yaskawa-global\\.com/wp-content/uploads/(?:[0-9]{4}/[0-9]{2}/[0-9]{8}_(?:en|haifu_en)|2026/01/202601019_haihu_en|2025/10/20251003_haihu_en|2023/07/230707_(?:en|haifu_en))\\.pdf$",
+    "item_pattern": "^(?:https://www\\.yaskawa-global\\.com/wp-content/uploads/(?:[0-9]{4}/[0-9]{2}/[0-9]{8}_(?:en|haifu_en)|2026/01/202601019_haihu_en|2025/10/20251003_haihu_en|2023/07/230707_(?:en|haifu_en))\\.pdf|https://www\\.yaskawa-global\\.com/ir/materials/annual)$",
     "allowed_hosts": ["www.yaskawa-global.com"],
     "scan_max_details": 20,
     "listing_profile": {
       "pagination": "single-page",
       "rule_id": "yaskawa-global-ir-results-v1",
-      "scope": "Official Yaskawa Global IR category; collect only dated downloadable financial-results and results-briefing PDFs, with older listed results proving the window boundary."
+      "scope": "Official Yaskawa Global IR category; collect dated financial-results and briefing PDFs plus the explicitly titled YASKAWA Report 2026 landing page, with older listed results proving the window boundary."
     },
     "parse_options": {
       "language": "en",
@@ -1539,9 +1940,9 @@
       "listing_link_rules": [
         {
           "id": "yaskawa-global-ir-results-v1",
-          "item_xpath": "//div[@id='contents']//div[contains(concat(' ', normalize-space(@class), ' '), ' news_list ')]/dl/dd/a[@href and contains(@href, '.pdf') and (contains(normalize-space(.), 'Results') or contains(normalize-space(.), 'results'))]",
+          "item_xpath": "//div[@id='contents']//div[contains(concat(' ', normalize-space(@class), ' '), ' news_list ')]/dl/dd/a[@href and ((contains(@href, '.pdf') and (contains(normalize-space(.), 'Results') or contains(normalize-space(.), 'results'))) or (@href='https://www.yaskawa-global.com/ir/materials/annual' and normalize-space(.)='YASKAWA Report 2026'))]",
           "url_attribute": "href",
-          "url_pattern": "(?P<url>https://www\\.yaskawa-global\\.com/wp-content/uploads/(?:[0-9]{4}/[0-9]{2}/[0-9]{8}_(?:en|haifu_en)|2026/01/202601019_haihu_en|2025/10/20251003_haihu_en|2023/07/230707_(?:en|haifu_en))\\.pdf)",
+          "url_pattern": "(?P<url>(?:https://www\\.yaskawa-global\\.com/wp-content/uploads/(?:[0-9]{4}/[0-9]{2}/[0-9]{8}_(?:en|haifu_en)|2026/01/202601019_haihu_en|2025/10/20251003_haihu_en|2023/07/230707_(?:en|haifu_en))\\.pdf|https://www\\.yaskawa-global\\.com/ir/materials/annual))",
           "title_xpath": ".",
           "title_pattern": "^(?P<title>.+)$",
           "date_xpath": "../../dt/text()[1]",
@@ -1550,7 +1951,7 @@
         }
       ]
     },
-    "verification": "official-ir-index-complete-and-results-pdf-profiles-verified"
+    "verification": "official-ir-results-and-yaskawa-report-2026-window-scanned-2026-10-02"
   },
   "route-hd-news-ko": {
     "item_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/news/[0-9]+$",
@@ -1596,5 +1997,17 @@
       "language": "ko"
     },
     "verification": "official-list-api-empty-contract-2026-10-01"
+  },
+  "boston-dynamics-blog": {
+    "item_pattern": "^https://bostondynamics\\.com/blog/[^/?#]+/?$",
+    "allowed_hosts": ["bostondynamics.com"],
+    "api_profile": {
+      "id": "wordpress-rest-posts-json-v1",
+      "endpoint": "https://bostondynamics.com/wp-json/wp/v2/blog",
+      "page_size": 100,
+      "max_pages": 5,
+      "max_details": 25
+    },
+    "verification": "official-wp-rest-api-article-profile-and-window-scan-2026-10-02"
   }
 }

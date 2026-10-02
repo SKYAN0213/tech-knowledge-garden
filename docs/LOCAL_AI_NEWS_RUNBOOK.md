@@ -5952,10 +5952,10 @@ node --test tests/publication-receipt.test.mjs tests/publish-lock.test.mjs
 
 2026-10-01 생성된 `qwen3.8:27b` model-policy `budget.json` 14개 완료 시도를 읽기 전용으로 집계했다. 역할별 결과는 다음과 같다.
 
-| 역할 | 완료 호출 수 | 중앙 wall time | 합계 |
-| --- | ---: | ---: | ---: |
-| `fact_extract` | 7 | 183.476초 | 1,249.895초 |
-| `article_write` | 7 | 155.170초 | 1,081.367초 |
+| 역할            | 완료 호출 수 | 중앙 wall time |        합계 |
+| --------------- | -----------: | -------------: | ----------: |
+| `fact_extract`  |            7 |      183.476초 | 1,249.895초 |
+| `article_write` |            7 |      155.170초 | 1,081.367초 |
 
 이 값은 서로 다른 extraction/article-writing run의 실제 `wall_ms` 합계다. 수집된 원문을 읽고 모델이 사실 또는 원고를 생성하는 호출이 각각 수 분 걸려 콘텐츠 처리에서는 추론 시간이 큰 병목이다. 다만 `daily-20261001-main26-integrated-v1`은 26경로·52창, receipt 52개의 별도 수집 run이며 연결된 model-policy run은 없다. 따라서 검색·수집·파싱의 병목이 모델이라는 증거는 없으며 위 값을 전체 일일 실행시간의 비율로 해석하지 않는다.
 
@@ -5983,6 +5983,7 @@ node --test tests/publication-receipt.test.mjs tests/publish-lock.test.mjs
 ## 164. 출처 현황판의 targeted scan baseline 증거
 
 일일 route의 `baseline_run`은 daily 통합 summary 또는 개별 `scan-list` summary일 수 있다. 현황판은 후자도 같은 route ID의 run인지 확인하고 `storedListScan`·`verifyStoredListScan`으로 window 및 listing/detail 원문 bytes를 검증한 경우에만 `baseline_evidence.exists:true`를 기록한다. 실패는 `invalid_evidence`로 표시하며 collection receipt 또는 baseline 숫자에 포함하지 않는다. 테스트는 valid single-page listing byte와 변경된 byte를 검증한다. Doosan Korean route의 `20261001-doosan-ko-today-v1`은 `window_scanned` baseline으로 읽힌다.
+
 ## 165. 로컬 모델 추론 위상 계측
 
 일일 비공개 현황판은 무결성 검증과 exact source-selection 연결을 통과한 완료 model budget에서 Ollama의 `load_duration`, `prompt_eval_duration`, `eval_duration`을 나눠 합산한다. 원본 값은 나노초이므로 표시 집계에서는 반올림해 ms로 바꾼다. `prompt_eval_count`, `eval_count`는 토큰 합계로 저장하며 model output, prompt, source URL은 현황판에 노출하지 않는다.
@@ -6084,7 +6085,7 @@ NLR의 두 날짜 창은 같은 URL/source ID를 병렬로 가져가며 `locks/s
 
 OpenAI Responses API adapter와 provider role 선택은 이미 구현되어 있다. 현재 실행 환경의 `OPENAI_API_KEY`는 absent이며 호출도 수행하지 않았다. 실제 비교에는 비공개 환경변수 구성, 외부 원문 전송과 과금 선택이 선행되어야 한다. API는 fact extraction/article writing 시간을 줄일 가능성을 측정할 수 있지만, 이번 16.3분 discovery scan에는 LLM 추론이 없으므로 그 지연은 해결하지 못한다. 비교할 때는 source bytes, prompt, schema, output budget을 고정하고 단일 경로만 실행해 wall time·usage와 근거 정확도를 함께 기록한다.
 
-동일 출처 회귀를 실제 수집기로 확인할 때 이전 중단 실행에서 남은 `robots.txt` source lock도 발견했다. lock owner PID는 `ps` 및 `process.kill(pid, 0)`로 부재를 확인한 후 파일의 owner UUID/PID가 바뀌지 않은지 재확인하고 수동 복구했다. 살아 있는 소유자 lock은 건드리지 않았다. 그 다음 `Promise.allSettled`로 서로 다른 run ID의 두 `scan-list`를 같은 Node process에서 동시에 실행했다. 결과는 2026-09-24~10-01 `window_scanned`·상세 1·후보 1, 2026-10-01~10-02 `window_scanned`·후보 0이다. 첫 창은 `daily-20261001-nlr-reconcile-v3`로 supplemental coverage에 반영했고 backlog 168건을 반환했으며 `candidate_published:false`다. 오늘 창은 날짜가 경과하지 않았으므로 coverage reconciliation을 하지 않았다. 기존 daily summary의 두 실패 receipt와 불완전 scan run은 보존했다. 초기에 같은 run ID를 다시 쓴 진단 시도는 stale run locks에 막혀 각각 새 `-v2`/`-v3` ID로 분리했다; 이 실패도 raw runs와 lock recovery evidence로 보존했다.
+동일 출처 회귀를 실제 수집기로 확인할 때 이전 중단 실행에서 남은 `robots.txt` source lock도 발견했다. lock owner PID는 `ps` 및 `process.kill(pid, 0)`로 부재를 확인한 후 파일의 owner UUID/PID가 바뀌지 않은지 재확인하고 수동 복구했다. 살아 있는 소유자 lock은 건드리지 않았다. 그 다음 `Promise.allSettled`로 서로 다른 run ID의 두 `scan-list`를 같은 Node process에서 동시에 실행했다. 결과는 2026-09-24~~10-01 `window_scanned`·상세 1·후보 1, 2026-10-01~~10-02 `window_scanned`·후보 0이다. 첫 창은 `daily-20261001-nlr-reconcile-v3`로 supplemental coverage에 반영했고 backlog 168건을 반환했으며 `candidate_published:false`다. 오늘 창은 날짜가 경과하지 않았으므로 coverage reconciliation을 하지 않았다. 기존 daily summary의 두 실패 receipt와 불완전 scan run은 보존했다. 초기에 같은 run ID를 다시 쓴 진단 시도는 stale run locks에 막혀 각각 새 `-v2`/`-v3` ID로 분리했다; 이 실패도 raw runs와 lock recovery evidence로 보존했다.
 
 ## 173. stale lock의 안전한 명시 복구
 
@@ -6186,7 +6187,6 @@ node scripts/research.mjs extract \
 `medium`은 185,704ms, `false`는 142,528ms로 `false`가 43,176ms(약 23.3%) 짧았다. 각각 6 claims를 만들었고 구조 통과는 2/6 대 3/6이었다. 원문 블록 인용과 number metadata를 검사하는 deterministic validator의 결과다. 인용/수치 필드가 source block에 정확히 맞지 않은 나머지 claim은 자동 사실 승격되지 않았다. 이 한 사례는 `think:false`가 더 빠른 동일 기기 실측임을 보이지만, 의미 정확도·한국어 편집 품질·여러 분야 전반의 일반화를 증명하지 않는다. 기본 model policy는 그대로 유지한다. 독립 gold와 인적 claim 검토가 있는 여러 분야/소스 비교를 P3-04의 다음 작업으로 둔다.
 
 검증은 저장된 두 run의 `claims.json`에서 같은 source/parse identity, model, claim 수와 `provenance.wall_ms`를 대조하고, 각 claim의 `review.structural_pass` 및 `problems`를 확인했다. API 호출·비용은 없었다. 원문/API 사용 논의는 178절과 현재 구현 68절을 참조한다.
-
 
 ## 180. 두산로보틱스 동일 사건의 다중 후보 비공개 승인과 중복 큐 방지
 
@@ -6481,6 +6481,7 @@ Ollama `/api/chat` 응답의 `prompt_eval_duration`을 private model provenance�
 실제 네트워크에 접근하지 않는 두 child process fixture가 같은 host의 서로 다른 URL을 동시에 fetch하도록 실행했다. 각 transport 시작 시각 차이는 160ms 정책 이상이었고 두 결과는 모두 `captured`였다. 두 번째 프로세스의 정책을 30ms로 낮춘 경우에도 이전 160ms 값이 유지됨을 확인했다. 전체 runtime 테스트 `28/28` 통과.
 
 공유 범위는 동일한 local research root를 사용하는 Node collector로 한정된다. 다른 root, 별도 Python worker 또는 외부 수집 프로그램과는 상태를 공유하지 않는다. live source latency·실패율·daily throughput은 아직 비교하지 않았고 P2-01은 계속 partial이다. 1시간 이상 반복 정체한 부분은 없으며, 기존 원문 수집·승인·Drive·RSS·GitHub·공개 데이터는 이 변경에서 수정하지 않았다.
+
 ## 196. redirect 목적지의 host 및 robots 정책 검증
 
 ### 적용 규칙
@@ -6558,9 +6559,9 @@ Fixture에서 재사용된 목록으로 다른 날짜 창을 독립 평가하고
 
 공식 FDA 목록의 single-page route에서 두 창을 순서대로 실행했다.
 
-| 창 | 실행 ID | 결과 |
-|---|---|---|
-| `[2026-09-30, 2026-10-01)` | `fda-adjacent-reuse-first-20261002-v1` | `window_scanned`; 기사 상세 1건; candidate 1; 비공개 |
+| 창                         | 실행 ID                                 | 결과                                                   |
+| -------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| `[2026-09-30, 2026-10-01)` | `fda-adjacent-reuse-first-20261002-v1`  | `window_scanned`; 기사 상세 1건; candidate 1; 비공개   |
 | `[2026-10-01, 2026-10-02)` | `fda-adjacent-reuse-second-20261002-v1` | `window_scanned`; candidate 0; 앞 창 목록/parse 재사용 |
 
 양쪽 listing source version은 `2de7e4891cf5543f498c:7802d85413d9373d07105df519c75f6b5161bf1282b9d8a349ef4b46f7aff9e8`, parse ID는 `0c8d091f967fa94834564f1c724cc2e273ac3878ab42f40acc83f5c641357b36`로 동일하다. 두 번째 `list-scan.json`은 `listing_reused_from_run`에 정확한 첫 run ID를 기록한다. 후속 run에는 `listing-fetch`·`listing-parse` stage, `journal.jsonl`, `listing-fetch.json`이 없고 저장 목록과 parse만 참조한다. 후속 command는 약 0.165초에 완료됐으며 새로운 목록 요청이나 목록 재파싱은 없다. 첫 창의 목록 request는 30.174초, 선택 상세는 약 29.586초가 걸렸다.
@@ -6570,7 +6571,6 @@ Fixture에서 재사용된 목록으로 다른 날짜 창을 독립 평가하고
 새 regression `daily plan connects its successful predecessor receipt to production listing reuse`는 `executeDailyPlan`이 첫 successful receipt의 정확한 attempt ID를 production scanner에 넘기고, CLI `--reuse-listing-run`과 완료된 두 번째 scan summary까지 연결되는지 한 번에 검증한다. `node --test tests/research-daily-scan.test.mjs tests/research-list-scan.test.mjs` 25/25, 전체 `npm run test:garden` 515/515, `npx tsc --noEmit`, 변경 JS/JSON Prettier 및 `git diff --check` 통과.
 
 실물 pair는 route/CLI 재사용을 증명하지만 29경로 full daily run에서의 결과는 아니다. 두 기사 후보 중 첫 창의 1건도 승인하지 않았고 Drive·RSS·GitHub·공개 사이트는 변경하지 않았다. WBS는 1/22 완료, P2-01·P5-01은 다른 요구가 남아 partial이다. [계획 19.116](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19116-fda-인접-창-목록-재사용의-실행기-연결-및-live-증거).
-
 
 ## 203. 29개 출처 통합 수집에서 계획→실행→재개의 live 검증
 
@@ -6594,10 +6594,10 @@ handoff는 미검토·기존 후보를 포함해 118개 고유 key를 유지했�
 
 ### 실행시간 해석과 API 비교 경계
 
-| 역할 | 전체 wall | 모델 로드 | 입력 평가 | 생성 | 생성 토큰 / 속도 |
-|---|---:|---:|---:|---:|---:|
-| 사실 추출 | 189.681초 | 9.139초 | 13.655초 / 1,282 tokens | 166.848초 | 1,531 / 9.18 tokens/s |
-| 기사 작성 | 128.492초 | 0.005초 | 18.466초 / 1,732 tokens | 109.926초 | 887 / 8.07 tokens/s |
+| 역할      | 전체 wall | 모델 로드 |               입력 평가 |      생성 |      생성 토큰 / 속도 |
+| --------- | --------: | --------: | ----------------------: | --------: | --------------------: |
+| 사실 추출 | 189.681초 |   9.139초 | 13.655초 / 1,282 tokens | 166.848초 | 1,531 / 9.18 tokens/s |
+| 기사 작성 | 128.492초 |   0.005초 | 18.466초 / 1,732 tokens | 109.926초 |   887 / 8.07 tokens/s |
 
 두 호출 wall 합계 318.173초 중 생성은 276.774초(약 87%)였다. 이 원문 한 건에서는 모델의 출력 생성 속도가 주 지연이라는 직접 근거가 있다. 입력 평가와 로드가 더 짧았고, 첫 추출 호출의 load만 약 9.1초였다. 이 결과는 이 하드웨어·모델·출력 크기에서의 한 사례이므로 모든 기사나 일일 실행의 지배적 병목으로 확대 해석하지 않는다. 별도 29경로 source run은 8분 48초였으며 그 수집 실행은 LLM 후처리를 호출하지 않았다. 둘은 단계가 분리된 측정이므로 더해 정식 end-to-end benchmark라고 부르지 않는다.
 
@@ -6612,3 +6612,918 @@ handoff는 미검토·기존 후보를 포함해 118개 고유 key를 유지했�
 `robotics-tts-paper-extract-20261002-v1`은 로컬 `qwen3.8:27b`로 5개 배치를 계획했다. 최초 실행에서 앞의 세 배치는 239,251ms·210,632ms·271,801ms로 끝났고 네 번째는 178,052ms 후 role의 900,000ms 합산 실행 한도에 걸려 중단됐다. role ledger에 기록된 누적 시간은 899,736ms다. 완료 배치 세 건은 개별 체크포인트와 원시 응답으로 남아 있으나 상위 `claims` stage는 실패했고 `claims.json`은 없다. 따라서 전체 논문 추출·사실 검토·기사 초안·승인은 생성되지 않았고 후보 공개 여부도 바뀌지 않았다.
 
 이 정체는 1시간 이상 반복된 차단이 아니라 설정된 15분 추출 예산을 한 번 소진한 실패다. 원문 재수집이나 완료 배치의 재추론은 하지 않았다. `extract --resume-local-budget-ms`를 추가해 기존 완료 배치는 그대로 재사용하고 Ollama의 남은 로컬 배치만 명시적 추가 예산으로 재개할 수 있게 했다. 이전 모델·정책·설정과 정확히 같은 run에 한정한 구현 지문 호환 회귀를 포함해 집중 테스트 25/25 통과했다. 6분 연장에서 4번째 배치가 완료됐고 5번째 배치가 추가로 시작됐지만 남은 role 예산 77.6초 후 다시 시간 한도에 걸렸다. 완료 배치는 4/5이며 aggregate `claims.json`은 아직 없다. 전체 원문을 재추출하지 않고 이 논문 slice를 중단한다. 예산 연장은 OpenAI provider에는 허용되지 않는다. API 실호출은 비밀 키와 비용 선택이 확인되기 전까지 하지 않는다. 현재 run과 partial checkpoints는 `.local/research/local-ai/runs/robotics-tts-paper-extract-20261002-v1/`에 비공개로 보존한다.
+
+## 206. 논문 핵심 구간 추출과 OpenAI API 호출 가능성
+
+### opt-in extraction scope
+
+기본 `full_source`는 기존 계약대로 원문 parse 전체를 사용한다. 명시적 `--extraction-scope research_key_findings`는 heading tree에서 Abstract, planned deployment, evaluation, results/findings, discussion, limitations, conclusion 구간만 선택한다. 참고문헌·배경·방법 구간은 이 profile의 claim 추출 입력에서 제외한다. 이는 논문 전체 검토가 아니라 핵심 결과 후보를 빠르게 얻는 profile이다.
+
+선택 profile은 다음 핵심 범주를 요구한다: abstract, evaluation/findings 중 하나, limitations/conclusion 중 하나. heading depth로 구간 경계를 정하며 heading을 신뢰성 있게 분류하지 못하거나 필수 범주가 없으면 거부한다. `full_source`로 조용히 fallback하지 않는다. provenance는 profile, 전체/포함/제외 block 개수, 포함·제외 block ID hash, 선택 heading과 원본 `parse_id`를 기록한다. 배치 안에서는 compact key를 쓰지만 모델 quote와 claim evidence는 원본 source/parse/block identity로 되돌린다. extraction scope는 model-policy fingerprint와 CLI reuse identity의 일부다.
+
+### 실물 논문 slice
+
+입력은 2026-10-02 KST Frontiers Quechua TTS 논문의 기존 immutable source run `robotics-tts-paper-source-20261002-v1`이다. 새 source fetch나 기존 실패 run의 덮어쓰기는 하지 않았다.
+
+같은 20,000자 input budget/6 claims per batch에서 `full_source`는 156/156 blocks와 5 batches, `research_key_findings`는 66/156 blocks(90 excluded)와 2 batches로 계획됐다. 새 비공개 run `robotics-tts-paper-keyfindings-extract-20261002-v1`의 Qwen 3.8 27B local inference는 첫 batch 244,006ms, 둘째 260,964ms, 합계 504,970ms였다. 완료 결과는 12개 claim, 2 batch, 각 quote의 원문 block 연결이며 모든 claim review state는 `unreviewed`, `candidate_published:false`다. full-source run은 aggregate 완료가 없어 이 숫자로 accuracy나 같은 품질을 증명하지 않는다. 원문 전체 deep-dive를 대체하거나 공개 뉴스로 올리는 실행이 아니다.
+
+재현:
+
+```sh
+node scripts/research.mjs extract \
+  --run robotics-tts-paper-keyfindings-extract-20261002-v1 \
+  --source-run robotics-tts-paper-source-20261002-v1 \
+  --model-policy data/research-model-policy.json \
+  --extraction-scope research_key_findings
+```
+
+저장 결과와 checkpoint는 `.local/research/local-ai/runs/robotics-tts-paper-keyfindings-extract-20261002-v1/` 아래 비공개다. 집중 Node 검증은 `tests/research-extraction.test.mjs`, `tests/research-model-policy.test.mjs`, `tests/research-model-policy-cli.test.mjs`다.
+
+## 207. 고정 평가 사례에 완료된 모델 run 가져오기
+
+모델 추출 결과를 같은 원문으로 재실행하지 않고 평가 fixture에서 검토하려면 `evaluation-import-candidate`를 사용한다. 이 명령은 후보 run이 완료·비공개인지, 저장된 source document/parse 해시가 fixture와 같은지, 모델 예산 기록이 지원되는 schema인지 확인하고 정확한 run 파일을 fixture에 복사한다. 원문이 달라졌거나 파일이 심볼릭 링크면 실패하며, 같은 가져오기 요청은 receipt를 재사용한다.
+
+```sh
+npm run research -- evaluation-import-candidate \
+  --run robotics-tts-paper-quechua-import-20261002-v1 \
+  --case-id robotics-tts-paper-quechua-20261002-dev-v1 \
+  --candidate-run robotics-tts-paper-keyfindings-extract-20261002-v1
+```
+
+Quechua TTS 논문은 7개 source-reviewed 개발용 기준 사실과 12개 Qwen 후보로 평가했다. 구조 통과는 1/12, 의미 coverage는 full 4·partial 2·missing 1이었고 `public_approved:false`다. 이 사례는 모델의 독립 human gold나 heldout 성능을 입증하지 않는다. 평가 결과와 후보는 계속 비공개이며 게시 승격으로 이어지지 않는다. 판정은 다음처럼 실행한다.
+
+```sh
+npm run research -- evaluation-review \
+  --run robotics-tts-paper-quechua-adjudication-20261002-v1 \
+  --case-id robotics-tts-paper-quechua-20261002-dev-v1 \
+  --candidate-run robotics-tts-paper-keyfindings-extract-20261002-v1 \
+  --review .local/research/local-ai/inputs/robotics-tts-paper-quechua-20261002-adjudication-v1.json
+```
+
+관련 회귀 테스트는 `tests/research-evaluation.test.mjs`다.
+
+### API 경로의 현재 상태
+
+`scripts/research/openai.mjs`는 OpenAI Responses API 요청을 만들고 `model-policy`는 `provider: "openai"`를 명시하면 role에 라우팅한다. 그러나 현재 호출 환경에서 `OPENAI_API_KEY`가 비어 있으므로 API를 호출할 자격 증명이 없다. ChatGPT 구독 로그인이나 이 대화에서 쓰는 모델 접근은 별도 OpenAI API 자격 증명·과금 계정으로 자동 변환되지 않는다. 현재는 API wall time/usage/quality 비교 자료도 없다.
+
+API를 직접 실험할 때는 비밀 저장소 또는 실행 환경에 key를 설정하고 private policy에서 필요한 한 role만 `provider: "openai"`로 고정한다. 같은 source parse, extraction scope, prompt, JSON schema와 `store:false`를 유지해 실행하며 응답 receipt의 token usage·wall time과 원문 claim/evidence 검토를 함께 비교한다. 원문 전문을 외부 API로 전송하고 사용량 과금이 생길 수 있다. API 사용과 외부 전송이 선택되기 전 자동 provider 전환은 하지 않는다. 수집·robots 대기·HTML/PDF parse는 별도 단계이므로 API 전환은 이 부분의 병목을 해결하지 않는다.
+
+## 208. 논문 수치 근거 및 실험 분포 추출 프롬프트 실험
+
+동일한 immutable Frontiers Quechua TTS source/parse와 `research_key_findings` profile로 Qwen 3.8 27B를 세 차례 실행했다. 세 run은 같은 development case에 대한 반복 실험이며 독립 사례 수를 늘리지 않는다. 전부 비공개·미승인 상태다.
+
+| Run                                                  | 프롬프트 조건                               | Claims | 구조 통과 | Coverage (full/partial/missing) | 호출 wall time 합계 |
+| ---------------------------------------------------- | ------------------------------------------- | -----: | --------: | ------------------------------: | ------------------: |
+| `robotics-tts-paper-keyfindings-extract-20261002-v1` | 초기 핵심구간 지침                          |     12 |      1/12 |                           4/2/1 |          504,970 ms |
+| `robotics-tts-paper-keyfindings-extract-20261002-v2` | 수치 단위·조건 exact-span, 중복 금지 구체화 |     12 |     11/12 |                           2/4/1 |          446,693 ms |
+| `robotics-tts-paper-keyfindings-extract-20261002-v3` | 표본별 분포·범위·예외 및 보류 검증 우선     |     12 |      8/12 |                           6/0/1 |          509,240 ms |
+
+두 번째 run은 구조 숫자 검사가 좋아졌지만 의미상 완전 사실이 줄었다. 세 번째는 A100/Orin 표본 분포·측정/예상 최적화를 더 잘 포착했으나, 서로 떨어진 원문 문장을 ellipsis로 이어 만든 인용 2건과 exact quote가 아닌 숫자 조건 3건이 남았다. pending native-speaker validation도 놓쳤다. 전체 핵심사실을 뽑았거나 공개할 수준이라는 증거가 아니다. 세 개 wall time은 단일 장비 반복이며 prompt 간 추론 속도 비교 결론으로 사용하지 않는다.
+
+세 번째 가져오기 및 직접 adjudication:
+
+```sh
+node scripts/research.mjs evaluation-import-candidate \
+  --run robotics-tts-paper-quechua-import-20261002-v3 \
+  --case-id robotics-tts-paper-quechua-20261002-dev-v1 \
+  --candidate-run robotics-tts-paper-keyfindings-extract-20261002-v3
+
+node scripts/research.mjs evaluation-review \
+  --run robotics-tts-paper-quechua-adjudication-20261002-v3 \
+  --case-id robotics-tts-paper-quechua-20261002-dev-v1 \
+  --candidate-run robotics-tts-paper-keyfindings-extract-20261002-v3 \
+  --review .local/research/local-ai/inputs/robotics-tts-paper-quechua-20261002-adjudication-v3.json
+```
+
+v3 fixture receipt SHA-256은 `b6bc33271077735f0b0154a3f55f15dfa811dc1f400b7ac883ff8ace6214639`다. 수정 위치는 `scripts/research/claims.mjs` 및 `tests/research-extraction.test.mjs`; 숫자 단위/조건의 exact quote 검사와 원문 block quote 검증은 계속 fail-closed다.
+
+## 209. FANUC 분기 실적 PDF 장문 요청 timeout 후 분할 재실행
+
+대상은 private source run `20260927-fanuc-ir-profile-v1`의 공식 FANUC FY2027 Q1 일본어 PDF다. 기존 source-reviewed fixture `fanuc-quarterly-202606-ja-pdf-dev-v1`의 document/parse SHA-256에 결속해 후보를 평가했다. PDF는 10쪽이고 저장 parse는 211 blocks/12 tables다. source acquisition은 다시 수행하지 않았다.
+
+첫 시도는 20,000자 input budget·6 facts cap의 단일 batch였으며 Qwen call timeout 300,000ms를 소진했다. `fanuc-quarterly-extract-20261002-v1`은 실패 receipt만 보유하고 성공 aggregate를 만들지 않았다. 이후 source와 parse는 그대로 두고 별도 run `fanuc-quarterly-extract-20261002-v2`에서 8,000자·batch당 4 facts를 지정했다. planner가 만든 네 batch는 모두 완료했다.
+
+호출별 wall time은 206,552ms·210,347ms·198,467ms·192,367ms, 합계 807,733ms였다. 결과는 16 claims/structure pass 11이다. Import receipt가 고정 fixture와 대조한 문서 SHA-256은 `e066c08fd935fca2107abfaa47cb14cf89e2d1e72cc92ce6b9c89ae5e7c1ea22`, parse SHA-256은 `4b5a4b6541d5b6652421e978d02ef2a9fa70b7c477a115e518f27d6c3129ce31`다. Importer wall time 합계는 별도 receipt 계측값 807,693ms다.
+
+재현 명령:
+
+```sh
+node scripts/research.mjs extract \
+  --run fanuc-quarterly-extract-20261002-v2 \
+  --source-run 20260927-fanuc-ir-profile-v1 \
+  --model-policy data/research-model-policy.json \
+  --input-char-budget 8000 \
+  --facts-per-batch 4
+
+node scripts/research.mjs evaluation-import-candidate \
+  --run fanuc-quarterly-import-20261002-v1 \
+  --case-id fanuc-quarterly-202606-ja-pdf-dev-v1 \
+  --candidate-run fanuc-quarterly-extract-20261002-v2
+
+node scripts/research.mjs evaluation-review \
+  --run fanuc-quarterly-adjudication-20261002-v1 \
+  --case-id fanuc-quarterly-202606-ja-pdf-dev-v1 \
+  --candidate-run fanuc-quarterly-extract-20261002-v2 \
+  --review .local/research/local-ai/inputs/fanuc-quarterly-202606-ja-pdf-adjudication-v1.json
+```
+
+Adjudication는 source-reviewed 6 facts 중 full 3·partial 2·missing 1, public approval false다. 로봇 부문 매출/지역 수요가 빠졌고, 연간 forecast는 4월 24일 전망 대비 +4.2% 비교를 놓쳤다. Claim 1/2/3은 연결 분기 실적을 나눠 반복한 것이므로 하나의 gold fact를 세 건으로 계산하지 않는다. Claim 16의 단일 segment 진술만으로 미작성 현금흐름과 검토 상태가 충족된 것으로 보지 않는다. 모든 후보는 `unreviewed`이며 게시·Drive·RSS·GitHub·웹사이트에 내보내지 않았다. 평가 receipt SHA-256은 `6c3ec0d051352b32c085e2c16cdb2944bed98dce057ecc4172aec3cc57178027`다. Inputs와 receipts는 `.local/research/local-ai/inputs/fanuc-quarterly-202606-ja-pdf-adjudication-v1.json` 및 evaluation private roots에 보관한다.
+
+## 210. 검색 계획과 현지화의 비신뢰 입력 경계
+
+`searchQueries`는 제한된 제목·주제·실패 backlog를 user payload로 받으며 `localizeQueries`는 언어 검사를 통과하지 못한 query를 번역한다. 전자는 기존에 제목·출처가 지시문이 아니라고만 했고, 후자는 입력 문자열이 명령처럼 보여도 무시하라는 정책이 없었다. 2026-10-02에 공통 system 문구 `UNTRUSTED_SEARCH_INPUT`를 추가해 제목·출처·주제·backlog·검색어를 모두 untrusted data로 선언하고, 내장 명령은 무시하며 지정된 검색 query field만 변환하고 slot ID를 보존하게 했다.
+
+회귀 실행:
+
+```sh
+node --test tests/research-search.test.mjs
+```
+
+검색 계획/현지화 system prompt가 경계를 포함하고, 지시문이 섞인 query가 data field로 전달되며 모델의 응답은 원래 언어/slot 검사를 계속 받는 것을 확인했다. 결과는 21/21 통과다. 테스트는 prompt contract와 입력 경계를 검사할 뿐 모델이 실제 적대 문서를 항상 이긴다는 사실을 입증하지 않는다. JavaScript 실행 여부, HTML/PDF parser의 script·link 처리, source-fetch host 정책 검증을 대체하지 않으며 P2-01은 부분으로 유지한다. 코드: `scripts/research/search.mjs`; 회귀: `tests/research-search.test.mjs`.
+
+## 211. PDF 본문 수신 시간 예산 분리
+
+`SourceFetcher`는 기존 HTML 10 MiB/PDF 50 MiB body cap, 공통 HTTP deadline 20초로 시작한다. PDF는 response header 도착 후 본문 전송만 60초의 별도 deadline을 사용하도록 변경했다. 서버가 PDF header를 주지 않으면 기존 20초 제한이 계속 적용된다. body timeout은 `PDF body deadline exceeded`로 원문 attempt에 실패 기록되고, 기존 GET transport 제한 재시도에만 들어간다. 성공 body 저장과 해시 계약은 변경하지 않는다.
+
+재현 및 집중 회귀:
+
+```sh
+node --test tests/research-runtime.test.mjs
+```
+
+추가한 `responseBodyTimeoutMs` 회귀는 `application/pdf` 60초, HTML/미상 MIME 20초 선택을 확인한다. 별도 mocked HTTP 회귀는 PDF header 이후 초기 5ms deadline이 지워지고 40ms body deadline 만료 때 요청이 실패하는 것을 확인한다. 실제 외부 PDF 다운로드 지연은 live 재현하지 않았다. IR publisher별 timeout/size override나 50 MiB 초과 때의 공식 대체 자료 선택은 완료되지 않았다. 코드는 `scripts/research/fetch.mjs`, 테스트는 `tests/research-runtime.test.mjs`다.
+
+## 212. Chromium에서 원문 스크립트의 외부 요청 차단
+
+`renderDocument`는 JavaScript가 필요한 원문을 격리 Chromium에서 렌더링하고, context의 모든 HTTP request를 worker IPC를 통해 parent `fetchWithPolicy`로 보낸다. 2026-10-02 KST에 Chromium을 실제 실행하는 `tests/research-browser.test.mjs`를 추가했다. HTML script의 외부 host fetch는 parent의 `assertURL` host allowlist에서 거부되고, 같은 host로 보내는 POST는 browser route에서 중단된다. 두 요청 모두 fake SourceFetcher transport까지 도달하지 않는다.
+
+재현:
+
+```sh
+node --test tests/research-browser.test.mjs
+```
+
+`node --test tests/research-browser.test.mjs` 2/2 통과. 테스트는 publisher와 robots 응답을 로컬 deterministic transport로 만들며 외부 네트워크를 호출하지 않는다. 외부 GET host, 같은 host POST, WebSocket 각각이 parent source transport에 도달하지 않는 것을 실제 Chromium으로 확인했다. 다운로드 거부와 새 창·링크 탐색은 별도 hostile-page 회귀가 남아 있다. allowlist 내 GET의 server-side effect 위험도는 source별로 검토해야 한다. 관련 코드는 `integrations/research-worker/browser.py`, `scripts/research/browser.mjs`, `scripts/research/source-policy.mjs`다.
+
+## 213. IEEE Spectrum Robotics RSS 기간 수집과 제목·날짜 근거
+
+2026-10-02에 공식 [IEEE Spectrum Robotics RSS](https://spectrum.ieee.org/rss/robotics/fulltext)를 공통 scanner로 확인했다. 실행은 `RESEARCH_PYTHON="$PWD/.local/research/local-ai/runtime/venv/bin/python" node scripts/research.mjs scan-list --run ieee-spectrum-robotics-20261002-v3 --channel ieee-spectrum-robotics --since 2026-09-25 --until 2026-10-02`이며 저장 위치는 `.local/research/local-ai/runs/ieee-spectrum-robotics-20261002-v3/`이다.
+
+실물 feed 30개 항목 중 기간 내 세 건의 상세 원문을 확인했고, 더 오래된 27개 항목으로 범위 끝을 확인해 `window_scanned`가 됐다. 세 상세 원문은 `source_parsed_unreviewed`; `candidate_published`는 false다. 각 상세 원문의 실제 표제와 RSS 표제를 둘 다 보존하며, 후보 제목에는 원문 표제를 사용한다. Robots Guide 상세 원문은 본문 JSON-LD 날짜가 파서 형식과 달라 정확한 일자로 판정되지 않았다. 대신 날짜가 명시된 RSS item의 `2026-09-28`, RSS URL, 저장된 listing source version을 HTML parser 결과의 `official-listing` basis로 기록했다. 근거가 없는 경우 이 fallback은 필수 listing 출처 필드가 없으면 실패한다.
+
+회귀는 새 HTML 목록 날짜 provenance 테스트, IEEE RSS route 계약, 제목 차이를 허용하는 명시 정책과 기본 엄격 정책, daily plan/source registry를 대상으로 실행했다: `"$PWD/.local/research/local-ai/runtime/venv/bin/python" -m unittest tests.test_research_worker.WorkerTests.test_html_article_can_use_exact_official_listing_date_with_provenance` 및 `node --test tests/research-ieee-spectrum-rss.test.mjs tests/research-rss-scan.test.mjs tests/source-registry.test.mjs tests/research-daily-plan.test.mjs` (24/24). `daily-20261002-source-route-check-v1 --plan-only`는 30개 경로·60개 창을 만들고 IEEE의 기준선 창과 당일 창을 포함했다. Ollama는 로컬 endpoint에서 응답했고 모델 4개가 조회됐다. 이 수집 창에는 LLM 추론이 필요하지 않아 긴 지연의 원인은 모델 구동이 아니다. 이 route는 2026-10-02 설정부터 일일 수집 대상이며, 새 후보의 검토·승인·발행 완료를 의미하지 않는다.
+
+## 214. IEEE Atlas 손 기사: 원문에서 로컬 추출·검토·육하원칙 초안까지
+
+2026-10-02 KST, `ieee-spectrum-robotics-20261002-v3`의 Boston Dynamics Atlas 손 후보를 기존 backlog에 같은 URL·유사 제목이 없는지 먼저 조회했다. `select-source`로 `https://spectrum.ieee.org/robust-robot-hand` 한 건만 선택해 기존 source version과 parse를 재사용했다. 새 원문 요청은 하지 않았다. 수집 source/run은 `.local/research/local-ai/runs/ieee-spectrum-robotics-20261002-v3/`, 선택본은 `.local/research/local-ai/runs/ieee-spectrum-atlas-selected-20261002-v1/`이다.
+
+로컬 `qwen3.8:27b`의 1회 `fact_extract`는 9개 원문 블록을 입력받아 6 claim 후보를 만들었다. wall 248,866ms, generation 2,006 tokens/8.96 tokens/s, load 9,634ms, prompt evaluation 15,327ms다. 생성 결과 중 구조 검사를 통과한 주장은 1개뿐이었다. 직접 원문을 읽고 그 1개를 검증했으며, 나머지 5개는 문장 일부의 인용 불일치나 수치 조건 누락 때문에 deferred로 남겼다. 빈 곳을 모델 결과로 채우지 않고 exact block quote에 결속된 사실 5개를 직접 추가해 검증했다. 최종 review ledger는 verified 6(모델 1+직접 5), deferred 5, rejected 0이다. 원 review와 정정 기록은 `ieee-spectrum-atlas-facts-20261002-v1/direct-review.json`에 있다.
+
+같은 로컬 모델의 `article_write`는 wall 115,212ms로 완료됐다. 첫 초안에서 `pinky`를 약지로 잘못 옮겼고, 조건부 연간 100,000개 검토를 확정 생산계획처럼 읽힐 수 있게 썼다. 원문에서 소지는 `pinky`, 약지는 `ring finger`로 구분하고, Rodriguez가 말한 규모는 만들려면 필요한 설계를 검토하는 조건부 표현이다. 수동 정정 이력 세 건을 보존한 최종 비공개 preview는 `runs/ieee-spectrum-atlas-facts-20261002-v1/preview.md`, 상태 `editorial_review`, 자동 문제 0, `public_approved:false`, `candidate_published:false`다. 최종 문장은 원문의 자유도 7→13, 관절 내장 직구동, 네 번째 손가락/소지 설계, 100,000개 연간 생산을 위한 현재 설계 검토만 전달한다. 새 공개 기사·Drive·RSS·GitHub는 만들지 않았다.
+
+검증은 관련 worker 날짜 provenance 1건, 이전 IEEE/RSS/title-policy/source-registry/daily-plan 회귀 24/24, 실제 source→select→local extract→review→draft→correction CLI 연결 및 저장 preview 문제 0을 확인했다. 이 구현 묶음에서는 전체 테스트를 반복하지 않았다. 세 원문 URL과 후보 제목은 backlog 172건 및 공개 `vault/News`에서 재검사해 기존 항목과 일치하지 않았다. 중복 없이 세 후보가 `.local/research/candidate-backlog.json`에 unreviewed로 추가되어 총 175건이 됐다. before SHA-256은 `402d277b46b8245d180ede54a308eb2b5e335b0f78e1beae9f2d4157b23537a7`, after raw bytes SHA-256은 `75355131f2d91f757550cd57def363a1161c533ab0cefee69de2b29da5cb6401`이며 merge 유틸리티를 재실행했을 때 `changed:false`, 175건, 같은 merged-state SHA가 확인됐다. 입력 fingerprint가 다른 기존 scan ID에 merge flag를 추가하면 안전하게 거부되므로 저장 후보를 다시 수집하지 않고 공통 `mergeBacklog` utility로 반영했다. 상세 영수증은 `ieee-spectrum-robotics-20261002-v3/candidate-backlog-merge.json`이다. 다음 반복은 이 사례의 오류를 개발 평가 사례에 반영하되, 독립 정답·사람 검토와 섞지 않고 새 원문 snapshot인지부터 확인한다. 실측 inference를 보면 이 처리 경로에서는 로컬 LLM이 수집이 아니라 추출·작성의 주요 시간 비용이다. 전체 WBS 1/22 및 일일 운영·공개 상태는 이 실행으로 승격하지 않는다.
+
+## 215. Boston Dynamics 공식 원문 프로필 수정과 같은 사건 근거
+
+`boston-dynamics-atlas-hand-primary-20261002-v1`은 [Boston Dynamics 공식 블로그](https://bostondynamics.com/blog/robot-hands-for-modern-ai-and-real-work)를 HTTP 200으로 저장했지만, 공통 parser는 본문 0블록·`partial`이었다. 저장 HTML의 제목은 `h1.fl-heading`, 기사 본문은 `div.post-content`이며 게시일은 JSON-LD `Article.datePublished`에 있었다. `Last-Modified` 헤더는 게시일 근거로 사용하지 않았다.
+
+`boston-dynamics-blog-article-v1` 공통 HTML profile을 등록한 뒤 네트워크 재요청 없이 `reparse --run boston-dynamics-atlas-hand-primary-reparse-v2 --source-run boston-dynamics-atlas-hand-primary-20261002-v1`을 수행했다. 재파싱은 제목 `Robot Hands for Modern AI and Real Work`, 본문 34블록, `2026-10-01T13:10:02+00:00` `Article.datePublished` basis를 추출했다. `dateModified=2026-10-01T13:10:05+00:00`은 수정 날짜 필드에 남았다. parser fixture 1/1과 source registry 9/9만 실행했고 full suite는 반복하지 않았다.
+
+같은 저장 parse로 `boston-dynamics-atlas-hand-facts-v1`의 Qwen 3.8 27B 한 배치(6 claims)를 추출했다. 모델 wall은 210,451ms, 출력 1,391 tokens/8.66 tokens/s, load 9,382ms, prompt evaluation 40,384ms였다. 6개 사실을 원문 블록·수치·시간과 직접 대조해 모두 검증했다. 모델 주장에서 Atlas 로봇 100lb+ payload와 Atlas 손이 100lb+ 적재 미니 냉장고를 들 수 있다는 내용을 서로 다른 주체로 확인했고, 제품 성능은 회사 설명으로 귀속했다. 독립 검증된 제품 시험으로 표현하지 않는다.
+
+`candidate-source-alternative` run `boston-dynamics-atlas-hand-identity-v1`은 IEEE Spectrum 후보 `source-589f46b203ce047a678c`와 공식 Boston Dynamics 문서를 `same_event`로 연결했다. private receipt는 두 URL과 body/source/parse/content hash, 직접 검증한 3개 연결 사실을 고정했다. 재실행은 `reused:true`였다. backlog 175건은 바뀌지 않았고 해당 후보도 `unreviewed`다. 승인·게시·Drive·공개 결과는 발생하지 않았다.
+
+이전 작업에서 실측한 기사 작성 115초와 이번 사실 추출 210초는 로컬 모델 생성 단계가 체감 지연의 주요 원인이라는 관측을 뒷받침한다. 저장소에는 OpenAI Responses 경로가 있으나 현재 실행환경에는 `OPENAI_API_KEY`가 없다. 이 세션에서 원문을 API로 외부 전송하거나 유료 API 속도를 측정하지 않았다. API 비교를 하려면 비밀 환경의 키와 API 과금·외부 데이터 전송 사용승인이 제공된 뒤 같은 원문·출력 기준으로 비교해야 한다.
+
+```sh
+node scripts/research.mjs collect --run boston-dynamics-atlas-hand-primary-20261002-v1 --url https://bostondynamics.com/blog/robot-hands-for-modern-ai-and-real-work
+node scripts/research.mjs reparse --run boston-dynamics-atlas-hand-primary-reparse-v2 --source-run boston-dynamics-atlas-hand-primary-20261002-v1
+node scripts/research.mjs extract --run boston-dynamics-atlas-hand-facts-v1 --source-run boston-dynamics-atlas-hand-primary-reparse-v2 --model qwen3.8:27b --think false --num-ctx 16384 --num-predict 2048 --facts-per-batch 6 --call-timeout-ms 300000 --extraction-timeout-ms 900000
+node scripts/research.mjs review --run boston-dynamics-atlas-hand-facts-v1 --review .local/research/local-ai/runs/boston-dynamics-atlas-hand-facts-v1/fact-review-input-v1.json
+node scripts/research.mjs candidate-source-alternative --run boston-dynamics-atlas-hand-identity-v1 --source-run boston-dynamics-atlas-hand-facts-v1 --candidate-key source-589f46b203ce047a678c --review .local/research/local-ai/runs/boston-dynamics-atlas-hand-facts-v1/candidate-source-alternative-review-v1.json
+```
+
+같은 run에서 `draft --model qwen3.8:27b`를 실행해 6개 검증 claim의 한국어 원고를 만들었다. 모델 wall 134,143ms, 출력 788 tokens, load 9,131ms, prompt evaluation 18,658ms, generation 106,319ms다. 초안은 제품 공개를 `연구·기술/새로운 방법`으로 분류하고 회사가 밝힌 100lb+ 수치의 귀속을 빼며, 설명을 반복했다. `draft-correction-input-v1.json`에서 `제품·서비스/신제품`, Boston Dynamics 설명 귀속, 짧은 구조로 직접 고쳤다. 이어 검증 사실의 subject와 발행 주체를 섞지 않도록 엔티티 범위를 정리하는 `draft-correction-input-v2.json`을 기록했다. 최종 preview는 `runs/boston-dynamics-atlas-hand-facts-v1/preview.md`; `editorial_review`, 자동 문제 0, `public_approved:false`, candidate publication false다. 정정 기록은 model 원출력을 성공 판정으로 바꾸지 않는다.
+
+## 216. Boston Dynamics WordPress REST 공통 수집기와 일일 경로
+
+Boston Dynamics 공식 블로그 목록은 RSS endpoint가 아닌 WordPress REST posts API가 실제 자료를 반환하는 것을 확인했다. 목록 API와 개별 상세 URL은 모두 shared collector를 통해 host allowlist와 robots 확인을 적용한다. 수집기를 특정 회사에서 분리하기 위해 `scripts/research/wordpress-scan.mjs`에 `wordpress-rest-posts-json-v1`를 만들었다. profile은 `/wp-json/wp/v2/<type>` endpoint, 1~100 page size, 제한된 page/detail 수를 사용한다. 요청에는 검색 날짜 창, 최신순 정렬, 명시한 `_fields`가 들어간다. 각 API page의 response bytes/hash를 저장하며 ID·published status·post type·날짜·title·slug·permalink host/path와 순서를 검사한다. 마지막 page가 page size보다 짧은 것을 확인해야 scan이 완료된다.
+
+`data/research-source-channels.json`의 `boston-dynamics-blog`은 해외/기술·제품/로봇·제조 source route다. `data/research-acquisition.json`에는 API profile과 기존 `boston-dynamics-blog-article-v1` detail profile을 연결하고, daily route는 고정된 baseline run을 가리킨다. 2026-10-02 실제 `[2026-09-25, 2026-10-02)` scan은 API 목록 1건, 상세 URL `https://bostondynamics.com/blog/robot-hands-for-modern-ai-and-real-work/` 1건, `window_scanned`, candidate 1건이었다. source run은 `.local/research/local-ai/runs/boston-dynamics-blog-20261002-baseline-v2/`다. 상세 HTTP는 `not_modified`였으며, 기존 immutable body SHA·parse를 다시 사용했고 JSON-LD 게시 시각 `2026-10-01T13:10:02+00:00`와 본문 34블록을 확인했다.
+
+첫 실물 scan v1은 목록의 일자 `2026-10-01`과 상세 JSON-LD timestamp 표현 전체를 문자열로 비교해 `date_conflict`가 났다. 이는 날짜 자체가 다른 경우가 아니라 정밀도 차이였다. 공통 `collectWindowDetails`와 `verifyStoredListScan`은 이제 두 값을 `parseResearchDate`로 읽고 source calendar day를 비교하며, parsed timestamp/basis는 수정하지 않는다. 이 변경 후 v2는 정상 완료됐다. 다른 scanner 날짜 범위로 인한 회귀도 포함해 관련 5개 test file 42/42가 통과했다.
+
+`node scripts/research-daily.mjs --root .local/research/local-ai --run daily-20261002-boston-dynamics-route-plan-v2 --plan-only` 결과는 `planned`, 62 windows다. Boston Dynamics는 기준선 `[2026-09-25, 2026-10-02)`와 일일 `[2026-10-02, 2026-10-03)` 창을 모두 받았다. plan-only는 실제 당일 원문 수집을 뜻하지 않는다. 후보의 공개 승인·기사 장부 병합·Drive·GitHub Pages/RSS는 변경하지 않았다. 전체 WBS는 1/22 complete, 19 partial, 2 not started다. 전체 테스트 suite는 이 slice에서 실행하지 않았다.
+
+재현:
+
+```sh
+node scripts/research.mjs scan-list --root .local/research/local-ai --run boston-dynamics-blog-20261002-baseline-v2 --channel boston-dynamics-blog --since 2026-09-25 --until 2026-10-02
+node scripts/research-daily.mjs --root .local/research/local-ai --run daily-20261002-boston-dynamics-route-plan-v2 --plan-only
+node --test tests/research-wordpress-scan.test.mjs tests/research-list-scan.test.mjs tests/research-daily-scan.test.mjs tests/research-daily-plan.test.mjs tests/source-registry.test.mjs
+```
+
+## 217. Boston Dynamics Atlas 손 개발 평가 case 고정과 표적 검증
+
+이미 저장·검토한 Boston Dynamics 공식 원문과 parse를 사용해 새 source-first evaluation spec을 만들었다. Qwen 출력과 기사가 이미 노출된 뒤 직접 검토한 사실 6개를 기준으로 삼으므로 split은 `development`, status는 `source_reviewed_candidate`다. 원문 사실은 13 DOF·직접 구동, GR2/GR3 비교, Atlas 로봇 100lb+ payload, 손의 적재 미니 냉장고 운반 설명, 손가락별 자유도, 새끼손가락 설계 절충이다. 요구 설명은 로봇 payload와 손 운반 예시의 대상 분리 및 설계 설명의 회사 귀속이다. 금지 변환은 두 100lb+ 주장의 주체를 합치거나 회사 설명을 독립 시험으로 표현하는 것이다.
+
+Spec: `.local/research/local-ai/evaluation/specifications/boston-dynamics-atlas-hand-20261002-dev-v1.json`. 입력 검토본은 `.local/research/local-ai/runs/boston-dynamics-atlas-hand-facts-v1/reviewed-claims.json`; source input은 `.local/research/local-ai/runs/boston-dynamics-atlas-hand-primary-reparse-v2/`. 고정 실행:
+
+```sh
+node scripts/research.mjs gold-case \
+  --root .local/research/local-ai \
+  --run boston-dynamics-atlas-hand-evaluation-case-v1 \
+  --source-run boston-dynamics-atlas-hand-primary-reparse-v2 \
+  --review .local/research/local-ai/evaluation/specifications/boston-dynamics-atlas-hand-20261002-dev-v1.json
+
+node --test tests/research-evaluation.test.mjs
+```
+
+저장 receipt는 `evaluation/fixtures/boston-dynamics-atlas-hand-20261002-dev-v1/manifest.json` 및 `runs/boston-dynamics-atlas-hand-evaluation-case-v1/evaluation-case-boston-dynamics-atlas-hand-20261002-dev-v1.json`이다. Spec SHA-256 `78cacdfc21b61a57b9b1fc46623057ca8c27d2ebf48eed80ce966b930535a95f`, facts 6, `model_evaluated:false`, `candidate_published:false`. Evaluation audit는 revisions 20, unique snapshots 18, development 18/40, heldout 0/20, facts 117, source URLs 23, invalid fixture 0, prior same-snapshot revisions 2, split conflict 0을 반환했다. 이는 모델 품질 판정이 아니며 독립 human gold도 추가하지 않았다.
+
+반복 테스트를 줄이라는 요청에 따라 구현 중에는 변경 경로 표적 테스트와 저장 산출물 integrity audit를 우선하고, 전체 suite는 통합/배포 검증 gate에서 실행한다. 이번 slice는 evaluation 테스트 모듈 17/17과 private `auditEvaluationCases`로 검증했으며 전체 테스트 suite는 실행하지 않았다. 공개 발행·Drive 변경은 없다.
+
+## 218. 활성 수집 route와 실제 일일 coverage의 차이 확인
+
+`node scripts/research.mjs status --root .local/research/local-ai --format json`으로 읽은 현재 상태는 source registry 116, enabled daily routes 31, latest integrated live run `daily-20261002-protocol-validation-v1` 29 routes/58 planned windows/57 successful receipts, retry queue 0이다. NLR baseline 창 한 개는 이미 보완 coverage가 있어 실행하지 않았다. receipt span은 14분 14.7초다. 당일 31-route 전체 scan으로 해석하지 않는다. 확인은 다음처럼 현재 설정과 coverage ledger를 직접 비교한다.
+
+```sh
+node -e 'const fs=require("fs");const c=JSON.parse(fs.readFileSync("data/research-daily-routes.json"));const v=JSON.parse(fs.readFileSync(".local/research/local-ai/daily/route-coverage.json"));const active=c.routes.filter(r=>r.enabled).map(r=>r.channel_id);console.log(JSON.stringify({active_routes:active.length,coverage_routes:Object.keys(v.routes).length,missing_coverage:active.filter(id=>!v.routes[id])},null,2))'
+```
+
+현재 coverage 파일에는 활성 31개 중 29개 route가 있고 `ieee-spectrum-robotics`, `boston-dynamics-blog` 두 개가 없다. 두 route의 기간 baseline scan은 저장 완료이고 plan-only에도 포함됐지만 latest integrated run에는 들어가지 않아 coverage bootstrap/live daily receipt가 없다. Boston scan 후보는 기존 IEEE Atlas 후보에 same-event 공식 source로 연결돼 있으므로 이를 별도 backlog 기사로 무심코 병합하지 않는다. latest 29-route receipt는 suppression v2 구현 이전 기록이다. 다음 일일 integrated execution에서 두 신규 경로, 기존 same-event identity 및 v2 suppression/coverage receipt 연결을 함께 확인한다.
+
+`node scripts/research.mjs status --root .local/research/local-ai --format html`은 비공개 진행판을 갱신한다. 2026-10-02 생성본은 `.local/research/local-ai/delivery-status.html`, SHA-256 `54d72a93efda730d852db6073de920c5eda37ce17854753134f0c545526c3b58`다. 화면은 116 routes·31 active daily routes·175 candidates·evaluation 18/40 development를 표시한다. 전체 suite는 실행하지 않았다.
+
+## 219. 검증된 `same_event` 대체 출처의 일일 merge 중복 억제
+
+### 규칙
+
+`scripts/research/candidate-source-alternative.mjs`의 `loadSameEventSourceAliases(root, backlogFile)`는 `.local/research/local-ai/runs/*/candidate-source-alternative.json`을 읽어 same-event alias index를 다시 만든다. symlink run directory는 거부한다. 각 receipt는 현재 backlog에서 target key가 정확히 하나인지, target의 단일 canonical URL과 publication day가 receipt 원문과 일치하는지 검사한다. source-run 저장 identity, 문서·parse, 검토된 claims, 원 검토문서 bytes/hash를 사용해 receipt 전체를 재구성하고 저장본과 byte-equivalent JSON인지 비교한다. 검토 파일이 legacy처럼 resolution run 또는 source run 중 한 곳에 있어도 pinned SHA-256이 맞는 단일 bytes만 채택한다.
+
+`scripts/research/scan-completion.mjs`의 `mergeCompletedScan`은 완료된 window의 후보 URL이 alias와 정확히 canonical match될 때만 이를 merge 호출에서 빼고 `same_event_aliases`에 기록한다. 같은 alias URL이 여러 target을 가리키면 중단한다. title similarity, 키워드나 공동 출현은 suppression 조건이 아니다. `daily-scan`은 실제 표준 실행 및 supplemental reconciliation에서 유효 alias를 불러온다. 신규 일일·supplemental 영수증은 v2 schema를 사용하며 빈 경우에도 배열을 저장한다. 검증은 evidence에서 억제 결과를 다시 계산하고 v2 목록이 빠지면 재개를 거부한다. 기존 v1 영수증은 호환 읽기를 유지하며, 기존 영수증에 suppression 목록이 있었다면 재검증한다. resolver 소스는 daily plan fingerprint 입력에 포함되어 기존 plan을 stale 처리한다.
+
+### 검증 결과
+
+집중 회귀 `node --test tests/research-candidate-source-alternative.test.mjs tests/research-daily-scan.test.mjs tests/research-delivery-status.test.mjs`는 38/38 통과했다. daily/supplemental v2 receipt에서 suppression 배열을 삭제하면 resume 또는 진행판 검증이 실패하는 회귀를 포함한다. 후속 symlink 거부 guard 반영 뒤 source-alternative 모듈은 6/6 통과했고 관련 JS·테스트 파일 Prettier 검사도 통과했다. 전체 suite는 반복 실행하지 않았다.
+
+생산 저장 근거의 no-write dry-run에서는 검증된 alias 4건, Boston Dynamics baseline source candidate 1건, backlog merge input 0건이 나왔다. 후보 `source-e5a64fefca98f908a539`는 IEEE Spectrum의 기존 candidate `source-589f46b203ce047a678c`에 resolution run `boston-dynamics-atlas-hand-identity-v1`로 연결된다. dry-run은 candidate backlog, coverage ledger, 승인, Drive나 공개 자료를 쓰지 않았다. Boston baseline scan 자체는 보존됐으며 다음 integrated scan은 suppression을 receipt에 실제 반영했는지 확인해야 한다.
+
+마지막 daily integrated coverage는 29/31 route였다. IEEE Spectrum Robotics와 Boston Dynamics는 baseline/plan-only 상태이며 둘을 포함한 신규 31-route live receipt는 아직 없다. 따라서 구현과 저장 receipt dry-run은 검증됐지만 운영 일일 merge/coverage까지 완료된 것은 아니다.
+
+재현 표적 테스트:
+
+```sh
+node --test tests/research-candidate-source-alternative.test.mjs tests/research-daily-scan.test.mjs tests/research-delivery-status.test.mjs
+npx prettier --check scripts/research/candidate-source-alternative.mjs scripts/research/daily-scan.mjs scripts/research/scan-completion.mjs scripts/research/delivery-status.mjs tests/research-candidate-source-alternative.test.mjs tests/research-daily-scan.test.mjs tests/research-delivery-status.test.mjs
+```
+
+API 지연 관련 기존 경계도 유지한다. OpenAI Responses adapter는 있지만 현재 셸에 `OPENAI_API_KEY`가 없어 실제 요청, 원문 외부 전송 또는 속도 비교는 수행하지 않았다. API는 추론 역할의 지연을 대체 측정할 수 있지만 URL 수집이나 HTML/PDF parse에서 모델 호출이 없는 구간은 줄이지 않는다. 관련 실측 및 다음 비교 조건은 [계획 19.120절](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19120-논문-핵심-구간-추출-profile과-api-사용-경계)과 [현재 상태 102절](LOCAL_AI_NEWS_CURRENT_BUILD.md#102-same_event-대체-원문을-후보-merge에서-중복-억제)을 참조한다.
+
+## 220. 31개 route coverage와 same_event handoff 연결
+
+### 실제 통합 run
+
+31개 활성 route의 live coverage와 v2 same-event suppression을 확인하기 위해 새 계획과 실행을 분리했다.
+
+```sh
+node scripts/research-daily.mjs --root .local/research/local-ai \
+  --run daily-20261002-core-31routes-integrated-v1 --plan-only
+
+node scripts/research-daily.mjs --root .local/research/local-ai \
+  --run daily-20261002-core-31routes-integrated-v1 --execute
+```
+
+계획은 31 route·62 window를 고정했다. cutoff는 `2026-09-29T23:17:13.068Z`, authority는 `local_vault_unreconciled`였다. 실행의 첫 receipt `2026-10-01T23:09:01.959Z`부터 마지막 `2026-10-01T23:19:45.464Z`까지 643,505ms(10분 43.5초)다. 62 receipt가 모두 `window_scanned`, retry queue 0이며 전체 62개가 `research-daily-receipt/v2`다. IEEE Spectrum Robotics와 Boston Dynamics 신규 route가 각각 두 coverage span을 기록해 활성 31 route 모두 coverage를 갖게 됐다. route coverage JSON 전체 key는 기존 잔여 경로 때문에 32개다.
+
+same-event receipt는 Boston Dynamics URL `https://bostondynamics.com/blog/robot-hands-for-modern-ai-and-real-work`를 후보 `source-e5a64fefca98f908a539`에서 IEEE `source-589f46b203ce047a678c`로 연결했다. Doosan Robotics 영어 CEO 공지는 `source-43dbd3fe6cdd4fcf7d95`에서 이미 검증된 `doosan-ceo`로 연결했다. 이 둘은 일반 제목 유사도가 아니라 저장된 원문·parse·review evidence를 다시 확인한 receipt다. 이번 실행은 공개 후보 수를 늘리기 위한 중복 merge를 하지 않았고 각 daily receipt에 alias 매핑을 보존했다. backlog는 188건, verified 69·deferred 9·rejected 1·unreviewed 109이며 SHA-256은 `eaa14744e954e3142acd474cfa913b925db1f9dd9b4bb2e2cef08d8a2ca11aa0`다.
+
+### handoff 오류와 수정
+
+첫 `--execute`는 62/62 window와 summary·coverage·backlog merge까지 완료했으나 마지막 private editorial handoff에서 `source-e5a64fefca98f908a539`가 backlog에 없다는 오류로 종료됐다. 이는 의도적으로 merge에서 뺀 alias 후보를 handoff가 일반 후보처럼 다시 요구한 경로 불일치였다. `buildEditorialHandoff`는 이제 alias가 receipt candidate key·source observation·backlog의 exact target에 매칭되는지 검사하고 source URL, resolution run, source version, parse ID와 content SHA를 `same_event_sources`에 보존한다. alias가 아닌 후보 누락은 계속 거부한다. v2 suppression 목록이 비었고 후보도 없을 때는 alias resolver에 backlog 파일을 요구하지 않아, empty-scan fixture와 실제 빈 route 모두 동작한다.
+
+기존 receipt에서 네트워크를 다시 호출하지 않고 handoff만 생성·읽었다.
+
+```sh
+node scripts/research-daily.mjs --root .local/research/local-ai \
+  --run daily-20261002-core-31routes-integrated-v1 --handoff
+```
+
+성공한 비공개 handoff는 `daily/runs/daily-20261002-core-31routes-integrated-v1/handoffs/c4bba1e65929355a172c3ac06a1e483db83c4225f12788f6b7ab92d3c8b3d037.json`이다. pending 134, observed pending 84, resolved 4, incomplete windows 0이고 `candidate_published`, `drive_verified`, `public_verified`는 모두 false다.
+
+표적 회귀 `node --test tests/research-editorial-handoff.test.mjs tests/research-daily-scan.test.mjs tests/research-delivery-status.test.mjs`는 43/43 통과한다. 추가 확인은 같은 세 파일의 Prettier와 `git diff --check`다. 전체 suite는 실행하지 않았다. 이 run은 새 뉴스 회차 작성이나 Drive/public 갱신이 아니다. Drive 조회에서 확인한 최신 issue는 2026-10-01이고 2026-10-02 issue는 검색되지 않았다. 계획이 local vault의 stale cutoff를 사용하므로 공개 발행은 계속 보류하며, local-vs-Drive source snapshot 정합성은 남은 직접 작업이다. 1시간 이상 막힌 작업은 없었다.
+
+## 221. Social robotics 원문 평가와 로컬 추론 시간
+
+### 원문과 source-first 기준
+
+일일 수집 run `daily-20261002-core-31routes-integrated-v1_frontiers-robotics-papers_20260925_20261002_a1`에서 Frontiers 논문 “How to express social presence: a comparison of perceptions of social robots’ cognitive abilities”를 URL로 선택해 `social-presence-paper-source-20261002-v1`에 분리했다. source ID `e69a99645684532507ac`, source version `e69a99645684532507ac:4b925d97ae762f7cb459b5f0758913b084e4a005990abac98bb8893c6f0a3585`, parse ID `3356e987896000482fb8c4beddd9860699b4e9ea7b8b3a953899f507322bcb07`, 논문 156 blocks다. immutable 원문 body SHA를 확인했으며 URL 재요청은 없었다.
+
+Codex가 모델 출력을 보기 전에 source-first 개발 평가 사양을 만들었다. 8개 기준 사실은 모집·표본 특성, 두 Pepper 로봇의 within-subject 순서, 설문 척도, vision과 memory 조건의 개별 통계, vision input 구성, 요양 환경 대상군 한계, 장기 기억의 후속 검증이다. 원문 전체는 fixture에 유지하고, 모델 입력만 Abstract·Experimental Setup·Results·Discussion·Limitations·Conclusion의 74/156 blocks로 제한했다. 사양 `.local/research/local-ai/evaluation/specifications/social-presence-pepper-study-20261001-dev-v1.json`의 importer 결과 status는 `source_reviewed_candidate`, split `development`, `model_evaluated:false`였다. Human review가 아니며 heldout도 아니다.
+
+### 단 한 번의 로컬 추출과 직접 판정
+
+`qwen38-27b-social-presence-keyfindings-v1`은 `research_key_findings`, Qwen 3.8 27B, `think:false`, `num_ctx=16384`, `num_predict=4096`, 두 batches로 완료됐다. batch wall은 299,754ms와 201,348ms, 합계 501,102ms였고 stage elapsed는 501,238ms다. 첫 결과 직후 같은 모델 요청을 재시도하지 않았다.
+
+후보 12개 중 구조 통과는 8개였다. 동기화된 frozen source/parse에서 평가한 실패는 `unit_not_in_evidence` 4건 및 `condition_not_in_evidence` 2건이다. source-first 8 fact coverage는 full 2·partial 4·missing 2, `raw_model_pass:false`, 공개 승인·후보 발행 false다. 참가자 수·연령, 두 조건의 설문 구성이 빠졌다. vision 결과에서 전체 평균과 개별 질문 평균·보정 p-value가 섞였고, memory/HRIES 수치에 필요한 조건도 모두 남지 않았다. 인용 문자열이 block 안에 있어도 숫자·조건 의미 검증은 별도로 필요하다.
+
+Private adjudication receipt `.local/research/local-ai/evaluation/runs/social-presence-paper-adjudication-20261002-v1/source-review.json`의 SHA-256은 `4b1a2eafbb1735ed935cc0f827ea0626441979c4f090361ad08b37550df0f6d5`다. `status --format json` audit은 21 revisions·19 unique actual-source snapshots, development 19/40, heldout 0/20, duplicate source snapshot revisions 2, split conflict 0, invalid cases 0을 보고한다. P0-03은 partial이고 전체 WBS 1/22다.
+
+이 시간은 추론 병목을 직접 보여주지만 수집 시간을 설명하지 않는다. 바로 전 31-route live source scan은 모델 호출이 0회였는데 10분 43.5초 걸렸다. 기존 OpenAI Responses adapter는 역할별로 연결 가능하지만 현재 `OPENAI_API_KEY`가 없으며 API 비교는 수행하지 않았다. API는 추출/작성에만 도움이 될 수 있고 원문 외부 전송·사용량 비용이 발생한다. local/API 동일 입력 지연·품질 대조는 키 사용과 과금·전송 선택 이후에만 가능하다. 이번 slice는 whole test suite를 실행하지 않았다.
+
+## 222. Yaskawa 연례 보고서 수집과 전략 PDF profile 추출 timeout
+
+### 목록 규칙과 실제 기간 수집
+
+기존 `route-yaskawa-ir-en` 목록 profile `yaskawa-global-ir-results-v1`은 Results PDF만 선택했다. 저장된 2026-10-02 공식 IR HTML에서 `Sep 30, 2026` 날짜의 `YASKAWA Report 2026`이 `https://www.yaskawa-global.com/ir/materials/annual`로 연결됨을 확인했다. 목록의 동일 rule selector에 이 제목·절대 URL 조합을 추가하고 `item_pattern`을 확장했다. 기존 금융 결과/설명회 PDF URL 조건은 보존했다. `article_profiles`에는 연례 보고서 최신 상세 영역과 Vision & Strategy·Business Performance and Strategy 두 PDF의 title-page profile을 추가했다. 최신 보고서 소개 페이지는 과거 발행본 링크를 함께 내므로 첫 현재연도 `img_txt_l_block`만 내용으로 추출한다. 연례 보고서 URL을 원문 사건 URL로 유지하고, 정확한 날짜는 공식 IR 목록에서 가져온다.
+
+실제 스캔:
+
+```bash
+node scripts/research.mjs scan-list --root .local/research/local-ai \
+  --run yaskawa-annual-report-window-20261002-v2 \
+  --channel route-yaskawa-ir-en --since 2026-09-29 --until 2026-10-02
+```
+
+첫 실행 `yaskawa-annual-report-window-20261002-v1`은 불완전했다. 저장된 HTML을 대조해 IR 목록의 해당 anchor가 상대 주소가 아니라 `https://www.yaskawa-global.com/ir/materials/annual` 절대 주소인 것을 확인했다. selector를 실제 href에 맞춰 `v2`로 새 실행했다. v2는 profile selected/matched 27/27, 선택 창 item 1, 이전 경계 26, `window_scanned`를 반환했다. 유일한 window item은 `YASKAWA Report 2026`·2026-09-30이며, detail source `d77db1edd97c0a59c51a:7eedeaecba60d38a3343db31a14af59a0715c1fc73c34e5b726f84e654871744`, parse `ca7931f96f5850c8b1f6099524de449dfefe1447abf3d7429c6ec1a8f2461c16`, 상태 `source_parsed_unreviewed`다. PDF A3/A4 중복·옛 보고서 전체를 자동 수집하지 않았다. 상세 HTML은 현재 issue의 03 전략 섹션 링크를 명시한다.
+
+### 불변 PDF 원문과 parse
+
+```bash
+node scripts/research.mjs collect --root .local/research/local-ai \
+  --run yaskawa-report-section03-20261002-v1 \
+  --url https://www.yaskawa-global.com/wp-content/uploads/2026/09/YR2026E_A4_03.pdf
+node scripts/research.mjs reparse --root .local/research/local-ai \
+  --run yaskawa-report-section03-profiled-v1 \
+  --source-run yaskawa-report-section03-20261002-v1
+```
+
+두 PDF는 일반 parse에서 각각 title null·`partial`이었으나 source bytes와 blocks는 보존됐다. `yaskawa-report-2026-vision-strategy-pdf-v1` (`^Vision & Strategy$`)와 `yaskawa-report-2026-business-performance-pdf-v1` (`^Business Performance and Strategy$`)를 추가해 immutable bytes를 재파싱했다. 결과는 각각 359·299 blocks이고 둘 다 `extracted`다. PDF metadata `creationDate`는 발행일로 승격하지 않았다. 보고서 event date는 앞선 IR 목록 근거에만 있다. 초기 HTML+PDF bundle/selection은 `yaskawa-report-evidence-bundle-v1`/`yaskawa-report-evidence-selection-v1`; IR 목록·보고서 landing page·전략 섹션 두 개를 함께 포함한 bundle/selection은 `yaskawa-2026-strategy-source-bundle-v1`/`yaskawa-2026-strategy-source-selection-v1`이다.
+
+### local inference 실패와 재시작 경계
+
+`yaskawa-report-extraction-20261002-v1`은 2 source/2 parse를 선택하고 candidate key `source-d77db1edd97c0a59c51a`와 함께 Qwen 3.8 27B·`think:false`로 실행했다. 첫 batch는 HTML 11 blocks/3,568 characters, batch 001 `848a1b1b2b112b66`; 정책의 `call_timeout_ms=300000`에서 `The operation was aborted due to timeout`으로 실패했다. 전체 계획상 PDF는 3개 후속 batch(130/144/85 blocks)였으며 실행되지 않았다. 동일 입력으로 resume/retry하지 않았다. 결과적으로 claim output 없음, `candidate_published:false`다. 이후 원문을 포함하지 않은 단순 `ollama run qwen3.8:27b 'Return only JSON: {"ok":true}'`는 성공해 모델 endpoint가 기본 생성 요청에 응답하는 것을 확인했다. 이 단순 prompt는 source extraction의 schema/input path나 latency를 검증한 것이 아니므로 앞선 timeout 원인은 여전히 미확정이다. 300초 timeout은 1시간 이상 반복 정체 기록 조건에 해당하지 않는다. 별도 1시간 blocker 기록은 만들지 않았다.
+
+### 테스트 빈도와 integrated plan
+
+초기 변경에 대해 `node --test tests/source-registry.test.mjs tests/research-list-scan.test.mjs` 16/16, PDF profile 추가 후 `node --test tests/source-registry.test.mjs` 9/9를 실행했다. 두 파일 중 첫 run의 list-scan 회귀 하나는 existing `same_event_aliases: []` 반환 contract가 test expectation에 빠진 상태라 기대값을 보강한 뒤 16/16으로 통과했다. 전체 suite는 요청에 따라 반복하지 않았다.
+
+```bash
+node scripts/research-daily.mjs --root .local/research/local-ai \
+  --run daily-20261002-yaskawa-ir-profile-plan-v1 --plan-only
+```
+
+plan-only는 31 enabled routes·62 windows를 계획하고 Yaskawa baseline `[2026-09-25, 2026-10-02)`와 current `[2026-10-02, 2026-10-03)`을 포함했다. 이는 다음 실행 계획이지 62개 창의 새 수집을 의미하지 않는다. 비공개 status HTML은 registry 116, enabled daily 31, acquisition profile 32, article profile 77, backlog 188 및 WBS 1/22를 표시하도록 최신 설정에서 다시 만들었다. 현재 dashboard SHA-256은 [현재 빌드 105절](LOCAL_AI_NEWS_CURRENT_BUILD.md#105-yaskawa-연례-전략-보고서-수집-경로와-추론-timeout)에 있다. source scan·PDF parse·LLM extraction은 private; 후보 backlog merge, 승인, Drive, RSS/GitHub, 배포는 수행하지 않았다.
+
+## 223. 공통 상세 첨부 수집과 Yaskawa 전략 PDF slice
+
+### 공통 수집기 계약
+
+`collectWindowDetails`에 선언형 `supporting_documents` 처리를 추가했다. 각 article profile은 작은 `id`와 제한된 전체 URL `url_pattern`으로 필수 첨부를 정한다. 수집기는 부모 parse가 실제로 링크한 PDF 가운데 선언된 URL만 선택하고, 같은 route의 host/robots/redirect/byte 정책으로 보관한다. 첨부 URL은 등록된 article profile 하나로 다시 parse한다. 규칙당 0건·복수 일치, 중복 URL, host 거부, profile 모호, fetch 실패 또는 본문 parse 불완전이면 해당 상세와 기간 run을 완료 처리하지 않는다. 등록되지 않은 다른 PDF는 fetch하지 않는다.
+
+완료된 상세는 첨부 URL·source version·parse ID·article profile ID를 private detail receipt에 보존한다. 후보에는 보조 원문 URL을 붙이되 public `source_urls`는 변경하지 않는다. daily handoff는 관측 attempt별로 해당 URL 목록을 전달하고, exact candidate selection은 목록이 부모의 exact parse `attachments`에 포함되는지 재확인한 뒤 부모 상세와 PDF를 한 번에 저장한다. 즉 첨부 연결은 같은 사건 또는 공개 승인 판단이 아니다.
+
+### Yaskawa 실물 실행과 선택
+
+`data/research-acquisition.json`의 `yaskawa-ir-annual-report-landing-v1`에는 `YR2026E_A4_03.pdf`와 `YR2026E_A4_04.pdf` 두 지원 문서 규칙이 선언됐다. 기존 results/briefing 경로와 route ID는 그대로 둔다. 실물 실행:
+
+```bash
+npm run research -- scan-list --run yaskawa-report-attachments-20261002-v1 \
+  --channel route-yaskawa-ir-en --since 2026-09-29 --until 2026-10-02
+npm run research -- select-source --run yaskawa-report-attachments-selected-20261002-v1 \
+  --source-run yaskawa-report-attachments-20261002-v1 \
+  --url https://www.yaskawa-global.com/ir/materials/annual \
+  --url https://www.yaskawa-global.com/wp-content/uploads/2026/09/YR2026E_A4_03.pdf \
+  --url https://www.yaskawa-global.com/wp-content/uploads/2026/09/YR2026E_A4_04.pdf
+```
+
+실제 `[2026-09-29, 2026-10-02)` scan은 27개 날짜 항목·26개 이전 경계로 `window_scanned`, 새 candidate 1건이었다. 저장 문서는 공식 목록, `YASKAWA Report 2026` landing, PDF 두 개 등 4개이고 parse 네 건 모두 `extracted`다. 03 section은 `Vision & Strategy` 359 blocks, 04 section은 `Business Performance and Strategy` 299 blocks다. 첨부 두 개는 fetch cache에서 `not_modified`로 확인됐지만 원문·parse를 이번 scan run에 다시 연결했다. 두 하위 문서는 선택되지 않은 다른 report PDF와 별개로 제한됐다.
+
+exact source selection은 landing과 두 section PDF를 각각 저장해 source 3/parse 3을 확인했다. 문서 목록 SHA-256 `d386d86c0fa40327303680c5f8432d484128c393d8b8111fa10fbb98410086aa`, parse 목록 SHA-256 `1e7e90b1c463d0783fb170df20c4844b885769b486dbd6c85d118d38e3a9da87`; `verifyStoredListScan` 및 선택 run의 `loadStoredSourceRun`이 통과했다. 후보 `source-d77db1edd97c0a59c51a`는 `unreviewed`이며 backlog·승인·공개에는 반영하지 않았다.
+
+### 표적 테스트와 남은 연결
+
+`node --test tests/research-list-scan.test.mjs tests/research-editorial-handoff.test.mjs`는 20/20 통과했다. 이후 저장 receipt에서도 supporting source URL·parent link·문서·완전 parse를 검증하도록 `research-daily-scan.test.mjs`를 확장하고, `source-registry.test.mjs`까지 포함한 표적 4-suite 실행은 48/48 통과했다. 정상 선택에서 선언된 PDF만 fetch하고 후보 선택이 부모+첨부 3개를 함께 저장하는 것, 필수 첨부 누락 및 receipt 자료 누락 시 window/검증이 실패하는 것을 확인했다. 전체 suite는 실행하지 않았다. 실제 daily receipt→handoff→`select-candidate` 및 3-source local extraction 결과는 다음 절에서 기록한다. immutable 이미 존재하는 source version의 재다운로드 억제는 별도 효율 slice로 남는다.
+
+## 224. Yaskawa 일일 수집부터 로컬 추출까지 실물 슬라이스
+
+### 격리된 일일 run
+
+검증은 운영 백로그·공개 발행과 분리했다. `.local/research/local-ai/yaskawa-daily-slice/routes.json`에는 Yaskawa route 하나만 있고, root 전용 후보 백로그는 빈 장부로 시작했다. 격리 root에서 Python parser를 쓰려면 기존 local runtime을 명시한다.
+
+```bash
+RESEARCH_PYTHON=/Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden/.local/research/local-ai/runtime/venv/bin/python \
+  node scripts/research.mjs baseline --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-attachments-baseline-daily-slice-20261002-v2 \
+  --channel route-yaskawa-ir-en --since 2026-09-24 --until 2026-10-01
+
+RESEARCH_PYTHON=/Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden/.local/research/local-ai/runtime/venv/bin/python \
+  npm run research:daily -- --root .local/research/local-ai/yaskawa-daily-slice \
+  --config .local/research/local-ai/yaskawa-daily-slice/routes.json \
+  --run daily-20261002-yaskawa-vertical-v1 --execute \
+  --backlog .local/research/local-ai/yaskawa-daily-slice/candidate-backlog.json
+
+node scripts/research.mjs select-candidate \
+  --root .local/research/local-ai/yaskawa-daily-slice --vault vault \
+  --backlog .local/research/local-ai/yaskawa-daily-slice/candidate-backlog.json \
+  --run yaskawa-daily-candidate-selection-20261002-v1 \
+  --daily-run daily-20261002-yaskawa-vertical-v1 \
+  --candidate-key source-d77db1edd97c0a59c51a
+```
+
+첫 baseline v1은 격리 root의 `runtime/venv`가 없어 중단됐고, 기본 runtime을 명시한 새 `v2`로 성공했다. daily run은 두 receipt, route `window_scanned`, contiguous coverage 2026-10-02, 후보 1건을 기록했다. handoff pending은 1이고 incomplete windows는 0이다. 후보의 supporting URL 두 개가 source attempt에 보존됐다. `select-candidate`는 handoff를 다시 읽어 annual landing과 Vision & Strategy·Business Performance PDF를 선택해 source 3/parse 3을 생성했다. 후보는 `unreviewed`, `candidate_published:false`; 운영 backlog·Drive·RSS·GitHub·공개 site는 변경하지 않았다.
+
+### 체크포인트 기반 로컬 추출
+
+```bash
+npm run research -- extract --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --source-run yaskawa-daily-candidate-selection-20261002-v1 \
+  --candidate-key source-d77db1edd97c0a59c51a \
+  --model-policy data/research-model-policy.json
+
+# 기본 15분 예산에서 checkpoint를 남기고 멈춘 경우 완료 batch를 보존하고 추가 예산으로 재개한다.
+npm run research -- extract --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --source-run yaskawa-daily-candidate-selection-20261002-v1 \
+  --candidate-key source-d77db1edd97c0a59c51a \
+  --model-policy data/research-model-policy.json --resume-local-budget-ms 300000
+```
+
+Ollama `qwen3.8:27b`는 6 checkpoint batch에서 claim 30건을 만들었고 총 wall time은 약 17분이었다. 기본 15분 extraction budget은 batch 5개 완료·6번째 진행 중 만료됐다. 저장 batch를 보존한 resume 경로로 마지막 batch를 이어 끝냈다. batch별 wall time은 약 17.5초, 186.9초, 241.2초, 147.9초, 186.5초, 244.8초다. 이 자료 묶음에서는 local inference가 가장 오래 걸리는 구간이었다.
+
+claim evidence의 source id·source version·parse·block 참조는 30/30 모두 선택된 parse와 일치했다. 23/30 구조 통과, 7/30 구조 실패였고, 실패 claim 가운데 quote가 block에 없는 항목은 1건이다. exact duplicate claim은 없다. 모델 추출은 원문 의미에 대한 사람의 사실 검토를 대신하지 않는다. claim을 승인·초안·발행으로 넘기지 않았으며 잘못된 인용·조건·단위가 있는 claim은 공개하지 않는다. API key가 없어 외부 API 실험은 하지 않았으므로 API 실행 시간이나 품질 비교도 없다. 이 처리시간은 단일 sample이다.
+
+이번 slice에서는 전체 테스트를 실행하지 않았다. 앞선 코드 변경 때의 표적 4-suite 48/48을 유지하고, 이번에는 daily receipt·handoff·selection·claim evidence 저장 결과를 직접 검증했다. private dashboard `.local/research/local-ai/yaskawa-daily-slice/delivery-status.html` (SHA-256 `6b1ecba37f2bf0dd0bfb90fff45757b4f186dbfd2c88ecf6ab171388151caa8d`)은 daily run과 overall WBS를 보여주지만 selection·extraction run은 집계하지 않는다. 다음 단계는 사람 검토가 끝나기 전 claim이 기사 draft나 승인으로 넘어가지 않도록 review 단계와 이 격리 run을 연결하는 것이다. 같은 병목에서 1시간 이상 반복 정체한 일은 없어 별도 blocker log를 추가하지 않았다.
+
+## 225. Yaskawa 전략 뉴스 검토·기사 및 후보 승인 연결
+
+### 원문 사실 검토
+
+실제 `claims.json` 30개를 각 `source_version_id`·`parse_id`·`block_id` 및 인용문으로 저장 parse와 맞췄다. 30개 block identity/source mapping은 유효했지만 구조 검사는 23 pass/7 fail이었고 failed set 중 quote mismatch 1건이 있었다. `fact-review-input-v1.json`에서 전략 기사에 사용할 사실은 다음과 같이 처리했다.
+
+- 검증 claim 12개: Vision 2035/Dash 35 시점, 투자·FY2029·FY2035 목표, physical AI, MOTOMAN NEXT, 액추에이터/휴머노이드, 공장·운영 계획.
+- direct-source addition 5개: MOTOMAN NEXT의 회사 귀속 문장, report landing section 관계, official-listing 발표일, 투자 allocation 목적, production-site consolidation.
+- deferred 18개: ESG 거버넌스, 인력/실적·배당 데이터, 비사용 market-share 행 등 이번 전략 기사에 넣지 않은 추출 사실.
+
+최종 `reviewed-claims.json`은 17 verified·18 deferred·0 rejected. 초기 30 claim의 구조 통과는 의미·숫자·시점 검토를 대신하지 않는다. 수정된 `reviewed_at`은 source observed time 이후이며 사용자가 볼 기사에 취재 실패나 보류 이유를 넣지 않는다.
+
+### 원고 교정 및 비공개 승인
+
+```bash
+node scripts/research.mjs review --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --review .local/research/local-ai/yaskawa-daily-slice/runs/yaskawa-daily-extract-20261002-v2/fact-review-input-v1.json
+
+npm run research -- draft --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --model-policy data/research-model-policy.json
+
+node scripts/research.mjs correct --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --review .local/research/local-ai/yaskawa-daily-slice/runs/yaskawa-daily-extract-20261002-v2/draft-correction-input-v1.json
+
+node scripts/research.mjs approve --root .local/research/local-ai/yaskawa-daily-slice \
+  --run yaskawa-daily-extract-20261002-v2 \
+  --review .local/research/local-ai/yaskawa-daily-slice/runs/yaskawa-daily-extract-20261002-v2/editorial-approval-input-v1.json
+
+node scripts/research.mjs candidate-approval --root .local/research/local-ai/yaskawa-daily-slice \
+  --backlog .local/research/local-ai/yaskawa-daily-slice/candidate-backlog.json \
+  --run yaskawa-daily-candidate-approval-link-20261002-v1 \
+  --source-run yaskawa-daily-extract-20261002-v2 \
+  --candidate-key source-d77db1edd97c0a59c51a
+```
+
+`draft` raw model call은 213,540 ms다. 첫 초안의 투자·목표 반복과 고성능 같은 추상 표현을 정정하고, 정확한 2026-09-30 IR 날짜, 투자 배분 목적, 목표 연도, 제품 주장의 귀속과 공장 계획을 넣었다. 최종 preview `runs/yaskawa-daily-extract-20261002-v2/preview.md`는 status `editorial_review`, `problems:[]`였다. 16 referenced claim IDs 모두 verified였다. 기사 제목은 “야스카와, 4년간 2,500억 엔 투자…2035년 수익성 목표 제시”다.
+
+private `approve`는 event ID `e9e9568c563eb251` 및 published date `2026-09-30`으로 성공했다. 후속 candidate-approval receipt는 `candidate-approval.json`, candidate review state `verified`이며 candidate backlog SHA-256은 `3e5d636a2a2ee670d0e5573c8e21c1a90423bfbf8eaecb47edc80696f8ab758e`다. article source URLs는 후보 원 URL인 annual landing과 exact supporting PDF를 포함하고 source version/date match가 통과했다. 승인 기사·candidate receipt 둘 다 `candidate_published:false`다. 운영 backlog와 외부 저장/공개에는 반영하지 않았다.
+
+격리 현황판은 `npm run research -- status --root .local/research/local-ai/yaskawa-daily-slice --format html`로 갱신했다. SHA-256 `133e9711be808033dd0534e14cd49b605194cb2043b6cbbd6432ad44bc59b520`; daily run/status와 전체 WBS는 보이지만 selection/extraction/approval 단계별 상세는 이 runbook과 개별 receipt에 둔다. 전체 suite는 실행하지 않았다. 이전 코드 변경의 표적 4-suite 48/48을 유지했고 이번 data-flow 검증은 읽기 전용 무결성 확인과 private approval/link 경로로 했다. 1시간 이상 정체는 없었다.
+
+## 226. 후보 본문 지문 범위와 중복 감사 표시
+
+후보 backlog는 188건이고 읽기 전용 intake ontology가 계산한 기존 관계는 `review_required` 0건이다. 이를 전체 중복 해소로 볼 수는 없다. 고정 backlog SHA-256 `eaa14744e954e3142acd474cfa913b925db1f9dd9b4bb2e2cef08d8a2ca11aa0`를 재계산한 결과 본문 content SHA-256이 유효한 후보는 135건, 누락은 53건, 형식 오류는 0건이다.
+
+`projectIntakeOntology`는 후보별 지문 상태만 노드에 보존하고 해시의 원문 값은 status summary에 포함하지 않는다. 중복 content relation은 `/^[a-f0-9]{64}$/`와 맞는 지문만 그룹화한다. 지문 누락·잘못된 문자열이 같다는 이유로 중복 연결을 만들지 않는다. `summarizeIntakeOntology`는 `candidate_count`, `fingerprinted_candidate_count`, `missing_content_fingerprint_count`, `invalid_content_fingerprint_count`를 반환한다. private HTML은 `135/188`, 누락 53, invalid 0, 검토 관계 0을 함께 보인다.
+
+저장 장부는 변경되지 않았다. `node --test tests/research-intake-ontology.test.mjs tests/research-delivery-status.test.mjs` 22/22, 대상 4개 JS 파일 Prettier, `git diff --check`를 확인했다. 전체 suite는 실행하지 않았다. 진행판은 `node scripts/research.mjs status --root .local/research/local-ai --format html`로 생성했고 SHA-256은 `24db6be0c31210189150e9e5a7ad7844860a33ea3f274f75f394ca815bcf6104`다. status JSON readback과 HTML에 135/188 및 missing 53이 표시되는 것을 대조했다. 전체 WBS는 1/22 완료, 19 partial, 2 not started다. 이 감사는 지문이 없는 53건의 기사 중복 상태를 해결하지 않았고 기사 병합·승인·발행도 하지 않았다.
+
+## 227. 저장 원문 본문 지문의 비공개 복구와 현황판
+
+### 실행
+
+이 절차는 기존에 저장된 원문과 parse만 읽는다. 후보 backlog SHA를 고정하고 전용 run ID로 receipt를 만든다.
+
+```bash
+node scripts/research.mjs reconcile-content-fingerprint-evidence \
+  --root .local/research/local-ai \
+  --run candidate-fingerprint-recovery-20261002-v1 \
+  --backlog .local/research/candidate-backlog.json
+
+node scripts/research.mjs status --root .local/research/local-ai --format html
+```
+
+같은 run ID와 같은 backlog bytes로 재실행하면 무결성을 다시 확인한 뒤 기존 receipt를 재사용한다. backlog SHA가 달라지면 새 run ID를 쓴다. 네트워크 fetch, 재파싱, backlog merge는 이 명령에서 수행하지 않는다.
+
+### 판정과 저장 결과
+
+`runs/<source-run>/documents.json`·`parses.json`을 읽어 후보의 정규화 source URL과 정확히 일치하는 captured/not_modified source version을 찾는다. `loadStoredSourceRun`이 저장된 원문 bytes SHA와 parse artifact를 검증한다. parse 상태가 extracted이고 발표일이 후보 발표일과 일치할 때만 article content fingerprint를 계산한다. receipt에는 source run identity hash, exact source URL, source version, raw body SHA, parse ID, publication date 및 계산된 content SHA를 기록한다.
+
+복구 대상은 지문이 기존에 없던 후보에 한정한다. 저장 parse가 하나라도 고유한 content fingerprint로 합치면 `unique_fingerprint`; 같은 후보의 유효 parse가 서로 다른 지문이면 `ambiguous_fingerprint`; 정확한 source/date parse가 없으면 `no_matching_source_parse`다. 애매하거나 없는 지문은 backlog와 온톨로지에 적용하지 않는다. receipt를 읽을 때마다 source bytes·parse·후보 identity·backlog SHA를 다시 검증하고, 어느 하나라도 달라지면 투영하지 않는다.
+
+2026-10-02 실행 receipt `runs/candidate-fingerprint-recovery-20261002-v1/candidate-content-fingerprint-evidence.json`의 SHA-256은 `e3e563d6f53d9908090b4daf0a624c013b84f51b1a9e7537df4bb8dabe9f4878`이다. 53개 원래 누락 후보 중 unique 12, ambiguous 1, no matching parse 40을 기록했다. backlog의 SHA-256은 실행 전후 `eaa14744e954e3142acd474cfa913b925db1f9dd9b4bb2e2cef08d8a2ca11aa0`로 동일하다. 검증된 receipt 1개, 복구 지문 12개, 무효 receipt 0개였다.
+
+온톨로지 요약은 원장 직접 지문 135, receipt 지문 12, 유효 지문 합계 147/188, 유일 지문이 없는 후보 41, 형식 오류 0을 표시한다. 중복 검토 관계는 0이지만 이는 남은 41개 후보의 본문 중복 여부를 판정했다는 뜻이 아니다. 관계 계산용 projection은 읽기 전용으로만 만들어진다.
+
+표적 회귀 `node --test tests/research-candidate-content-fingerprint.test.mjs tests/research-intake-ontology.test.mjs tests/research-delivery-status.test.mjs`는 25/25 통과했다. 케이스는 exact stored-source/date 복구, 서로 다른 두 저장 판본의 모호성, CLI receipt의 멱등 재사용, candidate backlog 불변을 확인한다. Prettier와 `git diff --check`도 통과했다. 전체 테스트 suite는 실행하지 않았다. 현황판 `.local/research/local-ai/delivery-status.html` SHA-256은 `50a59e3886d9680b42de7717b96f3aa80555bde458ce070e0fb6ce30455b3fc7`이다.
+
+이 receipt는 기사 사실 승인, candidate approval, 공개 발행 또는 누락 41건의 중복 판정을 뜻하지 않는다. WBS는 1/22 완료로 유지한다. 다음 재개 작업은 정확한 날짜·source match가 없는 후보의 저장 기록 범위를 확인하고, 새 원문 수집이 필요한 항목은 공통 source collection 경로에서 분리해 보충하는 것이다.
+
+## 228. 공통 fetch stage 재파싱과 누적 지문 영수증
+
+### UR 공식 기사 파싱 복구
+
+실행 당시 `teradyne-cco` 후보는 UR 공식 CCO 발표 URL을 보유했지만 같은 exact URL의 stored source가 없었다. 먼저 공통 수집 CLI를 사용했다.
+
+```bash
+node scripts/research.mjs collect --root .local/research/local-ai \
+  --run teradyne-ur-cco-source-20261002-v1 \
+  --url https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/
+```
+
+host/robots/source fetch는 통과해 HTTP 200 원문 172,765 bytes가 저장됐지만 당시 UR profile의 `//sirius-section[@class='text sir-default']`은 현재 `article.feature` 레이아웃을 찾지 못했다. fetch stage 영수증은 완료됐고 parse stage만 실패했다. 원문 body SHA-256은 `683016ef17b68eef16c376a3082a63a19c69d9d6d02af2f82a8339a2909ca83c`이며, 이후 복구는 이 저장 bytes를 사용했다.
+
+`universal-robots-news-center-article` profile의 `content_xpath`를 기존 section selector와 현재 article layout `//article[contains(concat(' ',normalize-space(@class),' '),' feature ')]`의 union으로 넓혔다. 기존 markup과 feature markup은 서로 다른 parser fixture로 검증한다. route 전용 crawler는 추가하지 않았다.
+
+run-level `documents.json`이 저장되기 전에 parse stage가 실패할 수 있으므로 `loadCapturedStagesForReparse`는 run state의 completed `fetch-*` stage와 result hash, source ID, 저장 body bytes/hash를 확인한 뒤 `reparse` 입력을 재구성한다. 원문 문서가 parse 배열에 아직 참조되지 않았더라도 모든 `captured`/`not_modified` 문서의 원문 bytes를 `assertStoredEvidence`가 먼저 검증한다. 복구 명령은 다음과 같다.
+
+```bash
+node scripts/research.mjs reparse --root .local/research/local-ai \
+  --run teradyne-ur-cco-reparse-20261002-v1 \
+  --source-run teradyne-ur-cco-source-20261002-v1
+```
+
+실제 복구 결과는 source 1건 captured, parse 1건 `extracted`, 발표일 `2026-09-15`, 본문 block 4개, parse ID `b7415e9e8b6f233619f7b9fb27c3ad2170f2ff83fff1d637668eaf3b56b866b2`다. 같은 URL을 다시 요청하지 않았다. 실행 원문 bytes·재파싱 artifact는 모두 `.local/research/local-ai/` 아래 private 상태로 남아 있다. 후보 승인과 공개는 수행하지 않았다.
+
+### 본문 지문 receipt 누적
+
+같은 backlog SHA에서 새로운 저장 원문이 추가될 때 전체 pending 후보를 재대조해 새 private receipt를 만든다. projection은 해당 backlog SHA의 무결성 검사를 통과한 모든 receipt에서 source observation을 합친다. 동일 source run/version/parse의 fingerprint가 영수증 간 달라지면 해당 receipt를 무효화한다. 새 receipt가 이전에 unique였던 후보의 서로 다른 content fingerprint를 관측하면 합산 결과를 ambiguous로 두고 과거 receipt만으로 승격하지 않는다.
+
+`candidate-fingerprint-recovery-20261002-v2` receipt SHA-256은 `f1844e03b343966a23ea80e83e7753a00fe6bc8221cf0618e6a73ca406354bb0`이다. 53개 대상은 unique 13, ambiguous 1, no matching parse 39였다. v1·v2 receipt 2개가 모두 유효하고 합산 projection은 13 후보다. backlog SHA는 `eaa14744e954e3142acd474cfa913b925db1f9dd9b4bb2e2cef08d8a2ca11aa0`로 유지됐다. 결과는 direct fingerprints 135, receipt-recovered 13, total 148/188, missing/ambiguous 40, invalid 0, review-required duplicate relations 0이다. 미확인 40건의 본문 중복이 없다는 판정은 아니다.
+
+표적 검증 `node --test tests/research-extraction.test.mjs tests/research-ur-scan.test.mjs tests/research-runtime.test.mjs tests/research-candidate-content-fingerprint.test.mjs`는 53/53 통과했다. `git diff --check`와 변경 파일 Prettier도 확인했다. 전체 suite는 실행하지 않았다. private delivery status SHA-256은 `6464a0f135484c617b6f6cbf136fa6b77b2823eb0b5217fcb0a7139dfe6dad3e`다. 1시간 이상 같은 단계에 막혀 반복 재시도한 일은 없었다. overall WBS는 1/22다.
+
+## 229. LS ELECTRIC 공식 보도자료의 정확한 날짜·본문 프로필
+
+### 공통 수집 결과와 파서 누락
+
+후보 `20260923-ls`의 공식 LS그룹 주소와 `20260923-intrinsic`의 Intrinsic 블로그 주소를 기존 `collect` 명령 한 번으로 수집했다.
+
+```bash
+node scripts/research.mjs collect --root .local/research/local-ai \
+  --run candidate-robots-sources-20261002-v1 \
+  --url https://lsholdings.co.kr/ko/media/news/306c38774167465a5137683163335633354a6952646459724d77734f74753645 \
+  --url https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge
+
+node scripts/research.mjs reparse --root .local/research/local-ai \
+  --run candidate-robots-sources-reparse-20261002-v1 \
+  --source-run candidate-robots-sources-20261002-v1
+```
+
+두 원문 모두 fetch는 `captured`, generic parse는 `extracted`였지만, LS 페이지의 og:title은 기사 제목 대신 `[홍보센터 > 보도자료]`이고 본문 날짜는 헤더 `div.newsView > div.titArea > span.date`에 있었다. 본문은 `div.newsView > div.viewCon > div.wrap_editor` 아래 문단에만 한정해야 관련 기사 목록을 섞지 않는다. 이를 확인하지 않고 generic parse를 지문 근거로 쓰면 안 된다.
+
+`ls-electric-press-detail-v1`을 기존 공통 profile registry에 등록해 `h3.tit`, 표시 날짜, 편집기 문단을 읽는다. 별도 수집기를 만들지 않았고 exact candidate URL에 제한된 정규식을 쓴다. 독립 fixture는 제목·날짜를 추출하고 공유 UI와 인접 기사 목록을 제외하는지 확인한다. 저장된 원문 body SHA-256 `864978ce30c154b3babbc34babe379ee91223b27093f11465821fdcbafd49743`를 다시 요청하지 않고 재파싱했으며 결과는 18개 block, 제목 `LS ELECTRIC, 4족 보행로봇으로 스마트팩토리 고도화 나선다`, 게시일 `2026-09-22`, parse ID `5e1f297ae345713b0cfd3a7987b67cbb916456688af78763d4a8439721892e64`다.
+
+Intrinsic page는 55 block을 얻었으나 stored HTML에 검증 가능한 게시일이 없어 해당 후보 fingerprint는 여전히 `no_matching_source_parse`다. 후보 날짜를 추정하거나 지문을 만들지 않았다.
+
+### 누적 중복 근거와 검증
+
+누적 receipt `candidate-fingerprint-recovery-20261002-v4` SHA-256은 `47fa2f2f787a60c769b511420eb4fb849a62e9c898802c1fbae91a6b2df9b214`다. unique 후보는 13→14, no matching은 39→38, ambiguous는 1로 유지됐다. backlog는 변경되지 않았고 SHA-256은 `eaa14744e954e3142acd474cfa913b925db1f9dd9b4bb2e2cef08d8a2ca11aa0`다. 직접 기록된 fingerprint 135개에 receipt 14개를 더해 149/188이며 나머지 39개는 미판정이다. private dashboard SHA-256은 `34d8365d872b39fa07321f62e655605299e725978b2241889ccb113c7d77fd95`다.
+
+`node --test tests/research-ls-electric-press.test.mjs` 1/1 및 `node --test tests/research-candidate-content-fingerprint.test.mjs` 3/3 통과, Prettier와 `git diff --check` 통과. 전체 suite는 실행하지 않았다. candidate approval·merge·Drive·RSS/GitHub·공개 배포는 수행하지 않았으며 P0-01은 partial이다.
+
+## 230. LS ELECTRIC 저장 원문의 비공개 편집 승인과 LLM/API 지연 구분
+
+### 저장 원문으로 수행한 수직 슬라이스
+
+LS ELECTRIC 상세 페이지는 이미 2026-09-23 발행 회차에 같은 exact URL로 포함돼 있다. 따라서 새 후보로 승인하거나 다시 발행하면 중복이 된다. `candidate-approval`은 `Candidate source already appears in an edition`으로 이를 거부했다. 이를 우회하지 않고 기존 사건 ID `94d03e7f8181fafd`를 재사용해 별도 private run에서 근거와 문안을 다시 검토했다.
+
+`ls-electric-robot-source-selection-20261002-v1`은 저장된 원문 1건과 parse를 선택했다. `ls-electric-robot-deployment-extraction-20261002-v2`의 `qwen3.8:27b` 로컬 추출은 source claim 6개를 만들었고, 여섯 개 모두 저장 원문의 해당 블록과 대조해 확인했다. 모델 provenance의 추출 `wall_ms`는 209,756이다. 기사 작성은 171,891ms였으며, 첫 초안의 과도한 영문 기관명과 잘못된 분류를 원문에 맞춰 직접 고쳤다. 최종 제목은 “LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획”이며 작성된 공개 문제는 0건이다.
+
+최종 문안은 event ID·날짜·주체·수량과 계획/운영 상태를 직접 확인한 뒤 `editorial-review.json`에서 비공개 승인했다. 승인본 `approved-article.json`은 `review_status:verified`, `candidate_published:false`다. 이미 발행된 기사·RSS·GitHub·Drive·사이트와 backlog는 수정하지 않았다. 이는 신규 게재 승인이 아니라 기존 사건의 원문 기반 소급 검토 샘플이다.
+
+### 지연 원인과 API 경계
+
+이 한 기사에서 측정한 추출·작성 호출은 합계 381,647ms(약 6분 22초)다. 별도 `daily-20261002-core-31routes-integrated-v1`은 31개 경로 62개 기간창의 수집·파싱을 10분 43.5초에 완료했다. 범위가 다른 두 실행 시간을 더해 하나의 비율로 해석하지 않는다. 다만 반복 가능한 증거에서 로컬 추론과 출처 네트워크/파싱 모두 실질 지연 구간임을 확인했다.
+
+`scripts/research/openai.mjs`의 Responses API adapter와 `model-policy.json`의 provider 분기는 이미 있어 역할별 provider 선택 및 같은 고정 원문 비교가 가능하다. 이번 실행 환경은 `OPENAI_API_KEY`가 설정되지 않아 직접 API 호출·속도 비교는 수행하지 않았다. 키가 안전한 실행 환경에 설정되면 저장 원문으로 추출 또는 작성만 비교할 수 있다. API는 유료 호출이며 기사 원문이 외부로 전송되므로 키 연결과 외부 전송/비용 선택 전에 호출하지 않는다. API를 선택해도 source discovery, fetch, parse 병목은 해결하지 않는다.
+
+현재 지속 검증은 표적 테스트로 제한한다. 이번 추가 private 자료 처리에서 전체 suite를 반복하지 않았고, 기존 focused tests 4/4와 변경 파일 Prettier·`git diff --check`의 직전 결과를 재사용했다. 전체 suite는 통합 시점에 실행한다. 1시간 이상 같은 실패에 머문 구간은 없으므로 장시간 차단 기록은 추가하지 않았다. private 현황판은 새 run을 반영해 재생성했고 SHA-256은 `4ebc852817a6c01e0542cc890e950d540397a3b3fb1b46485cd3fd12593f2321`이다. WBS는 1/22, 공개 배포는 미완료다.
+
+
+## 231. 두산로보틱스·머니투데이 광진 협동로봇 기사 원문 재검토와 비공개 승인
+
+### 원보도와 재게시본의 연결
+
+후보 `source-ed9437a45add1bf63a91`은 두산로보틱스 영문 뉴스에서 발견됐다. `doosan-kwangjin-source-pair-20261002-v1`에서 재게시 페이지와 본문이 직접 연결하는 MoneyToday 원문을 공통 `collect` 경로로 수집했다. 두산 페이지는 MoneyToday와 원문 URL을 명시한다. 두 문서는 각각 23·36개 block으로 파싱됐고, MoneyToday 원문 게시일은 `2026-06-26T06:30:00+09:00`이다. 후보 제목의 원래 게시일 `2026-06-26`은 보존했다.
+
+```bash
+node scripts/research.mjs collect --root .local/research/local-ai \
+  --run doosan-kwangjin-source-pair-20261002-v1 \
+  --url https://www.doosanrobotics.com/en/about/promotion/news/kwangjin-achieves-near-zero-defects-with-doosan-cobots \
+  --url https://www.mt.co.kr/industry/2026/06/26/2026062517001050048
+```
+
+MoneyToday 원문 block 6은 협동로봇과 비전검사 적용 뒤 리베팅 불량이 1~2장이라고 보도한다. 총 생산량·불량률 분모·측정 기간은 원문에 없어 기사에 쓰지 않았다. block 7은 14개 차종·사양에 맞춰 총 20개 부품을 검사하고 이상품을 별도 라인으로 분류한다고 설명한다. block 8은 약 13억원 투자와 4~6개월의 양산라인 적용, 현장 인력난에 따른 자동화 도입 배경을 담는다. block 10은 아산공장의 M시리즈 19대 현장과 2027년까지 17개 해외 사업장에 100대 이상을 도입할 계획을 보도한다. 100대는 완료 실적이 아니라 계획으로 표현했다.
+
+### 로컬 추출과 편집 교정
+
+첫 추출 run `doosan-kwangjin-article-extract-20261002-v1`은 두 문서 59 blocks를 기본 정책으로 전달하다 300초 호출 제한에서 timeout 됐다. 같은 입력을 즉시 반복하지 않았다. private policy `policies/doosan-kwangjin-fact-extract-small-batches-20261002-v1.json`에서 입력 budget을 12,000자로 줄이고 batch당 사실 수를 3으로 제한한 뒤 `doosan-kwangjin-article-extract-20261002-v2`를 실행했다. 세 batch가 완료됐고 모델 claim 9개를 얻었다. 원문 대조에서는 추출 claim 중복·주제 이탈을 버리고 직접 원문에서 사실을 보강했다. 최종 검토 결과 verified 6, rejected 6이다.
+
+Qwen `qwen3.8:27b` 작성 호출은 `148,337ms`였다. 모델 초안은 약 130억원으로 원문의 약 13억원을 10배 크게 표기했고 분야를 반도체·컴퓨팅으로 잘못 분류했다. 로봇 19대 전체를 신규 라인 적용 사실과 한데 묶기도 했다. 이를 원문과 claim에 대조해 제목·6W lead·현장 적용·투자와 계획을 직접 정정했다. 최종 제목은 “광진, 두산 협동로봇 도입 후 리베팅 불량 1~2장… 해외 100대 이상 확대 계획”이며 `로봇·제조`, `생산·공급망`, `설비 투자`, `양산`으로 분류했다. 분모 없는 불량률 환산이나 운영 안내문·추측 분석은 넣지 않았다. editorial problem은 0개다.
+
+비공개 미리보기: `.local/research/local-ai/runs/doosan-kwangjin-article-extract-20261002-v2/preview.md`. 원문: [MoneyToday 보도](https://www.mt.co.kr/industry/2026/06/26/2026062517001050048), [두산로보틱스 재게시](https://www.doosanrobotics.com/en/about/promotion/news/kwangjin-achieves-near-zero-defects-with-doosan-cobots).
+
+### 사건 동일성 receipt와 상태
+
+두산 페이지가 MoneyToday 원문을 직접 가리키고 본문이 같은 광진 자동화 사건을 다뤄 `doosan-kwangjin-source-identity-approved-20261002-v1`에서 `same_event` 관계를 exact source version·parse·content fingerprint와 원문 직접 인용으로 고정했다. `doosan-kwangjin-article-approved-20261002-v2`에서 편집 검토를 승인하고 `doosan-kwangjin-candidate-approval-20261002-v2`에서 후보를 `verified`로 연결했다. 후보 원 URL·게시일은 보존했다. `candidate_published:false`이며 Drive, RSS, GitHub, 기존 발행 회차와 공개 사이트를 변경하지 않았다.
+
+승인 검토 입력 파일이 불변 승인 기록 경로를 선점해 생긴 불완전 private checkpoint 두 건은 덮어쓰지 않고 보존했다. 입력 결정을 run 디렉터리 밖에 둔 새 run으로 승인 흐름을 마쳤다. 전체 테스트 suite는 실행하지 않았다. 이 데이터-only slice에서는 저장 원문/parse 무결성, 검증 claim의 직접 인용, 정정 초안 문제 0, same-event receipt, 후보 발행 false, 원장 상태를 확인했다. timeout은 작은 batch 정책으로 해결됐으며 1시간 이상 같은 실패를 반복한 정체는 없었다. WBS는 1/22이며 실제 공개·반복 운영 acceptance는 미완료다. private delivery dashboard SHA-256은 `4906d07ca996fbdeeca566d494cf7ea0cc3f54abd15edc20b06a47fc55542c54`다.
+
+
+## 232. backlog 변경에 따른 오래된 본문 지문 영수증 분리
+
+### 후보 승인 뒤 상태 대조
+
+광진 후보를 비공개 `verified`로 연결하면서 candidate backlog SHA가 갱신됐다. 그 결과 새 backlog를 대상으로 다시 만든 `candidate-fingerprint-recovery-20261002-v6` 이전 receipt 4개는 저장 원문이나 parse가 잘못된 것이 아니라 이전 backlog revision을 대상으로 한 기록이 됐다. v6 receipt SHA-256은 `72d5664dace2cd02541a28b740354172a4818ceca724e312c779dc85b5b87ed7`이며 당시 53개 후보를 unique 14, ambiguous 1, no matching parse 38로 분류했다.
+
+`projectVerifiedCandidateContentFingerprints`는 receipt의 schema·run ID·SHA 형식·비공개 flag·candidate 배열 envelope를 확인하고, backlog SHA가 현재와 다른 정상 envelope receipt를 `stale_receipt_count`로 집계한다. 이런 receipt는 새 후보 투영에 사용하지 않는다. 현재 backlog SHA가 맞는 receipt는 기존대로 모든 후보·원문·parse·관측을 검증하며, 잘못된 envelope 및 현재 revision의 무결성 실패는 `invalid_receipt_count`에 남긴다. `delivery-status`도 두 수치를 분리해 표시한다.
+
+현재 현황판 readback은 후보 188, 유효 receipt 1, 오래된 receipt 4, 무효 receipt 0, 원장 지문 135, 유효 receipt에서 복구한 지문 14, 합계 149, 미확인 39다. receipt 복구는 승인·중복 확정·공개 발행을 의미하지 않는다. 표적 회귀 `node --test tests/research-candidate-content-fingerprint.test.mjs tests/research-delivery-status.test.mjs`는 17/17 통과했고, 오래된 receipt가 invalid로 집계되거나 지문 투영에 쓰이지 않는지 확인했다. 전체 suite는 실행하지 않았다. private dashboard SHA-256은 `4f307e3e314a93ff5d5747a1846aa614553dd15b38cf90f54f1461a509d865e2`이다. 광진 기사 비공개 승인과 원문 대조는 [런북 231절](LOCAL_AI_NEWS_RUNBOOK.md#231-두산로보틱스머니투데이-광진-협동로봇-기사-원문-재검토와-비공개-승인), 전체 WBS는 1/22다.
+
+## 233. NVIDIA·Palantir 원문으로 미연결 후보 fingerprint 복구
+
+### 공통 수집과 저장 원문
+
+후보 `nvidia-palantir-supply-chain`의 exact URL은 이미 NVIDIA 공식 RSS 채널과 `nvidia-newsroom-press-release-v1` 상세 profile에 등록돼 있었다. 새 전용 수집기는 추가하지 않고 기존 collector를 사용했다.
+
+```bash
+node scripts/research.mjs collect --root .local/research/local-ai \
+  --run nvidia-palantir-source-recovery-20261002-v1 \
+  --url https://nvidianews.nvidia.com/news/nvidia-and-palantir-bring-sovereign-intelligence-to-critical-supply-chains
+
+node scripts/research.mjs reconcile-content-fingerprint-evidence \
+  --root .local/research/local-ai \
+  --run candidate-fingerprint-recovery-20261002-v7 \
+  --backlog .local/research/candidate-backlog.json
+```
+
+상세 원문은 HTTP captured, profile matched, extracted였다. 저장 원문 body SHA-256은 `a0bc2592a5e7174df98de898db70a8cfcbd29600b56bb060c6bd0d43a19cdc8c`, source version은 `c705d902c5bf7a4a6c86:a0bc2592a5e7174df98de898db70a8cfcbd29600b56bb060c6bd0d43a19cdc8c`, parse ID는 `c5f1c79d4947ce644ee8469a0d03a52e2473ff401b0a986ee484e92469890141`다. 제목은 `NVIDIA and Palantir Bring Sovereign Intelligence to Critical Supply Chains`, 날짜는 원문 표시 `September 10, 2026`에서 `2026-09-10`으로 추출됐고 본문은 17개 block이다.
+
+### 후보 연결 결과와 범위
+
+후보 장부 SHA-256에 고정된 새 private fingerprint receipt `candidate-fingerprint-recovery-20261002-v7`은 53개 대상 중 unique 15, ambiguous 1, no matching source parse 37을 기록했다. 직전 현재 backlog receipt보다 유일 지문이 1개 늘고 미연결이 1개 줄었다. 이 후보 행은 위 exact URL·원문 version·body SHA·parse ID·게시일·content SHA를 연결한다. 현황판 projection은 원장 지문 135 + receipt 복구 15 = 150/188이며, missing 38은 아직 미판정이고 invalid는 0이다. backlog, 기사 상태, 후보 승인/발행은 바꾸지 않았다(`candidate_published:false`).
+
+`candidate-fingerprint-recovery-20261002-v6`은 이미 존재하던 같은 이름의 실행 기록을 재사용해 새로 수집한 NVIDIA 원문을 포함하지 않았다. 따라서 수집 후 고유한 새 run ID인 v7을 사용했다. 이 점검은 source inventory 변화 뒤 이전 reconciliation run을 재사용하면 새로운 source observation이 들어오지 않는다는 운영 경계를 확인한 것이다.
+
+검증은 공통 collector 결과, 저장 원문/parse SHA, 날짜·block 근거, v7 receipt의 후보 행 및 `research.mjs status --format json`의 150/188 projection readback으로 제한했다. private 현황판을 재생성해 `150/188`, missing 38, stale receipt 4, invalid 0을 확인했으며 HTML SHA-256은 `710e27b2f4ecd3588d90c5e1985bb7f50d47f680ece4e8de46db88b8580b9bc0`이다. `git diff --check` 통과. 전체 테스트는 실행하지 않았다. 전체 WBS는 1/22다.
+
+## 234. 저장 원문 추가 뒤 기존 후보 fingerprint run의 오래된 재사용 차단
+
+### 재현된 stale reuse 문제
+
+기존 `reconcile-content-fingerprint-evidence`는 run ID가 이미 있으면 backlog SHA가 같다는 이유로 기존 receipt를 반환했다. source inventory는 run input identity에 들어 있지 않았다. 실제로 기존 v6 receipt는 2026-10-02의 NVIDIA 원문 collection 전에 만들어져 있었고, 그 뒤 exact candidate URL의 신규 captured/parsed source가 들어와도 v6을 호출하면 이전 14개 unique / 38 no-match 결과가 재사용됐다. 원문 내용과 backlog는 고정돼도 reconciliation 대상 source evidence는 늘어날 수 있으므로 backlog-only idempotency는 충분하지 않았다.
+
+### 수집 inventory fingerprint와 동시 변경 차단
+
+`candidateSourceInventoryFingerprint`는 지문이 필요한 후보의 canonical source URL과 일치하는 저장 source run을 찾아 documents.json 원 bytes SHA, parses.json SHA, 해당 URL·source version·body SHA·fetch state를 정렬해 digest로 고정한다. 새 receipt의 `source_inventory_sha256`은 이 digest다. 기존 run ID를 재사용할 때 backlog와 source inventory를 모두 비교한다. 값이 다르거나 과거 receipt에 inventory digest가 없으면 이전 상태를 덮어쓰지 않고 새 run ID 사용을 요구한다. 새 receipt 생성 중 전후 digest도 비교해 source evidence가 동시에 바뀌었으면 artifact를 저장하지 않는다. 기존 receipt는 당시 관측 스냅샷으로 읽기 전용 projection에는 계속 사용할 수 있다.
+
+표적 fixture는 동일 backlog로 첫 실행·무변경 재실행이 같은 receipt SHA를 보존하고, 그 사이 exact URL의 다른 captured/parsed version을 추가하면 기존 run이 재사용되지 않으며 새 run에서 두 본문 지문을 `ambiguous_fingerprint`로 드러내는 것을 확인한다. backlog bytes는 변경되지 않는다.
+
+실제 backlog에서 `candidate-fingerprint-recovery-20261002-v8`은 53개 미확정 지문 후보에 unique 15, ambiguous 1, no matching 37을 기록했다. backlog SHA는 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`, source inventory SHA는 `08614c69df9b60c864d4a6331dbb2e04a6c861887653c954ddab10b4a758155a`, receipt SHA는 `dc22f54a58f8d559314b76dc80027259147d7957fb78528082eca47e7409b66d`다. 동일 v8 run의 재실행은 같은 SHA를 반환하고 `reused:true`였다. status readback은 188 후보 중 150 지문, 미확정 38, 유효 receipt 4, 이전 revision stale 4, invalid 0이다. private dashboard SHA-256은 `a6f3e53739d979301e9dd3e0a50b4b7fcd82bb764d28ad5905be5bb2e6c959bd`다. 승인·후보 장부 수정·Drive·공개는 없었다.
+
+변경 파일은 `scripts/research/candidate-content-fingerprint.mjs`, `scripts/research.mjs`, `tests/research-candidate-content-fingerprint.test.mjs`다. `node --test tests/research-candidate-content-fingerprint.test.mjs` 4/4, 변경 JS/test Prettier, `node --check`, `git diff --check` 통과. 전체 테스트는 사용자 요청에 따라 이번 변경에서 재실행하지 않았다. WBS는 1/22이며 P0-01·P1-01은 부분 상태다.
+
+## 235. 국내 기업 공식 보도자료 3건 재파싱과 후보 지문 복구
+
+기존 미확정 후보 53건 중 삼성전자, 네이버, LG의 기업 전략·사업 동향 후보를 골라 등록된 source profile과 공통 collector로 원문을 수집하거나 저장 bytes에서 재파싱했다. Samsung newsroom 원문은 12 blocks, 원문 게시일 2026-09-21, body SHA-256 `8cd75651ed9e6715da134f15cc55f79996b2c8411b3f30fe756d64a855df701a`다. Naver 공식 보도자료는 저장 원문을 등록 profile `navercorp-press-release-v1`로 재파싱해 본문 10 blocks와 2026-09-22 게시일을 확인했다. LG 공식 보도자료는 JSON-LD 게시일 2026-09-22와 전체 본문 문단을 확인했다. LG 원문이 두 번 수집된 것은 body SHA가 같아 단일 사건 관측으로 처리됐다.
+
+`candidate-fingerprint-recovery-20261002-v10` receipt는 53건 중 unique 18, ambiguous 1, no matching source/parse 34건을 기록한다. 삼성 `20260922-samsung`, 네이버 `20260923-naver`, LG `20260923-lg`는 각 exact URL, 게시일, source version, parse ID 및 content SHA로 유일 연결됐다. Source inventory SHA-256은 `91d44018f1c9694ae97aa75d4b52ec2d8978f0b596cd5f5dca5cfb318df9297b`, backlog SHA-256은 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`, receipt SHA-256은 `ae62dfcd34844f5353c98ef33910483d687da7a5a01e6ab9767c3f0b266671f7`다. 후보 원장은 수정하지 않았다. private 현황판을 새로 생성해 SHA-256 `d71ed9113145cfd8c1c5c3df1715335f41812a9fc2399ec762d7473f5c653213`을 확인했다. 대시보드는 `local_private` 상태다.
+
+표적 회귀는 Naver parser와 source registry를 대상으로 `node --test tests/research-navercorp-press.test.mjs tests/source-registry.test.mjs` 10/10 통과한 기존 결과를 사용했다. 이번 데이터 재연결 뒤 테스트를 반복하지 않았고 전체 suite도 실행하지 않았다. 이후 slice는 변경 경로만 표적 검증하고 전체 suite는 통합·릴리스 gate에서 실행한다. 후보 승인, 편집 handoff, Drive 기록, GitHub/RSS/사이트 변경은 없다. 최신 status snapshot은 188 후보(verified 70, deferred 9, rejected 1, unreviewed 108)이며 P0-01은 여전히 partial이다.
+
+## 236. Intrinsic 로봇 원문 날짜 프로필 보완과 후보 지문 복구
+
+기존 `candidate-robots-sources-20261002-v1`의 Intrinsic 공식 페이지는 본문 55 blocks를 추출했지만 generic profile이 발행일을 찾지 못해 후보 `20260923-intrinsic`과 fingerprint를 연결하지 못했다. 저장한 원 HTML에는 기사 hero의 `intr-full-media-carousel-label` 아래 `intr-eyebrow`에 `September 22, 2026`이 한 번 명시돼 있었다. 그 표시값만 읽는 exact URL profile `intrinsic-ai-for-industry-article-v1`을 `data/research-acquisition.json`에 추가했다. 새 collector나 URL/date 추정은 사용하지 않았다.
+
+`tests/research-intrinsic-press.test.mjs`는 해당 exact URL·날짜 selector를 fixture로 확인하고, 관련 스토리의 다른 eyebrow가 선택되지 않는지 검증한다. 표적 `node --test tests/research-intrinsic-press.test.mjs tests/source-registry.test.mjs`는 10/10 통과했다. 실제 저장 source run을 새 profile로 재파싱한 결과 source bytes는 기존 SHA-256 `2147684b7cf8ef949cfa368c7df648d8b84be16f27500b7ced13e15499d9e09e`로 유지되고, parse는 extracted 55 blocks, 발표일 `2026-09-22`, parse ID `e271824a35a92ca46b90efe840497be9f27a2c3918cfac9933378d50877240ba`다.
+
+새 source inventory receipt `candidate-fingerprint-recovery-20261002-v11`은 대상 53건 중 unique 19, ambiguous 1, no matching source/parse 33을 기록한다. Intrinsic 후보에 exact source URL, source version, body SHA, parse ID 및 published date가 연결됐다. Receipt SHA-256 `6cbaa854d9cce97df8ef8ad07aca03185eb7ee9b614ecc785adce068ec485083`; backlog SHA-256은 기존 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`로 유지됐다. 갱신된 비공개 현황판 SHA-256은 `0dfcbc01da6a86876b0986eb1952368d2496781565b075a2c92977c92c073df3`이며 `local_private`다. 후보 승인·Drive·GitHub/RSS/사이트 반영은 없고 전체 테스트도 실행하지 않았다.
+
+## 237. KAIST 공식 연구 기사 등록일 파싱과 후보 지문 복구
+
+`kaist-selective-doping` 후보의 공식 KAIST newsroom 원문은 저장돼 있었고 generic parse의 제목·본문 23 blocks도 완전 추출됐지만 등록일은 parse에서 누락됐다. 원 HTML의 `prog_bord_view > prog_stit > span.date`에 `등록일: 2026-09-21`이 명시된 것을 확인했다. 기존 `news.kaist.ac.kr` 기사 profile과 호스트·템플릿이 다른 `www.kaist.ac.kr/news/html/news/?mode=V&mng_no=...` 주소만 대상으로 하는 `kaist-www-research-article-v1`을 추가해 이 날짜만 추출한다.
+
+새 fixture `tests/research-kaist-www-press.test.mjs`는 기사 등록일과 다른 aside 날짜를 구분한다. `node --test tests/research-kaist-www-press.test.mjs tests/source-registry.test.mjs` 10/10 통과. 저장된 `historical-recovery-20260930-common-date-v3`의 13개 원문 관측을 다시 요청하지 않고 재파싱해 KAIST parse 23 blocks, 게시일 2026-09-21, parse ID `5216bbcda98980e802d66a1b82aa78a9f4bf3c5e652b5c4c2384f97eaddcfd3b`를 확인했다. source body SHA-256은 `177977d69108a5140956585e2c3e1d8005f5f524f8d5fa72d78aeee71667318d`로 기존과 같다.
+
+`candidate-fingerprint-recovery-20261002-v12`는 대상 53건 중 unique 20, ambiguous 1, no matching source/parse 32를 기록하고 후보 `kaist-selective-doping`을 exact source/version/parse와 unique 연결한다. Receipt SHA-256 `eff2f18fbeabbb269a836cbc4cae0e9fc3cdba8e375233ac99e9440ff085b9cb`; backlog SHA-256은 변경 없이 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`다. private 현황판 SHA-256은 `557f7549d5fbf519395ec5dbbb747c208cb7c32d3ac8bd82d7d0e85dff48515d`다. 후보 승인, Drive·RSS·GitHub·사이트 반영은 없다. 전체 suite는 실행하지 않았다.
+
+## 238. Vestas 주문 목록 대체 출처 연결과 로컬 추론 시간 계측
+
+후보 `vestas119`의 원래 상세 URL은 현재 일반 뉴스 목록으로 이동한다. Vestas 공식 주문 register를 공통 collector로 저장하고 현재 연도 분기 표만 고르는 `vestas-wind-order-register-v1` 프로필을 적용했다. 실제 페이지 제목은 `Wind turbine orders`였는데 최초 selector의 대소문자 조건 때문에 `title_profile_status=missing`, parse `partial`이 됐다. 대소문자 비구분 XPath로 좁게 고친 뒤 저장된 동일 HTML을 재파싱해 네 개 분기 표를 `extracted` 상태로 읽었다. register 페이지에는 기사 게시일 metadata가 없으므로 이를 임의로 채우지 않았다.
+
+Q3 표의 직접 인용 `16-09-26 Vestas announces three new orders for a total of 119 MW 119`를 사실 검토하고, 후보에 고정된 2026-09-16과 제목·119 MW가 일치함을 private `candidate-source-alternative` receipt로 기록했다. 원래 URL과 backlog는 변경하지 않았고 candidate approval, Drive, RSS, GitHub, 공개 발행은 발생하지 않았다. 결과는 `.local/research/local-ai/runs/vestas-order-register-same-event-20261002-v1/candidate-source-alternative.json`에서 확인한다.
+
+모델 지연은 실제 provenance를 분리해 본다. 두산 광진 기사 작성은 `wall_ms=148337`이며 생성 1,037 token 중 모델 `eval_duration=121030.9ms`, prompt 처리 `18150.7ms`, load `9117.8ms`였다. 앞서 기록한 LS ELECTRIC slice의 추출 209,756ms·작성 171,891ms도 추론 경로가 수분 단위로 누적될 수 있음을 보여준다. 이번 단일 냉간 진단에서 같은 로컬 Qwen 27B의 짧은 구조화 호출은 11,387ms였고 load 9,150ms, prompt 730ms, generation 1,484ms였다. 반면 이번 Vestas parse는 모델을 호출하지 않았으며 profile 문제를 고친 뒤 추출 상태로 완료됐다. 따라서 로컬 추론은 추출·작성 지연의 실재 병목이지만, 1시간 이상 정체 전체를 설명하지는 않는다. 수집 경로 실행은 별도로 29 routes·58 windows에서 14분 14.7초로 측정된 적이 있다.
+
+OpenAI Responses provider와 역할별 `provider` 설정 경로는 이미 구현돼 있다. 현재 실행 환경에는 `OPENAI_API_KEY`가 설정되지 않았고 유료 API 호출은 하지 않았다. 안전한 실행 환경에 키를 설정하고 사용 예산을 정한 뒤 같은 입력·claim 검증으로 모델 wall time, usage, 비용, 품질을 비교해야 한다. 외부 API 전환은 모델 추론 단계에만 적용하며 source fetch·robots·publisher selector·parse 실패를 해결한 증거로 취급하지 않는다. Vestas profile/source registry 표적 테스트 10/10 통과, 전체 suite는 실행하지 않았다.
+
+## 239. AWS What's New RSS 경로와 상세 게시일 파싱
+
+### 공통 RSS 수집을 AWS에 적용
+
+AWS What's New 공식 페이지는 RSS 구독 경로를 제공한다. 별도 feed 전용 네트워크 수집기를 만들지 않고 기존 bounded-feed scanner와 공통 상세 fetch/parser를 재사용했다. AWS RSS는 GUID가 permalink와 다르고, 실제 permalink 중에는 월 아래 하위 경로가 있는 항목도 있으므로 이 채널 설정에서 GUID/URL 고유성, UTC 날짜, 공식 host, 상세 URL pattern을 검증한다. source-specific detail profile은 HTML 구조만 선언한다.
+
+상세 기사 제목은 `main.wn-post > h1.wn-title`, 표시 게시일은 첫 `.wn-body`의 `Posted on: Sep 18, 2026` 형식, 본문은 두 번째 `.wn-body`로 제한했다. URL의 연/월이나 RSS 날짜를 상세 원문 날짜 대신 쓰지 않는다. profile fixture는 exact 제목·날짜·본문 추출, 하위 path URL, 공통 source registry 등록을 확인한다.
+
+### 실물 기간 scan과 후보 경계
+
+`aws-whats-new-scan-20261002-v2`는 `[2026-10-01, 2026-10-02)`에서 RSS 100항목을 읽고 기간 내 16건, 시작일보다 오래된 경계 83건, 이후 항목 1건을 확인해 `window_scanned`를 기록했다. 상세 16건 모두 파싱됐고 후보는 `source_parsed_unreviewed`; 기사 승인과 발행은 하지 않았다(`candidate_published:false`). 이전 v1에서 실제 `/kinesis/` 하위 경로 항목이 URL 정규식 경계를 드러내어 source pattern을 보강했고, v2에서 전체 범위 검증을 마쳤다.
+
+기존에 후보 원문으로 저장돼 있던 9월 18일 AgentCore Runtime 및 PrivateLink Tunnel 페이지 두 건은 URL 재요청 없이 새 상세 profile로 재파싱했다. 각각 화면 게시일 `2026-09-18`, 본문 4/3 blocks를 확인했다. 지문 reconciliation `candidate-fingerprint-recovery-20261002-v17`은 53건 중 unique 27, ambiguous 1, no match 25이며, receipt SHA-256은 `77dd0ba2ec788c63b7d75a81b1c1e820c234664014a0facd49df1a8910be3ff8`, source inventory SHA-256은 `9fdcfeae00a07e0fbf054bcf0f0c3967736f6dc5d6c28724043a4291fad752e8`이다. 후보 원장 SHA는 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`로 유지됐다.
+
+표적 실행 `node --test tests/research-aws-whats-new.test.mjs tests/source-registry.test.mjs tests/research-rss-scan.test.mjs tests/research-daily-scan.test.mjs`는 38/38 통과했다. 전체 suite는 실행하지 않았다. AWS route를 daily routes에 추가했고 private local collector에서 후보 탐색을 확인했으나 실제 오전 8시 자동화 실행, 기사 승인, Drive, RSS/GitHub 또는 사이트 배포 검증은 이 run에 포함하지 않는다. private WBS는 1/22다.
+
+## 240. 공식 출처 배치 수집과 후보 원문 날짜 복구
+
+### 미연결 후보의 공통 원문 수집
+
+후보 source URL 15개를 세 번의 작은 배치로 기존 `collect` 경로에 전달했다. 출처는 DeepSeek·Google·Fujitsu·Roche·Rocket Lab·Qwen, 캐나다 사이버센터·Samsung·Roche·Dario Amodei, MagnaChip·Sunrun·Gates Foundation·Nutanix·VAST Data다. 결과는 captured 13, not-modified 1, blocked 1이며 재파싱 결과는 `extracted` 13, `partial` 1(Qwen, 0 block)이다. Fujitsu는 blocked다. blocked/partial에 대해서는 같은 요청을 반복하지 않았다.
+
+source acquisition은 공통 fetch/parser를 유지했다. 저장된 Roche 9월 17일 원문에는 `meta[name="release-date"]`가 있었지만 일반 추출이 날짜를 못 읽었다. `roche-media-release-date-v1`은 이 공식 media-release URL 계열의 해당 필드만 읽도록 설정해 9월 17일·22일 원문에 재사용했다. 화면/메타가 말하는 수정일은 게시일로 승격하지 않는다. Samsung, MagnaChip, Gates, Nutanix, DeepSeek, Google의 나머지 연결은 기존 공통 날짜·본문 정보가 후보 원문과 일치한 경우에만 fingerprint evidence로 계산됐다.
+
+### 후보 지문 projection과 범위
+
+reconciliation v17의 unique 27, ambiguous 1, no-match 25에서 v21은 unique 35, ambiguous 1, no-match 17로 바뀌었다. 추가 고유 연결은 DeepSeek, Gemini Live, Samsung One UI, MagnaChip, Gates Foundation, Nutanix, Roche 후보 등 8건이다. 최신 receipt `candidate-fingerprint-recovery-20261002-v21` SHA-256은 `5d12cb387c5ab6e81d99a4f4d95a6ca8d1ba9ad7320dc4cd84982bb102b4c2ca`, source inventory SHA-256은 `1421d887c9c85951bbe06f159411af12ec8b0a68a098326299020094976a4a08`; 후보 backlog SHA는 `9e98e9a937000f81d5f7ac08a2f95e43b76566de71f8c1afbc72b410b3d10b72`로 유지됐다.
+
+Fingerprint는 동일 본문과 날짜에 대한 source/parse 연결 후보일 뿐 사건 동일성·기사 내용 승인을 대체하지 않는다. 17개 no-match와 한 건의 ambiguous 검토는 남아 있고 후보 승인·발행은 하지 않았다. Roche profile/source registry 표적 테스트는 10/10 통과했으며 AWS를 포함한 앞선 관련 변경 표적 테스트는 38/38 통과했다. 전체 test suite는 실행하지 않았다. 1시간 이상 반복 재시도하며 막힌 항목은 없었다. 전체 WBS는 1/22다.
+
+## 241. AWS 7일 상세 예산과 daily plan baseline 통합
+
+### 상세 상한 불일치 수정
+
+실제 AWS feed의 100개 보존 항목을 UTC 게시일로 집계하자 daily 7일 창 `[2026-09-25, 2026-10-02)`에 80건이 있었다. 이전 `scan_max_details:20`은 단일 10월 1일 창에서는 충분했지만 daily lookback 전체에서는 최대 60건이 선택되지 못할 설정이었다. AWS route의 detail budget을 85로 조정하고 이를 80 이상으로 유지하는 profile 회귀 assertion을 추가했다. RSS item 한도는 100 그대로 둬 예산 초과 시 scanner가 완결을 추정하지 않게 했다.
+
+### 실물 창과 daily planner 연결
+
+`aws-whats-new-baseline-20261002-v1`은 `[2026-09-25, 2026-10-02)` 기간 내 80건, 이전 경계 19건, 이후 1건을 읽었다. 목록 원문과 기사 상세를 합쳐 저장 문서·parse 각각 81개이며 80 후보가 모두 `source_parsed_unreviewed`; 81 parse 전부 `extracted`다. scan은 `window_scanned`, `candidate_published:false`로 끝났다. 이 7일 창을 `aws-whats-new-rss`의 daily baseline으로 지정했다.
+
+실제 `research-daily.mjs --plan-only` 결과 `daily-20261002-32route-plan-v2`는 현재 설정에서 32개 출처·64개 창을 생성했고 AWS lookback을 baseline run이 실제로 덮는 7일 구간으로 계획했다. 이전 31-route 실행 receipt와 구분되며, plan-only이므로 당일 32개 경로의 수집·Drive·발행을 완료했다고 보지 않는다. WBS 현황판의 후보 원문 fingerprint는 unique 35/53이고 전체 188 후보 중 170 지문 확인·18 미확인, stale receipt 4·invalid 0이다. private HTML SHA-256 `ea1d1bf118ba758d91852c74dc738f21aead6eeb294dafa32be4708f0762c2f4`이다. 전체 WBS는 1/22다.
+
+표적 AWS/source-registry 검사는 12/12 통과했고, 전체 테스트 suite는 실행하지 않았다. `git diff --check`와 획득 설정 JSON parse를 확인했다. AWS day route는 32개 계획에 포함되지만 실제 32-route daily execute, 예약 실행 및 외부 배포/Drive readback은 미검증이다.
+
+## 242. 32개 경로 daily execute와 후보 지문 현황 갱신
+
+`daily-20261002-32route-plan-v2`를 private local collector에서 실제 실행했다. 계획된 32개 route·64개 시간 창이 모두 `window_scanned`로 완료됐고 미완료 창은 0이다. AWS는 7일 baseline 80건과 당일 창 1건을 각각 완료했다. 실행은 약 15분 41초였으며 후보 원장에는 기존 대비 88개가 추가되어 총 276건이 됐다. 이는 수집 완료이지 편집 승인이나 공개가 아니다. 후보는 196 unreviewed, 70 verified, 9 deferred, 1 rejected이고 공개 후보 발행·Drive 반영·웹/RSS/GitHub 배포는 모두 false다.
+
+일일 실행 상태 `window_scanned`는 해당 실행의 목록·상세 확인 완료를 뜻한다. 전체 32개 고정 커버리지 셀의 과거 연속 이력은 아직 19 partial, 13 not attempted이므로 전면 취재 완료로 해석하지 않는다. 내부 편집 handoff에는 pending 222, 이번 실행에서 관측된 pending 172, historical review 121, publication-time review 88 등이 포함된다. 이 값들은 중첩 집계이며 합산하지 않는다.
+
+새 후보 원장 SHA에 맞춰 `candidate-fingerprint-recovery-20261002-v22`를 다시 생성했다. 53개 연결 대상은 unique 35, ambiguous 1, no matching source parse 17이며 receipt SHA-256은 `80e90a5280f2a8bb539e6311ebef489f7b39efe578e075ce9eba778a03914df4`다. 이는 후보 원장의 승인 상태를 바꾸지 않는 근거 연결 projection이다. private status HTML을 다시 생성했고 SHA-256은 `17ecd484dad1a7005e9d5ebe332d1fc2fb12d0130894d5a5355a6275d04496e0`이다. WBS는 1/22(5%)로 유지된다.
+
+이번 변화에는 전체 suite를 다시 실행하지 않았다. 앞선 source-registry/AWS 표적 12/12와 이번 실제 32-route·64-window 통합 실행 결과를 사용하며, 문서·영수증 확인과 `git diff --check`만 추가한다. 같은 전체 테스트 빈도 원칙으로 넓은 회귀 suite는 핵심 slice 통합·릴리스 점검 시 실행한다. 1시간 이상 정체된 병목은 없었다. 수집은 약 15분 41초 걸렸고 로컬 LLM은 이 실행에서 사용하지 않았다.
+
+## 243. 검증된 대체 출처의 기존 후보 handoff 중복 정리
+
+Doosan Robotics CEO 선임은 영문·국문 공식 보도자료가 같은 9월 18일 발표를 가리킨다. 기존 영문 후보는 검증 및 승인돼 있었고, 10월 2일 저장된 한국어 공식 원문은 1개 직접 사실 주장을 검증했다. `doosan-ceo-korean-official-alt-identity-20261002-v1` same-event receipt SHA-256은 `c2428083d7a4830eb6eab88f560da1f0377f6ef820bcd358159eab3146407acf`다. 이 관계는 원문 주장 근거를 고정한 private 관계 기록이며 새 기사 승인·발행이 아니다.
+
+관계 receipt 생성 전에 backlog에 들어온 한국어 후보는 다음 스캔에서 중복 병합되지는 않았지만, 현재 handoff의 pending 목록에는 계속 남는 결함이 있었다. `editorial-handoff.mjs`가 evidence-rebuilt source-alias index를 읽어 기존 backlog 후보의 URL도 대조하도록 수정했다. 동일 사건의 보조 행은 편집 pending에서 제외하면서 `same_event_sources`와 `same_event_source_aliases`에 표시한다. 후보 원장 행은 보존하며 확인된 target에 연결한다. target 누락이나 복수 target 연결은 오류로 중단한다.
+
+Doosan URL을 실제 alias resolver에 대입해 한국어 후보가 영문 검증 후보로 연결되고 pending에서 빠지는 것을 확인했다. 새 관계가 과거 일일 receipt 판정을 소급 변경하지 않도록 alias에 생성 시각을 저장하고, receipt 완료·보충 reconciliation 시각 이후의 관계는 당시 suppression 재현에서 제외한다. 실제 `daily-20261002-32route-plan-v2` handoff를 새 코드로 생성해 backlog 후보 276건 중 대기 220건, 검토된 same-event alias 3건을 확인했다. Doosan 한국어 후보 pending은 0건이며 relation 항목은 기존 영문 candidate key `source-43dbd3fe6cdd4fcf7d95`를 가리킨다. 신규 handoff는 `daily/runs/daily-20261002-32route-plan-v2/handoffs/9d1c68a5d35a7c1e2d8d21372253b4187de1ed62bb7e211839dd6afa5da833e4.json`; 승인·Drive 확인·공개 상태는 false다. private dashboard를 재생성해 SHA-256 `7402cb0d5adba7cea60b9ff59b14f64d41a8e45fa86f7971f98a4ab7f6ecd70d`로 파일 재읽기를 확인했다. focused 회귀는 editorial handoff 12/12, source alternative 7/7, handoff 생성·resume 통합 1/1이다. 전체 suite는 실행하지 않았다.
+
+실제 32-route 수집은 약 15분 41초였고 LLM을 호출하지 않았다. Doosan 한국어 원문 claim extraction은 Qwen `qwen3.8:27b` 약 66초였다. `data/research-model-policy.json`은 provider 미지정으로 기본 Ollama를 사용한다. `scripts/research/openai.mjs`에는 OpenAI Responses API 지원이 있으나 현재 환경에 `OPENAI_API_KEY`가 없어 live API 호출·비교는 못 했다. 그러므로 관측된 수집 지연은 로컬 LLM이 아니라 32 route·64개 기간 창의 source scan에 있다. API 전환은 키 설정과 provider 정책 선택이 필요한 별도 작업이며 네트워크 수집 단계 자체를 대체하지 않는다.
+
+## 244. ABB 투자자 IR NewsBank 경로 검증
+
+ABB Robotics NewsBank 수집기를 feed ID와 목록·상세 경로 설정을 받도록 일반화해 ABB 투자자 보도자료에도 재사용했다. `abb-investor-releases-en` 채널은 공식 Selected Press Releases 화면과 ABB NewsBank JSON feed를 사용하며 기존 route 기본값은 유지한다. 신규 출처를 watchlist·acquisition registry·daily route에 등록해 총 118개 등록 출처, daily 활성 33개가 됐다.
+
+`abb-investor-results-20261002-baseline-v1`은 `[2026-09-25, 2026-10-02)` 구간을 확인하고 `window_scanned`, 후보 0건으로 끝났다. 상세 페이지 경로를 확인하기 위해 별도 과거 구간 `[2026-07-16, 2026-07-17)`을 실행했다. `abb-ir-q2-20260716-v1`은 2개 후보(Q2 2026 실적 발표, Rotork 인수)를 수집했고 두 기사 상세를 저장·파싱했다. Q2 실적 원문에는 영문 보도자료 등 PDF 첨부 4개가 연결되어 있었다.
+
+PDF 첨부까지 확인하도록 별도 parser/profile과 지원 첨부 URL을 설정해 재실행했으나, 공식 `resources.news.e.abb.com` PDF 요청은 fetch 정책에서 `blocked`가 됐다. `abb-ir-q2-20260716-attachments-v1`은 `incomplete`, 후보 1건이며 첨부 검증을 완료한 것으로 처리하지 않는다. 정책을 우회하지 않았다. 해당 PDF가 필요한 수집은 이 경로의 미완료 항목으로 남긴다. 7일 baseline 및 과거 샘플의 후보는 모두 미승인·비공개다.
+
+표적 `node --test tests/research-abb-scan.test.mjs tests/source-registry.test.mjs`는 13/13 통과했다. 전체 suite는 실행하지 않았다. 이번 ABB 7일 수집은 `window_scanned`였고 당일 후보는 없었다. 재시도 반복으로 1시간 이상 정체한 작업은 없었다. plan-only 결과는 33 daily route·66 windows이며 실제 33-route daily execute, 예약 실행, Drive·공개 배포는 확인하지 않았다. private 현황판은 재생성 후 파일 readback을 확인했고 SHA-256은 `d8e978936f2734d0da20ae7c7dc58df0d708828359867ccbc4a8ee410dd59c09`다. 현황판 WBS는 1/22(5%), P1-01은 부분 진행으로 유지한다.
+
+## 245. 공식 IR 첨부 대체 URL의 검증·파싱 연결
+
+244절에서 ABB 보도자료 상세의 직접 PDF 첨부가 정책상 `blocked`였던 문제를 같은 회사 IR이 제공하는 공식 Quarterly Results 파일로 보완했다. ABB Quarterly Results 페이지는 Q2 2026 Press release를 `DocumentID=9AKK108472A9735`의 ABB Library PDF로 연결한다. 해당 페이지도 공통 `SourceFetcher`로 수집해 캐시 판본에서 같은 DocumentID를 확인했다. [ABB Quarterly Results](https://global.abb/group/en/investors/quarterly-results)에는 2026-07-16 Q2 발표 날짜와 Q2 press release PDF가 함께 표시된다.
+
+공통 `supporting_documents` 규칙에 명시적 `fallback_sources`를 추가했다. fallback은 사전 선언된 URL과 `evidence_url` 쌍만 사용하며 route host allowlist·robots·redirect 검사·크기 한도·정확한 article profile을 그대로 거친다. 직접 첨부가 실패하면 시도별 상태를 남긴 후 fallback을 검사한다. 성공 기록에는 원 첨부 URL, 사용한 URL, 근거 페이지, 모든 시도, source version, parse ID와 profile ID가 보존된다. 자동으로 URL을 추측하거나 실패를 성공 처리하지 않는다. source acquisition spec에 이 계약을 기록했다.
+
+실제 `abb-ir-q2-20260716-official-pdf-fallback-v4` 구간은 20개 NewsBank 목록 항목에서 해당 날짜 기사 2건과 이전 경계를 확인해 `window_scanned`로 끝났다. Q2 상세 기사 1건은 direct attachment `blocked` 뒤 ABB Quarterly Results 근거 페이지를 저장하고 SHA를 확인했다. 본문에서 설정된 `DocumentID=9AKK108472A9735` 리터럴을 찾은 뒤에만 ABB Library PDF를 요청했다. HTTP 200 응답과 리다이렉트 robots 정책 `allowed`를 기록했다. PDF는 310개 텍스트/표 블록, 제목 `Q2 2026 results`, 발표일 `2026-07-16`, `required_fields_present:true`로 파싱됐다. 동일 run의 지원 자료 receipt에 원 첨부 실패, 근거 페이지 source version/hash, 대체 PDF source version, parse ID와 profile ID가 남는다. 두 후보는 모두 `unreviewed`; approval·발행은 false다. 새 설정의 최근 7일 `[2026-09-25, 2026-10-02)` 재확인 `abb-investor-results-20261002-evidenced-fallback-v2`도 `window_scanned`, 후보 0건이며 route baseline으로 지정했다.
+
+표적 테스트는 fallback 성공·evidence mismatch 거부·기존 supporting-document 세 케이스와 source registry 1개만 골라 4/4 통과했다. 전체 suite는 실행하지 않았다. 설정 JSON parse, `node --check scripts/research/list-scan.mjs`, `git diff --check`를 확인하고 plan-only `daily-20261002-abb-ir-evidenced-plan-v3`는 33 route·66 windows를 산출했으며 ABB 두 창 모두 `abb-investor-results-20261002-evidenced-fallback-v2` baseline에 연결됐다. private status HTML을 재생성·재읽기했고 SHA-256은 `10f6b3d751da296ccfa267af2199cd6fc82720b1a944c9b949a561401380a9d9`다. 1시간 이상 반복 정체는 없었다. 이 slice는 P1-01의 ABB IR·첨부 경로를 실제 확인한 증거다. WBS는 계속 1/22이고 다른 제조사·모든 기간의 수용을 완료한 것은 아니다.
+
+## 246. KUKA 연차보고서 원문 수집과 기간·발행일 분리
+
+KUKA 공식 [Berichte](https://www.kuka.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte) 페이지는 `2025` 회계연도 라벨과 Geschäftsbericht PDF 링크를 제공한다. 공통 `collect`로 그 페이지와 PDF를 함께 저장했다. 아카이브 HTML의 공통 JSON-LD에는 2022년 `datePublished`가 들어 있었으므로 `publication_date_policy: "not_applicable"`를 추가해 이 날짜를 발행일로 오인하지 않도록 했다. 페이지 profile은 연차보고서의 발행일 대신 `published_at:null`과 `not-applicable` 상태를 보존한다. 보고서 안의 2026-03-27 감사·이사회 서명 일자도 문서 발행일로 승격하지 않았다.
+
+PDF profile은 최종 공식 URL을 고정해 제목 `Geschäftsbericht 2025`를 1쪽에서 확인했다. 138쪽 중 마지막 쪽은 `www.kuka.com`만 있는 공식 back-cover 페이지였으며, 해당 페이지 번호와 본문 전체 일치 패턴을 `sparse_page_patterns`에 선언했다. 재파싱은 `extracted`, 2,555개 본문/표 블록, `missing_pages:[]`, `profile_accepted_sparse_pages:[138]`로 완료됐다. 아카이브 페이지도 11개 블록으로 추출됐고 PDF 링크의 `itemid`가 저장 HTML에 있음을 확인했다. 두 자료는 `.local` 원문·parse run에 보존되며 daily 기사 후보나 공개 발행은 생성하지 않았다. 이 연차보고서는 원문 기반 기업 전략·재무 조사 입력이지 날짜 창을 확인한 뉴스 항목이 아니다.
+
+HTML에 있는 오래된 구조화 날짜를 suppress하는 신규 `publication_date_policy` worker 검사는 단일 표적 1/1 통과했고, 출처 registry 표적은 10/10 통과했다. ABB fallback 경로 표적은 4/4 통과했다. 전체 suite는 실행하지 않았다. status WBS는 1/22(5%), source inventory는 118 registered·33 daily이며 KUKA annual-report path는 daily route로 승격하지 않았다. 1시간 이상 반복 정체한 작업은 없었다. 잔여 P1-01은 다른 제조사 운영 자료·기간 경계와 전체 활성 수집/Drive 검증이다.
+
+## 247. 테스트 실행 빈도 축소
+
+개발 중 테스트는 기능 변경의 마지막 의미 있는 코드 수정 뒤, 변경 모듈에 직접 대응하는 가장 좁은 표적 검사로 제한한다. 동일 코드 상태에서 이미 통과한 검사를 문서 편집·설정 데이터 갱신·현황판 재생성 뒤에 반복하지 않는다. 여러 변경을 한 번에 검증할 수 있으면 하나의 검사 호출로 묶고, 비코드 변경은 설정 JSON parse·문법·`git diff --check`·산출물 readback 중 필요한 확인만 수행한다. 전체 suite는 통합 위험이 큰 마일스톤 또는 릴리스 검증 때만 실행한다.
+
+이번 사용자 요청 이후 전체 suite나 추가 테스트는 실행하지 않았다. 기존 실행 증거는 KUKA date-policy 단일 표적 1/1, source registry 10/10, ABB fallback 관련 4/4다. 현재 수행한 확인은 설정 JSON parse, `node --check scripts/research/list-scan.mjs`, 변경 문서 diff check와 비공개 status HTML 재생성/readback이다. 최신 `.local/research/local-ai/delivery-status.html` SHA-256은 `56792719487e34bf16634d07b71ed46b127b956399a5f8dbe3c17b7f998492d3`이며 WBS 1/22(5%)다. 이 빈도 원칙은 [구현 계획 19.160](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19.160-테스트-실행-빈도-축소)에도 기록했다.
+## 248. Kawasaki 공식 로봇 뉴스 경로와 로컬 추출 결과
+
+기존 watchlist에 등록된 Kawasaki Robotics 항목을 재사용해 Kawasaki Heavy Industries의 공식 로봇 뉴스 분류 페이지를 추가했다. 신규 기업을 중복 등록하지 않고 route ID kawasaki-heavy-robot-news-en을 watchlist·acquisition registry·daily routes에 연결했다. 공식 목록에서 상세 기사 링크 48개를 식별하고, 상세 URL의 원문을 공통 SourceFetcher로 수집했다.
+
+목록 제목이 화면에서 말줄임표로 잘리는 경우를 처리하기 위해 title_match_policy truncated_prefix를 추가했다. 목록 제목이 명시적으로 … 또는 ...로 끝나고, 그 앞부분이 최소 24자이며, 상세 제목이 그 접두부와 일치할 때만 상세 제목을 기준 제목으로 채택한다. 날짜와 URL identity 검사는 그대로 수행하고, 관계 receipt에는 공식 목록의 잘린 제목과 상세 제목의 권위를 기록한다. 일반적인 제목 불일치는 계속 실패한다.
+
+역사 구간 kawasaki-robotics-20260914-article-window-v5는 공식 목록 48개 중 선택 링크 48개를 상세와 대조하고, 2026-09-14 MOU 발표 1건을 상세 파싱했다. 파싱 결과는 11개 블록이며 상세 제목은 “Kawasaki Signs MOU with Gemelli University Hospital in Italy to Explore Development of Next-Generation Healthcare Solutions”로 확인됐다. 최근 7일 baseline은 48개 링크를 확인해 기간 내 후보 0건으로 window_scanned를 기록했다. 2026-10-02 plan-only는 기존 활성 34 routes·68 windows를 유지하며 두 Kawasaki 창을 baseline에 연결했다. backlog는 병합하지 않았다.
+
+해당 사건의 private local extraction은 qwen3.8:27b로 약 278.6초가 걸렸다. 주장 6개 중 구조 검사를 통과한 것은 3개다. 날짜 단위와 인용문 경계 문제가 각각 2건 확인되어 전체 6개 주장은 미검토 상태이며 기사 생성·승인·발행은 없다. extraction receipt는 원문 근거를 보존하는 비공개 개발 자료로만 사용한다.
+
+제목 말줄임 처리에 대한 가장 좁은 회귀 테스트 1개가 통과했다. 전체 suite는 실행하지 않았다. JSON parse, 변경 모듈 문법 검사, diff check를 비테스트 정합성 확인으로 사용한다. 이번 경로는 P1-01 기업/제조사 원문 조사 진척이지만 WBS 전체는 1/22(5%)이며 모든 제조사 운영자료 검증이나 전체 수집 완료를 의미하지 않는다.
+## 249. 현재 34개 경로 일일 수집 통합 검증과 두산 IR 자료의 날짜 구분
+
+2026-10-02 현재 활성 34 route·68 window를 새 live run `daily-20261002-current34-live-v1`로 실행했다. 68/68 receipt가 모두 `window_scanned`, retry queue 0, incomplete window 0이다. 178개 관측 candidate key가 서로 고유했고 기존 same-event 관계 및 backlog 병합 후 candidate backlog는 276건으로 유지됐다(SHA-256 `14fa1d788ab20fae9daa16cd27d73d21a17b4709faeedb03b2ef54992d161316`). handoff는 pending 220, 같은 사건 대체 출처 3, 미완료 창 0이다. 32개 coverage cell 중 19개는 partial, 13개는 not_attempted이며 실패 route는 없다.
+
+전체 wall time은 15.9분, receipt별 병렬 작업시간 합은 53.4분, recorded scan time 합은 22.0분이다. 최대 네 route 병렬 실행, 창별 재시도 0회였다. Boston Dynamics와 AWS에서 진행 중처럼 보였던 마지막 4개 창도 모두 완료됐다. 후보 관측·승인·Drive 확인·공개 확인은 분리됐고 `candidate_published`, `drive_verified`, `public_verified`는 모두 false다. private status HTML은 다시 생성·파일 읽기를 확인했으며 SHA-256은 `2a230422e30058e965d38d794e010788502a521d735fbfcf9428c50297ab94e0`다. 전체 테스트는 실행하지 않았다. 이 실행은 WBS 1/22(5%)의 P1-01 부분 진척이다.
+
+두산로보틱스의 기존 watchlist-only 영문 IR 경로를 공통 `collect`로 확인했다. IR 표는 회계 분기별 문서와 2페이지 pagination을 보여주지만 행에는 발행일이 없다. 최신 `2026 2Q Earnings Release` 영문 파일 ID 85는 직접 수집해 10페이지·138개 block·5개 표를 파싱했다. PDF의 metadata creationDate `2026-07-24`는 발행일로 승격하지 않는다. 별도의 KRX KIND IR 일정 원문은 2026-07-24 16:00, “2026년 2분기 경영실적 발표” 일정 정보를 담았지만, 공통 HTML 파서는 fragment형 응답을 `unsupported`로 반환했다. 따라서 일정 날짜, 실제 실적 발표/자료 공개일, 회계 보고 기간을 별개로 보존해야 한다. 아직 daily news route나 후보로 연결하지 않았다.
+
+원문 capture run은 `doosan-ir-materials-probe-20261002-v1`, `doosan-ir-q2-2026-document-probe-v1`, `doosan-q2-ir-schedule-and-source-v1`이다. 다음 소스 슬라이스에서는 KIND IR 일정 fragment를 재사용 가능한 HTML profile로 파싱하고, 일정의 행사일과 발표/공시일 필드를 분리한 뒤 회사 IR PDF와 exact source identity로 연결한다. IR archive는 날짜 근거 없이 일일 뉴스로 활성화하지 않는다. 이 자료들은 private source evidence이며, 현재 분기 실적의 기사 승인이나 발행 자료가 아니다.
+
+## 250. KIND IR 일정의 실제 POST 목록 응답과 공통 어댑터 입력
+
+초기 KIND IR 일정 HTML에는 목록이 없었다. 페이지 JavaScript의 `searchIRScheduleSub` 폼 계약을 확인한 뒤 기존 `SourceFetcher`와 robots 확인을 거쳐 기간 `[2026-07-01, 2026-10-03]`의 읽기 전용 POST를 한 번 수집했다. 원 응답은 HTTP 200의 80,571 byte HTML 조각이며 SHA-256 `1c2cc99d006d3d096bc004898d2c8c1168736402fc3652e5d7b0c726c4dca0f4`; source version `4589c6688a3555e72733:1c2cc99d006d3d096bc004898d2c8c1168736402fc3652e5d7b0c726c4dca0f4`다. 실행 receipt는 `kind-ir-ajax-probe-20261002-v1`에 보존했다.
+
+응답은 회사·제목·장소·일자·시작시간 열을 가진 100행과 페이지 이동 링크를 포함한다. 첫 페이지는 2026-10-02부터 2026-09-18까지만 내려오며 Doosan 행은 없다. 요청 기간의 이전 경계까지 도달하지 못했으므로 이 한 페이지를 완전한 조사로 판정하지 않는다. 목록의 일자/시간은 IR 행사 일정이며 기사 발행일이 아니다. 따라서 이를 일일 뉴스 후보나 `published_at`으로 승격하지 않는다.
+
+공통 worker가 `<html>`로 시작하지 않는 명시적 `format: "html-fragment"` 입력을 HTML로 파싱하도록 수정했다. 잘못된 MIME type은 거부하고 `publication_date_policy: "not_applicable"`로 행사일을 발행일로 채택하지 않는다. 가장 좁은 worker 회귀 1/1을 실행했고, 위에 저장된 실물 응답을 새 parse run `kind-ir-post-fragment-reparse-20261002-v2`로 재생해 100개 행 block을 `extracted`, `published_at:null`로 확인했다. 이 코드 변경에는 전체 테스트를 실행하지 않았다.
+
+상세 문서에도 [`kind-ir-schedule-detail-fragment-ko-v1`](../data/research-acquisition.json) article profile을 추가하고 기존 저장 원문 run `doosan-q2-ir-schedule-and-source-v1`을 `kind-ir-detail-profile-reparse-20261002-v1`로 재생했다. KIND detail 1,625 byte 원문(source version `4a5f1efc1d961e492f25:72ff78c93aaa81a7101a920e67ed3d30b0e712fb40633bedd2493d5c07593cf0`)은 제목 `2026년 2분기 경영실적 발표`, 회사 두산로보틱스, 행사 2026-07-24 16:00, 설명 네 블록으로 `extracted`됐다. 프로필은 명시적으로 `published_at:null`을 유지한다. 같은 replay에서 IR archive와 PDF도 각각 기존 프로필로 파싱되어 1/3/138 blocks이며 공개 후보는 없다.
+
+다음 구현 단위는 기존 POST 수집 경로와 함께 쓸 bounded form→HTML-fragment pagination 계약이다. 요청 필드 허용 목록, exact form-bound URL, 단일 POST, 응답 hash, 행 수·페이지 경계는 공통 계층에서 검증하고 XPath/onclick·날짜 의미 매핑은 source profile로 둔다. KIND 일정 행사는 별도 event date로 유지하고 문서 공개일 근거가 확인될 때만 IR PDF와 연결한다. 아직 scanner·KIND 채널 등록·candidate·approval·public은 추가되지 않았다. 1시간 이상 반복 정체는 없었다.
+
+P1-01의 현재 원문 진행 행을 private 현황판에 반영해 재생성/readback했다. 최신 HTML SHA-256은 `db80693a52dc2450db55ca04b2c2a92fcc14e9c1e57b49d2f1eab951f7eb09bb`다. 전체 WBS는 계속 1/22(5%), P1-01 partial이다.
+
+
+## 251. KIND 일정 페이지 순회와 행사 데이터의 공통 bounded scanner
+
+`scripts/research/form-html-scan.mjs`에 form POST 기반 HTML fragment 페이지 순회를 구현하고 `scan-list` 경로에 연결했다. 요청 URL은 source profile에 묶인 허용 host 안에서만 만들며, URL-bound form field·페이지 번호·요청 기간을 제한하고 각 응답의 MIME, body hash, 행 identity, 날짜, 중복, 최신순 정렬, 페이지 예산을 검사한다. 마지막 페이지가 설정 행 상한보다 짧을 때만 기간 결과가 소진된 것으로 인정한다. 행의 링크·날짜 의미는 source profile이 정하고, 일정 날짜는 `event_date`로 저장해 `published_at`으로 복사하지 않는다.
+
+실제 실행 `kind-ir-schedule-20260701-20261003-live-v1`은 KIND 공식 일정의 15페이지에서 1,414개 행사 레코드를 저장했다. 마지막 페이지는 14행으로 기간 결과가 끝났음을 확인했다. 두산로보틱스의 2026-07-24 16:00 “2026년 2분기 경영실적 발표”는 `irSeq=45182` 상세 URL과 연결됐다. 결과는 `events.json`의 `research-scheduled-events/v1`이며 뉴스 후보 0건, candidate backlog SHA는 실행 전후 `14fa1d788ab20fae9daa16cd27d73d21a17b4709faeedb03b2ef54992d161316`로 같다. 행사 일정만으로 뉴스·실적 발표 완료를 주장하거나 일일 route에 승격하지 않았다.
+
+표적 `node --test tests/research-form-html-scan.test.mjs` 3/3과 `WorkerTests.test_html_fragment_listing_template_emits_event_date_without_publication_date` 1/1을 통과했다. 변경 모듈 `node --check`, 관련 설정 JSON parse, `git diff --check`도 통과했다. 이미 통과한 검사는 반복하지 않았고 전체 suite는 실행하지 않았다. 재현 run과 원문·페이지 receipts는 `.local/research/local-ai/runs/kind-ir-schedule-20260701-20261003-live-v1/`에 있다. WBS 전체는 1/22(5%), P1-01 partial이며 후속은 KIND 바깥의 기업 IR·운영자료 범위를 검증하는 일이다.
+
+
+## 252. KUKA 영문 목록 재사용과 다국어 중복 계보
+
+이미 등록된 KUKA 영어 뉴스 주소를 독일어용 `kuka-news-form-pages-v1` scanner에 연결했다. 공통 scanner를 locale-aware로 확장해 `de-DE`·`en-US` 요청과 언어별 상세 URL만 허용하고, 영문 목록의 `dateISO`/화면 날짜 일치, URL, 제목, `itemId`를 보존한다. 원문 CMS ID는 후보 discovery provenance의 `source_item_id`에 남으며 자동 사건 병합이나 승인은 하지 않는다.
+
+실행 `kuka-en-20260920-20260925-probe-v2`는 `[2026-09-20, 2026-09-25)`를 `window_scanned`로 완료했다. 2026-09-24 FSW 원문은 10 blocks, source version `b7c1c284b774282835e9:1bf6598f46b5f058601327b35aca1873f58a6be22ab0e32107e5f2d32a816ce5`, parse ID `e050fa7d93d05a676c40f791deea888674639dd8f061772ec5658eda83ea4397`이다. 영어 목록 body SHA-256은 `ecc034d578ae6799a8d5b40ee82710390ed913156add1f128fe73e4c64690947`다. 공식 API의 `dateISO`와 표시 문자열, 상세 화면 표시일은 모두 2026-09-24를 나타낸다. JSON-LD `datePublished`는 `2026-09-22T11:12:41Z`이므로 별도 date candidate로 남고, 게시일 provenance는 listing+visible-date가 정확히 일치한 근거로 기록한다.
+
+영문 행 `itemId=cac278d8-4c5a-4f25-8c58-8759bd18b671`은 저장된 독일어 목록 run `20260928-kuka-de-sep-window-v2`의 FSW 행과 동일하다. 후보 원장의 독립 merge는 하지 않았다. 따라서 영문 route는 watchlist/acquisition에 등록하고 실제 수집·상세 profile까지 검증했지만 daily routes에는 넣지 않았다. 기존 German 기사와 같은 기록을 중복 발행하지 않도록 source-item ID 기반 cross-language suppression을 별도 완료해야 한다. 후보 승인·Drive·RSS·GitHub·public 반영은 모두 없다. 현 registry는 121 route·daily 34 route이며, 최신 비공개 현황판 SHA-256은 `039a9a837aeb149a92a09a70af7a32ab32e82fcd48a5eb4401ad77f1e3e220b3`이다.
+
+검사는 `node --test tests/research-kuka-scan.test.mjs` 3/3, 전용 Python runtime의 `WorkerTests.test_kuka_english_news_profile_reads_display_day_and_article_blocks` 1/1, JSON parse, 변경 JS `node --check`, `git diff --check`를 사용했다. 전체 suite는 실행하지 않았다. 1시간 이상 같은 문제를 재시도하지 않아 blocker 기록은 만들지 않았다.
+
+
+## 253. CMS source record ID로 KUKA 다국어 후보 중복 억제
+
+후보의 source-record identity는 발행사·목록 profile·원문 CMS `source_item_id`의 조합으로 정한다. URL이나 언어는 identity key에 넣지 않는다. `mergeBacklog`는 이 조합이 일치할 때만 기존 후보를 재사용하고, 충돌 없이 하나의 대상에 연결되지 않으면 오류 처리한다. 대상 후보의 canonical `source_urls`, 제목, `review_status`, `event_id`, approval은 보존한다. 추가 URL은 `source_record_aliases`로 저장하고 discovery 기록은 원문 언어·목록 판본대로 누적한다.
+
+실제 KUKA German source run `20260928-kuka-de-content-fingerprint-final-v1`의 저장 list body hash를 검증하고 `/items/0` 행을 읽었다. 행의 href·headline은 기존 candidate URL·제목과 정확히 일치하며 `itemId=cac278d8-4c5a-4f25-8c58-8759bd18b671`이다. 이에 대응하는 verified German 후보 `source-496ab0bfbcdb42a4ce51`의 29 discovery entries에 ID를 기록했다. 원장 변경 전 raw bytes를 `.local/research/backups/before-kuka-source-itemid-backfill-20261002.json`에 보관했고 SHA-256은 `14fa1d788ab20fae9daa16cd27d73d21a17b4709faeedb03b2ef54992d161316`이다.
+
+영문 source run `kuka-en-20260920-20260925-probe-v2`도 완료 scan, listing hash와 article URL·date, 같은 publisher/profile/itemId를 대조했다. 이 후보를 실제 `mergeBacklog`에 넣은 결과 backlog는 276건을 유지했고 별도 English 후보는 0건이다. 독일어 대상의 검증 상태, event ID `496ab0bfbcdb42a4`, canonical URL은 보존됐다. 영어 URL과 item ID는 source-record alias로 누적됐다. merge compact-state SHA-256은 `f65cbcc55ff856f0679229570eef21c881971c268577f00cffc72202eb46294f`, backlog raw-byte SHA-256은 `0f48cef25aa9c8a6356f7e43c80ef3b2c417677888f11125b2245d9c46a97b2b`이다.
+
+`editorial-handoff`는 현재 run의 URL과 discovery identity가 기존 후보의 stored source-record alias와 둘 다 일치할 때 관측을 대상 후보에 귀속한다. 이를 별도 `source_record_aliases`로 반환하며 same-event 검토로 잘못 표기하지 않는다. 중복 병합 테스트 `node --test tests/research-source-record-identity.test.mjs`는 2/2, handoff 테스트 `node --test tests/research-editorial-handoff.test.mjs`는 13/13 통과했다. 첫 임시 fixture는 macOS `/tmp` symlink를 저장소 safe-path 규칙이 거부했으며 fixture를 realpath로 고친 뒤 표적 테스트가 통과했다. 전체 suite는 실행하지 않았다.
+
+비공개 현황판을 재생성해 후보 276건과 WBS 1/22 readback을 확인했다. 결과 HTML `.local/research/local-ai/delivery-status.html`의 SHA-256은 `fa7db50a2fa601b81e2614d883180340e4e22262d13e0e42f20ffad7c98a48b7`이다. 영어 route를 일일 설정에 활성화하거나 실제 daily receipt를 생성하지 않았다. Drive, RSS, GitHub와 공개 사이트도 바뀌지 않았다. 그러므로 이 slice는 후보 원장과 handoff의 identity 연결을 검증한 것이며 일일 운영·공개 배포 검증은 남아 있다. 전체 WBS는 1/22(5%), P1-01 partial이다. 이번 검증에서 1시간 이상 같은 단계에 막힌 반복은 없었다.
+
+
+## 254. KUKA 영어 route의 실제 일일수집과 source-record handoff
+
+`data/research-daily-routes.json`에 `route-kuka-news-en`을 활성 등록했고 baseline은 `kuka-en-20260920-20260925-probe-v2`다. 공용 일일 plan-only `daily-20261002-kuka-en-added-plan-v1`는 현재 전체 35개 route와 71 windows를 만든다. 이 plan에서는 영어 KUKA 구간이 `[2026-09-18, 2026-09-25)`, `[2026-09-25, 2026-10-02)`, `[2026-10-02, 2026-10-03)` 세 창으로 구성됐다. 독일어 경로는 기존 두 창을 유지한다.
+
+실제 전체 35-route를 재실행해 중복 수집하지 않도록, private 1-route config `.local/research/local-ai/kuka-en-integration-daily-routes.json`으로 해당 경로의 daily execution만 수행했다. 올바른 KST 날짜 prefix가 아닌 첫 임시 run ID는 plan 단계에서 거부되어 수집은 시작하지 않았다. 실제 실행 `daily-20261002-kuka-en-source-record-v1`은 3개 창을 모두 `window_scanned`로 완료했다. retry queue와 incomplete windows는 비어 있으며 route의 last contiguous coverage는 `2026-10-02`다. 첫 창에서 발견된 `source-b7c1c284b774282835e9`는 `source_item_id=cac278d8-4c5a-4f25-8c58-8759bd18b671`로 독일어 verified target `source-496ab0bfbcdb42a4ce51`에 병합됐다. handoff `source_record_aliases`는 영문 candidate key·URL·publisher·profile·CMS ID·target key를 보존한다. source item ID가 포함된 영어 URL의 별도 후보는 0건이며 backlog는 276건으로 유지됐다. German target의 status `verified`, event ID `496ab0bfbcdb42a4`, canonical German URL도 보존된다.
+
+`research-daily.mjs status --root .local/research/local-ai --format html`로 비공개 현황판을 재생성하고 readback했다. 등록 121·일일 활성 35·후보 276, WBS 1/22다. HTML SHA-256 `46d99e81041ccee49db4ab2c82f8ae6550dccaa1b6ffb42b086cfea5b0e39bc3`; backlog raw-byte SHA-256 `d076b810850b17da846c328b836b4b46f64f79d7693ec3928dc39334632dd3ea`다. 전체 suite는 돌리지 않았다. 직전 표적 identity 2/2·handoff 13/13을 재사용하고 이번에는 실제 수집·병합·handoff를 end-to-end로 확인했다. 기사 승인, Drive, RSS, GitHub와 public 배포는 수행하지 않았다. 전체 WBS는 1/22(5%)이며 P1-01 partial이다. 동일 병목을 1시간 이상 재시도한 일은 없다.
+
+## 255. current 35개 경로 실제 수집과 편집 인계
+
+실행 당시 설정의 활성 35 route를 통합 실행 `daily-20261002-current35-live-v1`로 확인했다. plan에 있던 70개 날짜 창의 receipt 70개가 모두 `window_scanned`다. retry queue와 미완료 창은 0, 후보 원장은 276건이다. receipt에는 same-event source alias 3건이 기록됐다. 수집 결과를 반영한 뒤 `--handoff`를 실행해 `.local/research/local-ai/daily/runs/daily-20261002-current35-live-v1/handoffs/4a1a726cddcd9ffbf5ed0d385b38c9bf79c989fbcf816dae6fd561c5d48ac73a.json`을 만들었다. pending 220건 중 current run 관측은 171건, observed resolved 4건, incomplete windows 0건이다. 이는 후보 검토 대기열이며 승인이나 발행이 아니다.
+
+receipt 단계 합계는 scan 1,357,590ms, verify 394ms, backlog merge 1,346ms다. 가장 느린 route 세 개는 AWS What's New 299,707ms, Boston Dynamics 299,587ms, IEEE Spectrum Robotics 299,526ms다. AWS `[2026-09-25, 2026-10-02)` 창에서 상세 후보 80건을 따라가 확인했고 해당 receipt는 290,895ms였다. AWS 다음 하루 창은 후보 1건, 8,812ms였다. 현황판은 이 run에 연결된 모델 추론 receipt가 없다고 표시한다. 이 run의 병목은 원문 수집·요청 처리로 확인됐으며 로컬 LLM 추론으로 판단할 증거는 없다. OpenAI API로 바꾸더라도 이 수집 네트워크 요청 시간은 줄어들지 않는다.
+
+전체 테스트 suite는 추가 실행하지 않았다. 실제 70개 receipt, retry/incomplete 수, 후보 장부 수, handoff JSON과 private dashboard readback을 확인했고, 같은 코드 상태에서 이미 통과한 표적 테스트는 반복하지 않았다. 현황판 SHA-256 `c01a5d5c843bb50e1a6b075857b749c1b43a28d6118d3f6a60c9e6c8e079de93`, backlog raw-byte SHA-256 `89aaf31ecc2e5c69129104b8806ec03ea1fde529374ebdfc6d7691c33177bbf7`다. 승인·Drive·공개 사이트·RSS·GitHub 갱신은 진행하지 않았다. WBS는 1/22(5%), P1-01 partial이며 1시간 초과 정체 조건은 발생하지 않았다.
+
+## 256. Drive 기준 원본 195개와 로컬 원고 동기화
+
+2026-10-02 Google Drive의 Editions·Knowledge·Signals·TrendTopics 네 루트를 재귀 열거하고 원문 바이트 SHA-256 195개 전부를 확인한 뒤 트리를 다시 열거했다. 두 목록은 같았고 원격 삭제는 없었다. 로컬 193개와 비교해 Drive에만 있던 2026-10-01 Edition·Signals 두 파일과 Drive에서 수정된 TrendTopics 세 파일만 동기화했다. 적용 결과 `updated` 5개, `deleted` 0개, 총 195개이며 snapshot hash는 `c2c40df7cdfb9bce69b2a1c6c7da6d60cc5660d86e387abecf015abefee36b08`다. 기존 파일별 주소·식별자는 바꾸지 않았다.
+
+연결기 readback 시각은 `2026-10-02 11:53:48 UTC` 형식으로 반환돼 snapshot builder가 요구하는 ISO timestamp로 직접 해석되지 않았다. 원본 receipt는 그대로 보존하고, 검증 시각을 의미 변경 없이 `2026-10-02T11:53:48Z`로 표준화한 private 사본을 만들어 snapshot을 재구성했다. builder가 195개 전체의 파일 경로·부모·원문 바이트 hash와 로컬 parity를 확인했고, `pull-drive.py --verify-source-snapshot`도 동일 파일 수와 hash로 통과했다. 최종 snapshot file SHA-256은 `4c7c48362d3fbe14908dfcdb60de71b35fd2313c2cb22bb9ff56e8f656f8dacb`다.
+
+이번 작업은 기존 [계획 19.160](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19160-테스트-실행-빈도-축소)에 따라 전체 테스트 suite를 실행하지 않았다. 코드 수정이 없어 표적 테스트도 재실행하지 않았다. 핵심 검증은 두 번의 Drive 트리 목록 일치, 195개 원문 hash, 5개 변경·0개 삭제의 dry-run/apply 결과, builder와 snapshot readback이다. Drive 기준 자료와 로컬 원고는 일치하지만 2026-10-02 새 회차 조사·편집·승인·배포가 완료된 것은 아니다.

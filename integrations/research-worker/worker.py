@@ -704,6 +704,16 @@ def html_parse(raw, url, options):
     for rule in rules:
         if not isinstance(rule, dict) or not all(isinstance(rule.get(k), str) and 0 < len(rule[k]) <= 512 for k in ("id", "item_xpath", "url_attribute", "url_pattern", "title_xpath")):
             raise ValueError("Incomplete listing link rule")
+        url_template = rule.get("url_template")
+        date_kind = rule.get("date_kind", "published_at")
+        if url_template is not None:
+            if not isinstance(url_template, str) or not 0 < len(url_template) <= 512:
+                raise ValueError("Invalid listing URL template")
+            template_fields = re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", url_template)
+            if not template_fields or len(template_fields) != url_template.count("{") or len(template_fields) != url_template.count("}") or any(not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) for name in template_fields):
+                raise ValueError("Invalid listing URL template fields")
+        if date_kind not in ("published_at", "event_date"):
+            raise ValueError("Invalid listing date kind")
         if rule.get("category_xpath") is not None and (not isinstance(rule["category_xpath"], str) or not 0 < len(rule["category_xpath"]) <= 512):
             raise ValueError("Invalid listing category selector")
         if bool(rule.get("date_pattern")) != bool(rule.get("date_format")) or (rule.get("date_pattern") and not rule.get("date_xpath")):
@@ -711,6 +721,8 @@ def html_parse(raw, url, options):
         if rule.get("title_pattern") and (not isinstance(rule["title_pattern"], str) or len(rule["title_pattern"]) > 512 or "title" not in re.compile(rule["title_pattern"]).groupindex):
             raise ValueError("Listing title pattern needs a named title group")
         pattern = re.compile(rule["url_pattern"])
+        if url_template is not None and any(name not in pattern.groupindex for name in template_fields):
+            raise ValueError("Listing URL template needs matching named groups")
         items = dom.xpath(rule["item_xpath"])
         matched = 0
         for item in items[:5000]:
@@ -719,7 +731,12 @@ def html_parse(raw, url, options):
             target = pattern.fullmatch(item.get(rule["url_attribute"], ""))
             if not target:
                 continue
-            href = urljoin(url, target.group("url"))
+            if url_template is None:
+                href_target = target.group("url")
+            else:
+                groups = target.groupdict()
+                href_target = re.sub(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", lambda match: groups[match.group(1)], url_template)
+            href = urljoin(url, href_target)
             if urlparse(href).scheme not in ("http", "https"):
                 continue
             title_nodes = item.xpath(rule["title_xpath"])
@@ -740,7 +757,8 @@ def html_parse(raw, url, options):
             categories = []
             if rule.get("category_xpath"):
                 categories = [clean(" ".join(n.itertext())) for n in item.xpath(rule["category_xpath"]) if isinstance(n, etree._Element)]
-            link = {"url": href, "text": item_title, "dom_path": domtree.getpath(item), "published_at": listed_day, "listed_date_text": listed_date or None, "profile_id": rule["id"]}
+            link = {"url": href, "text": item_title, "dom_path": domtree.getpath(item), "listed_date_text": listed_date or None, "profile_id": rule["id"], "date_kind": date_kind}
+            link["published_at" if date_kind == "published_at" else "event_date"] = listed_day
             if rule.get("category_xpath"):
                 link["categories"] = categories
             links.append(link)
@@ -877,6 +895,57 @@ def html_parse(raw, url, options):
     if published and source_date_value(published) is None:
         published = None
         date_profile_status = "invalid-date"
+    if options.get("publication_date_from_listing") is True and (
+        published is None or options.get("publication_date_listing_authoritative") is True
+    ):
+        listed_day = options.get("listing_published_at")
+        listing_url = options.get("listing_source_url")
+        listing_version = options.get("listing_source_version_id")
+        listing_text = options.get("listing_date_text")
+        try:
+            normalized_day = datetime.strptime(listed_day, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except (TypeError, ValueError):
+            raise ValueError("Official listing publication date is required")
+        if not all(isinstance(value, str) and value.strip() for value in (listing_url, listing_version, listing_text)):
+            raise ValueError("Official listing publication evidence is required")
+        if options.get("publication_date_listing_authoritative") is True:
+            displayed_day = None
+            displayed_text = date_basis.get("text") if isinstance(date_basis, dict) else None
+            displayed_match = re.fullmatch(options.get("publication_date_pattern", ""), displayed_text or "")
+            if displayed_match:
+                try:
+                    displayed_day = datetime.strptime(
+                        date_for_strptime(displayed_match.group(0), options["publication_date_format"], language),
+                        options["publication_date_format"],
+                    ).strftime("%Y-%m-%d")
+                except (KeyError, ValueError):
+                    displayed_day = None
+            if displayed_day != normalized_day:
+                published = None
+                date_profile_status = "listing-display-mismatch"
+            else:
+                published = normalized_day
+                date_profile_status = "official-listing-confirmed-by-display"
+                date_basis = {
+                    "type": "official-listing-and-visible-date",
+                    "published_at": normalized_day,
+                    "text": listing_text,
+                    "source_url": listing_url,
+                    "source_version_id": listing_version,
+                    "display_text": displayed_text,
+                    "display_dom_path": date_basis.get("dom_path"),
+                    "other_date_candidates": [value for value in date_nodes if known_date(value, calendar_zone) != normalized_day],
+                }
+        else:
+            published = normalized_day
+            date_profile_status = "official-listing"
+            date_basis = {
+                "type": "official-listing",
+                "published_at": normalized_day,
+                "text": listing_text,
+                "source_url": listing_url,
+                "source_version_id": listing_version,
+            }
     modified_days = [known_date(value, calendar_zone) for value in modified_nodes]
     valid_modified = bool(modified_days) and all(modified_days) and len(set(modified_days)) == 1
     modified = (modified_nodes[0] if len(set(modified_nodes)) == 1 else modified_days[0]) if valid_modified else None
@@ -890,6 +959,18 @@ def html_parse(raw, url, options):
     if modified and published and known_date(modified, calendar_zone) < known_date(published, calendar_zone):
         modified = None
         modified_profile_status = "before-publication"
+    publication_date_policy = options.get("publication_date_policy")
+    if publication_date_policy not in (None, "not_applicable"):
+        raise ValueError("Unsupported publication date policy")
+    if publication_date_policy == "not_applicable":
+        published = None
+        modified = None
+        date_nodes = []
+        modified_nodes = []
+        date_basis = None
+        modified_basis = None
+        date_profile_status = "not-applicable"
+        modified_profile_status = "not-applicable"
     dates = {"published_at": published, "modified_at": modified, "precision": "timestamp" if published and "T" in published else "day" if published else "unknown", "candidates": date_nodes, "basis": date_basis, "profile_status": date_profile_status, "modified_candidates": modified_nodes, "modified_basis": modified_basis, "modified_profile_status": modified_profile_status}
     # Parser date inference is kept as a candidate, never promoted to original publication time.
     missing_math = [{"dom_path": value["dom_path"], "reason": value["reason"]} for value in math_expressions if value["reason"]]
@@ -1634,6 +1715,9 @@ def run(request, root):
         raise ValueError("Worker input hash mismatch")
     options = request.get("options", {})
     markdown_mime = request.get("mime_type", "").split(";")[0].strip().lower() in ("text/markdown", "text/x-markdown", "application/markdown")
+    html_fragment_profile = options.get("format") == "html-fragment"
+    if html_fragment_profile and request.get("mime_type", "").split(";")[0].strip().lower() not in ("text/html", "application/xhtml+xml"):
+        raise ValueError("Explicit HTML fragment profile requires an HTML response")
     prefix = raw[:8192].removeprefix(b"\xef\xbb\xbf").lstrip()
     html_document = re.match(rb"^(?:<!--.*?-->\s*)*(?:<!doctype\s+html\b|<html(?:\s|>))", prefix, re.I | re.S)
     if raw.startswith(b"%PDF-"):
@@ -1642,12 +1726,12 @@ def run(request, root):
     elif options.get("format") == "jats":
         parsed = jats_parse(raw, request["url"], options)
         parser = {"id": "jats-xml", "version": "frontiers-jats/v1"}
-    elif html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
+    elif html_fragment_profile or html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
         parsed = html_parse(raw, request["url"], options)
         parser = (
             {"id": options["embedded_article"]["format"], "version": VERSION}
             if options.get("embedded_article")
-            else {"id": "trafilatura", "version": importlib.metadata.version("trafilatura")}
+            else {"id": "html-fragment" if html_fragment_profile else "trafilatura", "version": VERSION if html_fragment_profile else importlib.metadata.version("trafilatura")}
         )
     elif markdown_mime:
         parsed = markdown_parse(raw, request["url"], options)

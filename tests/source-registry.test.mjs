@@ -81,6 +81,23 @@ test("ABB Destination Zukunft profile is scoped to supported article paths", () 
   ])
 })
 
+test("Roche media release profile reads the exact release-date field", () => {
+  const acquisition = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
+  const profile = acquisition.article_profiles.find(
+    (item) => item.id === "roche-media-release-date-v1",
+  )
+  assert.ok(profile)
+  assert.ok(
+    new RegExp(profile.url_pattern).test("https://www.roche.com/media/releases/med-cor-2026-09-17"),
+  )
+  assert.ok(
+    new RegExp(profile.url_pattern).test("https://www.roche.com/media/releases/med-cor-2026-09-22"),
+  )
+  assert.ok(!new RegExp(profile.url_pattern).test("https://www.roche.com/media/about-us"))
+  assert.equal(profile.options.publication_date_xpath, "//meta[@name='release-date']")
+  assert.equal(profile.options.publication_date_attribute, "content")
+})
+
 test("new manufacturer routes keep stable IDs alongside an existing company with the same ID", () => {
   const company = {
     id: "doosan-robotics",
@@ -232,7 +249,7 @@ test("company and institution watchlist sources retain their editorial source ki
   const routes = registry(channels, watchlist)
   const byOwner = (id) => routes.find((route) => route.publisher_id === id)
 
-  assert.equal(routes.length, 114)
+  assert.equal(routes.length, 118)
   assert.ok(routes.every((route) => route.kind))
   assert.equal(byOwner("microsoft").kind, "filing-ir")
   assert.equal(byOwner("kaist").kind, "commercialization")
@@ -240,6 +257,22 @@ test("company and institution watchlist sources retain their editorial source ki
   assert.equal(byOwner("naver").kind, "company")
   assert.ok(routes.some((route) => route.channel_id === "route-doosan-news-ko"))
   assert.ok(routes.some((route) => route.channel_id === "route-doosan-news-en"))
+  const ieeeRobotics = routes.find((route) => route.channel_id === "ieee-spectrum-robotics")
+  assert.equal(ieeeRobotics.method, "rss")
+  assert.equal(ieeeRobotics.kind, "industry-press")
+  const awsWhatsNew = routes.find((route) => route.channel_id === "aws-whats-new-rss")
+  assert.equal(awsWhatsNew.method, "rss")
+  assert.equal(awsWhatsNew.url, "https://aws.amazon.com/about-aws/whats-new/recent/feed/")
+  assert.equal(ieeeRobotics.axis, "기술·제품")
+  const acquisition = JSON.parse(
+    fs.readFileSync(new URL("../data/research-acquisition.json", import.meta.url)),
+  )
+  const bostonDynamics = registry(channels, watchlist, acquisition).find(
+    (route) => route.channel_id === "boston-dynamics-blog",
+  )
+  assert.equal(bostonDynamics.method, "html-list")
+  assert.equal(bostonDynamics.api_profile.id, "wordpress-rest-posts-json-v1")
+  assert.equal(bostonDynamics.kind, "company")
   const dailyRoutes = JSON.parse(
     fs.readFileSync(new URL("../data/research-daily-routes.json", import.meta.url)),
   )
@@ -249,6 +282,14 @@ test("company and institution watchlist sources retain their editorial source ki
       channel_id: "route-doosan-news-ko",
       enabled: true,
       baseline_run: "20261001-doosan-ko-today-v1",
+    },
+  )
+  assert.deepEqual(
+    dailyRoutes.routes.find((route) => route.channel_id === "ieee-spectrum-robotics"),
+    {
+      channel_id: "ieee-spectrum-robotics",
+      enabled: true,
+      baseline_run: "ieee-spectrum-robotics-20261002-v3",
     },
   )
   assert.throws(
@@ -307,6 +348,11 @@ test("Yaskawa keeps its original global route and adds news, product, and IR rou
     "yaskawa-global-product-list-v1",
   )
   assert.equal(byId("route-yaskawa-ir-en").listing_profile.rule_id, "yaskawa-global-ir-results-v1")
+  assert.ok(
+    new RegExp(byId("route-yaskawa-ir-en").item_pattern).test(
+      "https://www.yaskawa-global.com/ir/materials/annual",
+    ),
+  )
   assert.equal(
     byId("route-yaskawa-company-news-en").item_pattern.includes("newsrelease/news/"),
     true,
@@ -328,8 +374,16 @@ test("Yaskawa keeps its original global route and adds news, product, and IR rou
   )
   assert.ok(
     acquisition.article_profiles
-      .filter((profile) => !profile.id.startsWith("yaskawa-ir-"))
+      .filter(
+        (profile) =>
+          !profile.id.startsWith("yaskawa-ir-") && profile.id !== "robotsguide-robotics-article-v1",
+      )
       .every((profile) => profile.options.publication_date_from_listing !== true),
+  )
+  assert.equal(
+    acquisition.article_profiles.find((profile) => profile.id === "robotsguide-robotics-article-v1")
+      .options.publication_date_from_listing,
+    true,
   )
   assert.ok(
     acquisition.article_profiles.some(
@@ -349,6 +403,24 @@ test("Yaskawa keeps its original global route and adds news, product, and IR rou
         ),
     ),
   )
+  const annualReport = acquisition.article_profiles.find(
+    (profile) => profile.id === "yaskawa-ir-annual-report-landing-v1",
+  )
+  assert.ok(annualReport)
+  assert.equal(annualReport.options.publication_date_from_listing, true)
+  assert.ok(
+    new RegExp(annualReport.url_pattern).test("https://www.yaskawa-global.com/ir/materials/annual"),
+  )
+  const strategySection = acquisition.article_profiles.find(
+    (profile) => profile.id === "yaskawa-report-2026-vision-strategy-pdf-v1",
+  )
+  assert.ok(strategySection)
+  assert.equal(strategySection.options.pdf_title_pattern, "^Vision & Strategy$")
+  const performanceSection = acquisition.article_profiles.find(
+    (profile) => profile.id === "yaskawa-report-2026-business-performance-pdf-v1",
+  )
+  assert.ok(performanceSection)
+  assert.equal(performanceSection.options.pdf_title_pattern, "^Business Performance and Strategy$")
 })
 
 test("FANUC dated IR disclosures are distinct from its undated quarterly archive", () => {

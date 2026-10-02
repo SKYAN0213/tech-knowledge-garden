@@ -605,6 +605,23 @@
       }
     },
     {
+      "id": "aws-whats-new-rss",
+      "name": "AWS What's New",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "반도체·컴퓨팅"],
+      "method": "rss",
+      "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
+      "route_check": {
+        "date": "2026-10-02",
+        "method": "official-rss-window-scan",
+        "status": "window-scanned",
+        "scope": "The official 100-item RSS feed reached an older boundary and a one-day 2026-10-01 window produced 16 dated full articles; all 16 details were fetched, title/date matched and parsed. Candidate approval remains separate."
+      }
+    },
+    {
       "id": "fda-press-announcements",
       "name": "FDA Press Announcements",
       "kind": "regulator",
@@ -651,6 +668,66 @@
         "method": "local-source-fetch",
         "status": "window-scanned",
         "scope": "Official journal index completed September 22–29 and observed September 29 windows. Published cards and dated full HTML matched; accepted cards were excluded. Paper claims and formula/table fidelity remain editorial review items."
+      }
+    },
+    {
+      "id": "ieee-spectrum-robotics",
+      "name": "IEEE Spectrum Robotics",
+      "kind": "industry-press",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "method": "rss",
+      "url": "https://spectrum.ieee.org/rss/robotics/fulltext",
+      "route_check": {
+        "date": "2026-10-02",
+        "method": "source-fetch-and-bounded-rss-scan",
+        "status": "window-scanned",
+        "scope": "Official IEEE Spectrum Robotics feed fetched and its 2026-09-25–2026-10-02 window completed: 3 dated originals, 27 older boundary items, source headlines retained alongside differing feed titles, and one Robots Guide date grounded in this feed's dated item. Candidate content remains editorially unreviewed."
+      }
+    },
+    {
+      "id": "boston-dynamics-blog",
+      "name": "Boston Dynamics 공식 블로그",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "url": "https://bostondynamics.com/blog/",
+      "route_check": {
+        "date": "2026-10-02",
+        "method": "local-source-fetch",
+        "status": "window-scanned-unreviewed",
+        "scope": "Official WordPress REST API window completed for 2026-09-25–2026-10-02: one listing record and its dated full article matched. The candidate remains editorially unreviewed."
+      }
+    },
+    {
+      "id": "kind-ir-schedule-ko",
+      "name": "KIND 공식 IR 일정",
+      "kind": "filing-ir",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기업·운영",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "method": "html-list",
+      "allowed_hosts": ["kind.krx.co.kr"],
+      "url": "https://kind.krx.co.kr/corpgeneral/irschedule.do?method=searchIRScheduleMain&gubun=iRSchedule",
+      "route_check": {
+        "date": "2026-10-02",
+        "method": "source-fetch-and-form-html-scan",
+        "status": "registered-private-event-source",
+        "scope": "Official IR event schedule; event dates are kept separate from publication dates and are never sent to the news candidate backlog."
       }
     }
   ]

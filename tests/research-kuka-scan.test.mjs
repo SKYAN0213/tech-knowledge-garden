@@ -39,6 +39,25 @@ const item = (slug, date) => ({
   date,
   href: `https://www.kuka.com/de-de/unternehmen/presse/news/2026/${slug}`,
 })
+const englishChannel = {
+  ...channel,
+  channel_id: "route-kuka-news-en",
+  url: "https://www.kuka.com/en-us/company/press/news",
+  language: "en",
+  item_pattern:
+    "^https://www\\.kuka\\.com/en-[a-z]{2}/company/press/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
+  api_profile: {
+    ...channel.api_profile,
+    sc_lang: "en-US",
+  },
+}
+const englishItem = (slug, date) => ({
+  itemId: "721a32dc-e7ee-4438-a8e2-f6d15e09880a",
+  headline: `KUKA announcement: ${slug}`,
+  date,
+  dateISO: "2026-09-10T09:52:00.0000000+02:00",
+  href: `https://www.kuka.com/en-us/company/press/news/2026/${slug}`,
+})
 
 test("KUKA form request binds locale and page cursor to its archived URL", () => {
   const request = kukaPageRequest(channel, 2),
@@ -51,6 +70,37 @@ test("KUKA form request binds locale and page cursor to its archived URL", () =>
   assert.equal(form.get("contextid"), channel.api_profile.context_id)
   assert.equal(kukaPublicationDay("5. März 2026"), "2026-03-05")
   assert.equal(kukaPublicationDay("31. Februar 2026"), null)
+  assert.equal(kukaPublicationDay("10 September 2026", "en-US"), "2026-09-10")
+  assert.equal(kukaPublicationDay("31 February 2026", "en-US"), null)
+  const englishRequest = kukaPageRequest(englishChannel, 0)
+  assert.equal(new URL(englishRequest.url).searchParams.get("sc_lang"), "en-US")
+  const englishRows = [englishItem("09/kuka-mobile-forklift-launch", "September 10, 2026")]
+  const parsedEnglish = parseKUKAPage({ count: 1, items: englishRows, facets: [] }, englishChannel, 0)
+  assert.equal(parsedEnglish.items[0].published_at, "2026-09-10")
+  assert.equal(parsedEnglish.items[0].source_item_id, englishRows[0].itemId)
+  assert.throws(
+    () =>
+      parseKUKAPage(
+        { count: 2, items: [englishRows[0], { ...englishRows[0], href: englishRows[0].href + "-duplicate" }], facets: [] },
+        englishChannel,
+        0,
+      ),
+    /locale-matched URL/,
+  )
+  const mismatch = englishItem("09/kuka-mobile-forklift-launch", "September 11, 2026")
+  assert.throws(
+    () => parseKUKAPage({ count: 1, items: [mismatch], facets: [] }, englishChannel, 0),
+    /publication date/,
+  )
+  assert.throws(
+    () =>
+      parseKUKAPage(
+        { count: 1, items: [item("09/forklift", "10 September 2026")], facets: [] },
+        englishChannel,
+        0,
+      ),
+    /locale-matched URL/,
+  )
   assert.throws(
     () =>
       kukaPageRequest({ ...channel, api_profile: { ...channel.api_profile, sc_lang: "ko-KR" } }, 0),
@@ -84,7 +134,7 @@ test("KUKA page rejects localized mismatches and missing rows", () => {
         channel,
         0,
       ),
-    /lacks German URL/,
+    /locale-matched URL/,
   )
   assert.throws(
     () =>

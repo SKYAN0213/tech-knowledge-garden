@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import path from "node:path"
 import { canonicalURL } from "../garden.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
@@ -23,14 +24,18 @@ function oneCandidate(backlog, candidateKey) {
   const matches = backlog.candidates.filter((candidate) => candidate.key === candidateKey)
   if (matches.length !== 1) throw Error("One exact candidate required")
   const [candidate] = matches
+  const reviewedExistingEvent =
+    candidate.review_status === "verified" &&
+    /^[a-f0-9]{16,64}$/.test(candidate.event_id || "") &&
+    typeof candidate.approval?.approved_run === "string" &&
+    /^[a-f0-9]{64}$/.test(candidate.approval?.article_sha256 || "")
   if (
     candidate.source_urls?.length !== 1 ||
     !candidate.source_published_at ||
-    !["unreviewed", "deferred"].includes(candidate.review_status) ||
-    candidate.event_id ||
-    candidate.approval
+    (!["unreviewed", "deferred"].includes(candidate.review_status) && !reviewedExistingEvent) ||
+    (!reviewedExistingEvent && (candidate.event_id || candidate.approval))
   )
-    throw Error("Candidate with one original URL and publication date required")
+    throw Error("Unresolved candidate or verified approved event with one original URL and date required")
   return candidate
 }
 
@@ -162,6 +167,108 @@ export function buildCandidateSourceAlternativeResolution({
     drive_written: false,
     public_verified: false,
   }
+}
+
+// Rebuild same-event relations from their original source, review and target
+// candidate before allowing a later scan to suppress a duplicate candidate.
+// A summary field or URL similarity alone is not sufficient to redirect intake.
+export function loadSameEventSourceAliases(root, backlogFile, { asOf = null } = {}) {
+  const backlogBytes = fs.readFileSync(backlogFile)
+  const backlog = JSON.parse(backlogBytes.toString("utf8"))
+  if (backlog?.schema !== "research-candidates/v1" || !Array.isArray(backlog.candidates))
+    throw Error("Research candidate backlog required for same-event source aliases")
+  const runsDirectory = safePath(root, "runs")
+  if (!fs.existsSync(runsDirectory)) return new Map()
+  const aliases = new Map()
+  for (const entry of fs.readdirSync(runsDirectory, { withFileTypes: true })) {
+    if (entry.isSymbolicLink()) throw Error("Symlinks are not allowed in same-event source index")
+    if (!entry.isDirectory()) continue
+    const runId = entry.name
+    const receiptPath = `runs/${runId}/candidate-source-alternative.json`
+    const receipt = readJSON(root, receiptPath)
+    if (!receipt || receipt.decision !== "same_event") continue
+    if (
+      receipt.schema !== "research-candidate-source-alternative-resolution/v1" ||
+      receipt.candidate_approved !== false ||
+      receipt.candidate_published !== false ||
+      receipt.backlog_written !== false ||
+      receipt.drive_written !== false ||
+      receipt.public_verified !== false ||
+      receipt.inputs?.source_run_id === undefined ||
+      receipt.generated_at === undefined
+    )
+      throw Error(`Invalid same-event source resolution: ${runId}`)
+    if (asOf && receipt.generated_at > asOf) continue
+
+    const targets = backlog.candidates.filter(
+      (candidate) => candidate.key === receipt.candidate_key,
+    )
+    if (targets.length !== 1)
+      throw Error(`Same-event target candidate is missing or ambiguous: ${runId}`)
+    const [candidate] = targets
+    if (
+      candidate.source_urls?.length !== 1 ||
+      canonicalURL(candidate.source_urls[0]) !== canonicalURL(receipt.original_source?.url) ||
+      candidate.source_published_at !== receipt.original_source?.published_at
+    )
+      throw Error(`Same-event target candidate identity changed: ${runId}`)
+
+    const sourceRunId = receipt.inputs.source_run_id
+    const reviewBytes = findPinnedAlternativeReview(
+      root,
+      runId,
+      sourceRunId,
+      receipt.inputs.review_sha256,
+    )
+    if (!reviewBytes) throw Error(`Same-event source review changed: ${runId}`)
+    const review = JSON.parse(reviewBytes.toString("utf8"))
+    const stored = loadStoredSourceRun(root, sourceRunId)
+    const reviewed = readJSON(root, `runs/${sourceRunId}/reviewed-claims.json`)
+    if (!Array.isArray(reviewed?.claims))
+      throw Error(`Same-event source review claims are missing: ${runId}`)
+    const rebuilt = buildCandidateSourceAlternativeResolution({
+      candidate,
+      review,
+      sourceRunId,
+      sourceRunIdentity: stored.identity,
+      documents: stored.documents,
+      parses: stored.parses,
+      reviewedClaims: reviewed.claims,
+      reviewSha256: sha256(reviewBytes),
+      backlogSha256: receipt.inputs.backlog_sha256,
+      generatedAt: receipt.generated_at,
+    })
+    if (JSON.stringify(rebuilt) !== JSON.stringify(receipt))
+      throw Error(`Same-event source resolution no longer matches its evidence: ${runId}`)
+
+    const alternativeURL = canonicalURL(receipt.alternative_source.url)
+    const previous = aliases.get(alternativeURL)
+    if (previous && previous.candidate_key !== candidate.key)
+      throw Error(`Same-event source maps to multiple candidates: ${alternativeURL}`)
+    aliases.set(alternativeURL, {
+      candidate_key: candidate.key,
+      resolution_run: runId,
+      generated_at: receipt.generated_at,
+    })
+  }
+  return aliases
+}
+
+function findPinnedAlternativeReview(root, resolutionRunId, sourceRunId, expectedSha256) {
+  if (!/^[a-f0-9]{64}$/.test(expectedSha256 || "")) return null
+  const matches = []
+  for (const runId of new Set([resolutionRunId, sourceRunId])) {
+    const directory = safePath(root, `runs/${runId}`)
+    if (!fs.existsSync(directory)) continue
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.startsWith("candidate-source-alternative-review")) continue
+      const bytes = fs.readFileSync(safePath(root, `runs/${runId}/${entry.name}`))
+      if (sha256(bytes) === expectedSha256) matches.push(bytes)
+    }
+  }
+  if (!matches.length) return null
+  if (matches.some((bytes) => !bytes.equals(matches[0]))) return null
+  return matches[0]
 }
 
 export async function recordCandidateSourceAlternative({

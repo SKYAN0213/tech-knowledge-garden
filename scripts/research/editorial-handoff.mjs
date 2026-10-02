@@ -6,6 +6,7 @@ import { sha256 } from "./contracts.mjs"
 import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { projectIntakeOntology, relatedCandidateKeys } from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
+import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import {
   readDailyReceipts,
   storedListScan,
@@ -151,9 +152,43 @@ export function selectCandidateSource(root, handoff, candidateKey) {
       ),
   )
   if (matchedDocuments?.length !== 1) throw Error("Candidate has no unique exact stored source URL")
-  const selected = selectStoredSources(root, attempt.attempt_id, [matchedDocuments[0].original_url])
-  const [document] = selected.documents
-  const [parse] = selected.parses
+  const supportURLs = attempt.supporting_source_urls || []
+  if (
+    !Array.isArray(supportURLs) ||
+    supportURLs.length > 7 ||
+    new Set(supportURLs.map((url) => canonicalURL(url))).size !== supportURLs.length
+  )
+    throw Error("Candidate supporting source list is invalid")
+  const primary = selectStoredSources(root, attempt.attempt_id, [matchedDocuments[0].original_url])
+  const [primaryParse] = primary.parses
+  const declaredAttachments = new Set(
+    (primaryParse.attachments || []).map((attachment) => canonicalURL(attachment.url)),
+  )
+  if (supportURLs.some((url) => !declaredAttachments.has(canonicalURL(url))))
+    throw Error("Candidate supporting source is not linked by its exact parent parse")
+  const selected = selectStoredSources(root, attempt.attempt_id, [
+    matchedDocuments[0].original_url,
+    ...supportURLs,
+  ])
+  if (
+    selected.documents.slice(1).some((_, index) => {
+      const sourceVersionId = selected.documents[index + 1].source_version_id
+      const supportParse = selected.parses.find(
+        (item) => item.source_version_id === sourceVersionId,
+      )
+      return (
+        !supportParse ||
+        supportParse.status !== "extracted" ||
+        !supportParse.quality?.required_fields_present ||
+        !supportParse.blocks?.length
+      )
+    })
+  )
+    throw Error("Selected supporting source does not have a complete extracted parse")
+  const document = selected.documents[0]
+  const parse = selected.parses.find(
+    (item) => item.source_version_id === document.source_version_id,
+  )
   if (
     document.source_version_id !== candidate.article_source_version_id ||
     parse.parse_id !== candidate.article_parse_id ||
@@ -172,6 +207,7 @@ export function buildEditorialHandoff({
   issues,
   observedAt,
   supplementalWindows = [],
+  sameEventAliases = new Map(),
 }) {
   if (
     !Array.isArray(supplementalWindows) ||
@@ -191,16 +227,177 @@ export function buildEditorialHandoff({
   )
   if (observationByAttemptKey.size !== observations.length)
     throw Error("Stored daily source observations contain duplicate candidate keys")
+  const backlogKeys = new Set((backlog?.candidates || []).map((candidate) => candidate.key))
+  const candidateByKey = new Map(
+    (backlog?.candidates || []).map((candidate) => [candidate.key, candidate]),
+  )
+  const suppressedSourceKeys = new Set()
+  const sameEventSources = []
+  const backlogAliasKeys = new Set()
+  for (const receipt of receipts.filter((item) => item.status === "window_scanned")) {
+    const aliases = receipt.backlog_merge?.same_event_aliases || []
+    if (!Array.isArray(aliases))
+      throw Error("Completed daily receipt has an invalid same-event source list")
+    for (const alias of aliases) {
+      const observation = observationByAttemptKey.get(
+        `${receipt.attempt_id}:${alias.candidate_key}`,
+      )
+      if (
+        !alias.candidate_key ||
+        !alias.target_candidate_key ||
+        alias.candidate_key === alias.target_candidate_key ||
+        !alias.candidate_url ||
+        !alias.resolution_run ||
+        !receipt.candidate_keys.includes(alias.candidate_key) ||
+        !observation ||
+        !backlogKeys.has(alias.target_candidate_key) ||
+        suppressedSourceKeys.has(`${receipt.attempt_id}:${alias.candidate_key}`)
+      )
+        throw Error(
+          "Same-event source alias does not match a completed candidate and backlog target",
+        )
+      suppressedSourceKeys.add(`${receipt.attempt_id}:${alias.candidate_key}`)
+      sameEventSources.push({
+        ...alias,
+        attempt_id: receipt.attempt_id,
+        article_source_version_id: observation.article_source_version_id,
+        article_parse_id: observation.article_parse_id,
+        article_content_sha256: observation.article_content_sha256,
+      })
+    }
+  }
+  for (const candidate of backlog?.candidates || []) {
+    const matches = [
+      ...new Map(
+        (candidate.source_urls || [])
+          .map((url) => sameEventAliases.get(canonicalURL(url)))
+          .filter(Boolean)
+          .map((alias) => [alias.candidate_key, alias]),
+      ).values(),
+    ]
+    if (matches.length > 1)
+      throw Error(`Backlog candidate maps to multiple same-event targets: ${candidate.key}`)
+    const alias = matches[0]
+    if (!alias || alias.candidate_key === candidate.key) continue
+    if (!candidateByKey.has(alias.candidate_key))
+      throw Error(`Same-event source alias target is absent from backlog: ${alias.candidate_key}`)
+    backlogAliasKeys.add(candidate.key)
+    const sourceUrl = candidate.source_urls.find((url) => sameEventAliases.has(canonicalURL(url)))
+    if (
+      !sameEventSources.some(
+        (item) =>
+          item.candidate_key === candidate.key && item.target_candidate_key === alias.candidate_key,
+      )
+    )
+      sameEventSources.push({
+        candidate_key: candidate.key,
+        candidate_url: canonicalURL(sourceUrl),
+        target_candidate_key: alias.candidate_key,
+        resolution_run: alias.resolution_run,
+        observed_in_current_run: false,
+      })
+  }
   for (const receipt of receipts.filter((item) => item.status === "window_scanned"))
     for (const key of receipt.candidate_keys) {
       const observation = observationByAttemptKey.get(`${receipt.attempt_id}:${key}`)
       if (!observation)
         throw Error("Completed daily candidate lacks its stored source observation: " + key)
+      if (suppressedSourceKeys.has(`${receipt.attempt_id}:${key}`)) continue
       if (!attemptsByKey.has(key)) attemptsByKey.set(key, new Set())
       attemptsByKey.get(key).add(observation)
     }
-  const backlogKeys = new Set((backlog?.candidates || []).map((candidate) => candidate.key))
-  const missing = [...attemptsByKey.keys()].filter((key) => !backlogKeys.has(key))
+  const sourceRecordAliases = []
+  const missing = []
+  for (const [key, attempts] of attemptsByKey) {
+    if (backlogKeys.has(key)) continue
+    const sourceObservations = [...attempts]
+    const identities = new Set(
+      sourceObservations.flatMap((observation) =>
+        (observation.source_records || [])
+          .filter(
+            (record) =>
+              typeof record.publisher_id === "string" &&
+              typeof record.profile_id === "string" &&
+              typeof record.source_item_id === "string",
+          )
+          .map((record) =>
+            JSON.stringify([
+              record.publisher_id.trim().toLowerCase(),
+              record.profile_id.trim(),
+              record.source_item_id.trim(),
+            ]),
+          ),
+      ),
+    )
+    const urls = new Set(
+      sourceObservations.flatMap((observation) =>
+        (observation.source_urls || []).map((url) => canonicalURL(url)),
+      ),
+    )
+    const matches = (backlog?.candidates || []).flatMap((target) =>
+      (target.source_record_aliases || [])
+        .filter((alias) => {
+          if (
+            typeof alias.source_url !== "string" ||
+            typeof alias.publisher_id !== "string" ||
+            typeof alias.profile_id !== "string" ||
+            typeof alias.source_item_id !== "string"
+          )
+            return false
+          const identity = JSON.stringify([
+            alias.publisher_id.trim().toLowerCase(),
+            alias.profile_id.trim(),
+            alias.source_item_id.trim(),
+          ])
+          const targetHasIdentity = (target.discovery || []).some(
+            (record) =>
+              typeof record.publisher_id === "string" &&
+              typeof record.profile_id === "string" &&
+              typeof record.source_item_id === "string" &&
+              JSON.stringify([
+                record.publisher_id.trim().toLowerCase(),
+                record.profile_id.trim(),
+                record.source_item_id.trim(),
+              ]) === identity,
+          )
+          return (
+            targetHasIdentity &&
+            urls.has(canonicalURL(alias.source_url)) &&
+            identities.has(identity)
+          )
+        })
+        .map((alias) => ({ target, alias })),
+    )
+    const uniqueMatches = [
+      ...new Map(
+        matches.map(({ target, alias }) => [
+          `${target.key}:${canonicalURL(alias.source_url)}:${alias.source_item_id}`,
+          { target, alias },
+        ]),
+      ).values(),
+    ]
+    if (uniqueMatches.length !== 1) {
+      missing.push(key)
+      continue
+    }
+    const { target, alias } = uniqueMatches[0]
+    if (!backlogKeys.has(target.key)) {
+      missing.push(key)
+      continue
+    }
+    if (!attemptsByKey.has(target.key)) attemptsByKey.set(target.key, new Set())
+    for (const observation of attempts) attemptsByKey.get(target.key).add(observation)
+    attemptsByKey.delete(key)
+    sourceRecordAliases.push({
+      candidate_key: key,
+      candidate_url: canonicalURL(alias.source_url),
+      target_candidate_key: target.key,
+      publisher_id: alias.publisher_id,
+      profile_id: alias.profile_id,
+      source_item_id: alias.source_item_id,
+      observed_in_current_run: true,
+    })
+  }
   if (missing.length)
     throw Error(
       "Completed daily candidates are absent from the current backlog: " + missing.join(", "),
@@ -217,9 +414,6 @@ export function buildEditorialHandoff({
     [...allLocal.pending, ...allLocal.resolved].map((candidate) => [candidate.key, candidate]),
   )
   const intakeOntology = projectIntakeOntology(backlog?.candidates || [])
-  const candidateByKey = new Map(
-    (backlog?.candidates || []).map((candidate) => [candidate.key, candidate]),
-  )
   const entry = (candidate) =>
     queueEntry(
       candidate,
@@ -227,41 +421,43 @@ export function buildEditorialHandoff({
         a.attempt_id.localeCompare(b.attempt_id),
       ),
     )
-  const pending = window.pending.map((candidate) => {
-    const local = localMatches.get(candidate.key)
-    const related = relatedCandidateKeys(intakeOntology, candidate.key)
-    const relatedReviewed = related.some((key) => candidateByKey.get(key)?.event_id)
-    const unverifiedPossibilities = (local?.possible_publications || []).filter(
-      (entry) =>
-        !(candidate.possible_publications || []).some(
-          (verified) => verified.event_id === entry.event_id,
-        ),
-    )
-    const routed =
-      !candidate.publication && local?.publication
-        ? {
-            ...candidate,
-            publication: local.publication,
-            next_route: "review-existing-unverified",
-          }
-        : !candidate.publication &&
-            !candidate.possible_publications?.length &&
-            unverifiedPossibilities.length
+  const pending = window.pending
+    .filter((candidate) => !backlogAliasKeys.has(candidate.key))
+    .map((candidate) => {
+      const local = localMatches.get(candidate.key)
+      const related = relatedCandidateKeys(intakeOntology, candidate.key)
+      const relatedReviewed = related.some((key) => candidateByKey.get(key)?.event_id)
+      const unverifiedPossibilities = (local?.possible_publications || []).filter(
+        (entry) =>
+          !(candidate.possible_publications || []).some(
+            (verified) => verified.event_id === entry.event_id,
+          ),
+      )
+      const routed =
+        !candidate.publication && local?.publication
           ? {
               ...candidate,
-              possible_publications: unverifiedPossibilities,
+              publication: local.publication,
               next_route: "review-existing-unverified",
             }
-          : candidate
-    return entry({
-      ...routed,
-      related_candidates: related,
-      ...(relatedReviewed &&
-      ["review-publication-time", "historical-review"].includes(routed.next_route)
-        ? { next_route: "review-related-candidate" }
-        : {}),
+          : !candidate.publication &&
+              !candidate.possible_publications?.length &&
+              unverifiedPossibilities.length
+            ? {
+                ...candidate,
+                possible_publications: unverifiedPossibilities,
+                next_route: "review-existing-unverified",
+              }
+            : candidate
+      return entry({
+        ...routed,
+        related_candidates: related,
+        ...(relatedReviewed &&
+        ["review-publication-time", "historical-review"].includes(routed.next_route)
+          ? { next_route: "review-related-candidate" }
+          : {}),
+      })
     })
-  })
   const observed_resolved = window.resolved
     .filter((candidate) => attemptsByKey.has(candidate.key))
     .map(entry)
@@ -284,6 +480,7 @@ export function buildEditorialHandoff({
     ),
     counts: {
       pending: pending.length,
+      same_event_source_aliases: backlogAliasKeys.size,
       pending_observed_in_run: pending.filter((candidate) => candidate.observed_in_run).length,
       observed_resolved: observed_resolved.length,
       source_revision: pending.filter(
@@ -308,6 +505,8 @@ export function buildEditorialHandoff({
       ).length,
     },
     pending,
+    same_event_sources: sameEventSources,
+    source_record_aliases: sourceRecordAliases,
     intake_ontology: intakeOntology,
     review_workstreams: reviewWorkstreams(pending),
     observed_resolved,
@@ -338,9 +537,12 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
       storedListScan(root, receipt.attempt_id).candidates.map((candidate) => ({
         attempt_id: receipt.attempt_id,
         key: candidate.key,
+        source_urls: candidate.source_urls || [],
+        source_records: candidate.discovery || [],
         article_source_version_id: candidate.article_source_version_id || null,
         article_parse_id: candidate.article_parse_id || null,
         article_content_sha256: candidate.article_content_sha256 || null,
+        supporting_source_urls: candidate.supporting_source_urls || [],
       })),
     )
   const backlog = readBacklog(backlogFile)
@@ -387,6 +589,9 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     issues,
     observedAt,
     supplementalWindows,
+    sameEventAliases: fs.existsSync(backlogFile)
+      ? loadSameEventSourceAliases(root, backlogFile)
+      : new Map(),
   })
   const input = {
     plan_sha256: sha256(fs.readFileSync(safePath(root, prefix + "plan.json"))),

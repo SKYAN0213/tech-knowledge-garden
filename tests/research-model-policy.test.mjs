@@ -112,6 +112,12 @@ test("fact extraction policy retains bounded segmentation and typed CLI override
   const resolved = resolveRolePolicy(p, "fact_extract", { think: "medium", num_predict: 4096 })
   assert.equal(resolved.think, "medium")
   assert.equal(resolved.input_char_budget, 16000)
+  assert.equal(
+    resolveRolePolicy(p, "fact_extract", { extraction_scope: "research_key_findings" })
+      .extraction_scope,
+    "research_key_findings",
+  )
+  assert.throws(() => resolveRolePolicy(p, "fact_extract", { extraction_scope: "guess" }), /scope/i)
   assert.throws(() => resolveRolePolicy(p, "fact_extract", { facts_per_batch: 7 }), /budget/i)
   assert.throws(() => resolveRolePolicy(p, "fact_extract", { input_char_budget: 40000 }), /budget/i)
 })

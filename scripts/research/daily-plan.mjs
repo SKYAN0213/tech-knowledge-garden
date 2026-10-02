@@ -1,6 +1,7 @@
 import { validDay } from "./list-scan.mjs"
 
 const supportedApis = new Set([
+  "wordpress-rest-posts-json-v1",
   "hd-press-json-pages-v1",
   "hd-disclosure-json-pages-v1",
   "kuka-news-form-pages-v1",

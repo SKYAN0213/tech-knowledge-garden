@@ -885,6 +885,7 @@
         "https://www.kuka.com/de-de/unternehmen/presse",
         "https://www.kuka.com/en-us/company/press",
         "https://www.kuka.com/de-de/unternehmen/presse/news",
+        "https://www.kuka.com/en-us/company/press/news",
         "https://www.kuka.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte"
       ],
       "source_routes": [
@@ -916,6 +917,15 @@
           "allowed_hosts": ["www.kuka.com"]
         },
         {
+          "route_id": "kuka-news-en",
+          "url": "https://www.kuka.com/en-us/company/press/news",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["www.kuka.com"]
+        },
+        {
           "route_id": "kuka-ir-de",
           "url": "https://www.kuka.com/de-de/unternehmen/%C3%BCber-kuka/investor-relations/berichte",
           "language": "de",
@@ -938,7 +948,8 @@
       "research_languages": ["en"],
       "source_urls": [
         "https://www.abb.com/global/en/areas/robotics",
-        "https://www.abb.com/global/en/areas/robotics/news-and-media/news-archive"
+        "https://www.abb.com/global/en/areas/robotics/news-and-media/news-archive",
+        "https://www.abb.com/global/en/company/media/selected"
       ],
       "source_routes": [
         {
@@ -949,6 +960,21 @@
           "kind": "company",
           "method": "html-list",
           "allowed_hosts": ["www.abb.com"]
+        },
+        {
+          "route_id": "abb-investor-releases-en",
+          "url": "https://www.abb.com/global/en/company/media/selected",
+          "language": "en",
+          "axis": "기업·운영",
+          "kind": "filing-ir",
+          "method": "html-list",
+          "allowed_hosts": [
+            "www.abb.com",
+            "resources.news.e.abb.com",
+            "search.abb.com",
+            "library.e.abb.com",
+            "global.abb"
+          ]
         }
       ],
       "status": "registered",
@@ -1023,11 +1049,15 @@
     {
       "id": "kawasaki-robotics",
       "name": "Kawasaki Robotics",
-      "aliases": ["가와사키 로보틱스", "川崎重工"],
+      "aliases": ["가와사키 로보틱스", "川崎重工", "Kawasaki Heavy Industries Robot Division"],
       "sector": "로봇·제조",
       "region": "해외",
       "research_languages": ["ja", "en"],
-      "source_urls": ["https://kawasakirobotics.com/jp/news/", "https://kawasakirobotics.com/"],
+      "source_urls": [
+        "https://kawasakirobotics.com/jp/news/",
+        "https://kawasakirobotics.com/",
+        "https://global.kawasaki.com/en/corp/newsroom/category/robot/"
+      ],
       "source_routes": [
         {
           "route_id": "kawasaki-news-ja",
@@ -1046,6 +1076,15 @@
           "kind": "company",
           "method": "html-list",
           "allowed_hosts": ["kawasakirobotics.com"]
+        },
+        {
+          "route_id": "kawasaki-heavy-robot-news-en",
+          "url": "https://global.kawasaki.com/en/corp/newsroom/category/robot/",
+          "language": "en",
+          "axis": "기술·제품",
+          "kind": "company",
+          "method": "html-list",
+          "allowed_hosts": ["global.kawasaki.com"]
         }
       ],
       "status": "registered",

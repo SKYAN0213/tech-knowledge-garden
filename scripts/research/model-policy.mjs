@@ -23,7 +23,12 @@ const commonFields = [
   "call_timeout_ms",
   "total_timeout_ms",
 ]
-const extractionFields = ["input_char_budget", "facts_per_batch", "extraction_timeout_ms"]
+const extractionFields = [
+  "input_char_budget",
+  "facts_per_batch",
+  "extraction_timeout_ms",
+  "extraction_scope",
+]
 const object = (value) => value && typeof value === "object" && !Array.isArray(value)
 
 function roleSettings(role, input) {
@@ -70,6 +75,13 @@ function roleSettings(role, input) {
     settings.temperature > 2
   )
     throw Error("Model policy temperature out of range")
+  if (role === "fact_extract")
+    settings.extraction_scope = settings.extraction_scope ?? "full_source"
+  if (
+    role === "fact_extract" &&
+    !["full_source", "research_key_findings"].includes(settings.extraction_scope)
+  )
+    throw Error("Invalid fact extraction scope")
   if (role === "fact_extract")
     Object.assign(
       settings,

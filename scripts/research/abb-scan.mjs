@@ -6,8 +6,7 @@ import { parseDocument } from "./parser.mjs"
 import { safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 
-const FEED_ID = "cbcceb45d7e74cfe9a4601cee01344df"
-const ARCHIVE_PATH = "/global/en/areas/robotics/news-and-media/news-archive"
+const DEFAULT_ARCHIVE_PATH = "/global/en/areas/robotics/news-and-media/news-archive"
 const API_PATH = "/conf/abbcommon/services/newsbank.json"
 
 export function abbPageURL(channel, page) {
@@ -25,20 +24,22 @@ export function abbPageURL(channel, page) {
     !Number.isInteger(profile.max_details) ||
     profile.max_details < 1 ||
     profile.max_details > 100 ||
-    profile.feed_id !== FEED_ID ||
+    !/^[0-9a-f]{32}$/.test(profile.feed_id || "") ||
     profile.culture_info !== "en"
   )
-    throw Error("Invalid ABB Robotics news API profile")
+    throw Error("Invalid ABB NewsBank API profile")
   const archive = assertURL(channel.url, channel.allowed_hosts)
   const url = assertURL(profile.endpoint, channel.allowed_hosts)
+  const archivePath = profile.archive_path || DEFAULT_ARCHIVE_PATH
+  const apiPath = profile.api_path || API_PATH
   if (
-    archive.pathname !== ARCHIVE_PATH ||
+    archive.pathname !== archivePath ||
     archive.search ||
     url.origin !== archive.origin ||
-    url.pathname !== API_PATH ||
+    url.pathname !== apiPath ||
     url.search
   )
-    throw Error("Unexpected ABB Robotics archive or API endpoint")
+    throw Error("Unexpected ABB archive or API endpoint")
   url.searchParams.set("requestType", "getNewsList")
   url.searchParams.set("feedId", profile.feed_id)
   url.searchParams.set("pageNumber", String(page))
@@ -63,7 +64,7 @@ export function parseABBPage(payload, channel, page) {
     news.hasPrevious !== page > 1 ||
     news.hasNext !== offset + size < count
   )
-    throw Error("ABB Robotics page count or cursor is incomplete")
+    throw Error("ABB NewsBank page count or cursor is incomplete")
   const pattern = new RegExp(channel.item_pattern)
   const origin = new URL(channel.url).origin
   const items = news.items.map((item, index) => {
@@ -81,10 +82,10 @@ export function parseABBPage(payload, channel, page) {
       item.cultureCode !== "en-US" ||
       item.internal !== false
     )
-      throw Error("ABB Robotics page item lacks public English identity, title or date")
+      throw Error("ABB NewsBank page item lacks public English identity, title or date")
     const url = `${origin}/global/en/news/${item.id}/${item.newsUrlTitleSlug}`
     assertURL(url, channel.allowed_hosts)
-    if (!pattern.test(url)) throw Error("ABB Robotics article URL is outside the route")
+    if (!pattern.test(url)) throw Error("ABB NewsBank article URL is outside the route")
     return {
       id: item.id,
       url,
@@ -153,7 +154,7 @@ export async function scanPaginatedABBRoute(
     try {
       if (!/application\/json/i.test(document.mime_type || "")) throw Error("API page is not JSON")
       const body = fs.readFileSync(safePath(root, document.body_path))
-      if (sha256(body) !== document.body_sha256) throw Error("ABB Robotics page body hash mismatch")
+      if (sha256(body) !== document.body_sha256) throw Error("ABB NewsBank page body hash mismatch")
       parsed = parseABBPage(JSON.parse(body.toString("utf8")), channel, page)
     } catch (error) {
       return incomplete("page_parse_failed", error.message)

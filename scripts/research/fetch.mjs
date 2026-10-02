@@ -68,7 +68,7 @@ export async function pinnedAddresses(host, resolver = dns.lookup) {
     throw Error("DNS includes non-public address")
   return addresses
 }
-function requestPinned(u, addresses, headers, budget, request = { method: "GET" }) {
+export function requestPinned(u, addresses, headers, budget, request = { method: "GET" }) {
   return new Promise((resolve, reject) => {
     const selected = addresses[0]
     const req = (u.protocol === "https:" ? https : http).request(u, {
@@ -78,7 +78,7 @@ function requestPinned(u, addresses, headers, budget, request = { method: "GET" 
       lookup: (_host, options, cb) =>
         options.all ? cb(null, [selected]) : cb(null, selected.address, selected.family),
     })
-    const timer = setTimeout(() => req.destroy(Error("Fetch deadline exceeded")), budget.timeout_ms)
+    let timer = setTimeout(() => req.destroy(Error("Fetch deadline exceeded")), budget.timeout_ms)
     req.on("socket", (s) => {
       s.once("connect", () => {
         if (
@@ -94,14 +94,22 @@ function requestPinned(u, addresses, headers, budget, request = { method: "GET" 
     })
     req.once("response", (res) => {
       const h = res.headers,
-        status = res.statusCode
+        status = res.statusCode,
+        isPdf = /pdf/i.test(h["content-type"] || "")
       if ([301, 302, 303, 307, 308, 304, 403, 404, 410, 429].includes(status)) {
         res.destroy()
         clearTimeout(timer)
         resolve({ status, headers: h, body: Buffer.alloc(0) })
         return
       }
-      const limit = /pdf/i.test(h["content-type"] || "") ? budget.pdf_bytes : budget.html_bytes
+      if (isPdf) {
+        clearTimeout(timer)
+        timer = setTimeout(
+          () => req.destroy(Error("PDF body deadline exceeded")),
+          responseBodyTimeoutMs(h["content-type"], budget),
+        )
+      }
+      const limit = isPdf ? budget.pdf_bytes : budget.html_bytes
       let size = 0,
         wire = 0
       res.on("data", (c) => {
@@ -133,6 +141,9 @@ function requestPinned(u, addresses, headers, budget, request = { method: "GET" 
   })
 }
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+export function responseBodyTimeoutMs(contentType, budget) {
+  return /pdf/i.test(contentType || "") ? budget.pdf_timeout_ms : budget.timeout_ms
+}
 const hostQueues = new Map(),
   lastHostRequest = new Map()
 const sourceQueues = new Map()
@@ -244,7 +255,7 @@ export function retryDelay(value, attempt, now = Date.now()) {
 }
 function isRetryableTransportError(error) {
   return (
-    error?.message === "Fetch deadline exceeded" ||
+    ["Fetch deadline exceeded", "PDF body deadline exceeded"].includes(error?.message) ||
     [
       "EAI_AGAIN",
       "ECONNRESET",
@@ -260,6 +271,7 @@ export class SourceFetcher {
     this.root = root
     this.options = {
       timeout_ms: 20000,
+      pdf_timeout_ms: 60000,
       html_bytes: 10 * 1024 ** 2,
       pdf_bytes: 50 * 1024 ** 2,
       redirects: 5,

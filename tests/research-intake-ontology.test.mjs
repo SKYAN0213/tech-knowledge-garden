@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import {
   projectIntakeOntology,
   relatedCandidateKeys,
+  summarizeIntakeOntology,
 } from "../scripts/research/intake-ontology.mjs"
 import { validateIdentities } from "../scripts/editorial.mjs"
 
@@ -73,6 +74,43 @@ test("intake ontology surfaces one canonical URL in two candidate identities", (
         decision: "review_required",
       },
     ],
+  )
+})
+
+test("invalid and missing content fingerprints are not treated as duplicate evidence", () => {
+  const graph = projectIntakeOntology([
+    candidate("valid", "https://example.org/valid", {
+      article_content_sha256: "c".repeat(64),
+    }),
+    candidate("missing", "https://example.org/missing", {
+      article_content_sha256: undefined,
+    }),
+    candidate("invalid", "https://example.org/invalid", {
+      article_content_sha256: "same-invalid-value",
+    }),
+    candidate("non-string", "https://example.org/non-string", {
+      article_content_sha256: 123,
+    }),
+  ])
+
+  const summary = summarizeIntakeOntology(graph)
+  assert.equal(
+    graph.relations.some((relation) => relation.type === "sameExtractedContentCandidate"),
+    false,
+  )
+  assert.deepEqual(
+    {
+      candidate_count: summary.candidate_count,
+      fingerprinted_candidate_count: summary.fingerprinted_candidate_count,
+      missing_content_fingerprint_count: summary.missing_content_fingerprint_count,
+      invalid_content_fingerprint_count: summary.invalid_content_fingerprint_count,
+    },
+    {
+      candidate_count: 4,
+      fingerprinted_candidate_count: 1,
+      missing_content_fingerprint_count: 1,
+      invalid_content_fingerprint_count: 2,
+    },
   )
 })
 

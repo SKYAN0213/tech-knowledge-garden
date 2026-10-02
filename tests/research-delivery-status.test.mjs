@@ -323,6 +323,11 @@ test("delivery status reports only supplemental scans whose source bytes and cov
     fs.mkdtempSync(path.join(os.tmpdir(), "research-supplemental-status-")),
   )
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const backlogFile = path.join(root, "candidate-backlog.json")
+  fs.writeFileSync(
+    backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [] }),
+  )
   const run = "independent-scan"
   const channel_id = "route-test"
   const since = "2026-09-30"
@@ -359,10 +364,11 @@ test("delivery status reports only supplemental scans whose source bytes and cov
   const reconciliation_run = "daily-example-reconcile"
   const reconciliations = path.join(root, "daily/reconciliations")
   fs.mkdirSync(reconciliations, { recursive: true })
+  const receiptFile = path.join(reconciliations, `${reconciliation_run}.json`)
   fs.writeFileSync(
-    path.join(reconciliations, `${reconciliation_run}.json`),
+    receiptFile,
     JSON.stringify({
-      schema: "research-supplemental-coverage/v1",
+      schema: "research-supplemental-coverage/v2",
       reconciliation_run,
       scan_run: run,
       channel_id,
@@ -372,7 +378,7 @@ test("delivery status reports only supplemental scans whose source bytes and cov
       reconciled_at: "2026-10-01T00:30:00+09:00",
       candidate_keys: [],
       candidate_published: false,
-      backlog_merge: { status: "merged" },
+      backlog_merge: { status: "merged", same_event_aliases: [] },
     }),
   )
   fs.mkdirSync(path.join(root, "daily"), { recursive: true })
@@ -396,16 +402,40 @@ test("delivery status reports only supplemental scans whose source bytes and cov
     }),
   )
 
-  const evidence = loadSupplementalCoverageEvidence(root, [{ channel_id }])
+  const evidence = loadSupplementalCoverageEvidence(root, [{ channel_id }], backlogFile)
   assert.equal(evidence.status, "verified")
   assert.equal(evidence.receipt_count, 1)
   assert.equal(evidence.candidate_count, 0)
   assert.equal(evidence.entries[0].coverage_until, "2026-10-01")
   assert.equal(JSON.stringify(evidence).includes("example.org"), false)
 
+  const missingAliases = JSON.parse(fs.readFileSync(receiptFile, "utf8"))
+  delete missingAliases.backlog_merge.same_event_aliases
+  fs.writeFileSync(receiptFile, JSON.stringify(missingAliases))
+  const withMissingAliases = loadSupplementalCoverageEvidence(root, [{ channel_id }], backlogFile)
+  assert.equal(withMissingAliases.status, "partial_or_invalid")
+  assert.equal(withMissingAliases.receipt_count, 0)
+  assert.equal(withMissingAliases.invalid_receipt_count, 1)
+  fs.writeFileSync(
+    receiptFile,
+    JSON.stringify({
+      schema: "research-supplemental-coverage/v2",
+      reconciliation_run,
+      scan_run: run,
+      channel_id,
+      since,
+      scan_until_exclusive: until_exclusive,
+      coverage_until: "2026-10-01",
+      reconciled_at: "2026-10-01T00:30:00+09:00",
+      candidate_keys: [],
+      candidate_published: false,
+      backlog_merge: { status: "merged", same_event_aliases: [] },
+    }),
+  )
+
   fs.writeFileSync(path.join(reconciliations, "invalid.json"), JSON.stringify({ schema: "wrong" }))
   fs.writeFileSync(path.join(reconciliations, "malformed.json"), "{")
-  const withInvalid = loadSupplementalCoverageEvidence(root, [{ channel_id }])
+  const withInvalid = loadSupplementalCoverageEvidence(root, [{ channel_id }], backlogFile)
   assert.equal(withInvalid.status, "partial_or_invalid")
   assert.equal(withInvalid.receipt_count, 1)
   assert.equal(withInvalid.invalid_receipt_count, 2)
@@ -479,6 +509,13 @@ test("delivery status reports ontology review links from the candidate ledger wi
         article_source_version_id: `source-two:${"c".repeat(64)}`,
         article_content_sha256: "b".repeat(64),
       },
+      {
+        key: "without-body-fingerprint",
+        title: "A separate robotics announcement",
+        source_urls: ["https://example.org/another-story"],
+        source_published_at: "2026-09-28",
+        review_status: "unreviewed",
+      },
     ],
   }
   fs.writeFileSync(candidatePath, JSON.stringify(ledger))
@@ -487,14 +524,18 @@ test("delivery status reports ontology review links from the candidate ledger wi
   const result = buildIntakeOntologyAudit(repo)
 
   assert.equal(result.status, "read_only_projection")
-  assert.equal(result.candidate_count, 2)
+  assert.equal(result.candidate_count, 3)
+  assert.equal(result.fingerprint_evidence.stale_receipt_count, 0)
   assert.deepEqual(result.ontology.node_counts, {
-    Candidate: 2,
+    Candidate: 3,
     Event: 1,
-    Source: 1,
+    Source: 2,
     SourceVersion: 2,
   })
   assert.equal(result.ontology.review_required_count, 3)
+  assert.equal(result.ontology.fingerprinted_candidate_count, 2)
+  assert.equal(result.ontology.missing_content_fingerprint_count, 1)
+  assert.equal(result.ontology.invalid_content_fingerprint_count, 0)
   assert.deepEqual(
     result.ontology.review_relations.map((relation) => relation.type),
     ["sameExtractedContentCandidate", "sameTitleDayCandidate", "sharedCanonicalSourceCandidate"],

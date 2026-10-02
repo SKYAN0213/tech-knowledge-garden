@@ -89,6 +89,332 @@ test("a dated full index covers a window only after reaching an older entry", ()
   )
 })
 
+test("a route captures only profile-declared PDF supporting documents with exact profiles", async (t) => {
+  const root = temporary(t)
+  const articleURL = base + "2026/notice20260911.html"
+  const supportURLs = [
+    "https://www.fanuc.co.jp/reports/vision.pdf",
+    "https://www.fanuc.co.jp/reports/performance.pdf",
+  ]
+  const calls = []
+  const supportListing = {
+    ...listing,
+    links: [
+      link("2026-09-11", "New welding robot announced"),
+      link("2026-08-27", "Older robot announcement"),
+    ],
+    link_profiles: [
+      {
+        id: "fanuc-index",
+        status: "matched",
+        selected_items: 2,
+        matched_links: 2,
+        truncated: false,
+      },
+    ],
+  }
+  const run = {
+    async stage(_name, _input, action) {
+      return action()
+    },
+  }
+  const channelWithSupport = {
+    ...channel,
+    allowed_hosts: ["www.fanuc.co.jp"],
+  }
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    calls.push(url)
+    return {
+      source_id: sourceId(url),
+      source_version_id: `${sourceId(url)}:${"a".repeat(64)}`,
+      original_url: url,
+      final_url: url,
+      fetch_status: "captured",
+      observed_at: "2026-09-28T00:00:00Z",
+    }
+  }
+  const parse = async (_root, document) => {
+    if (document.original_url === base) return supportListing
+    const isArticle = document.original_url === articleURL
+    return {
+      parse_id: "b".repeat(64),
+      source_id: document.source_id,
+      source_version_id: document.source_version_id,
+      status: "extracted",
+      title: isArticle ? "New welding robot announced" : "Official report section",
+      quality: { required_fields_present: true },
+      blocks: [{ text: isArticle ? "Article source body" : "Supporting source body" }],
+      dates: { published_at: isArticle ? "2026-09-11" : null },
+      attachments: isArticle
+        ? [...supportURLs, "https://www.fanuc.co.jp/reports/unselected.pdf"].map((url) => ({
+            url,
+            role: "unreviewed",
+          }))
+        : [],
+    }
+  }
+  const articleProfiles = [
+    {
+      id: "fanuc-release",
+      url_pattern:
+        "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/2026/notice20260911\\.html$",
+      supporting_documents: [
+        { id: "vision", url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/vision\\.pdf$" },
+        {
+          id: "performance",
+          url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/performance\\.pdf$",
+        },
+      ],
+      options: { language: "en" },
+    },
+    {
+      id: "fanuc-report",
+      url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/(?:vision|performance)\\.pdf$",
+      options: { language: "en" },
+    },
+  ]
+  const result = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channelWithSupport,
+    articleProfiles,
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.candidates.length, 1)
+  assert.deepEqual(result.candidates[0].supporting_source_urls, supportURLs)
+  assert.equal(result.documents.length, 4)
+  assert.equal(result.parses.length, 4)
+  assert.deepEqual(calls.sort(), [base, articleURL, ...supportURLs].sort())
+  assert.deepEqual(
+    result.summary.details[0].supporting_documents.map((item) => item.status),
+    ["captured", "captured"],
+  )
+})
+
+test("a declared official alternate source is used when the article PDF attachment is blocked", async (t) => {
+  const root = temporary(t)
+  const articleURL = base + "2026/notice20260911.html"
+  const attachmentURL = "https://www.fanuc.co.jp/reports/official.pdf"
+  const alternateURL = "https://www.fanuc.co.jp/investor/official.pdf"
+  const evidenceURL = "https://www.fanuc.co.jp/investor/results.html"
+  const evidenceMatch = "Official report links official.pdf"
+  const calls = []
+  const supportListing = {
+    ...listing,
+    links: [link("2026-09-11", "New welding robot announced"), link("2026-08-27", "Older")],
+    link_profiles: [
+      {
+        id: "fanuc-index",
+        status: "matched",
+        selected_items: 2,
+        matched_links: 2,
+        truncated: false,
+      },
+    ],
+  }
+  const run = { async stage(_name, _input, action) { return action() } }
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    calls.push(url)
+    if (url === evidenceURL) {
+      const body = Buffer.from(evidenceMatch)
+      const bodyPath = path.join(root, "evidence.bin")
+      fs.writeFileSync(bodyPath, body)
+      return {
+        source_id: sourceId(url),
+        source_version_id: `${sourceId(url)}:${"c".repeat(64)}`,
+        original_url: url,
+        final_url: url,
+        fetch_status: "captured",
+        observed_at: "2026-09-28T00:00:00Z",
+        body_path: "evidence.bin",
+        body_sha256: sha256(body),
+      }
+    }
+    return {
+      source_id: sourceId(url),
+      source_version_id: `${sourceId(url)}:${"a".repeat(64)}`,
+      original_url: url,
+      final_url: url,
+      fetch_status: url === attachmentURL ? "blocked" : "captured",
+      observed_at: "2026-09-28T00:00:00Z",
+    }
+  }
+  const parse = async (_root, document) => {
+    if (document.original_url === base) return supportListing
+    const isArticle = document.original_url === articleURL
+    return {
+      parse_id: "b".repeat(64),
+      source_id: document.source_id,
+      source_version_id: document.source_version_id,
+      status: "extracted",
+      title: isArticle ? "New welding robot announced" : "Q3 investor results",
+      quality: { required_fields_present: true },
+      blocks: [{ text: isArticle ? "Article source body" : "Official supporting document" }],
+      dates: { published_at: isArticle ? "2026-09-11" : null },
+      attachments: isArticle ? [{ url: attachmentURL, role: "unreviewed" }] : [],
+    }
+  }
+  const articleProfiles = [
+    {
+      id: "fanuc-release",
+      url_pattern:
+        "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/2026/notice20260911\\.html$",
+      supporting_documents: [
+        {
+          id: "ir-release",
+          url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/official\\.pdf$",
+          fallback_sources: [
+            { url: alternateURL, evidence_url: evidenceURL, evidence_match: evidenceMatch },
+          ],
+        },
+      ],
+      options: { language: "en" },
+    },
+    {
+      id: "fanuc-ir-release",
+      url_pattern: "^https://www\\.fanuc\\.co\\.jp/investor/official\\.pdf$",
+      options: { language: "en" },
+    },
+  ]
+  const result = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channel,
+    articleProfiles,
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.candidates.length, 1)
+  assert.deepEqual(result.candidates[0].supporting_source_urls, [alternateURL])
+  assert.deepEqual(calls.sort(), [base, articleURL, attachmentURL, alternateURL, evidenceURL].sort())
+  assert.deepEqual(result.summary.details[0].supporting_documents, [
+    {
+      id: "ir-release",
+      attachment_url: attachmentURL,
+      url: alternateURL,
+      status: "captured",
+      evidence_url: evidenceURL,
+      evidence_source_version_id: `${sourceId(evidenceURL)}:${"c".repeat(64)}`,
+      evidence_body_sha256: sha256(Buffer.from(evidenceMatch)),
+      attempts: [
+        { url: attachmentURL, status: "blocked" },
+        {
+          url: alternateURL,
+          status: "captured",
+          evidence_url: evidenceURL,
+          evidence_status: "captured",
+          evidence_source_version_id: `${sourceId(evidenceURL)}:${"c".repeat(64)}`,
+          evidence_body_sha256: sha256(Buffer.from(evidenceMatch)),
+        },
+      ],
+      source_version_id: `${sourceId(alternateURL)}:${"a".repeat(64)}`,
+      parse_id: "b".repeat(64),
+      article_profile_id: "fanuc-ir-release",
+    },
+  ])
+
+  calls.length = 0
+  const unlinkedProfiles = structuredClone(articleProfiles)
+  unlinkedProfiles[0].supporting_documents[0].fallback_sources[0].evidence_match =
+    "unrelated document identifier"
+  const unlinked = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channel,
+    unlinkedProfiles,
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  const unlinkedDetail = unlinked.summary.details.find((item) => item.url === articleURL)
+  assert.equal(unlinked.summary.status, "incomplete")
+  assert.equal(unlinked.candidates.length, 0)
+  assert.equal(unlinkedDetail.supporting_documents[0].attempts[0].status, "blocked")
+  assert.equal(unlinkedDetail.supporting_documents[0].attempts[1].status, "evidence_mismatch")
+  assert.equal(calls.includes(alternateURL), false)
+})
+
+test("a required supporting document that is absent keeps the route incomplete", async (t) => {
+  const root = temporary(t)
+  const articleURL = base + "2026/notice20260911.html"
+  const supportListing = {
+    ...listing,
+    links: [
+      link("2026-09-11", "New welding robot announced"),
+      link("2026-08-27", "Older robot announcement"),
+    ],
+    link_profiles: [
+      {
+        id: "fanuc-index",
+        status: "matched",
+        selected_items: 2,
+        matched_links: 2,
+        truncated: false,
+      },
+    ],
+  }
+  const run = {
+    async stage(_name, _input, action) {
+      return action()
+    },
+  }
+  const channelWithSupport = {
+    ...channel,
+  }
+  const fetchPolicy = async (_root, _fetcher, url) => ({
+    source_id: sourceId(url),
+    source_version_id: `${sourceId(url)}:${"a".repeat(64)}`,
+    original_url: url,
+    final_url: url,
+    fetch_status: "captured",
+    observed_at: "2026-09-28T00:00:00Z",
+  })
+  const parse = async (_root, document) =>
+    document.original_url === base
+      ? supportListing
+      : {
+          parse_id: "b".repeat(64),
+          source_id: document.source_id,
+          source_version_id: document.source_version_id,
+          status: "extracted",
+          title: "New welding robot announced",
+          quality: { required_fields_present: true },
+          blocks: [{ text: "Article source body" }],
+          dates: { published_at: "2026-09-11" },
+          attachments: [],
+        }
+  const result = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channelWithSupport,
+    [
+      {
+        id: "fanuc-release",
+        url_pattern:
+          "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/2026/notice20260911\\.html$",
+        supporting_documents: [
+          { id: "vision", url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/vision\\.pdf$" },
+        ],
+        options: { language: "en" },
+      },
+    ],
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(result.summary.status, "incomplete")
+  assert.equal(
+    result.summary.details.find((item) => item.url === articleURL).status,
+    "supporting_document_missing_or_ambiguous",
+  )
+  assert.equal(result.candidates.length, 0)
+})
+
 test("accepted-only journal cards are accounted for without becoming published articles", () => {
   const published = [link("2026-09-25", "Published research"), link("2026-09-14", "Older research")]
   const accepted = link("2026-09-26", "Accepted manuscript")
@@ -196,7 +522,9 @@ test("the scan keeps article-date conflicts out of candidates and reuses complet
   }
   const parse = async (_root, document) => {
     if (document.original_url === base) return listing
-    const published_at = document.original_url.includes("20260902") ? "2026-09-03" : "2026-09-11"
+    const published_at = document.original_url.includes("20260902")
+      ? "2026-09-03"
+      : "2026-09-11T13:10:02+00:00"
     return {
       parse_id: document.original_url,
       status: "extracted",
@@ -417,6 +745,58 @@ test("a completed empty window may merge while an incomplete window cannot", asy
   assert.deepEqual(await mergeCompletedScan(complete, "private/backlog.json", merge), {
     status: "merged",
     changed: false,
+    same_event_aliases: [],
   })
   assert.deepEqual(calls, [{ file: "private/backlog.json", candidates: [] }])
+})
+
+test("accepts a detail title when the official listing visibly truncates its matching prefix", async () => {
+  const channelWithTruncatedTitle = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      require_title_match: true,
+      title_match_policy: "truncated_prefix",
+    },
+  }
+  const truncatedListing = structuredClone(listing)
+  truncatedListing.links[0].text = "New welding robot announced for flexible production li..."
+  const documentFor = (url) => ({
+    source_id: sourceId(url),
+    source_version_id: sourceId(url) + ":v1",
+    original_url: url,
+    final_url: url,
+    fetch_status: "captured",
+    observed_at: "2026-09-11T12:00:00Z",
+  })
+  const run = { async stage(_name, _input, action) { return action() } }
+  const result = await scanSinglePageRoute(
+    "private",
+    run,
+    {},
+    channelWithTruncatedTitle,
+    [{ id: "fanuc-release", url_pattern: "notice20260911", options: { language: "en" } }],
+    { since: "2026-09-11", until: "2026-09-12" },
+    {
+      fetchPolicy: async (_root, _fetcher, url) => documentFor(url),
+      parse: async (_root, document) =>
+        document.original_url === base
+          ? truncatedListing
+          : {
+              parse_id: "detail-parse",
+              status: "extracted",
+              title: "New welding robot announced for flexible production lines",
+              quality: { required_fields_present: true },
+              blocks: [{ text: "Official release body" }],
+              dates: { published_at: "2026-09-11" },
+            },
+    },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.candidates.length, 1)
+  assert.equal(result.candidates[0].title, "New welding robot announced for flexible production lines")
+  assert.equal(
+    result.summary.details[0].title_relation,
+    "official_listing_truncated_detail_title_authoritative",
+  )
 })

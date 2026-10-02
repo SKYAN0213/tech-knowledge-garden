@@ -47,7 +47,7 @@ const page = (number, count, items) => ({
   },
 })
 
-test("ABB request uses the Robotics feed and bounded page cursor", () => {
+test("ABB request uses a configured NewsBank feed and bounded page cursor", () => {
   const url = new URL(abbPageURL(channel, 2))
   assert.equal(url.pathname, "/conf/abbcommon/services/newsbank.json")
   assert.deepEqual(
@@ -66,6 +66,29 @@ test("ABB request uses the Robotics feed and bounded page cursor", () => {
   )
   assert.throws(
     () => abbPageURL({ ...channel, url: "https://www.abb.com/global/en/company/media" }, 1),
+    /Unexpected ABB/,
+  )
+
+  const investor = {
+    ...channel,
+    channel_id: "route-abb-investor-releases-en",
+    url: "https://www.abb.com/global/en/company/media/selected",
+    api_profile: {
+      ...channel.api_profile,
+      archive_path: "/global/en/company/media/selected",
+      feed_id: "8de2033e3c8e49ef84794a00bf45af69",
+      endpoint: "https://www.abb.com/conf/abbcommon/services/newsbank.json",
+    },
+  }
+  const investorRequest = new URL(abbPageURL(investor, 1))
+  assert.equal(investorRequest.pathname, "/conf/abbcommon/services/newsbank.json")
+  assert.equal(investorRequest.searchParams.get("feedId"), investor.api_profile.feed_id)
+  assert.throws(
+    () =>
+      abbPageURL({
+        ...investor,
+        api_profile: { ...investor.api_profile, archive_path: "/wrong" },
+      }, 1),
     /Unexpected ABB/,
   )
 })

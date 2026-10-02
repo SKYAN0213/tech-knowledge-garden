@@ -394,6 +394,165 @@ test("editorial handoff refuses a completed candidate missing from the current b
   )
 })
 
+test("editorial handoff routes a bilingual source record to its existing candidate", () => {
+  const itemId = "cac278d8-4c5a-4f25-8c58-8759bd18b671"
+  const englishUrl = "https://www.kuka.com/en-us/company/press/news/fsw"
+  const identity = {
+    publisher_id: "kuka",
+    profile_id: "kuka-news-form-pages-v1",
+    source_item_id: itemId,
+  }
+  const target = candidate("german-approved", "2026-09-24", {
+    review_status: "verified",
+    event_id: "496ab0bfbcdb42a4",
+    source_record_aliases: [{ ...identity, source_url: englishUrl }],
+    discovery: [
+      { ...identity, language: "de" },
+      { ...identity, language: "en" },
+    ],
+  })
+  const receipt = {
+    status: "window_scanned",
+    attempt_id: "kuka-english-a1",
+    channel_id: "kuka-news-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-25",
+    candidate_keys: ["kuka-english-candidate"],
+  }
+  const handoff = buildEditorialHandoff({
+    plan: { ...plan, cutoff: "2026-09-24T23:00:00Z", windows: [plan.windows[0]] },
+    receipts: [receipt],
+    observations: [
+      {
+        attempt_id: receipt.attempt_id,
+        key: "kuka-english-candidate",
+        source_urls: [englishUrl],
+        source_records: [{ ...identity, language: "en" }],
+        article_source_version_id: "english-source-version",
+        article_parse_id: "english-parse",
+        article_content_sha256: "english-content",
+      },
+    ],
+    backlog: { candidates: [target] },
+    issues: [
+      {
+        key: "2026-09-24",
+        items: [
+          {
+            id: target.event_id,
+            urls: ["https://www.kuka.com/de-de/company/press/news/fsw"],
+            review: { review_status: "verified", published_at: "2026-09-24" },
+          },
+        ],
+      },
+    ],
+    observedAt: "2026-10-02T00:00:00Z",
+  })
+
+  assert.deepEqual(handoff.source_record_aliases, [
+    {
+      candidate_key: "kuka-english-candidate",
+      candidate_url: englishUrl,
+      target_candidate_key: "german-approved",
+      ...identity,
+      observed_in_current_run: true,
+    },
+  ])
+  assert.equal(
+    handoff.pending.some((entry) => entry.key === "kuka-english-candidate"),
+    false,
+  )
+  assert.equal(
+    handoff.observed_resolved.some((entry) => entry.key === "german-approved"),
+    true,
+  )
+})
+
+test("editorial handoff preserves verified same-event aliases without requiring a duplicate backlog row", () => {
+  const aliasReceipt = {
+    ...receipts[0],
+    candidate_keys: ["official-alternative"],
+    backlog_merge: {
+      status: "merged",
+      same_event_aliases: [
+        {
+          candidate_key: "official-alternative",
+          candidate_url: "https://example.org/official-alternative",
+          target_candidate_key: "published",
+          resolution_run: "same-event-review",
+        },
+      ],
+    },
+  }
+  const handoff = buildEditorialHandoff({
+    plan: { ...plan, windows: [plan.windows[0]] },
+    receipts: [aliasReceipt],
+    observations: [
+      {
+        attempt_id: aliasReceipt.attempt_id,
+        key: "official-alternative",
+        article_source_version_id: "alternative-version",
+        article_parse_id: "alternative-parse",
+        article_content_sha256: "alternative-content",
+      },
+    ],
+    backlog,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+  })
+
+  assert.deepEqual(handoff.same_event_sources, [
+    {
+      candidate_key: "official-alternative",
+      candidate_url: "https://example.org/official-alternative",
+      target_candidate_key: "published",
+      resolution_run: "same-event-review",
+      attempt_id: aliasReceipt.attempt_id,
+      article_source_version_id: "alternative-version",
+      article_parse_id: "alternative-parse",
+      article_content_sha256: "alternative-content",
+    },
+  ])
+  assert.equal(handoff.candidate_published, false)
+})
+
+test("editorial handoff hides an already-resolved backlog alias from pending review", () => {
+  const handoff = buildEditorialHandoff({
+    plan,
+    receipts,
+    observations,
+    backlog,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+    sameEventAliases: new Map([
+      [
+        "https://example.com/new",
+        { candidate_key: "published", resolution_run: "same-event-review" },
+      ],
+    ]),
+  })
+
+  assert.equal(
+    handoff.pending.some((item) => item.key === "new"),
+    false,
+  )
+  assert.equal(handoff.counts.same_event_source_aliases, 1)
+  assert.deepEqual(
+    handoff.same_event_sources.find((item) => item.candidate_key === "new"),
+    {
+      candidate_key: "new",
+      candidate_url: "https://example.com/new",
+      target_candidate_key: "published",
+      resolution_run: "same-event-review",
+      observed_in_current_run: false,
+    },
+  )
+  assert.equal(
+    backlog.candidates.some((item) => item.key === "new"),
+    true,
+  )
+})
+
 function storedEmptyScan(root, runId, window) {
   const url = "https://example.com/official-feed"
   const body = Buffer.from("<rss><channel /></rss>")
@@ -433,7 +592,7 @@ function storedEmptyScan(root, runId, window) {
   return storedListScan(root, runId)
 }
 
-function storedArticleScan(root, runId, window) {
+function storedArticleScan(root, runId, window, { withSupportingSources = false } = {}) {
   const originalURL = "https://example.com/chip?mode=V&id=1"
   const candidateURL = "https://example.com/chip?id=1&mode=V"
   const body = "A dated official chip announcement"
@@ -453,6 +612,9 @@ function storedArticleScan(root, runId, window) {
     observed_at: "2026-09-29T01:00:00Z",
   }
   const parseId = sha256(version + ":article")
+  const supportingURLs = withSupportingSources
+    ? ["https://example.com/vision.pdf", "https://example.com/performance.pdf"]
+    : []
   const parse = storeParseArtifact(root, {
     schema_version: "source-parse/v1",
     status: "extracted",
@@ -469,6 +631,46 @@ function storedArticleScan(root, runId, window) {
       },
     ],
     quality: { required_fields_present: true, missing_pages: [] },
+    attachments: supportingURLs.map((url) => ({ url, role: "unreviewed" })),
+  })
+  const supportingDocuments = supportingURLs.map((url, index) => {
+    const supportingBody = `Supporting report ${index + 1}`
+    const supportingHash = sha256(supportingBody)
+    const supportingId = sourceId(url)
+    const supportingVersion = `${supportingId}:${supportingHash}`
+    const supportingPath = `sources/${supportingId}/${supportingHash}.pdf`
+    atomicWrite(root, supportingPath, supportingBody)
+    const supportingParseId = sha256(supportingVersion + ":report")
+    const supportingParse = storeParseArtifact(root, {
+      schema_version: "source-parse/v1",
+      status: "extracted",
+      title: `Supporting report ${index + 1}`,
+      source_id: supportingId,
+      source_version_id: supportingVersion,
+      parse_id: supportingParseId,
+      dates: { published_at: null, observed_at: document.observed_at },
+      blocks: [
+        {
+          block_id: supportingParseId + ":b1",
+          text: supportingBody,
+          locator: { text_hash: supportingHash },
+        },
+      ],
+      quality: { required_fields_present: true, missing_pages: [] },
+    })
+    return {
+      document: {
+        original_url: url,
+        final_url: url,
+        source_id: supportingId,
+        source_version_id: supportingVersion,
+        fetch_status: "captured",
+        body_path: supportingPath,
+        body_sha256: supportingHash,
+        observed_at: document.observed_at,
+      },
+      parse: supportingParse,
+    }
   })
   const candidate = {
     key: "source-" + sourceId(candidateURL),
@@ -481,6 +683,7 @@ function storedArticleScan(root, runId, window) {
     article_source_version_id: version,
     article_parse_id: parseId,
     article_content_sha256: articleContentFingerprint(parse),
+    ...(supportingURLs.length ? { supporting_source_urls: supportingURLs } : {}),
   }
   const scan = {
     summary: {
@@ -490,8 +693,8 @@ function storedArticleScan(root, runId, window) {
       candidate_count: 1,
     },
     indexDocuments: [document],
-    documents: [document],
-    parses: [parse],
+    documents: [document, ...supportingDocuments.map((item) => item.document)],
+    parses: [parse, ...supportingDocuments.map((item) => item.parse)],
     candidates: [candidate],
   }
   for (const [file, value] of Object.entries({
@@ -654,7 +857,7 @@ test("a daily candidate selects its exact stored source without rediscovery or p
     scan: async (window, id) => {
       requests++
       return window.since === "2026-09-22"
-        ? storedArticleScan(root, id, window)
+        ? storedArticleScan(root, id, window, { withSupportingSources: true })
         : storedEmptyScan(root, id, window)
     },
     merge: async (scan) => {
@@ -687,11 +890,15 @@ test("a daily candidate selects its exact stored source without rediscovery or p
   ]
   const result = await main(args)
   assert.equal(result.candidate_key, key)
-  assert.equal(result.sources, 1)
+  assert.equal(result.sources, 3)
   assert.equal(result.candidate_published, false)
   const selected = readJSON(root, "runs/selected-candidate/source-selection.json")
   assert.equal(selected.candidate_key, key)
   assert.equal(selected.selected_urls[0], "https://example.com/chip?mode=V&id=1")
+  assert.deepEqual(selected.selected_urls.slice(1), [
+    "https://example.com/vision.pdf",
+    "https://example.com/performance.pdf",
+  ])
   assert.equal(selected.daily_run, "daily-20260929-candidate")
   assert.equal(selected.candidate_published, false)
   const before = fs.readFileSync(path.join(root, "runs/selected-candidate/source-selection.json"))

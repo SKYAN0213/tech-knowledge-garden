@@ -21,7 +21,9 @@ import {
   planDailyWindows,
   validateDailyRoutes,
 } from "./daily-plan.mjs"
-import { mergeCompletedScan } from "./scan-completion.mjs"
+import { mergeCompletedScan, sameEventAliasSuppressions } from "./scan-completion.mjs"
+import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
+import { parseResearchDate } from "./dates.mjs"
 
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
@@ -62,6 +64,7 @@ export function dailySources(configFile = DAILY_CONFIG) {
     "scripts/research/robots.mjs",
     "scripts/research/run-state.mjs",
     "scripts/research/scan-completion.mjs",
+    "scripts/research/candidate-source-alternative.mjs",
     "scripts/research/source-policy.mjs",
     "scripts/research/list-scan.mjs",
     "scripts/research/rss-scan.mjs",
@@ -256,9 +259,39 @@ export function verifyStoredListScan(root, scan, expected, { allowLegacyCandidat
       !candidate.source_urls?.some(
         (url) => canonicalURL(url) === canonicalURL(document.original_url),
       ) ||
-      candidate.source_published_at !== parsed.dates?.published_at
+      parseResearchDate(candidate.source_published_at)?.day !==
+        parseResearchDate(parsed.dates?.published_at)?.day
     )
       throw Error("Candidate lacks a matching stored detail source, parse and publication day")
+    const supportingURLs = candidate.supporting_source_urls || []
+    if (
+      !Array.isArray(supportingURLs) ||
+      supportingURLs.length > 7 ||
+      new Set(supportingURLs.map((url) => canonicalURL(url))).size !== supportingURLs.length
+    )
+      throw Error("Candidate supporting source URLs are invalid")
+    const declaredAttachments = new Set(
+      (parsed.attachments || []).map((attachment) => canonicalURL(attachment.url)),
+    )
+    if (supportingURLs.some((url) => !declaredAttachments.has(canonicalURL(url))))
+      throw Error("Candidate supporting source is not linked by its exact parent parse")
+    for (const url of supportingURLs) {
+      const supportDocuments = scan.documents.filter(
+        (item) => canonicalURL(item.original_url) === canonicalURL(url),
+      )
+      if (supportDocuments.length !== 1)
+        throw Error("Candidate supporting source document is missing")
+      const supportParses = scan.parses.filter(
+        (item) => item.source_version_id === supportDocuments[0].source_version_id,
+      )
+      if (
+        supportParses.length !== 1 ||
+        supportParses[0].status !== "extracted" ||
+        !supportParses[0].quality?.required_fields_present ||
+        !supportParses[0].blocks?.length
+      )
+        throw Error("Candidate supporting source lacks a complete stored parse")
+    }
   }
   if (
     scan.summary.candidate_count !== undefined &&
@@ -284,7 +317,40 @@ export function repairDailyCoverageState(state) {
   return state
 }
 
-export function verifyDailyCoverageEvidence(root, channelId, state) {
+function verifySameEventSuppressionRecord(
+  root,
+  candidates,
+  recordedAliases,
+  {
+    backlogFile = DAILY_BACKLOG,
+    sameEventAliases = null,
+    asOf = null,
+    required = false,
+    label = "Receipt",
+  } = {},
+) {
+  if (required && !Array.isArray(recordedAliases))
+    throw Error(`${label} is missing its same-event candidate suppression record`)
+  if (recordedAliases === undefined) return true
+  if (recordedAliases.length === 0 && candidates.length === 0) return true
+  const sourceAliases = sameEventAliases || loadSameEventSourceAliases(root, backlogFile)
+  const aliases = asOf
+    ? new Map(
+        [...sourceAliases].filter(([, alias]) => !alias.generated_at || alias.generated_at <= asOf),
+      )
+    : sourceAliases
+  const expectedAliases = sameEventAliasSuppressions(candidates, aliases)
+  if (JSON.stringify(recordedAliases) !== JSON.stringify(expectedAliases))
+    throw Error(`${label} same-event candidate suppression no longer matches its evidence`)
+  return true
+}
+
+export function verifyDailyCoverageEvidence(
+  root,
+  channelId,
+  state,
+  { backlogFile = DAILY_BACKLOG, sameEventAliases = null } = {},
+) {
   for (const span of state.covered) {
     if (span.kind === "verified_supplemental_scan") {
       if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
@@ -295,7 +361,9 @@ export function verifyDailyCoverageEvidence(root, channelId, state) {
         ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
         : null
       if (
-        receipt?.schema !== "research-supplemental-coverage/v1" ||
+        !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
+          receipt?.schema,
+        ) ||
         receipt.scan_run !== span.source_run ||
         receipt.channel_id !== channelId ||
         receipt.since !== span.since ||
@@ -308,6 +376,18 @@ export function verifyDailyCoverageEvidence(root, channelId, state) {
           JSON.stringify(scan.candidates.map((candidate) => candidate.key))
       )
         throw Error("Supplemental coverage receipt does not match its interval")
+      verifySameEventSuppressionRecord(
+        root,
+        scan.candidates,
+        receipt.backlog_merge?.same_event_aliases,
+        {
+          backlogFile,
+          sameEventAliases,
+          asOf: receipt.reconciled_at,
+          required: receipt.schema === "research-supplemental-coverage/v2",
+          label: "Supplemental coverage receipt",
+        },
+      )
       if (
         scan.summary.status !== "window_scanned" ||
         scan.summary.channel_id !== channelId ||
@@ -342,12 +422,15 @@ export async function reconcileSupplementalScan({
   reconciliationRun,
   backlogFile = DAILY_BACKLOG,
   now = new Date().toISOString(),
-  merge = mergeCompletedScan,
+  merge,
 }) {
   if (!/^[a-zA-Z0-9_-]+$/.test(scanRun || "")) throw Error("Valid stored scan run required")
   if (!/^[a-zA-Z0-9_-]+$/.test(reconciliationRun || ""))
     throw Error("Valid reconciliation run required")
   return withLock(root, "daily-acquisition", async () => {
+    const sourceAliases = merge ? null : loadSameEventSourceAliases(root, backlogFile)
+    const mergeScan =
+      merge || ((scan, file) => mergeCompletedScan(scan, file, undefined, sourceAliases))
     const { activeRoutes } = dailySources(configFile)
     const scan = storedListScan(root, scanRun)
     const channelId = scan.summary.channel_id
@@ -369,7 +452,7 @@ export async function reconcileSupplementalScan({
     if (scan.summary.window.since >= coverageUntil)
       throw Error("Stored scan has no elapsed dates to add to daily coverage")
     const expectedReceipt = {
-      schema: "research-supplemental-coverage/v1",
+      schema: "research-supplemental-coverage/v2",
       reconciliation_run: reconciliationRun,
       scan_run: scanRun,
       channel_id: channelId,
@@ -382,19 +465,32 @@ export async function reconcileSupplementalScan({
     }
     if (
       previousReceipt &&
-      Object.entries(expectedReceipt).some(
-        ([key, value]) => JSON.stringify(previousReceipt[key]) !== JSON.stringify(value),
+      !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
+        previousReceipt.schema,
       )
+    )
+      throw Error("Reconciliation run already exists with an unsupported receipt version")
+    if (
+      previousReceipt &&
+      Object.entries(expectedReceipt)
+        .filter(([key]) => key !== "schema")
+        .some(([key, value]) => JSON.stringify(previousReceipt[key]) !== JSON.stringify(value))
     )
       throw Error("Reconciliation run already exists with different evidence")
     if (existing) {
-      verifyDailyCoverageEvidence(root, channelId, state)
+      verifyDailyCoverageEvidence(root, channelId, state, {
+        backlogFile,
+        sameEventAliases: sourceAliases,
+      })
       return { status: "already_reconciled", channel_id: channelId, scan_run: scanRun }
     }
     if (previousReceipt && !fs.existsSync(safePath(root, COVERAGE_FILE)))
       throw Error("Reconciliation receipt exists without daily coverage state")
-    const merged = previousReceipt ? previousReceipt.backlog_merge : await merge(scan, backlogFile)
+    const merged = previousReceipt
+      ? previousReceipt.backlog_merge
+      : await mergeScan(scan, backlogFile)
     if (merged?.status !== "merged") throw Error("Supplemental candidates were not merged")
+    if (!Array.isArray(merged.same_event_aliases)) merged.same_event_aliases = []
     if (!previousReceipt)
       atomicCreate(root, receiptFile, { ...expectedReceipt, backlog_merge: merged })
     if (scan.summary.window.since < coverageUntil) {
@@ -416,7 +512,10 @@ export async function reconcileSupplementalScan({
         ]
       })
       state.last_contiguous_until = coveredFrontier(state.anchor_since, state.covered)
-      verifyDailyCoverageEvidence(root, channelId, state)
+      verifyDailyCoverageEvidence(root, channelId, state, {
+        backlogFile,
+        sameEventAliases: sourceAliases,
+      })
       atomicWrite(root, COVERAGE_FILE, coverage)
     }
     return {
@@ -517,7 +616,7 @@ export function applyDailyReceipts(coverage, plan, receipts) {
   const result = structuredClone(coverage)
   for (const receipt of receipts) {
     if (
-      receipt.schema !== "research-daily-receipt/v1" ||
+      !["research-daily-receipt/v1", "research-daily-receipt/v2"].includes(receipt.schema) ||
       receipt.daily_run !== plan.run_id ||
       !["window_scanned", "incomplete", "blocked", "failed"].includes(receipt.status)
     )
@@ -576,7 +675,12 @@ export function applyDailyReceipts(coverage, plan, receipts) {
   return result
 }
 
-export function supplementalCoverageReceiptForWindow(root, state, window) {
+export function supplementalCoverageReceiptForWindow(
+  root,
+  state,
+  window,
+  { backlogFile = DAILY_BACKLOG, sameEventAliases = null } = {},
+) {
   for (const span of state?.covered || []) {
     if (
       span.kind !== "verified_supplemental_scan" ||
@@ -592,7 +696,9 @@ export function supplementalCoverageReceiptForWindow(root, state, window) {
       ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
       : null
     if (
-      receipt?.schema !== "research-supplemental-coverage/v1" ||
+      !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
+        receipt?.schema,
+      ) ||
       receipt.reconciliation_run !== span.reconciliation_run ||
       receipt.channel_id !== window.channel_id ||
       receipt.since !== window.since ||
@@ -609,27 +715,47 @@ export function supplementalCoverageReceiptForWindow(root, state, window) {
       scan.summary.window?.until_exclusive !== window.until_exclusive
     )
       throw Error("Supplemental coverage receipt does not match its completed scan window")
+    verifySameEventSuppressionRecord(
+      root,
+      scan.candidates,
+      receipt.backlog_merge?.same_event_aliases,
+      {
+        backlogFile,
+        sameEventAliases,
+        asOf: receipt.reconciled_at,
+        required: receipt.schema === "research-supplemental-coverage/v2",
+        label: "Supplemental coverage receipt",
+      },
+    )
     verifyStoredListScan(root, scan, { channel_id: window.channel_id, ...scan.summary.window })
     return receipt
   }
   return null
 }
 
-function hasSupplementalResultForWindow(root, state, window) {
-  return supplementalCoverageReceiptForWindow(root, state, window) !== null
+function hasSupplementalResultForWindow(root, state, window, options) {
+  return supplementalCoverageReceiptForWindow(root, state, window, options) !== null
 }
 
 function attemptId(plan, window, attempt) {
   return `${plan.run_id}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a${attempt}`
 }
 
-export function dailyRetryQueue(root, plan, receipts, coverage = readJSON(root, COVERAGE_FILE)) {
+export function dailyRetryQueue(
+  root,
+  plan,
+  receipts,
+  coverage = readJSON(root, COVERAGE_FILE),
+  options,
+) {
   const policy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
   return plan.windows.flatMap((window) => {
     const attempts = receipts.filter((receipt) => sameWindow(receipt, window))
     if (!attempts.length || attempts.some((receipt) => receipt.status === "window_scanned"))
       return []
-    if (hasSupplementalResultForWindow(root, coverage?.routes?.[window.channel_id], window))
+    if (
+      hasSupplementalResultForWindow(root, coverage?.routes?.[window.channel_id], window, options)
+    )
       return []
     const last = attempts.at(-1)
     const state =
@@ -658,14 +784,19 @@ export function verifyDailyReceipts(
   root,
   plan,
   receipts,
-  { loadStored = storedListScan, verify = verifyStoredListScan } = {},
+  {
+    loadStored = storedListScan,
+    verify = verifyStoredListScan,
+    sameEventAliases = null,
+    backlogFile = DAILY_BACKLOG,
+  } = {},
 ) {
   const seen = new Set()
   for (const receipt of receipts) {
     const window = plan.windows.find((item) => sameWindow(item, receipt))
     const attemptNumber = Number(receipt.attempt_id?.match(/_a([1-9]\d*)$/)?.[1])
     if (
-      receipt.schema !== "research-daily-receipt/v1" ||
+      !["research-daily-receipt/v1", "research-daily-receipt/v2"].includes(receipt.schema) ||
       receipt.daily_run !== plan.run_id ||
       !window ||
       !Number.isSafeInteger(attemptNumber) ||
@@ -689,6 +820,18 @@ export function verifyDailyReceipts(
       receipt.backlog_merge?.status !== "merged"
     )
       throw Error("Daily receipt no longer matches its completed stored scan")
+    verifySameEventSuppressionRecord(
+      root,
+      stored.candidates,
+      receipt.backlog_merge.same_event_aliases,
+      {
+        backlogFile,
+        sameEventAliases,
+        asOf: receipt.finished_at,
+        required: receipt.schema === "research-daily-receipt/v2",
+        label: "Daily receipt",
+      },
+    )
   }
   return true
 }
@@ -703,12 +846,19 @@ export async function executeDailyPlan({
   loadStored = storedListScan,
   verify = verifyStoredListScan,
   merge = mergeCompletedScan,
+  sameEventAliases = null,
 }) {
   const receipts = readDailyReceipts(root, plan.run_id)
-  verifyDailyReceipts(root, plan, receipts, { loadStored, verify })
+  verifyDailyReceipts(root, plan, receipts, {
+    loadStored,
+    verify,
+    sameEventAliases,
+    backlogFile,
+  })
   for (const { channel_id } of activeRoutes) {
     const state = coverage.routes[channel_id]
-    if (state) verifyDailyCoverageEvidence(root, channel_id, state)
+    if (state)
+      verifyDailyCoverageEvidence(root, channel_id, state, { backlogFile, sameEventAliases })
   }
   let current = applyDailyReceipts(coverage, plan, receipts)
   const retryPolicy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
@@ -728,7 +878,10 @@ export async function executeDailyPlan({
       const lastAttempt = priorAttempts.at(-1)
       if (
         priorAttempts.some((receipt) => receipt.status === "window_scanned") ||
-        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window) ||
+        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window, {
+          backlogFile,
+          sameEventAliases,
+        }) ||
         priorAttempts.length >= retryPolicy.max_attempts_per_window ||
         (lastAttempt?.status === "blocked" && retryPolicy.blocked_requires_new_observation)
       )
@@ -820,6 +973,8 @@ export async function executeDailyPlan({
           outcome.mergeResult = await merge(result, backlogFile)
           if (outcome.mergeResult.status !== "merged")
             throw Error("Completed route candidates were not merged")
+          if (!Array.isArray(outcome.mergeResult.same_event_aliases))
+            outcome.mergeResult.same_event_aliases = []
           outcome.status = "window_scanned"
           outcome.candidates = result.candidates.map((candidate) => candidate.key)
         } catch (error) {
@@ -830,7 +985,7 @@ export async function executeDailyPlan({
         }
       }
       const receipt = {
-        schema: "research-daily-receipt/v1",
+        schema: "research-daily-receipt/v2",
         daily_run: plan.run_id,
         attempt_id: id,
         channel_id: window.channel_id,
@@ -863,7 +1018,11 @@ export async function executeDailyPlan({
       (window) =>
         receipts.some(
           (receipt) => sameWindow(receipt, window) && receipt.status === "window_scanned",
-        ) || hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window),
+        ) ||
+        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window, {
+          backlogFile,
+          sameEventAliases,
+        }),
     )
     return { ...route, status: complete ? "partial" : "failed" }
   })
@@ -886,7 +1045,10 @@ export async function executeDailyPlan({
       route_windows_serialized: true,
       candidate_merges_serialized: true,
     },
-    retry_queue: dailyRetryQueue(root, plan, receipts, current),
+    retry_queue: dailyRetryQueue(root, plan, receipts, current, {
+      backlogFile,
+      sameEventAliases,
+    }),
     timing: summarizeDailyTiming(receipts, activeRoutes),
     candidate_published: false,
     drive_verified: false,
@@ -1035,6 +1197,9 @@ export async function dailyScan({
       })
     if (mode === "plan-only")
       return { run_id: runId, status: "planned", windows: plan.windows.length, plan_path: planPath }
+    const sourceAliases = merge ? null : loadSameEventSourceAliases(root, backlogFile)
+    const mergeScan =
+      merge || ((scan, file) => mergeCompletedScan(scan, file, undefined, sourceAliases))
     const actualScan =
       scan ||
       createDailySourceScanner({
@@ -1053,7 +1218,8 @@ export async function dailyScan({
       backlogFile,
       scan: actualScan,
       verify,
-      merge,
+      merge: mergeScan,
+      sameEventAliases: sourceAliases,
     })
     const { generateDailyHandoff } = await import("./editorial-handoff.mjs")
     const handoff = generateDailyHandoff({ root, runId, vault, backlogFile })

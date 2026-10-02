@@ -172,6 +172,61 @@ test("Universal Robots news center profile parses general article dates and body
   )
 })
 
+test("Universal Robots current feature article layout uses the shared article profile", async (t) => {
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "research-ur-current-article-")),
+  )
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const previous = process.env.RESEARCH_PYTHON
+  process.env.RESEARCH_PYTHON =
+    previous || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  t.after(() => {
+    if (previous === undefined) delete process.env.RESEARCH_PYTHON
+    else process.env.RESEARCH_PYTHON = previous
+  })
+  const profile = urProfiles.find((item) => item.id === "universal-robots-news-center-article")
+  const url =
+    "https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/"
+  const html = `<html><head><title>Teradyne Robotics appoints a CCO</title></head><body>
+    <sirius-heading><h1>Teradyne Robotics appoints a CCO</h1></sirius-heading>
+    <sirius-section class="article-info-bar"><time class="sir-date">September 15, 2026</time></sirius-section>
+    <sirius-section class="feature sir-default"><article class="feature"><div class="feature-body">
+      <p>Teradyne Robotics appoints a commercial leader for Universal Robots and MiR.</p>
+      <p>The role covers the company’s global commercial organization across both units.</p>
+    </div></article></sirius-section>
+    </body></html>`
+  const bytes = Buffer.from(html)
+  const digest = sha256(bytes)
+  const id = sourceId(url)
+  const relative = `documents/${id}/${digest}/body.bin`
+  fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true })
+  fs.writeFileSync(path.join(root, relative), bytes)
+  const parsed = await parseDocument(
+    root,
+    {
+      original_url: url,
+      final_url: url,
+      source_id: id,
+      source_version_id: `${id}:${digest}`,
+      fetch_status: "captured",
+      mime_type: "text/html",
+      observed_at: "2026-10-02T00:00:00.000Z",
+      body_path: relative,
+      body_sha256: digest,
+    },
+    profile.options,
+  )
+  assert.equal(parsed.status, "extracted")
+  assert.equal(parsed.dates.published_at, "2026-09-15")
+  assert.deepEqual(
+    parsed.blocks.map((block) => block.text),
+    [
+      "Teradyne Robotics appoints a commercial leader for Universal Robots and MiR.",
+      "The role covers the company’s global commercial organization across both units.",
+    ],
+  )
+})
+
 test("paginated scan stops at an older date boundary and collects only the requested detail", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-ur-scan-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

@@ -6,6 +6,7 @@ import {
   parseDocument,
   assertStoredEvidence,
   loadStoredSourceRun,
+  loadCapturedStagesForReparse,
   bundleStoredSourceRuns,
   selectStoredSources,
 } from "./research/parser.mjs"
@@ -55,7 +56,11 @@ import {
 } from "./research/archive.mjs"
 import { withLocalSearch } from "./research/search-runtime.mjs"
 import { fetchWithPolicy } from "./research/source-policy.mjs"
-import { saveEvaluationAdjudication, saveEvaluationCase } from "./research/evaluation.mjs"
+import {
+  importEvaluationCandidate,
+  saveEvaluationAdjudication,
+  saveEvaluationCase,
+} from "./research/evaluation.mjs"
 import { recordDeepDiveReview } from "./research/deep-dive.mjs"
 import { assertReviewDate } from "./research/dates.mjs"
 import { privatePreview } from "./research/preview.mjs"
@@ -74,9 +79,11 @@ import {
 import { scanCalendarMonthRoute } from "./research/monthly-scan.mjs"
 import { scanBoundedRSSRoute } from "./research/rss-scan.mjs"
 import { scanPaginatedHDRoute } from "./research/api-scan.mjs"
+import { scanWordPressPostsRoute } from "./research/wordpress-scan.mjs"
 import { scanPaginatedKUKARoute } from "./research/kuka-scan.mjs"
 import { scanPaginatedABBRoute } from "./research/abb-scan.mjs"
 import { scanPaginatedURRoute } from "./research/ur-scan.mjs"
+import { scanFormHTMLRoute } from "./research/form-html-scan.mjs"
 import { recordCandidateDisposition } from "./research/candidate-disposition.mjs"
 import { recordCandidateIdentity } from "./research/candidate-identity.mjs"
 import { recordCandidateApproval } from "./research/candidate-approval.mjs"
@@ -93,6 +100,11 @@ import { intakeSearchCandidateBatch } from "./research/search-candidate-batch-in
 import { collectSearchCandidates } from "./research/search-candidate-collection.mjs"
 import { processSearchCandidates } from "./research/search-candidate-workflow.mjs"
 import { saveSourceSelection } from "./research/source-selection.mjs"
+import {
+  buildCandidateContentFingerprintEvidence,
+  candidateSourceInventoryFingerprint,
+  projectVerifiedCandidateContentFingerprints,
+} from "./research/candidate-content-fingerprint.mjs"
 
 export async function main(argv = process.argv.slice(2)) {
   const { values: v, positionals } = parseArgs({
@@ -138,6 +150,7 @@ export async function main(argv = process.argv.slice(2)) {
       "call-timeout-ms": { type: "string" },
       "extraction-timeout-ms": { type: "string" },
       "facts-per-batch": { type: "string" },
+      "extraction-scope": { type: "string" },
       "resume-local-budget-ms": { type: "string" },
       "approved-run": { type: "string", multiple: true },
       "knowledge-run": { type: "string", multiple: true },
@@ -174,6 +187,7 @@ export async function main(argv = process.argv.slice(2)) {
       "approve",
       "archive",
       "gold-case",
+      "evaluation-import-candidate",
       "evaluation-review",
       "deep-review",
       "reparse",
@@ -191,12 +205,13 @@ export async function main(argv = process.argv.slice(2)) {
       "candidate-disposition",
       "candidate-identity",
       "candidate-source-alternative",
+      "reconcile-content-fingerprint-evidence",
       "status",
       "recover-lock",
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|candidate-source-alternative|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|candidate-source-alternative|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -216,10 +231,18 @@ export async function main(argv = process.argv.slice(2)) {
     if (!v["model-policy"])
       throw Error("--resume-local-budget-ms requires an explicit --model-policy")
   }
+  if (v["extraction-scope"] !== undefined) {
+    if (command !== "extract") throw Error("--extraction-scope is only supported for extract")
+    if (!["full_source", "research_key_findings"].includes(v["extraction-scope"]))
+      throw Error("--extraction-scope must be full_source or research_key_findings")
+  }
   if (command !== "extract" && budgetFields.some((field) => v[field] !== undefined))
     throw Error("Extraction budgets are only supported for extract")
-  if (command !== "evaluation-review" && v["case-id"] !== undefined)
-    throw Error("--case-id is only supported for evaluation-review")
+  if (
+    !["evaluation-import-candidate", "evaluation-review"].includes(command) &&
+    v["case-id"] !== undefined
+  )
+    throw Error("--case-id is only supported for evaluation commands")
   if (
     command !== "reconcile-approved-inventory" &&
     ["drive-snapshot", "drive-readback", "inventory"].some((field) => v[field] !== undefined)
@@ -240,6 +263,7 @@ export async function main(argv = process.argv.slice(2)) {
     }
   let budget =
     command === "extract" && !v["model-policy"] ? extractionBudget(configuredBudget) : null
+  let extractionScope = v["extraction-scope"] ?? "full_source"
   let ollama = new Ollama()
   const policyRole = {
     queries: "search_plan",
@@ -292,6 +316,7 @@ export async function main(argv = process.argv.slice(2)) {
       "process-search-candidates",
       "select-search-candidate",
       "candidate-source-alternative",
+      "reconcile-content-fingerprint-evidence",
     ].includes(command)
   )
     throw Error("--backlog is only supported for candidate selection or approval")
@@ -353,10 +378,11 @@ export async function main(argv = process.argv.slice(2)) {
       "process-search-candidates",
       "select-search-candidate",
       "evaluation-review",
+      "evaluation-import-candidate",
     ].includes(command)
   )
     throw Error(
-      "--candidate-run is only supported for candidate-disposition, candidate-identity, intake-search-candidate, intake-search-batch, collect-search-candidates, process-search-candidates, select-search-candidate or evaluation-review",
+      "--candidate-run is only supported for candidate-disposition, candidate-identity, intake-search-candidate, intake-search-batch, collect-search-candidates, process-search-candidates, select-search-candidate or evaluation commands",
     )
   if (v["batch-manifest"] && command !== "intake-search-batch")
     throw Error("--batch-manifest is only supported for intake-search-batch")
@@ -383,6 +409,84 @@ export async function main(argv = process.argv.slice(2)) {
     if (!v.lock || !v["expected-owner"])
       throw Error("recover-lock requires --lock NAME and --expected-owner UUID")
     return recoverLock(root, v.lock, v["expected-owner"])
+  }
+  if (command === "reconcile-content-fingerprint-evidence") {
+    if (
+      !v.run ||
+      !/^[a-zA-Z0-9_-]+$/.test(v.run) ||
+      v.url?.length ||
+      v.channel?.length ||
+      v["source-run"] ||
+      v["candidate-run"] ||
+      v["candidate-key"] ||
+      v.review ||
+      v["merge-backlog"]
+    )
+      throw Error("Content fingerprint evidence requires --run and a local backlog")
+    const backlogPath = path.resolve(v.backlog || BACKLOG_PATH)
+    const backlogBytes = fs.readFileSync(backlogPath)
+    const backlog = JSON.parse(backlogBytes.toString("utf8"))
+    if (backlog?.schema !== "research-candidates/v1" || !Array.isArray(backlog.candidates))
+      throw Error("Valid candidate backlog required")
+    const backlogSha256 = sha256(backlogBytes)
+    const receiptPath = `runs/${v.run}/candidate-content-fingerprint-evidence.json`
+    return withLock(root, "run-" + v.run, () => {
+      const sourceInventoryBefore = candidateSourceInventoryFingerprint({
+        root,
+        candidates: backlog.candidates,
+      })
+      const previous = readJSON(root, receiptPath)
+      if (previous) {
+        if (previous.backlog_sha256 !== backlogSha256)
+          throw Error("Candidate backlog changed; create a new evidence run")
+        if (previous.source_inventory_sha256 !== sourceInventoryBefore)
+          throw Error("Source inventory changed or is unpinned; create a new evidence run")
+        const projection = projectVerifiedCandidateContentFingerprints({
+          root,
+          candidates: backlog.candidates,
+          backlogSha256,
+        })
+        if (projection.invalid_receipt_count)
+          throw Error("Stored content fingerprint evidence failed integrity validation")
+        const sourceInventoryAfter = candidateSourceInventoryFingerprint({
+          root,
+          candidates: backlog.candidates,
+        })
+        if (sourceInventoryAfter !== sourceInventoryBefore)
+          throw Error("Source inventory changed during reconciliation; create a new evidence run")
+        return {
+          path: receiptPath,
+          candidate_count: previous.candidate_count,
+          status_counts: previous.status_counts,
+          receipt_sha256: sha256(fs.readFileSync(safePath(root, receiptPath))),
+          reused: true,
+          candidate_published: false,
+        }
+      }
+      const receipt = buildCandidateContentFingerprintEvidence({
+        root,
+        runId: v.run,
+        candidates: backlog.candidates,
+        backlogSha256,
+      })
+      const sourceInventoryAfter = candidateSourceInventoryFingerprint({
+        root,
+        candidates: backlog.candidates,
+      })
+      if (
+        sourceInventoryBefore !== sourceInventoryAfter ||
+        receipt.source_inventory_sha256 !== sourceInventoryBefore
+      )
+        throw Error("Source inventory changed during reconciliation; create a new evidence run")
+      const saved = atomicCreate(root, receiptPath, receipt)
+      return {
+        path: saved.path,
+        receipt_sha256: saved.sha256,
+        candidate_count: receipt.candidate_count,
+        status_counts: receipt.status_counts,
+        candidate_published: false,
+      }
+    })
   }
   if (v["source-run"] && (v.channel?.length || (v.url?.length && command !== "select-source")))
     throw Error("Stored source input cannot be combined with live URLs or channels")
@@ -761,6 +865,7 @@ export async function main(argv = process.argv.slice(2)) {
       argv.some((arg) => arg === "--" + key || arg.startsWith("--" + key + "="))
     const overrides = {
       ...configuredBudget,
+      ...(explicit("extraction-scope") ? { extraction_scope: extractionScope } : {}),
       ...(explicit("model") ? { model: v.model } : {}),
       ...(explicit("think")
         ? { think: v.think === "false" ? false : v.think === "true" ? true : v.think }
@@ -785,7 +890,8 @@ export async function main(argv = process.argv.slice(2)) {
     const settings = ollama.executionPolicy.settings
     v.model = settings.model
     v.think = settings.think
-    if (command === "extract")
+    if (command === "extract") {
+      extractionScope = settings.extraction_scope ?? extractionScope
       budget = extractionBudget(
         Object.fromEntries(
           budgetFields
@@ -793,6 +899,7 @@ export async function main(argv = process.argv.slice(2)) {
             .map((key) => [key, settings[key]]),
         ),
       )
+    }
   }
   if (command === "knowledge-draft")
     return withLock(root, "run-" + v.run, () => {
@@ -1135,6 +1242,10 @@ export async function main(argv = process.argv.slice(2)) {
       JSON.parse(fs.readFileSync(v.review, "utf8")),
     )
   }
+  if (command === "evaluation-import-candidate") {
+    if (!v["case-id"] || !v["candidate-run"]) throw Error("--case-id and --candidate-run required")
+    return importEvaluationCandidate(root, v.run, v["case-id"], v["candidate-run"])
+  }
   if (command === "evaluation-review") {
     if (!v["case-id"] || !v["candidate-run"] || !v.review)
       throw Error("--case-id, --candidate-run and --review required")
@@ -1404,7 +1515,9 @@ export async function main(argv = process.argv.slice(2)) {
   return withLock(root, "run-" + v.run, async () => {
     if (v["source-run"] === v.run) throw Error("Output run must differ from source run")
     const stored = v["source-run"]
-      ? loadStoredSourceRun(root, v["source-run"], { allowUnacquired: command === "reparse" })
+      ? command === "reparse"
+        ? loadCapturedStagesForReparse(root, v["source-run"])
+        : loadStoredSourceRun(root, v["source-run"], { allowUnacquired: false })
       : null
     const input = {
       command,
@@ -1428,6 +1541,7 @@ export async function main(argv = process.argv.slice(2)) {
             kuka_scan_sha256: sha256(fs.readFileSync("scripts/research/kuka-scan.mjs")),
             abb_scan_sha256: sha256(fs.readFileSync("scripts/research/abb-scan.mjs")),
             rss_scan_sha256: sha256(fs.readFileSync("scripts/research/rss-scan.mjs")),
+            form_html_scan_sha256: sha256(fs.readFileSync("scripts/research/form-html-scan.mjs")),
           }
         : {}),
       policy_sha256: sha256(fs.readFileSync("scripts/research/source-policy.mjs")),
@@ -1487,27 +1601,31 @@ export async function main(argv = process.argv.slice(2)) {
       const profiles =
         JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
       const scanner =
-        channel.api_profile?.id === "ur-news-center-json-pages-v1"
-          ? scanPaginatedURRoute
-          : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
-                channel.api_profile?.id,
-              )
-            ? scanPaginatedHDRoute
-            : channel.api_profile?.id === "kuka-news-form-pages-v1"
-              ? scanPaginatedKUKARoute
-              : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
-                ? scanPaginatedABBRoute
-                : channel.api_profile
-                  ? null
-                  : channel.listing_profile?.pagination === "calendar-month"
-                    ? scanCalendarMonthRoute
-                    : channel.method === "rss" &&
-                        channel.listing_profile?.pagination === "bounded-feed"
-                      ? scanBoundedRSSRoute
-                      : channel.method === "html-list" &&
-                          channel.listing_profile?.pagination === "single-page"
-                        ? scanSinglePageRoute
-                        : null
+        channel.api_profile?.id === "wordpress-rest-posts-json-v1"
+          ? scanWordPressPostsRoute
+          : channel.api_profile?.id === "ur-news-center-json-pages-v1"
+            ? scanPaginatedURRoute
+            : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
+                  channel.api_profile?.id,
+                )
+              ? scanPaginatedHDRoute
+              : channel.api_profile?.id === "kuka-news-form-pages-v1"
+                ? scanPaginatedKUKARoute
+        : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
+                  ? scanPaginatedABBRoute
+                  : channel.api_profile?.id === "post-html-fragment-pages-v1"
+                    ? scanFormHTMLRoute
+                  : channel.api_profile
+                    ? null
+                    : channel.listing_profile?.pagination === "calendar-month"
+                      ? scanCalendarMonthRoute
+                      : channel.method === "rss" &&
+                          channel.listing_profile?.pagination === "bounded-feed"
+                        ? scanBoundedRSSRoute
+                        : channel.method === "html-list" &&
+                            channel.listing_profile?.pagination === "single-page"
+                          ? scanSinglePageRoute
+                          : null
       if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
       if (v["reuse-listing-run"] && scanner !== scanSinglePageRoute)
         throw Error("--reuse-listing-run is only supported for single-page HTML routes")
@@ -1579,6 +1697,12 @@ export async function main(argv = process.argv.slice(2)) {
       atomicWrite(root, `runs/${v.run}/documents.json`, result.documents)
       atomicWrite(root, `runs/${v.run}/parses.json`, result.parses)
       atomicWrite(root, `runs/${v.run}/candidates.json`, result.candidates)
+      if (result.events)
+        atomicWrite(root, `runs/${v.run}/events.json`, {
+          schema: "research-scheduled-events/v1",
+          events: result.events,
+          candidate_published: false,
+        })
       const backlogMerge = v["merge-backlog"]
         ? await mergeCompletedScan(result, ".local/research/candidate-backlog.json")
         : null
@@ -1587,6 +1711,7 @@ export async function main(argv = process.argv.slice(2)) {
         status: result.summary.status,
         reason: result.summary.reason,
         candidates: result.candidates.length,
+        ...(result.events ? { events: result.events.length } : {}),
         ...(backlogMerge ? { backlog_merge: backlogMerge } : {}),
         candidate_published: false,
       }
@@ -1679,10 +1804,12 @@ export async function main(argv = process.argv.slice(2)) {
           think: v.think,
           ...(ollama.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
           budget,
+          extraction_scope: extractionScope,
         },
         () =>
           extractClaims(ollama, parses, {
             ...budget,
+            extraction_scope: extractionScope,
             candidate_key: candidateKey,
             model: v.model,
             think: v.think === "false" ? false : v.think === "true" ? true : v.think,

@@ -431,14 +431,24 @@ test("RSS detail title conflict cannot become a candidate, while whitespace diff
     "unused",
     run,
     {},
-    { ...channel, publisher_id: "example.com", sectors: ["AI"], region: "해외", axis: "기술·제품" },
+    {
+      ...channel,
+      publisher_id: "example.com",
+      sectors: ["AI"],
+      region: "해외",
+      axis: "기술·제품",
+      listing_profile: { ...channel.listing_profile, rss_title_policy: "source_title_authoritative" },
+    },
     articleProfiles,
     [link],
     {
       ...options,
-      parse: async () => ({ ...(await parse()), title: " Verified\u00a0article   recent " }),
+      parse: async () => ({ ...(await parse()), title: "Verified article with source headline" }),
     },
   )
   assert.equal(accepted.details[0].status, "source_parsed_unreviewed")
+  assert.equal(accepted.details[0].title_relation, "rss_variant_source_title_authoritative")
+  assert.equal(accepted.candidates[0].title, "Verified article with source headline")
+  assert.equal(accepted.candidates[0].discovery[0].result_title, link.text)
   assert.equal(accepted.candidates.length, 1)
 })

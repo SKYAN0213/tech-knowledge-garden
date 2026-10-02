@@ -298,6 +298,129 @@ export function loadEvaluationCase(root, caseId) {
   return { manifest, specification: spec, documents, parses, root: path.resolve(caseRoot) }
 }
 
+export async function importEvaluationCandidate(root, runId, caseId, candidateRun) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid evaluation import run id")
+  if (!/^[a-zA-Z0-9_-]+$/.test(candidateRun || "")) throw Error("Invalid candidate run id")
+  return withLock(root, `evaluation-import-${caseId}`, async () => {
+    const evaluationCase = loadEvaluationCase(root, caseId)
+    const stored = loadStoredSourceRun(root, candidateRun)
+    if (
+      stored.identity.documents_sha256 !== evaluationCase.manifest.documents_sha256 ||
+      stored.identity.parses_sha256 !== evaluationCase.manifest.parses_sha256
+    )
+      throw Error("Candidate source snapshot does not match the frozen evaluation case")
+
+    const state = readJSON(root, `runs/${candidateRun}/state.json`)
+    const claims = readJSON(root, `runs/${candidateRun}/claims.json`)
+    const budget = readJSON(root, `runs/${candidateRun}/model-policy/fact_extract/budget.json`)
+    const claimsPath = `runs/${candidateRun}/claims.json`
+    if (
+      state?.schema !== "research-run/v1" ||
+      state.run_id !== candidateRun ||
+      state.candidate_published !== false ||
+      state.stages?.claims?.status !== "complete" ||
+      state.stages.claims.result_path !== claimsPath ||
+      state.stages.claims.result_hash !== sha256(JSON.stringify(claims)) ||
+      !Array.isArray(claims?.claims) ||
+      claims.claims.length === 0
+    )
+      throw Error("Completed unpublished source-bound candidate claims run required")
+    if (
+      !["model-budget/v1", "model-budget/v2"].includes(budget?.schema) ||
+      budget.binding?.role !== "fact_extract" ||
+      typeof budget.binding.settings?.model !== "string" ||
+      !Array.isArray(budget.attempts) ||
+      budget.attempts.length === 0 ||
+      budget.attempts.some(
+        (attempt) =>
+          attempt.status !== "complete" ||
+          attempt.result?.provenance?.model !== budget.binding.settings.model ||
+          !Number.isFinite(attempt.result?.provenance?.wall_ms) ||
+          attempt.result.provenance.wall_ms < 0,
+      )
+    )
+      throw Error("Complete fact-extraction model provenance required")
+
+    const sourceDirectory = safePath(root, `runs/${candidateRun}`)
+    const files = []
+    const walk = (directory) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const absolute = path.join(directory, entry.name)
+        const metadata = fs.lstatSync(absolute)
+        if (metadata.isSymbolicLink()) throw Error("Symlinks are not allowed in candidate run")
+        if (metadata.isDirectory()) {
+          walk(absolute)
+          continue
+        }
+        if (!metadata.isFile()) throw Error("Unsupported file in candidate run")
+        const relative = path.relative(sourceDirectory, absolute)
+        if (relative.startsWith("..") || path.isAbsolute(relative))
+          throw Error("Candidate run path escaped its root")
+        files.push({
+          relative,
+          bytes: fs.readFileSync(safePath(root, `runs/${candidateRun}/${relative}`)),
+        })
+      }
+    }
+    walk(sourceDirectory)
+    files.sort((a, b) => a.relative.localeCompare(b.relative))
+    const fileRecords = []
+    for (const file of files) {
+      const relative = `runs/${candidateRun}/${file.relative}`
+      const existingPath = safePath(evaluationCase.root, relative)
+      if (fs.existsSync(existingPath)) {
+        const existing = fs.readFileSync(existingPath)
+        if (!existing.equals(file.bytes)) throw Error("Imported candidate run file changed")
+      } else {
+        atomicCreate(evaluationCase.root, relative, file.bytes)
+      }
+      fileRecords.push({
+        path: file.relative,
+        sha256: sha256(file.bytes),
+        bytes: file.bytes.length,
+      })
+    }
+
+    const copied = loadStoredSourceRun(evaluationCase.root, candidateRun)
+    if (
+      copied.identity.documents_sha256 !== evaluationCase.manifest.documents_sha256 ||
+      copied.identity.parses_sha256 !== evaluationCase.manifest.parses_sha256
+    )
+      throw Error("Imported candidate source snapshot does not match the frozen evaluation case")
+    const receipt = {
+      schema: "evaluation-candidate-import/v1",
+      run_id: runId,
+      case_id: caseId,
+      candidate_run: candidateRun,
+      case_status: evaluationCase.manifest.status,
+      case_split: evaluationCase.manifest.split,
+      model: budget.binding.settings.model,
+      provider: budget.binding.settings.provider ?? "ollama",
+      source_documents_sha256: stored.identity.documents_sha256,
+      source_parses_sha256: stored.identity.parses_sha256,
+      candidate_run_sha256: sha256(JSON.stringify(fileRecords)),
+      file_count: fileRecords.length,
+      bytes_copied: fileRecords.reduce((total, file) => total + file.bytes, 0),
+      claim_count: claims.claims.length,
+      model_batch_count: budget.attempts.length,
+      model_wall_ms: budget.attempts.reduce(
+        (total, attempt) => total + attempt.result.provenance.wall_ms,
+        0,
+      ),
+      candidate_published: false,
+    }
+    const relativeReceipt = `runs/${runId}/evaluation-candidate-${caseId}.json`
+    const previous = readJSON(root, relativeReceipt)
+    if (previous) {
+      if (JSON.stringify(previous) !== JSON.stringify(receipt))
+        throw Error("Evaluation candidate import inputs changed; use a new run id")
+      return { ...receipt, idempotent: true }
+    }
+    atomicCreate(root, relativeReceipt, receipt)
+    return { ...receipt, idempotent: false }
+  })
+}
+
 // Aggregate only case metadata and source snapshot hashes for the private delivery dashboard.
 // Multiple specification revisions over identical source bytes count as one evaluation example.
 export function auditEvaluationCases(root, targets = { development: 40, heldout: 20 }) {
@@ -530,7 +653,7 @@ export async function saveEvaluationAdjudication(root, runId, caseId, candidateR
     const budgetBytes = fs.readFileSync(safePath(fixtureRoot, budgetPath))
     const budget = JSON.parse(budgetBytes.toString("utf8"))
     if (
-      budget.schema !== "model-budget/v1" ||
+      !["model-budget/v1", "model-budget/v2"].includes(budget.schema) ||
       budget.binding?.role !== "fact_extract" ||
       !Array.isArray(budget.attempts) ||
       budget.attempts.length === 0 ||

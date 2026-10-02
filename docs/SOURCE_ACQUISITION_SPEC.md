@@ -2354,3 +2354,86 @@ KAIST 기사의 등록일은 9월 28일, 본문에서 밝힌 대학 발표일은
 상세 원문은 `post-single`의 제목, `entry-content`의 본문 블록, 화면에 표시된 `slider-meta-left-content` 날짜를 같은 공통 HTML 파서의 `asec-public-ko-article-v1`로 읽는다. UTC 오프셋이 있는 `article:published_time`은 새 **공통 `publication_date_timezone` 옵션**으로 한국 달력일에 맞춰 화면 날짜와 비교한다. 원 타임스탬프와 DOM 날짜 근거를 모두 보존하고 실제 날짜가 다르면 `conflict`로 중단한다. `CONTENT_AD_PLACE` 구독 안내와 `post-footer` 태그 UI는 독서 블록에서 제외한다. 이 옵션이 없는 다른 출처의 기존 UTC·날짜 충돌 판정은 그대로다.
 
 `20260930-asec-public-sep23-v1`은 `[2026-09-23, 2026-09-30)`의 피드 30항목에서 공개 원문 4건·회원 전용 2건·이전 24건을 확인했다. 네 상세의 제목·표시 날짜·본문을 저장 원문에서 대조해 `window_scanned`와 `verifyStoredListScan`을 통과했다. `20260930-asec-public-today-v1`은 관측 시점의 `[9월 30일, 10월 1일)`에서 공개 후보 0건과 이전 30건의 경계를 확인했다. 첫 완료 run의 JSON 16개 SHA는 동일 run 재실행 전후 같았다. 단일 경로의 `daily-20260930-asec-only-v1`도 2/2창을 완료했고 재개 전후 7개 JSON의 합산 해시가 같았다. 이후 `Public` 필수 검사까지 넣은 `20260930-asec-public-strict-sep23-v2`와 `20260930-asec-public-strict-today-v2`도 각각 4건·0건으로 `window_scanned`를 통과했다. 현재 baseline은 전자다. `daily-20260930-asec-strict-only-v2`는 두 창을 다시 완료했고, 무변경 재개 전후의 JSON 7개 manifest SHA-256은 `5c35353f825c264f66dbe7751d0798c5df02bf8e733e376ff605e378e7a154e0`로 같다. 네 후보는 `source_parsed_unreviewed`이며 기존 기사 승인·Drive 작성 원본·공개 발행으로 승격하지 않았다.
+
+## 51. IEEE Spectrum Robotics: 공통 RSS와 교차 호스트 원문
+
+`ieee-spectrum-robotics`는 공식 Robotics RSS를 기존 RSS scanner로 읽고, 각 permalink를 공통 fetch/parse 경로에 넘긴다. 허용 호스트는 `spectrum.ieee.org`와 피드에 실제 포함된 `robotsguide.com`으로 제한한다. `[2026-09-25, 2026-10-02)` 실물 창은 피드 30항목 중 기간 내 기사 3건과 더 오래된 경계 27건을 확인해 `window_scanned`로 끝났다. 이 날짜 범위의 상세 후보는 승인·발행 전 상태다.
+
+세 기사 모두 RSS 표제와 상세 원문의 표제가 달랐다. 해당 route만 `source_title_authoritative`를 선언해 상세 원문 표제를 후보 제목으로 쓰고 RSS 표제는 발견 근거에 남긴다. 이 정책은 다른 RSS의 기본 `must_match` 동작을 바꾸지 않는다. Robots Guide 원문 날짜는 페이지에서 표준 날짜로 파싱되지 않았으며, 수집기가 보존한 공식 RSS 항목의 날짜·URL·버전으로 `official-listing` 근거를 기록했다. 등록된 `publication_date_from_listing` 옵션을 HTML 공통 parser까지 지원해 얻은 결과다. 기존 URL 호스트 제한, 상세 원문 확인, 날짜 일치 검증과 경계 검증은 유지한다.
+
+RSS 피드는 일일 로봇 기술·제품 route로 추가했으며, 이는 자동 후보 수집을 허용하는 설정이다. 후보의 사실 검토·승인·공개는 별도 단계다. 재현 명령과 정확한 저장 run은 [런북 213절](LOCAL_AI_NEWS_RUNBOOK.md#213-ieee-spectrum-robotics-rss-기간-수집과-제목날짜-근거) 참조.
+
+## 52. Boston Dynamics 블로그: 공통 프로필과 JSON-LD 게시일
+
+`boston-dynamics-blog-article-v1`은 `/blog/<slug>` 기사에만 적용하는 재사용 article profile이다. `fl-heading` 클래스의 `h1`에서 제목을, `post-content` 클래스의 본문 컨테이너에서 문단·소제목·목록·인용·표를 문서 순서로 읽는다. 게시일은 별도 날짜 규칙을 만들지 않고 공통 파서의 bounded JSON-LD `Article.datePublished` 추출을 사용한다. `dateModified`는 게시일로 올리지 않는다. 정확한 저장 원문과 profile 재파싱은 [런북 215절](LOCAL_AI_NEWS_RUNBOOK.md#215-boston-dynamics-공식-원문-프로필-수정과-같은-사건-근거)에 기록한다.
+
+## 53. 표준 WordPress REST 목록 API: 공통 페이지 scanner
+
+`wordpress-rest-posts-json-v1`은 WordPress REST API의 공개 collection endpoint `/wp-json/wp/v2/<post-type>`를 제한된 설정으로 읽는다. API 응답은 일반 source collector와 동일하게 host allowlist·robots·redirect 정책을 거쳐 원문 bytes와 SHA를 저장한다. 요청은 관측 기간의 `after`/`before`, `orderby=date`, `order=desc`, 설정된 `per_page`(최대 100), `page`, 필요한 `_fields`만 포함한다. API가 반환하는 `link`는 채널 host와 명시된 `item_pattern`을 모두 통과해야 상세 URL로 사용한다. 발표 상태, 글 ID, post type, slug, 날짜, 제목과 최신순 정렬을 검사하고 중복 permalink와 페이지 예산 초과는 창 완료로 처리하지 않는다. 마지막 page는 `per_page`보다 적은 항목이 반환될 때만 확인한다.
+
+상세 원문은 별도로 등록된 article profile로 다시 파싱한다. 목록이 `YYYY-MM-DD`를, 상세 JSON-LD가 시간대가 포함된 timestamp를 제공하면 출판일의 달력 날짜를 비교하되 상세 timestamp·basis는 상세 parse에 보존한다. Boston Dynamics 등록·실행 근거는 [런북 216절](LOCAL_AI_NEWS_RUNBOOK.md#216-boston-dynamics-wordpress-rest-공통-수집기와-일일-경로)에 있다. WordPress의 표준 pagination/collection query는 [REST API pagination](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/) 및 [Posts endpoint](https://developer.wordpress.org/rest-api/reference/posts/)를 참조한다. API가 비활성·보호·변형된 사이트는 성공으로 추정하지 않고 이 profile 사용을 보류한다.
+
+## 54. 공통 상세 원문의 선언형 첨부 수집
+
+공통 `collectWindowDetails`는 상세 HTML parse가 제공한 `attachments` 가운데 article profile의 `supporting_documents` 규칙에 명시된 URL만 추가 수집한다. 규칙은 고유 `id`와 전체 URL을 제한하는 `url_pattern`으로 선언한다. 각 규칙은 정확히 한 링크에 대응해야 하며, URL은 부모 route의 host 정책·robots·redirect·byte budget을 그대로 통과하고 상세 URL과 정확히 하나로 일치하는 article profile로 parse해야 한다. 특정 출처의 첨부가 막히거나 판본이 이동한 경우에는 규칙에 검증된 `fallback_sources`를 명시할 수 있다. 각 fallback은 대체 원문 `url`, 그 원문을 연결하는 `evidence_url`, 근거 원문 안에서 확인할 리터럴 `evidence_match`를 함께 지정한다. 근거 페이지를 먼저 공통 fetch/robots/redirect 정책으로 저장하고 body hash를 확인한 뒤 match가 있을 때만 대체 URL을 수집한다. 대체 원문도 route host allowlist·robots·redirect·byte budget 및 정확한 parser profile을 통과해야 한다. 원 첨부 시도, 근거 페이지 판본·해시, 대체 URL 시도, 실제 파싱된 판본을 run receipt에 모두 남긴다. 근거 match가 없으면 대체 원문 요청과 후보 생성을 중단한다. 임의 URL 탐색이나 실패 숨기기는 허용하지 않으며, 선택하지 않은 PDF 링크는 가져오지 않는다.
+
+IR 연차보고서 같은 자료 목록은 회계기간만 제공하면서 페이지 공통 JSON-LD가 오래된 날짜를 `datePublished`로 남길 수 있다. 출처 profile에서 `publication_date_policy: "not_applicable"`을 지정하면 이 메타데이터를 발표일 후보로 쓰지 않고 `published_at:null`, `profile_status:not-applicable`로 둔다. 회계연도·감사 서명일·이사회 승인일을 발행일로 대체하지 않는다. 원문이 날짜형 daily news 후보 계약을 충족하지 않으면 원문과 parse만 보존하고 daily article candidate를 만들지 않는다.
+
+선언한 첨부가 없거나 중복/모호하거나 fetch/profile/parse가 실패하면 상세는 `source_parsed_unreviewed`가 되지 않고 기간 scan도 완료되지 않는다. 저장한 하위 원문·parse와 URL·profile·상태는 부모 상세의 run에 귀속된다. 후보의 `supporting_source_urls`는 검토 handoff의 해당 실행 증거에만 전달하고 공개 기사 `source_urls`나 고정 사건 ID로 승격하지 않는다. 후보의 exact source selection은 부모 parse의 첨부 목록과 URL 관계를 재검증한 뒤 부모와 첨부를 함께 선택한다. 현재 실물 Yaskawa 적용과 실패/성공 검증은 [런북 223절](LOCAL_AI_NEWS_RUNBOOK.md#223-공통-상세-첨부-수집과-yaskawa-전략-pdf-슬라이스)을 참조한다.
+
+## 55. fetch stage 재파싱 복구와 누적 증거 영수증
+
+공통 `collect`가 원문 fetch는 완료했지만 parser가 실패해 run-level `documents.json`/`parses.json`이 생성되기 전에 종료될 수 있다. `reparse --source-run`은 이 경우 completed `fetch-*` stage receipt를 복구 입력으로 사용할 수 있다. run `state.json`의 stage 결과 경로·content hash·source ID를 검사하고, captured source의 immutable body path/sha를 검증한 후 현재 등록 article profile로 다시 파싱한다. 이 재개 경로는 원문 URL을 다시 fetch하지 않는다. 완료 stage가 없거나 result hash·source identity·raw body integrity가 맞지 않으면 실패한다.
+
+예를 들어 Universal Robots의 2026-09-15 Teradyne CCO 기사는 공통 fetch 성공 뒤 페이지의 본문 컨테이너가 기존 `sirius-section.text sir-default`에서 `article.feature`로 바뀌어 parse만 실패했다. 공통 UR article profile을 두 구조의 제한된 XPath union으로 갱신한 뒤 `reparse`로 저장 원문을 복구했고 4개 본문 block을 얻었다. 기존 profile 구조와 새 구조 모두 독립 fixture에서 테스트한다. 실행 세부·hash·명령은 [런북 228절](LOCAL_AI_NEWS_RUNBOOK.md#228-공통-fetch-stage-재파싱과-누적-지문-영수증)에서 확인한다.
+
+동일 backlog SHA를 대상으로 여러 candidate content fingerprint receipt가 만들어질 수 있다. 각 receipt는 현재 pending 후보 inventory 전체를 포함해야 하며 원문·parse integrity를 재검증한다. projection은 동일 source run/version/parse의 중복 observation을 합치고, 서로 다른 content hash가 한 parse identity에 붙으면 무효 처리한다. receipt 간 서로 다른 유효 content가 새로 관측되면 unique 상태를 해제하고 ambiguous로 둔다. 투영은 온톨로지의 duplicate-review 근거에만 쓰며 backlog, approval, publication 상태를 변경하지 않는다.
+
+## 56. LS ELECTRIC 보도자료 상세 프로필
+
+`ls-electric-press-detail-v1`은 LS그룹 `/ko/media/news/<alphanumeric-id>` 상세 주소에만 적용한다. 사이트 공통 og:title 대신 `newsView/titArea/h3.tit`을 제목으로, 같은 header의 `.date`를 `%Y-%m-%d` 게시일로 읽는다. 본문은 `newsView/viewCon/wrap_editor`의 실제 문단만 순서대로 추출하므로 공유 UI와 인접 보도자료 목록은 제외된다. URL은 기존 공통 fetch 정책을 사용하고 상세 DOM만 source-specific option으로 기술한다. 프로필 fixture는 제목·날짜 및 인접 기사 제외를 검사하며 실제 저장 원문 재파싱은 [런북 229절](LOCAL_AI_NEWS_RUNBOOK.md#229-ls-electric-공식-보도자료의-정확한-날짜-본문-프로필)에서 확인한다.
+
+## 57. Vestas 공식 주문 register
+
+`vestas-wind-order-register-v1`은 `https://www.vestas.com/en/investor/announcements/wind-turbines-orders`의 공식 주문 register를 기존 공통 collector로 가져온다. 페이지 제목은 `main` 안의 `h1`에서 대소문자 비구분 exact match로 선택하고, 본문은 첫 번째 `cmp-accordion` 안의 분기별 `table` 네 개로 제한한다. 이 첫 accordion은 현재 연도의 Q1–Q4를 담으며 이후 accordion의 연도 archive는 선택하지 않는다. 표 행 안의 날짜는 주문 사건의 날짜이지 페이지 게시일 metadata가 아니므로 parse `published_at`로 승격하지 않는다. 후보 동일성은 직접 인용된 날짜·주문 제목·MW 수치와 원래 상세 URL을 대조해 별도 검토한다. selector fixture·재파싱·비공개 same-event receipt는 [런북 238절](LOCAL_AI_NEWS_RUNBOOK.md#238-vestas-주문-목록-대체-출처-연결과-로컬-추론-시간-계측)에 기록한다.
+
+## 58. AWS What's New 공식 RSS와 기사 상세 프로필
+
+`aws-whats-new-rss`는 AWS What's New의 공식 [RSS feed](https://aws.amazon.com/about-aws/whats-new/recent/feed/)를 기존 bounded-feed scanner로 읽는다. 피드 제목은 `Recent Announcements`, 항목 한도는 100개이며 GUID는 permalink가 아니므로 URL·GUID 각각의 유일성을 검사한다. 발행 시각은 UTC 기준으로 판정하고, 상세 URL은 AWS 공식 호스트와 `/about-aws/whats-new/YYYY/M.../<slug>` 경로로 제한한다. 연도/월 뒤에 `/kinesis/`처럼 경로가 추가되는 실제 항목을 허용한다.
+
+`aws-whats-new-article-v1` 상세 profile은 `main.wn-post > h1.wn-title` 제목, 첫 `.wn-body`의 화면 게시일 `Posted on: Mon DD, YYYY`, 두 번째 `.wn-body`의 기사 문단을 각각 읽는다. RSS 게시일은 목록 창과 상세 날짜의 대조 자료로만 쓰고, 날짜가 URL에 들어 있다는 이유만으로 게시일을 추정하지 않는다. feed/detail 파싱은 기존 fetch·robots·redirect·bytes 보존 및 bounded-feed의 시작 경계 검증을 그대로 사용한다.
+
+실제 `[2026-10-01, 2026-10-02)` scan `aws-whats-new-scan-20261002-v2`는 피드 100건에서 기간 내 16건, 이전 경계 83건, 이후 항목 1건을 확인했다. 상세 16건은 `source_parsed_unreviewed` 후보이며 candidate publication은 false다. 이 경로는 매일 탐색 대상으로 등록됐다. 상세 실행·profile 날짜 근거와 표적 검증은 [런북 239절](LOCAL_AI_NEWS_RUNBOOK.md#239-aws-whats-new-rss-경로와-상세-게시일-파싱)에 기록한다.
+
+7일 daily 창에서는 같은 100개 feed 중 80건이 선택됐다. 따라서 `scan_max_details`를 85로 두어 최근 실물 분포를 수용하면서도 RSS item 상한보다 낮은 명시 예산을 둔다. baseline `[2026-09-25, 2026-10-02)`는 80/80 상세 파싱, 이전 경계 19건, 이후 항목 1건으로 `window_scanned`가 됐다. 실행 결과·daily plan readback은 [런북 241절](LOCAL_AI_NEWS_RUNBOOK.md#241-aws-7일-상세-예산과-daily-plan-baseline-통합)에 있다.
+
+## 59. Roche media release의 고정 게시일 메타데이터
+
+`roche-media-release-date-v1`은 Roche의 `/media/releases/med-cor-YYYY-MM-DD` 보도자료 상세 경로에 공통 적용한다. 상세 제목·본문 추출은 기존 HTML 파서를 유지하고, 게시일은 `meta[name="release-date"]`의 `content` 값 하나를 ISO 날짜로 읽는다. 이 메타와 별개인 수정일은 게시일로 대체하지 않는다. 실제 2026-09-17·2026-09-22 원문 재검토에서 날짜 필드와 후보 지문 연결을 확인했다. 상세 근거는 [런북 240절](LOCAL_AI_NEWS_RUNBOOK.md#240-공식-출처-배치-수집과-후보-원문-날짜-복구)을 따른다.
+## 60. 공식 목록의 명시적 제목 말줄임 처리
+
+목록 UI가 긴 제목 뒤에 말줄임표를 표시하는 source profile은 title_match_policy truncated_prefix를 선언할 수 있다. scanner는 목록 제목 끝의 Unicode … 또는 ASCII ...를 확인하고, 말줄임표 앞 접두부가 24자 이상이며 상세 제목이 그 접두부로 시작할 때만 제목 불일치를 허용한다. 후보에는 목록 표시 제목 대신 상세 원문 제목을 쓰고, 관계 receipt에는 official_listing_truncated_detail_title_authoritative 관계를 남긴다. 날짜·canonical URL·상세 링크 identity의 기존 검사는 계속 적용한다. 말줄임표가 없거나 접두부가 짧거나 접두부가 상세 제목과 일치하지 않으면 실패한다. 이 정책은 공식 목록의 시각적 축약만 보정하며 근사 제목 매칭이나 유사도 추론을 허용하지 않는다.
+## 61. IR 자료 기간·행사일·발표일 분리
+
+기업 IR archive의 회계기간 표기(예: 2026 2Q)는 보고 대상 기간이지 자료 게시일이 아니다. PDF `creationDate`, HTTP `Last-Modified`, 수집 관측일도 회사가 명시한 발표일의 대체 근거로 사용하지 않는다. KIND 등 거래소 IR 일정의 `일자/시간`은 일정상 행사 시각으로 보관한다. 원자료가 행사 완료나 자료 공개 시점을 별도로 명시하지 않으면 `published_at`을 비워 두고 event date, reporting period, publication date를 서로 다른 필드·근거로 유지한다. 이런 문서 목록은 dated daily news window에 넣지 않는다. 검증된 원문 event/공시 일자와 exact PDF identity가 결합된 뒤에만 해당 일자를 가진 뉴스 사건이나 전략 이력에 연결한다. 두산로보틱스 IR archive·KIND detail·Q2 2026 PDF의 실제 capture와 다음 parser 조치는 [런북 249절](LOCAL_AI_NEWS_RUNBOOK.md#249-현재-34개-경로-일일-수집-통합-검증과-두산-ir-자료의-날짜-구분)을 참고한다.
+
+## 62. POST HTML fragment 목록의 공통 수집 계약
+
+일부 공식 목록은 최초 GET에 화면 틀만 주고 JavaScript 폼 POST로 실제 목록 fragment를 받는다. 출처별 전체 스캐너를 복제하지 않고 공통 `SourceFetcher`의 robots 확인, 허용 호스트, URL-bound form 필드, body hash, redirect 금지와 단일 POST 규칙을 유지한다. source profile은 제한된 폼 값·페이지 변수·목록 행 selector·날짜 의미·상세 URL 변환만 선언한다.
+
+fragment 원문은 source bytes를 수정하지 않고 출처 profile이 `format: "html-fragment"`를 명시해 공통 HTML parser로 넘긴다. profile은 정확히 하나의 content container·title selector·block selector를 지정해야 한다. 지원 MIME은 HTML로 제한하고 날짜가 게시일이 아닌 경우 `publication_date_policy: "not_applicable"`로 메타데이터를 억제한다.
+
+기사 상세가 POST fragment를 GET query 형태로도 제공하는 출처는 해당 exact URL에 별도 `article_profile`을 둔다. 이 profile은 title selector를 기사 제목 행으로 지정하고 본문 block에는 원문 표 행을 보존한다. IR schedule detail에서 `event_date`가 본문에 보여도 article `published_at`으로 복사하지 않는다. 기존 저장 두산 상세 원문에서 네 블록 추출과 `published_at:null`을 확인했다.
+
+페이지가 행 상한을 가질 때는 페이지 번호, 행 수, 중복 URL/ID, 정렬, 기간 이전 경계 도달을 증명하기 전 `window_scanned`로 판정하지 않는다. IR 일정의 행사일은 `event_date`이며 `published_at`과 교환할 수 없다. 새 adapter는 검증 전 daily route, candidate backlog 또는 공개 이력에 연결하지 않는다. 실물 응답·100행 재파싱과 현재 한계는 [런북 250절](LOCAL_AI_NEWS_RUNBOOK.md#250-kind-ir-일정의-실제-post-목록-응답과-공통-어댑터-입력)이다.
+
+
+#### KIND bounded form-HTML scanner의 실물 계약 보강
+
+`scripts/research/form-html-scan.mjs`는 URL-bound POST 필드, 페이지 변수, 행 parser, 날짜 의미와 상세 URL template을 profile에서 받아 공통 페이지 순회를 수행한다. 각 응답은 기존 SourceFetcher 정책과 MIME/body hash, 고유 identity, 날짜 범위, 최신순 정렬, 페이지 상한 검사를 통과해야 한다. KIND 기간 API는 완전한 마지막 짧은 페이지를 확인한 경우만 소진으로 인정한다. 실제 2026-07-01~2026-10-03 실행은 15페이지·1,414개 일정 행·마지막 14행이었고, 행사 결과는 후보와 분리된 `events.json` (`research-scheduled-events/v1`)에 저장됐다. `event_date`는 게시일이 아니며 뉴스 후보 0건이다. 실행·테스트 증거는 [런북 251절](LOCAL_AI_NEWS_RUNBOOK.md#251-kind-일정-페이지-순회와-행사-데이터의-공통-bounded-scanner)을 참조한다.
+
+## 63. KUKA 영어 목록·독일어 목록의 동일 CMS 기록과 날짜 근거
+
+KUKA 영어 `/en-us/company/press/news`도 기존 `kuka-news-form-pages-v1` 공개 JSON POST endpoint와 같은 `contextid`·facet을 사용한다. profile의 `sc_lang`과 상세 URL 정규식은 언어별로 제한한다. 영어 응답 `dateISO`의 날짜와 표시 문자열 `MMMM D, YYYY`가 일치해야 목록 날짜로 인정한다. `itemId`는 source listing evidence와 후보의 discovery provenance에 보존하며 페이지 안에서 중복이면 실패한다.
+
+실제 2026-10-02 영어 목록의 2026-09-24 FSW 레코드는 독일어 목록 저장본과 같은 CMS `itemId`를 가졌다. 별도 URL의 영문 상세 화면 날짜도 2026-09-24였고 JSON-LD `datePublished`는 2026-09-22였다. 영어 profile은 `publication_date_listing_authoritative`를 사용하지만 listing 날짜만으로 덮어쓰지 않는다. 목록 날짜와 상세 화면 날짜가 정확히 일치할 때만 두 출처를 함께 provenance로 기록하고, JSON-LD 불일치 날짜도 후보 배열에 보존한다. 표적 worker/KUKA 검사와 상세 원문 근거는 [런북 252절](LOCAL_AI_NEWS_RUNBOOK.md#252-kuka-영문-목록-재사용과-다국어-중복-계보)에 있다. 영어 경로는 same-record identity의 일일 suppression 수용 전까지 daily route에서 제외한다.

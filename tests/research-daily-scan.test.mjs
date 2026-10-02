@@ -19,6 +19,7 @@ import {
   storedListScan,
   validateStoredDailyPlan,
   verifiedDriveEdition,
+  verifyDailyReceipts,
   verifyStoredListScan,
 } from "../scripts/research/daily-scan.mjs"
 
@@ -228,12 +229,38 @@ test("stored scan accepts a canonical candidate URL matching its exact article s
     source_id,
     source_version_id,
     parse_id,
-    dates: { published_at: "2026-09-25", observed_at: document.observed_at },
+    dates: { published_at: "2026-09-25T13:10:02+00:00", observed_at: document.observed_at },
     blocks: [
       {
         block_id: parse_id + ":block-1",
         text: "Verified article",
         locator: { text_hash: sha256("Verified article") },
+      },
+    ],
+    quality: { required_fields_present: true, missing_pages: [] },
+    attachments: [{ url: "https://example.com/blog/strategy.pdf", role: "unreviewed" }],
+  })
+  const supportingURL = "https://example.com/blog/strategy.pdf"
+  const supportingBody = Buffer.from("Verified supporting report")
+  const supportingId = sourceId(supportingURL)
+  const supportingBodyHash = sha256(supportingBody)
+  const supportingVersion = `${supportingId}:${supportingBodyHash}`
+  const supportingPath = `sources/${supportingId}/body.pdf`
+  atomicWrite(root, supportingPath, supportingBody)
+  const supportingParseId = sha256(supportingVersion + ":supporting-parse")
+  const supportingParse = storeParseArtifact(root, {
+    schema_version: "source-parse/v1",
+    status: "extracted",
+    title: "Verified supporting report",
+    source_id: supportingId,
+    source_version_id: supportingVersion,
+    parse_id: supportingParseId,
+    dates: { published_at: null, observed_at: document.observed_at },
+    blocks: [
+      {
+        block_id: supportingParseId + ":block-1",
+        text: "Verified supporting report",
+        locator: { text_hash: sha256("Verified supporting report") },
       },
     ],
     quality: { required_fields_present: true, missing_pages: [] },
@@ -246,14 +273,26 @@ test("stored scan accepts a canonical candidate URL matching its exact article s
       candidate_count: 1,
     },
     indexDocuments: [document],
-    documents: [document],
-    parses: [parse],
+    documents: [
+      document,
+      {
+        original_url: supportingURL,
+        source_id: supportingId,
+        source_version_id: supportingVersion,
+        fetch_status: "captured",
+        body_path: supportingPath,
+        body_sha256: supportingBodyHash,
+        observed_at: document.observed_at,
+      },
+    ],
+    parses: [parse, supportingParse],
     candidates: [
       {
         source_urls: ["https://example.com/blog/topics/security/article"],
         source_published_at: "2026-09-25",
         article_source_version_id: source_version_id,
         article_parse_id: parse_id,
+        supporting_source_urls: [supportingURL],
       },
     ],
   }
@@ -265,6 +304,32 @@ test("stored scan accepts a canonical candidate URL matching its exact article s
     }),
     true,
   )
+  const supportingDocuments = scan.documents
+  const supportingParses = scan.parses
+  scan.documents = [document]
+  scan.parses = [parse]
+  assert.throws(
+    () =>
+      verifyStoredListScan(root, scan, {
+        channel_id: "official-feed",
+        since: "2026-09-22",
+        until_exclusive: "2026-09-29",
+      }),
+    /supporting source document is missing/,
+  )
+  scan.documents = supportingDocuments
+  scan.parses = supportingParses
+  scan.candidates[0].source_published_at = "2026-09-26"
+  assert.throws(
+    () =>
+      verifyStoredListScan(root, scan, {
+        channel_id: "official-feed",
+        since: "2026-09-22",
+        until_exclusive: "2026-09-29",
+      }),
+    /publication day/,
+  )
+  scan.candidates[0].source_published_at = "2026-09-25"
   scan.candidates[0].source_urls = ["https://example.com/blog/topics/security/another"]
   assert.throws(
     () =>
@@ -854,8 +919,51 @@ test("a failed overlap scan stays unresolved even when an older baseline covers 
   assert.equal(next.routes["fanuc-en"].unresolved.length, 1)
 })
 
+test("v2 daily receipts require an intact same-event suppression record", () => {
+  const window = plan.windows[0]
+  const attempt_id = `${plan.run_id}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a1`
+  const stored = {
+    summary: {},
+    candidates: [],
+    indexDocuments: [],
+    documents: [],
+    parses: [],
+  }
+  const receipt = {
+    schema: "research-daily-receipt/v2",
+    daily_run: plan.run_id,
+    attempt_id,
+    ...window,
+    status: "window_scanned",
+    candidate_keys: [],
+    scan_evidence: {
+      list_scan_run: attempt_id,
+      listing_source_version_id: null,
+      index_documents: 0,
+      documents: 0,
+      parses: 0,
+    },
+    backlog_merge: { status: "merged", same_event_aliases: [] },
+  }
+  const options = {
+    loadStored: () => stored,
+    verify: () => true,
+    sameEventAliases: new Map(),
+  }
+  assert.equal(verifyDailyReceipts("unused", plan, [receipt], options), true)
+  delete receipt.backlog_merge.same_event_aliases
+  assert.throws(
+    () => verifyDailyReceipts("unused", plan, [receipt], options),
+    /missing its same-event candidate suppression record/,
+  )
+})
+
 test("a verified independent scan advances only confirmed coverage and preserves its prior failure receipt", async (t) => {
   const root = temporary(t)
+  atomicWrite(root, ".local/research/local-ai/candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+  })
   const baseline = {
     channel_id: "fanuc-en",
     since: "2026-09-20",
@@ -927,6 +1035,22 @@ test("a verified independent scan advances only confirmed coverage and preserves
     since: supplemental.since,
     until_exclusive: supplemental.until_exclusive,
   })
+  assert.equal(verifiedReceipt.schema, "research-supplemental-coverage/v2")
+  assert.deepEqual(verifiedReceipt.backlog_merge.same_event_aliases, [])
+  const aliasReceiptFile = "daily/reconciliations/coverage-reconcile.json"
+  const receiptWithMissingAliases = readJSON(root, aliasReceiptFile)
+  delete receiptWithMissingAliases.backlog_merge.same_event_aliases
+  atomicWrite(root, aliasReceiptFile, receiptWithMissingAliases)
+  assert.throws(
+    () =>
+      supplementalCoverageReceiptForWindow(root, updated, {
+        channel_id: "fanuc-en",
+        since: supplemental.since,
+        until_exclusive: supplemental.until_exclusive,
+      }),
+    /missing its same-event candidate suppression record/,
+  )
+  atomicWrite(root, aliasReceiptFile, verifiedReceipt)
   assert.equal(verifiedReceipt.scan_run, "independent-scan")
   assert.deepEqual(
     fs.readFileSync(path.join(root, "daily/runs/old-run/receipts/old-attempt.json")),

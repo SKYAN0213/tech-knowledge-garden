@@ -15,6 +15,9 @@ import { titleDayKey } from "../article-identity.mjs"
 import { projectIntakeOntology, summarizeIntakeOntology } from "./intake-ontology.mjs"
 import { auditEvaluationCases } from "./evaluation.mjs"
 import { articleContentFingerprint } from "./parser.mjs"
+import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
+import { sameEventAliasSuppressions } from "./scan-completion.mjs"
+import { projectVerifiedCandidateContentFingerprints } from "./candidate-content-fingerprint.mjs"
 
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
 const safeCanonical = (url) => {
@@ -36,7 +39,11 @@ const counter = (values) =>
     [...new Set(values)].sort().map((value) => [value, values.filter((x) => x === value).length]),
   )
 
-export function loadSupplementalCoverageEvidence(root, activeRoutes = []) {
+export function loadSupplementalCoverageEvidence(
+  root,
+  activeRoutes = [],
+  backlogFile = path.resolve(path.dirname(root), "candidate-backlog.json"),
+) {
   const routeIds = new Set(activeRoutes.map((route) => route.channel_id))
   const coverageFile = path.join(root, "daily/route-coverage.json")
   const coverage = fs.existsSync(coverageFile) ? readJSON(coverageFile) : null
@@ -48,7 +55,9 @@ export function loadSupplementalCoverageEvidence(root, activeRoutes = []) {
       const bytes = fs.readFileSync(file)
       const receipt = JSON.parse(bytes.toString("utf8"))
       if (
-        receipt?.schema !== "research-supplemental-coverage/v1" ||
+        !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
+          receipt?.schema,
+        ) ||
         !/^[a-zA-Z0-9_-]+$/.test(receipt.reconciliation_run || "") ||
         !/^[a-zA-Z0-9_-]+$/.test(receipt.scan_run || "") ||
         !routeIds.has(receipt.channel_id) ||
@@ -81,6 +90,15 @@ export function loadSupplementalCoverageEvidence(root, activeRoutes = []) {
         !hasCoverage
       )
         throw Error("supplemental receipt does not match verified coverage")
+      const recordedAliases = receipt.backlog_merge.same_event_aliases
+      if (receipt.schema === "research-supplemental-coverage/v2" && !Array.isArray(recordedAliases))
+        throw Error("supplemental receipt is missing its same-event suppression record")
+      if (recordedAliases !== undefined) {
+        const aliases = loadSameEventSourceAliases(root, backlogFile)
+        const expectedAliases = sameEventAliasSuppressions(scan.candidates, aliases)
+        if (JSON.stringify(recordedAliases) !== JSON.stringify(expectedAliases))
+          throw Error("supplemental receipt same-event suppression does not match source evidence")
+      }
       entries.push({
         reconciliation_run: receipt.reconciliation_run,
         scan_run: receipt.scan_run,
@@ -1144,11 +1162,22 @@ export function buildIntakeOntologyAudit(
   const backlog = JSON.parse(bytes.toString("utf8"))
   if (backlog?.schema !== "research-candidates/v1" || !Array.isArray(backlog.candidates))
     return { status: "invalid", source_sha256: sha256(bytes), candidate_count: 0, ontology: null }
+  const fingerprintEvidence = projectVerifiedCandidateContentFingerprints({
+    root: path.resolve(repo, ".local/research/local-ai"),
+    candidates: backlog.candidates,
+    backlogSha256: sha256(bytes),
+  })
   return {
     status: "read_only_projection",
     source_sha256: sha256(bytes),
     candidate_count: backlog.candidates.length,
-    ontology: summarizeIntakeOntology(projectIntakeOntology(backlog.candidates)),
+    fingerprint_evidence: {
+      receipt_count: fingerprintEvidence.receipt_count,
+      recovered_candidate_count: fingerprintEvidence.recovered_candidate_count,
+      stale_receipt_count: fingerprintEvidence.stale_receipt_count,
+      invalid_receipt_count: fingerprintEvidence.invalid_receipt_count,
+    },
+    ontology: summarizeIntakeOntology(projectIntakeOntology(fingerprintEvidence.candidates)),
   }
 }
 
@@ -1576,6 +1605,6 @@ export function renderDeliveryStatusHTML(status) {
     )}</p></article></div><h2>계획 작업 상태</h2><div class="tablewrap"><table><thead><tr><th>작업 ID</th><th>상태</th><th>현재 증거</th><th>다음 완료 항목</th></tr></thead><tbody>${planRows}</tbody></table></div></section>
     <section role="tabpanel" id="source" aria-labelledby="tab-source" hidden><h2>출처 등록부 (${status.source_inventory_counts.registered})</h2><p>일일 활성 ${status.source_inventory_counts.daily_enabled}개 · 일일 범위 밖 ${status.source_inventory_counts.outside_daily_scope}개 · 수집 영수증/기준선 보유 ${status.source_inventory_counts.with_collection_evidence}개 · 등록만 된 출처 ${status.source_inventory_counts.registered_only}개 · 유형 미분류 ${status.source_inventory_counts.unclassified_kind}개. 기본 출처 등록과 날짜 경계를 확인한 수집 영수증을 구분합니다.</p><div class="tablewrap"><table><thead><tr><th>출처</th><th>등록 검증·방식</th><th>분야</th><th>지역·축</th><th>유형·언어</th><th>일일 활성·기준선</th><th>개발 상태</th><th>최근 일일 결과</th><th>최근 보완 검색</th><th>최근 개별 검증</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <section role="tabpanel" id="coverage" aria-labelledby="tab-coverage" hidden><h2>최근 완료 수집의 조사 범위</h2><p>${htmlEscape(status.latest_complete_coverage?.run_id || "완료된 통합 범위 기록 없음")}</p><div class="tablewrap"><table><thead><tr><th>분야</th><th>지역</th><th>축</th><th>상태</th><th>경로</th></tr></thead><tbody>${grid}</tbody></table></div><h2>일일 실행시간 계측</h2><p>실제 receipt에 저장된 단계 시간만 집계합니다. 기존 미계측 receipt는 시간을 추정하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.timing || null, null, 2))}</pre><h2>후보별 모델 추론시간</h2><p>정확한 일일 실행 ID가 source selection에 기록된 예산 receipt만 합산합니다. 원문·프롬프트·모델 응답은 표시하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.model_timing || null, null, 2))}</pre><h2>일일 실패·재시도 큐</h2><p>창당 자동 시도는 최대 ${status.latest_daily_run?.retry_policy?.max_attempts_per_window || "—"}회입니다. blocked 상태는 새 출처 관측을 얻을 때까지 자동 재요청하지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ policy: status.latest_daily_run?.retry_policy || null, queue: status.latest_daily_run?.retry_queue || [] }, null, 2))}</pre><h2>독립 완료 스캔 재개</h2><p>저장 원문·파싱·후보와 coverage가 일치하는 재조정 영수증만 집계합니다. 후보 장부 병합은 기사 승인·발행을 뜻하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.supplemental_coverage, null, 2))}</pre><h2>보완 검색 영수증</h2><p>일일 수집 범위와 분리한 등록 출처 질의 결과입니다. 검색 결과는 원문 수집·기사 검증·후보 승인으로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.targeted_search, null, 2))}</pre></section>
-    <section role="tabpanel" id="pipeline" aria-labelledby="tab-pipeline" hidden><h2>후보 승인 대조</h2><p>아래 집계는 원장 읽기 결과입니다. 자동 승인이나 백로그 변경을 하지 않았습니다.</p><pre>${htmlEscape(JSON.stringify(status.approvals_reconciliation.counts, null, 2))}</pre><p>원장 SHA-256: ${htmlEscape(status.approvals_reconciliation.source_sha256)}</p><h2>Drive 작성본과 일일 후보 대조</h2><p>고정 사건 ID·원문 URL 대조의 비공개 receipt 집계입니다. 사건 승인·병합·Drive 쓰기나 공개 완료로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.drive_approval_reconciliation, null, 2))}</pre><h2>저장 원문 receipt 검증</h2><p>후보 판본·parse·내용 지문과 저장 원문의 정확한 URL을 대조한 집계입니다. 근거 검증은 기사 사실 승인이나 공개 허가가 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.candidate_source_evidence_review, null, 2))}</pre><h2>저장 과거 원문 연결</h2><p>고정된 원문 URL과 판본의 비공개 수집 이력을 대조합니다. 원문 bytes·parse 무결성 확인은 현재 후보 승인이나 같은 사건 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_reconciliation, null, 2))}</pre><h2>과거 parse 판정</h2><p>원문 bytes·후보 identity와 정확히 결속된 비공개 판정만 표시합니다. 원본 reconciliation 수치나 공개 상태를 소급 변경하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_adjudications, null, 2))}</pre><h2>후보 원문 온톨로지</h2><p>원문 URL·본문 지문·제목과 날짜의 관계를 읽기 전용으로 계산합니다. 관계는 검토 신호이며 사건 병합이나 발행 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.intake_ontology_audit, null, 2))}</pre><h2>평가 원문 세트</h2><p>원문·기준안의 무결성을 확인한 읽기 전용 집계입니다. 같은 고정 원문을 기준안 버전으로 중복 계산하지 않으며 개발/보류 수와 언어·분야 공백을 추적합니다.</p><pre>${htmlEscape(JSON.stringify(status.local_ai_shadow_operations.evaluation_cases, null, 2))}</pre><h2>발행·운영 증거</h2><pre>${htmlEscape(JSON.stringify({ existing_briefing_audit: status.existing_briefing_audit, local_ai_shadow_operations: status.local_ai_shadow_operations, latest_daily_run: status.latest_daily_run }, null, 2))}</pre></section>
+    <section role="tabpanel" id="pipeline" aria-labelledby="tab-pipeline" hidden><h2>후보 승인 대조</h2><p>아래 집계는 원장 읽기 결과입니다. 자동 승인이나 백로그 변경을 하지 않았습니다.</p><pre>${htmlEscape(JSON.stringify(status.approvals_reconciliation.counts, null, 2))}</pre><p>원장 SHA-256: ${htmlEscape(status.approvals_reconciliation.source_sha256)}</p><h2>Drive 작성본과 일일 후보 대조</h2><p>고정 사건 ID·원문 URL 대조의 비공개 receipt 집계입니다. 사건 승인·병합·Drive 쓰기나 공개 완료로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.drive_approval_reconciliation, null, 2))}</pre><h2>저장 원문 receipt 검증</h2><p>후보 판본·parse·내용 지문과 저장 원문의 정확한 URL을 대조한 집계입니다. 근거 검증은 기사 사실 승인이나 공개 허가가 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.candidate_source_evidence_review, null, 2))}</pre><h2>저장 과거 원문 연결</h2><p>고정된 원문 URL과 판본의 비공개 수집 이력을 대조합니다. 원문 bytes·parse 무결성 확인은 현재 후보 승인이나 같은 사건 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_reconciliation, null, 2))}</pre><h2>과거 parse 판정</h2><p>원문 bytes·후보 identity와 정확히 결속된 비공개 판정만 표시합니다. 원본 reconciliation 수치나 공개 상태를 소급 변경하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_adjudications, null, 2))}</pre><h2>후보 원문 온톨로지</h2><p>기록 지문 ${status.intake_ontology_audit.ontology.recorded_fingerprint_candidate_count}개 · 저장 원문 receipt로 복구 ${status.intake_ontology_audit.ontology.receipt_recovered_candidate_count}개 · 확인 지문 ${status.intake_ontology_audit.ontology.fingerprinted_candidate_count}/${status.intake_ontology_audit.ontology.candidate_count}개 · 지문 없음 ${status.intake_ontology_audit.ontology.missing_content_fingerprint_count}개 · 오래된 backlog 영수증 ${status.intake_ontology_audit.fingerprint_evidence.stale_receipt_count}개 · 무효 영수증 ${status.intake_ontology_audit.fingerprint_evidence.invalid_receipt_count}개 · 잘못된 지문 ${status.intake_ontology_audit.ontology.invalid_content_fingerprint_count}개 · 중복 검토 관계 ${status.intake_ontology_audit.ontology.review_required_count}건. 지문이 없는 후보는 본문 중복 비교를 완료한 것으로 보지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ ...status.intake_ontology_audit, fingerprint_evidence: status.intake_ontology_audit.fingerprint_evidence }, null, 2))}</pre><h2>평가 원문 세트</h2><p>원문·기준안의 무결성을 확인한 읽기 전용 집계입니다. 같은 고정 원문을 기준안 버전으로 중복 계산하지 않으며 개발/보류 수와 언어·분야 공백을 추적합니다.</p><pre>${htmlEscape(JSON.stringify(status.local_ai_shadow_operations.evaluation_cases, null, 2))}</pre><h2>발행·운영 증거</h2><pre>${htmlEscape(JSON.stringify({ existing_briefing_audit: status.existing_briefing_audit, local_ai_shadow_operations: status.local_ai_shadow_operations, latest_daily_run: status.latest_daily_run }, null, 2))}</pre></section>
     </main><script>const tabs=[...document.querySelectorAll('[role=tab]')];for(const [i,tab] of tabs.entries()){tab.addEventListener('click',()=>{tabs.forEach((t,j)=>{const active=i===j;t.setAttribute('aria-selected',String(active));document.getElementById(t.getAttribute('aria-controls')).hidden=!active});history.replaceState(null,'','#'+tab.id)});tab.addEventListener('keydown',e=>{let j=i;if(e.key==='ArrowRight')j=(i+1)%tabs.length;else if(e.key==='ArrowLeft')j=(i+tabs.length-1)%tabs.length;else return;e.preventDefault();tabs[j].focus();tabs[j].click()})}</script></html>`
 }

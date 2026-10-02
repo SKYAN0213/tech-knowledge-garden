@@ -23,6 +23,29 @@ export function mergeUniqueDiscovery(...groups) {
   return merged
 }
 
+function sourceRecordIdentityKeys(candidate) {
+  const records = [...(candidate?.discovery || []), ...(candidate?.source_record_aliases || [])]
+  return new Set(
+    records
+      .filter(
+        (record) =>
+          typeof record.publisher_id === "string" &&
+          record.publisher_id.trim() &&
+          typeof record.profile_id === "string" &&
+          record.profile_id.trim() &&
+          typeof record.source_item_id === "string" &&
+          record.source_item_id.trim(),
+      )
+      .map((record) =>
+        JSON.stringify([
+          record.publisher_id.trim().toLowerCase(),
+          record.profile_id.trim(),
+          record.source_item_id.trim(),
+        ]),
+      ),
+  )
+}
+
 export function registry(channels, watchlist, adapters = {}) {
   const methods = new Set(["html-list", "rss", "crossref", "sec"])
   const languages = new Set(["ko", "en", "ja", "zh", "de"])
@@ -215,6 +238,7 @@ export function candidatesFromLinks(links, channel, now) {
           ...(channel.parse_id ? { parse_id: channel.parse_id } : {}),
           ...(l.dom_path ? { dom_path: l.dom_path } : {}),
           ...(l.json_pointer ? { json_pointer: l.json_pointer } : {}),
+          ...(typeof l.source_item_id === "string" ? { source_item_id: l.source_item_id } : {}),
           ...(l.profile_id ? { profile_id: l.profile_id } : {}),
           ...(channel.search_scope ? { search_scope: channel.search_scope } : {}),
           ...(channel.search_entity_id ? { search_entity_id: channel.search_entity_id } : {}),
@@ -323,14 +347,24 @@ export async function mergeBacklog(file, candidates) {
       )
         throw Error("Article content fingerprint requires a captured source version")
       const normalized = c.source_urls.map(canonicalURL)
-      const matches = current.candidates.filter(
-        (old) =>
-          old.key === c.key || old.source_urls.some((u) => normalized.includes(canonicalURL(u))),
-      )
+      const incomingRecordKeys = sourceRecordIdentityKeys(c)
+      const matches = current.candidates.filter((old) => {
+        if (
+          old.key === c.key ||
+          old.source_urls.some((url) => normalized.includes(canonicalURL(url)))
+        )
+          return true
+        const existingRecordKeys = sourceRecordIdentityKeys(old)
+        return [...incomingRecordKeys].some((key) => existingRecordKeys.has(key))
+      })
       if (matches.length > 1) throw Error("Discovery combines existing candidates")
       const old = matches[0]
       if (old) {
         const before = JSON.stringify(old)
+        const existingRecordKeys = sourceRecordIdentityKeys(old)
+        const matchedSourceRecordKeys = new Set(
+          [...incomingRecordKeys].filter((key) => existingRecordKeys.has(key)),
+        )
         if (
           old.review_status === "unreviewed" &&
           c.article_source_version_id &&
@@ -342,6 +376,27 @@ export async function mergeBacklog(file, candidates) {
         )
           old.title = c.title
         old.discovery = mergeUniqueDiscovery(old.discovery || [], c.discovery || [])
+        if (
+          old.key !== c.key &&
+          !old.source_urls.some((url) => normalized.includes(canonicalURL(url)))
+        ) {
+          const matchedRecords = (c.discovery || [])
+            .filter((record) => {
+              const identity = sourceRecordIdentityKeys({ discovery: [record] })
+              return [...identity].some((key) => matchedSourceRecordKeys.has(key))
+            })
+            .map((record) => ({
+              publisher_id: record.publisher_id,
+              profile_id: record.profile_id,
+              source_item_id: record.source_item_id,
+              source_url: normalized[0],
+              discovered_at: record.discovered_at || c.discovered_at,
+            }))
+          old.source_record_aliases = mergeUniqueDiscovery(
+            old.source_record_aliases || [],
+            matchedRecords,
+          )
+        }
         const latestDiscovery = [old.last_discovered_at, old.discovered_at, c.discovered_at]
           .filter(Boolean)
           .sort()

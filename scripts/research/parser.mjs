@@ -74,6 +74,52 @@ export function loadStoredSourceRun(root, runId, { allowUnacquired = false } = {
   }
 }
 
+// Recover a fetch stage when collection saved the raw response but parsing
+// failed before the run-level documents/parses snapshot was written.
+export function loadCapturedStagesForReparse(root, runId) {
+  if (typeof runId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(runId))
+    throw Error("Invalid source run id")
+  const documentPath = `runs/${runId}/documents.json`
+  if (fs.existsSync(safePath(root, documentPath)))
+    return loadStoredSourceRun(root, runId, { allowUnacquired: true })
+
+  const state = readJSON(root, `runs/${runId}/state.json`)
+  if (state?.schema !== "research-run/v1" || state.run_id !== runId || !state.stages)
+    throw Error("Stored fetch-stage state required for reparse recovery")
+  const documents = []
+  for (const [stageName, stage] of Object.entries(state.stages).sort(([a], [b]) =>
+    a.localeCompare(b),
+  )) {
+    if (!stageName.startsWith("fetch-") || stage.status !== "complete") continue
+    const expectedPath = `runs/${runId}/${stageName}.json`
+    if (stage.result_path !== expectedPath || !/^[a-f0-9]{64}$/.test(stage.result_hash || ""))
+      throw Error("Stored fetch stage identity is invalid")
+    const document = readJSON(root, expectedPath)
+    if (!document || sha256(JSON.stringify(document)) !== stage.result_hash)
+      throw Error("Stored fetch stage checksum changed")
+    if (document.source_id !== stageName.slice("fetch-".length))
+      throw Error("Stored fetch stage source identity changed")
+    if (documents.some((prior) => prior.source_id === document.source_id)) {
+      const prior = documents.find((item) => item.source_id === document.source_id)
+      if (prior.source_version_id !== document.source_version_id)
+        throw Error("Stored fetch stages conflict for one source identity")
+      continue
+    }
+    documents.push(document)
+  }
+  if (!documents.length) throw Error("No completed fetch stages are available to reparse")
+  assertStoredEvidence(root, documents, [])
+  return {
+    documents,
+    parses: [],
+    identity: {
+      source_run: runId,
+      documents_sha256: sha256(JSON.stringify(documents)),
+      parses_sha256: sha256(JSON.stringify([])),
+    },
+  }
+}
+
 // Combine independently captured source versions without fetching them again.
 // Each input is byte-verified before the bundle is returned; duplicate source
 // versions are rejected so a reparse cannot silently replace an earlier parse.
@@ -141,12 +187,13 @@ export function selectStoredSources(root, runId, urls) {
 // Check the real stored bytes and immutable parser artifact before review or
 // approval. A run's copied metadata is insufficient evidence on its own.
 export function assertStoredEvidence(root, documents, parses) {
-  if (!Array.isArray(documents) || !documents.length || !Array.isArray(parses) || !parses.length)
+  if (!Array.isArray(documents) || !documents.length || !Array.isArray(parses))
     throw Error("Stored source documents and parses required")
   if (new Set(parses.map((p) => p.parse_id)).size !== parses.length)
     throw Error("Unique stored parse identities required")
-  const referenced = new Set(parses.map((p) => p.source_version_id))
-  for (const document of documents.filter((d) => referenced.has(d.source_version_id))) {
+  for (const document of documents.filter((d) =>
+    ["captured", "not_modified"].includes(d.fetch_status),
+  )) {
     if (
       !/^[a-f0-9]{64}$/.test(document.body_sha256 || "") ||
       typeof document.original_url !== "string" ||
@@ -167,7 +214,11 @@ export function assertStoredEvidence(root, documents, parses) {
     const document = documents.find(
       (d) => d.source_id === parse.source_id && d.source_version_id === parse.source_version_id,
     )
-    if (!/^[a-f0-9]{64}$/.test(parse.parse_id) || !document)
+    if (
+      !/^[a-f0-9]{64}$/.test(parse.parse_id) ||
+      !document ||
+      !["captured", "not_modified"].includes(document.fetch_status)
+    )
       throw Error("Parse must reference an exact stored source version")
     // Older valid parse artifacts may not include this optional field. When a
     // parser supplies it, its run-local value must match that observation.

@@ -415,7 +415,8 @@ A–E의 **비공개 통합 23경로/46창 수집 절편**과 저장 계획의 �
 
 1. **설계·단위:** [`research-daily-plan.test.mjs`](../tests/research-daily-plan.test.mjs), [`research-daily-scan.test.mjs`](../tests/research-daily-scan.test.mjs), [`research-monthly-scan.test.mjs`](../tests/research-monthly-scan.test.mjs), [`research-rss-scan.test.mjs`](../tests/research-rss-scan.test.mjs)가 KST 날짜·겹침·고정 계획 비교·중단/재개·중복·빈 완주·원본 변경·부분 실패·월/피드 경계를 재현한다. 기존 `research-list-scan`, `research-api-scan`, `research-kuka-scan`, `research-abb-scan`, `research-candidate-identity` 회귀도 실행한다. 남은 Drive 입력 변경 사례는 테스트를 먼저 추가한다.
 2. **저장·파서:** fixture뿐 아니라 실제 새 날짜 창의 `list-scan.json`, 목록 원본, 모든 선택 상세, `documents.json`/`parses.json`을 SHA와 내용으로 재읽는다. 목록 종료·상세 날짜·필수 본문·첨부가 맞지 않으면 해당 경로는 실패로 남긴다.
-3. **전체 코드:** 변경 범위의 Node/Python 검사를 통과한 뒤 `npm run test:garden`, 프로젝트 전용 Python 환경의 `unittest discover`, `npx tsc --noEmit`, `git diff --check`를 실행한다. 발행 코드를 건드린 묶음에서만 `npm run refresh`, `npm run validate`, `npm run build`, `node scripts/verify-site.mjs`와 RSS/digest 비교까지 확장한다.
+3. **변경 범위 검사:** 매 수정에서는 바뀐 모듈의 집중 테스트를 실행한다. 연구 검색은 해당 Node 테스트, worker는 해당 Python 테스트, 브라우저는 브라우저 회귀처럼 좁혀 돌리고 문서만 바뀌면 diff·문서 링크 검사로 충분하다. 디버깅 중 전체 suite를 반복 실행하지 않는다.
+   **전체 검사 관문:** 수직 슬라이스가 닫혔거나 공통 계약·여러 모듈이 함께 바뀐 시점, 그리고 코드 발행 전 최종 확인에서만 `npm run test:garden`, 관련 Python worker suite, `npx tsc --noEmit`를 실행한다. 새 실패가 생기면 관련 테스트를 먼저 고치고 해당 범위만 재실행한다. 통합 관문에서 새 실패가 나오거나 공통 인터페이스·생성 산출물에 영향이 있을 때 전체 검사를 다시 돌린다. 매번 모든 Python 환경을 검색하지 않는다.
 4. **비공개 운영:** `daily-20260929-v4`의 14개 창은 최초 HD 시간 초과 1회 뒤 해당 창만 재시도해 성공했다. 최종 15 receipt(성공 14·실패 이력 1)를 보존했고, 그 뒤의 동일 계획 재개에서는 요약·coverage·후보 장부 SHA와 receipt 수가 같으며 새 HTTP 시도가 없었다. 이는 수집 운영 시험이며 기사 품질/공개 증거가 아니다.
    `daily-20260929-v5`의 16창은 첫 공식 RSS를 포함해 모두 로컬 완주했고, 같은 코드/설정 아래 재개 불변성을 확인했다. 후속 공유 코드 fingerprint 강화 이후의 `v7`은 계획만 만들었다. 아홉 경로 `v8`의 18창도 성공했다. 열 경로 `v9`은 첫 시도 18성공/2실패에서 실패 창만 재개해 20성공·실패 이력 2개를 보존했다. 같은 계획 재개에서 receipt·summary·coverage·장부 SHA가 같았다. 이 실행들의 상태를 합쳐 발행 성공 횟수로 계산하지 않는다.
 5. **승인·원격:** 실제 편집 승인을 받은 변경만 Drive에 저장하고 remote bytes/부모/revision을 확인한다. 그 동일 입력으로 생성한 웹·RSS·GitHub를 실제 URL에서 읽고 ID·날짜·문장·원문 링크를 대조한다. 공개 성공과 신규 운영 7회는 각각 별도 receipt로 남긴다.
@@ -450,7 +451,7 @@ A–E의 **비공개 통합 23경로/46창 수집 절편**과 저장 계획의 �
 
 일일 runner의 source scan은 서로 다른 최대 네 경로를 병렬 처리하고, 동일 경로의 여러 기간 창과 후보 장부 병합은 직렬 처리한다. 실패 receipt 기록과 coverage checkpoint는 완료된 각 창 뒤에 수행한다. 2026-10-01 실물 비교에서 28경로의 완료 receipt 구간은 순차 977,122ms(54/55 성공)에서 제한 병렬 701,522ms(55/55 실행 완료; 사전 supplemental-covered 1창은 생략)로 줄었다. 서로 다른 시점의 한 차례 비교이므로 장기 평균이나 모든 출처의 실패율 개선으로 확대 해석하지 않는다. 병렬화 단위 시험과 실제 실행 receipt를 함께 보존한다.
 
-각 묶음의 PR/작업 단위에서는 관련 회귀→전체 Node/Python·타입 검사→실제 원본/영수증 재읽기 순으로 검사한다. 작성·발행 코드를 바꾸는 묶음에는 사이트 생성·RSS/digest 일치와 모바일/키보드/공유 URL도 검증한다. 실패는 원본 접근, 선택자/스키마, 모델, 편집, Drive, 공개 중 어느 층인지 구분해 기록하고 이전 성공으로 덮지 않는다.
+각 묶음은 관련 회귀→실제 원본/영수증 재읽기를 기본으로 한다. 전체 Node/Python·타입 검사는 수직 슬라이스 완료, 공통 계약 변경, 통합/발행 직전으로 제한한다. 작성·발행 코드를 바꾸는 통합 묶음에는 사이트 생성·RSS/digest 일치와 모바일/키보드/공유 URL도 검증한다. 실패는 원본 접근, 선택자/스키마, 모델, 편집, Drive, 공개 중 어느 층인지 구분해 기록하고 이전 성공으로 덮지 않는다.
 
 ## 8. 실행·장애·복구의 운영 계약
 

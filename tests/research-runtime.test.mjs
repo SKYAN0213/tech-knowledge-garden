@@ -1,6 +1,8 @@
 import test from "node:test"
 import assert from "node:assert/strict"
+import { EventEmitter } from "node:events"
 import fs from "node:fs"
+import http from "node:http"
 import os from "node:os"
 import path from "node:path"
 import { spawn } from "node:child_process"
@@ -10,7 +12,9 @@ import {
   assertURL,
   isPublicIP,
   pinnedAddresses,
+  requestPinned,
   retryDelay,
+  responseBodyTimeoutMs,
 } from "../scripts/research/fetch.mjs"
 import {
   sha256,
@@ -101,6 +105,42 @@ test("fetch blocks private, mixed DNS, encoded IPs and scoped addresses", async 
     await pinnedAddresses("github.blog", async () => [{ address: "192.0.66.2", family: 4 }]),
     [{ address: "192.0.66.2", family: 4 }],
   )
+})
+test("PDF bodies use their own transfer deadline while other responses keep the default", () => {
+  const budget = { timeout_ms: 20000, pdf_timeout_ms: 60000 }
+  assert.equal(responseBodyTimeoutMs("application/pdf", budget), 60000)
+  assert.equal(responseBodyTimeoutMs("application/octet-stream", budget), 20000)
+  assert.equal(responseBodyTimeoutMs(undefined, budget), 20000)
+})
+test("a PDF response header switches the live request to the PDF body deadline", async () => {
+  const originalRequest = http.request
+  http.request = () => {
+    const request = new EventEmitter()
+    request.end = () => {
+      const response = new EventEmitter()
+      response.statusCode = 200
+      response.headers = { "content-type": "application/pdf" }
+      response.destroy = () => {}
+      queueMicrotask(() => request.emit("response", response))
+    }
+    request.destroy = (error) => request.emit("error", error)
+    return request
+  }
+  const started = Date.now()
+  try {
+    await assert.rejects(
+      requestPinned(
+        new URL("http://example.com/report.pdf"),
+        [{ address: "1.1.1.1", family: 4 }],
+        {},
+        { timeout_ms: 5, pdf_timeout_ms: 40, pdf_bytes: 1024, html_bytes: 1024 },
+      ),
+      /PDF body deadline exceeded/,
+    )
+    assert.ok(Date.now() - started >= 30)
+  } finally {
+    http.request = originalRequest
+  }
 })
 test("versioned fetch preserves legacy ID, body, 304 observation and source changes", async (t) => {
   const root = temporary(t),
