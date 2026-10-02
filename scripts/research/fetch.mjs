@@ -284,7 +284,15 @@ export class SourceFetcher {
   }
   async fetch(
     raw,
-    { allowed_hosts, authorize_redirect, conditional = true, source_id, method = "GET", form } = {},
+    {
+      allowed_hosts,
+      authorize_redirect,
+      conditional = true,
+      source_id,
+      method = "GET",
+      form,
+      interval_ms,
+    } = {},
   ) {
     if (!["GET", "POST"].includes(method)) throw Error("Unsupported fetch method")
     if (method === "GET" && form !== undefined) throw Error("GET request cannot carry a form")
@@ -301,6 +309,9 @@ export class SourceFetcher {
       }
       if (!seen.size) throw Error("POST requires form fields")
     }
+    const requestInterval = interval_ms ?? this.options.interval_ms
+    if (!Number.isSafeInteger(requestInterval) || requestInterval < 0 || requestInterval > 60000)
+      throw Error("Request interval must be an integer between 0 and 60000 ms")
     // Identity follows the submitted URL spelling, as in prepare-drive.py.
     // Preserve the path spelling on the wire: some publishers route a trailing
     // slash to the article and the path without it to an unrelated page.
@@ -321,6 +332,7 @@ export class SourceFetcher {
           if (sha256(cachedBody) !== cache.body_sha256) throw Error("Cached source hash mismatch")
         }
         let current = request_url,
+          currentInterval = requestInterval,
           redirect_chain = [],
           response,
           redirectPolicyBlocked = false
@@ -352,7 +364,7 @@ export class SourceFetcher {
                 response = await hostRequest(
                   this.root,
                   u.hostname,
-                  this.options.interval_ms,
+                  currentInterval,
                   this.options.timeout_ms,
                   () => this.transport(u, addresses, headers, this.options, { method, body: form }),
                 )
@@ -385,6 +397,7 @@ export class SourceFetcher {
               if (!authorization || typeof authorization.allowed !== "boolean")
                 throw Error("Redirect authorizer returned an invalid decision")
             }
+            currentInterval = Math.max(requestInterval, authorization?.delay_ms || 0)
             redirect_chain.push({
               from: current,
               to: next,

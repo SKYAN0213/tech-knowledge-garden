@@ -66,6 +66,10 @@ export function registry(channels, watchlist, adapters = {}) {
       !["국내", "해외"].includes(c.region) ||
       !["기술·제품", "기업·운영"].includes(c.axis) ||
       (c.kind && !sourceKinds.has(c.kind)) ||
+      (c.request_interval_ms !== undefined &&
+        (!Number.isSafeInteger(c.request_interval_ms) ||
+          c.request_interval_ms < 0 ||
+          c.request_interval_ms > 60000)) ||
       !Array.isArray(c.sectors) ||
       !c.sectors.length ||
       c.sectors.some((s) => !SECTORS.includes(s))

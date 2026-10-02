@@ -9,6 +9,10 @@ import { readJSON, safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 
 const singlePageConfigHash = (channel) => sha256(JSON.stringify(channel))
+const routeFetchOptions = (channel) => ({
+  allowed_hosts: channel.allowed_hosts,
+  request_interval_ms: channel.request_interval_ms,
+})
 
 export function loadReusableSinglePageListing(
   root,
@@ -228,7 +232,7 @@ export async function collectWindowDetails(
     let supportingSources = []
     try {
       const document = await run.stage("detail-" + id, { url: link.url }, () =>
-        fetchPolicy(root, fetcher, link.url, { allowed_hosts: channel.allowed_hosts }),
+        fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
       )
       detail.fetch_status = document.fetch_status
       if (!["captured", "not_modified"].includes(document.fetch_status)) {
@@ -400,6 +404,7 @@ export async function collectWindowDetails(
               () =>
                 fetchPolicy(root, fetcher, source.evidence_url, {
                   allowed_hosts: channel.allowed_hosts,
+                  request_interval_ms: channel.request_interval_ms,
                 }),
             )
             attempt.evidence_url = source.evidence_url
@@ -432,7 +437,7 @@ export async function collectWindowDetails(
             "supporting-document-" + attachmentId,
             { url: source.url },
             () =>
-              fetchPolicy(root, fetcher, source.url, { allowed_hosts: channel.allowed_hosts }),
+              fetchPolicy(root, fetcher, source.url, routeFetchOptions(channel)),
           )
           attempt.status = attachment.fetch_status
           attempts.push(attempt)
@@ -560,7 +565,7 @@ export async function scanSinglePageRoute(
   const listing =
     listingEvidence?.document ||
     (await run.stage("listing-fetch", { channel }, () =>
-      fetchPolicy(root, fetcher, channel.url, { allowed_hosts: channel.allowed_hosts }),
+      fetchPolicy(root, fetcher, channel.url, routeFetchOptions(channel)),
     ))
   const summary = {
     schema: "research-list-scan/v1",
@@ -762,7 +767,7 @@ export async function scanPathPagesRoute(
     const page = { page: pageNumber, url, status: "incomplete" }
     pages.push(page)
     const document = await run.stage(`listing-fetch-page-${pageNumber}`, { channel, url }, () =>
-      fetchPolicy(root, fetcher, url, { allowed_hosts: channel.allowed_hosts }),
+      fetchPolicy(root, fetcher, url, routeFetchOptions(channel)),
     )
     page.fetch_status = document.fetch_status
     if (!["captured", "not_modified"].includes(document.fetch_status)) {

@@ -7533,3 +7533,11 @@ receipt 단계 합계는 scan 1,357,590ms, verify 394ms, backlog merge 1,346ms�
 `daily-20261002-current35-live-v1`의 70개 receipt를 다시 계산했다. 실제 `scan` 상위는 AWS What's New 290,646ms, GitHub Changelog 186,914ms, FDA Press Announcements 180,815ms다. Boston Dynamics와 IEEE Spectrum Robotics의 scan은 각각 7,037ms·15,256ms였지만, 예전 `timing_ms.total`은 batch의 가장 늦은 병렬 경로가 끝나고 순차 merge가 처리될 때까지의 대기를 포함해 각각 290,820ms·290,789ms로 기록됐다. 따라서 §255에 있던 이 두 출처의 높은 `total`을 실제 fetch 병목으로 해석한 문장은 정정한다. 이 run은 source scan 합계 1,357,590ms, phase 합계 1,359,330ms였고, 최초 receipt 시작부터 마지막 종료까지 실제 wall span은 975,524ms다. 기존 receipt와 run 입력은 변경하지 않았다.
 
 새 daily receipt는 `total = scan + verify + backlog_merge`로 기록하고 summary에는 receipt 작업시간 합계와 전체 실행 `wall_clock_ms`를 분리한다. 이로써 route별 출처 지연과 동시 수집 전체 시간을 구분할 수 있다. 수정 코드는 다음 실행부터 적용되며, 기존 run의 summary/receipt를 소급 변환하지 않는다. 이번 코드 수정 뒤 `node --test tests/research-daily-scan.test.mjs` 한 번만 실행하고, 전체 suite는 실행하지 않는다.
+
+## 258. 출처별 요청 간격과 AWS 상세 수집 실측
+
+공통 fetch 경로가 robots `Crawl-delay`를 모든 host의 공유 fetcher 기본값에 누적하던 방식을 제거했다. 이제 요청별 `request_interval_ms` override와 해당 host의 robots 지연 중 큰 값을 그 route 요청에만 적용하며, redirect 대상 host의 지연도 그 hop에만 적용한다. 생략된 route는 기존 기본 3초 간격을 유지한다. 설정값은 0~60,000ms 정수만 허용하고 source registry 단계에서 검사한다.
+
+AWS RSS의 robots 정책은 `Crawl-delay: 0`이었다. 2026-10-02 같은 2026-10-01 창의 16개 상세 URL을 기존 3초 기본과 1초 route override 설정으로 각각 저장 원문 확인했다. 두 run의 상세 단계 총합은 각각 55,107ms와 55,043ms, 평균은 3,444ms와 3,440ms로 사실상 같았다. 따라서 AWS에 1초 예외를 남기지 않고 기존 3초 기본을 유지한다. 이 창에서 확인한 상세 처리 응답시간은 기본 간격보다 길어, 관측된 지연을 요청 간격 감소로 해결할 근거가 없었다. 1초 run `aws-route-interval-20261002-v1`은 16개 detail과 parse를 private에 저장했으나 backlog 병합·승인·발행은 하지 않았다.
+
+표적 `tests/research-review.test.mjs` 중 route interval/robots redirect 두 케이스 2/2, 변경 모듈 `node --check`, acquisition JSON parse와 `git diff --check`를 확인했다. 전체 suite는 실행하지 않았다. 상세 원문 fetch는 순차·host 잠금 정책을 그대로 유지했으며, 동시 연결이나 keep-alive를 추가하지 않았다.

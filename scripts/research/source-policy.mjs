@@ -11,9 +11,9 @@ export function createRedirectAuthorizer(root, fetcher, allowedHosts) {
     }
     try {
       const policy = await checkRobots(root, fetcher, to, { allowed_hosts: allowedHosts })
-      fetcher.options.interval_ms = Math.max(fetcher.options.interval_ms || 0, policy.delay_ms)
       return {
         allowed: policy.allowed,
+        delay_ms: policy.delay_ms,
         policy_status: policy.allowed ? "allowed" : "denied",
         policy_source_id: policy.policy_source_id,
         policy_source_version_id: policy.policy_source_version_id,
@@ -55,10 +55,13 @@ export async function fetchWithPolicy(root, fetcher, url, options = {}) {
       policy_status: "denied",
       policy,
     }
-  fetcher.options.interval_ms = Math.max(fetcher.options.interval_ms || 0, policy.delay_ms)
+  const requestInterval = options.request_interval_ms ?? fetcher.options?.interval_ms ?? 0
+  if (!Number.isSafeInteger(requestInterval) || requestInterval < 0 || requestInterval > 60000)
+    throw Error("Source request interval must be an integer between 0 and 60000 ms")
   const document = await fetcher.fetch(url, {
     ...options,
     allowed_hosts,
+    interval_ms: Math.max(requestInterval, policy.delay_ms),
     authorize_redirect: createRedirectAuthorizer(root, fetcher, allowed_hosts),
   })
   const redirectStatuses = (document.redirect_chain || []).map((item) => item.policy_status)

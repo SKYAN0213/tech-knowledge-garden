@@ -1040,3 +1040,7 @@ KUKA 독일어 원문 목록 bytes에서 해당 행의 itemId와 URL·제목을 
 비공개 현황판을 실행 및 handoff 뒤 재생성·readback했다. SHA-256은 `c01a5d5c843bb50e1a6b075857b749c1b43a28d6118d3f6a60c9e6c8e079de93`이며 WBS는 1/22(5%), P1-01 partial이다. backlog raw-byte SHA-256은 `89aaf31ecc2e5c69129104b8806ec03ea1fde529374ebdfc6d7691c33177bbf7`다. 전체 테스트 suite는 추가 실행하지 않았다. 코드 변경이 없어 표적 테스트도 반복하지 않고 실제 receipt·handoff·현황판을 확인했다. 상세는 [런북 255절](LOCAL_AI_NEWS_RUNBOOK.md#255-current-35개-경로-실제-수집과-편집-인계)이다.
 
 이 run은 계측 수정 전 fingerprint로 생성됐다. 수정 후 현황판은 `historical_success_requires_current_revalidation`으로 판정하므로, 35개 경로 receipt는 완료 이력으로 유지하되 현재 코드 기준 통합 실행 증거로 세지 않는다. 같은 과거 기간을 단지 fingerprint 복구를 위해 재수집하지 않고 다음 유효 기간을 계획할 때 갱신 코드를 적용한다.
+
+## 139. 출처별 요청 간격과 AWS 상세 수집 확인
+
+공통 fetcher에서 source route가 `request_interval_ms`를 지정하면 해당 요청과 robots 지연 중 큰 값을 적용한다. robots 지연을 shared fetcher 전체에 누적하지 않으며, 이 설정을 사용하지 않는 route는 기존 3초 기본을 쓴다. AWS의 robots 지연은 0초로 확인했다. 같은 하루 창의 16개 상세 처리 시간은 3초 기본 설정 55,107ms·1초 override 55,043ms로 차이가 거의 없어 AWS 예외 설정은 제거했다. 현재 확인만으로는 이 경로의 병목을 로컬 LLM이나 요청 간격에 귀속할 수 없다. 관련 표적 검증과 private scan은 [런북 258절](LOCAL_AI_NEWS_RUNBOOK.md#258-출처별-요청-간격과-aws-상세-수집-실측)에 있다.

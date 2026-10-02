@@ -274,7 +274,10 @@ export async function scanBoundedRSSRoute(
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("RSS scan requires an increasing [since, until) day window")
   const listing = await run.stage("listing-fetch", { channel }, () =>
-    fetchPolicy(root, fetcher, channel.url, { allowed_hosts: channel.allowed_hosts }),
+    fetchPolicy(root, fetcher, channel.url, {
+      allowed_hosts: channel.allowed_hosts,
+      request_interval_ms: channel.request_interval_ms,
+    }),
   )
   const summary = {
     schema: "research-list-scan/v1",

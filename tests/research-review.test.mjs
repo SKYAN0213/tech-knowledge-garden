@@ -517,6 +517,38 @@ test("redirects require an allowed host and an allowed destination robots rule",
   ])
 })
 
+test("source request intervals are route-scoped and honor robots crawl delay", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-route-interval-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const robots = "User-agent: *\nAllow: /\nCrawl-delay: 2\n"
+  atomicWrite(root, "robots.txt", robots)
+  const observedIntervals = []
+  const fetcher = {
+    options: { interval_ms: 3000 },
+    fetch: async (url, options = {}) => {
+      if (url.endsWith("/robots.txt"))
+        return {
+          fetch_status: "captured",
+          body_path: "robots.txt",
+          body_sha256: sha256(robots),
+        }
+      observedIntervals.push(options.interval_ms)
+      return { fetch_status: "captured", redirect_chain: [] }
+    },
+  }
+
+  await fetchWithPolicy(root, fetcher, "https://source.example/fast", {
+    allowed_hosts: ["source.example"],
+    request_interval_ms: 1000,
+  })
+  await fetchWithPolicy(root, fetcher, "https://source.example/default", {
+    allowed_hosts: ["source.example"],
+  })
+
+  assert.deepEqual(observedIntervals, [2000, 3000])
+  assert.equal(fetcher.options.interval_ms, 3000)
+})
+
 test("redirect to an unregistered host is recorded as a policy denial", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-host-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
