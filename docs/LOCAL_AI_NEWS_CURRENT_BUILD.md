@@ -1035,6 +1035,6 @@ KUKA 독일어 원문 목록 bytes에서 해당 행의 itemId와 URL·제목을 
 
 실행 `daily-20261002-current35-live-v1`은 활성 35개 경로의 70개 기간 창을 모두 `window_scanned`로 끝냈다. 실패·retry queue는 0개이고 후보 원장은 276건을 유지했다. receipt에 same-event source alias 3건이 남았으며 handoff는 pending 220건 중 이번 실행 관측 171건, resolved 4건, incomplete window 0건을 기록했다. 이는 편집 승인이나 발행 상태가 아니다.
 
-가장 오래 걸린 경로는 AWS What's New, Boston Dynamics, IEEE Spectrum Robotics로 각각 약 291~300초였다. AWS 주간 창은 80개 상세 후보를 확인했다. receipt 계측은 scan 총 1,357,590ms, verify 394ms, backlog merge 1,346ms다. 현황판에는 이 run에 연결된 모델 추론 기록이 없다. 긴 구간은 원문 수집·요청 처리로 확인된다. 기사 승인, Drive, 공개 사이트·RSS·GitHub 배포는 수행하지 않았다.
+실제 scan 시간이 긴 경로는 AWS What's New 290,646ms, GitHub Changelog 186,914ms, FDA Press Announcements 180,815ms였다. AWS 주간 창은 80개 상세 후보를 확인했다. scan 합계는 1,357,590ms, verify 394ms, backlog merge 1,346ms이며 receipt 시작~종료 timestamp span은 975,524ms다. Boston Dynamics와 IEEE Spectrum Robotics는 실제 scan이 각각 7,037ms·15,256ms였다. 이들의 과거 `total`이 약 291초로 보인 것은 병렬 batch 대기 시간이 route별 합계에 포함됐기 때문이다. 현황판에는 이 run에 연결된 모델 추론 기록이 없다. 기사 승인, 공개 사이트·RSS·GitHub 배포는 수행하지 않았다. Drive 원문 동기화는 별도 readback으로 확인했다.
 
 비공개 현황판을 실행 및 handoff 뒤 재생성·readback했다. SHA-256은 `c01a5d5c843bb50e1a6b075857b749c1b43a28d6118d3f6a60c9e6c8e079de93`이며 WBS는 1/22(5%), P1-01 partial이다. backlog raw-byte SHA-256은 `89aaf31ecc2e5c69129104b8806ec03ea1fde529374ebdfc6d7691c33177bbf7`다. 전체 테스트 suite는 추가 실행하지 않았다. 코드 변경이 없어 표적 테스트도 반복하지 않고 실제 receipt·handoff·현황판을 확인했다. 상세는 [런북 255절](LOCAL_AI_NEWS_RUNBOOK.md#255-current-35개-경로-실제-수집과-편집-인계)이다.

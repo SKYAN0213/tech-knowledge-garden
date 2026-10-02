@@ -4,7 +4,7 @@
 
 ## 최신 로컬 현황
 
-2026-10-02 최신 운영 입력은 등록 114경로·일일 활성 29경로·수집 profile 30개·기사 profile 71개다. 오늘의 통합 실행은 29/29 route 완료, 58개 계획 창 중 사전 보완 coverage 창 하나를 제외한 57/57 receipt 완료, retry 0이다. 32칸 coverage는 partial 18·not attempted 14다. 실제 receipt 시작~종료는 14분 14.7초였고 연결된 LLM 실행은 0건이라 이 수집 시간은 로컬 추론 병목과 별개다. 동일 run resume에서 57 receipts와 SHA-256 `e2c78761dc21f942ff50d5d53408e4eb0f5131414aee1dd7165a835663356aab`가 보존됐다. 승인·Drive·공개 검증은 미실행이다. 상세는 [런북 197절](LOCAL_AI_NEWS_RUNBOOK.md#197-2026-10-02-29개-경로-통합-수집과-재개-무결성)이다.
+2026-10-02 최신 운영 입력은 등록 121경로·일일 활성 35경로·수집 profile 37개·기사 profile 91개다. 통합 실행 `daily-20261002-current35-live-v1`은 35/35 route와 70/70 기간 창 receipt를 완료했고 retry는 0이다. 32칸 coverage는 partial 19·not attempted 13이며 후보 원장은 276건(검증 70·미검토 196·보류 9·제외 1)이다. 연결된 모델 추론은 0건이다. 실제 scan 상위 시간은 AWS What's New 290,646ms·GitHub Changelog 186,914ms·FDA Press Announcements 180,815ms다. Boston Dynamics·IEEE의 이전 `total`은 병렬 batch 대기를 포함해 출처 지연을 과장했으며, 새 실행부터 phase 작업시간과 전체 wall span을 분리 계측한다. 이 daily run은 승인·발행·Drive write·공개 검증이 완료된 회차가 아니다. 상세는 [런북 255·257절](LOCAL_AI_NEWS_RUNBOOK.md#257-병렬-수집-시간의-출처별-귀속-수정)이다.
 
 전체 기준은 [로컬 AI 뉴스 구현 계획](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md)의 필수 WBS 22개다. `부분`은 진척으로 보이되 완료율의 분자에는 넣지 않는다. 2026-10-02 현재 운영 입력 기준 **1/22 완료(5%), 19개 부분 진행, 2개 미착수**다. 완전 무인 발행 P6-03은 별도 승격 항목이라 지원 운영 완료율에서 제외한다.
 

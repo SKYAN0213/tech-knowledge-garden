@@ -997,7 +997,10 @@ export async function executeDailyPlan({
           scan: outcome.scan_ms,
           verify: outcome.verify_ms,
           backlog_merge: outcome.backlog_merge_ms,
-          total: Math.round(performance.now() - attemptStarted),
+          total:
+            outcome.scan_ms +
+            (outcome.verify_ms ?? 0) +
+            (outcome.backlog_merge_ms ?? 0),
         },
         status: outcome.status,
         reason: outcome.reason,
@@ -1082,9 +1085,19 @@ function summarizeDailyTiming(receipts, activeRoutes) {
       ),
   )
   const sum = (key) => measured.reduce((total, receipt) => total + (receipt.timing_ms[key] ?? 0), 0)
+  const timestamp = (value) => {
+    const parsed = Date.parse(value || "")
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  const starts = receipts.map((receipt) => timestamp(receipt.started_at)).filter(Number.isFinite)
+  const finishes = receipts.map((receipt) => timestamp(receipt.finished_at)).filter(Number.isFinite)
   return {
     unit: "ms",
     receipt_elapsed_ms: sum("total"),
+    wall_clock_ms:
+      starts.length && finishes.length
+        ? Math.max(0, Math.max(...finishes) - Math.min(...starts))
+        : null,
     measured_receipts: measured.length,
     unmeasured_receipts: receipts.length - measured.length,
     phases: {

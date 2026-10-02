@@ -418,7 +418,11 @@ test("daily receipts measure scan, verification and candidate merge time across 
   assert.ok(receipt.timing_ms.scan >= 8)
   assert.ok(receipt.timing_ms.verify >= 8)
   assert.ok(receipt.timing_ms.backlog_merge >= 8)
-  assert.ok(receipt.timing_ms.total >= receipt.timing_ms.scan)
+  assert.equal(
+    receipt.timing_ms.total,
+    receipt.timing_ms.scan + receipt.timing_ms.verify + receipt.timing_ms.backlog_merge,
+  )
+  assert.ok(first.timing.wall_clock_ms > 0)
   assert.equal(first.timing.by_route["fanuc-en"].measured_attempts, 1)
   assert.ok(first.timing.phases.backlog_merge_ms >= 8)
 

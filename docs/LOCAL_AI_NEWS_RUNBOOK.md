@@ -5881,11 +5881,11 @@ node scripts/research.mjs extract \
 
 ## 151. 일일 수집 단계별 시간 계측
 
-`research-daily.mjs`의 새 실행은 각 route/window attempt receipt에 `timing_ms`를 남긴다. `scan`은 해당 경로 collector 완료까지, `verify`는 저장 원문·candidate 증거 검증, `backlog_merge`는 후보 장부 반영에 걸린 monotonic wall time이며 `total`은 attempt 내부 전체 시간이다. 실행 실패 시 완료된 단계 시간은 보존하고, 아직 수행하지 않은 verify/merge는 `null`이다. 측정 단위는 정수 밀리초다.
+`research-daily.mjs`의 실행은 각 route/window attempt receipt에 `timing_ms`를 남긴다. `scan`은 해당 경로 collector 완료까지, `verify`는 저장 원문·candidate 증거 검증, `backlog_merge`는 후보 장부 반영에 걸린 monotonic wall time이다. 새 receipt의 `total`은 이 세 단계의 실제 작업 시간 합이며, 병렬 batch의 나머지 경로를 기다리는 시간은 포함하지 않는다. 실행 실패 시 완료된 단계 시간은 보존하고, 아직 수행하지 않은 verify/merge는 `null`이다. 측정 단위는 정수 밀리초다.
 
-요약 `timing`은 `receipt_elapsed_ms`, 측정/미계측 receipt 수, phase 총합과 route별 attempt 수·측정 수·시간 합을 제공한다. 기존 receipt는 `unmeasured_receipts`에 유지하고 start/end timestamp로 계산한 추정치로 채우지 않는다. 완료 receipt가 재개되어 재사용되면 추가 요청이나 시간 합산 없이 동일 summary가 재생성된다. 이 필드는 실행 자원 현황이며 후보 수, 검토 상태, 승인, Drive 및 공개 여부를 바꾸지 않는다.
+요약 `timing`은 phase 작업시간의 receipt 합계 `receipt_elapsed_ms`, `wall_clock_ms` 전체 실행 구간, 측정/미계측 receipt 수, phase 총합과 route별 attempt 수·측정 수·시간 합을 제공한다. 병렬 실행에서는 phase 합과 전체 wall time이 같지 않다. 기존 receipt는 `unmeasured_receipts`에 유지하고 start/end timestamp로 phase 시간을 추정해 채우지 않는다. 완료 receipt가 재개되어 재사용되면 추가 요청이나 시간 합산 없이 동일 summary가 재생성된다. 이 필드는 실행 자원 현황이며 후보 수, 검토 상태, 승인, Drive 및 공개 여부를 바꾸지 않는다.
 
-검증: `node --test tests/research-daily-scan.test.mjs` 16/16. 지연을 인위적으로 둔 테스트에서 scan·async verify·merge 구간이 각각 별도로 기록되고, resume 누적 요약이 receipt와 일치함을 확인했다. 실 운영 분포와 API/로컬 모델 시간을 함께 얻기 전까지 일일 hard budget은 정하지 않는다. 구형 receipt 측정 수는 실행 데이터로부터 보간하지 않는다.
+검증 당시: `node --test tests/research-daily-scan.test.mjs` 16/16. 지연을 인위적으로 둔 테스트에서 scan·async verify·merge 구간이 각각 별도로 기록되고, resume 누적 요약이 receipt와 일치함을 확인했다. 2026-10-02 통합 run에서 route별 `total`이 batch 동기화 대기 시간을 포함해 출처별 scan 시간을 부풀리는 것이 발견되어, 새 run의 `total`·`receipt_elapsed_ms` 정의를 실제 phase 작업시간 합으로 바로잡았다. 예전 receipt 값은 수정하지 않고 기존 사실로 보존한다. 실 운영 분포와 API/로컬 모델 시간을 함께 얻기 전까지 일일 hard budget은 정하지 않는다. 구형 receipt 측정 수는 실행 데이터로부터 보간하지 않는다.
 
 ## 152. 일일 실행에 연결된 모델 추론 시간
 
@@ -7527,3 +7527,9 @@ receipt 단계 합계는 scan 1,357,590ms, verify 394ms, backlog merge 1,346ms�
 연결기 readback 시각은 `2026-10-02 11:53:48 UTC` 형식으로 반환돼 snapshot builder가 요구하는 ISO timestamp로 직접 해석되지 않았다. 원본 receipt는 그대로 보존하고, 검증 시각을 의미 변경 없이 `2026-10-02T11:53:48Z`로 표준화한 private 사본을 만들어 snapshot을 재구성했다. builder가 195개 전체의 파일 경로·부모·원문 바이트 hash와 로컬 parity를 확인했고, `pull-drive.py --verify-source-snapshot`도 동일 파일 수와 hash로 통과했다. 최종 snapshot file SHA-256은 `4c7c48362d3fbe14908dfcdb60de71b35fd2313c2cb22bb9ff56e8f656f8dacb`다.
 
 이번 작업은 기존 [계획 19.160](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19160-테스트-실행-빈도-축소)에 따라 전체 테스트 suite를 실행하지 않았다. 코드 수정이 없어 표적 테스트도 재실행하지 않았다. 핵심 검증은 두 번의 Drive 트리 목록 일치, 195개 원문 hash, 5개 변경·0개 삭제의 dry-run/apply 결과, builder와 snapshot readback이다. Drive 기준 자료와 로컬 원고는 일치하지만 2026-10-02 새 회차 조사·편집·승인·배포가 완료된 것은 아니다.
+
+## 257. 병렬 수집 시간의 출처별 귀속 수정
+
+`daily-20261002-current35-live-v1`의 70개 receipt를 다시 계산했다. 실제 `scan` 상위는 AWS What's New 290,646ms, GitHub Changelog 186,914ms, FDA Press Announcements 180,815ms다. Boston Dynamics와 IEEE Spectrum Robotics의 scan은 각각 7,037ms·15,256ms였지만, 예전 `timing_ms.total`은 batch의 가장 늦은 병렬 경로가 끝나고 순차 merge가 처리될 때까지의 대기를 포함해 각각 290,820ms·290,789ms로 기록됐다. 따라서 §255에 있던 이 두 출처의 높은 `total`을 실제 fetch 병목으로 해석한 문장은 정정한다. 이 run은 source scan 합계 1,357,590ms, phase 합계 1,359,330ms였고, 최초 receipt 시작부터 마지막 종료까지 실제 wall span은 975,524ms다. 기존 receipt와 run 입력은 변경하지 않았다.
+
+새 daily receipt는 `total = scan + verify + backlog_merge`로 기록하고 summary에는 receipt 작업시간 합계와 전체 실행 `wall_clock_ms`를 분리한다. 이로써 route별 출처 지연과 동시 수집 전체 시간을 구분할 수 있다. 수정 코드는 다음 실행부터 적용되며, 기존 run의 summary/receipt를 소급 변환하지 않는다. 이번 코드 수정 뒤 `node --test tests/research-daily-scan.test.mjs` 한 번만 실행하고, 전체 suite는 실행하지 않는다.
