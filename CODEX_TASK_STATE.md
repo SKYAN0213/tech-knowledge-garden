@@ -883,3 +883,8 @@ Daily1event CXMT G5; Drive170freshreadbacks; final6e4798d Actions35544279623/pub
 
 - 2026-10-04 release integration: Node 전체659 최초648pass/11fail→공통 날짜 파서·현재 공식목록/격리backlog/realpath/core-ID fixture 및 root 생성물 수정→실패11개 표적 재검사 완료. Python system27pass/workerimport환경오류; venv worker91 최초88pass/3fail→영향 날짜39/39 확인. whole suite 반복없음. 실제 저장 NASA/AWS2 source reparse 본문/locator/old artifacts SHA 보존·selecteddate보존·HTTP0/승인0. typecheck/build/site/Drive195verify 통과. source-live-debug/release-integration-20261004-v1 logs/proof. docs19.253/runbook343. WBS2/22/goalactive; 공개 관문은 별도 수행 예정, 한시간반복blocker없음.
 - source commit49297ec/content1c5cee4를 canonical publish/normal push/remote SHA로 확인했다. Drive14폴더 metadata195개 재조회 전부 동일(raw bytes 시각19:19 유지·새 raw read 주장없음). 첫CI37149869365는6실패로deploy 미실행. 전달된 격리backlog의 handoff 검증 누락·Pythonenv 덮어쓰기·CI Chromium누락·mock2/stale zero-shot 연결 단정 수정, 실패6개 로컬6/6. 재배포와 실제 웹/RSS/GitHub는 private release-integration proof에서 별도 판정한다. 새로운 운영 회수·미검토 후보 공개로 세지 않는다.
+
+
+2026-10-04 공개 확인: 수정 커밋 `c5a676838461dcf393e9418c2d9e5364db61c221`의 [Publish Garden 37150176071](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/37150176071)이 성공했다. CI Node659/659·빌드·사이트 검사·Pages 배포 통과. 공개 RSS40개는 로컬 생성본과 bytes SHA `471d6e7f86a69f8886b90f4b663cd15769ae3353e11d43740fe09c8769331a0d`가 동일하고 기존39 GUID/pubDate를 보존했다(Drive에 있던10/1 회차 추가). GitHub 기사2·digest2 파일 exact SHA 일치. 실제 공개9/1 브리핑의 desktop1280/mobile390, 분야URL/Enter/back·기사/원문 링크·overflow0/지도0을 확인했다. 공개 확인은 source-live-debug/release-integration-20261004-v1의 CI/RSS/GitHub/reader/verification 파일에서 재개한다. 소급 정정2건의 반영이며 후보372개 전체 승인,54-route current sweep,정규32칸/7회·독립평가·소급전수 완료는 아니다.
+
+검증 완료 후 이 문서 정리 커밋은 로컬에 보존하고 다음 코드/콘텐츠 릴리스와 함께 push한다. 문서 기록만을 위해 전체 CI를 또 실행하지 않는다.
