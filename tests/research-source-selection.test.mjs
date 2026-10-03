@@ -12,6 +12,7 @@ import {
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { selectCandidateSource } from "../scripts/research/editorial-handoff.mjs"
+import { saveSourceSelection } from "../scripts/research/source-selection.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-select-")))
@@ -55,6 +56,34 @@ function fixture(t) {
   atomicWrite(root, "runs/source/parses.json", parses)
   return { root, urls, documents, parses }
 }
+
+test("source selection rejects a flattened origin receipt before writing output", async (t) => {
+  const { root, urls } = fixture(t)
+  const selected = selectStoredSources(root, "source", [urls[1]])
+  selected.identity.source_run = "source"
+  await assert.rejects(
+    () => saveSourceSelection(root, "invalid-origin", selected),
+    /source selection/i,
+  )
+  assert.equal(fs.existsSync(path.join(root, "runs/invalid-origin")), false)
+})
+
+test("source selection rejects changed selected bytes and context overriding source identity", async (t) => {
+  const { root, urls } = fixture(t)
+  const selected = selectStoredSources(root, "source", [urls[1]])
+  const changed = structuredClone(selected)
+  changed.parses[0].title = "Unreviewed replacement"
+  await assert.rejects(
+    () => saveSourceSelection(root, "changed-selection", changed),
+    /source selection/i,
+  )
+  await assert.rejects(
+    () => saveSourceSelection(root, "context-override", selected, { source_run: "invented" }),
+    /source selection/i,
+  )
+  assert.equal(fs.existsSync(path.join(root, "runs/changed-selection")), false)
+  assert.equal(fs.existsSync(path.join(root, "runs/context-override")), false)
+})
 
 test("article content fingerprint ignores raw-wrapper and parse identities but detects editorial changes", (t) => {
   const { parses } = fixture(t)

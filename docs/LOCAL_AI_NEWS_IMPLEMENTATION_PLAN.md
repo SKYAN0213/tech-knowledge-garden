@@ -3858,3 +3858,7 @@ standalone research-revisions.mjs plan/inspect는 저장 bytes·불변 parse·�
 ### 19.258 실제 승인 후보의 과거 기사 혼입 수정
 
 승인 존재를 발표일보다 먼저 검사하던 경로 결함을 수정했다. KST cutoff 이전은 approved-historical, 날짜 미확인은 verify-original-date로 분리하고 동일 사건 승인 중복 제거를 두 경로에 적용한다. 기존 승인 원고와 발행 검증을 보존한다. 실제733후보에서 최신회차 cutoff2026-10-01T13:38:20Z에 따라 신규3/과거11로 분리됐고 신규3승인 hash/사건ID·장부 bytes 불변을 확인했다. 관련32건은 최초31통과/테스트 필드 정정 후1통과, 추가영향2/2였다. private Drive 원격 raw SHA 일치 확인. WBS2/22·goal active, 정규 조사·회차 편성·전체 소급·독립평가·실제7회는 남는다. [런북349절](LOCAL_AI_NEWS_RUNBOOK.md#349-실제-승인-후보의-과거-기사-혼입-수정).
+
+### 19.259 원문 기반 정규 편집 후보 보강과 선택 계보 검증
+
+새 Drive195원본/14목록 재읽기 후 SK하이닉스 협업8·교수 인프라 기고7·MIT InstructMesh6사실을 원문 block/quote로 직접 검토해 세 원고를 승인 연결했다. 로컬 추출120초 timeout을 보존하고 자동 모델 성공으로 집계하지 않았다. 평평한 원본 identity를 저장하던 source selection 결함은 실패2건 재현 후 공통 원본 재대조/identity override 차단으로 수정, 관련9/9·실제3선택 재개 승인 bytes 불변을 확인했다. 세 비공개 portable 묶음은 Drive 원격 raw bytes SHA와 실제 원격 ZIP 독립 복구·승인21사실/온톨로지 일치·위치 색인을 확인했다. 승인 신규6/과거11,733후보 중 verified76. 공개 회차/배포는 미실행, WBS2/22·goal active. [런북350절](LOCAL_AI_NEWS_RUNBOOK.md#350-정규-편집-후보-보강과-원문-선택-계보-검증).

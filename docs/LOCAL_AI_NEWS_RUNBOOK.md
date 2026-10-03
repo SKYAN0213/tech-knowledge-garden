@@ -8972,3 +8972,33 @@ WBS2/22·goal active 유지. 변경2건 처리와 보관/복구 경로만 완료
 증거: source-live-debug/approved-date-routing-20261004-v1.json(6455bytes, SHA06ac430d696732062ea99034ca32f9301ecbad3be700e77623bbf510fa8eceaf). Research Drive 파일1-98qzVWRIO0hy5kTndsEZZJQp_UwIOZB의 부모/shared=false/크기와 실제 원격 raw bytes SHA 일치를 확인했다. 이 JSON은 라우팅 검증 기록이며 전체 원문 복구 패키지가 아니다. 기존54경로 실수집·RSS 아카이브 보완·원문 수정 증거는 이전 절의 불변 기록을 참조한다.
 
 WBS2/22·goal active 유지. 다음은 현재 유효 승인 후보의 회차 편성과 부족한 정규32칸 실질 조사다. 과거11건은 신규 기사로 채우지 않고 기존 회차 보완으로 연결한다. 전체 소급·독립평가·실제7회 운영은 미완료이며 1시간 반복 blocker는 없다.
+
+## 350. 정규 편집 후보 보강과 원문 선택 계보 검증
+
+2026-10-04 KST. 직전 날짜 라우팅 수정 이후 실제 수집한 원문에서 로봇 이외의 기업·기술 자료를 편집했다. 작성 전에 Drive 네 원본 폴더를 새로 열거하고195Markdown raw bytes를 각각 읽었다.14폴더 목록을 다시 읽어 동일함을 확인했고 로컬 사본과 대조한 snapshot SHA는56b4ade20cfe97ee619831d7b07b136883e37ac40acbc28ecdfbab26ed43aed5, snapshot file SHA는c59f588456a52b14340aa6fa1d55ffaef3dabc72c4b0fa8b60ad1beeaabf084b다. verified_at2026-10-03T23:02:30Z. 이 시각의 source snapshot이며 미래 실행의 fresh 입력으로 재사용하지 않는다. pull-drive의 bool 옵션을 경로 인자로 잘못 사용한 최초 오류는 보존하고 --snapshot/--verify-source-snapshot으로 수정했다.
+
+| 승인 원고 | 발표일·검증 사실 | 편집에서 구분한 내용 |
+| --- | --- | --- |
+| SK하이닉스 벤처 협업·장비 도입 | 2026-10-02·8사실 | 9월 출범 행사와10월2일 설명문 구분; 장비 설치 결정·도입 계획·MemVerge 공동 개발과 내부 평가 계획을 집행 완료로 쓰지 않음 |
+| Onur Mutlu AI 인프라 기고 | 2026-10-02·7사실 | 교수의 설명으로 귀속; SK하이닉스 공식 사업 전략으로 표현하지 않음; CXL·GPU 연결·근접 메모리·자원 풀의 역할 구분 |
+| MIT InstructMesh 발표 | 2026-10-01·6사실 | MIT 발표에 귀속; Thingiverse 재생성 모델·초보 사용자·전문가 검토 조건을 수치와 함께 전달; 물리 시뮬레이션·TRELLIS.2는 후속 방향 |
+
+합계21사실은 각 원문 block/quote/source version/parse에 연결하고 validateEvidence→recordFactReview→assertVerifiedClaim→draftProblems→approvedArticle→loadApprovedOntologyInput을 통과했다. 별도 종합 심층 기사·논문 전문 분석으로 표시하지 않았다. 같은 날짜의 새 전문용어·지도 노드를 자동 생성하지 않았다. 공개 회차·cutoff·RSS·원고 폴더는 변경하지 않았다. 후보 장부는733건, verified76/deferred9/rejected1/unreviewed647이다. 현재 local authoring 기준 승인 미발행 신규6/과거11, raw SHA16638e2195aefdef9f19a3cf9b2d839526fdcc2e6c758511c0c2374a65650f55. 최초3건 승인 연결과 각 이벤트·원문 판본을 검증했다.
+
+로컬 qwen3.8:27b/think=false의 신규 SK하이닉스 추출 호출은120초 제한에 도달해 claims와 batch가 failed로 종료했다. 같은 호출을 반복하지 않았으며 GPT 직접 원문 검토로 편집을 이어갔다. claims/draft provenance는 model_generated=false이고 실패한 run도 보존했다. 이 결과를 로컬 모델 자동 브리핑 성공이나 1시간 blocker로 집계하지 않는다. 최초 실행 준비의 facts_per_batch 상한·source/output run 동일 오류도 실패로 남긴다.
+
+직접 작성 operator가 loadStoredSourceRun의 평평한 identity를 source selection writer에 전달하면서 보관 계보가 맞지 않는 결함을 발견했다. 공통 saveSourceSelection은 이제 selectStoredSources로 원본 실행·선택 URL·문서·parse·identity를 다시 대조하고, context가 원본 identity/schema를 덮으면 저장 전에 거부한다. 평평한 origin과 선택 parse 변경/identity override의 재현2건은 수정 전 실패했고 수정 후 관련9/9 통과했다. 실제3개 원고의 원문 선택 재실행에서도 승인 입력6파일 hash가 동일했다. 전체 suite/build/54경로 재수집은 반복하지 않았다.
+
+이번 operator의 초기 미완성 원고v1/v2는 보존했다. 승인3건의 잘못된 source-selection metadata는 이전 bytes를 source-selection-before-metadata-repair.json으로 보존하고, 원본/수정 SHA·원본 실행·정확한 URL·수정 이유를 source-selection-metadata-repair.json에 기록한 뒤 수정했다. 원문 bytes와 승인6파일·독자 본문·사건ID는 그대로다. 수정 영수증 재실행은 reused=true다. operator도 공통 selectStoredSources 결과를 쓰도록 고쳤다. 향후 새 잘못된 입력은 위 공통 guard가 차단한다.
+
+| 비공개 복구 묶음 | 실제 원격 ZIP bytes 검증 |
+| --- | --- |
+| skhynix-ventures-portable-20261004-v1 | 513008bytes·54members·7원문판본, Drive1exhqah3jV7oSAxbAFOKysUKBeU-jqkti, SHA858ae9949287b386c18a519e70c109ae0b7b1ba1a142c270f39e9e2c048c71ec |
+| skhynix-infrastructure-portable-20261004-v1 | 520046bytes·54members·7판본, Drive1VN_hPf2jKOYsZnYo3-rY1f64vjGRsSVj, SHA5ac190c450ded74bcf461d094b7ff0bd54ed7301c58cdcf964b27df66a179d32 |
+| mit-instructmesh-portable-20261004-v1 | 779809bytes·66members·10판본, Drive1C2daoWiQ9Oq6f0OpPcQnXdpPFX0Eleov, SHAd4852384cabe2d21834fb8715890ae6e3d0fd2fbf2e3498447a5ade9e2ad775f |
+
+Research 부모/shared=false/크기를 검증하고 실제 원격 raw ZIP을 받아 별도 private 폴더에 복구했다. 복구 후 승인 입력6파일·기사·21사실이 원본과 같고 사실 온톨로지 투영25/19/19노드 및40/31/29연결이 생성됐다. 네트워크·모델 없이 복구했으며, 독자용 전문용어 지도 노드 수가 아니다. 공통 Drive 위치 색인에 세 묶음을 등록했다. 전체 runtime·운영 장부 복구로 표현하지 않는다. 최초 restore 명령의 root-relative 경로를 중복 지정한 오류를 수정했고 실패도 남겼다.
+
+증거: source-live-debug/nonrobot-editorial-direct-proof-20261004-v1.json, nonrobot-portable-readback-proof-20261004-v1.json, 각 portable Drive 영수증·실제 원격 ZIP, restore-checks/*-actual-remote-20261004-v1, 직접 검토/승인/candidate-approval run. 원고 run은 skhynix-ventures-direct-20261004-v3, skhynix-infrastructure-direct-20261004-v1, mit-instructmesh-direct-20261004-v1이다. Codex에 SK하이닉스 preview.md 열기를 요청한 결과queued였다; 실제 렌더링 확인으로 집계하지 않는다.
+
+WBS2/22·goal active 유지. 이번 목표 turn은 실제 승인3건·복구/Drive검증·공통 원문 선택 결함 수정의 progress다. 다음은 신규 후보6건의 정규 회차 편성, 부족한32칸 실질 조사와 원문 기반 키워드 연결이다. 전체 소급·독립평가·실제 성공7회·정규 회차 공개 검증은 남는다.
