@@ -10,6 +10,10 @@ import { archiveManifest, packageResearchArchive } from "../scripts/research/arc
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { loadStoredSourceRun, storeParseArtifact } from "../scripts/research/parser.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
+import {
+  registerArchiveLocation,
+  lookupArchiveLocations,
+} from "../scripts/research/archive-locations.mjs"
 
 const script = path.resolve("scripts/research/package-archive.py")
 function fixture(t) {
@@ -62,7 +66,12 @@ function fixture(t) {
       JSON.stringify(loadStoredSourceRun(root, "article").identity),
     ),
   })
-  const article = { event_id: "robot-event", title: "A robot", review_status: "verified" }
+  const article = {
+    event_id: "robot-event",
+    title: "A robot",
+    source_urls: [url],
+    review_status: "verified",
+  }
   atomicWrite(root, "runs/article/approved-article.json", article)
   atomicWrite(root, "runs/approval/candidate-approval.json", {
     schema: "research-candidate-approval/v1",
@@ -88,6 +97,97 @@ function restore(root, receipt, destination, packagePath = receipt.path, hash = 
     { encoding: "utf8" },
   )
 }
+
+async function locationFixture(t) {
+  const data = fixture(t)
+  const archive = await archiveClosure(data.root, "portable", "article", ["approval"])
+  const remotePackageFile = path.join(data.root, "remote.zip")
+  fs.copyFileSync(path.join(data.root, archive.package.path), remotePackageFile)
+  const metadata = {
+    schema: "research-drive-archive-observation/v1",
+    observed_at: new Date().toISOString(),
+    file_id: "drive-archive-1",
+    name: "portable.zip",
+    mime_type: "application/zip",
+    size: archive.package.bytes,
+    parent_ids: ["research-folder"],
+    shared: false,
+  }
+  const metadataFile = path.join(data.root, "metadata.json")
+  fs.writeFileSync(metadataFile, JSON.stringify(metadata))
+  return {
+    ...data,
+    archive,
+    metadata,
+    metadataFile,
+    remotePackageFile,
+    args: {
+      root: data.root,
+      runId: "portable",
+      metadataFile,
+      remotePackageFile,
+      expectedParentId: "research-folder",
+    },
+  }
+}
+
+test("archive location connects exact source versions and event IDs to verified Drive bytes without the source cache", async (t) => {
+  const f = await locationFixture(t)
+  const registered = await registerArchiveLocation(f.args)
+  assert.equal(registered.sources.length, 1)
+  assert.deepEqual(registered.sources[0].event_ids, ["robot-event"])
+  assert.deepEqual(registered.sources[0].source_runs, ["article", "extraction"])
+  const record = fs.readFileSync(path.join(f.root, "archive-staging/portable/drive-location.json"))
+  assert.equal((await registerArchiveLocation(f.args)).reused, true)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "archive-staging/portable/drive-location.json")),
+    record,
+  )
+  fs.rmSync(path.join(f.root, "documents"), { recursive: true })
+  const result = lookupArchiveLocations(f.root, {
+    sourceVersionId: f.doc.source_version_id,
+    eventId: "robot-event",
+  })
+  assert.equal(result[0].drive.file_id, "drive-archive-1")
+  assert.equal(result[0].candidate_published, false)
+  assert.deepEqual(lookupArchiveLocations(f.root, { eventId: "different-event" }), [])
+})
+
+test("archive location rejects unverified, stale or changed Drive identity without overwriting a record", async (t) => {
+  const f = await locationFixture(t)
+  await registerArchiveLocation(f.args)
+  const recordPath = path.join(f.root, "archive-staging/portable/drive-location.json")
+  const before = fs.readFileSync(recordPath)
+  for (const change of [
+    { shared: true },
+    { parent_ids: ["other-folder"] },
+    { observed_at: "2020-01-01T00:00:00Z" },
+  ]) {
+    fs.writeFileSync(f.metadataFile, JSON.stringify({ ...f.metadata, ...change }))
+    await assert.rejects(registerArchiveLocation(f.args), /Fresh private/)
+  }
+  fs.writeFileSync(f.metadataFile, JSON.stringify({ ...f.metadata, file_id: "different-file" }))
+  await assert.rejects(registerArchiveLocation(f.args), /Archive location changed/)
+  fs.writeFileSync(f.metadataFile, JSON.stringify(f.metadata))
+  fs.writeFileSync(f.remotePackageFile, "corrupt")
+  await assert.rejects(registerArchiveLocation(f.args), /raw bytes do not match/)
+  assert.deepEqual(fs.readFileSync(recordPath), before)
+})
+
+test("archive location refuses changed dependencies and corrupt stored source indexes", async (t) => {
+  const f = await locationFixture(t)
+  await registerArchiveLocation(f.args)
+  fs.appendFileSync(path.join(f.root, f.doc.body_path), " altered")
+  await assert.rejects(registerArchiveLocation(f.args), /dependency changed/)
+  const recordPath = path.join(f.root, "archive-staging/portable/drive-location.json")
+  const record = JSON.parse(fs.readFileSync(recordPath))
+  record.sources[0].event_ids.push("unreviewed-event")
+  fs.writeFileSync(recordPath, JSON.stringify(record))
+  assert.throws(
+    () => lookupArchiveLocations(f.root, { eventId: "unreviewed-event" }),
+    /Invalid verified archive/,
+  )
+})
 
 test("CLI archive follows pinned extraction and approval, preserves sources and restores immutable parses without network", async (t) => {
   const { root, doc, parse } = fixture(t)

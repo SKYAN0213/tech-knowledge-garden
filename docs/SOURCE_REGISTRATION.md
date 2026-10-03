@@ -108,3 +108,6 @@ npm run research:sources -- activate --channel catalog-x46 \
 
 
 2026-10-04 제조사 실제 디버깅: 개별 scan-list 완료 창의 --merge-backlog도 일일 수집과 동일한 검토된 same-event aliases를 적용한다. FANUC 일본어/두산 다국어 원문을 별도 후보로 재생성하는 경로를 수정했다. HD 공식 API는 size100을 실물 확인해 전체 조회150건을 보존하면서19→2페이지로 줄였다. 변경 전 baseline은 새 설정에서 자동 재사용하지 않는다. [런북339절](LOCAL_AI_NEWS_RUNBOOK.md#339-로봇-제조사-실제-수집과-개별-병합-중복-수정).
+
+
+2026-10-04 최신 fingerprint의 실제 일일54경로/108창은106완료/2미완료다. 전자신문 AI·더일렉은 최신50 RSS만으로 주간 경계가 확인되지 않는다(feed_cutoff_not_reached). 개별 정상/빈 기간 검증과 일일 활성화는 과거 일주일 전체 수집 보장을 뜻하지 않는다. 현행 daily가 실패를 보존하고 현재-day 창은 수집했다. 다음 보강은 공통 fallback_archive/날짜 목록의 실제 과거 페이지·종료 경계 확인이며 같은 feed 재요청을 반복하지 않는다. 108영수증·원문/parse·장부 고유키 대조는 런북344절을 따른다.

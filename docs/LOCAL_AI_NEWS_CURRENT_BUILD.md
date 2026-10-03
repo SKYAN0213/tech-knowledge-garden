@@ -1481,3 +1481,23 @@ HD frontier10/4까지 실제 scan reconciliation, 다른53route/장부372건 불
 
 
 2026-10-04 공개 확인: 수정 커밋 `c5a676838461dcf393e9418c2d9e5364db61c221`의 [Publish Garden 37150176071](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/37150176071)이 성공했다. CI Node659/659·빌드·사이트 검사·Pages 배포 통과. 공개 RSS40개는 로컬 생성본과 bytes SHA `471d6e7f86a69f8886b90f4b663cd15769ae3353e11d43740fe09c8769331a0d`가 동일하고 기존39 GUID/pubDate를 보존했다(Drive에 있던10/1 회차 추가). GitHub 기사2·digest2 파일 exact SHA 일치. 실제 공개9/1 브리핑의 desktop1280/mobile390, 분야URL/Enter/back·기사/원문 링크·overflow0/지도0을 확인했다. 공개 확인은 source-live-debug/release-integration-20261004-v1의 CI/RSS/GitHub/reader/verification 파일에서 재개한다. 소급 정정2건의 반영이며 후보372개 전체 승인,54-route current sweep,정규32칸/7회·독립평가·소급전수 완료는 아니다.
+
+
+### 19.254 최신54경로 실제 수집과 Drive 원문 위치 연결
+
+2026-10-04 KST: Drive 작성 원본195개를 실제 raw bytes로 다시 읽고 14폴더를 읽기 전후 대조했다. 파일 ID·부모·크기·수정 시각과 모든 bytes SHA가 기존 원본과 같았다. fresh snapshot은 `.local/drive-sync/daily-current54-20261004-v1/source-snapshot.json`이며 exported_at=2026-10-03 20:18:16 UTC, content SHA=56b4ade20cfe97ee619831d7b07b136883e37ac40acbc28ecdfbab26ed43aed5다.
+
+현재 수집 fingerprint d93f5f4d9e18a9f1f488ee96078724e25f029d83901cc012c0cab87d66925ab1에서 기존 daily CLI로 54경로·108창을 실제 실행했다. `daily-20261004-current54-live-v1`은 920,051ms(15분20초)에 종료됐고 106 window_scanned/2 incomplete다. 전자신문 AI와 더일렉의 2026-09-27~10-04 창은 각각 최신50개가 모두 요청 기간 안에 있어 feed_cutoff_not_reached다. 현재-day 창은 성공했다. 같은 RSS 재요청으로 과거 경계가 생기지 않으므로 자동 resume를 반복하지 않았다. 다음 보강은 기존 fallback_archive/날짜 목록 수집기를 사용해 두 매체의 실제 과거 목록·종료·카테고리를 확인하는 것이다. 수집을 성공으로 바꾸거나 확인하지 않은 retention_days를 넣지 않는다.
+
+완료108 영수증의 identity와 저장 원문·불변parse·candidate 연결, daily search basis를 실제 검증했다. 원문 관측297행/고유 판본257개, 후보 관측204행/고유key203개다. 장부372건/고유key372개(verified73/deferred9/rejected1/unreviewed289)를 유지하며 신규 승인·후보공개는 없다. 증거는 `.local/research/local-ai/source-live-debug/current54-live-20261004-v1-verification.json`과 원래 daily plan/receipts/summary/log다. 완료한 수집과 정규 조사32칸/첫7회 완료를 구분한다.
+
+Tobor portable 검토 ZIP을 Drive 파일16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU에서 실제 raw bytes로 다시 받았다. 324,985bytes/SHA2a5d3bda16654cc22f82d3856e0c94175b3705540e084c959a24f247f3fd642b를 확인하고 새 private 폴더 `restore-checks/tobor-actual-remote-20261004-v1`에37파일을 복구했다. 기존/복구 원문3개 identity와 현재 승인 원고·승인 근거가 동일하다. HTTP 원문 요청/모델 추론은 추가하지 않았다. remote-restore proof는 `drive-roundtrip/tobor-remote-restore-20261004-v1/verification.json`이다.
+
+공통 `scripts/research/archive-locations.mjs`와 standalone `scripts/research-archives.mjs`는 portable archive의 기존 receipt·manifest·dependency SHA, fresh private Drive metadata/예상 부모, 실제 받은 ZIP bytes SHA를 검증해 불변 `archive-staging/<run>/drive-location.json`을 만든다. 원문 URL/판본/parse와 승인 기사에 명시된 source_urls/event_id만 연결한다. source cache를 지운 상태에서도 정확한 source-version/event lookup이 가능하며 조회가 다운로드·복구·승인·발행을 수행하지 않는다. 같은 고정 입력은 reused=true이고 파일 bytes가 같다. 다른 위치나 bytes는 기존 receipt를 덮어쓰지 않고 새 archive run을 요구한다.
+
+실제 등록은 원문3판본/사건1/Drive1이며 정확한 판본+사건 교집합1개와 반복 bytes 불변을 확인했다(location SHA feb42b67daff85d8e45d4774edacf93833578b03d7b568304ec97138b906bfb4). 메타데이터는 research-drive-archive-observation/v1, observed_at에 timezone 명시,10분 이내, file_id/name/mime_type/size/parent_ids/shared=false를 요구한다. signed download URL·token은 저장하지 않는다. stale/shared/부모 변경/remote ZIP 변조/dependency 변조/index 변조를 거부한다.
+
+표적 신규 archive-location 3/3 및 변경된 공통fixture의 기존 CLI archive 복구 회귀1/1을 확인했다. 새 두 모듈 syntax/diff 검사도 통과했다. 실행 중인 collector 파일은 수정하지 않았고 종료 후에도 current fingerprint가 그대로임을 확인했다. 앞서 통과한 전체659검사/build/public 배포를 반복하지 않았다. 전체 WBS2/22·goal active 유지; 다중 자료 유형·정정 재검토 큐·전수 소급·독립평가·정규32칸/7회는 남는다. 한 시간 반복 blocker는 없다.
+
+
+이번54경로 원문257판본·108창의 수집 파일/일일 plan·영수증·summary·검증 기록을 기존 archiveManifest/packageResearchArchive로 한 비공개 snapshot에 고정했다. ZIP21,701,311bytes/1770members/SHA b90b5454a9d888dced319bf5db43acdd91e1b48c7850278b55219b690626104e를 Drive Research 파일1yl35F2db4YTxpAJNrf-VP6BCoX3xZGBm에 저장했고 metadata ID/부모/크기/shared=false와 실제 원격 raw bytes SHA 일치를 확인했다. 이 묶음은 수집 증거 보관용 archive/v1이며 전체 runtime 독립 복구본으로 표시하지 않는다. 기존 입력은 덮어쓰지 않았다. 영수증: .local/research/local-ai/drive-roundtrip/current54-source-snapshot-20261004-v1/drive-receipt.json. 비공개 delivery-status.html도 현재 실행을 반영해 생성했다. 새 backend 코드는 로컬 커밋하고 다음 코드 릴리스에서 CI/공개 반영을 별도로 확인한다.

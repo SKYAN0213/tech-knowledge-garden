@@ -888,3 +888,10 @@ Daily1event CXMT G5; Drive170freshreadbacks; final6e4798d Actions35544279623/pub
 2026-10-04 공개 확인: 수정 커밋 `c5a676838461dcf393e9418c2d9e5364db61c221`의 [Publish Garden 37150176071](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/37150176071)이 성공했다. CI Node659/659·빌드·사이트 검사·Pages 배포 통과. 공개 RSS40개는 로컬 생성본과 bytes SHA `471d6e7f86a69f8886b90f4b663cd15769ae3353e11d43740fe09c8769331a0d`가 동일하고 기존39 GUID/pubDate를 보존했다(Drive에 있던10/1 회차 추가). GitHub 기사2·digest2 파일 exact SHA 일치. 실제 공개9/1 브리핑의 desktop1280/mobile390, 분야URL/Enter/back·기사/원문 링크·overflow0/지도0을 확인했다. 공개 확인은 source-live-debug/release-integration-20261004-v1의 CI/RSS/GitHub/reader/verification 파일에서 재개한다. 소급 정정2건의 반영이며 후보372개 전체 승인,54-route current sweep,정규32칸/7회·독립평가·소급전수 완료는 아니다.
 
 검증 완료 후 이 문서 정리 커밋은 로컬에 보존하고 다음 코드/콘텐츠 릴리스와 함께 push한다. 문서 기록만을 위해 전체 CI를 또 실행하지 않는다.
+
+
+- 2026-10-04 현재54경로/108창 live 종료:106완료/2 RSS cutoff 미완료,15분20초. actual195 Drive raw snapshot/14폴더 pre-post/원문·parse·후보 영수증 integrity 확인. 후보204관측→203key; backlog372unique 유지·승인/공개0. 두 매체 weekly RSS50개 한계는 과거 목록 fallback 보강 대상으로 남기며 같은 요청을 반복하지 않는다.
+- Drive actual Tobor ZIP324985bytes/SHA2a5d…→37파일 새폴더 restore·3원문/currentapproval 동일. 공통 private archive-location index/standaloneCLI 구현·실물3source/1event/1Drive·반복bytes불변·cachelesslookup. 신규3/3+기존복구1/1 통과. docs19.254/runbook344; current54-live proof와 tobor-remote-restore proof 참조. WBS2/22/goal active·전체소급/독립평가/32칸/7회 미완료·1시간반복blocker없음.
+
+
+이번54경로 원문257판본·108창의 수집 파일/일일 plan·영수증·summary·검증 기록을 기존 archiveManifest/packageResearchArchive로 한 비공개 snapshot에 고정했다. ZIP21,701,311bytes/1770members/SHA b90b5454a9d888dced319bf5db43acdd91e1b48c7850278b55219b690626104e를 Drive Research 파일1yl35F2db4YTxpAJNrf-VP6BCoX3xZGBm에 저장했고 metadata ID/부모/크기/shared=false와 실제 원격 raw bytes SHA 일치를 확인했다. 이 묶음은 수집 증거 보관용 archive/v1이며 전체 runtime 독립 복구본으로 표시하지 않는다. 기존 입력은 덮어쓰지 않았다. 영수증: .local/research/local-ai/drive-roundtrip/current54-source-snapshot-20261004-v1/drive-receipt.json. 비공개 delivery-status.html도 현재 실행을 반영해 생성했다. 새 backend 코드는 로컬 커밋하고 다음 코드 릴리스에서 CI/공개 반영을 별도로 확인한다.

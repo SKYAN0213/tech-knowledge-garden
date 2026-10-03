@@ -59,3 +59,17 @@ python3 scripts/research/package-archive.py --root .local/research/local-ai --pa
 prepare-drive.py --approved-preview의 준비 결과는 업로드 승인이 아니다. research-authoring.mjs release가 exact source/preview/변경분·최신 전수 Drive snapshot·최종 편집 검토를 확인한 불변 영수증을 생성한다. 정규회차는32조사칸, 소급정정은 retrospective로 구분한다. 상세 계약과 실제 명령은 LOCAL_AI_NEWS_RUNBOOK.md 342절을 따른다.
 
 업데이트 직전 원본 raw SHA를 확인하고 동일 파일 ID로 저장한 뒤 원격 bytes를 재조회해 desired SHA와 ID/부모를 확인한다. 저장 결과는 release receipt를 고치지 않고 별도 execution proof로 보관한다. post snapshot으로 local vault를 동기화하고 재실행은 동일 bytes 쓰기를 생략한다. 이 단계의 성공은 공개 사이트 배포 성공을 뜻하지 않는다.
+
+
+
+## 정확한 원문 판본에서 검증된 Drive 보관본 찾기
+
+새 `scripts/research-archives.mjs`는 기존 portable archive의 불변 receipt와 실제 Drive raw ZIP을 대조해 비공개 위치 기록을 만든다. 메타데이터 JSON은 `research-drive-archive-observation/v1`이며 `observed_at`(timezone 명시·10분 이내), `file_id`, `name`, `mime_type: application/zip`, `size`, `parent_ids`, `shared: false`가 필요하다. 업로드 응답이나 원격 이름만으로 등록할 수 없다.
+
+```sh
+node scripts/research-archives.mjs register --run <portable-archive-run> --metadata <fresh-private-metadata.json> --remote-package <actual-downloaded.zip> --parent <verified-Research-folder-id>
+node scripts/research-archives.mjs lookup --source-version <exact-source-version-id>
+node scripts/research-archives.mjs lookup --event <exact-event-id>
+```
+
+위치 기록은 `archive-staging/<run>/drive-location.json`에 불변 저장된다. 같은 고정 입력 재등록은 bytes 불변이며 다른 위치/bytes는 새 archive run을 요구한다. 승인 기사에 명시된 원문 URL·판본과 사건 ID만 연결한다. 원문 캐시가 없어도 위치 조회를 할 수 있지만 다운로드·복구·승인·공개는 실행하지 않는다. 로컬 ZIP만의 복구와 실제 원격 ZIP 복구는 별도다. 실제3원문/1사건 원격 복구와 표적 검증은 런북344절을 따른다.
