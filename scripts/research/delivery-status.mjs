@@ -17,6 +17,8 @@ import { auditEvaluationCases } from "./evaluation.mjs"
 import { articleContentFingerprint } from "./parser.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { sameEventAliasSuppressions } from "./scan-completion.mjs"
+import { verifyStoredPartialCandidates } from "./scan-evidence.mjs"
+import { safePath } from "./run-state.mjs"
 import { projectVerifiedCandidateContentFingerprints } from "./candidate-content-fingerprint.mjs"
 
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
@@ -38,6 +40,92 @@ const counter = (values) =>
   Object.fromEntries(
     [...new Set(values)].sort().map((value) => [value, values.filter((x) => x === value).length]),
   )
+
+export function loadPartialCandidateIntakeEvidence(
+  root,
+  backlogFile = path.resolve(path.dirname(root), "candidate-backlog.json"),
+) {
+  const receipts = filesUnder(path.join(root, "partial-candidate-intakes"), "receipt.json")
+  if (!receipts.length)
+    return {
+      status: "missing",
+      receipt_count: 0,
+      invalid_receipt_count: 0,
+      unique_candidate_count: 0,
+      entries: [],
+    }
+  const entries = [],
+    keys = new Set()
+  let aliases
+  for (const file of receipts) {
+    try {
+      const receipt = readJSON(file)
+      if (
+        receipt.schema !== "research-partial-candidate-intake/v1" ||
+        !/^[A-Za-z0-9_-]+$/.test(receipt.source_run || "") ||
+        receipt.window_complete !== false ||
+        receipt.candidate_approved !== false ||
+        receipt.candidate_published !== false ||
+        receipt.drive_written !== false ||
+        receipt.public_verified !== false ||
+        receipt.window_status !== "incomplete" ||
+        receipt.reason !== "detail_incomplete" ||
+        receipt.backlog_merge?.status !== "merged_partial" ||
+        !Array.isArray(receipt.backlog_merge.same_event_aliases) ||
+        !Number.isFinite(Date.parse(receipt.generated_at))
+      )
+        throw Error("Invalid partial intake receipt boundary")
+      const scan = storedListScan(root, receipt.source_run)
+      verifyStoredPartialCandidates(root, scan, {
+        channel_id: receipt.channel_id,
+        ...receipt.window,
+      })
+      for (const name of ["list-scan.json", "candidates.json", "documents.json", "parses.json"])
+        if (
+          sha256(fs.readFileSync(safePath(root, `runs/${receipt.source_run}/${name}`))) !==
+          receipt.source_artifact_sha256?.[name]
+        )
+          throw Error("Partial intake source artifact changed")
+      if (
+        JSON.stringify(receipt.candidate_keys) !== JSON.stringify(scan.candidates.map((c) => c.key))
+      )
+        throw Error("Partial intake candidate identity changed")
+      aliases ||= loadSameEventSourceAliases(root, backlogFile)
+      const historicalAliases = new Map(
+        [...aliases].filter(([, a]) => !a.generated_at || a.generated_at <= receipt.generated_at),
+      )
+      if (
+        JSON.stringify(sameEventAliasSuppressions(scan.candidates, historicalAliases)) !==
+        JSON.stringify(receipt.backlog_merge.same_event_aliases)
+      )
+        throw Error("Partial intake same-event suppression changed")
+      receipt.candidate_keys.forEach((key) => keys.add(key))
+      entries.push({
+        path: path.relative(root, file),
+        status: "verified_candidate_intake",
+        channel_id: receipt.channel_id,
+        source_run: receipt.source_run,
+        candidate_count: receipt.candidate_keys.length,
+        window: receipt.window,
+        window_complete: false,
+        unresolved_details: scan.summary.details
+          .filter((d) => d.status !== "source_parsed_unreviewed")
+          .map((d) => ({ url: d.url, status: d.status })),
+      })
+    } catch (error) {
+      entries.push({ path: path.relative(root, file), status: "invalid", reason: error.message })
+    }
+  }
+  return {
+    status: "read_only_partial_intake_audit",
+    receipt_count: entries.filter((e) => e.status !== "invalid").length,
+    invalid_receipt_count: entries.filter((e) => e.status === "invalid").length,
+    unique_candidate_count: keys.size,
+    entries,
+    candidate_published: false,
+    window_complete: false,
+  }
+}
 
 export function loadSupplementalCoverageEvidence(
   root,
@@ -1266,7 +1354,15 @@ export function buildSourceInventory({ knownRoutes, activeRoutes }) {
         url: source.url || null,
         daily_enabled: Boolean(daily?.enabled),
         baseline_run: daily?.baseline_run || null,
-        development_status: daily?.baseline_run ? "baseline_configured" : "registered_only",
+        source_recipe: source.source_recipe || null,
+        catalog_ids: source.catalog_ids || [],
+        onboarding: source.onboarding || null,
+        development_status:
+          source.onboarding?.collection_enabled === false
+            ? "registration_pending"
+            : daily?.baseline_run
+              ? "baseline_configured"
+              : "registered_only",
       }
     })
     .sort(
@@ -1486,6 +1582,9 @@ export function buildDeliveryStatus({
       registered_only: sourceEvidence.filter(
         (source) => source.development_status === "registered_only",
       ).length,
+      registration_pending: sourceEvidence.filter(
+        (source) => source.development_status === "registration_pending",
+      ).length,
       unclassified_kind: sourceEvidence.filter((source) => source.kind === "미분류").length,
     },
     approvals_reconciliation: backlog,
@@ -1495,6 +1594,7 @@ export function buildDeliveryStatus({
     historical_source_adjudications: historicalSourceAdjudications,
     candidate_source_alternative_resolutions: sourceAlternativeResolutions,
     supplemental_coverage: supplementalCoverage,
+    partial_candidate_intakes: loadPartialCandidateIntakeEvidence(absoluteRoot),
     intake_ontology_audit: intakeOntology,
     existing_briefing_audit: {
       completed_runs: legacyAudit.completed_runs,
@@ -1566,7 +1666,7 @@ export function renderDeliveryStatusHTML(status) {
       const sourceLink = source.url
         ? `<a href='${htmlEscape(source.url)}'>${htmlEscape(source.name)}</a>`
         : htmlEscape(source.name)
-      return `<tr><td>${sourceLink}<small>${htmlEscape(source.id)}</small></td><td>${htmlEscape(source.verification)} · ${htmlEscape(source.method)}</td><td>${htmlEscape(source.sectors.join(", ") || "미분류")}</td><td>${htmlEscape(source.region)} · ${htmlEscape(source.axis)}</td><td>${htmlEscape(source.kind)} · ${htmlEscape(source.language)}</td><td>${source.daily_enabled ? "활성" : "비활성"}<small>${htmlEscape(source.baseline_run || "기준선 없음")}</small></td><td>${htmlEscape(source.development_status)}</td><td>${htmlEscape(source.last_run?.status || "미실행")}${source.last_run?.reason ? `<small>${htmlEscape(source.last_run.reason)}</small>` : ""}</td><td>${htmlEscape(source.latest_targeted_search?.status || "—")}<small>${htmlEscape(source.latest_targeted_search?.run_id || "")}${source.latest_targeted_search ? ` · 결과 ${source.latest_targeted_search.result_count} · 후보 ${source.latest_targeted_search.candidate_count}` : ""}</small></td><td>${htmlEscape(source.latest_targeted_scan?.status || "—")}<small>${htmlEscape(source.latest_targeted_scan?.run_id || "")}${source.latest_targeted_scan?.reason ? " · " + htmlEscape(source.latest_targeted_scan.reason) : ""}</small></td></tr>`
+      return `<tr><td>${sourceLink}<small>${htmlEscape(source.id)}</small></td><td>${htmlEscape(source.verification)} · ${htmlEscape(source.method)}</td><td>${htmlEscape(source.sectors.join(", ") || "미분류")}</td><td>${htmlEscape(source.region)} · ${htmlEscape(source.axis)}</td><td>${htmlEscape(source.kind)} · ${htmlEscape(source.language)}</td><td>${source.daily_enabled ? "활성" : "비활성"}<small>${htmlEscape(source.baseline_run || "기준선 없음")}</small></td><td>${htmlEscape(source.development_status)}${source.source_recipe ? `<small>${htmlEscape(source.source_recipe)}</small>` : ""}${source.onboarding?.remaining_checks?.length ? `<small>${htmlEscape(source.onboarding.remaining_checks.join(", "))}</small>` : ""}</td><td>${htmlEscape(source.last_run?.status || "미실행")}${source.last_run?.reason ? `<small>${htmlEscape(source.last_run.reason)}</small>` : ""}</td><td>${htmlEscape(source.latest_targeted_search?.status || "—")}<small>${htmlEscape(source.latest_targeted_search?.run_id || "")}${source.latest_targeted_search ? ` · 결과 ${source.latest_targeted_search.result_count} · 후보 ${source.latest_targeted_search.candidate_count}` : ""}</small></td><td>${htmlEscape(source.latest_targeted_scan?.status || "—")}<small>${htmlEscape(source.latest_targeted_scan?.run_id || "")}${source.latest_targeted_scan?.reason ? " · " + htmlEscape(source.latest_targeted_scan.reason) : ""}</small></td></tr>`
     })
     .join("")
   const cards = [
@@ -1651,6 +1751,6 @@ export function renderDeliveryStatusHTML(status) {
     <section role="tabpanel" id="overview" aria-labelledby="tab-overview"><h2>필수 작업 ${status.overall_completion.numerator}/${status.overall_completion.denominator} 완료 (${status.overall_completion.percent ?? "—"}%)</h2><p>부분 진행 ${status.overall_completion.partial ?? "—"}개 · 미착수 ${status.overall_completion.not_started ?? "—"}개. WBS는 전체 완료로 닫힐 때만 분자에 반영합니다.</p><div class="status"><article class="panel"><strong>현재 버전 통합 수집</strong><p>${htmlEscape(integrated.status)}</p><small>${htmlEscape(integrated.run_id || "완료 영수증 없음")} · ${integrated.route_count || 0}개 경로 / ${integrated.window_count || 0}개 기간 창</small></article><article class="panel"><strong>최근 일일 수집</strong><p>${htmlEscape(latest?.status || "기록 없음")}</p><small>${htmlEscape(latest?.run_id || "")} · ${latest?.routes || 0}개 경로 / ${latest?.windows || 0}개 창 · 실패 큐 ${latest?.retry_queue?.length || 0}개</small></article>${renderIntegratedCoveragePanel(integrated)}</div><h2>계획 작업 상태</h2><div class="tablewrap"><table><thead><tr><th>작업 ID</th><th>상태</th><th>현재 증거</th><th>다음 완료 항목</th></tr></thead><tbody>${planRows}</tbody></table></div></section>
     <section role="tabpanel" id="source" aria-labelledby="tab-source" hidden><h2>출처 등록부 (${status.source_inventory_counts.registered})</h2><p>일일 활성 ${status.source_inventory_counts.daily_enabled}개 · 일일 범위 밖 ${status.source_inventory_counts.outside_daily_scope}개 · 수집 영수증/기준선 보유 ${status.source_inventory_counts.with_collection_evidence}개 · 등록만 된 출처 ${status.source_inventory_counts.registered_only}개 · 유형 미분류 ${status.source_inventory_counts.unclassified_kind}개. 기본 출처 등록과 날짜 경계를 확인한 수집 영수증을 구분합니다.</p><div class="tablewrap"><table><thead><tr><th>출처</th><th>등록 검증·방식</th><th>분야</th><th>지역·축</th><th>유형·언어</th><th>일일 활성·기준선</th><th>개발 상태</th><th>최근 일일 결과</th><th>최근 보완 검색</th><th>최근 개별 검증</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <section role="tabpanel" id="coverage" aria-labelledby="tab-coverage" hidden><h2>최근 완료 수집의 조사 범위</h2><p>${htmlEscape(status.latest_complete_coverage?.run_id || "완료된 통합 범위 기록 없음")}</p><div class="tablewrap"><table><thead><tr><th>분야</th><th>지역</th><th>축</th><th>상태</th><th>경로</th></tr></thead><tbody>${grid}</tbody></table></div><h2>독립 완료 스캔 보완 coverage</h2><p>일일 통합 실행의 원래 결과와 별도로, 저장 원문·파싱·후보 및 coverage가 확인된 추가 기간을 표시합니다.</p>${supplementalTable}<details><summary>보완 receipt 진단 자료</summary><pre>${htmlEscape(JSON.stringify(supplemental, null, 2))}</pre></details><h2>일일 실행시간 계측</h2><p>실제 receipt에 저장된 단계 시간만 집계합니다. 기존 미계측 receipt는 시간을 추정하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.timing || null, null, 2))}</pre><h2>후보별 모델 추론시간</h2><p>정확한 일일 실행 ID가 source selection에 기록된 예산 receipt만 합산합니다. 원문·프롬프트·모델 응답은 표시하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.model_timing || null, null, 2))}</pre><h2>일일 실패·재시도 큐</h2><p>창당 자동 시도는 최대 ${status.latest_daily_run?.retry_policy?.max_attempts_per_window || "—"}회입니다. blocked 상태는 새 출처 관측을 얻을 때까지 자동 재요청하지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ policy: status.latest_daily_run?.retry_policy || null, queue: status.latest_daily_run?.retry_queue || [] }, null, 2))}</pre><h2>보완 검색 영수증</h2><p>일일 수집 범위와 분리한 등록 출처 질의 결과입니다. 검색 결과는 원문 수집·기사 검증·후보 승인으로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.targeted_search, null, 2))}</pre></section>
-    <section role="tabpanel" id="pipeline" aria-labelledby="tab-pipeline" hidden><h2>후보 승인 대조</h2><p>아래 집계는 원장 읽기 결과입니다. 자동 승인이나 백로그 변경을 하지 않았습니다.</p><pre>${htmlEscape(JSON.stringify(status.approvals_reconciliation.counts, null, 2))}</pre><p>원장 SHA-256: ${htmlEscape(status.approvals_reconciliation.source_sha256)}</p><h2>Drive 작성본과 일일 후보 대조</h2><p>고정 사건 ID·원문 URL 대조의 비공개 receipt 집계입니다. 사건 승인·병합·Drive 쓰기나 공개 완료로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.drive_approval_reconciliation, null, 2))}</pre><h2>저장 원문 receipt 검증</h2><p>후보 판본·parse·내용 지문과 저장 원문의 정확한 URL을 대조한 집계입니다. 근거 검증은 기사 사실 승인이나 공개 허가가 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.candidate_source_evidence_review, null, 2))}</pre><h2>저장 과거 원문 연결</h2><p>고정된 원문 URL과 판본의 비공개 수집 이력을 대조합니다. 원문 bytes·parse 무결성 확인은 현재 후보 승인이나 같은 사건 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_reconciliation, null, 2))}</pre><h2>과거 parse 판정</h2><p>원문 bytes·후보 identity와 정확히 결속된 비공개 판정만 표시합니다. 원본 reconciliation 수치나 공개 상태를 소급 변경하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_adjudications, null, 2))}</pre><h2>후보 원문 온톨로지</h2><p>기록 지문 ${status.intake_ontology_audit.ontology.recorded_fingerprint_candidate_count}개 · 저장 원문 receipt로 복구 ${status.intake_ontology_audit.ontology.receipt_recovered_candidate_count}개 · 확인 지문 ${status.intake_ontology_audit.ontology.fingerprinted_candidate_count}/${status.intake_ontology_audit.ontology.candidate_count}개 · 지문 없음 ${status.intake_ontology_audit.ontology.missing_content_fingerprint_count}개 · 오래된 backlog 영수증 ${status.intake_ontology_audit.fingerprint_evidence.stale_receipt_count}개 · 무효 영수증 ${status.intake_ontology_audit.fingerprint_evidence.invalid_receipt_count}개 · 잘못된 지문 ${status.intake_ontology_audit.ontology.invalid_content_fingerprint_count}개 · 중복 검토 관계 ${status.intake_ontology_audit.ontology.review_required_count}건. 지문이 없는 후보는 본문 중복 비교를 완료한 것으로 보지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ ...status.intake_ontology_audit, fingerprint_evidence: status.intake_ontology_audit.fingerprint_evidence }, null, 2))}</pre><h2>평가 원문 세트</h2><p>원문·기준안의 무결성을 확인한 읽기 전용 집계입니다. 같은 고정 원문을 기준안 버전으로 중복 계산하지 않으며 개발/보류 수와 언어·분야 공백을 추적합니다.</p><pre>${htmlEscape(JSON.stringify(status.local_ai_shadow_operations.evaluation_cases, null, 2))}</pre><h2>발행·운영 증거</h2><pre>${htmlEscape(JSON.stringify({ existing_briefing_audit: status.existing_briefing_audit, local_ai_shadow_operations: status.local_ai_shadow_operations, latest_daily_run: status.latest_daily_run }, null, 2))}</pre></section>
+    <section role="tabpanel" id="pipeline" aria-labelledby="tab-pipeline" hidden><h2>후보 승인 대조</h2><p>아래 집계는 원장 읽기 결과입니다. 자동 승인이나 백로그 변경을 하지 않았습니다.</p><pre>${htmlEscape(JSON.stringify(status.approvals_reconciliation.counts, null, 2))}</pre><p>원장 SHA-256: ${htmlEscape(status.approvals_reconciliation.source_sha256)}</p><h2>Drive 작성본과 일일 후보 대조</h2><p>고정 사건 ID·원문 URL 대조의 비공개 receipt 집계입니다. 사건 승인·병합·Drive 쓰기나 공개 완료로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.drive_approval_reconciliation, null, 2))}</pre><h2>저장 원문 receipt 검증</h2><p>후보 판본·parse·내용 지문과 저장 원문의 정확한 URL을 대조한 집계입니다. 근거 검증은 기사 사실 승인이나 공개 허가가 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.candidate_source_evidence_review, null, 2))}</pre><h2>저장 과거 원문 연결</h2><p>고정된 원문 URL과 판본의 비공개 수집 이력을 대조합니다. 원문 bytes·parse 무결성 확인은 현재 후보 승인이나 같은 사건 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_reconciliation, null, 2))}</pre><h2>과거 parse 판정</h2><p>원문 bytes·후보 identity와 정확히 결속된 비공개 판정만 표시합니다. 원본 reconciliation 수치나 공개 상태를 소급 변경하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_adjudications, null, 2))}</pre><h2>미완료 기간의 정상 기사 편입</h2><pre>${htmlEscape(JSON.stringify(status.partial_candidate_intakes, null, 2))}</pre><h2>후보 원문 온톨로지</h2><p>기록 지문 ${status.intake_ontology_audit.ontology.recorded_fingerprint_candidate_count}개 · 저장 원문 receipt로 복구 ${status.intake_ontology_audit.ontology.receipt_recovered_candidate_count}개 · 확인 지문 ${status.intake_ontology_audit.ontology.fingerprinted_candidate_count}/${status.intake_ontology_audit.ontology.candidate_count}개 · 지문 없음 ${status.intake_ontology_audit.ontology.missing_content_fingerprint_count}개 · 오래된 backlog 영수증 ${status.intake_ontology_audit.fingerprint_evidence.stale_receipt_count}개 · 무효 영수증 ${status.intake_ontology_audit.fingerprint_evidence.invalid_receipt_count}개 · 잘못된 지문 ${status.intake_ontology_audit.ontology.invalid_content_fingerprint_count}개 · 중복 검토 관계 ${status.intake_ontology_audit.ontology.review_required_count}건. 지문이 없는 후보는 본문 중복 비교를 완료한 것으로 보지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ ...status.intake_ontology_audit, fingerprint_evidence: status.intake_ontology_audit.fingerprint_evidence }, null, 2))}</pre><h2>평가 원문 세트</h2><p>원문·기준안의 무결성을 확인한 읽기 전용 집계입니다. 같은 고정 원문을 기준안 버전으로 중복 계산하지 않으며 개발/보류 수와 언어·분야 공백을 추적합니다.</p><pre>${htmlEscape(JSON.stringify(status.local_ai_shadow_operations.evaluation_cases, null, 2))}</pre><h2>발행·운영 증거</h2><pre>${htmlEscape(JSON.stringify({ existing_briefing_audit: status.existing_briefing_audit, local_ai_shadow_operations: status.local_ai_shadow_operations, latest_daily_run: status.latest_daily_run }, null, 2))}</pre></section>
     </main><script>const tabs=[...document.querySelectorAll('[role=tab]')];for(const [i,tab] of tabs.entries()){tab.addEventListener('click',()=>{tabs.forEach((t,j)=>{const active=i===j;t.setAttribute('aria-selected',String(active));document.getElementById(t.getAttribute('aria-controls')).hidden=!active});history.replaceState(null,'','#'+tab.id)});tab.addEventListener('keydown',e=>{let j=i;if(e.key==='ArrowRight')j=(i+1)%tabs.length;else if(e.key==='ArrowLeft')j=(i+tabs.length-1)%tabs.length;else return;e.preventDefault();tabs[j].focus();tabs[j].click()})}</script></html>`
 }

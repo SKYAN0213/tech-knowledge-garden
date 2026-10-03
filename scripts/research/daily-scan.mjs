@@ -4,8 +4,7 @@ import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { canonicalURL, editions } from "../garden.mjs"
 import { registry, coverageGrid } from "./discovery.mjs"
-import { sourceId, sha256 } from "./contracts.mjs"
-import { assertStoredEvidence } from "./parser.mjs"
+import { sha256 } from "./contracts.mjs"
 import {
   DEFAULT_ROOT,
   atomicCreate,
@@ -21,12 +20,25 @@ import {
   planDailyWindows,
   validateDailyRoutes,
 } from "./daily-plan.mjs"
-import { mergeCompletedScan, sameEventAliasSuppressions } from "./scan-completion.mjs"
+import {
+  mergeCompletedScan,
+  mergePartialScan,
+  collectedCandidateReceipt,
+  sameEventAliasSuppressions,
+} from "./scan-completion.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
-import { parseResearchDate } from "./dates.mjs"
+import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evidence.mjs"
+export { verifyStoredListScan } from "./scan-evidence.mjs"
 
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
+function requireExplicitBacklog(root, backlogFile) {
+  if (backlogFile === undefined && path.resolve(root) !== path.resolve(DEFAULT_ROOT))
+    throw Error("A custom research root requires an explicit --backlog path")
+  if (backlogFile !== undefined && (typeof backlogFile !== "string" || !backlogFile.trim()))
+    throw Error("Explicit backlog path must be non-empty")
+  return backlogFile ?? DAILY_BACKLOG
+}
 const COVERAGE_FILE = "daily/route-coverage.json"
 const MAX_PARALLEL_DAILY_ROUTES = 6
 
@@ -36,8 +48,11 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "data/research-source-channels.json",
     "data/research-watchlist.json",
     "data/research-acquisition.json",
+    "data/research-source-recipes.json",
+    "scripts/research/source-recipes.mjs",
     "scripts/garden.mjs",
-    "scripts/research.mjs",
+    "scripts/research-scan.mjs",
+    "scripts/research/list-scan-command.mjs",
     "scripts/research-daily.mjs",
     "scripts/research/daily-plan.mjs",
     "scripts/research/daily-scan.mjs",
@@ -51,9 +66,12 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/robots.mjs",
     "scripts/research/run-state.mjs",
     "scripts/research/scan-completion.mjs",
+    "scripts/research/scan-evidence.mjs",
     "scripts/research/candidate-source-alternative.mjs",
+    "scripts/research/legacy-candidate-approval.mjs",
     "scripts/research/source-policy.mjs",
     "scripts/research/list-scan.mjs",
+    "scripts/research/scan-basis.mjs",
     "scripts/research/rss-scan.mjs",
     "scripts/research/monthly-scan.mjs",
     "scripts/research/api-scan.mjs",
@@ -201,18 +219,6 @@ export function validateStoredDailyPlan(plan, { runId, config, activeRoutes, con
   return true
 }
 
-function verifyDocument(root, document) {
-  if (
-    !["captured", "not_modified"].includes(document.fetch_status) ||
-    !/^[a-f0-9]{64}$/.test(document.body_sha256 || "") ||
-    document.source_id !== sourceId(document.original_url) ||
-    document.source_version_id !== `${document.source_id}:${document.body_sha256}`
-  )
-    throw Error("Daily scan source document identity is invalid")
-  const body = fs.readFileSync(safePath(root, document.body_path))
-  if (sha256(body) !== document.body_sha256) throw Error("Daily scan original body hash mismatch")
-}
-
 export function storedListScan(root, runId) {
   const prefix = `runs/${runId}/`
   const summary = readJSON(root, prefix + "list-scan.json")
@@ -229,85 +235,6 @@ export function storedListScan(root, runId) {
   )
     throw Error("Daily scan run artifacts are missing or malformed: " + runId)
   return { summary, documents, parses, candidates, indexDocuments }
-}
-
-export function verifyStoredListScan(root, scan, expected, { allowLegacyCandidates = false } = {}) {
-  if (
-    scan.summary.status !== "window_scanned" ||
-    scan.summary.channel_id !== expected.channel_id ||
-    scan.summary.window?.since !== expected.since ||
-    scan.summary.window?.until_exclusive !== expected.until_exclusive ||
-    !Array.isArray(scan.documents) ||
-    !Array.isArray(scan.parses) ||
-    !Array.isArray(scan.candidates) ||
-    !Array.isArray(scan.indexDocuments)
-  )
-    throw Error("Stored scan does not prove the requested route window")
-  if (![...scan.indexDocuments, ...scan.documents].length)
-    throw Error("A covered route window needs stored listing bytes")
-  for (const document of [...scan.indexDocuments, ...scan.documents]) verifyDocument(root, document)
-  if (scan.parses.length || scan.documents.length) {
-    if (!scan.parses.length || !scan.documents.length)
-      throw Error("Stored detail documents and parses must agree")
-    assertStoredEvidence(root, scan.documents, scan.parses)
-  }
-  for (const candidate of scan.candidates) {
-    const document = scan.documents.find((item) =>
-      candidate.article_source_version_id
-        ? item.source_version_id === candidate.article_source_version_id
-        : allowLegacyCandidates && candidate.key === "source-" + item.source_id,
-    )
-    const parsed = scan.parses.find((item) =>
-      candidate.article_parse_id
-        ? item.parse_id === candidate.article_parse_id
-        : allowLegacyCandidates && item.source_version_id === document?.source_version_id,
-    )
-    if (
-      !document ||
-      !parsed ||
-      !candidate.source_urls?.some(
-        (url) => canonicalURL(url) === canonicalURL(document.original_url),
-      ) ||
-      parseResearchDate(candidate.source_published_at)?.day !==
-        parseResearchDate(parsed.dates?.published_at)?.day
-    )
-      throw Error("Candidate lacks a matching stored detail source, parse and publication day")
-    const supportingURLs = candidate.supporting_source_urls || []
-    if (
-      !Array.isArray(supportingURLs) ||
-      supportingURLs.length > 7 ||
-      new Set(supportingURLs.map((url) => canonicalURL(url))).size !== supportingURLs.length
-    )
-      throw Error("Candidate supporting source URLs are invalid")
-    const declaredAttachments = new Set(
-      (parsed.attachments || []).map((attachment) => canonicalURL(attachment.url)),
-    )
-    if (supportingURLs.some((url) => !declaredAttachments.has(canonicalURL(url))))
-      throw Error("Candidate supporting source is not linked by its exact parent parse")
-    for (const url of supportingURLs) {
-      const supportDocuments = scan.documents.filter(
-        (item) => canonicalURL(item.original_url) === canonicalURL(url),
-      )
-      if (supportDocuments.length !== 1)
-        throw Error("Candidate supporting source document is missing")
-      const supportParses = scan.parses.filter(
-        (item) => item.source_version_id === supportDocuments[0].source_version_id,
-      )
-      if (
-        supportParses.length !== 1 ||
-        supportParses[0].status !== "extracted" ||
-        !supportParses[0].quality?.required_fields_present ||
-        !supportParses[0].blocks?.length
-      )
-        throw Error("Candidate supporting source lacks a complete stored parse")
-    }
-  }
-  if (
-    scan.summary.candidate_count !== undefined &&
-    scan.summary.candidate_count !== scan.candidates.length
-  )
-    throw Error("Stored scan candidate count changed")
-  return true
 }
 
 export function repairDailyCoverageState(state) {
@@ -429,10 +356,11 @@ export async function reconcileSupplementalScan({
   configFile = DAILY_CONFIG,
   scanRun,
   reconciliationRun,
-  backlogFile = DAILY_BACKLOG,
+  backlogFile,
   now = new Date().toISOString(),
   merge,
 }) {
+  backlogFile = requireExplicitBacklog(root, backlogFile)
   if (!/^[a-zA-Z0-9_-]+$/.test(scanRun || "")) throw Error("Valid stored scan run required")
   if (!/^[a-zA-Z0-9_-]+$/.test(reconciliationRun || ""))
     throw Error("Valid reconciliation run required")
@@ -450,7 +378,11 @@ export async function reconcileSupplementalScan({
     verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
     const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE))
     const state = coverage.routes[channelId]
-    const existing = state.covered.find((span) => span.source_run === scanRun)
+    // A baseline proves source coverage, not candidate ingestion. Only a
+    // completed supplemental merge receipt proves this reconciliation ran.
+    const existing = state.covered.find(
+      (span) => span.source_run === scanRun && span.kind === "verified_supplemental_scan",
+    )
     const receiptFile = reconciliationPath(reconciliationRun)
     const previousReceipt = fs.existsSync(safePath(root, receiptFile))
       ? readJSON(root, receiptFile)
@@ -814,9 +746,13 @@ export function verifyDailyReceipts(
     )
       throw Error("Daily receipt identity does not match the stored plan")
     seen.add(receipt.attempt_id)
-    if (receipt.status !== "window_scanned") continue
+    if (receipt.backlog_merge?.status === "merged_partial" && receipt.status !== "incomplete")
+      throw Error("Partial candidate intake cannot complete or hide a failed window")
+    if (!collectedCandidateReceipt(receipt)) continue
+    const partial = receipt.status !== "window_scanned"
     const stored = loadStored(root, receipt.attempt_id)
-    verify(root, stored, window)
+    if (partial) verifyStoredPartialCandidates(root, stored, window)
+    else verify(root, stored, window)
     if (
       receipt.scan_evidence?.list_scan_run !== receipt.attempt_id ||
       receipt.scan_evidence?.listing_source_version_id !==
@@ -826,9 +762,11 @@ export function verifyDailyReceipts(
       receipt.scan_evidence?.parses !== (stored.parses?.length || 0) ||
       JSON.stringify(receipt.candidate_keys) !==
         JSON.stringify(stored.candidates.map((candidate) => candidate.key)) ||
-      receipt.backlog_merge?.status !== "merged"
+      receipt.backlog_merge?.status !== (partial ? "merged_partial" : "merged") ||
+      (partial &&
+        (receipt.schema !== "research-daily-receipt/v2" || receipt.reason !== "detail_incomplete"))
     )
-      throw Error("Daily receipt no longer matches its completed stored scan")
+      throw Error("Daily receipt no longer matches its collected stored scan")
     verifySameEventSuppressionRecord(
       root,
       stored.candidates,
@@ -913,7 +851,8 @@ export async function executeDailyPlan({
           scanEvidence = null,
           result = null,
           scan_ms = 0,
-          verify_ms = null
+          verify_ms = null,
+          partialVerified = false
         try {
           const scanStarted = performance.now()
           const predecessor = plan.windows.find(
@@ -950,6 +889,15 @@ export async function executeDailyPlan({
                 : "incomplete"
             reason = result.summary.reason || "window_incomplete"
             candidates = result.candidates.map((candidate) => candidate.key)
+            if (result.summary.reason === "detail_incomplete" && candidates.length) {
+              const verifyStarted = performance.now()
+              try {
+                verifyStoredPartialCandidates(root, result, window)
+                partialVerified = true
+              } finally {
+                verify_ms = Math.round(performance.now() - verifyStarted)
+              }
+            }
           }
         } catch (error) {
           if (scanEvidence === null && scan_ms === 0)
@@ -970,6 +918,7 @@ export async function executeDailyPlan({
           verify_ms,
           backlog_merge_ms: null,
           mergeResult: null,
+          partialVerified,
         }
       }),
     )
@@ -993,6 +942,23 @@ export async function executeDailyPlan({
           outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
         }
       }
+      if (outcome.partialVerified) {
+        const mergeStarted = performance.now()
+        try {
+          outcome.mergeResult = await mergePartialScan(
+            root,
+            result,
+            backlogFile,
+            undefined,
+            sameEventAliases || new Map(),
+          )
+        } catch (error) {
+          outcome.reason = error.message
+          outcome.status = "failed"
+        } finally {
+          outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
+        }
+      }
       const receipt = {
         schema: "research-daily-receipt/v2",
         daily_run: plan.run_id,
@@ -1006,10 +972,7 @@ export async function executeDailyPlan({
           scan: outcome.scan_ms,
           verify: outcome.verify_ms,
           backlog_merge: outcome.backlog_merge_ms,
-          total:
-            outcome.scan_ms +
-            (outcome.verify_ms ?? 0) +
-            (outcome.backlog_merge_ms ?? 0),
+          total: outcome.scan_ms + (outcome.verify_ms ?? 0) + (outcome.backlog_merge_ms ?? 0),
         },
         status: outcome.status,
         reason: outcome.reason,
@@ -1165,12 +1128,13 @@ export async function dailyScan({
   configFile = DAILY_CONFIG,
   vault = "vault",
   driveSnapshotFile,
-  backlogFile = DAILY_BACKLOG,
+  backlogFile,
   now = new Date().toISOString(),
   scan,
   verify,
   merge,
 }) {
+  backlogFile = requireExplicitBacklog(root, backlogFile)
   if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid daily run ID")
   if (!["plan-only", "execute", "resume", "handoff"].includes(mode))
     throw Error("Daily scan mode required")
@@ -1228,7 +1192,7 @@ export async function dailyScan({
         root,
         activeRoutes,
         runResearch: async (args) => {
-          const { main } = await import("../research.mjs")
+          const { main } = await import("../research-scan.mjs")
           await main(args)
         },
       })

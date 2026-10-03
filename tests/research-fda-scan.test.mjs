@@ -92,10 +92,23 @@ test("FDA detail keeps the release date and article body without contact boilerp
     <hr><div class="inset-column"><p>Media contact</p></div><p>FDA boilerplate.</p>
   </div></article></main></body></html>`
   assert.match(url, new RegExp(profile.url_pattern))
-  const parsed = await parseDocument(root, source(root, url, html), profile.options)
+  await assert.rejects(
+    parseDocument(root, source(root, url, html), profile.options),
+    /Official listing publication date is required/,
+  )
+  const options = {
+    ...profile.options,
+    listing_published_at: "2026-09-28",
+    listing_source_url: "https://www.fda.gov/news-events/fda-newsroom/press-announcements",
+    listing_source_version_id: "fixture-listing:" + sha256(Buffer.from("FDA listing fixture")),
+    listing_date_text: "September 28, 2026",
+  }
+  const parsed = await parseDocument(root, source(root, url, html), options)
   assert.equal(parsed.status, "extracted")
   assert.equal(parsed.title, "FDA Approves New Treatment")
   assert.equal(parsed.dates.published_at, "2026-09-28")
+  assert.equal(parsed.dates.profile_status, "official-listing-confirmed-by-display")
+  assert.equal(parsed.dates.basis.source_version_id, options.listing_source_version_id)
   assert.deepEqual(
     parsed.blocks.map((block) => block.text),
     [
@@ -103,8 +116,11 @@ test("FDA detail keeps the release date and article body without contact boilerp
       "A clinical trial compared the treatment with placebo.",
     ],
   )
-  const conflicting = html.replace("Mon, 09/28/2026 - 17:43", "Sun, 09/27/2026 - 17:43")
-  const conflict = await parseDocument(root, source(root, url, conflicting), profile.options)
+  const conflicting = html.replace(
+    '<time datetime="2026-09-28T21:45:00Z">September 28, 2026</time>',
+    '<time datetime="2026-09-27T21:45:00Z">September 27, 2026</time>',
+  )
+  const conflict = await parseDocument(root, source(root, url, conflicting), options)
   assert.equal(conflict.dates.published_at, null)
-  assert.equal(conflict.dates.profile_status, "conflict")
+  assert.equal(conflict.dates.profile_status, "listing-display-mismatch")
 })

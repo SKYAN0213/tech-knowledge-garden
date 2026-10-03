@@ -554,7 +554,7 @@ test("alternative-source same-event receipts are counted read-only and invalid r
 })
 
 test("delivery status reports ontology review links from the candidate ledger without modifying it", (t) => {
-  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "research-delivery-status-"))
+  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-delivery-status-")))
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
   const candidatePath = path.join(repo, ".local/research/candidate-backlog.json")
   fs.mkdirSync(path.dirname(candidatePath), { recursive: true })

@@ -1,5 +1,13 @@
 # Google Drive 자료 보관 및 원문 수집
 
+## 승인 사본의 변경 원본 준비
+
+`python3 scripts/prepare-drive.py --approved-preview <preview-run>`은 기존 preview의 원문·승인·원본 사본·생성 결과를 재검사하고, 공개 작성 네 폴더의 승인된 변경 Markdown만 해당 run의 `drive-authoring/files/`에 준비한다. 전체 자료실 준비 명령은 유지한다. 이 경로는 전체 연구 자료를 재복사·압축하거나 원문을 다시 수집하지 않는다.
+
+`research-authoring.mjs compare --plan <파일> --observation <파일>`은 최신 Drive 부모 목록·대상 raw bytes SHA를 대조한다. 원하는 bytes는 `already_applied`, 원본 bytes는 동일 ID `update`, 신규 경로가 완전한 부모 목록에 없으면 `create`다. 다른 내용·동명 파일·누락 목록·10분 초과 조회는 거부한다. 업로드 응답이 불명확하면 재생성 전에 실제 부모 목록과 raw bytes를 다시 읽는다. 비교 함수는 쓰기를 실행하지 않는다.
+
+현재 준비 결과는 `release_approved=false`, `upload_allowed=false`다. 비공개 시험 회차를 정규 회차로 자동 승격하지 않는다. 실제 작성 원본 저장·전수 Drive 스냅샷·공개 배포·WebsiteData는 기존 발행 관문으로 확인한다.
+
 2026-09-13 사용자 지정 최종 저장 위치: [Projects / Tech Knowledge](https://drive.google.com/drive/folders/1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD). 폴더 ID `1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD`, 부모 Projects ID `1psoNS5hryuS9YGJg7JTK4AhG6X6B2LZE`.
 
 로컬 `vault/`는 편집·검증·웹사이트 생성용 작업 사본이며 Drive 보관을 대체하지 않는다. 기존 iCloud와 로컬 자료를 삭제하지 않는다. 현재 노트는 원래 상대 경로로 Drive 루트에 보관한다. 구 iCloud와 이전 증거는 `Archive/Imports/` ZIP으로 내부 경로를 보존한다. 이 규칙이 과거 문서의 로컬 전용 저장 설명보다 우선한다.
@@ -33,3 +41,21 @@
 ## Drive 원본의 사이트 자동 반영
 
 `docs/DRIVE_GITHUB_SYNC.md`가 발행 순서를 정한다. 작성 원본 네 폴더를 먼저 Drive에 저장하고 GitHub가 읽어 사이트를 생성한다. `WebsiteData`는 배포 결과를 다시 확인하는 자료이며 작성 원본이 아니다. Google 내보내기 연결과 성공한 동기화 실행을 확인하기 전에는 상시 자동 반영 완료라고 보고하지 않는다.
+
+
+## 로컬 수집·검토 묶음의 독립 복구
+
+새 검토 자료를 보관할 때 기존 archive 외에 archive-closure로 실제 참조된 이전 추출·원문 묶음·후보 승인·대체 원보도 검토와 불변 parse store를 포함할 수 있다. source-run은 원고 run, related-run은 그 원고의 후보 승인 run이다. 추가 원문이나 모델 추론 없이 저장 bytes/hash를 확인하며 기존 ZIP을 덮어쓰지 않는다.
+
+```sh
+node scripts/research.mjs archive-closure --run <new-archive-id> --source-run <article-run> --related-run <candidate-approval-run>
+python3 scripts/research/package-archive.py --root .local/research/local-ai --package archive-staging/<new-archive-id>/research-source-bundle.zip --expected-sha256 <package-sha256> --restore-to restore-checks/<new-directory>
+```
+
+복구 대상은 새 private 폴더만 허용하며 원문/모델 출력/검토/parse 파일을 재구성한다. 복구 후 loadCurrentApproval과 해당 관계 검증을 실행해 실제 승인 근거를 확인한다. 이는 연구 자료 복구이며 운영 장부/공개 사이트/일일 상태의 자동 복구나 실행 재개를 의미하지 않는다. Drive 업로드 뒤 metadata 확인·원격 bytes hash 확인·원격 ZIP 복구를 각각 구분한다. connector가 checksum이나 materialized bytes를 제공하지 않으면 remote hash/restore는 미검증으로 유지한다. 실제 사례/제한은 런북335절을 따른다.
+
+## 승인한 작성 원본의 변경분 저장
+
+prepare-drive.py --approved-preview의 준비 결과는 업로드 승인이 아니다. research-authoring.mjs release가 exact source/preview/변경분·최신 전수 Drive snapshot·최종 편집 검토를 확인한 불변 영수증을 생성한다. 정규회차는32조사칸, 소급정정은 retrospective로 구분한다. 상세 계약과 실제 명령은 LOCAL_AI_NEWS_RUNBOOK.md 342절을 따른다.
+
+업데이트 직전 원본 raw SHA를 확인하고 동일 파일 ID로 저장한 뒤 원격 bytes를 재조회해 desired SHA와 ID/부모를 확인한다. 저장 결과는 release receipt를 고치지 않고 별도 execution proof로 보관한다. post snapshot으로 local vault를 동기화하고 재실행은 동일 bytes 쓰기를 생략한다. 이 단계의 성공은 공개 사이트 배포 성공을 뜻하지 않는다.

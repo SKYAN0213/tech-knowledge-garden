@@ -72,6 +72,11 @@ export function validateDailyRoutes(config, routes) {
       const route = byId.get(entry.channel_id)
       if (!route) throw Error("Daily route is absent from registry: " + entry.channel_id)
       if (
+        route.onboarding &&
+        (route.onboarding.status !== "verified" || route.onboarding.collection_enabled !== true)
+      )
+        throw Error("Daily route registration is not verified: " + entry.channel_id)
+      if (
         !supportedApis.has(route.api_profile?.id) &&
         !(
           route.method === "html-list" &&

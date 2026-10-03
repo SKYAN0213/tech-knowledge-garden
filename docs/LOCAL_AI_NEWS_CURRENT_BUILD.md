@@ -1,5 +1,17 @@
 # 로컬 AI 뉴스 시스템: 현재 구현과 남은 개발 계약
 
+최신 결과(2026-10-04): 로봇신문의 정상 기사 11건을 원문/parse/날짜/지문 근거로 검토 장부에 편입했다. **372개 후보**, 기존 361개 record 동일, 반복 편입 changed=false. 이미지 표 2건과 기간 미완료는 유지한다. 공통 partial 경로를 CLI·daily·handoff에 연결했고 비공개 현황판에서 receipt·남은 detail을 확인한다. 활성 54개/로봇신문 inactive/coverage 불변, ontology 361/372·missing 11·invalid 0. 표적 57개 확인, 이후 판본 교차 연결 시험만 재검증했다. 전체 목표·승인·Drive·공개는 미완료. [계획 19.243](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19243-미완료-기간에서-정상-기사만-검토-장부로-편입)·[런북 333절](LOCAL_AI_NEWS_RUNBOOK.md#333-미완료-기간의-정상-기사-편입과-실제-검증).
+
+직전 결과(2026-10-04): 전자신문·디일렉 정상/빈 창을 실제 검증하고 활성 경로를 **54개**로 확장했다. 제목 ‘단독’ 배지 분리와 baseline 후보 편입 누락을 공통 코드에서 수정했다. KISA/KITECH/전자신문/디일렉 검증 후보 48건을 운영 장부에 편입해 **361건**이 됐으며 기존 313건의 내용은 같다. 저장 원문 지문 복구 후 ontology 350/361, missing 11, invalid 0이다. 표적 Python 2/2·profile Node 5/5·supplemental Node 4/4 통과. 전체 54경로 통합·Drive·기사 승인/공개 및 WBS 1/22는 미완료다. [계획 19.242](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19242-매체-수집-확장과-운영-후보-장부-편입)·[런북 332절](LOCAL_AI_NEWS_RUNBOOK.md#332-매체-rss-실제-확장과-운영-후보-편입).
+
+최신 수집 확장(2026-10-03): 공통 `research:sources verify|activate`로 KISA/KITECH의 정상·빈 창, 현재 코드/설정, 원문·parse·후보 날짜/본문 지문, 실제 재개 및 격리 중복 검증을 확인하고 기존 일일 수집에 추가했다. catalog 68/registry 194/일일 활성 **52**이며 이전 50개 설정은 그대로다. 새 2-route를 격리 root/장부에서 기존 daily CLI로 실행해 4/4창·8 unique 후보·retry 0·28.002초를 확인했다. 운영 후보 장부 313건/coverage는 유지했고 기사 승인·Drive·공개 상태는 바꾸지 않았다. 최종 onboarding/registration 10/10, 앞선 daily-plan 7/7 통과. 전체 52경로의 현재 fingerprint 통합과 전체 WBS 1/22는 미완료다. 명령은 [출처 등록](SOURCE_REGISTRATION.md#실제-수집-검증과-일일-활성화), 증거·남은 항목은 [런북 331절](LOCAL_AI_NEWS_RUNBOOK.md#331-공통-출처-검증과-일일-활성화-수직-슬라이스)을 따른다.
+
+2026-10-03 현재 작업: Drive 과거 발행본을 현재 승인 계약으로 연결하는 historical approval importer를 구현했다. Rocket Lab 기존 사건 `c8c055684e1b9e3a`에 적용해 후보 source fingerprint 및 pinned receipt link를 추가했으며 신규 기사·공개 상태는 만들지 않았다. 후보 313건 중 approval receipt 연결은 16건이다. 비공개 dashboard SHA-256 `7d975082fe649d316121a05ab3b6089feea0661460173a77af168185aa7ee0fd`. 표적 테스트 2/2 통과, 전체 suite 미실행. 구현과 경계: [계획 19.235](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19235-drive-과거-발행본의-승인-receipt-편입), [런북 325절](LOCAL_AI_NEWS_RUNBOOK.md#325-drive-과거-발행본의-승인-receipt-편입).
+
+2026-10-03 이어서: Rocket Lab 공식 보도자료의 정확한 날짜·위성·궤도 근거를 verified claim으로 연결하고 기존 사건과 `same_event` resolution을 저장했다. resolution receipt 12건 전부 유효하며 보도자료에서 신규 candidate key가 생기는 경우도 `rocketlab-electron`으로 억제됨을 확인했다. Backlog는 그대로고 approval/publication 플래그는 false다. WBS는 1/22, 전체 suite 재실행 없음. [계획 19.236](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19236-rocket-lab-대체-출처의-same-event-연결-및-중복-억제), [런북 326절](LOCAL_AI_NEWS_RUNBOOK.md#326-rocket-lab-대체-출처의-same-event-연결과-중복-억제).
+
+2026-10-03 현재 code 통합수집: `daily-20261003-post-resolution-currentfp-v1`에서 50/50 routes·100/100 windows 성공했고 status가 run/current fingerprint 일치로 검증했다. 실행 시간 993.6초, 32 coverage cells는 모두 partial. Backlog는 313 candidate, SHA `2eb16449d60f1d5b067b2a9fa4bc500f6c2940366e8a3ff2486f458508b451ed`. private dashboard SHA `b14b9462027263fa79d2bb3e5ae2218b619bb401f4e1e4d3db553ef965e6b808`. 전체 suite와 외부 발행은 하지 않았다. 상세 [계획 19.237](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19237-새-code-fingerprint의-50경로-통합-재검증)·[런북 327절](LOCAL_AI_NEWS_RUNBOOK.md#327-최신-fingerprint-50경로-통합-실행).
+
 2026-10-03 후속 구현: [계획 19.224](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19224-독립-출처-수집-동시성을-6개로-조정)에서 독립 route 병렬 상한을 4→6으로 조정했다. 기존 host 단위 요청 직렬화와 route 창·후보 병합 직렬화는 보존된다. 저장된 50-route receipt를 재구성한 추정은 1,120초→895초지만 신규 설정의 전 경로 live 통합 측정은 아직 없다. 동시성 계약 focused test 1건 통과, 전체 suite는 실행하지 않았다. 구현·경계·다음 실행 조건은 [런북 314절](LOCAL_AI_NEWS_RUNBOOK.md#314-일일-독립-route-동시성-상향)을 참조한다.
 
 후보 중복 재검토: 현재 backlog SHA `4f6ca715db4302a440a618cad4a0b13515319b43d2ff47a753168cf7269be268`를 공개 `vault` 기사 URL과 대조해 52개 exact URL 관계·50개 후보를 찾았다. 전부 verified이고 사건 ID 불일치·공개 URL 중복은 0이다. identity receipt 부재만으로 재검토하지 않는다. 예전 pinned 96건과 다른 분모다. 세부는 [런북 315절](LOCAL_AI_NEWS_RUNBOOK.md#315-후보와-공개-기사의-정확-url-교차-대조).
@@ -1391,3 +1403,78 @@ MIT News의 InstructMesh 기사 16 blocks를 exact source selection으로 고정
 
 
 새 scanner fingerprint로 50개 활성 route·100개 창을 다시 실행해 모두 `window_scanned`로 완료했다. retry 0, incomplete 0이며 현재 fingerprint와 run fingerprint가 일치해 status가 `verified_for_current_fingerprint`다. 32개 coverage cell은 전부 partial, 후보 장부는 313개 고유 key다. 후보 승인·Drive·공개는 수행하지 않았다. 비공개 진행 대시보드 SHA-256 `e62bb70940b859494a2e98c7a70e0c537b60695cd1443f3583e612cb4b299298`. 기존 목표의 WBS·7회 운영 및 발행 관문은 남아 있다. 상세: [런북 320절](LOCAL_AI_NEWS_RUNBOOK.md#320-새-fingerprint-50경로-통합과-현재-운영-진척).
+
+후보 온톨로지의 동일 canonical URL 연결을 pairwise 그룹으로 보강했다. 세 후보가 같은 원문 주소를 공유하면 어느 하나에서 검토를 시작해도 나머지 후보가 모두 보이도록 한다. 11개 온톨로지 표적 검사가 통과했으며 자동 사건 병합은 하지 않았다. 세부 [계획 19.231](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19231-동일-정규-출처-후보-관계의-그룹-누락-수정), [런북 321절](LOCAL_AI_NEWS_RUNBOOK.md#321-동일-정규-출처-후보의-그룹-관계-보존).
+
+현재 backlog에서 기존 저장 원문·parse로 지문 누락 53건을 재검토해 41개 고유 지문을 private receipt에 복구했다. 1개는 여러 지문으로 모호하고 11개는 exact source/date parse가 없으며 backlog의 SHA·내용은 변경하지 않았다. 온톨로지 projection은 301/313 fingerprinted, missing 12, invalid 0, review relation 0이다. 비공개 dashboard를 갱신해 readback했고 SHA-256은 `6f7d2b4514151ef77e374fbe48090a2ac7eb8082ac4f76e3acc04601957b8d04`다. 세부 [계획 19.232](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19232-저장-원문에서-현재-후보의-본문-지문-복구), [런북 322절](LOCAL_AI_NEWS_RUNBOOK.md#322-저장-원문-근거에서-후보-content-fingerprint-복구).
+
+Rocket Lab 공식 mission-success 보도자료를 공통 collector로 수집하고 저장된 원문을 URL 전용 dateline profile로 재파싱해 `published_at=2026-09-19`와 13개 본문 블록을 확인했다. 잘못된 JSON-LD 날짜 대신 원문 첫 문단의 명시 날짜를 사용한다. 기존 mission page의 발행일은 확인되지 않아 null이다. 이 설정 추가로 앞선 50-route 통합 fingerprint는 stale이며 새 통합 확인이 남았다. 후보 승인·공개는 변경하지 않았다. 세부 [계획 19.233](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19233-rocket-lab-공식-보도자료-날짜-추출-수직-슬라이스), [런북 323절](LOCAL_AI_NEWS_RUNBOOK.md#323-rocket-lab-공식-보도자료-날짜-추출-수직-슬라이스).
+
+## 19.238 수집 경로 등록 상태
+
+2026-10-03 발견 경로 65개를 기계 읽기 목록으로 등록했다. 신규 53개는 수집 대기, 동일 URL 12개는 기존 ID를 재사용하여 registry 191개/일일 활성 50개다. `research:sources list|plan|register|recipes`와 공유 RSS/HTML 레시피를 구현했고 MIT 두 feed의 수집 옵션을 보존했다. 새 경로의 자동 수집 완료 수는 0이다. 내부 dashboard에 대기 상태와 남은 검증을 표시한다. 표적 40/43·신규 6/6, 3개 실패는 기존 코드/설정에서도 재현했다. 렌더링은 file URL 보안 정책 차단으로 미검증; 데이터/HTML readback은 수행했다. 전체 suite·live 통합·Drive·배포는 실행하지 않았다. 전체 필수 WBS는 여전히 1/22다. 상세: [SOURCE_REGISTRATION.md](SOURCE_REGISTRATION.md).
+
+이후 실제 수집으로 RSS 3개를 추가해 catalog 68/registry 194/일일 활성 50이다. 전자신문 3·디일렉 2·KISA 1·KITECH 1건이 기간 수집·저장 원문/parse 검증을 완료했다. 로봇신문은 13건 중 11건 파싱, 이미지 2건 OCR 대기로 기간 미완료다. 격리 후보 7건은 반복 병합해 중복·hash 변경이 없고 운영 장부 313건은 불변이다. 공유 매체 profile, 고정 공지 처리, 프로세스 간 source 잠금 대기를 보강했다. 표적 40/40·잠금 회귀 2/2, 실제 이미지 병렬 확보 및 전자신문 새 run도 확인했다. 전체 suite/50경로 재검증·Drive·배포는 수행하지 않았다. 다섯 경로는 configured 상태이며 daily/approval/public 상태를 올리지 않았다. 다음은 이미지 원문 OCR과 남은 빈 기간/baseline 검증이다. [런북 329절](LOCAL_AI_NEWS_RUNBOOK.md#329-우선-5개-출처의-실제-수집과-공통-디버깅).
+
+
+이미지 본문 수집을 기존 한국어 OCR과 연결했다. 로봇신문의 두 PNG에서 335/207개 블록과 원본 픽셀 bbox·confidence를 확보했고 기사 DOM/source version과 연결했다. 0.90 미만 블록이 31/20개여서 parse는 partial, 숫자/표는 unreviewed다. 실제 run의 source/parse 16개 무결성과 기존 후보 11개의 key/본문 지문 보존, 운영 장부 313개 불변을 확인했다. Node 표적 23/23, Python 표적 5개는 실패한 1개 수정 후 모두 확인됐다. 신규 경로 daily 편입·승인·발행은 수행하지 않았으며 WBS는 1/22다. [런북 330절](LOCAL_AI_NEWS_RUNBOOK.md#330-이미지-본문-원문과-한국어-ocr-연결).
+
+
+### 19.244 실제 로컬 추출·제품 원문 수정·후보 승인
+
+2026-10-04 실제 Qwen3.8:27b Q4_K_M으로 한 기사에서 6개 사실을 추출(168.9초)하고 영문 원보도/제조사 자료를 연결해 verified 9개 근거로 작성(120.8초)했다. 별도 원문 검토로 발표→완료 오류·보도일·회사 귀속을 수정했다. 무관한 제품 홍보 본문 선택은 기존 worker profile로 같은 원문을 재파싱했다. 공통 reuse-extraction은 추가 추출 없이 기존 6개를 재사용하며 새 검토를 요구한다.
+
+후보 372개 중 한 건만 verified, 371개 동일·원래 URL/날짜/version/parse 지문 보존·반복 승인 SHA 불변. 국내/영문 same-event alias를 확인했다. ontology 361/372·missing 11·invalid 0, partial receipt 2/invalid 0이며 이미지 표 2건 대기다. 활성54/로봇신문 inactive/coverage 설정 불변. 새 표적 시험 4개 확인(첫 batch 3/4, Python 환경 경로 수정 후 실패한 시험만 1/1). 전체 suite/54-route/공개 발행은 미수행이다.
+
+Drive Research private ZIP 이름/부모/220,711bytes/shared=false metadata 재조회; remote bytes hash 미검증. 로컬 16자료 hash/CRC 확인, 공개 작성 원본 미변경. 상세 런북 334절; WBS 1/22/goal active 유지. proof .local/research/source-live-debug/tobor-local-pipeline-validation-20261004-v1.json, 최신 private status HTML SHA 706689f6e7cfcfba26b61457ab3a2f9b17fa7efe62fc7ec31a59493428ba7232는 파일 readback이고 브라우저 렌더링 확인은 아니다.
+
+
+### 19.245 승인 근거 의존 자료의 portable archive와 실제 복구
+
+2026-10-04 공통 archive-closure와 package-archive.py 복구 옵션을 구현했다. 실제 Tobor5runs/3원문/3불변parse·35자료/37 ZIP members·324,985bytes를 새 private root에 복구하고 loadCurrentApproval 원고/6근거 파일 동일, same-event alias1, reuse-extraction unchanged를 확인했다. 모델/네트워크 재호출 없이 검증했고 장부372/SHA9f740fba5cc118eff837b7f2de5c2e5666e9c54378ff7b7749dcbe9ae4a1056f 불변이다. 기존 v1 ZIP은 유지한다.
+
+관련 시험14개 확인: 최초12/12, 새 selection identity1/1, 기존 v1 package1/1. 전체 suite·54-route 스캔은 미실행이다. ZIP SHA2a5d3bda16654cc22f82d3856e0c94175b3705540e084c959a24f247f3fd642b, 실제 proof .local/research/source-live-debug/tobor-portable-restore-validation-20261004-v1.json. Drive Research의 새 file16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU 이름/부모/크기/shared=false metadata 확인, remote bytes hash/remote restore는 미검증이다. 공개/정규 회차/예약/commit/push는 하지 않았다. P2-03/P5-03 진척을 WBS 표에 반영하되 전체1/22 완료 상태는 유지한다.
+
+
+### 19.246 공통 수집 분리와 실물 디버깅
+
+편집/archive 변경이 수집 증거까지 무효화하던 의존성을 분리했다. 실제 ET17·KISA7/한국생산기술연구원1건, 통합4창/25.126초/retry0, CLI/daily 재개0HTTP를 확인했다. Python 경로 누락을 수정하고 custom root의 운영 장부 오기록8건을 복구한 뒤 명시적 backlog 관문을 추가했다. 격리8unique·운영372records/승인 보존. 표적13개 확인·전체 suite 미실행. ET ZIP Drive private metadata 확인/remote hash 미검증. 25기사 사실 승인·전체54경로 성공·서비스 배포는 미확인이다. [런북336절](LOCAL_AI_NEWS_RUNBOOK.md#336-수집-실행-경계-분리와-실제-디버깅).
+
+
+### 19.247 실제 원문 검토와 작성 재사용
+
+로봇신문 산업용 로봇 기술협력1건의 local 추출→GPT 원문 대조→한국어 작성→분류/날짜 교정→후보 승인을 확인했다. 공통 draft-checkpoint로 동일 검토 입력 재실행 추가 generation0·저장 원고/예산 불변, approved 재작성 거부. 장부372개 중 다른371개 불변·반복 승인 불변. 새3+기존관련2시험 확인·전체 suite 미실행. 의존자료 ZIP Drive private metadata 확인, 원격 hash/웹/RSS/GitHub·정규 운영 미검증. [런북337절](LOCAL_AI_NEWS_RUNBOOK.md#337-실제-산업용-로봇-기사-검토와-작성-추론-재사용). WBS1/22 유지.
+
+
+### 19.248 실제 승인 기사에서 독자 채널까지
+
+빈 Signals 검토 생성의 계약 불일치와 원고/캐시RSS 불일치를 수정했다. 실제 reader v3: 기사1/Signals1·public320/digest138·RSS40/이전39GUID와 날짜 보존·본문/설명/원문 일치, 모바일390px·분야query/back·지도/빈분석 미노출. private sample이며 coverage/Drive/public 완료가 아니다. 모델 adapter의6수용 항목은 현재 metadata·실물 artifacts·실패 계약 표적10개로 입증해 P3-01 완료/WBS2/22로 반영한다. 의미 품질/독립 평가(P3-02~04)와 전체 소급/08시/Drive/발행/7회 운영은 남아 있다. [런북338절](LOCAL_AI_NEWS_RUNBOOK.md#338-승인-원고의-독자-채널-연결과-모델-어댑터-완료).
+
+
+### 19.249 로봇 제조사 실제 수집 디버깅
+
+KUKA/ABB/FANUC/두산/HD 다섯 공식 경로를 실제 수집해 0/2/1/1/0건의 저장 원문·본문·게시일을 확인했다. 개별 완료 창에서 검토된 동일 사건 연결을 빠뜨리는 결함을 수정했다. 격리 장부 반복 병합은 중복 추가 없이372건/bytes 불변이다. HD 전체150행 보존·목록19→2요청·실제57.440→6.465초, FANUC 재개 새 fetch0. 신규1/related7·문법/format/diff 통과. 운영 장부/coverage·공개 출력·예약 불변. HD 정규 baseline/현재 설정 통합 실행은 미완료. 세부 [런북339절](LOCAL_AI_NEWS_RUNBOOK.md#339-로봇-제조사-실제-수집과-개별-병합-중복-수정). 전체WBS2/22.
+
+
+### 19.251 작성 원본 차이 준비와 Drive 충돌 대조
+
+기존 Drive 준비 명령에 승인 preview 전용 경로를 연결했다. 공통 원문/승인/생성 검사와 garden/run 잠금을 사용하며 선언 외 변경·삭제·비공개 파일을 거부한다. 실제 Corwin은 작성 원본 2파일/4,119bytes만 준비한다. Drive 부모·목록 조회에서 두 신규 대상의 부재를 확인했다. 순수 검사 6개·기존 run 잠금 1개·Python 진입점의 실제 garden-lock 오류 전달을 확인했다. 상세 명령·실패 기록은 런북341절, private proof는 source-live-debug/authoring-transfer-20261004-v1이다.
+
+Drive 전수 대조·정규 회차 검토·실제 write-fault 복구·공개 배포·독립 40/20 평가·전체 소급·신규 7회는 미완료다. 준비 원고를 정규 회차로 자동 승격하지 않는다. release_approved/upload_allowed는 false, WBS 2/22다.
+
+### 19.250 일일 증거 재사용과 승인 회차 조립
+
+HD frontier10/4까지 실제 scan reconciliation, 다른53route/장부372건 불변. 새 research-edition explicit후보→handof/장부/승인·대체원문검증→기존Signals/웹RSSdigest 조립 경로 구현. 실제1기사/1Signals·generator/consistency/39RSS identity 보존, 최종v2같은입력 재개6.928초·추가build/fetch/model0·receipt불변·changedinput 거부. reader bytes는 이전 UI검증 결과와 동일. 새5시험/syntax/format/diff pass. Research ZIP ID1FV3s_pY4jvf_2J19Vfx0j7759RkZtpxM metadata재조회/remotehash 미검증. WBS2/22, 정규공개/7회/전체소급 미완료. [런북340절](LOCAL_AI_NEWS_RUNBOOK.md#340-일일-증거-재사용과-승인-원고-회차-조립).
+
+### 19.252 Drive 작성 원본에 실제 반영된 소급 정정
+
+2026-10-04 KST: 기사2건(TimesFM-3, Search 제어 업데이트)·종속 용어2개를 수정해 2026-09-01 원고와 Knowledge2파일에 저장했다. Drive 동일3개 ID로 update→원격 raw bytes SHA 검증→post snapshot으로 로컬 반영까지 수행했다. 전수195개 일치, 반복 compare3건 already_applied·pull 변경0, 운영 backlog/coverage 불변이다.
+
+새 release 관문은 정규회차32조사칸/최종review와 retrospective를 구분한다. 신규5+기존7 표적검사 통과. private preview public318파일·기존RSS40 identity/발행시각 보존·desktop1440/mobile390·기사/용어 이동 확인. 원본 cached RSS는 변경하지 않았다. 실제 공개 사이트 배포는 미완료이며 기존 Corwin private 원고는 수정 전 원본에 고정되어 새 Drive 기준으로 새 run이 필요하다. WBS2/22. 런북342절/명세82절 참조.
+
+
+### 19.253 릴리스 통합 검사와 실제 원문 날짜 보존
+
+2026-10-04 KST: 전체 Node 검사를 릴리스 묶음에서 한 번 실행했다(659개: 최초 648 통과·11 실패). 날짜 파서 결함과 고립 fixture의 입력 계약·경로·기존 추적 목록 단정, 오래된 생성 RSS/링크를 수정한 뒤 실패한 11개를 표적으로 모두 확인했다. 기존 32기업·16기관 ID와 균등 배분 검사를 유지하면서 추가 기업·기관을 허용한다. 올바른 Python venv의 worker 검사 최초 91개 중 88 통과·3 실패 이후 영향을 받는 날짜 검사 39/39를 확인했다. 시스템 Python의 별도 27개는 통과했고 worker import는 PyMuPDF 미설치로 실패했다. 전체 검사를 반복하지 않았다.
+
+공통 HTML 파서가 명시적으로 선택한 게시일/시각을 첫 metadata 값으로 덮어쓰는 결함을 수정했다. 실제 저장 NASA/AWS 원문 두 건을 재파싱해 본문·locators·기존 원문/parse/후보 파일을 보존하며 NASA 표시일 2026-10-02, AWS 2026-10-02를 확인했다. 후보 승인이나 추가 네트워크 수집은 없다. root build·typecheck·site 검증과 Drive 작성 원본195개 일치를 확인했다. 공개 반영은 다음 publish 단계에서 별도로 판정한다. 상세 런북343절, 전체 WBS2/22 유지.

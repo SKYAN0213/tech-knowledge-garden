@@ -97,6 +97,24 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["profile_status"], "conflict")
         self.assertEqual(result["dates"]["basis"]["text"], "August 26, 2026")
 
+    def test_explicit_timestamp_retains_selected_offset_instead_of_first_metadata(self):
+        raw = b'''<html><head><title>Release</title>
+        <meta property="article:published_time" content="2026-09-28T08:00:00Z"></head>
+        <body><article><time class="release" datetime="2026-09-28T10:00:00+02:00">Release time</time>
+        <p>The company announced a product.</p></article></body></html>'''
+        options = {
+            "content_xpath": "//article",
+            "publication_date_xpath": "//article/time[@class='release']",
+            "publication_date_attribute": "datetime",
+            "publication_date_pattern": r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$",
+            "publication_date_format": "%Y-%m-%dT%H:%M:%S%z",
+            "publication_date_preserve_time": True,
+        }
+        result = self.invoke(raw, options)["result"]
+        self.assertEqual(result["dates"]["published_at"], "2026-09-28T10:00:00+02:00")
+        self.assertEqual(result["dates"]["basis"]["attribute"], "datetime")
+        self.assertEqual(result["dates"]["candidates"], ["2026-09-28T08:00:00Z", "2026-09-28T10:00:00+02:00"])
+
     def test_html_article_can_use_exact_official_listing_date_with_provenance(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = next(
@@ -286,15 +304,24 @@ class WorkerTests(unittest.TestCase):
         <div class="entry-content"><p>국내 서버의 공격 경로를 확인했다.</p>
         <div class="CONTENT_AD_PLACE"><p>회원 서비스 구독 안내</p></div>
         <div class="post-footer"><h4>Tags:</h4></div></div></article></body></html>'''
-        result = self.invoke(page.encode(), profile["options"], url="https://asec.ahnlab.com/ko/95560/")["result"]
+        self.assertEqual(self.invoke(page.encode(), profile["options"], url="https://asec.ahnlab.com/ko/95560/")["worker_status"], "failed")
+        options = {
+            **profile["options"],
+            "listing_published_at": "2026-09-28",
+            "listing_source_url": "https://asec.ahnlab.com/ko/category/analysis-notes/",
+            "listing_source_version_id": "fixture-listing:" + hashlib.sha256(b"ASEC listing fixture").hexdigest(),
+            "listing_date_text": "9월 28 2026",
+        }
+        result = self.invoke(page.encode(), options, url="https://asec.ahnlab.com/ko/95560/")["result"]
         self.assertEqual(result["title"], "공격 사례")
         self.assertEqual(result["dates"]["published_at"], "2026-09-28")
-        self.assertEqual(result["dates"]["profile_status"], "matched")
+        self.assertEqual(result["dates"]["profile_status"], "official-listing-confirmed-by-display")
+        self.assertEqual(result["dates"]["basis"]["source_version_id"], options["listing_source_version_id"])
         self.assertEqual([block["text"] for block in result["blocks"]], ["국내 서버의 공격 경로를 확인했다."])
         conflicting = page.replace("9월 28 2026", "9월 27 2026")
-        result = self.invoke(conflicting.encode(), profile["options"], url="https://asec.ahnlab.com/ko/95560/")["result"]
+        result = self.invoke(conflicting.encode(), options, url="https://asec.ahnlab.com/ko/95560/")["result"]
         self.assertIsNone(result["dates"]["published_at"])
-        self.assertEqual(result["dates"]["profile_status"], "conflict")
+        self.assertEqual(result["dates"]["profile_status"], "listing-display-mismatch")
 
     def test_asec_and_fda_listing_dates_require_matching_visible_article_date(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
@@ -922,6 +949,64 @@ echo 'source command only'
         self.assertEqual(result["quality"]["ocr_unavailable"], "unsupported-language:xx")
         self.assertEqual(result["quality"]["ocr_pages"], [])
 
+    @unittest.skipUnless(
+        (WORKER.parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx").is_file()
+        and Path("/System/Library/Fonts/Supplemental/AppleGothic.ttf").is_file()
+        and importlib.util.find_spec("PIL") is not None,
+        "local Korean OCR model and macOS Korean fixture font are required",
+    )
+    def test_raster_ocr_reuses_korean_model_and_preserves_pixel_positions(self):
+        from PIL import Image, ImageDraw, ImageFont
+        image = Image.new("RGB", (1600, 500), "white")
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/AppleGothic.ttf", 88)
+        draw.text((70, 100), "산업용 로봇 시장 동향", font=font, fill="black")
+        draw.text((70, 250), "FANUC 2026년 신규 공장 자동화 계획", font=font, fill="black")
+        output = io.BytesIO()
+        image.save(output, format="PNG")
+        result = self.invoke(output.getvalue(), {"ocr": True, "language": "ko", "title": "원문 이미지"}, mime_type="image/png")["result"]
+        self.assertEqual(result["quality"]["ocr_model"], "PP-OCRv5-korean-mobile")
+        self.assertIn("산업용 로봇 시장 동향", " ".join(block["text"] for block in result["blocks"]))
+        self.assertEqual(result["quality"]["source_width"], 1600)
+        self.assertEqual(result["quality"]["numeric_verification"], "unreviewed")
+        self.assertEqual(result["quality"]["table_structure"], "unreviewed")
+        self.assertIsNone(result["dates"]["published_at"])
+        for block in result["blocks"]:
+            self.assertEqual(block["locator"]["type"], "image")
+            self.assertEqual(block["locator"]["coordinate_space"], "source-pixels")
+            self.assertIn("confidence", block["locator"])
+            self.assertLessEqual(block["locator"]["bbox"][2], 1601)
+            self.assertLessEqual(block["locator"]["bbox"][3], 501)
+
+    def test_raster_image_budget_and_mime_are_enforced_before_ocr(self):
+        from PIL import Image
+        output = io.BytesIO()
+        Image.new("RGB", (100, 100), "white").save(output, format="PNG")
+        for options, mime in [({"ocr": True, "max_image_pixels": 100}, "image/png"), ({"ocr": True}, "image/jpeg")]:
+            with self.subTest(options=options, mime=mime):
+                response = self.invoke(output.getvalue(), options, mime_type=mime)
+                self.assertEqual(response["worker_status"], "failed")
+        default = self.invoke(output.getvalue(), {"language": "ko"}, mime_type="image/png")["result"]
+        self.assertEqual(default["status"], "unsupported")
+        partial = self.invoke(output.getvalue(), {"ocr": True, "language": "xx", "title": "원문 이미지"}, mime_type="image/png")["result"]
+        self.assertEqual(partial["status"], "partial")
+        self.assertEqual(partial["quality"]["ocr_unavailable"], "unsupported-language:xx")
+
+    def test_body_image_profile_selects_only_empty_article_container(self):
+        raw = b'<html><head><title>Publisher</title></head><body><img src="https://ads.test/banner.png"><h1>Source title</h1><article><p> </p><img src="/image.png"></article></body></html>'
+        options = {"title_xpath": "//h1", "content_xpath": "//article", "content_block_xpath": ".//p[normalize-space(.)]", "body_images": {"xpath": ".//img[@src]", "url_pattern": "^https://example\\.com/image\\.png$", "max_images": 1}}
+        result = self.invoke(raw, options)["result"]
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual(result["body_images"], [{"url": "https://example.com/image.png", "dom_path": "/html/body/article/img", "alt": ""}])
+        self.assertEqual(result["blocks"], [])
+        text_article = self.invoke(raw.replace(b'<p> </p>', b'<p>Verified article text.</p>'), options)["result"]
+        self.assertEqual(text_article["status"], "extracted")
+        self.assertNotIn("body_images", text_article)
+        outside = self.invoke(raw.replace(b'/image.png', b'https://other.test/image.png'), options)
+        self.assertEqual(outside["worker_status"], "failed")
+        missing = self.invoke(raw.replace(b'<img src="/image.png">', b''), options)
+        self.assertEqual(missing["worker_status"], "failed")
+
     def test_login_and_subscription_walls_do_not_count_as_article_content(self):
         title_wall = b'''<html><head><title>Sign in to read this article</title></head>
         <body><main><h1>Sign in to read this article</h1><p>Members only.</p>
@@ -1499,6 +1584,25 @@ echo 'source command only'
         body = " ".join(block["text"] for block in result["blocks"])
         self.assertIn("Resolved comments", body)
         self.assertNotIn("Unrelated later release", body)
+
+    def test_title_badge_exclusion_keeps_inline_text_tail_and_source_basis(self):
+        raw = '<html><head><title>사이트</title></head><body><h1><strong class="badge">단독</strong> 단독 <em>계약</em> 발표</h1><article><p>확인한 본문.</p></article></body></html>'.encode()
+        options = {"content_xpath": "//article", "title_xpath": "//h1", "title_exclude_xpath": ".//strong[@class='badge']"}
+        result = self.invoke(raw, options)["result"]
+        self.assertEqual(result["title"], "단독 계약 발표")
+        self.assertEqual(result["title_basis"]["dom_path"], "/html/body/h1")
+        excluded = result["title_basis"]["excluded"]
+        self.assertEqual(excluded[0]["dom_path"], "/html/body/h1/strong")
+        self.assertEqual(excluded[0]["text"], "단독")
+        self.assertEqual(excluded[0]["text_hash"], hashlib.sha256("단독".encode()).hexdigest())
+        self.assertEqual(result["blocks"][0]["text"], "확인한 본문.")
+
+    def test_title_badge_exclusion_rejects_non_descendant_and_text_selectors(self):
+        raw = b'<html><body><h1>Title <strong>Badge</strong></h1><article><p>Body.</p></article></body></html>'
+        for selector in ("//article", ".", ".//strong/text()", ".//strong | //article"):
+            with self.subTest(selector=selector):
+                response = self.invoke(raw, {"content_xpath": "//article", "title_xpath": "//h1", "title_exclude_xpath": selector})
+                self.assertEqual(response["worker_status"], "failed")
 
     def test_newspim_profile_excludes_ai_summary_and_keeps_reporter_body(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())

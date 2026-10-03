@@ -58,6 +58,56 @@ const listing = {
   ],
 }
 
+test("pinned notices are included once in their own date window without determining the cutoff", () => {
+  const pinned = { ...link("2026-09-10", "Pinned security notice"), profile_id: "pinned" }
+  const rule = {
+    id: "pinned",
+    status: "matched",
+    selected_items: 1,
+    matched_links: 1,
+    truncated: false,
+  }
+  const route = {
+    ...channel,
+    listing_profile: { ...channel.listing_profile, pinned_rule_ids: ["pinned"] },
+  }
+  const input = {
+    ...listing,
+    links: [pinned, ...listing.links],
+    link_profiles: [...listing.link_profiles, rule],
+  }
+  const result = assessSinglePageIndex(input, route, "2026-09-01", "2026-09-12")
+  assert.equal(result.status, "window_covered")
+  assert.equal(result.window_items, 3)
+  assert.equal(result.pinned_window_items, 1)
+  assert.equal(result.links.filter((item) => item.url === pinned.url).length, 1)
+  const duplicate = { ...links[0], profile_id: "pinned" }
+  const repeated = assessSinglePageIndex(
+    { ...input, links: [duplicate, ...listing.links] },
+    route,
+    "2026-09-01",
+    "2026-09-12",
+  )
+  assert.equal(repeated.status, "window_covered")
+  assert.equal(repeated.window_items, 2)
+  const conflict = assessSinglePageIndex(
+    { ...input, links: [{ ...duplicate, text: "Different notice" }, ...listing.links] },
+    route,
+    "2026-09-01",
+    "2026-09-12",
+  )
+  assert.equal(conflict.reason, "listing_pinned_identity_conflict")
+  const noBoundary = {
+    ...listing,
+    links: [links[0], { ...pinned, published_at: "2026-08-01" }],
+    link_profiles: [{ ...listing.link_profiles[0], selected_items: 1, matched_links: 1 }, rule],
+  }
+  assert.equal(
+    assessSinglePageIndex(noBoundary, route, "2026-09-01", "2026-09-12").reason,
+    "cutoff_not_reached",
+  )
+})
+
 test("a dated full index covers a window only after reaching an older entry", () => {
   const result = assessSinglePageIndex(listing, channel, "2026-09-01", "2026-09-28")
   assert.equal(result.status, "window_covered")
@@ -216,7 +266,11 @@ test("a declared official alternate source is used when the article PDF attachme
       },
     ],
   }
-  const run = { async stage(_name, _input, action) { return action() } }
+  const run = {
+    async stage(_name, _input, action) {
+      return action()
+    },
+  }
   const fetchPolicy = async (_root, _fetcher, url) => {
     calls.push(url)
     if (url === evidenceURL) {
@@ -292,7 +346,10 @@ test("a declared official alternate source is used when the article PDF attachme
   assert.equal(result.summary.status, "window_scanned")
   assert.equal(result.candidates.length, 1)
   assert.deepEqual(result.candidates[0].supporting_source_urls, [alternateURL])
-  assert.deepEqual(calls.sort(), [base, articleURL, attachmentURL, alternateURL, evidenceURL].sort())
+  assert.deepEqual(
+    calls.sort(),
+    [base, articleURL, attachmentURL, alternateURL, evidenceURL].sort(),
+  )
   assert.deepEqual(result.summary.details[0].supporting_documents, [
     {
       id: "ir-release",
@@ -770,7 +827,11 @@ test("accepts a detail title when the official listing visibly truncates its mat
     fetch_status: "captured",
     observed_at: "2026-09-11T12:00:00Z",
   })
-  const run = { async stage(_name, _input, action) { return action() } }
+  const run = {
+    async stage(_name, _input, action) {
+      return action()
+    },
+  }
   const result = await scanSinglePageRoute(
     "private",
     run,
@@ -795,7 +856,10 @@ test("accepts a detail title when the official listing visibly truncates its mat
   )
   assert.equal(result.summary.status, "window_scanned")
   assert.equal(result.candidates.length, 1)
-  assert.equal(result.candidates[0].title, "New welding robot announced for flexible production lines")
+  assert.equal(
+    result.candidates[0].title,
+    "New welding robot announced for flexible production lines",
+  )
   assert.equal(
     result.summary.details[0].title_relation,
     "official_listing_truncated_detail_title_authoritative",

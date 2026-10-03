@@ -1,6 +1,10 @@
 # 원문 출처·수집·파싱 설계
 
+발견 경로의 실제 등록 명령과 상속 가능한 공통 설정은 [SOURCE_REGISTRATION.md](SOURCE_REGISTRATION.md)를 따른다. API 문서·진입점은 검증 전 대기 상태로 등록하며, 수집 성공이나 일일 활성으로 올리지 않는다.
+
 작성·갱신일: 2026-09-29 · 상태: 목표 상세 설계와 부분 구현 기록
+
+2026-10-03 조사한 [65개 확장 후보](SOURCE_EXPANSION_CATALOG.md)는 기존 경로 재사용 여부, 실제 웹 확인 수준, RSS/API/목록/첨부 수집안과 무료 접근 조건을 함께 기록한다. 신규 crawler 개발 전에 그 목록과 기존 registry를 대조한다. 후보 목록 추가는 현재 50개 일일 경로의 활성화나 파싱 검증을 변경하지 않는다.
 
 이 문서는 로컬 AI 뉴스 시스템이 어떤 원문을 어디서 발견하고, 어떻게 내려받아 검증 가능한 자료로 변환할지 정의한다. 최신 일일 수집 경로와 확인 범위는 [34절](#34-github-changelog-월별-아카이브의-기간-수집) 및 [일일 구현 명세](DAILY_NEWS_INGESTION_IMPLEMENTATION.md)를 먼저 읽는다. 앞선 수량은 각 절의 관측 당시 기록이다.
 전체 서비스 방향은 [로컬 AI 뉴스 시스템](LOCAL_AI_NEWS_SYSTEM.md), 단계별 작업과 출시 조건은 [구현 계획](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md)을 따른다.
@@ -2475,3 +2479,97 @@ SEC Inline XBRL HTML이 XML encoding declaration으로 시작하면 저장 바�
 기존 `html-list`와 `path-pages` 수집 흐름에서 XML 목록을 재사용할 수 있다. `format: "xml-fragment"`는 저장된 원문 bytes를 네트워크 접근·외부 entity 처리가 꺼진 XML parser로 읽으며, XPath의 요소 대소문자와 CDATA 내용을 보존한다. 목록 규칙은 기존 `item_xpath`, `title_xpath`, `date_xpath`, `url_pattern`, `url_template`을 그대로 쓰고, 링크 ID가 속성 대신 자식 요소에 있으면 `url_value_xpath`로 정확히 하나의 문자열을 지정한다. 속성 기반 `url_attribute`와 값 기반 `url_value_xpath`를 동시에 또는 둘 다 생략해 선언할 수 없다. 0개·복수 XPath 결과는 해당 수집을 실패 처리한다.
 
 안랩의 공식 보도자료 목록 `https://company.ahnlab.com/kr/news/press_release_list.do?pageNum={page}`가 실물 사례다. 각 `<item>`의 `<seqPressRelease>`, `<title>`, `<date>`에서 상세 URL, 제목, 목록 날짜를 만들고, 상세 기사의 제목·날짜·본문은 별도 URL profile로 다시 확인한다. 목록의 CDATA `<contents>`를 상세 기사 본문으로 승격하지 않는다. 목록 행이 기간 시작 전의 날짜에 도달해야 창을 완료 처리한다. 구현과 `[2026-09-26, 2026-10-04)` 실물 결과는 [런북 296절](LOCAL_AI_NEWS_RUNBOOK.md#296-안랩-공식-xml-목록과-공통-상세-수집)에 기록한다.
+
+## 69. 고정 공지와 매체 RSS의 공통 수집
+
+날짜 HTML 목록의 `listing_profile.pinned_rule_ids`는 일반 최신순 항목과 별도로 고정 공지를 검증한다. 기간에 해당하는 공지는 수집하되, 고정 공지의 오래된 날짜로 과거 도달을 증명하지 않는다. 일반 항목이 기간 시작 이전에 닿아야 창을 완료한다. 공지 profile의 날짜·제목·URL·선택 개수·허용 host를 검증하며, 같은 canonical URL이 일반 목록에도 있으면 제목과 날짜가 일치할 때만 한 건으로 처리한다. 충돌하면 `listing_pinned_identity_conflict`로 미완료다. 기존 `ignored_rule_ids`와 중복 지정할 수 없다.
+
+로봇신문·디일렉은 공식 HTML alternate 선언에서 확인한 RSS에 `ndsoft-news-rss-v1`을 공유한다. 매체별 feed 이름과 host는 각각 제한하고 기사 DOM profile은 공유한다. 전자신문 AI는 공식 RSS 안내에서 확인한 HTTPS XML을 사용한다. 명시 날짜 메타데이터는 `publication_date_xpath`로 요소를 선택하고 `publication_date_attribute: "content"`로 값을 읽는다. XPath가 속성 문자열을 직접 반환하도록 작성하지 않는다.
+
+서로 다른 collector 프로세스의 동일 원문 요청은 기존 host lock 대기 구현을 source lock에도 재사용해 직렬 처리한다. 특히 같은 host의 robots 원문을 동시에 요청해도 즉시 `EEXIST`로 수집이 실패하지 않는다. 살아 있는 소유자가 해제할 때까지 제한 시간 안에서 대기하고, 죽은 프로세스의 잠금이나 손상된 잠금은 삭제하지 않고 명시 복구를 요구한다.
+
+이미지에만 본문이 있는 자료는 텍스트 파싱 완료로 처리하지 않는다. 원본 bytes를 확보해도 PNG OCR과 숫자 검증이 연결되기 전에는 `unsupported`로 보존하고 전체 창 병합을 보류한다. 실제 결과는 [런북 329절](LOCAL_AI_NEWS_RUNBOOK.md#329-우선-5개-출처의-실제-수집과-공통-디버깅)에 있다.
+
+## 70. 이미지 본문과 기존 한국어 OCR 재사용
+
+`body_images`는 본문 container 아래의 이미지 선택자, 허용 URL 정규식, 최대 1~7개와 `parse_options`를 명시한다. 텍스트 본문이 없는 기사에서만 적용한다. 일반 본문·메뉴·광고 이미지에는 자동 적용하지 않는다. 이미지가 없는 빈 본문, 예산 초과, 중복, 허용 URL 밖의 이미지는 실패를 유지한다. Scanner는 기존 fetch/robots/checkpoint로 이미지 원문을 확보하고 기사 source version·parse ID·DOM 위치와 이미지 source version·parse ID를 함께 보존한다.
+
+PNG/JPEG OCR은 설치된 한국어 모델과 PDF OCR 흐름을 재사용한다. `ocr: true`를 명시해야 하며 MIME과 실제 바이트 형식이 일치하고 단일 프레임이어야 한다. 최대 12,000,000픽셀(설정 상한 20,000,000), 한 변 12,000픽셀로 제한한다. 입력 해시는 원본 이미지 bytes 기준이다. 변환 PDF는 메모리에서만 만들고 OCR 좌표는 원본 픽셀로 환산한다. 각 블록의 confidence와 bbox, 이미지 크기, 모델명, 날짜 미확인 상태를 보존한다. 이미지에 보이는 날짜를 기사 발표일로 자동 채택하지 않는다.
+
+숫자와 표 구조는 `unreviewed`다. 기존 OCR의 0.90 신뢰도 관문을 낮추지 않으며 일부 블록이 기준 미만이면 image parse는 partial이다. 인식된 이미지 글자를 원 기사 본문에 덮어쓰거나 기사 후보/승인/발행으로 자동 승격하지 않는다. 기사 detail에는 `article_image_body_requires_review`를 남긴다. 실제 이미지 2건·해시·OCR 위치와 11개 기존 후보 보존은 [런북 330절](LOCAL_AI_NEWS_RUNBOOK.md#330-이미지-본문-원문과-한국어-ocr-연결)에 기록한다.
+
+
+## 71. 공통 onboarding 증거와 활성화
+
+실제 source route를 검증하는 공통 명령은 `research:sources verify`다. 현재 collection basis, 원문 정책/bytes/immutable parse, 후보 날짜·본문 지문, 정상/빈 기간 종료, 동일 run CLI 재개 및 checkpoint 보존, 격리 장부 중복 불변을 하나의 private receipt로 저장한다. basis는 route를 펼친 결과·전체 article profile·collector/worker 구현·Node 버전을 고정하며 관측 상태인 onboarding만 제외한다. 수집 허용 여부는 별도 관문이다.
+
+`activate`는 receipt와 실제 증거를 다시 검증한 뒤 해당 source만 verified로 바꾸고 daily baseline을 연결한다. 기본은 dry-run, --apply에서 source-channels/daily 정확한 복구본 및 prepared/applied receipt를 보존한다. source-channels를 먼저 적용하며 부분 실패는 verified/inactive로 남을 수 있다. 기존 baseline 차이는 자동 대체하지 않는다. 후보 승인·발행과 원문 수집 활성화는 별개다. 현재 상태는 `research:sources list`의 onboarding_status/remaining_checks/daily_enabled로 확인한다.
+
+실제 KISA/KITECH 두 경로를 적용해 일일 활성은 52개가 됐다. 기존 일일 CLI를 새 두 경로의 격리 root/장부로 실행해 4/4창 성공·후보 8 unique·retry 0을 확인했다. 기존 운영 backlog/coverage는 변경하지 않았고 52개 전체의 최신 fingerprint 통합 검증은 별도다. 상세 [런북 331절](LOCAL_AI_NEWS_RUNBOOK.md#331-공통-출처-검증과-일일-활성화-수직-슬라이스).
+
+
+## 72. 제목 배지 분리와 baseline 후보 편입
+
+공통 HTML worker의 title_exclude_xpath는 명시된 제목 요소 아래의 descendant element만 제외한다. relative XPath 최대 1024자/최대 16요소이며 자기 자신·텍스트·제목 밖 요소는 거부한다. 원본 DOM은 보존하고 복사본에서 badge를 제거하되 tail과 나머지 인라인 제목은 유지한다. 제외 요소의 원본 DOM/text/hash를 title_basis.excluded로 보존한다. NDSoft profile은 strong.user-point만 지정한다. 제목 비교 관문이나 내용 단어를 삭제하는 정규화는 바꾸지 않는다.
+
+baseline coverage는 source 날짜 창의 증거이며 후보 장부 병합 완료 증거가 아니다. 같은 source run의 verified_supplemental_scan receipt가 있을 때만 supplemental 편입을 이미 완료된 것으로 처리한다. 기존 baseline과 supplemental spans를 함께 보존하고 첫 편입은 원문/parse/후보 identity·같은 사건 alias 검증 후 기존 mergeCompletedScan을 사용한다. 후보 편입은 기사 승인/발행이 아니다. 실제 4경로 48건 및 반복 불변 검증은 런북 332절에 있다.
+
+
+## 73. 미완료 창의 정상 기사 활용
+
+기간 수집 완료와 개별 기사 수집 증거를 분리한다. listing 기간이 확인되고 detail_incomplete인 창에서 정상 기사만 정확한 원문 version/parse/content/date/policy 근거로 검토 장부에 편입할 수 있다. 이미지·부분 parse·제목 conflict·날짜 불일치 후보는 이 경로로 통과하지 못한다. 공동 등장/제목 유사성을 사건 승인 근거로 쓰지 않는다.
+
+공통 경로는 CLI와 daily에서 재사용한다. receipt status는 incomplete, backlog_merge는 merged_partial, coverage는 unresolved 그대로다. 정상 기사만 editorial source selection에 전달하며 별도 승인 관문을 유지한다. CLI immutable receipt와 비공개 read-only audit에서 source artifact 변조·후보 key 변경·same-event 억제 변경을 거부한다. partial 후보 편입은 source onboarding/활성화 요건을 충족시키지 않는다. 실제 11개 편입·372개 장부·이미지 2건 미완료 검증은 런북 333절을 따른다.
+
+
+## 74. 제품 페이지 파싱과 검토 전 추출 재사용
+
+제품 페이지는 기존 HTML worker의 title/content/block XPath 설정을 사용한다. toborlife-product-teleoperation-en-v1은 제품 hero·기능·번들 표·명세 heading을 선택하고 메뉴/다른 제품 홍보를 제외한다. publication_date_policy=not_applicable로 metadata 생성/수정 시각을 기사 발표일로 승격하지 않는다. 원문 bytes를 보존하고 reparse로 새 immutable parse를 만든다. 전체 제품 사양/가격 검증이나 타 사이트 DOM 호환을 보장하지 않는다.
+
+reuse-extraction --run <destination> --source-run <extraction>은 저장 run끼리만 작동한다. 원 claims.json의 모델 응답/provenance, schema, claim ID, 중복, 인용 블록을 검사한다. 인용 원문 판본과 parse 전체가 목적 run에 정확히 일치해야 한다. bytes 검증은 기존 loadStoredSourceRun 계약을 따른다. 결과 event_id=null·review=unreviewed·fact_review_required=true이며 새 원문 검토와 편집 승인 없이 공개로 연결할 수 없다. 추가 출처 사실은 기존 fact-review additions에서 근거 블록을 지정한다.
+
+두 출력은 create-only, 영수증에 원 claims/source identity/destination identity hash를 고정한다. 동일 반복은 재사용, 변조/다른 판본/한쪽 checkpoint만 존재/기존 검토 충돌은 보존 후 실패한다. 새 모델 호출·기간 완료를 만들지 않는다. 실제 3원문/6개 재사용/9개 승인 근거와 표적 시험 4개는 런북 334절에 있다.
+
+
+## 75. 명시적인 검토 의존 관계의 비공개 보관
+
+archive-closure는 저장된 source-bundle/source-selection/extraction-reuse와 candidate-approval/source-alternative 계약을 통해 의존 run을 모은다. bundle/selection은 입력·출력 문서/parse identity, reuse는 raw claims bytes·양쪽 identity, 후보 승인은 원고 hash·대체 출처 receipt hash를 확인한다. 추가 related-run은 대상 원고를 승인한 영수증만 허용한다. 임의 경로/공동 등장/제목 유사성은 탐색 근거가 아니다. 지원 계약 밖의 외부 의존 참조나 전체 runtime/코드/credentials 백업을 자동 보장하지 않는다.
+
+research-archive/v2 manifest는 source_run, bound_runs, parse_ids, 명시적 dependency edges, 파일 bytes/SHA를 고정한다. 각 run 자료/원문 bytes와 parses/<id>/parse.json을 포함해 승인 근거 재검사에 필요한 저장 구조를 재구성한다. source bytes는 판본당 한 번, 같은 입력 반복은 같은 ZIP이며 입력 변경은 새 run을 요구한다. 기존 v1 포장은 유지하고 portable restore 판정과 혼동하지 않는다.
+
+기존 package-archive.py의 restore 입력은 root-relative ZIP·예상 SHA256·새 root-relative destination이다. private root 바깥/경로 이탈/심볼릭 링크/중복 또는 미등록 member/변조/256MiB 초과/기존 대상 폴더를 거부한다. 모든 member 검증 뒤에만 새 폴더를 생성한다. 복구 중 I/O 실패는 부분 폴더를 보존하며 다른 새 폴더로 재시도한다. 복구된 모델 응답/상태 파일은 실행하지 않는다. 운영 장부·발행/예약·Drive 상태는 복구로 승격하지 않는다. 실제 원고·alias·재사용 검증은 런북335절에 있다.
+
+
+## 76. 수집 실행 경계와 독립 장부
+
+research/list-scan-command.mjs는 기존 adapter의 공통 실행/저장/완료·partial 병합을 담당한다. 전용 research-scan.mjs는 수집 옵션만 받고 기존 research.mjs scan-list는 같은 구현을 호출한다. 전용 entry는 모델/review/publication 옵션을 거부한다. collection basis와 daily fingerprint는 전용 entry/command를 포함하며 전체 research.mjs를 제외한다. 실제 route/profiles/수집/파싱/정책/worker 변경은 계속 새 증거를 요구한다. 입력 v2는 날짜 창을 고정하며 기존 run migration/rewrite 대신 새 ID로 검증한다. dailyScan/reconcileSupplementalScan에서 custom root는 명시적 non-empty backlogFile이 필수이고 lock/계획/수집 전에 검사한다. Python은 기존 RESEARCH_PYTHON 계약으로 지정한다. 실물 결과·초기 오류·8record 교정은 런북336절에 남긴다.
+
+개별 scan-list에서 custom root의 --merge-backlog는 금지한다. 이 경우 격리 장부 병합은 daily --backlog로 수행하며 두 CLI가 공통 command에서 동일하게 차단한다.
+
+
+## 77. 작성 generation의 재사용과 승인 경계
+
+수집 원문/parse 및 검토 facts를 바꾸지 않은 draft 재실행은 공통 draft-checkpoint를 사용한다. input에는 claims/documents/parses/deep context/model metadata/execution policy와 작성 관련 구현 hash를 고정한다. raw draft/receipt는 create-only이며 bytes/schema/draft fingerprint/참조 claims/검증 problems를 재확인한다. 동일 입력에서 모델 generation은 반복하지 않는다. input 변경·legacy draft·변조·영수증 없는 출력은 새 run 또는 저장 증거 검사를 요구하고 조용히 덮어쓰지 않는다. 실패 후 같은 input 재시도는 허용하되 원출력 orphan은 보존한다. 사실/편집/후보 승인은 별도 관문이며 재사용으로 승인하지 않는다. correct/approve 후 draft 재실행은 기존 CLI에서 거부한다. 실제 원문·local model·중복 승인 검증은 런북337절에 있다.
+
+
+## 78. 명시적인 빈 트렌드 검토와 새 회차 RSS 기준선
+
+새 Signals review는 원문·검토 claim·명시적인 최종 검토·review date·정확한 회차 경로를 갖춰야 한다. observations:[]는 검토했으나 추가할 가치 있는 누적 관측이 없는 경우의 승인 입력이며, 미검토나 접근 실패를 대체하지 않는다. 입력 누락/근거 없는 생성은 계속 거부한다. 관측이 있으면 사건/date/중복/판단 필드 검사를 유지한다.
+
+private 신규 회차 preview는 캐시된 RSS보다 고정한 작성 원본에서 만든 source-feed baseline을 이전 identity 기준으로 사용한다. 캐시SHA/current 여부를 기록하고 원본·공개 캐시를 갱신하지 않는다. 신규1item 뒤 이전39GUID/pubDate 보존을 확인하며 source baseline 변조도 거부한다. 자체 preview 구현 hash를 입력에 추가해 변경한 구현은 새 run으로 실행한다. coverage와 Drive/public 승격은 별도 관문이다. 실물 두 실패와 수정은 런북338절에 보존한다.
+
+
+## 79. 개별 완료 창의 동일 사건 연결과 HD 페이지 크기
+
+scan-list의 완료 창 장부 병합은 intakeCompletedScan을 사용한다. garden-operation lock 아래 기존 검토 근거로 loadSameEventSourceAliases를 재구축하고 mergeCompletedScan에 전달한다. 일일/미완료 창과 같은 URL의 검토된 동일 사건 연결을 재사용하며, 단순 제목/본문 유사도는 확정 연결로 쓰지 않는다. 검토 근거 변조·대상 신원 변경은 쓰기 전에 거부한다. 이 병합은 기사 승인·발행 또는 과거 중복 후보 삭제가 아니다.
+
+HD press profile의 page_size는 실제 API로 확인한 100이다. 전체150행 대조에서 19→2페이지를 확인했고 공시 profile은 바꾸지 않았다. 정렬 metadata가 unsorted이므로 첫 과거 항목에서 종료하지 않으며 총건수·페이지·중복·순서 검사를 유지한다. 변경 전 수집 증거는 새 설정의 baseline으로 자동 승격하지 않는다. 실물 근거/복구본은 런북339절을 따른다.
+
+
+## 81. 작성 원본 차이 전달
+
+`prepare-drive.py --approved-preview`는 기존 preview의 원문·승인·reader 검증을 재사용하여 공개 작성 네 폴더의 선언된 차이만 stage한다. 새 수집기나 승인 저장소를 만들지 않는다. Drive 대조는 최신 부모 목록과 대상 raw SHA에 의존한다. 같은 bytes/원본 bytes/신규 경로 부재를 구분하고 원격 충돌·잘못된 부모·중복/누락/오래된 목록을 거부한다. 불명 응답 뒤에는 생성 요청 반복 전에 실제 목록·raw bytes를 다시 읽는다. 준비와 비교는 조사 완주·업로드·공개 승인 증거가 아니며 기존 E/F 발행 관문을 유지한다.
+
+## 80. 승인된 일일 후보의 회차 조립
+
+scripts/research-edition.mjs --run --daily-run --review는 research-edition-preparation/v1의 explicit candidate_keys/knowledge_runs/edition_spec을 처리한다. current handoff approved-unpublished와 후보/저장승인·원문판본·대체원문 exact resolution을 대조한 뒤 기존 preview로 조립한다. 미승인/발행신원/중복사건/원문변경을 거부하고 과거자료 당일재발행은 기존 preview 계약이 차단한다. 준비 receipt가 일일handoff→선택/승인→생성 manifest hash를 연결한다. 동일 ID의 입력변경은 거부한다. private_slice만 허용하며 승인·Drive 작성원본·정규 배포를 대체하지 않는다. 사용/실물 검증/보관은 런북340절을 따른다.

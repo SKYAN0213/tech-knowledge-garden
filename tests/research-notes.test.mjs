@@ -257,6 +257,67 @@ test("v2 creates a new Signals review only for the exact source-backed event", (
   assert.throws(() => evaluateNoteReview(f.root, changed, { vault: f.vault }), /source event/)
 })
 
+test("a source-reviewed Signals creation may explicitly contain no trend observations", async (t) => {
+  const f = fixture(t),
+    edition = "Editions/2026/09/2026-09-27_0800_Tech_AI_Briefing",
+    decision = {
+      ...f.decision,
+      schema: "knowledge-note-review/v2",
+      notes: [
+        {
+          operation: "create",
+          path: "Signals/2026-09-27_0800_Tech_AI_Briefing.md",
+          previous_sha256: null,
+          content: noteText(
+            {
+              schema_version: "tech-signals/v1",
+              type: "trend-observations",
+              edition,
+              date: "2026-09-27",
+              reviewed: "2026-09-27",
+              review_basis: "primary-research",
+              observations: [],
+            },
+            `# 2026-09-27 관측 기록\n\n[[${edition}|수록 원고]]\n`,
+          ),
+          evidence: [{ run_id: "source", claim_ids: ["fact-1"] }],
+        },
+      ],
+    },
+    options = { vault: f.vault }
+  await approveNoteReview(f.root, "empty-signal", decision, options)
+  const approval = loadNoteApproval(f.root, "empty-signal", options).approval
+  assert.deepEqual(parseNote(approval.notes[0].content).meta.observations, [])
+  assert.equal(approval.candidate_published, false)
+  assert.equal(fs.existsSync(path.join(f.vault, decision.notes[0].path)), false)
+  const bytes = fs.readFileSync(path.join(f.root, "runs/empty-signal/approved-notes.json"))
+  await approveNoteReview(f.root, "empty-signal", decision, options)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/empty-signal/approved-notes.json")),
+    bytes,
+  )
+  for (const change of [
+    (d) => {
+      d.source_read = false
+    },
+    (d) => {
+      d.notes[0].evidence = []
+    },
+    (d) => {
+      d.notes[0].evidence[0].claim_ids = ["unreviewed"]
+    },
+    (d) => {
+      const n = parseNote(d.notes[0].content)
+      delete n.meta.observations
+      d.notes[0].content = noteText(n.meta, n.body)
+    },
+  ]) {
+    const invalid = structuredClone(decision)
+    change(invalid)
+    assert.throws(() => evaluateNoteReview(f.root, invalid, options))
+  }
+})
+
 test("creation rejects existing and subsequently created destinations, including identical bytes", async (t) => {
   const f = fixture(t),
     decision = creation(f),

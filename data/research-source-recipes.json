@@ -1,0 +1,77 @@
+{
+  "schema": "research-source-recipes/v1",
+  "recipes": {
+    "registered-route-v1": {
+      "description": "발견 경로 등록. 수집·기간 검증 전에는 요청하지 않는다.",
+      "config": {
+        "onboarding": {
+          "status": "registered",
+          "collection_enabled": false
+        }
+      }
+    },
+    "bounded-rss-v1": {
+      "description": "기존 RSS 수집기. feed 이름·GUID·날짜·범위·상세 규칙은 출처별로 확인한다.",
+      "config": {
+        "method": "rss",
+        "listing_profile": {
+          "pagination": "bounded-feed"
+        }
+      }
+    },
+    "dated-html-list-v1": {
+      "description": "기존 날짜 HTML 목록 수집기. selector·페이지 종료·원문 날짜 대조는 출처별 설정이다.",
+      "config": {
+        "method": "html-list",
+        "listing_profile": {
+          "pagination": "single-page"
+        }
+      }
+    },
+    "calendar-html-list-v1": {
+      "description": "기존 월별 HTML 아카이브 수집기. 월 URL과 날짜 규칙을 별도로 지정한다.",
+      "config": {
+        "method": "html-list",
+        "listing_profile": {
+          "pagination": "calendar-month"
+        }
+      }
+    },
+    "path-html-list-v1": {
+      "description": "기존 페이지 번호 HTML 수집기. URL template·상한·날짜 규칙을 지정한다.",
+      "config": {
+        "method": "html-list",
+        "listing_profile": {
+          "pagination": "path-pages"
+        }
+      }
+    },
+    "mit-news-rss-v1": {
+      "extends": "bounded-rss-v1",
+      "description": "MIT News 두 분야가 공유하는 원문 host·URL·목록 제한. 각 feed의 이름과 규칙 ID는 개별 지정한다.",
+      "config": {
+        "publisher_id": "news.mit.edu",
+        "item_pattern": "^https://news\\.mit\\.edu/20\\d\\d/[^/?#]+/?$",
+        "allowed_hosts": ["news.mit.edu"],
+        "scan_max_details": 20,
+        "listing_profile": {
+          "max_items": 50,
+          "guid_is_permalink": true
+        }
+      }
+    },
+    "ndsoft-news-rss-v1": {
+      "extends": "bounded-rss-v1",
+      "description": "공식 NDSoft 매체 RSS와 동일 기사 DOM 공통 규칙. 매체별 feed 이름과 host는 개별 지정.",
+      "config": {
+        "scan_max_details": 60,
+        "item_pattern": "^https://www\\.(?:irobotnews\\.com|thelec\\.kr)/news/articleView\\.html\\?idxno=[0-9]+$",
+        "listing_profile": {
+          "max_items": 100,
+          "guid_is_permalink": true,
+          "date_timezone": "Asia/Seoul"
+        }
+      }
+    }
+  }
+}

@@ -10,7 +10,7 @@ import {
 } from "../scripts/research/candidate-source-alternative.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
-import { mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
+import { intakeCompletedScan, mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
 import { storeParseArtifact, loadStoredSourceRun } from "../scripts/research/parser.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
 
@@ -226,6 +226,44 @@ function storedSameEventFixture(t, { approvedTarget = false } = {}) {
   atomicWrite(root, `runs/${resolutionRun}/candidate-source-alternative.json`, receipt)
   return { root, backlogFile, candidate, alternativeUrl, receipt, resolutionRun }
 }
+
+test("standalone completed intake suppresses reviewed same-event sources and preserves backlog bytes on resume", async (t) => {
+  const fixture = storedSameEventFixture(t)
+  const before = fs.readFileSync(fixture.backlogFile)
+  const result = {
+    summary: { status: "window_scanned" },
+    candidates: [
+      {
+        key: "source-" + sourceId(fixture.alternativeUrl),
+        title: "Official alternate source for the same announcement",
+        source_urls: [fixture.alternativeUrl],
+        source_published_at: "2026-10-01",
+        discovered_at: "2026-10-04T00:00:00Z",
+        review_status: "unreviewed",
+        discovery: [],
+      },
+    ],
+  }
+  const options = { root: fixture.root, result, backlogFile: fixture.backlogFile }
+  const first = await intakeCompletedScan(options)
+  assert.equal(first.changed, false)
+  assert.equal(first.same_event_aliases[0].target_candidate_key, fixture.candidate.key)
+  assert.deepEqual(fs.readFileSync(fixture.backlogFile), before)
+  const repeated = await intakeCompletedScan(options)
+  assert.equal(repeated.changed, false)
+  assert.deepEqual(fs.readFileSync(fixture.backlogFile), before)
+  fs.appendFileSync(
+    path.join(
+      fixture.root,
+      "runs",
+      fixture.resolutionRun,
+      "candidate-source-alternative-review.json",
+    ),
+    "tampered",
+  )
+  await assert.rejects(intakeCompletedScan(options), /source review changed/)
+  assert.deepEqual(fs.readFileSync(fixture.backlogFile), before)
+})
 
 test("same-event source aliases are rebuilt from the pinned candidate and source evidence", (t) => {
   const fixture = storedSameEventFixture(t)

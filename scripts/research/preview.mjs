@@ -13,6 +13,7 @@ import {
   parseNote,
   sections,
   noteText,
+  feeds,
 } from "../garden.mjs"
 import { digestPath, briefingLibrary, topicPath } from "../briefings.mjs"
 import { collect } from "../verify-site.mjs"
@@ -82,6 +83,24 @@ export function assertNewEditionSourceCutoff(approvals, spec) {
       )
     )
       throw Error("New-edition source was observed after the coverage cutoff")
+}
+
+// The cached feed can predate saved authoring files. A private new issue must
+// preserve identities derived from the pinned source vault, not a stale cache.
+export function newEditionFeedBaseline(root, run, vault) {
+  validRun(run)
+  const directory = `runs/${run}/preview/source-feed`
+  feeds(vault, safePath(root, directory))
+  const relative = directory + "/briefing.xml",
+    bytes = fs.readFileSync(safePath(root, relative)),
+    cached = fs.readFileSync(path.join(vault, "briefing.xml"))
+  return {
+    path: relative,
+    sha256: sha256(bytes),
+    cached_sha256: sha256(cached),
+    cached_feed_current: sha256(bytes) === sha256(cached),
+    candidate_published: false,
+  }
 }
 
 export function retrospectiveProjections(vault, approvals, knowledgeNotes = []) {
@@ -735,6 +754,7 @@ export async function privatePreview(
     navigation = conceptIndexProjection(vault, notes),
     input = {
       schema: "private-reader-preview/v1",
+      preview_implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       node_version: process.version,
       approvals,
       knowledge,
@@ -747,6 +767,13 @@ export async function privatePreview(
     state = new RunState(root, run, input, { scope: "preview" }),
     relativeWorkspace = `runs/${run}/preview-workspace`,
     workspace = safePath(root, relativeWorkspace)
+  const sourceFeed = editionSpec
+    ? await state.stage("source-feed", { sourceFiles, runtime }, () =>
+        newEditionFeedBaseline(root, run, vault),
+      )
+    : null
+  if (sourceFeed && sha256(fs.readFileSync(safePath(root, sourceFeed.path))) !== sourceFeed.sha256)
+    throw Error("Source feed baseline changed")
   if (new Set(notes.map((n) => n.path)).size !== notes.length)
     throw Error("Multiple knowledge approvals replace the same canonical note")
   assertConceptConflicts(vault, notes)
@@ -851,7 +878,10 @@ export async function privatePreview(
         workspace,
         approvals.map((a) => a.article),
         projections,
-        fs.readFileSync(path.join(vault, "briefing.xml"), "utf8"),
+        fs.readFileSync(
+          sourceFeed ? safePath(root, sourceFeed.path) : path.join(vault, "briefing.xml"),
+          "utf8",
+        ),
         { newEdition: !!editionSpec },
       )),
       knowledge: verifyKnowledgeOutputs(workspace, notes),
@@ -862,6 +892,7 @@ export async function privatePreview(
     run_id: run,
     approved_runs: approvedRuns,
     ...(editionSpec ? { edition_spec: editionSpec, coverage_complete: false } : {}),
+    ...(sourceFeed ? { source_feed: sourceFeed } : {}),
     knowledge_runs: knowledgeRuns,
     observed_at: new Date().toISOString(),
     workspace: relativeWorkspace,

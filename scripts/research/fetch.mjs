@@ -6,7 +6,7 @@ import path from "node:path"
 import zlib from "node:zlib"
 import fs from "node:fs"
 import { sha256, sourceId, sourceVersionId } from "./contracts.mjs"
-import { acquireLock, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { acquireLock, atomicWrite, readJSON, safePath } from "./run-state.mjs"
 
 export function isPublicIP(raw) {
   const address = raw.replace(/^\[|\]$/g, "").toLowerCase()
@@ -147,7 +147,7 @@ export function responseBodyTimeoutMs(contentType, budget) {
 const hostQueues = new Map(),
   lastHostRequest = new Map()
 const sourceQueues = new Map()
-async function acquireHostLock(root, name, timeoutMs) {
+async function acquireHostLock(root, name, timeoutMs, label = "Host request") {
   const deadline = Date.now() + Math.max(120000, timeoutMs + 5000)
   while (true) {
     try {
@@ -173,21 +173,30 @@ async function acquireHostLock(root, name, timeoutMs) {
           await sleep(10)
           continue
         }
-        throw Error("Host request lock is unreadable; preserving it")
+        throw Error(label + " lock is unreadable; preserving it")
       }
       if (!current) continue
       if (!Number.isSafeInteger(current.pid) || current.pid <= 0)
-        throw Error("Host request lock is unreadable; preserving it")
+        throw Error(label + " lock is unreadable; preserving it")
       try {
         process.kill(current.pid, 0)
       } catch (ownerError) {
         if (ownerError.code === "ESRCH")
-          throw Error("Host request lock is stale; explicit recovery is required")
+          throw Error(label + " lock is stale; explicit recovery is required")
         if (ownerError.code !== "EPERM") throw ownerError
       }
-      if (Date.now() >= deadline) throw Error("Timed out waiting for host request lock")
+      if (Date.now() >= deadline)
+        throw Error("Timed out waiting for " + label.toLowerCase() + " lock")
       await sleep(25)
     }
+  }
+}
+async function sharedSourceRequest(root, id, timeoutMs, action) {
+  const release = await acquireHostLock(root, "source-" + id, timeoutMs, "Source request")
+  try {
+    return await action()
+  } finally {
+    release()
   }
 }
 async function sharedHostRequest(root, host, interval, timeoutMs, action) {
@@ -324,7 +333,7 @@ export class SourceFetcher {
     if (method === "POST" && id !== sourceId(raw))
       throw Error("POST source identity must include its form-bound URL")
     return sourceRequest(this.root, id, () =>
-      withLock(this.root, "source-" + id, async () => {
+      sharedSourceRequest(this.root, id, this.options.pdf_timeout_ms, async () => {
         const cache = readJSON(this.root, `documents/${id}/latest.json`)
         let cachedBody = null
         if (cache?.body_path) {

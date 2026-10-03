@@ -126,7 +126,20 @@ def prepare_local_ai_sources(local_ai, stage, run_id=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--collect', action='store_true')
+    parser.add_argument('--approved-preview', help='Stage only reviewed authoring changes from this verified preview')
+    parser.add_argument('--research-root', type=Path, default=ROOT / '.local/research/local-ai')
     args = parser.parse_args()
+    if args.approved_preview:
+        if args.collect:
+            parser.error('--approved-preview cannot be combined with --collect')
+        # The common preview checks approvals, source snapshots and reader outputs.
+        # Research evidence uses its separate archive flow; no full-vault copy here.
+        result = subprocess.run(['node', str(ROOT / 'scripts/research-authoring.mjs'), 'prepare',
+                                 '--preview-run', args.approved_preview,
+                                 '--root', str(args.research_root)], cwd=ROOT)
+        if result.returncode:
+            raise SystemExit(result.returncode)
+        return
     if not STAGE.is_absolute() or (STAGE != WORK / 'staging' and STAGE.resolve().is_relative_to(ROOT)):
         raise ValueError('TECH_GARDEN_DRIVE_STAGE_DIR must be an absolute path outside the repository')
     cache = source_cache_dir()

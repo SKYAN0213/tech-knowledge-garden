@@ -77,6 +77,41 @@ test("intake ontology surfaces one canonical URL in two candidate identities", (
   )
 })
 
+test("intake ontology relates every candidate sharing one canonical source", () => {
+  const graph = projectIntakeOntology([
+    candidate("first", "https://example.org/story?utm_source=feed"),
+    candidate("second", "https://example.org/story#section"),
+    candidate("third", "https://example.org/story"),
+  ])
+  assert.deepEqual(relatedCandidateKeys(graph, "first"), ["second", "third"])
+  assert.deepEqual(
+    graph.relations.filter((relation) => relation.type === "sharedCanonicalSourceCandidate"),
+    [
+      {
+        from: "candidate:first",
+        type: "sharedCanonicalSourceCandidate",
+        to: "candidate:second",
+        basis: "https://example.org/story",
+        decision: "review_required",
+      },
+      {
+        from: "candidate:first",
+        type: "sharedCanonicalSourceCandidate",
+        to: "candidate:third",
+        basis: "https://example.org/story",
+        decision: "review_required",
+      },
+      {
+        from: "candidate:second",
+        type: "sharedCanonicalSourceCandidate",
+        to: "candidate:third",
+        basis: "https://example.org/story",
+        decision: "review_required",
+      },
+    ],
+  )
+})
+
 test("invalid and missing content fingerprints are not treated as duplicate evidence", () => {
   const graph = projectIntakeOntology([
     candidate("valid", "https://example.org/valid", {

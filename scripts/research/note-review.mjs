@@ -215,7 +215,9 @@ export function evaluateNoteReview(root, decision, { vault = "vault" } = {}) {
       if (!creating && (original.meta.observations || []).some((s) => !ids.has(s.id)))
         throw Error("Prior observations must be retained")
       if (creating) {
-        if (!next.meta.observations.length || ids.size !== next.meta.observations.length)
+        // An explicit, source-bound review may find no useful trend observation.
+        // Missing review/evidence remains invalid; never manufacture a judgment.
+        if (ids.size !== next.meta.observations.length)
           throw Error("New Signals review requires distinct source-bound observations")
         const events = new Set(
           facts.flatMap(({ source, claim }) =>

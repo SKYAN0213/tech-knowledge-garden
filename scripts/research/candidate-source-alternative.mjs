@@ -7,6 +7,7 @@ import { sha256 } from "./contracts.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { BACKLOG_PATH } from "../research-window.mjs"
+import { loadLegacyCandidateApproval } from "./legacy-candidate-approval.mjs"
 
 const choices = new Set(["same_event", "different_event", "unresolved"])
 const sourceContentFingerprint = (parse) =>
@@ -18,25 +19,32 @@ const sourceContentFingerprint = (parse) =>
     }),
   )
 
-function oneCandidate(backlog, candidateKey) {
+function oneCandidate(root, backlog, candidateKey) {
   if (backlog?.schema !== "research-candidates/v1" || !Array.isArray(backlog.candidates))
     throw Error("Research candidate backlog required")
   const matches = backlog.candidates.filter((candidate) => candidate.key === candidateKey)
   if (matches.length !== 1) throw Error("One exact candidate required")
   const [candidate] = matches
+  const legacyApproval = loadLegacyCandidateApproval(root, candidate)
+  const importedApprovalMatches = candidate.approval?.legacy_publication_receipt_sha256
+    ? Boolean(legacyApproval)
+    : true
   const reviewedExistingEvent =
     candidate.review_status === "verified" &&
     /^[a-f0-9]{16,64}$/.test(candidate.event_id || "") &&
     typeof candidate.approval?.approved_run === "string" &&
-    /^[a-f0-9]{64}$/.test(candidate.approval?.article_sha256 || "")
+    /^[a-f0-9]{64}$/.test(candidate.approval?.article_sha256 || "") &&
+    importedApprovalMatches
   if (
     candidate.source_urls?.length !== 1 ||
     !candidate.source_published_at ||
     (!["unreviewed", "deferred"].includes(candidate.review_status) && !reviewedExistingEvent) ||
     (!reviewedExistingEvent && (candidate.event_id || candidate.approval))
   )
-    throw Error("Unresolved candidate or verified approved event with one original URL and date required")
-  return candidate
+    throw Error(
+      "Unresolved candidate or verified approved event with one original URL and date required",
+    )
+  return { candidate, legacyApproval }
 }
 
 export function buildCandidateSourceAlternativeResolution({
@@ -49,6 +57,7 @@ export function buildCandidateSourceAlternativeResolution({
   reviewedClaims,
   reviewSha256,
   backlogSha256,
+  existingEventApproval = null,
   generatedAt = new Date().toISOString(),
 }) {
   if (
@@ -155,6 +164,7 @@ export function buildCandidateSourceAlternativeResolution({
     reviewer: review.reviewer,
     reviewed_at: review.reviewed_at,
     claim_evidence: claims,
+    ...(existingEventApproval ? { existing_event_approval: existingEventApproval } : {}),
     inputs: {
       source_run_id: sourceRunId,
       source_run_identity_sha256: sha256(JSON.stringify(sourceRunIdentity)),
@@ -206,6 +216,7 @@ export function loadSameEventSourceAliases(root, backlogFile, { asOf = null } = 
     if (targets.length !== 1)
       throw Error(`Same-event target candidate is missing or ambiguous: ${runId}`)
     const [candidate] = targets
+    const legacyApproval = loadLegacyCandidateApproval(root, candidate)
     if (
       candidate.source_urls?.length !== 1 ||
       canonicalURL(candidate.source_urls[0]) !== canonicalURL(receipt.original_source?.url) ||
@@ -234,6 +245,7 @@ export function loadSameEventSourceAliases(root, backlogFile, { asOf = null } = 
       documents: stored.documents,
       parses: stored.parses,
       reviewedClaims: reviewed.claims,
+      existingEventApproval: legacyApproval,
       reviewSha256: sha256(reviewBytes),
       backlogSha256: receipt.inputs.backlog_sha256,
       generatedAt: receipt.generated_at,
@@ -291,7 +303,7 @@ export async function recordCandidateSourceAlternative({
   return withLock(root, `run-${runId}`, async () => {
     const backlogBytes = fs.readFileSync(backlogFile)
     const backlog = JSON.parse(backlogBytes.toString("utf8"))
-    const candidate = oneCandidate(backlog, candidateKey)
+    const { candidate, legacyApproval } = oneCandidate(root, backlog, candidateKey)
     const reviewBytes = fs.readFileSync(reviewPath)
     const review = JSON.parse(reviewBytes.toString("utf8"))
     const stored = loadStoredSourceRun(root, sourceRunId)
@@ -316,6 +328,7 @@ export async function recordCandidateSourceAlternative({
       documents: stored.documents,
       parses: stored.parses,
       reviewedClaims: reviewed.claims,
+      existingEventApproval: legacyApproval,
       reviewSha256: sha256(reviewBytes),
       backlogSha256: sha256(backlogBytes),
       generatedAt: existing?.generated_at,

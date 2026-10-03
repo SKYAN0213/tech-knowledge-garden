@@ -15,6 +15,7 @@ import {
 import { articleReview } from "../scripts/article-review.mjs"
 import { auditRuns } from "../scripts/research-audit.mjs"
 import { SECTORS } from "../scripts/sectors.mjs"
+import { coreCompanies, coreInstitutions } from "./fixtures/core-watchlist.mjs"
 
 // Fictional fixtures only; never copied into the canonical vault.
 export function fixture(kind = "기업 전략") {
@@ -290,17 +291,16 @@ test("watchlist balances each sector and separates access checks from source rev
   const list = JSON.parse(
     fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url), "utf8"),
   )
-  assert.equal(list.companies.length, 32)
-  assert.equal(list.institutions.length, 16)
+  const core = coreCompanies(list)
+  const institutions = coreInstitutions(list)
+  assert.equal(core.length, 32)
+  assert.equal(institutions.length, 16)
   for (const sector of SECTORS)
     for (const region of ["국내", "해외"])
-      assert.equal(
-        list.companies.filter((c) => c.sector === sector && c.region === region).length,
-        2,
-      )
+      assert.equal(core.filter((c) => c.sector === sector && c.region === region).length, 2)
   for (const region of ["국내", "해외"])
-    assert.equal(list.institutions.filter((c) => c.region === region).length, 8)
-  for (const c of [...list.companies, ...list.institutions]) {
+    assert.equal(institutions.filter((c) => c.region === region).length, 8)
+  for (const c of [...core, ...institutions]) {
     assert.ok(c.last_checked_at)
     assert.ok(c.source_urls.every((u) => new URL(u).protocol === "https:"))
     assert.match(c.review_scope, /내용 취재.*아님/)

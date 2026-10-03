@@ -4,6 +4,30 @@ import { fileURLToPath } from "node:url"
 import { SECTORS } from "./sectors.mjs"
 import { DEEP_KINDS } from "./editorial.mjs"
 
+export function validResearchCoverage(coverage, { requireAttempt = false } = {}) {
+  return (
+    Array.isArray(coverage) &&
+    coverage.length === 32 &&
+    SECTORS.every((sector) =>
+      ["기술·제품", "기업·운영"].every((channel) =>
+        ["국내", "해외"].every((region) => {
+          const rows = coverage.filter(
+            (c) => c.sector === sector && c.channel === channel && c.region === region,
+          )
+          return (
+            rows.length === 1 &&
+            ["확인", "부분 확인", "접근 실패", ...(!requireAttempt ? ["미실시"] : [])].includes(
+              rows[0].status,
+            ) &&
+            Array.isArray(rows[0].urls) &&
+            (!(requireAttempt || rows[0].status === "확인") || rows[0].urls.length > 0)
+          )
+        }),
+      ),
+    )
+  )
+}
+
 export function auditRuns(records) {
   const seen = new Set(),
     accepted = [],
@@ -21,23 +45,7 @@ export function auditRuns(records) {
         (typeof r.skip_reason === "string" && r.skip_reason.trim())) &&
       Number.isFinite(r.reading_minutes) &&
       r.reading_minutes >= 0 &&
-      Array.isArray(r.coverage) &&
-      r.coverage.length === 32 &&
-      SECTORS.every((sector) =>
-        ["기술·제품", "기업·운영"].every((channel) =>
-          ["국내", "해외"].every((region) => {
-            const rows = r.coverage.filter(
-              (c) => c.sector === sector && c.channel === channel && c.region === region,
-            )
-            return (
-              rows.length === 1 &&
-              ["확인", "부분 확인", "접근 실패", "미실시"].includes(rows[0].status) &&
-              Array.isArray(rows[0].urls) &&
-              (rows[0].status !== "확인" || rows[0].urls.length > 0)
-            )
-          }),
-        ),
-      )
+      validResearchCoverage(r.coverage)
     if (!valid) {
       rejected.push(r.edition || "unknown")
       continue

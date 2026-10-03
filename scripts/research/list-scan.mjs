@@ -92,6 +92,7 @@ export function assessSinglePageIndex(parse, channel, since, until) {
   const profile = parse.link_profiles?.find((item) => item.id === profileId)
   const links = (parse.links || []).filter((link) => link.profile_id === profileId)
   const ignoredRuleIds = channel.listing_profile?.ignored_rule_ids || []
+  const pinnedRuleIds = channel.listing_profile?.pinned_rule_ids || []
   const result = {
     status: "incomplete",
     reason: null,
@@ -126,8 +127,15 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     ignoredRuleIds.includes(profileId)
   )
     return { ...result, reason: "listing_ignored_profile_invalid" }
+  if (
+    !Array.isArray(pinnedRuleIds) ||
+    new Set(pinnedRuleIds).size !== pinnedRuleIds.length ||
+    pinnedRuleIds.some((id) => id === profileId || ignoredRuleIds.includes(id))
+  )
+    return { ...result, reason: "listing_pinned_profile_invalid" }
   const ignoredLinks = []
-  for (const id of ignoredRuleIds) {
+  const pinnedLinks = []
+  for (const id of [...ignoredRuleIds, ...pinnedRuleIds]) {
     const ignoredProfile = parse.link_profiles?.find((item) => item.id === id)
     const profiled = (parse.links || []).filter((link) => link.profile_id === id)
     if (
@@ -138,8 +146,14 @@ export function assessSinglePageIndex(parse, channel, since, until) {
       ignoredProfile.matched_links !== profiled.length ||
       (ignoredProfile.status === "no-match" && profiled.length)
     )
-      return { ...result, reason: "listing_ignored_profile_incomplete" }
-    ignoredLinks.push(...profiled)
+      return {
+        ...result,
+        reason: pinnedRuleIds.includes(id)
+          ? "listing_pinned_profile_incomplete"
+          : "listing_ignored_profile_incomplete",
+      }
+    if (pinnedRuleIds.includes(id)) pinnedLinks.push(...profiled)
+    else ignoredLinks.push(...profiled)
   }
   if (channel.listing_profile.require_complete_count) {
     const count = parse.listing_page_summary
@@ -174,6 +188,35 @@ export function assessSinglePageIndex(parse, channel, since, until) {
       return { ...result, reason: "listing_item_missing_identity_or_date" }
     urls.add(url)
   }
+  const uniquePins = []
+  for (const link of pinnedLinks) {
+    let url
+    try {
+      url = canonicalURL(link.url)
+      assertURL(url, channel.allowed_hosts)
+    } catch {
+      return { ...result, reason: "listing_url_outside_policy" }
+    }
+    if (
+      !pattern.test(url) ||
+      !link.text?.trim() ||
+      !validDay(link.published_at) ||
+      !link.listed_date_text
+    )
+      return { ...result, reason: "listing_item_missing_identity_or_date" }
+    const existing = [...links, ...uniquePins].find((item) => canonicalURL(item.url) === url)
+    if (existing) {
+      if (
+        existing.published_at !== link.published_at ||
+        comparableTitle(existing.text) !== comparableTitle(link.text)
+      )
+        return { ...result, reason: "listing_pinned_identity_conflict" }
+      continue
+    }
+    if (urls.has(url)) return { ...result, reason: "listing_pinned_identity_conflict" }
+    urls.add(url)
+    uniquePins.push(link)
+  }
   for (const link of parse.links || []) {
     if (link.profile_id || !pattern.test(link.url || "")) continue
     if (!urls.has(canonicalURL(link.url))) return { ...result, reason: "unprofiled_article_link" }
@@ -182,7 +225,13 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     return { ...result, reason: "listing_not_newest_first" }
   const older = links.filter((link) => link.published_at < since)
   const later = links.filter((link) => link.published_at >= until)
-  const selected = links.filter((link) => link.published_at >= since && link.published_at < until)
+  const selected = [...links, ...uniquePins].filter(
+    (link) => link.published_at >= since && link.published_at < until,
+  )
+  if (pinnedRuleIds.length) {
+    selected.sort((a, b) => b.published_at.localeCompare(a.published_at))
+    result.pinned_window_items = uniquePins.filter((link) => selected.includes(link)).length
+  }
   if (!older.length)
     return {
       ...result,
@@ -207,6 +256,71 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     later_items: later.length,
     links: selected,
   }
+}
+
+export async function captureArticleBodyImages(
+  root,
+  run,
+  fetcher,
+  channel,
+  document,
+  parsed,
+  profile,
+  { fetchPolicy = fetchWithPolicy, parse = parseDocument } = {},
+) {
+  const rule = profile.options?.body_images
+  const images = parsed.body_images || []
+  if (
+    !rule ||
+    !Array.isArray(images) ||
+    !images.length ||
+    !Number.isSafeInteger(rule.max_images) ||
+    rule.max_images < 1 ||
+    rule.max_images > 7 ||
+    images.length > rule.max_images ||
+    new Set(images.map((image) => image.url)).size !== images.length ||
+    typeof rule.url_pattern !== "string" ||
+    !rule.url_pattern.startsWith("^") ||
+    !rule.url_pattern.endsWith("$") ||
+    rule.parse_options?.ocr !== true
+  )
+    throw Error("Invalid article body image policy")
+  const pattern = new RegExp(rule.url_pattern)
+  for (const image of images) {
+    assertURL(image.url, channel.allowed_hosts)
+    if (!pattern.test(image.url) || typeof image.dom_path !== "string" || !image.dom_path)
+      throw Error("Article body image lacks a declared parent position")
+  }
+  const result = { documents: [], parses: [], images: [] }
+  for (const image of images) {
+    const id = sourceId(image.url)
+    const record = {
+      url: image.url,
+      parent_source_version_id: document.source_version_id,
+      parent_parse_id: parsed.parse_id,
+      parent_dom_path: image.dom_path,
+      numeric_verification: "unreviewed",
+      table_structure: "unreviewed",
+    }
+    result.images.push(record)
+    const asset = await run.stage("body-image-" + id, { url: image.url }, () =>
+      fetchPolicy(root, fetcher, image.url, routeFetchOptions(channel)),
+    )
+    record.fetch_status = asset.fetch_status
+    if (!["captured", "not_modified"].includes(asset.fetch_status)) continue
+    result.documents.push(asset)
+    record.source_version_id = asset.source_version_id
+    const options = { ...rule.parse_options, title: parsed.title }
+    const extracted = await run.stage("parse-body-image-" + id, { document: asset, options }, () =>
+      parse(root, asset, options),
+    )
+    result.parses.push(extracted)
+    record.parse_id = extracted.parse_id
+    record.parse_status = extracted.status
+    record.block_count = extracted.blocks.length
+    record.ocr_quality = extracted.quality
+  }
+  return result
 }
 
 export async function collectWindowDetails(
@@ -268,6 +382,32 @@ export async function collectWindowDetails(
       detail.parse_id = parsed.parse_id
       detail.article_profile_id = profiles[0].id
       detail.source_published_at = parsed.dates?.published_at || null
+      if (
+        parsed.status === "partial" &&
+        !parsed.blocks?.length &&
+        parsed.title &&
+        parsed.dates?.published_at &&
+        parsed.body_images?.length &&
+        options.body_images
+      ) {
+        const assets = await captureArticleBodyImages(
+          root,
+          run,
+          fetcher,
+          channel,
+          document,
+          parsed,
+          profiles[0],
+          { fetchPolicy, parse },
+        )
+        documents.push(...assets.documents)
+        parses.push(...assets.parses)
+        detail.body_images = assets.images
+        // OCR text and table numbers remain separate source evidence. Never
+        // replace the article body or promote its review status implicitly.
+        detail.status = "article_image_body_requires_review"
+        continue
+      }
       if (
         parsed.status !== "extracted" ||
         !parsed.quality?.required_fields_present ||
@@ -442,8 +582,7 @@ export async function collectWindowDetails(
           const attachment = await run.stage(
             "supporting-document-" + attachmentId,
             { url: source.url },
-            () =>
-              fetchPolicy(root, fetcher, source.url, routeFetchOptions(channel)),
+            () => fetchPolicy(root, fetcher, source.url, routeFetchOptions(channel)),
           )
           attempt.status = attachment.fetch_status
           attempts.push(attempt)

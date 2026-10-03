@@ -507,15 +507,7 @@ test("daily plan connects its successful predecessor receipt to production listi
 
 test("daily scans run distinct routes concurrently, serialize each route and commit backlog in order", async (t) => {
   const root = temporary(t)
-  const routeIds = [
-    "route-a",
-    "route-b",
-    "route-c",
-    "route-d",
-    "route-e",
-    "route-f",
-    "route-g",
-  ]
+  const routeIds = ["route-a", "route-b", "route-c", "route-d", "route-e", "route-f", "route-g"]
   const windows = [
     { channel_id: "route-a", since: "2026-09-21", until_exclusive: "2026-09-24" },
     { channel_id: "route-a", since: "2026-09-24", until_exclusive: "2026-09-28" },
@@ -1025,6 +1017,7 @@ test("a verified independent scan advances only confirmed coverage and preserves
     configFile,
     scanRun: "independent-scan",
     reconciliationRun: "coverage-reconcile",
+    backlogFile: path.join(root, ".local/research/local-ai/candidate-backlog.json"),
     now: "2026-10-01T00:30:00+09:00",
     merge,
   })
@@ -1075,6 +1068,7 @@ test("a verified independent scan advances only confirmed coverage and preserves
         configFile,
         scanRun: "independent-scan",
         reconciliationRun: "coverage-reconcile",
+        backlogFile: path.join(root, ".local/research/local-ai/candidate-backlog.json"),
         now: "2026-10-01T00:30:00+09:00",
         merge,
       })
@@ -1195,4 +1189,49 @@ test("stored empty windows still need intact listing bytes", (t) => {
   assert.equal(verifyStoredListScan(root, scan, expected), true)
   fs.writeFileSync(path.join(root, "sources/listing.html"), "altered")
   assert.throws(() => verifyStoredListScan(root, scan, expected), /hash mismatch/)
+})
+
+test("a baseline coverage record does not skip its first candidate backlog reconciliation", async (t) => {
+  const root = temporary(t)
+  const window = { channel_id: "fanuc-en", since: "2026-10-02", until_exclusive: "2026-10-04" }
+  writeStoredEmptyScan(root, "baseline-onboarding", {
+    ...window,
+    url: "https://example.com/new-source",
+  })
+  const configFile = path.join(root, "daily-routes.json")
+  fs.writeFileSync(
+    configFile,
+    JSON.stringify({
+      schema: "research-daily-routes/v1",
+      lookback_days: 7,
+      max_window_days: 7,
+      routes: [{ channel_id: "fanuc-en", enabled: true, baseline_run: "baseline-onboarding" }],
+    }),
+  )
+  let merges = 0
+  const merge = async () => {
+    merges += 1
+    return { status: "merged", changed: false, same_event_aliases: [] }
+  }
+  const options = {
+    root,
+    configFile,
+    scanRun: "baseline-onboarding",
+    reconciliationRun: "baseline-intake",
+    backlogFile: path.join(root, "candidate-backlog.json"),
+    now: "2026-10-04T00:30:00+09:00",
+    merge,
+  }
+  const first = await reconcileSupplementalScan(options)
+  assert.equal(first.status, "reconciled")
+  assert.equal(merges, 1)
+  const state = readJSON(root, "daily/route-coverage.json").routes["fanuc-en"]
+  assert.equal(state.covered.filter((s) => s.kind === "verified_baseline").length, 1)
+  assert.equal(state.covered.filter((s) => s.kind === "verified_supplemental_scan").length, 1)
+  assert.equal(
+    readJSON(root, "daily/reconciliations/baseline-intake.json").backlog_merge.status,
+    "merged",
+  )
+  assert.equal((await reconcileSupplementalScan(options)).status, "already_reconciled")
+  assert.equal(merges, 1)
 })

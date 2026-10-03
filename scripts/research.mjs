@@ -2,6 +2,9 @@ import fs from "node:fs"
 import path from "node:path"
 import { parseArgs } from "node:util"
 import { SourceFetcher } from "./research/fetch.mjs"
+import { executeListScan } from "./research/list-scan-command.mjs"
+import { writeDraftCheckpoint } from "./research/draft-checkpoint.mjs"
+export { scanListImplementationFingerprints } from "./research/scan-basis.mjs"
 import {
   parseDocument,
   assertStoredEvidence,
@@ -18,7 +21,7 @@ import {
   extractionBudget,
   extractionCandidateKey,
 } from "./research/claims.mjs"
-import { writeDraft, draftMarkdown, correctDraft, draftFingerprint } from "./research/editor.mjs"
+import { draftMarkdown, correctDraft, draftFingerprint } from "./research/editor.mjs"
 import { registry, discoverChannel, mergeBacklog, coverageGrid } from "./research/discovery.mjs"
 import { saveBaseline } from "./research/baseline.mjs"
 import {
@@ -71,26 +74,12 @@ import { buildCandidateEvidenceReviewBatch } from "./research/candidate-evidence
 import { buildHistoricalSourceReconciliation } from "./research/historical-source-reconciliation.mjs"
 import { writeKnowledgeDraft } from "./research/knowledge-editor.mjs"
 import { prepareRoleProvider } from "./research/model-policy.mjs"
-import {
-  loadReusableSinglePageListing,
-  scanPathPagesRoute,
-  scanSinglePageRoute,
-} from "./research/list-scan.mjs"
-import { scanCalendarMonthRoute } from "./research/monthly-scan.mjs"
-import { scanBoundedRSSRoute } from "./research/rss-scan.mjs"
-import { scanPaginatedHDRoute } from "./research/api-scan.mjs"
-import { scanWordPressPostsRoute } from "./research/wordpress-scan.mjs"
-import { scanSECSubmissionsRoute } from "./research/sec-scan.mjs"
-import { scanPaginatedKUKARoute } from "./research/kuka-scan.mjs"
-import { scanPaginatedABBRoute } from "./research/abb-scan.mjs"
-import { scanPaginatedURRoute } from "./research/ur-scan.mjs"
-import { scanFormHTMLRoute } from "./research/form-html-scan.mjs"
 import { recordCandidateDisposition } from "./research/candidate-disposition.mjs"
 import { recordCandidateIdentity } from "./research/candidate-identity.mjs"
 import { recordCandidateApproval } from "./research/candidate-approval.mjs"
+import { importLegacyCandidateApproval } from "./research/legacy-candidate-approval.mjs"
 import { recordCandidateSourceAlternative } from "./research/candidate-source-alternative.mjs"
 import { recordScheduledEventMaterialLink } from "./research/event-material-link.mjs"
-import { mergeCompletedScan } from "./research/scan-completion.mjs"
 import { loadDailySearchBasis } from "./research/daily-search-basis.mjs"
 import { generateDailyHandoff, selectCandidateSource } from "./research/editorial-handoff.mjs"
 import { buildDeliveryStatus, renderDeliveryStatusHTML } from "./research/delivery-status.mjs"
@@ -102,6 +91,8 @@ import { intakeSearchCandidateBatch } from "./research/search-candidate-batch-in
 import { collectSearchCandidates } from "./research/search-candidate-collection.mjs"
 import { processSearchCandidates } from "./research/search-candidate-workflow.mjs"
 import { saveSourceSelection } from "./research/source-selection.mjs"
+import { reuseExtraction } from "./research/extraction-reuse.mjs"
+import { archiveClosure } from "./research/archive-closure.mjs"
 import {
   buildCandidateContentFingerprintEvidence,
   candidateSourceInventoryFingerprint,
@@ -141,6 +132,8 @@ export async function main(argv = process.argv.slice(2)) {
       "candidate-source-run": { type: "string" },
       "source-revision-review": { type: "string" },
       "source-alternative-run": { type: "string" },
+      "article-readback": { type: "string" },
+      "edition-readback": { type: "string" },
       "published-source-run": { type: "string" },
       "candidate-run": { type: "string" },
       "case-id": { type: "string" },
@@ -148,6 +141,7 @@ export async function main(argv = process.argv.slice(2)) {
       until: { type: "string" },
       "reuse-listing-run": { type: "string" },
       "additional-source-run": { type: "string", multiple: true },
+      "related-run": { type: "string", multiple: true },
       deep: { type: "boolean", default: false },
       "num-ctx": { type: "string" },
       "input-char-budget": { type: "string" },
@@ -179,6 +173,7 @@ export async function main(argv = process.argv.slice(2)) {
       "scan-list",
       "collect",
       "extract",
+      "reuse-extraction",
       "review",
       "draft",
       "correct",
@@ -191,6 +186,7 @@ export async function main(argv = process.argv.slice(2)) {
       "search",
       "approve",
       "archive",
+      "archive-closure",
       "gold-case",
       "evaluation-import-candidate",
       "evaluation-review",
@@ -200,6 +196,7 @@ export async function main(argv = process.argv.slice(2)) {
       "select-source",
       "select-candidate",
       "candidate-approval",
+      "legacy-candidate-approval",
       "intake-search-candidate",
       "intake-search-batch",
       "collect-search-candidates",
@@ -217,7 +214,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -307,6 +304,7 @@ export async function main(argv = process.argv.slice(2)) {
       "extract",
       "select-candidate",
       "candidate-approval",
+      "legacy-candidate-approval",
       "intake-search-candidate",
       "intake-search-batch",
       "process-search-candidates",
@@ -320,6 +318,7 @@ export async function main(argv = process.argv.slice(2)) {
     ![
       "select-candidate",
       "candidate-approval",
+      "legacy-candidate-approval",
       "intake-search-candidate",
       "intake-search-batch",
       "process-search-candidates",
@@ -341,6 +340,7 @@ export async function main(argv = process.argv.slice(2)) {
       "knowledge-draft",
       "select-candidate",
       "candidate-approval",
+      "legacy-candidate-approval",
       "intake-search-candidate",
       "intake-search-batch",
       "select-search-candidate",
@@ -354,11 +354,14 @@ export async function main(argv = process.argv.slice(2)) {
     v["source-run"] &&
     ![
       "extract",
+      "reuse-extraction",
       "gold-case",
+      "archive-closure",
       "reparse",
       "bundle",
       "select-source",
       "candidate-approval",
+      "legacy-candidate-approval",
       "intake-search-candidate",
       "select-search-candidate",
       "import-capture",
@@ -368,12 +371,14 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "--source-run is only supported for extract, gold-case, reparse, bundle, select-source, candidate-approval, candidate-source-alternative, intake-search-candidate, select-search-candidate, import-capture, candidate-disposition or candidate-identity",
+      "--source-run is only supported for extract, reuse-extraction, archive-closure, gold-case, reparse, bundle, select-source, candidate-approval, candidate-source-alternative, intake-search-candidate, select-search-candidate, import-capture, candidate-disposition or candidate-identity",
     )
   if (v["published-source-run"] && command !== "candidate-identity")
     throw Error("--published-source-run is only supported for candidate-identity")
   if (v["source-alternative-run"] && command !== "candidate-approval")
     throw Error("--source-alternative-run is only supported for candidate-approval")
+  if ((v["article-readback"] || v["edition-readback"]) && command !== "legacy-candidate-approval")
+    throw Error("Drive publication readbacks are only supported for legacy-candidate-approval")
   if (
     (v["approved-root"] || v["candidate-source-run"] || v["source-revision-review"]) &&
     command !== "candidate-approval"
@@ -383,6 +388,8 @@ export async function main(argv = process.argv.slice(2)) {
     throw Error("--candidate-source-run and --source-revision-review must be used together")
   if (v["additional-source-run"] && command !== "bundle")
     throw Error("--additional-source-run is only supported for bundle")
+  if (v["related-run"] && command !== "archive-closure")
+    throw Error("--related-run is only supported for archive-closure")
   if (
     v["candidate-run"] &&
     ![
@@ -638,6 +645,32 @@ export async function main(argv = process.argv.slice(2)) {
       publishedArticles,
     })
   }
+  if (command === "legacy-candidate-approval") {
+    if (
+      !v["source-run"] ||
+      !v["candidate-key"] ||
+      !v["article-readback"] ||
+      !v["edition-readback"] ||
+      !v.review ||
+      v.url?.length ||
+      v.channel?.length ||
+      v["merge-backlog"] ||
+      v.provisional
+    )
+      throw Error(
+        "Legacy approval requires source run, candidate key, both Drive readbacks and private review",
+      )
+    return importLegacyCandidateApproval({
+      root,
+      runId: v.run,
+      sourceRunId: v["source-run"],
+      candidateKey: v["candidate-key"],
+      articleReadbackPath: v["article-readback"],
+      editionReadbackPath: v["edition-readback"],
+      reviewPath: v.review,
+      backlogFile: v.backlog || BACKLOG_PATH,
+    })
+  }
   if (command === "intake-search-candidate") {
     if (
       !v["candidate-run"] ||
@@ -831,6 +864,30 @@ export async function main(argv = process.argv.slice(2)) {
     if (!v["source-run"] || v["source-run"] === v.run || !v.url?.length)
       throw Error("Select source requires a different --source-run and one or more --url values")
     return saveSourceSelection(root, v.run, selectStoredSources(root, v["source-run"], v.url))
+  }
+  if (command === "reuse-extraction") {
+    if (
+      !v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v.provisional ||
+      v["merge-backlog"]
+    )
+      throw Error("Extraction reuse requires only a stored source run and destination run")
+    return reuseExtraction(root, v.run, v["source-run"])
+  }
+  if (command === "archive-closure") {
+    if (
+      !v["source-run"] ||
+      v.url?.length ||
+      v.channel?.length ||
+      v.review ||
+      v.provisional ||
+      v["merge-backlog"]
+    )
+      throw Error("Archive closure requires a stored source run and optional related approval runs")
+    return archiveClosure(root, v.run, v["source-run"], v["related-run"] || [])
   }
   if (command === "import-capture") {
     if (!v.review || !v["source-run"] || v["source-run"] === v.run)
@@ -1528,23 +1585,33 @@ export async function main(argv = process.argv.slice(2)) {
       }
       const deepContext = v.deep ? readJSON(root, `runs/${v.run}/deep-context.json`) : null
       if (v.deep && !deepContext) throw Error("Review deep-dive source context first")
-      const draft = await writeDraft(ollama, claims, {
-        model: v.model,
-        think: false,
-        provisional: v.provisional,
-        deepContext,
-        parses,
-        documents,
-      })
+      const generated = await writeDraftCheckpoint(
+        root,
+        v.run,
+        ollama,
+        claims,
+        {
+          model: v.model,
+          think: false,
+          provisional: v.provisional,
+          deepContext,
+          parses,
+          documents,
+        },
+        await ollama.metadata(v.model),
+      )
+      const draft = generated.record
       atomicWrite(root, `runs/${v.run}/draft.json`, draft)
       atomicWrite(root, `runs/${v.run}/preview.md`, draftMarkdown(draft, claims, documents))
       return {
         status: draft.status,
         problems: draft.problems,
+        reused: generated.reused,
         candidate_published: false,
         preview: path.resolve(root, `runs/${v.run}/preview.md`),
       }
     })
+  if (command === "scan-list") return executeListScan(v)
   return withLock(root, "run-" + v.run, async () => {
     if (v["source-run"] === v.run) throw Error("Output run must differ from source run")
     const stored = v["source-run"]
@@ -1565,10 +1632,9 @@ export async function main(argv = process.argv.slice(2)) {
       registry_sha256: sha256(fs.readFileSync("data/research-acquisition.json")),
       watchlist_sha256: sha256(fs.readFileSync("data/research-watchlist.json")),
       channels_sha256: sha256(fs.readFileSync("data/research-source-channels.json")),
+      source_recipes_sha256: sha256(fs.readFileSync("data/research-source-recipes.json")),
+      source_recipe_resolver_sha256: sha256(fs.readFileSync("scripts/research/source-recipes.mjs")),
       collector_sha256: sha256(fs.readFileSync("scripts/research/discovery.mjs")),
-      ...(command === "scan-list"
-        ? scanListImplementationFingerprints()
-        : {}),
       policy_sha256: sha256(fs.readFileSync("scripts/research/source-policy.mjs")),
       worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
     }
@@ -1610,139 +1676,6 @@ export async function main(argv = process.argv.slice(2)) {
         failures: results
           .filter((r) => r.status !== "partial")
           .map((r) => ({ id: r.channel_id, status: r.status })),
-        candidate_published: false,
-      }
-    }
-    if (command === "scan-list") {
-      if (v.channel?.length !== 1 || !v.since || !v.until || v.url?.length)
-        throw Error("scan-list requires one --channel and a [--since, --until) day window")
-      const routes = registry(
-        JSON.parse(fs.readFileSync("data/research-source-channels.json")),
-        JSON.parse(fs.readFileSync("data/research-watchlist.json")),
-        JSON.parse(fs.readFileSync("data/research-acquisition.json")),
-      )
-      const channel = routes.find((route) => route.channel_id === v.channel[0])
-      if (!channel) throw Error("Unknown channel: " + v.channel[0])
-      const profiles =
-        JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
-      const scanner =
-        channel.api_profile?.id === "wordpress-rest-posts-json-v1"
-          ? scanWordPressPostsRoute
-          : channel.api_profile?.id === "sec-submissions-json-v1"
-            ? scanSECSubmissionsRoute
-            : channel.api_profile?.id === "ur-news-center-json-pages-v1"
-              ? scanPaginatedURRoute
-              : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
-                    channel.api_profile?.id,
-                  )
-                ? scanPaginatedHDRoute
-                : channel.api_profile?.id === "kuka-news-form-pages-v1"
-                  ? scanPaginatedKUKARoute
-                  : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
-                    ? scanPaginatedABBRoute
-                    : channel.api_profile?.id === "post-html-fragment-pages-v1"
-                      ? scanFormHTMLRoute
-                      : channel.api_profile
-                        ? null
-                        : channel.listing_profile?.pagination === "calendar-month"
-                          ? scanCalendarMonthRoute
-                          : channel.method === "rss" &&
-                              channel.listing_profile?.pagination === "bounded-feed"
-                            ? scanBoundedRSSRoute
-                            : channel.method === "html-list" &&
-                                channel.listing_profile?.pagination === "path-pages"
-                              ? scanPathPagesRoute
-                              : channel.method === "html-list" &&
-                                  channel.listing_profile?.pagination === "single-page"
-                                ? scanSinglePageRoute
-                                : null
-      if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
-      if (v["reuse-listing-run"] && scanner !== scanSinglePageRoute)
-        throw Error("--reuse-listing-run is only supported for single-page HTML routes")
-      let listingEvidence = null,
-        listingReuseError = null
-      if (v["reuse-listing-run"]) {
-        try {
-          listingEvidence = loadReusableSinglePageListing(root, v["reuse-listing-run"], channel, {
-            since: v.since,
-            until_exclusive: v.until,
-          })
-        } catch (error) {
-          listingReuseError = error.message
-        }
-      }
-      let result = await scanner(
-        root,
-        run,
-        fetcher,
-        channel,
-        profiles,
-        {
-          since: v.since,
-          until: v.until,
-        },
-        { listingEvidence, listingReuseError },
-      )
-      const archive = channel.listing_profile?.fallback_archive
-      if (
-        channel.method === "rss" &&
-        result.summary?.reason === "feed_cutoff_not_reached" &&
-        archive
-      ) {
-        const archiveChannel = {
-          ...channel,
-          method: "html-list",
-          url: archive.url_template.replace("{page}", "1"),
-          parse_options: archive.parse_options,
-          listing_profile: {
-            pagination: archive.pagination,
-            url_template: archive.url_template,
-            max_pages: archive.max_pages,
-            rule_id: archive.rule_id,
-            excluded_categories: archive.excluded_categories || [],
-            require_title_match: true,
-          },
-        }
-        const fallback = await scanPathPagesRoute(root, run, fetcher, archiveChannel, profiles, {
-          since: v.since,
-          until: v.until,
-        })
-        fallback.summary.fallback = {
-          source: "bounded-feed",
-          reason: result.summary.reason,
-          archive_status: fallback.summary.status,
-          archive_reason: fallback.summary.reason,
-        }
-        result = {
-          ...fallback,
-          indexDocuments: [...(result.indexDocuments || []), ...(fallback.indexDocuments || [])],
-          documents: [...result.documents, ...fallback.documents],
-          parses: [...result.parses, ...fallback.parses],
-          candidates: fallback.candidates,
-        }
-      }
-      atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
-      if (result.indexDocuments)
-        atomicWrite(root, `runs/${v.run}/list-pages.json`, result.indexDocuments)
-      atomicWrite(root, `runs/${v.run}/documents.json`, result.documents)
-      atomicWrite(root, `runs/${v.run}/parses.json`, result.parses)
-      atomicWrite(root, `runs/${v.run}/candidates.json`, result.candidates)
-      if (result.events)
-        atomicWrite(root, `runs/${v.run}/events.json`, {
-          schema: "research-scheduled-events/v1",
-          events: result.events,
-          candidate_published: false,
-        })
-      const backlogMerge = v["merge-backlog"]
-        ? await mergeCompletedScan(result, ".local/research/candidate-backlog.json")
-        : null
-      return {
-        channel_id: channel.channel_id,
-        status: result.summary.status,
-        reason: result.summary.reason,
-        candidates: result.candidates.length,
-        ...(result.events ? { events: result.events.length } : {}),
-        ...(backlogMerge ? { backlog_merge: backlogMerge } : {}),
         candidate_published: false,
       }
     }
@@ -1871,26 +1804,6 @@ export async function main(argv = process.argv.slice(2)) {
   })
 }
 
-export function scanListImplementationFingerprints() {
-  const modules = {
-    list_scan_sha256: "scripts/research/list-scan.mjs",
-    api_scan_sha256: "scripts/research/api-scan.mjs",
-    api_helpers_sha256: "scripts/research/api.mjs",
-    sec_scan_sha256: "scripts/research/sec-scan.mjs",
-    wordpress_scan_sha256: "scripts/research/wordpress-scan.mjs",
-    monthly_scan_sha256: "scripts/research/monthly-scan.mjs",
-    ur_scan_sha256: "scripts/research/ur-scan.mjs",
-    kuka_scan_sha256: "scripts/research/kuka-scan.mjs",
-    abb_scan_sha256: "scripts/research/abb-scan.mjs",
-    rss_scan_sha256: "scripts/research/rss-scan.mjs",
-    form_html_scan_sha256: "scripts/research/form-html-scan.mjs",
-    parser_sha256: "scripts/research/parser.mjs",
-    run_state_sha256: "scripts/research/run-state.mjs",
-  }
-  return Object.fromEntries(
-    Object.entries(modules).map(([key, file]) => [key, sha256(fs.readFileSync(file))]),
-  )
-}
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve("scripts/research.mjs")) {
   main()
     .then((result) => console.log(JSON.stringify(result, null, 2)))

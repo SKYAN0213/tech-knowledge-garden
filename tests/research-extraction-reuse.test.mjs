@@ -1,0 +1,130 @@
+import test from "node:test"
+import assert from "node:assert/strict"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
+import { main } from "../scripts/research.mjs"
+import { reuseExtraction } from "../scripts/research/extraction-reuse.mjs"
+import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { storeParseArtifact } from "../scripts/research/parser.mjs"
+
+function fixture(t) {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "extraction-reuse-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const url = "https://example.org/news/one",
+    text = "Company announced a robot control product."
+  const id = sourceId(url),
+    hash = sha256(text),
+    parseId = sha256("parse")
+  const doc = {
+    original_url: url,
+    final_url: url,
+    source_id: id,
+    source_version_id: `${id}:${hash}`,
+    body_sha256: hash,
+    body_path: `documents/${id}/${hash}/body.bin`,
+    fetch_status: "captured",
+    observed_at: "2026-10-04T00:00:00Z",
+  }
+  atomicWrite(root, doc.body_path, text)
+  const parse = {
+    schema_version: "source-parse/v1",
+    source_id: id,
+    source_version_id: doc.source_version_id,
+    parse_id: parseId,
+    title: "Product",
+    status: "extracted",
+    dates: { published_at: "2026-10-03" },
+    blocks: [{ block_id: parseId + ":b1", text, locator: { text_hash: hash } }],
+    quality: { missing_pages: [] },
+  }
+  storeParseArtifact(root, parse)
+  const claim = {
+    candidate_key: "source-" + id,
+    statement: text,
+    claim_kind: "fact",
+    subject: "Company",
+    event_state: "reported",
+    published_at: "2026-10-03",
+    effective_period: null,
+    numbers: [],
+    evidence: [
+      {
+        source_id: id,
+        source_version_id: doc.source_version_id,
+        parse_id: parseId,
+        block_id: parseId + ":b1",
+        quote: text,
+        support: "direct",
+      },
+    ],
+    review: { status: "verified" },
+    event_id: "old-event",
+  }
+  claim.claim_id = sha256(
+    JSON.stringify([claim.candidate_key, claim.statement, claim.evidence]),
+  ).slice(0, 24)
+  for (const run of ["source", "bundle"]) {
+    atomicWrite(root, `runs/${run}/documents.json`, [doc])
+    atomicWrite(root, `runs/${run}/parses.json`, [parse])
+  }
+  const extraction = { claims: [claim], provenance: { model: "controlled-fixture" } }
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  return { root, claim, parse, extraction }
+}
+
+test("CLI reuse preserves extraction provenance and exact sources while requiring fresh review without a model call", async (t) => {
+  const { root, claim } = fixture(t)
+  assert.equal(
+    (await main(["reuse-extraction", "--root", root, "--run", "bundle", "--source-run", "source"]))
+      .reused,
+    false,
+  )
+  const result = readJSON(root, "runs/bundle/claims.json")
+  assert.equal(result.claims[0].claim_id, claim.claim_id)
+  assert.equal(result.claims[0].review.status, "unreviewed")
+  assert.equal(result.claims[0].event_id, null)
+  assert.equal(result.provenance.model, "controlled-fixture")
+  assert.equal(
+    result.extraction_reuse.source_claims_sha256,
+    sha256(fs.readFileSync(path.join(root, "runs/source/claims.json"))),
+  )
+  const before = fs.readFileSync(path.join(root, "runs/bundle/claims.json"))
+  assert.equal((await reuseExtraction(root, "bundle", "source")).reused, true)
+  assert.deepEqual(fs.readFileSync(path.join(root, "runs/bundle/claims.json")), before)
+  assert.equal(fs.existsSync(path.join(root, "runs/bundle/reviewed-claims.json")), false)
+})
+
+test("reuse rejects different source parses, changed extraction and partial checkpoints before overwriting", async (t) => {
+  const { root, parse, extraction } = fixture(t)
+  atomicWrite(root, "runs/bundle/parses.json", [])
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"))
+  assert.equal(fs.existsSync(path.join(root, "runs/bundle/claims.json")), false)
+  atomicWrite(root, "runs/bundle/parses.json", [parse])
+  await reuseExtraction(root, "bundle", "source")
+  const before = fs.readFileSync(path.join(root, "runs/bundle/claims.json"))
+  extraction.provenance.model = "changed"
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /checkpoint differs/)
+  assert.deepEqual(fs.readFileSync(path.join(root, "runs/bundle/claims.json")), before)
+  fs.unlinkSync(path.join(root, "runs/bundle/extraction-reuse.json"))
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /checkpoint differs/)
+})
+
+test("reuse refuses stale claim identifiers, invalid quotations and pre-existing destination reviews", async (t) => {
+  const { root, extraction } = fixture(t)
+  extraction.claims[0].statement = "changed statement"
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /claim identity/)
+  const c = extraction.claims[0]
+  c.evidence[0].quote = "Not in this source"
+  c.claim_id = sha256(JSON.stringify([c.candidate_key, c.statement, c.evidence])).slice(0, 24)
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /evidence failed/)
+  c.evidence[0].quote = c.statement = "Company announced a robot control product."
+  c.claim_id = sha256(JSON.stringify([c.candidate_key, c.statement, c.evidence])).slice(0, 24)
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  atomicWrite(root, "runs/bundle/reviewed-claims.json", {})
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /already contains a review/)
+})

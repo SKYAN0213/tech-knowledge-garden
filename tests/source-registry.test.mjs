@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import { coverageGrid, registry } from "../scripts/research/discovery.mjs"
 import { validateDailyRoutes } from "../scripts/research/daily-plan.mjs"
+import { coreCompanies, coreInstitutions } from "./fixtures/core-watchlist.mjs"
 
 test("manufacturer routes retain native language and role without duplicating established channels", () => {
   const channels = {
@@ -71,17 +72,13 @@ test("coverage sectors expand investigation scope without changing article tags"
   const grid = coverageGrid([{ ...samsung, status: "partial" }])
   const cell = grid.find(
     (item) =>
-      item.sector === "반도체·컴퓨팅" &&
-      item.region === "국내" &&
-      item.axis === "기업·운영",
+      item.sector === "반도체·컴퓨팅" && item.region === "국내" && item.axis === "기업·운영",
   )
   assert.equal(cell.status, "partial")
   assert.deepEqual(cell.route_ids, ["samsung-global-press-releases"])
   assert.equal(
-    grid.find(
-      (item) =>
-        item.sector === "AI" && item.region === "국내" && item.axis === "기업·운영",
-    ).status,
+    grid.find((item) => item.sector === "AI" && item.region === "국내" && item.axis === "기업·운영")
+      .status,
     "partial",
   )
 })
@@ -237,8 +234,8 @@ test("the additive robot registry preserves eight-sector companies and instituti
   const channels = JSON.parse(
     fs.readFileSync(new URL("../data/research-source-channels.json", import.meta.url)),
   )
-  assert.equal(watchlist.companies.length, 32)
-  assert.equal(watchlist.institutions.length, 16)
+  assert.equal(coreCompanies(watchlist).length, 32)
+  assert.equal(coreInstitutions(watchlist).length, 16)
   assert.equal(watchlist.robot_manufacturers.length, 15)
   assert.equal(new Set(watchlist.robot_manufacturers.map((c) => c.id)).size, 15)
   const routes = registry(channels, watchlist)
@@ -413,8 +410,7 @@ test("Yaskawa keeps its original global route and adds news, product, and IR rou
   assert.ok(
     acquisition.article_profiles
       .filter(
-        (profile) =>
-          !profile.id.startsWith("yaskawa-ir-") && profile.id !== "robotsguide-robotics-article-v1",
+        (profile) => profile.id.startsWith("yaskawa-") && !profile.id.startsWith("yaskawa-ir-"),
       )
       .every((profile) => profile.options.publication_date_from_listing !== true),
   )

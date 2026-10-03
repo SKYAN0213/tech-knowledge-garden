@@ -82,16 +82,18 @@ export function projectIntakeOntology(candidates, { sameEventAliases = new Map()
         if (!group.has(candidate.key)) group.set(candidate.key, new Set())
         for (const language of languages) group.get(candidate.key).add(language)
       }
-      const prior = urls.get(url)
-      if (prior && prior !== candidate.key)
-        relations.push({
-          from: `candidate:${prior}`,
-          type: "sharedCanonicalSourceCandidate",
-          to: `candidate:${candidate.key}`,
-          basis: url,
-          decision: "review_required",
-        })
-      urls.set(url, candidate.key)
+      const priorCandidates = urls.get(url) || new Set()
+      for (const prior of priorCandidates)
+        if (prior !== candidate.key)
+          relations.push({
+            from: `candidate:${prior}`,
+            type: "sharedCanonicalSourceCandidate",
+            to: `candidate:${candidate.key}`,
+            basis: url,
+            decision: "review_required",
+          })
+      priorCandidates.add(candidate.key)
+      urls.set(url, priorCandidates)
       const sourceId = `source:${url}`
       if (!nodes.some((node) => node.id === sourceId))
         nodes.push({ id: sourceId, type: "Source", url })

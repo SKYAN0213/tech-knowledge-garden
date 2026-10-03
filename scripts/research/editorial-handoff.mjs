@@ -7,6 +7,7 @@ import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { projectIntakeOntology, relatedCandidateKeys } from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
+import { collectedCandidateReceipt } from "./scan-completion.mjs"
 import {
   readDailyReceipts,
   storedListScan,
@@ -234,7 +235,7 @@ export function buildEditorialHandoff({
   const suppressedSourceKeys = new Set()
   const sameEventSources = []
   const backlogAliasKeys = new Set()
-  for (const receipt of receipts.filter((item) => item.status === "window_scanned")) {
+  for (const receipt of receipts.filter(collectedCandidateReceipt)) {
     const aliases = receipt.backlog_merge?.same_event_aliases || []
     if (!Array.isArray(aliases))
       throw Error("Completed daily receipt has an invalid same-event source list")
@@ -297,7 +298,7 @@ export function buildEditorialHandoff({
         observed_in_current_run: false,
       })
   }
-  for (const receipt of receipts.filter((item) => item.status === "window_scanned"))
+  for (const receipt of receipts.filter(collectedCandidateReceipt))
     for (const key of receipt.candidate_keys) {
       const observation = observationByAttemptKey.get(`${receipt.attempt_id}:${key}`)
       if (!observation)
@@ -531,20 +532,18 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
   verifyDailyReceipts(root, plan, receipts)
   if (summary.receipts !== receipts.length)
     throw Error("Stored daily summary and receipt count disagree")
-  const observations = receipts
-    .filter((receipt) => receipt.status === "window_scanned")
-    .flatMap((receipt) =>
-      storedListScan(root, receipt.attempt_id).candidates.map((candidate) => ({
-        attempt_id: receipt.attempt_id,
-        key: candidate.key,
-        source_urls: candidate.source_urls || [],
-        source_records: candidate.discovery || [],
-        article_source_version_id: candidate.article_source_version_id || null,
-        article_parse_id: candidate.article_parse_id || null,
-        article_content_sha256: candidate.article_content_sha256 || null,
-        supporting_source_urls: candidate.supporting_source_urls || [],
-      })),
-    )
+  const observations = receipts.filter(collectedCandidateReceipt).flatMap((receipt) =>
+    storedListScan(root, receipt.attempt_id).candidates.map((candidate) => ({
+      attempt_id: receipt.attempt_id,
+      key: candidate.key,
+      source_urls: candidate.source_urls || [],
+      source_records: candidate.discovery || [],
+      article_source_version_id: candidate.article_source_version_id || null,
+      article_parse_id: candidate.article_parse_id || null,
+      article_content_sha256: candidate.article_content_sha256 || null,
+      supporting_source_urls: candidate.supporting_source_urls || [],
+    })),
+  )
   const backlog = readBacklog(backlogFile)
   const backlogBytes = fs.existsSync(backlogFile) ? fs.readFileSync(backlogFile) : null
   if (backlogBytes && JSON.stringify(JSON.parse(backlogBytes)) !== JSON.stringify(backlog))

@@ -391,3 +391,10 @@ ABB HTML의 `scheduledPublishDate`는 UTC 2026-09-02 13:13:50.623이고 `Publish
 서로 다른 출처의 `published_at` 날짜가 다르면 기본적으로 동일 사건 연결을 거부한다. 예외는 비공개 검토 JSON이 `event_date`를 명시하고, 새 원문과 기존 발행 원문 양쪽의 저장 parse에서 사건 발표일을 직접 인용한 `event_date` aspect가 확인되며, 명시된 날짜가 기존 발행 출처의 날짜와 일치하는 경우뿐이다. 검토자는 양쪽 인용문이 같은 회사 행위·대상·수량을 가리키는지 읽어 확인한다. 게시일 차이는 그대로 영수증과 후보 장부에 `publication_dates_match:false`로 보존한다. 추정한 날짜, 기사 제목, 검색 snippet, 외부의 지시문은 예외 근거가 될 수 없다.
 
 실행 전 backlog를 비공개 복구본으로 보존한다. 같은 run ID의 재실행은 `event_id`, review hash, source version 및 event date가 모두 기존 receipt와 일치할 때만 멱등 성공한다. 이미 verified 처리된 동일 후보에 다른 근거를 넣거나 기존 사건 ID를 바꾸려 하면 실패한다. 이 경로도 후보 identity bookkeeping만 수행하며 기사·회차·RSS·Drive·사이트를 수정하지 않는다. 실제 삼성SDS/삼성 Global Helix 후보 적용은 [현재 빌드 27절](LOCAL_AI_NEWS_CURRENT_BUILD.md#27-삼성sds-helix-발표일-차이가-있는-동일-사건), [런북 124절](LOCAL_AI_NEWS_RUNBOOK.md#124-삼성sds-helix-발표일-차이가-있는-동일-사건)에 기록한다.
+
+
+## 82. 작성 원본의 release 판정과 실제 저장 증거
+
+prepare/compare만으로 쓰기를 허용하지 않는다. release는 검증된 preview의 exact 사건 ID·Knowledge 경로·전체 delta·stage bytes와 10분 이내 완전 Drive snapshot 및 대상 parent listing/raw SHA를 재검증한다. source fidelity·상세 보존·종속지식·독자본문·독자상호작용의 최종검토 pass가 필수다. daily에는 기존32칸 조사계약을 재사용하고 각칸 실제 시도 URL을 요구한다. retrospective는 coverage/새 운영 회수를 갖지 않는다.
+
+immutable release receipt는 저장 권한만 증명한다. 실제 쓰기 직전 원본 SHA 확인, 저장 직후 동일 ID/부모/원격 raw SHA 확인, 전체 post snapshot과 로컬 동기화는 별도 execution proof로 남긴다. 같은 desired SHA는 already_applied로 쓰기 생략한다. 충돌·미완료조회·변조·오래된snapshot은 거부한다. 이번 실제3파일 저장/195개 검증/반복변경0은 런북342절에 있다. 공개 배포 검증과 전체 WBS 완료는 별도다.

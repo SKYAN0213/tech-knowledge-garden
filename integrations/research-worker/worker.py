@@ -1,6 +1,7 @@
 """Local-file-only document worker. One bounded JSON request/result per line."""
 import argparse
 import contextlib
+import copy
 import hashlib
 import importlib.metadata
 import json
@@ -827,18 +828,41 @@ def html_parse(raw, url, options):
         if len(title_nodes) == 1:
             if not isinstance(title_nodes[0], etree._Element):
                 raise ValueError("Title selector must return an element")
-            value = clean(" ".join(title_nodes[0].itertext()))
+            title_node = title_nodes[0]
+            exclusions = []
+            exclude_selector = options.get("title_exclude_xpath")
+            if exclude_selector is not None:
+                if not isinstance(exclude_selector, str) or not exclude_selector.startswith(".") or len(exclude_selector) > 1024:
+                    raise ValueError("Title exclusion must be a bounded relative XPath")
+                excluded_nodes = title_node.xpath(exclude_selector)
+                if len(excluded_nodes) > 16 or any(
+                    not isinstance(node, etree._Element) or title_node not in node.iterancestors()
+                    for node in excluded_nodes
+                ):
+                    raise ValueError("Title exclusion must select title descendants")
+                exclusions = [
+                    {"dom_path": domtree.getpath(node), "text": clean(" ".join(node.itertext())),
+                     "text_hash": digest(clean(" ".join(node.itertext())))}
+                    for node in excluded_nodes
+                ]
+                title_node = copy.deepcopy(title_node)
+                for node in title_node.xpath(exclude_selector):
+                    node.drop_tree()  # Preserve tail text following the badge.
+            value = clean(" ".join(title_node.itertext()))
             if value:
                 title = value
                 title_profile_status = "matched"
                 title_basis = {"type": "html", "dom_path": domtree.getpath(title_nodes[0]), "text": value, "text_hash": digest(value)}
+                if exclude_selector is not None:
+                    title_basis["excluded"] = exclusions
     block_selector = options.get("content_block_xpath")
     selected_blocks = None
     if block_selector:
         if not selected or not isinstance(block_selector, str) or len(block_selector) > 1024:
             raise ValueError("Block profile requires an explicit content container")
         selected_blocks = container.xpath(block_selector)
-        if not selected_blocks:
+        image_selector = options.get("body_images", {}).get("xpath") if isinstance(options.get("body_images"), dict) else None
+        if not selected_blocks and not (isinstance(image_selector, str) and image_selector.startswith(".") and container.xpath(image_selector)):
             raise ValueError("Block profile did not match any elements")
         for node in selected_blocks:
             if not isinstance(node, etree._Element) or container not in node.iterancestors():
@@ -917,7 +941,10 @@ def html_parse(raw, url, options):
     else:
         days = [known_date(value, calendar_zone) for value in date_nodes]
         valid_dates = bool(days) and all(days) and len(set(days)) == 1
-        published = (date_nodes[0] if len(set(days)) == 1 else days[0]) if valid_dates else None
+        # Compare metadata in the publisher calendar, but retain the selected
+        # display date (or explicitly requested timestamp) as the result.
+        # Unqualified metadata remains only a candidate without that selector.
+        published = (explicit_publication_date or date_nodes[0]) if valid_dates else None
         if date_nodes and not valid_dates:
             date_profile_status = "conflict" if all(days) else "invalid-date"
         if explicit_date and date_profile_status != "matched":
@@ -1008,6 +1035,28 @@ def html_parse(raw, url, options):
     complete = bool(title and blocks) and not missing_math
     status = "extracted" if complete else "partial"
     result = {"status": status, "title": title, "title_basis": title_basis, "title_profile_status": title_profile_status, "language": language, "dates": dates, "blocks": blocks, "links": links, "link_profiles": link_profiles, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False}}
+    image_profile = options.get("body_images")
+    if image_profile is not None and not blocks:
+        if not selected or not isinstance(image_profile, dict):
+            raise ValueError("Body images require an explicit content container and profile")
+        xpath, pattern, maximum = image_profile.get("xpath"), image_profile.get("url_pattern"), image_profile.get("max_images")
+        if (not isinstance(xpath, str) or not xpath.startswith(".") or len(xpath) > 512
+                or not isinstance(pattern, str) or not pattern.startswith("^") or not pattern.endswith("$")
+                or len(pattern) > 512 or type(maximum) is not int or not 1 <= maximum <= 7):
+            raise ValueError("Invalid body image profile")
+        images = container.xpath(xpath)
+        if len(images) > maximum:
+            raise ValueError("Body image budget exceeded")
+        result["body_images"] = []
+        for image in images:
+            if not isinstance(image, etree._Element) or image.tag.lower() != "img" or not image.get("src"):
+                raise ValueError("Body image selector must identify img elements with src")
+            target = urljoin(url, image.get("src"))
+            if urlparse(target).scheme not in ("http", "https") or re.fullmatch(pattern, target) is None:
+                raise ValueError("Body image URL outside declared profile")
+            if any(value["url"] == target for value in result["body_images"]):
+                raise ValueError("Duplicate body image URL")
+            result["body_images"].append({"url": target, "dom_path": domtree.getpath(image), "alt": clean(image.get("alt"))})
     if listing_page_summary is not None:
         result["listing_page_summary"] = listing_page_summary
     if math_expressions:
@@ -1735,6 +1784,43 @@ def pdf_parse(raw, options):
     return {"status": "extracted" if title and blocks and not missing else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
 
 
+def image_parse(raw, options):
+    """Reuse selective PDF OCR on one bounded raster, retaining original-pixel locations."""
+    import io
+    from PIL import Image
+    import pymupdf
+
+    maximum = options.get("max_image_pixels", 12_000_000)
+    if type(maximum) is not int or not 1 <= maximum <= 20_000_000:
+        raise ValueError("Invalid image pixel budget")
+    with Image.open(io.BytesIO(raw)) as image:
+        if image.format not in ("PNG", "JPEG") or getattr(image, "n_frames", 1) != 1:
+            raise ValueError("Only single-frame PNG/JPEG OCR is supported")
+        width, height = image.size
+        if width * height > maximum or max(width, height) > 12_000:
+            raise ValueError("Image pixel budget exceeded")
+        image.verify()
+    # Render at exactly the input dimensions rather than letting image DPI or
+    # the PDF OCR rasterizer multiply a potentially large allocation.
+    doc = pymupdf.open()
+    scale = 200 / 72
+    page = doc.new_page(width=width / scale, height=height / scale)
+    page.insert_image(page.rect, stream=raw)
+    allowed = {key: options[key] for key in ("title", "language", "ocr_language") if key in options}
+    parsed = pdf_parse(doc.tobytes(), {**allowed, "ocr": True, "max_pages": 1})
+    doc.close()
+    parsed["dates"] = {"published_at": None, "modified_at": None, "precision": "unknown", "profile_status": "not-configured", "basis": None}
+    parsed["quality"].update({"source_format": "raster-image", "source_width": width, "source_height": height,
+                             "numeric_verification": "unreviewed", "table_structure": "unreviewed"})
+    for block in parsed["blocks"]:
+        locator = block["locator"]
+        locator["type"] = "image"
+        locator["coordinate_space"] = "source-pixels"
+        locator["bbox"] = [coordinate * scale for coordinate in locator["bbox"]]
+        locator.pop("page", None)
+    return parsed
+
+
 def run(request, root):
     if request.get("schema_version") != "research-worker/v1" or request.get("operation") not in ("parse", "links"):
         raise ValueError("Invalid worker operation")
@@ -1758,6 +1844,12 @@ def run(request, root):
     if raw.startswith(b"%PDF-"):
         parsed = pdf_parse(raw, options)
         parser = {"id": "pymupdf", "version": importlib.metadata.version("PyMuPDF")}
+    elif options.get("ocr") is True and (raw.startswith(b"\x89PNG\r\n\x1a\n") or raw.startswith(b"\xff\xd8\xff")):
+        expected_mime = "image/png" if raw.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg"
+        if fragment_mime != expected_mime:
+            raise ValueError("Raster OCR requires a matching image response")
+        parsed = image_parse(raw, options)
+        parser = {"id": "pymupdf-raster-rapidocr", "version": importlib.metadata.version("rapidocr")}
     elif options.get("format") == "jats":
         parsed = jats_parse(raw, request["url"], options)
         parser = {"id": "jats-xml", "version": "frontiers-jats/v1"}

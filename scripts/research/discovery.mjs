@@ -10,6 +10,7 @@ import { sourceId, sha256 } from "./contracts.mjs"
 import { checkRobots } from "./robots.mjs"
 import { createRedirectAuthorizer } from "./source-policy.mjs"
 import { crossrefLinks, secLinks } from "./api.mjs"
+import { resolveSourceRecipe } from "./source-recipes.mjs"
 
 export function mergeUniqueDiscovery(...groups) {
   const seen = new Set()
@@ -46,7 +47,7 @@ function sourceRecordIdentityKeys(candidate) {
   )
 }
 
-export function registry(channels, watchlist, adapters = {}) {
+export function registry(channels, watchlist, adapters = {}, recipes) {
   const methods = new Set(["html-list", "rss", "crossref", "sec"])
   const languages = new Set(["ko", "en", "ja", "zh", "de"])
   const sourceKinds = new Set([
@@ -66,6 +67,12 @@ export function registry(channels, watchlist, adapters = {}) {
       !["국내", "해외"].includes(c.region) ||
       !["기술·제품", "기업·운영"].includes(c.axis) ||
       (c.kind && !sourceKinds.has(c.kind)) ||
+      (c.onboarding !== undefined &&
+        (!c.onboarding ||
+          !["registered", "configured", "verified"].includes(c.onboarding.status) ||
+          typeof c.onboarding.collection_enabled !== "boolean" ||
+          (c.onboarding.status === "registered" && c.onboarding.collection_enabled) ||
+          (c.onboarding.status === "verified" && !c.onboarding.collection_enabled))) ||
       (c.request_interval_ms !== undefined &&
         (!Number.isSafeInteger(c.request_interval_ms) ||
           c.request_interval_ms < 0 ||
@@ -82,8 +89,9 @@ export function registry(channels, watchlist, adapters = {}) {
     assertURL(c.url, c.allowed_hosts)
     return c
   }
-  const result = channels.channels.map((c) =>
-    validate({
+  const result = channels.channels.map((source) => {
+    const c = resolveSourceRecipe(source, recipes)
+    return validate({
       ...c,
       channel_id: c.id,
       publisher_id: new URL(c.url).hostname.replace(/^www\./, ""),
@@ -95,8 +103,8 @@ export function registry(channels, watchlist, adapters = {}) {
       entity_ids: [],
       watch_groups: [],
       registered_route_ids: [],
-    }),
-  )
+    })
+  })
   for (const group of ["companies", "institutions", "robot_manufacturers"])
     for (const c of watchlist[group] || []) {
       if (!/^[a-zA-Z0-9_-]+$/.test(c.id)) throw Error("Invalid watch route identity")
@@ -172,7 +180,9 @@ export function registry(channels, watchlist, adapters = {}) {
     }
   if (new Set(result.map((r) => r.channel_id)).size !== result.length)
     throw Error("Duplicate source route identities")
-  return result.map((c) => validate({ ...c, ...(adapters[c.channel_id] || {}) }))
+  return result.map((c) =>
+    validate({ ...c, ...resolveSourceRecipe(adapters[c.channel_id] || {}, recipes) }),
+  )
 }
 export function coverageGrid(routes) {
   return SECTORS.flatMap((sector) =>
@@ -180,9 +190,7 @@ export function coverageGrid(routes) {
       ["기술·제품", "기업·운영"].map((axis) => {
         const attempts = routes.filter(
           (r) =>
-            [...new Set([...(r.sectors || []), ...(r.coverage_sectors || [])])].includes(
-              sector,
-            ) &&
+            [...new Set([...(r.sectors || []), ...(r.coverage_sectors || [])])].includes(sector) &&
             r.region === region &&
             r.axis === axis,
         )
@@ -292,6 +300,8 @@ export async function discoverChannel(root, fetcher, channel) {
       status: "failed",
       candidates: [],
     }
+  if (channel.onboarding && channel.onboarding.collection_enabled !== true)
+    return { ...record, status: "registration_pending" }
   try {
     const allowed_hosts = channel.allowed_hosts || [new URL(channel.url).hostname]
     const policy = await checkRobots(root, fetcher, channel.url, { allowed_hosts })
