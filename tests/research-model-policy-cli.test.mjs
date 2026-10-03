@@ -96,11 +96,14 @@ function localRuntime(t, respond) {
         details: {},
       })
     if (endpoint === "/api/chat")
-      return Response.json({
-        done: true,
-        done_reason: "stop",
-        message: { content: JSON.stringify(respond(body)) },
-      })
+      return new Response(
+        JSON.stringify({
+          done: true,
+          done_reason: "stop",
+          message: { content: JSON.stringify(respond(body)) },
+        }) + "\n",
+        { headers: { "content-type": "application/x-ndjson" } },
+      )
     throw Error("Unexpected local fixture endpoint")
   }
   t.mock.method(globalThis, "fetch", fetchImpl)

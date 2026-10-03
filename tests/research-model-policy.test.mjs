@@ -69,7 +69,11 @@ function runtime({ mutateMetadata, chat, clock } = {}) {
           message: { content: '{"ok":true}' },
         }
       } else throw Error("Unexpected endpoint")
-      return { ok: true, json: async () => value }
+      return endpoint === "/api/chat" && body.stream
+        ? new Response(JSON.stringify(value) + "\n", {
+            headers: { "content-type": "application/x-ndjson" },
+          })
+        : Response.json(value)
     },
   })
   return {
@@ -137,6 +141,35 @@ test("role settings reach the actual Ollama request without replacing facts or s
     readJSON(root, "runs/article/model-policy/article_write/budget.json").attempts.length,
     1,
   )
+})
+test("local role receipts preserve failed stream bytes without caching them as results", async (t) => {
+  const root = temporary(t),
+    r = runtime({
+      chat: () => ({
+        done: false,
+        message: { content: '{"ok":' },
+      }),
+    })
+  const scoped = await prepareRoleOllama(r.api, policy(), "article_write", { root, run: "partial" })
+  await assert.rejects(scoped.structured(request), /Incomplete model stream/)
+  const attempt = readJSON(root, "runs/partial/model-policy/article_write/budget.json").attempts[0]
+  assert.equal(attempt.status, "failed")
+  assert.equal(attempt.result, undefined)
+  assert.equal(attempt.failure_artifacts.partial_response_content, '{"ok":')
+  assert.equal(attempt.failure_artifacts_sha256, sha256(JSON.stringify(attempt.failure_artifacts)))
+  const progress = readJSON(root, attempt.progress_path)
+  assert.equal(progress.status, "failed")
+  assert.equal(progress.content_chars, 6)
+  assert.equal(progress.attempt_id, attempt.id)
+  const stored = readJSON(root, "runs/partial/model-policy/article_write/budget.json")
+  const { sha256: _checksum, ...ledger } = stored
+  ledger.attempts[0].failure_artifacts.partial_response_content = "altered"
+  atomicWrite(root, "runs/partial/model-policy/article_write/budget.json", {
+    ...ledger,
+    sha256: sha256(JSON.stringify(ledger)),
+  })
+  await assert.rejects(scoped.structured(request), /Invalid model attempt receipt/)
+  assert.equal(r.requests.filter((r) => r.endpoint === "/api/chat").length, 1)
 })
 test("unsupported thinking or missing thinking metadata fails before inference", async (t) => {
   for (const values of [[false], null]) {

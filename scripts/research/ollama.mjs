@@ -68,6 +68,95 @@ export class Ollama {
       thinking: show.thinking,
     }
   }
+  async streamedChat(request, { timeout_ms, on_progress }) {
+    if (!Number.isInteger(timeout_ms) || timeout_ms <= 0)
+      throw Error("Local model call time budget exceeded")
+    const started = performance.now()
+    let content = "",
+      thinkingChars = 0,
+      frames = 0,
+      final = null,
+      reader
+    const progress = (status) => ({
+      schema: "local-model-progress/v1",
+      status,
+      elapsed_ms: Math.round(performance.now() - started),
+      frames,
+      content_chars: content.length,
+      thinking_chars: thinkingChars,
+    })
+    try {
+      await on_progress(progress("requesting"))
+      const response = await this.fetch(this.url + "/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(timeout_ms),
+        redirect: "error",
+      })
+      if (!response.ok) throw Error(`Ollama HTTP ${response.status}`)
+      if (
+        !response.headers?.get("content-type")?.includes("application/x-ndjson") ||
+        !response.body?.getReader
+      )
+        throw Error("Ollama streaming response must be NDJSON")
+      reader = response.body.getReader()
+      const decoder = new TextDecoder("utf-8", { fatal: true })
+      let pending = ""
+      const consume = async (line) => {
+        if (!line.trim()) return
+        if (final) throw Error("Unexpected data after model completion")
+        const frame = JSON.parse(line)
+        if (frame.error) throw Error("Ollama: " + frame.error)
+        if (typeof frame.done !== "boolean" || frame.message?.tool_calls?.length)
+          throw Error("Incomplete or unexpected model response")
+        for (const key of ["content", "thinking"])
+          if (frame.message?.[key] !== undefined && typeof frame.message[key] !== "string")
+            throw Error("Unexpected model message field")
+        content += frame.message?.content ?? ""
+        thinkingChars += frame.message?.thinking?.length ?? 0
+        frames++
+        if (content.length + thinkingChars > 4194304)
+          throw Error("Model stream exceeds output bound")
+        if (frame.done) final = frame
+        await on_progress(progress(frame.done ? "received" : "generating"))
+      }
+      while (true) {
+        const chunk = await reader.read()
+        pending += decoder.decode(chunk.value, { stream: !chunk.done })
+        if (pending.length > 4194304) throw Error("Model stream frame exceeds output bound")
+        let newline
+        while ((newline = pending.indexOf("\n")) >= 0) {
+          await consume(pending.slice(0, newline))
+          pending = pending.slice(newline + 1)
+        }
+        if (chunk.done) break
+      }
+      if (pending.trim()) await consume(pending)
+      if (!final) throw Error("Incomplete model stream")
+      return {
+        ...final,
+        message: { ...final.message, content },
+        stream_progress: progress("received"),
+      }
+    } catch (error) {
+      error.model_artifacts = {
+        request,
+        request_sha256: sha256(JSON.stringify(request)),
+        partial_response_content: content,
+        partial_response_content_sha256: sha256(content),
+        progress: progress("failed"),
+        done: final?.done ?? false,
+      }
+      await on_progress(error.model_artifacts.progress)
+      throw error
+    } finally {
+      if (reader) {
+        await reader.cancel().catch(() => {})
+        reader.releaseLock()
+      }
+    }
+  }
   async structured({
     model,
     think,
@@ -77,6 +166,7 @@ export class Ollama {
     num_predict = 4096,
     temperature = 0,
     timeout_ms = this.timeout,
+    on_progress,
   }) {
     if (
       !Number.isInteger(num_ctx) ||
@@ -107,26 +197,43 @@ export class Ollama {
       think,
       messages,
       format: schema,
-      stream: false,
+      stream: typeof on_progress === "function",
       options: { num_ctx, num_predict, temperature },
       keep_alive: "5m",
     }
     const remaining = Math.floor(timeout_ms - (performance.now() - started))
-    const response = await this.json("/api/chat", request, { timeout_ms: remaining })
-    if (
-      response.done !== true ||
-      !["stop", undefined].includes(response.done_reason) ||
-      response.message?.tool_calls?.length ||
-      !response.message?.content?.trim()
-    )
-      throw Error("Incomplete or unexpected model response")
+    const response = request.stream
+      ? await this.streamedChat(request, { timeout_ms: remaining, on_progress })
+      : await this.json("/api/chat", request, { timeout_ms: remaining })
     let output
     try {
-      output = JSON.parse(response.message.content)
-    } catch {
-      throw Error("Model returned invalid JSON")
+      if (
+        response.done !== true ||
+        !["stop", undefined].includes(response.done_reason) ||
+        response.message?.tool_calls?.length ||
+        !response.message?.content?.trim()
+      )
+        throw Error("Incomplete or unexpected model response")
+      try {
+        output = JSON.parse(response.message.content)
+      } catch {
+        throw Error("Model returned invalid JSON")
+      }
+      assertSchema(output, schema)
+    } catch (error) {
+      if (response.stream_progress)
+        error.model_artifacts = {
+          request,
+          request_sha256: sha256(JSON.stringify(request)),
+          partial_response_content: response.message.content,
+          partial_response_content_sha256: sha256(response.message.content),
+          progress: { ...response.stream_progress, status: "failed" },
+          done: response.done,
+          done_reason: response.done_reason ?? null,
+        }
+      if (error.model_artifacts) await on_progress(error.model_artifacts.progress)
+      throw error
     }
-    assertSchema(output, schema)
     return {
       output,
       artifacts: {
@@ -136,6 +243,7 @@ export class Ollama {
         response_content_sha256: sha256(response.message.content),
         done: response.done,
         done_reason: response.done_reason ?? null,
+        ...(response.stream_progress ? { stream_progress: response.stream_progress } : {}),
       },
       provenance: {
         ...metadata,

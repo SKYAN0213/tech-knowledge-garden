@@ -169,7 +169,10 @@ function readBudget(root, file, binding) {
       (attempt.status !== "running" &&
         (!Number.isInteger(attempt.wall_ms) || attempt.wall_ms < 0)) ||
       (attempt.status === "complete" &&
-        (!attempt.result || attempt.result_sha256 !== sha256(JSON.stringify(attempt.result))))
+        (!attempt.result || attempt.result_sha256 !== sha256(JSON.stringify(attempt.result)))) ||
+      (attempt.failure_artifacts &&
+        (attempt.status !== "failed" ||
+          attempt.failure_artifacts_sha256 !== sha256(JSON.stringify(attempt.failure_artifacts))))
     )
       throw Error("Invalid model attempt receipt")
     ids.add(attempt.id)
@@ -338,8 +341,26 @@ export async function prepareRoleProvider(
     }
     ledger.attempts.push(attempt)
     saveBudget(root, file, ledger)
+    let latestProgress,
+      lastProgressWrite = -Infinity
+    const progressFile = `runs/${run}/model-policy/${role}/progress/${attempt.id}.json`
+    const onProgress = (value, force = false) => {
+      latestProgress = value
+      if (!force && value.status === "generating" && now() - lastProgressWrite < 5000) return
+      atomicWrite(root, progressFile, {
+        ...value,
+        attempt_id: attempt.id,
+        request_fingerprint: requestFingerprint,
+        observed_at: new Date().toISOString(),
+      })
+      lastProgressWrite = now()
+    }
     try {
-      const result = await base.structured.call(scoped, { ...configured, timeout_ms: allowance })
+      const result = await base.structured.call(scoped, {
+        ...configured,
+        timeout_ms: allowance,
+        ...(settings.provider === "ollama" ? { on_progress: onProgress } : {}),
+      })
       // The first caller and a resumed caller must receive the same JSON value.
       // Optional provider statistics can be absent; do not invent zero counts.
       const recorded = JSON.parse(
@@ -355,6 +376,10 @@ export async function prepareRoleProvider(
         result: recorded,
         result_sha256: sha256(JSON.stringify(recorded)),
       })
+      if (latestProgress) {
+        onProgress({ ...latestProgress, status: "complete" }, true)
+        attempt.progress_path = progressFile
+      }
       saveBudget(root, file, ledger)
       return recorded
     } catch (error) {
@@ -364,6 +389,14 @@ export async function prepareRoleProvider(
         finished_at: new Date().toISOString(),
         error: error.message,
       })
+      if (latestProgress) {
+        onProgress({ ...latestProgress, status: "failed", error: error.message }, true)
+        attempt.progress_path = progressFile
+      }
+      if (error.model_artifacts) {
+        attempt.failure_artifacts = error.model_artifacts
+        attempt.failure_artifacts_sha256 = sha256(JSON.stringify(error.model_artifacts))
+      }
       delete attempt.result
       delete attempt.result_sha256
       saveBudget(root, file, ledger)

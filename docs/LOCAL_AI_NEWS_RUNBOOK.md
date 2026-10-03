@@ -9002,3 +9002,24 @@ Research 부모/shared=false/크기를 검증하고 실제 원격 raw ZIP을 받
 증거: source-live-debug/nonrobot-editorial-direct-proof-20261004-v1.json, nonrobot-portable-readback-proof-20261004-v1.json, 각 portable Drive 영수증·실제 원격 ZIP, restore-checks/*-actual-remote-20261004-v1, 직접 검토/승인/candidate-approval run. 원고 run은 skhynix-ventures-direct-20261004-v3, skhynix-infrastructure-direct-20261004-v1, mit-instructmesh-direct-20261004-v1이다. Codex에 SK하이닉스 preview.md 열기를 요청한 결과queued였다; 실제 렌더링 확인으로 집계하지 않는다.
 
 WBS2/22·goal active 유지. 이번 목표 turn은 실제 승인3건·복구/Drive검증·공통 원문 선택 결함 수정의 progress다. 다음은 신규 후보6건의 정규 회차 편성, 부족한32칸 실질 조사와 원문 기반 키워드 연결이다. 전체 소급·독립평가·실제 성공7회·정규 회차 공개 검증은 남는다.
+
+## 351. 실제 로컬 모델 추출·작성과 중단 출력 보존
+
+2026-10-04 KST. 직전120초 실패는 서버 로그에서 입력 처리 후 약760토큰을 생성하다 취소된 것으로 확인했다. 정지·메모리 부족으로 판정하지 않는다. 운영 기본 호출 제한은300초이고 실패한 실행만120초를 명시했다. 생성 속도를 높인 결과가 아니라 호출 상태·실패 보존을 보강한 것이다.
+
+Ollama 역할 호출은 공식 `/api/chat` NDJSON 스트림을 읽고, UTF-8 분할·출력 상한·고정 deadline을 지킨다. 최종 완료 frame·JSON·schema 확인 후에만 결과를 저장한다. 비공개 `runs/<run>/model-policy/<role>/progress/<attempt-id>.json`에 상태·경과 시간·frame/출력 문자 수를 기록한다. 생성 중 저장은 최대5초마다, 시작·수신·완료·실패는 즉시다. 문자/frame을 token 수나 사실 검증 결과로 해석하지 않는다. thinking 본문은 저장하지 않는다. [공식 API](https://docs.ollama.com/api/chat), [스트리밍](https://docs.ollama.com/api/streaming).
+
+실패 attempt의 `failure_artifacts`에는 정확한 요청·부분 출력·SHA가 남는다. 아티팩트 SHA를 재검사하며 usable result나 성공 cache로 사용하지 않는다. 잘린 출력·서버 오류·완료 뒤 추가 frame·tool call·schema 실패를 거부한다. OpenAI 경로와 progress callback 없는 기존 호출은 유지한다. 진행·실패 기록은 공개 기사/RSS에 넣지 않는다.
+
+### 실제 검증
+
+- `skhynix-ventures-extract-stream-20261004-v1`: 저장 원문33블록 전체를 두 배치로 처리했다. qwen3.8:27b/think=false/context16384/출력2048/입력10000자/최대3사실/호출300초/총900초다. ledger wall91,292/90,963ms, 출력571/686tokens.6후보 중 구조 통과5, RPM 배포 계획을 completed로 쓴1건은 기존 검증기가 거부했다. 원문을 잘라낸 블록은0이다.
+- 같은 완료 extract CLI 재개에서 state/documents/parses/claims/budget 5파일 SHA와 두 추론 attempt 수가 같았다. 이 재개 검증은 코드 포맷 변경 전 당시 판본에서 수행했다. 기존 승인 기사와733후보 장부 SHA16638e2195aefdef9f19a3cf9b2d839526fdcc2e6c758511c0c2374a65650f55도 불변이다.
+- 원문을 읽고 배포 상태·직접 인용·기술 소유사/공동 연구/화자 관계를 정정해6사실을 검토했다. 로컬 한국어 작성은185초에 완료했다. 원 초안의 SHG/RPM 공정·팹별 설치 범위 혼합, 출범 전 투자에 새 브랜드를 붙인 서술, 화자 이름, 투자 유치/지분 거래 태그를 직접 편집으로 고쳤다. 원래 모델 출력·첫 사실 검토·수정 전후 draft를 보존했다. 현재 draftProblems=[]이지만 editorial_review/public_approved=false다.
+- `skhynix-ventures-stream-timeout-probe-20261004-v1`: 별도 run에 의도한35초 deadline을 지정했다. 약35,033ms 뒤 TimeoutError, 부분 출력1,075자/244frames·SHA·terminal failed progress를 보존했다. claims/reviewed-claims/draft/approved-article은 생성되지 않았다. 최초120초 실패도 보존했다.
+
+표적31검사 최초30통과/1 오류 문구 fixture 정정 후 실패1검사 통과. 이후 실패 아티팩트 변조와 schema 실패 progress 변경의 해당 검사만 확인했다. 코드 Prettier·diff 검사 통과. 실제 호출4건은 추출2·작성1 완료와 의도한 시간 초과1이다. 전체 suite/build/공개 배포는 반복하지 않았다. SHG 원리·RPM 속도 수치가 추출 statement에 빠졌으므로 작은 배치 설정을 운영 기본값으로 승격하지 않았고, 무편집 자동 품질이나 독립 평가 통과로 집계하지 않는다.
+
+기존 archive/v1 경로의 `local-stream-debug-snapshot-20261004-v1`은42파일/43members/원문1판본,218,683bytes,SHA5fac6bf847fa9a3d111e279c86ff50a4b195b3970c82121bc3277a104524af06다. Drive Research 파일11IKsxS6Q7PSfX_LLKs8U1STb-cSjSB40의 부모·크기·shared=false 및 실제 원격 raw ZIP bytes SHA 일치를 확인했다. 증거 snapshot이며 전체 runtime 독립 복구본은 아니다.
+
+증거: `source-live-debug/local-stream-final-proof-20261004-v1.json`, `local-stream-reuse-proof-20261004-v1.json`, 위 두 run과 `archive-staging/local-stream-debug-snapshot-20261004-v1/drive-receipt.json`. 공개 회차·vault·예약은 변경하지 않았다. WBS2/22·goal active·1시간 반복 blocker 없음. 다음은 기존 신규 승인6건의 회차 편성·32칸 조사·원문 키워드 연결이다. 전체 소급·독립평가·실제7회·공개 검증은 남는다.
