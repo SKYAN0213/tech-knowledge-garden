@@ -111,3 +111,20 @@ npm run research:sources -- activate --channel catalog-x46 \
 
 
 2026-10-04 최신 fingerprint의 실제 일일54경로/108창은106완료/2미완료다. 전자신문 AI·더일렉은 최신50 RSS만으로 주간 경계가 확인되지 않는다(feed_cutoff_not_reached). 개별 정상/빈 기간 검증과 일일 활성화는 과거 일주일 전체 수집 보장을 뜻하지 않는다. 현행 daily가 실패를 보존하고 현재-day 창은 수집했다. 다음 보강은 공통 fallback_archive/날짜 목록의 실제 과거 페이지·종료 경계 확인이며 같은 feed 재요청을 반복하지 않는다. 108영수증·원문/parse·장부 고유키 대조는 런북344절을 따른다.
+
+## RSS 보존 범위가 짧은 경로의 주간 보강
+
+RSS가 요청 기간의 이전 경계를 제공하지 않으면 `fallback_archive`에 실제 관측한 날짜 목록과 `path-pages` profile을 등록한다. 목록의 최대 페이지·상세 원문 상한은 관측된 기간 경계를 충분히 포함하도록 제한적으로 설정한다. 날짜의 연도가 없으면 공통 `article_date_resolution: yearless-month-day`와 `max_date_resolution_details`를 사용한다. 원문의 완전한 날짜/본문/제목과 목록 MM-DD를 대조하며 연도를 추정하지 않는다. 목록의 제목 편집이 원문과 실제로 다를 때만 해당 archive에 `rss_title_policy: source_title_authoritative`를 지정한다.
+
+동일 기간의 실패/완료 실행에서 이미 받은 원문은 아래처럼 재사용할 수 있다. 관측 시간이 최신으로 바뀌지 않고 커버리지·승인은 다시 검증한다. 기존 run 입력/원문/checkpoint/의존성이 바뀌거나 새 실행 시작 때 관측이1시간보다 오래됐으면 거부한다.
+
+```sh
+node scripts/research-scan.mjs scan-list \
+  --run etnews-weekly-archive-20261004-v3 --channel etnews-ai-rss \
+  --since 2026-09-27 --until 2026-10-04 \
+  --reuse-source-run etnews-weekly-archive-20261004-v2
+npm run research:daily -- --run media-etnews-weekly-reconcile-20261004-v1 \
+  --reconcile-scan etnews-weekly-archive-20261004-v3
+```
+
+이 명령은 기록된 실행의 재개 예다. 새 기간/변경된 코드에는 새 run ID를 쓴다. 현재 검증 결과와 원문/후보/Drive 증거는 [런북346절](LOCAL_AI_NEWS_RUNBOOK.md#346-rss-주간-누락-보강-실제-수집-및-재개-검증)에 있다.

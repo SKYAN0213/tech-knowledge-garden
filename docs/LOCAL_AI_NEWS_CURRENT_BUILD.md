@@ -1501,3 +1501,31 @@ Tobor portable 검토 ZIP을 Drive 파일16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU에서
 
 
 이번54경로 원문257판본·108창의 수집 파일/일일 plan·영수증·summary·검증 기록을 기존 archiveManifest/packageResearchArchive로 한 비공개 snapshot에 고정했다. ZIP21,701,311bytes/1770members/SHA b90b5454a9d888dced319bf5db43acdd91e1b48c7850278b55219b690626104e를 Drive Research 파일1yl35F2db4YTxpAJNrf-VP6BCoX3xZGBm에 저장했고 metadata ID/부모/크기/shared=false와 실제 원격 raw bytes SHA 일치를 확인했다. 이 묶음은 수집 증거 보관용 archive/v1이며 전체 runtime 독립 복구본으로 표시하지 않는다. 기존 입력은 덮어쓰지 않았다. 영수증: .local/research/local-ai/drive-roundtrip/current54-source-snapshot-20261004-v1/drive-receipt.json. 비공개 delivery-status.html도 현재 실행을 반영해 생성했다. 새 backend 코드는 로컬 커밋하고 다음 코드 릴리스에서 CI/공개 반영을 별도로 확인한다.
+
+
+### 19.255 RSS 주간 누락을 과거 목록으로 보강 — 진행 중
+
+목표는 전자신문 AI/더일렉의 2026-09-27~10-04 주간 구간에서 RSS50건 한계를 실제 과거 목록으로 메우는 것이다. 기존 fallback_archive/path-pages/detail checkpoint를 재사용하며, 기사 승인·공개·예약·다른 출처 설정은 변경하지 않는다. 더일렉의 연도 없는 월·일은 해당 원문의 명시 발표일로만 해소한다. current year/URL/이미지/페이지 UPDATE 날짜를 근거로 쓰지 않는다. 원문/목록/parse ID와 인쇄 날짜를 보존하고 날짜 충돌·차단·읽기 실패·상한 초과는 미완료로 남긴다.
+
+수용 기준은 두 실제 주간 창의 원문·파싱/날짜·기간 경계 검증, 새 원문이 중복 없이 후보 장부에 연결되는 것, 같은 run 재개가 기존 detail checkpoint를 재사용하는 것, 공통 날짜 생략/회귀 표적 검사와 실제 증거 변조 거부, Drive 보관 확인이다. 54경로 전체를 변경 전 지문에서 확인했던 실행은 당시 증거로 보존하며 이번2경로 표적 성공을 전체 최신 수집 성공으로 표시하지 않는다. source-live-debug/media-archive-* 및 etnews-weekly-archive-20261004-v1/thelec-weekly-archive-20261004-v1에서 재개한다.
+
+현재 두 매체 공식 homepage→분야/전체 목록→실제page2를 정책 적용해 저장했다. 전자신문 12페이지는 최신180건과 9/27까지만 있어 더 이전 경계가 필요함을 확인했고 최초 실패는 보존한다. 더일렉은 실제 원문 날짜 확인 중이다. 날짜생략 공통 테스트 첫17개 중16통과/1 fixture의 필수lookback 설정 누락으로 실패; fixture를 수정한 뒤 실패1개만 재검사해 통과했다. 전체 suite를 반복하지 않았다. WBS2/22/goal active; 한시간 반복 blocker 없음.
+
+### 19.255 RSS 주간 누락 보강 — 실제 수집 슬라이스 완료
+
+2026-10-04 KST, 요청 구간 [2026-09-27, 2026-10-04). 기존 54경로/108창 실행의 106성공·2미완료를 보존하고 두 주간 누락만 보강했다. 기존 RSS/fallback_archive/path-pages/원문 상세 파서와 checkpoint를 재사용했다. 매체별 새 crawler는 추가하지 않았다.
+
+- 전자신문 AI `etnews-weekly-archive-20261004-v3`: 13목록 페이지, 후보191/고유key191, 원문·목록205판본/고유205, window_scanned. 목록과 원문 제목의 실제 변형2건은 해당 archive의 명시적 source_title_authoritative 정책으로 원문 제목을 사용하고 양쪽 제목·관계를 보존한다. URL·발표일·전체 본문 검증은 유지한다.
+- 더일렉 `thelec-weekly-archive-20261004-v4`: 11목록 페이지, 후보210/고유210, 원문·목록232판본/고유232, window_scanned. 연도 없는 MM-DD HH:mm 220건을 해당 원문의 완전한 발표일로 해소했다. 제목·월일·본문·exact source/parse/listing 관계를 검증하며 UPDATE 시각이나 이미지 경로로 연도를 추정하지 않는다.
+- 최초 페이지/상한 부족과 제목 충돌 실행은 실패 기록으로 보존했다. 더일렉 v2는 checkpoint 입력 구조를 잘못 읽던 source-reuse guard의 CLI 실패다. state.json에 input 객체가 없음을 확인해 collection-basis+summary+원래 입력 hash로 검증하도록 수정했다.
+- 공통 `--reuse-source-run`은 같은 창의 저장 bytes·불변 parse·원래 입력 hash·fetch/parser/profile 의존성·허용 host·정책 확인·실행 시작 시점의 1시간 이내 관측을 검증한다. 이미 완료된 실행도 원문만 재사용할 수 있으며 예전 커버리지 판정/승인/발행을 물려받지 않는다. 새 창은 새 관측을 요구한다.
+- 최종 두 실행에서 저장 자료204+231=435개를 재사용했다. 같은 실행 재개는 원래 시작 시각에 고정되며 state/list-scan/documents/parses/candidates/archive-reuse 6파일 bytes가 모두 동일했다. checkpoint 때문에 callback이 생략될 때 archive-reuse 목록이 비어 버릴 수 있던 결함을 수정하고 변조된 관측 receipt를 거부한다.
+- 후보 장부는372→733고유key, 신규361건이다. 기존372건의 review_status/event_id를 보존했다. verified73/deferred9/rejected1/unreviewed650. ETnews 재조정과 새 Thelec 최종 실행 병합 후에도 장부 SHA c5668025ed7d90b0d78f52666d65336f4bed380cc92108007417183466d85b64가 유지됐다. URL/key 중복 제거는 같은 사건 확정 판정이 아니다. 자동 승인·신규 공개는 없다.
+
+검증: 최초 좁은17개 중16통과/1 fixture 필수 설정 누락; 수정한 실패1개만 재검사해 통과. source-reuse 최초3/3 후 재개 receipt 회귀를 더한4/4, 기존 제목 정책 회귀1/1을 확인했다. 실제 scan evidence 검증과 연도/source-version/listing-parse 변조 거부도 확인했다. 전체659 suite·build·공개 배포는 반복하지 않았다. 실제 두 수집과 재개 CLI/후보 조정은 모두 exit0이다.
+
+증거: `source-live-debug/media-weekly-final-verification-20261004-v1.json`, `media-weekly-intake-verification-20261004-v1.json`, 각 run의 원문·parse·summary·로그. 기존54경로 당시 fingerprint 증거는 그대로이며 최신2경로 결과를 최신54경로 전체 성공으로 합산하지 않는다.
+
+Drive Research 비공개 묶음 `media-weekly-source-snapshot-20261004-v2`: 원문438판본/parse438,3164members,32,206,074bytes,SHA 3be07f93e5028bdd45bc0b085d336dc2e1e705b86b6954c4b52032fee7f7702f. 파일1dDCdUpiL5eZTyYPgiGbM1MpiuedzZ7PT, Research 부모/shared=false/크기를 읽고 실제 원격 raw bytes SHA 일치를 검증했다. 보관은 기존 archiveManifest/packageResearchArchive의 v1 증거 snapshot이며 전체 runtime portable 복구본이 아니다. 최초 snapshot v1은 실패 CLI run의 documents.json 부재로 packaging 전 중단; 부분 파일을 보존하고 v2에 실패 아티팩트를 별도로 기록해 보관했다. 영수증 `drive-roundtrip/media-weekly-source-snapshot-20261004-v2/drive-receipt.json`.
+
+전체 WBS2/22·goal active 유지. 이번 수집 디버깅 슬라이스만 완료했다. 정규32칸/실제7회, 다중 자료 유형, 정정 재검토 큐, 전수 소급, 독립평가와 전체 승인·발행 목표는 남는다. 1시간 반복 blocker는 없다.

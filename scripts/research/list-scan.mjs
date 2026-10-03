@@ -898,6 +898,99 @@ export function assessPathPage(parse, channel) {
   }
 }
 
+// Resolve an omitted year from the exact article's explicit publication date.
+// Never use the current year, URL digits, thumbnail paths or the page update time.
+export async function resolveYearlessArchiveDates(
+  root,
+  run,
+  fetcher,
+  channel,
+  articleProfiles,
+  listing,
+  remaining,
+  { fetchPolicy = fetchWithPolicy, parse = parseDocument } = {},
+) {
+  const result = { listing, documents: [], parses: [], resolutions: [], reason: null }
+  const ruleId = channel.listing_profile.rule_id
+  const links = (listing.links || []).filter((link) => link.profile_id === ruleId)
+  const profile = listing.link_profiles?.find((entry) => entry.id === ruleId)
+  if (
+    listing.status !== "extracted" ||
+    !listing.quality?.required_fields_present ||
+    !profile ||
+    profile.status !== "matched" ||
+    profile.truncated ||
+    !links.length ||
+    profile.selected_items !== links.length ||
+    profile.matched_links !== links.length
+  )
+    return { ...result, reason: "archive_listing_profile_incomplete" }
+  if (links.length > remaining)
+    return { ...result, reason: "archive_date_resolution_budget_exceeded" }
+  const resolved = new Map(),
+    seen = new Set()
+  for (const link of links) {
+    const printed = link.listed_date_text
+    const match =
+      typeof printed === "string" && printed.match(/^(\d{2}-\d{2}) ([01]\d|2[0-3]):[0-5]\d$/)
+    try {
+      assertURL(link.url, channel.allowed_hosts)
+      if (
+        !new RegExp(channel.item_pattern).test(canonicalURL(link.url)) ||
+        seen.has(canonicalURL(link.url)) ||
+        !link.text?.trim() ||
+        !match ||
+        link.published_at
+      )
+        return { ...result, reason: "archive_yearless_date_invalid" }
+      seen.add(canonicalURL(link.url))
+      const id = sourceId(link.url)
+      const document = await run.stage("detail-" + id, { url: link.url }, () =>
+        fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
+      )
+      if (!["captured", "not_modified"].includes(document.fetch_status))
+        return { ...result, reason: "archive_date_source_" + document.fetch_status }
+      result.documents.push(document)
+      const profiles = articleProfiles.filter((p) =>
+        new RegExp(p.url_pattern).test(document.final_url),
+      )
+      if (profiles.length !== 1 || profiles[0].options?.publication_date_from_listing === true)
+        return { ...result, reason: "archive_date_profile_missing_or_circular" }
+      const options = profiles[0].options
+      const parsed = await run.stage("parse-" + id, { document, options }, () =>
+        parse(root, document, options),
+      )
+      result.parses.push(parsed)
+      const date = parseResearchDate(parsed.dates?.published_at)
+      if (
+        parsed.status !== "extracted" ||
+        !parsed.quality?.required_fields_present ||
+        !parsed.blocks?.length ||
+        !date ||
+        date.day.slice(5) !== match[1] ||
+        comparableTitle(parsed.title) !== comparableTitle(link.text)
+      )
+        return { ...result, reason: "archive_article_date_missing_or_conflict" }
+      const evidence = {
+        url: link.url,
+        listed_date_text: printed,
+        published_at: date.day,
+        source_version_id: document.source_version_id,
+        parse_id: parsed.parse_id,
+        listing_source_version_id: listing.source_version_id,
+        listing_parse_id: listing.parse_id,
+        profile_id: ruleId,
+      }
+      result.resolutions.push(evidence)
+      resolved.set(link, { ...link, published_at: date.day, date_resolution: evidence })
+    } catch (error) {
+      return { ...result, reason: "archive_date_resolution_failed", error: error.message }
+    }
+  }
+  result.listing = { ...listing, links: listing.links.map((link) => resolved.get(link) || link) }
+  return result
+}
+
 export async function scanPathPagesRoute(
   root,
   run,
@@ -954,13 +1047,45 @@ export async function scanPathPagesRoute(
     indexDocuments.push(document)
     documents.push(document)
     const { content_block_xpath: _unused, ...listingParseOptions } = channel.parse_options || {}
-    const parsed = await run.stage(
+    let parsed = await run.stage(
       `listing-parse-page-${pageNumber}`,
       { document, options: listingParseOptions },
       () => parse(root, document, { language: channel.language, ...listingParseOptions }),
     )
     parses.push(parsed)
     page.parse_id = parsed.parse_id
+    if (channel.listing_profile.article_date_resolution !== undefined) {
+      const budget = channel.listing_profile.max_date_resolution_details
+      if (
+        channel.listing_profile.article_date_resolution !== "yearless-month-day" ||
+        !Number.isSafeInteger(budget) ||
+        budget < 1 ||
+        budget > 500
+      )
+        throw Error("Invalid archive article date resolution policy")
+      summary.date_resolutions ||= []
+      const resolution = await resolveYearlessArchiveDates(
+        root,
+        run,
+        fetcher,
+        channel,
+        articleProfiles,
+        parsed,
+        budget - summary.date_resolutions.length,
+        { fetchPolicy, parse },
+      )
+      documents.push(...resolution.documents)
+      parses.push(...resolution.parses)
+      summary.date_resolutions.push(...resolution.resolutions)
+      page.date_resolution_count = resolution.resolutions.length
+      if (resolution.reason) {
+        page.reason = resolution.reason
+        summary.reason = resolution.reason
+        if (resolution.error) page.error = resolution.error
+        return { summary, indexDocuments, documents, parses, candidates }
+      }
+      parsed = resolution.listing
+    }
     const assessment = assessPathPage(parsed, channel)
     page.status = assessment.status
     page.reason = assessment.reason
@@ -1023,8 +1148,11 @@ export async function scanPathPagesRoute(
     fetchPolicy,
     parse,
   })
-  documents.push(...inspected.documents)
-  parses.push(...inspected.parses)
+  for (const document of inspected.documents)
+    if (!documents.some((d) => d.source_version_id === document.source_version_id))
+      documents.push(document)
+  for (const parsed of inspected.parses)
+    if (!parses.some((p) => p.parse_id === parsed.parse_id)) parses.push(parsed)
   candidates.push(...inspected.candidates)
   summary.details = inspected.details
   summary.candidate_count = candidates.length

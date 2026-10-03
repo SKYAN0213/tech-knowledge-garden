@@ -130,9 +130,19 @@ export function validateDailyRoutes(config, routes) {
           !route.allowed_hosts?.includes(fallbackURL.hostname) ||
           !route.item_pattern ||
           !Array.isArray(fallback.excluded_categories) ||
-          !fallback.excluded_categories.length ||
+          (fallback.rss_title_policy !== undefined &&
+            !["must_match", "source_title_authoritative"].includes(fallback.rss_title_policy)) ||
           !Array.isArray(listingRules) ||
-          !listingRules.some((rule) => rule.id === fallback.rule_id && rule.category_xpath)
+          !listingRules.some(
+            (rule) =>
+              rule.id === fallback.rule_id &&
+              (!fallback.excluded_categories.length || rule.category_xpath),
+          ) ||
+          (fallback.article_date_resolution !== undefined &&
+            (fallback.article_date_resolution !== "yearless-month-day" ||
+              !Number.isSafeInteger(fallback.max_date_resolution_details) ||
+              fallback.max_date_resolution_details < 1 ||
+              fallback.max_date_resolution_details > 500))
         )
           throw Error("Daily fallback archive profile is incomplete: " + entry.channel_id)
       }

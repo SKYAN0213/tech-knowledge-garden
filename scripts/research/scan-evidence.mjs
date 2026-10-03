@@ -36,6 +36,42 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
       throw Error("Stored detail documents and parses must agree")
     assertStoredEvidence(root, scan.documents, scan.parses)
   }
+  if (scan.summary.date_resolutions !== undefined) {
+    if (!Array.isArray(scan.summary.date_resolutions) || scan.summary.date_resolutions.length > 500)
+      throw Error("Invalid archive date resolution evidence")
+    const seen = new Set()
+    for (const evidence of scan.summary.date_resolutions) {
+      const source = scan.documents.find((d) => d.source_version_id === evidence.source_version_id)
+      const article = scan.parses.find((p) => p.parse_id === evidence.parse_id)
+      const listing = scan.parses.find((p) => p.parse_id === evidence.listing_parse_id)
+      const printed = evidence.listed_date_text?.match(/^(\d{2}-\d{2}) ([01]\d|2[0-3]):[0-5]\d$/)
+      const day = parseResearchDate(article?.dates?.published_at)?.day
+      const link = listing?.links?.find(
+        (l) =>
+          l.profile_id === evidence.profile_id &&
+          canonicalURL(l.url) === canonicalURL(evidence.url) &&
+          l.listed_date_text === evidence.listed_date_text,
+      )
+      if (
+        !source ||
+        !article ||
+        !listing ||
+        !link ||
+        !printed ||
+        !day ||
+        seen.has(evidence.url) ||
+        canonicalURL(source.original_url) !== canonicalURL(evidence.url) ||
+        article.source_version_id !== source.source_version_id ||
+        listing.source_version_id !== evidence.listing_source_version_id ||
+        article.status !== "extracted" ||
+        !article.quality?.required_fields_present ||
+        day !== evidence.published_at ||
+        day.slice(5) !== printed[1]
+      )
+        throw Error("Archive omitted year lacks exact article and listing evidence")
+      seen.add(evidence.url)
+    }
+  }
   for (const candidate of scan.candidates) {
     const document = scan.documents.find((item) =>
       candidate.article_source_version_id

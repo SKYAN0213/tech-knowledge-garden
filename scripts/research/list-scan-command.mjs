@@ -3,7 +3,126 @@ import path from "node:path"
 import { SourceFetcher } from "./fetch.mjs"
 import { registry } from "./discovery.mjs"
 import { collectionBasis } from "./scan-basis.mjs"
-import { DEFAULT_ROOT, RunState, atomicWrite, withLock } from "./run-state.mjs"
+import { DEFAULT_ROOT, RunState, atomicWrite, readJSON, withLock } from "./run-state.mjs"
+import { loadStoredSourceRun } from "./parser.mjs"
+import { assertURL } from "./fetch.mjs"
+import { fetchWithPolicy } from "./source-policy.mjs"
+import { sha256 } from "./contracts.mjs"
+
+// Reuse bytes from the same window without advancing their observation
+// time or reusing a previous coverage judgment or approval.
+export function createArchiveSourceReuse(
+  root,
+  sourceRun,
+  channel,
+  basis,
+  window,
+  { now = Date.now(), fetchPolicy = fetchWithPolicy } = {},
+) {
+  if (!/^[A-Za-z0-9_-]+$/.test(sourceRun || "")) throw Error("Exact archive source run required")
+  const previous = readJSON(root, `runs/${sourceRun}/state.json`)
+  const summary = readJSON(root, `runs/${sourceRun}/list-scan.json`)
+  const old = readJSON(root, `runs/${sourceRun}/collection-basis.json`)
+  const earlierReuse = readJSON(root, `runs/${sourceRun}/archive-reuse.json`)
+  const input = {
+    schema: "research-list-run-input/v2",
+    channel_id: summary?.channel_id,
+    since: summary?.window?.since,
+    until_exclusive: summary?.window?.until_exclusive,
+    reuse_listing_run: null,
+    collection_basis: old,
+    ...(earlierReuse ? { reuse_source_run: earlierReuse.source_run?.source_run } : {}),
+  }
+  if (
+    !previous ||
+    previous.input_hash !== sha256(JSON.stringify(input)) ||
+    summary?.channel_id !== channel.channel_id ||
+    summary.window.since !== window.since ||
+    summary.window.until_exclusive !== window.until ||
+    summary?.pagination !== "path-pages" ||
+    !(
+      summary.status === "window_scanned" ||
+      (summary.status === "incomplete" &&
+        [
+          "archive_cutoff_not_reached",
+          "detail_budget_exceeded",
+          "archive_date_resolution_budget_exceeded",
+          "detail_incomplete",
+        ].includes(summary.reason))
+    ) ||
+    JSON.stringify(old?.dependencies) !== JSON.stringify(basis.dependencies) ||
+    old?.implementation?.parser_sha256 !== basis.implementation.parser_sha256 ||
+    old?.article_profiles_sha256 !== basis.article_profiles_sha256
+  )
+    throw Error("Archive reuse requires the same window and unchanged fetch/parser dependencies")
+  const stored = loadStoredSourceRun(root, sourceRun)
+  const available = new Map(),
+    used = new Map()
+  for (const doc of stored.documents) {
+    if (!["captured", "not_modified"].includes(doc.fetch_status)) continue
+    const age = now - Date.parse(doc.observed_at)
+    if (
+      !Number.isFinite(age) ||
+      age < -60000 ||
+      age > 3600000 ||
+      doc.policy_status !== "checked" ||
+      doc.policy?.allowed !== true
+    )
+      throw Error("Archive source reuse needs recent policy-checked observations")
+    assertURL(doc.original_url, channel.allowed_hosts)
+    assertURL(doc.final_url, channel.allowed_hosts)
+    const prior = available.get(doc.original_url)
+    if (prior && prior.source_version_id !== doc.source_version_id)
+      throw Error("Archive reuse source URL has conflicting versions")
+    available.set(doc.original_url, doc)
+  }
+  return {
+    reference: stored.identity,
+    available,
+    used,
+    fetchPolicy: async (root, fetcher, url, options) => {
+      assertURL(url, options.allowed_hosts)
+      const doc = available.get(url)
+      if (!doc) return fetchPolicy(root, fetcher, url, options)
+      used.set(url, { url, source_version_id: doc.source_version_id, observed_at: doc.observed_at })
+      return doc
+    },
+  }
+}
+
+export function preserveArchiveReuseReceipt(root, runId, reuse) {
+  const relative = `runs/${runId}/archive-reuse.json`
+  const existing = readJSON(root, relative)
+  if (existing && JSON.stringify(existing.source_run) !== JSON.stringify(reuse.reference))
+    throw Error("Archive reuse receipt source changed")
+  const sources = new Map((existing?.reused_sources || []).map((item) => [item.url, item]))
+  for (const item of sources.values()) {
+    const doc = reuse.available.get(item.url)
+    if (
+      !doc ||
+      doc.source_version_id !== item.source_version_id ||
+      doc.observed_at !== item.observed_at
+    )
+      throw Error("Archive reuse receipt observation is invalid")
+  }
+  for (const [url, item] of reuse.used) {
+    if (sources.has(url) && JSON.stringify(sources.get(url)) !== JSON.stringify(item))
+      throw Error("Archive reused observation changed")
+    sources.set(url, item)
+  }
+  const receipt = {
+    schema: "research-archive-source-reuse/v1",
+    source_run: reuse.reference,
+    reused_sources: [...sources.values()],
+    observation_times_preserved: true,
+    coverage_reused: false,
+    candidate_approved: false,
+    candidate_published: false,
+  }
+  if (!existing || JSON.stringify(existing) !== JSON.stringify(receipt))
+    atomicWrite(root, relative, receipt)
+  return receipt
+}
 import {
   validDay,
   loadReusableSinglePageListing,
@@ -48,6 +167,14 @@ export async function executeListScan(v) {
   if (!channel) throw Error("Unknown channel: " + v.channel[0])
   if (channel.onboarding && channel.onboarding.collection_enabled !== true)
     throw Error("Source registration is pending collection configuration: " + channel.channel_id)
+  if (
+    v["reuse-source-run"] &&
+    (v["reuse-source-run"] === v.run ||
+      v["reuse-listing-run"] ||
+      channel.method !== "rss" ||
+      !channel.listing_profile?.fallback_archive)
+  )
+    throw Error("--reuse-source-run requires a distinct RSS archive source run")
   const profiles = acquisition.article_profiles || []
   const basis = collectionBasis(channel, profiles)
   return withLock(root, "run-" + v.run, async () => {
@@ -58,6 +185,7 @@ export async function executeListScan(v) {
       until_exclusive: v.until,
       reuse_listing_run: v["reuse-listing-run"] || null,
       collection_basis: basis,
+      ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
     })
     const fetcher = new SourceFetcher(root)
     await run.stage("collection-basis", basis, async () => basis)
@@ -136,13 +264,39 @@ export async function executeListScan(v) {
           max_pages: archive.max_pages,
           rule_id: archive.rule_id,
           excluded_categories: archive.excluded_categories || [],
+          ...(archive.rss_title_policy ? { rss_title_policy: archive.rss_title_policy } : {}),
+          ...(archive.article_date_resolution
+            ? {
+                article_date_resolution: archive.article_date_resolution,
+                max_date_resolution_details: archive.max_date_resolution_details,
+              }
+            : {}),
           require_title_match: true,
         },
       }
-      const fallback = await scanPathPagesRoute(root, run, fetcher, archiveChannel, profiles, {
-        since: v.since,
-        until: v.until,
-      })
+      const reuse = v["reuse-source-run"]
+        ? createArchiveSourceReuse(
+            root,
+            v["reuse-source-run"],
+            channel,
+            basis,
+            {
+              since: v.since,
+              until: v.until,
+            },
+            { now: Date.parse(run.state.started_at) },
+          )
+        : null
+      const fallback = await scanPathPagesRoute(
+        root,
+        run,
+        fetcher,
+        archiveChannel,
+        profiles,
+        { since: v.since, until: v.until },
+        reuse ? { fetchPolicy: reuse.fetchPolicy } : {},
+      )
+      if (reuse) preserveArchiveReuseReceipt(root, v.run, reuse)
       fallback.summary.fallback = {
         source: "bounded-feed",
         reason: result.summary.reason,
