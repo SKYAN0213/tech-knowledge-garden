@@ -439,7 +439,33 @@ export async function mergeBacklog(file, candidates) {
         // A listing page version cannot invalidate an editorial decision.
         // Compare parsed detail content, or conservatively use source/parse
         // versions when the older decision has no comparable fingerprint.
-        if (c.article_source_version_id) {
+        const reviewedPrimaryVersion =
+          old.approval && !old.approval.source_alternative_resolution_run
+            ? old.approval.source_version_id
+            : old.article_source_version_id
+        const relatedRecord = Boolean(
+          old.approval &&
+          matchedSourceRecordKeys.size &&
+          reviewedPrimaryVersion &&
+          c.article_source_version_id &&
+          reviewedPrimaryVersion.split(":")[0] !== c.article_source_version_id.split(":")[0],
+        )
+        if (relatedRecord) {
+          old.related_source_observations = mergeUniqueDiscovery(
+            old.related_source_observations || [],
+            [
+              {
+                source_url: normalized[0],
+                article_source_version_id: c.article_source_version_id,
+                article_parse_id: c.article_parse_id || null,
+                article_content_sha256: c.article_content_sha256 || null,
+                observed_at: c.article_observed_at || c.discovered_at,
+                decision: "review_required",
+              },
+            ],
+          )
+        }
+        if (c.article_source_version_id && !relatedRecord) {
           const observedAt = c.article_observed_at || c.discovered_at
           const previousObservedAt = old.article_observed_at || old.discovered_at
           const observedMs = Date.parse(observedAt)
@@ -450,14 +476,26 @@ export async function mergeBacklog(file, candidates) {
             old.article_source_version_id || old.disposition?.source_version_id
           const previousContent =
             old.article_content_sha256 || old.disposition?.article_content_sha256
+          const sameApprovedSource =
+            old.approval &&
+            !old.approval.source_alternative_resolution_run &&
+            old.approval.source_version_id?.split(":")[0] ===
+              c.article_source_version_id.split(":")[0]
           const reviewedVersion =
-            old.disposition?.source_version_id || old.identity?.source_version_id || previousVersion
+            old.disposition?.source_version_id ||
+            old.identity?.source_version_id ||
+            (sameApprovedSource ? old.approval.source_version_id : null) ||
+            previousVersion
           const reviewedContent =
             old.disposition?.article_content_sha256 ||
             old.identity?.article_content_sha256 ||
+            (sameApprovedSource ? old.approval.article_content_sha256 : null) ||
             previousContent
           const reviewedParse =
-            old.disposition?.parse_id || old.identity?.parse_id || old.article_parse_id
+            old.disposition?.parse_id ||
+            old.identity?.parse_id ||
+            (sameApprovedSource ? old.approval.parse_id : null) ||
+            old.article_parse_id
           const comparableContent = Boolean(previousContent && c.article_content_sha256)
           if (
             previousObservedAt &&
@@ -480,7 +518,7 @@ export async function mergeBacklog(file, candidates) {
             if (
               changeBasis &&
               (old.review_status === "rejected" ||
-                (old.review_status === "verified" && old.identity))
+                (old.review_status === "verified" && (old.identity || old.approval)))
             ) {
               if (old.review_status === "rejected") {
                 old.disposition_history = [
@@ -493,7 +531,7 @@ export async function mergeBacklog(file, candidates) {
                   },
                 ]
                 delete old.disposition
-              } else {
+              } else if (old.identity) {
                 old.identity_history = [
                   ...(old.identity_history || []),
                   {
@@ -513,6 +551,10 @@ export async function mergeBacklog(file, candidates) {
               old.source_revision_alert = {
                 change_basis: changeBasis,
                 previous_source_version_id: previousVersion || null,
+                reviewed_source_version_id: reviewedVersion || null,
+                reviewed_parse_id: reviewedParse || null,
+                previous_parse_id: old.article_parse_id || null,
+                current_parse_id: c.article_parse_id || null,
                 current_source_version_id: c.article_source_version_id,
                 previous_content_sha256: reviewedContent || null,
                 current_content_sha256: c.article_content_sha256 || null,
@@ -525,6 +567,7 @@ export async function mergeBacklog(file, candidates) {
                 previousContent !== c.article_content_sha256)
             ) {
               old.source_revision_alert.current_source_version_id = c.article_source_version_id
+              old.source_revision_alert.current_parse_id = c.article_parse_id || null
               old.source_revision_alert.current_content_sha256 = c.article_content_sha256 || null
               old.source_revision_alert.detected_at = observedAt
             }

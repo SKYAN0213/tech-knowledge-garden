@@ -265,7 +265,10 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
     ...structuredClone(readJSON(f.root, "runs/approved/parses.json")[0]),
     source_version_id: currentVersion,
     parse_id: currentParseId,
-    dates: { ...readJSON(f.root, "runs/approved/parses.json")[0].dates, observed_at: currentDocument.observed_at },
+    dates: {
+      ...readJSON(f.root, "runs/approved/parses.json")[0].dates,
+      observed_at: currentDocument.observed_at,
+    },
   }
   currentParse.blocks = currentParse.blocks.map((block, index) => ({
     ...block,
@@ -325,7 +328,10 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
   assert.equal(updated.approval.parse_id, currentParseId)
   assert.equal(updated.approval.reviewed_source_version_id, f.document.source_version_id)
   assert.equal(receipt.source_revision.sources[0].body_bytes_identical, false)
-  assert.equal(receipt.source_revision.sources[0].article_content_sha256, currentCandidate.article_content_sha256)
+  assert.equal(
+    receipt.source_revision.sources[0].article_content_sha256,
+    currentCandidate.article_content_sha256,
+  )
 })
 
 test("legacy candidate with missing source identity is enriched from its exact approved source", async (t) => {
@@ -344,6 +350,79 @@ test("legacy candidate with missing source identity is enriched from its exact a
   assert.equal(updated.article_parse_id, parse.parse_id)
   assert.equal(updated.article_content_sha256, articleContentFingerprint(parse))
   assert.equal(updated.review_status, "verified")
+})
+
+test("an existing approved article can rebind identical parsed content after an explicit revision review", async (t) => {
+  const f = fixture(t)
+  await link(f)
+  const before = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const document = { ...f.document, observed_at: "2026-10-02T00:00:00Z" }
+  const parse = {
+    ...structuredClone(readJSON(f.root, "runs/approved/parses.json")[0]),
+    parse_id: sha256("revision-parse"),
+  }
+  parse.dates.observed_at = document.observed_at
+  parse.blocks = parse.blocks.map((b, i) => ({ ...b, block_id: parse.parse_id + ":b" + i }))
+  const candidate = {
+    ...before,
+    article_parse_id: parse.parse_id,
+    review_status: "deferred",
+    reason: "Parse revision review required",
+    source_revision_alert: { change_basis: "parse_version" },
+  }
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [candidate],
+  })
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  for (const [file, value] of Object.entries({
+    "documents.json": [document],
+    "parses.json": [parse],
+    "candidates.json": [candidate],
+  }))
+    atomicWrite(f.root, "runs/current-revision/" + file, value)
+  const reviewPath = "runs/current-revision/revision-review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-candidate-approval-source-revision-review/v1",
+    candidate_key: candidate.key,
+    event_id: f.article.event_id,
+    approved_run: "approved",
+    candidate_source_run: "current-revision",
+    reviewer: "fixture reviewer",
+    reviewed_at: "2026-10-03",
+    source_read: true,
+    revision_read: true,
+    title_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+    same_content_reason: "Exact article title, body and dates are identical.",
+    source_urls: f.article.source_urls,
+  })
+  const args = {
+    root: f.root,
+    runId: "rebind",
+    approvedRunId: "approved",
+    candidateKey: candidate.key,
+    candidateSourceRunId: "current-revision",
+    sourceRevisionReviewPath: reviewPath,
+    backlogFile: f.backlogFile,
+  }
+  const result = await recordCandidateApproval(args)
+  const updated = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(updated.review_status, "verified")
+  assert.equal(updated.event_id, before.event_id)
+  assert.equal(updated.source_revision_alert, undefined)
+  assert.equal(updated.approval.parse_id, parse.parse_id)
+  assert.deepEqual(updated.approval_history[0].approval, before.approval)
+  const bytes = fs.readFileSync(f.backlogFile)
+  assert.deepEqual(await recordCandidateApproval(args), result)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  parse.blocks[0].text = "A different article fact"
+  parse.blocks[0].locator.text_hash = sha256(parse.blocks[0].text)
+  atomicWrite(f.root, "runs/current-revision/parses.json", [parse])
+  await assert.rejects(() => recordCandidateApproval(args), /Stored parse differs/)
 })
 
 test("approval link rejects changed evidence, article and conflicting identity before writing", async (t) => {

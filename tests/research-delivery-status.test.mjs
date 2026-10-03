@@ -18,9 +18,28 @@ import {
   renderSupplementalCoverageTable,
   renderIntegratedCoveragePanel,
   sourceBaselineEvidence,
+  loadLatestSourceRevisionReview,
 } from "../scripts/research/delivery-status.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+
+test("revision status reports missing or invalid evidence without claiming zero pending reviews", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "revision-status-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  assert.deepEqual(loadLatestSourceRevisionReview(root, "missing-backlog.json"), {
+    status: "missing",
+    pending: null,
+  })
+  fs.mkdirSync(path.join(root, "review-queues", "broken"), { recursive: true })
+  fs.writeFileSync(
+    path.join(root, "review-queues", "broken", "queue.json"),
+    JSON.stringify({ schema: "research-source-revision-queue/v1", counts: { pending: 0 } }),
+  )
+  const result = loadLatestSourceRevisionReview(root, "missing-backlog.json")
+  assert.equal(result.status, "requires_new_snapshot")
+  assert.equal(result.pending, null)
+  assert.match(result.reason, /snapshot hash mismatch/)
+})
 
 test("integrated coverage panel does not replace the full grid with a narrow latest run", () => {
   const html = renderIntegratedCoveragePanel({

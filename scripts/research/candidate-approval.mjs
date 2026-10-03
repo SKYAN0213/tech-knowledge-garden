@@ -74,7 +74,9 @@ function verifySameSourceRevision({
 
   const sources = sourceURLs.map((url) => {
     const oldDocuments = approvedDocuments.filter((item) => canonicalURL(item.original_url) === url)
-    const newDocuments = currentRun.documents.filter((item) => canonicalURL(item.original_url) === url)
+    const newDocuments = currentRun.documents.filter(
+      (item) => canonicalURL(item.original_url) === url,
+    )
     if (oldDocuments.length !== 1 || newDocuments.length !== 1)
       throw Error("Approved and current source runs must contain every cited source")
     const oldDocument = oldDocuments[0]
@@ -123,7 +125,10 @@ function verifySameSourceRevision({
   )
     throw Error("Reviewed source revision does not match the current candidate and event date")
   assertReviewDate(review.reviewed_at, {
-    notBefore: [...currentRun.documents.map((item) => item.observed_at), candidate.source_published_at],
+    notBefore: [
+      ...currentRun.documents.map((item) => item.observed_at),
+      candidate.source_published_at,
+    ],
   })
   return {
     observation_run: candidateSourceRunId,
@@ -155,7 +160,7 @@ export async function recordCandidateApproval({
     runId === approvedRunId ||
     !/^[a-zA-Z0-9_-]+$/.test(candidateKey || "") ||
     (candidateSourceRunId && !/^[a-zA-Z0-9_-]+$/.test(candidateSourceRunId)) ||
-    (Boolean(candidateSourceRunId) !== Boolean(sourceRevisionReviewPath)) ||
+    Boolean(candidateSourceRunId) !== Boolean(sourceRevisionReviewPath) ||
     (candidateSourceRunId && candidateSourceRunId === runId) ||
     (sourceAlternativeResolutionRunId &&
       (!/^[a-zA-Z0-9_-]+$/.test(sourceAlternativeResolutionRunId) ||
@@ -316,10 +321,12 @@ async function linkCandidateApproval({
         !article.source_urls.some((articleURL) => canonicalURL(articleURL) === sourceUrl) ||
         (!samePublicationDate(candidate.source_published_at, article.article_review.published_at) &&
           !alternativeConfirmsEventDate) ||
-        (!sourceAlternative && !sourceRevision &&
+        (!sourceAlternative &&
+          !sourceRevision &&
           candidate.article_source_version_id &&
           candidate.article_source_version_id !== document.source_version_id) ||
-        (!sourceAlternative && !sourceRevision &&
+        (!sourceAlternative &&
+          !sourceRevision &&
           candidate.article_parse_id &&
           candidate.article_parse_id !== parse.parse_id) ||
         (!sourceAlternative &&
@@ -414,7 +421,47 @@ async function linkCandidateApproval({
           JSON.stringify(receiptWithoutAlternativeDate)
       )
         throw Error("Candidate approval link changed; use a new run ID")
+      let reboundChanged = false
       if (candidate.approval) {
+        const priorBinding = candidate.approval
+        const rebound =
+          sourceRevision &&
+          !sourceAlternative &&
+          ["verified", "deferred"].includes(candidate.review_status) &&
+          candidate.event_id === article.event_id &&
+          priorBinding.approved_run === approvedRunId &&
+          priorBinding.article_sha256 === receipt.article_sha256 &&
+          !priorBinding.source_alternative_resolution_run
+        if (rebound) {
+          const binding = {
+            approved_run: approvedRunId,
+            article_sha256: receipt.article_sha256,
+            source_version_id: receipt.source_version_id,
+            parse_id: receipt.parse_id,
+            article_content_sha256: contentSha,
+            reviewed_source_version_id: document.source_version_id,
+            reviewed_parse_id: parse.parse_id,
+            source_revision: sourceRevision,
+          }
+          if (JSON.stringify(priorBinding) !== JSON.stringify(binding)) {
+            candidate.approval_history = [
+              ...(candidate.approval_history || []),
+              {
+                approval: priorBinding,
+                review_status: candidate.review_status,
+                source_revision_alert: candidate.source_revision_alert || null,
+                reviewed_at: candidate.reviewed_at || null,
+              },
+            ]
+            candidate.approval = binding
+            candidate.review_status = "verified"
+            candidate.reviewed_at = sourceRevision.reviewed_at
+            delete candidate.source_revision_alert
+            delete candidate.reason
+            backlog.updated_at = new Date().toISOString()
+            reboundChanged = true
+          }
+        }
         if (
           candidate.review_status !== "verified" ||
           candidate.event_id !== article.event_id ||
@@ -430,7 +477,7 @@ async function linkCandidateApproval({
                     source_url: sourceUrl,
                     source_alternative_resolution_run: sourceAlternative.run_id,
                     source_alternative_resolution_sha256: sourceAlternative.receipt_sha256,
-                }
+                  }
                 : {}),
               ...(sourceRevision
                 ? {
@@ -475,7 +522,7 @@ async function linkCandidateApproval({
                 source_url: sourceUrl,
                 source_alternative_resolution_run: sourceAlternative.run_id,
                 source_alternative_resolution_sha256: sourceAlternative.receipt_sha256,
-            }
+              }
             : {}),
           ...(sourceRevision
             ? {
@@ -522,6 +569,7 @@ async function linkCandidateApproval({
         backlog.updated_at = new Date().toISOString()
         atomicWrite(backlogRoot, backlogName, backlog)
       }
+      if (reboundChanged) atomicWrite(backlogRoot, backlogName, backlog)
       if (!previous) atomicWrite(root, receiptPath, receipt)
       return {
         candidate_key: candidateKey,

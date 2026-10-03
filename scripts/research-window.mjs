@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { approvalSourceChange } from "./article-identity.mjs"
 
 export const BACKLOG_PATH = ".local/research/candidate-backlog.json"
 const day = 86400000
@@ -80,7 +81,7 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
       publication,
       possible_publications,
       next_route:
-        c.source_revision_alert && (publication || c.approval)
+        (c.source_revision_alert || approvalSourceChange(c)) && (publication || c.approval)
           ? "review-source-revision"
           : publication
             ? "already-published"

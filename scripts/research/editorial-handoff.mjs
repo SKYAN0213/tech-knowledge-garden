@@ -4,7 +4,11 @@ import { canonicalURL, editions, extractArticles, parseNote } from "../garden.mj
 import { readBacklog, researchWindow } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
 import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
-import { projectIntakeOntology, relatedCandidateKeys } from "./intake-ontology.mjs"
+import {
+  projectIntakeOntology,
+  relatedCandidateKeys,
+  approvalSourceChange,
+} from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { collectedCandidateReceipt } from "./scan-completion.mjs"
@@ -57,7 +61,10 @@ function queueEntry(candidate, observedAttempts) {
     article_source_version_id: candidate.article_source_version_id || null,
     article_parse_id: candidate.article_parse_id || null,
     article_content_sha256: candidate.article_content_sha256 || null,
-    source_revision_alert: Boolean(candidate.source_revision_alert),
+    source_revision_alert: Boolean(
+      candidate.source_revision_alert || approvalSourceChange(candidate),
+    ),
+    source_revision_details: candidate.source_revision_alert || approvalSourceChange(candidate),
     approval: candidate.approval
       ? {
           approved_run: candidate.approval.approved_run,

@@ -1,6 +1,8 @@
 import { canonicalURL } from "../garden.mjs"
 import { titleDayKey } from "../article-identity.mjs"
 
+export { approvalSourceChange } from "../article-identity.mjs"
+
 function sharesReviewedApproval(a, b) {
   const approvalA = a.approval
   const approvalB = b.approval

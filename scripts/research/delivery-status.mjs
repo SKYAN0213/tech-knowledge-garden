@@ -20,6 +20,47 @@ import { sameEventAliasSuppressions } from "./scan-completion.mjs"
 import { verifyStoredPartialCandidates } from "./scan-evidence.mjs"
 import { safePath } from "./run-state.mjs"
 import { projectVerifiedCandidateContentFingerprints } from "./candidate-content-fingerprint.mjs"
+import { inspectSourceRevisionQueue } from "./source-revision-queue.mjs"
+
+export function loadLatestSourceRevisionReview(root, backlogFile) {
+  const directory = path.join(root, "review-queues")
+  if (!fs.existsSync(directory)) return { status: "missing", pending: null }
+  const snapshots = fs
+    .readdirSync(directory, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /^[A-Za-z0-9_-]+$/.test(e.name))
+    .map((e) => ({ id: e.name, file: path.join(directory, e.name, "queue.json") }))
+    .filter((e) => fs.existsSync(e.file))
+    .sort((a, b) => fs.statSync(b.file).mtimeMs - fs.statSync(a.file).mtimeMs)
+  if (!snapshots.length) return { status: "missing", pending: null }
+  const latest = snapshots[0]
+  try {
+    const result = inspectSourceRevisionQueue({ root, snapshot: latest.id, backlogFile })
+    return {
+      status: result.status,
+      snapshot: latest.id,
+      path: result.path,
+      sha256: result.sha256,
+      ...result.counts,
+      entries: result.entries.map((e) => ({
+        candidate_key: e.candidate_key,
+        event_id: e.event_id,
+        reason: e.reason,
+        affected_claims: e.affected_claims.length,
+        dependencies: e.dependencies,
+        comparison_incomplete: e.comparison_incomplete,
+      })),
+      candidate_approved: false,
+      candidate_published: false,
+    }
+  } catch (error) {
+    return {
+      status: "requires_new_snapshot",
+      snapshot: latest.id,
+      pending: null,
+      reason: error.message,
+    }
+  }
+}
 
 const readJSON = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
 const safeCanonical = (url) => {
@@ -1595,6 +1636,10 @@ export function buildDeliveryStatus({
     candidate_source_alternative_resolutions: sourceAlternativeResolutions,
     supplemental_coverage: supplementalCoverage,
     partial_candidate_intakes: loadPartialCandidateIntakeEvidence(absoluteRoot),
+    source_revision_review: loadLatestSourceRevisionReview(
+      absoluteRoot,
+      path.resolve(repo, ".local/research/candidate-backlog.json"),
+    ),
     intake_ontology_audit: intakeOntology,
     existing_briefing_audit: {
       completed_runs: legacyAudit.completed_runs,
@@ -1714,6 +1759,14 @@ export function renderDeliveryStatusHTML(status) {
     ],
     ["기존 발행 감사", `${status.existing_briefing_audit.completed_runs}/7`],
     ["로컬 비교 운영", `${status.local_ai_shadow_operations.completed_runs}/7`],
+    [
+      "원문 변경 재검토",
+      status.source_revision_review?.status === "verified_private_review_queue"
+        ? `${status.source_revision_review.pending}건 · 사실 ${status.source_revision_review.affected_claims}개`
+        : status.source_revision_review?.status === "requires_new_snapshot"
+          ? "새 스냅샷 필요"
+          : "기록 없음",
+    ],
     [
       "독립 수집 재개",
       `${status.supplemental_coverage?.receipt_count || 0}건 · 후보 ${status.supplemental_coverage?.unique_candidate_count || 0}`,

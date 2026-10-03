@@ -8895,3 +8895,31 @@ Tobor portable 검토 ZIP을 Drive 파일16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU에서
 Drive Research 비공개 묶음 `media-weekly-source-snapshot-20261004-v2`: 원문438판본/parse438,3164members,32,206,074bytes,SHA 3be07f93e5028bdd45bc0b085d336dc2e1e705b86b6954c4b52032fee7f7702f. 파일1dDCdUpiL5eZTyYPgiGbM1MpiuedzZ7PT, Research 부모/shared=false/크기를 읽고 실제 원격 raw bytes SHA 일치를 검증했다. 보관은 기존 archiveManifest/packageResearchArchive의 v1 증거 snapshot이며 전체 runtime portable 복구본이 아니다. 최초 snapshot v1은 실패 CLI run의 documents.json 부재로 packaging 전 중단; 부분 파일을 보존하고 v2에 실패 아티팩트를 별도로 기록해 보관했다. 영수증 `drive-roundtrip/media-weekly-source-snapshot-20261004-v2/drive-receipt.json`.
 
 전체 WBS2/22·goal active 유지. 이번 수집 디버깅 슬라이스만 완료했다. 정규32칸/실제7회, 다중 자료 유형, 정정 재검토 큐, 전수 소급, 독립평가와 전체 승인·발행 목표는 남는다. 1시간 반복 blocker는 없다.
+
+
+## 347. 승인 원문의 변경 감지와 기존 근거 재검토
+
+2026-10-04 KST. 54경로 실제 수집과 주간 보완 이후의 후보 장부733건에서 승인 원문 연결6건의 차이를 발견했다. verified+identity만 다시 검토하던 공통 병합기가 verified+approval의 본문 변경을 놓쳤다. 같은 CMS의 다른 언어 원문이 승인된 주 원문을 바꾸는 결함도 재현했다. 승인 원문의 source identity·내용 지문·판본·parse 차이를 공통으로 판정하며 과거 장부에 alert가 없어도 다음 경로를 review-source-revision으로 지정한다. 다른 언어 관측은 related_source_observations에 보존하고 승인 주 원문을 덮어쓰지 않는다.
+
+동일 본문4건(FANUC/Hitachi, Frontiers 연속체 로봇, Yaskawa IR, Universal Robots 합의)은 저장한 제목·발표일·전체 문단을 원문과 대조했다. Yaskawa의 인용 PDF2개도 이전/현재 raw bytes가 같음을 확인했다. 기존 candidate-approval의 명시적 --candidate-source-run/--source-revision-review를 사용해 같은 사건·같은 승인 원고의 근거만 새 관측에 연결했다. approval_history에 이전 연결과 판정을 보존했고 반복 실행에서 영수증·장부 bytes가 그대로였다. 신규 기사·사건·회차·RSS 발행은 생성하지 않았다. 나머지729후보의 JSON 값도 동일하다.
+
+미해결2건은 명확히 구분했다. KUKA FSW는 독일어 승인 원문과 영어 관측 사이의 source_identity_conflict이며 기존 장부의 주 원문 복구가 남는다. KAIST 로봇 손은 원문 문단의 Issue 62→Issue 59 수정이다. 동일 내용 재연결로 처리하지 않으며 해당 quote·주장·승인 원고를 실제 재검토해야 한다. 관련 인용 사실11개와 명시적 기사/회차/Signals/TrendTopics/Knowledge 연결을 새 비공개 큐에 기록했다. 빈 연결을 추측으로 채우지 않는다.
+
+공통 CLI:
+
+```sh
+node scripts/research-revisions.mjs plan --snapshot approved-source-revisions-20261004-v7
+node scripts/research-revisions.mjs inspect --snapshot approved-source-revisions-20261004-v7
+```
+
+큐는 저장 원문 bytes/불변 parse와 승인 원고·사용된 verified 사실만 읽는다. 별도 승인 root는 --approval-root RUN=PATH로 명시한다. backlog/승인 파일/현재 source 파일/구현 fingerprint와 큐 자체 SHA를 고정한다. 같은 입력 재개는 reused=true이고 결과 bytes가 동일하다. 없는 근거는 comparison_incomplete, 장부·구현·근거가 바뀐 기록은 새 snapshot 필요로 표시한다. 조회만으로 승인·Drive 작성·공개를 하지 않는다. 현재 authoring 의존 관계는 생성 당시 local_authoring_snapshot이며 새로운 Drive 권위 판정이 아니다.
+
+v3 큐6건/사실29개에서 동일 내용4건을 실제 재연결한 뒤 최종 v7은2건/사실11개다. 최종 queue.json SHA 13d6f6a39c927d2d21386ec6cc3eee184f93b52f85105b59d6dc88d3d9f96d8d. 같은 원문을 여러 후보가 인용할 때 Map이 한 후보를 누락하던 결함도 실패 재현 후 수정했다. 현황판에는 검증된 최종 큐의 2건·사실11개가 표시되고 기록 부재/무효를 0건으로 표현하지 않는다.
+
+검증은 관련27/27, 후보 승인10/10, 새 큐4개(최초 fixture 손상 검사를 보강한 실패1개만 재검사; 공유 원문 후보 회귀1개는 수정 전 실패/수정 후 성공), 현황판 결손 상태1/1을 확인했다. 전체659 suite·전체54경로·build·공개 배포를 반복하지 않았다. 최초 Mac 임시 경로 realpath/필수 fixture 설정, 문서만 있는 archive/v1 컨테이너와 독립 승인 root 차이는 원인을 확인하고 수정했다. 실패 로그를 삭제하지 않았다. 브라우저가 file URL을 보안 정책으로 거부했으므로 실제 렌더링/상호작용은 미검증이고 HTML의 표시 값·구조만 확인했다.
+
+비공개 Drive 증거 묶음 source-revision-review-snapshot-20261004-v1은 v6까지의 검토와 재연결, 이전/현재 원문13판본·parse14개를 보관한다. 111members/2,913,323bytes, ZIP SHA 40aa57df4c3f6c7914ccfe25b490faf164121ec8be88f01b3b25105a4e1fc9b6. Research 파일12JF8EUkQf4Z-fFG3GIWwyy7bJEGOrBTQ의 부모·shared=false·크기를 읽고 실제 원격 raw bytes SHA 일치를 확인했다. v7은 마지막 공유 원문 회귀 수정 후의 로컬 최신 큐이며 위 ZIP의 v6을 최신 v7로 표시하지 않는다. 기존 archive/v1 증거 묶음이고 전체 runtime 독립 복구본이 아니다. receipt: .local/research/local-ai/drive-roundtrip/source-revision-review-snapshot-20261004-v1/drive-receipt.json.
+
+후보 장부 raw-byte SHA는 수정 전 dfe5ba7075b73d83557af87be07b1125c9a225e12a9b72d3ac8d31d0a481ed06, 재연결 후 62c88385160da60a20518477c5ab448de0610b8ffa868f0572eb47fecfd52491이다. 앞 절 c5668025…는 JSON.stringify 값의 논리 SHA이며 raw-byte SHA와 혼동하지 않는다. 직전 Drive 묶음 장부와 이번 수정 전 장부의 JSON 값733건은 동일했다.
+
+증거는 source-live-debug/approved-source-revision-comparisons-20261004-v1.json, source-revision-rebinding-20261004-v1.json, source-revision-rebinding-replay-20261004-v1.json, 승인 재연결4개 run 및 review-queues/approved-source-revisions-20261004-v7에 있다. WBS2/22·goal active 유지. P2-03의 변경 재검토 큐만 추가 진척이며 실제2건 수정·다중 자료 유형·전수 소급·독립평가·정규32칸/7회는 남는다. 1시간 반복 blocker는 없다.

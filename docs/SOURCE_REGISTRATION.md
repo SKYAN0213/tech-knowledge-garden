@@ -128,3 +128,15 @@ npm run research:daily -- --run media-etnews-weekly-reconcile-20261004-v1 \
 ```
 
 이 명령은 기록된 실행의 재개 예다. 새 기간/변경된 코드에는 새 run ID를 쓴다. 현재 검증 결과와 원문/후보/Drive 증거는 [런북346절](LOCAL_AI_NEWS_RUNBOOK.md#346-rss-주간-누락-보강-실제-수집-및-재개-검증)에 있다.
+
+
+## 승인 원문 변경을 공통 재검토로 연결하기
+
+승인된 원문은 새 관측의 source identity·내용 지문·판본·parse 차이를 비교한다. 다른 언어 CMS 관측은 주 원문을 덮어쓰지 않고 관련 관측에 기록한다. 수집 당시 alert가 없던 과거 장부도 approvalSourceChange로 찾아낸다. 저장 근거와 기존 승인에 연결된 실제 의존 항목만 재검토한다.
+
+```sh
+node scripts/research-revisions.mjs plan --snapshot REVIEW_ID
+node scripts/research-revisions.mjs inspect --snapshot REVIEW_ID
+```
+
+입력이 바뀌면 새 REVIEW_ID를 사용한다. 별도 승인 저장 위치는 --approval-root RUN=PATH로 명시한다. 동일 본문 재연결은 제목·발표일·전체 문단 및 인용 보조 원문의 bytes까지 검토한 뒤 기존 candidate-approval에 --candidate-source-run와 --source-revision-review를 함께 전달한다. 변경된 본문은 이 경로로 승인하지 않는다. 재검토 목록 생성/조회는 기사 승인·발행을 수행하지 않는다. 실제 입력·실패·재개·Drive 증거는 [런북347절](LOCAL_AI_NEWS_RUNBOOK.md#347-승인-원문의-변경-감지와-기존-근거-재검토)에 있다.
