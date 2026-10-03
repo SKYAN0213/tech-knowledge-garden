@@ -3,6 +3,7 @@ import { sha256 } from "./contracts.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { canonicalURL } from "../garden.mjs"
+import { loadApprovedOntologyInput } from "./ontology.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 const locationPath = (id) => `archive-staging/${id}/drive-location.json`
@@ -109,6 +110,24 @@ export async function registerArchiveLocation({
         if (!validRun(article.event_id) || !Array.isArray(article.source_urls))
           throw Error("Approved archive article requires an event ID and exact source URLs")
         articles.push(article)
+      }
+      const revision = readJSON(root, base + "source-revision-resolution.json")
+      if (revision) {
+        const { receipt_sha256, ...body } = revision
+        const selectedRun = revision.after?.approval?.approved_run
+        if (
+          revision.schema !== "research-source-revision-resolution/v1" ||
+          sha256(JSON.stringify(body)) !== receipt_sha256 ||
+          !manifest.bound_runs.includes(selectedRun)
+        )
+          throw Error("Archive revision resolution is invalid or points outside the package")
+        const selected = loadApprovedOntologyInput(root, selectedRun)
+        if (
+          sha256(JSON.stringify(selected.article)) !== revision.after.approval.article_sha256 ||
+          selected.article.event_id !== revision.event_id
+        )
+          throw Error("Archive revision does not match its current approval")
+        articles.push(selected.article)
       }
     }
     for (const source of sources.values()) {

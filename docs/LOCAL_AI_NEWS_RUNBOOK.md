@@ -8923,3 +8923,37 @@ v3 큐6건/사실29개에서 동일 내용4건을 실제 재연결한 뒤 최종
 후보 장부 raw-byte SHA는 수정 전 dfe5ba7075b73d83557af87be07b1125c9a225e12a9b72d3ac8d31d0a481ed06, 재연결 후 62c88385160da60a20518477c5ab448de0610b8ffa868f0572eb47fecfd52491이다. 앞 절 c5668025…는 JSON.stringify 값의 논리 SHA이며 raw-byte SHA와 혼동하지 않는다. 직전 Drive 묶음 장부와 이번 수정 전 장부의 JSON 값733건은 동일했다.
 
 증거는 source-live-debug/approved-source-revision-comparisons-20261004-v1.json, source-revision-rebinding-20261004-v1.json, source-revision-rebinding-replay-20261004-v1.json, 승인 재연결4개 run 및 review-queues/approved-source-revisions-20261004-v7에 있다. WBS2/22·goal active 유지. P2-03의 변경 재검토 큐만 추가 진척이며 실제2건 수정·다중 자료 유형·전수 소급·독립평가·정규32칸/7회는 남는다. 1시간 반복 blocker는 없다.
+
+
+## 348. KUKA 주 원문 복구와 KAIST 변경 판본 재승인
+
+2026-10-04 KST. 앞 절의 미해결2건을 실제 처리했다. 공통 resolveSourceRevision은 기존 승인/저장 원문/동일 날짜/내용 지문 검증을 재사용한다. 명시적 원문·변경·신원·날짜·수치·의존 검토와 수정 전 후보 SHA가 필요하다. 새 승인을 생성하거나 발행하지 않으며 이미 사실·최종 원고 검증을 통과한 저장 승인만 연결한다.
+
+- KUKA: 독일어·영어 각10문단에서 대학·FSW 연구 셀·KR FORTEC ultra MT·용접/밀링·디지털 트윈과 같은 publisher/profile/CMS item 관계를 확인했다. restore_primary로 독일어 승인 판본을 복구하고 잘못 덮였던 영어 관측은 source_observation_history/related_source_observations에 보존했다. 원문 관측 시각을 오늘로 바꾸지 않았다. 기존 승인·사건ID 유지.
+- KAIST:17문단 중 표지 호수 문단의 Issue62→59 변경만 있었다. 표지 호수 주장은 이전에도 deferred/기사 미사용이었다. 현재 원문의 기사 사용7사실을 다시 검토해 새 판본으로 승인했다. v1의 deferred statement/quote는59였으나 숫자 필드62가 남은 것을 readback으로 발견해 새 불변 v2에서59로 일치시켰다. v1도 보존한다. 현재7verified/1deferred, 독자 본문·발표일2026-09-30·사건ID 동일.
+
+두 사건 모두 생성 당시 local authoring inventory에 의존 회차·Signals·TrendTopics·Knowledge 기록이 없었다. 연결을 추측하지 않았다. 후보733건 중 나머지731건의 JSON 값 전체가 동일하다. 최종 backlog raw SHA b1d2923e29fda941bed5efb235be6ab0b1031a7e117bbcf0914d0dc1c147e40c. 신규 기사·회차·RSS 발행은 없다.
+
+```sh
+node scripts/research-revisions.mjs resolve --run kuka-primary-source-restore-20261004-v1 --review runs/kuka-primary-source-restore-20261004-v1/review.json
+node scripts/research-revisions.mjs resolve --run kaist-source-revision-resolution-20261004-v2 --review runs/kaist-source-revision-resolution-20261004-v2/review.json
+node scripts/research-revisions.mjs plan --snapshot approved-source-revisions-resolved-20261004-v3
+node scripts/research-revisions.mjs inspect --snapshot approved-source-revisions-resolved-20261004-v3
+```
+
+같은 수정 입력 재실행은 reused=true, 장부/영수증 bytes 불변이다. receipt는 before/after 후보·승인 입력·현재 source identity·검토 hash와 자체 SHA를 검증한다. 후보·원문·승인·영수증 손상을 거부한다. 영수증을 불변 생성한 뒤 장부를 저장하므로 중단 시 같은 before 상태에서만 재개할 수 있다. 해결된 publisher alias는 미검토 관측과 구분한다. 판정 없는 관련 관측은 검토 대상으로 유지하고 명시적 reviewed_publisher_record_alias만 제외한다(표적1/1). 최종 승인 변경 큐0건이며 전체 과거 자료 검토 완료를 뜻하지 않는다. 큐 SHA c57c070cecab0e6bb2ea762120abe3b379fddd7b72f2fd5963865b20a5324e3e.
+
+archive-closure는 resolution review·현재 관측·이전/새 승인·직전 resolution·사실 재검토 파일의 명시적 hash 관계를 따른다. archive-locations는 현재 승인 기사와 정확한 source URL만 사건 ID로 색인한다. KUKA 영어 별칭을 승인 원문으로 자동 승격하지 않는다.
+
+| 복구 묶음 | 범위 | 실제 Drive 저장/원격 ZIP 검증 |
+| --- | --- | --- |
+| KAIST portable v2 | 6runs/4원문판본/4parse·57자료/59members·400891bytes | 파일1GLBTCKl_WeWhpIiCr2ifIMgcou3lniIA, SHA f4122f2a1cc9631be9cea625e5612ea573b526965591a751ffa19329e62702f9 |
+| KUKA portable v1 | 3runs/2판본/2parse·34자료/36members·178244bytes | 파일1O8I9N6akjcBP3vO-Ok1LQlbiCLXC9I0Z, SHA51829173f806cdf140ee1ef8e92a9a7a01a73568baee995a0b0e4dcd75d9393b |
+
+각 파일의 Research 부모/shared=false/크기 및 실제 원격 raw SHA를 확인했다. 실제 받은 ZIP을 새 private 폴더에 복구한 뒤 승인 입력 동일·KAIST7/KUKA4 인용 사실 연결·직전 resolution 변조 거부를 확인했다. 두 묶음을 공통 Drive 위치 색인에 등록했다. 전체 runtime/운영 장부 자동 복구는 아니다. KAIST 최초 로컬 portable v1에는 직전 resolution이 빠져 v2로 확장했고 v1은 보존했다.
+
+검증: 후보 승인/재검토16/16, receipt guard2/2, 새 보관/위치 연결 표적1/1, 기존 보관 회귀9/9. 실제 resolve/재개·큐 inspect/재개·local/actual remote 복구 통과. 최초 private 스크립트 상대 import 오류는 로그를 보존하고 경로를 수정했다. 전체659 suite/build/54경로를 반복하지 않았다. HTML 현황판의 승인 변경0건을 확인했고 실제 렌더링은 기존 file URL 보안 제한으로 미검증이다.
+
+증거: source-live-debug/source-revision-actual-resolution-20261004-v1.json, kaist-number-metadata-verification-20261004-v2.json, source-revision-final-verification-20261004-v1.json, source-revision-portable-restore-proof-20261004-v1.json 및 각 resolve/portable/Drive 위치 영수증. Drive receipt는 drive-roundtrip/kaist-source-revision-20261004-v1·kuka-source-revision-20261004-v1 아래에 있다. private 문서 작성용 Python의 UTF-8 stdin 오류는 출력으로 남았으며 parse 단계에서 중단돼 파일 변경은 없었다; 저장한 UTF-8 문서를 읽는 짧은 명령으로 바꿨다.
+
+WBS2/22·goal active 유지. 변경2건 처리와 보관/복구 경로만 완료다. 다음은 현재 승인 후보를 정규32칸 조사와 회차 편집에 연결하고 다중 자료 유형·독립평가·전수 소급·실제7회 운영을 완료하는 것이다. 공개 작성 원본·새 배포는 변경하지 않았다. 1시간 반복 blocker는 없다.

@@ -3,6 +3,7 @@ import { archiveManifest, packageResearchArchive } from "./archive.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
+import { loadApprovedOntologyInput } from "./ontology.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
@@ -145,6 +146,59 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
         )
           throw Error("Alternative source dependency changed")
       })
+    }
+    const revision = readJSON(root, base + "source-revision-resolution.json")
+    if (revision) {
+      const { receipt_sha256, ...body } = revision
+      if (
+        revision.schema !== "research-source-revision-resolution/v1" ||
+        sha256(JSON.stringify(body)) !== receipt_sha256 ||
+        sha256(JSON.stringify(revision.before)) !== revision.before_candidate_sha256 ||
+        sha256(JSON.stringify(revision.after)) !== revision.after_candidate_sha256 ||
+        revision.after.event_id !== revision.before.event_id ||
+        !Array.isArray(revision.approved_inputs) ||
+        !revision.approved_inputs.length
+      )
+        throw Error("Invalid source revision resolution dependency")
+      const reviewFile = pinFile(revision.review_path)
+      if (reviewFile.sha256 !== revision.review_sha256)
+        throw Error("Source revision review dependency changed")
+      add(reviewFile)
+      const review = readJSON(root, revision.review_path)
+      reference(review.current_source_run, "revision_observation", () => {
+        if (
+          sha256(JSON.stringify(loadStoredSourceRun(root, review.current_source_run).identity)) !==
+          revision.current_source_identity_sha256
+        )
+          throw Error("Source revision observation dependency changed")
+      })
+      for (const input of revision.approved_inputs)
+        reference(input.run, "revision_approval", () => {
+          if (
+            JSON.stringify(loadApprovedOntologyInput(root, input.run).file_hashes) !==
+            JSON.stringify(input.files)
+          )
+            throw Error("Source revision approval dependency changed")
+        })
+      for (const prior of revision.before.source_revision_resolutions || [])
+        reference(prior.run_id, "prior_revision_resolution", () => {
+          const saved = readJSON(root, `runs/${prior.run_id}/source-revision-resolution.json`)
+          if (!saved || saved.review_sha256 !== prior.review_sha256)
+            throw Error("Prior revision resolution dependency changed")
+        })
+    }
+    const factRevision = readJSON(root, base + "source-revision-fact-review.json")
+    if (factRevision) {
+      reference(factRevision.prior_approved_run, "prior_fact_review", () => {
+        if (
+          JSON.stringify(
+            loadApprovedOntologyInput(root, factRevision.prior_approved_run).file_hashes,
+          ) !== JSON.stringify(factRevision.prior_files)
+        )
+          throw Error("Prior fact review dependency changed")
+      })
+      if (factRevision.current_source_run)
+        reference(factRevision.current_source_run, "fact_revision_source")
     }
     for (const target of dependencies) visit(target)
     for (const file of manifest.files) add(file)

@@ -1,4 +1,5 @@
 import path from "node:path"
+import { resolveSourceRevision } from "./research/source-revision-resolution.mjs"
 import { parseArgs } from "node:util"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import {
@@ -17,11 +18,13 @@ export async function main(argv = process.argv.slice(2)) {
       backlog: { type: "string" },
       vault: { type: "string", default: "vault" },
       "approval-root": { type: "string", multiple: true },
+      run: { type: "string" },
+      review: { type: "string" },
     },
   })
-  if (positionals.length !== 1 || !["plan", "inspect"].includes(positionals[0]))
+  if (positionals.length !== 1 || !["plan", "inspect", "resolve"].includes(positionals[0]))
     throw Error(
-      "Usage: research-revisions.mjs plan|inspect --snapshot ID [--root PATH --backlog PATH --vault PATH --approval-root RUN=PATH]",
+      "Usage: research-revisions.mjs plan|inspect --snapshot ID, or resolve --run ID --review PRIVATE_PATH",
     )
   const approvalRoots = new Map()
   for (const value of values["approval-root"] || []) {
@@ -37,6 +40,14 @@ export async function main(argv = process.argv.slice(2)) {
     vault: values.vault,
     approvalRoots,
   }
+  if (positionals[0] === "resolve") {
+    if (!values.run || !values.review || values.snapshot || approvalRoots.size)
+      throw Error(
+        "Resolution requires --run and --review; snapshot and approval roots are separate",
+      )
+    return resolveSourceRevision({ ...args, runId: values.run, reviewPath: values.review })
+  }
+  if (values.run || values.review) throw Error("--run and --review are only supported for resolve")
   return positionals[0] === "inspect"
     ? inspectSourceRevisionQueue(args)
     : saveSourceRevisionQueue(args)

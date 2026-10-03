@@ -17,7 +17,9 @@ const target = (candidate) =>
     candidate.approval &&
     (candidate.source_revision_alert ||
       approvalSourceChange(candidate) ||
-      candidate.related_source_observations?.length),
+      candidate.related_source_observations?.some(
+        (o) => o.decision !== "reviewed_publisher_record_alias",
+      )),
   )
 
 function implementationFingerprint() {

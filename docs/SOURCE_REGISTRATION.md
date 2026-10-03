@@ -140,3 +140,10 @@ node scripts/research-revisions.mjs inspect --snapshot REVIEW_ID
 ```
 
 입력이 바뀌면 새 REVIEW_ID를 사용한다. 별도 승인 저장 위치는 --approval-root RUN=PATH로 명시한다. 동일 본문 재연결은 제목·발표일·전체 문단 및 인용 보조 원문의 bytes까지 검토한 뒤 기존 candidate-approval에 --candidate-source-run와 --source-revision-review를 함께 전달한다. 변경된 본문은 이 경로로 승인하지 않는다. 재검토 목록 생성/조회는 기사 승인·발행을 수행하지 않는다. 실제 입력·실패·재개·Drive 증거는 [런북347절](LOCAL_AI_NEWS_RUNBOOK.md#347-승인-원문의-변경-감지와-기존-근거-재검토)에 있다.
+
+
+### 승인 원문 변경의 실제 해결
+
+`node scripts/research-revisions.mjs resolve --run NEW_ID --review PRIVATE_PATH`는 명시적 검토 JSON을 적용한다. schema는 `research-source-revision-resolution-review/v1`이다. action은 `restore_primary` 또는 `replace_approval`이고 prior_approved_run/current_source_run, candidate_key/expected_candidate_sha256, reviewer/reviewed_at/reason을 지정한다. source_read/revision_read/identity_checked/dates_checked/numbers_checked/dependencies_checked는 true, new_article/candidate_published는 false여야 한다.
+
+replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 new_approved_run이 필요하다. restore_primary는 명시적인 publisher/profile/CMS item 별칭과 정확한 기존 승인 판본을 요구한다. 같은 사건/발표일/원문 주소를 유지하며 이전 판단과 관측을 보존한다. resolve는 기사·회차를 발행하지 않는다. archive-closure는 현재 관측과 이전/새 승인 및 직전 resolution을 묶으며 Drive 위치 색인은 현재 승인 원문의 정확한 URL만 사건에 연결한다. [실제 복구·변조·Drive 검증](LOCAL_AI_NEWS_RUNBOOK.md#348-kuka-주-원문-복구와-kaist-변경-판본-재승인)을 따른다.

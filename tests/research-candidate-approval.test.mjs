@@ -6,6 +6,9 @@ import path from "node:path"
 import { canonicalURL } from "../scripts/garden.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { recordCandidateApproval } from "../scripts/research/candidate-approval.mjs"
+import { resolveSourceRevision } from "../scripts/research/source-revision-resolution.mjs"
+import { archiveClosure } from "../scripts/research/archive-closure.mjs"
+import { registerArchiveLocation } from "../scripts/research/archive-locations.mjs"
 import { recordCandidateSourceAlternative } from "../scripts/research/candidate-source-alternative.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
@@ -164,6 +167,212 @@ function link(f, more = {}) {
     ...more,
   })
 }
+
+function revisionReview(f, candidate, action, extra = {}) {
+  const reviewPath = "runs/resolution/review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-source-revision-resolution-review/v1",
+    action,
+    prior_approved_run: "approved",
+    current_source_run: "current-source",
+    candidate_key: candidate.key,
+    expected_candidate_sha256: sha256(JSON.stringify(candidate)),
+    reviewer: "fixture reviewer",
+    reviewed_at: "2026-10-04",
+    reason: "Read both source versions and their approved article dependencies",
+    source_read: true,
+    revision_read: true,
+    identity_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    dependencies_checked: true,
+    new_article: false,
+    candidate_published: false,
+    ...extra,
+  })
+  return { root: f.root, runId: "resolution", backlogFile: f.backlogFile, reviewPath }
+}
+
+function currentSource(f, url, text) {
+  const id = sourceId(url),
+    bodyHash = sha256(text),
+    parseId = sha256(url + text)
+  const doc = {
+    ...f.document,
+    source_id: id,
+    source_version_id: `${id}:${bodyHash}`,
+    original_url: url,
+    final_url: url,
+    body_sha256: bodyHash,
+    body_path: `documents/${id}/${bodyHash}/body.bin`,
+    observed_at: "2026-10-03T00:00:00Z",
+  }
+  const parse = {
+    ...readJSON(f.root, "runs/approved/parses.json")[0],
+    source_id: id,
+    source_version_id: doc.source_version_id,
+    parse_id: parseId,
+    dates: { published_at: "2026-09-30", observed_at: doc.observed_at },
+    blocks: [{ block_id: parseId + ":b1", text, locator: { text_hash: bodyHash } }],
+  }
+  atomicWrite(f.root, doc.body_path, text)
+  atomicWrite(f.root, `parses/${parseId}/parse.json`, parse)
+  atomicWrite(f.root, "runs/current-source/documents.json", [doc])
+  atomicWrite(f.root, "runs/current-source/parses.json", [parse])
+  return { doc, parse }
+}
+
+test("explicit primary restoration preserves approved identity and the displaced publisher alias", async (t) => {
+  const f = fixture(t)
+  await link(f)
+  const c = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const { doc, parse } = currentSource(f, "https://example.org/de/article", "Anderer Sprachtext")
+  Object.assign(c, {
+    article_source_version_id: doc.source_version_id,
+    article_parse_id: parse.parse_id,
+    article_content_sha256: articleContentFingerprint(parse),
+    article_observed_at: doc.observed_at,
+    source_record_aliases: [
+      {
+        source_url: doc.original_url,
+        publisher_id: "example",
+        profile_id: "cms",
+        source_item_id: "item",
+      },
+    ],
+    discovery: [{ publisher_id: "example", profile_id: "cms", source_item_id: "item" }],
+  })
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [c],
+  })
+  const args = revisionReview(f, c, "restore_primary")
+  await resolveSourceRevision(args)
+  const after = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(after.article_source_version_id, f.document.source_version_id)
+  assert.deepEqual(after.approval, c.approval)
+  assert.equal(
+    after.related_source_observations[0].article_source_version_id,
+    doc.source_version_id,
+  )
+  assert.equal(after.event_id, c.event_id)
+  const bytes = fs.readFileSync(f.backlogFile)
+  assert.equal((await resolveSourceRevision(args)).reused, true)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  const receiptPath = "runs/resolution/source-revision-resolution.json"
+  const receipt = readJSON(f.root, receiptPath)
+  atomicWrite(f.root, receiptPath, { ...receipt, new_article: true })
+  await assert.rejects(resolveSourceRevision(args), /receipt hash mismatch/)
+  atomicWrite(f.root, receiptPath, receipt)
+  fs.appendFileSync(path.join(f.root, doc.body_path), " changed")
+  await assert.rejects(resolveSourceRevision(args), /body hash mismatch/)
+})
+
+test("approval replacement requires a freshly reviewed same-event source revision and keeps history", async (t) => {
+  const f = fixture(t)
+  await link(f)
+  const before = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const { doc, parse } = currentSource(
+    f,
+    f.document.original_url,
+    "Example Lab demonstrated a revised soft robot material.",
+  )
+  const c = {
+    ...before,
+    article_source_version_id: doc.source_version_id,
+    article_parse_id: parse.parse_id,
+    article_content_sha256: articleContentFingerprint(parse),
+    article_observed_at: doc.observed_at,
+  }
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [c],
+  })
+  const original = readJSON(f.root, "runs/approved/reviewed-claims.json").claims[0]
+  const revisedClaim = {
+    ...original,
+    statement: parse.blocks[0].text,
+    evidence: [
+      {
+        ...original.evidence[0],
+        source_version_id: doc.source_version_id,
+        parse_id: parse.parse_id,
+        block_id: parse.blocks[0].block_id,
+        quote: parse.blocks[0].text,
+      },
+    ],
+  }
+  const claims = recordFactReview(
+    [revisedClaim],
+    [
+      {
+        claim_id: revisedClaim.claim_id,
+        status: "verified",
+        reason: "Read revised source",
+        source_read: true,
+        entailment_checked: true,
+        identity_checked: true,
+        numbers_checked: true,
+        time_checked: true,
+      },
+    ],
+    { reviewer: "fixture reviewer", reviewed_at: "2026-10-04" },
+    [parse],
+  )
+  const draft = readJSON(f.root, "runs/approved/draft.json"),
+    decision = {
+      ...readJSON(f.root, "runs/approved/editorial-review.json"),
+      reviewed_at: "2026-10-04",
+    }
+  const article = approvedArticle(draft, claims, [doc], decision, [parse])
+  for (const [file, value] of Object.entries({
+    "draft.json": draft,
+    "reviewed-claims.json": { claims },
+    "documents.json": [doc],
+    "parses.json": [parse],
+    "editorial-review.json": decision,
+    "approved-article.json": article,
+  }))
+    atomicWrite(f.root, "runs/revised/" + file, value)
+  const args = revisionReview(f, c, "replace_approval", { new_approved_run: "revised" })
+  await resolveSourceRevision(args)
+  const after = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(after.approval.approved_run, "revised")
+  assert.deepEqual(after.approval_history[0].approval, before.approval)
+  assert.equal(after.event_id, before.event_id)
+  assert.equal((await resolveSourceRevision(args)).reused, true)
+  const archived = await archiveClosure(f.root, "revision-archive", "resolution")
+  assert.deepEqual(archived.bound_runs, ["approved", "current-source", "resolution", "revised"])
+  const metadataFile = path.join(f.root, "metadata.json")
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "fixture-drive-id",
+      name: "revision.zip",
+      mime_type: "application/zip",
+      size: archived.package.bytes,
+      parent_ids: ["fixture-parent"],
+      shared: false,
+    }),
+  )
+  await registerArchiveLocation({
+    root: f.root,
+    runId: "revision-archive",
+    metadataFile,
+    remotePackageFile: path.join(f.root, archived.package.path),
+    expectedParentId: "fixture-parent",
+  })
+  const location = readJSON(f.root, "archive-staging/revision-archive/drive-location.json")
+  assert.equal(
+    location.sources.every((s) => s.event_ids.includes(before.event_id)),
+    true,
+  )
+  const changed = { ...article, event_id: "different-event" }
+  atomicWrite(f.root, "runs/revised/approved-article.json", changed)
+  await assert.rejects(resolveSourceRevision(args), /Saved approval differs/)
+})
 
 async function makeAlternativeResolution(
   f,

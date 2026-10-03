@@ -197,6 +197,26 @@ test("revision evidence remains available to multiple candidates citing the same
   assert.equal(sources.get(f.candidate.key).parse.parse_id, sources.get(second.key).parse.parse_id)
 })
 
+test("related observations without a decision require review; explicit reviewed aliases do not", (t) => {
+  const f = fixture(t)
+  const candidate = {
+    ...f.candidate,
+    article_source_version_id: f.old.document.source_version_id,
+    article_parse_id: f.old.parse.parse_id,
+    article_content_sha256: articleContentFingerprint(f.old.parse),
+    related_source_observations: [{ source_url: "https://example.org/translated" }],
+  }
+  const args = {
+    candidates: [candidate],
+    inventory: f.inventory,
+    approvals: new Map([["approved", f.approved]]),
+    currentSources: loadRevisionSourceEvidence(f.root, [candidate]),
+  }
+  assert.equal(projectSourceRevisionQueue(args).counts.pending, 1)
+  candidate.related_source_observations[0].decision = "reviewed_publisher_record_alias"
+  assert.equal(projectSourceRevisionQueue(args).counts.pending, 0)
+})
+
 test("revision source evidence rejects changed bytes and immutable parse content", (t) => {
   const f = fixture(t)
   fs.appendFileSync(path.join(f.root, f.current.document.body_path), " changed")
