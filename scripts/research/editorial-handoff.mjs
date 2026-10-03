@@ -22,6 +22,7 @@ import {
 const REVIEW_ROUTES = [
   "review-source-revision",
   "approved-unpublished",
+  "approved-historical",
   "review-existing-identity",
   "review-related-candidate",
   "review-existing-unverified",
@@ -139,7 +140,7 @@ export function selectCandidateSource(root, handoff, candidateKey) {
   const matches = handoff.pending.filter((entry) => entry.key === candidateKey)
   if (matches.length !== 1) throw Error("Candidate is not uniquely pending in the handoff")
   const candidate = matches[0]
-  if (candidate.next_route === "approved-unpublished")
+  if (["approved-unpublished", "approved-historical"].includes(candidate.next_route))
     throw Error("Candidate already has an approved article awaiting publication")
   if (candidate.source_evidence_state !== "exact")
     throw Error("Current candidate source version and parse were not observed in this daily run")
@@ -502,6 +503,9 @@ export function buildEditorialHandoff({
       ).length,
       existing_identity: pending.filter(
         (candidate) => candidate.next_route === "review-existing-identity",
+      ).length,
+      approved_historical: pending.filter(
+        (candidate) => candidate.next_route === "approved-historical",
       ).length,
       historical_review: pending.filter((candidate) => candidate.next_route === "historical-review")
         .length,

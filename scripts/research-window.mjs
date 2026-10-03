@@ -26,6 +26,7 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
     start = Date.parse(cutoff)
   if (!Number.isFinite(end) || !Number.isFinite(start) || start > end)
     throw Error("Invalid research window")
+  const firstPublicationDay = new Date(start + 9 * 3600000).toISOString().slice(0, 10)
   const publishedByUrl = new Map(),
     publishedIds = new Map()
   for (const i of issues)
@@ -88,13 +89,16 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
             : c.review_status === "rejected"
               ? "closed"
               : c.review_status === "verified" && c.approval
-                ? "approved-unpublished"
+                ? !c.source_published_at
+                  ? "verify-original-date"
+                  : c.source_published_at.slice(0, 10) < firstPublicationDay
+                    ? "approved-historical"
+                    : "approved-unpublished"
                 : possible_publications.length
                   ? "review-existing-identity"
                   : !c.source_published_at
                     ? "verify-original-date"
-                    : c.source_published_at.slice(0, 10) <
-                        new Date(start + 9 * 3600000).toISOString().slice(0, 10)
+                    : c.source_published_at.slice(0, 10) < firstPublicationDay
                       ? "historical-review"
                       : "review-publication-time",
     }
@@ -102,7 +106,7 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
   const approvedGroups = new Map()
   for (const candidate of candidates) {
     if (
-      candidate.next_route !== "approved-unpublished" ||
+      !["approved-unpublished", "approved-historical"].includes(candidate.next_route) ||
       !candidate.event_id ||
       !candidate.approval?.approved_run ||
       !candidate.approval?.article_sha256

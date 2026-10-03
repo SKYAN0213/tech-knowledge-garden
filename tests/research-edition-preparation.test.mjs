@@ -81,6 +81,9 @@ test("edition preparation rejects unreviewed, published, ambiguous and changed-s
       x.handoff.pending[0].next_route = "historical-review"
     },
     (x) => {
+      x.handoff.pending[0].next_route = "approved-historical"
+    },
+    (x) => {
       x.backlog.candidates[0].article_parse_id = "changed"
     },
     (x) => {

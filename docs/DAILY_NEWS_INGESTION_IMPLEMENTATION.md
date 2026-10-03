@@ -309,7 +309,7 @@ AMD 투자자관계실의 공식 RSS 10항목과 인수 계약·협력·실적 �
 
 `candidate-approval`은 기존 `review → correct → approve`의 **완료된 비공개 원고**를 후보 장부에 연결한다. 별도 기사 생성기나 새 수집기는 없다. 원본 bytes·parse, 검토된 사실, 최종 draft와 승인 입력에서 `approvedArticle`을 다시 계산해 저장 승인본과 대조한다. 후보 URL의 쿼리 순서가 원 저장 URL과 달라도 정규 주소로 비교하고, 원 발표일·source version·parse ID·본문 지문·사건 ID가 일치하는 후보 한 건만 `verified`로 바꾼다. 다른 기사나 후보가 이미 URL·사건 ID를 쓰면 중단하며, 동일 입력 재실행은 장부 bytes를 바꾸지 않는다.
 
-편집 인계에는 `approved-unpublished` 묶음과 승인 run/기사 SHA를 표시한다. 이것은 **추가 사실 검토 없이 회차 편성을 검토할 수 있는 상태**이지 Drive 저장이나 발행 완료가 아니다. 원문 판본이 바뀌면 기존 승인에 새 내용을 자동 승계하지 않고 `review-source-revision`으로 다시 보낸다.
+편집 인계에는 `approved-unpublished` 묶음과 승인 run/기사 SHA를 표시한다. 이것은 **추가 사실 검토 없이 회차 편성을 검토할 수 있는 상태**이지 Drive 저장이나 발행 완료가 아니다. 원문 판본이 바뀌면 기존 승인에 새 내용을 자동 승계하지 않고 `review-source-revision`으로 다시 보낸다. 원문 발표일이 저장된 coverage cutoff의 KST 날짜보다 앞선 승인 기사는 `approved-historical`로 분리해 기존 회차 보완·소급 경로에서 승인 원고를 재사용한다. 새 회차 편성과 원문 재추출에는 넣지 않는다. 날짜 미확인 승인은 `verify-original-date`로 보낸다. 두 승인 묶음 모두 동일 사건·승인 run·기사 SHA의 중복 후보를 하나로 묶고 기존 발행 검증을 유지한다.
 
 실제 KAIST 이오노그래스퍼 후보는 6개 모델 주장 중 5개를 검토·정정해 승인하고, 저장 원문 블록에서 작동 원리 2개를 추가해 검증 사실 7개를 만들었다. 논문사 [Wiley Early View 서지](https://advanced.onlinelibrary.wiley.com/doi/abs/10.1002/adma.74981)는 온라인 최초 공개일 9월 14일과 아직 호에 배정되기 전 상태를 표시한다. KAIST 발표문의 ‘62호지 표지논문’과 결합된 모델 주장은 보류했고 기사에 넣지 않았다. Wiley 원문은 시스템 수집 경로에서 `blocked`로 남겨 접근 성공으로 계산하지 않는다. 최종 기사는 로봇·제조/연구·기술로 비공개 승인됐다. 장부는 136건 중 verified 55건이며 KAIST 한 건은 `approved-unpublished`다. 21경로 재인계는 pending 86건을 유지하면서 `review-publication-time` 3건 중 1건을 승인 대기로 옮겼다. Drive·웹·RSS·GitHub 승격은 하지 않았다.
 

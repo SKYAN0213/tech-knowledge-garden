@@ -8957,3 +8957,18 @@ archive-closure는 resolution review·현재 관측·이전/새 승인·직전 r
 증거: source-live-debug/source-revision-actual-resolution-20261004-v1.json, kaist-number-metadata-verification-20261004-v2.json, source-revision-final-verification-20261004-v1.json, source-revision-portable-restore-proof-20261004-v1.json 및 각 resolve/portable/Drive 위치 영수증. Drive receipt는 drive-roundtrip/kaist-source-revision-20261004-v1·kuka-source-revision-20261004-v1 아래에 있다. private 문서 작성용 Python의 UTF-8 stdin 오류는 출력으로 남았으며 parse 단계에서 중단돼 파일 변경은 없었다; 저장한 UTF-8 문서를 읽는 짧은 명령으로 바꿨다.
 
 WBS2/22·goal active 유지. 변경2건 처리와 보관/복구 경로만 완료다. 다음은 현재 승인 후보를 정규32칸 조사와 회차 편집에 연결하고 다중 자료 유형·독립평가·전수 소급·실제7회 운영을 완료하는 것이다. 공개 작성 원본·새 배포는 변경하지 않았다. 1시간 반복 blocker는 없다.
+
+
+## 349. 실제 승인 후보의 과거 기사 혼입 수정
+
+2026-10-04 KST. 실제 수집한 장부733건을 최신 local authoring 회차와 대조했다. 기존 researchWindow는 승인이 있으면 발표일 확인보다 먼저 approved-unpublished로 분류해 과거 승인 기사도 신규 회차 조립으로 보냈다. 최종 newEditionProjection이 이미 차단하므로 공개 누출은 확인되지 않았지만 반복 조립 실패를 유발하는 경로 결함이었다.
+
+공통 라우팅에서 cutoff의 KST 날짜 이전 승인 기사를 approved-historical로 분리했다. 기존 승인·사건ID·원문 관측은 보존하며 신규 회차 선택과 원문 재검토 선택을 차단한다. 날짜가 없으면 verify-original-date다. 양쪽 승인 묶음에 동일 사건/run/기사SHA 중복 제거를 적용하고 handoff의 작업 목록·approved_historical 집계를 추가했다. 현재 신규/과거 회차의 최종 발행 검증은 그대로 유지한다.
+
+실제 최신 회차는 2026-10-01_0800, cutoff는 2026-10-01T13:38:20Z였다. 임시 점검에서 가정했던10월2일 시작 시각을 사용하지 않았다. 실제 cutoff에 따라 승인 미발행14건이 신규 후보3건(UR 합의10/1·Tobor10/2·Corwin/Lanxin10/2)과 과거 보완11건으로 분리됐다. 신규3건의 저장 승인 파일 hash·기사SHA·사건ID를 재검증했다. 장부733건 raw bytes/SHA b1d2923e29fda941bed5efb235be6ab0b1031a7e117bbcf0914d0dc1c147e40c 불변이다. 신규 사실 승인·회차 작성·발행은 없다. 이 점검은 local authoring inventory이며 새 Drive 권위 판정이나 새54경로 실수집 결과가 아니다.
+
+검증: handoff/후보승인/회차편성 관련32건 중31건 최초 통과. 새 테스트의 존재하지 않는 handoff.resolved 참조를 researchWindow.resolved로 정정한 뒤 해당1건 통과했다. 과거 승인 원문 재추출 차단과 회차 선택 거부 검증을 추가해 영향받은2건만 다시 실행해2/2 통과했다. 전체 suite/build/54경로 반복은 하지 않았다. private 증거 스크립트 상대 import는 최초 오류 후 경로를 바로잡았으며 실패를 성공으로 기록하지 않는다.
+
+증거: source-live-debug/approved-date-routing-20261004-v1.json(6455bytes, SHA06ac430d696732062ea99034ca32f9301ecbad3be700e77623bbf510fa8eceaf). Research Drive 파일1-98qzVWRIO0hy5kTndsEZZJQp_UwIOZB의 부모/shared=false/크기와 실제 원격 raw bytes SHA 일치를 확인했다. 이 JSON은 라우팅 검증 기록이며 전체 원문 복구 패키지가 아니다. 기존54경로 실수집·RSS 아카이브 보완·원문 수정 증거는 이전 절의 불변 기록을 참조한다.
+
+WBS2/22·goal active 유지. 다음은 현재 유효 승인 후보의 회차 편성과 부족한 정규32칸 실질 조사다. 과거11건은 신규 기사로 채우지 않고 기존 회차 보완으로 연결한다. 전체 소급·독립평가·실제7회 운영은 미완료이며 1시간 반복 blocker는 없다.

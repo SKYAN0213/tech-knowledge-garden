@@ -1544,3 +1544,8 @@ standalone research-revisions.mjs plan/inspect는 저장 bytes·불변 parse·�
 - KAIST:17문단 중 표지 호수 문단의 Issue62→59 변경만 있었다. 표지 호수 주장은 이전에도 deferred/기사 미사용이었다. 현재 원문의 기사 사용7사실을 다시 검토해 새 판본으로 승인했다. v1의 deferred statement/quote는59였으나 숫자 필드62가 남은 것을 readback으로 발견해 새 불변 v2에서59로 일치시켰다. v1도 보존한다. 현재7verified/1deferred, 독자 본문·발표일2026-09-30·사건ID 동일.
 
 최종 승인 변경 큐0건, 나머지731후보 동일·반복 bytes 불변. 이전/새 승인 및 현재 관측을 함께 보관하고 실제 원격 ZIP SHA/독립 복구를 검증했다. 표적16/16·guard2/2·위치 연결1/1·기존 보관9/9 확인. 전체 suite/build/발행은 미실행이며 WBS2/22·goal active를 유지한다. [런북348절](LOCAL_AI_NEWS_RUNBOOK.md#348-kuka-주-원문-복구와-kaist-변경-판본-재승인).
+
+
+### 19.258 실제 승인 후보의 과거 기사 혼입 수정
+
+승인 존재를 발표일보다 먼저 검사하던 경로 결함을 수정했다. KST cutoff 이전은 approved-historical, 날짜 미확인은 verify-original-date로 분리하고 동일 사건 승인 중복 제거를 두 경로에 적용한다. 기존 승인 원고와 발행 검증을 보존한다. 실제733후보에서 최신회차 cutoff2026-10-01T13:38:20Z에 따라 신규3/과거11로 분리됐고 신규3승인 hash/사건ID·장부 bytes 불변을 확인했다. 관련32건은 최초31통과/테스트 필드 정정 후1통과, 추가영향2/2였다. private Drive 원격 raw SHA 일치 확인. WBS2/22·goal active, 정규 조사·회차 편성·전체 소급·독립평가·실제7회는 남는다. [런북349절](LOCAL_AI_NEWS_RUNBOOK.md#349-실제-승인-후보의-과거-기사-혼입-수정).

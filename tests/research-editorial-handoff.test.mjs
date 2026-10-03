@@ -3,7 +3,10 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { buildEditorialHandoff } from "../scripts/research/editorial-handoff.mjs"
+import {
+  buildEditorialHandoff,
+  selectCandidateSource,
+} from "../scripts/research/editorial-handoff.mjs"
 import { main } from "../scripts/research.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
@@ -351,6 +354,72 @@ test("an approved but unpublished candidate is handed to edition assembly withou
   assert.equal(handoff.counts.approved_unpublished, 1)
   assert.equal(handoff.counts.review_publication_time, 0)
   assert.deepEqual(handoff.review_workstreams[1].candidate_keys, ["new"])
+})
+
+test("approved historical events retain approval without entering new edition assembly or source review", () => {
+  const stored = structuredClone(backlog)
+  const old = stored.candidates.find((item) => item.key === "old")
+  old.review_status = "verified"
+  old.event_id = "1111111111111111"
+  old.approval = { approved_run: "historical-article", article_sha256: "b".repeat(64) }
+  stored.candidates.push({ ...structuredClone(old), key: "zz-old-alias" })
+  const handoff = buildEditorialHandoff({
+    plan,
+    receipts,
+    observations,
+    backlog: stored,
+    issues,
+    observedAt: "2026-09-29T02:00:00Z",
+  })
+  const entry = handoff.pending.find((item) => item.key === "old")
+  assert.equal(entry.next_route, "approved-historical")
+  assert.throws(
+    () => selectCandidateSource("unused", handoff, "old"),
+    /already has an approved article/,
+  )
+  assert.deepEqual(entry.approval, old.approval)
+  assert.deepEqual(entry.same_approved_event_candidate_keys, ["zz-old-alias"])
+  assert.equal(handoff.counts.approved_historical, 1)
+  assert.equal(handoff.counts.approved_unpublished, 0)
+  assert.equal(handoff.counts.historical_review, 0)
+  assert.deepEqual(
+    handoff.review_workstreams.find((item) => item.route === "approved-historical").candidate_keys,
+    ["old"],
+  )
+  const window = researchWindow(plan.cutoff, "2026-09-29T02:00:00Z", stored, issues)
+  assert.equal(
+    window.resolved.find((item) => item.key === "zz-old-alias").next_route,
+    "same-approved-event",
+  )
+  assert.deepEqual(stored.candidates.find((item) => item.key === "old").approval, old.approval)
+})
+
+test("approval does not supply an unknown original publication date and KST cutoff remains inclusive", () => {
+  const approved = {
+    review_status: "verified",
+    event_id: "2222222222222222",
+    approval: { approved_run: "current-article", article_sha256: "c".repeat(64) },
+  }
+  const queue = researchWindow(
+    "2026-09-22T23:00:00Z",
+    "2026-09-29T02:00:00Z",
+    {
+      schema: "research-candidates/v1",
+      candidates: [
+        candidate("undated", null, approved),
+        candidate("boundary", "2026-09-23", { ...approved, event_id: "3333333333333333" }),
+      ],
+    },
+    [],
+  )
+  assert.equal(
+    queue.pending.find((item) => item.key === "undated").next_route,
+    "verify-original-date",
+  )
+  assert.equal(
+    queue.pending.find((item) => item.key === "boundary").next_route,
+    "approved-unpublished",
+  )
 })
 
 test("editorial handoff carries stored alternative-source attempts alongside today's observations", () => {
