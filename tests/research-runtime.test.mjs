@@ -34,7 +34,7 @@ import {
   recoverLock,
 } from "../scripts/research/run-state.mjs"
 import { validateEvidence, recordFactReview } from "../scripts/research/claims.mjs"
-import { Ollama } from "../scripts/research/ollama.mjs"
+import { Ollama, localOllamaURL } from "../scripts/research/ollama.mjs"
 import { candidatesFromLinks, coverageGrid, mergeBacklog } from "../scripts/research/discovery.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 
@@ -64,6 +64,21 @@ test("atomic creation never replaces existing or racing files and removes only i
   }
   assert.equal(fs.readFileSync(path.join(root, "Knowledge/Race.md"), "utf8"), "another writer")
   assert.deepEqual(fs.readdirSync(path.join(root, "Knowledge")).sort(), ["New.md", "Race.md"])
+})
+test("local Ollama endpoint can be configured while remaining loopback-only", () => {
+  assert.equal(localOllamaURL({}), "http://127.0.0.1:11434")
+  assert.equal(
+    localOllamaURL({ TECH_KNOWLEDGE_OLLAMA_URL: "http://localhost:11435/" }),
+    "http://localhost:11435",
+  )
+  assert.throws(
+    () => localOllamaURL({ TECH_KNOWLEDGE_OLLAMA_URL: "https://models.example.com" }),
+    /local endpoint/,
+  )
+  assert.throws(
+    () => localOllamaURL({ TECH_KNOWLEDGE_OLLAMA_URL: "http://user@127.0.0.1:11435" }),
+    /local endpoint/,
+  )
 })
 test("absence checks reject dangling destination and parent links", (t) => {
   const root = temporary(t)
@@ -541,6 +556,25 @@ test("facts detect fake quotes, version mixing, numeric condition loss and plan 
       p,
     ]).problems.includes("evidence_identity_mismatch"),
   )
+  const businessPlanQuote =
+    "참여 기업들은 사업 계획에 따른 향후 발사 수요 전망과 상업 발사 착수 시점을 고려한 인프라 구축 우선순위를 제시하고 요구사항을 개진하였다."
+  const businessPlanParse = {
+    ...p,
+    blocks: [
+      {
+        block_id: "p1:b1",
+        text: businessPlanQuote,
+        locator: { text_hash: sha256(businessPlanQuote) },
+      },
+    ],
+  }
+  const businessPlanClaim = {
+    ...c,
+    event_state: "completed",
+    numbers: [],
+    evidence: [{ ...c.evidence[0], quote: businessPlanQuote }],
+  }
+  assert.equal(validateEvidence(businessPlanClaim, [businessPlanParse]).structural_pass, true)
 })
 test("unresolved math cannot become verified evidence while unrelated prose remains usable", () => {
   const { p, c } = fixture()

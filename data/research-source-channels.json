@@ -22,7 +22,7 @@
       "name": "디일렉",
       "kind": "industry-press",
       "language": "ko",
-      "sectors": ["반도체·컴퓨팅", "에너지·기후기술", "로봇·제조"],
+      "sectors": ["반도체·컴퓨팅","에너지·기후기술","로봇·제조"],
       "url": "https://www.thelec.kr/",
       "route_check": {
         "date": "2026-09-14",
@@ -36,7 +36,7 @@
       "name": "KIPOST",
       "kind": "industry-press",
       "language": "ko",
-      "sectors": ["반도체·컴퓨팅", "에너지·기후기술", "로봇·제조"],
+      "sectors": ["반도체·컴퓨팅","에너지·기후기술","로봇·제조"],
       "url": "https://www.kipost.net/",
       "route_check": {
         "date": "2026-09-14",
@@ -50,16 +50,7 @@
       "name": "전자신문",
       "kind": "industry-press",
       "language": "ko",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "url": "https://www.etnews.com/",
       "route_check": {
         "date": "2026-09-14",
@@ -90,10 +81,10 @@
       "sectors": ["로봇·제조"],
       "url": "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/",
       "route_check": {
-        "date": "2026-09-14",
-        "method": "gpt-web",
-        "status": "read",
-        "scope": "Entry page only; review individual dated originals before publication."
+        "date": "2026-10-02",
+        "method": "common-list-scan",
+        "status": "window_scanned",
+        "scope": "Japanese dated News Release list and Sep 25–Oct 2 window verified; one dated original parsed, English/Japanese duplicate event linked privately."
       }
     },
     {
@@ -104,10 +95,10 @@
       "sectors": ["로봇·제조"],
       "url": "https://www.fanuc.co.jp/en/profile/pr/newsrelease/",
       "route_check": {
-        "date": "2026-09-14",
-        "method": "gpt-web",
-        "status": "read",
-        "scope": "Entry page only; review individual dated originals before publication."
+        "date": "2026-10-03",
+        "method": "common-list-scan",
+        "status": "window_scanned",
+        "scope": "English dated News Release list verified through 2026-10-03; notice/news link selection and exact window coverage verified, with the Sep 30 Hitachi–FANUC event reusing its existing candidate and event identity."
       }
     },
     {
@@ -213,16 +204,7 @@
       "name": "한국거래소 KIND",
       "kind": "filing-ir",
       "language": "ko",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "url": "https://kind.krx.co.kr/",
       "route_check": {
         "date": "2026-09-14",
@@ -236,16 +218,7 @@
       "name": "DART",
       "kind": "filing-ir",
       "language": "ko",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "url": "https://dart.fss.or.kr/",
       "route_check": {
         "date": "2026-09-14",
@@ -293,16 +266,7 @@
       "name": "MIT Technology Licensing Office",
       "kind": "commercialization",
       "language": "en",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "url": "https://tlo.mit.edu/industry-entrepreneurs/startups",
       "route_check": {
         "date": "2026-09-14",
@@ -316,16 +280,7 @@
       "name": "KAIST News",
       "kind": "research",
       "language": "ko",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "url": "https://news.kaist.ac.kr/",
       "route_check": {
         "date": "2026-09-14",
@@ -400,6 +355,38 @@
       }
     },
     {
+      "id": "kribb-bio-research",
+      "name": "KRIBB Biotechnology Research News",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["바이오·의료기술"],
+      "url": "https://www.kribb.re.kr/kor/sub02/sub02_02_01.jsp?category=&keyField=&keyWord=&nowBlock=0&page=1",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "local-source-fetch",
+        "status": "blocked-robots-unavailable",
+        "scope": "The official list and detail pages were inspected, but the collector's mandatory robots.txt request returned HTTP 400 and the scanner recorded listing_blocked. Keep out of active daily routes until robots policy can be read; do not bypass this gate."
+      }
+    },
+    {
+      "id": "nih-korea-bio-research",
+      "name": "Korea National Institute of Health Research Releases",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["바이오·의료기술"],
+      "url": "https://nih.go.kr/ko/bbs/B0000130/list.do?menuNo=300829",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "local-source-fetch",
+        "status": "window-scanned",
+        "scope": "Official National Institute of Health dated listing and full-text detail verified within 2026-09-26 through 2026-10-04. Use the listing's 게시일자 as publication date; detail pages expose 수정일, which is not a publication date."
+      }
+    },
+    {
       "id": "nlr-energy-news",
       "name": "National Laboratory of the Rockies News",
       "kind": "research",
@@ -421,7 +408,7 @@
       "name": "arXiv Robotics",
       "kind": "research",
       "language": "en",
-      "sectors": ["로봇·제조", "AI"],
+      "sectors": ["로봇·제조","AI"],
       "url": "https://arxiv.org/list/cs.RO/recent",
       "route_check": {
         "date": "2026-09-14",
@@ -477,7 +464,7 @@
       "name": "CISA Advisories",
       "kind": "regulator",
       "language": "en",
-      "sectors": ["사이버보안", "소프트웨어·클라우드"],
+      "sectors": ["사이버보안","소프트웨어·클라우드"],
       "url": "https://www.cisa.gov/news-events/cybersecurity-advisories",
       "route_check": {
         "date": "2026-09-14",
@@ -544,6 +531,7 @@
       "region": "국내",
       "axis": "기업·운영",
       "sectors": ["AI"],
+      "coverage_sectors": ["반도체·컴퓨팅"],
       "method": "rss",
       "url": "https://news.samsung.com/global/category/press-release/feed",
       "route_check": {
@@ -611,7 +599,7 @@
       "language": "en",
       "region": "해외",
       "axis": "기술·제품",
-      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "반도체·컴퓨팅"],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅"],
       "method": "rss",
       "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
       "route_check": {
@@ -704,22 +692,47 @@
       }
     },
     {
+      "id": "epson-robots-news",
+      "name": "Epson Robots 공식 뉴스",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "method": "html-list",
+      "url": "https://news.epson.com/news?t=Robots",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "official-html-page-pagination-review",
+        "status": "window-scanned",
+        "scope": "Official Epson US Robots-tagged press releases. Shared bounded path-pages scan completed for [2026-09-22, 2026-10-04); no in-window candidates. Run epson-robots-window-20261003-v2."
+      }
+    },
+    {
+      "id": "epson-collaborative-robot-news",
+      "name": "Epson Collaborative Robot 공식 뉴스",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기술·제품",
+      "sectors": ["로봇·제조"],
+      "method": "html-list",
+      "url": "https://news.epson.com/news?t=Collaborative+Robot",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "official-html-page-pagination-review",
+        "status": "window-scanned",
+        "scope": "Official Epson US Collaborative Robot-tagged press releases. Shared bounded path-pages scan completed for [2026-09-22, 2026-10-04); the 2026-09-22 AX6 release is stored as an unreviewed candidate. Run epson-cobot-window-20261003-v4."
+      }
+    },
+    {
       "id": "kind-ir-schedule-ko",
       "name": "KIND 공식 IR 일정",
       "kind": "filing-ir",
       "language": "ko",
       "region": "국내",
       "axis": "기업·운영",
-      "sectors": [
-        "AI",
-        "소프트웨어·클라우드",
-        "사이버보안",
-        "반도체·컴퓨팅",
-        "로봇·제조",
-        "에너지·기후기술",
-        "바이오·의료기술",
-        "우주·기초과학"
-      ],
+      "sectors": ["AI","소프트웨어·클라우드","사이버보안","반도체·컴퓨팅","로봇·제조","에너지·기후기술","바이오·의료기술","우주·기초과학"],
       "method": "html-list",
       "allowed_hosts": ["kind.krx.co.kr"],
       "url": "https://kind.krx.co.kr/corpgeneral/irschedule.do?method=searchIRScheduleMain&gubun=iRSchedule",
@@ -728,6 +741,109 @@
         "method": "source-fetch-and-form-html-scan",
         "status": "registered-private-event-source",
         "scope": "Official IR event schedule; event dates are kept separate from publication dates and are never sent to the news candidate backlog."
+      }
+    },
+    {
+      "id": "dart-samsung-filings",
+      "name": "DART 삼성전자 기업별 공시 RSS",
+      "kind": "filing-ir",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기업·운영",
+      "sectors": ["AI","반도체·컴퓨팅"],
+      "method": "rss",
+      "url": "https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-bounded-rss-scan",
+        "status": "rss-covered-details-blocked",
+        "scope": "The official company RSS was captured and its five-business-day window was covered. All three report-detail requests were denied by DART robots.txt; keep this channel out of active daily routes until a policy-permitted full-text route is verified."
+      }
+    },
+    {
+      "id": "samsung-sds-company-news-ko",
+      "name": "삼성SDS 국문 뉴스 RSS",
+      "kind": "company",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기업·운영",
+      "sectors": ["소프트웨어·클라우드"],
+      "method": "rss",
+      "url": "https://www.samsungsds.com/kr/news/media_report_ko_rss.xml",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-bounded-rss-scan",
+        "status": "window-scanned-unreviewed",
+        "scope": "Baseline samsung-sds-company-news-baseline-20261003-v3 covered [2026-09-26, 2026-10-04): 1,265 dated feed items, 3 in-window articles with matching detail publication dates. Candidate records remain unreviewed. The official feed mixes company releases and third-party media coverage; inspect category and byline before attribution."
+      }
+    },
+    {
+      "id": "roche-media-releases-rss",
+      "name": "Roche Media Releases RSS",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기업·운영",
+      "sectors": ["바이오·의료기술"],
+      "method": "rss",
+      "url": "https://www.roche.com/med_news_xml.xml",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-bounded-rss-scan",
+        "status": "window-scanned-unreviewed",
+        "scope": "Official Roche Media Releases RSS window [2026-09-26, 2026-10-04) completed through the common bounded-feed scanner. Three dated details matched listing titles and publication dates; candidates remain unreviewed."
+      }
+    },
+    {
+      "id": "kari-space-press-ko",
+      "name": "한국항공우주연구원 보도자료",
+      "kind": "research",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기술·제품",
+      "sectors": ["우주·기초과학"],
+      "method": "html-list",
+      "url": "https://www.kari.re.kr/kor/article/ATCL87374b48c?pageIndex=1",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-single-page-list-scan",
+        "status": "official-route-verified",
+        "scope": "Official KARI Korean press-release list and article detail pages. Scan only dated releases whose list rows and detail publication dates match; article inclusion remains editorially unreviewed."
+      }
+    },
+    {
+      "id": "airbus-space-press-rss",
+      "name": "Airbus Space RSS",
+      "kind": "company",
+      "language": "en",
+      "region": "해외",
+      "axis": "기업·운영",
+      "sectors": ["우주·기초과학"],
+      "method": "rss",
+      "url": "https://www.airbus.com/en/rss-all-feeds/15601?tid=15601&fid=29726",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-bounded-rss-scan",
+        "status": "window-scanned-unreviewed",
+        "scope": "Airbus official Space RSS feed; bounded 2026-09-26–2026-10-04 window scanned through shared RSS parser and full article extractor. Candidate remains unreviewed."
+      }
+    },
+    {
+      "id": "innospace-company-news-ko",
+      "name": "INNOSPACE 공식 뉴스",
+      "kind": "company",
+      "language": "ko",
+      "region": "국내",
+      "axis": "기업·운영",
+      "sectors": ["우주·기초과학"],
+      "method": "html-list",
+      "url": "https://www.innospc.com/myboard/sub04_04",
+      "route_check": {
+        "date": "2026-10-03",
+        "method": "shared-single-page-list-scan",
+        "status": "window-scanned-unreviewed",
+        "run_id": "innospace-company-news-baseline-20261003-v9",
+        "scope": "INNOSPACE official Korean News list; 2026-09-30 detail title/date and older 2026-09-21 boundary validated. Candidate remains unreviewed."
       }
     }
   ]

@@ -6,6 +6,7 @@ import path from "node:path"
 import {
   assessSinglePageIndex,
   loadReusableSinglePageListing,
+  scanPathPagesRoute,
   scanSinglePageRoute,
 } from "../scripts/research/list-scan.mjs"
 import { mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
@@ -799,4 +800,234 @@ test("accepts a detail title when the official listing visibly truncates its mat
     result.summary.details[0].title_relation,
     "official_listing_truncated_detail_title_authoritative",
   )
+})
+
+test("query-paged HTML listings use the shared boundary and detail checks", async (t) => {
+  const root = temporary(t)
+  const template = "https://news.epson.com/news?t=Robots&page={page}"
+  const seen = []
+  const pagedChannel = {
+    channel_id: "epson-robots-news",
+    publisher_id: "epson.com",
+    url: "https://news.epson.com/news?t=Robots",
+    method: "html-list",
+    language: "en",
+    region: "해외",
+    axis: "기술·제품",
+    sectors: ["로봇·제조"],
+    allowed_hosts: ["news.epson.com"],
+    item_pattern: "^https://news\\.epson\\.com/news/[a-z0-9-]+$",
+    listing_profile: {
+      pagination: "path-pages",
+      url_template: template,
+      max_pages: 3,
+      rule_id: "epson-robots-tag-v1",
+      excluded_categories: [],
+    },
+  }
+  const pageLinks = {
+    1: [
+      {
+        url: "https://news.epson.com/news/robot-release",
+        text: "Epson Robot Release",
+        published_at: "2026-09-30",
+        listed_date_text: "September 30, 2026",
+        profile_id: "epson-robots-tag-v1",
+        categories: [],
+      },
+    ],
+    2: [
+      {
+        url: "https://news.epson.com/news/older-robot-release",
+        text: "Older Epson Robot Release",
+        published_at: "2026-09-10",
+        listed_date_text: "September 10, 2026",
+        profile_id: "epson-robots-tag-v1",
+        categories: [],
+      },
+    ],
+  }
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    seen.push(url)
+    const body = Buffer.from(url)
+    const relative = `list-${seen.length}.html`
+    fs.writeFileSync(path.join(root, relative), body)
+    return {
+      source_id: sourceId(url),
+      source_version_id: `${sourceId(url)}:${sha256(body)}`,
+      original_url: url,
+      final_url: url,
+      body_path: relative,
+      body_sha256: sha256(body),
+      fetch_status: "captured",
+      mime_type: "text/html",
+      observed_at: "2026-10-03T00:00:00Z",
+    }
+  }
+  const parse = async (_root, document) => {
+    const page = new URL(document.original_url).searchParams.get("page")
+    const links = pageLinks[page]
+    return {
+      parse_id: `parse-${page}`,
+      status: "extracted",
+      quality: { required_fields_present: true },
+      links,
+      link_profiles: [
+        {
+          id: "epson-robots-tag-v1",
+          status: "matched",
+          selected_items: links.length,
+          matched_links: links.length,
+          truncated: false,
+        },
+      ],
+    }
+  }
+  const collectDetails = async (_root, _run, _fetcher, _channel, _profiles, links) => ({
+    details: links.map(() => ({ status: "source_parsed_unreviewed" })),
+    documents: [],
+    parses: [],
+    candidates: [{ key: "epson-robot-release" }],
+  })
+  const result = await scanPathPagesRoute(
+    root,
+    {
+      async stage(_name, _input, action) {
+        return action()
+      },
+    },
+    {},
+    pagedChannel,
+    [],
+    { since: "2026-09-22", until: "2026-10-04" },
+    { fetchPolicy, parse, collectDetails },
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.summary.pagination, "path-pages")
+  assert.equal(result.candidates.length, 1)
+  assert.deepEqual(seen, [
+    "https://news.epson.com/news?t=Robots&page=1",
+    "https://news.epson.com/news?t=Robots&page=2",
+  ])
+})
+
+test("path-pages accept an explicit terminal empty state and reject an unmarked empty page", async (t) => {
+  const root = temporary(t)
+  const template = "https://news.epson.com/news?t=Collaborative+Robot&page={page}"
+  const channel = {
+    channel_id: "epson-collaborative-robot-news",
+    method: "html-list",
+    language: "en",
+    allowed_hosts: ["news.epson.com"],
+    item_pattern: "^https://news\\.epson\\.com/news/[a-z0-9-]+$",
+    listing_profile: {
+      pagination: "path-pages",
+      url_template: template,
+      max_pages: 3,
+      rule_id: "epson-cobot-tag-v1",
+      terminal_empty_text_pattern:
+        "^We're just getting started here\\. Please check back later for updates\\.$",
+      excluded_categories: [],
+    },
+  }
+  const urls = []
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    urls.push(url)
+    const body = Buffer.from(url)
+    const bodyPath = `list-${urls.length}.html`
+    fs.writeFileSync(path.join(root, bodyPath), body)
+    return {
+      source_id: sourceId(url),
+      source_version_id: `${sourceId(url)}:${sha256(body)}`,
+      original_url: url,
+      final_url: url,
+      body_path: bodyPath,
+      body_sha256: sha256(body),
+      fetch_status: "captured",
+      mime_type: "text/html",
+      observed_at: "2026-10-03T00:00:00Z",
+    }
+  }
+  const parse = async (_root, document) => {
+    const page = new URL(document.original_url).searchParams.get("page")
+    const empty = page === "2"
+    return {
+      parse_id: `parse-${page}`,
+      status: "extracted",
+      title: "Tag: Collaborative Robot",
+      title_profile_status: "matched",
+      quality: { required_fields_present: true },
+      blocks: empty
+        ? [{ text: "We're just getting started here. Please check back later for updates." }]
+        : [{ text: "AX6 collaborative robot announcement" }],
+      links: empty
+        ? []
+        : [
+            {
+              url: "https://news.epson.com/news/ax6-6-axis-collaborative-robot",
+              text: "Epson introduces AX6 collaborative robot",
+              published_at: "2026-09-22",
+              listed_date_text: "September 22, 2026",
+              profile_id: "epson-cobot-tag-v1",
+              categories: [],
+            },
+          ],
+      link_profiles: [
+        {
+          id: "epson-cobot-tag-v1",
+          status: empty ? "no-match" : "matched",
+          selected_items: empty ? 0 : 1,
+          matched_links: empty ? 0 : 1,
+          truncated: false,
+        },
+      ],
+    }
+  }
+  const collectDetails = async (_root, _run, _fetcher, _channel, _profiles, links) => ({
+    details: links.map(() => ({ status: "source_parsed_unreviewed" })),
+    documents: [],
+    parses: [],
+    candidates: [{ key: "epson-ax6-release" }],
+  })
+  const makeRun = () => ({
+    async stage(_name, _input, action) {
+      return action()
+    },
+  })
+  const dependencies = { fetchPolicy, parse, collectDetails }
+  const result = await scanPathPagesRoute(
+    root,
+    makeRun(),
+    {},
+    channel,
+    [],
+    { since: "2026-09-22", until: "2026-10-04" },
+    dependencies,
+  )
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.summary.terminal_empty_page.page, 2)
+  assert.equal(
+    result.summary.terminal_empty_page.evidence.matched_text,
+    "We're just getting started here. Please check back later for updates.",
+  )
+  assert.equal(result.candidates.length, 1)
+
+  const unmarkedChannel = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      terminal_empty_text_pattern: "^No stories found$",
+    },
+  }
+  const unmarked = await scanPathPagesRoute(
+    root,
+    makeRun(),
+    {},
+    unmarkedChannel,
+    [],
+    { since: "2026-09-22", until: "2026-10-04" },
+    dependencies,
+  )
+  assert.equal(unmarked.summary.status, "incomplete")
+  assert.equal(unmarked.summary.reason, "archive_listing_profile_incomplete")
 })

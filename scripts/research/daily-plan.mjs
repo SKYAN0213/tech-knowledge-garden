@@ -7,6 +7,7 @@ const supportedApis = new Set([
   "kuka-news-form-pages-v1",
   "abb-newsbank-json-pages-v1",
   "ur-news-center-json-pages-v1",
+  "sec-submissions-json-v1",
 ])
 
 export const DEFAULT_DAILY_RETRY_POLICY = Object.freeze({
@@ -74,7 +75,9 @@ export function validateDailyRoutes(config, routes) {
         !supportedApis.has(route.api_profile?.id) &&
         !(
           route.method === "html-list" &&
-          ["single-page", "calendar-month"].includes(route.listing_profile?.pagination)
+          ["single-page", "calendar-month", "path-pages"].includes(
+            route.listing_profile?.pagination,
+          )
         ) &&
         !(route.method === "rss" && route.listing_profile?.pagination === "bounded-feed")
       )
@@ -149,6 +152,42 @@ export function validateDailyRoutes(config, routes) {
           !route.allowed_hosts?.length)
       )
         throw Error("Daily calendar archive route is incomplete: " + entry.channel_id)
+      if (route.listing_profile?.pagination === "path-pages") {
+        const profile = route.listing_profile
+        let firstPage
+        try {
+          firstPage = new URL(profile.url_template.replace("{page}", "1"))
+        } catch {
+          throw Error("Daily paged HTML route URL is invalid: " + entry.channel_id)
+        }
+        if (
+          route.method !== "html-list" ||
+          (profile.url_template.match(/\{page\}/g) || []).length !== 1 ||
+          !Number.isInteger(profile.max_pages) ||
+          profile.max_pages < 1 ||
+          profile.max_pages > 100 ||
+          !profile.rule_id ||
+          !route.item_pattern ||
+          !route.allowed_hosts?.includes(firstPage.hostname) ||
+          !route.parse_options?.listing_link_rules?.some((rule) => rule.id === profile.rule_id)
+        )
+          throw Error("Daily paged HTML route is incomplete: " + entry.channel_id)
+        if (profile.terminal_empty_text_pattern !== undefined) {
+          let terminalPattern
+          try {
+            terminalPattern = new RegExp(profile.terminal_empty_text_pattern, "u")
+          } catch {
+            throw Error("Daily paged HTML empty-state pattern is invalid: " + entry.channel_id)
+          }
+          if (
+            typeof profile.terminal_empty_text_pattern !== "string" ||
+            profile.terminal_empty_text_pattern.length < 1 ||
+            profile.terminal_empty_text_pattern.length > 512 ||
+            !terminalPattern
+          )
+            throw Error("Daily paged HTML empty-state pattern is invalid: " + entry.channel_id)
+        }
+      }
       return { ...entry, route }
     })
 }

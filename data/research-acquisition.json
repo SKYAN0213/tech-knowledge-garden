@@ -1,6 +1,68 @@
 {
   "article_profiles": [
     {
+      "id": "sec-company-filing-en-v1",
+      "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/1318605/[0-9]{18}/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$",
+      "options": {
+        "language": "en",
+        "format": "html-fragment",
+        "title_xpath": "//div[font[contains(@style, 'text-decoration:underline')]]",
+        "content_xpath": "//html/body",
+        "content_block_xpath": ".//div|.//table",
+        "publication_date_from_listing": true
+      }
+    },
+    {
+      "id": "sec-tesla-filing-shell-en-v1",
+      "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/1318605/[0-9]{18}/tsla-[A-Za-z0-9_.-]+\\.htm$",
+      "options": {
+        "language": "en",
+        "format": "html-fragment",
+        "title_xpath": "//*[@name='dei:DocumentType']",
+        "content_xpath": "//html/body",
+        "content_block_xpath": ".//div|.//table",
+        "publication_date_from_listing": true
+      }
+    },
+    {
+      "id": "sec-amazon-company-filing-en-v1",
+      "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/1018724/[0-9]{18}/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$",
+      "options": {
+        "language": "en",
+        "format": "html-fragment",
+        "title_xpath": "//*[@name='dei:EntityRegistrantName']",
+        "content_xpath": "//html/body",
+        "content_block_xpath": ".//div[not(contains(@style,'display:none')) and not(ancestor::*[contains(@style,'display:none')])]|.//table[not(ancestor::*[contains(@style,'display:none')])]",
+        "publication_date_from_listing": true
+      }
+    },
+    {
+      "id": "sec-amazon-filing-shell-en-v1",
+      "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/1018724/[0-9]{18}/[A-Za-z0-9_.-]+\\.htm$",
+      "options": {
+        "language": "en",
+        "format": "html-fragment",
+        "title_xpath": "//*[@name='dei:DocumentType']",
+        "content_xpath": "//html/body",
+        "content_block_xpath": ".//div|.//table",
+        "publication_date_from_listing": true
+      }
+    },
+    {
+      "id": "epson-robot-news-en-v1",
+      "url_pattern": "^https://news\\.epson\\.com/news/[a-z0-9][a-z0-9-]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[contains(concat(' ', normalize-space(@class), ' '), ' content-title--article ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' content-article__wrapper ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table",
+        "publication_date_xpath": "//span[contains(concat(' ', normalize-space(@class), ' '), ' content-meta__date ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}$",
+        "publication_date_format": "%B %d, %Y",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
       "id": "doosan-robotics-2q26-earnings-release-en",
       "url_pattern": "^https://www\\.doosanrobotics\\.com/kr/investment/ir/irdata/irDataFile/down/85$",
       "options": {
@@ -264,7 +326,10 @@
         "pdf_title_page": 1,
         "pdf_title_pattern": "Geschäftsbericht 2025",
         "sparse_page_patterns": [
-          { "page": 138, "pattern": "www\\.kuka\\.com" }
+          {
+            "page": 138,
+            "pattern": "www\\.kuka\\.com"
+          }
         ]
       }
     },
@@ -357,12 +422,11 @@
           "intro_field": "content",
           "modules_field": "contentModule.flexible",
           "module_type_field": "fieldGroupName",
-          "ignored_module_types": [
-            "Post_Contentmodule_Cm_CmGallery",
-            "Post_Contentmodule_Cm_CmRelatedPosts"
-          ],
+          "ignored_module_types": ["Post_Contentmodule_Cm_CmGallery","Post_Contentmodule_Cm_CmRelatedPosts"],
           "module_text_fields": {
-            "Post_Contentmodule_Cm_CmText": { "text_field": "cmTextText" },
+            "Post_Contentmodule_Cm_CmText": {
+              "text_field": "cmTextText"
+            },
             "Post_Contentmodule_Cm_CmPictext": {
               "text_field": "cmPictextText",
               "title_field": "cmPictextTitle"
@@ -707,6 +771,20 @@
       }
     },
     {
+      "id": "samsung-sds-company-news-ko-v1",
+      "url_pattern": "^https://www\\.samsungsds\\.com/kr/news/(?!sds20260930\\.html$)(?!index\\.html$)[^/?#]+\\.html$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//h1[contains(concat(' ', normalize-space(@class), ' '), ' post_title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' post ')]",
+        "content_block_xpath": ".//a[contains(concat(' ', normalize-space(@class), ' '), ' post_category ')]|.//h1|.//span[contains(concat(' ', normalize-space(@class), ' '), ' post_date ')]|.//span[contains(concat(' ', normalize-space(@class), ' '), ' post_author ')]|.//p|.//table|.//h2|.//h3|.//li",
+        "publication_date_xpath": "//span[contains(concat(' ', normalize-space(@class), ' '), ' post_date ')]",
+        "publication_date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
       "id": "kaist-www-research-article-v1",
       "url_pattern": "^https://www\\.kaist\\.ac\\.kr/news/html/news/\\?mode=V&mng_no=[0-9]+$",
       "options": {
@@ -766,7 +844,9 @@
         "publication_date_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' post-single ')]//div[contains(concat(' ', normalize-space(@class), ' '), ' slider-meta-left-content ')]",
         "publication_date_pattern": "^[0-9]{1,2}월 [0-9]{1,2} [0-9]{4}$",
         "publication_date_format": "%m월 %d %Y",
-        "publication_date_timezone": "Asia/Seoul"
+        "publication_date_timezone": "Asia/Seoul",
+        "publication_date_from_listing": true,
+        "publication_date_listing_authoritative": true
       }
     },
     {
@@ -792,7 +872,9 @@
         "content_block_xpath": "./p[not(preceding-sibling::hr)]|./h2[not(preceding-sibling::hr)]|./h3[not(preceding-sibling::hr)]|./ul[not(preceding-sibling::hr)]/li|./ol[not(preceding-sibling::hr)]/li|./table[not(preceding-sibling::hr)]",
         "publication_date_xpath": "//article[@id='main-content']//dl[contains(concat(' ', normalize-space(@class), ' '), ' lcds-description-list--grid ')]//dd/time[@datetime]",
         "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}$",
-        "publication_date_format": "%B %d, %Y"
+        "publication_date_format": "%B %d, %Y",
+        "publication_date_from_listing": true,
+        "publication_date_listing_authoritative": true
       }
     },
     {
@@ -876,6 +958,30 @@
         "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_view ')]/ul[contains(concat(' ', normalize-space(@class), ' '), ' basic_info ')]/li[1]",
         "publication_date_pattern": "[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}",
         "publication_date_format": "%Y.%m.%d"
+      }
+    },
+    {
+      "id": "kribb-bio-research-article-v1",
+      "url_pattern": "^https://www\\.kribb\\.re\\.kr/kor/sub02/sub02_02_01_view\\.jsp\\?b_idx=[0-9]+(?:&[^#]*)?$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_cont ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table",
+        "publication_date_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' board_date ')]",
+        "publication_date_pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "nih-korea-bio-research-article-v1",
+      "url_pattern": "^https://nih\\.go\\.kr/ko/bbs/B0000130/view\\.do\\?nttId=[0-9]+&menuNo=300829&pageIndex=[0-9]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' tstyle_view ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' tb_contents ')]",
+        "content_block_xpath": ".//h2|.//h3|.//h4|.//p|.//li|.//table",
+        "publication_date_from_listing": true
       }
     },
     {
@@ -974,6 +1080,30 @@
         "publication_date_xpath": "//meta[@name='release-date']",
         "publication_date_attribute": "content",
         "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "roche-media-release-date-suffixed-v1",
+      "url_pattern": "^https://www\\.roche\\.com/media/releases/med-cor-[0-9]{4}-[0-9]{2}-[0-9]{2}[a-z]/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//meta[@name='release-date']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "kari-space-press-article-ko-v1",
+      "url_pattern": "^https://www\\.kari\\.re\\.kr/kor/article/ATCL87374b48c/[0-9]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[@data-content='board_view']//div[contains(concat(' ',normalize-space(@class),' '),' t ')]/strong",
+        "content_xpath": "//div[@data-content='board_view']//div[@class='c']",
+        "content_block_xpath": ".//span|.//p|.//table",
+        "publication_date_xpath": "//div[@data-content='board_view']//ul[contains(concat(' ',normalize-space(@class),' '),' detail ')]/li[contains(concat(' ',normalize-space(@class),' '),' date ')]",
+        "publication_date_pattern": "([0-9]{4}-[0-9]{2}-[0-9]{2})",
         "publication_date_format": "%Y-%m-%d"
       }
     },
@@ -1142,8 +1272,231 @@
         "pdf_title_pattern": "^(?:FY[0-9]{4}.*Financial Results|Results Briefing.*)",
         "publication_date_from_listing": true
       }
+    },
+    {
+      "id": "vast-dataenclave-press-release-v1",
+      "url_pattern": "^https://www\\.vastdata\\.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' blog-post-main-section ')]//h1",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' blog-post-middle-content-section ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table|.//blockquote|.//figcaption",
+        "publication_date_xpath": "//script[@type='application/ld+json' and contains(., 'datePublished')]",
+        "publication_date_pattern": "(?<=\\\"datePublished\\\":\\\")[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "sunrun-tesla-grid-dispatch-20260921-v1",
+      "url_pattern": "^https://investors\\.sunrun\\.com/news-events/press-releases/detail/381/sunrun-and-tesla-dispatch-580-megawatts-to-californias/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' full-news-article ')]//h1[contains(concat(' ',normalize-space(@class),' '),' article-heading ')]",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' full-news-article ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//meta[@name='published_time']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "proofpoint-agentic-data-ai-security-20260922-v1",
+      "url_pattern": "^https://www\\.proofpoint\\.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node-news-main-content ')]//h3[contains(concat(' ',normalize-space(@class),' '),' news-main-content__title ')]",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node-news-main-content ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//time[@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "kasa-second-space-center-demand-meeting-20260922-v1",
+      "url_pattern": "^https://www\\.kasa\\.go\\.kr/prog/plcyBrf/brief/kor/sub01_01_04/view\\.do\\?plcyBrfNo=498$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//h2[contains(concat(' ',normalize-space(@class),' '),' board-view__title ')]",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' board-view__contents-inner ')]",
+        "content_block_xpath": ".//h3|.//h4|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//span[contains(concat(' ',normalize-space(@class),' '),' info__date ') and starts-with(normalize-space(.),'등록일')]",
+        "publication_date_pattern": "등록일\\s*([0-9]{4}-[0-9]{2}-[0-9]{2})",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "cyber-centre-cisco-ise-advisory-al26-021-v1",
+      "url_pattern": "^https://www\\.cyber\\.gc\\.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//p[.//strong[contains(normalize-space(.),'Date:')]]",
+        "publication_date_pattern": "Date:\\s*([A-Z][a-z]+\\s+[0-9]{1,2},\\s*[0-9]{4})",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "crowdstrike-company-news-en-v1",
+      "url_pattern": "^https://ir\\.crowdstrike\\.com/news-releases/news-release-details/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node--nir-news--full ')]//h2[1]",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node--nir-news--full ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node--nir-news--full ')]//div[contains(concat(' ',normalize-space(@class),' '),' field--name-field-nir-news-date ')]",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}$",
+        "publication_date_format": "%B %d, %Y",
+        "publication_date_from_listing": true,
+        "publication_date_listing_authoritative": true,
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "ahnlab-company-press-ko-v1",
+      "url_pattern": "^https://company\\.ahnlab\\.com/kr/news/press_release_view\\.do\\?seqPressRelease=[1-9][0-9]{2,7}$",
+      "options": {
+        "format": "html-fragment",
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' mTit03 ')]",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' bbsViewCont ')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//table",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' dateTit ')]",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "celltrion-press-release-ko-v1",
+      "url_pattern": "^https://www\\.celltrion\\.com/ko-kr/company/media-center/press-release/[0-9]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//h3[contains(concat(' ', normalize-space(@class), ' '), ' subject ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' viewBody ')]",
+        "content_block_xpath": ".//h3|.//h4|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//p[@class='date']",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "samsung-sdi-company-news-ko-v1",
+      "url_pattern": "^https://www\\.samsungsdi\\.co\\.kr/sdi-now/sdi-news/[1-9][0-9]{2,6}\\.html$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' view_cont ')]//h3[contains(concat(' ',normalize-space(@class),' '),' titmain ')]",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' view_cont ')]//div[contains(concat(' ',normalize-space(@class),' '),' cont_box ')]",
+        "content_block_xpath": ".//h2|.//h3|.//h4|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' view_cont ')]//div[contains(concat(' ',normalize-space(@class),' '),' view_head ')]//span[contains(concat(' ',normalize-space(@class),' '),' date ')]",
+        "publication_date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+        "publication_date_format": "%Y.%m.%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "airbus-space-press-release-en-v1",
+      "url_pattern": "^https://www\\.airbus\\.com/en/newsroom/press-releases/[^?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node--press-release ')]//h1",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' node--press-release ') and contains(concat(' ',normalize-space(@class),' '),' view-mode-full ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table|.//blockquote",
+        "publication_date_xpath": "//meta[@property='article:published_time']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
+    },
+    {
+      "id": "innospace-company-news-ko-article-v1",
+          "url_pattern": "^https://www\\.innospc\\.com/shop_contents/myboard_read\\.htm\\?[^#]*myboard_code=sub04_04[^#]*idx=[0-9]+[^#]*$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' read-content ')]//div[contains(concat(' ',normalize-space(@class),' '),' top ')]/h3",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' read-content ')]//div[contains(concat(' ',normalize-space(@class),' '),' bottom ')]",
+        "content_block_xpath": ".//p[normalize-space(.) and not(.//img)]",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' read-content ')]//div[contains(concat(' ',normalize-space(@class),' '),' top ')]//span[contains(concat(' ',normalize-space(@class),' '),' blue ')]",
+        "publication_date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d",
+        "publication_date_policy": "explicit-authoritative"
+      }
     }
   ],
+  "route-crowdstrike-company-news-en": {
+    "publisher_id": "crowdstrike",
+    "allowed_hosts": ["ir.crowdstrike.com"],
+    "item_pattern": "^https://ir\\.crowdstrike\\.com/news-releases/news-release-details/[^/?#]+/?$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "crowdstrike-company-news-list-en-v1",
+      "require_title_match": true,
+      "scope": "Official CrowdStrike investor press-release page; the window is complete only after a dated older release is observed."
+    },
+    "parse_options": {
+      "format": "html-fragment",
+      "language": "en",
+      "title_xpath": "//h1",
+      "content_xpath": "//body",
+      "content_block_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' lfg-details ')]",
+      "publication_date_policy": "not_applicable",
+      "listing_link_rules": [
+        {
+          "id": "crowdstrike-company-news-list-en-v1",
+          "item_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' lfg-details ')]",
+          "url_value_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' nir-widget--news--headline ')]/a[1]/@href",
+          "url_pattern": "(?P<url>/news-releases/news-release-details/[^/?#]+)",
+          "title_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' nir-widget--news--headline ')]/a[1]",
+          "date_xpath": "./div[contains(concat(' ',normalize-space(@class),' '),' nir-widget--news--date-time ')]",
+          "date_pattern": "^[A-Z][a-z]{2,4} [0-9]{1,2}, 20[0-9]{2}$",
+          "date_format": "%B %d, %Y"
+        }
+      ]
+    },
+    "verification": "observed-official-investor-list-and-detail-2026-10-03"
+  },
+  "route-ahnlab-company-press-ko": {
+    "publisher_id": "ahnlab",
+    "allowed_hosts": ["company.ahnlab.com"],
+    "item_pattern": "^https://company\\.ahnlab\\.com/kr/news/press_release_view\\.do\\?seqPressRelease=[1-9][0-9]{2,7}$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "path-pages",
+      "url_template": "https://company.ahnlab.com/kr/news/press_release_list.do?pageNum={page}",
+      "max_pages": 5,
+      "rule_id": "ahnlab-company-press-list-ko-v1",
+      "require_title_match": true,
+      "scope": "Official AhnLab corporate press release XML list. Stop only after the dated newest-first rows reach the requested older boundary."
+    },
+    "parse_options": {
+      "format": "xml-fragment",
+      "language": "ko",
+      "title_xpath": "//main/item[1]/title",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//item",
+      "publication_date_policy": "not_applicable",
+      "listing_link_rules": [
+        {
+          "id": "ahnlab-company-press-list-ko-v1",
+          "item_xpath": "//main/item",
+          "url_value_xpath": "./seqPressRelease",
+          "url_pattern": "(?P<seq>[1-9][0-9]{2,7})",
+          "url_template": "/kr/news/press_release_view.do?seqPressRelease={seq}",
+          "title_xpath": "./title",
+          "date_xpath": "./date",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
+        }
+      ]
+    },
+    "verification": "observed-official-xml-list-and-detail-2026-10-03"
+  },
   "fda-press-announcements": {
     "publisher_id": "fda.gov",
     "allowed_hosts": ["www.fda.gov"],
@@ -1266,6 +1619,66 @@
       ]
     }
   },
+  "kribb-bio-research": {
+    "publisher_id": "www.kribb.re.kr",
+    "allowed_hosts": ["www.kribb.re.kr"],
+    "item_pattern": "^https://www\\.kribb\\.re\\.kr/kor/sub02/sub02_02_01_view\\.jsp\\?b_idx=[0-9]+(?:&[^#]*)?$",
+    "scan_max_details": 12,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "kribb-bio-research-dated-v1",
+      "require_title_match": true,
+      "scope": "Official KRIBB release list; complete only when the newest-first page reaches an older dated article. The list includes research results, events and institutional notices, so every candidate needs editorial classification."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//table[.//td[contains(concat(' ', normalize-space(@class), ' '), ' bbs_notice_board_title ')]]",
+      "content_block_xpath": ".//tr[td[contains(concat(' ', normalize-space(@class), ' '), ' bbs_notice_board_title ')]]",
+      "listing_link_rules": [
+        {
+          "id": "kribb-bio-research-dated-v1",
+          "item_xpath": "//tr[td[contains(concat(' ', normalize-space(@class), ' '), ' bbs_notice_board_title ')]]/td[contains(concat(' ', normalize-space(@class), ' '), ' bbs_notice_board_title ')]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>../sub02/sub02_02_01_view\\.jsp\\?b_idx=[0-9]+&keyWord=[^&]*&keyField=[^&]*&page=[0-9]+&nowBlock=[0-9]+&category=[^&#]*)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::tr[1]/td[4]",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d"
+        }
+      ]
+    }
+  },
+  "nih-korea-bio-research": {
+    "publisher_id": "nih.go.kr",
+    "allowed_hosts": ["nih.go.kr"],
+    "item_pattern": "^https://nih\\.go\\.kr/ko/bbs/B0000130/view\\.do\\?menuNo=300829&nttId=[0-9]+&pageIndex=[0-9]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "nih-korea-bio-research-dated-v1",
+      "require_title_match": true,
+      "scope": "Official dated National Institute of Health press-reference list; complete only when the newest-first page reaches an older item. Page rows are full text at the official source and may include research, policy reference, or public health guidance."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//div[@id='listView']",
+      "content_block_xpath": "./ul",
+      "listing_link_rules": [
+        {
+          "id": "nih-korea-bio-research-dated-v1",
+          "item_xpath": "//div[@id='listView']/ul/li[contains(concat(' ', normalize-space(@class), ' '), ' title ')]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>(?:https://nih\\.go\\.kr)?/ko/bbs/B0000130/view\\.do\\?nttId=[0-9]+&menuNo=300829&pageIndex=[0-9]+)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::ul[1]/li[4]",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d"
+        }
+      ]
+    }
+  },
   "nlr-energy-news": {
     "publisher_id": "nlr.gov",
     "allowed_hosts": ["www.nlr.gov"],
@@ -1313,7 +1726,7 @@
   },
   "nasa-technology-rss": {
     "publisher_id": "nasa.gov",
-    "allowed_hosts": ["www.nasa.gov", "science.nasa.gov"],
+    "allowed_hosts": ["www.nasa.gov","science.nasa.gov"],
     "item_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?:[^/?#]+/)+[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -1327,7 +1740,7 @@
   },
   "google-cloud-threat-intelligence": {
     "publisher_id": "cloud.google.com",
-    "allowed_hosts": ["feeds.feedburner.com", "cloud.google.com"],
+    "allowed_hosts": ["feeds.feedburner.com","cloud.google.com"],
     "item_pattern": "^https://cloud\\.google\\.com/blog/topics/threat-intelligence/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -1368,6 +1781,23 @@
       "max_items": 50,
       "guid_is_permalink": false,
       "scope": "Official press-release RSS; use its UTC calendar date and verify full article titles and printed publication dates before accepting a window."
+    }
+  },
+  "samsung-sds-company-news-ko": {
+    "publisher_id": "www.samsungsds.com",
+    "allowed_hosts": ["www.samsungsds.com"],
+    "item_pattern": "^https://www\\.samsungsds\\.com/kr/news/(?!index(?:\\.html)?$)[^/?#]+\\.html$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "samsung-sds-newsroom-rss-ko-v1",
+      "feed_title": "언론보도 | 삼성 SDS",
+      "max_items": 1500,
+      "guid_is_permalink": true,
+      "date_timezone": "Asia/Seoul",
+      "pub_date_format": "korean-local-ampm-v1",
+      "rss_title_policy": "must_match",
+      "scope": "Official Samsung SDS Korean newsroom feed. The archive feed includes third-party media coverage as well as company press releases; retain each item's category and author evidence from the full article and do not attribute coverage to Samsung SDS as a company statement."
     }
   },
   "kakao-tech-blog": {
@@ -1458,7 +1888,7 @@
   },
   "ieee-spectrum-robotics": {
     "publisher_id": "spectrum.ieee.org",
-    "allowed_hosts": ["spectrum.ieee.org", "robotsguide.com"],
+    "allowed_hosts": ["spectrum.ieee.org","robotsguide.com"],
     "item_pattern": "^https://(?:spectrum\\.ieee\\.org/[^/?#]+|robotsguide\\.com/learn/[^/?#]+)$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -1486,7 +1916,7 @@
       "listing_link_rules": [
         {
           "id": "fanuc-en-dated-index-v1",
-          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[@href]",
+          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[@href and (contains(@href,'news') or contains(@href,'notice'))]",
           "url_attribute": "href",
           "url_pattern": "(?P<url>20\\d\\d/(?:notice|news)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html)",
           "title_xpath": ".",
@@ -1498,9 +1928,41 @@
     }
   },
   "fanuc-ja": {
-    "item_pattern": "/ja/profile/pr/newsrelease/20\\d\\d/news\\d{8}",
+    "item_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/profile/pr/newsrelease/20\\d\\d/(?:news|osirase)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html$",
     "allowed_hosts": ["www.fanuc.co.jp"],
-    "verification": "local-fixture-2026-09-27"
+    "scan_max_details": 12,
+    "listing_profile": {
+      "rule_id": "fanuc-ja-dated-index-v1",
+      "pagination": "single-page",
+      "ignored_rule_ids": ["fanuc-ja-announcements-ignored-v1"],
+      "scope": "FANUC Japanese News Release index with year/day headings; confirms this index window only."
+    },
+    "parse_options": {
+      "language": "ja",
+      "listing_link_rules": [
+        {
+          "id": "fanuc-ja-dated-index-v1",
+          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[@href and contains(@href,'news')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>20\\d\\d/news\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html)",
+          "title_xpath": ".",
+          "date_xpath": "concat(normalize-space(../../preceding-sibling::h2[1]), ' ', normalize-space(../../preceding-sibling::h3[1]))",
+          "date_pattern": "^20\\d\\d年 [0-9]{1,2}月[0-9]{1,2}日$",
+          "date_format": "%Y年 %m月%d日"
+        },
+        {
+          "id": "fanuc-ja-announcements-ignored-v1",
+          "item_xpath": "//*[@id='main']//div[contains(concat(' ',normalize-space(@class),' '),' raw ')]/ul/li/a[@href and contains(@href,'osirase')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>20\\d\\d/osirase\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html)",
+          "title_xpath": ".",
+          "date_xpath": "concat(normalize-space(../../preceding-sibling::h2[1]), ' ', normalize-space(../../preceding-sibling::h3[1]))",
+          "date_pattern": "^20\\d\\d年 [0-9]{1,2}月[0-9]{1,2}日$",
+          "date_format": "%Y年 %m月%d日"
+        }
+      ]
+    },
+    "verification": "common-list-scan-fanuc-ja-20261002-v5"
   },
   "route-fanuc-ir-disclosures-ja": {
     "item_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce_other/pdf/[0-9]{4}/[A-Za-z0-9_-]+\\.pdf$",
@@ -1829,15 +2291,72 @@
     },
     "verification": "captured-news-list-component-and-page-2026-09-28"
   },
+  "epson-robots-news": {
+    "item_pattern": "^https://news\\.epson\\.com/news/[A-Za-z0-9][A-Za-z0-9-]+/?$",
+    "allowed_hosts": ["news.epson.com"],
+    "scan_max_details": 25,
+    "listing_profile": {
+      "pagination": "path-pages",
+      "max_pages": 5,
+      "rule_id": "epson-robots-tag-v1",
+      "url_template": "https://news.epson.com/news?t=Robots&page={page}",
+      "scope": "Epson US official press releases tagged Robots. Capture dated robot product, application, distribution, and company announcements; require the newest-first listing to reach an item older than the scan window."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' content-block__heading ')]/h2",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' content-primary--full ')]",
+      "content_block_xpath": ".//article[contains(concat(' ', normalize-space(@class), ' '), ' story-block ')]",
+      "listing_link_rules": [
+        {
+          "id": "epson-robots-tag-v1",
+          "item_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' story-block ')]//h3[contains(concat(' ', normalize-space(@class), ' '), ' story-block__title ')]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/news/[A-Za-z0-9][A-Za-z0-9-]+)",
+          "title_xpath": ".",
+          "date_xpath": "../../div[contains(concat(' ', normalize-space(@class), ' '), ' story-block__meta ')]/span[contains(concat(' ', normalize-space(@class), ' '), ' story-block__date ')]",
+          "date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}$",
+          "date_format": "%B %d, %Y"
+        }
+      ]
+    },
+    "verification": "official-robots-tag-and-paginated-html-reviewed-2026-10-03"
+  },
+  "epson-collaborative-robot-news": {
+    "item_pattern": "^https://news\\.epson\\.com/news/[A-Za-z0-9][A-Za-z0-9-]+/?$",
+    "allowed_hosts": ["news.epson.com"],
+    "scan_max_details": 25,
+    "listing_profile": {
+      "pagination": "path-pages",
+      "max_pages": 5,
+      "rule_id": "epson-cobot-tag-v1",
+      "url_template": "https://news.epson.com/news?t=Collaborative+Robot&page={page}",
+      "terminal_empty_text_pattern": "^We're just getting started here\\. Please check back later for updates\\.$",
+      "scope": "Epson US official press releases tagged Collaborative Robot. Capture dated cobot product and deployment announcements; require the newest-first listing to reach an item older than the scan window."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' content-block__heading ')]/h2",
+      "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' content-primary--full ')]",
+      "content_block_xpath": ".//article[contains(concat(' ', normalize-space(@class), ' '), ' story-block ')]",
+      "listing_link_rules": [
+        {
+          "id": "epson-cobot-tag-v1",
+          "item_xpath": "//article[contains(concat(' ', normalize-space(@class), ' '), ' story-block ')]//h3[contains(concat(' ', normalize-space(@class), ' '), ' story-block__title ')]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/news/[A-Za-z0-9][A-Za-z0-9-]+)",
+          "title_xpath": ".",
+          "date_xpath": "../../div[contains(concat(' ', normalize-space(@class), ' '), ' story-block__meta ')]/span[contains(concat(' ', normalize-space(@class), ' '), ' story-block__date ')]",
+          "date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}$",
+          "date_format": "%B %d, %Y"
+        }
+      ]
+    },
+    "verification": "official-collaborative-robot-tag-and-article-reviewed-2026-10-03"
+  },
   "route-abb-investor-releases-en": {
     "item_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
-    "allowed_hosts": [
-      "www.abb.com",
-      "resources.news.e.abb.com",
-      "search.abb.com",
-      "library.e.abb.com",
-      "global.abb"
-    ],
+    "allowed_hosts": ["www.abb.com","resources.news.e.abb.com","search.abb.com","library.e.abb.com","global.abb"],
     "api_profile": {
       "id": "abb-newsbank-json-pages-v1",
       "endpoint": "https://www.abb.com/conf/abbcommon/services/newsbank.json",
@@ -2009,5 +2528,180 @@
       "max_details": 25
     },
     "verification": "official-wp-rest-api-article-profile-and-window-scan-2026-10-02"
+  },
+  "dart-samsung-filings": {
+    "publisher_id": "dart.fss.or.kr",
+    "allowed_hosts": ["dart.fss.or.kr"],
+    "item_pattern": "^https://dart\\.fss\\.or\\.kr/api/link\\.jsp\\?rcpNo=[0-9]{14}$",
+    "scan_max_details": 50,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "dart-company-rss-v1",
+      "feed_title": "DART : (유가)삼성전자의 공시",
+      "max_items": 50,
+      "guid_is_permalink": true,
+      "date_timezone": "Asia/Seoul",
+      "retention_business_days": 5,
+      "scope": "Official company-specific filing RSS. DART states it contains filings from the latest five business days; each disclosure is a candidate source, not an approved news article."
+    },
+    "verification": "official-dart-common-rss-route-2026-10-03"
+  },
+  "route-celltrion-company-news-ko": {
+    "publisher_id": "www.celltrion.com",
+    "allowed_hosts": ["www.celltrion.com"],
+    "item_pattern": "^https://www\\.celltrion\\.com/ko-kr/company/media-center/press-release/[0-9]+$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "celltrion-press-releases-dated-ko-v1",
+      "require_title_match": true,
+      "scope": "Official Celltrion Korean press release list; dated newest-first rows identify detail IDs from the site's observed common detail-navigation function. The current page must reach an older row before the selected window is complete."
+    },
+    "parse_options": {
+      "language": "ko",
+      "listing_link_rules": [
+        {
+          "id": "celltrion-press-releases-dated-ko-v1",
+          "item_xpath": "//ul[contains(concat(' ', normalize-space(@class), ' '), ' normal ')]/li//a[@no and contains(@onclick, 'commUtil.fnGoDetail')]",
+          "url_attribute": "no",
+          "url_pattern": "(?P<id>[0-9]+)",
+          "url_template": "/ko-kr/company/media-center/press-release/{id}",
+          "title_xpath": ".//p[@class='subject']",
+          "date_xpath": ".//span[contains(concat(' ', normalize-space(@class), ' '), ' date ')]",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
+        }
+      ]
+    },
+    "verification": "observed-article-list-and-detail-profile-2026-10-03"
+  },
+  "route-samsung-sdi-company-news-ko": {
+    "publisher_id": "samsungsdi.co.kr",
+    "allowed_hosts": ["www.samsungsdi.co.kr"],
+    "item_pattern": "^https://www\\.samsungsdi\\.co\\.kr/sdi-now/sdi-news/[1-9][0-9]{2,6}\\.html$",
+    "scan_max_details": 20,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "samsung-sdi-news-list-ko-v1",
+      "require_title_match": true,
+      "scope": "Official Samsung SDI Korean News list. Item IDs are taken from its documented detail navigation, with the full original title in the image alt text and a visible publication date. The newest-first page must reach an older dated item before the requested window is complete."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' sub_visual ')]//h2[contains(concat(' ',normalize-space(@class),' '),' subH ')]",
+      "content_xpath": "//ul[@id='newList']",
+      "content_block_xpath": ".//li",
+      "publication_date_policy": "not_applicable",
+      "listing_link_rules": [
+        {
+          "id": "samsung-sdi-news-list-ko-v1",
+          "item_xpath": "//ul[@id='newList']/li/a[contains(@onclick,'fnDetailForm')]",
+          "url_attribute": "onclick",
+          "url_pattern": "^javascript:fnDetailForm\\((?P<seq>[1-9][0-9]{2,6})\\); return false;$",
+          "url_template": "/sdi-now/sdi-news/{seq}.html",
+          "title_xpath": ".//img[@alt]/@alt",
+          "date_xpath": ".//span[contains(concat(' ',normalize-space(@class),' '),' date ')]",
+          "date_pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$",
+          "date_format": "%Y.%m.%d"
+        }
+      ]
+    },
+    "verification": "official-korean-news-list-and-detail-observed-2026-10-03"
+  },
+  "roche-media-releases-rss": {
+    "publisher_id": "www.roche.com",
+    "allowed_hosts": ["www.roche.com"],
+    "item_pattern": "^https://www\\.roche\\.com/media/releases/med-cor-[0-9]{4}-[0-9]{2}-[0-9]{2}[a-z]?/?$",
+    "scan_max_details": 12,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "roche-media-releases-rss-v1",
+      "feed_title": "MEDIA",
+      "max_items": 20,
+      "guid_is_permalink": false,
+      "date_timezone": "UTC",
+      "rss_title_policy": "must_match",
+      "scope": "Official Roche Media Releases RSS feed discovered from the Roche subscribe page. Complete a date window only after full release pages match feed title and publication date and an older dated item establishes the feed boundary."
+    },
+    "verification": "official-roche-media-releases-rss-captured-2026-10-03"
+  },
+  "kari-space-press-ko": {
+    "publisher_id": "www.kari.re.kr",
+    "allowed_hosts": ["www.kari.re.kr"],
+    "item_pattern": "^https://www\\.kari\\.re\\.kr/kor/article/ATCL87374b48c/[0-9]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "kari-space-press-list-ko-v1",
+      "require_title_match": true,
+      "scope": "Official KARI Korean press release list. Ten newest-first rows include date and article links; complete a window only after matching full article titles/dates and a dated row older than the window."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' notice_list ')]",
+      "content_block_xpath": ".//li[p[contains(concat(' ',normalize-space(@class),' '),' subject ')]]",
+      "listing_link_rules": [
+        {
+          "id": "kari-space-press-list-ko-v1",
+          "item_xpath": "//li[p[contains(concat(' ',normalize-space(@class),' '),' subject ')]]",
+          "url_value_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' subject ')]/a/@href",
+          "url_pattern": "(?P<url>/kor/article/ATCL87374b48c/[0-9]+)",
+          "title_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' subject ')]/a",
+          "date_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' date ')]/text()[last()]",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d"
+        }
+      ]
+    },
+    "verification": "official-kari-korean-press-list-and-detail-observed-2026-10-03"
+  },
+  "airbus-space-press-rss": {
+    "publisher_id": "www.airbus.com",
+    "allowed_hosts": ["www.airbus.com"],
+    "item_pattern": "^https://www\\.airbus\\.com/en/newsroom/(?:press-releases|stories)/[^?#]+$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "airbus-space-press-rss-v1",
+      "feed_title": "Space",
+      "max_items": 100,
+      "guid_is_permalink": false,
+      "date_timezone": "UTC",
+      "pub_date_format": "weekday-mdy-day-v1",
+      "pub_date_precision": "day",
+      "scope": "Airbus official Space feed lists calendar day and local clock without a declared timezone. Preserve the publisher-listed text and compare publication at day precision; full detail metadata is checked separately."
+    }
+  },
+  "innospace-company-news-ko": {
+    "publisher_id": "www.innospc.com",
+    "allowed_hosts": ["www.innospc.com"],
+    "item_pattern": "^https://www\\.innospc\\.com/shop_contents/myboard_read\\.htm\\?[^#]*myboard_code=sub04_04[^#]*idx=[0-9]+[^#]*$",
+    "scan_max_details": 10,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "innospace-company-news-ko-v1",
+      "require_title_match": false,
+      "scope": "Official INNOSPACE Korean News list. Extract newest dated rows from the first page; complete the window only after detail title/date match and an older listed row closes the boundary."
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' sub-page board-page ')]//h2[contains(concat(' ',normalize-space(@class),' '),' page-tit ')]",
+      "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' sub-page board-page ')]//ul",
+      "content_block_xpath": ".//li[contains(concat(' ',normalize-space(@class),' '),' list-content ')]",
+      "listing_link_rules": [
+        {
+          "id": "innospace-company-news-ko-v1",
+          "item_xpath": "//li[contains(concat(' ',normalize-space(@class),' '),' list-content ')]",
+          "url_value_xpath": "@onclick",
+          "url_pattern": "location\\.href='(?P<url>/shop_contents/myboard_read\\.htm\\?[^']*myboard_code=sub04_04[^']*idx=[0-9]+[^']*)'",
+          "title_xpath": ".//h3",
+          "date_xpath": ".//span[contains(concat(' ',normalize-space(@class),' '),' blue ')]",
+          "date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d"
+        }
+      ]
+    },
+    "verification": "official-innospace-korean-news-list-observed-2026-10-03"
   }
 }

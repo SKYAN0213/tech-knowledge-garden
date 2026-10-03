@@ -17,6 +17,13 @@ ROOTS = ('Editions', 'Knowledge', 'Signals', 'TrendTopics')
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
+def parse_drive_timestamp(value):
+    if not isinstance(value, str):
+        raise ValueError('Drive timestamp must be a string')
+    if value.endswith(' UTC'):
+        value = value[:-4] + '+00:00'
+    return datetime.fromisoformat(value.replace('Z', '+00:00'))
+
 def validate(snapshot):
     if snapshot.get('schema') != 'tech-drive-source/v1' or snapshot.get('complete') is not True:
         raise ValueError('Drive export is incomplete or invalid')
@@ -123,7 +130,7 @@ def verify_working_copy(repository):
 def verify_source_snapshot(snapshot, repository, snapshot_bytes, now=None, max_age_seconds=600):
     """Check a full Drive export against the local authoring tree without changing it."""
     try:
-        exported = datetime.fromisoformat(snapshot.get('exported_at', '').replace('Z', '+00:00'))
+        exported = parse_drive_timestamp(snapshot.get('exported_at', ''))
     except (TypeError, ValueError) as error:
         raise ValueError('Drive export has no valid timestamp') from error
     if exported.tzinfo is None:
@@ -175,7 +182,7 @@ def main():
         if len(raw) > 40 * 1048576:
             raise ValueError('Drive export response is too large')
         snapshot = json.loads(raw)
-        exported = datetime.fromisoformat(snapshot.get('exported_at', '').replace('Z', '+00:00'))
+        exported = parse_drive_timestamp(snapshot.get('exported_at', ''))
         if exported.tzinfo is None or abs((datetime.now(timezone.utc) - exported).total_seconds()) > 600:
             raise ValueError('Drive export is stale; no source changes applied')
     result = synchronize(snapshot, args.repository, args.apply)

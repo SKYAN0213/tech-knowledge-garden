@@ -79,6 +79,94 @@ test("stored RSS bytes become immutable parse evidence and a dated discovery lis
   }
 })
 
+test("Airbus day-only RSS dates retain calendar precision and cover the older boundary", async () => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-day-only-"))
+  const airbus = {
+    ...channel,
+    url: "https://www.airbus.com/en/rss-all-feeds/15601?tid=15601&fid=29726",
+    allowed_hosts: ["www.airbus.com"],
+    item_pattern: "^https://www\\.airbus\\.com/en/newsroom/(?:press-releases|stories)/[^?#]+$",
+    listing_profile: {
+      ...channel.listing_profile,
+      feed_title: "Space",
+      guid_is_permalink: false,
+      pub_date_format: "weekday-mdy-day-v1",
+      pub_date_precision: "day",
+    },
+  }
+  try {
+    const xml = `<rss version="2.0"><channel><title>Space</title>
+      <item><title>Current release</title><link>https://www.airbus.com/en/newsroom/press-releases/2026-10-current</link><guid>release-20261002</guid><pubDate>Fri, 10/02/2026 - 09:58</pubDate></item>
+      <item><title>Older release</title><link>https://www.airbus.com/en/newsroom/press-releases/2026-09-older</link><guid>release-20260910</guid><pubDate>Thu, 09/10/2026 - 09:58</pubDate></item>
+      </channel></rss>`
+    const raw = Buffer.from(xml)
+    fs.writeFileSync(path.join(root, "feed.xml"), raw)
+    const document = {
+      fetch_status: "captured",
+      original_url: airbus.url,
+      source_id: sourceId(airbus.url),
+      body_path: "feed.xml",
+      body_sha256: sha256(raw),
+      observed_at: "2026-10-03T00:00:00Z",
+    }
+    document.source_version_id = `${document.source_id}:${document.body_sha256}`
+    const result = await parseStoredRSSFeed(root, document, airbus)
+    assert.equal(result.links[0].published_at, "2026-10-02")
+    assert.equal(result.links[0].published_timestamp, null)
+    assert.equal(result.links[0].published_date_precision, "day")
+    assert.equal(
+      assessBoundedRSSFeed(result, airbus, "2026-09-26", "2026-10-04").status,
+      "window_covered",
+    )
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test("Korean localized RSS resolves relative permalinks and KST publication dates", async () => {
+  const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-ko-localized-"))
+  const korean = {
+    ...channel,
+    url: "https://example.com/kr/news/feed.xml",
+    item_pattern: "^https://example\\.com/articles/[^/?#]+/?$",
+    listing_profile: {
+      ...channel.listing_profile,
+      pub_date_format: "korean-local-ampm-v1",
+      date_timezone: "Asia/Seoul",
+    },
+  }
+  try {
+    const xml = `<rss version="2.0"><channel><title>Official Feed</title>
+      <item><title>  Current Korean release  </title><link> /articles/current/ </link><guid> /articles/current/ </guid><pubDate>2026-10-02 오후 15:10:00</pubDate></item>
+      <item><title>Older Korean release</title><link>/articles/older/</link><guid>/articles/older/</guid><pubDate>2026-09-25 오전 08:00:00</pubDate></item>
+      </channel></rss>`
+    const raw = Buffer.from(xml)
+    fs.writeFileSync(path.join(root, "feed.xml"), raw)
+    const document = {
+      fetch_status: "captured",
+      original_url: korean.url,
+      final_url: korean.url,
+      source_id: sourceId(korean.url),
+      body_path: "feed.xml",
+      body_sha256: sha256(raw),
+      observed_at: "2026-10-03T00:00:00Z",
+    }
+    document.source_version_id = `${document.source_id}:${document.body_sha256}`
+    const result = await parseStoredRSSFeed(root, document, korean)
+    assert.equal(result.links[0].url, "https://example.com/articles/current/")
+    assert.equal(result.links[0].guid, result.links[0].url)
+    assert.equal(result.links[0].text, "Current Korean release")
+    assert.equal(result.links[0].published_at, "2026-10-02")
+    assert.equal(result.links[0].published_timestamp, "2026-10-02T06:10:00.000Z")
+    assert.equal(
+      assessBoundedRSSFeed(result, korean, "2026-09-26", "2026-10-03").status,
+      "window_covered",
+    )
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test("RSS with short GUIDs preserves its stated UTC date across the boundary", async () => {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-short-guid-"))
   const samsung = {
@@ -295,9 +383,21 @@ test("RSS window coverage needs a valid older boundary and unique dated article 
     "feed_cutoff_not_reached",
   )
   assert.equal(assessBoundedRSSFeed(parse, channel, "2026-09-27", "2026-09-29").window_items, 0)
+  const sameDayOutOfOrder = {
+    ...parse,
+    links: [
+      { ...item("2026-09-25", "recent-a"), published_timestamp: "2026-09-25T05:15:00.000Z" },
+      { ...item("2026-09-25", "recent-b"), published_timestamp: "2026-09-25T05:00:00.000Z" },
+      item("2026-09-08", "older"),
+    ],
+  }
+  assert.equal(
+    assessBoundedRSSFeed(sameDayOutOfOrder, channel, "2026-09-22", "2026-09-29").status,
+    "window_covered",
+  )
   for (const badLinks of [
     [links[0], { ...links[0] }],
-    [links[0], { ...links[1], guid: "not-a-url" }],
+    [links[0], { ...item("2026-09-24", "current-invalid-guid"), guid: "not-a-url" }],
     [links[0], { ...links[1], published_at: null }],
     [links[1], links[0]],
   ])
@@ -311,6 +411,66 @@ test("RSS window coverage needs a valid older boundary and unique dated article 
     assessBoundedRSSFeed(crowded, { ...channel, scan_max_details: 1 }, "2026-09-22", "2026-09-29")
       .reason,
     "detail_budget_exceeded",
+  )
+})
+
+test("old archive mirrors do not invalidate a current RSS window", () => {
+  const current = item("2026-10-02", "current")
+  const legacy = {
+    ...item("2024-05-16", "legacy"),
+    url: "https://example.com/legacy-without-html",
+  }
+  const repeatedLegacy = { ...legacy, text: "Archived duplicate mirror" }
+  const result = assessBoundedRSSFeed(
+    { ...parse, links: [current, legacy, repeatedLegacy] },
+    channel,
+    "2026-09-26",
+    "2026-10-04",
+  )
+
+  assert.equal(result.status, "window_covered")
+  assert.equal(result.window_items, 1)
+  assert.equal(result.older_items, 2)
+  assert.deepEqual(result.links, [current])
+})
+
+test("official business-day retention bounds a feed without an older item", () => {
+  const dartChannel = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      date_timezone: "Asia/Seoul",
+      retention_business_days: 5,
+    },
+  }
+  const dartParse = {
+    ...parse,
+    dates: {
+      observed_at: "2026-10-02T21:25:20.505Z",
+      feed_updated_at: "2026-10-02T21:25:37.000Z",
+    },
+    links: [
+      item("2026-10-02", "oct-02"),
+      item("2026-10-01", "oct-01-a"),
+      item("2026-10-01", "oct-01-b"),
+    ],
+  }
+  const covered = assessBoundedRSSFeed(dartParse, dartChannel, "2026-09-26", "2026-10-03")
+  assert.equal(covered.status, "window_covered")
+  assert.equal(covered.older_items, 0)
+  assert.equal(covered.retention_covered, true)
+  assert.equal(
+    assessBoundedRSSFeed(dartParse, dartChannel, "2026-09-25", "2026-10-03").reason,
+    "feed_cutoff_not_reached",
+  )
+  assert.equal(
+    assessBoundedRSSFeed(
+      { ...dartParse, dates: { ...dartParse.dates, feed_updated_at: "2026-10-01T10:00:00Z" } },
+      dartChannel,
+      "2026-09-26",
+      "2026-10-03",
+    ).reason,
+    "feed_cutoff_not_reached",
   )
 })
 

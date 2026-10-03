@@ -242,7 +242,9 @@ export async function collectWindowDetails(
       documents.push(document)
       detail.source_version_id = document.source_version_id
       const profiles = articleProfiles.filter((profile) =>
-        new RegExp(profile.url_pattern).test(document.final_url),
+        link.article_profile_id
+          ? profile.id === link.article_profile_id
+          : new RegExp(profile.url_pattern).test(document.final_url),
       )
       if (profiles.length !== 1) {
         detail.status = "article_profile_missing_or_ambiguous"
@@ -291,7 +293,11 @@ export async function collectWindowDetails(
       if (!titleMatches) {
         detail.listed_title = link.text
         detail.source_title = parsed.title
-        detail.title_relation = "rss_variant_source_title_authoritative"
+        detail.title_relation = link.listing_title_authoritative
+          ? "official_listing_title_authoritative"
+          : link.discovery_method === "sec-submissions-json"
+            ? "filing_document_title_authoritative"
+            : "rss_variant_source_title_authoritative"
       } else if (truncatedTitleMatch) {
         detail.listed_title = link.text
         detail.source_title = parsed.title
@@ -523,7 +529,7 @@ export async function collectWindowDetails(
       }
       candidates.push({
         ...found[0],
-        ...(exactTitleMatch ? {} : { title: parsed.title }),
+        ...(exactTitleMatch || link.listing_title_authoritative ? {} : { title: parsed.title }),
         article_source_version_id: document.source_version_id,
         article_parse_id: parsed.parse_id,
         article_observed_at: document.observed_at,
@@ -670,6 +676,38 @@ export function assessPathPage(parse, channel) {
   const result = { status: "incomplete", reason: null, links }
   if (parse.status !== "extracted" || !parse.quality?.required_fields_present)
     return { ...result, reason: "archive_listing_parse_incomplete" }
+  const terminalEmptyPattern = channel.listing_profile?.terminal_empty_text_pattern
+  if (terminalEmptyPattern) {
+    let pattern
+    try {
+      pattern = new RegExp(terminalEmptyPattern, "u")
+    } catch {
+      return { ...result, reason: "archive_empty_state_pattern_invalid" }
+    }
+    const emptyMatch = (parse.blocks || [])
+      .map((block) => (block.text || "").match(pattern))
+      .find(Boolean)
+    if (
+      profile?.status === "no-match" &&
+      profile.selected_items === 0 &&
+      profile.matched_links === 0 &&
+      !profile.truncated &&
+      parse.title_profile_status === "matched" &&
+      !links.length &&
+      emptyMatch
+    )
+      return {
+        status: "terminal_empty_page",
+        reason: null,
+        links: [],
+        selected_items: 0,
+        empty_state_evidence: {
+          rule_id: profileId,
+          title: parse.title,
+          matched_text: emptyMatch[0],
+        },
+      }
+  }
   if (
     !profile ||
     profile.status !== "matched" ||
@@ -776,10 +814,11 @@ export async function scanPathPagesRoute(
     }
     indexDocuments.push(document)
     documents.push(document)
+    const { content_block_xpath: _unused, ...listingParseOptions } = channel.parse_options || {}
     const parsed = await run.stage(
       `listing-parse-page-${pageNumber}`,
-      { document, options: channel.parse_options },
-      () => parse(root, document, { language: channel.language, ...(channel.parse_options || {}) }),
+      { document, options: listingParseOptions },
+      () => parse(root, document, { language: channel.language, ...listingParseOptions }),
     )
     parses.push(parsed)
     page.parse_id = parsed.parse_id
@@ -787,6 +826,16 @@ export async function scanPathPagesRoute(
     page.status = assessment.status
     page.reason = assessment.reason
     page.selected_items = assessment.selected_items || 0
+    if (assessment.status === "terminal_empty_page") {
+      summary.terminal_empty_page = {
+        page: pageNumber,
+        url,
+        parse_id: parsed.parse_id,
+        evidence: assessment.empty_state_evidence,
+      }
+      reachedBoundary = true
+      break
+    }
     if (assessment.status !== "page_scanned") {
       summary.reason = assessment.reason
       return { summary, indexDocuments, documents, parses, candidates }

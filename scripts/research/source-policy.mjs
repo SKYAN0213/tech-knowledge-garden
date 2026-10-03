@@ -33,13 +33,14 @@ export async function fetchWithPolicy(root, fetcher, url, options = {}) {
   try {
     policy = await checkRobots(root, fetcher, url, { allowed_hosts })
   } catch (error) {
+    const fetchStatus = error?.fetch_status === "rate_limited" ? "rate_limited" : "blocked"
     return {
       source_id: sourceId(url),
       source_version_id: null,
       original_url: url,
       final_url: null,
       observed_at: new Date().toISOString(),
-      fetch_status: "blocked",
+      fetch_status: fetchStatus,
       policy_status: "failed",
       error: error.message,
     }

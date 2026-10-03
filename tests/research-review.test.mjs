@@ -474,6 +474,25 @@ test("direct acquisition refuses forbidden or corrupt robots policy without fetc
   assert.equal(calls.filter((url) => url.includes("article")).length, 0)
 })
 
+test("robots rate limiting remains distinct from a permanent source block", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-policy-rate-limit-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const calls = []
+  const fetcher = {
+    options: {},
+    fetch: async (url) => {
+      calls.push(url)
+      return { fetch_status: "rate_limited" }
+    },
+  }
+
+  const result = await fetchWithPolicy(root, fetcher, "https://example.com/public/article")
+  assert.equal(result.fetch_status, "rate_limited")
+  assert.equal(result.policy_status, "failed")
+  assert.match(result.error, /rate_limited/)
+  assert.deepEqual(calls, ["https://example.com/robots.txt"])
+})
+
 test("redirects require an allowed host and an allowed destination robots rule", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-policy-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

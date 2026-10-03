@@ -74,6 +74,22 @@ class WorkerTests(unittest.TestCase):
                 self.assertEqual(result["dates"]["profile_status"], status)
                 self.assertEqual(result["dates"]["candidates"], ["2026-08-26T21:09:39Z"])
 
+    def test_html_parser_accepts_sec_xml_encoding_declaration_after_byte_decode(self):
+        raw = b'''<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE html><html><head><title>8-K</title></head><body>
+        <h1>Tesla announces a corporate update</h1>
+        <p>The company filed this current report on October 2, 2026.</p>
+        </body></html>'''
+        result = self.invoke(
+            raw,
+            {"title_xpath": "//h1", "content_xpath": "//body", "content_block_xpath": ".//p"},
+            mime_type="text/html",
+            url="https://www.sec.gov/Archives/edgar/data/1318605/000162828026064366/tsla-20261002.htm",
+        )["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertEqual(result["title"], "Tesla announces a corporate update")
+        self.assertIn("October 2, 2026", " ".join(block["text"] for block in result["blocks"]))
+
     def test_explicit_publication_date_conflict_remains_unresolved(self):
         raw = self.aws_date_fixture(metadata=b'2026-08-27T21:09:39Z')
         result = self.invoke(raw, self.aws_date_options())["result"]
@@ -203,6 +219,40 @@ class WorkerTests(unittest.TestCase):
         self.assertNotIn("published_at", result["links"][0])
         self.assertEqual(result["links"][0]["categories"], ["두산로보틱스"])
 
+    def test_html_fragment_listing_template_can_build_url_from_xml_value(self):
+        raw = '''<?xml version="1.0" encoding="UTF-8"?>
+        <main><item><seqPressRelease>11150</seqPressRelease>
+        <title>AI-native 전환 발표</title><date>2026.09.16</date></item></main>'''.encode()
+        rule = {
+            "id": "ahnlab-company-press-list-ko-v1",
+            "item_xpath": "//main/item",
+            "url_value_xpath": "./seqPressRelease",
+            "url_pattern": r"(?P<seq>[1-9][0-9]{2,7})",
+            "url_template": "/kr/news/press_release_view.do?seqPressRelease={seq}",
+            "title_xpath": "./title",
+            "date_xpath": "./date",
+            "date_pattern": r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$",
+            "date_format": "%Y.%m.%d",
+        }
+        options = {
+            "format": "xml-fragment", "language": "ko", "title_xpath": "//main/item[1]/title",
+            "content_xpath": "//main", "content_block_xpath": ".//item",
+            "publication_date_policy": "not_applicable", "listing_link_rules": [rule],
+        }
+        parsed = self.invoke(raw, options, mime_type="application/xml; charset=UTF-8",
+                             url="https://company.ahnlab.com/kr/news/press_release_list.do?pageNum=1")["result"]
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertEqual(parsed["links"][0]["url"], "https://company.ahnlab.com/kr/news/press_release_view.do?seqPressRelease=11150")
+        self.assertEqual(parsed["links"][0]["text"], "AI-native 전환 발표")
+        self.assertEqual(parsed["links"][0]["published_at"], "2026-09-16")
+
+        missing_value = json.loads(json.dumps(options))
+        missing_value["listing_link_rules"][0]["url_value_xpath"] = "./missing"
+        self.assertEqual(self.invoke(raw, missing_value, mime_type="application/xml; charset=UTF-8")["worker_status"], "failed")
+        ambiguous_value = json.loads(json.dumps(options))
+        ambiguous_value["listing_link_rules"][0]["url_value_xpath"] = "./seqPressRelease | ./title"
+        self.assertEqual(self.invoke(raw, ambiguous_value, mime_type="application/xml; charset=UTF-8")["worker_status"], "failed")
+
     def test_declared_publisher_calendar_reconciles_offset_metadata_at_day_boundary(self):
         raw = '''<html lang="ko"><head><title>ASEC</title>
         <meta property="article:published_time" content="2026-09-27T15:00:00+00:00">
@@ -246,6 +296,38 @@ class WorkerTests(unittest.TestCase):
         self.assertIsNone(result["dates"]["published_at"])
         self.assertEqual(result["dates"]["profile_status"], "conflict")
 
+    def test_asec_and_fda_listing_dates_require_matching_visible_article_date(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profiles = {profile["id"]: profile for profile in config["article_profiles"]}
+        listing = {
+            "listing_published_at": "2026-10-01",
+            "listing_date_text": "October 1, 2026",
+            "listing_source_url": "https://www.fda.gov/news-events/press-announcements",
+            "listing_source_version_id": "listing:fda-20261003",
+        }
+        asec_options = profiles["asec-public-ko-article-v1"]["options"]
+        asec = '''<html lang="ko"><head><meta property="article:published_time" content="2026-09-30T15:00:00+00:00"></head>
+        <body><article class="post-content post-single"><header><h1 class="post-title">공격 사례</h1>
+        <div class="slider-meta-left-content">10월 01 2026</div></header>
+        <div class="entry-content"><p>공식 공지 내용이다.</p></div></article></body></html>'''.encode()
+        asec_result = self.invoke(asec, {**asec_options, **listing}, url="https://asec.ahnlab.com/ko/95668/")["result"]
+        self.assertEqual(asec_result["dates"]["published_at"], "2026-10-01")
+        self.assertEqual(asec_result["dates"]["profile_status"], "official-listing-confirmed-by-display")
+        self.assertEqual(asec_result["dates"]["basis"]["display_text"], "10월 01 2026")
+
+        fda_options = profiles["fda-press-announcement-article-v1"]["options"]
+        fda = b'''<html lang="en"><body><article id="main-content"><h1>FDA announcement</h1>
+        <dl class="lcds-description-list--grid"><dd><time datetime="2026-10-01">October 01, 2026</time></dd></dl>
+        <div role="main"><p>Official announcement text.</p><hr/></div></article></body></html>'''
+        fda_result = self.invoke(fda, {**fda_options, **listing}, url="https://www.fda.gov/news-events/press-announcements/test")["result"]
+        self.assertEqual(fda_result["dates"]["published_at"], "2026-10-01")
+        self.assertEqual(fda_result["dates"]["profile_status"], "official-listing-confirmed-by-display")
+        self.assertEqual(fda_result["dates"]["basis"]["display_text"], "October 01, 2026")
+
+        mismatch = self.invoke(fda, {**fda_options, **{**listing, "listing_published_at": "2026-10-02"}}, url="https://www.fda.gov/news-events/press-announcements/test")["result"]
+        self.assertIsNone(mismatch["dates"]["published_at"])
+        self.assertEqual(mismatch["dates"]["profile_status"], "listing-display-mismatch")
+
     def test_timezone_less_html_metadata_dates_remain_candidates(self):
         result = self.invoke(self.aws_date_fixture(), {"content_xpath": "//article"})["result"]
         self.assertIsNone(result["dates"]["published_at"])
@@ -266,6 +348,98 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["precision"], "timestamp")
         self.assertEqual(result["dates"]["basis"]["sources"][0]["type"], "json-ld")
         self.assertEqual(result["dates"]["basis"]["sources"][0]["attribute"], "datePublished")
+
+    def test_vast_dataenclave_profile_selects_published_date_and_article_body(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "vast-dataenclave-press-release-v1")
+        url = "https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure"
+        self.assertIsNotNone(re.fullmatch(profile["url_pattern"], url))
+        self.assertIsNone(re.fullmatch(profile["url_pattern"], url + "-unrelated"))
+        raw = b'''<html lang="en"><head><title>VAST release</title>
+        <meta property="article:published_time" content="2026-09-21T18:43:15.165Z">
+        <meta property="article:modified_time" content="2026-09-21T18:43:15.165Z">
+        <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-09-22","dateModified":"2026-09-21T19:29:22.272Z"}</script>
+        </head><body><div class="blog-post-main-section"><h1>VAST Data Introduces DataEnclave</h1></div>
+        <div class="blog-post-middle-content-section"><div class="content-warpper prose">
+        <p>NEW YORK CITY - September 22, 2026 - VAST Data announced DataEnclave.</p>
+        <h2>Confidential AI</h2><p>DataEnclave uses a hardware-isolated runtime.</p>
+        </div><footer>About VAST Data</footer></div></body></html>'''
+        result = self.invoke(raw, profile["options"], url=url)["result"]
+        self.assertEqual(result["title"], "VAST Data Introduces DataEnclave")
+        self.assertEqual(result["dates"]["published_at"], "2026-09-22")
+        self.assertIn("2026-09-21T18:43:15.165Z", result["dates"]["candidates"])
+        self.assertIsNone(result["dates"]["modified_at"])
+        self.assertEqual(result["dates"]["modified_profile_status"], "before-publication")
+        self.assertEqual(result["dates"]["profile_status"], "matched")
+        self.assertTrue(any("announced DataEnclave" in block["text"] for block in result["blocks"]))
+        self.assertFalse(any("About VAST Data" in block["text"] for block in result["blocks"]))
+
+    def test_official_candidate_profiles_extract_article_dates_and_bodies(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profiles = {p["id"]: p for p in config["article_profiles"]}
+        cases = [
+            (
+                "sunrun-tesla-grid-dispatch-20260921-v1",
+                "https://investors.sunrun.com/news-events/press-releases/detail/381/sunrun-and-tesla-dispatch-580-megawatts-to-californias",
+                b'''<html lang="en"><head><meta name="published_time" content="2026-09-21"></head><body>
+                <article class="full-news-article"><h1 class="article-heading">Sunrun and Tesla dispatch 580 megawatts</h1>
+                <p>More than 140,000 home batteries dispatched power to California's grid.</p></article><footer>Investor navigation</footer></body></html>''',
+                "2026-09-21",
+                "Sunrun and Tesla",
+                "140,000 home batteries",
+                "Investor navigation",
+            ),
+            (
+                "proofpoint-agentic-data-ai-security-20260922-v1",
+                "https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security",
+                b'''<html lang="en"><head><meta property="article:published_time" content="2026-09-21T10:05:57-07:00"></head><body>
+                <article class="node-news-main-content"><h3 class="news-main-content__title">Proofpoint Agentic Data and AI Security</h3>
+                <time datetime="2026-09-22T11:00:00Z">September 22, 2026</time><p>Proofpoint announced a unified agentic security system.</p></article></body></html>''',
+                "2026-09-22",
+                "Proofpoint Agentic",
+                "unified agentic security system",
+                None,
+            ),
+            (
+                "kasa-second-space-center-demand-meeting-20260922-v1",
+                "https://www.kasa.go.kr/prog/plcyBrf/brief/kor/sub01_01_04/view.do?plcyBrfNo=498",
+                '''<html lang="ko"><body><div class="board-view__header"><h2 class="board-view__title">제2우주센터 민간활용 수요기업 간담회 개최</h2>
+                <span class="info__date">작성자 우주항공청</span><span class="info__date">등록일 2026-09-22 14:00</span></div>
+                <div class="board-view__contents-inner"><p>우주항공청은 국내 발사체 기업이 참여하는 간담회를 개최했다.</p></div></body></html>'''.encode("utf-8"),
+                "2026-09-22",
+                "제2우주센터 민간활용",
+                "국내 발사체 기업",
+                None,
+            ),
+            (
+                "cyber-centre-cisco-ise-advisory-al26-021-v1",
+                "https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460",
+                b'''<html lang="en"><head><title>AL26-021 Cisco security alert</title></head><body><main>
+                <p><strong>Number:</strong> AL26-021<br><strong>Date:</strong> September 17, 2026</p><h2>Audience</h2>
+                <p>This alert covers vulnerabilities in Cisco Identity Services Engine.</p></main></body></html>''',
+                "2026-09-17",
+                "AL26-021 Cisco",
+                "vulnerabilities in Cisco Identity Services Engine",
+                None,
+            ),
+        ]
+        proofpoint_result = None
+        for profile_id, url, raw, expected_date, title_part, body_part, excluded in cases:
+            with self.subTest(profile=profile_id):
+                profile = profiles[profile_id]
+                self.assertIsNotNone(re.fullmatch(profile["url_pattern"], url))
+                self.assertIsNone(re.fullmatch(profile["url_pattern"], url + "-unrelated"))
+                result = self.invoke(raw, profile["options"], url=url)["result"]
+                self.assertEqual(result["dates"]["published_at"], expected_date)
+                self.assertEqual(result["dates"]["profile_status"], "matched")
+                self.assertIn(title_part, result["title"])
+                body = "\n".join(block["text"] for block in result["blocks"])
+                self.assertIn(body_part, body)
+                if excluded:
+                    self.assertNotIn(excluded, body)
+                if profile_id == "proofpoint-agentic-data-ai-security-20260922-v1":
+                    proofpoint_result = result
+        self.assertIn("2026-09-21T10:05:57-07:00", proofpoint_result["dates"]["candidates"])
 
     def test_common_time_itemprop_date_published_is_extracted_but_arbitrary_time_is_ignored(self):
         raw = b'''<html><head><title>Release</title></head><body><article><h1>Release</h1>

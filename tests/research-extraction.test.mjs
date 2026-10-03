@@ -9,6 +9,7 @@ import {
   extractClaims,
   extractionCandidateKey,
   selectExtractionScope,
+  validateEvidence,
 } from "../scripts/research/claims.mjs"
 import { atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { main } from "../scripts/research.mjs"
@@ -29,6 +30,69 @@ function parse(id, count = 1, length = 50) {
     quality: { missing_pages: [] },
   }
 }
+test("numeric evidence comparison ignores English capitalization but still requires the quoted condition", () => {
+  const source = parse("case-fold")
+  const quote =
+    "From January 2026 to August 2026, GTIG recorded 141 distinct vulnerabilities disclosed and exploited."
+  source.blocks[0].text = quote
+  source.blocks[0].locator.text_hash = sha256(quote)
+  const claim = {
+    numbers: [
+      {
+        literal: "141",
+        unit: "distinct vulnerabilities",
+        condition: "from January 2026 to August 2026",
+      },
+    ],
+    evidence: [
+      {
+        source_id: source.source_id,
+        source_version_id: source.source_version_id,
+        parse_id: source.parse_id,
+        block_id: source.blocks[0].block_id,
+        quote,
+        support: "direct",
+      },
+    ],
+  }
+
+  assert.equal(validateEvidence(claim, [source]).structural_pass, true)
+  assert.ok(
+    validateEvidence(
+      { ...claim, numbers: [{ ...claim.numbers[0], condition: "September 2026" }] },
+      [source],
+    ).problems.includes("condition_not_in_evidence"),
+  )
+})
+
+test("ongoing source activity cannot be marked as completed", () => {
+  const source = parse("ongoing-state")
+  const quote = "안랩은 지난 2013년부터 AV-TEST 평가에 꾸준히 참여하고 있고"
+  source.blocks[0].text = quote
+  source.blocks[0].locator.text_hash = sha256(quote)
+  const claim = {
+    statement: "안랩은 AV-TEST 평가에 꾸준히 참여하고 있다.",
+    event_state: "completed",
+    numbers: [],
+    evidence: [
+      {
+        source_id: source.source_id,
+        source_version_id: source.source_version_id,
+        parse_id: source.parse_id,
+        block_id: source.blocks[0].block_id,
+        quote,
+        support: "direct",
+      },
+    ],
+  }
+
+  assert.ok(validateEvidence(claim, [source]).problems.includes("ongoing_source_marked_completed"))
+  assert.ok(
+    !validateEvidence({ ...claim, event_state: "reported" }, [source]).problems.includes(
+      "ongoing_source_marked_completed",
+    ),
+  )
+})
 function response(request) {
   const doc = JSON.parse(request.messages[1].content)[0],
     block = doc.blocks[0]
@@ -214,6 +278,60 @@ test("research key-findings scope keeps results context and exact source identit
   assert.ok(focused.scope.documents[0].excluded_block_count > 0)
 })
 
+test("research key-findings scope supports concept-review papers without an empirical Results section", () => {
+  const source = parse("review-paper")
+  const sections = [
+    ["heading", "Abstract", "h2"],
+    ["paragraph", "The review proposes an operational framework."],
+    ["heading", "1 Introduction", "h2"],
+    ["paragraph", "Broad background that is not needed for the findings."],
+    ["heading", "3 Concept and definition", "h2"],
+    ["paragraph", "The framework defines six operational criteria."],
+    ["heading", "4 Enabling technologies", "h2"],
+    ["paragraph", "A long catalogue of technologies."],
+    ["heading", "6 Discussion", "h2"],
+    ["paragraph", "The literature synthesis distinguishes worker-centered outcomes."],
+    ["heading", "7 Conclusion", "h2"],
+    ["paragraph", "The framework has not been empirically validated."],
+    ["heading", "References", "h2"],
+    ["paragraph", "Citation metadata."],
+  ]
+  source.blocks = sections.map(([kind, text, tag], index) => ({
+    kind,
+    text,
+    block_id: `${source.parse_id}:review-${index}`,
+    locator: {
+      type: "html",
+      dom_path: tag ? `/html/body/article/${tag}` : `/html/body/article/p[${index}]`,
+      text_hash: sha256(text),
+    },
+  }))
+
+  const plan = planExtractionBatches([source], { extraction_scope: "research_key_findings" })
+  const scope = selectExtractionScope([source], "research_key_findings").documents[0]
+  const selectedText = plan.batches.flatMap((batch) =>
+    JSON.parse(batch.request.messages[1].content)[0].blocks.map((block) => block.text),
+  )
+
+  assert.deepEqual(
+    scope.selected_sections.map(({ category, heading }) => [category, heading]),
+    [
+      ["abstract", "Abstract"],
+      ["conceptual_framework", "3 Concept and definition"],
+      ["discussion", "6 Discussion"],
+      ["conclusion", "7 Conclusion"],
+    ],
+  )
+  assert.ok(selectedText.includes("The framework defines six operational criteria."))
+  assert.ok(
+    selectedText.includes("The literature synthesis distinguishes worker-centered outcomes."),
+  )
+  assert.ok(selectedText.includes("The framework has not been empirically validated."))
+  assert.ok(!selectedText.includes("A long catalogue of technologies."))
+  assert.ok(!selectedText.includes("Broad background that is not needed for the findings."))
+  assert.ok(scope.included_block_count < scope.source_block_count)
+})
+
 test("research scope extraction maps every retained quote to the immutable full parse", async () => {
   const source = researchPaper(),
     output = await extractClaims(
@@ -284,6 +402,28 @@ test("short source runs keep one request and exact evidence identities", async (
   assert.equal(output.claims[0].review.status, "unreviewed")
   assert.ok(output.model_artifacts.request)
   assert.equal(output.batches, undefined)
+})
+
+test("claim extraction does not classify ongoing activity as completed", async () => {
+  let request
+  await extractClaims(
+    {
+      structured: async (value) => {
+        request = value
+        return response(value)
+      },
+    },
+    [parse("ongoing-status")],
+    { candidate_key: "source-ongoing-status", think: false },
+  )
+  assert.match(
+    request.messages[0].content,
+    /Use event_state "completed" only for a discrete action the source says has finished/i,
+  )
+  assert.match(
+    request.messages[0].content,
+    /"continues to participate" or "참여하고 있다" are reported facts, not completed actions/i,
+  )
 })
 
 test("oversized blocks and invalid parse sets stop before any model request", async () => {

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto"
 import { sha256 } from "./contracts.mjs"
 import { extractionBudget } from "./claims.mjs"
 import { atomicWrite, readJSON, safePath } from "./run-state.mjs"
+import { validateLocalOllamaURL } from "./ollama.mjs"
 
 export const MODEL_ROLES = [
   "search_plan",
@@ -101,12 +102,17 @@ export function validateModelPolicy(policy) {
   if (
     !object(policy) ||
     policy.schema !== "model-execution-policy/v1" ||
-    Object.keys(policy).some((k) => !["schema", "roles"].includes(k)) ||
+    Object.keys(policy).some((k) => !["schema", "roles", "runtime"].includes(k)) ||
     !object(policy.roles) ||
     !Object.keys(policy.roles).length ||
-    Object.keys(policy.roles).some((r) => !MODEL_ROLES.includes(r))
+    Object.keys(policy.roles).some((r) => !MODEL_ROLES.includes(r)) ||
+    (policy.runtime !== undefined &&
+      (!object(policy.runtime) ||
+        Object.keys(policy.runtime).some((key) => key !== "ollama_url") ||
+        typeof policy.runtime.ollama_url !== "string"))
   )
     throw Error("Invalid model execution policy")
+  if (policy.runtime?.ollama_url !== undefined) validateLocalOllamaURL(policy.runtime.ollama_url)
   for (const [role, settings] of Object.entries(policy.roles)) roleSettings(role, settings)
   return structuredClone(policy)
 }

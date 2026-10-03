@@ -4,6 +4,7 @@ import crypto from "node:crypto"
 import { sha256 } from "./contracts.mjs"
 
 export const DEFAULT_ROOT = ".local/research/local-ai"
+export const GARDEN_OPERATION_LOCK = "garden-operation"
 export function safePath(root, relative) {
   const base = path.resolve(root),
     target = path.resolve(base, relative)
@@ -159,6 +160,9 @@ export async function withLock(root, name, action) {
   } finally {
     release()
   }
+}
+export function withGardenOperationLock(root, action) {
+  return withLock(root, GARDEN_OPERATION_LOCK, action)
 }
 export class RunState {
   constructor(root, id, input, { scope = "" } = {}) {

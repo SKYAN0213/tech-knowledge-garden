@@ -1,18 +1,36 @@
 import { assertSchema, sha256 } from "./contracts.mjs"
 
+export const DEFAULT_LOCAL_OLLAMA_URL = "http://127.0.0.1:11434"
+
+export function validateLocalOllamaURL(url) {
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw Error("Ollama must use a local endpoint")
+  }
+  if (
+    !/^https?:$/.test(parsed.protocol) ||
+    !["127.0.0.1", "localhost", "[::1]"].includes(parsed.hostname) ||
+    parsed.username ||
+    parsed.password ||
+    !["", "/"].includes(parsed.pathname) ||
+    parsed.search ||
+    parsed.hash
+  )
+    throw Error("Ollama must use a local endpoint")
+  return url.replace(/\/$/, "")
+}
+
+export function localOllamaURL(env = process.env) {
+  return validateLocalOllamaURL(env.TECH_KNOWLEDGE_OLLAMA_URL ?? DEFAULT_LOCAL_OLLAMA_URL)
+}
+
 export class Ollama {
-  constructor({ url = "http://127.0.0.1:11434", fetchImpl = fetch, timeout_ms = 300000 } = {}) {
-    const u = new URL(url)
-    if (
-      !/^https?:$/.test(u.protocol) ||
-      !["127.0.0.1", "localhost", "[::1]"].includes(u.hostname) ||
-      u.username ||
-      u.password
-    )
-      throw Error("Ollama must use a local endpoint")
+  constructor({ url = DEFAULT_LOCAL_OLLAMA_URL, fetchImpl = fetch, timeout_ms = 300000 } = {}) {
     if (!Number.isInteger(timeout_ms) || timeout_ms <= 0 || timeout_ms > 3600000)
       throw Error("Invalid local model timeout")
-    this.url = url.replace(/\/$/, "")
+    this.url = validateLocalOllamaURL(url)
     this.fetch = fetchImpl
     this.timeout = timeout_ms
   }
@@ -44,6 +62,7 @@ export class Ollama {
       model,
       digest: installed.digest,
       runtime: version.version,
+      endpoint: this.url,
       details: show.details,
       capabilities: show.capabilities,
       thinking: show.thinking,

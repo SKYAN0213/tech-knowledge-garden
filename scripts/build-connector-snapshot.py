@@ -30,6 +30,8 @@ def digest(data):
 def instant(value, label):
     if not isinstance(value, str):
         raise ValueError(label + ' must be a timestamp')
+    if value.endswith(' UTC'):
+        value = value[:-4] + '+00:00'
     try:
         parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
     except ValueError as error:

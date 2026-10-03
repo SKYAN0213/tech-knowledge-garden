@@ -75,7 +75,9 @@ export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
           if (sha256(body) !== record.body_sha256) throw Error("Robots policy hash mismatch")
           return { text: body.toString("utf8"), record }
         }
-        throw Error("Robots policy could not be checked: " + record.fetch_status)
+        const error = Error("Robots policy could not be checked: " + record.fetch_status)
+        error.fetch_status = record.fetch_status
+        throw error
       })(),
     )
   }

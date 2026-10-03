@@ -2437,3 +2437,41 @@ fragment 원문은 source bytes를 수정하지 않고 출처 profile이 `format
 KUKA 영어 `/en-us/company/press/news`도 기존 `kuka-news-form-pages-v1` 공개 JSON POST endpoint와 같은 `contextid`·facet을 사용한다. profile의 `sc_lang`과 상세 URL 정규식은 언어별로 제한한다. 영어 응답 `dateISO`의 날짜와 표시 문자열 `MMMM D, YYYY`가 일치해야 목록 날짜로 인정한다. `itemId`는 source listing evidence와 후보의 discovery provenance에 보존하며 페이지 안에서 중복이면 실패한다.
 
 실제 2026-10-02 영어 목록의 2026-09-24 FSW 레코드는 독일어 목록 저장본과 같은 CMS `itemId`를 가졌다. 별도 URL의 영문 상세 화면 날짜도 2026-09-24였고 JSON-LD `datePublished`는 2026-09-22였다. 영어 profile은 `publication_date_listing_authoritative`를 사용하지만 listing 날짜만으로 덮어쓰지 않는다. 목록 날짜와 상세 화면 날짜가 정확히 일치할 때만 두 출처를 함께 provenance로 기록하고, JSON-LD 불일치 날짜도 후보 배열에 보존한다. 표적 worker/KUKA 검사와 상세 원문 근거는 [런북 252절](LOCAL_AI_NEWS_RUNBOOK.md#252-kuka-영문-목록-재사용과-다국어-중복-계보)에 있다. 영어 경로는 same-record identity의 일일 suppression 수용 전까지 daily route에서 제외한다.
+
+
+## 64. 일정 이벤트와 원문 자료의 검토형 연결
+
+실적 발표 일정, 학회 일정 등 예정 사건은 그 자체를 발행 기사로 취급하지 않는다. 검토된 relation은 일정 이벤트 ID와 출처 버전·파싱 식별자, 공식 자료 ID와 출처 버전·파싱 식별자, 공식 archive의 연결 링크 및 자료 행 문맥을 보존한다. 제목·URL의 유사성만으로 연결을 확정하지 않으며, 원문 archive 링크가 대상 자료를 가리키고 이벤트의 회사·행사 식별이 맞는지 확인한다.
+
+`event_date`(예정/개최일)와 `published_at`(자료 게시일)은 별도 필드다. 게시일은 공식 자료 본문·목록 등 허용된 출처에 직접 근거가 있을 때만 기록한다. PDF 생성일, 일정일, 추정 날짜를 게시일로 승격하지 않는다. 연결 receipt는 private review evidence이며 뉴스 후보·승인·발행을 만들지 않는다. 이벤트 종류가 달라도 이 공통 계약을 사용하고 source-specific 확인사항만 별도로 추가한다.
+
+
+## 65. FANUC 영문 공지 URL 형식과 단일 페이지 선택
+
+FANUC 영문 News Release 목록은 상세 주소에 `noticeYYYYMMDD.html`을 사용하고 기존 페이지의 일부 항목은 `newsYYYYMMDD.html`도 사용한다. 공통 `fanuc-en-dated-index-v1` 선택자는 `news`와 `notice`를 모두 포함하되, 허용된 `item_pattern`으로 날짜형 영문 상세 링크만 최종 인정한다. 발행일은 URL 숫자가 아니라 상위 `h2` 연도와 `h3` 월일 텍스트에서 읽는다. 날짜 누락·잘못된 달력 값·최신순 위반은 창 완료로 승격하지 않는다.
+
+2026-10-02 저장 목록에서 기존 선택자는 `notice` 링크를 선택하지 않아 2026-09-30 Hitachi·FANUC 제휴를 놓쳤다. 고친 선택자는 보존된 기간 창에서 이 항목을 읽고 원문 상세를 파싱해 same candidate key에 결속했다. 영어·일본어 URL이 같지 않아도 이미 확인한 후보/event ID를 유지했고 새 후보나 기사 발행으로 복제하지 않았다. 실행 근거와 표적 회귀는 [런북 266절](LOCAL_AI_NEWS_RUNBOOK.md#266-fanuc-영문-notice-목록-링크-누락-복구)을 참조한다.
+
+
+## 66. 목록 날짜와 상세 화면 날짜의 교차 검증
+
+출처 목록의 날짜를 상세 기사 게시일로 사용할 때는 목록 URL·원문 버전 ID·표시 날짜 문구를 전달하고 `publication_date_from_listing`을 선언한다. `publication_date_listing_authoritative`를 켠 profile은 상세 HTML에서 지정한 날짜 선택자가 정확히 하나여야 하며, 그 표시 날짜를 지정된 정규식·포맷으로 읽은 값이 공식 목록 날짜와 같은 경우에만 게시일을 확정한다. 누락, 중복, 해석 실패, 날짜 불일치, 목록 provenance 누락은 확정 실패다. 날짜 provenance에는 공식 목록과 상세 화면 표시값을 함께 보존한다.
+
+ASEC 한국어 기사는 화면 날짜를 `Asia/Seoul` 달력 날짜로 대조해 UTC 시각의 전날 날짜와 구분한다. FDA press announcement는 Drupal 메타데이터의 `Thu, MM/DD/YYYY - HH:MM` 표현을 억지로 변환하지 않고 공식 목록 날짜와 본문 화면 날짜가 일치하는지 확인한다. 게시일은 스캐너의 기사-목록 날짜 비교에도 같은 일자 값으로 제공된다. 집중 회귀와 2026-10-03 실제 재수집 결과는 [런북 267절](LOCAL_AI_NEWS_RUNBOOK.md#267-asec-fda-공식-목록과-기사-화면-날짜-대조)에 기록했다.
+
+
+## 67. SEC submissions JSON과 EDGAR filing 원문
+
+SEC company submissions JSON은 `data.sec.gov/submissions/CIK##########.json`을 공통 fetch·robots·원문 보존 경로로 수집한다. Route profile은 CIK, 허용 Form 목록, bounded `recent` 행 수와 상세 문서 수를 명시한다. 평행 배열 길이·CIK·접수 번호·문서 경로·최신순 날짜·고유 identity를 검사하고, 가장 오래된 반환 날짜가 요청 구간 시작일보다 과거임을 확인한다. recent 배열이 창 시작 전에 닿지 않으면 보완 archive 파일을 읽기 전까지 `window_scanned`로 처리하지 않는다.
+
+접수 번호는 `##########-##-######` 형식을 요구하며 하이픈을 제거해 accession directory를 구성한다. primary document 경로는 안전한 상대 segment만 허용하고 `www.sec.gov/Archives/edgar/data/{cik}/{accession}/{primaryDocument}`를 허용 호스트에서 검증한다. 회사가 정한 Form allowlist 바깥의 거래·소유권 보고는 원문 상세 요청 대상에서 제외한다.
+
+8-K는 동일 accession primary document를 먼저 파싱한다. 같은 accession 경로 안에서 `Press release`라고 표시된 단일 exhibit만 따라가며, 복수·불명확 관계는 자동 선택하지 않는다. 보도자료가 없으면 8-K 원문을 후보 근거로 보존한다. 후보 provenance에는 SEC submissions JSON의 source version/JSON pointer, 필요할 때 8-K parent source version과 실제 article source version을 각각 남긴다. filing date는 공개 제출일로 쓰고 event date로 자동 해석하지 않는다.
+
+SEC Inline XBRL HTML이 XML encoding declaration으로 시작하면 저장 바이트를 정상 디코딩한 뒤 선언을 제거해 HTML parser에 넘긴다. 원문 bytes를 변형하지 않으며 listing/detail source hash는 그대로 보존한다. 구현·실제 SEC scan 결과는 [런북 290절](LOCAL_AI_NEWS_RUNBOOK.md#290-sec-submissions-json과-edgar-상세-수집)에 기록한다.
+
+## 68. XML 목록의 ID에서 상세 URL 구성
+
+기존 `html-list`와 `path-pages` 수집 흐름에서 XML 목록을 재사용할 수 있다. `format: "xml-fragment"`는 저장된 원문 bytes를 네트워크 접근·외부 entity 처리가 꺼진 XML parser로 읽으며, XPath의 요소 대소문자와 CDATA 내용을 보존한다. 목록 규칙은 기존 `item_xpath`, `title_xpath`, `date_xpath`, `url_pattern`, `url_template`을 그대로 쓰고, 링크 ID가 속성 대신 자식 요소에 있으면 `url_value_xpath`로 정확히 하나의 문자열을 지정한다. 속성 기반 `url_attribute`와 값 기반 `url_value_xpath`를 동시에 또는 둘 다 생략해 선언할 수 없다. 0개·복수 XPath 결과는 해당 수집을 실패 처리한다.
+
+안랩의 공식 보도자료 목록 `https://company.ahnlab.com/kr/news/press_release_list.do?pageNum={page}`가 실물 사례다. 각 `<item>`의 `<seqPressRelease>`, `<title>`, `<date>`에서 상세 URL, 제목, 목록 날짜를 만들고, 상세 기사의 제목·날짜·본문은 별도 URL profile로 다시 확인한다. 목록의 CDATA `<contents>`를 상세 기사 본문으로 승격하지 않는다. 목록 행이 기간 시작 전의 날짜에 도달해야 창을 완료 처리한다. 구현과 `[2026-09-26, 2026-10-04)` 실물 결과는 [런북 296절](LOCAL_AI_NEWS_RUNBOOK.md#296-안랩-공식-xml-목록과-공통-상세-수집)에 기록한다.

@@ -31,8 +31,10 @@ function sharesReviewedApproval(a, b) {
 
 // A private projection of the candidate ledger. Similarity is a review lead,
 // never an event identity or an editorial approval.
-export function projectIntakeOntology(candidates) {
+export function projectIntakeOntology(candidates, { sameEventAliases = new Map() } = {}) {
   if (!Array.isArray(candidates)) throw Error("Candidate inventory required")
+  if (!(sameEventAliases instanceof Map))
+    throw Error("Validated same-event source aliases required")
   const nodes = []
   const relations = []
   const keys = new Set()
@@ -172,12 +174,11 @@ export function projectIntakeOntology(candidates) {
             type: "samePublisherDayCrossLanguageCandidate",
             to: `candidate:${group[j][0]}`,
             basis,
-            decision: sharesReviewedApproval(
+            ...crossLanguageDecision(
               candidateByKey.get(group[i][0]),
               candidateByKey.get(group[j][0]),
-            )
-              ? "same_approved_event"
-              : "review_required",
+              sameEventAliases,
+            ),
           })
         }
   }
@@ -188,6 +189,28 @@ export function projectIntakeOntology(candidates) {
       `${a.from}|${a.type}|${a.to}`.localeCompare(`${b.from}|${b.type}|${b.to}`),
     ),
   }
+}
+
+function crossLanguageDecision(a, b, sameEventAliases) {
+  if (sharesReviewedApproval(a, b)) return { decision: "same_approved_event" }
+  for (const [candidate, target] of [
+    [a, b],
+    [b, a],
+  ])
+    for (const raw of candidate.source_urls || []) {
+      const alias = sameEventAliases.get(canonicalURL(raw))
+      if (
+        alias?.candidate_key === target.key &&
+        typeof alias.resolution_run === "string" &&
+        alias.resolution_run.length > 0
+      )
+        return {
+          decision: "same_event_source_resolution",
+          resolution_run: alias.resolution_run,
+          resolved_source_url: canonicalURL(raw),
+        }
+    }
+  return { decision: "review_required" }
 }
 
 export function relatedCandidateKeys(ontology, key) {

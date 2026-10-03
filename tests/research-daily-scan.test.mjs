@@ -507,7 +507,15 @@ test("daily plan connects its successful predecessor receipt to production listi
 
 test("daily scans run distinct routes concurrently, serialize each route and commit backlog in order", async (t) => {
   const root = temporary(t)
-  const routeIds = ["route-a", "route-b", "route-c", "route-d", "route-e"]
+  const routeIds = [
+    "route-a",
+    "route-b",
+    "route-c",
+    "route-d",
+    "route-e",
+    "route-f",
+    "route-g",
+  ]
   const windows = [
     { channel_id: "route-a", since: "2026-09-21", until_exclusive: "2026-09-24" },
     { channel_id: "route-a", since: "2026-09-24", until_exclusive: "2026-09-28" },
@@ -574,7 +582,7 @@ test("daily scans run distinct routes concurrently, serialize each route and com
   const result = await executeDailyPlan(args)
   assert.equal(result.receipts, windows.length)
   assert.ok(maxActiveScans > 1)
-  assert.ok(maxActiveScans <= 4)
+  assert.equal(maxActiveScans, 6)
   assert.deepEqual(completedRouteA, ["2026-09-21", "2026-09-24"])
   assert.deepEqual(
     reusedListingRuns
@@ -584,7 +592,7 @@ test("daily scans run distinct routes concurrently, serialize each route and com
   )
   assert.equal(maxActiveMerges, 1)
   assert.deepEqual(result.execution, {
-    max_parallel_routes: 4,
+    max_parallel_routes: 6,
     route_windows_serialized: true,
     candidate_merges_serialized: true,
   })

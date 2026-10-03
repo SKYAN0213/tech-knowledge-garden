@@ -119,6 +119,44 @@ test("Universal Robots official JSON pagination can enter the daily plan", () =>
   assert.equal(validateDailyRoutes(urConfig, [urRoute])[0].channel_id, "route-ur-news-en")
 })
 
+test("a bounded query-paginated HTML source can enter the daily plan", () => {
+  const pagedRoute = {
+    channel_id: "paged-html",
+    method: "html-list",
+    url: "https://example.com/news?tag=robots",
+    item_pattern: "^https://example\\.com/news/[a-z0-9-]+$",
+    allowed_hosts: ["example.com"],
+    listing_profile: {
+      pagination: "path-pages",
+      url_template: "https://example.com/news?tag=robots&page={page}",
+      max_pages: 5,
+      rule_id: "robots-news-v1",
+      terminal_empty_text_pattern: "^No stories found\\.$",
+    },
+    parse_options: { listing_link_rules: [{ id: "robots-news-v1" }] },
+  }
+  const pagedConfig = {
+    ...config,
+    routes: [{ channel_id: "paged-html", enabled: true, baseline_run: "paged_baseline" }],
+  }
+  assert.equal(validateDailyRoutes(pagedConfig, [pagedRoute])[0].channel_id, "paged-html")
+  for (const broken of [
+    { ...pagedRoute, listing_profile: { ...pagedRoute.listing_profile, max_pages: 0 } },
+    {
+      ...pagedRoute,
+      listing_profile: { ...pagedRoute.listing_profile, url_template: "https://example.com/news" },
+    },
+    {
+      ...pagedRoute,
+      listing_profile: { ...pagedRoute.listing_profile, terminal_empty_text_pattern: "[" },
+    },
+  ])
+    assert.throws(
+      () => validateDailyRoutes(pagedConfig, [broken]),
+      /paged HTML (?:route is incomplete|empty-state pattern is invalid)/,
+    )
+})
+
 test("calendar archive routes require an explicit complete listing contract", () => {
   const calendarConfig = {
     ...config,

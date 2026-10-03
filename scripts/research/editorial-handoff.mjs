@@ -413,7 +413,7 @@ export function buildEditorialHandoff({
   const localMatches = new Map(
     [...allLocal.pending, ...allLocal.resolved].map((candidate) => [candidate.key, candidate]),
   )
-  const intakeOntology = projectIntakeOntology(backlog?.candidates || [])
+  const intakeOntology = projectIntakeOntology(backlog?.candidates || [], { sameEventAliases })
   const entry = (candidate) =>
     queueEntry(
       candidate,

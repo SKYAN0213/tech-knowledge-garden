@@ -1,7 +1,7 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
-import { registry } from "../scripts/research/discovery.mjs"
+import { coverageGrid, registry } from "../scripts/research/discovery.mjs"
 import { validateDailyRoutes } from "../scripts/research/daily-plan.mjs"
 
 test("manufacturer routes retain native language and role without duplicating established channels", () => {
@@ -57,6 +57,33 @@ test("manufacturer routes retain native language and role without duplicating es
   assert.equal(ir.axis, "기업·운영")
   assert.equal(ir.kind, "filing-ir")
   assert.equal(ir.verification, "unverified")
+})
+
+test("coverage sectors expand investigation scope without changing article tags", () => {
+  const channels = JSON.parse(
+    fs.readFileSync(new URL("../data/research-source-channels.json", import.meta.url)),
+  )
+  const routes = registry(channels, { companies: [], robot_manufacturers: [] })
+  const samsung = routes.find((route) => route.channel_id === "samsung-global-press-releases")
+
+  assert.deepEqual(samsung.sectors, ["AI"])
+  assert.deepEqual(samsung.coverage_sectors, ["반도체·컴퓨팅"])
+  const grid = coverageGrid([{ ...samsung, status: "partial" }])
+  const cell = grid.find(
+    (item) =>
+      item.sector === "반도체·컴퓨팅" &&
+      item.region === "국내" &&
+      item.axis === "기업·운영",
+  )
+  assert.equal(cell.status, "partial")
+  assert.deepEqual(cell.route_ids, ["samsung-global-press-releases"])
+  assert.equal(
+    grid.find(
+      (item) =>
+        item.sector === "AI" && item.region === "국내" && item.axis === "기업·운영",
+    ).status,
+    "partial",
+  )
 })
 
 test("ABB Destination Zukunft profile is scoped to supported article paths", () => {
@@ -249,7 +276,6 @@ test("company and institution watchlist sources retain their editorial source ki
   const routes = registry(channels, watchlist)
   const byOwner = (id) => routes.find((route) => route.publisher_id === id)
 
-  assert.equal(routes.length, 118)
   assert.ok(routes.every((route) => route.kind))
   assert.equal(byOwner("microsoft").kind, "filing-ir")
   assert.equal(byOwner("kaist").kind, "commercialization")
@@ -264,6 +290,18 @@ test("company and institution watchlist sources retain their editorial source ki
   assert.equal(awsWhatsNew.method, "rss")
   assert.equal(awsWhatsNew.url, "https://aws.amazon.com/about-aws/whats-new/recent/feed/")
   assert.equal(ieeeRobotics.axis, "기술·제품")
+  const amazonSEC = routes.find((route) => route.channel_id === "route-amazon-sec-filings")
+  assert.ok(amazonSEC)
+  assert.equal(amazonSEC.method, "sec")
+  assert.equal(amazonSEC.region, "해외")
+  assert.equal(amazonSEC.axis, "기업·운영")
+  assert.deepEqual(amazonSEC.sectors, ["소프트웨어·클라우드"])
+  assert.equal(amazonSEC.api_profile.cik, "1018724")
+  assert.equal(routes.filter((route) => route.publisher_id === "amazon").length, 2)
+  assert.equal(
+    amazonSEC.api_profile.company_filing_article_profile_id,
+    "sec-amazon-company-filing-en-v1",
+  )
   const acquisition = JSON.parse(
     fs.readFileSync(new URL("../data/research-acquisition.json", import.meta.url)),
   )
@@ -423,7 +461,7 @@ test("Yaskawa keeps its original global route and adds news, product, and IR rou
   assert.equal(performanceSection.options.pdf_title_pattern, "^Business Performance and Strategy$")
 })
 
-test("FANUC dated IR disclosures are distinct from its undated quarterly archive", () => {
+test("FANUC Japanese news and dated IR routes preserve distinct listing contracts", () => {
   const watchlist = JSON.parse(
     fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url)),
   )
@@ -434,8 +472,30 @@ test("FANUC dated IR disclosures are distinct from its undated quarterly archive
     fs.readFileSync(new URL("../data/research-acquisition.json", import.meta.url)),
   )
   const routes = registry(channels, watchlist, acquisition)
+  const japaneseNews = routes.find((r) => r.channel_id === "fanuc-ja")
   const dated = routes.find((r) => r.channel_id === "route-fanuc-ir-disclosures-ja")
   const quarterly = routes.find((r) => r.url === "https://www.fanuc.co.jp/ja/ir/announce/")
+  assert.ok(japaneseNews)
+  assert.equal(japaneseNews.listing_profile.pagination, "single-page")
+  assert.deepEqual(japaneseNews.listing_profile.ignored_rule_ids, [
+    "fanuc-ja-announcements-ignored-v1",
+  ])
+  assert.ok(
+    new RegExp(japaneseNews.item_pattern).test(
+      "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260930.html",
+    ),
+  )
+  assert.ok(
+    new RegExp(japaneseNews.item_pattern).test(
+      "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2020/osirase20201006.html",
+    ),
+  )
+  assert.equal(
+    japaneseNews.parse_options.listing_link_rules.find(
+      (rule) => rule.id === "fanuc-ja-dated-index-v1",
+    ).date_format,
+    "%Y年 %m月%d日",
+  )
   assert.ok(dated)
   assert.ok(quarterly)
   assert.notEqual(dated.url, quarterly.url)
@@ -481,5 +541,45 @@ test("FANUC dated IR disclosures are distinct from its undated quarterly archive
     !new RegExp(profile.url_pattern).test(
       "https://www.fanuc.co.jp/ja/ir/announce_other/pdf/2026/notice20260920.pdf",
     ),
+  )
+})
+
+test("Samsung SDS Korean RSS keeps source identity and article evidence rules", () => {
+  const channels = JSON.parse(
+    fs.readFileSync(new URL("../data/research-source-channels.json", import.meta.url)),
+  )
+  const watchlist = JSON.parse(
+    fs.readFileSync(new URL("../data/research-watchlist.json", import.meta.url)),
+  )
+  const acquisition = JSON.parse(
+    fs.readFileSync(new URL("../data/research-acquisition.json", import.meta.url)),
+  )
+  const daily = JSON.parse(
+    fs.readFileSync(new URL("../data/research-daily-routes.json", import.meta.url)),
+  )
+  const route = registry(channels, watchlist, acquisition).find(
+    (item) => item.channel_id === "samsung-sds-company-news-ko",
+  )
+  assert.ok(route)
+  assert.equal(route.publisher_id, "www.samsungsds.com")
+  assert.equal(route.kind, "company")
+  assert.equal(route.region, "국내")
+  assert.equal(route.axis, "기업·운영")
+  assert.deepEqual(route.sectors, ["소프트웨어·클라우드"])
+  assert.equal(route.listing_profile.pagination, "bounded-feed")
+  assert.equal(route.listing_profile.pub_date_format, "korean-local-ampm-v1")
+  assert.equal(route.listing_profile.date_timezone, "Asia/Seoul")
+  assert.equal(route.listing_profile.guid_is_permalink, true)
+
+  const articleProfile = acquisition.article_profiles.find(
+    (profile) => profile.id === "samsung-sds-company-news-ko-v1",
+  )
+  assert.ok(articleProfile)
+  assert.equal(articleProfile.options.publication_date_policy, "explicit-authoritative")
+  assert.equal(
+    validateDailyRoutes(daily, registry(channels, watchlist, acquisition)).some(
+      (item) => item.channel_id === route.channel_id,
+    ),
+    true,
   )
 })

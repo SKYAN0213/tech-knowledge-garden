@@ -28,23 +28,10 @@ import { parseResearchDate } from "./dates.mjs"
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
 const COVERAGE_FILE = "daily/route-coverage.json"
-const MAX_PARALLEL_DAILY_ROUTES = 4
+const MAX_PARALLEL_DAILY_ROUTES = 6
 
-const load = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
-const sameWindow = (a, b) =>
-  a.channel_id === b.channel_id && a.since === b.since && a.until_exclusive === b.until_exclusive
-const reconciliationPath = (runId) => `daily/reconciliations/${runId}.json`
-
-export function dailySources(configFile = DAILY_CONFIG) {
-  const config = load(configFile)
-  const routes = registry(
-    load("data/research-source-channels.json"),
-    load("data/research-watchlist.json"),
-    load("data/research-acquisition.json"),
-  )
-  const activeRoutes = validateDailyRoutes(config, routes)
-  if (!activeRoutes.length) throw Error("No active daily acquisition routes")
-  const sourcePaths = [
+export function dailySourcePaths(configFile = DAILY_CONFIG) {
+  return [
     configFile,
     "data/research-source-channels.json",
     "data/research-watchlist.json",
@@ -70,10 +57,32 @@ export function dailySources(configFile = DAILY_CONFIG) {
     "scripts/research/rss-scan.mjs",
     "scripts/research/monthly-scan.mjs",
     "scripts/research/api-scan.mjs",
+    "scripts/research/api.mjs",
+    "scripts/research/sec-scan.mjs",
+    "scripts/research/wordpress-scan.mjs",
+    "scripts/research/ur-scan.mjs",
     "scripts/research/kuka-scan.mjs",
     "scripts/research/abb-scan.mjs",
+    "scripts/research/form-html-scan.mjs",
     "integrations/research-worker/worker.py",
   ]
+}
+
+const load = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
+const sameWindow = (a, b) =>
+  a.channel_id === b.channel_id && a.since === b.since && a.until_exclusive === b.until_exclusive
+const reconciliationPath = (runId) => `daily/reconciliations/${runId}.json`
+
+export function dailySources(configFile = DAILY_CONFIG) {
+  const config = load(configFile)
+  const routes = registry(
+    load("data/research-source-channels.json"),
+    load("data/research-watchlist.json"),
+    load("data/research-acquisition.json"),
+  )
+  const activeRoutes = validateDailyRoutes(config, routes)
+  if (!activeRoutes.length) throw Error("No active daily acquisition routes")
+  const sourcePaths = dailySourcePaths(configFile)
   return {
     config,
     activeRoutes,

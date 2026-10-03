@@ -72,7 +72,11 @@ export function registry(channels, watchlist, adapters = {}) {
           c.request_interval_ms > 60000)) ||
       !Array.isArray(c.sectors) ||
       !c.sectors.length ||
-      c.sectors.some((s) => !SECTORS.includes(s))
+      c.sectors.some((s) => !SECTORS.includes(s)) ||
+      (c.coverage_sectors !== undefined &&
+        (!Array.isArray(c.coverage_sectors) ||
+          !c.coverage_sectors.length ||
+          c.coverage_sectors.some((s) => !SECTORS.includes(s))))
     )
       throw Error("Invalid source route contract")
     assertURL(c.url, c.allowed_hosts)
@@ -126,6 +130,8 @@ export function registry(channels, watchlist, adapters = {}) {
               kind: descriptor.kind,
               method: descriptor.method,
               allowed_hosts: descriptor.allowed_hosts,
+              api_profile: descriptor.api_profile,
+              item_pattern: descriptor.item_pattern,
               region: c.region,
             }
           : c.source_kind
@@ -173,7 +179,12 @@ export function coverageGrid(routes) {
     ["국내", "해외"].flatMap((region) =>
       ["기술·제품", "기업·운영"].map((axis) => {
         const attempts = routes.filter(
-          (r) => r.sectors?.includes(sector) && r.region === region && r.axis === axis,
+          (r) =>
+            [...new Set([...(r.sectors || []), ...(r.coverage_sectors || [])])].includes(
+              sector,
+            ) &&
+            r.region === region &&
+            r.axis === axis,
         )
         const usable = attempts.filter((r) => r.status === "partial")
         return {
@@ -244,6 +255,14 @@ export function candidatesFromLinks(links, channel, now) {
           ...(l.json_pointer ? { json_pointer: l.json_pointer } : {}),
           ...(typeof l.source_item_id === "string" ? { source_item_id: l.source_item_id } : {}),
           ...(l.profile_id ? { profile_id: l.profile_id } : {}),
+          ...(l.article_profile_id ? { article_profile_id: l.article_profile_id } : {}),
+          ...(l.event_date_requires_review === true ? { event_date_requires_review: true } : {}),
+          ...(typeof l.primary_filing_url === "string"
+            ? { primary_filing_url: l.primary_filing_url }
+            : {}),
+          ...(typeof l.primary_filing_source_version_id === "string"
+            ? { primary_filing_source_version_id: l.primary_filing_source_version_id }
+            : {}),
           ...(channel.search_scope ? { search_scope: channel.search_scope } : {}),
           ...(channel.search_entity_id ? { search_entity_id: channel.search_entity_id } : {}),
           ...(channel.query_slot_id ? { query_slot_id: channel.query_slot_id } : {}),

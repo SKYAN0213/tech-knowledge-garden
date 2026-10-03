@@ -175,6 +175,53 @@ test("intake ontology flags same-publisher same-day multilingual items for revie
   )
 })
 
+test("a validated same-event source alias resolves the multilingual review lead", () => {
+  const koreanUrl = "https://www.doosanrobotics.com/kr/about/promotion/news/ceo-appointment"
+  const englishUrl = "https://www.doosanrobotics.com/en/about/promotion/news/ceo-appointment"
+  const graph = projectIntakeOntology(
+    [
+      {
+        key: "korean-release",
+        title: "두산로보틱스 신임 CEO 선임",
+        source_urls: [koreanUrl],
+        source_published_at: "2026-10-01",
+        discovery: [{ language: "ko" }],
+      },
+      {
+        key: "english-release",
+        title: "Doosan Robotics Appoints New CEO",
+        source_urls: [englishUrl],
+        source_published_at: "2026-10-01",
+        discovery: [{ language: "en" }],
+      },
+    ],
+    {
+      sameEventAliases: new Map([
+        [
+          "https://www.doosanrobotics.com/kr/about/promotion/news/ceo-appointment",
+          { candidate_key: "english-release", resolution_run: "reviewed-source-alt-v1" },
+        ],
+      ]),
+    },
+  )
+  assert.deepEqual(
+    graph.relations.find((item) => item.type === "samePublisherDayCrossLanguageCandidate"),
+    {
+      from: "candidate:english-release",
+      type: "samePublisherDayCrossLanguageCandidate",
+      to: "candidate:korean-release",
+      basis: "doosanrobotics.com|2026-10-01",
+      decision: "same_event_source_resolution",
+      resolution_run: "reviewed-source-alt-v1",
+      resolved_source_url: "https://www.doosanrobotics.com/kr/about/promotion/news/ceo-appointment",
+    },
+  )
+  assert.equal(
+    graph.relations.some((item) => item.decision === "review_required"),
+    false,
+  )
+})
+
 test("a shared verified approval resolves a cross-language same-day review signal", () => {
   const approved = (key, language, url) => {
     const item = candidate(key, url, {

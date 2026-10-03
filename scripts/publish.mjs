@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process"
 import fs from "node:fs"
 import { nonContentChanges, publicationContentPaths } from "./publication-state.mjs"
-import { DEFAULT_ROOT, withLock } from "./research/run-state.mjs"
+import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 import { pushAndVerify } from "./publication-receipt.mjs"
 
 function run(cmd, args, options = {}) {
@@ -11,7 +11,7 @@ function run(cmd, args, options = {}) {
   return r.stdout?.trim() || ""
 }
 try {
-  await withLock(DEFAULT_ROOT, "content-publication", async () => {
+  await withGardenOperationLock(DEFAULT_ROOT, async () => {
     const branch = run("git", ["branch", "--show-current"])
     if (branch !== "main") throw new Error("Publish from main after reviewing and merging changes.")
     const remote = run("git", ["remote", "get-url", "origin"])

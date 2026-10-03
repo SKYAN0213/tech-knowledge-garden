@@ -9,6 +9,11 @@
       "baseline_run": "20260928-fanuc-en-window-20260901-v2"
     },
     {
+      "channel_id": "fanuc-ja",
+      "enabled": true,
+      "baseline_run": "fanuc-ja-robotics-window-20261002-v5"
+    },
+    {
       "channel_id": "route-fanuc-ir-disclosures-ja",
       "enabled": true,
       "baseline_run": "20260928-fanuc-ir-disclosures-sep-window-v2"
@@ -74,6 +79,16 @@
       "baseline_run": "20260929-google-cloud-threat-window-v2"
     },
     {
+      "channel_id": "route-crowdstrike-company-news-en",
+      "enabled": true,
+      "baseline_run": "crowdstrike-company-news-baseline-20261003-v4"
+    },
+    {
+      "channel_id": "route-ahnlab-company-press-ko",
+      "enabled": true,
+      "baseline_run": "ahnlab-company-press-baseline-20261003-v2"
+    },
+    {
       "channel_id": "asec-public-ko",
       "enabled": true,
       "baseline_run": "20260930-asec-public-strict-sep23-v2"
@@ -107,6 +122,11 @@
       "channel_id": "fda-press-announcements",
       "enabled": true,
       "baseline_run": "20260929-fda-press-sep-window-v2"
+    },
+    {
+      "channel_id": "nih-korea-bio-research",
+      "enabled": true,
+      "baseline_run": "nih-korea-bio-research-20261003-window-v5"
     },
     {
       "channel_id": "samsung-global-press-releases",
@@ -174,9 +194,64 @@
       "baseline_run": "boston-dynamics-blog-20261002-baseline-v2"
     },
     {
+      "channel_id": "epson-robots-news",
+      "enabled": true,
+      "baseline_run": "epson-robots-window-20261003-v2"
+    },
+    {
+      "channel_id": "epson-collaborative-robot-news",
+      "enabled": true,
+      "baseline_run": "epson-cobot-window-20261003-v4"
+    },
+    {
+      "channel_id": "route-celltrion-company-news-ko",
+      "enabled": true,
+      "baseline_run": "celltrion-company-news-window-20261003-v3"
+    },
+    {
       "channel_id": "aws-whats-new-rss",
       "enabled": true,
       "baseline_run": "aws-whats-new-baseline-20261002-v1"
+    },
+    {
+      "channel_id": "route-tesla-sec-filings",
+      "enabled": true,
+      "baseline_run": "tesla-sec-filings-20261003-window-v8"
+    },
+    {
+      "channel_id": "samsung-sds-company-news-ko",
+      "enabled": true,
+      "baseline_run": "samsung-sds-company-news-baseline-20261003-v3"
+    },
+    {
+      "channel_id": "route-amazon-sec-filings",
+      "enabled": true,
+      "baseline_run": "amazon-sec-filings-baseline-20261003-v1"
+    },
+    {
+      "channel_id": "route-samsung-sdi-company-news-ko",
+      "enabled": true,
+      "baseline_run": "samsung-sdi-company-news-baseline-20261003-v1"
+    },
+    {
+      "channel_id": "roche-media-releases-rss",
+      "enabled": true,
+      "baseline_run": "roche-media-releases-baseline-20261003-v2"
+    },
+    {
+      "channel_id": "kari-space-press-ko",
+      "enabled": true,
+      "baseline_run": "kari-space-press-baseline-20261003-v6"
+    },
+    {
+      "channel_id": "airbus-space-press-rss",
+      "enabled": true,
+      "baseline_run": "airbus-space-press-baseline-20261003-v1"
+    },
+    {
+      "channel_id": "innospace-company-news-ko",
+      "enabled": true,
+      "baseline_run": "innospace-company-news-baseline-20261003-v9"
     }
   ]
 }

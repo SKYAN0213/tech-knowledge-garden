@@ -247,6 +247,87 @@ test("exact approved article closes a candidate without publishing and is idempo
   )
 })
 
+test("same-source revision reuses a reviewed article only when cited parsed content is identical", async (t) => {
+  const f = fixture(t)
+  const currentRun = "current-observation"
+  const currentBody = `${fs.readFileSync(path.join(f.root, f.document.body_path), "utf8")}\nUpdated page chrome.`
+  const currentHash = sha256(currentBody)
+  const currentVersion = `${f.document.source_id}:${currentHash}`
+  const currentParseId = sha256("current observed parse")
+  const currentDocument = {
+    ...f.document,
+    source_version_id: currentVersion,
+    body_path: `documents/${f.document.source_id}/${currentHash}/body.bin`,
+    body_sha256: currentHash,
+    observed_at: "2026-10-02T16:35:00Z",
+  }
+  const currentParse = {
+    ...structuredClone(readJSON(f.root, "runs/approved/parses.json")[0]),
+    source_version_id: currentVersion,
+    parse_id: currentParseId,
+    dates: { ...readJSON(f.root, "runs/approved/parses.json")[0].dates, observed_at: currentDocument.observed_at },
+  }
+  currentParse.blocks = currentParse.blocks.map((block, index) => ({
+    ...block,
+    block_id: `${currentParseId}:b${index + 1}`,
+  }))
+  atomicWrite(f.root, currentDocument.body_path, currentBody)
+  atomicWrite(f.root, `parses/${currentParseId}/parse.json`, currentParse)
+  atomicWrite(f.root, `runs/${currentRun}/documents.json`, [currentDocument])
+  atomicWrite(f.root, `runs/${currentRun}/parses.json`, [currentParse])
+  const currentCandidate = {
+    ...f.candidate,
+    article_source_version_id: currentVersion,
+    article_parse_id: currentParseId,
+    article_content_sha256: articleContentFingerprint(currentParse),
+  }
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [currentCandidate] }),
+  )
+  atomicWrite(f.root, `runs/${currentRun}/candidates.json`, [currentCandidate])
+  const reviewPath = "runs/current-observation/revision-review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-candidate-approval-source-revision-review/v1",
+    candidate_key: currentCandidate.key,
+    event_id: f.article.event_id,
+    approved_run: "approved",
+    candidate_source_run: currentRun,
+    reviewer: "fixture reviewer",
+    reviewed_at: "2026-10-03",
+    source_read: true,
+    revision_read: true,
+    title_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+    same_content_reason: "The extracted article text and event date are unchanged.",
+    source_urls: f.article.source_urls,
+  })
+
+  const result = await recordCandidateApproval({
+    root: f.root,
+    runId: "revision-link",
+    approvedRunId: "approved",
+    candidateSourceRunId: currentRun,
+    sourceRevisionReviewPath: reviewPath,
+    candidateKey: currentCandidate.key,
+    backlogFile: f.backlogFile,
+    publishedArticles: [],
+  })
+  const updated = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const receipt = readJSON(f.root, "runs/revision-link/candidate-approval.json")
+  assert.equal(result.review_status, "verified")
+  assert.equal(result.candidate_published, false)
+  assert.equal(updated.article_source_version_id, currentVersion)
+  assert.equal(updated.approval.source_version_id, currentVersion)
+  assert.equal(updated.approval.parse_id, currentParseId)
+  assert.equal(updated.approval.reviewed_source_version_id, f.document.source_version_id)
+  assert.equal(receipt.source_revision.sources[0].body_bytes_identical, false)
+  assert.equal(receipt.source_revision.sources[0].article_content_sha256, currentCandidate.article_content_sha256)
+})
+
 test("legacy candidate with missing source identity is enriched from its exact approved source", async (t) => {
   const f = fixture(t)
   const original = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))

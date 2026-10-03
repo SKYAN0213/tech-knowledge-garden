@@ -540,6 +540,7 @@ def html_parse(raw, url, options):
     from lxml import html, etree
     from charset_normalizer import from_bytes
 
+    xml_fragment_profile = options.get("format") == "xml-fragment"
     charset = options.get("encoding")
     if charset:
         decoded = raw.decode(charset, errors="strict")
@@ -548,7 +549,14 @@ def html_parse(raw, url, options):
         if guess is None:
             raise ValueError("HTML encoding undetected")
         decoded = str(guess)
-    dom = html.fromstring(decoded)
+    if xml_fragment_profile:
+        dom = etree.fromstring(raw, parser=etree.XMLParser(resolve_entities=False, no_network=True, recover=False))
+    else:
+        # SEC filing HTML often begins with an XML encoding declaration. The bytes
+        # have already been decoded above, so passing that declaration through to
+        # lxml's HTML parser is invalid and rejects an otherwise readable filing.
+        decoded = re.sub(r"^\s*<\?xml[^?]*\?>", "", decoded, count=1, flags=re.IGNORECASE)
+        dom = html.fromstring(decoded)
     domtree = dom.getroottree()
     calendar_name = options.get("publication_date_timezone")
     calendar_zone = None
@@ -570,6 +578,11 @@ def html_parse(raw, url, options):
     language = dom.get("lang") or options.get("language")
     date_nodes = dom.xpath('//meta[@property="article:published_time" or @name="date" or @name="pubdate"]/@content')
     modified_nodes = dom.xpath('//meta[@property="article:modified_time"]/@content')
+    publication_date_policy = options.get("publication_date_policy")
+    if publication_date_policy not in (None, "not_applicable", "explicit-authoritative"):
+        raise ValueError("Unsupported publication date policy")
+    if publication_date_policy == "explicit-authoritative" and not options.get("publication_date_xpath"):
+        raise ValueError("Explicit-authoritative publication date requires a selector")
     common_date_basis = []
     # Common, semantic publication-date metadata works across publishers and
     # keeps its provenance. Do not use arbitrary <time> elements: pages often
@@ -616,6 +629,7 @@ def html_parse(raw, url, options):
     date_basis = None
     date_profile_status = "not-configured"
     explicit_date_node = None
+    explicit_publication_date = None
     if explicit_date:
         chosen = dom.xpath(explicit_date)
         date_profile_status = "missing" if not chosen else "ambiguous" if len(chosen) != 1 else "no-match"
@@ -627,17 +641,20 @@ def html_parse(raw, url, options):
             value = clean(chosen[0].get(date_attribute)) if date_attribute else clean(" ".join(chosen[0].itertext()))
             match = re.search(options["publication_date_pattern"], value)
             if match:
+                matched_date = match.group(1) if match.lastindex else match.group(0)
                 date_basis = {"dom_path": domtree.getpath(chosen[0]), "text": value}
                 if date_attribute:
                     date_basis["attribute"] = date_attribute
                 try:
-                    parsed = datetime.strptime(date_for_strptime(match.group(0), options["publication_date_format"], language), options["publication_date_format"])
+                    parsed = datetime.strptime(date_for_strptime(matched_date, options["publication_date_format"], language), options["publication_date_format"])
                     if options.get("publication_date_preserve_time"):
-                        if parsed.tzinfo is None or source_date_value(match.group(0)) is None:
+                        if parsed.tzinfo is None or source_date_value(matched_date) is None:
                             raise ValueError("Publisher timestamp needs an explicit offset")
-                        date_nodes.append(match.group(0))
+                        date_nodes.append(matched_date)
+                        explicit_publication_date = matched_date
                     else:
-                        date_nodes.append(parsed.strftime("%Y-%m-%d"))
+                        explicit_publication_date = parsed.strftime("%Y-%m-%d")
+                        date_nodes.append(explicit_publication_date)
                     date_profile_status = "matched"
                 except ValueError:
                     date_profile_status = "invalid-date"
@@ -702,8 +719,15 @@ def html_parse(raw, url, options):
     if not isinstance(rules, list) or len(rules) > 10:
         raise ValueError("Invalid listing link rules")
     for rule in rules:
-        if not isinstance(rule, dict) or not all(isinstance(rule.get(k), str) and 0 < len(rule[k]) <= 512 for k in ("id", "item_xpath", "url_attribute", "url_pattern", "title_xpath")):
+        if not isinstance(rule, dict) or not all(isinstance(rule.get(k), str) and 0 < len(rule[k]) <= 512 for k in ("id", "item_xpath", "url_pattern", "title_xpath")):
             raise ValueError("Incomplete listing link rule")
+        url_attribute = rule.get("url_attribute")
+        url_value_xpath = rule.get("url_value_xpath")
+        if bool(url_attribute) == bool(url_value_xpath) or any(
+            value is not None and (not isinstance(value, str) or not 0 < len(value) <= 512)
+            for value in (url_attribute, url_value_xpath)
+        ):
+            raise ValueError("Listing link rule needs exactly one URL source")
         url_template = rule.get("url_template")
         date_kind = rule.get("date_kind", "published_at")
         if url_template is not None:
@@ -728,7 +752,14 @@ def html_parse(raw, url, options):
         for item in items[:5000]:
             if not isinstance(item, etree._Element):
                 raise ValueError("Listing selector must return elements")
-            target = pattern.fullmatch(item.get(rule["url_attribute"], ""))
+            if url_value_xpath:
+                url_nodes = item.xpath(url_value_xpath)
+                if len(url_nodes) != 1:
+                    raise ValueError("Listing URL value selector must identify exactly one value")
+                url_value = " ".join(url_nodes[0].itertext()) if isinstance(url_nodes[0], etree._Element) else str(url_nodes[0])
+            else:
+                url_value = item.get(url_attribute, "")
+            target = pattern.fullmatch(clean(url_value))
             if not target:
                 continue
             if url_template is None:
@@ -740,13 +771,13 @@ def html_parse(raw, url, options):
             if urlparse(href).scheme not in ("http", "https"):
                 continue
             title_nodes = item.xpath(rule["title_xpath"])
-            item_title = clean(" ".join(n.text_content() if isinstance(n, etree._Element) else str(n) for n in title_nodes))
+            item_title = clean(" ".join(" ".join(n.itertext()) if isinstance(n, etree._Element) else str(n) for n in title_nodes))
             if rule.get("title_pattern"):
                 title_match = re.fullmatch(rule["title_pattern"], item_title)
                 item_title = clean(title_match.group("title")) if title_match else ""
             selected_date = item.xpath(rule["date_xpath"]) if rule.get("date_xpath") else []
             item_date_nodes = selected_date if isinstance(selected_date, list) else [selected_date]
-            listed_date = clean(" ".join(n.text_content() if isinstance(n, etree._Element) else str(n) for n in item_date_nodes))
+            listed_date = clean(" ".join(" ".join(n.itertext()) if isinstance(n, etree._Element) else str(n) for n in item_date_nodes))
             listed_day = known_date(listed_date)
             if rule.get("date_pattern"):
                 date_match = re.fullmatch(rule["date_pattern"], listed_date)
@@ -767,7 +798,7 @@ def html_parse(raw, url, options):
     for a in dom.xpath("//a[@href]")[:5000]:
         href = urljoin(url, a.get("href"))
         if urlparse(href).scheme in ("http", "https"):
-            links.append({"url": href, "text": clean(a.text_content()), "dom_path": domtree.getpath(a)})
+            links.append({"url": href, "text": clean(" ".join(a.itertext())), "dom_path": domtree.getpath(a)})
     # Challenge/paywall signals cannot be treated as readable article bodies.
     if re.search(r"(?:just a moment|access denied|attention required|verify you are human)", title or "", re.I):
         return {"status": "blocked", "title": title, "language": language, "blocks": [], "links": links, "dates": {}, "quality": {"required_fields_present": False, "missing_pages": [], "reviewed": False, "reason": "challenge-page"}}
@@ -881,17 +912,20 @@ def html_parse(raw, url, options):
                 "reason": "authentication-page",
             },
         }
-    days = [known_date(value, calendar_zone) for value in date_nodes]
-    valid_dates = bool(days) and all(days) and len(set(days)) == 1
-    published = (date_nodes[0] if len(set(date_nodes)) == 1 else days[0]) if valid_dates else None
-    if date_nodes and not valid_dates:
-        date_profile_status = "conflict" if all(days) else "invalid-date"
-    if explicit_date and date_profile_status != "matched":
-        published = None
-    elif not explicit_date and common_date_basis:
-        date_basis = {"sources": common_date_basis}
-        if published:
-            date_profile_status = "matched"
+    if publication_date_policy == "explicit-authoritative":
+        published = explicit_publication_date if date_profile_status == "matched" else None
+    else:
+        days = [known_date(value, calendar_zone) for value in date_nodes]
+        valid_dates = bool(days) and all(days) and len(set(days)) == 1
+        published = (date_nodes[0] if len(set(days)) == 1 else days[0]) if valid_dates else None
+        if date_nodes and not valid_dates:
+            date_profile_status = "conflict" if all(days) else "invalid-date"
+        if explicit_date and date_profile_status != "matched":
+            published = None
+        elif not explicit_date and common_date_basis:
+            date_basis = {"sources": common_date_basis}
+            if published:
+                date_profile_status = "matched"
     if published and source_date_value(published) is None:
         published = None
         date_profile_status = "invalid-date"
@@ -959,9 +993,6 @@ def html_parse(raw, url, options):
     if modified and published and known_date(modified, calendar_zone) < known_date(published, calendar_zone):
         modified = None
         modified_profile_status = "before-publication"
-    publication_date_policy = options.get("publication_date_policy")
-    if publication_date_policy not in (None, "not_applicable"):
-        raise ValueError("Unsupported publication date policy")
     if publication_date_policy == "not_applicable":
         published = None
         modified = None
@@ -1716,8 +1747,12 @@ def run(request, root):
     options = request.get("options", {})
     markdown_mime = request.get("mime_type", "").split(";")[0].strip().lower() in ("text/markdown", "text/x-markdown", "application/markdown")
     html_fragment_profile = options.get("format") == "html-fragment"
-    if html_fragment_profile and request.get("mime_type", "").split(";")[0].strip().lower() not in ("text/html", "application/xhtml+xml"):
+    xml_fragment_profile = options.get("format") == "xml-fragment"
+    fragment_mime = request.get("mime_type", "").split(";")[0].strip().lower()
+    if html_fragment_profile and fragment_mime not in ("text/html", "application/xhtml+xml"):
         raise ValueError("Explicit HTML fragment profile requires an HTML response")
+    if xml_fragment_profile and fragment_mime not in ("application/xml", "text/xml", "application/xhtml+xml"):
+        raise ValueError("Explicit XML fragment profile requires an XML response")
     prefix = raw[:8192].removeprefix(b"\xef\xbb\xbf").lstrip()
     html_document = re.match(rb"^(?:<!--.*?-->\s*)*(?:<!doctype\s+html\b|<html(?:\s|>))", prefix, re.I | re.S)
     if raw.startswith(b"%PDF-"):
@@ -1726,12 +1761,12 @@ def run(request, root):
     elif options.get("format") == "jats":
         parsed = jats_parse(raw, request["url"], options)
         parser = {"id": "jats-xml", "version": "frontiers-jats/v1"}
-    elif html_fragment_profile or html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
+    elif html_fragment_profile or xml_fragment_profile or html_document or (not markdown_mime and (b"<html" in raw[:8192].lower() or b"<!doctype html" in raw[:8192].lower())):
         parsed = html_parse(raw, request["url"], options)
         parser = (
             {"id": options["embedded_article"]["format"], "version": VERSION}
             if options.get("embedded_article")
-            else {"id": "html-fragment" if html_fragment_profile else "trafilatura", "version": VERSION if html_fragment_profile else importlib.metadata.version("trafilatura")}
+            else {"id": "xml-fragment" if xml_fragment_profile else "html-fragment" if html_fragment_profile else "trafilatura", "version": VERSION if html_fragment_profile or xml_fragment_profile else importlib.metadata.version("trafilatura")}
         )
     elif markdown_mime:
         parsed = markdown_parse(raw, request["url"], options)

@@ -65,6 +65,20 @@ class ConnectorSnapshotTests(unittest.TestCase):
             self.assertEqual(len(pull_drive.validate(snapshot)), 4)
             self.assertEqual(pull_drive.synchronize(snapshot, repository)['updated'], [])
 
+    def test_utc_label_timestamp_passes_connector_snapshot_and_drive_verification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repository = Path(tmp)
+            now = datetime(2026, 10, 2, 11, 53, 48, tzinfo=timezone.utc)
+            receipt = fixture(repository, now)
+            receipt['verified_at'] = '2026-10-02 11:53:48 UTC'
+            raw = json.dumps(receipt).encode('utf-8')
+            snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+            source = json.dumps(snapshot, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+            result = pull_drive.verify_source_snapshot(snapshot, repository, source, now=now)
+            self.assertEqual(snapshot['exported_at'], '2026-10-02 11:53:48 UTC')
+            self.assertEqual(result['source_files'], 4)
+            self.assertEqual(result['exported_at'], '2026-10-02 11:53:48 UTC')
+
     def test_bad_scope_parent_hash_and_duplicate_identity_fail(self):
         with tempfile.TemporaryDirectory() as tmp:
             repository = Path(tmp)

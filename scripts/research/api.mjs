@@ -21,7 +21,12 @@ export function secLinks(body, cik) {
     throw Error("SEC parallel columns mismatch")
   return r.accessionNumber.map((accession, n) => {
     const doc = r.primaryDocument[n]
-    if (!/^[\d-]+$/.test(accession) || !/^[\w.-]+$/.test(doc))
+    if (
+      !/^\d{10}-\d{2}-\d{6}$/.test(accession) ||
+      typeof doc !== "string" ||
+      doc.startsWith("/") ||
+      doc.split("/").some((part) => !/^[\w.-]+$/.test(part) || part === "." || part === "..")
+    )
       throw Error("Invalid SEC filing identity")
     return {
       url: `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accession.replace(/-/g, "")}/${doc}`,

@@ -15,10 +15,25 @@ import {
   summarizeCandidateSourceAlternativeResolutions,
   summarizeCurrentSnapshot,
   loadTargetedSearchRuns,
+  renderSupplementalCoverageTable,
+  renderIntegratedCoveragePanel,
   sourceBaselineEvidence,
 } from "../scripts/research/delivery-status.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+
+test("integrated coverage panel does not replace the full grid with a narrow latest run", () => {
+  const html = renderIntegratedCoveragePanel({
+    status: "historical_success_requires_current_revalidation",
+    run_id: "daily-20261003-core38-planonly-v1",
+    coverage: { partial: 19, not_attempted: 13 },
+  })
+
+  assert.match(html, /마지막 통합 조사 범위 · 32칸/)
+  assert.match(html, /partial 19 · not_attempted 13/)
+  assert.match(html, /이 실행 이후 설정 변경이 있어 최신 경로 실행은 별도 확인 필요/)
+  assert.doesNotMatch(html, /partial 1 · not_attempted 31/)
+})
 
 test("daily model timing joins only integrity-checked model budgets through exact source selection", (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-daily-model-time-")))
@@ -48,7 +63,10 @@ test("daily model timing joins only integrity-checked model budgets through exac
       }),
     )
   }
-  const writeBudget = (runId, { corrupt = false } = {}) => {
+  const writeBudget = (
+    runId,
+    { corrupt = false, schema = "model-budget/v1", extensions = undefined } = {},
+  ) => {
     const directory = path.join(root, "runs", runId)
     fs.mkdirSync(path.join(directory, "model-policy", "fact_extract"), { recursive: true })
     fs.writeFileSync(path.join(directory, "documents.json"), JSON.stringify(source.documents))
@@ -86,13 +104,14 @@ test("daily model timing joins only integrity-checked model budgets through exac
       { id: "running-1", status: "running", reserved_ms: 800 },
     ]
     const ledger = {
-      schema: "model-budget/v1",
+      schema,
       binding: {
         schema: "model-role-binding/v1",
         role: "fact_extract",
         settings: { provider: "ollama", model: "qwen3.8:27b" },
       },
       attempts,
+      ...(extensions === undefined ? {} : { extensions }),
     }
     fs.writeFileSync(
       path.join(directory, "model-policy", "fact_extract", "budget.json"),
@@ -103,8 +122,21 @@ test("daily model timing joins only integrity-checked model budgets through exac
     )
   }
   writeSelection("selected-source")
-  writeBudget("model-extract-valid")
+  writeBudget("model-extract-valid", {
+    schema: "model-budget/v2",
+    extensions: [
+      {
+        additional_ms: 30000,
+        reason: "Complete a source-backed extraction after the initial budget expired.",
+        created_at: "2026-09-30T09:00:00.000Z",
+      },
+    ],
+  })
   writeBudget("model-extract-tampered", { corrupt: true })
+  writeBudget("model-extract-invalid-v2-extension", {
+    schema: "model-budget/v2",
+    extensions: [{ additional_ms: 0, reason: "", created_at: "invalid" }],
+  })
   writeSelection("other-day-source", "daily-other", {
     documents: [{ id: "other-doc" }],
     parses: [{ id: "other-parse" }],
@@ -114,8 +146,8 @@ test("daily model timing joins only integrity-checked model budgets through exac
   assert.equal(timing.status, "partial_invalid_receipts")
   assert.equal(timing.linked_selection_runs, 1)
   assert.equal(timing.measured_runs, 1)
-  assert.equal(timing.unmeasured_runs, 1)
-  assert.equal(timing.invalid_receipts, 1)
+  assert.equal(timing.unmeasured_runs, 2)
+  assert.equal(timing.invalid_receipts, 2)
   assert.deepEqual(timing.attempts, { complete: 2, failed: 1, running: 1 })
   assert.equal(timing.model_wall_ms, 285)
   assert.equal(timing.reserved_running_ms, 800)
@@ -439,6 +471,45 @@ test("delivery status reports only supplemental scans whose source bytes and cov
   assert.equal(withInvalid.status, "partial_or_invalid")
   assert.equal(withInvalid.receipt_count, 1)
   assert.equal(withInvalid.invalid_receipt_count, 2)
+})
+
+test("supplemental coverage is rendered as a concise, escaped period table", () => {
+  const html = renderSupplementalCoverageTable({
+    status: "verified",
+    receipt_count: 2,
+    invalid_receipt_count: 0,
+    unique_candidate_count: 1,
+    entries: [
+      {
+        reconciliation_run: "older-reconcile",
+        scan_run: "older-scan",
+        channel_id: "route-older",
+        since: "2026-09-20",
+        scan_until_exclusive: "2026-09-27",
+        coverage_until: "2026-09-26",
+        candidate_count: 1,
+        reconciled_at: "2026-09-26T12:00:00Z",
+      },
+      {
+        reconciliation_run: "latest-reconcile",
+        scan_run: "latest-scan",
+        channel_id: "route-<script>",
+        since: "2026-09-28",
+        scan_until_exclusive: "2026-10-04",
+        coverage_until: "2026-10-03",
+        candidate_count: 0,
+        reconciled_at: "2026-10-02T16:13:16.876Z",
+      },
+    ],
+  })
+
+  assert.match(html, /검증된 2건 · 무효 0건 · 관측 후보 1건/)
+  assert.match(html, /관측 후보는 승인·발행 건수가 아닙니다/)
+  assert.ok(html.indexOf("latest-scan") < html.indexOf("older-scan"))
+  assert.match(html, /\[2026-09-28, 2026-10-04\)/)
+  assert.match(html, /route-&lt;script&gt;/)
+  assert.doesNotMatch(html, /route-<script>/)
+  assert.match(html, /coverage 반영 종료/)
 })
 
 test("alternative-source same-event receipts are counted read-only and invalid receipts stay visible", (t) => {

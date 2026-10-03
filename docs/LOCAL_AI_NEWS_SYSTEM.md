@@ -412,6 +412,8 @@ Qwen3.8 현재 digest: `22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cb
 
 ### 6.2 Ollama 어댑터 계약
 
+CLI의 기본 Ollama 주소는 `http://127.0.0.1:11434`이며 `TECH_KNOWLEDGE_OLLAMA_URL` 환경 변수 또는 모델 정책의 `runtime.ollama_url`로 로컬 포트 구성을 바꿀 수 있다. 허용 호스트는 `127.0.0.1`, `localhost`, `[::1]`뿐이며 인증 정보가 포함된 URL과 원격 서버는 거부한다. 환경 변수 설정은 모델 정책 지문에 반영되어 다른 endpoint에서 생성한 실행을 재사용하지 않는다. `model-info`도 같은 주소 설정을 사용한다.
+
 1. 시작 시 `/api/version`, `/api/tags`, `/api/show`를 읽어 버전·digest·capabilities·thinking.values를 확인한다.
 2. native `/api/chat`의 `think`를 사용한다. 값과 타입을 모두 검사하며 미지원 설정은 로컬 어댑터가 오류로 종료한다. 서버의 암묵적 기본값 대체에 기대지 않는다.
 3. `format`에 JSON Schema, `stream: false`, 작업별 `options.num_ctx`, `options.num_predict`, `options.temperature`를 명시한다. 집필·분야 질의 생성은16,384문맥·온도0, 언어 보완은 어댑터 기본8,192문맥을 사용한다. 추출은CLI에서 문맥·입력 문자·출력 토큰·묶음당 사실·호출 시간·전체 추출 시간의6개 예산을 명시할 수 있다. 같은 원문 범위와 설정을 보관하고 실제 완주·정확성을 별도 평가한다. 문맥·온도는 정확성 보장 설정이 아니다.
