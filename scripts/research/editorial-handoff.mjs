@@ -529,7 +529,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
   )
     throw Error("Stored daily plan and completed scan summary required for editorial handoff")
   const receipts = readDailyReceipts(root, runId)
-  verifyDailyReceipts(root, plan, receipts)
+  verifyDailyReceipts(root, plan, receipts, { backlogFile })
   if (summary.receipts !== receipts.length)
     throw Error("Stored daily summary and receipt count disagree")
   const observations = receipts.filter(collectedCandidateReceipt).flatMap((receipt) =>
@@ -577,6 +577,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
       root,
       coverage?.routes?.[window.channel_id],
       window,
+      { backlogFile },
     )
     return receipt ? [window] : []
   })
@@ -602,7 +603,14 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     supplemental_receipts_sha256: sha256(
       JSON.stringify(
         supplementalWindows.map((window) =>
-          supplementalCoverageReceiptForWindow(root, coverage?.routes?.[window.channel_id], window),
+          supplementalCoverageReceiptForWindow(
+            root,
+            coverage?.routes?.[window.channel_id],
+            window,
+            {
+              backlogFile,
+            },
+          ),
         ),
       ),
     ),

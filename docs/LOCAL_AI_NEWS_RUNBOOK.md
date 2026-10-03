@@ -8851,3 +8851,5 @@ private proof: .local/research/local-ai/source-live-debug/authoring-release-2026
 - `actual-source-date-readback.json`: 실제 NASA source-00f71b14903080a9aaf8와 AWS source-49e0bd1a32097a2c9c0b를 저장 원문에서 새 불변 parse로 재검사. NASA timestamp→표시일2026-10-02; AWS2026-10-02 유지. block kind/text/locator SHA와 기존 documents/parses/candidates bytes SHA가 동일하다. parse ID에 종속된 block_id만 비교에서 제외한다. 최초 block_id 포함 비교 실패는 새 parse의 정상 ID 차이로 확인했다. 새 HTTP0/승인false/후보공개false.
 
 현재 fingerprint 전체54경로 재검증·정규 조사32칸·독립평가·소급 전수·첫7회는 남는다. 공개 배포는 publish receipt와 해당 GitHub workflow·웹/RSS 실제 readback을 별도로 남겨 판정한다. 한 시간 반복 blocker 없음.
+
+첫 canonical publish는 원격 SHA `1c5cee4ed4809b31ceee4e666ff613b8ac464954`까지 확인했지만 workflow `37149869365`는 6개 검사 실패로 배포하지 않았다. 정정된 TimesFM 기사에 없는 zero-shot 연결을 강제하는 구형 단정을 제거하고 stale 연결 부재를 검증한다. 브라우저 정책 검사는 전달된 `RESEARCH_PYTHON`을 보존하고 CI에도 기존 requirements의 Playwright 1.63.0/Chromium을 설치한다. mock daily 검사 두 건에는 명시적 empty alias map을 넣는다. 실제 handoff의 receipt/보완 coverage 검증은 전달된 `backlogFile`을 끝까지 사용하도록 수정했다. `ci-failures-recheck.log`의 해당 6/6 통과는 로컬 확인이며 CI 성공은 아니다. 추가 보완 경로 검사는 `ci-supplemental-recheck.log`를 따른다. 다음 push/workflow와 실제 공개 readback은 같은 증거 루트에 저장한다.

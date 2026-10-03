@@ -317,11 +317,15 @@ test("Published map contains reviewed terms with definitions, and genuine articl
   for (const [term, articleId] of [
     ["kv-cache", "19af374b78b369cd"],
     ["oidc", "322b7c88af36f3ac"],
-    ["zero-shot", "09a390c59d8969e0"],
     ["latency-percentiles", "46fcf5bb7b99520f"],
   ])
     assert.ok(data.articles.find((a) => a.id === "news:" + articleId).termIds.includes(term), term)
   assert.ok(relatedNews(data, "agents")[0].termIds.includes("agents"))
+  // The source-reviewed TimesFM rewrite has neither a term assignment nor
+  // an exact zero-shot name/alias; retain the term without a stale news link.
+  assert.ok(
+    !data.articles.find((a) => a.id === "news:09a390c59d8969e0").termIds.includes("zero-shot"),
+  )
   // The revised article omits the old explicit MCP assignment; do not retain stale links.
   assert.ok(!data.articles.find((a) => a.id === "news:b32e9b8471353987").termIds.includes("mcp"))
   assert.equal(data.counts.news, data.articles.length)

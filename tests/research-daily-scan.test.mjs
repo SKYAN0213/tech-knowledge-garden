@@ -386,6 +386,7 @@ test("daily receipts measure scan, verification and candidate merge time across 
   const stored = new Map()
   const args = {
     root,
+    sameEventAliases: new Map(),
     plan: oneWindowPlan,
     coverage: initialCoverage(),
     activeRoutes: [{ route: route("fanuc-en", "해외") }],
@@ -615,6 +616,7 @@ test("a failed route is retried without rescanning a completed route or advancin
   }
   const args = {
     root,
+    sameEventAliases: new Map(),
     plan,
     coverage: initialCoverage(),
     activeRoutes: [

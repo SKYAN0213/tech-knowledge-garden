@@ -10,7 +10,8 @@ test("browser-rendered source scripts cannot fetch outside the source host polic
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-browser-policy-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const previousPython = process.env.RESEARCH_PYTHON
-  process.env.RESEARCH_PYTHON = path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  process.env.RESEARCH_PYTHON =
+    previousPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
   t.after(() => {
     if (previousPython === undefined) delete process.env.RESEARCH_PYTHON
     else process.env.RESEARCH_PYTHON = previousPython
@@ -64,7 +65,8 @@ test("browser-rendered source scripts cannot send writes or open WebSockets", as
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-browser-methods-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const previousPython = process.env.RESEARCH_PYTHON
-  process.env.RESEARCH_PYTHON = path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  process.env.RESEARCH_PYTHON =
+    previousPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
   t.after(() => {
     if (previousPython === undefined) delete process.env.RESEARCH_PYTHON
     else process.env.RESEARCH_PYTHON = previousPython
