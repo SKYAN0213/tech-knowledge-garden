@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-09-13
-last_reviewed: 2026-09-13
+updated: 2026-09-27
+last_reviewed: 2026-09-27
 tags:
   - AI
   - KnowledgeMap
@@ -47,7 +47,7 @@ tags:
 | [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 음성 파이프라인의 업무 처리 단계에 에이전트를 연결할 수 있다. [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) · [근거](https://openai.github.io/openai-agents-python/agents/) |
 | [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]] | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | 음성 처리와 업무 실행의 단계를 추적으로 연결한다. [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) · [근거](https://openai.github.io/openai-agents-python/tracing/) |
 | [[Knowledge/AI Systems/KV Cache|KV 캐시]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 모델 서빙에서 이전 토큰의 어텐션 키·값을 재사용해 반복 계산을 줄인다. [근거](https://huggingface.co/docs/transformers/en/cache_explanation) |
-| [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 예측 모델도 실행 자원과 요청 처리 기반 위에서 동작한다. [근거](https://arxiv.org/abs/2403.07815) · [근거](https://docs.vllm.ai/en/latest/) |
+| [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 예측 모델의 구조와 실제 추론 실행 비용을 함께 살펴본다. [근거](https://arxiv.org/abs/2403.07815) · [근거](https://docs.vllm.ai/en/latest/) · [근거](https://arxiv.org/html/2403.07815v3) |
 | [[Knowledge/AI Systems/Vision-Language-Action Models|시각·언어·행동 모델]] | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | 로봇 행동은 지시 수행 결과와 실환경 조건에 맞춰 평가해야 한다. [근거](https://arxiv.org/abs/2307.15818) · [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) |
 | [[Knowledge/AI Systems/Zero-Shot Inference|제로샷 추론]] | [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] | 사전학습한 시계열 모델을 새 데이터셋에 추가 학습 없이 적용할 때 사용하는 평가 조건이다. [근거](https://arxiv.org/abs/2403.07815) |
 | [[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 모델 서빙의 느린 요청 구간을 지연 분포로 평가할 때 사용한다. [근거](https://prometheus.io/docs/practices/histograms/) |

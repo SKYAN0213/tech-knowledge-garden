@@ -33,6 +33,9 @@ tags:
 editorial_format: six-w/v1
 kind: 사건 뉴스
 region: 국내
+lead: Magnachip은 9월 21일 Navitas가 자사에 500만달러를 지분 투자하기로 합의했다고 발표했다. 계약에 따라 보통주
+  146만1,988주를 주당 3.42달러에 발행하며, 통상적인 종결 조건 충족 또는 면제를 전제로 9월 24일 전후 거래를 마칠 예정이다.
+  7월 발표한 고전압 탄화규소(SiC) 기술 협력에 자본 참여를 더한 단계다.
 facts:
   who: Magnachip, Navitas
   when: 2026-09-21 공식 게시, 시각 미표시; 9월24일 전후 종결 예상
@@ -40,13 +43,6 @@ facts:
   what: Navitas, Magnachip에 500만달러 지분 투자 계약
   how: 주식1461988주 × 3.42달러; 기존 SiC 라이선스 협력
   why: 고전압 전력반도체 공동 개발 확대 계획
-lead: Magnachip은 9월 21일 Navitas가 자사에 500만달러를 지분 투자하기로 합의했다고 발표했다. 계약에 따라 보통주
-  146만1,988주를 주당 3.42달러에 발행하며, 통상적인 종결 조건 충족 또는 면제를 전제로 9월 24일 전후 거래를 마칠 예정이다.
-  7월 발표한 고전압 탄화규소(SiC) 기술 협력에 자본 참여를 더한 단계다.
-papers: []
-relations: []
-topic_ids:
-  - company-magnachip-sic
 explanations:
   - heading: 기술 라이선스에서 제조 이전으로
     paragraphs:
@@ -56,6 +52,10 @@ explanations:
         확인 대상이다.
     source_urls:
       - https://www.magnachip.com/cn/magnachip-announces-strategic-investment-by-navitas-semiconductor-share/
+papers: []
+relations: []
+topic_ids:
+  - company-magnachip-sic
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden

@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-09-30
+date: 2026-10-01
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,13 +11,13 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 9건 · 원칙 1개
+- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 11건 · 원칙 1개
+- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 11건 · 원칙 0개
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 8건 · 원칙 1개
 - [[Briefings/Topics/company-samsung-ai-infrastructure|삼성 계열사의 AI 인프라 투자와 공급 참여]] · 1건 · 원칙 0개
-- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 8건 · 원칙 0개
 - [[Briefings/Topics/venture-envisagenics|Envisagenics의 RNA 표적 연구 사업화]] · 1건 · 원칙 0개
 - [[Briefings/Topics/grid-home-batteries|가정용 배터리의 전력망 공급 실적]] · 2건 · 원칙 0개
-- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 7건 · 원칙 1개
-- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 8건 · 원칙 1개
 - [[Briefings/Topics/company-magnachip-sic|Magnachip의 SiC 기술 이전과 사업화]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-ramanomics|RamanOmics의 조직 분석과 외부 검증]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-hvac|삼성전자 공조 생산거점 확대]] · 1건 · 원칙 0개
@@ -30,6 +30,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|2026-10-01 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-30_0800_Tech_AI_Briefing|2026-09-30 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|2026-09-23 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-22_0800_Tech_AI_Briefing|2026-09-22 · 0800 브리핑]]

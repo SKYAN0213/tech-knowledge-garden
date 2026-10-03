@@ -6,9 +6,9 @@
 
 ## 현재 판단
 
-가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의 성공률·총비용으로 운영 효과를 확인한다. DEEPX·Sixfab의 Raspberry Pi NPU 보드와 TITA의 온보드 AI 사양은 엣지 연산 제품 사례지만 실제 성능 비교는 아직 확인되지 않았다.
+가속기·서빙 도구·저장소 운영 사례는 실행 경로의 서로 다른 병목을 다룬다. 같은 모델·작업·품질 조건에서 지연 분포와 비용을 함께 비교할 필요가 있다. 9월22일 Sol·Luna의 단가·캐시 정책 변경은 비용 입력 조건의 변화다. 같은 과제의 성공률·총비용으로 운영 효과를 확인한다. DEEPX·Sixfab의 Raspberry Pi NPU 보드와 TITA의 온보드 AI 사양은 엣지 연산 제품 사례지만 실제 성능 비교는 아직 확인되지 않았다.  10월1일 OpenAI·Synopsys는 EDA 반복 작업용 모델의 공동 개발 계약을 발표했고 Google Cloud는 샌드박스 재개·저장 성능을 제시했다. 계약·제품 사양은 실제 설계 성과나 동일 부하의 독립 지연·비용 비교와 구분한다.
 
-2026-09-30까지 서로 다른 원문 7건 · 7일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-01까지 서로 다른 원문 9건 · 8일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -31,6 +31,32 @@
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<a id="20261001-synopsys-design-agent"></a>
+
+### 2026-10-01 · 참고
+
+**OpenAI와 Synopsys가 EDA 도구에 특화한 GPT-Synopsys 공동 개발·판매와 수익 배분 계약을 발표했다.**
+
+AI 협력을 반도체 설계 도구 안의 반복 실행 경로에 넣으려는 제품화 계획을 추가한다.
+
+- 한계: 초기 기술 협의 단계이며 출시 일정, 설계 품질·시간 개선과 고객 사용 결과는 확인되지 않았다.
+- 다음 확인: 실제 제품 제공 뒤 같은 설계·PPA·오류·검증 조건에서 작업시간과 성공률을 확인한다.
+- [OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약](https://skyan0213.github.io/tech-knowledge-garden/news/8fac3ce4d39c6ea9) · [news.synopsys.com 원문](https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
+- 2026-10-01 원문 검토
+
+<a id="20261001-gke-agent-substrate"></a>
+
+### 2026-10-01 · 참고
+
+**Google Cloud가 GKE Agent Substrate와 M4N·Z4D VM 제공을 발표하고 샌드박스 밀도·재개시간·저장 성능 수치를 제시했다.**
+
+격리 실행과 저장소 성능을 함께 제공하는 클라우드 운영 경로가 확대됐다.
+
+- 한계: 수치들은 Google이 제시한 제품별 결과이고 동일 작업의 독립 비교나 완료 비용은 없다.
+- 다음 확인: 실제 에이전트 부하의 p99 재개 지연, 격리·오류율, 요청 완료당 비용을 동일 설정에서 비교한다.
+- [Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개](https://skyan0213.github.io/tech-knowledge-garden/news/72249bd53d8a5849) · [Google 원문](https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
+- 2026-10-01 원문 검토
 
 <a id="20260923-sol-performance-path"></a>
 

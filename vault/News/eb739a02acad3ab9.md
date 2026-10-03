@@ -48,9 +48,6 @@ facts:
   what: AI 용접 에이전트 개발
   how: CRX 태블릿 TP 내장 카메라로 도면 입력, Gemini Enterprise로 조건·동작 생성
   why: 회사가 밝힌 숙련 용접 조건 설정·로봇 교시 인력 부족 대응
-papers: []
-relations: []
-topic_ids: []
 explanations:
   - heading: 도면 입력부터 프로그램 생성까지
     paragraphs:
@@ -60,6 +57,9 @@ explanations:
         설명했다. 연결된 특정 용접 전원에 종속되지 않도록 지원한다는 점도 발표에 포함됐다.
     source_urls:
       - https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
+papers: []
+relations: []
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden

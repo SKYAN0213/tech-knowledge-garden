@@ -32,6 +32,9 @@ tags:
 editorial_format: six-w/v1
 kind: 사건 뉴스
 region: 해외
+lead: NASA는 9월 21일 퍼서비어런스 탐사차의 제제로 분화구 관측에서 서로 다른 물의 작용이 최소 세 차례 나타난다고 밝혔다. 연구진은
+  SuperCam으로 185곳 이상의 기반암 표적을 분석하고 265m 고도 범위의 화학적 변화를 비교했다. 탄산염을 포함한 주변부 지층의
+  기원이 예상했던 퇴적암보다 감람석을 함유한 화성암에 가깝다는 해석도 제시했다.
 facts:
   who: NASA
   when: 2026-09-21T12:54:43-04:00 게시; 16:15:57-04:00 수정
@@ -39,12 +42,6 @@ facts:
   what: NASA, 화성 제제로 암석에서 최소 세 차례 물의 작용 구분
   how: SuperCam의 암석 화학 분석과 지층·광물맥 비교
   why: 화성의 초기 물과 암석 상호작용 복원
-lead: NASA는 9월 21일 퍼서비어런스 탐사차의 제제로 분화구 관측에서 서로 다른 물의 작용이 최소 세 차례 나타난다고 밝혔다. 연구진은
-  SuperCam으로 185곳 이상의 기반암 표적을 분석하고 265m 고도 범위의 화학적 변화를 비교했다. 탄산염을 포함한 주변부 지층의
-  기원이 예상했던 퇴적암보다 감람석을 함유한 화성암에 가깝다는 해석도 제시했다.
-papers: []
-relations: []
-topic_ids: []
 explanations:
   - heading: 광물의 생성 순서로 복원한 물의 역사
     paragraphs:
@@ -54,6 +51,9 @@ explanations:
         뜻은 아니다.
     source_urls:
       - https://www.nasa.gov/solar-system/planets/mars/nasa-discovery-reveals-complex-water-systems-on-early-mars/
+papers: []
+relations: []
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden

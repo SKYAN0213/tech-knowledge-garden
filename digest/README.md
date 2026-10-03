@@ -4,13 +4,13 @@
 
 ## 누적 주제
 
+- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 9건 · 1개 원칙
+- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 1개 원칙
+- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 11건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙
 - [삼성 계열사의 AI 인프라 투자와 공급 참여](topics/company-samsung-ai-infrastructure.md) — 원문 1건 · 0개 원칙
-- [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 8건 · 0개 원칙
 - [Envisagenics의 RNA 표적 연구 사업화](topics/venture-envisagenics.md) — 원문 1건 · 0개 원칙
 - [가정용 배터리의 전력망 공급 실적](topics/grid-home-batteries.md) — 원문 2건 · 0개 원칙
-- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 7건 · 1개 원칙
-- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 8건 · 1개 원칙
 - [Magnachip의 SiC 기술 이전과 사업화](topics/company-magnachip-sic.md) — 원문 1건 · 0개 원칙
 - [RamanOmics의 조직 분석과 외부 검증](topics/research-ramanomics.md) — 원문 1건 · 0개 원칙
 - [삼성전자 공조 생산거점 확대](topics/company-samsung-hvac.md) — 원문 1건 · 0개 원칙
@@ -23,6 +23,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-10-01 · 0800](2026/10/2026-10-01_0800_Tech_AI_Briefing.md) — AI가 반도체 설계와 클라우드 데이터·실행 환경에 들어오고, 각 분야에서 상용 배치 전 검증 단계가 구체화됐다.
 - [2026-09-30 · 0800](2026/09/2026-09-30_0800_Tech_AI_Briefing.md) — 2026-09-30 IT · AI · 로보틱스
 - [2026-09-23 · 0800](2026/09/2026-09-23_0800_Tech_AI_Briefing.md) — 2026-09-23 IT · AI · 로보틱스
 - [2026-09-22 · 0800](2026/09/2026-09-22_0800_Tech_AI_Briefing.md) — 2026-09-22 IT · AI · 로보틱스
@@ -40,7 +41,7 @@
 - [2026-09-04 · 0802](2026/09/2026-09-04_0802_Tech_AI_Briefing.md) — npm 다중 OIDC 설정 · Actions 실행기·권한 업데이트 · CodeQL 2.26.4
 - [2026-09-03 · 0803](2026/09/2026-09-03_0803_Tech_AI_Briefing.md) — 2026-09-03 IT · AI · 로보틱스
 - [2026-09-02 · 0801](2026/09/2026-09-02_0801_Tech_AI_Briefing.md) — 2026-09-02 IT · AI · 로보틱스
-- [2026-09-01 · 0801](2026/09/2026-09-01_0801_Tech_AI_Briefing.md) — 범용 모델의 무대가 문장에서 여러 시계열의 동시 예측으로 넓어졌다.
+- [2026-09-01 · 0801](2026/09/2026-09-01_0801_Tech_AI_Briefing.md) — 2026-09-01 IT · AI · 로보틱스
 - [2026-08-31 · 0801](2026/08/2026-08-31_0801_Tech_AI_Briefing.md) — 검증된 새 소식 없음.
 - [2026-08-30 · 0801](2026/08/2026-08-30_0801_Tech_AI_Briefing.md) — AI 검증은 “좋아 본인다”가 아니라 각 검사가 무엇을 입증하고 어떤 산출물을 남기는지로 설계해야 합니다.
 - [2026-08-29 · 0800](2026/08/2026-08-29_0800_Tech_AI_Briefing.md) — AI 실행 도구의 신뢰성은 빠른 시작보다 정확한 소유권, 실패 감지, 재현 가능한 배포 경계에서 만들어집니다.

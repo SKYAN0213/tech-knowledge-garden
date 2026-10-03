@@ -6,9 +6,9 @@
 
 ## 현재 판단
 
-npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.
+npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.  10월1일 Data Agent Kit는 사용자·서비스 계정 권한 전파를 설명했지만, 같은 날 Cisco와 AMD는 각각 관리 API·RCCL 실행 경계 취약점을 공지했다. 통제 기능의 존재와 설치된 최소 권한·패치 안전성을 구분한다.
 
-2026-09-30까지 서로 다른 원문 8건 · 5일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-01까지 서로 다른 원문 11건 · 6일에 걸쳐 관측. 최근 7일 3건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -31,6 +31,45 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<a id="20261001-data-agent-permissions"></a>
+
+### 2026-10-01 · 관측
+
+**Data Agent Kit 도구가 사용자 또는 가장된 서비스 계정 권한을 사용하고 IAM 및 데이터 보안 정책을 따르도록 제공됐다.**
+
+에이전트 데이터 작업에 기존 사용자 권한을 전파하는 통제 지점이 명시됐다.
+
+- 한계: 문서화된 기능은 실제 조직 설정, 최소 권한과 감사 적용이 안전하다는 증거가 아니다.
+- 다음 확인: 가장 역할 설정, 행·열 수준 정책, 감사 로그와 비인가 호출 거부를 실제 구성에서 확인한다.
+- [Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가](https://skyan0213.github.io/tech-knowledge-garden/news/294333117691a99b) · [Google 원문](https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
+- 2026-10-01 원문 검토
+
+<a id="20261001-cisco-api-vulnerability"></a>
+
+### 2026-10-01 · 반대·제약
+
+**Cisco는 SD-WAN Manager API의 CVSS 9.8 비인증 관리자 접근 취약점을 공개하고 우회책이 없어 업그레이드를 안내했다.**
+
+관리 API 인증 경계의 결함은 제품에 명시된 운영 권한 통제도 취약점 하나로 무력화될 수 있음을 보여준다.
+
+- 한계: 취약점 공지는 실제 침해가 확인됐다는 뜻이 아니며 영향은 취약 버전 구성에 한정된다.
+- 다음 확인: 설치 버전과 패치 상태, 관리자 진단 자료, Cisco의 후속 악용 현황을 확인한다.
+- [Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개](https://skyan0213.github.io/tech-knowledge-garden/news/0b883a59e5850ce3) · [cisco.com 원문](https://www.cisco.com/c/en/us/support/docs/csa/cisco-sa-sdwan-webauth-xr8beuuU.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
+- 2026-10-01 원문 검토
+
+<a id="20261001-amd-rccl-vulnerability"></a>
+
+### 2026-10-01 · 반대·제약
+
+**AMD가 RCCL 취약점에서 조건부 메모리 노출과 원격 코드 실행 가능성을 공지하고 완화 버전을 제시했다.**
+
+분산 GPU 통신 라이브러리 입력 검증이 에이전트·계산 작업의 실행 권한 경계에 영향을 줄 수 있다.
+
+- 한계: AMD 공지의 영향 제품 표에 다른 CVE 식별자가 함께 있어 해당 버전·식별자는 별도 확인이 필요하다. 침해가 보고된 것은 아니다.
+- 다음 확인: AMD가 수정하는 제품·CVE 매핑, RCCL 버전별 패치 적용과 악용 여부를 확인한다.
+- [AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고](https://skyan0213.github.io/tech-knowledge-garden/news/2000861d5f1c75c8) · [amd.com 원문](https://www.amd.com/en/resources/product-security/bulletin/amd-sb-6033.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
+- 2026-10-01 원문 검토
 
 <a id="20260923-proofpoint-execution-permissions"></a>
 

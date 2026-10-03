@@ -47,9 +47,6 @@ facts:
   what: Longfellow Zero-Knowledge Proof 라이브러리
   how: 기존 공개 라이브러리를 재단에 기부하고 공동 개발 지속
   why: 디지털 신원의 최소 속성 증명과 중립적 관리 지원
-papers: []
-relations: []
-topic_ids: []
 explanations:
   - heading: 신분증 정보와 조건의 증명을 구분한다
     paragraphs:
@@ -59,6 +56,9 @@ explanations:
         상호운용성을 자동으로 입증하지는 않는다.
     source_urls:
       - https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/
+papers: []
+relations: []
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden

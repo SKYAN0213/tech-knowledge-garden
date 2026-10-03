@@ -34,6 +34,10 @@ tags:
 editorial_format: six-w/v1
 kind: 사건 뉴스
 region: 해외
+lead: DEEPX와 Sixfab은 2026년 6월 26일 DEEPX NPU를 넣은 Raspberry Pi 5용 AI HAT를 공개하고 기술
+  구성을 발표했다. 두 회사 설명에 따르면 보드는 임베디드 AI 모델을 Raspberry Pi 5에서 로컬 실시간 추론하도록 설계됐으며,
+  개발자용 SDK는 모델 컴파일과 배포를 지원한다. 보드의 공식 유통은 향후 시작될 예정이라고 발표했으며, 원문에는 실제 판매 개시일이나 독립
+  성능 측정 결과가 제시되지 않았다.
 facts:
   who: DEEPX와 Sixfab
   when: 2026-06-26 발표
@@ -41,10 +45,6 @@ facts:
   what: DEEPX NPU를 적용한 Raspberry Pi 5용 AI HAT 공개
   how: 보드에 NPU를 통합하고 모델 컴파일·배포용 SDK 제공
   why: Raspberry Pi 5에서 임베디드 모델의 로컬 실시간 추론 지원
-lead: DEEPX와 Sixfab은 2026년 6월 26일 DEEPX NPU를 넣은 Raspberry Pi 5용 AI HAT를 공개하고 기술
-  구성을 발표했다. 두 회사 설명에 따르면 보드는 임베디드 AI 모델을 Raspberry Pi 5에서 로컬 실시간 추론하도록 설계됐으며,
-  개발자용 SDK는 모델 컴파일과 배포를 지원한다. 보드의 공식 유통은 향후 시작될 예정이라고 발표했으며, 원문에는 실제 판매 개시일이나 독립
-  성능 측정 결과가 제시되지 않았다.
 explanations:
   - heading: 보드와 개발 도구
     paragraphs:

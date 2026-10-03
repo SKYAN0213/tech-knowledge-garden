@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-09-30
+date: 2026-10-01
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,21 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]] · 2026-10-01
+- [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]] · 2026-10-01
+- [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01
+- [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]] · 2026-10-01
+- [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]] · 2026-10-01
+- [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]] · 2026-10-01
+- [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]] · 2026-10-01
+- [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]] · 2026-10-01
+- [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]] · 2026-10-01
+- [[News/2000861d5f1c75c8|AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고]] · 2026-10-01
+- [[News/0b883a59e5850ce3|Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개]] · 2026-10-01
+- [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · 2026-10-01
+- [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · 2026-10-01
+- [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · 2026-10-01
+- [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]] · 2026-10-01
 - [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
 - [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
 - [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
@@ -95,8 +110,8 @@ generated_by: tech-knowledge-garden
 - [[News/c0364833b41073ca|ChatGPT for Healthcare, Epic 환자 기록과 9개 공공 데이터원을 연결]] · 2026-09-02
 - [[News/b085c7f1762bfee8|Anthropic EFS, 안전 모니터링 데이터는 고객 클라우드에 둔다]] · 2026-09-02
 - [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]] · 2026-09-02
-- [[News/89b2997d0ccfa477|Google, 생성형 검색 노출 제어와 Search Console 인사이트를 전 세계로 확대]] · 2026-09-01
-- [[News/09a390c59d8969e0|TimesFM-3, 여러 시계열과 미래 단서를 한 번에 예측한다]] · 2026-09-01
+- [[News/89b2997d0ccfa477|Google, 생성형 검색 제어·노출 정보를 전 세계 웹사이트로 확대]] · 2026-09-01
+- [[News/09a390c59d8969e0|Google, 여러 시계열과 미래 변수를 함께 쓰는 TimesFM-3 공개]] · 2026-09-01
 - [[News/fd584d5c829c999d|에이전트 검증을 ‘통과 가능한 층’으로 나눈다]] · 2026-08-30
 - [[News/a0eed0f62d0dd240|TensorRT Model Connect가 체크포인트와 C++ 실행 사이를 묶었다]] · 2026-08-29
 - [[News/bab0e1718e7e0799|에이전트 샌드박스가 실패를 성공처럼 보이지 않게 했다]] · 2026-08-29

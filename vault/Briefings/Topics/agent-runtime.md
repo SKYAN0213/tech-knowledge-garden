@@ -2,11 +2,13 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-09-30
+date: 2026-10-01
 description: 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과
   격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선
   실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한
-  통제는 아직 검증 대상이다.
+  통제는 아직 검증 대상이다.  10월1일 Google Cloud는 에이전트 데이터 작업의 IAM 권한 전파를 정식 키트로 제공했고,
+  DigitalOcean은 microVM·추론·저장·도구를 구독형 공개 프리뷰로 묶었다. GKE Agent Substrate도 격리 실행
+  경로를 제공한다고 발표했다. 기능·가격과 배포 단계가 다르므로 실제 복구·권한·완료 품질은 별도 확인한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/agent-runtime.md
 cssclasses:
   - garden-generated
@@ -21,9 +23,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한 통제는 아직 검증 대상이다.
+긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한 통제는 아직 검증 대상이다.  10월1일 Google Cloud는 에이전트 데이터 작업의 IAM 권한 전파를 정식 키트로 제공했고, DigitalOcean은 microVM·추론·저장·도구를 구독형 공개 프리뷰로 묶었다. GKE Agent Substrate도 격리 실행 경로를 제공한다고 발표했다. 기능·가격과 배포 단계가 다르므로 실제 복구·권한·완료 품질은 별도 확인한다.
 
-2026-09-30까지 서로 다른 원문 8건 · 6일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-01까지 서로 다른 원문 11건 · 7일에 걸쳐 관측. 최근 7일 4건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -40,6 +42,45 @@ generated_by: tech-knowledge-garden
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="20261001-data-agent-kit"></span>
+
+### 2026-10-01 · 참고
+
+**Google Cloud Data Agent Kit가 정식 제공되고 Bigtable·Managed Spark·BigQuery Graph 지원이 추가됐다.**
+
+에이전트가 데이터 서비스를 검색·질의·관리하는 도구 인터페이스가 확장됐다.
+
+- 한계: 키트 이용은 무료지만 연결된 서비스 과금은 별도이며, 실제 업무 성공률과 권한 오류 자료는 발표되지 않았다.
+- 다음 확인: 연결된 에이전트별 실제 작업 성공률, 오류 복구, 쿼리 비용과 권한 감사 기록을 확인한다.
+- [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · [Google 원문](https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-01 원문 검토
+
+<span id="20261001-agent-substrate"></span>
+
+### 2026-10-01 · 관측
+
+**GKE Agent Substrate가 컨테이너 기반 작업에 샌드박스 격리와 자동 일시정지·재개 경로를 제공한다고 Google Cloud가 발표했다.**
+
+장시간·다중 에이전트 실행에서 별도 실행 경계와 자원 회수 기능을 제공하려는 기존 흐름을 보강한다.
+
+- 한계: 기능·밀도·재개 수치는 회사 설명이며 허용 동작, 우회 여부, 운영 복구 성공은 확인되지 않았다.
+- 다음 확인: 권한 경계 시험, 중단·재개 실패 및 고객 환경의 실제 배포 범위를 검토한다.
+- [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · [Google 원문](https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-01 원문 검토
+
+<span id="20261001-agent-droplets"></span>
+
+### 2026-10-01 · 참고
+
+**DigitalOcean이 에이전트 실행용 전용 microVM, 호스팅 추론·저장·도구 접근을 구독 청구로 묶은 Agent Droplets 공개 프리뷰를 발표했다.**
+
+개발자가 에이전트의 실행·저장·모델 호출을 단일 관리 경로에서 시작할 수 있는 상품 구성이 생겼다.
+
+- 한계: 공개 프리뷰이며 월 구독 한도 초과 뒤 사용료가 별도 청구된다. 작업 복구·권한·총비용의 독립 운영 결과는 없다.
+- 다음 확인: 일반 제공 시점, 세션 격리·재개 실패율, 사용량별 총비용과 데이터 보존 통제를 확인한다.
+- [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · [digitalocean.com 원문](https://www.digitalocean.com/blog/introducing-agent-droplets) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-01 원문 검토
 
 <span id="20260930-copilot-agent-runtime"></span>
 
