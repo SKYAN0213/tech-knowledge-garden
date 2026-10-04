@@ -1,5 +1,6 @@
 import { assertParse, assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
 import { parseResearchDate, samePublicationDate, assertReviewDate } from "./dates.mjs"
+import { modelSourceDates } from "./source-context.mjs"
 
 export function extractionCandidateKey(
   documents,
@@ -325,12 +326,7 @@ export function planExtractionBatches(parses, options = {}) {
     title: p.title,
     // Date provenance can contain an entire embedded page script. The model
     // needs the parsed dates; the stored parse retains the full evidence.
-    dates: {
-      published_at: p.dates?.published_at ?? null,
-      modified_at: p.dates?.modified_at ?? null,
-      precision: p.dates?.precision ?? null,
-      observed_at: p.dates?.observed_at ?? null,
-    },
+    dates: modelSourceDates(p.dates),
     blocks: p.blocks.flatMap((b, i) => {
       if (!scope.includedByParse.get(p.parse_id).has(b.block_id)) return []
       const block_key = `d${n + 1}b${i + 1}`

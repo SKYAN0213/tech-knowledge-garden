@@ -131,6 +131,7 @@ export async function processSourceRun({
           "processed-draft.mjs",
           "claims.mjs",
           "evidence-assessment.mjs",
+          "source-context.mjs",
           "draft-checkpoint.mjs",
           "editor.mjs",
           "model-policy.mjs",
@@ -247,7 +248,9 @@ export async function processSourceRun({
       return {
         status: "fact_review",
         claims: extracted.claims.length,
-        requires_attention: assessment.assessments.filter((row) => row.requires_attention).length,
+        requires_attention: packet.claims.filter(
+          (row) => row.model_assessment.requires_attention || row.identity_attention,
+        ).length,
         packet: safePath(root, base + "fact-review-packet.json"),
         review_template: safePath(root, base + "fact-review-template.json"),
         candidate_published: false,

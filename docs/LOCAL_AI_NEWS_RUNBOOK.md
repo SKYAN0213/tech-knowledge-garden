@@ -9165,3 +9165,58 @@ node scripts/research.mjs correct --run <processing-run> --review <explicit-edit
 
 
 비공개 증거104파일/ZIP105member·488,476bytes를 Drive Research `1SrWcM9eJsxvmcztab0Lh-A3swwSr8hEf`에 보관했다. 원격 raw SHA `8c65fadb89a6e79d3608d361564def976b5640913976d694c0e16d459dfde9c7`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/skhynix-source-processing-evidence-20261004-v2/drive-receipt.json`이며 불변 manifest를 덮어쓰지 않았다.
+
+
+## 358. 일일 후보의 공통 묶음 처리와 단계별 현황
+
+`research:process-daily`는 기존 `research:daily`의 정확한 handoff에서 명시한 최대12개 후보를 가져온다. 기존 일일 receipt/발행 목록/후보 장부를 대조한 `generateDailyHandoff`, 원문 선택기, `process-source`를 그대로 사용한다. 목록·상세 수집기를 별도로 추가하지 않는다. 후보 장부와 공개 사이트를 변경하지 않으며 자동 승인하지 않는다.
+
+```sh
+npm run research:process-daily -- --run <new-batch-run> --daily-run <collected-daily-run> --candidate-keys <exact-key> --candidate-keys <another-key> --plan-only
+npm run research:process-daily -- --run <same-batch-run> --daily-run <same-daily-run> --candidate-keys <same-keys-in-same-order> --execute
+npm run research:process-daily -- --run <same-batch-run> --daily-run <same-daily-run> --candidate-keys <same-keys-in-same-order> --resume --review-files <explicit-review-path-map.json>
+```
+
+`--review-files`는 `{ "후보 key": "해당 처리 run의 명시적 사실 검토 JSON 경로" }`다. 후보 목록 밖 key는 거부한다. plan-only는 모델을 호출하거나 source selection을 만들지 않는다. 실행은 별도의 고정 selection/processing run을 생성하고, 원문 대조 후 `fact_review`, 명시적 검토 후 `editorial_review`에 멈춘다. source/identity/승인/공개 완료는 별도다. `--model-policy`로 기존 local role 정책을 선택한다. custom root에는 명시적 backlog 경로가 필요하다.
+
+한 항목 실패는 오류·시각·시간·입력 hash와 자동 재시도 금지를 비공개 `failures/`에 남기고 다음 후보를 진행한다. resume은 실패 항목을 다시 호출하지 않는다. 변경된 자료/설정/실패 복구는 원래 실패를 보존한 새 batch run으로 진행한다. 모델 역할별 기존 timeout/예산을 유지하며 1시간 이상 같은 설정을 반복하지 않는다. 정확히 같은 원문 판본·parse·본문 지문의 두 후보는 한 번 처리하며 같은 사건 승인으로 확대하지 않는다. 신원/관련 사건/원문 정정 판정이 먼저 필요한 후보는 `identity_review`, 정확한 원문이 없는 후보는 `source_required`, 기존 승인 후보는 `approval_ready`로 연결한다.
+
+후보 선택 목록·판본·정책은 불변 입력으로 고정하고, 원문 선택의 handoff 참조도 고정한다. 다른 후보만 추가된 handoff가 생겨도 선택한 원문의 동일성은 현재 handoff와 다시 대조하며 기존 selection을 보존한다. 해당 후보의 판본·분류·승인 상태가 바뀌면 새 run을 요구한다. facts/model generation 승인에 관한 원래 관문을 낮추지 않는다.
+
+비공개 `research status` JSON과 현황판의 처리 탭에 `daily_processing`을 추가했다. 각 후보의 준비/실패/원문 필요/신원 검토/사실 검토/편집 검토, 실제 진행 stage, 모델 역할·경과 ms·frame 수와 packet/preview 위치를 구분한다. running 파일만으로 프로세스가 살아 있다고 판단하지 않고 해당 batch lock의 PID를 실제 조회한다. 프로세스와 출력이 관측됐다는 사실은 모델 성공/승인/발행 증명이 아니다. 잘못된 입력 hash·후보 순서·상태 집계는 invalid로 표시한다. 원문/프롬프트/모델 응답 전체는 현황판에 노출하지 않는다.
+
+실제 실행과 최종 검증은 아래 후속 기록에 남긴다. 이번 기능은 기존08시 예약을 수정하거나 전체54경로/32조사 칸을 완료로 승격하지 않는다.
+
+
+## 359. ABB 실제 일일 묶음과 날짜 근거 문맥 중복 디버깅
+
+실제 `daily-20261004-abb-processing-v1`은 기존 ABB Robotics 경로를 공통 일일 수집으로 호출했다. `[2026-09-27, 2026-10-04)` 후보2건과 `[2026-10-04, 2026-10-05)` 빈 창을 확인했다. 전체 후보 수는734개를 유지하며 기존 후보의 관측 이력을 갱신했다. source coverage는 이 한 경로·두 창의 결과이며 전체54경로 또는32조사 칸을 완료로 표시하지 않는다. 이번 수동 실행은 local_vault_unreconciled 기준이며 새 Drive 발행본/08시 운영 증거가 아니다.
+
+`abb-processing-batch-20261004-v1`에서 Andover 고객 사례(9월28일)와 machine tending 설명(10월1일)을 같은 후처리 경로로 처리했다. 첫 원문13문단/4,520자는 추출6사실과 대조2묶음을596.668초에 완료해 fact_review에 멈췄다. 다음 원문36문단/7,826자는 추출을 마치고 문맥 검사에서153.022초 후 실패했다. 대조 모델 호출 없이 `Full source assessment exceeds context budget`를 기록했다. 반복 resume은 실패 항목을 재호출하지 않았다. 첫 원문을 직접 검토해 회사명·수치 조건을 정정하고 원문 공구/냉각수 설명을 추가해7사실로 작성1회140.121초를 수행했다. raw writer problems=[]도 의미 정확성을 대신하지 않는다. 격리 울타리와 안전 구역, 초과와 이상의 경계는 최종 원문 편집 검토로 확인한다.
+
+실제 추출 모델은 제목의 동사 Process를 Andover의 회사명 일부로 오독했고, 대조 모델도 supported/identity supported로 놓쳤다. 관측은 `source-live-debug/abb-entity-misread-development-proof-20261004-v1.json`에 원래 claim·모델 의견·원문 근거와 함께 보관한다. 이 기록은 독립 사람 gold나 정량 평가 점수가 아니다. 직접 검토에서 Andover로 정정했으며 모델 의견만으로 자동 승인을 만들지 않았다. 최초 직접 추가 입력의 형식 오류도 v1 실패 로그로 보존하고 기존 claim/decision 계약에 맞춘 v2 검토7건으로 해결했다.
+
+문맥 실패의 실제 원인은 parse.dates.candidates raw에 들어간 전체 페이지 내장 script였다. 대조는 dates 전체를 넣어10,905/16,721자의 중복 문맥을 전달했지만 기존 추출기는 이미 정규 날짜4개만 사용하고 있었다. 그 기존 처리를 source-context.mjs로 공유했다. 이제 모델에는 날짜107자만 전달하고 전체 source blocks·원본 검증 근거는 유지한다. helper 지문도 불변 입력에 기록한다. 이전 입력/예산/모델 출력/원고를 고치지 않고 새 대조 run으로 진행한다. source bytes나 source parse를 다시 수집·절단하지 않는다.
+
+후처리17/17, 읽기 전용 현황/구현 변경 표시 각 표적1/1, 날짜 문맥/추출/공통 처리44/44와 코드 formatting/diff를 확인했다. `research status`는 후보 단계와 모델 진행량, 실제 PID 상태 및 현재 코드와의 구현 지문 일치 여부를 보여준다. 옛 결과가 새 구현과 다르면 changed로 표시하며 상태를 자동 승격하지 않는다. 비공개 HTML의 처리 패널과 batch 데이터는 실제 bytes에서 확인했으나 브라우저 URL 정책이 file protocol을 차단했으므로 렌더링은 미검증이다. 우회하지 않았다. 독자 사이트·RSS·197 Drive 작성 원본은 변경하지 않았다.
+
+실제 수정 후 대조/정정·재사용 및 최종 Drive 증거 보관은 아래 후속 기록에 남긴다.
+
+
+## 360. ABB 전체 원문 대조 복구·회사명 검토·기존 승인 중복 차단
+
+2026-10-04 실제 일일 수집은 ABB 공식 경로 1개/날짜창 2개를 실행했다. 과거 창의 9월 28일 고객 사례와 10월 1일 machine tending FAQ 2후보, 당일 창 0건을 확인했다. 후보 수 734개는 늘지 않았다. 전체54경로·32칸 조사 완료로 해석하지 않는다.
+
+날짜 후보의 페이지 스크립트를 모델 입력에 중복 전달하던 문제는 공통 `modelSourceDates`로 해결했다. 원본 날짜 근거와 13/36개 본문 블록은 보존하고 모델에는 확정된 published_at/modified_at/precision/observed_at만 전달한다. 날짜 metadata 10,905/16,721자는 각각107자로 줄었지만 기사 본문을 잘라내지 않았다. 원래 실패 batch `abb-processing-batch-20261004-v1`은 partial 상태와 자동 재시도 금지 receipt를 그대로 보존한다. 변경된 구현으로 새 run을 만들었다.
+
+실제 `abb-faq-normalized-context-20261004-v2`는 원문 전체36블록·6후보를 두 대조 호출(220.372초/188.421초)로 완료했다. 동일 실행 재개는 generated_batches0/reused_batches2다. 모든 문단을 직접 읽고 특정 신규 사건이 없는 일반 적용 설명으로 판단해 `abb-faq-background-review-20261004-v3`의6후보를 deferred로 기록했다. 결과는 reviewed_without_publishable_facts/verified0, 원고 생성0이다. ROI18~24개월 등 회사 설명을 일반 시장 실적으로 쓰지 않는다. 운영 사유는 private 기록에만 남긴다.
+
+고객 사례는 제목의 동사 Process를 회사명으로 붙인 `Andover Process` 오독을 모델이 두 번 모두 supported로 판단했다. 이 개발 관측은 독립 gold 성능 수치가 아니다. 제목에만 있고 본문에는 없는 subject에 identity_attention을 추가해 명시적 원문 검토를 요구한다. 이는 오류 확정이나 이름 자동 정정이 아니며 정당한 제목 표기는 근거로 confirmed 처리할 수 있다. `abb-andover-identity-gate-20261004-v3`의 attention은2개다. 회사명 resolution 없는 실제 검토는 거부했고, 정정 근거를 추가한 검토는7사실을 확인했다. 기존 작성 결과를 추가 호출0으로 재사용하고 두 단계 편집 정정·approved 상태 재개까지 검증했다. 회사명, 8,000개 초과 경계, 격리 울타리 표현, accuracy→정확도 번역을 원문대로 수정했다. 최종 비공개 preview는 `runs/abb-andover-identity-gate-20261004-v3/preview.md`다.
+
+후보 장부 연결은 기존 `20260929-abb-andover-source-review-v2` 승인 사건 `a0c307de02d0e03b` 때문에 `Candidate already has another editorial disposition`로 차단됐다. 기존 후보를 덮어쓰거나 새 사건을 만들지 않았다. 이 실제 발견에 따라 묶음 처리기는 verified+event_id인 과거 후보를 모델 실행 전에 identity_review로 분기한다. 실제 새 plan `abb-processing-identity-routing-20261004-v2`에서 해당 후보 identity_review1/FAQ ready1, 모델 호출0을 확인했다. 기존 승인 기록의 현재 계약 편입은 별도 원문/승인 관계 검토가 필요하다.
+
+검증은 기존 선택기 포함17/17, 상태 읽기1/1, 문맥 회귀 포함44/44, 제목 subject 관문1/1, legacy 승인 분기1/1이다. 최종 input 변경 후 묶음 계약10/10을 한 번 확인했다. 전체 suite는 반복하지 않았다. 정정·승인 상태 재개와 FAQ 대조 재개는 실제 저장 결과를 추가 모델 호출 없이 읽었다. private dashboard HTML bytes를 확인했으나 이번 file URL의 browser 렌더링은 도구 제한으로 미검증이다.
+
+비공개 개발 증거191파일/ZIP192member·992,302bytes를 Drive Research `1p_ymlqcKSNTC8N_rN4msINEetvxiDxwe`에 보관했다. 원격 raw SHA `494fbc7d5b2cce66b81db79615b830ea55ff41dd6543cc8f355a964dacfccb86`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/abb-processing-evidence-20261004-v4/drive-receipt.json`이다. 묶음은 개발 증거이며 portable dependency closure나 독립 평가가 아니다. 마지막 추가10건 테스트 로그는 별도 로컬 기록이다.
+
+공개448ec36·기존197원본·RSS/WebsiteData는 이번 변경으로 재발행하지 않았다. WBS2/22·goal active, 전체92회/801기사 소급·독립40dev/20heldout human gold0·로컬 shadow7회·무인08시 운영 검증은 남아 있다. 다음은 과거 승인 후보의 현재 계약 연결을 기존 importer로 검토하고, 새 사건 후보에 동일 공통 경로를 적용한다. 새 authoring은 fresh Drive readback부터 시작한다.

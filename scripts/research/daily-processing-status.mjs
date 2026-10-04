@@ -1,0 +1,141 @@
+import fs from "node:fs"
+import { sha256 } from "./contracts.mjs"
+import { readJSON, safePath } from "./run-state.mjs"
+
+const statuses = new Set([
+  "pending",
+  "ready",
+  "running",
+  "failed",
+  "fact_review",
+  "editorial_review",
+  "approved",
+  "reviewed_without_publishable_facts",
+  "identity_review",
+  "source_required",
+  "approval_ready",
+  "same_source",
+])
+function inspectProcess(pid) {
+  if (!Number.isSafeInteger(pid) || pid < 1) return "missing_handle"
+  try {
+    process.kill(pid, 0)
+    return "alive"
+  } catch (error) {
+    if (error.code === "ESRCH") return "missing_handle"
+    if (error.code === "EPERM") return "unobservable"
+    throw error
+  }
+}
+
+export function loadDailyProcessingStatus(root, { processState = inspectProcess } = {}) {
+  const directory = safePath(root, "runs")
+  if (!fs.existsSync(directory)) return { status: "missing", runs: [] }
+  const files = fs
+    .readdirSync(directory, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /^[A-Za-z0-9_-]+$/.test(e.name))
+    .map((e) => ({ run: e.name, file: safePath(root, `runs/${e.name}/daily-processing.json`) }))
+    .filter((e) => fs.existsSync(e.file))
+    .sort((a, b) => fs.statSync(b.file).mtimeMs - fs.statSync(a.file).mtimeMs)
+  const runs = files.map(({ run }) => {
+    try {
+      const base = `runs/${run}/`,
+        input = readJSON(root, base + "daily-processing-input.json"),
+        receipt = readJSON(root, base + "daily-processing.json")
+      if (
+        !input ||
+        receipt.schema !== "research-daily-processing/v1" ||
+        receipt.run_id !== run ||
+        receipt.input_sha256 !== sha256(JSON.stringify(input)) ||
+        receipt.total !== input.candidate_keys.length ||
+        !Array.isArray(receipt.results) ||
+        JSON.stringify(receipt.results.map((r) => r.candidate_key)) !==
+          JSON.stringify(input.candidate_keys) ||
+        receipt.results.some((r) => !statuses.has(r.status))
+      )
+        throw Error("Processing receipt does not match its input")
+      const counts = Object.fromEntries(
+        [...new Set(receipt.results.map((r) => r.status))].map((s) => [
+          s,
+          receipt.results.filter((r) => r.status === s).length,
+        ]),
+      )
+      if (JSON.stringify(counts) !== JSON.stringify(receipt.counts))
+        throw Error("Processing counts changed")
+      const lock = readJSON(root, `locks/daily-processing-${run}.json`)
+      const live = receipt.status === "running" ? processState(lock?.pid) : "not_running"
+      const results = receipt.results.map((row) => {
+        let phase = null,
+          progress = null
+        const binding = row.processing_run
+          ? readJSON(root, `runs/${row.processing_run}/source-processing-input.json`)
+          : null
+        const implementationStatus = !binding
+          ? "unrecorded"
+          : Object.entries(binding.implementation || {}).some(([file, hash]) => {
+                if (!/^[A-Za-z0-9_-]+\.mjs$/.test(file))
+                  throw Error("Invalid processing implementation path")
+                return sha256(fs.readFileSync(new URL(file, import.meta.url))) !== hash
+              })
+            ? "changed"
+            : "current"
+        if (row.status === "running" && row.processing_run) {
+          const state = readJSON(root, `runs/${row.processing_run}/processing/state.json`)
+          phase =
+            Object.entries(state?.stages || {}).find(([, s]) => s.status === "running")?.[0] || null
+          for (const role of ["article_write", "evidence_compare", "fact_extract"]) {
+            const ledger = readJSON(
+              root,
+              `runs/${row.processing_run}/model-policy/${role}/budget.json`,
+            )
+            const attempt = ledger?.attempts?.find((a) => a.status === "running")
+            if (attempt) {
+              const detail = readJSON(
+                root,
+                `runs/${row.processing_run}/model-policy/${role}/progress/${attempt.id}.json`,
+              )
+              progress = {
+                role,
+                attempt_id: attempt.id,
+                status: detail?.status || "running",
+                elapsed_ms: detail?.elapsed_ms ?? null,
+                frames: detail?.frames ?? null,
+                content_chars: detail?.content_chars ?? null,
+              }
+              break
+            }
+          }
+        }
+        return {
+          candidate_key: row.candidate_key,
+          status: row.status,
+          processing_run: row.processing_run || null,
+          source_run: row.source_run || null,
+          elapsed_ms: row.elapsed_ms ?? null,
+          implementation_status: implementationStatus,
+          phase,
+          progress,
+          ...(row.status === "failed" ? { error: row.error, automatic_retry: false } : {}),
+          ...(row.status === "same_source"
+            ? { primary_candidate_key: row.primary_candidate_key }
+            : {}),
+          packet: row.result?.packet || null,
+          preview: row.result?.preview || null,
+        }
+      })
+      return {
+        run_id: run,
+        daily_run: receipt.daily_run,
+        status: receipt.status,
+        live_process: live,
+        total: receipt.total,
+        counts,
+        results,
+        candidate_published: false,
+      }
+    } catch (error) {
+      return { run_id: run, status: "invalid", error: error.message, candidate_published: false }
+    }
+  })
+  return { status: runs.length ? "available" : "missing", runs }
+}

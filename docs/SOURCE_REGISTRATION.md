@@ -152,3 +152,10 @@ replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 n
 ## 등록 경로의 공통 후처리
 
 출처별 목록·상세 수집과 parse가 완료되면 같은 `research.mjs process-source` 경로로 추출→원문 의미 대조→명시적 사실 검토→원고를 진행한다. 별도 출처마다 모델 처리 코드를 만들지 않는다. 정확히 일치하는 완료 추출·대조·작성은 재사용하고, 출처별 특수성은 기존 profile/adapter에서만 처리한다. 이 후처리는 수집 경로 활성화나 자동 기사 승인·발행을 뜻하지 않는다. 명령, 검토 packet, 정정과 재개 방법은 [런북357절](LOCAL_AI_NEWS_RUNBOOK.md#357-공통-원문-후처리와-실제-작성정정재개)을 따른다.
+
+
+일일 handoff의 명시적 후보 여러 개를 처리할 때는 `npm run research:process-daily -- --run <batch> --daily-run <collected-run> --candidate-keys <key> --plan-only|--execute|--resume`를 사용한다. 실패 항목은 원래 오류를 보존하고 다음 항목을 수행하며 동일 run에서 자동 재호출하지 않는다. 각 source/identity/fact/editorial 상태는 비공개 현황판에서 확인한다. 명령·명시적 검토 경로는 [런북358절](LOCAL_AI_NEWS_RUNBOOK.md#358-일일-후보의-공통-묶음-처리와-단계별-현황)에 있다.
+
+모델에 원문을 전달할 때 날짜는 공통 `modelSourceDates`를 사용한다. `parse.dates` 전체를 프롬프트에 넣지 않는다. 날짜 후보의 raw 값에 본문 또는 내장 script가 들어갈 수 있으므로 resolved published_at/modified_at/precision/observed_at만 전달하고, 원래 검증 근거는 immutable parse에 보존한다. 기사 본문 block은 이 처리를 이유로 절단하지 않는다. 실제 ABB 사례와 회귀 검증은 [런북359절](LOCAL_AI_NEWS_RUNBOOK.md#359-abb-실제-일일-묶음과-날짜-근거-문맥-중복-디버깅)을 따른다.
+
+과거 verified 후보에 event_id가 있지만 현재 승인 receipt가 없는 경우에는 공통 묶음 처리에서 identity_review로 분기한다. 기존 승인을 덮어쓰거나 신규 사건으로 등록하지 않는다. 실제 수집 디버깅과 전체 원문 대조 복구는 [런북360절](LOCAL_AI_NEWS_RUNBOOK.md#360-abb-전체-원문-대조-복구회사명-검토기존-승인-중복-차단)을 참조한다.

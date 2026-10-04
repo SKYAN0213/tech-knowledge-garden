@@ -3,6 +3,7 @@ import { assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
 import { validateEvidence } from "./claims.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
+import { modelSourceDates } from "./source-context.mjs"
 
 const outcomes = ["supported", "contradicted", "insufficient"]
 const dimensions = ["meaning", "identity", "numbers", "time", "attribution"]
@@ -65,7 +66,7 @@ function selectedParses(claims, documents, parses) {
         (document) => document.source_version_id === parse.source_version_id,
       )?.original_url,
       title: parse.title,
-      dates: parse.dates,
+      dates: modelSourceDates(parse.dates),
       blocks: parse.blocks.map(({ block_id, text }) => ({ block_id, text })),
     }))
 }
@@ -167,6 +168,9 @@ export async function assessEvidenceCheckpoint(
     claims_validator_sha256: sha256(fs.readFileSync(new URL("./claims.mjs", import.meta.url))),
     parser_sha256: sha256(fs.readFileSync(new URL("./parser.mjs", import.meta.url))),
     contracts_sha256: sha256(fs.readFileSync(new URL("./contracts.mjs", import.meta.url))),
+    source_context_sha256: sha256(
+      fs.readFileSync(new URL("./source-context.mjs", import.meta.url)),
+    ),
   }
   const base = `runs/${run}/evidence-assessment/`
   const previous = readJSON(root, base + "input.json")

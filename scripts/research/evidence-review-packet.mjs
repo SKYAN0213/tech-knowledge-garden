@@ -5,6 +5,37 @@ import { validateEvidence, recordFactReview, assertVerifiedClaim } from "./claim
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 
+const normalized = (text) =>
+  text.normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("en-US")
+function titleOnlySubject(claim, parses) {
+  const subject = normalized(claim.subject)
+  const escaped = subject.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const pattern = new RegExp(
+    (/^[a-z0-9]/.test(subject) ? "(^|[^\\p{L}\\p{N}])" : "") +
+      escaped +
+      (/[a-z0-9]$/.test(subject) ? "(?=$|[^\\p{L}\\p{N}])" : ""),
+    "u",
+  )
+  const relevant = parses.filter((p) => claim.evidence.some((e) => e.parse_id === p.parse_id))
+  const titles = relevant.filter((p) => pattern.test(normalized(p.title || "")))
+  if (
+    !titles.length ||
+    relevant.some((p) =>
+      p.blocks.some(
+        (b) => normalized(b.text) !== normalized(p.title || "") && pattern.test(normalized(b.text)),
+      ),
+    )
+  )
+    return null
+  return {
+    reason: "subject_only_in_title",
+    subject: claim.subject,
+    parse_ids: titles.map((p) => p.parse_id),
+  }
+}
+const needsResolution = (row) =>
+  row.model_assessment.requires_attention || Boolean(row.identity_attention)
+
 export function isProcessedRun(root, run) {
   const base = `runs/${run}/`
   return Boolean(
@@ -59,11 +90,15 @@ export function factReviewPacket(run, input, extracted, documents, parses, asses
         (document) => document.source_version_id === parse.source_version_id,
       ).original_url,
     })),
-    claims: extracted.claims.map((claim) => ({
-      claim,
-      structural: validateEvidence(claim, parses),
-      model_assessment: assessment.assessments.find((row) => row.claim_id === claim.claim_id),
-    })),
+    claims: extracted.claims.map((claim) => {
+      const attention = titleOnlySubject(claim, parses)
+      return {
+        claim,
+        structural: validateEvidence(claim, parses),
+        model_assessment: assessment.assessments.find((row) => row.claim_id === claim.claim_id),
+        ...(attention ? { identity_attention: attention } : {}),
+      }
+    }),
     requires_explicit_review: true,
     public_approved: false,
   }
@@ -121,7 +156,8 @@ function validateAcknowledgment(context, decision) {
     const row = context.packet.claims.find((entry) => entry.claim.claim_id === resolution.claim_id)
     const reviewed = decision.claims?.find((entry) => entry.claim_id === resolution.claim_id)
     if (
-      !row?.model_assessment.requires_attention ||
+      !row ||
+      !needsResolution(row) ||
       reviewed?.status !== "verified" ||
       !["corrected", "confirmed"].includes(resolution.outcome) ||
       typeof resolution.reason !== "string" ||
@@ -153,7 +189,7 @@ function validateAcknowledgment(context, decision) {
     const reviewed = decision.claims?.find((entry) => entry.claim_id === row.claim.claim_id)
     if (
       reviewed?.status === "verified" &&
-      row.model_assessment.requires_attention &&
+      needsResolution(row) &&
       !acknowledgment.resolutions.some((entry) => entry.claim_id === row.claim.claim_id)
     )
       throw Error("Resolve each verified assessment concern explicitly")

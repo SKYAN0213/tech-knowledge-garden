@@ -122,6 +122,38 @@ test("assessment preserves candidate approval, full source context and cached ou
   assert.equal(second.reused_batches, 1)
 })
 
+test("embedded date provenance cannot duplicate page scripts in full-source model context", async (t) => {
+  const f = fixture(t),
+    parse = f.parses[0]
+  parse.dates.modified_at = "2026-10-03"
+  parse.dates.precision = "day"
+  parse.dates.candidates = [{ raw: "embedded-script-marker " + "x".repeat(50000) }]
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  const immutable = fs.readFileSync(path.join(f.root, `parses/${parse.parse_id}/parse.json`))
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const supplied = JSON.parse(request.messages[1].content)
+    assert.deepEqual(supplied.sources[0].dates, {
+      published_at: "2026-10-02",
+      modified_at: "2026-10-03",
+      precision: "day",
+      observed_at: "2026-10-04T00:00:00Z",
+    })
+    assert.deepEqual(
+      supplied.sources[0].blocks,
+      parse.blocks.map(({ block_id, text }) => ({ block_id, text })),
+    )
+    assert.equal(request.messages[1].content.includes("embedded-script-marker"), false)
+    return generate.call(this, request)
+  }
+  await run(f)
+  assert.equal(f.calls(), 1)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, `parses/${parse.parse_id}/parse.json`)),
+    immutable,
+  )
+})
+
 test("a model-supported claim cannot override structural source failures", async (t) => {
   const f = fixture(t)
   f.claims[0].evidence[0].quote = "Unrelated invented quote"

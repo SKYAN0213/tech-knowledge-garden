@@ -30,7 +30,8 @@
     "research": "node scripts/research.mjs",
     "research:daily": "node scripts/research-daily.mjs",
     "research:sources": "node scripts/research-sources.mjs",
-    "research:evidence": "node scripts/research-evidence-review.mjs"
+    "research:evidence": "node scripts/research-evidence-review.mjs",
+    "research:process-daily": "node scripts/research-process-daily.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",

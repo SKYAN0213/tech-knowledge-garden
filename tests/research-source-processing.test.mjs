@@ -407,3 +407,37 @@ test("development fixtures and irrelevant CLI flags are rejected", async (t) => 
   await assert.rejects(() => processSourceRun(f.options), /Development fixtures/)
   assert.deepEqual(f.calls, [])
 })
+
+test("a headline-only subject requires identity resolution even when the model supports it", async (t) => {
+  const f = fixture(t)
+  f.parse.title = "Example Process ships products"
+  atomicWrite(f.root, `parses/${f.parse.parse_id}/parse.json`, f.parse)
+  atomicWrite(f.root, "runs/source/parses.json", [f.parse])
+  const extraction = readJSON(f.root, "runs/source/claims.json")
+  extraction.claims[0].subject = "Example Process"
+  atomicWrite(f.root, "runs/source/claims.json", extraction)
+  const result = await processSourceRun(f.options)
+  assert.equal(result.requires_attention, 1)
+  const context = await loadFactReviewPacket(f.root, "processed")
+  assert.equal(context.packet.claims[0].model_assessment.requires_attention, false)
+  assert.equal(context.packet.claims[0].identity_attention.reason, "subject_only_in_title")
+  const d = await decision(f)
+  await assert.rejects(() => reviewProcessedClaims(f.root, "processed", d), /Resolve each/)
+  d.claims[0].replacement = { subject: "Example" }
+  d.model_assessment.resolutions = [
+    {
+      claim_id: f.claim.claim_id,
+      outcome: "corrected",
+      reason: "제목 동사를 회사명으로 읽은 결과를 본문의 주체로 정정한다.",
+      evidence: [
+        {
+          parse_id: f.parse.parse_id,
+          block_id: f.parse.blocks[0].block_id,
+          quote: f.parse.blocks[0].text,
+        },
+      ],
+    },
+  ]
+  await reviewProcessedClaims(f.root, "processed", d)
+  assert.equal((await processSourceRun(f.options)).status, "editorial_review")
+})
