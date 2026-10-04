@@ -62,6 +62,8 @@ Drive 원본 전환 완료:198개 실제 raw·16폴더 중 최초15폴더 목록
 
 # 로컬 AI 뉴스 시스템: 현재 구현과 남은 개발 계약
 
+최신 개발(2026-10-05): 발표 우선 추출·구조 오류 raw 후보 재사용·차단 관측을 포함한 보관/판본 위치 등록을 공통 경로에서 구현했다. 실제 신규4기사와 이전GitHub1기사, MCP 검토 정의/3명시적 배정을 private 승인했고 원문9판본·5승인·온톨로지131nodes/201edges를 Drive raw ZIP에서 독립 복구해 exact 일치를 확인했다. 표적20+7+10 및 위치 후속1통과·전체 suite 미반복·작성200불변. 공개 d21e269와 WBS2/22·전수66/617·독립40/20·정규7회/무인08시·full runtime 복구는 별도 남는다. standalone 승인 event 위치 조회 누락도 다음 보강 항목이다. [런북379](LOCAL_AI_NEWS_RUNBOOK.md#379-발표-우선-추출오류-후보-재사용복수-기사와-정의의-독립-복구).
+
 실수집·공개 후속(2026-10-04): 요청 간격 오류를 재현해 실제 시작 시각/호스트 잠금 기준으로 수정했다. 표적33/33·실제 Roche200→304/3,499ms/같은 판본, 릴리스 CI Node698/698·Python17개·build/link/Pages 성공. 코드c47e2c7/콘텐츠448ec36, 8분야16기사와32칸 부분 확인. Drive 신규2원본/기존195불변·197전체 raw readback, 공개19파일/GitHub digest exact·기존RSS39 GUID, 선택16후보 already-published/pending0, WebsiteData11개 기존ID/SHA 확인. 승인·원문16판본·검증220파일 증거ZIP는 Drive Research 실제 raw SHA 일치. 콘텐츠 발행 감사7회 충족은 로컬 모델 shadow7회/무인08시 검증과 구분한다. 전체 전수소급·독립40/20·예약 관문/WBS2/22·goal active 유지. [런북355절](LOCAL_AI_NEWS_RUNBOOK.md#355-실제-병렬-수집의-요청-간격-오류와-정규-원고-drive-보관).
 
 최신 실물 검증(2026-10-04): 고정 목록 밖 Satellogic 원문을 기존 수집/parse/후보 등록으로 편입하면서 timestamp→검토 day의 승인 연결 오류를 재현·수정했다. 후보-parse 순간 일치는 별도 검증하고 다른 날짜/시각은 거부한다. 셀트리온·Satellogic12사실 직접 검토로734후보/verified85·나머지732동일, intake/approval 반복은 중복0이다. regular-eight-sector-preview-20261004-v5는8분야14기사·기존RSS39 GUID 보존·실제 desktop/mobile 탭/URL/reload/Enter/상세 링크를 확인했다. focused34/34·Drive Research evidence 원격 raw SHA 일치; 전체 suite·이번 회차 Drive 작성/공개·32칸 편집 판정은 미완료다. WBS2/22·goal active. [런북354절](LOCAL_AI_NEWS_RUNBOOK.md#354-고정-목록-밖-원문-실수집과-timestamp-승인-연결-디버깅).

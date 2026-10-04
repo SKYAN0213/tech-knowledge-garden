@@ -144,6 +144,7 @@ export async function main(argv = process.argv.slice(2)) {
       "batch-manifest": { type: "string" },
       "source-run": { type: "string" },
       "retain-previous-parses": { type: "boolean", default: false },
+      "retain-unsupported-claims": { type: "boolean", default: false },
       "approved-root": { type: "string" },
       "candidate-source-run": { type: "string" },
       "source-revision-review": { type: "string" },
@@ -246,6 +247,8 @@ export async function main(argv = process.argv.slice(2)) {
   ]
   if (v["retain-previous-parses"] && (command !== "reparse" || !v["source-run"] || v.url?.length))
     throw Error("--retain-previous-parses requires reparse --source-run without --url")
+  if (v["retain-unsupported-claims"] && command !== "reuse-extraction")
+    throw Error("--retain-unsupported-claims is only supported for reuse-extraction")
   if (v["resume-local-budget-ms"] !== undefined) {
     if (command !== "extract") throw Error("--resume-local-budget-ms is only supported for extract")
     if (!/^\d+$/.test(v["resume-local-budget-ms"]))
@@ -905,7 +908,9 @@ export async function main(argv = process.argv.slice(2)) {
       v["merge-backlog"]
     )
       throw Error("Extraction reuse requires only a stored source run and destination run")
-    return reuseExtraction(root, v.run, v["source-run"])
+    return reuseExtraction(root, v.run, v["source-run"], {
+      retainUnsupportedClaims: v["retain-unsupported-claims"],
+    })
   }
   if (command === "archive-closure") {
     if (

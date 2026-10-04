@@ -117,6 +117,37 @@ function response(request) {
     provenance: { model: request.model, think: request.think },
   }
 }
+
+test("news extraction preserves narrative and tables while giving the main announcement priority", () => {
+  const source = parse("announcement-priority", 3)
+  source.title = "Search service adds shared endpoints"
+  const content = [
+    ["paragraph", "Today the company announced a shared search endpoint for its service."],
+    ["heading", "Preview pricing"],
+    ["table", "Preview usage price: $0.75 per million tokens; shared free monthly allowance."],
+  ]
+  source.blocks.forEach((block, i) => {
+    block.kind = content[i][0]
+    block.text = content[i][1]
+    block.locator.text_hash = sha256(block.text)
+  })
+  const plan = planExtractionBatches([source])
+  assert.equal(plan.batches.length, 1)
+  const request = plan.batches[0].request
+  const doc = JSON.parse(request.messages[1].content)[0]
+  assert.equal(doc.title, source.title)
+  assert.deepEqual(
+    doc.blocks.map((b) => [b.kind, b.text]),
+    content,
+  )
+  assert.deepEqual(
+    plan.batches[0].block_keys.map((key) => plan.blocks.get(key).block_id),
+    source.blocks.map((b) => b.block_id),
+  )
+  assert.match(request.messages[0].content, /main announcement before ancillary/)
+  assert.match(request.messages[0].content, /not in this batch/)
+  assert.equal(request.schema.properties.claims.maxItems, 6)
+})
 function researchPaper(id = "paper") {
   const source = parse(id)
   const sections = [

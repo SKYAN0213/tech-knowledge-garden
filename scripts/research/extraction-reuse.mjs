@@ -6,10 +6,16 @@ import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 
 // Reuse model extraction when adding sources, preserving raw output and requiring
 // a new fact review. Never inherit editorial decisions or model invented success.
-export async function reuseExtraction(root, runId, sourceRunId) {
+export async function reuseExtraction(
+  root,
+  runId,
+  sourceRunId,
+  { retainUnsupportedClaims = false } = {},
+) {
   if (
     [runId, sourceRunId].some((id) => !/^[A-Za-z0-9_-]+$/.test(id || "")) ||
-    runId === sourceRunId
+    runId === sourceRunId ||
+    typeof retainUnsupportedClaims !== "boolean"
   )
     throw Error("Distinct valid extraction and destination runs required")
   return withLock(root, "run-" + runId, async () => {
@@ -60,7 +66,19 @@ export async function reuseExtraction(root, runId, sourceRunId) {
           )
       }
       const review = validateEvidence(claim, target.parses)
-      if (!review.structural_pass)
+      const repairable = new Set([
+        "quote_not_in_block",
+        "number_not_in_evidence",
+        "unit_not_in_evidence",
+        "condition_not_in_evidence",
+        "ongoing_source_marked_completed",
+        "plan_promoted_to_completion",
+        "publication_date_requires_review",
+      ])
+      if (
+        !review.structural_pass &&
+        (!retainUnsupportedClaims || review.problems.some((problem) => !repairable.has(problem)))
+      )
         throw Error("Extraction evidence failed: " + review.problems.join(", "))
       return { ...claim, event_id: null, review }
     })
@@ -73,6 +91,14 @@ export async function reuseExtraction(root, runId, sourceRunId) {
       claim_ids: claims.map((c) => c.claim_id),
       fact_review_required: true,
       candidate_published: false,
+      ...(retainUnsupportedClaims
+        ? {
+            retain_unsupported_claims: true,
+            unsupported_claim_ids: claims
+              .filter((claim) => !claim.review.structural_pass)
+              .map((claim) => claim.claim_id),
+          }
+        : {}),
     }
     const output = { ...extracted, claims, extraction_reuse: receipt }
     const base = `runs/${runId}/`

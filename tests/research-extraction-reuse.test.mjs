@@ -5,6 +5,7 @@ import os from "node:os"
 import path from "node:path"
 import { main } from "../scripts/research.mjs"
 import { reuseExtraction } from "../scripts/research/extraction-reuse.mjs"
+import { recordFactReview } from "../scripts/research/claims.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import {
@@ -157,6 +158,97 @@ test("retained parse versions reuse existing claims without replacing their evid
   assert.equal(reused.evidence[0].parse_id, parse.parse_id)
   assert.equal(reused.review.status, "unreviewed")
   assert.deepEqual(fs.readFileSync(path.join(root, "runs/source/parses.json")), originals)
+})
+
+test("explicit reuse retains unsupported quotations for correction without inheriting approval", async (t) => {
+  const { root, extraction, parse } = fixture(t)
+  const claim = extraction.claims[0]
+  claim.evidence[0].quote = "Company announced ... product."
+  claim.claim_id = sha256(
+    JSON.stringify([claim.candidate_key, claim.statement, claim.evidence]),
+  ).slice(0, 24)
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  const sourceBytes = fs.readFileSync(path.join(root, "runs/source/claims.json"))
+  await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /evidence failed/)
+  const args = [
+    "reuse-extraction",
+    "--root",
+    root,
+    "--run",
+    "bundle",
+    "--source-run",
+    "source",
+    "--retain-unsupported-claims",
+  ]
+  assert.equal((await main(args)).reused, false)
+  const result = readJSON(root, "runs/bundle/claims.json")
+  assert.equal(result.claims[0].review.status, "unreviewed")
+  assert.equal(result.claims[0].review.structural_pass, false)
+  assert.deepEqual(result.claims[0].review.problems, ["quote_not_in_block"])
+  assert.deepEqual(result.claims[0].evidence, claim.evidence)
+  assert.equal(result.claims[0].event_id, null)
+  assert.deepEqual(result.extraction_reuse.unsupported_claim_ids, [claim.claim_id])
+  const decision = {
+    claim_id: claim.claim_id,
+    status: "verified",
+    reason: "Read the exact source block",
+    source_read: true,
+    entailment_checked: true,
+    identity_checked: true,
+    numbers_checked: true,
+    time_checked: true,
+  }
+  const review = { reviewer: "Source reviewer", reviewed_at: "2026-10-04" }
+  assert.throws(
+    () => recordFactReview(result.claims, [decision], review, [parse]),
+    /Verified claim requires/,
+  )
+  const corrected = recordFactReview(
+    result.claims,
+    [
+      {
+        ...decision,
+        replacement: {
+          evidence: [{ ...claim.evidence[0], quote: parse.blocks[0].text }],
+        },
+      },
+    ],
+    review,
+    [parse],
+  )
+  assert.equal(corrected[0].review.status, "verified")
+  assert.equal(corrected[0].previous_claim_id, claim.claim_id)
+  assert.equal((await main(args)).reused, true)
+  assert.deepEqual(fs.readFileSync(path.join(root, "runs/source/claims.json")), sourceBytes)
+  assert.equal(fs.existsSync(path.join(root, "runs/bundle/approved-article.json")), false)
+})
+
+test("retaining unsupported claims cannot bypass source block identity or unrelated CLI commands", async (t) => {
+  const { root, extraction } = fixture(t)
+  const claim = extraction.claims[0]
+  claim.evidence[0].block_id += "-missing"
+  claim.claim_id = sha256(
+    JSON.stringify([claim.candidate_key, claim.statement, claim.evidence]),
+  ).slice(0, 24)
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  await assert.rejects(
+    () => reuseExtraction(root, "bundle", "source", { retainUnsupportedClaims: true }),
+    /evidence_identity_mismatch/,
+  )
+  assert.equal(fs.existsSync(path.join(root, "runs/bundle/claims.json")), false)
+  await assert.rejects(
+    () =>
+      main([
+        "collect",
+        "--root",
+        root,
+        "--run",
+        "invalid-retention",
+        "--retain-unsupported-claims",
+      ]),
+    /only supported for reuse-extraction/,
+  )
+  assert.equal(fs.existsSync(path.join(root, "runs/invalid-retention")), false)
 })
 
 test("parse retention rejects incompatible CLI options before creating any run", async (t) => {

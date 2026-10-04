@@ -164,7 +164,7 @@ const extractionSystem = (max, extractionScope) =>
     extractionScope === "research_key_findings"
       ? " For scientific results, prefer the detailed Results or Findings passage over a repeated abstract summary, and report a key result once. When the source gives sample count, per-sample distribution, range, or exceptions alongside a mean, preserve those conditions in the result claim instead of reporting only the mean. Capture stated study limitations and validations that remain planned or pending as their own facts. Do not merge distinct devices, metrics, or measured and projected results."
       : ""
-  }`
+  } For news or product announcements, use the document title and opening narrative to identify the main announced action, who did it, rollout status, audience, and concrete mechanism. When those paragraphs are present in this batch, capture the main announcement before ancillary examples, pricing, or promotional metrics. Do not spend all fact slots on a price table unless pricing is the main event described by the title and narrative. Use each block's kind to distinguish narrative, headings, and tables. A table is evidence, not automatically the most important news. If the main announcement is not in this batch, extract only what is actually present; do not invent it.`
 
 // Keep whole source blocks and their original identities. An oversized block
 // needs an explicit parser decision rather than silent text truncation.
@@ -337,7 +337,7 @@ export function planExtractionBatches(parses, options = {}) {
         parse_id: p.parse_id,
         block_id: b.block_id,
       })
-      return [{ block_key, text: b.text }]
+      return [{ block_key, kind: b.kind ?? "paragraph", text: b.text }]
     }),
   }))
   if (input.some((document) => !document.blocks.length))

@@ -253,6 +253,69 @@ test("changed dependency and unbound related approval fail without replacing a p
   )
 })
 
+test("archive retains blocked collection observations behind an exact captured selection without promoting them", async (t) => {
+  const { root, doc, parse } = fixture(t)
+  const blocked = {
+    source_id: sourceId("https://example.org/blocked"),
+    original_url: "https://example.org/blocked",
+    fetch_status: "blocked",
+    http_status: 403,
+    observed_at: "2026-10-04T00:00:00Z",
+  }
+  atomicWrite(root, "runs/collection/documents.json", [doc, blocked])
+  atomicWrite(root, "runs/collection/parses.json", [parse])
+  const original = loadStoredSourceRun(root, "collection", { allowUnacquired: true })
+  const selected = loadStoredSourceRun(root, "article")
+  atomicWrite(root, "runs/article/source-selection.json", {
+    schema: "research-source-selection/v1",
+    source_run: original.identity,
+    selected_urls: [doc.original_url],
+    documents_sha256: selected.identity.documents_sha256,
+    parses_sha256: selected.identity.parses_sha256,
+    candidate_published: false,
+  })
+  const result = await archiveClosure(root, "portable", "article")
+  assert.equal(result.package.source_versions, 1)
+  assert.ok(result.bound_runs.includes("collection"))
+  const restored = restore(root, result.package, "restore/with-blocked")
+  assert.equal(restored.status, 0, restored.stderr)
+  const fresh = path.join(root, "restore/with-blocked")
+  assert.deepEqual(readJSON(fresh, "runs/collection/documents.json"), [doc, blocked])
+  assert.throws(() => loadStoredSourceRun(fresh, "collection"), /unacquired document/)
+  assert.deepEqual(loadStoredSourceRun(fresh, "article").documents, [doc])
+  const metadataFile = path.join(root, "blocked-archive-metadata.json")
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "blocked-observation-archive",
+      name: "portable.zip",
+      mime_type: "application/zip",
+      size: result.package.bytes,
+      parent_ids: ["research-folder"],
+      shared: false,
+    }),
+  )
+  const location = await registerArchiveLocation({
+    root,
+    runId: "portable",
+    metadataFile,
+    remotePackageFile: path.join(root, result.package.path),
+    expectedParentId: "research-folder",
+  })
+  assert.equal(location.sources.length, 1)
+  assert.equal(location.sources[0].source_version_id, doc.source_version_id)
+  assert.equal(
+    location.sources.some((s) => s.url === blocked.original_url),
+    false,
+  )
+  const docs = readJSON(root, "runs/collection/documents.json")
+  docs[1].http_status = 429
+  atomicWrite(root, "runs/collection/documents.json", docs)
+  await assert.rejects(() => archiveClosure(root, "changed", "article"), /dependency changed/)
+})
+
 test("parse corruption and source symlinks cannot enter a portable archive", async (t) => {
   const { root, parse } = fixture(t)
   atomicWrite(root, `parses/${parse.parse_id}/parse.json`, { ...parse, title: "Changed" })

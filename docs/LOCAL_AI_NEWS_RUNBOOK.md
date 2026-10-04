@@ -9621,3 +9621,22 @@ Research 증거 snapshot `legacy-20260811-release-evidence-20261004-v1`:282membe
 
 
 Drive 보관 완료: `legacy-source-association-evidence-20261004-v1`의64자료/65members·6source versions·1,675,214bytes, ZIP SHA `f178b924787f329d0e931ae7412ad95e90f5169c1236c699fa60b607c8bbd56d`다. Research 파일ID `16Y70GYkoR4MUw9xXXc_1msTO6X8-IFlq`, 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false와 실제 원격raw ZIP의 전체SHA·CRC·모든 member bytes/SHA·정확한 목록을 확인했다. 운영 작성200파일도 마지막 검증 Drive snapshot과 SHA 일치다. v1 패키지의 manifest hash는 source archive-manifest의 hash이고 원격 ZIP의 package-manifest hash가 아니다. v1에는 source archive-manifest가 별도 member로 들어가지 않는다. 이 두 검증 helper 가정을 실제 공통 package-archive.py 계약과 대조해 수정했으며 source member 경로는 기존 archive_member를 재사용했다. 이는 코드·원문·승인 개발 증거의 보관이며 독립 portable runtime 복구나 전체8/7 공개 전환은 아니다. receipt는 archive-staging/<id>/drive-receipt.json이고 frozen ZIP을 다시 만들지 않는다.
+
+
+## 379. 발표 우선 추출·오류 후보 재사용·복수 기사와 정의의 독립 복구
+
+동일 AI Search 원문/parse/model/digest/정책/예산/48blocks/1batch를 실제 대조했다. 이전6가격·구조2/6(77.833초)에서 새5기능+1가격·구조5/6(93.218초)으로 달라졌다. 가격 단위 오류1은 보류하고 소유 사이트·공개 URL opt-in·비공개 Access·robots 정책·Dev Stack MCP를 직접 검토/정정해8verified/1deferred와3문장248자/설명3을 private 승인했다. 단일 사례이며 독립 human 평가나 자동 사실 검증 성공이 아니다. 비교 source-live-debug/announcement-priority-comparison-20261004-v1.json. 추출 표적20/20은 앞 기능 묶음에서1회 실행했다.
+
+MCP는5원문·기존 raw6후보 재사용/직접11verified·2deferred·완성 작성57.703초 뒤8/6 Cloudflare 발표와7/28규격을 분리했다. canonical MCP note는 note-review 승인7d646803…/기존 SHA8096bc3a…로 정의·원리·세션과 application state 차이·날짜별 변화·관련 개념을 재작성했다. MCP·AI Search·WebMCP의3기사에는 이 exact 승인 note/explicit claim 관계를 배정했고 일반 제품·회사명이 새 지도 노드가 되지 않는다. Agentic 원문은 회사의 명시적인 배경 설명이며 독립 출시 기사로 만들지 않았다.
+
+WebMCP의6원 추출72.141초 중 인용 말줄임표1은 quote_not_in_block으로 차단했다. 최초 fact-review와 이어진 unsupported draft 입력 실패는 v1에 보존하고 새 v2로 이동했다. 선택형 reuse-extraction --retain-unsupported-claims는 source bytes/parse/claim identity가 같을 때 인용·수치·날짜·상태 오류만 unreviewed/structural_pass:false로 그대로 옮긴다. 근거 identity/integrity/없는 block은 계속 거부하며 기본 옵션도 기존 거부다. 오류 후보를 수정하거나 명시적으로 보류하기 전 승인할 수 없다. 실제 v2 재사용 HTTP0/model0·8verified, 작성57.324초 뒤 한국어/반복/preview/session/C2PA decoded-versus-signature-verified를 직접 정정했다.2문장149자/설명2/발표8/6/검토10/5/사건cb25a842d58a5ffc/MCP로 private 승인. reuse7/7, 전체 suite 미반복.
+
+Kitesurf100blocks 전체 추출2batch/12후보/구조12는86.470초와63.186초의 실제 완료 provenance에 기록돼 있다. 직접10verified/4deferred로 검토하고 새 원고69.564초 뒤 tag_theme_mismatch·발표일 누락·일방적인 효율 요약을 정정했다.2문장183자/설명3/사건d13caba5351daa86,14URL·5실행·중앙값·예열 Chromium 조건 아래 CPU380/1173ms·메모리57.8/271MiB·전체시간1148/637ms를 함께 전달한다. 무료 beta/account limits·일부CDP·동영상/WebGL/인증 state 작업 범위도 원문 회사 설명이다. 운영 분석 한계 변명이나 임의 전문용어 노드는 넣지 않았다.
+
+복수 승인 run을 source-bundle로 묶을 때 같은 AI Search 원문을 두 번 넣은 첫 시도는 duplicate source versions로 거부됐다. 실패 원추출은 proof로 별도 보존하고 최종5승인 run의 서로 다른9source versions만 bundle했다. archive-closure는 선택한 원문의 상위 collect가 HTTP403을 함께 가진 경우에도 관측을 보존해야 하므로 archive 읽기와 selection ancestor의 allowUnacquired를 허용했다. captured body·parse는 모두 SHA 검증하며 기사 근거/모델 입력 loadStoredSourceRun 기본 거부는 유지한다. 같은 blocked 관측을 원문 판본 색인에서 누락 없이 보관하되 성공한 판본만 등록하도록 location reader에도 적용했다. 보관 표적10/10 뒤 새 위치 경로만1/1 실행했고 기존 통과 검사를 반복하지 않았다.
+
+최종 portable research 보관본 legacy-prompt-review-portable-20261005-v1:445자료/447members/9원문판본/9parse/15bound runs/2,752,993bytes, ZIP SHA770cebce01b3d1c840fec1cae182e5fad02c22a5800e4ccd0249cce1ba6b3560. Drive Research ID1_UJAiSjfLGA_qoCmW19TPPYIMPXPNkel·부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false를 실제 읽고 원격rawZIP SHA/CRC·정확한 목록을 확인했다. 로컬 ZIP과 Drive에서 받은 ZIP을 각각 새 폴더에 복구해5승인·MCP3배정·온톨로지131nodes/201edges/SHA7bfff1eb…가 exact 동일함을 검증했다. 복구 model0/network0·작성200파일 SHA불변. runtime 설치/worker 무인 재개/공개 발행 성공을 뜻하지 않는다. 보관 ZIP은 frozen이며 location 코드 후속은 Git diff/표적 로그에 있다.
+
+재개 경로는 archive-staging/<id>/{package-receipt,drive-receipt,local-restore-verification,remote-restore-verification,drive-metadata,drive-location}.json과 source-live-debug/legacy-prompt-portable-verify-20261005-v1.mjs다. 실제 위치 등록은 원문9판본 조회를 제공하지만 candidate-approval가 없는 standalone editorial 승인5건의 event_ids는 아직 비어 있다. 사건별 위치 조회 누락을 다음 공통 색인 보강 항목으로 남겼으며 임의 event_ids 수정으로 숨기지 않았다. 온톨로지의5event/claim/source 연결과 독립 복구는 별도로 통과했다.
+
+공개 d21e269/Drive 작성200은 그대로다.8/7 전체 전환은 OpenAI HTTP403의 다른 공식 근거 확보·모든 원본 unit/Source List7URL 검토가 남아 있어 부분 적용하지 않았다. 다음은 standalone event 위치 연결, 확인 불가 사건의 공개 제외 계약/빈 legacy 처리, 나머지 전수66회차617구간 및 의존 용어 검토다. 독립40/20·정규7회/무인08시·full runtime portable 관문도 남는다. goal active/WBS2/22, 이번 구현/실추론·승인/독립 복구·Drive 보관은 progress이며 같은 요청을1시간 반복한 blocker는 없다.

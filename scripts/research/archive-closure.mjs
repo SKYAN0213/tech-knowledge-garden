@@ -61,7 +61,9 @@ export function buildArchiveClosure(
     const base = `runs/${id}/`
     const doc = readJSON(root, base + "documents.json")
     const parses = readJSON(root, base + "parses.json")
-    const stored = doc || parses ? loadStoredSourceRun(root, id) : null
+    // An acquisition ancestor may include blocked attempts alongside selected
+    // captured sources. Preserve those observations without making them evidence.
+    const stored = doc || parses ? loadStoredSourceRun(root, id, { allowUnacquired: true }) : null
     const manifest = archiveManifest(root, id)
     const dependencies = []
     const reference = (target, kind, check) => {
@@ -103,8 +105,10 @@ export function buildArchiveClosure(
         throw Error("Invalid source selection")
       reference(selection.source_run?.source_run, "source_selection", () => {
         if (
-          JSON.stringify(loadStoredSourceRun(root, selection.source_run.source_run).identity) !==
-          JSON.stringify(selection.source_run)
+          JSON.stringify(
+            loadStoredSourceRun(root, selection.source_run.source_run, { allowUnacquired: true })
+              .identity,
+          ) !== JSON.stringify(selection.source_run)
         )
           throw Error("Source selection dependency changed")
       })

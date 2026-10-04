@@ -4126,7 +4126,32 @@ pre-v2의 extractArticles=[]를 전수 검토로 오인하지 않는다. `resear
 
 실제 회차의 Cloudflare 한 기사에 여러 독립 발표가 들어 있어 한 원본 기사→복수 고정 사건 전환도 지원한다. 각 사건에 private `event_split_review`의 별도 사건 확인·사유를 요구하고, 원본 h2의 처리 ID와 anchor ID가 정확히 같아야 한다. inline/명시적 `[S번호]` 원문들의 합집합을 보존하고 기사별 배정은 승인 원문에 있어야 한다. source-free 분리는 각 사건의 `source_list_review`도 별도로 요구한다. `[S번호]`는 원래 Source List의 유일한 한 URL로만 해석하며 누락·중복·다중 URL은 거부한다. 자동 사건 분리·제목 유사도 연결·수집 실패의 승인 승격은 하지 않는다. 기존 packet 및 원본 SHA/전체 구간 검토/회차·RSS 식별자 보존 계약은 유지한다.
 
-실행 결과: source-list29/29 뒤 참조·분리 묶음31중30통과, fixture 줄바꿈 정규화 수정 후 실패1만통과했다. 실수집7중6/parse6/286blocks·OpenAI4031을 보존했다. GitHub 저장 원문은 새 MLX 추출54.920초/작성44.240초, 직접8facts verified/예정 가격1deferred 및 원고 정정 후 private 승인412eeeaddaef78db다. 공개/작성 원본은 미변경이고 전체8/7 전환·Cloudflare5사건·OpenAI 확보·의존 용어 검토는 다음 단계다. 런북378에서 재개한다. 전체 목표 active/WBS2/22 및 전수66/617을 유지한다.
+실행 결과: source-list29/29 뒤 참조·분리 묶음31중30통과, fixture 줄바꿈 정규화 수정 후 실패1만통과했다. 실수집7중6/parse6/286blocks·OpenAI4031을 보존했다. GitHub 저장 원문은 새 MLX 추출54.920초/작성44.240초, 직접8facts verified/예정 가격1deferred 및 원고 정정 후 private 승인412eeeaddaef78db다. 공개/작성 원본은 미변경이고 전체8/7 전환·Cloudflare 원문5개의 사건/배경 판정·OpenAI 확보·의존 용어 검토는 다음 단계다. 런북378에서 재개한다. 전체 목표 active/WBS2/22 및 전수66/617을 유지한다.
 
 
 Drive 보관 완료: `legacy-source-association-evidence-20261004-v1`의64자료/65members·6source versions·1,675,214bytes, ZIP SHA `f178b924787f329d0e931ae7412ad95e90f5169c1236c699fa60b607c8bbd56d`다. Research 파일ID `16Y70GYkoR4MUw9xXXc_1msTO6X8-IFlq`, 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false와 실제 원격raw ZIP의 전체SHA·CRC·모든 member bytes/SHA·정확한 목록을 확인했다. 운영 작성200파일도 마지막 검증 Drive snapshot과 SHA 일치다. v1 패키지의 manifest hash는 source archive-manifest의 hash이고 원격 ZIP의 package-manifest hash가 아니다. v1에는 source archive-manifest가 별도 member로 들어가지 않는다. 이 두 검증 helper 가정을 실제 공통 package-archive.py 계약과 대조해 수정했으며 source member 경로는 기존 archive_member를 재사용했다. 이는 코드·원문·승인 개발 증거의 보관이며 독립 portable runtime 복구나 전체8/7 공개 전환은 아니다. receipt는 archive-staging/<id>/drive-receipt.json이고 frozen ZIP을 다시 만들지 않는다.
+
+
+## 19.288. 실제 발표 누락을 줄이는 공통 추출 지침과 MCP 변화 근거
+
+8/7의 AI Search 원문48blocks를 같은 MLX 기본 정책으로 추출하자6후보가 가격/과금에만 몰렸다. 핵심 검색 기능·공개 endpoint·사이트 소유/공개 범위가 빠졌으며 구조 통과는2/6이다. 이 결과를 수정해 모델 성공으로 쓰지 않는다. 공통 extractionSystem에 제목·첫 본문의 발표/상태/대상/작동 방식을 우선하고, 가격이 주 사건이 아닐 때 가격표로 후보 슬롯을 소진하지 않도록 지침을 추가했다. 문단/제목/표의 kind도 실제 source block의 값으로 전달한다. 원문 block/ID/순서·기존 max6·날짜/수치 검증·후속 의미 대조·승인은 유지하며 부분 batch에서 없는 사건을 만들도록 요구하지 않는다. 별도 뉴스 전용 crawler/추상화는 도입하지 않는다.
+
+수용 기준은 전체 block 전달 및 기존 예산/잘못된 근거 차단, 좁은 extraction 검사 한 번, 동일 원문/모델/기본 정책의 새 prompt 판본 실제1실행 비교다. 새 모델 결과도 원문 직접 검토 전에는 미승인이다. 현재 표적20/20통과했고 새 run legacy-20260807-ai-search-priority-review-20261004-v1에서 실추출을 수행한다. 다른 passed suite를 반복하지 않는다.
+
+MCP는 공식7/28규격 원문까지 확보해 Cloudflare8/6 지원 안내와 사건 날짜를 구분했다. 기존6후보를 새2원문 basis에 재추론 없이 재사용하고8verified/2deferred로 직접 검토했다. MRTR의 규격 출처를 회사에 잘못 귀속한 review input과 잘못 전사한 claim ID는 원본/중간 결과를 보존하고 명시적 correction에서 바로잡았다. MCP 전문용어의 일반론 recent change도 정확한 두 날짜와 원문에 연결하도록 기존 note-review 경로에서 검토한다. OpenAI의 일반HTTPS 별도 확인도403이므로 우회하거나 같은 요청을 반복하지 않는다. 기존8/7 전체 원고를 부분 전환하지 않으며 Source List의 나머지 근거·의존 용어·Drive/공개 검증은 계속 남는다.
+
+
+동일 AI Search 원문/parse/model/digest/정책/48block 전체와1batch/예산을 직접 대조했다. 이전6가격·구조2에서 새5기능+1가격·구조5로 달라졌으며 실제 추출77.833초→93.218초다. 하나의 원문 사례이며 독립 평가나 자동 품질 통과로 일반화하지 않는다. 가격1은 계속 보류하고 직접 보완/조건 정정한8facts와 한국어 원고를 private 승인54aa107c534ae476/MCP explicit assignment로 연결했다. 비교 영수증 announcement-priority-comparison-20261004-v1.json에서 동일 입력을 확인한다.
+
+MCP는 규격·정의·Agents SDK·회사 배경까지5원문을 묶고 기존 추출 재사용 뒤11verified/2deferred로 검토했다. 기존 canonical MCP note의 정의·버전별 원리·7/28규격 및8/6제품 지원 이력을 private 승인7d646803…으로 교체 준비했다. 이 용어는 같은 reviewed definition을 AI Search와 WebMCP 기사에도 명시적 claim으로 배정한다. 아직 vault/Drive 작성 원본과 공개 용어 페이지에는 적용하지 않았다. Agentic 원문은 독립 제품 출시 기사로 강제하지 않고 확인된 회사 설명을 MCP 기사 배경에 보존한다.
+
+## 19.289. 구조 오류가 있는 원 추출을 보존하며 새 검토로 이동
+
+실제 WebMCP6후보 중1개의 인용문에 모델이 원문에 없는 말줄임표를 넣었다. 최초 검토 실패 뒤 원고 작성 명령까지 진행해 빈 unsupported input이 frozen 되었으므로 입력 hash를 덮어쓰지 않고 새 v2 run을 사용한다. 이 오류는 실행 순서의 문제이며 같은 추출을 다시 모델에 요청하지 않는다. 원본 v1·첫 검토 입력·오류·정정은 보존한다.
+
+기존 reuse-extraction은 구조 오류 한 개가 있어도 모든 후보 재사용을 거부했다. 선택형 --retain-unsupported-claims를 추가해 정확한 원문 bytes/parse/claim ID를 확인한 뒤 인용·숫자 조건·발표일·완료 상태 오류만 unreviewed/structural_pass:false로 보존한다. 기본 거부 동작과 근거 identity/integrity/없는 block 거부는 유지한다. 명시적 receipt에 오류 후보 ID를 남기고 새 fact review/정확한 인용 정정 없이는 승인되지 않는다. 다른 CLI 명령에 옵션을 주면 파일 생성 전에 거부한다. 자동 승인이나 failed model 성공 변환이 아니다.
+
+새 기능 묶음은 reuse 표적7/7, 앞 발표 우선 추출20/20이며 전체 suite는 반복하지 않았다. 실제 WebMCP26blocks의 추출72.141초·6후보/5구조 결과를 v2에서 모델0/HTTP0으로 재사용하고8사실을 원문 대조했다. 최초 한국어 초안57.324초의 어색한 문장/반복을 정정해2문장149자/설명2·발표8/6/검토10/5/고정 사건cb25a842d58a5ffc로 private 승인했다. Content Credentials 읽기와 암호학적 검증을 구분하고 방문자 session/지원 browser 조건을 보존한다. 실물 복구·Drive와 이후 Kitesurf 처리는 런북379에 기록한다. 기존200작성 bytes/공개 d21e269·전수66/617·WBS2/22·독립40/20·정규7회/무인08시 및 전체 목표는 유지한다.
+
+
+최종 결과(10/5 KST): Kitesurf10verified/4deferred·한국어 작성69.564초 뒤 실제 수치 비교/조건/시간/태그를 정정해 private 승인했다. archive-closure와 location이 실패 관측이 섞인 상위 수집 묶음을 보관하지 못하는 결함도 수정했다(기본 기사 근거 거부 유지). 보관 표적10/10 및 후속 위치1/1; 원문9판본/5승인/3MCP 관계/200작성 노트 authority를 v2 ZIP447members/2,752,993bytes로 private Drive1_UJAiSjfLGA_qoCmW19TPPYIMPXPNkel에 보관하고 실제 원격raw로 독립 복구해 승인/온톨로지 exactSHA를 확인했다. standalone 승인의 사건별 Drive 위치 색인 누락은 남은 항목으로 명시했으며 원문 판본9조회와 구분한다. 작성 원본·공개는 미변경, 전체 goal active·WBS2/22·전수66/617·독립평가/정규운영/full runtime 복구 유지. 자세한 재개점은 런북379다.
