@@ -9583,3 +9583,17 @@ MLX 새 원고2회(69.010/55.043초, think:false)를 생성했고 조건 범위�
 
 
 최종 guard delta17자료/18members/1,214,191bytes는 Drive Research1z_zflYsU_2hniY5CwJ2ehtkiHDA2ZAEb에 보관했고 원격rawSHA1e80ba038122c8f285b8e316862550a325f6886acbb9136a0274543ec9860757·부모/shared:false 및 로컬CRC/memberSHA/목록을 확인했다. 본편 frozen ZIP을 재작성하지 않았다. 원문4판본은 앞선 본편 보관본에 있으며 guard 묶음 source_versions0이다. 영수증은 archive-staging/legacy-transition-guard-evidence-20261004-v1/{drive-receipt,package-verification}.json. 다음 실제 발행 준비에서는 최종 reader-v2를 사용한다. 이2기사는 DOI/논문 버전 메타데이터와 전문용어 assignment가 아직 없으므로 다음 연결 검토에 포함한다. 전체 목표 active이며 운영 원본·공개 배포는 다음 완료 관문이다.
+
+## 377. 구형 8월 11일 회차의 Drive 원본 전환과 릴리스
+
+두 사건의 새 불변 승인 `legacy-{adaptive,platformer}-paper-approved-20261004-v1`에 DOI `10.1145/3815598.3815633` / `10.1145/3815598.3815634`와 정확한 대학 PDF 판본·parse·인용 claim을 연결했다. 전문 11/9쪽을 확보한 접근 상태이며 심층 분석이나 독립 human 평가를 의미하지 않는다. 기존 사건 ID·발표일·원고·15검토 사실과 이전 승인을 보존했다. 새 모델/원문 HTTP 호출0, 최종 private reader-v3의 전환 delta1파일10,586bytes다. 새 전문용어 노드는 등록하지 않았다.
+
+Drive 네 작성 루트/16폴더의 전체 목록을 대조하고200파일의 실제 원격 raw bytes를 다시 읽어 로컬과 SHA 일치를 확인했다. 대량 동시 요청의 tool host broken pipe 이후 응답을 성공으로 집계하지 않고10개 묶음의 결과를 private 디스크에 각각 보존했다. 확인 뒤 전체 목록을 다시 조회했다. 같은 UI 구현의 공개8/28 브리핑에서 분야 click/Enter/back/1280폭/overflow0/지도0/빈심층탭0을 확인했으며 수정8/11 화면의 사전 browser 검증으로 표시하지 않는다.
+
+`legacy-20260811-release-{readback,source-snapshot,observation,review,proof}-20261004-v2.json`과 common authorizeAuthoringTransfer를 사용했다. release receipt `d9f1080308e6155707b5354581155c4d3e5ee98280b6b9fce3efcdce7463aa10.json`은 retrospective/new_operational_run:false다. 기존 Drive ID `1daizWGdOSavMM6RV2tZcoO5BL3o7LAPa`를 in-place update하고 원격 raw10,586bytes/SHA `fa7f627d324d5566622af547ed0e35291073310a281b20ac23120032471deed9`·기존 부모/shared:false를 확인했다. 새 파일이나 회차를 만들지 않았다.
+
+후속16폴더 목록과199기존/1수정 판본을 common connector snapshot으로 고정한 뒤 canonical pull을 수행했다(updated1/deleted0). `.local/drive-sync/legacy-20260811-post-source-snapshot-20261004-v1.json` 파일SHA `83364b9d45017706824b15ccb69526ec9abcaea5fa31e85ab657d4dca2ef22cd`, source SHA `978415b2e542785ec302915c246f45fb9f5774a03985a9805556c40266882c34`다. 최신 원본200파일 검증 통과.
+
+canonical build/site:314HTML/312search/141news/19nodes/17relations/RSS40, v2 37. `legacy-release-canonical-verification-20261004-v1.json`은2승인 원고·설명·출처·8/10발표일이 웹/기존회차/digest/RSS에 같고 기존40GUID/pubDate/순서가 보존됨을 확인한다. 최초 verification helper의 approval wrapper 접근 오류는 실제 `.article` 계약으로 정정했다. 릴리스 후보 전체 Node795/795를 한 번 실행했고 Python Drive15/15·WebsiteData2/2·typecheck가 통과했다. 전체 검사를 반복하지 않았다.
+
+새 inventory `legacy-20260811-after-authority-20261004-v1`:200작성/37v2/84legacy·743units, 빈 판정18·126, 미판정66·617,141verified·v2미검토0/diagnostics0. 원래92회차/801구간 기준선과 WBS2/22·human40/20·shadow7회/무인08시·전체 소급 목표를 유지한다. 이번 턴은 실제 Drive authority1회차 전환으로 progress이며1시간 반복 blocker는 없다. 공개 배포·수정8/11 실제 UI·WebsiteData 결과는 후속 증거로 별도 기록한다.

@@ -4109,3 +4109,9 @@ pre-v2의 extractArticles=[]를 전수 검토로 오인하지 않는다. `resear
 
 
 최종 guard delta17자료/18members/1,214,191bytes는 Drive Research1z_zflYsU_2hniY5CwJ2ehtkiHDA2ZAEb에 보관했고 원격rawSHA1e80ba038122c8f285b8e316862550a325f6886acbb9136a0274543ec9860757·부모/shared:false 및 로컬CRC/memberSHA/목록을 확인했다. 본편 frozen ZIP을 재작성하지 않았다. 원문4판본은 앞선 본편 보관본에 있으며 guard 묶음 source_versions0이다. 영수증은 archive-staging/legacy-transition-guard-evidence-20261004-v1/{drive-receipt,package-verification}.json. 다음 실제 발행 준비에서는 최종 reader-v2를 사용한다. 이2기사는 DOI/논문 버전 메타데이터와 전문용어 assignment가 아직 없으므로 다음 연결 검토에 포함한다. 전체 목표 active이며 운영 원본·공개 배포는 다음 완료 관문이다.
+
+## 19.286. 전체 구간 검토를 거친 첫 pre-v2 회차의 원본 반영
+
+8/11의9구간을 검토한2기사에 DOI/정확한 PDF 판본을 연결하고 기존 Drive ID로 저장·원격 bytes 검증·canonical pull을 완료했다. Drive200파일을 실제 raw로 다시 읽고 전후16폴더 목록을 대조했다. source SHA978415b2e542785ec302915c246f45fb9f5774a03985a9805556c40266882c34,1update/0delete/새회차0. 공개용 원고에 비공개 검토 사유를 넣지 않았다.
+
+검토 기사141·v2 37, 기존 RSS40 GUID/pubDate와 원고·상세 설명·원문·발표일을 웹/RSS/digest에서 확인했다. 통합 릴리스 후보 Node795/795·Python15+2·typecheck·build/site 통과, 전체 suite1회다. 자세한 증거와 재개 경로는 런북377을 따른다. 기존92/801 전수 범위 중 미판정은66회차/617구간이고 빈 판정18/126은 별도다. 전문용어 배정·남은 소급·독립 평가·정규32칸/7회/무인08시를 축소하지 않는다. 목표active/WBS2/22 유지; 실제 공개 배포와 WebsiteData readback은 다음 관문이다.
