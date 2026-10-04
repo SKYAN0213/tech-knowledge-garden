@@ -11,7 +11,8 @@ briefing_format: sector-five/v1
 theme_format: news-themes/v1
 source_count: 16
 new_items_count: 16
-linked_knowledge_notes: []
+linked_knowledge_notes:
+  - Knowledge/AI Systems/AI Agent Security
 knowledge_notes_created: []
 knowledge_notes_updated: []
 headlines:
@@ -34,6 +35,9 @@ article_records:
     lead: 한국에너지기술연구원은 10월 1일 대기청정연구실 황선미 박사 연구팀이 암모니아 선박의 배출가스를 처리하는 촉매 기술을 개발했다고
       발표했다. 질소산화물과 미연소 암모니아를 함께 분해하는 하이브리드 촉매, 아산화질소를 분해하는 촉매를 각각 개발한 것이다. 연구진은
       이 기술을 암모니아 엔진과 연계한 파일럿 실증으로 확대할 계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 두 촉매의 처리 대상과 운전 조건
         paragraphs:
@@ -43,9 +47,6 @@ article_records:
             효율로 분해한다고 밝혔다.
         source_urls:
           - https://energium.kier.re.kr/sub040101/articles/view/tableid/news/category/2/id/6810
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월
     kind: 사건 뉴스
     region: 해외
@@ -60,6 +61,9 @@ article_records:
       발표했다. 시험은 CDK4/6 억제제와 내분비 치료를 받은 ER 양성·HER2 음성 국소 진행성 또는 전이성 유방암 환자를 대상으로
       표준 내분비 치료와 everolimus 병용군과 비교했다. 회사에 따르면 전체 무작위 배정 환자 집단의 무진행 생존기간 중앙값은
       giredestrant 병용군 8.8개월, 비교군 5.5개월이었다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 평가 지표와 집단별 결과
         paragraphs:
@@ -69,9 +73,6 @@ article_records:
             모두 0.001 미만이었다.
         source_urls:
           - https://www.roche.com/media/releases/med-cor-2026-10-01
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정
     kind: 사건 뉴스
     region: 해외
@@ -86,6 +87,9 @@ article_records:
       Falcon 9으로 태양동기 저궤도에 투입했다고 발표했다. 회사에 따르면 네 위성은 지상국과 교신했으며 각 하위 시스템의 상태가
       양호하다는 보고를 받았다. Merlin.01은 발사·초기 궤도 단계에 있으며, 이 단계가 끝나는 10월 중순부터 탑재체 시험과
       시운전에 들어갈 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 넓게 탐지한 뒤 세밀하게 촬영하는 설계
         paragraphs:
@@ -95,9 +99,6 @@ article_records:
             설계했다. 회사는 Merlin의 완전 운용 능력 확보 시점을 2027년 하반기로 전망했다.
         source_urls:
           - https://investors.satellogic.com/news-releases/news-release-details/satellogic-announces-successful-launch-first-merlin-satellite
-    papers: []
-    relations: []
-    topic_ids: []
   - title: AWS, 인프라 개선안을 코드로 제시하는 Well-Architected Agent 프리뷰 공개
     kind: 사건 뉴스
     region: 해외
@@ -112,10 +113,10 @@ article_records:
       Agent를 프리뷰로 공개했다. Terraform·CloudFormation·CDK 템플릿을 검토해 코드 변경안을 제시하고, 적용
       가능한 경우 실행용 런북이나 CLI 스크립트도 제공한다. 서비스와 권고안은 미국 버지니아 북부·오하이오·오리건에서 이용할 수 있으며,
       AWS Support 플랜 고객은 모든 AWS 상용 리전의 워크로드를 등록할 수 있다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: 코윈로보틱스·란신로보틱스, 3D 비전 기반 산업용 로봇 협력
     kind: 사건 뉴스
     region: 국제 공동
@@ -129,6 +130,9 @@ article_records:
     lead: 코윈로보틱스는 란신로보틱스와 산업용 지능형 로봇 사업 확대를 위한 업무협약을 체결했다고 10월 2일 밝혔다. 양사는 란신로보틱스의
       3D 비전 인지 기술과 코윈로보틱스의 산업현장 맞춤형 로봇 설계·제조 및 시스템 통합 역량을 결합할 계획이다. 양사는 인도·베트남 등
       아시아·태평양 시장에서 공동 사업 기회와 신규 고객 확보를 추진할 계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 3D 비전 적용 범위
         paragraphs:
@@ -136,9 +140,6 @@ article_records:
             제어와 연계할 전략이라고 설명했다.
         source_urls:
           - https://www.irobotnews.com/news/articleView.html?idxno=48808
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 셀트리온, 네덜란드·북유럽 신규 제품 수주와 공급 현황 공개
     kind: 사건 뉴스
     region: 국내
@@ -152,6 +153,9 @@ article_records:
     lead: 셀트리온은 10월 1일 앱토즈마·옴리클로·오센벨트의 네덜란드·북유럽 수주와 공급 현황을 발표했다. 회사에 따르면 앱토즈마는
       네덜란드에서 3월 공급을 시작한 뒤 2분기 입찰을 추가 수주해 현지 토실리주맙 시장의 약 58%에 해당하는 공급 물량을 확보했다.
       오센벨트는 노르웨이와 덴마크의 국가입찰에 단독 낙찰됐으며, 10월부터 제품 공급을 본격화할 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 앱토즈마의 국가·제형별 현황
         paragraphs:
@@ -166,9 +170,6 @@ article_records:
             것으로 전망했다.
         source_urls:
           - https://www.celltrion.com/ko-kr/company/media-center/press-release/4936
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Teradyne Robotics, Elite Robots와 법적 분쟁 해결 합의
     kind: 사건 뉴스
     region: 해외
@@ -182,10 +183,10 @@ article_records:
     lead: Teradyne Robotics A/S는 10월 1일 Elite Robots와의 법적 분쟁을 상호 합의로 해결했다고 발표했다.
       Teradyne Robotics의 최고법률책임자는 이번 합의가 Elite Robots의 책임·침해·지식재산권 유효성 등에 대한 인정은
       아니라고 밝혔다. 합의 조건은 비공개다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: MIT 연구진, AI 3D 설계의 일부를 고쳐 출력하는 InstructMesh 개발
     kind: 사건 뉴스
     region: 해외
@@ -200,6 +201,9 @@ article_records:
       부분을 선택해 수정하고 출력할 수 있는 InstructMesh를 개발했다고 발표했다. 이 도구는 텍스트·이미지에서 3D 모델을 만드는
       Microsoft TRELLIS와 언어 모델 GPT-4를 결합한다. 사용자는 자연어로 문제를 설명한 뒤 기하 형상의 수정 결과를
       평가·승인하고, 슬라이더로 특정 부분의 확대나 돌출 정도를 조절할 수 있다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 생성 모델의 결함을 초보 사용자가 수정
         paragraphs:
@@ -214,9 +218,6 @@ article_records:
             TRELLIS.2 통합을 후속 개발 방향으로 제시했다.
         source_urls:
           - https://news.mit.edu/2026/instructmesh-tool-lets-users-repair-ai-3d-models-then-fabricate-them-1001
-    papers: []
-    relations: []
-    topic_ids: []
   - title: SK하이닉스, 벤처 투자 범위를 AI 인프라로 확대…장비 도입·공동 연구 사례 공개
     kind: 사건 뉴스
     region: 국내
@@ -231,6 +232,9 @@ article_records:
       투자기관과 공동 투자를 강화하고 있다고 설명했다. 투자 검토 단계부터 기술·사업 부서를 참여시키고, 투자한 기업을 연구개발·제조·영업
       조직과 연결해 기술 평가와 제품 적용을 함께 추진하는 방식이다. SK hynix Ventures 브랜드 출범 행사는 9월
       실리콘밸리에서 열렸으며, 이번 자료는 기존 투자 기업과 진행한 협업 사례를 소개했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 공정 평가를 장비 도입으로 연결
         paragraphs:
@@ -255,9 +259,6 @@ article_records:
             기회 발굴이 포함된다.
         source_urls:
           - https://news.skhynix.com/en/skhynix-ventures-story/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Onur Mutlu 교수, AI 인프라의 데이터 이동을 줄이는 세 가지 설계 설명
     kind: 사건 뉴스
     region: 해외
@@ -270,6 +271,9 @@ article_records:
       why: 데이터 이동 비용을 줄이는 시스템 설계
     lead: SK하이닉스 뉴스룸은 10월 2일 ETH Zurich의 Onur Mutlu 교수가 쓴 AI 인프라 아키텍처 기고를 공개했다. 교수는
       데이터의 위치와 이동 비용을 고려해 메모리 배치와 연산 구조를 함께 설계하는 ‘메모리 중심 컴퓨팅’을 설명했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: CXL과 NVLink가 맡는 연결
         paragraphs:
@@ -290,9 +294,6 @@ article_records:
             배분과 통신 비용을 함께 고려해야 하며, 통신이 과도하면 지연과 에너지 소비가 늘 수 있다고 설명했다.
         source_urls:
           - https://news.skhynix.com/en/ai-ecosystem-series-ep3/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: GitHub Copilot, macOS·Windows 앱을 조작하는 computer use 공개 프리뷰
     kind: 사건 뉴스
     region: 해외
@@ -331,6 +332,9 @@ article_records:
       계정·리전의 위협 탐지 활성화 설정을 중앙에서 적용하고, 새로 가입한 계정에도 같은 설정을 자동 유지할 수 있다. 조직 루트·조직
       단위·개별 계정에 정책을 적용하고 리전별 예외를 둘 수 있으며, 정책으로 지정한 활성화 설정은 GuardDuty 콘솔이나 API에서
       덮어쓸 수 없다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 설정 경로
         paragraphs:
@@ -338,9 +342,6 @@ article_records:
             GuardDuty 콘솔의 조직 정책 화면이나 AWS Organizations API에서 설정한다.
         source_urls:
           - https://aws.amazon.com/about-aws/whats-new/2026/10/guardduty-org-enablement-policies/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: FDA, 성장에 맞춰 시술로 확장하는 소아 폐동맥판막 승인
     kind: 사건 뉴스
     region: 해외
@@ -355,6 +356,9 @@ article_records:
       승인했다. Autus Valve Technologies가 개발하고 Edwards Lifesciences가 승인을 받은 판막으로, 약
       13mm로 이식한 뒤 풍선 카테터 시술로 최대 22mm까지 확장할 수 있다. 혈류를 조절하는 판막엽에는 동물 조직 대신 고분자 소재를
       사용한다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 승인 근거가 된 임상 관찰
         paragraphs:
@@ -363,9 +367,6 @@ article_records:
             기능이 저하된 2명은 판막 확장을 받았다.
         source_urls:
           - https://www.fda.gov/news-events/press-announcements/fda-approves-first-heart-valve-designed-grow-children
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비
     kind: 사건 뉴스
     region: 해외
@@ -379,15 +380,15 @@ article_records:
     lead: Airbus Defence and Space는 10월 2일 Eutelsat에 최신 세대 OneWeb 저궤도 위성 32기를 납품했다고
       발표했다. 위성은 프랑스 툴루즈 생산시설에서 미국의 향후 발사를 위한 운송을 준비 중이다. 이번 물량은 차세대 위성 669기 계획의
       첫 물량이며, Eutelsat는 운용 수명이 끝나가는 기존 위성을 순차 교체할 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 유럽으로 이전한 생산라인
         paragraphs:
           - Airbus는 이번 납품이 위성 연속 생산라인을 유럽으로 이전한 뒤 이뤄졌다고 설명했다.
         source_urls:
           - https://www.airbus.com/en/newsroom/press-releases/2026-10-airbus-delivers-first-batch-of-next-generation-satellites-for-eutelsats-oneweb-constellation
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Tesla, 3분기 에너지 저장제품 13.7GWh 설치…차량 48만6532대 인도
     kind: 사건 뉴스
     region: 해외
@@ -400,15 +401,15 @@ article_records:
       why: 미기재
     lead: Tesla는 10월 2일 공개한 자료에서 2026년 3분기 에너지 저장제품 설치량이 13.7GWh라고 밝혔다. 같은 분기 차량
       생산량은 46만4391대, 고객 인도량은 48만6532대다. 분기 재무 실적은 10월 21일 미국 증시 마감 뒤 발표할 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 실적 발표 일정
         paragraphs:
           - 경영진 질의응답 웹캐스트는 10월 21일 미국 중부시간 오후 4시 30분에 열릴 예정이다.
         source_urls:
           - https://www.sec.gov/Archives/edgar/data/1318605/000162828026064366/exhibit991111111.htm
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표
     kind: 사건 뉴스
     region: 국내
@@ -422,6 +423,9 @@ article_records:
     lead: 안랩은 10월 1일 V3 Endpoint Security와 V3 Internet Security가 2026년 7~8월 AV-TEST
       윈도우용 백신 평가에서 각각 종합 18점 만점을 받았다고 발표했다. 회사에 따르면 기업용·개인용 두 제품 모두 상위 평가 제품에
       부여하는 Top Product에 선정됐다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 평가 점수의 구성
         paragraphs:
@@ -429,106 +433,104 @@ article_records:
             시스템에 미치는 영향, 사용성은 사용 편의성 등을 평가한다.
         source_urls:
           - https://company.ahnlab.com/kr/news/press_release_view.do?seqPressRelease=11170
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: 에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획
     event_id: 4e48c8fa40d39243
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월
     event_id: e37d74d0774d9a49
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정
     event_id: ab2949406d668c88
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: AWS, 인프라 개선안을 코드로 제시하는 Well-Architected Agent 프리뷰 공개
     event_id: 4641fb763fbf0045
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: 코윈로보틱스·란신로보틱스, 3D 비전 기반 산업용 로봇 협력
     event_id: d6176c412b1aa382
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: 셀트리온, 네덜란드·북유럽 신규 제품 수주와 공급 현황 공개
     event_id: 7b68be7361014eab
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Teradyne Robotics, Elite Robots와 법적 분쟁 해결 합의
     event_id: b37c512fcff4b5ed
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-01
-    concept_ids: []
   - title: MIT 연구진, AI 3D 설계의 일부를 고쳐 출력하는 InstructMesh 개발
     event_id: 02c744c8cb64f92f
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: SK하이닉스, 벤처 투자 범위를 AI 인프라로 확대…장비 도입·공동 연구 사례 공개
     event_id: 158499064eb74551
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Onur Mutlu 교수, AI 인프라의 데이터 이동을 줄이는 세 가지 설계 설명
     event_id: 8dde5fa115cf79da
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: GitHub Copilot, macOS·Windows 앱을 조작하는 computer use 공개 프리뷰
     event_id: e11a5d7f0be16c7a
     review_status: verified
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
+    concept_ids:
+      - agent-security
   - title: AWS GuardDuty, 조직 전체의 탐지 활성화 설정을 중앙 정책으로 관리
     event_id: e09c28db18a0043a
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: FDA, 성장에 맞춰 시술로 확장하는 소아 폐동맥판막 승인
     event_id: 83e34b9db61bc9cc
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비
     event_id: 5292eabe8550892f
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: Tesla, 3분기 에너지 저장제품 13.7GWh 설치…차량 48만6532대 인도
     event_id: 9877a6b970d84ef6
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-02
     reviewed_at: 2026-10-04
-    concept_ids: []
   - title: 안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표
     event_id: d8d0cc7e37ad6c82
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-04
-    concept_ids: []
 ---
 
 # 이번 호 표지
@@ -732,6 +734,8 @@ GitHub는 10월 1일 Copilot CLI와 Copilot 앱에 데스크톱 앱을 조작하
 ### 권한과 조직 설정
 
 macOS에서는 손쉬운 사용과 화면 기록 권한이 필요하다. 조직 관리 설정으로 computer use 기능을 비활성화할 수 있다. [S11]
+
+**개념:** [[Knowledge/AI Systems/AI Agent Security]]
 
 ## AWS GuardDuty, 조직 전체의 탐지 활성화 설정을 중앙 정책으로 관리
 

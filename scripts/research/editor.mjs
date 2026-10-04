@@ -2,6 +2,7 @@ import { SECTORS } from "../sectors.mjs"
 import { THEMES } from "../themes.mjs"
 import { sha256, assertSchema } from "./contracts.mjs"
 import { assertDeepDiveContext, deepClaimIds } from "./deep-dive.mjs"
+import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
 
 const string = { type: "string", minLength: 1 },
   nullable = { type: ["string", "null"] }
@@ -179,7 +180,7 @@ export async function writeDraft(
   ollama,
   claims,
   {
-    model = "qwen3.8:27b",
+    model = DEFAULT_LOCAL_OLLAMA_MODEL,
     think = false,
     provisional = false,
     deepContext = null,

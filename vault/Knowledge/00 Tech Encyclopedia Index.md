@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-09-13
+updated: 2026-10-04
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -71,6 +71,10 @@ tags:
 - [[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]
 - [[Knowledge/AI Systems/AI Medical Imaging|AI Medical Imaging]]
 - [[Knowledge/AI Systems/AI Wellness Devices|AI Wellness Devices]]
+
+### Robotics
+
+- [[Knowledge/Robotics/Machine Tending|머신 텐딩]]
 
 ## 개념 경계
 

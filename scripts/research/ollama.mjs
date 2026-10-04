@@ -1,6 +1,7 @@
 import { assertSchema, sha256 } from "./contracts.mjs"
 
 export const DEFAULT_LOCAL_OLLAMA_URL = "http://127.0.0.1:11434"
+export const DEFAULT_LOCAL_OLLAMA_MODEL = "qwen3.8:27b-mlx"
 
 export function validateLocalOllamaURL(url) {
   let parsed

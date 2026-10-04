@@ -1,4 +1,8 @@
-다음 실행: 기존32조사칸의 실제 편집 판정을 확인하고 정규 회차·기사/용어의 authority 반영을 준비한다. 최신 Drive 네 폴더 raw bytes와 unpublished 코드/작성 원본을 대조한 뒤 기존 release 관문으로 진행한다. 완료된 모델 호출·전체 수집은 반복하지 않는다.
+다음 실행: 전체 소급 inventory에서 최신 미검토 사건의 기존 수집·검토 결과를 우선 연결한다. 완료된 10월4일 회차/용어 전환과 모델 호출은 반복하지 않는다. 공개 반영은 미배포 코드의 통합 검사와 원격 Git 대조 후 기존 발행 관문으로 진행한다.
+
+최신 서비스 원본 반영(2026-10-04): Drive 작성197개 raw와 로컬을 대조한 뒤 승인된3파일만 저장·raw 재검증했다. 변경 후198개는195개 불변 판본 metadata와3개 새 raw를 연결한 snapshot이며198개를 새로 raw 조회한 것으로 집계하지 않는다. canonical build/site에서 Copilot→agent-security 상호 링크·발표일, 머신 텐딩 정의/원문·빈 부분 숨김/임의 선0, RSS40 GUID/발행일과16기사 본문·ID 보존을 확인했다. CLI/하위6호출 지점의 기본 모델을 공통 MLX 값으로 연결했고 명시적 override·기존 용어 작성 회귀11/11통과. 새 페이지 browser/공개 배포·전수92/801·독립40/20·운영7회는 미완료다. WBS2/22·goal active. 상세 런북371/계획19.280.
+
+최신 inventory는 구형85회차·752구간과 v2 미검토12사건을 표시한다(원래 전수 기준선92/801 유지). 이번 개발 증거75members/2,284,897bytes는 Drive private Research1qMLf9gFS9eHssX_iH7Sj8Oj9ZitO-4Yx에 보관·raw SHA06e5a254…/부모/비공유/CRC를 검증했다. 공개 배포와 별도다.
 
 최신 독립 복구(2026-10-04): 기사·전문용어 승인/정의 authority와 note approval/fact source를 기존 archive-closure에 연결했다. 실제197작성 노트·원문1판본/210자료/212ZIP members를 local 및 Drive raw ZIP의 새 폴더에서 복구했고 승인/온톨로지 exact SHA 동일·537보호/211재개파일 불변·모델0을 확인했다. 표적31/31. Drive Research1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr/raw SHA8589d383…604,687bytes. Research 자료 복구이며 runtime 설치·worker 재개·authority 최신 대조·공개 성공은 아니다. WBS2/22·goal active·전체소급/독립평가/7회 운영 유지. [런북370절](LOCAL_AI_NEWS_RUNBOOK.md#370-기사정의검토-관계를-drive-보관본에서-독립-복구).
 

@@ -7,6 +7,7 @@ import { assertVerifiedClaim } from "./claims.mjs"
 import { atomicWrite, assertAbsent, safePath, RunState } from "./run-state.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { assertNewConceptMetadata, assertConceptConflicts } from "./knowledge-links.mjs"
+import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
 
 export const KNOWLEDGE_DRAFT_HEADINGS = [
   "한 문장 정의",
@@ -231,7 +232,7 @@ export async function writeKnowledgeDraft(
   root,
   run,
   input,
-  { vault = "vault", ollama, model = "qwen3.8:27b" } = {},
+  { vault = "vault", ollama, model = DEFAULT_LOCAL_OLLAMA_MODEL } = {},
 ) {
   const context = loadKnowledgeDraftInput(root, input, { vault })
   const implementation = sha256(fs.readFileSync(new URL(import.meta.url)))

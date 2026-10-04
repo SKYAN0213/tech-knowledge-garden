@@ -1,6 +1,7 @@
 import { assertParse, assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
 import { parseResearchDate, samePublicationDate, assertReviewDate } from "./dates.mjs"
 import { modelSourceDates } from "./source-context.mjs"
+import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
 
 export function extractionCandidateKey(
   documents,
@@ -414,7 +415,7 @@ export async function extractClaims(
   {
     candidate_key,
     extraction_scope = "full_source",
-    model = "qwen3.8:27b",
+    model = DEFAULT_LOCAL_OLLAMA_MODEL,
     think = "medium",
     checkpoint,
     now = () => performance.now(),

@@ -9466,3 +9466,26 @@ python3 scripts/research/package-archive.py --root .local/research/local-ai --pa
 - 원격 ZIP을 `restore-checks/copilot-concept-portable-remote-20261004-v1`에 실제 복구했다. ZIP CRC/각 member SHA는 기존 restorer가 검증하고212files를 생성했다. 원 승인과 기사→용어→claim→원문 graph가 정확히 같았으며 graph SHA `e5052c721d569c6b1cd58ace1a8d3a5ac1c831982e1a123e0c17d992990a69b3`. 별도 `archive-staging/copilot-concept-portable-20261004-v1/{drive-receipt,remote-restore-verification}.json`에서 재개한다.
 
 syntax/Prettier/diff 확인, 전체 suite·기사 새 생성·전체 수집·공개 배포는 반복하지 않았다. 이 묶음은 독립 Research 자료 복구이며 호환 코드/Node/Python runtime 설치 자체를 포함한 완전 실행 환경 backup은 아니다. WBS2/22·goal active·92/801소급·독립40/20·운영7회/08시·공개 관문은 남는다. 1시간 이상 같은 실패로 막힌 항목은 없다.
+
+## 371. 기사·전문용어의 Drive 원본 반영과 canonical 생성본
+
+`keyword-service-preview-20261004-v1`은 기존10월4일 회차의16기사 본문·날짜·사건 ID를 유지하며 Copilot 기사에 `agent-security`만 연결한다. `machine-tending-note-approved-20261004-v1`의 머신 텐딩 정의와 색인을 추가했다. 다른 제조사 기사와 머신 텐딩의 연결은 만들지 않는다. 연구 원문은 ABB FAQ 배경자료이며 새 당일 뉴스가 아니다.
+
+Drive authority 전환은 완료됐다. 전체197파일의 원 bytes를 읽고 로컬과 대조했으며14폴더 목록을 다시 확인한 뒤 기존 release receipt로3파일/59,458bytes를 순차 저장했다. 새 Robotics 폴더와 note를 먼저 생성하고 회차·색인은 기존 ID로 갱신했다. 각 파일의 변경 전후 SHA·부모·MIME·크기와 실제 raw를 대조했다. 이후15폴더/198파일의 목록이 나머지195개 기존 source version과 새3판본에 정확히 대응했다.
+
+- 원본197 raw/metadata: `.local/drive-sync/keyword-authoring-20261004-v1-{connector-readback,source-snapshot}.json`.
+- 실제 release: `runs/keyword-service-preview-20261004-v1/drive-authoring/releases/2996cfac07179debf8ec25688254e6970c96507c5d01b4541f1e5115b51bd10d.json`.
+- 실제 write/readback: `source-live-debug/keyword-service-drive-execution-20261004-v1.json`.
+- 변경 후 목록·snapshot: `.local/drive-sync/keyword-service-{post-inventory,post-readback,post-source-snapshot}-20261004-v1.json`.
+
+post snapshot은 검증한 원 bytes195개와 변경 후 원격 raw3개를 합친 사본이다. 전체198개를 새로 raw 읽었다고 보고하지 않는다. snapshot SHA `e0734705309f4112134e2b15d6a95b5dae26a255e8cf69264dcc0fa518730b4f`를 기존 pull로 적용했다. `python3 scripts/pull-drive.py --verify-working-copy`가198개 일치를 확인했다.
+
+canonical `npm run build`와 `node scripts/verify-site.mjs` 통과:310 HTML/308 search/139 news/17 specialist nodes/RSS40. 원 회차와 의미를 대조해 바뀐 것은 `article_reviews[10].concept_ids`, `linked_knowledge_notes`, 명시적 용어 링크뿐이었다. 16기사 본문·나머지 metadata·사건 ID는 동일하다. 공통 `verifyReviewedConceptOutputs`/`verifyKnowledgeOutputs`로 상호 링크·2026-10-01 발표일·정의 SHA·원문·빈 부분 숨김을 확인했다. 기사와 두 용어의3 HTML은 승인 preview와 exact SHA가 같고 RSS40 GUID/pubDate도 같았다. `source-live-debug/keyword-service-canonical-{semantics,reader}-20261004-v1.json`이 증거다.
+
+모델 삭제 이후 direct 함수에 남은 `qwen3.8:27b` 기본값을 Ollama의 공통 MLX 상수로 연결했다. CLI와 추출·기사 작성·용어 작성·검색·번역·검색계획이 같은 기본값을 사용한다. 정책5역할·명시적 override·과거 provenance는 유지한다. `node --test tests/research-default-model.test.mjs tests/research-knowledge-editor.test.mjs` 11/11통과이며 model request/metadata 경계 전에 중단하는 테스트다. 실제 MLX 품질이나 운영 성능 검사로 집계하지 않는다. 모델 추가 호출0·전체 suite 미반복.
+
+현재 새 페이지 브라우저 검증과 공개 배포는 미실행이다. 기존 reader/control160파일이 이전 실제 desktop/mobile 검증본과 동일한 증거는 새 페이지 browser 완료와 다르다. `keyword-service-reader-review-20261004-v1.json`의 `new_page_browser_verified:false`를 유지한다. file URL 접근 자동 검토 거부를 우회하지 않았다. 전체 WBS2/22·92/801소급·독립40/20·shadow7회/무인08시가 남는다. 완료된 회차·수집·모델 호출을 반복하지 말고 다음 미검토 사건을 기존 원문/승인 inventory에서 선택한다. 같은 실패로1시간 이상 막힌 항목은 없다.
+
+현재 전수 목록은 `retrospective-after-keyword-authority-20261004-v1/retrospective/inventory.json`으로 갱신했다. 작성198개/36 v2회차/85 legacy회차·752개 구간/139사건 중127 verified·12 review 필요/655출처·654 URL묶음/diagnostics0이다. 원래92회차·801구간은 전체 전환 기준선이며 현재 남은85/752와 구분한다. verified127도 모든 과거 지식·관계의 최종 판정을 뜻하지 않는다. 이 목록 생성은 원문 재조사나 새 승인으로 세지 않는다.
+
+Drive private Research 증거 `1qMLf9gFS9eHssX_iH7Sj8Oj9ZitO-4Yx` 저장·부모/비공유/2,284,897bytes·원격 raw SHA `06e5a2541a990a3809d8ee8b7cd2a9f5ea77dd116a993edbc2bfde902f6248f7` 일치를 확인했다.75 ZIP members의 로컬 CRC가 정상이고 원격 bytes는 exact SHA로 동일하다. source_versions0인 개발 증거 archive/v1이며 원문 소스의 독립 복구본은 앞선 dependency archive에 별도로 보관됐다. 실제 영수증은 `archive-staging/keyword-service-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다. frozen snapshot의 보관 전 false는 재작성하지 않았다.

@@ -105,7 +105,7 @@ SK하이닉스 뉴스룸은 10월 2일 ETH Zurich의 Onur Mutlu 교수가 쓴 AI
 
 GitHub는 10월 1일 Copilot CLI와 Copilot 앱에 데스크톱 앱을 조작하는 computer use 공개 프리뷰를 추가했다. macOS와 Windows에서 앱 내용을 읽고 클릭·입력·스크롤·드래그를 수행하며, API·CLI·MCP 연동이 없는 GUI 소프트웨어에서도 여러 앱에 걸친 작업을 진행할 수 있다. Copilot은 앱 제어 전에 승인을 요청하고, 사용자는 항상 허용한 앱을 확인하거나 초기화할 수 있다.
 
-
+[[Knowledge/AI Systems/AI Agent Security|AI Agent Security]]
 
 ---
 

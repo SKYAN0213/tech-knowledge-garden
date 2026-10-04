@@ -4,6 +4,7 @@ import { canonicalURL } from "../garden.mjs"
 import { atomicWrite, readJSON, RunState, withLock } from "./run-state.mjs"
 import { candidatesFromLinks, mergeUniqueDiscovery } from "./discovery.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
+import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
 
 export function researchSlots() {
   const foreignLanguages = [
@@ -301,7 +302,7 @@ export function queryMatchesLanguage(query, language) {
 export async function localizeQueries(
   ollama,
   queries,
-  { model = "qwen3.8:27b", onLocalized, checkpoint } = {},
+  { model = DEFAULT_LOCAL_OLLAMA_MODEL, onLocalized, checkpoint } = {},
 ) {
   const missing = queries.filter((q) => !queryMatchesLanguage(q.query, q.language))
   if (!missing.length) return { queries, localization: null }
@@ -380,7 +381,7 @@ export async function localizeQueries(
 export async function searchQueries(
   ollama,
   {
-    model = "qwen3.8:27b",
+    model = DEFAULT_LOCAL_OLLAMA_MODEL,
     date,
     gaps = [],
     topics = [],
@@ -528,7 +529,7 @@ export async function planSearchQueries(root, id, ollama, { sourcePlan, ...optio
     const manufacturerQueries = manufacturers.length
       ? manufacturerSearchQueries(manufacturers, date)
       : []
-    const model = planningOptions.model || "qwen3.8:27b"
+    const model = planningOptions.model || DEFAULT_LOCAL_OLLAMA_MODEL
     const metadata = await ollama.metadata(model)
     const input = {
       ...planningOptions,

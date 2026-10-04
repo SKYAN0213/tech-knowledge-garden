@@ -15,6 +15,28 @@ import {
 } from "../scripts/research/knowledge-editor.mjs"
 import { main } from "../scripts/research.mjs"
 
+test("direct knowledge writing uses MLX by default and preserves explicit overrides", async (t) => {
+  const f = fixture(t)
+  for (const model of [undefined, "explicit-local-model"]) {
+    const requested = []
+    const stopped = Error("Stop before model metadata access")
+    await assert.rejects(
+      writeKnowledgeDraft(f.root, "model-check", f.input, {
+        vault: f.vault,
+        ...(model ? { model } : {}),
+        ollama: {
+          metadata: async (value) => {
+            requested.push(value)
+            throw stopped
+          },
+        },
+      }),
+      (error) => error === stopped,
+    )
+    assert.deepEqual(requested, [model ?? "qwen3.8:27b-mlx"])
+  }
+})
+
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "knowledge-editor-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

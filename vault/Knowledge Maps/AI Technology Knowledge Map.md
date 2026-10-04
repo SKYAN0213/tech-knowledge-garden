@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-09-27
-last_reviewed: 2026-09-27
+updated: 2026-10-04
+last_reviewed: 2026-10-04
 tags:
   - AI
   - KnowledgeMap
@@ -28,6 +28,7 @@ tags:
 - [[Knowledge/AI Systems/Vision-Language-Action Models|시각·언어·행동 모델]]
 - [[Knowledge/AI Systems/Zero-Shot Inference|제로샷 추론]]
 - [[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]
+- [[Knowledge/Robotics/Machine Tending|머신 텐딩]]
 - [[Knowledge/Security/OpenID Connect|OIDC]]
 - [[Knowledge/Security/Zero-Knowledge Proofs|영지식 증명]]
 - [[Knowledge/Software Engineering/Software Supply Chain Security|소프트웨어 공급망 보안]]

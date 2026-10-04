@@ -19,7 +19,7 @@ import {
   bundleStoredSourceRuns,
   selectStoredSources,
 } from "./research/parser.mjs"
-import { Ollama, localOllamaURL } from "./research/ollama.mjs"
+import { Ollama, localOllamaURL, DEFAULT_LOCAL_OLLAMA_MODEL } from "./research/ollama.mjs"
 import { OpenAIResponses } from "./research/openai.mjs"
 import {
   extractClaims,
@@ -118,7 +118,7 @@ export async function main(argv = process.argv.slice(2)) {
       url: { type: "string", multiple: true },
       channel: { type: "string", multiple: true },
       run: { type: "string" },
-      model: { type: "string", default: "qwen3.8:27b-mlx" },
+      model: { type: "string", default: DEFAULT_LOCAL_OLLAMA_MODEL },
       think: { type: "string", default: "medium" },
       "model-policy": { type: "string" },
       "assessment-run": { type: "string" },

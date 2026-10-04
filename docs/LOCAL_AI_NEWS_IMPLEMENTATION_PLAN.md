@@ -4031,3 +4031,9 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 새 `loadArchivedConceptApproval`은 manifest의 모든 bound bytes와 정의 inventory를 확인한 뒤 현재 승인 loader로 다시 검증한다. unlisted Markdown, 변조 note/claim/receipt, symlink와 다른 작업 run의 snapshot 소유권 충돌을 거부한다. plan은 읽기 전용이며 완전한 dependency 검증 후에만 create-only snapshot을 쓴다. 기존 archive를 덮어쓰거나 authority vault를 수정하지 않는다. 다른 vault를 사용할 때 archive-closure도 `--vault`를 받는다.
 
 표적 신규/기존 승인·보관·노트 검토31/31을 통과했다. 실제 `copilot-concept-portable-20261004-v1`:원문1판본·197작성 노트/210자료/212ZIP members·604,687bytes. local restore와 실제 Drive raw ZIP의 별도 복구 모두 승인/온톨로지가 원본과 정확히 같았다. graph SHA e5052c72…·보호537파일/재개211파일 불변·모델/HTTP0. Drive private Research `1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr`, raw SHA `8589d383166e1b27bd0994eb6395caaeec6d5adff1aed1536e2eaebfffb04e3e`. 이 Research 복구는 현행 호환 코드로 읽는 역사 자료이며 전체 실행 환경/worker 재개·Drive authority 최신성·공개 발행 성공을 뜻하지 않는다. 상세는 런북370절. WBS2/22·전체소급92/801·독립40/20·운영7회/08시·공개 관문을 유지한다. 같은 실패로1시간 이상 막힌 항목은 없다.
+
+### 19.280. 승인된 기사·용어의 authority와 canonical 서비스 통합
+
+기존 정규16기사/32개 부분 확인 칸을 새 회차로 만들지 않고 승인된 Copilot 용어 연결·머신 텐딩 정의·색인3파일만 소급 반영했다. Drive 작성4폴더197개 raw를 원본과 대조하고3변경을 순서대로 저장·raw SHA 확인했다. 변경 후198개 목록은195개 기존 판본 metadata와3개 변경 raw에 근거하며 모든198개를 재다운로드했다는 증거가 아니다. canonical pull 검증/빌드/사이트 검사와 승인 공통 출력 검사에서16기사 본문·기존 ID, 용어 상호링크·발표일·원문, RSS40 GUID/발행일, 빈 부분 숨김·머신 텐딩의 자동 관계 없음이 확인됐다.
+
+운영 CLI의 MLX 전환 뒤 하위 함수에 남은 삭제 모델 기본값6개도 공통 `DEFAULT_LOCAL_OLLAMA_MODEL`로 통일했다. 명시적 모델 override와 과거 실행 기록은 유지한다. 직접 추출·검색·번역·검색계획·기사·용어 작성의 기본값/override 및 기존 용어 작성 회귀11/11통과. 추가 모델 호출0·전체 suite 미반복. 새 페이지 browser와 공개 배포는 아직이며 전수92/801·독립40/20·shadow7회/무인08시/WBS2/22 전체 목표를 유지한다. 다음은 기존 처리 결과 우선 재사용으로 최신 미검토 소급 묶음을 확정한다. 런북371절에 실제 경로와 재개 지점을 기록한다.

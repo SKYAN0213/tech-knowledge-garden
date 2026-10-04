@@ -1,4 +1,8 @@
-다음 실행: 기존32조사칸의 실제 편집 판정을 확인하고 정규 회차·기사/용어의 authority 반영을 준비한다. 최신 Drive 네 폴더 raw bytes와 unpublished 코드/작성 원본을 대조한 뒤 기존 release 관문으로 진행한다. 완료된 모델 호출·전체 수집은 반복하지 않는다.
+다음 실행: 전체 소급 inventory에서 최신 미검토 사건의 기존 수집·검토 결과를 우선 연결한다. 완료된 10월4일 회차/용어 전환과 모델 호출은 반복하지 않는다. 공개 반영은 미배포 코드의 통합 검사와 원격 Git 대조 후 기존 발행 관문으로 진행한다.
+
+현재 진척(2026-10-04): 승인된 기사/용어3파일을 Drive authority에 반영했고 snapshot198파일과 canonical 사본이 일치한다. 원 raw197→변경3개 raw 재검증/나머지195 metadata 불변을 구분한다. build/site에서16기사 본문·ID, Copilot 용어 상호링크·발표일, 머신 텐딩 정의/원문·빈 부분숨김/임의 선0, RSS40 GUID/발행일을 검증했다. 삭제된 모델을 하위 호출 기본값으로 남겨둔 결함도 공통 MLX 값으로 수정했고 직접 호출·override·기존 용어 작성11/11통과. 모델 추가 호출0. 새 페이지 브라우저/공개 배포·92/801소급·독립40/20·shadow7회/무인08시는 미완료/WBS2/22/goal active. 런북371/계획19.280. 직전 삭제 상태 응답은 no progress이며 이번 턴은 canonical 통합·코드 수정으로 progress다. 같은 실패로1시간 이상 막힌 항목은 없다.
+
+최신 전수 inventory는198작성/36 v2/85 legacy·752구간/139사건·127verified·12미검토/655출처·diagnostics0이다. 원래92/801 전환 기준선은 유지한다. 다음은 최신 미검토 사건의 기존 저장 원문/검토 결과부터 재사용한다. Drive private Research1qMLf9gFS9eHssX_iH7Sj8Oj9ZitO-4Yx/75members/2,284,897bytes/raw06e5a254…·부모/shared:false/CRC 확인. archive/v1 개발 증거이며 원문 portable closure나 공개 배포 완료가 아니다.
 
 현재 독립 복구 완료(2026-10-04): 기사/전문용어 승인·source facts·canonical authority197노트·신규 note approval 의존성을 기존 archive-closure로 저장했다. sourceVault 위치 provenance는 유지하고 복구 vault bytes로 공통 검토한다. 실제 local/원격 Drive ZIP212files 복구에서 승인/온톨로지e5052c72… exact 일치·537보호/211재개files SHA불변·모델/HTTP0. 신규/기존 보관·노트·승인31/31·변조/unlisted alias/symlink/소유권 충돌 차단. archive210자료/212members/604,687bytes/raw8589d383…;Drive privateResearch1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr. stream reference materialization HTTP 실패 후 기존 bounded raw fallback으로 실제 원격복구/CRC/member SHA를 검증, 임시base64조각삭제. 런북370/계획19.279. 전체런타임 설치/worker재개·authority 최신성·공개·소급92/801·독립40/20·운영7회는 미완료/WBS2/22/goal active. 한시간 반복 blocker없음.
 
