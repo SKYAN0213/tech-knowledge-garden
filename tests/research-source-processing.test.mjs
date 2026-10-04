@@ -343,6 +343,28 @@ test("an exact prior assessment is reused without another comparison", async (t)
   assert.deepEqual(f.calls, ["evidence_compare"])
 })
 
+test("reuse of a completed assessment survives model replacement without metadata or ledger writes", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const file = path.join(f.root, "runs/processed/model-policy/evidence_compare/budget.json")
+  const before = fs.readFileSync(file)
+  const policy = JSON.parse(fs.readFileSync(f.options.policyFile))
+  policy.roles.evidence_compare.model = "replacement-local-model"
+  fs.writeFileSync(f.options.policyFile, JSON.stringify(policy))
+  f.provider.metadata = async () => {
+    throw Error("Deleted original model must not be requested")
+  }
+  const options = { ...f.options, run: "replacement-reuse", assessmentRun: "processed" }
+  assert.equal((await processSourceRun(options)).status, "fact_review")
+  assert.equal((await processSourceRun(options)).status, "fact_review")
+  assert.deepEqual(fs.readFileSync(file), before)
+  assert.equal(
+    readJSON(f.root, "runs/replacement-reuse/model-policy/evidence_compare/budget.json"),
+    null,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+})
+
 test("editorial correction survives processing resume without another model call", async (t) => {
   const f = fixture(t)
   await processSourceRun(f.options)

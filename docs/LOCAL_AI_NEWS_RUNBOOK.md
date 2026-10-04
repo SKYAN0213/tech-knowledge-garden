@@ -9360,3 +9360,26 @@ MLX 작성false는56.607초·3문장·구조문제0이었으나 실제로 `사�
 Drive Research 보관은 아래 원격 영수증으로 확인한다. 개발 증거 archive이며 portable runtime closure·독립 품질 평가·공개 발행 증거가 아니다. 공개448ec36·RSS·08시 예약은 유지한다. 전체WBS2/22·goal active, 소급92회/801기사·독립40dev/20heldout·local shadow7회/무인08시 운영·신규 공개 검증은 남는다. 이번 병목은 인용 표기였고1시간 이상 같은 시도를 반복하지 않았다.
 
 Drive 원격 검증: Research `1qc5-QgilnA5nnktPR2QpCJliwUOT9yEe`, 증거176파일/ZIP177members/3source versions/1,537,804bytes, raw SHA `31d01fb4c7ba07a12551360c5d2bbaa52e3cf20393ebeff0c7951a44ea762c52`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/sk-solidigm-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 재개 위치다.
+
+
+## 367. 모델 교체 후 완료된 대조 재사용과 머신 텐딩 전문용어
+
+`source-processing.mjs`는 명시적으로 `assessmentRun`을 지정했는데도 해당 옛 실행에 현재 모델 정책을 준비하려 했다. 기존 qwen3.8:27b 삭제/MLX 교체 뒤 완료된 ABB FAQ 근거 대조와 현재 정책이 달라 새 packet 연결이 중단됐다. 이제 `loadBoundAssessment`로 완료된 원문·claim·sealed ledger·checkpoints를 먼저 검증하고 원래 binding으로 assessment stage를 읽는다. 새로운 대조가 필요한 분기만 `prepareRoleProvider`를 수행한다. 옛 model/digest/runtime/비용을 새 모델로 덮어쓰지 않는다. 삭제된 모델의 metadata를 요청하지 않으며 새 run의 writer 등 신규 단계는 현재 정책을 사용한다.
+
+실패 재현은 `machine-tending-assessment-reuse-before-20261004-v1.log`에 보존했고, 수정 후 모델 교체/동일 대조 재개·canonical URL·잘못된 원문 거부 표적4/4가 통과했다. 새 run에 근거 대조 budget을 만들지 않고 원 장부가 그대로임을 fixture로 확인했다. 기존 실행 input의 구현 지문은 고정이며 변경된 구현의 실행에는 새 run을 쓴다. 기존 읽기 전용 approved projection은 유지된다.
+
+### 배경자료에서 학습 용어로
+
+ABB의 machine tending FAQ36블록은 이미 `abb-faq-background-disposition-20261004-v1`에서 신규 뉴스 사건이 없는 배경자료로 검토됐다. 같은 원문을 다시 뉴스로 승인하거나 실패한153초 추출을 반복하지 않았다. 초기 source-processing envelope를 단순 복사한 v1 시도는 원 processing input 부재로, v2는 모델 정책 충돌로 거부됐다. 실패 로그/폴더는 보존한다. 수정한 공통 처리의 `abb-machine-tending-knowledge-facts-20261004-v3`는 옛6추출/완료 assessment를0생성으로 연결하고, 뉴스로 보류된6사실을 유지했다. 정의·로봇 선택 조건·설치 전 시뮬레이션·위험 공정의 울타리 조건4개만 기존 direct-source additions로 직접 검토했다. ROI18~24개월·중량 범위·하루 훈련을 보편적 성과로 옮기지 않았다.
+
+전문용어 `machine-tending`/`Knowledge/Robotics/Machine Tending.md`의 metadata는 기존 v2/create 관문에서 직접 선정했다. 회사/제품명이 아닌 응용 방식이며, 정확한 한국어 별칭만 사용하고 개념 관계/최근 사건은 임의로 만들지 않았다. MLX 직접 CLI 진단 v1은57.240초·정책 budget 미지정이며 role-bound 실행으로 세지 않는다. 명시적 `--model-policy data/research-model-policy.json`의 `machine-tending-mlx-knowledge-policy-20261004-v2`는 concept_write:false·36.324초/1charged attempt다. 원 출력2개 모두 보존했다. 구조문제0도 정의 반복·잘못된 문단 배치·물류 적재/하역 직역을 보장하지 않아서 `machine-tending-note-approved-20261004-v1`에서 최종 본문을 직접 정리했다.
+
+### 생성 결과와 재개
+
+`machine-tending-private-reader-20261004-v1`은 기존 knowledge-only preview를 사용한다. refresh/validate/build/site·knowledge 검사를 통과해 승인 용어1개와 공개 생성 파일336개를 비공개 사본에 만들었다. 기사/회차는 추가하지 않았고 기존 RSS40식별자를 유지했다. 실제 HTML의 정의·선택 조건·작동/사전 검증·안전 조건은 표시되고 `왜 중요한가/실제 예시/혼동/관계/최근 변화`의 빈 항목은 숨겨졌다. graph의 specialist node는 `machine-tending`, degree0이며 확인하지 않은 선은 없다. 원 권위 vault에는 이 노트를 아직 만들지 않았다. 실제 브라우저 조작/공개 배포는 미검증이다.
+
+모델·노트 승인·preview 재개는 추가 모델0, 원 장부/원출력·기존 vault/후보를 포함한1918파일 SHA 및 runtime symlink1개가 그대로였다. `machine-tending-reader-proof-20261004-v1.json`·`machine-tending-resume-proof-20261004-v2.json`이 증거다. 첫 파일 보호 목록의 시도는 생성 workspace의 node_modules symlink 때문에 멈췄고, 다음에는 symlink를 따라 외부를 읽지 않고 link target을 따로 검증했다.
+
+원고→용어 작성/승인→생성까지의 개발 사례다. 전체 소급92/801·독립40/20 평가·local shadow7회/무인08시·실제 공개 관문은 완료하지 않았다. WBS2/22·goal active·공개448ec36 유지. 기사별 전문용어 지정과 변화 이력은 해당 기사/사건의 실제 근거가 확인될 때 기존 승인/preview로 연결한다. 이번 묶음에1시간 이상 동일 실패를 반복한 항목은 없다. 아래 Drive 영수증으로 비공개 증거 보관을 확인한다.
+
+Drive 원격 검증: Research `16sVSgdjDAKyxwjdeGYXdZkzKDyQWwKLO`, 증거136파일/ZIP137members/1source version/1,249,987bytes, raw SHA `15ac8b314ce1da24cd41ad4a5ff7070967ad3263f8a1aa26b9ee84231216e947`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/machine-tending-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 보관 영수증이다.

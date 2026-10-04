@@ -195,17 +195,26 @@ export async function processSourceRun({
     createOnce(root, base + "claims.json", workingExtraction)
     // Check exact source bytes even on a successful stage resume.
     assertStoredEvidence(root, documents, parses)
-    const scoped = await prepareRoleProvider(baseProvider, policy, "evidence_compare", {
-      root,
-      run: input.assessment_run,
-      overrides,
-    })
+    // Reuse validates the completed source-bound response before touching any
+    // installed model. Historical ledgers retain their original policy/cost.
+    const reusedAssessment = assessmentRun
+      ? await loadBoundAssessment(root, assessmentRun, extracted.claims, documents, parses)
+      : null
+    const scoped = assessmentRun
+      ? null
+      : await prepareRoleProvider(baseProvider, policy, "evidence_compare", {
+          root,
+          run: input.assessment_run,
+          overrides,
+        })
+    const assessmentBinding = assessmentRun
+      ? readJSON(root, `runs/${assessmentRun}/model-policy/evidence_compare/budget.json`).binding
+      : scoped.executionPolicy
     const assessment = await state.stage(
       "assessment",
-      { claims_sha256: sha256(JSON.stringify(extracted.claims)), binding: scoped.executionPolicy },
+      { claims_sha256: sha256(JSON.stringify(extracted.claims)), binding: assessmentBinding },
       async () => {
-        if (assessmentRun)
-          return loadBoundAssessment(root, assessmentRun, extracted.claims, documents, parses)
+        if (assessmentRun) return reusedAssessment
         return (
           await assessEvidenceCheckpoint(root, run, scoped, extracted.claims, documents, parses)
         ).record
