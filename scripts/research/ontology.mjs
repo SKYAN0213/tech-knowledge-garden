@@ -52,9 +52,9 @@ function referencedClaims(draft) {
 
 // The approval loader checks raw bytes, exact draft approval, source parses and
 // fact-review fingerprints. Recheck file hashes after reading for projection.
-export function loadApprovedOntologyInput(root, run) {
+export function loadApprovedOntologyInput(root, run, options = {}) {
   if (!validRun(run)) throw Error("Invalid approved run ID")
-  const approval = loadCurrentApproval(root, run)
+  const approval = loadCurrentApproval(root, run, options)
   const files = Object.fromEntries(
     Object.entries(approval.files).map(([name, expected]) => {
       const bytes = fs.readFileSync(safePath(root, `runs/${run}/${name}`))
@@ -65,6 +65,7 @@ export function loadApprovedOntologyInput(root, run) {
   return {
     run,
     article: approval.article,
+    ...(approval.concept_review ? { concept_review: approval.concept_review } : {}),
     file_hashes: approval.files,
     draft: files["draft.json"],
     claims: files["reviewed-claims.json"].claims,
@@ -142,7 +143,27 @@ export function projectEvidenceOntology(inputs) {
         throw Error("Invalid reviewed concept ID")
       const id = `concept:${conceptId}`
       addNode({ id, type: "Concept", concept_id: conceptId, basis: "explicit_article_review" })
-      addEdge(articleId, "explains", id)
+      const reviewedLink = input.concept_review?.links.find((link) => link.concept_id === conceptId)
+      const reviewedNote =
+        reviewedLink &&
+        input.concept_review.notes.find(
+          (note) => note.path.replace(/\.md$/, "") === reviewedLink.path,
+        )
+      if (input.concept_review && (!reviewedLink || !reviewedNote))
+        throw Error("Ontology specialist assignment evidence missing")
+      addEdge(
+        articleId,
+        "explains",
+        id,
+        reviewedLink
+          ? {
+              basis: "reviewed_article_concept_assignment",
+              evidence_claim_ids: reviewedLink.evidence.map((e) => e.claim_id),
+              note_sha256: reviewedNote.sha256,
+              editorial_decision_sha256: input.concept_review.editorial_decision_sha256,
+            }
+          : {},
+      )
     }
 
     const { allIds, publicIds } = referencedClaims(draft),

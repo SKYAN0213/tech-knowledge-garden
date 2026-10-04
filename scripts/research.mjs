@@ -57,6 +57,7 @@ import {
 import { approvedArticle } from "./research/publish-adapter.mjs"
 import { recordArticleApproval } from "./research/article-approval.mjs"
 import { inspectReaderQuality, assertReaderQuality } from "./research/reader-quality.mjs"
+import { evaluateArticleConceptReview } from "./research/article-concept-review.mjs"
 import { loadProcessedDraft } from "./research/processed-draft.mjs"
 import {
   archiveManifest,
@@ -348,6 +349,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (
     ![
       "preview",
+      "approve",
       "note-review",
       "inventory",
       "reconcile-approved-inventory",
@@ -363,7 +365,7 @@ export async function main(argv = process.argv.slice(2)) {
     v.vault
   )
     throw Error(
-      "--vault is only supported for preview, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
+      "--vault is only supported for preview, approve, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
     )
   if (
     v["source-run"] &&
@@ -1644,6 +1646,22 @@ export async function main(argv = process.argv.slice(2)) {
         // Existing immutable approvals remain readable. A new approval checks
         // current reader rules without rewriting historical model checkpoints.
         const existing = readJSON(root, `runs/${v.run}/approved-article.json`)
+        const conceptReceipt =
+          !existing || decision.concept_review
+            ? evaluateArticleConceptReview(
+                root,
+                article,
+                draft,
+                reviewed.claims,
+                parses,
+                decision,
+                { vault: v.vault || "vault" },
+              )
+            : null
+        const conceptPath = `runs/${v.run}/article-concept-review.json`
+        const previousConcepts = readJSON(root, conceptPath)
+        if (previousConcepts && JSON.stringify(previousConcepts) !== JSON.stringify(conceptReceipt))
+          throw Error("Article concept review receipt changed; use a new run")
         const quality = existing
           ? null
           : inspectReaderQuality(draft, reviewed.claims, {
@@ -1667,10 +1685,12 @@ export async function main(argv = process.argv.slice(2)) {
             throw Error("Reader quality approval receipt changed; use a new run")
           if (!previous) atomicCreate(root, qualityPath, receipt)
         }
+        if (conceptReceipt && !previousConcepts) atomicCreate(root, conceptPath, conceptReceipt)
         return {
           ...recordArticleApproval(root, v.run, decision, article),
           reader_quality: quality,
           reader_quality_receipt: qualityPath,
+          concept_review_receipt: conceptReceipt ? conceptPath : null,
           candidate_published: false,
         }
       }

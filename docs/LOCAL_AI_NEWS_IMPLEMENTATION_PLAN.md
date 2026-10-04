@@ -4011,3 +4011,13 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 실제 ABB Andover 원문13블록의 옛 qwen3.8:27b 작성 결과를 MLX 정책의 새 처리 run에 연결했다. 최초 v1은 제목의 회사명 오독을 명시적으로 해소하지 않은 과거 결정이어서 현재 identity 관문에 차단됐다. 기존 v3 identity 검토의 동일한7개 검토 사실과 추가 resolution을 사용한 v2는 메타데이터0/생성0, 원 승인 사건ID/597보호파일 SHA 및 재개16파일 불변을 확인했다. 변경된 입력/출력/비용/정정/미완료 결과 거부를 포함한14개 실질 표적 검사가 통과했다(부모 집계 포함15개). 최초 budget 거부는 정상 차단됐으며 테스트가 기대한 오류 표현만 실제 계약에 맞춰 수정해 실패 표적만 재검사했다. 전체 suite/수집 재실행/공개 발행은 수행하지 않았다.
 
 머신 텐딩 연결은 원문과 승인 정의를 직접 읽어 no_assignment로 비공개 기록했다. 같은 제조사의 로봇 사례·부품 이송을 근거로 머신 텐딩 기사나 관계 선을 만들지 않았다. 기사·용어 내용은 유지한다. 증거 위치는 source-live-debug/writer-reuse-live-20261004-v2.json 및 andover-machine-tending-assignment-review-20261004-v1.json, 상세는 런북368절이다. 전체WBS2/22·goal active·공개448ec36 유지; 전수 소급92/801·독립40/20·local shadow7회/무인08시·실제 키워드 연결과 공개 검증은 남는다. 같은 실패로1시간 이상 멈춘 항목은 없다.
+
+### 19.278. 원문 근거가 있는 기사·전문용어 연결의 승인과 독자 이력
+
+새 기사 승인에서 전문용어 ID를 지정하면 `article-concept-review/v1` 검토를 요구한다. 기사에 실제 사용한 verified claim/event, 검토한 전문용어 정의의 정확한 경로·SHA, 원문/정의/관계/별칭 검토를 함께 결속한다. 기존 Knowledge와 검토된 신규 note approval을 재사용하며 별도 지식 저장소를 만들지 않는다. 기업·제품명이나 공동 등장으로 연결하지 않는다. 이미 고정된 legacy 승인은 그대로 읽으며 새 연결은 새 run에 저장한다.
+
+승인·재개·비공개 preview는 동일한 평가 함수를 사용한다. 선택한 기존 용어도 다른 canonical 노트의 이름·별칭과 충돌하면 거부한다. 신규/교체 용어를 선택한 경우 preview에 정확한 note approval을 포함해야 한다. 독자에는 기존 `concept_ids`와 전문용어 설명·관련 기사·발표일·원문만 출력하며 검토 이유와 claim IDs는 내보내지 않는다. 내부 evidence ontology의 Article→Concept 연결에는 해당 claim IDs·note SHA·편집 결정 SHA를 보존한다. 용어 사이의 새 선은 이 과정에서 생성하지 않는다.
+
+실제 GitHub Copilot 앱 제어 기사의 원문9블록과 앱 제어 전 승인·허용 앱 확인/초기화·조직 비활성화 claim을 읽고 기존 `agent-security` 정의와 대조했다. `copilot-agent-security-approved-20261004-v1`은 같은 사건 `e11a5d7f0be16c7a`, 발표일2026-10-01, 본문·출처를 보존한 비공개 승인이다. 현재 코드의 최종 `copilot-concept-reader-20261004-v2`에서 335파일 생성·상호 링크·날짜/원문·RSS40식별자 보존을 확인했다. 보호537파일/재개1322파일 불변, 모델/metadata0이다. 신규6/기존 온톨로지4 표적 검사가 통과했고 전체 suite와54경로 수집은 반복하지 않았다.
+
+완료 범위는 이 연결 슬라이스다. WBS2/22·전체 목표를 유지한다. 브라우저 UI·authority Drive 최신 대조·공개 반영, 전수92/801·독립40/20·운영7회는 미완료다. canonical 용어 파일도 개발 증거에 포함하되 이 archive/v1 snapshot은 runtime portable closure가 아니다. 새 연결 계약의 독립 복구에는 원 승인 및 용어 authority/신규 note approval 의존성이 필요하며 이를 검증하기 전 portable 완료로 집계하지 않는다. 상세 입력과 실행 증거는 런북369절이다. 1시간 이상 반복된 blocker는 없다.

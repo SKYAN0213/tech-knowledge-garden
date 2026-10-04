@@ -1,4 +1,8 @@
-다음 실행: 기사 전문용어 지정에 기존 verifiedConceptLinks의 명시적 claim/event 근거를 신규 승인·비공개 preview에서 검증하고, 실제 연결된 용어/기사 이력을 확인한다. 무관한 사례를 억지로 묶지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+다음 실행: 새 기사·전문용어 연결의 승인/용어 authority 의존성을 portable closure에 포함해 독립 복구를 검증한다. 기존 run/원문/정의 SHA를 유지하고 관련 없는 모델 호출·전체 수집은 반복하지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+
+현재 완료(2026-10-04): 원문 사용 claim/event와 specialist 정의 hash·별칭 검토를 공통 승인/preview/ontology에 결속했다. 실제 Copilot event e11a5d7f0be16c7a를 agent-security에 명시적 검토로 연결했고 최종 private copilot-concept-reader-20261004-v2의335파일/기사·용어 상호링크/원문·날짜/RSS40를 확인했다. 내부 판정 이유 미노출·537보호파일/1322재개파일 불변·모델/metadata0·표적10/10. helper import 실패만 실제 export로 수정, 기존로그 보존. 공개·browser·전수92/801·독립40/20·운영7회 미완료/WBS2/22/goal active. 이 개발 archive/v1은 portable runtime closure가 아니다. 상세 런북369/계획19.278. 한시간 반복 blocker 없음.
+
+Drive private Research82자료/83members/1,285,241bytes 저장 및 실제 raw ZIP SHA a98fdfcb…/metadata/shared:false/CRC/member SHA 검증. 파일1-KV3ciYuA4M6387ab3sJaU_ry6u_oBox. 별도 영수증 archive-staging/copilot-concept-evidence-20261004-v1; archive frozen 입력은 보존했다.
 
 이번 turn은 실제 코드 수정·옛 모델 결과 연결/재개·Drive146파일 원격 raw SHA 검증으로 progress다. 직전 삭제 상태 확인 응답은 전체 목표의 구현 진척으로 집계하지 않는다. 병목 반복 없이 다음 공통 승인/용어 연결 관문으로 진행한다. private 보관 `19hw3KJcY-BaM95paom2ap57Mxx4cNTHe`/ZIP1,532,586bytes/SHA7c51f208…; 개발 증거이며 authority 네 폴더 최신 재대조나 공개 배포가 아니다.
 

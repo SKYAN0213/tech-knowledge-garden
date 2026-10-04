@@ -9397,3 +9397,50 @@ writer-reuse-live-20261004-v2.json은 model/metadata0, 원 승인·원문·원 �
 Drive Research 보관은 아래 영수증을 추가한다. 이 개발 증거는 전체 runtime portable closure·authority Drive 네 폴더 최신 대조·독립 평가·신규 승인/공개 발행 완료를 의미하지 않는다. WBS2/22·goal active이며92회/801기사 소급, 독립40dev/20heldout, 실제 shadow7회/08시 운영, 근거 있는 전문용어 연결/공개 관문은 남는다. 한 시간 이상 반복된 blocker는 없다.
 
 Drive 원격 검증: Research `19hw3KJcY-BaM95paom2ap57Mxx4cNTHe`, 증거146파일/ZIP147members/2source versions/1,532,586bytes, raw SHA `7c51f20858fe6acdecbb60ff148ce4450c266ab31c3faf09ddd8974a873dc7bb`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/writer-reuse-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 보관 영수증이다. 원 archive manifest의 drive_verified:false는 보관 전 고정 입력으로 유지하며 별도 원격 영수증만 true다.
+
+## 369. 원문에서 전문용어로 이어지는 검토·승인·실제 기사 이력
+
+`approve --vault <authority-copy>`에서 선택한 `concept_ids` 각각에 다음 검토를 제공한다. 원문 근거가 없으면 ID를 추가하지 않고 내부 기록에만 판단을 남긴다. 회사명·제품명·빈도·공동 등장만으로 작성하지 않는다.
+
+```json
+{
+  "concept_ids": ["agent-security"],
+  "concept_review": {
+    "schema": "article-concept-review/v1",
+    "assignments": [{
+      "concept_id": "agent-security",
+      "status": "verified",
+      "reviewer": "source and definition reviewer",
+      "reviewed_at": "2026-10-04",
+      "reason": "기사에 쓴 앱 제어 전 승인 사실을 용어 정의의 도구 실행 권한 통제와 대조했다.",
+      "definition_read": true,
+      "article_source_read": true,
+      "relationship_checked": true,
+      "aliases_checked": true,
+      "evidence": [{"event_id": "e11a5d7f0be16c7a", "claim_id": "3d3f4036860b2e01e6c7abf9"}],
+      "note": {
+        "path": "Knowledge/AI Systems/AI Agent Security.md",
+        "sha256": "fead350d16507a7d5ed0cef04ba85c0939536d3a60d78dea772689dbcb6b9884"
+      }
+    }]
+  }
+}
+```
+
+위 항목은 전체 editorial decision에 추가하는 부분이다. `draft_id`와 편집 검토 필드는 기존 계약대로 제공한다. 신규/교체 노트는 `note.approval_run`을 지정하고 preview에도 같은 `--knowledge-run`을 포함한다. 직접 정의를 수정하거나 이 SHA를 현재 다른 내용에 사용하지 않는다. `article-concept-review.json`은 불변 private receipt이며 승인·preview·ontology 읽기에 재검증된다. 운영 경로의 기본 vault는 그대로다. 별도 복구/시험 vault는 `loadApprovedOntologyInput(root, run, {vault})`에 명시할 수 있다.
+
+실물 원문: GitHub 공식 changelog `2026-10-01-github-copilot-can-now-interact-with-desktop-apps`, 전체9문단. claim `3d3f4036860b2e01e6c7abf9`의 원문4번째 블록에 승인, 항상 허용할 앱 관리, macOS 권한 안내 및 조직 비활성화가 있다. 이를 일반 안전 보증·프롬프트 주입 방어 성과로 확대하지 않았다. 기존 `agent-security` 노트의 정의/범위와 대조한 연결이며 기존 노트의 과거 모든 출처를 오늘 재조사한 것은 아니다.
+
+실제 실행·재개:
+
+```sh
+node scripts/research.mjs preview --run copilot-concept-reader-20261004-v2 --approved-run copilot-agent-security-approved-20261004-v1
+```
+
+같은 입력 재개에서 생성/모델 호출을 하지 않는다. 이전 v1 preview와 실패한 실물 helper import 로그도 보존했다. helper의 존재하지 않는 export를 실제 `assertEvidenceOntology`로 수정한 뒤 실행했으며 서비스 API나 테스트를 약화하지 않았다. v2 consistency는 기사→용어→날짜가 있는 관련 기사·원문, RSS40식별자, 지도 없는 기사와 검토 이유 미노출을 확인한다. 원 본문/사건ID/발표일 유지, 보호537파일 및 재개1322파일 불변. 0모델/0metadata. 브라우저는 file URL 보안 제한 때문에 미검증이며 우회하지 않았다.
+
+표적 `node --test tests/research-article-concept-review.test.mjs tests/research-ontology.test.mjs`:10/10. 다른 사건·기사 미사용 사실·중복ID·정의 미검토·일반/company ID·경로 이탈·미검증 claim·잘못된 검토일·별칭 충돌·변조 receipt/note·누락된 신규 노트 preview를 거부한다. legacy 승인의 고정 bytes 읽기도 유지한다. syntax/Prettier/diff 확인. 전체 suite·전체 수집·새 모델 추론·공개 배포 미실행.
+
+증거는 `source-live-debug/copilot-concept-live-20261004-v2.{mjs,json}`와 `copilot-concept-ontology-20261004-v2.json`, `runs/copilot-concept-reader-20261004-v2/preview/`다. 개발 archive에는 raw source/parse·원 승인/새 승인·canonical 정의·생성 HTML/RSS/graph와 구현을 포함한다. 공개 Git에는 코드/테스트/운영 문서만 저장한다. 이 snapshot은 authority vault/승인 dependencies를 재구성하는 portable runtime 복구본으로 표시하지 않는다. 새 계약의 portable closure 연결은 다음 작업이다. 전체 WBS2/22·92/801소급·독립40/20·실제 shadow7회·08시 운영·공개 관문을 유지한다. 1시간 이상 같은 실패로 중단된 항목은 없다.
+
+Drive 보관 검증: private Research 파일 `1-KV3ciYuA4M6387ab3sJaU_ry6u_oBox`,82자료/83ZIP members/원문1판본/1,285,241bytes. 원격 raw SHA `a98fdfcb676d00edc5654ad10fc6562867610a2cfa988bd1495e17b94146b7d4`, 메타데이터 부모/크기/shared:false 및 ZIP CRC/모든 member SHA 일치를 확인했다. `archive-staging/copilot-concept-evidence-20261004-v1/{drive-receipt,package-verification}.json`에 저장했다. frozen snapshot의 drive_verified:false는 보관 전 상태이며 원격 영수증만 true다. 독립 runtime 복구·authority 원고 반영·공개 배포 완료로 승격하지 않는다.

@@ -29,6 +29,7 @@ import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-s
 import { assertConceptConflicts } from "./knowledge-links.mjs"
 import { assertRetrospectiveAppearance, assertHistoricalAdditionReview } from "./event-date.mjs"
 import { articleDateLabel } from "../article-review.mjs"
+import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
 
 const approvalFiles = [
   "draft.json",
@@ -42,7 +43,7 @@ const validRun = (run) => {
   if (typeof run !== "string" || !/^[a-zA-Z0-9_-]+$/.test(run)) throw Error("Invalid run id")
 }
 
-export function loadCurrentApproval(root, run) {
+export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
   validRun(run)
   const entries = Object.fromEntries(
     approvalFiles.map((name) => {
@@ -64,12 +65,103 @@ export function loadCurrentApproval(root, run) {
   )
   if (sha256(JSON.stringify(article)) !== sha256(JSON.stringify(value("approved-article.json"))))
     throw Error("Saved approval differs from the currently reviewed article")
+  const conceptPath = `runs/${run}/article-concept-review.json`
+  const concepts = readJSON(root, conceptPath)
+  if (concepts || value("editorial-review.json").concept_review) {
+    const current = evaluateArticleConceptReview(
+      root,
+      article,
+      value("draft.json"),
+      value("reviewed-claims.json").claims,
+      parses,
+      value("editorial-review.json"),
+      { vault },
+    )
+    if (!concepts || JSON.stringify(concepts) !== JSON.stringify(current))
+      throw Error("Saved article concept assignment differs from current evidence")
+    entries["article-concept-review.json"] = {
+      sha256: sha256(fs.readFileSync(safePath(root, conceptPath))),
+    }
+  }
   return {
     run,
     article,
+    ...(concepts ? { concept_review: concepts } : {}),
     source_observed_at: documents.map((document) => document.observed_at),
-    files: Object.fromEntries(approvalFiles.map((name) => [name, entries[name].sha256])),
+    files: Object.fromEntries(Object.entries(entries).map(([name, entry]) => [name, entry.sha256])),
   }
+}
+
+// A concept selected from a private note approval must use that exact reviewed
+// definition in the reader, even if an older note with the same ID exists.
+export function assertPreviewConceptNotes(approvals, knowledge) {
+  for (const approval of approvals)
+    for (const selected of approval.concept_review?.notes || []) {
+      if (selected.approval_run === undefined) continue
+      const included = knowledge.find((k) => k.run === selected.approval_run)
+      if (
+        !included?.approval.notes.some(
+          (n) => n.path === selected.path && n.sha256 === selected.sha256,
+        )
+      )
+        throw Error("Private reader requires the exact approved concept note: " + selected.path)
+    }
+}
+
+export function verifyReviewedConceptOutputs(workspace, approvals) {
+  const selected = approvals.filter((a) => a.concept_review)
+  if (!selected.length) return []
+  const graph = readJSON(workspace, "public/knowledge-graph.json")
+  const hasPath = (tree, destination) =>
+    [...links(tree)].some((href) =>
+      new URL(href, "https://preview.invalid/").pathname
+        .replace(/\.html$/, "")
+        .endsWith("/" + destination),
+    )
+  return selected.flatMap((approval) =>
+    approval.concept_review.links.map((link) => {
+      const source = approval.concept_review.notes.find(
+        (n) => n.path.replace(/\.md$/, "") === link.path,
+      )
+      if (
+        !source ||
+        sha256(fs.readFileSync(safePath(path.join(workspace, "vault"), source.path))) !==
+          source.sha256
+      )
+        throw Error("Reader specialist definition differs from the assigned note")
+      const node = graph.nodes.find((n) => n.id === link.concept_id)
+      const slug = slugifyFilePath(source.path)
+      const eventId = approval.article.event_id
+      const graphArticle = graph.articles.find((a) => a.id === "news:" + eventId)
+      if (
+        !node ||
+        node.slug !== slug ||
+        !graphArticle?.matches.some((m) => m.termId === link.concept_id && m.basis === "editorial")
+      )
+        throw Error("Reviewed specialist assignment missing from reader graph")
+      const termTree = fromHtml(fs.readFileSync(safePath(workspace, `public/${slug}.html`), "utf8"))
+      const newsTree = fromHtml(
+        fs.readFileSync(safePath(workspace, `public/news/${eventId}.html`), "utf8"),
+      )
+      const termLinks = links(termTree)
+      if (
+        !hasPath(newsTree, slug) ||
+        !hasPath(termTree, "news/" + eventId) ||
+        !normalizedText(htmlText(termTree)).includes(
+          approval.article.article_review.published_at,
+        ) ||
+        approval.article.source_urls.some((url) => !termLinks.has(url))
+      )
+        throw Error("Reader concept tag, dated event history or original source missing")
+      return {
+        event_id: eventId,
+        concept_id: link.concept_id,
+        note_sha256: source.sha256,
+        reciprocal_links_verified: true,
+        original_date: approval.article.article_review.published_at,
+      }
+    }),
+  )
 }
 
 export function assertNewEditionSourceCutoff(approvals, spec) {
@@ -737,8 +829,9 @@ export async function privatePreview(
     throw Error("Distinct approved input runs required")
   repo = path.resolve(repo)
   vault = path.resolve(repo, vault)
-  const approvals = approvedRuns.map((id) => loadCurrentApproval(root, id))
+  const approvals = approvedRuns.map((id) => loadCurrentApproval(root, id, { vault }))
   const knowledge = knowledgeRuns.map((id) => loadNoteApproval(root, id, { vault }))
+  assertPreviewConceptNotes(approvals, knowledge)
   const notes = knowledge.flatMap((k) => k.approval.notes)
   if (editionSpec) assertNewEditionSourceCutoff(approvals, editionSpec)
   const projections = approvals.length
@@ -866,7 +959,7 @@ export async function privatePreview(
   assertFiles(repo, runtime, "Original renderer changed during private preview")
   for (const approval of approvals)
     if (
-      sha256(JSON.stringify(loadCurrentApproval(root, approval.run))) !==
+      sha256(JSON.stringify(loadCurrentApproval(root, approval.run, { vault }))) !==
       sha256(JSON.stringify(approval))
     )
       throw Error("Editorial approval changed during private preview")
@@ -891,6 +984,7 @@ export async function privatePreview(
         { newEdition: !!editionSpec },
       )),
       knowledge: verifyKnowledgeOutputs(workspace, notes),
+      concept_assignments: verifyReviewedConceptOutputs(workspace, approvals),
     }),
   )
   const result = await state.stage("outputs", { staged, runtime }, () => ({

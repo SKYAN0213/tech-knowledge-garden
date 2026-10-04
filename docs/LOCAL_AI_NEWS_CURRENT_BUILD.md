@@ -1,4 +1,8 @@
-다음 실행: 기사 전문용어 지정에 기존 verifiedConceptLinks의 명시적 claim/event 근거를 신규 승인·비공개 preview에서 검증하고, 실제 연결된 용어/기사 이력을 확인한다. 무관한 사례를 억지로 묶지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+다음 실행: 새 기사·전문용어 연결의 승인/용어 authority 의존성을 portable closure에 포함해 독립 복구를 검증한다. 기존 run/원문/정의 SHA를 유지하고 관련 없는 모델 호출·전체 수집은 반복하지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+
+최신 연결 구현(2026-10-04): explicit claim/event·정의 SHA·별칭 검토를 신규 approve와 preview/ontology 읽기에 공통 적용했다. 기존 canonical 별칭 충돌도 차단한다. 실제 Copilot 기사→agent-security→발표일2026-10-01 관련 기사·원문을 최종 reader-v2에서 확인했고 본문/ID·RSS40·보호537파일/재개1322파일 불변·모델0이다. 표적10/10, 공개/브라우저/전수소급/독립평가/7회 운영은 미완료다. WBS2/22·goal active 유지. [런북369절](LOCAL_AI_NEWS_RUNBOOK.md#369-원문에서-전문용어로-이어지는-검토승인실제-기사-이력).
+
+이 개발 증거82자료는 Drive private Research `1-KV3ciYuA4M6387ab3sJaU_ry6u_oBox`에 보관했고 raw ZIP SHA a98fdfcb…/부모/shared:false/CRC/member SHA를 검증했다. 개발 snapshot이며 portable runtime 복구본은 아니다.
 
 이번 개발 증거146파일은 Drive Research `19hw3KJcY-BaM95paom2ap57Mxx4cNTHe`에 비공개 보관했다. 원격 ZIP1,532,586bytes/SHA7c51f208…·메타데이터/CRC/member SHA를 확인했다. authority 네 폴더 최신 재대조나 공개 배포는 별도다.
 
