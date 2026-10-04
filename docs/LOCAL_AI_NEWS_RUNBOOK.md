@@ -9237,3 +9237,26 @@ npm run research:process-daily -- --run <same-batch-run> --daily-run <same-daily
 보관 helper v1은 metadata-only preflight가 실행 ledger 폴더를 만들지 않는 것을 확인하지 않아 존재하지 않는 run 복사에서 멈췄다. 해당 로컬 미완료 폴더를 보존하고 metadata binding JSON을 포함한 v2로 수정했다. 실제 생성 ledger는 원문 추출 run에 저장돼 있다. v2 개발 증거27파일/ZIP28member·158,383bytes를 Drive Research `1HdQp-km2I4brJk38ei_w0QUKteKuwKxA`에 보관했다. 원격 raw SHA `bf473a6718a4609e7ca35d4abf6f105dc661bd30a770eb5fb21250f90dae8a06`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/qwen38-mlx-switch-evidence-20261004-v2/drive-receipt.json`이다. 모델 가중치는 ZIP에 복제하지 않는다.
 
 기존 원문 수집 경로·승인·Drive 작성 원본·공개448ec36·RSS·08시 예약은 이번 모델 전환으로 변경하지 않았다. WBS2/22·goal active를 유지한다.
+
+
+## 362. 기존 비공개 승인 연결과 배경자료의 반복 처리 종료
+
+과거 ABB Andover 후보는 verified/event_id/editorial_approval_run이 있으나 현재 approval binding이 없어 일반 승인 연결에서 거부됐다. Drive에 이미 발행된 사건용 legacy importer와 구분해 기존 `candidate-approval`에 `--existing-editorial-review`를 추가했다. 현재·이전 원고를 승인 projection으로 다시 계산하고 원본 후보SHA·동일 사건ID·URL·발표일·전체 본문·명시적 원문/원고 검토를 대조한다. 과거 승인6개 artifact SHA와 원래 검토일을 lineage에 보존한다. 기존의 원문·공개 목록·다른 사건·다른 승인 차단은 유지한다. 처리형 run의 사실 검토 packet도 승인 연결 전에 재검증한다.
+
+```sh
+node scripts/research.mjs candidate-approval --run <new-link-run> --source-run <reverified-article-run> --candidate-key <exact-key> --existing-editorial-review runs/<new-link-run>/review-input.json
+```
+
+review는 `research-existing-editorial-approval-review/v1`, candidate_key/event_id/prior_approved_run/approved_run, expected_candidate_sha256/prior_article_sha256/article_sha256, reviewer/reviewed_at/reason, decision=attach_reverified_approval, source_read/prior_article_read/article_read/identity_checked/dates_checked/numbers_checked=true, new_article/candidate_published=false다. source revision·대체 URL·cross-root와 함께 사용하지 않는다. current binding이 없는 verified private event에만 최초 연결한다. 같은 run의 정확한 재개는 기존 receipt·장부를 유지하고 과거 artifact를 재검증한다. 기존 공개 기사의 정정·재발행 기능으로 사용하지 않는다.
+
+실제 `abb-andover-existing-editorial-link-20261004-v5`는 과거 `20260929-abb-andover-source-review-v2`와 현재 `abb-andover-identity-gate-20261004-v3`를 사건 `a0c307de02d0e03b`로 연결했다. 원문의 HTML 판본은 달라도 추출 본문13블록·발표일2026-09-28은 동일했다. 후보734개에서 해당 후보만 바뀌었고 반복 실행의 장부 JSON SHA `e7221ee6a4f4dfd64193589274118c6b677eb8ec76e10c7883c12030fb9cca19`는 불변이었다. 모델 추가 호출0, 공개 발행false다. 과거 원고·검토·원문은 삭제하지 않았다.
+
+FAQ는 처리 run 안의6개 fact만 deferred이고 후보 장부는 unreviewed로 남아 있었다. 이미 읽은36블록에 기존 `candidate-disposition`을 적용해 일반 적용 설명을 private background_only_no_news_event로 분류했다. 원문은 보존하고 후보 장부의 뉴스 선택 상태는rejected다. `abb-faq-background-disposition-20261004-v1`의 정확한 원문/날짜/공개목록 관문을 통과했으며 이를 전문용어 사건 이력이나 신규 고객 실적으로 사용하지 않는다. 별도 crawler·분류 저장소를 추가하지 않았다.
+
+최신 실제 handoff `966acaf6662dcc0d7dbe892bd7969a50b1c1e8098a3fe250a957365bf1ece696`은 pending660/approved-historical12/historical-review648·run 관측pending1/resolved1이다. Andover는 approved-historical→approval_ready, FAQ는 pending에 없고 observed_resolved에 있다. 두 후보 수집부터 처리·판정·장부 연결까지의 개발 슬라이스가 끝났으며 전체660후보 검토 완료는 아니다.
+
+검증: 관련 승인 계약19/19 및 추가 본문/날짜/원본바이트 관문2/2, 실제 연결·동일 연결 재개·최신 인계 분기·Prettier·diff 검사 통과. 전체 suite·모델 추론 반복·54경로 재수집은 하지 않았다. Development evidence113파일/ZIP114member·1,716,319bytes를 Drive Research `1mXhILAiYqaTyRPRzHtWEeeQ3rjI62_cO`에 보관하고 원격 raw SHA `6f356876d43b51944a428e0238de1ad2a234054dfd98fdc9e41d5003a6865a1e`, shared:false·부모·크기 및 ZIP CRC/memberSHA를 확인했다. 영수증은 `archive-staging/abb-editorial-lineage-evidence-20261004-v1/drive-receipt.json`이다. portable dependency closure나 gold 평가가 아니다.
+
+현재 Ollama GGUF `qwen3.8:27b`는 사용자 요청으로 삭제됐고 MLX만 기본 모델로 사용한다. 과거 정책·출력 기록은 보존하며 기존 정책 복구본만으로 삭제된 모델을 즉시 재구동할 수 있다고 약속하지 않는다. 삭제 모델을 자동 재설치하지 않는다.
+
+WBS2/22·goal active, 전체92회/801기사 소급·독립40dev/20heldout human gold0·로컬 shadow7회·무인08시 운영 검증은 남아 있다. 공개448ec36·기존197원본·RSS/WebsiteData를 이번 개발 묶음으로 변경하지 않았다. 다음은 실제 신규 사건에서 MLX 사실 대조·집필·승인까지 같은 공통 경로를 검증하고 fresh Drive authoring 연결을 진행한다. 같은 정체가1시간 넘게 반복된 항목은 없다.

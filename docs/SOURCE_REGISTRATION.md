@@ -159,3 +159,5 @@ replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 n
 모델에 원문을 전달할 때 날짜는 공통 `modelSourceDates`를 사용한다. `parse.dates` 전체를 프롬프트에 넣지 않는다. 날짜 후보의 raw 값에 본문 또는 내장 script가 들어갈 수 있으므로 resolved published_at/modified_at/precision/observed_at만 전달하고, 원래 검증 근거는 immutable parse에 보존한다. 기사 본문 block은 이 처리를 이유로 절단하지 않는다. 실제 ABB 사례와 회귀 검증은 [런북359절](LOCAL_AI_NEWS_RUNBOOK.md#359-abb-실제-일일-묶음과-날짜-근거-문맥-중복-디버깅)을 따른다.
 
 과거 verified 후보에 event_id가 있지만 현재 승인 receipt가 없는 경우에는 공통 묶음 처리에서 identity_review로 분기한다. 기존 승인을 덮어쓰거나 신규 사건으로 등록하지 않는다. 실제 수집 디버깅과 전체 원문 대조 복구는 [런북360절](LOCAL_AI_NEWS_RUNBOOK.md#360-abb-전체-원문-대조-복구회사명-검토기존-승인-중복-차단)을 참조한다.
+
+이미 verified인 private 후보에 현재 approval binding이 없으면 `candidate-approval --existing-editorial-review`로 과거 승인·원문·현재 재검토 원고의 동일 사건 관계를 명시적으로 검토한다. 이벤트ID를 바꾸거나 기존 승인 삭제로 우회하지 않는다. 일반 적용 FAQ의 뉴스 제외는 기존 `candidate-disposition`을 사용하고 원문은 보존한다. 명령/리뷰 스키마/실제 사례는 [런북362절](LOCAL_AI_NEWS_RUNBOOK.md#362-기존-비공개-승인-연결과-배경자료의-반복-처리-종료)을 따른다.

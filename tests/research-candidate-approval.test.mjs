@@ -5,6 +5,7 @@ import os from "node:os"
 import path from "node:path"
 import { canonicalURL } from "../scripts/garden.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
+import { verifyExistingEditorialApproval } from "../scripts/research/existing-editorial-approval.mjs"
 import { recordCandidateApproval } from "../scripts/research/candidate-approval.mjs"
 import { resolveSourceRevision } from "../scripts/research/source-revision-resolution.mjs"
 import { archiveClosure } from "../scripts/research/archive-closure.mjs"
@@ -921,4 +922,168 @@ test("alternative approval rejects a changed review receipt before mutating the 
   )
   assert.deepEqual(fs.readFileSync(f.backlogFile), before)
   assert.equal(readJSON(f.root, "runs/candidate-link/candidate-approval.json"), null)
+})
+
+function existingEditorialFixture(t) {
+  const f = fixture(t)
+  const oldBase = `runs/prior/`
+  for (const file of [
+    "documents.json",
+    "parses.json",
+    "draft.json",
+    "reviewed-claims.json",
+    "editorial-review.json",
+    "approved-article.json",
+  ])
+    atomicWrite(f.root, oldBase + file, readJSON(f.root, "runs/approved/" + file))
+  f.candidate.review_status = "verified"
+  f.candidate.event_id = f.article.event_id
+  f.candidate.editorial_approval_run = "prior"
+  f.candidate.reviewed_at = "2026-09-30"
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [f.candidate] }),
+  )
+  const path = "runs/existing-review/review.json"
+  const decision = {
+    schema: "research-existing-editorial-approval-review/v1",
+    candidate_key: f.candidate.key,
+    event_id: f.article.event_id,
+    prior_approved_run: "prior",
+    approved_run: "approved",
+    expected_candidate_sha256: sha256(JSON.stringify(f.candidate)),
+    prior_article_sha256: sha256(JSON.stringify(f.article)),
+    article_sha256: sha256(JSON.stringify(f.article)),
+    reviewer: "fixture source reviewer",
+    reviewed_at: "2026-10-04",
+    reason: "Same event and original source, with explicit previous and current article review",
+    decision: "attach_reverified_approval",
+    source_read: true,
+    prior_article_read: true,
+    article_read: true,
+    identity_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+  }
+  atomicWrite(f.root, path, decision)
+  return { ...f, existingReviewPath: path, decision }
+}
+
+test("explicit legacy private approval linkage retains event and history and resumes unchanged", async (t) => {
+  const f = existingEditorialFixture(t)
+  await assert.rejects(link(f), /another editorial disposition/)
+  const result = await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  assert.equal(result.event_id, f.candidate.event_id)
+  assert.equal(result.candidate_published, false)
+  const bytes = fs.readFileSync(f.backlogFile)
+  const current = JSON.parse(bytes).candidates[0]
+  assert.equal(current.approval.existing_editorial_approval.prior_approved_run, "prior")
+  assert.equal(current.approval_history[0].legacy_editorial_approval_run, "prior")
+  assert.equal(current.approval_history[0].reviewed_at, "2026-09-30")
+  const receipt = fs.readFileSync(path.join(f.root, "runs/candidate-link/candidate-approval.json"))
+  await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/candidate-link/candidate-approval.json")),
+    receipt,
+  )
+})
+
+test("existing approval rejects missing checks, mismatched event, stale candidate and projection", async (t) => {
+  const f = existingEditorialFixture(t)
+  const before = fs.readFileSync(f.backlogFile)
+  for (const patch of [
+    { prior_article_read: false },
+    { event_id: "0123456789abcdef" },
+    { expected_candidate_sha256: "0".repeat(64) },
+    { prior_article_sha256: "0".repeat(64) },
+    { article_sha256: "0".repeat(64) },
+  ]) {
+    atomicWrite(f.root, f.existingReviewPath, { ...f.decision, ...patch })
+    await assert.rejects(
+      link(f, { existingEditorialReviewPath: f.existingReviewPath }),
+      /approval review|projection|event/,
+    )
+    assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+  }
+})
+
+test("existing approval rejects a changed prior approved projection", async (t) => {
+  const f = existingEditorialFixture(t)
+  const before = fs.readFileSync(f.backlogFile)
+  const article = readJSON(f.root, "runs/prior/approved-article.json")
+  atomicWrite(f.root, "runs/prior/approved-article.json", { ...article, title: "Unreviewed title" })
+  await assert.rejects(link(f, { existingEditorialReviewPath: f.existingReviewPath }), /projection/)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+})
+
+test("existing private linkage retains published duplicate and conflicting approval guards", async (t) => {
+  const f = existingEditorialFixture(t)
+  await assert.rejects(
+    link(f, { existingEditorialReviewPath: f.existingReviewPath, publishedArticles: [f.article] }),
+    /already appears/,
+  )
+  const c = { ...f.candidate, approval: { approved_run: "another" } }
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [c] }),
+  )
+  await assert.rejects(
+    link(f, { existingEditorialReviewPath: f.existingReviewPath }),
+    /approval review/,
+  )
+})
+
+test("existing private linkage revalidates stored lineage on repeated invocation", async (t) => {
+  const f = existingEditorialFixture(t)
+  await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  const bytes = fs.readFileSync(f.backlogFile)
+  const old = readJSON(f.root, "runs/prior/editorial-review.json")
+  atomicWrite(f.root, "runs/prior/editorial-review.json", { ...old, reviewer: "altered reviewer" })
+  await assert.rejects(
+    link(f, { existingEditorialReviewPath: f.existingReviewPath }),
+    /link changed/,
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+})
+
+test("existing approval source guard rejects nonidentical text and publication day", async (t) => {
+  const f = existingEditorialFixture(t)
+  const parses = readJSON(f.root, "runs/approved/parses.json")
+  for (const change of [
+    (p) => {
+      p[0].blocks[0].text += " Additional event."
+    },
+    (p) => {
+      p[0].dates.published_at = "2026-09-29"
+    },
+  ]) {
+    const changed = structuredClone(parses)
+    change(changed)
+    await assert.rejects(
+      verifyExistingEditorialApproval({
+        root: f.root,
+        runId: "candidate-link",
+        approvedRunId: "approved",
+        candidate: f.candidate,
+        article: f.article,
+        parses: changed,
+        reviewPath: f.existingReviewPath,
+      }),
+      /original text or publication date/,
+    )
+  }
+})
+
+test("existing approval rejects modified source bytes before updating the backlog", async (t) => {
+  const f = existingEditorialFixture(t)
+  const before = fs.readFileSync(f.backlogFile)
+  fs.appendFileSync(path.join(f.root, f.document.body_path), " tampered source")
+  await assert.rejects(
+    link(f, { existingEditorialReviewPath: f.existingReviewPath }),
+    /hash|checksum|source|evidence/i,
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
 })

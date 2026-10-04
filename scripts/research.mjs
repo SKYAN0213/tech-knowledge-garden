@@ -140,6 +140,7 @@ export async function main(argv = process.argv.slice(2)) {
       "approved-root": { type: "string" },
       "candidate-source-run": { type: "string" },
       "source-revision-review": { type: "string" },
+      "existing-editorial-review": { type: "string" },
       "source-alternative-run": { type: "string" },
       "article-readback": { type: "string" },
       "edition-readback": { type: "string" },
@@ -387,6 +388,8 @@ export async function main(argv = process.argv.slice(2)) {
     )
   if (v["published-source-run"] && command !== "candidate-identity")
     throw Error("--published-source-run is only supported for candidate-identity")
+  if (v["existing-editorial-review"] && command !== "candidate-approval")
+    throw Error("--existing-editorial-review is only supported for candidate-approval")
   if (v["source-alternative-run"] && command !== "candidate-approval")
     throw Error("--source-alternative-run is only supported for candidate-approval")
   if ((v["article-readback"] || v["edition-readback"]) && command !== "legacy-candidate-approval")
@@ -652,6 +655,7 @@ export async function main(argv = process.argv.slice(2)) {
       candidateKey: v["candidate-key"],
       candidateSourceRunId: v["candidate-source-run"] || null,
       sourceRevisionReviewPath: v["source-revision-review"] || null,
+      existingEditorialReviewPath: v["existing-editorial-review"] || null,
       sourceAlternativeResolutionRunId: v["source-alternative-run"] || null,
       backlogFile: v.backlog || BACKLOG_PATH,
       publishedArticles,

@@ -8,6 +8,8 @@ import { assertReviewDate, parseResearchDate, samePublicationDate } from "./date
 import { articleContentFingerprint, loadStoredSourceRun } from "./parser.mjs"
 import { approvedArticle } from "./publish-adapter.mjs"
 import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { verifyExistingEditorialApproval } from "./existing-editorial-approval.mjs"
+import { assertProcessedFactReview } from "./evidence-review-packet.mjs"
 import { buildCandidateSourceAlternativeResolution } from "./candidate-source-alternative.mjs"
 
 function verifySameSourceRevision({
@@ -151,6 +153,7 @@ export async function recordCandidateApproval({
   candidateSourceRunId = null,
   sourceRevisionReviewPath = null,
   sourceAlternativeResolutionRunId = null,
+  existingEditorialReviewPath = null,
   backlogFile = BACKLOG_PATH,
   publishedArticles = [],
 }) {
@@ -179,6 +182,7 @@ export async function recordCandidateApproval({
       candidateSourceRunId,
       sourceRevisionReviewPath,
       sourceAlternativeResolutionRunId,
+      existingEditorialReviewPath,
       backlogFile,
       publishedArticles,
     }),
@@ -194,11 +198,17 @@ async function linkCandidateApproval({
   candidateSourceRunId,
   sourceRevisionReviewPath,
   sourceAlternativeResolutionRunId,
+  existingEditorialReviewPath,
   backlogFile,
   publishedArticles,
 }) {
   if (candidateSourceRunId && sourceAlternativeResolutionRunId)
     throw Error("Same-source revision and alternate-source approval are separate review paths")
+  if (
+    existingEditorialReviewPath &&
+    (approvedRoot !== root || candidateSourceRunId || sourceAlternativeResolutionRunId)
+  )
+    throw Error("Existing editorial linkage requires a separate same-root review path")
   const stored = loadStoredSourceRun(approvedRoot, approvedRunId)
   const { documents, parses } = stored
   const draft = readJSON(approvedRoot, `runs/${approvedRunId}/draft.json`)
@@ -207,6 +217,7 @@ async function linkCandidateApproval({
   const storedArticle = readJSON(approvedRoot, `runs/${approvedRunId}/approved-article.json`)
   if (!draft || !reviewed || !decision || !storedArticle)
     throw Error("Complete private fact and editorial approval required")
+  await assertProcessedFactReview(approvedRoot, approvedRunId, reviewed)
   const article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
   if (sha256(JSON.stringify(article)) !== sha256(JSON.stringify(storedArticle)))
     throw Error("Stored approved article differs from its reviewed source and draft")
@@ -388,6 +399,17 @@ async function linkCandidateApproval({
         }
       }
 
+      const existingEditorial = existingEditorialReviewPath
+        ? await verifyExistingEditorialApproval({
+            root,
+            runId,
+            approvedRunId,
+            candidate,
+            article,
+            parses,
+            reviewPath: existingEditorialReviewPath,
+          })
+        : null
       const receipt = {
         schema: "research-candidate-approval/v1",
         candidate_key: candidateKey,
@@ -407,6 +429,7 @@ async function linkCandidateApproval({
               source_revision: sourceRevision,
             }
           : {}),
+        ...(existingEditorial ? { existing_editorial_approval: existingEditorial } : {}),
         candidate_published: false,
       }
       const previous = readJSON(root, receiptPath)
@@ -474,6 +497,7 @@ async function linkCandidateApproval({
               source_version_id: receipt.source_version_id,
               parse_id: receipt.parse_id,
               article_content_sha256: contentSha,
+              ...(existingEditorial ? { existing_editorial_approval: existingEditorial } : {}),
               ...(sourceAlternative
                 ? {
                     source_url: sourceUrl,
@@ -493,8 +517,9 @@ async function linkCandidateApproval({
           throw Error("Candidate has a different editorial approval")
       } else {
         if (
-          !["unreviewed", "deferred"].includes(candidate.review_status) ||
-          candidate.event_id ||
+          (!existingEditorial &&
+            (!["unreviewed", "deferred"].includes(candidate.review_status) ||
+              candidate.event_id)) ||
           candidate.identity ||
           candidate.disposition ||
           candidate.source_revision_alert
@@ -510,6 +535,17 @@ async function linkCandidateApproval({
           candidate.article_observed_at = document.observed_at
           candidate.article_content_sha256 = contentSha
         }
+        if (existingEditorial)
+          candidate.approval_history = [
+            ...(candidate.approval_history || []),
+            {
+              legacy_editorial_approval_run: candidate.editorial_approval_run,
+              event_id: candidate.event_id,
+              review_status: candidate.review_status,
+              reviewed_at: candidate.reviewed_at,
+              existing_editorial_approval: existingEditorial,
+            },
+          ]
         candidate.review_status = "verified"
         candidate.event_id = article.event_id
         candidate.reviewed_at = article.article_review.reviewed_at
@@ -519,6 +555,7 @@ async function linkCandidateApproval({
           source_version_id: receipt.source_version_id,
           parse_id: receipt.parse_id,
           article_content_sha256: contentSha,
+          ...(existingEditorial ? { existing_editorial_approval: existingEditorial } : {}),
           ...(sourceAlternative
             ? {
                 source_url: sourceUrl,

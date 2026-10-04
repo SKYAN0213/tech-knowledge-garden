@@ -3953,3 +3953,12 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 기본 5역할 및 CLI를 Ollama `qwen3.8:27b-mlx`로 전환했다. safetensors/NVFP4/27.8B/digest5642e974…를 실제 확인했고 기존 think·문맥·시간 예산을 유지한다. 정책 metadata preflight, streaming JSON Schema 호출, ABB 전체13블록의 실제 추출6후보를 확인했다. 구조상 인용 불일치1개는 검토 대상으로 유지했다. 새 모델의 전 역할 품질 평가나 무인 운영 완료로 승격하지 않는다.
 
 구현·이전 설정 복구·정확한 실행 지문 및 Drive Research 원격 archive 검증은 [런북361절](LOCAL_AI_NEWS_RUNBOOK.md#361-ollama-qwen38-27b-mlx-기본-모델-전환)에 있다. 이전 모델·과거 실행·공개자료는 보존하며 WBS2/22·goal active다.
+
+### 19.271. 기존 비공개 승인 사건의 현재 승인 연결 보완
+
+진행 범위: verified/event_id/editorial_approval_run은 있지만 현재 candidate approval binding이 없는 비공개 사건을 정확한 기존 승인·새 검토 원고에 연결한다. 기존 published importer는 Drive에 발행된 사건을 대상으로 하므로 이번 비공개 승인 사례와 구분한다. 기존 recordCandidateApproval의 원문/날짜/중복/발행 차단을 재사용하며 사건 ID를 변경하거나 기존 승인을 삭제하지 않는다.
+
+수용 조건: 원본 후보 SHA, 기존 승인 projection 재검증, 같은 사건 ID·공식 URL·발표일·본문13블록, 새 승인 projection, 명시적 원문/기존·새 원고 검토를 요구한다. 연결은 비공개이며 이전 승인 lineage를 보존한다. 누락·다른 사건·변조·공개 기사 재편입은 거부하고 동일 연결 재개는 장부/receipt 불변이어야 한다. 실제 ABB 사례와 표적 실패 회귀 후 Drive Research 증거를 보관한다. 전체 목표·공개·예약 상태를 승격하지 않는다.
+
+
+19.271 실행 결과(2026-10-04): 기존 비공개 승인 연결 기능과 실제 ABB same-event lineage를 완료했다. 같은 사건ID를 유지하고 후보734개 중 해당 후보만 변경·정확한 재개 장부SHA 불변을 확인했다. 일반 FAQ를 기존 disposition으로 뉴스 처리에서 제외해 최신 handoff는 두 후보를 approval_ready/observed_resolved로 분리한다. 계약19/19+본문·날짜·바이트2/2 통과, 추가 모델 호출0, Drive Research113파일의 원격 ZIP SHA 확인. [런북362절](LOCAL_AI_NEWS_RUNBOOK.md#362-기존-비공개-승인-연결과-배경자료의-반복-처리-종료). 전체 과거 승인/후보·공개·독립평가·운영 검증을 완료한 것은 아니며 WBS2/22를 유지한다.
