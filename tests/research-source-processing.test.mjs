@@ -729,6 +729,8 @@ test("daily explicit reuse pins the original processing run and never invokes a 
 })
 
 test("daily reuse distinguishes private article approval from candidate approval routing", async (t) => {
+  // Keep current-time fact reviews within this fixture's fixed editorial day.
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
   const f = fixture(t)
   await processSourceRun(f.options)
   await reviewProcessedClaims(f.root, "processed", await decision(f))
@@ -835,6 +837,7 @@ test("reused exact source suppresses duplicate generation in the same daily batc
 })
 
 test("new CLI approvals enforce reader quality while preserving original model drafts", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
   const f = fixture(t)
   await processSourceRun(f.options)
   await reviewProcessedClaims(f.root, "processed", await decision(f))
