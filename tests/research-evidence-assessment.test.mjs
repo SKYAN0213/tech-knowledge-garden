@@ -283,8 +283,12 @@ test("source modified during inference cannot produce a completed assessment", a
   assert.equal(readJSON(f.root, "runs/assessment/evidence-assessment/assessment.json"), null)
 })
 
-async function quoteFixture(t) {
+async function quoteFixture(t, { partial = false } = {}) {
   const f = fixture(t)
+  if (partial) {
+    f.claims.push({ ...structuredClone(f.claims[0]), claim_id: "c2" })
+    f.provider.executionPolicy.settings.provider = "ollama"
+  }
   f.row.evidence[0].quote = f.row.evidence[0].quote.replace("50 units", "50  units")
   const generate = f.provider.structured.bind(f.provider)
   let request
@@ -292,7 +296,21 @@ async function quoteFixture(t) {
     request = value
     return generate(value)
   }
-  await assert.rejects(() => run(f), /exact stored source/)
+  await assert.rejects(
+    () =>
+      partial
+        ? assessEvidenceCheckpoint(
+            f.root,
+            "assessment",
+            f.provider,
+            f.claims,
+            f.documents,
+            f.parses,
+            { claimsPerBatch: 1 },
+          )
+        : run(f),
+    /exact stored source/,
+  )
   atomicWrite(f.root, "runs/assessment/documents.json", f.documents)
   atomicWrite(f.root, "runs/assessment/parses.json", f.parses)
   atomicWrite(f.root, "runs/assessment/claims.json", { claims: f.claims })
@@ -376,6 +394,178 @@ test("explicit quote repair preserves invalid output and verdict without new inf
     before,
   )
   await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
+})
+
+test("quote recovery generates only explicitly requested missing batches and resumes without metadata", async (t) => {
+  const f = await quoteFixture(t, { partial: true })
+  await assert.rejects(() => repairQuotes(f), /explicitly enable/)
+  let calls = 0
+  const options = {
+    root: f.root,
+    run: "quote-completed",
+    sourceRun: "assessment",
+    review: f.quoteReview,
+    completeMissing: true,
+    createMissingProvider: async () => ({
+      executionPolicy: f.provider.executionPolicy,
+      structured: async (request) => {
+        calls++
+        const supplied = JSON.parse(request.messages[1].content)
+        assert.deepEqual(
+          supplied.claims.map((c) => c.claim_id),
+          ["c2"],
+        )
+        const raw = {
+          output: {
+            assessments: [
+              {
+                ...structuredClone(f.row),
+                claim_id: "c2",
+                evidence: [{ ...f.row.evidence[0], quote: f.parses[0].blocks[0].text }],
+              },
+            ],
+          },
+        }
+        const file = "runs/quote-completed/model-policy/evidence_compare/budget.json"
+        const old = readJSON(f.root, file),
+          { sha256: _seal, ...payload } = old
+        payload.attempts.push({
+          status: "complete",
+          request,
+          result: raw,
+          result_sha256: sha256(JSON.stringify(raw)),
+        })
+        atomicWrite(f.root, file, { ...payload, sha256: sha256(JSON.stringify(payload)) })
+        return raw
+      },
+    }),
+  }
+  const result = await reviewEvidenceQuotes(options)
+  assert.equal(result.materialized_batches, 1)
+  assert.equal(result.model_calls, 1)
+  assert.equal(result.record.assessments.length, 2)
+  assert.equal(calls, 1)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+    f.originalBytes,
+  )
+  const before = fs.readFileSync(path.join(f.root, "runs/quote-completed/quote-review-result.json"))
+  const again = await reviewEvidenceQuotes({
+    ...options,
+    createMissingProvider: async () => {
+      throw Error("No metadata on completed resume")
+    },
+  })
+  assert.equal(again.model_calls, 0)
+  assert.equal(again.reused_batches, 2)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/quote-completed/quote-review-result.json")),
+    before,
+  )
+  await loadBoundAssessment(f.root, "quote-completed", f.claims, f.documents, f.parses)
+})
+
+test("a second quote repair authenticates inherited checkpoints and preserves both charged attempts", async (t) => {
+  const f = await quoteFixture(t, { partial: true })
+  let generated = 0
+  await assert.rejects(
+    () =>
+      reviewEvidenceQuotes({
+        root: f.root,
+        run: "partial-repair",
+        sourceRun: "assessment",
+        review: f.quoteReview,
+        completeMissing: true,
+        createMissingProvider: async () => ({
+          executionPolicy: f.provider.executionPolicy,
+          structured: async (request) => {
+            generated++
+            const raw = { output: { assessments: [{ ...structuredClone(f.row), claim_id: "c2" }] } }
+            const file = "runs/partial-repair/model-policy/evidence_compare/budget.json"
+            const { sha256: _seal, ...payload } = readJSON(f.root, file)
+            payload.attempts.push({
+              status: "complete",
+              finished_at: "2026-10-04T00:02:00Z",
+              request,
+              result: raw,
+              result_sha256: sha256(JSON.stringify(raw)),
+            })
+            atomicWrite(f.root, file, { ...payload, sha256: sha256(JSON.stringify(payload)) })
+            return raw
+          },
+        }),
+      }),
+    /exact stored source/,
+  )
+  assert.equal(generated, 1)
+  const base = "runs/partial-repair/"
+  const prefixBytes = fs.readFileSync(path.join(f.root, base + "evidence-assessment/batch-1.json"))
+  const failedBytes = fs.readFileSync(path.join(f.root, base + "evidence-assessment/batch-2.json"))
+  const ledgerBytes = fs.readFileSync(
+    path.join(f.root, base + "model-policy/evidence_compare/budget.json"),
+  )
+  const review = {
+    ...f.quoteReview,
+    source_run: "partial-repair",
+    reviewed_at: "2026-10-04T00:03:00Z",
+    corrections: [
+      {
+        ...f.quoteReview.corrections[0],
+        batch: 2,
+        claim_id: "c2",
+        raw_sha256: sha256(failedBytes),
+      },
+    ],
+  }
+  const options = { root: f.root, run: "second-repair", sourceRun: "partial-repair", review }
+  const result = await reviewEvidenceQuotes(options)
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.materialized_batches, 2)
+  assert.equal(result.record.assessments.length, 2)
+  for (const [file, bytes] of [
+    ["evidence-assessment/batch-1.json", prefixBytes],
+    ["evidence-assessment/batch-2.json", failedBytes],
+    ["model-policy/evidence_compare/budget.json", ledgerBytes],
+  ])
+    assert.deepEqual(fs.readFileSync(path.join(f.root, base + file)), bytes)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+    f.originalBytes,
+  )
+  const resumed = await reviewEvidenceQuotes(options)
+  assert.equal(resumed.model_calls, 0)
+  assert.equal(resumed.reused_batches, 2)
+  await loadBoundAssessment(f.root, "second-repair", f.claims, f.documents, f.parses)
+  const prefix = JSON.parse(prefixBytes)
+  prefix.output.assessments[0].verdict = "insufficient"
+  atomicWrite(f.root, base + "evidence-assessment/batch-1.json", prefix)
+  await assert.rejects(
+    () => reviewEvidenceQuotes({ ...options, run: "tampered-prefix" }),
+    /changed non-quote/,
+  )
+  assert.equal(readJSON(f.root, "runs/tampered-prefix/documents.json"), null)
+})
+
+test("missing-batch completion cannot switch the original local policy", async (t) => {
+  const f = await quoteFixture(t, { partial: true })
+  await assert.rejects(
+    () =>
+      reviewEvidenceQuotes({
+        root: f.root,
+        run: "quote-wrong-policy",
+        sourceRun: "assessment",
+        review: f.quoteReview,
+        completeMissing: true,
+        createMissingProvider: async () => ({
+          executionPolicy: { ...f.provider.executionPolicy, model_digest: "f".repeat(64) },
+          structured: async () => {
+            throw Error("Must not generate")
+          },
+        }),
+      }),
+    /exact original local model policy/,
+  )
+  assert.equal(readJSON(f.root, "runs/quote-wrong-policy/evidence-assessment/batch-2.json"), null)
 })
 
 for (const [name, change] of [

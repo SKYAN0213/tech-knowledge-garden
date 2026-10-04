@@ -2,6 +2,8 @@ import fs from "node:fs"
 import { parseArgs } from "node:util"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { reviewEvidenceQuotes } from "./research/evidence-quote-review.mjs"
+import { Ollama, localOllamaURL } from "./research/ollama.mjs"
+import { prepareRoleProvider } from "./research/model-policy.mjs"
 
 try {
   const { values } = parseArgs({
@@ -10,6 +12,8 @@ try {
       root: { type: "string" },
       "source-run": { type: "string" },
       review: { type: "string" },
+      "complete-missing": { type: "boolean", default: false },
+      "model-policy": { type: "string" },
     },
   })
   if (!values.review) throw Error("Explicit quote review JSON file required")
@@ -18,6 +22,18 @@ try {
     run: values.run,
     sourceRun: values["source-run"],
     review: JSON.parse(fs.readFileSync(values.review, "utf8")),
+    completeMissing: values["complete-missing"],
+    createMissingProvider: values["complete-missing"]
+      ? async () =>
+          prepareRoleProvider(
+            new Ollama({ url: localOllamaURL() }),
+            JSON.parse(
+              fs.readFileSync(values["model-policy"] || "data/research-model-policy.json", "utf8"),
+            ),
+            "evidence_compare",
+            { root: values.root || DEFAULT_ROOT, run: values.run },
+          )
+      : null,
   })
   console.log(
     JSON.stringify(

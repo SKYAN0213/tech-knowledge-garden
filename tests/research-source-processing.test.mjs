@@ -19,10 +19,13 @@ import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
 
-function fixture(t, { extracted = true, concern = false } = {}) {
+function fixture(
+  t,
+  { extracted = true, concern = false, sourceURL = "https://example.org/plan" } = {},
+) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "source-process-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  const url = "https://example.org/plan",
+  const url = sourceURL,
     text = "Example plans to ship 50 units in 2027."
   const source_id = sourceId(url),
     hash = sha256(text),
@@ -483,6 +486,38 @@ test("read-only reuse reports fact, writer and editorial gates without a model",
   assert.equal(result.status, "editorial_review")
   assert.equal(result.model_calls, 0)
   assert.deepEqual(f.calls, before)
+})
+
+test("read-only reuse preserves raw source identity while accepting its canonical candidate URL", async (t) => {
+  const f = fixture(t, { sourceURL: "https://example.org/plan/" })
+  await processSourceRun(f.options)
+  const entry = {
+    ...reuseEntry(f),
+    candidate_key: `source-${sourceId("https://example.org/plan")}`,
+    source_urls: ["https://example.org/plan"],
+  }
+  const result = await loadProcessedSourceResult(f.root, "processed", entry)
+  assert.equal(result.status, "fact_review")
+  assert.equal(result.source_candidate_key, f.claim.candidate_key)
+  assert.equal(result.candidate_url_identity, "canonical")
+  assert.equal(result.model_calls, 0)
+  await assert.rejects(
+    () =>
+      loadProcessedSourceResult(f.root, "processed", {
+        ...entry,
+        candidate_key: `source-${sourceId("https://example.org/other")}`,
+      }),
+    /same exact candidate/,
+  )
+  await assert.rejects(
+    () =>
+      loadProcessedSourceResult(f.root, "processed", {
+        ...entry,
+        source_urls: ["https://example.org/plan?edition=2"],
+      }),
+    /differs from the candidate/,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
 })
 
 test("reused results reject a different candidate, source, incomplete packet and changed source", async (t) => {

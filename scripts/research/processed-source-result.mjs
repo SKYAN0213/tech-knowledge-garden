@@ -1,5 +1,6 @@
 import fs from "node:fs"
-import { sha256 } from "./contracts.mjs"
+import { sha256, sourceId } from "./contracts.mjs"
+import { canonicalURL } from "../garden.mjs"
 import { loadStoredSourceRun, articleContentFingerprint } from "./parser.mjs"
 import { loadFactReviewPacket, assertProcessedFactReview } from "./evidence-review-packet.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
@@ -14,10 +15,7 @@ export async function loadProcessedSourceResult(root, run, entry) {
   const base = `runs/${run}/`
   const bytes = fs.readFileSync(safePath(root, base + "source-processing-input.json"))
   const input = JSON.parse(bytes)
-  if (
-    input.schema !== "research-source-processing-input/v1" ||
-    input.candidate_key !== entry.candidate_key
-  )
+  if (input.schema !== "research-source-processing-input/v1")
     throw Error("Reused processing requires the same exact candidate")
   const { documents, parses } = loadStoredSourceRun(root, run)
   const origin = loadStoredSourceRun(root, input.source_run)
@@ -39,11 +37,18 @@ export async function loadProcessedSourceResult(root, run, entry) {
     (p) => p.parse_id === entry.parse_id && p.source_version_id === entry.source_version_id,
   )
   const document = documents.find((d) => d.source_version_id === entry.source_version_id)
+  const canonicalCandidate = document && `source-${sourceId(canonicalURL(document.original_url))}`
+  const canonicalIdentity =
+    document &&
+    input.candidate_key === `source-${document.source_id}` &&
+    entry.candidate_key === canonicalCandidate
+  if (input.candidate_key !== entry.candidate_key && !canonicalIdentity)
+    throw Error("Reused processing requires the same exact candidate")
   if (
     !source ||
     !document ||
     articleContentFingerprint(source) !== entry.content_sha256 ||
-    !entry.source_urls?.includes(document.original_url)
+    !entry.source_urls?.some((url) => canonicalURL(url) === canonicalURL(document.original_url))
   )
     throw Error("Reused processing differs from the candidate source version, parse or URL")
   const context = await loadFactReviewPacket(root, run)
@@ -54,6 +59,12 @@ export async function loadProcessedSourceResult(root, run, entry) {
     processing_input_sha256: sha256(bytes),
     model_calls: 0,
     candidate_published: false,
+    ...(input.candidate_key !== entry.candidate_key
+      ? {
+          source_candidate_key: input.candidate_key,
+          candidate_url_identity: "canonical",
+        }
+      : {}),
     packet: safePath(root, base + "fact-review-packet.json"),
     ...(readJSON(root, `runs/${input.assessment_run}/quote-review-result.json`)
       ? { quote_review_run: input.assessment_run }

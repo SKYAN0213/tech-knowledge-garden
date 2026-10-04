@@ -9333,3 +9333,30 @@ node scripts/research.mjs editorial-check --run github-async-merge-mlx-processin
 Drive Research `1QWQBmWl3xsBUgsvoGAwv5NL9d0hPfnSK`에 원문2판본·증거129파일/ZIP130members·1,029,005bytes를 저장했다. 원격 raw SHA `0ae9433c7608e4146bb68a504184486e48bc2d6e03ca11c8d1eefadf497daae1`가 로컬과 같고 부모Research/shared:false/크기·ZIP CRC/member SHA를 확인했다. archive-staging/reader-quality-evidence-20261004-v1/drive-receipt.json·package-verification.json에서 재개한다. 개발 증거 보관이며 독립 runtime closure/공개 발행 영수증은 아니다.
 
 전체WBS2/22·goal active·공개448ec36 유지. 전체소급92/801,독립40/20,로컬shadow7/무인08시·새 공개 검증은 미완료다. 다음에는 실제 미검토 후보에 현재 MLX와 새 편집 관문을 적용해 사실·원고·후보 승인을 이어서 확인한다. 기존 전체 수집을 반복하지 않고 고정 판본을 재사용한다. 이번 묶음에1시간 이상 반복한 병목은 없었다.
+
+
+## 366. 부분 근거 대조 복구와 Solidigm 실제 편집 승인
+
+`research-evidence-quotes.mjs --complete-missing`은 명시적으로 원문 인용만 정정한 뒤 아직 호출하지 않은 batch만 같은 로컬 모델·digest·runtime·설정으로 수행한다. 기본값은 모델 호출0이며 옵션 없이 누락 batch가 있으면 멈춘다. 이전 비용 장부를 새 실행의 비용으로 복사하지 않는다. 새 호출은 새 run의 budget에 기록한다. 추가 batch도 인용 오류로 중단되면 새 quote review가 원출력·sealed ledger·고정 입력·검토 provenance를 재귀 대조하고, 기존 정정을 재구성해 판정/수치/주체/설명 변경을 거부한다. 완료한 prefix를 다시 추론하지 않는다. 의미 검토·편집·후보 승인은 여전히 별도다.
+
+실제 URL 끝 슬래시 때문에 저장 source ID와 canonical 후보 ID가 달랐다. 읽기 전용 processing 재사용은 raw ID와 canonical URL에서 계산한 후보 ID의 정확한 대응만 허용한다. 원문 판본·parse·본문 지문·추출·검토·원고·승인 검사는 그대로이며 `source_candidate_key`/`candidate_url_identity: canonical`로 표시한다. 사건 유사도나 제목으로 합치지 않는다.
+
+### 실제 실행과 오류
+
+SK hynix 10월1일 공식 Solidigm 설명의 저장된 원문17블록을 재사용했다. `sk-solidigm-mlx-processing-20261004-v1`에서 추출6후보55.156초, 대조 첫 batch113.818초를 수행했다. 곡선 apostrophe를 ASCII로 바꾼 인용2개를 source-bound 검토로 복원했다. `sk-solidigm-mlx-quote-completed-20261004-v1`은 완료한 첫 batch를 재사용하고 두 번째만126.930초 호출했으나 같은 인용 오류2개로 멈췄다. 원응답과 두 장부를 유지하고 `...quote-completed...-v2`에서 추가 모델0으로 두 batch를 완성했다. 오류 이후 같은 모델을 무차별 재호출하지 않았다.
+
+`sk-solidigm-mlx-processing-20261004-v2`는 원 추출과 복구된 assessment를 연결했다. 직접 원문 검토로4후보를 verified, 과거 설립/포괄적 가치 목표2개를 deferred로 두었다. 모델이 누락한 생산능력·기술 투자 필요성, 전사 투자/재무/자본 배분, 내부·외부 조달 선택 조건, 기존 주주 가치 비교4개를 기존 direct-source additions로 추가했다. 모델이 생성한 사실로 가장하지 않는다.
+
+MLX 작성false는56.607초·3문장·구조문제0이었으나 실제로 `사업 철수`로 잘못 분류했다. 구조·읽기 검사가 의미 판정은 아니다. 명시적 정정에서 `투자·기업거래`/`자금 조달 검토`/`자본 배분`으로 고치고, 원문 주체 표기와 투자 조건·미결정/조건부 이사회 검토를 보존했다. 분석/전망/회사 성과를 추가하지 않았다. 최종 리드3문장194자·reader block0이며 전체8 verified facts가 리드와 설명에 연결된다. 기사 preview는 `runs/sk-solidigm-mlx-processing-20261004-v2/preview.md`다.
+
+### 비공개 승인과 일일 재사용
+
+사건ID `c76244114834f165`, 발표10월1일/검토10월4일로 기존 편집 관문과 `candidate-approval`에 연결했다. 운영734후보 중 해당1개만 바뀌고 나머지733개는 동일하다. `stored-results-daily-20261004-v3`는 Solidigm/기존 GitHub/기존 ABB3건 모두0모델로 approval_ready를 읽었다. 편집·후보·daily·quote 복구를 재개한117파일 SHA가 동일하다. 실제 모델은 추출1·대조2·작성1, 합계4호출/352.511초다. 재사용0호출과 최초 비용을 구분한다.
+
+기존 Doosan 한국어 CEO 원문은 이미 공식 영어·기존 기사와 같은 사건으로 검토된 alias라서 신규 pending으로 다시 넣지 않았다. `reader-quality-next-candidate-routing-20261004-v1.json`이 그 판정과 handoff를 보존한다.
+
+검사: 인용/부분 완료 표적12/12(부모 provenance 및 판정 변조 거부 포함), URL identity 재사용2/2, 기존 theme 계약10/10. 전체 suite/build/공개 UI/배포는 이번 private CLI 묶음에서 실행하지 않았다. `source-live-debug/sk-solidigm-verification-20261004-v1.json`과 각 실패·검토·재개 로그가 실제 증거다.
+
+Drive Research 보관은 아래 원격 영수증으로 확인한다. 개발 증거 archive이며 portable runtime closure·독립 품질 평가·공개 발행 증거가 아니다. 공개448ec36·RSS·08시 예약은 유지한다. 전체WBS2/22·goal active, 소급92회/801기사·독립40dev/20heldout·local shadow7회/무인08시 운영·신규 공개 검증은 남는다. 이번 병목은 인용 표기였고1시간 이상 같은 시도를 반복하지 않았다.
+
+Drive 원격 검증: Research `1qc5-QgilnA5nnktPR2QpCJliwUOT9yEe`, 증거176파일/ZIP177members/3source versions/1,537,804bytes, raw SHA `31d01fb4c7ba07a12551360c5d2bbaa52e3cf20393ebeff0c7951a44ea762c52`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/sk-solidigm-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 재개 위치다.
