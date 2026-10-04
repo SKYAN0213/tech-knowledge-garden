@@ -9,9 +9,9 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "56b4ade20cfe97ee619831d7b07b136883e37ac40acbc28ecdfbab26ed43aed5",
-  "source_files": 195,
-  "exported_at": "2026-10-03 19:19:11 UTC",
+  "snapshot_sha256": "68ef93b2a9d680dac9732901ef04627ec5375d075c451f65911c139a33b49228",
+  "source_files": 197,
+  "exported_at": "2026-10-04 01:46:26 UTC",
   "hashes": {
     "Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md": "27f7cbb5d767ff47ef76a3cef2ff488730c20bae3a3a4a3e03f7e43634ac9c0b",
     "Editions/2026/06/2026-06-24_0700_Tech_AI_Briefing.md": "3781e0f9aadad101b9cf1be838fcb9d02e0baf91c6dba947f13ba9420d9acb49",
@@ -133,6 +133,7 @@
     "Editions/2026/09/2026-09-23_0800_Tech_AI_Briefing.md": "dcef839992f03972d595dfdd26d261fb333d110a0a19b897ddf9c576ed125600",
     "Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing.md": "ad1abf3dffc5f092e7b85d94e86d959e4236c35be24ad6277a098df249a1252a",
     "Editions/2026/10/2026-10-01_0800_Tech_AI_Briefing.md": "ab8455a11062ef8552cc218a7d234628e3e0ee65d139598db6d1e05db9301fe6",
+    "Editions/2026/10/2026-10-04_0800_Tech_AI_Briefing.md": "d4e30d72c042f659944a07f49d791395b418ac3cbc254f2ebc48c3437fac901f",
     "Knowledge/00 Tech Encyclopedia Index.md": "be579c07f1f137a339110b167612b0647b4793eacc6b7e84e94d403719ad9140",
     "Knowledge/AI Systems/AI Agent Governance.md": "ba624eb69c47cb2ad56a745aeca3e12d5985b20fa96bfad4e7637997cefb7e16",
     "Knowledge/AI Systems/AI Agent Security and Governance.md": "9cd8628bb437c04bcc9ca353b2858dfabf806a238ef500970855c6293fd70948",
@@ -192,6 +193,7 @@
     "Signals/2026-09-23_0800_Tech_AI_Briefing.md": "466db931078cd6e78417155790a28986016e66bdebb6d346c8801d5ab1e0cfe6",
     "Signals/2026-09-30_0800_Tech_AI_Briefing.md": "c2770ac7d539b540b30eb21e14cbb1481462da03bd5e39c2f9a6dcb7d6c248bf",
     "Signals/2026-10-01_0800_Tech_AI_Briefing.md": "691f8d10c25d8cd169faae25ebadb34af2f894bb2468864a12f6d6660bba55a5",
+    "Signals/2026-10-04_0800_Tech_AI_Briefing.md": "f1190c18c8d147f86217c5a58c2cb33c2a61838f3fcaff3e6b00afc37f6fca3d",
     "TrendTopics/agent-runtime.md": "6281b524217c894b50c2ba74648a3694b2032234f72fc2e584070e08ff999e01",
     "TrendTopics/company-agibot.md": "b383fa7af86bf897d57d4c9beee4ad7183e61e2bc909b5b1b66273469b6b7c03",
     "TrendTopics/company-cxmt.md": "90ec6fcc675e1934f7f1bb3af1ec3a74059c437c375d941cba9123885811f66b",

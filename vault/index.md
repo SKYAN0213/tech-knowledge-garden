@@ -1,17 +1,17 @@
 ---
 title: 뉴스
 type: home
-date: 2026-10-01
-description: OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약 · DigitalOcean, 에이전트
-  실행·추론·저장을 묶은 Agent Droplets 공개 · Google Cloud Data Agent Kit 정식
-  제공…Bigtable·Spark 지원 추가 · Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM
-  공개 · Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개 · AMD ROCm RCCL 입력 검증 취약점,
-  원격 코드 실행 가능성 보고 · Micron, 2026 회계연도 매출 1,332억 달러 기록 · Hitachi·FANUC, 이바라키 공장서
-  Physical AI 검증 후 공동 배치 계획 · IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계 · Ørsted, 미국
-  뉴멕시코 200MW 태양광 발전소 건설 착수 · Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로
-  선정 · Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개 · ARPA-H, 적응형 임상시험 인프라 SURPASS
-  등 4개 프로그램 발표 · NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약 · Rocket Lab,
-  Synspective SAR 위성 20회 추가 발사 계약
+date: 2026-10-04
+description: 에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획 · Roche, giredestrant 병용 임상
+  3상 결과 공개…무진행 생존기간 중앙값 8.8개월 · Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체
+  시험 예정 · AWS, 인프라 개선안을 코드로 제시하는 Well-Architected Agent 프리뷰 공개 · 코윈로보틱스·란신로보틱스,
+  3D 비전 기반 산업용 로봇 협력 · 셀트리온, 네덜란드·북유럽 신규 제품 수주와 공급 현황 공개 · Teradyne Robotics,
+  Elite Robots와 법적 분쟁 해결 합의 · MIT 연구진, AI 3D 설계의 일부를 고쳐 출력하는 InstructMesh 개발 ·
+  SK하이닉스, 벤처 투자 범위를 AI 인프라로 확대…장비 도입·공동 연구 사례 공개 · Onur Mutlu 교수, AI 인프라의 데이터
+  이동을 줄이는 세 가지 설계 설명 · GitHub Copilot, macOS·Windows 앱을 조작하는 computer use 공개 프리뷰
+  · AWS GuardDuty, 조직 전체의 탐지 활성화 설정을 중앙 정책으로 관리 · FDA, 성장에 맞춰 시술로 확장하는 소아 폐동맥판막
+  승인 · Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비 · Tesla, 3분기 에너지
+  저장제품 13.7GWh 설치…차량 48만6532대 인도 · 안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -19,144 +19,152 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
-## 2026.10.01
+## 2026.10.04
 
-### [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]]
+### [[News/4e48c8fa40d39243|에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획]]
 
-OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다.
-
-
-
----
-
-### [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]]
-
-DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도구 사용료를 월 구독과 단일 청구서로 묶는 Agent Droplets를 공개 프리뷰로 내놨다. Pro는 월 50달러, Team은 월 200달러이며 각각 사용량 할인 15%와 20%를 적용한다고 밝혔다. 구독 허용량을 넘기면 정가 과금이 이어질 수 있어 총비용은 실제 사용량에 따라 달라진다.
+한국에너지기술연구원은 10월 1일 대기청정연구실 황선미 박사 연구팀이 암모니아 선박의 배출가스를 처리하는 촉매 기술을 개발했다고 발표했다. 질소산화물과 미연소 암모니아를 함께 분해하는 하이브리드 촉매, 아산화질소를 분해하는 촉매를 각각 개발한 것이다. 연구진은 이 기술을 암모니아 엔진과 연계한 파일럿 실증으로 확대할 계획이다.
 
 
 
 ---
 
-### [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]]
+### [[News/e37d74d0774d9a49|Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월]]
 
-Google Cloud는 9월 30일 Data Agent Kit를 정식 제공하고 BigQuery Graph, Bigtable, Managed Service for Apache Spark 지원을 추가했다. 이 도구 묶음은 15개가 넘는 데이터 서비스의 스키마와 작업 로그를 읽고 쿼리·리소스 관리를 수행하며, 사용자의 IAM 권한을 따른다고 회사는 설명했다. 키트 자체는 무료지만 에이전트가 호출하는 클라우드 서비스 비용은 별도다.
-
-
-
----
-
-### [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]]
-
-Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식 제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배 높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대 25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수 있도록 설계했다고 설명했다.
+Roche는 10월 1일 giredestrant와 everolimus 병용을 평가한 evERA 임상 3상 결과가 NEJM에 게재됐다고 발표했다. 시험은 CDK4/6 억제제와 내분비 치료를 받은 ER 양성·HER2 음성 국소 진행성 또는 전이성 유방암 환자를 대상으로 표준 내분비 치료와 everolimus 병용군과 비교했다. 회사에 따르면 전체 무작위 배정 환자 집단의 무진행 생존기간 중앙값은 giredestrant 병용군 8.8개월, 비교군 5.5개월이었다.
 
 
 
 ---
 
-### [[News/0b883a59e5850ce3|Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개]]
+### [[News/ab2949406d668c88|Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정]]
 
-Cisco는 9월 30일 Catalyst SD-WAN Manager API 세션 인증 취약점 CVE-2026-76504를 공개했다. 원격 비인증 공격자가 관리자 권한으로 접근할 수 있으며 CVSS 기본 점수는 9.8이고 Cisco는 우회책이 없다고 밝혔다. Cisco는 영향 버전 사용자의 즉시 업그레이드와 관리자 진단 자료 점검을 안내했다.
-
-
-
----
-
-### [[News/2000861d5f1c75c8|AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고]]
-
-AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 취약점 CVE-2026-43598을 공지했다. 공격 조건이 충족되면 메모리 노출과 ASLR 우회를 거쳐 RCCL 프로세스 권한으로 원격 코드 실행이 가능할 수 있으며, 기본 CVSS는 7.7이다. AMD는 완화 버전을 안내했지만 영향 제품 표 일부에 다른 CVE 식별자가 함께 표시돼 설치 환경별 확인이 필요하다.
+Satellogic은 10월 2일 Merlin.01과 NewSat 3기 등 위성 4기를 전날 미국 캘리포니아 반덴버그에서 SpaceX Falcon 9으로 태양동기 저궤도에 투입했다고 발표했다. 회사에 따르면 네 위성은 지상국과 교신했으며 각 하위 시스템의 상태가 양호하다는 보고를 받았다. Merlin.01은 발사·초기 궤도 단계에 있으며, 이 단계가 끝나는 10월 중순부터 탑재체 시험과 시운전에 들어갈 예정이다.
 
 
 
 ---
 
-### [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]]
+### [[News/4641fb763fbf0045|AWS, 인프라 개선안을 코드로 제시하는 Well-Architected Agent 프리뷰 공개]]
 
-Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표했다. 전년도 373억 8천만 달러에서 증가했으며, 4분기 매출은 542억 3천만 달러로 직전 분기보다 늘었다. 회사는 FY2027 1분기 매출을 615억 달러±15억 달러로 전망했으며 이는 아직 실적이 아닌 회사 가이던스다.
-
-
-
----
-
-### [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]]
-
-Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결합하는 Physical AI 협력을 발표했다. 양사는 Hitachi 이바라키 제조시설을 시험 현장으로 삼아 부품 피킹과 생산 품목 전환을 검증하고, 인식 정확도·로봇 동작·택트타임·품질을 평가할 계획이다. 고객 공동 배치는 FY2027부터 시작하겠다고 밝혔으므로 발표된 협약은 현재 수주나 생산라인 성과와 구분된다.
+AWS는 10월 1일 인프라 비용·보안·성능·신뢰성을 분석해 업무 목표에 맞는 개선안을 제시하는 Well-Architected Agent를 프리뷰로 공개했다. Terraform·CloudFormation·CDK 템플릿을 검토해 코드 변경안을 제시하고, 적용 가능한 경우 실행용 런북이나 CLI 스크립트도 제공한다. 서비스와 권고안은 미국 버지니아 북부·오하이오·오리건에서 이용할 수 있으며, AWS Support 플랜 고객은 모든 AWS 상용 리전의 워크로드를 등록할 수 있다.
 
 
 
 ---
 
-### [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]]
+### [[News/d6176c412b1aa382|코윈로보틱스·란신로보틱스, 3D 비전 기반 산업용 로봇 협력]]
 
-IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다.
-
-
-
----
-
-### [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]]
-
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+코윈로보틱스는 란신로보틱스와 산업용 지능형 로봇 사업 확대를 위한 업무협약을 체결했다고 10월 2일 밝혔다. 양사는 란신로보틱스의 3D 비전 인지 기술과 코윈로보틱스의 산업현장 맞춤형 로봇 설계·제조 및 시스템 통합 역량을 결합할 계획이다. 양사는 인도·베트남 등 아시아·태평양 시장에서 공동 사업 기회와 신규 고객 확보를 추진할 계획이다.
 
 
 
 ---
 
-### [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]]
+### [[News/7b68be7361014eab|셀트리온, 네덜란드·북유럽 신규 제품 수주와 공급 현황 공개]]
 
-Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과 향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다.
-
-
-
----
-
-### [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]]
-
-Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상 중간위험군 분석과 PrTK05 2상 면역 지표를 공개했다. 3상 중간위험군 635명 분석에서 방사선 치료 병용군은 대조군보다 재발 또는 전립선암 사망 위험이 낮았다고 회사는 보고했다(HR 0.59, 95% CI 0.41–0.84, p=0.0034). 2상 혈액 비교는 병용군 13명과 표준치료군 6명의 탐색 분석이며, 대조군과의 정식 비교는 진행 중이다.
+셀트리온은 10월 1일 앱토즈마·옴리클로·오센벨트의 네덜란드·북유럽 수주와 공급 현황을 발표했다. 회사에 따르면 앱토즈마는 네덜란드에서 3월 공급을 시작한 뒤 2분기 입찰을 추가 수주해 현지 토실리주맙 시장의 약 58%에 해당하는 공급 물량을 확보했다. 오센벨트는 노르웨이와 덴마크의 국가입찰에 단독 낙찰됐으며, 10월부터 제품 공급을 본격화할 예정이다.
 
 
 
 ---
 
-### [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]]
+### [[News/b37c512fcff4b5ed|Teradyne Robotics, Elite Robots와 법적 분쟁 해결 합의]]
 
-HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS, CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새 프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다.
-
-
-
----
-
-### [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]]
-
-NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스템 개발 계약을 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러이며 실험실 시연은 2028년 1월까지, 달 표면 통합 네트워크 비행 시연은 2028년 말로 계획됐다. 현재 달에서 통신망이 구축됐거나 시험이 시작된 것은 아니다.
+Teradyne Robotics A/S는 10월 1일 Elite Robots와의 법적 분쟁을 상호 합의로 해결했다고 발표했다. Teradyne Robotics의 최고법률책임자는 이번 합의가 Elite Robots의 책임·침해·지식재산권 유효성 등에 대한 인정은 아니라고 밝혔다. 합의 조건은 비공개다.
 
 
 
 ---
 
-### [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]]
+### [[News/02c744c8cb64f92f|MIT 연구진, AI 3D 설계의 일부를 고쳐 출력하는 InstructMesh 개발]]
 
-Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기를 2028~2031년에 발사하는 다년 계약을 발표했다. 회사는 이번 계약이 Electron의 단일 최대 상업 발사 계약이며 양사의 총 계약 발사 수가 47회가 된다고 밝혔다. 계약 금액은 비공개이고 20회 발사는 향후 일정이다.
+MIT는 10월 1일 CSAIL·Google·Northeastern University 연구진이 AI로 생성한 3D 설계의 특정 부분을 선택해 수정하고 출력할 수 있는 InstructMesh를 개발했다고 발표했다. 이 도구는 텍스트·이미지에서 3D 모델을 만드는 Microsoft TRELLIS와 언어 모델 GPT-4를 결합한다. 사용자는 자연어로 문제를 설명한 뒤 기하 형상의 수정 결과를 평가·승인하고, 슬라이더로 특정 부분의 확대나 돌출 정도를 조절할 수 있다.
 
 
 
-[[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|브리핑 읽기 →]]
+---
+
+### [[News/158499064eb74551|SK하이닉스, 벤처 투자 범위를 AI 인프라로 확대…장비 도입·공동 연구 사례 공개]]
+
+SK하이닉스는 10월 2일 발표문에서 벤처 투자 탐색 범위를 반도체·메모리 인접 기술에서 AI 인프라와 관련 산업으로 넓히고, 글로벌 투자기관과 공동 투자를 강화하고 있다고 설명했다. 투자 검토 단계부터 기술·사업 부서를 참여시키고, 투자한 기업을 연구개발·제조·영업 조직과 연결해 기술 평가와 제품 적용을 함께 추진하는 방식이다. SK hynix Ventures 브랜드 출범 행사는 9월 실리콘밸리에서 열렸으며, 이번 자료는 기존 투자 기업과 진행한 협업 사례를 소개했다.
+
+
+
+---
+
+### [[News/8dde5fa115cf79da|Onur Mutlu 교수, AI 인프라의 데이터 이동을 줄이는 세 가지 설계 설명]]
+
+SK하이닉스 뉴스룸은 10월 2일 ETH Zurich의 Onur Mutlu 교수가 쓴 AI 인프라 아키텍처 기고를 공개했다. 교수는 데이터의 위치와 이동 비용을 고려해 메모리 배치와 연산 구조를 함께 설계하는 ‘메모리 중심 컴퓨팅’을 설명했다.
+
+
+
+---
+
+### [[News/e11a5d7f0be16c7a|GitHub Copilot, macOS·Windows 앱을 조작하는 computer use 공개 프리뷰]]
+
+GitHub는 10월 1일 Copilot CLI와 Copilot 앱에 데스크톱 앱을 조작하는 computer use 공개 프리뷰를 추가했다. macOS와 Windows에서 앱 내용을 읽고 클릭·입력·스크롤·드래그를 수행하며, API·CLI·MCP 연동이 없는 GUI 소프트웨어에서도 여러 앱에 걸친 작업을 진행할 수 있다. Copilot은 앱 제어 전에 승인을 요청하고, 사용자는 항상 허용한 앱을 확인하거나 초기화할 수 있다.
+
+
+
+---
+
+### [[News/e09c28db18a0043a|AWS GuardDuty, 조직 전체의 탐지 활성화 설정을 중앙 정책으로 관리]]
+
+AWS는 10월 1일 GuardDuty에 AWS Organizations 선언형 정책 지원을 추가했다. 관리자는 조직 전체 계정·리전의 위협 탐지 활성화 설정을 중앙에서 적용하고, 새로 가입한 계정에도 같은 설정을 자동 유지할 수 있다. 조직 루트·조직 단위·개별 계정에 정책을 적용하고 리전별 예외를 둘 수 있으며, 정책으로 지정한 활성화 설정은 GuardDuty 콘솔이나 API에서 덮어쓸 수 없다.
+
+
+
+---
+
+### [[News/83e34b9db61bc9cc|FDA, 성장에 맞춰 시술로 확장하는 소아 폐동맥판막 승인]]
+
+미국 FDA는 10월 1일 선천성 폐동맥판막 질환이 있는 소아에게 이식하는 Autus Size-Adjustable Valve를 승인했다. Autus Valve Technologies가 개발하고 Edwards Lifesciences가 승인을 받은 판막으로, 약 13mm로 이식한 뒤 풍선 카테터 시술로 최대 22mm까지 확장할 수 있다. 혈류를 조절하는 판막엽에는 동물 조직 대신 고분자 소재를 사용한다.
+
+
+
+---
+
+### [[News/5292eabe8550892f|Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비]]
+
+Airbus Defence and Space는 10월 2일 Eutelsat에 최신 세대 OneWeb 저궤도 위성 32기를 납품했다고 발표했다. 위성은 프랑스 툴루즈 생산시설에서 미국의 향후 발사를 위한 운송을 준비 중이다. 이번 물량은 차세대 위성 669기 계획의 첫 물량이며, Eutelsat는 운용 수명이 끝나가는 기존 위성을 순차 교체할 예정이다.
+
+
+
+---
+
+### [[News/9877a6b970d84ef6|Tesla, 3분기 에너지 저장제품 13.7GWh 설치…차량 48만6532대 인도]]
+
+Tesla는 10월 2일 공개한 자료에서 2026년 3분기 에너지 저장제품 설치량이 13.7GWh라고 밝혔다. 같은 분기 차량 생산량은 46만4391대, 고객 인도량은 48만6532대다. 분기 재무 실적은 10월 21일 미국 증시 마감 뒤 발표할 예정이다.
+
+
+
+---
+
+### [[News/d8d0cc7e37ad6c82|안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표]]
+
+안랩은 10월 1일 V3 Endpoint Security와 V3 Internet Security가 2026년 7~8월 AV-TEST 윈도우용 백신 평가에서 각각 종합 18점 만점을 받았다고 발표했다. 회사에 따르면 기업용·개인용 두 제품 모두 상위 평가 제품에 부여하는 Top Product에 선정됐다.
+
+
+
+[[Briefings/2026/10/2026-10-04_0800_Tech_AI_Briefing|브리핑 읽기 →]]
 
 ## 최근 뉴스
 
-- [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
-- [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
-- [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
-- [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]] · 2026-09-30
-- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
-- [[News/8a3306a5bb75996e|미 에너지부, 26개 주 송전망 개선 31개 사업에 52억5천만달러 선정]] · 2026-09-30
-- [[News/bad3d5636979c1ec|IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파]] · 2026-09-30
-- [[News/783ed5a89f40a298|SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시]] · 2026-09-30
-- [[News/280289462980857d|Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대]] · 2026-09-30
-- [[News/461333ec2270a664|Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정]] · 2026-09-30
-- [[News/295f6ca27b06224b|Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표]] · 2026-09-30
-- [[News/ef1b3a4772eab837|Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고]] · 2026-09-30
-- [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]] · 2026-09-30
-- [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]] · 2026-09-23
-- [[News/6bbcd64185c1cd83|우주항공청, 제2우주센터 설계에 민간 발사 수요 의견 수렴]] · 2026-09-23
+- [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]] · 2026-10-01
+- [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]] · 2026-10-01
+- [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01
+- [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]] · 2026-10-01
+- [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]] · 2026-10-01
+- [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]] · 2026-10-01
+- [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]] · 2026-10-01
+- [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]] · 2026-10-01
+- [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]] · 2026-10-01
+- [[News/2000861d5f1c75c8|AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고]] · 2026-10-01
+- [[News/0b883a59e5850ce3|Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개]] · 2026-10-01
+- [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · 2026-10-01
+- [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · 2026-10-01
+- [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · 2026-10-01
+- [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]] · 2026-10-01
 
 [[News/index|뉴스 전체 →]]

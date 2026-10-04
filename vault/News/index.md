@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-01
+date: 2026-10-04
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,22 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/d8d0cc7e37ad6c82|안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표]] · 2026-10-04
+- [[News/9877a6b970d84ef6|Tesla, 3분기 에너지 저장제품 13.7GWh 설치…차량 48만6532대 인도]] · 2026-10-04
+- [[News/5292eabe8550892f|Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비]] · 2026-10-04
+- [[News/83e34b9db61bc9cc|FDA, 성장에 맞춰 시술로 확장하는 소아 폐동맥판막 승인]] · 2026-10-04
+- [[News/e09c28db18a0043a|AWS GuardDuty, 조직 전체의 탐지 활성화 설정을 중앙 정책으로 관리]] · 2026-10-04
+- [[News/e11a5d7f0be16c7a|GitHub Copilot, macOS·Windows 앱을 조작하는 computer use 공개 프리뷰]] · 2026-10-04
+- [[News/8dde5fa115cf79da|Onur Mutlu 교수, AI 인프라의 데이터 이동을 줄이는 세 가지 설계 설명]] · 2026-10-04
+- [[News/158499064eb74551|SK하이닉스, 벤처 투자 범위를 AI 인프라로 확대…장비 도입·공동 연구 사례 공개]] · 2026-10-04
+- [[News/02c744c8cb64f92f|MIT 연구진, AI 3D 설계의 일부를 고쳐 출력하는 InstructMesh 개발]] · 2026-10-04
+- [[News/b37c512fcff4b5ed|Teradyne Robotics, Elite Robots와 법적 분쟁 해결 합의]] · 2026-10-04
+- [[News/7b68be7361014eab|셀트리온, 네덜란드·북유럽 신규 제품 수주와 공급 현황 공개]] · 2026-10-04
+- [[News/d6176c412b1aa382|코윈로보틱스·란신로보틱스, 3D 비전 기반 산업용 로봇 협력]] · 2026-10-04
+- [[News/4641fb763fbf0045|AWS, 인프라 개선안을 코드로 제시하는 Well-Architected Agent 프리뷰 공개]] · 2026-10-04
+- [[News/ab2949406d668c88|Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정]] · 2026-10-04
+- [[News/e37d74d0774d9a49|Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월]] · 2026-10-04
+- [[News/4e48c8fa40d39243|에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획]] · 2026-10-04
 - [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]] · 2026-10-01
 - [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]] · 2026-10-01
 - [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01
