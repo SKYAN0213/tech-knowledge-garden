@@ -161,3 +161,8 @@ replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 n
 과거 verified 후보에 event_id가 있지만 현재 승인 receipt가 없는 경우에는 공통 묶음 처리에서 identity_review로 분기한다. 기존 승인을 덮어쓰거나 신규 사건으로 등록하지 않는다. 실제 수집 디버깅과 전체 원문 대조 복구는 [런북360절](LOCAL_AI_NEWS_RUNBOOK.md#360-abb-전체-원문-대조-복구회사명-검토기존-승인-중복-차단)을 참조한다.
 
 이미 verified인 private 후보에 현재 approval binding이 없으면 `candidate-approval --existing-editorial-review`로 과거 승인·원문·현재 재검토 원고의 동일 사건 관계를 명시적으로 검토한다. 이벤트ID를 바꾸거나 기존 승인 삭제로 우회하지 않는다. 일반 적용 FAQ의 뉴스 제외는 기존 `candidate-disposition`을 사용하고 원문은 보존한다. 명령/리뷰 스키마/실제 사례는 [런북362절](LOCAL_AI_NEWS_RUNBOOK.md#362-기존-비공개-승인-연결과-배경자료의-반복-처리-종료)을 따른다.
+
+
+### 공통 후처리 인용 오류의 재사용 가능한 복구
+
+출처별 파서나 crawler를 추가하기 전에 원문 block과 모델 인용의 차이를 확인한다. 공백·곡선 따옴표 차이만이면 기존 exact 검증을 유지하고 `npm run research:evidence-quotes -- --run NEW_RUN --source-run FAILED_ASSESSMENT --review PRIVATE_JSON`으로 명시적 검토를 새 run에 기록할 수 있다. source read/원 input·raw SHA/동일 block의 실제 quote/검토 이유가 필요하며 판정·수치·주체·의미 변경은 거부한다. 생성 모델을 재호출하지 않고 core evidence validator와 기존 process-source --assessment-run을 재사용한다. 실제 source·claim/schema가 잘못된 경우에는 이 경로로 성공처럼 만들지 않는다. 입력·검증·실제 GitHub/MLX 사례는 [런북363절](LOCAL_AI_NEWS_RUNBOOK.md#363-mlx-새-출처-전체-처리와-명시적-인용-정정-재사용)을 따른다.

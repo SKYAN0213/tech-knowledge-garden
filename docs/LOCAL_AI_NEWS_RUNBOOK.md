@@ -9260,3 +9260,31 @@ FAQ는 처리 run 안의6개 fact만 deferred이고 후보 장부는 unreviewed�
 현재 Ollama GGUF `qwen3.8:27b`는 사용자 요청으로 삭제됐고 MLX만 기본 모델로 사용한다. 과거 정책·출력 기록은 보존하며 기존 정책 복구본만으로 삭제된 모델을 즉시 재구동할 수 있다고 약속하지 않는다. 삭제 모델을 자동 재설치하지 않는다.
 
 WBS2/22·goal active, 전체92회/801기사 소급·독립40dev/20heldout human gold0·로컬 shadow7회·무인08시 운영 검증은 남아 있다. 공개448ec36·기존197원본·RSS/WebsiteData를 이번 개발 묶음으로 변경하지 않았다. 다음은 실제 신규 사건에서 MLX 사실 대조·집필·승인까지 같은 공통 경로를 검증하고 fresh Drive authoring 연결을 진행한다. 같은 정체가1시간 넘게 반복된 항목은 없다.
+
+
+## 363. MLX 새 출처 전체 처리와 명시적 인용 정정 재사용
+
+GitHub 공식 `GitHub async merge API generally available`(발표2026-10-01)의 운영 후보 `source-e77dbfb3ff372c839752`를 공통 저장 원문 선택·후처리로 실제 처리했다. 기존 daily-20261004-current54-live-v1의 로컬 기사 inventory는 최신 공개 발행 뒤 달라져 select-candidate가 거부했다. 이 보호를 우회하거나 옛 계획을 수정하지 않고, 해당 실제 scan run의 exact source version을 select-source로 선택했다. 원문3문단·parse26d8f91d…·source version e77dbfb3ff372c839752:d8908a44…를 유지했다. 새 수집/54경로 재실행은 하지 않았다.
+
+**실제 MLX 실행**: fact_extract:false 32.548초·3주장, evidence_compare:medium 90.573초·3대조, article_write:false 52.557초였다. 토큰 생성은 역할별1회씩 총3회다. 근거 대조의 3번째 인용에서 원문 `It’s`의 곡선 apostrophe가 ASCII로 바뀌어 exact 인용 검증이 실패했다. 실패한 원응답과 role ledger/비용을 보존했다. 모델 supported 의견을 사실 승인으로 바꾸지 않았다.
+
+새 공통 `research:evidence-quotes`는 **명시적인 인용-only 검토**를 새 assessment run에 저장한다. 원 input/hash, 완료된 모델 response/ledger, exact claim batch, parse/본문/locator와 원문 인용을 확인한다. 공백·곡선 따옴표 차이만 허용하고 의미·문자 대소문자·단위·수치·주체·판정·인용 위치는 바꾸지 않는다. 자동 정규화나 검증 완화가 아니다. source_read/quote_only/meaning_unchanged, reviewer/실제 timestamp, 원 raw SHA·수정 이유를 요구한다. 원run·기존 destination은 덮어쓰지 않는다. 동일 입력 재개는 추가 추론0·materialized_batches0/reused_batches1이며 원 실패가 여전히 남는다. 모델 비용은 원 ledger에만 남고 새 run의 attempts는0이다. 모든 새 결과는 requires_fact_review:true/public_approved:false다.
+
+명령:
+
+```sh
+node scripts/research-evidence-quotes.mjs --run github-async-merge-mlx-quote-reviewed-20261004-v1 --source-run github-async-merge-mlx-processing-20261004-v1 --review .local/research/local-ai/source-live-debug/github-async-merge-mlx-quote-review-20261004-v1.json
+node scripts/research.mjs process-source --run github-async-merge-mlx-processing-20261004-v2 --source-run github-async-merge-mlx-processing-20261004-v1 --assessment-run github-async-merge-mlx-quote-reviewed-20261004-v1 --candidate-key source-e77dbfb3ff372c839752
+```
+
+검토 입력 schema는 research-evidence-quote-review/v1이다. source_run/input_sha256/reviewer/reviewed_at/source_read/quote_only/meaning_unchanged/corrections를 사용한다. 각 correction은 batch(1-based),claim_id,evidence_index(0-based),original_quote,quote,raw_sha256,reason이다. 정정하려는 quote는 원block의 실제 문자열이어야 한다. 나머지 invalid schema/verdict/미완료 batch는 이 도구로 복구하지 않는다. 이미 완료한 assessment 정정에도 사용하지 않는다. core assessment/모델 정책/과거 처리 모듈 지문은 변경하지 않았다.
+
+**직접 사실·편집 검토**: 회사가 권장한 경로·GitHub API 내 지원 범위를 회사 발표에 귀속하도록2사실을 정정했다. 작성 모델은 리드 배열3항목 안에 실제6문장을 넣었고 설명을 반복했으며 `풀 리퀘트` 오탈자를 썼다. 기존 correct를 이용해 원출력을 보존하면서3문장 리드, 발표일, 권한 조건, 요청/조회 방법과 회사 설명으로 정리했다. 해당 실제 원고의 problems:[]만으로 의미·독서 품질을 완료한 것으로 판단하지 않았다. 모델 원고가 편집 없이 발행 가능한 상태였다는 주장도 하지 않는다.
+
+비공개 승인event `e77dbfb3ff372c83`는2026-10-01 원 발표일을 유지한다. candidate-approval로 운영 장부734개 중 해당1개만 verified로 연결했고 나머지733개는 같다. 승인 후 process-source/candidate-approval 재개에서는 추가모델0·원출력/정정/승인 SHA·장부SHA 불변을 확인했다. 장부 JSON SHA `5bdbd6459a0705f2b66f4620044e073b0d056b874f1d68965f5103e1a18aa934`. 오늘 신규 회차·원고 vault·공개 사이트·RSS·예약은 변경하지 않았다. 원고 preview.md는 Codex 열기 queued이며 새 UI 렌더링을 검증했다고 표현하지 않는다.
+
+검증: `node --test tests/research-evidence-assessment.test.mjs`20/20. 새 검사는 원 실패 보존/인용 정정/재개0추론, 미검토·수치 변경·unknown verdict·잘못된 raw hash 거부, 원문·원응답 변조·occupied destination·running attempt 거부와 기존 bound assessment reader를 확인한다. 전체 suite는 미실행이다. 현재 묶음에서 같은 병목을1시간 이상 반복하지 않았다.
+
+원문1판본·증거82파일/ZIP83member·903,804bytes를 Drive Research `1-RdQT00EPigsyo20tWbadI-pyyI4wzuj`에 저장했다. 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false/크기와 실제 원격 raw SHA `4de9cdad3d4a7f840674bcdf2596e4ee4bbcdd80723f9b9b7b2cbbe98d7979e6`, ZIP CRC/각 member SHA를 확인했다. archive-staging/github-async-merge-mlx-evidence-20261004-v1/drive-receipt.json 및 package-verification.json에서 재개한다. 개발 증거 묶음이며 독립 runtime closure·원고 공개 영수증은 아니다.
+
+전체WBS2/22·goal active. MLX 독립 의미 평가60건/전체 소급/기존 일일 묶음과 새 인용-review의 재개·현황 연결/로컬 shadow7·무인08시·새 공개 배포는 미완료다. 다음 구현은 이 실제 실패/정정 run을 기존 처리 현황에서 구분해 표시하고, 정확히 연결된 reviewed assessment를 재개 선택에 전달하는 것이다. 원문·정책·주장 변경은 새 run으로 남기고 생성 재사용을 품질 승인으로 승격하지 않는다.

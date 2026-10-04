@@ -6,6 +6,8 @@ import path from "node:path"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { assessEvidenceCheckpoint } from "../scripts/research/evidence-assessment.mjs"
+import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
+import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "evidence-assess-")))
@@ -279,4 +281,159 @@ test("source modified during inference cannot produce a completed assessment", a
   }
   await assert.rejects(() => run(f), /body hash mismatch/)
   assert.equal(readJSON(f.root, "runs/assessment/evidence-assessment/assessment.json"), null)
+})
+
+async function quoteFixture(t) {
+  const f = fixture(t)
+  f.row.evidence[0].quote = f.row.evidence[0].quote.replace("50 units", "50  units")
+  const generate = f.provider.structured.bind(f.provider)
+  let request
+  f.provider.structured = async (value) => {
+    request = value
+    return generate(value)
+  }
+  await assert.rejects(() => run(f), /exact stored source/)
+  atomicWrite(f.root, "runs/assessment/documents.json", f.documents)
+  atomicWrite(f.root, "runs/assessment/parses.json", f.parses)
+  atomicWrite(f.root, "runs/assessment/claims.json", { claims: f.claims })
+  const rawPath = "runs/assessment/evidence-assessment/batch-1.json"
+  const bytes = fs.readFileSync(path.join(f.root, rawPath))
+  const raw = JSON.parse(bytes)
+  const payload = {
+    schema: "model-budget/v2",
+    binding: f.provider.executionPolicy,
+    attempts: [
+      {
+        status: "complete",
+        finished_at: "2026-10-04T00:00:00Z",
+        request,
+        result: raw,
+        result_sha256: sha256(JSON.stringify(raw)),
+      },
+    ],
+    extensions: [],
+  }
+  atomicWrite(f.root, "runs/assessment/model-policy/evidence_compare/budget.json", {
+    ...payload,
+    sha256: sha256(JSON.stringify(payload)),
+  })
+  f.quoteReview = {
+    schema: "research-evidence-quote-review/v1",
+    source_run: "assessment",
+    input_sha256: sha256(
+      JSON.stringify(readJSON(f.root, "runs/assessment/evidence-assessment/input.json")),
+    ),
+    reviewer: "Explicit test source reviewer",
+    reviewed_at: "2026-10-04T00:01:00Z",
+    source_read: true,
+    quote_only: true,
+    meaning_unchanged: true,
+    corrections: [
+      {
+        batch: 1,
+        claim_id: "c1",
+        evidence_index: 0,
+        original_quote: f.row.evidence[0].quote,
+        quote: f.parses[0].blocks[0].text,
+        raw_sha256: sha256(bytes),
+        reason: "Restore the exact single space in the source.",
+      },
+    ],
+  }
+  f.originalBytes = bytes
+  return f
+}
+const repairQuotes = (f, run = "quote-reviewed") =>
+  reviewEvidenceQuotes({
+    root: f.root,
+    run,
+    sourceRun: "assessment",
+    review: f.quoteReview,
+  })
+
+test("explicit quote repair preserves invalid output and verdict without new inference", async (t) => {
+  const f = await quoteFixture(t)
+  const result = await repairQuotes(f)
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.materialized_batches, 1)
+  assert.equal(result.record.assessments[0].verdict, "supported")
+  assert.equal(result.record.requires_fact_review, true)
+  assert.equal(result.record.public_approved, false)
+  const raw = readJSON(f.root, "runs/quote-reviewed/evidence-assessment/batch-1.json")
+  assert.equal(raw.output.assessments[0].evidence[0].quote, f.parses[0].blocks[0].text)
+  assert.equal(raw.quote_review.source_run, "assessment")
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+    f.originalBytes,
+  )
+  const before = fs.readFileSync(path.join(f.root, "runs/quote-reviewed/quote-review-result.json"))
+  const again = await repairQuotes(f)
+  assert.equal(again.materialized_batches, 0)
+  assert.equal(again.reused_batches, 1)
+  assert.equal(f.calls(), 1)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/quote-reviewed/quote-review-result.json")),
+    before,
+  )
+  await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
+})
+
+for (const [name, change] of [
+  [
+    "unacknowledged source",
+    (f) => {
+      f.quoteReview.source_read = false
+    },
+  ],
+  [
+    "different number",
+    (f) => {
+      f.quoteReview.corrections[0].quote = f.quoteReview.corrections[0].quote.replace("50", "60")
+    },
+  ],
+  [
+    "unknown verdict field",
+    (f) => {
+      f.quoteReview.corrections[0].verdict = "supported"
+    },
+  ],
+  [
+    "different raw response",
+    (f) => {
+      f.quoteReview.corrections[0].raw_sha256 = "a".repeat(64)
+    },
+  ],
+]) {
+  test(`quote recovery rejects ${name} without inference`, async (t) => {
+    const f = await quoteFixture(t)
+    change(f)
+    await assert.rejects(() => repairQuotes(f), /review required|explicitly repaired/)
+    assert.equal(f.calls(), 1)
+    assert.equal(readJSON(f.root, "runs/quote-reviewed/evidence-assessment/assessment.json"), null)
+  })
+}
+
+test("quote recovery rejects changed source and prior raw output on resume", async (t) => {
+  const f = await quoteFixture(t)
+  await repairQuotes(f)
+  const raw = readJSON(f.root, "runs/assessment/evidence-assessment/batch-1.json")
+  raw.output.assessments[0].checks.meaning = "contradicted"
+  atomicWrite(f.root, "runs/assessment/evidence-assessment/batch-1.json", raw)
+  await assert.rejects(() => repairQuotes(f), /completed model attempt/)
+  atomicWrite(f.root, f.documents[0].body_path, "Changed body")
+  await assert.rejects(() => repairQuotes(f), /body hash mismatch/)
+  assert.equal(f.calls(), 1)
+})
+
+test("quote recovery preserves an occupied destination and rejects a running attempt", async (t) => {
+  const f = await quoteFixture(t)
+  atomicWrite(f.root, "runs/occupied/claims.json", { preserved: true })
+  await assert.rejects(() => repairQuotes(f, "occupied"), /use a new run/)
+  assert.equal(readJSON(f.root, "runs/occupied/quote-review-input.json"), null)
+  const file = "runs/assessment/model-policy/evidence_compare/budget.json"
+  const { sha256: seal, ...ledger } = readJSON(f.root, file)
+  ledger.attempts[0].status = "running"
+  atomicWrite(f.root, file, { ...ledger, sha256: sha256(JSON.stringify(ledger)) })
+  await assert.rejects(() => repairQuotes(f), /Stopped incomplete/)
+  assert.equal(f.calls(), 1)
 })
