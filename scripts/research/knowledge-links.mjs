@@ -99,6 +99,10 @@ export function assertNewConceptMetadata(meta, { reviewDay, sourceURLs }) {
     map.reviewed !== reviewDay
   )
     throw Error("Explicit specialist learning-value review required")
+  assertConceptConnections(meta, sourceURLs)
+}
+
+export function assertConceptConnections(meta, sourceURLs) {
   for (const key of ["relations", "connections"]) {
     const edges = meta[key] || []
     if (!Array.isArray(edges)) throw Error("Explicit concept connection array required")
@@ -125,9 +129,10 @@ export function assertNewConceptMetadata(meta, { reviewDay, sourceURLs }) {
             !["source", "inference"].includes(edge.basis) ||
             !edge.evidence?.length)) ||
         (edge.evidence !== undefined &&
-          (!Array.isArray(edge.evidence) || edge.evidence.some((u) => !sourceURLs.has(u))))
+          (!Array.isArray(edge.evidence) ||
+            edge.evidence.some((u) => !sourceURLs.has(u) || !meta.verified_sources.includes(u))))
       )
-        throw Error("Source-bound new concept connections required")
+        throw Error("Source-bound concept connections required")
       seen.add(identity)
     }
   }
@@ -208,11 +213,9 @@ export function assertConceptConflicts(vault, proposals) {
       )
         throw Error("Concept identity or exact alias conflicts with another canonical note")
     }
-    if (changed.get(concept.path).operation === "create") {
-      for (const edge of [...(concept.meta.relations || []), ...(concept.meta.connections || [])])
-        if (!concepts.some((c) => c.meta.concept_id === edge.target))
-          throw Error("Unknown new concept connection target")
-    }
+    for (const edge of [...(concept.meta.relations || []), ...(concept.meta.connections || [])])
+      if (!concepts.some((c) => c.meta.concept_id === edge.target))
+        throw Error("Unknown concept connection target")
   }
 }
 

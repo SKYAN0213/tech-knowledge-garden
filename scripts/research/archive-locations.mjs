@@ -3,10 +3,11 @@ import { sha256 } from "./contracts.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { canonicalURL } from "../garden.mjs"
-import { loadApprovedOntologyInput } from "./ontology.mjs"
+import { loadApprovedOntologyInput, projectEvidenceOntology } from "./ontology.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
-const locationPath = (id) => `archive-staging/${id}/drive-location.json`
+const locationPath = (id, reindexed = false) =>
+  `archive-staging/${id}/drive-location${reindexed ? "-v2" : ""}.json`
 
 // Index verified storage locations only. A lookup never approves, downloads,
 // restores or publishes an article, and remains useful when the source cache is absent.
@@ -16,9 +17,11 @@ export async function registerArchiveLocation({
   metadataFile,
   remotePackageFile,
   expectedParentId,
+  reindex = false,
+  vault = "vault",
   now = new Date().toISOString(),
 }) {
-  if (!validRun(runId) || !validRun(expectedParentId))
+  if (!validRun(runId) || !validRun(expectedParentId) || typeof reindex !== "boolean")
     throw Error("Exact archive run and expected Drive parent required")
   return withLock(root, `archive-location-${runId}`, async () => {
     const metadataBytes = fs.readFileSync(metadataFile)
@@ -67,7 +70,25 @@ export async function registerArchiveLocation({
         throw Error("Archive dependency changed: " + f.path)
     }
     const sources = new Map(),
-      articles = []
+      articles = [],
+      reviewedRuns = new Set()
+    const reviewedArticle = (run) => {
+      if (reviewedRuns.has(run)) return
+      const authority = manifest.concept_authorities?.find((a) => a.approved_run === run)
+      const input = loadApprovedOntologyInput(root, run, {
+        vault: authority ? safePath(root, authority.relative_vault) : vault,
+      })
+      const graph = projectEvidenceOntology([input])
+      articles.push({
+        article: input.article,
+        versions: new Set(
+          graph.nodes
+            .filter((node) => node.type === "SourceVersion")
+            .map((node) => node.source_version_id),
+        ),
+      })
+      reviewedRuns.add(run)
+    }
     for (const run of manifest.bound_runs) {
       if (!validRun(run)) throw Error("Invalid bound archive run")
       const base = `runs/${run}/`
@@ -101,6 +122,7 @@ export async function registerArchiveLocation({
         }
       }
       const approval = readJSON(root, base + "candidate-approval.json")
+      if (readJSON(root, base + "editorial-review.json")) reviewedArticle(run)
       if (approval) {
         if (!manifest.bound_runs.includes(approval.approved_run))
           throw Error("Archive approval points outside the package")
@@ -109,7 +131,9 @@ export async function registerArchiveLocation({
           throw Error("Archive article does not match its approval")
         if (!validRun(article.event_id) || !Array.isArray(article.source_urls))
           throw Error("Approved archive article requires an event ID and exact source URLs")
-        articles.push(article)
+        if (readJSON(root, `runs/${approval.approved_run}/editorial-review.json`))
+          reviewedArticle(approval.approved_run)
+        else articles.push({ article, versions: null })
       }
       const revision = readJSON(root, base + "source-revision-resolution.json")
       if (revision) {
@@ -127,15 +151,19 @@ export async function registerArchiveLocation({
           selected.article.event_id !== revision.event_id
         )
           throw Error("Archive revision does not match its current approval")
-        articles.push(selected.article)
+        reviewedArticle(selectedRun)
       }
     }
     for (const source of sources.values()) {
       source.event_ids = [
         ...new Set(
           articles
-            .filter((a) => a.source_urls.some((u) => canonicalURL(u) === canonicalURL(source.url)))
-            .map((a) => a.event_id),
+            .filter(({ article, versions }) =>
+              versions
+                ? versions.has(source.source_version_id)
+                : article.source_urls.some((u) => canonicalURL(u) === canonicalURL(source.url)),
+            )
+            .map(({ article }) => article.event_id),
         ),
       ].sort()
       source.source_runs = [...new Set(source.source_runs)].sort()
@@ -144,8 +172,26 @@ export async function registerArchiveLocation({
     const rows = [...sources.values()].sort((a, b) =>
       a.source_version_id.localeCompare(b.source_version_id),
     )
+    const priorPath = locationPath(runId)
+    const prior = reindex ? readJSON(root, priorPath) : null
+    if (
+      reindex &&
+      (!prior ||
+        prior.schema !== "research-drive-archive-location/v1" ||
+        prior.package_sha256 !== receipt.sha256 ||
+        prior.manifest_sha256 !== receipt.manifest_sha256 ||
+        prior.drive?.file_id !== metadata.file_id ||
+        prior.drive?.parent_id !== expectedParentId ||
+        prior.drive?.shared !== false ||
+        prior.drive?.raw_sha256_verified !== true ||
+        prior.sources_sha256 !== sha256(JSON.stringify(prior.sources)))
+    )
+      throw Error("Reindex requires the preserved verified location of the same archive")
     const record = {
-      schema: "research-drive-archive-location/v1",
+      schema: `research-drive-archive-location/v${reindex ? 2 : 1}`,
+      ...(reindex
+        ? { previous_location_sha256: sha256(fs.readFileSync(safePath(root, priorPath))) }
+        : {}),
       archive_run: runId,
       package_sha256: receipt.sha256,
       package_bytes: receipt.bytes,
@@ -164,10 +210,11 @@ export async function registerArchiveLocation({
       candidate_approved: false,
       candidate_published: false,
     }
-    const existing = readJSON(root, locationPath(runId))
+    const outputPath = locationPath(runId, reindex)
+    const existing = readJSON(root, outputPath)
     if (existing && JSON.stringify(existing) !== JSON.stringify(record))
-      throw Error("Archive location changed; preserve the old record and use a new archive run")
-    if (!existing) atomicCreate(root, locationPath(runId), record)
+      throw Error("Archive location changed; preserve the old record and explicitly reindex it")
+    if (!existing) atomicCreate(root, outputPath, record)
     return { ...record, reused: Boolean(existing) }
   })
 }
@@ -187,10 +234,26 @@ export function lookupArchiveLocations(root, { sourceVersionId, eventId }) {
   for (const entry of entries) {
     if (entry.isSymbolicLink()) throw Error("Symlink in archive location register")
     if (!entry.isDirectory() || !validRun(entry.name)) continue
-    const record = readJSON(root, locationPath(entry.name))
+    const prior = readJSON(root, locationPath(entry.name))
+    const revised = readJSON(root, locationPath(entry.name, true))
+    if (
+      revised &&
+      (!prior ||
+        revised.schema !== "research-drive-archive-location/v2" ||
+        revised.previous_location_sha256 !==
+          sha256(fs.readFileSync(safePath(root, locationPath(entry.name)))) ||
+        revised.package_sha256 !== prior.package_sha256 ||
+        revised.manifest_sha256 !== prior.manifest_sha256 ||
+        revised.drive?.file_id !== prior.drive?.file_id ||
+        revised.drive?.parent_id !== prior.drive?.parent_id)
+    )
+      throw Error("Invalid reindexed archive location: " + entry.name)
+    const record = revised || prior
     if (!record) continue
     if (
-      record.schema !== "research-drive-archive-location/v1" ||
+      !["research-drive-archive-location/v1", "research-drive-archive-location/v2"].includes(
+        record.schema,
+      ) ||
       record.archive_run !== entry.name ||
       record.drive?.shared !== false ||
       record.drive?.raw_sha256_verified !== true ||

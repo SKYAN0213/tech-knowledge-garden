@@ -16,6 +16,8 @@ export async function main(args = process.argv.slice(2)) {
       parent: { type: "string" },
       "source-version": { type: "string" },
       event: { type: "string" },
+      reindex: { type: "boolean", default: false },
+      vault: { type: "string" },
     },
   })
   if (positionals.length !== 1) throw Error("Use register or lookup")
@@ -24,7 +26,9 @@ export async function main(args = process.argv.slice(2)) {
     !values.run &&
     !values.metadata &&
     !values["remote-package"] &&
-    !values.parent
+    !values.parent &&
+    !values.reindex &&
+    !values.vault
   )
     return lookupArchiveLocations(values.root, {
       sourceVersionId: values["source-version"],
@@ -45,9 +49,11 @@ export async function main(args = process.argv.slice(2)) {
       metadataFile: values.metadata,
       remotePackageFile: values["remote-package"],
       expectedParentId: values.parent,
+      reindex: values.reindex,
+      vault: values.vault || "vault",
     })
   throw Error(
-    "register --run ID --metadata FILE --remote-package FILE --parent ID; lookup --source-version ID or --event ID",
+    "register --run ID --metadata FILE --remote-package FILE --parent ID [--reindex] [--vault PATH]; lookup --source-version ID or --event ID",
   )
 }
 if (

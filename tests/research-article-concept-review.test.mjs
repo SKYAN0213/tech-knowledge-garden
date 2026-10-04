@@ -18,6 +18,10 @@ import { CONCEPT_NOTE_HEADINGS } from "../scripts/research/knowledge-links.mjs"
 import { archiveClosure } from "../scripts/research/archive-closure.mjs"
 import { loadArchivedConceptApproval } from "../scripts/research/concept-archive.mjs"
 import {
+  registerArchiveLocation,
+  lookupArchiveLocations,
+} from "../scripts/research/archive-locations.mjs"
+import {
   loadApprovedOntologyInput,
   projectEvidenceOntology,
 } from "../scripts/research/ontology.mjs"
@@ -220,6 +224,138 @@ function restoreArchive(f, result, destination = "restore/concepts") {
   assert.equal(restored.status, 0, restored.stderr)
   return path.join(f.root, destination)
 }
+
+test("standalone editorial event locations bind only cited versions and reindex without rewriting old evidence", async (t) => {
+  const f = fixture(t)
+  const original = readJSON(f.root, `runs/${f.run}/documents.json`)[0]
+  const extraBody = "Later, unrelated text at the same URL."
+  const hash = sha256(extraBody)
+  const later = {
+    ...original,
+    body_sha256: hash,
+    source_version_id: `${original.source_id}:${hash}`,
+    body_path: `documents/${original.source_id}/${hash}/body.bin`,
+  }
+  atomicWrite(f.root, later.body_path, extraBody)
+  atomicWrite(f.root, `runs/${f.run}/documents.json`, [original, later])
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const packaged = await archiveClosure(f.root, "portable", f.run, [], { vault: f.vault })
+  const metadataFile = path.join(f.root, "drive-metadata.json")
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "editorial-archive",
+      name: "portable.zip",
+      mime_type: "application/zip",
+      size: packaged.package.bytes,
+      parent_ids: ["research-folder"],
+      shared: false,
+    }),
+  )
+  const args = {
+    root: f.root,
+    runId: "portable",
+    metadataFile,
+    remotePackageFile: path.join(f.root, packaged.package.path),
+    expectedParentId: "research-folder",
+  }
+  fs.rmSync(f.vault, { recursive: true })
+  const result = await registerArchiveLocation(args)
+  assert.deepEqual(
+    result.sources.find((s) => s.source_version_id === original.source_version_id).event_ids,
+    [f.review.event_id],
+  )
+  assert.deepEqual(
+    result.sources.find((s) => s.source_version_id === later.source_version_id).event_ids,
+    [],
+  )
+  assert.equal(fs.existsSync(path.join(f.root, `runs/${f.run}/candidate-approval.json`)), false)
+  assert.equal(lookupArchiveLocations(f.root, { eventId: f.review.event_id }).length, 1)
+  const base = `archive-staging/portable/drive-location.json`
+  const legacy = structuredClone(result)
+  delete legacy.reused
+  for (const source of legacy.sources) source.event_ids = []
+  legacy.sources_sha256 = sha256(JSON.stringify(legacy.sources))
+  atomicWrite(f.root, base, legacy)
+  const before = fs.readFileSync(path.join(f.root, base))
+  await assert.rejects(() => registerArchiveLocation(args), /explicitly reindex/)
+  const current = await registerArchiveLocation({ ...args, reindex: true })
+  assert.equal(current.schema, "research-drive-archive-location/v2")
+  assert.equal(current.previous_location_sha256, sha256(before))
+  assert.deepEqual(fs.readFileSync(path.join(f.root, base)), before)
+  assert.equal((await registerArchiveLocation({ ...args, reindex: true })).reused, true)
+  const located = lookupArchiveLocations(f.root, { eventId: f.review.event_id })
+  assert.equal(located.length, 1)
+  assert.deepEqual(
+    located[0].sources.map((s) => s.source_version_id),
+    [original.source_version_id],
+  )
+  fs.appendFileSync(path.join(f.root, base), "\n")
+  assert.throws(
+    () => lookupArchiveLocations(f.root, { eventId: f.review.event_id }),
+    /Invalid reindexed/,
+  )
+})
+
+test("standalone archive location cannot index an unapproved or changed editorial draft", async (t) => {
+  const f = fixture(t)
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const packaged = await archiveClosure(f.root, "portable", f.run, [], { vault: f.vault })
+  const metadataFile = path.join(f.root, "drive-metadata.json")
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "editorial-archive",
+      name: "portable.zip",
+      mime_type: "application/zip",
+      size: packaged.package.bytes,
+      parent_ids: ["research-folder"],
+      shared: false,
+    }),
+  )
+  const args = {
+    root: f.root,
+    runId: "portable",
+    metadataFile,
+    remotePackageFile: path.join(f.root, packaged.package.path),
+    expectedParentId: "research-folder",
+  }
+  const draftFile = path.join(f.root, `runs/${f.run}/draft.json`)
+  fs.appendFileSync(draftFile, "\n")
+  await assert.rejects(() => registerArchiveLocation(args), /Archive dependency changed/)
+  assert.equal(
+    fs.existsSync(path.join(f.root, "archive-staging/portable/drive-location.json")),
+    false,
+  )
+  await assert.rejects(
+    () => registerArchiveLocation({ ...args, reindex: true }),
+    /Archive dependency changed/,
+  )
+})
 
 test("concept closure restores approval and ontology without the original vault or source cache", async (t) => {
   const f = fixture(t)

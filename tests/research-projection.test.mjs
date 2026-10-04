@@ -19,6 +19,7 @@ import {
   verifyKnowledgeOutputs,
   stageApprovedNote,
   conceptIndexProjection,
+  copyFiles,
 } from "../scripts/research/preview.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import {
@@ -147,6 +148,32 @@ function reviseLegacyFixture(f, body) {
   }))
   atomicWrite(f.vault, f.relative, f.packet.before_content)
 }
+
+test("preview snapshot copies preserve exact bytes, independent writes and drift rejection", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "preview-clone-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const source = path.join(root, "source"),
+    destination = path.join(root, "destination")
+  fs.mkdirSync(source)
+  const original = Buffer.alloc(1024 * 1024, 65)
+  fs.writeFileSync(path.join(source, "asset.bin"), original)
+  const entries = [{ path: "asset.bin", sha256: sha256(original) }]
+  copyFiles(source, destination, entries)
+  assert.deepEqual(fs.readFileSync(path.join(destination, "asset.bin")), original)
+  fs.writeFileSync(path.join(destination, "asset.bin"), "edited preview")
+  assert.deepEqual(fs.readFileSync(path.join(source, "asset.bin")), original)
+  fs.writeFileSync(path.join(source, "asset.bin"), "changed source")
+  assert.throws(() => copyFiles(source, destination, entries), /Snapshot source changed/)
+  assert.equal(fs.readFileSync(path.join(destination, "asset.bin"), "utf8"), "edited preview")
+  assert.deepEqual(fs.readdirSync(destination), ["asset.bin"])
+  const link = path.join(root, "link")
+  fs.symlinkSync(source, link)
+  assert.throws(() => copyFiles(link, destination, entries), /Symlink/)
+  assert.throws(
+    () => copyFiles(source, link, [{ path: "asset.bin", sha256: sha256("changed source") }]),
+    /Symlink/,
+  )
+})
 
 test("complete pre-v2 transition retains edition identity and all source events without old editorial prose", (t) => {
   const f = legacyTransitionFixture(t)
@@ -396,6 +423,68 @@ test("one legacy article can split into explicitly reviewed distinct events with
       mutate(packet)
       assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
     }
+  }
+})
+
+test("legacy official alternatives retain original citations and use only the same event's approved sources", (t) => {
+  for (const mode of [{}, { sourceMarkers: true }, { sourceListOnly: true }]) {
+    const f = legacyTransitionFixture(t, mode)
+    const original = f.packet.events[0].source_urls[0]
+    const alternative = "https://official.example.com/system-card"
+    f.articles[0].source_urls = [alternative]
+    f.packet.events[0].source_alternative_reviews = [
+      {
+        original_url: original,
+        alternative_url: alternative,
+        alternative_source_read: true,
+        official_source_checked: true,
+        same_event_checked: true,
+        event_date_checked: true,
+        reason: "Original unavailable; publisher system card directly confirms this dated release",
+      },
+    ]
+    if (mode.sourceListOnly)
+      for (const event of f.packet.events)
+        event.source_list_review = {
+          source_list_read: true,
+          article_source_read: true,
+          association_checked: true,
+          reason: "Matched original list entry to original article before reviewing alternative",
+        }
+    const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+    const after = parseNote(projection.content)
+    assert.deepEqual(
+      extractArticles({ ...after, file: f.existing.file }).map((a) => [a.id, a.urls]),
+      f.articles.map((a) => [a.event_id, a.source_urls]),
+    )
+    assert.equal(after.meta.coverage_end, f.existing.meta.coverage_end)
+    assert.equal(fs.readFileSync(f.existing.file, "utf8"), f.packet.before_content)
+    assert.equal(f.packet.events[0].source_urls[0], original)
+    assert.equal(projection.content.includes("source_alternative_reviews"), false)
+    assert.equal(projection.content.includes("Original unavailable"), false)
+    for (const mutate of [
+      (p) => delete p.events[0].source_alternative_reviews,
+      (p) => (p.events[0].source_alternative_reviews[0].original_url = alternative),
+      (p) => (p.events[0].source_alternative_reviews[0].alternative_url = original),
+      (p) =>
+        (p.events[0].source_alternative_reviews[0].alternative_url = f.articles[1].source_urls[0]),
+      (p) => (p.events[0].source_alternative_reviews[0].alternative_source_read = false),
+      (p) => (p.events[0].source_alternative_reviews[0].official_source_checked = false),
+      (p) => (p.events[0].source_alternative_reviews[0].same_event_checked = false),
+      (p) => (p.events[0].source_alternative_reviews[0].event_date_checked = false),
+      (p) => (p.events[0].source_alternative_reviews[0].reason = " "),
+      (p) => p.events[0].source_alternative_reviews.push(p.events[0].source_alternative_reviews[0]),
+      (p) => (p.events[0].source_urls = [alternative]),
+    ]) {
+      const packet = structuredClone(f.packet)
+      mutate(packet)
+      assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+    }
+    const changed = structuredClone(f.articles)
+    changed[0].source_urls = []
+    assert.throws(() => assertLegacyTransition(f.packet, changed, f.existing, f.relative))
+    changed[0].source_urls = [original, alternative]
+    assert.throws(() => assertLegacyTransition(f.packet, changed, f.existing, f.relative))
   }
 })
 

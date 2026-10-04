@@ -656,6 +656,57 @@ test("note review rejects stale canonical input, false review, foreign facts, al
   assert.throws(() => evaluate(f.decision), /body hash mismatch/)
 })
 
+test("replacement note approvals validate typed relations, evidence and canonical targets before preview", (t) => {
+  const f = fixture(t)
+  atomicWrite(
+    f.vault,
+    "Knowledge/Other Model.md",
+    noteText(
+      {
+        ...f.meta,
+        title: "Other Model",
+        concept_id: "other-model",
+        label: "다른 모델",
+        aliases: ["OM"],
+      },
+      "## 한 문장 정의\n\n다른 모델.\n",
+    ),
+  )
+  const n = parseNote(f.decision.notes[0].content)
+  const relation = {
+    target: "other-model",
+    type: "uses",
+    reason: "직접 확인한 구성 관계",
+    basis: "source",
+    evidence: [f.doc.original_url],
+  }
+  const decision = structuredClone(f.decision)
+  decision.notes[0].content = noteText({ ...n.meta, relations: [relation] }, n.body)
+  assert.equal(evaluateNoteReview(f.root, decision, { vault: f.vault }).notes.length, 1)
+  for (const mutate of [
+    (r) => (r.basis = "explicit"),
+    (r) => (r.type = "invented"),
+    (r) => (r.target = "unknown-concept"),
+    (r) => (r.target = n.meta.concept_id),
+    (r) => (r.evidence = []),
+    (r) => (r.evidence = ["https://example.org/uncited"]),
+    (r) => (r.reason = " "),
+    (r) => (r.extra = true),
+  ]) {
+    const changed = structuredClone(relation)
+    mutate(changed)
+    const d = structuredClone(decision)
+    d.notes[0].content = noteText({ ...n.meta, relations: [changed] }, n.body)
+    assert.throws(() => evaluateNoteReview(f.root, d, { vault: f.vault }), /concept connection/)
+  }
+  const duplicate = structuredClone(decision)
+  duplicate.notes[0].content = noteText({ ...n.meta, relations: [relation, relation] }, n.body)
+  assert.throws(
+    () => evaluateNoteReview(f.root, duplicate, { vault: f.vault }),
+    /concept connection/,
+  )
+})
+
 test("current canonical note and review day cannot change behind a saved approval", async (t) => {
   const f = fixture(t)
   await approveNoteReview(f.root, "notes", f.decision, { vault: f.vault })

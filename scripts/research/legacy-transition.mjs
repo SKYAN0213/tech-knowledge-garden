@@ -31,6 +31,19 @@ eventSchema.properties.event_split_review = object({
   distinct_event_checked: { type: "boolean", enum: [true] },
   reason: text,
 })
+eventSchema.properties.source_alternative_reviews = {
+  type: "array",
+  minItems: 1,
+  items: object({
+    original_url: text,
+    alternative_url: text,
+    alternative_source_read: { type: "boolean", enum: [true] },
+    official_source_checked: { type: "boolean", enum: [true] },
+    same_event_checked: { type: "boolean", enum: [true] },
+    event_date_checked: { type: "boolean", enum: [true] },
+    reason: text,
+  }),
+}
 const packetSchema = object({
   schema: { type: "string", enum: ["research-legacy-edition-transition/v1"] },
   reviewer: text,
@@ -171,6 +184,41 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     throw Error("Legacy transition requires exactly all distinct reviewed source events")
   const byID = new Map(articles.map((a) => [a.event_id, a]))
   const sources = legacySources(before.body, units)
+  // Retain original citation identity privately. A reviewed official alternative
+  // may support that event, but must actually be cited by its approved article.
+  // These mappings never make the unavailable original into acquired evidence.
+  const alternativesByEvent = new Map()
+  for (const event of packet.events) {
+    const assigned = new Set(event.source_urls.map(canonicalURL))
+    const approved = new Set(byID.get(event.event_id).source_urls.map(canonicalURL))
+    const alternatives = new Map()
+    for (const review of event.source_alternative_reviews || []) {
+      const original = canonicalURL(review.original_url)
+      const alternative = canonicalURL(review.alternative_url)
+      if (
+        !/^https?:\/\//.test(original) ||
+        !/^https?:\/\//.test(alternative) ||
+        !review.reason.trim() ||
+        !assigned.has(original) ||
+        original === alternative ||
+        approved.has(original) ||
+        !approved.has(alternative) ||
+        alternatives.has(original)
+      )
+        throw Error(
+          "Legacy alternative requires a distinct cited official source for its original event",
+        )
+      alternatives.set(original, alternative)
+    }
+    alternativesByEvent.set(event.event_id, alternatives)
+  }
+  const retainsSource = (id, url) => {
+    const original = canonicalURL(url)
+    const approved = byID.get(id).source_urls.map(canonicalURL)
+    return (
+      approved.includes(original) || approved.includes(alternativesByEvent.get(id)?.get(original))
+    )
+  }
   const anchorsByUnit = new Map()
   for (const event of packet.events) {
     if (!anchorsByUnit.has(event.unit_id)) anchorsByUnit.set(event.unit_id, [])
@@ -211,7 +259,12 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         urls.some(
           (url) =>
             !decision.event_ids.some((id) =>
-              byID.get(id).source_urls.map(canonicalURL).includes(url),
+              packet.events.some(
+                (event) =>
+                  event.event_id === id &&
+                  event.source_urls.map(canonicalURL).includes(url) &&
+                  retainsSource(id, url),
+              ),
             ),
         )
       )
@@ -269,10 +322,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       !decision.event_ids.includes(event.event_id) ||
       (!sourceListReview && assignedSources.some((url) => !inlineSources.includes(url))) ||
       (event.event_split_review && !event.event_split_review.reason.trim()) ||
-      event.source_urls.some(
-        (url) =>
-          !byID.get(event.event_id).source_urls.map(canonicalURL).includes(canonicalURL(url)),
-      )
+      event.source_urls.some((url) => !retainsSource(event.event_id, url))
     )
       throw Error("Legacy transition event must retain its exact title, unit and original sources")
   }

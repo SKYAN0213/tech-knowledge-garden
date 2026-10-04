@@ -9640,3 +9640,37 @@ Kitesurf100blocks 전체 추출2batch/12후보/구조12는86.470초와63.186초�
 재개 경로는 archive-staging/<id>/{package-receipt,drive-receipt,local-restore-verification,remote-restore-verification,drive-metadata,drive-location}.json과 source-live-debug/legacy-prompt-portable-verify-20261005-v1.mjs다. 실제 위치 등록은 원문9판본 조회를 제공하지만 candidate-approval가 없는 standalone editorial 승인5건의 event_ids는 아직 비어 있다. 사건별 위치 조회 누락을 다음 공통 색인 보강 항목으로 남겼으며 임의 event_ids 수정으로 숨기지 않았다. 온톨로지의5event/claim/source 연결과 독립 복구는 별도로 통과했다.
 
 공개 d21e269/Drive 작성200은 그대로다.8/7 전체 전환은 OpenAI HTTP403의 다른 공식 근거 확보·모든 원본 unit/Source List7URL 검토가 남아 있어 부분 적용하지 않았다. 다음은 standalone event 위치 연결, 확인 불가 사건의 공개 제외 계약/빈 legacy 처리, 나머지 전수66회차617구간 및 의존 용어 검토다. 독립40/20·정규7회/무인08시·full runtime portable 관문도 남는다. goal active/WBS2/22, 이번 구현/실추론·승인/독립 복구·Drive 보관은 progress이며 같은 요청을1시간 반복한 blocker는 없다.
+
+
+## 380. 단독 편집 승인 사건 색인과 구형 기사의 공식 대체 출처
+
+단독 editorial 승인은 candidate-approval가 없어서 기존 Drive 위치 색인의 event_ids가 비었다. 공통 registerArchiveLocation이 exact 승인 원고·검토·용어 authority를 다시 검증하고 온톨로지의 실제 인용 SourceVersion으로 연결하도록 수정했다. 같은 URL의 다른 판본을 인용하지 않았다면 연결하지 않는다. 기존 candidate-only 보관 호환은 유지하고 승인·draft 변경은 거부한다. 위치 조회는 다운로드·승인·공개를 수행하지 않는다.
+
+기존 drive-location.json은 보존한다. register --reindex는 같은 ZIP/manifest/Drive ID·부모/private·fresh 메타데이터·원격 raw SHA·모든 dependency hash를 확인한 뒤 drive-location-v2.json을 추가한다. previous_location_sha256으로 이전 파일 bytes를 고정하며 lookup은 일치하는 v2만 한 번 반환한다. 이전 파일 변조·다른 보관본·stale 관측·변경 의존성은 차단한다. CLI scripts/research-archives.mjs의 register에서만 --reindex와 --vault를 사용할 수 있다.
+
+실제 legacy-prompt-review-portable-20261005-v1의 같은 Drive ZIP을 재읽어 private/shared:false·원격 SHA770cebce…를 확인했다. 원문9판본 중5승인 사건을 각각 정확한 인용 판본으로 조회했고 미인용 정의 자료와 HTTP403 관측은 기사 근거로 등록하지 않았다. 기존 v1 SHA2ae06525…는 불변이며 같은 입력 재개도 v2 bytes 불변이다. 영수증 archive-staging/<id>/event-reindex-verification.json. model0/새 원문 HTTP0/공개false. 앞 구현 묶음20/20통과 후 CLI 추가 경로만1/1검사했다.
+
+구형 transition의 event.source_urls는 원래 inline/[S번호]/Source List의 URL을 계속 보존한다. 선택형 source_alternative_reviews에는 original_url, alternative_url, alternative_source_read, official_source_checked, same_event_checked, event_date_checked, reason을 넣는다. 원본 URL은 해당 사건의 원래 배정 출처여야 하고, 대체 URL은 그 사건의 승인 원고가 실제 인용한 다른 자료여야 한다. 모든 체크는 true·reason은 비어 있지 않아야 한다. 원문도 이미 승인 인용한 불필요한 대체, 다른 사건 근거, 중복 매핑, 원래 목록을 새 URL로 바꾸는 시도는 거부한다. 원래 citation/unit/전체 disposition/hash·고정 ID·날짜 관문은 유지한다. 공개 기사에는 읽은 대체 원문만 출력하고 매핑/이유는 비공개 검토 packet에 보존한다. 이 결정은 접근 실패 원문을 성공한 수집으로 승격하지 않는다. projection 표적31/31통과(inline/marker/source-list 정상·실패·동일 URL/다른 사건·hash/ID 보존).
+
+실제 OpenAI 8/6 발표의 원래 블로그와 Help는 HTTP403이다. 같은 회사 Deployment Safety Hub의 gpt-5-6-august-update는 공통 수집기 HTTP200/body SHA5bb7c8ad…로 확보했다. 본문이 여러 article로 구성된 것을 확인한 뒤 공통 HTML worker의 profile만 추가했다: 제목은 main section/header/h1, 본문은 해당 header의 section/div/div, 날짜는 Published로 시작하는 header/p. 별도 crawler는 없다. 첫 //article 단일 선택자 실패(v1)는 보존하고 v2에서 같은 raw를 HTTP0/model0 재파싱했다. title GPT-5.6 — August Updates·170blocks·발표일2026-08-06과 실제 DOM/text basis가 복원됐고 8/19 changelog와 구분된다. Worker 표적1/1(정상·누락·중복·잘못된 날짜4조건)통과. 원래 collect/parse bytes는 불변이며 select-source는 확보된 하나만 사용한다.
+
+저장 공간 부족(ENOSPC)으로 write/로그 생성이 실패했다. 전체 suite나 기존 실패 source 요청을 반복하지 않았다. 정확한 ZIP SHA와 복구 검증 영수증을 대조한 후 이번 작업의 재생성 가능한 local restore 사본16MB만 제거했다. ZIP·원격 restore·원문·승인·검증 영수증은 보존한다. 비어 있는 Python 초기 로그는 테스트 성공 증거가 아니며 -m unittest의 실제 1/1 완료를 사용한다. 같은 병목1시간 반복은 없고 공간 상태는 다음 build/보관 전 재확인한다.
+
+공개 d21e269/작성 authority200·141verified/37v2/84legacy는 아직 변경하지 않았다. source-free 원문의 전체8/7 전환, 의존 용어 재검토, Drive-first 보관·웹/RSS/digest 및 실제 화면 검증은 다음 관문이다. full historical92/801·독립40/20·정규7회/무인08시·portable runtime 전체 범위는 남는다. goal active/WBS2/22이며 이전 목표 turn의 검증기 변경과 이번 실파싱·색인 검증은 progress다.
+
+
+## 381. 8/7 전체 구간과 의존 용어의 비공개 발행·복구 슬라이스
+
+OpenAI 공식 system card 전체170blocks/4배치의 MLX 추출24후보를 직접 원문과 대조해9verified/21deferred로 검토했다. 한국어 초안57.702초 뒤 실제 시행·계획, ChatGPT와 Codex/Work 적용 범위, 평가 표본과 web-enabled grader 조건을 보존했다. 원래403 URL은 private original Source List에 남기고 공개 원고는 읽은 공식 대체 자료에 연결한다. 근거 없는62/68수치·요금제 설명을 되살리지 않았다.
+
+의존 용어는 SDK·RAG 초록/제출 이력·콘텐츠 접근 조건·vLLM의5원문에서11사실을 직접 대조했다. RAG와 미세조정이 배타적이지 않음을 수정하고 일반론 변화 문구를 제거했다. AI Agents/RAG/MCP3노트는 원래 concept ID/별칭/path를 유지한다. 최초 압축 노트가 기존12항목 validator에 맞지 않아 실패한 증거는 보존했다. validator를 완화하거나 근거 없는 본문을 채우지 않고 기존12항목 저장 계약과 독자의 empty-section 제거를 재사용했다. 승인 `legacy-20260807-canonical-notes-approved-20261005-v3`. 기사3개는 정확한 새 MCP note SHA로 다시 배정한다.
+
+replacement 노트에 새 노트와 같은 관계 검사를 적용했다. 잘못된 basis explicit, 없는 target, 자기 연결, 중복, 알 수 없는 유형, 누락/다른 출처 근거는 승인 전에 거부한다. 첫 관계 실패는 그대로 남기고 source/inference와 실제 source-backed reason을 구분했다. notes 표적19/19. 최초 단순 원고 재연결 사본은 extraction destination identity가 이전 run에 묶여 portable closure에서 거부됐다. 새 v2는 기존 select-source/reuse-extraction/review 경로를 재사용했다. AI Search의 수동 보완 사실1개가 최초 input에 누락된 것도 확인해 exact quote·check reason을 보존한 별도 입력에 추가했다. 최종 사실 내용·판정·원고는 원 승인과 동일하며 재추론/재수집0, 최초 사본/실패/원 승인은 보존한다.
+
+최종 private preview `legacy-20260807-reader-20261005-v4`: 원본10구간 전부,6기사,3용어,346public files. refresh/knowledge sync/validate/build/site·6기사 웹/Markdown 내용 및 링크,3용어 원문 링크/빈 항목 숨김,3MCP 기사↔용어 양방향 연결이 통과했다. 현재 RSS에 과거8/7을 새 회차로 넣지 않았고 기존40GUID/pubDate를 보존했다. 실제 브라우저 상호작용은 미검증이다.
+
+ENOSPC 관측은 모델 병목과 구분한다. 이미 frozen ZIP와 원격 복구 증거가 있는 재생성 가능한 local restore16MB만 정리했고, 이어106개의15MB emoji 미리보기 파일을 canonical SHA와 대조해 APFS COW 사본으로 교체했다. 각 bytes/mode/mtime를 보존하며 hardlink를 사용하지 않았다. 약1.62GB logical 중복을 줄이고 실제 df 여유가 약1.9GB로 회복됐다. 공통 copyFiles도 FICLONE 지원 시 독립 사본을 만들고 fallback·전후 SHA·안전 경로·fsync/원자 교체를 유지한다. 표적1/1, 최초 macOS /tmp symlink fixture 실패는 realpath로 고친 뒤 실패 표적만 재검사했다. 증거 `source-live-debug/preview-space-clone-20261005-v1.json`.
+
+보관 `legacy-20260807-canonical-portable-20261005-v2`:23bound runs,13source versions/13parses,522files/524ZIP members,3,553,439bytes,SHA b574a54755f0006f5272054888bb7961c856a63ee95ef0c455c94f18d5ecd3c4. Drive1ypppJfhfeqkl-A6jZ1eNuWLCX7OZQ0JV, Research 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared=false/size와 실제 원격 raw SHA/CRC/member 검사를 확인했다. 원격 ZIP을 별도 폴더에 복구해6승인 기사 SHA와 ontology151nodes/235edges SHA a30095c81ed1cd94df787aafe46511b1bc2a58e5ffc8fddc54ca1c28dc2d99d3를 대조했다. 전체 runtime 복구를 주장하지 않는다. 위치 색인은6사건을 exact 원문 판본에 연결한다. 영수증/독립 복구 증거 `drive-roundtrip/legacy-20260807-canonical-portable-20261005-v2/`.
+
+운영 작성200파일과 public141verified/d21e269는 미변경이며66회차/617구간의 미판정 수를 private preview 성공으로 줄이지 않는다. 다음은 새 Drive 작성 원본200파일 대조→승인8/7 회차와3용어 same-ID 저장→한 차례 릴리스 통합/공개 검증이다. 전체 전수 판정,독립40/20,정규7실제회차/무인08시,full portable runtime은 계속 남는다. WBS2/22·goal active. 동일 실패의1시간 반복은 없으며 기능·실자료·보관 진척이다. 전체 suite는 이번 묶음에서 반복하지 않았다.

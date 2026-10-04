@@ -10,6 +10,7 @@ import {
   assertNewConceptMetadata,
   assertNewConceptBody,
   assertConceptConflicts,
+  assertConceptConnections,
 } from "./knowledge-links.mjs"
 
 const checks = [
@@ -187,14 +188,7 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
         new Set(names.map(exactName)).size !== names.length
       )
         throw Error("Distinct exact concept aliases required")
-      for (const edge of [...(next.meta.relations || []), ...(next.meta.connections || [])])
-        if (
-          !nonempty(edge.target) ||
-          edge.target === next.meta.concept_id ||
-          !nonempty(edge.reason) ||
-          edge.evidence?.some((u) => !sourceURLs.has(u))
-        )
-          throw Error("Source-bound concept connections required")
+      assertConceptConnections(next.meta, sourceURLs)
     } else if (relative.startsWith("TrendTopics/")) {
       if (
         next.meta.schema_version !== "tech-trend/v1" ||

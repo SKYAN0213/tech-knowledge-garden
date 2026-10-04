@@ -4155,3 +4155,21 @@ MCP는 규격·정의·Agents SDK·회사 배경까지5원문을 묶고 기존 �
 
 
 최종 결과(10/5 KST): Kitesurf10verified/4deferred·한국어 작성69.564초 뒤 실제 수치 비교/조건/시간/태그를 정정해 private 승인했다. archive-closure와 location이 실패 관측이 섞인 상위 수집 묶음을 보관하지 못하는 결함도 수정했다(기본 기사 근거 거부 유지). 보관 표적10/10 및 후속 위치1/1; 원문9판본/5승인/3MCP 관계/200작성 노트 authority를 v2 ZIP447members/2,752,993bytes로 private Drive1_UJAiSjfLGA_qoCmW19TPPYIMPXPNkel에 보관하고 실제 원격raw로 독립 복구해 승인/온톨로지 exactSHA를 확인했다. standalone 승인의 사건별 Drive 위치 색인 누락은 남은 항목으로 명시했으며 원문 판본9조회와 구분한다. 작성 원본·공개는 미변경, 전체 goal active·WBS2/22·전수66/617·독립평가/정규운영/full runtime 복구 유지. 자세한 재개점은 런북379다.
+
+
+## 19.290. 원문 판본별 사건 색인과 공식 대체 자료로 소급 검토
+
+진척: 단독 편집 승인→exact 인용 SourceVersion→Drive 위치 조회를 연결하고 기존 색인의 additive v2 reindex/CLI를 구현했다. 실제5사건의 동일 private ZIP 조회와 이전/v2 파일 불변을 확인했다. 구형 transition은 원래 사건·원문 URL·전체 unit을 보존하면서 명시적으로 읽은 공식 대체 자료를 승인 원고에 결속한다. inline/marker/source-list 모두 지원하되 다른 사건 근거·누락 체크·원래 citation 변경을 거부한다. public projection에는 내부 대체 검토 이유를 내보내지 않는다.
+
+실자료: 원래 OpenAI 블로그/Help403을 보존하고 공식 Deployment Safety Hub의8/6 system card HTTP200을 확보했다. 새로운 crawler 대신 공통 HTML profile에 실제 header 날짜·제목·복수 article의 공통 본문 컨테이너를 설정했다. 동일 raw 재파싱170blocks/Published August6 DOM basis는 모델/HTTP0이며 잘못된 첫 선택자는 별도 failed run으로 남겼다.
+
+검증: 앞 색인20/20, 이번 legacy projection31/31, 새 CLI1/1, 새 worker1/1(4날짜조건). 통과한 전체/표적 suite는 반복하지 않았다. ENOSPC는 원본/승인/ZIP/원격 복구/영수증을 보존하고 재생성 가능한 이번 local restore 사본만 제거해 진행했다. 실제 원고 검토/기존8/7 전체 전환·의존 용어·Drive 보관/공개 검증은 이어서 완료한다. 미판정66회차617구간·독립40/20·정규7회/무인08시·full portable runtime은 미완료이며 WBS2/22·goal active를 유지한다. 상세 런북380.
+
+
+## 19.291. 8/7 전체 구간·의존 전문용어의 비공개 발행과 원격 복구
+
+6기사를10원본 구간에 연결하고3의존 용어를 원문에서 재검토했다. 새 원고에는 계획/완료·서비스 적용 범위·성능 비교 조건을 유지하며, RAG/미세조정의 관계를 바로잡고 근거 없는 일반론을 제거했다. 기존12항목 canonical contract/reader의 빈 항목 숨김을 재사용했다. 노트 관계 승인 검사는 replacement/create에 공통 적용(19/19). 공통 preview 복사의 reflink/hash/원자 교체로106개 emoji 파일의 약1.62GB logical 중복을 줄였다(표적1/1).
+
+최종 private preview v4의 refresh/knowledge/validate/build/site와6기사·3용어·3MCP상호 링크/Markdown/RSS40identity 검증 통과. 단순 사본의 extraction identity 오류와 최초 fact input에서 빠진 AI Search 직접 사실1개는 select-source/reuse-extraction/review를 재사용한 v2에서 exact 근거로 복원했으며 원 승인을 보존했다. 모델/HTTP 재호출0이다.
+
+Drive Research 복구 묶음13원문/23runs/524members/3,553,439bytes를 실제 원격 raw SHA/CRC로 확인하고 별도 복구6승인 및151nodes/235edges exact ontology SHA를 검증했다. 모든 사건의 exact SourceVersion 위치 색인도 확인했다. 전체 runtime/UI 상호작용/공개 배포와 구분한다. canonical200/public141verified는 유지하며 전수66/617·독립40/20·정규7회/무인08시·full runtime 복구는 미완료다. 전체목표active/WBS2/22; 다음 승인8/7 작성 원본의 Drive-first 같은 ID 반영 및 릴리스 게이트. 런북381에 실패·근거·재개점을 기록했다.

@@ -1538,6 +1538,19 @@
         "content_block_xpath": ".//section[contains(concat(\" \",normalize-space(@class),\" \"),\" tobor-phero \")]//*[self::p or self::h1 or self::li] | .//section[contains(concat(\" \",normalize-space(@class),\" \"),\" tobor-fsec \")]//*[self::p or self::h2 or self::li] | .//section[@id=\"compare-bundles\"]//table | .//section[@id=\"specifications\"]//*[self::h2 or self::li]",
         "publication_date_policy": "not_applicable"
       }
+    },
+    {
+      "id": "openai-deployment-safety-system-card-en-v1",
+      "url_pattern": "^https://deploymentsafety\\.openai\\.com/[a-z0-9-]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//section/header//h1",
+        "content_xpath": "//main//section[header[.//h1]]/div/div",
+        "publication_date_xpath": "//main//section/header//p[starts-with(normalize-space(.), 'Published ')]",
+        "publication_date_pattern": "^Published ([A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2})$",
+        "publication_date_format": "%B %d, %Y",
+        "publication_date_policy": "explicit-authoritative"
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {

@@ -16,6 +16,36 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_openai_system_card_registered_profile_uses_header_publication_not_changelog(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "openai-deployment-safety-system-card-en-v1")
+        template = b'''<html lang="en"><head><title>Safety Hub</title>
+        <meta property="article:published_time" content="2026-08-19T12:00:00Z"></head><body>
+        <nav>Other release</nav><main><section><header><h1>GPT-5.6 August Updates</h1>DATE</header>
+        <div><div><section><article><p>August 19, 2026: corrected a table.</p></article></section>
+        <section><article><p>Starting today we update ChatGPT; Codex keeps the July version.</p></article></section>
+        <section><h2>Factuality</h2><article><p>Web-enabled grading used high-stakes prompts.</p></article></section></div></div>
+        </section></main><aside>Published September 1, 2026</aside></body></html>'''
+        for date, expected, status in [
+            (b'<p class="text-meta">Published August 6, 2026</p>', "2026-08-06", "matched"),
+            (b'', None, "missing"),
+            (b'<p>Published August 6, 2026</p><p>Published August 7, 2026</p>', None, "ambiguous"),
+            (b'<p>Published August 32, 2026</p>', None, "invalid-date"),
+        ]:
+            with self.subTest(status=status):
+                result = self.invoke(template.replace(b"DATE", date), profile["options"],
+                                     url="https://deploymentsafety.openai.com/gpt-5-6-august-update")["result"]
+                self.assertEqual(result["title"], "GPT-5.6 August Updates")
+                self.assertEqual(result["dates"]["published_at"], expected)
+                self.assertEqual(result["dates"]["profile_status"], status)
+                text = " ".join(block["text"] for block in result["blocks"])
+                self.assertIn("August 19, 2026", text)
+                self.assertIn("Codex keeps the July version", text)
+                self.assertNotIn("Other release", text)
+                self.assertNotIn("September 1, 2026", text)
+                if expected:
+                    self.assertEqual(result["dates"]["basis"]["text"], "Published August 6, 2026")
+
     def test_nvidia_publication_registered_profile_preserves_authors_and_display_date(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         profile = next(p for p in config["article_profiles"] if p["id"] == "nvidia-research-publication-v1")

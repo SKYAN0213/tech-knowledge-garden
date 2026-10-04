@@ -5,6 +5,7 @@ import os from "node:os"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { main } from "../scripts/research.mjs"
+import { main as archivesMain } from "../scripts/research-archives.mjs"
 import { archiveClosure } from "../scripts/research/archive-closure.mjs"
 import { archiveManifest, packageResearchArchive } from "../scripts/research/archive.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
@@ -151,6 +152,41 @@ test("archive location connects exact source versions and event IDs to verified 
   assert.equal(result[0].drive.file_id, "drive-archive-1")
   assert.equal(result[0].candidate_published, false)
   assert.deepEqual(lookupArchiveLocations(f.root, { eventId: "different-event" }), [])
+})
+
+test("archive CLI exposes additive reindex without allowing registration options in lookup", async (t) => {
+  const f = await locationFixture(t)
+  const args = [
+    "register",
+    "--root",
+    f.root,
+    "--run",
+    "portable",
+    "--metadata",
+    f.metadataFile,
+    "--remote-package",
+    f.remotePackageFile,
+    "--parent",
+    "research-folder",
+    "--vault",
+    f.root,
+  ]
+  await archivesMain(args)
+  const priorPath = path.join(f.root, "archive-staging/portable/drive-location.json")
+  const before = fs.readFileSync(priorPath)
+  const result = await archivesMain([...args, "--reindex"])
+  assert.equal(result.schema, "research-drive-archive-location/v2")
+  assert.equal(result.previous_location_sha256, sha256(before))
+  assert.equal((await archivesMain([...args, "--reindex"])).reused, true)
+  assert.deepEqual(fs.readFileSync(priorPath), before)
+  const found = await archivesMain(["lookup", "--root", f.root, "--event", "robot-event"])
+  assert.equal(found.length, 1)
+  assert.equal(found[0].drive.file_id, "drive-archive-1")
+  for (const options of [["--reindex"], ["--vault", f.root]])
+    await assert.rejects(
+      () => archivesMain(["lookup", "--root", f.root, "--event", "robot-event", ...options]),
+      /register --run/,
+    )
 })
 
 test("archive location rejects unverified, stale or changed Drive identity without overwriting a record", async (t) => {

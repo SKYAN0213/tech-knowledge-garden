@@ -457,11 +457,38 @@ function assertFiles(directory, entries, message) {
 function assertSnapshot(directory, entries, message) {
   if (JSON.stringify(fingerprints(directory)) !== JSON.stringify(entries)) throw Error(message)
 }
-function copyFiles(source, destination, entries) {
+export function copyFiles(source, destination, entries) {
   for (const entry of entries) {
-    const bytes = fs.readFileSync(safePath(source, entry.path))
+    const original = safePath(source, entry.path)
+    const bytes = fs.readFileSync(original)
     if (sha256(bytes) !== entry.sha256) throw Error("Snapshot source changed during copy")
-    atomicWrite(destination, entry.path, bytes)
+    const file = safePath(destination, entry.path)
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    const tmp = file + "." + randomUUID() + ".tmp"
+    try {
+      // Reflinks keep independent writable files without duplicating every
+      // preview's runtime bytes. Node uses a normal copy when unsupported.
+      fs.copyFileSync(original, tmp, fs.constants.COPYFILE_FICLONE | fs.constants.COPYFILE_EXCL)
+      fs.chmodSync(tmp, 0o600)
+      if (sha256(fs.readFileSync(tmp)) !== entry.sha256)
+        throw Error("Snapshot source changed during copy")
+      const fd = fs.openSync(tmp, "r")
+      try {
+        fs.fsyncSync(fd)
+      } finally {
+        fs.closeSync(fd)
+      }
+      safePath(destination, entry.path)
+      fs.renameSync(tmp, file)
+      const dir = fs.openSync(path.dirname(file), "r")
+      try {
+        fs.fsyncSync(dir)
+      } finally {
+        fs.closeSync(dir)
+      }
+    } finally {
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp)
+    }
   }
 }
 
