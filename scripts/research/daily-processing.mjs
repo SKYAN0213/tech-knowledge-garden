@@ -3,6 +3,7 @@ import { sha256 } from "./contracts.mjs"
 import { generateDailyHandoff, selectCandidateSource } from "./editorial-handoff.mjs"
 import { saveSourceSelection } from "./source-selection.mjs"
 import { processSourceRun } from "./source-processing.mjs"
+import { loadProcessedSourceResult } from "./processed-source-result.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const validId = (id) => /^[A-Za-z0-9_-]{1,100}$/.test(id || "")
@@ -35,6 +36,7 @@ export async function processDailyCandidates({
   backlogFile = ".local/research/candidate-backlog.json",
   execute = false,
   reviewFiles = {},
+  processingRuns = {},
   provider,
   handoffLoader = currentHandoff,
   processor = processSourceRun,
@@ -53,6 +55,16 @@ export async function processDailyCandidates({
     Array.isArray(reviewFiles) ||
     Object.entries(reviewFiles).some(
       ([key, file]) => !candidateKeys.includes(key) || typeof file !== "string" || !file.trim(),
+    ) ||
+    !processingRuns ||
+    typeof processingRuns !== "object" ||
+    Array.isArray(processingRuns) ||
+    Object.entries(processingRuns).some(
+      ([key, id]) =>
+        !candidateKeys.includes(key) ||
+        !/^[A-Za-z0-9_-]{1,160}$/.test(id || "") ||
+        id === runId ||
+        reviewFiles[key],
     )
   )
     throw Error(
@@ -69,22 +81,30 @@ export async function processDailyCandidates({
     const handoffBytes = fs.readFileSync(safePath(root, handoff.path))
     if (JSON.stringify(JSON.parse(handoffBytes)) !== JSON.stringify(handoff.value))
       throw Error("Daily handoff changed while loading")
-    const entries = candidateKeys.map((key) => {
-      const matches = handoff.value.pending.filter((item) => item.key === key)
-      if (matches.length !== 1) throw Error("Candidate is not uniquely pending: " + key)
-      const row = matches[0]
-      return {
-        candidate_key: key,
-        next_route: row.next_route,
-        review_status: row.review_status || null,
-        event_id: row.event_id,
-        source_evidence_state: row.source_evidence_state,
-        source_version_id: row.article_source_version_id,
-        parse_id: row.article_parse_id,
-        content_sha256: row.article_content_sha256,
-        source_urls: row.source_urls,
-      }
-    })
+    const entries = await Promise.all(
+      candidateKeys.map(async (key) => {
+        const matches = handoff.value.pending.filter((item) => item.key === key)
+        if (matches.length !== 1) throw Error("Candidate is not uniquely pending: " + key)
+        const row = matches[0]
+        const entry = {
+          candidate_key: key,
+          next_route: row.next_route,
+          review_status: row.review_status || null,
+          event_id: row.event_id,
+          source_evidence_state: row.source_evidence_state,
+          source_version_id: row.article_source_version_id,
+          parse_id: row.article_parse_id,
+          content_sha256: row.article_content_sha256,
+          source_urls: row.source_urls,
+        }
+        if (processingRuns[key]) {
+          const reused = await loadProcessedSourceResult(root, processingRuns[key], entry)
+          entry.reuse_run = processingRuns[key]
+          entry.reuse_input_sha256 = reused.processing_input_sha256
+        }
+        return entry
+      }),
+    )
     const input = {
       schema: "research-daily-processing-input/v1",
       daily_run: dailyRunId,
@@ -92,6 +112,9 @@ export async function processDailyCandidates({
       entries,
       policy_sha256: sha256(policyBytes),
       implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
+      reuse_reader_sha256: sha256(
+        fs.readFileSync(new URL("./processed-source-result.mjs", import.meta.url)),
+      ),
     }
     const base = `runs/${runId}/`
     const previousInput = readJSON(root, base + "daily-processing-input.json")
@@ -142,6 +165,47 @@ export async function processDailyCandidates({
       const key = entry.candidate_key,
         prior = rows.get(key)
       const row = { candidate_key: key, next_route: entry.next_route }
+      if (
+        entry.reuse_run &&
+        !identityRoutes.has(entry.next_route) &&
+        !(
+          entry.review_status === "verified" &&
+          entry.event_id &&
+          !["approved-unpublished", "approved-historical"].includes(entry.next_route)
+        )
+      ) {
+        const sourceKey = JSON.stringify([
+          entry.source_version_id,
+          entry.parse_id,
+          entry.content_sha256,
+        ])
+        if (sourceOwners.has(sourceKey)) {
+          rows.set(key, {
+            ...row,
+            status: "same_source",
+            primary_candidate_key: sourceOwners.get(sourceKey),
+          })
+          continue
+        }
+        sourceOwners.set(sourceKey, key)
+        const result = await loadProcessedSourceResult(root, entry.reuse_run, entry)
+        if (result.processing_input_sha256 !== entry.reuse_input_sha256)
+          throw Error("Pinned reused processing input changed")
+        const approvedRoute = ["approved-unpublished", "approved-historical"].includes(
+          entry.next_route,
+        )
+        if (approvedRoute && result.status !== "approved")
+          throw Error("Approved routing requires the exact completed processing approval")
+        rows.set(key, {
+          ...row,
+          status: approvedRoute ? "approval_ready" : result.status,
+          processing_run: entry.reuse_run,
+          source_run: result.source_run,
+          reused_processing: true,
+          result,
+        })
+        continue
+      }
       if (["approved-unpublished", "approved-historical"].includes(entry.next_route)) {
         rows.set(key, { ...row, status: "approval_ready" })
         continue

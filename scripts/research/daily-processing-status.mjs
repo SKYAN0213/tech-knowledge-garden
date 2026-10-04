@@ -9,6 +9,7 @@ const statuses = new Set([
   "failed",
   "fact_review",
   "editorial_review",
+  "writer_required",
   "approved",
   "reviewed_without_publishable_facts",
   "identity_review",
@@ -70,6 +71,20 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
         const binding = row.processing_run
           ? readJSON(root, `runs/${row.processing_run}/source-processing-input.json`)
           : null
+        if (row.reused_processing === true) {
+          const entry = input.entries.find((e) => e.candidate_key === row.candidate_key)
+          const bytes = fs.readFileSync(
+            safePath(root, `runs/${row.processing_run}/source-processing-input.json`),
+          )
+          if (
+            !entry?.reuse_run ||
+            entry.reuse_run !== row.processing_run ||
+            entry.reuse_input_sha256 !== sha256(bytes) ||
+            row.result?.processing_input_sha256 !== entry.reuse_input_sha256 ||
+            row.result?.model_calls !== 0
+          )
+            throw Error("Reused processing receipt differs from the pinned run")
+        }
         const implementationStatus = !binding
           ? "unrecorded"
           : Object.entries(binding.implementation || {}).some(([file, hash]) => {
@@ -121,6 +136,10 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
             : {}),
           packet: row.result?.packet || null,
           preview: row.result?.preview || null,
+          reused_processing: row.reused_processing === true,
+          assessment_run: row.result?.assessment_run || null,
+          quote_review_run: row.result?.quote_review_run || null,
+          model_calls: row.reused_processing === true ? (row.result?.model_calls ?? null) : null,
         }
       })
       return {

@@ -14,6 +14,7 @@ const { values: v } = parseArgs({
     vault: { type: "string" },
     backlog: { type: "string" },
     "review-files": { type: "string" },
+    "processing-runs": { type: "string" },
     "plan-only": { type: "boolean", default: false },
     execute: { type: "boolean", default: false },
     resume: { type: "boolean", default: false },
@@ -34,6 +35,9 @@ console.log(
       backlogFile: v.backlog,
       execute: v.execute || v.resume,
       reviewFiles: v["review-files"] ? JSON.parse(fs.readFileSync(v["review-files"], "utf8")) : {},
+      processingRuns: v["processing-runs"]
+        ? JSON.parse(fs.readFileSync(v["processing-runs"], "utf8"))
+        : {},
     }),
     null,
     2,

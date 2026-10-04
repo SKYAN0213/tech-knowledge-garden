@@ -13,6 +13,10 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { validateEvidence } from "../scripts/research/claims.mjs"
 import { main } from "../scripts/research.mjs"
+import { loadProcessedSourceResult } from "../scripts/research/processed-source-result.mjs"
+import { processDailyCandidates } from "../scripts/research/daily-processing.mjs"
+import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
+import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 
 function fixture(t, { extracted = true, concern = false } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "source-process-")))
@@ -440,4 +444,234 @@ test("a headline-only subject requires identity resolution even when the model s
   ]
   await reviewProcessedClaims(f.root, "processed", d)
   assert.equal((await processSourceRun(f.options)).status, "editorial_review")
+})
+
+function reuseEntry(f) {
+  const document = readJSON(f.root, "runs/source/documents.json")[0]
+  return {
+    candidate_key: f.claim.candidate_key,
+    next_route: "historical-review",
+    event_id: null,
+    source_evidence_state: "exact",
+    source_version_id: document.source_version_id,
+    parse_id: f.parse.parse_id,
+    content_sha256: articleContentFingerprint(f.parse),
+    source_urls: [document.original_url],
+  }
+}
+
+test("read-only reuse reports fact, writer and editorial gates without a model", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const entry = reuseEntry(f)
+  const first = await loadProcessedSourceResult(f.root, "processed", entry)
+  assert.equal(first.status, "fact_review")
+  assert.equal(first.model_calls, 0)
+  const d = await decision(f)
+  await reviewProcessedClaims(f.root, "processed", d)
+  assert.equal(
+    (await loadProcessedSourceResult(f.root, "processed", entry)).status,
+    "writer_required",
+  )
+  await processSourceRun(f.options)
+  f.provider.metadata = async () => {
+    throw Error("No installed model for this read")
+  }
+  const before = [...f.calls]
+  const result = await loadProcessedSourceResult(f.root, "processed", entry)
+  assert.equal(result.status, "editorial_review")
+  assert.equal(result.model_calls, 0)
+  assert.deepEqual(f.calls, before)
+})
+
+test("reused results reject a different candidate, source, incomplete packet and changed source", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const entry = reuseEntry(f)
+  await assert.rejects(
+    () => loadProcessedSourceResult(f.root, "processed", { ...entry, candidate_key: "other" }),
+    /same exact candidate/,
+  )
+  await assert.rejects(
+    () => loadProcessedSourceResult(f.root, "processed", { ...entry, parse_id: "a".repeat(64) }),
+    /differs from the candidate/,
+  )
+  const packet = readJSON(f.root, "runs/processed/fact-review-packet.json")
+  fs.unlinkSync(path.join(f.root, "runs/processed/fact-review-packet.json"))
+  await assert.rejects(() => loadProcessedSourceResult(f.root, "processed", entry))
+  atomicWrite(f.root, "runs/processed/fact-review-packet.json", packet)
+  atomicWrite(f.root, readJSON(f.root, "runs/source/documents.json")[0].body_path, "Changed source")
+  await assert.rejects(
+    () => loadProcessedSourceResult(f.root, "processed", entry),
+    /body hash mismatch/,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+})
+
+test("daily explicit reuse pins the original processing run and never invokes a processor", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        ...entry,
+        key,
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+      },
+    ],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  const options = {
+    root: f.root,
+    runId: "reuse-batch",
+    dailyRunId: "daily",
+    candidateKeys: [key],
+    policyFile: f.policyFile,
+    processingRuns: { [key]: "processed" },
+    handoffLoader: async () => ({ path: "handoff.json", value: handoff }),
+    processor: async () => {
+      throw Error("Reused result must never invoke processing")
+    },
+  }
+  const before = fs.readFileSync(path.join(f.root, "runs/processed/fact-review-packet.json"))
+  const result = await processDailyCandidates({ ...options, execute: true })
+  assert.equal(result.results[0].reused_processing, true)
+  assert.equal(result.results[0].processing_run, "processed")
+  assert.equal(result.results[0].status, "fact_review")
+  assert.equal(result.results[0].result.model_calls, 0)
+  const again = await processDailyCandidates({ ...options, execute: true })
+  assert.deepEqual(again.counts, { fact_review: 1 })
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/fact-review-packet.json")),
+    before,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  const status = loadDailyProcessingStatus(f.root).runs[0]
+  assert.equal(status.results[0].reused_processing, true)
+  assert.equal(status.results[0].model_calls, 0)
+  assert.equal(status.results[0].assessment_run, "processed")
+  await assert.rejects(
+    () => processDailyCandidates({ ...options, processingRuns: {} }),
+    /inputs changed/,
+  )
+  await assert.rejects(
+    () => processDailyCandidates({ ...options, reviewFiles: { [key]: "ignored-review.json" } }),
+    /unique candidate/,
+  )
+  const receipt = readJSON(f.root, "runs/reuse-batch/daily-processing.json")
+  receipt.results[0].result.model_calls = 1
+  atomicWrite(f.root, "runs/reuse-batch/daily-processing.json", receipt)
+  assert.equal(loadDailyProcessingStatus(f.root).runs[0].status, "invalid")
+})
+
+test("daily reuse distinguishes private article approval from candidate approval routing", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  await processSourceRun(f.options)
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  const review = {
+    status: "approved",
+    draft_id: draft.draft_id,
+    reviewer: "Direct fixture editorial reviewer",
+    source_read: true,
+    final_prose_read: true,
+    title_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    analysis_checked: true,
+    event_id: "1234567890abcdef",
+    published_at: "2026-10-02",
+    reviewed_at: "2026-10-04",
+    region: "해외",
+  }
+  const file = path.join(f.root, "editorial-review.json")
+  fs.writeFileSync(file, JSON.stringify(review))
+  await main(["approve", "--root", f.root, "--run", "processed", "--review", file])
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const first = await loadProcessedSourceResult(f.root, "processed", entry)
+  assert.equal(first.status, "approved")
+  assert.equal(first.event_id, review.event_id)
+  await assert.rejects(
+    () =>
+      loadProcessedSourceResult(f.root, "processed", { ...entry, event_id: "abcdef1234567890" }),
+    /existing event/,
+  )
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        ...entry,
+        key,
+        next_route: "approved-historical",
+        event_id: review.event_id,
+        review_status: "verified",
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+      },
+    ],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  const r = await processDailyCandidates({
+    root: f.root,
+    runId: "reuse-approved",
+    dailyRunId: "daily",
+    candidateKeys: [key],
+    policyFile: f.policyFile,
+    processingRuns: { [key]: "processed" },
+    execute: true,
+    handoffLoader: async () => ({ path: "handoff.json", value: handoff }),
+    processor: async () => {
+      throw Error("No model for approved reuse")
+    },
+  })
+  assert.deepEqual(r.counts, { approval_ready: 1 })
+  assert.equal(r.candidate_published, false)
+  assert.equal(r.results[0].result.model_calls, 0)
+})
+
+test("reused exact source suppresses duplicate generation in the same daily batch", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const row = {
+    ...entry,
+    key,
+    article_source_version_id: entry.source_version_id,
+    article_parse_id: entry.parse_id,
+    article_content_sha256: entry.content_sha256,
+  }
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [row, { ...row, key: "duplicate-source-candidate" }],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  const result = await processDailyCandidates({
+    root: f.root,
+    runId: "reuse-dedup",
+    dailyRunId: "daily",
+    candidateKeys: [key, "duplicate-source-candidate"],
+    policyFile: f.policyFile,
+    processingRuns: { [key]: "processed" },
+    execute: true,
+    handoffLoader: async () => ({ path: "handoff.json", value: handoff }),
+    processor: async () => {
+      throw Error("Duplicate source must not be generated again")
+    },
+  })
+  assert.deepEqual(result.counts, { fact_review: 1, same_source: 1 })
+  assert.equal(result.results[1].primary_candidate_key, key)
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  assert.equal(result.candidate_published, false)
 })

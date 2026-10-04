@@ -9288,3 +9288,30 @@ node scripts/research.mjs process-source --run github-async-merge-mlx-processing
 원문1판본·증거82파일/ZIP83member·903,804bytes를 Drive Research `1-RdQT00EPigsyo20tWbadI-pyyI4wzuj`에 저장했다. 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false/크기와 실제 원격 raw SHA `4de9cdad3d4a7f840674bcdf2596e4ee4bbcdd80723f9b9b7b2cbbe98d7979e6`, ZIP CRC/각 member SHA를 확인했다. archive-staging/github-async-merge-mlx-evidence-20261004-v1/drive-receipt.json 및 package-verification.json에서 재개한다. 개발 증거 묶음이며 독립 runtime closure·원고 공개 영수증은 아니다.
 
 전체WBS2/22·goal active. MLX 독립 의미 평가60건/전체 소급/기존 일일 묶음과 새 인용-review의 재개·현황 연결/로컬 shadow7·무인08시·새 공개 배포는 미완료다. 다음 구현은 이 실제 실패/정정 run을 기존 처리 현황에서 구분해 표시하고, 정확히 연결된 reviewed assessment를 재개 선택에 전달하는 것이다. 원문·정책·주장 변경은 새 run으로 남기고 생성 재사용을 품질 승인으로 승격하지 않는다.
+
+
+## 364. 일일 묶음에서 완료된 처리 결과를 다시 추론하지 않고 연결
+
+`research:process-daily --processing-runs <PRIVATE_JSON>`으로 후보 key→기존 processing run을 명시적으로 연결한다. 새 묶음은 같은 후보·원문 판본·parse·본문 지문·URL과 기존 source-processing-input bytes SHA를 고정한다. 매번 기존 source/원 추출/packet/사실 검토/원 모델 작성/정정 chain/최종 승인을 해당 검증기로 읽는다. 모델 metadata/추론/새 원문 수집은 호출하지 않는다. 정책/모델 변경을 기존 완료 결과의 재생성 사유로 쓰지 않으며 삭제된 모델도 재설치하지 않는다.
+
+기존 실패 receipt는 유지한다. 복구 완료 결과는 새 batch에 연결하고 원 실패가 성공했던 것처럼 바꾸지 않는다. 기존 batch의 input/처리 reader 지문/연결 run을 바꾸면 새 run이 필요하다. 현재 handoff의 identity 관문은 그대로며 private article 승인과 후보 장부의 approval_ready 분기를 구분한다. 저장 원고의 승인을 읽는 것이 새 후보 승인이나 발행은 아니다.
+
+상태: packet만 있으면 fact_review, 승인된 사실 뒤 원고가 없으면 writer_required, 미검토 원고면 editorial_review, 직접 승인한 원고면 approved다. 후보 장부까지 승인된 기존 경로는 approval_ready이며 새 발행 상태가 아니다. 사실0개는 reviewed_without_publishable_facts다. writer_required/review 단계의 후속 생성·검토는 기존 명시적 처리 절차에서 수행한다. `--processing-runs` 읽기 경로는 새 reviewFiles와 함께 사용하지 않으며 검토 입력을 조용히 무시하지 않는다. 같은 원문의 일반 생성·source_required·신원 검토·실패 자동 재시도 금지 규칙도 유지된다.
+
+실제 예:
+
+```sh
+node scripts/research-process-daily.mjs --run stored-results-daily-20261004-v2 --daily-run daily-20261004-abb-processing-v1 --candidate-keys source-e77dbfb3ff372c839752 --candidate-keys source-a0c307de02d0e03bce7f --processing-runs .local/research/local-ai/source-live-debug/processing-reuse-map-20261004-v1.json --execute
+```
+
+같은 명령의 `--resume`도 실행했다. 현재 handoff의 persistent pending에는 다른 경로에서 조사한 과거 승인도 포함되며 원문이 이번 ABB 창에서 새로 발견됐다는 뜻은 아니다. 원 처리와 근거를 별도로 고정해 GitHub MLX·ABB 기존 GGUF 결과2개를 approval_ready에 연결했다. run은 각각 github-async-merge-mlx-processing-20261004-v2와 abb-andover-identity-gate-20261004-v3다. 새모델호출0/HTTP수집0이며 이미 제거된 qwen3.8:27b를 복구하지 않았다. 실제 설치 목록과 현재 source/근거/정정/승인/일일/현황 증거를 확인했다.
+
+CLI 반복 receipt는 동일하며734후보 원장 raw SHA `3b63c6f562af7ea140ad36e3697a17d78772822951428ef66f60f973df9e2c92`가 불변이다. 기존 ABB 실패/두 원고 승인/원 모델의 비용 ledger/원 인용 실패 bytes도 그대로다. 최종 proof는 source-live-debug/processing-reuse-verification-20261004-v2.json이다. v1 실행과 원래 영수증은 보존하며 구현 지문 변경 뒤 v2를 새로 실행·재개했다. 비공개 현황에는 processing_run,assessment_run,quote_review_run,reused_processing,이번 읽기의 model_calls:0을 표시한다. 과거 모델 비용0을 뜻하지 않는다. 정적 HTMLbytes와 JSON 참조를 확인했으며 새로운 browser 렌더링 검증은 아니다.
+
+관련검사27/27: source-processing 및 daily-processing 두 파일을 한 번 묶어 실행했다. 원문/packet/다른 후보·parse/누락/승인 event 불일치/연결 변경·ignored review/변조된 재사용 현황을 거부하고 fact→writer→editorial→private approval/candidate routing과 0생성 재사용을 확인한다. 최종 검토에서 재사용 항목을 기존 sourceOwners 중복 제거 경로에 연결했다. 같은 판본·parse·본문 지문의 일반 처리 후보가 뒤따르면 same_source로 남겨 추가 생성하지 않는다. 해당 회귀만 별도로1/1 통과했고 최종 실제 v2 실행·재개도0모델호출·receipt 불변이다. 전체 suite는 미실행이다. source collector54경로의 현재 수집 인증이나 independent gold/무인 운영의 증거로 쓰지 않는다.
+
+Drive Research `1-OPcrbcK2vmirOs1VUSlK7MlUeVAOMCL`에 원문2판본·증거123파일/ZIP124members·1,041,983bytes를 보관했다. 실제 원격 raw SHA `252be68120c69319653e0a1214ca28a140510faa11f530e72936bc72cce8902f`, 부모Research/shared:false/크기 및 ZIP CRC·각member SHA를 확인했다. archive-staging/processing-reuse-evidence-20261004-v1/drive-receipt.json·package-verification.json이 영수증이다. 개발 증거이며 독립 runtime closure/새 원고 공개 영수증은 아니다.
+
+최종 구현 증거는 Drive Research `1b3sOeEim41QfzgACi_pNNgMBdeHCBMtg`의 processing-reuse-evidence-20261004-v2.zip이다. 원문2판본·증거131파일/ZIP132members·1,049,773bytes이며 실제 원격 raw SHA `688d880bff8633bcdf3eb4fb351e7b680592ba46e9e655153da611ab4d4c9a75`가 로컬과 같다. 부모Research/shared:false/크기·로컬 CRC/각member SHA와 archive-staging/processing-reuse-evidence-20261004-v2/drive-receipt.json을 확인했다. 정적 HTML 증거는 앞선 v1 상태 스냅샷이며 최종 v2 처리 증거는 JSON·CLI·재개 영수증이다. 개발 증거 묶음으로 독립 runtime closure나 렌더링 검증을 뜻하지 않는다.
+
+전체WBS2/22·goal active·공개448ec36 유지. 원고 품질에서 확인한 실제6문장·발표일 누락·설명 반복을 기존 검토 흐름에서 더 직접적으로 표시하는 것이 다음 구현이다. 전체소급92/801,독립40/20,로컬shadow7/무인08시·신규 공개 관문은 별도로 남는다.

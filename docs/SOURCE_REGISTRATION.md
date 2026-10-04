@@ -166,3 +166,8 @@ replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 n
 ### 공통 후처리 인용 오류의 재사용 가능한 복구
 
 출처별 파서나 crawler를 추가하기 전에 원문 block과 모델 인용의 차이를 확인한다. 공백·곡선 따옴표 차이만이면 기존 exact 검증을 유지하고 `npm run research:evidence-quotes -- --run NEW_RUN --source-run FAILED_ASSESSMENT --review PRIVATE_JSON`으로 명시적 검토를 새 run에 기록할 수 있다. source read/원 input·raw SHA/동일 block의 실제 quote/검토 이유가 필요하며 판정·수치·주체·의미 변경은 거부한다. 생성 모델을 재호출하지 않고 core evidence validator와 기존 process-source --assessment-run을 재사용한다. 실제 source·claim/schema가 잘못된 경우에는 이 경로로 성공처럼 만들지 않는다. 입력·검증·실제 GitHub/MLX 사례는 [런북363절](LOCAL_AI_NEWS_RUNBOOK.md#363-mlx-새-출처-전체-처리와-명시적-인용-정정-재사용)을 따른다.
+
+
+### 일일 처리에서 완료된 원문·검토·원고의 재사용
+
+새 source crawler나 모델 생성 전에 기존 완료 run을 확인한다. `research:process-daily --processing-runs PRIVATE_JSON`은 같은 후보/판본/parse/본문/URL과 기존 input SHA를 고정하고 원문·packet·사실 승인·원고 정정·승인을 읽는다. metadata·추론·수집을 하지 않으며 삭제한 모델을 재설치하지 않는다. 미완료 결과는 성공으로 승격하지 않고 fact/writer/editorial/approval 단계와 기존 identity 관문을 구분한다. 같은 입력의 source/core reader 지문 변경은 새 batch를 사용한다. [런북364절](LOCAL_AI_NEWS_RUNBOOK.md#364-일일-묶음에서-완료된-처리-결과를-다시-추론하지-않고-연결)의 실제 명령과 실패/재개 증거를 따른다.

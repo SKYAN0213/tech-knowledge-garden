@@ -3971,3 +3971,12 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 수용 조건: 운영 후보/공개 기사 중복 대조 → 정확한 저장 판본 선택 → 추출·근거 대조 → 원문 직접 검토 → 원고 작성·필요한 명시적 정정 → 기존 candidate approval 연결까지 실제 수행한다. 완료된 단계 재개는 추가 모델 생성 없이 원출력/판본/검토 이력을 보존해야 한다. 오류는 원본 출력과 시간을 기록하고 동일 조건의 무차별 재시도는 하지 않는다. 표적 검증·Drive Research 비공개 증거 raw readback 후 기록한다. 전체 소급/독립 평가/무인08시·공개 배포 완료는 별도 관문이다.
 
 19.272 실행 결과(2026-10-04): GitHub 새 출처3문단에서 MLX 추출3·대조medium3·작성의 실제3호출을 수행했다. 곡선 apostrophe 인용 차이로 멈춘 원응답/비용을 보존하고, 명시적 source-bound quote-only 검토 경로로 추가추론 없이 새 assessment를 만들었다. 원고의 실제6문장/반복/오탈자는 기존 명시적 편집 정정으로 보완했다. 같은 사건ID/원 발표일로 운영734후보 중1개를 비공개 승인 연결했고 재개는 모델0·SHA불변이다. 표적20/20·Drive Research82파일 raw ZIP SHA 검증. 기존 daily inventory 변경 보호는 유지했고 exact 저장 source 선택으로 처리했다. 전체WBS2/22·공개448ec36 유지, 독립평가·전체소급·무인운영은 남는다. [런북363절](LOCAL_AI_NEWS_RUNBOOK.md#363-mlx-새-출처-전체-처리와-명시적-인용-정정-재사용).
+
+
+### 19.273. 일일 묶음의 검토 완료 결과 연결과 읽기 전용 현황
+
+진행 범위: 기존 실패 run을 삭제·재시도하지 않고 `processing-runs` 명시적 후보→기존 processing run 연결을 새 daily batch에 고정한다. 기존 packet/원문/사실 검토/원고 정정/승인 검증기를 재사용해 모델 metadata나 추론 없이 실제 다음 검토 상태를 읽는다. 삭제된 GGUF 모델의 완료된 승인도 원래 정책·비용·근거를 유지하며 재사용한다.
+
+수용 조건: 같은 후보·원문 판본·parse·본문 지문·URL·원 추출과 processing input SHA를 검증한다. 미검토→사실 검토, 사실 승인 후 원고 없음→writer_required, 원고→편집 검토, 비공개 승인→approved/기존 승인 준비를 구분한다. 미완료 모델 결과·잘못된 run·다른 사건·원문/packet/정정 변조는 연결하지 않는다. 기존 identity/승인/공개 관문과 실패 receipt는 보존한다. 동일 batch의 연결 변경은 새 run을 요구한다. 현황에 원 processing/assessment/quote-review 위치와 실제0호출 재사용을 표시한다. 표적 검사·실제 GitHub MLX와 기존 ABB 승인 연결·재개불변·Drive Research 증거 raw readback을 수행한다. 전체 과거자료/독립평가/운영08시/공개 완료는 별도다.
+
+19.273 실행 결과(2026-10-04): source-bound 완료 결과 읽기와 명시적 daily processing-runs 연결을 구현했다. 모델 metadata/생성 없이 packet·사실·정정·승인을 검사하고 fact/writer/editorial/private approval/candidate approval 상태를 구분한다. 실제 GitHub MLX와 삭제된 GGUF 기반 ABB2개를 새batch에 연결하고 CLI 재개 receipt·734후보/기존실패/승인/비용 SHA불변·모델0을 확인했다. 현황은 원 processing/assessment/quote-review와 재사용0호출을 표시한다. 재사용 항목도 기존 원문 중복 제거 경로를 공유하며 같은 원문의 후속 일반 처리를 same_source로 보존한다. 표적27/27과 최종 중복 회귀1/1, 실제 v2 실행·재개0모델호출·최종 Drive131파일 raw ZIP SHA검증(초기 v1 123파일도 별도 보존). [런북364절](LOCAL_AI_NEWS_RUNBOOK.md#364-일일-묶음에서-완료된-처리-결과를-다시-추론하지-않고-연결). 전체WBS2/22·공개448ec36/예약 유지이며 전체소급·독립평가·무인 운영은 미완료다.
