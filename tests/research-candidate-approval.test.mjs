@@ -17,7 +17,10 @@ import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { selectCandidateSource } from "../scripts/research/editorial-handoff.mjs"
 
-function fixture(t) {
+function fixture(
+  t,
+  { sourcePublishedAt = "2026-09-30", candidatePublishedAt = sourcePublishedAt } = {},
+) {
   const workspace = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "candidate-approval-")))
   t.after(() => fs.rmSync(workspace, { recursive: true, force: true }))
   const root = path.join(workspace, "research")
@@ -47,7 +50,7 @@ function fixture(t) {
     parse_id,
     title: "Soft robot material",
     status: "extracted",
-    dates: { published_at: "2026-09-30", observed_at: document.observed_at },
+    dates: { published_at: sourcePublishedAt, observed_at: document.observed_at },
     blocks: [{ block_id: `${parse_id}:b1`, text: body, locator: { text_hash: body_sha256 } }],
     quality: { missing_pages: [] },
   }
@@ -58,7 +61,7 @@ function fixture(t) {
     claim_kind: "attributed_fact",
     subject: "Example Lab",
     event_state: "completed",
-    published_at: "2026-09-30",
+    published_at: sourcePublishedAt,
     effective_period: null,
     numbers: [],
     evidence: [
@@ -141,7 +144,7 @@ function fixture(t) {
     key,
     title: parse.title,
     source_urls: [candidateURL],
-    source_published_at: "2026-09-30",
+    source_published_at: candidatePublishedAt,
     discovered_at: document.observed_at,
     review_status: "unreviewed",
     priority: "normal",
@@ -413,6 +416,36 @@ async function makeAlternativeResolution(
     originalVersion: candidate.article_source_version_id,
   }
 }
+
+test("timestamped source closes a day-reviewed candidate and preserves the original timestamp", async (t) => {
+  const timestamp = "2026-09-30T08:01:02-04:00"
+  const f = fixture(t, { sourcePublishedAt: timestamp })
+  const first = await link(f)
+  const before = fs.readFileSync(f.backlogFile)
+  const candidate = JSON.parse(before).candidates[0]
+  assert.equal(candidate.source_published_at, timestamp)
+  assert.equal(candidate.review_status, "verified")
+  assert.equal(candidate.event_id, f.article.event_id)
+  assert.equal(first.candidate_published, false)
+  assert.deepEqual(await link(f), first)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+})
+
+test("timestamp approval rejects a different source instant or publication day without writes", async (t) => {
+  for (const candidatePublishedAt of ["2026-09-30T08:02:02-04:00", "2026-09-29"]) {
+    const f = fixture(t, {
+      sourcePublishedAt: "2026-09-30T08:01:02-04:00",
+      candidatePublishedAt,
+    })
+    const before = fs.readFileSync(f.backlogFile)
+    await assert.rejects(link(f), /differ in URL, date or source version/)
+    assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+    assert.equal(
+      fs.existsSync(path.join(f.root, "runs/candidate-link/candidate-approval.json")),
+      false,
+    )
+  }
+})
 
 test("exact approved article closes a candidate without publishing and is idempotent", async (t) => {
   const f = fixture(t)

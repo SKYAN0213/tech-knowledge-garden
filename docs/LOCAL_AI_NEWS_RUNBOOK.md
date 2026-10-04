@@ -9074,3 +9074,22 @@ Ollama 역할 호출은 공식 `/api/chat` NDJSON 스트림을 읽고, UTF-8 분
 이번 profile 변경 후 과거54경로 실행을 현재 fingerprint 완료로 재표시하지 않는다. collectionBasis가 전체 article_profiles의 SHA를 사용하므로 한 출처 profile 변경이 다른 출처의 재사용에도 영향을 주는 점은 다음 조사 확장 때 개선할 대상이다. 검증기를 무시하거나 전체54경로를 즉시 반복하는 대신, 현재 완료한 두산의 새 영수증과 다른 출처의 기존 불변 근거를 분리해 보존한다. 정규32칸 조사 판정·fresh Drive release·이번 회차의 실제 저장/공개·성공7회·전수 소급·독립평가는 남아 있고 WBS2/22·goal active다. 1시간 반복 blocker는 없었다.
 
 보관 완료: 기존 archiveManifest/packageResearchArchive로 source4판본·57파일/58members·1,678,306bytes를 묶어 각 member SHA/CRC를 검증했다. Drive Research 파일1DfjOzUsarrSiNQr4Q15dQn8eXN3yqEsQ의 ID/이름/부모/크기/shared:false와 실제 원격 ZIP SHA2eb1d0076cbe76155e4e3ce36fd6de7c1d87b4ef21afc225aeb88ab22162fb35를 확인했다. evidence snapshot이며 전체 runtime 복구본이나 원고 공개 영수증이 아니다. archive-staging/doosan-leaf-body-debug-snapshot-20261004-v1/drive-receipt.json과 package-verification.json에서 재개한다. 같은 supplemental reconciliation 재실행은 already_reconciled이며 추가 수집·모델 호출·장부 변경 없이 끝났다.
+
+
+## 354. 고정 목록 밖 원문 실수집과 timestamp 승인 연결 디버깅
+
+2026-10-04 실제 조사에서 Satellogic 공식 IR 목록의 Merlin 상세 발표를 발견했다. 출처 전용 crawler를 추가하지 않고 기존 안전 GET·robots·원본 SHA 보관·trafilatura 상세 추출을 재사용했다. `satellogic-merlin-live-20261004-v1`은 HTTP200, 원문 SHA `b81616ca45596e78ce110a9fd309a3e485ff3a6d631d94bcaa74675ccc1a3322`, 본문20블록, parse `9f5a93f367e93c26bffb575f8c5e4a012c5957f775d3f4bfeeaa86c2d5ebb8a6`다. 원문 발표는 `2026-10-02T08:01:02-04:00`, 실제 발사는10월1일이다. GPT 외부 탐색 기록은 `satellogic-merlin-gpt-discovery-20261004-v1/search.json`에 별도 보존했고 local search provider 실행으로 표시하지 않았다. 새 활성 일일 route를 추가했다는 뜻은 아니다.
+
+기존 `intake-search-candidate`로 `source-ab2949406d668c881d7a`를 미검토 상태에 편입했다. 승인 전 같은 intake 재실행은 `backlog_changed:false`였다. 이후 직접 원문/최종 한국어 원고를 대조해6사실을 승인했으나 candidate-approval이 같은 발표일의 timestamp와 day를 다른 날짜로 판정해 거부했다. 원인: precision을 가진 `samePublicationDate(claimDate, sourceDate)`의 인수 방향이 반대였다. 후보-기사 연결 및 같은 원문의 판본 재연결에서 기사 발표일을 첫 인수로 둔다. 동시에 후보 timestamp와 실제 parse timestamp가 같은 순간인지 별도로 검사해 단순 날짜 절삭으로 검증을 약화하지 않는다. 원문 시각·시간대·판본·parse·본문 SHA는 보존한다.
+
+재현 테스트는 수정 전2건 중1건 실패했다. 수정 후 `node --test tests/research-candidate-approval.test.mjs tests/research-search-candidate-intake.test.mjs tests/research-intake-ontology.test.mjs` 34/34 통과. 같은 날 다른 시각과 다른 발표일은 장부/승인 영수증 쓰기 전에 거부한다. 실제 `satellogic-merlin-direct-20261004-v2-link`의 승인 연결 및 재실행이 같은 사건 `ab2949406d668c88`로 성공했다. 직접 작성 v1의 잘못된 theme/tag는 스키마가 거부했고 원본 실패 시도는 보존했다. Signal 검토 입력에 보류/기각 claim을 넣었던 시도도 거부됐으며 v3는 검증된 사실만 참조한다. 이 두 경우는 작성 입력 오류이며 안전 검증을 삭제하거나 우회하지 않았다.
+
+셀트리온 공식 원문4936도6사실을 직접 대조해 `celltrion-orders-direct-20261004-v1-link`로 연결했다. 네덜란드58%는 확보한 공급 물량, 핀란드42%는6월 피하주사 중심 리테일 시장 관측, 노르웨이85%·덴마크98%는 회사 전망으로 구분한다. 두 기사 모두 Codex GPT 직접 검토이며 local model의 무인 승인 품질을 실증한 결과가 아니다. 전체 장부733→734, 기존 셀트리온1건 변경/새 Satellogic1건 추가/나머지732건 동일, verified85건. 정확한 raw 장부 SHA는 `07fbdc0664757a1e98f12459ae5160fda664dbee7ebd9b69e9d5ecfeb3f2b327`이다.
+
+`regular-eight-sector-preview-20261004-v5`는8분야14기사·중복 사건0·기존RSS39 GUID 보존을 검증했다. manifest SHA `bb4e7c70a4fb263e87f0dd92ee81ac3f5dc8736656ded3c8930b199371a08610`. 기존 발표 날짜/상세 설명/원문 링크를 웹·RSS·GitHub digest에 보존한다. 실제 IAB에서14카드·전체+8분야 탭, 우주2기사 필터/URL/reload, Enter로 전체14복원,390px 모바일 overflow없음·지도canvas0, 새 Satellogic 상세 본문/원문 링크·console error0를 확인했다. 별도 관측 proof만 추가하고 manifest의 browser_verified:false는 수정하지 않는다. 로컬 미리보기: `http://127.0.0.1:8092/tech-knowledge-garden/briefings/2026/10/2026-10-04_0800_tech_ai_briefing`.
+
+실제 Drive195개 원문파일/14목록을01:05:04UTC에 다시 읽어 local authority와 동일함을 확인했다. 이 스냅샷은 후속 작업 시10분 freshness 범위를 벗어나므로 release에 재사용하지 않는다. authoring prepare는2파일/45,428bytes·upload_allowed:false다. 실제 회차 Drive 작성·웹/RSS/GitHub 공개 배포는 아직 수행하지 않았다.32칸 실질 조사 검토, 최신 Drive 관측, release 판정이 필요하다. 수집 완료를 편집 완료로 표시하지 않는다. Signals는 검토된 빈 관측이며 근거 없는 추세/전문용어를 만들지 않았다.
+
+추가 원문2판본·56파일/57member·517,872bytes의 evidence ZIP을 기존 archive/v1로 만들고 모든 member SHA/CRC를 검사했다. Drive Research 파일 `1DpsAfEC1DYVPExj4fHq7kDVNeD3Zc2Qk`, 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7·shared:false·원격 raw SHA `13a78d6dee165a7fa4e7361d586d014aaa72cbce51c08595bd900efbc407caf2` 일치를01:20:49UTC에 확인했다. 전체 회차 dependency/portable runtime 복구본 또는 공개 영수증으로 사용하지 않는다. 증거: `source-live-debug/supplemental-live-debug-proof-20261004-v1.json`, `archive-staging/supplemental-live-debug-snapshot-20261004-v1/drive-receipt.json`, `package-verification.json`.
+
+재개 순서: 현재14기사 승인을 재사용해32칸의 실제 조사·관계 근거를 완성 → fresh Drive release/2파일 작성 및 원격 재읽기 → 실제 공개 검증. 기존 전체 profile/공유 module fingerprint가 한 경로 수정으로 다른 경로까지 재수집을 요구하는 병목은 이전353절의 후속 항목으로 유지하며 조용히 우회하지 않는다. 전체 suite는 이번에 반복하지 않았고 WBS2/22·goal active·전체 소급/독립평가/실제7회는 미완료다.1시간 이상 같은 실패를 반복한 blocker는 없다.

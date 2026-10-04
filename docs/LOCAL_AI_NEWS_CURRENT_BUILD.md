@@ -1,5 +1,7 @@
 # 로컬 AI 뉴스 시스템: 현재 구현과 남은 개발 계약
 
+최신 실물 검증(2026-10-04): 고정 목록 밖 Satellogic 원문을 기존 수집/parse/후보 등록으로 편입하면서 timestamp→검토 day의 승인 연결 오류를 재현·수정했다. 후보-parse 순간 일치는 별도 검증하고 다른 날짜/시각은 거부한다. 셀트리온·Satellogic12사실 직접 검토로734후보/verified85·나머지732동일, intake/approval 반복은 중복0이다. regular-eight-sector-preview-20261004-v5는8분야14기사·기존RSS39 GUID 보존·실제 desktop/mobile 탭/URL/reload/Enter/상세 링크를 확인했다. focused34/34·Drive Research evidence 원격 raw SHA 일치; 전체 suite·이번 회차 Drive 작성/공개·32칸 편집 판정은 미완료다. WBS2/22·goal active. [런북354절](LOCAL_AI_NEWS_RUNBOOK.md#354-고정-목록-밖-원문-실수집과-timestamp-승인-연결-디버깅).
+
 실수집 후속(2026-10-04): 두산 한국어 원문의 span 없는 마지막 문단 누락을 재현해 기존 profile 두 개를 수정했다. 새 목록→상세 실수집에서42항목/기간 안1기사·본문3→4블록을 확인했고, 기존 same-event 연결로 반복 편입은 changed:false·733후보/승인 SHA 불변이었다. 비공개8분야12기사의 desktop/mobile·탭URL/reload/back/Enter·기업+검색·카드 상세 이동도 실제 browser에서 확인했다. 표적30/30, 전체 suite·이번 회차 공개는 미실행이다. [런북353절](LOCAL_AI_NEWS_RUNBOOK.md#353-두산-원문-문단-누락-수정과-실제-독자-화면-확인).
 
 최신 결과(2026-10-04): 로봇신문의 정상 기사 11건을 원문/parse/날짜/지문 근거로 검토 장부에 편입했다. **372개 후보**, 기존 361개 record 동일, 반복 편입 changed=false. 이미지 표 2건과 기간 미완료는 유지한다. 공통 partial 경로를 CLI·daily·handoff에 연결했고 비공개 현황판에서 receipt·남은 detail을 확인한다. 활성 54개/로봇신문 inactive/coverage 불변, ontology 361/372·missing 11·invalid 0. 표적 57개 확인, 이후 판본 교차 연결 시험만 재검증했다. 전체 목표·승인·Drive·공개는 미완료. [계획 19.243](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19243-미완료-기간에서-정상-기사만-검토-장부로-편입)·[런북 333절](LOCAL_AI_NEWS_RUNBOOK.md#333-미완료-기간의-정상-기사-편입과-실제-검증).

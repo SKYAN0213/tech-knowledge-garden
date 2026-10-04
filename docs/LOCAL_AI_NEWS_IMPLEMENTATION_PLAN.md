@@ -3876,3 +3876,12 @@ Ollama 공통 역할 호출에 스트리밍 진행 기록·부분 실패 출력/
 기존 공통 파서·한국어 profile 두 개의 leaf div 선택을 보강해 span 없는 회사 발언 누락을 고쳤다. 수정 전 재현2실패, 수정 뒤 관련30/30과 새 목록42항목→상세1기사의 실수집·동일 raw SHA·새4블록 parse를 확인했다. 기존 same-event 승인 날짜9월18일을 재확인했으며 supplemental 편입은 changed:false·733후보/고유key/승인 SHA 불변이다. 새 기사 승인·공개로 세지 않는다. 8분야12기사 비공개 browser에서 desktop/mobile·탭URL/reload/back/Enter·기업+검색·카드 상세 이동을 확인했다. 별도 proof를 남기며 기존 manifest는 변경하지 않는다.
 
 다음은 기존32칸의 수집 증거와 실제 관련 후보를 대조해 편집 판정을 완료하고 fresh Drive release/정규 회차 저장·공개로 잇는다. source별 판정은 raw 후보 상태보다 검토된 alias와 승인 원문의 날짜를 우선한다. 전체 article_profiles SHA가 한 출처 수정으로 다른 경로까지 재사용을 무효화하는 범위 문제는 후속 수집 개선 항목으로 남긴다. 해당 의존성을 조용히 우회하지 않으며 전체54경로·전체 suite를 매 수정마다 반복하지 않는다. 전체 WBS2/22·goal active이며 정규 성공7회·전수 소급·독립평가는 남는다. [런북353절](LOCAL_AI_NEWS_RUNBOOK.md#353-두산-원문-문단-누락-수정과-실제-독자-화면-확인).
+
+
+### 19.263. 외부 탐색 원문의 공통 편입과 timestamp 승인 결함 수정
+
+고정 목록 밖 GPT 탐색→공식 목록/상세 원문→기존 수집/parse→미검토 후보→직접 검토→승인 연결→14기사 비공개 회차를 실제로 연결했다. Satellogic에 새 crawler를 추가하지 않았으며 원문20블록과 원래 발표시각을 보존했다. 후보 timestamp와 검토 기사 day 비교의 인수 방향 오류를 재현·수정하고 후보-parse의 정확한 순간 일치도 별도로 검사했다. 다른 날짜/시각은 쓰기 전에 거부한다. focused34/34 및 실제 intake/approval 재실행 불변을 확인했다.
+
+셀트리온6사실·Satellogic6사실 추가로734후보/verified85, 이전732후보 동일.8분야14기사 웹/RSS/GitHub 정합·39기존GUID·실제 desktop/mobile 탭/공유URL/상세 이동 확인.195authority파일은 불변이다. 신규 원문2판본 evidence517872bytes의 실제 Drive Research raw SHA를 검증했다. 작성 입력의 잘못된 tag와 보류 claim은 거부된 실패 기록을 보존했고 승인 기준을 낮추지 않았다.
+
+32칸 실질 조사 판정과 fresh Drive release/정규 회차 작성·공개는 미완료다. 모델 자동 승인·새 정기 route 활성화·독립평가 통과로 표시하지 않는다. 현재14승인은 다음 편성에서 재사용하고 재수집/재작성하지 않는다. 전체 fingerprint 범위 개선·전수 소급·실제7회는 기존 계획에 유지한다. WBS2/22/goal active. [런북354절](LOCAL_AI_NEWS_RUNBOOK.md#354-고정-목록-밖-원문-실수집과-timestamp-승인-연결-디버깅).

@@ -121,7 +121,7 @@ function verifySameSourceRevision({
     primary.current_parse_id !== candidate.article_parse_id ||
     primary.article_content_sha256 !== candidate.article_content_sha256 ||
     !samePublicationDate(primary.published_at, candidate.source_published_at) ||
-    !samePublicationDate(candidate.source_published_at, article.article_review.published_at)
+    !samePublicationDate(article.article_review.published_at, candidate.source_published_at)
   )
     throw Error("Reviewed source revision does not match the current candidate and event date")
   assertReviewDate(review.reviewed_at, {
@@ -319,8 +319,10 @@ async function linkCandidateApproval({
         samePublicationDate(sourceAlternative.published_at, article.article_review.published_at)
       if (
         !article.source_urls.some((articleURL) => canonicalURL(articleURL) === sourceUrl) ||
-        (!samePublicationDate(candidate.source_published_at, article.article_review.published_at) &&
+        (!samePublicationDate(article.article_review.published_at, candidate.source_published_at) &&
           !alternativeConfirmsEventDate) ||
+        (!sourceAlternative &&
+          !samePublicationDate(candidate.source_published_at, parse.dates?.published_at)) ||
         (!sourceAlternative &&
           !sourceRevision &&
           candidate.article_source_version_id &&
