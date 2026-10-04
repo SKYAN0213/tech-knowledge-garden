@@ -61,7 +61,7 @@ function sourceReview(root, run) {
 
 // The full replacement is approved against preserved authoring bytes and exact
 // reviewed source facts. This never writes the authority vault or publishes.
-export function evaluateNoteReview(root, decision, { vault = "vault" } = {}) {
+export function evaluateNoteReview(root, decision, { vault = "vault", sourceVault = vault } = {}) {
   const v2 = decision?.schema === "knowledge-note-review/v2"
   const allowed = ["schema", "reviewer", "reason", "reviewed_at", ...checks, "notes"]
   if (
@@ -258,7 +258,7 @@ export function evaluateNoteReview(root, decision, { vault = "vault" } = {}) {
     schema: v2 ? "approved-knowledge-notes/v2" : "approved-knowledge-notes/v1",
     reviewed_at: decision.reviewed_at,
     reviewer: decision.reviewer,
-    vault: path.resolve(vault),
+    vault: path.resolve(sourceVault),
     notes: approved,
     source_files: sources.map(({ run, files }) => ({ run, files })),
     candidate_published: false,
@@ -294,8 +294,12 @@ export function loadNoteApproval(root, run, { vault = "vault" } = {}) {
   validRun(run)
   const decisionBytes = fs.readFileSync(safePath(root, `runs/${run}/note-review.json`))
   const bytes = fs.readFileSync(safePath(root, `runs/${run}/approved-notes.json`))
-  const current = evaluateNoteReview(root, JSON.parse(decisionBytes), { vault })
-  if (sha256(JSON.stringify(current)) !== sha256(JSON.stringify(JSON.parse(bytes))))
+  const stored = JSON.parse(bytes)
+  const current = evaluateNoteReview(root, JSON.parse(decisionBytes), {
+    vault,
+    sourceVault: stored.vault || vault,
+  })
+  if (sha256(JSON.stringify(current)) !== sha256(JSON.stringify(stored)))
     throw Error("Saved knowledge approval differs from current evidence")
   return {
     run,

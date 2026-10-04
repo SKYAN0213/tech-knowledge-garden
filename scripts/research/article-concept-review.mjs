@@ -29,7 +29,7 @@ export function evaluateArticleConceptReview(
   claims,
   parses,
   decision,
-  { vault = "vault" } = {},
+  { vault = "vault", sourceVault = vault } = {},
 ) {
   const ids = decision.concept_ids ?? []
   const review = decision.concept_review
@@ -169,7 +169,7 @@ export function evaluateArticleConceptReview(
     event_id: article.event_id,
     draft_id: draft.draft_id,
     editorial_decision_sha256: sha256(JSON.stringify(decision)),
-    source_vault: path.resolve(vault),
+    source_vault: path.resolve(sourceVault),
     links,
     notes: sourceNotes,
     candidate_published: false,

@@ -4021,3 +4021,13 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 실제 GitHub Copilot 앱 제어 기사의 원문9블록과 앱 제어 전 승인·허용 앱 확인/초기화·조직 비활성화 claim을 읽고 기존 `agent-security` 정의와 대조했다. `copilot-agent-security-approved-20261004-v1`은 같은 사건 `e11a5d7f0be16c7a`, 발표일2026-10-01, 본문·출처를 보존한 비공개 승인이다. 현재 코드의 최종 `copilot-concept-reader-20261004-v2`에서 335파일 생성·상호 링크·날짜/원문·RSS40식별자 보존을 확인했다. 보호537파일/재개1322파일 불변, 모델/metadata0이다. 신규6/기존 온톨로지4 표적 검사가 통과했고 전체 suite와54경로 수집은 반복하지 않았다.
 
 완료 범위는 이 연결 슬라이스다. WBS2/22·전체 목표를 유지한다. 브라우저 UI·authority Drive 최신 대조·공개 반영, 전수92/801·독립40/20·운영7회는 미완료다. canonical 용어 파일도 개발 증거에 포함하되 이 archive/v1 snapshot은 runtime portable closure가 아니다. 새 연결 계약의 독립 복구에는 원 승인 및 용어 authority/신규 note approval 의존성이 필요하며 이를 검증하기 전 portable 완료로 집계하지 않는다. 상세 입력과 실행 증거는 런북369절이다. 1시간 이상 반복된 blocker는 없다.
+
+### 19.279. 기사·용어 관계의 독립 Research 복구
+
+기존 archive-closure/v2에 기사·전문용어 승인 receipt와 정의 authority 의존성을 연결했다. source-only archive는 그대로 두고, 이 연결 계약을 사용한 기사만 기존 작성4폴더의 Markdown을 별도 private snapshot run에 고정한다. 전체 Knowledge를 포함해 별칭 충돌 검사를 재현하고 Signals/TrendTopics/Edition의 원 노트 교체 검토도 보존한다. 생성 폴더·운영 기록·자격증명·장부는 이 snapshot에서 제외한다. snapshot은 보관 파일이며 새 지식 저장소나 공개 source가 아니다.
+
+원래 검토한 vault 경로는 provenance로 보존하고 실제 bytes 검증은 명시적으로 지정한 복구 vault에서 수행한다. source_vault/vault 문자열 때문에 같은 정의·근거의 새 위치가 거부되지 않도록 읽기 경로를 분리했으며 SHA·원문 검토·노트 이전 내용·별칭 검사는 완화하지 않는다. 신규/교체 note approval과 그 source_files도 명시적 dependency로 따라간다. 자신이 연결한 기사 사실을 사용한 노트의 factual dependency는 이미 검증한 run을 다시 방문하지 않고 포함하며 기존 일반 순환 거부는 유지한다.
+
+새 `loadArchivedConceptApproval`은 manifest의 모든 bound bytes와 정의 inventory를 확인한 뒤 현재 승인 loader로 다시 검증한다. unlisted Markdown, 변조 note/claim/receipt, symlink와 다른 작업 run의 snapshot 소유권 충돌을 거부한다. plan은 읽기 전용이며 완전한 dependency 검증 후에만 create-only snapshot을 쓴다. 기존 archive를 덮어쓰거나 authority vault를 수정하지 않는다. 다른 vault를 사용할 때 archive-closure도 `--vault`를 받는다.
+
+표적 신규/기존 승인·보관·노트 검토31/31을 통과했다. 실제 `copilot-concept-portable-20261004-v1`:원문1판본·197작성 노트/210자료/212ZIP members·604,687bytes. local restore와 실제 Drive raw ZIP의 별도 복구 모두 승인/온톨로지가 원본과 정확히 같았다. graph SHA e5052c72…·보호537파일/재개211파일 불변·모델/HTTP0. Drive private Research `1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr`, raw SHA `8589d383166e1b27bd0994eb6395caaeec6d5adff1aed1536e2eaebfffb04e3e`. 이 Research 복구는 현행 호환 코드로 읽는 역사 자료이며 전체 실행 환경/worker 재개·Drive authority 최신성·공개 발행 성공을 뜻하지 않는다. 상세는 런북370절. WBS2/22·전체소급92/801·독립40/20·운영7회/08시·공개 관문을 유지한다. 같은 실패로1시간 이상 막힌 항목은 없다.

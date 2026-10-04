@@ -54,6 +54,8 @@ python3 scripts/research/package-archive.py --root .local/research/local-ai --pa
 
 복구 대상은 새 private 폴더만 허용하며 원문/모델 출력/검토/parse 파일을 재구성한다. 복구 후 loadCurrentApproval과 해당 관계 검증을 실행해 실제 승인 근거를 확인한다. 이는 연구 자료 복구이며 운영 장부/공개 사이트/일일 상태의 자동 복구나 실행 재개를 의미하지 않는다. Drive 업로드 뒤 metadata 확인·원격 bytes hash 확인·원격 ZIP 복구를 각각 구분한다. connector가 checksum이나 materialized bytes를 제공하지 않으면 remote hash/restore는 미검증으로 유지한다. 실제 사례/제한은 런북335절을 따른다.
 
+기사에 새 `article-concept-review/v1` 연결 검토가 있으면 archive-closure는 정의·별칭/노트 교체 검토용 작성4폴더 snapshot과 선택한 note approval/fact source도 포함한다. 별도 vault로 승인했으면 같은 `--vault`를 제공한다. 복구 뒤 `loadArchivedConceptApproval(restoredRoot, archiveRun, approvedRun)`으로 manifest 전체 bytes·정의 inventory·현재 승인 계약을 다시 확인한다. 검토 origin 경로는 유지하고 정의 파일은 복구 snapshot에서 읽는다. 실제 local/원격 ZIP212파일 복구·승인/온톨로지 SHA 일치는 런북370절에 있다. 이 Research 자료 복구는 최신 Drive authority 동기화나 공개/worker 재개를 자동 수행하지 않는다.
+
 ## 승인한 작성 원본의 변경분 저장
 
 prepare-drive.py --approved-preview의 준비 결과는 업로드 승인이 아니다. research-authoring.mjs release가 exact source/preview/변경분·최신 전수 Drive snapshot·최종 편집 검토를 확인한 불변 영수증을 생성한다. 정규회차는32조사칸, 소급정정은 retrospective로 구분한다. 상세 계약과 실제 명령은 LOCAL_AI_NEWS_RUNBOOK.md 342절을 따른다.

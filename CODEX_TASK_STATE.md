@@ -1,4 +1,6 @@
-다음 실행: 새 기사·전문용어 연결의 승인/용어 authority 의존성을 portable closure에 포함해 독립 복구를 검증한다. 기존 run/원문/정의 SHA를 유지하고 관련 없는 모델 호출·전체 수집은 반복하지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+다음 실행: 기존32조사칸의 실제 편집 판정을 확인하고 정규 회차·기사/용어의 authority 반영을 준비한다. 최신 Drive 네 폴더 raw bytes와 unpublished 코드/작성 원본을 대조한 뒤 기존 release 관문으로 진행한다. 완료된 모델 호출·전체 수집은 반복하지 않는다.
+
+현재 독립 복구 완료(2026-10-04): 기사/전문용어 승인·source facts·canonical authority197노트·신규 note approval 의존성을 기존 archive-closure로 저장했다. sourceVault 위치 provenance는 유지하고 복구 vault bytes로 공통 검토한다. 실제 local/원격 Drive ZIP212files 복구에서 승인/온톨로지e5052c72… exact 일치·537보호/211재개files SHA불변·모델/HTTP0. 신규/기존 보관·노트·승인31/31·변조/unlisted alias/symlink/소유권 충돌 차단. archive210자료/212members/604,687bytes/raw8589d383…;Drive privateResearch1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr. stream reference materialization HTTP 실패 후 기존 bounded raw fallback으로 실제 원격복구/CRC/member SHA를 검증, 임시base64조각삭제. 런북370/계획19.279. 전체런타임 설치/worker재개·authority 최신성·공개·소급92/801·독립40/20·운영7회는 미완료/WBS2/22/goal active. 한시간 반복 blocker없음.
 
 현재 완료(2026-10-04): 원문 사용 claim/event와 specialist 정의 hash·별칭 검토를 공통 승인/preview/ontology에 결속했다. 실제 Copilot event e11a5d7f0be16c7a를 agent-security에 명시적 검토로 연결했고 최종 private copilot-concept-reader-20261004-v2의335파일/기사·용어 상호링크/원문·날짜/RSS40를 확인했다. 내부 판정 이유 미노출·537보호파일/1322재개파일 불변·모델/metadata0·표적10/10. helper import 실패만 실제 export로 수정, 기존로그 보존. 공개·browser·전수92/801·독립40/20·운영7회 미완료/WBS2/22/goal active. 이 개발 archive/v1은 portable runtime closure가 아니다. 상세 런북369/계획19.278. 한시간 반복 blocker 없음.
 

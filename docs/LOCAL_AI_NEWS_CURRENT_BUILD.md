@@ -1,4 +1,6 @@
-다음 실행: 새 기사·전문용어 연결의 승인/용어 authority 의존성을 portable closure에 포함해 독립 복구를 검증한다. 기존 run/원문/정의 SHA를 유지하고 관련 없는 모델 호출·전체 수집은 반복하지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+다음 실행: 기존32조사칸의 실제 편집 판정을 확인하고 정규 회차·기사/용어의 authority 반영을 준비한다. 최신 Drive 네 폴더 raw bytes와 unpublished 코드/작성 원본을 대조한 뒤 기존 release 관문으로 진행한다. 완료된 모델 호출·전체 수집은 반복하지 않는다.
+
+최신 독립 복구(2026-10-04): 기사·전문용어 승인/정의 authority와 note approval/fact source를 기존 archive-closure에 연결했다. 실제197작성 노트·원문1판본/210자료/212ZIP members를 local 및 Drive raw ZIP의 새 폴더에서 복구했고 승인/온톨로지 exact SHA 동일·537보호/211재개파일 불변·모델0을 확인했다. 표적31/31. Drive Research1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr/raw SHA8589d383…604,687bytes. Research 자료 복구이며 runtime 설치·worker 재개·authority 최신 대조·공개 성공은 아니다. WBS2/22·goal active·전체소급/독립평가/7회 운영 유지. [런북370절](LOCAL_AI_NEWS_RUNBOOK.md#370-기사정의검토-관계를-drive-보관본에서-독립-복구).
 
 최신 연결 구현(2026-10-04): explicit claim/event·정의 SHA·별칭 검토를 신규 approve와 preview/ontology 읽기에 공통 적용했다. 기존 canonical 별칭 충돌도 차단한다. 실제 Copilot 기사→agent-security→발표일2026-10-01 관련 기사·원문을 최종 reader-v2에서 확인했고 본문/ID·RSS40·보호537파일/재개1322파일 불변·모델0이다. 표적10/10, 공개/브라우저/전수소급/독립평가/7회 운영은 미완료다. WBS2/22·goal active 유지. [런북369절](LOCAL_AI_NEWS_RUNBOOK.md#369-원문에서-전문용어로-이어지는-검토승인실제-기사-이력).
 

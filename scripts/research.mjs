@@ -350,6 +350,7 @@ export async function main(argv = process.argv.slice(2)) {
     ![
       "preview",
       "approve",
+      "archive-closure",
       "note-review",
       "inventory",
       "reconcile-approved-inventory",
@@ -365,7 +366,7 @@ export async function main(argv = process.argv.slice(2)) {
     v.vault
   )
     throw Error(
-      "--vault is only supported for preview, approve, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
+      "--vault is only supported for preview, approve, archive-closure, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
     )
   if (
     v["source-run"] &&
@@ -908,7 +909,9 @@ export async function main(argv = process.argv.slice(2)) {
       v["merge-backlog"]
     )
       throw Error("Archive closure requires a stored source run and optional related approval runs")
-    return archiveClosure(root, v.run, v["source-run"], v["related-run"] || [])
+    return archiveClosure(root, v.run, v["source-run"], v["related-run"] || [], {
+      vault: v.vault || "vault",
+    })
   }
   if (command === "import-capture") {
     if (!v.review || !v["source-run"] || v["source-run"] === v.run)

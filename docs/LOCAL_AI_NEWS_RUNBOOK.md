@@ -9444,3 +9444,25 @@ node scripts/research.mjs preview --run copilot-concept-reader-20261004-v2 --app
 증거는 `source-live-debug/copilot-concept-live-20261004-v2.{mjs,json}`와 `copilot-concept-ontology-20261004-v2.json`, `runs/copilot-concept-reader-20261004-v2/preview/`다. 개발 archive에는 raw source/parse·원 승인/새 승인·canonical 정의·생성 HTML/RSS/graph와 구현을 포함한다. 공개 Git에는 코드/테스트/운영 문서만 저장한다. 이 snapshot은 authority vault/승인 dependencies를 재구성하는 portable runtime 복구본으로 표시하지 않는다. 새 계약의 portable closure 연결은 다음 작업이다. 전체 WBS2/22·92/801소급·독립40/20·실제 shadow7회·08시 운영·공개 관문을 유지한다. 1시간 이상 같은 실패로 중단된 항목은 없다.
 
 Drive 보관 검증: private Research 파일 `1-KV3ciYuA4M6387ab3sJaU_ry6u_oBox`,82자료/83ZIP members/원문1판본/1,285,241bytes. 원격 raw SHA `a98fdfcb676d00edc5654ad10fc6562867610a2cfa988bd1495e17b94146b7d4`, 메타데이터 부모/크기/shared:false 및 ZIP CRC/모든 member SHA 일치를 확인했다. `archive-staging/copilot-concept-evidence-20261004-v1/{drive-receipt,package-verification}.json`에 저장했다. frozen snapshot의 drive_verified:false는 보관 전 상태이며 원격 영수증만 true다. 독립 runtime 복구·authority 원고 반영·공개 배포 완료로 승격하지 않는다.
+
+## 370. 기사·정의·검토 관계를 Drive 보관본에서 독립 복구
+
+새 연결 계약을 사용한 기사의 archive-closure는 source files와 parse뿐 아니라 exact article-concept receipt, 정의 snapshot 및 선택한 note approval의 검토/원문 fact files를 포함한다. snapshot은 작성4폴더 Markdown만 보관한다. Knowledge의 일반/제외 노트도 포함해 이름·별칭 충돌 검토의 문맥을 재현한다. worker/캐시/장부/credential/생성 vault 폴더는 복구 대상이 아니다.
+
+```sh
+node scripts/research.mjs archive-closure --run copilot-concept-portable-20261004-v1 --source-run copilot-agent-security-approved-20261004-v1
+python3 scripts/research/package-archive.py --root .local/research/local-ai --package archive-staging/copilot-concept-portable-20261004-v1/research-source-bundle.zip --expected-sha256 8589d383166e1b27bd0994eb6395caaeec6d5adff1aed1536e2eaebfffb04e3e --restore-to restore-checks/new-copilot-concept-restore
+```
+
+새 private 복구 폴더를 사용한다. 같은 폴더의 재복구나 ZIP 덮어쓰기는 거부된다. 별도 vault 사본으로 승인했다면 archive-closure에도 `--vault <same-reviewed-copy>`를 제공한다. 복구 후 `loadArchivedConceptApproval(restoredRoot, archiveRun, approvedRun)`을 먼저 호출한다. 이 함수는 bound files 전체 bytes와 snapshot inventory를 확인하고, manifest에 지정된 vault로 공통 승인 검증을 다시 수행한다. 승인 때의 origin vault 경로는 유지하되 그 절대 경로에 의존해 정의를 읽지 않는다. 노트·원문 SHA, alias/identity 및 원 note replacement 검토는 그대로 적용한다.
+
+온톨로지 재생성은 manifest.concept_authorities의 relative_vault를 restoredRoot에 결합해 `loadApprovedOntologyInput(restoredRoot, approvedRun, {vault})`에 제공한다. 원본 승인/그래프와 정확한 JSON 및 SHA를 대조한다. 이는 완료된 자료 읽기·복구이며 새 기사 승인·model generation·현재 authority 교체·worker 재개를 수행하지 않는다. 소스/노트 의존성 budget32runs/2000files/256MiB와 authority snapshot1024files/64MiB를 유지한다.
+
+검증:
+
+- 기존 승인·노트·보관과 신규 독립 복구 표적31/31 통과. 원 vault·원 article run·원문 cache를 삭제한 소유한 임시 fixture에서도 승인·온톨로지 동일; 추가 alias Markdown·정의 변조·symlink·소유권 없는 snapshot run·다른 bytes 재사용은 거부했다.
+- 실제 local archive/restore: 작성197노트·210자료/212members·원문1판본,604,687bytes. 보호537파일·재개211파일 bytes 불변, model/HTTP0. `source-live-debug/copilot-concept-portable-20261004-v1.{mjs,json,log}`.
+- 실제 Drive Research `1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr`:parent/shared:false/604,687bytes 및 raw SHA `8589d383166e1b27bd0994eb6395caaeec6d5adff1aed1536e2eaebfffb04e3e` 일치. stream file reference 취득은 성공했으나 materialization HTTP 오류가 나서 동일 URL 반복 대신 기존 bounded legacy raw caller를 사용했다. base64 임시 조각은 검증한 ZIP 생성 후 삭제했고 credential URL을 영수증에 저장하지 않았다.
+- 원격 ZIP을 `restore-checks/copilot-concept-portable-remote-20261004-v1`에 실제 복구했다. ZIP CRC/각 member SHA는 기존 restorer가 검증하고212files를 생성했다. 원 승인과 기사→용어→claim→원문 graph가 정확히 같았으며 graph SHA `e5052c721d569c6b1cd58ace1a8d3a5ac1c831982e1a123e0c17d992990a69b3`. 별도 `archive-staging/copilot-concept-portable-20261004-v1/{drive-receipt,remote-restore-verification}.json`에서 재개한다.
+
+syntax/Prettier/diff 확인, 전체 suite·기사 새 생성·전체 수집·공개 배포는 반복하지 않았다. 이 묶음은 독립 Research 자료 복구이며 호환 코드/Node/Python runtime 설치 자체를 포함한 완전 실행 환경 backup은 아니다. WBS2/22·goal active·92/801소급·독립40/20·운영7회/08시·공개 관문은 남는다. 1시간 이상 같은 실패로 막힌 항목은 없다.

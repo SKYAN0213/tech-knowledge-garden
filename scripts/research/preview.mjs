@@ -75,7 +75,9 @@ export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
       value("reviewed-claims.json").claims,
       parses,
       value("editorial-review.json"),
-      { vault },
+      // The location records where review happened; byte identity and current
+      // validation use the supplied vault, including a verified archive copy.
+      { vault, sourceVault: concepts?.source_vault || vault },
     )
     if (!concepts || JSON.stringify(concepts) !== JSON.stringify(current))
       throw Error("Saved article concept assignment differs from current evidence")

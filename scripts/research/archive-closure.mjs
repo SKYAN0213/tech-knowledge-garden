@@ -4,12 +4,21 @@ import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
 import { loadApprovedOntologyInput } from "./ontology.mjs"
+import { loadCurrentApproval } from "./preview.mjs"
+import { loadNoteApproval } from "./note-review.mjs"
+import { planConceptAuthority } from "./concept-archive.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
 // Follow explicit evidence references only. This is a portable research snapshot,
 // not a backup of caches, credentials, the live backlog, or publication state.
-export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) {
+export function buildArchiveClosure(
+  root,
+  runId,
+  sourceRunId,
+  relatedRuns = [],
+  { vault = "vault", authorityWrites = [] } = {},
+) {
   if (
     !validRun(runId) ||
     !validRun(sourceRunId) ||
@@ -24,7 +33,9 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
     runs = new Map(),
     visiting = new Set(),
     edges = [],
-    parseIds = new Set()
+    parseIds = new Set(),
+    authorities = [],
+    authorityPlans = new Map()
   const add = (file) => {
     const previous = files.get(file.path)
     if (previous && JSON.stringify(previous) !== JSON.stringify(file))
@@ -56,7 +67,10 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
     const reference = (target, kind, check) => {
       if (!validRun(target)) throw Error("Invalid dependency reference: " + kind)
       check?.()
-      dependencies.push(target)
+      // A knowledge definition can use facts from the article which selects it.
+      // The current run already carries those exact source files; this factual
+      // dependency does not recurse through publication or model generation.
+      if (!(kind === "knowledge_fact_source" && visiting.has(target))) dependencies.push(target)
       edges.push({ from: id, to: target, kind })
     }
     const bundle = readJSON(root, base + "source-bundle.json")
@@ -175,7 +189,7 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
       for (const input of revision.approved_inputs)
         reference(input.run, "revision_approval", () => {
           if (
-            JSON.stringify(loadApprovedOntologyInput(root, input.run).file_hashes) !==
+            JSON.stringify(loadApprovedOntologyInput(root, input.run, { vault }).file_hashes) !==
             JSON.stringify(input.files)
           )
             throw Error("Source revision approval dependency changed")
@@ -192,13 +206,51 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
       reference(factRevision.prior_approved_run, "prior_fact_review", () => {
         if (
           JSON.stringify(
-            loadApprovedOntologyInput(root, factRevision.prior_approved_run).file_hashes,
+            loadApprovedOntologyInput(root, factRevision.prior_approved_run, { vault }).file_hashes,
           ) !== JSON.stringify(factRevision.prior_files)
         )
           throw Error("Prior fact review dependency changed")
       })
       if (factRevision.current_source_run)
         reference(factRevision.current_source_run, "fact_revision_source")
+    }
+    const concepts = readJSON(root, base + "article-concept-review.json")
+    if (concepts || readJSON(root, base + "editorial-review.json")?.concept_review) {
+      const current = loadCurrentApproval(root, id, { vault })
+      if (!current.concept_review) throw Error("Concept assignment archive receipt missing")
+      const planned = planConceptAuthority(vault, runId)
+      if (!authorityPlans.has(planned.run)) {
+        if (runs.size + visiting.size + authorityPlans.size >= 32)
+          throw Error("Archive dependency budget exceeded")
+        authorityPlans.set(planned.run, planned)
+        authorityWrites.push(...planned.writes)
+        for (const file of planned.files) add(file)
+      }
+      authorities.push({
+        approved_run: id,
+        run: planned.run,
+        relative_vault: planned.relative_vault,
+      })
+      edges.push({ from: id, to: planned.run, kind: "concept_authority" })
+      for (const note of current.concept_review.notes)
+        if (note.approval_run)
+          reference(note.approval_run, "concept_note_approval", () => {
+            if (
+              JSON.stringify(loadNoteApproval(root, note.approval_run, { vault }).files) !==
+              JSON.stringify(note.approval_files)
+            )
+              throw Error("Concept note approval dependency changed")
+          })
+    }
+    const notes = readJSON(root, base + "approved-notes.json")
+    if (notes) {
+      const current = loadNoteApproval(root, id, { vault })
+      for (const input of current.approval.source_files)
+        reference(input.run, "knowledge_fact_source", () => {
+          for (const [name, hash] of Object.entries(input.files))
+            if (pinFile(`runs/${input.run}/${name}`).sha256 !== hash)
+              throw Error("Knowledge fact source dependency changed")
+        })
     }
     for (const target of dependencies) visit(target)
     for (const file of manifest.files) add(file)
@@ -216,6 +268,12 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
       throw Error("Related run must approve the selected source article")
     visit(id)
   }
+  for (const planned of authorityPlans.values()) {
+    if (runs.has(planned.run))
+      throw Error("Concept authority run conflicts with a source dependency")
+    runs.set(planned.run, { run_id: planned.run, source_identity: null })
+  }
+  if (runs.size > 32) throw Error("Archive dependency budget exceeded")
   const entries = [...files.values()].sort((a, b) => a.path.localeCompare(b.path))
   if (entries.length > 2000 || entries.reduce((sum, f) => sum + f.bytes, 0) > 256 * 1024 ** 2)
     throw Error("Archive file or byte budget exceeded")
@@ -226,19 +284,44 @@ export function buildArchiveClosure(root, runId, sourceRunId, relatedRuns = []) 
     bound_runs: [...runs.keys()].sort(),
     parse_ids: [...parseIds].sort(),
     dependencies: edges.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+    ...(authorities.length
+      ? {
+          concept_authorities: authorities.sort((a, b) =>
+            a.approved_run.localeCompare(b.approved_run),
+          ),
+        }
+      : {}),
     files: entries,
     drive_verified: false,
     candidate_published: false,
   }
 }
 
-export async function archiveClosure(root, runId, sourceRunId, relatedRuns = []) {
+export async function archiveClosure(root, runId, sourceRunId, relatedRuns = [], options = {}) {
   return withLock(root, "run-" + runId, async () => {
-    const manifest = buildArchiveClosure(root, runId, sourceRunId, relatedRuns)
+    const authorityWrites = []
+    const manifest = buildArchiveClosure(root, runId, sourceRunId, relatedRuns, {
+      ...options,
+      authorityWrites,
+    })
     const file = `runs/${runId}/archive-manifest.json`
     const previous = readJSON(root, file)
     if (previous && JSON.stringify(previous) !== JSON.stringify(manifest))
       throw Error("Archive closure inputs changed; preserve the package and use a new run ID")
+    for (const write of authorityWrites) {
+      if (
+        write.path.endsWith("/concept-authority.json") &&
+        fs.existsSync(safePath(root, write.path.slice(0, -"/concept-authority.json".length))) &&
+        !fs.existsSync(safePath(root, write.path))
+      )
+        throw Error("Concept authority run already exists without archive ownership")
+      const existing = fs.existsSync(safePath(root, write.path))
+        ? fs.readFileSync(safePath(root, write.path))
+        : null
+      if (existing && sha256(existing) !== sha256(write.content))
+        throw Error("Archived concept authority bytes changed")
+      if (!existing) atomicCreate(root, write.path, write.content)
+    }
     if (!previous) atomicCreate(root, file, manifest)
     const receipt = packageResearchArchive(root, runId)
     const receiptFile = `archive-staging/${runId}/package-receipt.json`

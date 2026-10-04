@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { spawnSync } from "node:child_process"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
@@ -14,6 +15,8 @@ import { main } from "../scripts/research.mjs"
 import { loadCurrentApproval, assertPreviewConceptNotes } from "../scripts/research/preview.mjs"
 import { approveNoteReview } from "../scripts/research/note-review.mjs"
 import { CONCEPT_NOTE_HEADINGS } from "../scripts/research/knowledge-links.mjs"
+import { archiveClosure } from "../scripts/research/archive-closure.mjs"
+import { loadArchivedConceptApproval } from "../scripts/research/concept-archive.mjs"
 import {
   loadApprovedOntologyInput,
   projectEvidenceOntology,
@@ -197,6 +200,113 @@ function fixture(t) {
       evaluateArticleConceptReview(root, project(), record, claims, [parse], review, { vault }),
   }
 }
+
+function restoreArchive(f, result, destination = "restore/concepts") {
+  const restored = spawnSync(
+    "python3",
+    [
+      "scripts/research/package-archive.py",
+      "--root",
+      f.root,
+      "--package",
+      result.package.path,
+      "--expected-sha256",
+      result.package.sha256,
+      "--restore-to",
+      destination,
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(restored.status, 0, restored.stderr)
+  return path.join(f.root, destination)
+}
+
+test("concept closure restores approval and ontology without the original vault or source cache", async (t) => {
+  const f = fixture(t)
+  const options = [
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ]
+  await main(options)
+  const original = loadCurrentApproval(f.root, f.run, { vault: f.vault })
+  const graph = projectEvidenceOntology([
+    loadApprovedOntologyInput(f.root, f.run, { vault: f.vault }),
+  ])
+  const result = await main([
+    "archive-closure",
+    "--root",
+    f.root,
+    "--run",
+    "portable",
+    "--source-run",
+    f.run,
+    "--vault",
+    f.vault,
+  ])
+  assert.equal(
+    (await archiveClosure(f.root, "portable", f.run, [], { vault: f.vault })).reused,
+    true,
+  )
+  const restored = restoreArchive(f, result)
+  fs.rmSync(f.vault, { recursive: true })
+  fs.rmSync(path.join(f.root, "runs", f.run), { recursive: true })
+  fs.rmSync(path.join(f.root, "documents"), { recursive: true })
+  assert.deepEqual(loadArchivedConceptApproval(restored, "portable", f.run), original)
+  const authority = readJSON(restored, "runs/portable/archive-manifest.json").concept_authorities[0]
+  const vault = path.join(restored, authority.relative_vault)
+  assert.deepEqual(
+    projectEvidenceOntology([loadApprovedOntologyInput(restored, f.run, { vault })]),
+    graph,
+  )
+  fs.writeFileSync(path.join(vault, "Knowledge/Injected.md"), f.content)
+  assert.throws(() => loadArchivedConceptApproval(restored, "portable", f.run), /inventory changed/)
+  fs.rmSync(path.join(vault, "Knowledge/Injected.md"))
+  fs.appendFileSync(path.join(vault, f.notePath), "\nchanged\n")
+  assert.throws(
+    () => loadArchivedConceptApproval(restored, "portable", f.run),
+    /dependency bytes changed/,
+  )
+})
+
+test("concept closure refuses changed authority, symlinks and preexisting snapshot ownership without replacing a package", async (t) => {
+  const f = fixture(t)
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const result = await archiveClosure(f.root, "portable", f.run, [], { vault: f.vault })
+  const before = fs.readFileSync(path.join(f.root, result.package.path))
+  fs.appendFileSync(path.join(f.vault, f.notePath), "\nchanged\n")
+  await assert.rejects(
+    archiveClosure(f.root, "portable", f.run, [], { vault: f.vault }),
+    /hash changed/,
+  )
+  fs.writeFileSync(path.join(f.vault, f.notePath), f.content)
+  fs.symlinkSync(path.join(f.vault, f.notePath), path.join(f.vault, "Knowledge/Linked.md"))
+  await assert.rejects(archiveClosure(f.root, "other", f.run, [], { vault: f.vault }), /[Ss]ymlink/)
+  fs.rmSync(path.join(f.vault, "Knowledge/Linked.md"))
+  const authority = readJSON(f.root, "runs/portable/archive-manifest.json").concept_authorities[0]
+  fs.rmSync(path.join(f.root, `runs/${authority.run}/concept-authority.json`))
+  await assert.rejects(
+    archiveClosure(f.root, "portable", f.run, [], { vault: f.vault }),
+    /archive ownership/,
+  )
+  assert.deepEqual(fs.readFileSync(path.join(f.root, result.package.path)), before)
+})
 
 test("article concept approval binds a specialist definition and public fact without exporting review reasons", async (t) => {
   const f = fixture(t)
@@ -415,6 +525,27 @@ test("a not-yet-installed specialist approval binds exact source facts and requi
     assertPreviewConceptNotes(approvals, [
       { run: noteRun, approval: { notes: [{ path: notePath, sha256: sha256(content) }] } },
     ]),
+  )
+  fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const portable = await archiveClosure(f.root, "private-note-portable", f.run, [], {
+    vault: f.vault,
+  })
+  assert.ok(portable.bound_runs.includes(noteRun))
+  const restored = restoreArchive(f, portable)
+  assert.deepEqual(
+    loadArchivedConceptApproval(restored, "private-note-portable", f.run).concept_review,
+    receipt,
   )
   atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, { tampered: true })
   assert.throws(f.evaluate, /differs from current evidence/)
