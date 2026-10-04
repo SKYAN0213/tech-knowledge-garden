@@ -567,12 +567,13 @@ test("stored-source extraction runs offline, reuses claims and refuses altered r
     if (url.endsWith("/api/show"))
       return Response.json({ capabilities: ["completion"], thinking: { values: [false] } })
     if (url.endsWith("/api/tags"))
-      return Response.json({ models: [{ name: "qwen3.8:27b", digest: "test-digest" }] })
+      return Response.json({ models: [{ name: "fixture-model", digest: "test-digest" }] })
     if (url.endsWith("/api/version")) return Response.json({ version: "test" })
     if (url.endsWith("/api/chat")) {
       modelCalls++
       const request = JSON.parse(options.body)
       assert.equal(request.think, false)
+      assert.equal(request.model, "fixture-model")
       assert.match(request.messages[1].content, /plans to ship/)
       const output = {
         ...claim,
@@ -592,6 +593,8 @@ test("stored-source extraction runs offline, reuses claims and refuses altered r
     root,
     "--run",
     "model-test",
+    "--model",
+    "fixture-model",
     "--source-run",
     "source",
     "--think",

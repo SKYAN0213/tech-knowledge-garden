@@ -177,7 +177,15 @@ test("Reviewed concept evidence is retained while publication connections are un
   const knowledge = readKnowledge(),
     graph = buildGraph()
   assert.ok(knowledge.nodes.length >= 23)
-  assert.ok(knowledge.nodes.every((n) => n.keywords.length >= 3 && n.sources.length > 0))
+  // Reviewed terms need actual keywords, not filler to meet a numeric quota.
+  assert.ok(knowledge.nodes.every((n) => n.keywords.length > 0 && n.sources.length > 0))
+  for (const node of graph.nodes) {
+    const source = knowledge.nodes.find((n) => n.id === node.id)
+    assert.ok(source)
+    assert.deepEqual(node.sources, source.sources)
+    assert.equal(node.definition, source.definition)
+    assert.equal(source.mapReview.decision, "include")
+  }
   assert.ok(knowledge.associations.every((e) => e.reason && e.evidence.length))
   const ids = new Set(graph.nodes.map((n) => n.id)),
     pairs = new Set()

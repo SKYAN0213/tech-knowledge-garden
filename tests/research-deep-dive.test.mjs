@@ -610,11 +610,41 @@ test("deep CLI binds source files and preserves existing news mode without start
   assert.ok(context.fingerprints.documents_sha256)
   const record = {
     ...s.record,
+    draft: {
+      ...s.draft,
+      lead: [
+        {
+          text: "Example Co는 2026년 9월 2일 생산 설비 계약을 체결했다고 밝혔다.",
+          claim_ids: [s.claims[1].claim_id],
+        },
+        {
+          text: "앞서 9월 1일 공개한 자료에는 생산라인 구축 계획이 담겼다.",
+          claim_ids: [s.claims[0].claim_id],
+        },
+      ],
+      explanations: s.draft.explanations.map((section, i) => ({
+        ...section,
+        paragraphs: [
+          {
+            ...section.paragraphs[0],
+            text: [
+              "9월 1일 자료에서 회사는 생산라인 구축을 계획으로 제시했다.",
+              "9월 2일 자료에서 회사는 생산 설비 계약의 체결 상태를 설명했다.",
+              "두 자료는 구축 계획과 설비 계약이라는 서로 다른 실행 단계를 각각 다룬다.",
+            ][i],
+          },
+        ],
+      })),
+    },
     deep_context: context,
-    draft_id: draftFingerprint(s.draft, context),
   }
+  record.draft_id = draftFingerprint(record.draft, context)
   atomicWrite(root, `${dir}/draft.json`, record)
-  atomicWrite(root, "editorial-review.json", { ...s.editorialReview, draft_id: record.draft_id })
+  atomicWrite(root, "editorial-review.json", {
+    ...s.editorialReview,
+    draft_id: record.draft_id,
+    reader_quality_review: { repetition_checked: true },
+  })
   const approved = await main([
     "approve",
     "--root",

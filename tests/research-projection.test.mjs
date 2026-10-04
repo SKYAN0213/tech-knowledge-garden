@@ -5,6 +5,7 @@ import os from "node:os"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { sha256 } from "../scripts/research/contracts.mjs"
+import { atomicWrite } from "../scripts/research/run-state.mjs"
 import { draftProblems } from "../scripts/research/editor.mjs"
 import {
   approvedArticle,
@@ -880,9 +881,43 @@ test("paper versions and same-name people require explicit identity reconciliati
     /conflict/,
   )
 })
-test("concept assignments use reviewed specialist registry, never generic entities or cooccurrence", () => {
-  const registry = conceptRegistry("vault")
-  assert.equal(registry.length, 16)
+test("concept assignments use reviewed specialist registry, never generic entities or cooccurrence", (t) => {
+  const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "concept-registry-")))
+  t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
+  const metadata = {
+    title: "Runtime Policy",
+    entry_type: "concept",
+    concept_id: "runtime-policy",
+    verified_sources: ["https://example.org/policy"],
+    map_review: {
+      decision: "include",
+      kind: "security",
+      reason: "Synthetic review of execution policy boundaries",
+      reviewed: "2026-09-27",
+    },
+  }
+  atomicWrite(vault, "Knowledge/Policy.md", noteText(metadata, "Synthetic definition"))
+  atomicWrite(
+    vault,
+    "Knowledge/FANUC.md",
+    noteText(
+      { ...metadata, concept_id: "fanuc", map_review: { decision: "exclude", kind: "security" } },
+      "Synthetic company entry",
+    ),
+  )
+  atomicWrite(
+    vault,
+    "Knowledge/Unreviewed.md",
+    noteText(
+      { ...metadata, concept_id: "unreviewed", map_review: null },
+      "Synthetic unreviewed definition",
+    ),
+  )
+  const registry = conceptRegistry(vault)
+  assert.deepEqual(
+    registry.map((n) => n.meta.concept_id),
+    ["runtime-policy"],
+  )
   assert.throws(
     () =>
       verifiedConceptLinks(
@@ -893,6 +928,14 @@ test("concept assignments use reviewed specialist registry, never generic entiti
     /specialist/,
   )
   assert.deepEqual(verifiedConceptLinks({ review_status: "unreviewed" }, [], registry), [])
+  assert.deepEqual(
+    verifiedConceptLinks(
+      { review_status: "verified", event_id: "e1", claim_ids: ["c1"] },
+      [],
+      registry,
+    ),
+    [],
+  )
 })
 test("legacy archive verifies old IDs/raw hash and keeps imports unreviewed", (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-archive-")))
