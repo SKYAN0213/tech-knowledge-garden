@@ -7,6 +7,7 @@ import { editions, extractArticles, parseNote, walk, canonicalURL } from "../gar
 import { makeResolver } from "../links.mjs"
 import { PUBLIC_ROOTS, sha256, sourceId } from "./contracts.mjs"
 import { RunState } from "./run-state.mjs"
+import { legacyReviewUnits, loadEmptyLegacyReviews } from "./legacy-review.mjs"
 
 const distinct = (xs) => [...new Set(xs)].sort()
 const markdown = unified().use(remarkParse)
@@ -49,10 +50,14 @@ function wikiReferences(body) {
 // automatically inferred event; sharing a URL never merges two event identities.
 export async function retrospectiveInventory(
   vault,
-  { observedAt = new Date().toISOString() } = {},
+  { observedAt = new Date().toISOString(), reviewRoot = null } = {},
 ) {
   const base = path.resolve(vault)
   if (fs.realpathSync(base) !== base) throw Error("Inventory vault cannot follow a symlink")
+  const privateReviews = loadEmptyLegacyReviews(reviewRoot)
+  const reviewHashes = Object.fromEntries(
+    privateReviews.map((review) => [review.path, review.sha256]),
+  )
   const notes = PUBLIC_ROOTS.flatMap((folder) => {
     const directory = path.join(base, folder)
     if (!fs.existsSync(directory) || !fs.lstatSync(directory).isDirectory())
@@ -228,36 +233,13 @@ export async function retrospectiveInventory(
       excluded.get(id).edition_paths.push(relative)
     }
     if (edition.meta.schema_version !== "tech-ai-magazine/v2") {
-      const headings = markdown.parse(edition.body).children.filter((n) => n.type === "heading")
-      const starts = [
-        { offset: 0, title: null, depth: 0 },
-        ...headings.map((n) => ({
-          offset: n.position.start.offset,
-          title: text(n),
-          depth: n.depth,
-        })),
-      ]
-      const units = starts
-        .map((h, i) => {
-          const end = starts[i + 1]?.offset ?? edition.body.length
-          const content = edition.body.slice(h.offset, end)
-          if (!content.trim()) return null
-          const id = sha256(JSON.stringify([relative, h.offset])).slice(0, 20)
-          return {
-            unit_id: id,
-            title: h.title,
-            depth: h.depth,
-            body_start: h.offset,
-            body_end: end,
-            sha256: sha256(content),
-            source_ids: distinct(
-              externalURLs(content)
-                .map(({ url }) => addSource(url, { path: relative, legacy_unit_id: id }))
-                .filter(Boolean),
-            ),
-          }
-        })
-        .filter(Boolean)
+      const units = legacyReviewUnits(edition.body, relative, (content, id) =>
+        distinct(
+          externalURLs(content)
+            .map(({ url }) => addSource(url, { path: relative, legacy_unit_id: id }))
+            .filter(Boolean),
+        ),
+      )
       legacy.push({
         path: relative,
         date: edition.meta.date,
@@ -284,6 +266,27 @@ export async function retrospectiveInventory(
       })
       for (const url of article.urls) addSource(url, { path: relative, event_id: article.id })
       eventMap.set(article.id, event)
+    }
+  }
+  for (const review of privateReviews) {
+    for (const record of review.packet.records) {
+      const current = legacy.find((edition) => edition.path === record.path)
+      if (!current || current.sha256 !== record.sha256) {
+        diagnostics.push({
+          kind: "stale_empty_record_review",
+          path: record.path,
+          review: review.path,
+        })
+        continue
+      }
+      if (current.review_status !== "unreviewed") throw Error("Conflicting private legacy reviews")
+      current.review_status = "empty_record"
+      current.review = {
+        path: review.path,
+        sha256: review.sha256,
+        reviewer: review.packet.reviewer,
+        reviewed_at: review.packet.reviewed_at,
+      }
     }
   }
   const sourceGroups = [...groups.values()]
@@ -352,6 +355,15 @@ export async function retrospectiveInventory(
       throw Error("Generated reference changed during inventory")
   if (sha256(fs.readFileSync(rssFile)) !== sha256(rssBytes))
     throw Error("RSS changed during inventory")
+  if (
+    JSON.stringify(reviewHashes) !==
+    JSON.stringify(
+      Object.fromEntries(
+        loadEmptyLegacyReviews(reviewRoot).map((review) => [review.path, review.sha256]),
+      ),
+    )
+  )
+    throw Error("Private legacy reviews changed during inventory")
   return {
     schema: "research-retrospective-inventory/v1",
     observed_at: observedAt,
@@ -359,6 +371,7 @@ export async function retrospectiveInventory(
     notes: noteRows,
     events,
     legacy,
+    private_legacy_review_hashes: reviewHashes,
     concepts,
     relations,
     signals,
@@ -379,6 +392,15 @@ export async function retrospectiveInventory(
       v2_editions: all.length - legacy.length,
       legacy_editions: legacy.length,
       legacy_units: legacy.reduce((n, e) => n + e.units.length, 0),
+      empty_legacy_records: legacy.filter((e) => e.review_status === "empty_record").length,
+      empty_legacy_units: legacy
+        .filter((e) => e.review_status === "empty_record")
+        .reduce((n, e) => n + e.units.length, 0),
+      legacy_editions_requiring_review: legacy.filter((e) => e.review_status === "unreviewed")
+        .length,
+      legacy_units_requiring_review: legacy
+        .filter((e) => e.review_status === "unreviewed")
+        .reduce((n, e) => n + e.units.length, 0),
       distinct_events: events.length,
       appearances: events.reduce((n, e) => n + e.appearances.length, 0),
       verified_events: events.filter((e) => e.review_status === "verified").length,
@@ -401,6 +423,7 @@ export async function saveRetrospectiveInventory(root, runId, vault) {
   const implementations = Object.fromEntries(
     [
       "retrospective.mjs",
+      "legacy-review.mjs",
       "../garden.mjs",
       "../links.mjs",
       "../article-review.mjs",
@@ -409,7 +432,7 @@ export async function saveRetrospectiveInventory(root, runId, vault) {
       "../sectors.mjs",
     ].map((file) => [file, sha256(fs.readFileSync(new URL(file, import.meta.url)))]),
   )
-  const current = await retrospectiveInventory(vault)
+  const current = await retrospectiveInventory(vault, { reviewRoot: root })
   const state = new RunState(
     root,
     runId,
@@ -419,6 +442,7 @@ export async function saveRetrospectiveInventory(root, runId, vault) {
       hashes: current.hashes,
       rss_sha256: current.rss.sha256,
       generated_dependencies: current.generated_dependencies,
+      private_legacy_review_hashes: current.private_legacy_review_hashes,
       implementations,
     },
     { scope: "retrospective" },

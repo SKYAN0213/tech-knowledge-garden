@@ -16,6 +16,34 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_nvidia_publication_registered_profile_preserves_authors_and_display_date(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "nvidia-research-publication-v1")
+        template = b'''<html lang="en"><head><title>Paper | Research</title>
+        <meta property="article:published_time" content="2026-09-09T12:00:00Z"></head>
+        <body><nav>Related paper navigation</nav><section class="node-type-publication node-vm-full">
+        <h1>Platformer research paper</h1><section><p>Researchers tested 31 participants on eight tasks.</p></section>
+        <div class="field field--name-field-authors"><div class="field--items">
+        <div class="field--item">Samin Shahriar Tokey (Worcester Polytechnic University)</div>
+        <div class="field--item"><a href="/person/ben-boudaoud">Ben Boudaoud</a></div></div></div>
+        <div class="field field--name-field-publication-date"><div class="field--label"><h2>Publication Date</h2></div>
+        <div class="field--item">DATE</div></div>
+        <div class="field field--name-field-published-in"><div class="field--item">Foundations of Digital Games</div></div>
+        </section><aside><time datetime="2026-10-01T12:00:00Z">October 1, 2026</time></aside></body></html>'''
+        for date, expected in [(b'<time datetime="2026-08-10T12:00:00Z">Monday, August 10, 2026</time>', "2026-08-10"), (b"", None)]:
+            with self.subTest(date=expected):
+                result = self.invoke(template.replace(b"DATE", date), profile["options"],
+                                     url="https://research.nvidia.com/publication/2026-08_platformer")["result"]
+                self.assertEqual(result["title"], "Platformer research paper")
+                self.assertEqual(result["dates"]["published_at"], expected)
+                self.assertEqual(result["dates"]["profile_status"], "matched" if expected else "missing")
+                text = " ".join(block["text"] for block in result["blocks"])
+                self.assertIn("Samin Shahriar Tokey", text)
+                self.assertIn("Ben Boudaoud", text)
+                self.assertIn("Foundations of Digital Games", text)
+                self.assertNotIn("Related paper navigation", text)
+                self.assertNotIn("October 1", text)
+
     def invoke(self, data, options=None, operation="parse", expected_hash=None, mime_type=None, url="https://example.com/news"):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()

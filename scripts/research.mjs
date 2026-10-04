@@ -78,6 +78,7 @@ import { assertReviewDate } from "./research/dates.mjs"
 import { privatePreview } from "./research/preview.mjs"
 import { approveNoteReview } from "./research/note-review.mjs"
 import { retrospectiveInventory, saveRetrospectiveInventory } from "./research/retrospective.mjs"
+import { saveEmptyLegacyReview } from "./research/legacy-review.mjs"
 import { buildApprovedInventoryReconciliation } from "./research/approved-inventory-reconcile.mjs"
 import { buildCandidateEvidenceReviewBatch } from "./research/candidate-evidence-review.mjs"
 import { buildHistoricalSourceReconciliation } from "./research/historical-source-reconciliation.mjs"
@@ -179,6 +180,7 @@ export async function main(argv = process.argv.slice(2)) {
     ![
       "baseline",
       "inventory",
+      "review-legacy-empty",
       "reconcile-approved-inventory",
       "prepare-identity-review-batch",
       "reconcile-historical-source-evidence",
@@ -229,7 +231,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -353,6 +355,7 @@ export async function main(argv = process.argv.slice(2)) {
       "archive-closure",
       "note-review",
       "inventory",
+      "review-legacy-empty",
       "reconcile-approved-inventory",
       "prepare-identity-review-batch",
       "knowledge-draft",
@@ -366,7 +369,7 @@ export async function main(argv = process.argv.slice(2)) {
     v.vault
   )
     throw Error(
-      "--vault is only supported for preview, approve, archive-closure, note-review, inventory, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
+      "--vault is only supported for preview, approve, archive-closure, note-review, inventory, review-legacy-empty, reconcile-approved-inventory, prepare-identity-review-batch, knowledge-draft, select-candidate or candidate-approval",
     )
   if (
     v["source-run"] &&
@@ -1071,6 +1074,18 @@ export async function main(argv = process.argv.slice(2)) {
     return withLock(root, "run-" + v.run, () =>
       saveRetrospectiveInventory(root, v.run, v.vault || "vault"),
     )
+  if (command === "review-legacy-empty") {
+    if (!v.review || v.url || v.channel || v["source-run"] || v["approved-run"])
+      throw Error("Explicit empty-record review JSON and source vault required")
+    return withLock(root, "legacy-empty-review", () =>
+      saveEmptyLegacyReview(
+        root,
+        v.run,
+        v.vault || "vault",
+        JSON.parse(fs.readFileSync(v.review, "utf8")),
+      ),
+    )
+  }
   if (command === "reconcile-approved-inventory") {
     const runId = v["daily-run"]
     if (
@@ -1100,7 +1115,9 @@ export async function main(argv = process.argv.slice(2)) {
         throw Error(`${label} must be an existing file inside its private evidence directory`)
     }
     return withLock(root, "daily-acquisition", async () => {
-      const currentInventory = await retrospectiveInventory(v.vault || "vault")
+      const currentInventory = await retrospectiveInventory(v.vault || "vault", {
+        reviewRoot: root,
+      })
       const storedInventory = JSON.parse(fs.readFileSync(inventoryPath, "utf8"))
       const comparable = (value) => sha256(JSON.stringify({ ...value, observed_at: null }))
       if (comparable(currentInventory) !== comparable(storedInventory))

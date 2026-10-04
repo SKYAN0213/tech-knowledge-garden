@@ -4072,3 +4072,21 @@ Drive16작성폴더/200파일의 fresh connector metadata는 기존 raw 검증 �
 
 
 릴리스 증거는 Drive private Research `1LRWdEkRRUEOo75c_YNc12AXHMbCzqqbS`에 보관했다. ZIP44members/3,283,544bytes/source_versions0, 로컬CRC/member SHA와 원격raw SHA `d3fd55eccaf101aa2f51785c1b455d4b1a13035681100c320d27e12328b599bb`가 같고 이름/부모/shared:false를 확인했다. `archive-staging/release-integration-evidence-20261004-v3/{drive-receipt,package-verification}.json`은 frozen ZIP 이후 영수증이다. 처음 verification helper가 v2의 archive_manifest 필드를 v1에도 기대해 실패했으나 실제 v1 package 계약으로 좁혀 확인했다. runtime/원문 의존성 전체 portable 복구 성공으로 집계하지 않는다.
+
+
+## 19.284. 구형 빈 기록의 전수 구간 판정과 8월 11일 실제 원문 확보
+
+전체 목표인 원래92회차/801구간의 재조사·소급 공개 전환, 8분야 조사·지식 연결·독립40/20평가·실제7회운영/무인08시를 유지한다. 이번 묶음은 최근 legacy부터 실제 자료를 판정하며 private 검토와 공개 결과를 구분한다. 추가 API/예약·기존 원본 삭제·Git 이력 재작성은 도입하지 않는다.
+
+- 기존 heading offset 기반 legacy unit ID를 공통 `legacyReviewUnits`로 재사용했다. 코드 내 heading·공유URL로 사건을 추정하지 않는다.
+- `review-legacy-empty`는 원본 전체·모든 구간·검토자/일자를 확인해 내용 없는 template만 private empty_record로 등록한다. 원본 추가/변경, 누락·순서/중복/해시 오류, 소스·조사 주장·지식 연결, symlink, ledger 변조를 거부한다. 원본 변경 시 inventory가 stale/미검토를 명시한다.
+- 실제 zero-source19회차를 직접 읽어18회차/126구간을 판정했고, 7/14의 “없었다” 조사 주장이 남은 회차는 미검토다. legacy 구조총수85/752를 줄이지 않으며 pending67/626, verified_events139는 그대로다. 빈 기록의 공개 처리/회차 유지 검증은 아직 남는다.
+- 8/11의 NVIDIA 공식 소개2와 저자 대학 소개2·논문PDF2를 공통 수집기로 확보했다. CloudFront의 robots 확인 실패2도 보존하고 공식 저자 제공 경로를 사용했다. PDF11/9페이지·129/102blocks·missing_pages0은 전문 파싱 증거이며 전문 분석 완성을 뜻하지 않는다.
+- 기본 추출의 날짜/저자 누락을 동일 NVIDIA publication profile의 기존 XPath/날짜 옵션으로 보강했다. 저장 bytes 재파싱으로 발표일2026-08-10과4저자·학회명을 복원했다. source version/body는 그대로, 예전 parse와 모델 출력도 보존한다.
+- MLX2호출로5+4claims를 추출해 실제 원문으로 대조했다. 조건의 may/can과 저자 귀속을 정정했다. 9 verified facts와 기사 승인/발행을 구분한다. null 날짜의 옛 추출과 새 profile parse를 몰래 합치지 않는다.
+
+검증은 Node retrospective 표적10중9 최초통과 후 CLI allowlist를 보완해 실패1만 재검사 통과, 승인 inventory reconciliation2/2, Python profile1(정상/누락2경우) 통과다. 새 Python fixture의 repo parent/envelope 오류를 수정했다. 전체suite/공개배포를 반복하지 않았다. 작성 원본200파일·RSS40GUID/bytes 불변을 대조했다.
+
+Drive Research의 `legacy-retrospective-evidence-20261004-v1.zip`은80자료/81members/18,393,755bytes·6captured source versions다. 파일ID `1GpFKzQhfAqbAi7zUVKIAyMqVpakD4aqN`, SHA `6f8f625936458316a3fe938da9d1bcc745ed8b6aa83cf50e748746e74105aa3e`. 원격raw SHA·부모·shared:false, local CRC/member SHA/목록 exact를 확인했다. 이 development/v1 ZIP은 독립 runtime 복구 성공이 아니다. 추가 검증 영수증은 archive-staging에 별도 보존하며 frozen ZIP을 다시 만들지 않는다.
+
+다음 완료 조건은 8/11 원본9구간 전부의 처리 판정·고정 사건 ID와8/10발표일·4저자/PDF근거를 사용한2기사·소급 projection·원래 회차 날짜/URL/RSS 보존·Drive 작성 원본/공개 결과 확인이다. 현재 pre-v2는 extractArticles가 빈 목록을 반환하므로 일반 historical addition으로 나머지 구형 본문을 조용히 버리지 않는다. 공통 전체 구간 전환 검토를 구현한다. WBS2/22/goal active, 한시간 동일 병목 없음.

@@ -5,6 +5,12 @@ import os from "node:os"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { noteText } from "../scripts/garden.mjs"
+import { sha256 } from "../scripts/research/contracts.mjs"
+import {
+  assertEmptyLegacyReview,
+  legacyReviewUnits,
+  saveEmptyLegacyReview,
+} from "../scripts/research/legacy-review.mjs"
 import {
   retrospectiveInventory,
   saveRetrospectiveInventory,
@@ -219,4 +225,238 @@ test("distinct fixed events sharing a canonical URL remain separate", async (t) 
       .length,
     2,
   )
+})
+
+function emptyFixture(t, { overview = "없음", meta = {} } = {}) {
+  const setup = fixture(t)
+  const relative = "Editions/2026/08/2026-08-23_0205_Tech_AI_Briefing.md"
+  const names = [
+    "한눈에 보기",
+    "오늘의 핵심 기사",
+    "논문과 연구",
+    "오픈소스와 도구",
+    "흐름 읽기",
+    "바로 써먹을 점",
+    "Source List",
+  ]
+  const body = names.map((name, i) => `# ${name}\n\n${i === 0 ? overview : "없음"}`).join("\n\n")
+  const content = noteText(
+    { date: "2026-08-23", source_count: 0, new_items_count: 0, ...meta },
+    body,
+  )
+  const file = path.join(setup.vault, relative)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, content)
+  const packet = {
+    schema: "research-empty-legacy-review/v1",
+    reviewer: "fixture-reviewer",
+    reviewed_at: "2026-10-04",
+    authoring_read: true,
+    decision: "empty_record",
+    records: [
+      {
+        path: relative,
+        sha256: sha256(content),
+        before_content: content,
+        units: legacyReviewUnits(body, relative).map(({ unit_id, sha256 }) => ({
+          unit_id,
+          sha256,
+        })),
+        reason: "Read all original units; no authored news or sources are present.",
+      },
+    ],
+  }
+  return { ...setup, packet, file }
+}
+
+test("explicit empty legacy review preserves original bytes and separates records from verified news", async (t) => {
+  const { vault, root, packet, file } = emptyFixture(t)
+  const original = fs.readFileSync(file)
+  const before = await saveRetrospectiveInventory(root, "before-empty-review", vault)
+  const result = await saveEmptyLegacyReview(root, "empty-review", vault, packet)
+  assert.equal(result.records, 1)
+  assert.equal(result.units, 7)
+  assert.equal(result.verified_events, 0)
+  assert.equal(result.source_research_completed, false)
+  assert.equal(result.authoring_mutated, false)
+  assert.equal(result.drive_verified, false)
+  assert.equal(result.published, false)
+  const receipt = fs.readFileSync(
+    path.join(root, "runs/empty-review/retrospective/empty-record-review.json"),
+  )
+  const review = fs.readFileSync(path.join(root, result.review))
+  assert.deepEqual(await saveEmptyLegacyReview(root, "empty-review", vault, packet), result)
+  assert.deepEqual(fs.readFileSync(path.join(root, result.review)), review)
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, "runs/empty-review/retrospective/empty-record-review.json")),
+    receipt,
+  )
+  assert.deepEqual(fs.readFileSync(file), original)
+  const current = await retrospectiveInventory(vault, { reviewRoot: root })
+  assert.equal(current.counts.legacy_editions, before.counts.legacy_editions)
+  assert.equal(current.counts.legacy_units, before.counts.legacy_units)
+  assert.equal(current.counts.empty_legacy_records, 1)
+  assert.equal(current.counts.empty_legacy_units, 7)
+  assert.equal(current.counts.legacy_units_requiring_review, 2)
+  assert.equal(current.counts.verified_events, before.counts.verified_events)
+  assert.deepEqual(current.rss, JSON.parse(fs.readFileSync(path.join(root, before.inventory))).rss)
+  assert.equal(
+    current.legacy.find((edition) => edition.path === packet.records[0].path).review.reviewed_at,
+    packet.reviewed_at,
+  )
+  assert.equal((await retrospectiveInventory(vault)).counts.empty_legacy_records, 0)
+  await assert.rejects(
+    saveRetrospectiveInventory(root, "before-empty-review", vault),
+    /Run input changed/,
+  )
+  fs.appendFileSync(file, "\nActual announcement requiring source review\n")
+  const stale = await retrospectiveInventory(vault, { reviewRoot: root })
+  assert.equal(stale.counts.empty_legacy_records, 0)
+  assert(stale.diagnostics.some((diagnostic) => diagnostic.kind === "stale_empty_record_review"))
+  await assert.rejects(
+    saveEmptyLegacyReview(root, "empty-review", vault, packet),
+    /current authoring bytes/,
+  )
+})
+
+test("empty legacy review accepts only empty template prose, including the old overview list", (t) => {
+  const { packet } = emptyFixture(t, {
+    overview: "- 오늘의 핵심 기사: 없음\n- 논문과 연구: 없음\n- 오픈소스와 도구: 없음",
+  })
+  assert.equal(assertEmptyLegacyReview(packet), packet)
+  const replace = (from, to) => {
+    const altered = structuredClone(packet)
+    const record = altered.records[0]
+    record.before_content = record.before_content.replace(from, to)
+    record.sha256 = sha256(record.before_content)
+    return altered
+  }
+  assert.throws(
+    () => assertEmptyLegacyReview(replace("- 오늘의 핵심 기사: 없음", "오늘 새 소식은 없었다.")),
+    /requiring source review/,
+  )
+  assert.throws(
+    () =>
+      assertEmptyLegacyReview(
+        replace("# Source List\n\n없음", "# Source List\n\n[Source](https://example.com)"),
+      ),
+    /requiring source review/,
+  )
+  assert.throws(
+    () => assertEmptyLegacyReview(replace("new_items_count: 0", "new_items_count: 1")),
+    /report news or sources/,
+  )
+  assert.throws(
+    () =>
+      assertEmptyLegacyReview(
+        replace("date: 2026-08-23", "source_urls: [https://example.com]\ndate: 2026-08-23"),
+      ),
+    /metadata requires separate review/,
+  )
+  assert.throws(
+    () =>
+      assertEmptyLegacyReview(
+        replace("# Source List\n\n없음", "# Source List\n\n없음\n\n```\nExtra material\n```"),
+      ),
+    /additional unreviewed content/,
+  )
+})
+
+test("empty review requires exact full unit coverage, hashes, actor, date and a private destination", async (t) => {
+  const { vault, root, packet } = emptyFixture(t)
+  for (const mutate of [
+    (p) => p.records[0].units.pop(),
+    (p) => p.records[0].units.reverse(),
+    (p) => p.records[0].units.push(p.records[0].units[0]),
+    (p) => {
+      p.records[0].units[0].sha256 = "0".repeat(64)
+    },
+    (p) => {
+      p.records[0].sha256 = "0".repeat(64)
+    },
+    (p) => {
+      p.authoring_read = false
+    },
+    (p) => {
+      p.reviewer = ""
+    },
+    (p) => {
+      p.reviewed_at = "2026-08-22"
+    },
+    (p) => {
+      p.records[0].path = "../outside.md"
+    },
+    (p) => {
+      p.records[0].path = p.records[0].path.replace("2026/08/", "2026/07/")
+    },
+    (p) => {
+      p.source_research_completed = true
+    },
+  ]) {
+    const invalid = structuredClone(packet)
+    mutate(invalid)
+    await assert.rejects(saveEmptyLegacyReview(root, "invalid-empty", vault, invalid))
+    assert(!fs.existsSync(path.join(root, "runs/invalid-empty")))
+  }
+  await assert.rejects(
+    saveEmptyLegacyReview(path.join(vault, "private"), "inside", vault, packet),
+    /outside the authoring vault/,
+  )
+  await saveEmptyLegacyReview(root, "first-empty", vault, packet)
+  const repeated = structuredClone(packet)
+  repeated.reviewer = "another reviewer"
+  await assert.rejects(
+    saveEmptyLegacyReview(root, "overlap", vault, repeated),
+    /already has a private review/,
+  )
+  const result = await retrospectiveInventory(vault, { reviewRoot: root })
+  const file = Object.keys(result.private_legacy_review_hashes)[0]
+  const tampered = structuredClone(packet)
+  tampered.records[0].reason = "Edited after approval"
+  fs.writeFileSync(path.join(root, file), JSON.stringify(tampered))
+  await assert.rejects(retrospectiveInventory(vault, { reviewRoot: root }), /content hash mismatch/)
+  fs.rmSync(path.join(root, file))
+  fs.symlinkSync(path.join(vault, packet.records[0].path), path.join(root, file))
+  await assert.rejects(retrospectiveInventory(vault, { reviewRoot: root }), /Symlink/)
+})
+
+test("empty-record CLI uses the common private review and inventory path without a model", (t) => {
+  const { vault, root, packet } = emptyFixture(t)
+  const review = path.join(root, "review.json")
+  fs.mkdirSync(root, { recursive: true })
+  fs.writeFileSync(review, JSON.stringify(packet))
+  const result = spawnSync(
+    process.execPath,
+    [
+      "scripts/research.mjs",
+      "review-legacy-empty",
+      "--root",
+      root,
+      "--run",
+      "cli-empty",
+      "--vault",
+      vault,
+      "--review",
+      review,
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(JSON.parse(result.stdout).decision, "empty_record")
+  const inventory = spawnSync(
+    process.execPath,
+    [
+      "scripts/research.mjs",
+      "inventory",
+      "--root",
+      root,
+      "--run",
+      "cli-inventory",
+      "--vault",
+      vault,
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(inventory.status, 0, inventory.stderr)
+  assert.equal(JSON.parse(inventory.stdout).counts.empty_legacy_records, 1)
 })

@@ -76,3 +76,10 @@ context의 `next_deep_kind`에 따라 기업 전략 → 논문 해설 → 연구
 검증한 기사만 명시적인 concept_ids로 용어 변화 이력의 근거가 된다. 기존 검색용 keywords나 이웃 용어의 공동 등장으로 이력을 생성하지 않는다. 같은 사건은 여러 회차에 있어도 한 번 검토하되 모든 등장 원고를 일치시킨다. article_reviews가 있는 회차의 분석 생략 이유와 후속 조사 질문은 `.local/retrospective/` 기록에 저장하며 원고에 강제하지 않는다.
 
 제외한 사건의 원문·기존 본문·판정 이유는 비공개 Drive Research/Archive에 보관한다. 공개 Editions에 본문을 남겨둔 채 숨기지 않는다. 모든 공개 등장 원고에서 해당 기사와 사용하지 않는 출처를 제거하고 `excluded_events`에 ID만 남긴다. 생성기는 공개 본문에 제외 사건이 남아 있으면 실패한다. 기존 News 주소에는 비공개 상태만 표시하고 검색에는 등록하지 않는다. 연결된 Signals·TrendTopics·Knowledge의 근거도 함께 재검토한 뒤 발행한다. 구형 92회는 새 형식 추출기에 자동 포함되지 않으므로 별도 목록을 기준으로 누락 없이 검토한다.
+
+
+## 구형 빈 기록의 비공개 판정
+
+`research.mjs review-legacy-empty --run <id> --vault vault --review <private JSON>`은 `research-empty-legacy-review/v1`의 검토자·검토일·authoring_read와 모든 원본 bytes/SHA·구간 ID/SHA를 확인한다. decision은 `empty_record`이며 일곱 원래 섹션의 “없음” 또는 한눈에 보기의 세 빈 항목만 허용한다. URL이 없다는 이유만으로 빈 기록이라고 분류하지 않는다. 조사 결과 주장, 추가 본문·출처·지식 연결, 양수 기사/출처 수, 별도 메타데이터는 원문 재검토 대상으로 남긴다.
+
+판정 원본과 이유는 private root의 `retrospective/empty-record-reviews`에 보관한다. inventory CLI와 승인 원본 reconciliation은 같은 ledger hash를 읽고 고정 입력에 포함한다. 원본이 바뀐 판정은 stale이며 미검토로 돌아간다. `empty_legacy_records/units`와 `legacy_editions/units_requiring_review`는 구조상 legacy 총수와 구분한다. 빈 판정을 verified_events, source_research_completed, 공개 제외·발행 완료로 승격하지 않는다. 운영 기록과 제외 이유는 공개 projection 입력이 아니다. 원래 회차 주소·취재 경계·RSS 식별자와 작성 원본은 이 명령으로 수정하지 않는다.

@@ -1,6 +1,20 @@
 {
   "article_profiles": [
     {
+      "id": "nvidia-research-publication-v1",
+      "url_pattern": "^https://research\\.nvidia\\.com/publication/[A-Za-z0-9_-]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//section[contains(concat(' ',normalize-space(@class),' '),' node-type-publication ')]//h1",
+        "content_xpath": "//section[contains(concat(' ',normalize-space(@class),' '),' node-type-publication ')]",
+        "content_block_xpath": ".//h1|.//p|.//div[contains(concat(' ',normalize-space(@class),' '),' field--name-field-authors ')]//div[contains(concat(' ',normalize-space(@class),' '),' field--item ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' field--name-field-published-in ')]//div[contains(concat(' ',normalize-space(@class),' '),' field--item ')]",
+        "publication_date_policy": "explicit-authoritative",
+        "publication_date_xpath": "//section[contains(concat(' ',normalize-space(@class),' '),' node-type-publication ')]//div[contains(concat(' ',normalize-space(@class),' '),' field--name-field-publication-date ')]/div[contains(concat(' ',normalize-space(@class),' '),' field--item ')]/time",
+        "publication_date_pattern": "^[A-Za-z]+, [A-Za-z]+ [0-9]{1,2}, [0-9]{4}$",
+        "publication_date_format": "%A, %B %d, %Y"
+      }
+    },
+    {
       "id": "sec-company-filing-en-v1",
       "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/1318605/[0-9]{18}/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$",
       "options": {

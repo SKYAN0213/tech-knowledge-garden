@@ -9543,3 +9543,20 @@ canonical386078d와 이 묶음 private preview를 구분한다. 새 묶음의 Dr
 
 
 릴리스 증거는 Drive private Research `1LRWdEkRRUEOo75c_YNc12AXHMbCzqqbS`에 보관했다. ZIP44members/3,283,544bytes/source_versions0, 로컬CRC/member SHA와 원격raw SHA `d3fd55eccaf101aa2f51785c1b455d4b1a13035681100c320d27e12328b599bb`가 같고 이름/부모/shared:false를 확인했다. `archive-staging/release-integration-evidence-20261004-v3/{drive-receipt,package-verification}.json`은 frozen ZIP 이후 영수증이다. 처음 verification helper가 v2의 archive_manifest 필드를 v1에도 기대해 실패했으나 실제 v1 package 계약으로 좁혀 확인했다. runtime/원문 의존성 전체 portable 복구 성공으로 집계하지 않는다.
+
+
+## 375. 빈 legacy 기록의 별도 판정과 논문 원문 재사용
+
+`node scripts/research.mjs review-legacy-empty --run legacy-empty-review-20261004-v1 --vault vault --review .local/research/local-ai/runs/legacy-empty-review-20261004-v1/review-input.json`을 실행했다. 원본7섹션을 읽은18회차/126unit의 전체 bytes/ID/SHA를 검증했고 동일 판정의 재개는 immutable ledger를 재사용한다. inventory `retrospective-empty-reviewed-20261004-v1`은 authoring200/v2 36/legacy85·752, empty18·126, requiring-review67·626, verified139, RSS40/diagnostics0이다. 7/14의 조사 주장 1건은 pending 목록에 보존한다. 이 판정은 뉴스 없음·공개 제외·발행 성공이 아니다.
+
+원문 수집 run `legacy-20260811-sources-20261004-v1`에서 NVIDIA2captured/CloudFrontPDF2blocked(robots 확인 실패), `legacy-20260811-university-20261004-v1`에서 대학소개2/PDF2captured다. PDF11/9pages·129/102blocks·missing_pages0. 모든 body와 parse의 무결성을 공통 assertStoredEvidence로 검사했다. 사이트별 새 crawler는 만들지 않았다.
+
+누락 날짜/저자 보강 profile `nvidia-research-publication-v1`은 공통 content/title/publication_date XPath 설정을 사용한다. `reparse --run legacy-20260811-publication-profile-20261004-v1 --source-run legacy-20260811-sources-20261004-v1`의 HTTP/모델 호출0, source bytes 유지·새 parse8blocks 각각·발표일8/10·저자4명을 확인했다. 날짜 누락 fixture가 엉뚱한 meta/aside 날짜로 대체되지 않는 검사를 포함한다.
+
+기존 select-source로 성공 원문만 분리하고 `legacy-adaptive-extract-20261004-v1`, `legacy-platformer-extract-20261004-v1`에서 MLX를 각각1회 호출했다(46.849/32.135초, 5/4claims). 같은 run의 직접 review에서 conditional 및 연구자 귀속을 정정하여9facts verified. 이 두 옛 parse의 날짜는 null이며 새 profile 날짜를 무단 소급 주입하지 않았다. 기사 원고·승인·전환은 다음 단계다. 전문 파싱과 실제 전문 분석을 구분한다.
+
+표적 Node10중9·CLI allowlist 수정 후 실패1통과/관련 reconciliation2통과, Python 새 profile1통과. 최초 Python fixture2오류는 parent 경로/envelope 접근 문제로 수정했다. 전체 tests·build·공개 배포는 미실행이다. 작성200파일/RSS40의 SHA/GUID가 검토 전후 같다.
+
+Research archive `legacy-retrospective-evidence-20261004-v1`:80files/81members/18,393,755bytes·source versions6, ZIP SHA6f8f625936458316a3fe938da9d1bcc745ed8b6aa83cf50e748746e74105aa3e, Drive ID1GpFKzQhfAqbAi7zUVKIAyMqVpakD4aqN. 원격raw SHA·부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false 및 local CRC/member SHA exact. 최초 helper의 루트 package-manifest 가정은 실패했으며 실제 v1 member `Research/LocalAI/runs/<id>/archive-package-manifest.json` 계약으로 검증했다. independent runtime 복구 보장은 아니다. 추가2회귀와 원격/ZIP readback 영수증은 archive-staging에 별도 저장한다.
+
+직전 삭제 확인은 goal no progress, 이번 코드·18판정/6실제원문/9사실/Drive보관은 progress. 목표 active/WBS2/22, 공개775f25d 유지. 다음은 pre-v2 전체9unit 검토와2기사 projection·Drive·공개 확인이며 기존92/801 범위를 유지한다.

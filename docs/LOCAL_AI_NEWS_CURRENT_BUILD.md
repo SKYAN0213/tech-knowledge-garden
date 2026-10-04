@@ -1,3 +1,11 @@
+현재 소급 판정(2026-10-04): 구형 85회차/752구간을 그대로 유지하며 빈 템플릿 18회차/126구간을 private empty_record로 판정했다. 실제 기사 verified나 조사 성공·새 소식 없음으로 집계하지 않는다. 미판정 legacy는67회차/626구간이며 7/14의 조사 주장 1회차도 포함한다. 공통 legacyReviewUnits로 기존 offset/ID를 보존하고 원본 전체 bytes·모든 unit SHA·검토자·검토일·private ledger hash를 inventory/reconciliation에 결속했다. 변경 원본은 stale 진단/미검토로 돌아가며 소스·추가 문장·불완전 구간·symlink·ledger 변조를 거부한다.
+
+최신 실제 원문: 8/11 회차의 NVIDIA 소개 2개와 저자 대학 소개 2개/PDF2편을 공통 수집기로 확보했다(8요청 중6captured/2CloudFront robots 정책 실패 보존). PDF11/9페이지·129/102blocks·missing_pages0은 파싱 결과이며 전문 분석 완료가 아니다. 기본 파서에서 누락한 날짜·저자에 기존 profile 선택자를 적용해 HTTP/추론0 재파싱: 두 발표일8/10·저자4명 복원. MLX 실제2호출46.849/32.135초·5+4facts를 직접 대조하고 조건/회사 귀속을 정정했다. 기사 승인·원고·소급 공개 전환은 아직 없다.
+
+검증/보관: Node 표적10중9 최초통과, CLI --vault allowlist 수정 후 실패1만 재검사 통과; inventory reconciliation2/2; Python 선택자1(정상/날짜누락2경우) 통과. fixture 경로/응답 envelope 오류를 수정했고 전체suite는 미실행이다. 작성 원본200파일/RSS40GUID와 bytes 불변. private Research ZIP80files/81members/18,393,755bytes·6source versions를 원격rawSHA/CRC/memberSHA로 검증했다(1GpFKzQhfAqbAi7zUVKIAyMqVpakD4aqN, SHA6f8f6259…). 이 v1 증거는 독립 실행 복구 보장이 아니다. 런북375/계획19.284.
+
+다음 실행: 8/11 원본9구간을 모두 명시적으로 판정하는 pre-v2 전환 관문과 검토한2기사의 날짜/저자·PDF 근거 연결을 완료한다. old extract/date-unknown과 새 profile parse를 덮어쓰거나 같은 완료 추론을 반복하지 않는다. 빈18회차의 공개 처리도 별도 발행 검증이 남는다. 전체 원래92/801, WBS2/22, 독립40/20·shadow7/무인08시를 유지하며 목표 active다. 직전 모델삭제 확인은 no progress, 이번 코드·실제 판정/수집/Drive 보관은 progress이며 한시간 반복 blocker 없음. 공개775f25d 유지.
+
 현재 공개 반영(2026-10-04): 커밋775f25d·Actions37197877632 배포success. CI Node787/787·Python15+2/build/site통과, 공개43개 웹/RSS/GitHub bytes exact·Drive source200/hash 일치. UI1280/390에서 탭·태그·Enter·뒤로가기·공유URL·신규 용어/사건 연결을 확인했다. WebsiteData11개 기존ID 교체/원격rawSHA·부모/shared:false확인. 전체WBS2/22·legacy85/752·독립40/20·shadow7/무인08시·실제 portable closure 보완은 남아 있다. 런북374/계획19.283.
 
 다음 실행: 전체 목표를 유지한 채 최신 legacy 자료부터 기존 원문·직접검토·보관본을 재사용해 남은85회차/752구간을 조사한다. 독립human 평가40/20과 실제7회운영/무인08시를 코드·배포 성공으로 대신하지 않는다. 직전 모델삭제 확인 응답은 전체목표의no progress였고 이번 통합수정·실제공개·WebsiteData는progress다. 한시간 반복blocker없음.
