@@ -9023,3 +9023,38 @@ Ollama 역할 호출은 공식 `/api/chat` NDJSON 스트림을 읽고, UTF-8 분
 기존 archive/v1 경로의 `local-stream-debug-snapshot-20261004-v1`은42파일/43members/원문1판본,218,683bytes,SHA5fac6bf847fa9a3d111e279c86ff50a4b195b3970c82121bc3277a104524af06다. Drive Research 파일11IKsxS6Q7PSfX_LLKs8U1STb-cSjSB40의 부모·크기·shared=false 및 실제 원격 raw ZIP bytes SHA 일치를 확인했다. 증거 snapshot이며 전체 runtime 독립 복구본은 아니다.
 
 증거: `source-live-debug/local-stream-final-proof-20261004-v1.json`, `local-stream-reuse-proof-20261004-v1.json`, 위 두 run과 `archive-staging/local-stream-debug-snapshot-20261004-v1/drive-receipt.json`. 공개 회차·vault·예약은 변경하지 않았다. WBS2/22·goal active·1시간 반복 blocker 없음. 다음은 기존 신규 승인6건의 회차 편성·32칸 조사·원문 키워드 연결이다. 전체 소급·독립평가·실제7회·공개 검증은 남는다.
+
+## 352. 실제 원문 날짜·승인 ID와 8분야 비공개 회차 검증
+
+2026-10-04: 현재54경로 실제 수집의 저장 원문을 사용해 승인→회차 생성까지 진행했다. 오전00:17:41 UTC에 Drive 네 작성 폴더의195원본을 raw bytes로 다시 읽고14목록을 두 번 대조했다. source snapshot SHA56b4ade20cfe97ee619831d7b07b136883e37ac40acbc28ecdfbab26ed43aed5, 파일 SHAaeed4497c87e804c123b8ccd8b2128e14138bc7cc427984d2a0fc3db39397cdf다. 이 관측을 이후 시점의 최신 Drive 확인으로 사용하지 않는다.
+
+### 재현·수정
+
+- 토보라이프 후속 보도는10월2일이지만 승인 원문 사건 날짜는9월23일이었다. 공통 researchWindow는 승인 원고의 논리 JSON SHA·사건 ID·verified 상태·원문 날짜를 대조해 분류한다. 대체 원문 승인에 날짜 원고가 없으면 verify-original-date로 둔다. 실제 장부와 토보 승인 SHA19aa30daaf1e4883314b73a9c9a20a33b51297a28ebe6392c353622d318863c7는 바꾸지 않고 approved-historical로 이동했다. 수정 전 미발행 큐의 잘못된 분류이며 실제 신규 공개를 입증한 것은 아니다.
+- Teradyne Robotics/Elite Robots 승인 사건b37c512fcff4b5ed는 원문 URL의 끝 슬래시를 포함한 SHA에서 만들어졌다. 새 회차 생성기가 canonical URL SHA만 요구해 막히는 실패를 재현했다. 현재 승인 원문 URL 또는 그 canonical URL의 SHA만 허용해 기존 ID·URL을 보존한다. 이전 사건 ID와 canonical URL 중복 검사·발표일 범위·승인 입력 검증은 유지한다. 임의 다른 원문 ID는 계속 거부한다.
+- 최초 원문 선택 operator가 AWS의 canonical URL을 넘겨 exact stored URL 검사에서 중단됐다. 원본 run의 실제 끝 슬래시 URL로 고쳐 재사용했다. source selection 검사를 느슨하게 만들지 않았다. 승인 연결의 잘못된 --approved-run 및 상대 review 파일 경로도 CLI guard에서 중단됐고 실제 계약인 --source-run/작업 루트 경로로 실행했다.
+- 최초 회차 preview는 새 Signals 검토가 없어서 refresh가 중단됐다. 원문 비교 근거24사실을 연결한 explicit reviewed-empty Signals를 승인했다. 단일 발표에서 시장 성장·장기 변화 판단을 만들어 채우지 않았다. 코드 포맷 변경 후 v2 authoring prepare가 입력 판본 차이를 거부했으므로 과거 preview를 덮지 않고 최종 판본v3에서 생성했다.
+
+### 원문 기반 기사와 산출물
+
+기존 공통 selectStoredSources→saveSourceSelection→recordFactReview→assertVerifiedClaim→draftProblems→approvedArticle→candidate-approval를 사용했다. 별도 crawler·유료 API·예약을 추가하지 않았다. GPT 직접 원문 검토이며 model_generated=false, 로컬 자동 작성 성능이나 독립 human gold로 집계하지 않는다.
+
+| 원문 | 확인한 사실 수 | 유지한 조건 |
+| --- | --- | --- |
+| AWS Well-Architected Agent | 3 | 프리뷰·미국3리전 서비스/권고안과 모든 상용 리전 워크로드 등록을 구분; Support 플랜 |
+| GitHub Copilot computer use | 3 | 공개 프리뷰·macOS/Windows·앱 제어 승인과 조직 설정 |
+| AWS GuardDuty 조직 정책 | 3 | 활성화 설정의 중앙 적용/예외/콘솔·API 덮어쓰기 제한; 탐지 성공률로 해석하지 않음 |
+| 에너지연 암모니아 촉매 | 5 | 하이브리드와 아산화질소 촉매를 구분; 비용/효율/온도는 연구원 발표에 귀속; 파일럿은 계획 |
+| FDA 소아 폐동맥판막 | 4 | 자동 성장 대신 풍선 카테터 확장;13→22mm·62명/12기관/6개월과 관찰된 프레임·판막엽 이상 포함 |
+| Airbus OneWeb | 3 |32기 납품/운송 준비와 향후 미국 발사를 구분;669기는 전체 계획 |
+| Tesla 3분기 생산·설치 | 3 |2026년3분기13.7GWh·464391대 생산/486532대 인도;10월21일 재무 발표 예정 |
+
+733후보 중 위7건만 승인 연결해 verified76→83, 나머지726건은 논리 내용이 동일하다. 원문 날짜와 사건 ID도 보존했다. 최신 handoff 신규12/과거11/변경 큐0이고 이를 전체 미검토 완료로 표시하지 않는다.
+
+최종 regular-eight-sector-preview-20261004-v3는8분야12기사·Signals1개를 담는다. private generator/build·link 검증과 웹/RSS/GitHub 내용·출처 일치, 기존 RSS39식별자 보존을 통과했다. preview manifest SHA d0b8ca77358cba38eb5ea538b5d0c18c3835a492165c8d7861cb5ac40219dc98. authority 작성 원본195파일 SHA가 그대로다. authoring prepare는2파일/38247bytes, upload_allowed=false다. reviewed-empty Signals는 새 분석이나 전문용어 지도 노드를 만들지 않는다.
+
+새 날짜 회귀4검사 최초3실패/1통과, macOS temp realpath fixture 수정 뒤 실제 결함을 고쳤다. 원문 URL 고정 ID 회귀도 수정 전 실패를 확인했다. 마지막 기능 묶음의6파일 표적61/61이 통과했다. 코드 Prettier·diff 검사 통과. 전체 suite는 반복하지 않았다. 최초 preview의 ID·Signals 실패와 v2 입력 판본 실패는 보존했다.
+
+비공개 Research 증거 snapshot regular-editorial-debug-snapshot-20261004-v1은182파일/183members/원문12판본,1947732bytes,SHAe9d8dba5210c71659f8973a37d0484c5871fd3feeff501b309f1f20f782f5c2b다. Drive15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU의 Research 부모/shared=false/크기와 실제 원격 raw ZIP SHA 일치를 확인했다. 전체 runtime portable 복구본으로 표시하지 않는다.
+
+증거: source-live-debug/regular-editorial-final-proof-20261004-v1.json, multifield-editorial-direct-proof-20261004-v1.json, 위 v3의 edition-preparation/preview-manifest/drive-authoring transfer-plan 및 archive-staging의 drive-receipt.json. 원고의 Markdown 패널 열기는 queued이며 실제 브라우저 렌더링 성공이 아니다. coverage_complete/browser_verified/candidate_published/drive_authoring_written=false. 새 Drive Editions/Signals 작성·공개 배포·정규 성공7회는 아직 미실행이다. WBS2/22·goal active·1시간 반복 blocker 없음. 다음은32칸 실제 조사 검토와 독자 상호작용을 확인하고 fresh Drive 비교·release·작성/배포/readback으로 이어간다.

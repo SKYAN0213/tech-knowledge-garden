@@ -1364,7 +1364,13 @@ export async function main(argv = process.argv.slice(2)) {
     const observedAt =
       readJSON(root, `runs/${v.run}/search-plan/context.json`)?.window?.discovery_end ||
       new Date().toISOString()
-    const window = researchWindow(library.latest.cutoff, observedAt, readBacklog(), library.issues)
+    const window = researchWindow(
+      library.latest.cutoff,
+      observedAt,
+      readBacklog(),
+      library.issues,
+      { approvalRoot: root },
+    )
     const context = buildSearchContext(
       watchlist,
       window,

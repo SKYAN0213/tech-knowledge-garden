@@ -257,8 +257,14 @@ export function newEditionProjections(vault, approvals, spec, knowledgeNotes = [
   const firstDay = kstDay(spec.coverage_start)
   for (const article of approvals) {
     const published = article.article_review.published_at
+    // Keep fixed IDs from approvals made before URL canonicalization. Only
+    // hashes of this exact approved source or its canonical form are accepted.
+    const sourceIDs = new Set([
+      sha256(canonicalURL(article.source_urls[0])).slice(0, 16),
+      sha256(article.source_urls[0]).slice(0, 16),
+    ])
     if (
-      article.event_id !== sha256(canonicalURL(article.source_urls[0])).slice(0, 16) ||
+      !sourceIDs.has(article.event_id) ||
       priorIds.has(article.event_id) ||
       article.source_urls.some((url) => priorUrls.has(canonicalURL(url))) ||
       published < firstDay ||

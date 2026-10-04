@@ -398,6 +398,28 @@ test("private new-edition slice continues the cutoff without reusing an event or
     [article.event_id],
   )
   assert.equal(fs.existsSync(path.join(vault, projection.path)), false)
+  // Earlier approvals used the exact original URL, including a trailing slash.
+  // Publication must preserve their fixed event identity and URL.
+  const originalURL = "https://example.com/announcement/"
+  const originalID = sha256(originalURL).slice(0, 16)
+  const originalArticle = {
+    ...article,
+    event_id: originalID,
+    source_urls: [originalURL],
+    article_review: { ...article.article_review, event_id: originalID },
+  }
+  const [originalProjection] = newEditionProjections(vault, [originalArticle], spec)
+  assert.deepEqual(originalProjection.event_ids, [originalID])
+  assert.ok(originalProjection.content.includes(originalURL))
+  assert.throws(
+    () =>
+      newEditionProjections(
+        vault,
+        [{ ...originalArticle, event_id: sha256("https://example.com/other/").slice(0, 16) }],
+        spec,
+      ),
+    /duplicate or out-of-window event/,
+  )
   assert.throws(
     () => newEditionProjections(vault, [{ ...article, event_id: "0000000000000000" }], spec),
     /duplicate or out-of-window event/,

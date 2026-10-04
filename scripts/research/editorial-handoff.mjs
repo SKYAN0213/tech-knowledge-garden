@@ -56,6 +56,7 @@ function queueEntry(candidate, observedAttempts) {
     review_status: candidate.review_status,
     priority: candidate.priority,
     source_published_at: candidate.source_published_at || null,
+    approved_published_at: candidate.approved_published_at || null,
     discovered_at: candidate.discovered_at,
     source_urls: candidate.source_urls,
     event_id: candidate.event_id || null,
@@ -217,6 +218,7 @@ export function buildEditorialHandoff({
   observedAt,
   supplementalWindows = [],
   sameEventAliases = new Map(),
+  approvalRoot = null,
 }) {
   if (
     !Array.isArray(supplementalWindows) ||
@@ -415,9 +417,10 @@ export function buildEditorialHandoff({
     ...issue,
     items: issue.items.filter((article) => article.review?.review_status === "verified"),
   }))
-  const window = researchWindow(plan.cutoff, observedAt, backlog, verifiedIssues)
+  const window = researchWindow(plan.cutoff, observedAt, backlog, verifiedIssues, { approvalRoot })
   const allLocal = researchWindow(plan.cutoff, observedAt, backlog, issues, {
     includeUnverified: true,
+    approvalRoot,
   })
   const localMatches = new Map(
     [...allLocal.pending, ...allLocal.resolved].map((candidate) => [candidate.key, candidate]),
@@ -599,6 +602,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     backlog,
     issues,
     observedAt,
+    approvalRoot: root,
     supplementalWindows,
     sameEventAliases: fs.existsSync(backlogFile)
       ? loadSameEventSourceAliases(root, backlogFile)

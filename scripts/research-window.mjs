@@ -1,5 +1,8 @@
 import fs from "node:fs"
 import { approvalSourceChange } from "./article-identity.mjs"
+import { sha256 } from "./research/contracts.mjs"
+import { parseResearchDate } from "./research/dates.mjs"
+import { DEFAULT_ROOT, safePath } from "./research/run-state.mjs"
 
 export const BACKLOG_PATH = ".local/research/candidate-backlog.json"
 const day = 86400000
@@ -20,8 +23,33 @@ export function readBacklog(file = BACKLOG_PATH) {
   return data
 }
 
+function approvedPublicationDay(candidate, root) {
+  const approval = candidate.approval
+  if (candidate.review_status !== "verified" || !approval || root === null) return null
+  if (!/^[A-Za-z0-9_-]+$/.test(approval.approved_run || ""))
+    throw Error("Invalid approval publication reference")
+  const file = safePath(root, `runs/${approval.approved_run}/approved-article.json`)
+  if (!fs.existsSync(file)) return null
+  const article = JSON.parse(fs.readFileSync(file, "utf8"))
+  const date = parseResearchDate(article.article_review?.published_at)
+  if (
+    sha256(JSON.stringify(article)) !== approval.article_sha256 ||
+    article.event_id !== candidate.event_id ||
+    article.article_review?.review_status !== "verified" ||
+    date?.precision !== "day"
+  )
+    throw Error("Approved publication date requires its unchanged event approval")
+  return date.day
+}
+
 // Discovery overlaps prior runs. Seen URLs and downloaded pages are not publication evidence.
-export function researchWindow(cutoff, now, backlog, issues, { includeUnverified = false } = {}) {
+export function researchWindow(
+  cutoff,
+  now,
+  backlog,
+  issues,
+  { includeUnverified = false, approvalRoot = DEFAULT_ROOT } = {},
+) {
   const end = Date.parse(now),
     start = Date.parse(cutoff)
   if (!Number.isFinite(end) || !Number.isFinite(start) || start > end)
@@ -77,8 +105,14 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
                 .map((entry) => [entry.event_id, entry]),
             ).values(),
           ]
+    const approvedDate = approvedPublicationDay(c, approvalRoot)
+    // A later report can describe an older event. An alternate source needs the
+    // reviewed article's pinned date; the discovery date cannot substitute for it.
+    const publicationDate =
+      approvedDate || (c.approval?.source_alternative_resolution_run ? null : c.source_published_at)
     return {
       ...c,
+      approved_published_at: approvedDate,
       publication,
       possible_publications,
       next_route:
@@ -89,9 +123,9 @@ export function researchWindow(cutoff, now, backlog, issues, { includeUnverified
             : c.review_status === "rejected"
               ? "closed"
               : c.review_status === "verified" && c.approval
-                ? !c.source_published_at
+                ? !publicationDate
                   ? "verify-original-date"
-                  : c.source_published_at.slice(0, 10) < firstPublicationDay
+                  : publicationDate.slice(0, 10) < firstPublicationDay
                     ? "approved-historical"
                     : "approved-unpublished"
                 : possible_publications.length

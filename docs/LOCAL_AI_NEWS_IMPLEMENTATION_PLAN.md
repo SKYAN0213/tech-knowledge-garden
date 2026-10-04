@@ -3866,3 +3866,7 @@ standalone research-revisions.mjs plan/inspect는 저장 bytes·불변 parse·�
 ### 19.260 로컬 모델 실제 실행과 실패 출력 보존
 
 Ollama 공통 역할 호출에 스트리밍 진행 기록·부분 실패 출력/SHA 검사를 연결했다. 실제33블록 전체 추출2배치/6후보와 한국어 작성1회 완료, 별도35초 실패 주입에서1,075자 부분 출력·failed receipt 보존을 확인했다. 계획 상태·공정 범위·이름·태그는 직접 원문 검토로 정정했으며 무편집 자동 품질로 표시하지 않는다. 관련31검사·변경 실패 경로·재개/기존 승인/733장부 불변·Drive 실제 원격 ZIP SHA 일치를 확인했다. 운영 모델/배치 기본값·공개·예약은 유지한다. WBS2/22·goal active, 정규32칸/회차·전체 소급·독립평가·실제7회는 남는다. [런북351절](LOCAL_AI_NEWS_RUNBOOK.md#351-실제-로컬-모델-추출작성과-중단-출력-보존).
+
+### 19.261 원문 발표일·고정 승인 ID와 8분야 회차 실물 연결
+
+후속 보도10월2일을 원문9월23일 사건으로 라우팅하도록 승인 원고의 SHA·사건ID·verified 날짜를 검증한다. URL 끝 슬래시를 포함한 과거 승인 ID가 새 회차에서 거부되는 실패도 재현해 해당 원문/정규화 URL hash만 허용하고 canonical URL 중복 차단을 유지했다. 새 Drive195raw/14목록 재읽기 후7원문의24사실을 직접 검토해 승인 연결했다.733후보 중7변경/726동일·verified83, 현재 신규12/과거11이다. 최종 regular-eight-sector-preview-20261004-v3는8분야12기사/Signals1·웹/RSS/GitHub 일치와 기존RSS39식별자 보존, 표적61/61·포맷·diff를 통과했다. 작성 authority195파일은 불변이다. authoring prepare2파일/38247bytes는 upload_allowed=false이며32칸 조사·실제 브라우저·fresh Drive release/원고 저장·공개 배포는 남는다. 증거 ZIP1947732bytes·182파일/12원문판본은 Drive Research15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU에 보관하고 원격 raw SHA 일치를 확인했다. 전체 suite·정규 운영7회·전수 소급·독립평가는 미완료, WBS2/22·goal active 유지. [런북352절](LOCAL_AI_NEWS_RUNBOOK.md#352-실제-원문-날짜승인-id와-8분야-비공개-회차-검증).
