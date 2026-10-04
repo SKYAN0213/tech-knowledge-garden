@@ -4003,3 +4003,11 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 
 
 19.276 실행 결과(2026-10-04): 삭제/교체된 모델의 완료 assessment에 새 정책을 준비하던 공통 reuse 결함을 수정했다. 과거 원문·claim·checkpoints·장부 검증을 재사용하고 새 호출 분기만 현재 정책으로 준비한다. 실패 재현 후 표적4/4 및 실제 ABB36블록 원 대조의 재사용을 확인했다. 배경자료의 뉴스 보류6사실을 유지하고4직접 검토로 머신 텐딩 정의·적용 조건을 작성했다. role-bound MLX concept_write1호출36.324초 및 원 진단57.240초를 구분해 보존했다. 최종 용어1개 비공개 승인/preview 생성336파일·빈 부분 숨김·specialist node/임의edge0·RSS40식별자 유지·재개1918파일SHA불변/0모델. 브라우저·공개·전체소급·독립평가·운영 관문은 남으며 WBS2/22다. [런북367절](LOCAL_AI_NEWS_RUNBOOK.md#367-모델-교체-후-완료된-대조-재사용과-머신-텐딩-전문용어).
+
+### 19.277. 삭제된 모델의 기사 작성 결과를 재추론 없이 재사용
+
+명시적 draftRun 재사용에서도 현재 모델 정책으로 옛 article_write provider를 준비하는 실패를 재현했다. 공통 loadDraftCheckpoint와 원 binding으로 기존 budget/attempt 검증을 재사용하는 loadRoleBudget, source-bound loadBoundDraftCheckpoint를 적용했다. 신규 작성만 현재 provider를 준비하며 검토 사실·원문 판본·parse·생성 input/output·완료 비용 기록이 정확히 일치해야 한다. 원고 편집 정정은 기존 processing reader에서 보존하고, 정정된 working draft를 원 생성 결과로 가장해 새 run에 복사하지 않는다. 승인과 후보 공개는 별도다.
+
+실제 ABB Andover 원문13블록의 옛 qwen3.8:27b 작성 결과를 MLX 정책의 새 처리 run에 연결했다. 최초 v1은 제목의 회사명 오독을 명시적으로 해소하지 않은 과거 결정이어서 현재 identity 관문에 차단됐다. 기존 v3 identity 검토의 동일한7개 검토 사실과 추가 resolution을 사용한 v2는 메타데이터0/생성0, 원 승인 사건ID/597보호파일 SHA 및 재개16파일 불변을 확인했다. 변경된 입력/출력/비용/정정/미완료 결과 거부를 포함한14개 실질 표적 검사가 통과했다(부모 집계 포함15개). 최초 budget 거부는 정상 차단됐으며 테스트가 기대한 오류 표현만 실제 계약에 맞춰 수정해 실패 표적만 재검사했다. 전체 suite/수집 재실행/공개 발행은 수행하지 않았다.
+
+머신 텐딩 연결은 원문과 승인 정의를 직접 읽어 no_assignment로 비공개 기록했다. 같은 제조사의 로봇 사례·부품 이송을 근거로 머신 텐딩 기사나 관계 선을 만들지 않았다. 기사·용어 내용은 유지한다. 증거 위치는 source-live-debug/writer-reuse-live-20261004-v2.json 및 andover-machine-tending-assignment-review-20261004-v1.json, 상세는 런북368절이다. 전체WBS2/22·goal active·공개448ec36 유지; 전수 소급92/801·독립40/20·local shadow7회/무인08시·실제 키워드 연결과 공개 검증은 남는다. 같은 실패로1시간 이상 멈춘 항목은 없다.

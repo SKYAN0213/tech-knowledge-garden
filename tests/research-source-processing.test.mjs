@@ -18,6 +18,7 @@ import { processDailyCandidates } from "../scripts/research/daily-processing.mjs
 import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
+import { loadBoundDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
 
 function fixture(
   t,
@@ -413,6 +414,105 @@ test("a new processing run reuses exact reviewed generation without duplicate in
   ref.output_sha256 = "0".repeat(64)
   atomicWrite(f.root, "runs/reuse/draft-generation-reference.json", ref)
   await assert.rejects(() => processSourceRun(options), /generation binding changed/)
+})
+
+test("completed writer reuse survives model replacement without metadata or budget writes", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const review = await decision(f)
+  await reviewProcessedClaims(f.root, "processed", review)
+  await processSourceRun(f.options)
+  const budget = path.join(f.root, "runs/processed/model-policy/article_write/budget.json")
+  const before = fs.readFileSync(budget)
+  const policy = JSON.parse(fs.readFileSync(f.policyFile))
+  policy.roles.article_write.model = "replacement-local-model"
+  fs.writeFileSync(f.policyFile, JSON.stringify(policy))
+  f.provider.metadata = async () => {
+    throw Error("Deleted writer model must not be requested")
+  }
+  const options = {
+    ...f.options,
+    run: "replacement-writer",
+    assessmentRun: "processed",
+    draftRun: "processed",
+  }
+  await processSourceRun(options)
+  review.model_assessment.packet_sha256 = (
+    await loadFactReviewPacket(f.root, options.run)
+  ).packet_sha256
+  await reviewProcessedClaims(f.root, options.run, review)
+  assert.equal((await processSourceRun(options)).draft_reused, true)
+  assert.equal((await processSourceRun(options)).draft_reused, true)
+  assert.deepEqual(fs.readFileSync(budget), before)
+  assert.equal(readJSON(f.root, `runs/${options.run}/model-policy/article_write/budget.json`), null)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+})
+
+test("historical writer reuse rejects changed facts, source, output, budget and working edits", async (t) => {
+  const cases = {
+    facts: (f) => {
+      const facts = readJSON(f.root, "runs/processed/reviewed-claims.json").claims
+      facts[0].review.reason = "changed review"
+      atomicWrite(f.root, "runs/processed/reviewed-claims.json", { claims: facts })
+    },
+    source: (f) => {
+      const docs = readJSON(f.root, "runs/processed/documents.json")
+      docs[0].original_url = "https://example.org/different"
+      atomicWrite(f.root, "runs/processed/documents.json", docs)
+    },
+    output: (f) => {
+      const receipt = readJSON(f.root, "runs/processed/model-draft-checkpoint.json")
+      fs.appendFileSync(path.join(f.root, receipt.output_path), " ")
+    },
+    budget: (f) => {
+      const ledger = readJSON(f.root, "runs/processed/model-policy/article_write/budget.json")
+      ledger.attempts[0].wall_ms++
+      atomicWrite(f.root, "runs/processed/model-policy/article_write/budget.json", ledger)
+    },
+    result: (f) => {
+      const { sha256: seal, ...ledger } = readJSON(
+        f.root,
+        "runs/processed/model-policy/article_write/budget.json",
+      )
+      ledger.attempts[0].result.output.title = "Different recorded generation"
+      ledger.attempts[0].result_sha256 = sha256(JSON.stringify(ledger.attempts[0].result))
+      atomicWrite(f.root, "runs/processed/model-policy/article_write/budget.json", {
+        ...ledger,
+        sha256: sha256(JSON.stringify(ledger)),
+      })
+    },
+    working: (f) => {
+      const draft = readJSON(f.root, "runs/processed/draft.json")
+      draft.draft.title = "Edited working draft"
+      atomicWrite(f.root, "runs/processed/draft.json", draft)
+    },
+    incomplete: (f) =>
+      fs.unlinkSync(path.join(f.root, "runs/processed/model-draft-checkpoint.json")),
+  }
+  for (const [name, mutate] of Object.entries(cases))
+    await t.test(name, async (t) => {
+      const f = fixture(t)
+      await processSourceRun(f.options)
+      await reviewProcessedClaims(f.root, "processed", await decision(f))
+      await processSourceRun(f.options)
+      const load = () =>
+        loadBoundDraftCheckpoint(
+          f.root,
+          "processed",
+          readJSON(f.root, "runs/processed/reviewed-claims.json").claims,
+          {
+            documents: readJSON(f.root, "runs/processed/documents.json"),
+            parses: readJSON(f.root, "runs/processed/parses.json"),
+          },
+        )
+      assert.equal(load().reused, true)
+      mutate(f)
+      assert.throws(
+        load,
+        name === "budget" ? /Model budget hash mismatch/ : /changed|differs|required/,
+      )
+      assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+    })
 })
 
 test("development fixtures and irrelevant CLI flags are rejected", async (t) => {

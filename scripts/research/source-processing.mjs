@@ -17,7 +17,7 @@ import {
   reviewProcessedClaims,
   assertProcessedFactReview,
 } from "./evidence-review-packet.mjs"
-import { writeDraftCheckpoint } from "./draft-checkpoint.mjs"
+import { writeDraftCheckpoint, loadBoundDraftCheckpoint } from "./draft-checkpoint.mjs"
 import { draftMarkdown } from "./editor.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
@@ -295,25 +295,27 @@ export async function processSourceRun({
         candidate_published: false,
       }
     }
-    const writer = await prepareRoleProvider(baseProvider, policy, "article_write", {
-      root,
-      run: input.draft_run,
-    })
-    if (draftRun && !readJSON(root, `runs/${draftRun}/model-draft-checkpoint.json`))
-      throw Error("Completed draft checkpoint required for reuse")
-    const generated = await writeDraftCheckpoint(
-      root,
-      input.draft_run,
-      writer,
-      reviewed.claims,
-      {
-        model: writer.executionPolicy.settings.model,
-        think: writer.executionPolicy.settings.think,
-        parses,
-        documents,
-      },
-      await writer.metadata(writer.executionPolicy.settings.model),
-    )
+    const writer = draftRun
+      ? null
+      : await prepareRoleProvider(baseProvider, policy, "article_write", {
+          root,
+          run: input.draft_run,
+        })
+    const generated = draftRun
+      ? loadBoundDraftCheckpoint(root, draftRun, reviewed.claims, { parses, documents })
+      : await writeDraftCheckpoint(
+          root,
+          input.draft_run,
+          writer,
+          reviewed.claims,
+          {
+            model: writer.executionPolicy.settings.model,
+            think: writer.executionPolicy.settings.think,
+            parses,
+            documents,
+          },
+          await writer.metadata(writer.executionPolicy.settings.model),
+        )
     const generation = readJSON(root, `runs/${input.draft_run}/model-draft-checkpoint.json`)
     createOnce(root, base + "draft-generation-reference.json", {
       run: input.draft_run,

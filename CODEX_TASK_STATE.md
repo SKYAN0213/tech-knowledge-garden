@@ -1,4 +1,8 @@
-다음 실행: 새 전문용어와 실제 뉴스의 명시적 근거 연결을 기존 note/article 승인·private preview에서 검토한다. 해당 과거 회차 반영은 최신 Drive 네 작성 폴더의 raw bytes 대조부터 재개하며, 위136파일 보관은 그 대조를 대신하지 않는다.
+다음 실행: 기사 전문용어 지정에 기존 verifiedConceptLinks의 명시적 claim/event 근거를 신규 승인·비공개 preview에서 검증하고, 실제 연결된 용어/기사 이력을 확인한다. 무관한 사례를 억지로 묶지 않는다. authority/공개 반영은 최신 Drive 네 폴더 raw bytes 대조부터 수행한다.
+
+이번 turn은 실제 코드 수정·옛 모델 결과 연결/재개·Drive146파일 원격 raw SHA 검증으로 progress다. 직전 삭제 상태 확인 응답은 전체 목표의 구현 진척으로 집계하지 않는다. 병목 반복 없이 다음 공통 승인/용어 연결 관문으로 진행한다. private 보관 `19hw3KJcY-BaM95paom2ap57Mxx4cNTHe`/ZIP1,532,586bytes/SHA7c51f208…; 개발 증거이며 authority 네 폴더 최신 재대조나 공개 배포가 아니다.
+
+최신 작성 재사용(2026-10-04): 삭제된 모델의 --draft-run에도 현재 metadata/provider를 준비하던 실패를 재현·수정했다. 공통 frozen generation과 원 binding의 budget/완료 output·provenance를 검증하며 신규 작성만 모델을 준비한다. 실제 ABB13블록/검토7사실은 MLX 정책 새 run에서 metadata0/model0·기존597파일/재개16파일 불변이고 최종 승인 사건ID·편집 원고를 보존했다. 제목-only 신원 resolution이 없는 옛 결정은 현재 관문에 차단됐으며 동일 facts+기존 명시적 resolution으로 재사용했다. 실질14표적(부모 포함15) 확인·전체suite/공개 미실행. Andover를 머신 텐딩으로 묶을 근거는 확인하지 못해 비공개 no_assignment 기록만 남겼다. WBS2/22·goal active, 전체 소급/독립 평가/실제 키워드 연결/정규 운영은 남는다. [런북368절](docs/LOCAL_AI_NEWS_RUNBOOK.md#368-삭제된-모델의-기사-작성-결과를-원-비용근거로-재사용).
 
 최신 용어 경로(2026-10-04): 완료된 옛 assessment를 현재 모델 정책에 묶던 source-processing reuse 결함을 수정했다. metadata/새 대조 없이 원 claim·원문·비용·checkpoint를 검증하며 실패재현 후4/4통과. ABB 배경 FAQ에서 정의/적용 조건4사실만 직접 검토해 머신 텐딩 신규 용어를 MLX concept_write/최종 본문 검토로 비공개 승인했다. 생성336파일·빈 부분숨김·specialist node/임의선0·RSS40식별자 유지·1918파일/1runtime link 재개불변/모델0·Drive 비공개136파일 raw ZIP SHA 검증. 브라우저·공개·전체소급·독립평가·운영 관문은 미완료며 WBS2/22·goal active다. [런북367절](docs/LOCAL_AI_NEWS_RUNBOOK.md#367-모델-교체-후-완료된-대조-재사용과-머신-텐딩-전문용어).
 

@@ -9383,3 +9383,17 @@ ABB의 machine tending FAQ36블록은 이미 `abb-faq-background-disposition-202
 원고→용어 작성/승인→생성까지의 개발 사례다. 전체 소급92/801·독립40/20 평가·local shadow7회/무인08시·실제 공개 관문은 완료하지 않았다. WBS2/22·goal active·공개448ec36 유지. 기사별 전문용어 지정과 변화 이력은 해당 기사/사건의 실제 근거가 확인될 때 기존 승인/preview로 연결한다. 이번 묶음에1시간 이상 동일 실패를 반복한 항목은 없다. 아래 Drive 영수증으로 비공개 증거 보관을 확인한다.
 
 Drive 원격 검증: Research `16sVSgdjDAKyxwjdeGYXdZkzKDyQWwKLO`, 증거136파일/ZIP137members/1source version/1,249,987bytes, raw SHA `15ac8b314ce1da24cd41ad4a5ff7070967ad3263f8a1aa26b9ee84231216e947`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/machine-tending-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 보관 영수증이다.
+
+## 368. 삭제된 모델의 기사 작성 결과를 원 비용·근거로 재사용
+
+process-source의 --draft-run은 이전 완료 결과를 읽도록 명시하는 옵션이다. 기존 경로는 prepareRoleProvider로 현재 모델 metadata/정책을 옛 실행에 적용하려 해서 삭제된 qwen3.8:27b 결과를 재사용할 수 없었다. 이제 완료한 생성 입력의 reviewed claims/documents/parses/deep context/provisional 조건, 고정 input SHA/출력 경로/bytes, 현재 schema·draft fingerprint·claim IDs/problems/public_approved:false를 공통 loadDraftCheckpoint에서 검사한다. loadRoleBudget은 기존 readBudget 검증을 원래 binding으로 호출하며 provider/metadata/새 비용을 만들지 않는다. loadBoundDraftCheckpoint는 원 article_write policy/hash·모델/think·완료 attempt의 정확한 output/provenance까지 대조한다. 편집된 working draft는 이 원 생성 결과 재사용 대상이 아니다. 기존 loadProcessedDraft의 명시적 correction chain으로 읽어야 한다.
+
+실제 실행 abb-andover-writer-reuse-20261004-v2는 원 source/추출 abb-processing-batch-20261004-v1-3fac2af7c024와 완료 대조 abb-andover-normalized-context-20261004-v2, 원 작성 checkpoint를 사용한다. 새 정책은 MLX다. v1의 과거 사실 결정은 subject_only_in_title resolution이 없어서 현재 관문에서 거부됐다. v1 실패 파일/로그를 보존하고 기존 identity-gate-v3의 동일한 검토 사실/검토일/정정과 추가 resolution을 적용했다. 과거 판단을 오늘 새 조사로 다시 날짜 찍지 않았다. 검토7사실 SHA가 원 작성 입력과 동일하고 새 작업은 editorial_review에 멈췄다. 원 생성 원고를 최종 승인으로 상속하지 않았다. 기존 최종 승인 a0c307de02d0e03b의 수정 문장은 그대로다.
+
+writer-reuse-live-20261004-v2.json은 model/metadata0, 원 승인·원문·원 예산·authority vault·734후보와 용어 승인 포함597파일 불변, 새 처리 재개16파일 불변을 확인한다. 회귀는 old model replacement/new run generation reuse·correction chain 보존·checkpoint3개 및 변조7경로, 실질14검사/부모 포함15개다. 최초 budget 테스트는 Model budget hash mismatch로 올바르게 차단돼 기대 문자열만 수정했고 해당 실패 자식만 재실행했다. 변경 세 모듈 syntax/Prettier/diff 확인, 전체 suite/build/사이트 배포는 반복하지 않았다.
+
+원문13블록과 머신 텐딩 승인 정의를 읽고 andover-machine-tending-assignment-review-20261004-v1.json에 no_assignment를 기록했다. 직접 모따기 공정을 부품 투입·회수 자동화 기사로 추측해 연결하지 않는다. 비공개 판단 이유는 독자 화면에 넣지 않고 기존 전문용어·기사·지도는 변경하지 않았다.
+
+Drive Research 보관은 아래 영수증을 추가한다. 이 개발 증거는 전체 runtime portable closure·authority Drive 네 폴더 최신 대조·독립 평가·신규 승인/공개 발행 완료를 의미하지 않는다. WBS2/22·goal active이며92회/801기사 소급, 독립40dev/20heldout, 실제 shadow7회/08시 운영, 근거 있는 전문용어 연결/공개 관문은 남는다. 한 시간 이상 반복된 blocker는 없다.
+
+Drive 원격 검증: Research `19hw3KJcY-BaM95paom2ap57Mxx4cNTHe`, 증거146파일/ZIP147members/2source versions/1,532,586bytes, raw SHA `7c51f20858fe6acdecbb60ff148ce4450c266ab31c3faf09ddd8974a873dc7bb`. 부모Research/shared:false/크기·raw SHA·ZIP CRC/모든 member SHA를 확인했다. `archive-staging/writer-reuse-evidence-20261004-v1/{drive-receipt,package-verification}.json`이 보관 영수증이다. 원 archive manifest의 drive_verified:false는 보관 전 고정 입력으로 유지하며 별도 원격 영수증만 true다.

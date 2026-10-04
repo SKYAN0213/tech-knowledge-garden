@@ -185,6 +185,20 @@ function saveBudget(root, file, ledger) {
   atomicWrite(root, file, { ...ledger, sha256: sha256(JSON.stringify(ledger)) })
 }
 
+// Validate historical receipts using their original binding, without consulting
+// installed models or reserving budget for a new call.
+export function loadRoleBudget(root, run, role) {
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "") || !MODEL_ROLES.includes(role))
+    throw Error("Exact historical model role required")
+  const file = `runs/${run}/model-policy/${role}/budget.json`
+  const stored = readJSON(root, file)
+  if (!stored) throw Error("Completed bound model role required")
+  const { fingerprint, ...identity } = stored.binding || {}
+  if (stored.binding?.role !== role || fingerprint !== sha256(JSON.stringify(identity)))
+    throw Error("Historical model role binding changed")
+  return readBudget(root, file, stored.binding)
+}
+
 // The caller owns its run lock. The private budget records reservations before
 // inference so a killed process cannot reset its total allowance on restart.
 export async function prepareRoleProvider(
