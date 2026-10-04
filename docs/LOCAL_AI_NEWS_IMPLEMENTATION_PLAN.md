@@ -4037,3 +4037,11 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 기존 정규16기사/32개 부분 확인 칸을 새 회차로 만들지 않고 승인된 Copilot 용어 연결·머신 텐딩 정의·색인3파일만 소급 반영했다. Drive 작성4폴더197개 raw를 원본과 대조하고3변경을 순서대로 저장·raw SHA 확인했다. 변경 후198개 목록은195개 기존 판본 metadata와3개 변경 raw에 근거하며 모든198개를 재다운로드했다는 증거가 아니다. canonical pull 검증/빌드/사이트 검사와 승인 공통 출력 검사에서16기사 본문·기존 ID, 용어 상호링크·발표일·원문, RSS40 GUID/발행일, 빈 부분 숨김·머신 텐딩의 자동 관계 없음이 확인됐다.
 
 운영 CLI의 MLX 전환 뒤 하위 함수에 남은 삭제 모델 기본값6개도 공통 `DEFAULT_LOCAL_OLLAMA_MODEL`로 통일했다. 명시적 모델 override와 과거 실행 기록은 유지한다. 직접 추출·검색·번역·검색계획·기사·용어 작성의 기본값/override 및 기존 용어 작성 회귀11/11통과. 추가 모델 호출0·전체 suite 미반복. 새 페이지 browser와 공개 배포는 아직이며 전수92/801·독립40/20·shadow7회/무인08시/WBS2/22 전체 목표를 유지한다. 다음은 기존 처리 결과 우선 재사용으로 최신 미검토 소급 묶음을 확정한다. 런북371절에 실제 경로와 재개 지점을 기록한다.
+
+### 19.281. 완료된 소급 승인 재사용과 현재 의존 노트 통합
+
+현재 미검토12사건은 원문 검토를 마친19승인 판본에 이미 들어 있었다. 최종12승인을 current loader로 읽고, 관련 용어·Signals12개를 현재 원본과 대조했다. 최초 묶음의 performance-path 교훈 검증 실패는 보존했다. 이전 승인본으로 덮어쓰지 않고 현재 주제 bytes와 NVIDIA/Model Connect18사실을 직접 읽어 새 source-events 승인으로 묶었다. 추가된 이전 판단은 private before_content에 보존한다. 용어 변경에 의존하는 Copilot의 실제 원문9문단·기사에 사용한 권한 통제 claim도 새 정의와 대조했다. 기사 본문·ID·발표일은 유지한다.
+
+최종 `retrospective-pending-twelve-reader-20261004-v3`:13기사/7과거회차/12노트/338publicfiles·생성/사이트/채널 대조/RSS40식별자 통과·추론0. fresh preview v1의 실패와 승인 helper의 원 추출 envelope 누락 실패를 별도 로그로 보존했고 같은 실패를 반복하지 않았다. authority·브라우저·공개는 아직이다.
+
+다음 필수 구현은 반영 후 읽기다. 현행 `loadNoteApproval`은 교체 전 hash/creation absence를 요구하므로 이 조건을 새 승인 관문에서 유지한다. 별도 읽기 경로는 현재 모든 대상이 exact approved SHA와 일치할 때만 저장된 교체 전 bytes·원문 facts·alias/receipt를 다시 검증해야 한다. current drift·일부만 반영·다른 source·변조된 before/after/receipt·symlink는 거부한다. 이를 정의에 의존하는 승인 loader에 연결하고 표적 검사와 실제 v3 사본에서 검증한 다음 Drive 전환한다. 전체WBS2/22·원래전수/독립40/20·운영7회/08시·공개 완료 기준은 유지한다.

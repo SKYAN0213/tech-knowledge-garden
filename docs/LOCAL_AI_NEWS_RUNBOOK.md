@@ -9489,3 +9489,19 @@ canonical `npm run build`와 `node scripts/verify-site.mjs` 통과:310 HTML/308 
 현재 전수 목록은 `retrospective-after-keyword-authority-20261004-v1/retrospective/inventory.json`으로 갱신했다. 작성198개/36 v2회차/85 legacy회차·752개 구간/139사건 중127 verified·12 review 필요/655출처·654 URL묶음/diagnostics0이다. 원래92회차·801구간은 전체 전환 기준선이며 현재 남은85/752와 구분한다. verified127도 모든 과거 지식·관계의 최종 판정을 뜻하지 않는다. 이 목록 생성은 원문 재조사나 새 승인으로 세지 않는다.
 
 Drive private Research 증거 `1qMLf9gFS9eHssX_iH7Sj8Oj9ZitO-4Yx` 저장·부모/비공유/2,284,897bytes·원격 raw SHA `06e5a2541a990a3809d8ee8b7cd2a9f5ea77dd116a993edbc2bfde902f6248f7` 일치를 확인했다.75 ZIP members의 로컬 CRC가 정상이고 원격 bytes는 exact SHA로 동일하다. source_versions0인 개발 증거 archive/v1이며 원문 소스의 독립 복구본은 앞선 dependency archive에 별도로 보관됐다. 실제 영수증은 `archive-staging/keyword-service-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다. frozen snapshot의 보관 전 false는 재작성하지 않았다.
+
+## 372. 미검토 사건의 기존 승인 재사용과 현재 정의 의존성
+
+최신 canonical inventory의12미검토 사건은19개 기존 승인 판본에서 모두 확인됐다. `loadCurrentApproval`은 원문/파싱/facts/원고/결정 exact SHA를 재검증했다. 최초 console helper는 반환값에 없는 documents.length를 읽어 실패처럼 출력했으나 loader 실패가 아니었다. 실제 files 계약으로 수정한 `pending-retrospective-reusable-approvals-20261004-v1.json`의19/19 valid·12distinct events가 최종 증거다. 최종 승인 선택은 원문 귀속/분류/판본/캐노니컬 검토의 마지막 승인본이며 새 추론으로 재작성하지 않았다.
+
+12기사/4노트 묶음 v1은 refresh에서 `performance-path: lesson needs reviewed evidence from two distinct events and dates: measure-the-path`로 중단했다. 현재 원본은9월23일/30일/10월1일 판단이 추가돼 기존 topic 승인과 hash가 달랐다. 그 source hash 관문을 약화하거나 이전 노트를 직접 덮어쓰지 않았다. 현재 원본 전체를 읽고 old reviewed NVIDIA·Model Connect18사실의 원문 블록을 대조했다. `performance-topic-current-source-events-20261004-v1`이 이전 전체 bytes를 before_content로 보존하며 확인한 날짜별 사건과 판본·조건만 제공한다. 임의 교훈과 이전 운영 기록 문단은 독자에 출력하지 않는다. 최신 다른 사건의 기존 이력은 Signals의 사건 ID에 기반한 generator로 유지한다.
+
+이 note approval을 추가한 v2는12기사/6과거회차/12노트의 전체 생성·출처/채널 검사를 통과했다. Agent Security 정의 교체가 현재 Copilot 연결의 exact definition SHA를 바꾸는 것을 공통 loader로 확인했다. 원문9문단, 실제 사용하는 권한 통제 claim과 새 정의·범위·별칭을 읽어 `copilot-dependency-note-approved-20261004-v1`로 같은 기사/ID/발표일을 재승인했다. 원 추출·사실 검토·원고는 exact bytes 재사용이다. 최초 helper가 claims.json envelope를 누락해 CLI의 `Extract sources first`로 거부됐고, 원 extraction envelope를 별도 reuse receipt로 복사한 attempt2만 성공했다. 실패 로그는 보존했고 새 모델 호출은 없다.
+
+최종 v3는13기사/7과거회차/12노트·338publicfiles, RSS40 GUID/pubDate 보존과 웹·RSS·digest 요약/출처 대조를 통과했다. 재승인 Copilot article JSON은 원 승인과 완전히 같고, 새 정의 SHA `0359e1537728439420ae940b4197608abe7a3d1c101d1c30b877c718c6e96984`와 상호 링크·2026-10-01 발표일을 확인했다. 실제 argv는 `source-live-debug/retrospective-pending-twelve-reader-20261004-v3-command.json`, 출력 proof는 `retrospective-pending-twelve-integration-20261004-v2.json`이다. 이번 새 source-only 조사는 frozen 원문 판본을 대조한 것이며13새 뉴스나7새 운영 회차가 아니다.
+
+authority 전환 전에 반영 후 읽기 검증이 필요하다. 현행 loadNoteApproval의 적용 전 canonical hash/creation absence 검사는 의도된 안전 관문이다. 이를 완화하지 말고 exact 적용본을 읽는 별도 계약을 추가한다. current target 모두가 approved SHA일 때 pinned before_content·원문 검토·별칭·receipt를 재검증해야 하며 일부 반영/변조/source drift를 허용하지 않는다. 그 뒤 현재 Copilot의 note approval dependency를 실제 적용된 preview vault에서 읽고 승인/온톨로지 동일·모델0을 확인한다. 이 관문 전에는 v3를 release_ready나 authority 반영 완료로 집계하지 않는다.
+
+canonical386078d와 이 묶음 private preview를 구분한다. 새 묶음의 Drive authority/브라우저/공개 배포는 미실행이며 WBS2/22·전체전수/독립40/20·shadow7회/무인08시 목표는 active다. 같은 실패로1시간 이상 멈춘 항목은 없다.
+
+개발 증거는 Drive private Research `1khxlDbAdUD4cJjVG60CBhj1CrfdV8wse`에 보관했다.432,133bytes/89ZIP members/실제 원문4판본, 부모/shared:false·원격 raw SHA `bb98b71695c2a2c1022d552b6ba407475f928d23de5d2e3547bb49206eeddf30` 일치·로컬 ZIP CRC를 확인했다. 개발 snapshot/v1이며 전체13기사의 모든 historical dependencies를 독립 복구하는 portable closure는 아니다. 새로 직접 읽은 NVIDIA/Model Connect/Copilot raw와 파싱·검토, 이번 승인·실패/성공·생성 증거를 포함하고 다른 기존 승인은 이전 archive를 참조한다. 영수증은 `archive-staging/retrospective-pending-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다.
