@@ -233,6 +233,16 @@ test("host request spacing is shared across collector processes", async (t) => {
       import fs from "node:fs";
       import { SourceFetcher } from ${JSON.stringify(moduleUrl)};
       const root = process.argv[1], log = process.argv[2], interval = Number(process.argv[3]);
+      const rename = fs.renameSync;
+      let delayed = false;
+      fs.renameSync = (from, to) => {
+        if (!delayed && to.includes("state/host-rate/") && !fs.existsSync(to)) {
+          delayed = true;
+          const until = Date.now() + 80;
+          while (Date.now() < until) {}
+        }
+        return rename(from, to);
+      };
       const fetcher = new SourceFetcher(root, {
         interval_ms: interval,
         timeout_ms: 2000,

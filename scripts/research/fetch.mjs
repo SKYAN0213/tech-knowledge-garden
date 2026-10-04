@@ -144,8 +144,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 export function responseBodyTimeoutMs(contentType, budget) {
   return /pdf/i.test(contentType || "") ? budget.pdf_timeout_ms : budget.timeout_ms
 }
-const hostQueues = new Map(),
-  lastHostRequest = new Map()
+const hostQueues = new Map()
 const sourceQueues = new Map()
 async function acquireHostLock(root, name, timeoutMs, label = "Host request") {
   const deadline = Date.now() + Math.max(120000, timeoutMs + 5000)
@@ -218,13 +217,19 @@ async function sharedHostRequest(root, host, interval, timeoutMs, action) {
     const lastRequest = previous ? Date.parse(previous.last_request_at) : 0
     const enforcedInterval = Math.max(interval, previous?.interval_ms || 0)
     await sleep(Math.max(0, lastRequest + enforcedInterval - Date.now()))
-    atomicWrite(root, stateFile, {
-      schema: "host-rate-state/v1",
-      host,
-      interval_ms: enforcedInterval,
-      last_request_at: new Date().toISOString(),
-    })
-    return await action()
+    const startedAt = new Date().toISOString()
+    try {
+      return await action()
+    } finally {
+      // Keep the host lock until the actual start has been persisted, including
+      // failed requests. Disk latency must not shorten the next request's gap.
+      atomicWrite(root, stateFile, {
+        schema: "host-rate-state/v1",
+        host,
+        interval_ms: enforcedInterval,
+        last_request_at: startedAt,
+      })
+    }
   } finally {
     release()
   }
@@ -243,14 +248,7 @@ async function hostRequest(root, host, interval, timeoutMs, action) {
     previous = hostQueues.get(key) || Promise.resolve()
   const next = previous
     .catch(() => {})
-    .then(() => {
-      const lastRequest = lastHostRequest.get(key) || 0
-      return sharedHostRequest(root, host, interval, timeoutMs, async () => {
-        await sleep(Math.max(0, lastRequest + interval - Date.now()))
-        lastHostRequest.set(key, Date.now())
-        return action()
-      })
-    })
+    .then(() => sharedHostRequest(root, host, interval, timeoutMs, action))
   hostQueues.set(key, next)
   try {
     return await next
