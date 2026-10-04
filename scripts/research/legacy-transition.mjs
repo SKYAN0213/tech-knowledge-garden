@@ -15,6 +15,22 @@ const text = { type: "string", minLength: 1 }
 const hash = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const eventID = { type: "string", pattern: "^[a-f0-9]{16}$" }
 const unitID = { type: "string", pattern: "^[a-f0-9]{20}$" }
+const eventSchema = object({
+  event_id: eventID,
+  unit_id: unitID,
+  previous_title: text,
+  source_urls: { type: "array", minItems: 1, items: text },
+})
+eventSchema.properties.source_list_review = object({
+  source_list_read: { type: "boolean", enum: [true] },
+  article_source_read: { type: "boolean", enum: [true] },
+  association_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
+eventSchema.properties.event_split_review = object({
+  distinct_event_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
 const packetSchema = object({
   schema: { type: "string", enum: ["research-legacy-edition-transition/v1"] },
   reviewer: text,
@@ -33,12 +49,7 @@ const packetSchema = object({
     type: "array",
     minItems: 1,
     maxItems: 40,
-    items: object({
-      event_id: eventID,
-      unit_id: unitID,
-      previous_title: text,
-      source_urls: { type: "array", minItems: 1, items: text },
-    }),
+    items: eventSchema,
   },
   units: {
     type: "array",
@@ -56,6 +67,35 @@ const markdown = unified().use(remarkParse)
 const urlsIn = (content) =>
   [...new Set((content.match(/https?:\/\/[^\s<>\]\)]+/g) || []).map(canonicalURL))].sort()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+
+// Resolve explicit original citations only. Ambiguous or dangling markers must
+// never silently become source-free prose eligible for manual reassignment.
+function legacySources(body, units) {
+  const list = units
+    .filter((unit) => unit.depth === 1 && unit.title === "Source List")
+    .map((unit) => body.slice(unit.body_start, unit.body_end))
+    .join("\n")
+  const markers = new Map()
+  for (const line of list.split("\n")) {
+    const ids = [...line.matchAll(/\[(S\d+)\]/g)].map((match) => match[1])
+    if (!ids.length) continue
+    const urls = urlsIn(line)
+    if (ids.length !== 1 || urls.length !== 1 || markers.has(ids[0]))
+      throw Error("Legacy source markers require one unique original list entry")
+    markers.set(ids[0], urls[0])
+  }
+  return {
+    listed: new Set(urlsIn(list)),
+    forContent(content) {
+      const cited = [...content.matchAll(/\[(S\d+)\]/g)].map((match) => {
+        const url = markers.get(match[1])
+        if (!url) throw Error("Legacy source marker has no original list entry")
+        return url
+      })
+      return [...new Set([...urlsIn(content), ...cited])].sort()
+    },
+  }
+}
 
 // Every original unit must have an explicit disposition. This prevents the
 // pre-v2 extractor's empty article list from authorizing a partial replacement.
@@ -116,7 +156,6 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   const ids = packet.events.map((e) => e.event_id)
   if (
     new Set(ids).size !== ids.length ||
-    new Set(packet.events.map((e) => e.unit_id)).size !== ids.length ||
     !same([...ids].sort(), articles.map((a) => a.event_id).sort()) ||
     articles.some(
       (a) =>
@@ -131,10 +170,36 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   )
     throw Error("Legacy transition requires exactly all distinct reviewed source events")
   const byID = new Map(articles.map((a) => [a.event_id, a]))
+  const sources = legacySources(before.body, units)
+  const anchorsByUnit = new Map()
+  for (const event of packet.events) {
+    if (!anchorsByUnit.has(event.unit_id)) anchorsByUnit.set(event.unit_id, [])
+    anchorsByUnit.get(event.unit_id).push(event)
+  }
   for (const [i, unit] of units.entries()) {
     const decision = packet.units[i]
     const content = before.body.slice(unit.body_start, unit.body_end)
-    const urls = urlsIn(content)
+    const urls = sources.forContent(content)
+    const anchors = anchorsByUnit.get(unit.unit_id) || []
+    if (
+      unit.depth === 2 &&
+      decision.decision === "replaced" &&
+      !same(anchors.map((event) => event.event_id).sort(), [...decision.event_ids].sort())
+    )
+      throw Error("Legacy article disposition must match its exact event anchors")
+    if (anchors.length > 1 && anchors.some((event) => !event.event_split_review?.reason.trim()))
+      throw Error("Legacy article split requires explicit distinct-event review for every event")
+    if (
+      anchors.length &&
+      !anchors.some((event) => event.source_list_review) &&
+      !same(
+        urls,
+        [...new Set(anchors.flatMap((event) => event.source_urls.map(canonicalURL)))].sort(),
+      )
+    )
+      throw Error(
+        "Legacy transition event must retain its exact title, unit and original sources (source union)",
+      )
     if (
       new Set(decision.event_ids).size !== decision.event_ids.length ||
       decision.event_ids.some((id) => !byID.has(id))
@@ -179,16 +244,31 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const index = units.findIndex((u) => u.unit_id === event.unit_id),
       unit = units[index]
     const decision = packet.units[index]
+    const inlineSources = unit
+      ? sources.forContent(before.body.slice(unit.body_start, unit.body_end))
+      : []
+    const sourceMarkers = unit
+      ? /\[S\d+\]/.test(before.body.slice(unit.body_start, unit.body_end))
+      : false
+    const assignedSources = [...new Set(event.source_urls.map(canonicalURL))].sort()
+    const sourceListReview = event.source_list_review
+    if (
+      sourceListReview &&
+      (inlineSources.length ||
+        sourceMarkers ||
+        !sourceListReview.reason.trim() ||
+        assignedSources.length !== event.source_urls.length ||
+        assignedSources.some((url) => !sources.listed.has(url)))
+    )
+      throw Error("Legacy source-list assignment requires reviewed distinct original list sources")
     if (
       !unit ||
       unit.depth !== 2 ||
       unit.title !== event.previous_title ||
       decision.decision !== "replaced" ||
       !decision.event_ids.includes(event.event_id) ||
-      !same(
-        urlsIn(before.body.slice(unit.body_start, unit.body_end)),
-        [...new Set(event.source_urls.map(canonicalURL))].sort(),
-      ) ||
+      (!sourceListReview && assignedSources.some((url) => !inlineSources.includes(url))) ||
+      (event.event_split_review && !event.event_split_review.reason.trim()) ||
       event.source_urls.some(
         (url) =>
           !byID.get(event.event_id).source_urls.map(canonicalURL).includes(canonicalURL(url)),

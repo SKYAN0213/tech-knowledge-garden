@@ -39,7 +39,7 @@ import {
   legacyTransitionBatch,
 } from "../scripts/research/legacy-transition.mjs"
 
-function legacyTransitionFixture(t) {
+function legacyTransitionFixture(t, { sourceListOnly = false, sourceMarkers = false } = {}) {
   const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "legacy-transition-")))
   t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
   fs.mkdirSync(path.join(vault, "Knowledge"))
@@ -52,7 +52,7 @@ function legacyTransitionFixture(t) {
   const articles = [first, second],
     key = "2026-09-28_0801_Tech_AI_Briefing"
   const relative = `Editions/2026/09/${key}.md`
-  const content = noteText(
+  let content = noteText(
     {
       title: "2026-09-28 Tech & AI Briefing",
       date: "2026-09-28",
@@ -69,6 +69,16 @@ function legacyTransitionFixture(t) {
       "# 오픈소스와 도구\n\n없음\n\n# 흐름 읽기\n\n근거 없는 옛 추론.\n\n" +
       "# 바로 써먹을 점\n\n옛 조언.\n\n# Source List\n\nhttps://example.com/announcement\nhttps://example.com/second\n",
   )
+  if (sourceListOnly)
+    content = content
+      .replace("이전 본문. https://example.com/announcement", "이전 본문.")
+      .replace("이전 본문. https://example.com/second", "이전 본문.")
+  if (sourceMarkers)
+    content = content
+      .replace("이전 본문. https://example.com/announcement", "이전 본문. [S1]")
+      .replace("이전 본문. https://example.com/second", "이전 본문. [S2]")
+      .replace("\nhttps://example.com/announcement", "\n[S1] https://example.com/announcement")
+      .replace("\nhttps://example.com/second", "\n[S2] https://example.com/second")
   atomicWrite(vault, relative, content)
   const existing = { ...parseNote(content), file: path.join(vault, relative) }
   const units = legacyReviewUnits(existing.body, relative)
@@ -117,6 +127,25 @@ function legacyTransitionFixture(t) {
     })),
   }
   return { vault, articles, existing, relative, packet, key }
+}
+
+function reviseLegacyFixture(f, body) {
+  f.packet.before_content = noteText(f.existing.meta, body)
+  f.existing.body = body = parseNote(f.packet.before_content).body
+  f.packet.target_sha256 = sha256(f.packet.before_content)
+  const units = legacyReviewUnits(body, f.relative)
+  const byOldID = new Map(f.packet.units.map((unit, i) => [unit.unit_id, i]))
+  for (const event of f.packet.events) {
+    const unit = units[byOldID.get(event.unit_id)]
+    event.unit_id = unit.unit_id
+    event.previous_title = unit.title
+  }
+  f.packet.units = f.packet.units.map((row, i) => ({
+    ...row,
+    unit_id: units[i].unit_id,
+    sha256: units[i].sha256,
+  }))
+  atomicWrite(f.vault, f.relative, f.packet.before_content)
 }
 
 test("complete pre-v2 transition retains edition identity and all source events without old editorial prose", (t) => {
@@ -196,6 +225,178 @@ test("legacy transition rejects partial review, hash drift, lost sources and fal
     () => retrospectiveProjections(f.vault, f.articles, [], [f.packet]),
     /bytes changed/,
   )
+})
+
+test("source-free legacy articles require explicit original source-list assignments", (t) => {
+  const f = legacyTransitionFixture(t, { sourceListOnly: true })
+  assert.throws(
+    () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+    /exact title, unit and original sources/,
+  )
+  for (const event of f.packet.events)
+    event.source_list_review = {
+      source_list_read: true,
+      article_source_read: true,
+      association_checked: true,
+      reason: "Read the original list and matched this article to its captured original",
+    }
+  const before = fs.readFileSync(f.existing.file)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = parseNote(projection.content)
+  const articles = extractArticles({ ...after, file: f.existing.file })
+  assert.deepEqual(
+    articles.map((a) => a.urls),
+    f.articles.map((a) => a.source_urls),
+  )
+  assert.deepEqual(
+    articles.map((a) => a.id),
+    f.articles.map((a) => a.event_id),
+  )
+  for (const k of ["date", "coverage_start", "coverage_end"])
+    assert.equal(after.meta[k], f.existing.meta[k])
+  assert.equal(projection.content.includes("source_list_review"), false)
+  assert.equal(projection.content.includes("matched this article"), false)
+  assert.deepEqual(fs.readFileSync(f.existing.file), before)
+
+  for (const mutate of [
+    (p) => delete p.events[0].source_list_review,
+    (p) => (p.events[0].source_list_review.source_list_read = false),
+    (p) => (p.events[0].source_list_review.article_source_read = false),
+    (p) => (p.events[0].source_list_review.association_checked = false),
+    (p) => (p.events[0].source_list_review.reason = " "),
+    (p) => (p.events[0].source_urls = ["https://example.org/unlisted"]),
+    (p) => (p.events[0].source_urls = f.articles[1].source_urls),
+    (p) => p.events[0].source_urls.push(p.events[0].source_urls[0]),
+    (p) => p.units.pop(),
+    (p) => (p.units[8].event_ids = [f.articles[0].event_id]),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
+  const unlistedApproval = structuredClone(f.articles)
+  unlistedApproval[0].source_urls.push("https://example.org/extra")
+  const unlistedPacket = structuredClone(f.packet)
+  unlistedPacket.events[0].source_urls = unlistedApproval[0].source_urls
+  assert.throws(
+    () => assertLegacyTransition(unlistedPacket, unlistedApproval, f.existing, f.relative),
+    /original list sources/,
+  )
+})
+
+test("source-list review cannot override inline sources or explicit source markers", (t) => {
+  const f = legacyTransitionFixture(t)
+  f.packet.events[0].source_list_review = {
+    source_list_read: true,
+    article_source_read: true,
+    association_checked: true,
+    reason: "Manual association",
+  }
+  assert.throws(
+    () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+    /original list sources/,
+  )
+  const marker = legacyTransitionFixture(t, { sourceMarkers: true })
+  marker.packet.events.forEach((event) => {
+    event.source_list_review = { ...f.packet.events[0].source_list_review }
+  })
+  assert.throws(
+    () => assertLegacyTransition(marker.packet, marker.articles, marker.existing, marker.relative),
+    /original list sources/,
+  )
+})
+
+test("legacy source markers resolve only unique original list entries and preserve published sources", (t) => {
+  const f = legacyTransitionFixture(t, { sourceMarkers: true })
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = parseNote(projection.content)
+  assert.deepEqual(
+    extractArticles({ ...after, file: f.existing.file }).map((a) => a.urls),
+    f.articles.map((a) => a.source_urls),
+  )
+  const original = f.existing.body
+  for (const body of [
+    original.replace("이전 본문. [S1]", "이전 본문. [S99]"),
+    original + "\n[S1] https://example.org/different\n",
+    original + "\n[S1] https://example.com/announcement\n",
+    original.replace(
+      "[S1] https://example.com/announcement",
+      "[S1] https://example.com/announcement https://example.org/extra",
+    ),
+    original.replace(
+      "[S1] https://example.com/announcement",
+      "[S1] [S3] https://example.com/announcement",
+    ),
+  ]) {
+    reviseLegacyFixture(f, body)
+    assert.throws(
+      () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+      /source marker/,
+    )
+  }
+})
+
+test("one legacy article can split into explicitly reviewed distinct events without source loss", (t) => {
+  for (const sourceListOnly of [false, true]) {
+    const f = legacyTransitionFixture(t, { sourceListOnly })
+    reviseLegacyFixture(
+      f,
+      f.existing.body
+        .replace(
+          "## 이전 두 번째 제목\n\n이전 본문." +
+            (sourceListOnly ? "" : " https://example.com/second"),
+          "## 이전 두 번째 제목\n\n없음",
+        )
+        .replace(
+          "## 이전 첫 제목\n\n이전 본문." +
+            (sourceListOnly ? "" : " https://example.com/announcement"),
+          "## 이전 첫 제목\n\n두 발표를 다룬 이전 본문." +
+            (sourceListOnly ? "" : " https://example.com/announcement https://example.com/second"),
+        ),
+    )
+    f.packet.events[1].unit_id = f.packet.events[0].unit_id
+    f.packet.events[1].previous_title = f.packet.events[0].previous_title
+    f.packet.units[3].event_ids = f.articles.map((a) => a.event_id)
+    f.packet.units[4].decision = "omitted_empty"
+    f.packet.units[4].event_ids = []
+    for (const event of f.packet.events) {
+      event.event_split_review = {
+        distinct_event_checked: true,
+        reason: "Separate source announcements directly reviewed",
+      }
+      if (sourceListOnly)
+        event.source_list_review = {
+          source_list_read: true,
+          article_source_read: true,
+          association_checked: true,
+          reason: "Original source list directly matched to this distinct event",
+        }
+    }
+    const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+    const after = parseNote(projection.content)
+    const projected = extractArticles({ ...after, file: f.existing.file })
+    assert.deepEqual(
+      projected.map((a) => [a.id, a.urls]),
+      f.articles.map((a) => [a.event_id, a.source_urls]),
+    )
+    assert.equal(after.meta.coverage_end, f.existing.meta.coverage_end)
+    assert.equal(projection.content.includes("event_split_review"), false)
+    assert.equal(fs.readFileSync(f.existing.file, "utf8"), f.packet.before_content)
+    for (const mutate of [
+      (p) => delete p.events[1].event_split_review,
+      (p) => (p.events[1].event_split_review.distinct_event_checked = false),
+      (p) => (p.events[1].event_split_review.reason = " "),
+      (p) => (p.events[1].source_urls = f.articles[0].source_urls),
+      (p) => p.units[3].event_ids.pop(),
+      (p) => (p.events[1].event_id = p.events[0].event_id),
+      (p) => (p.events[1].previous_title = "Unrelated original article"),
+      ...(sourceListOnly ? [(p) => delete p.events[1].source_list_review] : []),
+    ]) {
+      const packet = structuredClone(f.packet)
+      mutate(packet)
+      assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+    }
+  }
 })
 
 test("new concept navigation is derived without changing existing index prose or authority bytes", (t) => {

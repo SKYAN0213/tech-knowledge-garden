@@ -9603,3 +9603,21 @@ canonical build/site:314HTML/312search/141news/19nodes/17relations/RSS40, v2 37.
 WebsiteData를 실제 공개312페이지/141기사/19개념/17연결로 다시 export하고4live assets/localSHA 일치를 확인했다. 실행 순서를 모르는 `--help`가 지원되는지 먼저 확인하지 않고 호출해 초기 export가 이전139기사 상태를 읽었으므로 그 결과는 최신으로 쓰지 않았다. 배포 성공 뒤의 final export만 사용한다. 기존11파일/3,258,016bytes를 원격raw로 백업했고, 같은11ID로3,280,498bytes를 교체한 뒤 전부 원격raw SHA·12파일 부모 목록/shared:false를 확인했다. snapshot은 마지막 저장. `legacy-website-upload-receipt-20261004-v1.json`에 기록했으며 생성 note60개 미매핑은 숨기지 않는다. 스트림 다운로드 실패는 보존 상태를 확인한 뒤 기존 bounded raw 호환 경로로 검증했다.
 
 Research 증거 snapshot `legacy-20260811-release-evidence-20261004-v1`:282members/3,435,302bytes/SHA `fe225ff4aef340976d153381bf4832f56ca4a787cc6b928fea072a13ad8026a4`, Drive ID `1gWChEE-LDEF7zXfoaL4Hh4ndM4YLD9EZ`·Research 부모/shared:false·원격raw ZIP SHA/CRC/member count 일치. 이전 원문4판본은 frozen 본편 archive에 연결하며 이번 source_versions0·runtime portable:false다. 영수증은 archive-staging의 별도 파일이며 frozen ZIP을 재작성하지 않는다. 전수 소급/독립 평가/정규 운영 목표는 계속active다. 이 공개 결과 문서 커밋은 로컬에 보존하고 다음 기능 릴리스에 함께 push하여 기록만으로 전체 CI를 반복하지 않는다.
+
+
+## 378. 구형 출처 목록 연결·명시적 참조·복수 사건 전환
+
+`legacy-transition.mjs`의 선택형 `source_list_review`는 source-free h2와 원래 Source List를 직접 읽고 연결한 검토만 받는다. 원문 목록/기사 원문/연결 대조 true와 사유를 요구하며 배정 URL은 원래 목록과 승인 원고 양쪽에 있어야 한다. 기존 inline URL이나 `[S번호]`를 수동 배정으로 덮을 수 없다. `[S번호]`는 원래 목록의 유일한 한 URL만 해석하며 미등록 번호·중복 번호·한 번호의 다중 URL은 거부한다.
+
+원본 h2 하나의 독립 발표들을 복수 event_id로 나눌 때 각 anchor에 `event_split_review: {distinct_event_checked: true, reason: ...}`를 추가한다. 해당 h2의 disposition.event_ids는 anchors와 exact match여야 하며 원래 inline/marker 원문은 각 배정의 합집합으로 보존한다. source-free 분리는 각 anchor에 source_list_review도 필요하다. 고정 원본 SHA/모든 unit 판정/원래 회차 날짜와 컷오프/승인과 공개 분리는 유지한다. 검토 사유는 공개 projection에 없다.
+
+실제 `legacy-20260807-sources-20261004-v1`은 원래 Source List의7URL을 공통 collect로 확보 시도했다. Cloudflare5·GitHub1은 HTTP200/immutable body6/parse6/286blocks이고 OpenAI1은 정책 확인 후403 blocked다. web 도구에서 읽을 수 있었던 별도 관찰을 원문 HTTP bytes 확보로 위장하지 않았고 같은403 요청을 반복하지 않았다. Cloudflare 원문5의 발표일은8/6이며 현재 판본의 수정일은8/6~9/23로 서로 다르다. GitHub는 발표8/6·현재 판본 수정8/7이며 과거 회차08:02 이후의 수정 관찰을 당시 판단으로 가정하지 않는다.
+
+`select-source --run legacy-20260807-github-source-20261004-v1 --source-run legacy-20260807-sources-20261004-v1 --url <원래GitHubURL>`로 저장 근거를 재사용하고 `extract --run legacy-20260807-github-review-20261004-v1 --source-run legacy-20260807-github-source-20261004-v1 --model-policy data/research-model-policy.json`을 실행했다. MLX 추출54.920초/6후보/구조통과5; 예정 가격의 완료 승격1은 보류했다. 실제25원문 block을 읽고 중단·재개·과금·배포환경을 보강해8verified/1deferred다. 동일 run의 draft44.240초는 가격표를 공개했다는 과장을 교정했고 원출력/정정이력을 보존했다. approve는 사건412eeeaddaef78db/발표8/6/검토10/4/리드3문장·설명2/reader findings0의 비공개 승인만 만들었다. 과거 기사 중단 상태를 최신 원문의 재개 안내와 혼동하지 않는다. 모델/코드 판정은 독립 human gold가 아니다.
+
+검증: 앞 source-list 묶음29/29 통과 후 명시적 참조/분리 기능 묶음31중30통과. 나머지1은 새 test fixture의 noteText 줄바꿈 정규화 불일치를 수정했고 `--test-name-pattern='legacy source markers resolve'` 실패 표적만1/1 통과했다. 구현 기대를 낮추지 않았으며 통과한 나머지30/전체 suite/build를 반복하지 않았다. logs는 source-live-debug/legacy-source-{list-tests-20261004-v1,association-tests-20261004-v2,marker-repair-20261004-v2}.log다. 새 수집/승인에 authoring/public 변경은 없다.
+
+다음은 Cloudflare5원문을 별도 사건으로 검토하고 OpenAI의 수집 근거를 확보하는 것이다. 그 뒤 원본8/7의 모든 구간·Source List7개·의존 용어를 연결한 complete transition과 Drive 원본/웹/RSS/digest 검증을 수행한다. 확인 불가 사건의 공개 제외/빈 기록 공개 처리는 별도 남은 관문이다. 전수 pending66회차/617구간·독립40/20·정규7회/무인08시·portable runtime 등 전체 범위를 유지한다. 이전 모델 삭제 확인 turn은 목표 no progress였으나 이번 공통 구현/실수집/직접검토/원고승인은 progress다. 한시간 같은 병목 없이 목표active/WBS2/22다.
+
+
+Drive 보관 완료: `legacy-source-association-evidence-20261004-v1`의64자료/65members·6source versions·1,675,214bytes, ZIP SHA `f178b924787f329d0e931ae7412ad95e90f5169c1236c699fa60b607c8bbd56d`다. Research 파일ID `16Y70GYkoR4MUw9xXXc_1msTO6X8-IFlq`, 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false와 실제 원격raw ZIP의 전체SHA·CRC·모든 member bytes/SHA·정확한 목록을 확인했다. 운영 작성200파일도 마지막 검증 Drive snapshot과 SHA 일치다. v1 패키지의 manifest hash는 source archive-manifest의 hash이고 원격 ZIP의 package-manifest hash가 아니다. v1에는 source archive-manifest가 별도 member로 들어가지 않는다. 이 두 검증 helper 가정을 실제 공통 package-archive.py 계약과 대조해 수정했으며 source member 경로는 기존 archive_member를 재사용했다. 이는 코드·원문·승인 개발 증거의 보관이며 독립 portable runtime 복구나 전체8/7 공개 전환은 아니다. receipt는 archive-staging/<id>/drive-receipt.json이고 frozen ZIP을 다시 만들지 않는다.

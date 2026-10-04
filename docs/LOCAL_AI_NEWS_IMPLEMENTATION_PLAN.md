@@ -4117,3 +4117,16 @@ pre-v2의 extractArticles=[]를 전수 검토로 오인하지 않는다. `resear
 검토 기사141·v2 37, 기존 RSS40 GUID/pubDate와 원고·상세 설명·원문·발표일을 웹/RSS/digest에서 확인했다. 통합 릴리스 후보 Node795/795·Python15+2·typecheck·build/site 통과, 전체 suite1회다. 자세한 증거와 재개 경로는 런북377을 따른다. 기존92/801 전수 범위 중 미판정은66회차/617구간이고 빈 판정18/126은 별도다. 전문용어 배정·남은 소급·독립 평가·정규32칸/7회/무인08시를 축소하지 않는다. 목표active/WBS2/22 유지; 실제 공개 배포와 WebsiteData readback은 다음 관문이다.
 
 해당 공개 관문도 완료했다. commit d21e269/Actions37203662036 success·공개11파일 exactSHA·8/11 desktop/mobile 실제 컨트롤·WebsiteData11기존ID 원격rawSHA 확인. frozen 증거 ZIP282members/3,435,302bytes를 private Research1gWChEE-LDEF7zXfoaL4Hh4ndM4YLD9EZ에 저장하고 실제 원격 ZIP SHA/CRC/공유 상태를 확인했다. 런북377의 공개 후속에서 재개한다. 다음은 미판정66/617의 최신 자료부터 원문 재조사와 전문용어 연결 검토이며 독립40/20·정규7회/무인08시·전체 수집 승인 목표는 그대로다. 전체 목표 완료로 판정하지 않는다.
+
+## 19.287. 기사별 출처가 없는 구형 회차의 명시적 원문 연결 검토
+
+최신 미판정8/7은3기사의 본문 URL이 없고 원문7개가 회차 끝 Source List에만 있다. 현재 전환은 기사 anchor의 source_urls가 비어 있을 수 없고 본문 URL과 같아야 하므로 이 형식을 처리할 수 없다. 출처를 자동 추정하거나 검증기를 우회하지 않고 선택형 private `source_list_review`를 사건 anchor에 추가한다. 원문 목록·기사 원문을 읽고 연결을 대조한 true checks와 비어 있지 않은 사유를 요구하며, 명시한 모든 URL이 정확한 원본 Source List 및 해당 승인 원고에 있어야 한다. 기존 본문 URL이 있는 anchor의 검증과 이전 packet bytes는 유지한다. 전체 unit 판정·원본 SHA·고정 ID/날짜·Source List 전체 URL 보존도 유지한다.
+
+수용 기준: source-free 본문은 명시적 검토 없이는 계속 거부; 목록 외 URL·승인 원고에 없는 URL·빈 사유/false check·기존 inline 링크를 대체하는 assignment·부분 회차/출처 누락은 거부; 명시적 전환에서는 원본을 수정하지 않고 웹/RSS/digest에 승인 원문을 연결한다. 좁은 전환/preview 회귀를 한 묶음으로 확인하고 실제8/7의7원문은 기존 공통 수집기로 읽어 성공/차단을 기록한다. 원문 검토가 끝나기 전 운영 회차를 수정하거나 공개하지 않는다. 다음 별도 관문은 확인 불가 사건의 공개 제외 및 의존 용어 재검토이며 이 묶음에서 완료로 집계하지 않는다.
+
+실제 회차의 Cloudflare 한 기사에 여러 독립 발표가 들어 있어 한 원본 기사→복수 고정 사건 전환도 지원한다. 각 사건에 private `event_split_review`의 별도 사건 확인·사유를 요구하고, 원본 h2의 처리 ID와 anchor ID가 정확히 같아야 한다. inline/명시적 `[S번호]` 원문들의 합집합을 보존하고 기사별 배정은 승인 원문에 있어야 한다. source-free 분리는 각 사건의 `source_list_review`도 별도로 요구한다. `[S번호]`는 원래 Source List의 유일한 한 URL로만 해석하며 누락·중복·다중 URL은 거부한다. 자동 사건 분리·제목 유사도 연결·수집 실패의 승인 승격은 하지 않는다. 기존 packet 및 원본 SHA/전체 구간 검토/회차·RSS 식별자 보존 계약은 유지한다.
+
+실행 결과: source-list29/29 뒤 참조·분리 묶음31중30통과, fixture 줄바꿈 정규화 수정 후 실패1만통과했다. 실수집7중6/parse6/286blocks·OpenAI4031을 보존했다. GitHub 저장 원문은 새 MLX 추출54.920초/작성44.240초, 직접8facts verified/예정 가격1deferred 및 원고 정정 후 private 승인412eeeaddaef78db다. 공개/작성 원본은 미변경이고 전체8/7 전환·Cloudflare5사건·OpenAI 확보·의존 용어 검토는 다음 단계다. 런북378에서 재개한다. 전체 목표 active/WBS2/22 및 전수66/617을 유지한다.
+
+
+Drive 보관 완료: `legacy-source-association-evidence-20261004-v1`의64자료/65members·6source versions·1,675,214bytes, ZIP SHA `f178b924787f329d0e931ae7412ad95e90f5169c1236c699fa60b607c8bbd56d`다. Research 파일ID `16Y70GYkoR4MUw9xXXc_1msTO6X8-IFlq`, 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false와 실제 원격raw ZIP의 전체SHA·CRC·모든 member bytes/SHA·정확한 목록을 확인했다. 운영 작성200파일도 마지막 검증 Drive snapshot과 SHA 일치다. v1 패키지의 manifest hash는 source archive-manifest의 hash이고 원격 ZIP의 package-manifest hash가 아니다. v1에는 source archive-manifest가 별도 member로 들어가지 않는다. 이 두 검증 helper 가정을 실제 공통 package-archive.py 계약과 대조해 수정했으며 source member 경로는 기존 archive_member를 재사용했다. 이는 코드·원문·승인 개발 증거의 보관이며 독립 portable runtime 복구나 전체8/7 공개 전환은 아니다. receipt는 archive-staging/<id>/drive-receipt.json이고 frozen ZIP을 다시 만들지 않는다.
