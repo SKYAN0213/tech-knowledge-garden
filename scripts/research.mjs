@@ -56,6 +56,8 @@ import {
 } from "./research/search.mjs"
 import { approvedArticle } from "./research/publish-adapter.mjs"
 import { recordArticleApproval } from "./research/article-approval.mjs"
+import { inspectReaderQuality, assertReaderQuality } from "./research/reader-quality.mjs"
+import { loadProcessedDraft } from "./research/processed-draft.mjs"
 import {
   archiveManifest,
   packageResearchArchive,
@@ -196,6 +198,7 @@ export async function main(argv = process.argv.slice(2)) {
       "localize-queries",
       "search",
       "approve",
+      "editorial-check",
       "archive",
       "archive-closure",
       "gold-case",
@@ -225,7 +228,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -1547,13 +1550,39 @@ export async function main(argv = process.argv.slice(2)) {
       snapshot: `baselines/${v.run}/inventory.json`,
     }
   }
-  if (["review", "deep-review", "draft", "correct", "approve"].includes(command))
+  if (["review", "deep-review", "draft", "correct", "approve", "editorial-check"].includes(command))
     return withLock(root, "run-" + v.run, async () => {
       const extracted = readJSON(root, `runs/${v.run}/claims.json`),
         documents = readJSON(root, `runs/${v.run}/documents.json`),
         parses = readJSON(root, `runs/${v.run}/parses.json`)
       if (!extracted || !documents) throw Error("Extract sources first")
       assertStoredEvidence(root, documents, parses)
+      if (command === "editorial-check") {
+        const reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
+        if (!reviewed) throw Error("Reviewed claims required for editorial quality checks")
+        await assertProcessedFactReview(root, v.run, reviewed)
+        const processed = isProcessedRun(root, v.run)
+        const draft = processed
+          ? loadProcessedDraft(root, v.run, reviewed, documents, parses)
+          : readJSON(root, `runs/${v.run}/draft.json`)
+        if (!draft) throw Error("Exact draft required for editorial quality checks")
+        const decision = readJSON(root, `runs/${v.run}/editorial-review.json`)
+        const current = inspectReaderQuality(draft, reviewed.claims, {
+          publishedAt: decision?.published_at,
+        })
+        const reference =
+          processed && readJSON(root, `runs/${v.run}/draft-generation-reference.json`)
+        const checkpoint =
+          reference && readJSON(root, `runs/${reference.run}/model-draft-checkpoint.json`)
+        const original = checkpoint && readJSON(root, checkpoint.output_path)
+        return {
+          current,
+          original: original ? inspectReaderQuality(original, reviewed.claims) : null,
+          model_calls: 0,
+          approval_changed: false,
+          candidate_published: false,
+        }
+      }
       if (command === "correct") {
         if (!v.review) throw Error("Explicit draft correction JSON required")
         const decision = JSON.parse(fs.readFileSync(v.review, "utf8")),
@@ -1604,14 +1633,44 @@ export async function main(argv = process.argv.slice(2)) {
       }
       if (command === "approve") {
         if (!v.review) throw Error("Explicit editorial review JSON required")
-        const draft = readJSON(root, `runs/${v.run}/draft.json`),
-          reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
+        let draft = readJSON(root, `runs/${v.run}/draft.json`)
+        const reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
         if (!draft || !reviewed) throw Error("Reviewed claims and exact draft required")
         await assertProcessedFactReview(root, v.run, reviewed)
+        if (isProcessedRun(root, v.run))
+          draft = loadProcessedDraft(root, v.run, reviewed, documents, parses)
         const decision = JSON.parse(fs.readFileSync(v.review, "utf8")),
           article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
+        // Existing immutable approvals remain readable. A new approval checks
+        // current reader rules without rewriting historical model checkpoints.
+        const existing = readJSON(root, `runs/${v.run}/approved-article.json`)
+        const quality = existing
+          ? null
+          : inspectReaderQuality(draft, reviewed.claims, {
+              publishedAt: decision.published_at,
+            })
+        if (quality) assertReaderQuality(quality, decision)
+        let qualityPath = null
+        if (quality) {
+          const implementationHash = sha256(
+            fs.readFileSync(new URL("./research/reader-quality.mjs", import.meta.url)),
+          )
+          qualityPath = `runs/${v.run}/editorial-quality/${draft.draft_id}-${implementationHash}.json`
+          const receipt = {
+            ...quality,
+            implementation_sha256: implementationHash,
+            editorial_decision_sha256: sha256(JSON.stringify(decision)),
+            repetition_checked: decision.reader_quality_review?.repetition_checked === true,
+          }
+          const previous = readJSON(root, qualityPath)
+          if (previous && sha256(JSON.stringify(previous)) !== sha256(JSON.stringify(receipt)))
+            throw Error("Reader quality approval receipt changed; use a new run")
+          if (!previous) atomicCreate(root, qualityPath, receipt)
+        }
         return {
           ...recordArticleApproval(root, v.run, decision, article),
+          reader_quality: quality,
+          reader_quality_receipt: qualityPath,
           candidate_published: false,
         }
       }

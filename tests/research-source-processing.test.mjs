@@ -17,6 +17,7 @@ import { loadProcessedSourceResult } from "../scripts/research/processed-source-
 import { processDailyCandidates } from "../scripts/research/daily-processing.mjs"
 import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+import { draftFingerprint } from "../scripts/research/editor.mjs"
 
 function fixture(t, { extracted = true, concern = false } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "source-process-")))
@@ -161,7 +162,7 @@ function fixture(t, { extracted = true, concern = false } = {}) {
           tags: ["신제품"],
           entities: ["Example"],
           lead: [
-            { text: "Example은 2027년 제품 50대를 출하할 계획이다.", claim_ids: [id] },
+            { text: "Example은 10월 2일 2027년 제품 50대 출하 계획을 발표했다.", claim_ids: [id] },
             { text: "계획된 출하 수량은 50대다.", claim_ids: [id] },
           ],
           facts: {
@@ -674,4 +675,92 @@ test("reused exact source suppresses duplicate generation in the same daily batc
   assert.equal(result.results[1].primary_candidate_key, key)
   assert.deepEqual(f.calls, ["evidence_compare"])
   assert.equal(result.candidate_published, false)
+})
+
+test("new CLI approvals enforce reader quality while preserving original model drafts", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  await processSourceRun(f.options)
+  const original = readJSON(f.root, "runs/processed/draft.json")
+  const checkpoint = readJSON(f.root, "runs/processed/model-draft-checkpoint.json")
+  const rawPath = path.join(f.root, checkpoint.output_path),
+    raw = fs.readFileSync(rawPath)
+  const editPath = path.join(f.root, "quality-edit.json"),
+    reviewPath = path.join(f.root, "quality-approval.json")
+  async function correct(draft) {
+    fs.writeFileSync(
+      editPath,
+      JSON.stringify({
+        draft_id: readJSON(f.root, "runs/processed/draft.json").draft_id,
+        reviewer: "Fixture source and reader reviewer",
+        reason: "Reader quality regression case",
+        reviewed_at: new Date().toISOString(),
+        draft,
+      }),
+    )
+    await main(["correct", "--root", f.root, "--run", "processed", "--review", editPath])
+  }
+  async function approve(extra = {}) {
+    fs.writeFileSync(
+      reviewPath,
+      JSON.stringify({
+        status: "approved",
+        draft_id: readJSON(f.root, "runs/processed/draft.json").draft_id,
+        reviewer: "Fixture direct editorial review",
+        source_read: true,
+        final_prose_read: true,
+        title_checked: true,
+        dates_checked: true,
+        numbers_checked: true,
+        analysis_checked: true,
+        event_id: "1234567890abcdef",
+        published_at: "2026-10-02",
+        reviewed_at: "2026-10-04",
+        region: "해외",
+        ...extra,
+      }),
+    )
+    return main(["approve", "--root", f.root, "--run", "processed", "--review", reviewPath])
+  }
+  const bad = structuredClone(original.draft)
+  bad.lead[0].text = "Example은 계획했다. 제품을 소개했다. 수량을 정했다."
+  bad.lead[1].text = "출하를 준비한다. 제품은 50대다."
+  await correct(bad)
+  const check = await main(["editorial-check", "--root", f.root, "--run", "processed"])
+  assert.equal(check.current.lead_sentences, 5)
+  assert.equal(check.model_calls, 0)
+  await assert.rejects(() => approve(), /lead_sentence_count.*lead_date_missing/)
+  assert.equal(readJSON(f.root, "runs/processed/approved-article.json"), null)
+  const detail = structuredClone(original.draft)
+  detail.explanations = [
+    {
+      heading: "출하 계획",
+      paragraphs: [{ text: "출하 예정 시점은 2027년이다.", claim_ids: [f.claim.claim_id] }],
+    },
+  ]
+  await correct(detail)
+  await assert.rejects(() => approve(), /Explicit repetition review/)
+  const approved = await approve({ reader_quality_review: { repetition_checked: true } })
+  assert.equal(approved.reader_quality.blocked, false)
+  assert.equal(approved.reused, false)
+  const qualityReceipt = readJSON(f.root, approved.reader_quality_receipt)
+  assert.equal(qualityReceipt.repetition_checked, true)
+  assert.equal(qualityReceipt.draft_id, readJSON(f.root, "runs/processed/draft.json").draft_id)
+  const approvalBytes = fs.readFileSync(path.join(f.root, "runs/processed/approved-article.json"))
+  assert.equal(
+    (await approve({ reader_quality_review: { repetition_checked: true } })).reused,
+    true,
+  )
+  assert.deepEqual(fs.readFileSync(rawPath), raw)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const tampered = readJSON(f.root, "runs/processed/draft.json")
+  tampered.draft.lead[0].text = "Example은 10월 2일 제품 계획을 수정했다."
+  tampered.draft_id = draftFingerprint(tampered.draft)
+  atomicWrite(f.root, "runs/processed/draft.json", tampered)
+  await assert.rejects(() => approve(), /Processing correction/)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/approved-article.json")),
+    approvalBytes,
+  )
 })

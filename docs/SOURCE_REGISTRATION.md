@@ -171,3 +171,7 @@ replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 n
 ### 일일 처리에서 완료된 원문·검토·원고의 재사용
 
 새 source crawler나 모델 생성 전에 기존 완료 run을 확인한다. `research:process-daily --processing-runs PRIVATE_JSON`은 같은 후보/판본/parse/본문/URL과 기존 input SHA를 고정하고 원문·packet·사실 승인·원고 정정·승인을 읽는다. metadata·추론·수집을 하지 않으며 삭제한 모델을 재설치하지 않는다. 미완료 결과는 성공으로 승격하지 않고 fact/writer/editorial/approval 단계와 기존 identity 관문을 구분한다. 같은 입력의 source/core reader 지문 변경은 새 batch를 사용한다. [런북364절](LOCAL_AI_NEWS_RUNBOOK.md#364-일일-묶음에서-완료된-처리-결과를-다시-추론하지-않고-연결)의 실제 명령과 실패/재개 증거를 따른다.
+
+### 출처와 무관한 원고 편집 검사
+
+원고 생성 이후에는 출처별 편집 규칙을 새로 만들지 않고 `research.mjs editorial-check` 및 새 승인 관문을 공통으로 적용한다. 문장 수·리드 길이·알려진 날짜 표기·정확한 반복을 검사하고, 같은 사실을 쓰는 설명은 직접 검토한다. 원출력과 정정 이력은 보존한다. [읽을 내용이 있는 브리핑](BRIEFING_QUALITY.md#로컬-원고의-편집-검사)의 명령·승인 입력을 따른다.

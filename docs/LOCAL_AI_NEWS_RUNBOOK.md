@@ -9315,3 +9315,21 @@ Drive Research `1-OPcrbcK2vmirOs1VUSlK7MlUeVAOMCL`에 원문2판본·증거123�
 최종 구현 증거는 Drive Research `1b3sOeEim41QfzgACi_pNNgMBdeHCBMtg`의 processing-reuse-evidence-20261004-v2.zip이다. 원문2판본·증거131파일/ZIP132members·1,049,773bytes이며 실제 원격 raw SHA `688d880bff8633bcdf3eb4fb351e7b680592ba46e9e655153da611ab4d4c9a75`가 로컬과 같다. 부모Research/shared:false/크기·로컬 CRC/각member SHA와 archive-staging/processing-reuse-evidence-20261004-v2/drive-receipt.json을 확인했다. 정적 HTML 증거는 앞선 v1 상태 스냅샷이며 최종 v2 처리 증거는 JSON·CLI·재개 영수증이다. 개발 증거 묶음으로 독립 runtime closure나 렌더링 검증을 뜻하지 않는다.
 
 전체WBS2/22·goal active·공개448ec36 유지. 원고 품질에서 확인한 실제6문장·발표일 누락·설명 반복을 기존 검토 흐름에서 더 직접적으로 표시하는 것이 다음 구현이다. 전체소급92/801,독립40/20,로컬shadow7/무인08시·신규 공개 관문은 별도로 남는다.
+
+## 365. 실제 본문 분량·날짜·반복의 공통 편집 관문
+
+`reader-quality.mjs`는 lead 배열 길이 대신 실제 한국어 문장 수2~4와900자를 검사한다. Intl.Segmenter의 소수·버전·URL 경계를 유지하고 인용 뒤의 한국어 전달 표현을 합친다. 알려진 날짜의 ISO/숫자/한국어 월·일 표기를 검사하되 날짜 진위·계획/완료를 자동 판정하지 않는다. 정확한 동일 문장 반복은 block이며 같은 사실 ID의 리드·설명은 review다. 실제로 다른 세부 사항을 설명할 수 있으므로 같은 ID만으로 삭제하지 않는다.
+
+```sh
+node scripts/research.mjs editorial-check --run github-async-merge-mlx-processing-20261004-v2
+```
+
+이 명령은 현재 원문·검토·처리 원고의 원 생성과 모든 정정 chain을 검증해 current/original 보고서를 반환한다. 모델 호출/승인/원고 수정은0이다. 새 approve CLI는 block을 거부하고 공유 사실의 설명을 읽은 `reader_quality_review: {"repetition_checked": true}`를 요구한다. 승인 직전 처리 원고의 원 생성/정정도 검증하며 성공 시 draft ID·검사 구현 SHA·명시적 결정 SHA에 묶인 private editorial-quality 영수증을 create-only로 남긴다. 이미 존재하는 불변 승인은 기존 승인과 동일한지 검사해 재사용하며 새 규칙으로 과거 모델 출력·승인을 덮어쓰지 않는다. 후보 승인/공개 관문은 유지한다.
+
+실제 GitHub 저장 원출력은6문장·발표일 누락으로 block2, 현재 정정본은3문장/188자·block0이다. 한 설명이 같은 사실을 공유하므로 직접 읽을 대상으로 표시됐다. 기존 ABB 원고는2문장/block0이었다. 기존 GitHub approve 재개는 reused:true,48개 보호 파일(두 원고/승인/장부 포함) SHA불변이다. 모델 호출0·새 수집0·새 승인0·공개 변경0. source-live-debug/reader-quality-github-20261004-v1.json·reader-quality-abb-20261004-v1.json·reader-quality-verification-20261004-v2.json이 실제 증거다.
+
+표적 검사24/24가 한 번 통과했다. 승인 영수증·정정 chain 보강 후 해당2개 중1통과/1시험 import 누락 실패를 기록하고 실패한1개만 수정·재검사해1/1 통과했다. 실패 로그를 보존했다. 한국어 인용·소수·버전·URL·분량·날짜·반복·새 승인 거부·명시적 검토·원출력 보존·변조된 정정/승인 불변을 확인했다. 전체 suite/54수집/build/새 UI 렌더링은 반복하지 않았다. 날짜 문자열·문장 분할·정확한 반복 검사는 의미·정보 가치의 독립 평가가 아니다.
+
+Drive Research `1QWQBmWl3xsBUgsvoGAwv5NL9d0hPfnSK`에 원문2판본·증거129파일/ZIP130members·1,029,005bytes를 저장했다. 원격 raw SHA `0ae9433c7608e4146bb68a504184486e48bc2d6e03ca11c8d1eefadf497daae1`가 로컬과 같고 부모Research/shared:false/크기·ZIP CRC/member SHA를 확인했다. archive-staging/reader-quality-evidence-20261004-v1/drive-receipt.json·package-verification.json에서 재개한다. 개발 증거 보관이며 독립 runtime closure/공개 발행 영수증은 아니다.
+
+전체WBS2/22·goal active·공개448ec36 유지. 전체소급92/801,독립40/20,로컬shadow7/무인08시·새 공개 검증은 미완료다. 다음에는 실제 미검토 후보에 현재 MLX와 새 편집 관문을 적용해 사실·원고·후보 승인을 이어서 확인한다. 기존 전체 수집을 반복하지 않고 고정 판본을 재사용한다. 이번 묶음에1시간 이상 반복한 병목은 없었다.
