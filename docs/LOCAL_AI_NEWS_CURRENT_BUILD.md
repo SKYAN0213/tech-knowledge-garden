@@ -1,3 +1,5 @@
+로컬 의미 대조 실물 검증(2026-10-04): `research:evidence` 공통 CLI/checkpoint 구현. SK hynix 원문33문단/6주장 실제 대조378.146초·재개 추가 생성0, 구조 attention1 유지. 독립된 통제 오류2건을 실제 모델이 attention으로 탐지했으나 모델 판정은 명시적 승인과 별도다. medium6주장300초 timeout/부분 출력 보존·기본 모델 정책 불변·think:false 별도 실행. 새12/12+역할14/14·코드 formatting/diff, 전체 suite 미실행. 원문/모델/실패/재사용 증거311964bytes·73files/ZIP74member Drive Research1CBghT_HooCbqSAqZVUmcInPTuI2chbfp 원격raw SHA/비공유 확인. public448ec36/작성197원본 유지, 자동 worker 편입·60건 독립 의미 검토 미완료/WBS2/22·goal active. 런북356/계획19.265.
+
 # 로컬 AI 뉴스 시스템: 현재 구현과 남은 개발 계약
 
 실수집·공개 후속(2026-10-04): 요청 간격 오류를 재현해 실제 시작 시각/호스트 잠금 기준으로 수정했다. 표적33/33·실제 Roche200→304/3,499ms/같은 판본, 릴리스 CI Node698/698·Python17개·build/link/Pages 성공. 코드c47e2c7/콘텐츠448ec36, 8분야16기사와32칸 부분 확인. Drive 신규2원본/기존195불변·197전체 raw readback, 공개19파일/GitHub digest exact·기존RSS39 GUID, 선택16후보 already-published/pending0, WebsiteData11개 기존ID/SHA 확인. 승인·원문16판본·검증220파일 증거ZIP는 Drive Research 실제 raw SHA 일치. 콘텐츠 발행 감사7회 충족은 로컬 모델 shadow7회/무인08시 검증과 구분한다. 전체 전수소급·독립40/20·예약 관문/WBS2/22·goal active 유지. [런북355절](LOCAL_AI_NEWS_RUNBOOK.md#355-실제-병렬-수집의-요청-간격-오류와-정규-원고-drive-보관).

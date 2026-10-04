@@ -9111,3 +9111,27 @@ WebsiteData는 실제 배포본에서 다시 추출한11파일을 이전 raw 백
 16원문 판본과 현재 승인·검토·수집 디버깅·실제 발행 증거220파일/ZIP221member를 공통 research-archive/v1로 보관했다. ZIP988,644bytes의 SHA `ac28cbe79566199151b633b655d60bbc00645e78beb326749e59c8a1d9afa1a4`는 CRC/member SHA 검사 및 Drive Research `1olhehXGd8ggmgCy1ahroNIXNKwNJkT1F` 원격 raw와 일치한다. 전체 수집 실행의 portable closure나 무인 모델 성능 평가로 쓰지 않는다. 로컬 검증 영수증: `source-live-debug/regular-public-readback-20261004-v7/proof.json`, `regular-publication-dedup-20261004-v7.json`, `regular-website-data-readback-20261004-v7.json`, `archive-staging/regular-release-evidence-20261004-v7/drive-receipt.json`.
 
 이번 수직 슬라이스의 원문→검토→Drive→공개→중복/내용 readback은 완료했다. 전체 목표는 WBS2/22·goal active다. 다음 재개점은 원래 남은 기존 자료 전체 소급, 독립40/20 평가, 로컬 모델의 무인 실행/예약 관문이다. profile별 코드 지문 범위 개선은 기존19.262 계약을 유지하며 공통 fetch 변경의 전체54경로 재인증을 자동 완료로 표시하지 않는다. 장시간 반복 blocker 없이 실수집 결함을 수정했고 전체 목표 완료로 승격하지 않았다.
+
+## 356. 로컬 evidence_compare 실호출과 원문 의미 검토
+
+`npm run research:evidence`는 기존 추출 run의 `claims.json`, 실제 원문 bytes와 불변 parse를 읽는다. 로컬 역할 정책·지원 think 값·모델 digest·시간/출력 예산을 기존 provider에서 검증한다. 결과는 별도 비공개 run의 `evidence-assessment/`에 저장하며 원 추출·승인·후보 장부·공개 자료를 수정하지 않는다.
+
+```sh
+npm run research:evidence -- --source-run <extraction-run> --run <new-assessment-run> --think false
+```
+
+기본 주장 묶음3개이며 `--claims-per-batch 1..6`으로 명시할 수 있다. `--think`는 명시한 값만 해당 run에 적용하며 기본 정책을 바꾸지 않는다. 모델이 지원하지 않는 값은 추론 전에 거부된다. 미기재 옵션은 역할 정책을 따른다. 원문 전체가 context 예산을 넘으면 명시적 source event 선택을 요구하고 본문을 자동 절단하지 않는다. 동일 원문을 프롬프트 앞에 배치하지만 실제 cache 가속을 보장하지 않는다.
+
+실제 입력 `skhynix-ventures-extract-stream-20261004-v1`은 공식 발표 원문33문단·추출6주장이다. v1실행에서 요청의 model 전달 누락을 찾고 수정했다. v2 `medium`·6주장 호출은300초 제한으로 실패했다. 원 stream progress는1,809frames·추론7,186chars·부분 내용790chars이며 성공 출력/판정으로 저장하지 않았다. 실패 결과에 같은 설정을 무차별 재시도하지 않았다.
+
+v3는 기본 모델 정책을 그대로 보존하고 private policy의 evidence_compare만 `think:false`, 묶음3개를 사용했다. 실제 Qwen3.8 27B Q4_K_M/digest `22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643`·Ollama0.34.4에서 두 호출179.419/198.727초, 합계378.146초다. 원문 입력 평가62.86/65.89초·출력116.41/132.76초다. prompt cache 속도 개선은 확인되지 않았다. 모델6주장 supported와 별도로 기존 구조 검사1개 `plan_promoted_to_completion`을 requires_attention으로 남겼다. 원문 주장은 unreviewed 상태이며 모델 의견으로 verified를 만들지 않는다.
+
+같은 CLI/input/model/정책의 실제 재개는 generated_batches0/reused_batches2·모델 추가 호출0이다. 재개 때 `--think false`의 typed override도 확인했다. claims/source/policy/모델/코드 변경은 새 run을 요구하고, 인용을 꾸미거나 출력을 새로 만들어 기존 결과를 덮어쓰지 않는다.
+
+`skhynix-semantic-negative-input-20261004-v1`은 별도 development fixture다. 원문 bytes와 인용은 그대로 두고 ‘설치 결정→설치 완료’, ‘RPM DRAM→HBM’을 고의로 변경한 두 주장을 넣었다. 둘 다 구조 검사는 통과한다. 기대 기준은 모델 호출 전에 고정했고 모델에 전달하지 않았다. 실제 별도 호출162.556초에서 두 주장을 모두 attention으로 잡았다. 모델은 contradicted라고 표현했지만 미기재와 직접 모순의 구분, ‘모든 팹’ 범위 해석은 최종 판단으로 쓰지 않는다. 이는 통제 개발 사례이며 독립 gold/heldout 성능 점수가 아니다. 운영 후보·원고·RSS에는 들어가지 않는다.
+
+최종 새 계약12/12와 앞선 기존 역할 정책14/14 통과. 인용 위조/알 수 없는 주장 ID/상충 판정/원문 변경/변경된 checkpoint/예산 초과/동일 실행 재사용/동시 원문 변경을 확인했다. 최초 unknown-ID test fixture가 ID를 다시 덮는 문제를 고쳐 실제 거부 경로를 시험했다. 코드 Prettier와 diff를 확인하고 전체 suite는 반복하지 않았다. reader UI/Drive 작성 원본/발행과 예약은 변경하지 않았다.
+
+비공개 증거: `source-live-debug/evidence-assessment-proof-20261004-v1.json`, `skhynix-evidence-compare-20261004-v1..v3.log`, `skhynix-evidence-compare-resume-20261004-v3.log`, positive/negative의 `evidence-assessment/assessment.json` 및 role 예산/stream artifacts. 공통 archive의 원문 판본1개·73files/ZIP74member·311,964bytes는 CRC/member SHA와 Drive Research 원격 raw SHA `c421b8b2baa3cf4268d8fbee3936c8c02eafcea5a7b15800197a617d7a66091c`를 확인했다. 파일ID `1CBghT_HooCbqSAqZVUmcInPTuI2chbfp`, shared:false/Research parent 확인; 실제 영수증은 `archive-staging/skhynix-evidence-assessment-20261004-v1/drive-receipt.json`이다. 불변 archive manifest의 drive_verified:false를 덮어쓰지 않는다.
+
+새 CLI는 원문 대조 의견을 생성하는 개발 경로다. 기존 자동 worker에 의무 stage로 편입하거나 자동 승인/무인 예약/독립60건 의미 검토를 완료한 상태가 아니다. P3-02 partial/WBS2/22·goal active를 유지한다. 다음은 이 결과를 기존 명시적 review packet과 다양한 실제 출처의 오류 사례에 연결하는 단계다.
