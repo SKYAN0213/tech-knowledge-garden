@@ -9,7 +9,7 @@ import {
   verifiedConceptLinks,
   assertConceptConflicts,
 } from "./knowledge-links.mjs"
-import { loadNoteApproval } from "./note-review.mjs"
+import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { safePath } from "./run-state.mjs"
 import { learningKinds } from "../../web/graph-model.mjs"
 
@@ -98,7 +98,7 @@ export function evaluateArticleConceptReview(
     let content,
       approvalFiles = null
     if (assignment.note.approval_run !== undefined) {
-      const approved = loadNoteApproval(root, assignment.note.approval_run, { vault })
+      const approved = loadReferencedNoteApproval(root, assignment.note.approval_run, { vault })
       const note = approved.approval.notes.find((n) => n.path === assignment.note.path)
       if (!note) throw Error("Selected specialist note missing from knowledge approval")
       content = note.content

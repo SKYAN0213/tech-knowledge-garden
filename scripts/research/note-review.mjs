@@ -5,7 +5,7 @@ import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { sha256 } from "./contracts.mjs"
-import { atomicWrite, assertAbsent, safePath, RunState } from "./run-state.mjs"
+import { atomicWrite, assertAbsent, readJSON, safePath, RunState } from "./run-state.mjs"
 import {
   assertNewConceptMetadata,
   assertNewConceptBody,
@@ -62,6 +62,10 @@ function sourceReview(root, run) {
 // The full replacement is approved against preserved authoring bytes and exact
 // reviewed source facts. This never writes the authority vault or publishes.
 export function evaluateNoteReview(root, decision, { vault = "vault", sourceVault = vault } = {}) {
+  return evaluateNoteReviewInternal(root, decision, { vault, sourceVault })
+}
+
+function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, applied = null) {
   const v2 = decision?.schema === "knowledge-note-review/v2"
   const allowed = ["schema", "reviewer", "reason", "reviewed_at", ...checks, "notes"]
   if (
@@ -116,9 +120,14 @@ export function evaluateNoteReview(root, decision, { vault = "vault", sourceVaul
         n.previous_sha256 !== null)
     )
       throw Error("Creation requires a new Knowledge or Signals path and null previous hash")
-    const before = creating
-      ? (assertAbsent(vault, relative), null)
-      : fs.readFileSync(safePath(vault, relative))
+    const preserved = applied?.notes.find((note) => note.path === relative)
+    const before = preserved
+      ? preserved.before_content === null
+        ? null
+        : Buffer.from(preserved.before_content, "utf8")
+      : creating
+        ? (assertAbsent(vault, relative), null)
+        : fs.readFileSync(safePath(vault, relative))
     const original = before === null ? null : parseNote(before.toString("utf8")),
       next = parseNote(n.content)
     if (!creating && sha256(before) !== n.previous_sha256)
@@ -306,4 +315,67 @@ export function loadNoteApproval(root, run, { vault = "vault" } = {}) {
     approval: current,
     files: { review_sha256: sha256(decisionBytes), approval_sha256: sha256(bytes) },
   }
+}
+
+// Reading a completed transfer is separate from authorizing a replacement.
+// Every destination must be exactly applied; mixed or changed states fail closed.
+export function loadAppliedNoteApproval(root, run, { vault = "vault" } = {}) {
+  validRun(run)
+  const decisionBytes = fs.readFileSync(safePath(root, `runs/${run}/note-review.json`))
+  const bytes = fs.readFileSync(safePath(root, `runs/${run}/approved-notes.json`))
+  const decision = JSON.parse(decisionBytes)
+  const stored = JSON.parse(bytes)
+  if (
+    !Array.isArray(stored.notes) ||
+    !stored.notes.length ||
+    stored.notes.length !== decision.notes?.length ||
+    new Set(stored.notes.map((n) => n.path)).size !== stored.notes.length
+  )
+    throw Error("Exact applied approval note inventory required")
+  for (const note of stored.notes) {
+    const relative = notePath(note.path)
+    const input = decision.notes.find((n) => n.path === relative)
+    const creating = decision.schema === "knowledge-note-review/v2" && input?.operation === "create"
+    if (
+      !input ||
+      note.content !== input.content ||
+      sha256(note.content) !== note.sha256 ||
+      note.previous_sha256 !== input.previous_sha256 ||
+      (creating
+        ? note.before_content !== null || note.previous_sha256 !== null
+        : typeof note.before_content !== "string" ||
+          sha256(note.before_content) !== note.previous_sha256)
+    )
+      throw Error("Preserved before and approved after bytes differ from the review")
+    if (sha256(fs.readFileSync(safePath(vault, relative))) !== note.sha256)
+      throw Error("Approval is not fully applied or canonical content changed")
+  }
+  const current = evaluateNoteReviewInternal(
+    root,
+    decision,
+    { vault, sourceVault: stored.vault || vault },
+    stored,
+  )
+  if (sha256(JSON.stringify(current)) !== sha256(JSON.stringify(stored)))
+    throw Error("Saved applied knowledge approval differs from current evidence")
+  return {
+    run,
+    approval: current,
+    files: { review_sha256: sha256(decisionBytes), approval_sha256: sha256(bytes) },
+  }
+}
+
+export function loadReferencedNoteApproval(root, run, { vault = "vault" } = {}) {
+  validRun(run)
+  const stored = readJSON(root, `runs/${run}/approved-notes.json`)
+  const applied =
+    Array.isArray(stored?.notes) &&
+    stored.notes.length > 0 &&
+    stored.notes.every((n) => {
+      const file = safePath(vault, notePath(n.path))
+      return fs.existsSync(file) && sha256(fs.readFileSync(file)) === n.sha256
+    })
+  return applied
+    ? loadAppliedNoteApproval(root, run, { vault })
+    : loadNoteApproval(root, run, { vault })
 }

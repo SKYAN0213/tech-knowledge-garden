@@ -5,7 +5,7 @@ import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
 import { loadApprovedOntologyInput } from "./ontology.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
-import { loadNoteApproval } from "./note-review.mjs"
+import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { planConceptAuthority } from "./concept-archive.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
@@ -236,15 +236,16 @@ export function buildArchiveClosure(
         if (note.approval_run)
           reference(note.approval_run, "concept_note_approval", () => {
             if (
-              JSON.stringify(loadNoteApproval(root, note.approval_run, { vault }).files) !==
-              JSON.stringify(note.approval_files)
+              JSON.stringify(
+                loadReferencedNoteApproval(root, note.approval_run, { vault }).files,
+              ) !== JSON.stringify(note.approval_files)
             )
               throw Error("Concept note approval dependency changed")
           })
     }
     const notes = readJSON(root, base + "approved-notes.json")
     if (notes) {
-      const current = loadNoteApproval(root, id, { vault })
+      const current = loadReferencedNoteApproval(root, id, { vault })
       for (const input of current.approval.source_files)
         reference(input.run, "knowledge_fact_source", () => {
           for (const [name, hash] of Object.entries(input.files))

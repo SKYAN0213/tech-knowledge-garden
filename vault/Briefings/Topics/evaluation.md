@@ -148,7 +148,7 @@ AI 학습 자료와 도구가 부족한 언어의 접근성 개선
 
 - 한계: 현장 전문가의 의견 프레임워크이며 효과를 입증한 독립 실험은 아니다.
 - 다음 확인: 층별 결함 발견률과 검증 구축·유지 비용.
-- [[News/fd584d5c829c999d|에이전트 검증을 ‘통과 가능한 층’으로 나눈다]] · [Microsoft 원문](https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/) · [[Briefings/2026/08/2026-08-30_0801_Tech_AI_Briefing|당일 브리핑]]
+- [[News/fd584d5c829c999d|Microsoft 개발 블로그, AI 역공학 문서와 생성 코드의 검증 단계 제안]] · [Microsoft 원문](https://devblogs.microsoft.com/all-things-azure/only-believe-what-you-can-validate/) · [[Briefings/2026/08/2026-08-30_0801_Tech_AI_Briefing|당일 브리핑]]
 - 기존 수록 기사 재정리 · 2026-09-13 검토
 
 ## 관련 개념

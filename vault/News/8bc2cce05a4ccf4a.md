@@ -1,42 +1,98 @@
 ---
-title: "CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다"
+title: MIT 등, 화학 규칙을 결합한 결정 물질 생성 모델 CrysVCD 논문 출판
 type: news
 schema_version: tech-news/v1
 date: 2026-08-27
 created: 2026-08-27
 updated: 2026-08-27
 event_id: 8bc2cce05a4ccf4a
-review_status: unreviewed
-concept_ids: []
+review_status: verified
+concept_ids:
+  - science
+published_at: 2026-08-26
+reviewed_at: 2026-09-28
 source_url: https://www.nature.com/articles/s43588-026-01037-2
 sources:
   - https://www.nature.com/articles/s43588-026-01037-2
 concepts:
   - Knowledge/AI Systems/AI for Scientific Discovery
-description: CrysVCD는 결정 구조를 대량 생성한 뒤 불안정 후보를 버리는 대신, 먼저 원자가 균형을 만족하는 조성을 만들고 그
-  조성으로 구조를 생성합니다.
+description: MIT·오크리지국립연구소·미시간주립대 연구자들이 참여한 CrysVCD 논문이 2026년 8월 26일 Nature
+  Computational Science에 출판됐다. 결정 물질 후보를 만드는 과정에 원자가 균형 같은 화학 규칙을 결합하는 방법이다.
+theme_format: news-themes/v1
+sector: AI
+theme: 연구·기술
+secondary_theme: null
+event_tags:
+  - 새로운 방법
+entities:
+  - MIT
+  - Oak Ridge National Laboratory
+  - Michigan State University
+tags:
+  - sector/ai
+  - theme/research
+  - event/새로운-방법
+editorial_format: six-w/v1
+kind: 사건 뉴스
+region: 해외
+lead: MIT·오크리지국립연구소·미시간주립대 연구자들이 참여한 CrysVCD 논문이 2026년 8월 26일 Nature
+  Computational Science에 출판됐다. 결정 물질 후보를 만드는 과정에 원자가 균형 같은 화학 규칙을 결합하는 방법이다.
+facts:
+  who: MIT·오크리지국립연구소·미시간주립대 소속 연구자
+  when: 2026년 8월 26일
+  where: 미기재
+  what: 생성 과정에 화학 규칙을 결합한 결정 물질 설계 방법 CrysVCD 논문이 Nature Computational Science에 출판됨
+  how: 트랜스포머 기반 원소 언어모델로 조성을 생성하고 확산 모델로 결정 구조를 생성
+  why: 기존 확산 기반 생성 모델이 산화 상태 균형 같은 화학 제약을 놓쳐 화학적으로 유효하지 않은 구조를 만들 수 있는 문제를 해결하기 위해
+explanations:
+  - heading: 조성을 만든 뒤 결정 구조를 생성
+    paragraphs:
+      - 논문은 확산 모델이 산화 상태 균형 등의 제약을 놓쳐 화학적으로 유효하지 않은 구조를 만들 수 있다는 문제에서 출발한다.
+      - CrysVCD는 트랜스포머 기반 원소 언어모델로 원자가 균형을 맞춘 조성을 만든 뒤, 확산 모델로 결정 구조를 생성한다.
+    source_urls:
+      - https://www.nature.com/articles/s43588-026-01037-2
+  - heading: 안정성 기준과 조건부 후보 탐색
+    paragraphs:
+      - 연구팀은 안정성 지표로 미세조정한 모델의 생성 결과에서 준안정성 85%를 보고했다. 기준은 Ehull이 원자당 0.1eV 미만인
+        경우다.
+      - 별도 지표인 포논 안정성은 68%로 제시했다. 조건부 생성으로 열전도율이 높은 반도체와 유전율이 높은 물질 후보를 탐색하는 기능도
+        설명했다.
+    source_urls:
+      - https://www.nature.com/articles/s43588-026-01037-2
+papers:
+  - work_id: crysvcd-202608
+    identifiers:
+      - doi:10.1038/s43588-026-01037-2
+    access: 초록
+    status: 동료심사
+    evidence_url: https://www.nature.com/articles/s43588-026-01037-2
+relations: []
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
 ---
 
-# CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다
+# MIT 등, 화학 규칙을 결합한 결정 물질 생성 모델 CrysVCD 논문 출판
 
-**논문:** *Enhancing materials discovery with valence-constrained design in generative modeling*
 
-**쉽게 설명하면:** CrysVCD는 결정 구조를 대량 생성한 뒤 불안정 후보를 버리는 대신, 먼저 원자가 균형을 만족하는 조성을 만들고 그 조성으로 구조를 생성합니다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+MIT·오크리지국립연구소·미시간주립대 연구자들이 참여한 CrysVCD 논문이 2026년 8월 26일 Nature Computational Science에 출판됐다. 결정 물질 후보를 만드는 과정에 원자가 균형 같은 화학 규칙을 결합하는 방법이다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
 
-**방법과 데이터:** 원소 언어 모델이 원자가 균형 조성을 만들고 확산 모델이 결정 구조를 생성하는 모듈식 파이프라인입니다. 연구진은 기존 생성 모델에 결합하고, 안정성 지표로 미세조정한 뒤 계산 기반 열역학·포논 안정성과 목표 물성을 평가했습니다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+### 조성을 만든 뒤 결정 구조를 생성
 
-**결과:** 논문은 미세조정 조건에서 준안정성 85%, 포논 안정성 68%를 보고했고, 사후 필터링 방식보다 화학적 원자가 검사를 수 자릿수 규모로 효율화했다고 밝혔습니다. 고열전도 반도체와 고유전율 물질 후보의 조건부 생성도 보였습니다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+논문은 확산 모델이 산화 상태 균형 등의 제약을 놓쳐 화학적으로 유효하지 않은 구조를 만들 수 있다는 문제에서 출발한다.
 
-**왜 중요한가:** 물리·화학 제약을 생성 전에 넣으면 계산 예산을 타당하지 않은 후보에 덜 쓰고, 작은 연구팀도 탐색 공간을 더 효율적으로 줄일 수 있습니다.
+CrysVCD는 트랜스포머 기반 원소 언어모델로 원자가 균형을 맞춘 조성을 만든 뒤, 확산 모델로 결정 구조를 생성한다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
 
-**한계:** 결과는 계산 안정성 평가이며 실제 합성 성공이나 장기 재료 성능을 뜻하지 않습니다. 규칙성이 높은 고체 결정에 가장 잘 맞고, 저자들은 관련 특허를 출원했습니다. 독립 재현과 실험 검증이 필요합니다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+### 안정성 기준과 조건부 후보 탐색
 
-**개념:** [[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]
+연구팀은 안정성 지표로 미세조정한 모델의 생성 결과에서 준안정성 85%를 보고했다. 기준은 Ehull이 원자당 0.1eV 미만인 경우다.
 
-**근거:** [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+별도 지표인 포논 안정성은 68%로 제시했다. 조건부 생성으로 열전도율이 높은 반도체와 유전율이 높은 물질 후보를 탐색하는 기능도 설명했다. [원문 1](<https://www.nature.com/articles/s43588-026-01037-2>)
+
+**개념:** [[Knowledge/AI Systems/AI for Scientific Discovery]]
+
+
 
 ## 이어 읽기
 

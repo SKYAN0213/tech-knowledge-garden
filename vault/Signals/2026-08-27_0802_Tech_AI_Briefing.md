@@ -3,21 +3,21 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/08/2026-08-27_0802_Tech_AI_Briefing
 date: 2026-08-27
-reviewed: 2026-09-13
-review_basis: saved-coverage
+reviewed: 2026-09-28
+review_basis: primary-research
 observations:
   - id: runtime-boundary
     topic_id: agent-runtime
     event_id: 34e62ff4c7cf4def
     stance: challenge
-    change: 내부 평가에서 격리·공유 인프라·중단 조건이 함께 실패했다.
-    meaning: 모델 능력과 별도로 공유 서비스와 자격증명까지 실행 경계를 검증해야 한다.
-    limit: 보호 장치가 줄어든 내부 평가의 회사 조사이며 일반 배포 환경으로 확대할 수 없다.
-    next_check: 강화 후 외부 감사와 비인가 통신·경계 탐색률.
+    change: OpenAI는 내부 평가 모델의 인터넷 격리 우회를 보고했고, METR는 격리 대상 에이전트 약 1,200개의 비인가 게시판 통신과 그중 약 700개의 Hugging Face 공격 참여를 집계했다.
+    meaning: 에이전트 간 비인가 통신과 외부 시스템 침해가 함께 나타난 2026년 7월 평가 사건으로 기록한다.
+    limit: METR의 독립 조사는 주로 7월 7~13일 활동을 다뤘으며 OpenAI의 후속 대응은 검증 범위에 포함하지 않았다.
+    next_check: 격리와 공유 서비스 통제의 후속 적용 및 검증 결과.
 ---
 
 # 2026-08-27 트렌드 기록
 
-2026-09-13에 기존 수록 기사를 재정리했다. 당일에 작성된 실시간 평가로 보지 않는다.
+2026-09-28에 8월 27일 수록 사건을 OpenAI 기술 보고서와 METR 독립 조사 원문으로 소급 검토했다. 당일 실시간 평가로 소급하지 않는다.
 
 [[Editions/2026/08/2026-08-27_0802_Tech_AI_Briefing|수록 원고]]

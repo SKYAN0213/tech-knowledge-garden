@@ -1,10 +1,16 @@
-다음 실행: 적용 전 노트 승인 관문을 유지하면서 exact 승인 bytes를 이미 반영한 노트의 읽기를 별도로 검증한다. 그 뒤 `retrospective-pending-twelve-reader-20261004-v3`의13기사/7과거회차/12노트를 최신 Drive authority와 대조해 전환한다. 수집·모델 호출은 반복하지 않는다. 공개 반영은 미배포 코드 통합 검사·원격 Git 대조 후 기존 발행 관문으로 진행한다.
+다음 실행: 미배포 코드와 승인된 소급 원본을 릴리스 후보로 통합하고 관련 전체 검사는 그 시점에 한 번 실행한다. 원격 Git/기존 발행 관문과 공개 결과는 별도로 검증한다. 전체 소급의 나머지85 legacy회차·752구간은 최신 자료부터 저장 원문/검토/Drive 보관본을 재사용한다. 독립40/20평가·shadow7회/무인08시는 남아 있다. 전체 목표/WBS2/22를 유지하며 완료된 수집·추론을 반복하지 않는다.
 
-최신 소급 통합(2026-10-04): 미검토12사건의 기존 승인19판본을 공통 loader로 검증했고 새 추론 없이 최종 승인12개를 사용했다. stale performance-path의18근거를 직접 재검토하고, 용어 정의 변경에 의존하는 현재 Copilot 기사도 원문9문단으로 재승인했다. v3 생성·사이트·웹/RSS/digest 대조PASS:13기사/7과거회차/12노트/338publicfiles/RSS40 preserved·Copilot 본문 동일·모델0. 원본 반영 후 노트 승인 읽기 관문을 먼저 검증해야 하므로 새 묶음은 private다. canonical386078d와 이 private 결과를 구분한다. WBS2/22·전수/독립평가/운영/공개는 미완료. 런북372절.
+현재 진척(2026-10-04): 적용 후 읽기 경로를 구현해 교체 전 hash/creation absence를 요구하는 새 승인 관문을 유지했다. 이미 반영된 노트는 모든 대상의 승인 SHA, 보존한 교체 전 bytes, 원문 facts, 별칭과 전체 receipt를 재검증한다. 일부 반영·내용/원문/receipt 변조·별칭 충돌·symlink는 거부한다. 신규/기존 표적35개 중34개 최초통과, 테스트의 기존 변조 검사 시점을 보존한 뒤 실패1개만 재검사해 통과했다. 실제13기사/12노트는 반영 전후 승인/온톨로지 동일이며 model/HTTP0이다.
 
-최신 서비스 원본 반영(2026-10-04): Drive 작성197개 raw와 로컬을 대조한 뒤 승인된3파일만 저장·raw 재검증했다. 변경 후198개는195개 불변 판본 metadata와3개 새 raw를 연결한 snapshot이며198개를 새로 raw 조회한 것으로 집계하지 않는다. canonical build/site에서 Copilot→agent-security 상호 링크·발표일, 머신 텐딩 정의/원문·빈 부분 숨김/임의 선0, RSS40 GUID/발행일과16기사 본문·ID 보존을 확인했다. CLI/하위6호출 지점의 기본 모델을 공통 MLX 값으로 연결했고 명시적 override·기존 용어 작성 회귀11/11통과. 새 페이지 browser/공개 배포·전수92/801·독립40/20·운영7회는 미완료다. WBS2/22·goal active. 상세 런북371/계획19.280.
+Drive 원본 전환 완료:198개 실제 raw·16폴더 중 최초15폴더 목록 안정성을 확인하고 승인된19파일/143,710bytes를 기존 release 관문으로 저장했다. 기존17파일 ID 유지·신규2개 생성, 변경19개 모두 원격 raw SHA 일치. post200파일은181개 기존 판본 metadata와19개 변경 raw를 합친 snapshot이며200개를 새로 다운로드한 결과가 아니다. source SHA83996df89d771afc3a81be5fc5343a6fca8f6bc6158aff580a9c21e020908c99, canonical pull/build/site PASS:312 HTML/139 news/19노드/17관계/RSS40. 13기사/12노트 승인과 정의·이력 상호링크·기존40GUID/pubDate를 재검증했고 v4 preview와 HTML/RSS bytes가 같다.
 
-최신 inventory는 구형85회차·752구간과 v2 미검토12사건을 표시한다(원래 전수 기준선92/801 유지). 이번 개발 증거75members/2,284,897bytes는 Drive private Research1qMLf9gFS9eHssX_iH7Sj8Oj9ZitO-4Yx에 보관·raw SHA06e5a254…/부모/비공유/CRC를 검증했다. 공개 배포와 별도다.
+현재 inventory:200작성·36 v2·85 legacy/752구간·139사건 모두verified·v2미검토0·662출처/661URL묶음·diagnostics0. 원래 전체 전환92회차/801구간은 유지하며 v2미검토0을 전수 완료로 해석하지 않는다. 브라우저 새 페이지/공개 배포는 미실행이며 기존 검증된160개 동일 reader/control bytes와 현재 링크 검증을 구분한다. 런북373/계획19.282.
+
+진행 분류: 직전 모델 삭제 상태 확인은 목표 구현의 no progress였고 이번 턴은 승인 읽기 코드·Drive 원본19파일·canonical 생성/판정 변경으로 progress다. 실제 새 portable closure는 과거 비표준 source-selection.json에서 Invalid source selection으로 차단돼 실패를 보존했다. synthetic의 applied-note 복구/승인/온톨로지 검사는 통과했으나 실제 묶음의 독립 복구 성공으로 집계하지 않는다. 원본 전환·기존 Research 증거 보관과 구분하며 별도 후속으로 기록한다. 1시간 이상 같은 실패를 반복한 항목은 없다.
+
+이번 개발/작성 전환 snapshot은 Drive private Research `1XDap-OgwK8GG2cY4igEFz2SyxlLmE2_c`에 보관했다. ZIP295members/3,628,270bytes/source_versions0, 로컬 member SHA/CRC와 원격 raw SHA `34645bb391b50cdd119930198e4cdb334dcac3f595976e6a192fbbbe2ca1bc8d` 일치·이름/부모/shared:false를 확인했다. frozen 기록의 false 상태를 다시 쓰지 않았으며 실제 영수증은 `archive-staging/retrospective-authoring-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다. 이 archive/v1은 개발/작성 전환 증거이며 historical source 전체 의존성의 portable closure나 runtime 독립 복구본은 아니다. 기존 원문 보관본·새 원본200 일치·공개 배포를 구분한다.
+
+이하 이전 실행 기록은 각 시점의 증거다.
 
 최신 독립 복구(2026-10-04): 기사·전문용어 승인/정의 authority와 note approval/fact source를 기존 archive-closure에 연결했다. 실제197작성 노트·원문1판본/210자료/212ZIP members를 local 및 Drive raw ZIP의 새 폴더에서 복구했고 승인/온톨로지 exact SHA 동일·537보호/211재개파일 불변·모델0을 확인했다. 표적31/31. Drive Research1BCfYCGS2jhjXMQFLkvO6i1v2AD0OAFcr/raw SHA8589d383…604,687bytes. Research 자료 복구이며 runtime 설치·worker 재개·authority 최신 대조·공개 성공은 아니다. WBS2/22·goal active·전체소급/독립평가/7회 운영 유지. [런북370절](LOCAL_AI_NEWS_RUNBOOK.md#370-기사정의검토-관계를-drive-보관본에서-독립-복구).
 
@@ -1605,3 +1611,6 @@ Ollama 역할 호출의 스트리밍 진행 기록·부분 실패 출력/SHA 검
 ### 19.261 원문 발표일·고정 승인 ID와 8분야 회차 실물 연결
 
 후속 보도10월2일을 원문9월23일 사건으로 라우팅하도록 승인 원고의 SHA·사건ID·verified 날짜를 검증한다. URL 끝 슬래시를 포함한 과거 승인 ID가 새 회차에서 거부되는 실패도 재현해 해당 원문/정규화 URL hash만 허용하고 canonical URL 중복 차단을 유지했다. 새 Drive195raw/14목록 재읽기 후7원문의24사실을 직접 검토해 승인 연결했다.733후보 중7변경/726동일·verified83, 현재 신규12/과거11이다. 최종 regular-eight-sector-preview-20261004-v3는8분야12기사/Signals1·웹/RSS/GitHub 일치와 기존RSS39식별자 보존, 표적61/61·포맷·diff를 통과했다. 작성 authority195파일은 불변이다. authoring prepare2파일/38247bytes는 upload_allowed=false이며32칸 조사·실제 브라우저·fresh Drive release/원고 저장·공개 배포는 남는다. 증거 ZIP1947732bytes·182파일/12원문판본은 Drive Research15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU에 보관하고 원격 raw SHA 일치를 확인했다. 전체 suite·정규 운영7회·전수 소급·독립평가는 미완료, WBS2/22·goal active 유지. [런북352절](LOCAL_AI_NEWS_RUNBOOK.md#352-실제-원문-날짜승인-id와-8분야-비공개-회차-검증).
+
+
+최종 메타데이터 대조에서 connector 표기를 기존 `codex-drive-connector`로 통일했다. 새 `retrospective-authoring-post-source-snapshot-20261004-v2.json`은 작성200파일 bytes/원 snapshot SHA/발표일을 바꾸지 않는다. named snapshot으로 apply한 결과 updated/deleted 모두0이며 표기 metadata만 갱신했다. shared build-site 생성만 재실행해 public/drive-sync의 표기,13기사 HTML과 RSS exact SHA 불변을 확인했다. 전체 build/test suite는 반복하지 않았다. `source-live-debug/retrospective-authoring-transport-verification-20261004-v1.json`이 후속 영수증이며 Drive 개발 ZIP은 이 표기 정정 전의 frozen 증거다. ZIP/원문/승인 snapshot을 재작성하지 않는다.

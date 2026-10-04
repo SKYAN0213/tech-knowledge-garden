@@ -6,63 +6,46 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-07-11
-updated: 2026-09-13
+updated: 2026-09-28
 aliases:
   - 기업 AI 운영 모델
 parent_concepts: []
 related_concepts:
-  - "[[Knowledge/AI Systems/AI Governance|AI 거버넌스]]"
   - "[[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]"
-  - "[[Knowledge/Data Systems/Aggregate Metrics|집계 지표]]"
 tags:
   - AI
   - EnterpriseAI
   - OperatingModel
-last_reviewed: 2026-09-13
+last_reviewed: 2026-09-28
 concept_id: enterprise
 label: 기업 AI 운영 모델
 group: 평가와 운영
 keywords:
-  - 업무 설계
-  - 책임자
-  - 성과 기준
-  - 사람 이관
+  - 업무 평가
+  - 조직 권한
+  - 사용량 관리
+  - 변경 승인
 verified_sources:
-  - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+  - https://openai.com/index/introducing-admin-plugin/
   - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
-  - https://prometheus.io/docs/practices/histograms/
 relations:
-  - target: governance
-    type: uses
-    reason: 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다.
-    basis: inference
-    evidence:
-      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
   - target: evaluation
     type: uses
-    reason: 도입 범위를 정할 때 실제 업무 결과를 평가한다.
-    basis: inference
-    evidence:
-      - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
-      - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
-  - target: metrics
-    type: uses
-    reason: 성과를 볼 때 사용량과 과제 성공 기준을 구분해 집계한다.
+    reason: 기업의 에이전트 업무는 과제의 실행 결과를 평가해 운영 기준을 정할 수 있다.
     basis: inference
     evidence:
       - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
-      - https://prometheus.io/docs/practices/histograms/
 map_review:
   decision: exclude
-  reason: 기업 도입과 책임 배분이라는 운영 범주다. 단일 기술의 작동 원리를 설명하는 용어가 아니다.
-  reviewed: 2026-09-13
+  reason: 기업의 업무·권한·평가 운영을 묶는 범주이며 독립적인 기술 작동 원리를 뜻하는 용어가 아니다.
+  reviewed: 2026-09-28
 ---
 
 # Enterprise AI Operating Model
 
 ## 한 문장 정의
 
-AI를 업무에 도입하고 유지하기 위해 역할·의사결정·성과 기준·위험 관리 책임을 배분하는 운영 구조다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
+기업 AI 운영 모델은 AI를 실제 업무에 쓰면서 과제의 성공 기준, 조직 권한, 사용량과 변경 승인을 함께 관리하는 업무 운영 구조다. [Anthropic · Agent evals](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI · Admin plugin](https://openai.com/index/introducing-admin-plugin/)
 
 ## 용어 카드
 
@@ -70,61 +53,50 @@ AI를 업무에 도입하고 유지하기 위해 역할·의사결정·성과 �
 |---|---|
 | 한국어 | 기업 AI 운영 모델 |
 | 영어 | Enterprise AI Operating Model |
-| 키워드 | 업무 설계 · 책임자 · 성과 기준 · 사람 이관 |
+| 이 문서의 관점 | 업무 평가 · 조직 권한 · 사용량 관리 · 변경 승인 |
 
 ## 범위
 
-**포함:** 업무 선택, 사람과 AI의 역할, 평가와 운영 피드백.
+**포함:** 에이전트 과제와 성공 기준, 역할별 접근 권한, 구성원·그룹 변경, 사용량 한도와 승인 흐름. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
-**포함하지 않음:** 단순한 모델 구매나 사용자 계정 수 확대.
+**포함하지 않음:** 한 공급업체의 기능을 모든 기업의 표준 운영 방식으로 일반화하는 것. IT 지원 사례의 해결률을 별도 관리 도구의 효과로 간주하는 것. [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 왜 중요한가
 
-실험용 AI 기능을 반복 가능한 업무로 옮길 때 책임·성과·운영 피드백이 빠지지 않게 한다.
+에이전트를 업무에 넣을 때는 실행 결과가 성공 기준을 충족하는지와 누가 어떤 데이터·기능·모델에 접근하고 설정을 바꿀 수 있는지를 구분해 관리해야 한다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 핵심 구성 요소
 
-- 업무 설계
-- 책임자
-- 성과 기준
-- 사람 이관
+- 업무 평가: 과제·시도·채점기·실행 기록을 구별해 성공 기준과 결과를 확인한다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
+- 권한 관리: 구성원과 그룹을 바꾸고 실제 적용 권한과 역할·그룹별 기능 접근을 확인한다. [OpenAI](https://openai.com/index/introducing-admin-plugin/)
+- 사용량 관리: 구성원·그룹·작업공간의 사용량과 한도, 추가 사용 요청을 살펴본다. [OpenAI](https://openai.com/index/introducing-admin-plugin/)
+- 변경 승인: 지원되는 관리 작업을 기존 역할·작업공간 정책·승인 절차 안에서 수행하고 결과를 확인한다. [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 작동 원리
 
-업무 목적과 책임자를 정하고 성공 기준을 만든다. 실제 결과와 위험을 측정해 권한·업무 흐름·운영 정책을 수정한다. [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
+먼저 업무 과제와 성공 기준을 정하고, 각 시도의 실행 기록과 최종 상태를 평가한다. 운영자는 조직 역할에 따라 조회·변경할 수 있는 범위를 정하고 사용량과 권한 변경을 승인한다. OpenAI가 발표한 Admin plugin은 이러한 관리 작업 일부를 ChatGPT Work와 Codex에서 처리하되 사용자에게 기존 권한 이상의 접근을 부여하지 않는 사례다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 실제 예시
 
-자동 처리 성공과 사람 재작업을 함께 측정해 고객 지원 업무 범위를 조정하는 운영 설계.
+OpenAI가 2026년 8월 25일 발표한 Admin plugin은 관리자에게 ChatGPT Work와 Codex 사용량 확인, 구성원·그룹 변경, 역할별 기능·모델 접근 설정, 사용량 요청 승인 기능을 제공한다고 설명한다. 요청은 지원되는 읽기·쓰기 작업에 매핑되고 기존 작업공간 정책과 승인 경계를 따른다. [원문](https://openai.com/index/introducing-admin-plugin/)
 
 ## 한계와 실패 조건
 
-호출량과 사용량은 업무 성과의 대체 지표가 될 수 없다. 팀마다 다른 과제를 같은 기준 없이 비교하면 왜곡된다.
+관리 도구가 제공하는 기능 목록은 사용 기업의 성과를 입증하지 않는다. 에이전트 평가는 과제별 입력·성공 기준·시도와 최종 결과를 정해야 비교할 수 있다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 혼동하기 쉬운 개념
 
-AI 거버넌스는 위험·책임 체계이고 운영 모델은 업무·역할·성과 운영까지 포함하는 편집상 묶음이다.
+에이전트 평가는 개별 과제의 실행과 결과를 판단하는 방법이다. 기업 AI 운영 모델은 평가 결과에 더해 구성원 권한·사용량·승인 절차를 함께 다루는 운영 범주다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [OpenAI](https://openai.com/index/introducing-admin-plugin/)
 
 ## 관련 개념
 
-- → 활용: [[Knowledge/AI Systems/AI Governance#한 문장 정의|AI 거버넌스]] — 업무 도입·운영 책임에 AI 위험 관리 체계를 결합한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/))
-- → 활용: [[Knowledge/AI Systems/Agent Evaluation#한 문장 정의|에이전트 평가]] — 도입 범위를 정할 때 실제 업무 결과를 평가한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents))
-- → 활용: [[Knowledge/Data Systems/Aggregate Metrics#한 문장 정의|집계 지표]] — 성과를 볼 때 사용량과 과제 성공 기준을 구분해 집계한다. (해석; [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [근거](https://prometheus.io/docs/practices/histograms/))
+- [[Knowledge/AI Systems/Agent Evaluation#한 문장 정의|에이전트 평가]] — 업무 과제의 성공 기준과 실행 결과를 구분해 검토한다. [Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 
 ## 최근 변화
 
-- 2026-09-09 — OpenAI는 Astra 기업 안내에서 앱·웹사이트와 파일 전송 통제, 기본 비활성화된 Enterprise 접근을 설명했습니다. 모델 도입과 업무 자원 접근 정책을 함께 관리할 필요를 구체화했습니다. [source](https://openai.com/index/gpt-6-astra-next-generation-work/)
-
-- 2026-09-08 — GHES 3.22는 정식 출시됐지만 폐쇄망 Copilot CLI 연동은 기술 미리보기입니다. 기업 AI 운영은 서버 버전과 개별 기능 성숙도, 모델 공급자·데이터 경로를 각각 관리해야 합니다. [source](https://github.blog/changelog/2026-09-08-github-enterprise-server-3-22-is-now-generally-available/)
-
-- 2026-09-04 — GitHub는 Copilot의 Astra 정식 제공과 조직 모델 정책에 따른 기본 활성화를 공지했습니다. 새 모델 도입은 접근·비용·자체 평가를 함께 관리할 운영 변경임을 보여줍니다. 내부 성능 설명은 독립 검증과 구분해야 합니다. [source](https://github.blog/changelog/2026-09-04-gpt-6-astra-is-generally-available-in-github-copilot/)
-
-- 2026-09-02 — Microsoft Fabric의 GCC High 공개 미리보기는 정부용 규제 환경에서 데이터 통합·분석·의미 계층을 에이전트 기반과 연결했습니다. 기업 AI 운영은 모델 배치뿐 아니라 지원되는 workload, 데이터 위치, 공통 용량과 단계별 출시 범위를 함께 관리해야 합니다. [source](https://www.microsoft.com/en-us/microsoft-cloud/blog/us-government/2026/09/02/microsoft-fabric-in-gcc-high-building-the-data-foundation-for-ai/)
-- 2026-08-25 — OpenAI는 ChatGPT Work와 Codex용 Admin plugin을 발표해 사용량·권한 조회와 지원되는 관리 변경을 기존 역할·승인 경계 안의 대화형 흐름으로 연결했습니다. 이는 AI 운영 자동화가 단순 질의에서 권한 인식형 실행과 결과 확인으로 넓어지는 신호지만, 내부 지원 티켓 해결 수치는 공급업체 사례입니다. [source](https://openai.com/index/introducing-admin-plugin/)
-- 2026 — 기업 AI 성과 측정은 좌석 수와 토큰 단가에서 성공 업무당 총비용, 품질 문턱, 사람 수정·이관 비율로 이동하고 있습니다.
+- 2026-08-25 — OpenAI는 ChatGPT Work와 Codex의 일부 관리 작업을 대화형으로 수행하는 Admin plugin을 발표했다. 사용량·구성원·권한 변경은 사용자의 기존 역할과 작업공간 승인 정책을 따르고, 관리자는 변경 결과를 확인할 수 있다고 설명했다. [[News/33eae878317d27dc|관련 기사]] · [원문](https://openai.com/index/introducing-admin-plugin/)
 
 ## 출처
 
-- [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
 - [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
-- [Prometheus · Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [OpenAI · Introducing Admin plugin](https://openai.com/index/introducing-admin-plugin/)

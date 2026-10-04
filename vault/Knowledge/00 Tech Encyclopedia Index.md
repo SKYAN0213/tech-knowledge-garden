@@ -76,6 +76,14 @@ tags:
 
 - [[Knowledge/Robotics/Machine Tending|머신 텐딩]]
 
+### AI Systems
+
+- [[Knowledge/AI Systems/Double-Blind AI Evaluation|이중 블라인드 AI 평가]]
+
+### Research Methods
+
+- [[Knowledge/Research Methods/Randomized Controlled Trial|무작위 대조 시험]]
+
 ## 개념 경계
 
 | 분야 | 중심 질문 | 시작 문서 |

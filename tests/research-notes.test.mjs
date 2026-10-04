@@ -11,6 +11,8 @@ import {
   approveNoteReview,
   evaluateNoteReview,
   loadNoteApproval,
+  loadAppliedNoteApproval,
+  loadReferencedNoteApproval,
 } from "../scripts/research/note-review.mjs"
 import { main } from "../scripts/research.mjs"
 
@@ -499,6 +501,116 @@ test("canonical note approval preserves source authoring bytes and reuses only u
     () => loadNoteApproval(f.root, "notes", options),
     /Saved knowledge approval differs/,
   )
+})
+
+test("exact applied replacements stay readable without authorizing another write", async (t) => {
+  const f = fixture(t),
+    options = { vault: f.vault }
+  await approveNoteReview(f.root, "notes", f.decision, options)
+  const pending = loadReferencedNoteApproval(f.root, "notes", options)
+  assert.deepEqual(pending, loadNoteApproval(f.root, "notes", options))
+  assert.throws(() => loadAppliedNoteApproval(f.root, "notes", options), /not fully applied/)
+  atomicWrite(f.vault, f.relative, f.decision.notes[0].content)
+  const before = [
+    path.join(f.vault, f.relative),
+    path.join(f.root, "runs/notes/note-review.json"),
+    path.join(f.root, "runs/notes/approved-notes.json"),
+    path.join(f.root, f.doc.body_path),
+  ].map((file) => [file, fs.readFileSync(file)])
+  assert.deepEqual(loadAppliedNoteApproval(f.root, "notes", options), pending)
+  assert.deepEqual(loadReferencedNoteApproval(f.root, "notes", options), pending)
+  assert.throws(() => loadNoteApproval(f.root, "notes", options), /Canonical note changed/)
+  await assert.rejects(
+    approveNoteReview(f.root, "new-write", f.decision, options),
+    /Canonical note changed/,
+  )
+  for (const [file, bytes] of before) assert.deepEqual(fs.readFileSync(file), bytes)
+  assert.equal(pending.approval.candidate_published, false)
+  assert.equal(pending.approval.drive_verified, false)
+})
+
+test("exact applied creations are readable while creation absence remains mandatory for approval", async (t) => {
+  const f = fixture(t),
+    decision = creation(f),
+    options = { vault: f.vault }
+  await approveNoteReview(f.root, "created", decision, options)
+  const pending = loadReferencedNoteApproval(f.root, "created", options)
+  atomicWrite(f.vault, decision.notes[0].path, decision.notes[0].content)
+  assert.deepEqual(loadAppliedNoteApproval(f.root, "created", options), pending)
+  assert.deepEqual(loadReferencedNoteApproval(f.root, "created", options), pending)
+  assert.throws(() => loadNoteApproval(f.root, "created", options), /already exists/)
+  await assert.rejects(approveNoteReview(f.root, "new-write", decision, options), /already exists/)
+})
+
+test("applied reads reject partial batches, drift and symlinks without changing saved receipts", async (t) => {
+  const f = fixture(t),
+    decision = creation(f),
+    options = { vault: f.vault }
+  decision.notes.push({ ...f.decision.notes[0], operation: "replace" })
+  await approveNoteReview(f.root, "mixed", decision, options)
+  const pending = loadReferencedNoteApproval(f.root, "mixed", options)
+  atomicWrite(f.vault, decision.notes[0].path, decision.notes[0].content)
+  assert.throws(() => loadAppliedNoteApproval(f.root, "mixed", options), /not fully applied/)
+  assert.throws(() => loadReferencedNoteApproval(f.root, "mixed", options), /already exists/)
+  atomicWrite(f.vault, f.relative, f.decision.notes[0].content)
+  assert.deepEqual(loadReferencedNoteApproval(f.root, "mixed", options), pending)
+  atomicWrite(f.vault, f.relative, f.decision.notes[0].content + "Unreviewed change")
+  assert.throws(() => loadAppliedNoteApproval(f.root, "mixed", options), /not fully applied/)
+  assert.throws(() => loadReferencedNoteApproval(f.root, "mixed", options))
+  fs.unlinkSync(path.join(f.vault, f.relative))
+  fs.symlinkSync(path.join(f.root, f.doc.body_path), path.join(f.vault, f.relative))
+  assert.throws(() => loadAppliedNoteApproval(f.root, "mixed", options), /Symlink/)
+  assert.throws(() => loadReferencedNoteApproval(f.root, "mixed", options), /Symlink/)
+  assert.deepEqual(readJSON(f.root, "runs/mixed/approved-notes.json"), pending.approval)
+})
+
+test("applied approval rechecks preserved bytes, evidence, identities and the complete receipt", async (t) => {
+  for (const corrupt of [
+    (f, stored) => {
+      stored.notes[0].before_content += "Changed before bytes"
+    },
+    (f, stored) => {
+      stored.notes[0].content += "Changed approved bytes"
+    },
+    (f, stored) => {
+      stored.notes[0].sha256 = "0".repeat(64)
+    },
+    (f, stored) => {
+      stored.notes[0].previous_sha256 = "0".repeat(64)
+    },
+    (f, stored) => {
+      stored.notes.push(stored.notes[0])
+    },
+    (f, stored) => {
+      stored.source_files[0].files["documents.json"] = "0".repeat(64)
+    },
+    (f, stored) => {
+      stored.candidate_published = true
+    },
+    (f) => {
+      atomicWrite(f.root, f.doc.body_path, "Changed source body")
+    },
+    (f) => {
+      atomicWrite(
+        f.vault,
+        "Knowledge/Other.md",
+        noteText(
+          { ...f.meta, concept_id: "other", title: "Other", label: "다른 개념" },
+          "Other definition",
+        ),
+      )
+    },
+  ]) {
+    const f = fixture(t),
+      options = { vault: f.vault }
+    await approveNoteReview(f.root, "notes", f.decision, options)
+    atomicWrite(f.vault, f.relative, f.decision.notes[0].content)
+    const stored = readJSON(f.root, "runs/notes/approved-notes.json")
+    corrupt(f, stored)
+    atomicWrite(f.root, "runs/notes/approved-notes.json", stored)
+    assert.throws(() => loadAppliedNoteApproval(f.root, "notes", options))
+    assert.throws(() => loadReferencedNoteApproval(f.root, "notes", options))
+  }
 })
 
 test("note review rejects stale canonical input, false review, foreign facts, aliases and source URLs", (t) => {

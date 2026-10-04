@@ -4045,3 +4045,14 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 최종 `retrospective-pending-twelve-reader-20261004-v3`:13기사/7과거회차/12노트/338publicfiles·생성/사이트/채널 대조/RSS40식별자 통과·추론0. fresh preview v1의 실패와 승인 helper의 원 추출 envelope 누락 실패를 별도 로그로 보존했고 같은 실패를 반복하지 않았다. authority·브라우저·공개는 아직이다.
 
 다음 필수 구현은 반영 후 읽기다. 현행 `loadNoteApproval`은 교체 전 hash/creation absence를 요구하므로 이 조건을 새 승인 관문에서 유지한다. 별도 읽기 경로는 현재 모든 대상이 exact approved SHA와 일치할 때만 저장된 교체 전 bytes·원문 facts·alias/receipt를 다시 검증해야 한다. current drift·일부만 반영·다른 source·변조된 before/after/receipt·symlink는 거부한다. 이를 정의에 의존하는 승인 loader에 연결하고 표적 검사와 실제 v3 사본에서 검증한 다음 Drive 전환한다. 전체WBS2/22·원래전수/독립40/20·운영7회/08시·공개 완료 기준은 유지한다.
+
+
+### 19.282. 반영된 승인 의존성 읽기와 미검토12사건의 원본 전환
+
+`loadNoteApproval`의 적용 전 canonical hash/creation absence 관문은 유지한다. 별도 `loadAppliedNoteApproval`은 승인 대상 전체의 현재 bytes가 approved SHA인 경우만 보존한 before_content·원문 facts·별칭·전체 승인 receipt를 재검증한다. 참조를 읽는 `loadReferencedNoteApproval`을 기사 전문용어 승인과 archive-closure dependency에 연결했으며 일부 적용/변조/다른 source/충돌/symlink는 거부한다. 반영 상태를 새 승인·Drive 완료·공개 발행 상태로 자동 승격하지 않는다.
+
+신규4개를 포함한 표적35개 중34개 최초통과, 기존 변조 검사 시점을 보존한 후 실패1개만 재검사해 통과했다. source-only 생성의 v3/v4 출력475파일 exact SHA와 sitemap의 생성 lastmod만 변경됨을 확인했다. 기존 browser에서 직접 시험했던 reader/control160개 bytes는 같고 새 페이지는 browser 미검증이다. 실제 v3의13기사/12노트 승인·온톨로지는 exact 적용 사본에서도 같았다. 새로운 전체 수집·추론은0이다.
+
+Drive 작성198개 raw를 실제 읽고15폴더 목록 안정성을 대조했다. 새 Research Methods 폴더는 부재 확인 후 만들었고 release가 승인한19파일을 순서대로 저장했다. 변경19개 원격 raw와 기존17개 ID/부모를 확인했다. post16폴더/200파일은181개 기존 판본 metadata와19개 변경 raw에 근거한다. canonical source200 일치/build/site/전문용어·이력/웹RSSdigest 대조와 RSS40식별자를 확인했다. 현재 v2미검토12→0이지만 남은85 legacy회차/752구간과 전체92/801 기준선은 그대로다.
+
+실제 portable closure는 과거 수동 Model Connect run의 비표준 source-selection.json에서 거부됐다. source-selection 관문이나 과거 승인 bytes를 완화하지 않았다. 이 실패는 다음 별도 근거 이관 대상으로 남기며 canonical 적용 후 승인 읽기와 원본 저장 성공을 부정하지 않는다. optional snapshot alias의 부재 때문에 백업 helper가 실패했으나 실제 named snapshot200은 적용/검증됐다. 모든 실패는 private 기록으로 보존한다. 미배포 코드 통합·원격/공개 관문, 독립40/20·shadow7회/무인08시를 계속 진행한다. 전체WBS2/22·goal active, 1시간 이상 반복 blocker 없음. 상세 런북373절.

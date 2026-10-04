@@ -128,18 +128,18 @@ generated_by: tech-knowledge-garden
 - [[News/f2694bfa96c49e91|OpenAI, Astra를 첫 Critical 사이버 역량 모델로 판정]] · 2026-09-02
 - [[News/89b2997d0ccfa477|Google, 생성형 검색 제어·노출 정보를 전 세계 웹사이트로 확대]] · 2026-09-01
 - [[News/09a390c59d8969e0|Google, 여러 시계열과 미래 변수를 함께 쓰는 TimesFM-3 공개]] · 2026-09-01
-- [[News/fd584d5c829c999d|에이전트 검증을 ‘통과 가능한 층’으로 나눈다]] · 2026-08-30
-- [[News/a0eed0f62d0dd240|TensorRT Model Connect가 체크포인트와 C++ 실행 사이를 묶었다]] · 2026-08-29
-- [[News/bab0e1718e7e0799|에이전트 샌드박스가 실패를 성공처럼 보이지 않게 했다]] · 2026-08-29
-- [[News/068cf5b2747d434f|지리공간 예측의 데이터 찾기부터 모델 평가까지 자동화했다]] · 2026-08-28
-- [[News/de0d8b99a9cda9c5|ChatGPT와 인과 추론 훈련은 서로 다른 결과를 높였다]] · 2026-08-28
-- [[News/7a7d38500197da71|시험 문제도 모델 가중치도 숨긴 채 평가한다]] · 2026-08-28
-- [[News/8bc2cce05a4ccf4a|CrysVCD: 생성 뒤 필터링 대신 화학 규칙을 먼저 건다]] · 2026-08-27
-- [[News/9f43a79e9c23b1f3|AWS와 NVIDIA, 2027~2028년에 GPU 200만 개 추가 배치 계획]] · 2026-08-27
-- [[News/34e62ff4c7cf4def|에이전트가 평가 경계를 넘어 협업했다: 격리와 중단 조건의 실패]] · 2026-08-27
-- [[News/33eae878317d27dc|관리 대화가 조회에서 권한 있는 변경까지 이어진다]] · 2026-08-26
-- [[News/b9406ae170bd9133|OpenAI의 첫 추론 칩, 속도와 전력 효율을 함께 겨눈다]] · 2026-08-26
-- [[News/19af374b78b369cd|에이전트 추론, 칩 하나보다 전체 경로를 재설계한다]] · 2026-08-25
+- [[News/fd584d5c829c999d|Microsoft 개발 블로그, AI 역공학 문서와 생성 코드의 검증 단계 제안]] · 2026-08-30
+- [[News/a0eed0f62d0dd240|NVIDIA, 공개 모델 체크포인트를 C++ 추론으로 연결하는 Model Connect 소개]] · 2026-08-29
+- [[News/bab0e1718e7e0799|NVIDIA NemoClaw v0.0.115, 소유 컨테이너 복구와 샌드박스 검사 강화]] · 2026-08-29
+- [[News/068cf5b2747d434f|Google Research, 데이터 수집·학습·예측을 잇는 지리공간 PPE 연구 공개]] · 2026-08-28
+- [[News/de0d8b99a9cda9c5|보코니대·OpenAI, 학생 1,053명 실험에서 ChatGPT와 인과 추론 훈련 비교]] · 2026-08-28
+- [[News/7a7d38500197da71|Google DeepMind, 모델과 시험 문제를 서로 공개하지 않는 평가 시범 연구]] · 2026-08-28
+- [[News/8bc2cce05a4ccf4a|MIT 등, 화학 규칙을 결합한 결정 물질 생성 모델 CrysVCD 논문 출판]] · 2026-08-27
+- [[News/9f43a79e9c23b1f3|AWS, 2027~2028년 NVIDIA GPU 200만 개 추가 배치 계획]] · 2026-08-27
+- [[News/34e62ff4c7cf4def|OpenAI·METR, Hugging Face 침해 사건 조사 결과 공개]] · 2026-08-27
+- [[News/33eae878317d27dc|OpenAI, ChatGPT Work·Codex 관리용 Admin 플러그인 발표]] · 2026-08-26
+- [[News/b9406ae170bd9133|OpenAI, 자체 추론 칩 Jalapeño의 세 모델 시험 결과 발표]] · 2026-08-26
+- [[News/19af374b78b369cd|NVIDIA, Groq 3 LPX 양산과 GPU·LPU 공동 추론 구성 소개]] · 2026-08-25
 - [[News/fe30a02568cd33cb|AirJoule, Kubota와 주택용 대기 물 생산 시스템 판매 계약]] · 2026-08-14
 - [[News/bb0b51006dee6853|Semtech, 셀룰러 모듈 사업 Compal 매각 계약…현금 6,200만 달러]] · 2026-08-14
 - [[News/72f164fe85756954|Nauticus Robotics, ToolKITT 통합 ROV를 고객 운영에 배치]] · 2026-08-13

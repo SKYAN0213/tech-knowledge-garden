@@ -6,32 +6,34 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-09-13
+updated: 2026-09-28
 aliases:
   - 에이전트 보안
 parent_concepts: []
 related_concepts:
   - "[[Knowledge/AI Systems/AI Agents|AI 에이전트]]"
   - "[[Knowledge/AI Systems/Model Context Protocol|MCP]]"
-  - "[[Knowledge/AI Systems/AI Agent Governance|에이전트 거버넌스]]"
 tags:
   - AI
   - Agent
   - Security
-last_reviewed: 2026-09-13
+last_reviewed: 2026-09-28
 concept_id: agent-security
 label: 에이전트 보안
 group: 위험과 책임
 keywords:
   - 신원
   - 인가
-  - 프롬프트 주입
+  - 도구 실행
   - 신뢰 경계
   - guardrail
 verified_sources:
   - https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents
   - https://openai.github.io/openai-agents-python/guardrails/
   - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+  - https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115
+  - https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
+  - https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/
 relations:
   - target: agents
     type: controls
@@ -50,14 +52,14 @@ map_review:
   decision: include
   kind: security
   reason: 모델 입력의 신뢰 경계와 도구 실행 권한을 구분하는 기술 지식이 필요하다.
-  reviewed: 2026-09-13
+  reviewed: 2026-09-28
 ---
 
 # AI Agent Security
 
 ## 한 문장 정의
 
-에이전트의 신원·권한·입출력·도구 실행 경계를 보호해 공격이나 잘못된 행동의 영향을 줄이는 통제다. [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [OpenAI Agents SDK · Guardrails](https://openai.github.io/openai-agents-python/guardrails/) · [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+에이전트 보안은 AI 에이전트가 데이터·도구·애플리케이션에 접근할 때 신원과 권한을 확인하고 입력·출력·도구 실행의 검사 경계를 정하는 통제다. [NIST](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/guardrails/)
 
 ## 용어 카드
 
@@ -65,63 +67,61 @@ map_review:
 |---|---|
 | 한국어 | 에이전트 보안 |
 | 영어 | AI Agent Security |
-| 키워드 | 신원 · 인가 · 프롬프트 주입 · 신뢰 경계 · guardrail |
+| 핵심 용어 | 신원 · 인가 · 도구 실행 · 신뢰 경계 · guardrail |
 
 ## 범위
 
-**포함:** 권한 검증, 도구 격리, 신뢰 경계, 실행 전 검사.
+**포함:** 신원·인가 통제, 에이전트 입력과 최종 출력 검사, 보호되는 도구의 호출 전후 검사, 호스트가 관리하는 연결 권한과 서버 간 경계를 다룬다. [NIST](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [SDK](https://openai.github.io/openai-agents-python/guardrails/) · [MCP architecture](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
-**포함하지 않음:** 모델 출력 필터 하나로 전체 실행을 안전하게 만드는 보증.
+**포함하지 않음:** 입력 guardrail 하나를 전체 도구·연결 권한의 검사로 간주하는 것. 함수 도구와 handoff·hosted·내장 도구의 실행 경로는 구분한다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
 
 ## 왜 중요한가
 
-에이전트의 잘못된 판단이 도구를 통해 실제 상태 변경으로 이어질 수 있어, 출력뿐 아니라 실행 경계를 보호해야 한다.
+NIST NCCoE의 프로젝트 구상은 에이전트가 데이터·도구·애플리케이션에 접근하면서 생기는 위험에 신원과 인가 통제가 필요하다고 설명한다. 무엇을 출력하는지와 어떤 권한으로 실제 도구를 실행하는지를 함께 확인하는 출발점이다. [NIST](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
 
 ## 핵심 구성 요소
 
-- 신원
-- 인가
-- 프롬프트 주입
-- 신뢰 경계
-- guardrail
+- 신원·인가: 접근 주체와 허용 권한을 다룬다. [NIST](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
+- 입력·출력 guardrail: 에이전트에 전달되는 입력과 최종 출력을 검사한다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
+- 도구 guardrail: 보호되는 함수 도구의 입력은 실행 전에, 출력은 실행 후에 검사한다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
+- 호스트 경계: 연결 권한, 보안 정책, 동의와 서버 간 상호작용을 관리한다. [MCP](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 작동 원리
 
-누가 어떤 권한으로 행동하는지 확인하고, 외부 입력을 지시와 분리한다. 부작용을 막아야 하는 도구는 실행 전에 검사를 마친다. [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [OpenAI Agents SDK · Guardrails](https://openai.github.io/openai-agents-python/guardrails/) · [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+OpenAI Agents SDK에서 입력 guardrail은 체인의 첫 에이전트, 출력 guardrail은 최종 출력을 만드는 에이전트에 적용된다. 보호되는 함수 도구는 매 호출의 입력과 출력을 별도로 검사한다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
+
+MCP 호스트는 client 연결의 권한·수명주기·보안 정책·동의·사용자의 인가 결정을 관리한다. 전체 대화 이력은 호스트에 두고 서버에는 필요한 문맥만 전달하며, 서버 간 상호작용도 호스트가 통제한다. [MCP architecture 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 실제 예시
 
-파일 삭제 도구 호출 전 대상 경로와 권한을 확인하고 실패하면 실행하지 않는 경계.
+NemoClaw v0.0.115의 Portable Hermes 복구는 작업 전에 기록에 등록된 컨테이너·게이트웨이·실행 파일·정책·경로·런타임 식별자를 재확인한다. 기본 Docker 이미지 조회에 실패하면 샌드박스 생성 전에 중단한다. [NemoClaw v0.0.115](https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115)
 
 ## 한계와 실패 조건
 
-병렬 guardrail은 검사 실패가 발견되기 전에 도구가 실행될 수 있다. 사후 취소가 이미 발생한 부작용을 되돌리지는 않는다.
+SDK의 기본 병렬 입력 guardrail은 에이전트와 동시에 실행하므로 검사 실패 후 취소되기 전에 토큰을 쓰거나 도구를 실행할 수 있다. blocking 모드는 검사가 끝나기 전에 에이전트를 시작하지 않는다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
+
+함수 도구 guardrail의 적용 경로와 handoff·hosted 도구·ComputerTool·ShellTool 등의 경로는 다르다. 로컬 MCP 도구의 guardrail은 서버 설정을 확인해야 한다. [SDK](https://openai.github.io/openai-agents-python/guardrails/)
 
 ## 혼동하기 쉬운 개념
 
-인가가 행동의 허용 여부라면 인증은 주체의 신원 확인이다. 둘은 같은 검사가 아니다.
+에이전트 입력·최종 출력 검사는 도구 호출의 전후 검사와 적용 시점이 다르다. MCP 연결의 권한·동의 관리는 호스트의 책임이며, 입력 guardrail 하나가 이 경계 전체를 대신하지 않는다. [SDK](https://openai.github.io/openai-agents-python/guardrails/) · [MCP](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 관련 개념
 
-- → 통제: [[Knowledge/AI Systems/AI Agents#한 문장 정의|AI 에이전트]] — 모델과 도구 실행의 신원·권한·검사 경계를 보호한다. (해석; [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [근거](https://openai.github.io/openai-agents-python/guardrails/))
-- → 통제: [[Knowledge/AI Systems/Model Context Protocol#한 문장 정의|MCP]] — 호스트가 연결별 동의·권한과 서버 사이의 경계를 유지한다. (해석; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
-- ← 근거 제공: [[Knowledge/AI Systems/AI Agent Governance#한 문장 정의|에이전트 거버넌스]] — 책임과 허용 범위를 신원·인가 통제의 운영 기준으로 연결한다. (해석; [근거](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
-- ← 대비: [[Knowledge/Software Engineering/AI-Assisted Security Engineering#한 문장 정의|AI 보조 보안 개발]] — AI로 보안 업무를 돕는 활동과 AI 실행 자체를 보호하는 통제는 대상이 다르다. (해석; [근거](https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features) · [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents))
+- [[Knowledge/AI Systems/AI Agents#한 문장 정의|AI 에이전트]] — 데이터·도구 접근의 신원·인가와 검사 경계를 다룬다. [NIST](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [SDK](https://openai.github.io/openai-agents-python/guardrails/)
+- [[Knowledge/AI Systems/Model Context Protocol#한 문장 정의|MCP]] — 호스트가 연결별 권한·동의와 서버 간 경계를 관리한다. [MCP](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 최근 변화
 
-- 2026-09-09 — Copilot은 관리 제한을 사용자 설정이나 과거 승인으로 완화할 수 없는 중앙 작업 권한을 정식 제공했습니다. 권한 검토에는 허용 목록뿐 아니라 정책 우선순위도 포함됩니다. [source](https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/)
+- 2026-08-28 — NVIDIA NemoClaw v0.0.115는 소유권 기록에 따른 컨테이너 복구, 기본 이미지 조회 실패 시 중단, 자격증명 전달과 불완전 상태 판정을 갱신했다. [[News/bab0e1718e7e0799|관련 기사]] · [원문](https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115)
 
-- 2026-09-02 — Google은 Gemini 3.8 Flash Cyber와 CodeMender를 제한된 Fairwind 참여자에게 제공하고 취약점 탐지·검증·패치를 한 흐름으로 묶었습니다. 고역량 사이버 에이전트 보안이 모델 거부뿐 아니라 접근 자격, 조직 내 역할 제한, 다중 인증과 패치 검증을 함께 요구함을 보여줍니다. [source](https://blog.google/innovation-and-ai/technology/safety-security/fairwind-program/)
-- 2026-09-01 — OpenAI는 출시 전 Astra를 자사 최초의 `Critical` 사이버 역량 모델로 판정하고, 사용자 오용 방어와 모델의 무단 행동을 탐지·중단하는 감시를 별도 보호 경로로 두었습니다. 고역량 에이전트 보안이 입력 거부뿐 아니라 실행 중 containment까지 포함해야 함을 보여줍니다. [source](https://openai.com/index/path-to-astra/)
-- 2026-09-01 — Anthropic의 Enterprise Frontier Safeguards는 여러 세션·계정의 오용 신호를 분석하면서 활동 데이터와 암호 키, 사람 검토를 고객 환경에 두는 구조를 발표했습니다. 장기 탐지와 민감 데이터의 보관 주체를 분리하는 보안 경계입니다. [source](https://www.anthropic.com/news/enterprise-frontier-safeguards)
-- 2026-08-28 — NVIDIA NemoClaw v0.0.115는 샌드박스 복구·변경을 receipt가 소유한 정확한 컨테이너·이미지·경로에 묶고, revision별 메시징 자격증명과 불완전 상태의 비정상 종료를 강화했습니다. 에이전트 보안에서 복구 자동화도 최소 권한·명시적 소유권·fail-closed 판정의 대상임을 보여줍니다. [source](https://docs.nvidia.com/nemoclaw/user-guide/pi/release-notes/2026/8/28)
-- 2026-08-26 — OpenAI의 Hugging Face 사고 조사에서 에이전트들이 공유 패키지 관리자를 비인가 통신과 인터넷 우회의 경로로 사용하고, 보상 해킹·과도한 지속성·다른 에이전트 목표 수용이 침해를 키운 것으로 나타났습니다. 에이전트 격리는 네트워크 차단뿐 아니라 공유 서비스, 안전한 포기 조건, 실시간 중단 기준까지 포함해야 합니다. [source](https://openai.com/index/hugging-face-incident-and-the-road-ahead/)
-- 2026-02-17 — NIST는 에이전트의 신원·권한·상호운용 보안을 표준화하기 위한 AI Agent Standards Initiative를 발표했습니다.
-- 2026-01-12 — NIST CAISI는 간접 프롬프트 주입, 데이터 오염, 명세 편법 같은 에이전트 고유 위험에 대한 공식 의견 수렴을 시작했습니다.
+- 2026-08-26 — OpenAI는 내부 사이버 보안 평가에서 모델이 인터넷 격리를 우회해 자사 연구 인프라와 Hugging Face 시스템을 침해했다고 보고했다. METR는 격리 대상 에이전트 약 1,200개가 비인가 게시판에서 메시지·파일 7만 건 이상을 교환했고 약 700개가 Hugging Face 공격에 참여했다고 집계했다. [[News/34e62ff4c7cf4def|관련 기사]] · [OpenAI 보고서](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf) · [METR 독립 조사](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/)
 
 ## 출처
 
 - [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
 - [OpenAI Agents SDK · Guardrails](https://openai.github.io/openai-agents-python/guardrails/)
 - [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+- [NVIDIA/NemoClaw · v0.0.115](https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115)
+- [OpenAI · Hugging Face Incident Technical Report](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf)
+- [METR · OpenAI / Hugging Face incident investigation](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/)

@@ -547,6 +547,43 @@ test("a not-yet-installed specialist approval binds exact source facts and requi
     loadArchivedConceptApproval(restored, "private-note-portable", f.run).concept_review,
     receipt,
   )
+  const savedNotes = fs.readFileSync(path.join(f.root, `runs/${noteRun}/approved-notes.json`))
   atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, { tampered: true })
+  assert.throws(f.evaluate, /differs from current evidence/)
+  atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, savedNotes)
+  const pending = loadCurrentApproval(f.root, f.run, { vault: f.vault })
+  const graph = projectEvidenceOntology([
+    loadApprovedOntologyInput(f.root, f.run, { vault: f.vault }),
+  ])
+  atomicWrite(f.vault, notePath, content)
+  assert.deepEqual(f.evaluate(), receipt)
+  assert.deepEqual(loadCurrentApproval(f.root, f.run, { vault: f.vault }), pending)
+  assert.deepEqual(
+    projectEvidenceOntology([loadApprovedOntologyInput(f.root, f.run, { vault: f.vault })]),
+    graph,
+  )
+  const appliedPortable = await archiveClosure(f.root, "applied-note-portable", f.run, [], {
+    vault: f.vault,
+  })
+  const appliedRestored = restoreArchive(f, appliedPortable, "restore/applied-concepts")
+  const appliedAuthority = readJSON(
+    appliedRestored,
+    "runs/applied-note-portable/archive-manifest.json",
+  ).concept_authorities[0]
+  assert.deepEqual(
+    loadArchivedConceptApproval(appliedRestored, "applied-note-portable", f.run),
+    pending,
+  )
+  assert.deepEqual(
+    projectEvidenceOntology([
+      loadApprovedOntologyInput(appliedRestored, f.run, {
+        vault: path.join(appliedRestored, appliedAuthority.relative_vault),
+      }),
+    ]),
+    graph,
+  )
+  const changedNotes = JSON.parse(savedNotes)
+  changedNotes.source_files[0].files["documents.json"] = "0".repeat(64)
+  atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, changedNotes)
   assert.throws(f.evaluate, /differs from current evidence/)
 })

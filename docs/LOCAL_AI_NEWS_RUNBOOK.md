@@ -9505,3 +9505,26 @@ authority 전환 전에 반영 후 읽기 검증이 필요하다. 현행 loadNot
 canonical386078d와 이 묶음 private preview를 구분한다. 새 묶음의 Drive authority/브라우저/공개 배포는 미실행이며 WBS2/22·전체전수/독립40/20·shadow7회/무인08시 목표는 active다. 같은 실패로1시간 이상 멈춘 항목은 없다.
 
 개발 증거는 Drive private Research `1khxlDbAdUD4cJjVG60CBhj1CrfdV8wse`에 보관했다.432,133bytes/89ZIP members/실제 원문4판본, 부모/shared:false·원격 raw SHA `bb98b71695c2a2c1022d552b6ba407475f928d23de5d2e3547bb49206eeddf30` 일치·로컬 ZIP CRC를 확인했다. 개발 snapshot/v1이며 전체13기사의 모든 historical dependencies를 독립 복구하는 portable closure는 아니다. 새로 직접 읽은 NVIDIA/Model Connect/Copilot raw와 파싱·검토, 이번 승인·실패/성공·생성 증거를 포함하고 다른 기존 승인은 이전 archive를 참조한다. 영수증은 `archive-staging/retrospective-pending-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다.
+
+
+## 373. 적용된 승인 읽기와 소급12사건의 Drive 작성 원본 전환
+
+2026-10-04. `loadAppliedNoteApproval`은 read-only이며 모든 target이 정확히 적용됐을 때만 승인 before/after·원문/fact review·별칭·receipt를 재검증한다. `loadReferencedNoteApproval`은 참조를 읽을 때 pending/applied 계약을 선택한다. 생성/재작성/새 note approval과 pending authoring prepare는 strict `loadNoteApproval`을 유지한다. 적용된 receipt의 false 상태를 성공 상태로 덮어쓰지 않는다.
+
+- 표적: `node --test tests/research-notes.test.mjs tests/research-article-concept-review.test.mjs tests/research-archive-closure.test.mjs`:35개 중34개 최초통과. 마지막 기존 변조 기대값은 그대로 보존하고 반영 전 검사를 제자리에서 시험하도록 수정했다. 실패1개만 `--test-name-pattern='a not-yet-installed specialist approval'`로 재검사해 통과. 로그 `source-live-debug/applied-note-approval-targeted-20261004-v{1,2}.log`.
+- 실제5 note batches/12notes·13articles의 pending/applied 승인/온톨로지 동일, 보호1218파일 불변·model/HTTP0: `applied-note-approval-live-20261004-v2.{mjs,json,log}`. 첫 helper의 coverage 경로 오기는 v1실패로 보존했다. 실제 portable closure 실패는 historical Model Connect의 비표준 source-selection이며 현재 strict 관문을 통과하지 않는다. 묶음의 독립 복구 성공이 아니다.
+- fresh v4 preview: `retrospective-pending-twelve-reader-20261004-v4`13기사/7과거회차/12노트/338publicfiles. 이전v3와475 public/digest files exact SHA, sitemap은 생성 lastmod만 다르다. reader/control160개는 이전 실제 browser 검증본과 동일; 새 페이지 browser false. `retrospective-authoring-reader-review-20261004-v2.json`.
+- baseline Drive198개 실제 raw 및15폴더 pre/post 목록: `.local/drive-sync/retrospective-authoring-20261004-v1-{inventory,post-read-inventory,readback,source-snapshot}.json`. 첫 raw helper는 nested structuredContent에서 b64를 잘못 읽어 거부됐으며 반환 형태를 확인해 수정했다. 원문 fetch·파싱·모델 추론 재실행은 없다.
+- release: `runs/retrospective-pending-twelve-reader-20261004-v4/drive-authoring/releases/663df6f518dde1b6de114db05fdeb320c17b5a244287064c9f1b375290c355d4.json`. 최초 release는 Research Methods 부모 목록 누락으로 거부됐다. 최신 부모에서 부재 확인 후 해당 폴더를 생성/조회하고 새 observation으로 승인했다. stale/누락 검증은 유지한다.
+- 실제19파일/143,710bytes·기존17ID 유지·신규2Knowledge 정의: `retrospective-authoring-drive-execution-20261004-v1.json` 및 file별 immutable receipts. 업데이트 직전 original raw SHA, 저장 후 desired raw SHA/ID/부모를 대조했다. 자체 garden lock PID5423/session98278은 TTY에서 live 보유했고 작업 후 해제했다.
+- post16폴더/200파일: `.local/drive-sync/retrospective-authoring-post-{inventory,readback,source-snapshot}-20261004-v1.json`.181개 unchanged baseline metadata+19개 changed raw에 근거한다. 전체200개를 새로 raw 읽었다고 보고하지 않는다. optional `.local/drive-sync/source-snapshot.json` alias는 원래 없었고 복사 helper가 실패했지만, named post snapshot으로 pull --apply/verify-working-copy를 완료했다. source SHA83996df89d771afc3a81be5fc5343a6fca8f6bc6158aff580a9c21e020908c99.
+- canonical `npm run build` 및 `node scripts/verify-site.mjs` PASS:312HTML/310search/139news/19nodes/17relations/RSS40. `retrospective-authoring-canonical-verification-20261004-v1.{mjs,json,log}`은13승인과12note receipt·온톨로지 SHA/정의·기사·원문·날짜 이력/preview HTML·RSS exact SHA를 대조했다.
+- 현재 `retrospective-after-pending-authority-20261004-v1/retrospective/inventory.json`:200작성/36v2/85legacy·752units/139verified·v2미검토0/30concepts/36knowledge/34authoredrelations/27signals/16topics/662sources·661URLgroups/diagnostics0. 전수92/801 기준선과 remaining85/752를 구분한다.
+
+새 페이지 browser/공개 배포는 미실행이다. 기존 컨트롤 재사용·로컬 build·Drive authority 반영·실제 공개 결과를 각각 구분한다. 전체 suite/54경로 sweep·추론은 반복하지 않았으며 WBS2/22·독립40/20·shadow7회/무인08시·전체 소급을 유지한다. 한 시간 이상 같은 실패로 막힌 항목은 없다. 다음은 미배포 코드의 통합 릴리스/공개 관문과 남은 legacy 재조사를 진행하며 historical 비표준 selection의 근거 이관은 별도 수정한다.
+
+
+이번 개발/작성 전환 snapshot은 Drive private Research `1XDap-OgwK8GG2cY4igEFz2SyxlLmE2_c`에 보관했다. ZIP295members/3,628,270bytes/source_versions0, 로컬 member SHA/CRC와 원격 raw SHA `34645bb391b50cdd119930198e4cdb334dcac3f595976e6a192fbbbe2ca1bc8d` 일치·이름/부모/shared:false를 확인했다. frozen 기록의 false 상태를 다시 쓰지 않았으며 실제 영수증은 `archive-staging/retrospective-authoring-evidence-20261004-v1/{drive-receipt,package-verification}.json`이다. 이 archive/v1은 개발/작성 전환 증거이며 historical source 전체 의존성의 portable closure나 runtime 독립 복구본은 아니다. 기존 원문 보관본·새 원본200 일치·공개 배포를 구분한다.
+
+
+최종 메타데이터 대조에서 connector 표기를 기존 `codex-drive-connector`로 통일했다. 새 `retrospective-authoring-post-source-snapshot-20261004-v2.json`은 작성200파일 bytes/원 snapshot SHA/발표일을 바꾸지 않는다. named snapshot으로 apply한 결과 updated/deleted 모두0이며 표기 metadata만 갱신했다. shared build-site 생성만 재실행해 public/drive-sync의 표기,13기사 HTML과 RSS exact SHA 불변을 확인했다. 전체 build/test suite는 반복하지 않았다. `source-live-debug/retrospective-authoring-transport-verification-20261004-v1.json`이 후속 영수증이며 Drive 개발 ZIP은 이 표기 정정 전의 frozen 증거다. ZIP/원문/승인 snapshot을 재작성하지 않는다.

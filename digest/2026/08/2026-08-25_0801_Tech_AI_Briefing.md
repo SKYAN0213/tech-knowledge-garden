@@ -1,43 +1,53 @@
 # 2026-08-25 아침 브리핑
 
-에이전트 추론 경쟁의 기준이 단일 칩 속도에서 긴 문맥의 생성 지연·전력·비용을 함께 다루는 시스템 설계로 넓어졌습니다.
+2026-08-25 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-25_0801_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
-## 오늘의 변화
+## 주요 소식
 
-기존 수록 기사 재정리 · 2026-09-13 검토
+### [NVIDIA, Groq 3 LPX 양산과 GPU·LPU 공동 추론 구성 소개](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd)
 
-### 칩·캐시·네트워크를 묶은 추론 최적화가 제시됐다.
+발표 2026-08-24
 
-NVIDIA 사례는 긴 문맥 처리와 토큰 생성의 병목을 전체 경로에서 나누어 보는 근거다.
+NVIDIA는 2026년 8월 24일 공식 블로그에서 Groq 3 LPX가 양산 단계라고 밝히고 Vera Rubin NVL72와 함께 사용하는 추론 구성을 소개했다. Rubin GPU가 대규모 문맥 처리를 맡고 LPX가 지연에 민감한 토큰 생성을 가속하며, 두 종류의 계산 장치가 모델의 각 계층을 함께 계산하는 설계다. 회사는 Nebius를 LPX의 첫 도입사로 소개하고 Nebius Token Factory에 Vera Rubin NVL72와 LPX를 결합할 계획이라고 설명했다.
 
-- 판단: 관측
-- 한계: 회사 자체 측정이며 핵심 성능 수치 일부는 외부 검토 전이다.
-- 다음 확인: 동일 품질·지연 조건의 독립 재현과 실제 업무당 비용.
-- 근거: [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
-- 누적 기록: [성능 평가를 전체 실행 경로로](https://skyan0213.github.io/tech-knowledge-garden/briefings/topics/performance-path)
+## 분야별 브리핑
 
-## 헤드라인과 원문
+### 반도체·컴퓨팅 · 1건
 
-### [에이전트 추론, 칩 하나보다 전체 경로를 재설계한다](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd)
+#### [NVIDIA, Groq 3 LPX 양산과 GPU·LPU 공동 추론 구성 소개](https://skyan0213.github.io/tech-knowledge-garden/news/19af374b78b369cd)
 
-NVIDIA는 Vera Rubin 랙 시스템에 지연 민감형 토큰 생성을 맡는 Groq 3 LPX를 결합하고, GPU·LPU·네트워크·캐시·런타임을 함께 최적화하는 구성을 공개했습니다. 회사 자체 측정은 큰 효율 향상을 주장하지만 일부 수치는 외부 검토 전입니다.
+발표 2026-08-24
 
+제품·서비스 · 신제품 · 기능 추가 · NVIDIA · Nebius
 
+NVIDIA는 2026년 8월 24일 공식 블로그에서 Groq 3 LPX가 양산 단계라고 밝히고 Vera Rubin NVL72와 함께 사용하는 추론 구성을 소개했다. Rubin GPU가 대규모 문맥 처리를 맡고 LPX가 지연에 민감한 토큰 생성을 가속하며, 두 종류의 계산 장치가 모델의 각 계층을 함께 계산하는 설계다. 회사는 Nebius를 LPX의 첫 도입사로 소개하고 Nebius Token Factory에 Vera Rubin NVL72와 LPX를 결합할 계획이라고 설명했다.
+
+##### GPU와 LPU가 함께 계산하는 추론 구성
+
+NVIDIA는 GPU와 LPU가 모델의 각 계층을 함께 계산한다고 설명한다. Rubin GPU가 대규모 문맥을 처리하고 LPX가 생성 지연에 민감한 작업을 가속하는 역할을 소개했다.
+
+랙 규모 Groq 3 LPX 구성에는 칩 간 직접 연결을 사용하는 LP30 가속기 256개를 포함할 수 있다고 밝혔다.
+
+##### 네트워크와 인프라 서비스의 역할
+
+Spectrum-X Multiplane은 서버 연결을 독립적인 2계층 경로로 나눈다. NVIDIA는 ConnectX SuperNIC의 전용 하드웨어가 경로 간 트래픽을 관리하고 장애가 생기면 다른 경로로 보내도록 구성했다고 설명한다.
+
+BlueField-4와 DOCA 기반 Scale-In은 멀티테넌트 네트워킹, 스토리지 접근, 실리콘 보안, 자원 제공과 실시간 관측을 처리하는 구성으로 소개됐다. 이 인프라 처리는 호스트의 계산 자원과 분리한다.
+
+##### 9월 15일 갱신 자료의 서빙 최적화
+
+9월 15일 갱신한 자료는 문맥 처리인 prefill과 응답 토큰 생성인 decode를 분리해 각 단계를 독립적으로 확장하고, 두 단계의 처리 속도를 맞추는 구성을 설명한다.
+
+분산 KV 캐시는 가속기 연결 영역에 걸쳐 메모리를 활용한다. 덜 사용하는 문맥을 호스트와 스토리지로 옮겨 이미 처리한 문맥을 재계산하지 않고 다시 사용할 수 있도록 한다.
+
+KV-aware routing은 필요한 캐시를 가진 GPU로 요청을 보낸다. 자료는 전문가 병렬화, 계산과 GPU 간 통신을 묶는 커널, TensorRT LLM과 Dynamo 등의 런타임·서빙 소프트웨어도 최적화 구성으로 소개한다.
+
+##### 9월 15일 갱신된 성능 비교
+
+NVIDIA는 8월 24일 최초 게시한 성능 자료를 9월 15일 갱신했다. 갱신본에서 Vera Rubin NVL72가 DeepSeek V4 Pro의 AgentX 코딩 워크로드에서 GB300 NVL72보다 메가와트당 처리량은 최대 30배 높고, 백만 토큰당 비용은 최대 45배 낮다고 제시했다.
+
+이 비교는 회사 자료의 해당 모델과 AgentX 워크로드 조건에 속하며, 도구 호출의 Vera CPU 성능은 결과에 포함하지 않는다고 설명했다.
 
 [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
-
-## 흐름 읽기
-
-> **확인된 사실**
-> NVIDIA의 이번 발표는 에이전트 추론을 prefill, decode, KV cache, 네트워크, 전력과 운영 서비스가 결합된 시스템 문제로 정의합니다. 성능 주장은 공급업체 자체 측정이며 일부 결과는 외부 검토 전입니다. [S1](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) [S2](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/)
-
-> **분석**
-> 조달 기준도 최고 단일 벤치마크 점수보다 특정 업무 궤적에서의 응답성·전력·비용·복원력을 함께 검증하는 방향으로 이동할 가능성이 큽니다. 이는 발표 사실을 바탕으로 한 분석이며 시장 전체의 확정된 추세는 아닙니다.
-
-## 오늘의 적용
-
-- **대상:** 에이전트 서비스 인프라·플랫폼 팀
-- **행동:** 후보 시스템을 같은 모델, 같은 품질 문턱, 같은 실제 도구 호출 궤적으로 재생해 업무 완료당 비용·p95 지연·전력당 완료량을 함께 기록합니다.
-- **가드레일:** 공급업체의 최대 배수 수치를 그대로 용량 계획에 넣지 말고, 독립 검토와 자체 부하 시험 전에는 가정값으로만 표시합니다.
