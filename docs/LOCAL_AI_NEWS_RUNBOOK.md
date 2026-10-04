@@ -9058,3 +9058,19 @@ Ollama 역할 호출은 공식 `/api/chat` NDJSON 스트림을 읽고, UTF-8 분
 비공개 Research 증거 snapshot regular-editorial-debug-snapshot-20261004-v1은182파일/183members/원문12판본,1947732bytes,SHAe9d8dba5210c71659f8973a37d0484c5871fd3feeff501b309f1f20f782f5c2b다. Drive15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU의 Research 부모/shared=false/크기와 실제 원격 raw ZIP SHA 일치를 확인했다. 전체 runtime portable 복구본으로 표시하지 않는다.
 
 증거: source-live-debug/regular-editorial-final-proof-20261004-v1.json, multifield-editorial-direct-proof-20261004-v1.json, 위 v3의 edition-preparation/preview-manifest/drive-authoring transfer-plan 및 archive-staging의 drive-receipt.json. 원고의 Markdown 패널 열기는 queued이며 실제 브라우저 렌더링 성공이 아니다. coverage_complete/browser_verified/candidate_published/drive_authoring_written=false. 새 Drive Editions/Signals 작성·공개 배포·정규 성공7회는 아직 미실행이다. WBS2/22·goal active·1시간 반복 blocker 없음. 다음은32칸 실제 조사 검토와 독자 상호작용을 확인하고 fresh Drive 비교·release·작성/배포/readback으로 이어간다.
+
+## 353. 두산 원문 문단 누락 수정과 실제 독자 화면 확인
+
+2026-10-04 KST. 352절의 8분야12기사 비공개 회차를 실제 in-app browser의 localhost8091에서 확인했다. 데스크톱1280×720·모바일390×844에서 분야 선택→URL 저장→새로고침→뒤로 가기, Enter 이동, 기업 태그와 검색어 결합 및 기사 카드 클릭의 상세 이동을 확인했다. 모바일 가로 넘침·뉴스 지도 canvas는 없고 이번 회차의 빈 심층 탭도 없다. 콘솔 error/warn은0이었다. viewport override는 해제했고 screenshot 파일은 저장하지 않았다. 기존8088 서버와 원본 vault는 보존했다. 과거 immutable manifest의 browser_verified:false는 수정하지 않고 별도 검증 기록으로 남긴다.
+
+후보 원문을 읽다가 두산 한국어 CEO 공지의 마지막 회사 발언이 parse에서 빠진 것을 확인했다. 기존 doosan-ko-news-slug/view의 `.//div[span]` 선택자가 span 없는 div를 누락했다. 공통 파서의 상대 XPath를 그대로 사용해 본문 컨테이너 안의 leaf div도 읽도록 두 profile을 수정했다. 감싸는 div와 그 안의 p를 중복 수집하지 않으며 빈 div와 외부 공유 메뉴를 기사에 넣지 않는다. 수정 전 두 재현 시험은 마지막 문단 누락으로 실패했고, 수정 뒤 한국어 profile·기존 ontology·source registry 표적30/30이 통과했다. 전체 suite는 반복하지 않았다.
+
+실제 공지 URL과 이전 원문 bytes를 reparse한 뒤 `doosan-ko-leaf-body-live-20261004-v1`로 목록42항목→기간 안1기사→상세 원문 수집을 새로 수행했다. 9월26일~10월4일 미만 창은 window_scanned이며 HTTP200 원문 SHA는 이전과 같고 parse는3→4블록이다. 새 parse ID는 fbe2ddea3fab2f69e9f4a02e2821a9d88d4e469855384fa723fe9489e7265318이며 원래3블록 parse를 덮어쓰지 않았다. 마지막 문단의 원본 DOM locator와 회사 발언 귀속을 보존했다.
+
+페이지 게시일10월1일과 본문 “18일 밝혔다”만 보고 새 사건으로 승인하지 않았다. 기존 same-event receipt와 승인 원고를 확인하니 이 사건은 이미9월18일·고정ID43dbd3fe6cdd4fcf로 검토돼 있었다. `doosan-ko-leaf-body-reconcile-20261004-v1`을 기존 daily supplemental reconciliation으로 연결했을 때 한국어 URL은 기존 영문 후보에 alias 연결됐고 changed:false였다. 운영 장부733개/고유key733개·전체 bytes와 기존 승인 SHA가 불변이다. 새 후보나 기사 승인·발행은 없다. 후보의 단독 unreviewed 상태보다 검토된 same-event 관계와 최종 승인 날짜를 먼저 확인한다.
+
+재개 증거: `.local/research/local-ai/source-live-debug/doosan-leaf-body-verification-20261004-v1.json`, 같은 이름의 proof script/log, source/body 선택·reparse·live runs, `daily/reconciliations/doosan-ko-leaf-body-reconcile-20261004-v1.json`, 표적30검사 log 및 수정 전 backlog 복구본. 일반 수집 성공을32칸 편집 검토의 완료로 표시하지 않는다. 셀트리온 원문14블록은 읽었지만 새 기사 승인은 하지 않았다.
+
+이번 profile 변경 후 과거54경로 실행을 현재 fingerprint 완료로 재표시하지 않는다. collectionBasis가 전체 article_profiles의 SHA를 사용하므로 한 출처 profile 변경이 다른 출처의 재사용에도 영향을 주는 점은 다음 조사 확장 때 개선할 대상이다. 검증기를 무시하거나 전체54경로를 즉시 반복하는 대신, 현재 완료한 두산의 새 영수증과 다른 출처의 기존 불변 근거를 분리해 보존한다. 정규32칸 조사 판정·fresh Drive release·이번 회차의 실제 저장/공개·성공7회·전수 소급·독립평가는 남아 있고 WBS2/22·goal active다. 1시간 반복 blocker는 없었다.
+
+보관 완료: 기존 archiveManifest/packageResearchArchive로 source4판본·57파일/58members·1,678,306bytes를 묶어 각 member SHA/CRC를 검증했다. Drive Research 파일1DfjOzUsarrSiNQr4Q15dQn8eXN3yqEsQ의 ID/이름/부모/크기/shared:false와 실제 원격 ZIP SHA2eb1d0076cbe76155e4e3ce36fd6de7c1d87b4ef21afc225aeb88ab22162fb35를 확인했다. evidence snapshot이며 전체 runtime 복구본이나 원고 공개 영수증이 아니다. archive-staging/doosan-leaf-body-debug-snapshot-20261004-v1/drive-receipt.json과 package-verification.json에서 재개한다. 같은 supplemental reconciliation 재실행은 already_reconciled이며 추가 수집·모델 호출·장부 변경 없이 끝났다.

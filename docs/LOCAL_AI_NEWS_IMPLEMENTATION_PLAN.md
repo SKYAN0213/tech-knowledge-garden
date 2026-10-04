@@ -3870,3 +3870,9 @@ Ollama 공통 역할 호출에 스트리밍 진행 기록·부분 실패 출력/
 ### 19.261 원문 발표일·고정 승인 ID와 8분야 회차 실물 연결
 
 후속 보도10월2일을 원문9월23일 사건으로 라우팅하도록 승인 원고의 SHA·사건ID·verified 날짜를 검증한다. URL 끝 슬래시를 포함한 과거 승인 ID가 새 회차에서 거부되는 실패도 재현해 해당 원문/정규화 URL hash만 허용하고 canonical URL 중복 차단을 유지했다. 새 Drive195raw/14목록 재읽기 후7원문의24사실을 직접 검토해 승인 연결했다.733후보 중7변경/726동일·verified83, 현재 신규12/과거11이다. 최종 regular-eight-sector-preview-20261004-v3는8분야12기사/Signals1·웹/RSS/GitHub 일치와 기존RSS39식별자 보존, 표적61/61·포맷·diff를 통과했다. 작성 authority195파일은 불변이다. authoring prepare2파일/38247bytes는 upload_allowed=false이며32칸 조사·실제 브라우저·fresh Drive release/원고 저장·공개 배포는 남는다. 증거 ZIP1947732bytes·182파일/12원문판본은 Drive Research15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU에 보관하고 원격 raw SHA 일치를 확인했다. 전체 suite·정규 운영7회·전수 소급·독립평가는 미완료, WBS2/22·goal active 유지. [런북352절](LOCAL_AI_NEWS_RUNBOOK.md#352-실제-원문-날짜승인-id와-8분야-비공개-회차-검증).
+
+### 19.262 두산 본문 누락과 비공개 독자 화면의 실제 검증
+
+기존 공통 파서·한국어 profile 두 개의 leaf div 선택을 보강해 span 없는 회사 발언 누락을 고쳤다. 수정 전 재현2실패, 수정 뒤 관련30/30과 새 목록42항목→상세1기사의 실수집·동일 raw SHA·새4블록 parse를 확인했다. 기존 same-event 승인 날짜9월18일을 재확인했으며 supplemental 편입은 changed:false·733후보/고유key/승인 SHA 불변이다. 새 기사 승인·공개로 세지 않는다. 8분야12기사 비공개 browser에서 desktop/mobile·탭URL/reload/back/Enter·기업+검색·카드 상세 이동을 확인했다. 별도 proof를 남기며 기존 manifest는 변경하지 않는다.
+
+다음은 기존32칸의 수집 증거와 실제 관련 후보를 대조해 편집 판정을 완료하고 fresh Drive release/정규 회차 저장·공개로 잇는다. source별 판정은 raw 후보 상태보다 검토된 alias와 승인 원문의 날짜를 우선한다. 전체 article_profiles SHA가 한 출처 수정으로 다른 경로까지 재사용을 무효화하는 범위 문제는 후속 수집 개선 항목으로 남긴다. 해당 의존성을 조용히 우회하지 않으며 전체54경로·전체 suite를 매 수정마다 반복하지 않는다. 전체 WBS2/22·goal active이며 정규 성공7회·전수 소급·독립평가는 남는다. [런북353절](LOCAL_AI_NEWS_RUNBOOK.md#353-두산-원문-문단-누락-수정과-실제-독자-화면-확인).

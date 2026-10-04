@@ -35,6 +35,11 @@ for (const [name, url, html] of [
     "https://www.kitech.re.kr/pages/61?id=1&menuMode=READ",
     '<div class="board-view"><p class="tit">확인한 기사 제목</p><span id="infoDate">2026-10-02</span><div class="ck-content"><p>확인한 본문.</p></div></div>',
   ],
+  ...["appointment", "view/123"].map((slug) => [
+    slug.startsWith("view/") ? "doosan-ko-news-view" : "doosan-ko-news-slug",
+    `https://www.doosanrobotics.com/kr/about/promotion/news/${slug}`,
+    '<div class="board-head"><h2>확인한 기사 제목</h2><p>2026. 10. 02</p></div><div class="board-cont"><div class="content"><div><span>확인한 본문.</span></div><div><br></div><div>회사 관계자는 다음 단계의 계획이라고 말했다.<br></div><div><p>별도 문단의 조건.</p></div></div><div>공유 메뉴</div></div>',
+  ]),
 ]) {
   test(`${name} isolates title, original body and publication date for ${new URL(url).hostname}`, async (t) => {
     const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "korean-source-profile-")))
@@ -73,7 +78,9 @@ for (const [name, url, html] of [
     assert.equal(parsed.dates.profile_status, "matched")
     assert.deepEqual(
       parsed.blocks.map((block) => block.text),
-      ["확인한 본문."],
+      name.startsWith("doosan-ko-")
+        ? ["확인한 본문.", "회사 관계자는 다음 단계의 계획이라고 말했다.", "별도 문단의 조건."]
+        : ["확인한 본문."],
     )
   })
 }
