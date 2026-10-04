@@ -9135,3 +9135,33 @@ v3는 기본 모델 정책을 그대로 보존하고 private policy의 evidence_
 비공개 증거: `source-live-debug/evidence-assessment-proof-20261004-v1.json`, `skhynix-evidence-compare-20261004-v1..v3.log`, `skhynix-evidence-compare-resume-20261004-v3.log`, positive/negative의 `evidence-assessment/assessment.json` 및 role 예산/stream artifacts. 공통 archive의 원문 판본1개·73files/ZIP74member·311,964bytes는 CRC/member SHA와 Drive Research 원격 raw SHA `c421b8b2baa3cf4268d8fbee3936c8c02eafcea5a7b15800197a617d7a66091c`를 확인했다. 파일ID `1CBghT_HooCbqSAqZVUmcInPTuI2chbfp`, shared:false/Research parent 확인; 실제 영수증은 `archive-staging/skhynix-evidence-assessment-20261004-v1/drive-receipt.json`이다. 불변 archive manifest의 drive_verified:false를 덮어쓰지 않는다.
 
 새 CLI는 원문 대조 의견을 생성하는 개발 경로다. 기존 자동 worker에 의무 stage로 편입하거나 자동 승인/무인 예약/독립60건 의미 검토를 완료한 상태가 아니다. P3-02 partial/WBS2/22·goal active를 유지한다. 다음은 이 결과를 기존 명시적 review packet과 다양한 실제 출처의 오류 사례에 연결하는 단계다.
+
+
+## 357. 공통 원문 후처리와 실제 작성·정정·재개
+
+`process-source`는 모든 출처에서 기존 수집·parse가 완료된 run을 공통으로 처리한다. 수집기별 별도 LLM 구현을 추가하지 않는다. source run과 처리 run을 분리하며 raw bytes/parse를 유지한다. 기존 추출이 있으면 미검토 후보로 재사용하고, 없으면 기존 fact_extract 역할을 호출한다. 이후 evidence_compare가 필수이며 완료하지 못하면 검토 packet/원고를 만들지 않는다. 역할은 로컬 Ollama만 허용하고 유료 API나 기본 정책은 바꾸지 않는다.
+
+```sh
+node scripts/research.mjs process-source --source-run <stored-source-run> --run <new-processing-run> --model-policy data/research-model-policy.json
+# fact-review-template.json을 원문/모델 attention과 함께 명시적으로 검토한다.
+node scripts/research.mjs process-source --source-run <stored-source-run> --run <same-processing-run> --model-policy data/research-model-policy.json --review <explicit-fact-review.json>
+# 기존 명시적 편집 정정/승인 경로를 사용한다. 이 명령은 발행하지 않는다.
+node scripts/research.mjs correct --run <processing-run> --review <explicit-editorial-correction.json>
+```
+
+지원 옵션은 root/run/source-run/model-policy/assessment-run/draft-run/evidence-think/review/candidate-key다. `--evidence-think false|low|medium|xhigh`는 해당 모델 지원 값을 확인하며 별도 대조 실행에만 적용한다. 사용하지 않는 model/think/provisional/deep 옵션은 거부한다. 서로 다른 사건을 임의 bundle로 합치지 않는다. 다중 원문은 기존 bundle/selection의 exact 지문과 명시적 candidate key를 검증한다.
+
+`fact-review-packet.json`에는 원문 전체 block, 후보별 구조 판정/모델 의견과 입력 hash가 있다. fact review JSON은 `model_assessment.packet_sha256`, `resolutions`를 추가한다. attention 후보를 verified로 처리할 때 resolution은 claim_id/outcome(corrected 또는 confirmed)/reason/evidence(parse_id,block_id,quote)를 요구한다. corrected는 해당 claim replacement, confirmed는 replacement 없음이어야 한다. 원문과 다른 인용, 누락된 attention resolution, 변조 packet/후보/검토 결정은 거부한다. 모든 처리 표식을 지워 legacy 경로로 넘기는 작업은 허용하지 않는다. 기존 처리 표식 중 하나만 남아도 새 검토를 확인한다.
+
+완료 대조 재사용은 `--assessment-run <completed-assessment-run>`, 완료 원고 재사용은 `--draft-run <completed-generation-run>`이다. claims 배열(검토 시각/내용 포함), 원문/parse, 모델/정책이 동일해야 한다. 결과를 재사용해도 새 packet acknowledgment는 별도로 저장한다. 정정된 원고가 있으면 원출력 hash, 검토 근거, 정정 결정과 최대32단계의 이력을 재검증해 현재 preview를 유지한다. 모델 생성 checkpoint를 편집본으로 덮어쓰지 않는다. 입력/구현 변경은 새 run에 보관하며 과거 input을 수정하지 않는다.
+
+실제 `skhynix-source-processing-20261004-v1`은 `skhynix-ventures-extract-stream-20261004-v1`의 원문33문단/6추출, `skhynix-evidence-compare-20261004-v3` 결과를 추가 호출 없이 사용했다. 원문 전체 직접 검토로6개를 정정/확인하고 SHG 원리와 회사에 귀속된 RPM 10~100배 비교 조건2개를 추가해8사실을 확인했다. Qwen3.8 27B Q4_K_M/digest22130167…/Ollama0.34.4/think:false의 실제 작성1회124.430초였다. raw writer의 잘못 복사한 claim ID는 unknown_claim_reference/claim_needs_review로 남았다. SHG·RPM 적용 범위 혼합과 AFM 오역은 직접 원문 검토에서 발견했다. 구조 검사 통과를 의미 정확성으로 대체하지 않는다.
+
+`v2`는 재개 보존 결함을 수정한 구현으로 새 run을 만들고 v1의 정확한 추론 결과를 재사용했다. 원문8사실과 한국어 표현에 따라 투자 전략·브랜드·SHG·RPM·MemVerge를 구분한 명시적 정정 후 problems=[]다. 실제 재개는 원고·preview 불변, 추가 모델 호출0이며 자동 사실/편집 승인·공개 발행을 뜻하지 않는다. 원문 발표일2026-10-02는 유지하고 오늘 새 사건으로 재발행하지 않았다.
+
+검증: 새 처리 계약10개+기존 review/model-policy-cli/cli-validation 합계46/46, 정정 재개·타 run 생성 재사용·이력/참조 변조 거부 추가 후 처리 계약12/12. 전체 suite를 반복하지 않았다. 증거는 `source-live-debug/source-processing-proof-20261004-v2.json`, `source-processing-targeted-20261004-v1.log`, `source-processing-resume-targeted-20261004-v2.log`, packet/write/reuse/correct/resume 실제 로그 및 v1/v2 run, 원출력과 정정 이력이다. 최종 sample은 `runs/skhynix-source-processing-20261004-v2/preview.md`다.
+
+이 경로는 명시적 검토를 포함한 개발 실행이다. 일일 source worker에 자동 연결하거나 독립40dev/20heldout 평가, 로컬 shadow7회, 무인08시 운영 검증을 완료하지 않았다. 공개448ec36, 기존197원본, RSS/WebsiteData는 유지하며 WBS2/22·goal active다.
+
+
+비공개 증거104파일/ZIP105member·488,476bytes를 Drive Research `1SrWcM9eJsxvmcztab0Lh-A3swwSr8hEf`에 보관했다. 원격 raw SHA `8c65fadb89a6e79d3608d361564def976b5640913976d694c0e16d459dfde9c7`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/skhynix-source-processing-evidence-20261004-v2/drive-receipt.json`이며 불변 manifest를 덮어쓰지 않았다.

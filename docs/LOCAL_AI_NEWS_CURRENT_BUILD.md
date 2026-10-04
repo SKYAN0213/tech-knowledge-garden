@@ -1,3 +1,5 @@
+실수집 후처리 연결(2026-10-04): 공통 `research.mjs process-source`로 저장 원문→추출 재사용→필수 의미 대조→명시적 사실 검토→원고를 연결했다. SK hynix 33문단/6후보를 직접 검토해8사실로 작성했고 실제 Qwen 작성1회124.430초의 잘못된 근거 ID·SHG/RPM 범위 혼합·AFM 오역을 보존/정정했다. 새 run의 대조·작성 재사용 및 정정 후 재개는 추가 생성0이며 원출력/정정 이력 불변이다. 표적46/46 후 재개 변경12/12, 전체 suite/공개 변경 없음. WBS2/22·goal active·자동 worker/독립60건/08시 관문 미완료. Drive Research104파일/488476bytes 원격raw SHA/비공유 검증. 런북357/계획19.266.
+
 로컬 의미 대조 실물 검증(2026-10-04): `research:evidence` 공통 CLI/checkpoint 구현. SK hynix 원문33문단/6주장 실제 대조378.146초·재개 추가 생성0, 구조 attention1 유지. 독립된 통제 오류2건을 실제 모델이 attention으로 탐지했으나 모델 판정은 명시적 승인과 별도다. medium6주장300초 timeout/부분 출력 보존·기본 모델 정책 불변·think:false 별도 실행. 새12/12+역할14/14·코드 formatting/diff, 전체 suite 미실행. 원문/모델/실패/재사용 증거311964bytes·73files/ZIP74member Drive Research1CBghT_HooCbqSAqZVUmcInPTuI2chbfp 원격raw SHA/비공유 확인. public448ec36/작성197원본 유지, 자동 worker 편입·60건 독립 의미 검토 미완료/WBS2/22·goal active. 런북356/계획19.265.
 
 # 로컬 AI 뉴스 시스템: 현재 구현과 남은 개발 계약

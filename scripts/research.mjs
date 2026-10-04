@@ -4,6 +4,12 @@ import { parseArgs } from "node:util"
 import { SourceFetcher } from "./research/fetch.mjs"
 import { executeListScan } from "./research/list-scan-command.mjs"
 import { writeDraftCheckpoint } from "./research/draft-checkpoint.mjs"
+import { processSourceRun } from "./research/source-processing.mjs"
+import {
+  reviewProcessedClaims,
+  assertProcessedFactReview,
+  isProcessedRun,
+} from "./research/evidence-review-packet.mjs"
 export { scanListImplementationFingerprints } from "./research/scan-basis.mjs"
 import {
   parseDocument,
@@ -112,6 +118,9 @@ export async function main(argv = process.argv.slice(2)) {
       model: { type: "string", default: "qwen3.8:27b" },
       think: { type: "string", default: "medium" },
       "model-policy": { type: "string" },
+      "assessment-run": { type: "string" },
+      "draft-run": { type: "string" },
+      "evidence-think": { type: "string" },
       review: { type: "string" },
       provisional: { type: "boolean", default: false },
       "merge-backlog": { type: "boolean", default: false },
@@ -173,6 +182,7 @@ export async function main(argv = process.argv.slice(2)) {
       "scan-list",
       "collect",
       "extract",
+      "process-source",
       "reuse-extraction",
       "review",
       "draft",
@@ -214,7 +224,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -278,7 +288,7 @@ export async function main(argv = process.argv.slice(2)) {
     (policyRole || command === "model-info") && !v["model-policy"]
       ? new Ollama({ url: localOllamaURL() })
       : null
-  if (v["model-policy"] && !policyRole)
+  if (v["model-policy"] && !policyRole && command !== "process-source")
     throw Error("Model policy is only supported for model-generating commands")
   if (v.deep && command !== "draft") throw Error("--deep is only supported for draft")
   if (command !== "scan-list" && (v.since || v.until))
@@ -302,6 +312,7 @@ export async function main(argv = process.argv.slice(2)) {
     v["candidate-key"] &&
     ![
       "extract",
+      "process-source",
       "select-candidate",
       "candidate-approval",
       "legacy-candidate-approval",
@@ -354,6 +365,7 @@ export async function main(argv = process.argv.slice(2)) {
     v["source-run"] &&
     ![
       "extract",
+      "process-source",
       "reuse-extraction",
       "gold-case",
       "archive-closure",
@@ -941,6 +953,49 @@ export async function main(argv = process.argv.slice(2)) {
       }
     })
   }
+  if (
+    (v["assessment-run"] || v["draft-run"] || v["evidence-think"] !== undefined) &&
+    command !== "process-source"
+  )
+    throw Error("Assessment processing options are only supported for process-source")
+  if (command === "process-source") {
+    const allowed = [
+      "root",
+      "run",
+      "source-run",
+      "model-policy",
+      "assessment-run",
+      "draft-run",
+      "evidence-think",
+      "review",
+      "candidate-key",
+    ]
+    if (
+      positionals.length !== 1 ||
+      argv.some((arg) => arg.startsWith("--") && !allowed.includes(arg.slice(2).split("=")[0]))
+    )
+      throw Error("Unsupported process-source option; configure local roles with --model-policy")
+    if (!v["source-run"] || v.url || v.provisional || v.deep)
+      throw Error(
+        "process-source requires one stored --source-run without provisional or deep overrides",
+      )
+    return processSourceRun({
+      root,
+      run: v.run,
+      sourceRun: v["source-run"],
+      policyFile: v["model-policy"],
+      assessmentRun: v["assessment-run"],
+      draftRun: v["draft-run"],
+      reviewFile: v.review,
+      candidateKey: v["candidate-key"],
+      evidenceThink:
+        v["evidence-think"] === "false"
+          ? false
+          : v["evidence-think"] === "true"
+            ? true
+            : v["evidence-think"],
+    })
+  }
   if (v["model-policy"]) {
     const explicit = (key) =>
       argv.some((arg) => arg === "--" + key || arg.startsWith("--" + key + "="))
@@ -1503,6 +1558,7 @@ export async function main(argv = process.argv.slice(2)) {
           original = JSON.parse(originalBytes),
           reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
         if (!reviewed) throw Error("Reviewed claims required for correction")
+        await assertProcessedFactReview(root, v.run, reviewed)
         const allowed = ["draft_id", "reviewer", "reason", "reviewed_at", "draft"]
         if (Object.keys(decision).some((key) => !allowed.includes(key)))
           throw Error("Unknown draft correction field")
@@ -1547,6 +1603,7 @@ export async function main(argv = process.argv.slice(2)) {
         const draft = readJSON(root, `runs/${v.run}/draft.json`),
           reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
         if (!draft || !reviewed) throw Error("Reviewed claims and exact draft required")
+        await assertProcessedFactReview(root, v.run, reviewed)
         const decision = JSON.parse(fs.readFileSync(v.review, "utf8")),
           article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
         return {
@@ -1557,8 +1614,15 @@ export async function main(argv = process.argv.slice(2)) {
       if (command === "review") {
         if (!v.review) throw Error("--review JSON decision file required")
         const decisions = JSON.parse(fs.readFileSync(v.review, "utf8"))
-        const claims = recordFactReview(extracted.claims, decisions.claims, decisions, parses)
-        atomicWrite(root, `runs/${v.run}/reviewed-claims.json`, { ...extracted, claims })
+        const processed = isProcessedRun(root, v.run)
+        const envelope = processed
+          ? await reviewProcessedClaims(root, v.run, decisions)
+          : {
+              ...extracted,
+              claims: recordFactReview(extracted.claims, decisions.claims, decisions, parses),
+            }
+        const claims = envelope.claims
+        if (!processed) atomicWrite(root, `runs/${v.run}/reviewed-claims.json`, envelope)
         return {
           verified: claims.filter((c) => c.review.status === "verified").length,
           deferred: claims.filter((c) => c.review.status === "deferred").length,
@@ -1566,6 +1630,7 @@ export async function main(argv = process.argv.slice(2)) {
         }
       }
       const reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
+      await assertProcessedFactReview(root, v.run, reviewed)
       if (command === "deep-review") {
         if (!reviewed || !v.review)
           throw Error("Reviewed claims and explicit deep review JSON required")

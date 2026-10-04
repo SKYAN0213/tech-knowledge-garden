@@ -147,3 +147,8 @@ node scripts/research-revisions.mjs inspect --snapshot REVIEW_ID
 `node scripts/research-revisions.mjs resolve --run NEW_ID --review PRIVATE_PATH`는 명시적 검토 JSON을 적용한다. schema는 `research-source-revision-resolution-review/v1`이다. action은 `restore_primary` 또는 `replace_approval`이고 prior_approved_run/current_source_run, candidate_key/expected_candidate_sha256, reviewer/reviewed_at/reason을 지정한다. source_read/revision_read/identity_checked/dates_checked/numbers_checked/dependencies_checked는 true, new_article/candidate_published는 false여야 한다.
 
 replace_approval에는 기존 사실·최종 편집 검증을 통과한 별도 new_approved_run이 필요하다. restore_primary는 명시적인 publisher/profile/CMS item 별칭과 정확한 기존 승인 판본을 요구한다. 같은 사건/발표일/원문 주소를 유지하며 이전 판단과 관측을 보존한다. resolve는 기사·회차를 발행하지 않는다. archive-closure는 현재 관측과 이전/새 승인 및 직전 resolution을 묶으며 Drive 위치 색인은 현재 승인 원문의 정확한 URL만 사건에 연결한다. [실제 복구·변조·Drive 검증](LOCAL_AI_NEWS_RUNBOOK.md#348-kuka-주-원문-복구와-kaist-변경-판본-재승인)을 따른다.
+
+
+## 등록 경로의 공통 후처리
+
+출처별 목록·상세 수집과 parse가 완료되면 같은 `research.mjs process-source` 경로로 추출→원문 의미 대조→명시적 사실 검토→원고를 진행한다. 별도 출처마다 모델 처리 코드를 만들지 않는다. 정확히 일치하는 완료 추출·대조·작성은 재사용하고, 출처별 특수성은 기존 profile/adapter에서만 처리한다. 이 후처리는 수집 경로 활성화나 자동 기사 승인·발행을 뜻하지 않는다. 명령, 검토 packet, 정정과 재개 방법은 [런북357절](LOCAL_AI_NEWS_RUNBOOK.md#357-공통-원문-후처리와-실제-작성정정재개)을 따른다.

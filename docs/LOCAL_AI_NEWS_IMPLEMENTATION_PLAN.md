@@ -3905,3 +3905,19 @@ Ollama 공통 역할 호출에 스트리밍 진행 기록·부분 실패 출력/
 모델의 `contradicted`는 최종 사실 판정이 아니다. 미기재와 모순의 구분, ‘모든 팹’ 범위에 대한 모델 해석은 원문 검토에 남긴다. 두 full-source 입력의 평가 시간62.86/65.89초는 prompt cache 개선 증거가 아니며, 검증한 재사용은 완료된 생성 결과에 한정한다. 독립 품질 평가나 자동 승인을 주장하지 않는다.
 
 최종 새 계약12/12·기존 역할 정책14/14와 코드 Prettier/diff 확인, 실제 positive6/통제 오류2/재개를 수행했다. 전체 suite·사이트 변경은 없다. 원문 판본1개·증거73파일 ZIP74member/311,964bytes를 Drive Research에 보관하고 원격 raw SHA `c421b8b2baa3cf4268d8fbee3936c8c02eafcea5a7b15800197a617d7a66091c`와 비공유/부모/크기를 확인했다. Drive 파일ID `1CBghT_HooCbqSAqZVUmcInPTuI2chbfp`; 독립 실행 closure가 아닌 개발 증거 묶음이다. WBS2/22·P3-02 partial·goal active이며 다음은 다양한 원문의 의미 오류 사례와 기존 명시적 검토 흐름 연결이다. [런북356절](LOCAL_AI_NEWS_RUNBOOK.md#356-로컬-evidence-compare-실호출과-원문-의미-검토).
+
+
+### 19.266. 공통 원문 후처리와 명시적 검토 연결
+
+새 공통 `process-source` 경로는 출처별 수집기를 늘리지 않고 기존 저장 원문/parse, 추출 checkpoint, 역할 정책, 의미 대조와 원고 생성기를 재사용한다. source bytes/parse/후보/정책/모델/구현 지문을 고정하고 모델 판정이 완료된 정확한 자료로 검토 packet을 만든다. 추출 또는 구조상 문제를 조용히 버리지 않고 attention으로 남긴다. 미검토 상태에서는 작성하지 않는다.
+
+명시적 fact decision은 정확한 packet SHA와 원문 검토를 요구한다. 모델이나 구조 검사에 attention이 있는데 verified로 처리하려면 원문 인용을 갖춘 corrected/confirmed resolution을 요구한다. 추가 사실은 기존 명시적 review protocol로 직접 원문을 확인한다. 기존 `review`, `draft`, `correct`, `approve` 경로에서도 processing 표시가 있는 run은 이 검토를 우회할 수 없다. 모델 의견을 자동 승인으로 승격하지 않는다.
+
+완료한 대조/원고는 `--assessment-run`, `--draft-run`으로 동일 입력만 재사용한다. 정정 후 재개는 원출력·근거·정정 결정·이력 chain·현재 preview를 검사하고 정정된 원고를 보존한다. 운영 후보 장부/사건 ID/공개 투영은 기존 승인/발행 흐름에서 별도로 수행한다. source collector 54경로의 인증을 이 후처리 표적 테스트로 갱신하지 않는다.
+
+실물은 `skhynix-source-processing-20261004-v1/v2`다. 기존 33문단/6추출/대조 결과 재사용, 원문 직접 검토6건 및 추가2건으로8사실을 작성했다. 실제 Qwen 작성1회124.430초에 잘못 복사한 근거 ID를 구조 검사가 거부했다. 직접 원문 검토에서는 SHG와 RPM의 DRAM/HBM·팹별 적용 범위 혼합, AFM 오역 및 핵심 투자 전략 누락도 발견했다. 구조 검사만으로 의미 오류를 모두 탐지했다고 표현하지 않는다. 원출력을 보존하고 원문8사실에 맞춘 한국어 원고를 명시적 정정으로 저장했다. 새 run에서 정확한 생성 재사용 및 정정 후 재개는 추가 호출0이다.
+
+표적 기존46/46과 재개/정정 변경12/12를 통과했다. 전체 suite·독자 UI·공개 웹/RSS·Drive 작성197원본은 변경하지 않았다. 독립 gold/heldout 평가와 자동 worker 편입·무인08시·로컬 shadow7회는 미완료다. WBS2/22·P3-02/03 partial·goal active를 유지한다. [런북357절](LOCAL_AI_NEWS_RUNBOOK.md#357-공통-원문-후처리와-실제-작성정정재개)의 명령/증거로 재개한다.
+
+
+비공개 증거104파일/ZIP105member·488,476bytes를 Drive Research `1SrWcM9eJsxvmcztab0Lh-A3swwSr8hEf`에 보관했다. 원격 raw SHA `8c65fadb89a6e79d3608d361564def976b5640913976d694c0e16d459dfde9c7`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/skhynix-source-processing-evidence-20261004-v2/drive-receipt.json`이며 불변 manifest를 덮어쓰지 않았다.
