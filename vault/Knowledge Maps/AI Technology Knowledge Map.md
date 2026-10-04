@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-10-04
-last_reviewed: 2026-10-04
+updated: 2026-10-05
+last_reviewed: 2026-10-05
 tags:
   - AI
   - KnowledgeMap
@@ -41,9 +41,9 @@ tags:
 |---|---|---|
 | [[Knowledge/AI Systems/AI Agent Security|에이전트 보안]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 모델과 도구 실행의 신원·권한·검사 경계를 보호한다. [근거](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents) · [근거](https://openai.github.io/openai-agents-python/guardrails/) |
 | [[Knowledge/AI Systems/AI Agent Security|에이전트 보안]] | [[Knowledge/AI Systems/Model Context Protocol|MCP]] | 호스트가 연결별 동의·권한과 서버 사이의 경계를 유지한다. [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture) |
-| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/Model Context Protocol|MCP]] | 외부 도구 연결에 MCP를 사용할 수 있다. MCP 사용은 에이전트의 필수 조건이 아니다. [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture) |
-| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]] | 외부 문서를 근거로 삼는 작업에는 검색-생성 경로를 조합할 수 있다. [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://arxiv.org/abs/2005.11401) |
-| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 모델 호출을 수행하려면 해당 모델의 추론 실행 기반을 사용한다. [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://docs.vllm.ai/en/latest/) |
+| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/Model Context Protocol|MCP]] | 외부 도구 연결에 MCP를 사용할 수 있다. SDK의 MCP 서버 설정은 선택 사항이다. [근거](https://openai.github.io/openai-agents-python/agents/) |
+| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]] | 문서 검색 도구와 생성 모델을 결합하는 에이전트 작업에 RAG 구성을 사용할 수 있다. [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://arxiv.org/abs/2005.11401) |
+| [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 모델을 호출하는 실행은 해당 모델의 추론 실행 기반을 사용한다. [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://docs.vllm.ai/en/latest/) |
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 에이전트와 실행 환경의 최종 결과를 성공 기준으로 채점한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) |
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | 평가는 실행 기록과 최종 환경 상태를 서로 다른 증거로 사용한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [근거](https://openai.github.io/openai-agents-python/tracing/) |
 | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 모델 호출·도구 사용·이관으로 구성된 실행을 추적한다. [근거](https://openai.github.io/openai-agents-python/tracing/) · [근거](https://openai.github.io/openai-agents-python/agents/) |

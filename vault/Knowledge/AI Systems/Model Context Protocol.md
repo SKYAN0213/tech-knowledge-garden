@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-23
-updated: 2026-09-13
+updated: 2026-10-05
 aliases:
   - MCP
 parent_concepts: []
@@ -17,7 +17,7 @@ tags:
   - AI
   - MCP
   - Protocol
-last_reviewed: 2026-09-13
+last_reviewed: 2026-10-05
 concept_id: mcp
 label: MCP
 group: 지식과 연결
@@ -30,19 +30,22 @@ keywords:
   - 도구
 verified_sources:
   - https://modelcontextprotocol.io/specification/2025-11-25/architecture
+  - https://blog.modelcontextprotocol.io/posts/2026-07-28/
+  - https://blog.cloudflare.com/mcp-v2/
+  - https://openai.github.io/openai-agents-python/agents/
 relations: []
 map_review:
   decision: include
   kind: protocol
   reason: AI 호스트와 외부 도구 서버의 통신 역할과 메시지 규격을 별도로 익혀야 한다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-05
 ---
 
 # Model Context Protocol
 
 ## 한 문장 정의
 
-AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트를 교환하는 프로토콜이다. [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트를 교환하는 프로토콜이다. [MCP 아키텍처](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 용어 카드
 
@@ -50,52 +53,52 @@ AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트�
 |---|---|
 | 한국어 | MCP |
 | 영어 | Model Context Protocol |
-| 키워드 | MCP · 호스트 · 클라이언트 · 서버 · JSON-RPC · 도구 |
 
 ## 범위
 
-**포함:** 호스트가 관리하는 클라이언트와 서버 간 능력 협상, 메시지 교환, 보안 경계.
+**포함:** 호스트·클라이언트·서버의 도구·리소스·프롬프트 교환 규격.
 
-**포함하지 않음:** 에이전트의 계획 능력이나 연결된 도구의 정확성 보증.
+**포함하지 않음:** 애플리케이션의 모든 상태 관리. 프로토콜 세션 제거가 애플리케이션 상태 제거를 뜻하지 않는다.
+
+[원문](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 왜 중요한가
 
-도구 제공자와 AI 호스트가 공통 인터페이스를 쓰면 연결을 재사용할 수 있다. 동시에 권한과 문맥을 어느 주체가 관리하는지 명확해진다.
+없음
 
 ## 핵심 구성 요소
 
-- MCP
-- 호스트
-- 클라이언트
-- 서버
-- JSON-RPC
-- 도구
+없음
 
 ## 작동 원리
 
-호스트가 서버별 클라이언트를 만들고 연결 권한을 관리한다. 서버는 기능을 노출하고 클라이언트가 요청과 응답을 중계한다. [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+2025-11-25 아키텍처에서 호스트는 서버별 클라이언트, 연결 권한과 동의를 관리하고 여러 클라이언트의 문맥을 모은다. 서버는 도구·리소스·프롬프트를 노출하며 필요한 문맥만 받는다. 서버 사이의 정보 격리는 호스트가 관리한다. [원문](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
 ## 실제 예시
 
-문서 서버의 검색 도구를 AI 호스트가 발견하고 호출하는 연결.
+없음
 
 ## 한계와 실패 조건
 
-규격을 준수해도 서버를 신뢰할 수 있다는 뜻은 아니다. 동의·인가와 다른 서버의 정보 격리는 호스트가 관리한다.
+없음
 
 ## 혼동하기 쉬운 개념
 
-API 자체와 달리 AI 문맥 교환의 공통 인터페이스를 정의한다. RAG는 검색과 생성 방식이다.
+프로토콜의 세션과 애플리케이션의 상태는 다르다. 2026-07-28 규격은 필수 연결 초기화와 프로토콜 세션을 요청 경로에서 제거했다. 애플리케이션이 상태를 유지해야 한다면 명시적 핸들을 전달하는 방식 등을 사용할 수 있다. [규격 발표](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
 
 ## 관련 개념
 
-- ← 활용: [[Knowledge/AI Systems/AI Agents#한 문장 정의|AI 에이전트]] — 외부 도구 연결에 MCP를 사용할 수 있다. MCP 사용은 에이전트의 필수 조건이 아니다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
-- ← 통제: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 호스트가 연결별 동의·권한과 서버 사이의 경계를 유지한다. (해석; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
+- ← 활용: [[Knowledge/AI Systems/AI Agents#한 문장 정의|AI 에이전트]] — 외부 MCP 서버의 도구를 사용할 수 있다. OpenAI Agents SDK에서 MCP 서버 설정은 선택 사항이다. (원문; [근거](https://openai.github.io/openai-agents-python/agents/))
+- ← 통제: [[Knowledge/AI Systems/AI Agent Security#한 문장 정의|에이전트 보안]] — 호스트가 연결 권한·동의와 서버 사이의 정보 경계를 관리한다. (원문; [근거](https://modelcontextprotocol.io/specification/2025-11-25/architecture))
 
 ## 최근 변화
 
-- 2026 — MCP 구현은 긴 세션 상태 의존을 줄이고 상태 없는 원격 호출과 적합성 시험을 강화하는 방향으로 발전하고 있습니다.
+- 2026-07-28 — MCP 유지관리팀이 무상태 요청·응답 코어와 MRTR을 포함한 새 규격을 공개했다. [원문](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
+- 2026-08-06 — Cloudflare가 Workers에서 새 규격을 지원한다고 발표했다. 애플리케이션 자체에 상태가 필요한 경우에는 Durable Objects를 계속 사용할 수 있다고 설명했다. [원문](https://blog.cloudflare.com/mcp-v2/)
 
 ## 출처
 
-- [MCP · Architecture (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+- [MCP 아키텍처 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
+- [MCP 규격 발표 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
+- [Cloudflare의 새 규격 지원 안내](https://blog.cloudflare.com/mcp-v2/)
+- [OpenAI Agents SDK의 에이전트 설정](https://openai.github.io/openai-agents-python/agents/)

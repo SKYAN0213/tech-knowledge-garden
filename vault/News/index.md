@@ -145,6 +145,12 @@ generated_by: tech-knowledge-garden
 - [[News/72f164fe85756954|Nauticus Robotics, ToolKITT 통합 ROV를 고객 운영에 배치]] · 2026-08-13
 - [[News/0fd634bb4127f8db|WPI·NVIDIA, 화면 끊김이 게임 과제 수행에 미치는 영향 비교]] · 2026-08-11
 - [[News/32729c0cb8ce1d4a|WPI·NVIDIA, FPS 대결 순간에만 지연을 맞추는 기법 제안]] · 2026-08-11
+- [[News/412eeeaddaef78db|GitHub, Kimi K3의 Copilot 배포 재개]] · 2026-08-07
+- [[News/d13caba5351daa86|Cloudflare, Workers에서 실행하는 에이전트용 브라우저 Kitesurf 베타 공개]] · 2026-08-07
+- [[News/cb25a842d58a5ffc|Cloudflare, 기존 사이트에 WebMCP 도구를 연결하는 개발자 프리뷰 공개]] · 2026-08-07
+- [[News/54aa107c534ae476|Cloudflare AI Search, 사이트맵 없는 수집과 공통 검색 엔드포인트 추가]] · 2026-08-07
+- [[News/f66aea27eeabe66a|Cloudflare, 무상태 MCP 규격을 Workers에서 지원]] · 2026-08-07
+- [[News/1bc83fc4634ab269|OpenAI, ChatGPT용 Sol 업데이트와 추론량 조절 기능 발표]] · 2026-08-07
 - [[News/45c58985be6c34bb|IonQ, SkyWater Technology 인수 완료]] · 2026-08-01
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
