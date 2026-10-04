@@ -24,6 +24,7 @@ import {
   existingArticleProjection,
 } from "./publish-adapter.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
+import { assertLegacyTransition, legacyTransitionBatch } from "./legacy-transition.mjs"
 import { loadNoteApproval } from "./note-review.mjs"
 import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-state.mjs"
 import { assertConceptConflicts } from "./knowledge-links.mjs"
@@ -197,7 +198,12 @@ export function newEditionFeedBaseline(root, run, vault) {
   }
 }
 
-export function retrospectiveProjections(vault, approvals, knowledgeNotes = []) {
+export function retrospectiveProjections(
+  vault,
+  approvals,
+  knowledgeNotes = [],
+  legacyReviews = [],
+) {
   if (!approvals.length || new Set(approvals.map((a) => a.event_id)).size !== approvals.length)
     throw Error("Distinct approved events required")
   const knowledgeByPath = new Map(
@@ -223,6 +229,15 @@ export function retrospectiveProjections(vault, approvals, knowledgeNotes = []) 
     projections = [],
     appearances = new Map(approvals.map((a) => [a.event_id, []])),
     additionsByPath = new Map()
+  const reviewsByPath = new Map(
+    legacyReviews.length
+      ? legacyTransitionBatch({
+          schema: "research-legacy-transition-batch/v1",
+          reviews: legacyReviews,
+        }).map((p) => [p.target_path, p])
+      : [],
+  )
+  const appliedReviews = new Set()
   for (const article of approvals) {
     const packet = article.historical_addition_review
     if (!packet) continue
@@ -239,6 +254,32 @@ export function retrospectiveProjections(vault, approvals, knowledgeNotes = []) 
     const articles = extractArticles(existing)
     const relativePath = path.relative(vault, existing.file).split(path.sep).join("/")
     const additions = additionsByPath.get(relativePath) || []
+    const legacyReview = reviewsByPath.get(relativePath)
+    if (legacyReview) {
+      const revised = legacyReview.events.map((e) => byId.get(e.event_id))
+      if (revised.some((a) => !a) || additions.length)
+        throw Error("Complete legacy transition cannot borrow missing or additional events")
+      const originalBytes = fs.readFileSync(existing.file)
+      if (sha256(originalBytes) !== legacyReview.target_sha256)
+        throw Error("Legacy transition original edition bytes changed")
+      assertLegacyTransition(legacyReview, revised, existing, relativePath)
+      const projection = editionProjection(revised, {
+        key: path.basename(existing.file, ".md"),
+        date: existing.meta.date,
+        coverage_start: existing.meta.coverage_start,
+        coverage_end: existing.meta.coverage_end,
+        existing,
+        legacy_review: legacyReview,
+        concept_paths_by_id,
+      })
+      projections.push({ ...projection, event_ids: revised.map((a) => a.event_id) })
+      for (const article of revised) {
+        found.add(article.event_id)
+        appearances.get(article.event_id).push(relativePath)
+      }
+      appliedReviews.add(relativePath)
+      continue
+    }
     if (!articles.some((a) => byId.has(a.id)) && !additions.length) continue
     const originalBytes = fs.readFileSync(existing.file)
     const reviewed_sections = {}
@@ -293,6 +334,8 @@ export function retrospectiveProjections(vault, approvals, knowledgeNotes = []) 
       ],
     })
   }
+  if (appliedReviews.size !== reviewsByPath.size)
+    throw Error("Legacy transition target edition is missing")
   if (approvals.some((a) => !found.has(a.event_id)))
     throw Error("Approved event has no existing edition; use the new-edition workflow")
   for (const a of approvals.filter((a) => a.retrospective_review))
@@ -818,7 +861,13 @@ export async function privatePreview(
   root,
   run,
   approvedRuns,
-  { repo = process.cwd(), vault = "vault", knowledgeRuns = [], editionSpec = null } = {},
+  {
+    repo = process.cwd(),
+    vault = "vault",
+    knowledgeRuns = [],
+    editionSpec = null,
+    legacyReviews = [],
+  } = {},
 ) {
   validRun(run)
   if (
@@ -835,6 +884,8 @@ export async function privatePreview(
   const knowledge = knowledgeRuns.map((id) => loadNoteApproval(root, id, { vault }))
   assertPreviewConceptNotes(approvals, knowledge)
   const notes = knowledge.flatMap((k) => k.approval.notes)
+  if (legacyReviews.length && (editionSpec || !approvals.length))
+    throw Error("Legacy transition requires retrospective approved articles")
   if (editionSpec) assertNewEditionSourceCutoff(approvals, editionSpec)
   const projections = approvals.length
       ? editionSpec
@@ -848,6 +899,7 @@ export async function privatePreview(
             vault,
             approvals.map((a) => a.article),
             notes,
+            legacyReviews,
           )
       : [],
     sourceFiles = fingerprints(vault),
@@ -860,6 +912,17 @@ export async function privatePreview(
       approvals,
       knowledge,
       ...(editionSpec ? { edition_spec: editionSpec } : {}),
+      ...(legacyReviews.length
+        ? {
+            legacy_reviews: legacyReviews,
+            legacy_transition_sha256: sha256(
+              fs.readFileSync(new URL("./legacy-transition.mjs", import.meta.url)),
+            ),
+            legacy_review_units_sha256: sha256(
+              fs.readFileSync(new URL("./legacy-review.mjs", import.meta.url)),
+            ),
+          }
+        : {}),
       source_vault: vault,
       source_files: sourceFiles,
       runtime_files: runtime,
@@ -994,6 +1057,7 @@ export async function privatePreview(
     run_id: run,
     approved_runs: approvedRuns,
     ...(editionSpec ? { edition_spec: editionSpec, coverage_complete: false } : {}),
+    ...(legacyReviews.length ? { legacy_reviews: legacyReviews } : {}),
     ...(sourceFeed ? { source_feed: sourceFeed } : {}),
     knowledge_runs: knowledgeRuns,
     observed_at: new Date().toISOString(),

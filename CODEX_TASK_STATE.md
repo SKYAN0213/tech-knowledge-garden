@@ -1,3 +1,7 @@
+현재 개발 진척(2026-10-04): 공통 reparse --retain-previous-parses로 옛/새 parse를 함께 보존하고 기존 추출을 재사용했다. 실제 논문2건은 재추출0·HTTP0, 원문 대조15facts(8+7), MLX 신규 원고2호출69.010/55.043초를 편집 정정한 뒤 승인했다. pre-v2 전체 구간 전환 검토를 구현하여8/11 원본9unit 전부와 원본SHA/고정 사건ID/제목/출처/일자를 연결했다. partial 전환·source-bearing 누락·거짓 empty·hash drift를 거부한다.
+
+private legacy-20260811-reader-20261004-v2:1회차/2기사·public340파일, 웹/RSS/GitHub 본문·원문·발표8/10 일치·기존RSS40GUID/pubDate 보존. 전환 준비1파일9,956bytes, 운영vault200/legacy85·752/pending67·626/verified139 불변이다. parser/reuse 재개52파일 SHA불변·model/HTTP0. 표적9+27+12=48검사 통과, 전체suite 반복 없음. Drive 작성 원본 반영·공개 배포·새 UI 상호작용 검증은 미실행이다. 기존 runtime/portable 복구·전수92/801·독립40/20·shadow7/무인08시 범위는 유지한다. 다음은 최신 Drive 대조→승인된8/11 변경 저장→공개 릴리스 검증. 목표 active/WBS2/22, 한시간 동일 병목 없음. 런북376/계획19.285.
+
 현재 소급 판정(2026-10-04): 구형 85회차/752구간을 그대로 유지하며 빈 템플릿 18회차/126구간을 private empty_record로 판정했다. 실제 기사 verified나 조사 성공·새 소식 없음으로 집계하지 않는다. 미판정 legacy는67회차/626구간이며 7/14의 조사 주장 1회차도 포함한다. 공통 legacyReviewUnits로 기존 offset/ID를 보존하고 원본 전체 bytes·모든 unit SHA·검토자·검토일·private ledger hash를 inventory/reconciliation에 결속했다. 변경 원본은 stale 진단/미검토로 돌아가며 소스·추가 문장·불완전 구간·symlink·ledger 변조를 거부한다.
 
 최신 실제 원문: 8/11 회차의 NVIDIA 소개 2개와 저자 대학 소개 2개/PDF2편을 공통 수집기로 확보했다(8요청 중6captured/2CloudFront robots 정책 실패 보존). PDF11/9페이지·129/102blocks·missing_pages0은 파싱 결과이며 전문 분석 완료가 아니다. 기본 파서에서 누락한 날짜·저자에 기존 profile 선택자를 적용해 HTTP/추론0 재파싱: 두 발표일8/10·저자4명 복원. MLX 실제2호출46.849/32.135초·5+4facts를 직접 대조하고 조건/회사 귀속을 정정했다. 기사 승인·원고·소급 공개 전환은 아직 없다.

@@ -18,6 +18,7 @@ import {
   assertHistoricalAdditionReview,
 } from "./event-date.mjs"
 import { markdownProse } from "../explanations.mjs"
+import { assertLegacyTransition } from "./legacy-transition.mjs"
 
 // Pure projection: no Drive write, Git commit or push is performed here.
 export function approvedArticle(draftRecord, claims, documents, review, parses = []) {
@@ -236,6 +237,7 @@ export function editionProjection(
     reviewed_sections = {},
     added_event_ids = [],
     concept_paths_by_id = {},
+    legacy_review = null,
   },
 ) {
   if (
@@ -261,7 +263,19 @@ export function editionProjection(
   )
     throw Error("Historical edition dates/cutoffs must be preserved")
   const old = existing ? extractArticles(existing) : []
-  if (existing) {
+  if (legacy_review) {
+    if (added_event_ids.length)
+      throw Error("Legacy transition cannot add unrelated historical events")
+    assertLegacyTransition(
+      legacy_review,
+      articles,
+      existing,
+      `Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,
+    )
+    reviewed_sections = { "흐름 읽기": "없음", "오늘의 적용": "없음", "개념 색인": "없음" }
+  } else if (existing) {
+    if (existing.meta.schema_version !== "tech-ai-magazine/v2")
+      throw Error("Pre-v2 edition requires a complete legacy transition review")
     if (
       old.length + added_event_ids.length !== articles.length ||
       new Set(added_event_ids).size !== added_event_ids.length ||

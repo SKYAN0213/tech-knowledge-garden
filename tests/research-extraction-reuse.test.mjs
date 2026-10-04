@@ -7,7 +7,11 @@ import { main } from "../scripts/research.mjs"
 import { reuseExtraction } from "../scripts/research/extraction-reuse.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
-import { storeParseArtifact } from "../scripts/research/parser.mjs"
+import {
+  storeParseArtifact,
+  retainParse,
+  assertStoredEvidence,
+} from "../scripts/research/parser.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "extraction-reuse-")))
@@ -127,4 +131,46 @@ test("reuse refuses stale claim identifiers, invalid quotations and pre-existing
   atomicWrite(root, "runs/source/claims.json", extraction)
   atomicWrite(root, "runs/bundle/reviewed-claims.json", {})
   await assert.rejects(() => reuseExtraction(root, "bundle", "source"), /already contains a review/)
+})
+
+test("retained parse versions reuse existing claims without replacing their evidence or review", async (t) => {
+  const { root, parse, claim } = fixture(t)
+  const revised = structuredClone(parse)
+  revised.parse_id = sha256("improved-parser")
+  revised.title = "Product with improved metadata"
+  revised.blocks[0].block_id = revised.parse_id + ":b1"
+  storeParseArtifact(root, revised)
+  const originals = fs.readFileSync(path.join(root, "runs/source/parses.json"))
+  const parses = [structuredClone(parse)]
+  retainParse(parses, revised)
+  retainParse(parses, structuredClone(revised))
+  assert.equal(parses.length, 2)
+  assert.deepEqual(parses[0], parse)
+  const collision = structuredClone(revised)
+  collision.title = "Changed under the same identity"
+  assert.throws(() => retainParse(parses, collision), /identity collision/)
+  atomicWrite(root, "runs/bundle/parses.json", parses)
+  assertStoredEvidence(root, readJSON(root, "runs/bundle/documents.json"), parses)
+  await reuseExtraction(root, "bundle", "source")
+  const reused = readJSON(root, "runs/bundle/claims.json").claims[0]
+  assert.equal(reused.claim_id, claim.claim_id)
+  assert.equal(reused.evidence[0].parse_id, parse.parse_id)
+  assert.equal(reused.review.status, "unreviewed")
+  assert.deepEqual(fs.readFileSync(path.join(root, "runs/source/parses.json")), originals)
+})
+
+test("parse retention rejects incompatible CLI options before creating any run", async (t) => {
+  const { root } = fixture(t)
+  for (const args of [
+    ["collect", "--url", "https://example.org/news/one"],
+    ["reparse"],
+    ["reparse", "--source-run", "source", "--url", "https://example.org/news/one"],
+  ]) {
+    await assert.rejects(
+      () =>
+        main([...args, "--root", root, "--run", "invalid-retention", "--retain-previous-parses"]),
+      /requires reparse --source-run without --url/,
+    )
+    assert.equal(fs.existsSync(path.join(root, "runs/invalid-retention")), false)
+  }
 })

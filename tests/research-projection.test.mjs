@@ -33,6 +33,170 @@ import { promotionAudit, shadowRecord } from "../scripts/research/promotion.mjs"
 import { robotsPolicy, checkRobots } from "../scripts/research/robots.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { parseNote, extractArticles, noteText } from "../scripts/garden.mjs"
+import { legacyReviewUnits } from "../scripts/research/legacy-review.mjs"
+import {
+  assertLegacyTransition,
+  legacyTransitionBatch,
+} from "../scripts/research/legacy-transition.mjs"
+
+function legacyTransitionFixture(t) {
+  const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "legacy-transition-")))
+  t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
+  fs.mkdirSync(path.join(vault, "Knowledge"))
+  const s = sample(),
+    first = approvedArticle(s.record, s.claims, s.documents, s.review, s.parses)
+  const second = structuredClone(first)
+  second.event_id = second.article_review.event_id = "abcdef1234567890"
+  second.title = second.record.title = second.article_review.title = "다른 연구 발표"
+  second.source_urls = ["https://example.com/second"]
+  const articles = [first, second],
+    key = "2026-09-28_0801_Tech_AI_Briefing"
+  const relative = `Editions/2026/09/${key}.md`
+  const content = noteText(
+    {
+      title: "2026-09-28 Tech & AI Briefing",
+      date: "2026-09-28",
+      timezone: "Asia/Seoul",
+      coverage_start: "2026-09-27T08:01:00+09:00",
+      coverage_end: "2026-09-28T08:01:00+09:00",
+      source_count: 2,
+      new_items_count: 2,
+      linked_knowledge_notes: [],
+    },
+    "# 한눈에 보기\n\n이전 요약.\n\n# 오늘의 핵심 기사\n\n없음\n\n# 논문과 연구\n\n" +
+      "## 이전 첫 제목\n\n이전 본문. https://example.com/announcement\n\n" +
+      "## 이전 두 번째 제목\n\n이전 본문. https://example.com/second\n\n" +
+      "# 오픈소스와 도구\n\n없음\n\n# 흐름 읽기\n\n근거 없는 옛 추론.\n\n" +
+      "# 바로 써먹을 점\n\n옛 조언.\n\n# Source List\n\nhttps://example.com/announcement\nhttps://example.com/second\n",
+  )
+  atomicWrite(vault, relative, content)
+  const existing = { ...parseNote(content), file: path.join(vault, relative) }
+  const units = legacyReviewUnits(existing.body, relative)
+  const packet = {
+    schema: "research-legacy-edition-transition/v1",
+    reviewer: "test-reviewer",
+    reviewed_at: "2026-09-28",
+    original_read: true,
+    source_read: true,
+    duplicate_checked: true,
+    reason: "Complete source review",
+    target_path: relative,
+    target_sha256: sha256(content),
+    before_content: content,
+    events: [
+      {
+        event_id: first.event_id,
+        unit_id: units[3].unit_id,
+        previous_title: units[3].title,
+        source_urls: first.source_urls,
+      },
+      {
+        event_id: second.event_id,
+        unit_id: units[4].unit_id,
+        previous_title: units[4].title,
+        source_urls: second.source_urls,
+      },
+    ],
+    units: units.map((u, i) => ({
+      unit_id: u.unit_id,
+      sha256: u.sha256,
+      decision: [0, 3, 4, 8].includes(i)
+        ? "replaced"
+        : [1, 2, 5].includes(i)
+          ? "omitted_empty"
+          : "omitted_editorial",
+      event_ids:
+        i === 3
+          ? [first.event_id]
+          : i === 4
+            ? [second.event_id]
+            : [0, 8].includes(i)
+              ? articles.map((a) => a.event_id)
+              : [],
+      reason: "Read original unit and its sources",
+    })),
+  }
+  return { vault, articles, existing, relative, packet, key }
+}
+
+test("complete pre-v2 transition retains edition identity and all source events without old editorial prose", (t) => {
+  const f = legacyTransitionFixture(t)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = parseNote(projection.content)
+  assert.equal(projection.path, f.relative)
+  assert.deepEqual(
+    extractArticles({ ...after, file: f.existing.file })
+      .map((a) => a.id)
+      .sort(),
+    f.articles.map((a) => a.event_id).sort(),
+  )
+  for (const k of ["date", "coverage_start", "coverage_end", "linked_knowledge_notes"])
+    assert.deepEqual(after.meta[k], f.existing.meta[k])
+  for (const prose of ["근거 없는 옛 추론", "옛 조언", "Complete source review", "original_read"])
+    assert.equal(projection.content.includes(prose), false)
+  assert.equal(fs.readFileSync(f.existing.file, "utf8"), f.packet.before_content)
+  assert.throws(
+    () => retrospectiveProjections(f.vault, [f.articles[0]], [], [f.packet]),
+    /missing or additional/,
+  )
+  assert.throws(
+    () =>
+      editionProjection(f.articles, {
+        key: f.key,
+        date: f.existing.meta.date,
+        coverage_start: f.existing.meta.coverage_start,
+        coverage_end: f.existing.meta.coverage_end,
+        existing: f.existing,
+        added_event_ids: f.articles.map((a) => a.event_id),
+      }),
+    /complete legacy transition/,
+  )
+})
+
+test("legacy transition rejects partial review, hash drift, lost sources and false empty dispositions", (t) => {
+  const f = legacyTransitionFixture(t)
+  const mutations = [
+    (p) => p.units.pop(),
+    (p) => (p.units[3].sha256 = "0".repeat(64)),
+    (p) => (p.target_sha256 = "0".repeat(64)),
+    (p) => (p.events[0].previous_title = "changed"),
+    (p) => (p.events[0].source_urls = ["https://example.org/unrelated"]),
+    (p) => (p.units[3].event_ids = []),
+    (p) => (p.units[3].decision = "omitted_editorial"),
+    (p) => {
+      p.units[6].decision = "omitted_empty"
+    },
+    (p) => (p.units[8].event_ids = [f.articles[0].event_id]),
+    (p) => p.units[3].event_ids.push("0000000000000000"),
+    (p) => (p.reviewed_at = "2026-09-26"),
+    (p) => {
+      p.units[0].decision = "omitted_editorial"
+      p.units[0].event_ids = []
+    },
+    (p) => (p.reviewer = " "),
+  ]
+  for (const mutate of mutations) {
+    const p = structuredClone(f.packet)
+    mutate(p)
+    assert.throws(() => assertLegacyTransition(p, f.articles, f.existing, f.relative))
+  }
+  assert.throws(
+    () =>
+      legacyTransitionBatch({
+        schema: "research-legacy-transition-batch/v1",
+        reviews: [f.packet, f.packet],
+      }),
+    /unique/,
+  )
+  const changed = structuredClone(f.articles)
+  changed[0].source_urls = []
+  assert.throws(() => assertLegacyTransition(f.packet, changed, f.existing, f.relative), /retain/)
+  fs.appendFileSync(f.existing.file, "\nChanged original")
+  assert.throws(
+    () => retrospectiveProjections(f.vault, f.articles, [], [f.packet]),
+    /bytes changed/,
+  )
+})
 
 test("new concept navigation is derived without changing existing index prose or authority bytes", (t) => {
   const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "new-concept-index-")))

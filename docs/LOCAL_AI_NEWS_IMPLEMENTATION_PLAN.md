@@ -4090,3 +4090,22 @@ Drive16작성폴더/200파일의 fresh connector metadata는 기존 raw 검증 �
 Drive Research의 `legacy-retrospective-evidence-20261004-v1.zip`은80자료/81members/18,393,755bytes·6captured source versions다. 파일ID `1GpFKzQhfAqbAi7zUVKIAyMqVpakD4aqN`, SHA `6f8f625936458316a3fe938da9d1bcc745ed8b6aa83cf50e748746e74105aa3e`. 원격raw SHA·부모·shared:false, local CRC/member SHA/목록 exact를 확인했다. 이 development/v1 ZIP은 독립 runtime 복구 성공이 아니다. 추가 검증 영수증은 archive-staging에 별도 보존하며 frozen ZIP을 다시 만들지 않는다.
 
 다음 완료 조건은 8/11 원본9구간 전부의 처리 판정·고정 사건 ID와8/10발표일·4저자/PDF근거를 사용한2기사·소급 projection·원래 회차 날짜/URL/RSS 보존·Drive 작성 원본/공개 결과 확인이다. 현재 pre-v2는 extractArticles가 빈 목록을 반환하므로 일반 historical addition으로 나머지 구형 본문을 조용히 버리지 않는다. 공통 전체 구간 전환 검토를 구현한다. WBS2/22/goal active, 한시간 동일 병목 없음.
+
+
+## 19.285. 파서 판본을 보존한 사실 재사용과 완전한 구형 회차 전환
+
+재활용 범위를 원문 bytes뿐 아니라 추론에서 인용한 정확한 parse까지 확장했다. `reparse --retain-previous-parses`로 새 날짜/저자 판본을 추가하되 기존 claim의 parse ID/quote/모델 provenance는 그대로 두고 새 직접 검토를 요구한다. 실제2사건/4source/6parse를 재추출 없이 연결하고15facts·2원고를 승인했다. MLX 원고2호출 뒤 원문 조건 범위를 직접 정정했다.
+
+pre-v2의 extractArticles=[]를 전수 검토로 오인하지 않는다. `research-legacy-transition-batch/v1`의 회차별 원본전체/모든 unit/처리 판정·사건/title/source anchor를 private preview와 Drive 준비/release에 묶었다. 일부 사건만 교체하거나 source-bearing 구간을 생략할 수 없다. 원래 날짜/cutoff/URL을 유지하고 근거 없는 generic 분석과 조언은 explicit omission 뒤 제거한다. 초기 고정 사건ID는 패킷에 확정하며 이후 기존 v2 경로를 사용한다.
+
+실제8/11 전체9unit→2검토 기사 private preview340파일, 웹/RSS/GitHub 일치·기존40RSS GUID/pubDate 보존·Drive 준비delta1파일9,956bytes. resume52파일 SHA불변·HTTP/model0. 표적48통과, 운영200작성/legacy85·752/미판정67·626/verified139는 미변경이다. 공개 전환 전까지 이 private 결과를 전체 판정/배포 진척에 더하지 않는다. 런북376의 증거를 사용한다.
+
+다음은 fresh Drive source metadata/원문 대조 후1파일 같은 ID로 저장·canonical apply·릴리스 후보 표적/전체 검사1회·공개 bytes/독자 UI 확인이다. 전수 원래92/801·빈18 공개 처리·독립40/20·shadow7/무인08시·portable runtime 복구 등 전체 목표의 나머지를 유지한다. 완료를 private preview로 축소하지 않는다.
+
+
+최종 보강: source-free 기사/한눈에 보기까지 omitted_editorial로 지우는 처리를 차단하고 기존 흐름 읽기/바로 써먹을 점만 허용했다. blank 검토자/사유도 거부한다. 보강 표적1만 재검사해 통과했다. final private legacy-20260811-reader-20261004-v2는 웹339/340·digest138 exact SHA가 v1과 같고 sitemap1의 lastmod만 새 생성 시각이다(URL 목록 동일). 처음 전부 exact 비교가 이 sitemap에 실패한 것은 검증 기대의 문제로 원인을 좁혀 확인했다. 원본200files 불변·같은 delta1파일9,956bytes, model/HTTP0. 파일 열기는 Codex queued이며 새 브라우저 상호작용 확인을 뜻하지 않는다.
+
+개발 본편은 Drive private Research1y_yCg36p-PTczhtBeEmzfteCs1qisjo1에 보관했다. ZIP118자료/119members/19,256,380bytes/SHA c8c6cfb80ee237f7abb81d6522986a5caa0b7d49ed6fda173e2c0436c65a7cd8·4source versions. 로컬CRC/memberSHA/목록과 원격rawSHA/부모/shared:false를 확인했다. v1 ZIP은 보강 전 frozen 증거이며 guard delta는 별도 보존한다. authoring update/public 배포/runtime portable 복구를 증명하는 보관본은 아니다.
+
+
+최종 guard delta17자료/18members/1,214,191bytes는 Drive Research1z_zflYsU_2hniY5CwJ2ehtkiHDA2ZAEb에 보관했고 원격rawSHA1e80ba038122c8f285b8e316862550a325f6886acbb9136a0274543ec9860757·부모/shared:false 및 로컬CRC/memberSHA/목록을 확인했다. 본편 frozen ZIP을 재작성하지 않았다. 원문4판본은 앞선 본편 보관본에 있으며 guard 묶음 source_versions0이다. 영수증은 archive-staging/legacy-transition-guard-evidence-20261004-v1/{drive-receipt,package-verification}.json. 다음 실제 발행 준비에서는 최종 reader-v2를 사용한다. 이2기사는 DOI/논문 버전 메타데이터와 전문용어 assignment가 아직 없으므로 다음 연결 검토에 포함한다. 전체 목표 active이며 운영 원본·공개 배포는 다음 완료 관문이다.

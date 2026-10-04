@@ -52,6 +52,19 @@ export function storeParseArtifact(root, parse) {
   return parse
 }
 
+// Keep evidence cited by an earlier extraction alongside a newly parsed view
+// of the same immutable response. Matching IDs must still describe identical
+// content and observation; retention never replaces an earlier parse.
+export function retainParse(parses, parse) {
+  assertParse(parse)
+  const existing = parses.find((item) => item.parse_id === parse.parse_id)
+  if (existing) {
+    if (JSON.stringify(existing) !== JSON.stringify(parse))
+      throw Error("Retained parse identity collision")
+  } else parses.push(parse)
+  return parses
+}
+
 export function loadStoredSourceRun(root, runId, { allowUnacquired = false } = {}) {
   if (typeof runId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(runId))
     throw Error("Invalid source run id")

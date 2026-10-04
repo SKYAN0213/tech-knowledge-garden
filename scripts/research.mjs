@@ -18,6 +18,7 @@ import {
   loadCapturedStagesForReparse,
   bundleStoredSourceRuns,
   selectStoredSources,
+  retainParse,
 } from "./research/parser.mjs"
 import { Ollama, localOllamaURL, DEFAULT_LOCAL_OLLAMA_MODEL } from "./research/ollama.mjs"
 import { OpenAIResponses } from "./research/openai.mjs"
@@ -79,6 +80,7 @@ import { privatePreview } from "./research/preview.mjs"
 import { approveNoteReview } from "./research/note-review.mjs"
 import { retrospectiveInventory, saveRetrospectiveInventory } from "./research/retrospective.mjs"
 import { saveEmptyLegacyReview } from "./research/legacy-review.mjs"
+import { legacyTransitionBatch } from "./research/legacy-transition.mjs"
 import { buildApprovedInventoryReconciliation } from "./research/approved-inventory-reconcile.mjs"
 import { buildCandidateEvidenceReviewBatch } from "./research/candidate-evidence-review.mjs"
 import { buildHistoricalSourceReconciliation } from "./research/historical-source-reconciliation.mjs"
@@ -141,6 +143,7 @@ export async function main(argv = process.argv.slice(2)) {
       backlog: { type: "string" },
       "batch-manifest": { type: "string" },
       "source-run": { type: "string" },
+      "retain-previous-parses": { type: "boolean", default: false },
       "approved-root": { type: "string" },
       "candidate-source-run": { type: "string" },
       "source-revision-review": { type: "string" },
@@ -241,6 +244,8 @@ export async function main(argv = process.argv.slice(2)) {
     "extraction-timeout-ms",
     "facts-per-batch",
   ]
+  if (v["retain-previous-parses"] && (command !== "reparse" || !v["source-run"] || v.url?.length))
+    throw Error("--retain-previous-parses requires reparse --source-run without --url")
   if (v["resume-local-budget-ms"] !== undefined) {
     if (command !== "extract") throw Error("--resume-local-budget-ms is only supported for extract")
     if (!/^\d+$/.test(v["resume-local-budget-ms"]))
@@ -1332,14 +1337,20 @@ export async function main(argv = process.argv.slice(2)) {
         vault: v.vault || "vault",
       })
     })
-  if (command === "preview")
+  if (command === "preview") {
+    const specification = v.review ? JSON.parse(fs.readFileSync(v.review, "utf8")) : null
     return withLock(root, "run-" + v.run, () =>
       privatePreview(root, v.run, v["approved-run"] || [], {
         vault: v.vault || "vault",
         knowledgeRuns: v["knowledge-run"] || [],
-        ...(v.review ? { editionSpec: JSON.parse(fs.readFileSync(v.review, "utf8")) } : {}),
+        ...(specification
+          ? specification.schema === "research-legacy-transition-batch/v1"
+            ? { legacyReviews: legacyTransitionBatch(specification) }
+            : { editionSpec: specification }
+          : {}),
       }),
     )
+  }
   if (command === "source-register")
     return withLock(root, "run-" + v.run, async () => {
       const urls = new Set(),
@@ -1802,6 +1813,12 @@ export async function main(argv = process.argv.slice(2)) {
       ...(ollama?.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
       ...(budget ? { extraction_budget: budget } : {}),
       ...(stored ? { stored_source: stored.identity } : {}),
+      ...(v["retain-previous-parses"]
+        ? {
+            retain_previous_parses: true,
+            parser_sha256: sha256(fs.readFileSync("scripts/research/parser.mjs")),
+          }
+        : {}),
       ...(!stored ? { fetcher_sha256: sha256(fs.readFileSync("scripts/research/fetch.mjs")) } : {}),
       registry_sha256: sha256(fs.readFileSync("data/research-acquisition.json")),
       watchlist_sha256: sha256(fs.readFileSync("data/research-watchlist.json")),
@@ -1855,7 +1872,10 @@ export async function main(argv = process.argv.slice(2)) {
     }
     if (!stored && !v.url?.length) throw Error("At least one --url or --source-run required")
     const documents = stored?.documents || [],
-      parses = command === "reparse" ? [] : stored?.parses || []
+      parses =
+        command === "reparse" && !v["retain-previous-parses"]
+          ? []
+          : structuredClone(stored?.parses || [])
     if (command === "reparse") {
       const profiles =
         JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
@@ -1866,7 +1886,8 @@ export async function main(argv = process.argv.slice(2)) {
       )) {
         const options =
           profiles.find((p) => new RegExp(p.url_pattern).test(document.final_url))?.options || {}
-        parses.push(
+        retainParse(
+          parses,
           await run.stage(
             `parse-${document.source_id}-${document.body_sha256.slice(0, 12)}`,
             {
@@ -1902,6 +1923,7 @@ export async function main(argv = process.argv.slice(2)) {
           ),
         )
     }
+    if (v["retain-previous-parses"]) assertStoredEvidence(root, documents, parses)
     atomicWrite(root, `runs/${v.run}/documents.json`, documents)
     atomicWrite(root, `runs/${v.run}/parses.json`, parses)
     if (command === "extract") {

@@ -9560,3 +9560,26 @@ canonical386078d와 이 묶음 private preview를 구분한다. 새 묶음의 Dr
 Research archive `legacy-retrospective-evidence-20261004-v1`:80files/81members/18,393,755bytes·source versions6, ZIP SHA6f8f625936458316a3fe938da9d1bcc745ed8b6aa83cf50e748746e74105aa3e, Drive ID1GpFKzQhfAqbAi7zUVKIAyMqVpakD4aqN. 원격raw SHA·부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false 및 local CRC/member SHA exact. 최초 helper의 루트 package-manifest 가정은 실패했으며 실제 v1 member `Research/LocalAI/runs/<id>/archive-package-manifest.json` 계약으로 검증했다. independent runtime 복구 보장은 아니다. 추가2회귀와 원격/ZIP readback 영수증은 archive-staging에 별도 저장한다.
 
 직전 삭제 확인은 goal no progress, 이번 코드·18판정/6실제원문/9사실/Drive보관은 progress. 목표 active/WBS2/22, 공개775f25d 유지. 다음은 pre-v2 전체9unit 검토와2기사 projection·Drive·공개 확인이며 기존92/801 범위를 유지한다.
+
+
+## 376. 기존 파싱 근거 재사용과 pre-v2 전체 구간 전환
+
+`reparse --retain-previous-parses`는 저장 source-run만 받는다. 새 URL/다른 명령과의 조합을 거부하고, 원문/기존 parse 무결성을 확인해 새 판본을 추가한다. 동일 parse ID는 동일 내용일 때만 중복 없이 재사용하며 이전 관찰·근거를 교체하지 않는다. 입력에는 retention과 parser SHA를 고정한다. 기본 reparse 동작은 유지한다.
+
+실제 `legacy-adaptive-retained-20261004-v1`, `legacy-platformer-retained-20261004-v1`에서 각각 old5/new8blocks를 보존했다. 대학 PDF를 select-source/bundle로 묶은 `legacy-{adaptive,platformer}-review-20261004-v1`은 원 추출5/4claims를 재사용하고 새 직접 검토를 수행했다. 저자·소속·발표일·실험 조건/결과를 추가해8/7facts가 검증됐다. source/body와 옛 parse/추출은 불변이다. 수치 unit:null 입력 오류는 계약대로 빈 문자열로 정정한 뒤 실패한 platformer 검토만 재실행했다.
+
+MLX 새 원고2회(69.010/55.043초, think:false)를 생성했고 조건 범위·중복 문장·발표일을 원문 기준으로 편집 정정했다. 원고/정정/승인 provenance는 private run에 보존한다. 사건ID32729c0cb8ce1d4a/0fd634bb4127f8db, 발표8/10·검토10/4, 육하원칙 리드3문장·구체적 설명과 NVIDIA/대학PDF 출처다. 독립 human 평가나 전문 심층 분석으로 집계하지 않는다.
+
+`research-legacy-transition-batch/v1`/`research-legacy-edition-transition/v1`은 원본 bytes/target SHA·전체 unit ID/순서/SHA·각 replaced/omitted_empty/omitted_editorial 판정·검토자/일자·원문 읽음·중복 검토를 고정한다. 모든 사건은 exact h2 제목·unit·원래 URL에 연결한다. 출처가 있는 구간의 누락·부분 사건 전환·미검토 원고·잘못된 일자·불명 metadata를 거부한다. pre-v2에 일반 historical-addition으로 부분 교체하는 경로를 차단했다. privatePreview/Drive transfer/release 재검증에 패킷을 함께 전달한다. 공개 원본에는 비공개 판정/이유를 넣지 않는다.
+
+실제8/11 원본9unit을 판정해 private `legacy-20260811-reader-20261004-v1`을 생성했다. 웹2기사/기존 브리핑/digest/RSS 내용·원문·발표일 일치, RSS40 GUID/pubDate 보존, 기존 generic 분석/조언 제거. public340파일·전환 delta1파일9,956bytes. common prepareAuthoringTransfer 재개가 동작하며 upload_allowed:false다. reparse/reuse 재개52파일 SHA불변, 추가HTTP/model0. 표적9+27+12=48통과, 전체suite 반복 없음. 실제새 browser 상호작용·Drive authoring update·공개 배포는 미검증이며 운영vault/재검토 inventory는 그대로다.
+
+증거: `.local/research/local-ai/source-live-debug/retained-legacy-parses-20261004-v1/{legacy-transition-input,verification}.json`, `runs/legacy-20260811-reader-20261004-v1/{preview-manifest.json,drive-authoring/transfer-plan.json}`. 남은 조건은 최신 Drive authority 대조·같은 ID 원본 update·canonical/public 릴리스/readback다. 전수92/801·WBS2/22·독립40/20·실제7회/08시를 유지한다. 이번 turn은 코드/검토/승인/실제 미리보기로 progress이며 한시간 같은 실패를 반복하지 않았다.
+
+
+최종 보강: source-free 기사/한눈에 보기까지 omitted_editorial로 지우는 처리를 차단하고 기존 흐름 읽기/바로 써먹을 점만 허용했다. blank 검토자/사유도 거부한다. 보강 표적1만 재검사해 통과했다. final private legacy-20260811-reader-20261004-v2는 웹339/340·digest138 exact SHA가 v1과 같고 sitemap1의 lastmod만 새 생성 시각이다(URL 목록 동일). 처음 전부 exact 비교가 이 sitemap에 실패한 것은 검증 기대의 문제로 원인을 좁혀 확인했다. 원본200files 불변·같은 delta1파일9,956bytes, model/HTTP0. 파일 열기는 Codex queued이며 새 브라우저 상호작용 확인을 뜻하지 않는다.
+
+개발 본편은 Drive private Research1y_yCg36p-PTczhtBeEmzfteCs1qisjo1에 보관했다. ZIP118자료/119members/19,256,380bytes/SHA c8c6cfb80ee237f7abb81d6522986a5caa0b7d49ed6fda173e2c0436c65a7cd8·4source versions. 로컬CRC/memberSHA/목록과 원격rawSHA/부모/shared:false를 확인했다. v1 ZIP은 보강 전 frozen 증거이며 guard delta는 별도 보존한다. authoring update/public 배포/runtime portable 복구를 증명하는 보관본은 아니다.
+
+
+최종 guard delta17자료/18members/1,214,191bytes는 Drive Research1z_zflYsU_2hniY5CwJ2ehtkiHDA2ZAEb에 보관했고 원격rawSHA1e80ba038122c8f285b8e316862550a325f6886acbb9136a0274543ec9860757·부모/shared:false 및 로컬CRC/memberSHA/목록을 확인했다. 본편 frozen ZIP을 재작성하지 않았다. 원문4판본은 앞선 본편 보관본에 있으며 guard 묶음 source_versions0이다. 영수증은 archive-staging/legacy-transition-guard-evidence-20261004-v1/{drive-receipt,package-verification}.json. 다음 실제 발행 준비에서는 최종 reader-v2를 사용한다. 이2기사는 DOI/논문 버전 메타데이터와 전문용어 assignment가 아직 없으므로 다음 연결 검토에 포함한다. 전체 목표 active이며 운영 원본·공개 배포는 다음 완료 관문이다.
