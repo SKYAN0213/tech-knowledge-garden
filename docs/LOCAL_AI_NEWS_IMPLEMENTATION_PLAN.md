@@ -4056,3 +4056,19 @@ ABB 1경로/2창 실제 수집에서2개 과거 후보와 당일0건을 확인�
 Drive 작성198개 raw를 실제 읽고15폴더 목록 안정성을 대조했다. 새 Research Methods 폴더는 부재 확인 후 만들었고 release가 승인한19파일을 순서대로 저장했다. 변경19개 원격 raw와 기존17개 ID/부모를 확인했다. post16폴더/200파일은181개 기존 판본 metadata와19개 변경 raw에 근거한다. canonical source200 일치/build/site/전문용어·이력/웹RSSdigest 대조와 RSS40식별자를 확인했다. 현재 v2미검토12→0이지만 남은85 legacy회차/752구간과 전체92/801 기준선은 그대로다.
 
 실제 portable closure는 과거 수동 Model Connect run의 비표준 source-selection.json에서 거부됐다. source-selection 관문이나 과거 승인 bytes를 완화하지 않았다. 이 실패는 다음 별도 근거 이관 대상으로 남기며 canonical 적용 후 승인 읽기와 원본 저장 성공을 부정하지 않는다. optional snapshot alias의 부재 때문에 백업 helper가 실패했으나 실제 named snapshot200은 적용/검증됐다. 모든 실패는 private 기록으로 보존한다. 미배포 코드 통합·원격/공개 관문, 독립40/20·shadow7회/무인08시를 계속 진행한다. 전체WBS2/22·goal active, 1시간 이상 반복 blocker 없음. 상세 런북373절.
+
+
+### 19.283. 통합 릴리스와 공개 서비스·WebsiteData 확인
+
+승인된 소급 원본과 미배포17커밋을 통합했다. 로컬 전체 Node 검사는 한 번 실행해787개 중783통과·4실패했다. 실제 용어 수에 묶인 registry/키워드 quota, 삭제한 모델 이름의 mock, 새 날짜·반복 규칙을 위반하는 deep fixture를 실제 계약에 맞췄다. registry는 reviewed/excluded/unreviewed 격리 자료와 무자동연결로, 키워드는 source/definition/include 보존으로 검증한다. offline 추출은 명시적 fixture-model 및 재사용 무호출을 확인한다. deep fixture는 원 사실의 날짜와 계획/체결을 구분하며 fingerprint와 반복 검토를 유지한다. 실패4개만 재검사해3통과, fixture atomicWrite import 누락1개를 수정해 해당 검사만 통과했다. Python Drive15·WebsiteData2·타입/format/diff 검사도 통과했다. 실제 승인·출처 관문을 완화하지 않았다.
+
+Drive16작성폴더/200파일의 fresh connector metadata는 기존 raw 검증 판본의 ID·경로·부모·크기·수정 시각과 같고 로컬 source SHA83996df89d771afc3a81be5fc5343a6fca8f6bc6158aff580a9c21e020908c99와 일치한다. 이번 단계는 신규 raw200 읽기나 신규 일일 조사/회차가 아니다. 기존 publish 관문으로 커밋775f25d를 normal push했고 해당 Actions37197877632는 Node787/787·Python15+2·build·site·Pages 배포를 모두 성공했다.
+
+공개43개 웹/JSON/RSS/GitHub digest bytes가 로컬과 정확히 같고 source200/hash/transport가 일치한다. 소급13기사·12노트의 원 승인/온톨로지와 RSS40 GUID/pubDate를 보존했으며 새 뉴스로 재발행하지 않았다. 실제1280px/390px 화면에서 로봇 분야18기사, FANUC2기사 필터, Enter·뒤로가기·공유URL, 신규 이중블라인드 기사→용어→사건/원문, RCT 정의/연구 기사,8월28일 브리핑을 확인했다. 가로 넘침 없고 기사/브리핑에 canvas/지도·빈 심층탭이 없다.
+
+배포 이후 기존 export로 WebsiteData11파일/3,258,016bytes를 만들었다.4개 실제 배포 asset은 local bytes와 일치하며 source200의 검증된 ID로 원본 링크 영수증을 보완했다. 이전 원격11파일/3,115,076bytes는 raw 백업했고, 기존ID로 교체한11파일 모두 원격raw SHA·부모·새목록 shared:false를 확인했다. 미매핑58개는 생성 노트의 Drive mirror 부재이며 새 전문용어 원본2개는 매핑됐고 미매핑을 검증된 링크로 꾸미지 않는다.
+
+이번 턴은 통합 검사 수정·actual publication·WebsiteData 변경으로 progress다. 전체WBS2/22·원래92/801·남은legacy85/752·독립human40/20·shadow7회/무인08시·historical 비표준 selection의 portable closure 보완을 유지한다. 로컬 helper의 첫 문서 append는 stdin UTF-8 오류로 실패해 파일이 바뀌지 않았으며 ASCII unicode literal로 재작성했다. 한 시간 이상 같은 실패를 반복한 항목은 없다. 상세 런북374절.
+
+
+릴리스 증거는 Drive private Research `1LRWdEkRRUEOo75c_YNc12AXHMbCzqqbS`에 보관했다. ZIP44members/3,283,544bytes/source_versions0, 로컬CRC/member SHA와 원격raw SHA `d3fd55eccaf101aa2f51785c1b455d4b1a13035681100c320d27e12328b599bb`가 같고 이름/부모/shared:false를 확인했다. `archive-staging/release-integration-evidence-20261004-v3/{drive-receipt,package-verification}.json`은 frozen ZIP 이후 영수증이다. 처음 verification helper가 v2의 archive_manifest 필드를 v1에도 기대해 실패했으나 실제 v1 package 계약으로 좁혀 확인했다. runtime/원문 의존성 전체 portable 복구 성공으로 집계하지 않는다.

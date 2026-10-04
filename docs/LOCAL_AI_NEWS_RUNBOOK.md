@@ -9528,3 +9528,18 @@ canonical386078d와 이 묶음 private preview를 구분한다. 새 묶음의 Dr
 
 
 최종 메타데이터 대조에서 connector 표기를 기존 `codex-drive-connector`로 통일했다. 새 `retrospective-authoring-post-source-snapshot-20261004-v2.json`은 작성200파일 bytes/원 snapshot SHA/발표일을 바꾸지 않는다. named snapshot으로 apply한 결과 updated/deleted 모두0이며 표기 metadata만 갱신했다. shared build-site 생성만 재실행해 public/drive-sync의 표기,13기사 HTML과 RSS exact SHA 불변을 확인했다. 전체 build/test suite는 반복하지 않았다. `source-live-debug/retrospective-authoring-transport-verification-20261004-v1.json`이 후속 영수증이며 Drive 개발 ZIP은 이 표기 정정 전의 frozen 증거다. ZIP/원문/승인 snapshot을 재작성하지 않는다.
+
+
+### 374. 릴리스 후보 검사·공개 배포·WebsiteData 갱신
+
+- private 검사: source-live-debug/release-integration-20261004-v2-{node,failed-recheck,registry-recheck,typecheck,python-test_alldriveall,python-test_export_website_data}.log. 로컬 전체787 중783최초통과, fixture 수정 후 실패4개 각각통과. 로컬 전체 suite는 반복하지 않았다.
+- Drive 판본 고정: .local/drive-sync/release-integration-20261004-v3-drive-version-check.json. 루트+16작성폴더 새목록,200파일 ID/부모/경로/크기/수정 시각 변화0, 기존raw 판본과 local SHA일치. 신규 raw읽기0·새 조사/회차0.
+- commit775f25d700aa3eb67146c2630d6d4a4dfe5df8c9, publish log 및 actions.json/actions.log/actions-watch.log. Actions37197877632의 CI Node787/787/Python15+2/build/site/Pages 완료 success. 기존 원격448ec36에서 normal push·remote_confirmed, force push 없음.
+- public-readback.mjs/json/log:43개 HTTP200/exactSHA, source200 및 snapshot SHA/transport 일치. 검증한13기사·12노트의 공개 결과와 기존RSS40식별자는 이전 canonical/preview evidence에 연결된다. frozen preview의 public_deployed:false를 재작성하지 않고 별도 실제 release proof를 남긴다.
+- browser-proof.json:공개 UI1280/390, 로봇분야18/FANUC2·Enter/뒤로가기/공유URL·신규 기사/용어/연구 이력·8월28일브리핑·가로넘침0·기사/브리핑 지도/빈심층탭 없음. 브라우저 검증은 기록된 표본 경로에 한정되며43bytes readback과 구분한다.
+- website export log/snapshot:310페이지/139기사/19개념/17연결,4개 live asset local SHA일치. 기존 receipt의source200검증 링크를 병합했고 신규2용어 원본도 연결한다. 생성 mirror58개 미매핑은 숨기지 않는다.
+- website-data-backup-release-integration-20261004-v3.json:교체전 원격11raw/3,115,076bytes. website-data-upload-release-integration-20261004-v3.json:기존11ID로3,258,016bytes 교체·원격raw SHA/parent 확인. snapshot은 마지막 저장, 후속목록12개(기존영수증1포함) 모두shared:false. Drive authoring authority와WebsiteData/output 보관은 서로 다르다.
+- 전체scope/WBS2/22·legacy85/752·human40/20·shadow7회·무인08시는 미완료다. 이번 공개 반영을 신규 운영 회차나 전체 자료 전수 완료로 집계하지 않는다. 과거비표준 selection의 실제 portable closure 차단은 보존한다. 한시간반복 blocker 없음.
+
+
+릴리스 증거는 Drive private Research `1LRWdEkRRUEOo75c_YNc12AXHMbCzqqbS`에 보관했다. ZIP44members/3,283,544bytes/source_versions0, 로컬CRC/member SHA와 원격raw SHA `d3fd55eccaf101aa2f51785c1b455d4b1a13035681100c320d27e12328b599bb`가 같고 이름/부모/shared:false를 확인했다. `archive-staging/release-integration-evidence-20261004-v3/{drive-receipt,package-verification}.json`은 frozen ZIP 이후 영수증이다. 처음 verification helper가 v2의 archive_manifest 필드를 v1에도 기대해 실패했으나 실제 v1 package 계약으로 좁혀 확인했다. runtime/원문 의존성 전체 portable 복구 성공으로 집계하지 않는다.
