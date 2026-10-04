@@ -115,7 +115,7 @@ export async function main(argv = process.argv.slice(2)) {
       url: { type: "string", multiple: true },
       channel: { type: "string", multiple: true },
       run: { type: "string" },
-      model: { type: "string", default: "qwen3.8:27b" },
+      model: { type: "string", default: "qwen3.8:27b-mlx" },
       think: { type: "string", default: "medium" },
       "model-policy": { type: "string" },
       "assessment-run": { type: "string" },

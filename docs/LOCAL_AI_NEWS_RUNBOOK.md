@@ -9220,3 +9220,20 @@ npm run research:process-daily -- --run <same-batch-run> --daily-run <same-daily
 비공개 개발 증거191파일/ZIP192member·992,302bytes를 Drive Research `1p_ymlqcKSNTC8N_rN4msINEetvxiDxwe`에 보관했다. 원격 raw SHA `494fbc7d5b2cce66b81db79615b830ea55ff41dd6543cc8f355a964dacfccb86`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/abb-processing-evidence-20261004-v4/drive-receipt.json`이다. 묶음은 개발 증거이며 portable dependency closure나 독립 평가가 아니다. 마지막 추가10건 테스트 로그는 별도 로컬 기록이다.
 
 공개448ec36·기존197원본·RSS/WebsiteData는 이번 변경으로 재발행하지 않았다. WBS2/22·goal active, 전체92회/801기사 소급·독립40dev/20heldout human gold0·로컬 shadow7회·무인08시 운영 검증은 남아 있다. 다음은 과거 승인 후보의 현재 계약 연결을 기존 importer로 검토하고, 새 사건 후보에 동일 공통 경로를 적용한다. 새 authoring은 fresh Drive readback부터 시작한다.
+
+
+## 361. Ollama Qwen3.8 27B MLX 기본 모델 전환
+
+사용자 요청에 따라 `qwen3.8:27b-mlx`를 공식 Ollama registry에서 내려받아 설치했다. 기존 `qwen3.8:27b`는 삭제하거나 덮어쓰지 않았다. Ollama0.34.4의 실제 metadata는 safetensors/NVFP4/27.8B, digest `5642e97495e1a088883805981563dcdc4a040c2f53388b7a41d1f24d3622cf7e`다. 지원 think 값은 false/low/medium/xhigh다. 공식 태그 확인: https://ollama.com/library/qwen3.8/tags
+
+`data/research-model-policy.json`의 search_plan/fact_extract/article_write/concept_write/evidence_compare 5개 모델과 `research.mjs` 기본 CLI 모델을 변경했다. 앞4역할 think:false, 대조 think:medium, num_ctx16384/num_predict4096/기존 시간 제한은 유지한다. 5역할은 실제 설치 metadata로 정책 preflight를 확인했다. 이것은 모든 역할의 전체 생성 품질 시험이 아니다. 모델 출력·검토·승인·발행은 계속 분리한다.
+
+현재 Ollama adapter의 streaming JSON Schema smoke 호출은12.190초에 완료됐다. 회사명 Andover/500개/4시간 미만/회사 귀속 한국어 요약을 직접 확인했다. 제목의 Process 오독을 피하라는 명시적 지시가 포함된 작은 호환성 시험이며 독립 품질 benchmark가 아니다.
+
+실제 `abb-andover-mlx-extract-20261004-v1`은 기본 정책으로 저장된 ABB 원문 전체13블록을 넣어61.136초에6후보를 추출했다. 구조 검사는5개 통과·1개 quote_not_in_block이었다. 후보는 모두 unreviewed로 보존했으며 자동 승인하지 않았다. 이 실행에서는 subject Andover를 올바르게 추출했지만 단일 사례로 기존 모델보다 품질이 우수하다고 판정하지 않는다. 전체 처리 성능·대조 medium·집필 품질 비교는 별도 운영 검증이 필요하다.
+
+정책 schema/모든 역할 metadata preflight·실제 JSON Schema 호출·전체 원문 추출·기본 model-info·node 문법·변경 파일 Prettier·diff 검사를 통과했다. 전체 테스트 suite를 다시 실행하지 않았다. 기존 source-processing run의 정책/모델 지문을 바꾸지 않으며 신규 모델은 새 run에 사용한다. 과거 실행 재개는 해당 실행의 정확한 기존 정책 파일을 지정한다. 이전 기본 정책 복구본은 private `source-live-debug/qwen38-before-mlx-policy-20261004-v1.json`이다.
+
+보관 helper v1은 metadata-only preflight가 실행 ledger 폴더를 만들지 않는 것을 확인하지 않아 존재하지 않는 run 복사에서 멈췄다. 해당 로컬 미완료 폴더를 보존하고 metadata binding JSON을 포함한 v2로 수정했다. 실제 생성 ledger는 원문 추출 run에 저장돼 있다. v2 개발 증거27파일/ZIP28member·158,383bytes를 Drive Research `1HdQp-km2I4brJk38ei_w0QUKteKuwKxA`에 보관했다. 원격 raw SHA `bf473a6718a4609e7ca35d4abf6f105dc661bd30a770eb5fb21250f90dae8a06`, 부모·shared:false·크기 및 ZIP CRC/member SHA를 확인했다. 영수증은 `archive-staging/qwen38-mlx-switch-evidence-20261004-v2/drive-receipt.json`이다. 모델 가중치는 ZIP에 복제하지 않는다.
+
+기존 원문 수집 경로·승인·Drive 작성 원본·공개448ec36·RSS·08시 예약은 이번 모델 전환으로 변경하지 않았다. WBS2/22·goal active를 유지한다.
