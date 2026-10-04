@@ -143,6 +143,8 @@ generated_by: tech-knowledge-garden
 - [[News/fe30a02568cd33cb|AirJoule, Kubota와 주택용 대기 물 생산 시스템 판매 계약]] · 2026-08-14
 - [[News/bb0b51006dee6853|Semtech, 셀룰러 모듈 사업 Compal 매각 계약…현금 6,200만 달러]] · 2026-08-14
 - [[News/72f164fe85756954|Nauticus Robotics, ToolKITT 통합 ROV를 고객 운영에 배치]] · 2026-08-13
+- [[News/0fd634bb4127f8db|WPI·NVIDIA, 화면 끊김이 게임 과제 수행에 미치는 영향 비교]] · 2026-08-11
+- [[News/32729c0cb8ce1d4a|WPI·NVIDIA, FPS 대결 순간에만 지연을 맞추는 기법 제안]] · 2026-08-11
 - [[News/45c58985be6c34bb|IonQ, SkyWater Technology 인수 완료]] · 2026-08-01
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
