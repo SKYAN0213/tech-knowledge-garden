@@ -75,6 +75,22 @@ export function buildArchiveClosure(
       if (!(kind === "knowledge_fact_source" && visiting.has(target))) dependencies.push(target)
       edges.push({ from: id, to: target, kind })
     }
+    for (const document of stored?.documents || []) {
+      if (document.capture_method !== "manual-readable-tool") continue
+      // Stored evidence validation above has already checked the exact tool,
+      // manifest, blocked observation and normalized source bytes. Follow the
+      // importing run as well, so its proof remains within the portable scope.
+      const captureRun = document.capture_provenance.evidence_paths[0].split("/")[1]
+      if (captureRun === id) continue
+      reference(captureRun, "readable_capture", () => {
+        const imported = loadStoredSourceRun(root, captureRun, { allowUnacquired: true })
+        const matches = imported.documents.filter(
+          (candidate) => candidate.source_version_id === document.source_version_id,
+        )
+        if (matches.length !== 1 || JSON.stringify(matches[0]) !== JSON.stringify(document))
+          throw Error("Readable capture dependency changed")
+      })
+    }
     const bundle = readJSON(root, base + "source-bundle.json")
     if (bundle) {
       if (

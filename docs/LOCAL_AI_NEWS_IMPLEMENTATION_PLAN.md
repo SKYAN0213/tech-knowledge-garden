@@ -4173,3 +4173,22 @@ MCP는 규격·정의·Agents SDK·회사 배경까지5원문을 묶고 기존 �
 최종 private preview v4의 refresh/knowledge/validate/build/site와6기사·3용어·3MCP상호 링크/Markdown/RSS40identity 검증 통과. 단순 사본의 extraction identity 오류와 최초 fact input에서 빠진 AI Search 직접 사실1개는 select-source/reuse-extraction/review를 재사용한 v2에서 exact 근거로 복원했으며 원 승인을 보존했다. 모델/HTTP 재호출0이다.
 
 Drive Research 복구 묶음13원문/23runs/524members/3,553,439bytes를 실제 원격 raw SHA/CRC로 확인하고 별도 복구6승인 및151nodes/235edges exact ontology SHA를 검증했다. 모든 사건의 exact SourceVersion 위치 색인도 확인했다. 전체 runtime/UI 상호작용/공개 배포와 구분한다. canonical200/public141verified는 유지하며 전수66/617·독립40/20·정규7회/무인08시·full runtime 복구는 미완료다. 전체목표active/WBS2/22; 다음 승인8/7 작성 원본의 Drive-first 같은 ID 반영 및 릴리스 게이트. 런북381에 실패·근거·재개점을 기록했다.
+
+
+## 19.292. 8/7 소급 원본 반영·공개 배포·웹 데이터 검증
+
+Drive200raw/17folder를 실제 새 조회하고4대상 같은ID·40,059bytes를 저장했다.196원본과membership보존,post snapshot/sourceSHA·pull4/반복변경0을확인했다. 공개ceeafd2·Actions37242363296 success,CI809/809·Python15+2/build/site통과,웹·RSS·GitHub18exact파일과공개Drive200SHA일치다.1280/390UI에서탭/Enter/기업태그/뒤로가기·MCP정의/이력/기사연결을검증하고뉴스/브리핑지도0·overflow0·빈분석탭없음을확인했다. WebsiteData318pages/147articles/19nodes/17relations의11rawSHA(10같은ID변경/1불변),66생성페이지의직접Drive매핑부재도기록했다.
+
+로컬전체809중2fixture날짜실패는테스트Date만고정해실패2표적을통과시켰고전체suite를반복하지않았다. immutable release와별도실행proof를보존하고26-member/3,646,393byte개발·발행ZIP을privateDrive에서rawSHA/CRC확인했다. 원문13판본의별도독립복구와fullruntime복구를구분한다. 기존RSS40GUID/pubDate·cutoff유지,소급수정으로새운영횟수0이다.
+
+전체미판정65회차607구간·WBS2/22·독립40/20·정규7회/무인08시·fullruntime복구는미완료다. 다음최근8/4의5원문을공통수집기로확인해4captured/4parse148blocks·OpenAI차단1을보존했고Microsoft공식발표를정확한source selection/MLX정책으로추출한다. source확보를기사승인으로집계하지않는다. 전체goal active·한시간반복병목없음. [런북382](LOCAL_AI_NEWS_RUNBOOK.md#382-87-소급-수정의-drive-원본공개사이트website-data-검증).
+
+## 19.293. 공통 읽기 도구 수집과 실제 편집 승인 복구
+
+2026-10-05: 정책 허용 403 자료에 기존 import-capture/Markdown parser/검토/보관을 재사용하는 manual-readable-capture/v1 경로를 추가했다. 원 도구 응답의 URL·참조·연속 행 범위에서 정규 본문을 정확히 재구성한다. HTTP200이나 무인 수집 성공으로 가장하지 않으며 저장된 원문·차단 관측·날짜 근거와 parse identity를 검증한다. 공개 기사·후보 자동 승인은 하지 않는다.
+
+실제 OpenAI 자료 57블록/동일 SHA와 반복 import 불변을 확인했다. MLX 추출 11후보의 구조 오류와 누락을 직접 검토해 16verified/1rejected, Microsoft는 발표·수정 날짜를 구분한 9verified를 두 비공개 원고로 승인했다. 원 출력·정정·검토·전문용어 배정을 보존한다. 전체 회차 전환이나 human gold 완료로 집계하지 않는다.
+
+실제 archive-closure 포장에서 수집 실행 의존 누락을 발견해 readable_capture 관계를 추가했다. 원격 ZIP 두 개의 SHA·부모·shared=false 및 독립 복구 후 모든 승인 bytes·용어 배정 일치를 확인했고 exact 원문 판본/사건별 Drive 위치를 등록했다. 관련 20검사 중 최초19통과/새 fixture 기대 메시지1실패, 해당 실패1개만 수정·재검사해 통과했다. 전체 suite/build/공개 배포는 미실행이다.
+
+다음은 기존8/4의9구간·5출처와 의존 용어2개의 전체 재검토/전환 및 Drive-first 발행이다. 미판정65회차607구간·독립40/20·정규7회/무인08시·full portable runtime은 남으며 WBS2/22·goal active를 유지한다. 직전 모델/저장 경로 확인은 목표 구현의 no progress, 이번 공통 경로 수정·실제 승인/원격 복구는 progress다. 1시간 반복 병목은 없다. 런북383에 입력·실패·복구·재개점을 남긴다.

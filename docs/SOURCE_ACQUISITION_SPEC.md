@@ -2573,3 +2573,11 @@ HD press profile의 page_size는 실제 API로 확인한 100이다. 전체150행
 ## 80. 승인된 일일 후보의 회차 조립
 
 scripts/research-edition.mjs --run --daily-run --review는 research-edition-preparation/v1의 explicit candidate_keys/knowledge_runs/edition_spec을 처리한다. current handoff approved-unpublished와 후보/저장승인·원문판본·대체원문 exact resolution을 대조한 뒤 기존 preview로 조립한다. 미승인/발행신원/중복사건/원문변경을 거부하고 과거자료 당일재발행은 기존 preview 계약이 차단한다. 준비 receipt가 일일handoff→선택/승인→생성 manifest hash를 연결한다. 동일 ID의 입력변경은 거부한다. private_slice만 허용하며 승인·Drive 작성원본·정규 배포를 대체하지 않는다. 사용/실물 검증/보관은 런북340절을 따른다.
+
+## 82. 정책 허용 403 자료의 공통 읽기 도구 import
+
+실제 web.run 원문 응답을 사용한 manual-readable-capture/v1은 기존 import-capture와 Markdown worker를 재사용한다. 원 URL의 policy allowed/checked·HTTP403을 별도 보존한다. 새 문서의 HTTP 상태는 null이며 도구 응답을 HTTP200 결과로 바꾸지 않는다. 정확한 URL·참조 ID·연속 행 범위·raw transcript SHA와 그 범위에서 재구성한 body SHA가 일치해야 한다. 명시된 원문 발표일 행만 파싱한다.
+
+원문/검토/승인/보관 경계는 동일하다. import는 unreviewed이며 source-register와 승인용 assertStoredEvidence가 실제 tool transcript·blocked documents·manifest까지 다시 읽는다. 같은 source version과 parse를 재사용하고 자동 후보 승인·발행·정규 운영 성공으로 집계하지 않는다. 목차·인용 마커를 포함한 raw source는 보존하므로 원고에 넣을 사실은 별도로 검토한다.
+
+다른 실행에서 원문을 사용한 portable archive-closure는 importing run을 readable_capture 관계로 따라가고 exact document를 대조한다. 복구 때 원문 proof를 잃거나 달라진 승인 상태를 받아들이지 않는다. 무인 local worker의 자동 fallback은 이번 경로의 완료 범위가 아니다. 실제 원문 57블록·편집 승인·Drive raw ZIP 독립 복구와 실패 기록은 [런북383](LOCAL_AI_NEWS_RUNBOOK.md#383-공통-읽기-도구-수집과-84-기사의-원격-복구)에 있다.

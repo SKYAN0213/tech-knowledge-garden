@@ -9674,3 +9674,86 @@ ENOSPC 관측은 모델 병목과 구분한다. 이미 frozen ZIP와 원격 복�
 보관 `legacy-20260807-canonical-portable-20261005-v2`:23bound runs,13source versions/13parses,522files/524ZIP members,3,553,439bytes,SHA b574a54755f0006f5272054888bb7961c856a63ee95ef0c455c94f18d5ecd3c4. Drive1ypppJfhfeqkl-A6jZ1eNuWLCX7OZQ0JV, Research 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared=false/size와 실제 원격 raw SHA/CRC/member 검사를 확인했다. 원격 ZIP을 별도 폴더에 복구해6승인 기사 SHA와 ontology151nodes/235edges SHA a30095c81ed1cd94df787aafe46511b1bc2a58e5ffc8fddc54ca1c28dc2d99d3를 대조했다. 전체 runtime 복구를 주장하지 않는다. 위치 색인은6사건을 exact 원문 판본에 연결한다. 영수증/독립 복구 증거 `drive-roundtrip/legacy-20260807-canonical-portable-20261005-v2/`.
 
 운영 작성200파일과 public141verified/d21e269는 미변경이며66회차/617구간의 미판정 수를 private preview 성공으로 줄이지 않는다. 다음은 새 Drive 작성 원본200파일 대조→승인8/7 회차와3용어 same-ID 저장→한 차례 릴리스 통합/공개 검증이다. 전체 전수 판정,독립40/20,정규7실제회차/무인08시,full portable runtime은 계속 남는다. WBS2/22·goal active. 동일 실패의1시간 반복은 없으며 기능·실자료·보관 진척이다. 전체 suite는 이번 묶음에서 반복하지 않았다.
+
+
+## 382. 8/7 소급 수정의 Drive 원본·공개사이트·WebsiteData 검증
+
+2026-10-05 KST. 앞381절의 private preview `legacy-20260807-reader-20261005-v4`를 실제 작성 원본과 공개 사이트에 반영했다. 원문13판본·6승인·3용어의 연구 복구 archive는 그대로 보존하고 발행 실행 증거를 별도 불변 묶음으로 보관한다.
+
+### 작성 원본과 고정 ID
+
+Tech Knowledge의17폴더 목록과200Markdown raw bytes를 새로 읽고 기존 로컬과 일치함을 확인했다. 같은17폴더를 재확인하여 원본 내용·멤버십 변화 없음으로 시작했다. prepare는8/7회차·AI Agents·MCP·RAG의4파일40,059bytes만 선택했다. review/observation/snapshot을 기존 release 관문에 결속했고 immutable release receipt는 보존했다.
+
+파일별 쓰기 직전 기존 raw SHA, 쓰기 직후 같은 Drive ID·부모·새 raw SHA를 대조했다.4개의 같은 ID 갱신 뒤 다른196파일의 metadata와 전체 parent membership이 그대로임을 확인했다. post snapshot은 이4개 새 raw와196개 앞서 실제로 받은 raw를 결합한200파일 입력이다. 추가200 raw 재다운로드로 표시하지 않는다. snapshot SHA는 `e3a6d1515b14e7b144a0120f09e4ea683691cfa2c6edbc06fa52b679835417f3`, snapshot 파일 자체 SHA는 `3784c3fcbfe9535d8039056641c4c0b6e89339db5ee45fb33f1a1184cc8c2513`다. pull apply4/deleted0, 반복 dry-run 변경0·working-copy200검증을 완료했다. post compare4개 모두 already_applied다.
+
+최초 snapshot-builder의 preview repository 밖 output 거부와 그 뒤 존재하지 않는 snapshot을 읽으려 한 실패는 보존했다. 수정된 경로는 private preview workspace 안에서 snapshot을 만들고 검증된 bytes 그대로 canonical private staging으로 옮겼다. `pull-drive.py --snapshot PATH --verify-source-snapshot`의 검증 옵션은 boolean이며 옵션 값으로 경로를 다시 주지 않는다. 실패 후 종속 명령을 실행하지 않는다.
+
+### 릴리스 검사와 실제 배포
+
+로컬 릴리스 전체 Node검사1회는809중807통과·2실패였다. source-processing의 두 fixture가 observed/reviewed 날짜를10/4로 고정하면서 fact-review는 현재 Date를 사용해 KST10/5가 되어 올바른 날짜 관문에서 먼저 실패했다. fixture 안의 Date만10/4T01:00Z로 고정했으며 production guard와 기존 기대값은 바꾸지 않았다. 실패한 두 표적만 재실행해2/2통과, PythonDrive15·WebsiteData2·tsc통과다. 로컬 전체 suite를 반복하지 않았다. 수정 커밋은ab2b620이다.
+
+`npm run publish`는 콘텐츠17파일을 커밋ceeafd291a14ccba50c3c9fae7e0ea692e34a8c6에 저장하고 정상 push했다. Actions37242363296의 build/deploy가 success이며 원격 로그의 Node809/809·Python15+2·build·verify-site를 확인했다. 실제 공개18파일(웹·검색·지도·RSS·GitHub 정리)의HTTP200과 로컬 bytes SHA 일치, 공개drive-sync200/sourceSHA일치를 확인했다. RSS40GUID/pubDate 및 원래 cutoff2026-10-04T01:30:38.099959Z는 유지한다.8/7수정을 신규 회차나 정규 운영 횟수로 만들지 않았다.
+
+canonical 검증은6승인·3노트·3MCP 명시 관계, private preview와11HTML/Markdown파일 exact, 작성200SHA를 대조한다. 정의 원본이 교체된 concept-assigned 기사만 bound archive authority로 읽고, 비배정 기사는 기존 loadCurrentApproval을 사용한다. 모든 기사를 concept archive로 읽던 private helper v1과 manifest 경로를 잘못 지정한v2는 실패로 보존했다. 올바른 v3검증은147verified/147appearances·diagnostics0을 확인했다.
+
+### 독자 화면과 배포 데이터 보관
+
+실제 공개8/7브리핑·MCP기사·MCP용어를1280x900/390x844에서 확인했다. 분야 탭query, 전체탭Enter, 카드→기사, 전문용어태그→정의/변화이력, 이력의Enter→기사, 기사→브리핑, 기업태그query와뒤로가기를 수행했다. 뉴스/브리핑 main의지도0·가로넘침0·빈분석탭없음을 확인했다. 모바일 inline 줄바꿈 링크의 중앙 자동화 클릭이 이동하지 않았을 때 DOM/스크린샷/실제 터치영역을 확인하고 동일 링크의Enter로 이동을 검증했다. UI 실패를 성공으로 바꾸지 않았으며 전체 과거자료 UI를 모두 검증한 결과는 아니다. viewport를복원했다.
+
+export-website-data.py는 실제 배포본318페이지/147기사/19노드/17관계·11파일을 가져왔고4배포 asset bytes가 로컬과 같다. WebsiteData기존11raw를 먼저 백업해 이전 receipt SHA와 비교했다. 변경10개를 같은ID로 갱신하고 briefing.xml은불변으로 유지했다.11개 전부 remote raw SHA·ID·부모·크기와12개폴더 멤버십·shared:false를 다시 확인했다. 공개 생성노트66페이지는 작성 원본 Drive ID 직접 매핑이 없어서 snapshot.unmapped_pages에 남긴다. 직접 업로드된 원본200과 생성페이지318을 혼합하지 않는다.
+
+불변 실행 증거는 source-live-debug/legacy-release-execution-20261005-v1.json이다. release receipt를 덮어쓰지 않고 작성4개 raw proof·post snapshot·canonical/public/UI/WebsiteData·Actions 로그의 exact SHA를 결속한다. private Research archive legacy-release-evidence-20261005-v1은25files/26ZIPmembers·3,646,393bytes·SHA e0edaf05c6f28059bab3afb0885ee52ce9b595af0287647484b0d454e45cfd7d, Drive1EpbQ0l2qUkbgNHHdPiqH62uxGtw7qVCt다. 원격 raw SHA/CRC·부모를 확인했으며 source_versions0의 개발/발행 증거 묶음이다. 원문13판본의 독립 복구본 및 전체 portable runtime과 구분한다.
+
+### 남은 범위와 다음 실행
+
+현재200작성/38v2/83legacy·733구간, empty18회차126구간을 분리하고 소급 미판정65회차607구간이다. 용어30/지식노트36·관계34·Signals27/TrendTopics16·sources665/URLgroups664·RSS40이다. 전체92회차801구간의 최종 판정, 독립40dev/20heldout human gold, 정규7회/무인08시, full runtime 복구는 미완료다. WBS2/22·goal active를 유지한다. 직전 모델삭제 상태 응답은 목표 구현의no progress였고 이번 실제 public/WebsiteData/Drive 증거와 다음 원문 확보는progress다. 한시간 반복 병목은 없다.
+
+다음 legacy-20260804-primary-20261005-v1은 원래5출처를 그대로 수집했다. Microsoft발표·GitHub·HF데이터·arXiv의4captured/4parse·148blocks이며 OpenAI원문1차단을보존했다. Microsoft발표8/3·수정8/21은별개이며 현재읽은내용을8/3시점의판단으로덮어쓰지않는다. 공식발표 one-document source selection을고정한 MLX fact_extract는legacy-20260804-orchard-fact-review-20261005-v1에서수행한다. 최신 다른daily 수집17615프로세스는초기live확인뒤PID가사라졌고해당daily폴더에는plan/일부receipt만있다. 완료summary나새회차를확인하지않았으며자동재시작·운영성공집계하지않는다.
+
+## 383. 공통 읽기 도구 수집과 8/4 기사의 원격 복구
+
+2026-10-05 KST. 기존 수집의 정책 허용 403 기록을 보존하면서 실제 GPT 읽기 도구가 읽은 원문을 공통 import-capture로 연결했다. 출처별 crawler나 새 유료 API를 추가하지 않았다. 이 경로는 GPT 도구 보조 수동 import이며 로컬 worker의 무인 자동 fallback은 아니다.
+
+### 입력과 재사용 계약
+
+기존 manual-http-capture/v1의 HTTP200 HTML/PDF 계약은 그대로다. 새 manual-readable-capture/v1은 article_review_status: unreviewed, http_status: null, mime_type: text/markdown을 요구한다. name.md에는 원문에서 선택한 연속 행의 본문을, name.txt에는 가공 전 실제 web.run 응답을 저장한다. readable의 provider/web.run, source_reference, first_line/last_line, transcript_path/SHA를 명시한다. 정확한 최종 URL과 도구 참조가 하나만 있어야 하며 누락·중복·순서 변경·다른 페이지·정규 본문 수정은 거부한다. 원문의 인용 마커는 삭제하지 않는다.
+
+parse_options에는 markdown_publication_date_line, publication_date_pattern, publication_date_format만 허용한다. 발표일 행을 원문에서 읽고 기존 Markdown parser로 파싱하며 관측 시각이나 URL에서 날짜를 추정하지 않는다. 기존 blocked run의 정확한 URL·source ID·policy allowed/checked·HTTP403 및 documents SHA를 고정한다.
+
+```sh
+node scripts/research.mjs import-capture --run <new-readable-run> --source-run <blocked-run> --review captures/<capture>/manifest.json
+node scripts/research.mjs extract --run <new-fact-run> --source-run <new-readable-run> --model-policy data/research-model-policy.json
+```
+
+import가 runs/<run>/capture-evidence에 manifest, blocked-documents, 실제 tool transcript를 create-only 저장한다. body.bin과 source version은 불변이고 latest.json과 원래 차단 기록은 덮어쓰지 않는다. 같은 bytes 재실행은 모델·네트워크 추가 호출 없이 같은 parse를 사용한다. assertStoredEvidence 및 source-register는 이 증거까지 재읽는다. 오래된 근거가 없으면 미완료로 표시하고 승격하지 않는다. 본문에는 도구가 전달한 목차 등도 남을 수 있으므로 사실/편집 검토는 별도로 수행한다.
+
+### 실제 자료와 승인
+
+원래8/4 다섯 URL의 primary run은 legacy-20260804-primary-20261005-v1이다. OpenAI의 영어·한국어 HTTP 수집 실패는 보존했고 실제 도구 응답을 읽어 캡처했다. prototype readable-source-v1은 최종 provenance 계약 이전의 미승인 자료로 유지하며 수정하지 않는다. 최종 legacy-20260804-openai-readable-source-20261005-v2는 1문서/57블록, 본문 SHA d5b116312861ad63830e507120eab75e82301c274175956a08f8c8c7cda0c88f이며 반복 import 결과가 같다.
+
+legacy-20260804-openai-fact-review-20261005-v1의 MLX 후보11개는 구조6통과/5오류였다. 인용·수치 조건·계획 상태를 직접 대조하고6사실을 추가해16verified/1rejected를 기록했다. 의미를 확인할 수 없는 지표 해석은 제외한다. 기사 작성77.028초 이후 원문의 오역·날짜·조건을 직접 정정했고 최종 draft d65fc53299fd61a77428cfea6acab3e48da9737d81e4e9ec45723edd0dea3e3b는 리드2문장/132자와4설명이다. 모델 후보, 직접 사실 보완, 정정 원고를 구분하고 원 출력은 보존한다.
+
+legacy-20260804-orchard-fact-review-20261005-v1은9verified와 draft b1a4933d884e66f245bbc18f1de709f3afea0a5a2871c46a22ee8fa3c73f35cf를 승인했다. 원문 발표8/3과 수정8/21을 분리하고 인용 수치의 판본·재시도 조건을 유지한다. 기존 voice/evaluation 정의를 읽고 각 원고에 명시적으로 배정했으며 동시 등장·기업/제품명으로 새 지도 노드를 만들지 않는다. 이 배정은 기존 용어 전체 이력의 재검토 완료가 아니다.
+
+### 포장 실패, 수정과 검증
+
+서로 무관한 두 승인 run을 하나의 related-run으로 묶으려던 최초 시도는 거부됐다. related-run은 선택한 기사의 후보 승인 의존만 허용한다. 이후 OpenAI portable-v1은 capture-evidence를 포함했지만 importing run이 bound_runs에 없어 Python packager가 거부했다. 기존 경계 검사를 유지하고 공통 closure가 exact readable import document를 대조한 뒤 readable_capture 의존을 방문하도록 수정했다. 실패 manifest는 보존하고 v2로 포장했다.
+
+관련 표적은 research-manual-capture 및 research-archive-closure의20검사다. 최초19통과/1실패는 비어 있는 import documents가 일반 stored-evidence 검사에서 먼저 거부되어 새 fixture 기대 메시지와 달랐던 것이다. 기대하는 최초 거부 조건을 명시하고 별도로 review_status 변경의 의존 불일치 거부도 추가했다. 실패한 새 검사1개만 재실행해 통과했다. 앞 단계의46/46 및15/15는 각 당시 상태의 별도 증거이며 합산하지 않는다. 전체 suite/build는 반복하지 않았다.
+
+### Drive 원격 bytes와 독립 복구
+
+Google Drive Research 폴더11Mu9qSiR8Pk32k53-i032qSRPTdsozV7의 부모/이름/shared=false를 새 조회했다. 두 ZIP을 저장한 뒤 파일별 MIME·크기·부모·shared=false와 실제 원격 raw bytes를 확인했다. 스트림 참조는 로컬 materialized path를 제공하지 않아 기존 bounded base64 호환 경로로 받았으며 signed download URL은 영수증에 넣지 않았다.
+
+| 원격 자료 | bytes / members | 원격 ZIP SHA |
+|---|---|---|
+| OpenAI portable-v2, ID1UGVzV4MA3VRpSAnHUvusBm19-jeFipMC | 807081 / 240 | 303fe9812ece309b73e0cae4fec5d499956a263f187fcbb2a8c1dddffe4a3eaa |
+| Orchard portable-v1, ID1Oi4iPTW0uLsn0atVPS1VniS0-2pbLByw | 745816 / 228 | 640b9281a17efd5320557b13ce6ea62fb49506d8fd33ac7e988363ff670b0941 |
+
+원격 ZIP을 별도 restore-checks에 복구해 manifest 전체 bytes, 승인 원고·검토·source proof·정의 authority를 loadArchivedConceptApproval로 검증했다. 로컬 승인과 모든 반환 bytes가 일치하며 기사25verified facts, 이벤트 deec56a13e2b9b57/a8dbd4f6642c381b, 기존 용어 배정이 보존된다. 위치 register는 정확한 SourceVersion/사건을 해당 Drive 파일에 연결한다. 연구 자료 복구이며 full runtime·후보 장부·worker 자동 재개 복구로 표시하지 않는다.
+
+증거는 .local/research/local-ai/drive-roundtrip/<archive-id>의 drive-receipt.json, approval-restore.json, location-register.json과 source-live-debug/readable-capture-portable-focused-20261005-v1.log/failed-test-v2.log다. 원문·오류·모델 응답·검토·ZIP은 비공개로 유지한다.
+
+### 재개점
+
+작성 원본200파일과 공개 사이트/RSS는 이번 작업에서 변경하지 않았다.8/4의 기존9구간을 모두 판정하고 원래5출처 연결, 두 의존 용어의 과거 이력과 근거를 재검토해야 한다. 현재 Orchard 승인에서 모든 Source List URL을 임의로 승인했다고 처리하지 않는다. 전체 미판정65회차607구간·독립40dev/20heldout human gold·정규7회/무인08시·full runtime portable 검증은 미완료이며 WBS2/22·goal active를 유지한다. 1시간 반복 병목은 없다. Ollama 실제 저장 경로는 내장 /Users/shinjh/.ollama/models이고 외장 이동 요청으로 해석해 변경하지 않았다.

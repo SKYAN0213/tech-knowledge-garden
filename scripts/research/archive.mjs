@@ -62,18 +62,30 @@ export function buildSourceRegister(root, { url_reference_path = null } = {}) {
           return false
         }
       }
-      const valid = (record) =>
-        record &&
-        record.schema_version === "source-document/v1" &&
-        record.source_id === source.name &&
-        record.body_sha256 === version.name &&
-        record.source_version_id === sourceVersionId(source.name, version.name) &&
-        record.body_path === bodyPath &&
-        typeof record.original_url === "string" &&
-        publicURL(record.original_url) &&
-        sourceId(record.original_url) === source.name &&
-        ["captured", "not_modified"].includes(record.fetch_status) &&
-        parseResearchDate(record.observed_at)?.precision === "timestamp"
+      const valid = (record) => {
+        if (!(
+          record &&
+          record.schema_version === "source-document/v1" &&
+          record.source_id === source.name &&
+          record.body_sha256 === version.name &&
+          record.source_version_id === sourceVersionId(source.name, version.name) &&
+          record.body_path === bodyPath &&
+          typeof record.original_url === "string" &&
+          publicURL(record.original_url) &&
+          sourceId(record.original_url) === source.name &&
+          ["captured", "not_modified"].includes(record.fetch_status) &&
+          parseResearchDate(record.observed_at)?.precision === "timestamp"
+        ))
+          return false
+        if (record.capture_method === "manual-readable-tool") {
+          try {
+            assertReadableCaptureEvidence(root, record, body)
+          } catch {
+            return false
+          }
+        }
+        return true
+      }
       let selected = valid(first)
         ? { file: safePath(root, firstPath), record: first }
         : observations
@@ -190,6 +202,41 @@ export function importLegacySources(root, register, snapshotRoot) {
 // Import a separately captured public source without rewriting the collector's
 // blocked attempt or pretending that the normal fetch route succeeded. Inspect
 // every entry before writing any source version, then create immutable copies.
+export function readableCaptureBody(transcript, source) {
+  const normalization = source.readable
+  if (
+    normalization?.provider !== "web.run" ||
+    !/^[a-zA-Z0-9]+$/.test(normalization.source_reference || "") ||
+    !Number.isInteger(normalization.first_line) ||
+    !Number.isInteger(normalization.last_line) ||
+    normalization.first_line < 0 ||
+    normalization.last_line < normalization.first_line ||
+    normalization.last_line - normalization.first_line >= 5000
+  )
+    throw Error("Explicit readable source reference and bounded lines required")
+  const headers = [
+    ...transcript.matchAll(/^.+ \((https:\/\/[^\r\n]+)\)\r?\ncite([a-zA-Z0-9]+)[^\n]*\n/gm),
+  ]
+  const matching = headers.filter(
+    (h) => h[1] === source.final_url && h[2] === normalization.source_reference,
+  )
+  if (matching.length !== 1) throw Error("Exact readable page URL/reference required")
+  const header = matching[0],
+    next = headers[headers.indexOf(header) + 1],
+    page = transcript.slice(header.index + header[0].length, next?.index ?? transcript.length),
+    lines = [...page.matchAll(/(?:^|\n| )L(\d+):[ \t]?([\s\S]*?)(?=(?:\n| )L\d+:|$)/g)]
+      .map((m) => ({ number: Number(m[1]), text: m[2].replace(/\n$/, "") }))
+      .filter(
+        (line) => line.number >= normalization.first_line && line.number <= normalization.last_line,
+      )
+  if (
+    lines.length !== normalization.last_line - normalization.first_line + 1 ||
+    lines.some((line, index) => line.number !== normalization.first_line + index)
+  )
+    throw Error("Readable source range contains missing, repeated or unordered lines")
+  return Buffer.from(lines.map((line) => line.text).join("\n") + "\n")
+}
+
 export function inspectManualCapture(root, manifestPath, blockedRunId) {
   if (typeof manifestPath !== "string" || !manifestPath.endsWith(".json"))
     throw Error("Manual capture manifest path required")
@@ -198,7 +245,7 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
   const manifestBytes = fs.readFileSync(safePath(root, manifestPath))
   const manifest = JSON.parse(manifestBytes)
   if (
-    manifest.schema !== "manual-http-capture/v1" ||
+    !["manual-http-capture/v1", "manual-readable-capture/v1"].includes(manifest.schema) ||
     manifest.article_review_status !== "unreviewed" ||
     !Array.isArray(manifest.sources) ||
     !manifest.sources.length ||
@@ -210,6 +257,7 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
   const blocked = JSON.parse(blockedBytes)
   if (!Array.isArray(blocked)) throw Error("Invalid blocked source run")
   const seen = new Set()
+  const readable = manifest.schema === "manual-readable-capture/v1"
   const entries = manifest.sources.map((source) => {
     if (
       !source ||
@@ -217,9 +265,11 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
       typeof source.name !== "string" ||
       !/^[a-z0-9][a-z0-9-]{0,63}$/.test(source.name) ||
       source.body_path !==
-        `${source.name}.${source.mime_type?.startsWith("application/pdf") ? "pdf" : "html"}` ||
-      source.http_status !== 200 ||
-      !["text/html", "application/pdf"].some((mime) => source.mime_type?.split(";")[0] === mime) ||
+        `${source.name}.${readable ? "md" : source.mime_type?.startsWith("application/pdf") ? "pdf" : "html"}` ||
+      source.http_status !== (readable ? null : 200) ||
+      !(readable ? ["text/markdown"] : ["text/html", "application/pdf"]).some(
+        (mime) => source.mime_type?.split(";")[0] === mime,
+      ) ||
       !/^[a-f0-9]{64}$/.test(source.body_sha256 || "") ||
       !Number.isInteger(source.body_bytes) ||
       source.body_bytes < 1 ||
@@ -248,7 +298,42 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
     const body = fs.readFileSync(safePath(root, localPath))
     if (body.length !== source.body_bytes || sha256(body) !== source.body_sha256)
       throw Error("Manual capture body hash/size mismatch")
-    return { source, body, id, localPath }
+    let readableEvidence = null
+    if (readable) {
+      const evidencePath = path.posix.join(path.posix.dirname(manifestPath), `${source.name}.txt`)
+      if (
+        source.readable?.transcript_path !== `${source.name}.txt` ||
+        !/^[a-f0-9]{64}$/.test(source.readable?.transcript_sha256 || "") ||
+        !Number.isInteger(source.parse_options?.markdown_publication_date_line) ||
+        source.parse_options.markdown_publication_date_line < 1 ||
+        source.parse_options.markdown_publication_date_line >
+          source.readable.last_line - source.readable.first_line + 1 ||
+        ![
+          source.parse_options.publication_date_pattern,
+          source.parse_options.publication_date_format,
+        ].every((value) => typeof value === "string" && value.length > 0 && value.length <= 512) ||
+        Object.keys(source.parse_options).some(
+          (key) =>
+            ![
+              "markdown_publication_date_line",
+              "publication_date_pattern",
+              "publication_date_format",
+            ].includes(key),
+        )
+      )
+        throw Error("Readable capture needs exact transcript and explicit date parse options")
+      const transcript = fs.readFileSync(safePath(root, evidencePath))
+      if (
+        transcript.length > 10 * 1024 ** 2 ||
+        sha256(transcript) !== source.readable.transcript_sha256
+      )
+        throw Error("Readable transcript hash/size mismatch")
+      const decoded = new TextDecoder("utf-8", { fatal: true }).decode(transcript)
+      if (!readableCaptureBody(decoded, source).equals(body))
+        throw Error("Readable body differs from recorded source lines")
+      readableEvidence = { path: evidencePath, body: transcript, sha256: sha256(transcript) }
+    }
+    return { source, body, id, localPath, readableEvidence }
   })
   return {
     entries,
@@ -257,6 +342,7 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
       manifest_sha256: sha256(manifestBytes),
       blocked_run_id: blockedRunId,
       blocked_documents_sha256: sha256(blockedBytes),
+      capture_schema: manifest.schema,
       source_versions: entries.map(({ source, id }) => sourceVersionId(id, source.body_sha256)),
     },
   }
@@ -275,20 +361,26 @@ export function storeManualCapture(root, inspected) {
       final_url: source.final_url,
       observed_at: source.observed_at,
       fetch_status: "captured",
-      http_status: 200,
+      http_status: source.http_status,
       mime_type: source.mime_type,
       etag: source.etag || null,
       last_modified: source.last_modified || null,
       body_sha256: hash,
       body_path: bodyPath,
       article_review_status: "unreviewed",
-      capture_method: "manual-https",
+      capture_method:
+        inspected.identity.capture_schema === "manual-readable-capture/v1"
+          ? "manual-readable-tool"
+          : "manual-https",
       capture_provenance: {
         local_path: localPath,
         manifest_path: inspected.identity.manifest_path,
         manifest_sha256: inspected.identity.manifest_sha256,
         blocked_run_id: inspected.identity.blocked_run_id,
         blocked_documents_sha256: inspected.identity.blocked_documents_sha256,
+        ...(source.readable
+          ? { readable: source.readable, evidence_paths: inspected.identity.evidence_paths }
+          : {}),
       },
     }
     const storedBody = safePath(root, bodyPath)
@@ -309,7 +401,10 @@ export function storeManualCapture(root, inspected) {
       )
         throw Error("Existing manual source metadata conflicts")
     } else atomicCreate(root, first, record)
-    const attemptPath = `documents/${id}/attempts/manual-${sha256(source.observed_at).slice(0, 16)}-${hash.slice(0, 12)}.json`
+    const readableSuffix = source.readable
+      ? `-${sha256(JSON.stringify(record.capture_provenance)).slice(0, 12)}`
+      : ""
+    const attemptPath = `documents/${id}/attempts/manual-${sha256(source.observed_at).slice(0, 16)}-${hash.slice(0, 12)}${readableSuffix}.json`
     const previousAttempt = readJSON(root, attemptPath)
     if (previousAttempt) {
       if (sha256(JSON.stringify(previousAttempt)) !== sha256(JSON.stringify(record)))
@@ -317,6 +412,70 @@ export function storeManualCapture(root, inspected) {
     } else atomicCreate(root, attemptPath, record)
     return record
   })
+}
+
+// A readable snapshot is evidence only while its exact tool observation and
+// failed collector observation remain available, including after restoration.
+export function assertReadableCaptureEvidence(root, document, body) {
+  if (document.capture_method !== "manual-readable-tool") return
+  const provenance = document.capture_provenance
+  const paths = provenance?.evidence_paths
+  if (
+    document.http_status !== null ||
+    !Array.isArray(paths) ||
+    paths.length < 3 ||
+    paths.length > 10 ||
+    new Set(paths).size !== paths.length ||
+    !/^runs\/[a-zA-Z0-9_-]+\/capture-evidence\/manifest\.json$/.test(paths[0] || "")
+  )
+    throw Error("Readable capture provenance is incomplete")
+  const prefix = path.posix.dirname(paths[0])
+  if (paths.some((p) => path.posix.dirname(p) !== prefix))
+    throw Error("Readable capture evidence paths differ")
+  const manifestBytes = fs.readFileSync(safePath(root, paths[0]))
+  if (sha256(manifestBytes) !== provenance.manifest_sha256)
+    throw Error("Stored readable manifest hash mismatch")
+  const manifest = JSON.parse(manifestBytes)
+  const matching = manifest.sources?.filter((s) => s.original_url === document.original_url)
+  if (manifest.schema !== "manual-readable-capture/v1" || matching?.length !== 1)
+    throw Error("Stored readable manifest source identity mismatch")
+  const source = matching[0]
+  if (
+    source.body_sha256 !== document.body_sha256 ||
+    source.body_bytes !== body.length ||
+    source.observed_at !== document.observed_at ||
+    source.final_url !== document.final_url ||
+    source.mime_type !== document.mime_type ||
+    source.http_status !== null ||
+    JSON.stringify(source.readable) !== JSON.stringify(provenance.readable)
+  )
+    throw Error("Readable document differs from its recorded observation")
+  const blockedPath = `${prefix}/blocked-documents.json`
+  const transcriptPath = `${prefix}/${source.name}.txt`
+  if (!paths.includes(blockedPath) || !paths.includes(transcriptPath))
+    throw Error("Readable capture original observations missing")
+  const blockedBytes = fs.readFileSync(safePath(root, blockedPath))
+  if (sha256(blockedBytes) !== provenance.blocked_documents_sha256)
+    throw Error("Stored readable blocked observation hash mismatch")
+  const blocked = JSON.parse(blockedBytes).find((d) => d.original_url === source.original_url)
+  if (
+    blocked?.source_id !== document.source_id ||
+    blocked.fetch_status !== "blocked" ||
+    blocked.http_status !== 403 ||
+    blocked.policy_status !== "checked" ||
+    blocked.policy?.allowed !== true
+  )
+    throw Error("Readable capture blocked observation differs")
+  const transcript = fs.readFileSync(safePath(root, transcriptPath))
+  if (sha256(transcript) !== source.readable.transcript_sha256)
+    throw Error("Stored readable transcript hash mismatch")
+  if (
+    !readableCaptureBody(
+      new TextDecoder("utf-8", { fatal: true }).decode(transcript),
+      source,
+    ).equals(body)
+  )
+    throw Error("Stored readable body differs from source lines")
 }
 export function archiveManifest(root, runId) {
   const base = safePath(root, `runs/${runId}`)
@@ -358,6 +517,20 @@ export function archiveManifest(root, runId) {
     const body = fs.readFileSync(bodyPath)
     if (sha256(body) !== document.body_sha256)
       throw Error("Captured source body hash mismatch: " + document.source_version_id)
+    assertReadableCaptureEvidence(root, document, body)
+    if (document.capture_method === "manual-readable-tool") {
+      for (const relative of document.capture_provenance.evidence_paths) {
+        const evidence = fs.readFileSync(safePath(root, relative))
+        if (!results.some((file) => file.path === relative))
+          results.push({
+            path: relative,
+            bytes: evidence.length,
+            sha256: sha256(evidence),
+            drive_root: "Research",
+            public: false,
+          })
+      }
+    }
     const previous = sourceFiles.get(document.body_path)
     if (previous && previous.source_version_id !== document.source_version_id)
       throw Error("Conflicting source versions share one archive path")

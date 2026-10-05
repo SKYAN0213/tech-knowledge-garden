@@ -941,12 +941,40 @@ export async function main(argv = process.argv.slice(2)) {
         importer_sha256: sha256(fs.readFileSync("scripts/research/archive.mjs")),
       })
       const selectedProfiles = inspected.entries.map(({ source }) => {
+        if (inspected.identity.capture_schema === "manual-readable-capture/v1")
+          return { id: "readable-source/v1", options: source.parse_options }
         const matching = profiles.filter((profile) =>
           new RegExp(profile.url_pattern).test(source.final_url),
         )
         if (matching.length !== 1) throw Error("Manual capture needs one exact article profile")
         return matching[0]
       })
+      if (inspected.identity.capture_schema === "manual-readable-capture/v1") {
+        const evidencePaths = [`runs/${v.run}/capture-evidence/manifest.json`]
+        const manifestBytes = fs.readFileSync(safePath(root, v.review))
+        if (fs.existsSync(safePath(root, evidencePaths[0]))) {
+          if (!fs.readFileSync(safePath(root, evidencePaths[0])).equals(manifestBytes))
+            throw Error("Stored readable manifest changed")
+        } else atomicCreate(root, evidencePaths[0], manifestBytes)
+        const blockedPath = `runs/${v.run}/capture-evidence/blocked-documents.json`
+        const blockedBytes = fs.readFileSync(
+          safePath(root, `runs/${v["source-run"]}/documents.json`),
+        )
+        if (fs.existsSync(safePath(root, blockedPath))) {
+          if (!fs.readFileSync(safePath(root, blockedPath)).equals(blockedBytes))
+            throw Error("Stored readable blocked observation changed")
+        } else atomicCreate(root, blockedPath, blockedBytes)
+        evidencePaths.push(blockedPath)
+        for (const entry of inspected.entries) {
+          const relative = `runs/${v.run}/capture-evidence/${entry.source.name}.txt`
+          if (fs.existsSync(safePath(root, relative))) {
+            if (sha256(fs.readFileSync(safePath(root, relative))) !== entry.readableEvidence.sha256)
+              throw Error("Stored readable transcript changed")
+          } else atomicCreate(root, relative, entry.readableEvidence.body)
+          evidencePaths.push(relative)
+        }
+        inspected.identity.evidence_paths = evidencePaths
+      }
       const documents = storeManualCapture(root, inspected)
       const parses = []
       for (const [index, document] of documents.entries()) {

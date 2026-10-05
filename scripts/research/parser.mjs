@@ -5,6 +5,7 @@ import { spawn } from "node:child_process"
 import { assertParse, sha256, sourceId } from "./contracts.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { atomicCreate, atomicWrite, safePath, readJSON } from "./run-state.mjs"
+import { assertReadableCaptureEvidence } from "./archive.mjs"
 
 function parseContentFingerprint(parse) {
   const content = structuredClone(parse)
@@ -221,6 +222,7 @@ export function assertStoredEvidence(root, documents, parses) {
       throw Error("Captured source and valid observation timestamp required")
     const body = fs.readFileSync(safePath(root, document.body_path))
     if (sha256(body) !== document.body_sha256) throw Error("Stored original body hash mismatch")
+    assertReadableCaptureEvidence(root, document, body)
   }
   for (const parse of parses) {
     assertParse(parse)
