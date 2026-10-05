@@ -88,6 +88,29 @@ const urlsIn = (content) =>
   [...new Set((content.match(/https?:\/\/[^\s<>\]\)]+/g) || []).map(canonicalURL))].sort()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 
+// Metadata eligibility is not source review or publication approval. Inventory
+// uses the same checks as transition so missing historical cutoffs surface early.
+export function legacyTransitionReadiness(meta, relativePath) {
+  const day = relativePath.split("/").at(-1).slice(0, 10)
+  const issues = []
+  if (meta.date !== day) issues.push("date")
+  if (
+    relativePath !==
+    `Editions/${day.slice(0, 4)}/${day.slice(5, 7)}/${relativePath.split("/").at(-1)}`
+  )
+    issues.push("path")
+  if (meta.timezone !== "Asia/Seoul") issues.push("timezone")
+  const start = parseResearchDate(meta.coverage_start)
+  const end = parseResearchDate(meta.coverage_end)
+  if (!start) issues.push("coverage_start")
+  if (!end) issues.push("coverage_end")
+  if (start && end && start.instant >= end.instant) issues.push("coverage_order")
+  return {
+    status: issues.length ? "metadata_recovery_required" : "metadata_ready",
+    issues,
+  }
+}
+
 // Resolve explicit original citations only. Ambiguous or dangling markers must
 // never silently become source-free prose eligible for manual reassignment.
 function legacySources(body, units) {
@@ -138,15 +161,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   )
     throw Error("Legacy transition requires the exact pre-v2 original")
   const day = packet.target_path.split("/").at(-1).slice(0, 10)
-  if (
-    before.meta.date !== day ||
-    packet.target_path !==
-      `Editions/${day.slice(0, 4)}/${day.slice(5, 7)}/${packet.target_path.split("/").at(-1)}` ||
-    before.meta.timezone !== "Asia/Seoul" ||
-    !parseResearchDate(before.meta.coverage_start) ||
-    !parseResearchDate(before.meta.coverage_end) ||
-    Date.parse(before.meta.coverage_start) >= Date.parse(before.meta.coverage_end)
-  )
+  if (legacyTransitionReadiness(before.meta, packet.target_path).issues.length)
     throw Error("Legacy transition requires preserved edition identity and cutoffs")
   const allowedMeta = new Set([
     "title",

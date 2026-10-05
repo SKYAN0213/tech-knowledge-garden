@@ -15,6 +15,7 @@ import {
   retrospectiveInventory,
   saveRetrospectiveInventory,
 } from "../scripts/research/retrospective.mjs"
+import { legacyTransitionReadiness } from "../scripts/research/legacy-transition.mjs"
 
 const eventId = "1234567890abcdef"
 function fixture(t) {
@@ -153,6 +154,52 @@ test("legacy units keep separate identities, exact spans and shared URL candidat
   assert.equal(group.source_ids.length, 2)
   assert(result.sources.some((s) => s.url === "https://example.com/paper_(v1)"))
   assert(!result.sources.some((s) => s.url.includes("ignored.example.com")))
+})
+
+test("legacy metadata readiness exposes missing cutoffs without guessing dates or reviewing prose", async (t) => {
+  const { vault } = fixture(t)
+  const relative = "Editions/2026/07/2026-07-23_0803_Tech_AI_Briefing.md"
+  const target = path.join(vault, relative)
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  const original = "---\n{}\n---\n\n# Original news\n\n[Source](https://example.com/july)\n"
+  fs.writeFileSync(target, original)
+  const result = await retrospectiveInventory(vault)
+  const edition = result.legacy.find((e) => e.path === relative)
+  assert.deepEqual(edition.transition_readiness, {
+    status: "metadata_recovery_required",
+    issues: ["date", "timezone", "coverage_start", "coverage_end"],
+  })
+  assert.equal(edition.date, "2026-07-23") // existing routing date, not source metadata
+  assert.equal(edition.review_status, "unreviewed")
+  assert.equal(result.counts.legacy_editions_metadata_recovery_required, 2)
+  assert.equal(result.counts.legacy_editions_requiring_review, 2)
+  assert.equal(result.counts.distinct_events, 1)
+  assert.equal(fs.readFileSync(target, "utf8"), original)
+})
+
+test("legacy readiness shares transition identity and cutoff checks without promoting eligibility", () => {
+  const relative = "Editions/2026/07/2026-07-24_0800_Tech_AI_Briefing.md"
+  const meta = {
+    date: "2026-07-24",
+    timezone: "Asia/Seoul",
+    coverage_start: "2026-07-23T08:03:00+09:00",
+    coverage_end: "2026-07-24T08:00:36+09:00",
+  }
+  assert.deepEqual(legacyTransitionReadiness(meta, relative), {
+    status: "metadata_ready",
+    issues: [],
+  })
+  for (const field of ["date", "timezone", "coverage_start", "coverage_end"]) {
+    const changed = { ...meta, [field]: "invalid" }
+    assert.deepEqual(legacyTransitionReadiness(changed, relative).issues, [field])
+  }
+  assert.deepEqual(
+    legacyTransitionReadiness({ ...meta, coverage_end: meta.coverage_start }, relative).issues,
+    ["coverage_order"],
+  )
+  assert.deepEqual(legacyTransitionReadiness(meta, relative.replace("/07/", "/08/")).issues, [
+    "path",
+  ])
 })
 
 test("same inventory run is immutable, resumption checks authored changes and checkpoint tampering", async (t) => {

@@ -4194,3 +4194,17 @@ WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9�
 WebsiteData337pages/161articles/24nodes/22relations의11새raw를 검증했다.10같은ID 갱신·RSS1불변·기존저장영수증1보존을 구분한다. 실제Drive 발행증거403files/404members의 SHA/CRC/전체member를대조해 ordinary v1복구했다.6원문 portable복구와 fullruntime미완료를 구분한다.
 
 canonical 미판정59회차553구간·diagnostics0이다. 다음7/24·7/23·7/22를 작은검토묶음으로 처리한다. 기존 독립human40/20·정규7회/무인08시·fullportable runtime·전체legacy판정·WBS2/22·goalactive는유지한다. 이번progress는 실제Drive/공개변경이며1시간 동일실패반복0이다. 상세런북395.
+
+## 19.303. 발행 증거 복구의 재사용과 다음 소급 묶음의 실제 근거
+
+공통 ZIP 복구기에 정확한 외부 원본 manifest를 명시하는 v1 복구를 추가했다. 기존 v2 의존성 관문은 유지하고 일반 발행 증거는 `dependency_closed:false`로 구분한다. 표적16/16과 이전 실제 원격 ZIP의403자료 bytes/SHA 복구를 확인했다. 회차마다 임시 ZIP 복구 코드를 다시 작성하지 않는다. 새 Drive readback 또는 전체 runtime 복구로 집계하지 않는다.
+
+다음7/24·7/23·7/22의 원본 SHA·10URL을 고정하고 공통 직접수집5개·403다섯을 확인했다. venv 지정 누락은 같은 run의 완료 fetch 재사용으로 해결했다. OpenAI4자료는 기존 읽기 도구 capture를 재사용했다. 8사건의 source-bound56사실을 직접 검토하고 실제 Qwen 초안 작성으로 넘겼다. 보안 발표의 이후 추기를 섞거나 현재 Health 도움말의9월 권한 정책을7월 당시 판단으로 덮어쓰지 않는다.
+
+실제 Qwen 원고8건의 정정·승인을 완료했다. 회차 전체 전환·의존 용어/날짜 이력·Drive-first 발행이 다음 단계다. 미판정59/553·독립human40/20·실제정규7회·전체runtime복구·전체WBS2/22와 goal active는 유지한다. 실제 명령·진척·검증과 다음 입력은 런북396을 따른다.
+
+## 19.304. 전환 전에 드러나는 메타데이터 복구와 승인 재사용
+
+전수 목록과 전환 검증기가 원본 날짜·시간대·조사 구간 검사 함수를 공유한다. 파일명 날짜 보정으로 원본 누락을 정상으로 오인하지 않으며, 표적46/46과 실제 inventory에서 복구 필요10회차를 확인했다. 미판정59/553은 줄이지 않는다. 7월23·22일 기사 승인4건은 보존하고 정확한 메타데이터 근거를 찾는 복구 항목을 독립 진행한다. 누락을 추정해 전환 관문을 통과시키지 않는다.
+
+정상7월24일10구간을4사건으로 연결하고 MCP의7월23일 사전 지원 이력 및 검토된 빈 Signals를 승인했다. 기존 정의11사실·5원문판본을 공통 bundle로 재사용해 반복 모델 생성0이며 기사4portable ZIP의 실제 복구와 동일 파일 충돌 검사를 통과했다. 다음 실제 reader 생성·원문/기사/용어/이력/웹·RSS·GitHub 대조·Drive-first 발행을 수행한다. 전체 legacy 판정·독립human40/20·정규7회·fullruntime복구·WBS2/22·goalactive는 유지한다. 상세 런북397.

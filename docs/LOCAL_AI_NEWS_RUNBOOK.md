@@ -9938,3 +9938,40 @@ live PID49272의 garden-operation lock으로 저장 구간을 보호했다. 기�
 canonical inventory는 작성206·v244·legacy77/679, 검토한빈18/126을 제외한 미판정59회차553구간·161verifiedevents·35conceptIDs/41knowledge notes/40authoredrelations·28Signals/16Topics·RSS40·diagnostics0이다. 다음 실제 미검토는7/24_0800이고7/23·7/22와 묶음 검토를 이어간다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체legacy판정·전체WBS2/22는 남는다. 목표active를 유지한다. 이번은 authoritative Drive와 실제 공개를 변경한 progress이며 1시간 동일실패 재시도는 없었다.
 
 증거 루트는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1이다. july28-27-25-drive-preflight-v1의 tree/raw203/second/post-raw-verification/execution/release-review, source-before/post snapshot, ci-status-v1.json/release-ci-full-v1.log, public-readback-v1/receipt.json, rss-identity-verification-v1.json, public-ui-verification-v1.json/두JPEG, website-before/after/final-listing/raw-verification-v1, release-archive-observation-v1.json과 실제remoteZIP/release-evidence-restored-v1, release-evidence-restore-observation-v1.json을 확인한다. 통과한 원문 조사·모델 생성·표적 suite와 전체CI를 반복하지 않고 다음 원문 묶음으로 진행한다.
+
+## 396. 발행 증거의 공통 복구와 다음 세 회차 원문 확보
+
+`scripts/research/package-archive.py`의 복구 경로가 v2 의존성 묶음만 지원해 일반 v1 발행 증거를 매번 임시 코드로 복구하던 반복을 제거했다. v1은 ZIP에 기록된 원본 manifest SHA와 정확하게 일치하는 `--source-manifest`를 명시해야 한다. ZIP SHA, run ID, 파일 목록, 개별 bytes/SHA, 비공개 분류, 허용 경로와 전체 member를 대조한 뒤 새 private 폴더에만 쓴다. manifest를 추측하거나 기존 ZIP을 재포장하지 않는다. v2의 embedded manifest와 의존 범위 검증은 유지하며 외부 manifest로 대체할 수 없다.
+
+실제 실행:
+
+```sh
+python3 scripts/research/package-archive.py \
+  --root /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1 \
+  --package july28-27-25-release-archive-remote-v1.zip \
+  --restore-to common-release-evidence-restored-20261005-v1 \
+  --expected-sha256 64fcd079f04eb935e0890a12d9877cc0a77e9d9bca6b2b3948d5b52d5a8f1b2d \
+  --source-manifest combined-v2/runs/legacy-20260728-27-25-public-release-evidence-20261005-v1/archive-manifest.json
+```
+
+앞서 실제 Drive에서 내려받은 동일 ZIP으로 403자료의 bytes/SHA를 검증했다. 영수증의 405파일은 자료403+원본 manifest+package manifest다. 이번에는 새 원격 다운로드를 수행하지 않았다. `archive_schema: research-archive/v1`, `dependency_closed: false`, `drive_verified: false`로 일반 증거 복구를 의존성 전체 복구·새 Drive 검증·전체 runtime 복구로 승격하지 않는다. 원본 manifest가 없거나 다르면 쓰기 전에 거부한다.
+
+신규 `tests/research-archive-restore.test.mjs`와 기존 `tests/research-archive-closure.test.mjs`의 표적16/16이 통과했다. 캐시 제거 후 복구, manifest 누락/변조, ZIP SHA·run·목록·본문 변경, 미등록 member, 공개 자료, 경로 이탈, 다른 run 경로, symlink 거부와 기존 v2 회귀를 확인했다. 전체 suite는 반복하지 않았다. external root의 `common-evidence-restore-tests-20261005-v1.log`, `common-release-evidence-restore-20261005-v1.json`, `common-evidence-restore-readback-20261005-v1.json`이 증거다.
+
+7/24·7/23·7/22 원본 SHA·10URL을 `july24-23-22-batch-input-20261005-v1.json`에 고정했다. 공통 collect 직접5개 확보·403다섯을 구분했다. 첫 parse는 private 자료 root에 venv가 없어 ENOENT로 종료됐고 완료 fetch3개를 보존했다. `RESEARCH_PYTHON`을 실제 외장 canonical venv로 지정해 같은 run을 재개했다. OpenAI4자료는 기존 `manual-readable-capture/v1`으로 실제 web.run 응답·정확한 URL/행 범위·원래403을 보존하며 보완했다. HTTP200으로 표시하지 않는다. Health는 전체 개인정보 조항까지 확보한 별도v2를 사용한다. 현재 Help Center에 명시된9월 권한 정책을7월 당시 근거로 사용하지 않는다.
+
+8사건의 직접 원문 검토56사실을 private run에 기록했다(Health9/Issues7/Linear6/MCP7/Presence7/metrics5/science7/incident8). 보안 사고는 OpenAI7/21 최초 본문과 Hugging Face7/16 공지를 회사별·날짜별로 구분했고7/28·7/29·8/26 추기를 과거 기사에 넣지 않았다. 지원 금액은 집행 실적, 공급사의 해결률은 독립 검증, 사용 집단 지표는 인과효과로 표현하지 않는다. Codex 직접 검토는 독립 human gold로 집계하지 않는다.
+
+8건의 실제 Qwen 초안이 모두 terminal complete이며 재생성 없이 원문 대조·정정·편집 승인을 마쳤다. `july24-23-22-approval-results-20261005-v1.json`과 각 run의 원출력·정정 chain을 보존한다. 작성 원본206·공개e6ff0f9·RSS40·전수 미판정59/553은 유지된다. 전체 회차 전환·용어/이력 검토·Drive-first 공개·정규7회·독립human40/20·전체runtime복구는 이어서 완료한다. 저장 위치 재확인은 개발 구현의 진척과 구분하며 이번 공통 수정·실물 복구·원문 검토는 progress다. 1시간 같은 실패 반복은 없다.
+
+## 397. 과거 회차 메타데이터 복구 목록과 7월 24일 전환 준비
+
+공통 `legacyTransitionReadiness`를 전환 관문과 retrospective inventory가 함께 사용한다. 원본 머리말의 날짜·시간대·조사 시작/종료·구간 순서를 확인하고 `metadata_ready` 또는 `metadata_recovery_required`와 필드 목록을 비공개 출력한다. 전환 가능성은 원문 검토·승인·배포 완료가 아니다. `editions()`의 파일명 기반 라우팅 날짜를 원본 보존 메타데이터로 사용하지 않는다. 원본을 수정하거나 빈 값에 추정 시각을 넣지 않는다.
+
+최초 표적 검사에서 파일명 날짜 보정으로 원본 날짜 누락을 놓치는 것을 재현하고 원본 parse 결과로 고쳤다. retrospective/projection 표적46/46이 통과했다. canonical inventory `legacy-metadata-readiness-canonical-20261005-v1`은206원본·미판정59/553·161verifiedevents·diagnostics0을 유지하며 메타데이터 복구 필요10회차를 별도로 집계한다. 7월23·22·21일 및7월11·14·15·16·17·18일과6월23일 sample이다. 누락을 조사 성공·빈 뉴스·공개 제외로 판정하지 않는다. 원 작성 자료나 보관본에서 정확한 값을 찾는 복구 항목이며 승인한8원고는 재생성하지 않는다.
+
+7월24일 원래10구간·5출처를 네 고정 사건으로 연결한 명시 전환 packet을 만들었다. Health 현재 도움말의9월 변경 대신7월23일 공식 출시 원문의 전체 조항을 당시 근거로 명시 배정하고 원래 도움말 URL/403은 private에 보존한다. Issues 자동 변경 기능과 Linear 코딩 agent의 별개 발표를 분리했다. 기존 MCP 정의의 source-bound11사실·5판본을 재사용해7월23일 사전 지원의 날짜 이력·기사 연결만 추가했다. 임의 추세 판단 없이 Signals는 검토된 빈 관측으로 승인했다. 회사·제품·일반어 노드나 공동 등장 관계를 만들지 않는다.
+
+기사4건을 공통v2 ZIP으로 만들고31/49/49/49payload bytes를 복구했다. canonical private 연구 루트로 옮길 때 이미 있는58파일은 exact bytes로 대조하고 새120파일만 생성했다. 작성 vault·공개 자료는 아직 변경하지 않았다. 기존 MCP 배경 기사 approval의 옛 노트와 현재 노트가 달라 통째 closure 복사를 거부한 증거를 보존했다. 옛 승인 우회 대신 현재 note의 동일 facts·원본3수집 묶음을 공통 bundle로 재사용하며 새 모델 호출0으로 구분한다. 서로 다른 사건을 related-run으로 묶지 않고 사건별 보관 계약을 유지한다.
+
+외장 `july24-reader-inputs-20261005-v2.json`은 새 MCP 배정 승인 run·노트 승인 run·전체 전환 packet의 다음 입력이다. 다음은 이 입력의 실제 reader 생성·기존RSS/ID/링크/내용 검증, 승인과 근거의 Drive 보관, fresh Drive-first 작성 반영 및 공개 검증이다. 독립human40/20·정규7회·fullruntime복구·전체 legacy 판정·WBS2/22·goalactive는 남는다. 같은 실패를 한시간 재시도한 항목은 없다.

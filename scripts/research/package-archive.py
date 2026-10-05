@@ -145,7 +145,7 @@ def create_package(root, run_id):
         temporary.unlink(missing_ok=True)
 
 
-def restore_package(root, package, destination, expected_sha256):
+def restore_package(root, package, destination, expected_sha256, source_manifest=None):
     root = root.resolve(strict=True)
     source = safe_file(root, package)
     target = safe_file(root, destination)
@@ -169,24 +169,46 @@ def restore_package(root, package, destination, expected_sha256):
             raise ValueError("One package manifest required")
         packed = json.loads(archive.read(manifests[0]))
         manifest = packed.get("archive_manifest")
-        if packed.get("schema") != "research-archive-package/v1" or manifest is None or manifest.get("schema") != "research-archive/v2":
+        if packed.get("schema") != "research-archive-package/v1":
+            raise ValueError("Invalid archive package manifest")
+        if manifest is None and source_manifest:
+            # Ordinary v1 packages pin the original manifest hash but do not
+            # embed its bytes. An explicit exact manifest is required; never
+            # reconstruct it from file names or infer dependency closure.
+            raw = safe_file(root, source_manifest).read_bytes()
+            if sha256(raw) != packed.get("source_manifest_sha256"):
+                raise ValueError("Archive source manifest mismatch")
+            manifest = json.loads(raw)
+            if manifest.get("schema") != "research-archive/v1":
+                raise ValueError("External manifest is only supported for ordinary v1 archives")
+            embedded_manifest = False
+        elif manifest is not None and not source_manifest:
+            embedded_manifest = True
+        else:
             raise ValueError("Restore requires a portable dependency archive")
+        if manifest.get("schema") not in {"research-archive/v1", "research-archive/v2"}:
+            raise ValueError("Unsupported restore archive schema")
+        dependency_closed = manifest["schema"] == "research-archive/v2"
         run_id = manifest.get("run_id")
         if not isinstance(run_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", run_id) or packed.get("run_id") != run_id:
             raise ValueError("Invalid restore run identity")
-        if manifest.get("source_run") not in manifest.get("bound_runs", []):
+        if dependency_closed and manifest.get("source_run") not in manifest.get("bound_runs", []):
             raise ValueError("Source run is outside archive dependency scope")
         if manifests[0] != f"Research/LocalAI/runs/{run_id}/archive-package-manifest.json" or packed.get("files") != manifest.get("files"):
             raise ValueError("Archive package manifest disagrees with dependency manifest")
         raw_name = f"Research/LocalAI/runs/{run_id}/archive-manifest.json"
-        raw = archive.read(raw_name)
+        if embedded_manifest:
+            raw = archive.read(raw_name)
         if sha256(raw) != packed.get("source_manifest_sha256") or json.loads(raw) != manifest:
             raise ValueError("Archive source manifest mismatch")
-        expected_names = {manifests[0], raw_name}
+        files = manifest.get("files")
+        if not isinstance(files, list) or not files:
+            raise ValueError("Research archive has no files")
+        expected_names = {manifests[0]} | ({raw_name} if embedded_manifest else set())
         local_paths = set()
-        for item in manifest.get("files", []):
+        for item in files:
             member = archive_member(manifest, item)
-            if member in expected_names or item["path"] in local_paths:
+            if member in expected_names or member == raw_name or item["path"] in local_paths:
                 raise ValueError("Duplicate archive dependency path")
             expected_names.add(member)
             local_paths.add(item["path"])
@@ -212,7 +234,9 @@ def restore_package(root, package, destination, expected_sha256):
             os.fsync(handle.fileno())
     receipt = {"schema": "research-archive-restore/v1", "run_id": run_id,
                "package_sha256": expected_sha256, "files": len(outputs),
-               "bound_runs": manifest["bound_runs"], "destination": destination,
+               "bound_runs": manifest["bound_runs"] if dependency_closed else [run_id],
+               "archive_schema": manifest["schema"], "dependency_closed": dependency_closed,
+               "source_manifest_sha256": sha256(raw), "destination": destination,
                "network_used": False, "candidate_published": False, "drive_verified": False}
     with safe_file(target, "restore-receipt.json").open("x") as handle:
         json.dump(receipt, handle, ensure_ascii=False, indent=2)
@@ -227,11 +251,12 @@ def main():
     parser.add_argument("--package")
     parser.add_argument("--restore-to")
     parser.add_argument("--expected-sha256")
+    parser.add_argument("--source-manifest", help="Exact original manifest for ordinary v1 archive restoration")
     args = parser.parse_args()
-    if args.package or args.restore_to or args.expected_sha256:
+    if args.package or args.restore_to or args.expected_sha256 or args.source_manifest:
         if args.run or not (args.package and args.restore_to and args.expected_sha256):
             parser.error("Restore requires --package, --restore-to and --expected-sha256, without --run")
-        result = restore_package(args.root, args.package, args.restore_to, args.expected_sha256)
+        result = restore_package(args.root, args.package, args.restore_to, args.expected_sha256, args.source_manifest)
     elif args.run:
         result = create_package(args.root, args.run)
     else:

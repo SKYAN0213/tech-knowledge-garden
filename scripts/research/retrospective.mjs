@@ -8,6 +8,7 @@ import { makeResolver } from "../links.mjs"
 import { PUBLIC_ROOTS, sha256, sourceId } from "./contracts.mjs"
 import { RunState } from "./run-state.mjs"
 import { legacyReviewUnits, loadEmptyLegacyReviews } from "./legacy-review.mjs"
+import { legacyTransitionReadiness } from "./legacy-transition.mjs"
 
 const distinct = (xs) => [...new Set(xs)].sort()
 const markdown = unified().use(remarkParse)
@@ -246,6 +247,12 @@ export async function retrospectiveInventory(
         sha256: hashes[relative],
         schema_version: edition.meta.schema_version || null,
         review_status: "unreviewed",
+        // editions() adds a routing date from the filename; that is not a
+        // preserved source identity eligible for a historical transition.
+        transition_readiness: legacyTransitionReadiness(
+          notes.find((note) => note.path === relative).meta,
+          relative,
+        ),
         units,
       })
       continue
@@ -401,6 +408,11 @@ export async function retrospectiveInventory(
       legacy_units_requiring_review: legacy
         .filter((e) => e.review_status === "unreviewed")
         .reduce((n, e) => n + e.units.length, 0),
+      legacy_editions_metadata_recovery_required: legacy.filter(
+        (e) =>
+          e.review_status === "unreviewed" &&
+          e.transition_readiness.status === "metadata_recovery_required",
+      ).length,
       distinct_events: events.length,
       appearances: events.reduce((n, e) => n + e.appearances.length, 0),
       verified_events: events.filter((e) => e.review_status === "verified").length,
