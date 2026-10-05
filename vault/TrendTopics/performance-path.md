@@ -1,7 +1,7 @@
 ---
 schema_version: tech-trend/v1
 type: trend-topic-source
-reviewed: 2026-10-04
+reviewed: 2026-10-05
 id: performance-path
 title: 성능 평가를 전체 실행 경로로
 question: 단품 속도가 빨라지면 실제 요청도 빨라지는가?
@@ -14,11 +14,15 @@ knowledge_notes:
   - Knowledge/AI Systems/AI Inference Infrastructure
   - Knowledge/AI Systems/KV Cache
   - Knowledge/Data Systems/Latency Percentiles
+  - Knowledge/AI Systems/Classifier-Free Guidance
+  - Knowledge/AI Systems/Diffusion Transformer
 lessons: []
 reader_format: source-events/v1
 ---
 
 # 성능 평가를 전체 실행 경로로
+
+2026-07-26 — NVIDIA가 소개한 GalaxyDiT의 본문 표에서 Wan2.1-1.3B slow는 1.85배 가속·VBench 56.65%→55.68%, fast는 2.57배·52.83%다. 14B fast는 2.37배·58.36%→57.64%이며 GPU·프레임·해상도 조건은 기사에 함께 기록한다. [[News/a9911e33a5a858b4|기사]] · [논문 전문](https://arxiv.org/html/2512.03451v1)
 
 2026-08-24 — NVIDIA는 Groq 3 LPX 양산과 Rubin GPU·LPU 공동 추론 구성을 소개했다. [[News/19af374b78b369cd|기사]] · [원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/)
 

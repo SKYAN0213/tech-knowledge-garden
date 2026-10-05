@@ -20,8 +20,10 @@ tags:
 - [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]]
 - [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]
 - [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]]
+- [[Knowledge/AI Systems/Classifier-Free Guidance|분류기 없는 가이던스]]
 - [[Knowledge/AI Systems/Context Compaction|문맥 압축]]
 - [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]]
+- [[Knowledge/AI Systems/Diffusion Transformer|확산 트랜스포머]]
 - [[Knowledge/AI Systems/Double-Blind AI Evaluation|이중 블라인드 AI 평가]]
 - [[Knowledge/AI Systems/KV Cache|KV 캐시]]
 - [[Knowledge/AI Systems/Model Context Protocol|MCP]]
@@ -50,6 +52,7 @@ tags:
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 에이전트와 실행 환경의 최종 결과를 성공 기준으로 채점한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) |
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | 평가는 실행 기록과 최종 환경 상태를 서로 다른 증거로 사용한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [근거](https://openai.github.io/openai-agents-python/tracing/) |
 | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 모델 호출·도구 사용·이관으로 구성된 실행을 추적한다. [근거](https://openai.github.io/openai-agents-python/tracing/) · [근거](https://openai.github.io/openai-agents-python/agents/) |
+| [[Knowledge/AI Systems/Classifier-Free Guidance|분류기 없는 가이던스]] | [[Knowledge/AI Systems/Diffusion Transformer|확산 트랜스포머]] | 영상 확산 모델은 각 DiT 경로의 노이즈 예측을 CFG로 결합해 다음 sampler 입력을 만든다. [근거](https://arxiv.org/html/2512.03451v1) |
 | [[Knowledge/AI Systems/Context Compaction|문맥 압축]] | [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]] | 대화 문맥을 교체하면 프롬프트 앞부분이 바뀌어 압축 직후 이전 캐시의 재사용을 줄일 수 있다. [근거](https://developers.openai.com/api/docs/guides/prompt-caching.md) |
 | [[Knowledge/AI Systems/Context Compaction|문맥 압축]] | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | OpenAI는 ARC-AGI-3 평가 실행기의 오래된 메시지 삭제를 문맥 압축으로 바꿔 추론 보존과 함께 시험했다. [근거](https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/) |
 | [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 음성 파이프라인의 업무 처리 단계에 에이전트를 연결할 수 있다. [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) |

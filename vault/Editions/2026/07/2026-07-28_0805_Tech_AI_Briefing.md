@@ -1,72 +1,224 @@
 ---
 title: 2026-07-28 Tech & AI Briefing
+type: briefing
+schema_version: tech-ai-magazine/v2
 date: 2026-07-28
 timezone: Asia/Seoul
 coverage_start: 2026-07-27T08:00:24+09:00
 coverage_end: 2026-07-28T08:05:00+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
 source_count: 4
-new_items_count: 2
+new_items_count: 3
 linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]"
-  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]"
+  - "[[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI
+    Operating Model]]"
+  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security
+    and Governance]]"
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
+  - GitHub, Copilot 앱 접근 정책을 CLI와 분리
+  - Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
+article_records:
+  - title: OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: OpenAI
+      when: 2026-07-27
+      where: 미국
+      what: Work at the Frontier 보고서 공개 및 ChatGPT 업무 사용 조사
+      how: 미국 이용자 개인 ChatGPT 계정 업무 메시지 80만 건 이상을 O*NET 업무 활동과 비교 분석
+      why: 직종 간 ChatGPT 업무 사용 현황 파악
+    lead: OpenAI는 7월 27일 미국 이용자의 개인 ChatGPT 계정에서 보낸 업무 메시지 80만 건 이상을 분석한 Work at the
+      Frontier 보고서를 공개했다. 다른 직종의 과업으로 분류된 메시지는 전체 업무 메시지의 16.8%였으며, 여러 직종에 공통인
+      활동을 뺀 직종 특화 메시지에서는 43.5%였다.
+    explanations:
+      - heading: 분석 대상과 직종 정보
+        paragraphs:
+          - 직종은 ChatGPT Business에서 이용자가 자기보고한 정보와 연결했다. 고객
+            경험·디자인·엔지니어링·재무·인사·법률·마케팅·영업의 8개 직종을 대상으로, O*NET의 상세 업무 활동과 각 메시지의
+            주요 활동을 대조했다.
+        source_urls:
+          - https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf
+      - heading: 메시지를 분류한 방법
+        paragraphs:
+          - 글쓰기·요약·일정 관리처럼 여러 직종에 공통인 활동은 일반 업무로 따로 분류했다. 분류 단위는 이용자 메시지 한 건이며,
+            같은 대화의 이전 메시지를 최대 9개까지 맥락으로 사용했다.
+        source_urls:
+          - https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, Copilot 앱 접근 정책을 CLI와 분리
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-27
+      where: 미기재
+      what: Copilot 앱 접근을 기업·조직별로 관리하는 전용 정책 발표
+      how: 기업 또는 조직 설정의 AI Controls → Copilot Clients → Copilot app policy에서 정책 변경
+      why: 미기재
+    lead: GitHub는 7월 27일 Copilot 앱의 기업·조직별 접근 정책을 Copilot CLI 정책과 분리했다고 발표했다. 관리자는 앱
+      사용을 전체 허용·전체 차단하거나 조직별로 결정하도록 설정할 수 있으며, 기본값은 전체 허용이다.
+    explanations:
+      - heading: 관리자가 정책을 변경하는 위치
+        paragraphs:
+          - 기업 또는 조직 설정의 AI Controls → Copilot Clients → Copilot app policy에서
+            변경한다. 앱을 차단하면 개발자가 앱을 열 때 관리자가 사용을 허용하지 않았다는 알림을 본다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-27-manage-github-copilot-app-access-with-a-dedicated-policy/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-27
+      where: 미기재
+      what: 기업 관리 설정 적용 대상 확대
+      how: managed-settings.json을 통한 설정 지정 및 적용
+      why: 미기재
+    lead: GitHub는 7월 27일 Copilot 앱과 클라우드 에이전트에 기업 관리 설정을 적용한다고 발표했다. 기업은
+      managed-settings.json에 허용할 플러그인과 마켓플레이스를 지정하고, 지원되는 키에서 이 값은 개발자의 로컬 설정보다
+      우선한다.
+    explanations:
+      - heading: 앱과 클라우드의 적용 항목
+        paragraphs:
+          - 앱에서는 명령 실행·파일 접근·URL 요청 전 승인 절차의 우회 허용 여부와 새 대화의 자동 모델 선택 기본값을 정할 수
+            있다. 클라우드 에이전트에는 플러그인·마켓플레이스 설정이 적용되며, 승인 프롬프트 우회 통제는 앱·CLI·VS Code
+            같은 대화형 클라이언트에만 적용된다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/
+      - heading: 배포와 설정 반영 시점
+        paragraphs:
+          - 서버 관리 방식은 기업의 .github-private 저장소에 copilot/managed-settings.json을
+            작성해 기본 브랜치에 반영하는 방식이다. MDM이나 파일 배포도 지원한다.
+          - 기존 설정은 앱의 다음 로그인·재시작 때 반영되고, 클라우드 에이전트는 다음 작업 배정 때 변경을 적용한다. 지원
+            클라이언트는 변경을 약 한 시간 안에 반영하며 재시작·재로그인 때 즉시 적용한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
+    event_id: db9d0913513df69e
+    review_status: verified
+    published_at: 2026-07-27
+    reviewed_at: 2026-10-05
+    concept_ids: []
+  - title: GitHub, Copilot 앱 접근 정책을 CLI와 분리
+    event_id: bbabde57472042d3
+    review_status: verified
+    published_at: 2026-07-27
+    reviewed_at: 2026-10-05
+    concept_ids: []
+  - title: Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
+    event_id: beab8f92f6eeb134
+    review_status: verified
+    published_at: 2026-07-27
+    reviewed_at: 2026-10-05
+    concept_ids: []
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- OpenAI의 미국 사용자 분석에서는 업무 관련 메시지의 16.8%가 사용자 직무 밖의 과업으로 분류됐습니다. AI가 일자리를 없앤다는 증거가 아니라, 한 사람이 맡는 업무 범위가 넓어지는 초기 신호입니다.
-- GitHub는 Copilot 앱 접근을 CLI와 따로 켜고 끌 수 있게 하고, 플러그인·승인 우회 같은 중앙 설정을 앱과 클라우드 agent까지 확대했습니다.
-- 논문·오픈소스의 별도 주요 업데이트는 없음.
+OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
 
-# 오늘의 핵심 기사
+# 차례
 
-## AI는 직업을 대체하기보다 먼저 ‘업무 경계’를 흔들고 있다
+- OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
+- GitHub, Copilot 앱 접근 정책을 CLI와 분리
+- Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
 
-OpenAI가 미국 ChatGPT 사용자의 업무 관련 메시지 80만 건 이상을 분석한 결과, 사람들이 자신의 전통적인 직무 범위를 넘어 다른 분야의 일을 AI에 묻는 패턴이 확인됐습니다.
-
-**핵심 사실:** 전체 업무 메시지의 16.8%, 이메일 작성처럼 여러 직무에 공통인 일을 제외한 직무 특화 메시지의 43.5%가 다른 직업과 연결된 과업으로 분류됐습니다. 금융 계산과 기술 문제 해결은 조사한 여러 직군에서 반복해서 나타났습니다. 일반 사용자의 경우 2~5석 규모 워크스페이스의 직무 밖 메시지 비중은 18.9%, 101석 이상은 16.3%였습니다.
-
-**왜 중요한가:** AI 도입의 첫 변화는 직업 수보다 “누가 어떤 일을 맡는가”에서 나타날 수 있습니다. 작은 조직에서는 전문가에게 넘기던 초안 작성, 기초 분석, 소프트웨어 문제 해결을 현장 담당자가 먼저 시도할 가능성이 큽니다.
-
-**구독자가 알아둘 점:** 이 연구는 메시지 사용 패턴을 설명할 뿐 고용 감소, 생산성 향상, 결과물의 품질을 측정하지 않았습니다. 미국 사용자와 8개 직군을 대상으로 했고, AI 결과가 실제 업무에 쓰였는지도 알 수 없습니다.
-
-**다음에 볼 점:** 직무 밖 과업이 장기적인 역할 변화로 이어지는지, 전문가 검토와 책임 절차가 함께 마련되는지 확인해야 합니다.
-
-더 깊게 보기: [[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]
-
-## Copilot 앱과 클라우드 agent도 기업 정책 안으로
-
-GitHub가 Copilot 앱의 접근 정책을 CLI와 분리하고, 기업이 관리하는 공통 설정을 Copilot 앱과 클라우드 agent까지 확대했습니다.
-
-**핵심 사실:** 기업·조직 관리자는 Copilot 앱을 전체 허용, 전체 차단, 조직별 결정으로 설정할 수 있습니다. 별도의 `managed-settings.json`으로 허용 플러그인과 마켓플레이스, 명령·파일·URL 접근 전 승인 우회 가능 여부, 자동 모델 선택 기본값을 관리할 수 있습니다. 관리값은 사용자의 로컬 설정보다 우선합니다.
-
-**왜 중요한가:** 코딩 agent가 CLI, 편집기, 데스크톱 앱, 클라우드로 퍼지면 한 곳만 통제해서는 정책 공백이 생깁니다. 이번 변경은 agent 보안을 기능별 설정이 아니라 여러 실행 화면에 일관되게 적용하는 운영 문제로 다룹니다.
-
-**구독자가 알아둘 점:** Copilot 앱 접근 정책은 기본적으로 활성화돼 있습니다. 승인 우회 통제는 대화형 클라이언트에만 적용되고, 클라우드 agent에는 플러그인과 마켓플레이스 설정 등이 적용됩니다.
-
-**다음에 볼 점:** 조직별 예외가 실제로 어떻게 감사되는지, 정책 변경이 각 클라이언트에 적용되는 시간과 실패 상태를 확인해야 합니다.
-
-더 깊게 보기: [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
+
+## OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 새로운 방법, 실증·재현
+**기업·기관:** OpenAI
+
+OpenAI는 7월 27일 미국 이용자의 개인 ChatGPT 계정에서 보낸 업무 메시지 80만 건 이상을 분석한 Work at the Frontier 보고서를 공개했다. 다른 직종의 과업으로 분류된 메시지는 전체 업무 메시지의 16.8%였으며, 여러 직종에 공통인 활동을 뺀 직종 특화 메시지에서는 43.5%였다. [S1] [S2]
+
+### 분석 대상과 직종 정보
+
+직종은 ChatGPT Business에서 이용자가 자기보고한 정보와 연결했다. 고객 경험·디자인·엔지니어링·재무·인사·법률·마케팅·영업의 8개 직종을 대상으로, O*NET의 상세 업무 활동과 각 메시지의 주요 활동을 대조했다. [S2]
+
+### 메시지를 분류한 방법
+
+글쓰기·요약·일정 관리처럼 여러 직종에 공통인 활동은 일반 업무로 따로 분류했다. 분류 단위는 이용자 메시지 한 건이며, 같은 대화의 이전 메시지를 최대 9개까지 맥락으로 사용했다. [S2]
+
+## GitHub, Copilot 앱 접근 정책을 CLI와 분리
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 7월 27일 Copilot 앱의 기업·조직별 접근 정책을 Copilot CLI 정책과 분리했다고 발표했다. 관리자는 앱 사용을 전체 허용·전체 차단하거나 조직별로 결정하도록 설정할 수 있으며, 기본값은 전체 허용이다. [S3]
+
+### 관리자가 정책을 변경하는 위치
+
+기업 또는 조직 설정의 AI Controls → Copilot Clients → Copilot app policy에서 변경한다. 앱을 차단하면 개발자가 앱을 열 때 관리자가 사용을 허용하지 않았다는 알림을 본다. [S3]
+
+## Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 7월 27일 Copilot 앱과 클라우드 에이전트에 기업 관리 설정을 적용한다고 발표했다. 기업은 managed-settings.json에 허용할 플러그인과 마켓플레이스를 지정하고, 지원되는 키에서 이 값은 개발자의 로컬 설정보다 우선한다. [S4]
+
+### 앱과 클라우드의 적용 항목
+
+앱에서는 명령 실행·파일 접근·URL 요청 전 승인 절차의 우회 허용 여부와 새 대화의 자동 모델 선택 기본값을 정할 수 있다. 클라우드 에이전트에는 플러그인·마켓플레이스 설정이 적용되며, 승인 프롬프트 우회 통제는 앱·CLI·VS Code 같은 대화형 클라이언트에만 적용된다. [S4]
+
+### 배포와 설정 반영 시점
+
+서버 관리 방식은 기업의 .github-private 저장소에 copilot/managed-settings.json을 작성해 기본 브랜치에 반영하는 방식이다. MDM이나 파일 배포도 지원한다.
+
+기존 설정은 앱의 다음 로그인·재시작 때 반영되고, 클라우드 에이전트는 다음 작업 배정 때 변경을 적용한다. 지원 클라이언트는 변경을 약 한 시간 안에 반영하며 재시작·재로그인 때 즉시 적용한다. [S4]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
 
 없음
 
 # 흐름 읽기
 
-**분석:** AI 도입은 개인이 더 넓은 과업을 시도하게 만드는 동시에, 기업에는 더 넓어진 실행 표면을 한 정책으로 관리하라는 부담을 줍니다. 업무 경계가 넓어질수록 결과 검토와 책임 경계를 분명히 하고, agent가 어디에서 실행되든 같은 플러그인·승인·접근 정책을 적용하는 운영 설계가 중요해집니다.
+없음
 
-# 바로 써먹을 점
+# 오늘의 적용
 
-- **업무 자동화:** 직무 밖 과업을 AI로 처리할 때는 초안·기초 분석까지만 맡기고, 법무·재무·보안 판단은 담당 전문가의 검토 단계를 남기세요.
-- **개발 생산성:** Copilot을 여러 클라이언트에서 쓴다면 허용 플러그인, 마켓플레이스, 승인 우회 정책이 앱·CLI·편집기·클라우드 agent에 빠짐없이 적용되는지 점검하세요.
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://openai.com/index/how-ai-is-expanding-what-people-do-at-work/
-- https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf
-- https://github.blog/changelog/2026-07-27-manage-github-copilot-app-access-with-a-dedicated-policy/
-- https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/
+- [S1] https://openai.com/index/how-ai-is-expanding-what-people-do-at-work/
+- [S2] https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf
+- [S3] https://github.blog/changelog/2026-07-27-manage-github-copilot-app-access-with-a-dedicated-policy/
+- [S4] https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/

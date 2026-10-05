@@ -62,6 +62,14 @@ NVIDIA는 2026년 8월 24일 공식 블로그에서 Groq 3 LPX가 양산 단계�
 
 [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-25_0801_tech_ai_briefing)
 
+<a id="galaxydit-settings-20260726"></a>
+
+### 2026-07-26 · [GalaxyDiT, 영상 확산 모델의 두 계산 경로를 함께 재사용](https://skyan0213.github.io/tech-knowledge-garden/news/a9911e33a5a858b4)
+
+NVIDIA는 7월 26일 DAC 2026의 GalaxyDiT 논문을 연구 페이지에 소개했다. 이 방법은 영상 확산 트랜스포머의 반복 계산을 모델 재학습 없이 재사용하며, 조건부·무조건부 경로의 계산과 재사용을 함께 결정한다.
+
+[NVIDIA 원문](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy) · [arXiv 원문](https://arxiv.org/html/2512.03451v1) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/07/2026-07-27_0800_tech_ai_briefing)
+
 <a id="20260930-tita-edge-robot-computing"></a>
 
 ### 2026-06-27 · [Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개](https://skyan0213.github.io/tech-knowledge-garden/news/ef404a41d1e5901f)
@@ -83,3 +91,5 @@ DEEPX와 Sixfab은 2026년 6월 26일 DEEPX NPU를 넣은 Raspberry Pi 5용 AI H
 - [AI Inference Infrastructure](https://skyan0213.github.io/tech-knowledge-garden/knowledge/ai-systems/ai-inference-infrastructure)
 - [KV Cache](https://skyan0213.github.io/tech-knowledge-garden/knowledge/ai-systems/kv-cache)
 - [Latency Percentiles](https://skyan0213.github.io/tech-knowledge-garden/knowledge/data-systems/latency-percentiles)
+- [Classifier-Free Guidance](https://skyan0213.github.io/tech-knowledge-garden/knowledge/ai-systems/classifier-free-guidance)
+- [Diffusion Transformer](https://skyan0213.github.io/tech-knowledge-garden/knowledge/ai-systems/diffusion-transformer)

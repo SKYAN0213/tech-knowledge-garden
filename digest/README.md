@@ -4,7 +4,7 @@
 
 ## 누적 주제
 
-- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 9건 · 0개 원칙
+- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 10건 · 0개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 1개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 11건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙

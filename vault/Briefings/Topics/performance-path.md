@@ -2,7 +2,7 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-10-04
+date: 2026-10-05
 description: NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트워크·서빙 구성을 설명한다.
   9월15일 갱신 성능은 DeepSeek V4 Pro·AgentX에서 GB300 NVL72와 비교한 값이다. Model Connect는 지원
   모델의 체크포인트부터 TensorRT 엔진·전후처리·C++ 실행 자산까지 번들로 묶는 별도 배포 사례다.
@@ -76,6 +76,14 @@ NVIDIA는 2026년 8월 24일 공식 블로그에서 Groq 3 LPX가 양산 단계�
 
 [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-lpx-spectrum-x-nvlink-fusion/) · [NVIDIA 원문](https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents/) · [[Briefings/2026/08/2026-08-25_0801_Tech_AI_Briefing|당일 브리핑]]
 
+<span id="galaxydit-settings-20260726"></span>
+
+### 2026-07-26 · [[News/a9911e33a5a858b4|GalaxyDiT, 영상 확산 모델의 두 계산 경로를 함께 재사용]]
+
+NVIDIA는 7월 26일 DAC 2026의 GalaxyDiT 논문을 연구 페이지에 소개했다. 이 방법은 영상 확산 트랜스포머의 반복 계산을 모델 재학습 없이 재사용하며, 조건부·무조건부 경로의 계산과 재사용을 함께 결정한다.
+
+[NVIDIA 원문](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy) · [arXiv 원문](https://arxiv.org/html/2512.03451v1) · [[Briefings/2026/07/2026-07-27_0800_Tech_AI_Briefing|당일 브리핑]]
+
 <span id="20260930-tita-edge-robot-computing"></span>
 
 ### 2026-06-27 · [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]]
@@ -97,3 +105,5 @@ DEEPX와 Sixfab은 2026년 6월 26일 DEEPX NPU를 넣은 Raspberry Pi 5용 AI H
 - [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]
 - [[Knowledge/AI Systems/KV Cache|KV Cache]]
 - [[Knowledge/Data Systems/Latency Percentiles|Latency Percentiles]]
+- [[Knowledge/AI Systems/Classifier-Free Guidance|Classifier-Free Guidance]]
+- [[Knowledge/AI Systems/Diffusion Transformer|Diffusion Transformer]]

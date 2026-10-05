@@ -11,7 +11,7 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
-- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 9건 · 원칙 0개
+- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 10건 · 원칙 0개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 11건 · 원칙 1개
 - [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 11건 · 원칙 0개
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 8건 · 원칙 1개

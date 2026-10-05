@@ -90,6 +90,11 @@ tags:
 - [[Knowledge/AI Systems/Speculative Decoding|추측 디코딩]]
 - [[Knowledge/AI Systems/Context Compaction|문맥 압축]]
 
+### AI Systems
+
+- [[Knowledge/AI Systems/Classifier-Free Guidance|분류기 없는 가이던스]]
+- [[Knowledge/AI Systems/Diffusion Transformer|확산 트랜스포머]]
+
 ## 개념 경계
 
 | 분야 | 중심 질문 | 시작 문서 |

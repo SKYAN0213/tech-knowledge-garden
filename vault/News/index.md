@@ -161,6 +161,11 @@ generated_by: tech-knowledge-garden
 - [[News/265c6a0134aba9b6|OpenAI, 추론 보존·문맥 압축으로 ARC-AGI-3 점수 약 3배 높여]] · 2026-07-30
 - [[News/7e9257b6dba23518|GitHub Actions, 악성 의심 워크플로를 승인 전 실행 보류]] · 2026-07-29
 - [[News/1618822b0726a28a|GitHub, OpenSSF 악성 패키지 정보를 Dependabot 경보에 자동 반영]] · 2026-07-29
+- [[News/beab8f92f6eeb134|Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대]] · 2026-07-28
+- [[News/bbabde57472042d3|GitHub, Copilot 앱 접근 정책을 CLI와 분리]] · 2026-07-28
+- [[News/db9d0913513df69e|OpenAI 업무 사용 조사, 직종 특화 메시지의 43.5%가 다른 직종 과업]] · 2026-07-28
+- [[News/a9911e33a5a858b4|GalaxyDiT, 영상 확산 모델의 두 계산 경로를 함께 재사용]] · 2026-07-27
+- [[News/9cfe677975551bb6|Claude Opus 5, GitHub Copilot에 단계적 제공]] · 2026-07-25
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
