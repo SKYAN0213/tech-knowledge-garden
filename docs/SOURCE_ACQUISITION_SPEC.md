@@ -2587,3 +2587,9 @@ scripts/research-edition.mjs --run --daily-run --review는 research-edition-prep
 읽기 원문에 기사와 데모의 H1이 함께 있으면 `parse_options.markdown_title_line`으로 기사 H1의 시작 행을 명시한다. 정규화된 Markdown 안의 1부터 시작하는 행 번호이며 원문 캡처 범위 안의 양의 정수만 허용한다. worker는 해당 행의 H1 하나를 확인하고 원문 locator를 제목 근거로 보존한다. 제목을 직접 입력하거나 데모 본문을 삭제하지 않는다. 미지정 시 기존 복수 제목의 partial 판정은 유지하며 잘못된 행·일반 문단·불리언·문자열·범위 초과는 실패한다.
 
 legacy `source_list_review`는 기사에 이미 있는 inline 원문을 유지하면서 같은 원래 Source List의 관련 공식 자료를 추가하는 명시적 검토도 허용한다. 승인 원고가 추가 자료를 실제로 인용해야 하며 원래 inline 주소 누락·다른 목록의 URL·S 번호 재해석은 거부한다. 단순 공동 등장이나 자동 출처 배정은 하지 않는다. 실제8/4의5URL/9구간 전환, 전문용어 이력과 원격 복구는 런북384에 기록한다.
+
+## 84. 저장소를 가리지 않는 GitHub 고정 릴리스 상세 프로필
+
+`github-release-detail-v1`은공통 HTML XPath 파서에GitHub release의본문/제목/발표일위치만설정한다. 기존정확한NemoClaw v0.0.115 profile과겹치지않게유지하며그밖의공개owner/repository/releases/tag 경로를재사용한다. 로그인안내/전역탐색/태그비교dialog는본문과제목에포함하지않는다. `markdown-body`가정확히하나가아니면fallback하지않고실패한다. 본문의paragraph/list/code/table과heading을보존한다.
+
+발표시각은release header의relative-time.no-wrap@datetime의ISOUTC이며서명시각·관측시각·파일명을대체근거로쓰지않는다. `%Y-%m-%dT%H:%M:%S%z`로offset을검사하고publication_date_preserve_time을사용한다. 시각누락/중복은dates.profile_status와null을유지하며본문추출과발표시각검토는별도다. 기존프로필과새프로필의표적/actual4HTML 재파싱·누락/중복·서명배제·raw/oldparse보존증거는런북399를따른다. 짧은release본문만확인했다면변경세부는별도공식commit/compare/API원문검토후작성한다.

@@ -4218,3 +4218,11 @@ canonical 미판정59회차553구간·diagnostics0이다. 다음7/24·7/23·7/22
 매회별도작성하던공개readback을공통CLI `research:public-readback`으로구현했다. 배포exactcommit확인→승인미리보기/원본SHA→고유URL계획→boundedactualraw→불일치보존→미완료파일재개를한경로로수행한다. 실제동일범위21고유파일+지도module을확인했고재개추가다운로드0이었다. 새표적9/9·기존push4/4, 새코드릴리스CI는별도다. Drive/기사승인/브라우저검증을대신하지않으며추가유료API/예약없음. 상세런북398.
 
 canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive를유지한다. 이번은authoritative상태와공통코드를바꾼progress이며1시간같은실패반복은없었다. 다음묶음은원본메타데이터복구와남은metadata-ready자료의소급검토이며기존정상모델출력/승인은재사용한다.
+
+## 19.306. 공통 공개 readback 릴리스와 GitHub 릴리스 원문 파싱
+
+5c715e4/Actions37275620750의통합CI838/838·Python15+2/build/site와실제공개21고유파일+지도module이통과했다. 공통명령의원격입력확인·동일run재개·private Research56자료 actualraw/v1복구를확인했다. 신규기사를생성하거나정규운영횟수로집계하지않는다.
+
+다음7월14일5URL을collect하면서GitHub로그인안내문본문오인을발견해공통 `github-release-detail-v1`을등록했다. 저장소별crawler를추가하지않고release markdown본문·dialog제외제목·UTCheader시각만기존XPath파서로읽는다. 신규Node2/기존Python1과실제raw4개재파싱이통과했다. 현재Vercel3출처가명시선택됐고Codex한줄본문/compare차단은유지한다. source재파싱/선택의HTTP·모델·승인·공개변경0이며원래4parse도보존한다. 상세런북399.
+
+전체legacy58/543·메타데이터복구10·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는남는다. profile추가성공을전경로기간수집/기사검토완료로승격하지않는다. 다음선택원문사실검토와기존회차/용어연결,공식Codex변경대체원문확보를진행한다.

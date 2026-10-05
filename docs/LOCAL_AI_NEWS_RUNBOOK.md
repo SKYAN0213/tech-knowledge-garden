@@ -10009,3 +10009,17 @@ CLI가 `gh run view --repo SKYAN0213/tech-knowledge-garden`로 성공한 정확�
 표적 첫12/12(새8+기존push4), 이후캐시동등성/수집중입력변경 검증을보강한새9/9가통과했다. 전표적/전체 suite는반복하지않았다. 실제f77배포를공통CLI로확인했고동일run재개결과도같다. 원문재수집/모델재생성/기사승인/Drive저장은재실행하지않았다. 새코드의릴리스CI는이어확인하며f77의829개를새코드검증으로승계하지않는다.
 
 증거는 external root의july24-ci-status-v1.json/release-ci-full-v1.log/public-readback-v1/receipt.json/rss-identities-v1.json/public-ui-verification-v1.json/두JPEG/website-raw-verification-v1.json/release-archive-remote-v1.zip/release-evidence-restored-v1와canonical의common-public-readback run에있다. canonical inventory는미판정58회차543구간·metadata복구10·165검증사건·diagnostics0이다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체legacy판정·전체WBS2/22는남는다. 목표active,이번은공개반영과공통코드구현의progress이며1시간동일실패반복0이다. 다음은메타데이터복구근거탐색과metadata-ready회차를병행하되파일명으로조사구간을추정하지않는다.
+
+## 399. GitHub 릴리스 공통 본문·발표 시각 파싱
+
+공통 공개 검증 코드는5c715e4831c5e8ec5551dfdefab59c61dae1eb62로발행했다. Actions37275620750 실제build/deploy success·Node838/838·Python15+2·build/site가통과했다. `legacy-20260724-common-public-readback-release-20261005-v2`에서정확한새commit으로21고유웹/RSS/GitHub파일과지도module의actualbytes를확인했다. private Drive Research ID11COtNRn8fBYaudMEbctD1E93bk3RVWqR의972,403bytes/56자료/57ZIPmembers를실제원격SHA53a88676fed88f248d47a0766e4ed436bf15532913e37b1ad39cb2a83c8e11c8과대조하고commonv1로복구했다. ordinary증거복구이며fullruntime가아니다.
+
+다음metadata-ready 원본7/14_0801·7/14_0002 SHA를고정했다. 실제공통collect의5URL 중GitHub 릴리스4captured·compare1blocked다. 원래generic 파서는Vercel2/Codex1에서로그인안내문만1블록으로추출했다. title이있다는이유로이본문을뉴스작성에넘기지않고저장된raw HTML을읽어공통프로필을보강했다.
+
+`github-release-detail-v1`은GitHub의고정releases/tag URL에재사용한다. `markdown-body` 하나의본문만읽고dialog/dialog-helper/role=dialog 안의비교선택H1은제외한다. 발표일은header의`relative-time.no-wrap@datetime`만읽으며commit서명시각을쓰지않는다. ISO UTC의시간을보존하려면Python format의`%z`가필요하다. 처음리터럴Z format은explicit offset관문에서invalid-date로거부됐고 `%Y-%m-%dT%H:%M:%S%z`로수정했다. missing/ambiguous발표시각은null/상태를보존하며본문extracted와날짜eligible는기존별도계약이다. 본문selector누락/중복은실패하고제목누락은partial이다. 기존NemoClaw exactprofile ID/옵션/적용범위는바꾸지않았다.
+
+두신규Node검사는최초실패를보존한뒤실패case만수정·재검사해각각통과했다. 기존NemoClaw의발표일/서명/누락/중복/유효하지않은날짜Python1회귀도통과했다. 전체suite는이profile개발중돌리지않았다. 처음testcwd를잘못지정한명령은실행실패로보존하고정확한root에서실패case를검사했다.
+
+actualv3재파싱은4원문판본과원래4parse를그대로유지하며새4parse를추가했다. Vercel ai@7.0.23/25/26의발표는각각2026-07-13T18:31:57Z/21:32:40Z/22:04:00Z이고본문3/7/2블록이다. Codex0.145.0-alpha.7은10:49:55Z·한줄본문만있다. 모든새본문에로그인안내문없음,원본SHA/parsedate matched/timestamp를검사했다. 이후선택용v4에서current4parse만저장하고Vercel3원문을common select-source로명시선택했다. oldv1/v2/v3·불변parse캐시를수정하거나삭제하지않았다. v3/v4reparse·selection의추가HTTP/모델생성/기사승인/Drive작성원본/공개변경은0이다. 비교페이지blocked와Codex상세미확인은남는다.
+
+private source ZIP는공통archive로생성해4SourceVersion원본과전/후parse/설정/실패·표적검사/readback의21자료/22ZIPmembers·196,148bytes를Research ID1MfP9Qf7Bm8V_nqK2Q6myuuWjyEhhyT6l에보관했다. actual원격metadata의private부모/shared:false와rawSHA3881fff8f0750b3f402da30ecd9d49c8bb662e864e6ed529578bfc7e56a77d87을대조하고exactmanifest SHA1f1c7ec5f9d363f88d1f3d139a7ff98a2f6c9dbecb9902d44ed04b2c97ac2000으로공통v1의23파일CRC/bytes복구를확인했다. common v1의복구는raw/실행자료와CRC/SHA검사이며의존성전체승인/runtime복구로집계하지않는다. 다음은선택run `legacy-20260714-vercel-source-selection-20261005-v1`의3발표를직접사실검토해기존회차에연결하고Codex변경은공식비교/API대체근거를먼저확인하는일이다. metadata복구10과나머지58/543·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는유지한다. 1시간동일실패반복은없었다.

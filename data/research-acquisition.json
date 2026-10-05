@@ -1551,6 +1551,22 @@
         "publication_date_format": "%B %d, %Y",
         "publication_date_policy": "explicit-authoritative"
       }
+    },
+    {
+      "id": "github-release-detail-v1",
+      "url_pattern": "^https://github\\.com/(?!NVIDIA/NemoClaw/releases/tag/v0\\.0\\.115/?$)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/tag/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1[not(ancestor::dialog or ancestor::dialog-helper or ancestor::*[@role='dialog'])]",
+        "content_xpath": "//main//*[contains(concat(' ',normalize-space(@class),' '),' markdown-body ')]",
+        "content_block_xpath": ".//h1 | .//h2 | .//h3 | .//h4 | .//p | .//li | .//table | .//pre",
+        "publication_date_xpath": "//main//relative-time[contains(concat(' ',normalize-space(@class),' '),' no-wrap ')][@datetime]",
+        "publication_date_attribute": "datetime",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%S%z",
+        "publication_date_preserve_time": true,
+        "publication_date_policy": "explicit-authoritative"
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {
