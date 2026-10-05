@@ -154,6 +154,11 @@ generated_by: tech-knowledge-garden
 - [[News/a8dbd4f6642c381b|Microsoft Research, 학습·평가 환경을 재사용하는 Orchard 소개]] · 2026-08-04
 - [[News/deec56a13e2b9b57|OpenAI, 음성 전송과 도구 실행을 분리한 GPT-Live 구조 설명]] · 2026-08-04
 - [[News/45c58985be6c34bb|IonQ, SkyWater Technology 인수 완료]] · 2026-08-01
+- [[News/37ab4b1c66029ac0|GitHub, Copilot 기업용 새 모델 기본 허용 정책 8월 26일 시행 예고]] · 2026-07-30
+- [[News/05746085e97d8c7d|GitHub Copilot 코드리뷰, agent skills·MCP 정식 지원]] · 2026-07-30
+- [[News/eb71f165025c2507|OpenAI, GPT-5.6 서빙과 에이전트 실행기의 효율 개선 공개]] · 2026-07-30
+- [[News/47da73cdc4f72b4c|OpenAI, 대학 연구자 10만 명에 무료 AI 도구 지원 계획 발표]] · 2026-07-30
+- [[News/265c6a0134aba9b6|OpenAI, 추론 보존·문맥 압축으로 ARC-AGI-3 점수 약 3배 높여]] · 2026-07-30
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28

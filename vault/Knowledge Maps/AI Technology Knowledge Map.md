@@ -20,11 +20,14 @@ tags:
 - [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]]
 - [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]]
 - [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]]
+- [[Knowledge/AI Systems/Context Compaction|문맥 압축]]
 - [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]]
 - [[Knowledge/AI Systems/Double-Blind AI Evaluation|이중 블라인드 AI 평가]]
 - [[Knowledge/AI Systems/KV Cache|KV 캐시]]
 - [[Knowledge/AI Systems/Model Context Protocol|MCP]]
+- [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]]
 - [[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]]
+- [[Knowledge/AI Systems/Speculative Decoding|추측 디코딩]]
 - [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]]
 - [[Knowledge/AI Systems/Vision-Language-Action Models|시각·언어·행동 모델]]
 - [[Knowledge/AI Systems/Zero-Shot Inference|제로샷 추론]]
@@ -47,9 +50,13 @@ tags:
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 에이전트와 실행 환경의 최종 결과를 성공 기준으로 채점한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) |
 | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | 평가는 실행 기록과 최종 환경 상태를 서로 다른 증거로 사용한다. [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) · [근거](https://openai.github.io/openai-agents-python/tracing/) |
 | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 모델 호출·도구 사용·이관으로 구성된 실행을 추적한다. [근거](https://openai.github.io/openai-agents-python/tracing/) · [근거](https://openai.github.io/openai-agents-python/agents/) |
+| [[Knowledge/AI Systems/Context Compaction|문맥 압축]] | [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]] | 대화 문맥을 교체하면 프롬프트 앞부분이 바뀌어 압축 직후 이전 캐시의 재사용을 줄일 수 있다. [근거](https://developers.openai.com/api/docs/guides/prompt-caching.md) |
+| [[Knowledge/AI Systems/Context Compaction|문맥 압축]] | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | OpenAI는 ARC-AGI-3 평가 실행기의 오래된 메시지 삭제를 문맥 압축으로 바꿔 추론 보존과 함께 시험했다. [근거](https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/) |
 | [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]] | [[Knowledge/AI Systems/AI Agents|AI 에이전트]] | 음성 파이프라인의 업무 처리 단계에 에이전트를 연결할 수 있다. [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) |
 | [[Knowledge/AI Systems/Conversational Voice AI|대화형 음성 AI]] | [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] | 음성 처리와 업무 실행의 단계를 추적으로 연결한다. [근거](https://openai.github.io/openai-agents-python/voice/pipeline/) · [근거](https://openai.github.io/openai-agents-python/tracing/) |
 | [[Knowledge/AI Systems/KV Cache|KV 캐시]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 모델 서빙에서 이전 토큰의 어텐션 키·값을 재사용해 반복 계산을 줄인다. [근거](https://huggingface.co/docs/transformers/en/cache_explanation) |
+| [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]] | [[Knowledge/AI Systems/KV Cache|KV 캐시]] | 동일한 입력 앞부분에 대한 KV 텐서를 저장하고 후속 요청에서 재사용한다. [근거](https://developers.openai.com/api/docs/guides/prompt-caching.md) |
+| [[Knowledge/AI Systems/Speculative Decoding|추측 디코딩]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 작은 모델의 후보 토큰을 주 모델이 검증해 비싼 순차 추론 횟수를 줄이는 서빙 기법이다. [근거](https://huggingface.co/docs/transformers/en/assisted_decoding) · [근거](https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency/) |
 | [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] | [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] | 예측 모델의 구조와 실제 추론 실행 비용을 함께 살펴본다. [근거](https://arxiv.org/abs/2403.07815) · [근거](https://docs.vllm.ai/en/latest/) · [근거](https://arxiv.org/html/2403.07815v3) |
 | [[Knowledge/AI Systems/Vision-Language-Action Models|시각·언어·행동 모델]] | [[Knowledge/AI Systems/Agent Evaluation|에이전트 평가]] | 로봇 행동은 지시 수행 결과와 실환경 조건에 맞춰 평가해야 한다. [근거](https://arxiv.org/abs/2307.15818) · [근거](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) |
 | [[Knowledge/AI Systems/Zero-Shot Inference|제로샷 추론]] | [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] | 사전학습한 시계열 모델을 새 데이터셋에 추가 학습 없이 적용할 때 사용하는 평가 조건이다. [근거](https://arxiv.org/abs/2403.07815) |

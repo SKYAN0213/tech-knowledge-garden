@@ -6,8 +6,8 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-09-13
-updated: 2026-09-13
-last_reviewed: 2026-09-13
+updated: 2026-10-05
+last_reviewed: 2026-10-05
 aliases:
   - KV 캐시
   - KV cache
@@ -26,11 +26,12 @@ keywords:
   - 메모리 재사용
 verified_sources:
   - https://huggingface.co/docs/transformers/en/cache_explanation
+  - https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency/
 map_review:
   decision: include
   kind: mechanism
   reason: 문맥이 길어질 때 추론 메모리와 속도가 달라지는 이유를 어텐션의 키·값 재사용으로 설명하는 기술이다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-05
 connections:
   - target: inference
     reason: 모델 서빙에서 이전 토큰의 어텐션 키·값을 재사용해 반복 계산을 줄인다.
@@ -90,8 +91,9 @@ connections:
 
 ## 최근 변화
 
-없음
+- 2026-07-29 — OpenAI가 입력 처리에서 KV 캐시를 만들고 출력 생성에서 읽고 확장하는 서빙 경로를 설명했다. [[News/eb71f165025c2507|기사]] · [원문](https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency/)
 
 ## 출처
 
 - [Hugging Face · Caching](https://huggingface.co/docs/transformers/en/cache_explanation)
+- [OpenAI · GPT-5.6 효율 개선](https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency/)

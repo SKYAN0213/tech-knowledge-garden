@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-04
+updated: 2026-10-05
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -83,6 +83,12 @@ tags:
 ### Research Methods
 
 - [[Knowledge/Research Methods/Randomized Controlled Trial|무작위 대조 시험]]
+
+### AI Systems
+
+- [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]]
+- [[Knowledge/AI Systems/Speculative Decoding|추측 디코딩]]
+- [[Knowledge/AI Systems/Context Compaction|문맥 압축]]
 
 ## 개념 경계
 
