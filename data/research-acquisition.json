@@ -1656,6 +1656,51 @@
         "publication_date_preserve_time": true,
         "publication_date_policy": "explicit-authoritative"
       }
+    },
+    {
+      "id": "github-pull-request-json-v1",
+      "url_pattern": "^https://api\\.github\\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pulls/[1-9][0-9]*$",
+      "options": {
+        "format": "json-document",
+        "json_document": {
+          "title_pointer": "/title",
+          "published_at_pointer": "/created_at",
+          "modified_at_pointer": "/updated_at",
+          "identities": [
+            {
+              "pointer": "/number",
+              "url_pattern": "https://api\\.github\\.com/repos/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/pulls/(?P<value>[1-9][0-9]*)"
+            },
+            {
+              "pointer": "/html_url",
+              "url_pattern": "https://api\\.github\\.com/repos/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/pulls/(?P<value>[1-9][0-9]*)",
+              "expected": "https://github.com/{owner}/{repo}/pull/{value}"
+            }
+          ],
+          "fields": [
+            {
+              "pointer": "/title"
+            },
+            {
+              "pointer": "/body",
+              "format": "markdown",
+              "required": false
+            },
+            {
+              "pointer": "/merged",
+              "format": "scalar"
+            },
+            {
+              "pointer": "/merged_at",
+              "required": false
+            },
+            {
+              "pointer": "/merge_commit_sha",
+              "required": false
+            }
+          ]
+        }
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {

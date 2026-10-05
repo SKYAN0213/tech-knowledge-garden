@@ -60,7 +60,7 @@ const packetSchema = object({
   before_content: { type: "string", minLength: 1, maxLength: 262144 },
   events: {
     type: "array",
-    minItems: 1,
+    minItems: 0,
     maxItems: 40,
     items: eventSchema,
   },
@@ -70,11 +70,21 @@ const packetSchema = object({
     items: object({
       unit_id: unitID,
       sha256: hash,
-      decision: { type: "string", enum: ["replaced", "omitted_empty", "omitted_editorial"] },
+      decision: {
+        type: "string",
+        enum: ["replaced", "omitted_empty", "omitted_editorial", "omitted_discovery"],
+      },
       event_ids: { type: "array", items: eventID },
       reason: text,
     }),
   },
+})
+packetSchema.properties.no_article_review = object({
+  original_content_checked: { type: "boolean", enum: [true] },
+  article_sections_checked: { type: "boolean", enum: [true] },
+  discovery_routes_checked: { type: "boolean", enum: [true] },
+  unsupported_no_news_claims_removed: { type: "boolean", enum: [true] },
+  reason: text,
 })
 packetSchema.properties.metadata_review = object({
   metadata_read: { type: "boolean", enum: [true] },
@@ -258,6 +268,35 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     notBefore: [day, ...articles.map((a) => a.article_review?.reviewed_at)],
   })
   const units = legacyReviewUnits(before.body, relativePath)
+  const noArticles = packet.events.length === 0
+  if (
+    noArticles
+      ? !packet.no_article_review?.reason.trim() ||
+        articles.length !== 0 ||
+        before.meta.new_items_count !== 0 ||
+        ["linked_knowledge_notes", "knowledge_notes_created", "knowledge_notes_updated"].some(
+          (field) =>
+            before.meta[field] !== undefined &&
+            (!Array.isArray(before.meta[field]) || before.meta[field].length !== 0),
+        ) ||
+        units.some((unit) => unit.depth !== 1) ||
+        !same(
+          units.map((unit) => unit.title),
+          [
+            "한눈에 보기",
+            "오늘의 핵심 기사",
+            "논문과 연구",
+            "오픈소스와 도구",
+            "흐름 읽기",
+            "바로 써먹을 점",
+            "Source List",
+          ],
+        )
+      : packet.no_article_review !== undefined
+  )
+    throw Error(
+      "Article-free legacy transition requires explicit review of the original empty article sections",
+    )
   if (
     !same(
       packet.units.map((u) => [u.unit_id, u.sha256]),
@@ -405,11 +444,26 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       )
         throw Error("Legacy transition must retain every reviewed original source")
     } else {
+      if (decision.decision === "omitted_discovery") {
+        if (
+          !noArticles ||
+          unit.depth !== 1 ||
+          unit.title !== "Source List" ||
+          decision.event_ids.length ||
+          urls.some((url) => !discovery.has(url)) ||
+          sources.listed.size !== discovery.size
+        )
+          throw Error("Article-free discovery omission requires every original route disposition")
+        continue
+      }
       if (decision.event_ids.length || urls.length)
         throw Error("Legacy transition cannot omit source-bearing units")
       if (
         decision.decision === "omitted_editorial" &&
-        (unit.depth !== 1 || !["흐름 읽기", "바로 써먹을 점"].includes(unit.title))
+        (unit.depth !== 1 ||
+          !["흐름 읽기", "바로 써먹을 점", ...(noArticles ? ["한눈에 보기"] : [])].includes(
+            unit.title,
+          ))
       )
         throw Error("Legacy transition editorial omission is limited to ancillary sections")
       if (decision.decision === "omitted_empty") {

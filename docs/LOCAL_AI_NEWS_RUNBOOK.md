@@ -10241,3 +10241,23 @@ inventory에서 다음 metadata-ready 미검토는7/13_1602·0802·0002 세회�
 original 묶음·실제source/parse14자료/15members·2source versions·75,001bytes를 공통ordinaryv1으로Research ID1xYgvdc4kxar8SViCkvdWyPwthPlehTfF에보관했다. parent/shared:false·actualraw SHA4143b4c473022e57203cadc8892e23fc56b94ca8c3d52cc5a7895e3fa5294daa와exactmanifest7935557c935b4ebd2ea1cb5cb9cdeba1b0f7380206d99a0d10899bd39619e8eb로복구를확인했다. source location register 시도는metadata의name 계약에서 거부됐으며 코드확인결과 register는portablev2만수용하므로ordinaryv1을강제로등록하지않았다. 원격보관/복구성공과locationindex미등록을구분한다. 최종승인closure를v2로구성한뒤기존register를사용한다.
 
 다음은7/13_1602 실제release/명시PR를대조한claim·모델원고·의존AgentEvaluation노트검토와0802/0002의근거없는‘새소식없음’/분석문장판정이다. 현재시점discovery API목록을당시기간의완전조사로쓰지않는다. 세회차를작은한묶음으로전환해Drive/CI반복을줄이고기존coverage/사건ID/RSS를보존한다. 원문수집만완료한준비묶음이므로56회차527구간미판정/metadata10·전체WBS2/22·goalactive를유지한다. 실물08시정규실행과독립평가·fullruntime도계속남는다.
+
+## 410. 기사 없는 과거 회차와 GitHub PR 원문의 공통 처리
+
+2026-10-05 KST. 사용자 지시에 따라 기존 목표의 작업을 재개했다. 목표 도구가 반환한 상태는 paused이며, 도구에 resume 인자가 없어 active로 표시하지 않는다. 새 목표를 중복 생성하지 않았다.
+
+7/13 세 회차의 원본 SHA·22개 구간·16개 원문/탐색 URL을 고정했다. 기존 json-document에 github-pull-request-json-v1 프로필을 추가해 PR 번호와 html_url의 저장소/번호를 함께 검증한다. created_at은 게시 시각이며 merged/merged_at/merge_commit_sha를 별도로 보존한다. PR body는 기존 Markdown 파서로 처리하고 null 병합·미병합을 출시 완료로 바꾸지 않는다. 새 crawler·adapter·의존성은 없다. 실제 PR #32672의 HTML UI 3블록과 최초 unsupported JSON을 보존하고 같은 raw bytes를 재사용해 JSON 15블록을 얻었다.
+
+qwen3.8:27b-mlx의 실제 사실 추출 57.711초·4개 후보와 한국어 writer 원출력을 보존했다. 원문의 인용문·시간·조건을 직접 대조한 9개 사실을 승인하고, Codex 0.144.2의 자동 코드 리뷰 프롬프트 회귀 복구를 2문장 리드와 두 설명으로 작성했다. 정책 템플릿·리뷰 요청 형식·도구 사양·테스트/스냅샷의 복구와 PR 작성자가 보고한 Guardian 테스트 58개 통과를 구분한다. 잘못된 수치를 시장 성과나 전체 core 시험 성공으로 확대하지 않는다. 전문용어/지도 노드를 추가하지 않았다.
+
+빈 기사 회차 전환은 events:[]만으로 허용되지 않는다. no_article_review의 원본/기사 구간/탐색 경로 확인과 무근거 무소식 문장 제거를 명시해야 한다. 원래 7개 최상위 구간·new_items_count:0·지식 변경 없음·원본/metadata/구간 SHA·모든 탐색 URL 판정이 일치해야 한다. 기사가 있는 구간이나 인용 근거를 이 경로로 제거할 수 없다. 검토 기록과 이유는 private이며 공개에는 기존 날짜/주소와 간결한 빈 자료만 남긴다. 현재 조회한 목록으로 과거에 새 소식이 없었다고 판정하지 않는다.
+
+실물 preview에서 빈 Source List/undefined 표지, PR #32672는의 Obsidian 숫자 태그 오인, Markdown escape와 digest 문자열 비교 오류를 각각 재현했다. 빈 렌더링·공통 markdownProse 숫자 # escape·markdownProseText 복원을 고쳐 v4가 생성/링크/전체 build/site/웹·GitHub 내용 대조를 통과했다. RSS 40개 GUID/pubDate를 유지한다. private 브라우저 렌더링은 미검증이다. 기존 공개 7/14 공통 UI에서 분야 Enter→query·뒤로가기·기사 Enter를 실제 확인했고, 새 대상 UI는 공개 배포 후 별도 확인한다. 예약·조사 범위·유료 API 변경은 없다.
+
+최초 approval 입력을 예약된 editorial-review.json에 쓴 run v1은 immutable checkpoint guard가 거부했다. 실패 상태를 보존하고 공통 bundle/reuse-extraction과 editorial-input.json을 쓰는 v2에서 새 writer/정정/승인을 완료했다. 승인 event b5e2211dddab87f3, article SHA 06ff41ed25e44042865779f69078a15214c8c0d8fa209ba68ff366153e86b58d를 유지한다.
+
+portable v2 승인 closure는 60자료/62 ZIP members·4원문판본·262475bytes다. Research Drive ID 1iUBlx4epHxMntNTC59nKPaWupU5VLDpA의 실제 raw SHA 3c745dba3ad8826406ad7babbc1990a2549b61fbbae19a0f01bfbddcab6782d0, private 부모/shared:false, 전 member CRC/SHA 복구와 restored approval 9사실을 확인했다. 기존 register로 원격 원문 위치를 등록했다. full runtime 복구나 독립 평가로 세지 않는다.
+
+실제 Drive 작성 208 raw/16목록을 재대조해 전환 전 local bytes와 같음을 확인했다. 변경 3파일/5540bytes만 release하고 직접 tty write-session a654ee01-c7ca-463c-897c-f66681a76524의 intent마다 connector update를 한 번 수행했다. 같은 Drive ID/부모를 유지하고 각 post raw를 대조하여 verified3/pending0/conflict0/unresolved0이다. 이어 전체 208 raw/16목록을 다시 읽어 승인 preview와 exact 일치를 확인하고 공통 snapshot/pull-drive로 canonical에 반영했다. 새 정규 운영은0이다. canonical inventory는 legacy 미판정53회차505구간·metadata 복구10·verified event168·diagnostics0이며 전체 WBS2/22다.
+
+표적 묶음 51/51과 추가 숫자 # 회귀1/1이 통과했다. 빈 원고 렌더링 수정 뒤 해당 실패 표적1개만 재확인했으며 전체 suite를 로컬에서 반복하지 않는다. 최종 코드/원고를 한 번의 CI 배포로 묶는다. 동일 실패를1시간 이상 반복한 항목은0이다. 공개 배포·새 대상 UI·WebsiteData·최종 발행 증거 보관은 후속 기록으로 구분한다. 독립 human40dev/20heldout·새 정규7회·무인08시/인증/중단·full runtime·전수 legacy 판정은 남는다.

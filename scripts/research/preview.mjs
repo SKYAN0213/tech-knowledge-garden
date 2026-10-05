@@ -25,6 +25,7 @@ import {
 } from "./publish-adapter.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertLegacyTransition, legacyTransitionBatch } from "./legacy-transition.mjs"
+import { markdownProseText } from "../explanations.mjs"
 import { loadNoteApproval } from "./note-review.mjs"
 import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-state.mjs"
 import { assertConceptConflicts } from "./knowledge-links.mjs"
@@ -204,7 +205,10 @@ export function retrospectiveProjections(
   knowledgeNotes = [],
   legacyReviews = [],
 ) {
-  if (!approvals.length || new Set(approvals.map((a) => a.event_id)).size !== approvals.length)
+  if (
+    (!approvals.length && !legacyReviews.length) ||
+    new Set(approvals.map((a) => a.event_id)).size !== approvals.length
+  )
     throw Error("Distinct approved events required")
   const knowledgeByPath = new Map(
     walk(path.join(vault, "Knowledge"))
@@ -532,7 +536,6 @@ function htmlText(node) {
   return textBlocks.has(node.tagName) ? "\n" + text + "\n" : text
 }
 const normalizedText = (value) => value.normalize("NFC").replace(/\s+/g, " ").trim()
-const markdownVisibleText = (value) => value.replace(/\\~/g, "~")
 const links = (tree) =>
   new Set(collect(tree, (n) => n.tagName === "a").map((n) => n.properties?.href))
 
@@ -622,7 +625,7 @@ export async function verifyRetrospectiveOutputs(
         phrases.some(
           (p) =>
             !normalizedText(htmlText(issue)).includes(normalizedText(p)) ||
-            !markdownVisibleText(markdown).includes(p),
+            !markdownProseText(markdown).includes(p),
         ) ||
         article.source_urls.some((u) => !links(issue).has(u) || !markdown.includes(u)) ||
         !markdown.includes(dateText)
@@ -898,7 +901,7 @@ export async function privatePreview(
 ) {
   validRun(run)
   if (
-    (!approvedRuns.length && !knowledgeRuns.length) ||
+    (!approvedRuns.length && !knowledgeRuns.length && !legacyReviews.length) ||
     new Set(approvedRuns).size !== approvedRuns.length ||
     new Set(knowledgeRuns).size !== knowledgeRuns.length ||
     approvedRuns.includes(run) ||
@@ -911,24 +914,25 @@ export async function privatePreview(
   const knowledge = knowledgeRuns.map((id) => loadNoteApproval(root, id, { vault }))
   assertPreviewConceptNotes(approvals, knowledge)
   const notes = knowledge.flatMap((k) => k.approval.notes)
-  if (legacyReviews.length && (editionSpec || !approvals.length))
+  if (legacyReviews.length && editionSpec)
     throw Error("Legacy transition requires retrospective approved articles")
   if (editionSpec) assertNewEditionSourceCutoff(approvals, editionSpec)
-  const projections = approvals.length
-      ? editionSpec
-        ? newEditionProjections(
-            vault,
-            approvals.map((a) => a.article),
-            editionSpec,
-            notes,
-          )
-        : retrospectiveProjections(
-            vault,
-            approvals.map((a) => a.article),
-            notes,
-            legacyReviews,
-          )
-      : [],
+  const projections =
+      approvals.length || legacyReviews.length
+        ? editionSpec
+          ? newEditionProjections(
+              vault,
+              approvals.map((a) => a.article),
+              editionSpec,
+              notes,
+            )
+          : retrospectiveProjections(
+              vault,
+              approvals.map((a) => a.article),
+              notes,
+              legacyReviews,
+            )
+        : [],
     sourceFiles = fingerprints(vault),
     runtime = runtimeFiles(repo),
     navigation = conceptIndexProjection(vault, notes),

@@ -248,7 +248,7 @@ export function editionProjection(
   )
     throw Error("Only explicitly reviewed ancillary omissions are supported")
   if (
-    !articles.length ||
+    (!articles.length && !legacy_review?.no_article_review) ||
     articles.length > 40 ||
     new Set(articles.map((a) => a.event_id)).size !== articles.length
   )
@@ -434,8 +434,8 @@ export function editionProjection(
   // an operational instruction in the news, RSS or digest.
   const articleBody =
     [
-      ["이번 호 표지", headlines[0]],
-      ["차례", headlines.map((title) => `- ${title}`).join("\n")],
+      ["이번 호 표지", headlines[0] || "없음"],
+      ["차례", headlines.map((title) => `- ${title}`).join("\n") || "없음"],
       ...["커버 스토리", "뉴스 데스크", "리서치 노트", "도구 상자"].map((name) => [
         name,
         articles
@@ -481,7 +481,7 @@ export function editionProjection(
   const body =
     articleBody +
     "\n# Source List\n\n" +
-    usedSources.map(([key, url]) => `- [${key}] ${url}`).join("\n") +
+    (usedSources.map(([key, url]) => `- [${key}] ${url}`).join("\n") || "없음") +
     "\n"
   const issue = {
     file: `vault/Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,

@@ -1,6 +1,7 @@
 // Editorial evidence is author-reviewed metadata, never graph-matching prose.
 import { paperKey } from "./paper-identifiers.mjs"
 import { titleDayKey } from "./article-identity.mjs"
+import { markdownProseText } from "./explanations.mjs"
 
 export const EDITORIAL_FORMAT = "six-w/v1"
 export const DEEP_KINDS = ["기업 전략", "논문 해설", "연구 사업화"]
@@ -65,9 +66,8 @@ export function applyEditorial(issue, articles) {
     assertOnlyKeys(r.facts, ["who", "when", "where", "what", "how", "why"], "six-w facts")
     if (!["사건 뉴스", ...DEEP_KINDS].includes(r.kind)) fail("invalid article kind")
     if (!["국내", "해외", "국제 공동"].includes(r.region)) fail("invalid region")
-    // The projection escapes literal tildes so GFM does not strike through
-    // numeric ranges. Compare the resulting prose, not the Markdown escape.
-    const bodyProse = a.body.replace(/\\~/g, "~")
+    // Compare literal prose after the projection's numeric range/issue escapes.
+    const bodyProse = markdownProseText(a.body)
     for (const k of ["who", "when", "where", "what", "how", "why"])
       if (!text(r.facts?.[k])) fail("missing six-w fact: " + k)
     if (!text(r.lead) || r.lead.length > 900 || /[<>\n]/.test(r.lead)) fail("invalid lead")

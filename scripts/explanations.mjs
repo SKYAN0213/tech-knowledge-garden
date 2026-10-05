@@ -3,9 +3,11 @@ const esc = (s) =>
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   )
-// Approved prose is plain text. Escape a literal tilde before inserting it
-// into Markdown so numeric ranges do not become GFM strikethrough.
-export const markdownProse = (value) => value.replace(/(?<!\\)~/g, "\\~")
+// Approved prose is plain text. Numeric ranges and issue numbers must not
+// become strikethrough or Obsidian tags, including numbers with Korean particles.
+export const markdownProse = (value) =>
+  value.replace(/(?<!\\)~/g, "\\~").replace(/(?<!\\)#(?=\d)/g, "\\#")
+export const markdownProseText = (value) => value.replace(/\\([~#])/g, "$1")
 export const explanationHTML = (a) =>
   (a.editorial?.explanations || [])
     .map(

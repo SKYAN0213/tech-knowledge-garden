@@ -163,6 +163,34 @@ test("approved numeric ranges render as literal prose without Markdown strikethr
   assert(digest.includes("1.5\\~1.9배"))
   assert(digest.includes("1.7\\~3.6배"))
 })
+
+test("numeric issue references with Korean particles remain literal prose across publication channels", () => {
+  const issue = fixture()
+  const old = extractArticles(issue)
+  const first = approved(old[0])
+  first.record.lead = "기관은 8월 27일 PR #32672를 병합했다. 리뷰 동작을 복구했다."
+  first.record.explanations[0].paragraphs = ["PR #32672는 정책과 테스트를 함께 복구했다."]
+  const projection = project(issue, [first, existingArticleProjection(old[1])])
+  const next = { ...parseNote(projection.content), file: issue.file }
+  const items = extractArticles(next)
+  assert(next.body.includes("PR \\#32672는"))
+  assert.equal(items[0].editorial.lead, first.record.lead)
+  assert.deepEqual(
+    items[0].editorial.explanations[0].paragraphs,
+    first.record.explanations[0].paragraphs,
+  )
+  const value = {
+    date: next.meta.date,
+    key: "Editions/2026/08/2026-08-28_0800_Tech_AI_Briefing",
+    original: next,
+    items,
+    lead: first.record.lead,
+    analysis: "",
+    snapshot: { review: null },
+  }
+  assert(digestMarkdown(value, "https://example.org/garden").includes("PR \\#32672는"))
+  assert(feedDescription(value, "https://example.org/garden").includes("PR #32672는"))
+})
 test("partial source replacement removes obsolete sources without renumbering untouched citations", () => {
   const issue = fixture(),
     old = extractArticles(issue),

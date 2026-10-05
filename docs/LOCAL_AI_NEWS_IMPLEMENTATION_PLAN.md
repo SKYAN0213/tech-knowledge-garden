@@ -4301,3 +4301,11 @@ P5-01의 release→execution→commit/push→deployment→public raw를 기존 �
 ## 19.315. 다음 7월13일 source 묶음 재사용
 
 3회차22unit/16URL을원본SHA로고정하고Codex0.144.2의공식tag/REST 두source를기존공통profile로HTTP200/13blocks수집했다.14자료ordinaryv1의actualDriveZIPSHA/CRC/commonrestore를확인했다. register는portablev2계약이므로미등록을완료로바꾸지않았고최종승인closure에연결한다. 다음은실제PR/claim·한국어writer·의존전문용어와2회차‘새소식없음’문장의근거판정이다. 당시discovery범위를현재목록으로완료처리하지않고3회차를한묶음으로전환해반복Drive/CI를줄인다. 상세런북409. 전체56/527·metadata10·WBS2/22·goalactive는유지한다.
+
+## 19.316. 7월13일 세 회차 전환과 공통 재사용 경로 보강
+
+PR JSON은 기존 json-document 프로필로 처리한다. 번호/html_url·게시/병합 시각·nullable 병합 상태를 검증하며 동일 raw 재파싱으로 실제15블록을 확보했다. 기사 없는 과거 회차는 원래 기사 구간과 모든 탐색 URL을 명시 검토해야 전환하며, 근거 없는 무소식/전망을 독자 화면에서 제거한다. 숫자 # 참조의 태그 오인과 채널 간 escape 비교를 공통 수정했다. crawler·의존성·예약은 추가하지 않는다.
+
+실제MLX 추출·writer·9사실 직접 검토·불변 승인과60자료 portable v2의 실제 Drive raw/전체 복구/location 등록을 완료했다. fresh208 raw/16목록→3같은ID 업데이트/각 raw 재대조→전체208 재대조→공통 canonical pull을 수행했다. 3회차22구간 전환 후 미판정53회차505구간·metadata10·verified168·diagnostics0이다. 표적51/51+추가 회귀1/1, 실제 private v4 build/site/웹·GitHub/기존RSS40identity가 통과했다. 전체 CI는 최종 배포 한 차례에서 실행한다. 상세 런북410.
+
+사용자의 재개 지시로 작업은 계속했으나 goal 도구의 실제 카드 상태는 paused다. 도구가 resume를 지원하지 않아 active라고 기록하지 않는다. 전체WBS2/22·독립human40/20·새정규7회·무인08시/인증·fullruntime·전수legacy 완료는 남는다. 다음은 이번 코드/원고의 공개 배포·새 대상 화면·WebsiteData·최종 발행 증거 검증이다. 동일 실패1시간 재시도0이다.

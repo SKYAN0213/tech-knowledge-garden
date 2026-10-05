@@ -35,6 +35,48 @@ const article = () => ({
   published: "2026-07-13T10:49:55Z",
   body: "A verified announcement.",
 })
+
+test("GitHub pull request profile preserves proposal publication, merge state and body without UI text", async (t) => {
+  const settings = JSON.parse(fs.readFileSync("data/research-acquisition.json", "utf8"))
+  const options = settings.article_profiles.find(
+    (p) => p.id === "github-pull-request-json-v1",
+  ).options
+  const address = "https://api.github.com/repos/openai/codex/pulls/32672"
+  const value = {
+    number: 32672,
+    html_url: "https://github.com/openai/codex/pull/32672",
+    title: "Revert auto review prompting",
+    created_at: "2026-07-13T02:00:00Z",
+    updated_at: "2026-07-13T03:13:56Z",
+    merged: true,
+    merged_at: "2026-07-13T03:13:56Z",
+    merge_commit_sha: "32649bc5e6591ad8ea0b7b8ce073df447565ec7c",
+    body: "## Summary\n\nRestore policy, request layout and tool specifications.\n\n## Validation\n\n58 passed.",
+  }
+  const result = await parse(t, value, options, "application/json", address)
+  assert.equal(result.status, "extracted")
+  assert.equal(result.dates.published_at, value.created_at)
+  assert.equal(result.dates.modified_at, value.updated_at)
+  assert(
+    result.blocks.some(
+      (b) => b.locator.json_pointer === "/merged_at" && b.text === value.merged_at,
+    ),
+  )
+  assert(result.blocks.some((b) => b.locator.json_pointer === "/body" && b.text === "58 passed."))
+  const open = await parse(
+    t,
+    { ...value, merged: false, merged_at: null, merge_commit_sha: null },
+    options,
+    "application/json",
+    address,
+  )
+  assert.equal(open.status, "extracted")
+  assert(open.blocks.some((b) => b.locator.json_pointer === "/merged" && b.text === "false"))
+  await assert.rejects(
+    parse(t, { ...value, number: 32673 }, options, "application/json", address),
+    /identity mismatch/,
+  )
+})
 async function parse(t, value, options = profile(), mime = "application/json", address = url) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-json-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
