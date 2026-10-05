@@ -10261,3 +10261,13 @@ portable v2 승인 closure는 60자료/62 ZIP members·4원문판본·262475byte
 실제 Drive 작성 208 raw/16목록을 재대조해 전환 전 local bytes와 같음을 확인했다. 변경 3파일/5540bytes만 release하고 직접 tty write-session a654ee01-c7ca-463c-897c-f66681a76524의 intent마다 connector update를 한 번 수행했다. 같은 Drive ID/부모를 유지하고 각 post raw를 대조하여 verified3/pending0/conflict0/unresolved0이다. 이어 전체 208 raw/16목록을 다시 읽어 승인 preview와 exact 일치를 확인하고 공통 snapshot/pull-drive로 canonical에 반영했다. 새 정규 운영은0이다. canonical inventory는 legacy 미판정53회차505구간·metadata 복구10·verified event168·diagnostics0이며 전체 WBS2/22다.
 
 표적 묶음 51/51과 추가 숫자 # 회귀1/1이 통과했다. 빈 원고 렌더링 수정 뒤 해당 실패 표적1개만 재확인했으며 전체 suite를 로컬에서 반복하지 않는다. 최종 코드/원고를 한 번의 CI 배포로 묶는다. 동일 실패를1시간 이상 반복한 항목은0이다. 공개 배포·새 대상 UI·WebsiteData·최종 발행 증거 보관은 후속 기록으로 구분한다. 독립 human40dev/20heldout·새 정규7회·무인08시/인증/중단·full runtime·전수 legacy 판정은 남는다.
+
+후속 공개 완료: d3798b065e89729e65325e1308d29eb90e27ac68 / Actions37319110565의 build·deploy가 success다. 전체 CI는 이 후보 한 차례에서 Node893/893·Drive Python15/15·WebsiteData2/2·build/site를 통과했다. 공통 public-readback의 실제14파일과 지도module, 웹·GitHub reader_equivalent:true를 확인하고 publication operation을 public_bytes_verified로 연결했다. 이 operation의 browser_verified/website_data_verified:false는 별도 관문을 자동 승격하지 않는다는 뜻이며, 아래 실제 UI/WebsiteData 증거를 따로 보존한다.
+
+새 기사와1602브리핑의1280/390 실제 공개 UI에서 분야 Enter→query·뒤로가기·기사 Enter·#AI→분야필터·기사→브리핑을 확인했다. 제목·발표일·2문장 리드·두 설명·원문2개가 표시되고 PR #32672는이 숫자 태그로 변하지 않는다. news/briefing main canvas0·가로넘침0이다. 0802/0002는 원래 주소를 유지하며 미확인 무소식/주말/전망이 표시되지 않는다. private browser_verified:false는 변경하지 않는다. 도구 transcript의 실제 screenshot와 july13-public-ui-observation-v1.json을 보존했다.
+
+WebsiteData344pages/168articles/24concepts/22connections·11파일3,448,351bytes를 actual pre/post raw SHA·같은ID·private 부모/shared:false 및 두 부모 목록으로 검증했다. 변경8개만 update하고 briefing.xml/concepts.csv/connections.csv3개 bytes/수정시각과 기존 추가 receipt1개를 유지했다. 로컬 receipt는 실제 readback의14개(작성3+WebsiteData11) 정보를 반영하고 이전 receipt를 private 복구본으로 보존했다.
+
+저장·승인·전환·CI·공개 raw·UI·WebsiteData·변경 patch의158자료/159ZIPmembers·4,945,970bytes를 공통 ordinary v1으로 Research ID1NEInRcoOLzDGOfmQDNkItZUF5f1CNeDM에 보관했다. 실제 내려받은 ZIP SHA5855f85233db02ca0a22114e1f0e6460b767c1304d024c7e3e5851cd43bd3a45·부모/shared:false·159 CRC와 source manifest77da716557f72b0210ef5e83321303847ef9e97c8e4879510a6a960d62f9bfe8로160파일 복구를 확인했다. 복구한 summary/readback의 같은commit·14공개 proof를 대조했다. 이 묶음은 source_versions0/dependency_closed:false인 운영 증거이며, 원문/승인 dependency closure는 별도 v2 보관 ID1iUBlx4epHxMntNTC59nKPaWupU5VLDpA다. 전체runtime복구나 운영정규횟수로 세지 않는다.
+
+남은 canonical 소급53회차505구간·metadata10·전체WBS2/22·독립human40dev/20heldout·새정규7회·무인08시/인증·fullruntime는 유지한다. 다음은 metadata가 완전한 다음 legacy 묶음 검토와 기존08시의 실제 수집→승인→Drive→배포 전체 회차 증거 연결이다. 동일 실패를1시간 이상 반복한 항목0이다. goal 카드 paused 상태는 그대로 확인됐으며 사용자의 재개 지시로 이번 구현/저장/발행을 수행했다.
