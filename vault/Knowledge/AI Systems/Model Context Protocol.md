@@ -33,6 +33,7 @@ verified_sources:
   - https://blog.modelcontextprotocol.io/posts/2026-07-28/
   - https://blog.cloudflare.com/mcp-v2/
   - https://openai.github.io/openai-agents-python/agents/
+  - https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/
 relations: []
 map_review:
   decision: include
@@ -93,6 +94,7 @@ AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트�
 
 ## 최근 변화
 
+- 2026-07-23 — GitHub는 7월 28일 공개 예정인 차기 규격을 공식 MCP Server에서 사전 지원한다고 발표했다. Redis 세션과 초기화·요청별 데이터베이스 작업을 제거했으며 이전 클라이언트 호환을 유지한 Go SDK 베타 지원과 적합성 시험을 안내했다. [[News/12e0b107d161c130|기사]] · [원문](https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/)
 - 2026-07-28 — MCP 유지관리팀이 무상태 요청·응답 코어와 MRTR을 포함한 새 규격을 공개했다. [원문](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
 - 2026-08-06 — Cloudflare가 Workers에서 새 규격을 지원한다고 발표했다. 애플리케이션 자체에 상태가 필요한 경우에는 Durable Objects를 계속 사용할 수 있다고 설명했다. [원문](https://blog.cloudflare.com/mcp-v2/)
 
@@ -102,3 +104,5 @@ AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트�
 - [MCP 규격 발표 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
 - [Cloudflare의 새 규격 지원 안내](https://blog.cloudflare.com/mcp-v2/)
 - [OpenAI Agents SDK의 에이전트 설정](https://openai.github.io/openai-agents-python/agents/)
+
+- [GitHub MCP Server 사전 지원 2026-07-23](https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/)
