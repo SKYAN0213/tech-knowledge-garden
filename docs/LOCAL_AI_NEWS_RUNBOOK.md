@@ -10225,3 +10225,19 @@ node scripts/research-publication.mjs status --run OPERATION
 기존 발행의 중단 복구나 실제 증거 연결에는 `node scripts/research-publication.mjs bind --run OPERATION --release RELEASE --push publication/push-attempts/ACTUAL_ATTEMPT.json`을 사용한다. 커밋에 승인 bytes가 없거나 push가 execution 관측 이전이면 거부한다. 이 bind는 새 API 저장/발행이나 fresh 원격 관측이 아니다. default `npm run publish`의 기존 동작은 유지한다. 비공개 진척 화면의 수집후처리 탭에 발행 단계 연결을 추가했다. 이 화면의 새 HTML 렌더링은 미검증이며 공개 독자 UI는 변경하지 않았다.
 
 표적 최초18건 중 기존13은 통과했고 새5는 fixture가 필수shared:false/mime_type을 빠뜨려 실패했다. fixture를 실제 raw 계약에 맞춘 뒤 실패5만 재실행해5/5 통과했다. 실제 release7/14_0002·push20a19110·Actions37305045327·공개12파일을 `codex-json-publication-operation-20261005-v1`에 연결했고 추가HTTP/모델/Drive원고쓰기0으로 public_bytes_verified를 확인했다. 순수 운영 proof로 소급신규운영0·전체WBS2/22·goalactive를 유지한다. 다음은 이 구현의 실제 publisher 무변경 재개·CI 및 기존08시 지침 연결이다.
+
+후속 실물 완료: 공개4cbb43e0a5318e0fa8a6a391481030daec2dacbd / Actions37310164417 build·deploy가 success다. 전체 검사는 이 새 코드 후보의 CI 한 차례로 Node887/887·Drive Python15/15·WebsiteData2/2·build/site를 통과했다. push 성공과 readback 실패가 모순된 새 표적1/1도 확인했다. actual fresh 대상1raw/전후51개 부모목록·2중첩폴더 metadata를 capture/reconcile하여 verified1을 확인했고 원고 쓰기는0이다. 실제 --operation publisher가 커밋을 정상 push했고 같은 명령을 재개해208원본 검증 뒤 build_performed:false/push_performed:false와 동일 HEAD를 확인했다. API 반환 필드를 observation_path로 잘못 사용한 첫 reconcile은 ENOENT였으며 이미완료capture의 observation_file/readback_file을 재사용해 추가API0으로 바로잡았다.
+
+기존 tech-ai-briefing-08은 native 도구로 prompt만 덧붙였다. actual TOML 전후에서 변경은prompt/updated_at뿐이며 이전prompt prefix·오전8시·gpt-6-luna/medium·프로젝트·cwds·ACTIVE를 유지했다. 기존원문/기사승인·32칸·reader/UI·WebsiteData 계약을 보존하고 수집/편집 run과 발행operation을 같은회차의 비공개 기록에 연결하도록 했다. 실제무인08시 완료나 새정규운영으로 세지 않는다.
+
+공통 actual public-readback12파일/지도module은 이전배포와도 모두 같은bytes였다. 기존1280/390 UI 증거를 내용불변 근거와 함께 재사용했으며 새render로 표시하지 않는다. WebsiteData11개의fresh raw/ID/부모/shared:false를 대조한 뒤 수집시각 snapshot.json1개만 같은ID로갱신했다. 나머지10생성파일 bytes/metadata·기존receipt를 보존했고 새snapshot actualraw SHA 및 최종12목록을 재검증했다. 비공개 status CLI/HTML은 발행연결2개를 실제출력했다. 추가한 운영HTML의 브라우저 렌더링은 미검증이다.
+
+실행·CI·공개raw·freshDrive대조·예약전후·WebsiteData·변경구현12파일의178자료/179ZIPmembers·6,581,353bytes를 Research ID1CQNr1IsUM_ZWqblivDHXDwedfdbBr4Sq에 보관했다. parent/shared:false·이름1개·actualraw SHA64fe1b8cee0a1e2b996afefc19769bcf42b293bda16e891986315e212217d6dc, exactmanifest5288c741774a8ae3a70cded7228cfb8cf0c66815b1518fd003b5a5e253383691와 common ordinaryv1 모든member CRC/SHA 복구를 확인했다. 복구root와 별도복구한selectedrepository에서 publicationOperationStatus가 같은4cbb43e/public_bytes_verified를 재현했다. fullruntime·새정규회차로 승격하지 않는다. 증거는 외장 publication-operation-*와 canonical 두operation/delivery/public-readback run이다. 목표active·WBS2/22·56/527·metadata10·독립40/20·정규7회/무인08시·fullruntime는 유지하며 동일실패1시간 반복0이다.
+
+## 409. 다음 7월13일 묶음과 공통 parser의 실제 재사용
+
+inventory에서 다음 metadata-ready 미검토는7/13_1602·0802·0002 세회차임을 확인했다. `legacy-20260713-batch-input-20261005-v1`에 original SHA/내용·metadata·22unit hash/offset·16고유URL을 고정했다. 1602의Codex0.144.2 공식GitHubtag와 정확한RESTrelease를 기존 collector/profile로 HTTP200 두원본·HTML5/JSON8블록 수집했다. source별새crawler/추가dependency/새파서/추가모델은0이다. source_id b5e2211dddab87f352fa/732ac1df2b2fd40f6e40과두불변parse를 보존한다. 기사/용어승인·Drive작성원본·공개전환은 아직0이다.
+
+original 묶음·실제source/parse14자료/15members·2source versions·75,001bytes를 공통ordinaryv1으로Research ID1xYgvdc4kxar8SViCkvdWyPwthPlehTfF에보관했다. parent/shared:false·actualraw SHA4143b4c473022e57203cadc8892e23fc56b94ca8c3d52cc5a7895e3fa5294daa와exactmanifest7935557c935b4ebd2ea1cb5cb9cdeba1b0f7380206d99a0d10899bd39619e8eb로복구를확인했다. source location register 시도는metadata의name 계약에서 거부됐으며 코드확인결과 register는portablev2만수용하므로ordinaryv1을강제로등록하지않았다. 원격보관/복구성공과locationindex미등록을구분한다. 최종승인closure를v2로구성한뒤기존register를사용한다.
+
+다음은7/13_1602 실제release/명시PR를대조한claim·모델원고·의존AgentEvaluation노트검토와0802/0002의근거없는‘새소식없음’/분석문장판정이다. 현재시점discovery API목록을당시기간의완전조사로쓰지않는다. 세회차를작은한묶음으로전환해Drive/CI반복을줄이고기존coverage/사건ID/RSS를보존한다. 원문수집만완료한준비묶음이므로56회차527구간미판정/metadata10·전체WBS2/22·goalactive를유지한다. 실물08시정규실행과독립평가·fullruntime도계속남는다.

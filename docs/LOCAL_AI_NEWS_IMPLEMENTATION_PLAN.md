@@ -4295,3 +4295,9 @@ fresh208원본을 검증한 retrospective release에서 기존7/14_0002 파일1�
 P5-01의 release→execution→commit/push→deployment→public raw를 기존 공통 검증기로 연결했다. publisher는 --operation/--release로 소유 커밋을 고정하고 이미확인된local/remote HEAD에서는 build/commit/push를 생략한다. source/승인/기사ID/기존default발행은 유지한다. raw변조·stale새발행·commit/CI불일치를 검사한 새5/5와 기존13/13이 통과했고 실제12b4179의release/Drive1/push/CI/public12을 HTTP0으로 연결했다. 상세 런북408.
 
 이 단계는 단일08시 전체 완료나 자동승인이 아니다. 수집→사실검토→편집의 기존 checkpoint와 새발행operation을 같은08시 회차에서 실제 실행하는 증거, WebsiteData/UI/최종보관 및 인증/중단시험·독립평가·새정규7회·전체소급은 남는다. WBS2/22·56회차527구간·metadata10·goalactive를 유지하며 신규 출처 등록이나 임의 구조 확장보다 실제정규회차 연결을 우선한다.
+
+19.314 후속: 4cbb43e/Actions37310164417 build·deploy·CI887/887·Python15+2·build/site·공개12+지도module이통과했다. actualpublisher 동일operation 재개에서 build/push0, 기존08시prompt만변경한전후TOML, WebsiteData11freshraw/1snapshot갱신·10불변을확인했다. 실행증거178자료의actualDriveZIP/commonrestore에서같은publication상태를재현했다. 전체정규회차완료로세지않는다. 상세런북408.
+
+## 19.315. 다음 7월13일 source 묶음 재사용
+
+3회차22unit/16URL을원본SHA로고정하고Codex0.144.2의공식tag/REST 두source를기존공통profile로HTTP200/13blocks수집했다.14자료ordinaryv1의actualDriveZIPSHA/CRC/commonrestore를확인했다. register는portablev2계약이므로미등록을완료로바꾸지않았고최종승인closure에연결한다. 다음은실제PR/claim·한국어writer·의존전문용어와2회차‘새소식없음’문장의근거판정이다. 당시discovery범위를현재목록으로완료처리하지않고3회차를한묶음으로전환해반복Drive/CI를줄인다. 상세런북409. 전체56/527·metadata10·WBS2/22·goalactive는유지한다.
