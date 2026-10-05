@@ -1,3 +1,5 @@
+최신 Drive 반영(2026-10-05): 7/30의 기사5건과 전문용어4개를 승인6작성 파일로 반영했다. fresh200실제 raw와16폴더 재조회, 명시적 retrospective release를 확인하고3같은ID 갱신·3신규경로 생성 후6새raw의44,082bytes/SHA를 대조했다. 나머지197개는 동일ID·크기·수정시각을 확인한 기존 raw를 사용한다. 최종203파일 원본/SHA6c8d1a37e2e7551f7786c9265d0fec896d375795258db89fc03b4d27ee5cbf1b을 canonical 외장 작업 사본에 적용했다. 실제 공개 배포·WebsiteData는 이어서 검증한다. 이전 private checkpoint의 upload_allowed=false와 작성200개 수치는 당시 상태다.
+
 최신 비공개 개발(2026-10-05): 외장 저장소에서7/30 원본11구간·5발표를 재검토했다. 기사69사실·정의17사실을 직접 대조하고 MLX 실제5작성 호출 뒤 정정한5기사를 승인했다. 새 전문용어3개와 기존 KV 캐시1개를 연결했다. 승인 묶음 안의 용어 관계와 공유 정의의 복구 참조 순환을 공통 수정했으며 최종 표적23/23을 통과했다. reader-v2의 생성/용어/validate/build/site·RSS40식별자·채널 내용 일치,1280/390 실제 UI와13파일 동일 bytes를 확인했다. private Drive4ZIP에서5승인·정의4개·온톨로지를 실제 원격 bytes로 복구했다. 변경6작성 파일44,082bytes는 준비만 됐고 upload_allowed=false다. 작성 원본200파일과 공개b18e591은 유지하며 전체미판정64/598·독립40/20·정규7회/무인08시·full runtime 복구는 남는다. [런북389](LOCAL_AI_NEWS_RUNBOOK.md#389-730-전체-원문-기사전문용어-전환과-공유-정의의-복구).
 
 저장소 위치 갱신(2026-10-05): 본체와 두 연결 worktree를 `/Volumes/X5Storage/Projects/Personal/Apps/`로 이동하고 기존 경로는 symlink로 유지했다. 총272,837파일의 bytes·링크·mode·확장 속성 및 Git HEAD/미커밋 상태를 대조한 뒤 내장 중복 사본을 삭제했다. Git fsck·Python/Node 실행·Drive 원본200개 일치·기존 미리보기 HTTP200을 확인했다. 내장 available 실측0.36→8.65GB. 원문/검토 장부/개발환경은 보존했고 모델 이동과 공개 배포는 이번 작업에 포함되지 않는다. [런북388](LOCAL_AI_NEWS_RUNBOOK.md#388-프로젝트-저장소-외장-이동과-내장-중복-사본-정리-2026-10-05). 이전 위치/상태를 설명하는 아래 checkpoint는 당시 기록이다.
@@ -989,13 +991,11 @@ LS ELECTRIC의 2026-09-22 보도자료를 원문 블록과 직접 대조해 주�
 
 Qwen 3.8 27B Q4_K_M의 provenance 기준 추출은 209,756ms, 초안 작성은 171,891ms로 합계 약 6분 22초였다. 별도 31경로 source scan은 10분 43.5초였다. 따라서 지연은 로컬 LLM에만 있지 않다. OpenAI Responses API adapter는 있지만 `OPENAI_API_KEY`가 unset이라 실호출 비교는 하지 않았다. 안전한 키 연결, 원문 외부 전송, 유료 실행을 선택한 뒤 고정 저장 원문에서 역할별 비교가 가능하며, API는 fetch·parse 시간을 줄이지 않는다. 비공개 현황판을 새 실행에 맞춰 다시 생성했다. 상세 결과는 [런북 230절](LOCAL_AI_NEWS_RUNBOOK.md#230-ls-electric-저장-원문의-비공개-편집-승인과-llmapi-지연-구분)에 있다. WBS는 1/22로 유지한다.
 
-
 ## 114. 광진 협동로봇 사례의 원문 재검증과 비공개 후보 승인
 
-두산로보틱스 영문 페이지가 MoneyToday를 원보도로 직접 표시한 사실을 확인하고 두 문서를 공통 collector로 수집했다. MoneyToday 원문은 2026-06-26 보도이며, 리베팅 불량 1~2장, 13억원 투자·4~6개월 적용, 아산공장의 M시리즈 19대, 14개 차종·사양과 20개 부품 검사, 현장 인력난에 따른 자동화 배경, 2027년 해외 17개 사업장 100대 이상 도입 계획을 담았다. 분모 없는 불량률은 계산하지 않았고 해외 도입은 계획으로 유지했다.
+두산로보틱스 영문 페이지가 MoneyToday를 원보도로 직접 표시한 사실을 확인하고 두 문서를 공통 collector로 수집했다. MoneyToday 원문은 2026-06-26 보도이며, 리베팅 불량 1~~2장, 13억원 투자·4~~6개월 적용, 아산공장의 M시리즈 19대, 14개 차종·사양과 20개 부품 검사, 현장 인력난에 따른 자동화 배경, 2027년 해외 17개 사업장 100대 이상 도입 계획을 담았다. 분모 없는 불량률은 계산하지 않았고 해외 도입은 계획으로 유지했다.
 
 59-block 모델 입력의 첫 호출이 300초 timeout을 내자 같은 입력을 재시도하지 않고 12,000자·3 facts/batch 정책으로 바꿔 3개 batch를 완료했다. Qwen 초안의 투자액 10배 오류와 분야 오분류를 원문 대조에서 찾아 바로잡았다. 수정본은 [MoneyToday 원문](https://www.mt.co.kr/industry/2026/06/26/2026062517001050048)과 [두산로보틱스 재게시](https://www.doosanrobotics.com/en/about/promotion/news/kwangjin-achieves-near-zero-defects-with-doosan-cobots)를 연결한다. `candidate-source-alternative`가 두 URL을 같은 사건으로 고정하고 후보는 `verified`가 됐으나 `candidate_published:false`다. 기존 회차, RSS, GitHub, Drive 및 공개 사이트는 바꾸지 않았다. 전체 테스트는 실행하지 않았다. 실행 근거와 모델 오류는 [런북 231절](LOCAL_AI_NEWS_RUNBOOK.md#231-두산로보틱스머니투데이-광진-협동로봇-기사-원문-재검토와-비공개-승인)에 있다. WBS는 1/22 유지.
-
 
 ## 115. 후보 revision 변경 후 오래된 지문 영수증을 무효 건수와 분리
 
@@ -1084,6 +1084,7 @@ KUKA 공식 연차보고서 아카이브와 Geschäftsbericht 2025 PDF를 기존
 ## 130. 테스트 실행 빈도 조정
 
 동일 코드 상태에서 같은 표적 테스트를 여러 번 반복하지 않는다. 코드 수정이 끝난 뒤 가장 좁은 관련 검사를 한 번 실행하며, 이후 문서·설정 변경은 필요한 정적 검사와 결과물 readback으로 확인한다. 전체 suite는 통합 위험 또는 릴리스 검증에만 사용한다. 이번 확인에서는 전체 suite나 새 테스트를 실행하지 않았고, 설정 parse·변경 JS 문법·diff 검사만 수행했다. 최신 비공개 현황판 SHA-256은 `56792719487e34bf16634d07b71ed46b127b956399a5f8dbe3c17b7f998492d3`이다. 자세한 실행 원칙은 [런북 247절](LOCAL_AI_NEWS_RUNBOOK.md#247-테스트-실행-빈도-축소)을 참조한다.
+
 ## 131. Kawasaki 로봇 뉴스 경로와 로컬 추출 결과
 
 기존 Kawasaki Robotics 기업 레코드를 확장해 Kawasaki Heavy Industries의 공식 Robot 뉴스 페이지를 신규 route로 등록했다. 분류 페이지의 기사 상세 링크 48개가 선택 대상이며, 2026-09-14 MOU 원문을 공통 collector로 확보해 11개 블록으로 파싱했다. 7일 기준선은 링크 48개를 확인하고 기간 내 신규 후보가 없는 상태로 완료됐다. daily plan-only는 기존 34개 활성 route·68개 기간 창을 산출하며 Kawasaki 기준선을 참조한다. 후보 backlog와 공개 상태는 변경하지 않았다.
@@ -1091,6 +1092,7 @@ KUKA 공식 연차보고서 아카이브와 Geschäftsbericht 2025 PDF를 기존
 공식 목록 제목이 말줄임표로 잘리는 실제 UI를 반영해 엄격한 truncated-prefix 정책을 추가했다. 최소 24자 접두부가 상세 제목과 일치할 때만 상세 제목을 정본으로 쓰며 날짜·URL 검사와 불일치 차단은 유지한다. 회귀 검사 1개 통과, 전체 suite 미실행이다.
 
 로컬 Qwen 3.8 27B extraction은 약 278.6초, 주장 6개를 만들었고 구조 검사는 3개만 통과했다. 날짜 단위·원문 인용 경계 문제로 모든 주장을 미검토·비공개로 유지했다. 기사나 승인·발행 결과는 없다. 현재 WBS는 1/22(5%), P1-01 부분 진행이다. 다음 조사 대상은 다른 제조사의 공식 운영자료와 기간·상세 대조다.
+
 ## 132. 34개 route 통합 수집 및 두산 분기 IR 원문 probe
 
 `daily-20261002-current34-live-v1`의 34개 활성 route, 68개 기간 창이 모두 `window_scanned`로 끝났고 retry 0, incomplete 0이다. 실측 벽시계 시간은 15.9분이다. 178개 후보 관측 키는 전부 고유했고 기존 사건 연결/병합 뒤 backlog 276건(SHA-256 `14fa1d788ab20fae9daa16cd27d73d21a17b4709faeedb03b2ef54992d161316`)이다. handoff pending 220, verified same-event aliases 3, coverage 19 partial·13 not_attempted다. 승인은 미실행이며 Drive·public verification은 false다.
@@ -1111,13 +1113,11 @@ P1-01 source progress를 반영한 private 현황판을 재생성/readback했다
 
 KIND detail exact profile까지 반영한 최신 private 현황판 SHA-256은 `db80693a52dc2450db55ca04b2c2a92fcc14e9c1e57b49d2f1eab951f7eb09bb`다. WBS P1-01은 partial이며 전체 완료 수 1/22로 유지된다.
 
-
 ## 134. KIND IR 일정의 공통 페이지 순회 실물 실행
 
 공통 `form-html-scan`이 KIND IR 일정의 URL-bound POST와 HTML fragment를 페이지 단위로 순회한다. 실행 `kind-ir-schedule-20260701-20261003-live-v1`에서 15페이지·1,414행을 저장했고 마지막 페이지는 14행이었다. 행사 목록은 별도 `events.json`에 `event_date`로 보존하며 뉴스 후보는 0건, backlog는 바뀌지 않았다. 두산로보틱스 2026-07-24 행사 행과 `irSeq=45182` 상세 원문 연결을 확인했다.
 
 스캐너 표적 3/3, worker 날짜 의미 표적 1/1, 변경 JS 문법·설정 JSON·diff 검사가 통과했다. 전체 suite는 다시 실행하지 않았다. 비공개 실행 증거와 재현 명령은 [런북 251절](LOCAL_AI_NEWS_RUNBOOK.md#251-kind-일정-페이지-순회와-행사-데이터의-공통-bounded-scanner)에 기록했다. 전체 WBS는 1/22(5%), P1-01 partial이다. 비공개 현황판을 재생성·readback했으며 SHA-256은 `d28c891d5e93c40a07589f3324cfaa09ba66bd020341f11aab8fb266fd7f1a5c`다.
-
 
 ## 135. KUKA 영어 뉴스 API의 실물 원문 수집
 
@@ -1153,13 +1153,11 @@ KUKA 독일어 원문 목록 bytes에서 해당 행의 itemId와 URL·제목을 
 
 공통 fetcher에서 source route가 `request_interval_ms`를 지정하면 해당 요청과 robots 지연 중 큰 값을 적용한다. robots 지연을 shared fetcher 전체에 누적하지 않으며, 이 설정을 사용하지 않는 route는 기존 3초 기본을 쓴다. AWS의 robots 지연은 0초로 확인했다. 같은 하루 창의 16개 상세 처리 시간은 3초 기본 설정 55,107ms·1초 override 55,043ms로 차이가 거의 없어 AWS 예외 설정은 제거했다. 현재 확인만으로는 이 경로의 병목을 로컬 LLM이나 요청 간격에 귀속할 수 없다. 관련 표적 검증과 private scan은 [런북 258절](LOCAL_AI_NEWS_RUNBOOK.md#258-출처별-요청-간격과-aws-상세-수집-실측)에 있다.
 
-
 ## 140. VAST 원문 날짜 판정과 후보 지문 복구
 
 VAST DataEnclave 공식 원문의 저장 bytes를 exact article profile로 재파싱해 제목과 43개 본문 block을 추출했다. 원문 첫 문단과 JSON-LD `datePublished`가 2026-09-22로 일치해 발행일로 선택했고, 메타데이터의 2026-09-21 값은 충돌 후보로 보존했다. 수정 시각 후보 중 게시일보다 앞선 2026-09-21 값은 `modified_at`에 반영하지 않았다.
 
 새 inventory hash로 만든 private fingerprint receipt에서 후보 53건 중 unique 36, ambiguous 1, no-match 16을 기록했다. 이전 v3 대비 고유 매칭이 1건 늘었다. 백로그는 수정하지 않았으며 승인·Drive 작성·공개는 수행하지 않았다. 코드 변경의 표적 worker 테스트 1건이 통과했고 전체 테스트는 실행하지 않았다. 같은 코드의 성공 검사를 반복하지 않는 테스트 빈도 정책은 [런북 247절](LOCAL_AI_NEWS_RUNBOOK.md#247-테스트-실행-빈도-축소)을 따른다. 자세한 원문 재생과 영수증은 [런북 259절](LOCAL_AI_NEWS_RUNBOOK.md#259-vast-dataenclave-원문-날짜-프로필과-후보-지문-복구)에 기록했다.
-
 
 ## 141. 기존 후보 다섯 건의 원문 지문 복구
 
@@ -1167,13 +1165,11 @@ VAST DataEnclave 공식 원문의 저장 bytes를 exact article profile로 재�
 
 Qwen은 정적 HTML에 기사 본문이 없어 partial, KERI·BusinessWire는 blocked, Dario는 검증 가능한 게시일이 없어 미연결이다. Rocket Lab의 9월 19일은 본문상 발사일로 확인돼 게시일로 쓰지 않았다. 후보 backlog·승인·Drive·공개 상태는 변경하지 않았다. 네 exact profile을 포괄하는 표적 테스트 1건이 통과했고 전체 suite는 실행하지 않았다. 세부 실행과 영수증은 [런북 260절](LOCAL_AI_NEWS_RUNBOOK.md#260-다섯-후보-원문-재수집공통-날짜-추출후보-지문-연결)에 있다. WBS 전체는 1/22(5%), P1-01 partial이다.
 
-
 ## 142. KASA 기사 한 건의 로컬 추출부터 비공개 초안까지
 
 공식 KASA 원문을 공통 collector로 저장·선택하고 Qwen 3.8 27B 로컬 추출, 직접 quote 검토, 초안 생성까지 한 경로로 실행했다. 7 blocks·3,752 chars 추출은 169.1초, 한국어 초안은 136.7초였다. 직접 검토는 4 verified·2 deferred이며, 결과 Markdown은 원문 링크를 포함한 `editorial_review` 상태이고 공개 승인은 없다.
 
 이 슬라이스에서 `사업 계획`이라는 명사 때문에 completed fact를 보류하던 validator 오탐을 발견해 future-action 패턴으로 좁혔다. 관련 회귀 1/1과 4개 article profile 회귀 1/1이 통과했고 전체 suite는 실행하지 않았다. 입력 원문·claims·review·draft는 `.local/research/local-ai/runs/candidate-kasa-local-extraction-20261002-v2/`에 있다. 세부는 [런북 261절](LOCAL_AI_NEWS_RUNBOOK.md#261-kasa-원문에서-로컬-추출사실-검토비공개-초안까지). 후보 승인, backlog 병합, Drive와 공개 배포는 수행하지 않았다. WBS는 1/22(5%), P1-01 partial이다.
-
 
 ## 143. FANUC 일본어 뉴스의 일일 수집과 중복 없는 인계
 
@@ -1181,26 +1177,21 @@ FANUC 일본어 현지어 route를 공용 일일 경로에 추가하고, 2026-09
 
 이번 검증은 source-registry 전체 suite를 반복하지 않고, 앞서 통과한 FANUC 표적 검사 1건과 실제 일일 receipt·backlog hash·coverage/handoff readback을 사용했다. 비공개 현황판을 갱신해 36개 활성 경로, 후보 276건, 최근 1-route·2-window 실행을 표시한다(SHA-256 `ddf80ef16ae5eea789300664bc9e75cd58c8326e6dda24d0ee4f542bd9dad39a`). 전체 WBS 1/22(5%), P1-01 partial을 유지한다. 세부 receipt는 [런북 263절](LOCAL_AI_NEWS_RUNBOOK.md#263-fanuc-일본어-경로의-일일-실행중복-억제handoff)이다.
 
-
 ## 144. Doosan 일정과 공식 IR 자료의 근거 연결
 
 공통 resolver `scripts/research/event-material-link.mjs`를 추가해 검토가 끝난 일정 이벤트와 공식 원문 자료를 provenance를 유지한 relation receipt로 연결했다. Doosan Robotics의 KIND 2026-07-24 경영실적 발표 이벤트와 공식 `2Q26 Earnings Release` PDF를 연결했으며, 자료 게시일을 확인하는 원문 근거가 없어 `published_at`은 양쪽 모두 null이다. 최신 receipt는 private이며 independently verified relation ID `272874945a9450c41b4e2d67`를 포함한다. 뉴스 후보 생성·승인·발행·Drive·공개는 없었다. 집중 테스트 2/2와 문법 검사를 통과했고 전체 suite는 실행하지 않았다. WBS는 1/22(5%), P1-01 partial이다. 상세 근거는 [런북 264절](LOCAL_AI_NEWS_RUNBOOK.md#264-일정-행사와-공식-ir-자료의-검토형-연결)과 [수집 명세 64절](SOURCE_ACQUISITION_SPEC.md#64-일정-이벤트와-원문-자료의-검토형-연결)에 있다.
-
 
 ## 145. 36개 일일 경로 실행과 FANUC 영문 공지 선택자 복구
 
 활성 36개 경로를 실행한 `daily-20261003-core36-live-v1`은 72개 날짜 창 중 68개를 완료하고 4개를 미완료로 남겼다(17분 03초). FANUC 영어 목록의 `notice` URL이 기존 `news` 선택자에서 누락된 점을 원문 DOM과 미완료 receipt에서 확인했다. 선택자를 보강하고 9월 25일~10월 4일을 다시 수집해 Hitachi·FANUC 9월 30일 발표를 포착했다. 기존 verified candidate key와 event ID를 재사용해 중복 후보는 생성하지 않았고 supplemental coverage를 10월 3일까지 연결했다. 정확한 두 supplemental 창을 reconcile해 FANUC retry를 제거했다. ASEC/FDA 상세 incomplete 두 건은 남았다. 후보 장부 279건, 편집 handoff pending 222건이며 기사 발행·Drive 확인·공개 검증은 수행하지 않았다. 전체 suite는 돌리지 않고 FANUC 표적 Python 검사 1건과 JSON/diff 확인을 사용했다. WBS 1/22(5%), P1-01 partial이다. 상세는 [런북 265~266절](LOCAL_AI_NEWS_RUNBOOK.md#265-36개-일일-경로-실행과-창별-미완료-분류)과 [원천 수집 명세 65절](SOURCE_ACQUISITION_SPEC.md#65-fanuc-영문-공지-url-형식과-단일-페이지-선택)에 있다.
 
-
 ## 146. ASEC·FDA 목록 날짜 검증과 미완료 창 복구
 
 ASEC 6건과 FDA 5건의 공식 목록 날짜를 각 기사 화면 날짜와 교차 확인하도록 article profile을 보강했다. 해당 목록/화면 날짜가 일치한 11건을 `source_parsed_unreviewed`로 다시 수집했고 기존 후보 279건에 병합했다. 이 두 창의 재시도는 정리됐으며 승인·공개는 없었다. 단일 worker 회귀 테스트 1/1 통과, 전체 suite 미실행. private dashboard SHA-256은 `7bce364ef0baeacc3884abd77e47a20cb0a0e4e8244407d797ef327b4d633755`다. 근거 및 남은 전체 coverage 상태는 [런북 267절](LOCAL_AI_NEWS_RUNBOOK.md#267-asec-fda-공식-목록과-기사-화면-날짜-대조)을 참조한다.
 
-
 ## 147. FANUC·ABB 제조사 IR 기간 확인
 
 공식 목록에서 FANUC 일본어 IR 공시와 ABB 투자자 발표의 2026-09-28~10-03 구간을 확인했다. 두 경로 모두 `window_scanned`, 후보 0건으로 완료했고 후보 장부는 279건으로 바뀌지 않았다. 두 source coverage는 2026-10-03까지 이어졌다. 전체 테스트 없이 설정 parse·receipt·reconciliation·dashboard readback만 확인했다. 자세한 내용은 [런북 268절](LOCAL_AI_NEWS_RUNBOOK.md#268-fanuc-ir-공시와-abb-투자자-발표의-최신-기간-확인)에 기록했다.
-
 
 ## 148. 현황판 supplemental coverage 표
 
@@ -1290,7 +1281,6 @@ candidate backlog 289개는 key 기준 289개 고유하다. handoff는 pending 2
 
 비공개 기록은 `.local/research/local-ai/strategy-reviews/kuka-annual-report-2025.md`다. 근거가 없는 AI 매출·투자 수익률·경쟁 우위 주장은 기록하지 않았고 다른 연도의 전략 변화, 기사 후보, 승인, Drive, 공개 사이트와 연결하지 않았다. 전체 WBS는 1/22, P1-01 partial 그대로다. 데이터·문서 변경만 수행했으며 테스트 suite는 실행하지 않았다. 상세 provenance와 후속 추적 항목은 [런북 285절](LOCAL_AI_NEWS_RUNBOOK.md#285-kuka-연차보고서-전략실적-이력)이다.
 
-
 ## 166. DART 기업별 RSS 목록 검증과 상세 원문 차단
 
 공식 DART 안내의 회사별 RSS 버튼 구현에서 `https://dart.fss.or.kr/api/companyRSS.xml?crpCd=00126380` 주소 패턴을 확인했다. 삼성전자 피드는 원본 XML 3건과 공시 보고서 식별자·RSS 날짜를 보존했다. DART 안내는 회사별 피드의 범위를 최근 5영업일이라고 설명한다. 공통 RSS scanner가 이 명시된 범위를 최신 feed `pubDate`와 함께 검증하도록 하고, 5영업일 이내·초과·오래된 feed를 구분하는 표적 검사 1/1이 통과했다.
@@ -1309,13 +1299,11 @@ source channel의 `coverage_sectors`는 coverage grid 계산에만 쓰고 `secto
 
 실제 통합 run `daily-20261003-coverage-sector-current-v2`는 39 routes·78 windows 전부 `window_scanned`, retry queue 0, wall 998,884ms다. 32칸 중 partial 21·not_attempted 11이다. 국내 AI·기업 운영과 국내 반도체·기업 운영이 모두 `samsung-global-press-releases`를 경로로 표시하고 후보 분류는 AI로 보존된다. backlog에서 해당 RSS가 관측한 5개 후보를 원장 readback해 모두 기존 `AI` sector로 유지됨을 확인했다. 후보 backlog는 292개 고유 key(SHA-256 `c300c35a6f719617785134d1349e3effa6f02df2df1aed50802f69fe44c62470`), 공개·Drive flags는 false다. 비공개 현황판 readback SHA-256은 `e73a400beaaa9b945bc97f5fbf149be82d9703c9098e5297d83ffb17015884c1`이다. WBS 1/22 및 P1-01 partial은 변함없다.
 
-
 ## 169. Celltrion 공식 뉴스 수집 통합
 
 Celltrion 한국어 공식 보도자료 목록을 공통 list/detail scanner에 연결했다. `daily-20261003-celltrion-route-v1`은 40 routes·80 windows 모두 `window_scanned`, retry 0이다. 날짜 범위에 든 상세 원문 3건(2026-10-01 1건, 2026-09-29 2건)이 후보 장부에 기록됐고 전부 `unreviewed`로 유지된다. 후보 장부는 297건·297 고유 key이며 SHA-256은 `6983216d35d160a9597a0bf7122f2a1873a440bca76ebe86bdd53674bed4e65e`다.
 
 바이오 국내 기업·운영 coverage는 Celltrion route를 포함해 `partial`로 표시된다. 전체 coverage 22 partial·10 not_attempted, wall time 1,013,921ms다. 현황판은 최신 통합 run과 coverage를 반영하며 SHA-256은 `e5fe0337314650039330d2ccf7b1ab74c6b08242a05579adf4aa253b06cca974`다. 전체 테스트 suite·승인·Drive 저장·공개 배포는 수행하지 않았다. 세부 기록은 [런북 289절](LOCAL_AI_NEWS_RUNBOOK.md#289-celltrion-공식-뉴스와-테스트-빈도-기준)이다.
-
 
 ## 170. SEC filings JSON/API와 EDGAR 상세 연결
 
@@ -1428,6 +1416,7 @@ INNOSPACE 한국어 공식 뉴스 목록을 새 crawler 없이 기존 `html-list
 현재 50개 활성 경로를 `daily-20261003-innospace-plan-v1`로 실행해 50/50 route·100/100 window가 `window_scanned`, retry 0으로 끝났다. 32개 coverage 조합은 모두 `partial`이며 `not_attempted`는 없다. wall-clock은 1,135,164ms(18분 55초), receipt elapsed 합계는 1,750,228ms다. LLM 추론은 없었다. 가장 느린 경로는 AWS What's New 297,550ms, FDA 공지 181,268ms, GitHub Changelog 181,034ms, Epson 협동로봇 140,907ms, HD현대로보틱스 뉴스 117,415ms다. 지연은 출처 fetch·parse 경로에서 발생했다.
 
 비공개 현황판 `.local/research/local-ai/delivery-status.html`은 최신 50-route run과 313개 후보를 표시한다. 최종 SHA-256은 `3338cfb496594499f6bfccaa6a3c6fb40ca635156b70ae112f589b5aebf9f9e2`다. 네 설정 JSON 파싱과 `git diff --check`를 확인했다. 앞선 단일 날짜 parser 표적 검사 외에 전체 suite나 같은 성공 검사를 반복하지 않았다. Drive·웹·GitHub 발행은 하지 않았다. 원문과 상세 receipt는 [런북 304절](LOCAL_AI_NEWS_RUNBOOK.md#304-innospace-공식-뉴스와-50개-경로-통합-실행)에 기록했다.
+
 ### 19.215 로컬 Ollama 주소 설정 외부화
 
 로컬 Ollama 기본 주소를 `127.0.0.1:11434`로 유지하면서 `TECH_KNOWLEDGE_OLLAMA_URL` 환경 변수와 모델 정책의 `runtime.ollama_url`로 loopback 안에서 포트를 지정할 수 있게 했다. 원격 host와 URL 인증 정보는 어댑터 경계에서 거부한다. 환경 변수로 재정의하면 정규화된 주소를 모델 정책 지문에 넣고, metadata에는 실제 endpoint를 기록한다. 따라서 주소가 다른 실행 사이에 모델 결과 cache/checkpoint가 섞이지 않는다. 기본 주소를 쓰는 기존 정책은 불필요한 지문 변경을 피한다.
@@ -1447,7 +1436,6 @@ Qwen3.8:27b 로컬 추출은 6개 claim을 냈고 5개 구조 검사를 통과�
 이 출력에서 원문 quote는 대문자 `From`으로 시작하고 숫자 condition은 소문자 `from`을 사용해, 내용이 일치하는데도 기존 검증기가 대소문자 구분으로 거부하는 결함을 확인했다. 숫자·단위·조건 비교를 영어 대소문자에 무관하게 바꾸고, 해당 원문 조건은 통과하되 실제 없는 조건은 계속 실패하는 표적 테스트 하나로 검증했다. 이미 저장된 Google Qwen run은 수정 전 코드 hash로 보존한다. 새 판단은 이전 receipt를 재작성하지 않았다.
 
 평가 fixture 누적은 actual-source 21/40 development, heldout 0/20, Codex reviewer 21, independent human 0, invalid 0이다. 보안 분야는 1→2건, AI는 4→5건이다. private dashboard 재생성 SHA-256과 원문·입력·응답·판정 receipt는 [런북 307절](LOCAL_AI_NEWS_RUNBOOK.md#307-google-gti-ai-era-원문과-조건-검증-보정)에 기록한다.
-
 
 ### 19.218 안랩 V3 한국어 원문과 AV-TEST 독립 결과 대조
 
@@ -1478,21 +1466,18 @@ Qwen3.8:27b 로컬 추출은 6개 claim을 냈고 5개 구조 검사를 통과�
 ### 19.223 소급 파서 판정의 승인 기준선 확인
 
 2026-10-01 고정 historical-source reconciliation은 후보 109개, historical source가 있는 후보 107개, 판본 782개와 parse 1,037개를 기록한다. 다른 판본 내용 불일치 23행과 같은 판본의 parse 내용 불일치 7행 중 8행은 기존 4개 adjudication receipt가 유효하게 판정했다. 추가 비교를 검토했지만, ESA BepiColombo 후보는 미승인·event ID 없음·candidate approval 없음으로 판정 기준선이 없었다. 승인된 ABB 및 Doosan 비교는 본문 내용이 실제로 달라 기존 parser metadata/subset adjudication 형식으로 맞지 않았다. 잘못된 receipt를 추가하지 않았다. 상세 검토 경계는 [런북 313절](LOCAL_AI_NEWS_RUNBOOK.md#313-소급-비교의-승인-기준선-검사)이다.
+
 ### 19.219 MIT InstructMesh 단일 원문 추출 평가
 
 MIT News의 InstructMesh 기사 16 blocks를 exact source selection으로 고정하고, source-first 기준 사실 5개 작성 후 Qwen3.8:27b Q4_K_M 추출을 한 번 실행했다. 결과는 6 claims/구조 통과 6/6·wall 179,169ms, 의미 대조 full 3·partial 1·missing 1이다. 자연어 수정 흐름 일부와 미래 AR 통합 가능성이 빠져 raw model pass false다. 전체 RSS 실행의 10개 문서가 들어간 초기 fixture는 단일 기사 평가에 부적합해 private quarantine로 옮겼으며 active audit invalid cases는 0이다. 개발 evaluation 23/40, heldout 0/20, 독립 human 0이다.
 
 비공개 status HTML은 새 집계를 반영해 생성하고 SHA-256 `6248cfe175a3c2c4fcbff7802a31db7ccc27d05205695b21e2f838aa586b66fb`를 확인했다. 데이터 전용 변경으로 전체 테스트는 실행하지 않았다. 근거·재현 흐름은 [런북 316절](LOCAL_AI_NEWS_RUNBOOK.md#316-mit-instructmesh-단일-원문-로컬-평가)에 있다.
 
-
 2026-10-03 SEC 공시 scanner의 8-K shell fetch/parse checkpoint가 JSON pointer 인덱스 끝 한 자리만 사용하던 결함을 수정했다. 10번째 이후 서로 다른 공시의 checkpoint가 같은 이름을 써서 앞선 성공 결과를 덮어쓰고 재개 때 재요청할 수 있었다. 전체 인덱스로 이름을 구성해 checkpoint 덮어쓰기와 재개 시 불필요한 재요청을 막았다. 11개 입력에서 고유 checkpoint를 확인한 focused 회귀 1건이 통과했다. 전체 suite와 live SEC 요청은 실행하지 않았다. 상세는 [런북 317절](LOCAL_AI_NEWS_RUNBOOK.md#317-sec-공시-checkpoint의-전체-인덱스-보존)이다.
-
 
 수집 실행의 재개 안전성을 보강했다. 개별 `scan-list` 입력과 일일 계획 fingerprint에 SEC·WordPress·UR·form HTML·월간 adapter 및 공통 parser/checkpoint 코드를 추가했다. 이전 status readback은 50 route·100 window 성공 실행을 `historical_success_requires_current_revalidation`로 표시했고, 그 실행은 현재 코드 fingerprint와 일치하지 않았다. 설정 변경 이후 새 fingerprint의 50-route live 재검증은 아직 없다. focused contract 검사 1건만 실행했고 전체 suite는 실행하지 않았다. 자세한 내용은 [런북 318절](LOCAL_AI_NEWS_RUNBOOK.md#318-수집-어댑터-변경과-run-fingerprint-연결)을 참조한다.
 
-
 현재 SEC scanner의 종단 확인: `tesla-sec-revalidation-20261003-v1`은 submissions 1,000행을 검사해 2건을 수집하고 filing shell·상세 자료 3개 및 parse 3개를 저장했다. 결과 `window_scanned`, 후보 2건은 장부 미병합·미검토이며 발행되지 않았다. 이번 one-route 실물 확인은 50-route 전체의 새 fingerprint 재검증이 아니다. 전체 suite는 실행하지 않았다. 자세한 readback은 [런북 319절](LOCAL_AI_NEWS_RUNBOOK.md#319-tesla-sec-공시의-현재-코드-종단-수집)이다.
-
 
 새 scanner fingerprint로 50개 활성 route·100개 창을 다시 실행해 모두 `window_scanned`로 완료했다. retry 0, incomplete 0이며 현재 fingerprint와 run fingerprint가 일치해 status가 `verified_for_current_fingerprint`다. 32개 coverage cell은 전부 partial, 후보 장부는 313개 고유 key다. 후보 승인·Drive·공개는 수행하지 않았다. 비공개 진행 대시보드 SHA-256 `e62bb70940b859494a2e98c7a70e0c537b60695cd1443f3583e612cb4b299298`. 기존 목표의 WBS·7회 운영 및 발행 관문은 남아 있다. 상세: [런북 320절](LOCAL_AI_NEWS_RUNBOOK.md#320-새-fingerprint-50경로-통합과-현재-운영-진척).
 
@@ -1508,9 +1493,7 @@ Rocket Lab 공식 mission-success 보도자료를 공통 collector로 수집하�
 
 이후 실제 수집으로 RSS 3개를 추가해 catalog 68/registry 194/일일 활성 50이다. 전자신문 3·디일렉 2·KISA 1·KITECH 1건이 기간 수집·저장 원문/parse 검증을 완료했다. 로봇신문은 13건 중 11건 파싱, 이미지 2건 OCR 대기로 기간 미완료다. 격리 후보 7건은 반복 병합해 중복·hash 변경이 없고 운영 장부 313건은 불변이다. 공유 매체 profile, 고정 공지 처리, 프로세스 간 source 잠금 대기를 보강했다. 표적 40/40·잠금 회귀 2/2, 실제 이미지 병렬 확보 및 전자신문 새 run도 확인했다. 전체 suite/50경로 재검증·Drive·배포는 수행하지 않았다. 다섯 경로는 configured 상태이며 daily/approval/public 상태를 올리지 않았다. 다음은 이미지 원문 OCR과 남은 빈 기간/baseline 검증이다. [런북 329절](LOCAL_AI_NEWS_RUNBOOK.md#329-우선-5개-출처의-실제-수집과-공통-디버깅).
 
-
 이미지 본문 수집을 기존 한국어 OCR과 연결했다. 로봇신문의 두 PNG에서 335/207개 블록과 원본 픽셀 bbox·confidence를 확보했고 기사 DOM/source version과 연결했다. 0.90 미만 블록이 31/20개여서 parse는 partial, 숫자/표는 unreviewed다. 실제 run의 source/parse 16개 무결성과 기존 후보 11개의 key/본문 지문 보존, 운영 장부 313개 불변을 확인했다. Node 표적 23/23, Python 표적 5개는 실패한 1개 수정 후 모두 확인됐다. 신규 경로 daily 편입·승인·발행은 수행하지 않았으며 WBS는 1/22다. [런북 330절](LOCAL_AI_NEWS_RUNBOOK.md#330-이미지-본문-원문과-한국어-ocr-연결).
-
 
 ### 19.244 실제 로컬 추출·제품 원문 수정·후보 승인
 
@@ -1520,33 +1503,27 @@ Rocket Lab 공식 mission-success 보도자료를 공통 collector로 수집하�
 
 Drive Research private ZIP 이름/부모/220,711bytes/shared=false metadata 재조회; remote bytes hash 미검증. 로컬 16자료 hash/CRC 확인, 공개 작성 원본 미변경. 상세 런북 334절; WBS 1/22/goal active 유지. proof .local/research/source-live-debug/tobor-local-pipeline-validation-20261004-v1.json, 최신 private status HTML SHA 706689f6e7cfcfba26b61457ab3a2f9b17fa7efe62fc7ec31a59493428ba7232는 파일 readback이고 브라우저 렌더링 확인은 아니다.
 
-
 ### 19.245 승인 근거 의존 자료의 portable archive와 실제 복구
 
 2026-10-04 공통 archive-closure와 package-archive.py 복구 옵션을 구현했다. 실제 Tobor5runs/3원문/3불변parse·35자료/37 ZIP members·324,985bytes를 새 private root에 복구하고 loadCurrentApproval 원고/6근거 파일 동일, same-event alias1, reuse-extraction unchanged를 확인했다. 모델/네트워크 재호출 없이 검증했고 장부372/SHA9f740fba5cc118eff837b7f2de5c2e5666e9c54378ff7b7749dcbe9ae4a1056f 불변이다. 기존 v1 ZIP은 유지한다.
 
 관련 시험14개 확인: 최초12/12, 새 selection identity1/1, 기존 v1 package1/1. 전체 suite·54-route 스캔은 미실행이다. ZIP SHA2a5d3bda16654cc22f82d3856e0c94175b3705540e084c959a24f247f3fd642b, 실제 proof .local/research/source-live-debug/tobor-portable-restore-validation-20261004-v1.json. Drive Research의 새 file16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU 이름/부모/크기/shared=false metadata 확인, remote bytes hash/remote restore는 미검증이다. 공개/정규 회차/예약/commit/push는 하지 않았다. P2-03/P5-03 진척을 WBS 표에 반영하되 전체1/22 완료 상태는 유지한다.
 
-
 ### 19.246 공통 수집 분리와 실물 디버깅
 
 편집/archive 변경이 수집 증거까지 무효화하던 의존성을 분리했다. 실제 ET17·KISA7/한국생산기술연구원1건, 통합4창/25.126초/retry0, CLI/daily 재개0HTTP를 확인했다. Python 경로 누락을 수정하고 custom root의 운영 장부 오기록8건을 복구한 뒤 명시적 backlog 관문을 추가했다. 격리8unique·운영372records/승인 보존. 표적13개 확인·전체 suite 미실행. ET ZIP Drive private metadata 확인/remote hash 미검증. 25기사 사실 승인·전체54경로 성공·서비스 배포는 미확인이다. [런북336절](LOCAL_AI_NEWS_RUNBOOK.md#336-수집-실행-경계-분리와-실제-디버깅).
-
 
 ### 19.247 실제 원문 검토와 작성 재사용
 
 로봇신문 산업용 로봇 기술협력1건의 local 추출→GPT 원문 대조→한국어 작성→분류/날짜 교정→후보 승인을 확인했다. 공통 draft-checkpoint로 동일 검토 입력 재실행 추가 generation0·저장 원고/예산 불변, approved 재작성 거부. 장부372개 중 다른371개 불변·반복 승인 불변. 새3+기존관련2시험 확인·전체 suite 미실행. 의존자료 ZIP Drive private metadata 확인, 원격 hash/웹/RSS/GitHub·정규 운영 미검증. [런북337절](LOCAL_AI_NEWS_RUNBOOK.md#337-실제-산업용-로봇-기사-검토와-작성-추론-재사용). WBS1/22 유지.
 
-
 ### 19.248 실제 승인 기사에서 독자 채널까지
 
 빈 Signals 검토 생성의 계약 불일치와 원고/캐시RSS 불일치를 수정했다. 실제 reader v3: 기사1/Signals1·public320/digest138·RSS40/이전39GUID와 날짜 보존·본문/설명/원문 일치, 모바일390px·분야query/back·지도/빈분석 미노출. private sample이며 coverage/Drive/public 완료가 아니다. 모델 adapter의6수용 항목은 현재 metadata·실물 artifacts·실패 계약 표적10개로 입증해 P3-01 완료/WBS2/22로 반영한다. 의미 품질/독립 평가(P3-02~04)와 전체 소급/08시/Drive/발행/7회 운영은 남아 있다. [런북338절](LOCAL_AI_NEWS_RUNBOOK.md#338-승인-원고의-독자-채널-연결과-모델-어댑터-완료).
 
-
 ### 19.249 로봇 제조사 실제 수집 디버깅
 
 KUKA/ABB/FANUC/두산/HD 다섯 공식 경로를 실제 수집해 0/2/1/1/0건의 저장 원문·본문·게시일을 확인했다. 개별 완료 창에서 검토된 동일 사건 연결을 빠뜨리는 결함을 수정했다. 격리 장부 반복 병합은 중복 추가 없이372건/bytes 불변이다. HD 전체150행 보존·목록19→2요청·실제57.440→6.465초, FANUC 재개 새 fetch0. 신규1/related7·문법/format/diff 통과. 운영 장부/coverage·공개 출력·예약 불변. HD 정규 baseline/현재 설정 통합 실행은 미완료. 세부 [런북339절](LOCAL_AI_NEWS_RUNBOOK.md#339-로봇-제조사-실제-수집과-개별-병합-중복-수정). 전체WBS2/22.
-
 
 ### 19.251 작성 원본 차이 준비와 Drive 충돌 대조
 
@@ -1564,16 +1541,13 @@ HD frontier10/4까지 실제 scan reconciliation, 다른53route/장부372건 불
 
 새 release 관문은 정규회차32조사칸/최종review와 retrospective를 구분한다. 신규5+기존7 표적검사 통과. private preview public318파일·기존RSS40 identity/발행시각 보존·desktop1440/mobile390·기사/용어 이동 확인. 원본 cached RSS는 변경하지 않았다. 실제 공개 사이트 배포는 미완료이며 기존 Corwin private 원고는 수정 전 원본에 고정되어 새 Drive 기준으로 새 run이 필요하다. WBS2/22. 런북342절/명세82절 참조.
 
-
 ### 19.253 릴리스 통합 검사와 실제 원문 날짜 보존
 
 2026-10-04 KST: 전체 Node 검사를 릴리스 묶음에서 한 번 실행했다(659개: 최초 648 통과·11 실패). 날짜 파서 결함과 고립 fixture의 입력 계약·경로·기존 추적 목록 단정, 오래된 생성 RSS/링크를 수정한 뒤 실패한 11개를 표적으로 모두 확인했다. 기존 32기업·16기관 ID와 균등 배분 검사를 유지하면서 추가 기업·기관을 허용한다. 올바른 Python venv의 worker 검사 최초 91개 중 88 통과·3 실패 이후 영향을 받는 날짜 검사 39/39를 확인했다. 시스템 Python의 별도 27개는 통과했고 worker import는 PyMuPDF 미설치로 실패했다. 전체 검사를 반복하지 않았다.
 
 공통 HTML 파서가 명시적으로 선택한 게시일/시각을 첫 metadata 값으로 덮어쓰는 결함을 수정했다. 실제 저장 NASA/AWS 원문 두 건을 재파싱해 본문·locators·기존 원문/parse/후보 파일을 보존하며 NASA 표시일 2026-10-02, AWS 2026-10-02를 확인했다. 후보 승인이나 추가 네트워크 수집은 없다. root build·typecheck·site 검증과 Drive 작성 원본195개 일치를 확인했다. 공개 반영은 다음 publish 단계에서 별도로 판정한다. 상세 런북343절, 전체 WBS2/22 유지.
 
-
 2026-10-04 공개 확인: 수정 커밋 `c5a676838461dcf393e9418c2d9e5364db61c221`의 [Publish Garden 37150176071](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/37150176071)이 성공했다. CI Node659/659·빌드·사이트 검사·Pages 배포 통과. 공개 RSS40개는 로컬 생성본과 bytes SHA `471d6e7f86a69f8886b90f4b663cd15769ae3353e11d43740fe09c8769331a0d`가 동일하고 기존39 GUID/pubDate를 보존했다(Drive에 있던10/1 회차 추가). GitHub 기사2·digest2 파일 exact SHA 일치. 실제 공개9/1 브리핑의 desktop1280/mobile390, 분야URL/Enter/back·기사/원문 링크·overflow0/지도0을 확인했다. 공개 확인은 source-live-debug/release-integration-20261004-v1의 CI/RSS/GitHub/reader/verification 파일에서 재개한다. 소급 정정2건의 반영이며 후보372개 전체 승인,54-route current sweep,정규32칸/7회·독립평가·소급전수 완료는 아니다.
-
 
 ### 19.254 최신54경로 실제 수집과 Drive 원문 위치 연결
 
@@ -1591,9 +1565,7 @@ Tobor portable 검토 ZIP을 Drive 파일16TWQWz2CC_q41v_rjupOmEVwOmnfrjeU에서
 
 표적 신규 archive-location 3/3 및 변경된 공통fixture의 기존 CLI archive 복구 회귀1/1을 확인했다. 새 두 모듈 syntax/diff 검사도 통과했다. 실행 중인 collector 파일은 수정하지 않았고 종료 후에도 current fingerprint가 그대로임을 확인했다. 앞서 통과한 전체659검사/build/public 배포를 반복하지 않았다. 전체 WBS2/22·goal active 유지; 다중 자료 유형·정정 재검토 큐·전수 소급·독립평가·정규32칸/7회는 남는다. 한 시간 반복 blocker는 없다.
 
-
 이번54경로 원문257판본·108창의 수집 파일/일일 plan·영수증·summary·검증 기록을 기존 archiveManifest/packageResearchArchive로 한 비공개 snapshot에 고정했다. ZIP21,701,311bytes/1770members/SHA b90b5454a9d888dced319bf5db43acdd91e1b48c7850278b55219b690626104e를 Drive Research 파일1yl35F2db4YTxpAJNrf-VP6BCoX3xZGBm에 저장했고 metadata ID/부모/크기/shared=false와 실제 원격 raw bytes SHA 일치를 확인했다. 이 묶음은 수집 증거 보관용 archive/v1이며 전체 runtime 독립 복구본으로 표시하지 않는다. 기존 입력은 덮어쓰지 않았다. 영수증: .local/research/local-ai/drive-roundtrip/current54-source-snapshot-20261004-v1/drive-receipt.json. 비공개 delivery-status.html도 현재 실행을 반영해 생성했다. 새 backend 코드는 로컬 커밋하고 다음 코드 릴리스에서 CI/공개 반영을 별도로 확인한다.
-
 
 ### 19.255 RSS 주간 누락을 과거 목록으로 보강 — 진행 중
 
@@ -1622,13 +1594,11 @@ Drive Research 비공개 묶음 `media-weekly-source-snapshot-20261004-v2`: 원�
 
 전체 WBS2/22·goal active 유지. 이번 수집 디버깅 슬라이스만 완료했다. 정규32칸/실제7회, 다중 자료 유형, 정정 재검토 큐, 전수 소급, 독립평가와 전체 승인·발행 목표는 남는다. 1시간 반복 blocker는 없다.
 
-
 ### 19.256 승인 원문 변경 감지와 재검토 큐
 
 2026-10-04: 실제 수집 장부733건에서 승인 근거의 차이6건을 확인했다. verified+approval 변경을 놓치던 병합과 CMS의 다른 언어 원문 덮어쓰기를 수정했다. 동일 제목·발표일·전체 본문 및 인용 PDF bytes를 대조한4건은 같은 사건/승인 원고에 재연결하고 이전 승인을 보존했다. 반복 bytes 불변, 나머지729후보 동일. 실제 다른 원문/내용인 KUKA·KAIST2건은 인용 사실11개와 명시적 의존 관계를 비공개 재검토 큐에 묶었다. 같은 원문을 인용한 여러 후보의 근거 누락도 재현·수정했다.
 
 standalone research-revisions.mjs plan/inspect는 저장 bytes·불변 parse·승인 hash만 사용하며 승인/발행을 수행하지 않는다. 최종 v7 큐2건/사실11개 및 반복 불변을 확인했다. 관련27/27·승인10/10·큐4개·현황판 결손1/1 검증; 전체 suite/build 미반복. v6까지의 비공개 증거 ZIP111members/2,913,323bytes는 Drive Research에 저장하고 실제 원격 SHA 일치를 확인했다. 최종 v7은 로컬 최신이며 ZIP v6과 구분한다. 실제 화면 렌더링은 file URL 보안 제한으로 미검증이다. KUKA 기존 주 원문 복구와 KAIST 변경된 인용/승인 재검토가 다음 작업이다. 전체 WBS2/22·goal active·전체 목표 미완료. [런북347절](LOCAL_AI_NEWS_RUNBOOK.md#347-승인-원문의-변경-감지와-기존-근거-재검토).
-
 
 ### 19.257 KUKA 주 원문 복구와 KAIST 변경 판본 재승인
 
@@ -1636,7 +1606,6 @@ standalone research-revisions.mjs plan/inspect는 저장 bytes·불변 parse·�
 - KAIST:17문단 중 표지 호수 문단의 Issue62→59 변경만 있었다. 표지 호수 주장은 이전에도 deferred/기사 미사용이었다. 현재 원문의 기사 사용7사실을 다시 검토해 새 판본으로 승인했다. v1의 deferred statement/quote는59였으나 숫자 필드62가 남은 것을 readback으로 발견해 새 불변 v2에서59로 일치시켰다. v1도 보존한다. 현재7verified/1deferred, 독자 본문·발표일2026-09-30·사건ID 동일.
 
 최종 승인 변경 큐0건, 나머지731후보 동일·반복 bytes 불변. 이전/새 승인 및 현재 관측을 함께 보관하고 실제 원격 ZIP SHA/독립 복구를 검증했다. 표적16/16·guard2/2·위치 연결1/1·기존 보관9/9 확인. 전체 suite/build/발행은 미실행이며 WBS2/22·goal active를 유지한다. [런북348절](LOCAL_AI_NEWS_RUNBOOK.md#348-kuka-주-원문-복구와-kaist-변경-판본-재승인).
-
 
 ### 19.258 실제 승인 후보의 과거 기사 혼입 수정
 
@@ -1653,7 +1622,6 @@ Ollama 역할 호출의 스트리밍 진행 기록·부분 실패 출력/SHA 검
 ### 19.261 원문 발표일·고정 승인 ID와 8분야 회차 실물 연결
 
 후속 보도10월2일을 원문9월23일 사건으로 라우팅하도록 승인 원고의 SHA·사건ID·verified 날짜를 검증한다. URL 끝 슬래시를 포함한 과거 승인 ID가 새 회차에서 거부되는 실패도 재현해 해당 원문/정규화 URL hash만 허용하고 canonical URL 중복 차단을 유지했다. 새 Drive195raw/14목록 재읽기 후7원문의24사실을 직접 검토해 승인 연결했다.733후보 중7변경/726동일·verified83, 현재 신규12/과거11이다. 최종 regular-eight-sector-preview-20261004-v3는8분야12기사/Signals1·웹/RSS/GitHub 일치와 기존RSS39식별자 보존, 표적61/61·포맷·diff를 통과했다. 작성 authority195파일은 불변이다. authoring prepare2파일/38247bytes는 upload_allowed=false이며32칸 조사·실제 브라우저·fresh Drive release/원고 저장·공개 배포는 남는다. 증거 ZIP1947732bytes·182파일/12원문판본은 Drive Research15p_XFKkaC3hjtjjQTpBfImE5ULGJBYZU에 보관하고 원격 raw SHA 일치를 확인했다. 전체 suite·정규 운영7회·전수 소급·독립평가는 미완료, WBS2/22·goal active 유지. [런북352절](LOCAL_AI_NEWS_RUNBOOK.md#352-실제-원문-날짜승인-id와-8분야-비공개-회차-검증).
-
 
 최종 메타데이터 대조에서 connector 표기를 기존 `codex-drive-connector`로 통일했다. 새 `retrospective-authoring-post-source-snapshot-20261004-v2.json`은 작성200파일 bytes/원 snapshot SHA/발표일을 바꾸지 않는다. named snapshot으로 apply한 결과 updated/deleted 모두0이며 표기 metadata만 갱신했다. shared build-site 생성만 재실행해 public/drive-sync의 표기,13기사 HTML과 RSS exact SHA 불변을 확인했다. 전체 build/test suite는 반복하지 않았다. `source-live-debug/retrospective-authoring-transport-verification-20261004-v1.json`이 후속 영수증이며 Drive 개발 ZIP은 이 표기 정정 전의 frozen 증거다. ZIP/원문/승인 snapshot을 재작성하지 않는다.
 
