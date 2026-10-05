@@ -209,6 +209,7 @@ export function publicationOperationStatus({ root, run, repository = process.cwd
     deployment = readJSON(root, base + "/deployment.json"),
     publicProof = readJSON(root, base + "/public.json")
   let status = "drive_verified"
+  let observationBasis = null
   if (push) {
     if (
       push.input_sha256 !== sha256(JSON.stringify(input)) ||
@@ -234,16 +235,25 @@ export function publicationOperationStatus({ root, run, repository = process.cwd
       previewRun: input.preview_run,
       repository,
       commit: push.commit,
+      historical: fs.existsSync(
+        safePath(root, `runs/${publicProof.readback_run}/public-readback/archive.json`),
+      ),
     })
     pinned(root, publicProof.readback)
     if (rb.actions_url !== deployment.url) throw Error("Stored operation deployment differs")
     status = "public_bytes_verified"
+    observationBasis = fs.existsSync(
+      safePath(root, `runs/${publicProof.readback_run}/public-readback/archive.json`),
+    )
+      ? "archived_observation"
+      : "current_local_artifacts"
   }
   return {
     run_id: run,
     status,
     preview_run: input.preview_run,
     commit: push?.commit || null,
+    observation_basis: observationBasis,
     new_regular_operation_counted: false,
     browser_verified: false,
     website_data_verified: false,

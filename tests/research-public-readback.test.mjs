@@ -8,6 +8,8 @@ import {
   assertDeploymentProof,
   publicReadbackPlan,
   verifyPublicReadback,
+  loadVerifiedPublicReadback,
+  archivePublicReadback,
 } from "../scripts/research/public-readback.mjs"
 
 function fixture(t) {
@@ -102,11 +104,53 @@ test("public readback checks all channels and resumes without duplicate network 
   assert.deepEqual(result, resumed)
 })
 
+test("historical verification survives newer authoring and builds while current verification stays strict", async (t) => {
+  const f = fixture(t)
+  await verifyPublicReadback({ ...f.options, fetchImpl: f.fetchImpl })
+  const calls = f.calls()
+  f.write("vault/" + f.preview.editions[0].path, "new edition")
+  f.write("public/reader.js", "new reader")
+  f.write("public/briefing.xml", "new feed")
+  f.write(".local/site-notes.json", "[]")
+  assert.throws(() => loadVerifiedPublicReadback(f.options), /authoring bytes changed/)
+  const historical = loadVerifiedPublicReadback({ ...f.options, historical: true })
+  assert.equal(historical.commit, f.commit)
+  const sealed = await archivePublicReadback(f.options)
+  assert.equal(sealed.current_site_verified, false)
+  assert.equal(sealed.new_regular_operation_counted, false)
+  assert.equal(f.calls(), calls)
+  f.write(".local/research/runs/verify/public-readback/files/0.bin", "tampered")
+  assert.throws(() => loadVerifiedPublicReadback({ ...f.options, historical: true }))
+})
+
+test("legacy archives reconstruct only the pinned original reader and reject failed receipts", async (t) => {
+  const f = fixture(t)
+  await verifyPublicReadback({ ...f.options, fetchImpl: f.fetchImpl })
+  const file = path.join(f.root, "runs/verify/public-readback/archive.json")
+  fs.unlinkSync(file)
+  f.write("public/reader.js", "different reader")
+  await archivePublicReadback(f.options)
+  const archive = JSON.parse(fs.readFileSync(file))
+  archive.reader = "tampered"
+  fs.writeFileSync(file, JSON.stringify(archive))
+  assert.throws(() => loadVerifiedPublicReadback({ ...f.options, historical: true }))
+  fs.unlinkSync(file)
+  const receiptFile = path.join(f.root, "runs/verify/public-readback/receipt.json")
+  const receipt = JSON.parse(fs.readFileSync(receiptFile))
+  receipt.verified = false
+  fs.writeFileSync(receiptFile, JSON.stringify(receipt))
+  await assert.rejects(archivePublicReadback(f.options))
+  assert.equal(fs.existsSync(file), false)
+})
+
 test("authoring navigation is verified in GitHub without requiring a reader page", (t) => {
   const f = fixture(t)
   const file = "Knowledge/00 Tech Encyclopedia Index.md"
   f.write("vault/" + file, "reviewed navigation")
-  const preview = { ...f.preview, navigation: { path: file, sha256: sha256(Buffer.from("reviewed navigation")) } }
+  const preview = {
+    ...f.preview,
+    navigation: { path: file, sha256: sha256(Buffer.from("reviewed navigation")) },
+  }
   const plan = publicReadbackPlan({ ...f, preview })
   assert.ok(plan.files.some((row) => row.kind === "github" && row.path === "vault/" + file))
   assert.ok(!plan.files.some((row) => row.kind === "web" && /encyclopedia-index/.test(row.path)))
@@ -116,7 +160,11 @@ test("authoring navigation is verified in GitHub without requiring a reader page
 
 test("concepts cannot masquerade as nonpublic authoring navigation", (t) => {
   const f = fixture(t)
-  assert.throws(() => publicReadbackPlan({ ...f, preview: { ...f.preview, navigation: f.preview.knowledge[0] } }), /canonical encyclopedia index/)
+  assert.throws(
+    () =>
+      publicReadbackPlan({ ...f, preview: { ...f.preview, navigation: f.preview.knowledge[0] } }),
+    /canonical encyclopedia index/,
+  )
 })
 
 test("mismatch retains exact remote bytes and never records a successful verification", async (t) => {

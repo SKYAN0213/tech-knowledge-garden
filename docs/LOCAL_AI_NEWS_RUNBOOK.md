@@ -10436,3 +10436,19 @@ preview daily-20261006-paper-hfnn-reader-preview-v2, release runs/daily-20261006
 ### 2026-10-06 HFNN 실제 공개 검증
 
 e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/reader equivalence를 확인했다. canonical 색인은 GitHub 원본으로 검증하고 독자 페이지를 요구하지 않도록 수정했다. 공개 검증 표적11/11 통과. 원본213개는 기존 connector snapshot builder와 pull-drive 검증기를 재사용했다. 새 WebsiteData·수정 도구의 배포는 별도 gate이며 전체 목표는 active다.
+
+## 421. 비교 운영 기록과 과거 공개 관찰 재확인
+
+`npm run research:shadow`는 예약이나 공개 기사를 만들지 않는다. 모든 장부·근거는 비공개 `.local/research/local-ai`에 둔다.
+
+1. 기존08:00 실행에서 수집과 handoff 생성 직후, 모델 처리·후보 승인 전에 `npm run research:shadow -- basis --run daily-YYYYMMDD-ID`로 당시39개 설정/코드·active routes·backlog를 고정한다. 옛 plan의 config hash가 다르면 거절한다. basis만으로 수집/비교를 완료하지 않는다.
+2. 기존 처리기와 preview로 별도 로컬 후보를 검토한다. legacy의 승인 실행을 로컬 후보로 재사용하지 않는다. legacy 공개 작업은 Drive·build/deploy·웹/RSS/GitHub readback을 완료해야 한다.
+3. 검토 JSON을 `npm run research:shadow -- record --run SHADOW_ID --review runs/SHADOW_ID/review.json`으로 등록한다. schema=research-shadow-review/v1, run_id, reviewer, reviewer_kind(human/codex), reviewed_at, daily_run, edition, legacy_publication_run, processing_seconds, published_by=legacy, candidate_published=false를 명시한다.
+4. invocation에는 kind=scheduled, schedule_id=tech-ai-briefing-08, 실제 execution_id/started_at, reason과 실행 로그 evidence `{path, sha256}`를 둔다. 이는 귀속된 검토 판정이며 제어기 인증 증거가 아니다. manual 실행·명목 시각으로 완료하지 않는다.
+5. plan/summary/handoff/collection_basis/candidate_preview는 실제 파일의 `{path, sha256}`다. handoff의 plan/receipts/backlog 해시가 같아야 한다. candidates에는 candidate_key/processing_run을 넣고 그 수집에서 실제 확인한 원문 판본만 사용한다. 미리보기 source_feed가 없으면 실제 고정한 원래 RSS의 rss_baseline을 제공한다.
+6. comparison의 source_review/final_read/important_misses/source_bias/duplicates/korean_quality/processing_time 각각에 decision(accepted/rejected), reason, evidence `{path, sha256}`를 기록한다. 모두 accepted일 때만 완료한다. 모델 버전·요청 fingerprint·원문 판본·실제 시간을 별도로 남긴다.
+7. `npm run research:shadow -- status` 또는 `npm run research -- status --format json|html`로 완료/중복/증거 오류를 확인한다. 같은 receipt 재등록은 같은 근거에만 멱등이며 변경은 새 ID를 요구한다. 날짜·edition·execution 중 하나가 같아도 완료 수는 증가하지 않는다.
+
+과거 공개 관찰 보존: `npm run research:public-readback -- --archive --run READBACK_ID --preview-run PREVIEW_ID --commit COMMIT_SHA`. 당시 raw·receipt·preview·배포를 검증해 archive.json을 불변 생성한다. 원 reader의 import 경로 복원 SHA가 plan과 정확히 같아야 한다. 옛 페이지 매핑은 필요하면 `--repository ORIGINAL_WORKSPACE`로 지정한다. 새 일반 readback은 archive를 자동 생성한다. HTTP·모델·새 발행을 실행하지 않고 관찰 날짜를 유지한다. 현재 검증은 --archive 없는 기존 명령을 사용한다.
+
+외장 tkg-daily-core-20261006-v1의 historical-publication-archive-v1.json, shadow-delivery-status-v1.json/html, shadow-ledger-target-v1.log와 실패 부분 수정 로그가 실제 증거다. 공개7작업은 archived observation이며 비교0/7이다. GPT26/40·0/20와 독립 gold0/40·0/20를 구분한다. basis preflight54경로/108창/39입력은 계획 고정일 뿐이다. 옛 hash·첫 ID 거절은 보존했다. browser file URL 차단으로 UI 렌더링은 미검증이다. 독립 gold·실제7회·08시/인증/중단·전체legacy·전체runtime 복구는 남는다.

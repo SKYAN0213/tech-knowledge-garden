@@ -302,7 +302,7 @@ export function loadEvaluationCase(root, caseId) {
 // Read genuine model checkpoints through their existing integrity validators.
 // A processing input selects that format even when its checkpoint is incomplete;
 // never fall back to a legacy state or an editorially corrected claims copy.
-function candidateCheckpoint(root, run, documents, parses) {
+export function candidateCheckpoint(root, run, documents, parses) {
   const base = `runs/${run}/`
   const processed = fs.existsSync(safePath(root, base + "source-processing-input.json"))
   const statePath = base + (processed ? "processing/state.json" : "state.json")

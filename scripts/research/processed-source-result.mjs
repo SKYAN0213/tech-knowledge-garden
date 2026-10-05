@@ -12,7 +12,7 @@ import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
 
 // Read completed checkpoints without metadata requests or generation. A model
 // being replaced/deleted does not invalidate its reviewed, exact-source work.
-export async function loadProcessedSourceResult(root, run, entry) {
+export async function loadProcessedSourceResult(root, run, entry, { vault = "vault" } = {}) {
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "")) throw Error("Invalid reused processing run")
   const base = `runs/${run}/`
   const bytes = fs.readFileSync(safePath(root, base + "source-processing-input.json"))
@@ -103,7 +103,7 @@ export async function loadProcessedSourceResult(root, run, entry) {
   if (fs.readFileSync(preview, "utf8") !== draftMarkdown(working, reviewed.claims, documents))
     throw Error("Reused working preview changed")
   if (approval) {
-    const current = loadCurrentApproval(root, run)
+    const current = loadCurrentApproval(root, run, { vault })
     if (entry.event_id && current.article.event_id !== entry.event_id)
       throw Error("Reused approval differs from the existing event")
     return {

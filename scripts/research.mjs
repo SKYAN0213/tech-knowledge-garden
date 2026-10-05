@@ -552,7 +552,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "model-info") return ollama.metadata(v.model)
   if (command === "status") {
     if (!["json", "html"].includes(v.format)) throw Error("Status accepts --format json|html")
-    const status = buildDeliveryStatus({ root })
+    const status = await buildDeliveryStatus({ root })
     if (v.format === "html") {
       const html = renderDeliveryStatusHTML(status)
       const receipt = atomicWrite(root, "delivery-status.html", html)

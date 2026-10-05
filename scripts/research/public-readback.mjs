@@ -44,6 +44,15 @@ export function assertDeploymentProof(proof, commit) {
 
 // This checks publication bytes, never approves articles or writes to the public site.
 export function publicReadbackPlan({ repository, preview, commit, deployment }) {
+  return readbackPlan({
+    preview,
+    commit,
+    deployment,
+    read: (file) => fs.readFileSync(safePath(repository, file)),
+  })
+}
+
+function readbackPlan({ preview, commit, deployment, read }) {
   assertDeploymentProof(deployment, commit)
   if (
     preview?.schema !== "private-reader-preview/v1" ||
@@ -56,7 +65,7 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
     throw Error("Verified reader preview required")
   if (preview.navigation && preview.navigation.path !== "Knowledge/00 Tech Encyclopedia Index.md")
     throw Error("Authoring navigation must use the canonical encyclopedia index")
-  const mapping = JSON.parse(fs.readFileSync(safePath(repository, ".local/site-notes.json")))
+  const mapping = JSON.parse(read(".local/site-notes.json"))
   const slugs = new Map(mapping.map((row) => [row.path + ".md", row.slug]))
   const web = new Set([
     "drive-sync.json",
@@ -76,7 +85,7 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
     relativePath(row.path)
     if (!PUBLIC_ROOTS.includes(row.path.split("/")[0])) throw Error("Private authoring path")
     const local = "vault/" + row.path
-    if (sha256(fs.readFileSync(safePath(repository, local))) !== row.sha256)
+    if (sha256(read(local)) !== row.sha256)
       throw Error("Approved preview authoring bytes changed: " + row.path)
     github.add(local)
     // Signals are authoring records, not reader pages.
@@ -110,7 +119,7 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
     for (const file of [...paths].sort()) {
       relativePath(file)
       const local = kind === "web" ? "public/" + file : file
-      const data = fs.readFileSync(safePath(repository, local))
+      const data = read(local)
       if (data.length > LIMIT) throw Error("Local publication artifact exceeds readback limit")
       rows.push({
         kind,
@@ -122,10 +131,10 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
       })
     }
   }
-  const reader = fs.readFileSync(safePath(repository, "public/reader.js"), "utf8")
+  const reader = read("public/reader.js").toString("utf8")
   const modules = [...reader.matchAll(modulePattern)].map((x) => x[0].slice(2))
   if (modules.length !== 1) throw Error("One reviewed connection-map bundle required")
-  const bytes = fs.readFileSync(safePath(repository, "public/" + modules[0]))
+  const bytes = read("public/" + modules[0])
   return {
     schema: "publication-readback-plan/v1",
     commit,
@@ -289,6 +298,7 @@ export async function verifyPublicReadback({
       throw Error(
         "Deployed artifacts differ from the pinned publication; mismatch receipt preserved",
       )
+    sealReadbackArchive({ root, run, previewRun, repository, commit })
     return { path: directory + "/receipt.json", ...receipt }
   })
 }
@@ -301,12 +311,47 @@ export function loadVerifiedPublicReadback({
   previewRun,
   repository = process.cwd(),
   commit,
+  historical = false,
+  archive,
 }) {
   runId(run)
   const directory = `runs/${run}/public-readback`
   const plan = readJSON(root, directory + "/plan.json")
   const receipt = readJSON(root, directory + "/receipt.json")
   const preview = readJSON(root, `runs/${previewRun}/preview-manifest.json`)
+  const baseline = historical ? archive || readJSON(root, directory + "/archive.json") : null
+  let expectedPlan, localReader
+  if (historical) {
+    if (
+      baseline?.schema !== "publication-readback-archive/v1" ||
+      baseline.run_id !== run ||
+      baseline.preview_run !== previewRun ||
+      baseline.commit !== commit ||
+      baseline.plan_sha256 !== sha256(JSON.stringify(plan)) ||
+      baseline.receipt_sha256 !== sha256(JSON.stringify(receipt)) ||
+      baseline.preview_sha256 !== sha256(JSON.stringify(preview)) ||
+      typeof baseline.reader !== "string" ||
+      !Array.isArray(baseline.mapping)
+    )
+      throw Error("Exact historical readback archive required")
+    // Reconstruct the original plan from observed bytes and the only two
+    // local-only inputs. No latest vault/build files or HTTP requests are used.
+    const captured = new Map((plan?.files || []).map((row, index) => [row.local, index]))
+    const read = (file) => {
+      if (file === ".local/site-notes.json") return Buffer.from(JSON.stringify(baseline.mapping))
+      if (file === "public/reader.js") return Buffer.from(baseline.reader)
+      if (file === plan.reader_module.local)
+        return fs.readFileSync(safePath(root, directory + "/files/map.bin"))
+      const index = captured.get(file)
+      if (index === undefined) throw Error("Historical artifact is not in the pinned plan")
+      return fs.readFileSync(safePath(root, `${directory}/files/${index}.bin`))
+    }
+    expectedPlan = readbackPlan({ preview, commit, deployment: plan.deployment, read })
+    localReader = baseline.reader
+  } else {
+    expectedPlan = publicReadbackPlan({ repository, preview, commit, deployment: plan?.deployment })
+    localReader = fs.readFileSync(safePath(repository, "public/reader.js"), "utf8")
+  }
   if (
     !plan ||
     !receipt ||
@@ -316,9 +361,10 @@ export function loadVerifiedPublicReadback({
     receipt.status !== "public_artifact_bytes_verified" ||
     receipt.verified !== true ||
     receipt.reader_equivalent !== true ||
-    JSON.stringify(
-      publicReadbackPlan({ repository, preview, commit, deployment: plan.deployment }),
-    ) !== JSON.stringify(plan)
+    receipt.schema !== "publication-readback-receipt/v1" ||
+    receipt.run_id !== run ||
+    plan.schema !== "publication-readback-plan/v1" ||
+    JSON.stringify(expectedPlan) !== JSON.stringify(plan)
   )
     throw Error("Exact completed publication readback required")
   const read = (index, expected) => {
@@ -352,7 +398,6 @@ export function loadVerifiedPublicReadback({
     url: SITE + modules[0],
     ...plan.reader_module,
   })
-  const localReader = fs.readFileSync(safePath(repository, "public/reader.js"), "utf8")
   if (
     !module.metadata.matches_local ||
     reader.replace(modulePattern, "./chunks/connection-map.js") !==
@@ -368,4 +413,67 @@ export function loadVerifiedPublicReadback({
   )
     throw Error("Stored public receipt does not match the verified artifacts")
   return { path: directory + "/receipt.json", ...receipt }
+}
+
+function sealReadbackArchive({ root, run, previewRun, repository, commit }) {
+  const directory = `runs/${run}/public-readback`
+  const file = directory + "/archive.json"
+  const previous = readJSON(root, file)
+  const plan = readJSON(root, directory + "/plan.json")
+  const readerIndex = plan?.files?.findIndex(
+    (row) => row.kind === "web" && row.path === "reader.js",
+  )
+  // Recover the exact original local reader from the observed deployed reader:
+  // the sole allowed transformation is its pinned map-bundle import name.
+  // Its hash must still equal the original plan, including every other byte.
+  const reader = previous
+    ? previous.reader
+    : fs
+        .readFileSync(safePath(root, `${directory}/files/${readerIndex}.bin`), "utf8")
+        .replace(modulePattern, "./" + plan.reader_module.local.slice("public/".length))
+  if (sha256(reader) !== plan.files[readerIndex].sha256)
+    throw Error("Exact original reader bytes required for archive")
+  const archive = previous || {
+    schema: "publication-readback-archive/v1",
+    run_id: run,
+    preview_run: previewRun,
+    commit,
+    plan_sha256: sha256(JSON.stringify(readJSON(root, directory + "/plan.json"))),
+    receipt_sha256: sha256(JSON.stringify(readJSON(root, directory + "/receipt.json"))),
+    preview_sha256: sha256(
+      JSON.stringify(readJSON(root, `runs/${previewRun}/preview-manifest.json`)),
+    ),
+    mapping: JSON.parse(fs.readFileSync(safePath(repository, ".local/site-notes.json"))),
+    reader,
+  }
+  const proof = loadVerifiedPublicReadback({
+    root,
+    run,
+    previewRun,
+    repository,
+    commit,
+    historical: true,
+    archive,
+  })
+  if (!previous) atomicCreate(root, file, archive)
+  return {
+    path: file,
+    commit,
+    status: "historical_public_bytes_verified",
+    observed_at: proof.files
+      .map((r) => r.observed_at)
+      .sort()
+      .at(-1),
+    current_site_verified: false,
+    new_regular_operation_counted: false,
+  }
+}
+
+// Legacy receipts retain their raw observation time and original byte digests.
+export async function archivePublicReadback(options) {
+  runId(options.run)
+  runId(options.previewRun)
+  return withLock(options.root, "public-readback-" + options.run, () =>
+    sealReadbackArchive({ repository: process.cwd(), ...options }),
+  )
 }

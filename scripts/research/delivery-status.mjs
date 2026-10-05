@@ -24,6 +24,7 @@ import { inspectSourceRevisionQueue } from "./source-revision-queue.mjs"
 import { loadDailyProcessingStatus } from "./daily-processing-status.mjs"
 import { loadAuthoringExecutionStatus } from "./authoring-execution.mjs"
 import { loadPublicationOperations } from "./publication-operation.mjs"
+import { auditShadowOperations } from "./shadow-operations.mjs"
 
 export function loadLatestSourceRevisionReview(root, backlogFile) {
   const directory = path.join(root, "review-queues")
@@ -1417,7 +1418,7 @@ export function buildSourceInventory({ knownRoutes, activeRoutes }) {
     )
 }
 
-export function buildDeliveryStatus({
+export async function buildDeliveryStatus({
   repo = process.cwd(),
   root = ".local/research/local-ai",
 } = {}) {
@@ -1655,8 +1656,7 @@ export function buildDeliveryStatus({
       runs: legacyAudit.runs,
     },
     local_ai_shadow_operations: {
-      completed_runs: filesUnder(path.join(absoluteRoot, "evaluation/shadow"), ".json").length,
-      target_runs: 7,
+      ...(await auditShadowOperations(absoluteRoot, repo)),
       evaluation_cases: auditEvaluationCases(absoluteRoot),
       latest_ontology_snapshot: latestOntology
         ? {
@@ -1764,7 +1764,10 @@ export function renderDeliveryStatusHTML(status) {
           : `${status.candidate_source_alternative_resolutions?.receipt_count || 0}건 · 무결성 확인 필요`,
     ],
     ["기존 발행 감사", `${status.existing_briefing_audit.completed_runs}/7`],
-    ["로컬 비교 운영", `${status.local_ai_shadow_operations.completed_runs}/7`],
+    [
+      "로컬 비교 운영",
+      `${status.local_ai_shadow_operations.completed_runs}/7${status.local_ai_shadow_operations.rejected?.length ? ` · 증거 확인 ${status.local_ai_shadow_operations.rejected.length}` : ""}${status.local_ai_shadow_operations.duplicate_runs?.length ? ` · 재실행 ${status.local_ai_shadow_operations.duplicate_runs.length}` : ""}`,
+    ],
     [
       "원문 변경 재검토",
       status.source_revision_review?.status === "verified_private_review_queue"
@@ -1778,8 +1781,12 @@ export function renderDeliveryStatusHTML(status) {
       `${status.supplemental_coverage?.receipt_count || 0}건 · 후보 ${status.supplemental_coverage?.unique_candidate_count || 0}`,
     ],
     [
-      "평가 원문 세트",
+      "GPT 원문 대조 세트",
       `${status.local_ai_shadow_operations.evaluation_cases?.unique_actual_by_split?.development || 0}/40 개발 · ${status.local_ai_shadow_operations.evaluation_cases?.unique_actual_by_split?.heldout || 0}/20 보류`,
+    ],
+    [
+      "독립 평가 정답 세트",
+      `${status.local_ai_shadow_operations.evaluation_cases?.independent_human_gold || 0}/40 개발 · ${status.local_ai_shadow_operations.evaluation_cases?.heldout_independent_human || 0}/20 보류`,
     ],
   ]
     .map(

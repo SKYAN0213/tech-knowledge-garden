@@ -4425,3 +4425,18 @@ Drive 작성 원본212개를 실제 raw로 새로 읽고16폴더의 앞뒤 목�
 HFNN 소급 변경의 e7a6ee1은 Actions37381769777에서 전체 검사·빌드·배포에 성공했다. 실제 publicReadbackPlan은 작성용 Knowledge/00 Tech Encyclopedia Index.md에도 웹 페이지를 요구해 Missing knowledge page mapping으로 중단됐다. 실제 manifest와 배포 SHA로 재현했다. 명시적인 canonical 색인만 웹 대상에서 제외하고 색인 원본은 pinned GitHub raw 대상에 유지했다. 색인 byte 변경과 다른 전문용어를 navigation으로 위장한 경우는 거부한다. 첫 worktree 검사는 node_modules 부재라는 환경 실패였으며 소유한 의존성 symlink 제공 후 공개 검증 파일 전체11/11을 확인했다. 전체 suite는 로컬에서 반복하지 않았다.
 
 수정된 검증기로 e7a6ee1의 공개15파일·map 모듈을 실제 조회하고 byte/reader equivalence를 확인했다. operation daily-20261006-paper-hfnn-publication-v1은 public_bytes_verified이며 신규 운영으로 집계하지 않는다. 작성 원본213개도 기존 build-connector-snapshot.py와 pull-drive.py를 재사용해16폴더 metadata·파일별 부모/크기/수정시각·raw SHA 및 전체 로컬 scope를 검증했다. 공개 검사 도구 수정의 배포와 새 WebsiteData는 별도로 확인한다.
+
+## 19.329. 실제 비교 운영 장부와 과거 공개 증거 보존
+
+P6-01의 기록·중복 제외·진척 표시를 구현한다. 실제7회 운영, 독립 평가40/20, 자동 운영 전환은 완료하지 않는다. 기존 기사·RSS GUID·예약·모델을 유지한다.
+
+- `research-shadow.mjs basis|record|status`는 기존 계획·수집 영수증·원문 판본·완료 추출·모델 역할 예산·원고 검토·비공개 미리보기·Drive 및 공개 검증기를 재사용한다. 새 수집기나 예약을 만들지 않는다.
+- `evaluation/shadow/<run>/receipt.json`은 불변 장부다. 같은 수집의 정확한 source version/parse, legacy와 별도의 승인 후보, 미리보기 원본·웹·digest SHA, 기사/브리핑/RSS의 문장·출처를 검증한다. 당시 plan/receipts/backlog 해시가 handoff와 일치해야 한다.
+- 예약 호출은 검토자의 귀속된 판정과 고정된 실행 로그를 요구한다. `_0800` 파일명·mtime을 자동 실행 증거로 사용하지 않는다. 이 장부는 예약 제어기·인증·중단 복구의 독립 검증을 대신하지 않는다.
+- 같은 날짜·회차·예약 실행 ID는 한 번 집계한다. 임의 JSON·누락/변조 증거·접근 실패·미완료 후보·미확인 발행은 제외하고 오류를 표시한다. 원문 확인·최종 읽기·중요 누락·편중·중복·한국어·처리 시간의 근거를 보관한다.
+- 공개 readback은 당시 reader·페이지 매핑 및 plan/receipt/preview 해시를 보존한다. 관찰 raw로 당시 계획을 다시 구성하므로 이후 수정이 과거 검증을 무효화하지 않는다. reader 복원은 map module import 이름만 바꾸며 원 SHA가 정확히 같아야 한다. 현재 파일 검증은 엄격하게 유지한다.
+- `observation_basis=archived_observation`을 현재 사이트·브라우저·WebsiteData·새 비교 회차의 성공으로 승격하지 않는다. 운영 화면에서 GPT 원문 대조와 독립 평가 정답을 분리한다.
+
+검증: 관련75개 중 최초74 통과, 새 fixture의 필수 ID 보완 후 실패한 shadow 파일4개 통과. reader 복원 변경2개·추가 연결4개 표적 통과. 저장된 공개7작업을 HTTP·모델 호출 없이 원문/웹/RSS/GitHub/map raw로 재확인했다. 사전 계획 daily-20261006-shadow-basis-preflight-v1의54경로/108창/39설정·코드 고정은 성공했으며 새 수집·회차는 아니다. 옛 core54 계획은 config hash 불일치로 거절했고 원본은 보존했다. 첫 사전 계획 ID의 형식 오류도 보존하고 규칙에 맞는 새 ID로 처리했다.
+
+실제 상태: GPT26/40·0/20, 독립0/40·0/20, 새 비교0/7. HTML 정적 카드 문구를 확인했지만 브라우저 file URL 정책이 열기를 차단해 렌더링은 미검증이다. 로컬 전체 suite는 반복하지 않았고 릴리스 CI/배포는 별도 gate다. 새1시간 반복 병목은 없다. 다음은 기존08:00 수집 직후 basis/handoff를 고정하여 첫 실제 비교 기록을 등록한다. 전체 소급·독립 평가·runtime 복구 목표를 유지한다.

@@ -34,7 +34,8 @@
     "research:evidence-quotes": "node scripts/research-evidence-quotes.mjs",
     "research:process-daily": "node scripts/research-process-daily.mjs",
     "research:public-readback": "node scripts/research-public-readback.mjs",
-    "research:publication": "node scripts/research-publication.mjs"
+    "research:publication": "node scripts/research-publication.mjs",
+    "research:shadow": "node scripts/research-shadow.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
