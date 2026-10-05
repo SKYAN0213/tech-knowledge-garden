@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-04T01:30:38.099959Z",
   "edition_count": 121,
-  "news_count": 165,
+  "news_count": 166,
   "concept_count": 35,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -240,7 +240,6 @@
     "https://export.arxiv.org/api/query?max_results=15&search_query=cat%3Acs.AI+OR+cat%3Acs.LG+OR+cat%3Acs.CL+OR+cat%3Acs.CV+OR+cat%3Astat.ML&sortBy=submittedDate&sortOrder=descending&start=0",
     "https://export.arxiv.org/api/query?max_results=20&search_query=cat%3Acs.AI+OR+cat%3Acs.CL+OR+cat%3Acs.LG&sortBy=submittedDate&sortOrder=descending",
     "https://export.arxiv.org/api/query?max_results=20&search_query=cat%3Acs.AI+OR+cat%3Acs.CL+OR+cat%3Acs.LG+OR+cat%3Acs.CV+OR+cat%3Acs.RO&sortBy=submittedDate&sortOrder=descending",
-    "https://export.arxiv.org/api/query?max_results=20&search_query=cat%3Acs.AI+OR+cat%3Acs.CL+OR+cat%3Acs.LG+OR+cat%3Acs.RO+OR+cat%3Acs.CR&sortBy=submittedDate&sortOrder=descending",
     "https://export.arxiv.org/api/query?max_results=20&search_query=cat%3Acs.AI+OR+cat%3Acs.LG+OR+cat%3Acs.CL+OR+cat%3Acs.CV+OR+cat%3Astat.ML&sortBy=submittedDate&sortOrder=descending&start=0",
     "https://export.arxiv.org/api/query?max_results=30&search_query=cat%3Acs.AI+OR+cat%3Acs.CL+OR+cat%3Acs.LG&sortBy=submittedDate&sortOrder=descending",
     "https://export.arxiv.org/api/query?max_results=30&search_query=cat%3Acs.AI+OR+cat%3Acs.CL+OR+cat%3Acs.LG+OR+cat%3Acs.CV+OR+cat%3Acs.RO&sortBy=submittedDate&sortOrder=descending",
@@ -638,6 +637,7 @@
     "News/ef404a41d1e5901f",
     "News/e9d913994a1de60c",
     "News/74d1c92a38ffbb1a",
+    "News/6c31b0895d6be835",
     "News/f2d1b40c0608be47",
     "News/315398693b2d0d19",
     "News/2b6a41b2be21650d",
