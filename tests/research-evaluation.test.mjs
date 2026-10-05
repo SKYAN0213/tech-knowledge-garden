@@ -733,3 +733,158 @@ test("source adjudication cannot pass a structurally invalid or incomplete candi
     /requires a human reviewer/,
   )
 })
+
+function processedCandidateRun(root, runId, document, parse, claim, { keepLegacy = false } = {}) {
+  const claims = [{ ...claim, claim_id: "candidate-fact-processed" }]
+  candidateRun(root, runId, claims, "")
+  atomicWrite(root, `runs/${runId}/documents.json`, [document])
+  atomicWrite(root, `runs/${runId}/parses.json`, [parse])
+  const input = {
+    schema: "research-source-processing-input/v1",
+    source_run: "source",
+    source_identity: loadStoredSourceRun(root, "source").identity,
+    source_extraction_sha256: null,
+  }
+  const extraction = { claims, batches: [] }
+  const claimsDocument = {
+    ...extraction,
+    source_processing: { run: runId, input_sha256: sha256(JSON.stringify(input)) },
+  }
+  atomicWrite(root, `runs/${runId}/source-processing-input.json`, input)
+  atomicWrite(root, `runs/${runId}/processing/extraction.json`, extraction)
+  atomicWrite(root, `runs/${runId}/claims.json`, claimsDocument)
+  const legacy = readJSON(root, `runs/${runId}/state.json`)
+  atomicWrite(root, `runs/${runId}/processing/state.json`, {
+    ...legacy,
+    input_hash: sha256(JSON.stringify(input)),
+    stages: {
+      extraction: {
+        ...legacy.stages.claims,
+        result_path: `runs/${runId}/processing/extraction.json`,
+        result_hash: sha256(JSON.stringify(extraction)),
+      },
+    },
+  })
+  if (keepLegacy) {
+    legacy.stages.claims.result_hash = sha256(JSON.stringify(claimsDocument))
+    atomicWrite(root, `runs/${runId}/state.json`, legacy)
+  } else fs.unlinkSync(path.join(root, `runs/${runId}/state.json`))
+}
+
+test("processed extraction imports and adjudicates its genuine checkpoint without a legacy state or another model call", async (t) => {
+  const { root, spec, document, parse, claim } = fixture(t)
+  await saveEvaluationCase(root, "processed-case", "source", spec)
+  const run = "processed-evaluation"
+  processedCandidateRun(root, run, document, parse, claim)
+  const stateBefore = fs.readFileSync(path.join(root, `runs/${run}/processing/state.json`))
+  const imported = await importEvaluationCandidate(root, "processed-import", spec.case_id, run)
+  assert.equal(imported.candidate_checkpoint, "source-processing-extraction/v1")
+  assert.equal(imported.model_batch_count, 1)
+  assert.equal(imported.claim_count, 1)
+  assert.equal(
+    (await importEvaluationCandidate(root, "processed-import", spec.case_id, run)).idempotent,
+    true,
+  )
+  const reviewed = await saveEvaluationAdjudication(
+    root,
+    "processed-review",
+    spec.case_id,
+    run,
+    adjudicationInput(spec, run, "candidate-fact-processed"),
+  )
+  assert.deepEqual(reviewed.semantic_coverage, { full: 1, partial: 0, missing: 0 })
+  const receipt = readJSON(root, "evaluation/runs/processed-review/source-review.json")
+  assert.equal(receipt.candidate_checkpoint, "source-processing-extraction/v1")
+  assert.equal(receipt.inputs.candidate_run_state_sha256, sha256(stateBefore))
+  assert.equal(receipt.provenance.run_elapsed_ms, 300000)
+  assert.equal(receipt.public_approved, false)
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, `runs/${run}/processing/state.json`)),
+    stateBefore,
+  )
+})
+
+test("processed extraction rejects incomplete, altered, published or malformed checkpoints even beside a complete legacy state", async (t) => {
+  const cases = [
+    [
+      "incomplete",
+      (root, run) => {
+        const s = readJSON(root, `runs/${run}/processing/state.json`)
+        s.stages.extraction.status = "running"
+        atomicWrite(root, `runs/${run}/processing/state.json`, s)
+      },
+    ],
+    [
+      "claims-changed",
+      (root, run) => {
+        const c = readJSON(root, `runs/${run}/claims.json`)
+        c.claims[0].statement = "invented completion"
+        atomicWrite(root, `runs/${run}/claims.json`, c)
+      },
+    ],
+    [
+      "published",
+      (root, run) => {
+        const s = readJSON(root, `runs/${run}/processing/state.json`)
+        s.candidate_published = true
+        atomicWrite(root, `runs/${run}/processing/state.json`, s)
+      },
+    ],
+    [
+      "null-input",
+      (root, run) => atomicWrite(root, `runs/${run}/source-processing-input.json`, "null"),
+    ],
+    [
+      "digest-changed",
+      (root, run) => {
+        const b = readJSON(root, `runs/${run}/model-policy/fact_extract/budget.json`)
+        b.attempts[0].result.provenance.digest = "another-model"
+        atomicWrite(root, `runs/${run}/model-policy/fact_extract/budget.json`, b)
+      },
+    ],
+  ]
+  for (const [name, mutate] of cases)
+    await t.test(name, async (t) => {
+      const { root, spec, document, parse, claim } = fixture(t)
+      await saveEvaluationCase(root, "case", "source", spec)
+      const run = "processed-" + name
+      processedCandidateRun(root, run, document, parse, claim, { keepLegacy: true })
+      mutate(root, run)
+      await assert.rejects(
+        importEvaluationCandidate(root, "reject-" + name, spec.case_id, run),
+        /Completed.*(?:extraction checkpoint|candidate claims run)|Complete fact-extraction model provenance/,
+      )
+      assert.equal(
+        fs.existsSync(
+          path.join(root, `evaluation/fixtures/${spec.case_id}/runs/${run}/claims.json`),
+        ),
+        false,
+      )
+    })
+})
+
+test("processed adjudication rechecks the frozen extraction instead of accepting a modified claim copy", async (t) => {
+  const { root, spec, document, parse, claim } = fixture(t)
+  await saveEvaluationCase(root, "case", "source", spec)
+  const run = "processed-frozen-tamper"
+  processedCandidateRun(root, run, document, parse, claim)
+  await importEvaluationCandidate(root, "import", spec.case_id, run)
+  const frozen = loadEvaluationCase(root, spec.case_id).root
+  const c = readJSON(frozen, `runs/${run}/claims.json`)
+  c.claims[0].statement = "Completed instead of planned"
+  atomicWrite(frozen, `runs/${run}/claims.json`, c)
+  await assert.rejects(
+    saveEvaluationAdjudication(
+      root,
+      "tampered-review",
+      spec.case_id,
+      run,
+      adjudicationInput(spec, run, "candidate-fact-processed"),
+    ),
+    /Completed source-bound extraction checkpoint/,
+  )
+  assert.equal(
+    fs.existsSync(path.join(root, "evaluation/runs/tampered-review/source-review.json")),
+    false,
+  )
+})

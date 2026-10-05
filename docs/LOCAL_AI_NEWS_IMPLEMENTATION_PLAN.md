@@ -4371,3 +4371,12 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 54경로/108창 실행은 완료됐지만107 window_scanned/1 detail_incomplete이며 모든32 조사 셀은 현재 시점의 부분 확인으로 남긴다. AWS404를 같은 요청으로 재시도하지 않는다. 고정 목록 밖 RobCo 공식 발표를 GPT 탐색으로 찾고 기존 collector/HTML parser/options를 사용해 추가 확인했다. inline 날짜 문단에 사건 내용이 함께 있으면 명시적 preserve_publication_date_block 옵션을 사용한다. 전체 RobCo 사이트나 새 예약 경로의 활성화를 뜻하지 않는다.
 
 다음 수용 기준은 승인3기사(FDA·쌓인 옷감 집기 논문·RobCo)와 topic2/Signals1의 최신 regular preview, 실제 desktop/mobile 상호작용, fresh Drive208 원본과4개 신규 작성 파일, 공개 배포/RSS/GitHub/WebsiteData readback이다. 기존 새 정규 운영0과7회·08시·독립평가·과거50/483+metadata10 미완료를 유지하며 실제 통과한 단계만 갱신한다.
+
+
+## 19.323. 실제 처리 체크포인트의 평가 재사용
+
+기존 평가 가져오기와 판정 경로가 legacy state.json의 claims 단계만 요구하던 연결 누락을 보강한다. source-processing-input.json이 존재하면 기존 loadCompletedExtraction으로 processing/state.json·extraction 결과·원본 claims·입력 SHA·정확한 원문과 parse를 검증한다. 새 형식의 미완료·변조·공개 상태를 legacy로 우회하지 않는다. 모델 budget과 digest를 확인하고 기존 원출력·배치 시간·원문을 그대로 가져오며 추가 추론은 하지 않는다. legacy 영수증 형식과 불변 검토는 유지한다.
+
+수용 증거: 관련 평가25/25, 실제 FDA·Frontiers 장문 논문·RobCo 추출3건 가져오기와 판정 완료, 추가 모델 호출0. 개발용 실제 원문은23→26개이고 독립 사람 gold/heldout은0이다. 원모델 검사는 편집 후 승인과 분리한다. FDA6/6 구조 통과·핵심2누락, 논문23/29 구조 통과·조건3부분, RobCo0/6 구조 통과(발표일 검토 필요6·인용 단위 문제3)·거래구조1부분으로 모두 raw_model_pass:false다. 최종 기사들은 별도의 실제 원문 검토를 거친 승인본이며 이 평가가 승인을 되돌리거나 새 발행을 만들지 않는다.
+
+작업은 외장 별도 worktree의 codex/processed-evaluation-20261006에서 검증한다. 선행0b827e1의 실제 배포와 공개 readback을 마친 후 주 저장소에 통합한다. GitHub hosted runner 미배정/Actions 장애로 중단된 CI는 코드 테스트 실패와 구분하며, 서비스 복구 확인 전 반복 실행하지 않는다. 전체 suite는 통합 릴리스에서 한 번 실행한다.

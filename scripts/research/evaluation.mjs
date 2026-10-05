@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
 import { assertReviewDate } from "./dates.mjs"
+import { loadCompletedExtraction } from "./extraction-checkpoint.mjs"
 import { validateEvidence } from "./claims.mjs"
 import { assertStoredEvidence, loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
@@ -298,6 +299,35 @@ export function loadEvaluationCase(root, caseId) {
   return { manifest, specification: spec, documents, parses, root: path.resolve(caseRoot) }
 }
 
+// Read genuine model checkpoints through their existing integrity validators.
+// A processing input selects that format even when its checkpoint is incomplete;
+// never fall back to a legacy state or an editorially corrected claims copy.
+function candidateCheckpoint(root, run, documents, parses) {
+  const base = `runs/${run}/`
+  const processed = fs.existsSync(safePath(root, base + "source-processing-input.json"))
+  const statePath = base + (processed ? "processing/state.json" : "state.json")
+  const stateBytes = fs.readFileSync(safePath(root, statePath))
+  const state = JSON.parse(stateBytes.toString("utf8"))
+  const claimsBytes = processed
+    ? loadCompletedExtraction(root, run, documents, parses)
+    : fs.readFileSync(safePath(root, base + "claims.json"))
+  const claimsDocument = JSON.parse(claimsBytes.toString("utf8"))
+  const stage = state.stages?.[processed ? "extraction" : "claims"]
+  if (
+    state.schema !== "research-run/v1" ||
+    state.run_id !== run ||
+    state.candidate_published !== false ||
+    stage?.status !== "complete" ||
+    (!processed &&
+      (stage.result_path !== base + "claims.json" ||
+        stage.result_hash !== sha256(JSON.stringify(claimsDocument)))) ||
+    !Array.isArray(claimsDocument.claims) ||
+    claimsDocument.claims.length === 0
+  )
+    throw Error("Completed unpublished source-bound candidate claims run required")
+  return { processed, statePath, stateBytes, state, stage, claimsBytes, claimsDocument }
+}
+
 export async function importEvaluationCandidate(root, runId, caseId, candidateRun) {
   if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid evaluation import run id")
   if (!/^[a-zA-Z0-9_-]+$/.test(candidateRun || "")) throw Error("Invalid candidate run id")
@@ -310,21 +340,9 @@ export async function importEvaluationCandidate(root, runId, caseId, candidateRu
     )
       throw Error("Candidate source snapshot does not match the frozen evaluation case")
 
-    const state = readJSON(root, `runs/${candidateRun}/state.json`)
-    const claims = readJSON(root, `runs/${candidateRun}/claims.json`)
+    const checkpoint = candidateCheckpoint(root, candidateRun, stored.documents, stored.parses)
+    const claims = checkpoint.claimsDocument
     const budget = readJSON(root, `runs/${candidateRun}/model-policy/fact_extract/budget.json`)
-    const claimsPath = `runs/${candidateRun}/claims.json`
-    if (
-      state?.schema !== "research-run/v1" ||
-      state.run_id !== candidateRun ||
-      state.candidate_published !== false ||
-      state.stages?.claims?.status !== "complete" ||
-      state.stages.claims.result_path !== claimsPath ||
-      state.stages.claims.result_hash !== sha256(JSON.stringify(claims)) ||
-      !Array.isArray(claims?.claims) ||
-      claims.claims.length === 0
-    )
-      throw Error("Completed unpublished source-bound candidate claims run required")
     if (
       !["model-budget/v1", "model-budget/v2"].includes(budget?.schema) ||
       budget.binding?.role !== "fact_extract" ||
@@ -335,6 +353,8 @@ export async function importEvaluationCandidate(root, runId, caseId, candidateRu
         (attempt) =>
           attempt.status !== "complete" ||
           attempt.result?.provenance?.model !== budget.binding.settings.model ||
+          (checkpoint.processed &&
+            attempt.result?.provenance?.digest !== budget.binding.model_digest) ||
           !Number.isFinite(attempt.result?.provenance?.wall_ms) ||
           attempt.result.provenance.wall_ms < 0,
       )
@@ -394,6 +414,7 @@ export async function importEvaluationCandidate(root, runId, caseId, candidateRu
       candidate_run: candidateRun,
       case_status: evaluationCase.manifest.status,
       case_split: evaluationCase.manifest.split,
+      ...(checkpoint.processed ? { candidate_checkpoint: "source-processing-extraction/v1" } : {}),
       model: budget.binding.settings.model,
       provider: budget.binding.settings.provider ?? "ollama",
       source_documents_sha256: stored.identity.documents_sha256,
@@ -588,25 +609,13 @@ export async function saveEvaluationAdjudication(root, runId, caseId, candidateR
 
   return withLock(root, `evaluation-adjudication-${runId}`, async () => {
     const evaluationCase = loadEvaluationCase(root, caseId)
-    const { manifest, specification, parses } = evaluationCase
+    const { manifest, specification, documents, parses } = evaluationCase
     const fixtureRoot = evaluationCase.root
     const relativeRun = `runs/${candidateRun}`
-    const runStateBytes = fs.readFileSync(safePath(fixtureRoot, `${relativeRun}/state.json`))
-    const runState = JSON.parse(runStateBytes.toString("utf8"))
-    const claimsBytes = fs.readFileSync(safePath(fixtureRoot, `${relativeRun}/claims.json`))
-    const claimsDocument = JSON.parse(claimsBytes.toString("utf8"))
-    const claims = claimsDocument.claims
-    if (
-      runState.schema !== "research-run/v1" ||
-      runState.run_id !== candidateRun ||
-      runState.candidate_published !== false ||
-      runState.stages?.claims?.status !== "complete" ||
-      runState.stages.claims.result_path !== `${relativeRun}/claims.json` ||
-      runState.stages.claims.result_hash !== sha256(JSON.stringify(claimsDocument)) ||
-      !Array.isArray(claims) ||
-      claims.length === 0
-    )
-      throw Error("Completed source-bound candidate claims run required")
+    const checkpoint = candidateCheckpoint(fixtureRoot, candidateRun, documents, parses)
+    const runStateBytes = checkpoint.stateBytes
+    const claimsBytes = checkpoint.claimsBytes
+    const claims = checkpoint.claimsDocument.claims
 
     const expectedFactIds = specification.facts.map((fact) => fact.fact_id).sort()
     const reviewedFactIds = input.gold_fact_coverage.map((fact) => fact.fact_id).sort()
@@ -667,12 +676,12 @@ export async function saveEvaluationAdjudication(root, runId, caseId, candidateR
     )
       throw Error("Complete model provenance for every extraction batch required")
     const modelWallTimes = budget.attempts.map((attempt) => attempt.result.provenance.wall_ms)
-    const startedAt = Date.parse(runState.stages.claims.started_at)
-    const finishedAt = Date.parse(runState.stages.claims.finished_at)
+    const startedAt = Date.parse(checkpoint.stage.started_at)
+    const finishedAt = Date.parse(checkpoint.stage.finished_at)
     if (!Number.isFinite(startedAt) || !Number.isFinite(finishedAt) || finishedAt < startedAt)
       throw Error("Valid candidate extraction timestamps required")
     assertReviewDate(input.reviewed_at, {
-      notBefore: [runState.stages.claims.finished_at],
+      notBefore: [checkpoint.stage.finished_at],
     })
 
     const inputSha256 = sha256(JSON.stringify(input))
@@ -683,6 +692,7 @@ export async function saveEvaluationAdjudication(root, runId, caseId, candidateR
       case_status: manifest.status,
       case_split: manifest.split,
       candidate_run: candidateRun,
+      ...(checkpoint.processed ? { candidate_checkpoint: "source-processing-extraction/v1" } : {}),
       reviewer: input.reviewer,
       reviewer_kind: input.reviewer_kind,
       independent_human_review: input.independent_human_review,

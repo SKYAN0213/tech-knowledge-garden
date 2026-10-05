@@ -10378,3 +10378,18 @@ RobCo closure58자료/60members/210589bytes SHA2c830b0ed604f3a03bf014a3796358532
 증거 위치: /Volumes/X5Storage/tkg-daily-core-20261006-v1. 코드·새 정규 회차 공개와 fresh Drive 작성본 확인은 이 기록 시점에 미완료다. 기존50회차483구간+metadata10, 독립40/20평가·7회·08시/인증/중단·전체runtime 복구는 계속 active 목표의 남은 항목이다. 전체 local suite는 반복하지 않고 변경 묶음의 단일 릴리스 CI로 확인한다.
 
 415 후속: 태그 정정본의 실제 원고는 processing-v5, draft61ac8bb2다. 재승인 후보-v2는 동일 사건 ID를 유지하고 원래 approval를 history에 보존했다. private Drive ID1QPkYAxOGEXBAmX2l-b0bMrM21_Wdj7_-에 closure-v3를 보관했고3,505,505bytes SHA9c2f0cc8eeb9eaa61c39af84e90af943b0d05c34b15e23c30c3cfd82fecbdd63 실제 raw download·독립210파일 복구·태그 빈 배열/12사실의 승인 재검증·위치 등록을 완료했다. 이 보관본은 이전 승인과 명시적 lineage review 원본도 포함한다. RobCo 복구 파일 수의 정확한 값은60이다.
+
+
+## 416. 새 체크포인트 평가 연결과 정규 발행의 외부 차단
+
+0b827e10b221cc2a4df07707433c6b65b3713948에는 실제 Drive212 작성 원본(기존208·신규4)과 새 정규 브리핑3기사·Signals1·TrendTopics2를 반영해 정상 push했다. Actions37372213094는 build 단계에 hosted runner가 배정되지 않아15분 뒤 cancelled, deploy skipped였다. 실행 step0이며 전체 테스트와 실제 배포 성공이 아니다. annotations의 원인은 The job was not acquired by Runner of type hosted even after multiple attempts다. GitHub 공식 상태는 Actions major_outage/Incident with Actions investigating였으며21:05:26 UTC 취소 시각을 보존했다. 새 정규 운영은 아직0, WebsiteData는 이전 실제 배포 보관본을 유지한다. 독자 화면에 장애·발행 안내를 넣지 않는다.
+
+원본212의 실제post16폴더 열거와 기존208 raw·신규4 raw를 대조해 private Drive 업로드 receipt의 작성본 매핑을 갱신했다. 기존331개 비작성 자료/영수증은 그대로 두었고 누락되어 있던 과거Signals2개도 실제ID와 raw SHA로 연결했다. 최종 receipt543행 중 작성본212행이다. raw의 실제 취득 시각을 나중 시각으로 바꾸지 않았다.
+
+실제 qwen3.8:27b-mlx가 HFNN 용어 초안을1회/94,790ms 생성했다. 원문 인용을 읽고 일반적인 HFNN 전체로 확대하지 않도록 옷감 집기 논문 속 모델(fabric-grasping-hfnn)로 고정ID·범위를 좁혔다. 최근 변화는 원문 발표일10/5와 사건72081e8f67345f20에 연결했다. 총30회·동일 후보 생성의80.0/93.3과 별도 속성 예측91.7/90.9·80.3/82.0을 보존했다. 빈 설명과 일반적 전망·개념 간 연결은 추가하지 않는다. daily-20261006-hfnn-knowledge-note-review-v1은 private 승인본이며 canonical/Drive 작성본/공개 지도를 아직 바꾸지 않았다.
+
+평가 누락은 별도 외장 worktree에서 수정했다. 기존 공통 loadCompletedExtraction을 import/adjudication 양쪽에 사용하고 새 형식 입력이 있으면 미완료·변조·null input·다른digest·published 상태를 legacy로 우회하지 못하게 했다. legacy output 형식은 유지한다. tests/research-evaluation.test.mjs25/25가 한 번 통과했고 전체 suite는 반복하지 않았다. 실제 FDA6후보/1배치56,988ms, 논문29후보/5배치357,643ms, RobCo6후보/1배치63,865ms를 원출력 그대로 가져왔다. 새 추론은0이며 semantic full/partial/missing은 각각6/0/2·9/3/0·5/1/0이다. 구조 실패와 누락/조건 누락을 편집 후 승인과 구분해 raw pass로 승격하지 않았다. 독립 사람 평가0·heldout0, 개발 실제 원문26개다.
+
+증거 루트 /Volumes/X5Storage/tkg-daily-core-20261006-v1의 processed-evaluation-target-v1.log, 각 source-case/input/import/review-v1, hfnn-knowledge-model/note-review-v1, regular-drive-note-mapping-proof-v1, regular-ci-first-attempt/annotations-v1, regular-github-actions-incident-v1 및 canonical evaluation/fixtures·evaluation/runs를 확인한다. 새 평가 코드는 격리된 codex/processed-evaluation-20261006이고 주 저장소의 원고와 publication operation 바인딩은 유지한다. 병목 때문에 같은 모델을 다시 생성하거나 전체 테스트를 반복하지 않는다.
+
+다음은 Actions 서비스 복구를 확인해0b827e1 CI를 한 번 재개하고 정확한 웹/RSS/GitHub·topic HTML/digest·실제desktop/mobile·WebsiteData를 검증한 뒤 첫 정규 운영1건을 집계한다. 이후 검증한 평가 코드와 HFNN 전문용어/기사 연결을 다음 릴리스에 통합한다. 과거50/483+metadata10·독립40/20·정규7회·무인08시/인증/중단·전체runtime복구와 전체목표는 active다.
