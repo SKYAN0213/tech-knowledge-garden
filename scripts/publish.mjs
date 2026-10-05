@@ -3,6 +3,7 @@ import fs from "node:fs"
 import { nonContentChanges, publicationContentPaths } from "./publication-state.mjs"
 import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 import { pushAndVerify } from "./publication-receipt.mjs"
+import { assertNoUnresolvedAuthoringWrites } from "./research/authoring-execution.mjs"
 
 function run(cmd, args, options = {}) {
   const r = spawnSync(cmd, args, { encoding: "utf8", ...options })
@@ -12,6 +13,7 @@ function run(cmd, args, options = {}) {
 }
 try {
   await withGardenOperationLock(DEFAULT_ROOT, async () => {
+    assertNoUnresolvedAuthoringWrites(DEFAULT_ROOT)
     const branch = run("git", ["branch", "--show-current"])
     if (branch !== "main") throw new Error("Publish from main after reviewing and merging changes.")
     const remote = run("git", ["remote", "get-url", "origin"])

@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import crypto from "node:crypto"
 import { sha256 } from "./contracts.mjs"
 import { compareAuthoringRemote } from "./authoring-transfer.mjs"
 import { materializeAuthoringReadback, storeAuthoringReadback } from "./authoring-readback.mjs"
@@ -305,78 +306,336 @@ export async function reconcileAuthoringExecution({
   now = Date.now(),
 }) {
   return withGardenOperationLock(root, () =>
+    withLock(root, "authoring-execution", () =>
+      reconcileExecutionLocked({ root, releasePath, observationFile, readbackFile, now }),
+    ),
+  )
+}
+
+async function reconcileExecutionLocked({ root, releasePath, observationFile, readbackFile, now }) {
+  const binding = { ...loadRelease(root, releasePath), release_path: releasePath }
+  const observationBytes = fs.readFileSync(observationFile),
+    readbackBytes = fs.readFileSync(readbackFile)
+  const observation = JSON.parse(observationBytes),
+    readback = JSON.parse(readbackBytes)
+  const rawFiles = new Map(
+    (readback.files || []).map((r) => [r.path, fs.readFileSync(safePath(root, r.raw_path))]),
+  )
+  const previous = executionFiles(root, binding),
+    priorBindings = new Map()
+  for (const { receipt } of previous) {
+    if (Date.parse(receipt.observed_at) > Date.parse(observation.observed_at))
+      throw Error("Observation predates the saved execution")
+    for (const row of receipt.rows.filter((r) => r.status === "verified")) {
+      if (priorBindings.has(row.path) && priorBindings.get(row.path) !== row.file_id)
+        throw Error("Saved authoring identity conflict")
+      priorBindings.set(row.path, row.file_id)
+    }
+  }
+  const result = assessAuthoringExecution({
+    ...binding,
+    observation,
+    readback,
+    rawFiles,
+    priorBindings,
+    now,
+  })
+  const inputHash = sha256(
+    JSON.stringify({
+      release: binding.release_sha256,
+      observation: sha256(observationBytes),
+      readback: sha256(readbackBytes),
+    }),
+  )
+  const directory = `${binding.base}/executions/${binding.release_sha256}/${inputHash}`
+  const existing = readJSON(root, directory + "/receipt.json")
+  if (existing) {
+    const stored = inspectStoredExecution(root, directory + "/receipt.json", binding)
+    if (
+      Object.keys(result).some((key) => JSON.stringify(result[key]) !== JSON.stringify(stored[key]))
+    )
+      throw Error("Saved observation conflicts with subsequent execution evidence")
+    return { ...stored, receipt: directory + "/receipt.json" }
+  }
+  const receipt = {
+    schema: "research-authoring-execution/v1",
+    preview_run: binding.release.preview_run,
+    release_path: releasePath,
+    release_sha256: binding.release_sha256,
+    input_sha256: inputHash,
+    observed_at: observation.observed_at,
+    sequence: Math.max(0, ...previous.map((r) => r.receipt.sequence || 0)) + 1,
+    valid_until: new Date(Date.parse(observation.observed_at) + 600000).toISOString(),
+    ...result,
+  }
+  const install = (file, bytes) => {
+    const absolute = safePath(root, file)
+    if (!fs.existsSync(absolute)) atomicCreate(root, file, bytes)
+    else if (!fs.readFileSync(absolute).equals(bytes))
+      throw Error("Authoring execution evidence changed")
+  }
+  install(directory + "/observation.json", observationBytes)
+  install(directory + "/readback.json", readbackBytes)
+  readback.files.forEach((r, i) => install(directory + `/raw/${i}.bin`, rawFiles.get(r.path)))
+  install(directory + "/receipt.json", jsonBytes(receipt))
+  return {
+    ...inspectStoredExecution(root, directory + "/receipt.json", binding),
+    receipt: directory + "/receipt.json",
+  }
+}
+
+const targetKey = (op) => sha256(JSON.stringify([op.parent_id, path.posix.basename(op.path)]))
+
+function executionProof(root, relative) {
+  const receipt = readJSON(root, relative)
+  const binding = {
+    ...loadRelease(root, receipt?.release_path),
+    release_path: receipt.release_path,
+  }
+  const verified = inspectStoredExecution(root, relative, binding)
+  return {
+    receipt: verified,
+    readback: readJSON(root, path.posix.dirname(relative) + "/readback.json"),
+  }
+}
+
+function targetProof(proof, intent) {
+  const file = proof.readback.files.find((r) => targetKey(r) === targetKey(intent.operation))
+  if (
+    !file ||
+    file.sha256 !== intent.operation.desired_sha256 ||
+    (intent.operation.file_id && file.file_id !== intent.operation.file_id) ||
+    Date.parse(proof.receipt.observed_at) < Date.parse(intent.started_at) ||
+    Date.parse(file.modified_at) < Date.parse(intent.started_at)
+  )
+    return null
+  return file
+}
+
+function inspectWriteIntent(root, relative) {
+  const bytes = fs.readFileSync(safePath(root, relative)),
+    intent = JSON.parse(bytes)
+  if (
+    intent?.schema !== "research-authoring-write-intent/v1" ||
+    !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(intent.attempt_id || "") ||
+    !Number.isSafeInteger(intent.pid) ||
+    intent.pid < 1 ||
+    !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(intent.lock_owner || "") ||
+    !Number.isFinite(Date.parse(intent.started_at)) ||
+    relative !==
+      `authoring-write-intents/${targetKey(intent.operation)}/${intent.attempt_id}/intent.json`
+  )
+    throw Error("Invalid authoring write intent")
+  const binding = { ...loadRelease(root, intent.release_path), release_path: intent.release_path }
+  const proof = inspectStoredExecution(root, intent.execution_receipt, binding)
+  if (
+    intent.release_sha256 !== binding.release_sha256 ||
+    intent.execution_sha256 !== sha256(fs.readFileSync(safePath(root, intent.execution_receipt))) ||
+    !proof.next_operations.some((op) => JSON.stringify(op) === JSON.stringify(intent.operation)) ||
+    Date.parse(intent.started_at) < Date.parse(proof.observed_at) ||
+    Date.parse(intent.started_at) > Date.parse(proof.valid_until)
+  )
+    throw Error("Write intent differs from the approved fresh operation")
+  const resolutionPath = path.posix.dirname(relative) + "/resolution.json"
+  const resolution = readJSON(root, resolutionPath)
+  if (resolution) {
+    const remote = executionProof(root, resolution.execution_receipt),
+      file = targetProof(remote, intent)
+    if (
+      resolution.schema !== "research-authoring-write-resolution/v1" ||
+      resolution.intent_sha256 !== sha256(bytes) ||
+      resolution.execution_sha256 !==
+        sha256(fs.readFileSync(safePath(root, resolution.execution_receipt))) ||
+      !file ||
+      resolution.file_id !== file.file_id ||
+      resolution.observed_at !== remote.receipt.observed_at
+    )
+      throw Error("Write resolution lacks matching post-write raw evidence")
+  }
+  return { path: relative, intent, sha256: sha256(bytes), resolved: Boolean(resolution) }
+}
+
+function writeIntents(root) {
+  const directory = safePath(root, "authoring-write-intents"),
+    entries = []
+  if (!fs.existsSync(directory)) return entries
+  for (const target of fs.readdirSync(directory)) {
+    if (!hash(target)) throw Error("Invalid authoring write target")
+    const base = "authoring-write-intents/" + target
+    for (const attempt of fs.readdirSync(safePath(root, base)))
+      entries.push(inspectWriteIntent(root, `${base}/${attempt}/intent.json`))
+  }
+  return entries
+}
+
+function resolveWriteIntents(root, receiptPath) {
+  const proof = executionProof(root, receiptPath),
+    recovered = []
+  for (const entry of writeIntents(root).filter((r) => !r.resolved)) {
+    const file = targetProof(proof, entry.intent)
+    if (!file) continue
+    const resolutionPath = path.posix.dirname(entry.path) + "/resolution.json"
+    atomicCreate(root, resolutionPath, {
+      schema: "research-authoring-write-resolution/v1",
+      intent_sha256: entry.sha256,
+      execution_receipt: receiptPath,
+      execution_sha256: sha256(fs.readFileSync(safePath(root, receiptPath))),
+      file_id: file.file_id,
+      observed_at: proof.receipt.observed_at,
+    })
+    recovered.push(entry.path)
+  }
+  return recovered
+}
+
+export function assertNoUnresolvedAuthoringWrites(root) {
+  if (writeIntents(root).some((r) => !r.resolved))
+    throw Error("Unconfirmed Drive writes must be reconciled before publication")
+}
+
+export function loadAuthoringWriteStatus(root) {
+  try {
+    const entries = writeIntents(root),
+      lock = readJSON(root, "locks/garden-operation.json")
+    return {
+      status: "read_only_write_intent_audit",
+      verified: entries.filter((r) => r.resolved).length,
+      unresolved: entries.filter((r) => !r.resolved).length,
+      entries: entries.map((r) => ({
+        intent_path: r.path,
+        path: r.intent.operation.path,
+        resolved: r.resolved,
+        owner_pid: r.intent.pid,
+        lock_owned: lock?.owner === r.intent.lock_owner && lock?.pid === r.intent.pid,
+      })),
+    }
+  } catch (error) {
+    return { status: "invalid", unresolved: null, reason: error.message }
+  }
+}
+
+// The signed-in caller performs connector writes; this process guards and journals them.
+export async function authoringWriteSession({
+  root,
+  releasePath,
+  acquisitionFile,
+  nextCapture,
+  emit = () => {},
+  now = Date.now,
+  waitMs = 300000,
+}) {
+  if (
+    typeof nextCapture !== "function" ||
+    !Number.isSafeInteger(waitMs) ||
+    waitMs < 1 ||
+    waitMs > 600000
+  )
+    throw Error("Bounded post-write capture callback required")
+  return withGardenOperationLock(root, () =>
     withLock(root, "authoring-execution", async () => {
-      const binding = { ...loadRelease(root, releasePath), release_path: releasePath }
-      const observationBytes = fs.readFileSync(observationFile),
-        readbackBytes = fs.readFileSync(readbackFile)
-      const observation = JSON.parse(observationBytes),
-        readback = JSON.parse(readbackBytes)
-      const rawFiles = new Map(
-        (readback.files || []).map((r) => [r.path, fs.readFileSync(safePath(root, r.raw_path))]),
-      )
-      const previous = executionFiles(root, binding),
-        priorBindings = new Map()
-      for (const { receipt } of previous) {
-        if (Date.parse(receipt.observed_at) > Date.parse(observation.observed_at))
-          throw Error("Observation predates the saved execution")
-        for (const row of receipt.rows.filter((r) => r.status === "verified")) {
-          if (priorBindings.has(row.path) && priorBindings.get(row.path) !== row.file_id)
-            throw Error("Saved authoring identity conflict")
-          priorBindings.set(row.path, row.file_id)
+      const binding = loadRelease(root, releasePath)
+      const capture = async (file) => {
+        const current = materializeAuthoringReadback(root, binding, file, now())
+        assessAuthoringExecution({ ...binding, ...current, now: now() })
+        const staged = storeAuthoringReadback(root, current)
+        return reconcileExecutionLocked({
+          root,
+          releasePath,
+          observationFile: staged.observation_file,
+          readbackFile: staged.readback_file,
+          now: now(),
+        })
+      }
+      let receipt = await capture(acquisitionFile)
+      const recovered = resolveWriteIntents(root, receipt.receipt),
+        created = []
+      const sessionID = crypto.randomUUID()
+      const finish = (status) => {
+        const result = {
+          schema: "research-authoring-write-session/v1",
+          session_id: sessionID,
+          release_path: releasePath,
+          release_sha256: binding.release_sha256,
+          status,
+          execution_receipt: receipt.receipt,
+          counts: receipt.counts,
+          created_intents: created,
+          recovered_intents: recovered,
+          unresolved_intents: writeIntents(root)
+            .filter((r) => !r.resolved)
+            .map((r) => r.path),
+          drive_verified: status === "verified_complete",
+          write_performed: false,
+          automatic_retry: false,
+          candidate_published: false,
+          new_operational_run: false,
+        }
+        const relative = `${binding.base}/write-sessions/${sessionID}.json`
+        atomicCreate(root, relative, result)
+        return { ...result, receipt: relative }
+      }
+      // Even an absent target can be a late in-flight create; absence never cancels an intent.
+      if (writeIntents(root).some((r) => !r.resolved)) return finish("write_outcome_unknown")
+      while (receipt.status === "pending") {
+        if (now() >= Date.parse(receipt.valid_until))
+          throw Error("Fresh pre-write acquisition required")
+        const operation = receipt.next_operations[0],
+          attempt = crypto.randomUUID()
+        const lock = readJSON(root, "locks/garden-operation.json")
+        if (lock?.pid !== process.pid) throw Error("Authoring write lock owner changed")
+        const relative = `authoring-write-intents/${targetKey(operation)}/${attempt}/intent.json`
+        const intent = {
+          schema: "research-authoring-write-intent/v1",
+          attempt_id: attempt,
+          release_path: releasePath,
+          release_sha256: binding.release_sha256,
+          execution_receipt: receipt.receipt,
+          execution_sha256: sha256(fs.readFileSync(safePath(root, receipt.receipt))),
+          operation,
+          started_at: new Date(now()).toISOString(),
+          pid: process.pid,
+          lock_owner: lock.owner,
+        }
+        atomicCreate(root, relative, intent)
+        created.push(relative)
+        const row = binding.plan.files.find((r) => r.path === operation.path)
+        emit({
+          type: "write_intent",
+          intent_path: relative,
+          attempt_id: attempt,
+          operation,
+          file_uri: safePath(root, row.staged_path),
+          expires_at: receipt.valid_until,
+          require_post_write_capture: true,
+        })
+        let timer
+        try {
+          const postFile = await Promise.race([
+            Promise.resolve().then(() => nextCapture(intent)),
+            new Promise((_, reject) => {
+              timer = setTimeout(
+                () => reject(Error("Post-write capture timed out")),
+                Math.min(waitMs, Date.parse(receipt.valid_until) - now()),
+              )
+            }),
+          ])
+          receipt = await capture(postFile)
+          const resolved = resolveWriteIntents(root, receipt.receipt)
+          if (!resolved.includes(relative))
+            return finish(receipt.status === "conflict" ? "conflict" : "write_outcome_unknown")
+        } catch (error) {
+          atomicCreate(root, path.posix.dirname(relative) + "/interruption.json", {
+            schema: "research-authoring-write-interruption/v1",
+            intent_path: relative,
+            stopped_at: new Date(now()).toISOString(),
+            status: "write_outcome_unknown",
+          })
+          throw Error("Drive write outcome unknown; durable intent preserved", { cause: error })
+        } finally {
+          clearTimeout(timer)
         }
       }
-      const result = assessAuthoringExecution({
-        ...binding,
-        observation,
-        readback,
-        rawFiles,
-        priorBindings,
-        now,
-      })
-      const inputHash = sha256(
-        JSON.stringify({
-          release: binding.release_sha256,
-          observation: sha256(observationBytes),
-          readback: sha256(readbackBytes),
-        }),
-      )
-      const directory = `${binding.base}/executions/${binding.release_sha256}/${inputHash}`
-      const existing = readJSON(root, directory + "/receipt.json")
-      if (existing) {
-        const stored = inspectStoredExecution(root, directory + "/receipt.json", binding)
-        if (
-          Object.keys(result).some(
-            (key) => JSON.stringify(result[key]) !== JSON.stringify(stored[key]),
-          )
-        )
-          throw Error("Saved observation conflicts with subsequent execution evidence")
-        return { ...stored, receipt: directory + "/receipt.json" }
-      }
-      const receipt = {
-        schema: "research-authoring-execution/v1",
-        preview_run: binding.release.preview_run,
-        release_path: releasePath,
-        release_sha256: binding.release_sha256,
-        input_sha256: inputHash,
-        observed_at: observation.observed_at,
-        sequence: Math.max(0, ...previous.map((r) => r.receipt.sequence || 0)) + 1,
-        valid_until: new Date(Date.parse(observation.observed_at) + 600000).toISOString(),
-        ...result,
-      }
-      const install = (file, bytes) => {
-        const absolute = safePath(root, file)
-        if (!fs.existsSync(absolute)) atomicCreate(root, file, bytes)
-        else if (!fs.readFileSync(absolute).equals(bytes))
-          throw Error("Authoring execution evidence changed")
-      }
-      install(directory + "/observation.json", observationBytes)
-      install(directory + "/readback.json", readbackBytes)
-      readback.files.forEach((r, i) => install(directory + `/raw/${i}.bin`, rawFiles.get(r.path)))
-      install(directory + "/receipt.json", jsonBytes(receipt))
-      return {
-        ...inspectStoredExecution(root, directory + "/receipt.json", binding),
-        receipt: directory + "/receipt.json",
-      }
+      return finish(receipt.status)
     }),
   )
 }
@@ -419,5 +678,9 @@ export function loadAuthoringExecutionStatus(root) {
       }
     }
   }
-  return { status: "read_only_authoring_execution_audit", releases: entries }
+  return {
+    status: "read_only_authoring_execution_audit",
+    releases: entries,
+    write_intents: loadAuthoringWriteStatus(root),
+  }
 }

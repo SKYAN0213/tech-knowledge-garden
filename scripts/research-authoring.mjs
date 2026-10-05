@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import { parseArgs } from "node:util"
+import { createInterface } from "node:readline"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { prepareAuthoringTransfer, compareAuthoringRemote } from "./research/authoring-transfer.mjs"
 import { authorizeAuthoringTransfer } from "./research/authoring-release.mjs"
@@ -7,6 +8,7 @@ import {
   reconcileAuthoringExecution,
   loadAuthoringExecutionStatus,
   stageAuthoringReadback,
+  authoringWriteSession,
 } from "./research/authoring-execution.mjs"
 
 try {
@@ -24,20 +26,88 @@ try {
       release: { type: "string" },
       readback: { type: "string" },
       acquisition: { type: "string" },
+      "wait-ms": { type: "string" },
     },
   })
   let result
   if (positionals.length !== 1)
-    throw Error("Use prepare, compare, release, capture, reconcile or status")
-  if (!["capture", "reconcile"].includes(positionals[0]) && values.release)
-    throw Error("Release receipt requires capture or reconcile")
+    throw Error("Use prepare, compare, release, capture, reconcile, write-session or status")
+  if (!["capture", "reconcile", "write-session"].includes(positionals[0]) && values.release)
+    throw Error("Release receipt requires capture, reconcile or write-session")
   if (positionals[0] !== "reconcile" && values.readback)
     throw Error("Release receipt and raw readback require reconcile")
-  if (positionals[0] !== "capture" && values.acquisition)
-    throw Error("Connector acquisition requires capture")
+  if (!["capture", "write-session"].includes(positionals[0]) && values.acquisition)
+    throw Error("Connector acquisition requires capture or write-session")
+  if (positionals[0] !== "write-session" && values["wait-ms"])
+    throw Error("Wait budget requires write-session")
   if (positionals[0] !== "release" && (values.review || values.snapshot))
     throw Error("Review and snapshot require release")
   if (
+    positionals[0] === "write-session" &&
+    values.release &&
+    values.acquisition &&
+    !values["preview-run"] &&
+    !values.plan &&
+    !values.observation &&
+    !values.readback
+  ) {
+    const lines = createInterface({ input: process.stdin, crlfDelay: Infinity })
+    const queue = [],
+      keepAlive = setInterval(() => {}, 1000)
+    let waiting,
+      closed = false
+    const stop = () => lines.close()
+    lines.on("line", (line) => {
+      if (waiting) {
+        const current = waiting
+        waiting = null
+        current.resolve(line)
+      } else queue.push(line)
+    })
+    lines.on("close", () => {
+      closed = true
+      if (waiting) {
+        waiting.reject(Error("Writer input closed"))
+        waiting = null
+      }
+    })
+    process.once("SIGTERM", stop)
+    process.once("SIGINT", stop)
+    try {
+      result = await authoringWriteSession({
+        root: values.root,
+        releasePath: values.release,
+        acquisitionFile: values.acquisition,
+        waitMs: values["wait-ms"] ? Number(values["wait-ms"]) : 300000,
+        emit: (event) => console.log(JSON.stringify(event)),
+        nextCapture: async () => {
+          const line = queue.length
+            ? queue.shift()
+            : closed
+              ? (() => {
+                  throw Error("Writer input closed")
+                })()
+              : await new Promise((resolve, reject) => {
+                  waiting = { resolve, reject }
+                })
+          if (line.length > 4096) throw Error("Writer message too long")
+          const message = JSON.parse(line)
+          if (
+            message?.type !== "readback" ||
+            typeof message.acquisition_file !== "string" ||
+            Object.keys(message).sort().join() !== "acquisition_file,type"
+          )
+            throw Error("Post-write acquisition required")
+          return message.acquisition_file
+        },
+      })
+    } finally {
+      clearInterval(keepAlive)
+      lines.close()
+      process.removeListener("SIGTERM", stop)
+      process.removeListener("SIGINT", stop)
+    }
+  } else if (
     positionals[0] === "capture" &&
     values.release &&
     values.acquisition &&
@@ -110,9 +180,15 @@ try {
     })
   else
     throw Error(
-      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; status",
+      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000]; status",
     )
-  console.log(JSON.stringify(result, null, 2))
+  console.log(
+    JSON.stringify(
+      positionals[0] === "write-session" ? { type: "session_result", ...result } : result,
+      null,
+      positionals[0] === "write-session" ? undefined : 2,
+    ),
+  )
 } catch (error) {
   console.error(error.message)
   process.exitCode = 1

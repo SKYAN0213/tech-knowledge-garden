@@ -10116,3 +10116,34 @@ P5-01/P5-03은 계속 부분 완료다. 실제 connector 쓰기·인증 갱신�
 보관 v1은 공개 readback이 진행 중일 때 만든 부분 증거 snapshot으로 원격 업로드하지 않았다. 완료 상태를 잘못 가정한 준비 스크립트는 실제 `public_artifact_bytes_verified` 계약을 확인한 뒤 수정했다. 성공 proof를 확인한 다음 v2를 생성했다. 최종60자료/61 ZIPmembers·1,907,840bytes를 private Research ID1Emf48oLZBHgZuewT8ssD8EFM6R62ijYY에 저장했다. metadata의 부모/shared:false, 원격 raw SHA a0d4436192ac359759f314ee5867db6d80a3b2c5e9aa9dcf4f44c3ed047c5305와 exact manifest718cd2e2cdc4883ef896b3c6201ad7f387e0c5c18a4cd36f7869c805a8ab2ec5를 대조했다. 공통 ordinary v1 복구62파일을 확인하고 복구된 root에서 release·plan·staged bytes·raw proof를 다시 검사해 verified2/pending0/conflict0가 일치했다. 이 보관은 실행 proof 복구이며 원문 승인 의존성 전체나 full runtime 복구로 승격하지 않는다.
 
 증거는 외장 루트의 authoring-execution-{actual-reconciliation,status,ci-status,ci-full,public-readback}-v1, archive-v2, remote-archive-{metadata,raw}-v2, remote-v2.zip, exact-manifest-v2, restore-v2, restored-proof-v2와 canonical의 두 새 run에 있다. 기존 원고·날짜·ID·RSS·공개 분류를 변경하지 않았고 추가 Drive 작성0/새 정규 운영0이다. private HTML 렌더링은 브라우저 정책으로 미검증이다. 전체 WBS2/22와 목표 active를 유지하며, 다음 핵심은 동일 execution proof를 쓰는 단일08시 전 구간과 실제 쓰기/중단 복구의 연결이다. 독립40/20·정규7회·전체 legacy 판정도 남는다. 동일 실패를 1시간 반복한 항목은 없다.
+
+## 404. Drive 쓰기 세션·불명확한 요청의 중복 방지
+
+`research-authoring.mjs write-session`은 승인된 release·원래 사건 ID·staged bytes를 그대로 사용한다. 공유 `garden-operation`과 `authoring-execution` lock을 실제 connector 쓰기와 원격 재확인 동안 함께 유지한다. CLI는 API를 직접 호출하지 않으며 로그인된 실행자가 기존 Drive 도구를 사용한다. 새 인증·유료 API·별도 예약을 만들지 않는다.
+
+```sh
+node scripts/research-authoring.mjs write-session \
+  --release runs/<preview>/drive-authoring/releases/<release-key>.json \
+  --acquisition <fresh-provider-acquisition.json> \
+  --wait-ms 300000
+```
+
+입력 acquisition은 403절의 원격 metadata·실제 raw bytes·부모 목록 전후 대조와 중첩 폴더 metadata를 포함한다. 기록 시각은 실제 읽기 완료 시각이며 오래된 응답에 현재 시각을 붙이지 않는다. signed URL과 중복 readable 본문은 저장하지 않는다. 쓰기가 없으면 즉시 `session_result/verified_complete`를 반환한다. 이 경우 새 API 쓰기 요청이나 정규 운영 횟수는 증가하지 않는다.
+
+쓰기가 남으면 stdin을 유지하는 실행 도구의 `tty:true` 세션으로 시작하고 반환된 process/session handle을 보존한다. stdout의 `write_intent` 한 줄은 승인 대상·기존 file ID 또는 새 부모·정확한 staged 파일 경로·만료 시각을 담는다. 이 출력 전에 `authoring-write-intents/<parent-name-hash>/<attempt-uuid>/intent.json`이 불변 기록으로 설치된다. 출력된 요청 한 건만 기존 connector의 same-ID update 또는 upload로 수행하고, 원격 전체 bytes와 metadata·전후 부모 목록을 새로 읽어 다음 입력 한 줄을 보낸다.
+
+```json
+{"type":"readback","acquisition_file":"/absolute/fresh-post-write-acquisition.json"}
+```
+
+같은 세션 안에서 normalized capture와 execution proof를 만들므로 lock을 다시 획득하는 별도 `capture` CLI를 동시에 실행하지 않는다. 다음 쓰기는 직전 요청의 실제 bytes·ID·부모·수정시각 확인이 끝난 뒤에만 나온다. 성공 응답이나 CLI 상태만으로 저장을 확정하지 않는다. 기존 release의 승인 원고와 기존 GUID·회차 날짜를 바꾸지 않는다.
+
+응답 유실·stdin 종료·timeout·강제 종료는 요청 결과를 불명확하게 남긴다. 원격 파일이 잠시 없거나 예전 bytes라는 사실은 진행 중 요청의 취소 근거가 아니다. 새 release나 다른 preview로 이동해도 같은 전역 intent를 우회하지 못한다. 이후 해당 요청 뒤의 수정시각을 가진 desired bytes·기존 update ID가 실제 raw로 확인되면 `resolution.json`을 추가하며 API를 재호출하지 않는다. 확정되지 않은 intent는 모든 추가 쓰기와 `npm run publish`를 막는다. 잘못되거나 변조된 proof도 발행을 차단한다. 요청하지 않았다는 자동 취소나 새 revision 강제 덮어쓰기는 구현하지 않았다.
+
+살아 있는 handle은 그대로 관측한다. 죽은 PID가 ESRCH로 확인되고 소유자 UUID가 현재 lock과 일치할 때만 기존 명령 `node scripts/research.mjs recover-lock --lock <garden-operation|authoring-execution> --expected-owner <owner-uuid>`를 사용한다. 두 lock의 각 소유자를 따로 확인한다. lock 회수는 intent 해결을 뜻하지 않으며 새 fresh acquisition으로 같은 release를 재개한다. 파일을 직접 삭제해 unknown을 지우지 않는다.
+
+세션 영수증은 `runs/<preview>/drive-authoring/write-sessions/<uuid>.json`에 보존한다. `write_performed:false`는 CLI가 네트워크 쓰기를 하지 않았다는 의미이며 실행자의 connector 호출과 별도다. execution status 및 비공개 delivery status는 unresolved intent 수·owner/lock 결속을 노출한다. `lock_owned`는 기록의 owner 일치이고 살아 있는 프로세스의 증거로 사용하지 않는다. 공개 독자 화면에는 운영 기록을 넣지 않는다.
+
+검증: 좁은 관련 묶음36/36이 통과했다. 직렬 update/create, 원격 이미 저장됨, 유실된 응답, 늦게 도착한 저장, timeout, 다른 승인 release의 우회, 실제 publisher 차단과 실제 CLI SIGKILL→owner lock 복구→늦은 raw 판정을 확인했다. 실제 Drive를 2026-10-05 09:57:15 UTC에 다시 읽고 기존 승인2파일/5,450bytes·ID·SHA와51/30 부모 목록 전후를 대조했다. 실제 CLI session `2bca4510-a15b-45e8-bbc5-47ec9d154a76` 결과 verified2/pending0/conflict0·intent0·추가 쓰기0다. API의 조건부 원자적 CAS, 실제 신규 원고 저장 중 장애·인증 갱신·무인08시 전체 경로는 이 증거로 완료 처리하지 않는다.
+
+전체 계획의 미판정57회차535구간·메타데이터 복구10·독립 human40/20·새 정규7회·full portable runtime 복구·WBS2/22·goal active를 유지한다. 이번은 코드와 실제 execution proof를 바꾼 progress이며 동일 실패1시간 반복은0이다. 다음은 이 세션을 동일08시 지침에 연결하고 실제 다음 승인 원고의 Drive-first 발행에 사용하는 것이다.

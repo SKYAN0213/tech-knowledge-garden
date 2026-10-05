@@ -4255,3 +4255,11 @@ P5-01/P5-03과 실행 묶음 7~8의 다음 수직 슬라이스다. 기존 releas
 보관 v1은 공개 readback이 진행 중일 때 만든 부분 증거 snapshot으로 원격 업로드하지 않았다. 완료 상태를 잘못 가정한 준비 스크립트는 실제 `public_artifact_bytes_verified` 계약을 확인한 뒤 수정했다. 성공 proof를 확인한 다음 v2를 생성했다. 최종60자료/61 ZIPmembers·1,907,840bytes를 private Research ID1Emf48oLZBHgZuewT8ssD8EFM6R62ijYY에 저장했다. metadata의 부모/shared:false, 원격 raw SHA a0d4436192ac359759f314ee5867db6d80a3b2c5e9aa9dcf4f44c3ed047c5305와 exact manifest718cd2e2cdc4883ef896b3c6201ad7f387e0c5c18a4cd36f7869c805a8ab2ec5를 대조했다. 공통 ordinary v1 복구62파일을 확인하고 복구된 root에서 release·plan·staged bytes·raw proof를 다시 검사해 verified2/pending0/conflict0가 일치했다. 이 보관은 실행 proof 복구이며 원문 승인 의존성 전체나 full runtime 복구로 승격하지 않는다.
 
 증거는 외장 루트의 authoring-execution-{actual-reconciliation,status,ci-status,ci-full,public-readback}-v1, archive-v2, remote-archive-{metadata,raw}-v2, remote-v2.zip, exact-manifest-v2, restore-v2, restored-proof-v2와 canonical의 두 새 run에 있다. 기존 원고·날짜·ID·RSS·공개 분류를 변경하지 않았고 추가 Drive 작성0/새 정규 운영0이다. private HTML 렌더링은 브라우저 정책으로 미검증이다. 전체 WBS2/22와 목표 active를 유지하며, 다음 핵심은 동일 execution proof를 쓰는 단일08시 전 구간과 실제 쓰기/중단 복구의 연결이다. 독립40/20·정규7회·전체 legacy 판정도 남는다. 동일 실패를 1시간 반복한 항목은 없다.
+
+## 19.310. 승인 원고의 Drive 쓰기 세션과 전역 unknown 관문
+
+공통 authoring execution에 실제 connector 호출 전 durable intent, 공유 writer lock, 한 번에 한 파일의 fresh post-write capture, 전역 unknown 상태 및 publisher 관문을 구현했다. 기존 release·staged bytes·고정 사건 ID와 Guid는 유지한다. 요청 유실이나 파일의 일시적 부재는 재시도 허가가 아니며 다른 preview/release로 우회하지 못한다. 실제 raw의 desired SHA·ID·부모·요청 뒤 수정시각만 불변 resolution을 만든다. 같은 코드를 기존 로그인된 Drive 실행자와 단일08시 흐름이 재사용한다.
+
+좁은 관련36/36과 실제 child process SIGKILL·PID/owner lock 복구·늦은 원격 proof·publisher CLI 차단을 확인했다. 실제 기존 승인2파일을 새 Drive metadata/raw/부모목록으로 검증한 write-session도 verified2/pending0/conflict0·추가 쓰기0이다. 구현과 검증 절차는 런북404, 실제 proof는 외장 authoring-write-actual-session-v1 및 canonical write-sessions에 있다. 아직 실제 신규 원고를 쓰던 중의 네트워크 장애·재인증이나 무인08시 전체를 검증한 것은 아니다.
+
+전체 legacy57/535·metadata복구10·독립human40/20·실제새정규7회·fullruntime복구 및 전체WBS2/22를 유지한다. 로컬 모델 운영 승격과 GPT 예약 모델 변경도 하지 않는다. 동일 실패를1시간 반복한 항목은0이며 이어서 기존 예약 지침과 실제 배포·private Drive 보관을 검증한다.

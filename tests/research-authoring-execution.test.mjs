@@ -3,9 +3,10 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { spawnSync } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
+import { once } from "node:events"
 import { sha256 } from "../scripts/research/contracts.mjs"
-import { acquireLock } from "../scripts/research/run-state.mjs"
+import { acquireLock, recoverLock } from "../scripts/research/run-state.mjs"
 import {
   compareAuthoringRemote,
   DRIVE_AUTHORING_ROOTS,
@@ -14,6 +15,9 @@ import {
   reconcileAuthoringExecution,
   loadAuthoringExecutionStatus,
   stageAuthoringReadback,
+  authoringWriteSession,
+  assertNoUnresolvedAuthoringWrites,
+  loadAuthoringWriteStatus,
 } from "../scripts/research/authoring-execution.mjs"
 
 function fixture(t, { nested = false } = {}) {
@@ -376,21 +380,19 @@ test("reconcile and status CLI expose real saved proof without performing writes
   assert.equal(invoke(["status", "--readback", c.readbackFile]).status, 1)
 })
 
-function connectorCapture(f) {
-  const existing = f.observation.listings[0].files[0]
-  const metadata = {
-    id: existing.id,
-    title: existing.name,
-    mime_type: "text/markdown",
-    size: "3",
-    modified_time: existing.modified_at,
-    parent_ids: [existing.parent_id],
-    shared: false,
-  }
+function connectorCapture(f, contents = new Map([["Knowledge/topic.md", "old"]])) {
   return {
     schema: "research-authoring-drive-acquisition/v1",
     observed_at: f.observation.observed_at,
-    folders: [],
+    folders: f.observation.folders.map((r) => ({
+      path: r.path,
+      metadata: {
+        id: r.id,
+        title: path.posix.basename(r.path),
+        mime_type: "application/vnd.google-apps.folder",
+        parent_ids: [r.parent_id],
+      },
+    })),
     listings: f.observation.listings.map((l) => ({
       path: l.path,
       id: l.id,
@@ -410,21 +412,33 @@ function connectorCapture(f) {
         parent_ids: null,
       })),
     })),
-    files: [
-      {
-        path: "Knowledge/topic.md",
-        metadata,
-        raw: {
-          id: metadata.id,
-          mime_type: metadata.mime_type,
-          modified_time: metadata.modified_time,
-          parent_ids: metadata.parent_ids,
-          file_size_bytes: 3,
-          b64_string: Buffer.from("old").toString("base64"),
-          file_uri: { download_url: "opaque-download-reference" },
-        },
-      },
-    ],
+    files: f.observation.listings.flatMap((l) =>
+      l.files.map((r) => {
+        const relative = l.path + "/" + r.name,
+          raw = Buffer.from(contents.get(relative))
+        return {
+          path: relative,
+          metadata: {
+            id: r.id,
+            title: r.name,
+            mime_type: "text/markdown",
+            size: String(raw.length),
+            modified_time: r.modified_at,
+            parent_ids: [r.parent_id],
+            shared: false,
+          },
+          raw: {
+            id: r.id,
+            mime_type: "text/markdown",
+            modified_time: r.modified_at,
+            parent_ids: [r.parent_id],
+            file_size_bytes: raw.length,
+            b64_string: raw.toString("base64"),
+            file_uri: { download_url: "opaque-download-reference" },
+          },
+        }
+      }),
+    ),
   }
 }
 
@@ -494,5 +508,271 @@ test("connector capture rejects truncated, changing, corrupt or mismatched raw a
       }),
     )
     assert.equal(loadAuthoringExecutionStatus(f.root).releases[0].status, "readback_required")
+  }
+})
+
+function liveCapture(f, contents, name) {
+  f.observation.observed_at = new Date().toISOString()
+  return f.put(name, connectorCapture(f, contents))
+}
+function appliedNow(f, kind) {
+  f.apply(kind)
+  const index = kind === "create" ? 1 : 0
+  f.observation.listings[index].files[0].modified_at = new Date().toISOString()
+}
+const session = (f, file, options = {}) =>
+  authoringWriteSession({
+    root: f.root,
+    releasePath: f.releasePath,
+    acquisitionFile: file,
+    ...options,
+  })
+
+test("writer serializes connector requests under one lock and proves each write before continuing", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "old"]]),
+    events = []
+  const result = await session(f, liveCapture(f, contents, "initial.json"), {
+    emit: (event) => {
+      events.push(event)
+      assert.equal(fs.existsSync(path.join(f.root, event.intent_path)), true)
+      assert.equal(
+        JSON.parse(fs.readFileSync(path.join(f.root, "locks/garden-operation.json"))).pid,
+        process.pid,
+      )
+      assert.throws(() => assertNoUnresolvedAuthoringWrites(f.root), /Unconfirmed Drive writes/)
+    },
+    nextCapture: async (intent) => {
+      if (intent.operation.action === "update") {
+        appliedNow(f, "update")
+        contents.set("Knowledge/topic.md", "new")
+      } else {
+        appliedNow(f, "create")
+        contents.set("Signals/new.md", "signals")
+      }
+      return liveCapture(f, contents, `post-${events.length}.json`)
+    },
+  })
+  assert.equal(result.status, "verified_complete")
+  assert.equal(events.length, 2)
+  assert.equal(result.created_intents.length, 2)
+  assert.equal(result.unresolved_intents.length, 0)
+  assert.equal(result.write_performed, false)
+  assert.equal(result.new_operational_run, false)
+  assertNoUnresolvedAuthoringWrites(f.root)
+  assert.equal(loadAuthoringWriteStatus(f.root).verified, 2)
+  assert.equal(fs.existsSync(path.join(f.root, "locks/garden-operation.json")), false)
+})
+
+test("writer confirms already present data without requesting any connector writes", async (t) => {
+  const f = fixture(t)
+  f.apply()
+  const result = await session(
+    f,
+    liveCapture(
+      f,
+      new Map([
+        ["Knowledge/topic.md", "new"],
+        ["Signals/new.md", "signals"],
+      ]),
+      "initial.json",
+    ),
+    {
+      emit: () => assert.fail("No write may be requested"),
+      nextCapture: () => assert.fail("No post-write fetch needed"),
+    },
+  )
+  assert.equal(result.status, "verified_complete")
+  assert.deepEqual(result.created_intents, [])
+})
+
+test("lost connector response preserves an intent and gates the actual publisher before Git or build", async (t) => {
+  const f = fixture(t),
+    original = new Map([["Knowledge/topic.md", "old"]])
+  await assert.rejects(
+    session(f, liveCapture(f, original, "initial.json"), {
+      nextCapture: () => {
+        throw Error("response lost")
+      },
+    }),
+    /outcome unknown/,
+  )
+  assert.equal(loadAuthoringWriteStatus(f.root).unresolved, 1)
+  assert.equal(fs.existsSync(path.join(f.root, "locks/garden-operation.json")), false)
+  const result = await session(f, liveCapture(f, original, "resume.json"), {
+    emit: () => assert.fail("An uncertain request cannot be sent twice"),
+    nextCapture: () => assert.fail(),
+  })
+  assert.equal(result.status, "write_outcome_unknown")
+  const repo = path.join(f.root, "test-publication")
+  fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
+  const privateRoot = path.join(repo, ".local/research/local-ai")
+  // Copy only this test's evidence; do not recursively copy the new project into itself.
+  fs.mkdirSync(privateRoot)
+  for (const entry of fs.readdirSync(f.root)) {
+    if (entry === "test-publication") continue
+    fs.cpSync(path.join(f.root, entry), path.join(privateRoot, entry), { recursive: true })
+  }
+  const command = spawnSync(process.execPath, [path.resolve("scripts/publish.mjs")], {
+    cwd: repo,
+    encoding: "utf8",
+  })
+  assert.equal(command.status, 1)
+  assert.match(command.stderr, /Unconfirmed Drive writes/)
+  assert.equal(command.stderr.includes("git branch"), false)
+})
+
+test("a fresh failed-write readback does not turn an uncertain request into an automatic retry", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "old"]])
+  const result = await session(f, liveCapture(f, contents, "initial.json"), {
+    nextCapture: () => liveCapture(f, contents, "not-applied.json"),
+  })
+  assert.equal(result.status, "write_outcome_unknown")
+  assert.equal(result.created_intents.length, 1)
+  assert.throws(() => assertNoUnresolvedAuthoringWrites(f.root), /Unconfirmed/)
+})
+
+test("late successful writes resolve unknown intents from raw evidence without another request", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "old"]])
+  await assert.rejects(
+    session(f, liveCapture(f, contents, "initial.json"), {
+      nextCapture: () => {
+        throw Error("connection closed")
+      },
+    }),
+  )
+  appliedNow(f, "update")
+  appliedNow(f, "create")
+  contents.set("Knowledge/topic.md", "new")
+  contents.set("Signals/new.md", "signals")
+  const result = await session(f, liveCapture(f, contents, "late.json"), {
+    nextCapture: () => assert.fail("No additional request"),
+  })
+  assert.equal(result.status, "verified_complete")
+  assert.equal(result.recovered_intents.length, 1)
+  assert.equal(result.created_intents.length, 0)
+  assertNoUnresolvedAuthoringWrites(f.root)
+  const intent = loadAuthoringWriteStatus(f.root).entries[0].intent_path
+  const file = path.join(f.root, path.posix.dirname(intent), "resolution.json"),
+    raw = JSON.parse(fs.readFileSync(file))
+  raw.intent_sha256 = sha256("tampered")
+  fs.writeFileSync(file, JSON.stringify(raw))
+  assert.equal(loadAuthoringWriteStatus(f.root).status, "invalid")
+  assert.throws(() => assertNoUnresolvedAuthoringWrites(f.root), /resolution/)
+})
+
+test("unknown writes are gated across separately approved releases", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "old"]])
+  await assert.rejects(
+    session(f, liveCapture(f, contents, "initial.json"), {
+      nextCapture: () => {
+        throw Error("interrupted")
+      },
+    }),
+  )
+  const different = structuredClone(f.release)
+  different.input_sha256.review = sha256("new editorial approval")
+  const releasePath = `${f.base}/releases/${sha256(JSON.stringify(different.input_sha256))}.json`
+  f.put(releasePath, different)
+  const result = await session(f, liveCapture(f, contents, "other-release.json"), {
+    releasePath,
+    emit: () => assert.fail("New approval cannot duplicate an uncertain old request"),
+    nextCapture: () => assert.fail(),
+  })
+  assert.equal(result.status, "write_outcome_unknown")
+})
+
+test("bounded writer timeout releases the process lock while keeping uncertain data protected", async (t) => {
+  const f = fixture(t)
+  await assert.rejects(
+    session(f, liveCapture(f, new Map([["Knowledge/topic.md", "old"]]), "initial.json"), {
+      waitMs: 5,
+      nextCapture: () => new Promise(() => {}),
+    }),
+    /outcome unknown/,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "locks/garden-operation.json")), false)
+  assert.equal(loadAuthoringWriteStatus(f.root).unresolved, 1)
+})
+
+test("killed writer keeps its create intent; owner recovery and later raw proof prevent duplicate creation", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "new"]])
+  appliedNow(f, "update")
+  const file = liveCapture(f, contents, "initial.json")
+  const child = spawn(
+    process.execPath,
+    [
+      "scripts/research-authoring.mjs",
+      "write-session",
+      "--root",
+      f.root,
+      "--release",
+      f.releasePath,
+      "--acquisition",
+      file,
+    ],
+    { stdio: ["pipe", "pipe", "pipe"] },
+  )
+  let errorText = ""
+  child.stderr.on("data", (b) => (errorText += b))
+  try {
+    const first = await new Promise((resolve, reject) => {
+      let buffer = ""
+      const timer = setTimeout(
+        () => reject(Error("Writer did not produce an intent: " + errorText)),
+        5000,
+      )
+      child.stdout.on("data", (b) => {
+        buffer += b
+        const index = buffer.indexOf("\n")
+        if (index >= 0) {
+          clearTimeout(timer)
+          resolve(JSON.parse(buffer.slice(0, index)))
+        }
+      })
+      child.once("exit", () => {
+        clearTimeout(timer)
+        reject(Error("Writer exited before intent: " + errorText))
+      })
+    })
+    assert.equal(first.type, "write_intent")
+    assert.equal(first.operation.action, "create")
+    const garden = JSON.parse(fs.readFileSync(path.join(f.root, "locks/garden-operation.json")))
+    const execution = JSON.parse(
+      fs.readFileSync(path.join(f.root, "locks/authoring-execution.json")),
+    )
+    assert.equal(garden.pid, child.pid)
+    process.kill(child.pid, 0)
+    await assert.rejects(session(f, file, { nextCapture: () => assert.fail() }), /EEXIST/)
+    const exited = once(child, "exit")
+    child.kill("SIGKILL")
+    await exited
+    assert.throws(() => process.kill(child.pid, 0), { code: "ESRCH" })
+    recoverLock(f.root, "authoring-execution", execution.owner)
+    recoverLock(f.root, "garden-operation", garden.owner)
+    const resumed = await session(f, liveCapture(f, contents, "resume.json"), {
+      emit: () => assert.fail("Unknown create must not repeat"),
+      nextCapture: () => assert.fail(),
+    })
+    assert.equal(resumed.status, "write_outcome_unknown")
+    appliedNow(f, "create")
+    contents.set("Signals/new.md", "signals")
+    const verified = await session(f, liveCapture(f, contents, "late-create.json"), {
+      nextCapture: () => assert.fail(),
+    })
+    assert.equal(verified.status, "verified_complete")
+    assert.equal(verified.created_intents.length, 0)
+    assert.equal(verified.recovered_intents.length, 1)
+    assertNoUnresolvedAuthoringWrites(f.root)
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) {
+      const ended = once(child, "exit")
+      child.kill("SIGKILL")
+      await ended
+    }
   }
 })
