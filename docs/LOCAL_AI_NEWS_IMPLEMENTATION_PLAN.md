@@ -4168,3 +4168,11 @@ canonical 미판정은63회차587구간·diagnostics0이다. 다음 실제 미�
 한국어 종결 뒤 소문자 기술 명칭의 문장 수 오판을 재현·수정하고 reader-quality 표적7/7을 통과했다. 최종 private 웹·링크·RSS/GitHub 일치와1280/390 실제 UI를 확인했다. 두 Drive portable ZIP의 원격 raw SHA 및346dependency files/348members·13source versions를 복구해 실제 기사·전문용어 승인을 재검증했다.
 
 canonical은63회차587구간 미판정이며 private projection에 기존 authoritative empty-review ledger를 적용하면62회차579구간·156verifiedevents·diagnostics0이다. 작성 변경2파일/16,896bytes는 준비됐지만 fresh Drive 작성 원본 readback/release·동일ID 저장·canonical pull·실제 공개·WebsiteData는 미완료다. 전체WBS2/22·독립human40/20·정규7회/무인08시·fullportable runtime·goalactive를 유지한다. 소급 수정의 신규 운영 횟수와1시간 동일 실패 반복은0이다. 다음은 이 준비 원고의 Drive-first release이며 이미 성공한 모델 생성·표적 검사를 다시 실행하지 않는다. 상세 런북392.
+
+## 19.300. 7/29 소급 두 사건·공급망 보안의 공개 슬라이스 완료
+
+fresh203실제raw/16폴더·재조회와 explicit release로2작성 파일16,896bytes를 같은ID 저장하고 재읽었다. 나머지201개metadata 불변을 확인해 최초raw를 재사용했다. sourceSHA a7b3e5e7a374260dccab43e62a468eb0b1cdaab5b0d7e79b9dbe2ba4c7af8050을 canonical에 적용하고 공개25f2794/Actions37262505299 build·deploy success, CI820/820·Python15+2·build/site, 웹/RSS/GitHub16exact·지도module·1280/390실제UI를 확인했다. RSS40identity/XML은 불변이고 새 운영 횟수0이다.
+
+WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9같은ID 갱신·2불변·기존보관기록1유지를 구분한다. 발행증거334files/335members·4,862,415bytes를 private Drive에 저장하고 actual remote SHA/CRC·모든member bytes를 대조해 ordinary v1으로 복구했다. 원문·승인·실제 raw를 보존한 뒤 own중복base64 transport23개만 정리했다.
+
+미판정은 canonical62회차579구간·diagnostics0이다. 다음7/28·7/27·7/25를 가능한 검토 묶음으로 처리해 전수Drive대조/공개CI 빈도를 줄이며 공통 수집·판정·원고/용어 승인 구조를 유지한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체legacy판정·WBS2/22·goalactive는 남는다. 이번은 authoritative Drive와 공개 상태를 바꾼 progress이며 동일실패1시간 반복0이다. 상세런북393.
