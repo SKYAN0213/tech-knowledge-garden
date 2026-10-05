@@ -110,6 +110,21 @@ packetSchema.properties.source_list_dispositions = {
     reason: text,
   }),
 }
+packetSchema.properties.inline_discovery_dispositions = {
+  type: "array",
+  minItems: 1,
+  maxItems: 40,
+  items: object({
+    unit_id: unitID,
+    sha256: hash,
+    url: text,
+    role: { type: "string", enum: ["discovery"] },
+    source_role_checked: { type: "boolean", enum: [true] },
+    article_sources_read: { type: "boolean", enum: [true] },
+    association_checked: { type: "boolean", enum: [true] },
+    reason: text,
+  }),
+}
 packetSchema.properties.units.items.properties.duplicate_event_review = object({
   original_read: { type: "boolean", enum: [true] },
   source_read: { type: "boolean", enum: [true] },
@@ -385,10 +400,47 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     if (!anchorsByUnit.has(event.unit_id)) anchorsByUnit.set(event.unit_id, [])
     anchorsByUnit.get(event.unit_id).push(event)
   }
+  const inlineDiscovery = new Map()
+  for (const row of packet.inline_discovery_dispositions || []) {
+    const unit = units.find((u) => u.unit_id === row.unit_id)
+    const url = canonicalURL(row.url)
+    const anchors = anchorsByUnit.get(row.unit_id) || []
+    const route = new URL(url)
+    const prefix = route.pathname.replace(/\/$/, "") + "/"
+    if (
+      !unit ||
+      unit.depth !== 2 ||
+      row.sha256 !== unit.sha256 ||
+      !row.reason.trim() ||
+      !anchors.length ||
+      !sources.forContent(before.body.slice(unit.body_start, unit.body_end)).includes(url) ||
+      assigned.has(url) ||
+      approved.has(url) ||
+      route.search ||
+      route.hash ||
+      inlineDiscovery.get(row.unit_id)?.has(url) ||
+      anchors.some((event) => !event.source_list_review) ||
+      !anchors.some((event) =>
+        event.source_urls.some((source) => {
+          const original = new URL(source)
+          return original.origin === route.origin && original.pathname.startsWith(prefix)
+        }),
+      )
+    )
+      throw Error(
+        "Inline discovery requires an exact reviewed article unit and original same-project permalinks",
+      )
+    if (!inlineDiscovery.has(row.unit_id)) inlineDiscovery.set(row.unit_id, new Set())
+    inlineDiscovery.get(row.unit_id).add(url)
+  }
+  const eventSourcesForUnit = (unit) =>
+    sources
+      .forContent(before.body.slice(unit.body_start, unit.body_end))
+      .filter((url) => !inlineDiscovery.get(unit.unit_id)?.has(url))
   for (const [i, unit] of units.entries()) {
     const decision = packet.units[i]
     const content = before.body.slice(unit.body_start, unit.body_end)
-    const urls = sources.forContent(content)
+    const urls = eventSourcesForUnit(unit)
     const anchors = anchorsByUnit.get(unit.unit_id) || []
     const duplicate = decision.duplicate_event_review
     if (
@@ -486,9 +538,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const index = units.findIndex((u) => u.unit_id === event.unit_id),
       unit = units[index]
     const decision = packet.units[index]
-    const inlineSources = unit
-      ? sources.forContent(before.body.slice(unit.body_start, unit.body_end))
-      : []
+    const inlineSources = unit ? eventSourcesForUnit(unit) : []
     const sourceMarkers = unit
       ? /\[S\d+\]/.test(before.body.slice(unit.body_start, unit.body_end))
       : false

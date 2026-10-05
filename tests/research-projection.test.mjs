@@ -1711,3 +1711,61 @@ test("legacy publication is never candidate publication or seven shadow runs", (
   assert.equal(audit.assisted_transition_allowed, false)
   assert.equal(audit.unattended_publication_allowed, false)
 })
+test("reviewed inline project routes can be replaced by exact original event permalinks without losing evidence", (t) => {
+  const f = legacyTransitionFixture(t, { sourceListOnly: true })
+  const route = "https://example.com"
+  reviseLegacyFixture(f, f.existing.body.replace("이전 본문.", `이전 본문. ${route}`))
+  const event = f.packet.events[0]
+  event.source_list_review = {
+    source_list_read: true,
+    article_source_read: true,
+    association_checked: true,
+    reason:
+      "Original listed permalink identifies this event; the inline project homepage is a discovery route.",
+  }
+  f.packet.events[1].source_list_review = {
+    source_list_read: true,
+    article_source_read: true,
+    association_checked: true,
+    reason: "Reviewed exact original source-list assignment.",
+  }
+  const unit = f.packet.units.find((u) => u.unit_id === event.unit_id)
+  f.packet.inline_discovery_dispositions = [
+    {
+      unit_id: unit.unit_id,
+      sha256: unit.sha256,
+      url: route,
+      role: "discovery",
+      source_role_checked: true,
+      article_sources_read: true,
+      association_checked: true,
+      reason:
+        "Same project homepage precedes the original event permalink; reviewed full original unit and article.",
+    },
+  ]
+  assert.equal(assertLegacyTransition(f.packet, f.articles, f.existing, f.relative), f.packet)
+  const projected = editionProjection(f.articles, {
+    key: f.key,
+    date: f.existing.meta.date,
+    coverage_start: f.existing.meta.coverage_start,
+    coverage_end: f.existing.meta.coverage_end,
+    existing: f.existing,
+    legacy_review: f.packet,
+  })
+  assert.equal(projected.content.includes("inline_discovery_dispositions"), false)
+  assert.equal(projected.content.includes("Same project homepage"), false)
+  for (const mutate of [
+    (p) => delete p.inline_discovery_dispositions,
+    (p) => (p.inline_discovery_dispositions[0].sha256 = "0".repeat(64)),
+    (p) => (p.inline_discovery_dispositions[0].unit_id = p.units[0].unit_id),
+    (p) => (p.inline_discovery_dispositions[0].url = "https://unrelated.example"),
+    (p) => (p.inline_discovery_dispositions[0].url = p.events[0].source_urls[0]),
+    (p) => (p.inline_discovery_dispositions[0].association_checked = false),
+    (p) => p.inline_discovery_dispositions.push(p.inline_discovery_dispositions[0]),
+    (p) => delete p.events[0].source_list_review,
+  ]) {
+    const p = structuredClone(f.packet)
+    mutate(p)
+    assert.throws(() => assertLegacyTransition(p, f.articles, f.existing, f.relative))
+  }
+})
