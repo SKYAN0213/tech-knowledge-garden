@@ -177,6 +177,7 @@ generated_by: tech-knowledge-garden
 - [[News/661912ab39baa4f1|Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가]] · 2026-07-14
 - [[News/b5e2211dddab87f3|Codex 0.144.2, 자동 코드 리뷰 프롬프트 회귀 복구]] · 2026-07-13
 - [[News/18f464ca2bf3c740|Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정]] · 2026-07-12
+- [[News/060f4905c5779472|Claude Code v2.1.206, 외부 작업공간 진입 확인과 MCP 시간 제한 수정]] · 2026-07-10
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
