@@ -4391,3 +4391,14 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 검토 상태·복구 run은 기존 일일 처리 상태에 표시한다. 기존 portable closure는 빈 추출→검토→복구 및 역방향 진입점을 따라 원문과 원출력을 보관하며 변조된 검토는 거부한다. 전체 suite를 반복하지 않고 처리 경로49/49, 추가 closure 진입점1/1, 기존 archive 회귀14/14를 확인했다. 실제 Groq 릴리스2개를 원문 대조한 검토를 등록하고 이미 완료된 think:medium의 사실5개에 연결했다. 최초 think:false 기록과 후속 원본49개 파일 SHA를 보존했고 추가 모델 호출0이다. 기존 공개 사건18f464ca2bf3c740과 후보 장부는 수정하지 않았다.
 
 별도 외장 worktree에서 검증했다. 선행0b827e1의 공개 배포 gate를 보존하며 서비스 복구 후 통합한다. 이 묶음은 전체 소급 전환, 독립 사람 gold, 신규7회 운영 및 무인8시 실행 완료를 의미하지 않는다. 다음은 복구 묶음의 독립 ZIP 복원·Drive 보관, 선행 실제 배포 readback, HFNN 승인 용어의 기존 기사 연결이다.
+
+
+## 19.325. HFNN 전문용어와 기사의 검증된 연결
+
+기존 논문 기사72081e8f67345f20의 문장·실험 조건·발표일을 유지한 별도 processing v6를 만들고, 완료된 추출·의미 비교·작성 checkpoint를 재사용했다. 추가 모델 호출0이며 기존v5 승인·후보 장부·당일 발행 바인딩은 유지했다. 원문에서 확인한 HFNN 구조·27개 퍼지 규칙·학습과 추론의 사실4개로 `fabric-grasping-hfnn` 전문용어와 명시적으로 연결했다. 일반 HFNN 전체로 개념을 확대하거나 공동 등장으로 개념 사이의 선을 만들지 않았다.
+
+private preview380개 파일을 생성하고 실제 브라우저에서 기사 #태그→용어→변화 이력 기사, 키보드 Enter 이동, 모바일390px 가로 넘침0, 빈 정의 섹션 숨김, 뉴스 지도0, 연결지도 focus의 관련 기사1개를 확인했다. RSS40개 GUID·pubDate는 전부 유지됐다. canonical Drive 노트의 실제 변경·공개 배포는 아직 수행하지 않았다.
+
+Groq 빈 추출 복구 묶음은 Drive ZIP1uHupfrDCvaj6yHawFZ3yhveFVHQI_ZZI, manifest1zoC7V6vBDSeygSDkueHJp6IxJ7zV-tr3으로 보관했다. 실제 재다운로드 SHA와 private parent를 검증한 독립 복원281개 파일에서 원문 검토·복구를 재검증했고, manifest279개 파일을 전부 대조했다. HFNN 기사·정의 묶음은 Drive ZIP1TpxrhG22IHt2-3541ta5xzZUDfjYzOEF, manifest1-1PIW_Kdi5VrBDLyDURxbgcShl2EfBmD이며 4,120,319bytes·SHA5e0f31ec0c83278496edec272cc64393d22ee3febf1a6ecc576508f7f126d8c6다. 재다운로드 후 독립 복원428개 파일에서 포함된 authority vault만 사용해 승인 기사·정의·관계를 재검증했고 manifest426개 파일을 전부 대조했다. 두 묶음을 기존 archive-location 조회에 등록했다.
+
+외부 병목: Actions37372213094는 hosted runner 미배정으로 실패했고 테스트 단계는 실행되지 않았다. 2026-10-05T20:50:25Z부터 21:51:51Z까지3,686초이며 공식 Actions 상태는 degraded_performance/incident investigating이다. 수동 재실행0. 1시간 이상 병목으로 기록하고 빈 추출·전문용어 슬라이스를 진행했다. 서비스 복구 확인 후 같은0b827e1 run만 한 번 재실행하고 배포·공개 readback·WebsiteData를 확인한다. 다음으로 검증된 개발 branch를 통합하고 명시적 v5→v6 승인 이력과 기존 기사 ID를 유지해 HFNN을 반영한다. 전체 목표는 active이고 독립 사람 gold0·heldout0·신규 로컬AI 운영0은 그대로다.

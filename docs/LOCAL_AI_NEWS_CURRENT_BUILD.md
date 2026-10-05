@@ -1702,3 +1702,10 @@ Next source slice: legacy-20260714-codex-api-sources-20261005-v1 captured two of
 ### 2026-10-06 빈 추출 검토 슬라이스
 
 공통 source processing에서 사실0개는 비교·작성을 진행하지 않고 별도 원문 검토로 반환한다. 완료된 추출·모델 ledger와 정확한 원문 판본을 검증하며, 명시적 검토와 기존 복구만 연결한다. 일일 상태와 portable closure까지 연결했다. 처리49/49+추가 보관1/1+기존 보관14/14. 실제 Groq 두 릴리스 원문으로 모델 누락을 확인하고 기존 사실5개 재추출에 연결했으며 원본49개 파일 SHA와 기존 발행을 보존했다. 추가 추론0. 별도 worktree이고 선행0b827e1 배포 대기 상태를 변경하지 않는다. 전체 목표는 계속 active다.
+
+
+### 2026-10-06 HFNN 연결·원본 복원·1시간 외부 병목
+
+빈 추출 공통 경로 commit7a37591, 처리49+신규 보관1+기존 보관14 표적 검사 통과. 실제 Groq 빈 추출·기존5사실 복구는 원본49개 파일 보존·추가 모델 호출0, Drive 재다운로드 및279payload/281restore 검증 완료. HFNN은 별도 paper-concepts-processing-v6에서 기존 기사72081e8f67345f20의 본문·날짜를 유지해 fabric-grasping-hfnn에 연결했다. 모델 호출0, private380파일 빌드·실제 태그/용어/이력/지도 관련기사1개·390px/키보드·RSS40 GUID/pubDate 검증 완료. Drive4.12MB 원본 재다운로드·426payload/428restore 검증 및 두 archive-location 등록 완료. canonical 노트·후보 장부·선행0b827e1 발행 바인딩은 유지됐다.
+
+GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 기록했다. 공식 investigating/degraded 상태, 테스트 실행0·수동 재실행0. 서비스 복구 후 같은37372213094 run을 한 번 재실행해0b827e1 공개 readback/WebsiteData를 완료한다. 그 뒤 개발 branch 통합과 HFNN v5→v6 lineage를 적용한다. 전체 목표 active, 독립 사람 gold0/heldout0, 신규 로컬AI 운영0.

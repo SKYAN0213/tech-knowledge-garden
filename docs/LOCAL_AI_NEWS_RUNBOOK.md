@@ -10408,3 +10408,12 @@ node scripts/research.mjs review-empty-extraction --root PRIVATE_ROOT --run REVI
 ```
 
 private root에 있는 검토 입력만 받으며 모델/API 옵션은 거부한다. 결과는 empty_extraction_recovery_required/recovered/source_deferred/no_event로 구분되고 승인·발행은 별도다. 기존 검토는 불변이며 추가 조사는 완료된 추출을 재사용하는 새 processing run으로 진행한다. `archive-closure`가 원문·빈 추출·검토·후속 추출을 함께 추적한다. 실제 검증: 처리49/49, 신규 보관1/1, 기존 보관14/14. Groq 실제 기록2개 원문→빈 원출력→기존 사실5개 복구, 원본49개 파일 보존, 추가 모델 호출0.
+
+
+## 418. HFNN 승인 연결과 배포 재개 지점
+
+별도 승인 run `daily-20261006-paper-concepts-processing-v6`는 기존 논문 사건72081e8f67345f20에 전문용어 fabric-grasping-hfnn을 연결한다. 원문 사실4개·승인 정의 SHA5af27469c14fe729c1da22056e94d320a773491f87a4252e17018d2aae93fefb를 명시적으로 검토했다. 기존 원고의 본문·발표일을 유지하고 model calls0으로 만들었다. private preview는 daily-20261006-paper-hfnn-reader-preview-v1이다. 브라우저 링크·모바일·키보드·지도 관련 기사1개와 RSS40 GUID/pubDate 보존을 확인했다.
+
+Drive 보관과 독립 복원은 완료됐으며 공통 archive-location에 등록했다. 빈 추출 묶음279payload/281restore, HFNN 묶음426payload/428restore이다. HFNN 복원본은 포함된 authority vault에서만 승인 기사와 정의를 읽었다. 이 영수증은 canonical 노트 저장·실제 배포·신규 운영 완료를 대신하지 않는다.
+
+Actions hosted runner 미배정 대기는1시간 이상이며 수동 재실행0이다. 공식 상태 복구 전 같은 요청을 반복하지 않는다. 기존 daily-20261006-regular-publication-v1은 remote_confirmed이고 배포 완료로 승격하지 않았다. 먼저0b827e1의 CI·실제 공개 readback·WebsiteData를 완료한 뒤 개발 branch 통합과 v5→v6 승인 lineage로 HFNN을 적용한다. private 증거는 외장 tkg-daily-core-20261006-v1/core-development-checkpoint-20261006-v2.json에 재개 입력과 SHA를 보존한다.
