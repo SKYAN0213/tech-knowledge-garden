@@ -1,76 +1,129 @@
 ---
 title: Tech & AI Briefing - 08:02
-date: 2026-07-12
 time: 08:02
-timezone: Asia/Seoul
-coverage_start: 2026-07-12T00:03:59+09:00
-coverage_end: 2026-07-12T08:02:30+09:00
 type: briefing
-source_count: 10
-new_items_count: 1
-linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]"
-excluded_items_count: 5
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-12
+timezone: Asia/Seoul
+coverage_start: 2026-07-12T00:03:59+09:00
+coverage_end: 2026-07-12T08:02:30+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 2
+new_items_count: 1
+linked_knowledge_notes:
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation
+    and Observability]]"
+  - Knowledge/AI Systems/Prompt Caching
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
+article_records:
+  - title: Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: "@ai-sdk/groq"
+      when: 2026-07-11T20:21:42Z
+      where: 미기재
+      what: 프롬프트 캐시 읽기 반영을 위한 4.0.8 및 3.0.51 버전 패치 릴리스
+      how: convertGroqUsage의 cached_tokens 미반영 버그 수정 및 Groq 암시적 캐싱의
+        usage.cachedInputTokens 매핑
+      why: 캐시 히트가 noCache로 잘못 계산되는 문제 해결
+    lead: Vercel AI SDK의 Groq 연동 패키지 @ai-sdk/groq가 한국시간 7월 12일 4.0.8과 3.0.51 패치 버전을
+      GitHub에 공개했다. 두 버전은 캐시에서 읽은 입력 토큰이 일반 입력 토큰과 구분되지 않던 사용량 표기 오류를 수정했다.
+    explanations:
+      - heading: 캐시 사용량 필드의 연결
+        paragraphs:
+          - 기존 convertGroqUsage는 Groq 응답의 prompt_tokens_details.cached_tokens를
+            전달받아도 읽지 않아 cacheRead를 undefined로 두고 입력 토큰 전체를 noCache로 기록했다. 수정 후에는
+            캐시 입력 토큰을 usage.cachedInputTokens와 cacheRead에 반영하고, 그만큼을 noCache에서
+            뺀다.
+        source_urls:
+          - https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%404.0.8
+      - heading: cacheWrite 값의 처리
+        paragraphs:
+          - SDK 릴리스 설명에 따르면 Groq에는 캐시 생성 과금이 없어 cacheWrite는 undefined로 유지된다.
+        source_urls:
+          - https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%404.0.8
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
+    event_id: 18f464ca2bf3c740
+    review_status: verified
+    published_at: 2026-07-12
+    reviewed_at: 2026-10-06
+    concept_ids:
+      - prompt-caching
+    date_kind: source-publication-time
+    source_published_at: 2026-07-11T20:21:42Z
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- 오픈소스와 도구: Vercel AI SDK가 Groq provider의 prompt cache 사용량 계산을 고쳤습니다. 캐시가 실제로 얼마나 비용을 줄였는지 보는 지표가 더 정확해집니다.
-- 오늘의 핵심 기사: 없음
-- 논문과 연구: 없음
-- 흐름 읽기: 이번 창의 유일한 실질 업데이트는 "모델 호출 결과"보다 "사용량과 비용을 정확히 관측하는 SDK 계층" 쪽입니다.
-- 바로 써먹을 점: Groq를 Vercel AI SDK로 쓰는 프로젝트는 `usage.cachedInputTokens`와 비용 집계가 의도대로 기록되는지 확인할 만합니다.
+Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
 
-# 오늘의 핵심 기사
+# 차례
 
-없음
+- Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
 
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
 
-## Vercel AI SDK, Groq prompt cache 사용량 계산 수정
+## Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정
 
-Vercel AI SDK가 Groq provider의 작은 계산 오류를 고쳤습니다. 겉으로는 patch release지만, AI 앱을 운영하는 팀에는 비용과 성능을 읽는 숫자가 더 정확해진다는 의미가 있습니다.
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** @ai-sdk/groq, Groq
 
-- 프로젝트: Vercel AI SDK `@ai-sdk/groq@4.0.8`, `@ai-sdk/groq@3.0.51`
-- 쉬운 설명: Groq API가 알려주는 prompt cache hit 값을 SDK가 제대로 읽지 못해, 캐시로 절약된 입력 토큰이 `cacheRead`에 잡히지 않고 `noCache`로 보일 수 있었습니다. 이번 수정으로 Groq의 `cached_tokens`가 SDK의 `usage.cachedInputTokens`로 반영됩니다.
-- GitHub: https://github.com/vercel/ai
-- 공개 시각: `@ai-sdk/groq@4.0.8`은 2026-07-12 05:21 KST, `@ai-sdk/groq@3.0.51`은 2026-07-12 05:58 KST에 공개됐습니다.
-- Star 증가 추세: 현재 GitHub API 기준 25,491 stars입니다. 비교 가능한 이전 star 기록은 이번 실행에서 확인하지 못해 추세 확인 불가입니다.
-- 어디에 쓸 수 있나: Groq backend를 쓰는 챗봇, agent, 검색형 AI 앱에서 cache hit와 no-cache token을 나눠 비용 리포트나 성능 대시보드에 반영할 때 유용합니다.
-- 더 깊게 보기: [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]], [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
+Vercel AI SDK의 Groq 연동 패키지 @ai-sdk/groq가 한국시간 7월 12일 4.0.8과 3.0.51 패치 버전을 GitHub에 공개했다. 두 버전은 캐시에서 읽은 입력 토큰이 일반 입력 토큰과 구분되지 않던 사용량 표기 오류를 수정했다. [S1] [S2]
+
+### 캐시 사용량 필드의 연결
+
+기존 convertGroqUsage는 Groq 응답의 prompt_tokens_details.cached_tokens를 전달받아도 읽지 않아 cacheRead를 undefined로 두고 입력 토큰 전체를 noCache로 기록했다. 수정 후에는 캐시 입력 토큰을 usage.cachedInputTokens와 cacheRead에 반영하고, 그만큼을 noCache에서 뺀다. [S1]
+
+### cacheWrite 값의 처리
+
+SDK 릴리스 설명에 따르면 Groq에는 캐시 생성 과금이 없어 cacheWrite는 undefined로 유지된다. [S1]
+
+**개념:** [[Knowledge/AI Systems/Prompt Caching]]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
 
 # 흐름 읽기
 
-- 확인된 사실: Vercel AI SDK는 cutoff 이후 Groq provider의 prompt cache read usage mapping을 수정한 두 릴리스를 공개했습니다. OpenAI RSS, GitHub Changelog feed, arXiv 최근 피드, Anthropic 뉴스 페이지, Claude Code와 OpenAI Codex release API에서는 이번 창에 새로 포함할 만한 중복 없는 핵심 업데이트가 확인되지 않았습니다.
-- 분석: AI 앱 운영의 관심사가 "모델이 답을 잘했는가"에서 "캐시, 토큰, provider별 사용량이 정확히 기록되는가"로 내려오고 있습니다. 특히 agent나 업무 자동화 앱은 작은 usage mapping 오류도 비용 귀속과 성능 판단을 흐릴 수 있습니다.
-- 앞으로 볼 점: provider SDK가 cache write/read, tool call, streaming usage, retry 비용을 얼마나 일관된 형태로 노출하는지 봐야 합니다.
+없음
 
-# 바로 써먹을 점
+# 오늘의 적용
 
-- 업무 자동화: Groq 기반 내부 도구가 있다면 cache hit가 비용 리포트에 반영되는지 확인합니다.
-- AI 활용: 응답 품질만 보지 말고 cache read, no-cache token, 지연 시간을 함께 봅니다.
-- 개발 생산성: Vercel AI SDK Groq provider를 쓰는 프로젝트는 최신 patch 적용 뒤 usage 로그 스냅샷을 비교합니다.
-- 연구 개발: 없음
-- 개인 프로젝트: 실험용 AI 앱에서도 provider별 usage field 이름을 표준화해 나중에 비용을 비교하기 쉽게 둡니다.
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://api.github.com/repos/vercel/ai
-- https://api.github.com/repos/vercel/ai/releases?per_page=10
-- https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%404.0.8
-- https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%403.0.51
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.LG&sortBy=submittedDate&sortOrder=descending&max_results=20
-- https://www.anthropic.com/news
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=5
-- https://api.github.com/repos/openai/codex/releases?per_page=5
+- [S1] https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%404.0.8
+- [S2] https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%403.0.51
