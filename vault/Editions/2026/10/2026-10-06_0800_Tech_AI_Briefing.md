@@ -11,7 +11,8 @@ briefing_format: sector-five/v1
 theme_format: news-themes/v1
 source_count: 3
 new_items_count: 3
-linked_knowledge_notes: []
+linked_knowledge_notes:
+  - Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)
 knowledge_notes_created: []
 knowledge_notes_updated: []
 headlines:
@@ -33,6 +34,9 @@ article_records:
       요청(RFI)을 통해 의견과 자료를 받는다고 발표했다. 의견 수렴 대상은 연구 설계, 용량 선택·증량, 안전 고려 사항, 윤리·감독의
       네 영역이다. 제출 마감은 11월 20일이며, regulations.gov에서 FDA-2026-N-10429를 검색해 의견을 제출할
       수 있다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 시험 설계에서 검토하는 안전·감독 조건
         paragraphs:
@@ -46,9 +50,6 @@ article_records:
             신약(IND) 신청에 따라 진행되도록 허용했다고 밝혔다.
         source_urls:
           - https://www.fda.gov/news-events/press-announcements/fda-seeks-public-input-support-ibogaine-research
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고
     kind: 논문 해설
     region: 해외
@@ -119,6 +120,9 @@ article_records:
     lead: 산업용 로봇 업체 RobCo는 10월 5일 기업가치가 10억 달러를 넘어섰으며, 9개월 전보다 두 배가 됐다고 발표했다. 이번 거래는
       회사에 대한 신규 투자와 직원 보유 지분의 일부 매각을 함께 진행하는 구조다. 회사는 자율 산업용 로봇 Alfie를 2027년 3월
       4일 뮌헨에서 열리는 RobCoN에서 상용 출시할 계획이라고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 거래에 참여하는 투자자
         paragraphs:
@@ -135,28 +139,26 @@ article_records:
             Robotics-as-a-Service(RaaS) 모델을 운영한다고 소개했다.
         source_urls:
           - https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: FDA, 이보가인 초기 임상시험 설계에 관한 공개 의견 수렴
     event_id: 61b4373c4f6f0682
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
-    concept_ids: []
   - title: 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고
     event_id: 72081e8f67345f20
     review_status: verified
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
-    concept_ids: []
+    concept_ids:
+      - fabric-grasping-hfnn
   - title: RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
     event_id: 1c20824a90713fc8
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
-    concept_ids: []
     date_kind: source-stated-event-date
     source_published_at: null
 ---
@@ -226,6 +228,8 @@ FDA는 이보가인 유도체인 노리보가인 염산염의 알코올 사용 �
 로봇 실험의 두 방식은 동일한 볼록 구조 기반 후보 생성을 사용했다. 수작업으로 설계한 점수로 후보를 선택한 방식의 집기 성공률은 80.0%, HFNN 기반 퍼지 추론으로 선택한 방식은 93.3%였다.
 
 별도의 속성 예측 비교에서는 같은 학습·시험 분할, 학습 전략과 평가 지표를 적용했다. 표 2의 평균 예측 정확도는 HFNN 91.7%, Direct-fusion 90.9%였다. 집었을 때 옷감이 분리되는 효과의 예측 정확도는 Local-PointNet 82.0%, HFNN 80.3%로 보고됐다. [S2]
+
+**개념:** [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)]]
 
 ## RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
 

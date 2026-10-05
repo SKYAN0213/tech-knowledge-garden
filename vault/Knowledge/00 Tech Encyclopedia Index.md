@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-05
+updated: 2026-10-06
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -94,6 +94,10 @@ tags:
 
 - [[Knowledge/AI Systems/Classifier-Free Guidance|분류기 없는 가이던스]]
 - [[Knowledge/AI Systems/Diffusion Transformer|확산 트랜스포머]]
+
+### Robotics
+
+- [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)|옷감 집기용 HFNN]]
 
 ## 개념 경계
 

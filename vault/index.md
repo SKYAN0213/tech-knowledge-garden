@@ -25,7 +25,7 @@ generated_by: tech-knowledge-garden
 
 연구진은 10월 5일 겹겹이 쌓인 옷감에서 로봇이 집을 위치와 자세를 고르는 방법을 Frontiers in Robotics and AI에 발표했다. 3차원 점군에서 볼록한 영역을 찾아 집기 후보를 만들고, 계층적 퍼지 신경망(HFNN)으로 후보를 평가한다. 무작위로 쌓은 옷감의 로봇 분류 실험에서 HFNN을 적용한 방식의 집기 성공률은 93.3%, 같은 후보에 수작업 점수를 적용한 방식은 80.0%로 보고됐다.
 
-
+[[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)|Hierarchical Fuzzy Neural Network (Fabric Grasping)]]
 
 ---
 

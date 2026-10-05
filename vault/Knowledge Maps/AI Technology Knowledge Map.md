@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-06
+last_reviewed: 2026-10-06
 tags:
   - AI
   - KnowledgeMap
@@ -35,6 +35,7 @@ tags:
 - [[Knowledge/AI Systems/Zero-Shot Inference|제로샷 추론]]
 - [[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]
 - [[Knowledge/Research Methods/Randomized Controlled Trial|무작위 대조 시험]]
+- [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)|옷감 집기용 HFNN]]
 - [[Knowledge/Robotics/Machine Tending|머신 텐딩]]
 - [[Knowledge/Security/OpenID Connect|OIDC]]
 - [[Knowledge/Security/Zero-Knowledge Proofs|영지식 증명]]
