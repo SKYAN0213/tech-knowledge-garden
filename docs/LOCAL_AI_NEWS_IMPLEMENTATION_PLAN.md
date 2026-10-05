@@ -4160,3 +4160,11 @@ canonical 실측은 v240·미판정63회차587구간·154verifiedevents·33conce
 Drive203 작성 원본을 반영한 공개9519c66/Actions37258169305의 build·deploy success, CI818/818·Python15+2·build/site, 웹·RSS·GitHub28exact 및 같은 지도 모듈,1280/390 실제 UI를 확인했다. RSS40GUID/pubDate를 보존하고 WebsiteData328pages/154articles/22nodes/21relations의11원격 raw를 대조했다.10같은ID 갱신·RSS1불변·과거 업로드 기록1보존을 구분한다. 발행 증거349files/350members·6,479,020bytes의 실제 원격 ZIPSHA/CRC·모든member bytes를 검증하고 일반 evidence로 복구했다.
 
 canonical 미판정은63회차587구간·diagnostics0이다. 다음 실제 미검토는7/29이며 기존 공통 수집·직접 판정·원고/용어 승인·Drive-first 공개 경로를 재사용한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 남는다. 소급 수정은 새 운영 횟수0, 동일 실패1시간 반복은 없었다. 상세 런북391.
+
+## 19.299. 7/29 소급 두 사건과 공급망 보안 이력의 발행 준비
+
+공통 수집으로13공식 원문을 확보하고 source-bound33사실을 직접 판정했다. 7/28 Dependabot 확대와 Actions 실행 보류를 구분하고 기존5Source List 연관은 private 전환 검토에 보존했다. 현재 정책 문서의 후속 변경을 당시 발표에 혼합하지 않았다. 기존 공급망 보안 정의·별칭·관계와9월5이력도 재검토했다. 실제 로컬 모델은 원고2·용어1호출이며 새 note 승인 연결로 기사 승인을 분리할 때 이전 생성과 정정 chain을 재사용해 추가 모델 호출0이다.
+
+한국어 종결 뒤 소문자 기술 명칭의 문장 수 오판을 재현·수정하고 reader-quality 표적7/7을 통과했다. 최종 private 웹·링크·RSS/GitHub 일치와1280/390 실제 UI를 확인했다. 두 Drive portable ZIP의 원격 raw SHA 및346dependency files/348members·13source versions를 복구해 실제 기사·전문용어 승인을 재검증했다.
+
+canonical은63회차587구간 미판정이며 private projection에 기존 authoritative empty-review ledger를 적용하면62회차579구간·156verifiedevents·diagnostics0이다. 작성 변경2파일/16,896bytes는 준비됐지만 fresh Drive 작성 원본 readback/release·동일ID 저장·canonical pull·실제 공개·WebsiteData는 미완료다. 전체WBS2/22·독립human40/20·정규7회/무인08시·fullportable runtime·goalactive를 유지한다. 소급 수정의 신규 운영 횟수와1시간 동일 실패 반복은0이다. 다음은 이 준비 원고의 Drive-first release이며 이미 성공한 모델 생성·표적 검사를 다시 실행하지 않는다. 상세 런북392.

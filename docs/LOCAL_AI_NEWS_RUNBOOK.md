@@ -9857,3 +9857,21 @@ WebsiteData는 실제 배포본328pages/154articles/22nodes/21relations를 내�
 생성 후 canonical inventory는 작성203·v240·legacy81/713, 검토한 빈18/126을 제외한 미판정63회차587구간,154verifiedevents·33conceptIDs/39notes/38authoredrelations, RSS40·diagnostics0이다. 원본 적용 직후의 stale generated link diagnostics4는 새 generation에서0으로 해소됐고 최초 기록을 남긴다. 독립40dev/20heldout human gold·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 남는다. 이번 소급 반영의 새 운영 횟수0이며 같은 실패를1시간 반복한 항목은 없다.
 
 실행 증거 루트는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`이다. july30-drive-preflight-v1, july30-public-readback-v1/receipt.json, july30-release-ci-full-v1.log, july30-public-ui-verification-v1.json, july30-rss-identity-verification-v1.json, july30-website-{update-plan,final-readback,post-metadata}-v1.json, july30-release-archive-observation-v1.json과 july30-release-evidence-restore-observation-v1.json을 확인한다. canonical 실제 다음 미검토는 `Editions/2026/07/2026-07-29_0801_Tech_AI_Briefing.md`이며 기존 수집·직접 검토·승인·Drive-first 전환을 재사용한다. 이미 완료한7/30 검사·발행을 반복하지 않는다.
+
+## 392. 7/29 소급 기사 두 건·공급망 보안 정의의 검토와 원격 복구
+
+7/30 공개 완료 다음 미검토였던 7/29 원고의 8구간과 원래 5출처를 직접 확인했다. 공통 collect/select-source/review/draft/correct/approve/note-review/preview/archive-closure를 재사용했으며 출처 전용 수집기를 추가하지 않았다. 첫 수집의 공식 6원문과 기존 용어 이력·관계의 7원문이 모두 HTTP200으로 확보됐다. 현재 workflow 정책 문서는 별도11/2 pull_request_target 차단 예고로 바뀌었으므로 7/28 사건에 섞지 않는다. 원래 배경3링크는 같은 사건의 직접 공식 공지로 교체한다는 명시적 alternative review로 private 연관과 원본을 보존했다. 접근 실패로 취급하지 않았다.
+
+Dependabot 자료 확대와 Actions 승인 전 실행 보류를 별개 사건 `1618822b0726a28a`·`7e9257b6dba23518`로 검토했다. 공개 저장소/GHES·경보 활성화·쓰기 권한·인증 웹 승인·자동 적용 조건을 구분했다. source-bound 사실33개는 직접 원문 block 검토이며 independent human gold가 아니다. qwen3.8:27b-mlx/think:false의 실제 원고2호출은47.404초·44.388초, concept1호출은121.619초였다. 모델 원출력·편집 정정 chain은 보존했다. 용어 정의가 제품 사례와 섞인 초안은 재구성하고 기존9월5이력의6공지 및 기존 AI 보안 연결 근거도 재검토했다. 전문용어 ID·정확한 별칭·경로와 기존 관계는 유지하고 추세 일반화 한 문장을 제거했다.
+
+직접 사실 입력의 미지원 event_state는 형식 검사에서 거부돼 reported로 정정했다. 빈 claim 상태에서 생성 시도된 불변 입력은 보존하고 별도 run에서 실제 원고를 만들었다. 첫 용어 교체는 범위의 포함/제외 및 typed 관계의 근거 레이블 요구를 전체 검증에서 발견했다. 원문 판정은 그대로 두고 새 불변 note 승인 v2에 반영했다. 이에 따른 기사 승인도 새 run으로 분리하되 원 모델 출력과 실제 정정 chain을 공통 loadProcessedDraft로 검증해 재사용했다. 추가 모델 호출0이며 과거 승인을 덮어쓰지 않았다.
+
+승인 중 Intl.Segmenter가 한국어 종결 뒤 소문자 npm을 약어 연속으로 판단해 실제2문장을1문장으로 세는 결함을 재현했다. 공통 reader-quality에 한국어 종결 경계를 보완했다. 실제 재현1실패 뒤 좁은 reader-quality7/7통과를 확인했다. 소수·버전·URL·인용 연결과 과다 분량·반복 차단을 유지한다. 전체 suite는 실행하지 않았다.
+
+최종 `legacy-20260729-complete-reader-20261005-v3`의 용어 검증·생성·사이트/링크·채널 내용 대조가 통과했다. 기사2개는 각2문장 리드와 상세 설명을 보존하며 기존 회차 경로·cutoff·RSS40GUID/pubDate를 유지한다. 7/29는 현재40회 피드 밖이며 새 회차를 만들지 않는다.1280/390 실제 UI의 분야 query/뒤로가기/Enter·용어 정의→날짜 이력→기사 이동, 뉴스·브리핑 canvas0·가로 넘침0을 확인했다. archive 등록 전후의 독자가 보는 웹4파일·RSS·digest6파일 bytes가 같았다.
+
+두 portable Research ZIP을 actual Drive Research 아래에 저장하고 각각 원격 raw SHA·private 부모·크기를 확인했다. Dependabot `1OuVMALDGM87nAp1alt2qUPwnSvaj50y8`:1,634,302bytes/SHA `df28ada48e65b1a8a7a61cb563eb37213928a3aa0874d1add1b2a269064dbc44`. Actions `1fGztmcQ83-0ZCQWoUY_hYO4Mj-s9T8-6`:1,632,352bytes/SHA `acf9fd7e0a9185ce4e2dc260376782aad8bea497aa74fdf3a4991b3881cd4f0c`. 각각346dependency files/348members·13source versions를 공통 복구기로 복구하고 loadArchivedConceptApproval에서 모든 member·정의 inventory·기사와 개념 승인 bytes를 재검증했다. 공통 archive 위치 등록도 통과했다. full runtime 복구나 공개 발행과 구분한다.
+
+승인한 작성 변경분 준비는2파일/16,896bytes이며 upload_allowed:false다. 최신 Drive 작성 원본 전체 raw 대조·release·동일ID 저장·canonical pull·공개 배포·WebsiteData는 아직 하지 않았다. canonical은7/30 공개 상태의154verifiedevents·63회차587미판정구간이다. 기존 authoritative empty-review ledger를 적용한 private projection은156verifiedevents·62회차579미판정구간·diagnostics0이다. 외장 ROOT만 사용하는 첫 inventory에는 기존18empty-review가 없어80/705로 나왔으며 이를 완료 진척으로 오인하지 않고 canonical ledger를 지정해 대조했다.
+
+증거 루트는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`이다. july29-complete-transition-v1.json, 원고/용어 승인과 모델 원출력, july29-remote-approval-verification-v1.json, july29-_-archive-{observation,register}-v1, july29-_-remote-restored-v1, july29-private-ui-verification-v1.json/PNG, 최종 preview/drive-authoring transfer-plan을 보존한다. 앞선7/30 목표 회차는 실제 공개·Drive readback을 마친 progress였다. 이번 회차도 원문 재검토·공통 결함 수정·불변 승인·실제 원격 복구 증거를 추가했다. 동일 실패1시간 반복과 신규 정규 운영 횟수는0이다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체 legacy 전환·WBS2/22·goalactive는 남는다. 다음은 이2파일의 fresh Drive-first release다.

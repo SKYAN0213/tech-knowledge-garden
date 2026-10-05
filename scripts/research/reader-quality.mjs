@@ -7,11 +7,16 @@ const segmenter = new Intl.Segmenter("ko", { granularity: "sentence" })
 export function readerSentences(text) {
   const result = []
   for (const part of segmenter.segment(text.normalize("NFC"))) {
-    const sentence = part.segment.trim()
-    if (!sentence) continue
-    if (result.length && /^(?:[”’"')\]]*)(?:이라고|라고|라며|고|며)\s/.test(sentence))
-      result[result.length - 1] += sentence
-    else result.push(sentence)
+    // Unicode sentence rules can treat a period followed by lowercase Latin
+    // text as an abbreviation, even after a complete Korean sentence.
+    // Split these Korean endings without touching decimals, versions or URLs.
+    for (const segment of part.segment.split(/(?<=(?:다|요|죠)[.!?])\s+(?=[a-z])/u)) {
+      const sentence = segment.trim()
+      if (!sentence) continue
+      if (result.length && /^(?:[”’"')\]]*)(?:이라고|라고|라며|고|며)\s/.test(sentence))
+        result[result.length - 1] += sentence
+      else result.push(sentence)
+    }
   }
   return result
 }

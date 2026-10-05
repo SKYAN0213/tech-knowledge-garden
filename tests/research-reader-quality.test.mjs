@@ -23,6 +23,38 @@ test("reader sentence boundaries preserve numbers, versions, URLs and reported K
   assert.equal(readerSentences("“공개했다.”라고 밝혔다. 상태 조회를 제공한다.").length, 2)
   assert.equal(readerSentences("“가능하다!”고 밝혔다. 다음 요청을 받는다.").length, 2)
 })
+test("Korean news sentences followed by lowercase technical names remain separate", () => {
+  const prose =
+    "GitHub는 7월 28일 악성 패키지 보고를 자동 반영한다고 발표했다. npm과 PyPI의 경보 범위가 넓어졌다."
+  assert.equal(readerSentences(prose).length, 2)
+  const r = inspectReaderQuality(record({ lead: [row(prose)] }), [
+    { ...claim, published_at: "2026-07-28" },
+  ])
+  assert.equal(r.blocked, false)
+  assert.equal(r.lead_sentences, 2)
+  assert.equal(
+    readerSentences("API v1.2.3은 지연이 0.5초다. npm 경로는 https://a.com/x다.").length,
+    2,
+  )
+})
+test("lowercase starts cannot conceal excessive or repeated Korean news sentences", () => {
+  const excessive = inspectReaderQuality(
+    record({
+      lead: [row("공개했다. npm을 지원한다. api를 제공한다. sdk를 추가한다. cli를 출시한다.")],
+    }),
+    [],
+  )
+  assert.equal(excessive.lead_sentences, 5)
+  assert.ok(excessive.findings.some((f) => f.code === "lead_sentence_count"))
+  const duplicate = inspectReaderQuality(
+    record({
+      lead: [row("기업은 10월 1일 공개했다. npm을 지원한다.")],
+      explanations: [{ paragraphs: [row("npm을 지원한다.")] }],
+    }),
+    [claim],
+  )
+  assert.ok(duplicate.findings.some((f) => f.code === "repeated_sentence"))
+})
 test("actual lead sentences and length block approval regardless of array length", () => {
   const r = inspectReaderQuality(
     record({ lead: [row("출시했다. 조회한다. 처리한다."), row("공개했다. 완료했다.")] }),
