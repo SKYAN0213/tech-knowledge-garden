@@ -778,6 +778,17 @@ echo 'source command only'
         unsupported = self.invoke(b'# Not a declared Markdown response')["result"]
         self.assertEqual(unsupported["status"], "unsupported")
 
+    def test_markdown_title_line_selects_only_an_explicit_original_h1(self):
+        raw = b"September 10, 2026\n\n# Article title\n\nContent.\n\n# Interactive demo\n"
+        result = self.invoke(raw, {"markdown_title_line": 3}, mime_type="text/markdown")["result"]
+        self.assertEqual(result["title"], "Article title")
+        self.assertEqual(result["title_basis"]["line_start"], 3)
+        self.assertEqual(result["status"], "extracted")
+        self.assertTrue(any(block["text"] == "Interactive demo" for block in result["blocks"]))
+        for line in [True, 0, "3", 2, 5, 8]:
+            rejected = self.invoke(raw, {"markdown_title_line": line}, mime_type="text/markdown")
+            self.assertEqual(rejected["worker_status"], "failed", line)
+
     def test_markdown_date_requires_profiled_line_and_valid_calendar(self):
         options = {"markdown_publication_date_line": 3, "publication_date_pattern": r"[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}", "publication_date_format": "%B %d, %Y"}
         raw = b'# Release\n\nPublished: August 28, 2026\n\nBody.\n\nUpdated: September 27, 2026\n'

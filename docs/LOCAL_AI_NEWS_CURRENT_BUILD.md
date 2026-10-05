@@ -2,9 +2,11 @@
 
 최신 개발(2026-10-05): 기존 HTTP 수집이 정책상 허용되지만 403인 자료를 실제 GPT 읽기 도구 응답에서 가져오는 공통 `manual-readable-capture/v1` 경로를 구현했다. HTTP 상태는 null로 유지하며 원래 403, 정확한 URL·도구 참조·행 범위·본문·발표일 근거를 함께 보존한다. 승인 전과 복구 후 같은 증거를 재검증한다. 수집 실행 의존 누락으로 실제 포장이 실패한 결함을 수정했고, 복구 뒤 원문 변조와 수집 상태 변경을 거부한다. 무인 로컬 수집의 자동 fallback으로 표시하지 않는다.
 
-8/4 소급 검토는 OpenAI 16사실·Microsoft 9사실과 두 한국어 원고의 비공개 편집 승인을 마쳤다. 모델의 오역·인용·날짜·계획 상태를 직접 정정하고 원출력과 이력을 보존했다. 기존 전문용어 voice/evaluation 배정도 검증했으나 두 용어 전체 이력 재검토는 별도다. Drive Research의 두 ZIP을 원격 raw SHA·비공개 부모와 대조하고 실제 원격 ZIP에서 독립 복구해 승인 bytes·용어 배정 일치를 확인했다. 관련 20검사 중 최초 19통과/1새 테스트의 오류 메시지 기대 불일치를 기록하고 해당 1검사만 정정·재실행해 통과했다. 전체 suite/build는 반복하지 않았다. [런북383](LOCAL_AI_NEWS_RUNBOOK.md#383-공통-읽기-도구-수집과-84-기사의-원격-복구).
+8/4 소급 검토는 원본9구간·5출처를 모두 판정하고 OpenAI16사실·Microsoft12사실의 두 기사와 voice/evaluation의 정의·관계·날짜 이력을 private 전환했다. SDK·Google·API 원문에서 음성 근거9사실을 직접 검토했으며 독립 human gold로 집계하지 않는다. 명시적 제목 행 선택과 inline 원문/기존 목록 자료 보완의 공통 계약도 구현했다. Node10/10·Python4/4·전환33/33 표적 결과를 확인했고 전체 suite는 반복하지 않았다.
 
-다음은 8/4 원본 9구간, 원래 5출처와 두 의존 용어 이력의 전환이다. 현재 공개 작성 원본·RSS·사이트는 변경하지 않았으며 미판정 65회차607구간, WBS2/22, 전체 목표 active를 유지한다. 기존 모델 qwen3.8:27b는 없고 5역할은 MLX 모델로 설정돼 있다. 실제 모델 저장 경로는 내장 `/Users/shinjh/.ollama/models`이며 외장 이동은 수행하지 않았다. 이하 기록의 수량은 각 실행 당시 상태다.
+최종 외장 임시 reader-v4가 생성/용어/내용/빌드/사이트 및 웹·RSS·GitHub 일치 검사를 통과했다. 기존RSS40identity를 보존하고1280/390 실제 화면에서 탭 query·전문용어 태그·이력 Enter·기업 필터/뒤로가기를 확인했다. 뉴스/브리핑 지도0·가로 넘침0이다. 최종 v5 ZIP 두 개의14원문판본·376members를 private Drive Research에서 실제 원격 raw SHA/CRC로 독립 복구해 승인28사실과 두 정의 배정 exact bytes를 확인하고 사건/원문 위치를 등록했다. [런북384](LOCAL_AI_NEWS_RUNBOOK.md#384-84-전체-구간의존-전문용어실제-화면-검증).
+
+다음은 작성 원본200파일의 fresh Drive 대조, 승인3파일 반영과 공개 릴리스다. 이번 private 결과는 아직 공개되지 않았으며 미판정65회차607구간·WBS2/22·전체 목표 active를 유지한다. 저장 실패 증거를 보존하고 새 임시 출력만 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`에 생성했다. Ollama 모델55GB는 여전히 내장 `/Users/shinjh/.ollama/models`에 있고 모델·기존 저장소 이동/삭제는 수행하지 않았다. 이하 기록의 수량은 각 실행 당시 상태다.
 
 이전 비공개 슬라이스(2026-10-05): 8/7의 원본10구간을 6기사·3의존 용어로 private 전환하여 refresh/knowledge sync/validate/build/site와 웹·RSS·GitHub 내용 대조를 통과했다. RSS40 GUID/pubDate를 보존하며 공개346파일의 private 생성 결과는 운영 배포와 구분한다. 원문13판본·524members/3,553,439bytes의 복구 묶음을 Drive Research에 저장하고 원격 raw SHA/CRC, 별도 복구6승인과 ontology151nodes/235edges의 exact SHA를 확인했다. 저장 공간 부족은106개의 동일 emoji 파일을 독립 COW 사본으로 바꿔 해결하고 공통 preview 복사에도 hash/fsync/safePath를 유지한 reflink를 적용했다. replacement/create 노트에 관계 유형·source/inference·근거·실제 target 검사를 공통 적용(19/19), COW 표적1/1. 기존 qwen3.8:27b는 tags에 없으며5역할/default는 qwen3.8:27b-mlx다. canonical 작성200파일/공개141verified·d21e269는 유지, 전수66/617·WBS2/22·goal active. [런북381](LOCAL_AI_NEWS_RUNBOOK.md#381-87-전체-구간과-의존-용어의-비공개-발행복구-슬라이스).
 

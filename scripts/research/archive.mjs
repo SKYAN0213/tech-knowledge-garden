@@ -304,6 +304,11 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
       if (
         source.readable?.transcript_path !== `${source.name}.txt` ||
         !/^[a-f0-9]{64}$/.test(source.readable?.transcript_sha256 || "") ||
+        (source.parse_options?.markdown_title_line !== undefined &&
+          (!Number.isInteger(source.parse_options.markdown_title_line) ||
+            source.parse_options.markdown_title_line < 1 ||
+            source.parse_options.markdown_title_line >
+              source.readable.last_line - source.readable.first_line + 1)) ||
         !Number.isInteger(source.parse_options?.markdown_publication_date_line) ||
         source.parse_options.markdown_publication_date_line < 1 ||
         source.parse_options.markdown_publication_date_line >
@@ -318,6 +323,7 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
               "markdown_publication_date_line",
               "publication_date_pattern",
               "publication_date_format",
+              "markdown_title_line",
             ].includes(key),
         )
       )

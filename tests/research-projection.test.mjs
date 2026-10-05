@@ -333,6 +333,49 @@ test("source-list review cannot override inline sources or explicit source marke
   )
 })
 
+test("reviewed source-list supplements preserve the inline anchor and require approved original evidence", (t) => {
+  const f = legacyTransitionFixture(t)
+  const extra = "https://example.com/framework-data"
+  reviseLegacyFixture(f, f.existing.body + "\n" + extra + "\n")
+  f.articles[0].source_urls = [...f.articles[0].source_urls, extra]
+  f.packet.events[0].source_urls = [...f.articles[0].source_urls]
+  f.packet.events[0].source_list_review = {
+    source_list_read: true,
+    article_source_read: true,
+    association_checked: true,
+    reason:
+      "Read the listed dataset as material for this original event; retain the inline announcement",
+  }
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const articles = extractArticles({ ...parseNote(projection.content), file: f.existing.file })
+  assert.deepEqual(
+    articles.find((a) => a.id === f.articles[0].event_id).urls,
+    f.articles[0].source_urls,
+  )
+  assert.equal(projection.content.includes("source_list_review"), false)
+  const missingAnchor = structuredClone(f.packet)
+  missingAnchor.events[0].source_urls = [extra]
+  assert.throws(
+    () => assertLegacyTransition(missingAnchor, f.articles, f.existing, f.relative),
+    /retain every reviewed original source/,
+  )
+  const missingApproval = structuredClone(f.articles)
+  missingApproval[0].source_urls = missingApproval[0].source_urls.filter((url) => url !== extra)
+  assert.throws(
+    () => assertLegacyTransition(f.packet, missingApproval, f.existing, f.relative),
+    /retain every reviewed original source/,
+  )
+  const unlisted = structuredClone(f.packet)
+  unlisted.events[0].source_urls.push("https://example.com/not-in-original")
+  const extended = structuredClone(f.articles)
+  extended[0].source_urls.push("https://example.com/not-in-original")
+  assert.throws(
+    () => assertLegacyTransition(unlisted, extended, f.existing, f.relative),
+    /original list sources/,
+  )
+})
+
 test("legacy source markers resolve only unique original list entries and preserve published sources", (t) => {
   const f = legacyTransitionFixture(t, { sourceMarkers: true })
   const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])

@@ -255,6 +255,26 @@ test("readable normalization refuses a different page, missing lines, and ambigu
   )
 })
 
+test("readable capture accepts a bounded title line and rejects invalid title selectors", (t) => {
+  const f = readableFixture(t)
+  const titleOptions = { ...f.source.parse_options, markdown_title_line: 3 }
+  atomicWrite(f.root, f.manifestPath, {
+    ...f.manifest,
+    sources: [{ ...f.source, parse_options: titleOptions }],
+  })
+  assert.doesNotThrow(() => inspectManualCapture(f.root, f.manifestPath, f.blockedRun))
+  for (const markdown_title_line of [true, 0, "3", 5]) {
+    atomicWrite(f.root, f.manifestPath, {
+      ...f.manifest,
+      sources: [{ ...f.source, parse_options: { ...titleOptions, markdown_title_line } }],
+    })
+    assert.throws(
+      () => inspectManualCapture(f.root, f.manifestPath, f.blockedRun),
+      /explicit date parse options/,
+    )
+  }
+})
+
 test("source evidence checks re-read the tool and blocked observations before approving readable facts", (t) => {
   const f = readableFixture(t)
   const inspected = inspectManualCapture(f.root, f.manifestPath, f.blockedRun)

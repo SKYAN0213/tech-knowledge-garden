@@ -1580,8 +1580,17 @@ def markdown_parse(raw, url, options):
                 blocks.append({"kind": "code", "text": value, "code_language": "html" if token.type == "html_block" else token.info.strip() or None, "locator": locator(token.map, value)})
         i += 1
 
-    title = titles[0]["text"] if len(titles) == 1 else None
-    title_basis = titles[0]["locator"] if title else None
+    title_line = options.get("markdown_title_line")
+    if title_line is not None:
+        if isinstance(title_line, bool) or not isinstance(title_line, int) or title_line < 1:
+            raise ValueError("Markdown title line must be a positive integer")
+        selected_titles = [item for item in titles if item["locator"]["line_start"] == title_line]
+        if len(selected_titles) != 1:
+            raise ValueError("Markdown title line must identify one source H1 heading")
+    else:
+        selected_titles = titles
+    title = selected_titles[0]["text"] if len(selected_titles) == 1 else None
+    title_basis = selected_titles[0]["locator"] if title else None
     published, date_basis, candidates = None, None, []
     profile_status = "not-configured"
     date_line = options.get("markdown_publication_date_line")

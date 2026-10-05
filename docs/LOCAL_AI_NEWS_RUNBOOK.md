@@ -9757,3 +9757,46 @@ Google Drive Research 폴더11Mu9qSiR8Pk32k53-i032qSRPTdsozV7의 부모/이름/s
 ### 재개점
 
 작성 원본200파일과 공개 사이트/RSS는 이번 작업에서 변경하지 않았다.8/4의 기존9구간을 모두 판정하고 원래5출처 연결, 두 의존 용어의 과거 이력과 근거를 재검토해야 한다. 현재 Orchard 승인에서 모든 Source List URL을 임의로 승인했다고 처리하지 않는다. 전체 미판정65회차607구간·독립40dev/20heldout human gold·정규7회/무인08시·full runtime portable 검증은 미완료이며 WBS2/22·goal active를 유지한다. 1시간 반복 병목은 없다. Ollama 실제 저장 경로는 내장 /Users/shinjh/.ollama/models이고 외장 이동 요청으로 해석해 변경하지 않았다.
+
+## 384. 8/4 전체 구간·의존 전문용어·실제 화면 검증
+
+2026-10-05 KST. 직전 모델 경로 응답은 구현의 no progress였으며 실제 다음 자료의 전환과 원격 복구를 진행했다. 작성 원본이나 이전 승인 자료를 덮어쓰지 않았다.
+
+### 공통 파싱과 출처 보완
+
+9/10 OpenAI API 원문에는 기사 H1과 데모 H1이 함께 있었다. 첫 readable import는 제목이 partial이었다. 새 `markdown_title_line`은 원문의 명시된 H1 시작 행 하나를 선택하며 전체 데모·본문·locator를 보존한다. 범위 초과·불리언·문자열·일반 문단을 거부하고 미지정 복수 H1의 기존 partial 판정은 유지한다. 최종 `legacy-20260804-voice-api-readable-source-20261005-v2`는66블록/게시9/10이다. 원 HTTP403과 실제 tool transcript도 그대로다.
+
+기존8/4 Orchard 본문에는 GitHub inline URL이, 마지막 Source List에는 Microsoft 발표·HF 데이터·arXiv 초록이 있었다. `source_list_review`에서 원 inline을 보존하는 엄격한 추가 집합과 실제 승인 근거를 요구하도록 공통 전환 검사를 확장했다. 원 inline 누락·승인 원고에 없는 자료·원 목록 밖 URL·S 번호 재해석은 거부한다. 원래9unit SHA/기사ID/5URL을 보존한 private 전환 검사가 통과했다.
+
+표적 결과: `readable-title-focused-20261005-v1.log` Node10/10, `readable-title-worker-focused-20261005-v1.log` Python4/4, `legacy-inline-source-supplement-focused-20261005-v1.log` 전환33/33이다. 같은 코드 상태에서 전체 suite나 통과한 표적을 반복하지 않았다.
+
+### 실제 원고와 전문용어
+
+Orchard의 공통 source selection/reuse-extraction을 재사용해 공식4자료의12verified facts를 검토했다. 현재 README/HF 카드/논문 초록을 읽었으며 최초 게시일의 새 출시나 논문 전문 분석으로 표현하지 않는다. Microsoft 발표8/3과8/21 수정본의 수치 조건을 구분했다. 최초 원고 실행은 terminal1·draft/checkpoint 없음이었다. budget의 running 표기를 모델 실행 성공으로 바꾸지 않고 terminal 관측을 `legacy-20260804-orchard-all-source-terminal-observation-20261005-v1.json`에 보존했다. 새 run-v2에서78.170초 작성 후 직접 정정한 원고를 승인했다.
+
+두 의존 용어는 기존 전문용어 저장소를 사용했다. voice는 SDK 파이프라인·Google 발표·GPT-Live-1 API를 원문에서 읽은 직접9facts와 기존 tracing 검토를 근거로 재작성했다. 예정8/3과 API 출시9/10을 구분하고 출처 없는2026 일반 추세를 제거했다. evaluation의9/28 승인 정의는 exact bytes/원근거를 재사용하고 Orchard의 공통 환경·실행기별 평가 조건을 추가했다. 현재 판본을 과거의 판단으로 덮어쓰지 않으며 이력은 최신순이다. 회사/제품 별칭이나 공동 등장 관계를 추가하지 않았다. 직접 검토는 `model_extraction:false`, `independent_human_gold:false`다.
+
+최종 note 승인 run은 `legacy-20260804-dependent-notes-approved-20261005-v5`, 기사 run은 `legacy-20260804-openai-note-bound-editorial-20261005-v4`와 `legacy-20260804-orchard-note-bound-editorial-20261005-v4`다. 원고/모델 provenance를 재사용하고 새 모델·원문 HTTP 호출0으로 정의 배정을 다시 검토했다. voice SHA38a24e0927111f069b6e2a42189991e91086d347dd00b025e47214ed2c3a0f41, evaluation SHAe15e9cb0c36d0870b1597957292f7f7c24c2d04891ccd6b3a2e7b2db7cbbf840이다.
+
+### 외장 임시 reader와 실패 보존
+
+현재 모델 실제 경로 `/Users/shinjh/.ollama/models`·55GB, MLX1209layers/18.17GB·외장 연결0을 확인했다. 모델 이동/삭제는 승인 대기이며 수행하지 않았다. 내장 여유가 약200MB 이하일 때 파일 작성/ZIP이 ENOSPC로 실패했다. 기존 원문·승인·ZIP·원격 복구는 보존하고 새 임시 출력만 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`에 만들었다. 기존 프로젝트나 모델을 외장으로 이동한 것이 아니다.
+
+독립 archive 두 개의 복구를 합칠 때 run 밖의 서로 다른 `restore-receipt.json`이 충돌했다. 그 실패와 부분 사본을 보존하고 새 combined-v2에는 검증된 연구 파일만 결합했으며 두 복구 영수증은 각 복구 루트에 유지했다. run-specific extraction-reuse receipt를 다른 run에 복사한 초기 실험은 의존 검사에서 거부됐다. 공통 select-source/reuse-extraction으로 새 receipt를 생성해 검토했고 이전 자료는 보존한다. 전체 기사 근거/날짜/동일 사건 관문을 우회하지 않았다.
+
+reader-v2는 음성 노트의 범위 표시와 관련 개념 문법3오류로 실패했다. 원고의 기존12항목 계약을 복원했고 validator를 약화하지 않았다. reader-v3 통과 뒤 evaluation 이력 순서를 바로잡아 새 note/기사 승인으로 reader-v4를 생성했다. 최종 `legacy-20260804-complete-reader-20261005-v4`는 생성/knowledge/validate/build/site와 웹·RSS·GitHub consistency를 통과했다. 생성파일352는 public 배포 파일 수가 아니라 private 결과다. RSS40GUID/pubDate, 원래8/4회차와 deec56a13e2b9b57/a8dbd4f6642c381b를 보존한다. 빈 editorial/일반론만 명시적으로 제외하며 새 회차를 만들지 않았다.
+
+1280x900/390x844 실제 브라우저에서 AI 탭 query, 전문용어 태그→정의/이력, 이력의 Enter→기사, 기업 태그 query/뒤로가기, 기사→브리핑을 검증했다. 뉴스/브리핑 main 지도0·가로 넘침0이고 빈 심층 탭이 없다. Python 단순 파일 서버의 prefix asset404는 그대로 기록하고 기존 `scripts/serve.mjs`로 올바르게 확인했다. viewport는 복원했다. 최종 evidence는 외장 루트의 `ui-verification-final.json`, `briefing-{mobile,desktop}-final.png`, combined-v2/runs/reader-v4/preview/state.json·consistency.json이다.
+
+### 최종 Drive 복구와 재개점
+
+private Research 폴더와 파일 메타데이터를 새 조회하고 최종 v5 두 ZIP의 실제 원격 raw SHA/CRC·부모/shared:false를 확인했다. 원격 ZIP에서 각각 독립 복구한14원문판본/376members, 승인28facts와 두 specialist note 배정·전체 승인 files가 현재 검토 bytes와 같다. 원문/사건 위치 register도 등록했다. v4 ZIP은 앞선 노트 버전의 증거로 별도 보존하며 최종 버전으로 혼용하지 않는다.
+
+| 최종 원격 자료 | bytes / members | SHA-256 |
+|---|---|---|
+| OpenAI note-bound-portable-v5, ID1txCofB_-u2beBD2Aa6vZ4hT7hXSelbCq | 2368304 / 376 | 431d358ce097599cab9da9e35b7365ee9ef1359303cbdb29418ef7ea27fca39b |
+| Orchard note-bound-portable-v5, ID1-P_kRuIMUdDWCepmXvHM1uRouP2vXaVi | 2382964 / 376 | a9cc91b3d9a6fca863ff7809191a6eefed3867108572364007dca98111ba221b |
+
+외장 `drive-{openai,orchard}-v5/`의 metadata·archive-observation·drive-receipt·remote.zip·restored·location-register와 `remote-approval-verification-v5.json`에 근거가 있다. 원격 raw의 임시 b64만 디코딩 후 제거했다. signed URL/자격 정보는 저장하지 않는다. 전체 worker/runtime 재개 검증과 구분한다.
+
+다음은 fresh Drive 작성200파일/부모 목록의 원격 대조, 위 final preview의 승인3파일(8/4회차+용어2)의 Drive-first 같은ID 저장, 공개 릴리스와 배포 readback이다. 현재 canonical 작성/공개ceeafd2/RSS는 유지한다. 미판정65회차607구간·WBS2/22·독립40/20·정규7회/무인08시·full portable runtime은 미완료, 전체 goal active다. 이번 공통 구현·원문/용어/전체 회차 검토·실제 화면·원격 복구는 progress다. 동일 실패를1시간 이상 반복한 병목은 없으며 디스크 실패에 대해서는 새 외장 출력 경로로 전환했다.

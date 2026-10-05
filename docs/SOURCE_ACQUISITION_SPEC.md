@@ -2581,3 +2581,9 @@ scripts/research-edition.mjs --run --daily-run --review는 research-edition-prep
 원문/검토/승인/보관 경계는 동일하다. import는 unreviewed이며 source-register와 승인용 assertStoredEvidence가 실제 tool transcript·blocked documents·manifest까지 다시 읽는다. 같은 source version과 parse를 재사용하고 자동 후보 승인·발행·정규 운영 성공으로 집계하지 않는다. 목차·인용 마커를 포함한 raw source는 보존하므로 원고에 넣을 사실은 별도로 검토한다.
 
 다른 실행에서 원문을 사용한 portable archive-closure는 importing run을 readable_capture 관계로 따라가고 exact document를 대조한다. 복구 때 원문 proof를 잃거나 달라진 승인 상태를 받아들이지 않는다. 무인 local worker의 자동 fallback은 이번 경로의 완료 범위가 아니다. 실제 원문 57블록·편집 승인·Drive raw ZIP 독립 복구와 실패 기록은 [런북383](LOCAL_AI_NEWS_RUNBOOK.md#383-공통-읽기-도구-수집과-84-기사의-원격-복구)에 있다.
+
+## 83. 읽기 원문의 제목 지정과 기존 목록 출처 보완
+
+읽기 원문에 기사와 데모의 H1이 함께 있으면 `parse_options.markdown_title_line`으로 기사 H1의 시작 행을 명시한다. 정규화된 Markdown 안의 1부터 시작하는 행 번호이며 원문 캡처 범위 안의 양의 정수만 허용한다. worker는 해당 행의 H1 하나를 확인하고 원문 locator를 제목 근거로 보존한다. 제목을 직접 입력하거나 데모 본문을 삭제하지 않는다. 미지정 시 기존 복수 제목의 partial 판정은 유지하며 잘못된 행·일반 문단·불리언·문자열·범위 초과는 실패한다.
+
+legacy `source_list_review`는 기사에 이미 있는 inline 원문을 유지하면서 같은 원래 Source List의 관련 공식 자료를 추가하는 명시적 검토도 허용한다. 승인 원고가 추가 자료를 실제로 인용해야 하며 원래 inline 주소 누락·다른 목록의 URL·S 번호 재해석은 거부한다. 단순 공동 등장이나 자동 출처 배정은 하지 않는다. 실제8/4의5URL/9구간 전환, 전문용어 이력과 원격 복구는 런북384에 기록한다.

@@ -307,7 +307,9 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const sourceListReview = event.source_list_review
     if (
       sourceListReview &&
-      (inlineSources.length ||
+      ((inlineSources.length &&
+        (assignedSources.length <= inlineSources.length ||
+          inlineSources.some((url) => !assignedSources.includes(url)))) ||
         sourceMarkers ||
         !sourceListReview.reason.trim() ||
         assignedSources.length !== event.source_urls.length ||
