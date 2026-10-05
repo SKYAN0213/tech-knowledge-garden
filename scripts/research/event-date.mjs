@@ -1,5 +1,5 @@
 import { assertSchema, sha256 } from "./contracts.mjs"
-import { parseResearchDate, assertReviewDate } from "./dates.mjs"
+import { parseResearchDate, assertReviewDate, seoulPublicationDay } from "./dates.mjs"
 
 const text = { type: "string", minLength: 1 }
 const object = (properties) => ({
@@ -11,6 +11,15 @@ const object = (properties) => ({
 const trueValue = { type: "boolean", enum: [true] }
 const hash = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const date = { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" }
+const publicationTimeSchema = object({
+  kind: { type: "string", enum: ["source-publication-time"] },
+  source_id: text,
+  source_version_id: text,
+  parse_id: text,
+  claim_id: text,
+  source_published_at: text,
+  timezone: { type: "string", enum: ["Asia/Seoul"] },
+})
 const updateSchema = object({
   kind: { type: "string", enum: ["dated-update"] },
   source_id: text,
@@ -88,6 +97,41 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     return {}
   }
   const b = review.event_date_basis
+  if (b?.kind === "source-publication-time") {
+    assertSchema(b, publicationTimeSchema)
+    const p = parses.find(
+      (p) =>
+        p.parse_id === b.parse_id &&
+        p.source_id === b.source_id &&
+        p.source_version_id === b.source_version_id,
+    )
+    const claim = eligible.find((c) => c.claim_id === b.claim_id)
+    const stamp = parseResearchDate(b.source_published_at)
+    if (
+      !p ||
+      !claim ||
+      stamp?.precision !== "timestamp" ||
+      p.dates?.published_at !== b.source_published_at ||
+      p.dates.precision !== "timestamp" ||
+      p.dates.profile_status !== "matched" ||
+      !p.dates.basis?.dom_path ||
+      parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant ||
+      parseResearchDate(claim.published_at)?.instant !== stamp.instant ||
+      !claim.evidence.some(
+        (e) =>
+          e.parse_id === p.parse_id &&
+          e.source_id === p.source_id &&
+          e.source_version_id === p.source_version_id &&
+          e.support === "direct",
+      ) ||
+      seoulPublicationDay(b.source_published_at) !== review.published_at
+    ) {
+      throw Error(
+        "Publication timezone conversion requires the exact used source timestamp and header evidence",
+      )
+    }
+    return { date_kind: "source-publication-time", source_published_at: b.source_published_at }
+  }
   if (b?.kind === "source-stated-event-date") {
     assertSchema(b, statedEventDateSchema)
     const p = parses.find(

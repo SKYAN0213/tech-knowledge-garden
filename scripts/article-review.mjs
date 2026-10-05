@@ -1,3 +1,5 @@
+import { seoulPublicationDay } from "./research/dates.mjs"
+
 // Public review metadata contains no private review notes or reasoning.
 export const ARTICLE_REVIEW_STATES = ["unreviewed", "verified", "excluded"]
 export const articleDateLabel = (review) =>
@@ -52,7 +54,9 @@ export function articleReview(edition, title, fallbackId) {
         (r.date_kind === "dated-update" &&
           day(r.source_published_at) &&
           r.source_published_at < r.published_at) ||
-        (r.date_kind === "source-stated-event-date" && r.source_published_at === null)
+        (r.date_kind === "source-stated-event-date" && r.source_published_at === null) ||
+        (r.date_kind === "source-publication-time" &&
+          seoulPublicationDay(r.source_published_at) === r.published_at)
       )
     )
       throw Error("Event date metadata needs a verified, source-supported date basis")

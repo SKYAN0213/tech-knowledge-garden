@@ -132,6 +132,88 @@ function fixture() {
   }
 }
 
+test("source publication timestamps retain UTC evidence and explicitly project the Seoul publication day", () => {
+  const s = fixture()
+  const timestamp = "2026-07-13T22:04:00Z"
+  const text = "We released the package."
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: { dom_path: "/main/relative-time", attribute: "datetime", text: timestamp },
+  }
+  s.p.blocks[0] = { block_id: "p1:b1", text, locator: { text_hash: sha256(text) } }
+  Object.assign(s.claims[0], { statement: text, published_at: timestamp, effective_period: null })
+  s.claims[0].evidence[0].quote = text
+  const { review: previousReview, ...claim } = s.claims[0]
+  s.claims = recordFactReview(
+    [claim],
+    [
+      {
+        claim_id: "c1",
+        status: "verified",
+        reason: "Timestamp fixture reviewed against the changed parse",
+        source_read: true,
+        entailment_checked: true,
+        identity_checked: true,
+        numbers_checked: true,
+        time_checked: true,
+      },
+    ],
+    { reviewer: "test", reviewed_at: "2026-09-27" },
+    [s.p],
+  )
+  s.record.draft.lead = [
+    { text: "Example Co는 7월 14일(한국시각) 패키지를 공개했다.", claim_ids: ["c1"] },
+    { text: "공식 릴리스에서 공개 사실을 알렸다.", claim_ids: ["c1"] },
+  ]
+  s.record.draft.facts.when = "2026-07-14 (Asia/Seoul)"
+  s.record.draft_id = s.review.draft_id = sha256(JSON.stringify(s.record.draft))
+  s.review.published_at = "2026-07-14"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])
+  assert.equal(article.article_review.published_at, "2026-07-14")
+  assert.equal(article.article_review.source_published_at, timestamp)
+  assert.equal(article.article_review.date_kind, "source-publication-time")
+  assert.equal(s.claims[0].published_at, timestamp)
+  assert.equal(s.p.dates.published_at, timestamp)
+  const publicReview = articleReview(
+    { meta: { article_reviews: [article.article_review] } },
+    article.title,
+    article.event_id,
+  )
+  assert.equal(publicReview.source_published_at, timestamp)
+  assert.throws(() =>
+    articleReview(
+      { meta: { article_reviews: [{ ...article.article_review, published_at: "2026-07-13" }] } },
+      article.title,
+      article.event_id,
+    ),
+  )
+  for (const mutate of [
+    (r, p) => (r.event_date_basis.source_published_at = "2026-07-13T23:04:00Z"),
+    (r, p) => (r.event_date_basis.timezone = "UTC"),
+    (r, p) => (r.event_date_basis.claim_id = "unknown"),
+    (r, p) => (p.dates.basis.text = "2026-07-13T23:04:00Z"),
+    (r, p) => (p.dates.profile_status = "ambiguous"),
+    (r, p) => delete p.dates.basis,
+    (r, p) => (p.dates.published_at = "2026-07-13"),
+  ]) {
+    const r = structuredClone(s.review),
+      p = structuredClone(s.p)
+    mutate(r, p)
+    assert.throws(() => eventDateMetadata(r, s.claims, [p]))
+  }
+})
+
 test("dated update preserves source publication and requires the visible event's explicit date", () => {
   const s = fixture()
   const a = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])

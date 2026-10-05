@@ -398,3 +398,11 @@ ABB HTML의 `scheduledPublishDate`는 UTC 2026-09-02 13:13:50.623이고 `Publish
 prepare/compare만으로 쓰기를 허용하지 않는다. release는 검증된 preview의 exact 사건 ID·Knowledge 경로·전체 delta·stage bytes와 10분 이내 완전 Drive snapshot 및 대상 parent listing/raw SHA를 재검증한다. source fidelity·상세 보존·종속지식·독자본문·독자상호작용의 최종검토 pass가 필수다. daily에는 기존32칸 조사계약을 재사용하고 각칸 실제 시도 URL을 요구한다. retrospective는 coverage/새 운영 회수를 갖지 않는다.
 
 immutable release receipt는 저장 권한만 증명한다. 실제 쓰기 직전 원본 SHA 확인, 저장 직후 동일 ID/부모/원격 raw SHA 확인, 전체 post snapshot과 로컬 동기화는 별도 execution proof로 남긴다. 같은 desired SHA는 already_applied로 쓰기 생략한다. 충돌·미완료조회·변조·오래된snapshot은 거부한다. 이번 실제3파일 저장/195개 검증/반복변경0은 런북342절에 있다. 공개 배포 검증과 전체 WBS 완료는 별도다.
+
+## 83. 원문 발표 시각과 구형 회차의 명시적 검토
+
+`event_date_basis.kind: source-publication-time`은 source_id/source_version_id/parse_id/사용한 claim_id/source_published_at/timezone:Asia/Seoul을 요구한다. profile matched·timestamp precision·header DOM locator/명시적시각·direct evidence와claim timestamp가모두일치해야한국시각발표일을생성한다. 원문/claim의timestamp를고치거나day-only자료에시간대를추정하지않는다. 구형회차포함여부는source instant의exclusive coverage_start/inclusive coverage_end로판정한다.
+
+`metadata_review`는원래추가필드마다한번만판정한다. time은파일명HHmm과같은유효시각, type은briefing, tags는distinct 문자열목록만preserve한다. excluded_items_count는private_only로원본에남기고공개에복사하지않는다. 미등록필드·중복·누락판정은거부한다. Signals 새노트도유효HHmm과같은edition basename을유지해야한다.
+
+`source_list_dispositions`의discovery는원래Source List에있는미사용발견URL만대상이다. source_role_checked:true와근거를명시하고inline citation·배정/승인기사source·중복disposition은거부한다. 전체before_content는불변보존한다. 이계약은원문획득·새소식없음·기사승인을대신하지않는다. 실제7/14의3릴리스/12발견경로전환과반대검증은런북402에있다.

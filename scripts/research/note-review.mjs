@@ -203,7 +203,7 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
         next.meta.schema_version !== "tech-signals/v1" ||
         (creating
           ? relative !== `Signals/${next.meta.edition?.split("/").at(-1)}.md` ||
-            !/^Editions\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}_0800_Tech_AI_Briefing$/.test(
+            !/^Editions\/\d{4}\/\d{2}\/\d{4}-\d{2}-\d{2}_(?:[01]\d|2[0-3])[0-5]\d_Tech_AI_Briefing$/.test(
               next.meta.edition || "",
             ) ||
             next.meta.date !== next.meta.edition.split("/").at(-1).slice(0, 10) ||

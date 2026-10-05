@@ -2,7 +2,7 @@ import { unified } from "unified"
 import remarkParse from "remark-parse"
 import { canonicalURL, parseNote } from "../garden.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
-import { assertReviewDate, parseResearchDate } from "./dates.mjs"
+import { assertReviewDate, parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { legacyReviewUnits } from "./legacy-review.mjs"
 
 const object = (properties) => ({
@@ -76,6 +76,30 @@ const packetSchema = object({
     }),
   },
 })
+packetSchema.properties.metadata_review = object({
+  metadata_read: { type: "boolean", enum: [true] },
+  dispositions: {
+    type: "array",
+    minItems: 1,
+    maxItems: 4,
+    items: object({
+      field: { type: "string", enum: ["time", "type", "tags", "excluded_items_count"] },
+      action: { type: "string", enum: ["preserve", "private_only"] },
+      reason: text,
+    }),
+  },
+})
+packetSchema.properties.source_list_dispositions = {
+  type: "array",
+  minItems: 1,
+  maxItems: 500,
+  items: object({
+    url: text,
+    role: { type: "string", enum: ["discovery"] },
+    source_role_checked: { type: "boolean", enum: [true] },
+    reason: text,
+  }),
+}
 packetSchema.properties.units.items.properties.duplicate_event_review = object({
   original_read: { type: "boolean", enum: [true] },
   source_read: { type: "boolean", enum: [true] },
@@ -87,6 +111,67 @@ const markdown = unified().use(remarkParse)
 const urlsIn = (content) =>
   [...new Set((content.match(/https?:\/\/[^\s<>\]\)]+/g) || []).map(canonicalURL))].sort()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+const baseMetadata = new Set([
+  "title",
+  "date",
+  "timezone",
+  "coverage_start",
+  "coverage_end",
+  "source_count",
+  "new_items_count",
+  "linked_knowledge_notes",
+  "knowledge_notes_created",
+  "knowledge_notes_updated",
+])
+
+function assertMetadataReview(packet, meta, relativePath) {
+  const fields = Object.keys(meta)
+    .filter((field) => !baseMetadata.has(field))
+    .sort()
+  const dispositions = packet.metadata_review?.dispositions || []
+  if (
+    !same(fields, dispositions.map((d) => d.field).sort()) ||
+    dispositions.some(
+      (d) =>
+        !d.reason.trim() ||
+        d.action !== (d.field === "excluded_items_count" ? "private_only" : "preserve"),
+    )
+  ) {
+    throw Error("Legacy metadata requires one explicit disposition for every additional field")
+  }
+  const key = relativePath.split("/").at(-1)
+  if (
+    (fields.includes("time") &&
+      (!/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(meta.time) ||
+        meta.time !== `${key.slice(11, 13)}:${key.slice(13, 15)}`)) ||
+    (fields.includes("type") && meta.type !== "briefing") ||
+    (fields.includes("tags") &&
+      (!Array.isArray(meta.tags) ||
+        meta.tags.length > 64 ||
+        new Set(meta.tags).size !== meta.tags.length ||
+        meta.tags.some(
+          (tag) => typeof tag !== "string" || !tag.trim() || tag.trim() !== tag || tag.length > 100,
+        ))) ||
+    (fields.includes("excluded_items_count") &&
+      (!Number.isSafeInteger(meta.excluded_items_count) || meta.excluded_items_count < 0))
+  ) {
+    throw Error("Legacy metadata values do not match the preserved edition identity and types")
+  }
+}
+
+function eventInsideCoverage(article, meta, day) {
+  const review = article.article_review
+  if (review?.date_kind === "source-publication-time") {
+    const source = parseResearchDate(review.source_published_at)
+    return (
+      source?.precision === "timestamp" &&
+      seoulPublicationDay(review.source_published_at) === review.published_at &&
+      source.instant > parseResearchDate(meta.coverage_start).instant &&
+      source.instant <= parseResearchDate(meta.coverage_end).instant
+    )
+  }
+  return review?.published_at <= day && review?.published_at >= meta.coverage_start.slice(0, 10)
+}
 
 // Metadata eligibility is not source review or publication approval. Inventory
 // uses the same checks as transition so missing historical cutoffs surface early.
@@ -108,6 +193,11 @@ export function legacyTransitionReadiness(meta, relativePath) {
   return {
     status: issues.length ? "metadata_recovery_required" : "metadata_ready",
     issues,
+    ...(Object.keys(meta).some((field) => !baseMetadata.has(field))
+      ? {
+          metadata_review_fields: Object.keys(meta).filter((field) => !baseMetadata.has(field)),
+        }
+      : {}),
   }
 }
 
@@ -163,20 +253,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   const day = packet.target_path.split("/").at(-1).slice(0, 10)
   if (legacyTransitionReadiness(before.meta, packet.target_path).issues.length)
     throw Error("Legacy transition requires preserved edition identity and cutoffs")
-  const allowedMeta = new Set([
-    "title",
-    "date",
-    "timezone",
-    "coverage_start",
-    "coverage_end",
-    "source_count",
-    "new_items_count",
-    "linked_knowledge_notes",
-    "knowledge_notes_created",
-    "knowledge_notes_updated",
-  ])
-  if (Object.keys(before.meta).some((k) => !allowedMeta.has(k)))
-    throw Error("Legacy transition contains metadata requiring additional review")
+  assertMetadataReview(packet, before.meta, relativePath)
   assertReviewDate(packet.reviewed_at, {
     notBefore: [day, ...articles.map((a) => a.article_review?.reviewed_at)],
   })
@@ -199,13 +276,36 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         a.article_review?.review_status !== "verified" ||
         a.retrospective_review ||
         a.historical_addition_review ||
-        a.article_review.published_at > day ||
-        a.article_review.published_at < before.meta.coverage_start.slice(0, 10),
+        !eventInsideCoverage(a, before.meta, day),
     )
   )
     throw Error("Legacy transition requires exactly all distinct reviewed source events")
   const byID = new Map(articles.map((a) => [a.event_id, a]))
   const sources = legacySources(before.body, units)
+  const assigned = new Set(packet.events.flatMap((event) => event.source_urls.map(canonicalURL)))
+  const approved = new Set(articles.flatMap((article) => article.source_urls.map(canonicalURL)))
+  const inline = new Set(
+    units
+      .filter((unit) => !(unit.depth === 1 && unit.title === "Source List"))
+      .flatMap((unit) => sources.forContent(before.body.slice(unit.body_start, unit.body_end))),
+  )
+  const discovery = new Set()
+  for (const row of packet.source_list_dispositions || []) {
+    const url = canonicalURL(row.url)
+    if (
+      !row.reason.trim() ||
+      !sources.listed.has(url) ||
+      assigned.has(url) ||
+      approved.has(url) ||
+      inline.has(url) ||
+      discovery.has(url)
+    ) {
+      throw Error(
+        "Legacy discovery disposition must name an unused original list route, never cited article evidence",
+      )
+    }
+    discovery.add(url)
+  }
   // Retain original citation identity privately. A reviewed official alternative
   // may support that event, but must actually be cited by its approved article.
   // These mappings never make the unavailable original into acquired evidence.
@@ -292,6 +392,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         !decision.event_ids.length ||
         urls.some(
           (url) =>
+            !(unit.depth === 1 && unit.title === "Source List" && discovery.has(url)) &&
             !decision.event_ids.some((id) =>
               packet.events.some(
                 (event) =>

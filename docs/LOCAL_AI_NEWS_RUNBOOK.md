@@ -10044,3 +10044,19 @@ private source ZIP는공통archive로생성해4SourceVersion원본과전/후pars
 다음 전환은 원본 7/14_0801의 time/type/tags와 legacy transition의 추가 메타데이터 관문을 대조하고, UTC 7/13 발표일과 한국시각 7/14 취재 구간의 달력 비교를 정확한 원문 시각으로 확인한다. 로컬 날짜로 원문 발표일을 덮거나 메타데이터를 조용히 삭제하지 않는다. Codex 한 줄 릴리스와 비교 차단의 공식 대체 근거도 남는다. 한 시간 같은 실패를 반복한 항목은 없으며 전체 목표는 active다.
 
 원문 판본 3개와 모델/후보/직접 검토/원초안/정정/검사의 47자료·48ZIPmembers·222,440bytes를 private Research ID1HaM3vzc5wdrr0iLMg5iMM4Da-eOOwrdj에 보관했다. actual 원격 metadata의 부모/shared:false와 raw SHA89967cc96839ed59aa72e400acb98c21b1791d649636d934db1a0700798e02a6을 대조했다. exact manifest SHA4322390694b4ca81e95d0a3cdfc6d69e948a72f54b396831be7c27aab851aaa8로 공통v1의49파일 CRC/SHA/bytes 복구를 확인했다. 실행 실패와 작성/검토 완료를 구분하며 fullruntime 복구나 공개 승인으로 집계하지 않는다.
+
+## 402. 원문 UTC 시각·구형 메타데이터·발견 경로를 보존한 소급 전환
+
+7/14_0801 실제 전환에서 공통 차단 결함을 수정했다. `source-publication-time`은 사용한 verified claim과 exact source/parse의 명시적 header timestamp를 확인한 뒤 한국시각 발표일을 제공한다. 원문·claim의 UTC timestamp는 유지하며 day-only·ambiguous/missing header는 변환하지 않는다. 구형 취재 구간은 원문 instant의 exclusive start/inclusive end로 판정한다. `metadata_review`는 추가 필드 각각의 명시적 판정을 요구하고, 파일명과 일치하는 time·briefing type·tags만 유지한다. 기존 excluded_items_count는 immutable before_content에만 남긴다. 미등록 추가 필드는 계속 거부한다.
+
+`source_list_dispositions`는 원래 Source List에만 있는 사용하지 않은 발견 경로를 명시적으로 검토할 수 있다. 원래 inline citation·기사 배정·승인 기사 출처·중복 판정은 이 경로로 제거할 수 없다. 실제 원래 15주소 중 릴리스3개는 공개 기사에 유지하고 RSS/API 발견12개는 전체 원본과 검토 packet에 보존했다. Signals 검증기의 0800 고정도 유효한 HHmm으로 수정해 원래0801 identity를 유지하며 잘못된 시각/다른 파일명은 거부한다.
+
+표적검사: 이전 날짜/메타데이터 묶음56개는55통과/1 fixture 반환값 오류였고 해당 실패1개만 정정 후 통과했다. 발견 경로와 기존 Source List/중복/분할 회귀10/10, Signals clock 신규 실패 재현 후 관련3/3이 통과했다. 전체 suite는 개발 중 반복하지 않았다. 로컬 모델을 다시 실행하지 않고 기존6 verified 사실과 정정 초안을 재사용해 event6c31b0895d6be835를 승인했다. 새 전문용어·기업 노드·근거 없는 누적 판단은 추가하지 않았다.
+
+`legacy-20260714-complete-reader-20261005-v1`의 생성·검증·build/site·웹/GitHub 내용 대조가 통과했다. 기존RSS40 GUID/pubDate를 유지하고 과거 수정은 현재RSS에 새 회차로 넣지 않는다. 실제1280/390 화면에서 분야 공유query/뒤로가기·Enter 기사 이동·원문3개·발표일·지도0·가로넘침0을 확인했다. 승인된 빈 Signals는 독자 안내 문구를 출력하지 않는다.
+
+새 승인 의존성 ZIP은58payload/60members·247,720bytes·SHA bbe5a95717788545e1d800daa99dfa82518484195a53eec5cb588facde42ada0이다. private Research ID1ZbZiprXtk5_hz81fqmZEOiBoMDS97vTR의 metadata/private 부모/shared:false와 actual raw SHA가 일치했다. 공통v2로60파일 복구 후 기사·Signals 승인 반환값이 원본과 정확히 일치했다. 최초 related-run에 preview/note를 넣은 입력은 candidate-approval 관계가 없어 거부됐고 note 승인에서 명시적 fact-source를 따라 closure를 구성했다. 최초 복구는 v1 전용 외부manifest 옵션과 복구root 오지정으로 실패했으며 올바른 v2 옵션/root로 검증했다. fullruntime 복구와 구분한다.
+
+Drive 작성207파일/16폴더를 실제 raw 및 전후목록으로 대조했다. 승인된2변경/삭제0의 retrospective release 후 기존7/14 회차 ID1iXHdsZv1p8QJtyc1VTUMScxsJo-rmOrq에5150bytes를 저장하고 Signals ID1c0rDTuhQcxVMxIgylf0ywOFzz_yZ-8Eh를 추가했다. 원격 raw bytes·부모·ID와 나머지 원본 불변을 확인하고 canonical에2파일을 반영했다. 최종208작성원본 source SHA d4e3552586a0325ccc5608191434025bfb10220a45aa378532ba85e7f7c54c5a, inventory166verified/57회차535미판정구간/metadata복구10/diagnostics0이다. write lock 최초 keepalive 없는 Node가 종료된 것은 실제 PID 부재를 확인해 owner 기반 recover-lock으로 기록하고 live PID4116의 guard로 저장한 뒤 정상 해제했다.
+
+증거는 외장 루트 july14-drive-preflight-v1, july14-approved-closure-{drive-raw-v2,restore-v3}, july14-restored-approvals-verification-v1, reader UI JSON/PNG와 canonical의 새 승인·Signals·preview·inventory run에 있다. 공개 commit/Actions/readback/WebsiteData는 이어 검증한다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체 legacy/WBS2/22·goal active는 남는다. 동일 실패를1시간 반복한 항목은 없다.

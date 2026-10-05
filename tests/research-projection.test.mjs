@@ -209,6 +209,152 @@ test("complete pre-v2 transition retains edition identity and all source events 
   )
 })
 
+test("legacy reviewed metadata preserves clocks and tags while retaining obsolete counters privately", (t) => {
+  const f = legacyTransitionFixture(t)
+  Object.assign(f.existing.meta, {
+    time: "08:01",
+    type: "briefing",
+    tags: ["AI", "TechBriefing", "Obsidian"],
+    excluded_items_count: 5,
+  })
+  reviseLegacyFixture(f, f.existing.body)
+  f.packet.metadata_review = {
+    metadata_read: true,
+    dispositions: [
+      { field: "time", action: "preserve", reason: "Original clock matches edition identity" },
+      { field: "type", action: "preserve", reason: "Original document is a briefing" },
+      {
+        field: "tags",
+        action: "preserve",
+        reason: "Original edition tags, not concept assignments",
+      },
+      {
+        field: "excluded_items_count",
+        action: "private_only",
+        reason: "Historical research count",
+      },
+    ],
+  }
+  const projected = () =>
+    editionProjection(f.articles, {
+      key: f.key,
+      date: f.existing.meta.date,
+      coverage_start: f.existing.meta.coverage_start,
+      coverage_end: f.existing.meta.coverage_end,
+      existing: f.existing,
+      legacy_review: f.packet,
+    })
+  const before = f.packet.before_content
+  const result = parseNote(projected().content)
+  assert.equal(result.meta.time, "08:01")
+  assert.equal(result.meta.type, "briefing")
+  assert.deepEqual(result.meta.tags, ["AI", "TechBriefing", "Obsidian"])
+  assert.equal(result.meta.excluded_items_count, undefined)
+  assert.equal(f.packet.before_content, before)
+  assert.equal(parseNote(before).meta.excluded_items_count, 5)
+  for (const mutate of [
+    (p) => delete p.metadata_review,
+    (p) => p.metadata_review.dispositions.pop(),
+    (p) => p.metadata_review.dispositions.push(p.metadata_review.dispositions[0]),
+    (p) => (p.metadata_review.dispositions[3].action = "preserve"),
+    (p) => (p.metadata_review.dispositions[2].reason = " "),
+  ]) {
+    const p = structuredClone(f.packet)
+    mutate(p)
+    assert.throws(() => assertLegacyTransition(p, f.articles, f.existing, f.relative))
+  }
+  for (const [field, value] of [
+    ["time", "09:01"],
+    ["type", "news"],
+    ["tags", ["AI", "AI"]],
+    ["excluded_items_count", -1],
+    ["private_notes", "sensitive"],
+  ]) {
+    const changed = structuredClone(f)
+    changed.existing.meta[field] = value
+    changed.packet.before_content = noteText(changed.existing.meta, changed.existing.body)
+    changed.packet.target_sha256 = sha256(changed.packet.before_content)
+    assert.throws(() =>
+      assertLegacyTransition(changed.packet, changed.articles, changed.existing, changed.relative),
+    )
+  }
+})
+
+test("legacy discovery source roles stay private and cannot remove inline or approved article evidence", (t) => {
+  const f = legacyTransitionFixture(t)
+  const discovery = "https://api.github.com/repos/vercel/ai/releases?per_page=5"
+  reviseLegacyFixture(f, f.existing.body + `\n${discovery}\n`)
+  assert.throws(
+    () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+    /retain every/,
+  )
+  f.packet.source_list_dispositions = [
+    {
+      url: discovery,
+      role: "discovery",
+      source_role_checked: true,
+      reason: "This release-list query is a research route, not one of the cited event permalinks",
+    },
+  ]
+  assert.equal(assertLegacyTransition(f.packet, f.articles, f.existing, f.relative), f.packet)
+  const after = editionProjection(f.articles, {
+    key: f.key,
+    date: f.existing.meta.date,
+    coverage_start: f.existing.meta.coverage_start,
+    coverage_end: f.existing.meta.coverage_end,
+    existing: f.existing,
+    legacy_review: f.packet,
+  })
+  assert.equal(after.content.includes(discovery), false)
+  assert.equal(f.packet.before_content.includes(discovery), true)
+  for (const mutate of [
+    (p) => (p.source_list_dispositions[0].url = f.articles[0].source_urls[0]),
+    (p) => (p.source_list_dispositions[0].url = "https://example.org/not-listed"),
+    (p) => (p.source_list_dispositions[0].reason = " "),
+    (p) => p.source_list_dispositions.push(p.source_list_dispositions[0]),
+    (p) => (p.source_list_dispositions[0].source_role_checked = false),
+  ]) {
+    const p = structuredClone(f.packet)
+    mutate(p)
+    assert.throws(() => assertLegacyTransition(p, f.articles, f.existing, f.relative))
+  }
+  reviseLegacyFixture(
+    f,
+    f.existing.body.replace("근거 없는 옛 추론.", `근거 없는 옛 추론. ${discovery}`),
+  )
+  assert.throws(
+    () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+    /discovery/,
+  )
+})
+
+test("legacy timestamp dates use the exact exclusive-start inclusive-end coverage instants", (t) => {
+  const f = legacyTransitionFixture(t)
+  const article = f.articles[0]
+  article.article_review.date_kind = "source-publication-time"
+  article.article_review.source_published_at = "2026-09-27T23:01:00Z"
+  article.article_review.published_at = "2026-09-28"
+  assert.equal(assertLegacyTransition(f.packet, f.articles, f.existing, f.relative), f.packet)
+  for (const timestamp of [
+    f.existing.meta.coverage_start,
+    "2026-09-26T23:00:59Z",
+    "2026-09-27T23:01:00.001Z",
+  ]) {
+    const changed = structuredClone(f.articles)
+    changed[0].article_review.source_published_at = timestamp
+    changed[0].article_review.published_at =
+      timestamp === f.existing.meta.coverage_start
+        ? "2026-09-27"
+        : timestamp.startsWith("2026-09-26")
+          ? "2026-09-27"
+          : "2026-09-28"
+    assert.throws(
+      () => assertLegacyTransition(f.packet, changed, f.existing, f.relative),
+      /reviewed source events/,
+    )
+  }
+})
+
 test("legacy transition rejects partial review, hash drift, lost sources and false empty dispositions", (t) => {
   const f = legacyTransitionFixture(t)
   const mutations = [

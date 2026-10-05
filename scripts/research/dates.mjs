@@ -34,6 +34,12 @@ export function samePublicationDate(claimDate, sourceDate) {
   return claim.day === source.day
 }
 
+// Translate only an explicit instant. Day-only dates have no recoverable zone.
+export function seoulPublicationDay(value) {
+  const parsed = parseResearchDate(value)
+  return parsed?.precision === "timestamp" ? kstDay(parsed.instant) : null
+}
+
 export function assertReviewDate(value, { notBefore = [] } = {}) {
   const review = parseResearchDate(value)
   if (!review) throw Error("Valid review date with an explicit timestamp offset required")

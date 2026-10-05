@@ -320,6 +320,54 @@ test("a source-reviewed Signals creation may explicitly contain no trend observa
   }
 })
 
+test("Signals creation preserves valid historical edition clocks and rejects mismatched identities", (t) => {
+  const f = fixture(t)
+  const make = (clock) => {
+    const key = `2026-09-27_${clock}_Tech_AI_Briefing`
+    const edition = `Editions/2026/09/${key}`
+    return {
+      ...f.decision,
+      schema: "knowledge-note-review/v2",
+      notes: [
+        {
+          operation: "create",
+          path: `Signals/${key}.md`,
+          previous_sha256: null,
+          content: noteText(
+            {
+              schema_version: "tech-signals/v1",
+              type: "trend-observations",
+              edition,
+              date: "2026-09-27",
+              reviewed: "2026-09-27",
+              review_basis: "primary-research",
+              observations: [],
+            },
+            `[[${edition}|수록 원고]]\n`,
+          ),
+          evidence: [{ run_id: "source", claim_ids: ["fact-1"] }],
+        },
+      ],
+    }
+  }
+  for (const clock of ["0800", "0801", "0000", "2359"])
+    assert.equal(
+      evaluateNoteReview(f.root, make(clock), { vault: f.vault }).notes[0].path,
+      `Signals/2026-09-27_${clock}_Tech_AI_Briefing.md`,
+    )
+  for (const clock of ["2400", "0860", "801"])
+    assert.throws(
+      () => evaluateNoteReview(f.root, make(clock), { vault: f.vault }),
+      /Observation edition/,
+    )
+  const mismatched = make("0801")
+  mismatched.notes[0].path = "Signals/2026-09-27_0800_Tech_AI_Briefing.md"
+  assert.throws(
+    () => evaluateNoteReview(f.root, mismatched, { vault: f.vault }),
+    /Observation edition/,
+  )
+})
+
 test("creation rejects existing and subsequently created destinations, including identical bytes", async (t) => {
   const f = fixture(t),
     decision = creation(f),

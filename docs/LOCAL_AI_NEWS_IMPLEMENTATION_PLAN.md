@@ -4233,3 +4233,9 @@ canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·�
 6a02b3f/Actions37278066302의actual build/deploy success·Node840/840·Python15+2·build/site와공통public readback21고유파일+지도module을확인했다. source4판본과release55자료의두private Drive ZIP을actual raw SHA/공통v1로복구했다. 기사원본/회차/운영횟수는변하지않았다. 다음은Vercel3원문의실제local processing 후보를직접검토하고기존7/14 회차/전문용어에연결한다. 전체legacy58/543·metadata복구10·독립human40/20·정규7회/무인08시·fullportable runtime·WBS2/22·goalactive 유지. 상세런북400.
 
 후속 실제 처리에서 Vercel3원문·12블록의 후보6개를 직접 검토하고 실제 모델 작성·정정 초안까지 진행했다. 추출60.392초·작성54.732초와 원출력/정정/근거를 보존한다. 관련47자료의 private Drive ZIP actualraw와49파일 공통v1복구를 확인했다. 추가 원문 HTTP0이며 구형 메타데이터·UTC와 한국시각의 취재 구간 판정·기사 승인·기존 회차 반영은 남는다. 상세런북401.
+
+## 19.308. 시각과 발견 경로를 보존하는 실제 소급 전환
+
+원문UTC header와 verified claim을 확인한 한국시각 발표일·정확한취재instant, 추가메타데이터의필드별판정, Source List 발견경로의비공개역할, Signals HHmm identity를공통계약에추가했다. 원문날짜/원래회차/인용은유지하며 미확인날짜·사용된기사출처·알수없는필드는계속거부한다. 날짜/metadata55통과+수정실패1통과·출처역할10/10·Signals3/3과실제preview/build/site·desktop/mobile·RSS40유지를확인했다.
+
+Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더대조후2변경/삭제0을같은회차ID로저장하고원격bytes·canonical208/sourceSHA를검증했다. 승인v2closure의actual Drive ZIP60파일복구와승인일치도확인했다. canonical166verified·57회차535구간미판정·metadata복구10·diagnostics0이다. 공개배포는후속검증, 정규운영횟수추가0·독립human40/20·정규7회/무인08시·fullruntime·전체WBS2/22·goalactive를유지한다. 상세런북402.

@@ -375,6 +375,13 @@ export function editionProjection(
   const marker = (u) => `[${[...sourceMarkers].find(([, url]) => url === u)?.[0]}]`
   const meta = {
     title: existing?.meta.title || `${date} Tech & AI 브리핑`,
+    ...(legacy_review?.metadata_review
+      ? Object.fromEntries(
+          legacy_review.metadata_review.dispositions
+            .filter((d) => d.action === "preserve")
+            .map((d) => [d.field, structuredClone(existing.meta[d.field])]),
+        )
+      : {}),
     type: "briefing",
     schema_version: "tech-ai-magazine/v2",
     date,
