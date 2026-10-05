@@ -151,6 +151,8 @@ generated_by: tech-knowledge-garden
 - [[News/54aa107c534ae476|Cloudflare AI Search, 사이트맵 없는 수집과 공통 검색 엔드포인트 추가]] · 2026-08-07
 - [[News/f66aea27eeabe66a|Cloudflare, 무상태 MCP 규격을 Workers에서 지원]] · 2026-08-07
 - [[News/1bc83fc4634ab269|OpenAI, ChatGPT용 Sol 업데이트와 추론량 조절 기능 발표]] · 2026-08-07
+- [[News/a8dbd4f6642c381b|Microsoft Research, 학습·평가 환경을 재사용하는 Orchard 소개]] · 2026-08-04
+- [[News/deec56a13e2b9b57|OpenAI, 음성 전송과 도구 실행을 분리한 GPT-Live 구조 설명]] · 2026-08-04
 - [[News/45c58985be6c34bb|IonQ, SkyWater Technology 인수 완료]] · 2026-08-01
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28

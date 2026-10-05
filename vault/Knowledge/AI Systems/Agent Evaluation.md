@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-09-28
+updated: 2026-10-05
 aliases:
   - 에이전트 평가
 parent_concepts: []
@@ -18,7 +18,7 @@ tags:
   - AI
   - Agent
   - Evaluation
-last_reviewed: 2026-09-28
+last_reviewed: 2026-10-05
 concept_id: evaluation
 label: 에이전트 평가
 group: 평가와 운영
@@ -29,6 +29,8 @@ keywords:
   - 성공 기준
   - outcome
 verified_sources:
+  - https://www.microsoft.com/en-us/research/blog/orchard-an-open-framework-for-scalable-agentic-ai/
+  - https://github.com/microsoft/Orchard
   - https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents
   - https://openai.github.io/openai-agents-python/tracing/
   - https://prometheus.io/docs/practices/histograms/
@@ -57,7 +59,7 @@ map_review:
   decision: include
   kind: evaluation
   reason: 과제·반복 시도·채점기·최종 환경 상태를 구분하는 평가 방법을 배울 필요가 있다.
-  reviewed: 2026-09-28
+  reviewed: 2026-10-05
 ---
 
 # Agent Evaluation
@@ -127,10 +129,14 @@ Prometheus의 histogram과 summary는 관측 수와 관측값의 합계를 기�
 
 ## 최근 변화
 
-없음
+- 2026-08-21 수정본 — Microsoft Research는 Claw-Eval에서 최대 세 번의 시도로 59.6%를 기록하고, ZeroClaw 연결 시 73.9%였다고 보고했다. 평가 도구 연결 조건이 다른 두 결과이며, 최초 발표일의 수치로 소급하지 않는다. [원문](https://www.microsoft.com/en-us/research/blog/orchard-an-open-framework-for-scalable-agentic-ai/)
+- 2026-08-03 — Microsoft Research가 에이전트 학습·평가 환경을 재사용하는 Orchard를 발표했다. 공식 저장소는 같은 환경 서비스를 궤적 수집·강화학습·평가에서 재사용하는 구조를 설명한다. [[News/a8dbd4f6642c381b|기사]] · [발표](https://www.microsoft.com/en-us/research/blog/orchard-an-open-framework-for-scalable-agentic-ai/) · [저장소](https://github.com/microsoft/Orchard)
 
 ## 출처
 
 - [Anthropic · Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 - [OpenAI Agents SDK · Tracing](https://openai.github.io/openai-agents-python/tracing/)
 - [Prometheus · Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+
+- [Microsoft Research · Orchard](https://www.microsoft.com/en-us/research/blog/orchard-an-open-framework-for-scalable-agentic-ai/)
+- [Microsoft · Orchard 공식 저장소](https://github.com/microsoft/Orchard)
