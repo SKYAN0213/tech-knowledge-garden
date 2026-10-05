@@ -1725,3 +1725,8 @@ GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 �
 - HFNN 기존 기사에 전문용어 연결·용어 정의·색인 Drive 저장:3/3 verified, canonical213개·삭제0. 새 기사/새 회차로 만들지 않았다.
 - 기존 후보 최초 승인 guard는 공개 원문을 차단했다. 기존v5 승인 유지, 별도 retrospective v6 authoring release를 사용한다.
 - 공개 배포와 다음 WebsiteData는 아직 별도 gate다. 신규 운영 횟수0·독립 사람 gold0·heldout0 및 전체 목표 active를 유지한다.
+
+
+### 2026-10-06 HFNN 실제 공개 검증
+
+e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/reader equivalence를 확인했다. canonical 색인은 GitHub 원본으로 검증하고 독자 페이지를 요구하지 않도록 수정했다. 공개 검증 표적11/11 통과. 원본213개는 기존 connector snapshot builder와 pull-drive 검증기를 재사용했다. 새 WebsiteData·수정 도구의 배포는 별도 gate이며 전체 목표는 active다.

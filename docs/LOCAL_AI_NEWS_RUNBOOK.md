@@ -10431,3 +10431,8 @@ export-website-data.py는 기존 garden parser로 고정 사건 ID→모든 Edit
 최초 candidate-approval은 이미 공개된 원문을 새로 승인하지 않는다. paper-hfnn-approval-lineage-v1 요청의 실패를 보존했고 guard를 완화하지 않았다. 기존 후보 v5 승인과 approval_history를 유지하며, 검증된 v6·전문용어 note approval을 private-preview와 retrospective authoring release로 연결한다. 다음 최초 후보 승인 재시도는 하지 않는다.
 
 preview daily-20261006-paper-hfnn-reader-preview-v2, release runs/daily-20261006-paper-hfnn-reader-preview-v2/drive-authoring/releases/3c80abf276d8535baa1b2620d26a17f6998f96f449f2da9b77509aac0ac4aa99.json이다. writer는3개 모두 검증 완료했다. post snapshot .local/drive-sync/hfnn-authoring-post-snapshot-20261006-v1.json의213개 원본을 pull-drive로 적용했다. 새 publication operation은 daily-20261006-paper-hfnn-publication-v1이며 scripts/publish.mjs --operation --release가 bind를 수행한다. research-publication CLI의 독립 prepare 모드는 없다. 기존 정규 발행0b827e1의 공개 검증과 WebsiteData11 raw 검증은 완료했고 이 소급 변경의 배포 증거와 섞지 않는다.
+
+
+### 2026-10-06 HFNN 실제 공개 검증
+
+e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/reader equivalence를 확인했다. canonical 색인은 GitHub 원본으로 검증하고 독자 페이지를 요구하지 않도록 수정했다. 공개 검증 표적11/11 통과. 원본213개는 기존 connector snapshot builder와 pull-drive 검증기를 재사용했다. 새 WebsiteData·수정 도구의 배포는 별도 gate이며 전체 목표는 active다.

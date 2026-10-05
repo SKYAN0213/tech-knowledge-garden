@@ -4418,3 +4418,10 @@ WebsiteData는 실제 배포0b827e1의351페이지·172기사·24개념·22관�
 HFNN 기사 v6를 최초 후보 승인 경로로 다시 연결하려던 요청은 이미 공개된 원문이라는 중복 방지 gate에서 거절됐다. 실패 영수증을 보존하고 후보 장부·기존v5 승인을 변경하지 않았다. 기존 공개 사건72081e8f67345f20에 대한 retrospective authoring 경로로 진행했다. 현재 런타임으로 만든 preview-v2는380공개 파일 중379개가 이전 UI 검증본과 동일하고 유일한 차이는 sitemap.xml 생성 시각이며 digest도 동일하다. 기존 사건 ID·본문·발표일·RSS40 GUID/pubDate를 유지했다.
 
 Drive 작성 원본212개를 실제 raw로 새로 읽고16폴더의 앞뒤 목록을 대조했다. 검토된 소급 release로 기존 회차·용어 색인 업데이트2개와 HFNN 노트 생성1개를 guarded writer에서 확인했다. session cd1e0186-08f6-47fe-8b74-430ac59e479b는 verified_complete, pending/conflict/unresolved0이고 후보 발행·신규 운영 횟수로 승격하지 않는다. HFNN 노트 ID1s4rFAcBMMOm3dXd1SOmrglG2hEr4_2e-와 세 변경의 raw byte 검증을 마쳤다. 원격 전체 목록과212개 사전 raw 및3개 쓰기 후 raw를 합친 일관된213원본 snapshot을 기존 pull-drive.py로 반영했고 삭제0·업데이트3이다. 공개 배포·새 WebsiteData 갱신은 후속 gate이며 사람 독립 gold·신규7회·무인8시 실행·전체 소급은 계속 미완료다.
+
+
+## 19.328. 용어 색인과 독자 페이지의 공개 검증 경계 수정
+
+HFNN 소급 변경의 e7a6ee1은 Actions37381769777에서 전체 검사·빌드·배포에 성공했다. 실제 publicReadbackPlan은 작성용 Knowledge/00 Tech Encyclopedia Index.md에도 웹 페이지를 요구해 Missing knowledge page mapping으로 중단됐다. 실제 manifest와 배포 SHA로 재현했다. 명시적인 canonical 색인만 웹 대상에서 제외하고 색인 원본은 pinned GitHub raw 대상에 유지했다. 색인 byte 변경과 다른 전문용어를 navigation으로 위장한 경우는 거부한다. 첫 worktree 검사는 node_modules 부재라는 환경 실패였으며 소유한 의존성 symlink 제공 후 공개 검증 파일 전체11/11을 확인했다. 전체 suite는 로컬에서 반복하지 않았다.
+
+수정된 검증기로 e7a6ee1의 공개15파일·map 모듈을 실제 조회하고 byte/reader equivalence를 확인했다. operation daily-20261006-paper-hfnn-publication-v1은 public_bytes_verified이며 신규 운영으로 집계하지 않는다. 작성 원본213개도 기존 build-connector-snapshot.py와 pull-drive.py를 재사용해16폴더 metadata·파일별 부모/크기/수정시각·raw SHA 및 전체 로컬 scope를 검증했다. 공개 검사 도구 수정의 배포와 새 WebsiteData는 별도로 확인한다.
