@@ -10424,3 +10424,10 @@ Actions hosted runner 미배정 대기는1시간 이상이며 수동 재실행0�
 Actions37372213094 attempt2는0b827e1에서 success다. regular-deployment-v1.json, regular-public-readback-v1.json, regular-topic-public-readback-v1.json은 외장 tkg-daily-core-20261006-v1에 있다. hosted runner1시간 차단 기록은 과거 이력으로 보존한다. 이번 배포를 수동 실행이나 예약 완료 횟수로 자동 계산하지 않는다.
 
 export-website-data.py는 기존 garden parser로 고정 사건 ID→모든 Editions 원본, topic ID→실제 TrendTopics 파일을 찾는다. 직접 작성 Knowledge와 briefing edition도 보존한다. Drive SHA 불일치나 live/local assets 불일치는 중단한다. WebsiteData CSV에서 여러 회차는 같은 셀의 줄바꿈으로 제공하며 snapshot.note_lineage에서 각각의 path/url/SHA를 확인한다. 기존 RSS GUID·기사 URL·발표일을 변경하지 않는다. canonical 조사는 다시 실행하지 않으며 모델 호출0이다. 표적 검사는 node --test tests/website-note-lineage.test.mjs, python -m unittest discover -s tests -p test_export_website_data.py이며 각각2/2·3/3이다. 실제 링크 proof는 regular-website-note-link-proof-v1.json이다.
+
+
+## 420. HFNN 소급 반영의 승인 경계와 Drive 저장
+
+최초 candidate-approval은 이미 공개된 원문을 새로 승인하지 않는다. paper-hfnn-approval-lineage-v1 요청의 실패를 보존했고 guard를 완화하지 않았다. 기존 후보 v5 승인과 approval_history를 유지하며, 검증된 v6·전문용어 note approval을 private-preview와 retrospective authoring release로 연결한다. 다음 최초 후보 승인 재시도는 하지 않는다.
+
+preview daily-20261006-paper-hfnn-reader-preview-v2, release runs/daily-20261006-paper-hfnn-reader-preview-v2/drive-authoring/releases/3c80abf276d8535baa1b2620d26a17f6998f96f449f2da9b77509aac0ac4aa99.json이다. writer는3개 모두 검증 완료했다. post snapshot .local/drive-sync/hfnn-authoring-post-snapshot-20261006-v1.json의213개 원본을 pull-drive로 적용했다. 새 publication operation은 daily-20261006-paper-hfnn-publication-v1이며 scripts/publish.mjs --operation --release가 bind를 수행한다. research-publication CLI의 독립 prepare 모드는 없다. 기존 정규 발행0b827e1의 공개 검증과 WebsiteData11 raw 검증은 완료했고 이 소급 변경의 배포 증거와 섞지 않는다.

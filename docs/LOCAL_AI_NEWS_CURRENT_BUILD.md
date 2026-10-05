@@ -1717,3 +1717,11 @@ GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 �
 - 모바일·데스크톱 실제 공개 UI의 탭·태그·공유 URL·뒤로 가기·키보드·누적 기록, 가로 넘침0·뉴스/브리핑 지도0·console error0 확인.
 - WebsiteData 원본 연결: 고정 사건 ID와 topic ID로347개 source page→175개 canonical note를 정확히 연결. 모든 Drive 링크/SHA 일치. 표적5검사 통과.
 - 아직 별도 gate: WebsiteData 갱신·재다운로드, HFNN canonical/public 반영, 신규7회 운영, 사람 gold/heldout, 무인8시 복구, 전체 legacy 판정.
+
+
+### 2026-10-06: Drive 보관 검증과 HFNN 소급 원본
+
+- 실제 배포0b827e1 WebsiteData: 11raw SHA·bytes 검증 완료, 링크 누락0, 기존 ID 보존.
+- HFNN 기존 기사에 전문용어 연결·용어 정의·색인 Drive 저장:3/3 verified, canonical213개·삭제0. 새 기사/새 회차로 만들지 않았다.
+- 기존 후보 최초 승인 guard는 공개 원문을 차단했다. 기존v5 승인 유지, 별도 retrospective v6 authoring release를 사용한다.
+- 공개 배포와 다음 WebsiteData는 아직 별도 gate다. 신규 운영 횟수0·독립 사람 gold0·heldout0 및 전체 목표 active를 유지한다.

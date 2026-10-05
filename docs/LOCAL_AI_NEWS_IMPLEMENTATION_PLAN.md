@@ -4409,3 +4409,12 @@ Groq 빈 추출 복구 묶음은 Drive ZIP1uHupfrDCvaj6yHawFZ3yhveFVHQI_ZZI, man
 공식 Actions 복구를 확인한 뒤 기존37372213094를 한 번 재실행했다. attempt2의 전체 검사·빌드·배포는 실제0b827e10b221cc2a4df07707433c6b65b3713948에서 성공했다. 웹11·commit-pinned GitHub8 파일의 byte readback과 추가 주제4 파일을 확인했다. publication은 public_bytes_verified이며 무인8시 실행·신규 운영 횟수로 승격하지 않는다. 실제 브라우저에서 모바일390px·데스크톱1280px, 분야 탭·공유 URL·뒤로 가기·기업 태그·키보드 Enter·기사→누적 기록·기사와 브리핑 지도0·가로 넘침0·console error0을 확인했다.
 
 WebsiteData export에서 최근 생성 기사·브리핑·누적 주제의 Drive 링크 누락을 발견했다. 기존 생성본 업로드 경로에만 의존하던 join을 고정 사건 ID의 실제 회차 원본, briefing의 명시적 edition, topic ID의 실제 TrendTopics 파일, Knowledge 원본으로 바꿨다. 반복 사건의 모든 회차를 최신순으로 보존하며 파일명을 topic ID로 추측하지 않는다. canonical 파일 SHA가 Drive 영수증과 다르면 중단하고, 배포 assets와 로컬 build bytes가 다를 때도 원본 연결을 거부한다. 표적 Node2/2·Python3/3 통과, 실제347개 source page·175개 canonical note의 모든 링크와 SHA가 일치했다. Drive WebsiteData 업로드·재다운로드는 다음 단계이며 HFNN canonical 발행·독립 사람 gold·신규7회 운영·무인8시 실행은 미완료다.
+
+
+## 19.327. WebsiteData 검증 완료와 HFNN canonical 소급 반영
+
+WebsiteData는 실제 배포0b827e1의351페이지·172기사·24개념·22관계를 보관했다. 11파일 중 바뀐10개를 기존 ID로 갱신하고 나머지 연결 CSV는 보존했다. private parent·폴더12항목·11개 raw 재다운로드 SHA와 로컬 보관본 byte equality를 확인했으며 snapshot.unmapped_pages는0이다. regular-websitedata-readback-proof-v2.json은 외장 증거 위치에 있다.
+
+HFNN 기사 v6를 최초 후보 승인 경로로 다시 연결하려던 요청은 이미 공개된 원문이라는 중복 방지 gate에서 거절됐다. 실패 영수증을 보존하고 후보 장부·기존v5 승인을 변경하지 않았다. 기존 공개 사건72081e8f67345f20에 대한 retrospective authoring 경로로 진행했다. 현재 런타임으로 만든 preview-v2는380공개 파일 중379개가 이전 UI 검증본과 동일하고 유일한 차이는 sitemap.xml 생성 시각이며 digest도 동일하다. 기존 사건 ID·본문·발표일·RSS40 GUID/pubDate를 유지했다.
+
+Drive 작성 원본212개를 실제 raw로 새로 읽고16폴더의 앞뒤 목록을 대조했다. 검토된 소급 release로 기존 회차·용어 색인 업데이트2개와 HFNN 노트 생성1개를 guarded writer에서 확인했다. session cd1e0186-08f6-47fe-8b74-430ac59e479b는 verified_complete, pending/conflict/unresolved0이고 후보 발행·신규 운영 횟수로 승격하지 않는다. HFNN 노트 ID1s4rFAcBMMOm3dXd1SOmrglG2hEr4_2e-와 세 변경의 raw byte 검증을 마쳤다. 원격 전체 목록과212개 사전 raw 및3개 쓰기 후 raw를 합친 일관된213원본 snapshot을 기존 pull-drive.py로 반영했고 삭제0·업데이트3이다. 공개 배포·새 WebsiteData 갱신은 후속 gate이며 사람 독립 gold·신규7회·무인8시 실행·전체 소급은 계속 미완료다.
