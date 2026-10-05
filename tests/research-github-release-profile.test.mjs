@@ -98,3 +98,27 @@ test("missing or ambiguous bodies, titles and release dates cannot fall back to 
   assert.equal(duplicate.dates.profile_status, "ambiguous")
   assert.equal(duplicate.dates.published_at, null)
 })
+
+test("scoped package tags select the common release profile and retain its authoritative timestamp", async (t) => {
+  const parse = fixture(t)
+  const scoped = html.replaceAll("ai@7.0.25", "@ai-sdk/groq@4.0.8")
+  for (const url of [
+    "https://github.com/vercel/ai/releases/tag/%40ai-sdk/groq%404.0.8",
+    "https://github.com/vercel/ai/releases/tag/%40ai-sdk%2Fgroq%404.0.8",
+    "https://github.com/vercel/ai/releases/tag/@ai-sdk/groq@4.0.8",
+  ]) {
+    const matched = profiles.filter((p) => new RegExp(p.url_pattern).test(url))
+    assert.equal(matched.length, 1)
+    assert.equal(matched[0].id, profile.id)
+    const result = await parse(scoped, url)
+    assert.equal(result.title, "@ai-sdk/groq@4.0.8")
+    assert.equal(result.dates.published_at, "2026-07-13T21:32:40Z")
+    assert.equal(result.dates.precision, "timestamp")
+  }
+  assert.equal(
+    new RegExp(profile.url_pattern).test(
+      "https://example.com/vercel/ai/releases/tag/@ai-sdk/groq@4.0.8",
+    ),
+    false,
+  )
+})

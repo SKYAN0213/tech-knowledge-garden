@@ -231,6 +231,36 @@ test("fresh-source processing invokes extraction then assessment but never auto-
   assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
 })
 
+test("an impossible full-source assessment stops before extraction without changing stored source bytes", async (t) => {
+  const f = fixture(t, { extracted: false })
+  const documents = readJSON(f.root, "runs/source/documents.json")
+  const parse = readJSON(f.root, "runs/source/parses.json")[0]
+  const text = "Example plans to ship 50 units in 2027. " + "A long source paragraph. ".repeat(280)
+  const original = Buffer.from(Array(12).fill(text).join("\n\n"))
+  const bodyHash = sha256(original)
+  documents[0].body_sha256 = bodyHash
+  documents[0].source_version_id = `${documents[0].source_id}:${bodyHash}`
+  documents[0].body_path = `documents/${documents[0].source_id}/${bodyHash}/body.bin`
+  parse.source_version_id = documents[0].source_version_id
+  parse.parse_id = sha256("long-source-parse")
+  parse.blocks = Array.from({ length: 12 }, (_, i) => ({
+    block_id: `${parse.parse_id}:b${i + 1}`,
+    text,
+    locator: { text_hash: sha256(text) },
+  }))
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  atomicWrite(f.root, documents[0].body_path, original)
+  atomicWrite(f.root, "runs/source/documents.json", documents)
+  atomicWrite(f.root, "runs/source/parses.json", [parse])
+  await assert.rejects(
+    processSourceRun(f.options),
+    /Full source assessment exceeds context budget before extraction/,
+  )
+  assert.deepEqual(f.calls, [])
+  assert.equal(readJSON(f.root, "runs/processed/claims.json"), null)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, documents[0].body_path)), original)
+})
+
 test("completed extraction survives failed assessment and is reused under a new policy", async (t) => {
   const f = fixture(t, { extracted: false })
   const generate = f.provider.structured

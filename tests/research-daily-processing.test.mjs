@@ -122,6 +122,26 @@ test("planning never invokes a model or writes selections; execution links exact
     )
 })
 
+test("publication-time review permits exact source fact processing without approving or inventing a time", async (t) => {
+  const f = fixture(t)
+  f.handoff.pending[0].next_route = "review-publication-time"
+  f.handoff.pending[0].source_published_at = "2026-10-02"
+  f.options.candidateKeys = ["candidate-0"]
+  atomicWrite(f.root, "handoff.json", f.handoff)
+  const result = await processDailyCandidates({ ...f.options, execute: true })
+  assert.equal(f.calls.length, 1)
+  assert.equal(result.results[0].status, "fact_review")
+  assert.equal(result.results[0].next_route, "review-publication-time")
+  assert.equal(result.candidate_published, false)
+  assert.equal(result.public_approved, false)
+  const selected = readJSON(f.root, `runs/${result.results[0].source_run}/parses.json`)
+  assert.equal(selected[0].dates.published_at, "2026-10-02")
+  assert.equal(
+    readJSON(f.root, `runs/${result.results[0].processing_run}/approved-article.json`),
+    null,
+  )
+})
+
 test("one failed item is preserved while the next proceeds; resume does not retry it", async (t) => {
   const f = fixture(t)
   f.options.processor = async (opts) => {

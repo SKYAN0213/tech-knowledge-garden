@@ -1643,7 +1643,7 @@
     },
     {
       "id": "github-release-detail-v1",
-      "url_pattern": "^https://github\\.com/(?!NVIDIA/NemoClaw/releases/tag/v0\\.0\\.115/?$)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/tag/[^/?#]+/?$",
+      "url_pattern": "^https://github\\.com/(?!NVIDIA/NemoClaw/releases/tag/v0\\.0\\.115/?$)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/tag/[^?#]+/?$",
       "options": {
         "language": "en",
         "title_xpath": "//main//h1[not(ancestor::dialog or ancestor::dialog-helper or ancestor::*[@role='dialog'])]",

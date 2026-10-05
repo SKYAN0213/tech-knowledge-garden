@@ -13,7 +13,6 @@ const identityRoutes = new Set([
   "review-existing-unverified",
   "review-source-revision",
   "verify-original-date",
-  "review-publication-time",
 ])
 
 async function currentHandoff({ root, dailyRunId, vault, backlogFile }) {
@@ -26,6 +25,9 @@ async function currentHandoff({ root, dailyRunId, vault, backlogFile }) {
 // A daily handoff supplies the routing and exact stored source; the common
 // processor supplies the model checkpoints and explicit review gates.
 // Candidate/event approval and publication remain in their existing paths.
+// Reviewing a known publication date is not an event-identity conflict. Exact
+// source facts may be extracted first; the original date precision and the
+// explicit fact/editorial approval gates remain unchanged.
 export async function processDailyCandidates({
   root,
   runId,
