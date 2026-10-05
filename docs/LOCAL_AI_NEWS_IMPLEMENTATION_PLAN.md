@@ -4238,4 +4238,6 @@ canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·�
 
 원문UTC header와 verified claim을 확인한 한국시각 발표일·정확한취재instant, 추가메타데이터의필드별판정, Source List 발견경로의비공개역할, Signals HHmm identity를공통계약에추가했다. 원문날짜/원래회차/인용은유지하며 미확인날짜·사용된기사출처·알수없는필드는계속거부한다. 날짜/metadata55통과+수정실패1통과·출처역할10/10·Signals3/3과실제preview/build/site·desktop/mobile·RSS40유지를확인했다.
 
-Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더대조후2변경/삭제0을같은회차ID로저장하고원격bytes·canonical208/sourceSHA를검증했다. 승인v2closure의actual Drive ZIP60파일복구와승인일치도확인했다. canonical166verified·57회차535구간미판정·metadata복구10·diagnostics0이다. 공개배포는후속검증, 정규운영횟수추가0·독립human40/20·정규7회/무인08시·fullruntime·전체WBS2/22·goalactive를유지한다. 상세런북402.
+Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더대조후2변경/삭제0을같은회차ID로저장하고원격bytes·canonical208/sourceSHA를검증했다. 승인v2closure의actual Drive ZIP60파일복구와승인일치도확인했다. canonical166verified·57회차535구간미판정·metadata복구10·diagnostics0이다. 정규운영횟수추가0·독립human40/20·정규7회/무인08시·fullruntime·전체WBS2/22·goalactive를유지한다. 상세런북402.
+
+공개 후속: 258ecb9/Actions37284484323의 build/deploy 성공·Node845/845·Python15+2/build/site·실제13공개파일과지도module·desktop/mobile을 검증했다. WebsiteData11파일3,460,243bytes의 실제Drive raw SHA를 확인하고 변경 없는3파일은 쓰기를 생략했다. 릴리스 증거322자료의 Drive ZIP actual raw와공통v1 324파일복구까지확인했다. 전체 목표는 미완료이며 다음은 남은 metadata-ready 자료와 metadata 복구 근거를 조사한다.
