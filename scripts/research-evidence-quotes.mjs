@@ -14,6 +14,8 @@ try {
       review: { type: "string" },
       "complete-missing": { type: "boolean", default: false },
       "model-policy": { type: "string" },
+      "resume-local-budget-ms": { type: "string" },
+      "resume-budget-reason": { type: "string" },
     },
   })
   if (!values.review) throw Error("Explicit quote review JSON file required")
@@ -24,15 +26,29 @@ try {
     review: JSON.parse(fs.readFileSync(values.review, "utf8")),
     completeMissing: values["complete-missing"],
     createMissingProvider: values["complete-missing"]
-      ? async () =>
-          prepareRoleProvider(
+      ? async () => {
+          const root = values.root || DEFAULT_ROOT
+          const ledger = JSON.parse(
+            fs.readFileSync(
+              `${root}/runs/${values["source-run"]}/model-policy/evidence_compare/budget.json`,
+              "utf8",
+            ),
+          )
+          return prepareRoleProvider(
             new Ollama({ url: localOllamaURL() }),
             JSON.parse(
               fs.readFileSync(values["model-policy"] || "data/research-model-policy.json", "utf8"),
             ),
             "evidence_compare",
-            { root: values.root || DEFAULT_ROOT, run: values.run },
+            {
+              root,
+              run: values.run,
+              overrides: { think: ledger.binding.settings.think },
+              additionalBudgetMs: Number(values["resume-local-budget-ms"] || 0),
+              extensionReason: values["resume-budget-reason"],
+            },
           )
+        }
       : null,
   })
   console.log(

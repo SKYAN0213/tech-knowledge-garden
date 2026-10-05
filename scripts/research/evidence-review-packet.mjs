@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
+import { assessWindowEvidenceCheckpoint } from "./window-evidence-assessment.mjs"
 import { validateEvidence, recordFactReview, assertVerifiedClaim } from "./claims.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
@@ -63,7 +64,11 @@ export async function loadBoundAssessment(root, run, claims, documents, parses) 
       throw Error("Missing assessment checkpoint; compare evidence first")
     },
   }
-  const result = await assessEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
+  const assess =
+    input.schema === "research-window-evidence-assessment-input/v1"
+      ? assessWindowEvidenceCheckpoint
+      : assessEvidenceCheckpoint
+  const result = await assess(root, run, provider, claims, documents, parses, {
     claimsPerBatch: input.claims_per_batch,
   })
   if (result.generated_batches !== 0) throw Error("Assessment reader cannot generate results")

@@ -9,7 +9,10 @@ import {
 import { loadStoredSourceRun, assertStoredEvidence } from "./parser.mjs"
 import { prepareRoleProvider, resolveRolePolicy } from "./model-policy.mjs"
 import { Ollama, localOllamaURL } from "./ollama.mjs"
-import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
+import {
+  assessSourceEvidenceCheckpoint,
+  assertSegmentableSource,
+} from "./window-evidence-assessment.mjs"
 import {
   factReviewPacket,
   loadBoundAssessment,
@@ -113,18 +116,7 @@ export async function processSourceRun({
         throw Error("Source processing requires local Ollama roles")
     const overrides = evidenceThink === undefined ? {} : { think: evidenceThink }
     const assessmentPolicy = resolveRolePolicy(policy, "evidence_compare", overrides)
-    // The full single-source block array alone is a conservative lower bound
-    // on the assessment request. Keep the exact assessment implementation and
-    // historical checkpoints unchanged; its complete budget check still runs.
-    // Multi-source events retain the existing per-claim source selection.
-    if (
-      parses.length === 1 &&
-      JSON.stringify(parses[0].blocks.map(({ block_id, text }) => ({ block_id, text }))).length >
-        assessmentPolicy.num_ctx * 2
-    )
-      throw Error(
-        "Full source assessment exceeds context budget before extraction; preserve it for long-document review",
-      )
+    assertSegmentableSource(parses, assessmentPolicy)
     const baseProvider =
       provider ||
       new Ollama({
@@ -150,6 +142,7 @@ export async function processSourceRun({
           "processed-draft.mjs",
           "claims.mjs",
           "evidence-assessment.mjs",
+          "window-evidence-assessment.mjs",
           "source-context.mjs",
           "draft-checkpoint.mjs",
           "editor.mjs",
@@ -235,7 +228,14 @@ export async function processSourceRun({
       async () => {
         if (assessmentRun) return reusedAssessment
         return (
-          await assessEvidenceCheckpoint(root, run, scoped, extracted.claims, documents, parses)
+          await assessSourceEvidenceCheckpoint(
+            root,
+            run,
+            scoped,
+            extracted.claims,
+            documents,
+            parses,
+          )
         ).record
       },
     )

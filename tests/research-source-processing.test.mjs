@@ -231,19 +231,80 @@ test("fresh-source processing invokes extraction then assessment but never auto-
   assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
 })
 
-test("an impossible full-source assessment stops before extraction without changing stored source bytes", async (t) => {
+test("long-source processing retains all blocks and requires full-context resolution before writing", async (t) => {
+  const f = fixture(t)
+  const documents = readJSON(f.root, "runs/source/documents.json")
+  const parse = readJSON(f.root, "runs/source/parses.json")[0]
+  const extracted = readJSON(f.root, "runs/source/claims.json")
+  parse.blocks = Array.from({ length: 12 }, (_, i) => {
+    const text = f.claim.statement + " Source context. ".repeat(440)
+    return { block_id: `${parse.parse_id}:b${i + 1}`, text, locator: { text_hash: sha256(text) } }
+  })
+  const body = parse.blocks.map((b) => b.text).join("\n\n")
+  const hash = sha256(body)
+  documents[0].body_sha256 = hash
+  documents[0].source_version_id = `${documents[0].source_id}:${hash}`
+  documents[0].body_path = `documents/${documents[0].source_id}/${hash}/body.bin`
+  parse.source_version_id = documents[0].source_version_id
+  extracted.claims[0].evidence[0].source_version_id = parse.source_version_id
+  extracted.claims[0].claim_id = sha256(
+    JSON.stringify([f.claim.candidate_key, f.claim.statement, extracted.claims[0].evidence]),
+  ).slice(0, 24)
+  atomicWrite(f.root, documents[0].body_path, body)
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  atomicWrite(f.root, "runs/source/documents.json", documents)
+  atomicWrite(f.root, "runs/source/parses.json", [parse])
+  atomicWrite(f.root, "runs/source/claims.json", extracted)
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const response = await generate.call(this, request)
+    if (this.executionPolicy.role === "evidence_compare") {
+      const data = JSON.parse(request.messages[1].content)
+      for (const row of response.output.assessments)
+        row.evidence[0].block_id = data.sources[0].blocks[0].block_id
+    }
+    return response
+  }
+  const first = await processSourceRun(f.options)
+  assert.equal(first.status, "fact_review")
+  assert.ok(f.calls.length > 1)
+  assert.ok(f.calls.every((role) => role === "evidence_compare"))
+  const context = await loadFactReviewPacket(f.root, "processed")
+  assert.deepEqual(context.packet.sources[0].blocks, parse.blocks)
+  assert.equal(context.packet.claims[0].model_assessment.requires_attention, true)
+  const review = await decision(f)
+  await assert.rejects(reviewProcessedClaims(f.root, "processed", review), /Resolve each/)
+  const evidence = extracted.claims[0].evidence[0]
+  review.model_assessment.resolutions.push({
+    claim_id: extracted.claims[0].claim_id,
+    outcome: "confirmed",
+    reason: "전체 문단을 읽고 출하 수량은 2027년 계획이며 완료 실적이 아님을 확인했다.",
+    evidence: [{ parse_id: evidence.parse_id, block_id: evidence.block_id, quote: evidence.quote }],
+  })
+  await reviewProcessedClaims(f.root, "processed", review)
+  const compared = f.calls.length
+  const result = await processSourceRun(f.options)
+  assert.equal(result.status, "editorial_review")
+  assert.equal(f.calls.length, compared + 1)
+  assert.equal(f.calls.at(-1), "article_write")
+  await processSourceRun(f.options)
+  assert.equal(f.calls.length, compared + 1)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, documents[0].body_path)), Buffer.from(body))
+})
+
+test("an oversized atomic source block stops before extraction without changing stored source bytes", async (t) => {
   const f = fixture(t, { extracted: false })
   const documents = readJSON(f.root, "runs/source/documents.json")
   const parse = readJSON(f.root, "runs/source/parses.json")[0]
-  const text = "Example plans to ship 50 units in 2027. " + "A long source paragraph. ".repeat(280)
-  const original = Buffer.from(Array(12).fill(text).join("\n\n"))
+  const text = "Example plans to ship 50 units in 2027. " + "A long source paragraph. ".repeat(3360)
+  const original = Buffer.from(text)
   const bodyHash = sha256(original)
   documents[0].body_sha256 = bodyHash
   documents[0].source_version_id = `${documents[0].source_id}:${bodyHash}`
   documents[0].body_path = `documents/${documents[0].source_id}/${bodyHash}/body.bin`
   parse.source_version_id = documents[0].source_version_id
   parse.parse_id = sha256("long-source-parse")
-  parse.blocks = Array.from({ length: 12 }, (_, i) => ({
+  parse.blocks = Array.from({ length: 1 }, (_, i) => ({
     block_id: `${parse.parse_id}:b${i + 1}`,
     text,
     locator: { text_hash: sha256(text) },

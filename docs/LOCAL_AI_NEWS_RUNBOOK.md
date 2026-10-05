@@ -10322,3 +10322,21 @@ Groq 승인 portable closure는261자료/263members/801,479bytes/SHA696ff47a…�
 전체 목표 active/WBS2/22, metadata 복구10·미판정50/483·독립human40dev/20heldout·서로 다른 새정규7회·실제08시/인증/중단·장문 전체 대조·full runtime 복구는 남는다. 다음 개발은 새로운 구조/출처 확장보다 기존54경로/772후보와 승인 NASA/FDA를 재사용해 첫8분야 정규회차의 전체 흐름을 연결하는 것을 우선한다. 새 회차에 필요한 추가 분야 원문은 실제 조사하고 승인하며, 소급 수정이나 private sample을 정규 횟수로 계산하지 않는다.
 
 412 최종보관: 원래3회차·수정3회차·transition 검토·실제Drive intent/execution·CI·공개14파일·WebsiteData11·UI/inventory 증거128자료를 기존 ordinary v1으로 보관했다. Private Drive ZIP15kAB_TJ5qeridjdmRT7h8on_Q-xRWfiM(1,357,227bytes/SHA62764c8b…)와 exact manifest1v57YDpNl7HovtNgz93lnkeNsXjRtx9xr(SHA6ace705d…)를 실제raw로 다시 읽고 ZIP129members·복구130파일(원 manifest 포함)을 확인했다. 복구본의 원본/승인3SHA·write-session verified3·public_bytes_verified·배포성공·WebsiteData11·미판정50/483을 재검증했다. 이 운영증거 ordinary v1과 승인원문/개념 authority portable v2를 구분하며 전체runtime/정규운영으로세지않는다. release-evidence-drive-proof-v1 및 remote raw/restore 영수증은 외장 비공개 증거에 보존한다.
+
+## 413. 긴 논문의 공통 창 대조·명시적 인용 복구
+
+2026-10-06 KST. 기존 목표는 active이며 외장 본체와 dirty state를 확인한 뒤 직접 차단 결함만 구현했다. 공통 장문 어댑터를 추가하고 기존 짧은 원문 대조 파일은 그대로 유지했다. 원문 130블록을 자르거나 새 locator를 만들지 않는다. 후보 묶음별 모든 블록의 순서·창·요청 SHA와 원문/parse/정책/구현 SHA를 고정한다. 창 밖 인용·원문/응답 변조·미완성 응답의 무단 재생성은 거부한다. 완료 checkpoint를 읽는 경로는 모델을 호출하지 않는다.
+
+최초 표적62건 중 기존56건은 통과했으며 신규5fixture의 블록 ID와 작은 테스트 context 조건을 실제 계약에 맞게 수정했다. 실패5만 재실행해5/5가 통과했다. 추가 긴 원문 처리→완전한 packet→명시적 문맥 판정→writer→재개 회귀1/1을 확인했다. quote-only 보강 후 관련19건이 통과했다. 성공한 전체 로컬 suite는 반복하지 않았다. 로그는 외장 `tkg-daily-core-20261006-v1/window-evidence-target-v1.log`, `window-evidence-failed-subset-v2.log`, `window-evidence-processing-integration-v1.log`, `window-quote-recovery-target-v1.log`에 보존한다.
+
+실제 Frontiers DOI10.3389/frobt.2026.1917009의 기존 추출 run `daily-20261006-current-paper-processing-v1-998cf9d38b93`에서29후보를 재사용했다. 발표일10/5/day와 원문 bytes·parse130블록/57,026자를 유지한다. `paper-window-plan-v1.json`은 원문 전수 포함10창의 모델 호출0 사전 관찰이며 승인 자료가 아니다. 새 `daily-20261006-paper-window-processing-v1`은 fact_extract0, evidence_compare의 비공개 think:false만 지정했다. 기본 정책은 변경하지 않았다.
+
+첫 창은 실제 Qwen3.8:27b-mlx/digest5642e974…/runtime0.34.4로261.594초에 완료했다. prompt15,548tokens·생성2,210tokens이며 중간 frame/progress도 보존됐다. 모델이 block-0005의 문중 부정관사 a를 독립 인용문 첫 A로 바꿔 exact quote 검증이 실패했다. 처음 실패 원응답과 비용 ledger를 남기고 같은 호출을 반복하지 않았다.
+
+`paper-window-quote-review-v1.json`은 직접 읽은 동일 block의 A/a 한 글자만 정정하며 `sentence_initial_article_checked: true`와 이유·원raw SHA를 고정한다. 공통 quote-only에 창 계획을 연결하고 부정관사 이외의 case 변경은 허용하지 않았다. `daily-20261006-paper-window-quote-reviewed-v1`은 첫 완료 응답1개를 materialize하고 미호출9창만 실행 중이다. 기본900초에 명시적 로컬1,800초를 더한 sealed extension은 9×기존300초 호출 상한에 맞춘 예산이다. 원래 완료 비용을 새 비용으로 복사하지 않는다. 비공개 think override도 원 binding에 맞춘다.
+
+GPT가 전체 원문과 표를 직접 확인했다. 표2의 분리효과 정확도는 Local-PointNet82.0%가 HFNN80.3%보다 높아 모든 지표에서 최고라는 결론을 그대로 기사에 쓰지 않는다. 실제 분류 실험30회와93.3%/80.0% 결과, 평균 속성 분류 정확도91.7%/90.9%의 조건을 구분한다. 이 관찰만으로 사실·기사 승인이나 상용 성능을 확정하지 않는다. 전체 창의 완료와 정확한 packet 검토를 이어 수행한다.
+
+코드/장문 실행은 작성본208·공개169기사·RSS40·미판정50/483·metadata10을 변경하지 않았다. 새 정규운영0이며 독립human40dev/20heldout·새정규7회·무인08시/인증/중단·전체runtime복구는 남는다. 같은 실패를 한시간 반복한 항목0이다. 다음은 현재 창들을 완료/명시 검토하고 승인된 FDA와 함께 첫 정규회차를 연결하는 것이다.
+
+413 인용 복구 후속: 두 번째 실제 호출은185.591초에 완료했지만 block-0130 인용에 모델 생략점이 들어갔다. 동일 블록에서 HFNN 제안부터 최적 포즈 선택까지572자의 연속 원문을 읽고 `elision_expansion_checked: true`로 복원했다. 공통 quote-only는 한 번의 명시적 생략점 확장만 허용한다. 고정된 앞뒤 문자열과 정확한 원문 포함·같은 block을 요구하고 삭제·수치·주체·판정·설명을 바꾸지 않는다. 자동 보정은 없다. 관련 신규2검사를 통과했다. 새 run `daily-20261006-paper-window-quote-reviewed-v2`는 두 완료 응답을 재호출하지 않고8누락창을 진행한다. 최대8×300초에 맞춰 새 ledger 기본900초+명시1,500초를 확보했으며 원래2호출 비용과 분리한다. 먼저 실패한 v1과 그 원출력은 남겨둔다.

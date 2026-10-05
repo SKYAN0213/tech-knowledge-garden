@@ -3,6 +3,10 @@ import { sha256 } from "./contracts.mjs"
 import { assertReviewDate, parseResearchDate } from "./dates.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
+import {
+  assessWindowEvidenceCheckpoint,
+  evidenceWindowPlan,
+} from "./window-evidence-assessment.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 
 // Explicit, source-bound typography repair. Never normalize the evidence
@@ -10,6 +14,40 @@ import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 const typography = (value) =>
   value.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+const reviewedTypography = (correction, original, replacement) => {
+  const before = typography(original),
+    after = typography(replacement)
+  if (before === after)
+    return (
+      correction.sentence_initial_article_checked === undefined &&
+      correction.elision_expansion_checked === undefined
+    )
+  if (
+    correction.elision_expansion_checked === true &&
+    correction.sentence_initial_article_checked === undefined
+  ) {
+    // Expand one explicitly reviewed editorial ellipsis into the unchanged
+    // contiguous source span. Never remove text or select a different locator.
+    const parts = before.split(" ... ")
+    return (
+      parts.length === 2 &&
+      parts.every(Boolean) &&
+      !after.includes(" ... ") &&
+      after.startsWith(parts[0]) &&
+      after.endsWith(parts[1]) &&
+      after.length > parts[0].length + parts[1].length
+    )
+  }
+  // Only an explicitly checked indefinite article may change sentence-initial
+  // case. Proper names, other letters and the remainder of the quote stay exact.
+  return (
+    correction.sentence_initial_article_checked === true &&
+    correction.elision_expansion_checked === undefined &&
+    /^[Aa] /.test(before) &&
+    /^[Aa] /.test(after) &&
+    before.slice(1) === after.slice(1)
+  )
+}
 
 function applyCorrections({
   root,
@@ -34,6 +72,8 @@ function applyCorrections({
       "quote",
       "raw_sha256",
       "reason",
+      "sentence_initial_article_checked",
+      "elision_expansion_checked",
     ]
     const batch = correctedBatches[correction.batch - 1]
     const original = rawBatches[correction.batch - 1]
@@ -64,7 +104,7 @@ function applyCorrections({
       citation.quote !== correction.original_quote ||
       block.text.includes(citation.quote) ||
       !block.text.includes(correction.quote) ||
-      typography(citation.quote) !== typography(correction.quote) ||
+      !reviewedTypography(correction, citation.quote, correction.quote) ||
       (rejectCheckpoint && readJSON(root, base + `batch-${correction.batch}-checkpoint.json`))
     )
       throw Error("Only invalid typography quotes can be explicitly repaired in the same block")
@@ -214,7 +254,10 @@ export async function reviewEvidenceQuotes({
     const { sha256: ledgerSeal, ...ledgerPayload } = ledger || {}
     if (
       !claims?.length ||
-      originalInput?.schema !== "research-evidence-assessment-input/v1" ||
+      ![
+        "research-evidence-assessment-input/v1",
+        "research-window-evidence-assessment-input/v1",
+      ].includes(originalInput?.schema) ||
       !Number.isInteger(originalInput.claims_per_batch) ||
       originalInput.claims_per_batch < 1 ||
       originalInput.claims_per_batch > 6 ||
@@ -259,7 +302,19 @@ export async function reviewEvidenceQuotes({
     assertReviewDate(review.reviewed_at, {
       notBefore: ledger.attempts.filter((a) => a.status === "complete").map((a) => a.finished_at),
     })
-    const count = Math.ceil(claims.length / originalInput.claims_per_batch)
+    const windowed = originalInput.schema === "research-window-evidence-assessment-input/v1"
+    const windowPlan = windowed
+      ? evidenceWindowPlan(
+          claims,
+          documents,
+          parses,
+          ledger.binding.settings,
+          originalInput.claims_per_batch,
+        )
+      : null
+    const count = windowed
+      ? windowPlan.length
+      : Math.ceil(claims.length / originalInput.claims_per_batch)
     const rawBatches = [],
       correctedBatches = [],
       originals = [],
@@ -290,11 +345,14 @@ export async function reviewEvidenceQuotes({
         parses,
       )
       const supplied = JSON.parse(attempt.request.messages[1].content)
-      const selected = claims.slice(
-        (index - 1) * originalInput.claims_per_batch,
-        index * originalInput.claims_per_batch,
-      )
+      const selected = windowed
+        ? windowPlan[index - 1].claims
+        : claims.slice(
+            (index - 1) * originalInput.claims_per_batch,
+            index * originalInput.claims_per_batch,
+          )
       if (
+        (windowed && !same(attempt.request.messages, windowPlan[index - 1].messages)) ||
         !same(
           supplied.claims.map((c) => c.claim_id),
           selected.map((c) => c.claim_id),
@@ -370,7 +428,8 @@ export async function reviewEvidenceQuotes({
     let materialized = 0,
       generatedMissing = 0,
       missingProvider = null
-    const result = await assessEvidenceCheckpoint(
+    const assess = windowed ? assessWindowEvidenceCheckpoint : assessEvidenceCheckpoint
+    const result = await assess(
       root,
       run,
       {
@@ -382,15 +441,17 @@ export async function reviewEvidenceQuotes({
           const index = requests.findIndex((original, i) =>
             original
               ? same(original.messages, request.messages) && same(original.schema, request.schema)
-              : same(
-                  requested,
-                  claims
-                    .slice(
-                      i * originalInput.claims_per_batch,
-                      (i + 1) * originalInput.claims_per_batch,
-                    )
-                    .map((c) => c.claim_id),
-                ),
+              : windowed
+                ? same(request.messages, windowPlan[i].messages)
+                : same(
+                    requested,
+                    claims
+                      .slice(
+                        i * originalInput.claims_per_batch,
+                        (i + 1) * originalInput.claims_per_batch,
+                      )
+                      .map((c) => c.claim_id),
+                  ),
           )
           if (index < 0) throw Error("Original assessment claim order changed")
           if (!correctedBatches[index]) {
