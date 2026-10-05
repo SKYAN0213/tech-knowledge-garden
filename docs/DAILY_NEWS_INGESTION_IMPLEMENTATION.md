@@ -467,3 +467,9 @@ A–E의 **비공개 통합 23경로/46창 수집 절편**과 저장 계획의 �
 ## 9. 이번 설계의 완료 판정
 
 문서 완료와 제품 완료는 다르다. 주 체크아웃의 **23경로 통합 로컬 일일 수집**은 46창의 원본/parse/후보/coverage 영수증을 남겼고 같은 계획의 무변경 재개를 확인했다. 이후 변경된 ASEC 공개 분류 검사는 해당 경로만 재수집해 통과했고 강화된 전체 설정은 계획까지 재확인했다. 앞선 19·21·22경로 실행과 실패 이력도 보존했다. 이 통합 실행은 32칸 중 15칸이 미시도이며 Drive 작성 원본 대조·기사 발행·공개 성공을 증명하지 않는다. 9월 30일 예약의 별도 발행은 공개 확인까지 끝났지만 당시 32칸 중 18개가 미실시였으며, 새 23경로 설정의 **예약 실행**과 후보 중복·정정 편집은 완료되지 않았다. **서비스 전체 완료**는 기존 8개 분야와 기업·연구 경로의 실물 수용, 과거 자료 전체와 의존 지식의 판정, 독립 모델 평가, 승인 원고의 Drive 원격 readback, 웹·RSS·GitHub 공개 일치, 서로 다른 신규 성공 7회를 추가로 확인한 뒤에만 선언한다. 등록 출처 수, 테스트 통과 수, 로컬 사본, 모델 JSON 생성만으로 이 기준을 대신하지 않는다.
+
+## 10. 08시 발행 단계의 공통 operation 연결 (2026-10-05)
+
+실제Drive writer의 verified_complete 후 canonical pull과 발행은 `npm run publish -- --operation <회차별-고유-ID> --release <root-relative-approved-release>`를 사용한다. fresh raw 관측10분·승인 preview bytes·global unknown 관문을 적용한다. 실제push가확인된operation은 현재local/remote HEAD를재검사하고build/commit/push를반복하지않는다. 다른HEAD/원고/원격충돌은기존operation에덮지않는다.
+
+정확한 Actions 성공 응답은 `research-publication.mjs deployment`, 기존public-readback의 실제bytes는 `research-publication.mjs public`으로 연결한다. status·비공개진척화면에서 같은operation의Drive→push→배포→공개 단계를 추적한다. `bind`는 실제기존push receipt 복구용으로 승인bytes를Git에서대조하며새발행이나현재원격확인으로세지않는다. 원문/후보/기사승인·32칸 조사·실제화면·WebsiteData·정규7회 집계는 기존계약으로분리해유지한다. 전체실행기완료가아니며다음실제08시회차에서 수집/편집 run과 이operation을연결한다. 명령·실패보존·시험은런북408을따른다.

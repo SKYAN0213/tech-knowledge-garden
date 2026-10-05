@@ -4,6 +4,12 @@ import { nonContentChanges, publicationContentPaths } from "./publication-state.
 import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 import { pushAndVerify } from "./publication-receipt.mjs"
 import { assertNoUnresolvedAuthoringWrites } from "./research/authoring-execution.mjs"
+import { parseArgs } from "node:util"
+import {
+  preparePublicationOperation,
+  recordPublicationPush,
+  publicationOperationStatus,
+} from "./research/publication-operation.mjs"
 
 function run(cmd, args, options = {}) {
   const r = spawnSync(cmd, args, { encoding: "utf8", ...options })
@@ -12,6 +18,17 @@ function run(cmd, args, options = {}) {
   return r.stdout?.trim() || ""
 }
 try {
+  const { values } = parseArgs({
+    strict: true,
+    options: {
+      operation: { type: "string" },
+      release: { type: "string" },
+    },
+  })
+  if (Boolean(values.operation) !== Boolean(values.release))
+    throw Error("Publication operation requires both --operation and --release")
+  if (values.operation && !/^[A-Za-z0-9_-]{1,100}$/.test(values.operation))
+    throw Error("Invalid publication operation ID")
   await withGardenOperationLock(DEFAULT_ROOT, async () => {
     assertNoUnresolvedAuthoringWrites(DEFAULT_ROOT)
     const branch = run("git", ["branch", "--show-current"])
@@ -28,6 +45,35 @@ try {
         "Uncommitted source, configuration, or documentation changes must be reviewed and committed before publishing content.",
       )
     run("python3", ["scripts/pull-drive.py", "--verify-working-copy"], { stdio: "inherit" })
+    if (values.operation) {
+      const pushed = fs.existsSync(
+        `${DEFAULT_ROOT}/runs/${values.operation}/publication-operation/push.json`,
+      )
+      await preparePublicationOperation({
+        root: DEFAULT_ROOT,
+        run: values.operation,
+        releasePath: values.release,
+        fresh: !pushed,
+      })
+      if (pushed) {
+        const operation = publicationOperationStatus({ root: DEFAULT_ROOT, run: values.operation })
+        const local = run("git", ["rev-parse", "HEAD"])
+        const remoteHead = run("git", ["ls-remote", "origin", "refs/heads/main"])
+        if (local !== operation.commit || remoteHead !== `${operation.commit}\trefs/heads/main`)
+          throw Error(
+            "Saved operation commit differs from the current local or remote head; use a new operation",
+          )
+        console.log(
+          JSON.stringify({
+            ...operation,
+            resumed: true,
+            build_performed: false,
+            push_performed: false,
+          }),
+        )
+        return
+      }
+    }
     run("npm", ["run", "build"], { stdio: "inherit" })
     run("node", ["scripts/verify-site.mjs"], { stdio: "inherit" })
     run("git", ["add", "--", ...publicationContentPaths])
@@ -47,6 +93,12 @@ try {
       root: DEFAULT_ROOT,
       runGit: (args, options) => run("git", args, options),
     })
+    if (values.operation)
+      await recordPublicationPush({
+        root: DEFAULT_ROOT,
+        run: values.operation,
+        pushPath: `publication/push-attempts/${publication.attempt_id}.json`,
+      })
     console.log(
       `Remote commit ${publication.local_commit} confirmed (${publication.status}). Check the Publish Garden workflow before reporting website publication.`,
     )

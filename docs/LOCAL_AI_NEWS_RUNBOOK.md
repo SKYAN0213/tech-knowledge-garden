@@ -10191,3 +10191,37 @@ CLI를 직접 tty로 실행한 session c40007c5-e864-420c-9159-a862f052be60 안�
 증거는 canonical runs의 reparse-v2/selection-v1/processing-v2/v3/v4/reader-v1·authoring intents/session/approved closure 및 외장 json-document-*·codex-json-drive-preflight-v1·codex-json-drive-post-v1에 있다. 다음은 코드/승인 원고를 한 번의 실제 CI 배포로 묶고 공개 bytes·대상1280/390 UI·WebsiteData·발행 증거를 확인한다.
 
 writer 실행은 node 명령을 직접 tty에 연결한다. heredoc·닫힌 stdin·파이프 wrapper로 입력 채널을 대체하지 않는다. unknown update 재개는 기본 경로가 아니며 먼저 actual fresh capture와 이전 PID 종료를 확인한 뒤 정확한 intent 경로를 명시한다. unknown create는 새 요청 없이 늦은 실제 원격 proof를 기다린다.
+
+## 407. Codex 소급 배포와 실제 발행 증거 복구
+
+2026-10-05 KST. 406의 저장 결과를 공개12b4179e640881e74b3421ef7d30c8f174d9448b / Actions37305045327에 반영했다. build·deploy가 모두 success이고 CI 한 차례에서 Node881/881·Drive Python15/15·WebsiteData2/2·build/site를 통과했다. 이미 통과한 표적 또는 전체 suite를 로컬에서 반복하지 않았다. 공통 public-readback은 웹/GitHub12고유파일과 지도 module의 actual bytes 및 reader_equivalent:true를 확인했다. 원래 기사ID661912ab39baa4f1·7/14_0002 회차·RSS40 GUID/pubDate를 유지하며 신규 정규운영0이다.
+
+실제 공개1280/390 화면에서 AI탭의 query/뒤로가기, Enter→기사, #AI→기사필터, 기사→브리핑을 확인했다. 제목·발표일·3문장 리드와2설명/5문단·원문2링크가 보이고 뉴스·브리핑 main canvas0·가로넘침0이다. private preview의 browser_verified:false는 그대로이며 공개 검증을 별도 UI JSON/JPG에 기록했다. 웹의 운영 문구·빈 심층 탭·지도는 없다.
+
+WebsiteData는343pages/167articles/24concepts/22connections·11파일3,459,493bytes를 실제 Drive에 대조했다. 같은ID8개 update, RSS/concepts/connections3개는 bytes가 같아 생략했고 기존 receipt1개를 보존했다. 전체11의 raw SHA·ID·부모/shared:false와 두 번째 목록을 확인했다. 86생성페이지의 Drive 작성 미매핑을 snapshot에 그대로 유지한다.
+
+발행·저장·중단/명시 재개·CI·공개 raw·UI·WebsiteData·변경 구현20파일의585자료/586ZIPmembers·9,545,883bytes를 기존 공통 ordinary v1 archive로 보관했다. Research ID1aFDQKEqV4Fslh9iHHoSWSV9KrYZrko5k의 private 부모/shared:false·이름1개와 remote raw SHA698fb366509c0a32c9a415979981dd3b6ccd6d3202bae242fc2993c5a71dd59a를 검증했다. exact manifestec120b3e35a9335fc712eac5e103325b459a26778f98e6234828a5b73699c0ce로 전체member CRC/SHA를 복구하고 복구 root에서 verified1/pending0/conflict0·resolved intent1·공개12·WebsiteData11을 재검증했다. source_versions0인 운영 증거이며 원문 승인 closure(ID1dHgqeaN4eTPglJsmLYjybq7bhP6lE87F)는 별도 원격 복구 기록이다. full runtime 복구로 세지 않는다.
+
+원격bytes를 shell 인자로 전달한 첫 저장은 ARG_MAX로 실패해 추가 fetch 없이 같은 응답을 raw stdin으로 저장했다. 첫 두 복구 명령의 absolute package/destination은 root-relative 계약에서 거부됐다. 둘 다 상대 경로로 바로잡은 v3가 통과했으며 검증기를 완화하지 않았다. 근거 비교의 실제v3는 num_ctx32768와 evidence-think:false override였고 기본 medium 정책은 유지한다.
+
+증거: 외장 json-document-codex-{ci-status-v2,ci-build-v1,public-readback-v1,ui-v1,desktop-v1,mobile-v1,website-verification-v1} 및 json-document-release-delivery-{archive-v1,remote-proof-v1,remote-v1.zip,restore-v3,restored-proof-v1}; canonical runs/codex-json-release-delivery-20261005-v1. canonical 미판정56회차527구간·metadata10·전체WBS2/22·독립40dev/20heldout·새정규7회·무인08시/인증·fullruntime는 남으며 goal active다. 다음은 실제 저장 proof와 발행을 회차별 재개 가능한 checkpoint로 연결한다. 동일 실패를1시간 이상 재시도한 항목0이다.
+
+## 408. 저장 결과에 연결된 발행 checkpoint와 무변경 재개
+
+2026-10-05 KST. `publication-operation.mjs`가 기존 승인 release·preview·raw execution을 재검사하고, 실제 Git 커밋의 승인 작성 bytes·push receipt·정확한 CI head·공개 raw proof를 불변 input/push/deployment/public 단계에 연결한다. 별도 후보 저장소나 승인 기준을 만들지 않는다. 공통 `inspectedAuthoringRelease`와 `loadVerifiedPublicReadback`을 재사용하며 status도 저장 성공 flag만 읽지 않고 원본 bytes를 검사한다. 원고 충돌·unresolved intent·다른 commit/CI·raw 변조는 단계 진행을 거부한다. 운영 횟수·UI·WebsiteData는 이 단계가 완료됐다는 이유로 완료 처리하지 않는다.
+
+승인 원고를 실제 Drive에 저장하고 fresh raw를 확인한 뒤 canonical pull을 마치면 다음을 실행한다. OPERATION과 RELEASE는 실제 실행 ID 및 root-relative release 경로로 바꾼다. release의 원격 raw 관측이10분을 넘으면 capture/reconcile로 실제 새 응답을 확보하고, 원고를 다시 쓰지 않는다.
+
+```bash
+npm run publish -- --operation OPERATION --release RELEASE
+node scripts/research-publication.mjs deployment --run OPERATION --deployment FRESH_ACTIONS_PROOF.json
+node scripts/research-public-readback.mjs --run READBACK --preview-run PREVIEW --commit COMMIT --actions-run ACTIONS_ID
+node scripts/research-publication.mjs public --run OPERATION --readback-run READBACK
+node scripts/research-publication.mjs status --run OPERATION
+```
+
+배포 proof는 실제 `gh run view ACTIONS_ID --repo SKYAN0213/tech-knowledge-garden --json status,conclusion,headSha,jobs,url` 응답이다. 진행중 job은 기존 handle/ID로 관측하고 완료 성공을 확인한 후 연결한다. 공개 성공 뒤 WebsiteData와 실제 화면·최종 Research 보관은 기존 절차를 이어간다. 각 단계를 같은 명령으로 재개하되 이미 저장된 proof는 원본 hash를 재검사한다. 확인된 push가 있으면 publisher는 local/remote HEAD를 확인한 뒤 build/commit/push를 모두 생략한다. HEAD가 달라졌으면 이전 operation을 새 코드의 발행으로 바꾸지 않고 새 ID를 사용한다.
+
+기존 발행의 중단 복구나 실제 증거 연결에는 `node scripts/research-publication.mjs bind --run OPERATION --release RELEASE --push publication/push-attempts/ACTUAL_ATTEMPT.json`을 사용한다. 커밋에 승인 bytes가 없거나 push가 execution 관측 이전이면 거부한다. 이 bind는 새 API 저장/발행이나 fresh 원격 관측이 아니다. default `npm run publish`의 기존 동작은 유지한다. 비공개 진척 화면의 수집후처리 탭에 발행 단계 연결을 추가했다. 이 화면의 새 HTML 렌더링은 미검증이며 공개 독자 UI는 변경하지 않았다.
+
+표적 최초18건 중 기존13은 통과했고 새5는 fixture가 필수shared:false/mime_type을 빠뜨려 실패했다. fixture를 실제 raw 계약에 맞춘 뒤 실패5만 재실행해5/5 통과했다. 실제 release7/14_0002·push20a19110·Actions37305045327·공개12파일을 `codex-json-publication-operation-20261005-v1`에 연결했고 추가HTTP/모델/Drive원고쓰기0으로 public_bytes_verified를 확인했다. 순수 운영 proof로 소급신규운영0·전체WBS2/22·goalactive를 유지한다. 다음은 이 구현의 실제 publisher 무변경 재개·CI 및 기존08시 지침 연결이다.

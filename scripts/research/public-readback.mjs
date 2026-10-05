@@ -290,3 +290,80 @@ export async function verifyPublicReadback({
     return { path: directory + "/receipt.json", ...receipt }
   })
 }
+
+// Recheck stored bytes for a resumed publication without another HTTP request.
+// The original observation date remains visible; this is not a current-site poll.
+export function loadVerifiedPublicReadback({
+  root,
+  run,
+  previewRun,
+  repository = process.cwd(),
+  commit,
+}) {
+  runId(run)
+  const directory = `runs/${run}/public-readback`
+  const plan = readJSON(root, directory + "/plan.json")
+  const receipt = readJSON(root, directory + "/receipt.json")
+  const preview = readJSON(root, `runs/${previewRun}/preview-manifest.json`)
+  if (
+    !plan ||
+    !receipt ||
+    plan.commit !== commit ||
+    receipt.preview_run !== previewRun ||
+    receipt.commit !== commit ||
+    receipt.status !== "public_artifact_bytes_verified" ||
+    receipt.verified !== true ||
+    receipt.reader_equivalent !== true ||
+    JSON.stringify(
+      publicReadbackPlan({ repository, preview, commit, deployment: plan.deployment }),
+    ) !== JSON.stringify(plan)
+  )
+    throw Error("Exact completed publication readback required")
+  const read = (index, expected) => {
+    const stem = `${directory}/files/${index}`
+    const metadata = readJSON(root, stem + ".json")
+    const bytes = fs.readFileSync(safePath(root, stem + ".bin"))
+    if (
+      !metadata ||
+      metadata.kind !== expected.kind ||
+      metadata.path !== expected.path ||
+      metadata.url !== expected.url ||
+      metadata.status !== 200 ||
+      metadata.bytes !== bytes.length ||
+      metadata.sha256 !== sha256(bytes) ||
+      !Number.isFinite(Date.parse(metadata.observed_at)) ||
+      metadata.matches_local !== (sha256(bytes) === expected.sha256)
+    )
+      throw Error("Stored publication observation or raw bytes changed")
+    return { metadata, bytes }
+  }
+  const files = plan.files.map((row, i) => read(i, row))
+  const reader =
+    files[plan.files.findIndex((r) => r.kind === "web" && r.path === "reader.js")].bytes.toString(
+      "utf8",
+    )
+  const modules = [...reader.matchAll(modulePattern)].map((x) => x[0].slice(2))
+  if (modules.length !== 1) throw Error("Stored reader module is ambiguous")
+  const module = read("map", {
+    kind: "web",
+    path: modules[0],
+    url: SITE + modules[0],
+    ...plan.reader_module,
+  })
+  const localReader = fs.readFileSync(safePath(repository, "public/reader.js"), "utf8")
+  if (
+    !module.metadata.matches_local ||
+    reader.replace(modulePattern, "./chunks/connection-map.js") !==
+      localReader.replace(modulePattern, "./chunks/connection-map.js") ||
+    files.some(
+      (r, i) =>
+        !r.metadata.matches_local &&
+        !(plan.files[i].kind === "web" && plan.files[i].path === "reader.js"),
+    ) ||
+    JSON.stringify(receipt.files) !== JSON.stringify(files.map((r) => r.metadata)) ||
+    JSON.stringify(receipt.connection_map_module) !== JSON.stringify(module.metadata) ||
+    receipt.actions_url !== plan.deployment.url
+  )
+    throw Error("Stored public receipt does not match the verified artifacts")
+  return { path: directory + "/receipt.json", ...receipt }
+}

@@ -399,6 +399,31 @@ function executionProof(root, relative) {
   }
 }
 
+// Reuse the exact raw-byte verifier for publication; a saved success flag alone
+// cannot authorize the next stage. This is an observation, not a fresh API read.
+export function inspectedAuthoringRelease(
+  root,
+  releasePath,
+  { now = Date.now(), fresh = false } = {},
+) {
+  assertNoUnresolvedAuthoringWrites(root)
+  const binding = { ...loadRelease(root, releasePath), release_path: releasePath }
+  const latest = executionFiles(root, binding).at(-1)
+  if (
+    !latest ||
+    !latest.receipt.drive_verified ||
+    latest.receipt.counts.pending ||
+    latest.receipt.counts.conflict
+  )
+    throw Error("Verified authoring raw readback required before publication")
+  if (
+    fresh &&
+    (Date.parse(latest.receipt.observed_at) > now || Date.parse(latest.receipt.valid_until) < now)
+  )
+    throw Error("Fresh authoring raw readback required before publication")
+  return { ...binding, execution_path: latest.path, execution: latest.receipt }
+}
+
 function targetProof(proof, intent) {
   const file = proof.readback.files.find((r) => targetKey(r) === targetKey(intent.operation))
   if (

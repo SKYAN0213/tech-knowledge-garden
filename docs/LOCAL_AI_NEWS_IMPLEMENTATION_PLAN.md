@@ -4285,3 +4285,13 @@ JSON pointer/식별자/record 날짜/예산을 갖춘 공통 parser와 GitHub RE
 fresh208원본을 검증한 retrospective release에서 기존7/14_0002 파일1개를 같은 Drive ID에 update1회 하고 post raw SHA를 확인했다. stdin wrapper 중단으로 남은 unknown update를 지우지 않았으며 explicit --resume-intent의 종료PID·같은 release/첫 operation/ID/부모/원본SHA/수정시각/fresh raw 관문으로 재개했다. create·live·변경·다른 release 거부2시험과 원래 intent 불변/원격 resolution을 확인했다. 전체208 post raw 대조에서207불변이고 common snapshot/apply·canonical refresh/validate가 통과했다.
 
 소급 미검토56회차527구간·metadata10·전체WBS2/22·goalactive를 유지한다. 독립human40dev/20heldout·새 실제 정규7회·무인08시/인증·fullportable runtime 및 전수legacy 판정은 남는다. 이 단계는 actual Drive write의 증거이며 새 정규 운영이나 전체 완료가 아니다. 다음은 최종 통합 CI1회·공개 기사/브리핑/GitHub/RSS·1280/390 대상 UI·WebsiteData·최종 발행 증거 확인이다. 같은 병목을1시간 재시도한 항목0이다.
+
+## 19.313. Codex 소급 공개 배포와 최종 증거 보관
+
+12b4179/Actions37305045327 build·deploy success·CI881/881·Python15+2·build/site,12공개파일과지도module·1280/390 대상UI·WebsiteData11raw를 확인했다. RSS40·원ID·회차를 보존하며 정규운영0이다. 운영증거585자료/586members의 실제private Drive ZIP을 CRC/SHA 및 공통v1로 복구하고 verified authoring1·resolvedintent1·공개12·WebsiteData11을 재검증했다. 런북407에 실패/수정과 actual evidence-think:false override도 기록했다. 전체미판정56/527·metadata10·WBS2/22·독립40/20·새정규7회·무인08시/인증·fullruntime·goalactive는 유지하며 다음 P5-01 발행 checkpoint를 연결한다.
+
+## 19.314. Drive 이후 발행 checkpoint 연결
+
+P5-01의 release→execution→commit/push→deployment→public raw를 기존 공통 검증기로 연결했다. publisher는 --operation/--release로 소유 커밋을 고정하고 이미확인된local/remote HEAD에서는 build/commit/push를 생략한다. source/승인/기사ID/기존default발행은 유지한다. raw변조·stale새발행·commit/CI불일치를 검사한 새5/5와 기존13/13이 통과했고 실제12b4179의release/Drive1/push/CI/public12을 HTTP0으로 연결했다. 상세 런북408.
+
+이 단계는 단일08시 전체 완료나 자동승인이 아니다. 수집→사실검토→편집의 기존 checkpoint와 새발행operation을 같은08시 회차에서 실제 실행하는 증거, WebsiteData/UI/최종보관 및 인증/중단시험·독립평가·새정규7회·전체소급은 남는다. WBS2/22·56회차527구간·metadata10·goalactive를 유지하며 신규 출처 등록이나 임의 구조 확장보다 실제정규회차 연결을 우선한다.
