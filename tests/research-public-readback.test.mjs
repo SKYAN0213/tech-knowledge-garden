@@ -102,6 +102,23 @@ test("public readback checks all channels and resumes without duplicate network 
   assert.deepEqual(result, resumed)
 })
 
+test("authoring navigation is verified in GitHub without requiring a reader page", (t) => {
+  const f = fixture(t)
+  const file = "Knowledge/00 Tech Encyclopedia Index.md"
+  f.write("vault/" + file, "reviewed navigation")
+  const preview = { ...f.preview, navigation: { path: file, sha256: sha256(Buffer.from("reviewed navigation")) } }
+  const plan = publicReadbackPlan({ ...f, preview })
+  assert.ok(plan.files.some((row) => row.kind === "github" && row.path === "vault/" + file))
+  assert.ok(!plan.files.some((row) => row.kind === "web" && /encyclopedia-index/.test(row.path)))
+  f.write("vault/" + file, "unreviewed navigation")
+  assert.throws(() => publicReadbackPlan({ ...f, preview }), /authoring bytes changed/)
+})
+
+test("concepts cannot masquerade as nonpublic authoring navigation", (t) => {
+  const f = fixture(t)
+  assert.throws(() => publicReadbackPlan({ ...f, preview: { ...f.preview, navigation: f.preview.knowledge[0] } }), /canonical encyclopedia index/)
+})
+
 test("mismatch retains exact remote bytes and never records a successful verification", async (t) => {
   const f = fixture(t)
   const fetchImpl = (url, config) =>

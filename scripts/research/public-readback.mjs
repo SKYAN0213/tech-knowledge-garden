@@ -54,6 +54,8 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
     !preview.consistency.articles.length
   )
     throw Error("Verified reader preview required")
+  if (preview.navigation && preview.navigation.path !== "Knowledge/00 Tech Encyclopedia Index.md")
+    throw Error("Authoring navigation must use the canonical encyclopedia index")
   const mapping = JSON.parse(fs.readFileSync(safePath(repository, ".local/site-notes.json")))
   const slugs = new Map(mapping.map((row) => [row.path + ".md", row.slug]))
   const web = new Set([
@@ -78,7 +80,7 @@ export function publicReadbackPlan({ repository, preview, commit, deployment }) 
       throw Error("Approved preview authoring bytes changed: " + row.path)
     github.add(local)
     // Signals are authoring records, not reader pages.
-    if (row.path.startsWith("Knowledge/")) {
+    if (row.path.startsWith("Knowledge/") && row.path !== preview.navigation?.path) {
       const slug = slugs.get(row.path)
       if (!slug?.startsWith("knowledge/")) throw Error("Missing knowledge page mapping")
       web.add(relativePath(slug + ".html"))
