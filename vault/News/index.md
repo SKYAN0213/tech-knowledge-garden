@@ -159,6 +159,8 @@ generated_by: tech-knowledge-garden
 - [[News/eb71f165025c2507|OpenAI, GPT-5.6 서빙과 에이전트 실행기의 효율 개선 공개]] · 2026-07-30
 - [[News/47da73cdc4f72b4c|OpenAI, 대학 연구자 10만 명에 무료 AI 도구 지원 계획 발표]] · 2026-07-30
 - [[News/265c6a0134aba9b6|OpenAI, 추론 보존·문맥 압축으로 ARC-AGI-3 점수 약 3배 높여]] · 2026-07-30
+- [[News/7e9257b6dba23518|GitHub Actions, 악성 의심 워크플로를 승인 전 실행 보류]] · 2026-07-29
+- [[News/1618822b0726a28a|GitHub, OpenSSF 악성 패키지 정보를 Dependabot 경보에 자동 반영]] · 2026-07-29
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
