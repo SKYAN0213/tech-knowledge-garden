@@ -4204,3 +4204,8 @@ Drive200raw/17folder를 실제 새 조회하고4대상 같은ID·40,059bytes를 
 두 최종 v5 ZIP은 private Drive Research에 저장하고 원격 raw SHA/CRC·14원문판본·정의/승인 exact bytes를 독립 복구했다. 원문/사건별 위치 색인도 등록했다. 내장 ENOSPC의 실행 실패는 보존하고 새 임시 출력만 외장에 생성했다. Ollama55GB의 저장 경로는 여전히 내장이며 모델 이동·원본 삭제는 수행하지 않았다.
 
 다음은 현재 Drive 작성200원본의 새 대조와 승인3파일의 Drive-first 반영/공개 릴리스다. 공개본·전수 미판정65/607·WBS2/22·독립40/20·정규7회/무인08시·전체 runtime 복구의 완료 판정은 유지하지 않고 미완료로 남긴다. 전체 목표 active; 이번은 progress다. 상세 런북384.
+
+
+## 19.295. 8/4 Drive-first 공개 슬라이스 완료
+
+원격200raw/16폴더 baseline을 검증해 승인3파일 같은ID 반영·post197불변+3새raw/16폴더·source SHA 일치를 확인했다. 외장 Git 작업 사본에서 공개b18e591과 Actions37251568420 success, CI816/816·Python15+2/build/site,17웹/RSS/GitHub exact와 동일 지도 모듈,1280/390 실제 UI를 확인했다. 내장 원본은 같은 커밋으로 fast-forward했고 모델/프로젝트 이동·삭제는 하지 않았다. WebsiteData11rawSHA도 일치한다. 미판정64/598·독립human40/20·정규7회/무인08시·fullruntime은 남는다. 전체WBS2/22·goal active이며 다음미검토7/30 원문 조사에 기존 수집/검토를 재사용한다. 상세 런북386.

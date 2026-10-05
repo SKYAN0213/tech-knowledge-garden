@@ -9819,3 +9819,27 @@ post source SHA4bb895f8858cfdb5dd870edb2d39ffe3ede5f8478ab48698c06180529d73a60c,
 증거 루트는 외장 `fresh-drive-preflight-v1/`의 tree/raw-acquisition/raw-000..199/second-listing, connector-readback, release-review, prewrite-metadata, write-0..2, post-raw-0..2, post-tree-verification, post-connector-readback이다. raw b64에는 signed download URL이 없다. 원격 자료·승인·복구는 비공개이고 공개 원고에는 운영 문구를 넣지 않았다.
 
 이 checkpoint의 공개 사이트는 여전히ceeafd2다. 다음은 외장 릴리스 사본의 build/site·정상 push·Actions 및 웹/RSS/GitHub/WebsiteData 실제 readback이다. 전체 미판정65회차607구간, 독립40/20, 정규7회/무인08시, full runtime portable는 미완료이며 WBS2/22와 goal active를 유지한다. 같은 실패를1시간 반복한 항목은 없다.
+
+## 386. 8/4 소급 수정의 공개 배포와 최종 데이터 보관
+
+2026-10-05 KST. 승인3작성 원본을 Drive에 같은ID로 저장한 뒤 외장 Git 작업 사본에서 발행했다. 공개 커밋은 b18e5910e21a562698834b32a76d880b93f134fb이고 Actions37251568420의 build/deploy는 success다. CI Node816/816, Python Drive15/15·WebsiteData2/2, build/site를 통과했다. 내장 원래 작업 사본도442ad27에서b18e591로 정상 fast-forward했으며 작업 중인 research worker는 없다. 모델·프로젝트 원본의 외장 이동/삭제는 수행하지 않았다.
+
+공개18파일 중 웹·RSS·GitHub 원고17개가 외장 생성본과 exact bytes였다. reader.js의 유일한 차이는 연결지도 lazy import의 산출물 파일명이다. 파일명을 제외한 전체 JS 문자열이 동일하고, 실제 배포 chunk7J5J3UID와 로컬EMWXVGN4의169,303bytes 전체가 같다. 초기 exact18 영수증의 verified:false는 보존하고 별도 resolution/module-proof에17exact+동일 모듈 확인을 기록했다. 공개 source200/SHA4bb895f8858cfdb5dd870edb2d39ffe3ede5f8478ab48698c06180529d73a60c도 실제 readback으로 일치한다.
+
+공개1280/390 브라우저에서 기사→전문용어→변화 이력의 Enter→기사→브리핑을 확인했다. 기존 private UI 증거와 구분한다. main 지도0·가로 넘침0이고 최종 브리핑 탭을 deliverable로 유지했다. screenshot은 외장 public-briefing-desktop.png/public-briefing-mobile.png, 실제 관측은 public-ui-verification.json이다. 브라우저 임시 viewport는 복원했다.
+
+WebsiteData는 실제 배포 데이터에서320pages/149articles/19nodes/17relations의11파일을 생성했다. 네 live asset은 로컬 bytes와 같으며 catalog는 local-build-input으로 구분한다. 기존 파일을 새로 목록/raw 조회해10변경을 같은ID로 저장했고, RSS1불변을 포함한11파일/3,339,226bytes의 새 원격 raw SHA·부모/shared:false가 정확히 일치한다. 생성된68페이지는 Drive 작성 원본 직접 매핑이 없어 snapshot에 남긴다. 동기화 실패를 숨기지 않고 별도 생성 페이지의 상태를 유지한다.
+
+canonical reviewRoot의 실제 inventory는 작성200·v2 39·legacy82/724구간, 검토한 빈 기록18/126구간을 제외한 미판정64회차/598구간,149verified events,30concept IDs/36knowledge notes/34authored relations,665sources/664URLgroups, RSS40이며 diagnostics0이다. 외장 연구 복구 루트의 최초 inventory에는 기존 private 빈 기록이 없어82/724로 표시됐고 전수 완료로 집계하지 않았다. 최종 기준은 canonical private ledger가 포함된 legacy-20260804-after-authority-20261005-v1이다. 과거 회차 보완으로 새 운영 횟수0이며 기존40GUID/pubDate/cutoff를 보존한다.
+
+이번 원문·편집·용어·Drive 보관·실제 공개 슬라이스는 완료했지만 전체 WBS2/22·goal active다. 남은64/598, 독립40dev/20heldout human gold, 정규7회/무인08시, full portable runtime은 미완료다. 한시간 이상 같은 실패를 반복한 항목은 없다. 빈 기록으로 이미 검토된8/3을 재조사하지 않고, 다음은 실제 미검토7/30의 원문을 기존 수집·판본·직접 검토를 재사용해 조사하며 기존 승인이나 배포 검사를 반복하지 않는다.
+
+모든 실행 증거는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`의 fresh-drive-preflight-v1, public-readback-v1/{receipt,module-proof,resolution}.json, release-actions-v1.log, website-final-readback-v1.json과 canonical inventory에 있다. 최신 공개 Git 커밋/배포와 이번 개발 문서 갱신의 Git 상태는 별도로 확인한다.
+
+이번 발행 증거288files/289members·5,290,621bytes·SHA96bad726c81dd12f7cb995ea64c4b851fb37a7a2756984c0523233b7c5c82712를 private Drive Research1QDODmwUuu5-eWttIfREnDjPRP3ZQXHC6에 보관하고 원격 raw SHA/CRC·부모/shared:false를 확인했다. source_versions0의 발행 증거이고 원문14판본의 v5 독립 복구 및 fullruntime과 구분한다. 다음7/30 collect-v1은 실행 경로에 realpath를 적용해 venv가 아닌 시스템 Python을 선택했으며 trafilatura import 실패로 일부 fetch/state만 생성되고 최종 documents/parses는 생성되지 않았다. venv 자체의 경로를 지정한 v2에서 진행하며 최초 실패 로그를 보존한다.
+
+## 387. 실제 미검토7/30의 공통 원문 확보
+
+전수 private ledger에서 가장 최근 미검토는7/30이다.8/3·8/2·8/1의 빈 기록은 이미 판정되어 재취재 대상으로 계산하지 않았다. 기존 source-count5와 원래 URL5를 사용했다. collect-v2의 OpenAI3 HTTP403은 보존하고 GitHub2 HTTP200·20blocks를 공통 profile로 파싱했다. actual web.run 응답 turn638view0/1 및 turn640view0을 frozen transcript로 저장하고 manual-readable-capture/v1·명시적7/29날짜/단일H1 선택을 재사용해 OpenAI3·100blocks를 import했다. 자동 HTTP 성공이나 승인으로 표시하지 않는다. 학술 연구자 원문에8/10수정이 있으므로 최초7/29발표와 구분한다.
+
+공통 select-source/bundle로 원래5자료/120blocks를 결합했고 ARC1문서의 exact source selection을 MLX fact_extract에 고정했다. run은 외장 combined-v2/runs/legacy-20260730-{all-source-bundle,arc-selected-source,arc-fact-extract}-20261005-v1이다. CLI session31010이 실제 live로 관측됐으며 진행 중인 stage만으로 완료 판정하지 않는다. 승인·전환·공개·Drive 최종 보관은 아직 수행하지 않았다. logs 및 readable response/manifest를 외장 루트에 보존한다. 전체 미판정64/598·WBS2/22·goal active다.
