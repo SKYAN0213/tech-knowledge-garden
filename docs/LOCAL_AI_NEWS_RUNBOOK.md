@@ -10023,3 +10023,24 @@ CLI가 `gh run view --repo SKYAN0213/tech-knowledge-garden`로 성공한 정확�
 actualv3재파싱은4원문판본과원래4parse를그대로유지하며새4parse를추가했다. Vercel ai@7.0.23/25/26의발표는각각2026-07-13T18:31:57Z/21:32:40Z/22:04:00Z이고본문3/7/2블록이다. Codex0.145.0-alpha.7은10:49:55Z·한줄본문만있다. 모든새본문에로그인안내문없음,원본SHA/parsedate matched/timestamp를검사했다. 이후선택용v4에서current4parse만저장하고Vercel3원문을common select-source로명시선택했다. oldv1/v2/v3·불변parse캐시를수정하거나삭제하지않았다. v3/v4reparse·selection의추가HTTP/모델생성/기사승인/Drive작성원본/공개변경은0이다. 비교페이지blocked와Codex상세미확인은남는다.
 
 private source ZIP는공통archive로생성해4SourceVersion원본과전/후parse/설정/실패·표적검사/readback의21자료/22ZIPmembers·196,148bytes를Research ID1MfP9Qf7Bm8V_nqK2Q6myuuWjyEhhyT6l에보관했다. actual원격metadata의private부모/shared:false와rawSHA3881fff8f0750b3f402da30ecd9d49c8bb662e864e6ed529578bfc7e56a77d87을대조하고exactmanifest SHA1f1c7ec5f9d363f88d1f3d139a7ff98a2f6c9dbecb9902d44ed04b2c97ac2000으로공통v1의23파일CRC/bytes복구를확인했다. common v1의복구는raw/실행자료와CRC/SHA검사이며의존성전체승인/runtime복구로집계하지않는다. 다음은선택run `legacy-20260714-vercel-source-selection-20261005-v1`의3발표를직접사실검토해기존회차에연결하고Codex변경은공식비교/API대체근거를먼저확인하는일이다. metadata복구10과나머지58/543·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는유지한다. 1시간동일실패반복은없었다.
+
+
+## 400. GitHub 공통 프로필의 통합 배포 검증
+
+6a02b3fd0c1e567effe3cff660eb13ef195f11e2 / Actions37278066302의 실제 terminal build/deploy success를 확인했다. Node840/840·Python Drive15/15·WebsiteData2/2·build/site가 통과했다. 로컬 전체 suite는 반복하지 않았다. `legacy-20260724-github-profile-release-readback-20261005-v1`에서 정확한 commit의 웹·RSS·GitHub21고유파일과 지도module actual bytes가 일치했다. 기사/회차/기존RSS/Drive 작성 원본은 바꾸지 않았으며 이전 UI 검사를 새 UI 검사로 집계하지 않는다.
+
+코드·설정·표적 검사·실제 CI·공개 bytes의55자료/56ZIPmembers·989,774bytes를 private Research ID1S5kx5XqHPmuzggxptvd7zf2bit1s3Tft에 저장했다. actual 원격 metadata의 private 부모/shared:false와 raw SHA f37eab76ad158bee163a86422bff79e2c834276a1aa7faff26d4cc2ed0572730을 확인했다. exact manifest SHA615194de6005c170329c08e37484f32fe699fe3e1a55a10d5bcd8d10dfe04af6으로 공통v1의57파일 CRC/SHA/bytes 복구가 통과했다. 전체 runtime 복구나 기사 승인으로 표시하지 않는다.
+
+이전 저장소 이동 재확인은 상태 확인으로 분류한다. 이번은 공통 파서 코드의 commit/push/CI/actual 공개 readback 및 Drive 최종 증거 보관으로 authoritative state를 바꾼 progress다. 다음 선택된 Vercel3원문의 processing run은 `legacy-20260714-vercel-processing-20261005-v1`이며 실제 local qwen3.8:27b-mlx 후보와 원문을 직접 검토한다. 전체legacy58/543·metadata복구10·독립human40/20·정규7회/무인08시·fullportable runtime·WBS2/22·goalactive는 남는다.
+
+## 401. 실제 Vercel 릴리스 3건의 로컬 사실 검토와 기사 초안
+
+`legacy-20260714-vercel-processing-20261005-v1`은 기존 선택 출처 3건·본문 12블록으로 qwen3.8:27b-mlx의 실제 추출 60.392초와 근거 비교 2배치를 수행했다. 후보 6개 중 4개가 구조 검사를 통과했고, 2개의 원문에 없는 단위 `version`을 차단했다. 공식 릴리스 제목·UTC 발표 시각·정확한 본문 인용을 직접 대조해 6사실을 검토했다. 버전 2사실은 숫자와 패키지 조건을 유지하며 측정 단위가 없는 식별자이므로 단위를 빈 문자열로 정정했다. 제목에만 있는 주체와 수치 주의를 각각 원문 근거로 검토했다. 원모델·후보·정정 기록을 보존하고 모델의 supported 판정을 자동 승인으로 사용하지 않는다.
+
+같은 실행의 재개는 추출과 근거 비교를 재사용하고 실제 작성 54.732초 후 editorial_review에 진입했다. 날짜 누락, 어색한 번역, 제품을 회사 태그로 사용하는 오류를 직접 정정했다. 현재 초안 a97b1e13ec36a5ab93a141d9767a214409b76ac80bbe6828cf0516e6dfa699c8은 3문장·178자 리드와 취소 준비·추적 문맥·의존성의 3설명이다. 품질 검사 blocked:false이며 같은 사실을 공유하는 리드와 설명의 반복 검토는 남는다. 기사 승인·작성 원본·공개 변경은 0이다. `preview.md`는 canonical 해당 실행에 있다.
+
+최초 요청은 다중 원문의 candidate key 누락으로 모델 호출 전에 거부됐다. 설명형 key도 원문 식별 관문에서 거부됐고, ai@7.0.26의 정확한 source-6c31b0895d6be8358ba4로 실제 처리를 진행했다. 처음 두 실패 로그를 보존하며 성공으로 표시하지 않는다.
+
+다음 전환은 원본 7/14_0801의 time/type/tags와 legacy transition의 추가 메타데이터 관문을 대조하고, UTC 7/13 발표일과 한국시각 7/14 취재 구간의 달력 비교를 정확한 원문 시각으로 확인한다. 로컬 날짜로 원문 발표일을 덮거나 메타데이터를 조용히 삭제하지 않는다. Codex 한 줄 릴리스와 비교 차단의 공식 대체 근거도 남는다. 한 시간 같은 실패를 반복한 항목은 없으며 전체 목표는 active다.
+
+원문 판본 3개와 모델/후보/직접 검토/원초안/정정/검사의 47자료·48ZIPmembers·222,440bytes를 private Research ID1HaM3vzc5wdrr0iLMg5iMM4Da-eOOwrdj에 보관했다. actual 원격 metadata의 부모/shared:false와 raw SHA89967cc96839ed59aa72e400acb98c21b1791d649636d934db1a0700798e02a6을 대조했다. exact manifest SHA4322390694b4ca81e95d0a3cdfc6d69e948a72f54b396831be7c27aab851aaa8로 공통v1의49파일 CRC/SHA/bytes 복구를 확인했다. 실행 실패와 작성/검토 완료를 구분하며 fullruntime 복구나 공개 승인으로 집계하지 않는다.

@@ -4226,3 +4226,10 @@ canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·�
 다음7월14일5URL을collect하면서GitHub로그인안내문본문오인을발견해공통 `github-release-detail-v1`을등록했다. 저장소별crawler를추가하지않고release markdown본문·dialog제외제목·UTCheader시각만기존XPath파서로읽는다. 신규Node2/기존Python1과실제raw4개재파싱이통과했다. 현재Vercel3출처가명시선택됐고Codex한줄본문/compare차단은유지한다. source재파싱/선택의HTTP·모델·승인·공개변경0이며원래4parse도보존한다. 상세런북399.
 
 전체legacy58/543·메타데이터복구10·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는남는다. profile추가성공을전경로기간수집/기사검토완료로승격하지않는다. 다음선택원문사실검토와기존회차/용어연결,공식Codex변경대체원문확보를진행한다.
+
+
+## 19.307. 공통 GitHub 프로필 배포 검증 완료
+
+6a02b3f/Actions37278066302의actual build/deploy success·Node840/840·Python15+2·build/site와공통public readback21고유파일+지도module을확인했다. source4판본과release55자료의두private Drive ZIP을actual raw SHA/공통v1로복구했다. 기사원본/회차/운영횟수는변하지않았다. 다음은Vercel3원문의실제local processing 후보를직접검토하고기존7/14 회차/전문용어에연결한다. 전체legacy58/543·metadata복구10·독립human40/20·정규7회/무인08시·fullportable runtime·WBS2/22·goalactive 유지. 상세런북400.
+
+후속 실제 처리에서 Vercel3원문·12블록의 후보6개를 직접 검토하고 실제 모델 작성·정정 초안까지 진행했다. 추출60.392초·작성54.732초와 원출력/정정/근거를 보존한다. 관련47자료의 private Drive ZIP actualraw와49파일 공통v1복구를 확인했다. 추가 원문 HTTP0이며 구형 메타데이터·UTC와 한국시각의 취재 구간 판정·기사 승인·기존 회차 반영은 남는다. 상세런북401.

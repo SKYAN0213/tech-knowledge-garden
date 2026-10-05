@@ -1,3 +1,7 @@
+최신 로컬 처리(2026-10-05): Vercel 릴리스 3건·12블록을 실제 qwen3.8:27b-mlx로 추출·근거 비교한 뒤 6사실을 직접 검토했다. 실제 작성 54.732초 후 한국시각 표시·번역·제품 태그를 정정해 3문장·178자 리드와 3설명 초안을 보존했다. 품질 검사 blocked:false, 기사 승인·Drive 작성 원본·공개 변경은 0이다. 다음 구형 메타데이터 및 UTC와 한국시각 취재 구간 관문을 확인해 기존 회차에 전환한다. [런북401](LOCAL_AI_NEWS_RUNBOOK.md#401-실제-vercel-릴리스-3건의-로컬-사실-검토와-기사-초안).
+
+최신 수집 코드 배포(2026-10-05): 공통 GitHub 릴리스 프로필을6a02b3f로commit/push했고Actions37278066302 실제build/deploy success·Node840/840·Python15+2·build/site를확인했다. 공통readback의21고유웹/RSS/GitHub파일+지도module actualbytes가일치하고 private Drive의55자료 ZIP rawSHA/공통v1복구를확인했다. 원문4개/oldparse보존의별도source ZIP도원격복구했다. 기사/회차/Drive작성원본은이번코드배포에서바꾸지않았다. [런북400](LOCAL_AI_NEWS_RUNBOOK.md#400-github-공통-프로필의-통합-배포-검증).
+
 최신 수집 수정(2026-10-05): 7/14 두 원본 회차의5고정URL을 실제 공통 collect로 읽어4captured·비교1blocked를 확인했다. GitHub generic extraction이 로그인 안내문을 본문으로 잡는 실제 오류를 `github-release-detail-v1` 공통 profile로 수정했다. 여러 저장소의 markdown-body·대화상자 밖 H1·릴리스 relative-time을 읽고 UTC timestamp를 보존한다. 옛 고정NemoClaw profile은 유지했다. Node 신규2경로와 기존Python1회귀를 확인했고 실제4원문을HTTP0으로재파싱해3릴리스변경내용/4시각·old4parse불변을확인했다. Codex한줄본문/비교차단은상세미승인으로남기며기사승인/작성원본/공개내용은바꾸지않았다. [런북399](LOCAL_AI_NEWS_RUNBOOK.md#399-github-릴리스-공통-본문발표-시각-파싱).
 
 공통 공개 검증 코드5c715e4의Actions37275620750 build/deploy success와CI838/838·Python15+2·build/site를확인했다. 새코드배포를공통명령으로21고유파일+지도module actualbytes 대조했고private Drive Research의56자료ZIP actualraw SHA/공통v1복구를확인했다. 이전f77의829개와새코드838개를구분한다. 아래새프로필릴리스CI는별도로확인한다.
