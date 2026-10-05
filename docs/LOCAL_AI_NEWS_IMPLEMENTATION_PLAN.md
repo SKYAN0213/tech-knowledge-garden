@@ -4248,3 +4248,10 @@ Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더
 P5-01/P5-03과 실행 묶음 7~8의 다음 수직 슬라이스다. 기존 release·transfer plan·staged bytes를 변경하지 않고, 실제 원격 부모 전체 목록과 raw bytes를 공통 `research-authoring reconcile`에서 대조한다. 부분 저장은 남은 파일만, 응답 유실 뒤 원하는 bytes가 있으면 추가 쓰기 없이 확인한다. 업데이트 ID·부모·수정시각 변경과 이미 생성한 ID의 교체/삭제는 충돌로 기록하고 후속 쓰기를 막는다. 입력 SHA와 공유 잠금에 묶인 불변 receipt를 기존 비공개 진척 화면에 연결한다.
 
 수용 기준은 부분 저장·모호한 생성 성공·ID 교체·revision 충돌·기한 만료·증거 변경·잠금 회귀 검사, 기존 실제 승인 2파일의 fresh Drive readback과 CLI/진척 화면 확인이다. 저장 결과는 공개 배포·정규 운영 횟수로 승격하지 않는다. 실제 API 쓰기 자동화와 인증 갱신, 강제 종료를 포함한 단일 08시 전 구간, 전체 소급·독립 평가·새 정규 7회는 이 슬라이스 이후에도 전체 완료 조건으로 남는다.
+
+
+후속 검증: ea32e080574447eb6bcf6b01a3cc617c0d52653e / Actions37289063973의 build·deploy가 성공했다. Node859/859, Drive Python15/15·WebsiteData2/2, build/site를 확인했다. 공개 readback 첫 요청은8파일 완료/5네트워크 실패였고 현재 RSS HTTP200 관측 후 같은 run에서 미완료 요청만 다시 수집했다. 기존 완료 bytes를 재사용해 웹·RSS·GitHub13파일과 지도 모듈이 일치했다. 실패 원본은 삭제하지 않았다.
+
+보관 v1은 공개 readback이 진행 중일 때 만든 부분 증거 snapshot으로 원격 업로드하지 않았다. 완료 상태를 잘못 가정한 준비 스크립트는 실제 `public_artifact_bytes_verified` 계약을 확인한 뒤 수정했다. 성공 proof를 확인한 다음 v2를 생성했다. 최종60자료/61 ZIPmembers·1,907,840bytes를 private Research ID1Emf48oLZBHgZuewT8ssD8EFM6R62ijYY에 저장했다. metadata의 부모/shared:false, 원격 raw SHA a0d4436192ac359759f314ee5867db6d80a3b2c5e9aa9dcf4f44c3ed047c5305와 exact manifest718cd2e2cdc4883ef896b3c6201ad7f387e0c5c18a4cd36f7869c805a8ab2ec5를 대조했다. 공통 ordinary v1 복구62파일을 확인하고 복구된 root에서 release·plan·staged bytes·raw proof를 다시 검사해 verified2/pending0/conflict0가 일치했다. 이 보관은 실행 proof 복구이며 원문 승인 의존성 전체나 full runtime 복구로 승격하지 않는다.
+
+증거는 외장 루트의 authoring-execution-{actual-reconciliation,status,ci-status,ci-full,public-readback}-v1, archive-v2, remote-archive-{metadata,raw}-v2, remote-v2.zip, exact-manifest-v2, restore-v2, restored-proof-v2와 canonical의 두 새 run에 있다. 기존 원고·날짜·ID·RSS·공개 분류를 변경하지 않았고 추가 Drive 작성0/새 정규 운영0이다. private HTML 렌더링은 브라우저 정책으로 미검증이다. 전체 WBS2/22와 목표 active를 유지하며, 다음 핵심은 동일 execution proof를 쓰는 단일08시 전 구간과 실제 쓰기/중단 복구의 연결이다. 독립40/20·정규7회·전체 legacy 판정도 남는다. 동일 실패를 1시간 반복한 항목은 없다.
