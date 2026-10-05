@@ -469,6 +469,64 @@ test("one legacy article can split into explicitly reviewed distinct events with
   }
 })
 
+test("legacy duplicate article sections require explicit same-event review and preserve one fixed event", (t) => {
+  const f = legacyTransitionFixture(t)
+  reviseLegacyFixture(
+    f,
+    f.existing.body.replaceAll("https://example.com/second", "https://example.com/announcement"),
+  )
+  f.articles.pop()
+  f.packet.events.pop()
+  const id = f.articles[0].event_id
+  for (const row of f.packet.units) row.event_ids = row.event_ids.filter((v) => v === id)
+  f.packet.units[4].event_ids = [id]
+  f.packet.units[4].duplicate_event_review = {
+    original_read: true,
+    source_read: true,
+    same_event_checked: true,
+    dates_checked: true,
+    reason:
+      "Both original sections describe the same dated source announcement; preserve one event.",
+  }
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = parseNote(projection.content)
+  assert.deepEqual(
+    extractArticles({ ...after, file: f.existing.file }).map((a) => a.id),
+    [id],
+  )
+  assert.equal(after.meta.new_items_count, 1)
+  assert.equal(after.meta.coverage_end, f.existing.meta.coverage_end)
+  assert.equal(projection.content.includes("duplicate_event_review"), false)
+  for (const mutate of [
+    (p) => delete p.units[4].duplicate_event_review,
+    (p) => (p.units[4].duplicate_event_review.source_read = false),
+    (p) => (p.units[4].duplicate_event_review.same_event_checked = false),
+    (p) => (p.units[4].duplicate_event_review.dates_checked = false),
+    (p) => (p.units[4].duplicate_event_review.reason = " "),
+    (p) => p.units[4].event_ids.push(id),
+    (p) => (p.units[4].event_ids = ["0000000000000000"]),
+    (p) => (p.units[3].duplicate_event_review = structuredClone(p.units[4].duplicate_event_review)),
+    (p) => (p.units[0].duplicate_event_review = structuredClone(p.units[4].duplicate_event_review)),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
+  const before = f.existing.body
+  reviseLegacyFixture(
+    f,
+    before.replace(
+      "이전 본문. https://example.com/announcement\n\n# 오픈소스",
+      "이전 본문. https://example.org/unrelated\n\n# 오픈소스",
+    ),
+  )
+  assert.throws(
+    () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
+    /retain/,
+  )
+})
+
 test("legacy official alternatives retain original citations and use only the same event's approved sources", (t) => {
   for (const mode of [{}, { sourceMarkers: true }, { sourceListOnly: true }]) {
     const f = legacyTransitionFixture(t, mode)

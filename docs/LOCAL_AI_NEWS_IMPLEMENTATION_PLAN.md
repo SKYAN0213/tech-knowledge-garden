@@ -4176,3 +4176,12 @@ fresh203실제raw/16폴더·재조회와 explicit release로2작성 파일16,896
 WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9같은ID 갱신·2불변·기존보관기록1유지를 구분한다. 발행증거334files/335members·4,862,415bytes를 private Drive에 저장하고 actual remote SHA/CRC·모든member bytes를 대조해 ordinary v1으로 복구했다. 원문·승인·실제 raw를 보존한 뒤 own중복base64 transport23개만 정리했다.
 
 미판정은 canonical62회차579구간·diagnostics0이다. 다음7/28·7/27·7/25를 가능한 검토 묶음으로 처리해 전수Drive대조/공개CI 빈도를 줄이며 공통 수집·판정·원고/용어 승인 구조를 유지한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체legacy판정·WBS2/22·goalactive는 남는다. 이번은 authoritative Drive와 공개 상태를 바꾼 progress이며 동일실패1시간 반복0이다. 상세런북393.
+
+
+## 19.301. 3회차 소급 묶음과 공통 중복·원격 복구 보강
+
+7/28·7/27·7/25의 원래 26구간을 원문 기반 고정 사건 5개로 재구성하고 38사실·실제 MLX 원고5회·정정·승인을 보존했다. 전문용어2개와 performance-path/Signal 이력을 원문에 연결했다. 중복 뉴스/논문 구간을 같은 사건으로 묶는 명시 검토와 승인 정의의 exact source selection 순환을 공통 계약으로 구현했다. 원문 유지·hash·일반 순환 거부를 유지한 표적58/58이 통과했다.
+
+비공개 Drive portable ZIP6개의 실제 raw SHA/CRC·독립 복구·기사 승인 동일·이력2노트 재검증과 공통 위치 등록을 완료했다. private v5의 생성·링크·채널 검사는 통과했고 v4와 독자 HTML/digest가 같다.1280/390 UI 증거가 유지된다. 승인 작성 변경은 용어 인덱스 포함8파일40,120bytes다. 최신 작성 원본 readback/release·canonical 공개·WebsiteData는 아직 실행하지 않았다. canonical 미판정62/579와 private59/553을 구분한다.
+
+다음은 준비된8파일의 fresh Drive-first release다. 추가 모델 재생성·이미 통과한 표적 suite 반복은 하지 않는다. 전체 legacy판정·독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 유지한다. 상세 런북394와 external evidence를 따른다.

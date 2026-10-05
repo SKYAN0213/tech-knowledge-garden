@@ -8,7 +8,8 @@ import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
-import { noteText } from "../scripts/garden.mjs"
+import { noteText, parseNote } from "../scripts/garden.mjs"
+import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
 import { approvedArticle } from "../scripts/research/publish-adapter.mjs"
 import { evaluateArticleConceptReview } from "../scripts/research/article-concept-review.mjs"
 import { main } from "../scripts/research.mjs"
@@ -811,6 +812,102 @@ test("shared definition evidence closes across two selecting article runs and re
   await assert.rejects(
     () => archiveClosure(f.root, "tampered-shared-definition", f.run, [], { vault: f.vault }),
     /changed|differs|mismatch/,
+  )
+})
+
+test("definition facts may select exact source bytes from the article using that approved definition", async (t) => {
+  const f = fixture(t),
+    definitionRun = "definition-facts",
+    noteRun = "selected-definition"
+  await main([
+    "select-source",
+    "--root",
+    f.root,
+    "--run",
+    definitionRun,
+    "--source-run",
+    f.run,
+    "--url",
+    "https://example.org/runtime",
+  ])
+  for (const name of ["claims.json", "reviewed-claims.json"])
+    atomicWrite(f.root, `runs/${definitionRun}/${name}`, readJSON(f.root, `runs/${f.run}/${name}`))
+  const note = parseNote(f.content)
+  note.meta.last_reviewed = note.meta.map_review.reviewed = "2026-10-03"
+  const content = noteText(note.meta, note.body)
+  await approveNoteReview(
+    f.root,
+    noteRun,
+    {
+      schema: "knowledge-note-review/v1",
+      reviewer: "fixture editor",
+      reason: "Review the specialist definition against the selected exact source.",
+      reviewed_at: "2026-10-03",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: [
+        {
+          path: f.notePath,
+          previous_sha256: sha256(f.content),
+          content,
+          evidence: [{ run_id: definitionRun, claim_ids: ["c1"] }],
+        },
+      ],
+    },
+    { vault: f.vault },
+  )
+  f.review.concept_review.assignments[0].note = {
+    path: f.notePath,
+    sha256: sha256(content),
+    approval_run: noteRun,
+  }
+  fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const portable = await archiveClosure(f.root, "selected-definition-portable", f.run, [], {
+    vault: f.vault,
+  })
+  assert.ok(portable.bound_runs.includes(definitionRun))
+  const manifest = readJSON(f.root, "runs/selected-definition-portable/archive-manifest.json")
+  assert.ok(
+    manifest.dependencies.some(
+      (e) => e.from === definitionRun && e.to === f.run && e.kind === "source_selection",
+    ),
+  )
+  const restored = restoreArchive(f, portable, "restore/selected-definition")
+  assert.deepEqual(
+    loadArchivedConceptApproval(restored, "selected-definition-portable", f.run),
+    loadCurrentApproval(f.root, f.run, { vault: f.vault }),
+  )
+  const selection = readJSON(f.root, `runs/${definitionRun}/source-selection.json`)
+  const changed = structuredClone(selection)
+  changed.source_run.documents_sha256 = "0".repeat(64)
+  atomicWrite(f.root, `runs/${definitionRun}/source-selection.json`, changed)
+  await assert.rejects(
+    archiveClosure(f.root, "changed-definition-selection", f.run, [], { vault: f.vault }),
+    /changed/,
+  )
+  atomicWrite(f.root, `runs/${definitionRun}/source-selection.json`, selection)
+  // A plain selection loop lacks the reviewed article -> note -> fact chain.
+  atomicWrite(f.root, `runs/${f.run}/source-selection.json`, {
+    ...selection,
+    source_run: loadStoredSourceRun(f.root, definitionRun).identity,
+  })
+  await assert.rejects(
+    archiveClosure(f.root, "plain-selection-loop", f.run, [], { vault: f.vault }),
+    /Cyclic/,
   )
 })
 

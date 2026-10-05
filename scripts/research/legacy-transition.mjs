@@ -76,6 +76,13 @@ const packetSchema = object({
     }),
   },
 })
+packetSchema.properties.units.items.properties.duplicate_event_review = object({
+  original_read: { type: "boolean", enum: [true] },
+  source_read: { type: "boolean", enum: [true] },
+  same_event_checked: { type: "boolean", enum: [true] },
+  dates_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
 const markdown = unified().use(remarkParse)
 const urlsIn = (content) =>
   [...new Set((content.match(/https?:\/\/[^\s<>\]\)]+/g) || []).map(canonicalURL))].sort()
@@ -229,9 +236,21 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const content = before.body.slice(unit.body_start, unit.body_end)
     const urls = sources.forContent(content)
     const anchors = anchorsByUnit.get(unit.unit_id) || []
+    const duplicate = decision.duplicate_event_review
+    if (
+      duplicate &&
+      (unit.depth !== 2 ||
+        decision.decision !== "replaced" ||
+        anchors.length ||
+        decision.event_ids.length !== 1 ||
+        !packet.events.some((event) => event.event_id === decision.event_ids[0]) ||
+        !duplicate.reason.trim())
+    )
+      throw Error("Legacy duplicate review requires one separately anchored source event")
     if (
       unit.depth === 2 &&
       decision.decision === "replaced" &&
+      !duplicate &&
       !same(anchors.map((event) => event.event_id).sort(), [...decision.event_ids].sort())
     )
       throw Error("Legacy article disposition must match its exact event anchors")

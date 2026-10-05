@@ -54,7 +54,7 @@ export function buildArchiveClosure(
   }
   const visit = (id) => {
     if (!validRun(id) || id === runId) throw Error("Invalid archive dependency run")
-    if (visiting.has(id)) throw Error("Cyclic archive dependency")
+    if (visiting.has(id)) throw Error("Cyclic archive dependency: " + [...visiting, id].join(" → "))
     if (runs.has(id)) return
     if (runs.size + visiting.size >= 32) throw Error("Archive dependency budget exceeded")
     visiting.add(id)
@@ -76,7 +76,25 @@ export function buildArchiveClosure(
       // Other source/approval dependency cycles remain invalid.
       const reviewedDefinitionBackEdge =
         visiting.has(target) && ["knowledge_fact_source", "concept_note_approval"].includes(kind)
-      if (!reviewedDefinitionBackEdge) dependencies.push(target)
+      // A note's separately reviewed facts may select the exact bytes from
+      // the article assigning that note. The selection hash check above still
+      // runs. Close only this explicit article -> approved note -> fact chain;
+      // an ordinary source-selection cycle remains invalid.
+      const definitionSelectionBackEdge =
+        visiting.has(target) &&
+        kind === "source_selection" &&
+        edges.some(
+          (articleNote) =>
+            articleNote.from === target &&
+            articleNote.kind === "concept_note_approval" &&
+            edges.some(
+              (noteFact) =>
+                noteFact.from === articleNote.to &&
+                noteFact.to === id &&
+                noteFact.kind === "knowledge_fact_source",
+            ),
+        )
+      if (!reviewedDefinitionBackEdge && !definitionSelectionBackEdge) dependencies.push(target)
       edges.push({ from: id, to: target, kind })
     }
     for (const document of stored?.documents || []) {
