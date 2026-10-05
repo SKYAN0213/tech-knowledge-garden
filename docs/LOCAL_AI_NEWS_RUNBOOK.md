@@ -9800,3 +9800,22 @@ private Research 폴더와 파일 메타데이터를 새 조회하고 최종 v5 
 외장 `drive-{openai,orchard}-v5/`의 metadata·archive-observation·drive-receipt·remote.zip·restored·location-register와 `remote-approval-verification-v5.json`에 근거가 있다. 원격 raw의 임시 b64만 디코딩 후 제거했다. signed URL/자격 정보는 저장하지 않는다. 전체 worker/runtime 재개 검증과 구분한다.
 
 다음은 fresh Drive 작성200파일/부모 목록의 원격 대조, 위 final preview의 승인3파일(8/4회차+용어2)의 Drive-first 같은ID 저장, 공개 릴리스와 배포 readback이다. 현재 canonical 작성/공개ceeafd2/RSS는 유지한다. 미판정65회차607구간·WBS2/22·독립40/20·정규7회/무인08시·full portable runtime은 미완료, 전체 goal active다. 이번 공통 구현·원문/용어/전체 회차 검토·실제 화면·원격 복구는 progress다. 동일 실패를1시간 이상 반복한 병목은 없으며 디스크 실패에 대해서는 새 외장 출력 경로로 전환했다.
+## 385. 8/4 Drive 작성 원본 반영과 외장 릴리스 작업 사본
+
+2026-10-05 KST. 직전 저장 위치 질의는 read-only 확인이며 goal 구현의 no progress였다. 이어 실제 live cell 468을 같은 handle로 확인해 원격 raw 200파일 취득 완료를 확인했다. 새 예약이나 모델 이동/삭제는 수행하지 않았다.
+
+16폴더 최초 목록, 200실제 원격 raw, 16폴더 재조회에서 ID·부모·크기·수정시각이 일치하며 1,261,248bytes 전부 기존 canonical과 같다. 같은 폴더 fetch에 bare ID를 전달한 조회는 INVALID_ARGUMENT으로 실패했다. 실제 canonical Drive 폴더 URL로 수정해 전체 재조회했으며 실패를 수집 성공으로 집계하지 않는다.
+
+내장 ENOSPC로 snapshot 임시 파일 저장이 실패했다. 새 Git 사본을 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1/release-checkout-v1`에 생성했다. 원래 저장소/모델/기존 근거를 이동하거나 제거하지 않았다. 외장 사본은442ad27의 실제 tracked 파일이며 node_modules는 기존 의존성의 읽기용 링크다. Git info/exclude에만 해당 링크를 제외하고 공개 ignore 계약은 바꾸지 않았다.
+
+명시적 retrospective release review는 원문 충실도·상세 내용·의존 용어·독자 본문·실제 UI의5관문 pass이며 운영 회차를 생성하지 않는다. 기존 release 관문은 fresh200 baseline, 승인 preview SHA, 3staged SHA와 동일ID 갱신을 검증했다. release receipt는 reader-v4의 `drive-authoring/releases/1dda36e69ba3cc30c361182f66d468d04acafe736bd07a28892b35d7556ee2b1.json`이다.
+
+승인3파일을 같은 Drive ID에 저장하고 새 metadata/raw를 다시 읽었다. 원격 bytes는 회차 SHA61c88ef5074f7b79f1624d8a12cbc938953e64b843edb91ac3c2d47169eb391f, evaluation SHAe15e9cb0c36d0870b1597957292f7f7c24c2d04891ccd6b3a2e7b2db7cbbf840, voice SHA38a24e0927111f069b6e2a42189991e91086d347dd00b025e47214ed2c3a0f41과 같다. 원래ID·부모·shared:false를 유지한다. 이후16폴더를 다시 확인해197불변 raw + 3새 raw로200파일 post snapshot을 구성했다. 200개를 반영 후 다시 다운로드한 것으로 표시하지 않는다.
+
+post source SHA4bb895f8858cfdb5dd870edb2d39ffe3ede5f8478ab48698c06180529d73a60c, snapshot file SHAda7af4a30aea1b0b4112b8062dab9a475d05a044da5c1361f806137d25fca771이다. 외장 릴리스 사본은 검증된 원격 bytes를 사용하고 pull-drive 적용/상태 생성을 완료했다. 기존 내장 작업 사본은 아직 이전 공개 source를 유지하며 새 무인 실행 전에 같은 snapshot 또는 새 Drive 상태로 대조해야 한다.
+
+통합 검사 최초 실행은 기본 TMPDIR의 내장 ENOSPC로 실패했다. 외장 TMPDIR로 바꾼 full Node816검사는778pass/38fail이었다. 38실패 모두 새 Git 사본에 없는 research Python 경로다. RESEARCH_PYTHON에 검증된 기존 venv를 명시하고 실패한25파일의68검사만 실행해68/68통과했다. 두 환경 실패 로그를 보존했으며 코드 기대값·실패 경계는 바꾸지 않았다. Python Drive 및 WebsiteData 릴리스 검사도 terminal0이다. 통과한 전체 검사는 다시 실행하지 않는다.
+
+증거 루트는 외장 `fresh-drive-preflight-v1/`의 tree/raw-acquisition/raw-000..199/second-listing, connector-readback, release-review, prewrite-metadata, write-0..2, post-raw-0..2, post-tree-verification, post-connector-readback이다. raw b64에는 signed download URL이 없다. 원격 자료·승인·복구는 비공개이고 공개 원고에는 운영 문구를 넣지 않았다.
+
+이 checkpoint의 공개 사이트는 여전히ceeafd2다. 다음은 외장 릴리스 사본의 build/site·정상 push·Actions 및 웹/RSS/GitHub/WebsiteData 실제 readback이다. 전체 미판정65회차607구간, 독립40/20, 정규7회/무인08시, full runtime portable는 미완료이며 WBS2/22와 goal active를 유지한다. 같은 실패를1시간 반복한 항목은 없다.
