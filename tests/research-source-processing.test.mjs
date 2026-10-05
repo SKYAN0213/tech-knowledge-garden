@@ -644,7 +644,7 @@ test("reuse of a completed assessment survives model replacement without metadat
   assert.deepEqual(f.calls, ["evidence_compare"])
 })
 
-test("editorial correction survives processing resume without another model call", async (t) => {
+test("editorial correction survives resume and immutable generation reuse without another model call", async (t) => {
   const f = fixture(t)
   await processSourceRun(f.options)
   await reviewProcessedClaims(f.root, "processed", await decision(f))
@@ -664,11 +664,25 @@ test("editorial correction survives processing resume without another model call
   assert.equal((await processSourceRun(f.options)).draft_reused, true)
   assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/draft.json")), corrected)
   assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const reviewed = readJSON(f.root, "runs/processed/reviewed-claims.json")
+  const reuseOptions = {
+    documents: readJSON(f.root, "runs/processed/documents.json"),
+    parses: readJSON(f.root, "runs/processed/parses.json"),
+  }
+  const reused = loadBoundDraftCheckpoint(f.root, "processed", reviewed.claims, reuseOptions)
+  assert.deepEqual(reused.record, original)
+  assert.notEqual(reused.record.draft_id, JSON.parse(corrected).draft_id)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/draft.json")), corrected)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
   atomicWrite(f.root, `runs/processed/corrections/${sha256(JSON.stringify(correction))}.json`, {
     ...correction,
     reason: "tampered",
   })
   await assert.rejects(() => processSourceRun(f.options), /correction history changed/)
+  assert.throws(
+    () => loadBoundDraftCheckpoint(f.root, "processed", reviewed.claims, reuseOptions),
+    /correction history changed/,
+  )
   assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
 })
 

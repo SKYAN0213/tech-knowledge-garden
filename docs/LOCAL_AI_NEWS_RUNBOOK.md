@@ -10465,3 +10465,11 @@ e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/read
 6. 커스텀 연구 root의 --backlog를 모든 coverage·supplemental 검증에도 전달한다. 같은 사건 alias는 그 장부의 원문/검토 근거로 검증한다. 현재 폴더의 기본 장부를 읽는 우회를 사용하지 않는다.
 
 표적 증거는 외장 `tkg-daily-core-20261006-v1/shadow-auto-basis-target-v1.log`, 실패 파일 수정 `shadow-auto-basis-failed-target-v2.log`, 경로 회귀 및 설정 거부 `shadow-auto-basis-boundary-target-v3.log`다. 최초 적용 오류를 보존하고37/37·44/44 결과를 구분한다. 단위 fixture를 실제 예약 실행이나 실제 원문 수집으로 집계하지 않는다. 다음은 실제08:00 실행에 고정된 입력·원문·별도 로컬 후보·legacy 공개 readback·귀속된 최종 비교 검토를 연결해 첫 완료 기록을 등록한다.
+
+## 423. 편집 후 불변 모델 초안 재사용과 7월 10일 소급 전환
+
+기존 process-source의 --extraction-run/--assessment-run/--draft-run을 사용한다. 다른 run에서 완료된 writer를 재사용할 때 그 run의 작업 초안이 수정됐으면 전체 correction chain을 검증한다. 반환값은 model-draft-checkpoint가 고정한 최초 출력이며 해당 run의 수정·승인은 상속하지 않는다. 근거 검토 packet은 새 run에서 명시적으로 판정한다. 이력 누락·변조와 role ledger/원문/검토 사실의 차이는 거부하며 모델을 자동 재호출하지 않는다. 관련 표적53/53 통과.
+
+실제 승인 run은 legacy-20260710-claude-processing-20261006-v3, preview는 legacy-20260710-claude-reader-20261006-v2다. v1의 원 추출/근거 비교/writer와 거부 판정, 첫 표기·재사용 실패를 보존했다. 원래 9구간 중 같은 사건의 핵심 기사·도구 카드는 하나의 고정 ID에 연결했다. 동적 arXiv/OpenAI 탐색 주소는 당시 새 소식 부재의 근거로 쓰지 않는다. 공개 안내·전망·독자 조언을 제거하고 원문 조건을 2설명/5문단으로 전달한다. 전문용어는 기존 MCP만 배정했다.
+
+Drive 전후 작성 원본213개를 raw로 읽고 목록을 두 번 대조했다. 7월 10일16:03 파일만 기존 ID로 수정했으며 guarded write-session verified1/intent0이다. 승인 ZIP283자료/285members·868841bytes의 remote SHA는 bc1e2174d3035e20327ac0ed99fa084dbbaf97f074119fdf5d253bb89af7cc6e다. 외장 tkg-daily-core-20261006-v1의 legacy-jul10-*가 원문·모델·판정·화면·저장 증거다. 배포·WebsiteData·독립 복원은 각각 별도 검증으로 이어가고 이 소급 작업을 새 정규 운영 회차로 계산하지 않는다.

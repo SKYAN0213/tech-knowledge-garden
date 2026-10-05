@@ -4,6 +4,7 @@ import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { draftFingerprint, draftProblems, schemaForDraft, writeDraft } from "./editor.mjs"
 import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { loadRoleBudget } from "./model-policy.mjs"
+import { loadProcessedDraft } from "./processed-draft.mjs"
 
 function validator(claims, options) {
   const usable = options.deepContext
@@ -80,8 +81,14 @@ export function loadBoundDraftCheckpoint(root, runId, claims, options) {
   )
     throw Error("Article writer role ledger changed")
   const current = readJSON(root, `runs/${runId}/draft.json`)
-  if (current && JSON.stringify(current) !== JSON.stringify(result.record))
-    throw Error("Working draft differs from the generation checkpoint")
+  if (current && JSON.stringify(current) !== JSON.stringify(result.record)) {
+    // Reuse the immutable model output, never the other run's editorial approval.
+    // A legitimate correction may coexist with that output; validate its full
+    // history instead of forcing another model request after editing.
+    if (!readJSON(root, `runs/${runId}/draft-generation-reference.json`))
+      throw Error("Working draft differs from the generation checkpoint")
+    loadProcessedDraft(root, runId, { claims }, options.documents || [], options.parses || [])
+  }
   return result
 }
 
