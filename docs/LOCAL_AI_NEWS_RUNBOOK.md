@@ -10271,3 +10271,30 @@ WebsiteData344pages/168articles/24concepts/22connections·11파일3,448,351bytes
 저장·승인·전환·CI·공개 raw·UI·WebsiteData·변경 patch의158자료/159ZIPmembers·4,945,970bytes를 공통 ordinary v1으로 Research ID1NEInRcoOLzDGOfmQDNkItZUF5f1CNeDM에 보관했다. 실제 내려받은 ZIP SHA5855f85233db02ca0a22114e1f0e6460b767c1304d024c7e3e5851cd43bd3a45·부모/shared:false·159 CRC와 source manifest77da716557f72b0210ef5e83321303847ef9e97c8e4879510a6a960d62f9bfe8로160파일 복구를 확인했다. 복구한 summary/readback의 같은commit·14공개 proof를 대조했다. 이 묶음은 source_versions0/dependency_closed:false인 운영 증거이며, 원문/승인 dependency closure는 별도 v2 보관 ID1iUBlx4epHxMntNTC59nKPaWupU5VLDpA다. 전체runtime복구나 운영정규횟수로 세지 않는다.
 
 남은 canonical 소급53회차505구간·metadata10·전체WBS2/22·독립human40dev/20heldout·새정규7회·무인08시/인증·fullruntime는 유지한다. 다음은 metadata가 완전한 다음 legacy 묶음 검토와 기존08시의 실제 수집→승인→Drive→배포 전체 회차 증거 연결이다. 동일 실패를1시간 이상 반복한 항목0이다. goal 카드 paused 상태는 그대로 확인됐으며 사용자의 재개 지시로 이번 구현/저장/발행을 수행했다.
+
+
+## 411. 54경로 실제 수집·대기 병목·로컬 원고 승인 연결
+
+2026-10-06 사용자 재개 후 goal 도구의 active 상태를 확인했다. 작업 루트는 `/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden`이며 내부 경로 symlink와 다른 두 worktree는 보존했다. 기존54경로·8분야·로봇 추가 조사·오전8시·모델 정책을 유지했다. 외장 증거 루트는 `/Volumes/X5Storage/tkg-daily-core-20261006-v1`이다.
+
+첫 daily-20261006-core54-live-v1은 원문 호출 전 supplemental receipt의 이전 날짜 경계를 새 창과 비교해 실패했다. 원본 scan 자체 경계·원문 SHA·동일 사건 장부를 검증한 뒤 현재 창과 같을 때만 재사용하도록 수정했다. 기존 plan resume는 코드 SHA 관문이 거부했으며 이를 완화하지 않고 새 v2를 만들었다. 두 실패 log/plan과 기존 supplemental bytes를 보존했다.
+
+실제 v2는54경로/108창 중106영수증을 저장했다.105창은 검증됐고 전자신문 AI의10/4~10/7 창1건은 title_conflict로 incomplete였다. 이전의 정확한 독립 scan2창을 재사용했다. 실측 wall_clock 1,027,357ms·수집 phase 합계1,879,461ms였다. 이것은 개선 전 batch scheduler의 실제 측정이며 새 scheduler의 속도 향상 수치가 아니다.
+
+수집 종료를 PID/terminal 결과로 확인한 뒤 executor를 rolling route pool로 바꿨다. 최대6출처, 같은 출처 창 순서, 선행 목록 재사용, 후보/coverage 저장 직렬 처리를 유지한다. 완료 즉시 영수증을 저장하고 빈 슬롯으로 다음 출처를 시작한다. 저장 오류가 나면 새 작업을 멈추고 이미 진행한 작업을 drain한 뒤 실패를 반환해 operation lock이 일찍 풀리지 않는다. 느린 출처에서7번째 출처와 영수증이 지연되는 회귀를 재현했고 daily-scan22/22가 통과했다.
+
+전자신문의 실제 RSS `[단독] 금융권 AI 해킹, 1달러·22초만에 가능`과 상세 h2 `단독 금융권 AI 해킹, 1달러·22초만에 가능`을 직접 읽었다. 공통 title_prefix_labels에 검토한 `단독`만 등록했다. 표지를 제거하지 않고 대괄호 표기만 같게 비교하며 다른 단어·숫자·표지 누락은 계속 거부한다. 목록/상세 제목·관계와 원문 bytes를 보존했다. RSS13/13, 실제 etnews-prefix-20261006-core-v1의27원문 검증이 통과했다. 독립 reconcile은10/6까지만 coverage를 확인하며10/7 미래 날짜를 완료 처리하지 않는다. 새 handoff의 incomplete_windows0,54경로 대상창 검증, 후보772·same-event aliases3·원문 수정 검토21을 확인했다. 원래 summary partial/실패 영수증은 덮어쓰지 않았다. local_vault_unreconciled 계획이며 fresh Drive208 작성본 대조로 승격하지 않는다.
+
+공통 daily processor로 새 적층 직물 grasping 논문 후보와 NASA 로봇팀 원문을 연결했다. 논문은 발표 시각 검토 경로로 보존하고 자동 승인하지 않았다. NASA는9/28 과거 원문이며 오늘 기사로 쓰지 않았다. Qwen3.8:27b-mlx의 실제 전체11블록 추출6사실, medium 근거 대조2배치, 한국어 writer를 수행했다. 첫 대조 배치의 ASCII/곡선 아포스트로피4곳, 누락 배치에서1곳의 인용 실패를 보존했다. 기존 explicit evidence-quotes로 직접 원문 대조한 문자만 정정했고 완료 배치 재추론0/아직 없던 배치1호출이었다. 숫자16명은 정확한 추가 block과 member/조건 문자열로 검토했다. 첫 후보 key override·수치 metadata 실패도 보존하고 canonical 원문 key 및 실제 인용 문자열로 정정했다. 의미 검증 관문은 완화하지 않았다.
+
+NASA 원고의 시설 신규 공개로 읽히는 제목과 불필요한 이력→시설 인과를 정정했다. 최종2문장164자 리드·2설명/3문단·6verified 사실, 사건67afafd6394f0f6b·원문 발표일9/28을 승인했다. 일반 단어·기업·시설명으로 지도 노드를 만들지 않았다. 공통 candidate-approval로 후보에 연결했고 daily processing v2는 approval_ready1/identity_review1, 재사용 model_calls0이다. 원래 실패 processing v1을 성공으로 바꾸지 않았다. 신규 회차·Drive 작성 원고 쓰기·정규 운영 횟수 증가는0이다.
+
+승인 보관에서 quote-review 중간 parent 의존성이 빠지는 결함과 ordinary archive가 기존v2 manifest를 덮어쓰는 결함을 수정했다. 원 input·ledger/raw SHA·문서/parse 일치 검증을 거쳐 parent chain을 자동 포함한다. ordinary 명령은 기존v2를 쓰기 전에 거부한다. 잘못 바뀐 새 보관 manifest는 기존 ZIP embedded exact SHA에서 복원하고 잘못된 사본을 증거로 남겼다. 보관13/13이 통과했다. 최종 NASA closure v2는7bound runs·90자료/92members·4원문판본·628639bytes다.
+
+전체 수집 보관 v1은2024자료/2025members로 생성됐으나 실제 복구의2002member 제한에서 실패했다. 생성에도 같은2000자료 제한을 적용해 사전에 거부하며 회귀1/1을 확인했다. v2는 파싱 배열과 내용이 완전히 같은 복제 parse 사본271개만 묶음에서 제외하고 각 원 SHA/보존 경로 색인을 남겼다. canonical 원문/parse/모델 기록을 삭제하지 않았다. 실제 신규 표적 합계49통과(22+13+13+1), 전체 suite는 통합 CI 한 차례로 남겼다.
+
+Drive Research의 기존 업로드 ID1skI1DC6qYk0faCKSdWsdOiTGELiIa7A2를 v2로 같은ID 갱신했다. metadata는 private 부모11Mu9qSiR8Pk32k53-i032qSRPTdsozV7/shared:false·24,114,518bytes·v2 이름을 확인했다. 인증된 streamed file reference의 host 물질화는403으로 실패했고 기존 bounded raw compatibility 경로에서 실제 bytes를 다시 받았다. 최종 원격 SHA444fee58b1020afa5a736f02f9694a6832bd73b6ca9c10b947378bde60c67954가 패키지와 같다. exact manifest aaa71b2f2e0297498a3d71b01a32cf779c02d6a1f7f0a0ed132a1fc5ba9f63dc로1759파일 복구했다. 그 원격 복구본의 nested 승인 ZIP을 다시92파일 복구하고6verified 사실·인용 provenance·원고 SHA78fd5ba3accb35e9f6e8597f02f43eadbb7fca1b537b784cb70fa0909d4069e9를 검증했다. 추가 모델 호출0이다. 일반 묶음은 전체 승인 dependency closure가 아니며 nested NASA v2만 해당 승인 closure다. full runtime 복구로 세지 않는다. 개별 source 위치 registry 등록은 별도 후속 항목이다.
+
+증거는 collection-v{1,2}/resume log, regression/prefix/archive/budget 표적 결과, 원문/승인/daily-processing, 원격 metadata/proof·remote-delivery-v2.zip·restore-delivery-v2·restore-nasa-approved-v2·restored-nasa-approval-proof-v2에 있다. private dashboard는 재생성/readback했으며 브라우저 렌더링은 이번 묶음에서 미검증이다. 공개 원고·기사주소·RSS 변경0이다.
+
+목표 active·전체WBS2/22, legacy 미판정53회차505구간·metadata복구10·독립human40dev/20heldout·새정규7회·무인08시/인증/중단·full runtime 복구는 미완료다. 동일 실패1시간 반복은0이다. 다음은 fresh Drive 기준의 새 정규 회차·승인 원고 저장·발행 proof 및 실제 새 scheduler 측정을 연결하고, 원문 위치 등록과 나머지 소급 묶음을 이어간다. 전체 완료로 보고하지 않는다.

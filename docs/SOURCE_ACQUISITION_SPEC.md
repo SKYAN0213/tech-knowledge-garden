@@ -2607,3 +2607,10 @@ UTF-8, 중복 object key, 비유한 수, 잘못된 pointer·값 타입·원문 �
 `process-source --extraction-run COMPLETED_PROCESSING_RUN`은 동일한 선택 documents/parses에서 완료한 extraction 체크포인트를 재사용한다. source-processing input·state/result hash·claims 원본이 일치해야 하며 원래 candidate_key를 유지한다. 후속 비교 실패, 정책 변경 후에는 새 run에서 완료 추출을 재사용하고 근거 비교부터 진행한다. 이전 run과 모델 원출력은 덮어쓰지 않는다. 근거 비교·사실 검토·편집 승인·Drive 쓰기·공개는 각각 별도이며 재사용만으로 승인하지 않는다.
 
 현재 로컬 qwen3.8:27b-mlx의 metadata는 context_length262,144를 제공한다. 전체 source block ID를 포함하는 실제 API 입력이16,384 설정의 보수적 문자 예산을 넘겨 evidence_compare만32,768로 조정했다. 기존 역할 검증의 상한32,768·call300초·total900초와 기타 역할은 유지한다. 더 큰 입력이 상한을 넘으면 원문을 조용히 잘라내거나 같은 실행을 반복하지 않는다. 실제 운영 승격과 예약 모델은 별도다.
+
+
+### 검토한 제목 표지의 대괄호 차이
+
+`listing_profile.title_prefix_labels`는 원문에서 확인한 선두 표지를 최대8개 등록한다. 각 표지는 문자·숫자1~16자이며 중복은 거부한다. 같은 표지의 `[단독] 제목`과 `단독 제목`처럼 선두 대괄호만 다른 경우에만 비교 표현을 같게 한다. 표지 자체, 전체 제목, 날짜, URL은 제거하거나 추정하지 않는다. 미등록 표지·표지 누락·다른 숫자/단어는 여전히 제목 충돌이다. 원문 제목과 목록 제목을 각각 보존하고 `reviewed_prefix_label_brackets` 관계와 적용한 표지를 비공개 상세 영수증에 저장한다.
+
+전자신문 AI RSS의 실제2026-10-05 기사에서 `[단독]`/`단독` 차이를 확인해 `단독`만 등록했다. 공통 scanner 옵션을 재사용하며 추가 crawler나 source-title-authoritative 완화는 없다. 적용·실제 수집·원문 보관 결과는 런북411절을 따른다.

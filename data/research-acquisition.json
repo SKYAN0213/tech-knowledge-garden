@@ -2985,6 +2985,7 @@
       "max_items": 100,
       "guid_is_permalink": false,
       "date_timezone": "Asia/Seoul",
+      "title_prefix_labels": ["단독"],
       "scope": "Official AI XML feed, day-boundary and full originals required.",
       "fallback_archive": {
         "pagination": "path-pages",

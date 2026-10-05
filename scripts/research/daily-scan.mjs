@@ -643,7 +643,7 @@ export function supplementalCoverageReceiptForWindow(
       receipt.reconciliation_run !== span.reconciliation_run ||
       receipt.channel_id !== window.channel_id ||
       receipt.since !== window.since ||
-      receipt.scan_until_exclusive !== window.until_exclusive ||
+      receipt.scan_until_exclusive !== scan.summary.window?.until_exclusive ||
       receipt.coverage_until !== span.until_exclusive ||
       receipt.coverage_until !== expectedUntil ||
       receipt.backlog_merge?.status !== "merged" ||
@@ -652,8 +652,7 @@ export function supplementalCoverageReceiptForWindow(
         JSON.stringify(scan.candidates.map((candidate) => candidate.key)) ||
       scan.summary.status !== "window_scanned" ||
       scan.summary.channel_id !== window.channel_id ||
-      scan.summary.window?.since !== window.since ||
-      scan.summary.window?.until_exclusive !== window.until_exclusive
+      scan.summary.window?.since !== window.since
     )
       throw Error("Supplemental coverage receipt does not match its completed scan window")
     verifySameEventSuppressionRecord(
@@ -669,7 +668,9 @@ export function supplementalCoverageReceiptForWindow(
       },
     )
     verifyStoredListScan(root, scan, { channel_id: window.channel_id, ...scan.summary.window })
-    return receipt
+    // Validate the stored scan against its own bounds before checking reuse.
+    // A valid older scan must not block a wider window or confirm its new days.
+    if (receipt.scan_until_exclusive === window.until_exclusive) return receipt
   }
   return null
 }
@@ -810,17 +811,154 @@ export async function executeDailyPlan({
   let current = applyDailyReceipts(coverage, plan, receipts)
   const retryPolicy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
   atomicWrite(root, COVERAGE_FILE, current)
-  const pending = [...plan.windows]
-  while (pending.length) {
-    const batch = []
-    const selectedRoutes = new Set()
-    for (let index = 0; index < pending.length && batch.length < MAX_PARALLEL_DAILY_ROUTES;) {
-      const window = pending[index]
-      if (selectedRoutes.has(window.channel_id)) {
-        index++
-        continue
+  const pendingRoutes = [...Map.groupBy(plan.windows, (window) => window.channel_id).values()]
+  let commitQueue = Promise.resolve()
+  let stopped = false
+  const scanWindow = async (window, priorAttempts) => {
+    const attempt = priorAttempts.length + 1
+    const id = attemptId(plan, window, attempt)
+    const started_at = new Date().toISOString()
+    const attemptStarted = performance.now()
+    let status = "failed",
+      reason = null,
+      candidates = [],
+      scanEvidence = null,
+      result = null,
+      scan_ms = 0,
+      verify_ms = null,
+      partialVerified = false
+    try {
+      const scanStarted = performance.now()
+      const predecessor = plan.windows.find(
+        (candidate) =>
+          candidate.channel_id === window.channel_id && candidate.until_exclusive === window.since,
+      )
+      const reusableReceipt = predecessor
+        ? receipts.find(
+            (receipt) => sameWindow(receipt, predecessor) && receipt.status === "window_scanned",
+          )
+        : null
+      result = await scan(window, id, reusableReceipt?.attempt_id || null)
+      scan_ms = Math.round(performance.now() - scanStarted)
+      scanEvidence = {
+        list_scan_run: id,
+        listing_source_version_id: result.summary.listing_source_version_id || null,
+        index_documents: result.indexDocuments?.length || 0,
+        documents: result.documents?.length || 0,
+        parses: result.parses?.length || 0,
       }
-      pending.splice(index, 1)
+      if (result.summary.status === "window_scanned") {
+        const verifyStarted = performance.now()
+        try {
+          await verify(root, result, window)
+        } finally {
+          verify_ms = Math.round(performance.now() - verifyStarted)
+        }
+      } else {
+        status =
+          result.summary.status === "blocked" || result.summary.reason?.includes("blocked")
+            ? "blocked"
+            : "incomplete"
+        reason = result.summary.reason || "window_incomplete"
+        candidates = result.candidates.map((candidate) => candidate.key)
+        if (result.summary.reason === "detail_incomplete" && candidates.length) {
+          const verifyStarted = performance.now()
+          try {
+            verifyStoredPartialCandidates(root, result, window)
+            partialVerified = true
+          } finally {
+            verify_ms = Math.round(performance.now() - verifyStarted)
+          }
+        }
+      }
+    } catch (error) {
+      if (scanEvidence === null && scan_ms === 0)
+        scan_ms = Math.round(performance.now() - attemptStarted)
+      reason = error.message
+    }
+    return {
+      window,
+      id,
+      started_at,
+      attemptStarted,
+      status,
+      reason,
+      candidates,
+      result,
+      scanEvidence,
+      scan_ms,
+      verify_ms,
+      backlog_merge_ms: null,
+      mergeResult: null,
+      partialVerified,
+    }
+  }
+  const commitOutcome = async (outcome) => {
+    const { window, id, started_at, result, scanEvidence } = outcome
+    if (result?.summary.status === "window_scanned" && outcome.reason === null) {
+      const mergeStarted = performance.now()
+      try {
+        outcome.mergeResult = await merge(result, backlogFile)
+        if (outcome.mergeResult.status !== "merged")
+          throw Error("Completed route candidates were not merged")
+        if (!Array.isArray(outcome.mergeResult.same_event_aliases))
+          outcome.mergeResult.same_event_aliases = []
+        outcome.status = "window_scanned"
+        outcome.candidates = result.candidates.map((candidate) => candidate.key)
+      } catch (error) {
+        outcome.reason = error.message
+        outcome.status = "failed"
+      } finally {
+        outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
+      }
+    }
+    if (outcome.partialVerified) {
+      const mergeStarted = performance.now()
+      try {
+        outcome.mergeResult = await mergePartialScan(
+          root,
+          result,
+          backlogFile,
+          undefined,
+          sameEventAliases || new Map(),
+        )
+      } catch (error) {
+        outcome.reason = error.message
+        outcome.status = "failed"
+      } finally {
+        outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
+      }
+    }
+    const receipt = {
+      schema: "research-daily-receipt/v2",
+      daily_run: plan.run_id,
+      attempt_id: id,
+      channel_id: window.channel_id,
+      since: window.since,
+      until_exclusive: window.until_exclusive,
+      started_at,
+      finished_at: new Date().toISOString(),
+      timing_ms: {
+        scan: outcome.scan_ms,
+        verify: outcome.verify_ms,
+        backlog_merge: outcome.backlog_merge_ms,
+        total: outcome.scan_ms + (outcome.verify_ms ?? 0) + (outcome.backlog_merge_ms ?? 0),
+      },
+      status: outcome.status,
+      reason: outcome.reason,
+      candidate_keys: outcome.candidates,
+      ...(scanEvidence ? { scan_evidence: scanEvidence } : {}),
+      ...(outcome.mergeResult ? { backlog_merge: outcome.mergeResult } : {}),
+      candidate_published: false,
+    }
+    atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
+    receipts.push(receipt)
+    current = applyDailyReceipts(coverage, plan, receipts)
+    atomicWrite(root, COVERAGE_FILE, current)
+  }
+  const runRoute = async (windows) => {
+    for (const window of windows) {
+      if (stopped) return
       const priorAttempts = receipts.filter((receipt) => sameWindow(receipt, window))
       const lastAttempt = priorAttempts.at(-1)
       if (
@@ -833,160 +971,32 @@ export async function executeDailyPlan({
         (lastAttempt?.status === "blocked" && retryPolicy.blocked_requires_new_observation)
       )
         continue
-      batch.push({ window, priorAttempts })
-      selectedRoutes.add(window.channel_id)
-    }
-    if (!batch.length) break
-
-    // Scan independent routes together; preserve route order and serialize backlog writes below.
-    const outcomes = await Promise.all(
-      batch.map(async ({ window, priorAttempts }) => {
-        const attempt = priorAttempts.length + 1
-        const id = attemptId(plan, window, attempt)
-        const started_at = new Date().toISOString()
-        const attemptStarted = performance.now()
-        let status = "failed",
-          reason = null,
-          candidates = [],
-          scanEvidence = null,
-          result = null,
-          scan_ms = 0,
-          verify_ms = null,
-          partialVerified = false
-        try {
-          const scanStarted = performance.now()
-          const predecessor = plan.windows.find(
-            (candidate) =>
-              candidate.channel_id === window.channel_id &&
-              candidate.until_exclusive === window.since,
-          )
-          const reusableReceipt = predecessor
-            ? receipts.find(
-                (receipt) =>
-                  sameWindow(receipt, predecessor) && receipt.status === "window_scanned",
-              )
-            : null
-          result = await scan(window, id, reusableReceipt?.attempt_id || null)
-          scan_ms = Math.round(performance.now() - scanStarted)
-          scanEvidence = {
-            list_scan_run: id,
-            listing_source_version_id: result.summary.listing_source_version_id || null,
-            index_documents: result.indexDocuments?.length || 0,
-            documents: result.documents?.length || 0,
-            parses: result.parses?.length || 0,
-          }
-          if (result.summary.status === "window_scanned") {
-            const verifyStarted = performance.now()
-            try {
-              await verify(root, result, window)
-            } finally {
-              verify_ms = Math.round(performance.now() - verifyStarted)
-            }
-          } else {
-            status =
-              result.summary.status === "blocked" || result.summary.reason?.includes("blocked")
-                ? "blocked"
-                : "incomplete"
-            reason = result.summary.reason || "window_incomplete"
-            candidates = result.candidates.map((candidate) => candidate.key)
-            if (result.summary.reason === "detail_incomplete" && candidates.length) {
-              const verifyStarted = performance.now()
-              try {
-                verifyStoredPartialCandidates(root, result, window)
-                partialVerified = true
-              } finally {
-                verify_ms = Math.round(performance.now() - verifyStarted)
-              }
-            }
-          }
-        } catch (error) {
-          if (scanEvidence === null && scan_ms === 0)
-            scan_ms = Math.round(performance.now() - attemptStarted)
-          reason = error.message
-        }
-        return {
-          window,
-          id,
-          started_at,
-          attemptStarted,
-          status,
-          reason,
-          candidates,
-          result,
-          scanEvidence,
-          scan_ms,
-          verify_ms,
-          backlog_merge_ms: null,
-          mergeResult: null,
-          partialVerified,
-        }
-      }),
-    )
-
-    for (const outcome of outcomes) {
-      const { window, id, started_at, attemptStarted, result, scanEvidence } = outcome
-      if (result?.summary.status === "window_scanned" && outcome.reason === null) {
-        const mergeStarted = performance.now()
-        try {
-          outcome.mergeResult = await merge(result, backlogFile)
-          if (outcome.mergeResult.status !== "merged")
-            throw Error("Completed route candidates were not merged")
-          if (!Array.isArray(outcome.mergeResult.same_event_aliases))
-            outcome.mergeResult.same_event_aliases = []
-          outcome.status = "window_scanned"
-          outcome.candidates = result.candidates.map((candidate) => candidate.key)
-        } catch (error) {
-          outcome.reason = error.message
-          outcome.status = "failed"
-        } finally {
-          outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
-        }
-      }
-      if (outcome.partialVerified) {
-        const mergeStarted = performance.now()
-        try {
-          outcome.mergeResult = await mergePartialScan(
-            root,
-            result,
-            backlogFile,
-            undefined,
-            sameEventAliases || new Map(),
-          )
-        } catch (error) {
-          outcome.reason = error.message
-          outcome.status = "failed"
-        } finally {
-          outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
-        }
-      }
-      const receipt = {
-        schema: "research-daily-receipt/v2",
-        daily_run: plan.run_id,
-        attempt_id: id,
-        channel_id: window.channel_id,
-        since: window.since,
-        until_exclusive: window.until_exclusive,
-        started_at,
-        finished_at: new Date().toISOString(),
-        timing_ms: {
-          scan: outcome.scan_ms,
-          verify: outcome.verify_ms,
-          backlog_merge: outcome.backlog_merge_ms,
-          total: outcome.scan_ms + (outcome.verify_ms ?? 0) + (outcome.backlog_merge_ms ?? 0),
-        },
-        status: outcome.status,
-        reason: outcome.reason,
-        candidate_keys: outcome.candidates,
-        ...(scanEvidence ? { scan_evidence: scanEvidence } : {}),
-        ...(outcome.mergeResult ? { backlog_merge: outcome.mergeResult } : {}),
-        candidate_published: false,
-      }
-      atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
-      receipts.push(receipt)
-      current = applyDailyReceipts(coverage, plan, receipts)
-      atomicWrite(root, COVERAGE_FILE, current)
+      const outcome = await scanWindow(window, priorAttempts)
+      // Commit completed scans immediately, one at a time. The next window of
+      // this route starts only after its verified receipt and backlog exist.
+      const committed = commitQueue.then(() => commitOutcome(outcome))
+      // The worker propagates this error; keep the shared queue drainable.
+      commitQueue = committed.catch(() => {})
+      await committed
     }
   }
+  const workers = Array.from(
+    { length: Math.min(MAX_PARALLEL_DAILY_ROUTES, pendingRoutes.length) },
+    async () => {
+      try {
+        while (!stopped && pendingRoutes.length) await runRoute(pendingRoutes.shift())
+      } catch (error) {
+        stopped = true
+        throw error
+      }
+    },
+  )
+  // Drain live scans even if a route's stored evidence fails validation.
+  // The caller must not release its operation lock while workers still write.
+  const results = await Promise.allSettled(workers)
+  const failed = results.find((result) => result.status === "rejected")
+  if (failed) throw failed.reason
+
   const routeResults = activeRoutes.map(({ route }) => {
     const windows = plan.windows.filter((item) => item.channel_id === route.channel_id)
     const complete = windows.every(
@@ -1017,6 +1027,7 @@ export async function executeDailyPlan({
     retry_policy: retryPolicy,
     execution: {
       max_parallel_routes: MAX_PARALLEL_DAILY_ROUTES,
+      scheduling: "rolling-route-pool",
       route_windows_serialized: true,
       candidate_merges_serialized: true,
     },

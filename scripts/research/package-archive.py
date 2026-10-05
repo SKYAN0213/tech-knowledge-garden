@@ -72,6 +72,10 @@ def create_package(root, run_id):
     files = manifest.get("files")
     if not isinstance(files, list) or not files:
         raise ValueError("Research archive has no files")
+    if (len(files) > 2000 or
+        any(not isinstance(item, dict) or type(item.get("bytes")) is not int or item["bytes"] < 0 for item in files) or
+        sum(item["bytes"] for item in files) > 256 * 1024 ** 2):
+        raise ValueError("Archive file or byte budget exceeded")
 
     entries = []
     names = set()

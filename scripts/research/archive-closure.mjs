@@ -175,6 +175,43 @@ export function buildArchiveClosure(
       if (processing.draft_run !== id && readJSON(root, base + "draft-generation-reference.json"))
         reference(processing.draft_run, "processing_draft")
     }
+    const quoteReview = readJSON(root, base + "quote-review-input.json")
+    if (quoteReview) {
+      reference(quoteReview.source_run, "assessment_quote_review", () => {
+        const parent = `runs/${quoteReview.source_run}/`
+        const originalInput = readJSON(root, parent + "evidence-assessment/input.json")
+        const ownInput = readJSON(root, base + "evidence-assessment/input.json")
+        const identity = loadStoredSourceRun(root, quoteReview.source_run).identity
+        if (
+          quoteReview.schema !== "research-reviewed-assessment-input/v1" ||
+          !originalInput ||
+          quoteReview.original_input_sha256 !== sha256(JSON.stringify(originalInput)) ||
+          JSON.stringify(ownInput) !== JSON.stringify(originalInput) ||
+          quoteReview.review?.source_run !== quoteReview.source_run ||
+          quoteReview.review?.input_sha256 !== quoteReview.original_input_sha256 ||
+          quoteReview.ledger_sha256 !==
+            sha256(
+              fs.readFileSync(safePath(root, parent + "model-policy/evidence_compare/budget.json")),
+            ) ||
+          identity.documents_sha256 !== stored?.identity.documents_sha256 ||
+          identity.parses_sha256 !== stored?.identity.parses_sha256 ||
+          !Array.isArray(quoteReview.original_responses) ||
+          !quoteReview.original_responses.length ||
+          quoteReview.original_responses.length > 216 ||
+          quoteReview.original_responses.some((response, index) => {
+            const expected = parent + `evidence-assessment/batch-${index + 1}.json`
+            const file = safePath(root, expected)
+            return (
+              response.path !== expected ||
+              (response.sha256 === null
+                ? fs.existsSync(file)
+                : !fs.existsSync(file) || response.sha256 !== sha256(fs.readFileSync(file)))
+            )
+          })
+        )
+          throw Error("Quote review dependency changed")
+      })
+    }
     const reuse = readJSON(root, base + "extraction-reuse.json")
     if (reuse) {
       if (reuse.schema !== "research-extraction-reuse/v1")

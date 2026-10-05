@@ -586,9 +586,141 @@ test("daily scans run distinct routes concurrently, serialize each route and com
   assert.equal(maxActiveMerges, 1)
   assert.deepEqual(result.execution, {
     max_parallel_routes: 6,
+    scheduling: "rolling-route-pool",
     route_windows_serialized: true,
     candidate_merges_serialized: true,
   })
+})
+
+test("a slow route does not hold finished slots or delay their durable receipts", async (t) => {
+  const root = temporary(t)
+  const routeIds = ["route-a", "route-b", "route-c", "route-d", "route-e", "route-f", "route-g"]
+  const windows = routeIds.map((channel_id) => ({
+    channel_id,
+    since: "2026-09-21",
+    until_exclusive: "2026-09-28",
+  }))
+  const coverage = initialCoverage()
+  coverage.routes = Object.fromEntries(
+    routeIds.map((id) => [id, structuredClone(coverage.routes["fanuc-en"])]),
+  )
+  let releaseSlow
+  const slow = new Promise((resolve) => {
+    releaseSlow = resolve
+  })
+  let slowReleased = false
+  const release = () => {
+    slowReleased = true
+    releaseSlow()
+  }
+  // A deadline lets the old batch barrier finish so the regression reports a
+  // failure instead of hanging; successful scheduling releases the gate itself.
+  const deadline = setTimeout(release, 1000)
+  t.after(() => clearTimeout(deadline))
+  let nextStartedWhileSlow = false
+  let receiptExistedWhileSlow = false
+  let activeScans = 0
+  let maxActiveScans = 0
+  const stored = new Map()
+  const summary = await executeDailyPlan({
+    root,
+    plan: { ...plan, windows },
+    coverage,
+    activeRoutes: routeIds.map((id) => ({ route: route(id, "해외") })),
+    scan: async (window, id) => {
+      activeScans++
+      maxActiveScans = Math.max(maxActiveScans, activeScans)
+      await Promise.resolve()
+      if (window.channel_id === "route-a") await slow
+      else if (window.channel_id === "route-g") {
+        nextStartedWhileSlow = !slowReleased
+        receiptExistedWhileSlow =
+          fs.readdirSync(path.join(root, "daily/runs", plan.run_id, "receipts")).length > 0
+        release()
+      }
+      activeScans--
+      const result = {
+        summary: { status: "window_scanned", channel_id: window.channel_id },
+        candidates: [],
+      }
+      stored.set(id, result)
+      return result
+    },
+    verify: async () => {},
+    loadStored: (_, id) => stored.get(id),
+    merge: async () => ({ status: "merged" }),
+  })
+  assert.equal(
+    nextStartedWhileSlow,
+    true,
+    "the seventh route must start before the slow route finishes",
+  )
+  assert.equal(
+    receiptExistedWhileSlow,
+    true,
+    "finished scans must have durable receipts before the slow route finishes",
+  )
+  assert.equal(maxActiveScans, 6)
+  assert.equal(summary.receipts, 7)
+  assert.equal(summary.status, "configured_routes_scanned")
+})
+
+test("a receipt failure drains live routes before rejecting the executor", async (t) => {
+  const root = temporary(t)
+  let releaseSlow, signalCommit
+  const slow = new Promise((resolve) => {
+    releaseSlow = resolve
+  })
+  const commitAttempted = new Promise((resolve) => {
+    signalCommit = resolve
+  })
+  const deadline = setTimeout(() => {
+    releaseSlow()
+    signalCommit()
+  }, 1000)
+  t.after(() => clearTimeout(deadline))
+  let settled = false
+  const execution = executeDailyPlan({
+    root,
+    plan,
+    coverage: initialCoverage(),
+    activeRoutes: [
+      { route: route("fanuc-en", "해외") },
+      { route: route("route-hd-news-ko", "국내") },
+    ],
+    scan: async (window, id) => {
+      if (window.channel_id === "fanuc-en") await slow
+      return {
+        summary: { status: "window_scanned", channel_id: window.channel_id },
+        candidates: [],
+        attempt_id: id,
+      }
+    },
+    verify: async () => {},
+    merge: async (result) => {
+      if (result.summary.channel_id === "route-hd-news-ko") {
+        atomicWrite(root, `daily/runs/${plan.run_id}/receipts/${result.attempt_id}.json`, {
+          tampered: true,
+        })
+        signalCommit()
+      }
+      return { status: "merged" }
+    },
+  })
+  execution.then(
+    () => {
+      settled = true
+    },
+    () => {
+      settled = true
+    },
+  )
+  await commitAttempted
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(settled, false, "the operation must remain live until its other writer drains")
+  releaseSlow()
+  await assert.rejects(execution, /already exists/)
+  assert.equal(fs.readdirSync(path.join(root, "daily/runs", plan.run_id, "receipts")).length, 2)
 })
 
 test("a failed route is retried without rescanning a completed route or advancing its coverage", async (t) => {
@@ -1044,6 +1176,8 @@ test("a verified independent scan advances only confirmed coverage and preserves
   })
   assert.equal(verifiedReceipt.schema, "research-supplemental-coverage/v2")
   assert.deepEqual(verifiedReceipt.backlog_merge.same_event_aliases, [])
+  const widerWindow = { ...supplemental, until_exclusive: "2026-10-04" }
+  assert.equal(supplementalCoverageReceiptForWindow(root, updated, widerWindow), null)
   const aliasReceiptFile = "daily/reconciliations/coverage-reconcile.json"
   const receiptWithMissingAliases = readJSON(root, aliasReceiptFile)
   delete receiptWithMissingAliases.backlog_merge.same_event_aliases
@@ -1055,6 +1189,10 @@ test("a verified independent scan advances only confirmed coverage and preserves
         since: supplemental.since,
         until_exclusive: supplemental.until_exclusive,
       }),
+    /missing its same-event candidate suppression record/,
+  )
+  assert.throws(
+    () => supplementalCoverageReceiptForWindow(root, updated, widerWindow),
     /missing its same-event candidate suppression record/,
   )
   atomicWrite(root, aliasReceiptFile, verifiedReceipt)
@@ -1117,6 +1255,34 @@ test("a verified independent scan advances only confirmed coverage and preserves
       gap.until_exclusive,
     ]),
     [["2026-10-01", "2026-10-02"]],
+  )
+  const widerPlan = {
+    ...resumePlan,
+    run_id: "daily-20261003-supplemental-wider",
+    kst_day: "2026-10-03",
+    windows: [widerWindow],
+  }
+  const originalSupplemental = fs.readFileSync(path.join(root, aliasReceiptFile))
+  const widerResult = await executeDailyPlan({
+    root,
+    plan: widerPlan,
+    coverage: readJSON(root, "daily/route-coverage.json"),
+    activeRoutes: [{ route: route("fanuc-en", "해외") }],
+    scan: async (window, id) => {
+      scans += 1
+      return writeStoredEmptyScan(root, id, {
+        ...window,
+        url: "https://example.com/wider",
+      }).result
+    },
+    merge,
+  })
+  assert.equal(scans, 1)
+  assert.equal(widerResult.status, "configured_routes_scanned")
+  assert.deepEqual(fs.readFileSync(path.join(root, aliasReceiptFile)), originalSupplemental)
+  assert.equal(
+    readJSON(root, "daily/route-coverage.json").routes["fanuc-en"].last_contiguous_until,
+    "2026-10-03",
   )
   const receiptFile = "daily/reconciliations/coverage-reconcile.json"
   const tamperedReceipt = readJSON(root, receiptFile)

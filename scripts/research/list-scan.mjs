@@ -62,12 +62,16 @@ export function validDay(value) {
   )
 }
 
-function comparableTitle(value) {
-  return String(value || "")
+function comparableTitle(value, prefixLabels = []) {
+  const title = String(value || "")
     .normalize("NFC")
     .replace(/[\u200b-\u200d\ufeff]/gu, "")
     .replace(/\s+/gu, " ")
     .trim()
+  for (const label of prefixLabels) {
+    if (title.startsWith(`[${label}] `)) return label + title.slice(label.length + 2)
+  }
+  return title
 }
 
 function detailTitleConfirmsTruncatedListingPrefix(detailTitle, listedTitle) {
@@ -335,6 +339,14 @@ export async function collectWindowDetails(
   const rssTitlePolicy = channel.listing_profile?.rss_title_policy || "must_match"
   if (!new Set(["must_match", "source_title_authoritative"]).has(rssTitlePolicy))
     throw Error("Invalid RSS title policy")
+  const prefixLabels = channel.listing_profile?.title_prefix_labels ?? []
+  if (
+    !Array.isArray(prefixLabels) ||
+    prefixLabels.length > 8 ||
+    new Set(prefixLabels).size !== prefixLabels.length ||
+    prefixLabels.some((label) => typeof label !== "string" || !/^[\p{L}\p{N}]{1,16}$/u.test(label))
+  )
+    throw Error("Invalid title prefix labels")
   const documents = [],
     parses = [],
     candidates = [],
@@ -417,11 +429,15 @@ export async function collectWindowDetails(
         continue
       }
       const exactTitleMatch = comparableTitle(parsed.title) === comparableTitle(link.text)
+      const prefixLabelTitleMatch =
+        !exactTitleMatch &&
+        prefixLabels.length > 0 &&
+        comparableTitle(parsed.title, prefixLabels) === comparableTitle(link.text, prefixLabels)
       const truncatedTitleMatch =
         !exactTitleMatch &&
         channel.listing_profile?.title_match_policy === "truncated_prefix" &&
         detailTitleConfirmsTruncatedListingPrefix(parsed.title, link.text)
-      const titleMatches = exactTitleMatch || truncatedTitleMatch
+      const titleMatches = exactTitleMatch || prefixLabelTitleMatch || truncatedTitleMatch
       if (
         (channel.method === "rss" || channel.listing_profile?.require_title_match) &&
         !titleMatches &&
@@ -438,6 +454,11 @@ export async function collectWindowDetails(
           : link.discovery_method === "sec-submissions-json"
             ? "filing_document_title_authoritative"
             : "rss_variant_source_title_authoritative"
+      } else if (prefixLabelTitleMatch) {
+        detail.listed_title = link.text
+        detail.source_title = parsed.title
+        detail.title_relation = "reviewed_prefix_label_brackets"
+        detail.title_prefix_labels = prefixLabels
       } else if (truncatedTitleMatch) {
         detail.listed_title = link.text
         detail.source_title = parsed.title

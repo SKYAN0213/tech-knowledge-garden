@@ -437,3 +437,79 @@ test("existing single-run package stays compatible and cannot be called a restor
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /portable dependency archive/)
 })
+
+test("ordinary archive refuses to replace an existing portable closure", async (t) => {
+  const { root } = fixture(t)
+  await archiveClosure(root, "portable", "article")
+  const manifest = path.join(root, "runs/portable/archive-manifest.json")
+  const packageFile = path.join(root, "archive-staging/portable/research-source-bundle.zip")
+  const before = fs.readFileSync(manifest)
+  const zipBefore = fs.readFileSync(packageFile)
+  await assert.rejects(
+    main(["archive", "--root", root, "--run", "portable"]),
+    /Use archive-closure/,
+  )
+  assert.deepEqual(fs.readFileSync(manifest), before)
+  assert.deepEqual(fs.readFileSync(packageFile), zipBefore)
+})
+
+test("portable closure retains reviewed-quote parents and refuses changed raw provenance", async (t) => {
+  const { root, doc, parse } = fixture(t)
+  atomicWrite(root, "runs/quote-child/documents.json", [doc])
+  atomicWrite(root, "runs/quote-child/parses.json", [parse])
+  const input = { schema: "research-evidence-assessment-input/v1", claims_per_batch: 3 }
+  atomicWrite(root, "runs/article/evidence-assessment/input.json", input)
+  atomicWrite(root, "runs/quote-child/evidence-assessment/input.json", input)
+  const ledger = atomicWrite(root, "runs/article/model-policy/evidence_compare/budget.json", {
+    status: "sealed-fixture",
+  })
+  const response = atomicWrite(root, "runs/article/evidence-assessment/batch-1.json", {
+    output: "original controlled fixture",
+  })
+  atomicWrite(root, "runs/quote-child/quote-review-input.json", {
+    schema: "research-reviewed-assessment-input/v1",
+    source_run: "article",
+    original_input_sha256: sha256(JSON.stringify(input)),
+    ledger_sha256: ledger.sha256,
+    original_responses: [{ path: response.path, sha256: response.sha256 }],
+    review: { source_run: "article", input_sha256: sha256(JSON.stringify(input)) },
+  })
+  const result = await archiveClosure(root, "quote-portable", "quote-child")
+  assert.ok(result.bound_runs.includes("article"))
+  assert.ok(
+    readJSON(root, "runs/quote-portable/archive-manifest.json").files.some(
+      (f) => f.path === response.path,
+    ),
+  )
+  fs.appendFileSync(path.join(root, response.path), "changed")
+  await assert.rejects(
+    archiveClosure(root, "quote-corrupt", "quote-child"),
+    /Quote review dependency changed/,
+  )
+})
+
+test("package creation rejects manifests beyond the same member budget used for restore", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "archive-budget-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const files = Array.from({ length: 2001 }, (_, i) => ({
+    path: `runs/large/file-${i}.txt`,
+    bytes: 1,
+    sha256: sha256("x"),
+    drive_root: "Research",
+    public: false,
+  }))
+  atomicWrite(root, "runs/large/archive-manifest.json", {
+    schema: "research-archive/v1",
+    run_id: "large",
+    files,
+  })
+  const result = spawnSync("python3", [script, "--root", root, "--run", "large"], {
+    encoding: "utf8",
+  })
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /Archive file or byte budget exceeded/)
+  assert.equal(
+    fs.existsSync(path.join(root, "archive-staging/large/research-source-bundle.zip")),
+    false,
+  )
+})

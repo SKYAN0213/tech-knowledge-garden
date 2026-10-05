@@ -597,7 +597,10 @@ test("RSS detail title conflict cannot become a candidate, while whitespace diff
       sectors: ["AI"],
       region: "해외",
       axis: "기술·제품",
-      listing_profile: { ...channel.listing_profile, rss_title_policy: "source_title_authoritative" },
+      listing_profile: {
+        ...channel.listing_profile,
+        rss_title_policy: "source_title_authoritative",
+      },
     },
     articleProfiles,
     [link],
@@ -611,4 +614,74 @@ test("RSS detail title conflict cannot become a candidate, while whitespace diff
   assert.equal(accepted.candidates[0].title, "Verified article with source headline")
   assert.equal(accepted.candidates[0].discovery[0].result_title, link.text)
   assert.equal(accepted.candidates.length, 1)
+})
+
+test("reviewed prefix-label brackets preserve exact headlines and reject other title changes", async () => {
+  const listedTitle = "[단독] 금융권 AI 해킹, 1달러·22초만에 가능"
+  const detailTitle = "단독 금융권 AI 해킹, 1달러·22초만에 가능"
+  const link = {
+    ...item("2026-10-05", "exclusive"),
+    text: listedTitle,
+    listing_source_version_id: "feed:v1",
+    listing_parse_id: "feed-parse",
+    discovered_at: "2026-10-06T00:00:00Z",
+  }
+  const run = { stage: (_name, _input, operation) => operation() }
+  const document = {
+    source_version_id: "article:v1",
+    final_url: link.url,
+    original_url: link.url,
+    fetch_status: "captured",
+    observed_at: link.discovered_at,
+  }
+  const profiles = [
+    { id: "test-article", url_pattern: "^https://example\\.com/articles/", options: {} },
+  ]
+  const collect = (title, labels) =>
+    collectWindowDetails(
+      "unused",
+      run,
+      {},
+      {
+        ...channel,
+        publisher_id: "example.com",
+        sectors: ["보안"],
+        region: "국내",
+        axis: "기술·제품",
+        listing_profile: {
+          ...channel.listing_profile,
+          ...(labels === undefined ? {} : { title_prefix_labels: labels }),
+        },
+      },
+      profiles,
+      [link],
+      {
+        fetchPolicy: async () => document,
+        parse: async () => ({
+          status: "extracted",
+          quality: { required_fields_present: true },
+          title,
+          dates: { published_at: "2026-10-05" },
+          blocks: [{ text: "Actual full article" }],
+          parse_id: "article-parse",
+        }),
+      },
+    )
+  const accepted = await collect(detailTitle, ["단독"])
+  assert.equal(accepted.details[0].status, "source_parsed_unreviewed")
+  assert.equal(accepted.details[0].title_relation, "reviewed_prefix_label_brackets")
+  assert.equal(accepted.details[0].listed_title, listedTitle)
+  assert.equal(accepted.candidates[0].title, detailTitle)
+  assert.equal(accepted.candidates[0].discovery[0].result_title, listedTitle)
+  for (const [title, labels] of [
+    [detailTitle, undefined],
+    [detailTitle.replace("22초", "23초"), ["단독"]],
+    [detailTitle.replace("단독 ", ""), ["단독"]],
+    [detailTitle.replace("단독", "분석"), ["단독"]],
+  ]) {
+    const rejected = await collect(title, labels)
+    assert.equal(rejected.details[0].status, "title_conflict")
+    assert.equal(rejected.candidates.length, 0)
+  }
+  await assert.rejects(collect(detailTitle, ["단독", "단독"]), /Invalid title prefix labels/)
 })

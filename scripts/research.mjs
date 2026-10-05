@@ -1587,8 +1587,10 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (command === "archive") {
     return withLock(root, "run-" + v.run, async () => {
-      const manifest = archiveManifest(root, v.run)
       const existing = readJSON(root, `runs/${v.run}/archive-manifest.json`)
+      if (existing?.schema === "research-archive/v2")
+        throw Error("Use archive-closure to preserve an existing portable dependency archive")
+      const manifest = archiveManifest(root, v.run)
       if (
         existing?.schema === manifest.schema &&
         existing.run_id === manifest.run_id &&
