@@ -1,83 +1,133 @@
 ---
 title: Tech & AI Briefing - 00:02
-date: 2026-07-14
 time: 00:02
-timezone: Asia/Seoul
-coverage_start: 2026-07-13T16:02:25+09:00
-coverage_end: 2026-07-14T00:02:49+09:00
 type: briefing
-source_count: 17
-new_items_count: 1
-linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-excluded_items_count: 6
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-14
+timezone: Asia/Seoul
+coverage_start: 2026-07-13T16:02:25+09:00
+coverage_end: 2026-07-14T00:02:49+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 2
+new_items_count: 1
+linked_knowledge_notes:
+  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
+article_records:
+  - title: Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: OpenAI의 Codex GitHub 저장소
+      when: 2026-07-13T19:49:55+09:00
+      where: GitHub
+      what: Codex 0.145.0-alpha.7 시험판 공개
+      how: 고급 추론 선택 경고와 다중 에이전트 모델 지정·호환성 검사 변경
+      why: 고급 추론의 우발적 선택 방지
+    lead: OpenAI는 7월 13일 19시 49분(한국시각) GitHub에 Codex 0.145.0-alpha.7 시험판을 공개했다. 공식
+      변경 자료에는 Max·Ultra 추론 선택 경고와 다중 에이전트의 모델·추론 수준 지정 기능이 담겼다. 현재 다중 에이전트 백엔드와
+      맞지 않는 모델은 선택 목록에서 제외하고 실행 요청도 거부한다.
+    explanations:
+      - heading: Max·Ultra 선택과 Ultra 적용 범위
+        paragraphs:
+          - Max와 Ultra는 일반 추론 단계와 분리된 More reasoning… 항목에서 경고와 설명을 거쳐 고른다. 공식 변경
+            설명은 두 수준이 일반 추론보다 사용 한도를 더 빨리 소모한다고 명시했다.
+          - 단축키가 고급 단계로 조용히 넘어가지 않도록 했다. Ultra는 현재 대화에 적용해 새 대화의 기본값을 바꾸지 않으며,
+            모드 전환과 대화 재개에서도 설정을 유지한다.
+        source_urls:
+          - https://api.github.com/repos/openai/codex/compare/rust-v0.145.0-alpha.4...rust-v0.145.0-alpha.7
+      - heading: 에이전트별 모델 지정과 허용 조건
+        paragraphs:
+          - 다중 에이전트 v2의 spawn_agent는 기본 설정에서 model과 reasoning_effort를 노출한다.
+            features.multi_agent_v2.expose_spawn_agent_model_overrides 설정으로 이
+            기능을 독립적으로 끌 수 있으며, 다른 spawn 메타정보가 숨겨져도 모델 지정 기능은 유지된다.
+          - 모델과 추론 수준을 지정할 때는 명시적 허가와 부분 문맥 또는 문맥 없는 fork에서 사용하라는 지침이 적용된다.
+          - 호환성 검사는 현재 다중 에이전트 백엔드를 기준으로 한다. 오류 메시지의 대안 제안도 선택기에 표시되는 호환 모델로
+            제한한다.
+        source_urls:
+          - https://api.github.com/repos/openai/codex/compare/rust-v0.145.0-alpha.4...rust-v0.145.0-alpha.7
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
+    event_id: 661912ab39baa4f1
+    review_status: verified
+    published_at: 2026-07-13
+    reviewed_at: 2026-10-05
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-13T10:49:55Z
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- 오늘의 핵심 기사: 없음
-- 논문과 연구: 없음
-- 오픈소스와 도구: Codex 시험판이 고급 추론 선택의 오조작을 막고, 여러 에이전트가 서로 다른 모델과 추론 수준을 쓰도록 제어 범위를 넓혔습니다.
-- 흐름 읽기: 다중 에이전트 제품은 단순 병렬 실행을 넘어 에이전트별 모델·비용·권한을 명시적으로 조절하는 방향으로 가고 있습니다.
-- 바로 써먹을 점: 안정판 사용자는 기다리는 편이 안전하며, 시험 환경에서는 고급 추론 선택과 에이전트별 모델 제한이 의도대로 작동하는지 확인할 수 있습니다.
+Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
 
-# 오늘의 핵심 기사
+# 차례
 
-없음
+- Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
 
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
 
-## Codex 시험판, 고급 추론과 다중 에이전트의 제어 장치를 다듬다
+## Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가
 
-OpenAI는 7월 13일 19:49 KST에 Codex `0.145.0-alpha.7`을 공개했습니다. 안정판 전 단계인 시험판으로, 더 많은 사용량을 쓰는 고급 추론을 실수로 고르지 않게 하고 여러 에이전트가 맡은 일에 따라 모델과 추론 수준을 따로 지정할 수 있도록 한 변경이 담겼습니다.
+**분야:** AI
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
 
-- 프로젝트: OpenAI Codex `0.145.0-alpha.7`
-- 핵심 사실: `Max`와 `Ultra` 추론 수준은 일반 선택 목록에서 분리되어 `More reasoning…` 경고 화면을 거쳐 선택하게 됐습니다. 단축키로도 고급 수준이 조용히 선택되지 않으며, `Ultra`는 현재 대화에만 적용되고 새 대화의 기본값은 바꾸지 않습니다.
-- 핵심 사실: 다중 에이전트 v2의 `spawn_agent` 도구에는 에이전트별 `model`과 `reasoning_effort` 지정 기능이 기본 노출됩니다. 다만 명시적 허가와 제한된 문맥 전달이 필요하다는 안내가 추가됐고, 현재 실행 백엔드와 맞지 않는 모델은 목록에서 숨기고 요청도 거부합니다.
-- GitHub: https://github.com/openai/codex/releases/tag/rust-v0.145.0-alpha.7
-- Star 증가 추세: 추세 확인 불가
-- 어디에 쓸 수 있나: 시험 환경에서 단순 작업은 가벼운 모델, 어려운 하위 작업은 강한 모델로 나누는 다중 에이전트 구성을 검증할 수 있습니다.
-- 왜 중요한가: 다중 에이전트의 비용과 품질은 에이전트 수만이 아니라 각 역할에 어떤 모델과 추론 수준을 배정하는지에 달려 있습니다. 고비용 설정을 별도 경고로 분리하고 호환되지 않는 모델을 실행 전에 막는 장치는 운영 실수를 줄입니다.
-- 다음에 볼 점: 이 기능들이 안정판에 어떤 기본값으로 들어가는지, 에이전트별 사용량과 성공률을 비교할 관측 기능이 함께 제공되는지 확인해야 합니다.
-- 더 깊게 보기: [[Knowledge/AI Systems/AI Agents|AI Agents]]
+OpenAI는 7월 13일 19시 49분(한국시각) GitHub에 Codex 0.145.0-alpha.7 시험판을 공개했다. 공식 변경 자료에는 Max·Ultra 추론 선택 경고와 다중 에이전트의 모델·추론 수준 지정 기능이 담겼다. 현재 다중 에이전트 백엔드와 맞지 않는 모델은 선택 목록에서 제외하고 실행 요청도 거부한다. [S1] [S2]
+
+### Max·Ultra 선택과 Ultra 적용 범위
+
+Max와 Ultra는 일반 추론 단계와 분리된 More reasoning… 항목에서 경고와 설명을 거쳐 고른다. 공식 변경 설명은 두 수준이 일반 추론보다 사용 한도를 더 빨리 소모한다고 명시했다.
+
+단축키가 고급 단계로 조용히 넘어가지 않도록 했다. Ultra는 현재 대화에 적용해 새 대화의 기본값을 바꾸지 않으며, 모드 전환과 대화 재개에서도 설정을 유지한다. [S1]
+
+### 에이전트별 모델 지정과 허용 조건
+
+다중 에이전트 v2의 spawn_agent는 기본 설정에서 model과 reasoning_effort를 노출한다. features.multi_agent_v2.expose_spawn_agent_model_overrides 설정으로 이 기능을 독립적으로 끌 수 있으며, 다른 spawn 메타정보가 숨겨져도 모델 지정 기능은 유지된다.
+
+모델과 추론 수준을 지정할 때는 명시적 허가와 부분 문맥 또는 문맥 없는 fork에서 사용하라는 지침이 적용된다.
+
+호환성 검사는 현재 다중 에이전트 백엔드를 기준으로 한다. 오류 메시지의 대안 제안도 선택기에 표시되는 호환 모델로 제한한다. [S1]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
 
 # 흐름 읽기
 
-- 확인된 사실: 조사 창 안에서 확인된 실질적 업데이트는 Codex `0.145.0-alpha.7` 한 건입니다. 공식 릴리스는 시험판이며, 변경 내용은 릴리스 태그에 포함된 공식 커밋과 테스트 설명으로 확인했습니다.
-- 확인된 제외: OpenAI·Anthropic·Google AI 공식 발표, GitHub Changelog, AWS·NVIDIA 기술 블로그, arXiv 최근 피드와 나머지 주요 오픈소스 공식 릴리스에는 컷오프 뒤 포함할 만한 중복 없는 업데이트가 없었습니다.
-- 분석: 다중 에이전트 제품의 경쟁축이 “여러 개를 동시에 실행한다”에서 “역할마다 모델, 추론 비용, 권한, 호환성을 안전하게 배정한다”로 이동하고 있습니다.
-- 앞으로 볼 점: 에이전트별 모델 선택이 안정판에서 유지되는지, 비용·지연 시간·성공률을 역할별로 비교할 수 있는지 봐야 합니다.
+없음
 
-# 바로 써먹을 점
+# 오늘의 적용
 
-- 개발 생산성: 안정판을 쓰는 업무 환경은 이번 알파 버전을 바로 도입하기보다 정식 릴리스를 기다리는 편이 안전합니다.
-- AI 활용: 시험 환경에서는 쉬운 하위 작업과 어려운 하위 작업에 서로 다른 모델·추론 수준을 배정하고, 전체 성공률과 사용량이 실제로 나아지는지 비교할 수 있습니다.
-- 업무 자동화: 고비용 추론 수준은 일반 선택 목록과 분리하고, 적용 범위를 현재 작업으로 제한해 기본값이 뜻하지 않게 바뀌지 않도록 설계하는 것이 좋습니다.
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.com/openai/codex/releases/tag/rust-v0.145.0-alpha.7
-- https://github.com/openai/codex/compare/rust-v0.145.0-alpha.4...rust-v0.145.0-alpha.7
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=5
-- https://api.github.com/repos/vercel/ai/releases?per_page=5
-- https://api.github.com/repos/langchain-ai/langchain/releases?per_page=5
-- https://api.github.com/repos/ollama/ollama/releases?per_page=5
-- https://api.github.com/repos/vllm-project/vllm/releases?per_page=5
-- https://api.github.com/repos/modelcontextprotocol/modelcontextprotocol/releases?per_page=5
-- https://api.github.com/repos/huggingface/transformers/releases?per_page=5
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI%20OR%20cat:cs.CL%20OR%20cat:cs.LG%20OR%20cat:cs.RO%20OR%20cat:cs.CR&sortBy=submittedDate&sortOrder=descending&max_results=10
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://www.anthropic.com/news
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blogs.nvidia.com/feed/
-- https://blog.google/technology/ai/
+- [S1] https://api.github.com/repos/openai/codex/compare/rust-v0.145.0-alpha.4...rust-v0.145.0-alpha.7
+- [S2] https://api.github.com/repos/openai/codex/releases/tags/rust-v0.145.0-alpha.7
