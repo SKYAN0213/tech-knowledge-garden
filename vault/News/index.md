@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-04
+date: 2026-10-06
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,9 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/1c20824a90713fc8|RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행]] · 2026-10-06
+- [[News/72081e8f67345f20|쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고]] · 2026-10-06
+- [[News/61b4373c4f6f0682|FDA, 이보가인 초기 임상시험 설계에 관한 공개 의견 수렴]] · 2026-10-06
 - [[News/d8d0cc7e37ad6c82|안랩, V3 기업용·개인용 제품의 AV-TEST 7~8월 만점 평가 결과 발표]] · 2026-10-04
 - [[News/9877a6b970d84ef6|Tesla, 3분기 에너지 저장제품 13.7GWh 설치…차량 48만6532대 인도]] · 2026-10-04
 - [[News/5292eabe8550892f|Airbus, Eutelsat에 차세대 OneWeb 위성 32기 납품…미국 발사 전 운송 준비]] · 2026-10-04

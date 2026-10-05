@@ -4,6 +4,8 @@
 
 ## 누적 주제
 
+- [RobCo의 투자와 미국 운영](topics/company-robco.md) — 원문 1건 · 0개 원칙
+- [쌓인 옷감의 로봇 집기](topics/research-stacked-fabric-grasping.md) — 원문 1건 · 0개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 10건 · 0개 원칙
 - [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 1개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 11건 · 0개 원칙
@@ -23,6 +25,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-10-06 · 0800](2026/10/2026-10-06_0800_Tech_AI_Briefing.md) — 2026-10-06 IT · AI · 로보틱스
 - [2026-10-04 · 0800](2026/10/2026-10-04_0800_Tech_AI_Briefing.md) — 2026-10-04 IT · AI · 로보틱스
 - [2026-10-01 · 0800](2026/10/2026-10-01_0800_Tech_AI_Briefing.md) — AI가 반도체 설계와 클라우드 데이터·실행 환경에 들어오고, 각 분야에서 상용 배치 전 검증 단계가 구체화됐다.
 - [2026-09-30 · 0800](2026/09/2026-09-30_0800_Tech_AI_Briefing.md) — 2026-09-30 IT · AI · 로보틱스

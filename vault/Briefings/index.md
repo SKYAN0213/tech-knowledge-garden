@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-10-04
+date: 2026-10-06
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,6 +11,8 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/company-robco|RobCo의 투자와 미국 운영]] · 1건 · 원칙 0개
+- [[Briefings/Topics/research-stacked-fabric-grasping|쌓인 옷감의 로봇 집기]] · 1건 · 원칙 0개
 - [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 10건 · 원칙 0개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 11건 · 원칙 1개
 - [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 11건 · 원칙 0개
@@ -30,6 +32,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-06_0800_Tech_AI_Briefing|2026-10-06 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-04_0800_Tech_AI_Briefing|2026-10-04 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|2026-10-01 · 0800 브리핑]]
 - [[Briefings/2026/09/2026-09-30_0800_Tech_AI_Briefing|2026-09-30 · 0800 브리핑]]
