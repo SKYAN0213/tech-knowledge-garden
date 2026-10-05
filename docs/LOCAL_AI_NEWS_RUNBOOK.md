@@ -9841,3 +9841,19 @@ private Research의 부모/shared:false를 새 조회하고4ZIP을 보관했다.
 canonicalinventory는v240·legacy81/713구간·검토한빈18/126·미판정63회차587구간·154verifiedevents·33conceptIDs/39notes/38authoredrelations·RSS40이다. 원본적용직후generatedcache는아직이전공개본이어서diagnostics4를보존하고이번발행build에서재생성한다. raw판정과cache불일치를숨기지않는다. 이번소급수정의새운영횟수0이며독립40/20·정규7회/무인08시·fullruntime복구·전체WBS2/22·goalactive는남는다.
 
 증거는외장 `july30-drive-preflight-v1`의tree/raw-acquisition/raw-000..199/second-listing/connector-readback/release-review/prewrite-metadata/write-0..5/post-raw-0..5/post-raw-verification/post-tree-verification/postwrite-metadata/post-connector-readback과canonical `.local/drive-sync/july30-post-authoring-20261005-v1.json`이다. 실제공개배포·채널readback·WebsiteData는이어서검증한다. 같은실패를1시간반복한항목은없다.
+
+## 391. 7/30 소급 수정의 공개 배포와 최종 보관
+
+2026-10-05 KST. 승인6 작성 원본을 Drive에 저장·재조회한 뒤 canonical 외장 저장소에서 발행했다. 공개 커밋은 `9519c6615c68f5069880d23a995bbecaca0e94bd`, Actions는 `37258169305`이며 build·deploy가 모두 success다. 릴리스 후보의 전체 검사 한 차례를 CI에서 실행해 Node818/818, Python Drive15/15·WebsiteData2/2, build/site를 통과했다. 이미 통과한23 표적 검사나 전체 suite를 로컬에서 반복하지 않았다.
+
+웹·RSS·GitHub28파일은 로컬 생성본과 exact bytes이고 reader.js·실제 연결지도 모듈도 같다. 공개 drive-sync203/sourceSHA `6c8d1a37e2e7551f7786c9265d0fec896d375795258db89fc03b4d27ee5cbf1b`가 검증한 작성 원본과 일치한다. 기존RSS40GUID/pubDate를 이전 공개 커밋b18e591과 대조해 모두 보존했다.7/30은 현재40회 피드 밖이므로 신규 회차를 만들지 않았다.
+
+공개1280/390 화면에서 소프트웨어 탭2기사·뒤로가기 전체5기사·AI Enter3기사, 필터의 공유 URL, 전문용어 Enter→정의·날짜 이력→기사 연결을 확인했다. 뉴스·브리핑 지도 canvas0·가로 넘침0이다. 임시 viewport는 복원하고7/30 공개 브리핑을 deliverable로 남겼다. actual browser observation과 desktop/mobile/article PNG를 보관했다.
+
+WebsiteData는 실제 배포본328pages/154articles/22nodes/21relations를 내려받아11파일/3,390,747bytes를 만들었다. 네 live asset이 로컬과 같으며 catalog는 local-build-input이다.11원격 raw를 먼저 보관하고10같은ID 갱신·RSS1불변 뒤11새raw/전체SHA/부모/shared:false를 확인했다. 처음11개 total을 가정한 guard는 실제12개를 보고 거부했다.12번째는 기존 `website-data-upload-receipt-20260930.json`이며 그대로 보존하고 ID·크기·수정시각 불변을 확인했다. XML raw transport가 `briefing.xml.xsl`이라는 임시 이름을 반환해 첫 staging 비교가 실패했다. 실제 Drive metadata의 같은ID·`briefing.xml` 이름으로 결합하고 원격 raw bytes를 대조했으며 파일을 rename하지 않았다. 공개 및 원고 업로드 영수증의 검증된 경로만 갱신했다.
+
+발행 관측349파일/350members를 private Research의 `1XL0Ka-pLFXl7aiZwYlgGL7h3N2_yafuR`에 보관했다.6,479,020bytes/SHA `29b6ebd58ea8cf8790a5e38c67a831b3029db19fa6fd91131b53081a607c5c6d`이며 실제 원격 ZIP의SHA·CRC와349member 전체bytes를 manifest에 대조하고 별도 폴더에 복구했다. source_versions0인 일반 발행 증거다. 공통 portable 복구기를 절대경로로 부른 첫 호출은 root-relative guard, 상대경로 호출은 v2 dependency archive 요구로 거부됐다. gate를 완화하지 않고 일반 v1 evidence의 manifest-hash 검증·안전한 extraction으로 구분했다. 모델·런타임의 full portable restore로 집계하지 않는다. temporary archive b64 파일은 디코딩·원격 SHA 확인 뒤 제거했고 signed URL을 보관하지 않았다.
+
+생성 후 canonical inventory는 작성203·v240·legacy81/713, 검토한 빈18/126을 제외한 미판정63회차587구간,154verifiedevents·33conceptIDs/39notes/38authoredrelations, RSS40·diagnostics0이다. 원본 적용 직후의 stale generated link diagnostics4는 새 generation에서0으로 해소됐고 최초 기록을 남긴다. 독립40dev/20heldout human gold·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 남는다. 이번 소급 반영의 새 운영 횟수0이며 같은 실패를1시간 반복한 항목은 없다.
+
+실행 증거 루트는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`이다. july30-drive-preflight-v1, july30-public-readback-v1/receipt.json, july30-release-ci-full-v1.log, july30-public-ui-verification-v1.json, july30-rss-identity-verification-v1.json, july30-website-{update-plan,final-readback,post-metadata}-v1.json, july30-release-archive-observation-v1.json과 july30-release-evidence-restore-observation-v1.json을 확인한다. canonical 실제 다음 미검토는 `Editions/2026/07/2026-07-29_0801_Tech_AI_Briefing.md`이며 기존 수집·직접 검토·승인·Drive-first 전환을 재사용한다. 이미 완료한7/30 검사·발행을 반복하지 않는다.

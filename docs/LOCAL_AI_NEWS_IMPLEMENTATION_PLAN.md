@@ -4154,3 +4154,9 @@ reader-v2는 생성·용어·validate/build/site·5원고/출처/GitHub 일치·
 fresh200 raw/16폴더와 재조회가 일치해 explicit retrospective release를 승인했다. 기존3파일 같은ID 갱신·새용어3생성 뒤6실제 raw/44,082bytes를 stagedSHA와 대조하고, 나머지197개는 post목록의ID/부모/크기/수정시각 불변을 확인해 기존raw를 재사용했다. 최종203작성 파일의 sourceSHA6c8d1a37e2e7551f7786c9265d0fec896d375795258db89fc03b4d27ee5cbf1b을 기존pull-drive로 canonical외장 저장소에반영했다. 승인 원고5건·정의4개·날짜이력/목차6파일 외에는 수정하지않았다.
 
 canonical 실측은 v240·미판정63회차587구간·154verifiedevents·33conceptIDs/39notes/38authoredrelations·RSS40이다. 생성캐시 재생성은이번 릴리스build에서수행하고 실제공개배포/WebsiteData를검증한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는유지하며, 이번소급반영은새운영횟수0이다. 상세런북390.
+
+## 19.298. 7/30 소급 기사·전문용어의 공개 슬라이스 완료
+
+Drive203 작성 원본을 반영한 공개9519c66/Actions37258169305의 build·deploy success, CI818/818·Python15+2·build/site, 웹·RSS·GitHub28exact 및 같은 지도 모듈,1280/390 실제 UI를 확인했다. RSS40GUID/pubDate를 보존하고 WebsiteData328pages/154articles/22nodes/21relations의11원격 raw를 대조했다.10같은ID 갱신·RSS1불변·과거 업로드 기록1보존을 구분한다. 발행 증거349files/350members·6,479,020bytes의 실제 원격 ZIPSHA/CRC·모든member bytes를 검증하고 일반 evidence로 복구했다.
+
+canonical 미판정은63회차587구간·diagnostics0이다. 다음 실제 미검토는7/29이며 기존 공통 수집·직접 판정·원고/용어 승인·Drive-first 공개 경로를 재사용한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 남는다. 소급 수정은 새 운영 횟수0, 동일 실패1시간 반복은 없었다. 상세 런북391.
