@@ -4177,7 +4177,6 @@ WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9�
 
 미판정은 canonical62회차579구간·diagnostics0이다. 다음7/28·7/27·7/25를 가능한 검토 묶음으로 처리해 전수Drive대조/공개CI 빈도를 줄이며 공통 수집·판정·원고/용어 승인 구조를 유지한다. 독립human40/20·정규7회/무인08시·fullportable runtime·전체legacy판정·WBS2/22·goalactive는 남는다. 이번은 authoritative Drive와 공개 상태를 바꾼 progress이며 동일실패1시간 반복0이다. 상세런북393.
 
-
 ## 19.301. 3회차 소급 묶음과 공통 중복·원격 복구 보강
 
 7/28·7/27·7/25의 원래 26구간을 원문 기반 고정 사건 5개로 재구성하고 38사실·실제 MLX 원고5회·정정·승인을 보존했다. 전문용어2개와 performance-path/Signal 이력을 원문에 연결했다. 중복 뉴스/논문 구간을 같은 사건으로 묶는 명시 검토와 승인 정의의 exact source selection 순환을 공통 계약으로 구현했다. 원문 유지·hash·일반 순환 거부를 유지한 표적58/58이 통과했다.
@@ -4185,7 +4184,6 @@ WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9�
 비공개 Drive portable ZIP6개의 실제 raw SHA/CRC·독립 복구·기사 승인 동일·이력2노트 재검증과 공통 위치 등록을 완료했다. private v5의 생성·링크·채널 검사는 통과했고 v4와 독자 HTML/digest가 같다.1280/390 UI 증거가 유지된다. 승인 작성 변경은 용어 인덱스 포함8파일40,120bytes다. 최신 작성 원본 readback/release·canonical 공개·WebsiteData는 아직 실행하지 않았다. canonical 미판정62/579와 private59/553을 구분한다.
 
 다음은 준비된8파일의 fresh Drive-first release다. 추가 모델 재생성·이미 통과한 표적 suite 반복은 하지 않는다. 전체 legacy판정·독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 유지한다. 상세 런북394와 external evidence를 따른다.
-
 
 ## 19.302. 7/28·7/27·7/25 묶음의 공개 슬라이스 완료
 
@@ -4227,7 +4225,6 @@ canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·�
 
 전체legacy58/543·메타데이터복구10·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는남는다. profile추가성공을전경로기간수집/기사검토완료로승격하지않는다. 다음선택원문사실검토와기존회차/용어연결,공식Codex변경대체원문확보를진행한다.
 
-
 ## 19.307. 공통 GitHub 프로필 배포 검증 완료
 
 6a02b3f/Actions37278066302의actual build/deploy success·Node840/840·Python15+2·build/site와공통public readback21고유파일+지도module을확인했다. source4판본과release55자료의두private Drive ZIP을actual raw SHA/공통v1로복구했다. 기사원본/회차/운영횟수는변하지않았다. 다음은Vercel3원문의실제local processing 후보를직접검토하고기존7/14 회차/전문용어에연결한다. 전체legacy58/543·metadata복구10·독립human40/20·정규7회/무인08시·fullportable runtime·WBS2/22·goalactive 유지. 상세런북400.
@@ -4242,13 +4239,11 @@ Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더
 
 공개 후속: 258ecb9/Actions37284484323의 build/deploy 성공·Node845/845·Python15+2/build/site·실제13공개파일과지도module·desktop/mobile을 검증했다. WebsiteData11파일3,460,243bytes의 실제Drive raw SHA를 확인하고 변경 없는3파일은 쓰기를 생략했다. 릴리스 증거322자료의 Drive ZIP actual raw와공통v1 324파일복구까지확인했다. 전체 목표는 미완료이며 다음은 남은 metadata-ready 자료와 metadata 복구 근거를 조사한다.
 
-
 ## 19.309. 승인한 Drive 작성본의 재개와 저장 결과 연결
 
 P5-01/P5-03과 실행 묶음 7~8의 다음 수직 슬라이스다. 기존 release·transfer plan·staged bytes를 변경하지 않고, 실제 원격 부모 전체 목록과 raw bytes를 공통 `research-authoring reconcile`에서 대조한다. 부분 저장은 남은 파일만, 응답 유실 뒤 원하는 bytes가 있으면 추가 쓰기 없이 확인한다. 업데이트 ID·부모·수정시각 변경과 이미 생성한 ID의 교체/삭제는 충돌로 기록하고 후속 쓰기를 막는다. 입력 SHA와 공유 잠금에 묶인 불변 receipt를 기존 비공개 진척 화면에 연결한다.
 
 수용 기준은 부분 저장·모호한 생성 성공·ID 교체·revision 충돌·기한 만료·증거 변경·잠금 회귀 검사, 기존 실제 승인 2파일의 fresh Drive readback과 CLI/진척 화면 확인이다. 저장 결과는 공개 배포·정규 운영 횟수로 승격하지 않는다. 실제 API 쓰기 자동화와 인증 갱신, 강제 종료를 포함한 단일 08시 전 구간, 전체 소급·독립 평가·새 정규 7회는 이 슬라이스 이후에도 전체 완료 조건으로 남는다.
-
 
 후속 검증: ea32e080574447eb6bcf6b01a3cc617c0d52653e / Actions37289063973의 build·deploy가 성공했다. Node859/859, Drive Python15/15·WebsiteData2/2, build/site를 확인했다. 공개 readback 첫 요청은8파일 완료/5네트워크 실패였고 현재 RSS HTTP200 관측 후 같은 run에서 미완료 요청만 다시 수집했다. 기존 완료 bytes를 재사용해 웹·RSS·GitHub13파일과 지도 모듈이 일치했다. 실패 원본은 삭제하지 않았다.
 
@@ -4312,7 +4307,6 @@ PR JSON은 기존 json-document 프로필로 처리한다. 번호/html_url·게�
 
 19.316 공개 완료: d3798b0/Actions37319110565 build·deploy success, 통합CI893/893·Python15+2·build/site, 공통 실제공개14파일/지도module·1280/390 UI·WebsiteData11postraw(8update/3불변)·158자료ordinary v1 원격SHA/전체복구를 확인했다. 승인원문closure60자료portable v2와운영증거158자료를구분하며 전체runtime/정규운영으로세지않는다. RSS40·원URL/원발행일을 유지한다. 상세런북410 후속. 다음metadata-ready 소급묶음과실제08시전체흐름을이어간다.
 
-
 ## 19.317. 54경로 실제 수집 재개와 대기 병목 제거
 
 2026-10-06 사용자 재개 지시 후 goal 실제 상태 active를 확인했다. 외장 본체에서 기존 54경로/108날짜 창의 정규 수집을 재개한다. 공개 원고·08시 예약·모델 정책·다른 worktree는 이번 묶음에서 변경하지 않는다.
@@ -4325,5 +4319,4 @@ PR JSON은 기존 json-document 프로필로 처리한다. 번호/html_url·게�
 
 전체WBS2/22·미판정53회차505구간·metadata복구10·독립human40/20·새정규7회·무인08시/인증/중단·full runtime 복구를 유지한다. 동일 실패1시간 반복 시 실패 증거와 다음 재개 지점을 남기고 다음 슬라이스로 이동한다.
 
-
-19.317 결과: 실제54경로/108창과 전자신문 보완의 handoff incomplete0, 후보772를 확인했다. rolling scheduler와 제한적 제목 표지 처리, 보관 의존성/덮어쓰기/파일 수 사전 관문을 구현했다. 표적49통과, 실제 Qwen 추출·대조·작성과 GPT 원문검토 뒤 NASA9/28 원고6사실/후보 승인 및 추가 추론0 재사용을 확인했다. Drive 같은ID v2의 원격24,114,518bytes/SHA와1759파일·nested92파일 복구 및 승인 provenance가 통과했다. 공개 새 회차0·fresh 작성208 대조0·정규 운영0이며 전체WBS2/22/goal active다. 세부 실패/정정·남은 작업·증거는 런북411절을 따른다. 코드 통합 CI·배포 결과는 후속 확인으로 구분한다.
+19.317 결과: 실제54경로/108창과 전자신문 보완의 handoff incomplete0, 후보772를 확인했다. rolling scheduler와 제한적 제목 표지 처리, 보관 의존성/덮어쓰기/파일 수 사전 관문을 구현했다. 표적49통과, 실제 Qwen 추출·대조·작성과 GPT 원문검토 뒤 NASA9/28 원고6사실/후보 승인 및 추가 추론0 재사용을 확인했다. Drive 같은ID v2의 원격24,114,518bytes/SHA와1759파일·nested92파일 복구 및 승인 provenance가 통과했다. 공개 새 회차0·fresh 작성208 대조0·정규 운영0이며 전체WBS2/22/goal active다. 세부 실패/정정·남은 작업·증거는 런북411절을 따른다. 코드80886e1의 통합 Actions37346853728은 Node899/899·Python15+2·build/site/deploy success이고 실제 웹·RSS·GitHub12파일이 exact bytes다. NASA 승인 closure는 별도 private Drive1C0eXQlo0mTv-dX3uKY0nQVVgauT-Q6fk/628,639bytes·원격 SHA/92파일 및6사실 semantic 승인 복구 후 공통 위치 등록·사건 조회를 완료했다. 신규 회차·Drive 작성본 대조·정규 운영 완료로 승격하지 않는다.

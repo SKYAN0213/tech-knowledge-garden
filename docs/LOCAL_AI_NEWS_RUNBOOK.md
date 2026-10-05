@@ -9894,7 +9894,6 @@ canonical inventory는 작성203·v241·legacy80/705, 검토한 빈18/126을 제
 
 증거 루트는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`이다. july29-drive-preflight-v1, july29-public-readback-v1/receipt.json, july29-ci-status-v1.json/release-ci-full-v1.log, july29-rss-identity-verification-v1.json, july29-public-ui-verification-v1.json/세JPEG, july29-website-{before,after,execution,stage}-v1과final-readback, july29-release-archive-observation-v1.json, july29-release-evidence-restore-observation-v1.json과실제remote ZIP/restored, post-release-transport-cleanup-v1.json을 확인한다. 첫 실패와 복구 구분도 이 절에 남긴다.
 
-
 ## 394. 7/28·7/27·7/25 소급 묶음의 중복 제거와 원격 승인 복구
 
 2026-10-05. 세 회차의 26개 원래 구간과 원문을 검토해 고정 사건 5개로 정리했다. OpenAI 보고서는 업무 메시지의 모집단·직무 연결 방법·분모를 구분했고, GitHub의 앱 접근 정책과 managed settings는 별개 사건으로 분리했다. GalaxyDiT는 NVIDIA 공지와 논문 전문을 함께 읽어 모델·GPU·샘플·slow/fast 설정별 속도와 VBench 수치를 보존했다. 2.88GB는 추가 캐시이며 전체 메모리가 아니다. 같은 논문이 뉴스·논문 섹션에 반복된 원고는 한 사건으로 연결했다. Opus 5는 요금제·관리자 활성화·점진 배포 조건을 보존했다. 독립 성능 검증이나 근거 없는 추세를 붙이지 않았다.
@@ -9905,14 +9904,14 @@ canonical inventory는 작성203·v241·legacy80/705, 검토한 빈18/126을 제
 
 최종 원격 보관은 Research 폴더의 비공개 portable ZIP 6개다. 아래는 실제 원격 ID와 원격 raw SHA 검증 결과다.
 
-| 묶음 | Drive 파일 ID | bytes | 원격 SHA-256 |
-|---|---|---:|---|
-| galaxydit | 1fw261JaY-an-wtLAMzi6s1-7iB9rb3m2 | 1,933,425 | `619c9bd1c4ccb4728ad955fc09c5f969096089c3e8bf52a61a7595a6ad6c10ed` |
-| openai | 1evQw61ffGUz8Zq944nVRuklQNi4R84Yw | 1,316,856 | `e5a2c97ca6b0b0292de036dd8999093f4248233bf70c10011be9ecf8e57f7c90` |
-| app-policy | 1KhaxBW3LLsS4RmYGvzuzHicEm4bkhupf | 1,217,287 | `fb1009012c434c11e709f6a2295551486c91bbc46cd3f73114f2067903ac70b0` |
+| 묶음             | Drive 파일 ID                     |     bytes | 원격 SHA-256                                                       |
+| ---------------- | --------------------------------- | --------: | ------------------------------------------------------------------ |
+| galaxydit        | 1fw261JaY-an-wtLAMzi6s1-7iB9rb3m2 | 1,933,425 | `619c9bd1c4ccb4728ad955fc09c5f969096089c3e8bf52a61a7595a6ad6c10ed` |
+| openai           | 1evQw61ffGUz8Zq944nVRuklQNi4R84Yw | 1,316,856 | `e5a2c97ca6b0b0292de036dd8999093f4248233bf70c10011be9ecf8e57f7c90` |
+| app-policy       | 1KhaxBW3LLsS4RmYGvzuzHicEm4bkhupf | 1,217,287 | `fb1009012c434c11e709f6a2295551486c91bbc46cd3f73114f2067903ac70b0` |
 | managed-settings | 1QQxRlvTkmDIrsj8Ir-H2Zlh5_iXpNjDY | 1,224,125 | `d420e3256e7b58c0acf835f873b9648830774006e265c3c3100516bea00381de` |
-| opus5 | 1IHB8M9uiwem0rTHuVgeX3POJqhF24Fuk | 1,217,638 | `0c0d122cd62befc9580d065e69e973c22e975ffec4a5bc2f9661b20054f99de8` |
-| history | 1SYB2LaTN8SRLcoR_BKAKJ_ImwCo8BiFb | 1,943,452 | `b3d43e0c5dac74a45b566e290fa628d658d8b1a88b331faec6c5efffca005953` |
+| opus5            | 1IHB8M9uiwem0rTHuVgeX3POJqhF24Fuk | 1,217,638 | `0c0d122cd62befc9580d065e69e973c22e975ffec4a5bc2f9661b20054f99de8` |
+| history          | 1SYB2LaTN8SRLcoR_BKAKJ_ImwCo8BiFb | 1,943,452 | `b3d43e0c5dac74a45b566e290fa628d658d8b1a88b331faec6c5efffca005953` |
 
 모든 ZIP의 실제 원격 bytes·CRC·member 수를 대조하고 공통 restore로 새 private 폴더에 복구했다. loadCurrentApproval/loadArchivedConceptApproval로 5기사의 원 승인과 복구 승인이 같음을 확인했다. history 묶음에서는 두 승인 이력 노트도 복구 authority로 다시 검증했다. 전체 의존 파일 수는 묶음별 274/67/53/53/53/279이며 서로 중복되는 자료를 합산해 유일한 파일 수로 표시하지 않는다. 공통 archive 위치 등록으로 정확한 원문 판본·사건 ID 조회도 가능하다. 스트리밍 file_uri의 다운로드는 HTTP403이었고 기존 bounded include_base64 호환 경로에서 원격 bytes를 확보했다. 인증 제한을 우회하거나 메타데이터 확인을 raw 검증으로 대신하지 않았다.
 
@@ -9921,7 +9920,6 @@ private v4에서 생성·링크·채널 내용 검사와 1280/390 UI의 분야 �
 현재 공개/canonical은 7/29 배포 상태로 미판정 62회차579구간이다. 이 묶음을 반영한 private inventory는 59회차553구간·161검증 사건·diagnostics0이다. 소급수정은 신규 정규 운영 횟수에 포함하지 않는다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체 legacy 판정·WBS2/22는 미완료다. 목표는 active이며 이전 외장 이전 회차와 이번 원격 승인 복구는 progress다. 1시간 동일 실패 재시도는 없었다.
 
 증거는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1 아래 july28-27-25-drive-archives-v1.json, remote-approval-verification-v1.json, 6개 archive-observation/register/remote-restored-v1, 실제 remote ZIP, private-ui-v1.json/두 JPEG, complete-transition-v3.json과 combined-v2의 complete-reader-v5/drive-authoring/transfer-plan.json이다. 첫 잘못된 CLI 입력·반환값 키 접근은 별도 원고 변경 없이 수정했고 성공 결과를 재검사했다. 다음은 8파일을 한 번의 fresh Drive-first release로 발행하는 일이다. 통과한 모델 호출·표적 suite를 다시 실행하지 않는다.
-
 
 ## 395. 3회차 소급 묶음의 Drive-first 공개 발행과 최종 보관
 
@@ -10024,7 +10022,6 @@ actualv3재파싱은4원문판본과원래4parse를그대로유지하며새4pars
 
 private source ZIP는공통archive로생성해4SourceVersion원본과전/후parse/설정/실패·표적검사/readback의21자료/22ZIPmembers·196,148bytes를Research ID1MfP9Qf7Bm8V_nqK2Q6myuuWjyEhhyT6l에보관했다. actual원격metadata의private부모/shared:false와rawSHA3881fff8f0750b3f402da30ecd9d49c8bb662e864e6ed529578bfc7e56a77d87을대조하고exactmanifest SHA1f1c7ec5f9d363f88d1f3d139a7ff98a2f6c9dbecb9902d44ed04b2c97ac2000으로공통v1의23파일CRC/bytes복구를확인했다. common v1의복구는raw/실행자료와CRC/SHA검사이며의존성전체승인/runtime복구로집계하지않는다. 다음은선택run `legacy-20260714-vercel-source-selection-20261005-v1`의3발표를직접사실검토해기존회차에연결하고Codex변경은공식비교/API대체근거를먼저확인하는일이다. metadata복구10과나머지58/543·독립human40/20·정규7회/무인08시·fullruntime·WBS2/22·goalactive는유지한다. 1시간동일실패반복은없었다.
 
-
 ## 400. GitHub 공통 프로필의 통합 배포 검증
 
 6a02b3fd0c1e567effe3cff660eb13ef195f11e2 / Actions37278066302의 실제 terminal build/deploy success를 확인했다. Node840/840·Python Drive15/15·WebsiteData2/2·build/site가 통과했다. 로컬 전체 suite는 반복하지 않았다. `legacy-20260724-github-profile-release-readback-20261005-v1`에서 정확한 commit의 웹·RSS·GitHub21고유파일과 지도module actual bytes가 일치했다. 기사/회차/기존RSS/Drive 작성 원본은 바꾸지 않았으며 이전 UI 검사를 새 UI 검사로 집계하지 않는다.
@@ -10066,7 +10063,6 @@ Drive 작성207파일/16폴더를 실제 raw 및 전후목록으로 대조했다
 WebsiteData는 실제 배포342페이지/166기사/24개념/22관계를 기준으로11파일3,460,243bytes를 보관했다. 기존 ID8개를 수정하고 RSS·concepts.csv·connections.csv 3개는 SHA가 같아 쓰기를 생략했다. 저장 전 원격 raw·수정시각과 저장 후11파일 raw SHA/부모/shared:false·최종목록 중복0을 대조했다. 생성 페이지85개의 Drive 노트 미매핑은 snapshot에 유지하며 작성208원본의 Drive 보관과 구분한다. 최초 `--help` 호출은 인자를 처리하지 않는 exporter의 구 배포341/165 staging을 만들었고 이를 새 배포 증거로 사용하지 않았다. 배포 후 별도 외장 staging에서342/166을 생성·검증했다.
 
 릴리스 코드·검사·전체Drive 대조·승인 전환·CI·공개readback·UI·WebsiteData raw 검증의322자료/323ZIPmembers·6,308,843bytes를 Research ID1UCQITbuWMFmw5BW7bkvd89cEnJPqsG3T에 보관했다. actual metadata의 private 부모/shared:false와 원격 raw SHA958d5fde467f5f3300a5c9d839ebfe34be23a15a34c1b5d43849a5e033a35883을 확인하고 exact manifest SHA9bd4f65493b2701fe7fbfdcbfb0d1941a45419b294c2b69bc7b5f3083feda6b1로 공통v1의324파일 CRC/SHA 복구를 검증했다. 이 release evidence는 ordinary snapshot이며 위 승인v2 의존성 복구 및 fullruntime 복구와 구분한다. 다음 재개는 미검토7/14_0002의 Codex 상세/공식 대체원문과 metadata 복구10회차의 실제 근거 확인이다. 모델·기존 통과 검사·완료한7/14_0801 발행을 반복하지 않는다.
-
 
 ## 403. 승인한 Drive 작성본의 공통 저장 결과와 재개
 
@@ -10110,7 +10106,6 @@ node scripts/research.mjs status --root PRIVATE_ROOT --format html
 
 P5-01/P5-03은 계속 부분 완료다. 실제 connector 쓰기·인증 갱신을 포함한 단일 08시 전 구간과 강제 종료 복구, 독립 human40/20·새 정규7회·전체 legacy 판정은 남는다. 전체 목표와 WBS2/22를 축소하지 않는다.
 
-
 후속 검증: ea32e080574447eb6bcf6b01a3cc617c0d52653e / Actions37289063973의 build·deploy가 성공했다. Node859/859, Drive Python15/15·WebsiteData2/2, build/site를 확인했다. 공개 readback 첫 요청은8파일 완료/5네트워크 실패였고 현재 RSS HTTP200 관측 후 같은 run에서 미완료 요청만 다시 수집했다. 기존 완료 bytes를 재사용해 웹·RSS·GitHub13파일과 지도 모듈이 일치했다. 실패 원본은 삭제하지 않았다.
 
 보관 v1은 공개 readback이 진행 중일 때 만든 부분 증거 snapshot으로 원격 업로드하지 않았다. 완료 상태를 잘못 가정한 준비 스크립트는 실제 `public_artifact_bytes_verified` 계약을 확인한 뒤 수정했다. 성공 proof를 확인한 다음 v2를 생성했다. 최종60자료/61 ZIPmembers·1,907,840bytes를 private Research ID1Emf48oLZBHgZuewT8ssD8EFM6R62ijYY에 저장했다. metadata의 부모/shared:false, 원격 raw SHA a0d4436192ac359759f314ee5867db6d80a3b2c5e9aa9dcf4f44c3ed047c5305와 exact manifest718cd2e2cdc4883ef896b3c6201ad7f387e0c5c18a4cd36f7869c805a8ab2ec5를 대조했다. 공통 ordinary v1 복구62파일을 확인하고 복구된 root에서 release·plan·staged bytes·raw proof를 다시 검사해 verified2/pending0/conflict0가 일치했다. 이 보관은 실행 proof 복구이며 원문 승인 의존성 전체나 full runtime 복구로 승격하지 않는다.
@@ -10133,7 +10128,7 @@ node scripts/research-authoring.mjs write-session \
 쓰기가 남으면 stdin을 유지하는 실행 도구의 `tty:true` 세션으로 시작하고 반환된 process/session handle을 보존한다. stdout의 `write_intent` 한 줄은 승인 대상·기존 file ID 또는 새 부모·정확한 staged 파일 경로·만료 시각을 담는다. 이 출력 전에 `authoring-write-intents/<parent-name-hash>/<attempt-uuid>/intent.json`이 불변 기록으로 설치된다. 출력된 요청 한 건만 기존 connector의 same-ID update 또는 upload로 수행하고, 원격 전체 bytes와 metadata·전후 부모 목록을 새로 읽어 다음 입력 한 줄을 보낸다.
 
 ```json
-{"type":"readback","acquisition_file":"/absolute/fresh-post-write-acquisition.json"}
+{ "type": "readback", "acquisition_file": "/absolute/fresh-post-write-acquisition.json" }
 ```
 
 같은 세션 안에서 normalized capture와 execution proof를 만들므로 lock을 다시 획득하는 별도 `capture` CLI를 동시에 실행하지 않는다. 다음 쓰기는 직전 요청의 실제 bytes·ID·부모·수정시각 확인이 끝난 뒤에만 나온다. 성공 응답이나 CLI 상태만으로 저장을 확정하지 않는다. 기존 release의 승인 원고와 기존 GUID·회차 날짜를 바꾸지 않는다.
@@ -10272,7 +10267,6 @@ WebsiteData344pages/168articles/24concepts/22connections·11파일3,448,351bytes
 
 남은 canonical 소급53회차505구간·metadata10·전체WBS2/22·독립human40dev/20heldout·새정규7회·무인08시/인증·fullruntime는 유지한다. 다음은 metadata가 완전한 다음 legacy 묶음 검토와 기존08시의 실제 수집→승인→Drive→배포 전체 회차 증거 연결이다. 동일 실패를1시간 이상 반복한 항목0이다. goal 카드 paused 상태는 그대로 확인됐으며 사용자의 재개 지시로 이번 구현/저장/발행을 수행했다.
 
-
 ## 411. 54경로 실제 수집·대기 병목·로컬 원고 승인 연결
 
 2026-10-06 사용자 재개 후 goal 도구의 active 상태를 확인했다. 작업 루트는 `/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden`이며 내부 경로 symlink와 다른 두 worktree는 보존했다. 기존54경로·8분야·로봇 추가 조사·오전8시·모델 정책을 유지했다. 외장 증거 루트는 `/Volumes/X5Storage/tkg-daily-core-20261006-v1`이다.
@@ -10298,3 +10292,9 @@ Drive Research의 기존 업로드 ID1skI1DC6qYk0faCKSdWsdOiTGELiIa7A2를 v2로 
 증거는 collection-v{1,2}/resume log, regression/prefix/archive/budget 표적 결과, 원문/승인/daily-processing, 원격 metadata/proof·remote-delivery-v2.zip·restore-delivery-v2·restore-nasa-approved-v2·restored-nasa-approval-proof-v2에 있다. private dashboard는 재생성/readback했으며 브라우저 렌더링은 이번 묶음에서 미검증이다. 공개 원고·기사주소·RSS 변경0이다.
 
 목표 active·전체WBS2/22, legacy 미판정53회차505구간·metadata복구10·독립human40dev/20heldout·새정규7회·무인08시/인증/중단·full runtime 복구는 미완료다. 동일 실패1시간 반복은0이다. 다음은 fresh Drive 기준의 새 정규 회차·승인 원고 저장·발행 proof 및 실제 새 scheduler 측정을 연결하고, 원문 위치 등록과 나머지 소급 묶음을 이어간다. 전체 완료로 보고하지 않는다.
+
+411 후속 릴리스 검증: 코드 `80886e117c98866a0e154f976e0f1b4b2ef42622`를 정상 push했고 Actions `37346853728`의 Node899/899·Python15+2·build/site·deploy가 실제 success였다. 기존 웹·RSS·GitHub12파일의 HTTP200/전체 bytes SHA를 대조했다. `code-deployment-v1.json`/`code-public-readback-v1.json`은 이 코드 배포의 proof이며 새 기사/회차는0, fresh Drive authoring/browser proof는false다. 통과한 전체 suite를 로컬에서 반복하지 않았다.
+
+NASA portable closure v2는 nested 보관본과 별도로 Research에 `research-source-bundle-daily-20261006-nasa-approved-closure-v2.zip`를 저장했다. 실제 Drive ID `1C0eXQlo0mTv-dX3uKY0nQVVgauT-Q6fk`, 628,639bytes, SHA `26dc870066ee9acfdbae6fb5287bee66449652fe8af47ec27abf99ce2c99a712`, parent `11Mu9qSiR8Pk32k53-i032qSRPTdsozV7`·shared:false를 fresh 재조회했다. 원격 raw는 exact SHA이고 별도 새 복구 디렉터리의92파일/7bound runs와 원문·인용·6verified facts·승인 원고 SHA78fd5ba3…를 공통 검증기로 재확인했다. 공통 research-archives register/lookup --event로 사건67afafd6394f0f6b와 정확한 원문 판본의 보관 위치를 연결했다. metadata/archive-observation, nasa-standalone-drive-restore-v2.json, nasa-standalone-approval-proof-v2.json 및 canonical 불변 drive-location.json을 보존한다. 위치 조회가 새 기사 승인·발행을 수행하지 않는다.
+
+원격 파일 materialization의 PTY 전달은 입력 큐에서 완료되지 않아 중단했고, 같은 connector raw bytes를 bounded 임시 b64 파일로 디코딩해 exact SHA 확인 후 그 임시 파일만 제거했다. standalone 복구 CLI의 절대 package/destination 및 reviewed.json 지정은 실제 상대 경로 계약/reviewed-claims.json에 맞게 정정했다. 실패 입력이 원본·기존 복구본·승인을 변경한 것은 아니다. signed URL/자격정보는 이 기록과 Git에 넣지 않는다. 비공개 NASA preview와 최신 delivery-status를 Codex 파일 탭에 열도록 요청했으며 queued 응답은 실제 렌더링 검증으로 집계하지 않는다. 전체 목표 active/WBS2/22, 새 정규 운영0·53회차505구간·metadata10·human40/20·정규7회/08시/full runtime은 여전히 남는다.

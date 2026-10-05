@@ -1,4 +1,4 @@
-최신 진행(2026-10-06): goal 실제 active를 확인하고54출처/108날짜 창의 수집을 재개했다. 보완 후 handoff 미완료0·후보772이며, 느린 출처 때문에 다음 수집/저장이 기다리는 병목과 제목 표지·보관 결함을 고쳤다. 표적49개가 통과했다. 실제 Qwen 추출·근거 대조·작성 및 GPT 원문검토로 NASA9/28 원고6사실을 승인/후보 연결했고 재사용 호출0을 확인했다. Drive 동일ID v2의 실제 원격 SHA와1759파일·승인 closure92파일 복구를 확인했다. 공개 신규 회차/정규 운영0, 전체WBS2/22·소급53/505·metadata10·독립평가·정규7회·무인08시·full runtime은 남는다. 통합 CI와 코드 배포는 이어 확인한다. [런북411](LOCAL_AI_NEWS_RUNBOOK.md#411-54경로-실제-수집대기-병목로컬-원고-승인-연결). 아래 checkpoint는 당시 상태다.
+최신 진행(2026-10-06): goal 실제 active를 확인하고54출처/108날짜 창의 수집을 재개했다. 보완 후 handoff 미완료0·후보772이며, 느린 출처 때문에 다음 수집/저장이 기다리는 병목과 제목 표지·보관 결함을 고쳤다. 표적49개가 통과했다. 실제 Qwen 추출·근거 대조·작성 및 GPT 원문검토로 NASA9/28 원고6사실을 승인/후보 연결했고 재사용 호출0을 확인했다. Drive 동일ID v2의 실제 원격 SHA와1759파일·승인 closure92파일 복구를 확인했다. 공개 신규 회차/정규 운영0, 전체WBS2/22·소급53/505·metadata10·독립평가·정규7회·무인08시·full runtime은 남는다. 코드80886e1·Actions37346853728의 Node899/899·Python15+2·build/site/deploy와 실제 공개12파일 bytes 일치를 확인했다. 승인 closure는 별도 private Drive1C0eXQlo0mTv-dX3uKY0nQVVgauT-Q6fk에 저장·원격 SHA/92파일/6사실 승인 복구했고 사건/원문 위치 등록·조회도 통과했다. [런북411](LOCAL_AI_NEWS_RUNBOOK.md#411-54경로-실제-수집대기-병목로컬-원고-승인-연결). 아래 checkpoint는 당시 상태다.
 
 최신 공개 완료(2026-10-05): 7월 13일 세 회차를 Drive 원본부터 재검토해 공개 배포했다. 공통 PR JSON 프로필, 기사 없는 회차의 명시 검토, 숫자 # 참조 처리를 구현했다. 공개 d3798b0 / Actions37319110565의 Node893개·Python17개·build/site, 실제 공개14파일 및 1280/390 탭·태그·기사 연결이 통과했다. Drive 작성208개 전후 대조/3같은ID저장, WebsiteData11개(8갱신·3불변), 승인 closure60자료와 발행 증거158자료의 실제 원격 ZIP/복구를 확인했다. 기존 RSS40개 식별자·발행시각과 기사 주소를 유지하며 신규 정규 운영은0이다. 소급 미판정은53회차·505구간으로 줄었고 metadata복구10·독립평가·신규정규7회·무인08시·전체runtime복구가 남는다. 필수WBS2/22이고 goal 도구 카드의 실제 paused 표시와 이번 사용자 지시로 수행한 작업을 구분한다. [런북410](LOCAL_AI_NEWS_RUNBOOK.md#410-기사-없는-과거-회차와-github-pr-원문의-공통-처리). 아래 checkpoint는 당시 상태다.
 
@@ -1667,9 +1667,7 @@ Ollama 역할 호출의 스트리밍 진행 기록·부분 실패 출력/SHA 검
 
 2026-10-05 최신: 7/14_0801의UTC발표시각·필드별메타데이터·발견경로판정·Signals시각공통계약을구현했다. 기존6verified사실로1기사를승인하고실제reader/build/site·웹/GitHub/RSS40유지·desktop/mobile을확인했다. Drive207raw/16폴더대조후2파일저장/삭제0·동일회차ID/원격bytes·canonical208/sourceSHA를검증했다. 승인v2 ZIP의actual원격SHA·60파일복구·기사/Signals승인일치확인. 258ecb9/Actions37284484323 build/deploy success·Node845/845/Python15+2·실제13공개파일/지도module/공개UI·WebsiteData11파일원격SHA까지검증했다. 현재166verified/57회차535미판정구간/metadata복구10/diagnostics0·전체WBS2/22/goalactive유지. 상세런북402.
 
-
 2026-10-05 09:04:30 UTC에 기존 7/14 승인본 2파일을 재확인했다. 실제 metadata/raw와 51개·30개 부모 목록의 전후 대조, 중첩 폴더 metadata를 공통 capture에서 검사했다. 두 파일 5,450bytes가 기존 ID와 승인 SHA에 일치했고 reconcile 결과 verified2/pending0/conflict0, 추가 쓰기0이었다. release·plan·원고를 재작성하지 않았다. 실제 receipt는 `legacy-20260714-complete-reader-20261005-v1/drive-authoring/executions/467342e58f289c585938db238a4bcd1665b1d5670ecb5a248b61ce9818285235/054850b6f34eaa35a08485865d1394d41fe31346e86f2ab3789bc7bcfb2c9a57/receipt.json`이다.
-
 
 후속 검증: ea32e080574447eb6bcf6b01a3cc617c0d52653e / Actions37289063973의 build·deploy가 성공했다. Node859/859, Drive Python15/15·WebsiteData2/2, build/site를 확인했다. 공개 readback 첫 요청은8파일 완료/5네트워크 실패였고 현재 RSS HTTP200 관측 후 같은 run에서 미완료 요청만 다시 수집했다. 기존 완료 bytes를 재사용해 웹·RSS·GitHub13파일과 지도 모듈이 일치했다. 실패 원본은 삭제하지 않았다.
 
