@@ -24,6 +24,7 @@ import { writeDraftCheckpoint, loadBoundDraftCheckpoint } from "./draft-checkpoi
 import { draftMarkdown } from "./editor.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
+import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { atomicCreate, readJSON, safePath, RunState, withLock } from "./run-state.mjs"
 import { loadCompletedExtraction } from "./extraction-checkpoint.mjs"
 
@@ -291,6 +292,8 @@ export async function processSourceRun({
         verified: 0,
         candidate_published: false,
       }
+    const deepContext = readJSON(root, base + "deep-context.json")
+    if (deepContext) assertDeepDiveContext(deepContext, reviewed.claims, parses, documents)
     if (readJSON(root, base + "draft.json")) {
       const working = loadProcessedDraft(root, run, reviewed, documents, parses)
       if (readJSON(root, base + "approved-article.json")) {
@@ -321,7 +324,11 @@ export async function processSourceRun({
           run: input.draft_run,
         })
     const generated = draftRun
-      ? loadBoundDraftCheckpoint(root, draftRun, reviewed.claims, { parses, documents })
+      ? loadBoundDraftCheckpoint(root, draftRun, reviewed.claims, {
+          parses,
+          documents,
+          deepContext,
+        })
       : await writeDraftCheckpoint(
           root,
           input.draft_run,
@@ -332,6 +339,7 @@ export async function processSourceRun({
             think: writer.executionPolicy.settings.think,
             parses,
             documents,
+            deepContext,
           },
           await writer.metadata(writer.executionPolicy.settings.model),
         )

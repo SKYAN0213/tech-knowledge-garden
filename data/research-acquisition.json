@@ -1701,6 +1701,21 @@
           ]
         }
       }
+    },
+    {
+      "id": "robco-unicorn-press-20261005-v1",
+      "url_pattern": "^https://www\\.rob\\.co/en-us/resources/news/press/robco-becomes-a-unicorn/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main/header//div[contains(concat(' ',normalize-space(@class),' '),' body-text ') and contains(concat(' ',normalize-space(@class),' '),' w-richtext ')]",
+        "content_block_xpath": ".//h2|.//h3|.//p|.//li|.//table",
+        "publication_date_policy": "explicit-authoritative",
+        "publication_date_xpath": "//main/header//div[contains(concat(' ',normalize-space(@class),' '),' w-richtext ')]/p[starts-with(normalize-space(.),'San Francisco, Austin and Munich, ')]",
+        "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}",
+        "publication_date_format": "%B %d, %Y",
+        "preserve_publication_date_block": true
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {

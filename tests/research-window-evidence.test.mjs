@@ -74,7 +74,9 @@ function fixture(t, { article = false } = {}) {
     failAt = null,
     outside = false,
     uppercase = false,
-    elision = false
+    elision = false,
+    adjacentLocator = false,
+    missingCited = false
   const requests = []
   const provider = {
     executionPolicy: {
@@ -92,7 +94,7 @@ function fixture(t, { article = false } = {}) {
         output: {
           assessments: data.claims.map((c) => ({
             claim_id: c.claim_id,
-            verdict: "supported",
+            verdict: missingCited ? "insufficient" : "supported",
             checks: {
               meaning: "supported",
               identity: "supported",
@@ -101,17 +103,25 @@ function fixture(t, { article = false } = {}) {
               attribution: "supported",
             },
             explanation: "계획과 수량 조건을 해당 창의 원문에서 확인했다.",
-            evidence: [
-              {
-                parse_id,
-                block_id: outside ? blocks[4].block_id : block.block_id,
-                quote: uppercase
-                  ? sentence.replace(/^a /, "A ")
-                  : elision
-                    ? sentence.replace("plans to ship", "...")
-                    : sentence,
-              },
-            ],
+            evidence: missingCited
+              ? []
+              : [
+                  {
+                    parse_id,
+                    block_id: adjacentLocator
+                      ? data.sources[0].blocks[1].block_id
+                      : outside
+                        ? blocks[4].block_id
+                        : block.block_id,
+                    quote: uppercase
+                      ? sentence.replace(/^a /, "A ")
+                      : elision
+                        ? sentence.replace("plans to ship", "...")
+                        : adjacentLocator
+                          ? sentence + " Section 0."
+                          : sentence,
+                  },
+                ],
           })),
         },
       }
@@ -129,6 +139,12 @@ function fixture(t, { article = false } = {}) {
     },
     elision: (value) => {
       elision = value
+    },
+    adjacentLocator: (value) => {
+      adjacentLocator = value
+    },
+    missingCited: (value) => {
+      missingCited = value
     },
     calls: () => calls,
     fail: (at) => {
@@ -232,13 +248,18 @@ test("tampered window output and source bytes cannot become completed review", a
   await assert.rejects(() => run(f, "new-window"), /body hash mismatch/)
 })
 
-for (const kind of ["article-case", "elision"])
+for (const kind of ["article-case", "elision", "adjacent-locator"])
   test(`explicit ${kind} quote review reuses a window response and completes exact missing windows`, async (t) => {
     const f = fixture(t, { article: kind === "article-case" })
     const flag =
-      kind === "article-case" ? "sentence_initial_article_checked" : "elision_expansion_checked"
+      kind === "article-case"
+        ? "sentence_initial_article_checked"
+        : kind === "elision"
+          ? "elision_expansion_checked"
+          : "adjacent_locator_checked"
     if (kind === "article-case") f.uppercase(true)
-    else f.elision(true)
+    else if (kind === "elision") f.elision(true)
+    else f.adjacentLocator(true)
     await assert.rejects(() => run(f), /supplied exact source block/)
     const base = "runs/windowed/",
       rawPath = base + "evidence-assessment/batch-1.json"
@@ -270,19 +291,31 @@ for (const kind of ["article-case", "elision"])
       claim_id: "c1",
       evidence_index: 0,
       original_quote: raw.output.assessments[0].evidence[0].quote,
-      quote: f.claims[0].evidence[0].quote,
+      quote:
+        kind === "adjacent-locator"
+          ? raw.output.assessments[0].evidence[0].quote
+          : f.claims[0].evidence[0].quote,
       raw_sha256: sha256(fs.readFileSync(path.join(f.root, rawPath))),
       reason: "문장 첫 부정관사만 원문의 소문자로 맞췄다.",
       [flag]: true,
+      ...(kind === "adjacent-locator"
+        ? {
+            original_block_id: raw.output.assessments[0].evidence[0].block_id,
+            block_id: f.parses[0].blocks[0].block_id,
+          }
+        : {}),
     }
     const review = {
-      schema: "research-evidence-quote-review/v1",
+      schema:
+        kind === "adjacent-locator"
+          ? "research-evidence-citation-review/v1"
+          : "research-evidence-quote-review/v1",
       source_run: "windowed",
       input_sha256: sha256(JSON.stringify(input)),
       reviewer: "explicit fixture reviewer",
       reviewed_at: new Date().toISOString(),
       source_read: true,
-      quote_only: true,
+      ...(kind === "adjacent-locator" ? { citation_only: true } : { quote_only: true }),
       meaning_unchanged: true,
       corrections: [correction],
     }
@@ -303,11 +336,27 @@ for (const kind of ["article-case", "elision"])
           corrections: [{ ...correction, [flag]: undefined }],
         },
       }),
-      /typography/,
+      /typography|adjacent/,
     )
+    if (kind === "adjacent-locator") {
+      for (const changes of [
+        { block_id: f.parses[0].blocks[4].block_id },
+        { quote: correction.quote + " altered" },
+        { verdict: "insufficient" },
+        { block_id: "other-parse:block-1" },
+      ])
+        await assert.rejects(
+          reviewEvidenceQuotes({
+            ...options,
+            review: { ...review, corrections: [{ ...correction, ...changes }] },
+          }),
+          /adjacent|typography/,
+        )
+    }
     assert.equal(f.calls(), before)
     f.uppercase(false)
     f.elision(false)
+    f.adjacentLocator(false)
     const result = await reviewEvidenceQuotes(options)
     const total = evidenceWindowPlan(
       f.claims,
@@ -326,6 +375,98 @@ for (const kind of ["article-case", "elision"])
     assert.equal(resumed.generated_batches, 0)
     assert.equal(f.calls(), calls)
     const response = readJSON(f.root, "runs/quote-reviewed/evidence-assessment/batch-1.json")
+    if (kind === "adjacent-locator") {
+      assert.equal(result.repaired_quotes, 0)
+      assert.equal(result.repaired_locators, 1)
+      assert.equal(response.output.assessments[0].evidence[0].quote, correction.original_quote)
+      assert.equal(response.output.assessments[0].evidence[0].block_id, correction.block_id)
+    }
     assert.equal(response.output.assessments[0].verdict, raw.output.assessments[0].verdict)
     assert.equal(response.output.assessments[0].explanation, raw.output.assessments[0].explanation)
   })
+
+test("explicit missing cited blocks review only lowers a check and preserves the insufficient verdict", async (t) => {
+  const f = fixture(t)
+  f.claims[0].evidence[0].block_id = f.parses[0].blocks[4].block_id
+  f.missingCited(true)
+  await assert.rejects(() => run(f), /Inconsistent window assessment/)
+  const base = "runs/windowed/",
+    rawPath = base + "evidence-assessment/batch-1.json"
+  const raw = readJSON(f.root, rawPath),
+    input = readJSON(f.root, base + "evidence-assessment/input.json")
+  atomicWrite(f.root, base + "documents.json", f.documents)
+  atomicWrite(f.root, base + "parses.json", f.parses)
+  atomicWrite(f.root, base + "claims.json", { claims: f.claims })
+  const payload = {
+    schema: "model-budget/v2",
+    binding: f.provider.executionPolicy,
+    extensions: [],
+    attempts: [
+      {
+        status: "complete",
+        request: f.requests[0],
+        result: raw,
+        result_sha256: sha256(JSON.stringify(raw)),
+        finished_at: new Date(Date.now() - 1000).toISOString(),
+      },
+    ],
+  }
+  atomicWrite(f.root, base + "model-policy/evidence_compare/budget.json", {
+    ...payload,
+    sha256: sha256(JSON.stringify(payload)),
+  })
+  const correction = {
+    batch: 1,
+    claim_id: "c1",
+    raw_sha256: sha256(fs.readFileSync(path.join(f.root, rawPath))),
+    reason: "원래 인용한 블록이 현재 창에 없음을 확인해 의미 확인을 낮춘다.",
+    missing_cited_blocks_checked: true,
+  }
+  const options = {
+    root: f.root,
+    run: "window-reviewed",
+    sourceRun: "windowed",
+    completeMissing: true,
+    createMissingProvider: async () => f.provider,
+    review: {
+      schema: "research-evidence-window-review/v1",
+      source_run: "windowed",
+      input_sha256: sha256(JSON.stringify(input)),
+      reviewer: "explicit fixture reviewer",
+      reviewed_at: new Date().toISOString(),
+      source_read: true,
+      window_assessment_only: true,
+      meaning_unchanged: true,
+      corrections: [correction],
+    },
+  }
+  for (const changes of [
+    { missing_cited_blocks_checked: false },
+    { verdict: "supported" },
+    { check: "numbers" },
+    { quote: "Invented" },
+  ])
+    await assert.rejects(
+      reviewEvidenceQuotes({
+        ...options,
+        review: { ...options.review, corrections: [{ ...correction, ...changes }] },
+      }),
+      /only lower meaning/,
+    )
+  assert.equal(f.calls(), 1)
+  f.missingCited(false)
+  const result = await reviewEvidenceQuotes(options)
+  assert.equal(result.lowered_checks, 1)
+  assert.equal(result.repaired_quotes, 0)
+  const revised = readJSON(f.root, "runs/window-reviewed/evidence-assessment/batch-1.json").output
+    .assessments[0]
+  assert.equal(revised.checks.meaning, "insufficient")
+  assert.equal(revised.verdict, raw.output.assessments[0].verdict)
+  assert.deepEqual(revised.evidence, raw.output.assessments[0].evidence)
+  assert.equal(revised.explanation, raw.output.assessments[0].explanation)
+  assert.deepEqual(readJSON(f.root, rawPath), raw)
+  const before = f.calls()
+  const resumed = await reviewEvidenceQuotes(options)
+  assert.equal(resumed.generated_batches, 0)
+  assert.equal(f.calls(), before)
+})

@@ -16,6 +16,20 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_inline_publication_date_preserves_substantive_news_paragraph(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        profile = next(p for p in config["article_profiles"] if p["id"] == "robco-unicorn-press-20261005-v1")
+        body = b'''<html><head><title>Company announcement</title></head><body><main><header><h1>Company announcement</h1>
+        <div class="body-text w-richtext"><p>Employee secondary share sale.</p>
+        <p>San Francisco, Austin and Munich, October 5, 2026 - Company valuation surpassed $1 billion.</p>
+        <p>Manufacturing operations continue in Austin.</p></div></header></main></body></html>'''
+        parsed = self.invoke(body, profile["options"])["result"]
+        self.assertEqual(parsed["dates"]["published_at"], "2026-10-05")
+        self.assertTrue(any("valuation surpassed $1 billion" in b["text"] for b in parsed["blocks"]))
+        self.assertEqual(len(parsed["blocks"]), 3)
+        invalid = {**profile["options"], "preserve_publication_date_block": "true"}
+        self.assertNotEqual(self.invoke(body, invalid).get("status"), "extracted")
+
     def test_openai_system_card_registered_profile_uses_header_publication_not_changelog(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         profile = next(p for p in config["article_profiles"] if p["id"] == "openai-deployment-safety-system-card-en-v1")

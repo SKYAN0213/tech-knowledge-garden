@@ -735,7 +735,7 @@ export function verifyKnowledgeOutputs(workspace, approvedNotes) {
         for (const s of history)
           if (
             !text.includes(normalizedText(s.article.summary)) ||
-            !markdownVisibleText(digest).includes(s.article.summary) ||
+            !markdownProseText(digest).includes(s.article.summary) ||
             s.article.urls.some((u) => !sourceLinks.has(u) || !digest.includes(u))
           )
             throw Error("Private topic history differs from its verified event")

@@ -10340,3 +10340,41 @@ GPT가 전체 원문과 표를 직접 확인했다. 표2의 분리효과 정확�
 코드/장문 실행은 작성본208·공개169기사·RSS40·미판정50/483·metadata10을 변경하지 않았다. 새 정규운영0이며 독립human40dev/20heldout·새정규7회·무인08시/인증/중단·전체runtime복구는 남는다. 같은 실패를 한시간 반복한 항목0이다. 다음은 현재 창들을 완료/명시 검토하고 승인된 FDA와 함께 첫 정규회차를 연결하는 것이다.
 
 413 인용 복구 후속: 두 번째 실제 호출은185.591초에 완료했지만 block-0130 인용에 모델 생략점이 들어갔다. 동일 블록에서 HFNN 제안부터 최적 포즈 선택까지572자의 연속 원문을 읽고 `elision_expansion_checked: true`로 복원했다. 공통 quote-only는 한 번의 명시적 생략점 확장만 허용한다. 고정된 앞뒤 문자열과 정확한 원문 포함·같은 block을 요구하고 삭제·수치·주체·판정·설명을 바꾸지 않는다. 자동 보정은 없다. 관련 신규2검사를 통과했다. 새 run `daily-20261006-paper-window-quote-reviewed-v2`는 두 완료 응답을 재호출하지 않고8누락창을 진행한다. 최대8×300초에 맞춰 새 ledger 기본900초+명시1,500초를 확보했으며 원래2호출 비용과 분리한다. 먼저 실패한 v1과 그 원출력은 남겨둔다.
+
+
+### 414. 장문 인용 위치·불충분 판정의 명시적 복구와 전체 원문 검토
+
+2026-10-06, 공통 장문 창10개의 실제 로컬 대조를 완료했다. 마지막 run은 `daily-20261006-paper-window-assessment-reviewed-v4`이며 완료 응답9개를 보존·재사용하고 마지막 미완료 창1개만 호출했다. 앞선 raw 응답과 비용 ledger를 덮어쓰지 않았다. 자동 대조 결과는 부분 창을 합쳐 사실 승인으로 승격하지 않는다.
+
+인용문 자체는 맞으나 인접 블록 번호가 틀린 경우 `research-evidence-citation-review/v1`을 사용한다. `citation_only`, `adjacent_locator_checked`, 원 raw SHA와 직접 읽은 출처를 명시해야 한다. 같은 parse의 인접 블록에 유일하게 존재하는 **변경되지 않은 인용문**만 옮길 수 있으며 두 블록 모두 해당 모델 창에 포함되어야 한다. 인용문·판정·수치·설명은 수정하지 않는다. 실제 창7의 block72→73이 해당하며 원 응답은 그대로 보관했다.
+
+`research-evidence-window-review/v1`은 모델이 이미 insufficient/인용0이라고 답했으나 meaning 체크만 supported로 남긴 모순을 보수적으로 낮춘다. 실제 모델 창에 원 후보의 모든 인용 블록이 없고, 명시적 원문 확인과 raw SHA가 있어야 한다. meaning만 insufficient로 내리고 판정·나머지 체크·빈 인용·설명은 보존한다. 창9의5후보에 적용했으며 verified로 올리는 경로는 없다.
+
+인접 위치 회귀8/8을 확인했다. 기존 짧은 인용 회귀의 실패3개는 오류 메시지 문구 변경 때문이었고 기존 계약 문구를 복원했다. 새 보수 복구1개와 실패3개만 재실행해4/4가 통과했다. 반복 전체 로컬 suite는 실행하지 않았다. 로그는 외장 `adjacent-citation-recovery-target-v1.log`, `adjacent-citation-short-regression-v1.log`, `window-conservative-recovery-target-v1.log`에 남긴다.
+
+GPT가 원문130블록/57,026자와 표2·로봇 실험 조건을 재검토했다. processing-v2 packet `0b3fc9635bb6f95e5a5789ba1f765e549624107abe3802952c2902dba50a7e0e`의29후보와 직접 확인한 문제 정의1건을 판정해 verified12/deferred17/rejected1을 기록했다. 모든 비교 지표에서 최고라는 후보는 표의 분리효과82.0%/80.3%와 모순돼 제외했다. 전체30회 실험을 방식별30회로 바꾸거나93.3%를 임의의 성공 횟수로 환산하지 않는다. 문제·방법·조건·비교·결과의 명시적 논문 해설 근거를 등록했다. 사실 판정은 기사·발행 승인이 아니다.
+
+배포된0df5680의 CI37362286792는 Node911/911·Python15+2·build/site·deploy를 통과했다. 공개14파일은 common readback에서 reader equivalent를 확인했다. 이번 인용 복구 후속 코드는 아직 그 배포에 포함되지 않는다.
+
+fresh Drive 원본208개와16폴더 전후 목록의 실제 raw bytes를2026-10-05T19:40:24Z에 대조했다. 과거 소급 전환 뒤 기존 일일 계획의 canonical inventory가 달라져 재사용이 차단된 것은 정상이다. 새 `daily-20261006-canonical54-review-v1`으로54경로/108창 수집을 실행했다. 옛 계획·실패·수집 관찰은 보존하며 이후 실제 완료 결과를 별도 기록한다. 공개 원고 변경·새 정규 운영은 아직0, 미판정 legacy50회차/483구간·metadata10·독립 평가40/20·7회 운영·08시/인증/중단·전체 runtime 복구는 남는다.
+
+
+### 415. 심층 원고·이력·재승인 연결과 실제 수집 완료
+
+2026-10-06. Frontiers 원문130블록/10대조 창을 읽고12verified/17deferred/1rejected 사실과 문제·방법·조건·비교·결과 근거를 기록했다. 실제 local writer 출력은 보존하고 GPT correction으로3문장 리드와4설명/7문단으로 정리했다. 계층적 퍼지 신경망의 예측 정확도91.7%와 실제30회 집기 실험의93.3%/80.0%는 다른 지표로 유지했다. 분리 항목82.0%/80.3%도 숨기지 않는다. 원래 model generation run을 재사용해 새로운 processing-v5의 추가 모델 호출은0이다. processing-v4는 model checkpoint가 없는 correction run을 generation으로 지정해 거부됐으며 원본 generation run으로 새 v5를 만들었다.
+
+논문의 방법·실험명을 기업 태그로 잘못 출력한 원고를 명시적으로 다시 승인했다. 동일 event72081e8f67345f20/원문/날짜를 유지하고 candidate 기존 approval를 history에 보존하는 공통 재승인 연결을 추가했다. 정확한 후보 SHA, 원래 승인·source version·parse·본문·발표일·새 승인 전체를 검증하며 source revision/alternative는 별도 경로로 유지한다. 보관 closure에는 원래6승인 파일·검토 원본·의존 run도 포함한다. 관련 최초5/5, 새 archive 경로의 실패1개를 bound review run 누락으로 좁혀 수정한 뒤1/1, 기존 archive14/14가 통과했다.
+
+RobCo10/5 공식 발표에서 기업가치10억 달러 초과와 신규 투자/직원 구주 거래를 구분했다. 투자금액으로 바꾸지 않고 미국12개 초과 주 운영과Austin/SF 거점,2027/3/4 Alfie 출시 계획을 회사에 귀속했다. 공통 worker 날짜 profile은 이 페이지에서 직접 확인했고 날짜와 기업가치가 함께 있는 paragraph를 옵션으로 보존한다. 새 Python 표적1/1, retained parse 후보5검사의 fixture 실패1개만 수정/재실행1/1이 통과했다. 새 topic 표적4/4와 심층 처리/인용 복구6/6도 통과했다.
+
+실행 순서 오류로 첫 reuse-extraction이 실패한 뒤 별도 newline의 dependent processing-v2가 시작됐다. 그 뒤 만든 미사용 source claims/reuse receipt 때문에 archive가 원래 null extraction basis와 충돌해 정상 거부했다. 실행을 종료하고 두 파일31431/803bytes를 external robco-unused-extraction-recovery-v1로 가역 이동해 원래 입력 부재를 복원했다. original source/parses/input/model ledger/approved article bytes는 변경하지 않았고 common origin 검증과 승인 재검증이 통과했다. 앞으로 의존 명령은 exit code 검사 또는 set -e로 연결한다. 후보·note approval를 무차별 related-run으로 포함한 archive-v2도 계약상 거부됐으며 허용된 후보 approval만 포함한 v3를 생성했다.
+
+RobCo closure58자료/60members/210589bytes SHA2c830b0ed604f3a03bf014a3796358532cc36c67f326f9d5c39d23bfd337de14를 private Drive ID1_Y-xfV0lMJ_IM2JuwByzUVCw8amZILzN에 업로드했다. 실제 remote bytes SHA와 독립 복구·event1c20824a90713fc8 재승인 검증·위치 등록이 통과했다. 실패한 absolute restore 인자는 root-relative로 바꾸고 새 검증 로그로 보존했다.
+
+54경로/108창 collector는 모두 종료됐고107 window_scanned/1 AWS detail_incomplete(공식 상세404)다.32조사 셀을 부분 확인으로 남기며 미래 cutoff나 목록 성공을 전체 조사 완료로 표현하지 않는다. 검색으로 찾은 RobCo는 기존 공통 수집/parse/intake/승인 경로를 이용했다. 전체54 실행은 재시도하지 않았다.
+
+새 TrendTopics2와 Signals1을 승인해 기존 저장소에서 source-events 이력을 만든다. reader preview의 undefined markdownVisibleText를 기존 markdownProseText로 고쳤다. 실제 실패는 v1에 남겨두고 새 preview에서3기사/3notes/379공개파일·RSS39기존 GUID/날짜 유지·새1GUID를 확인했다. 새 회귀는 numeric range/issue number의 Markdown escape와 원문 링크 누락 거부를 검사해1/1 통과했다. 최초 fixture syntax/date 계약 실패는 기록하고 실패 검사만 재실행했다. private preview는 공개 발행·Drive 작성·browser·정규 운영 완료가 아니다.
+
+증거 위치: /Volumes/X5Storage/tkg-daily-core-20261006-v1. 코드·새 정규 회차 공개와 fresh Drive 작성본 확인은 이 기록 시점에 미완료다. 기존50회차483구간+metadata10, 독립40/20평가·7회·08시/인증/중단·전체runtime 복구는 계속 active 목표의 남은 항목이다. 전체 local suite는 반복하지 않고 변경 묶음의 단일 릴리스 CI로 확인한다.
+
+415 후속: 태그 정정본의 실제 원고는 processing-v5, draft61ac8bb2다. 재승인 후보-v2는 동일 사건 ID를 유지하고 원래 approval를 history에 보존했다. private Drive ID1QPkYAxOGEXBAmX2l-b0bMrM21_Wdj7_-에 closure-v3를 보관했고3,505,505bytes SHA9c2f0cc8eeb9eaa61c39af84e90af943b0d05c34b15e23c30c3cfd82fecbdd63 실제 raw download·독립210파일 복구·태그 빈 배열/12사실의 승인 재검증·위치 등록을 완료했다. 이 보관본은 이전 승인과 명시적 lineage review 원본도 포함한다. RobCo 복구 파일 수의 정확한 값은60이다.

@@ -27,6 +27,10 @@ export async function verifyExistingEditorialApproval({
     candidate.approval?.approved_run === approvedRunId &&
     candidate.approval?.existing_editorial_approval?.review_sha256 === sha256(bytes) &&
     priorReceipt?.existing_editorial_approval?.review_sha256 === sha256(bytes)
+  const priorBinding = alreadyLinked
+    ? priorReceipt.existing_editorial_approval.prior_approval || null
+    : candidate.approval || null
+  const priorCandidateRun = priorBinding?.approved_run || candidate.editorial_approval_run
   if (
     review.schema !== "research-existing-editorial-approval-review/v1" ||
     review.candidate_key !== candidate.key ||
@@ -35,12 +39,13 @@ export async function verifyExistingEditorialApproval({
     review.approved_run !== approvedRunId ||
     !/^[A-Za-z0-9_-]+$/.test(priorRun || "") ||
     priorRun === approvedRunId ||
-    candidate.editorial_approval_run !== priorRun ||
+    priorCandidateRun !== priorRun ||
     candidate.review_status !== "verified" ||
     candidate.identity ||
     candidate.disposition ||
     candidate.source_revision_alert ||
-    (candidate.approval && !alreadyLinked) ||
+    (priorBinding &&
+      (priorBinding.source_revision || priorBinding.source_alternative_resolution_run)) ||
     review.expected_candidate_sha256 !==
       (alreadyLinked
         ? priorReceipt.existing_editorial_approval.candidate_before_sha256
@@ -76,6 +81,20 @@ export async function verifyExistingEditorialApproval({
     oldSource.parses,
   )
   const oldHash = sha256(JSON.stringify(oldArticle))
+  if (
+    priorBinding &&
+    (priorBinding.article_sha256 !== oldHash ||
+      priorBinding.source_version_id !== candidate.article_source_version_id ||
+      priorBinding.parse_id !== candidate.article_parse_id ||
+      priorBinding.article_content_sha256 !== candidate.article_content_sha256 ||
+      !oldSource.parses.some(
+        (p) =>
+          p.parse_id === priorBinding.parse_id &&
+          p.source_version_id === priorBinding.source_version_id &&
+          articleContentFingerprint(p) === priorBinding.article_content_sha256,
+      ))
+  )
+    throw Error("Prior candidate approval differs from its verified source and article")
   if (
     oldHash !== sha256(JSON.stringify(stored)) ||
     oldHash !== review.prior_article_sha256 ||
@@ -118,6 +137,7 @@ export async function verifyExistingEditorialApproval({
   })
   return {
     prior_approved_run: priorRun,
+    ...(priorBinding ? { prior_approval: structuredClone(priorBinding) } : {}),
     prior_article_sha256: oldHash,
     prior_artifacts_sha256: Object.fromEntries(
       [

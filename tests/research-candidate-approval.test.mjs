@@ -448,6 +448,23 @@ test("timestamp approval rejects a different source instant or publication day w
   }
 })
 
+test("candidate approval selects the exact bound parse among retained versions", async (t) => {
+  const f = fixture(t)
+  const current = readJSON(f.root, "runs/approved/parses.json")[0]
+  const previous = structuredClone(current)
+  previous.parse_id = sha256("previous undated parse")
+  previous.dates.published_at = null
+  previous.blocks[0].block_id = previous.parse_id + ":b1"
+  atomicWrite(f.root, `parses/${previous.parse_id}/parse.json`, previous)
+  atomicWrite(f.root, "runs/approved/parses.json", [previous, current])
+  const receipt = await link(f)
+  assert.equal(receipt.event_id, f.article.event_id)
+  assert.equal(
+    readJSON(f.root, "runs/candidate-link/candidate-approval.json").parse_id,
+    current.parse_id,
+  )
+})
+
 test("exact approved article closes a candidate without publishing and is idempotent", async (t) => {
   const f = fixture(t)
   const first = await link(f)
@@ -1008,6 +1025,62 @@ test("existing approval rejects missing checks, mismatched event, stale candidat
     )
     assert.deepEqual(fs.readFileSync(f.backlogFile), before)
   }
+})
+
+test("explicit reverified active approval preserves the prior binding and resumes without another event", async (t) => {
+  const f = existingEditorialFixture(t)
+  const candidate = { ...f.candidate, review_status: "unreviewed" }
+  delete candidate.event_id
+  delete candidate.editorial_approval_run
+  delete candidate.reviewed_at
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [candidate] }),
+  )
+  await link(f, { runId: "prior-link", approvedRunId: "prior" })
+  const before = JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0]
+  const review = { ...f.decision, expected_candidate_sha256: sha256(JSON.stringify(before)) }
+  atomicWrite(f.root, f.existingReviewPath, review)
+  await assert.rejects(link(f), /different editorial approval/)
+  const corrupt = structuredClone(before)
+  corrupt.approval.article_sha256 = "0".repeat(64)
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [corrupt] }),
+  )
+  atomicWrite(f.root, f.existingReviewPath, {
+    ...review,
+    expected_candidate_sha256: sha256(JSON.stringify(corrupt)),
+  })
+  await assert.rejects(
+    link(f, { existingEditorialReviewPath: f.existingReviewPath }),
+    /Prior candidate approval differs/,
+  )
+  fs.writeFileSync(
+    f.backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [before] }),
+  )
+  atomicWrite(f.root, f.existingReviewPath, review)
+  await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  const bytes = fs.readFileSync(f.backlogFile),
+    current = JSON.parse(bytes).candidates[0]
+  assert.equal(current.event_id, before.event_id)
+  assert.equal(current.approval.approved_run, "approved")
+  assert.deepEqual(current.approval_history[0].approval, before.approval)
+  await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  const archived = await archiveClosure(f.root, "reverified-archive", "approved", [
+    "candidate-link",
+  ])
+  const manifest = readJSON(f.root, "runs/reverified-archive/archive-manifest.json")
+  assert.ok(manifest.files.some((row) => row.path === "runs/prior/editorial-review.json"))
+  assert.ok(manifest.files.some((row) => row.path === f.existingReviewPath))
+  assert.ok(archived.package.sha256)
+  atomicWrite(f.root, f.existingReviewPath, { ...review, reason: "Changed after approval" })
+  await assert.rejects(
+    archiveClosure(f.root, "tampered-lineage-archive", "approved", ["candidate-link"]),
+    /Existing editorial approval review changed/,
+  )
 })
 
 test("existing approval rejects a changed prior approved projection", async (t) => {

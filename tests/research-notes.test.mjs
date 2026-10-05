@@ -320,6 +320,68 @@ test("a source-reviewed Signals creation may explicitly contain no trend observa
   }
 })
 
+test("new source-bound topics preserve fixed identity and reject incomplete or duplicate records", async (t) => {
+  const f = fixture(t)
+  const meta = {
+    schema_version: "tech-trend/v1",
+    type: "trend-topic-source",
+    id: "joint-learning",
+    title: "Joint learning",
+    question: "Which inputs are learned jointly?",
+    thesis: "The source describes learning observations and actions jointly.",
+    watch_for: "Follow-up experiments with the same inputs.",
+    disconfirming: "A dated correction to the stated inputs.",
+    reviewed: "2026-09-27",
+    reader_format: "source-events/v1",
+    knowledge_notes: [],
+    lessons: [],
+  }
+  const decision = {
+    ...f.decision,
+    schema: "knowledge-note-review/v2",
+    notes: [
+      {
+        operation: "create",
+        path: "TrendTopics/joint-learning.md",
+        previous_sha256: null,
+        content: noteText(meta, "[Source](https://example.org/research)\n"),
+        evidence: [{ run_id: "source", claim_ids: ["fact-1"] }],
+      },
+    ],
+  }
+  const options = { vault: f.vault }
+  await approveNoteReview(f.root, "new-topic", decision, options)
+  assert.equal(loadNoteApproval(f.root, "new-topic", options).approval.notes[0].operation, "create")
+  assert.equal(fs.existsSync(path.join(f.vault, decision.notes[0].path)), false)
+  for (const change of [
+    (d) => {
+      d.notes[0].path = "TrendTopics/other.md"
+    },
+    (d) => {
+      d.notes[0].content = noteText(
+        { ...meta, thesis: "" },
+        "[Source](https://example.org/research)",
+      )
+    },
+    (d) => {
+      d.notes[0].content = noteText(meta, "No source link")
+    },
+    (d) => {
+      d.notes[0].evidence[0].claim_ids = ["not-reviewed"]
+    },
+  ]) {
+    const invalid = structuredClone(decision)
+    change(invalid)
+    assert.throws(() => evaluateNoteReview(f.root, invalid, options))
+  }
+  fs.mkdirSync(path.join(f.vault, "TrendTopics"), { recursive: true })
+  fs.writeFileSync(
+    path.join(f.vault, "TrendTopics", "Existing.md"),
+    noteText(meta, "Existing topic"),
+  )
+  assert.throws(() => evaluateNoteReview(f.root, decision, options), /duplicate topic/i)
+})
+
 test("Signals creation preserves valid historical edition clocks and rejects mismatched identities", (t) => {
   const f = fixture(t)
   const make = (clock) => {

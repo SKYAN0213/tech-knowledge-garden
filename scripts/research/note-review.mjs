@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
-import { canonicalURL, parseNote } from "../garden.mjs"
+import { canonicalURL, parseNote, walk } from "../garden.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { assertReviewDate } from "./dates.mjs"
@@ -117,10 +117,14 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
       creating = v2 && n.operation === "create"
     if (
       creating &&
-      ((!relative.startsWith("Knowledge/") && !relative.startsWith("Signals/")) ||
+      ((!relative.startsWith("Knowledge/") &&
+        !relative.startsWith("Signals/") &&
+        !relative.startsWith("TrendTopics/")) ||
         n.previous_sha256 !== null)
     )
-      throw Error("Creation requires a new Knowledge or Signals path and null previous hash")
+      throw Error(
+        "Creation requires a new Knowledge, Signals or TrendTopics path and null previous hash",
+      )
     const preserved = applied?.notes.find((note) => note.path === relative)
     const before = preserved
       ? preserved.before_content === null
@@ -192,12 +196,52 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
     } else if (relative.startsWith("TrendTopics/")) {
       if (
         next.meta.schema_version !== "tech-trend/v1" ||
-        next.meta.id !== original.meta.id ||
+        (!creating && next.meta.id !== original.meta.id) ||
         next.meta.reviewed !== reviewDay ||
         !Array.isArray(next.meta.knowledge_notes) ||
         !Array.isArray(next.meta.lessons)
       )
         throw Error("Topic identity and current review day required")
+      if (creating) {
+        const fields = [
+          "schema_version",
+          "type",
+          "id",
+          "title",
+          "question",
+          "thesis",
+          "watch_for",
+          "disconfirming",
+          "reviewed",
+          "reader_format",
+          "knowledge_notes",
+          "lessons",
+        ]
+        if (
+          next.meta.type !== "trend-topic-source" ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(next.meta.id || "") ||
+          relative !== `TrendTopics/${next.meta.id}.md` ||
+          Object.keys(next.meta).some((key) => !fields.includes(key)) ||
+          ["title", "question", "thesis", "watch_for", "disconfirming"].some(
+            (key) => !nonempty(next.meta[key]),
+          ) ||
+          (next.meta.reader_format !== undefined &&
+            next.meta.reader_format !== "source-events/v1") ||
+          ![...sourceURLs].some((url) => next.body.includes(url))
+        )
+          throw Error(
+            "New topic requires a fixed identity, complete source-bound content and an original source link",
+          )
+        if (
+          walk(path.join(vault, "TrendTopics"))
+            .filter(
+              (file) =>
+                file.endsWith(".md") && path.resolve(file) !== path.resolve(vault, relative),
+            )
+            .some((file) => parseNote(fs.readFileSync(file, "utf8")).meta.id === next.meta.id)
+        )
+          throw Error("Duplicate topic identity in authority vault")
+      }
     } else {
       if (
         next.meta.schema_version !== "tech-signals/v1" ||

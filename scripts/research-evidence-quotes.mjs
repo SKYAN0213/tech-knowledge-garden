@@ -59,6 +59,10 @@ try {
         materialized_batches: result.materialized_batches,
         reused_batches: result.reused_batches,
         repaired_quotes: result.repaired_quotes,
+        ...(result.repaired_locators === undefined
+          ? {}
+          : { repaired_locators: result.repaired_locators }),
+        ...(result.lowered_checks === undefined ? {} : { lowered_checks: result.lowered_checks }),
         requires_fact_review: true,
         public_approved: false,
         candidate_published: false,

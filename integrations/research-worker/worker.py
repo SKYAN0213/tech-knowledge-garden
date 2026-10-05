@@ -627,6 +627,9 @@ def html_parse(raw, url, options):
                     common_date_basis.append({"type": "json-ld", "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value})
             pending.extend(value for value in item.values() if isinstance(value, (dict, list)))
     explicit_date = options.get("publication_date_xpath")
+    preserve_date_block = options.get("preserve_publication_date_block", False)
+    if not isinstance(preserve_date_block, bool) or (preserve_date_block and not explicit_date):
+        raise ValueError("Preserving a publication date block requires a boolean flag and explicit date selector")
     date_basis = None
     date_profile_status = "not-configured"
     explicit_date_node = None
@@ -871,7 +874,7 @@ def html_parse(raw, url, options):
                 raise ValueError("Block profile selected non-reader content")
     blocks = []
     for node in selected_blocks if selected_blocks is not None else container.iter():
-        if node is explicit_date_node:
+        if node is explicit_date_node and not preserve_date_block:
             continue
         tag = etree.QName(node).localname if isinstance(node.tag, str) else ""
         if selected_blocks is None and tag not in ("p", "head", "h1", "h2", "h3", "h4", "h5", "h6", "table", "item", "li", "quote", "blockquote"):

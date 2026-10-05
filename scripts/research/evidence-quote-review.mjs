@@ -9,11 +9,29 @@ import {
 } from "./window-evidence-assessment.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 
-// Explicit, source-bound typography repair. Never normalize the evidence
-// validator itself or change a model verdict, entity, number or source locator.
+// Explicit source-bound citation review. Quote repairs keep their locator.
+// A separate review may fix one unique adjacent locator in the same window;
+// neither path changes model verdicts, entities, numbers or explanations.
 const typography = (value) =>
   value.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+const reviewMode = (review) =>
+  review?.schema === "research-evidence-quote-review/v1" &&
+  review.quote_only === true &&
+  review.citation_only === undefined &&
+  review.window_assessment_only === undefined
+    ? "quote"
+    : review?.schema === "research-evidence-citation-review/v1" &&
+        review.citation_only === true &&
+        review.quote_only === undefined &&
+        review.window_assessment_only === undefined
+      ? "citation"
+      : review?.schema === "research-evidence-window-review/v1" &&
+          review.window_assessment_only === true &&
+          review.quote_only === undefined &&
+          review.citation_only === undefined
+        ? "window"
+        : null
 const reviewedTypography = (correction, original, replacement) => {
   const before = typography(original),
     after = typography(replacement)
@@ -60,10 +78,57 @@ function applyCorrections({
   rawBatches,
   correctedBatches,
   originals,
+  originalInput,
   rejectCheckpoint = true,
 }) {
   const touched = new Set()
   for (const correction of review.corrections) {
+    if (reviewMode(review) === "window") {
+      const allowed = ["batch", "claim_id", "raw_sha256", "reason", "missing_cited_blocks_checked"]
+      const batch = correctedBatches[correction.batch - 1]
+      const original = rawBatches[correction.batch - 1]
+      const row = batch?.output?.assessments?.find((r) => r.claim_id === correction.claim_id)
+      const claim = claims.find((c) => c.claim_id === correction.claim_id)
+      const supplied = originalInput.windows?.[correction.batch - 1]
+      const key = JSON.stringify([correction.batch, correction.claim_id, "meaning"])
+      if (
+        Object.keys(correction).some((k) => !allowed.includes(k)) ||
+        !Number.isInteger(correction.batch) ||
+        correction.batch < 1 ||
+        originalInput.schema !== "research-window-evidence-assessment-input/v1" ||
+        !supplied?.claim_ids.includes(correction.claim_id) ||
+        correction.missing_cited_blocks_checked !== true ||
+        !row ||
+        row.verdict !== "insufficient" ||
+        row.evidence.length !== 0 ||
+        row.checks.meaning !== "supported" ||
+        Object.values(row.checks).includes("contradicted") ||
+        !claim?.evidence.length ||
+        claim.evidence.some((e) =>
+          supplied.blocks.some((b) => b.parse_id === e.parse_id && b.block_id === e.block_id),
+        ) ||
+        touched.has(key) ||
+        correction.raw_sha256 !== originals[correction.batch - 1]?.sha256 ||
+        typeof correction.reason !== "string" ||
+        !correction.reason.trim() ||
+        (rejectCheckpoint && readJSON(root, base + `batch-${correction.batch}-checkpoint.json`))
+      )
+        throw Error(
+          "Explicit missing cited blocks review required; only lower meaning to insufficient",
+        )
+      touched.add(key)
+      row.checks.meaning = "insufficient"
+      batch.window_review = {
+        schema: review.schema,
+        source_run: sourceRun,
+        input_sha256: inputSha,
+        original_response_sha256: sha256(JSON.stringify(original)),
+        review_sha256: sha256(JSON.stringify(review)),
+        reviewer: review.reviewer,
+        reviewed_at: review.reviewed_at,
+      }
+      continue
+    }
     const allowed = [
       "batch",
       "claim_id",
@@ -74,6 +139,9 @@ function applyCorrections({
       "reason",
       "sentence_initial_article_checked",
       "elision_expansion_checked",
+      ...(reviewMode(review) === "citation"
+        ? ["original_block_id", "block_id", "adjacent_locator_checked"]
+        : []),
     ]
     const batch = correctedBatches[correction.batch - 1]
     const original = rawBatches[correction.batch - 1]
@@ -81,13 +149,41 @@ function applyCorrections({
     const citation = row?.evidence?.[correction.evidence_index]
     const key = JSON.stringify([correction.batch, correction.claim_id, correction.evidence_index])
     const claim = claims.find((c) => c.claim_id === correction.claim_id)
-    const block = parses
-      .find(
-        (p) =>
-          p.parse_id === citation?.parse_id &&
-          claim?.evidence.some((e) => e.parse_id === p.parse_id),
+    const parse = parses.find(
+      (p) =>
+        p.parse_id === citation?.parse_id && claim?.evidence.some((e) => e.parse_id === p.parse_id),
+    )
+    const block = parse?.blocks.find((b) => b.block_id === citation?.block_id)
+    let replacementBlock = null
+    if (reviewMode(review) === "citation") {
+      const originalIndex = parse?.blocks.findIndex((b) => b.block_id === citation?.block_id)
+      const replacementIndex = parse?.blocks.findIndex((b) => b.block_id === correction.block_id)
+      replacementBlock = parse?.blocks[replacementIndex]
+      const supplied =
+        originalInput.schema === "research-window-evidence-assessment-input/v1"
+          ? originalInput.windows[correction.batch - 1]?.blocks
+          : parse?.blocks.map((b) => ({ parse_id: parse.parse_id, block_id: b.block_id }))
+      if (
+        correction.adjacent_locator_checked !== true ||
+        correction.original_block_id !== citation?.block_id ||
+        correction.quote !== correction.original_quote ||
+        correction.sentence_initial_article_checked !== undefined ||
+        correction.elision_expansion_checked !== undefined ||
+        !Number.isInteger(originalIndex) ||
+        originalIndex < 0 ||
+        !Number.isInteger(replacementIndex) ||
+        replacementIndex < 0 ||
+        Math.abs(originalIndex - replacementIndex) !== 1 ||
+        !replacementBlock?.text.includes(correction.quote) ||
+        parse.blocks.filter((b) => b.text.includes(correction.quote)).length !== 1 ||
+        ![block, replacementBlock].every((b) =>
+          supplied?.some(
+            (entry) => entry.parse_id === parse.parse_id && entry.block_id === b?.block_id,
+          ),
+        )
       )
-      ?.blocks.find((b) => b.block_id === citation?.block_id)
+        throw Error("Explicit unique same-window adjacent citation locator review required")
+    }
     if (
       Object.keys(correction).some((field) => !allowed.includes(field)) ||
       !Number.isInteger(correction.batch) ||
@@ -103,13 +199,16 @@ function applyCorrections({
       !correction.quote.trim() ||
       citation.quote !== correction.original_quote ||
       block.text.includes(citation.quote) ||
-      !block.text.includes(correction.quote) ||
-      !reviewedTypography(correction, citation.quote, correction.quote) ||
+      (!replacementBlock && !block.text.includes(correction.quote)) ||
+      (!replacementBlock && !reviewedTypography(correction, citation.quote, correction.quote)) ||
       (rejectCheckpoint && readJSON(root, base + `batch-${correction.batch}-checkpoint.json`))
     )
-      throw Error("Only invalid typography quotes can be explicitly repaired in the same block")
+      throw Error(
+        "Only invalid typography quotes or explicitly checked adjacent locators can be explicitly repaired",
+      )
     touched.add(key)
-    citation.quote = correction.quote
+    if (replacementBlock) citation.block_id = replacementBlock.block_id
+    else citation.quote = correction.quote
     batch.quote_review = {
       schema: review.schema,
       source_run: sourceRun,
@@ -180,13 +279,13 @@ function authenticateResponse(
     throw Error("Inherited quote review source response or ledger changed")
   const review = origin.review
   if (
-    review?.schema !== "research-evidence-quote-review/v1" ||
+    !reviewMode(review) ||
     review.source_run !== sourceRun ||
     review.input_sha256 !== origin.original_input_sha256 ||
     typeof review.reviewer !== "string" ||
     !review.reviewer.trim() ||
     parseResearchDate(review.reviewed_at)?.precision !== "timestamp" ||
-    ["source_read", "quote_only", "meaning_unchanged"].some((k) => review[k] !== true) ||
+    ["source_read", "meaning_unchanged"].some((k) => review[k] !== true) ||
     !Array.isArray(review.corrections) ||
     !review.corrections.length
   )
@@ -225,11 +324,13 @@ function authenticateResponse(
     rawBatches,
     correctedBatches,
     originals,
+    originalInput: input,
     rejectCheckpoint: false,
   })
   const expected = correctedBatches[index - 1]
   if (partialReview.corrections.length)
-    expected.quote_review.review_sha256 = sha256(JSON.stringify(review))
+    expected[reviewMode(review) === "window" ? "window_review" : "quote_review"].review_sha256 =
+      sha256(JSON.stringify(review))
   if (!same(expected, raw)) throw Error("Inherited quote review changed non-quote output")
   return attempt
 }
@@ -281,19 +382,21 @@ export async function reviewEvidenceQuotes({
       "reviewed_at",
       "source_read",
       "quote_only",
+      "citation_only",
+      "window_assessment_only",
       "meaning_unchanged",
       "corrections",
     ]
     if (
       !review ||
       Object.keys(review).some((key) => !fields.includes(key)) ||
-      review.schema !== "research-evidence-quote-review/v1" ||
+      !reviewMode(review) ||
       review.source_run !== sourceRun ||
       review.input_sha256 !== inputSha ||
       typeof review.reviewer !== "string" ||
       !review.reviewer.trim() ||
       parseResearchDate(review.reviewed_at)?.precision !== "timestamp" ||
-      ["source_read", "quote_only", "meaning_unchanged"].some((key) => review[key] !== true) ||
+      ["source_read", "meaning_unchanged"].some((key) => review[key] !== true) ||
       !Array.isArray(review.corrections) ||
       !review.corrections.length ||
       review.corrections.length > 216
@@ -375,6 +478,7 @@ export async function reviewEvidenceQuotes({
       rawBatches,
       correctedBatches,
       originals,
+      originalInput,
     })
     const target = `runs/${run}/`
     if (
@@ -476,10 +580,17 @@ export async function reviewEvidenceQuotes({
     )
     const completedLedger = readJSON(root, target + "model-policy/evidence_compare/budget.json")
     create("quote-review-result.json", {
-      schema: "research-evidence-quote-review-result/v1",
+      schema:
+        reviewMode(review) === "window"
+          ? "research-evidence-window-review-result/v1"
+          : reviewMode(review) === "citation"
+            ? "research-evidence-citation-review-result/v1"
+            : "research-evidence-quote-review-result/v1",
       source_run: sourceRun,
       review_sha256: sha256(JSON.stringify(review)),
-      repaired_quotes: repairedQuotes,
+      repaired_quotes: reviewMode(review) === "quote" ? repairedQuotes : 0,
+      ...(reviewMode(review) === "citation" ? { repaired_locators: repairedQuotes } : {}),
+      ...(reviewMode(review) === "window" ? { lowered_checks: repairedQuotes } : {}),
       assessment_sha256: sha256(JSON.stringify(result.record)),
       model_calls: completedLedger.attempts.filter((a) => a.status === "complete").length,
       requires_fact_review: true,
@@ -490,7 +601,9 @@ export async function reviewEvidenceQuotes({
       ...result,
       generated_batches: generatedMissing,
       materialized_batches: materialized,
-      repaired_quotes: repairedQuotes,
+      repaired_quotes: reviewMode(review) === "quote" ? repairedQuotes : 0,
+      ...(reviewMode(review) === "citation" ? { repaired_locators: repairedQuotes } : {}),
+      ...(reviewMode(review) === "window" ? { lowered_checks: repairedQuotes } : {}),
       model_calls: generatedMissing,
     }
   })

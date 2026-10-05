@@ -320,7 +320,11 @@ async function linkCandidateApproval({
       const parse = parses.find(
         (item) =>
           item.source_version_id === document.source_version_id &&
-          (!sourceAlternative || item.parse_id === sourceAlternative.parse_id),
+          (sourceAlternative
+            ? item.parse_id === sourceAlternative.parse_id
+            : sourceRevision ||
+              !candidate.article_parse_id ||
+              item.parse_id === candidate.article_parse_id),
       )
       if (!parse || parse.status !== "extracted")
         throw Error("Approved candidate needs its exact extracted parse")
@@ -457,7 +461,32 @@ async function linkCandidateApproval({
           priorBinding.approved_run === approvedRunId &&
           priorBinding.article_sha256 === receipt.article_sha256 &&
           !priorBinding.source_alternative_resolution_run
-        if (rebound) {
+        if (
+          existingEditorial?.prior_approval &&
+          priorBinding.approved_run === existingEditorial.prior_approved_run
+        ) {
+          candidate.approval_history = [
+            ...(candidate.approval_history || []),
+            {
+              approval: structuredClone(priorBinding),
+              event_id: candidate.event_id,
+              review_status: candidate.review_status,
+              reviewed_at: candidate.reviewed_at,
+              existing_editorial_approval: existingEditorial,
+            },
+          ]
+          candidate.approval = {
+            approved_run: approvedRunId,
+            article_sha256: receipt.article_sha256,
+            source_version_id: receipt.source_version_id,
+            parse_id: receipt.parse_id,
+            article_content_sha256: contentSha,
+            existing_editorial_approval: existingEditorial,
+          }
+          candidate.reviewed_at = article.article_review.reviewed_at
+          backlog.updated_at = new Date().toISOString()
+          reboundChanged = true
+        } else if (rebound) {
           const binding = {
             approved_run: approvedRunId,
             article_sha256: receipt.article_sha256,

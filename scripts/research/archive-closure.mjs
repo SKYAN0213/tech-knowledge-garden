@@ -236,6 +236,28 @@ export function buildArchiveClosure(
         if (!article || sha256(JSON.stringify(article)) !== approval.article_sha256)
           throw Error("Candidate approval article changed")
       })
+      const lineage = approval.existing_editorial_approval
+      if (lineage) {
+        const reviewed = pinFile(lineage.review_path)
+        if (reviewed.sha256 !== lineage.review_sha256)
+          throw Error("Existing editorial approval review changed")
+        add(reviewed)
+        const reviewRun = lineage.review_path.match(/^runs\/([A-Za-z0-9_-]+)\/.+$/)?.[1]
+        if (!reviewRun) throw Error("Existing editorial approval review needs a bound run")
+        if (reviewRun !== id) reference(reviewRun, "editorial_lineage_review")
+        reference(lineage.prior_approved_run, "prior_editorial_approval", () => {
+          const prior = loadCurrentApproval(root, lineage.prior_approved_run, { vault })
+          if (
+            prior.article.event_id !== approval.event_id ||
+            sha256(JSON.stringify(prior.article)) !== lineage.prior_article_sha256 ||
+            Object.entries(lineage.prior_artifacts_sha256).some(
+              ([name, hash]) =>
+                pinFile(`runs/${lineage.prior_approved_run}/${name}`).sha256 !== hash,
+            )
+          )
+            throw Error("Prior editorial approval dependency changed")
+        })
+      }
       if (approval.source_alternative)
         reference(approval.source_alternative.run_id, "source_alternative", () => {
           if (

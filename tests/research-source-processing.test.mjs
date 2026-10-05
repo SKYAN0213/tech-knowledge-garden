@@ -20,6 +20,7 @@ import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
 import { loadBoundDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
 import { buildArchiveClosure } from "../scripts/research/archive-closure.mjs"
+import { recordDeepDiveReview } from "../scripts/research/deep-dive.mjs"
 
 function fixture(
   t,
@@ -406,6 +407,99 @@ test("extraction reuse rejects changed source, incomplete checkpoints and altere
   await assert.rejects(() => processSourceRun(options), /Completed source-bound extraction/)
   assert.deepEqual(f.calls, ["evidence_compare"])
   assert.equal(readJSON(f.root, "runs/continued/source-processing-input.json"), null)
+})
+
+test("processed paper retains reviewed deep basis through writing and resume", async (t) => {
+  // Synthetic source tests the binding pipeline; it is never a research case.
+  const f = fixture(t, { sourceURL: "https://research.example.edu/paper" })
+  await processSourceRun(f.options)
+  const factDecision = await decision(f)
+  const reviewed = await reviewProcessedClaims(f.root, "processed", factDecision)
+  const documents = readJSON(f.root, "runs/processed/documents.json")
+  const parses = readJSON(f.root, "runs/processed/parses.json")
+  const ids = reviewed.claims.map((c) => c.claim_id)
+  const roles = ["problem", "method", "conditions", "comparison", "results"]
+  const input = {
+    schema: "deep-dive-input/v1",
+    kind: "논문 해설",
+    topic_ids: ["synthetic-paper-topic"],
+    event_claim_ids: ids,
+    basis: roles.map((role) => ({ role, claim_ids: ids })),
+    sources: [
+      {
+        source_version_id: documents[0].source_version_id,
+        organization_id: "example-university",
+        organization_kind: "university",
+        scope: "full_document",
+      },
+    ],
+    papers: [
+      {
+        work_id: "synthetic-paper",
+        identifiers: ["url:" + documents[0].original_url],
+        access: "전문",
+        status: null,
+        evidence_url: documents[0].original_url,
+        full_text_source_version_id: documents[0].source_version_id,
+        claim_ids: ids,
+      },
+    ],
+    relations: [],
+  }
+  const context = recordDeepDiveReview(input, reviewed.claims, parses, documents, {
+    reviewer: "synthetic source reviewer",
+    reviewed_at: new Date().toISOString(),
+    source_read: true,
+    source_roles_checked: true,
+    basis_checked: true,
+    identities_checked: true,
+    scope_checked: true,
+  })
+  atomicWrite(f.root, "runs/processed/deep-context.json", context)
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const result = await generate.call(this, request)
+    if (this.executionPolicy.role === "article_write") {
+      assert.equal(JSON.parse(request.messages[1].content).deep_basis.kind, "논문 해설")
+      result.output.analysis = null
+      result.output.explanations = roles.map((role) => ({
+        role,
+        heading: "Synthetic " + role,
+        paragraphs: [{ text: f.claim.statement, claim_ids: ids }],
+      }))
+    }
+    return result
+  }
+  assert.equal((await processSourceRun(f.options)).status, "editorial_review")
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  assert.deepEqual(draft.deep_context, context)
+  assert.deepEqual(draft.problems, [])
+  assert.equal((await processSourceRun(f.options)).draft_reused, true)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const reusedOptions = {
+    ...f.options,
+    run: "deep-reuse",
+    assessmentRun: "processed",
+    draftRun: "processed",
+  }
+  assert.equal((await processSourceRun(reusedOptions)).status, "fact_review")
+  const reusedPacket = await loadFactReviewPacket(f.root, "deep-reuse")
+  await reviewProcessedClaims(f.root, "deep-reuse", {
+    ...factDecision,
+    model_assessment: {
+      ...factDecision.model_assessment,
+      packet_sha256: reusedPacket.packet_sha256,
+    },
+  })
+  atomicWrite(f.root, "runs/deep-reuse/deep-context.json", context)
+  assert.equal((await processSourceRun(reusedOptions)).draft_reused, true)
+  assert.deepEqual(readJSON(f.root, "runs/deep-reuse/draft.json"), draft)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const changed = structuredClone(context)
+  changed.review.scope_checked = false
+  atomicWrite(f.root, "runs/processed/deep-context.json", changed)
+  await assert.rejects(processSourceRun(f.options), /Explicit deep-dive|deep.*changed/i)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
 })
 
 test("explicit packet acknowledgment permits drafting and resumes without generation", async (t) => {

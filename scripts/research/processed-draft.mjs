@@ -2,6 +2,7 @@ import fs from "node:fs"
 import { sha256, assertSchema } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { draftFingerprint, schemaForDraft, draftProblems, correctDraft } from "./editor.mjs"
+import { assertDeepDiveContext } from "./deep-dive.mjs"
 
 // Validate the frozen model generation and each explicit correction. Resume
 // must preserve editorial work rather than overwrite it with model output.
@@ -9,6 +10,10 @@ export function loadProcessedDraft(root, run, reviewed, documents, parses) {
   const base = `runs/${run}/`
   const reference = readJSON(root, base + "draft-generation-reference.json")
   const current = readJSON(root, base + "draft.json")
+  const deepContext = readJSON(root, base + "deep-context.json")
+  const usable = deepContext
+    ? assertDeepDiveContext(deepContext, reviewed.claims, parses, documents)
+    : reviewed.claims.filter((c) => c.review.status === "verified")
   if (!reference || !current) throw Error("Processing draft generation reference required")
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(reference.run || ""))
     throw Error("Invalid draft generation run")
@@ -23,28 +28,22 @@ export function loadProcessedDraft(root, run, reviewed, documents, parses) {
     reference.output_sha256 !== checkpoint.output_sha256 ||
     input.claims_sha256 !== sha256(JSON.stringify(reviewed.claims)) ||
     input.documents_sha256 !== sha256(JSON.stringify(documents)) ||
-    input.parses_sha256 !== sha256(JSON.stringify(parses))
+    input.parses_sha256 !== sha256(JSON.stringify(parses)) ||
+    input.deep_context_sha256 !== sha256(JSON.stringify(deepContext || null))
   )
     throw Error("Processing draft source or generation binding changed")
   const bytes = fs.readFileSync(safePath(root, checkpoint.output_path))
   if (sha256(bytes) !== checkpoint.output_sha256) throw Error("Processing model draft changed")
   const original = JSON.parse(bytes)
   const validate = (record) => {
-    assertSchema(record.draft, schemaForDraft())
+    assertSchema(record.draft, schemaForDraft(deepContext))
     if (
-      record.draft_id !== draftFingerprint(record.draft) ||
+      record.draft_id !== draftFingerprint(record.draft, deepContext) ||
+      JSON.stringify(record.deep_context || null) !== JSON.stringify(deepContext || null) ||
       record.public_approved !== false ||
-      JSON.stringify(record.claim_ids) !==
-        JSON.stringify(
-          reviewed.claims.filter((c) => c.review.status === "verified").map((c) => c.claim_id),
-        ) ||
+      JSON.stringify(record.claim_ids) !== JSON.stringify(usable.map((c) => c.claim_id)) ||
       JSON.stringify(record.problems) !==
-        JSON.stringify(
-          draftProblems(
-            record.draft,
-            reviewed.claims.filter((c) => c.review.status === "verified"),
-          ),
-        )
+        JSON.stringify(draftProblems(record.draft, usable, deepContext))
     )
       throw Error("Processing working draft differs from its reviewed facts")
   }
