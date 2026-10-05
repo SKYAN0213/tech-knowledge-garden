@@ -27,6 +27,19 @@ class DriveLinksTests(unittest.TestCase):
                 {'path': 'Editions/example.md', 'id': 'second'},
             ]})
 
+    def test_canonical_lineage_supersedes_stale_generated_news_receipts(self):
+        lineage = {'mapping': {'news/event': ['Editions/new.md', 'Editions/old.md']},
+                   'sources': {'Editions/new.md': {'sha256': 'new'}, 'Editions/old.md': {'sha256': 'old'}}}
+        receipt = {'files': [{'path': 'News/event.md', 'id': 'stale'},
+                            {'path': 'Editions/new.md', 'id': 'current', 'sha256': 'new'}]}
+        refs = website_data.source_note_links(lineage, receipt)['news/event']
+        self.assertEqual([ref['path'] for ref in refs], ['Editions/new.md', 'Editions/old.md'])
+        self.assertIn('/current/', refs[0]['url'])
+        self.assertEqual(refs[1]['url'], '')
+        receipt['files'][1]['sha256'] = 'different'
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            website_data.source_note_links(lineage, receipt)
+
 
 if __name__ == '__main__':
     unittest.main()

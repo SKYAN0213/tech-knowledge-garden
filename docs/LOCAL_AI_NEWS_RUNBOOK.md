@@ -10417,3 +10417,10 @@ private root에 있는 검토 입력만 받으며 모델/API 옵션은 거부한
 Drive 보관과 독립 복원은 완료됐으며 공통 archive-location에 등록했다. 빈 추출 묶음279payload/281restore, HFNN 묶음426payload/428restore이다. HFNN 복원본은 포함된 authority vault에서만 승인 기사와 정의를 읽었다. 이 영수증은 canonical 노트 저장·실제 배포·신규 운영 완료를 대신하지 않는다.
 
 Actions hosted runner 미배정 대기는1시간 이상이며 수동 재실행0이다. 공식 상태 복구 전 같은 요청을 반복하지 않는다. 기존 daily-20261006-regular-publication-v1은 remote_confirmed이고 배포 완료로 승격하지 않았다. 먼저0b827e1의 CI·실제 공개 readback·WebsiteData를 완료한 뒤 개발 branch 통합과 v5→v6 승인 lineage로 HFNN을 적용한다. private 증거는 외장 tkg-daily-core-20261006-v1/core-development-checkpoint-20261006-v2.json에 재개 입력과 SHA를 보존한다.
+
+
+## 419. 배포 복구와 WebsiteData 원본 연결 검증
+
+Actions37372213094 attempt2는0b827e1에서 success다. regular-deployment-v1.json, regular-public-readback-v1.json, regular-topic-public-readback-v1.json은 외장 tkg-daily-core-20261006-v1에 있다. hosted runner1시간 차단 기록은 과거 이력으로 보존한다. 이번 배포를 수동 실행이나 예약 완료 횟수로 자동 계산하지 않는다.
+
+export-website-data.py는 기존 garden parser로 고정 사건 ID→모든 Editions 원본, topic ID→실제 TrendTopics 파일을 찾는다. 직접 작성 Knowledge와 briefing edition도 보존한다. Drive SHA 불일치나 live/local assets 불일치는 중단한다. WebsiteData CSV에서 여러 회차는 같은 셀의 줄바꿈으로 제공하며 snapshot.note_lineage에서 각각의 path/url/SHA를 확인한다. 기존 RSS GUID·기사 URL·발표일을 변경하지 않는다. canonical 조사는 다시 실행하지 않으며 모델 호출0이다. 표적 검사는 node --test tests/website-note-lineage.test.mjs, python -m unittest discover -s tests -p test_export_website_data.py이며 각각2/2·3/3이다. 실제 링크 proof는 regular-website-note-link-proof-v1.json이다.

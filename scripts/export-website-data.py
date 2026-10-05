@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tempfile
 from datetime import datetime, timezone
 from urllib.parse import urljoin
@@ -42,6 +43,21 @@ def drive_links(receipt):
                 raise ValueError('Drive receipt lacks a usable link or file ID: ' + path)
             url = f'https://drive.google.com/file/d/{file_id}/view?usp=drivesdk'
         links[path] = url
+    return links
+
+def source_note_links(lineage, receipt):
+    """Join exact event/topic lineage to the bytes verified in Drive."""
+    drive = drive_links(receipt)
+    rows = {file['path']: file for file in receipt['files']}
+    links = {}
+    for slug, paths in lineage['mapping'].items():
+        links[slug] = []
+        for path in paths:
+            expected = lineage['sources'][path]['sha256']
+            record = rows.get(path)
+            if record and record.get('sha256') != expected:
+                raise ValueError('Source note differs from verified Drive bytes: ' + path)
+            links[slug].append({'path': path, 'url': drive.get(path, ''), 'sha256': expected})
     return links
 
 def main():
@@ -89,11 +105,23 @@ def main():
         assert all(n['slug'] in content for n in nodes)
         receipt = json.loads((WORK / 'receipt.json').read_text())
         drive = drive_links(receipt)
+        if not all(asset.get('matches_local_build_bytes') for asset in provenance):
+            raise ValueError('Live website differs from the local build; source lineage cannot be attached')
+        lineage = json.loads(subprocess.run(
+            ['node', str(ROOT / 'scripts/website-note-lineage.mjs'), str(ROOT)],
+            check=True, capture_output=True, text=True).stdout)
+        source_links = source_note_links(lineage, receipt)
         local_notes = json.loads((ROOT / '.local/site-notes.json').read_text())
         paths = {n['slug']: n['path'] + '.md' for n in local_notes}
         def note(slug):
+            references = source_links.get(slug, [])
+            if references:
+                return ['\n'.join(r['path'] for r in references), '\n'.join(r['url'] for r in references)]
             path = paths.get(slug, '')
             return [path, drive.get(path, '')]
+        def mapped(slug):
+            references = source_links.get(slug, [])
+            return all(r['url'] for r in references) if references else bool(drive.get(paths.get(slug, '')))
         table(output / 'pages.csv', ['제목', '유형', '날짜', '웹페이지', 'Drive 노트 경로', 'Drive 노트 링크', '검색 키워드'],
             [[p['title'], p['type'], p.get('date', ''), urljoin(BASE, p['url']), *note(p['slug']), p.get('keywords', [])] for p in pages])
         table(output / 'articles.csv', ['기사 ID', '제목', '날짜', '요약', '웹페이지', 'Drive 노트 경로', 'Drive 노트 링크', '연결 개념 ID'],
@@ -109,8 +137,9 @@ def main():
         provenance.append({'file': 'catalog.json', 'origin': 'local-build-input', 'path': 'data/catalog.json', 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()})
         counts = {'pages': len(pages), 'articles': len(articles), 'concepts': len(nodes), 'connections': len(edges)}
         write_json(output / 'snapshot.json', {'schema': 'website-data-archive/v1', 'website': BASE, 'counts': counts,
-            'note_mapping_basis': 'local site projection paths joined to verified Drive upload receipts',
-            'unmapped_pages': [p['slug'] for p in pages if not drive.get(paths.get(p['slug'], ''))], 'assets': provenance})
+            'note_mapping_basis': 'exact source event IDs, edition metadata and topic IDs joined to byte-verified Drive authoring notes; remaining pages use projection receipt paths',
+            'note_lineage': source_links,
+            'unmapped_pages': [p['slug'] for p in pages if not mapped(p['slug'])], 'assets': provenance})
         (output / 'README.md').write_text(f'''# 웹사이트에서 사용하는 데이터
 
 [뉴스 웹사이트]({BASE})가 실제 제공하는 데이터를 내려받은 보관본입니다. 수집 시각과 파일 해시, 로컬 생성본과의 일치 여부는 `snapshot.json`에서 확인합니다.

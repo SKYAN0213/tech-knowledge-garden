@@ -4402,3 +4402,10 @@ private preview380개 파일을 생성하고 실제 브라우저에서 기사 #�
 Groq 빈 추출 복구 묶음은 Drive ZIP1uHupfrDCvaj6yHawFZ3yhveFVHQI_ZZI, manifest1zoC7V6vBDSeygSDkueHJp6IxJ7zV-tr3으로 보관했다. 실제 재다운로드 SHA와 private parent를 검증한 독립 복원281개 파일에서 원문 검토·복구를 재검증했고, manifest279개 파일을 전부 대조했다. HFNN 기사·정의 묶음은 Drive ZIP1TpxrhG22IHt2-3541ta5xzZUDfjYzOEF, manifest1-1PIW_Kdi5VrBDLyDURxbgcShl2EfBmD이며 4,120,319bytes·SHA5e0f31ec0c83278496edec272cc64393d22ee3febf1a6ecc576508f7f126d8c6다. 재다운로드 후 독립 복원428개 파일에서 포함된 authority vault만 사용해 승인 기사·정의·관계를 재검증했고 manifest426개 파일을 전부 대조했다. 두 묶음을 기존 archive-location 조회에 등록했다.
 
 외부 병목: Actions37372213094는 hosted runner 미배정으로 실패했고 테스트 단계는 실행되지 않았다. 2026-10-05T20:50:25Z부터 21:51:51Z까지3,686초이며 공식 Actions 상태는 degraded_performance/incident investigating이다. 수동 재실행0. 1시간 이상 병목으로 기록하고 빈 추출·전문용어 슬라이스를 진행했다. 서비스 복구 확인 후 같은0b827e1 run만 한 번 재실행하고 배포·공개 readback·WebsiteData를 확인한다. 다음으로 검증된 개발 branch를 통합하고 명시적 v5→v6 승인 이력과 기존 기사 ID를 유지해 HFNN을 반영한다. 전체 목표는 active이고 독립 사람 gold0·heldout0·신규 로컬AI 운영0은 그대로다.
+
+
+## 19.326. 실제 배포 복구와 Drive 원본 연결
+
+공식 Actions 복구를 확인한 뒤 기존37372213094를 한 번 재실행했다. attempt2의 전체 검사·빌드·배포는 실제0b827e10b221cc2a4df07707433c6b65b3713948에서 성공했다. 웹11·commit-pinned GitHub8 파일의 byte readback과 추가 주제4 파일을 확인했다. publication은 public_bytes_verified이며 무인8시 실행·신규 운영 횟수로 승격하지 않는다. 실제 브라우저에서 모바일390px·데스크톱1280px, 분야 탭·공유 URL·뒤로 가기·기업 태그·키보드 Enter·기사→누적 기록·기사와 브리핑 지도0·가로 넘침0·console error0을 확인했다.
+
+WebsiteData export에서 최근 생성 기사·브리핑·누적 주제의 Drive 링크 누락을 발견했다. 기존 생성본 업로드 경로에만 의존하던 join을 고정 사건 ID의 실제 회차 원본, briefing의 명시적 edition, topic ID의 실제 TrendTopics 파일, Knowledge 원본으로 바꿨다. 반복 사건의 모든 회차를 최신순으로 보존하며 파일명을 topic ID로 추측하지 않는다. canonical 파일 SHA가 Drive 영수증과 다르면 중단하고, 배포 assets와 로컬 build bytes가 다를 때도 원본 연결을 거부한다. 표적 Node2/2·Python3/3 통과, 실제347개 source page·175개 canonical note의 모든 링크와 SHA가 일치했다. Drive WebsiteData 업로드·재다운로드는 다음 단계이며 HFNN canonical 발행·독립 사람 gold·신규7회 운영·무인8시 실행은 미완료다.

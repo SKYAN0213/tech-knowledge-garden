@@ -1709,3 +1709,11 @@ Next source slice: legacy-20260714-codex-api-sources-20261005-v1 captured two of
 빈 추출 공통 경로 commit7a37591, 처리49+신규 보관1+기존 보관14 표적 검사 통과. 실제 Groq 빈 추출·기존5사실 복구는 원본49개 파일 보존·추가 모델 호출0, Drive 재다운로드 및279payload/281restore 검증 완료. HFNN은 별도 paper-concepts-processing-v6에서 기존 기사72081e8f67345f20의 본문·날짜를 유지해 fabric-grasping-hfnn에 연결했다. 모델 호출0, private380파일 빌드·실제 태그/용어/이력/지도 관련기사1개·390px/키보드·RSS40 GUID/pubDate 검증 완료. Drive4.12MB 원본 재다운로드·426payload/428restore 검증 및 두 archive-location 등록 완료. canonical 노트·후보 장부·선행0b827e1 발행 바인딩은 유지됐다.
 
 GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 기록했다. 공식 investigating/degraded 상태, 테스트 실행0·수동 재실행0. 서비스 복구 후 같은37372213094 run을 한 번 재실행해0b827e1 공개 readback/WebsiteData를 완료한다. 그 뒤 개발 branch 통합과 HFNN v5→v6 lineage를 적용한다. 전체 목표 active, 독립 사람 gold0/heldout0, 신규 로컬AI 운영0.
+
+
+### 2026-10-06: 배포 복구와 Drive 링크 보강
+
+- 기존0b827e1: Actions37372213094 attempt2 검사·빌드·배포 성공. 공개19파일 및 주제4파일 byte 대조 완료.
+- 모바일·데스크톱 실제 공개 UI의 탭·태그·공유 URL·뒤로 가기·키보드·누적 기록, 가로 넘침0·뉴스/브리핑 지도0·console error0 확인.
+- WebsiteData 원본 연결: 고정 사건 ID와 topic ID로347개 source page→175개 canonical note를 정확히 연결. 모든 Drive 링크/SHA 일치. 표적5검사 통과.
+- 아직 별도 gate: WebsiteData 갱신·재다운로드, HFNN canonical/public 반영, 신규7회 운영, 사람 gold/heldout, 무인8시 복구, 전체 legacy 판정.
