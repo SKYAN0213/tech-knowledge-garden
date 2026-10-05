@@ -4210,3 +4210,11 @@ canonical 미판정59회차553구간·diagnostics0이다. 다음7/24·7/23·7/22
 정상7월24일10구간을4사건으로 연결하고 MCP의7월23일 사전 지원 이력 및 검토된 빈 Signals를 승인했다. 기존 정의11사실·5원문판본을 공통 bundle로 재사용해 반복 모델 생성0이며 기사4portable ZIP의 실제 복구와 동일 파일 충돌 검사를 통과했다. 다음 실제 reader 생성·원문/기사/용어/이력/웹·RSS·GitHub 대조·Drive-first 발행을 수행한다. 전체 legacy 판정·독립human40/20·정규7회·fullruntime복구·WBS2/22·goalactive는 유지한다. 상세 런북397.
 
 실제reader/채널·1280/390 UI와15판본·438members의Drive 원격 복구가 통과했다. fresh206raw/16폴더 및release로3작성파일을2같은ID갱신·1생성했다. 새3raw와나머지203metadata불변을대조한 최종207원본을canonical에적용했다. 다음 공개배포·WebsiteData·발행증거 보관을 검증한다. sourceSHA9270f47ab0a4dd152ea7faadfb1a91f15150642181df05109604696fa90ea9aa이며 신규정규운영0·goalactive다.
+
+## 19.305. 7월 24일 실제 공개와 재사용 가능한 발행 결과 검증
+
+7/24의10구간·4기사를Drive207원본/sourceSHA9270f47ab0a4dd152ea7faadfb1a91f15150642181df05109604696fa90ea9aa에반영했다. 공개f77ed635/Actions37273592270 success, 통합CI829/829·Python15+2·build/site, 실제웹/RSS/GitHub24응답exact·지도module·1280/390UI와RSS40identities/XML불변을확인했다. WebsiteData12actualraw(9같은ID갱신·2산출물불변·기존영수증1보존)및privateDrive발행증거334자료의공통v1복구가통과했다. 전체runtime복구와구분한다.
+
+매회별도작성하던공개readback을공통CLI `research:public-readback`으로구현했다. 배포exactcommit확인→승인미리보기/원본SHA→고유URL계획→boundedactualraw→불일치보존→미완료파일재개를한경로로수행한다. 실제동일범위21고유파일+지도module을확인했고재개추가다운로드0이었다. 새표적9/9·기존push4/4, 새코드릴리스CI는별도다. Drive/기사승인/브라우저검증을대신하지않으며추가유료API/예약없음. 상세런북398.
+
+canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive를유지한다. 이번은authoritative상태와공통코드를바꾼progress이며1시간같은실패반복은없었다. 다음묶음은원본메타데이터복구와남은metadata-ready자료의소급검토이며기존정상모델출력/승인은재사용한다.

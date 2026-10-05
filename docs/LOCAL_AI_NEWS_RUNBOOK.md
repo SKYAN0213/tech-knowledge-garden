@@ -9983,3 +9983,29 @@ python3 scripts/research/package-archive.py \
 fresh206원본 raw/16폴더 재조회가 canonical과 일치했고 명시적 retrospective release로3파일22,435bytes를 승인했다. 기존 브리핑·MCP2개를 같은ID로갱신하고 빈Signals ID13TeNXrDFeoPfuWgG-3Pcj_G10D4SOkKB를 생성했다. 새3raw는 stagedSHA/bytes/부모/수정시각이 같고 나머지203개는 post16폴더의metadata 불변을 대조한 최초raw를 재사용했다. 최종207원본1,335,113bytes/sourceSHA9270f47ab0a4dd152ea7faadfb1a91f15150642181df05109604696fa90ea9aa, snapshotfileSHA3e9482816af984d62bfc3dd00ec739d23318ce89d7c63c5ea2a016a4cca56f6a를 canonical에 적용했다. pull의 변경3/삭제0·workingcopy207 검증이 통과했다. 최종 저장 구간은 실제livePID76788로 garden-operation을 보호하고 정상해제했다. 최초 stdin EOF로 종료한PID76734는 terminal13과실제missingPID를 확인한 뒤 정확한owner로 공통recover-lock을 수행했다. 살아 있는 worker를 재시작하거나 lock을 임의삭제하지 않았다.
 
 작성원본 반영까지 완료했고 공개배포·WebsiteData·최종발행증거 보관은 다음이다. 소급 정정은 신규정규운영0이며 전체 목표 active다. metadata복구10회차와 독립human40/20·정규7회·fullruntime복구를 그대로 유지한다.
+
+## 398. 7월 24일 공개 완료와 공통 발행 결과 검증
+
+앞 절의 공개 미완료 checkpoint 이후 `npm run publish`의 콘텐츠 커밋 f77ed635ea1bb6042c4b52b388af5fbafa05af8d와 Actions 37273592270을 확인했다. build/deploy는 success이며 실제 로그에서 Node829/829·Python Drive15/15·WebsiteData2/2·build/site가 통과했다. 로컬 전체 suite를 다시 돌리지 않았다. 실제 배포본의 웹/RSS/GitHub24응답 bytes와 지도module, Drive source207/sourceSHA9270f47ab0a4dd152ea7faadfb1a91f15150642181df05109604696fa90ea9aa를 대조했다. 기존 RSS40 GUID/pubDate와 전체 XML bytes는 이전 e6ff0f9와 같고 과거 수정은 신규 회차로 발행하지 않았다.
+
+1280×900과390×844 실제 브라우저에서4카드→소프트웨어3카드의 분야 URL, Enter #MCP→정의/날짜 이력→기사 이동, 뒤로가기의 필터/전체 복원을 확인했다. 뉴스/브리핑 지도0·가로넘침0이며 viewport를 reset했다. 공개 URL은 `https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/07/2026-07-24_0800_tech_ai_briefing`이다.
+
+standalone export-website-data.py로 actual 공개본341pages/165articles/24nodes/22relations를 저장했다. WebsiteData12개 전체의 fresh metadata/raw와2차목록을 읽고9파일을같은ID로갱신했다. 변경 없는RSS와connections.csv, 기존20260930저장영수증은보존했다. 최종12개actualraw SHA/size/parents/modified time과목록이일치한다. Sources/Research의공유범위는변경하지않았다.
+
+발행 증거334자료/335ZIPmembers·6,054,742bytes를 private Research ID1_YrJdjFyyu3aY4KptbPTQbaa6N4XAByv에 저장했다. 실제 원격 SHA a9169133e6518218f5478253d70bbf578e451a8fd3b30b0a5ab774efba875337을 확인하고, 정확한 원본 manifest SHA f2b526b5969ce1d9f4226406390f9e6e500c6eb3ec312d99de36b2807d5eb189를 명시해 공통 v1복구기의전체bytes/CRC/member검사를통과했다. 복구영수증336은자료334+원본/패키지manifest2이며fullruntime복구가아니다. 첫 절대경로 manifest 인수는 root-relative 관문에서 쓰기 전에 거부됐고, 동일 원본 bytes를 private root에 보존해 상대경로로 바로 수정했다. 같은 실패를 반복하지 않았다.
+
+### 다음 회차에서 재사용하는 공개 검증
+
+임시 Python 파일을 회차마다 복사하던 작업을 `scripts/research/public-readback.mjs`와 공통 CLI에 옮겼다. 새 의존성·발행 경로·예약을 추가하지 않는다.
+
+```sh
+npm run research:public-readback --   --root .local/research/local-ai   --run legacy-20260724-common-public-readback-20261005-v1   --preview-run legacy-20260724-complete-reader-20261005-v1   --commit f77ed635ea1bb6042c4b52b388af5fbafa05af8d   --actions-run 37273592270
+```
+
+CLI가 `gh run view --repo SKYAN0213/tech-knowledge-garden`로 성공한 정확한 commit/build/deploy를 직접 읽는다. 승인 미리보기의 작성 원본SHA·사건ID·회차/digest·전문용어 경로를 대조해 웹과 고정commit GitHub 주소만 확인한다. index·RSS·drive-sync·CSS·reader/module도 포함한다. 인접 공개 배열의 같은 경로는 한 번만 조회한다. 실제21고유파일+지도module은 기존24응답의동일범위이며중복3을제거했다.
+
+응답은30초/16MiB·redirect불허·4병렬로 제한하고 각 actualraw/메타데이터를 불변 저장한다. 네트워크 실패·불일치·원본변경·잘못된 캐시판정은 성공으로 처리하지 않는다. 통신 실패는 완료된 파일을 유지하고 아직 받지 못한 파일만 재개한다. 관측이 완료된 동일run의재개는새조회가아니며 추가다운로드0이다. 새원격상태확인은새run으로한다. 지도bundle파일명만다를때도reader의나머지본문과mapmodule bytes가모두같아야한다. `receipt.verified`는지정공개자료일치이며 `drive_verified/browser_verified/approval_created/public_written:false`를유지한다.
+
+표적 첫12/12(새8+기존push4), 이후캐시동등성/수집중입력변경 검증을보강한새9/9가통과했다. 전표적/전체 suite는반복하지않았다. 실제f77배포를공통CLI로확인했고동일run재개결과도같다. 원문재수집/모델재생성/기사승인/Drive저장은재실행하지않았다. 새코드의릴리스CI는이어확인하며f77의829개를새코드검증으로승계하지않는다.
+
+증거는 external root의july24-ci-status-v1.json/release-ci-full-v1.log/public-readback-v1/receipt.json/rss-identities-v1.json/public-ui-verification-v1.json/두JPEG/website-raw-verification-v1.json/release-archive-remote-v1.zip/release-evidence-restored-v1와canonical의common-public-readback run에있다. canonical inventory는미판정58회차543구간·metadata복구10·165검증사건·diagnostics0이다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체legacy판정·전체WBS2/22는남는다. 목표active,이번은공개반영과공통코드구현의progress이며1시간동일실패반복0이다. 다음은메타데이터복구근거탐색과metadata-ready회차를병행하되파일명으로조사구간을추정하지않는다.

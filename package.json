@@ -32,7 +32,8 @@
     "research:sources": "node scripts/research-sources.mjs",
     "research:evidence": "node scripts/research-evidence-review.mjs",
     "research:evidence-quotes": "node scripts/research-evidence-quotes.mjs",
-    "research:process-daily": "node scripts/research-process-daily.mjs"
+    "research:process-daily": "node scripts/research-process-daily.mjs",
+    "research:public-readback": "node scripts/research-public-readback.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
