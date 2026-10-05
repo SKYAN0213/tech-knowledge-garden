@@ -4185,3 +4185,12 @@ WebsiteData330pages/156articles/22nodes/21relations의11원격raw가 같으며9�
 비공개 Drive portable ZIP6개의 실제 raw SHA/CRC·독립 복구·기사 승인 동일·이력2노트 재검증과 공통 위치 등록을 완료했다. private v5의 생성·링크·채널 검사는 통과했고 v4와 독자 HTML/digest가 같다.1280/390 UI 증거가 유지된다. 승인 작성 변경은 용어 인덱스 포함8파일40,120bytes다. 최신 작성 원본 readback/release·canonical 공개·WebsiteData는 아직 실행하지 않았다. canonical 미판정62/579와 private59/553을 구분한다.
 
 다음은 준비된8파일의 fresh Drive-first release다. 추가 모델 재생성·이미 통과한 표적 suite 반복은 하지 않는다. 전체 legacy판정·독립human40/20·정규7회/무인08시·fullportable runtime·전체WBS2/22·goalactive는 유지한다. 상세 런북394와 external evidence를 따른다.
+
+
+## 19.302. 7/28·7/27·7/25 묶음의 공개 슬라이스 완료
+
+새 Drive203raw/16폴더·재조회와 명시적 retrospective release로8작성파일40,120bytes를5같은ID 갱신·3신규로반영했다.8원격SHA와198metadata불변을 대조해206전체snapshot을 canonical에 적용했다. 공개e6ff0f9/Actions37267845282 success, 통합CI822/822·Python15+2·build/site, 웹/RSS/GitHub35exact·지도module·1280/390UI가 통과했다. RSS40identity/XML은 불변이고 신규 정규운영0이다.
+
+WebsiteData337pages/161articles/24nodes/22relations의11새raw를 검증했다.10같은ID 갱신·RSS1불변·기존저장영수증1보존을 구분한다. 실제Drive 발행증거403files/404members의 SHA/CRC/전체member를대조해 ordinary v1복구했다.6원문 portable복구와 fullruntime미완료를 구분한다.
+
+canonical 미판정59회차553구간·diagnostics0이다. 다음7/24·7/23·7/22를 작은검토묶음으로 처리한다. 기존 독립human40/20·정규7회/무인08시·fullportable runtime·전체legacy판정·WBS2/22·goalactive는유지한다. 이번progress는 실제Drive/공개변경이며1시간 동일실패반복0이다. 상세런북395.

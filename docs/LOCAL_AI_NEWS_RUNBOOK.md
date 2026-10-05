@@ -9921,3 +9921,20 @@ private v4에서 생성·링크·채널 내용 검사와 1280/390 UI의 분야 �
 현재 공개/canonical은 7/29 배포 상태로 미판정 62회차579구간이다. 이 묶음을 반영한 private inventory는 59회차553구간·161검증 사건·diagnostics0이다. 소급수정은 신규 정규 운영 횟수에 포함하지 않는다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체 legacy 판정·WBS2/22는 미완료다. 목표는 active이며 이전 외장 이전 회차와 이번 원격 승인 복구는 progress다. 1시간 동일 실패 재시도는 없었다.
 
 증거는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1 아래 july28-27-25-drive-archives-v1.json, remote-approval-verification-v1.json, 6개 archive-observation/register/remote-restored-v1, 실제 remote ZIP, private-ui-v1.json/두 JPEG, complete-transition-v3.json과 combined-v2의 complete-reader-v5/drive-authoring/transfer-plan.json이다. 첫 잘못된 CLI 입력·반환값 키 접근은 별도 원고 변경 없이 수정했고 성공 결과를 재검사했다. 다음은 8파일을 한 번의 fresh Drive-first release로 발행하는 일이다. 통과한 모델 호출·표적 suite를 다시 실행하지 않는다.
+
+
+## 395. 3회차 소급 묶음의 Drive-first 공개 발행과 최종 보관
+
+2026-10-05 KST. 공통 중복 판정·정의 원문 재사용 복구 및 비공개 원고 준비를 3847662에 커밋했다. 연결된 Drive 작성203raw/16폴더와 두 번째 전체 목록을 새로 읽어 canonical과 정확히 일치함을 확인했다. 변경8파일40,120bytes의 명시적 retrospective release는 c920b90956ed6ff05c16fb785f42e0a69959b02f94bbcf484b350ed2053bc4ad다. 작업 원고를 최신 자료 대신 사용하지 않았다.
+
+live PID49272의 garden-operation lock으로 저장 구간을 보호했다. 기존5파일은 같은 ID로 갱신하고 전문용어2개·Signal1개를 새로 저장했다. 새 CFG ID는1LFT8hW5IptnAwJsVvDLXQjFow1GVx6FM, DiT는13o8Ko8WekhiJuGpFXoDV-69dNnXoDYUZ, Signal은1VxsmBOVqSKXucmbTwYMorS_eaXvSHQ3n이다. 실제8새raw의 SHA/ID/부모를 대조하고 전체16폴더를 재조회했다. 나머지198파일은 최초raw와 ID/크기/수정시각 불변을 확인해 재사용했다. post206원고/1,323,961bytes의 source SHA는912353acae03bcf7af49087ab5620d4658cbf4240a3380f41442e57d34bc1649, snapshotfile SHA는155fcb05f7385df39dda2496e8dbab929b16f83e5c7607b48bc3221297a1945b다. private snapshot builder는 preview의 실제 작성 사본과 일치시킨 뒤 canonical pull의 dry-run/update8/delete0·apply·workingcopy 검증을 통과했다. authoring upload receipt도 이전 사본을 보존하고 같은 ID/새3ID를 갱신했다. lock은 정상 해제했다.
+
+공개커밋 e6ff0f90ed9870ab756a39271daee9cadb6081d8 / Actions37267845282의 build·deploy가 success다. 릴리스 통합 전체 검사는 CI 한 번으로 Node822/822·Python Drive15/15·WebsiteData2/2·build/site를 확인했다. 로컬 전체 suite를 다시 실행하지 않았다. 실제 웹·RSS·GitHub35파일과 연결지도 module이 local 생성본과 exact bytes였다. RSS40GUID/pubDate/XML은 25f2794와 동일하고 소급정정의 신규 운영 횟수0이다. 사이트는337readerpages·161기사·24지도nodes·22relations이며 broad/excluded11개념을 노드로 승격하지 않았다.
+
+공개1280/390 화면에서 분야 탭·공유 query·뒤로가기3기사 복원·Enter 전문용어→날짜 이력→기사 이동을 확인했다. 뉴스/브리핑 canvas0·가로넘침0이다. viewport는 reset했고 공개7/28 브리핑을 deliverable로 유지했다. 실제 public screenshot두 장은 JPEG다. WebsiteData11개는 이전 원격raw와 마지막 영수증을 먼저 대조한 뒤10개를같은ID로갱신했고 RSS1개는 동일bytes라 쓰지 않았다. 새11raw/SHA·private 부모와 마지막12파일 목록을 확인했다. 기존 website-data-upload-receipt-20260930.json의 ID/크기/수정시각은 유지했다.
+
+발행 증거403files/404members·9,818,152bytes의 ordinary v1 ZIP을 private Research의1qd-NvkdvXEMzAf0BQJc9avSbjs1E8s-f에 저장했다. 실제 원격 SHA64fcd079f04eb935e0890a12d9877cc0a77e9d9bca6b2b3948d5b52d5a8f1b2d·CRC·manifestSHA·모든member bytes를 확인하고 별도 폴더에 복구했다. 원문 portable6ZIP의 복구는394절에 별도로 완료됐고 이 발행증거는 source_versions0이며 fullruntime복구가 아니다. 처음 strict base64 decode는 파일 마지막 줄바꿈을 거부했다. 줄바꿈만 제거해 같은 내려받은 bytes를 검증했으며 새 다운로드·약한 hash 검증으로 바꾸지 않았다. 검증한 실제ZIP·복구본을 보존하고 중복전송 base64 파일만 삭제했다.
+
+canonical inventory는 작성206·v244·legacy77/679, 검토한빈18/126을 제외한 미판정59회차553구간·161verifiedevents·35conceptIDs/41knowledge notes/40authoredrelations·28Signals/16Topics·RSS40·diagnostics0이다. 다음 실제 미검토는7/24_0800이고7/23·7/22와 묶음 검토를 이어간다. 독립human40dev/20heldout·정규7회/무인08시·fullportable runtime·전체legacy판정·전체WBS2/22는 남는다. 목표active를 유지한다. 이번은 authoritative Drive와 실제 공개를 변경한 progress이며 1시간 동일실패 재시도는 없었다.
+
+증거 루트는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1이다. july28-27-25-drive-preflight-v1의 tree/raw203/second/post-raw-verification/execution/release-review, source-before/post snapshot, ci-status-v1.json/release-ci-full-v1.log, public-readback-v1/receipt.json, rss-identity-verification-v1.json, public-ui-verification-v1.json/두JPEG, website-before/after/final-listing/raw-verification-v1, release-archive-observation-v1.json과 실제remoteZIP/release-evidence-restored-v1, release-evidence-restore-observation-v1.json을 확인한다. 통과한 원문 조사·모델 생성·표적 suite와 전체CI를 반복하지 않고 다음 원문 묶음으로 진행한다.
