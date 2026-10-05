@@ -172,6 +172,7 @@ generated_by: tech-knowledge-garden
 - [[News/f2d1b40c0608be47|ChatGPT Health, 미국 성인 이용자에게 의료기록·Apple Health 연결 제공]] · 2026-07-24
 - [[News/6c31b0895d6be835|AI SDK, 음성 전사 취소와 도구 호출 추적 수정]] · 2026-07-14
 - [[News/661912ab39baa4f1|Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가]] · 2026-07-14
+- [[News/b5e2211dddab87f3|Codex 0.144.2, 자동 코드 리뷰 프롬프트 회귀 복구]] · 2026-07-13
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
