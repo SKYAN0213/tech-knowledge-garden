@@ -10395,3 +10395,16 @@ RobCo closure58자료/60members/210589bytes SHA2c830b0ed604f3a03bf014a3796358532
 다음은 Actions 서비스 복구를 확인해0b827e1 CI를 한 번 재개하고 정확한 웹/RSS/GitHub·topic HTML/digest·실제desktop/mobile·WebsiteData를 검증한 뒤 첫 정규 운영1건을 집계한다. 이후 검증한 평가 코드와 HFNN 전문용어/기사 연결을 다음 릴리스에 통합한다. 과거50/483+metadata10·독립40/20·정규7회·무인08시/인증/중단·전체runtime복구와 전체목표는 active다.
 
 416 최종 보관: 평가3원문/원모델과 실제 검토·HFNN94.8초 생성본/승인·작성authority212·Drive/CI장애 관측·4bdbaf7 코드 patch·복구한 미사용RobCo 증거의346자료를 ordinary v1으로 보관했다. ZIP347members/1,658,992bytes/SHA72f46ed7b31302f6315d55181a06f57fba5452e126ff253f2e38f2a1863a99ba, private Research ID17V6Xb96aHqPTeh2ZHlNHLuX9jHp-M1Rw다. 원 manifest ID1wAqqHa3NN3ZzE3YMZtTv3HWcJrg1fQNd의 SHA c07463c11e8d95c72f27026a3e140f1f6318f3cd0c760e7afe2be98b67efb578와 원격raw를 대조했다. 새 디렉터리348파일 복구 후 평가3판정이 exact idempotent이고 HFNN10검토사실·승인 SHA5af27469…와212authority를 독립 재검증했다. post-package receipt ID1RfAuUYcJYvq16bUynhHgywgfPbU25XPD의 원격SHA7c479052…/2,549bytes·Research 부모/shared:false도 확인했다. source_versions0·dependency_closed:false이며 개발/평가 복구다. 전체 원문 승인 closure·fullruntime·공개 배포로 집계하지 않는다. 첫 restore는 별도worktree에 존재하지 않는 상대 interpreter 경로로 실패해 출력0byte를 보존했고, 기존 실제3.12 interpreter 절대 경로로 실패 단계만 재개했다.
+
+
+## 417. 모델 빈 추출 검토와 복구
+
+`process-source`의 `empty_extraction_review`는 조사 완료나 새 소식 없음이 아니다. 후속 비교·작성은 중단되며 원문을 읽고 별도 검토를 작성한다. `inspectEmptyExtraction(root, processingRun)`의 binding을 그대로 복사하고 `schema: editorial-empty-extraction-review/v1`, reviewer, 실제 reviewed_at, source_read, reason, anchors(정확한 source_version_id·parse_id·block_id·quote), `public_approved:false`, `candidate_published:false`를 포함한다.
+
+결정은 `extraction_missed_event`, `source_review_deferred`, `no_publishable_event` 중 하나다. 누락에는 원문 사건 근거를, 사건 부재에는 모든 parse의 인용과 event_check의 new_product/research_result/customer_adoption/contract/strategy_change/operating_result/technical_change:false 및 notes를 기록한다. 미열람·불완전 원문은 사건 부재로 처리하지 않는다. 이미 완료된 동일 원문·parse의 재추출이 있으면 누락 검토의 followup_run으로 연결한다. 최초 빈 기록을 삭제하거나 같은 설정의 추론을 자동 반복하지 않는다.
+
+```sh
+node scripts/research.mjs review-empty-extraction --root PRIVATE_ROOT --run REVIEW_RUN --source-run EMPTY_PROCESSING_RUN --review runs/REVIEW_RUN/submitted-review.json
+```
+
+private root에 있는 검토 입력만 받으며 모델/API 옵션은 거부한다. 결과는 empty_extraction_recovery_required/recovered/source_deferred/no_event로 구분되고 승인·발행은 별도다. 기존 검토는 불변이며 추가 조사는 완료된 추출을 재사용하는 새 processing run으로 진행한다. `archive-closure`가 원문·빈 추출·검토·후속 추출을 함께 추적한다. 실제 검증: 처리49/49, 신규 보관1/1, 기존 보관14/14. Groq 실제 기록2개 원문→빈 원출력→기존 사실5개 복구, 원본49개 파일 보존, 추가 모델 호출0.

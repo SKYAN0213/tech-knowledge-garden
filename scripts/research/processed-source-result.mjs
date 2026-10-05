@@ -8,6 +8,7 @@ import { loadCurrentApproval } from "./preview.mjs"
 import { draftMarkdown } from "./editor.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
+import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
 
 // Read completed checkpoints without metadata requests or generation. A model
 // being replaced/deleted does not invalidate its reviewed, exact-source work.
@@ -47,7 +48,6 @@ export async function loadProcessedSourceResult(root, run, entry) {
     !entry.source_urls?.some((url) => canonicalURL(url) === canonicalURL(document.original_url))
   )
     throw Error("Reused processing differs from the candidate source version, parse or URL")
-  const context = await loadFactReviewPacket(root, run)
   const common = {
     processing_run: run,
     source_run: input.source_run,
@@ -62,7 +62,6 @@ export async function loadProcessedSourceResult(root, run, entry) {
           candidate_url_identity: "canonical",
         }
       : {}),
-    packet: safePath(root, base + "fact-review-packet.json"),
     ...(readJSON(root, `runs/${input.assessment_run}/quote-review-result.json`)
       ? { quote_review_run: input.assessment_run }
       : {}),
@@ -70,6 +69,14 @@ export async function loadProcessedSourceResult(root, run, entry) {
   const reviewed = readJSON(root, base + "reviewed-claims.json")
   const draft = readJSON(root, base + "draft.json")
   const approval = readJSON(root, base + "approved-article.json")
+  const extracted = readJSON(root, base + "claims.json")
+  if (Array.isArray(extracted?.claims) && !extracted.claims.length) {
+    if (reviewed || draft || approval)
+      throw Error("Empty extraction cannot carry fact review, draft or approval")
+    return { ...common, ...loadEmptyExtractionResult(root, run) }
+  }
+  const context = await loadFactReviewPacket(root, run)
+  common.packet = safePath(root, base + "fact-review-packet.json")
   if (!reviewed) {
     if (draft || approval) throw Error("Reused draft or approval lacks reviewed facts")
     return {

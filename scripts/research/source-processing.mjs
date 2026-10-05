@@ -27,6 +27,7 @@ import { loadCurrentApproval } from "./preview.mjs"
 import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { atomicCreate, readJSON, safePath, RunState, withLock } from "./run-state.mjs"
 import { loadCompletedExtraction } from "./extraction-checkpoint.mjs"
+import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
 
 function createOnce(root, relative, value) {
   const current = readJSON(root, relative)
@@ -39,12 +40,7 @@ function createOnce(root, relative, value) {
 }
 
 function candidatesFromExtraction(extracted, candidateKey, parses) {
-  if (
-    !extracted?.provenance ||
-    !Array.isArray(extracted.claims) ||
-    !extracted.claims.length ||
-    extracted.development_fixture
-  )
+  if (!extracted?.provenance || !Array.isArray(extracted.claims) || extracted.development_fixture)
     throw Error("Real extracted candidates and provenance required")
   const fields = Object.keys(extractionSchema.properties.claims.items.properties)
   const ids = new Set()
@@ -100,6 +96,8 @@ export async function processSourceRun({
     const sourceExtraction = sourceExtractionBytes ? JSON.parse(sourceExtractionBytes) : null
     if (sourceExtraction?.development_fixture)
       throw Error("Development fixtures cannot enter source processing")
+    if (sourceExtraction?.claims?.length === 0 && !extractionRun)
+      throw Error("Empty source claims require a completed --extraction-run checkpoint")
     const sourceManifest =
       readJSON(root, `runs/${sourceRun}/source-bundle.json`) ||
       readJSON(root, `runs/${sourceRun}/source-selection.json`)
@@ -139,6 +137,7 @@ export async function processSourceRun({
         [
           "source-processing.mjs",
           "extraction-checkpoint.mjs",
+          "empty-extraction-review.mjs",
           "evidence-review-packet.mjs",
           "processed-draft.mjs",
           "claims.mjs",
@@ -208,6 +207,21 @@ export async function processSourceRun({
     createOnce(root, base + "claims.json", workingExtraction)
     // Check exact source bytes even on a successful stage resume.
     assertStoredEvidence(root, documents, parses)
+    if (!workingExtraction.claims.length) {
+      if (reviewFile || assessmentRun || draftRun)
+        throw Error("Empty extraction requires explicit source review before assessment or writing")
+      return {
+        processing_run: run,
+        source_run: sourceRun,
+        processing_input_sha256: sha256(
+          fs.readFileSync(safePath(root, base + "source-processing-input.json")),
+        ),
+        ...loadEmptyExtractionResult(root, run),
+        model_calls: sourceExtraction
+          ? 0
+          : readJSON(root, base + "model-policy/fact_extract/budget.json").attempts.length,
+      }
+    }
     // Reuse validates the completed source-bound response before touching any
     // installed model. Historical ledgers retain their original policy/cost.
     const reusedAssessment = assessmentRun

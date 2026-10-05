@@ -1697,3 +1697,8 @@ Next source slice: legacy-20260714-codex-api-sources-20261005-v1 captured two of
 
 
 2026-10-06 후속 수직 슬라이스: Drive212 작성본과 신규3기사/3이력 노트를 보관·검증하고0b827e1을 push했다. Actions37372213094는 hosted runner 미배정/공식 Actions 장애로 실행 step0·cancelled/deploy skipped이며, 배포·첫 정규 운영 완료로 집계하지 않는다. 외장 별도 worktree에서 source-processing 체크포인트를 기존 공통 검증기로 평가에 연결했다. 평가25/25와 실제3원출력 가져오기/판정(추가 추론0)이 완료됐다. 개발 실제원문26·독립human0·heldout0이다. HFNN 설명1건은 실제 qwen3.8 초안/원문 검토를 거친 private 승인본이며 공개 반영은 후속이다. 런북416·계획19.323을 따른다. 전체 목표 active, 기존7회/08시·50회차483구간+metadata10·독립평가·fullruntime는 유지한다.
+
+
+### 2026-10-06 빈 추출 검토 슬라이스
+
+공통 source processing에서 사실0개는 비교·작성을 진행하지 않고 별도 원문 검토로 반환한다. 완료된 추출·모델 ledger와 정확한 원문 판본을 검증하며, 명시적 검토와 기존 복구만 연결한다. 일일 상태와 portable closure까지 연결했다. 처리49/49+추가 보관1/1+기존 보관14/14. 실제 Groq 두 릴리스 원문으로 모델 누락을 확인하고 기존 사실5개 재추출에 연결했으며 원본49개 파일 SHA와 기존 발행을 보존했다. 추가 추론0. 별도 worktree이고 선행0b827e1 배포 대기 상태를 변경하지 않는다. 전체 목표는 계속 active다.

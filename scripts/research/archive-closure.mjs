@@ -8,6 +8,7 @@ import { loadCurrentApproval } from "./preview.mjs"
 import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { planConceptAuthority } from "./concept-archive.mjs"
 import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
+import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
@@ -95,7 +96,20 @@ export function buildArchiveClosure(
                 noteFact.kind === "knowledge_fact_source",
             ),
         )
-      if (!reviewedDefinitionBackEdge && !definitionSelectionBackEdge) dependencies.push(target)
+      const emptyReviewBackEdge =
+        visiting.has(target) &&
+        ["empty_extraction_review", "empty_extraction_source"].includes(kind) &&
+        edges.some(
+          (edge) =>
+            edge.from === target &&
+            edge.to === id &&
+            edge.kind ===
+              (kind === "empty_extraction_review"
+                ? "empty_extraction_source"
+                : "empty_extraction_review"),
+        )
+      if (!reviewedDefinitionBackEdge && !definitionSelectionBackEdge && !emptyReviewBackEdge)
+        dependencies.push(target)
       edges.push({ from: id, to: target, kind })
     }
     for (const document of stored?.documents || []) {
@@ -153,6 +167,20 @@ export function buildArchiveClosure(
       })
     }
     const processing = readJSON(root, base + "source-processing-input.json")
+    const emptyReference = readJSON(root, base + "empty-extraction-review-reference.json")
+    if (emptyReference) {
+      const result = loadEmptyExtractionResult(root, id)
+      reference(result.review_run, "empty_extraction_review")
+      if (result.recovery) reference(result.recovery.run, "empty_extraction_recovery")
+    }
+    const emptyReview = readJSON(root, base + "empty-extraction-review-input.json")
+    if (emptyReview) {
+      const source = emptyReview.binding?.processing_run
+      reference(source, "empty_extraction_source", () => {
+        if (loadEmptyExtractionResult(root, source).review_run !== id)
+          throw Error("Empty extraction review archive binding changed")
+      })
+    }
     if (processing) {
       if (
         processing.schema !== "research-source-processing-input/v1" ||

@@ -16,6 +16,11 @@ const statuses = new Set([
   "source_required",
   "approval_ready",
   "same_source",
+  "empty_extraction_review",
+  "empty_extraction_recovery_required",
+  "empty_extraction_recovered",
+  "empty_extraction_source_deferred",
+  "empty_extraction_no_event",
 ])
 function inspectProcess(pid) {
   if (!Number.isSafeInteger(pid) || pid < 1) return "missing_handle"
@@ -139,6 +144,8 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
           reused_processing: row.reused_processing === true,
           assessment_run: row.result?.assessment_run || null,
           quote_review_run: row.result?.quote_review_run || null,
+          empty_extraction_review_run: row.result?.review_run || null,
+          empty_extraction_recovery_run: row.result?.recovery?.run || null,
           model_calls: row.reused_processing === true ? (row.result?.model_calls ?? null) : null,
         }
       })

@@ -20,11 +20,16 @@ import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
 import { loadBoundDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
 import { buildArchiveClosure } from "../scripts/research/archive-closure.mjs"
+import {
+  inspectEmptyExtraction,
+  loadEmptyExtractionResult,
+  recordEmptyExtractionReview,
+} from "../scripts/research/empty-extraction-review.mjs"
 import { recordDeepDiveReview } from "../scripts/research/deep-dive.mjs"
 
 function fixture(
   t,
-  { extracted = true, concern = false, sourceURL = "https://example.org/plan" } = {},
+  { extracted = true, concern = false, empty = false, sourceURL = "https://example.org/plan" } = {},
 ) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "source-process-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
@@ -182,6 +187,7 @@ function fixture(
           explanations: [],
         }
       } else throw Error("Unexpected fixture role")
+      if (role === "fact_extract" && empty) output = { claims: [] }
       return {
         output,
         provenance: { model: request.model, digest: "e".repeat(64), runtime: "fixture" },
@@ -857,6 +863,288 @@ function reuseEntry(f) {
     source_urls: [document.original_url],
   }
 }
+
+function emptyReview(f, decision = "extraction_missed_event") {
+  return {
+    schema: "editorial-empty-extraction-review/v1",
+    binding: inspectEmptyExtraction(f.root, "processed").binding,
+    decision,
+    reviewer: "explicit fixture reviewer",
+    reviewed_at: new Date().toISOString(),
+    source_read: true,
+    reason: "원문에 출하 계획이 있지만 모델이 사건을 추출하지 않았다.",
+    anchors: [
+      {
+        source_version_id: f.parse.source_version_id,
+        parse_id: f.parse.parse_id,
+        block_id: f.parse.blocks[0].block_id,
+        quote: f.parse.blocks[0].text,
+      },
+    ],
+    public_approved: false,
+    candidate_published: false,
+  }
+}
+
+test("empty extraction stops before assessment and reuses its completed checkpoint without a model", async (t) => {
+  const f = fixture(t, { extracted: false, empty: true })
+  const result = await processSourceRun(f.options)
+  assert.equal(result.status, "empty_extraction_review")
+  assert.equal(result.model_calls, 1)
+  assert.deepEqual(f.calls, ["fact_extract"])
+  assert.equal(readJSON(f.root, "runs/processed/fact-review-packet.json"), null)
+  const before = fs.readFileSync(path.join(f.root, "runs/processed/claims.json"))
+  assert.equal(
+    (await loadProcessedSourceResult(f.root, "processed", reuseEntry(f))).status,
+    "empty_extraction_review",
+  )
+  const reused = await processSourceRun({
+    ...f.options,
+    run: "reused-empty",
+    extractionRun: "processed",
+    provider: {
+      metadata() {
+        throw Error("No metadata calls allowed")
+      },
+    },
+  })
+  assert.equal(reused.status, "empty_extraction_review")
+  assert.equal(reused.model_calls, 0)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/claims.json")), before)
+  assert.deepEqual(f.calls, ["fact_extract"])
+})
+
+test("empty extraction review connects exact completed recovery and is immutable", async (t) => {
+  const f = fixture(t, { extracted: false, empty: true })
+  await processSourceRun(f.options)
+  const g = fixture(t, { extracted: false })
+  await processSourceRun({ ...f.options, run: "positive", provider: g.provider })
+  const review = { ...emptyReview(f), followup_run: "positive" }
+  atomicWrite(f.root, "empty-review.json", review)
+  const before = fs.readFileSync(path.join(f.root, "runs/processed/processing/state.json"))
+  const result = await main([
+    "review-empty-extraction",
+    "--root",
+    f.root,
+    "--run",
+    "reviewed-empty",
+    "--source-run",
+    "processed",
+    "--review",
+    "empty-review.json",
+  ])
+  assert.equal(result.status, "empty_extraction_recovered")
+  assert.equal(result.recovery.claims, 1)
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.public_approved, false)
+  assert.deepEqual(
+    await recordEmptyExtractionReview({
+      root: f.root,
+      run: "reviewed-empty",
+      sourceRun: "processed",
+      reviewFile: "empty-review.json",
+    }),
+    result,
+  )
+  assert.equal(
+    (await loadProcessedSourceResult(f.root, "processed", reuseEntry(f))).status,
+    "empty_extraction_recovered",
+  )
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/processing/state.json")),
+    before,
+  )
+  await assert.rejects(
+    () =>
+      recordEmptyExtractionReview({
+        root: f.root,
+        run: "different-review",
+        sourceRun: "processed",
+        reviewFile: "empty-review.json",
+      }),
+    /already reviewed/,
+  )
+  const changed = readJSON(f.root, "runs/reviewed-empty/empty-extraction-review.json")
+  changed.recovery.claims = 2
+  atomicWrite(f.root, "runs/reviewed-empty/empty-extraction-review.json", changed)
+  assert.throws(() => loadEmptyExtractionResult(f.root, "processed"), /reference changed/)
+})
+
+test("empty extraction no-event and deferred outcomes require explicit source review", async (t) => {
+  for (const decision of [
+    "no_publishable_event",
+    "source_review_deferred",
+    "extraction_missed_event",
+  ]) {
+    const f = fixture(t, { extracted: false, empty: true })
+    await processSourceRun(f.options)
+    const review = emptyReview(f, decision)
+    if (decision === "source_review_deferred")
+      Object.assign(review, {
+        source_read: false,
+        anchors: [],
+        reason: "원문 사건 여부는 추가 검토가 필요하다.",
+      })
+    if (decision === "no_publishable_event") {
+      review.event_check = Object.fromEntries(
+        [
+          "new_product",
+          "research_result",
+          "customer_adoption",
+          "contract",
+          "strategy_change",
+          "operating_result",
+          "technical_change",
+        ].map((key) => [key, false]),
+      )
+      review.event_check.notes = "테스트의 명시적 검토 입력이며 자동 판정이 아니다."
+    }
+    atomicWrite(f.root, "empty-review.json", review)
+    const result = await recordEmptyExtractionReview({
+      root: f.root,
+      run: "review",
+      sourceRun: "processed",
+      reviewFile: "empty-review.json",
+    })
+    assert.equal(
+      result.status,
+      {
+        no_publishable_event: "empty_extraction_no_event",
+        source_review_deferred: "empty_extraction_source_deferred",
+        extraction_missed_event: "empty_extraction_recovery_required",
+      }[decision],
+    )
+    assert.equal(result.candidate_published, false)
+    assert.equal(result.public_approved, false)
+  }
+})
+
+test("empty extraction rejects unsealed sources, changed checkpoints and invented review evidence", async (t) => {
+  for (const scenario of [
+    "raw-empty",
+    "checkpoint",
+    "budget",
+    "binding",
+    "quote",
+    "unread",
+    "no-checks",
+    "empty-followup",
+    "approval",
+  ]) {
+    await t.test(scenario, async (t) => {
+      const f = fixture(t, { extracted: false, empty: true })
+      await processSourceRun(f.options)
+      const review = emptyReview(f)
+      if (scenario === "raw-empty") {
+        atomicWrite(
+          f.root,
+          "runs/source/claims.json",
+          readJSON(f.root, "runs/processed/claims.json"),
+        )
+        await assert.rejects(
+          () => processSourceRun({ ...f.options, run: "unsealed" }),
+          /completed --extraction-run/,
+        )
+        return
+      }
+      if (scenario === "checkpoint")
+        atomicWrite(f.root, "runs/processed/processing/extraction.json", {
+          claims: [],
+          provenance: { model: "forged" },
+        })
+      if (scenario === "budget") {
+        const budget = readJSON(f.root, "runs/processed/model-policy/fact_extract/budget.json")
+        budget.attempts[0].wall_ms += 1
+        atomicWrite(f.root, "runs/processed/model-policy/fact_extract/budget.json", budget)
+      }
+      if (scenario === "binding") review.binding.claims_sha256 = "a".repeat(64)
+      if (scenario === "quote") review.anchors[0].quote = "This source says nothing."
+      if (scenario === "unread") review.source_read = false
+      if (scenario === "no-checks") review.decision = "no_publishable_event"
+      if (scenario === "empty-followup") {
+        await processSourceRun({ ...f.options, run: "still-empty", extractionRun: "processed" })
+        review.followup_run = "still-empty"
+      }
+      if (scenario === "approval") atomicWrite(f.root, "runs/processed/approved-article.json", {})
+      atomicWrite(f.root, "empty-review.json", review)
+      await assert.rejects(() =>
+        recordEmptyExtractionReview({
+          root: f.root,
+          run: "review",
+          sourceRun: "processed",
+          reviewFile: "empty-review.json",
+        }),
+      )
+      assert.equal(readJSON(f.root, "runs/processed/empty-extraction-review-reference.json"), null)
+    })
+  }
+})
+
+test("empty extraction daily reuse exposes its review gate without processing or candidate approval", async (t) => {
+  const f = fixture(t, { extracted: false, empty: true })
+  await processSourceRun(f.options)
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        ...entry,
+        key,
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+      },
+    ],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  const result = await processDailyCandidates({
+    root: f.root,
+    runId: "empty-daily",
+    dailyRunId: "daily",
+    candidateKeys: [key],
+    policyFile: f.policyFile,
+    processingRuns: { [key]: "processed" },
+    handoffLoader: async () => ({ path: "handoff.json", value: handoff }),
+    processor: async () => {
+      throw Error("No retry allowed")
+    },
+    execute: true,
+  })
+  assert.deepEqual(result.counts, { empty_extraction_review: 1 })
+  assert.equal(
+    loadDailyProcessingStatus(f.root).runs[0].results[0].status,
+    "empty_extraction_review",
+  )
+  assert.deepEqual(f.calls, ["fact_extract"])
+})
+
+test("empty extraction archive follows exact review and recovery from either entry point", async (t) => {
+  const f = fixture(t, { extracted: false, empty: true })
+  await processSourceRun(f.options)
+  const g = fixture(t, { extracted: false })
+  await processSourceRun({ ...f.options, run: "positive", provider: g.provider })
+  atomicWrite(f.root, "empty-review.json", { ...emptyReview(f), followup_run: "positive" })
+  await recordEmptyExtractionReview({
+    root: f.root,
+    run: "review",
+    sourceRun: "processed",
+    reviewFile: "empty-review.json",
+  })
+  for (const entry of ["processed", "review"]) {
+    const closure = buildArchiveClosure(f.root, "portable-" + entry, entry)
+    assert.ok(closure.files.some((file) => file.path === "runs/positive/claims.json"))
+    assert.ok(
+      closure.files.some((file) => file.path === "runs/review/empty-extraction-review.json"),
+    )
+  }
+  atomicWrite(f.root, "runs/review/empty-extraction-review-input.json", {
+    ...emptyReview(f),
+    reason: "changed review",
+  })
+  assert.throws(() => buildArchiveClosure(f.root, "changed", "processed"), /reference changed/)
+})
 
 test("read-only reuse reports fact, writer and editorial gates without a model", async (t) => {
   const f = fixture(t)

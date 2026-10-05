@@ -5,6 +5,7 @@ import { SourceFetcher } from "./research/fetch.mjs"
 import { executeListScan } from "./research/list-scan-command.mjs"
 import { writeDraftCheckpoint } from "./research/draft-checkpoint.mjs"
 import { processSourceRun } from "./research/source-processing.mjs"
+import { recordEmptyExtractionReview } from "./research/empty-extraction-review.mjs"
 import {
   reviewProcessedClaims,
   assertProcessedFactReview,
@@ -194,6 +195,7 @@ export async function main(argv = process.argv.slice(2)) {
       "collect",
       "extract",
       "process-source",
+      "review-empty-extraction",
       "reuse-extraction",
       "review",
       "draft",
@@ -236,7 +238,7 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review-empty-extraction|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -385,6 +387,7 @@ export async function main(argv = process.argv.slice(2)) {
     ![
       "extract",
       "process-source",
+      "review-empty-extraction",
       "reuse-extraction",
       "gold-case",
       "archive-closure",
@@ -1015,6 +1018,22 @@ export async function main(argv = process.argv.slice(2)) {
     command !== "process-source"
   )
     throw Error("Assessment processing options are only supported for process-source")
+  if (command === "review-empty-extraction") {
+    const allowed = ["root", "run", "source-run", "review"]
+    if (
+      !v["source-run"] ||
+      !v.review ||
+      positionals.length !== 1 ||
+      argv.some((arg) => arg.startsWith("--") && !allowed.includes(arg.slice(2).split("=")[0]))
+    )
+      throw Error("review-empty-extraction requires --source-run and private --review only")
+    return recordEmptyExtractionReview({
+      root,
+      run: v.run,
+      sourceRun: v["source-run"],
+      reviewFile: v.review,
+    })
+  }
   if (command === "process-source") {
     const allowed = [
       "root",
