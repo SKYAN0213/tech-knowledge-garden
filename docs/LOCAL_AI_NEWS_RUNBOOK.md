@@ -10066,3 +10066,46 @@ Drive 작성207파일/16폴더를 실제 raw 및 전후목록으로 대조했다
 WebsiteData는 실제 배포342페이지/166기사/24개념/22관계를 기준으로11파일3,460,243bytes를 보관했다. 기존 ID8개를 수정하고 RSS·concepts.csv·connections.csv 3개는 SHA가 같아 쓰기를 생략했다. 저장 전 원격 raw·수정시각과 저장 후11파일 raw SHA/부모/shared:false·최종목록 중복0을 대조했다. 생성 페이지85개의 Drive 노트 미매핑은 snapshot에 유지하며 작성208원본의 Drive 보관과 구분한다. 최초 `--help` 호출은 인자를 처리하지 않는 exporter의 구 배포341/165 staging을 만들었고 이를 새 배포 증거로 사용하지 않았다. 배포 후 별도 외장 staging에서342/166을 생성·검증했다.
 
 릴리스 코드·검사·전체Drive 대조·승인 전환·CI·공개readback·UI·WebsiteData raw 검증의322자료/323ZIPmembers·6,308,843bytes를 Research ID1UCQITbuWMFmw5BW7bkvd89cEnJPqsG3T에 보관했다. actual metadata의 private 부모/shared:false와 원격 raw SHA958d5fde467f5f3300a5c9d839ebfe34be23a15a34c1b5d43849a5e033a35883을 확인하고 exact manifest SHA9bd4f65493b2701fe7fbfdcbfb0d1941a45419b294c2b69bc7b5f3083feda6b1로 공통v1의324파일 CRC/SHA 복구를 검증했다. 이 release evidence는 ordinary snapshot이며 위 승인v2 의존성 복구 및 fullruntime 복구와 구분한다. 다음 재개는 미검토7/14_0002의 Codex 상세/공식 대체원문과 metadata 복구10회차의 실제 근거 확인이다. 모델·기존 통과 검사·완료한7/14_0801 발행을 반복하지 않는다.
+
+
+## 403. 승인한 Drive 작성본의 공통 저장 결과와 재개
+
+`research-authoring.mjs`의 `capture → reconcile → status`를 기존 승인 경로에 연결했다. 새로운 승인이나 Drive API 쓰기를 대신하지 않는다. 공개 독자 화면에는 운영 정보를 추가하지 않았으며, 기존 비공개 `research status`의 처리 탭에서 저장 결과를 조회한다.
+
+### 입력과 실행
+
+1. 기존 `release`가 반환한 ROOT 상대 receipt와 transfer plan, preview manifest, staged bytes를 그대로 사용한다. plan·manifest SHA와 모든 staged SHA/크기가 달라지면 진행하지 않는다. canonical이 변경됐다는 이유로 이전 preview나 원고를 다시 생성하지 않는다.
+2. 연결 도구로 대상 부모의 전체 목록을 먼저 읽고, 존재하는 대상의 metadata와 raw bytes를 읽은 뒤 같은 부모 목록을 다시 읽는다. `list_folder`에는 실제 사용한 `top_k`를 명시한다. 두 목록의 이름·ID·수정시각이 일치하고 제한 개수 미만이어야 한다. 중첩 폴더는 실제 metadata의 부모를 포함한다.
+3. 비공개 `research-authoring-drive-acquisition/v1` JSON으로 연결 응답을 전달한다. `observed_at`은 마지막 실제 원격 확인 시각이다. 이전 응답을 보관한 채 시각만 갱신하지 않는다. `folders`는 `{path, metadata}`, `listings`는 `{path, id, limit, before, after}`다. 목록 항목은 연결 도구의 `id/title/mime_type/parent_ids/modified_time` 필드를 사용한다. `files`는 `{path, metadata, raw}`다. metadata에는 `id/title/mime_type/size/parent_ids/modified_time/shared`, raw에는 `id/mime_type/parent_ids/modified_time/file_size_bytes/b64_string`을 담는다. signed download URL과 readable 중복 응답은 저장하지 않는다.
+4. `capture`가 실제 MIME·부모·ID·수정시각·크기와 완전한 base64를 검사해 observation/readback을 생성한다. 전체 부모 목록으로 부재가 확인된 새 파일에는 raw proof를 만들지 않는다.
+5. `reconcile`이 normalized 파일과 원격 bytes를 재검증하고 승인 release SHA에 묶인 불변 execution receipt를 생성한다. `status`와 `research status`는 저장된 proof를 재검증해 과거 확인 상태를 표시한다.
+
+```sh
+node scripts/research-authoring.mjs capture --root PRIVATE_ROOT \
+  --release runs/PREVIEW/drive-authoring/releases/RELEASE_HASH.json \
+  --acquisition CONNECTOR_ACQUISITION.json
+node scripts/research-authoring.mjs reconcile --root PRIVATE_ROOT \
+  --release runs/PREVIEW/drive-authoring/releases/RELEASE_HASH.json \
+  --observation NORMALIZED_OBSERVATION.json --readback NORMALIZED_READBACK.json
+node scripts/research-authoring.mjs status --root PRIVATE_ROOT
+node scripts/research.mjs status --root PRIVATE_ROOT --format html
+```
+
+관측의 사용 기한은 10분이다. 이후에는 실제 목록과 raw를 다시 확인한다. 입력이 같은 재실행은 같은 receipt를 반환하며 원격 쓰기를 수행하지 않는다. 공유 garden lock과 execution lock을 사용하고 중단된 증거 설치는 동일 bytes에 한해 재개한다. 저장된 raw proof를 재검사하며, 이후 journal 순번으로 같은 관측 시각의 결과도 구분한다.
+
+### 상태와 후속 쓰기
+
+- `verified_complete`: 모든 대상의 실제 bytes가 승인본과 같다. 응답이 유실됐어도 다시 업로드하지 않는다.
+- `pending`: 검증 완료 파일은 제외하고 아직 필요한 `next_operations`만 제시한다. 업데이트는 기존 ID·부모·원래 수정시각과 원래 bytes가 모두 같은 경우에만 남긴다. 새 파일은 전체 부모 목록에 없는 경우에만 생성 후보가 된다. 실제 API 쓰기 직전에도 기한과 원격 metadata를 확인해야 한다.
+- `conflict`: 내용·ID·부모·revision이 다르다. 이전에 확인한 생성 ID가 교체되거나 없어졌어도 재생성하지 않는다. `next_operations` 전체를 비워 다른 파일도 자동으로 밀어 넣지 않는다. 새 검토와 승인으로 충돌을 해결한다.
+- `readback_required` 또는 `invalid`: 공통 proof가 없거나 저장한 증거가 바뀌었다. 과거의 별도 수동 확인 기록을 자동으로 완료로 승격하지 않는다.
+
+`drive_verified`는 해당 관측에서 승인본의 존재를 뜻한다. 이 명령이 쓰기를 수행했다는 뜻이 아니며 `write_performed/drive_written`은 false다. 상태 화면은 `drive_verified_at_observation`과 `remote_current_verified:false`를 구분한다. 공개 배포, 웹·RSS·GitHub·WebsiteData 확인과 새 정규 운영 횟수는 별도 증거가 필요하다.
+
+### 실제 검증과 남은 범위
+
+2026-10-05 09:04:30 UTC에 기존 7/14 승인본 2파일을 재확인했다. 실제 metadata/raw와 51개·30개 부모 목록의 전후 대조, 중첩 폴더 metadata를 공통 capture에서 검사했다. 두 파일 5,450bytes가 기존 ID와 승인 SHA에 일치했고 reconcile 결과 verified2/pending0/conflict0, 추가 쓰기0이었다. release·plan·원고를 재작성하지 않았다. 실제 receipt는 `legacy-20260714-complete-reader-20261005-v1/drive-authoring/executions/467342e58f289c585938db238a4bcd1665b1d5670ecb5a248b61ce9818285235/054850b6f34eaa35a08485865d1394d41fe31346e86f2ab3789bc7bcfb2c9a57/receipt.json`이다.
+
+최초 관련 검사39/39, capture·journal 후속5/5, 중첩 부모/증거 손상 후속2/2 통과. 실제 CLI status와 기존 진척 HTML 생성에 동일 verified_complete를 확인했다. 브라우저 file URL 정책 때문에 실제 HTML 렌더링은 미검증이며 거부를 우회하지 않았다. 첫 patch 문맥 불일치는 현재 코드를 다시 읽어 해결했다. 문서 추가의 stdin 인코딩 실패는 UTF-8 파일을 읽어 추가하는 방식으로 해결했다. 같은 실패를 1시간 반복하지 않았다. 전체 CI와 공개 배포 증거는 후속 기록으로 추가한다.
+
+P5-01/P5-03은 계속 부분 완료다. 실제 connector 쓰기·인증 갱신을 포함한 단일 08시 전 구간과 강제 종료 복구, 독립 human40/20·새 정규7회·전체 legacy 판정은 남는다. 전체 목표와 WBS2/22를 축소하지 않는다.

@@ -4241,3 +4241,10 @@ canonical미판정58/543·metadata복구10·diagnostics0이다. 전수legacy·�
 Vercel6사실/1기사와검토된빈Signals를승인했다. Drive207raw/16폴더대조후2변경/삭제0을같은회차ID로저장하고원격bytes·canonical208/sourceSHA를검증했다. 승인v2closure의actual Drive ZIP60파일복구와승인일치도확인했다. canonical166verified·57회차535구간미판정·metadata복구10·diagnostics0이다. 정규운영횟수추가0·독립human40/20·정규7회/무인08시·fullruntime·전체WBS2/22·goalactive를유지한다. 상세런북402.
 
 공개 후속: 258ecb9/Actions37284484323의 build/deploy 성공·Node845/845·Python15+2/build/site·실제13공개파일과지도module·desktop/mobile을 검증했다. WebsiteData11파일3,460,243bytes의 실제Drive raw SHA를 확인하고 변경 없는3파일은 쓰기를 생략했다. 릴리스 증거322자료의 Drive ZIP actual raw와공통v1 324파일복구까지확인했다. 전체 목표는 미완료이며 다음은 남은 metadata-ready 자료와 metadata 복구 근거를 조사한다.
+
+
+## 19.309. 승인한 Drive 작성본의 재개와 저장 결과 연결
+
+P5-01/P5-03과 실행 묶음 7~8의 다음 수직 슬라이스다. 기존 release·transfer plan·staged bytes를 변경하지 않고, 실제 원격 부모 전체 목록과 raw bytes를 공통 `research-authoring reconcile`에서 대조한다. 부분 저장은 남은 파일만, 응답 유실 뒤 원하는 bytes가 있으면 추가 쓰기 없이 확인한다. 업데이트 ID·부모·수정시각 변경과 이미 생성한 ID의 교체/삭제는 충돌로 기록하고 후속 쓰기를 막는다. 입력 SHA와 공유 잠금에 묶인 불변 receipt를 기존 비공개 진척 화면에 연결한다.
+
+수용 기준은 부분 저장·모호한 생성 성공·ID 교체·revision 충돌·기한 만료·증거 변경·잠금 회귀 검사, 기존 실제 승인 2파일의 fresh Drive readback과 CLI/진척 화면 확인이다. 저장 결과는 공개 배포·정규 운영 횟수로 승격하지 않는다. 실제 API 쓰기 자동화와 인증 갱신, 강제 종료를 포함한 단일 08시 전 구간, 전체 소급·독립 평가·새 정규 7회는 이 슬라이스 이후에도 전체 완료 조건으로 남는다.
