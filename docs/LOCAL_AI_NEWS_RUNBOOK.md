@@ -9975,3 +9975,11 @@ python3 scripts/research/package-archive.py \
 기사4건을 공통v2 ZIP으로 만들고31/49/49/49payload bytes를 복구했다. canonical private 연구 루트로 옮길 때 이미 있는58파일은 exact bytes로 대조하고 새120파일만 생성했다. 작성 vault·공개 자료는 아직 변경하지 않았다. 기존 MCP 배경 기사 approval의 옛 노트와 현재 노트가 달라 통째 closure 복사를 거부한 증거를 보존했다. 옛 승인 우회 대신 현재 note의 동일 facts·원본3수집 묶음을 공통 bundle로 재사용하며 새 모델 호출0으로 구분한다. 서로 다른 사건을 related-run으로 묶지 않고 사건별 보관 계약을 유지한다.
 
 외장 `july24-reader-inputs-20261005-v2.json`은 새 MCP 배정 승인 run·노트 승인 run·전체 전환 packet의 다음 입력이다. 다음은 이 입력의 실제 reader 생성·기존RSS/ID/링크/내용 검증, 승인과 근거의 Drive 보관, fresh Drive-first 작성 반영 및 공개 검증이다. 독립human40/20·정규7회·fullruntime복구·전체 legacy 판정·WBS2/22·goalactive는 남는다. 같은 실패를 한시간 재시도한 항목은 없다.
+
+이어 reader-v1에서 생성/링크/본문/build/site·웹/RSS/GitHub 내용 대조와 RSS40identity가 통과했다. 실제1280/390 화면에서 분야 공유 URL·뒤로가기3→4기사 복원·Enter MCP→날짜 이력→기사 이동, 지도0·가로넘침0을 확인했다. UI JSON과JPEG 두 장은 external root에 보존했다. 전체suite는 로컬에서 반복하지 않았다.
+
+공통v2 전체 승인 근거436payload/438members·15원문판본·2,494,556bytes를 private Drive Research `1vAoaiPtE0_GwioeFEe4JDAwgeOTr09UR`에 저장했다. actual remote SHA47eacfd4c2f860ed0371a8dd26044eb13110f8409cec3b6482b3cbc46390ddaa·모든member 및 loadArchivedConceptApproval의 정의 inventory/기사·개념 배정 bytes를 검증했다. 앞서4건의 local복구와 실제Drive복구를 구분하며 fullruntime복구로 표시하지 않는다.
+
+fresh206원본 raw/16폴더 재조회가 canonical과 일치했고 명시적 retrospective release로3파일22,435bytes를 승인했다. 기존 브리핑·MCP2개를 같은ID로갱신하고 빈Signals ID13TeNXrDFeoPfuWgG-3Pcj_G10D4SOkKB를 생성했다. 새3raw는 stagedSHA/bytes/부모/수정시각이 같고 나머지203개는 post16폴더의metadata 불변을 대조한 최초raw를 재사용했다. 최종207원본1,335,113bytes/sourceSHA9270f47ab0a4dd152ea7faadfb1a91f15150642181df05109604696fa90ea9aa, snapshotfileSHA3e9482816af984d62bfc3dd00ec739d23318ce89d7c63c5ea2a016a4cca56f6a를 canonical에 적용했다. pull의 변경3/삭제0·workingcopy207 검증이 통과했다. 최종 저장 구간은 실제livePID76788로 garden-operation을 보호하고 정상해제했다. 최초 stdin EOF로 종료한PID76734는 terminal13과실제missingPID를 확인한 뒤 정확한owner로 공통recover-lock을 수행했다. 살아 있는 worker를 재시작하거나 lock을 임의삭제하지 않았다.
+
+작성원본 반영까지 완료했고 공개배포·WebsiteData·최종발행증거 보관은 다음이다. 소급 정정은 신규정규운영0이며 전체 목표 active다. metadata복구10회차와 독립human40/20·정규7회·fullruntime복구를 그대로 유지한다.
