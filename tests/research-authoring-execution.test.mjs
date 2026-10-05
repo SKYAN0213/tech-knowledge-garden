@@ -515,6 +515,94 @@ function liveCapture(f, contents, name) {
   f.observation.observed_at = new Date().toISOString()
   return f.put(name, connectorCapture(f, contents))
 }
+function interruptedCli(f, contents) {
+  const command = spawnSync(
+    process.execPath,
+    [
+      "scripts/research-authoring.mjs",
+      "write-session",
+      "--root",
+      f.root,
+      "--release",
+      f.releasePath,
+      "--acquisition",
+      liveCapture(f, contents, "closed-input.json"),
+    ],
+    { encoding: "utf8", input: "", timeout: 10000 },
+  )
+  assert.equal(command.status, 1, command.stderr)
+  assert.match(command.stderr, /outcome unknown/)
+  return JSON.parse(command.stdout.trim().split("\n")[0])
+}
+
+test("explicit update resume reuses a dead writer intent with fresh unchanged raw evidence", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "old"]])
+  const first = interruptedCli(f, contents),
+    intentFile = path.join(f.root, first.intent_path)
+  const original = fs.readFileSync(intentFile),
+    events = []
+  assert.throws(() => process.kill(JSON.parse(original).pid, 0), { code: "ESRCH" })
+  const result = await session(f, liveCapture(f, contents, "resume-update.json"), {
+    resumeIntent: first.intent_path,
+    emit: (event) => events.push(event),
+    nextCapture: async (intent) => {
+      const kind = intent.operation.action
+      appliedNow(f, kind)
+      contents.set(
+        kind === "update" ? "Knowledge/topic.md" : "Signals/new.md",
+        kind === "update" ? "new" : "signals",
+      )
+      return liveCapture(f, contents, kind + "-post.json")
+    },
+  })
+  assert.equal(result.status, "verified_complete")
+  assert.deepEqual(result.resumed_intents, [first.intent_path])
+  assert.equal(result.created_intents.length, 1)
+  assert.equal(events[0].intent_path, first.intent_path)
+  assert.equal(events[0].resumed, true)
+  assert.equal(events[1].resumed, false)
+  assert.deepEqual(fs.readFileSync(intentFile), original)
+  assert.equal(loadAuthoringWriteStatus(f.root).unresolved, 0)
+  assertNoUnresolvedAuthoringWrites(f.root)
+})
+
+test("explicit update resume rejects live owners, changed metadata, other releases and create intents", async (t) => {
+  for (const kind of ["live", "modified", "release", "create"]) {
+    const f = fixture(t),
+      contents = new Map([["Knowledge/topic.md", "old"]])
+    if (kind === "create") {
+      appliedNow(f, "update")
+      contents.set("Knowledge/topic.md", "new")
+    }
+    const first = interruptedCli(f, contents)
+    if (kind === "live") {
+      const file = path.join(f.root, first.intent_path),
+        intent = JSON.parse(fs.readFileSync(file))
+      intent.pid = process.pid
+      fs.writeFileSync(file, JSON.stringify(intent, null, 2) + "\n")
+    }
+    if (kind === "modified")
+      f.observation.listings[0].files[0].modified_at = new Date().toISOString()
+    let releasePath = f.releasePath
+    if (kind === "release") {
+      const different = structuredClone(f.release)
+      different.input_sha256.review = sha256("separate review")
+      releasePath = `${f.base}/releases/${sha256(JSON.stringify(different.input_sha256))}.json`
+      f.put(releasePath, different)
+    }
+    await assert.rejects(
+      session(f, liveCapture(f, contents, "resume-denied.json"), {
+        releasePath,
+        resumeIntent: first.intent_path,
+        emit: () => assert.fail("Rejected resumption must not request a write"),
+        nextCapture: () => assert.fail(),
+      }),
+      kind === "live" ? /still live/ : /unchanged existing file and original update/,
+    )
+    assert.equal(loadAuthoringWriteStatus(f.root).unresolved, 1)
+  }
+})
 function appliedNow(f, kind) {
   f.apply(kind)
   const index = kind === "create" ? 1 : 0

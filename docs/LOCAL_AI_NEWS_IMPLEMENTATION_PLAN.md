@@ -4277,3 +4277,11 @@ P5-01/P5-03과 실행 묶음 7~8의 다음 수직 슬라이스다. 기존 releas
 Codex7/14_0002의 릴리스와 비교 변경을 공식 API에서 확인하고 기존 공통 collector로 다른 원문 identity의2endpoint를 policy checked/HTTP200 수집했다. 원래 robots-denied HTML은 그대로 보존한다. 실제 상세 parser는 JSON unsupported/blocks0이므로 수집을 기사 전환으로 승격하지 않는다. raw/parse10자료·2source versions를 private Drive에 실제 SHA 검증·common restore로 보관했다. 상세 런북405.
 
 다음은 source별 crawler가 아닌 profile 기반 공통 JSON 상세 parser다. pointer provenance·metadata/record 분리·예산·URL/tag identity·결손/충돌 검사를 구현하고 저장 raw2개를 재사용해 reparse한다. 기존 릴리스/HTML/PDF 경로를 보존하며 표적 한 묶음만 수행한다. 실제 세 변경 사실 검토·Qwen 작성·고정ID 전환 뒤404 writer의 실제 Drive 저장과 기존 공개 채널 검증까지 진행한다. 기사/용어 승인과 무인08시·독립human40/20·정규7회·전수legacy/fullruntime는 아직 완료하지 않았다. 전체WBS2/22·goalactive를 유지한다.
+
+## 19.312. 공통 JSON 원문부터 실제 원고 저장까지 연결
+
+JSON pointer/식별자/record 날짜/예산을 갖춘 공통 parser와 GitHub REST release/compare 재사용 profile, 완료 추출 checkpoint 재사용, archive의 processing/extraction/assessment 참조, JSON 문서 발표시각 guard를 구현했다. Codex의 기존 raw2개를 추가 HTTP0으로178blocks 재파싱하고 추출 완료 후 context 실패를 기존3batch 재사용으로 복구했다. 실제 Qwen 비교4호출·한국어 writer1호출 후7facts/3문장/2설명을 승인했다. 근거/정정/승인82자료의 actual private Drive bytes와 v2 독립 복구를 확인했다. 상세 런북406.
+
+fresh208원본을 검증한 retrospective release에서 기존7/14_0002 파일1개를 같은 Drive ID에 update1회 하고 post raw SHA를 확인했다. stdin wrapper 중단으로 남은 unknown update를 지우지 않았으며 explicit --resume-intent의 종료PID·같은 release/첫 operation/ID/부모/원본SHA/수정시각/fresh raw 관문으로 재개했다. create·live·변경·다른 release 거부2시험과 원래 intent 불변/원격 resolution을 확인했다. 전체208 post raw 대조에서207불변이고 common snapshot/apply·canonical refresh/validate가 통과했다.
+
+소급 미검토56회차527구간·metadata10·전체WBS2/22·goalactive를 유지한다. 독립human40dev/20heldout·새 실제 정규7회·무인08시/인증·fullportable runtime 및 전수legacy 판정은 남는다. 이 단계는 actual Drive write의 증거이며 새 정규 운영이나 전체 완료가 아니다. 다음은 최종 통합 CI1회·공개 기사/브리핑/GitHub/RSS·1280/390 대상 UI·WebsiteData·최종 발행 증거 확인이다. 같은 병목을1시간 재시도한 항목0이다.

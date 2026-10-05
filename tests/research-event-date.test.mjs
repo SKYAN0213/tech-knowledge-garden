@@ -214,6 +214,72 @@ test("source publication timestamps retain UTC evidence and explicitly project t
   }
 })
 
+test("JSON publication time requires an exact reviewed root field, not a record or observation date", () => {
+  const s = fixture()
+  const timestamp = "2026-07-13T22:04:00Z"
+  s.p.parser = { id: "json-document" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      type: "json",
+      json_pointer: "/published_at",
+      text: timestamp,
+      text_hash: sha256(timestamp),
+    },
+  }
+  s.p.blocks = [
+    {
+      block_id: "p1:b1",
+      text: timestamp,
+      locator: {
+        type: "json",
+        json_pointer: "/published_at",
+        field_sha256: sha256(timestamp),
+        text_hash: sha256(timestamp),
+      },
+    },
+  ]
+  s.claims[0].published_at = timestamp
+  s.claims[0].evidence[0].quote = timestamp
+  s.review.published_at = "2026-07-14"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-time",
+    source_published_at: timestamp,
+  })
+  for (const mutate of [
+    (p) => (p.dates.basis.json_pointer = "/other_date"),
+    (p) => (p.dates.basis.json_pointer = "/invalid~escape"),
+    (p) => (p.dates.basis.text_hash = "0".repeat(64)),
+    (p) => (p.blocks[0].locator.field_sha256 = "0".repeat(64)),
+    (p) => (p.blocks[0].locator.record = { id: "commit" }),
+    (p) => (p.parser.id = "html"),
+    (p) => (p.blocks[0].locator.json_pointer = "/observed_at"),
+    (p) => (p.blocks[0].text = "Another date"),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]), /exact used source timestamp/)
+  }
+  const claims = structuredClone(s.claims)
+  claims[0].evidence[0].quote = "Another value"
+  assert.throws(() => eventDateMetadata(s.review, claims, [s.p]), /exact used source timestamp/)
+  assert.throws(
+    () => eventDateMetadata(s.review, s.claims, [s.p], ["other-claim"]),
+    /exact used source timestamp/,
+  )
+})
+
 test("dated update preserves source publication and requires the visible event's explicit date", () => {
   const s = fixture()
   const a = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])

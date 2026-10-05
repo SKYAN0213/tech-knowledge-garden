@@ -27,6 +27,7 @@ try {
       readback: { type: "string" },
       acquisition: { type: "string" },
       "wait-ms": { type: "string" },
+      "resume-intent": { type: "string" },
     },
   })
   let result
@@ -40,6 +41,8 @@ try {
     throw Error("Connector acquisition requires capture or write-session")
   if (positionals[0] !== "write-session" && values["wait-ms"])
     throw Error("Wait budget requires write-session")
+  if (positionals[0] !== "write-session" && values["resume-intent"])
+    throw Error("Explicit update resumption requires write-session")
   if (positionals[0] !== "release" && (values.review || values.snapshot))
     throw Error("Review and snapshot require release")
   if (
@@ -79,6 +82,7 @@ try {
         releasePath: values.release,
         acquisitionFile: values.acquisition,
         waitMs: values["wait-ms"] ? Number(values["wait-ms"]) : 300000,
+        resumeIntent: values["resume-intent"] || null,
         emit: (event) => console.log(JSON.stringify(event)),
         nextCapture: async () => {
           const line = queue.length
@@ -180,7 +184,7 @@ try {
     })
   else
     throw Error(
-      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000]; status",
+      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000] [--resume-intent ROOT_RELATIVE_UPDATE_INTENT]; status",
     )
   console.log(
     JSON.stringify(

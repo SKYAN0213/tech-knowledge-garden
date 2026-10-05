@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -1615,6 +1615,191 @@ def markdown_parse(raw, url, options):
     return {"status": "extracted" if complete else "partial", "title": title, "title_basis": title_basis, "title_profile_status": "matched" if title else "ambiguous" if titles else "missing", "language": options.get("language"), "dates": dates, "blocks": blocks, "links": links, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False}}
 
 
+def json_document_parse(raw, url, options):
+    """Parse configured JSON fields, preserving pointers and separate record dates."""
+    import math
+
+    profile = options.get("json_document")
+    allowed = {"title_pointer", "published_at_pointer", "modified_at_pointer", "identities", "fields", "records", "max_bytes", "max_depth", "max_nodes", "max_records", "max_blocks", "max_field_chars"}
+    if not isinstance(profile, dict) or set(profile) - allowed:
+        raise ValueError("Explicit JSON document profile required")
+
+    def budget(key, default, maximum):
+        value = profile.get(key, default)
+        if type(value) is not int or not 1 <= value <= maximum:
+            raise ValueError("Invalid JSON budget: " + key)
+        return value
+
+    if len(raw) > budget("max_bytes", 5 * 1024**2, 10 * 1024**2):
+        raise ValueError("JSON byte budget exceeded")
+    max_depth, max_nodes = budget("max_depth", 64, 128), budget("max_nodes", 100000, 200000)
+    max_records, max_blocks = budget("max_records", 300, 1000), budget("max_blocks", 3000, 10000)
+    max_field_chars = budget("max_field_chars", 200000, 1000000)
+
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("Duplicate JSON key")
+            value[key] = item
+        return value
+
+    def invalid_constant(value):
+        raise ValueError("Non-finite JSON number")
+
+    document = json.loads(raw.decode("utf-8-sig", errors="strict"), object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    pending, nodes = [(document, 0)], 0
+    while pending:
+        value, depth = pending.pop()
+        nodes += 1
+        if depth > max_depth or nodes > max_nodes:
+            raise ValueError("JSON structure budget exceeded")
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError("Non-finite JSON number")
+        children = value.values() if isinstance(value, dict) else value if isinstance(value, list) else []
+        pending.extend((item, depth + 1) for item in children)
+
+    missing = object()
+
+    def pointer(value, selector):
+        if not isinstance(selector, str) or len(selector) > 1024 or (selector and not selector.startswith("/")) or re.search(r"~(?![01])", selector):
+            raise ValueError("Invalid JSON pointer")
+        for encoded in selector[1:].split("/") if selector else []:
+            key = encoded.replace("~1", "/").replace("~0", "~")
+            if isinstance(value, dict):
+                value = value.get(key, missing)
+            elif isinstance(value, list) and re.fullmatch(r"0|[1-9][0-9]*", key):
+                index = int(key)
+                value = value[index] if index < len(value) else missing
+            else:
+                return missing
+            if value is missing:
+                break
+        return value
+
+    identities = profile.get("identities")
+    if not isinstance(identities, list) or not 1 <= len(identities) <= 8:
+        raise ValueError("JSON source identity rules required")
+    for rule in identities:
+        if not isinstance(rule, dict) or set(rule) - {"pointer", "url_pattern", "expected"}:
+            raise ValueError("Invalid JSON identity rule")
+        pattern = rule.get("url_pattern")
+        if not isinstance(pattern, str) or not 1 <= len(pattern) <= 1024 or len(url) > 4096:
+            raise ValueError("Bounded JSON identity pattern required")
+        match = re.fullmatch(pattern, unquote(url))
+        actual = pointer(document, rule.get("pointer"))
+        expected = rule.get("expected", "{value}")
+        if not isinstance(expected, str) or len(expected) > 4096:
+            raise ValueError("Invalid JSON identity expectation")
+        if not match or type(actual) not in (str, int) or unquote(str(actual)) != expected.format_map(match.groupdict()):
+            raise ValueError("JSON source identity mismatch")
+
+    def location(selector, value):
+        return {"type": "json", "json_pointer": selector, "text_hash": digest(clean(value))}
+
+    title_value = pointer(document, profile.get("title_pointer"))
+    if title_value is not missing and title_value is not None and not isinstance(title_value, str):
+        raise ValueError("JSON title must be a string")
+    title = clean(title_value) if isinstance(title_value, str) else None
+    if title and len(title) > 4096:
+        raise ValueError("JSON title budget exceeded")
+    dates = {"published_at": None, "modified_at": None, "precision": "unknown", "profile_status": "not-configured", "basis": None}
+    issues, blocks, links, selected = [], [], [], set()
+    if not title:
+        issues.append({"pointer": profile["title_pointer"], "reason": "missing-title"})
+    for key in ("published_at", "modified_at"):
+        selector = profile.get(key + "_pointer")
+        if selector is None:
+            continue
+        value = pointer(document, selector)
+        parsed = source_date_value(value)
+        dates[key] = parsed
+        state = "matched" if parsed else "missing" if value is missing or value is None else "invalid-date"
+        dates[key + "_profile_status"] = state
+        if key == "published_at":
+            dates.update({"profile_status": state, "precision": "timestamp" if parsed and "T" in parsed else "day" if parsed else "unknown", "basis": {**location(selector, value), "text": value} if isinstance(value, str) else None})
+            if not parsed:
+                issues.append({"pointer": selector, "reason": state})
+        elif value is not missing and value is not None and not parsed:
+            issues.append({"pointer": selector, "reason": state})
+
+    def fields(value, mapping, prefix="", record=None):
+        if not isinstance(mapping, list) or len(mapping) > 32:
+            raise ValueError("Bounded JSON field mappings required")
+        for field in mapping:
+            if not isinstance(field, dict) or set(field) - {"pointer", "format", "required"} or type(field.get("required", True)) is not bool:
+                raise ValueError("Invalid JSON field mapping")
+            selector = field.get("pointer")
+            item = pointer(value, selector)
+            absolute = prefix + selector
+            if absolute in selected:
+                raise ValueError("Duplicate JSON field selection")
+            selected.add(absolute)
+            fmt = field.get("format", "text")
+            if fmt not in ("text", "markdown", "scalar"):
+                raise ValueError("Unsupported JSON field format")
+            if item is missing or item is None or (isinstance(item, str) and not item.strip()):
+                if field.get("required", True):
+                    issues.append({"pointer": absolute, "reason": "missing-field"})
+                continue
+            if not isinstance(item, str) and not (fmt == "scalar" and type(item) in (int, float, bool)):
+                raise ValueError("JSON field has an incompatible value type")
+            text = item if isinstance(item, str) else json.dumps(item, ensure_ascii=False, allow_nan=False)
+            if len(text) > max_field_chars:
+                raise ValueError("JSON field character budget exceeded")
+            loc = {"type": "json", "json_pointer": absolute, "field_sha256": digest(text)}
+            if record is not None:
+                loc["record"] = record
+            if fmt == "markdown":
+                content = markdown_parse(text.encode(), url, {})
+                for block in content["blocks"]:
+                    block["locator"] = {**loc, "fragment": block["locator"], "text_hash": digest(block["text"])}
+                    blocks.append(block)
+                for link in content["links"]:
+                    link["locator"] = {**loc, "fragment": link["locator"]}
+                    links.append(link)
+            else:
+                text = clean(text)
+                blocks.append({"kind": "paragraph", "text": text, "locator": {**loc, "text_hash": digest(text)}})
+            if len(blocks) > max_blocks or len(links) > 5000:
+                raise ValueError("JSON extracted block budget exceeded")
+
+    fields(document, profile.get("fields", []))
+    records = profile.get("records")
+    record_count = 0
+    if records is not None:
+        if not isinstance(records, dict) or set(records) - {"pointer", "id_pointer", "date_pointer", "count_pointer", "fields"}:
+            raise ValueError("Invalid JSON record mapping")
+        rows = pointer(document, records.get("pointer"))
+        if not isinstance(rows, list) or len(rows) > max_records:
+            raise ValueError("JSON record collection missing or over budget")
+        record_count = len(rows)
+        if records.get("count_pointer") is not None:
+            count = pointer(document, records["count_pointer"])
+            if type(count) is not int or count != record_count:
+                raise ValueError("Incomplete JSON record collection")
+        identities = set()
+        for index, row in enumerate(rows):
+            identity = pointer(row, records.get("id_pointer"))
+            if type(identity) not in (str, int) or isinstance(identity, str) and (not identity.strip() or len(identity) > 4096):
+                raise ValueError("JSON record identity required")
+            encoded = json.dumps(identity)
+            if encoded in identities:
+                raise ValueError("Duplicate JSON record identity")
+            identities.add(encoded)
+            prefix = records["pointer"] + "/" + str(index)
+            record = {"json_pointer": prefix, "id": identity}
+            if records.get("date_pointer") is not None:
+                value = pointer(row, records["date_pointer"])
+                date = source_date_value(value)
+                record.update({"date_pointer": prefix + records["date_pointer"], "date": date})
+                if date is None:
+                    issues.append({"pointer": record["date_pointer"], "reason": "missing-or-invalid-record-date"})
+            fields(row, records.get("fields"), prefix, record)
+    complete = bool(title and blocks and not issues)
+    return {"status": "extracted" if complete else "partial", "title": title, "title_basis": location(profile["title_pointer"], title_value) if title else None, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": links, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False, "json_issues": issues, "record_count": record_count}}
+
+
 def pdf_parse(raw, options):
     import pymupdf
     doc = pymupdf.open(stream=raw, filetype="pdf")
@@ -1850,7 +2035,12 @@ def run(request, root):
         raise ValueError("Explicit XML fragment profile requires an XML response")
     prefix = raw[:8192].removeprefix(b"\xef\xbb\xbf").lstrip()
     html_document = re.match(rb"^(?:<!--.*?-->\s*)*(?:<!doctype\s+html\b|<html(?:\s|>))", prefix, re.I | re.S)
-    if raw.startswith(b"%PDF-"):
+    if options.get("format") == "json-document":
+        if fragment_mime != "application/json" and not (fragment_mime.startswith("application/") and fragment_mime.endswith("+json")):
+            raise ValueError("Explicit JSON profile requires a JSON response")
+        parsed = json_document_parse(raw, request["url"], options)
+        parser = {"id": "json-document", "version": VERSION}
+    elif raw.startswith(b"%PDF-"):
         parsed = pdf_parse(raw, options)
         parser = {"id": "pymupdf", "version": importlib.metadata.version("PyMuPDF")}
     elif options.get("ocr") is True and (raw.startswith(b"\x89PNG\r\n\x1a\n") or raw.startswith(b"\xff\xd8\xff")):

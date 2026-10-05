@@ -125,6 +125,7 @@ export async function main(argv = process.argv.slice(2)) {
       think: { type: "string", default: "medium" },
       "model-policy": { type: "string" },
       "assessment-run": { type: "string" },
+      "extraction-run": { type: "string" },
       "draft-run": { type: "string" },
       "evidence-think": { type: "string" },
       review: { type: "string" },
@@ -1007,7 +1008,10 @@ export async function main(argv = process.argv.slice(2)) {
     })
   }
   if (
-    (v["assessment-run"] || v["draft-run"] || v["evidence-think"] !== undefined) &&
+    (v["extraction-run"] ||
+      v["assessment-run"] ||
+      v["draft-run"] ||
+      v["evidence-think"] !== undefined) &&
     command !== "process-source"
   )
     throw Error("Assessment processing options are only supported for process-source")
@@ -1017,6 +1021,7 @@ export async function main(argv = process.argv.slice(2)) {
       "run",
       "source-run",
       "model-policy",
+      "extraction-run",
       "assessment-run",
       "draft-run",
       "evidence-think",
@@ -1037,6 +1042,7 @@ export async function main(argv = process.argv.slice(2)) {
       run: v.run,
       sourceRun: v["source-run"],
       policyFile: v["model-policy"],
+      extractionRun: v["extraction-run"],
       assessmentRun: v["assessment-run"],
       draftRun: v["draft-run"],
       reviewFile: v.review,

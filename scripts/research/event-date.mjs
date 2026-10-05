@@ -107,6 +107,31 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     )
     const claim = eligible.find((c) => c.claim_id === b.claim_id)
     const stamp = parseResearchDate(b.source_published_at)
+    const basis = p?.dates?.basis
+    const jsonBasis =
+      p?.parser?.id === "json-document" &&
+      basis?.type === "json" &&
+      typeof basis.json_pointer === "string" &&
+      /^\/(?:[^~]|~[01])*$/.test(basis.json_pointer) &&
+      basis.json_pointer.length <= 1024 &&
+      typeof basis.text === "string" &&
+      basis.text_hash === sha256(basis.text.trim().replace(/\s+/g, " ")) &&
+      claim?.evidence.some((e) => {
+        const block = p.blocks.find((block) => block.block_id === e.block_id)
+        return (
+          e.parse_id === p.parse_id &&
+          e.source_id === p.source_id &&
+          e.source_version_id === p.source_version_id &&
+          e.support === "direct" &&
+          block?.locator.type === "json" &&
+          !block.locator.record &&
+          block.locator.json_pointer === basis.json_pointer &&
+          block.locator.field_sha256 === sha256(basis.text) &&
+          block.locator.text_hash === sha256(block.text) &&
+          block.text === basis.text.trim().replace(/\s+/g, " ") &&
+          e.quote.includes(basis.text.trim())
+        )
+      })
     if (
       !p ||
       !claim ||
@@ -114,7 +139,7 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
       p.dates?.published_at !== b.source_published_at ||
       p.dates.precision !== "timestamp" ||
       p.dates.profile_status !== "matched" ||
-      !p.dates.basis?.dom_path ||
+      (!basis?.dom_path && !jsonBasis) ||
       parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant ||
       parseResearchDate(claim.published_at)?.instant !== stamp.instant ||
       !claim.evidence.some(

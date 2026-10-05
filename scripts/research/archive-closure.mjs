@@ -7,6 +7,7 @@ import { loadApprovedOntologyInput } from "./ontology.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
 import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { planConceptAuthority } from "./concept-archive.mjs"
+import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
@@ -150,6 +151,29 @@ export function buildArchiveClosure(
         )
           throw Error("Source selection dependency changed")
       })
+    }
+    const processing = readJSON(root, base + "source-processing-input.json")
+    if (processing) {
+      if (
+        processing.schema !== "research-source-processing-input/v1" ||
+        processing.source_identity?.source_run !== processing.source_run ||
+        processing.source_identity.documents_sha256 !== stored?.identity.documents_sha256 ||
+        processing.source_identity.parses_sha256 !== stored?.identity.parses_sha256
+      )
+        throw Error("Processing archive source binding changed")
+      reference(processing.source_run, "processing_source", () => {
+        if (
+          JSON.stringify(loadStoredSourceRun(root, processing.source_run).identity) !==
+          JSON.stringify(processing.source_identity)
+        )
+          throw Error("Processing source dependency changed")
+      })
+      assertProcessingExtractionOrigin(root, processing, stored.documents, stored.parses)
+      if (processing.extraction_run) reference(processing.extraction_run, "processing_extraction")
+      if (processing.assessment_run !== id)
+        reference(processing.assessment_run, "processing_assessment")
+      if (processing.draft_run !== id && readJSON(root, base + "draft-generation-reference.json"))
+        reference(processing.draft_run, "processing_draft")
     }
     const reuse = readJSON(root, base + "extraction-reuse.json")
     if (reuse) {

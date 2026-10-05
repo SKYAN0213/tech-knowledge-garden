@@ -7,6 +7,7 @@ import { loadProcessedDraft } from "./processed-draft.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
 import { draftMarkdown } from "./editor.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
+import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
 
 // Read completed checkpoints without metadata requests or generation. A model
 // being replaced/deleted does not invalidate its reviewed, exact-source work.
@@ -27,12 +28,7 @@ export async function loadProcessedSourceResult(root, run, entry) {
     origin.identity.parses_sha256 !== input.source_identity.parses_sha256
   )
     throw Error("Reused processing source binding changed")
-  const sourceClaims = safePath(root, `runs/${input.source_run}/claims.json`)
-  if (
-    input.source_extraction_sha256 !==
-    (fs.existsSync(sourceClaims) ? sha256(fs.readFileSync(sourceClaims)) : null)
-  )
-    throw Error("Reused extraction origin changed")
+  assertProcessingExtractionOrigin(root, input, documents, parses)
   const source = parses.find(
     (p) => p.parse_id === entry.parse_id && p.source_version_id === entry.source_version_id,
   )
@@ -55,6 +51,7 @@ export async function loadProcessedSourceResult(root, run, entry) {
   const common = {
     processing_run: run,
     source_run: input.source_run,
+    ...(input.extraction_run ? { extraction_run: input.extraction_run } : {}),
     assessment_run: input.assessment_run,
     processing_input_sha256: sha256(bytes),
     model_calls: 0,

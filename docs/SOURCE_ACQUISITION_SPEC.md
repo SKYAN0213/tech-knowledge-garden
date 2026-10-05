@@ -2593,3 +2593,17 @@ legacy `source_list_review`는 기사에 이미 있는 inline 원문을 유지�
 `github-release-detail-v1`은공통 HTML XPath 파서에GitHub release의본문/제목/발표일위치만설정한다. 기존정확한NemoClaw v0.0.115 profile과겹치지않게유지하며그밖의공개owner/repository/releases/tag 경로를재사용한다. 로그인안내/전역탐색/태그비교dialog는본문과제목에포함하지않는다. `markdown-body`가정확히하나가아니면fallback하지않고실패한다. 본문의paragraph/list/code/table과heading을보존한다.
 
 발표시각은release header의relative-time.no-wrap@datetime의ISOUTC이며서명시각·관측시각·파일명을대체근거로쓰지않는다. `%Y-%m-%dT%H:%M:%S%z`로offset을검사하고publication_date_preserve_time을사용한다. 시각누락/중복은dates.profile_status와null을유지하며본문추출과발표시각검토는별도다. 기존프로필과새프로필의표적/actual4HTML 재파싱·누락/중복·서명배제·raw/oldparse보존증거는런북399를따른다. 짧은release본문만확인했다면변경세부는별도공식commit/compare/API원문검토후작성한다.
+
+## 85. 공통 JSON 원문 상세 파싱과 완료한 사실 추출 재사용
+
+공통 collector로 보관한 `application/json` 또는 `application/*+json` 응답은 명시적인 `format: json-document` 상세 프로필에서만 처리한다. 형식 미지정 응답의 unsupported 판정은 유지한다. JSON을 HTML로 위장하거나 접근이 거부된 원문을 성공으로 바꾸지 않는다. 수집·robots 정책·raw 판본·재파싱·승인·보관 경로는 기존 기능을 재사용한다.
+
+`json_document`의 `title_pointer`, `published_at_pointer`, `modified_at_pointer`는 RFC 6901 pointer다. `identities`는 원문 필드와 URL의 명명된 캡처를 정확하게 대조한다. `fields`는 text/markdown/scalar를 지정하며, `records`는 반복 목록의 pointer·id_pointer·date_pointer·count_pointer와 동일한 fields를 지정한다. 본문 선택 필드는 최대32개이며 미선택 원문 필드도 raw에 보존한다. Markdown은 기존 Markdown 파서를 사용해 제목·문단·목록·표·코드·링크를 보존하고 실행하지 않는다. 각 block에는 절대 JSON pointer·선택 필드 SHA·원래 Markdown 조각 locator·text SHA를 기록한다.
+
+등록된 `github-release-json-v1`, `github-compare-json-v1`은 여러 owner/repository에 공통 적용한다. 릴리스의 tag_name/html_url과 요청 경로를 대조하고, compare의 url·total_commits·commits 개수 및 고유 SHA를 검사한다. compare status/ahead/behind/base/merge-base와 commit 메시지를 보존한다. commit 날짜는 record locator에 남기고 문서 발표일로 추정하지 않는다. 날짜가 구성되지 않은 비교 문서의 published_at은 null이다. profile 선택용 url_pattern은 JavaScript 문법, worker의 identities.url_pattern은 Python 문법이다. 외부 JSON 문자열은 실행 지시가 아니다.
+
+UTF-8, 중복 object key, 비유한 수, 잘못된 pointer·값 타입·원문 신원 충돌, 누락/중복 record, 불완전 total count를 검사한다. 기본 예산은 raw5MiB·깊이64·node100,000·record300·block3,000·field200,000자이며 최대값은10MiB/128/200,000/1,000/10,000/1,000,000이다. 예산 초과는 잘라내지 않고 실패한다. 제목·필수 본문·구성된 발표일의 결손은 partial/json_issues로 남기며 파싱 성공은 기사 검토가 아니다. 실물2개 재파싱은 추가 HTTP0, 과거 raw/parse/관측시각을 유지했다.
+
+`process-source --extraction-run COMPLETED_PROCESSING_RUN`은 동일한 선택 documents/parses에서 완료한 extraction 체크포인트를 재사용한다. source-processing input·state/result hash·claims 원본이 일치해야 하며 원래 candidate_key를 유지한다. 후속 비교 실패, 정책 변경 후에는 새 run에서 완료 추출을 재사용하고 근거 비교부터 진행한다. 이전 run과 모델 원출력은 덮어쓰지 않는다. 근거 비교·사실 검토·편집 승인·Drive 쓰기·공개는 각각 별도이며 재사용만으로 승인하지 않는다.
+
+현재 로컬 qwen3.8:27b-mlx의 metadata는 context_length262,144를 제공한다. 전체 source block ID를 포함하는 실제 API 입력이16,384 설정의 보수적 문자 예산을 넘겨 evidence_compare만32,768로 조정했다. 기존 역할 검증의 상한32,768·call300초·total900초와 기타 역할은 유지한다. 더 큰 입력이 상한을 넘으면 원문을 조용히 잘라내거나 같은 실행을 반복하지 않는다. 실제 운영 승격과 예약 모델은 별도다.

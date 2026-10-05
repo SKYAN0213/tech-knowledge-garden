@@ -19,6 +19,7 @@ import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
 import { loadBoundDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
+import { buildArchiveClosure } from "../scripts/research/archive-closure.mjs"
 
 function fixture(
   t,
@@ -228,6 +229,92 @@ test("fresh-source processing invokes extraction then assessment but never auto-
   assert.equal(result.status, "fact_review")
   assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
   assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+})
+
+test("completed extraction survives failed assessment and is reused under a new policy", async (t) => {
+  const f = fixture(t, { extracted: false })
+  const generate = f.provider.structured
+  f.provider.structured = function (request) {
+    if (this.executionPolicy.role === "evidence_compare")
+      throw Error("Deliberate assessment failure after completed extraction")
+    return generate.call(this, request)
+  }
+  await assert.rejects(() => processSourceRun(f.options), /Deliberate assessment failure/)
+  const before = fs.readFileSync(path.join(f.root, "runs/processed/claims.json"))
+  assert.equal(
+    readJSON(f.root, "runs/processed/processing/state.json").stages.extraction.status,
+    "complete",
+  )
+  f.provider.structured = generate
+  f.policy.roles.evidence_compare = { ...f.policy.roles.evidence_compare, num_ctx: 32768 }
+  fs.writeFileSync(f.policyFile, JSON.stringify(f.policy))
+  const options = { ...f.options, run: "continued", extractionRun: "processed" }
+  const result = await processSourceRun(options)
+  assert.equal(result.status, "fact_review")
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
+  await processSourceRun(options)
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/claims.json")), before)
+  assert.equal(readJSON(f.root, "runs/continued/draft.json"), null)
+  assert.equal(readJSON(f.root, "runs/continued/claims.json").claims[0].review.status, "unreviewed")
+  assert.equal(
+    readJSON(f.root, "runs/continued/source-processing-input.json").extraction_run,
+    "processed",
+  )
+  const entry = {
+    candidate_key: f.claim.candidate_key,
+    parse_id: f.parse.parse_id,
+    source_version_id: f.parse.source_version_id,
+    content_sha256: articleContentFingerprint(f.parse),
+    source_urls: ["https://example.org/plan"],
+  }
+  const reused = await loadProcessedSourceResult(f.root, "continued", entry)
+  assert.equal(reused.status, "fact_review")
+  assert.equal(reused.extraction_run, "processed")
+  const closure = buildArchiveClosure(f.root, "portable", "continued")
+  assert.ok(
+    closure.dependencies.some(
+      (edge) => edge.kind === "processing_extraction" && edge.to === "processed",
+    ),
+  )
+  assert.ok(closure.files.some((file) => file.path === "runs/processed/processing/extraction.json"))
+  const changed = readJSON(f.root, "runs/processed/processing/state.json")
+  changed.stages.extraction.status = "failed"
+  atomicWrite(f.root, "runs/processed/processing/state.json", changed)
+  await assert.rejects(
+    () => loadProcessedSourceResult(f.root, "continued", entry),
+    /Completed source-bound extraction/,
+  )
+  assert.throws(
+    () => buildArchiveClosure(f.root, "portable-invalid", "continued"),
+    /Completed source-bound extraction/,
+  )
+})
+
+test("extraction reuse rejects changed source, incomplete checkpoints and altered claims before inference", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const options = { ...f.options, run: "continued", extractionRun: "processed" }
+  const originalParse = structuredClone(f.parse)
+  const changed = { ...f.parse, parse_id: sha256("another-parse"), title: "Another document" }
+  changed.blocks = f.parse.blocks.map((block) => ({ ...block, block_id: `${changed.parse_id}:b1` }))
+  atomicWrite(f.root, `parses/${changed.parse_id}/parse.json`, changed)
+  atomicWrite(f.root, "runs/source/parses.json", [changed])
+  await assert.rejects(() => processSourceRun(options), /exact selected documents/)
+  atomicWrite(f.root, `parses/${f.parse.parse_id}/parse.json`, originalParse)
+  atomicWrite(f.root, "runs/source/parses.json", [originalParse])
+  const state = readJSON(f.root, "runs/processed/processing/state.json")
+  const originalState = structuredClone(state)
+  state.stages.extraction.status = "failed"
+  atomicWrite(f.root, "runs/processed/processing/state.json", state)
+  await assert.rejects(() => processSourceRun(options), /Completed source-bound extraction/)
+  atomicWrite(f.root, "runs/processed/processing/state.json", originalState)
+  const claims = readJSON(f.root, "runs/processed/claims.json")
+  claims.claims[0].statement = "Invented replacement"
+  atomicWrite(f.root, "runs/processed/claims.json", claims)
+  await assert.rejects(() => processSourceRun(options), /Completed source-bound extraction/)
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  assert.equal(readJSON(f.root, "runs/continued/source-processing-input.json"), null)
 })
 
 test("explicit packet acknowledgment permits drafting and resumes without generation", async (t) => {

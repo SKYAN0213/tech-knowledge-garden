@@ -1,6 +1,95 @@
 {
   "article_profiles": [
     {
+      "id": "github-release-json-v1",
+      "url_pattern": "^https://api\\.github\\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/tags/[^?#]+$",
+      "options": {
+        "format": "json-document",
+        "json_document": {
+          "title_pointer": "/name",
+          "published_at_pointer": "/published_at",
+          "identities": [
+            {
+              "pointer": "/tag_name",
+              "url_pattern": "https://api\\.github\\.com/repos/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/tags/(?P<value>[^?#]+)"
+            },
+            {
+              "pointer": "/html_url",
+              "url_pattern": "https://api\\.github\\.com/repos/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/releases/tags/(?P<value>[^?#]+)",
+              "expected": "https://github.com/{owner}/{repo}/releases/tag/{value}"
+            }
+          ],
+          "fields": [
+            {
+              "pointer": "/tag_name"
+            },
+            {
+              "pointer": "/published_at"
+            },
+            {
+              "pointer": "/prerelease",
+              "format": "scalar"
+            },
+            {
+              "pointer": "/body",
+              "format": "markdown"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "github-compare-json-v1",
+      "url_pattern": "^https://api\\.github\\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/compare/[^?#]+$",
+      "options": {
+        "format": "json-document",
+        "json_document": {
+          "title_pointer": "/html_url",
+          "identities": [
+            {
+              "pointer": "/url",
+              "url_pattern": "(?P<value>https://api\\.github\\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/compare/[^?#]+)"
+            }
+          ],
+          "fields": [
+            {
+              "pointer": "/status"
+            },
+            {
+              "pointer": "/ahead_by",
+              "format": "scalar"
+            },
+            {
+              "pointer": "/behind_by",
+              "format": "scalar"
+            },
+            {
+              "pointer": "/total_commits",
+              "format": "scalar"
+            },
+            {
+              "pointer": "/base_commit/sha"
+            },
+            {
+              "pointer": "/merge_base_commit/sha"
+            }
+          ],
+          "records": {
+            "pointer": "/commits",
+            "id_pointer": "/sha",
+            "date_pointer": "/commit/committer/date",
+            "count_pointer": "/total_commits",
+            "fields": [
+              {
+                "pointer": "/commit/message",
+                "format": "markdown"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
       "id": "nvidia-research-publication-v1",
       "url_pattern": "^https://research\\.nvidia\\.com/publication/[A-Za-z0-9_-]+/?$",
       "options": {

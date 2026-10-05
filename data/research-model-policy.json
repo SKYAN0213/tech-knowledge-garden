@@ -39,7 +39,7 @@
     "evidence_compare": {
       "model": "qwen3.8:27b-mlx",
       "think": "medium",
-      "num_ctx": 16384,
+      "num_ctx": 32768,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
       "total_timeout_ms": 900000

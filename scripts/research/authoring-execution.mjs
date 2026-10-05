@@ -523,6 +523,7 @@ export async function authoringWriteSession({
   emit = () => {},
   now = Date.now,
   waitMs = 300000,
+  resumeIntent = null,
 }) {
   if (
     typeof nextCapture !== "function" ||
@@ -548,8 +549,35 @@ export async function authoringWriteSession({
       }
       let receipt = await capture(acquisitionFile)
       const recovered = resolveWriteIntents(root, receipt.receipt),
-        created = []
+        created = [],
+        resumed = []
       const sessionID = crypto.randomUUID()
+      let resume = null
+      if (resumeIntent) {
+        const pending = writeIntents(root).filter((r) => !r.resolved)
+        const selected = pending.find((r) => r.path === resumeIntent)
+        if (selected) {
+          const original = selected.intent
+          if (
+            pending.length !== 1 ||
+            original.release_path !== releasePath ||
+            original.operation.action !== "update" ||
+            !original.operation.file_id ||
+            Date.parse(receipt.observed_at) < Date.parse(original.started_at) ||
+            JSON.stringify(receipt.next_operations[0]) !== JSON.stringify(original.operation)
+          )
+            throw Error("Explicit resume requires the unchanged existing file and original update")
+          try {
+            process.kill(original.pid, 0)
+          } catch (error) {
+            if (error.code !== "ESRCH") throw error
+            resume = selected
+          }
+          if (!resume) throw Error("Previous authoring writer is still live")
+        } else if (!recovered.includes(resumeIntent)) {
+          throw Error("Unresolved original write intent required")
+        }
+      }
       const finish = (status) => {
         const result = {
           schema: "research-authoring-write-session/v1",
@@ -561,6 +589,7 @@ export async function authoringWriteSession({
           counts: receipt.counts,
           created_intents: created,
           recovered_intents: recovered,
+          resumed_intents: resumed,
           unresolved_intents: writeIntents(root)
             .filter((r) => !r.resolved)
             .map((r) => r.path),
@@ -575,7 +604,8 @@ export async function authoringWriteSession({
         return { ...result, receipt: relative }
       }
       // Even an absent target can be a late in-flight create; absence never cancels an intent.
-      if (writeIntents(root).some((r) => !r.resolved)) return finish("write_outcome_unknown")
+      if (!resume && writeIntents(root).some((r) => !r.resolved))
+        return finish("write_outcome_unknown")
       while (receipt.status === "pending") {
         if (now() >= Date.parse(receipt.valid_until))
           throw Error("Fresh pre-write acquisition required")
@@ -583,26 +613,49 @@ export async function authoringWriteSession({
           attempt = crypto.randomUUID()
         const lock = readJSON(root, "locks/garden-operation.json")
         if (lock?.pid !== process.pid) throw Error("Authoring write lock owner changed")
-        const relative = `authoring-write-intents/${targetKey(operation)}/${attempt}/intent.json`
-        const intent = {
-          schema: "research-authoring-write-intent/v1",
-          attempt_id: attempt,
-          release_path: releasePath,
-          release_sha256: binding.release_sha256,
-          execution_receipt: receipt.receipt,
-          execution_sha256: sha256(fs.readFileSync(safePath(root, receipt.receipt))),
-          operation,
-          started_at: new Date(now()).toISOString(),
-          pid: process.pid,
-          lock_owner: lock.owner,
+        const relative = resume
+          ? resume.path
+          : `authoring-write-intents/${targetKey(operation)}/${attempt}/intent.json`
+        const intent = resume
+          ? resume.intent
+          : {
+              schema: "research-authoring-write-intent/v1",
+              attempt_id: attempt,
+              release_path: releasePath,
+              release_sha256: binding.release_sha256,
+              execution_receipt: receipt.receipt,
+              execution_sha256: sha256(fs.readFileSync(safePath(root, receipt.receipt))),
+              operation,
+              started_at: new Date(now()).toISOString(),
+              pid: process.pid,
+              lock_owner: lock.owner,
+            }
+        const isResume = Boolean(resume)
+        if (isResume) {
+          atomicCreate(root, path.posix.dirname(relative) + `/resumptions/${sessionID}.json`, {
+            schema: "research-authoring-update-resumption/v1",
+            intent_path: relative,
+            intent_sha256: resume.sha256,
+            execution_receipt: receipt.receipt,
+            execution_sha256: sha256(fs.readFileSync(safePath(root, receipt.receipt))),
+            observed_at: receipt.observed_at,
+            resumed_at: new Date(now()).toISOString(),
+            pid: process.pid,
+            lock_owner: lock.owner,
+            automatic_retry: false,
+          })
+          resumed.push(relative)
+          resume = null
+        } else {
+          atomicCreate(root, relative, intent)
+          created.push(relative)
         }
-        atomicCreate(root, relative, intent)
-        created.push(relative)
         const row = binding.plan.files.find((r) => r.path === operation.path)
         emit({
           type: "write_intent",
           intent_path: relative,
-          attempt_id: attempt,
+          attempt_id: intent.attempt_id,
+          resumed: isResume,
           operation,
           file_uri: safePath(root, row.staged_path),
           expires_at: receipt.valid_until,
@@ -624,12 +677,17 @@ export async function authoringWriteSession({
           if (!resolved.includes(relative))
             return finish(receipt.status === "conflict" ? "conflict" : "write_outcome_unknown")
         } catch (error) {
-          atomicCreate(root, path.posix.dirname(relative) + "/interruption.json", {
-            schema: "research-authoring-write-interruption/v1",
-            intent_path: relative,
-            stopped_at: new Date(now()).toISOString(),
-            status: "write_outcome_unknown",
-          })
+          atomicCreate(
+            root,
+            path.posix.dirname(relative) +
+              (isResume ? `/resumptions/${sessionID}-interruption.json` : "/interruption.json"),
+            {
+              schema: "research-authoring-write-interruption/v1",
+              intent_path: relative,
+              stopped_at: new Date(now()).toISOString(),
+              status: "write_outcome_unknown",
+            },
+          )
           throw Error("Drive write outcome unknown; durable intent preserved", { cause: error })
         } finally {
           clearTimeout(timer)

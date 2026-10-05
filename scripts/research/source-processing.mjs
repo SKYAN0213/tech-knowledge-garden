@@ -22,6 +22,7 @@ import { draftMarkdown } from "./editor.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
 import { atomicCreate, readJSON, safePath, RunState, withLock } from "./run-state.mjs"
+import { loadCompletedExtraction } from "./extraction-checkpoint.mjs"
 
 function createOnce(root, relative, value) {
   const current = readJSON(root, relative)
@@ -68,6 +69,7 @@ export async function processSourceRun({
   run,
   sourceRun,
   policyFile = "data/research-model-policy.json",
+  extractionRun,
   assessmentRun,
   draftRun,
   evidenceThink,
@@ -76,18 +78,21 @@ export async function processSourceRun({
   candidateKey: requestedCandidateKey,
 }) {
   if (
-    [run, sourceRun, assessmentRun ?? run, draftRun ?? run].some(
+    [run, sourceRun, extractionRun ?? sourceRun, assessmentRun ?? run, draftRun ?? run].some(
       (id) => !/^[A-Za-z0-9_-]{1,160}$/.test(id || ""),
     ) ||
-    run === sourceRun
+    run === sourceRun ||
+    run === extractionRun
   )
     throw Error("Distinct source and processing runs required")
   return withLock(root, "run-" + run, async () => {
     const { documents, parses, identity } = loadStoredSourceRun(root, sourceRun)
     const sourceExtractionPath = safePath(root, `runs/${sourceRun}/claims.json`)
-    const sourceExtractionBytes = fs.existsSync(sourceExtractionPath)
-      ? fs.readFileSync(sourceExtractionPath)
-      : null
+    const sourceExtractionBytes = extractionRun
+      ? loadCompletedExtraction(root, extractionRun, documents, parses)
+      : fs.existsSync(sourceExtractionPath)
+        ? fs.readFileSync(sourceExtractionPath)
+        : null
     const sourceExtraction = sourceExtractionBytes ? JSON.parse(sourceExtractionBytes) : null
     if (sourceExtraction?.development_fixture)
       throw Error("Development fixtures cannot enter source processing")
@@ -119,6 +124,7 @@ export async function processSourceRun({
       source_run: sourceRun,
       source_identity: identity,
       source_extraction_sha256: sourceExtractionBytes ? sha256(sourceExtractionBytes) : null,
+      ...(extractionRun ? { extraction_run: extractionRun } : {}),
       candidate_key: candidateKey,
       assessment_run: assessmentRun ?? run,
       draft_run: draftRun ?? run,
@@ -127,6 +133,7 @@ export async function processSourceRun({
       implementation: Object.fromEntries(
         [
           "source-processing.mjs",
+          "extraction-checkpoint.mjs",
           "evidence-review-packet.mjs",
           "processed-draft.mjs",
           "claims.mjs",
