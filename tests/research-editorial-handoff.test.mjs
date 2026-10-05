@@ -14,6 +14,12 @@ import { dailyScan, storedListScan } from "../scripts/research/daily-scan.mjs"
 import { articleContentFingerprint, storeParseArtifact } from "../scripts/research/parser.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 
+import {
+  loadShadowCollectionInputs,
+  loadShadowHandoffBasis,
+} from "../scripts/research/shadow-collection-basis.mjs"
+import { saveShadowCollectionBasis } from "../scripts/research/shadow-operations.mjs"
+
 const candidate = (key, date, more = {}) => ({
   key,
   title: `Article ${key}`,
@@ -812,6 +818,12 @@ test("daily execution creates a private handoff and resume leaves it unchanged",
     backlogFile,
     now: "2026-09-29T01:00:00Z",
     scan: async (window, id) => {
+      const collectingRun = id.startsWith("daily-20260929-drive")
+        ? "daily-20260929-drive"
+        : options.runId
+      const inputs = loadShadowCollectionInputs(root, collectingRun)
+      assert.ok(inputs, "acquisition inputs must be frozen before the first request")
+      assert.equal(readJSON(root, `daily/runs/${collectingRun}/shadow-basis.json`), null)
       calls.push(id)
       return storedEmptyScan(root, id, window)
     },
@@ -825,11 +837,54 @@ test("daily execution creates a private handoff and resume leaves it unchanged",
   assert.equal(handoff.authority, "local_vault_unreconciled")
   assert.equal(handoff.completed_windows, 2)
   assert.equal(handoff.candidate_published, false)
+  const basis = loadShadowHandoffBasis(root, first.shadow_collection_basis)
+  assert.equal(basis.phase, "handoff")
+  assert.equal(basis.backlog, null, "absence is pinned without fabricating a backlog")
+  assert.equal(basis.handoff.sha256, sha256(fs.readFileSync(path.join(root, handoffPath))))
+  assert.equal(basis.candidate_published, false)
+  assert.equal(basis.comparison_completed, false)
+  assert.deepEqual(
+    await saveShadowCollectionBasis({ root, dailyRun: options.runId }),
+    first.shadow_collection_basis,
+  )
+  const beforeBasis = fs.readFileSync(path.join(root, first.shadow_collection_basis.path))
   const before = fs.readFileSync(path.join(root, handoffPath))
   const second = await dailyScan({ ...options, mode: "resume" })
   assert.equal(second.editorial_handoff.path, handoffPath)
   assert.deepEqual(fs.readFileSync(path.join(root, handoffPath)), before)
   assert.equal(calls.length, 2)
+  assert.deepEqual(second.shadow_collection_basis, first.shadow_collection_basis)
+  fs.writeFileSync(
+    backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [] }),
+  )
+  const updated = await dailyScan({ ...options, mode: "handoff" })
+  assert.notEqual(updated.path, handoffPath)
+  assert.notEqual(updated.shadow_collection_basis.path, first.shadow_collection_basis.path)
+  assert.equal(
+    loadShadowHandoffBasis(root, updated.shadow_collection_basis).backlog.sha256,
+    sha256(fs.readFileSync(backlogFile)),
+  )
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, first.shadow_collection_basis.path)),
+    beforeBasis,
+  )
+  assert.deepEqual(loadShadowHandoffBasis(root, first.shadow_collection_basis), basis)
+  assert.equal(calls.length, 2, "handoff regeneration cannot request sources again")
+
+  // A genuinely older run can regenerate its handoff, but today's code cannot
+  // manufacture the original acquisition snapshot for a comparison.
+  fs.renameSync(
+    path.join(root, `evaluation/shadow-inputs/${options.runId}`),
+    path.join(root, "original-inputs-away"),
+  )
+  const legacy = await dailyScan({ ...options, mode: "handoff" })
+  assert.equal(legacy.shadow_collection_basis, null)
+  assert.equal(legacy.shadow_basis_status, "missing_original_collection_inputs")
+  fs.renameSync(
+    path.join(root, "original-inputs-away"),
+    path.join(root, `evaluation/shadow-inputs/${options.runId}`),
+  )
 
   const sourceFiles = {}
   for (const name of ["Knowledge", "Signals", "TrendTopics"]) {
@@ -942,6 +997,11 @@ test("a daily candidate selects its exact stored source without rediscovery or p
   const handoff = readJSON(root, daily.editorial_handoff.path)
   const key = handoff.pending[0].key
   assert.equal(handoff.pending[0].source_evidence_state, "exact")
+  const collection = loadShadowHandoffBasis(root, daily.shadow_collection_basis)
+  assert.equal(collection.backlog.sha256, handoff.inputs.backlog_sha256)
+  const frozenBacklog = readJSON(root, collection.backlog.path)
+  assert.equal(frozenBacklog.candidates[0].key, key)
+  assert.equal(frozenBacklog.candidates[0].article_parse_id, handoff.pending[0].article_parse_id)
   const args = [
     "select-candidate",
     "--root",
@@ -976,6 +1036,22 @@ test("a daily candidate selects its exact stored source without rediscovery or p
     fs.readFileSync(path.join(root, "runs/selected-candidate/source-selection.json")),
     before,
   )
+  const resumed = await dailyScan({
+    runId: "daily-20260929-candidate",
+    mode: "resume",
+    root,
+    vault,
+    configFile,
+    backlogFile,
+    now: "2026-09-29T01:00:00Z",
+    scan: async () => {
+      throw Error("No source requests allowed on this resume")
+    },
+    merge: async () => {
+      throw Error("No second backlog merge allowed")
+    },
+  })
+  assert.deepEqual(resumed.shadow_collection_basis, daily.shadow_collection_basis)
   assert.equal(requests, 2)
   fs.writeFileSync(
     backlogFile,

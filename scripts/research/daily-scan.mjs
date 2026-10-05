@@ -30,6 +30,12 @@ import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evidence.mjs"
 export { verifyStoredListScan } from "./scan-evidence.mjs"
 
+import {
+  freezeShadowCollectionInputs,
+  freezeShadowHandoffBasis,
+  loadShadowCollectionInputs,
+} from "./shadow-collection-basis.mjs"
+
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
 function requireExplicitBacklog(root, backlogFile) {
@@ -56,6 +62,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research-daily.mjs",
     "scripts/research/daily-plan.mjs",
     "scripts/research/daily-scan.mjs",
+    "scripts/research/shadow-collection-basis.mjs",
     "scripts/pull-drive.py",
     "scripts/research/editorial-handoff.mjs",
     "scripts/research/contracts.mjs",
@@ -376,7 +383,10 @@ export async function reconcileSupplementalScan({
     if (scan.summary.status !== "window_scanned" || !scan.summary.window)
       throw Error("Only a completed stored scan can supplement daily coverage")
     verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
-    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE))
+    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE), {
+      backlogFile,
+      sameEventAliases: sourceAliases,
+    })
     const state = coverage.routes[channelId]
     // A baseline proves source coverage, not candidate ingestion. Only a
     // completed supplemental merge receipt proves this reconciliation ran.
@@ -472,7 +482,12 @@ export async function reconcileSupplementalScan({
   })
 }
 
-export function bootstrapCoverage(root, activeRoutes, previous = null) {
+export function bootstrapCoverage(
+  root,
+  activeRoutes,
+  previous = null,
+  { backlogFile = DAILY_BACKLOG, sameEventAliases = null } = {},
+) {
   if (previous && (previous.schema !== "research-daily-coverage/v1" || !previous.routes))
     throw Error("Unsupported daily coverage state")
   const coverage = structuredClone(previous || { schema: "research-daily-coverage/v1", routes: {} })
@@ -523,7 +538,7 @@ export function bootstrapCoverage(root, activeRoutes, previous = null) {
       state.covered.push(baseline)
     state.anchor_since = [state.anchor_since, expected.since].sort()[0]
     const repaired = repairDailyCoverageState(state)
-    verifyDailyCoverageEvidence(root, entry.channel_id, repaired)
+    verifyDailyCoverageEvidence(root, entry.channel_id, repaired, { backlogFile, sameEventAliases })
     coverage.routes[entry.channel_id] = repaired
   }
   return coverage
@@ -1154,14 +1169,30 @@ export async function dailyScan({
   return withLock(root, "daily-acquisition", async () => {
     if (mode === "handoff") {
       const { generateDailyHandoff } = await import("./editorial-handoff.mjs")
-      return generateDailyHandoff({ root, runId, vault, backlogFile })
+      const handoff = generateDailyHandoff({ root, runId, vault, backlogFile })
+      if (!loadShadowCollectionInputs(root, runId))
+        return {
+          ...handoff,
+          shadow_collection_basis: null,
+          shadow_basis_status: "missing_original_collection_inputs",
+        }
+      const basis = await freezeShadowHandoffBasis({
+        root,
+        dailyRun: runId,
+        handoffPath: handoff.path,
+        backlogFile,
+        receipts: readDailyReceipts(root, runId),
+      })
+      return { ...handoff, shadow_collection_basis: basis, shadow_basis_status: "frozen" }
     }
     const { config, activeRoutes, config_sha256 } = dailySources(configFile)
     const storedPlan = readJSON(root, `daily/runs/${runId}/plan.json`)
     const edition = driveSnapshotFile
       ? verifiedDriveEdition(driveSnapshotFile, vault, { allowStale: Boolean(storedPlan) })
       : localEditionSnapshot(vault)
-    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE))
+    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE), {
+      backlogFile,
+    })
     const planPath = `daily/runs/${runId}/plan.json`
     let plan = storedPlan
     if (!plan) {
@@ -1194,6 +1225,13 @@ export async function dailyScan({
       })
     if (mode === "plan-only")
       return { run_id: runId, status: "planned", windows: plan.windows.length, plan_path: planPath }
+    await freezeShadowCollectionInputs({
+      root,
+      plan,
+      activeRoutes,
+      sourcePaths: dailySourcePaths(configFile),
+      configFile,
+    })
     const sourceAliases = merge ? null : loadSameEventSourceAliases(root, backlogFile)
     const mergeScan =
       merge || ((scan, file) => mergeCompletedScan(scan, file, undefined, sourceAliases))
@@ -1220,6 +1258,18 @@ export async function dailyScan({
     })
     const { generateDailyHandoff } = await import("./editorial-handoff.mjs")
     const handoff = generateDailyHandoff({ root, runId, vault, backlogFile })
-    return { ...summary, editorial_handoff: handoff }
+    const basis = await freezeShadowHandoffBasis({
+      root,
+      dailyRun: runId,
+      handoffPath: handoff.path,
+      backlogFile,
+      receipts: readDailyReceipts(root, runId),
+    })
+    return {
+      ...summary,
+      editorial_handoff: handoff,
+      shadow_collection_basis: basis,
+      shadow_basis_status: "frozen",
+    }
   })
 }

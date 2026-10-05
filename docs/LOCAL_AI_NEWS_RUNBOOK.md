@@ -10441,7 +10441,7 @@ e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/read
 
 `npm run research:shadow`는 예약이나 공개 기사를 만들지 않는다. 모든 장부·근거는 비공개 `.local/research/local-ai`에 둔다.
 
-1. 기존08:00 실행에서 수집과 handoff 생성 직후, 모델 처리·후보 승인 전에 `npm run research:shadow -- basis --run daily-YYYYMMDD-ID`로 당시39개 설정/코드·active routes·backlog를 고정한다. 옛 plan의 config hash가 다르면 거절한다. basis만으로 수집/비교를 완료하지 않는다.
+1. 기존08:00의 `research-daily --execute|--resume`가 수집 전 입력과 수집 후 handoff basis를 자동 고정한다(운영422). `npm run research:shadow -- basis --run daily-YYYYMMDD-ID`로 정확한 참조를 조회한다. 최초 snapshot이 없는 옛 수집은 비교 증거로 재구성하지 않는다. basis만으로 수집/비교를 완료하지 않는다.
 2. 기존 처리기와 preview로 별도 로컬 후보를 검토한다. legacy의 승인 실행을 로컬 후보로 재사용하지 않는다. legacy 공개 작업은 Drive·build/deploy·웹/RSS/GitHub readback을 완료해야 한다.
 3. 검토 JSON을 `npm run research:shadow -- record --run SHADOW_ID --review runs/SHADOW_ID/review.json`으로 등록한다. schema=research-shadow-review/v1, run_id, reviewer, reviewer_kind(human/codex), reviewed_at, daily_run, edition, legacy_publication_run, processing_seconds, published_by=legacy, candidate_published=false를 명시한다.
 4. invocation에는 kind=scheduled, schedule_id=tech-ai-briefing-08, 실제 execution_id/started_at, reason과 실행 로그 evidence `{path, sha256}`를 둔다. 이는 귀속된 검토 판정이며 제어기 인증 증거가 아니다. manual 실행·명목 시각으로 완료하지 않는다.
@@ -10452,3 +10452,16 @@ e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/read
 과거 공개 관찰 보존: `npm run research:public-readback -- --archive --run READBACK_ID --preview-run PREVIEW_ID --commit COMMIT_SHA`. 당시 raw·receipt·preview·배포를 검증해 archive.json을 불변 생성한다. 원 reader의 import 경로 복원 SHA가 plan과 정확히 같아야 한다. 옛 페이지 매핑은 필요하면 `--repository ORIGINAL_WORKSPACE`로 지정한다. 새 일반 readback은 archive를 자동 생성한다. HTTP·모델·새 발행을 실행하지 않고 관찰 날짜를 유지한다. 현재 검증은 --archive 없는 기존 명령을 사용한다.
 
 외장 tkg-daily-core-20261006-v1의 historical-publication-archive-v1.json, shadow-delivery-status-v1.json/html, shadow-ledger-target-v1.log와 실패 부분 수정 로그가 실제 증거다. 공개7작업은 archived observation이며 비교0/7이다. GPT26/40·0/20와 독립 gold0/40·0/20를 구분한다. basis preflight54경로/108창/39입력은 계획 고정일 뿐이다. 옛 hash·첫 ID 거절은 보존했다. browser file URL 차단으로 UI 렌더링은 미검증이다. 독립 gold·실제7회·08시/인증/중단·전체legacy·전체runtime 복구는 남는다.
+
+## 422. 일일 수집의 자동 비교 자료 보존과 승인 후 목록 재생성
+
+기존08:00 예약과 `research-daily.mjs`를 유지한다. 설정/코드 입력 수는 `dailySourcePaths`에서 가져오며 이번 구현 기준40개다. collection snapshot의 완료는 후보 승인·발행·비교 운영 완료가 아니다.
+
+1. 기존 fresh Drive 대조 뒤 `research-daily --run DAILY --plan-only`, 같은 ID의 `--execute`를 실행한다. 입력 snapshot은 execute에서 첫 요청 전에 생성하고 handoff basis는 수집 후 생성한다. 결과의 `shadow_collection_basis`는 `{path,sha256}`다. 모든 파일은 비공개 연구 root에 둔다.
+2. `npm run research:shadow -- basis --run DAILY [--root PRIVATE_ROOT]`는 현재 포인터가 가리키는 실제 handoff basis를 검증해 출력한다. 비교 review의 collection_basis/plan/handoff/summary에는 해당 basis가 고정한 정확한 참조를 사용한다. receipts/backlog/coverage는 고정본을 사용한다.
+3. 후보 승인 후 편집 목록만 바꾸려면 기존 `research-daily --run DAILY --handoff`를 사용한다. 새 입력 hash에 별도 basis를 생성하며 원문·모델 호출은 없다. 오래된 review는 옛 basis를 그대로 참조한다.
+4. 포인터 생성이 실패했거나 정확한 다른 handoff를 고정하려면 `research:shadow basis --run DAILY --handoff daily/runs/DAILY/handoffs/HASH.json --backlog ACTUAL_BACKLOG`를 사용한다. original acquisition snapshot이 반드시 있어야 하며 현재 backlog/coverage의 SHA가 그 handoff와 달라지면 먼저 --handoff로 목록만 재생성한다. 같은 파일을 덮어쓰지 않는다.
+5. 최초 입력 snapshot 없는 옛 run의 일반 handoff는 유지하지만 basis_status는 missing_original_collection_inputs다. 수집 성공 이력은 보존하고 비교 완료로 승격하지 않는다. 옛 plan과 현재 code/config SHA가 다를 때 새로운 execute/resume을 억지로 수행하지 않는다.
+6. 커스텀 연구 root의 --backlog를 모든 coverage·supplemental 검증에도 전달한다. 같은 사건 alias는 그 장부의 원문/검토 근거로 검증한다. 현재 폴더의 기본 장부를 읽는 우회를 사용하지 않는다.
+
+표적 증거는 외장 `tkg-daily-core-20261006-v1/shadow-auto-basis-target-v1.log`, 실패 파일 수정 `shadow-auto-basis-failed-target-v2.log`, 경로 회귀 및 설정 거부 `shadow-auto-basis-boundary-target-v3.log`다. 최초 적용 오류를 보존하고37/37·44/44 결과를 구분한다. 단위 fixture를 실제 예약 실행이나 실제 원문 수집으로 집계하지 않는다. 다음은 실제08:00 실행에 고정된 입력·원문·별도 로컬 후보·legacy 공개 readback·귀속된 최종 비교 검토를 연결해 첫 완료 기록을 등록한다.

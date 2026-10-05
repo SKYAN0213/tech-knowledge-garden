@@ -5,8 +5,6 @@ import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { kstDay, validateDailyRoutes } from "./daily-plan.mjs"
 import { registry } from "./discovery.mjs"
 import {
-  dailySources,
-  dailySourcePaths,
   readDailyReceipts,
   validateStoredDailyPlan,
   verifyDailyReceipts,
@@ -18,6 +16,12 @@ import { loadRoleBudget } from "./model-policy.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
 import { publicationOperationStatus } from "./publication-operation.mjs"
 import { verifyRetrospectiveOutputs } from "./preview.mjs"
+
+import {
+  freezeShadowHandoffBasis,
+  loadShadowHandoffBasis,
+  loadShadowCollectionInputs,
+} from "./shadow-collection-basis.mjs"
 
 export const SHADOW_CRITERIA = [
   "source_review",
@@ -76,6 +80,16 @@ export async function verifyShadowReview({ root, review, repository = process.cw
   for (const key of SHADOW_CRITERIA) pinned(root, review.comparison[key].evidence, false)
   const plan = pinned(root, review.plan)
   const collection = pinned(root, review.collection_basis)
+  if (collection.phase === "handoff") {
+    loadShadowHandoffBasis(root, review.collection_basis)
+    if (
+      collection.daily_run !== review.daily_run ||
+      JSON.stringify(collection.handoff) !== JSON.stringify(review.handoff) ||
+      JSON.stringify(collection.plan) !== JSON.stringify(review.plan) ||
+      JSON.stringify(collection.summary) !== JSON.stringify(review.summary)
+    )
+      throw Error("Comparison review differs from automatic handoff snapshot")
+  }
   const config = pinned(root, collection.config)
   const handoff = pinned(root, review.handoff)
   const summary = pinned(root, review.summary)
@@ -133,7 +147,10 @@ export async function verifyShadowReview({ root, review, repository = process.cw
   )
   if (JSON.stringify(routes) !== JSON.stringify(collection.active_routes))
     throw Error("Frozen active routes changed")
-  const receipts = readDailyReceipts(root, review.daily_run)
+  const receipts =
+    collection.phase === "handoff"
+      ? pinned(root, collection.receipts)
+      : readDailyReceipts(root, review.daily_run)
   pinned(root, collection.backlog)
   verifyDailyReceipts(root, plan, receipts, {
     backlogFile: safePath(root, collection.backlog.path),
@@ -159,7 +176,8 @@ export async function verifyShadowReview({ root, review, repository = process.cw
   if (
     summary.schema !== "research-daily-summary/v1" ||
     summary.run_id !== review.daily_run ||
-    review.summary.path !== `daily/runs/${review.daily_run}/summary.json` ||
+    (collection.phase !== "handoff" &&
+      review.summary.path !== `daily/runs/${review.daily_run}/summary.json`) ||
     !["configured_routes_scanned", "partial"].includes(summary.status) ||
     summary.receipts !== receipts.length ||
     !plan.windows?.length ||
@@ -352,60 +370,42 @@ export async function verifyShadowReview({ root, review, repository = process.cw
   }
 }
 
-// Freeze only shared collection inputs. This does not start collection or a
-// schedule and cannot manufacture any comparison/publication evidence.
-export async function saveShadowCollectionBasis({ root, dailyRun, configFile, backlogFile }) {
+// Resolve the exact automatically captured handoff. Never reconstruct historical
+// acquisition inputs from today's code/configuration or guess a handoff by mtime.
+export async function saveShadowCollectionBasis({
+  root,
+  dailyRun,
+  handoffPath,
+  configFile,
+  backlogFile,
+}) {
   id(dailyRun)
-  return withLock(root, "shadow-basis-" + dailyRun, () => {
-    const prefix = `evaluation/shadow-bases/${dailyRun}`
-    const old = readJSON(root, prefix + "/basis.json")
-    if (old) {
-      pinned(root, old.config)
-      pinned(root, old.backlog)
-      for (const row of old.sources) pinned(root, row, false)
-      if (
-        sha256(old.sources.map((row) => `${row.original_path}:${row.sha256}`).join("\n")) !==
-        old.config_sha256
-      )
-        throw Error("Frozen collection configuration changed")
-      return ref(root, prefix + "/basis.json")
-    }
-    const { config, activeRoutes, config_sha256 } = dailySources(configFile)
-    const plan = readJSON(root, `daily/runs/${dailyRun}/plan.json`)
-    validateStoredDailyPlan(plan, {
-      runId: dailyRun,
-      config,
-      activeRoutes,
-      configSha: config_sha256,
-      edition: plan?.edition,
+  if (
+    configFile &&
+    loadShadowCollectionInputs(root, dailyRun)?.value.config.original_path !== configFile
+  )
+    throw Error("Requested configuration differs from original acquisition inputs")
+  if (handoffPath)
+    return freezeShadowHandoffBasis({
+      root,
+      dailyRun,
+      handoffPath,
+      backlogFile,
+      receipts: readDailyReceipts(root, dailyRun),
     })
-    const copy = (from, name) => {
-      const bytes = fs.readFileSync(from),
-        file = prefix + "/" + name
-      if (fs.existsSync(safePath(root, file))) {
-        if (!fs.readFileSync(safePath(root, file)).equals(bytes))
-          throw Error("Shadow collection input changed")
-      } else atomicCreate(root, file, bytes)
-      return ref(root, file)
-    }
-    const sources = dailySourcePaths(configFile).map((file, index) => ({
-      original_path: file,
-      ...copy(file, `source-inputs/${index}.bin`),
-    }))
-    const basis = {
-      schema: "research-shadow-collection-basis/v1",
-      config_sha256,
-      sources,
-      config: sources.find((row) => row.original_path === configFile),
-      backlog: copy(backlogFile, "backlog.json"),
-      ...(fs.existsSync(safePath(root, "daily/route-coverage.json"))
-        ? { coverage: copy(safePath(root, "daily/route-coverage.json"), "coverage.json") }
-        : {}),
-      active_routes: activeRoutes,
-    }
-    atomicCreate(root, prefix + "/basis.json", basis)
-    return ref(root, prefix + "/basis.json")
-  })
+  const pointer = readJSON(root, `daily/runs/${dailyRun}/shadow-basis.json`)
+  if (pointer?.schema !== "research-shadow-basis-pointer/v1" || pointer.daily_run !== dailyRun)
+    throw Error(
+      "Automatic acquisition and handoff snapshot required; use --handoff only for an exact stored handoff",
+    )
+  const basis = loadShadowHandoffBasis(root, pointer.basis)
+  if (
+    JSON.stringify(basis.handoff) !== JSON.stringify(pointer.handoff) ||
+    basis.daily_run !== dailyRun ||
+    (configFile && basis.config.original_path !== configFile)
+  )
+    throw Error("Collection snapshot pointer differs from exact handoff inputs")
+  return pointer.basis
 }
 
 export async function recordShadowOperation({ root, run, reviewPath, repository = process.cwd() }) {

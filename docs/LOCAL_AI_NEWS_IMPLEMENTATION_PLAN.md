@@ -4440,3 +4440,19 @@ P6-01의 기록·중복 제외·진척 표시를 구현한다. 실제7회 운영
 검증: 관련75개 중 최초74 통과, 새 fixture의 필수 ID 보완 후 실패한 shadow 파일4개 통과. reader 복원 변경2개·추가 연결4개 표적 통과. 저장된 공개7작업을 HTTP·모델 호출 없이 원문/웹/RSS/GitHub/map raw로 재확인했다. 사전 계획 daily-20261006-shadow-basis-preflight-v1의54경로/108창/39설정·코드 고정은 성공했으며 새 수집·회차는 아니다. 옛 core54 계획은 config hash 불일치로 거절했고 원본은 보존했다. 첫 사전 계획 ID의 형식 오류도 보존하고 규칙에 맞는 새 ID로 처리했다.
 
 실제 상태: GPT26/40·0/20, 독립0/40·0/20, 새 비교0/7. HTML 정적 카드 문구를 확인했지만 브라우저 file URL 정책이 열기를 차단해 렌더링은 미검증이다. 로컬 전체 suite는 반복하지 않았고 릴리스 CI/배포는 별도 gate다. 새1시간 반복 병목은 없다. 다음은 기존08:00 수집 직후 basis/handoff를 고정하여 첫 실제 비교 기록을 등록한다. 전체 소급·독립 평가·runtime 복구 목표를 유지한다.
+
+## 19.330. 수집 전 입력과 수집 후 handoff 자동 고정
+
+목표: 기존 일일 수집 경로에서 비교 자료를 자동 보존하고, 후보 승인이나 수집 재개가 이전 근거를 덮어쓰지 않도록 한다. 새로운 예약·수집기·모델·승인을 도입하지 않는다. 이번 묶음으로 실제 예약 비교7회나 독립 평가를 완료했다고 판정하지 않는다.
+
+- `dailyScan --execute|--resume`는 첫 원문 요청 전에 `evaluation/shadow-inputs/<dailyRun>/inputs.json`에 정확한 plan 및 설정/수집 코드의 원본 bytes와 active routes를 불변 저장한다. 합성 config SHA가 plan과 다르면 수집을 시작하지 않는다. `--plan-only`는 수집 완료나 비교 완료를 만들지 않는다.
+- 수집·handoff 생성 뒤 `evaluation/shadow-bases/<dailyRun>/handoffs/<handoff-input-hash>/basis.json`을 저장한다. 해당 handoff의 실제 backlog·coverage·receipts·summary를 함께 고정한다. 후보 장부가 없었던 경우 null을 보존하며 빈 장부를 만들어 대신하지 않는다.
+- `daily/runs/<dailyRun>/shadow-basis.json`은 현재 handoff로 이동하는 비공개 포인터다. 승인 후 `--handoff`를 실행하면 바뀐 입력의 별도 basis를 생성하고 이전 원본·해시는 유지한다. 원문·모델을 재호출하지 않는다. 당시 summary와 receipts도 고정하므로 이후 resume이 최신 요약을 갱신해도 옛 비교 근거를 보존한다.
+- `research:shadow basis --run DAILY`는 자동 고정된 정확한 basis를 조회한다. `--handoff ROOT_RELATIVE_PATH`는 당시 acquisition input이 있는 경우에만 별도 handoff를 고정한다. 오늘의 코드로 옛 수집 당시 입력을 재구성하거나 mtime으로 handoff를 추측하지 않는다. 기존 v1 기록은 그대로 보존한다.
+- 기존 수집에 최초 입력 snapshot이 없으면 `--handoff`의 일반 편집 목록은 계속 생성하되 `shadow_collection_basis=null`, `shadow_basis_status=missing_original_collection_inputs`를 반환한다. 이 내부 상태를 독자 본문에 노출하지 않는다. 비교 완료를 위조하거나 기존 수집을 다시 실행해 수집 당시 증거로 바꾸지 않는다.
+- 비교 검토기는 자동 basis의 plan·handoff·summary 참조와 review를 대조하고 고정 receipts·backlog·coverage를 검증한다. source version/parse, 별도 승인 후보, preview/Drive/public gates와 일자/회차/실행 중복 제외는 기존 계약을 유지한다.
+- 실제 외장 저장 자료의 preflight에서 bootstrapCoverage가 명시한 backlog 경로를 전달받지 못하고 작업 폴더의 기본 장부를 읽는 기존 결함을 발견했다. daily 실행과 supplemental reconciliation 모두 같은 explicit backlog/alias 옵션을 coverage 검증에 전달하도록 수정했다. 다른 작업 폴더에서 실제 후보가 있는 수집을 재개하는 회귀를 추가했다.
+
+검증: 첫 표적36개 중33개 통과, 변경 적용 범위 오류2건과 테스트 문법 오류1건을 수정한 실패 파일37/37 통과. 실제 preflight의 장부 경로 결함 수정과 새 설정 판정 검사 후 관련44/44 통과했다. 앞서 통과한 shadow/collection-boundary 검사를 반복하지 않았다. 릴리스 전체 CI와 공개·Drive 보관은 후속 gate로 기록한다. 단위 수집 fixture의 요청 전 고정, 후보 merge 후 고정, 같은 resume의 요청0, 다른 handoff의 옛 basis 보존, 누락·변조 거부를 확인했다. 실제 새 예약 비교는0/7이며 첫 실제08:00 실행 확인, 독립40/20, 전체 소급·인증/중단·전체runtime 복구는 남는다.
+
+실제 자료 확인: daily-20261006-shadow-auto-basis-preflight-v1의54경로/108창 계획과40개 코드·설정 원본 고정을 확인했다. 실제 기존 원문/coverage/alias를 재사용했고 source/model 요청은0이다. 이는 사전 입력 고정만 성공한 수동 preflight이며 새 수집·예약·비교 완료가 아니다. 첫 장부 경로 오류는 기록하고 경로 전달 보완 후 같은 계획을 처음 저장했다.
