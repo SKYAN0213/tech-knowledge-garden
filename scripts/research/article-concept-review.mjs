@@ -60,7 +60,13 @@ export function evaluateArticleConceptReview(
   const publicClaims = claims.filter((c) => publicIDs.has(c.claim_id))
   const registry = conceptRegistry(vault)
   const selected = []
-  const proposals = []
+  const proposals = new Map()
+  const propose = (note) => {
+    const previous = proposals.get(note.path)
+    if (previous && previous.content !== note.content)
+      throw Error("Conflicting approved concept note proposals")
+    proposals.set(note.path, note)
+  }
   const sourceNotes = []
   for (const assignment of review.assignments) {
     if (
@@ -103,7 +109,12 @@ export function evaluateArticleConceptReview(
       if (!note) throw Error("Selected specialist note missing from knowledge approval")
       content = note.content
       approvalFiles = approved.files
-      proposals.push(note)
+      // A reviewed note may connect to a sibling created in the same exact
+      // approval. Validate that approved concept set, while assigning only the
+      // explicitly selected IDs to this article. The full approval hash remains
+      // pinned in approval_files; unapproved notes cannot supply a target.
+      for (const sibling of approved.approval.notes)
+        if (sibling.path.startsWith("Knowledge/")) propose(sibling)
     } else {
       content = fs.readFileSync(safePath(vault, assignment.note.path), "utf8")
       if (
@@ -115,7 +126,7 @@ export function evaluateArticleConceptReview(
         throw Error("Reviewed specialist concept registry entry required")
       // Recheck existing notes too: an alias conflict introduced since the
       // note's review must not attach a different concept to this article.
-      proposals.push({ path: assignment.note.path, content, operation: "replace" })
+      propose({ path: assignment.note.path, content, operation: "replace" })
     }
     const note = parseNote(content)
     assertReviewDate(note.meta.last_reviewed)
@@ -154,7 +165,7 @@ export function evaluateArticleConceptReview(
       ...(approvalFiles ? { approval_files: approvalFiles } : {}),
     })
   }
-  assertConceptConflicts(vault, proposals)
+  assertConceptConflicts(vault, [...proposals.values()])
   const links = verifiedConceptLinks(
     {
       review_status: "verified",

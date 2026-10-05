@@ -570,6 +570,250 @@ test("concept assignments reject another event, unused facts, duplicate IDs, unc
   }
 })
 
+test("pending specialist relations can target an approved sibling without assigning it to the article", async (t) => {
+  const f = fixture(t),
+    noteRun = "linked-specialists"
+  const makeNote = (id, title, connections = []) => {
+    const meta = {
+      title,
+      type: "knowledge",
+      entry_type: "concept",
+      schema_version: "tech-encyclopedia/v2",
+      status: "evergreen",
+      domain: "AI Systems",
+      group: "실행 통제",
+      concept_id: id,
+      label: title,
+      created: "2026-10-03",
+      updated: "2026-10-03",
+      last_reviewed: "2026-10-03",
+      aliases: [],
+      keywords: [title],
+      parent_concepts: [],
+      related_concepts: [],
+      tags: ["Security"],
+      verified_sources: ["https://example.org/runtime"],
+      map_review: {
+        decision: "include",
+        kind: "security",
+        reason: "원문에 근거해 실행을 통제하는 별도의 전문 방법이다.",
+        reviewed: "2026-10-03",
+      },
+      connections,
+    }
+    const content = noteText(
+      meta,
+      "# " +
+        title +
+        "\n\n" +
+        CONCEPT_NOTE_HEADINGS.map(
+          (heading) =>
+            "## " +
+            heading +
+            "\n\n" +
+            ({
+              "한 문장 정의": "에이전트 동작을 추적하고 정책을 적용하는 실행 통제다.",
+              범위: "**포함:** 실행 통제.\n\n**포함하지 않음:** 회사와 제품 이름.",
+              출처: "[원문](https://example.org/runtime)",
+            }[heading] || "없음"),
+        ).join("\n\n") +
+        "\n",
+    )
+    return {
+      operation: "create",
+      path: "Knowledge/" + title + ".md",
+      previous_sha256: null,
+      content,
+      evidence: [{ run_id: f.run, claim_ids: ["c1"] }],
+    }
+  }
+  const sibling = makeNote("runtime-tracing", "Runtime Tracing")
+  const selected = makeNote("runtime-policy", "Runtime Policy", [
+    {
+      target: "runtime-tracing",
+      reason: "원문에서 정책 실행과 동작 추적을 연결한다.",
+      evidence: ["https://example.org/runtime"],
+    },
+  ])
+  await approveNoteReview(
+    f.root,
+    noteRun,
+    {
+      schema: "knowledge-note-review/v2",
+      reviewer: "fixture editor",
+      reason: "연결된 두 전문 방법을 함께 대조했다.",
+      reviewed_at: "2026-10-03",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: [selected, sibling],
+    },
+    { vault: f.vault },
+  )
+  f.review.concept_ids = ["runtime-policy"]
+  const assignment = f.review.concept_review.assignments[0]
+  assignment.concept_id = "runtime-policy"
+  assignment.note = { path: selected.path, sha256: sha256(selected.content), approval_run: noteRun }
+  const receipt = f.evaluate()
+  assert.equal(receipt.links.length, 1)
+  assert.equal(receipt.links[0].concept_id, "runtime-policy")
+  assert.deepEqual(
+    receipt.notes.map((note) => note.path),
+    [selected.path],
+  )
+  assert.ok(receipt.notes[0].approval_files)
+  assert.equal(fs.existsSync(path.join(f.vault, sibling.path)), false)
+  assert.deepEqual(f.evaluate(), receipt)
+
+  // Selecting both siblings must reuse their shared proposal set, not conflict
+  // with duplicate paths or add any undeclared article assignment.
+  f.review.concept_ids.push("runtime-tracing")
+  f.review.concept_review.assignments.push({
+    ...structuredClone(assignment),
+    concept_id: "runtime-tracing",
+    note: { path: sibling.path, sha256: sha256(sibling.content), approval_run: noteRun },
+  })
+  const both = f.evaluate()
+  assert.deepEqual(
+    both.links.map((link) => link.concept_id),
+    ["runtime-policy", "runtime-tracing"],
+  )
+
+  const approved = readJSON(f.root, `runs/${noteRun}/approved-notes.json`)
+  approved.notes[1].content += "\n이 승인 뒤 변경된 문장\n"
+  atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, approved)
+  assert.throws(() => f.evaluate(), /changed|differs|mismatch/i)
+})
+
+test("shared definition evidence closes across two selecting article runs and restores both approvals", async (t) => {
+  const f = fixture(t),
+    peerRun = "article-peer",
+    noteRun = "shared-definition"
+  for (const name of [
+    "draft.json",
+    "claims.json",
+    "reviewed-claims.json",
+    "documents.json",
+    "parses.json",
+  ])
+    atomicWrite(f.root, `runs/${peerRun}/${name}`, readJSON(f.root, `runs/${f.run}/${name}`))
+  const meta = {
+    title: "Runtime Policy",
+    type: "knowledge",
+    entry_type: "concept",
+    schema_version: "tech-encyclopedia/v2",
+    status: "evergreen",
+    domain: "AI Systems",
+    group: "실행 통제",
+    concept_id: "runtime-policy",
+    label: "런타임 정책",
+    created: "2026-10-03",
+    updated: "2026-10-03",
+    last_reviewed: "2026-10-03",
+    aliases: [],
+    keywords: ["Runtime policy"],
+    parent_concepts: [],
+    related_concepts: [],
+    tags: [],
+    verified_sources: ["https://example.org/runtime"],
+    map_review: {
+      decision: "include",
+      kind: "security",
+      reason: "도구 실행 경계의 전문 통제다.",
+      reviewed: "2026-10-03",
+    },
+  }
+  const content = noteText(
+    meta,
+    "# Runtime Policy\n\n" +
+      CONCEPT_NOTE_HEADINGS.map(
+        (heading) =>
+          "## " +
+          heading +
+          "\n\n" +
+          ({
+            "한 문장 정의": "에이전트의 도구 실행 경계를 통제하는 정책이다.",
+            범위: "**포함:** 도구 실행 통제.\n\n**포함하지 않음:** 회사나 제품 이름.",
+            출처: "[원문](https://example.org/runtime)",
+          }[heading] || "없음"),
+      ).join("\n\n") +
+      "\n",
+  )
+  const notePath = "Knowledge/Runtime Policy.md"
+  await approveNoteReview(
+    f.root,
+    noteRun,
+    {
+      schema: "knowledge-note-review/v2",
+      reviewer: "fixture editor",
+      reason: "두 검토 판본의 사실로 같은 전문 정의를 대조했다.",
+      reviewed_at: "2026-10-03",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: [
+        {
+          operation: "create",
+          path: notePath,
+          previous_sha256: null,
+          content,
+          evidence: [f.run, peerRun].map((run_id) => ({ run_id, claim_ids: ["c1"] })),
+        },
+      ],
+    },
+    { vault: f.vault },
+  )
+  f.review.concept_ids = [meta.concept_id]
+  const assignment = f.review.concept_review.assignments[0]
+  assignment.concept_id = meta.concept_id
+  assignment.note = { path: notePath, sha256: sha256(content), approval_run: noteRun }
+  fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+  for (const run of [f.run, peerRun])
+    await main([
+      "approve",
+      "--root",
+      f.root,
+      "--run",
+      run,
+      "--vault",
+      f.vault,
+      "--review",
+      f.reviewFile,
+    ])
+  const portable = await archiveClosure(f.root, "shared-definition-portable", f.run, [], {
+    vault: f.vault,
+  })
+  assert.ok([f.run, peerRun, noteRun].every((run) => portable.bound_runs.includes(run)))
+  const manifest = readJSON(f.root, "runs/shared-definition-portable/archive-manifest.json")
+  assert.ok(
+    manifest.dependencies.some(
+      (e) => e.from === peerRun && e.to === noteRun && e.kind === "concept_note_approval",
+    ),
+  )
+  assert.ok(
+    manifest.dependencies.some(
+      (e) => e.from === noteRun && e.to === peerRun && e.kind === "knowledge_fact_source",
+    ),
+  )
+  const restored = restoreArchive(f, portable, "restore/shared-definition")
+  for (const run of [f.run, peerRun])
+    assert.deepEqual(
+      loadArchivedConceptApproval(restored, "shared-definition-portable", run),
+      loadCurrentApproval(f.root, run, { vault: f.vault }),
+    )
+  const claims = readJSON(f.root, `runs/${peerRun}/reviewed-claims.json`)
+  claims.claims[0].value = "Changed after approval"
+  atomicWrite(f.root, `runs/${peerRun}/reviewed-claims.json`, claims)
+  await assert.rejects(
+    () => archiveClosure(f.root, "tampered-shared-definition", f.run, [], { vault: f.vault }),
+    /changed|differs|mismatch/,
+  )
+})
+
 test("a not-yet-installed specialist approval binds exact source facts and requires the same note in preview", async (t) => {
   const f = fixture(t),
     notePath = "Knowledge/Runtime Policy.md",

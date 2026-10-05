@@ -9843,3 +9843,59 @@ canonical reviewRoot의 실제 inventory는 작성200·v2 39·legacy82/724구간
 전수 private ledger에서 가장 최근 미검토는7/30이다.8/3·8/2·8/1의 빈 기록은 이미 판정되어 재취재 대상으로 계산하지 않았다. 기존 source-count5와 원래 URL5를 사용했다. collect-v2의 OpenAI3 HTTP403은 보존하고 GitHub2 HTTP200·20blocks를 공통 profile로 파싱했다. actual web.run 응답 turn638view0/1 및 turn640view0을 frozen transcript로 저장하고 manual-readable-capture/v1·명시적7/29날짜/단일H1 선택을 재사용해 OpenAI3·100blocks를 import했다. 자동 HTTP 성공이나 승인으로 표시하지 않는다. 학술 연구자 원문에8/10수정이 있으므로 최초7/29발표와 구분한다.
 
 공통 select-source/bundle로 원래5자료/120blocks를 결합했고 ARC1문서의 exact source selection을 MLX fact_extract에 고정했다. run은 외장 combined-v2/runs/legacy-20260730-{all-source-bundle,arc-selected-source,arc-fact-extract}-20261005-v1이다. CLI session31010이 실제 live로 관측됐으며 진행 중인 stage만으로 완료 판정하지 않는다. 승인·전환·공개·Drive 최종 보관은 아직 수행하지 않았다. logs 및 readable response/manifest를 외장 루트에 보존한다. 전체 미판정64/598·WBS2/22·goal active다.
+
+
+## 388. 프로젝트 저장소 외장 이동과 내장 중복 사본 정리 (2026-10-05)
+
+본체와 연결된 두 worktree를 `/Volumes/X5Storage/Projects/Personal/Apps/`로 이동했다. 본체의 새 실제 루트는 `/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden`이며 기존 `/Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden` 경로는 이 위치를 가리키는 symlink다. briefing-20261001 및 common-source-ingestion도 같은 방식으로 이동했다. 기존 프로젝트 등록·예약·가상환경 shebang·수집 증거의 절대 경로는 이 연결을 통해 유지한다. 외장 X5Storage UUID `B0232753-2970-4B99-B372-BD7CB75A69DC`의 실제 mount를 확인하고 진행했다.
+
+`ditto --rsrc --extattr --acl`로 숨김 파일·Git·원문·검토 장부·개발 환경을 포함해 복사했다. 세 사본 총 272,837 regular files / 9,333,972,146 logical bytes를 SHA-256, symlink 대상, mode, 확장 속성으로 대조했다. 시스템 provenance 속성은 비교에서 제외하며 나머지 속성은 대조했다. 원본을 전환 직전에 다시 대조했고, 주 저장소 HEAD84d1eb4와 두 작업 사본 HEAD·전체 미커밋/미추적 상태가 이전·새 경로 양쪽에서 일치했다. 다른 작업자의 변경은 커밋·삭제·되돌리지 않았다.
+
+`git fsck --full`, 설치된 Python 수집 의존성 import(trafilatura/PyMuPDF/markdown-it/lxml), 실제 Node YAML parse/esbuild transform, `pull-drive.py --verify-working-copy`가 통과했다. Drive 작성 원본200개와 SHA4bb895f8858cfdb5dd870edb2d39ffe3ede5f8478ab48698c06180529d73a60c가 일치했다. 이전에 실행 중이던 외장 브리핑 미리보기는 이동 전후 HTTP200 / 11,958bytes / SHA d9cf9b0d3c65bf08008bb1f69f233fff50c2d3b380cfd5ce552e9ef2f6078d14로 일치했다. 이 원문 검사는 새 Drive 동기화나 공개 배포를 뜻하지 않는다. 전체 suite는 재실행하지 않았다.
+
+최초 임시 검사에 지정한 bs4와 gray-matter는 해당 프로젝트 설치 의존성이 아니었고 기존 내장 환경에서도 없음을 확인했다. 검사를 저장소에 선언되고 실제 사용하는 의존성으로 바로잡았으며 설치·환경 교체는 하지 않았다. 최초 실패 로그와 성공 결과를 모두 보존했다.
+
+검증을 마친 정확한 내장 backup 디렉터리 세 곳만 삭제했다. 원문·심사 기록·Git 이력·미커밋 변경·가상환경·외장 발행 증거는 보존했다. 작업 전후 관측한 내장 available은 356,208,640 → 8,654,000,128bytes, 증가8,297,791,488bytes다. APFS와 다른 프로세스의 사용량으로 현재 수치는 달라질 수 있으며 논리적 이동 크기를 여유 공간 증가와 동일시하지 않는다. Ollama 모델은 이번 프로젝트 이동 대상이 아니다.
+
+비공개 receipt·전체 manifest·검사 로그는 `.local/migration/external-repository-20261005-v1/`을 통해 접근한다. 실제 위치는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1/project-migration-20261005-v1`이다. 외장을 연결한 상태에서 기존 경로 또는 새 루트로 작업한다. 복구가 필요하면 receipt의 UUID와 manifest를 확인하고 외장 사본을 새로운 내장 경로에 복사·대조한 뒤 symlink를 교체한다. 삭제된 내장 중복 사본을 별도 백업으로 표시하지 않는다.
+
+기존 공개b18e591은 그대로다. 다음 개발은 7/30 실제5출처·120블록의 facts 직접 검토/전환부터 재개한다. 미판정64회차598구간·독립 human40/20·정규7회/무인08시·full portable runtime 복구는 미완료이며 WBS2/22·전체 목표 active를 유지한다.
+
+## 389. 7/30 전체 원문 기사·전문용어 전환과 공유 정의의 복구
+
+canonical 실제 저장소는 외장 `/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden`이다. 기존 경로 symlink와 두 dirty worktree를 보존한다. 이번 개발은 기존 수집·선택·직접 검토·로컬 모델·승인·preview·archive를 재사용하며 새 crawler나 유료 API를 도입하지 않았다.
+
+### 원문·편집·전문용어
+
+7/30 원본11구간/SHA d28175361fcf20bc56bee46168bcba314ae68fdd61c384678bd3e65f64311544와5원문/120블록을 모두 대조했다. OpenAI3의403/readable-tool import와 GitHub2의HTTP200을 구분한다. ARC14·학술 연구자14·서빙 효율20·코드리뷰11·모델 정책10의69사실과 정의용 공식 문서17background 사실을 직접 검토했다. ARC 모델 후보6개의 원 출력·정정·추가 사실8개를 보존한다. RHAE를 게임 성공률로 쓰지 않고175,000문자/토큰 단위를 구분했다. 연구자100,000명은2027년까지 확대 계획이며8/10추가 공지는7/30에 섞지 않는다. GitHub의 정식 기능 발표와8/26시행 정책은 두 기사로 분리했다.
+
+qwen3.8:27b-mlx의 실제 article_write5호출은76.648/57.507/69.459/46.692/36.098초에 terminal0이었다. 원 출력과 checkpoint를 유지하고 날짜 누락·반복·불필요한 편집 문구를 직접 정정했다. 자동 품질이나 독립 human gold로 집계하지 않는다. 최종 사건ID는265c6a0134aba9b6,47da73cdc4f72b4c,eb71f165025c2507,05746085e97d8c7d,37ab4b1c66029ac0다.
+
+최종 `legacy-20260730-specialist-notes-approved-20261005-v2`는 Prompt Caching·Speculative Decoding·Context Compaction 신규3개와 KV Cache 기존ID/경로 교체1개다. 정의·작동·정확한 별칭·혼동 개념·7/29기사/원문 이력을 대조했다. KV 텐서 재사용·초안 생성과 검증·문맥 교체의 캐시 영향·평가 조건에만 관계를 연결하며 일반 단어·회사·제품을 노드로 만들지 않는다.
+
+### 공통 결함 수정과 검사
+
+실제 문맥 압축 승인은 같은 묶음의 새 프롬프트 캐싱을 관계 대상으로 찾지 못해 처음 실패했다. `article-concept-review.mjs`는 exact hash로 고정한 승인 묶음의 전문 노트를 관계 검증에 제공하되 직접 배정한 개념만 기사에 붙인다. 같은 path/bytes는 재사용하고 다른 bytes는 거부한다. 최초 표적11/11 이후 공유 정의의 archive가 다른 기사에서 그 정의를 다시 선택하는 참조를 Cyclic archive dependency로 거부하는 결함도 새 검사로 재현했다. `archive-closure.mjs`는 hash 대조한 knowledge_fact_source/concept_note_approval의 조상 참조만 중복 재귀 없이 보존한다. 다른 순환은 기존대로 거부한다. 재현1실패 뒤 최종 두 관련 파일23/23·format/diff가 통과했다. 변조된 근거 거부·두 승인 실제 복구를 검사하고 전체suite는 반복하지 않았다.
+
+### 비공개 화면과 변경분
+
+최종 `legacy-20260730-complete-reader-20261005-v2`는11구간의 전환·5기사·4정의·색인을 포함한다. 생성/용어 sync/check/validate/build/site·채널 내용 일치가 통과했고 기존 회차 경로/cutoff·RSS40 GUID/pubDate를 보존한다.7/30은 현재40회 피드 밖이므로 새 item을 만들지 않았다. 승인된 설명은 기사·브리핑·GitHub digest에 같다. 빈 분석/일반론/운영 문구는 추가하지 않았다.
+
+1280/390 실제 화면에서 분야 탭·공유 query·Enter·뒤로가기·전문용어→날짜 이력→기사·브리핑을 확인했다. 뉴스/브리핑 canvas0·가로 넘침0·빈 분석0이다. archive 보강 뒤 생성한reader-v2의13파일은 UI로 본reader-v1과 bytes가 같다. private 검증이며 공개 배포 증거가 아니다. `prepare-drive.py --approved-preview`의 변경6파일/44,082bytes는 `upload_allowed=false`다.
+
+### 실제 Drive 원격 복구
+
+private Research의 부모/shared:false를 새 조회하고4ZIP을 보관했다. streamed file reference의 로컬 materialization은 HTTPError였고 기존 bounded raw compatibility로 실제 원격 bytes를 받아 SHA/CRC·모든 member를 확인했다. 임시base64만 디코딩 후 제거했고 signed URL은 영수증에 남기지 않는다. 같은 판본이 중복 포함된 묶음의 수를 독립 원문 수로 더하지 않는다. 네 ZIP에서5승인·4정의·승인 파일/온톨로지를 독립 복구해 원래 검토와 같음을 확인하고 정확한 원문/사건 위치를 등록했다.
+
+| 묶음 / Drive ID | bytes / members | SHA-256 |
+|---|---|---|
+| shared technical v2 / 1g3Zh4KvqmYkNUoNtfLhXEaA0H-CgdRr1 | 1,442,608 / 341 | 408ea12494cf814ae73ac2dfad0ddc637407cb0a5ef5c723810be132ad6aec88 |
+| academic v1 / 1TccZE352KRYO8jmHgHGgR_5LaGbioNY2 | 289,821 / 63 | e8c5d5969878aeb1c67e022bb1f504d2f2a4937698c817628aaddf812fdb54e5 |
+| skills v1 / 1yjFUQF0jfW2K28mtK93AygT_yPLlQ38k | 861,354 / 265 | 2e868e2384e7528bfdb48629c8d8fdd28a3635bc7990f42e9d284ff9dcbdee30 |
+| policy v1 / 16JEbc9bgr_R-Ix9JHERMRoAE7doxxOV4 | 280,217 / 63 | 1c37ce38d11428fcd6289228ed194292f604970473d6251d3035345d25430e27 |
+
+외장 증거 루트는 `/Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1`이다. july30-complete-transition-v1.json, reviewed-facts checkpoint, 기사 승인/corrections, model-draft results, concept/closure 검사 로그, browser observation/PNG, reader-runtime-comparison-v2, drive-july30-{technical,academic,skills,policy}-v1의 metadata/remote.zip/restored/location-register, july30-remote-approval-verification-v1.json과 final preview의 drive-authoring에 근거가 있다. 최초 문서 append는 stdin UTF-8 오류로 실패해 원본을 바꾸지 않았으며 파일 patch로 기록했다.
+
+### 재개점과 완료 경계
+
+작성 authority200파일과 공개b18e591/RSS는 이번 작업에서 변경하지 않았다. 다음은 코드/문서 판본 정리 → fresh Drive 작성 원본 전체·부모/raw 대조 → 승인6파일 retrospective release와 같은ID update/신규경로 create·재읽기 → 공개 릴리스·WebsiteData다. private11구간을 canonical 공개 완료로 집계하지 않는다. 미판정64회차598구간·독립40dev/20heldout human gold·정규7회/무인08시·full portable runtime 복구가 남는다. 과거 수정의 새 운영 횟수0, WBS2/22·goal active를 유지한다. 동일 실패를1시간 이상 반복한 항목은 없으며 이번 원문/편집/용어/공통 결함 수정/원격 복구는 progress다.

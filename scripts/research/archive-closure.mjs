@@ -69,10 +69,14 @@ export function buildArchiveClosure(
     const reference = (target, kind, check) => {
       if (!validRun(target)) throw Error("Invalid dependency reference: " + kind)
       check?.()
-      // A knowledge definition can use facts from the article which selects it.
-      // The current run already carries those exact source files; this factual
-      // dependency does not recurse through publication or model generation.
-      if (!(kind === "knowledge_fact_source" && visiting.has(target))) dependencies.push(target)
+      // A definition may use facts from several articles that all select that
+      // same approved definition. Its fact source or note approval can therefore
+      // point back to an ancestor already being packaged. Check the exact bound
+      // bytes above and retain the edge; do not recurse into that ancestor twice.
+      // Other source/approval dependency cycles remain invalid.
+      const reviewedDefinitionBackEdge =
+        visiting.has(target) && ["knowledge_fact_source", "concept_note_approval"].includes(kind)
+      if (!reviewedDefinitionBackEdge) dependencies.push(target)
       edges.push({ from: id, to: target, kind })
     }
     for (const document of stored?.documents || []) {

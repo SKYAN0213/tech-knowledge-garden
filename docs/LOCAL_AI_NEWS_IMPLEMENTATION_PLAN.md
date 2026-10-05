@@ -4209,3 +4209,13 @@ Drive200raw/17folder를 실제 새 조회하고4대상 같은ID·40,059bytes를 
 ## 19.295. 8/4 Drive-first 공개 슬라이스 완료
 
 원격200raw/16폴더 baseline을 검증해 승인3파일 같은ID 반영·post197불변+3새raw/16폴더·source SHA 일치를 확인했다. 외장 Git 작업 사본에서 공개b18e591과 Actions37251568420 success, CI816/816·Python15+2/build/site,17웹/RSS/GitHub exact와 동일 지도 모듈,1280/390 실제 UI를 확인했다. 내장 원본은 같은 커밋으로 fast-forward했고 모델/프로젝트 이동·삭제는 하지 않았다. WebsiteData11rawSHA도 일치한다. 미판정64/598·독립human40/20·정규7회/무인08시·fullruntime은 남는다. 전체WBS2/22·goal active이며 다음미검토7/30 원문 조사에 기존 수집/검토를 재사용한다. 상세 런북386.
+
+## 19.296. 외장 저장소 이전과 7/30 기사·전문용어의 실제 복구 슬라이스
+
+저장소와 두 dirty worktree를 외장으로 이동하고 전체272,837파일의 SHA/mode/링크/확장 속성·Git HEAD/변경 상태·선언된 runtime·기존 HTTP 출력 대조 후 내장 중복 사본만 삭제했다. 실제 내장 available 증가8,297,791,488bytes를 확인했다. 기존 경로는 symlink로 호환하며 원문·검토·Git·개발환경을 보존한다. 모델55GB의 이동은 이 저장소 이동 범위에 포함되지 않는다. 상세 런북388.
+
+7/30 원본11구간·5원문을 직접 대조해 기사69사실과 정의17background 사실을 검토했다. MLX5실제 작성 호출을 완료하고 최종 원문 정정한5기사를 승인했다. 전문용어3create/1replace의 정확한 정의·별칭·확인된 관계·날짜 이력을 연결했다. 같은 승인 묶음 안의 새 용어 관계 검증과 여러 기사가 공유하는 정의의 portable 참조 순환을 공통 수정했으며 최종 표적23/23과 변조 거부·두 승인 복구를 확인했다. 전체suite/출처별 crawler/새 API를 추가하지 않았다.
+
+reader-v2는 생성·용어·validate/build/site·5원고/출처/GitHub 일치·RSS40식별자를 확인했다.1280/390 실제 탭/query/키보드/이력/기사 이동·지도0·넘침0과13파일의 동일 bytes를 검증했다. private Drive4ZIP의 원격 SHA/CRC·승인5개·전문 정의4개·온톨로지 독립 복구가 같으며 정확한 판본/사건 위치를 등록했다. 승인6작성 파일44,082bytes는 준비만 됐고 upload_allowed=false다.
+
+다음 관문은 코드 판본 정리 → fresh Drive 작성200파일/부모/raw 대조 → 승인6파일 retrospective release/저장 → 실제 공개 배포/WebsiteData다. private11구간 검토를 canonical 공개 완료로 집계하지 않는다. 미판정64/598·독립human40/20·정규7회/무인08시·full portable runtime 복구·전체WBS2/22·goal active를 유지한다. 상세 런북389에 실제 입력·실패·수정·보관·재개점을 남겼으며1시간 같은 실패 반복 병목은 없다.
