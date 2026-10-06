@@ -1,3 +1,5 @@
+공통 수정 배포/보관확인(2026-10-06):ec17abb/Actions37416254685 success, CI971/971·Python15+10+3·build/site/deploy. 실제공개브리핑/RSS/GitHub digest/원고4bytes이전7기사와동일, HD새후보공개0. 최종조사closure v2는Drive실제rawSHA/private부모·복원후31documents/34parses/131evidence SHA 검증완료. ordinary v1의parse참조누락/ENOENT는보존하고복구성공으로세지않는다. 수집/모델재실행0. 다음:해외바이오기업6-1-1 및 현재기간/공식대조 판정→freshDrive→다음정규발행operation. 전체목표active/정규0·7/legacy47·454/독립40·20/fullruntime미완료 유지.
+
 실제 조사 재개(2026-10-06):62검색/843URL/3엔진 실패와 원문28판본·31/32칸 읽기 근거를 private investigation-v2에 기록했다.32칸 모두부분확인, 해외바이오기업 칸은미확보. 회원안내만있는본문의공통blocked판정과4표적시험/실제Thelec3건HTTP0재파싱·원parse보존완료. KUKA기존사건/언어별칭/본문지문동일재관측은새기사0이다. 공식5source와HD승인closure는Drive원격SHA/복원/7facts동등성검증완료. HD현대로보틱스825b509098936f76은7verified/1deferred 편집승인·다음정규후보이며오늘12:05게시이므로08시소급발행0이다. 후보783/verified98. 런북430/계획19.338.
 
 다음 재개:현재기간공식원문 판정→최신Drive대조→다음신규정규승인/발행operation. 완료수집/추출재실행금지. WBS2/22·legacy47/454·metadata10·독립40/20·정규0/7·08시/인증/중단/fullruntime미완료, goal active.1시간동일실패반복0. private진척화면 `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-cell-delivery-status-v1.html`.

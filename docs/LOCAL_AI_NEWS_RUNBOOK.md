@@ -10587,3 +10587,8 @@ HD현대사이트솔루션의 10월 후보는 6월/8월 공식 자료를 함께 
 검토된 후보의 다른 판본을 다시 intake하려고 review_status를 미검토로 초기화하지 않는다. KUKA의 경우 기존 언어별칭 검토/원문과 새 판본을 공통 articleContentFingerprint로 대조하여 본문·발표일 동일인 재관측을 별도 기록했다. 검색 제목만으로 사건 합치기를 승인하지 않는다. NVIDIA 뉴스룸/IR 두 주소도 기간 밖 동일발표 후보와 날짜 차이를 보존한다.
 
 HD 승인 run은 daily-20261006-hd-fabtech-processing-v1, approval-link는 daily-20261006-hd-fabtech-approval-link-v1이다. 최종 preview.md와7verified/1deferred 및 실제 복원 proof를 확인한다. 게시12:05는오늘08시 이후이므로 다음 정규후보로 유지한다. 기존cutoff/RSS pubDate를 변경해 억지로 같은 회차에 넣지 않는다. 일반 카드/분석에 운영 설명이나 실패 이유를 추가하지 않는다. source5와HDapproval은 각각 공통 closure→Drive metadata/raw SHA→공통 restore→approval 동등성을 확인했다. private 진척 화면은 `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-cell-delivery-status-v1.html`이며 신규 정규0/7은 유지한다.
+
+
+430 최종 관문: 공통 코드ec17abbc006dde037ce3ca0823f307e2ca0e798b/Actions37416254685의 Node971/971·Python15+10+3·build/site/deploy가 통과했다. 로컬 전체 suite는 실행하지 않았다. 실제 웹 브리핑·RSS·해당 commit의 GitHub digest/원고4파일은 이전 승인7기사와 bytes가 일치하며 HD 후보는 공개되지 않았다. 전체 목표 active·신규 정규0/7을 유지한다.
+
+추가 NVIDIA2판본 source closure13자료15members/100417bytes는 Research1mEpiHlMOFxynPt_Mj9np80XYqwRvCQkt의 원격 SHA f1ac89b281a2e2595c90e2bd6626a5ea4bfa0146f76a5a7ff02e9cf8022620e9를 대조하고 공통 복원했다. 검색/검토/회귀 증거의 ordinary v1은165자료166members·원격SHA/167파일 복원까지 확인했으나 canonical parse 경로가 없어 공통 source reader의ENOENT를 보존했다. 이를 독립 원문 읽기 복구 성공으로 기록하지 않는다. 기존 archive-closure를 적용한 최종 v2는199자료201members/3731881bytes이고 Research1TpoMFERHuA0mI5AeJP4ZrR7xbAwMHV1j의 원격 SHA e1f913bf45ceb0a7afc751cf0f4e0eab99ed492bf7a0d0510fd0f9eac3e7af3d를 대조했다. 최종 복원본의31source documents/34old·current parses/131evidence files를 실제 common source reader와 개별SHA로 재검증했다. 수집/모델 추가0이며 전체 runtime 복구가 아니다. 원문 읽기28판본과 회귀 원문3판본의 보관31개를 서로 구분한다.

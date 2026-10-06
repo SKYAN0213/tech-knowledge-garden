@@ -4585,3 +4585,8 @@ HD현대로보틱스는 실제 qwen3.8:27b-mlx 추출→근거 대조→작성 �
 공식5원문 closure26자료28members/435814bytes는 private Research1PLTev4ZHgyfCgQlHuibZgKiHWwLr3xaS의 원격 SHA8a1dda0a6be6e0a2db9bde5ef6a1360df7cfd21ee455665ef79e11cfebb06e6f로 대조하고 공통 복원했다. HD 승인 closure72자료74members/581003bytes는 Research1ao8G-0LM8TuCthQ0is0Eba-US6PvOCeF의 원격 SHA00c57b264bacab430e9586cef6e72d6d0a52e982fc9ea30273d5ca6ffd895eba로 대조했다. 복원 승인 기사/파일/7사실 동등성을 검증했다. 이 보관은 전체 runtime 복구가 아니다. private status JSON을 한 번 수집하고 같은 결과로 HTML을 렌더링했다.
 
 전체 WBS2/22·legacy47회차454구간/metadata10·독립human gold40/20·실제 신규 정규0/7·08시/인증/중단/fullruntime 미완료와 goal active를 유지한다. 이번 묶음의1시간 동일 실패 반복0이다. 다음은 현재 기간과 공식 원문 판정을 채우고 최신 Drive 대조→다음 정규 회차 승인/발행 operation으로 연결한다. 이미 완료한 전체 수집/추출을 재실행하지 않는다.
+
+
+19.338 최종 관문: 공통 코드ec17abbc006dde037ce3ca0823f307e2ca0e798b/Actions37416254685의 Node971/971·Python15+10+3·build/site/deploy가 통과했다. 로컬 전체 suite는 실행하지 않았다. 실제 웹 브리핑·RSS·해당 commit의 GitHub digest/원고4파일은 이전 승인7기사와 bytes가 일치하며 HD 후보는 공개되지 않았다. 전체 목표 active·신규 정규0/7을 유지한다.
+
+추가 NVIDIA2판본 source closure13자료15members/100417bytes는 Research1mEpiHlMOFxynPt_Mj9np80XYqwRvCQkt의 원격 SHA f1ac89b281a2e2595c90e2bd6626a5ea4bfa0146f76a5a7ff02e9cf8022620e9를 대조하고 공통 복원했다. 검색/검토/회귀 증거의 ordinary v1은165자료166members·원격SHA/167파일 복원까지 확인했으나 canonical parse 경로가 없어 공통 source reader의ENOENT를 보존했다. 이를 독립 원문 읽기 복구 성공으로 기록하지 않는다. 기존 archive-closure를 적용한 최종 v2는199자료201members/3731881bytes이고 Research1TpoMFERHuA0mI5AeJP4ZrR7xbAwMHV1j의 원격 SHA e1f913bf45ceb0a7afc751cf0f4e0eab99ed492bf7a0d0510fd0f9eac3e7af3d를 대조했다. 최종 복원본의31source documents/34old·current parses/131evidence files를 실제 common source reader와 개별SHA로 재검증했다. 수집/모델 추가0이며 전체 runtime 복구가 아니다. 원문 읽기28판본과 회귀 원문3판본의 보관31개를 서로 구분한다.
