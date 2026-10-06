@@ -1,137 +1,256 @@
 ---
 title: Tech & AI Briefing - 08:03
-date: 2026-07-11
 time: 08:03
-timezone: Asia/Seoul
-coverage_start: 2026-07-11T00:00:59+09:00
-coverage_end: 2026-07-11T08:03:40+09:00
 type: briefing
-source_count: 10
-new_items_count: 3
-linked_knowledge_notes:
-  - "[[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]"
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
-  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]"
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-11
+timezone: Asia/Seoul
+coverage_start: 2026-07-11T00:00:59+09:00
+coverage_end: 2026-07-11T08:03:40+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 3
+new_items_count: 3
+linked_knowledge_notes:
+  - "[[Knowledge/Software Engineering/AI-Assisted Security
+    Engineering|AI-Assisted Security Engineering]]"
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
+  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security
+    and Governance]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation
+    and Observability]]"
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
+  - GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경
+  - GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가
+article_records:
+  - title: CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-11
+      where: 미기재
+      what: CodeQL 2.26.0 출시 및 기능 업데이트
+      how: Kotlin 2.4.0 지원 추가, JavaScript/TypeScript 시스템 프롬프트 주입 탐지 쿼리 도입, C# Razor
+        Page 핸들러 파라미터 및 Go slog 패키지 모델 추가
+      why: 미기재
+    lead: GitHub는 2026년 7월 11일(한국 시간) CodeQL 2.26.0의 Kotlin 2.4.0 지원과
+      JavaScript·TypeScript용 시스템 프롬프트 인젝션 탐지 쿼리를 발표했습니다. GitHub.com의 코드 스캔에는 새
+      버전이 자동 적용되며, GitHub Enterprise Server에는 향후 릴리스에 포함될 예정이라고 설명했습니다.
+    explanations:
+      - heading: 사용자 입력이 시스템 지시문으로 흐르는 경로 탐지
+        paragraphs:
+          - js/system-prompt-injection은 신뢰하지 않는 사용자 입력이 AI 모델의 시스템 프롬프트로 들어가는 코드
+            경로를 찾습니다. 탐지 대상은 공격자가 이 입력 경로를 통해 모델의 행동을 바꾸는 경우입니다.
+          - OpenAI, Anthropic, Google GenAI SDK의 프롬프트 입력 지점도 분석 대상으로 추가했습니다.
+            Sora의 프롬프트, OpenAI Realtime의 세션 지시문, Anthropic의 구형 completion 프롬프트,
+            Google GenAI의 캐시된 콘텐츠와 시스템 지시문이 포함됩니다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-10-codeql-2-26-0-adds-kotlin-2-4-0-support-and-ai-prompt-injection-detection
+      - heading: C#·Go의 데이터 흐름 모델 보강
+        paragraphs:
+          - C#에서는 Razor Page의 OnGet·OnPost·OnPostAsync 같은 처리 함수의 인수를 외부 입력의
+            출발점으로 인식합니다. 해당 인수를 거치는 취약점 경로를 보안 쿼리로 검사할 수 있습니다.
+          - Go에서는 1.21에 도입된 log/slog 패키지의 함수와 Logger 메서드를 분석합니다.
+            go/log-injection과 go/clear-text-logging 쿼리가 해당 로깅 코드의 문제를 찾도록 모델을
+            추가했습니다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-10-codeql-2-26-0-adds-kotlin-2-4-0-support-and-ai-prompt-injection-detection
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-11
+      where: 미기재
+      what: 시크릿 스캐닝 탐지기 유형 명칭 변경
+      how: 탐지 방식에 맞춰 명칭을 'Generic patterns'과 'AI-detected secrets'으로 변경
+      why: 각 탐지기가 시크릿을 찾는 방식을 더 잘 반영하기 위해
+    lead: GitHub는 2026년 7월 11일(한국 시간) secret scanning에서 Non-provider patterns를
+      Generic patterns로, Copilot secret scanning을 AI-detected secrets로 바꾼다고
+      발표했습니다. 탐지 동작은 그대로이며, webhook·감사 로그 이벤트와 REST API에도 변경이 없다고 설명했습니다.
+    explanations:
+      - heading: 발급 주체와 탐지 방식을 구분하는 이름
+        paragraphs:
+          - Provider secrets는 AWS 키나 Stripe 토큰처럼 특정 서비스가 발급한 비밀정보입니다. Generic
+            secrets는 특정 서비스에 속하지 않는 개인 키·연결 문자열·비밀번호 등을 가리킵니다.
+          - Patterns는 정규식에 엔트로피 분석 같은 검사를 결합해 일정한 구조가 있는 비밀정보를 찾습니다. 서비스별 키를 찾는
+            provider patterns와 개인 키·연결 문자열을 찾는 generic patterns가 여기에 포함됩니다.
+          - AI-detected secrets는 주변 코드의 맥락을 읽어 비밀번호처럼 일정한 형식이 없는 generic secret을
+            찾습니다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-10-clearer-names-for-secret-scanning-detector-types
+      - heading: 기존 문서 링크는 유지
+        paragraphs:
+          - GitHub는 문서의 용어를 갱신하고 리다이렉트를 추가해 기존 문서 링크를 계속 사용할 수 있게 했다고 밝혔습니다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-10-clearer-names-for-secret-scanning-detector-types
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-11
+      where: 미기재
+      what: 다중 사용자 예산 사용 현황 조회용 REST API 엔드포인트 도입
+      how: 단일 엔드포인트를 통해 사용자의 소비량과 할당 한도를 페이지 단위로 조회하며, 예산 한도 비율 필터링, 개별 사용자 필터링, 소비 금액
+        정렬, 개별 예산 오버라이드 표시 기능 제공
+      why: 미기재
+    lead: GitHub는 2026년 7월 11일(한국 시간) 다중 사용자 예산의 사용자별 사용량과 할당 한도를 페이지 단위로 조회하는 REST
+      API 엔드포인트를 추가했습니다. GitHub Enterprise Cloud의 엔터프라이즈 소유자와 청구 관리자가 사용할 수 있으며,
+      엔터프라이즈 전체 사용자 예산과 비용센터에 한정된 사용자별 예산 모두를 지원합니다.
+    explanations:
+      - heading: 사용률 필터·정렬과 개별 한도 확인
+        paragraphs:
+          - 지정한 사용률 이상인 사용자를 필터링하거나 특정 사용자만 조회할 수 있습니다. 결과는 각 사용자의 사용량을 기준으로 정렬할
+            수 있습니다.
+          - 사용자에게 개별 예산 조정이 적용되어 실제 한도가 달라진 경우도 표시합니다. 여러 사용자의 현황을 하나의 엔드포인트에서
+            조회하되 결과는 페이지별로 받습니다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-10-per-user-states-for-multi-user-budgets-in-the-rest-api
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
+    event_id: cd5027de226c01e4
+    review_status: verified
+    published_at: 2026-07-11
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-10T13:40:56-07:00
+  - title: GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경
+    event_id: de3b723b4c4d604c
+    review_status: verified
+    published_at: 2026-07-11
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-10T13:06:10-07:00
+  - title: GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가
+    event_id: b94c58885676c1b2
+    review_status: verified
+    published_at: 2026-07-11
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-10T08:07:23-07:00
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- 오늘의 핵심 기사: GitHub가 CodeQL 2.26.0을 공개하며 AI prompt injection을 찾는 JavaScript/TypeScript query를 추가했습니다.
-- 보안 운영: GitHub secret scanning은 탐지 유형 이름을 `Generic patterns`와 `AI-detected secrets`로 정리했습니다. 동작 변화는 없지만, 사람이 이해하기 쉬운 분류로 바뀌었습니다.
-- 개발도구 운영: GitHub Enterprise Cloud REST API에서 multi-user budget의 사용자별 사용 상태를 한 번에 조회할 수 있게 됐습니다.
-- 논문과 연구: 없음
-- 흐름: AI 개발도구는 "새 모델" 경쟁만이 아니라 prompt injection 탐지, secret 분류, AI credit 예산 추적처럼 운영·보안 통제 쪽으로 계속 넓어지고 있습니다.
+CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
 
-# 오늘의 핵심 기사
+# 차례
 
-## CodeQL, AI prompt injection을 코드 흐름으로 찾기 시작하다
+- CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
+- GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경
+- GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가
 
-GitHub는 2026-07-10 20:40 UTC에 CodeQL 2.26.0을 공지했습니다. 이번 릴리스는 Kotlin 2.4.0 지원과 여러 언어의 정확도 개선을 포함하지만, AI 개발자에게 가장 중요한 변화는 JavaScript/TypeScript용 system prompt injection 탐지입니다.
-
-핵심 사실:
-- `js/system-prompt-injection` query가 추가됐습니다.
-- 이 query는 신뢰할 수 없는 사용자 입력이 AI 모델의 system prompt로 흘러 들어가 모델 행동을 바꿀 수 있는 경우를 찾습니다.
-- OpenAI, Anthropic, Google GenAI SDK 관련 prompt sink 모델링도 넓어졌습니다.
-- GitHub code scanning 사용자는 github.com에서 새 CodeQL 기능을 자동으로 받습니다.
-
-왜 중요한가:
-AI 앱과 coding agent는 외부 문서, 사용자 입력, repository 파일을 읽고 모델 지시문을 만듭니다. 이 경로가 섞이면 공격자가 모델의 규칙을 바꾸는 prompt injection이 생길 수 있습니다. CodeQL이 이를 정적 분석 대상으로 넣었다는 것은 AI 보안이 "프롬프트 문구 점검"에서 "코드 흐름 점검"으로 이동한다는 신호입니다.
-
-구독자가 알아두면 좋은 점:
-AI 기능을 넣은 웹앱이나 내부 도구를 운영한다면 system instruction, developer instruction, realtime session instruction에 사용자 입력이 들어가는지 확인해야 합니다. 보안팀은 CodeQL alert를 단순 취약점 목록이 아니라 agent 권한·도구 호출 정책과 함께 봐야 합니다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
-
-## Secret scanning, AI 탐지 secret을 더 분명히 부르다
-
-GitHub는 2026-07-10 20:06 UTC에 secret scanning detector type 이름을 더 명확하게 바꾼다고 공지했습니다. 기능 동작은 그대로지만, 보안팀이 탐지 결과를 설명하는 말이 쉬워졌습니다.
-
-핵심 사실:
-- 기존 `Non-provider patterns`는 `Generic patterns`로 바뀝니다.
-- 기존 `Copilot secret scanning`은 `AI-detected secrets`로 바뀝니다.
-- webhook event, audit log event, REST API 동작은 바뀌지 않습니다.
-- GitHub 문서 링크는 redirect와 문서 업데이트로 계속 동작합니다.
-
-왜 중요한가:
-secret 탐지는 점점 두 갈래가 됩니다. 하나는 정규식과 엔트로피 분석처럼 구조가 뚜렷한 secret을 찾는 방식이고, 다른 하나는 AI가 주변 코드를 읽어 비정형 secret을 찾는 방식입니다. 이름이 명확하면 보안 리포트에서 "어떤 방식으로 잡힌 문제인지"를 설명하기 쉽습니다.
-
-구독자가 알아두면 좋은 점:
-보안 dashboard나 내부 알림을 운영한다면 detector type 표시명을 새 용어에 맞춰 바꾸는지 확인하세요. 탐지 방식은 그대로이므로, 이번 변경 자체 때문에 policy threshold를 바꿀 필요는 없습니다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]], [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]
-
-## Copilot AI credit 예산을 사용자별로 한 번에 본다
-
-GitHub는 2026-07-10 15:07 UTC에 multi-user budget의 사용자별 사용 상태를 REST API에서 조회할 수 있게 했다고 공지했습니다. Enterprise owner와 billing manager는 큰 예산 안에서 누가 한도에 가까운지 API로 확인할 수 있습니다.
-
-핵심 사실:
-- 한 endpoint에서 multi-user budget에 속한 사용자별 사용량과 할당 한도를 page 단위로 조회할 수 있습니다.
-- 사용률 기준으로 filter하거나, 특정 사용자만 보거나, 사용량 기준으로 sort할 수 있습니다.
-- universal budget과 cost center scoped per-user budget 모두에 적용됩니다.
-- GitHub Docs 예시는 사용자 한 명의 월별 Copilot AI credit을 제한하는 budget 설정을 보여줍니다.
-
-왜 중요한가:
-AI coding 도구는 편하지만, 조직 전체에서 쓰면 비용이 빠르게 커질 수 있습니다. 사용자별 상태 조회가 API로 열리면 finance나 platform 팀이 "누가 많이 썼는지"를 수동으로 모으지 않고, 비용 경고와 자동 리포트를 만들 수 있습니다.
-
-구독자가 알아두면 좋은 점:
-팀에서 Copilot이나 AI credit 예산을 관리한다면 사용률 80%, 90% 같은 기준으로 자동 알림을 만들 수 있습니다. 단, 비용 데이터만으로 생산성을 판단하지 말고 실제 업무 성공률, review 품질, agent session 상태와 함께 봐야 합니다.
-
-더 깊게 보기: [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
 
-## CodeQL 2.26.0
+## CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가
 
-프로젝트: CodeQL / GitHub code scanning
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-쉬운 설명: 코드 안에서 취약한 데이터 흐름을 찾는 분석 도구가 AI prompt injection 경로도 보기 시작했습니다.
+GitHub는 2026년 7월 11일(한국 시간) CodeQL 2.26.0의 Kotlin 2.4.0 지원과 JavaScript·TypeScript용 시스템 프롬프트 인젝션 탐지 쿼리를 발표했습니다. GitHub.com의 코드 스캔에는 새 버전이 자동 적용되며, GitHub Enterprise Server에는 향후 릴리스에 포함될 예정이라고 설명했습니다. [S1]
 
-GitHub: https://github.blog/changelog/2026-07-10-codeql-2-26-0-adds-kotlin-2-4-0-support-and-ai-prompt-injection-detection
+### 사용자 입력이 시스템 지시문으로 흐르는 경로 탐지
 
-Star 증가 추세: 추세 확인 불가
+js/system-prompt-injection은 신뢰하지 않는 사용자 입력이 AI 모델의 시스템 프롬프트로 들어가는 코드 경로를 찾습니다. 탐지 대상은 공격자가 이 입력 경로를 통해 모델의 행동을 바꾸는 경우입니다.
 
-어디에 쓸 수 있나:
-AI 기능이 들어간 JavaScript/TypeScript 앱에서 사용자 입력이 system prompt나 모델 지시문으로 흘러 들어가는지 점검하는 데 쓸 수 있습니다.
+OpenAI, Anthropic, Google GenAI SDK의 프롬프트 입력 지점도 분석 대상으로 추가했습니다. Sora의 프롬프트, OpenAI Realtime의 세션 지시문, Anthropic의 구형 completion 프롬프트, Google GenAI의 캐시된 콘텐츠와 시스템 지시문이 포함됩니다. [S1]
 
-더 깊게 보기: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
+### C#·Go의 데이터 흐름 모델 보강
+
+C#에서는 Razor Page의 OnGet·OnPost·OnPostAsync 같은 처리 함수의 인수를 외부 입력의 출발점으로 인식합니다. 해당 인수를 거치는 취약점 경로를 보안 쿼리로 검사할 수 있습니다.
+
+Go에서는 1.21에 도입된 log/slog 패키지의 함수와 Logger 메서드를 분석합니다. go/log-injection과 go/clear-text-logging 쿼리가 해당 로깅 코드의 문제를 찾도록 모델을 추가했습니다. [S1]
+
+## GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 명칭 변경
+**기업·기관:** GitHub
+
+GitHub는 2026년 7월 11일(한국 시간) secret scanning에서 Non-provider patterns를 Generic patterns로, Copilot secret scanning을 AI-detected secrets로 바꾼다고 발표했습니다. 탐지 동작은 그대로이며, webhook·감사 로그 이벤트와 REST API에도 변경이 없다고 설명했습니다. [S2]
+
+### 발급 주체와 탐지 방식을 구분하는 이름
+
+Provider secrets는 AWS 키나 Stripe 토큰처럼 특정 서비스가 발급한 비밀정보입니다. Generic secrets는 특정 서비스에 속하지 않는 개인 키·연결 문자열·비밀번호 등을 가리킵니다.
+
+Patterns는 정규식에 엔트로피 분석 같은 검사를 결합해 일정한 구조가 있는 비밀정보를 찾습니다. 서비스별 키를 찾는 provider patterns와 개인 키·연결 문자열을 찾는 generic patterns가 여기에 포함됩니다.
+
+AI-detected secrets는 주변 코드의 맥락을 읽어 비밀번호처럼 일정한 형식이 없는 generic secret을 찾습니다. [S2]
+
+### 기존 문서 링크는 유지
+
+GitHub는 문서의 용어를 갱신하고 리다이렉트를 추가해 기존 문서 링크를 계속 사용할 수 있게 했다고 밝혔습니다. [S2]
+
+## GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 2026년 7월 11일(한국 시간) 다중 사용자 예산의 사용자별 사용량과 할당 한도를 페이지 단위로 조회하는 REST API 엔드포인트를 추가했습니다. GitHub Enterprise Cloud의 엔터프라이즈 소유자와 청구 관리자가 사용할 수 있으며, 엔터프라이즈 전체 사용자 예산과 비용센터에 한정된 사용자별 예산 모두를 지원합니다. [S3]
+
+### 사용률 필터·정렬과 개별 한도 확인
+
+지정한 사용률 이상인 사용자를 필터링하거나 특정 사용자만 조회할 수 있습니다. 결과는 각 사용자의 사용량을 기준으로 정렬할 수 있습니다.
+
+사용자에게 개별 예산 조정이 적용되어 실제 한도가 달라진 경우도 표시합니다. 여러 사용자의 현황을 하나의 엔드포인트에서 조회하되 결과는 페이지별로 받습니다. [S3]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
 
 # 흐름 읽기
 
-분석: 이번 창의 변화는 새 모델 발표보다 운영 통제에 가깝습니다. CodeQL은 prompt injection을 코드 취약점처럼 다루기 시작했고, secret scanning은 AI 기반 탐지 결과를 더 분명한 이름으로 설명하며, GitHub 예산 API는 Copilot AI credit을 사용자별로 추적하기 쉽게 만듭니다.
+없음
 
-확인된 사실과 구분한 해석: 확인된 사실은 GitHub Changelog와 GitHub Docs에 공개된 세 가지 변경입니다. 해석은 AI 개발도구의 경쟁축이 모델 성능뿐 아니라 보안 스캔, secret 대응, 비용 관측으로 확장되고 있다는 점입니다.
+# 오늘의 적용
 
-앞으로 볼 점:
-- CodeQL의 prompt injection query가 pull request 차단 ruleset과 얼마나 결합되는지
-- secret scanning의 `AI-detected secrets`가 어떤 유형의 비정형 secret에서 유용한지
-- Copilot AI credit 예산 API가 팀별 생산성·비용 dashboard와 어떻게 연결되는지
+없음
 
-# 바로 써먹을 점
+# 개념 색인
 
-- 업무 자동화: Copilot AI credit 사용률을 API로 가져와 80% 이상 사용자나 팀을 자동 보고합니다.
-- AI 활용: AI 앱의 system prompt와 tool instruction에 사용자 입력이 섞이는지 CodeQL 결과로 점검합니다.
-- 개발 생산성: CodeQL 2.26.0 적용 뒤 새 AI 관련 alert가 생기면 false positive로 넘기기 전에 입력 흐름을 먼저 확인합니다.
-- 연구 개발: 없음
-- 개인 프로젝트: secret 이름이나 API key를 코드에 남겼다면 GitHub secret scanning 알림에서 `AI-detected secrets`와 `Generic patterns`를 구분해 봅니다.
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-07-10-codeql-2-26-0-adds-kotlin-2-4-0-support-and-ai-prompt-injection-detection
-- https://codeql.github.com/docs/codeql-overview/codeql-changelog/codeql-cli-2.26.0/
-- https://github.blog/changelog/2026-07-10-clearer-names-for-secret-scanning-detector-types
-- https://docs.github.com/en/code-security/concepts/secret-security/secret-scanning
-- https://github.blog/changelog/2026-07-10-per-user-states-for-multi-user-budgets-in-the-rest-api
-- https://docs.github.com/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10
-- https://github.blog/changelog/feed/
-- https://openai.com/news/rss.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.LG+OR+cat:cs.CV+OR+cat:cs.RO&sortBy=submittedDate&sortOrder=descending&max_results=10
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=10
+- [S1] https://github.blog/changelog/2026-07-10-codeql-2-26-0-adds-kotlin-2-4-0-support-and-ai-prompt-injection-detection
+- [S2] https://github.blog/changelog/2026-07-10-clearer-names-for-secret-scanning-detector-types
+- [S3] https://github.blog/changelog/2026-07-10-per-user-states-for-multi-user-budgets-in-the-rest-api
