@@ -249,6 +249,26 @@ export function buildArchiveClosure(
           throw Error("Source selection dependency changed")
       })
     }
+    const precision = readJSON(root, base + "publication-time-revision.json")
+    if (precision) {
+      if (precision.schema !== "research-publication-time-revision/v1" || !stored)
+        throw Error("Invalid publication precision revision archive")
+      reference(precision.prior_run, "publication_precision_prior", () => {
+        if (
+          JSON.stringify(loadApprovedOntologyInput(root, precision.prior_run).file_hashes) !==
+          JSON.stringify(precision.prior_files)
+        )
+          throw Error("Prior precision approval dependency changed")
+      })
+      reference(precision.source_identity?.source_run, "publication_precision_source", () => {
+        if (
+          JSON.stringify(
+            loadStoredSourceRun(root, precision.source_identity.source_run).identity,
+          ) !== JSON.stringify(precision.source_identity)
+        )
+          throw Error("Precision source dependency changed")
+      })
+    }
     const processing = readJSON(root, base + "source-processing-input.json")
     const emptyReference = readJSON(root, base + "empty-extraction-review-reference.json")
     if (emptyReference) {

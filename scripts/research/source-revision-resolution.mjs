@@ -56,6 +56,16 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
       if (previous && previous.review_sha256 !== sha256(reviewBytes))
         throw Error("Resolution review changed; use a new run")
       if (previous && hash(candidate) === previous.after_candidate_sha256) {
+        if (previous.publication_precision) {
+          const bound = previous.publication_precision
+          if (
+            hash(readJSON(root, `runs/${bound.run}/publication-time-revision.json`)) !==
+              bound.manifest_sha256 ||
+            hash(loadStoredSourceRun(root, bound.source_identity.source_run).identity) !==
+              hash(bound.source_identity)
+          )
+            throw Error("Resolved publication precision lineage changed")
+        }
         for (const input of previous.approved_inputs)
           if (
             JSON.stringify(loadApprovedOntologyInput(root, input.run).file_hashes) !==
@@ -101,7 +111,10 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
       const before = structuredClone(candidate),
         next = structuredClone(candidate)
       const inputs = [old]
+      let publicationPrecision = null
       if (review.action === "restore_primary") {
+        if (review.publication_time_revision_run)
+          throw Error("Publication precision upgrade requires a replacement approval")
         if (review.new_approved_run) throw Error("Primary restoration cannot replace approval")
         const primaryDoc = old.documents.find(
           (d) => d.source_version_id === candidate.approval.source_version_id,
@@ -199,6 +212,48 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
         assertReviewDate(revised.article.article_review.reviewed_at, {
           notBefore: current.documents.map((d) => d.observed_at),
         })
+        let approvedParse = parse
+        if (review.publication_time_revision_run) {
+          const precision = readJSON(root, `runs/${revised.run}/publication-time-revision.json`)
+          const basis = readJSON(
+            root,
+            `runs/${revised.run}/editorial-review.json`,
+          )?.event_date_basis
+          const precise = revised.parses.find((p) => p.parse_id === basis?.parse_id)
+          if (
+            review.publication_time_revision_run !== revised.run ||
+            precision?.schema !== "research-publication-time-revision/v1" ||
+            precision.prior_run !== old.run ||
+            JSON.stringify(precision.prior_files) !== JSON.stringify(old.file_hashes) ||
+            basis?.kind !== "source-publication-time" ||
+            !precise ||
+            precise.source_version_id !== parse.source_version_id ||
+            precise.title !== parse.title ||
+            JSON.stringify(precise.blocks.map((b) => ({ ...b, block_id: null }))) !==
+              JSON.stringify(parse.blocks.map((b) => ({ ...b, block_id: null }))) ||
+            precise.dates?.published_at !== revised.article.article_review.source_published_at ||
+            !samePublicationDate(candidate.source_published_at, precise.dates.published_at)
+          )
+            throw Error(
+              "Publication precision replacement needs its reviewed unchanged-source lineage",
+            )
+          const precisionSource = loadStoredSourceRun(root, precision.source_identity?.source_run)
+          if (
+            hash(precisionSource.identity) !== hash(precision.source_identity) ||
+            !precisionSource.parses.some((p) => JSON.stringify(p) === JSON.stringify(precise))
+          )
+            throw Error("Publication precision source changed")
+          approvedParse = precise
+          publicationPrecision = {
+            run: revised.run,
+            manifest_sha256: hash(precision),
+            source_identity: precision.source_identity,
+          }
+          next.source_published_at = precise.dates.published_at
+          next.article_parse_id = precise.parse_id
+          next.article_content_sha256 = articleContentFingerprint(precise)
+          next.article_observed_at = doc.observed_at
+        }
         next.approval_history = [
           ...(next.approval_history || []),
           {
@@ -213,8 +268,8 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
           approved_run: revised.run,
           article_sha256: hash(revised.article),
           source_version_id: doc.source_version_id,
-          parse_id: parse.parse_id,
-          article_content_sha256: articleContentFingerprint(parse),
+          parse_id: approvedParse.parse_id,
+          article_content_sha256: articleContentFingerprint(approvedParse),
           revision_resolution_run: runId,
         }
       }
@@ -237,6 +292,7 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
       delete next.reason
       const receipt = {
         schema: "research-source-revision-resolution/v1",
+        ...(publicationPrecision ? { publication_precision: publicationPrecision } : {}),
         review_sha256: sha256(reviewBytes),
         review_path: reviewPath,
         action: review.action,

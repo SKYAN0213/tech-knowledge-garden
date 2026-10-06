@@ -4865,3 +4865,14 @@ source closure126자료/128members/3원문판본/524,032bytes/SHAf72094b31930f8b
 
 
 455/19.362 후속 완료: code 204f1ae0d28067f26bf01498640511d796f06578 / Actions37492396995 build·deploy success. 릴리스CI 전체검사1회·로컬 전체suite0, 공개3파일 raw SHA 동일·RSS40 GUID/pubDate/내용을 보존했다. 새 기사 공개0·정규0/7이다. source closure publication-time-source-closure-20261007-v1은16자료/18members/124,369bytes/SHA2e2d09a03fb3928837125918b7a961acd10c3bba6d800d1254bbf7eb2bbc25c1이다. private Drive ID1uAmTbz_0AVqEf-fe2Q-muCFHPdyUnqNY의 Research parent/shared=false·원격 raw SHA·18members restore·위치 등록을 확인했고 복원된2원문판본/1parse가 원본과 같았다. 닫힌 run/group/manifest는 추가 수정하지 않는다. 최신 비공개 진척판 core-progress-checkpoint-20261007-v4.json/html은 WBS3/22·partial17/not_started2다. UI 동작 변경이 없어 브라우저 검사는 반복하지 않았다. 다음은 정확한 게시 시각의 승인 연결과 해당 마감을 포함하는 회차 연결이며, 10월6일 기존 회차에 넣지 않는다. 기존 승인과 후보 장부는 보존했으므로 날짜 정밀도 변경은 별도 검토가 필요하다. 전체legacy·전문용어/독립 평가·실제08시/인증/복구/정규7회는 미완료이고 goal active를 유지한다. 동일 실패1시간 반복0이다.
+
+
+### 19.363. 승인 원고의 게시 시각 정밀도 정정과 재사용
+
+research-publication-time.mjs --run NEW --prior-run APPROVED --source-run PRECISE --review ROOT_RELATIVE_JSON은 승인된 일반 기사의 동일 원문·제목·언어·본문 블록을 확인하고, 날짜→명시적 오프셋 시각으로만 정밀도를 높인다. 원 발표일의 KST 날짜가 달라지거나 내용이 달라지면 이 경로로 정정하지 않는다. 전문 분석은 기존 전체 검토를 이용한다. 리뷰 schema는 research-publication-time-revision-review/v1이며 reviewer/reviewed_at/reason/event_id/prior_article_sha256/parse_id, source_read/claims_read/prose_read/identity_checked/dates_checked/numbers_checked=true, new_article/candidate_published=false를 요구한다. 승인 사실을 재검토하고 기존 원고의 근거 ID만 갱신하며 새 모델 추출로 표시하지 않는다. 편집 템플릿은 pending/검사false로 생성하고 기존 approve에서 별도 읽기·반복·날짜 근거 검토를 수행한다.
+
+source-revision-resolution의 replace_approval에 publication_time_revision_run을 명시하면 검증된 정정 계보·원문 판본·본문·정확한 시각을 대조해 후보와 승인 근거를 함께 갱신한다. 원 사건 ID·URL·관측 시각과 과거 승인을 보존하며 정정 source fingerprint가 새 수집에서 다시 미검토로 바뀌지 않도록 연결한다. 새 receipt는 시각 계보 hash를 pin해 반복 처리에서 변경을 거부하고 기존 receipt 동작을 보존한다. archive-closure는 publication_precision_prior/source 의존성을 자동 포함한다. 승인·정정 리뷰 파일은 runs/RUN/... 아래에 둬 portable archive의 bound-dependency 계약을 따른다. live backlog 전체 복원이나 runtime 재가동을 뜻하지 않는다.
+
+실제 사건28865e31f8cb281c: approved run crowdstrike-publication-time-revision-20261007-v3, 시각2026-10-06T08:15:23-04:00, 13verified facts·기존 육하원칙 리드/설명 그대로·추가 model/원문HTTP0. resolution-v1에서 후보911개 중1개만 정정하고 나머지910개·ID·관측 시각·과거 승인을 보존했다. 반복 resolution은 backlog SHA5c2379d016467d0fd7d3b18c10b4df06030176fc22a8f608286d18cf4b65715a가 같았다. 기존 daily plan의 새 precise-approval-reuse-v1은 approval_ready1/모델0이며 공개나08시 완료는 아니다.
+
+표적 처음32/32·CLI handoff1/1. 연결 추가 검사1실패는 stage 결과와 정정 manifest의 같은 파일명 충돌이었고 stage명을 분리해 해당1통과했다. idempotence 추가1통과. archive 검사2실패는 related-run이 candidate-approval만 받는 계약과 루트 review 경로가 bound dependency 밖인 시험 호출이었다. source 승인 root의 자동 계보 closure를 검증하도록 수정해 해당1통과했으며 guard를 완화하지 않았다. 초기 actual v1/v2는 보존했고 최종 v3만 후보에 연결했다. 신규 정규0/7·WBS3/22·legacy/독립평가/08시/fullruntime 미완료, goal active다. CI·Drive archive·공개 보존은 후속 결과로 기록한다. 동일 실패1시간 반복0이다.
