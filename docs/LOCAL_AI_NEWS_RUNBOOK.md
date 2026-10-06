@@ -10721,3 +10721,15 @@ v204 최종draft4891389c7f79d4863030f005a91e4ae4bee77c33dc5b831db2aaef73832fe6ee
 근거: 외장루트의claude-original-{versions-collection-v1.log,version-and-cutoff-proof-v1.json},claude-204-{source-processing-runtime,writer-runtime,approval-final,remote-restore,drive-restored-approval-proof}-v1자료,bug-fix-classification-targeted-v1.log. 독자용claude-204-reviewed-article-v1.md와thirteen-six-w-reviewed-samples-v1.md/summary는13사건·74verified/8deferred다. 실제분야합은software9/AI4이며모두private다. 동일사건으로정해지지않은v206은이샘플합에없고원마감에소급삽입하지않는다.
 
 다음은이미수집한v203/v205의개별사실·원고승인이다. 8구간 중7은승인사건매핑준비,Claude구간은v204만승인된partial이다. sourceList탐색3URL·정의·별칭/원문대체관계·전체15구간검토와선정분리결정후Drive작성원본/공개전환을확인한다. 목표active·WBS2/22·legacy47/454/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime관문은유지한다. 반복실패1시간0·추가유료API/예약/새adapter0이다. 핸들28259/69428/20701은terminal이다.
+
+## 439. 오류 수정 분류 배포 영수증과 계속 작업할 위치
+
+코드8185e79544c5235cfbc4e8a75ad047ba5895a71c / Actions37435333163의 Node993/993·Python15+10+3·build/site/deploy가 성공했다. 배포 완료2026-10-06T08:21:35Z, 실제 공개 readback08:23:19Z다. 외장 증거루트의 bug-fix-tag-ci-final-status-v1.json과 bug-fix-tag-public-preservation-v1.json을 확인했다. RSS40개/606,070bytes SHA b2f7e2d3e554619e2cb42164c095a3ef120aca40827b31010f4e568510f47403, Roche6,922bytes SHA75ef1506b426e441de89c67fe8f68207424972eef0e71db0dbb115019dc1df7e, reader-index1,239,161bytes SHA4fbf9418b1ba2d1dcf545d87c503e7eb48e62f1b779163642e2295e345089091은 직전 공개 bytes와 같다. GPT-5.6/v204 private event는 인덱스에 없다. 코드 배포와 새 기사 공개를 구분한다.
+
+계획표의 P2-03/P3-02/P3-03/P4-03 부분 근거와 재개 지점을 이번 확인 결과로 갱신했다. 기준일은10월6일이며 과거 행의 inventory 관측 시점은 그대로 보존한다. 완료 상태/분자는 올리지 않았다. 비공개 독자 샘플은 thirteen-six-w-reviewed-samples-v1.md, 승인 합계는 thirteen-approved-article-summary-v1.json의13사건/74verified/8deferred다. GPT-5.6과v204의 Drive raw SHA·전수 복원·승인 동등성 증거는 앞 두 절에 있다.
+
+다음은 저장된 legacy-20260710-claude-original-versions-source-20261006-v1의 exact tag v2.1.203/v2.1.205를 각각 select-source로 분리하여 공통 처리·직접 검토·승인·Drive 보관을 마치는 일이다. 새 수집/adapter와 완료 모델 응답 반복이 필요하지 않다. 원문 판본은 각각38/24블록이며 원 마감 내 발표다. v206은 별도 후속 사건으로 유지한다. 전체15구간·SourceList 관계·의존 용어·선정 분리 결정·fresh Drive 작성원본 확인이 뒤따른다.
+
+전체goal active·WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7의 미완료 관문을 유지한다. 로컬 전체 suite는 반복하지 않았으며 문서 영수증 commit은 skip ci로 처리한다. 같은 실패1시간 반복0이다.
+
+갱신된 계획표로 비공개 현황판 core-progress-checkpoint-20261006-v1.json/html을 생성하고 기준일2026-10-06·2/22·partial18·not_started2 및 모든 WBS 상태 보존을 실제 확인했다. 첫 readback script가 내부 필드 completed/required를 출력 API 필드로 오인해 assertion 실패했다. 실제 출력 계약 overall_completion.numerator/denominator/workstreams로 수정한 readback은 통과했고 제품 코드는 바꾸지 않았다. JSON SHA db89c43e27fc5e184a862727430d7272e31c228a582b569efd08415ede9c8c55; HTML SHA f612d56c8875443bca1d16055a00caa39cbf7e3fefcc649071703d83355f68f0이다. 현황판은 local_private이며 실제 브라우저 렌더링 검증으로 표시하지 않는다.
