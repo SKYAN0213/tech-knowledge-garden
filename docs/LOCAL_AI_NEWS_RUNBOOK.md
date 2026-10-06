@@ -11192,3 +11192,12 @@ approved intake daily-20261007-approved-intake-slice-v1의2후보는 기존candi
 private-reader-slice-v1의 Signals 누락 실패는 보존했고 source-bound daily-20261007-signal-review-v1과 두산위빙note 승인으로 v2만 성공했다. 두 기사/한용어의 웹/RSS/digest/상호links consistency를 통과했으며 nativebrowser/publication/32칸내용취재완료를 뜻하지 않는다. private preview 전체원고와 canonical의580파일 불변을 기록했다. CLI stdout에 feeds 안내가 앞서므로 JSON.parse 전체stdout 실패를 보존하고 preview-manifest/consistency를 직접 읽는다.
 
 source archive plan은 실제109terminal observation run을 공통closure6개로 나눴다. 6remote ZIP은 각16MiB 이하의 기존 bounded raw compatibility 호출로 받아 실제SHA·member전수restore·registry를 확인한다. source register의 rawSHA 검증은 기사승인/정규발행과 구분한다. 새progress/전체suite를 반복하지 않고 최종 후보의CI와 전달 증거를 이어서 남긴다.
+
+
+467 최종 검증: code a6a155a0/Actions37531187024의 Node1078/1078·Python28·build/site/deploy가 success다. source-binding-public-preservation-v1.json의 실제 공개3파일 HTTP200/rawSHA·RSS40 전체bytes 불변을 확인했다. 승인2기사/위빙/Signals는 private preview v2에서만 검증했으며 공개 신규 회차·정규 성공 횟수에는 포함하지 않는다. 추가 모델 실행0·같은 원문 재요청0·로컬 전체suite0이다.
+
+실제 수집6패키지46686416bytes/4059members의 원격 rawSHA·전수복원·등록은 current55-oct7-source-{restore-proof-v1,register-proof-v2}.json, 복원된108완료/1부분 관측은 current55-oct7-restored-observations-v1.json이다. 최초 provider metadata 직접 전달은 schema 요구에서 거부되어 변경 없이 보존됐고 fresh metadata를 실제 관측 wrapper로 작성한v2만 등록했다. 각 native/member 제한 관측과 원문 판본770을 그대로 보존한다.
+
+추가 승인3패키지3343443bytes/900members의 원격 rawSHA·전수복원·등록은 current55-oct7-approval-roundtrip-proof-v1.json이다. 복원본의 정확한 parse/원고/기사 개념 authority·위빙/Signals 승인 guard를 current55-oct7-restored-approvals-v1.json으로 다시 검증했다. 패키지 간 중복된 같은 승인 판본은 독립 새 기사로 세지 않는다. 전체 모델/runtime 복원이나 08시 실행으로 확대하지 않는다.
+
+다음 입력: terminal run daily-20261007-current55-integrated-v1 및 daily-20261007-approved-intake-slice-v1. 남은 분야의 원문/중복/날짜/상세 검토→정규 원고→fresh Drive 작성 원본 확인·보관→공개 readback 순서다. 현재 preview v2는 coverage_complete/drive_verified/browser_verified/candidate_published=false이고 canonical580파일은 불변이다. 기존 예약의 실제08시/7회 성공, legacy44회차430구간·metadata10, 독립human 평가와 인증/복구/fullruntime은 미완료이며 WBS3/22와 goal active를 유지한다. 문서 최종 기록은 [skip ci]로 커밋하고 통과한 검사/수집/모델을 재실행하지 않는다.
