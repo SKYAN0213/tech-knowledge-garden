@@ -4,8 +4,9 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { processDailyCandidates } from "../scripts/research/daily-processing.mjs"
-import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+import { articleContentFingerprint, loadStoredSourceRun } from "../scripts/research/parser.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { extractionCandidateKey } from "../scripts/research/claims.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
 
@@ -287,4 +288,40 @@ test("read-only processing status distinguishes source, review and a live model"
   invalid.counts = { ready: 2 }
   atomicWrite(f.root, "runs/batch/daily-processing.json", invalid)
   assert.equal(loadDailyProcessingStatus(f.root).runs[0].status, "invalid")
+})
+
+test("daily processing binds a multi-document event to the selected primary source identity", async (t) => {
+  const f = fixture(t)
+  const documents = [0, 1].map((i) => readJSON(f.root, `runs/source-${i}/documents.json`)[0])
+  const parses = [0, 1].map((i) => readJSON(f.root, `runs/source-${i}/parses.json`)[0])
+  parses[0].attachments = [{ url: documents[1].original_url }]
+  parses[1].quality.required_fields_present = true
+  for (const parse of parses) atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  atomicWrite(f.root, "runs/source-0/documents.json", documents)
+  atomicWrite(f.root, "runs/source-0/parses.json", parses)
+  const primary = f.handoff.pending[0]
+  primary.article_content_sha256 = articleContentFingerprint(parses[0])
+  primary.source_attempts[0].article_content_sha256 = primary.article_content_sha256
+  primary.source_attempts[0].supporting_source_urls = [documents[1].original_url]
+  f.options.candidateKeys = [primary.key]
+  atomicWrite(f.root, "handoff.json", f.handoff)
+  f.options.processor = async (options) => {
+    const selected = loadStoredSourceRun(f.root, options.sourceRun)
+    assert.equal(selected.documents.length, 2)
+    const key = extractionCandidateKey(selected.documents, {
+      candidateKey: options.candidateKey,
+      explicitlyGrouped: true,
+    })
+    assert.equal(key, `source-${documents[0].source_id}`)
+    assert.notEqual(key, `source-${documents[1].source_id}`)
+    return { status: "fact_review", candidate_published: false }
+  }
+  const result = await processDailyCandidates({ ...f.options, execute: true })
+  assert.equal(result.results[0].status, "fact_review")
+  assert.equal(result.results[0].candidate_key, primary.key)
+  assert.equal(result.public_approved, false)
+  assert.equal(
+    readJSON(f.root, `runs/${result.results[0].source_run}/source-selection.json`).candidate_key,
+    primary.key,
+  )
 })

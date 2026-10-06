@@ -282,6 +282,10 @@ export async function processDailyCandidates({
           sourceRun: selectionRun,
           policyFile,
           reviewFile: reviewFiles[key],
+          // Backlog keys can use canonical URLs or editorial identifiers. The
+          // extractor needs the acquired primary source identity for a grouped
+          // event; supporting documents must not replace that primary.
+          candidateKey: `source-${selected.selected.documents[0].source_id}`,
           provider,
         })
         rows.set(key, {
