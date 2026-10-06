@@ -10564,3 +10564,12 @@ node scripts/research-scan.mjs scan-list --root /absolute/private-root \
 실물 AWS복구v2는 원문72개(목록1+상세71) 재사용/누락상세1요청/후보71이다. 누락주소의 새404를 보존하고 반복 요청하지 않았다. 원본·복구153JSON의 재개SHA 불변과 기존후보ID·관측시점·raw SHA 일치를 확인했다. 본문 전체 재파싱은 추론이 아니며 신규 모델 호출0이다. proof `daily-20261006-aws-detail-repair-proof-v1.json`을 확인한다. 신규/공통 검증7개와 자동연결/상한2개가 통과했다. 전체 로컬 suite는 반복하지 않는다.
 
 19.336 공개·입력 관문: 코드078b33c0d3d3f1eac2bb1c6704899b408dc1cf0f/Actions37409624285의 Node971/971·Python15+10+3·build/deploy가 통과했다. 실제 공개12파일은 기존 승인 preview의byte/reader동등성을 유지했다. 로컬 전체suite는 반복하지 않았다. 기존공개179기사·RSS40·원고/회차는 유지한다. 새Drive작성원본213개를 두번의 같은전체목록과 실제raw·metadata로 재확인해 localbytes일치·source SHA c677107d…를 검증했다. fresh snapshot은 connector-source-snapshot-20261006T1237KST.json이며 canonical pull은 원문변경0·비공개mapping 관측갱신만 수행했다. status JSON을 한 번 생성해 같은결과로 private진척HTML을 갱신했다. AWS복구는첫stage~마지막stage26,040ms이며 기존collection273,809ms와 구분해 기록했다. 이검증은 새정규발행이나0/7 운영완료를 뜻하지 않는다. 다음은 같은회차32칸의 실제원문검토와 승인/발행operation연결이다.
+
+
+## 429. 보안·에너지 기사 보완과 날짜 형식 복구
+
+공통 날짜 파서는 명시적 `±HHMM`을 `±HH:MM`으로 정규화하고 범위를 검증한다. source 날짜 원 근거와 원문 판본/블록은 그대로 둔다. DOE 원문은 `daily-20261006-doe-cladding-source-v2`에서 HTTP0으로 재파싱하고 실제 검색→intake→processing→명시적 사실/편집 검토→approval-link를 연결했다. 전자신문 후보는 저장된 실제 54경로 수집 원문을 `daily-20261006-security-source-v1`로 선택해 같은 processing/approval-link를 사용했다. 완료 출력은 재사용하고 자료별 crawler를 추가하지 않는다.
+
+두 approved processing run을 `research.mjs preview --approved-run`에 함께 넘긴 `daily-20261006-diversified-reader-v1`을 사용한다. 대상은 기존10월6일 원고1개이며 기존5기사가 보존된다. 1280/390 탭/태그 query·Enter·뒤로 가기·상세를 실제 확인했다. 이후 `research-authoring prepare/release/write-session`에서 fresh 실제 Drive raw/metadata와 두 목록을 확인한 뒤 같은ID update한다. 정확한 post acquisition/readback을 guard와 pull-drive에 전달하고 하나의 `publish --operation --release`로 코드/원고를 함께 반영한다. 실제 deployment/public readback을 확인하기 전 공개 성공으로 기록하지 않는다.
+
+HD현대사이트솔루션의 10월 후보는 6월/8월 공식 자료를 함께 보존한 비공개 조사 기록에 남긴다. 이미 출시된 모델을 새 최초 출시로 쓰지 않으며 HD현대로보틱스와 기업을 합치지 않는다. source closure·Drive 작성 원본·WebsiteData·public readback·전체 runtime 복구는 각각 별도 상태다. 수동 보완은 정규7회에 추가하지 않는다.
