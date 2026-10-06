@@ -1760,3 +1760,8 @@ KISA2페이지/7일7후보·오늘4후보/실제 빈 창0, 전자신문17페이�
 
 
 후속: 디일렉/Adobe 원문248판본·248parse의 Drive 원격 SHA·전수 복원·partial160/동일 본문 재검증과 운영 receipt 별도 portable 보관/복원/등록까지 완료했다. d361635의 Actions37458258118 Node1,008/1,008·Python15+10+3·build/site/deploy 성공 및 기존 RSS/기사/reader-index 공개 bytes/SHA 보존 확인. 비공개 현황판은 core-progress-checkpoint-20261006-v7이며 다음 묶음은 유효 후보의 공통 처리·사건 연결·편집 승인이다. 전체 목표의 정규0/7·legacy/독립human/08시운영·선정 분리 gate는 유지하며 코드 배포가 신규 기사 발행을 뜻하지 않는다.
+
+
+### 2026-10-06 NACHI 기존 회차 보완·공개 검증 완료
+
+NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7개 보존, 로봇·제조4건). Drive213개 전후 raw 검증·변경1/기존ID 유지, cf3049f/Actions37464932439 Node1,011/Python15+10+3/build/site/deploy,12파일 공개 동등성·RSS40 GUID/pubDate 보존, 실제 HTTPS 데스크톱/모바일 태그·키보드·뒤로 가기, WebsiteData11raw SHA/링크 누락0을 확인했다. 새 모델 호출0·추가 로컬 전체suite0·릴리스 CI1회다. source closure와 delivery evidence는 비공개 Drive 원격 SHA/전수 복원까지 완료했다. 런북448/계획19.355/외장 core-progress-checkpoint-20261006-v10를 따른다. 전체목표 active/WBS2/22·신규정규0/7 및 전체legacy/독립human/08시 운영 gate는 남는다.

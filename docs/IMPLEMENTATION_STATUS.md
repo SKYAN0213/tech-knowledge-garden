@@ -355,3 +355,8 @@ HTML 200 응답에 로그인 벽이 반환되면 짧은 placeholder를 추출 �
 ## 2026-10-02 ABB GoFa 원문 대조와 기사 초안
 
 ABB 공식 고객 사례를 보존된 source version/parse에서 검토해 5개 claim을 확인하고 2개를 보류했다. qwen3.8:27b 추출 189.681초, 기사 작성 128.492초였고 provenance상 generation 276.774초가 두 호출 wall의 약 87%다(9.18/8.07 tokens/s). 최종 draft는 자동 편집 검사 문제 0개다. 이미 승인 대기 중인 FANUC/Hitachi 중복 후보는 guard가 차단했다. ABB draft는 아직 공개 승인되지 않았다. OpenAI API adapter는 있으나 이 실행 환경에 `OPENAI_API_KEY`가 없어 성능 비교는 하지 않았다. API 전환은 외부 원문 전송과 별도 사용료가 수반되며, source collection 지연에는 직접 영향을 주지 않는다. [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안).
+
+
+### 2026-10-06 NACHI 기존 회차 보완·공개 검증 완료
+
+NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7개 보존, 로봇·제조4건). Drive213개 전후 raw 검증·변경1/기존ID 유지, cf3049f/Actions37464932439 Node1,011/Python15+10+3/build/site/deploy,12파일 공개 동등성·RSS40 GUID/pubDate 보존, 실제 HTTPS 데스크톱/모바일 태그·키보드·뒤로 가기, WebsiteData11raw SHA/링크 누락0을 확인했다. 새 모델 호출0·추가 로컬 전체suite0·릴리스 CI1회다. source closure와 delivery evidence는 비공개 Drive 원격 SHA/전수 복원까지 완료했다. 런북448/계획19.355/외장 core-progress-checkpoint-20261006-v10를 따른다. 전체목표 active/WBS2/22·신규정규0/7 및 전체legacy/독립human/08시 운영 gate는 남는다.

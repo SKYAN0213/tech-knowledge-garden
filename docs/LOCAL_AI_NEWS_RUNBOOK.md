@@ -10882,3 +10882,24 @@ nachi-approved-closure-20261006-v1은 승인·명시 수정·모델 원출력·�
 릴리스 완료: 새 공통 override 코드 d3e84bc0b203e571842e7ba03e0b13b888988a90의 Actions37462269038에서 Node1,011/1,011·Python15+10+3·build/site/deploy success를 확인했다. 전체 로컬suite 반복0·이 코드 릴리스 CI1회다. 2026-10-06T12:21:15.777Z 공개 readback의 RSS606,070bytes·기존기사6,922bytes·reader-index1,239,161bytes는 모두 HTTP200/기존SHA 동일이다. 코드 배포와 신규 기사 발행0을 구분한다. 외장 daily-evidence-override-release-ci-{final-v1.json,log-v1.txt} 및 daily-evidence-override-public-preservation-v1.json이 증거다.
 
 core-progress-checkpoint-20261006-v8.json/html은 일일 처리 승인 준비1·실패2의 실제 receipt와 장부904·verified98·approval receipt 연결46·등록195/활성55/수집근거56을 집계한다. 운영 횟수·전체WBS 판정은 올리지 않았다. 승인 Markdown 파일 열기는 queued이며 독자가 실제 읽었다는 확인은 아니다. 작업 worker는 종료했고 Git 변경은 이번 코드/증거 문서만 포함한다.
+
+
+## 448. NACHI 승인 기사의 기존 회차 보완과 실제 공개 배포
+
+2026-10-05 발표는 기존 2026-10-06 회차 취재 구간(2026-10-04T01:30:38.099959Z~2026-10-05T20:21:45.039Z)에 포함된다. 기존7기사·분야 상한을 보존하며 로봇·제조3→4건으로 보완했다. 새 과거 회차나 정규 운영 실적으로 만들지 않았다. 기존 승인v3의 실제 완료 추출·대조·작성 결과를 재사용한 nachi-historical-processing-20261006-v4에서 동일13사실과 명시 교정을 확인하고 별도 historical_addition_review를 승인했다. 새 모델 호출0·일반/기업 전문용어 노드0이다.
+
+Drive 작성원본은16폴더/213Markdown을 원격 raw bytes로 전수 확인했다. 취득 전후 목록이 일치했고 최초1,374,967bytes가 모두 로컬과 같았다. 승인 reader preview nachi-historical-reader-20261006-v1은 기존 회차 한 파일만 변경했다. root 폴더를 subfolder 관측에 중복 포함한 첫 authoring release가 거부되어 실제12개 하위 폴더와 raw SHA를 포함한 observation-v2로 수정했다. 검증기를 완화하거나 거부 전에 Drive를 쓰지 않았다.
+
+공통 write-session의 durable intent 이후 Drive 파일1UqN8fCvitSJt9kkOVnTOKz6kuoULGZ-8을 같은 ID로 갱신했다. 40,267bytes/SHA a5df60f8cab41e588971505e1f18d9fc30a958c03594b815c4918d17f5124b20의 실제 raw 재조회가 verified_complete이며 unresolved intent0이다. 이후213파일을 새로 다시 읽어 변경1·나머지212동일을 확인했다. 승인 preview vault를 기존 connector builder의 repository로 사용해 postflight snapshot을 만들고 pull-drive --apply로 실제 Drive 원본만 로컬에 반영했다. 외장 raw/receipt와 private snapshot에 전후 근거가 남는다.
+
+공개 commit cf3049fa867822f51c08701c1f61c9e636d6753d / Actions37464932439의 Node1,011/1,011·Python15+10+3·build/site/deploy 성공을 확인했다. 로컬 전체 suite 반복0·이번 content 릴리스 CI1회다. nachi-historical-publication-20261006-v1은 공통 authoring→push→deploy→12파일 공개 readback을 결속하고 public_bytes_verified를 기록한다. 기존 RSS40 GUID/pubDate·기존7기사·회차 주소·취재 종료 시각을 보존했다. 공개 뉴스/브리핑/RSS/GitHub 요약과 원문2PDF가 일치하며 신기사61fdd67b9300a89e가 공개됐다.
+
+실제 HTTPS 공개 화면을 CUA로 검증했다. 기업 태그 Enter가 entity query를 저장하고 관련기사1개를 표시한다. 뒤로 가기는 기사로 복귀한다. 데스크톱과390x844모바일에서 가로 넘침0·뉴스 지도 없음·발표일10월5일·누적 실적/연간 전망 구분을 확인했다. viewport는 원복했다. 운영 안내/불필요 분석을 추가하지 않았다. browser-and-rss-proof 및 실제 JPG는 별도 증거이며 publication status의 browser_verified/website_data_verified=false 필드를 임의로 수정하지 않았다.
+
+WebsiteData는 실제 배포에서11파일을 다시 생성해 기존11ID로 갱신하고 원격11raw SHA·bytes와 일치, unmapped_pages0을 확인했다. 363페이지/183기사/25전문개념/22관계다. 기존 receipt 파일은 갱신 대상이 아니다.
+
+승인 source closure는100자료/102members·5bound runs·3원문 판본/3parse, 비공개 Drive1EjHIi8E321JLTL6mwvNCYOHI_mD47LZO의1,557,194bytes/SHA d2103227ccc86042285f2e7fe3dbcebd4bf30c0fa0b464ea7dfc9a9355c574f7를 실제 다운로드·전수 복원·archive registry 등록했다. 첫 restore에서 절대 package 경로, 첫 register에서 일반 metadata 형식을 사용해 거부됐다. private root-relative verified-remote와 실제 metadata 기반 observation으로 바로잡고 새 결과v2에 기록했다.
+
+별도 delivery evidence는83자료/84members·source_versions0이며 전후213raw·authoring/push/deploy/readback·WebsiteData·브라우저 증거를 포함한다. Drive1CTrMcSeZ23HmSvM3TXXamJl-YSgDl6KW,3,419,202bytes/SHA d260ec08e912bb79eef272ac6f3cefa6fd91dc9d018b7399689babc809badeb9의 실제 원격 SHA와 전수 복원을 확인했다. 원문 source archive와 운영 증거를 구분한다.
+
+외장 근거는 /Volumes/X5Storage/tkg-daily-core-20261006-v1/nachi-historical-* 및 nachi-publication-*, nachi-public-readback-v1.json, nachi-browser-and-rss-proof-v1.json, nachi-website-verified-v1.json이다. core-progress-checkpoint-20261006-v10.json/html은 실제 장부/운영 receipt에서 집계한다. 전체 목표 active/WBS2/22·신규 정규0/7·legacy47회차454구간/metadata10·독립human40/20(라벨0)·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 이번 소급 보완을 정규 성공 횟수로 세지 않는다. 같은 실패를 새 근거 없이1시간 반복한 항목0이다. 다음은 완료 수집/추출 결과를 재사용해 다음 유효 후보의 사실 검토·승인·공개 반영을 이어가고, 모델 오류를 수동 검토 없이 통과시키지 않는 자동 품질 경로를 보강한다.
