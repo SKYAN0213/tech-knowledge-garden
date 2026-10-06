@@ -2,6 +2,42 @@ import fs from "node:fs"
 import path from "node:path"
 import { sha256 } from "./contracts.mjs"
 
+// Only prove a scope for a literal, anchored HTTP(S) authority. Alternation,
+// variable hosts and optional separators remain global dependencies. Do not
+// guess whether two arbitrary regular expressions can overlap.
+function literalProfileHost(pattern) {
+  if (typeof pattern !== "string" || pattern.includes("|")) return null
+  const match = pattern.match(/^\^https?:\/\/((?:[A-Za-z0-9-]|\\\.)+)\/(?![?*{])/)
+  if (!match) return null
+  try {
+    new RegExp(pattern)
+    const host = match[1].replaceAll("\\.", ".").toLowerCase()
+    return new URL("https://" + host).hostname === host ? host : null
+  } catch {
+    return null
+  }
+}
+
+export function collectionArticleProfiles(channel, articleProfiles) {
+  const hosts = channel.allowed_hosts
+  if (!Array.isArray(hosts) || !hosts.length || hosts.some((host) => typeof host !== "string"))
+    return articleProfiles
+  const allowed = new Set(hosts.map((host) => host.toLowerCase()))
+  const referenced = new Set()
+  const visit = (value) => {
+    if (typeof value === "string") referenced.add(value)
+    else if (Array.isArray(value)) value.forEach(visit)
+    else if (value && typeof value === "object") Object.values(value).forEach(visit)
+  }
+  visit(channel)
+  // Preserve profile order: overlapping matching profiles must still fail the
+  // existing ambiguity check, and explicitly selected IDs remain dependencies.
+  return articleProfiles.filter((profile) => {
+    const host = literalProfileHost(profile.url_pattern)
+    return host === null || allowed.has(host) || referenced.has(profile.id)
+  })
+}
+
 export function scanListImplementationFingerprints(repo = process.cwd()) {
   const modules = {
     list_scan_sha256: "scripts/research/list-scan.mjs",
@@ -45,10 +81,13 @@ export function collectionBasis(channel, articleProfiles, repo = process.cwd()) 
     "integrations/research-worker/worker.py",
   ]
   return {
-    schema: "research-collection-basis/v1",
+    schema: "research-collection-basis/v2",
     channel_id: channel.channel_id,
     route_sha256: sha256(JSON.stringify(route)),
-    article_profiles_sha256: sha256(JSON.stringify(articleProfiles)),
+    article_profile_scope: "allowed-hosts-conservative/v1",
+    article_profiles_sha256: sha256(
+      JSON.stringify(collectionArticleProfiles(channel, articleProfiles)),
+    ),
     implementation: scanListImplementationFingerprints(repo),
     dependencies: Object.fromEntries(
       files.map((file) => [file, sha256(fs.readFileSync(path.join(repo, file)))]),

@@ -2,7 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { SourceFetcher } from "./fetch.mjs"
 import { registry } from "./discovery.mjs"
-import { collectionBasis } from "./scan-basis.mjs"
+import { collectionArticleProfiles, collectionBasis } from "./scan-basis.mjs"
 import { DEFAULT_ROOT, RunState, atomicWrite, readJSON, withLock } from "./run-state.mjs"
 import { loadStoredSourceRun, assertStoredEvidence, retainParse } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
@@ -280,7 +280,7 @@ export async function executeListScan(v) {
     throw Error(
       "--repair-source-run requires a distinct supported listing scan without other reuse modes",
     )
-  const profiles = acquisition.article_profiles || []
+  const profiles = collectionArticleProfiles(channel, acquisition.article_profiles || [])
   const basis = collectionBasis(channel, profiles)
   return withLock(root, "run-" + v.run, async () => {
     const run = new RunState(root, v.run, {

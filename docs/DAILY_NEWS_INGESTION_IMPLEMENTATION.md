@@ -98,6 +98,12 @@ flowchart LR
 
 실제 비공개 산출물은 `.local/research/local-ai/daily/runs/<run>/plan.json`, `receipts/<attempt_id>.json`, `summary.json`과 공용 `.local/research/local-ai/daily/route-coverage.json`이다. 상세 증거는 기존 `runs/<attempt_id>/` 아래의 `list-scan.json`, `list-pages.json`, `documents.json`, `parses.json`, `candidates.json` 및 원본 bytes에 있다. receipt는 이 하위 run ID와 건수·상태·시각·후보 키·병합 결과를 참조한다. 이 내부 자료를 기사·브리핑·RSS에 그대로 출력하지 않는다.
 
+### 출처별 본문 profile 의존 범위
+
+`collection-basis/v2`는 해당 경로의 `allowed_hosts`와 명시적으로 선택한 article profile ID를 기준으로 본문/PDF profile을 선택한다. 선택 결과를 실제 `scan-list`의 상세 파서·PDF 요청 예산과 동일하게 사용하고 그 배열의 순서와 전체 설정을 해시한다. 다른 host에만 적용됨이 증명된 profile의 추가·수정·삭제는 이 경로의 collection basis를 바꾸지 않는다. 같은 host의 여러 profile, redirect/첨부 허용 host, 명시 ID, 수치·본문·날짜·PDF 예산 변경은 계속 의존 항목이다.
+
+자동 범위 판정은 anchor가 있는 literal HTTP(S) host와 필수 `/` 구분자가 있는 URL 정규식으로 한정한다. 가변 host·alternation·선택적 구분자·잘못된 패턴·host 정책 누락은 제외하지 않고 전체 의존으로 보존한다. matching profile의 기존 순서·모호성 거부·허용 host·robots·기간/원문 무결성 검사는 그대로다. 과거 v1 영수증을 v2로 덮어쓰지 않으며, 코드/입력이 달라진 실행은 새 run ID를 사용한다. 일일 계획 전체의 frozen configuration hash와 저장된 실행의 재개 관문은 여전히 유지한다. 이 범위 축소가 변경된 일일 전체 계획의 재개를 허용하는 것은 아니다.
+
 ### 4.3 성공·부분 실패와 후보 장부
 
 `scan-list`의 `list-scan.json.status === "window_scanned"`를 확인하고 `documents.json`·`parses.json`·`candidates.json`과 저장된 원본을 재읽은 뒤에만 그 창의 후보를 장부에 병합한다. 기존 `--merge-backlog`의 불완전 창 병합 결함은 `mergeCompletedScan()`으로 고쳤고, **부분 후보가 있어도 미완료 창은 병합하지 않는** 회귀 시험을 추가했다. 미완료 subrun의 후보는 비공개 증거로 남지만 완주·승인 기사로 취급하지 않는다. 완주 여부는 목록 종료, 상세 예산, 정확한 날짜에 달려 있으며 후보 수 0은 그 자체로 근거가 아니다.

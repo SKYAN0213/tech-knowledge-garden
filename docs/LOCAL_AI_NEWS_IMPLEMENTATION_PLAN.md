@@ -4932,3 +4932,11 @@ source closure crowdstrike-extraction-comparison-closure-20261007-v1은47자료/
 코드·UI 동작 변경0이므로 테스트/빌드/배포 반복0이다. 현재 코드160f823f/Actions37502154780의 Node1,052/Python28/build/site/deploy 성공과 이번 데이터 검토를 구분한다. 공개 기사·RSS 식별자를 수정하거나 과거 자료를 새 회차로 만들지 않았다. 전체WBS3/22·partial17/not_started2·정규0/7·goal active를 유지한다. 새 원문 재조사/전수 legacy 완료나 무인 발행 품질 달성을 뜻하지 않는다. 동일 실패1시간 반복0이다. 다음은 같은 발표 기간을 포함하는 실제 회차의 전체 취재·fresh Drive authoring 대조와 승인 원고/용어 전달, 나머지 legacy·독립평가·08시/인증/복구 검증이다. 외장 doosan-physical-ai-core-proof-v1.json, doosan-physical-ai-drive-readback-proof-v1.json, doosan-physical-ai-restored-approval-proof-v1.json, doosan-physical-ai-restored-alias-proof-v1.json을 따른다.
 
 실제 저장 후보4개를 공통 sameEventAliasSuppressions에 전달해 별칭3개 제외/대표 후보1개를 재현했다. 별도 임시 기사·fake 수집 성공·장부 삭제 없이 향후 intake의 중복 억제 판정을 확인한 읽기 전용 검사다. 증거 doosan-physical-ai-intake-dedup-proof-v1.json. 최신 비공개 진척판은 core-progress-checkpoint-20261007-v8.json/html로 기록한다.
+
+### 19.367. 출처별 본문 profile 의존 범위 축소
+
+공통 collection basis가 전체131 article profiles를 해시해 한 출처 수정이 관계없는 출처 재사용/온보딩까지 무효화하던 결함을 재현했다. collection-basis/v2에서 명시 allowed_hosts와 article profile ID를 사용해 안전하게 범위가 증명된 profile만 분리한다. 불명확한 정규식/host 정책은 전체 의존으로 보존하며 실제 상세 parser와 PDF budget에도 같은 선택 배열을 사용한다. 기사·승인·원문 판본·공개 ID와 일일 전체 frozen plan 관문은 변경하지 않는다. 과거 실행/닫힌 archive를 고치지 않는다.
+
+수용 검증: 재현1건 수정 전 실패 → 관련 collection/onboarding/daily/list51/51 통과. 기존55경로110창의 저장929 document observations에서 원래/선택 profile match set을 전수 대조해 일치했다. 두산 profile의 in-memory 변경 영향은 활성55중2경로이며 나머지53경로 basis는 불변이다(실제 설정 수정 아님). 공식 두산10/6~10/7 actual scan은 window_scanned/후보1,131→15 profiles, 기존 사건 key/본문 지문 불변; 동일 실행 재개에서 state/basis/목록/원문/parse/후보 hashes 불변(없는 list-pages는 양쪽null)이다. 전체55경로를 새로 수집한 것으로 표시하지 않는다.
+
+코드 release CI·원격 private source archive·최종 readback을 이어간다. 전체WBS3/22·partial17/not_started2·전수legacy47/454/metadata10·독립human40/20·정규0/7·08시/인증/복구/fullruntime은 미완료다. 소급7월10일의 선정분리 결정은 해당 회차만 남은 조건으로 유지한다. 추가 모델/유료API/예약0, canonical 작성원본 변경0이다.

@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { collectionBasis } from "../scripts/research/scan-basis.mjs"
+import { collectionArticleProfiles, collectionBasis } from "../scripts/research/scan-basis.mjs"
 import {
   dailySourcePaths,
   dailyScan,
@@ -11,6 +11,109 @@ import {
 } from "../scripts/research/daily-scan.mjs"
 import { main as research } from "../scripts/research.mjs"
 import { main as scan } from "../scripts/research-scan.mjs"
+
+test("unrelated host profiles do not invalidate a route's collection basis", () => {
+  const route = {
+    channel_id: "official",
+    allowed_hosts: ["news.example.org"],
+    url: "https://news.example.org/feed",
+  }
+  const own = {
+    id: "own",
+    url_pattern: "^https://news\\.example\\.org/articles/[^?#]+$",
+    options: { language: "en" },
+  }
+  const unrelated = {
+    id: "other",
+    url_pattern: "^https://other\\.example\\.org/news/[^?#]+$",
+    options: { language: "ko" },
+  }
+  const basis = collectionBasis(route, [own])
+  assert.deepEqual(collectionBasis(route, [own, unrelated]), basis)
+  assert.deepEqual(
+    collectionBasis(route, [{ ...unrelated, options: { language: "de" } }, own]),
+    basis,
+  )
+  assert.notDeepEqual(collectionBasis(route, [{ ...own, options: { language: "ko" } }]), basis)
+  assert.notDeepEqual(collectionBasis(route, []), basis)
+})
+
+test("redirect hosts and explicitly selected article profiles remain collection dependencies", () => {
+  const primary = { id: "primary", url_pattern: "^https://news\\.example\\.org/article/[0-9]+$" }
+  const external = { id: "attachment", url_pattern: "^https://files\\.example\\.org/docs/[^?#]+$" }
+  const unrelated = { id: "unrelated", url_pattern: "^https://elsewhere\\.example\\.org/[^?#]+$" }
+  const route = { channel_id: "official", allowed_hosts: ["news.example.org", "files.example.org"] }
+  assert.notDeepEqual(
+    collectionBasis(route, [primary]),
+    collectionBasis(route, [primary, external]),
+  )
+  const explicit = {
+    ...route,
+    allowed_hosts: ["news.example.org"],
+    api_profile: { article_profile_id: "attachment" },
+  }
+  assert.notDeepEqual(
+    collectionBasis(explicit, [primary]),
+    collectionBasis(explicit, [primary, external]),
+  )
+  assert.deepEqual(
+    collectionBasis(explicit, [primary, external]),
+    collectionBasis(explicit, [primary, unrelated, external]),
+  )
+})
+
+test("ambiguous regular expressions and missing host policies remain global dependencies", () => {
+  const route = { channel_id: "official", allowed_hosts: ["news.example.org"] }
+  for (const pattern of [
+    "^https://.*\\.example\\.org/news/[^?#]+$",
+    "^https://other.example.org/news/[^?#]+$",
+    "^https://other\\.example\\.org/news/[^?#]+$|^https://news\\.example\\.org/item/[0-9]+$",
+    "^https://other\\.example\\.org/?news$",
+    "^https://other\\.example\\.org/*news$",
+    "^https://other\\.example\\.org/{0,1}news$",
+    "https://other\\.example\\.org/news$",
+    "^https://other\\.example\\.org/news/[invalid$",
+    undefined,
+  ]) {
+    const profile = { id: "uncertain", url_pattern: pattern }
+    assert.deepEqual(collectionArticleProfiles(route, [profile]), [profile])
+    assert.notDeepEqual(collectionBasis(route, [profile]), collectionBasis(route, []))
+  }
+  const other = { id: "other", url_pattern: "^https://other\\.example\\.org/news$" }
+  assert.deepEqual(collectionArticleProfiles({ channel_id: "unrestricted" }, [other]), [other])
+})
+
+test("scoped execution keeps matching profile order and exact PDF/attachment options", () => {
+  const route = { allowed_hosts: ["news.example.org", "files.example.org"] }
+  const profiles = [
+    { id: "unrelated", url_pattern: "^https://elsewhere\\.example\\.org/news$" },
+    {
+      id: "first",
+      url_pattern: "^https://news\\.example\\.org/article/[0-9]+$",
+      options: { language: "en" },
+    },
+    {
+      id: "second",
+      url_pattern: "^https://news\\.example\\.org/article/[0-9]+$",
+      options: { language: "ko" },
+    },
+    {
+      id: "pdf",
+      url_pattern: "^https://files\\.example\\.org/docs/[^?#]+$",
+      fetch_budget: { pdf_timeout_ms: 60000 },
+    },
+  ]
+  assert.deepEqual(collectionArticleProfiles(route, profiles), profiles.slice(1))
+  const basis = collectionBasis(route, profiles)
+  assert.notDeepEqual(collectionBasis(route, profiles.toReversed()), basis)
+  assert.notDeepEqual(
+    collectionBasis(
+      route,
+      profiles.map((p) => (p.id === "pdf" ? { ...p, fetch_budget: { pdf_timeout_ms: 30000 } } : p)),
+    ),
+    basis,
+  )
+})
 
 test("custom daily roots require an explicit backlog before locks, plans or source requests", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "daily-backlog-boundary-")))
