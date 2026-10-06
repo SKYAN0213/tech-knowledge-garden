@@ -13,6 +13,24 @@ function parseContentFingerprint(parse) {
   return sha256(JSON.stringify(content))
 }
 
+// Only a matched publisher header is usable for chronology. The blocked body
+// stays ineligible for content fingerprints, candidates and approval.
+export function hasBlockedPublicationMetadata(parsed) {
+  return Boolean(
+    parsed?.status === "blocked" &&
+    parsed.quality?.reason === "authentication-page" &&
+    parsed.quality.required_fields_present === false &&
+    parsed.title_profile_status === "matched" &&
+    parsed.dates?.access_scope === "metadata-only" &&
+    parsed.dates.profile_status === "matched" &&
+    parsed.dates.basis?.dom_path &&
+    parsed.dates.basis?.text &&
+    parseResearchDate(parsed.dates.published_at) &&
+    Array.isArray(parsed.blocks) &&
+    parsed.blocks.length === 0,
+  )
+}
+
 // Compare the article text the editorial pipeline actually read. A page can
 // change navigation, tracking or other HTML bytes without changing its title,
 // publication date or selected content blocks. This is not a substitute for

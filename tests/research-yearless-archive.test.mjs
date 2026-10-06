@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import { resolveYearlessArchiveDates, scanPathPagesRoute } from "../scripts/research/list-scan.mjs"
 import { validateDailyRoutes } from "../scripts/research/daily-plan.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
+import { rssArchiveChannel } from "../scripts/research/list-scan-command.mjs"
 
 const route = {
   channel_id: "yearless-news",
@@ -214,6 +215,116 @@ test("yearless pagination reuses originals for detail intake, retains boundary e
   assert.equal(new Set(requested).size, 5)
 })
 
+test("public metadata dates allow traversal past a blocked body without creating its candidate", async () => {
+  const stages = new Map(),
+    requested = []
+  const cachedRun = {
+    stage: async (name, _input, operation) => {
+      if (!stages.has(name)) stages.set(name, await operation())
+      return stages.get(name)
+    },
+  }
+  const result = await scanPathPagesRoute(
+    "unused",
+    cachedRun,
+    {},
+    route,
+    profiles,
+    { since: "2026-10-02", until: "2026-10-04" },
+    {
+      fetchPolicy: async (_r, _f, url) => {
+        requested.push(url)
+        return document(url)
+      },
+      parse: async (_r, d) => {
+        const url = d.original_url
+        if (url.includes("news?page="))
+          return url.endsWith("=1")
+            ? listing([link("locked", "10-03 09:00"), link("free", "10-02 08:30")])
+            : listing([link("boundary", "10-01 17:00")], 2)
+        if (url.endsWith("locked"))
+          return {
+            ...article(url, "2026-10-03"),
+            status: "blocked",
+            blocks: [],
+            title_profile_status: "matched",
+            quality: { required_fields_present: false, reason: "authentication-page" },
+            dates: {
+              published_at: "2026-10-03",
+              access_scope: "metadata-only",
+              profile_status: "matched",
+              basis: { dom_path: "/html/head/meta", text: "2026-10-03T09:00:00+09:00" },
+            },
+          }
+        return article(url, url.endsWith("free") ? "2026-10-02" : "2026-10-01")
+      },
+    },
+  )
+  assert.equal(result.summary.status, "incomplete")
+  assert.equal(result.summary.reason, "detail_incomplete")
+  assert.equal(result.summary.assessment.status, "window_covered")
+  assert.equal(result.summary.date_resolutions[0].access_scope, "metadata-only")
+  assert.equal(result.summary.pages.at(-1).status, "window_boundary_reached")
+  assert.equal(result.candidates.length, 1)
+  assert.equal(result.candidates[0].title, "Article free")
+  assert.equal(result.summary.details[0].status, "article_parse_incomplete")
+  assert.equal(new Set(requested).size, requested.length)
+})
+
+test("blocked dates without explicit metadata provenance cannot resolve an archive year", async () => {
+  const valid = {
+    ...article("https://example.org/article/locked", "2026-10-03"),
+    status: "blocked",
+    blocks: [],
+    title_profile_status: "matched",
+    quality: { required_fields_present: false, reason: "authentication-page" },
+    dates: {
+      published_at: "2026-10-03",
+      access_scope: "metadata-only",
+      profile_status: "matched",
+      basis: { dom_path: "/html/head/meta", text: "2026-10-03T09:00:00+09:00" },
+    },
+  }
+  for (const mutate of [
+    (p) => {
+      delete p.dates.access_scope
+    },
+    (p) => {
+      delete p.dates.basis.dom_path
+    },
+    (p) => {
+      p.quality.reason = "fetch-error"
+    },
+    (p) => {
+      p.blocks = [{ text: "Members only" }]
+    },
+    (p) => {
+      p.dates.published_at = "2026-10-02"
+    },
+    (p) => {
+      p.title = "Article other"
+    },
+  ]) {
+    const changed = structuredClone(valid)
+    mutate(changed)
+    const result = await resolveYearlessArchiveDates(
+      "unused",
+      run,
+      {},
+      route,
+      profiles,
+      listing([link("locked", "10-03 09:00")]),
+      10,
+      {
+        fetchPolicy: async (_r, _f, url) => document(url),
+        parse: async () => changed,
+      },
+    )
+    assert.equal(result.reason, "archive_article_date_missing_or_conflict")
+    assert.equal(result.resolutions.length, 0)
+  }
+})
+
 test("RSS fallback permits unfiltered archives and requires category evidence only for exclusions", () => {
   const fallback = {
     pagination: "path-pages",
@@ -272,4 +383,24 @@ test("RSS fallback permits unfiltered archives and requires category evidence on
       ]),
     /fallback archive profile/,
   )
+})
+
+test("RSS fallback preserves shared pagination policies instead of dropping new options", () => {
+  const fallback = {
+    ...route.listing_profile,
+    page_overlap_policy: { mode: "adjacent-prefix", max_items: 1 },
+    pinned_rule_ids: ["pins"],
+    parse_options: { language: "ko" },
+  }
+  const result = rssArchiveChannel({
+    ...route,
+    method: "rss",
+    listing_profile: { fallback_archive: fallback },
+  })
+  assert.deepEqual(result.listing_profile.page_overlap_policy, fallback.page_overlap_policy)
+  assert.deepEqual(result.listing_profile.pinned_rule_ids, ["pins"])
+  assert.deepEqual(result.parse_options, { language: "ko" })
+  assert.equal(result.listing_profile.parse_options, undefined)
+  assert.equal(result.listing_profile.require_title_match, true)
+  assert.equal(result.listing_profile.article_date_resolution, "yearless-month-day")
 })

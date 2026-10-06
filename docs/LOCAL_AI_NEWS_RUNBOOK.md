@@ -10830,3 +10830,21 @@ knowledge-reference-dispositions는 원6링크의 exact note SHA·정의/별칭�
 수정 commit e98b3ff27532c71580d80991fb976a8ba5b7dfd4의 Actions37451920803은 Node997/997·Python15+10+3·build/site/deploy를 통과했다. 최초 실패 뒤 수정 코드의 릴리스 CI 한 번이며 같은 코드 재실행0이다. 실제공개 readback2026-10-06T10:48:26.582Z에서 briefing.xml606,070bytes·기존Roche기사6,922bytes·reader-index1,239,161bytes가 HTTP200이며 이전 bytes/SHA와 모두 일치했다. 신규 private 후보 공개0·신규정규0/7이다. 상세 증거는 collection-layout-release-ci-{final-v1.json,log-v1.txt}와 collection-layout-public-preservation-v1.json이다.
 
 남은 문제의 saved-source 진단을 좁혔다. 전자신문16페이지는 실제로 순서대로 진행했으며 마지막2026-09-29 07:11까지 읽었다. 페이지 무시나 동일 결과 반복이 아니며 다음 이전 경계와 상세 예산을 확인해야 한다. 무조건 재실행하거나 기간 내 후보를 잘라내지 않는다. 디일렉의 첫 미해결은 idxno=62134 “[차이나 브리프] 中법원, 네덜란드 넥스페리아 자산 동결”이다. native parse는 blocked/authentication-page·published_at 미상이다. 추정 연도·로그인 우회·유료API를 넣지 않는다. 이미 확보한 다른 공개 원문의 partial intake와 접근 실패 분류, 원문 대체 검토를 공통 처리 경로로 잇고 원 목록의 완주와 구분한다. 비공개 최신 현황판은 외장 core-progress-checkpoint-20261006-v6.json/html이다.
+
+
+## 446. KISA·전자신문 기간 복구와 디일렉 공개 원문 부분 intake
+
+작업 루트는 외장 /Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden이며 이전 내장 경로는 symlink다. 이번 수집은 원문·장부 보강이며 정규 작성/발행 회차가 아니다. 기존8분야·조사 목록·55활성 경로·195등록 경로·예약·모델 설정·기사 ID·RSS GUID/pubDate를 유지했다.
+
+- KISA 정상 kisa-path-native-id-live-20261006-v1: [9/29,10/6)2페이지/7후보. 오늘 kisa-path-native-id-empty-20261006-v1은4후보이므로 빈 기간으로 사용하지 않았다. 실제 빈10월4일 창은 kisa-path-native-id-weekend-empty-20261006-v1이며0후보다. 정상/빈 창 재개·반복 병합 검증 receipt는 외장 kisa-path-onboarding-v2.json의 실제 receipt 필드를 따른다. 기존 활성 baseline을 교체하지 않았다.
+- 전자신문 etnews-path-budget-live-20261006-v1: 같은7일 창17페이지/171후보 모두 native 상세 제목·발표일·본문을 대조했다. max_pages16→24, scan_max_details240 유지. 반복 격리 장부 merge bytes 불변.
+- 디일렉 thelec-public-metadata-live-20261006-v1: 회원 전용 자료의 공개 날짜를 보존해10페이지까지 진행했지만 인접 마지막/첫 행 중복1건에서 멈췄다. 과거 실패 run을 덮어쓰지 않았다. v2 raw reuse는 동일 parse copy 배열로 실패했고, v3은 RSS fallback 옵션 전달 누락으로 중단됐다. 공통 recovery view의 identical-copy 검증과 RSS 정책 전달을 보강해 v4로 완료했다. source basis 변경 없는 원문 응답209건을 재사용하고 부족한11페이지를 실제 요청했다.
+- 최종 thelec-public-metadata-reuse-20261006-v4:220날짜/11페이지·공개160후보·기간 내 본문 미확인20건. 전체23개의 metadata-only parse 중 기간 밖3건을 구분한다. detail_incomplete와 window_complete=false 유지. 원문의 추정 연도나 로그인 우회를 쓰지 않았다. 정확한 원본/목록 DOM/이전 날짜 경계 검증 후 부분 intake receipt a50e19bc-a05d-437e-820b-8f9e0fc70634를 생성했다. 반복 intake bytes/SHA 불변.
+
+KISA Adobe 공지의 pageIndex만 달라진 주소를 비교했다. 두 원문의 제목·발표일·본문8문단 fingerprint가 같아 kisa-adobe-page-identity-20261006-v1의 기존 same-event review로 연결하고 native ID 발견 기록을 보강했다. 후보 source-c8edd8822e5873040e0c의 주 원문/parse/검토 상태를 유지하고 다른 후보로 추가하지 않았다. 정상 intake에서1개 suppressed alias를 기록했다. 실제 장부904후보는 전후 동일이며 이번 수집 건수338을 새 사건 수로 세지 않는다.
+
+표적 검사: 최초 path/list Node20통과·신규 fixture 경로 표기 정정 후4통과, native record2, yearless/partial13통과+fixture blocks 정정1통과, collection-boundary3, metadata candidate/overlap2, archive reuse4+fixture reference 정정1, RSS 정책 전달1, Python native ID/blocked metadata2와 login 회귀3 통과. 전체 로컬suite를 반복하지 않았다. 실패는 exact 로그로 보존했으며 blanket 재시도/기준 완화는0이다.
+
+KISA·전자신문 원문204판본/parse204·851manifest파일/853ZIP members의9,819,824bytes를 Drive Research 1X9hr8ESahs-TNsUdBkDg8AW_f8uGPy0u에 비공개 보관했다. SHA a0284f3e714e3b1f32a255a0f395d0ec52ba270cb8289cd64907fc872bd3ceba·metadata·실제 원격 ZIP을 확인하고 전수 복원/4원 scan 재검증/위치 등록을 완료했다. Python urllib 다운로드 실패는 Node의 인증된 file reference 다운로드로 해결했고 TLS 검증을 끄지 않았다. source204 복원은 전체 일일 운영·Drive 작성4폴더 최신 동기화를 의미하지 않는다. 외장 kisa-etnews-drive-restoration-proof-v1.json이 증거다.
+
+디일렉/원문 주소 연결의 추가 보관·CI·공개 보존 readback은 아래에 후속 기록한다. 전체 목표active/WBS2/22, 신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다.

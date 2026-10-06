@@ -2638,3 +2638,18 @@ UTF-8, 중복 object key, 비유한 수, 잘못된 pointer·값 타입·원문 �
 후보의 `supporting_listing_relations`는 목록 source version/parse ID·rule ID·본문/보충자료 DOM 위치를 보존한다. scanner 검증과 일일 편집 선택은 공통 `supporting-sources.mjs`에서 해당 원문 관계를 다시 대조한다. 보충 PDF 발표일은 본문 발표일과 같아야 한다. 보충자료는 같은 후보의 근거이며 별도 기사·동일 사건 alias·발행 승인으로 자동 승격하지 않는다. 편집 입력에는 선택한 두 PDF만 전달하고 전체 자료실은 넣지 않는다. 공통 검증 모듈 해시도 collection basis에 포함한다.
 
 실제 `nachi-financial-results-ja`는102개 실적 본문을 확인해2026-10-05의 본문·보충 PDF를 후보1개로 수집했다. 정상/빈 기간·바이트 불변 재개·격리 장부 반복 병합 검증 뒤 기존 일일 경로에 추가했다(54→55). 경로1개만의 실제 일일 실행→handoff→PDF2개/241blocks 선택·변조 거부를 확인했다. 이는 전체8분야 정규 운영이 아니다. 현재 상세 프로필은 확인한 PDF 판본에 한정되며 향후 다른 양식의 결손은 검토 대기로 남긴다. 실제 Drive raw ZIP·복원과 나머지 범위는 런북444절에 기록한다.
+
+
+## 88. 페이지별 고정 공지와 공개 날짜 메타데이터
+
+공통 HTML 목록 rule의 source_item_id_group은 실제 URL 정규식의 명시적 capture group에서 최대160자 원문 ID를 읽는다. URL·쿼리·DOM 위치를 유지하고 임의 canonical URL을 조합하지 않는다. path-pages의 pinned_rule_ids도 단일 페이지와 같은 완전성 검증을 적용한다. 공지는 페이지마다 원래 URL이 달라도 같은 native ID·제목·날짜이면 한 번 선택한다. 날짜·제목 충돌과 일반 행의 반복은 실패다. 공지는 기간 경계를 결정하지 않으며 일반 시간순 행에 나타난 과거 자료만 이전 경계가 된다. 제외 category 규칙은 공지에도 적용한다.
+
+회원 전용 본문은 blocked/authentication-page·required_fields_present=false·0blocks를 유지한다. 다만 실제 기사 제목 프로필과 explicit-authoritative 발표일 selector가 각각 matched이면 그 공개 날짜·DOM 근거만 dates.access_scope=metadata-only로 보존한다. 로그인 제목·일반 메타 추측·미일치 날짜·목록 역주입은 이 경로로 날짜가 되지 않는다. 해당 parse는 원문 내용 fingerprint·기사 후보·편집 근거가 될 수 없다.
+
+yearless-month-day resolver는 이 공개 날짜와 목록의 월일·제목을 대조해 연도를 확인할 수 있다. date_resolutions의 metadata-only는 원래 blocked parse로 재검증한다. 날짜 경계가 확인된 뒤 공개 상세 원문만 후보로 만든다. 기간 안에 본문 미확인 자료가 있으면 summary는 detail_incomplete이고 coverage는 전진하지 않는다. path-pages 부분 intake는 모든 실제 목록의 policy/원본/parse, 마지막 페이지의 이전 날짜 또는 명시적 빈 상태, 각 공개 후보의 정확한 목록 DOM과 상세 원문을 다시 확인한다.
+
+KISA는 공통 GET 페이지 이동과 공지 ID를 사용한다. 전자신문의 기존 RSS fallback은17페이지에서 실제 이전 날짜가 확인돼 max_pages를16→24로 늘렸다. scan_max_details=240은 유지한다. 수집 분량 초과를 잘라 성공 처리하지 않는다. 신규 crawler·추정 연도·유료API·로그인 우회는 추가하지 않았다. 실제 수집·보관 증거는 런북446에 기록한다.
+
+인접 목록의 관측 시점이 달라 마지막 행이 다음 페이지의 첫 행으로 반복되는 경우는 page_overlap_policy={mode: adjacent-prefix, max_items: N}으로 명시한다. N은1~10이며 실제 확인한 경계 중복만 설정한다. 원래 URL·제목·게시 시각이 이전 페이지 마지막 N행과 다음 페이지 처음 N행에서 모두 일치해야 한다. 전체 페이지 반복·중간/다른 페이지의 반복·상한 초과·내용 충돌은 여전히 실패다. 두 native parse와 행 URL을 page_overlaps에 보존하고 재검증한다. 디일렉에서 실제 확인한 중복은1건이며 상한1을 적용한다.
+
+이전 실패 run이 동일 cached source/parse를 배열에 두 번 저장했으면 raw-response 재사용 경로에서 JSON bytes가 같은 복사본만 일시적으로 합친다. 이전 run 파일·해시는 바꾸지 않으며 복사본 수와 원래 arrays의 SHA를 영수증에 남긴다. 다른 관측/본문은 collision이다. 기본 원문 선택·승인 loader의 unique 검증은 유지한다. 같은 창·1시간 내의 policy-checked 원문과 동일 fetch/worker/parser/profile만 재사용하고 coverage·승인·발표 시각을 새로 만들지 않는다.

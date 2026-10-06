@@ -9,6 +9,7 @@ import {
 } from "../scripts/research/list-scan-command.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { storeParseArtifact } from "../scripts/research/parser.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "archive-source-reuse-")))
@@ -83,6 +84,51 @@ test("archive source reuse verifies stored bytes, keeps original time and reques
   await assert.rejects(
     reuse.fetchPolicy(f.root, {}, f.doc.original_url, { allowed_hosts: ["other.org"] }),
     /Host outside/,
+  )
+})
+
+test("failed overlap recovery retains original arrays while rejecting nonidentical copies", (t) => {
+  const f = fixture(t),
+    parse_id = sha256("recovery parse")
+  const parsed = {
+    schema_version: "source-parse/v1",
+    source_id: f.doc.source_id,
+    source_version_id: f.doc.source_version_id,
+    parse_id,
+    status: "extracted",
+    title: "Recorded article",
+    dates: { published_at: "2026-10-02" },
+    quality: { required_fields_present: true },
+    blocks: [
+      {
+        block_id: parse_id + ":b1",
+        text: "Recorded original.",
+        locator: { text_hash: sha256("Recorded original.") },
+      },
+    ],
+  }
+  storeParseArtifact(f.root, parsed)
+  atomicWrite(f.root, "runs/old/parses.json", [parsed, parsed])
+  atomicWrite(f.root, "runs/old/documents.json", [f.doc, f.doc])
+  const summary = {
+    channel_id: f.channel.channel_id,
+    pagination: "path-pages",
+    window: { since: f.window.since, until_exclusive: f.window.until },
+    status: "incomplete",
+    reason: "archive_duplicate_across_pages",
+  }
+  atomicWrite(f.root, "runs/old/list-scan.json", summary)
+  const before = fs.readFileSync(path.join(f.root, "runs/old/parses.json"))
+  const reuse = createArchiveSourceReuse(f.root, "old", f.channel, f.basis, f.window, {
+    now: f.now,
+  })
+  assert.equal(reuse.available.size, 1)
+  assert.equal(reuse.reference.identical_parse_copies, 1)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/old/parses.json")), before)
+  atomicWrite(f.root, "runs/old/parses.json", [parsed, { ...parsed, title: "Different article" }])
+  assert.throws(
+    () => createArchiveSourceReuse(f.root, "old", f.channel, f.basis, f.window, { now: f.now }),
+    /collision/,
   )
 })
 

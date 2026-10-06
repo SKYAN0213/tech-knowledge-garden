@@ -3,7 +3,12 @@ import { canonicalURL } from "../garden.mjs"
 import { sha256, sourceId } from "./contracts.mjs"
 import { candidatesFromLinks } from "./discovery.mjs"
 import { assertURL } from "./fetch.mjs"
-import { articleContentFingerprint, assertStoredEvidence, parseDocument } from "./parser.mjs"
+import {
+  articleContentFingerprint,
+  assertStoredEvidence,
+  parseDocument,
+  hasBlockedPublicationMetadata,
+} from "./parser.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
@@ -925,10 +930,38 @@ function pathPageURL(channel, page) {
   return url
 }
 
+function pathRecordKey(link) {
+  return typeof link.source_item_id === "string" && link.source_item_id.trim()
+    ? "record:" + link.source_item_id
+    : "url:" + canonicalURL(link.url)
+}
+
 export function assessPathPage(parse, channel) {
   const profileId = channel.listing_profile?.rule_id
   const profile = parse.link_profiles?.find((entry) => entry.id === profileId)
   const links = (parse.links || []).filter((entry) => entry.profile_id === profileId)
+  const pinnedIds = channel.listing_profile?.pinned_rule_ids || []
+  if (
+    !Array.isArray(pinnedIds) ||
+    new Set(pinnedIds).size !== pinnedIds.length ||
+    pinnedIds.includes(profileId)
+  )
+    return { status: "incomplete", reason: "archive_pinned_profile_invalid", links }
+  const pinned = []
+  for (const id of pinnedIds) {
+    const proof = parse.link_profiles?.find((p) => p.id === id)
+    const items = (parse.links || []).filter((l) => l.profile_id === id)
+    if (
+      !proof ||
+      !["matched", "no-match"].includes(proof.status) ||
+      proof.truncated ||
+      proof.selected_items !== items.length ||
+      proof.matched_links !== items.length ||
+      (proof.status === "no-match" && items.length)
+    )
+      return { status: "incomplete", reason: "archive_pinned_profile_incomplete", links }
+    pinned.push(...items)
+  }
   const result = { status: "incomplete", reason: null, links }
   if (parse.status !== "extracted" || !parse.quality?.required_fields_present)
     return { ...result, reason: "archive_listing_parse_incomplete" }
@@ -976,7 +1009,7 @@ export function assessPathPage(parse, channel) {
 
   const pattern = new RegExp(channel.item_pattern)
   const seen = new Set()
-  for (const link of links) {
+  for (const link of [...links, ...pinned]) {
     let url
     try {
       url = canonicalURL(link.url)
@@ -986,13 +1019,26 @@ export function assessPathPage(parse, channel) {
     }
     if (
       !pattern.test(url) ||
-      seen.has(url) ||
+      (seen.has(pathRecordKey(link)) && !pinned.includes(link)) ||
+      (link.source_item_id !== undefined &&
+        (typeof link.source_item_id !== "string" ||
+          !link.source_item_id.trim() ||
+          link.source_item_id !== link.source_item_id.trim() ||
+          link.source_item_id.length > 160)) ||
       !link.text?.trim() ||
       !validDay(link.published_at) ||
       !link.listed_date_text
     )
       return { ...result, reason: "archive_article_identity_or_date_invalid" }
-    seen.add(url)
+    if (seen.has(pathRecordKey(link))) {
+      const first = [...links, ...pinned].find((l) => pathRecordKey(l) === pathRecordKey(link))
+      if (
+        first.published_at !== link.published_at ||
+        comparableTitle(first.text) !== comparableTitle(link.text)
+      )
+        return { ...result, reason: "archive_pinned_identity_conflict" }
+    }
+    seen.add(pathRecordKey(link))
   }
   if (links.some((link, index) => index && link.published_at > links[index - 1].published_at))
     return { ...result, reason: "archive_not_newest_first" }
@@ -1003,12 +1049,13 @@ export function assessPathPage(parse, channel) {
     excluded.some((category) => typeof category !== "string" || !category.trim())
   )
     return { ...result, reason: "archive_excluded_categories_invalid" }
-  if (excluded.length && links.some((link) => !Array.isArray(link.categories)))
+  if (excluded.length && [...links, ...pinned].some((link) => !Array.isArray(link.categories)))
     return { ...result, reason: "archive_categories_missing" }
   return {
     status: "page_scanned",
     reason: null,
     links,
+    pinned_links: pinned,
     selected_items: links.length,
     first_date: links[0]?.published_at || null,
     last_date: links.at(-1)?.published_at || null,
@@ -1079,10 +1126,12 @@ export async function resolveYearlessArchiveDates(
       )
       result.parses.push(parsed)
       const date = parseResearchDate(parsed.dates?.published_at)
+      const metadataOnly = hasBlockedPublicationMetadata(parsed)
       if (
-        parsed.status !== "extracted" ||
-        !parsed.quality?.required_fields_present ||
-        !parsed.blocks?.length ||
+        (!metadataOnly &&
+          (parsed.status !== "extracted" ||
+            !parsed.quality?.required_fields_present ||
+            !parsed.blocks?.length)) ||
         !date ||
         date.day.slice(5) !== match[1] ||
         comparableTitle(parsed.title) !== comparableTitle(link.text)
@@ -1097,6 +1146,7 @@ export async function resolveYearlessArchiveDates(
         listing_source_version_id: listing.source_version_id,
         listing_parse_id: listing.parse_id,
         profile_id: ruleId,
+        ...(metadataOnly ? { access_scope: "metadata-only" } : {}),
       }
       result.resolutions.push(evidence)
       resolved.set(link, { ...link, published_at: date.day, date_resolution: evidence })
@@ -1123,13 +1173,23 @@ export async function scanPathPagesRoute(
 ) {
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("Path-pages scan requires an increasing [since, until) day window")
+  const overlapPolicy = channel.listing_profile.page_overlap_policy
+  if (
+    overlapPolicy !== undefined &&
+    (overlapPolicy?.mode !== "adjacent-prefix" ||
+      !Number.isSafeInteger(overlapPolicy.max_items) ||
+      overlapPolicy.max_items < 1 ||
+      overlapPolicy.max_items > 10)
+  )
+    throw Error("Invalid bounded adjacent page overlap policy")
   const documents = [],
     indexDocuments = [],
     parses = [],
     candidates = [],
     pages = [],
     selected = [],
-    seenURLs = new Set()
+    seenURLs = new Set(),
+    seenRecords = new Map()
   const excludedCategories = new Set(
     (channel.listing_profile.excluded_categories || []).map((value) =>
       value.normalize("NFC").trim().toLocaleUpperCase("en-US"),
@@ -1148,7 +1208,8 @@ export async function scanPathPagesRoute(
     candidate_published: false,
   }
   let previousDate = null,
-    reachedBoundary = false
+    reachedBoundary = false,
+    previousLinks = []
   for (let pageNumber = 1; pageNumber <= channel.listing_profile.max_pages; pageNumber++) {
     const url = pathPageURL(channel, pageNumber)
     const page = { page: pageNumber, url, status: "incomplete" }
@@ -1191,8 +1252,11 @@ export async function scanPathPagesRoute(
         budget - summary.date_resolutions.length,
         { fetchPolicy, parse },
       )
-      documents.push(...resolution.documents)
-      parses.push(...resolution.parses)
+      for (const d of resolution.documents)
+        if (!documents.some((existing) => existing.source_version_id === d.source_version_id))
+          documents.push(d)
+      for (const p of resolution.parses)
+        if (!parses.some((existing) => existing.parse_id === p.parse_id)) parses.push(p)
       summary.date_resolutions.push(...resolution.resolutions)
       page.date_resolution_count = resolution.resolutions.length
       if (resolution.reason) {
@@ -1222,19 +1286,66 @@ export async function scanPathPagesRoute(
       return { summary, indexDocuments, documents, parses, candidates }
     }
     const links = assessment.links
+    let overlapCount = 0
+    if (overlapPolicy) {
+      while (overlapCount < links.length && seenRecords.has(pathRecordKey(links[overlapCount])))
+        overlapCount++
+      if (overlapCount) {
+        const earlier = previousLinks.slice(-overlapCount)
+        if (
+          overlapCount > overlapPolicy.max_items ||
+          overlapCount === links.length ||
+          earlier.length !== overlapCount ||
+          links
+            .slice(0, overlapCount)
+            .some(
+              (link, index) =>
+                canonicalURL(link.url) !== canonicalURL(earlier[index].url) ||
+                comparableTitle(link.text) !== comparableTitle(earlier[index].text) ||
+                link.published_at !== earlier[index].published_at ||
+                link.listed_date_text !== earlier[index].listed_date_text,
+            )
+        ) {
+          summary.reason = page.reason = "archive_duplicate_across_pages"
+          return { summary, indexDocuments, documents, parses, candidates }
+        }
+        summary.page_overlaps ||= []
+        summary.page_overlaps.push({
+          previous_page: pageNumber - 1,
+          page: pageNumber,
+          previous_parse_id: pages.at(-2).parse_id,
+          parse_id: parsed.parse_id,
+          rule_id: channel.listing_profile.rule_id,
+          urls: links.slice(0, overlapCount).map((link) => link.url),
+        })
+        page.overlap_items = overlapCount
+      }
+    }
     if (previousDate && links[0]?.published_at > previousDate) {
       page.reason = "archive_not_newest_first_across_pages"
       summary.reason = page.reason
       return { summary, indexDocuments, documents, parses, candidates }
     }
-    for (const link of links) {
+    for (const link of links.slice(overlapCount)) {
       const urlKey = canonicalURL(link.url)
-      if (seenURLs.has(urlKey)) {
+      const recordKey = pathRecordKey(link)
+      const previous = seenRecords.get(recordKey)
+      if (
+        previous &&
+        previous.pinned &&
+        previous.link.published_at === link.published_at &&
+        comparableTitle(previous.link.text) === comparableTitle(link.text)
+      ) {
+        if (link.published_at < since) reachedBoundary = true
+        continue
+      }
+      if (seenURLs.has(urlKey) || previous) {
         page.reason = "archive_duplicate_across_pages"
         summary.reason = page.reason
         return { summary, indexDocuments, documents, parses, candidates }
       }
       seenURLs.add(urlKey)
+      seenRecords.set(recordKey, { link, pinned: false })
       const excluded = (link.categories || []).some((category) =>
         excludedCategories.has(category.normalize("NFC").trim().toLocaleUpperCase("en-US")),
       )
@@ -1247,7 +1358,33 @@ export async function scanPathPagesRoute(
         })
       if (link.published_at < since) reachedBoundary = true
     }
+    for (const link of assessment.pinned_links || []) {
+      const key = pathRecordKey(link),
+        previous = seenRecords.get(key)
+      if (previous) {
+        if (
+          previous.link.published_at !== link.published_at ||
+          comparableTitle(previous.link.text) !== comparableTitle(link.text)
+        ) {
+          summary.reason = page.reason = "archive_pinned_identity_conflict"
+          return { summary, indexDocuments, documents, parses, candidates }
+        }
+        continue
+      }
+      seenRecords.set(key, { link, pinned: true })
+      const excluded = (link.categories || []).some((category) =>
+        excludedCategories.has(category.normalize("NFC").trim().toLocaleUpperCase("en-US")),
+      )
+      if (link.published_at >= since && link.published_at < until && !excluded)
+        selected.push({
+          ...link,
+          listing_source_version_id: document.source_version_id,
+          listing_parse_id: parsed.parse_id,
+          discovered_at: document.observed_at,
+        })
+    }
     previousDate = links.at(-1)?.published_at || previousDate
+    previousLinks = links
     if (reachedBoundary) {
       page.status = "window_boundary_reached"
       break
@@ -1260,6 +1397,12 @@ export async function scanPathPagesRoute(
   if (selected.length > (channel.scan_max_details || 25)) {
     summary.reason = "detail_budget_exceeded"
     return { summary, indexDocuments, documents, parses, candidates }
+  }
+  summary.listing_source_version_id = indexDocuments[0]?.source_version_id || null
+  summary.assessment = {
+    status: "window_covered",
+    rule_id: channel.listing_profile.rule_id,
+    window_items: selected.length,
   }
   const inspected = await collectDetails(root, run, fetcher, channel, articleProfiles, selected, {
     fetchPolicy,

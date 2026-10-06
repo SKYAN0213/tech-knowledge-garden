@@ -3072,7 +3072,7 @@
       "fallback_archive": {
         "pagination": "path-pages",
         "url_template": "https://www.etnews.com/news/section.html?id1=04&id2=046&page={page}",
-        "max_pages": 16,
+        "max_pages": 24,
         "rule_id": "etnews-ai-archive-v1",
         "rss_title_policy": "source_title_authoritative",
         "excluded_categories": [],
@@ -3139,20 +3139,26 @@
               "category_xpath": "ancestor::li[1]//div[@class='altlist-info-item'][1]"
             }
           ]
+        },
+        "page_overlap_policy": {
+          "mode": "adjacent-prefix",
+          "max_items": 1
         }
       }
     },
     "scan_max_details": 400
   },
   "catalog-x46": {
-    "source_recipe": "dated-html-list-v1",
+    "source_recipe": "path-html-list-v1",
     "allowed_hosts": ["www.krcert.or.kr"],
     "scan_max_details": 20,
     "item_pattern": "^https://www\\.krcert\\.or\\.kr/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=[0-9]+[^#]*$",
     "listing_profile": {
       "rule_id": "kisa-dated-advisories-ko-v1",
       "require_title_match": true,
-      "pinned_rule_ids": ["kisa-pinned-advisories-ko-v1"]
+      "pinned_rule_ids": ["kisa-pinned-advisories-ko-v1"],
+      "url_template": "https://www.krcert.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020&pageIndex={page}",
+      "max_pages": 12
     },
     "parse_options": {
       "encoding": "utf-8",
@@ -3165,21 +3171,23 @@
           "id": "kisa-dated-advisories-ko-v1",
           "item_xpath": "//tr[td[@class=\"num\" and normalize-space(.) != \"공지\"] and td[@class=\"date\"]]/td[contains(@class,\"sbj\")]/a",
           "url_attribute": "href",
-          "url_pattern": "(?P<url>/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=[0-9]+[^#]*)",
+          "url_pattern": "(?P<url>/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=(?P<item_id>[0-9]+)[^#]*)",
           "title_xpath": ".",
           "date_xpath": "../../td[@class=\"date\"]",
           "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-          "date_format": "%Y-%m-%d"
+          "date_format": "%Y-%m-%d",
+          "source_item_id_group": "item_id"
         },
         {
           "id": "kisa-pinned-advisories-ko-v1",
           "item_xpath": "//tr[td[@class=\"num\" and normalize-space(.) = \"공지\"] and td[@class=\"date\"]]/td[contains(@class,\"sbj\")]/a",
           "url_attribute": "href",
-          "url_pattern": "(?P<url>/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=[0-9]+[^#]*)",
+          "url_pattern": "(?P<url>/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=(?P<item_id>[0-9]+)[^#]*)",
           "title_xpath": ".",
           "date_xpath": "../../td[@class=\"date\"]",
           "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-          "date_format": "%Y-%m-%d"
+          "date_format": "%Y-%m-%d",
+          "source_item_id_group": "item_id"
         }
       ]
     }

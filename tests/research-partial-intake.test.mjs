@@ -12,7 +12,10 @@ import {
   mergePartialScan,
   intakePartialScan,
 } from "../scripts/research/scan-completion.mjs"
-import { verifyStoredPartialCandidates } from "../scripts/research/scan-evidence.mjs"
+import {
+  verifyStoredPartialCandidates,
+  verifyStoredListScan,
+} from "../scripts/research/scan-evidence.mjs"
 import {
   executeDailyPlan,
   verifyDailyReceipts,
@@ -142,6 +145,96 @@ test("partial intake preserves the failed detail, refuses complete-window merge 
   assert.equal(result.summary.details[1].status, "article_image_body_requires_review")
 })
 
+test("path archive partial intake requires an original dated boundary and exact discovery linkage", async (t) => {
+  const { root, result, window } = fixture(t)
+  const listingDocument = result.indexDocuments[0]
+  const parse_id = sha256("path listing fixture")
+  const dom_path = "/html/body/main/a[1]"
+  const parsed = {
+    schema_version: "source-parse/v1",
+    source_id: listingDocument.source_id,
+    source_version_id: listingDocument.source_version_id,
+    parse_id,
+    parser: { id: "controlled-fixture" },
+    status: "extracted",
+    title: "Archive",
+    title_profile_status: "matched",
+    quality: { required_fields_present: true },
+    dates: {},
+    blocks: [
+      {
+        block_id: parse_id + ":block-0001",
+        text: "Covered dated listing",
+        kind: "paragraph",
+        locator: {
+          type: "html",
+          dom_path: "/html/body/main",
+          text_hash: sha256("Covered dated listing"),
+        },
+      },
+    ],
+    links: [
+      {
+        url: result.candidates[0].source_urls[0],
+        text: "Confirmed article",
+        profile_id: "archive",
+        dom_path,
+        published_at: "2026-10-02",
+        listed_date_text: "2026-10-02",
+      },
+      {
+        url: "https://example.com/news/older",
+        text: "Older article",
+        profile_id: "archive",
+        dom_path: "/html/body/main/a[2]",
+        published_at: "2026-10-01",
+        listed_date_text: "2026-10-01",
+      },
+    ],
+    link_profiles: [
+      { id: "archive", status: "matched", selected_items: 2, matched_links: 2, truncated: false },
+    ],
+  }
+  storeParseArtifact(root, parsed)
+  result.documents.push(listingDocument)
+  result.parses.push(parsed)
+  result.summary.pagination = "path-pages"
+  result.summary.assessment.rule_id = "archive"
+  result.summary.pages = [
+    { page: 1, url: listingDocument.original_url, parse_id, status: "window_boundary_reached" },
+  ]
+  result.candidates[0].discovery = [
+    {
+      source_version_id: listingDocument.source_version_id,
+      parse_id,
+      dom_path,
+      profile_id: "archive",
+    },
+  ]
+  assert.equal(verifyStoredPartialCandidates(root, result, window), true)
+  for (const mutate of [
+    (s) => {
+      s.summary.pages[0].status = "page_scanned"
+    },
+    (s) => {
+      s.summary.assessment.rule_id = "unproved"
+    },
+    (s) => {
+      s.candidates[0].discovery[0].dom_path = "/unrelated"
+    },
+    (s) => {
+      s.summary.pages[0].url = "https://example.com/other"
+    },
+  ]) {
+    const changed = structuredClone(result)
+    mutate(changed)
+    assert.throws(() => verifyStoredPartialCandidates(root, changed, window))
+  }
+  const first = await mergePartialScan(root, result, path.join(root, "path-backlog.json"))
+  assert.equal(first.status, "merged_partial")
+  assert.equal(first.window_complete, false)
+})
+
 test("partial intake rejects unsupported evidence, conflicting dates, duplicate keys and incomplete listing coverage before writing", async (t) => {
   const { root, result, window } = fixture(t)
   const mutations = [
@@ -187,6 +280,29 @@ test("partial intake rejects unsupported evidence, conflicting dates, duplicate 
   }
   fs.writeFileSync(path.join(root, result.documents[0].body_path), "changed source bytes")
   assert.throws(() => verifyStoredPartialCandidates(root, result, window), /hash mismatch/)
+})
+
+test("a blocked parse with a valid public date cannot become a completed scan candidate", (t) => {
+  const { root, result, window } = fixture(t)
+  const blocked = {
+    ...result.parses[0],
+    parse_id: sha256("blocked metadata fixture"),
+    status: "blocked",
+    blocks: [],
+    title_profile_status: "matched",
+    quality: { required_fields_present: false, reason: "authentication-page" },
+    dates: {
+      published_at: "2026-10-02",
+      access_scope: "metadata-only",
+      profile_status: "matched",
+      basis: { dom_path: "/html/head/meta", text: "2026-10-02T08:30:00+09:00" },
+    },
+  }
+  storeParseArtifact(root, blocked)
+  result.parses = [blocked]
+  result.candidates[0].article_parse_id = blocked.parse_id
+  result.summary.status = "window_scanned"
+  assert.throws(() => verifyStoredListScan(root, result, window), /complete readable article/)
 })
 
 test("daily partial intake supplies exact sources to editorial handoff while leaving coverage unresolved across resume", async (t) => {

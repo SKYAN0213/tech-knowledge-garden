@@ -433,6 +433,26 @@ class WorkerTests(unittest.TestCase):
         ambiguous_value["listing_link_rules"][0]["url_value_xpath"] = "./seqPressRelease | ./title"
         self.assertEqual(self.invoke(raw, ambiguous_value, mime_type="application/xml; charset=UTF-8")["worker_status"], "failed")
 
+    def test_html_listing_captures_native_record_identity_without_rewriting_url(self):
+        raw = b'''<html><head><title>Advisories</title></head><body><main>
+        <a href="/view?board=security&amp;page=2&amp;id=72207"><span>Security update</span><time>2026-10-05</time></a>
+        </main></body></html>'''
+        rule = {
+            "id": "advisories-v1", "item_xpath": "//main/a", "url_attribute": "href",
+            "url_pattern": r"(?P<url>/view\?board=security&page=[0-9]+&id=(?P<record_id>[0-9]+))",
+            "source_item_id_group": "record_id", "title_xpath": "./span", "date_xpath": "./time",
+            "date_pattern": r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "date_format": "%Y-%m-%d",
+        }
+        options = {"title_xpath": "//title", "content_xpath": "//main", "listing_link_rules": [rule]}
+        result = self.invoke(raw, options, url="https://example.org/list?page=2")["result"]
+        link = next(link for link in result["links"] if link.get("profile_id") == "advisories-v1")
+        self.assertEqual(link["source_item_id"], "72207")
+        self.assertEqual(link["url"], "https://example.org/view?board=security&page=2&id=72207")
+        self.assertEqual(link["dom_path"], "/html/body/main/a")
+        invalid = json.loads(json.dumps(options))
+        invalid["listing_link_rules"][0]["source_item_id_group"] = "missing"
+        self.assertEqual(self.invoke(raw, invalid)["worker_status"], "failed")
+
     def test_declared_publisher_calendar_reconciles_offset_metadata_at_day_boundary(self):
         raw = '''<html lang="ko"><head><title>ASEC</title>
         <meta property="article:published_time" content="2026-09-27T15:00:00+00:00">
@@ -1196,6 +1216,32 @@ echo 'source command only'
         result = self.invoke(form_wall)["result"]
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["quality"]["reason"], "authentication-page")
+
+    def test_blocked_article_retains_only_explicit_publication_metadata(self):
+        raw = b'''<html><head><title>Technology update</title>
+        <meta property="article:published_time" content="2026-10-06T08:41:51+09:00"></head>
+        <body><h1>Technology update</h1><article><p>Members only.</p></article></body></html>'''
+        options = {
+            "title_xpath": "//h1", "content_xpath": "//article",
+            "publication_date_policy": "explicit-authoritative",
+            "publication_date_xpath": "//meta[@property='article:published_time']",
+            "publication_date_attribute": "content",
+            "publication_date_pattern": r"^20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$",
+            "publication_date_format": "%Y-%m-%dT%H:%M:%S%z",
+        }
+        result = self.invoke(raw, options)["result"]
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["blocks"], [])
+        self.assertFalse(result["quality"]["required_fields_present"])
+        self.assertEqual(result["dates"]["published_at"], "2026-10-06")
+        self.assertEqual(result["dates"]["access_scope"], "metadata-only")
+        self.assertEqual(result["dates"]["basis"]["dom_path"], "/html/head/meta")
+        common_only = self.invoke(raw, {"title_xpath": "//h1", "content_xpath": "//article"})["result"]
+        self.assertIsNone(common_only["dates"].get("published_at"))
+        missing = self.invoke(raw.replace(b"2026-10-06T08:41:51+09:00", b"not-a-date"), options)["result"]
+        self.assertIsNone(missing["dates"].get("published_at"))
+        login = self.invoke(raw.replace(b"Technology update", b"Sign in to read this article"), options)["result"]
+        self.assertIsNone(login["dates"].get("published_at"))
 
     def test_login_call_to_action_does_not_block_a_substantial_article(self):
         article = " ".join(["The company described its robotics program and deployment results."] * 28)

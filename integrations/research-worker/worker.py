@@ -761,6 +761,9 @@ def html_parse(raw, url, options):
         if rule.get("title_pattern") and (not isinstance(rule["title_pattern"], str) or len(rule["title_pattern"]) > 512 or "title" not in re.compile(rule["title_pattern"]).groupindex):
             raise ValueError("Listing title pattern needs a named title group")
         pattern = re.compile(rule["url_pattern"])
+        identity_group = rule.get("source_item_id_group")
+        if identity_group is not None and (not isinstance(identity_group, str) or identity_group not in pattern.groupindex):
+            raise ValueError("Listing source identity needs an explicit URL capture group")
         if url_template is not None and any(name not in pattern.groupindex for name in template_fields):
             raise ValueError("Listing URL template needs matching named groups")
         items = dom.xpath(rule["item_xpath"])
@@ -805,6 +808,11 @@ def html_parse(raw, url, options):
             if rule.get("category_xpath"):
                 categories = [clean(" ".join(n.itertext())) for n in item.xpath(rule["category_xpath"]) if isinstance(n, etree._Element)]
             link = {"url": href, "text": item_title, "dom_path": domtree.getpath(item), "listed_date_text": listed_date or None, "profile_id": rule["id"], "date_kind": date_kind}
+            if identity_group is not None:
+                source_item_id = target.group(identity_group)
+                if not source_item_id or len(source_item_id) > 160:
+                    raise ValueError("Listing source identity is missing or exceeds its budget")
+                link["source_item_id"] = source_item_id
             link["published_at" if date_kind == "published_at" else "event_date"] = listed_day
             support_selector = rule.get("supporting_links_xpath")
             if support_selector is not None:
@@ -972,13 +980,28 @@ def html_parse(raw, url, options):
         body_access_notice.fullmatch(clean(block["text"])) for block in blocks
     )
     if title_access_wall or wall_only_body or (auth_forms and auth_copy and len(body_text) < 1000):
+        # A public article header can expose its original date while the body
+        # remains inaccessible. Retain only an explicitly selected date; this
+        # does not make the source readable or eligible for editorial intake.
+        blocked_dates = {}
+        if (not title_access_wall and title_profile_status == "matched"
+                and publication_date_policy == "explicit-authoritative"
+                and date_profile_status == "matched" and date_basis
+                and explicit_publication_date):
+            public_date = source_date_value(explicit_publication_date)
+            if public_date:
+                blocked_dates = {
+                    "published_at": public_date, "basis": date_basis,
+                    "profile_status": "matched", "access_scope": "metadata-only",
+                    "precision": "timestamp" if "T" in public_date else "day",
+                }
         return {
             "status": "blocked",
             "title": title,
             "title_basis": title_basis,
             "title_profile_status": title_profile_status,
             "language": language,
-            "dates": {},
+            "dates": blocked_dates,
             "blocks": [],
             "links": links,
             "link_profiles": link_profiles,

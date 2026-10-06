@@ -4761,3 +4761,13 @@ UR의 text sir-default→text is-default 본문 클래스 변경과 KARI 목록�
 정상 전체 수집을 반복하지 않고 UR·KARI·NACHI3경로6창만 새 설정으로 실행해 모두 완료했다. 실제 handoff에서 UR10월1일/6blocks, KARI10월6일/1block, NACHI2PDF/241blocks를 정확하게 선택했고 새 공통 모듈이 frozen inputs에 포함됨을 확인했다. KARI본문1block은 확보 범위이며 전문 기사 설명·첨부 검토 승인으로 승격하지 않는다. UR URL의 trailing slash 정규화 후보 키는source-f586fded0ef45a99dbbe이며 raw source ID b37c512fcff4b5ed4b1a와 구분한다.
 
 KISA cutoff_not_reached·전자신문 archive_cutoff_not_reached·디일렉 archive_article_date_missing_or_conflict를 다음 공통 페이지/날짜 resolver 묶음으로 남겼다. 같은 입력 재시도0·같은 실패1시간 반복0이다. 전체WBS2/22·legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규정규0/7·선정 분리 pending은 유지한다. 실제 archive/release 근거와 다음 명령은 런북445다.
+
+## 19.353. 기간 경계·고정 공지·회원 전용 원문의 공통 수집 보강
+
+다음 묶음은 기존 path-pages/RSS fallback/날짜 resolver/부분 후보 intake를 재사용한다. KISA는 실제 GET 페이지 이동과 게시물 ID를 보존해 고정 공지를 중복 수집하지 않는다. 전자신문은 실제17페이지에서 날짜 경계를 확인했으므로 페이지 상한만24로 늘린다. 상세 예산240을 유지하고 기사를 잘라 완료 처리하지 않는다.
+
+디일렉 회원 전용 기사에는 공개 제목과 명시적 발표일이 있다. 명시적 프로필·DOM 근거로 확인한 날짜만 기간 판단에 사용하고, 본문은 blocked/0blocks/required_fields_present=false를 유지한다. 이 자료는 기사 후보·요약·승인 대상으로 쓰지 않는다. 뒤의 공개 원문은 계속 수집하되 해당 기간 전체는 detail_incomplete로 남긴다. 부분 intake는 실제 목록의 날짜 경계와 각 공개 기사의 정확한 원문·목록 연결을 다시 확인해야 한다. 로그인 페이지의 날짜·현재 연도 추측·목록 날짜 역주입은 허용하지 않는다.
+
+실수집: KISA7일 창7후보/오늘4후보/10월4일 빈 창0 및 재개·반복 병합 검증, 전자신문17페이지/171상세 원문과 반복 병합 불변, 디일렉11페이지/220날짜·공개160후보/본문 미확인20건을 확인했다. 디일렉은 detail_incomplete를 유지한 채 부분 intake에 연결했고 반복 intake에서 장부 bytes가 같았다. 기존 응답209건은1시간 내 policy/원본 해시/동일 parser를 확인해 재사용했다. RSS→공통 archive 변환이 새 옵션을 누락하던 결함과 이전 실패 배열의 동일 copy 중복도 수정했다. 이전 run은 보존하고 동일 원문만 복구 view에서 합치며 충돌은 거부한다.
+
+KISA의 pageIndex1→2 주소 변경1건은 원문8문단 fingerprint·제목·발표일을 대조한 기존 same-event review로 연결했다. 기존 후보 ID·주 원문·승인 상태를 유지하고 native ID를 근거 있는 발견 기록에 보강했다. 장부는904후보이며 이번338수집 건수는 새 사건 수가 아니다. 활성55/등록195·coverage baseline·원고 승인/공개·정규0/7·전체WBS2/22를 유지한다. 전수 legacy·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 그대로 남는다. 코드 묶음별 표적 검사와 실제 raw/parse/장부 readback을 사용했고 로컬 전체suite는 반복하지 않았다. 같은 실패1시간 반복0이다. Drive 복원·릴리스 결과는 런북446에 이어 기록한다.

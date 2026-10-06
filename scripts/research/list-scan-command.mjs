@@ -4,11 +4,26 @@ import { SourceFetcher } from "./fetch.mjs"
 import { registry } from "./discovery.mjs"
 import { collectionBasis } from "./scan-basis.mjs"
 import { DEFAULT_ROOT, RunState, atomicWrite, readJSON, withLock } from "./run-state.mjs"
-import { loadStoredSourceRun } from "./parser.mjs"
+import { loadStoredSourceRun, assertStoredEvidence, retainParse } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 import { sha256 } from "./contracts.mjs"
 import { verifyStoredPartialCandidates } from "./scan-evidence.mjs"
+
+export function rssArchiveChannel(channel) {
+  const { parse_options, ...listing_profile } = channel.listing_profile.fallback_archive
+  return {
+    ...channel,
+    method: "html-list",
+    url: listing_profile.url_template.replace("{page}", "1"),
+    parse_options,
+    listing_profile: {
+      ...listing_profile,
+      excluded_categories: listing_profile.excluded_categories || [],
+      require_title_match: true,
+    },
+  }
+}
 
 // Reuse bytes from the same window without advancing their observation
 // time or reusing a previous coverage judgment or approval.
@@ -59,6 +74,7 @@ export function createArchiveSourceReuse(
           "detail_budget_exceeded",
           "archive_date_resolution_budget_exceeded",
           "detail_incomplete",
+          "archive_duplicate_across_pages",
         ].includes(summary.reason))
     ) ||
     JSON.stringify(fetchDependencies(old?.dependencies)) !==
@@ -69,7 +85,37 @@ export function createArchiveSourceReuse(
       (!/^[a-f0-9]{64}$/.test(old?.route_sha256 || "") || old.route_sha256 !== basis.route_sha256))
   )
     throw Error("Archive reuse requires the same window and unchanged fetch/parser dependencies")
-  const stored = loadStoredSourceRun(root, sourceRun)
+  let stored
+  if (!detailRepair && summary.reason === "archive_duplicate_across_pages") {
+    // Older failed scans copied an identical cached article twice. Normalize
+    // only byte-identical copies in this raw-response recovery view, preserve
+    // the original run and hashes, and reject conflicting observations.
+    const originalDocuments = readJSON(root, `runs/${sourceRun}/documents.json`)
+    const originalParses = readJSON(root, `runs/${sourceRun}/parses.json`)
+    if (!Array.isArray(originalDocuments) || !Array.isArray(originalParses))
+      throw Error("Archive duplicate recovery requires stored arrays")
+    const byVersion = new Map()
+    for (const document of originalDocuments) {
+      const prior = byVersion.get(document.source_version_id)
+      if (prior && JSON.stringify(prior) !== JSON.stringify(document))
+        throw Error("Archive duplicate source observation conflicts")
+      byVersion.set(document.source_version_id, document)
+    }
+    const documents = [...byVersion.values()]
+    const parses = originalParses.reduce((result, p) => retainParse(result, p), [])
+    assertStoredEvidence(root, documents, parses)
+    stored = {
+      documents,
+      parses,
+      identity: {
+        source_run: sourceRun,
+        documents_sha256: sha256(JSON.stringify(originalDocuments)),
+        parses_sha256: sha256(JSON.stringify(originalParses)),
+        identical_document_copies: originalDocuments.length - documents.length,
+        identical_parse_copies: originalParses.length - parses.length,
+      },
+    }
+  } else stored = loadStoredSourceRun(root, sourceRun)
   if (detailRepair) {
     verifyStoredPartialCandidates(
       root,
@@ -327,27 +373,7 @@ export async function executeListScan(v) {
       result.summary?.reason === "feed_cutoff_not_reached" &&
       archive
     ) {
-      const archiveChannel = {
-        ...channel,
-        method: "html-list",
-        url: archive.url_template.replace("{page}", "1"),
-        parse_options: archive.parse_options,
-        listing_profile: {
-          pagination: archive.pagination,
-          url_template: archive.url_template,
-          max_pages: archive.max_pages,
-          rule_id: archive.rule_id,
-          excluded_categories: archive.excluded_categories || [],
-          ...(archive.rss_title_policy ? { rss_title_policy: archive.rss_title_policy } : {}),
-          ...(archive.article_date_resolution
-            ? {
-                article_date_resolution: archive.article_date_resolution,
-                max_date_resolution_details: archive.max_date_resolution_details,
-              }
-            : {}),
-          require_title_match: true,
-        },
-      }
+      const archiveChannel = rssArchiveChannel(channel)
       const reuse = v["reuse-source-run"]
         ? createArchiveSourceReuse(
             root,
