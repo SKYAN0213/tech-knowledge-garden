@@ -148,6 +148,45 @@ test("news extraction preserves narrative and tables while giving the main annou
   assert.match(request.messages[0].content, /not in this batch/)
   assert.equal(request.schema.properties.claims.maxItems, 6)
 })
+test("structured source fields reach extraction without losing body versus metadata provenance", () => {
+  const source = parse("structured-release", 4)
+  source.title = "SDK@7.0.16"
+  const fields = [
+    ["/tag_name", "SDK@7.0.16"],
+    ["/published_at", "2026-07-06T14:24:25Z"],
+    ["/body", "Preserve signed approval metadata when recording approval responses."],
+    ["/release/notes~1summary", "Updated dependencies: SDK@7.0.16"],
+  ]
+  source.blocks.forEach((block, index) => {
+    block.text = fields[index][1]
+    block.locator = {
+      type: "json",
+      json_pointer: fields[index][0],
+      text_hash: sha256(block.text),
+    }
+  })
+  const original = structuredClone(source)
+  const plan = planExtractionBatches([source])
+  const request = plan.batches[0].request
+  const [document] = JSON.parse(request.messages[1].content)
+  assert.deepEqual(document.blocks.map((block) => [block.source_field, block.text]), fields)
+  assert.deepEqual(source, original)
+  assert.deepEqual(
+    document.blocks.map((block) => plan.blocks.get(block.block_key).block_id),
+    source.blocks.map((block) => block.block_id),
+  )
+  assert.equal(
+    plan.batches[0].input_chars,
+    request.messages.reduce((length, message) => length + message.content.length, 0) +
+      JSON.stringify(request.schema).length,
+  )
+})
+test("non-JSON sources do not acquire a guessed structured field", () => {
+  const source = parse("unstructured-source")
+  source.blocks[0].locator.json_pointer = "/published_at"
+  const [document] = JSON.parse(planExtractionBatches([source]).batches[0].request.messages[1].content)
+  assert.equal(Object.hasOwn(document.blocks[0], "source_field"), false)
+})
 function researchPaper(id = "paper") {
   const source = parse(id)
   const sections = [

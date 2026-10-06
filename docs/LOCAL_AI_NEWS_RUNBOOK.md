@@ -11100,3 +11100,20 @@ source closure71자료/73members·176157bytes·SHA b0df287e74a827c12b7c493b47c7a
 외장 /Volumes/X5Storage/tkg-daily-core-20261007-v1/legacy-jul07-*가 정확한 근거다. private helper의 roots를 문자열 배열로 넣은1회 snapshot 거부는 계약의 name/id 객체 배열로 정정한 새 실제 raw receipt 구성 문제였으며 원본/승인/정책을 변경하지 않았다. WebsiteData 목록의12번째 파일은 예전 upload receipt이므로 일반11개와 구분했다. 전체WBS3/22·partial17/not_started2·legacy46/446/metadata10·독립human40/20(라벨0)·정규0/7·goal active, 동일실패1시간 반복0이다. 다음 유효 구형 회차의 원문 대조/전환과8분야 실제 정규 조사를 이어간다.
 
 461 최종 보관: 전달 증거의 portable closure126자료/128members·3495935bytes/SHA5d4dcf6eaf8bd4a2b3af2a1e7dddcb334ad171f7d6a210a498a3d7156624910e는 privateResearch Drive1OSEg8_dzaQtXx6Quef28z9k6SLb6E8ra에서 actual parent/shared=false·원격 rawSHA·전수128members 복원·registry raw_sha256_verified를 확인했다. source_versions0이며 기사 원문6판본은 별도 source closure를 참조한다. 처음의 일반 archive/v1은 portable restore 계약에 맞지 않아 restore/등록이 거부됐다. 원 패키지와 원격 파일1Vbs8A0CH7sXmInHSGzyuydL3J3pU52tX는 보존하고 기존 archiveClosure로 새 v2 dependency package를 생성해 확인했다. 보호 규칙을 완화하거나 닫힌 manifest를 수정하지 않았다. 최신 비공개 현황판 core-progress-checkpoint-20261007-v10.json/html은 실제 WBS3/22·partial17/not_started2와 공개 전달 operation을 반영한다. 동일실패1시간 반복0·목표active다.
+
+
+## 462. 구조화 본문·메타데이터 구분을 공통 추출에 보존
+
+JSON locator의 pointer를 input source_field에 그대로 넣고 전체 요청 예산에 포함한다. JSON 이름/값은 신뢰하지 않는 원문이다. 실제 변경을 먼저 추출하되 태그·날짜는 변경의 동일성으로 보존하며, 버전/날짜에 가짜 numbers 단위를 만들지 않는다. 실제 수량/금액/성능과 조건은 유지한다. 비JSON 원문·블록 식별·인용 검사·완료 재사용 규칙은 유지했다. 출처 전용 adapter나 옵션은 없다.
+
+변경 전 pointer 전달 회귀 실패→변경 후 node --test tests/research-extraction.test.mjs tests/research-extraction-reuse.test.mjs tests/research-source-processing.test.mjs의83/83을 한 번 통과했다. 같은 코드의 로컬 전체suite는 반복하지 않는다. 기존 저장 원문으로 다음 두 실제 명령을 완료했다.
+
+```sh
+node scripts/research.mjs extract --run extraction-substance-sdk-20261007-v1 --source-run legacy-jul07-sdk-selected-20261007-v1 --candidate-key source-3b59b1b88f4cc9fad07c --model-policy data/research-model-policy.json
+node scripts/research.mjs extract --run extraction-substance-doosan-20261007-v1 --source-run daily-20261007-doosan-physical-ai-core-v1-438cae24e023-source --candidate-key source-7cc23b8dc1f502f520ee --model-policy data/research-model-policy.json
+```
+
+두 run은 terminal이며 추가 모델 실행 없이 저장 request/response를 대조했다.
+ 원문 context는 source_field만 제거하면 양쪽 동일하다. model/digest/runtime/think/context/output/temperature와 max6도 동일하다. SDK 실제 변경0→6/구조통과0→6, 두산구조4→3이다. SDK 패치2/의존성4의 원문 인용을 확인했다. 두산 수치 조건3개와 시험기관·현장실증·시간 단축 등 누락은 품질 미완료로 남는다. 수동 정정이나 기존 승인14사실을 새 모델 성공으로 세지 않았다. 새 출력은 unreviewed, 승인·public기사·새 정규회차0이다.
+
+외장 /Volumes/X5Storage/tkg-daily-core-20261007-v1/extraction-substance-*에 재현 실패/표적83로그·실제2실행·정확한 원문/설정 비교를 보존한다. 계획19.369/P3-02/03 partial·전체WBS3/22·legacy46/446/metadata10·독립human라벨0·정규0/7을 유지한다. 다음은 릴리스CI/실제공개보존/비공개Drive 원격SHA·전수복원·registry를 확인한 뒤 수치 조건과 상세 포착을 검토한다. 동일 실패1시간 반복0·목표active다.

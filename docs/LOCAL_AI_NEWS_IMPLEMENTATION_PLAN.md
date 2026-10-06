@@ -4956,3 +4956,17 @@ source closure71자료/73members·176157bytes/SHA b0df287e74a827c12b7c493b47c7ab
 전수 미검토는46회차/446구간·metadata10이다(원래47/454에서1회차/8구간 전환). WBS3/22·partial17/not_started2·신규 정규0/7·goal active를 유지한다. 추가 유료API/예약0·동일 실패1시간 반복0이다. 전체legacy/독립평가/실제08시/인증/복구/fullruntime은 남는다. 다음은 검토 가능한 다음 구형 회차의 저장 원문을 재사용해 전환하고, 현재 시각을 포함하는 정규 회차의8분야/기업전략/연구 사업화 조사를 진행한다. 7월10일 선정분리 pending은 해당 회차에만 적용한다.
 
 19.368 전달 증거의 private Drive 보관까지 완료했다. portable closure126자료/128members·3495935bytes(SHA5d4dcf6eaf8bd4a2b3af2a1e7dddcb334ad171f7d6a210a498a3d7156624910e)/Drive1OSEg8_dzaQtXx6Quef28z9k6SLb6E8ra의 actual parent/shared=false·원격 rawSHA·전수restore·registry를 확인했다. 일반 archive/v1의 portable restore 거부는 새 v2 closure로 해결하고 원 패키지는 보존했다. 현황판 core-progress-checkpoint-20261007-v10.json/html을 실제 장부로 갱신했으며 전체3/22와 남은 작업을 그대로 표시한다. 문서 정리 commit은 [skip ci]로 통과한 동일 코드/데이터의 전체 suite를 반복하지 않는다.
+
+## 19.369. 구조화 원문의 본문 우선 사실 추출 — 실제 두 사례 검증
+
+완료된7월7일 SDK 사례에서 모델6슬롯이 버전/게시시각에만 사용되고 실제 변경2개·의존성4개는 빠졌다. JSON parser의 locator에는 /tag_name·/published_at·/body가 있는데 공통 model input이 이 필드 위치를 버려 모두 문단처럼 전달한 것이 확인된 입력 공백이다. 기존 JSON pointer를 model source context에 그대로 보존해 구조화 본문과 메타데이터를 구분할 수 있게 한다. JSON 필드 이름도 신뢰하지 않는 원문 데이터로 취급하며 출처별 crawler/예외·새 모델/schema·유료API를 추가하지 않는다.
+
+수용 기준: 같은6원문·34블록·동일facts_per_batch6/model digest/think=false의 새 실행에서 실제 두 수정과 네 의존성 변화 포착·식별자/날짜에 가짜 수치단위 없음·기존 근거 validator 유지 여부를 직접 대조한다. 단일 사례의 구조 통과를 자동 승인·전수 의미품질 달성으로 승격하지 않는다. 기본 HTML/PDF input과 블록 식별/예산/완료 checkpoint 재사용 계약을 보존하는 좁은 회귀를1회 실행한다. 두산의 실제 수치·계획/완료 원문도 별도 저장 사례에서 확인한다. 닫힌 추출/승인/archive는 고치지 않고 새로운 run만 쓴다.
+
+변경 전 JSON 위치 누락 회귀의 실패를 확인한 뒤 공통 추출·완료 재사용·source-processing 표적83/83을 한 번 통과했다. 원문 parse는 수정하지 않으며 비JSON 자료에는 필드를 만들지 않는다. 위치 정보를 포함한 요청 예산·블록 식별·인용 검증을 그대로 유지한다.
+
+실제 qwen3.8:27b-mlx 요청2회는 같은 원문 문맥·facts6·digest5642e97495e1a088883805981563dcdc4a040c2f53388b7a41d1f24d3622cf7e·think:false/context16384/output4096/temperature0으로 완료됐다. SDK 6원문34블록은 메타데이터만6개/구조통과0에서 실제 patch2개와 dependency4개/구조통과6으로 바뀌었다(101759→96084ms). 패키지별 버전·발표시각을 변경 내용과 함께 보존하고 identifiers에 가짜 수치 단위가 없다. 두산1원문13블록은 실제 수량·금액·2031년 계획을 보존했지만 수치 조건3개를 정확히 복사하지 못해 구조통과4→3이다(86834→86549ms). 54개월·45개월 참여기관을 포착하면서 클라우드 없이 제어·다층 용접/작업시간 단축·시험기관/현장실증 조건이 빠졌다. 전체 상세 포착이나 기업 발표 품질 개선으로 보고하지 않는다.
+
+원출력과 기존 승인 자료를 보존했고 신규 사실 승인·공개 원고 변경·원문 HTTP 수집은0이다. 두 실행의 단일 측정값은 속도 벤치마크나 독립human 평가가 아니다. 새 runs extraction-substance-{sdk,doosan}-20261007-v1과 외장 extraction-substance-comparison-v1.json/log가 근거다. 다음은 정확한 수치 조건과 상세 누락을 기존 검토 경로에서 해결하고 이미 확보한 원문을 계속 재사용한다. 검증기 완화·자동 정정·새 crawler·유료API는 추가하지 않았다.
+
+P3-02/03은 partial이며 WBS3/22·legacy46/446/metadata10·독립human40/20·정규0/7·실제08시/인증/복구/fullruntime 조건을 유지한다. 같은 오류를 반복 실행하지 않았고1시간 이상 막힌 항목0·goal active다. 릴리스CI1회와 private Drive 보관·복원을 다음 전달 관문으로 확인한다.
