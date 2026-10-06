@@ -10767,3 +10767,21 @@ Drive source closure의 메타데이터/shared:false/부모/크기, actual raw Z
 코드 b70550da7956a06be793944f7114d6f81a0eba91 / Actions37441658334는 Node994/994·Python15+10+3·build/site/deploy를 통과했다. 배포2026-10-06T09:17:22Z 뒤 실제 공개 readback09:18:04Z에서 RSS40개/606,070bytes·기존Roche기사6,922bytes·reader-index1,239,161bytes의 SHA가 직전 공개 결과와 같았다. `writer-date-ci-final-{status-v1.json,v1.log}`와 `writer-date-public-preservation-v1.json`이 근거다. 전체 검사는 릴리스 CI 한 번이며 로컬에서 전체suite를 반복하지 않았다. 원고 후보는 계속private다.
 
 다음은 원7월10일의 기존 기사 주소와 분할 사건 관계·추가 전문용어 검토다. 선정 분리 사용자 결정과 fresh Drive 작성원본 대조를 건너뛰어 소급 발행하지 않는다. 목표active/WBS2/22·전체legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 미완료다. 핸들55870/97556/24522/31991은 terminal이며 같은 실패1시간 반복0이다. 최종 영수증 문서만의 commit은 skip ci로 처리한다.
+
+## 442. 원7월10일의 전체 구간 전환 입력과 실제 최신 원본 조회
+
+`legacy-20260710-full-unit-review-20261006-v1`의 legacy-transition-review는 원15구간/17distinct 사건이다. prepare-jul10-transition-v1.mjs(외장 증거루트의 stdin 실행 스크립트)에서 원고·현재 승인 파일·fact packet을 읽고 공통 assertLegacyTransition을 통과했다. 검증기를 고치지 않았다. 한눈에 보기와 Source List는 승인 사건에서 재생성할 replaced, 구조 제목3은 omitted_empty, 원 근거 없는 흐름/권고2는 omitted_editorial이다. 원8기사 구간의 회사/제품 및 공식 permalink 관계와 Copilot/Claude의 명시적 분할을 검토했다. Claude 일반 목록은 각 exact tag로 대체할 근거이며 목록URL을 세 사건의 canonical alias로 만들지 않는다.
+
+첫 준비 단계에서 GPT-5.6 매핑의 article SHA가 구v4와 일치하고 새v5의 exact approval files는 이미 같음을 확인했다. 이후 검사 스크립트는 불완전 Claude 행의 optional hash/files를 필수라고 가정해 실패했다. 실제 현재 approval/packet을 전수 읽어 v5 stale1해시와 Claude missing3해시를 새 매핑v4에 보완했다. 원 승인 또는 이전 매핑 bytes는 변경하지 않았다. 외장 legacy-jul10-approved-article-unit-mapping-v4.json과 새run/source-unit-mapping.json이 정정 기록이다.
+
+legacy-jul10-original-identity-readiness-v1.json에서 원 구형 extractArticles=0, 다른 회차의 ID/원문 match0, 실제 공개 reader-index의17사건 match0을 확인했다. 기존 `/briefings/2026/07/2026-07-10_0802_tech_ai_briefing`은 HTTP200이다. RSS 최근40회에는 원 회차가 없으므로 현재 feed entry/GUID 비교 성공으로 표현하지 않는다. 원 key/coverage_end 기반 GUID/pubDate를 보존할 기준만 기록했다. 실제 전환 후 비교는 남는다.
+
+knowledge-reference-dispositions는 원6링크의 exact note SHA·정의/별칭·type/map_review를 읽은 구조 판정이다. navigation2와 broad science map-exclude1을 전문 노드로 배정하지 않는다. 기존 전문3노트의 모든 definition 원문을 이번에 재검토했다는 뜻은 아니다. 새로운 배정0이며 GPT-5.6 v5의 prompt-caching1배정은 그대로다. 승인17개 모두 exact file SHA가 일치하는 등록된 Drive archive location을 조회해 approved-input-references에 연결했다. 과거 location observation이며 각17원격 ZIP을 새로 다운로드한 것으로 표시하지 않는다.
+
+최신 Drive authoring 조회: 외장 fresh-authoring-inventory-20261006-v1/v2.json의 같은16폴더/213파일 목록, raw-20261006-v1.json의 실제213파일 raw bytes, fresh 폴더/파일 metadata의 ID/부모/수정시각을 대조했다. 전체1,374,967bytes가 로컬과 같았다. connector-readback-20261006-full-unit-v1.json → build-connector-snapshot.py → connector-source-snapshot-20261006-full-unit-v1.json → pull-drive dry-run/apply/repeat를 기존 공통 방식으로 수행했다. 원고/public state 변경0·private mapping 갱신1·반복0이다. fresh-authoring-full-unit-binding-proof-v1.json에서 target/참조6SHA를 최신 원본에 연결했다.
+
+검토6자료/8members의 v1와 최신213raw/snapshot/receipt를 포함한16자료/18members의 v2를 private Research Drive에 업로드·metadata/shared:false/크기/raw ZIP SHA 대조·전수 복원했다. v2 원격의 실제213raw로 build_snapshot(source_contents=...)을 재구성해 snapshot files와 readback receipt hash의 동일성을 확인했다. source_versions=0인 검토 기록 보관이며 17개 승인 source closure는 별도다. ID/크기/SHA는 계획19.349, 근거는 legacy-jul10-full-unit-{review,authority}-drive-restoration-proof-v1/v2 및 각 remote-restore/register JSON이다.
+
+남은 우선 작업은 async로 요청한 선정 분리 결정에 맞춘 공통 뉴스/브리핑 투영, 원 참조 전문 정의의 출처 재검토, 발행 시 최신 Drive 대조 및 실제 과거 회차 공개 검증이다. 답변이 없으면 이 공개 형식 변경은 실행하지 않고 다른 수집/과거 검토를 이어간다. 이번 목표 turn은 실제 전환 입력·매핑 정정·원격 원본/복구 증거를 완료한 progress이며 새 모델 호출/기사 수집/adapter/정규 회차0이다. 전체goal active/WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 남는다. 전체suite/build/deploy 반복0·같은 실패1시간 반복0이다.
+
+비공개 현황판 core-progress-checkpoint-20261006-v3.json/html을 갱신하고 2/22·partial18·not_started2와 최신 런북442 근거 표시를 확인했다. JSON SHA0e55e698998859eeee4c4ab6685cdce4be0816bd1ce39eedd7a34c0625264eb5, HTML SHA46bd319e7f804fc83b4bd04cf3d4c79d0b851ebf185b08958f8dd4c9ed08808a다. 브라우저 렌더링 검증으로 보고하지 않는다. 핸들2812/7376은 terminal이다. 문서 commit은 skip ci로 처리한다.
