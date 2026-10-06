@@ -4541,3 +4541,14 @@ GPT-Live의 완료된 추출·대조는 재사용한다. 모델이 웹 인용 �
 Anthropic 실제writer56.321초 뒤 새 이니셔티브의 당일 실적으로 표현한 기존 설문·공개 추적 완료를 암시하는 제목·발표일 누락을 정정했다. 최종8dbb2238c30b71eb/3376d651…는2문장151자·2설명3문단·9verified·quality blocked:false로 편집 승인했다. 원문 발표일7월9일을 보존하고 리드에 한국시각10일을 명시했다. mixed meta+JSON-LD 날짜 근거의 KST 메타데이터 변환은 현 gate에서 허용되지 않아 v1 review 실패를 보존하고 원문 발표일을 쓰는 v2 review를 승인했다. 날짜 검증을 완화하거나 저장 근거를 바꾸지 않았다. 첫 closure v1은 승인 전 준비본이며 최종 승인 보관은v2만 사용한다.
 
 최종 closure62자료64members/233,402bytes를 private Drive ZIP1pVvHEJRS0CVOvkiiRD9ba7JGNmfF_mdk·manifest1jUrYR7wZ-3-lHRiIhlrk8_raxCJn1U-U에 보관했다. 실제 원격 SHA5fb4a366aa8980763529f6c440bb9b7bcb0ef351bac1ed2d7e6660f53681bb8b/manifest aa12c115a7296fbb13132c65456b6f8980f6f82222705a9fc51c2598bc80a222·private metadata·64파일 복원의기사/9사실 동등성·원문/사건 위치 등록을 확인했다. 전체 runtime 복구본이 아니며 작성 원본/회차/공개 변경은0이다. 같은7월10일 회차의 GPT-Live와 Anthropic은 승인됐지만 전체15구간은 미완료다. legacy47회차454구간·metadata10·WBS2/22·정규0/7·독립human평가·08시/인증/중단/fullruntime과 전체 목표active를 유지한다. 다음은 같은 회차의 Copilot·논문·도구릴리스 검토와 GPT5.6의 작은 배치 재개 설계다.
+
+
+## 19.336. 실패 상세만 복구하는 공통 수집 재개
+
+정규 발행 연결을 먼저 완성한다는 기존 우선순위(DAILY_NEWS_INGESTION_IMPLEMENTATION 7절)를 유지한다. 현재54경로/108창의 미완료 원인은AWS 한 창의72개 상세 중1개404다. 전체 수집·모델을 다시 실행하지 않고 기존 archive reuse의 bytes·정책·host·checkpoint 검사를 공유하는 `--repair-source-run`을 추가했다. RSS, 단일 HTML, 페이지 HTML, 월별 목록에 공통 적용한다. 일일 `--resume`은 마지막 `detail_incomplete` receipt에 성공 후보가 있을 때만 같은 창의 복구 입력을 전달한다. 기존2회 상한·blocked 재관측 요구는 유지한다.
+
+정확한 입력 hash·같은 route/window·변하지 않은 요청 정책 의존성·저장 bytes/parse/후보 근거를 먼저 확인한다. 파서와 profile 변경은 허용하되 현재 파서로 모두 다시 검증한다. 성공 원문의 발표일·관측일·ID를 갱신하지 않으며 누락된 URL만 정책 요청한다. `detail-repair-reuse.json`과 일일 receipt에 original_listing_observation/fresh_listing_observation:false를 명시한다. 새 취재·기사 승인·새 정규 성공 회차로 계산하지 않는다.
+
+실물 `daily-20261006-aws-detail-repair-v2`는 피드1+기사71의72개 저장 원문을 재사용하고 상세1개만 새 요청했다. 해당주소는2026-10-06T03:29:30Z에도404라71후보·incomplete를 유지한다. 후보 ID·원문 bytes·관측시각 일치, 원본과 복구153JSON의 무변경 재개(549ms)를 확인했다. 추가 모델 호출0이다. 원 파서 의존성 변경으로 차단한 v1은 보존했고 파싱만 수행하는 worker와 네트워크 정책 의존성을 구분해v2로 재파싱했다. proof는 기존 외장 evidence 디렉터리의 `daily-20261006-aws-detail-repair-proof-v1.json`이다.
+
+표적 archive reuse4+신규repair3, 자동 CLI 연결/재시도 상한2를 검증했다. 파서 의존성 분리 뒤 영향3만 재검사했고 전체 로컬 suite는 실행하지 않았다. 한시간 동일 실패 반복 기준에 해당하지 않으며404를 무차별 재시도하지 않는다. 작성 원본·공개 기사 변경0, 전체legacy47회차454구간/독립40·20/실제 신규 정규0·7/WBS2·22는 미완료다. 다음은 신선한Drive 작성 원본 대조와32칸의 실제 원문 조사, 같은 회차의승인→Drive→발행operation 연결이다. 전체54경로 재수집이나 과거기사 소급을 새 회차 성공으로 대체하지 않는다.

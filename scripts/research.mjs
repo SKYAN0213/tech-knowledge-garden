@@ -160,6 +160,7 @@ export async function main(argv = process.argv.slice(2)) {
       since: { type: "string" },
       until: { type: "string" },
       "reuse-listing-run": { type: "string" },
+      "repair-source-run": { type: "string" },
       "additional-source-run": { type: "string", multiple: true },
       "related-run": { type: "string", multiple: true },
       deep: { type: "boolean", default: false },
@@ -311,6 +312,8 @@ export async function main(argv = process.argv.slice(2)) {
   if (v.deep && command !== "draft") throw Error("--deep is only supported for draft")
   if (command !== "scan-list" && (v.since || v.until))
     throw Error("--since and --until are only supported for scan-list")
+  if (command !== "scan-list" && v["repair-source-run"])
+    throw Error("--repair-source-run is only supported for scan-list")
   if (command === "discover" && v.url?.length)
     throw Error("discover does not accept --url; use --channel to limit route discovery")
   if (

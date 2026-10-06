@@ -16,6 +16,7 @@ export async function main(args = process.argv.slice(2)) {
       until: { type: "string" },
       "reuse-listing-run": { type: "string" },
       "reuse-source-run": { type: "string" },
+      "repair-source-run": { type: "string" },
       "merge-backlog": { type: "boolean", default: false },
     },
   })

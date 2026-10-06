@@ -1,3 +1,5 @@
+현재 핵심 진척(2026-10-06): 같은 창의 detail_incomplete를 RSS/HTML/월별 공통 수집에서 복구한다. 일일 resume에 연결하고 기존2회 상한을 유지했다. 실제 AWS 목록1+상세71 bytes/관측시각/후보ID를 재사용하고404 URL1개만 새 요청했다. 여전히404이므로incomplete이며 원본/복구153JSON 무변경 재개549ms·model0을 확인했다. 표적 공통4+신규3·자동연결/상한2 통과. 런북428/계획19.336. 전체 목표active·WBS2/22·legacy47/454·독립40/20·정규0/7 유지. 다음은 과거 소급을 새 성공으로 세지 않고 최신Drive대조→32칸 실제조사→같은 회차 승인/발행operation 연결을 우선한다.
+
 현재 개발 진척(2026-10-04): 공통 reparse --retain-previous-parses로 옛/새 parse를 함께 보존하고 기존 추출을 재사용했다. 실제 논문2건은 재추출0·HTTP0, 원문 대조15facts(8+7), MLX 신규 원고2호출69.010/55.043초를 편집 정정한 뒤 승인했다. pre-v2 전체 구간 전환 검토를 구현하여8/11 원본9unit 전부와 원본SHA/고정 사건ID/제목/출처/일자를 연결했다. partial 전환·source-bearing 누락·거짓 empty·hash drift를 거부한다.
 
 private legacy-20260811-reader-20261004-v2:1회차/2기사·public340파일, 웹/RSS/GitHub 본문·원문·발표8/10 일치·기존RSS40GUID/pubDate 보존. 전환 준비1파일9,956bytes, 운영vault200/legacy85·752/pending67·626/verified139 불변이다. parser/reuse 재개52파일 SHA불변·model/HTTP0. 표적9+27+12=48검사 통과, 전체suite 반복 없음. Drive 작성 원본 반영·공개 배포·새 UI 상호작용 검증은 미실행이다. 기존 runtime/portable 복구·전수92/801·독립40/20·shadow7/무인08시 범위는 유지한다. 다음은 최신 Drive 대조→승인된8/11 변경 저장→공개 릴리스 검증. 목표 active/WBS2/22, 한시간 동일 병목 없음. 런북376/계획19.285.

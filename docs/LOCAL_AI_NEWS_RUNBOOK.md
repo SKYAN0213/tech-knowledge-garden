@@ -10544,3 +10544,21 @@ WebsiteData11raw·9same-ID 갱신/2불변·358페이지/178기사/25용어/22관
 427 최종: 코드136c009/Actions37407882449 success·Node967/967·Python15+10+3·build/deploy와 shared-news-review-public-readback-20261006-v1의12files/reader_equivalent를 확인했다. 로컬은 관련27시험·신규본문시험·형식/문법만 확인했으며 전체 suite/54수집을 반복하지 않았다. private status는 shared-news-review-delivery-status-v1.json이며 canonical HTML로 반영했다.
 
 Anthropic factual-v1의 writer56.321초·편집 승인9사실/2문장151자/2설명3문단, event8dbb2238c30b71eb. UTC 원문 발표일7월9일·리드 한국시각10일을 유지한다. mixed meta+JSON-LD 근거의 KST 메타데이터 변환 실패 review-v1은 보존했고 기존 원문 날짜를 쓰는 review-v2를 승인했다. 첫 closure-v1은 승인 전 준비본이다. 최종 closure-v2의62files/64members ZIP1pVvHEJRS0CVOvkiiRD9ba7JGNmfF_mdk 및 manifest1jUrYR7wZ-3-lHRiIhlrk8_raxCJn1U-U를 실제raw/SHA/private/복원64files/기사9사실 동등성으로 확인했다. proof legacy-jul10-anthropic-remote-proof-v2.json, 위치 legacy-jul10-anthropic-location-v2.json. preview.md 열기 요청은queued였으므로 실제 화면이 열렸다고 집계하지 않는다. 기존 회차15구간/전체47회차454구간은 계속 미완료다. 다음 독립 Copilot·논문·릴리스부터 진행하고 GPT5.6 timeout 요청은 반복하지 않는다.
+
+
+## 428. 같은 목록 관측의 실패 상세만 복구
+
+일일 `--resume`은 마지막 `detail_incomplete` receipt와 성공 후보를 확인해 복구 입력을 자동 전달한다. 수집 설정/코드가 바뀐 옛 계획은 기존 입력 불일치 관문을 유지한다. 그 계획을 덮어쓰지 말고 정확한 미완료 source run과 같은 기간으로 별도 복구한다.
+
+```sh
+node scripts/research-scan.mjs scan-list --root /absolute/private-root \
+  --run UNIQUE_REPAIR --channel REGISTERED_CHANNEL \
+  --since ORIGINAL_START --until ORIGINAL_EXCLUSIVE_END \
+  --repair-source-run EXACT_INCOMPLETE_SCAN
+```
+
+지원 경로는 RSS bounded-feed, HTML single-page/path-pages, calendar-month다. 다른 reuse 옵션과 조합하지 않는다. 원본 input hash·route·window·요청 정책 의존성과 저장 원문/후보/parse를 검증한다. 파서·본문 profile은 현재 코드로 다시 적용한다. 이미 확보한 원문은 bytes와 관측 시점을 보존하고, 없는 URL만 요청한다. 예전 목록을 새로 관측했다고 표시하거나 승인·발행 상태를 재사용하지 않는다. 복구receipt는 `research-detail-repair-source-reuse/v1`, `coverage_scope:original_listing_observation`, `fresh_listing_observation:false`, `parses_recomputed:true`다. 일일 receipt에도 같은 복구 scope를 연결한다.
+
+같은 run 재개는 새HTTP 없이 checkpoint를 읽는다. 실패가 남으면 `incomplete`와 실제 실패를 유지한다. 완료됐을 때만 기존 `--reconcile-scan`의 저장 근거 검증으로 기간 coverage에 연결할 수 있다. 기사 승인·Drive·공개·새정규 운영 성공은 별도 관문이다.
+
+실물 AWS복구v2는 원문72개(목록1+상세71) 재사용/누락상세1요청/후보71이다. 누락주소의 새404를 보존하고 반복 요청하지 않았다. 원본·복구153JSON의 재개SHA 불변과 기존후보ID·관측시점·raw SHA 일치를 확인했다. 본문 전체 재파싱은 추론이 아니며 신규 모델 호출0이다. proof `daily-20261006-aws-detail-repair-proof-v1.json`을 확인한다. 신규/공통 검증7개와 자동연결/상한2개가 통과했다. 전체 로컬 suite는 반복하지 않는다.

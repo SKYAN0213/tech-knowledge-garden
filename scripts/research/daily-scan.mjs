@@ -853,7 +853,12 @@ export async function executeDailyPlan({
             (receipt) => sameWindow(receipt, predecessor) && receipt.status === "window_scanned",
           )
         : null
-      result = await scan(window, id, reusableReceipt?.attempt_id || null)
+      const lastAttempt = priorAttempts.at(-1)
+      const repairSourceRun =
+        lastAttempt?.reason === "detail_incomplete" && lastAttempt.candidate_keys?.length
+          ? lastAttempt.attempt_id
+          : null
+      result = await scan(window, id, reusableReceipt?.attempt_id || null, repairSourceRun)
       scan_ms = Math.round(performance.now() - scanStarted)
       scanEvidence = {
         list_scan_run: id,
@@ -861,6 +866,7 @@ export async function executeDailyPlan({
         index_documents: result.indexDocuments?.length || 0,
         documents: result.documents?.length || 0,
         parses: result.parses?.length || 0,
+        ...(result.summary.detail_repair ? { detail_repair: result.summary.detail_repair } : {}),
       }
       if (result.summary.status === "window_scanned") {
         const verifyStarted = performance.now()
@@ -1121,7 +1127,7 @@ function summarizeDailyTiming(receipts, activeRoutes) {
 
 export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
   if (typeof runResearch !== "function") throw Error("Daily source runner is required")
-  return async (window, attempt, reuseListingRun) => {
+  return async (window, attempt, reuseListingRun, repairSourceRun) => {
     const args = [
       "scan-list",
       "--root",
@@ -1137,6 +1143,13 @@ export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
     ]
     const route = activeRoutes.find((item) => item.route.channel_id === window.channel_id)?.route
     if (
+      repairSourceRun &&
+      ["bounded-feed", "single-page", "path-pages", "calendar-month"].includes(
+        route?.listing_profile?.pagination,
+      )
+    )
+      args.push("--repair-source-run", repairSourceRun)
+    else if (
       reuseListingRun &&
       route?.method === "html-list" &&
       route.listing_profile?.pagination === "single-page"

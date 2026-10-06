@@ -8,6 +8,7 @@ import { loadStoredSourceRun } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 import { sha256 } from "./contracts.mjs"
+import { verifyStoredPartialCandidates } from "./scan-evidence.mjs"
 
 // Reuse bytes from the same window without advancing their observation
 // time or reusing a previous coverage judgment or approval.
@@ -17,21 +18,31 @@ export function createArchiveSourceReuse(
   channel,
   basis,
   window,
-  { now = Date.now(), fetchPolicy = fetchWithPolicy } = {},
+  { now = Date.now(), fetchPolicy = fetchWithPolicy, detailRepair = false } = {},
 ) {
   if (!/^[A-Za-z0-9_-]+$/.test(sourceRun || "")) throw Error("Exact archive source run required")
   const previous = readJSON(root, `runs/${sourceRun}/state.json`)
   const summary = readJSON(root, `runs/${sourceRun}/list-scan.json`)
   const old = readJSON(root, `runs/${sourceRun}/collection-basis.json`)
   const earlierReuse = readJSON(root, `runs/${sourceRun}/archive-reuse.json`)
+  const earlierRepair = readJSON(root, `runs/${sourceRun}/detail-repair-reuse.json`)
+  // The worker only parses saved bytes. A repair runs the current parser again;
+  // network policy and route dependencies must still match the original scan.
+  const fetchDependencies = (dependencies) =>
+    Object.fromEntries(
+      Object.entries(dependencies || {}).filter(
+        ([file]) => !detailRepair || file !== "integrations/research-worker/worker.py",
+      ),
+    )
   const input = {
     schema: "research-list-run-input/v2",
     channel_id: summary?.channel_id,
     since: summary?.window?.since,
     until_exclusive: summary?.window?.until_exclusive,
-    reuse_listing_run: null,
+    reuse_listing_run: summary?.listing_reused_from_run || null,
     collection_basis: old,
     ...(earlierReuse ? { reuse_source_run: earlierReuse.source_run?.source_run } : {}),
+    ...(earlierRepair ? { repair_source_run: earlierRepair.source_run?.source_run } : {}),
   }
   if (
     !previous ||
@@ -39,7 +50,7 @@ export function createArchiveSourceReuse(
     summary?.channel_id !== channel.channel_id ||
     summary.window.since !== window.since ||
     summary.window.until_exclusive !== window.until ||
-    summary?.pagination !== "path-pages" ||
+    (!detailRepair && summary?.pagination !== "path-pages") ||
     !(
       summary.status === "window_scanned" ||
       (summary.status === "incomplete" &&
@@ -50,12 +61,38 @@ export function createArchiveSourceReuse(
           "detail_incomplete",
         ].includes(summary.reason))
     ) ||
-    JSON.stringify(old?.dependencies) !== JSON.stringify(basis.dependencies) ||
-    old?.implementation?.parser_sha256 !== basis.implementation.parser_sha256 ||
-    old?.article_profiles_sha256 !== basis.article_profiles_sha256
+    JSON.stringify(fetchDependencies(old?.dependencies)) !==
+      JSON.stringify(fetchDependencies(basis.dependencies)) ||
+    (!detailRepair && old?.implementation?.parser_sha256 !== basis.implementation.parser_sha256) ||
+    (!detailRepair && old?.article_profiles_sha256 !== basis.article_profiles_sha256) ||
+    (detailRepair &&
+      (!/^[a-f0-9]{64}$/.test(old?.route_sha256 || "") || old.route_sha256 !== basis.route_sha256))
   )
     throw Error("Archive reuse requires the same window and unchanged fetch/parser dependencies")
   const stored = loadStoredSourceRun(root, sourceRun)
+  if (detailRepair) {
+    verifyStoredPartialCandidates(
+      root,
+      {
+        ...stored,
+        summary,
+        candidates: readJSON(root, `runs/${sourceRun}/candidates.json`),
+        indexDocuments: readJSON(root, `runs/${sourceRun}/list-pages.json`) || [],
+      },
+      {
+        channel_id: channel.channel_id,
+        since: window.since,
+        until_exclusive: window.until,
+      },
+    )
+    stored.identity = {
+      ...stored.identity,
+      summary_sha256: sha256(JSON.stringify(summary)),
+      candidates_sha256: sha256(
+        JSON.stringify(readJSON(root, `runs/${sourceRun}/candidates.json`)),
+      ),
+    }
+  }
   const available = new Map(),
     used = new Map()
   for (const doc of stored.documents) {
@@ -64,7 +101,7 @@ export function createArchiveSourceReuse(
     if (
       !Number.isFinite(age) ||
       age < -60000 ||
-      age > 3600000 ||
+      (!detailRepair && age > 3600000) ||
       doc.policy_status !== "checked" ||
       doc.policy?.allowed !== true
     )
@@ -78,6 +115,7 @@ export function createArchiveSourceReuse(
   }
   return {
     reference: stored.identity,
+    ...(detailRepair ? { detailRepair: true } : {}),
     available,
     used,
     fetchPolicy: async (root, fetcher, url, options) => {
@@ -91,7 +129,7 @@ export function createArchiveSourceReuse(
 }
 
 export function preserveArchiveReuseReceipt(root, runId, reuse) {
-  const relative = `runs/${runId}/archive-reuse.json`
+  const relative = `runs/${runId}/${reuse.detailRepair ? "detail-repair-reuse" : "archive-reuse"}.json`
   const existing = readJSON(root, relative)
   if (existing && JSON.stringify(existing.source_run) !== JSON.stringify(reuse.reference))
     throw Error("Archive reuse receipt source changed")
@@ -111,13 +149,22 @@ export function preserveArchiveReuseReceipt(root, runId, reuse) {
     sources.set(url, item)
   }
   const receipt = {
-    schema: "research-archive-source-reuse/v1",
+    schema: reuse.detailRepair
+      ? "research-detail-repair-source-reuse/v1"
+      : "research-archive-source-reuse/v1",
     source_run: reuse.reference,
     reused_sources: [...sources.values()],
     observation_times_preserved: true,
     coverage_reused: false,
     candidate_approved: false,
     candidate_published: false,
+    ...(reuse.detailRepair
+      ? {
+          coverage_scope: "original_listing_observation",
+          fresh_listing_observation: false,
+          parses_recomputed: true,
+        }
+      : {}),
   }
   if (!existing || JSON.stringify(existing) !== JSON.stringify(receipt))
     atomicWrite(root, relative, receipt)
@@ -175,6 +222,18 @@ export async function executeListScan(v) {
       !channel.listing_profile?.fallback_archive)
   )
     throw Error("--reuse-source-run requires a distinct RSS archive source run")
+  if (
+    v["repair-source-run"] &&
+    (v["repair-source-run"] === v.run ||
+      v["reuse-source-run"] ||
+      v["reuse-listing-run"] ||
+      !["bounded-feed", "single-page", "path-pages", "calendar-month"].includes(
+        channel.listing_profile?.pagination,
+      ))
+  )
+    throw Error(
+      "--repair-source-run requires a distinct supported listing scan without other reuse modes",
+    )
   const profiles = acquisition.article_profiles || []
   const basis = collectionBasis(channel, profiles)
   return withLock(root, "run-" + v.run, async () => {
@@ -186,6 +245,7 @@ export async function executeListScan(v) {
       reuse_listing_run: v["reuse-listing-run"] || null,
       collection_basis: basis,
       ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
+      ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
     })
     const fetcher = new SourceFetcher(root)
     await run.stage("collection-basis", basis, async () => basis)
@@ -235,6 +295,16 @@ export async function executeListScan(v) {
         listingReuseError = error.message
       }
     }
+    const repair = v["repair-source-run"]
+      ? createArchiveSourceReuse(
+          root,
+          v["repair-source-run"],
+          channel,
+          basis,
+          { since: v.since, until: v.until },
+          { now: Date.parse(run.state.started_at), detailRepair: true },
+        )
+      : null
     let result = await scanner(
       root,
       run,
@@ -245,7 +315,11 @@ export async function executeListScan(v) {
         since: v.since,
         until: v.until,
       },
-      { listingEvidence, listingReuseError },
+      {
+        listingEvidence,
+        listingReuseError,
+        ...(repair ? { fetchPolicy: repair.fetchPolicy } : {}),
+      },
     )
     const archive = channel.listing_profile?.fallback_archive
     if (
@@ -294,7 +368,7 @@ export async function executeListScan(v) {
         archiveChannel,
         profiles,
         { since: v.since, until: v.until },
-        reuse ? { fetchPolicy: reuse.fetchPolicy } : {},
+        reuse || repair ? { fetchPolicy: (reuse || repair).fetchPolicy } : {},
       )
       if (reuse) preserveArchiveReuseReceipt(root, v.run, reuse)
       fallback.summary.fallback = {
@@ -309,6 +383,14 @@ export async function executeListScan(v) {
         documents: [...result.documents, ...fallback.documents],
         parses: [...result.parses, ...fallback.parses],
         candidates: fallback.candidates,
+      }
+    }
+    if (repair) {
+      preserveArchiveReuseReceipt(root, v.run, repair)
+      result.summary.detail_repair = {
+        source_run: v["repair-source-run"],
+        coverage_scope: "original_listing_observation",
+        fresh_listing_observation: false,
       }
     }
     atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
@@ -344,6 +426,7 @@ export async function executeListScan(v) {
       status: result.summary.status,
       reason: result.summary.reason,
       candidates: result.candidates.length,
+      ...(result.summary.detail_repair ? { detail_repair: result.summary.detail_repair } : {}),
       ...(result.events ? { events: result.events.length } : {}),
       ...(backlogMerge ? { backlog_merge: backlogMerge } : {}),
       candidate_published: false,

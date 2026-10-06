@@ -65,6 +65,47 @@ const plan = {
   ],
 }
 
+test("daily detail repair binds the failed attempt and takes precedence over adjacent listing reuse", async (t) => {
+  const root = temporary(t),
+    calls = []
+  const routeConfig = {
+    channel_id: "official",
+    method: "rss",
+    listing_profile: { pagination: "bounded-feed" },
+  }
+  const scanner = createDailySourceScanner({
+    root,
+    activeRoutes: [{ channel_id: "official", route: routeConfig }],
+    runResearch: async (args) => {
+      calls.push(args)
+      const id = args[args.indexOf("--run") + 1]
+      atomicWrite(root, `runs/${id}/list-scan.json`, {
+        status: "incomplete",
+        channel_id: "official",
+      })
+      for (const file of ["documents", "parses", "candidates", "list-pages"])
+        atomicWrite(root, `runs/${id}/${file}.json`, [])
+    },
+  })
+  await scanner(
+    { channel_id: "official", since: "2026-10-01", until_exclusive: "2026-10-02" },
+    "new",
+    "adjacent",
+    "failed-a1",
+  )
+  assert.deepEqual(calls[0].slice(-2), ["--repair-source-run", "failed-a1"])
+  assert.equal(calls[0].includes("--reuse-listing-run"), false)
+  routeConfig.listing_profile.pagination = "single-page"
+  routeConfig.method = "html-list"
+  await scanner(
+    { channel_id: "official", since: "2026-10-01", until_exclusive: "2026-10-02" },
+    "html",
+    "adjacent",
+    "failed-html",
+  )
+  assert.deepEqual(calls[1].slice(-2), ["--repair-source-run", "failed-html"])
+})
+
 test("stored daily windows must match their frozen verified coverage basis", () => {
   const config = { lookback_days: 7, max_window_days: 7 }
   const activeRoutes = [
