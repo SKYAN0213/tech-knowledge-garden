@@ -373,3 +373,5 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 
 
 2026-10-06 전체55경로 원문 실행·공통 보관: 110창 중106완료,52/55경로 완료,830원문관측·정책/redirect·실패 집계를 private status에 표시한다. 과거 좁은 경로 성공을 전체 통합 완료로 오인하지 않도록 scope를 검사한다. 5개 원문 closure를 private Drive에서 actual SHA/4090members 전수 복원하고106성공창을 다시 검증했다. 목록/중간 checkpoint raw BLOB 누락과 빈 창 archive 거부를 수정했다. 후보904→911/고유911·기존112 review_status/편집 필드 보존·재취득31후보 metadata 갱신. KUKA timeout3창/디일렉 인증20포함1창은 미완료다. 신규 기사 승인·정규 발행0, 전체WBS2/22 유지. 상세는 계획19.359/런북452, 다음은 공통 영구 오류 retry 분리다.
+
+완료 증거: ff7de5b/Actions37482298032 Node1,034/1,034·Python28·build/site/deploy success. 공개3파일/40RSS 식별자 보존; source5archive4090members와 delivery220members를 private Drive actual SHA로 전수 복원·등록하고 delivery217inventory/49frozen refs를 확인했다. private 현황판1440/390px 탭/키보드 검증. 전체2/22·정규0/7 유지, 다음 공통 retry eligibility(인증/영구 실패 대기·일시 오류 제한 재시도). 런북452절.

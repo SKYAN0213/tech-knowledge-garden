@@ -4821,3 +4821,5 @@ Drive213개 전후 raw·기존ID1파일 갱신/212불변, 기존12기사·RSS40 
 잔여 오류: KUKA DE두 창/EN한 창의 POST timeout, 디일렉 주간창 detail180 중 인증 제한 parse20이다. 자동 queue가 후자를 detail_incomplete/retryable로 분류하므로 전체180기사 재요청을 하지 않았다. 다음 묶음은 공통 retry eligibility에서 저장된 상세 실패 원인에 따라 인증/영구 오류를 대기시키고 실제 일시 오류만 제한 재시도하는 것이다. KUKA를 근거 없이 반복하거나 성공 상태로 바꾸지 않는다. 1시간 이상 동일 실패 반복 병목은 없다.
 
 검증은 관련 묶음만 수행했다. source audit18/18; archive 최초16중15통과/fixture경로 수정1통과; archive 원문·복원 묶음29/29; 빈 창 보관 수정 묶음30/30; 새 scope/empty 표적2중1통과(빈창)/단일 route fallback 수정 후 해당1통과다. 실행 명령의 nonexistent archive-locations test filename은 실제 시험 파일로 계산하지 않으며 위치 등록 검사는 research-archive-closure.test.mjs에 있다. 전체 로컬suite를 반복하지 않고 릴리스CI에서 한 번 확인한다. 전체 WBS2/22·partial18/not_started2 및 정규0/7 유지; P2-01의 재시도 영향, 독립human/legacy/08시/복구/fullruntime gate는 미완료다. actual CI·공개 보존·보관 ID는 런북452절 후속 결과로 확인한다.
+
+19.359 후속 완료 증거: codeff7de5b/Actions37482298032 Node1,034·Python28/build/site/deploy success. 공개3파일/40 RSS 식별자 보존, private 현황판1440/390px 탭·hash·keyboard 검증, 실행 입력과49frozen refs/delivery218자료의 private Drive actual SHA/220members·217inventory파일 복원을 확인했다. 상세 ID·SHA·재개 지점은 런북452절이다. 코드릴리스CI1·전체로컬suite0, 문서 후속은 skip ci로 보존한다. 전체2/22·정규0/7을 유지한다.
