@@ -1277,8 +1277,8 @@
       "options": {
         "language": "ko",
         "title_xpath": "//div[@data-content='board_view']//div[contains(concat(' ',normalize-space(@class),' '),' t ')]/strong",
-        "content_xpath": "//div[@data-content='board_view']//div[@class='c']",
-        "content_block_xpath": ".//span|.//p|.//table",
+        "content_xpath": "//div[@data-content='board_view'][count(.//div[@class='c'])=1]",
+        "content_block_xpath": ".//div[@class='c']",
         "publication_date_xpath": "//div[@data-content='board_view']//ul[contains(concat(' ',normalize-space(@class),' '),' detail ')]/li[contains(concat(' ',normalize-space(@class),' '),' date ')]",
         "publication_date_pattern": "([0-9]{4}-[0-9]{2}-[0-9]{2})",
         "publication_date_format": "%Y-%m-%d"

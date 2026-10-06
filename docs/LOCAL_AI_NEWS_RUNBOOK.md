@@ -11201,3 +11201,10 @@ source archive plan은 실제109terminal observation run을 공통closure6개로
 추가 승인3패키지3343443bytes/900members의 원격 rawSHA·전수복원·등록은 current55-oct7-approval-roundtrip-proof-v1.json이다. 복원본의 정확한 parse/원고/기사 개념 authority·위빙/Signals 승인 guard를 current55-oct7-restored-approvals-v1.json으로 다시 검증했다. 패키지 간 중복된 같은 승인 판본은 독립 새 기사로 세지 않는다. 전체 모델/runtime 복원이나 08시 실행으로 확대하지 않는다.
 
 다음 입력: terminal run daily-20261007-current55-integrated-v1 및 daily-20261007-approved-intake-slice-v1. 남은 분야의 원문/중복/날짜/상세 검토→정규 원고→fresh Drive 작성 원본 확인·보관→공개 readback 순서다. 현재 preview v2는 coverage_complete/drive_verified/browser_verified/candidate_published=false이고 canonical580파일은 불변이다. 기존 예약의 실제08시/7회 성공, legacy44회차430구간·metadata10, 독립human 평가와 인증/복구/fullruntime은 미완료이며 WBS3/22와 goal active를 유지한다. 문서 최종 기록은 [skip ci]로 커밋하고 통과한 검사/수집/모델을 재실행하지 않는다.
+
+
+## 468. 네 분야 실제 편집과 항우연 본문 재사용
+
+입력 context b75f02ef90be507ee94e2805d5797417b6b804a7e612d38d89d7a5424875191d에서 exact candidate 상세4개를 읽고 daily-20261007-four-fields-editorial-v1에 frozen handoff458c81e0/원문 version·parse를 고정했다. 모델 처리 handle16038의 live 진행을 확인하며 같은 실행을 재시작하지 않는다. 완료된 수집55경로를 다시 실행하지 않는다. local qwen3.8:27b-mlx fact_extract/evidence_compare의 실제 provenance와 원출력은 해당 child run에 보존한다. 사실/편집 검토·신규 발행은 별도 단계다.
+
+항우연 원 HTML21e392ed…의 실제 br/direct-text 내용을 읽어 누락을 재현했다(kari-body-regression-before-v1.log). 기존 common XPath 설정만 수정한 뒤 Python 표적2/2와 missing/ambiguous body 차단을 확인했다(kari-body-targeted-v1.log). select-source kari-body-current-selection-20261007-v1→reparse kari-body-current-reparse-20261007-v1은 raw·게시일2026-10-06·원 URL을 그대로 유지했고 새parse6357e1ba…에654자 본문이 있다. kari-body-runtime-proof-v1.json은 원19자 parse·원문 보존·HTTP0·승인false를 기록한다. 진행 중 모델의 기존 title-only input은 변경하지 않았으며 그 결과를 새 본문 결과로 표시하지 않는다. 다음 source processing은 이 새parse를 사용한다.

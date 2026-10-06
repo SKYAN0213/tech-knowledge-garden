@@ -5062,3 +5062,10 @@ private reader slice v1은 필수Signals review 누락으로 refresh가 실패�
 terminal109수집 관측의6개 비공개 Drive 패키지는 원격raw SHA·4059members 전수복원·registry를 통과했다. 복원본에서108완료/1회원제한 관측을 재검증했으며 고유 source_versions770은 승인 기사 수가 아니다. 기존 두 기사와 용어/Signals 승인 의존성의3개 패키지도 원격raw SHA·900members 복원·registry와 loadApprovedOntologyInput/loadNoteApproval 재판정을 통과했다. 원문·이전 승인·정밀시각 판본·개념 authority를 함께 보존한다. fullruntime/08시/정규발행 검증으로 세지 않는다.
 
 재개 지점은 daily-20261007-current55-integrated-v1의 terminal handoff와 승인2건, private reader daily-20261007-approved-reader-slice-v2다. 다음에는 나머지 분야의 후보를 원문/기존 사건과 대조하여 실제 정규 회차 편집을 완성하고, 최신 Drive 작성 원본 재확인→보관→공개 검증을 이어간다. thelec-all-rss 제한 관측은 새 근거 없이 재시도하지 않는다. 기존08시 예약은 공통 SHA 고정 context 페이지 조회를 사용하며 시간·모델·상태는 유지했다. 전체3/22·legacy44/430/metadata10·독립평가 미완료·정규0/7 및 goal active를 유지한다.
+
+
+## 19.375. 나머지 분야 원고 처리와 본문 누락 복구
+
+다음 실제 처리 대상은 KAIST 동적 벡터 검색 연구, 셀트리온 미국 출시, 항우연 누리호 이송, AWS Batch 지표다. terminal daily handoff의 정확한4후보/원문 판본을 고정하여 daily-20261007-four-fields-editorial-v1에서 공통 local processing을 실행한다. 기존 로봇·보안 승인2건에 추가하는 편집 작업이며 기존8분야를 대체하지 않는다. 모델의 추출·근거대조 완료 뒤 실제 원문과 비교해 사실/기사 승인과 private reader를 진행한다. 원문 본문에 없는 추론은 작성하지 않는다.
+
+항우연 본문은 저장 HTML에 존재하지만 span/p/table 선택만으로19자 제목만 남았다. 수집기는 terminal이며 진행 중인 모델 처리는 고정한 기존 parse를 읽는다. 해당 원본/모델 정책/처리 파일을 수정하지 않고 수집 profile의 기존 XPath 설정만 보완했다. worker/common crawler 변경 없이 직접 텍스트를 포함한 고유 c 전체를 선택한다. 실패 재현 후 표적2건 통과와 같은 raw bytes 재파싱654자/새parse를 확인했다. 원문 재수집·전체 수집 재개0이다. 옛 parse 처리 결과를 새 본문 검토 결과로 바꾸지 않는다. 다음 계획은 수정된 설정 fingerprint와 새 Drive 입력으로 만들고 기존 frozen run/영수증을 보존한다.

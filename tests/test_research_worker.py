@@ -16,6 +16,36 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_kari_plain_text_body_retains_details_after_line_breaks(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "kari-space-press-article-ko-v1")
+        raw = """<html><body><nav>이전 뉴스</nav><div data-content="board_view">
+        <div class="t"><strong>누리호 5호기, 발사대로 이송 시작</strong><ul class="detail"><li class="date">2026-10-06</li></ul></div>
+        <div class="c"><strong><span>누리호 5호기, 발사대로 이송 시작</span></strong><br><br>
+        우주항공청과 한국항공우주연구원은 10월 6일 오전 6시 이송을 시작했다.<br><br>
+        제2발사대까지 약 1시간 30분에 걸쳐 이송될 예정이다.<br><br>
+        내일 위원회에서 최종 발사시각을 결정할 예정이다.</div>
+        <div class="b">다음 기사 본문</div></div><footer>관련 기사</footer></body></html>"""
+        result = self.invoke(raw.encode(), options, url="https://www.kari.re.kr/kor/article/ATCL87374b48c/18726")
+        self.assertEqual(result["worker_status"], "complete", result)
+        parsed = result["result"]
+        text = " ".join(b["text"] for b in parsed["blocks"])
+        self.assertIn("10월 6일 오전 6시 이송을 시작했다", text)
+        self.assertIn("약 1시간 30분에 걸쳐 이송될 예정이다", text)
+        self.assertIn("내일 위원회에서 최종 발사시각을 결정할 예정이다", text)
+        self.assertNotIn("다음 기사 본문", text)
+        self.assertNotIn("관련 기사", text)
+        self.assertEqual(parsed["dates"]["published_at"], "2026-10-06")
+        self.assertEqual(len(parsed["blocks"]), 1)
+        self.assertTrue(parsed["blocks"][0]["locator"]["dom_path"].endswith("/div[2]"))
+        for changed in (
+            raw.replace('<div class="c">', '<div class="missing-body">'),
+            raw.replace('<div class="b">', '<div class="c">'),
+        ):
+            with self.subTest(changed=changed):
+                response = self.invoke(changed.encode(), options, url="https://www.kari.re.kr/kor/article/ATCL87374b48c/18726")
+                self.assertEqual(response["worker_status"], "failed")
+
     def test_kari_listing_omits_only_the_new_badge_from_the_title(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = config["kari-space-press-ko"]["parse_options"]

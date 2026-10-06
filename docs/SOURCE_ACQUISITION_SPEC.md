@@ -2653,3 +2653,10 @@ KISA는 공통 GET 페이지 이동과 공지 ID를 사용한다. 전자신문�
 인접 목록의 관측 시점이 달라 마지막 행이 다음 페이지의 첫 행으로 반복되는 경우는 page_overlap_policy={mode: adjacent-prefix, max_items: N}으로 명시한다. N은1~10이며 실제 확인한 경계 중복만 설정한다. 원래 URL·제목·게시 시각이 이전 페이지 마지막 N행과 다음 페이지 처음 N행에서 모두 일치해야 한다. 전체 페이지 반복·중간/다른 페이지의 반복·상한 초과·내용 충돌은 여전히 실패다. 두 native parse와 행 URL을 page_overlaps에 보존하고 재검증한다. 디일렉에서 실제 확인한 중복은1건이며 상한1을 적용한다.
 
 이전 실패 run이 동일 cached source/parse를 배열에 두 번 저장했으면 raw-response 재사용 경로에서 JSON bytes가 같은 복사본만 일시적으로 합친다. 이전 run 파일·해시는 바꾸지 않으며 복사본 수와 원래 arrays의 SHA를 영수증에 남긴다. 다른 관측/본문은 collision이다. 기본 원문 선택·승인 loader의 unique 검증은 유지한다. 같은 창·1시간 내의 policy-checked 원문과 동일 fetch/worker/parser/profile만 재사용하고 coverage·승인·발표 시각을 새로 만들지 않는다.
+
+
+## 89. 직접 텍스트와 줄바꿈으로 작성된 보도자료 본문
+
+2026-10-07 항우연 상세 원문에서 제목을 감싼 span만 선택하고, br 뒤의 직접 텍스트를 빠뜨리는 결함을 확인했다. 새 crawler나 worker 옵션을 추가하지 않고 기존 content_xpath/content_block_xpath를 재사용한다. 고유 board_view 안에 c 본문이 정확히 하나일 때만 해당 c 전체를 하나의 근거 block으로 읽는다. 본문이 없거나 둘 이상이면 실패하며 제목·게시일은 기존 별도 selector로 유지한다. 다른 출처에서도 문단 태그 없이 직접 텍스트/inline 요소/br를 사용하는 실제 원문을 확인했을 때, 고유 wrapper에서 실제 본문 요소를 선택하는 같은 설정을 적용할 수 있다. 페이지 전체 fallback이나 임의의 본문 추정은 사용하지 않는다.
+
+실제 누리호 발표의 저장 HTML을 select-source→reparse로 재사용했다. 같은 raw SHA/게시일/원 URL을 유지하면서 추출 텍스트가19자에서654자로 늘었다. 원 parse와 실패 재현 기록을 보존하고 새 parse ID를 발급했다. 모델 실행이나 원문 HTTP 요청 없이 이송 시작·예정 소요시간·엄빌리칼 연결·발사시각 결정 계획을 되찾았다. 설정 회귀2건과 본문 누락/복수·관련 기사 제외를 검사했다. 이는 사실·기사 승인이나 발행 완료가 아니다. 실행 증거는 런북468과 외장 kari-body-*를 따른다.
