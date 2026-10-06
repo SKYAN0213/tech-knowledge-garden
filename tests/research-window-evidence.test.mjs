@@ -515,3 +515,141 @@ test("explicit missing cited blocks review only lowers a check and preserves the
   assert.equal(resumed.generated_batches, 0)
   assert.equal(f.calls(), before)
 })
+
+function sealFixtureBudget(f, id) {
+  const identity = { ...f.provider.executionPolicy, schema: "model-role-binding/v1" }
+  delete identity.fingerprint
+  const binding = { ...identity, fingerprint: sha256(JSON.stringify(identity)) }
+  f.provider.executionPolicy = binding
+  const ledger = { schema: "model-budget/v2", binding, attempts: [], extensions: [] }
+  atomicWrite(f.root, `runs/${id}/model-policy/evidence_compare/budget.json`, {
+    ...ledger,
+    sha256: sha256(JSON.stringify(ledger)),
+  })
+}
+
+async function interruptedQuoteFixture(t) {
+  const f = fixture(t)
+  f.provider.executionPolicy.settings.num_ctx = 32768
+  f.claims = Array.from({ length: 7 }, (_, i) => ({ ...f.claims[0], claim_id: `c${i}` }))
+  sealFixtureBudget(f, "old")
+  f.fail(2)
+  await assert.rejects(run(f, "old"), /Fixture interruption/)
+  assert.equal(readJSON(f.root, "runs/old/evidence-assessment/batch-2-checkpoint.json"), null)
+  const quoteGenerate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const result = await quoteGenerate.call(this, request)
+    const data = JSON.parse(request.messages[1].content)
+    for (const row of result.output.assessments)
+      row.evidence = [{ evidence_ref: data.sources[0].blocks[0].evidence_refs[0].evidence_ref }]
+    return result
+  }
+  return f
+}
+
+const reuseWindow = (f, id = "new", options = {}) =>
+  assessWindowEvidenceCheckpoint(f.root, id, f.provider, f.claims, f.documents, f.parses, {
+    responseProtocol: REFERENCE_PROTOCOL,
+    reuseRun: "old",
+    ...options,
+  })
+
+test("interrupted quote comparisons reuse exact completed bytes and call only the missing reference frame", async (t) => {
+  const f = await interruptedQuoteFixture(t)
+  const oldRaw = fs.readFileSync(path.join(f.root, "runs/old/evidence-assessment/batch-1.json"))
+  const result = await reuseWindow(f)
+  assert.equal(f.calls(), 3)
+  assert.equal(result.generated_batches, 1)
+  assert.equal(result.inherited_batches, 1)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/new/evidence-assessment/batch-1.json")),
+    oldRaw,
+  )
+  const input = readJSON(f.root, "runs/new/evidence-assessment/input.json")
+  assert.equal(input.reused_windows[0].response_protocol, "verbatim-quote/v1")
+  assert.equal(input.reused_windows[0].output_sha256, sha256(oldRaw))
+  assert.equal(
+    input.windows[0].request_sha256,
+    readJSON(f.root, "runs/old/evidence-assessment/input.json").windows[0].request_sha256,
+  )
+  assert.ok(input.windows[1].catalog_sha256)
+  assert.ok(
+    result.record.assessments.every(
+      (row) => row.requires_attention && row.verdict === "insufficient",
+    ),
+  )
+  assert.equal(result.record.assessments[0].window_assessments[0].reused_from.run, "old")
+  assert.deepEqual(
+    readJSON(f.root, "runs/new/evidence-assessment/batch-2.json").output.assessments[0].evidence[0],
+    {
+      evidence_ref: JSON.parse(f.requests.at(-1).messages[1].content).sources[0].blocks[0]
+        .evidence_refs[0].evidence_ref,
+    },
+  )
+  sealFixtureBudget(f, "new")
+  const actual = await loadBoundAssessment(f.root, "new", f.claims, f.documents, f.parses)
+  assert.deepEqual(actual, result.record)
+  assert.equal((await reuseWindow(f)).generated_batches, 0)
+  assert.equal(f.calls(), 3)
+  // The inherited run must remain independently verifiable after another reuse.
+  const chained = await reuseWindow(f, "chained", { reuseRun: "new" })
+  assert.equal(chained.generated_batches, 0)
+  assert.equal(chained.inherited_batches, 2)
+  assert.equal(f.calls(), 3)
+})
+
+for (const mutate of ["raw", "checkpoint", "binding", "claims", "request"])
+  test(`partial inheritance rejects changed ${mutate} before new inference`, async (t) => {
+    const f = await interruptedQuoteFixture(t)
+    if (mutate === "claims") f.claims[0].statement += " changed"
+    else {
+      const file =
+        mutate === "binding"
+          ? "runs/old/model-policy/evidence_compare/budget.json"
+          : `runs/old/evidence-assessment/${mutate === "raw" ? "batch-1.json" : mutate === "checkpoint" ? "batch-1-checkpoint.json" : "input.json"}`
+      const stored = readJSON(f.root, file)
+      if (mutate === "raw") stored.output.assessments[0].explanation += " changed"
+      if (mutate === "checkpoint") stored.output_sha256 = "0".repeat(64)
+      if (mutate === "binding") stored.binding.settings.model = "different-model"
+      if (mutate === "request") stored.windows[0].request_sha256 = "0".repeat(64)
+      atomicWrite(f.root, file, stored)
+    }
+    await assert.rejects(reuseWindow(f), /changed|differs|checkpoint/i)
+    assert.equal(f.calls(), 2)
+    assert.equal(readJSON(f.root, "runs/new/evidence-assessment/input.json"), null)
+  })
+
+test("partial readers skip unfinished output without changing files or invoking the model", async (t) => {
+  const f = await interruptedQuoteFixture(t)
+  const unfinished = "runs/old/evidence-assessment/batch-2.json"
+  atomicWrite(f.root, unfinished, { unfinished: true })
+  const before = fs.readFileSync(path.join(f.root, unfinished))
+  const result = await assessWindowEvidenceCheckpoint(
+    f.root,
+    "old",
+    f.provider,
+    f.claims,
+    f.documents,
+    f.parses,
+    { readOnly: true, partial: true },
+  )
+  assert.equal(result.completed_windows.length, 1)
+  assert.equal(f.calls(), 2)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, unfinished)), before)
+  assert.equal(readJSON(f.root, "runs/old/evidence-assessment/assessment.json"), null)
+  await assert.rejects(
+    assessWindowEvidenceCheckpoint(f.root, "old", f.provider, f.claims, f.documents, f.parses, {
+      partial: true,
+    }),
+    /cannot generate/,
+  )
+})
+
+test("a partial run with no completed frame cannot authorize inheritance", async (t) => {
+  const f = fixture(t)
+  sealFixtureBudget(f, "old")
+  f.fail(1)
+  await assert.rejects(run(f, "old"), /Fixture interruption/)
+  await assert.rejects(reuseWindow(f), /No exact completed/)
+  assert.equal(f.calls(), 1)
+})

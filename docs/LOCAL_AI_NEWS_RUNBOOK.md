@@ -10681,3 +10681,26 @@ Fresh private metadata·다운로드한 실제 ZIP bytes/SHA·전체 복원·승
 샘플은 four-new-reviewed-samples-v1.md 및 eleven-six-w-reviewed-samples-v1.md이며 운영 안내문을 넣지 않았다. 전체7월10일15구간은 아직 전환하지 않았다. 공개 작성본·URL·RSS GUID/pubDate/cutoff·예약·기본 정책 변경0, 테스트 suite 반복0이다. 승인 품질 관문과 원격/복원 readback은 실제 수행했다. 소프트웨어9건과 분야당5건의 분리 제안은 질문 응답 전 미구현이며 news-briefing-selection-design-observation-v1.json에 검토를 기록했다.
 
 모델 핸들67486/58069/29149/28373/41228/25680은 모두terminal이다. 다음은 기존 GPT-5.6 원 발표18사실과 완료된 과거 창을 보존해 남은 대조를 재개하는 계약을 확인하고, 전체 회차의 동일 사건·원문·legacy15구간·의존 용어를 대조하는 것이다. 전체 목표active와 기존 미완료 관문을 유지한다. 같은 실패를1시간 반복한 항목은0이다.
+
+
+## 437. 중단된 원문 대조 창의 공통 재사용과 GPT-5.6 실물
+
+완료 추출은 --extraction-run, 완료된 전체 대조는 --assessment-run을 유지한다. 부분 완료 대조는 새 --assessment-reuse-run으로 구분한다. 두 대조 옵션은 상호 배타적이다. 기존 원문/claim/parse·정책 binding/ledger·request plan·raw/checkpoint SHA를 검증하고 같은 claim 그룹과 전체 블록 순서/window 구성이 일치하는 완료 창만 복사한다. 과거 응답의 실제 protocol과 입력/출력/checkpoint SHA·run/batch를 reused_windows와 각 관찰의 reused_from에 남긴다. 실패 또는 checkpoint 없는 raw를 완료 응답으로 사용하지 않는다. source-processing input과 archive-closure가 이전 run 및 인용 정정 ancestry를 포함한다. aggregate supported 자동 승격은 없다.
+
+실제 명령:
+
+```sh
+node scripts/research.mjs process-source --run legacy-20260710-gpt56-window-reused-processing-20261006-v4 --source-run legacy-20260710-gpt56-source-20261006-v2 --extraction-run legacy-20260710-gpt56-processing-20261006-v1 --assessment-reuse-run legacy-20260710-gpt56-quote-reviewed-20261006-v3 --model-policy data/research-model-policy.json --evidence-think false
+```
+
+Qwen qwen3.8:27b-mlx의 실제 digest5642e97495e1a088883805981563dcdc4a040c2f53388b7a41d1f24d3622cf7e·Ollama0.34.4를 유지한다. 원래 두 완료창은 verbatim-quote/v1 원 bytes이며 신규 마지막 창만 source-evidence-ref/v1이다. 첫 CLI 시도는 option 등록 누락으로 inference 전 거부됐고 테스트/등록을 수정한 뒤 위 명령을 실행했다. 완료추출18사실을 재호출하지 않았다. 새 evidence_compare는 think:false/ctx32768/predict4096/300초 제한에서285.871초에 완료됐다. timeout상한 확대와 실패 재시도는0이다. provider 전체의 지속 성능 개선으로 주장하지 않는다. writer1회104.881초가 끝났으며 모델 핸들9305/52147은terminal이다.
+
+원문119블록을 직접 읽고 최초18사실에서15verified/3deferred, 제품별 요금제·effort 조건2direct additions로최종17verified/3deferred를 판정했다. 후속7월30일·8월21일 가격 공지를 최초 사건에 소급 삽입하지 않는다. 현재 판본의 기본 가격은 당시별도판본 확인 전 사용하지 않는다. 원 writer의 deck→slide 번역, 고객 범위, 숫자비교의 token budget, 누락된 제품별 effort, 배포 계획을 직접 정정했고 원출력·정정 이력을 보존했다. 최초 승인 timestamp precision 오류는 기존day 계약대로 review date만 바로잡았으며 모델 재호출/guard 완화는0이다. 최종 draft51897a13b7028fd74c4022eb176bc2d4a1de877454f6c1ce936d98394d272437·eventcaaa735c832bdb26·day7월9일·리드2문장139자·설명4항목8문단·기업OpenAI·추가지도노드0이다.
+
+gpt56-original-reused-window-approved-closure-v1은6bound runs·98자료/100members/983,578bytes·ZIP SHA1df5fd611cedd5094cbc5d77280770b902a618033025062318fd4a25c8e5f130·manifest SHAa4cfe3ebcab4a9d0d3822f578e5fc975bf770adbef66d3c166ff4b34087d4e80다. private Research18YDq8LwCP4Iu5ZJO60uWaABhIW66i2PG의fresh metadata/shared:false·실제rawSHA·전수복원·승인6파일/기사/fact packet 동등성을 확인하고 보관 위치를 등록했다. sourceclosure이며 전체runtime 복구나 Drive authority 네폴더 동기화가 아니다.
+
+표적명령 node --test tests/research-window-evidence.test.mjs tests/research-source-processing.test.mjs tests/research-archive-closure.test.mjs는84중83통과·신규옵션 충돌 메시지1실패를 남겼다. 메시지분리 후 실패1개만 재검사했고 CLI옵션 등록/전달1개를추가검증해 최종85고유검사가 통과했다. 완료bytes 재사용/딱 누락frame만호출/두protocol 혼합/readonly·chain replay/원raw·checkpoint·binding·claims·request 변조거부/미완료raw불변·0완료상속거부/processing→packet→closure ancestry를 확인했다. 전체로컬tests 반복0이다. 릴리스 CI/공개보존은 후속기록으로 구분한다.
+
+근거루트 /Volumes/X5Storage/tkg-daily-core-20261006-v1의 gpt56-partial-reuse-preflight-v1.json,partial-window-reuse-{targeted-tests,failed-target-retest,cli-retest}-v1.log,gpt56-original-{source-reading,reference-reuse-runtime-proof,drive-restored-approval-proof}-v1.json에 실제근거가있다. 독자용 gpt56-original-reviewed-article-v1.md와twelve-six-w-reviewed-samples-v1.md에는 운영 안내가 없다. 누적12사건/73verified/8deferred·public발행0이다.
+
+다음은 기사 선정 분리의 사용자 결정과7월10일15구간의전체사건/원문동일성·소급전환·의존용어 대조다. 기존 프롬프트 캐싱 정의는 exact alias/기존 concept_id prompt-caching으로검토할후보이며승인된연결로아직집계하지않는다. WBS2/22·legacy47/454/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime미완료를유지한다. 1시간같은실패반복항목0,추가유료API/예약/별도저장소0이다.

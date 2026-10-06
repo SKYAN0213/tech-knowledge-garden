@@ -126,6 +126,7 @@ export async function main(argv = process.argv.slice(2)) {
       think: { type: "string", default: "medium" },
       "model-policy": { type: "string" },
       "assessment-run": { type: "string" },
+      "assessment-reuse-run": { type: "string" },
       "extraction-run": { type: "string" },
       "draft-run": { type: "string" },
       "evidence-think": { type: "string" },
@@ -1016,6 +1017,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (
     (v["extraction-run"] ||
       v["assessment-run"] ||
+      v["assessment-reuse-run"] ||
       v["draft-run"] ||
       v["evidence-think"] !== undefined) &&
     command !== "process-source"
@@ -1045,6 +1047,7 @@ export async function main(argv = process.argv.slice(2)) {
       "model-policy",
       "extraction-run",
       "assessment-run",
+      "assessment-reuse-run",
       "draft-run",
       "evidence-think",
       "review",
@@ -1066,6 +1069,7 @@ export async function main(argv = process.argv.slice(2)) {
       policyFile: v["model-policy"],
       extractionRun: v["extraction-run"],
       assessmentRun: v["assessment-run"],
+      assessmentReuseRun: v["assessment-reuse-run"],
       draftRun: v["draft-run"],
       reviewFile: v.review,
       candidateKey: v["candidate-key"],

@@ -4654,3 +4654,21 @@ Copilot 배포는 점진적 제공, 모델별 요금제, 기본 비활성인 기
 상세 근거는 런북436절과 기존 외장 evidence 폴더의 four-new-reviewed-samples-v1.md, eleven-approved-article-summary-v1.json 및 네 승인 복원 proof에 있다. 작성 원본·공개 기사·RSS·최신 cutoff 변경은 0이다. 코드 동작 변경이 없어 전체/표적 suite를 반복하지 않았고 JSON/schema, 승인 품질 검사, 원격 bytes 및 복원 산출물 readback을 수행했다. 같은 실패를 1시간 반복한 항목은 없다. 전체 goal active·WBS2/22·legacy47회차454구간/metadata10·독립 human40/20·신규 정규0/7·08시/인증/중단/fullruntime의 미완료 상태를 유지한다.
 
 다음은 GPT-5.6 원 발표의 완료된 18사실 추출과 과거 대조 checkpoint를 먼저 재사용 가능 여부로 확인하는 것이다. 기존 v1의 인용 불일치, v2 완료 대조, v3의 추가 300초 timeout은 별개 기록이며 원출력을 보존한다. 완료한 두 창을 전체 실패로 취급해 다시 추론하지 않는다. 남은 대조의 재개 계약을 정한 뒤 같은 회차 전체 사건/원문 중복, 15구간 전환 및 의존 용어를 대조한다. 부분 기사 승인이나 초록 검토를 회차 전체 완료·독립 human gold·정규 신규 운영으로 세지 않는다.
+
+
+## 19.343. 완료된 원문 대조 창의 공통 재사용
+
+다음 구현은 불완전한 대조 run에서 완료 checkpoint만 새 처리에 재사용하는 공통 경로다. 기존 원문 bytes·claims·parses·정책 ledger·원 요청 plan·raw/checkpoint 해시를 모두 재검증한다. 재사용한 응답은 원 protocol·run·입력/출력 provenance를 보존하고 새 모델 응답으로 계산하지 않는다. 실패/미완료 raw는 재사용하지 않으며 남은 동일 원문 창만 새 근거 ID protocol로 처리한다. 새 원문·사실·블록 구성이 다르면 재사용을 거부한다. 읽기 전용 재검증에는 추론·파일 생성이 없고 창 관찰을 전체 사실 승인으로 승격하지 않는다.
+
+실제 적용은 완료 추출18사실·119블록과 완료2/3 창이 있는 GPT-5.6이다. 첫 두 창을 반복하지 않고 마지막 창만 처리한 뒤 명시 사실 검토/작성/승인/Drive 보관을 잇는다. 표적 검증은 provenance 위조, 변한 입력, 미완료 창, 이력 재읽기·재개와 공통 source-processing/closure 통합이다. 코드 묶음을 마친 뒤 관련 검사 한 번, 릴리스 통합CI 한 번을 실행한다. 전체 목표와 기존 독립 gold·정규 운영·소급 검토 범위는 유지한다.
+
+
+## 19.344. GPT-5.6 대조 재개와 실제 승인·복원
+
+19.343의 공통 구현은 완료 창의 정확한 원 요청/protocol·입력·원문/claim/parse/role ledger·raw/checkpoint SHA를 검증하고 그대로 복사한다. process-source의 --assessment-reuse-run은 완료된 --assessment-run과 동시에 사용할 수 없고, source-processing·readonly packet·archive-closure가 같은 이전 run을 추적한다. 미완료 응답은 상속하지 않고 다른 원문/사실/블록 구성과 변조를 거부한다. 읽기 전용 부분 읽기는 파일 생성·모델 호출을 하지 않는다.
+
+실제 GPT-5.6 원 발표119블록/완료추출18사실/완료2창을 재사용했다. 마지막6사실의 새 ref 대조1회285.871초와 writer1회104.881초를 완료했고 이전2raw bytes는 변하지 않았다. 직접 원문 검토에서17verified/3deferred를 판정했다. 7월30일·8월21일 후속 인하와 당시가격 추가확인 항목을7월10일 원고에 섞지 않는다. 제품별 요금제/effort2사실을 추가하고 company/client 귀속, benchmark 조건, deck과 slide의 차이,24시간 배포 계획을 보존했다.
+
+정정 승인 사건 caaa735c832bdb26/원문 day precision7월9일/리드2문장139자·설명4항목8문단은 Research Drive18YDq8LwCP4Iu5ZJO60uWaABhIW66i2PG에 보관했다. 원격 ZIP983,578bytes/100members·SHA1df5fd611cedd5094cbc5d77280770b902a618033025062318fd4a25c8e5f130와 복원된 승인6파일/기사/전체fact packet 동등성을 확인했다. 소급 원고나 정규 발행이 아닌 private 승인 자료다. 누적12기사/73verified/8deferred이며 pending 기사 선정 분리 결정과 전체15구간·의존 용어 검토는 계속 미완료다.
+
+표적3파일84검사는83통과/옵션 충돌 메시지1실패였다. 오류 메시지를 구체화한 뒤 실패1개만 재검사했고 실제 CLI option 등록 누락을 수정해CLI1개를 추가 검증했다(최종85고유 표적 통과). 전체 로컬suite 반복0이며 릴리스 통합CI는 별도로 확인한다. 사용법·근거·다음 작업은 런북437이다. 전체목표active·WBS2/22·legacy47회차454구간/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime 관문은 유지한다.

@@ -71,18 +71,27 @@ export async function processSourceRun({
   policyFile = "data/research-model-policy.json",
   extractionRun,
   assessmentRun,
+  assessmentReuseRun,
   draftRun,
   evidenceThink,
   reviewFile,
   provider,
   candidateKey: requestedCandidateKey,
 }) {
+  if (assessmentRun && assessmentReuseRun)
+    throw Error("Complete assessment and partial assessment reuse are mutually exclusive")
   if (
-    [run, sourceRun, extractionRun ?? sourceRun, assessmentRun ?? run, draftRun ?? run].some(
-      (id) => !/^[A-Za-z0-9_-]{1,160}$/.test(id || ""),
-    ) ||
+    [
+      run,
+      sourceRun,
+      extractionRun ?? sourceRun,
+      assessmentRun ?? run,
+      assessmentReuseRun ?? sourceRun,
+      draftRun ?? run,
+    ].some((id) => !/^[A-Za-z0-9_-]{1,160}$/.test(id || "")) ||
     run === sourceRun ||
-    run === extractionRun
+    run === extractionRun ||
+    run === assessmentReuseRun
   )
     throw Error("Distinct source and processing runs required")
   return withLock(root, "run-" + run, async () => {
@@ -130,6 +139,7 @@ export async function processSourceRun({
       ...(extractionRun ? { extraction_run: extractionRun } : {}),
       candidate_key: candidateKey,
       assessment_run: assessmentRun ?? run,
+      ...(assessmentReuseRun ? { assessment_reuse_run: assessmentReuseRun } : {}),
       draft_run: draftRun ?? run,
       policy_sha256: sha256(JSON.stringify(policy)),
       evidence_overrides: overrides,
@@ -251,6 +261,7 @@ export async function processSourceRun({
             extracted.claims,
             documents,
             parses,
+            { reuseRun: assessmentReuseRun },
           )
         ).record
       },

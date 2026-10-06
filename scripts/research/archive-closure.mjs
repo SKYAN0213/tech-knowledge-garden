@@ -200,10 +200,14 @@ export function buildArchiveClosure(
       if (processing.extraction_run) reference(processing.extraction_run, "processing_extraction")
       if (processing.assessment_run !== id)
         reference(processing.assessment_run, "processing_assessment")
+      if (processing.assessment_reuse_run)
+        reference(processing.assessment_reuse_run, "processing_assessment_reuse")
       if (processing.draft_run !== id && readJSON(root, base + "draft-generation-reference.json"))
         reference(processing.draft_run, "processing_draft")
     }
     const quoteReview = readJSON(root, base + "quote-review-input.json")
+    const windowInput = readJSON(root, base + "evidence-assessment/input.json")
+    if (windowInput?.reuse_run) reference(windowInput.reuse_run, "window_assessment_reuse")
     if (quoteReview) {
       reference(quoteReview.source_run, "assessment_quote_review", () => {
         const parent = `runs/${quoteReview.source_run}/`

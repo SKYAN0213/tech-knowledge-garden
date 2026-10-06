@@ -72,6 +72,7 @@ export async function loadBoundAssessment(root, run, claims, documents, parses) 
     claimsPerBatch: input.claims_per_batch,
     responseProtocol: input.response_protocol || "verbatim-quote/v1",
     readOnly: true,
+    reuseRun: input.reuse_run,
   })
   if (result.generated_batches !== 0) throw Error("Assessment reader cannot generate results")
   return result.record

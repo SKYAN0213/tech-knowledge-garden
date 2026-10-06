@@ -4,6 +4,7 @@ import { validateEvidence } from "./claims.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { modelSourceDates } from "./source-context.mjs"
+import { loadRoleBudget } from "./model-policy.mjs"
 import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
 import {
   assessmentReferences,
@@ -187,6 +188,7 @@ export function evidenceWindowPlan(
         claims: selected,
         entries,
         ...request(entries),
+        responseProtocol,
         group: offset / claimsPerBatch,
         window: index + 1,
         windows: windows.length,
@@ -239,13 +241,24 @@ export async function assessWindowEvidenceCheckpoint(
   claims,
   documents,
   parses,
-  { claimsPerBatch = 6, responseProtocol = QUOTE_PROTOCOL, readOnly = false, historicalInput } = {},
+  {
+    claimsPerBatch = 6,
+    responseProtocol = QUOTE_PROTOCOL,
+    readOnly = false,
+    historicalInput,
+    reuseRun,
+    partial = false,
+    ancestors = [],
+  } = {},
 ) {
+  if (partial && !readOnly) throw Error("Partial window reader cannot generate results")
+  if (ancestors.includes(run) || ancestors.length >= 100)
+    throw Error("Cyclic window assessment reuse")
   if (!/^[A-Za-z0-9_-]+$/.test(run || "") || provider?.executionPolicy?.role !== "evidence_compare")
     throw Error("Bound window assessment execution required")
   assertStoredEvidence(root, documents, parses)
   const settings = provider.executionPolicy.settings
-  const batches = evidenceWindowPlan(
+  let batches = evidenceWindowPlan(
     claims,
     documents,
     parses,
@@ -253,6 +266,61 @@ export async function assessWindowEvidenceCheckpoint(
     claimsPerBatch,
     responseProtocol,
   )
+  const inherited = new Map()
+  if (reuseRun) {
+    if (!/^[A-Za-z0-9_-]{1,160}$/.test(reuseRun) || reuseRun === run)
+      throw Error("Distinct window reuse run required")
+    const oldBase = `runs/${reuseRun}/evidence-assessment/`
+    const oldInput = readJSON(root, oldBase + "input.json")
+    if (oldInput?.schema !== "research-window-evidence-assessment-input/v1")
+      throw Error("Frozen window assessment reuse input required")
+    const ledger = loadRoleBudget(root, reuseRun, "evidence_compare")
+    const old = await assessWindowEvidenceCheckpoint(
+      root,
+      reuseRun,
+      { executionPolicy: ledger.binding },
+      claims,
+      documents,
+      parses,
+      {
+        claimsPerBatch: oldInput.claims_per_batch,
+        responseProtocol: oldInput.response_protocol || QUOTE_PROTOCOL,
+        readOnly: true,
+        partial: true,
+        reuseRun: oldInput.reuse_run,
+        ancestors: [...ancestors, run],
+      },
+    )
+    const frame = (batch) =>
+      JSON.stringify({
+        claim_ids: batch.claims.map((c) => c.claim_id),
+        blocks: batch.entries.map((e) => ({ parse_id: e.parse_id, block_id: e.block.block_id })),
+        window: batch.window,
+        windows: batch.windows,
+      })
+    batches = batches.map((batch, index) => {
+      const match = old.completed_windows.find((row) => frame(row.batch) === frame(batch))
+      if (!match) return batch
+      const origin = {
+        run: reuseRun,
+        batch: match.index + 1,
+        input_sha256: old.input_sha256,
+        output_sha256: sha256(match.bytes),
+        checkpoint_sha256: match.checkpoint_sha256,
+        response_protocol: match.batch.responseProtocol,
+      }
+      inherited.set(index, { ...match, origin })
+      // Preserve the actual old request/schema and response protocol. Only
+      // the unfinished frames use the new protocol; no response is recast.
+      return {
+        ...batch,
+        messages: match.batch.messages,
+        references: match.batch.references,
+        responseProtocol: match.batch.responseProtocol,
+      }
+    })
+    if (!inherited.size) throw Error("No exact completed windows available for reuse")
+  }
   let input = {
     schema: "research-window-evidence-assessment-input/v1",
     claims_per_batch: claimsPerBatch,
@@ -274,7 +342,7 @@ export async function assessWindowEvidenceCheckpoint(
       windows: b.windows,
       blocks: b.entries.map((e) => ({ parse_id: e.parse_id, block_id: e.block.block_id })),
       request_sha256: sha256(JSON.stringify(b.messages)),
-      ...(responseProtocol === REFERENCE_PROTOCOL
+      ...(b.responseProtocol === REFERENCE_PROTOCOL
         ? {
             catalog_sha256: b.references.catalog_sha256,
             schema_sha256: b.references.schema_sha256,
@@ -287,6 +355,15 @@ export async function assessWindowEvidenceCheckpoint(
           references_sha256: sha256(
             fs.readFileSync(new URL("./assessment-references.mjs", import.meta.url)),
           ),
+        }
+      : {}),
+    ...(reuseRun
+      ? {
+          reuse_run: reuseRun,
+          reused_windows: [...inherited].map(([index, row]) => ({
+            index: index + 1,
+            ...row.origin,
+          })),
         }
       : {}),
   }
@@ -302,12 +379,20 @@ export async function assessWindowEvidenceCheckpoint(
     atomicCreate(root, base + "input.json", input)
   }
   const observations = new Map(claims.map((c) => [c.claim_id, []]))
+  const completed = []
   let generated = 0
   for (const [index, batch] of batches.entries()) {
     const rawPath = base + `batch-${index + 1}.json`,
       checkpointPath = base + `batch-${index + 1}-checkpoint.json`
     let raw = readJSON(root, rawPath)
     const checkpoint = readJSON(root, checkpointPath)
+    const reuse = inherited.get(index)
+    if (
+      reuse &&
+      raw &&
+      sha256(fs.readFileSync(safePath(root, rawPath))) !== reuse.origin.output_sha256
+    )
+      throw Error("Inherited window response changed")
     if (checkpoint) {
       if (
         !raw ||
@@ -316,26 +401,43 @@ export async function assessWindowEvidenceCheckpoint(
       )
         throw Error("Window checkpoint changed")
     } else {
+      if (partial) continue
       if (readOnly) throw Error("Missing assessment checkpoint; compare evidence first")
       if (raw) throw Error("Unfinished window output; preserve it for explicit review")
-      raw = await provider.structured({
-        model: settings.model,
-        messages: batch.messages,
-        schema: batch.references.schema,
-      })
-      const stored = atomicCreate(root, rawPath, raw)
+      raw = reuse
+        ? reuse.raw
+        : await provider.structured({
+            model: settings.model,
+            messages: batch.messages,
+            schema: batch.references.schema,
+          })
+      const stored = atomicCreate(root, rawPath, reuse ? reuse.bytes : raw)
       validateWindow(batch.references.resolve(raw.output), batch, parses)
       atomicCreate(root, checkpointPath, { input_sha256: inputSHA, output_sha256: stored.sha256 })
-      generated++
+      if (!reuse) generated++
     }
     const output = batch.references.resolve(raw.output)
     validateWindow(output, batch, parses)
+    completed.push({
+      index,
+      batch,
+      raw,
+      bytes: fs.readFileSync(safePath(root, rawPath)),
+      checkpoint_sha256: sha256(fs.readFileSync(safePath(root, checkpointPath))),
+    })
     for (const row of output.assessments)
       observations
         .get(row.claim_id)
-        .push({ batch: index + 1, window: batch.window, windows: batch.windows, ...row })
+        .push({
+          batch: index + 1,
+          window: batch.window,
+          windows: batch.windows,
+          ...row,
+          ...(reuse ? { reused_from: reuse.origin } : {}),
+        })
   }
   assertStoredEvidence(root, documents, parses)
+  if (partial) return { input_sha256: inputSHA, completed_windows: completed, generated_batches: 0 }
   const record = {
     schema: "research-evidence-assessment/v1",
     input_sha256: inputSHA,
@@ -373,7 +475,12 @@ export async function assessWindowEvidenceCheckpoint(
     if (readOnly) throw Error("Completed bound evidence assessment required")
     atomicCreate(root, base + "assessment.json", record)
   }
-  return { record, generated_batches: generated, reused_batches: batches.length - generated }
+  return {
+    record,
+    generated_batches: generated,
+    reused_batches: batches.length - generated,
+    inherited_batches: inherited.size,
+  }
 }
 
 export async function assessSourceEvidenceCheckpoint(
@@ -383,6 +490,7 @@ export async function assessSourceEvidenceCheckpoint(
   claims,
   documents,
   parses,
+  { reuseRun } = {},
 ) {
   // New source runs use references in both paths. Direct legacy functions
   // remain available for replaying their exact archived quote requests.
@@ -391,11 +499,13 @@ export async function assessSourceEvidenceCheckpoint(
     0,
   )
   if (
+    reuseRun ||
     sourceSize + JSON.stringify(claims).length + 12000 >
-    provider.executionPolicy.settings.num_ctx * 2
+      provider.executionPolicy.settings.num_ctx * 2
   )
     return assessWindowEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
       responseProtocol: REFERENCE_PROTOCOL,
+      reuseRun,
     })
   return assessEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
     responseProtocol: REFERENCE_PROTOCOL,

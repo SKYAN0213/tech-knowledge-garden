@@ -240,38 +240,11 @@ test("fresh-source processing invokes extraction then assessment but never auto-
 
 test("long-source processing retains all blocks and requires full-context resolution before writing", async (t) => {
   const f = fixture(t)
-  const documents = readJSON(f.root, "runs/source/documents.json")
+  configureLongSource(f)
   const parse = readJSON(f.root, "runs/source/parses.json")[0]
+  const documents = readJSON(f.root, "runs/source/documents.json")
   const extracted = readJSON(f.root, "runs/source/claims.json")
-  parse.blocks = Array.from({ length: 12 }, (_, i) => {
-    const text = f.claim.statement + " Source context. ".repeat(440)
-    return { block_id: `${parse.parse_id}:b${i + 1}`, text, locator: { text_hash: sha256(text) } }
-  })
   const body = parse.blocks.map((b) => b.text).join("\n\n")
-  const hash = sha256(body)
-  documents[0].body_sha256 = hash
-  documents[0].source_version_id = `${documents[0].source_id}:${hash}`
-  documents[0].body_path = `documents/${documents[0].source_id}/${hash}/body.bin`
-  parse.source_version_id = documents[0].source_version_id
-  extracted.claims[0].evidence[0].source_version_id = parse.source_version_id
-  extracted.claims[0].claim_id = sha256(
-    JSON.stringify([f.claim.candidate_key, f.claim.statement, extracted.claims[0].evidence]),
-  ).slice(0, 24)
-  atomicWrite(f.root, documents[0].body_path, body)
-  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
-  atomicWrite(f.root, "runs/source/documents.json", documents)
-  atomicWrite(f.root, "runs/source/parses.json", [parse])
-  atomicWrite(f.root, "runs/source/claims.json", extracted)
-  const generate = f.provider.structured
-  f.provider.structured = async function (request) {
-    const response = await generate.call(this, request)
-    if (this.executionPolicy.role === "evidence_compare") {
-      const data = JSON.parse(request.messages[1].content)
-      for (const row of response.output.assessments)
-        row.evidence[0].evidence_ref = data.sources[0].blocks[0].evidence_refs[0].evidence_ref
-    }
-    return response
-  }
   const first = await processSourceRun(f.options)
   assert.equal(first.status, "fact_review")
   assert.ok(f.calls.length > 1)
@@ -1497,4 +1470,114 @@ test("new CLI approvals enforce reader quality while preserving original model d
     fs.readFileSync(path.join(f.root, "runs/processed/approved-article.json")),
     approvalBytes,
   )
+})
+
+function configureLongSource(f) {
+  const documents = readJSON(f.root, "runs/source/documents.json")
+  const parse = readJSON(f.root, "runs/source/parses.json")[0]
+  const extracted = readJSON(f.root, "runs/source/claims.json")
+  parse.blocks = Array.from({ length: 12 }, (_, i) => {
+    const text = f.claim.statement + " Source context. ".repeat(440)
+    return { block_id: `${parse.parse_id}:b${i + 1}`, text, locator: { text_hash: sha256(text) } }
+  })
+  const body = parse.blocks.map((b) => b.text).join("\n\n")
+  const hash = sha256(body)
+  documents[0].body_sha256 = hash
+  documents[0].source_version_id = `${documents[0].source_id}:${hash}`
+  documents[0].body_path = `documents/${documents[0].source_id}/${hash}/body.bin`
+  parse.source_version_id = documents[0].source_version_id
+  extracted.claims[0].evidence[0].source_version_id = parse.source_version_id
+  extracted.claims[0].claim_id = sha256(
+    JSON.stringify([f.claim.candidate_key, f.claim.statement, extracted.claims[0].evidence]),
+  ).slice(0, 24)
+  atomicWrite(f.root, documents[0].body_path, body)
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  atomicWrite(f.root, "runs/source/documents.json", documents)
+  atomicWrite(f.root, "runs/source/parses.json", [parse])
+  atomicWrite(f.root, "runs/source/claims.json", extracted)
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const response = await generate.call(this, request)
+    if (this.executionPolicy.role === "evidence_compare") {
+      const data = JSON.parse(request.messages[1].content)
+      for (const row of response.output.assessments)
+        row.evidence[0].evidence_ref = data.sources[0].blocks[0].evidence_refs[0].evidence_ref
+    }
+    return response
+  }
+}
+
+test("source processing resumes only missing windows and archives the completed ancestor", async (t) => {
+  const f = fixture(t)
+  configureLongSource(f)
+  const generate = f.provider.structured
+  let comparisons = 0
+  f.provider.structured = async function (request) {
+    if (this.executionPolicy.role === "evidence_compare" && ++comparisons === 2)
+      throw Error("Interrupted comparison")
+    return generate.call(this, request)
+  }
+  await assert.rejects(
+    processSourceRun({ ...f.options, run: "interrupted" }),
+    /Interrupted comparison/,
+  )
+  const raw = fs.readFileSync(
+    path.join(f.root, "runs/interrupted/evidence-assessment/batch-1.json"),
+  )
+  const result = await processSourceRun({ ...f.options, assessmentReuseRun: "interrupted" })
+  assert.equal(result.status, "fact_review")
+  const assessment = readJSON(f.root, "runs/processed/evidence-assessment/input.json")
+  assert.equal(assessment.reused_windows.length, 1)
+  assert.equal(assessment.reused_windows[0].run, "interrupted")
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/evidence-assessment/batch-1.json")),
+    raw,
+  )
+  const packet = await loadFactReviewPacket(f.root, "processed")
+  assert.equal(packet.packet.claims[0].model_assessment.requires_attention, true)
+  const count = comparisons
+  await processSourceRun({ ...f.options, assessmentReuseRun: "interrupted" })
+  assert.equal(comparisons, count)
+  const closure = buildArchiveClosure(f.root, "portable", "processed")
+  assert.ok(closure.bound_runs.includes("interrupted"))
+  assert.ok(
+    closure.files.some((file) => file.path === "runs/interrupted/evidence-assessment/batch-1.json"),
+  )
+  assert.ok(
+    closure.files.some(
+      (file) => file.path === "runs/interrupted/model-policy/evidence_compare/budget.json",
+    ),
+  )
+  assert.equal(f.calls.includes("article_write"), false)
+})
+
+test("complete assessment and partial reuse options cannot be combined or reuse the destination", async (t) => {
+  const f = fixture(t)
+  await assert.rejects(
+    processSourceRun({ ...f.options, assessmentRun: "prior", assessmentReuseRun: "partial" }),
+    /assessment|reuse/i,
+  )
+  await assert.rejects(
+    processSourceRun({ ...f.options, assessmentReuseRun: "processed" }),
+    /distinct|reuse/i,
+  )
+  assert.equal(f.calls.length, 0)
+})
+
+test("CLI accepts partial assessment reuse and forwards its conflict checks", async (t) => {
+  const f = fixture(t)
+  const args = [
+    "process-source",
+    "--root",
+    f.root,
+    "--run",
+    "processed",
+    "--source-run",
+    "source",
+    "--assessment-reuse-run",
+    "partial",
+  ]
+  await assert.rejects(main([...args, "--assessment-run", "prior"]), /mutually exclusive/)
+  await assert.rejects(main([...args.slice(0, -1), "processed"]), /Distinct source and processing/)
+  assert.equal(readJSON(f.root, "runs/processed/source-processing-input.json"), null)
 })
