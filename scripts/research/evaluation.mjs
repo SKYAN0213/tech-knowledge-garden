@@ -195,13 +195,19 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
     const stored = loadStoredSourceRun(root, sourceRun)
     assertSpecification(spec, stored.documents, stored.parses)
     if (spec.supersedes) {
-      const previous = loadEvaluationCase(root, spec.supersedes)
+      // Preserve and verify the frozen predecessor even when a later evidence
+      // contract rejects its expectations. Only the new case may be evaluated.
+      const previous = loadFrozenEvaluationCase(root, spec.supersedes)
       if (
         spec.supersedes === spec.case_id ||
         previous.manifest.documents_sha256 !== stored.identity.documents_sha256 ||
-        previous.manifest.parses_sha256 !== stored.identity.parses_sha256
+        previous.manifest.parses_sha256 !== stored.identity.parses_sha256 ||
+        previous.specification.split !== spec.split ||
+        previous.specification.origin !== spec.origin
       )
-        throw Error("Superseded case must be a different case using the same exact source snapshot")
+        throw Error(
+          "Superseded case must be a different case using the same exact source snapshot and split",
+        )
     }
     const specification_sha256 = sha256(JSON.stringify(spec))
     const directory = `evaluation/fixtures/${spec.case_id}`
@@ -269,7 +275,7 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
   })
 }
 
-export function loadEvaluationCase(root, caseId) {
+function loadFrozenEvaluationCase(root, caseId) {
   if (typeof caseId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(caseId))
     throw Error("Invalid evaluation case id")
   const directory = `evaluation/fixtures/${caseId}`
@@ -292,11 +298,17 @@ export function loadEvaluationCase(root, caseId) {
   )
     throw Error("Evaluation source snapshot changed")
   const { status, specification: spec } = gold
-  assertSpecification(spec, documents, parses)
+  assertSchema(spec, evaluationSpecSchema)
   if (sha256(JSON.stringify(spec)) !== manifest.specification_sha256 || status !== manifest.status)
     throw Error("Evaluation expectations changed")
   assertStoredEvidence(caseRoot, documents, parses)
   return { manifest, specification: spec, documents, parses, root: path.resolve(caseRoot) }
+}
+
+export function loadEvaluationCase(root, caseId) {
+  const frozen = loadFrozenEvaluationCase(root, caseId)
+  assertSpecification(frozen.specification, frozen.documents, frozen.parses)
+  return frozen
 }
 
 // Read genuine model checkpoints through their existing integrity validators.
@@ -455,14 +467,40 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
     : []
   const cases = []
   const invalid = []
+  const frozenInvalid = new Map()
   for (const caseId of caseIds) {
     try {
       const { manifest, specification, documents, parses } = loadEvaluationCase(root, caseId)
       cases.push({ manifest, specification, documents, parses })
     } catch (error) {
       invalid.push({ case_id: caseId, error: String(error.message || error) })
+      try {
+        frozenInvalid.set(caseId, loadFrozenEvaluationCase(root, caseId))
+      } catch {
+        // Corrupt snapshots/provenance remain active integrity failures.
+      }
     }
   }
+
+  const supersededInvalid = []
+  const activeInvalid = invalid.filter((item) => {
+    const previous = frozenInvalid.get(item.case_id)
+    if (!previous) return true
+    const replacements = cases.filter(
+      (replacement) =>
+        replacement.specification.supersedes === item.case_id &&
+        replacement.manifest.documents_sha256 === previous.manifest.documents_sha256 &&
+        replacement.manifest.parses_sha256 === previous.manifest.parses_sha256 &&
+        replacement.specification.split === previous.specification.split &&
+        replacement.specification.origin === previous.specification.origin,
+    )
+    if (!replacements.length) return true
+    supersededInvalid.push({
+      ...item,
+      superseded_by: replacements.map((replacement) => replacement.manifest.case_id),
+    })
+    return false
+  })
 
   const actual = cases.filter(({ specification }) => specification.origin === "actual-source")
   const groups = new Map()
@@ -525,7 +563,9 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
   )
   return {
     status:
-      invalid.length || conflictingSnapshots ? "integrity_review_required" : "read_only_audit",
+      activeInvalid.length || conflictingSnapshots
+        ? "integrity_review_required"
+        : "read_only_audit",
     target_cases: allTargetCounts,
     registered_case_revisions: cases.length,
     actual_source_case_revisions: actual.length,
@@ -584,7 +624,8 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
         actual.map(({ manifest }) => `${manifest.documents_sha256}:${manifest.parses_sha256}`),
       ).size,
     conflicting_split_snapshots: conflictingSnapshots,
-    invalid_cases: invalid,
+    invalid_cases: activeInvalid,
+    superseded_invalid_cases: supersededInvalid,
     candidate_published: false,
     public_verified: false,
   }

@@ -5110,3 +5110,15 @@ HTTPS 실제 화면에서 분야 탭→LG 기사→기업 태그→뒤로가기,
 전체 뉴스에 심층 기사가 있더라도 현재 회사·분야·테마·검색어에 맞는 심층 기사가 없으면 탭을 숨긴다. 기사 종류를 제외한 현재 조건으로 심층 가용성을 판정하며, 오래된 kind=deep 공유URL의0건은 그대로 보존한다. 클릭과 링크 href는 같은 회사·분야·테마·검색어를 유지한다. 다른 회사나 분야의 분석을 보여주는 것으로 빈 결과를 대체하지 않는다.
 
 실제 reader 이벤트 핸들러로 재현4건 실패→수정 후 관련9건 통과했다. 기존 matchesNews 공통 함수를 재사용하며 새 의존성·모델 호출·원문 수집은 없다. npm run build와 실제 사이트 링크검증을 통과했고, CUA에서 LG1일반기사/심층 탭 없음, 삼성전자·AI·투자·Helix1심층/탭 표시, Enter→조건 유지, 뒤로가기,390px/문서375px를 확인했다. 공개 배포 검증은 다음 CI/readback에서 확인한다. 전체3/22와 평가·shadow 조건은 그대로다.
+
+공개 검증 완료: commit0b22ada6/Actions37543951095 성공, HTTPS reader.js 및 데이터4asset의 실제 원격 bytes를 대조했다. 데이터·RSS는 직전 발행본과 동일하며 새 회차를 만들지 않았다. 공개 CUA에서도 동일 필터·모바일·Enter·뒤로가기를 확인했다. 운영 증거15members/19,721bytes는 private Research Drive에 저장하고 실제 원격ZIP SHA·전수복원·registry를 확인했다. 증거 source_versions0은 기사 원문이나 전체 런타임 백업으로 세지 않는다. 필터 label의 명시적 for/id 연결은 다음 접근성 표적 개선으로 남긴다.
+
+## 19.380. 보류 평가 원문 1건과 기존 기준의 검증 회귀
+
+새 모델 후보를 생성하거나 읽기 전에 공식 원문1건을 보류 평가에 고정했다. 보관된 제목·게시일·본문3문단에서7사실·필수 설명3개·금지 변형4개를 직접 작성하고, 기존 개발/보류 case의 source ID 중복0을 확인했다. native gold-case의 상태는 source_reviewed_candidate이며 모델 평가·뉴스 발행·독립 human 완료는 모두 false다. 비공개 source.md와 미작성 human-review-input.json을 준비했으며 실제 검토자와 읽기·독립성 진술은 자동 채우지 않는다. 이 보류 자료를 프롬프트 튜닝에 사용하지 않는다.
+
+기존 평가 감사를 실행하니 FANUC·Google 개발 기준2건이 현재의 숫자/단위/조건 동일 인용문 검사를 통과하지 못했다. 과거 gold·원문·검증 실패를 보존하면서 새 기준 판본을 연결할 수 있도록 내부 frozen loader와 현재 평가용 loader를 분리했다. 과거 판본의 원문·parse·gold·명세 해시와 schema는 계속 검증하고, 새 기준은 현재의 전체 사실 검사를 통과해야 한다. 같은 정확한 원문/parse·split·origin의 유효한 수정본만 과거 기준을 대체하며 과거 실패는 superseded_invalid_cases에 남긴다. 원문 또는 provenance 손상은 계속 active invalid로 판정한다.
+
+표적 재현2실패→수정 후 evaluation 검사27통과. Google의 위험도 표와 RCE 모집단 문단을 직접 대조해 숫자의 % 단위·원문에 있는 모집단 조건을 수정한9사실 v2를 고정했다. 수치·본문·발표일 null·원문 판본·기존 검토 이력은 보존했다. 현재 유효한 원문 snapshot은 개발26/40·보류1/20이며 독립 human은0/40·0/20이다. FANUC는 분기 실적의 조건 연결과 연간 전망 표의 별도 금액 단위 문단을 보강해야 하므로 active invalid1을 유지한다. 단위를 지우거나 검증 규칙을 낮춰 완료로 만들지 않았다.
+
+평가 원문·원본/수정 기준·검토 인계·표적 검사 기록을 공통 source bundle/closure로 묶었다. 73members/1,330,565bytes·source_versions7이며 실제 관련 수집 lineage를 포함한다. private Drive 업로드와 metadata의 크기·부모·shared=false는 확인했지만 원격 raw 다운로드는403으로 실패했다. 원격 SHA·복원·registry는 미완료로 보존하고 동일 다운로드를 반복하지 않는다. 최초 관련-run은 기사 승인 전용 계약으로 거부되어 평가 custody를 source run 내부에 포함한 v2로 저장했다. 기사 승인·새 회차·추가 예약·전체 런타임 복구로 세지 않는다. 전체 WBS3/22·새 shadow0/7·legacy44/430+metadata10·기존08시 실제 실행 확인은 미완료다.

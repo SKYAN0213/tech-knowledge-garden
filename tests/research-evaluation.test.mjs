@@ -143,6 +143,72 @@ function candidateRun(root, runId, claims, base = "evaluation/fixtures/source-pl
   })
 }
 
+// Recreate a hash-consistent historical case accepted before the stricter
+// same-quote number contract. Only test data is changed here.
+async function historicalSplitQuoteCase(t) {
+  const value = fixture(t)
+  value.spec.origin = "actual-source"
+  await saveEvaluationCase(value.root, "import", "source", value.spec)
+  const goldPath = `evaluation/gold/${value.spec.case_id}.json`
+  const manifestPath = `evaluation/fixtures/${value.spec.case_id}/manifest.json`
+  const gold = readJSON(value.root, goldPath)
+  const claim = gold.specification.facts[0].claim
+  claim.numbers[0].condition = "Example plans"
+  claim.evidence = [
+    { ...claim.evidence[0], quote: "50 units in 2027." },
+    { ...claim.evidence[0], quote: "Example plans" },
+  ]
+  const manifest = readJSON(value.root, manifestPath)
+  manifest.gold_sha256 = sha256(JSON.stringify(gold))
+  manifest.specification_sha256 = sha256(JSON.stringify(gold.specification))
+  atomicWrite(value.root, goldPath, gold)
+  atomicWrite(value.root, manifestPath, manifest)
+  return { ...value, goldPath, manifestPath }
+}
+
+test("invalid historical expectations can be superseded while preserving their evidence and failure", async (t) => {
+  const { root, spec, goldPath } = await historicalSplitQuoteCase(t)
+  const before = fs.readFileSync(path.join(root, goldPath))
+  assert.throws(() => loadEvaluationCase(root, spec.case_id), /number_parts_not_in_same_evidence/)
+  assert.equal(auditEvaluationCases(root).status, "integrity_review_required")
+  const revised = { ...spec, case_id: "source-plan-repaired", supersedes: spec.case_id }
+  await saveEvaluationCase(root, "repair", "source", revised)
+  assert.deepEqual(fs.readFileSync(path.join(root, goldPath)), before)
+  assert.throws(() => loadEvaluationCase(root, spec.case_id), /number_parts_not_in_same_evidence/)
+  assert.equal(loadEvaluationCase(root, revised.case_id).specification.supersedes, spec.case_id)
+  const audit = auditEvaluationCases(root)
+  assert.equal(audit.status, "read_only_audit")
+  assert.equal(audit.unique_actual_by_split.development, 1)
+  assert.equal(audit.invalid_cases.length, 0)
+  assert.equal(audit.superseded_invalid_cases[0].case_id, spec.case_id)
+  assert.deepEqual(audit.superseded_invalid_cases[0].superseded_by, [revised.case_id])
+  assert.match(audit.superseded_invalid_cases[0].error, /number_parts_not_in_same_evidence/)
+})
+
+test("superseding historical expectations cannot hide tampered bytes or change the evaluation split", async (t) => {
+  const { root, spec, document, goldPath } = await historicalSplitQuoteCase(t)
+  const revised = { ...spec, case_id: "source-plan-repaired", supersedes: spec.case_id }
+  await assert.rejects(
+    saveEvaluationCase(root, "repair-heldout", "source", { ...revised, split: "heldout" }),
+    /same exact source snapshot and split/,
+  )
+  const originalGold = fs.readFileSync(path.join(root, goldPath))
+  fs.appendFileSync(path.join(root, goldPath), " ")
+  // Whitespace preserves semantic JSON hashes, so change a semantic value.
+  const gold = readJSON(root, goldPath)
+  gold.specification.review.notes = "tampered historical provenance"
+  atomicWrite(root, goldPath, gold)
+  await assert.rejects(saveEvaluationCase(root, "repair-gold", "source", revised), /gold mismatch/)
+  fs.writeFileSync(path.join(root, goldPath), originalGold)
+  await saveEvaluationCase(root, "repair", "source", revised)
+  const frozenBody = path.join(root, "evaluation/fixtures", spec.case_id, document.body_path)
+  fs.writeFileSync(frozenBody, "tampered historical source")
+  const audit = auditEvaluationCases(root)
+  assert.equal(audit.status, "integrity_review_required")
+  assert.equal(audit.invalid_cases[0].case_id, spec.case_id)
+  assert.equal(audit.superseded_invalid_cases.length, 0)
+})
+
 test("completed model runs import into an exact frozen source case without rerunning inference", async (t) => {
   const { root, spec, document, parse, claim } = fixture(t)
   await saveEvaluationCase(root, "import", "source", spec)

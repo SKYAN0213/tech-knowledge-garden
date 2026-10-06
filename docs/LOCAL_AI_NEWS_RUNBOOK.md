@@ -11268,3 +11268,15 @@ parser recovery 입력·원고/요약·preview 검증과17호출ledger 등18실�
 web/reader.mjs에서 현재 필터에 맞는 심층 기사가 있을 때만 탭을 표시한다. kind를 제외한 회사·분야·테마·검색어를 기존 matchesNews로 대조한다. deep 클릭 때 sector를 지우지 않으며 href에도 같은 필터를 반영한다. stale deep 공유URL은 임의로 전체 목록으로 바꾸지 않는다.
 
 표적 재현: node --test tests/reader-filters.test.mjs (최초4실패). 수정 검증: node --test tests/reader-filters.test.mjs tests/reader-cards.test.mjs (9통과). npm run build와 node scripts/verify-site.mjs 통과. actual reader 핸들러 테스트 fixture는 발행 경로와 분리된다. CUA local의 LG/삼성·AI·투자·Helix/Enter/뒤로가기/mobile390 검증은 current55-filter-tabs-browser-v1.json, 빌드·검사 로그는 같은 외장 evidence 루트다. 독립human 및 공개 배포 완료로 세지 않는다. 현재08시 예약·원고·RSS GUID는 유지한다.
+
+472 공개 전달: Actions37543951095/commit0b22ada6 성공, current55-filter-tabs-public-readback-v1.json의5실제 HTTPS asset와 public CUA 필터/키보드/모바일 확인. 데이터4asset·RSS bytes 불변이며 WebsiteData 재작성과 새 회차 집계를 하지 않았다. private Drive Research14sZxG0zLApyFgSE84XfX2gHFhVO6qSmY에 closure15members·SHAabc9ae2bfa477f21f2e4fcd792d965c22742bba3cf80b21f5221438738e73b8c를 보관하고 실제 raw·복원·registry를 확인했다. label for/id 연결은 후속 접근성 항목이다.
+
+## 473. 원문 먼저 고정한 보류 평가와 과거 기준의 수정 판본
+
+`gold-case --run eval-heldout-acme-privatelink-import-20261007-v1 --source-run eval-heldout-acme-privatelink-source-20261007-v1 --review /Volumes/X5Storage/tkg-daily-core-20261007-v1/current55-heldout-acme-spec-v1.json`은 공식 원문1판본·7사실을 등록했다. 미노출 보류이며 source_reviewed_candidate/모델 실행 false/발행 false다. source ID 중복0, 개발26/보류1, 독립human0/40·0/20은 current55-evaluation-repair-audit-v2.json에서 확인한다. source.md/README.md/human-review-input.json은 해당 fixture의 runs/human-review-handoff-20261007-v1 아래에 있다. 사람 검토 입력은 reviewer·실제 시각·source_read·독립성·검토 의견을 실제 담당자가 작성하기 전에는 등록할 수 없다.
+
+evaluation.mjs의 비공개 frozen loader는 과거 원문·parse·schema·gold/명세 해시를 확인한다. 공개 loadEvaluationCase는 현재 사실 검사까지 계속 요구한다. gold-case의 supersedes는 동일 source snapshot·split·origin만 허용하고 과거 파일을 바꾸지 않는다. audit는 유효한 수정본으로 대체된 과거 규칙 실패를 superseded_invalid_cases에 보존하며, 손상된 과거 bytes는 active invalid로 남긴다. 재현2실패와 표적27통과는 evaluation-historical-repair-{before,targeted}-v1.log에 있다. Google 위험 분포 조건은 native v2 등록/원 gold 불변을 확인했고 FANUC의 별도 단위 문단은 active invalid1로 유지했다.
+
+`bundle --run eval-source-review-bundle-20261007-v1 --source-run eval-heldout-acme-privatelink-source-20261007-v1 --additional-source-run google-gti-ai-era-eval-source-20261003-v1 --additional-source-run 20260927-fanuc-ir-profile-v1`로 저장 원문을 재사용했다. 평가 관련-run을 article approval로 처리하는 최초 closure는 거부됐다. 평가 custody18파일을 bundle run 내부에 복사하고 archive-closure v2를 생성했다. 73members/1,330,565bytes/source_versions7/SHA26dd52da36ecb4022780b85e6e1af61af9d328bca02f7a696a0f686b762c151a다.
+
+Drive Research 파일1vh4-roXTb5LImLUfdS3KkQmmXDQe9uTg 업로드·metadata의 부모/크기/shared=false를 확인했다. 실제 raw readback은403으로 실패하여 원격SHA·전수복원·registry는 미완료다. upload/metadata/raw-failure 영수증은 외장 evidence의 current55-evaluation-closure-*-v2.json에 보존했다. 권한 제한을 다른 다운로드 경로로 우회하거나 업로드 성공을 보관 완료로 표시하지 않는다. 추가 모델·HTTP 뉴스수집·발행·예약 없음. 다음은 PDF 표 단위 범위 보강, 잔여 보류 원문 확보, 실제 담당자의 독립 검토다.
