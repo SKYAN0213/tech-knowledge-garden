@@ -10562,3 +10562,5 @@ node scripts/research-scan.mjs scan-list --root /absolute/private-root \
 같은 run 재개는 새HTTP 없이 checkpoint를 읽는다. 실패가 남으면 `incomplete`와 실제 실패를 유지한다. 완료됐을 때만 기존 `--reconcile-scan`의 저장 근거 검증으로 기간 coverage에 연결할 수 있다. 기사 승인·Drive·공개·새정규 운영 성공은 별도 관문이다.
 
 실물 AWS복구v2는 원문72개(목록1+상세71) 재사용/누락상세1요청/후보71이다. 누락주소의 새404를 보존하고 반복 요청하지 않았다. 원본·복구153JSON의 재개SHA 불변과 기존후보ID·관측시점·raw SHA 일치를 확인했다. 본문 전체 재파싱은 추론이 아니며 신규 모델 호출0이다. proof `daily-20261006-aws-detail-repair-proof-v1.json`을 확인한다. 신규/공통 검증7개와 자동연결/상한2개가 통과했다. 전체 로컬 suite는 반복하지 않는다.
+
+19.336 공개·입력 관문: 코드078b33c0d3d3f1eac2bb1c6704899b408dc1cf0f/Actions37409624285의 Node971/971·Python15+10+3·build/deploy가 통과했다. 실제 공개12파일은 기존 승인 preview의byte/reader동등성을 유지했다. 로컬 전체suite는 반복하지 않았다. 기존공개179기사·RSS40·원고/회차는 유지한다. 새Drive작성원본213개를 두번의 같은전체목록과 실제raw·metadata로 재확인해 localbytes일치·source SHA c677107d…를 검증했다. fresh snapshot은 connector-source-snapshot-20261006T1237KST.json이며 canonical pull은 원문변경0·비공개mapping 관측갱신만 수행했다. status JSON을 한 번 생성해 같은결과로 private진척HTML을 갱신했다. AWS복구는첫stage~마지막stage26,040ms이며 기존collection273,809ms와 구분해 기록했다. 이검증은 새정규발행이나0/7 운영완료를 뜻하지 않는다. 다음은 같은회차32칸의 실제원문검토와 승인/발행operation연결이다.
