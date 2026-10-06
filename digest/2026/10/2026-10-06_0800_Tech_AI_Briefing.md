@@ -54,6 +54,30 @@ AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 �
 
 [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/)
 
+### 사이버보안 · 1건
+
+#### [과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고](https://skyan0213.github.io/tech-knowledge-garden/news/3287c7f8e2e5e4bd)
+
+발표 2026-10-04
+
+위험·사고 · 보안 사고 · 과학기술정보통신부 · 한국인터넷진흥원(KISA) · 금융보안원
+
+전자신문은 10월 4일 과학기술정보통신부와 한국인터넷진흥원(KISA)이 금융권 해킹 사고의 민간 확산을 막기 위한 긴급 대응체계를 가동했다고 보도했다. 두 기관은 최고정보보호책임자(CISO) 신고기업 약 2만8000곳에 이날 보안 점검 권고 메일을 보냈다.
+
+##### 모니터링과 현장 대응
+
+보도에 따르면 KISA 인터넷침해대응센터(KISC)는 주요 기업 홈페이지의 모니터링을 강화하고 침해사고 대응 인력을 보강했다. 비상출동조도 상시 대기시켰다.
+
+##### 위협 정보 공유
+
+보호나라와 사이버위협정보 분석·공유 체계(C-TAS)를 통해 기업·기관의 자체 보안조치를 안내했다. C-TAS는 악성코드, 공격자 인터넷 주소와 최신 사이버 위협 동향을 공유하는 플랫폼이라고 기사는 설명했다.
+
+##### 클라우드 사업자에 차단 조치 요청
+
+과기정통부와 KISA는 금융보안원이 확인한 해외 공격자 IP에 관한 위협 정보를 해당 클라우드 사업자에 전달하고 악성행위 차단 등 필요한 조치를 요청했다고 보도됐다.
+
+[etnews.com 원문](https://www.etnews.com/20261004000031)
+
 ### 로봇·제조 · 3건
 
 #### [쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고](https://skyan0213.github.io/tech-knowledge-garden/news/72081e8f67345f20)
@@ -133,6 +157,26 @@ RobCo는 미국의 12개가 넘는 주에서 고객 운영을 수행하고 있�
 뉴저지주 캠던·글로스터 카운티 보안관 기관은 사용 첫해에 Spot을 20회 넘게 투입했다고 회사는 전했다. 이탈리아 국가경찰기관 카라비니에리는 2025년 로마 주빌리 행사를 앞두고 Spot을 도입한 사례로 소개됐다.
 
 [bostondynamics.com 원문](https://bostondynamics.com/blog/spot-to-the-rescue/)
+
+### 에너지·기후기술 · 1건
+
+#### [미 에너지부, 원전 탄화규소 피복재 연구에 최대 5,000만 달러 공모](https://skyan0213.github.io/tech-knowledge-garden/news/cc2b0d13b882971e)
+
+발표 2026-10-05
+
+연구·기술 · 실증·재현 · U.S. Department of Energy · Office of Nuclear Energy · U.S. Nuclear Regulatory Commission
+
+미국 에너지부 원자력 담당 조직(Office of Nuclear Energy)은 미국 현지시각 10월 5일 탄화규소(SiC) 연료 피복재의 연구개발을 지원하는 경쟁 공모를 발표했다. 3년에 걸쳐 최대 5,000만 달러를 지원하며, 연구용 원자로에서 조사 시험을 할 12피트 길이의 탄화규소 피복재 연료봉 제작이 지원 대상이다. 신청 마감은 2026년 12월 7일이다.
+
+##### 연료와 냉각수 사이의 보호벽
+
+현재 원전에서는 작은 우라늄 세라믹 펠릿을 금속관 안에 쌓고 양끝을 밀봉해 연료봉을 만든다. 피복재는 원자로 냉각수와 핵연료 펠릿 사이를 가르는 보호벽이다. 이번 공모는 이 피복재에 탄화규소를 적용하는 연구를 지원한다.
+
+##### 연구용 원자로 시험과 인허가 자료
+
+DOE는 연구용 원자로의 조사 시험에서 얻을 성능 자료가 미국 원자력규제위원회(NRC) 인허가와 새 피복재의 상업적 도입에 필요한 자료라고 설명했다.
+
+[energy.gov 원문](https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material)
 
 ### 바이오·의료기술 · 1건
 

@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 179,
+  "news_count": 181,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -539,8 +539,10 @@
     "https://www.deepseek.com/en/news/deepseek-v4-1-flash",
     "https://www.digitalocean.com/blog/introducing-agent-droplets",
     "https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity",
+    "https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material",
     "https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter",
     "https://www.etnews.com/20260911000249",
+    "https://www.etnews.com/20261004000031",
     "https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html",
     "https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html",
     "https://www.fda.gov/news-events/press-announcements/fda-approves-first-heart-valve-designed-grow-children",
@@ -800,6 +802,8 @@
     "News/1c20824a90713fc8",
     "News/a4e8f23e78c22e95",
     "News/82294a16ed862561",
+    "News/cc2b0d13b882971e",
+    "News/3287c7f8e2e5e4bd",
     "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE",
     "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing",
     "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing",
