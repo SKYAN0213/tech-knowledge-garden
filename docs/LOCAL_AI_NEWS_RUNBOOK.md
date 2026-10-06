@@ -11246,3 +11246,7 @@ parser recovery 입력·원고/요약·preview 검증과17호출ledger 등18실�
 명령: node scripts/research-edition.mjs --run daily-20261007-seven-article-reader-v2 --daily-run daily-20261007-current55-integrated-v1 --review /Volumes/X5Storage/tkg-daily-core-20261007-v1/current55-oct7-seven-article-selection-v1.json. 기존 reader-v1의 ID gate 실패는 보존했다. reader-v2의 7고유 사건·기존RSS39 identity·용어 reciprocal 링크 pass는 실제 manifest에 있다. 실화면/Drive 작성/공개/정규 성공 횟수로 승격하지 않는다.
 
 표적64 중62최초 통과, 신규2fixture를 실제 승인/기존 기사 문법으로 고친 뒤 실패한2만2통과했다. 현재 전체3/22와 legacy44회430기사+metadata10·독립human0/40 및0/20·실제08시/정규0/7은 그대로다. 반복1시간 blocker 없음. 다음은 새 reader 실화면과 실제32칸 조사에 대한 편집 검토, fresh Drive 원본 비교 및 작성·배포·readback이다.
+
+470 실제 저장: writer ae2712c2-eb68-491e-84f8-75da5b70e2a4에서 Editions1Ap-qbJlZTCsPcXIAf9sl4PbAEW2pV4kx·용어1SvaIs-XiTRWibTNU2EbupKqzg4YmJy6J·Signals156j0sQpZl8nrYMxRj9b7IwPnsW4-Vriq 생성과 기존 Knowledge index 동일ID update를 각각 실제 raw/metadata로 검증했다. 4/4완료·미확정0·동명중복0이다. post216파일은 전후16폴더 안정 목록과 변경4raw/나머지212개 기존raw·ID·수정시각 불변을 대조했다. 변경 없는 raw의 이전 검증 시각을 보존했고 10분 freshness 안에서 canonical에 적용했다. fullruntime/human/08시/shadow7회로 세지 않는다.
+
+첫 원고 CI37541591178은 tests/trends.test.mjs의 RSS URL 문자열 검사1개에서 실패했다. KAIST 원문 `&mng_no=67870&GotoPage=1`의 실제 href는 보존되어 있으나 HTML 안전 escape가 `&amp;`를 포함하므로 raw includes가 틀렸다. 현재 실제href 파싱 및 query 보존2건 표적 통과이며 공개 RSS bytes는 수정하지 않았다. 최초publication operation/실패 CI는 보존하고 새 복구 operation에서 실제 배포·readback을 확인한다. 독자 화면·용어 이력 모바일390/키보드/필터/뒤로가기/CUA 확인은 current55-oct7-reader-interactions-v2에 있고 독립human gold로 세지 않는다.

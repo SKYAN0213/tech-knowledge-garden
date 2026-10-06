@@ -4,6 +4,8 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import RSSParser from "rss-parser"
+import { fromHtml } from "hast-util-from-html"
+import { visit } from "unist-util-visit"
 import { loadTrends, trendSnapshot, currentTrendSnapshot } from "../scripts/trends.mjs"
 import { noteText, editions, extractArticles, feeds } from "../scripts/garden.mjs"
 import {
@@ -285,8 +287,12 @@ test("Real daily RSS retains stable permalinks and carries originals, reviewed c
     ),
   )
   assert.ok(feed.items[0].content.includes(githubIssue(lib.latest.key)))
+  const sourceHrefs = new Set()
+  visit(fromHtml(feed.items[0].content, { fragment: true }), "element", (node) => {
+    if (node.tagName === "a") sourceHrefs.add(node.properties.href)
+  })
   for (const a of lib.latest.items)
-    for (const url of a.urls) assert.ok(feed.items[0].content.includes(url))
+    for (const url of a.urls) assert.ok(sourceHrefs.has(url), `Missing original href: ${url}`)
   if (lib.latest.original.meta.article_reviews) {
     assert.doesNotMatch(feed.items[0].content, /다음 확인|트렌드 기록 미정리|수록 없음/)
     for (const a of lib.latest.items) assert.ok(feed.items[0].content.includes(a.summary))
@@ -294,6 +300,32 @@ test("Real daily RSS retains stable permalinks and carries originals, reviewed c
   assert.ok(lib.latest.snapshot.topics.length > 0)
   for (const issue of lib.issues)
     assert.doesNotMatch(fs.readFileSync(digestPath(issue.key), "utf8"), /\[\[/)
+})
+test("RSS original query parameters survive safe HTML escaping as exact navigable hrefs", () => {
+  const original = "https://example.org/news/?mode=V&mng_no=67870&GotoPage=1"
+  const html = feedDescription(
+    {
+      key: "Editions/2026/10/2026-10-07_0800_Tech_AI_Briefing",
+      lead: "Test",
+      snapshot: { review: null },
+      items: [
+        {
+          id: "source-event",
+          title: "Source announcement",
+          summary: "Reviewed facts",
+          urls: [original],
+        },
+      ],
+    },
+    "https://example.org",
+  )
+  assert.ok(html.includes("mode=V&amp;mng_no=67870&amp;GotoPage=1"))
+  const hrefs = []
+  visit(fromHtml(html, { fragment: true }), "element", (node) => {
+    if (node.tagName === "a") hrefs.push(node.properties.href)
+  })
+  assert.equal(hrefs.filter((href) => href === original).length, 1)
+  assert.equal(hrefs.includes(original.replaceAll("&", "&amp;")), false)
 })
 test("Feed summaries escape editorial HTML rather than executing it in readers", () => {
   const i = {
