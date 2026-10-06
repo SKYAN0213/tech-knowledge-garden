@@ -39,6 +39,7 @@ export async function processDailyCandidates({
   execute = false,
   reviewFiles = {},
   processingRuns = {},
+  evidenceThink,
   provider,
   handoffLoader = currentHandoff,
   processor = processSourceRun,
@@ -67,7 +68,14 @@ export async function processDailyCandidates({
         !/^[A-Za-z0-9_-]{1,160}$/.test(id || "") ||
         id === runId ||
         reviewFiles[key],
-    )
+    ) ||
+    (evidenceThink !== undefined &&
+      typeof evidenceThink !== "boolean" &&
+      !(
+        typeof evidenceThink === "string" &&
+        /^[a-z][a-z_-]{0,31}$/.test(evidenceThink) &&
+        !["false", "true"].includes(evidenceThink)
+      ))
   )
     throw Error(
       "Daily processing requires distinct run IDs and one to twelve unique candidate keys",
@@ -117,6 +125,7 @@ export async function processDailyCandidates({
       reuse_reader_sha256: sha256(
         fs.readFileSync(new URL("./processed-source-result.mjs", import.meta.url)),
       ),
+      ...(evidenceThink === undefined ? {} : { evidence_overrides: { think: evidenceThink } }),
     }
     const base = `runs/${runId}/`
     const previousInput = readJSON(root, base + "daily-processing-input.json")
@@ -286,6 +295,7 @@ export async function processDailyCandidates({
           // extractor needs the acquired primary source identity for a grouped
           // event; supporting documents must not replace that primary.
           candidateKey: `source-${selected.selected.documents[0].source_id}`,
+          evidenceThink,
           provider,
         })
         rows.set(key, {

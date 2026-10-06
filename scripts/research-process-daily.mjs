@@ -15,6 +15,7 @@ const { values: v } = parseArgs({
     backlog: { type: "string" },
     "review-files": { type: "string" },
     "processing-runs": { type: "string" },
+    "evidence-think": { type: "string" },
     "plan-only": { type: "boolean", default: false },
     execute: { type: "boolean", default: false },
     resume: { type: "boolean", default: false },
@@ -38,6 +39,12 @@ console.log(
       processingRuns: v["processing-runs"]
         ? JSON.parse(fs.readFileSync(v["processing-runs"], "utf8"))
         : {},
+      evidenceThink:
+        v["evidence-think"] === "false"
+          ? false
+          : v["evidence-think"] === "true"
+            ? true
+            : v["evidence-think"],
     }),
     null,
     2,

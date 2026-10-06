@@ -10857,3 +10857,24 @@ partial intake/same-event receipt는 원문 묶음과 구분하여 exact bytes·
 코드 d3616356a6eb86eae843f7bd7536d394a580c4c4의 Actions37458258118을 릴리스 CI 한 번 실행했다. Node1,008/1,008·Python15+10+3·build/site/deploy 성공, 반복 CI0이다. 공개 readback2026-10-06T11:46:28.665Z에서 briefing.xml606,070bytes·기존기사6,922bytes·reader-index1,239,161bytes가 HTTP200이며 이전 SHA/bytes와 모두 일치했다. 코드 배포 완료와 신규 기사 발행0을 구분한다. 외장 pagination-source-release-ci-{final-v1.json,log-v1.txt}·pagination-source-public-preservation-v1.json·public-metadata-alias-drive-restoration-proof-v2.json 및 pagination-operation-receipts-drive-restore-v2.json이 근거다.
 
 현황판 core-progress-checkpoint-20261006-v7.json/html은 현재 장부904·활성55·등록195와 target scan/partial intake 증거를 다시 집계했다. Codex 탭 열기는 queued이며 화면 렌더링 확인으로 세지 않았다. 다음 묶음은 유효 원문 후보의 공통 처리·사건 연결·편집 승인으로 진행한다. 디일렉 미확인20건은 대체 공개 원문을 찾아야 하며 무조건 재수집하지 않는다. 현 전체 WBS2/22·신규정규0/7·전수legacy/독립human/08시운영 gate와 선정 분리 pending은 유지한다.
+
+
+## 447. 다문서 일일 처리 연결과 NACHI 원문 편집
+
+전 턴은 원문 수집 코드·실수집·비공개 Drive 복구·배포를 변경한 progress였다. 이번 입력은 기존 daily-20261006-layout-recovery-v1 handoff의 source-61fdd67b9300a89e2a0a다. 정상 선택은 실적 본문·보충2PDF/241blocks이고 source version·parse·발표일2026-10-05를 유지한다. fresh Drive 작성원본을 읽은 새 정규 회차로 세지 않는다.
+
+nachi-daily-processing-20261006-v1은86ms에 다문서 key 전달 누락으로 실패·모델호출0이며 동일 run 재시도0이다. 재현1실패 후 exact selected primary source ID를 processor에 전달하고 관련12검사를 한 묶음으로 통과했다. 원 failure receipt와 source-selection을 보존했고 실제 실행은 nachi-daily-processing-20261006-v2다. 외장 daily-multisource-regression-{before-v1,after-v1}.log와 nachi-daily-processing-execute-{v1,v2}.json을 따른다. 코드 commit ecdf76c의 릴리스 CI만 실행하며 전체 로컬suite는 반복하지 않는다.
+
+실적 본문1·4페이지 및 보충1페이지의 날짜·표 머리글·단위·로봇 행을 읽었다. 로봇21,314백만엔/+16.9%는2025-12-01~2026-08-31누적이고 단독분기7,386백만엔·연간계획31,400백만엔과 구분한다. 기계공구60,604백만엔을 로봇 단독으로 쓰지 않는다. 전략·수익증감 이유는 회사 설명이며 시장전체 성장률·경쟁우위·해고 규모를 추론하지 않는다. 관찰8개는 nachi-source-reading-review-v1.json에 source/page/block와 함께 기록했다. 독립 human gold가 아니다. 모델/사실 검토·승인·원격 보관 결과는 뒤에 실제 증거로 기록한다.
+
+후속 완료: v2의 실제 로컬 추출4배치/18후보는 완료했으나 medium 근거 대조 첫 요청은300,021ms에 timeout으로 종료했다. 전체793,011ms 실패를 보존했다. 재추출 없이 같은 원문2PDF/241blocks와 완료 추출을 재사용하는 nachi-evidence-fast-processing-20261006-v3에서 실행별 evidence-think=false로 대조했다. 실제3배치59,664/94,720/277,531ms가 완료됐고 모든18후보가 사실 검토를 요구했다. 추론 off가 모든 지연이나 품질 문제를 해결했다는 판정은 하지 않는다. 같은 요청 자동 재시도·validator 완화는0이다.
+
+원문·시각 표 검토로6후보를 명시 교정하고7사실을 직접 추가해13verified/3rejected/9deferred를 기록했다. raw 모델 회사명·비율 오류를 그대로 승인하지 않았다. article_write provenance는84,269ms(역할 장부84,276ms)에 완료했지만 반도체·컴퓨팅으로 오분류하고 facts.why에서 발표 이유를 추론했다. 원 출력과 정확한 수정 이력을 보존하며 로봇·제조, 수치 단위/누적 기간/계획, 회사 귀속을 편집했다. 승인 event_id=61fdd67b9300a89e·발표일2026-10-05·검토일2026-10-06, 리드3문장205자·3설명6문단·품질 findings0이다. 불필요한 분석·운영 안내·회사명 전문용어 노드0, 독립 human label0을 유지한다. 공개 기사나 당일 신규 회차로 발행하지 않았다.
+
+nachi-candidate-approval-20261006-v1에서 기존 후보와 승인 사건을 연결했다. nachi-approved-daily-processing-20261006-v4는 approved-historical/approval_ready1·model_calls0으로 완료 결과를 재사용하고 --evidence-think false를 입력에 기록했다. 기업 이력과13사실의 원문 추적은 기존 ontology로 Article1/Event1/Claim13/EntityMention1/EvidenceBlock8/Parse2/SourceVersion2·59관계이며 Concept0이다. 승인 기사→인용문→PDF 페이지→정확한 원문 해시13경로를 확인했다. 외장 nachi-approved-ontology-{v1,proof-v1}.json이 근거다. 장부904후보 수와 고정 ID를 유지한다.
+
+공통 daily CLI에 --evidence-think false|true|reasoning-level을 추가했다. 미지정하면 공유 policy를 유지하며 실행별 override를 입력 hash에 고정한다. 같은 run에서 설정 변경은 거부하고 완료 결과 재사용에는 그 결과의 원래 policy를 적용한다. 새 검사는 전달/공유 policy 보존/입력 변경 거부/문자열 boolean 및 잘못된 값 거부2개만 실행해 통과했다. 실제 CLI v4의 입력 기록도 확인했다. 첫 다문서 수정 ecdf76c는 Actions37459399664 Node1,009/1,009·Python15+10+3·build/site/deploy success와 공개3파일 hash 보존을 확인했다. 이후 새 override 코드의 릴리스 결과는 별도로 기록한다.
+
+nachi-approved-closure-20261006-v1은 승인·명시 수정·모델 원출력·추출/대조·후보 승인·원문 선택 계보5run, 원문3판본/parse3·manifest80파일/ZIP82members를 보관했다. Drive Research의 비공개1Bf1HOSsq5naHmMS47sIWyZK6JoZ1oXPQ,1,296,602bytes·SHA fc87ec6cd5a4e610f8bf718bea3c41a0589aa64d4aeac82ceaa7976c14a52362를 실제 원격 다운로드로 대조했다. 전수 복원·공통 archive 위치 등록·복원 승인/ontology 완전 동일을 확인했다. raw ZIP 보관과 모델 자동 품질 승격을 혼동하지 않는다. 외장 nachi-drive-restoration-proof-v1.json 및 nachi-drive-{restore,register}-v1.json이 증거다.
+
+기사 파일 .local/editorial-samples/2026-10-05-nachi-approved.html은 실제 승인 projection과 서비스 articleCard/reader.css를 재사용해 생성했다. 브라우저 file URL 열기는 보안 정책으로 거부되어 렌더링은 미검증이다. 우회하지 않았다. 전체WBS2/22·신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 다음은 승인 묶음의 날짜 관문과 최신 Drive 작성원본을 맞춘 소급 반영 및 다음 유효 원문 처리다.

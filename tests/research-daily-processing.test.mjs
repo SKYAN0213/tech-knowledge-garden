@@ -325,3 +325,28 @@ test("daily processing binds a multi-document event to the selected primary sour
     primary.key,
   )
 })
+
+test("explicit daily evidence reasoning is forwarded and frozen without changing the shared policy", async (t) => {
+  const f = fixture(t)
+  const before = fs.readFileSync(f.options.policyFile)
+  const run = await processDailyCandidates({ ...f.options, execute: true, evidenceThink: false })
+  assert.equal(run.status, "review_pending")
+  assert.ok(f.calls.every((call) => call.evidenceThink === false))
+  assert.deepEqual(readJSON(f.root, "runs/batch/daily-processing-input.json").evidence_overrides, {
+    think: false,
+  })
+  assert.deepEqual(fs.readFileSync(f.options.policyFile), before)
+  await assert.rejects(
+    () => processDailyCandidates({ ...f.options, execute: true, evidenceThink: "medium" }),
+    /inputs changed/,
+  )
+  assert.equal(f.calls.length, 2)
+})
+
+test("daily reasoning overrides reject untyped string booleans before source selection", async (t) => {
+  const f = fixture(t)
+  for (const value of ["false", "true", {}, 0])
+    await assert.rejects(() => processDailyCandidates({ ...f.options, evidenceThink: value }))
+  assert.equal(f.calls.length, 0)
+  assert.equal(readJSON(f.root, "runs/batch/daily-processing-input.json"), null)
+})
