@@ -559,6 +559,43 @@ test("explicit extraction budgets preserve all blocks and control each model req
   assert.equal(result.provenance.extraction_budget.extraction_timeout_ms, 20000)
 })
 
+test("block bounds read short dense sources completely without lifting per-batch fact or context limits", async () => {
+  const sources = [parse("dense", 13, 40), parse("supplement", 3, 40)]
+  assert.equal(planExtractionBatches(sources).batches.length, 1)
+  const options = { max_blocks_per_batch: 4, input_char_budget: 20000 }
+  const plan = planExtractionBatches(sources, options)
+  assert.deepEqual(
+    plan.batches.map((b) => b.block_keys.length),
+    [4, 4, 4, 1, 3],
+  )
+  assert.deepEqual(
+    plan.batches.flatMap((b) => b.block_keys),
+    sources.flatMap((p, n) => p.blocks.map((_, i) => `d${n + 1}b${i + 1}`)),
+  )
+  assert.ok(plan.batches.every((b) => b.input_chars <= 20000))
+  assert.ok(plan.batches.every((b) => b.request.schema.properties.claims.maxItems === 6))
+  const requests = []
+  const result = await extractClaims(
+    {
+      structured: async (r) => {
+        requests.push(r)
+        return response(r)
+      },
+    },
+    sources,
+    { ...options, candidate_key: "dense", think: false },
+  )
+  assert.equal(requests.length, 5)
+  assert.equal(result.provenance.extraction_budget.max_blocks_per_batch, 4)
+  assert.ok(result.claims.every((c) => c.review.status === "unreviewed"))
+  for (const value of [0, -1, 1.5, 129, "4", null])
+    assert.throws(() => planExtractionBatches(sources, { max_blocks_per_batch: value }), /budget/)
+  assert.throws(
+    () => planExtractionBatches([parse("too-many", 65)], { max_blocks_per_batch: 1 }),
+    /64 batches/,
+  )
+})
+
 test("deadline expiry stops the next batch while retaining a completed checkpoint for resume", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-deadline-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

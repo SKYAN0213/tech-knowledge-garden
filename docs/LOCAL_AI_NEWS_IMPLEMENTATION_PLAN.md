@@ -4885,3 +4885,11 @@ source-revision-resolution의 replace_approval에 publication_time_revision_run�
 릴리스 통합 증빙 JSON은 비공개 Drive ID12wBGQvD3JX4PiNlNF3UrweVRKwMs21S6, 911,766bytes, SHAc433153a8273e1c1755537eeafbe622921c9bc186bbfb3afe9de540e60e27395다. 원격 raw 파일과 로컬 bytes·SHA, parent·shared=false를 재확인했다. 증빙은 외장 tkg-daily-core-20261007-v1/publication-time-revision-release-drive-proof-v1.json에 있다. 최신 비공개 진척판 core-progress-checkpoint-20261007-v5.json/html은 WBS 3/22·partial17/not_started2, 새 정규 0/7이다. UI 동작 변경이 없어 브라우저 검사를 반복하지 않았다.
 
 다음 재개 지점은 정확한 시각으로 승인된 후보를 포함할 수 있는 회차의 작성·전달과 기존 자료 재검토다. 10월6일 기존 회차의 마감을 바꾸거나 과거 수정으로 새 RSS 회차를 만들지 않는다. 전체 legacy·전문용어·독립 평가·실제08시·인증·복구·정규7회는 미완료이며 goal active를 유지한다. 추가 모델·원문 HTTP 호출은 0회, 동일 실패를 1시간 이상 반복한 항목은 0이다.
+
+### 19.364. 짧고 정보가 많은 원문의 구간별 사실 추출
+
+원문 전체가 context에 들어가더라도 한 요청의 최대 6사실 때문에 세부 사항을 놓칠 수 있다. 기존 공통 추출기에 선택 설정 `max_blocks_per_batch`(정수 1~128)를 추가했다. 문자 예산과 블록 수 상한을 동시에 적용하고, 원래 블록·순서·출처 ID를 빠짐없이 유지한다. 요청당 최대 사실 수·64구간 상한·총 시간 예산·완료 구간 재사용·명시적 승인 경계는 유지한다. 설정하지 않으면 기존 분할 동작과 예산 객체가 그대로다.
+
+CLI와 source-processing 모두 같은 정책 값을 사용한다. 짧은 발표의 누락 여부를 진단할 때 `extract --max-blocks-per-batch 4`를 사용하며, 반복 운용은 `fact_extract.max_blocks_per_batch`에 지정한다. 사실 수 증가를 정확도나 승인으로 간주하지 않는다. 긴 논문에 작은 상한을 일괄 적용하지 않고 실제 처리 시간과 내용 대조 결과를 먼저 확인한다.
+
+검증과 실제 원문 비교 결과는 런북457절에 기록한다. 독립 평가·정규 발행·legacy 전환의 기존 완료 조건은 유지한다.

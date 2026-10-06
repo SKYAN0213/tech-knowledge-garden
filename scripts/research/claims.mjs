@@ -175,6 +175,7 @@ export function extractionBudget({
   call_timeout_ms = 300000,
   extraction_timeout_ms = 900000,
   facts_per_batch = 6,
+  max_blocks_per_batch,
 } = {}) {
   for (const [name, value, minimum, maximum] of [
     ["num_ctx", num_ctx, 4096, 32768],
@@ -186,6 +187,13 @@ export function extractionBudget({
   ])
     if (!Number.isInteger(value) || value < minimum || value > maximum)
       throw Error("Extraction budget out of range: " + name)
+  if (
+    max_blocks_per_batch !== undefined &&
+    (!Number.isInteger(max_blocks_per_batch) ||
+      max_blocks_per_batch < 1 ||
+      max_blocks_per_batch > 128)
+  )
+    throw Error("Extraction budget out of range: max_blocks_per_batch")
   return {
     num_ctx,
     input_char_budget,
@@ -193,6 +201,7 @@ export function extractionBudget({
     call_timeout_ms,
     extraction_timeout_ms,
     facts_per_batch,
+    ...(max_blocks_per_batch === undefined ? {} : { max_blocks_per_batch }),
   }
 }
 
@@ -315,7 +324,8 @@ export function selectExtractionScope(parses, extraction_scope = "full_source") 
 
 export function planExtractionBatches(parses, options = {}) {
   assertParseSet(parses)
-  const { num_ctx, input_char_budget, num_predict, facts_per_batch } = extractionBudget(options)
+  const { num_ctx, input_char_budget, num_predict, facts_per_batch, max_blocks_per_batch } =
+    extractionBudget(options)
   const extractionScope = options.extraction_scope ?? "full_source"
   const scope = selectExtractionScope(parses, extractionScope)
   if (!parses.length) throw Error("Readable parses and supported extraction context required")
@@ -370,13 +380,15 @@ export function planExtractionBatches(parses, options = {}) {
   const limit = input_char_budget
   const requests = []
   const all = requestFor(input)
-  if (chars(all) <= limit) requests.push(all)
+  const blockLimit = max_blocks_per_batch ?? Infinity
+  if (chars(all) <= limit && input.reduce((n, d) => n + d.blocks.length, 0) <= blockLimit)
+    requests.push(all)
   else
     for (const document of input) {
       let section = []
       for (const block of document.blocks) {
         const request = requestFor([{ ...document, blocks: [...section, block] }])
-        if (chars(request) <= limit) section.push(block)
+        if (chars(request) <= limit && section.length < blockLimit) section.push(block)
         else {
           if (!section.length)
             throw Error("Source block exceeds extraction context; reparse explicitly")

@@ -11023,3 +11023,11 @@ source-revision-resolution의 replace_approval에 publication_time_revision_run�
 릴리스 통합 증빙 JSON은 비공개 Drive ID12wBGQvD3JX4PiNlNF3UrweVRKwMs21S6, 911,766bytes, SHAc433153a8273e1c1755537eeafbe622921c9bc186bbfb3afe9de540e60e27395다. 원격 raw 파일과 로컬 bytes·SHA, parent·shared=false를 재확인했다. 증빙은 외장 tkg-daily-core-20261007-v1/publication-time-revision-release-drive-proof-v1.json에 있다. 최신 비공개 진척판 core-progress-checkpoint-20261007-v5.json/html은 WBS 3/22·partial17/not_started2, 새 정규 0/7이다. UI 동작 변경이 없어 브라우저 검사를 반복하지 않았다.
 
 다음 재개 지점은 정확한 시각으로 승인된 후보를 포함할 수 있는 회차의 작성·전달과 기존 자료 재검토다. 10월6일 기존 회차의 마감을 바꾸거나 과거 수정으로 새 RSS 회차를 만들지 않는다. 전체 legacy·전문용어·독립 평가·실제08시·인증·복구·정규7회는 미완료이며 goal active를 유지한다. 추가 모델·원문 HTTP 호출은 0회, 동일 실패를 1시간 이상 반복한 항목은 0이다.
+
+## 457. 정보 밀도가 높은 원문을 나누어 읽는 공통 옵션
+
+`research.mjs extract --run NEW --source-run STORED --model-policy data/research-model-policy.json --max-blocks-per-batch 4`는 저장 원문만 읽는다. 정책 파일의 `roles.fact_extract.max_blocks_per_batch`로 source-processing에도 같은 설정을 전달할 수 있다. 정수1~128만 허용하고 extraction 명령 밖의 CLI 사용을 거부한다. source가 짧아도 블록 상한을 적용하므로 최대6사실이 전체 원문 상한으로 작동하는 문제를 줄이는 데 사용한다. 블록을 잘라내거나 사실을 승인하지 않는다.
+
+기존 문자 예산·64구간·전체/요청 시간 예산과 구간 체크포인트를 재사용한다. 같은 run에서 상한을 바꾸면 입력 불일치로 거부한다. 기본 정책은 변경하지 않았으며 이미 닫힌 승인·원출력·archive를 덮어쓰지 않는다. 짧은 문서와 여러 문서의 순서/무누락/무중복, 정책과CLI/processor 전달, 잘못된 값, 완료 재사용과 변경 거부의 관련101검사 및 processor 추가표적1검사가 통과했다. 전체 로컬 suite는 실행하지 않았다.
+
+실제 비교는 CrowdStrike의 같은 6,516자·23blocks 원문을 사용한다. 원래 모델의6사실/1구간과 이미 검토된13사실을 기준으로 새6구간 결과를 대조하며, 새로운 고유 평가 사례나 independent human gold로 계산하지 않는다. 실행 `crowdstrike-dense-extraction-20261007-v1`과 source selection은 기존 저장 원문에서 만들어졌으며 신규 원문HTTP·유료API·공개 발행은0이다. 최종 사실/조건 대조와 모델 시간·Drive 보관·릴리스 결과는 실행 완료 뒤 기록한다.

@@ -171,6 +171,7 @@ export async function main(argv = process.argv.slice(2)) {
       "call-timeout-ms": { type: "string" },
       "extraction-timeout-ms": { type: "string" },
       "facts-per-batch": { type: "string" },
+      "max-blocks-per-batch": { type: "string" },
       "extraction-scope": { type: "string" },
       "resume-local-budget-ms": { type: "string" },
       "approved-run": { type: "string", multiple: true },
@@ -249,6 +250,7 @@ export async function main(argv = process.argv.slice(2)) {
     "call-timeout-ms",
     "extraction-timeout-ms",
     "facts-per-batch",
+    "max-blocks-per-batch",
   ]
   if (v["retain-previous-parses"] && (command !== "reparse" || !v["source-run"] || v.url?.length))
     throw Error("--retain-previous-parses requires reparse --source-run without --url")

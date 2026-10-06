@@ -27,6 +27,7 @@ const commonFields = [
 const extractionFields = [
   "input_char_budget",
   "facts_per_batch",
+  "max_blocks_per_batch",
   "extraction_timeout_ms",
   "extraction_scope",
 ]
@@ -92,6 +93,7 @@ function roleSettings(role, input) {
         call_timeout_ms: settings.call_timeout_ms,
         input_char_budget: settings.input_char_budget,
         facts_per_batch: settings.facts_per_batch,
+        max_blocks_per_batch: settings.max_blocks_per_batch,
         extraction_timeout_ms: settings.extraction_timeout_ms ?? settings.total_timeout_ms,
       }),
     )

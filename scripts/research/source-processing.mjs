@@ -193,6 +193,7 @@ export async function processSourceRun({
               "num_predict",
               "input_char_budget",
               "facts_per_batch",
+              "max_blocks_per_batch",
               "call_timeout_ms",
               "extraction_timeout_ms",
             ]

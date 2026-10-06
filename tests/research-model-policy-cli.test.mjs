@@ -391,6 +391,25 @@ test("explicit input bounds are validated against the policy context rather than
   assert.equal(ledger.binding.settings.input_char_budget, 45000)
   assert.equal(r.calls.find((x) => x.endpoint === "/api/chat").body.options.num_ctx, 32768)
 })
+
+test("block bounds flow through the policy CLI and pin extraction checkpoint reuse", async (t) => {
+  const f = fixture(t),
+    r = localRuntime(t, factOutput)
+  f.policy.roles.fact_extract.max_blocks_per_batch = 4
+  fs.writeFileSync(f.file, JSON.stringify(f.policy))
+  await main(args(f, "block-bound", ["--max-blocks-per-batch", "2"]))
+  const result = readJSON(f.root, "runs/block-bound/claims.json")
+  assert.equal(result.provenance.extraction_budget.max_blocks_per_batch, 2)
+  await main(args(f, "block-bound", ["--max-blocks-per-batch", "2"]))
+  assert.equal(r.calls.filter((x) => x.endpoint === "/api/chat").length, 1)
+  await assert.rejects(main(args(f, "block-bound", ["--max-blocks-per-batch", "3"])), /changed/)
+  await assert.rejects(main(args(f, "invalid-bound", ["--max-blocks-per-batch", "0"])), /budget/)
+  await assert.rejects(
+    main(["collect", "--run", "unused", "--max-blocks-per-batch", "2"]),
+    /only supported/,
+  )
+  assert.equal(r.calls.filter((x) => x.endpoint === "/api/chat").length, 1)
+})
 test("policy model selection and explicit model overrides are distinct from CLI defaults", async (t) => {
   const f = fixture(t),
     r = localRuntime(t, factOutput)

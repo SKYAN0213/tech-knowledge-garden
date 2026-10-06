@@ -232,10 +232,17 @@ test("processing reuses raw extraction and pauses at explicit fact review withou
 
 test("fresh-source processing invokes extraction then assessment but never auto-verifies", async (t) => {
   const f = fixture(t, { extracted: false })
+  f.policy.roles.fact_extract.max_blocks_per_batch = 4
+  fs.writeFileSync(f.policyFile, JSON.stringify(f.policy))
   const result = await processSourceRun(f.options)
   assert.equal(result.status, "fact_review")
   assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
   assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+  assert.equal(
+    readJSON(f.root, "runs/processed/claims.json").provenance.extraction_budget
+      .max_blocks_per_batch,
+    4,
+  )
 })
 
 test("long-source processing retains all blocks and requires full-context resolution before writing", async (t) => {
