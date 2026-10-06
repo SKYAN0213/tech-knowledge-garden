@@ -5138,3 +5138,12 @@ worker의 opt-in pdf_table_context를 구현했다. 출처 profile의 명시적 
 최종 전달: commit734d95d11a63927af3d79b6a528e92beac9229a3/Actions37547169181 success, Node1093/1093·PDF Python5+3·기존Python15+10+3·build/site/deploy 통과. 실제 HTTPS4asset(reader.js/reader-index.json/knowledge-graph.json/briefing.xml)은 로컬 bytes와 같고 새 회차 없음. private Drive Research1UCS1AlxzY41oVJzu7Ik-eOaFUWKjBQZn의 closure v4는37members/1,256,197bytes/SHA417b0e9222501086b6c40235cc96ff2543b1a05fb9be10d06c14b2e4553e9570이다. 실제 metadata·remote raw SHA·전수복원·registry와 복원본의6사실/과거 gold/새 parse 검증을 완료했다. 원 파싱은 명시적 predecessor custody3파일로 보존했고 전체 runtime/새모델/독립human 완료로 세지 않는다.
 
 첫 v1 패키지는 구 parse를 포함하지 않아 로컬 보존했다. 동일 source version의 bundle v2와 terminal state가 없는 구 수집 run의 acquisition group v3는 각각 기존 경계에서 거부됐다. 조건을 낮추거나 가짜 checkpoint를 만들지 않고 원 predecessor documents/parses/artifact의 실제 bytes·해시를 custody에 추가한 v4를 보관했다. 19.380의 별도 평가 묶음1vh4…는 새 archive의 실제 raw 읽기 성공 뒤 한 번 재확인해도403이므로 그 미완료 판정은 유지한다. checkpoint-v21의 개발27/보류1·active invalid0·human0/40/0/20·WBS3/22와 현재 parser fingerprint 아래 일일55경로 통합 재검증 미완료를 기록했다. 같은 실패1시간 이상 반복한 항목은 없다.
+
+
+## 19.382. 현재 55경로 실행과 빠른 수집 진척 조회
+
+최근 공통 PDF 파서 변경 후 새 native 실행 `daily-20261007-current55-pdf-integration-v1`을 만들었다. 실제 KST10월7일의55경로/110기간 창을 사용하고 이전 완료 기록의 fingerprint를 바꾸지 않는다. 현재 collector fingerprint6216d1b9f67eea1d1b7350e3e48bea23f10173f2977a60abd417c2d8bb5a9177이다. collection-only로 로컬 cutoff를 사용했으며 fresh Drive 작성 원본 대조·새 원고·발행으로 승격하지 않는다.
+
+공통 `research.mjs acquisition-status [--run ID]`는 completed summary를 기다리지 않고 plan·receipt·native stage checkpoint를 읽는다. 정확한 계획/시도/파일명과 frozen plan hash를 확인하고 같은 창의 재시도는 중복 완료로 세지 않는다. 현재 full status에도 daily_acquisition을 포함한다. 전체 평가/승인/과거 원문 감사·HTTP·모델 호출·lock 회복·파일 쓰기를 하지 않는다. 원문 검증/승인/Drive/공개 완료는 false이며, 불완전 근거를 evidence_invalid로 표시한다. global lock에는 run ID가 없으므로 실제 PID 존재 관측을 특정 실행의 확인된 worker로 연결하지 않는다. 기록된 running 단계도 interrupted 여부를 자동 판정하지 않는다.
+
+표적28건 통과(진행 조회 신규7+기존21), stage checkpoint 관측 보강1건 통과. 추가 로컬 전체 검사 없음. 실제 실행 중73/89/103/104창 영수증과 상세 단계 진척을 외장 evidence의 current55-pdf-integration-live-status-v1~v5에 보존했다. 조회0.07~0.26초는 이 실제 환경의 단발 측정이며 성능 보장치가 아니다. 운영 JSON의 추가이고 공개 UI와 비공개 HTML은 변경하지 않았다. 전체WBS3/22·legacy44/430+metadata10·개발27/보류1·독립human0/40/0/20·새 shadow0/7·goal active를 유지한다. 최종 수집/보관/CI 결과는 같은 절에 후속 기록한다.

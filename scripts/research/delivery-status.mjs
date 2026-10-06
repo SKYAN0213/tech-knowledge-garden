@@ -22,6 +22,7 @@ import { safePath } from "./run-state.mjs"
 import { projectVerifiedCandidateContentFingerprints } from "./candidate-content-fingerprint.mjs"
 import { inspectSourceRevisionQueue } from "./source-revision-queue.mjs"
 import { loadDailyProcessingStatus } from "./daily-processing-status.mjs"
+import { loadDailyAcquisitionStatus } from "./daily-acquisition-status.mjs"
 import { loadAuthoringExecutionStatus } from "./authoring-execution.mjs"
 import { loadPublicationOperations } from "./publication-operation.mjs"
 import { auditShadowOperations } from "./shadow-operations.mjs"
@@ -1799,6 +1800,7 @@ export async function buildDeliveryStatus({
       config_sha256,
       activeRoutes.map((route) => route.channel_id),
     ),
+    daily_acquisition: loadDailyAcquisitionStatus(absoluteRoot),
     latest_daily_run: latest
       ? {
           run_id: latest.summary.run_id,

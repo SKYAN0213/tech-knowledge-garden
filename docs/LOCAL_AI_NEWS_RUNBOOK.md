@@ -11298,3 +11298,10 @@ same-source-new-parse는 supersedes를 필수로 요구하고 동일한 document
 source closure v1은 새 parse만 담아 보존했고 동일 source version의 bundle는 중복 경계에서 거부됐다. acquisition group도 구 원문 run에 state.json이 없어 거부됐다. 가짜 state나 입력 해시를 만들지 않았다. 기존 native 원문 검증을 통과한 predecessor-documents/parses/parse-artifact3파일과 별도 custody를 현재 reparse run에 넣어 archive-closure v4를 생성했다. 37members/1,256,197bytes/source_versions1/typed parse_count1이며 구 parse는 명시적 custody 파일에 있다. archive scope를 두 수집 run의 전체 runtime으로 확장하지 않는다.
 
 Drive Research1UCS1AlxzY41oVJzu7Ik-eOaFUWKjBQZn metadata·raw size/parent/shared:false·SHA417b0e9222501086b6c40235cc96ff2543b1a05fb9be10d06c14b2e4553e9570·37파일 remote restore·registry를 완료했다. 복원된 current source와 predecessor custody만으로 두 frozen evaluation case를 구성해 native loader의6사실·원 spec 해시0f573653…·invalid0·과거 superseded 실패1을 확인했다(fanuc-pdf-context-remote-roundtrip-v4.json). 모델/뉴스/독립human/fullruntime false다. 새 archive 읽기 성공이라는 새 근거로 이전 평가 ZIP1vh4…를 한 번 재조회했으나403이므로 미완료를 유지했다(current55-evaluation-closure-raw-recheck-v3.json). 추가 반복 없이 다음 현재55경로 재검증·새 모델 비교·보류 원문 확보·독립 검토를 진행한다. checkpoint-v21은 WBS3/22·개발27/보류1·human0/40/0/20·legacy44/430+metadata10·goal active다.
+
+
+## 475. 실행이 끝나기 전의 수집 진척 조회
+
+`node scripts/research.mjs acquisition-status --run daily-20261007-current55-pdf-integration-v1`로 plan/receipt/checkpoint를 빠르게 읽는다. `--run` 생략 시 최신 계획을 선택하고, full `research status`에도 daily_acquisition이 있다. 완료 summary 없는 실행의55경로/110창, 영수증별 정상/미완료/대기 창, detail 단계 시작 시각과 완료 stage 수를 관측한다. 원문 전체 검증·모델·네트워크·기사 승인·Drive 저장·발행을 실행하지 않는다. raw 검증과 공개 완료를 이 카운터로 대체하지 않는다. global lock의 bound_run은 null이며 running checkpoint가 live worker를 증명하지 않는다. corrupted exact evidence는 invalid로 표시한다.
+
+신규 진행7+기존status21검사28통과, 추가 stage checkpoint1통과. 실제 실행 중 관측73→89→103→104창을 current55-pdf-integration-live-status-v1~v5에 보존했다. 마지막3경로의117/105/103개 complete stage 증가를 읽어 같은 실패 반복과 정상 detail 수집을 구분했다. 현재 native 실행은 collection-only/local_vault_unreconciled이며 fresh Drive 작성 대조나 새 정규 회차로 세지 않는다. 최종 결과는 아래에 추가하고 전체3/22·legacy44/430+metadata10·독립human0/40/0/20·shadow0/7을 유지한다.

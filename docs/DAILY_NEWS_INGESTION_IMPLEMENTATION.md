@@ -172,6 +172,14 @@ Drive 기준 계획을 만들 때는 **실제 연결된 Drive에서 새로 읽�
 
 `python3 scripts/pull-drive.py --snapshot <파일> --verify-source-snapshot`으로 내보내기 범위·본문 해시·10분 시각·로컬 네 폴더의 완전 일치를 다시 확인한다. 이후 `--plan-only` 또는 `--execute`에 `--drive-snapshot <같은 파일>`을 주며 `--resume`에도 같은 파일을 전달한다. `--handoff`는 저장된 계획과 원본을 읽는 단계이며 새 Drive 입력을 받지 않는다. 제공 파일이 없으면 기존 로컬 수집은 계속 가능하지만 Drive 대조로 표시하지 않는다. 현재 보관된 2026-09-13 스냅샷은 오래되어 이 관문을 통과하지 못한다. 08시 실행에 새 내보내기 획득을 연결하기 전까지 이 옵션은 수동 입력 경로다.
 
+실행 중의 빠른 조회는 다음 명령을 사용한다. `--run`을 생략하면 가장 최근에 생성한 계획을 선택한다. 완료 summary가 아직 없는 실행도 계획한 경로·기간 창, 관측한 정상/미완료 영수증, 대기 창, 상세 수집 단계의 체크포인트를 조회한다. 전체 평가·승인·과거 원문 감사를 다시 실행하거나 네트워크·모델을 호출하지 않는다.
+
+```bash
+node scripts/research.mjs acquisition-status --run daily-YYYYMMDD
+```
+
+결과 `research-daily-acquisition-status/v1`은 비공개 관측값이다. 계획 identity와 frozen plan hash, 영수증의 정확한 창/시도/파일명, 체크포인트 identity를 대조하고 같은 창의 재시도는 한 번만 센다. 잘못된 근거는 `evidence_invalid`로 표시하고 완료 수를 반환하지 않는다. 원문 전수 검증·승인·발행을 대신하지 않는다. global acquisition lock에는 run ID가 없으므로 `acquisition_owner.bound_run:null`을 유지하며, 기록된 `running` stage를 살아 있는 worker의 증거로 승격하지 않는다. full `research status`에도 같은 `daily_acquisition` JSON을 포함한다. 기존 비공개 현황 HTML과 공개 독자 UI는 변경하지 않는다.
+
 ### 4.6 2026-09-29 실제 실행과 자료 위치
 
 앞선 `daily-20260929-v3`는 제조사 여섯 경로의 12개 창을 완주한 당시 기록이다. 그 뒤 GitHub Changelog 월별 아카이브를 추가해 `daily-20260929-v4`를 새 계획으로 실행했다. 일곱 활성 경로마다 `[2026-09-22, 2026-09-29)`와 `[2026-09-29, 2026-09-30)` 두 창을 두어 총 14개 창이다. 두 번째 창은 **실행 당시의 당일 관측 스냅샷**이며 완주 receipt가 있어도 확인 범위의 마지막 연속 날짜는 모든 경로에서 `2026-09-29`로 남긴다. 32칸 표는 로봇·제조 3칸과 소프트웨어·클라우드 해외 기술·제품 1칸만 `partial`, 나머지 28칸은 `not_attempted`다. `configured_routes_scanned`는 **설정된 경로의 로컬 수집 성공**이지 전체 취재·발행 성공이 아니다.
