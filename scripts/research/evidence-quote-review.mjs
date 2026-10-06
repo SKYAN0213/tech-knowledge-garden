@@ -705,7 +705,7 @@ export async function reviewEvidenceQuotes({
       claims,
       documents,
       parses,
-      { claimsPerBatch: originalInput.claims_per_batch },
+      { claimsPerBatch: originalInput.claims_per_batch, historicalInput: originalInput },
     )
     const completedLedger = readJSON(root, target + "model-policy/evidence_compare/budget.json")
     create("quote-review-result.json", {

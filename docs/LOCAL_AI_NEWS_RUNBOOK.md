@@ -10615,3 +10615,17 @@ private1280/390 UI와 공개 분야 탭·상세를 실제 확인했다. WebsiteD
 소급승인closure Drive1MCcfuRZgy2qRF_QuQKxuvvOOftO3YNy3의 rawSHA/110파일복원/approval8verified2deferred 동등성 완료. 발행증거 ZIP1MIylN5FFE0OKMCdf7ywOYW4v8mLxHVDZ와 manifest16ziLYILQTIJxEl-XtWVw-jhjeA3EwtGg도 실제raw 대조·v1복원50파일/48자료 SHA 검증 완료. v1복원은 정확한 원격manifest를 --source-manifest로 제공하며 source/runtime closure 완료로 세지 않는다. 잘못된 절대package 경로와 manifest 없는 첫 복원은 성공으로 집계하지 않았다.
 
 새 모델/원문수집0·기본정책변경0·신규정규0/7·전체목표active. 다음은 완료 checkpoint를 재사용하는 독립 소급 기사/논문 검토 및 다음 정규후보의 승인이다. 계획19.340과 외장 daily-roche-historical-delivery-status-v1.html을 확인한다.
+
+## 433. 고정 근거 ID 대조와 Copilot 소급 원고 승인
+
+새 `process-source` 실행은 짧은 원문과 긴 연속 창 모두 `source-evidence-ref/v1`을 사용한다. 모델은 `evidence_ref`만 선택하고 저장 블록의 정확한 인용·parse/block ID는 공통 `assessment-references.mjs`가 해석한다. 전체 블록 문맥과 날짜를 유지하며 3,000 UTF-16자 이내의 연속 span은 손실 없이 이어진다. 참조/claim ID enum, 중복·다른 원문/창·판정 불일치·없는 필수 근거를 거부한다. 기존 semantic/structural 및 명시적 fact/editorial 승인은 유지하고 map/schema/request SHA를 input에 고정한다.
+
+완료된 과거 quote/새 ref checkpoint를 읽는 경로는 당시 코드 SHA를 provenance로 보존하고 실제 source/claims/parses/policy/checkpoint/record는 다시 검증한다. readOnly는 누락 checkpoint를 생성할 수 없다. 현재 코드로 기존 추론 run을 이어 쓰는 것은 계속 거부한다. 기존 quote-only 복구는 원 요청·schema가 완전히 일치하는 명시 replay만 허용한다. 공통3파일 표적 `node --test tests/research-evidence-assessment.test.mjs tests/research-window-evidence.test.mjs tests/research-source-processing.test.mjs`는96/96이다. 긴 창은 단독 지원 판정을 전체 원문 지원으로 승격하지 않는다.
+
+저장된 GitHub 8공지는 서로 다른 사건이다. 7월10일 legacy 구간에 임의로 하나의 후보 ID를 부여한 요청은 즉시 거부됐다. 개별 원문으로 나눴다. 저장소 개요 원고는 실패2배치의 아포스트로피만 직접 복원해4사실을 검토했으며 기존 완료 배치를 다시 호출하지 않았다. writer51.754초 이후 자동 생성/사용자 완료·회사 귀속·리드 반복을 정정했다. 최종 사건c1b395091566575d·7/9 발표·2문장157자·설명1문단이다.
+
+기기 관리 설정 공지 `legacy-20260710-copilot-mdm-processing-20261006-v1`은 실제 Qwen3.8:27b-mlx로 추출6사실과 medium 대조2배치를 수행했다. 대조101.543/121.205초의 raw9근거는 ref 형식이며 인용 교정/재호출0이다. 추출의 Windows 경로 구분자 누락은 structural guard가 잡았다. 모델은 이를 지지했지만 직접 사실 검토는 정확한 원문 경로로 정정했다. 설정 우선순위의 통째 적용, 기기에서 읽는 설정의 로그인 독립 적용을 원문으로 확인해6verified다. writer는 경로 구분자를 다시 누락했으므로 독자 원고는 불필요한 경로 설명을 빼고 배포 도구·적용·우선순위2설명 문단으로 정리했다. 원출력과 정정은 모두 보존했다. 최종 사건8380dfc46fdb5389·2문장169자이며 PDT7/8과 KST7/9를 함께 표시한다. 첫 승인에는 날짜 근거가 없었고 두 번째에는 리드의 KST 날짜가 없어 거부됐으며, 기존 source-publication-time 계약과 정확한 timestamp를 연결한 v3 승인이 통과했다. 관문을 완화하지 않았다.
+
+두 승인 closure를 private Drive Research에 보관하고 원격 raw SHA·전체 복원·loadCurrentApproval/원 fact-review packet 동등성을 확인했다. 개요 ZIP19gM9YHDzVdwVVskTihoIhUwm3l24_bth:179자료/181members/2,031,713bytes·SHA79361cdcfa27076fc8750c0834a9ffb1d2fe34756abb29a6710a489b600d836f·4verified. 설정 ZIP1Ig-A9LN8S8k98I_DE-LOh1ef8K8yLDlq:159자료/161members/2,010,408bytes·SHA5b2132a2c32ba3d85ee22da0a6c6c1cd4e65fe54a7d336ef66761cfc58984339·6verified. 각각 승인6파일·packet·기사 내용이 복원본과 동일하다. streamed 다운로드1회403은 기록하고 기존 bounded raw connector로 실제 원격 bytes를 조회했다. 승인 전 생성된 MDM archive-v1은 private 실패 증거이며 최종 승인 보관은v2다.
+
+새 원문 HTTP0·승인 기사2건·독자 회차 변경0·새 일반 용어/지도 노드0이다. 같은 실패를1시간 반복한 항목은 없다. 계획19.341의 수직 슬라이스는 완료했지만 전체 목표/WBS2/22·legacy47/454·metadata10·독립human40/20·08시/인증/중단/fullruntime·신규 정규0/7은 미완료다. 다음은 Vercel7.0.19 및 남은 Copilot 개별 공지·논문을 재사용해7월10일 회차의 모든15구간 판정을 끝내는 것이다. 부분 승인2개로 회차 전체 검토를 완료 처리하지 않는다.

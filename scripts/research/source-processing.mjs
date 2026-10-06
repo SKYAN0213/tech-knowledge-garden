@@ -143,6 +143,7 @@ export async function processSourceRun({
           "claims.mjs",
           "evidence-assessment.mjs",
           "window-evidence-assessment.mjs",
+          "assessment-references.mjs",
           "source-context.mjs",
           "draft-checkpoint.mjs",
           "editor.mjs",

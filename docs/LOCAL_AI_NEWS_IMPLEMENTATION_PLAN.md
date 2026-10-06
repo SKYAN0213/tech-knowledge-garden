@@ -4621,3 +4621,13 @@ WebsiteData는 실제 배포본362페이지·182기사·25용어·22관계다. �
 증거는 외장 `tkg-daily-core-20261006-v1`의 roche-publication-preservation-v1.json, roche-public-readback-result-v1.json, roche-website-data-proof-v1.json, roche-historical-approval-restored-proof-v2.json, roche-historical-delivery-restore-proof-v1.json이다. 최신 private 진행 화면은 daily-roche-historical-delivery-status-v1.html이며 한 번 생성한 JSON으로 렌더했다.
 
 전체 목표는 active다. WBS2/22·legacy47회차454구간/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규 정규0/7은 미완료다. 같은 실패를1시간 반복한 항목은 없다. 다음은 이미 수집된 최근 소급 회차의 독립 기사·논문 검토와 다음 정규 후보의 실제 조사/승인이다. HD10월6일12:05 발표는 다음 정규후보로 유지하고 완료 수집·모델 결과를 반복 실행하지 않는다.
+
+## 19.341. 근거 ID 선택으로 반복 인용 교정 제거
+
+다음 수직 슬라이스는 근거 대조의 자유 인용문 출력을 고정 근거 ID 선택으로 전환한다. 짧은 전체 원문과 긴 연속 창이 동일한 공통 매핑을 사용한다. 원문 블록을 손실 없이 제공하고 선택한 ID를 저장된 정확한 인용으로 해석하며, 의미·주체·수치·시점·귀속 판정과 명시적 사실/편집 승인은 유지한다. 알 수 없는 ID, 다른 원문/창의 근거, 중복과 누락 판정은 거부한다. 자료 수집·추출·완료 배치를 반복하지 않는다.
+
+기존 자유 인용 checkpoint는 그대로 보존한다. 읽기 전용 재검증은 당시 코드 지문을 역사적 provenance로 보존하되 실제 원문 bytes·claims·parses·정책·input/raw/record SHA를 재확인한다. 현재 실행의 코드 지문이 달라진 run에 추론을 덧붙이지 않는다. 기존 명시적 인용 교정은 원 요청이 완전히 일치하는 재생 경로로만 유지한다. 새 실행에는 버전 표시와 매핑/응답 schema hash를 고정한다.
+
+완료 조건: 짧은/긴 원문의 실제 처리 경로 적용, 위조/창 밖/동명이인/판정 불일치 거부 및 과거 checkpoint 재사용의 표적 검사, 실제 저장 원문 1건의 로컬 모델 대조·명시 검토·작성, private Drive 근거 보관과 재읽기. 이 묶음은 전체 소급 검토·human gold·7회 정규 운영을 대체하지 않는다. 독자 원고·주소·RSS·예약·기본 모델 설정 변경은 없다.
+
+19.341 구현/실제 검증 완료: 새 source processor의 짧은/긴 경로에 근거 ref를 적용했고 표적96/96을 확인했다. MDM 실제 Qwen 대조2배치·ref9개는 인용 교정0이며 추출 literal 오류는 structural/explicit review로 계속 차단했다. 과거 개요 대조·추출 재사용 후2원고를 승인했고 Drive 원격 ZIP/복원/기사·승인·packet 동등성을 확인했다. 상세는 런북433절이다. 전체 소급 회차 판정과 정규 운영 관문은 계속 미완료다. 원문 수집/완료 배치 재실행0이며 로컬 전체 suite는 반복하지 않았다.

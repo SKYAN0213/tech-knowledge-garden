@@ -4,6 +4,13 @@ import { validateEvidence } from "./claims.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { modelSourceDates } from "./source-context.mjs"
+import {
+  assessmentReferences,
+  historicalAssessmentInput,
+  QUOTE_PROTOCOL,
+  REFERENCE_PROTOCOL,
+  referenceInstruction,
+} from "./assessment-references.mjs"
 
 const outcomes = ["supported", "contradicted", "insufficient"]
 const dimensions = ["meaning", "identity", "numbers", "time", "attribution"]
@@ -114,7 +121,7 @@ export async function assessEvidenceCheckpoint(
   claims,
   documents,
   parses,
-  { claimsPerBatch = 3 } = {},
+  { claimsPerBatch = 3, responseProtocol = QUOTE_PROTOCOL, readOnly = false, historicalInput } = {},
 ) {
   if (!/^[A-Za-z0-9_-]+$/.test(run || "") || !Array.isArray(claims) || !claims.length)
     throw Error("Exact assessment run and candidate claims required")
@@ -143,21 +150,32 @@ export async function assessEvidenceCheckpoint(
   for (let offset = 0; offset < candidates.length; offset += claimsPerBatch) {
     const selected = candidates.slice(offset, offset + claimsPerBatch)
     const context = selectedParses(selected, documents, parses)
+    const references = assessmentReferences(context, assessmentSchema, responseProtocol, selected)
     const messages = [
-      { role: "system", content: system },
+      {
+        role: "system",
+        content:
+          responseProtocol === REFERENCE_PROTOCOL
+            ? system.replace(
+                "Include exact source block quotes supporting your judgment; supported or contradicted requires at least one quote.",
+                referenceInstruction,
+              )
+            : system,
+      },
       // Identical source blocks form a reusable prompt prefix across batches.
-      { role: "user", content: JSON.stringify({ sources: context, claims: selected }) },
+      { role: "user", content: JSON.stringify({ sources: references.sources, claims: selected }) },
     ]
     if (
-      JSON.stringify(assessmentSchema).length + messages.reduce((n, m) => n + m.content.length, 0) >
+      JSON.stringify(references.schema).length +
+        messages.reduce((n, m) => n + m.content.length, 0) >
       settings.num_ctx * 2
     )
       throw Error(
         "Full source assessment exceeds context budget; explicitly select a smaller source event",
       )
-    batches.push({ claims: selected, messages })
+    batches.push({ claims: selected, messages, references })
   }
-  const input = {
+  let input = {
     schema: "research-evidence-assessment-input/v1",
     claims_per_batch: claimsPerBatch,
     claims_sha256: sha256(JSON.stringify(claims)),
@@ -171,12 +189,30 @@ export async function assessEvidenceCheckpoint(
     source_context_sha256: sha256(
       fs.readFileSync(new URL("./source-context.mjs", import.meta.url)),
     ),
+    ...(responseProtocol === REFERENCE_PROTOCOL
+      ? {
+          response_protocol: responseProtocol,
+          references_sha256: sha256(
+            fs.readFileSync(new URL("./assessment-references.mjs", import.meta.url)),
+          ),
+          batches: batches.map((b) => ({
+            catalog_sha256: b.references.catalog_sha256,
+            schema_sha256: b.references.schema_sha256,
+            request_sha256: sha256(JSON.stringify(b.messages)),
+          })),
+        }
+      : {}),
   }
   const base = `runs/${run}/evidence-assessment/`
   const previous = readJSON(root, base + "input.json")
+  if (readOnly || historicalInput)
+    input = historicalAssessmentInput(input, historicalInput || previous)
   if (previous && JSON.stringify(previous) !== JSON.stringify(input))
     throw Error("Evidence assessment input changed; use a new run")
-  if (!previous) atomicCreate(root, base + "input.json", input)
+  if (!previous) {
+    if (readOnly) throw Error("Frozen assessment input required")
+    atomicCreate(root, base + "input.json", input)
+  }
   const assessments = []
   let generated = 0
   for (const [index, batch] of batches.entries()) {
@@ -192,23 +228,24 @@ export async function assessEvidenceCheckpoint(
       )
         throw Error("Evidence assessment checkpoint changed")
     } else {
+      if (readOnly) throw Error("Missing assessment checkpoint; compare evidence first")
       if (raw) throw Error("Unfinished assessment output; inspect it and use a new run")
       raw = await provider.structured({
         model: settings.model,
         messages: batch.messages,
-        schema: assessmentSchema,
+        schema: batch.references.schema,
       })
       // Preserve invalid model outputs too, rather than silently regenerating.
       const stored = atomicCreate(root, rawPath, raw)
-      validateAssessment(raw.output, batch.claims, parses)
+      validateAssessment(batch.references.resolve(raw.output), batch.claims, parses)
       atomicCreate(root, checkpointPath, {
         input_sha256: sha256(JSON.stringify(input)),
         output_sha256: stored.sha256,
       })
       generated++
     }
-    validateAssessment(raw.output, batch.claims, parses)
-    for (const row of raw.output.assessments) {
+    const resolved = validateAssessment(batch.references.resolve(raw.output), batch.claims, parses)
+    for (const row of resolved.assessments) {
       const claim = claims.find((candidate) => candidate.claim_id === row.claim_id)
       const structural = validateEvidence(claim, parses)
       assessments.push({
@@ -234,6 +271,9 @@ export async function assessEvidenceCheckpoint(
   const current = readJSON(root, finalPath)
   if (current && JSON.stringify(current) !== JSON.stringify(record))
     throw Error("Stored evidence assessment differs from its checkpoints")
-  if (!current) atomicCreate(root, finalPath, record)
+  if (!current) {
+    if (readOnly) throw Error("Completed bound evidence assessment required")
+    atomicCreate(root, finalPath, record)
+  }
   return { record, generated_batches: generated, reused_batches: batches.length - generated }
 }

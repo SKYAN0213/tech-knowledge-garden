@@ -70,6 +70,8 @@ export async function loadBoundAssessment(root, run, claims, documents, parses) 
       : assessEvidenceCheckpoint
   const result = await assess(root, run, provider, claims, documents, parses, {
     claimsPerBatch: input.claims_per_batch,
+    responseProtocol: input.response_protocol || "verbatim-quote/v1",
+    readOnly: true,
   })
   if (result.generated_batches !== 0) throw Error("Assessment reader cannot generate results")
   return result.record

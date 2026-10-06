@@ -8,6 +8,10 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { assessEvidenceCheckpoint } from "../scripts/research/evidence-assessment.mjs"
 import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
+import {
+  assessmentReferences,
+  REFERENCE_PROTOCOL,
+} from "../scripts/research/assessment-references.mjs"
 
 function fixture(t, { text = "Example announced plans to ship 50 units in 2027." } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "evidence-assess-")))
@@ -90,6 +94,14 @@ function fixture(t, { text = "Example announced plans to ship 50 units in 2027."
           assessments: supplied.claims.map((c) => ({
             ...structuredClone(row),
             claim_id: row.claim_id === "c1" ? c.claim_id : row.claim_id,
+            ...(request.schema.properties.assessments.items.properties.evidence.items.properties
+              .evidence_ref
+              ? {
+                  evidence: [
+                    { evidence_ref: supplied.sources[0].blocks[0].evidence_refs[0].evidence_ref },
+                  ],
+                }
+              : {}),
           })),
         },
         provenance: { model: "test fixture" },
@@ -108,6 +120,191 @@ function fixture(t, { text = "Example announced plans to ship 50 units in 2027."
 }
 const run = (f, id = "assessment") =>
   assessEvidenceCheckpoint(f.root, id, f.provider, f.claims, f.documents, f.parses)
+
+const referenceRun = (f, id = "referenced", options = {}) =>
+  assessEvidenceCheckpoint(f.root, id, f.provider, f.claims, f.documents, f.parses, {
+    responseProtocol: REFERENCE_PROTOCOL,
+    ...options,
+  })
+
+test("reference output resolves exact source typography and reuses immutable model response", async (t) => {
+  const f = fixture(t, { text: "Example’s ‘plans’ are to ship 50 units in 2027." })
+  const first = await referenceRun(f)
+  assert.deepEqual(first.record.assessments[0].evidence, f.row.evidence)
+  const raw = readJSON(f.root, "runs/referenced/evidence-assessment/batch-1.json")
+  assert.deepEqual(raw.output.assessments[0].evidence, [{ evidence_ref: "e1" }])
+  const input = readJSON(f.root, "runs/referenced/evidence-assessment/input.json")
+  assert.equal(input.response_protocol, REFERENCE_PROTOCOL)
+  assert.match(input.batches[0].catalog_sha256, /^[a-f0-9]{64}$/)
+  const second = await referenceRun(f)
+  assert.equal(second.reused_batches, 1)
+  assert.equal(f.calls(), 1)
+  assert.equal(first.record.public_approved, false)
+  assert.equal(f.claims[0].review.status, "unreviewed")
+})
+
+for (const [name, change] of [
+  [
+    "unknown reference",
+    (row) => {
+      row.evidence[0].evidence_ref = "e999999"
+    },
+  ],
+  [
+    "duplicate reference",
+    (row) => {
+      row.evidence.push({ ...row.evidence[0] })
+    },
+  ],
+  [
+    "invented quote field",
+    (row) => {
+      row.evidence[0].quote = "invented"
+    },
+  ],
+  [
+    "incorrect verdict",
+    (row) => {
+      row.checks.time = "contradicted"
+    },
+  ],
+  [
+    "missing required evidence",
+    (row) => {
+      row.evidence = []
+    },
+  ],
+])
+  test(`reference contract rejects ${name} without retry or approval`, async (t) => {
+    const f = fixture(t),
+      generate = f.provider.structured
+    f.provider.structured = async function (request) {
+      const raw = await generate.call(this, request)
+      change(raw.output.assessments[0])
+      return raw
+    }
+    await assert.rejects(() => referenceRun(f))
+    assert.ok(readJSON(f.root, "runs/referenced/evidence-assessment/batch-1.json"))
+    assert.equal(readJSON(f.root, "runs/referenced/evidence-assessment/assessment.json"), null)
+    await assert.rejects(() => referenceRun(f), /Unfinished assessment/)
+    assert.equal(f.calls(), 1)
+  })
+
+test("historical read validates sealed checkpoint across code changes without inference", async (t) => {
+  const f = fixture(t)
+  await run(f)
+  const base = "runs/assessment/evidence-assessment/"
+  const input = readJSON(f.root, base + "input.json")
+  input.implementation_sha256 = "f".repeat(64)
+  atomicWrite(f.root, base + "input.json", input)
+  const checkpoint = readJSON(f.root, base + "batch-1-checkpoint.json")
+  checkpoint.input_sha256 = sha256(JSON.stringify(input))
+  atomicWrite(f.root, base + "batch-1-checkpoint.json", checkpoint)
+  const record = readJSON(f.root, base + "assessment.json")
+  record.input_sha256 = checkpoint.input_sha256
+  atomicWrite(f.root, base + "assessment.json", record)
+  const payload = {
+    schema: "model-budget/v2",
+    binding: f.provider.executionPolicy,
+    attempts: [],
+    extensions: [],
+  }
+  atomicWrite(f.root, "runs/assessment/model-policy/evidence_compare/budget.json", {
+    ...payload,
+    sha256: sha256(JSON.stringify(payload)),
+  })
+  assert.deepEqual(
+    await loadBoundAssessment(f.root, "assessment", f.claims, f.documents, f.parses),
+    record,
+  )
+  assert.equal(f.calls(), 1)
+  await assert.rejects(() => run(f), /input changed/)
+  f.claims[0].statement = "Example has shipped the units."
+  await assert.rejects(
+    () => loadBoundAssessment(f.root, "assessment", f.claims, f.documents, f.parses),
+    /Historical assessment/,
+  )
+  f.claims[0].statement = f.parses[0].blocks[0].text
+  fs.unlinkSync(path.join(f.root, base + "batch-1-checkpoint.json"))
+  await assert.rejects(
+    () => loadBoundAssessment(f.root, "assessment", f.claims, f.documents, f.parses),
+    /Missing assessment checkpoint/,
+  )
+  assert.equal(f.calls(), 1)
+})
+
+test("a known reference belonging to another claim source is rejected", async (t) => {
+  const f = fixture(t),
+    p = structuredClone(f.parses[0]),
+    d = structuredClone(f.documents[0])
+  d.source_id = sourceId("https://example.org/another")
+  d.source_version_id = `${d.source_id}:${d.body_sha256}`
+  d.original_url = "https://example.org/another"
+  d.body_path = "source/another.bin"
+  p.parse_id = sha256("another-parse")
+  p.source_id = d.source_id
+  p.source_version_id = d.source_version_id
+  p.blocks[0].block_id = `${p.parse_id}:b1`
+  atomicWrite(f.root, d.body_path, p.blocks[0].text)
+  atomicWrite(f.root, `parses/${p.parse_id}/parse.json`, p)
+  f.documents.push(d)
+  f.parses.push(p)
+  const claim = structuredClone(f.claims[0])
+  claim.claim_id = "c2"
+  Object.assign(claim.evidence[0], {
+    source_id: d.source_id,
+    source_version_id: d.source_version_id,
+    parse_id: p.parse_id,
+    block_id: p.blocks[0].block_id,
+  })
+  f.claims.push(claim)
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const raw = await generate.call(this, request)
+    raw.output.assessments[0].evidence = [{ evidence_ref: "e2" }]
+    return raw
+  }
+  await assert.rejects(() => referenceRun(f), /exact stored source block/)
+  assert.equal(f.calls(), 1)
+})
+
+test("long repeated Unicode blocks keep every character and bounded exact spans", () => {
+  const text = "a".repeat(2999) + "🤖" + "b".repeat(3000) + "b".repeat(3000)
+  const quoteSchema = {
+    type: "object",
+    properties: {
+      assessments: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            claim_id: { type: "string" },
+            evidence: { type: "array", items: { type: "object" } },
+          },
+        },
+      },
+    },
+  }
+  const refs = assessmentReferences(
+    [{ parse_id: "p", blocks: [{ block_id: "b", text }] }],
+    quoteSchema,
+    REFERENCE_PROTOCOL,
+  )
+  assert.equal(refs.sources[0].blocks[0].text, text)
+  const resolved = refs.resolve({
+    assessments: [
+      {
+        claim_id: "c",
+        evidence: refs.sources[0].blocks[0].evidence_refs.map(({ evidence_ref }) => ({
+          evidence_ref,
+        })),
+      },
+    ],
+  })
+  const quotes = resolved.assessments[0].evidence.map((e) => e.quote)
+  assert.equal(quotes.join(""), text)
+  assert.ok(quotes.every((q) => q.length <= 3000 && !/^[\uDC00-\uDFFF]|[\uD800-\uDBFF]$/.test(q)))
+})
 
 test("assessment preserves candidate approval, full source context and cached output", async (t) => {
   const f = fixture(t)

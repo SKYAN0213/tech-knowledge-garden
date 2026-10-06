@@ -12,6 +12,7 @@ import {
 } from "../scripts/research/window-evidence-assessment.mjs"
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
+import { REFERENCE_PROTOCOL } from "../scripts/research/assessment-references.mjs"
 
 function fixture(t, { article = false } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "window-evidence-")))
@@ -157,6 +158,50 @@ function fixture(t, { article = false } = {}) {
 }
 const run = (f, id = "windowed") =>
   assessWindowEvidenceCheckpoint(f.root, id, f.provider, f.claims, f.documents, f.parses)
+
+test("bounded references retain full context and resolve only the supplied window", async (t) => {
+  const f = fixture(t),
+    generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const raw = await generate.call(this, request)
+    const data = JSON.parse(request.messages[1].content)
+    for (const row of raw.output.assessments)
+      row.evidence = [{ evidence_ref: data.sources[0].blocks[0].evidence_refs[0].evidence_ref }]
+    return raw
+  }
+  const options = { responseProtocol: REFERENCE_PROTOCOL }
+  const result = await assessWindowEvidenceCheckpoint(
+    f.root,
+    "refs",
+    f.provider,
+    f.claims,
+    f.documents,
+    f.parses,
+    options,
+  )
+  assert.ok(result.generated_batches > 1)
+  const input = readJSON(f.root, "runs/refs/evidence-assessment/input.json")
+  assert.equal(input.response_protocol, REFERENCE_PROTOCOL)
+  for (const row of result.record.assessments[0].window_assessments) {
+    const supplied = JSON.parse(f.requests[row.batch - 1].messages[1].content)
+    const block = supplied.sources[0].blocks[0]
+    assert.equal(row.evidence[0].block_id, block.block_id)
+    assert.equal(row.evidence[0].quote, block.text.slice(0, 3000))
+  }
+  assert.equal(result.record.assessments[0].requires_attention, true)
+  assert.equal(result.record.public_approved, false)
+  const again = await assessWindowEvidenceCheckpoint(
+    f.root,
+    "refs",
+    f.provider,
+    f.claims,
+    f.documents,
+    f.parses,
+    options,
+  )
+  assert.equal(again.generated_batches, 0)
+  assert.equal(f.calls(), result.generated_batches)
+})
 
 test("every source block is retained in order for each bounded claim group", (t) => {
   const f = fixture(t),

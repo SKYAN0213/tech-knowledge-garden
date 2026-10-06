@@ -161,7 +161,7 @@ function fixture(
               attribution: "supported",
             },
             explanation: "원문은 출하 계획을 명시한다.",
-            evidence: [{ parse_id, block_id: parse.blocks[0].block_id, quote: text }],
+            evidence: [{ evidence_ref: data.sources[0].blocks[0].evidence_refs[0].evidence_ref }],
           })),
         }
       } else if (role === "article_write") {
@@ -268,7 +268,7 @@ test("long-source processing retains all blocks and requires full-context resolu
     if (this.executionPolicy.role === "evidence_compare") {
       const data = JSON.parse(request.messages[1].content)
       for (const row of response.output.assessments)
-        row.evidence[0].block_id = data.sources[0].blocks[0].block_id
+        row.evidence[0].evidence_ref = data.sources[0].blocks[0].evidence_refs[0].evidence_ref
     }
     return response
   }
