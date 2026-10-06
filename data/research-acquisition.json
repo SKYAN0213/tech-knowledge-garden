@@ -618,7 +618,7 @@
       "options": {
         "language": "en",
         "title_xpath": "//sirius-heading//h1",
-        "content_xpath": "//sirius-section[@class='text sir-default'] | //article[contains(concat(' ',normalize-space(@class),' '),' feature ')]",
+        "content_xpath": "//sirius-section[contains(concat(' ',normalize-space(@class),' '),' text ') and (contains(concat(' ',normalize-space(@class),' '),' sir-default ') or contains(concat(' ',normalize-space(@class),' '),' is-default '))] | //article[contains(concat(' ',normalize-space(@class),' '),' feature ')]",
         "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//table",
         "publication_date_xpath": "//time[contains(concat(' ',normalize-space(@class),' '),' sir-date ')]",
         "publication_date_pattern": "[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}",
@@ -2998,7 +2998,7 @@
           "item_xpath": "//li[p[contains(concat(' ',normalize-space(@class),' '),' subject ')]]",
           "url_value_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' subject ')]/a/@href",
           "url_pattern": "(?P<url>/kor/article/ATCL87374b48c/[0-9]+)",
-          "title_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' subject ')]/a",
+          "title_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' subject ')]/a//text()[not(ancestor::span[contains(concat(' ',normalize-space(@class),' '),' new ')])]",
           "date_xpath": ".//p[contains(concat(' ',normalize-space(@class),' '),' date ')]/text()[last()]",
           "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
           "date_format": "%Y-%m-%d"

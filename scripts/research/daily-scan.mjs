@@ -74,6 +74,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/run-state.mjs",
     "scripts/research/scan-completion.mjs",
     "scripts/research/scan-evidence.mjs",
+    "scripts/research/supporting-sources.mjs",
     "scripts/research/candidate-source-alternative.mjs",
     "scripts/research/legacy-candidate-approval.mjs",
     "scripts/research/source-policy.mjs",

@@ -4749,3 +4749,15 @@ NACHI 실적 목록102건 중10월5일 본문·보충PDF를 후보1건으로 수
 관련Node4파일43검사·Python4검사 통과, formatting/diff 검증 완료다. 전체 로컬suite와 모델 호출은0이다. 소스3판본/parse3·26manifest파일/28ZIP members를 Research Drive에 보관했고 실제927,899bytes/SHA c3ae3be75537cc072cc7774f98e99b7de20d465f44926116f0d54c166ebf8d42를 재다운로드·전수 복원했다. 복원 원문에서 목록 관계·PDF2개/241blocks를 다시 검증했다. Drive ID13HUUN3vX_ezJ0Bc2gtu5VyyUqxB-ah1P이며 일일 운영 상태를 자동 복구한 것으로 보고하지 않는다.
 
 런북444 및 외장 core-progress-checkpoint-20261006-v5가 현재 증거다. 코드 릴리스 CI/공개 보존 readback은 별도로 기록한다. 전체goal active/WBS2/22·legacy47회차454구간/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규정규0/7은 남는다. 소급 발행의 선정 분리 결정은 pending이며 공개 형식과 원고를 바꾸지 않았다. 같은 실패1시간 반복0이다. 다음 묶음은 공통 IR 상세 프로필의 판본 범위를 넓히거나 미완료 공시 경로를 정상/빈 창까지 연결하는 것이다. 확인 없는 URL/발표일 추정·완료 추론 재실행은 하지 않는다.
+
+## 19.352. 전체55경로 실수집과 고정 입력·본문 차이 복구
+
+현재55경로110창을 실제 실행해105창/50경로를 완료하고5창/5경로의 실패를 보존했다(531,913ms). 원고 승인·정규 운영으로 계산하지 않는다. 기존 장부와 합친 handoff의841 pending은 새 사건 수가 아니며 이번 exact 수집 후보 키292개/observed pending285를 구분한다. 결과는 local_vault_unreconciled 수집이며 Drive 작성원본 최신 조회나 전체 원문 원격 보관 완료가 아니다.
+
+19.351 릴리스 CI는 Node996/997에서 collection-boundary1검사 실패로 배포하지 않았다. 새 supporting-sources.mjs는 scan basis에 있었지만 dailySourcePaths에 빠졌다. 실제 일일 고정 입력/복구 스냅샷에도 영향을 주므로 운영 목록과 해당 회귀 검사를 함께 수정했다. 무작정 CI를 재실행하거나 fixture만 완화하지 않았다.
+
+UR의 text sir-default→text is-default 본문 클래스 변경과 KARI 목록의 span.new 배지를 저장 원문에서 확인했다. 기존 공통 XPath 프로필에 확인한 두 클래스를 유지하고 KARI의 특정 배지만 제목 선택에서 제외했다. 본문의 일반 new 단어·원 제목·native 날짜·raw 판본은 유지하며 제목 충돌 guard를 완화하지 않는다. 코드 묶음 뒤 실패Node1개와 새Python2개만 검증해 통과했다. 실행 중인 worker가 끝난 뒤 런타임 파일을 수정했다.
+
+정상 전체 수집을 반복하지 않고 UR·KARI·NACHI3경로6창만 새 설정으로 실행해 모두 완료했다. 실제 handoff에서 UR10월1일/6blocks, KARI10월6일/1block, NACHI2PDF/241blocks를 정확하게 선택했고 새 공통 모듈이 frozen inputs에 포함됨을 확인했다. KARI본문1block은 확보 범위이며 전문 기사 설명·첨부 검토 승인으로 승격하지 않는다. UR URL의 trailing slash 정규화 후보 키는source-f586fded0ef45a99dbbe이며 raw source ID b37c512fcff4b5ed4b1a와 구분한다.
+
+KISA cutoff_not_reached·전자신문 archive_cutoff_not_reached·디일렉 archive_article_date_missing_or_conflict를 다음 공통 페이지/날짜 resolver 묶음으로 남겼다. 같은 입력 재시도0·같은 실패1시간 반복0이다. 전체WBS2/22·legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규정규0/7·선정 분리 pending은 유지한다. 실제 archive/release 근거와 다음 명령은 런북445다.

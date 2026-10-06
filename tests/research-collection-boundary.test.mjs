@@ -78,6 +78,7 @@ test("collection evidence ignores editorial/archive commands and still binds col
     "scripts/research-scan.mjs",
     "scripts/research/list-scan-command.mjs",
     "scripts/research/parser.mjs",
+    "scripts/research/supporting-sources.mjs",
     "integrations/research-worker/worker.py",
   ]) {
     assert.ok(dailySourcePaths().includes(file))

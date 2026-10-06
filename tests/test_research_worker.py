@@ -16,6 +16,37 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_kari_listing_omits_only_the_new_badge_from_the_title(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = config["kari-space-press-ko"]["parse_options"]
+        raw = '''<html lang="ko"><head><title>Press releases</title></head><body><div class="notice_list"><ul>
+        <li><p class="subject"><a href="/kor/article/ATCL87374b48c/18726" class="new"><strong>누리호 5호기, 발사대로 이송 시작<span class="new">new</span></strong></a></p><p class="date">2026-10-06</p></li>
+        <li><p class="subject"><a href="/kor/article/ATCL87374b48c/18725">A new technology report</a></p><p class="date">2026-09-30</p></li>
+        </ul></div></body></html>'''
+        parsed = self.invoke(raw.encode(), options, url="https://www.kari.re.kr/kor/article/ATCL87374b48c?pageIndex=1")["result"]
+        links = [l for l in parsed["links"] if l.get("profile_id")]
+        self.assertEqual(links[0]["text"], "누리호 5호기, 발사대로 이송 시작")
+        self.assertEqual(links[0]["published_at"], "2026-10-06")
+        self.assertEqual(links[1]["text"], "A new technology report")
+        self.assertTrue(links[0]["url"].endswith("/18726"))
+
+    def test_universal_robots_news_retains_both_reviewed_section_layouts(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "universal-robots-news-center-article")
+        for layout in ("sir-default", "is-default"):
+            raw = f'''<html lang="en"><head><title>Legal dispute resolved</title></head><body><main>
+            <sirius-section class="text-header {layout}"><sirius-heading><h1>Legal dispute resolved</h1></sirius-heading></sirius-section>
+            <sirius-section class="article-info-bar {layout}"><time class="sir-date">October 1, 2026</time></sirius-section>
+            <sirius-section class="text {layout}"><p>Teradyne Robotics and Elite Robots resolved their legal dispute by mutual agreement.</p><p>The terms are confidential and the settlement does not constitute an admission of liability.</p></sirius-section>
+            <sirius-section class="author {layout}"><p>Author profile is outside the article.</p></sirius-section></main></body></html>'''
+            parsed = self.invoke(raw.encode(), options)["result"]
+            self.assertEqual(parsed["status"], "extracted")
+            self.assertEqual(parsed["dates"]["published_at"], "2026-10-01")
+            self.assertEqual(len(parsed["blocks"]), 2)
+            self.assertNotIn("Author profile", " ".join(b["text"] for b in parsed["blocks"]))
+            ambiguous = raw.replace('</main>', f'<sirius-section class="text {layout}"><p>Another article body.</p></sirius-section></main>')
+            self.assertEqual(self.invoke(ambiguous.encode(), options)["worker_status"], "failed")
+
     def complete_index_fixture(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = config["nachi-financial-results-ja"]["parse_options"]
