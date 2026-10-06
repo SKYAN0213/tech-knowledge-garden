@@ -11262,3 +11262,9 @@ parser recovery 입력·원고/요약·preview 검증과17호출ledger 등18실�
 운영 증거 source run `daily-20261007-seven-article-delivery-evidence-v2`를 기존 archive-closure에 전달했다. `daily-20261007-seven-article-delivery-closure-v2`는107members/4,120,393bytes/SHA87095c13f983baff0124476c0cc46a3d623869b6928f5240449cb798298e8364, Drive private Research1_k_ec62nZL9o8RM2jOTZh8JH-w3Mij8f다. 실제 raw ZIP·shared=false/부모/크기 확인,107파일 전체복원·registry를 완료했다. source_versions0의 운영 증거이며 전체 런타임 또는 기사 원문 복구로 세지 않는다. 첫 부분패키지v1은 파일명 불일치로 custody 없이 생성되어 로컬 보존, 업로드하지 않았다. 복원 CLI는 root-relative package/destination 계약을 사용한다.
 
 새회차 성공은 기존 편집audit8회에만 추가했다. 새 localAI shadow0/7·독립human0/40/0/20·전체3/22·legacy44/430/metadata10은 유지했다. checkpoint-v19(JSON)는 실제 상태1회 조회 결과다. 다음은 기존08시 실행의 실제 관측과 같은 사건/회차 재발행 차단, 새로운 비교 운영·독립평가·기존자료 재검토다. 추가 예약·유료API·모델/수집 재실행·전체로컬검사 반복 없음. 금회1시간 반복blocker 없음.
+
+## 472. 뉴스 필터의 빈 심층 탭과 조건 보존
+
+web/reader.mjs에서 현재 필터에 맞는 심층 기사가 있을 때만 탭을 표시한다. kind를 제외한 회사·분야·테마·검색어를 기존 matchesNews로 대조한다. deep 클릭 때 sector를 지우지 않으며 href에도 같은 필터를 반영한다. stale deep 공유URL은 임의로 전체 목록으로 바꾸지 않는다.
+
+표적 재현: node --test tests/reader-filters.test.mjs (최초4실패). 수정 검증: node --test tests/reader-filters.test.mjs tests/reader-cards.test.mjs (9통과). npm run build와 node scripts/verify-site.mjs 통과. actual reader 핸들러 테스트 fixture는 발행 경로와 분리된다. CUA local의 LG/삼성·AI·투자·Helix/Enter/뒤로가기/mobile390 검증은 current55-filter-tabs-browser-v1.json, 빌드·검사 로그는 같은 외장 evidence 루트다. 독립human 및 공개 배포 완료로 세지 않는다. 현재08시 예약·원고·RSS GUID는 유지한다.
