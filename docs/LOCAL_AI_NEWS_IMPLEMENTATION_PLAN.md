@@ -5040,3 +5040,18 @@ KUKA native 수집2run은 기존 acquisition-group/portable archive를 재사용
 새 계획 daily-20261007-current55-integrated-v1은 현재 clean코드/55경로와213작성 원본의 실제 stableDrive전후/16폴더/raw bytes에 결속했다. snapshot파일SHA ed6cac7545f6abf913590f0f59bc2eb17dbc938c9e38d173dc7cfdae5c26e287, logicalSHA1371e28469e5a237b87603e60695698bd0c0dd2df7dc5ad65d384dc456a60123이다. 현재110창 실제 수집을 실행 중이며 terminal/handoff를 확인한 뒤 판정한다. 수집 중 source dependency/장부를 외부에서 수정하거나 재시작하지 않는다. source fingerprint는 새 조회 CLI와 독립이다.
 
 전체WBS3/22·legacy44회차/430구간/metadata10·독립human40/20·실제08시/인증/복구/fullruntime·정규0/7을 유지하며 goal active다. 접근 제한은 새 소식 없음/완료로 바꾸지 않는다. 다음은 terminal 수집→정확한 후보/원문/기존 사건 대조→승인 원고의 정규 브리핑·Drive·공개 연결이며 확인한 실제 상태만 추가 기록한다.
+
+
+19.373 실행 결과: 실제55경로/110계획창에서108완료receipt·1미완료receipt·기존검증보완1창으로 현재109/110창·54/55경로다. wall1055986ms(17분35.986초)이며32칸 모두 실제 경로 시도의 partial이다. thelec9/29→10/6의 회원 전용 본문 접근은 awaiting_new_observation으로 남기고 우회·반복 요청하지 않는다. handoff/원문별 대조 후 동일한 두산13문단·CrowdStrike23문단을 기존 승인·사건에 다시 연결했다. 새 HTTP/LLM 재실행 없이 같은 source collection을 재사용한다.
+
+입력CLI codeab226b6c/Actions37528975520은 Node1078/1078·Python15+10+3·build/site/deploy success다. 기존08시의 입력 지침만 실제 tool로 갱신했고 native TOML 재읽기에서 시간·모델·project/cwd·status가 같았다. tool은 끝 newline만 제거했으며 본문은 동일하다. 첫 호출의 cwds 미지원은 변경 없이 거부됐고 지원 필드로 정정했다. 실제08시 실행/정규 성공 횟수로 세지 않는다. 공개3파일HTTP200·원bytes/SHA 동일·새기사0이다.
+
+## 19.374. 재관측 기사의 정확한 승인 parse 재사용
+
+현재 후보2건이 재관측으로 review-source-revision이 됐다. 두산은 동일raw의 관측시각으로 parse ID만 변경됐다. CrowdStrike 승인에는 최초day-only와 이후JSON-LD timestamp parse 둘 다 보존되는데 same-source 검토가 첫parse를 고르는 실제 차단 결함이었다. 새로운 모델/추출을 실행하지 않고 candidate의 reviewed_parse_id 또는 기존 승인 parse_id에 결속한 원 판본과 현재 관측의 exact parse를 선택한다. supporting source가 모호하면 실패하며 제목·전체본문·발표시각·content fingerprint 대조·명시적 review·원문 bytes/주장 검증을 유지한다. 검토자가 날짜/사건을 임의로 통일하지 않는다.
+
+회귀를 원 구현에서 실패시킨 뒤 candidate-approval/publication-time-revision/editorial-handoff 표적48/48을 한 번 통과했다. 실제 두산13/CrowdStrike23문단·제목·게시일/정밀시각을 직접 읽어 동일성을 확인하고 기존 candidate-approval 공통 경로로 승인 연결만 갱신했다. 원 사건ID·승인 원고·과거 승인/관측은 보존한다. 실제 일일 processing은 approval_ready2이며 모델/HTTP 재실행0이다. source fingerprintdbc0ed04…는 그대로다.
+
+private reader slice v1은 필수Signals review 누락으로 refresh가 실패했다. 실패출력/로그를 보존하고 실제 두 기사 검토의 source-bound reviewed-empty Signals note를 승인한 v2는 refresh/용어sync/check/validate/build/verify와 웹·RSS·digest·용어/기사 상호 링크를 통과했다. 1회차/2기사/용어위빙·Signals2노트를 비공개 생성했다. coverage_complete/drive_verified/browser_verified/candidate_published는 false다. 빈 분석을 채우거나 실제 정규 발행/공개로 승격하지 않는다. canonical vault/Drive 작성 원본과 RSS는 아직 수정하지 않았다.
+
+109개 terminal source run은 기존 공통 acquisition group/closure로6개 패키지에 보존했다. native raw·parse·원 날짜/관측·회원제한 결과를 포함하고 목록 자료를 기사 근거로 자동 승격하지 않는다. 실제 Drive 부모·원격rawSHA·전수restore·registry의 결과를 이어서 기록한다. 전체3/22·legacy44/430/metadata10·독립human40/20·정규0/7·실제08시/인증/복구/fullruntime 관문은 유지하며 goal active다.

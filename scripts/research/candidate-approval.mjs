@@ -93,12 +93,27 @@ function verifySameSourceRevision({
       throw Error("Approved and current source runs must contain every cited source")
     const oldDocument = oldDocuments[0]
     const newDocument = newDocuments[0]
-    const oldParse = approvedParses.find(
-      (item) => item.source_version_id === oldDocument.source_version_id,
+    // Publication-time corrections retain both old and precise parses. Follow
+    // the reviewed binding rather than the array's historical first entry.
+    const primary = url === originalURL
+    const approvedParseId =
+      primary && candidate.approval?.approved_run === approvedRunId
+        ? candidate.approval.reviewed_parse_id || candidate.approval.parse_id
+        : null
+    const oldMatches = approvedParses.filter(
+      (item) =>
+        item.source_version_id === oldDocument.source_version_id &&
+        (!approvedParseId || item.parse_id === approvedParseId),
     )
-    const newParse = currentRun.parses.find(
-      (item) => item.source_version_id === newDocument.source_version_id,
+    const newMatches = currentRun.parses.filter(
+      (item) =>
+        item.source_version_id === newDocument.source_version_id &&
+        (!primary || item.parse_id === observation.article_parse_id),
     )
+    if (oldMatches.length !== 1 || newMatches.length !== 1)
+      throw Error("Same-source review requires an exact unambiguous approved and current parse")
+    const oldParse = oldMatches[0]
+    const newParse = newMatches[0]
     if (
       !oldParse ||
       !newParse ||
@@ -332,9 +347,10 @@ async function linkCandidateApproval({
           item.source_version_id === document.source_version_id &&
           (sourceAlternative
             ? item.parse_id === sourceAlternative.parse_id
-            : sourceRevision ||
-              !candidate.article_parse_id ||
-              item.parse_id === candidate.article_parse_id),
+            : sourceRevision
+              ? item.parse_id ===
+                sourceRevision.sources.find((s) => s.url === sourceUrl)?.approved_parse_id
+              : !candidate.article_parse_id || item.parse_id === candidate.article_parse_id),
       )
       if (!parse || parse.status !== "extracted")
         throw Error("Approved candidate needs its exact extracted parse")

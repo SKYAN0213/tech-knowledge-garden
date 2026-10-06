@@ -664,10 +664,21 @@ test("legacy candidate with missing source identity is enriched from its exact a
 test("an existing approved article can rebind identical parsed content after an explicit revision review", async (t) => {
   const f = fixture(t)
   await link(f)
+  const boundParse = readJSON(f.root, "runs/approved/parses.json")[0]
+  const olderParse = structuredClone(boundParse)
+  olderParse.parse_id = sha256("older day-only publication parse")
+  olderParse.dates.published_at = "2026-09-29"
+  olderParse.blocks = olderParse.blocks.map((block, i) => ({
+    ...block,
+    block_id: olderParse.parse_id + ":b" + i,
+  }))
+  atomicWrite(f.root, `parses/${olderParse.parse_id}/parse.json`, olderParse)
+  // Precision corrections retain earlier parses without rebinding approval.
+  atomicWrite(f.root, "runs/approved/parses.json", [olderParse, boundParse])
   const before = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
   const document = { ...f.document, observed_at: "2026-10-02T00:00:00Z" }
   const parse = {
-    ...structuredClone(readJSON(f.root, "runs/approved/parses.json")[0]),
+    ...structuredClone(boundParse),
     parse_id: sha256("revision-parse"),
   }
   parse.dates.observed_at = document.observed_at
@@ -724,6 +735,7 @@ test("an existing approved article can rebind identical parsed content after an 
   assert.equal(updated.event_id, before.event_id)
   assert.equal(updated.source_revision_alert, undefined)
   assert.equal(updated.approval.parse_id, parse.parse_id)
+  assert.equal(updated.approval.reviewed_parse_id, boundParse.parse_id)
   assert.deepEqual(updated.approval_history[0].approval, before.approval)
   const bytes = fs.readFileSync(f.backlogFile)
   assert.deepEqual(await recordCandidateApproval(args), result)

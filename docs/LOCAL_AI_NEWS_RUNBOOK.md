@@ -11179,3 +11179,16 @@ source closure kuka-de-recovery-source-closure-20261007-v1·20자료/22members·
 현재 run daily-20261007-current55-integrated-v1/55경로110창은 fresh213Drive의 동일 원본/clean판본에서 시작했다. 외장 current55-oct7-{plan,execution,context}-v1과 fresh connector-readback/source-snapshot-daily-oct7-pre-20261007-v1을 보존한다. 활성 worker는 재시작하거나 입력을 바꾸지 않는다. terminal 뒤 handoff/32칸/검토 대기와 실제 원문 상태를 확인한다.
 
 공통 조회는 `npm run research:context --silent`로 원본을 고정하고 snapshot.input·sha256으로 `--section NAME --offset N`, `--route ROUTE`, `--candidate KEY`를 읽는다. 정확한 다음 cursor는 page.next_offset이다. 첫850건43페이지·원순서/고유key850·첫61979/최대73541bytes 확인; context-page-runtime-proof-v1.json과 context-page-targeted-v1.log의 표적4/4가 근거다. 승인을 위한 전체 이력과 source/parse/사건 판정은 별도 원 기록으로 읽는다. 전체수집 fingerprint/원 장부는 변경하지 않는다. 기존 npm run context는 호환 전체 출력으로 유지한다.
+
+
+466 실제 검증: ab226b6c/Actions37528975520 Node1078/Python28·build/site/deploy success. 자동화 입력 지침의 actualTOML before/after/proof-v3는 끝newline 제거 외 본문동등과 시간/모델/project/cwd/status 불변을 확인했다. tool의 cwds 미지원/초기 raw exactfalse 결과를 보존했다. 공개3파일 실제HTTP200/rawSHA 보존이며 actual08시/정규 횟수는0이다.
+
+## 467. 일일 재관측을 기존 승인·용어·브리핑에 연결
+
+원 collect daily-20261007-current55-integrated-v1은 wall1055986ms,109receipt(108완료/1incomplete),기존보완1로110계획창 중109완료·54/55경로다. thelec는 실제회원본문 제한으로 awaiting_new_observation이다. 새 handoff와 oldhandoff/basis를 함께 보존한다. 원 source collector fingerprint는 변하지 않았다.
+
+approved intake daily-20261007-approved-intake-slice-v1의2후보는 기존candidate-approval에서 동일본문 검토 뒤 approval_ready2로 연결됐다. 두산same-content-review-v1은 후보 목록이 없는 select run을 지정해 실패했고 native originalscan을 지정한v2만 통과했다. CrowdStrike는 옛day parse를 첫 항목으로 선택하는 결함을 고친 뒤v1으로 정밀 날짜 승인parse/새관측을 연결했다. 원13/23문단을 직접 대조했으며 같은HTTP·모델 재호출0이다. source-binding-regression-before/targeted-v1.log의 실패·48/48과 source-binding-proof-v1/재승인receipt가 근거다.
+
+private-reader-slice-v1의 Signals 누락 실패는 보존했고 source-bound daily-20261007-signal-review-v1과 두산위빙note 승인으로 v2만 성공했다. 두 기사/한용어의 웹/RSS/digest/상호links consistency를 통과했으며 nativebrowser/publication/32칸내용취재완료를 뜻하지 않는다. private preview 전체원고와 canonical의580파일 불변을 기록했다. CLI stdout에 feeds 안내가 앞서므로 JSON.parse 전체stdout 실패를 보존하고 preview-manifest/consistency를 직접 읽는다.
+
+source archive plan은 실제109terminal observation run을 공통closure6개로 나눴다. 6remote ZIP은 각16MiB 이하의 기존 bounded raw compatibility 호출로 받아 실제SHA·member전수restore·registry를 확인한다. source register의 rawSHA 검증은 기사승인/정규발행과 구분한다. 새progress/전체suite를 반복하지 않고 최종 후보의CI와 전달 증거를 이어서 남긴다.
