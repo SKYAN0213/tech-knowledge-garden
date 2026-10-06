@@ -68,10 +68,17 @@ def date_for_strptime(value, fmt, language):
 
 def source_date_value(value):
     """Keep source days or explicit-offset timestamps; never infer a timezone."""
+    if isinstance(value, str):
+        # ISO 8601 basic offsets denote the same instant as the colon form.
+        # Keep the publisher's untouched spelling in the extraction basis.
+        value = re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", value)
     if not isinstance(value, str) or not re.fullmatch(
         r"\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2}))?",
         value,
     ) or known_date(value) is None:
+        return None
+    offset = re.search(r"[+-](\d{2}):(\d{2})$", value)
+    if offset and (int(offset[1]) > 23 or int(offset[2]) > 59):
         return None
     return value
 
@@ -976,9 +983,10 @@ def html_parse(raw, url, options):
             else:
                 published = timestamps[0]
                 date_basis = {**timestamp_bases[0], "text": published, "display_basis": date_basis, "sources": timestamp_bases}
-    if published and source_date_value(published) is None:
-        published = None
-        date_profile_status = "invalid-date"
+    if published:
+        published = source_date_value(published)
+        if published is None:
+            date_profile_status = "invalid-date"
     if options.get("publication_date_from_listing") is True and (
         published is None or options.get("publication_date_listing_authoritative") is True
     ):
@@ -1037,9 +1045,10 @@ def html_parse(raw, url, options):
         modified_profile_status = "conflict" if all(modified_days) else "invalid-date"
     if explicit_modified and modified_profile_status != "matched":
         modified = None
-    if modified and source_date_value(modified) is None:
-        modified = None
-        modified_profile_status = "invalid-date"
+    if modified:
+        modified = source_date_value(modified)
+        if modified is None:
+            modified_profile_status = "invalid-date"
     if modified and published and known_date(modified, calendar_zone) < known_date(published, calendar_zone):
         modified = None
         modified_profile_status = "before-publication"

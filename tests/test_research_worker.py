@@ -16,6 +16,29 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_common_metadata_basic_offset_retains_instant_and_raw_basis(self):
+        raw = b'''<html><head><title>Research funding</title>
+        <meta property="article:published_time" content="2026-10-05T11:49:24-0400">
+        <meta property="article:modified_time" content="2026-10-05T14:10:02-0400">
+        <script type="application/ld+json">{"@type":"Article","datePublished":"2026-10-05T11:49:24-0400","dateModified":"2026-10-05T14:10:02-0400"}</script>
+        </head><body><article><p>Applications support irradiation testing.</p></article></body></html>'''
+        result = self.invoke(raw, {"content_xpath": "//article"})["result"]
+        dates = result["dates"]
+        self.assertEqual(dates["published_at"], "2026-10-05T11:49:24-04:00")
+        self.assertEqual(dates["modified_at"], "2026-10-05T14:10:02-04:00")
+        self.assertEqual(dates["precision"], "timestamp")
+        self.assertEqual(dates["profile_status"], "matched")
+        self.assertEqual(dates["basis"]["sources"][0]["text"], "2026-10-05T11:49:24-0400")
+        self.assertIn("2026-10-05T11:49:24-0400", dates["candidates"])
+
+    def test_common_metadata_offset_repair_does_not_infer_or_accept_invalid_zone(self):
+        for value in ("2026-10-05T11:49:24", "2026-10-05T11:49:24-2460", "2026-10-05T11:49:24-0460", "2026-10-05T11:49:24-24:00"):
+            with self.subTest(value=value):
+                raw = ('<html><head><title>Research funding</title><meta property="article:published_time" content="'+value+'"></head><body><article><p>Applications support testing.</p></article></body></html>').encode()
+                dates = self.invoke(raw, {"content_xpath": "//article"})["result"]["dates"]
+                self.assertIsNone(dates["published_at"])
+                self.assertEqual(dates["profile_status"], "invalid-date")
+
     def test_inline_publication_date_preserves_substantive_news_paragraph(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         profile = next(p for p in config["article_profiles"] if p["id"] == "robco-unicorn-press-20261005-v1")
