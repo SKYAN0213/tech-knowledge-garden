@@ -9,8 +9,8 @@ coverage_end: 2026-10-05T20:21:45.039Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 4
-new_items_count: 4
+source_count: 5
+new_items_count: 5
 linked_knowledge_notes:
   - Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)
 knowledge_notes_created: []
@@ -152,6 +152,9 @@ article_records:
     lead: AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새
       CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명
       전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 인증서 내용과 실패 사유 기록
         paragraphs:
@@ -175,6 +178,45 @@ article_records:
             관리·추적·모니터링에 활용할 수 있다고 설명했다.
         source_urls:
           - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+  - title: 보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Boston Dynamics
+      when: 2026-10-05T19:23:58+00:00
+      where: Las Vegas, Massachusetts, New Jersey, Rome
+      what: Spot의 경찰·소방 등 공공안전 분야 활용 사례 공개
+      how: 공식 블로그에서 장비 구성과 기관별 활용 사례 소개
+      why: 미기재
+    lead: 보스턴 다이내믹스는 한국시각 10월 6일 공식 블로그에서 지난 6년간 사족보행 로봇 Spot이 재난 수색, 인질 사건 대응, 마약
+      제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와
+      로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과
+      2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다.
+    explanations:
+      - heading: 원격 조작과 현장 확인
+        paragraphs:
+          - 회사 설명에 따르면 표준 공공안전 장비 구성은 Spot Cam, 시야가 닿지 않는 거리에서도 조작할 수 있는 무선
+            통신장비, 물체를 다루는 로봇팔이다. Spot은 계단을 오르고 좁은 공간을 이동하며 고르지 않은 지면에서도 자세를
+            유지하도록 설계됐다.
+          - 카메라는 최대 25배 확대를 지원하며, 열화상은 연기가 있는 환경에서 사람이나 열을 내는 물체를 찾는 데 활용된다.
+            스피커와 마이크로 현장에 있는 사람과 양방향으로 대화할 수 있다고 회사는 설명했다.
+        source_urls:
+          - https://bostondynamics.com/blog/spot-to-the-rescue/
+      - heading: 물체 운반과 로봇팔
+        paragraphs:
+          - 회사는 로봇팔과 집게가 최대 15파운드의 물체를 들어 운반하고, 최대 50파운드의 물체를 끌 수 있다고 밝혔다. 들어
+            운반하는 무게와 끄는 무게의 한도는 서로 다르다.
+        source_urls:
+          - https://bostondynamics.com/blog/spot-to-the-rescue/
+      - heading: 기관별 활용 사례
+        paragraphs:
+          - 블로그에 따르면 라스베이거스 메트로 경찰은 2026년 2월 주택 안의 의심 생물실험실을 수색할 때 Spot을 먼저 투입해
+            내부 상태를 확인하고 공기 시료를 채취했다. 매사추세츠 주 경찰의 2024년 3월 대치 현장에서는 용의자가 로봇에 총을 쏴
+            일부 기능이 작동하지 않게 된 사례도 소개됐다.
+          - 뉴저지주 캠던·글로스터 카운티 보안관 기관은 사용 첫해에 Spot을 20회 넘게 투입했다고 회사는 전했다. 이탈리아
+            국가경찰기관 카라비니에리는 2025년 로마 주빌리 행사를 앞두고 Spot을 도입한 사례로 소개됐다.
+        source_urls:
+          - https://bostondynamics.com/blog/spot-to-the-rescue/
     papers: []
     relations: []
     topic_ids: []
@@ -203,9 +245,17 @@ article_reviews:
   - title: AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
     event_id: a4e8f23e78c22e95
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
+  - title: 보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개
+    event_id: 82294a16ed862561
+    review_status: verified
+    published_at: 2026-10-06
+    reviewed_at: 2026-10-06
     concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-10-05T19:23:58+00:00
 ---
 
 # 이번 호 표지
@@ -322,6 +372,32 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 
 AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 조회해 인증서 감사·목록 관리·추적·모니터링에 활용할 수 있다고 설명했다. [S4]
 
+## 보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개
+
+**분야:** 로봇·제조
+**테마:** 사업·고객
+**보조 테마:** 없음
+**세부 태그:** 고객 도입
+**기업·기관:** ["Boston Dynamics","Las Vegas Metro Police Department","Massachusetts State Police","Sheriff’s departments in Camden and Gloucester Counties, New Jersey","Carabinieri"]
+
+보스턴 다이내믹스는 한국시각 10월 6일 공식 블로그에서 지난 6년간 사족보행 로봇 Spot이 재난 수색, 인질 사건 대응, 마약 제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와 로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과 2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다. [S5]
+
+### 원격 조작과 현장 확인
+
+회사 설명에 따르면 표준 공공안전 장비 구성은 Spot Cam, 시야가 닿지 않는 거리에서도 조작할 수 있는 무선 통신장비, 물체를 다루는 로봇팔이다. Spot은 계단을 오르고 좁은 공간을 이동하며 고르지 않은 지면에서도 자세를 유지하도록 설계됐다.
+
+카메라는 최대 25배 확대를 지원하며, 열화상은 연기가 있는 환경에서 사람이나 열을 내는 물체를 찾는 데 활용된다. 스피커와 마이크로 현장에 있는 사람과 양방향으로 대화할 수 있다고 회사는 설명했다. [S5]
+
+### 물체 운반과 로봇팔
+
+회사는 로봇팔과 집게가 최대 15파운드의 물체를 들어 운반하고, 최대 50파운드의 물체를 끌 수 있다고 밝혔다. 들어 운반하는 무게와 끄는 무게의 한도는 서로 다르다. [S5]
+
+### 기관별 활용 사례
+
+블로그에 따르면 라스베이거스 메트로 경찰은 2026년 2월 주택 안의 의심 생물실험실을 수색할 때 Spot을 먼저 투입해 내부 상태를 확인하고 공기 시료를 채취했다. 매사추세츠 주 경찰의 2024년 3월 대치 현장에서는 용의자가 로봇에 총을 쏴 일부 기능이 작동하지 않게 된 사례도 소개됐다.
+
+뉴저지주 캠던·글로스터 카운티 보안관 기관은 사용 첫해에 Spot을 20회 넘게 투입했다고 회사는 전했다. 이탈리아 국가경찰기관 카라비니에리는 2025년 로마 주빌리 행사를 앞두고 Spot을 도입한 사례로 소개됐다. [S5]
+
 # 리서치 노트
 
 없음
@@ -348,3 +424,4 @@ AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 �
 - [S2] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
 - [S3] https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
 - [S4] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+- [S5] https://bostondynamics.com/blog/spot-to-the-rescue/

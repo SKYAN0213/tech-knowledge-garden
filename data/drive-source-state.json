@@ -9,9 +9,9 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "80902697fd9bb359799eb2a1c1f92e754168c6c423402d267eb8fd103120abf2",
+  "snapshot_sha256": "c677107d5f6dfd88944b778efcea36670fd6ae05c541b7b1466e21c85f75be9d",
   "source_files": 213,
-  "exported_at": "2026-10-06 01:31:55 UTC",
+  "exported_at": "2026-10-06 02:10:47 UTC",
   "hashes": {
     "Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md": "27f7cbb5d767ff47ef76a3cef2ff488730c20bae3a3a4a3e03f7e43634ac9c0b",
     "Editions/2026/06/2026-06-24_0700_Tech_AI_Briefing.md": "3781e0f9aadad101b9cf1be838fcb9d02e0baf91c6dba947f13ba9420d9acb49",
@@ -134,7 +134,7 @@
     "Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing.md": "ad1abf3dffc5f092e7b85d94e86d959e4236c35be24ad6277a098df249a1252a",
     "Editions/2026/10/2026-10-01_0800_Tech_AI_Briefing.md": "ab8455a11062ef8552cc218a7d234628e3e0ee65d139598db6d1e05db9301fe6",
     "Editions/2026/10/2026-10-04_0800_Tech_AI_Briefing.md": "2dd99255f3d4f187e3218b721e46b7f1c9239c46d2de50b840203ec0bcdbba22",
-    "Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing.md": "e24931d6fe1e45b0836935cc447500976e8a8f018489fcf96a434b55c86837d9",
+    "Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing.md": "b2b9fe4e1dbe3a071a0e3346a2f6a26325c1c994b28bbd1a48fc0c1618df44f1",
     "Knowledge/00 Tech Encyclopedia Index.md": "cca9015f421d3f7a1c81b847d829a14e7d391c85156a2504bf202775e4a3ca6b",
     "Knowledge/AI Systems/AI Agent Governance.md": "ba624eb69c47cb2ad56a745aeca3e12d5985b20fa96bfad4e7637997cefb7e16",
     "Knowledge/AI Systems/AI Agent Security and Governance.md": "9cd8628bb437c04bcc9ca353b2858dfabf806a238ef500970855c6293fd70948",

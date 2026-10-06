@@ -7,7 +7,7 @@ modified: 2026-10-06
 description: 2026-10-06 IT · AI · 로보틱스
 coverage_start: 2026-10-04T01:30:38.099959Z
 coverage_end: 2026-10-05T20:21:45.039Z
-item_count: 4
+item_count: 5
 edition: Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-06_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -43,7 +43,7 @@ generated_by: tech-knowledge-garden
 
 AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새 CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명 전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
 
-### 로봇·제조 · 2건
+### 로봇·제조 · 3건
 
 #### [[News/72081e8f67345f20|쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고]]
 
@@ -56,6 +56,12 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 투자·기업거래 · 투자 유치 · RobCo
 
 산업용 로봇 업체 RobCo는 10월 5일 기업가치가 10억 달러를 넘어섰으며, 9개월 전보다 두 배가 됐다고 발표했다. 이번 거래는 회사에 대한 신규 투자와 직원 보유 지분의 일부 매각을 함께 진행하는 구조다. 회사는 자율 산업용 로봇 Alfie를 2027년 3월 4일 뮌헨에서 열리는 RobCoN에서 상용 출시할 계획이라고 밝혔다.
+
+#### [[News/82294a16ed862561|보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개]]
+
+사업·고객 · 고객 도입 · Boston Dynamics · Las Vegas Metro Police Department · Massachusetts State Police · Sheriff’s departments in Camden and Gloucester Counties, New Jersey · Carabinieri
+
+보스턴 다이내믹스는 한국시각 10월 6일 공식 블로그에서 지난 6년간 사족보행 로봇 Spot이 재난 수색, 인질 사건 대응, 마약 제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와 로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과 2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다.
 
 ### 바이오·의료기술 · 1건
 
@@ -73,3 +79,4 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 - [S2] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
 - [S3] https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
 - [S4] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+- [S5] https://bostondynamics.com/blog/spot-to-the-rescue/

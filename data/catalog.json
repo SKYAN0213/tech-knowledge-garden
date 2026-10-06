@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 178,
+  "news_count": 179,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -188,6 +188,7 @@
     "https://blogs.nvidia.com/blog/vera-rubin-nvl72-efficiency-ai-agents",
     "https://blogs.nvidia.com/blog/vision-ai-agent-skills-omniverse-metropolis",
     "https://blogs.nvidia.com/feed",
+    "https://bostondynamics.com/blog/spot-to-the-rescue",
     "https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf",
     "https://cdn.openai.com/pdf/novices-and-llm-august-2026.pdf",
     "https://cdn.openai.com/pdf/work-at-the-frontier-report.pdf",
@@ -798,6 +799,7 @@
     "News/72081e8f67345f20",
     "News/1c20824a90713fc8",
     "News/a4e8f23e78c22e95",
+    "News/82294a16ed862561",
     "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE",
     "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing",
     "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing",

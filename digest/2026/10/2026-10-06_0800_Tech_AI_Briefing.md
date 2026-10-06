@@ -54,7 +54,7 @@ AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 �
 
 [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/)
 
-### 로봇·제조 · 2건
+### 로봇·제조 · 3건
 
 #### [쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고](https://skyan0213.github.io/tech-knowledge-garden/news/72081e8f67345f20)
 
@@ -107,6 +107,32 @@ RobCo는 미국의 12개가 넘는 주에서 고객 운영을 수행하고 있�
 2020년 뮌헨에서 설립된 회사는 초기 투자금 없이 로봇 시스템을 제공하는 Robotics-as-a-Service(RaaS) 모델을 운영한다고 소개했다.
 
 [rob.co 원문](https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn)
+
+#### [보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개](https://skyan0213.github.io/tech-knowledge-garden/news/82294a16ed862561)
+
+발표 2026-10-06
+
+사업·고객 · 고객 도입 · Boston Dynamics · Las Vegas Metro Police Department · Massachusetts State Police · Sheriff’s departments in Camden and Gloucester Counties, New Jersey · Carabinieri
+
+보스턴 다이내믹스는 한국시각 10월 6일 공식 블로그에서 지난 6년간 사족보행 로봇 Spot이 재난 수색, 인질 사건 대응, 마약 제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와 로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과 2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다.
+
+##### 원격 조작과 현장 확인
+
+회사 설명에 따르면 표준 공공안전 장비 구성은 Spot Cam, 시야가 닿지 않는 거리에서도 조작할 수 있는 무선 통신장비, 물체를 다루는 로봇팔이다. Spot은 계단을 오르고 좁은 공간을 이동하며 고르지 않은 지면에서도 자세를 유지하도록 설계됐다.
+
+카메라는 최대 25배 확대를 지원하며, 열화상은 연기가 있는 환경에서 사람이나 열을 내는 물체를 찾는 데 활용된다. 스피커와 마이크로 현장에 있는 사람과 양방향으로 대화할 수 있다고 회사는 설명했다.
+
+##### 물체 운반과 로봇팔
+
+회사는 로봇팔과 집게가 최대 15파운드의 물체를 들어 운반하고, 최대 50파운드의 물체를 끌 수 있다고 밝혔다. 들어 운반하는 무게와 끄는 무게의 한도는 서로 다르다.
+
+##### 기관별 활용 사례
+
+블로그에 따르면 라스베이거스 메트로 경찰은 2026년 2월 주택 안의 의심 생물실험실을 수색할 때 Spot을 먼저 투입해 내부 상태를 확인하고 공기 시료를 채취했다. 매사추세츠 주 경찰의 2024년 3월 대치 현장에서는 용의자가 로봇에 총을 쏴 일부 기능이 작동하지 않게 된 사례도 소개됐다.
+
+뉴저지주 캠던·글로스터 카운티 보안관 기관은 사용 첫해에 Spot을 20회 넘게 투입했다고 회사는 전했다. 이탈리아 국가경찰기관 카라비니에리는 2025년 로마 주빌리 행사를 앞두고 Spot을 도입한 사례로 소개됐다.
+
+[bostondynamics.com 원문](https://bostondynamics.com/blog/spot-to-the-rescue/)
 
 ### 바이오·의료기술 · 1건
 
