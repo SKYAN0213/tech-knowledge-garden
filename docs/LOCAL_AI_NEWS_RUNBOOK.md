@@ -10903,3 +10903,12 @@ WebsiteData는 실제 배포에서11파일을 다시 생성해 기존11ID로 갱
 별도 delivery evidence는83자료/84members·source_versions0이며 전후213raw·authoring/push/deploy/readback·WebsiteData·브라우저 증거를 포함한다. Drive1CTrMcSeZ23HmSvM3TXXamJl-YSgDl6KW,3,419,202bytes/SHA d260ec08e912bb79eef272ac6f3cefa6fd91dc9d018b7399689babc809badeb9의 실제 원격 SHA와 전수 복원을 확인했다. 원문 source archive와 운영 증거를 구분한다.
 
 외장 근거는 /Volumes/X5Storage/tkg-daily-core-20261006-v1/nachi-historical-* 및 nachi-publication-*, nachi-public-readback-v1.json, nachi-browser-and-rss-proof-v1.json, nachi-website-verified-v1.json이다. core-progress-checkpoint-20261006-v10.json/html은 실제 장부/운영 receipt에서 집계한다. 전체 목표 active/WBS2/22·신규 정규0/7·legacy47회차454구간/metadata10·독립human40/20(라벨0)·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 이번 소급 보완을 정규 성공 횟수로 세지 않는다. 같은 실패를 새 근거 없이1시간 반복한 항목0이다. 다음은 완료 수집/추출 결과를 재사용해 다음 유효 후보의 사실 검토·승인·공개 반영을 이어가고, 모델 오류를 수동 검토 없이 통과시키지 않는 자동 품질 경로를 보강한다.
+
+
+## 449. 공통 원고 퍼센트 값·단위 검증
+
+앞 턴은 NACHI 승인 기사와213개 작성원본/WebsiteData의 Drive 검증, cf3049f 실제 배포와 공개 readback을 마친 progress다. 이번에는 원고 claim_ids 검사가 문장 속 퍼센트 값까지 대조하지 않는 공통 공백을 보강했다. reader-quality에서 각 문단의 verified statement/numbers만 근거로 쓴다. 제목/육하원칙 metadata는 실제 인용한 본문 사실, 소제목은 해당 설명 사실로 범위를 제한한다. 원문 block의 다른 표 수치·미인용 claim·미검증 claim은 허용하지 않는다. %와%p/퍼센트포인트를 구분하고 부호·정밀 소수/전각·trailing zero를 비교하며 URL encoding을 퍼센트로 읽지 않는다. unsupported_percentage는 기존 신규 승인 단계의 assertReaderQuality에서 block이고 numbers_checked/반복 검토 확인으로 우회할 수 없다.
+
+표적14/14를 한 묶음으로 확인했다. 구조화 literal에 원 %가 함께 남는 별도 조건을 보강한 후 해당 새 표적1개만 실행해 통과했다. 실제 승인 nachi-historical-processing-20261006-v4의13사실/원고는 findings0이며, 비공개 테스트 사본16.9%→17.9%는 승인 차단됐다. 원고·원문·기존 approval·고정 ID·공개 자료 변경0, 새 모델 호출0이다. 비교 지표·기간·조건·인과·분야의 의미 판정은 이 값/단위 검사로 대체하지 않는다. 원고 자동 보정·validator 완화·무차별 재시도0이다.
+
+외장 percentage-fidelity-targeted-v1.log, percentage-fidelity-inline-literal-v1.log, nachi-percentage-fidelity-editorial-check-v1.json, nachi-percentage-fidelity-runtime-proof-v1.json이 근거다. 코드 릴리스 CI/공개 보존 검증/비공개 Drive 보관은 이후 실제 결과로 기록한다. 전체WBS2/22·신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 같은 실패를1시간 반복한 항목0이다. 다음은 원문 기반 사실 검토/분류·발표 목적과 실적 원인 구분을 공통 원고 경로에서 보강하고 다음 유효 후보를 처리한다.

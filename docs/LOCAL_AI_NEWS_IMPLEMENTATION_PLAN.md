@@ -4795,3 +4795,10 @@ KISA의 pageIndex1→2 주소 변경1건은 원문8문단 fingerprint·제목·�
 Drive213원문을 전후 각각 actual raw/안정 목록으로 읽고 변경1파일만 공통 authoring write-session→postflight builder/pull-drive→publish 경로로 반영했다. cf3049f/Actions37464932439의 검사·빌드·배포,12파일 공개 동등성, 실제 HTTPS 데스크톱/모바일 태그·키보드·뒤로 가기, WebsiteData11 raw 검증/링크 누락0, source closure와 delivery evidence의 비공개 Drive 저장/전수 복원을 확인했다. 상세 ID·SHA·오류 교정은 런북448에 있다. 추가 로컬 전체suite는 실행하지 않고 릴리스 CI1회로 묶었다.
 
 이 슬라이스는 완료했으나 전체WBS2/22·신규정규0/7·전체legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 그대로다. 자동 모델 품질 승격으로 해석하지 않는다. 다음 후보에서도 공통 수집/완료 추출 재사용을 기본으로 하고 특별한 판본·표/단위·날짜 조건만 별도 확인한다. 새로운 근거 없이 실패를 반복하지 않는다. 최신 비공개 현황판은 core-progress-checkpoint-20261006-v10이다.
+
+
+## 19.356. 공통 원고의 인용 범위별 퍼센트 검증
+
+P4 편집 품질 경로에 명시 퍼센트 값/단위 검사를 추가한다. 문장/문단의 claim_ids가 붙어 있어도 그 수치가 해당 verified 사실에 없으면 신규 승인을 거부한다. title/metadata와 소제목의 허용 사실 범위도 본문 근거로 제한한다. 미인용 다른 claim이나 evidence quote의 주변 숫자를 근거로 승격하지 않는다. 검토된 기존 NACHI 원고는 그대로 통과하며 변조16.9→17.9는 차단됐고 모델 호출은 없었다. 퍼센트포인트·부호·정밀 소수·전각 표기·원 literal의 단위 포함·URL encoding에 대한 표적 검증을 완료했다(런북449).
+
+자동 단위 환산이나 지표/기간/인과의 의미 판정을 구현했다고 해석하지 않는다. 기존 승인/원출력/ID/발행 상태를 보존하며 검토 상태와 차단 내역은 비공개다. 릴리스 통합 CI는1회에 묶고 같은 코드의 전체 로컬suite를 반복하지 않는다. 전체목표 active/WBS2/22·정규0/7·전수legacy/독립human/08시운영·선정 분리 pending을 유지한다.
