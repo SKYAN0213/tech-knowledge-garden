@@ -10912,3 +10912,8 @@ WebsiteData는 실제 배포에서11파일을 다시 생성해 기존11ID로 갱
 표적14/14를 한 묶음으로 확인했다. 구조화 literal에 원 %가 함께 남는 별도 조건을 보강한 후 해당 새 표적1개만 실행해 통과했다. 실제 승인 nachi-historical-processing-20261006-v4의13사실/원고는 findings0이며, 비공개 테스트 사본16.9%→17.9%는 승인 차단됐다. 원고·원문·기존 approval·고정 ID·공개 자료 변경0, 새 모델 호출0이다. 비교 지표·기간·조건·인과·분야의 의미 판정은 이 값/단위 검사로 대체하지 않는다. 원고 자동 보정·validator 완화·무차별 재시도0이다.
 
 외장 percentage-fidelity-targeted-v1.log, percentage-fidelity-inline-literal-v1.log, nachi-percentage-fidelity-editorial-check-v1.json, nachi-percentage-fidelity-runtime-proof-v1.json이 근거다. 코드 릴리스 CI/공개 보존 검증/비공개 Drive 보관은 이후 실제 결과로 기록한다. 전체WBS2/22·신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 같은 실패를1시간 반복한 항목0이다. 다음은 원문 기반 사실 검토/분류·발표 목적과 실적 원인 구분을 공통 원고 경로에서 보강하고 다음 유효 후보를 처리한다.
+
+
+릴리스 결과: 코드437d6e9471ae5926149e5c0719b1ad845d40b5cf/Actions37467094867에서 Node1,019/1,019·Python15+10+3·build/site/deploy success를 확인했다. 전체 로컬suite 반복0·릴리스CI1회다. 실제 공개RSS·NACHI기사·reader-index3파일은 HTTP200/기존bytes·SHA와 같다. 비공개 검증 closure11자료/13members·source_versions0을 Drive18jI4TROu1_XRNEVxnM1Z5a6PxQ21-mB2에 저장하고15,313bytes/SHA8d2304b79ae650a70ac01ed94a754209c0ee4c56d0b6a4406fa6743727954c7a의 원격 다운로드·전수 복원·archive registry 등록까지 확인했다. source_versions0은 검사/릴리스 증거이며 실제 NACHI 원문은 기존 source closure를 참조한다. 모델 재호출/새 기사/정규 회차 증가0이다. P3-03 증거를 갱신하되 전체WBS2/22와 미완료 gate를 올리지 않았다.
+
+최신 비공개 진척판은 외장 core-progress-checkpoint-20261006-v11.json/html이며 전체2/22 유지와 P3-03의 새 실제 증거를 읽어 확인했다.

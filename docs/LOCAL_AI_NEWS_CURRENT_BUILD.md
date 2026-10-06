@@ -1765,3 +1765,8 @@ KISA2페이지/7일7후보·오늘4후보/실제 빈 창0, 전자신문17페이�
 ### 2026-10-06 NACHI 기존 회차 보완·공개 검증 완료
 
 NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7개 보존, 로봇·제조4건). Drive213개 전후 raw 검증·변경1/기존ID 유지, cf3049f/Actions37464932439 Node1,011/Python15+10+3/build/site/deploy,12파일 공개 동등성·RSS40 GUID/pubDate 보존, 실제 HTTPS 데스크톱/모바일 태그·키보드·뒤로 가기, WebsiteData11raw SHA/링크 누락0을 확인했다. 새 모델 호출0·추가 로컬 전체suite0·릴리스 CI1회다. source closure와 delivery evidence는 비공개 Drive 원격 SHA/전수 복원까지 완료했다. 런북448/계획19.355/외장 core-progress-checkpoint-20261006-v10를 따른다. 전체목표 active/WBS2/22·신규정규0/7 및 전체legacy/독립human/08시 운영 gate는 남는다.
+
+
+### 2026-10-06 원고 퍼센트 값·단위 관문 배포
+
+문단별 verified 인용 사실 밖의 퍼센트, 다른 fact의 수치, %/%p 혼동을 신규 승인에서 차단한다. 원 NACHI 승인 원고는 통과했고 비공개17.9%변조는 차단됐다. 표적14+새 literal1개 및437d6e9/Actions37467094867 Node1,019·Python15+10+3/build/site/deploy를 확인했다. 기존 공개3파일 bytes/SHA는 동일하고 비공개 Drive 검사 증거11자료의 원격 SHA/전수 복원을 마쳤다. 새 모델 호출0·추가 로컬 전체suite0·새 기사/정규운영0. 지표·기간·인과·분류의 의미 판정은 기존 원문 검토로 확인한다. 런북449/계획19.356을 따른다. 전체목표 active/WBS2/22와 legacy/독립human/08시 운영 gate는 유지한다.
