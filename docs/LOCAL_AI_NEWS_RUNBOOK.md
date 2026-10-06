@@ -10785,3 +10785,15 @@ knowledge-reference-dispositions는 원6링크의 exact note SHA·정의/별칭�
 남은 우선 작업은 async로 요청한 선정 분리 결정에 맞춘 공통 뉴스/브리핑 투영, 원 참조 전문 정의의 출처 재검토, 발행 시 최신 Drive 대조 및 실제 과거 회차 공개 검증이다. 답변이 없으면 이 공개 형식 변경은 실행하지 않고 다른 수집/과거 검토를 이어간다. 이번 목표 turn은 실제 전환 입력·매핑 정정·원격 원본/복구 증거를 완료한 progress이며 새 모델 호출/기사 수집/adapter/정규 회차0이다. 전체goal active/WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 남는다. 전체suite/build/deploy 반복0·같은 실패1시간 반복0이다.
 
 비공개 현황판 core-progress-checkpoint-20261006-v3.json/html을 갱신하고 2/22·partial18·not_started2와 최신 런북442 근거 표시를 확인했다. JSON SHA0e55e698998859eeee4c4ab6685cdce4be0816bd1ce39eedd7a34c0625264eb5, HTML SHA46bd319e7f804fc83b4bd04cf3d4c79d0b851ebf185b08958f8dd4c9ed08808a다. 브라우저 렌더링 검증으로 보고하지 않는다. 핸들2812/7376은 terminal이다. 문서 commit은 skip ci로 처리한다.
+
+## 443. 제조사 IR 실제 수집과 공통 PDF 날짜 결함 수정
+
+나치 영문 News·일문 IR·실적 archive·두산 IR 자료실의 실제 HTML4와 NACHI10월5일 PDF3을 기존 collector/source-policy로 수집했다. URL 공유·비시간순 목록·날짜 미표시는 `nachi-route-audit-20261006-v2/route-feasibility.json`에 보존했다. 날짜 목록 guard를 낮추거나 별도 crawler를 만들지 않았고 일일54경로/등록194는 유지한다. 수집·기사 승인·정규 발행을 합산하지 않는다.
+
+공통 전각 숫자 날짜 해석과 PDF의 기존 날짜 함수 재사용을 구현했다. 실물 exact PDF 프로필3개로 발표일2026-10-05와 제목·본문/표297blocks를 확인했다. 최초 주식분할 profile은 발표일과11월30일 기준일을 함께 선택해 ambiguous였고, 실제 ‘各 位’ 발표 문맥으로 좁혀 새 stock v2에서 정상 추출했다. 이전 raw/parse와 두 날짜 문단을 보존했다.
+
+표적 Python5tests 통과: PDF 전각/독일어 날짜·원문 basis·불가능/중복 날짜, NACHI 제목/날짜/제목 결손, 기존 PDF 모호성, FANUC 날짜, KUKA 독일어 HTML이다. stock 문맥 보완 후 NACHI profile1test만 재실행해 통과했다. 전체suite는 로컬 반복하지 않았다. JSON formatting 이후 구Q3 v2의 exact-run 재개는 input SHA 변화로 거부됐고, 새로운 v3에서 저장 bytes만 재파싱했다. exact 재실행 documents/parses/state3파일 SHA 동일·원 관측시각 보존을 확인했다. 주식분할 최초 capture와 조건부 `not_modified` 재요청은 같은 source version이다. 모델 호출0·기사 ID/사건 alias/공개 기사 생성0이다.
+
+준비 중 `nachi-route-audit-20261006-v1`은 날짜 assertion 실패로 replay/feasibility만 담은 불완전 metadata 묶음이며 보관 완료 증거로 쓰지 않는다. 완전 입력은 v2다. archive closure v2는 HTML4·PDF3·robots2의9source versions,3parse,17manifest files/19ZIP members다. ZIP691,974bytes/SHA3c76ee1bf8d97d15f0565f9d10a9447bdcec65c25bf746907ab5a3371a3ef832를 Research Drive `1oSbnxiAIflGYZsZUxzYelBRIH2qwd-79`에 업로드했다. fresh metadata(shared:false/parent/size)·실제 raw ZIP SHA를 확인·등록하고 복원17files/3parses/9원본을 exact hash로 대조했다. 복원 CLI의 절대 package 경로 거부 후 private root-relative downloads에 새 복사해 성공했다. 검증기를 수정하거나 제한을 우회하지 않았다. 근거는 외장 `nachi-route-audit-drive-restoration-proof-v2.json`, raw/download/metadata 및 restored/nachi-route-audit-drive-v2다.
+
+다음은 저장 원본에서 IR의 기간/고유문서 해석을 설계하고 다른 새 출처 수용을 이어가는 것이다. 같은 실패1시간 반복0이다. 일일 활성화·기사 승인·오늘 공개·Drive authoring 수정0이다. 선정 분리 결정도 미응답이라 소급 공개 형식을 변경하지 않았다. 전체goal active, WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 남는다.

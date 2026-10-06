@@ -1567,6 +1567,66 @@ echo 'source command only'
         wrong_page = self.invoke(doc.tobytes(), {**options, "publication_date_page": 2})
         self.assertEqual(wrong_page["worker_status"], "failed")
 
+    def test_pdf_publisher_date_normalization_preserves_source_and_rejects_conflicts(self):
+        cases = [
+            ("ja", "２０２６年１０月５日", "%Y年%m月%d日", "２０２６年２月３０日"),
+            ("de", "5 Oktober 2026", "%d %B %Y", "30 Februar 2026"),
+        ]
+        for language, printed, date_format, invalid in cases:
+            with self.subTest(language=language):
+                options = {
+                    "language": language, "pdf_title_page": 1,
+                    "pdf_title_pattern": "^Quarterly report$",
+                    "publication_date_page": 1,
+                    "publication_date_pattern": "^" + re.escape(printed) + "$",
+                    "publication_date_format": date_format,
+                }
+                doc = pymupdf.open()
+                doc.set_metadata({"creationDate": "D:20260901000000"})
+                page = doc.new_page()
+                page.insert_text((50, 50), "Quarterly report")
+                page.insert_text((50, 90), printed, fontname="japan" if language == "ja" else "helv")
+                page.insert_text((50, 130), "Document text and financial reporting conditions.")
+                result = self.invoke(doc.tobytes(), options)["result"]
+                self.assertEqual(result["dates"]["published_at"], "2026-10-05")
+                self.assertEqual(result["dates"]["basis"]["matched_text"], printed)
+                self.assertEqual(result["dates"]["basis"]["page"], 1)
+                self.assertTrue(result["dates"]["basis"]["bbox"])
+                page.insert_text((50, 170), printed, fontname="japan" if language == "ja" else "helv")
+                conflict = self.invoke(doc.tobytes(), options)["result"]
+                self.assertIsNone(conflict["dates"]["published_at"])
+                self.assertEqual(conflict["dates"]["profile_status"], "ambiguous")
+                invalid_doc = pymupdf.open()
+                invalid_page = invalid_doc.new_page()
+                invalid_page.insert_text((50, 50), "Quarterly report")
+                invalid_page.insert_text((50, 90), invalid, fontname="japan" if language == "ja" else "helv")
+                bad = self.invoke(invalid_doc.tobytes(), {**options, "publication_date_pattern": "^" + re.escape(invalid) + "$"})["result"]
+                self.assertIsNone(bad["dates"]["published_at"])
+                self.assertEqual(bad["dates"]["profile_status"], "invalid-date")
+
+    def test_nachi_pdf_profiles_require_exact_source_title_and_printed_date(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        ids = ["nachi-q3-2026-consolidated-results-ja-v1", "nachi-q3-2026-results-supplement-ja-v1", "nachi-stock-split-20261005-ja-v1"]
+        titles = ["2026年11月期 第３四半期決算短信〔日本基準〕（連結）", "決算短信補足資料", "株式分割および株式分割に伴う定款の一部変更に関するお知らせ"]
+        dates = ["2026年10月５日", "2026年10月5日", "2026 年10 月5 日"]
+        for profile_id, title, date in zip(ids, titles, dates):
+            with self.subTest(profile=profile_id):
+                options = next(p["options"] for p in config["article_profiles"] if p["id"] == profile_id)
+                doc = pymupdf.open()
+                page = doc.new_page(width=900)
+                page.insert_text((50, 50), title, fontname="japan")
+                page.insert_text((50, 90), date + (" 各 位" if "stock-split" in profile_id else ""), fontname="japan")
+                if "stock-split" in profile_id:
+                    page.insert_text((50, 170), "2026 年11 月30 日(月曜日)を基準日として", fontname="japan")
+                page.insert_text((50, 130), "株式会社不二越の財務資料。報告対象期間と予想条件を保管する。", fontname="japan")
+                result = self.invoke(doc.tobytes(), options)["result"]
+                self.assertEqual(result["title"], title)
+                self.assertEqual(result["dates"]["published_at"], "2026-10-05")
+                self.assertEqual(result["dates"]["basis"]["matched_text"], date)
+                missing = self.invoke(doc.tobytes(), {**options, "pdf_title_pattern": "^Missing title$"})["result"]
+                self.assertIsNone(missing["title"])
+                self.assertEqual(missing["status"], "partial")
+
     def test_fanuc_ir_disclosure_index_uses_year_and_day_headings_for_every_pdf(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = config["route-fanuc-ir-disclosures-ja"]["parse_options"]

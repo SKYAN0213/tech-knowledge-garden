@@ -44,7 +44,8 @@ def known_date(value, calendar_zone=None):
 
 
 def date_for_strptime(value, fmt, language):
-    """Normalize publisher month names without relying on the host locale."""
+    """Normalize date digits/month names; callers retain the untouched source basis."""
+    value = value.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
     if isinstance(language, str) and language.split("-", 1)[0].lower() == "en" and "%B" in fmt:
         months = {
             "Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April",
@@ -1987,7 +1988,7 @@ def pdf_parse(raw, options):
             block, match = matches[0]
             dates["basis"] = {**block["locator"], "text": block["text"], "matched_text": match.group(0)}
             try:
-                dates["published_at"] = datetime.strptime(match.group(0), options["publication_date_format"]).strftime("%Y-%m-%d")
+                dates["published_at"] = datetime.strptime(date_for_strptime(match.group(0), options["publication_date_format"], options.get("language")), options["publication_date_format"]).strftime("%Y-%m-%d")
                 dates["precision"] = "day"
                 dates["profile_status"] = "matched"
             except ValueError:

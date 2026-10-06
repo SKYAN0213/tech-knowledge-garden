@@ -4731,3 +4731,11 @@ Drive 네 작성 폴더의16폴더/213Markdown/1,374,967bytes를 실제 전수 m
 검토 자료 v1 Drive `12qwFdAPOyg9624oPt_yD8Pw8nIvYv0z6`/38,366bytes/8members/SHAdebe60b0fe896bf2acd9fd969d5362109a802e63171d093478e53f4aeb5dd4f5, 최신 원본 조회를 포함한 v2 `15OrSJhcZ5GAHCGjVPO6g9UEiFTU9k6as`/1,012,113bytes/18members/SHAe679ff6a78cb2ac667da5ee7ec2a8fa1a86a5553e3d70e256a7312c9891f2152를 raw 다운로드·전수 복원했다. v2에서 복원된 실제213raw bytes로 snapshot/readback binding을 재구성했다. 이 ZIP은 검토 기록과 작성 원본 조회이며 기사 원문 source_versions는0이다. 17승인의 exact file SHA가 일치하는 기존 등록 source closure 위치를 별도로 모두 확인했다. 전체17기사 원문을 이 ZIP에 함께 보관한 것으로 보고하지 않는다.
 
 분야별 최대5건과 상세 정보 보존의 선정 분리 선택을 async 요청했고 답변 전에는 공개 형식을 바꾸지 않는다. 새 모델/HTTP 기사 수집/adapter/공개 회차0이다. 데이터·문서 작업이므로 전체suite/build/deploy 반복0이다. WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 남는다. 상세 근거·다음 작업은 런북442다.
+
+## 19.350. 제조사 원본 획득과 공통 PDF 날짜 처리
+
+NACHI 실제 실적 본문·보충·주식분할3PDF와 나치/두산 목록4HTML을 수집했다. 전각 숫자가 포함된 발표일의 공통 파서 결함을 수정하고 PDF에 기존 월 이름 날짜 함수를 재사용했다. 원문 표기·bbox/페이지·raw/parse/관측시각을 유지하며 날짜 없는 IR 행·공유 landing URL·순서가 섞인 archive를 완주로 처리하지 않는다. exact profiles3와 실물297blocks·발표일2026-10-05를 확인했다. 같은 회계기간 원문2개는 자료 관계 후보이며 기사2건으로 자동 발행하지 않는다.
+
+표적5tests와 수정한 NACHI profile1test만 실행했다. Q3 exact 재파싱 재실행3파일 SHA 동일·stock 조건부 재요청 동일 source version을 확인했다. Research Drive raw ZIP691,974bytes/19members/9source versions/3parse의 metadata·SHA·전수 복원을 완료했다. Drive ID1oSbnxiAIflGYZsZUxzYelBRIH2qwd-79, SHA3c76ee1bf8d97d15f0565f9d10a9447bdcec65c25bf746907ab5a3371a3ef832이며 상세 근거는 런북443/출처86과 비공개 proof다.
+
+원문 수집·파서 수정·원격 복구의 진척이다. 새 일일 활성 경로·기사 승인·실제 정규 회차는0이며 WBS2/22를 올리지 않는다. 모델 호출0·전체suite 로컬 반복0·같은 실패1시간 반복0이다. 미완료 IR 경로는 원본을 보존한 채 다음 공통 식별/기간 resolver 대상으로 남겼다. 선정 분리 결정 전 공개 형식·구7월10일 원고는 유지한다. 나머지 전체 완료 조건은 런북443을 따른다.

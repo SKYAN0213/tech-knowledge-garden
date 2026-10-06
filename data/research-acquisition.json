@@ -1747,6 +1747,42 @@
         "publication_date_format": "%B %d, %Y",
         "preserve_publication_date_block": true
       }
+    },
+    {
+      "id": "nachi-q3-2026-consolidated-results-ja-v1",
+      "url_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/20261005_jp1\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^2026年11月期 第３四半期決算短信〔日本基準〕（連結）$",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日",
+        "publication_date_format": "%Y年%m月%d日"
+      }
+    },
+    {
+      "id": "nachi-q3-2026-results-supplement-ja-v1",
+      "url_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/20261005_jp2\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^決算短信補足資料$",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日$",
+        "publication_date_format": "%Y年%m月%d日"
+      }
+    },
+    {
+      "id": "nachi-stock-split-20261005-ja-v1",
+      "url_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/20261005_Notice_of_Stock_Split\\.pdf$",
+      "options": {
+        "language": "ja",
+        "pdf_title_page": 1,
+        "pdf_title_pattern": "^株式分割および株式分割に伴う定款の一部変更に関するお知らせ$",
+        "publication_date_page": 1,
+        "publication_date_pattern": "^[0-9０-９]{4} 年[0-9０-９]{1,2} 月[0-9０-９]{1,2} 日(?= 各 位(?:$| ))",
+        "publication_date_format": "%Y 年%m 月%d 日"
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {
