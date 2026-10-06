@@ -1770,3 +1770,6 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 ### 2026-10-06 원고 퍼센트 값·단위 관문 배포
 
 문단별 verified 인용 사실 밖의 퍼센트, 다른 fact의 수치, %/%p 혼동을 신규 승인에서 차단한다. 원 NACHI 승인 원고는 통과했고 비공개17.9%변조는 차단됐다. 표적14+새 literal1개 및437d6e9/Actions37467094867 Node1,019·Python15+10+3/build/site/deploy를 확인했다. 기존 공개3파일 bytes/SHA는 동일하고 비공개 Drive 검사 증거11자료의 원격 SHA/전수 복원을 마쳤다. 새 모델 호출0·추가 로컬 전체suite0·새 기사/정규운영0. 지표·기간·인과·분류의 의미 판정은 기존 원문 검토로 확인한다. 런북449/계획19.356을 따른다. 전체목표 active/WBS2/22와 legacy/독립human/08시 운영 gate는 유지한다.
+
+
+2026-10-06 두산 CEO 보완 완료: 기존 승인 원고·6검증 사실을 재사용해9/18선임 사건을9/20회차12→13기사로 반영하고 한국어 공식 공지를 같은 ID에 연결했다. Drive213 전후 raw/기존ID1업데이트·212불변, c5f83b3/Actions37470663227 Node1,019/Python15+10+3/build/site/deploy,12공개파일 동등성·RSS40/기존12 보존, 실제 HTTPS desktop/mobile 태그·키보드·뒤로가기, WebsiteData11raw/링크누락0과 source/delivery 비공개 Drive 원격ZIP SHA·전수 복원을 확인했다. 모델 재호출0·전체 로컬suite 반복0·정규 증가0. 런북450/계획19.357을 따른다. 전체목표 active/WBS2/22·정규0/7·전체legacy/독립human/08시/복구/fullruntime gate는 유지한다.

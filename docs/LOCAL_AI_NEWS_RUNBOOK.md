@@ -10917,3 +10917,24 @@ WebsiteData는 실제 배포에서11파일을 다시 생성해 기존11ID로 갱
 릴리스 결과: 코드437d6e9471ae5926149e5c0719b1ad845d40b5cf/Actions37467094867에서 Node1,019/1,019·Python15+10+3·build/site/deploy success를 확인했다. 전체 로컬suite 반복0·릴리스CI1회다. 실제 공개RSS·NACHI기사·reader-index3파일은 HTTP200/기존bytes·SHA와 같다. 비공개 검증 closure11자료/13members·source_versions0을 Drive18jI4TROu1_XRNEVxnM1Z5a6PxQ21-mB2에 저장하고15,313bytes/SHA8d2304b79ae650a70ac01ed94a754209c0ee4c56d0b6a4406fa6743727954c7a의 원격 다운로드·전수 복원·archive registry 등록까지 확인했다. source_versions0은 검사/릴리스 증거이며 실제 NACHI 원문은 기존 source closure를 참조한다. 모델 재호출/새 기사/정규 회차 증가0이다. P3-03 증거를 갱신하되 전체WBS2/22와 미완료 gate를 올리지 않았다.
 
 최신 비공개 진척판은 외장 core-progress-checkpoint-20261006-v11.json/html이며 전체2/22 유지와 P3-03의 새 실제 증거를 읽어 확인했다.
+
+
+## 450. 두산 CEO 과거 미수록 사건 보완과 언어판 중복 연결
+
+2026-10-06: 두산로보틱스 권영민 사장 선임을 기존9/20회차에 보완했다. 사건 ID43dbd3fe6cdd4fcf와9/18 발표일을 고정했고, 회사 공식 공지의10/1 게시일과 구분했다. 원고는 선임 사실과2000년 입사·2018~2020년 CSO·2021년 두산모트롤 경력만 설명한다. 회사 기대를 집행·성과로 승격하지 않고 회사/인물 전문용어 지도 노드를 만들지 않았다.
+
+기존 doosan-ceo-dual-source-extract-20261001-v1의 불변 모델 원출력·정정·6검증 사실을 재사용한다. 공통 select-source로2원문을 고정하고 draft/claims/fact-review/correction의 exact byte/SHA와 승인 계보를 reviewed-artifact-reuse에 남겼다. 새로운 모델 checkpoint나 호출 성공을 만들지 않았다. doosan-ceo-historical-approved-20261006-v1에서 현재 reader-quality/historical-addition 승인을 확인했고 reader preview도 생성했다. 사용된5사실·4근거문단·2원문은 ontology/doosan-ceo-historical-20261006-v1에 연결했다.
+
+한국어 공지는 이미 발견된 unreviewed 후보로 남아 있었다. doosan-ceo-korean-published-identity-20261006-v1에서 공식 한국어/9월18일 보도의 인물·행위·날짜 exact block을 대조해 기존 공통 candidate-identity로 같은 사건에 묶었다. 후보 key/10월1일 게시일/원문 판본을 보존하고 새 기사0으로 처리했다. 장부904개 중 verified99/unreviewed792/deferred11/rejected2이며 자동 제목 유사도 판정으로 승격하지 않았다.
+
+Drive 작성원본213개·16폴더를 전후 각각 raw bytes와 안정된 두 목록으로 대조했다. 기존 회차 ID1CuQuHwbY7evakLihsyT0n1Elm_toPLfG의1파일만36,025→38,668bytes로 갱신했고212개는 불변이다. 새 SHA461d8ae60066bc6492b819cdfd7adc6483e99747e6e1ebcab5cbc38c290e1bb8. 공통 authoring write-session의 durable intent는 verified1/pending0/conflict0/unresolved0, postflight snapshot→pull-drive→publish로 반영했다. 기존12 article_records/article_reviews·headlines·cutoff/date를 보존하고13기사/로봇3을 확인했다. RSS40 GUID/pubDate는 그대로다.
+
+공개 commit c5f83b3137adb67a5946ae5a57837d6c0fcef764/Actions37470663227에서 Node1,019/1,019·Python15+10+3·build/site/deploy 성공을 확인했다. 추가 전체 로컬suite0·릴리스CI1회이며 코드 변경0이다. doosan-ceo-historical-public-readback-20261006-v1의12파일은 승인 preview와 동등하다. 실제 HTTPS 기사·회사태그1건·뒤로가기·390px 가로 넘침0·키보드 브리핑 이동·로봇탭3건·뒤로가기전체13건을 확인했고 viewport를 복원했다. 실제 WebsiteData364페이지/184기사/25개념/22연결·링크누락0·11파일의 기존ID와 actual remote raw SHA를 확인했다. operation의 browser/WebsiteData flag는 별도 proof를 대체하지 않아 임의 true로 수정하지 않았다.
+
+source closure52자료/54members·3원문은 Drive Research1rKgMo3FS36oY7XggAJ9VvsC9L_91VEb5의208,466bytes·SHAf67399d8a9d5894b4939b6f078fb2f5dbc00659fc46f19bc893c7ad78cba5e37로 보관했다. delivery closure145자료/147members·source_versions0은1xz_tX5BroMzHRe4aytVN8TJCbEr2MULa의2,898,711bytes·SHAd5dda11879099fa1918dec501b23d177fd57949cf78cdd315a906eed662365a6로 보관했다. 둘 다 비공개 metadata/actual remote ZIP SHA·전수 복원·registry 등록을 확인했다. source_versions0은 발행 증거이며 원문은 source closure를 참조한다. 보존 검사는 별도 doosan-existing-content-preservation-v1.json에 있다.
+
+첫213개 동시 raw 호출은 도구 host stdout 종료로 관측을 보존하지 못해 사용하지 않았다. 4개씩 제한한 actual read로 새213개 결과를 전후 각각 저장해 해결했다. macOS 기본 Python3.9의 zip(strict)와 archive 스크립트 경로 오입력은 확인된 Python3.14와 실제 scripts/research/package-archive.py로 해결했다. release observation의 complete 표시 누락은 실제1000한도 미만 두 목록 근거로 보완했다. 새 근거 없는 반복이나1시간 이상 차단은 없었다.
+
+전체 목표active/WBS2/22·partial18/not_started2·새 정규0/7·전수legacy47회차454구간/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending을 유지한다. 이 사건 보완은 정규운영 완료 횟수가 아니다. 다음은 최근 확보 후보의 원문·언어판·수정판 관계를 공통 처리하고 승인 가능한 사건을 완결하는 묶음이다.
+
+최신 비공개 진척판은 외장 core-progress-checkpoint-20261006-v13.json/html이며 공개 보완·한국어 후보99번째 검증·archive location과 WBS2/22를 실제 receipt에서 집계했다. 보존 검사에서 JSON 키 순서만 바뀐 경우는 parsed object deep equality로 대조하여 기존12개 내용이 같음을 확인했다. 문서만 반영하는 후속 commit은 CI skip 표기로 이미 통과한 같은 코드의 전체 suite를 반복하지 않는다.
