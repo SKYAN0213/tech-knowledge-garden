@@ -11208,3 +11208,26 @@ source archive plan은 실제109terminal observation run을 공통closure6개로
 입력 context b75f02ef90be507ee94e2805d5797417b6b804a7e612d38d89d7a5424875191d에서 exact candidate 상세4개를 읽고 daily-20261007-four-fields-editorial-v1에 frozen handoff458c81e0/원문 version·parse를 고정했다. 모델 처리 handle16038의 live 진행을 확인하며 같은 실행을 재시작하지 않는다. 완료된 수집55경로를 다시 실행하지 않는다. local qwen3.8:27b-mlx fact_extract/evidence_compare의 실제 provenance와 원출력은 해당 child run에 보존한다. 사실/편집 검토·신규 발행은 별도 단계다.
 
 항우연 원 HTML21e392ed…의 실제 br/direct-text 내용을 읽어 누락을 재현했다(kari-body-regression-before-v1.log). 기존 common XPath 설정만 수정한 뒤 Python 표적2/2와 missing/ambiguous body 차단을 확인했다(kari-body-targeted-v1.log). select-source kari-body-current-selection-20261007-v1→reparse kari-body-current-reparse-20261007-v1은 raw·게시일2026-10-06·원 URL을 그대로 유지했고 새parse6357e1ba…에654자 본문이 있다. kari-body-runtime-proof-v1.json은 원19자 parse·원문 보존·HTTP0·승인false를 기록한다. 진행 중 모델의 기존 title-only input은 변경하지 않았으며 그 결과를 새 본문 결과로 표시하지 않는다. 다음 source processing은 이 새parse를 사용한다.
+
+
+## 469. 원문 검토·파싱 연결 복구·여섯 기사 전달
+
+468의 parent daily-20261007-four-fields-editorial-v1은 terminal이다. 옛 항우연 title-only child를 새 소식 없음으로 처리하지 않았다. kari-body-empty-review-20261007-v4는 정확한 모델 추출/원문 binding으로 extraction_missed_event를 기록한다. empty review의 --source-run은 선택용 source run이 아니라 완료 processing run이고 --review는 research root 기준 상대 경로다. 처음 잘못 지정한 CLI 실행은 승인/원문을 바꾸지 않았다.
+
+KAIST child c656b11f80f6의 인용 한 건을 실제 block으로 정정하고 그래프 연결 유지 원리를 직접 추가했다(7verified). 최대24.5%/1.90배·1억개/6시간 실험·9/2학술 발표·4분기 상용화 계획의 범위를 유지했다. 논문 전문을 읽은 것으로 표시하지 않고 창업 관계를 자동 확정하지 않았다. event9059b04353193fee의 candidate는 canonical 별칭 source-f725e61c7221f280ed4d에 연결됐다.
+
+셀트리온 child78c14cbb6065는 제품의 원문 한글명과 %/개월 단위를 복원하고 진행 중 협상/기존 판매망 계획을 보완했다(8verified). 10/6발표와 10/5미국 현지 출시, 옵텀의 사보험 처방집, 약15%낮은 WAC를 구분했다. 미국 신제품 성과 단락에 있던 스페인/다른 제품 배경 수치를 공개 원고에서 제거했으며 원 검토 사실과 source bytes에는 보존했다. event14ae3c84f2654e37를 승인/후보에 연결했다.
+
+AWS childc957f31038c7의 5사실을 직접 확인했다. publishes를 인터넷 공개로 오해하지 않도록 CloudWatch 전송으로 정정하고 제출/실행/성공/실패 상태로 진입한 작업 수, 대기열별 구분, 소요시간, Batch 제공 리전 범위를 설명했다. event2dae24cccb14cc62는 원 후보 source-97bd7b374f2cb70a139a에 연결됐다. 최초17자 event ID 입력은 거부됐고 native source ID의 앞16자를 사용한 검토만 승인됐다.
+
+kari-body-current-editorial-20261007-v1은 복구parse6357e1ba로 실제 처리했다. 영문으로 바뀐 원문 기관명·숫자 조건/단위를 바로잡고 직전 위원회 결정과 조건부 설치 계획을 직접 추가했다(6verified). 제목에 결정 ‘예정’을 명시하고 반복 설치 문장을 상세에만 유지했다. event9fc8bc0338395f2d를 승인했다. 최초 잘못된 ID 입력은 거부됐고 원문은 바꾸지 않았다.
+
+공통 scripts/research-reconcile-parse.mjs를 kari-body-candidate-parse-recovery-20261007-v1에 적용했다. 초기 구현이 일반 mergeBacklog에서 같은 관측 시각의 content 충돌로 거부되는 것을 표적 검사/실물로 확인했다. 그 검사는 유지하고 저장 bytes를 검증하는 별도 parser recovery로 처리한다. 원문21e392ed…·관측시각·발표일·제목·key와 다른 모든 후보를 보존하며 새 parse 연결만 갱신한다. 세 순수 검사는 처음 통과했고 실패한 실제 저장/재개/변조 검사는 수정 뒤1/1 통과했다. candidate-parse-recovery-targeted-v1/v2.log와 kari-body-candidate-parse-recovery-v2.json/input이 증거다. custom root의 backlog 명시와 고정 input/receipt 재개를 지원하고 기사 승인으로 승격하지 않는다.
+
+실제 모델은 qwen3.8:27b-mlx, 추출/작성 think:false·근거대조 medium이다. 네 사건 및 옛 빈 추출은 총17 complete 호출(추출5/대조8/작성4), 누적 wall1339190ms, 최대174647ms였다. 같은 실패의1시간 반복은0이다. current55-oct7-four-fields-model-ledger-v1.json의 실제 예산 ledger에 근거한다. 대기 시간이 포함돼 hardware 성능 보장치로 쓰지 않는다. 보완/정정/승인/후보 연결에는 모델을 다시 호출하지 않았다.
+
+새 KAIST/셀트리온/AWS/항우연 source+approval closure는 각각60/60/68/52members,342892/238019/390800/167005bytes다. private Research Drive1GPdQiVqtFrUxJtPEM3YgdrpAUM9zC07e·1qQaUROzbnVXh_KopRcHN31_LzBMZtIhX·1xsUWvdETzkVPDtKnQAPEa780xzUx2e5L·1bIKSBA8xEs2GJWOLKLMv3bbUbGx0pFsf에서 실제 metadata/원격raw SHA/240members 전수 복원/registry/승인 동일성을 확인했다. 최초 remote ZIP의 root 오지정은 안전 경계에서 거부됐고 external evidence root에서 복원했다. fullruntime/인증 복원이나 canonical 작성 원고의 Drive 발행을 뜻하지 않는다.
+
+원래 두산/보안 승인2를 유지한 여섯 기사와 위빙/Signals2노트로 daily-20261007-six-article-reader-slice-v1을 생성했다. 새 Signals는 여섯 승인 source-events에 결속된 reviewed-empty로, 단일 발표를 성장·인과관계로 해석하지 않는다. 실제 refresh/knowledge sync/check/validate/build/verify가 모두 완료됐다. consistency에6고유 event와 웹·RSS·GitHub 링크/요약 동등성, 기존39 RSS identity 보존/preview 새GUID1(총40 cap), 위빙 상호링크를 기록했다. coverage_complete/drive_written/browser_verified/candidate_published는 false다. 공개 새기사/정규 성공 횟수는0이다.
+
+외장 증거 루트 /Volumes/X5Storage/tkg-daily-core-20261007-v1의 current55-oct7-{four-fields-execution,new-editorial-archives,new-editorial-roundtrip,new-editorial-remote-approval,six-article-selection,six-article-signals-review,six-article-reader}-v1과 kari-body-{empty-review-v4,candidate-parse-recovery-v2,remote-restore-v1,remote-approval-v1}을 사용한다. private reader 출력은 runs/daily-20261007-six-article-reader-slice-v1/preview-workspace/public/briefings/2026/10/2026-10-07_0800_tech_ai_briefing.html이다. 기존 dashboard의 browser file 거부를 우회하지 않았으며 이 preview의 실화면 검증도 미완료다. 전체3/22·legacy44/430/metadata10·독립human0/40·0/20·actual08시 및 정규0/7·goal active를 유지한다.

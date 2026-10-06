@@ -5069,3 +5069,14 @@ terminal109수집 관측의6개 비공개 Drive 패키지는 원격raw SHA·4059
 다음 실제 처리 대상은 KAIST 동적 벡터 검색 연구, 셀트리온 미국 출시, 항우연 누리호 이송, AWS Batch 지표다. terminal daily handoff의 정확한4후보/원문 판본을 고정하여 daily-20261007-four-fields-editorial-v1에서 공통 local processing을 실행한다. 기존 로봇·보안 승인2건에 추가하는 편집 작업이며 기존8분야를 대체하지 않는다. 모델의 추출·근거대조 완료 뒤 실제 원문과 비교해 사실/기사 승인과 private reader를 진행한다. 원문 본문에 없는 추론은 작성하지 않는다.
 
 항우연 본문은 저장 HTML에 존재하지만 span/p/table 선택만으로19자 제목만 남았다. 수집기는 terminal이며 진행 중인 모델 처리는 고정한 기존 parse를 읽는다. 해당 원본/모델 정책/처리 파일을 수정하지 않고 수집 profile의 기존 XPath 설정만 보완했다. worker/common crawler 변경 없이 직접 텍스트를 포함한 고유 c 전체를 선택한다. 실패 재현 후 표적2건 통과와 같은 raw bytes 재파싱654자/새parse를 확인했다. 원문 재수집·전체 수집 재개0이다. 옛 parse 처리 결과를 새 본문 검토 결과로 바꾸지 않는다. 다음 계획은 수정된 설정 fingerprint와 새 Drive 입력으로 만들고 기존 frozen run/영수증을 보존한다.
+
+
+## 19.376. 네 분야 승인과 여섯 기사 비공개 전달
+
+19.375의 terminal 처리 뒤 KAIST7·셀트리온8·AWS5·항우연6개 사실을 직접 원문과 대조하여 26 verified로 판정했다. KAIST 최대 성능/실험 조건·학술 발표/제품 계획, 셀트리온 미국 출시/사보험 범위/WAC/진행 중 협상, AWS 작업 상태별 수와 소요시간, 항우연 이송 시작/조건부 설치/발사시각 결정 계획을 구분했다. 네 기사를 직접 정정·승인하고 기존 로봇·보안 두 기사를 유지한 여섯 기사 private reader를 생성했다. 독립 human gold나 무인 승인 검증으로 세지 않는다.
+
+항우연의 제목-only 모델 결과는 `extraction_missed_event`로 별도 기록하고 같은 저장 bytes의 새 parse로 한 번 처리했다. 미검토 후보의 옛 parse 연결을 정확한 새 parse로 바꾸는 공통 recovery CLI를 추가했다. 원문 관측 시각을 새로 만들거나 일반 observation 충돌 검사를 느슨하게 하지 않는다. 이전 후보/원문/parse와 재개 입력을 보존하고 기사 승인은 따로 수행한다.
+
+새 네 승인 묶음은 비공개 Research Drive에서 실제 원격 ZIP SHA·부모/shared:false·전수 복원·승인 결과 동일성까지 확인했다. 여섯 기사 `daily-20261007-six-article-reader-slice-v1`은 refresh/knowledge sync/check/validate/build/site verification 및 웹·RSS·GitHub 요약/링크 일치를 통과했다. 원격 연구 보관과 canonical 작성 원고의 Drive 발행은 다르며 이 preview는 coverage_complete/drive_written/browser_verified/candidate_published:false다.
+
+다음은 남은 분야의 사건/배경·중복 판정을 이어 정규 편집을 완성하고 fresh Drive 작성 원본→동일 ID 보관→공개 결과/WebsiteData를 확인하는 일이다. 제한된 thelec 원문은 새 공식 근거 없이 재시도하지 않는다. 전체3/22·legacy44회차430구간/metadata10·독립40/20·실제08시/인증/복구·서로 다른 정규0/7과 goal active는 그대로다. 이미 통과한 모델/수집/전체 CI를 반복하지 않는다. 상세 실행·실패와 재개 위치는 런북469에 기록한다.

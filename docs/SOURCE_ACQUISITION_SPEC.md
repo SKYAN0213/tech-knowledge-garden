@@ -2660,3 +2660,12 @@ KISA는 공통 GET 페이지 이동과 공지 ID를 사용한다. 전자신문�
 2026-10-07 항우연 상세 원문에서 제목을 감싼 span만 선택하고, br 뒤의 직접 텍스트를 빠뜨리는 결함을 확인했다. 새 crawler나 worker 옵션을 추가하지 않고 기존 content_xpath/content_block_xpath를 재사용한다. 고유 board_view 안에 c 본문이 정확히 하나일 때만 해당 c 전체를 하나의 근거 block으로 읽는다. 본문이 없거나 둘 이상이면 실패하며 제목·게시일은 기존 별도 selector로 유지한다. 다른 출처에서도 문단 태그 없이 직접 텍스트/inline 요소/br를 사용하는 실제 원문을 확인했을 때, 고유 wrapper에서 실제 본문 요소를 선택하는 같은 설정을 적용할 수 있다. 페이지 전체 fallback이나 임의의 본문 추정은 사용하지 않는다.
 
 실제 누리호 발표의 저장 HTML을 select-source→reparse로 재사용했다. 같은 raw SHA/게시일/원 URL을 유지하면서 추출 텍스트가19자에서654자로 늘었다. 원 parse와 실패 재현 기록을 보존하고 새 parse ID를 발급했다. 모델 실행이나 원문 HTTP 요청 없이 이송 시작·예정 소요시간·엄빌리칼 연결·발사시각 결정 계획을 되찾았다. 설정 회귀2건과 본문 누락/복수·관련 기사 제외를 검사했다. 이는 사실·기사 승인이나 발행 완료가 아니다. 실행 증거는 런북468과 외장 kari-body-*를 따른다.
+
+
+## 90. 동일 응답의 미검토 후보 파싱 연결 복구
+
+`scripts/research-reconcile-parse.mjs`는 `--run`, `--source-run`(복구 전 원본 수집), `--reparse-run`(저장 원문 재파싱), `--candidate-key`로 정확한 후보 하나만 갱신한다. 별도 research root는 명시적인 `--backlog`를 요구한다. 기존 원문 bytes/parse 검증, fingerprint, garden/daily/backlog lock과 원자 저장을 공통으로 사용한다. 새 크롤러·HTTP·모델 호출은 없다.
+
+원문 source version·raw SHA·관측 시각·제목·발표일은 같아야 하고 두 parse가 모두 존재해야 한다. 미검토이며 사건 ID·기사 승인·공개·제외·동일사건 판정·revision alert가 없는 후보만 처리한다. 일반 관측 병합의 ‘같은 관측 시각의 내용 충돌’ 검사는 완화하지 않는다. 파싱 복구는 원 관측 시각을 유지하는 별도 작업으로 기록한다.
+
+복구 전 후보와 두 source identity를 `parse-recovery-input.json`에 고정하고 `candidate-parse-recovery.json`에 새 연결을 저장한다. 승인 상태와 다른 후보는 보존한다. 재실행은 고정 입력·원문·영수증·현재 연결을 검사하여 재사용하며 새 승인·발행을 만들지 않는다. 제목/발표일/원문 변경은 이 경로에서 거부하고 기존 원문 개정·사건 검토를 사용한다. 런북469의 항우연 실물 적용을 따른다.
