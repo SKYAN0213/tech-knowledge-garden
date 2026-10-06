@@ -8,6 +8,61 @@ import { extractClaims } from "../scripts/research/claims.mjs"
 import { writeDraft } from "../scripts/research/editor.mjs"
 import { localizeQueries, searchQueries, planSearchQueries } from "../scripts/research/search.mjs"
 
+test("writer receives exact source days, explicit KST instants and no observation-date fallback", async () => {
+  const cases = [
+    [
+      "2026-07-07T21:06:12Z",
+      { source_day: "2026-07-07", precision: "timestamp", seoul_day: "2026-07-08" },
+    ],
+    [
+      "2026-07-08T06:06:12+09:00",
+      { source_day: "2026-07-08", precision: "timestamp", seoul_day: "2026-07-08" },
+    ],
+    [
+      "2026-07-08T23:30:00-07:00",
+      { source_day: "2026-07-08", precision: "timestamp", seoul_day: "2026-07-09" },
+    ],
+    ["2026-07-07", { source_day: "2026-07-07", precision: "day", seoul_day: null }],
+    [null, null],
+    [undefined, null],
+    ["2026-07-07T21:06:12", null],
+    ["2026-02-30", null],
+  ]
+  const stopped = Error("Inspect request without inference")
+  let request
+  const claims = cases.map(([published_at], index) => ({
+    claim_id: "c" + index,
+    subject: "기업",
+    statement: "기업은 2026-08-01부터 제품을 제공할 계획이라고 발표했다.",
+    published_at,
+    observed_at: "2026-10-06T00:00:00Z",
+    effective_period: "2026-08-01",
+    review: { status: "verified" },
+  }))
+  await assert.rejects(
+    writeDraft(
+      {
+        structured: async (input) => {
+          request = input
+          throw stopped
+        },
+      },
+      [...claims, { ...claims[0], claim_id: "deferred", review: { status: "deferred" } }],
+    ),
+    (error) => error === stopped,
+  )
+  const input = JSON.parse(request.messages[1].content)
+  assert.equal(input.claims.length, cases.length)
+  input.claims.forEach((claim, index) => {
+    assert.deepEqual(claim.publication_date, cases[index][1])
+    assert.equal(claim.published_at, cases[index][0])
+    assert.equal(claim.effective_period, "2026-08-01")
+    assert.equal("observed_at" in claim, false)
+  })
+  assert.match(request.messages[0].content, /facts\.when에만/)
+  assert.match(request.messages[0].content, /수집일·검토일로 발표일을 채우지 않는다/)
+})
+
 test("direct inference and planning use the installed MLX default and preserve explicit model overrides", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "default-model-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

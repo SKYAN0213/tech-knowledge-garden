@@ -10733,3 +10733,35 @@ v204 최종draft4891389c7f79d4863030f005a91e4ae4bee77c33dc5b831db2aaef73832fe6ee
 전체goal active·WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7의 미완료 관문을 유지한다. 로컬 전체 suite는 반복하지 않았으며 문서 영수증 commit은 skip ci로 처리한다. 같은 실패1시간 반복0이다.
 
 갱신된 계획표로 비공개 현황판 core-progress-checkpoint-20261006-v1.json/html을 생성하고 기준일2026-10-06·2/22·partial18·not_started2 및 모든 WBS 상태 보존을 실제 확인했다. 첫 readback script가 내부 필드 completed/required를 출력 API 필드로 오인해 assertion 실패했다. 실제 출력 계약 overall_completion.numerator/denominator/workstreams로 수정한 readback은 통과했고 제품 코드는 바꾸지 않았다. JSON SHA db89c43e27fc5e184a862727430d7272e31c228a582b569efd08415ede9c8c55; HTML SHA f612d56c8875443bca1d16055a00caa39cbf7e3fefcc649071703d83355f68f0이다. 현황판은 local_private이며 실제 브라우저 렌더링 검증으로 표시하지 않는다.
+
+## 440. 원 v203/v205 완료와 기존 용어로 이어지는 공통 재사용
+
+새 수집/adapter 없이 legacy-20260710-claude-original-versions-source-20261006-v1의 v203/v205를 각각 select-source로 분리했다. 공통 process-source의 Qwen qwen3.8:27b-mlx를 그대로 사용했고 실제 digest/정책은437절과 같다. v203 추출71.182초·medium 대조112.479+111.936초·작성113.477초, v205 추출54.664초·대조95.659+99.648초·작성115.180초가 모두 완료됐다. 각6모델 사실에20/17원문 직접 보완을 더해26/23verified를 판정했다. human gold나 독립 모델 정확도 측정으로 세지 않는다.
+
+첫 v203 fact review는 숫자 조건을 바꿔 쓴 문자열 때문에 condition_not_in_evidence로 거부됐다. 조건을 정확한 원문 인용으로 보존한 검토가 통과했다. 첫 승인 입력의17자리event ID는16자리 aa3c9fe0f3678a1e로 바로잡았다. 한국시간 날짜는 기본 UTC day와 달라 기존 source-publication-time 근거를 명시해 승인했으며 guard를 완화하지 않았다. v205 최종event414c9891d5ccd917도 같은 계약으로7월9일을 승인했다. writer의 invalid→비효율적 오역·날짜 누락·일반 성능 확대 문장을 정정했다. 5설명/4문단 입력은 기존4설명/각3문단 계약에 맞춰 사실을 삭제하지 않고 묶었다. 모델 재호출은0이다.
+
+두 source closure의 Drive ID/크기/SHA는 계획19.347절에 있다. 각각57자료/59members·3판본이며 actual raw ZIP의59자료를 새 private 폴더로 복원했다. 보관 registry의 remote-package는 root-relative가 아니라 실제 filesystem 경로다. 처음 상대 경로 등록이 ENOENT였고 source ZIP의 절대경로로 등록했다. 메타데이터/shared:false/부모/크기·raw SHA·승인6파일/기사/fact packet 동등성은 실제 확인했다. 근거: claude-203-205-original-source-reading-v1.json,claude-original-two-version-approval-runtime-proof-v1.json,claude-{203,205}-drive-restored-approval-proof-v1.json과 각remote-restore/register 파일.
+
+추가 전문용어 검토는 다음처럼 완료된 세 역할을 공통 옵션으로 재사용했다. 최초 source-processing은 fact_review까지만 준비하고 기존 결정의 exact packet acknowledgment를 새 packet으로 연결했다. 검토 사실 배열·검토시점은 기존 writer 입력과 같게 보존했다. 최초 writer 원출력의tag_theme_mismatch는 과거 출력 그대로 남겼으며 현재 최종 원고를 명시적 correct로 보존했다.
+
+```sh
+node scripts/research.mjs process-source --run legacy-20260710-gpt56-concept-reused-processing-20261006-v5 --source-run legacy-20260710-gpt56-source-20261006-v2 --extraction-run legacy-20260710-gpt56-processing-20261006-v1 --assessment-run legacy-20260710-gpt56-window-reused-processing-20261006-v4 --draft-run legacy-20260710-gpt56-window-reused-processing-20261006-v4 --model-policy data/research-model-policy.json --evidence-think false
+```
+
+기존 전문 정의 prompt-caching의 정의·범위·정확한 별칭과 기사 사실11709ca13f4be9301629103e를 읽고 article-concept-review/v1을 승인했다. 원 사건ID/원날짜/본문/원문은 동일하고 새 개념 노드나 다른 회사 연결은 없다. 추가 모델 생성0이다. ontologyConceptArticles에서 기사1건을 확인했다. archive는 정의·별칭 conflict 확인용 작성4폴더 사본을 포함하는334자료/336members다. 실제 Drive raw SHA·전수 복원 뒤 loadArchivedConceptApproval·loadFactReviewPacket·온톨로지 전량 동등성 및 관련기사1건을 재확인했다. GPT-5.6 원 승인v4는 보존하고 v5를 명시적인 새 연결 검토 revision으로 선택한다. gpt56-prompt-caching-drive-restored-approval-proof-v1.json과 ontology/related-articles JSON이 근거다.
+
+private 샘플은 fifteen-six-w-reviewed-samples-v2.md·fifteen-approved-article-summary-v2.json의15사건/123verified/8deferred/software11·AI4다. legacy-jul10-approved-article-unit-mapping-v3.json은 원8기사구간→17개별 승인사건의 준비 기록이다. 이전 v206은 원 마감 뒤 별도 사건으로 유지한다. legacy-jul10-source-reference-review-v1.json에서 SourceList-only3URL과 원v203~205 목록/각태그 관계를 판정했다. URL을 실제 기사근거로 자동 승격하거나 같은 사건 alias를 생성하지 않았다. 원 원고 SHA37ba45683ceacc6e27edf05d67ffa1649c369306e401c74a0a7cda58dbbccc46은 그대로다.
+
+전체 legacy전환·주소 보존 관계·나머지 전문용어·브리핑 선정 분리 사용자결정·fresh Drive authoring snapshot·공개 발행은 남는다. goal active/WBS2/22·legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 유지한다. 핸들23917/79933/84068/65064/33943은 모두 terminal이다. 데이터·문서 변경이므로 전체suite/build/deploy 반복0,같은 실패1시간 반복0,추가 유료API/예약0이다.
+
+## 441. 공통 작성기의 날짜 전달과 실제 두 원고 확인
+
+원고에 날짜가 빠져 수작업 정정을 반복하던 문제를 공통 작성 입력에서 보강했다. `publication_date`는 검토 사실의 `published_at`에서만 계산하며 source_day/precision/seoul_day를 전달한다. source timestamp의 offset이 명시됐을 때만 KST로 변환한다. 최초 게시일·갱신일·시행일 구분은 유지한다. `EDITORIAL_RESEARCH.md`와 checkpoint 구현 해시도 함께 갱신했다. 공개 계약이나 기존 승인 파일은 변경하지 않는다.
+
+표적 명령 `node --test tests/research-default-model.test.mjs tests/research-draft-checkpoint.test.mjs tests/research-reader-quality.test.mjs` 12/12. 외장 증거루트의 `writer-date-context-targeted-v1.log`, `writer-date-existing-approval-compatibility-v1.json`(기존 15건), `writer-date-{same-day,crossday}-runtime-proof-v1.json`, 두 editorial-quality JSON이 근거다. 표적검사 뒤 코드 변경이나 같은 검사 반복은 없었다. 최초 readback의 날짜 필드 오인은 실제 article_review 계약으로 수정했다.
+
+`legacy-20260710-claude-{204,203}-writer-date-processing-20261006-v2`는 각 원 processing-v1의 완료 extraction/assessment만 재사용하고 새 writer를 호출했다. packet acknowledgment를 새 정확한 packet SHA에 연결했고 원 판정·검토 시점은 보존했다. 모델 정책은 기존 qwen3.8:27b-mlx/digest5642e974…/think:false 그대로다. writer 34.833/126.930초, 호출 총2·재시도0이다. 같은 날짜와 KST 다음날 리드를 실제 확인했다. 두 후보의 태그/과장/반복/범위 문제는 비공개 원문 대조에 남기고 승인하지 않았다. 이전 승인 v1 원고가 계속 최종 승인본이며 샘플15사건/123verified/8deferred는 늘리지 않는다.
+
+Drive source closure의 메타데이터/shared:false/부모/크기, actual raw ZIP SHA, 전수80/79members 복원 뒤 `loadFactReviewPacket`·`loadBoundDraftCheckpoint` 동등성을 확인했다. 두 Drive ID/크기/SHA는 계획19.348에 있다. archive registry에는 실제 ZIP 절대경로를 등록했다. `writer-date-runtime-drive-restoration-proof-v1.json`과 `writer-date-{203,204}-remote-{restore,register}-v1.json`이 근거다. 승인 전 두 run을 related approval로 묶는 첫 시도는 거부돼 각각의 source closure로 보관했다. 승인 guard를 완화하지 않았다.
+
+다음은 릴리스 한 번의 CI·실제 배포/공개 보존 확인과 영수증 기록이다. 이후 원7월10일의 기존 기사 주소와 분할 사건 관계·추가 전문용어를 검토한다. 선정 분리 사용자 결정과 fresh Drive 작성원본 대조를 건너뛰어 소급 발행하지 않는다. 목표active/WBS2/22·전체legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 미완료다. 핸들55870/97556은 terminal이며 같은 실패1시간 반복0이다.

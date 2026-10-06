@@ -113,6 +113,7 @@ export async function writeDraftCheckpoint(root, runId, ollama, claims, options,
       [
         "scripts/research/draft-checkpoint.mjs",
         "scripts/research/editor.mjs",
+        "scripts/research/dates.mjs",
         "scripts/research/deep-dive.mjs",
         "scripts/research/contracts.mjs",
         "scripts/sectors.mjs",
