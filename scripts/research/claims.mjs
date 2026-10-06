@@ -21,6 +21,29 @@ export function extractionCandidateKey(
 
 const normalize = (s) => s.normalize("NFKC").replace(/\s+/g, " ").trim()
 const normalizeComparable = (s) => normalize(s).toLocaleLowerCase("en-US")
+function quotedNumber(quote, literal) {
+  const source = normalizeComparable(quote),
+    value = normalizeComparable(literal)
+  const startsNumber = /^(?:[-+−$€£¥₩]\s*)*\d/u.test(value)
+  for (let i = source.indexOf(value); i !== -1; i = source.indexOf(value, i + 1)) {
+    const before = source[i - 1] || "",
+      previous = source[i - 2] || ""
+    const after = source[i + value.length] || "",
+      next = source[i + value.length + 1] || ""
+    if (
+      startsNumber &&
+      (/\d/.test(before) ||
+        (/[.,]/.test(before) && /\d/.test(previous)) ||
+        (/[-−]/u.test(before) && !/\d/.test(previous)))
+    )
+      continue
+    if (/\d$/.test(value) && (/\d/.test(after) || (/[.,]/.test(after) && /\d/.test(next)))) continue
+    if (/^[a-z]/i.test(value) && /[a-z0-9_]/i.test(before)) continue
+    if (/[a-z]$/i.test(value) && /[a-z0-9_]/i.test(after)) continue
+    return true
+  }
+  return false
+}
 export function validateEvidence(claim, parses) {
   const problems = [],
     quotes = [],
@@ -50,8 +73,7 @@ export function validateEvidence(claim, parses) {
   }
   if (!quotes.length) problems.push("evidence_missing")
   for (const n of claim.numbers || []) {
-    if (!quotes.some((q) => normalizeComparable(q).includes(normalizeComparable(n.literal))))
-      problems.push("number_not_in_evidence")
+    if (!quotes.some((q) => quotedNumber(q, n.literal))) problems.push("number_not_in_evidence")
     if (n.unit && !quotes.some((q) => normalizeComparable(q).includes(normalizeComparable(n.unit))))
       problems.push("unit_not_in_evidence")
     if (
@@ -59,6 +81,15 @@ export function validateEvidence(claim, parses) {
       !quotes.some((q) => normalizeComparable(q).includes(normalizeComparable(n.condition)))
     )
       problems.push("condition_not_in_evidence")
+    if (
+      !quotes.some(
+        (q) =>
+          quotedNumber(q, n.literal) &&
+          (!n.unit || normalizeComparable(q).includes(normalizeComparable(n.unit))) &&
+          (!n.condition || normalizeComparable(q).includes(normalizeComparable(n.condition))),
+      )
+    )
+      problems.push("number_parts_not_in_same_evidence")
   }
   const ongoingActivity =
     /\b(?:continues? to (?:participate|operate|run)|is (?:still|currently) (?:participating|operating|running))\b|(?:참여하고\s*있(?:다|고|으며)|꾸준히\s*참여하고\s*있(?:다|고|으며)|운영하고\s*있(?:다|고|으며)|진행\s*중(?:이다|이며|인))/iu
@@ -68,16 +99,31 @@ export function validateEvidence(claim, parses) {
     quotes.some((quote) => ongoingActivity.test(quote))
   )
     problems.push("ongoing_source_marked_completed")
+  const completedReporting =
+    /\b(?:announced|stated|said|reported)\b|(?:발표했다|밝혔다|말했다|보고했다)/iu.test(
+      claim.statement || "",
+    )
+  const explicitFutureStatement =
+    /\b(?:will|(?:is|are) scheduled (?:to|for)|may(?: also)? be considered for)\b/iu.test(
+      claim.statement || "",
+    )
+  const supportedReporting =
+    completedReporting &&
+    quotes.some((q) =>
+      /\b(?:announced|stated|said|reported)\b|(?:발표했다|밝혔다|말했다|보고했다)/iu.test(q),
+    )
   if (
     claim.event_state === "completed" &&
-    quotes.every((q) =>
-      /\b(?:plans?\s+to|will|expects?\s+to|scheduled\s+to|intends?\s+to|aims?\s+to)\b|(?:할\s*계획(?:이다|이라고|임)?|계획하고\s*있다|계획\s*중(?:이다|임)|예정(?:이다|으로|되어\s*있다))|(?:を予定|を計画|予定している|計画している)|(?:将|计划(?:于|将))|geplant/i.test(
-        q,
-      ),
-    ) &&
-    !quotes.some((q) =>
-      /\b(?:completed|delivered|launched|has signed)\b|완료|출시했다|체결했다/i.test(q),
-    )
+    ((explicitFutureStatement && !completedReporting) ||
+      (quotes.every((q) =>
+        /\b(?:plans?\s+to|will|expects?\s+to|scheduled\s+to|intends?\s+to|aims?\s+to)\b|(?:할\s*계획(?:이다|이라고|임)?|계획하고\s*있다|계획\s*중(?:이다|임)|예정(?:이다|으로|되어\s*있다))|(?:を予定|を計画|予定している|計画している)|(?:将|计划(?:于|将))|geplant/i.test(
+          q,
+        ),
+      ) &&
+        !quotes.some((q) =>
+          /\b(?:completed|delivered|launched|has signed)\b|완료|출시했다|체결했다/i.test(q),
+        ) &&
+        !supportedReporting))
   )
     problems.push("plan_promoted_to_completion")
   if (

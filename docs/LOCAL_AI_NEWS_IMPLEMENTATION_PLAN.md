@@ -4901,3 +4901,12 @@ CLI와 source-processing 모두 같은 정책 값을 사용한다. 짧은 발표
 source closure crowdstrike-extraction-comparison-closure-20261007-v1은47자료/49 ZIP members·205,172bytes·SHA70d5342eab34ac3b6d5ff0a5a403b0025a2e06f4460d429b9ba43053c6e23cb0다. 비공개 Research Drive ID1N9pB2Gj9GQZkorzBuu8dOl0G7BY5R0Nx에서 parent/shared=false·raw SHA·49members 복원·보관 위치 등록을 확인했다. 복원된3run 원문/parse/추출과8개 모델 request/response·대조표가 원본과 같았다. 원출력의 실패를 그대로 보존했고 닫힌 manifest를 수정하지 않는다. 전체runtime 재가동이나 기사 승인을 뜻하지 않는다.
 
 재개 지점: 최종 v2의 누락2사실·시간 상태·숫자 단위를 source-review 경로에서 보완하고, 다른 이미 수집한 국내·로봇 원문으로 적용 범위를 검증한다. 같은 원문의 조건 없는 모델 재실행은 하지 않는다. 전체WBS3/22·partial17/not_started2·새정규0/7·legacy/독립평가/08시/인증/복구 미완료를 유지한다. 같은 실패를1시간 이상 반복한 항목0, goal active다. 외장 증거 dense-source-content-comparison-v1.json, dense-source-drive-restored-proof-v1.json, dense-source-public-preservation-v1.json 및 core-progress-checkpoint-20261007-v6.json을 따른다.
+
+
+### 19.365. 수치 인용 결합과 미래 상태 검토 보강
+
+다른 인용문의 수치와 조건을 결합하거나 150에서 50을 부분 일치시키는 경우, 과거 완료 인용이 함께 있어 미래 계획을 completed로 통과시키는 경우를 재현했다. validateEvidence는 수치 literal·unit·condition을 동일 인용문에서 확인하고 숫자 크기/단어 경계를 확인한다. 명시적 미래·조건부 문장의 completed를 거부하며, 실제 완료된 발표와 미래 발표 내용은 기존 보고 동사 근거로 구분한다. 자동 정정이나 검토 생략은 추가하지 않았다.
+
+새 회귀 3개는 변경 전 실패를 확인했다. 관련 검토·추출·runtime 표적59/59, 보고 동사 예외 정밀화 후 해당 표적1/1이 통과했다. 저장 후보911개 중 explicit approved_run 연결45개/고유43run을 읽었다. Yaskawa 별도 private root를 포함한 모델 승인42run은 현재 guard를 통과했고 기존 Drive 발행 영수증1개는 기존 legacy 승인 경로로 대조했다. 전체100verified의 원문 재조사나 fresh Drive 작성 대조를 뜻하지 않는다. 후보 장부 SHA5c2379d016467d0fd7d3b18c10b4df06030176fc22a8f608286d18cf4b65715a와 승인 원고를 보존했다.
+
+저장된 CrowdStrike 미승인 wide-v2 출력에서 기존 통과하던 선택적 투자 심사의 completed 오류를 추가 검출했다. 신규 모델·원문 HTTP·기사 승인·공개0, 로컬 전체suite0이다. 기존 13사실 승인 원고는 수정하지 않았다. 전체WBS3/22·partial17/not_started2·정규0/7 및 독립평가/legacy/08시/인증/복구 미완료를 유지한다. 외장 claim-consistency-approval-audit-v2.json은 정확한 별도 root를 포함하며 v1의 main-root 누락 판정과 구분한다. 다음은 릴리스 CI와 이 비공개 대조의 Drive 보관 확인 후 기존 수집 원문의 검토를 이어간다. 같은 실패1시간 반복0, goal active다.
