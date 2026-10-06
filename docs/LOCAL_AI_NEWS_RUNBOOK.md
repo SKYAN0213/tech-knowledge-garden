@@ -10848,3 +10848,12 @@ KISA Adobe 공지의 pageIndex만 달라진 주소를 비교했다. 두 원문�
 KISA·전자신문 원문204판본/parse204·851manifest파일/853ZIP members의9,819,824bytes를 Drive Research 1X9hr8ESahs-TNsUdBkDg8AW_f8uGPy0u에 비공개 보관했다. SHA a0284f3e714e3b1f32a255a0f395d0ec52ba270cb8289cd64907fc872bd3ceba·metadata·실제 원격 ZIP을 확인하고 전수 복원/4원 scan 재검증/위치 등록을 완료했다. Python urllib 다운로드 실패는 Node의 인증된 file reference 다운로드로 해결했고 TLS 검증을 끄지 않았다. source204 복원은 전체 일일 운영·Drive 작성4폴더 최신 동기화를 의미하지 않는다. 외장 kisa-etnews-drive-restoration-proof-v1.json이 증거다.
 
 디일렉/원문 주소 연결의 추가 보관·CI·공개 보존 readback은 아래에 후속 기록한다. 전체 목표active/WBS2/22, 신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다.
+
+
+후속 완료: 디일렉/Adobe 비교 원문의 portable closure public-metadata-alias-closure-20261006-v2는 248원문 판본/248parse·1,027manifest파일/1,029ZIP members, 15,306,246bytes·SHA c74effc83f059daf0a20bfa68910b26ff565f9a8b1f711df692039426cd56655다. Drive Research 1RRAT2GteH88NDJJjNClkoZGy25GXq0T5의 비공개 metadata와 실제 원격 ZIP 해시를 확인하고 전수 복원했다. 복원본에서 디일렉 partial160·11페이지 근거 검증과 Adobe 두8문단 content fingerprint 일치·reviewed claims 보존을 확인하고 archive location을 등록했다. same-event run을 --related-run으로 넣은 최초 closure는 “Related run must approve the selected source article”로 거부되어 승인 의미를 완화하지 않고 원문 bundle만 closure했다.
+
+partial intake/same-event receipt는 원문 묶음과 구분하여 exact bytes·원 경로/SHA provenance를 별도 보관했다. 최초 research-archive/v1 보관본 1zRF2Rp9N3_tt-FqiJkWZgefTg7-zvCFD는 원격 byte 확인만 했고 portable restore/register에서 거부됐다. 기존 closure로 새 v2를 생성했으며 Drive 1CBWrRjhI-O_dRI-Xk7tsY1-8R_F_cLbh·6,852bytes·SHA df3c1403a51d6ff753633fb40dd71517f274b783a605e59ea4558f21d499e5e5의 원격 byte 확인/5members 전수 복원/위치 등록을 완료했다. v1 실패를 v2 성공으로 덮어쓰지 않았다. operation receipt snapshot은 원문을 새로 승인하거나 published status를 바꾸지 않는다.
+
+코드 d3616356a6eb86eae843f7bd7536d394a580c4c4의 Actions37458258118을 릴리스 CI 한 번 실행했다. Node1,008/1,008·Python15+10+3·build/site/deploy 성공, 반복 CI0이다. 공개 readback2026-10-06T11:46:28.665Z에서 briefing.xml606,070bytes·기존기사6,922bytes·reader-index1,239,161bytes가 HTTP200이며 이전 SHA/bytes와 모두 일치했다. 코드 배포 완료와 신규 기사 발행0을 구분한다. 외장 pagination-source-release-ci-{final-v1.json,log-v1.txt}·pagination-source-public-preservation-v1.json·public-metadata-alias-drive-restoration-proof-v2.json 및 pagination-operation-receipts-drive-restore-v2.json이 근거다.
+
+현황판 core-progress-checkpoint-20261006-v7.json/html은 현재 장부904·활성55·등록195와 target scan/partial intake 증거를 다시 집계했다. Codex 탭 열기는 queued이며 화면 렌더링 확인으로 세지 않았다. 다음 묶음은 유효 원문 후보의 공통 처리·사건 연결·편집 승인으로 진행한다. 디일렉 미확인20건은 대체 공개 원문을 찾아야 하며 무조건 재수집하지 않는다. 현 전체 WBS2/22·신규정규0/7·전수legacy/독립human/08시운영 gate와 선정 분리 pending은 유지한다.
