@@ -85,6 +85,7 @@ generated_by: tech-knowledge-garden
 - [[News/a49bfbd297aaeae9|Navitas, Magnachip에 500만달러 지분 투자 계약]] · 2026-09-22
 - [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · 2026-09-22
 - [[News/43924fdd4d64f158|CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표]] · 2026-09-21
+- [[News/43dbd3fe6cdd4fcf|두산로보틱스, 권영민 사장 신임 CEO로 선임]] · 2026-09-20
 - [[News/c8c055684e1b9e3a|Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료]] · 2026-09-20
 - [[News/21e5701b8e5bea51|Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표]] · 2026-09-20
 - [[News/0e528873a64d1ce6|네이버·거린에너지, 216MW 태양광 사업 지분 투자·전력 구매 협의]] · 2026-09-20

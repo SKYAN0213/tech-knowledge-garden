@@ -4,10 +4,10 @@ type: briefing-index
 date: 2026-09-20
 created: 2026-09-20
 modified: 2026-09-20
-description: 센서를 품은 협동로봇, 대화로 연결되는 예약, 데이터센터의 장기 전력 조달
+description: 2026-09-20 IT · AI · 로보틱스
 coverage_start: 2026-09-13T23:12:04.828Z
 coverage_end: 2026-09-19T23:16:34.765Z
-item_count: 12
+item_count: 13
 edition: Editions/2026/09/2026-09-20_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-20_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -93,7 +93,7 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 
 Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
 
-### 로봇·제조 · 2건
+### 로봇·제조 · 3건
 
 #### [[News/ebcefe563a8a7faf|Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개]]
 
@@ -106,6 +106,12 @@ Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-
 인력·조직 · 핵심 인재 이동 · Teradyne Robotics · Universal Robots · Mobile Industrial Robots
 
 Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)로 선임했다. 그는 Universal Robots와 Mobile Industrial Robots의 글로벌 영업 활동을 총괄한다. 앞서 Universal Robots에서 10년 넘게 일했고, 최근에는 Trener Robotics의 글로벌 영업 부사장을 맡았다.
+
+#### [[News/43dbd3fe6cdd4fcf|두산로보틱스, 권영민 사장 신임 CEO로 선임]]
+
+인력·조직 · 경영진 교체 · 두산로보틱스 · 권영민 · 두산밥캣 · 두산모트롤
+
+두산로보틱스는 2026년 9월 18일 권영민 사장을 신임 CEO로 선임했다고 밝혔다. 선임 당시 권 사장은 두산밥캣 자회사 두산모트롤의 대표이사를 맡고 있었다.
 
 ### 에너지·기후기술 · 1건
 
@@ -135,15 +141,17 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 
 ## 출처
 
-- [S1] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/
-- [S2] https://navercorp.com/media/pressReleasesDetail?seq=10034667
-- [S3] https://news.samsung.com/kr/삼성전자-one-ui-9-공식-버전-업데이트-시작
-- [S4] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
-- [S5] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
-- [S6] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
-- [S7] https://global.fujitsu/en-global/pr/news/2026/09/14-02
-- [S8] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai/
+- [S1] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai/
+- [S2] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/
+- [S3] https://navercorp.com/media/pressReleasesDetail?seq=10034667
+- [S4] https://news.samsung.com/kr/삼성전자-one-ui-9-공식-버전-업데이트-시작
+- [S5] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
+- [S6] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
+- [S7] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
+- [S8] https://global.fujitsu/en-global/pr/news/2026/09/14-02
 - [S9] https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/
 - [S10] https://www.navercorp.com/media/pressReleasesDetail?seq=10034661
 - [S11] https://www.roche.com/media/releases/med-cor-2026-09-17
 - [S12] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen/
+- [S13] https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
+- [S14] https://www.yna.co.kr/amp/view/AKR20260918151800003

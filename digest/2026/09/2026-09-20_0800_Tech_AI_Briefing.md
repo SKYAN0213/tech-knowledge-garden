@@ -1,6 +1,6 @@
 # 2026-09-20 아침 브리핑
 
-센서를 품은 협동로봇, 대화로 연결되는 예약, 데이터센터의 장기 전력 조달
+2026-09-20 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-20_0800_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
@@ -144,7 +144,7 @@ CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026
 
 [global.fujitsu 원문](https://global.fujitsu/en-global/pr/news/2026/09/14-02)
 
-### 로봇·제조 · 2건
+### 로봇·제조 · 3건
 
 #### [Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개](https://skyan0213.github.io/tech-knowledge-garden/news/ebcefe563a8a7faf)
 
@@ -171,6 +171,22 @@ Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)
 
 
 [universal-robots.com 원문](https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/)
+
+#### [두산로보틱스, 권영민 사장 신임 CEO로 선임](https://skyan0213.github.io/tech-knowledge-garden/news/43dbd3fe6cdd4fcf)
+
+발표 2026-09-18
+
+인력·조직 · 경영진 교체 · 두산로보틱스 · 권영민 · 두산밥캣 · 두산모트롤
+
+두산로보틱스는 2026년 9월 18일 권영민 사장을 신임 CEO로 선임했다고 밝혔다. 선임 당시 권 사장은 두산밥캣 자회사 두산모트롤의 대표이사를 맡고 있었다.
+
+##### 주요 경력
+
+권 사장은 2000년 ㈜두산 전략기획본부에 입사했다.
+
+2018년부터 2020년까지 두산밥캣 최고전략책임자(CSO)를 지냈고, 2021년부터 두산모트롤 대표이사로 재직했다.
+
+[doosanrobotics.com 원문](https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo) · [yna.co.kr 원문](https://www.yna.co.kr/amp/view/AKR20260918151800003)
 
 ### 에너지·기후기술 · 1건
 

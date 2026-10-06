@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 183,
+  "news_count": 184,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -538,6 +538,7 @@
     "https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460",
     "https://www.deepseek.com/en/news/deepseek-v4-1-flash",
     "https://www.digitalocean.com/blog/introducing-agent-droplets",
+    "https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo",
     "https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity",
     "https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material",
     "https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter",
@@ -622,6 +623,7 @@
     "https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai",
     "https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure",
     "https://www.wix.com/press-room/home/post/base44-becomes-first-app-creation-platform-to-launch-its-own-proprietary-llm-base-1-marking-a-maj",
+    "https://www.yna.co.kr/amp/view/AKR20260918151800003",
     "https://www1.edaily.co.kr/News/Read?mediaCodeNo=257&newsId=02932326645579136",
     "https://z.ai/blog/glm-5.2"
   ],
@@ -733,6 +735,7 @@
     "News/0e528873a64d1ce6",
     "News/21e5701b8e5bea51",
     "News/c8c055684e1b9e3a",
+    "News/43dbd3fe6cdd4fcf",
     "News/43924fdd4d64f158",
     "News/d37e6feb52f811ed",
     "News/a49bfbd297aaeae9",
