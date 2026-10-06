@@ -10764,4 +10764,6 @@ private 샘플은 fifteen-six-w-reviewed-samples-v2.md·fifteen-approved-article
 
 Drive source closure의 메타데이터/shared:false/부모/크기, actual raw ZIP SHA, 전수80/79members 복원 뒤 `loadFactReviewPacket`·`loadBoundDraftCheckpoint` 동등성을 확인했다. 두 Drive ID/크기/SHA는 계획19.348에 있다. archive registry에는 실제 ZIP 절대경로를 등록했다. `writer-date-runtime-drive-restoration-proof-v1.json`과 `writer-date-{203,204}-remote-{restore,register}-v1.json`이 근거다. 승인 전 두 run을 related approval로 묶는 첫 시도는 거부돼 각각의 source closure로 보관했다. 승인 guard를 완화하지 않았다.
 
-다음은 릴리스 한 번의 CI·실제 배포/공개 보존 확인과 영수증 기록이다. 이후 원7월10일의 기존 기사 주소와 분할 사건 관계·추가 전문용어를 검토한다. 선정 분리 사용자 결정과 fresh Drive 작성원본 대조를 건너뛰어 소급 발행하지 않는다. 목표active/WBS2/22·전체legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 미완료다. 핸들55870/97556은 terminal이며 같은 실패1시간 반복0이다.
+코드 b70550da7956a06be793944f7114d6f81a0eba91 / Actions37441658334는 Node994/994·Python15+10+3·build/site/deploy를 통과했다. 배포2026-10-06T09:17:22Z 뒤 실제 공개 readback09:18:04Z에서 RSS40개/606,070bytes·기존Roche기사6,922bytes·reader-index1,239,161bytes의 SHA가 직전 공개 결과와 같았다. `writer-date-ci-final-{status-v1.json,v1.log}`와 `writer-date-public-preservation-v1.json`이 근거다. 전체 검사는 릴리스 CI 한 번이며 로컬에서 전체suite를 반복하지 않았다. 원고 후보는 계속private다.
+
+다음은 원7월10일의 기존 기사 주소와 분할 사건 관계·추가 전문용어 검토다. 선정 분리 사용자 결정과 fresh Drive 작성원본 대조를 건너뛰어 소급 발행하지 않는다. 목표active/WBS2/22·전체legacy47/454/metadata10·독립human40/20·실제08시/인증/중단/fullruntime·신규정규0/7은 미완료다. 핸들55870/97556/24522/31991은 terminal이며 같은 실패1시간 반복0이다. 최종 영수증 문서만의 commit은 skip ci로 처리한다.
