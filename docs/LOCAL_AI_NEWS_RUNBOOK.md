@@ -11172,3 +11172,10 @@ source closure kuka-de-recovery-source-closure-20261007-v1·20자료/22members·
 최종 전달: code903d03222d33c165d77e5a973c8c89dbcc8d9871·Actions37525614648의 Node1074/1074·Python15+10+3·build/site/deploy가 성공했다. 릴리스CI1회·로컬전체0이며 실제 공개RSS/reader-index/기존SDK기사3파일 HTTP200·rawSHA 동일·RSS40 전체bytes 보존·새기사0을 확인했다. 원문 HTTP관측2개·새모델0·영수증보완3개를 현재109/110창·54/55경로로 표시하되 정규0/7과 전체3/22는 유지한다.
 
 최종 전달 기록은15자료/17members·185025bytes·SHAad2bffa2ce93a5c610501278cef0a922e6b63c2effea4d3b43012ea85d5200eb·비공개Research Drive1sc7dPiWLEew7rrXh7yuPzJ0cGRqCTUXG에서 실제 부모/shared=false·원격rawSHA·전수restore·registry를 검증했다. source_versions0인 운영 기록이며 native1판본은 별도source closure에 있다. 현황판v18은 생성한 실제109/110집계 파일이며 브라우저file 프로토콜 거부/open_in_codex queued로 실제UI 렌더링·조작은 미검증이다. 같은 동작을 우회하지 않는다. 문서 최종 기록만 [skip ci]로 커밋하고 같은 시험/모델/수집을 반복하지 않는다. 남은1창의 회원전용 원문과 최신Drive/새계획 정규 회차·독립평가·08시/인증/복구/fullruntime 관문을 다음 재개 지점으로 남기며 goal active다.
+
+
+## 466. 일일 수집과 공통 context 페이지
+
+현재 run daily-20261007-current55-integrated-v1/55경로110창은 fresh213Drive의 동일 원본/clean판본에서 시작했다. 외장 current55-oct7-{plan,execution,context}-v1과 fresh connector-readback/source-snapshot-daily-oct7-pre-20261007-v1을 보존한다. 활성 worker는 재시작하거나 입력을 바꾸지 않는다. terminal 뒤 handoff/32칸/검토 대기와 실제 원문 상태를 확인한다.
+
+공통 조회는 `npm run research:context --silent`로 원본을 고정하고 snapshot.input·sha256으로 `--section NAME --offset N`, `--route ROUTE`, `--candidate KEY`를 읽는다. 정확한 다음 cursor는 page.next_offset이다. 첫850건43페이지·원순서/고유key850·첫61979/최대73541bytes 확인; context-page-runtime-proof-v1.json과 context-page-targeted-v1.log의 표적4/4가 근거다. 승인을 위한 전체 이력과 source/parse/사건 판정은 별도 원 기록으로 읽는다. 전체수집 fingerprint/원 장부는 변경하지 않는다. 기존 npm run context는 호환 전체 출력으로 유지한다.

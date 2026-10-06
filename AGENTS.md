@@ -1,5 +1,9 @@
 # Tech Knowledge Garden
 
+## 조사 입력의 페이지별 조회 (2026-10-07)
+
+조사 입력은 `npm run research:context --silent`로 한 번 고정한다. snapshot.input·sha256을 후속 `--input`·`--sha256`에 함께 전달하고 page.next_offset으로 필요한 구간의 전 페이지를 읽는다. pending_by_route는 작업 분류이며 자동 제외 기준이 아니다. sources·companies·institutions·robot-manufacturers·entities·events·terms·evidence·deep·known-sources는 `--section`으로 조회한다. 승인·정정 전에는 `--candidate 정확한-key`로 전체 발견·승인·정정 이력을 읽고 기존 원문/승인 검증기를 통과한다. history_summary와 목록은 사실 근거나 승인 결과를 대신하지 않는다. 원본 npm run context와 비공개 장부는 유지한다. docs/DAILY_NEWS_INGESTION_IMPLEMENTATION.md 7.4절을 따른다.
+
 ## 브리핑 내용 보강 (2026-09-14)
 
 매회 `docs/BRIEFING_QUALITY.md`를 읽는다. context의 discovery_window로 최근 7일을 겹쳐 탐색하고 비공개 candidate-backlog를 실제 발행 기사와 대조한다. cutoff 이전이라는 이유만으로 미수록 중요 사건을 버리지 않는다. 해당 과거 회차에 보완하고 오늘에는 날짜를 표시한 참조만 제공한다. 육하원칙 2~4문장은 리드이며, 원문에 근거한 구체적 설명을 explanations에 작성해 웹·RSS·GitHub에서 바로 읽게 한다. 운영 안내·분석 부족 해명·억지 전망을 쓰지 않는다. 기존 예약·조사 범위를 유지한다.

@@ -459,6 +459,24 @@ A–E의 **비공개 통합 23경로/46창 수집 절편**과 저장 계획의 �
 
 각 묶음은 관련 회귀→실제 원본/영수증 재읽기를 기본으로 한다. 전체 Node/Python·타입 검사는 수직 슬라이스 완료, 공통 계약 변경, 통합/발행 직전으로 제한한다. 작성·발행 코드를 바꾸는 통합 묶음에는 사이트 생성·RSS/digest 일치와 모바일/키보드/공유 URL도 검증한다. 실패는 원본 접근, 선택자/스키마, 모델, 편집, Drive, 공개 중 어느 층인지 구분해 기록하고 이전 성공으로 덮지 않는다.
 
+### 7.4 조사 입력의 고정·분할 조회 (2026-10-07)
+
+실제 일일 입력7,159,302bytes 중 pending850건의 discovery에 동일 후보의 과거 목록 관측이 반복됐다. 원 장부를 변경하지 않고 기존 context를 고정한 뒤 공통 조회기로 읽는다. 첫 명령 `npm run research:context --silent`는 비공개 `.local/research/local-ai/context/<sha256>.json`에 원 bytes를 보존한다. 이후 모든 조회는 응답의 snapshot.input·sha256을 지정하고, 새 자료를 반영할 때만 새 snapshot을 만든다.
+
+```sh
+npm run research:context --silent
+node scripts/research-context.mjs --input PATH --sha256 SHA --offset 20
+node scripts/research-context.mjs --input PATH --sha256 SHA --route review-publication-time
+node scripts/research-context.mjs --input PATH --sha256 SHA --candidate EXACT_KEY
+node scripts/research-context.mjs --input PATH --sha256 SHA --section sources
+```
+
+기본 pending20건, limit1~100이며 UTF-8 출력120,000bytes 안에서 반환 수를 줄인다. 다음 페이지는 요청 limit이 아니라 page.next_offset을 사용한다. 원 순서·total·returned·전체 작업별 건수를 보존한다. 단일 자료도 예산을 넘으면 잘림 없이 실패하고 고정 원본을 직접 읽는다. 잘못된 key·route·section·cursor·SHA는 실패한다. 정정 경고·원문 판본·parse·검토 상태·승인 정보는 요약에도 보존한다. 반복 이력 배열만 건수/마지막 기록으로 표시하며 승인 전 정확한 candidate 조회로 전체 이력을 읽는다. 수집·사실 검증·승인 관문은 그대로다.
+
+섹션은 pending/resolved/sources/companies/institutions/robot-manufacturers/known-sources/entities/events/terms/evidence/deep이다. 추적 대상·탐색 범위와 기존 사건·원문·용어·심층 이력은 해당 섹션의 전 페이지를 읽는다. 첫 pending 페이지만 읽고 조사 완료로 표시하지 않는다. 공개 UI·RSS에 운영 형식을 노출하지 않는다. 기존 npm run context 전체 출력도 유지한다.
+
+실제850건을43페이지로 순서·고유 key 손실 없이 조회했다. 첫61,979bytes·최대73,541bytes이며 첫 입력99.13% 감소다. 이는 입력 크기이며 모델 사실 품질·전체 조사 시간·승인 기사 수의 개선으로 확대 해석하지 않는다. 기존08시의 실제 새 조회 실행은 예약 지침 적용과 구분해 확인한다.
+
 ## 8. 실행·장애·복구의 운영 계약
 
 - 오전 8시 실행은 하나만 유지한다. 수집 실패나 Ollama 중단 때문에 예약을 늘리지 않는다. 매 단계에는 소유 lock·입력 해시·단계별 상태와 재시도 경로를 남긴다. 기존 다른 작업자/자동화가 같은 checkout을 사용 중이면 겹치는 쓰기·발행을 중단하고 소유 상태를 먼저 확인한다.

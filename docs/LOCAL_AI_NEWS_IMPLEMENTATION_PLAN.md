@@ -5029,3 +5029,14 @@ KUKA native 수집2run은 기존 acquisition-group/portable archive를 재사용
 최종 전달: code903d03222d33c165d77e5a973c8c89dbcc8d9871·Actions37525614648의 Node1074/1074·Python15+10+3·build/site/deploy가 성공했다. 릴리스CI1회·로컬전체0이며 실제 공개RSS/reader-index/기존SDK기사3파일 HTTP200·rawSHA 동일·RSS40 전체bytes 보존·새기사0을 확인했다. 원문 HTTP관측2개·새모델0·영수증보완3개를 현재109/110창·54/55경로로 표시하되 정규0/7과 전체3/22는 유지한다.
 
 최종 전달 기록은15자료/17members·185025bytes·SHAad2bffa2ce93a5c610501278cef0a922e6b63c2effea4d3b43012ea85d5200eb·비공개Research Drive1sc7dPiWLEew7rrXh7yuPzJ0cGRqCTUXG에서 실제 부모/shared=false·원격rawSHA·전수restore·registry를 검증했다. source_versions0인 운영 기록이며 native1판본은 별도source closure에 있다. 현황판v18은 생성한 실제109/110집계 파일이며 브라우저file 프로토콜 거부/open_in_codex queued로 실제UI 렌더링·조작은 미검증이다. 같은 동작을 우회하지 않는다. 문서 최종 기록만 [skip ci]로 커밋하고 같은 시험/모델/수집을 반복하지 않는다. 남은1창의 회원전용 원문과 최신Drive/새계획 정규 회차·독립평가·08시/인증/복구/fullruntime 관문을 다음 재개 지점으로 남기며 goal active다.
+
+
+## 19.373. 최신 Drive 기반 일일 수집과 공통 조사 입력 절편
+
+이 묶음은 첫 정규 발행의 직접 병목인 원 context7,159,302bytes/850후보의 반복 관측 입력을 해결한다. 원 context·장부·수집기/승인 계약을 바꾸지 않고 새 공통 CLI가 전체 bytes/SHA를 고정해 분할 조회한다. pending·원문 등록·기업/기관/제조사·기존 사건/개념/심층 근거를 같은 snapshot에서 조회하며 승인 전 exact key의 전체 이력 조회를 요구한다. 기본20건/120000bytes와 정확한 다음 cursor, 오류 시 명시 실패를 사용한다. 출처별 예외·새 저장소·새 모델·유료API는 추가하지 않는다.
+
+실제850후보43페이지·고유850/원순서 보존·첫61979/최대73541bytes를 확인했고 새 표적4/4가1회 통과했다. discovery 축약을 사실 근거나 승인으로 쓰지 않으며 원문 판본·parse·정정/승인 경고는 보존한다. 의미 품질 향상·정규 실행 성공으로 세지 않는다. 전체suite는 단일 릴리스CI에서 확인한다.
+
+새 계획 daily-20261007-current55-integrated-v1은 현재 clean코드/55경로와213작성 원본의 실제 stableDrive전후/16폴더/raw bytes에 결속했다. snapshot파일SHA ed6cac7545f6abf913590f0f59bc2eb17dbc938c9e38d173dc7cfdae5c26e287, logicalSHA1371e28469e5a237b87603e60695698bd0c0dd2df7dc5ad65d384dc456a60123이다. 현재110창 실제 수집을 실행 중이며 terminal/handoff를 확인한 뒤 판정한다. 수집 중 source dependency/장부를 외부에서 수정하거나 재시작하지 않는다. source fingerprint는 새 조회 CLI와 독립이다.
+
+전체WBS3/22·legacy44회차/430구간/metadata10·독립human40/20·실제08시/인증/복구/fullruntime·정규0/7을 유지하며 goal active다. 접근 제한은 새 소식 없음/완료로 바꾸지 않는다. 다음은 terminal 수집→정확한 후보/원문/기존 사건 대조→승인 원고의 정규 브리핑·Drive·공개 연결이며 확인한 실제 상태만 추가 기록한다.

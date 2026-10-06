@@ -27,6 +27,7 @@
     "dev": "node scripts/serve.mjs",
     "publish": "node scripts/publish.mjs",
     "context": "node scripts/garden.mjs context",
+    "research:context": "node scripts/research-context.mjs",
     "research": "node scripts/research.mjs",
     "research:daily": "node scripts/research-daily.mjs",
     "research:sources": "node scripts/research-sources.mjs",
