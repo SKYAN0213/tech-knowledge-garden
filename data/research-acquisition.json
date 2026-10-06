@@ -764,6 +764,26 @@
       }
     },
     {
+      "id": "arxiv-versioned-abstract-v1",
+      "url_pattern": "^https://arxiv\\.org/abs/(?!2608\\.26088v1/?$)[0-9]{4}\\.[0-9]{4,5}(?:v[1-9][0-9]*)?/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' dateline ')]",
+        "publication_date_pattern": "[0-9]{1,2} [A-Z][a-z]{2} [0-9]{4}",
+        "publication_date_format": "%d %b %Y"
+      }
+    },
+    {
+      "id": "arxiv-versioned-html-v1",
+      "url_pattern": "^https://arxiv\\.org/html/(?!2608\\.26088v1/?$)[0-9]{4}\\.[0-9]{4,5}(?:v[1-9][0-9]*)?/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' ltx_document ')]//h1",
+        "content_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' ltx_document ')]",
+        "content_block_xpath": ".//h1 | .//h2 | .//h3 | .//h4 | .//h5 | .//h6 | .//p | .//table | .//li | .//figcaption | .//div[contains(concat(' ',normalize-space(@class),' '),' ltx_authors ')]"
+      }
+    },
+    {
       "id": "arxiv-ppe-html-v1",
       "url_pattern": "^https://arxiv\\.org/html/2608\\.26088v1/?$",
       "options": {

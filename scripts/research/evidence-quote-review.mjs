@@ -35,6 +35,24 @@ const reviewMode = (review) =>
 const reviewedTypography = (correction, original, replacement) => {
   const before = typography(original),
     after = typography(replacement)
+  if (correction.citation_markers_checked === true) {
+    // Restore only the three transport glyphs of an explicitly checked web
+    // citation. Reference numbers, link labels and all prose remain unchanged.
+    const marker = /\uE200cite\uE202[0-9]+†[^\uE200\uE202\uE201\uFFFC]+\uE201/g
+    return (
+      correction.sentence_initial_article_checked === undefined &&
+      correction.elision_expansion_checked === undefined &&
+      /(?:\uFFFCcite\uFFFC| cite )[0-9]+†/.test(before) &&
+      marker.test(after) &&
+      ["\uFFFC", " "].some(
+        (glyph) =>
+          typography(
+            after.replace(marker, (value) => value.replace(/[\uE200\uE202\uE201]/g, glyph)),
+          ) === before,
+      )
+    )
+  }
+  if (correction.citation_markers_checked !== undefined) return false
   if (before === after)
     return (
       correction.sentence_initial_article_checked === undefined &&
@@ -139,6 +157,7 @@ function applyCorrections({
       "reason",
       "sentence_initial_article_checked",
       "elision_expansion_checked",
+      "citation_markers_checked",
       ...(reviewMode(review) === "citation"
         ? ["original_block_id", "block_id", "adjacent_locator_checked"]
         : []),
@@ -169,6 +188,7 @@ function applyCorrections({
         correction.quote !== correction.original_quote ||
         correction.sentence_initial_article_checked !== undefined ||
         correction.elision_expansion_checked !== undefined ||
+        correction.citation_markers_checked !== undefined ||
         !Number.isInteger(originalIndex) ||
         originalIndex < 0 ||
         !Number.isInteger(replacementIndex) ||

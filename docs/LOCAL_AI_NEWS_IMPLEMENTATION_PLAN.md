@@ -4498,3 +4498,27 @@ Drive 작성213원본의 전후 raw/두 목록 검증에서 같은ID의10월6일
 승인 source closure는72원문 판본/343ZIPmembers·4,835,922bytes이며 비공개 Research1M1sFmDA2j8_vTEnAgQB63g_PBwSs-aSJ의 실제 원격 SHA31200079be3cd44b0e2a1f8e38977f88071ad8f21c7cc160af21aff627d83aaf를 대조했다. 공통 portable 복원에서8사실·기사 승인 동등성을 재검증하고 원문 위치를 등록했다. 발행 운영증거89자료/90members·3,710,477bytes는 Research1tEkn4wYFDa_7A5SgBtWdYP6PidGNWltm 및 exact manifest1SoWpV_Pekie7PzvegERDeEKVJLHVfHCH에 보관했다. 원격 ZIP SHA83d59cc25f5cf338c9e1229ca22eeacc45bf0e96894b88d950f9683d179aef68, manifest SHA0464f7099de94a5bf2b1680f0287d71b498d98f3a65ec4619d2e5886fa80d6e4를 대조해 ordinary v1으로91파일을 복원하고 공개/WebsiteData/승인 근거를 다시 읽었다. 전체 runtime 복구와 구분한다.
 
 다음 재개: 저장된 daily-20261006-spot-source-selected-v1은 아직 기사 승인·공개가 아니다. 공식 게시물의 발표시각과 소개하는 과거 사례 시각을 구분해 직접 검토하고 공통 처리·후보 승인 경로를 사용한다. 다음 실제 일일 실행은 최초 수집 전에 shadow inputs를 고정하고 완료 handoff/발행 근거를 같은 회차에 연결한다. 최초 입력이 없는 옛 수집을 비교 회차로 재구성하거나 수동 소급 발행을 정규7회로 세지 않는다. 기존7월10일08:02의15구간은 다음 소급 묶음이며 metadata 누락 회차는 별도 복구 목록에 유지한다. 전체 legacy47회차454구간·metadata10·독립 human gold40/20·실제 정규 비교0/7·08시/인증/중단·전체 runtime 복구는 미완료, 목표 active다. 이번 묶음에서1시간 동일 실패 반복 항목은0이다.
+
+
+## 19.335. Spot 실제 발행과 공통 arXiv·인용 복구
+
+2026-10-06 실제 qwen3.8:27b-mlx 추출·근거 대조·작성과 원문 직접 검토로 Spot의 경찰·소방 활용 기사 8사실을 승인했다. 발표 시각 2026-10-05T19:23:58Z는 한국 10월6일이며, 본문에 소개된 2024·2025·2026년 현장 사례는 각 과거 날짜를 유지했다. 오늘 회차의 기존 FDA·옷감 집기·RobCo·AWS 4기사를 보존한 5기사로 수정했다. 회사에 귀속된 활용 설명을 새 제품 출시·올해 신규 실적·시장 성과로 바꾸지 않았다. 제품·기관 이름을 전문용어 노드에 추가하지 않았다.
+
+공통 날짜 검증은 기존 불변 JSON-LD Article의 script index/type/attribute/text 근거에서 같은 발표 timestamp를 확인한다. 수정 시각·WebPage·상충하는 Article·파서 날짜 불일치는 거부한다. 후보 날짜도 명시적으로 검토한 source-publication-time에만 UTC/KST 같은 instant 연결을 허용한다. 기관명 내부 쉼표는 entityListText의 JSON 배열 직렬화로 보존하고 기존 쉼표 목록을 계속 읽는다. 긴 태그는 카드 폭 안에서 줄바꿈된다. 코드26c8e34와 공개33cb0dd, Actions37402943072의 Node962/962·Python15+10+3·build/deploy가 통과했다. 날짜10·후보24·테마12의 표적 검증, 실제1280/390 탭·태그 query·뒤로 가기·Enter·넘침0·지도0을 확인했다. 로컬 전체 suite는 반복하지 않았다.
+
+Drive 작성213원본 전후 두 목록/raw 대조에서 같은ID 오늘 회차1개만 바뀌었다. guarded writer의 verified1/pending0/conflict0/unresolved0, 기존 pull-drive --readback 적용과 공개 웹/RSS/GitHub12파일 byte/reader 동등성을 확인했다. RSS40 GUID/pubDate와 원고 주소는 유지했다. WebsiteData는359페이지179기사25용어22관계이며11파일 raw 검증에서 기존ID9개 갱신·2개 불변이다. 배포 전 WebsiteData 생성의 live/local 불일치 거부를 유지하고 실제 배포 뒤 성공한 별도 기록을 사용했다.
+
+승인 source closure는64자료66ZIPmembers·2원문 판본, 원격 ZIP SHA7bb352587197c9517954261608877ddb862e854807f2ad18d7667417fc964594를 대조해66파일로 복원했다. 복원본에서8사실·기사 승인 동등성을 공통 loadCurrentApproval로 다시 검증했다. 발행 증거68자료69members·5,616,401bytes는 비공개 Research의1h9P5Ul-lX1e4UbEF1x732MC6lVWVYTGI에 보관했다. 원격 ZIP SHAa4c179214783c188f4c6d2cefec34ee9ba2ef7a82e86d381f0c4bbf6f37558b4와 exact manifest SHA1b17d41f6380ae0ad6478aacc1653af3948bb4e0ca64a0826b970d56cc6640e4를 대조하고 ordinary v1으로70파일을 복원했다. 이 보관은 전체 runtime/의존성 복구 완료가 아니다.
+
+다음 소급 대상은 기존7월10일08:02 회차15구간이다. 정확한18URL의 원문 수집에서16captured/2OpenAI403을 보존하고, OpenAI는 공식 웹 도구의 원문·줄번호·hash를 공통 readable capture로 저장했다. 두 논문은 abstract와 특정v1 HTML을 함께 수집했다.20captured 원문 판본/111자료113ZIPmembers의 원격 SHA428339203fe1669c99a9679a82eef5f460178555b53aa0a479962eb90219212b를 대조해113파일로 복원했으며 이는 기사 승인이 아니다.
+
+arXiv는 기존 특정 PPE profile을 유지하고 다른 논문에 공통 abstract/HTML profile을 적용했다. 저장된4원문을 HTTP0으로 재파싱해 두 abstract의7월8일 발표일과 전문의30+8개 표 블록을 확보했다. 전문 HTML의 날짜 없음은 그대로 유지하며 abstract 판본 근거와 별도로 연결한다.6지원URL의 profile 단일 일치와3잘못된URL의 제외를 확인했다. 특정 논문별 crawler를 추가하지 않았다.
+
+GPT-Live의 완료된 추출·대조는 재사용한다. 모델이 웹 인용 구분자를 replacement glyph 또는 공백으로 바꾼 실제 오류는 명시적인 citation_markers_checked 교정으로만 복구한다. 동일 블록의 원문 일치·원 출력 SHA·원문 읽기·구분자 한정 변환을 요구하며 참조번호·링크명·숫자·문장·판정 변경은 거부한다. 실패 원 출력과 비용 장부를 보존하고 미수행 배치만 호출한다. 기본 quote 검증을 완화하거나 임의로 구분자를 제거하지 않는다. 기존32개와 신규2유형/거부 사례의 집중 검증을 확인했다.7월31일 추가 내용을7월10일 기사에 넣지 않는 판정은 별도 사실 검토에서 수행한다.
+
+현재 전체 legacy 미판정47회차454구간·metadata10·독립 human gold40/20·실제 정규 비교0/7·08시/인증/중단·전체 runtime 복구는 미완료이며 목표 active다. Spot 보완을 새 운영 회차로 세지 않는다. 이번 묶음에1시간 동일 실패 반복 항목은0이다. 다음은 GPT-Live 근거 대조·사실/편집 판정과 같은 회차 나머지14구간의 검토다. 전체15구간 판정 전에 구형 회차를 완료 처리하거나 새 당일 뉴스로 재발행하지 않는다.
+
+
+19.335 후속 완료: GPT-Live12추출 후보를 직접 대조해11verified/1rejected로 판정하고 원문에서API 제공계획·모드별 배경모델2사실을 보강해 총13verified를 승인했다. 계획2건은planned, 출시시 미지원 설명은reported로 교정하고 숫자 비교 조건·추출 인용을 정확한 원문으로 정정했다. 모델이 supported라고 했더라도 구조·시점 검토를 통과시키지 않았다.7월31일 SynthID 갱신은 제외했다. 완료된 추출과 대조3배치를 재사용해 마지막1배치만 호출했으며 실제 작성70.534초 뒤 회사평가의 입증/우위 표현과 반복을 정정했다. 최종기사3fb14968493dc682는 리드2문장200자·설명3항목5문단으로 편집 승인했고 공개/회차변경은0이다.
+
+승인closure97자료99ZIPmembers·679,136bytes를 private Research1cw0qfyyDdSg63hn0gxd16W9EPph38QoT와 manifest1wqj4Ez9UIebOCAdi63I-fK5XOsNPqEiz에 보관했다. 실제 원격 ZIP SHA c9abacc8b0677a09a8e123597a967254caa797d02948da132b2d09c86c56271e 및 manifest SHA762d61a824c3cbef1d3f4be80d302a1258621f97ce43bcf0a89c57860124e61a를 대조해99파일로 복원했다. 복원본의13승인 사실·1제외·기사 동등성·후속업데이트 제외를 재검증하고 원문/사건 위치를 등록했다. 전체15구간 전환 판정은 아직 미완료이며 전체47회차454구간 수는 유지한다. 다음은 같은 회차GPT-5.6·Copilot·Anthropic·논문·도구릴리스의 검토다.

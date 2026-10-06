@@ -10512,3 +10512,21 @@ WebsiteData11raw·9same-ID 갱신/2불변·358페이지/178기사/25용어/22관
 증거 위치는 외장 `/Volumes/X5Storage/tkg-daily-core-20261006-v1`의 `daily-ca-logs-public-readback-v1.json`, `daily-ca-logs-website-verified-v1.json`, `daily-ca-logs-post-snapshot-proof-v1.json`, `daily-ca-logs-restored-approval-v1.json`, `daily-ca-logs-delivery-proof-v1.json`, `daily-ca-logs-delivery-restored-proof-v1.json`이다. private Drive에는 승인 원문 ZIP `1M1sFmDA2j8_vTEnAgQB63g_PBwSs-aSJ`, 발행증거 ZIP `1tEkn4wYFDa_7A5SgBtWdYP6PidGNWltm`, 발행 exact manifest `1SoWpV_Pekie7PzvegERDeEKVJLHVfHCH`를 보관했다.
 
 다음은 저장된 Spot 공식 게시물 `daily-20261006-spot-source-selected-v1`의 실제 사실 검토다. 새 제품 발표로 오해하지 않고 게시물 날짜와 과거 활용 사례 날짜를 분리한다. 다음 실제 정규 실행의 원 수집 입력/basis를 고정해 비교 장부로 연결하며 수동 보완을 정규 운영 횟수로 세지 않는다. 소급 미판정47/454·metadata10·독립40/20·정규0/7·08시/인증/중단·전체runtime 복구는 남는다. 전체 suite 재시도0·새1시간 반복 병목0이며 목표 active다.
+
+
+## 427. Spot 발행 완료와 다음 과거 회차의 공통 수집
+
+현재 공개 Spot 기사: https://skyan0213.github.io/tech-knowledge-garden/news/82294a16ed862561
+처리 daily-20261006-spot-processing-v1, preview daily-20261006-spot-reader-preview-v2, publication daily-20261006-spot-publication-v1, actual readback daily-20261006-spot-public-readback-v1. 공개33cb0dd/Actions37402943072 success 및12공개파일 일치,213Drive 전수 전후/raw·1같은ID원고 수정, WebsiteData11raw·9갱신2불변, 기존RSS40을 확인했다. 코드의 날짜·후보UTC/KST·쉼표 기관 태그·모바일 줄바꿈은 공통 경로에 적용됐다. 배포 전 live/local 불일치로 실패한 WebsiteData v1은 보존하고 성공한 v2를 사용한다.
+
+비공개 증거는 외장 /Volumes/X5Storage/tkg-daily-core-20261006-v1의 daily-spot-* 영수증이다. 승인 source closure 원격 ZIP1SM4-MXDKFBTjlKZAn7vp-jSPzZSS5uyh·manifest1rRJJ9q_XqFZwaMLcRy-nNUKsB8iHTyji의 bytes/SHA와66파일 복원본의8사실/기사 승인을 대조했다. 운영 증거 ZIP1h9P5Ul-lX1e4UbEF1x732MC6lVWVYTGI·manifest1hLR85jP_8jDmr1J3rK6FS8x9BtLysgWV의 실제 원격 SHA 및70파일 공통 ordinary 복원을 확인했다. 전체 runtime 복구로 세지 않는다.
+
+7월10일08:02의15구간 inventory는 legacy-20260710-morning-inventory-20261006-v1이며 원고 SHA37ba45683ceacc6e27edf05d67ffa1649c369306e401c74a0a7cda58dbbccc46를 보존했다. 원문 수집 legacy-20260710-morning-sources-20261006-v1의2OpenAI403은 실패 기록으로 남기고 legacy-20260710-openai-readable-20261006-v1의 공식 웹 도구 캡처로 보완했다.20captured 판본의 source-only closure v2는 원격1beGHS3aKH2phcI-IFJ8zpgODXV502STS·manifest1FOUP4qMo49uLx0h2YEfN07sH2GG3mRHP의 raw/SHA와113파일 복원을 검증했다. 수집 성공과 기사 승인·공개는 구분한다.
+
+공통 arxiv-versioned-abstract-v1/arxiv-versioned-html-v1로 stored4원문을 다시 파싱했다. abstract2날짜7월8일, 전문664블록/38표를 확보했고 기존판본·raw SHA는 유지한다. 전문 날짜를 임의로 채우지 않는다. proof: legacy-jul10-arxiv-generic-profile-proof-v1.json.
+
+원문 인용 표지가 모델에서 변형되면 research-evidence-quotes.mjs의 명시 review를 사용한다. source_run/input_sha256/raw_sha256·원문 블록을 고정하고 citation_markers_checked:true로 세 구분 문자만 복원한다. 번호·표시 이름·문장·조건은 바꾸지 않는다. --complete-missing은 존재하지 않는 배치만 수행하며 이전 추출/대조를 다시 호출하지 않는다. source original/output·비용 장부를 보존한다. 새 repair run이 assessment.json까지 완료됐을 때만 process-source --extraction-run 원추출 --assessment-run 완료교정을 사용한다. 미검토7월31일 갱신을7월10일 기사에 혼입하지 않는다.
+
+전체47회차454구간·metadata10·human gold·실제정규0/7·08시/인증/중단/fullruntime은 미완료. 다음은 같은 과거 회차15구간의 사실/편집 판정이다. 취재 실패·운영 안내·분석 생략 이유는 독자 화면에 넣지 않는다. 전체 수집/전체 테스트를 근거 없이 반복하지 않으며1시간 동일 병목은 기존 blocker 기록에 남기고 다음 독립 slice로 진행한다.
+
+427 후속: legacy-20260710-gptlive-factual-20261006-v1의13verified/1rejected·최종2문장200자/설명3항목5문단·기사3fb14968493dc682를 승인했다. quote-reviewed v2는3기존배치/마지막1호출만 사용하며7월31일 후속 내용을 제외했다. 실제writer70.534초, 편집회사귀속/API계획/음성모드배경모델 정정 후 quality blocked:false다. 승인closure 원격1cw0qfyyDdSg63hn0gxd16W9EPph38QoT·exact manifest1wqj4Ez9UIebOCAdi63I-fK5XOsNPqEiz, SHA c9abacc8b0677a09a8e123597a967254caa797d02948da132b2d09c86c56271e 및99파일 복원의기사/13사실/제외1을 대조했다. 원문위치 등록영수증 legacy-jul10-gptlive-location-v1.json. 공개·원고수정은0이고 같은회차 나머지구간을 다음 검토한다.

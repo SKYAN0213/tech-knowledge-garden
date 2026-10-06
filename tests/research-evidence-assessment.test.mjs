@@ -9,10 +9,9 @@ import { assessEvidenceCheckpoint } from "../scripts/research/evidence-assessmen
 import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 
-function fixture(t) {
+function fixture(t, { text = "Example announced plans to ship 50 units in 2027." } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "evidence-assess-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  const text = "Example announced plans to ship 50 units in 2027."
   const source_id = sourceId("https://example.org/plans")
   const body_sha256 = sha256(text)
   const source_version_id = `${source_id}:${body_sha256}`
@@ -283,13 +282,25 @@ test("source modified during inference cannot produce a completed assessment", a
   assert.equal(readJSON(f.root, "runs/assessment/evidence-assessment/assessment.json"), null)
 })
 
-async function quoteFixture(t, { partial = false } = {}) {
-  const f = fixture(t)
+async function quoteFixture(t, { partial = false, citationMarkers = false } = {}) {
+  const f = fixture(
+    t,
+    citationMarkers
+      ? {
+          text: "Example announced plans to ship 50 units in 2027. \uE200cite\uE2027†Official verification tool\uE201 supports this.",
+        }
+      : {},
+  )
   if (partial) {
     f.claims.push({ ...structuredClone(f.claims[0]), claim_id: "c2" })
     f.provider.executionPolicy.settings.provider = "ollama"
   }
-  f.row.evidence[0].quote = f.row.evidence[0].quote.replace("50 units", "50  units")
+  f.row.evidence[0].quote = citationMarkers
+    ? f.row.evidence[0].quote.replace(
+        /[\uE200\uE202\uE201]/g,
+        citationMarkers === "spaces" ? " " : "\uFFFC",
+      )
+    : f.row.evidence[0].quote.replace("50 units", "50  units")
   const generate = f.provider.structured.bind(f.provider)
   let request
   f.provider.structured = async (value) => {
@@ -395,6 +406,41 @@ test("explicit quote repair preserves invalid output and verdict without new inf
   )
   await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
 })
+
+for (const citationMarkers of ["replacement-glyph", "spaces"])
+  test(`explicit citation marker repair (${citationMarkers}) preserves words, reference ID and original response`, async (t) => {
+    const f = await quoteFixture(t, { citationMarkers })
+    const correction = f.quoteReview.corrections[0]
+    correction.citation_markers_checked = true
+    for (const changes of [
+      { citation_markers_checked: undefined },
+      { sentence_initial_article_checked: true },
+      { elision_expansion_checked: true },
+      { quote: correction.quote.replace("7†", "8†") },
+      { quote: correction.quote.replace("50 units", "51 units") },
+      { quote: correction.quote.replace("Official", "Different") },
+      { original_quote: correction.original_quote.replace("cite", "note") },
+    ])
+      await assert.rejects(
+        () =>
+          reviewEvidenceQuotes({
+            root: f.root,
+            run: "quote-reviewed",
+            sourceRun: "assessment",
+            review: { ...f.quoteReview, corrections: [{ ...correction, ...changes }] },
+          }),
+        /typography|adjacent/,
+      )
+    const result = await repairQuotes(f)
+    assert.equal(result.model_calls, 0)
+    assert.equal(result.repaired_quotes, 1)
+    await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
+    assert.deepEqual(
+      fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+      f.originalBytes,
+    )
+    assert.equal(f.calls(), 1)
+  })
 
 test("quote recovery generates only explicitly requested missing batches and resumes without metadata", async (t) => {
   const f = await quoteFixture(t, { partial: true })
