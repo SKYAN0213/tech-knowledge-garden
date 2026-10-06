@@ -11055,3 +11055,20 @@ source closure crowdstrike-extraction-comparison-closure-20261007-v1은47자료/
 458/19.365 완료 증거: code160f823f907702d2f6796842e4d6e5c76d098147 / Actions37502154780에서 Node1,052/1,052·Python15+10+3·build/site/deploy가 성공했다. 코드 릴리스CI1회·로컬전체suite0회. 공개3파일 HTTP200·raw bytes/SHA 동일, RSS40GUID/기존내용·후보 장부SHA 보존, 새기사0이다. source closure claim-consistency-audit-closure-20261007-v1은18자료/20members·89,019bytes·SHA18e7d0a9416d08618c68074ccdb10df1f5fe717e9cf443ee9590a75611fb2eeb다. 비공개 Research Drive ID1metMlcGhfsCf7i1dDfxM_dLyz11GinY1에서 actual parent/shared=false·원격 raw SHA·20members restore·보관 위치 등록을 확인했다. 복원된 operator7자료의 SHA, 원문parse 동등성과 미승인16사실 중 구조통과6을 재현했다. 닫힌 manifest/원출력은 수정하지 않는다.
 
 비공개 진척판 core-progress-checkpoint-20261007-v7.json/html은 실제 수집목록195/활성55경로, 전체WBS3/22·partial17/not_started2를 표시한다. UI 변경이 없어 브라우저 검사를 반복하지 않았다. 전체legacy·독립human평가·08시실행/인증/복구·정규7회는 미완료이며 새정규0/7·goal active다. 이번에는 새 원문 재조사/기사 발행을 수행하지 않았다. 다음은 이미 수집한 국내·로봇 원문 검토와 승인·Drive/public 전달 연결을 이어간다. 동일 실패1시간 반복0이다. 외장 claim-consistency-ci-final-v1.json/log, claim-consistency-public-preservation-v1.json, claim-consistency-drive-restored-proof-v1.json이 증거다.
+
+
+## 459. 국내 로봇 공식 원문에서 승인·중복 연결·전문용어 이력까지
+
+이전 turn은 수치/시간 guard 수정·표적검사·배포·Drive 복원이라는 progress였다. 이번에는 기존 full55 일일 원문 중 두산로보틱스 10월6일 국책과제 발표를 공통 process-daily로 처리했다. qwen3.8:27b-mlx 추출 think:false 86,834ms, 대조 medium117,247/120,870ms, 작성 think:false102,872ms의4모델 요청을 실제 완료했다. 신규 원문HTTP·유료API·새adapter·모델 재생성0이다.
+
+모델6사실 중 수치 condition2개가 기존 guard에서 거부됐다. 한국어13문단을 직접 대조해 숫자 조건을 바로잡고 칩 구성·현장실증·54개월 참여기관·용접 방법·위빙 정의·45개월 수요기업·배경 등8사실을 보완해14verified를 기록했다. 모델 원출력/요청/응답은 보존했다. 모델 초안의 2031년을 협동로봇과 용접 모두에 걸친 목표처럼 쓴 리드를 정정하고3문장198자 리드·3소제목7설명 문단으로 승인했다. 총989억원/정부681억원은 두 과제의 연구개발비 범위이며 회사 단독 수입이나 집행실적이 아니다. 95% 이상·±3mm·50% 이상은 검증된 결과가 아니라 회사 목표다.
+
+한국어/영어 공식 발표·디일렉·전자신문 원문을 각각 읽었다. 영어 more than95%와 한국어95% 이상의 차이는 보존하고 한국어 조건을 기사에 사용했다. 당사자·발표일·두 사업/제안 과제의 동일성을 직접 확인해3source aliases를 한국어 후보에 연결했다. 공동 등장/제목 유사성으로 사건을 합치거나 재전재를 독립 검증으로 세지 않았다. primary 후보1건을 candidate-approval로 verified에 연결했다(장부911/verified101); secondary3개는 별도 기사로 승인하지 않았고 향후 intake에서 같은 canonical 후보로 연결한다. 새 approved-reuse는 approval_ready·추가모델0을 확인했다. 기존 미승인 batch의 historical editorial_review 영수증은 그대로 보존했다.
+
+공식 정의가 있는 용접 위빙을 Knowledge/Robotics/Welding Weaving.md의 private 생성 승인으로 검토했다. 정확한 별칭·정의/작동/적용 예시만 작성하고 없는 설명은 공개 생성을 위한 추론으로 채우지 않았다. 기사에 welding-weaving ID와 실제 본문에 인용한 정의 fact를 명시적으로 연결했다. 기존 source evidence ontology36nodes/62edges에서 전문용어 관련 기사1건(원 발표10월6일)을 조회했고 회사/제품을 학습지도 노드로 등록하거나 공동 등장 관계를 만들지 않았다. 이 ontology의 기업 evidence entity는 전문용어 지도 노드와 다른 역할이다. canonical vault/Drive 작성4폴더와 공개 페이지는 수정하지 않았다. 독립human gold·평가case·정규 회차 증가는0이다.
+
+보관은 승인 source closure276자료/278members·990,707bytes(SHA42b321569c0b5295bcfd224bdc3df7d7ef4830409d7ad69c3bd3352a62ff97dd, Drive1M3YwfxtTmP7ZTu1erYqsYd7T-fRbNQmZ)와 source alias3closures(EN22members/209,363bytes/Drive1XcIb2kIUMftjwxYHmTI2mqAb4YCEbfca; 디일렉129members/1,421,019bytes/Drive1vQlG-vpBg8CtyV81ZWO3nUvvqMlGRLMM; 전자신문333members/2,558,228bytes/Drive1cXfQwe7ik9_TC6Zr0tJKbbFAjS2UMhMN)다. 모두 비공개 Research parent/shared=false·원격 rawSHA·전수restore·registry를 확인했다. 승인 기사·정의 배정은 portable concept authority로 원격 복원과 동일하며 용어 이력1건도 재현했다. alias3개는 각각 복원된 source/비공개 검토에서 같은 canonical 후보로 다시 구성했다. 닫힌 manifest는 수정하지 않는다.
+
+코드·UI 동작 변경0이므로 테스트/빌드/배포 반복0이다. 현재 코드160f823f/Actions37502154780의 Node1,052/Python28/build/site/deploy 성공과 이번 데이터 검토를 구분한다. 공개 기사·RSS 식별자를 수정하거나 과거 자료를 새 회차로 만들지 않았다. 전체WBS3/22·partial17/not_started2·정규0/7·goal active를 유지한다. 새 원문 재조사/전수 legacy 완료나 무인 발행 품질 달성을 뜻하지 않는다. 동일 실패1시간 반복0이다. 다음은 같은 발표 기간을 포함하는 실제 회차의 전체 취재·fresh Drive authoring 대조와 승인 원고/용어 전달, 나머지 legacy·독립평가·08시/인증/복구 검증이다. 외장 doosan-physical-ai-core-proof-v1.json, doosan-physical-ai-drive-readback-proof-v1.json, doosan-physical-ai-restored-approval-proof-v1.json, doosan-physical-ai-restored-alias-proof-v1.json을 따른다.
+
+실제 저장 후보4개를 공통 sameEventAliasSuppressions에 전달해 별칭3개 제외/대표 후보1개를 재현했다. 별도 임시 기사·fake 수집 성공·장부 삭제 없이 향후 intake의 중복 억제 판정을 확인한 읽기 전용 검사다. 증거 doosan-physical-ai-intake-dedup-proof-v1.json. 최신 비공개 진척판은 core-progress-checkpoint-20261007-v8.json/html로 기록한다.
