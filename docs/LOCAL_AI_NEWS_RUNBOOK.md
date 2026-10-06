@@ -11236,3 +11236,13 @@ kari-body-current-editorial-20261007-v1은 복구parse6357e1ba로 실제 처리�
 469 최종 전달: code282faaa57b203cfe6fbab856d4f6da47e3d1c32d/Actions37537130232는 Node1082/1082·Python15+10+3·build/site/deploy success다. candidate-parse-recovery-ci-status/full-v1과 actual public-preservation-v1의3파일 HTTP200/rawSHA·기존RSS40 전체bytes 불변을 확인했다. 새 코드 묶음의 릴리스CI1회·추가 로컬전체0이며 승인 여섯 기사는 공개하지 않았다. 별도 six-approved-intake-v1은 review_pending/approval_ready6로 완료됐고 처리/HTTP 재호출0이다. 원 private-preview/Signals/용어/생성파일 검증을 다시 실행하지 않았다.
 
 parser recovery 입력·원고/요약·preview 검증과17호출ledger 등18실물 파일을 byte 그대로 복사한 delivery-evidence-v1을 공통 closure에 보관했다. daily-20261007-six-article-delivery-closure-v1은21members/64020bytes·SHA3f14203c7dde2a496406752e266119c7fe981f6d9ed095cea3a310d730eafd8b·private Research Drive1xt5ibbtHA47sxIDUPHimb3zOaINgiB23다. actual metadata/private parent/shared:false·원격SHA·전수restore·registry를 확인했다. source_versions0인 운영 기록이며 원문/승인은 앞의4개 source closure에 있다. 이는 canonical Drive 작성 원고나 fullruntime 복원 증거로 세지 않는다. open_in_codex의 새 reader 파일 열기는 queued로 반환돼 실화면 검증 완료로 기록하지 않았다. 다음은 나머지 사건 판정과 fresh Drive-first 정규 발행이며, 기존 WBS/legacy/독립human/08시/정규7회 목표는 active다.
+
+## 470. 공식 대체 원문의 고정 ID를 일일 preview·작성 발행에 전달
+
+새 원문 수집기 없이 기존 candidate-source-alternative의 same_event 검토를 일일 edition 선정→preview→authoring prepare/release에서 재생한다. 선정 참조는 resolution_run/receipt_sha256/approved_run/event_id 네 필드만 사용하며 원문·parse·검토 사실이 바뀌면 거부한다. 최초 URL의 raw/canonical ID를 보존하고 이미 공개된 최초 URL의 중복도 거부한다. reference를 입력 및 manifest에 고정해 재개 시 URL을 새 해시로 바꾸지 않는다.
+
+실제 LG전자 원문7사실 검증·2외부 시장 전망 제외→정정 원고→same-event→후보 승인→7기사 reader-v2를 완료했다. 원 interrupted 로컬 대조 호출은 실패 이력을 보존하고 완료된 추출/첫 대조는 재사용해 누락 대조와 작성만 수행했다. AMD 실적 발표 일정은 실제 결과가 아닌 배경 기록으로 판정했다. LG 공급 예정/CDU 협의와 기존 수주액을 각각 구분하고 실제 매출/설치 완료로 쓰지 않았다.
+
+명령: node scripts/research-edition.mjs --run daily-20261007-seven-article-reader-v2 --daily-run daily-20261007-current55-integrated-v1 --review /Volumes/X5Storage/tkg-daily-core-20261007-v1/current55-oct7-seven-article-selection-v1.json. 기존 reader-v1의 ID gate 실패는 보존했다. reader-v2의 7고유 사건·기존RSS39 identity·용어 reciprocal 링크 pass는 실제 manifest에 있다. 실화면/Drive 작성/공개/정규 성공 횟수로 승격하지 않는다.
+
+표적64 중62최초 통과, 신규2fixture를 실제 승인/기존 기사 문법으로 고친 뒤 실패한2만2통과했다. 현재 전체3/22와 legacy44회430기사+metadata10·독립human0/40 및0/20·실제08시/정규0/7은 그대로다. 반복1시간 blocker 없음. 다음은 새 reader 실화면과 실제32칸 조사에 대한 편집 검토, fresh Drive 원본 비교 및 작성·배포·readback이다.

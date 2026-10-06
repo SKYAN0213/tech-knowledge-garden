@@ -33,6 +33,7 @@ import { assertRetrospectiveAppearance, assertHistoricalAdditionReview } from ".
 import { articleDateLabel } from "../article-review.mjs"
 import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
+import { loadPreviewSourceAlternatives } from "./preview-source-alternatives.mjs"
 
 const approvalFiles = [
   "draft.json",
@@ -364,7 +365,13 @@ export function retrospectiveProjections(
 
 // A new issue may be assembled privately from reviewed events. This does not
 // certify the eight-sector coverage or install the issue in the authority vault.
-export function newEditionProjections(vault, approvals, spec, knowledgeNotes = []) {
+export function newEditionProjections(
+  vault,
+  approvals,
+  spec,
+  knowledgeNotes = [],
+  sourceOriginals = new Map(),
+) {
   if (
     !spec ||
     spec.schema !== "research-private-edition/v1" ||
@@ -415,10 +422,16 @@ export function newEditionProjections(vault, approvals, spec, knowledgeNotes = [
       sha256(canonicalURL(article.source_urls[0])).slice(0, 16),
       sha256(article.source_urls[0]).slice(0, 16),
     ])
+    const original = sourceOriginals.get(article.event_id)
+    if (original) {
+      sourceIDs.add(sha256(original).slice(0, 16))
+      sourceIDs.add(sha256(canonicalURL(original)).slice(0, 16))
+    }
     if (
       !sourceIDs.has(article.event_id) ||
       priorIds.has(article.event_id) ||
       article.source_urls.some((url) => priorUrls.has(canonicalURL(url))) ||
+      (original && priorUrls.has(canonicalURL(original))) ||
       published < firstDay ||
       published > spec.date
     )
@@ -908,6 +921,7 @@ export async function privatePreview(
     knowledgeRuns = [],
     editionSpec = null,
     legacyReviews = [],
+    sourceAlternatives = [],
   } = {},
 ) {
   validRun(run)
@@ -922,6 +936,9 @@ export async function privatePreview(
   repo = path.resolve(repo)
   vault = path.resolve(repo, vault)
   const approvals = approvedRuns.map((id) => loadCurrentApproval(root, id, { vault }))
+  if (sourceAlternatives.length && !editionSpec)
+    throw Error("New-edition alternate-source references required")
+  const sourceOriginals = loadPreviewSourceAlternatives(root, sourceAlternatives, approvals)
   const knowledge = knowledgeRuns.map((id) => loadNoteApproval(root, id, { vault }))
   assertPreviewConceptNotes(approvals, knowledge)
   const notes = knowledge.flatMap((k) => k.approval.notes)
@@ -936,6 +953,7 @@ export async function privatePreview(
               approvals.map((a) => a.article),
               editionSpec,
               notes,
+              sourceOriginals,
             )
           : retrospectiveProjections(
               vault,
@@ -954,6 +972,7 @@ export async function privatePreview(
       approvals,
       knowledge,
       ...(editionSpec ? { edition_spec: editionSpec } : {}),
+      ...(sourceAlternatives.length ? { source_alternatives: sourceAlternatives } : {}),
       ...(legacyReviews.length
         ? {
             legacy_reviews: legacyReviews,
@@ -1070,6 +1089,11 @@ export async function privatePreview(
       sha256(JSON.stringify(approval))
     )
       throw Error("Editorial approval changed during private preview")
+  if (
+    JSON.stringify([...loadPreviewSourceAlternatives(root, sourceAlternatives, approvals)]) !==
+    JSON.stringify([...sourceOriginals])
+  )
+    throw Error("Alternate-source identity changed during private preview")
   for (const approved of knowledge)
     if (
       sha256(JSON.stringify(loadNoteApproval(root, approved.run, { vault }))) !==
@@ -1098,6 +1122,7 @@ export async function privatePreview(
     schema: "private-reader-preview/v1",
     run_id: run,
     approved_runs: approvedRuns,
+    ...(sourceAlternatives.length ? { source_alternatives: sourceAlternatives } : {}),
     ...(editionSpec ? { edition_spec: editionSpec, coverage_complete: false } : {}),
     ...(legacyReviews.length ? { legacy_reviews: legacyReviews } : {}),
     ...(sourceFeed ? { source_feed: sourceFeed } : {}),

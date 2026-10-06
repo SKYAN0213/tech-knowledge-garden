@@ -144,7 +144,14 @@ test("edition preparation accepts a pinned reviewed alternate original and rejec
   const hash = sha256(JSON.stringify(resolution))
   candidate.approval.source_alternative_resolution_sha256 = hash
   input.alternatives = new Map([["alternate-review", { value: resolution, sha256: hash }]])
-  assert.equal(selectEditionApprovals(input)[0].source_version_id, "source:bytes")
+  const selected = selectEditionApprovals(input)[0]
+  assert.equal(selected.source_version_id, "source:bytes")
+  assert.deepEqual(selected.source_alternative, {
+    resolution_run: "alternate-review",
+    receipt_sha256: hash,
+    approved_run: "reviewed-one",
+    event_id: candidate.event_id,
+  })
   resolution.candidate_key = "another-event"
   assert.throws(() => selectEditionApprovals(input), /pinned identity review/)
 })

@@ -12,6 +12,7 @@ import { recordFactReview } from "../scripts/research/claims.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { intakeCompletedScan, mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
 import { storeParseArtifact, loadStoredSourceRun } from "../scripts/research/parser.mjs"
+import { loadPreviewSourceAlternatives } from "../scripts/research/preview-source-alternatives.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
 
 const candidate = {
@@ -226,6 +227,91 @@ function storedSameEventFixture(t, { approvedTarget = false } = {}) {
   atomicWrite(root, `runs/${resolutionRun}/candidate-source-alternative.json`, receipt)
   return { root, backlogFile, candidate, alternativeUrl, receipt, resolutionRun }
 }
+
+test("preview replays pinned source alternatives and preserves the original event identity", (t) => {
+  const f = storedSameEventFixture(t)
+  const eventId = sha256(f.candidate.source_urls[0]).slice(0, 16)
+  const approval = {
+    run: "alternate-source",
+    article: { event_id: eventId, source_urls: [f.alternativeUrl] },
+  }
+  const receiptPath = `runs/${f.resolutionRun}/candidate-source-alternative.json`
+  const reference = {
+    approved_run: approval.run,
+    event_id: eventId,
+    resolution_run: f.resolutionRun,
+    receipt_sha256: sha256(fs.readFileSync(path.join(f.root, receiptPath))),
+  }
+  assert.deepEqual(
+    [...loadPreviewSourceAlternatives(f.root, [reference], [approval])],
+    [[eventId, f.candidate.source_urls[0]]],
+  )
+  for (const bad of [
+    null,
+    { ...reference, approved_run: "unbound" },
+    { ...reference, event_id: "0".repeat(16) },
+    { ...reference, receipt_sha256: "0".repeat(64) },
+    { ...reference, bypass: true },
+  ])
+    assert.throws(() => loadPreviewSourceAlternatives(f.root, [bad], [approval]))
+  assert.throws(
+    () =>
+      loadPreviewSourceAlternatives(
+        f.root,
+        [reference, reference],
+        [approval, { ...approval, article: { ...approval.article, event_id: "f".repeat(16) } }],
+      ),
+    /unique/,
+  )
+  assert.throws(
+    () =>
+      loadPreviewSourceAlternatives(
+        f.root,
+        [reference],
+        [
+          {
+            ...approval,
+            article: { ...approval.article, source_urls: ["https://example.com/unrelated"] },
+          },
+        ],
+      ),
+    /does not match/,
+  )
+  const reviewPath = `runs/${f.resolutionRun}/candidate-source-alternative-review.json`
+  const reviewBytes = fs.readFileSync(path.join(f.root, reviewPath))
+  // Changing even the review attribution invalidates its pinned hash.
+  atomicWrite(f.root, reviewPath, { ...JSON.parse(reviewBytes), reason: "changed" })
+  assert.throws(
+    () => loadPreviewSourceAlternatives(f.root, [reference], [approval]),
+    /does not match/,
+  )
+  atomicWrite(f.root, reviewPath, reviewBytes)
+  for (const change of [
+    { ...f.receipt, decision: "different_event" },
+    { ...f.receipt, existing_event_approval: { event_id: eventId } },
+    { ...f.receipt, reason: "unreviewed replacement reason" },
+  ]) {
+    atomicWrite(f.root, receiptPath, change)
+    const changedRef = {
+      ...reference,
+      receipt_sha256: sha256(fs.readFileSync(path.join(f.root, receiptPath))),
+    }
+    assert.throws(() => loadPreviewSourceAlternatives(f.root, [changedRef], [approval]))
+  }
+  atomicWrite(f.root, receiptPath, f.receipt)
+  const rawRef = {
+    ...reference,
+    receipt_sha256: sha256(fs.readFileSync(path.join(f.root, receiptPath))),
+  }
+  const docs = JSON.parse(
+    fs.readFileSync(path.join(f.root, "runs/alternate-source/documents.json")),
+  )
+  atomicWrite(f.root, docs[0].body_path, "Changed source bytes")
+  assert.throws(
+    () => loadPreviewSourceAlternatives(f.root, [rawRef], [approval]),
+    /changed|mismatch|hash|bytes/i,
+  )
+})
 
 test("standalone completed intake suppresses reviewed same-event sources and preserves backlog bytes on resume", async (t) => {
   const fixture = storedSameEventFixture(t)

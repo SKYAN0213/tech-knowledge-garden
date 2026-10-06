@@ -144,6 +144,7 @@ export async function authorizeAuthoringTransfer({
         knowledgeRuns: initial.knowledge_runs,
         editionSpec: initial.edition_spec || null,
         legacyReviews: initial.legacy_reviews || [],
+        sourceAlternatives: initial.source_alternatives || [],
       })
       const planPath = `runs/${previewRun}/drive-authoring/transfer-plan.json`
       const paths = {

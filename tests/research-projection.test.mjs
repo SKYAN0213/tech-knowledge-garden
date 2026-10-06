@@ -1135,6 +1135,56 @@ test("private new-edition slice continues the cutoff without reusing an event or
     () => newEditionProjections(vault, [article], { ...spec, intent: "publish" }),
     /private new-edition/,
   )
+  const officialArticle = {
+    ...originalArticle,
+    source_urls: ["https://official.example.org/new-source"],
+  }
+  assert.throws(
+    () => newEditionProjections(vault, [officialArticle], spec),
+    /duplicate or out-of-window event/,
+  )
+  const verifiedOriginals = new Map([[originalID, originalURL]])
+  const [officialProjection] = newEditionProjections(
+    vault,
+    [officialArticle],
+    spec,
+    [],
+    verifiedOriginals,
+  )
+  const projectedArticles = extractArticles({
+    ...parseNote(officialProjection.content),
+    file: path.join(vault, officialProjection.path),
+  })
+  assert.deepEqual(
+    projectedArticles.map((entry) => entry.id),
+    [originalID],
+  )
+  assert.deepEqual(projectedArticles[0].urls, officialArticle.source_urls)
+  assert.equal(officialProjection.content.includes(originalURL), false)
+  const priorBytes = fs.readFileSync(prior)
+  fs.writeFileSync(
+    prior,
+    editionProjection(
+      [
+        {
+          ...article,
+          source_urls: [originalURL],
+          event_id: sha256("https://example.com/announcement").slice(0, 16),
+        },
+      ],
+      {
+        key: "2026-09-27_0800_Tech_AI_Briefing",
+        date: "2026-09-27",
+        coverage_start: "2026-09-26T00:00:00Z",
+        coverage_end: "2026-09-27T00:00:00Z",
+      },
+    ).content,
+  )
+  assert.throws(
+    () => newEditionProjections(vault, [officialArticle], spec, [], verifiedOriginals),
+    /duplicate or out-of-window event/,
+  )
+  fs.writeFileSync(prior, priorBytes)
   const duplicateConcept = noteText({ concept_id: "same-concept" }, "# Term\n")
   fs.writeFileSync(path.join(vault, "Knowledge/First.md"), duplicateConcept)
   fs.writeFileSync(path.join(vault, "Knowledge/Second.md"), duplicateConcept)

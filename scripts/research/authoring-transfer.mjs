@@ -105,6 +105,7 @@ export async function prepareAuthoringTransfer({
         knowledgeRuns: initial.knowledge_runs,
         editionSpec: initial.edition_spec || null,
         legacyReviews: initial.legacy_reviews || [],
+        sourceAlternatives: initial.source_alternatives || [],
       })
       const manifestBytes = fs.readFileSync(safePath(root, manifestPath))
       const manifest = JSON.parse(manifestBytes)

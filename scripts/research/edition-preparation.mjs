@@ -111,6 +111,16 @@ export function selectEditionApprovals({
       source_version_id: candidate.approval.source_version_id,
       parse_id: candidate.approval.parse_id,
       content_sha256: candidate.approval.article_content_sha256,
+      ...(alternate
+        ? {
+            source_alternative: {
+              resolution_run: alternate,
+              receipt_sha256: candidate.approval.source_alternative_resolution_sha256,
+              approved_run: approval.run,
+              event_id: candidate.event_id,
+            },
+          }
+        : {}),
     }
   })
   if (
@@ -199,6 +209,9 @@ export async function prepareDailyEdition({
           vault,
           knowledgeRuns: decision.knowledge_runs,
           editionSpec: decision.edition_spec,
+          sourceAlternatives: selected.flatMap((item) =>
+            item.source_alternative ? [item.source_alternative] : [],
+          ),
         },
       )
       const previewPath = `runs/${runId}/preview-manifest.json`

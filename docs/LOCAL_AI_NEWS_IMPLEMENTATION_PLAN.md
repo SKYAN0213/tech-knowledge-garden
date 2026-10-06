@@ -5080,3 +5080,11 @@ terminal109수집 관측의6개 비공개 Drive 패키지는 원격raw SHA·4059
 새 네 승인 묶음은 비공개 Research Drive에서 실제 원격 ZIP SHA·부모/shared:false·전수 복원·승인 결과 동일성까지 확인했다. 여섯 기사 `daily-20261007-six-article-reader-slice-v1`은 refresh/knowledge sync/check/validate/build/site verification 및 웹·RSS·GitHub 요약/링크 일치를 통과했다. 원격 연구 보관과 canonical 작성 원고의 Drive 발행은 다르며 이 preview는 coverage_complete/drive_written/browser_verified/candidate_published:false다.
 
 다음은 남은 분야의 사건/배경·중복 판정을 이어 정규 편집을 완성하고 fresh Drive 작성 원본→동일 ID 보관→공개 결과/WebsiteData를 확인하는 일이다. 제한된 thelec 원문은 새 공식 근거 없이 재시도하지 않는다. 전체3/22·legacy44회차430구간/metadata10·독립40/20·실제08시/인증/복구·서로 다른 정규0/7과 goal active는 그대로다. 이미 통과한 모델/수집/전체 CI를 반복하지 않는다. 상세 실행·실패와 재개 위치는 런북469에 기록한다.
+
+## 19.377. 공식 대체 원문을 새 회차까지 연결하는 고정 사건 ID
+
+발견 원문과 승인한 공식 원문이 다른 같은 사건은 기존 candidate-source-alternative의 원문·검토·사실 판본을 재사용한다. 일일 선정은 원고 run/event ID와 해시가 고정된 관계 receipt를 preview에 전달한다. preview는 원문 bytes/parse/검토 claim을 읽어 기존 관계 생성기로 재구축하며, 실행 종료 및 작성 원본 준비·release 재개 때에도 같은 근거를 확인한다. 승인된 관계 없이 URL 해시가 다른 ID를 넣는 우회, 이미 공개한 최초 URL의 재발행, 관계·원문 변조는 거부한다. 최초 발견 URL의 정확한 ID와 기존 주소를 보존하고 독자에게는 승인한 공식 원문만 제공한다.
+
+실제 LG전자 북미 냉각 공급 계약의 발견 경로 디일렉과 공식 LG전자 원문을 같은 사건으로 확인했다. 원래 사건 d5bbd37fc92cb75b를 바꾸지 않고 daily-20261007-seven-article-reader-v2에 포함했다. 7건의 웹·RSS·GitHub 요약/출처 동등성과 기존 RSS39 identity 보존 및 위빙 용어 연결을 확인했다. 이는 아직 비공개 reader 생성이며 Drive 작성 원본/실화면/공개 발행/정규 성공 회차는 별도로 검증한다. AMD 실적 발표 일정만 있는 원문은 비공개 배경 기록으로 처리했고 실제 실적 발표 기사로 만들지 않았다. 확인 못한 공시 후보는 계속 원문 확인 대상으로 보존한다.
+
+표적 검사64건 중 최초62통과·새 회귀 fixture2실패였다. 원인인 중복 approval fixture 및 기사 문법이 없는 prior URL fixture를 실제 계약 형태로 수정하고 실패한2검사만 재실행해2통과했다. 코드의 실패를 숨기거나 제품 검증 조건을 낮추지 않았다. 전체 로컬 검사는 재실행하지 않는다. 증거는 외장 daily-core 루트 current55-alternate-preview-targeted-tests-v1/v2.log, current55-oct7-seven-article-reader/transfer-v2.json이다. 전체3/22·legacy44/430/metadata10·독립human0/40 및0/20·실제08시/정규7회는 유지하며 다음은 실화면·실제 조사32칸·fresh Drive-first 발행이다.
