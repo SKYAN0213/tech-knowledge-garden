@@ -12,6 +12,46 @@ import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
+// Preserve acquisition runs together without merging observations or turning
+// shared URL/body versions into a new editorial source bundle.
+export async function createSourceAcquisitionGroup(root, runId, sourceRuns) {
+  if (
+    !validRun(runId) ||
+    !Array.isArray(sourceRuns) ||
+    !sourceRuns.length ||
+    sourceRuns.length > 24 ||
+    sourceRuns.some((id) => !validRun(id) || id === runId) ||
+    new Set(sourceRuns).size !== sourceRuns.length
+  )
+    throw Error("Acquisition group requires one to twenty-four distinct source runs")
+  return withLock(root, "run-" + runId, async () => {
+    const sources = sourceRuns.map((id) => {
+      const statePath = `runs/${id}/state.json`,
+        state = readJSON(root, statePath)
+      if (
+        state?.schema !== "research-run/v1" ||
+        state.run_id !== id ||
+        !/^[a-f0-9]{64}$/.test(state.input_hash || "") ||
+        Object.values(state.stages || {}).some((stage) => stage.status === "running")
+      )
+        throw Error("Acquisition group requires terminal source checkpoints")
+      return { source_run: id, state_sha256: sha256(fs.readFileSync(safePath(root, statePath))) }
+    })
+    const group = {
+      schema: "research-source-acquisition-group/v1",
+      source_runs: sources,
+      candidate_approved: false,
+      candidate_published: false,
+    }
+    const relative = `runs/${runId}/acquisition-group.json`,
+      existing = readJSON(root, relative)
+    if (existing && JSON.stringify(existing) !== JSON.stringify(group))
+      throw Error("Acquisition group input changed")
+    if (!existing) atomicCreate(root, relative, group)
+    return { ...group, reused: Boolean(existing) }
+  })
+}
+
 // Follow explicit evidence references only. This is a portable research snapshot,
 // not a backup of caches, credentials, the live backlog, or publication state.
 export function buildArchiveClosure(
@@ -65,7 +105,27 @@ export function buildArchiveClosure(
     const parses = readJSON(root, base + "parses.json")
     // An acquisition ancestor may include blocked attempts alongside selected
     // captured sources. Preserve those observations without making them evidence.
-    const stored = doc || parses ? loadStoredSourceRun(root, id, { allowUnacquired: true }) : null
+    const emptyAcquisition =
+      Array.isArray(doc) &&
+      !doc.length &&
+      Array.isArray(parses) &&
+      !parses.length &&
+      edges.some((edge) => edge.to === id && edge.kind === "source_acquisition_group")
+    // Empty windows can be backed up only through pinned acquisition groups.
+    // Editorial source loading keeps its requirement for actual documents.
+    const stored = emptyAcquisition
+      ? {
+          documents: doc,
+          parses,
+          identity: {
+            source_run: id,
+            documents_sha256: sha256(JSON.stringify(doc)),
+            parses_sha256: sha256(JSON.stringify(parses)),
+          },
+        }
+      : doc || parses
+        ? loadStoredSourceRun(root, id, { allowUnacquired: true })
+        : null
     const manifest = archiveManifest(root, id)
     const dependencies = []
     const reference = (target, kind, check) => {
@@ -129,6 +189,29 @@ export function buildArchiveClosure(
       })
     }
     const bundle = readJSON(root, base + "source-bundle.json")
+    const acquisitionGroup = readJSON(root, base + "acquisition-group.json")
+    if (acquisitionGroup) {
+      const sources = acquisitionGroup.source_runs
+      if (
+        acquisitionGroup.schema !== "research-source-acquisition-group/v1" ||
+        acquisitionGroup.candidate_approved !== false ||
+        acquisitionGroup.candidate_published !== false ||
+        !Array.isArray(sources) ||
+        !sources.length ||
+        sources.length > 24 ||
+        new Set(sources.map((s) => s.source_run)).size !== sources.length
+      )
+        throw Error("Invalid acquisition archive group")
+      for (const source of sources)
+        reference(source.source_run, "source_acquisition_group", () => {
+          if (
+            !/^[a-f0-9]{64}$/.test(source.state_sha256 || "") ||
+            sha256(fs.readFileSync(safePath(root, `runs/${source.source_run}/state.json`))) !==
+              source.state_sha256
+          )
+            throw Error("Acquisition group source checkpoint changed")
+        })
+    }
     if (bundle) {
       if (
         bundle.schema !== "research-source-bundle/v1" ||

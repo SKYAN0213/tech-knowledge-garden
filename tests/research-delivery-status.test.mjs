@@ -19,9 +19,45 @@ import {
   renderIntegratedCoveragePanel,
   sourceBaselineEvidence,
   loadLatestSourceRevisionReview,
+  loadDailySourceAcquisitionAudit,
+  currentCodeEvidence,
 } from "../scripts/research/delivery-status.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+
+test("current full incomplete acquisition stays visible instead of an earlier narrow success", () => {
+  const run = (id, fingerprint, routes) => ({
+    plan: { config_sha256: fingerprint, windows: routes.map(() => ({})) },
+    summary: { run_id: id, routes, coverage_grid: [{ status: "partial" }] },
+  })
+  const full = run("current-full", "current", [
+    { channel_id: "a", status: "window_scanned" },
+    { channel_id: "b", status: "incomplete" },
+  ])
+  const narrow = run("current-narrow", "current", [{ channel_id: "a", status: "window_scanned" }])
+  const historic = run("old-full", "old", [
+    { channel_id: "a", status: "window_scanned" },
+    { channel_id: "b", status: "window_scanned" },
+  ])
+  const result = currentCodeEvidence([narrow, full, historic], "current", ["a", "b"])
+  assert.equal(result.run_id, "current-full")
+  assert.equal(result.status, "current_integrated_run_incomplete")
+  assert.equal(result.completed_routes, 1)
+  assert.match(renderIntegratedCoveragePanel(result), /완료 1\/2 · 미완료 경로 있음/)
+  assert.equal(
+    currentCodeEvidence([narrow], "current", ["a", "b"]).status,
+    "partial_route_scope_requires_full_run",
+  )
+  assert.equal(
+    currentCodeEvidence([historic], "current", ["a", "b"]).status,
+    "historical_success_requires_current_revalidation",
+  )
+  full.summary.routes[1].status = "window_scanned"
+  assert.equal(
+    currentCodeEvidence([full], "current", ["a", "b"]).status,
+    "verified_for_current_fingerprint",
+  )
+})
 
 test("revision status reports missing or invalid evidence without claiming zero pending reviews", (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "revision-status-")))
@@ -1188,4 +1224,139 @@ test("delivery status counts only adjudications bound to exact historical parse 
   assert.equal(wrongDateEvidence.status, "partial_or_invalid")
   assert.equal(wrongDateEvidence.invalid_receipt_count, 2)
   assert.equal(wrongDateEvidence.adjudicated_comparison_rows, 3)
+})
+
+test("source acquisition audit deduplicates reused observations and distinguishes window retries from HTTP attempts", async (t) => {
+  const { RunState, atomicWrite } = await import("../scripts/research/run-state.mjs")
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "daily-source-audit-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const make = (url, body, observed_at) => {
+    const id = sourceId(url),
+      hash = sha256(body),
+      body_path = `documents/${id}/${hash}/body.bin`
+    atomicWrite(root, body_path, Buffer.from(body))
+    return {
+      schema_version: "source-document/v1",
+      source_id: id,
+      source_version_id: `${id}:${hash}`,
+      body_sha256: hash,
+      body_path,
+      original_url: url,
+      final_url: url,
+      observed_at,
+      fetch_status: "captured",
+      request_method: "GET",
+      policy_status: "checked",
+      redirect_chain: [],
+      policy: {
+        policy_source_id: "robots",
+        policy_source_version_id: "robots:version",
+        policy_observed_at: "2026-10-06T00:00:00Z",
+        policy_fetch_status: "captured",
+      },
+    }
+  }
+  const index = make("https://publisher.example/list", "Index body", "2026-10-06T01:00:00Z")
+  const failed = {
+    source_id: sourceId("https://publisher.example/api"),
+    original_url: "https://publisher.example/api",
+    final_url: null,
+    request_method: "POST",
+    fetch_status: "failed",
+    policy_status: "checked",
+    observed_at: "2026-10-06T01:01:00Z",
+    error: "Fetch deadline exceeded",
+  }
+  const article = {
+    ...make("https://publisher.example/report.pdf", "%PDF-1.7 report", "2026-10-06T01:02:00Z"),
+    budget_profile_ids: ["ir"],
+    redirect_chain: [{ status: 301, policy_status: "allowed" }],
+  }
+  const a = new RunState(root, "first_a1", {}),
+    b = new RunState(root, "first_a2", {}),
+    c = new RunState(root, "next_a1", {})
+  await a.stage("index", {}, async () => index)
+  await a.stage("page", {}, async () => failed)
+  await b.stage("index", {}, async () => index)
+  await b.stage("detail", {}, async () => article)
+  await c.stage("index", {}, async () => index)
+  const receipt = (attempt_id, until_exclusive, status) => ({
+    daily_run: "daily",
+    channel_id: "publisher",
+    attempt_id,
+    since: "2026-10-05",
+    until_exclusive,
+    status,
+    scan_evidence: { list_scan_run: attempt_id },
+  })
+  const receipts = [
+    receipt("first_a1", "2026-10-06", "incomplete"),
+    receipt("first_a2", "2026-10-06", "window_scanned"),
+    receipt("next_a1", "2026-10-07", "window_scanned"),
+  ]
+  const result = loadDailySourceAcquisitionAudit(root, "daily", receipts)
+  assert.equal(result.status, "verified_source_observations")
+  assert.equal(result.source_observations, 3)
+  assert.deepEqual(result.observation_status_counts, { captured: 2, failed: 1 })
+  assert.equal(result.observation_failure_percent, 33.33)
+  assert.equal(result.robots_observations, 1)
+  assert.equal(result.redirect_hops, 1)
+  assert.deepEqual(result.redirect_policy_counts, { allowed: 1 })
+  assert.equal(result.pdf_profile_observations, 1)
+  assert.equal(result.window_attempts, 3)
+  assert.equal(result.windows_observed, 2)
+  assert.equal(result.windows_with_retry, 1)
+  assert.equal(result.recovered_windows, 1)
+  assert.equal(result.unresolved_windows, 0)
+  assert.equal(result.http_request_attempts, null)
+  assert.equal(result.transport_retry_attempts, null)
+  assert.equal(result.candidate_approved, false)
+  assert.equal(result.candidate_published, false)
+  fs.writeFileSync(path.join(root, article.body_path), "changed body")
+  const corrupt = loadDailySourceAcquisitionAudit(root, "daily", receipts)
+  assert.equal(corrupt.status, "incomplete_source_evidence")
+  assert.equal(corrupt.source_observations, 2)
+  assert.equal(corrupt.issues.length, 1)
+  assert.match(corrupt.issues[0].reason, /body or version differs/)
+  fs.writeFileSync(
+    path.join(root, "runs/first_a1/page.json"),
+    JSON.stringify({ ...failed, fetch_status: "captured" }),
+  )
+  assert.match(
+    loadDailySourceAcquisitionAudit(root, "daily", receipts).issues[0].reason,
+    /checkpoint hash mismatch/,
+  )
+})
+
+test("source acquisition audit reports absent evidence and never reads paths from another run", () => {
+  assert.equal(loadDailySourceAcquisitionAudit("missing", "daily", []).status, "missing")
+  assert.throws(
+    () =>
+      loadDailySourceAcquisitionAudit("missing", "daily", [
+        { daily_run: "another", attempt_id: "first" },
+      ]),
+    /another daily run/,
+  )
+  assert.throws(
+    () =>
+      loadDailySourceAcquisitionAudit("missing", "daily", [
+        { daily_run: "daily", attempt_id: "first", scan_evidence: { list_scan_run: "../escape" } },
+      ]),
+    /run reference/,
+  )
+  const absent = loadDailySourceAcquisitionAudit("missing", "daily", [
+    {
+      daily_run: "daily",
+      attempt_id: "first",
+      status: "blocked",
+      channel_id: "publisher",
+      since: "2026-10-05",
+      until_exclusive: "2026-10-06",
+    },
+  ])
+  assert.equal(absent.status, "incomplete_source_evidence")
+  assert.equal(absent.source_observations, 0)
+  assert.equal(absent.observation_failure_percent, null)
+  assert.equal(absent.unresolved_windows, 1)
+  assert.equal(absent.issues.length, 1)
 })

@@ -93,7 +93,19 @@ export async function registerArchiveLocation({
       if (!validRun(run)) throw Error("Invalid bound archive run")
       const base = `runs/${run}/`
       if (readJSON(root, base + "documents.json") || readJSON(root, base + "parses.json")) {
-        const stored = loadStoredSourceRun(root, run, { allowUnacquired: true })
+        const documents = readJSON(root, base + "documents.json"),
+          parses = readJSON(root, base + "parses.json")
+        const emptyAcquisition =
+          Array.isArray(documents) &&
+          !documents.length &&
+          Array.isArray(parses) &&
+          !parses.length &&
+          manifest.dependencies?.some(
+            (edge) => edge.to === run && edge.kind === "source_acquisition_group",
+          )
+        const stored = emptyAcquisition
+          ? { documents, parses }
+          : loadStoredSourceRun(root, run, { allowUnacquired: true })
         for (const d of stored.documents) {
           if (!["captured", "not_modified"].includes(d.fetch_status)) continue
           let source = sources.get(d.source_version_id)

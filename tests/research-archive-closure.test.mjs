@@ -6,9 +6,13 @@ import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { main } from "../scripts/research.mjs"
 import { main as archivesMain } from "../scripts/research-archives.mjs"
-import { archiveClosure } from "../scripts/research/archive-closure.mjs"
+import {
+  archiveClosure,
+  buildArchiveClosure,
+  createSourceAcquisitionGroup,
+} from "../scripts/research/archive-closure.mjs"
 import { archiveManifest, packageResearchArchive } from "../scripts/research/archive.mjs"
-import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { atomicWrite, readJSON, RunState } from "../scripts/research/run-state.mjs"
 import { loadStoredSourceRun, storeParseArtifact } from "../scripts/research/parser.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import {
@@ -511,5 +515,116 @@ test("package creation rejects manifests beyond the same member budget used for 
   assert.equal(
     fs.existsSync(path.join(root, "archive-staging/large/research-source-bundle.zip")),
     false,
+  )
+})
+
+test("acquisition groups retain repeated source observations without merging or approving them", async (t) => {
+  const { root } = fixture(t)
+  const first = loadStoredSourceRun(root, "extraction")
+  atomicWrite(root, "runs/source/documents.json", first.documents)
+  atomicWrite(root, "runs/source/parses.json", first.parses)
+  atomicWrite(
+    root,
+    "runs/second/documents.json",
+    first.documents.map((d) => ({
+      ...d,
+      observed_at: "2026-10-06T00:00:00Z",
+      fetch_status: "not_modified",
+    })),
+  )
+  atomicWrite(root, "runs/second/parses.json", first.parses)
+  new RunState(root, "source", { purpose: "collection" })
+  new RunState(root, "second", { purpose: "collection" })
+  const created = await createSourceAcquisitionGroup(root, "group", ["source", "second"])
+  assert.equal(created.candidate_approved, false)
+  assert.equal(created.candidate_published, false)
+  assert.equal(
+    (await createSourceAcquisitionGroup(root, "group", ["source", "second"])).reused,
+    true,
+  )
+  const portable = await archiveClosure(root, "acquisition-portable", "group")
+  const manifest = readJSON(root, "runs/acquisition-portable/archive-manifest.json")
+  assert.deepEqual([...manifest.bound_runs].sort(), ["group", "second", "source"])
+  assert.equal(manifest.files.filter((f) => f.drive_root === "Sources").length, 1)
+  assert.ok(manifest.files.some((f) => f.path === "runs/second/documents.json"))
+  assert.ok(manifest.files.some((f) => f.path === "runs/source/documents.json"))
+  const restored = restore(root, portable.package, "restored-acquisition")
+  assert.equal(restored.status, 0, restored.stderr)
+  assert.equal(readJSON(root, "runs/second/documents.json")[0].observed_at, "2026-10-06T00:00:00Z")
+  atomicWrite(root, "runs/source/state.json", {
+    ...readJSON(root, "runs/source/state.json"),
+    candidate_published: true,
+  })
+  assert.throws(() => buildArchiveClosure(root, "changed", "group"), /checkpoint changed/)
+  await assert.rejects(
+    createSourceAcquisitionGroup(root, "group", ["source", "second"]),
+    /input changed/,
+  )
+})
+
+test("acquisition groups refuse active or unbounded source runs", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "active-acquisition-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const active = new RunState(root, "active", {})
+  active.record("page", { status: "running" })
+  await assert.rejects(createSourceAcquisitionGroup(root, "group", ["active"]), /terminal source/)
+  for (const sources of [
+    [],
+    ["../escape"],
+    ["group"],
+    ["active", "active"],
+    Array.from({ length: 25 }, (_, i) => "source" + i),
+  ])
+    await assert.rejects(
+      createSourceAcquisitionGroup(root, "group", sources),
+      /distinct source runs/,
+    )
+})
+
+test("empty acquisition windows preserve their raw listing without becoming editorial inputs", async (t) => {
+  const { root } = fixture(t)
+  const original = loadStoredSourceRun(root, "extraction")
+  atomicWrite(root, "runs/empty/documents.json", [])
+  atomicWrite(root, "runs/empty/parses.json", [])
+  atomicWrite(root, "runs/empty/list-pages.json", original.documents)
+  new RunState(root, "empty", { purpose: "collection" })
+  assert.throws(() => loadStoredSourceRun(root, "empty"), /documents and parses required/)
+  assert.throws(
+    () => buildArchiveClosure(root, "editorial-empty", "empty"),
+    /documents and parses required/,
+  )
+  await createSourceAcquisitionGroup(root, "empty-group", ["empty"])
+  const result = await archiveClosure(root, "empty-portable", "empty-group")
+  const manifest = readJSON(root, "runs/empty-portable/archive-manifest.json")
+  assert.equal(manifest.files.filter((f) => f.drive_root === "Sources").length, 1)
+  assert.equal(manifest.parse_ids.length, 0)
+  assert.equal(restore(root, result.package, "restored-empty").status, 0)
+  const metadataFile = path.join(root, "empty-metadata.json")
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "empty-archive",
+      name: "empty.zip",
+      mime_type: "application/zip",
+      size: result.package.bytes,
+      parent_ids: ["research-folder"],
+      shared: false,
+    }),
+  )
+  const registered = await registerArchiveLocation({
+    root,
+    runId: "empty-portable",
+    metadataFile,
+    remotePackageFile: path.join(root, result.package.path),
+    expectedParentId: "research-folder",
+  })
+  assert.deepEqual(registered.sources, [])
+  assert.throws(() => loadStoredSourceRun(root, "empty"), /documents and parses required/)
+  atomicWrite(root, "runs/empty/parses.json", original.parses)
+  assert.throws(
+    () => buildArchiveClosure(root, "broken-empty", "empty-group"),
+    /documents and parses required/,
   )
 })

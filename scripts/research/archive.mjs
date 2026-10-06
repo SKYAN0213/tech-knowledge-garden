@@ -508,8 +508,22 @@ export function archiveManifest(root, runId) {
   walk(base)
   const documentsPath = `runs/${runId}/documents.json`
   const documents = readJSON(root, documentsPath)
+  const indexDocuments = readJSON(root, `runs/${runId}/list-pages.json`)
+  if (indexDocuments !== null && !Array.isArray(indexDocuments))
+    throw Error("Archive index documents must be an array")
+  const capturedStages = []
+  const state = readJSON(root, `runs/${runId}/state.json`)
+  for (const stage of Object.values(state?.stages || {})) {
+    if (stage.status !== "complete") continue
+    const record = readJSON(root, stage.result_path)
+    if (!record?.source_id || !record.original_url || !record.fetch_status || record.rendered_from)
+      continue
+    if (sha256(JSON.stringify(record)) !== stage.result_hash)
+      throw Error("Archive source checkpoint hash mismatch")
+    capturedStages.push(record)
+  }
   const sourceFiles = new Map()
-  for (const document of documents || []) {
+  for (const document of [...(documents || []), ...(indexDocuments || []), ...capturedStages]) {
     if (!["captured", "not_modified"].includes(document.fetch_status)) continue
     if (
       !/^[a-f0-9]{20}$/.test(document.source_id || "") ||

@@ -86,6 +86,139 @@ const counter = (values) =>
     [...new Set(values)].sort().map((value) => [value, values.filter((x) => x === value).length]),
   )
 
+// Count immutable source observations, not inferred HTTP requests. Adjacent
+// windows may reuse a listing checkpoint with the same observation identity.
+export function loadDailySourceAcquisitionAudit(root, runId, receipts = []) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(runId || "") || !Array.isArray(receipts))
+    throw Error("Exact daily run and receipt array required for source audit")
+  const observations = new Map(),
+    robots = new Map(),
+    issues = [],
+    windows = new Map()
+  const stageRows = [],
+    seenRuns = new Set()
+  for (const receipt of receipts) {
+    if (receipt.daily_run !== runId || !/^[a-zA-Z0-9_-]+$/.test(receipt.attempt_id || ""))
+      throw Error("Source audit receipt belongs to another daily run")
+    const windowKey = JSON.stringify([receipt.channel_id, receipt.since, receipt.until_exclusive])
+    const attempts = windows.get(windowKey) || []
+    attempts.push(receipt)
+    windows.set(windowKey, attempts)
+    const sourceRun = receipt.scan_evidence?.list_scan_run || receipt.attempt_id
+    if (!/^[a-zA-Z0-9_-]+$/.test(sourceRun)) throw Error("Invalid source audit run reference")
+    if (seenRuns.has(sourceRun)) continue
+    seenRuns.add(sourceRun)
+    try {
+      const state = readJSON(safePath(root, `runs/${sourceRun}/state.json`))
+      if (!state?.stages) throw Error("Missing source run checkpoints")
+      for (const [name, stage] of Object.entries(state.stages)) {
+        if (stage.status !== "complete") continue
+        try {
+          if (
+            !/^[a-zA-Z0-9_-]+$/.test(name) ||
+            stage.result_path !== `runs/${sourceRun}/${name}.json`
+          )
+            throw Error("Source checkpoint path differs")
+          const document = readJSON(safePath(root, stage.result_path))
+          if (!document || sha256(JSON.stringify(document)) !== stage.result_hash)
+            throw Error("Source checkpoint hash mismatch")
+          if (!document.source_id || !document.fetch_status || !document.original_url) continue
+          if (
+            !/^[a-f0-9]{20}$/.test(document.source_id) ||
+            !Number.isFinite(Date.parse(document.observed_at || ""))
+          )
+            throw Error("Invalid source observation identity")
+          if (["captured", "not_modified"].includes(document.fetch_status)) {
+            const bytes = fs.readFileSync(safePath(root, document.body_path))
+            if (
+              sha256(bytes) !== document.body_sha256 ||
+              document.source_version_id !== `${document.source_id}:${document.body_sha256}`
+            )
+              throw Error("Source observation body or version differs")
+          }
+          const key = JSON.stringify([
+            document.source_id,
+            document.original_url,
+            document.observed_at,
+            document.request_method || "GET",
+          ])
+          const previous = observations.get(key)
+          if (previous && sha256(JSON.stringify(previous)) !== sha256(JSON.stringify(document)))
+            throw Error("Source observation identity conflict")
+          observations.set(key, document)
+          const policy = document.policy
+          if (policy?.policy_source_id && policy.policy_observed_at)
+            robots.set(
+              JSON.stringify([
+                policy.policy_source_id,
+                policy.policy_source_version_id,
+                policy.policy_observed_at,
+              ]),
+              policy.policy_fetch_status || "unknown",
+            )
+          const duration = Date.parse(stage.finished_at || "") - Date.parse(stage.started_at || "")
+          if (!previous && Number.isFinite(duration) && duration >= 0)
+            stageRows.push({
+              channel_id: receipt.channel_id,
+              duration_ms: duration,
+              fetch_status: document.fetch_status,
+            })
+        } catch (error) {
+          issues.push({ source_run: sourceRun, stage: name, reason: error.message })
+        }
+      }
+    } catch (error) {
+      issues.push({ source_run: sourceRun, reason: error.message })
+    }
+  }
+  const docs = [...observations.values()],
+    groups = [...windows.values()]
+  const redirects = docs.flatMap((d) => d.redirect_chain || [])
+  const failures = docs.filter((d) => !["captured", "not_modified"].includes(d.fetch_status))
+  const failurePolicy = docs.filter((d) => ["denied", "failed"].includes(d.policy_status))
+  return {
+    status: !receipts.length
+      ? "missing"
+      : issues.length
+        ? "incomplete_source_evidence"
+        : "verified_source_observations",
+    run_id: runId,
+    source_runs: seenRuns.size,
+    source_observations: docs.length,
+    observation_status_counts: counter(docs.map((d) => d.fetch_status)),
+    failed_observations: failures.length,
+    observation_failure_percent: docs.length
+      ? Math.round((failures.length / docs.length) * 10000) / 100
+      : null,
+    policy_status_counts: counter(docs.map((d) => d.policy_status || "unknown")),
+    denied_or_failed_policy_observations: failurePolicy.length,
+    robots_observations: robots.size,
+    robots_status_counts: counter([...robots.values()]),
+    redirect_hops: redirects.length,
+    redirect_policy_counts: counter(redirects.map((h) => h.policy_status || "unknown")),
+    redirect_http_status_counts: counter(redirects.map((h) => String(h.status))),
+    pdf_profile_observations: docs.filter((d) => d.budget_profile_ids?.length).length,
+    window_attempts: receipts.length,
+    windows_observed: groups.length,
+    windows_with_retry: groups.filter((g) => g.length > 1).length,
+    recovered_windows: groups.filter(
+      (g) => g.length > 1 && g.some((r) => r.status === "window_scanned"),
+    ).length,
+    unresolved_windows: groups.filter((g) => !g.some((r) => r.status === "window_scanned")).length,
+    acquisition_stage_elapsed_ms: stageRows.reduce((n, r) => n + r.duration_ms, 0),
+    slowest_acquisition_stages: stageRows.sort((a, b) => b.duration_ms - a.duration_ms).slice(0, 8),
+    // Stage durations include pacing, DNS and policy checks. GET retries inside
+    // the transport are not individually recorded by this receipt version.
+    http_request_attempts: null,
+    transport_retry_attempts: null,
+    measurement_scope: "deduplicated_source_observations_and_window_attempts",
+    stage_timing_scope: "acquisition_including_policy_pacing_and_internal_retries",
+    issues,
+    candidate_approved: false,
+    candidate_published: false,
+  }
+}
+
 export function loadPartialCandidateIntakeEvidence(
   root,
   backlogFile = path.resolve(path.dirname(root), "candidate-backlog.json"),
@@ -1353,22 +1486,44 @@ export function summarizeCurrentSnapshot(scope, approvalReconciliation) {
   }
 }
 
-function currentCodeEvidence(runs, currentFingerprint) {
-  const latestIntegrated = runs.find(
-    ({ summary, plan }) =>
-      plan &&
-      summary.routes?.length > 1 &&
-      summary.routes.every((route) => route.status === "window_scanned"),
+export function currentCodeEvidence(runs, currentFingerprint, requiredRouteIds = []) {
+  const completeScope = ({ summary }) =>
+    requiredRouteIds.length > 0 &&
+    summary.routes?.length === requiredRouteIds.length &&
+    new Set(summary.routes.map((route) => route.channel_id)).size === requiredRouteIds.length &&
+    requiredRouteIds.every((id) => summary.routes.some((route) => route.channel_id === id))
+  const currentFull = runs.find(
+    (run) => run.plan?.config_sha256 === currentFingerprint && completeScope(run),
   )
+  const latestIntegrated =
+    currentFull ||
+    runs.find(
+      ({ summary, plan }) =>
+        plan &&
+        summary.routes?.length > 0 &&
+        summary.routes.every((route) => route.status === "window_scanned"),
+    )
   if (!latestIntegrated)
     return { status: "no_completed_integrated_run", current_fingerprint: currentFingerprint }
+  const completed = latestIntegrated.summary.routes.every(
+    (route) => route.status === "window_scanned",
+  )
+  const matches = latestIntegrated.plan.config_sha256 === currentFingerprint
   return {
-    status:
-      latestIntegrated.plan.config_sha256 === currentFingerprint
-        ? "verified_for_current_fingerprint"
-        : "historical_success_requires_current_revalidation",
+    status: !matches
+      ? "historical_success_requires_current_revalidation"
+      : requiredRouteIds.length && !completeScope(latestIntegrated)
+        ? "partial_route_scope_requires_full_run"
+        : !completed
+          ? "current_integrated_run_incomplete"
+          : "verified_for_current_fingerprint",
     run_id: latestIntegrated.summary.run_id,
     route_count: latestIntegrated.summary.routes.length,
+    required_route_count: requiredRouteIds.length || null,
+    completed_routes: latestIntegrated.summary.routes.filter(
+      (route) => route.status === "window_scanned",
+    ).length,
+    route_statuses: counter(latestIntegrated.summary.routes.map((route) => route.status)),
     window_count: latestIntegrated.plan.windows.length,
     run_fingerprint: latestIntegrated.plan.config_sha256,
     current_fingerprint: currentFingerprint,
@@ -1583,7 +1738,11 @@ export async function buildDeliveryStatus({
       excluded_from_assisted_completion: planProgress.excluded_from_assisted_completion,
       workstreams: planProgress.rows,
     },
-    current_integrated_evidence: currentCodeEvidence(dailyRuns, config_sha256),
+    current_integrated_evidence: currentCodeEvidence(
+      dailyRuns,
+      config_sha256,
+      activeRoutes.map((route) => route.channel_id),
+    ),
     latest_daily_run: latest
       ? {
           run_id: latest.summary.run_id,
@@ -1593,6 +1752,11 @@ export async function buildDeliveryStatus({
           windows: latest.plan?.windows?.length || null,
           coverage: counter((latest.summary.coverage_grid || []).map((cell) => cell.status)),
           timing: latest.summary.timing || null,
+          source_acquisition: loadDailySourceAcquisitionAudit(
+            absoluteRoot,
+            latest.summary.run_id,
+            latest.receipts,
+          ),
           model_timing: loadDailyModelTiming(absoluteRoot, latest.summary.run_id),
           retry_policy: latest.plan?.retry_policy || DEFAULT_DAILY_RETRY_POLICY,
           retry_queue: latest.plan
@@ -1688,9 +1852,13 @@ export function renderIntegratedCoveragePanel(integrated = {}) {
   const freshness =
     integrated.status === "verified_for_current_fingerprint"
       ? "현재 설정과 일치하는 통합 실행"
-      : integrated.run_id
-        ? "이 실행 이후 설정 변경이 있어 최신 경로 실행은 별도 확인 필요"
-        : "완료된 통합 실행 없음"
+      : integrated.status === "current_integrated_run_incomplete"
+        ? `현재 전체 경로 실행 · 완료 ${integrated.completed_routes}/${integrated.required_route_count} · 미완료 경로 있음`
+        : integrated.status === "partial_route_scope_requires_full_run"
+          ? "일부 경로의 성공 · 전체 경로 실행 확인 필요"
+          : integrated.run_id
+            ? "이 실행 이후 설정 변경이 있어 최신 경로 실행은 별도 확인 필요"
+            : "완료된 통합 실행 없음"
   return `<article class="panel"><strong>마지막 통합 조사 범위 · 32칸</strong><p>${htmlEscape(coverageText || "기록 없음")}</p><small>${htmlEscape(integrated.run_id || "")} · ${htmlEscape(freshness)}</small></article>`
 }
 
@@ -1816,7 +1984,7 @@ export function renderDeliveryStatusHTML(status) {
     </style><main><div class="top"><div><h1>수집·온톨로지 개발 현황</h1><div class="muted">비공개 로컬 운영 현황 · 독자용 뉴스 화면과 분리</div></div><div class="stamp">계획 기준 ${htmlEscape(status.overall_completion.plan_as_of || "확인 불가")} · 생성 ${htmlEscape(status.generated_at)}</div></div><div class="cards">${cards}</div><nav class="tabs" role="tablist"><button role="tab" aria-selected="true" aria-controls="overview" id="tab-overview">전체</button><button role="tab" aria-selected="false" aria-controls="source" id="tab-source">출처 개발</button><button role="tab" aria-selected="false" aria-controls="coverage" id="tab-coverage">조사 범위</button><button role="tab" aria-selected="false" aria-controls="pipeline" id="tab-pipeline">승인·발행</button></nav>
     <section role="tabpanel" id="overview" aria-labelledby="tab-overview"><h2>필수 작업 ${status.overall_completion.numerator}/${status.overall_completion.denominator} 완료 (${status.overall_completion.percent ?? "—"}%)</h2><p>부분 진행 ${status.overall_completion.partial ?? "—"}개 · 미착수 ${status.overall_completion.not_started ?? "—"}개. WBS는 전체 완료로 닫힐 때만 분자에 반영합니다.</p><div class="status"><article class="panel"><strong>현재 버전 통합 수집</strong><p>${htmlEscape(integrated.status)}</p><small>${htmlEscape(integrated.run_id || "완료 영수증 없음")} · ${integrated.route_count || 0}개 경로 / ${integrated.window_count || 0}개 기간 창</small></article><article class="panel"><strong>최근 일일 수집</strong><p>${htmlEscape(latest?.status || "기록 없음")}</p><small>${htmlEscape(latest?.run_id || "")} · ${latest?.routes || 0}개 경로 / ${latest?.windows || 0}개 창 · 실패 큐 ${latest?.retry_queue?.length || 0}개</small></article>${renderIntegratedCoveragePanel(integrated)}</div><h2>계획 작업 상태</h2><div class="tablewrap"><table><thead><tr><th>작업 ID</th><th>상태</th><th>현재 증거</th><th>다음 완료 항목</th></tr></thead><tbody>${planRows}</tbody></table></div></section>
     <section role="tabpanel" id="source" aria-labelledby="tab-source" hidden><h2>출처 등록부 (${status.source_inventory_counts.registered})</h2><p>일일 활성 ${status.source_inventory_counts.daily_enabled}개 · 일일 범위 밖 ${status.source_inventory_counts.outside_daily_scope}개 · 수집 영수증/기준선 보유 ${status.source_inventory_counts.with_collection_evidence}개 · 등록만 된 출처 ${status.source_inventory_counts.registered_only}개 · 유형 미분류 ${status.source_inventory_counts.unclassified_kind}개. 기본 출처 등록과 날짜 경계를 확인한 수집 영수증을 구분합니다.</p><div class="tablewrap"><table><thead><tr><th>출처</th><th>등록 검증·방식</th><th>분야</th><th>지역·축</th><th>유형·언어</th><th>일일 활성·기준선</th><th>개발 상태</th><th>최근 일일 결과</th><th>최근 보완 검색</th><th>최근 개별 검증</th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    <section role="tabpanel" id="coverage" aria-labelledby="tab-coverage" hidden><h2>최근 완료 수집의 조사 범위</h2><p>${htmlEscape(status.latest_complete_coverage?.run_id || "완료된 통합 범위 기록 없음")}</p><div class="tablewrap"><table><thead><tr><th>분야</th><th>지역</th><th>축</th><th>상태</th><th>경로</th></tr></thead><tbody>${grid}</tbody></table></div><h2>독립 완료 스캔 보완 coverage</h2><p>일일 통합 실행의 원래 결과와 별도로, 저장 원문·파싱·후보 및 coverage가 확인된 추가 기간을 표시합니다.</p>${supplementalTable}<details><summary>보완 receipt 진단 자료</summary><pre>${htmlEscape(JSON.stringify(supplemental, null, 2))}</pre></details><h2>일일 실행시간 계측</h2><p>실제 receipt에 저장된 단계 시간만 집계합니다. 기존 미계측 receipt는 시간을 추정하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.timing || null, null, 2))}</pre><h2>후보별 모델 추론시간</h2><p>정확한 일일 실행 ID가 source selection에 기록된 예산 receipt만 합산합니다. 원문·프롬프트·모델 응답은 표시하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.model_timing || null, null, 2))}</pre><h2>일일 실패·재시도 큐</h2><p>창당 자동 시도는 최대 ${status.latest_daily_run?.retry_policy?.max_attempts_per_window || "—"}회입니다. blocked 상태는 새 출처 관측을 얻을 때까지 자동 재요청하지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ policy: status.latest_daily_run?.retry_policy || null, queue: status.latest_daily_run?.retry_queue || [] }, null, 2))}</pre><h2>보완 검색 영수증</h2><p>일일 수집 범위와 분리한 등록 출처 질의 결과입니다. 검색 결과는 원문 수집·기사 검증·후보 승인으로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.targeted_search, null, 2))}</pre></section>
+    <section role="tabpanel" id="coverage" aria-labelledby="tab-coverage" hidden><h2>최근 완료 수집의 조사 범위</h2><p>${htmlEscape(status.latest_complete_coverage?.run_id || "완료된 통합 범위 기록 없음")}</p><div class="tablewrap"><table><thead><tr><th>분야</th><th>지역</th><th>축</th><th>상태</th><th>경로</th></tr></thead><tbody>${grid}</tbody></table></div><h2>독립 완료 스캔 보완 coverage</h2><p>일일 통합 실행의 원래 결과와 별도로, 저장 원문·파싱·후보 및 coverage가 확인된 추가 기간을 표시합니다.</p>${supplementalTable}<details><summary>보완 receipt 진단 자료</summary><pre>${htmlEscape(JSON.stringify(supplemental, null, 2))}</pre></details><h2>일일 실행시간 계측</h2><p>실제 receipt에 저장된 단계 시간만 집계합니다. 기존 미계측 receipt는 시간을 추정하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.timing || null, null, 2))}</pre><h2>원문 취득·정책·재시도</h2><p>같은 관측의 목록 재사용은 한 번 집계합니다. 원문 관측 수와 실제 HTTP 요청 수를 구분하고, 기록되지 않은 내부 재시도는 추정하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.source_acquisition || null, null, 2))}</pre><h2>후보별 모델 추론시간</h2><p>정확한 일일 실행 ID가 source selection에 기록된 예산 receipt만 합산합니다. 원문·프롬프트·모델 응답은 표시하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.latest_daily_run?.model_timing || null, null, 2))}</pre><h2>일일 실패·재시도 큐</h2><p>창당 자동 시도는 최대 ${status.latest_daily_run?.retry_policy?.max_attempts_per_window || "—"}회입니다. blocked 상태는 새 출처 관측을 얻을 때까지 자동 재요청하지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ policy: status.latest_daily_run?.retry_policy || null, queue: status.latest_daily_run?.retry_queue || [] }, null, 2))}</pre><h2>보완 검색 영수증</h2><p>일일 수집 범위와 분리한 등록 출처 질의 결과입니다. 검색 결과는 원문 수집·기사 검증·후보 승인으로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.targeted_search, null, 2))}</pre></section>
     <section role="tabpanel" id="pipeline" aria-labelledby="tab-pipeline" hidden><h2>수집 후 공통 처리</h2><pre>${htmlEscape(JSON.stringify(status.daily_processing || { status: "missing", runs: [] }, null, 2))}</pre><h2>Drive 승인본 저장 결과</h2><pre>${htmlEscape(JSON.stringify(status.authoring_execution || { status: "missing", releases: [] }, null, 2))}</pre><h2>발행 단계 연결</h2><pre>${htmlEscape(JSON.stringify(status.publication_operations || { status: "missing", runs: [] }, null, 2))}</pre><h2>후보 승인 대조</h2><p>아래 집계는 원장 읽기 결과입니다. 자동 승인이나 백로그 변경을 하지 않았습니다.</p><pre>${htmlEscape(JSON.stringify(status.approvals_reconciliation.counts, null, 2))}</pre><p>원장 SHA-256: ${htmlEscape(status.approvals_reconciliation.source_sha256)}</p><h2>Drive 작성본과 일일 후보 대조</h2><p>고정 사건 ID·원문 URL 대조의 비공개 receipt 집계입니다. 사건 승인·병합·Drive 쓰기나 공개 완료로 계산하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.drive_approval_reconciliation, null, 2))}</pre><h2>저장 원문 receipt 검증</h2><p>후보 판본·parse·내용 지문과 저장 원문의 정확한 URL을 대조한 집계입니다. 근거 검증은 기사 사실 승인이나 공개 허가가 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.candidate_source_evidence_review, null, 2))}</pre><h2>저장 과거 원문 연결</h2><p>고정된 원문 URL과 판본의 비공개 수집 이력을 대조합니다. 원문 bytes·parse 무결성 확인은 현재 후보 승인이나 같은 사건 판정이 아닙니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_reconciliation, null, 2))}</pre><h2>과거 parse 판정</h2><p>원문 bytes·후보 identity와 정확히 결속된 비공개 판정만 표시합니다. 원본 reconciliation 수치나 공개 상태를 소급 변경하지 않습니다.</p><pre>${htmlEscape(JSON.stringify(status.historical_source_adjudications, null, 2))}</pre><h2>미완료 기간의 정상 기사 편입</h2><pre>${htmlEscape(JSON.stringify(status.partial_candidate_intakes, null, 2))}</pre><h2>후보 원문 온톨로지</h2><p>기록 지문 ${status.intake_ontology_audit.ontology.recorded_fingerprint_candidate_count}개 · 저장 원문 receipt로 복구 ${status.intake_ontology_audit.ontology.receipt_recovered_candidate_count}개 · 확인 지문 ${status.intake_ontology_audit.ontology.fingerprinted_candidate_count}/${status.intake_ontology_audit.ontology.candidate_count}개 · 지문 없음 ${status.intake_ontology_audit.ontology.missing_content_fingerprint_count}개 · 오래된 backlog 영수증 ${status.intake_ontology_audit.fingerprint_evidence.stale_receipt_count}개 · 무효 영수증 ${status.intake_ontology_audit.fingerprint_evidence.invalid_receipt_count}개 · 잘못된 지문 ${status.intake_ontology_audit.ontology.invalid_content_fingerprint_count}개 · 중복 검토 관계 ${status.intake_ontology_audit.ontology.review_required_count}건. 지문이 없는 후보는 본문 중복 비교를 완료한 것으로 보지 않습니다.</p><pre>${htmlEscape(JSON.stringify({ ...status.intake_ontology_audit, fingerprint_evidence: status.intake_ontology_audit.fingerprint_evidence }, null, 2))}</pre><h2>평가 원문 세트</h2><p>원문·기준안의 무결성을 확인한 읽기 전용 집계입니다. 같은 고정 원문을 기준안 버전으로 중복 계산하지 않으며 개발/보류 수와 언어·분야 공백을 추적합니다.</p><pre>${htmlEscape(JSON.stringify(status.local_ai_shadow_operations.evaluation_cases, null, 2))}</pre><h2>발행·운영 증거</h2><pre>${htmlEscape(JSON.stringify({ existing_briefing_audit: status.existing_briefing_audit, local_ai_shadow_operations: status.local_ai_shadow_operations, latest_daily_run: status.latest_daily_run }, null, 2))}</pre></section>
     </main><script>const tabs=[...document.querySelectorAll('[role=tab]')];for(const [i,tab] of tabs.entries()){tab.addEventListener('click',()=>{tabs.forEach((t,j)=>{const active=i===j;t.setAttribute('aria-selected',String(active));document.getElementById(t.getAttribute('aria-controls')).hidden=!active});history.replaceState(null,'','#'+tab.id)});tab.addEventListener('keydown',e=>{let j=i;if(e.key==='ArrowRight')j=(i+1)%tabs.length;else if(e.key==='ArrowLeft')j=(i+tabs.length-1)%tabs.length;else return;e.preventDefault();tabs[j].focus();tabs[j].click()})}</script></html>`
 }

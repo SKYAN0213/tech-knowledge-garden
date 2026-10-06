@@ -10938,3 +10938,20 @@ Chromium은 초기 captured final URL의 주 문서 탐색만 허용한다. 같�
 원문 closure `pdf-profile-source-closure-20261006-v1`은4sources/2parses/28자료30members,1,227,842bytes/SHA872506f1b3e8816cdf2a0f036469ac9496701be859de95863d3db62f8089af64이다. 비공개 Drive ID1QDkrhraMmKg1qwqhmy6pcDe4oXgOdAI5/Research parent·shared=false를 actual metadata로 확인하고 원격 actual ZIP SHA·30members 전수 restore·archive location 등록을 완료했다. delivery closure `pdf-profile-delivery-closure-20261006-v2`는13자료15members/674,294bytes/SHA2ef38e8584dad97a86858811f5e191a891c5250e1904afa8ac08fd8250190db1, Drive ID1J3YIgMzAeMUxN1iqJ7qRfYDVmSJK7TEt에 같은 비공개 parent/원격 SHA/15members restore/registry 확인까지 끝났다. raw 원문과 CI·공개 보존·현재 진척판은 각각 별도 closure에 보관한다.
 
 후속 증거 helper가 state.input을 가정해 실패했으나 실제 RunState는 input_hash만 저장함을 확인했다. 현재 config/fetcher/scanner로 원래 input의 SHA를 재계산해 live input_hash 일치를 검증했다. 먼저 생성된4자료 delivery v1은 수정하거나 업로드하지 않고 보존하며, 새 v2에 전체 근거를 묶었다. 닫힌 source/delivery evidence root와 manifest는 추가 수정하지 않는다. 최신 비공개 진척판은 외장 core-progress-checkpoint-20261006-v14.json/html이고 WBS2/22·partial18/not_started2·정규0/7을 유지한다. 다음 재개점은 현재 config/fetcher로 전체 활성55경로 일일 수집을 재검증하고 실패 유형·시간을 기존 receipt에서 집계하는 것이다. 1시간 이상 같은 실패를 반복한 병목은 없다. 후속 결과 문서 commit은 skip ci로 동일 코드의 전체 검사 재실행을 막는다.
+
+## 452. 55경로 원문 관측과 acquisition dependency 복원
+
+실행: node scripts/research-daily.mjs --run daily-20261006-current55-budget-v1 --execute. 원래 plan/receipts/frozen shadow inputs를 보존하고 local_vault_unreconciled authority를 Drive 작성 검증으로 승격하지 않았다. 55경로110창/106성공4미완료, wall18분27.424초, 32cells partial이다. 최신private진척판v15는 current_integrated_run_incomplete/52of55를 표시한다. 원문830관측/정책/시간/실패는 current55-source-acquisition-audit-v1.json, 기존 검토/고유key 보존은 current55-backlog-preservation-v2.json이다. 초기 helper가 status를 읽어 실제 review_status를 놓친 것을 필드 대조로 수정했다. 검토 상태/편집 필드는 보존됐고 재취득 필드31후보는 실제 갱신됐다.
+
+공통 createSourceAcquisitionGroup(root, runId, sourceRuns)와 archiveClosure를 사용했다. run당24leaf 이하/총32run·2000자료·256MiB 기존 상한을 유지한다. docs/parse가 빈 뉴스창의 initial archive 실패는 pinned group만 허용하도록 수정했으며 편집 loader의 원문 요구는 그대로다. 목록 페이지/완료 source-stage raw body도 포함해 원격 복구 때 목록 무결성 검증이 가능하다. 원문 원장을 기사 승인의 source-bundle로 합치지 않았다.
+
+5개 closure/Drive IDs:
+- 01: 19alYFC8tRMw4SYfvG6E20YYp-1mqJ62v, ZIP17,717,623bytes/SHA52406dfd0cabc012ea067b40d623834545bb5d8f57ca902cd90a2751086ff03d,1746members.
+- 02: 1CbbrGWmzFOQ2mxs5yYbsfYWSqM94wQrh,8,088,025bytes/SHA2f2c7e2f4e0a8fe4afe60db2ab2a9861132ae2e74329ef1f842db865b09233cb,516members.
+- 03: 1XsRtpYZX3joJd1vq4ZHJJhgpvCFHgOkc,2,788,759bytes/SHA9d615551f598a49882ba6f771acf203e806f4abe3cf422b9b5b8dc5cbe45ea52,334members.
+- 04: 1QuU-voQKwEM4kGKWiBFqHkcbobzvLuS7,1,896,866bytes/SHA05ae7bbc49cd009c21f74fe9e3f75df58de2bbbabfb3ea53b7e5a51b81a3d06f,299members.
+- 05: 1U_5fBJ-3oNK2K1acNhjq992_783XIZQg,15,626,059bytes/SHA70561729e7c8abcf6c5de242c24f629dab11b0a4e99bb60abd48b427318c8959,1195members.
+
+실제 원격 metadata의 Research parent/shared=false를 확인했다. connector file_uri download_url의 actual bytes를 내려받아 SHA·size·전수4090members restore를 확인하고 위치를 등록했다. 복구한 leaf root에서 storedListScan/verifyStoredListScan으로 106성공창을 검증했다. 4미완료창은 성공으로 바꾸지 않았다. 정책 원문은 group별 불변판본, 각 실행 정책 관측은 policy-observations와 leaf stage에 별도로 보존한다. 상세 원격 proof는 current55-drive-archive-01..05-v1.json, 재검증은 current55-remote-restored-window-audit-v1.json이다.
+
+KUKA POST timeout3창과 디일렉 인증 제한20개 때문에 남은4창을 전체 resume하지 않았다. 다음은 공통 상세 실패 retry eligibility 개선과 제한된 일시 오류 확인이다. 실제 wire 요청횟수는 불명이며 source 관측 수/창 재시도 수와 구분한다. etnews/thelec 두 큰 주간 원문 묶음이 주요 지연이고 이 실행에는 LLM 호출이 없다. whole WBS2/22·정규0/7 유지. source archive는 끝났고 code CI·공개 보존·delivery evidence 보관은 후속 결과로 남긴다.

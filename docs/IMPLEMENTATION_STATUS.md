@@ -370,3 +370,6 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 공통 SourceFetcher의 profile budget을 일반·일일·검색 수집 경로에 적용하고 PDF21 profile/ABB첨부 rule에 제한값을 등록했다. redirect와304 cache에도 좁은 한도를 유지하며 실패는 유효 원문을 덮어쓰지 않는다. 실제 FANUC size 초과/cache 보존 및 ABB 공식 alternate 수집/parse를 확인했고, Chromium 같은 host 이동·iframe·popup을 즉시 차단했다. 새 수집기·유료 API·예약은 추가하지 않았다. 최초 표적74/78, 실패한 추가 탐색 수정4/4, live header 오류 수정 후 강화한 표적1/1. 통합 검증은 릴리스 CI한번, private source/실패/수정 증거는 런북451절로 연결한다. 두 구현 체크는 완료, 전출처 운영 통계·독립human·정규7회 등의 완료 조건은 유지해 전체WBS2/22/partial18/not_started2·새정규0/7이다.
 
 후속 완료 증거: codef0cced5/Actions37475100558 Node1,027/1,027·Python28·build/site/deploy success. 공개3파일 SHA와RSS40GUID/pubDate가 그대로이며, source4개/parse2개 archive는 비공개Drive actual SHA/30members restore, delivery13자료는 actual SHA/15members restore/registry까지 확인했다. 전체로컬suite는 반복하지 않았고 코드릴리스CI는1회다. 진척판v14/전체2/22·정규0/7, 상세는 런북451절. 다음은 현재55route의 실제 통합 수집/운영 통계 검증이다.
+
+
+2026-10-06 전체55경로 원문 실행·공통 보관: 110창 중106완료,52/55경로 완료,830원문관측·정책/redirect·실패 집계를 private status에 표시한다. 과거 좁은 경로 성공을 전체 통합 완료로 오인하지 않도록 scope를 검사한다. 5개 원문 closure를 private Drive에서 actual SHA/4090members 전수 복원하고106성공창을 다시 검증했다. 목록/중간 checkpoint raw BLOB 누락과 빈 창 archive 거부를 수정했다. 후보904→911/고유911·기존112 review_status/편집 필드 보존·재취득31후보 metadata 갱신. KUKA timeout3창/디일렉 인증20포함1창은 미완료다. 신규 기사 승인·정규 발행0, 전체WBS2/22 유지. 상세는 계획19.359/런북452, 다음은 공통 영구 오류 retry 분리다.

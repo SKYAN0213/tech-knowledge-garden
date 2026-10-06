@@ -4,8 +4,8 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { sourceId, sourceVersionId, sha256 } from "../scripts/research/contracts.mjs"
-import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
-import { buildSourceRegister } from "../scripts/research/archive.mjs"
+import { atomicWrite, readJSON, RunState } from "../scripts/research/run-state.mjs"
+import { buildSourceRegister, archiveManifest } from "../scripts/research/archive.mjs"
 import { main } from "../scripts/research.mjs"
 
 function fixture(t, url = "https://example.com/research/") {
@@ -193,4 +193,22 @@ test("source register uses byte-verified browser resource references and rejects
     main(["source-register", "--root", root, "--run", "render-corrupted"]),
     /reference hash mismatch/,
   )
+})
+
+test("archives preserve raw listing pages and captured checkpoints even when article arrays are empty", async (t) => {
+  const { root, record } = fixture(t)
+  atomicWrite(root, "runs/acquisition/documents.json", [])
+  atomicWrite(root, "runs/acquisition/parses.json", [])
+  atomicWrite(root, "runs/acquisition/list-pages.json", [record])
+  const state = new RunState(root, "acquisition", {})
+  await state.stage("page", {}, async () => record)
+  const manifest = archiveManifest(root, "acquisition")
+  assert.equal(manifest.files.filter((f) => f.drive_root === "Sources").length, 1)
+  atomicWrite(root, "runs/acquisition/list-pages.json", [])
+  assert.equal(
+    archiveManifest(root, "acquisition").files.filter((f) => f.drive_root === "Sources").length,
+    1,
+  )
+  atomicWrite(root, "runs/acquisition/page.json", { ...record, http_status: 999 })
+  assert.throws(() => archiveManifest(root, "acquisition"), /checkpoint hash mismatch/)
 })
