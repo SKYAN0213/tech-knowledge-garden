@@ -83,3 +83,6 @@ context의 `next_deep_kind`에 따라 기업 전략 → 논문 해설 → 연구
 `research.mjs review-legacy-empty --run <id> --vault vault --review <private JSON>`은 `research-empty-legacy-review/v1`의 검토자·검토일·authoring_read와 모든 원본 bytes/SHA·구간 ID/SHA를 확인한다. decision은 `empty_record`이며 일곱 원래 섹션의 “없음” 또는 한눈에 보기의 세 빈 항목만 허용한다. URL이 없다는 이유만으로 빈 기록이라고 분류하지 않는다. 조사 결과 주장, 추가 본문·출처·지식 연결, 양수 기사/출처 수, 별도 메타데이터는 원문 재검토 대상으로 남긴다.
 
 판정 원본과 이유는 private root의 `retrospective/empty-record-reviews`에 보관한다. inventory CLI와 승인 원본 reconciliation은 같은 ledger hash를 읽고 고정 입력에 포함한다. 원본이 바뀐 판정은 stale이며 미검토로 돌아간다. `empty_legacy_records/units`와 `legacy_editions/units_requiring_review`는 구조상 legacy 총수와 구분한다. 빈 판정을 verified_events, source_research_completed, 공개 제외·발행 완료로 승격하지 않는다. 운영 기록과 제외 이유는 공개 projection 입력이 아니다. 원래 회차 주소·취재 경계·RSS 식별자와 작성 원본은 이 명령으로 수정하지 않는다.
+
+
+제품의 기존 동작을 바로잡은 버그 수정은 `제품·서비스`의 `오류 수정` 태그를 사용한다. 새 동작을 추가할 때만 `기능 추가`를 붙이며 비교 성능 근거 없이 `성능 개선`으로 분류하지 않는다. 짧은 릴리스 공지에 정의나 작동 원리가 없다면 상식으로 용어 설명을 채우지 않는다. 검토 입력에 근거 있는 설명이 없는 부분은 생략한다.

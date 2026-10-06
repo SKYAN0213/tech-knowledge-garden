@@ -10704,3 +10704,20 @@ gpt56-original-reused-window-approved-closure-v1은6bound runs·98자료/100memb
 근거루트 /Volumes/X5Storage/tkg-daily-core-20261006-v1의 gpt56-partial-reuse-preflight-v1.json,partial-window-reuse-{targeted-tests,failed-target-retest,cli-retest}-v1.log,gpt56-original-{source-reading,reference-reuse-runtime-proof,drive-restored-approval-proof}-v1.json에 실제근거가있다. 독자용 gpt56-original-reviewed-article-v1.md와twelve-six-w-reviewed-samples-v1.md에는 운영 안내가 없다. 누적12사건/73verified/8deferred·public발행0이다.
 
 다음은 기사 선정 분리의 사용자 결정과7월10일15구간의전체사건/원문동일성·소급전환·의존용어 대조다. 기존 프롬프트 캐싱 정의는 exact alias/기존 concept_id prompt-caching으로검토할후보이며승인된연결로아직집계하지않는다. WBS2/22·legacy47/454/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime미완료를유지한다. 1시간같은실패반복항목0,추가유료API/예약/별도저장소0이다.
+
+
+## 438. 공통 재개 배포와 Claude Code 원 판본 대조
+
+재개코드6ea4ddb/Actions37433463539는Node992/992·Python15+10+3·build/site/deploy를통과했다. 실제RSS/기존Roche기사/reader-index의SHA/bytes가직전4564배포와일치했다. partial-window-reuse-ci-final-{status-v1.json,v1.log}와partial-window-reuse-public-preservation-v1.json이증거다. 코드릴리스이며private신규기사공개/작성원본변경은0이다.
+
+legacy-jul10-approved-article-unit-mapping-v1.json은8기사구간에15승인후보를연결한준비기록이다. 전환완료영수증이아니다. 원고의Claudev2.1.203~205에v2.1.206승인을대체연결할수없음을날짜/원문제목에서확인했다. v206의2026-07-10T01:45:26Z는원마감2026-07-09T23:02Z뒤다. 원일반릴리스목록URL을확인된후속태그URL과동일사건으로자동연결하지않는다. v203/v204/v205는공통collect로3원문을확보했다. 정확한날짜/38·2·24블록을직접읽었으며앞두날짜는7월8일한국시간,마지막은7월9일한국시간이다. 각기다른release로유지한다.
+
+원문run legacy-20260710-claude-original-versions-source-20261006-v1에서exactURL의v204만select-source로선택했고,legacy-20260710-claude-204-processing-20261006-v1에서Qwen실제추출21.138초(1사실)/medium ref대조43.726초/작성33.778초를완료했다. title-only subject주의를공식저장소·tag·날짜·본문의일치로명시해해결했다. Anthropic기업태그는본문/subject에서확인되지않아기존entity guard가거부했고최종태그에서뺐다. 회사발표의귀속은정확한저장소와원문으로본문에보존한다. 모델출력의날짜누락·반복·근거없는headless/SessionStart정의를제거했다. explanation을필수로채우지않는다.
+
+원래제품태그에는버그수정을정확히표현할값이없어기능추가로오분류되는문제도확인했다. scripts/themes.mjs에오류수정을추가하고editor/NEWS_THEMES/EDITORIAL_RESEARCH의분류지침을함께맞췄다. 기존명칭/URL/ID를바꾸지않고제품태그의허용값만확장했다. themes13/13·실제과거GPT56승인/packet읽기·v204정정/승인이통과했고모델재호출0이다. 이후릴리스의전체CI/배포결과는별도로읽어기록한다.
+
+v204 최종draft4891389c7f79d4863030f005a91e4ae4bee77c33dc5b831db2aaef73832fe6ee·event2f4818ccad349c12·원발표7월8일·리드2문장160자·설명0·오류수정태그·지도노드0이다. claude-204-original-approved-closure-v1은56자료/58members/3판본·264,557bytes·SHA22d95b4e3803964daff01c65f20b90416d441d0cbeb7a2bdce502e1768280e39·manifest SHA102c2e8236f1517fd782c4e85dfe9108afcf054d13c1f9f240161b52a7cf7ddd다. privateResearch1MxfdVhWEcZmHhy6TjAOIT4bB_q2-SO71의fresh metadata/실제rawSHA/복원58자료/승인6파일·기사·packet동등성을확인하고기존archive registry에등록했다. 원문3판본의보관과v204한건의승인은구분한다.
+
+근거: 외장루트의claude-original-{versions-collection-v1.log,version-and-cutoff-proof-v1.json},claude-204-{source-processing-runtime,writer-runtime,approval-final,remote-restore,drive-restored-approval-proof}-v1자료,bug-fix-classification-targeted-v1.log. 독자용claude-204-reviewed-article-v1.md와thirteen-six-w-reviewed-samples-v1.md/summary는13사건·74verified/8deferred다. 실제분야합은software9/AI4이며모두private다. 동일사건으로정해지지않은v206은이샘플합에없고원마감에소급삽입하지않는다.
+
+다음은이미수집한v203/v205의개별사실·원고승인이다. 8구간 중7은승인사건매핑준비,Claude구간은v204만승인된partial이다. sourceList탐색3URL·정의·별칭/원문대체관계·전체15구간검토와선정분리결정후Drive작성원본/공개전환을확인한다. 목표active·WBS2/22·legacy47/454/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime관문은유지한다. 반복실패1시간0·추가유료API/예약/새adapter0이다. 핸들28259/69428/20701은terminal이다.

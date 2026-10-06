@@ -15,6 +15,8 @@ import {
 import { newsView } from "../scripts/reader-views.mjs"
 import { articleSearchText } from "../scripts/knowledge.mjs"
 import { matchesNews } from "../web/news-filter.mjs"
+import { draftSchema, draftProblems } from "../scripts/research/editor.mjs"
+import { assertSchema } from "../scripts/research/contracts.mjs"
 
 const body = `**분야:** 로봇·제조
 **테마:** 투자·기업거래
@@ -289,4 +291,55 @@ test("entity names containing commas survive classification and shared tag URLs"
   for (const value of ["[null]", '[" "]', '["Example", "Example"]']) {
     assert.throws(() => classifyArticle(body.replace("Example Robotics", value), "Invalid"))
   }
+})
+
+test("bug fixes share the product tag across authoring, classification and stable event identity", () => {
+  const issue = fixture()
+  issue.body = issue.body
+    .replace("**테마:** 투자·기업거래", "**테마:** 제품·서비스")
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "오류 수정")
+  const a = extractArticles(issue)[0]
+  assert.deepEqual(a.classification.event_tags, ["오류 수정"])
+  assert.ok(classificationMeta(a).tags.includes("event/오류-수정"))
+  const before = structuredClone(issue)
+  before.body = before.body.replace("오류 수정", "기능 추가")
+  assert.equal(a.id, extractArticles(before)[0].id)
+  const claim = {
+    claim_id: "fix-claim",
+    subject: "Example",
+    event_state: "completed",
+    evidence: [],
+    review: { status: "verified" },
+  }
+  const draft = {
+    title: "Example, 세션 시작 훅의 전송 오류 수정",
+    lead: [
+      {
+        text: "Example은 9월 14일 훅 이벤트 전송 오류를 수정한 버전을 공개했다.",
+        claim_ids: [claim.claim_id],
+      },
+      {
+        text: "릴리스 노트는 이전 오류로 작업이 중간에 종료될 수 있었다고 설명했다.",
+        claim_ids: [claim.claim_id],
+      },
+    ],
+    facts: {
+      who: "Example",
+      when: "2026-09-14",
+      where: null,
+      what: "훅 이벤트 전송 오류 수정",
+      how: null,
+      why: null,
+    },
+    sector: "소프트웨어·클라우드",
+    theme: "제품·서비스",
+    tags: ["오류 수정"],
+    entities: ["Example"],
+    explanations: [],
+  }
+  assertSchema(draft, draftSchema)
+  assert.deepEqual(draftProblems(draft, [claim]), [])
+  const invalid = { ...draft, theme: "실적·재무" }
+  assert.ok(draftProblems(invalid, [claim]).includes("tag_theme_mismatch"))
 })
