@@ -11155,3 +11155,16 @@ source run legacy-jul04-claude-official-20261007-v1은 공식 API2개를 수집/
 464 보관: source200 closure54자료/56members·176651bytes/SHA59eebe2e…·Research Drive1zhCZ5ea_VjL2LtonUV3YCIuXaB7dLvPO, source201 closure64자료/66members·148917bytes/SHAa64d8024…·Drive1fLR89tDIixHtVuEr4t5CNoefXFRLpwHQ. 실제 metadata/부모/private·원격ZIP rawSHA·전수복원·registry와 복원 승인 guard18/1을 확인했다. 최초 절대경로 restore는 root-relative 계약에서 거부됐다. 내려받은 동일bytes를 root-relative로 복사한 v2만 복원 성공이며 fullruntime 복원으로 확대 해석하지 않는다. 외장 legacy-jul04-{ci-final,public-readback,publication-status,website-verified,restored-approval-proof}-v1/v2가 증거다. 전체WBS3/22·partial17/not_started2·독립human0·정규0/7·goal active 유지. 다음은 남은44회차의 같은 원문/사건 재사용과 실제 정규 운영 연결이다.
 
 최종 전달 증거도 별도로 닫았다. operator529자료/531members·2588709bytes/SHAbae6dee70502221ad6ee241668f1d108dff8a39ba4f65314ff90666cd323671f·Research Drive1LzyDZkwYzw7aYGK8PNhQb7dI5Rk0WLWp에서 실제 parent/shared=false·원격raw SHA·전수복원·registry를 확인했다. 전후213작성 원본·Drive authoring 의도/판정·공개17파일·WebsiteData/CI/복원 증거를 포함한다. 이 묶음의 source_versions0은 운영 전달 기록이며 공식2원문은 위 두 source closure에 있다. 비공개 현황판 core-progress-checkpoint-20261007-v16.json/html에 수집 경로와 전체WBS3/22·partial17/not_started2를 유지했다. 파일 열기는 queued 결과였으므로 렌더링 완료로 기록하지 않는다. 문서 정리만 [skip ci]로 커밋하고 테스트·모델·원문HTTP를 다시 반복하지 않는다.
+
+
+## 465. 정규 수집 복구와 최초/보완 상태 분리
+
+KUKA 독일 run kuka-de-{current,next}-window-recovery-20261007-v1은 각각9/29→10/6·10/6→10/7의 공식 POST JSON HTTP200·동일rawSHA·20정렬항목·기간후보0을 확인했다. research-daily --run kuka-de-{current,next}-window-reconciliation-20261007-v1 --reconcile-scan corresponding-run으로 기존 backlog/coverage에 반영했다. 새 원고/후보 승인/공개 발행은0이다. 기존 실패 관측과 날짜 경계를 보존한다.
+
+현황판 acquisition_recovery는 loadSupplementalCoverageEvidence가 원문·후보·alias·coverage를 실제 검증한 결과만 받아 정확히 같은 창과 결속한다. 최초 저장 완료106·검증보완3·미완료1, 현재54/55경로·109/110창이며 최초summary의52성공/3미완료는 덮어쓰지 않는다. 표적59/59가1회 통과했고 전체suite는 반복하지 않았다. 공개 뉴스 화면에는 운영 집계를 추가하지 않는다.
+
+남은 thelec-all-rss 9/29→10/6은 공개160건/회원제한20건이다. 로그인 div 원문을 읽어 실제 제한임을 확인했고 access_restricted/awaiting_new_observation으로 유지했다. 새로운 실제 관측/공식 대체 자료 없이 반복 요청·파서 수리·검증기 완화하지 않는다. 다음 정규 편집은 freshDrive와 새 run을 사용한다. 이전110창 frozen 계획의 inventory는 소급 전환 전 값이므로 기존 handoff 재생성은 실패 계약대로 중단했다. 오류 문자열은 Local edition inventory changed after daily planning; reconcile with a new run이다.
+
+source closure kuka-de-recovery-source-closure-20261007-v1·20자료/22members·1native판본·25855bytes·SHA8375cd9b84c272e2187c7614170fef3a05d9444cd63597e5c5efbf71760610be·Research Drive1xqx4JzmUKSPr_ICeiGKNqakN86tCXupj의 실제 비공개 부모/원격SHA/전수restore/registry를 검증했다. 외장 kuka-de-recovery-{closure,metadata,restore,register}-v1과 current55-post-kuka-handoff-v1 기록을 사용한다. streamed download403 후 connector raw응답을 사용했으며 같은 실패를 반복하지 않았다. 원문 목록을 기사근거로 등록하거나 fullruntime 복원으로 세지 않는다. 다음 전달은 단일CI와 현재 현황판 실화면 확인이며 WBS3/22·정규0/7·goal active다.
+
+현황판v18 실제 저장 집계는109/110창·54/55경로·미완료1이며 private HTML을 생성했다. 브라우저 file URL은 보안 정책에서 거부돼 같은 경로를 다른 브라우저/프로토콜로 우회하지 않았다. open_in_codex는 queued이므로 실제 렌더링·탭 조작 완료로 기록하지 않는다. 생성 HTML/좁은 회귀 검증과 UI 실사용 검증을 구분하며 후자는 미검증으로 남긴다.

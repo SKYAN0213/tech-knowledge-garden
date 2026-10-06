@@ -21,9 +21,72 @@ import {
   loadLatestSourceRevisionReview,
   loadDailySourceAcquisitionAudit,
   currentCodeEvidence,
+  summarizeAcquisitionRecovery,
+  renderAcquisitionRecovery,
 } from "../scripts/research/delivery-status.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
+
+test("acquisition recovery reconciles exact windows without overwriting the original run", () => {
+  const window = (channel_id, since, until_exclusive) => ({ channel_id, since, until_exclusive })
+  const windows = [
+    window("a", "2026-09-29", "2026-10-06"),
+    window("a", "2026-10-06", "2026-10-07"),
+    window("b", "2026-09-29", "2026-10-06"),
+  ]
+  const plan = { run_id: "original", windows }
+  const receipts = windows.map((w) => ({ ...w, daily_run: "original", status: "incomplete" }))
+  const verified = {
+    entries: windows.slice(0, 2).map((w) => ({
+      ...w,
+      scan_until_exclusive: w.until_exclusive,
+      coverage_until: w.until_exclusive,
+      reconciliation_run: "recovery",
+      scan_run: "scan",
+    })),
+  }
+  const before = JSON.stringify({ plan, receipts, verified })
+  const result = summarizeAcquisitionRecovery(plan, receipts, verified)
+  assert.equal(result.recorded_completed_windows, 0)
+  assert.equal(result.verified_supplemental_windows, 2)
+  assert.equal(result.completed_windows, 2)
+  assert.equal(result.unresolved_windows, 1)
+  assert.deepEqual(result.route_statuses, { window_scanned: 1, incomplete: 1 })
+  assert.equal(result.publication_ready, false)
+  assert.equal(JSON.stringify({ plan, receipts, verified }), before)
+  assert.match(renderAcquisitionRecovery(result), /2\/3개 기간/)
+  assert.match(renderAcquisitionRecovery(result), /최초 실행 기록/)
+})
+
+test("acquisition recovery ignores unrelated and narrower evidence and counts each window once", () => {
+  const w = { channel_id: "a", since: "2026-10-06", until_exclusive: "2026-10-07" }
+  const plan = { run_id: "original", windows: [w] }
+  const wrongReceipt = { ...w, daily_run: "other", status: "window_scanned" }
+  const evidence = {
+    ...w,
+    scan_until_exclusive: w.until_exclusive,
+    coverage_until: w.until_exclusive,
+  }
+  const unrelated = {
+    entries: [
+      { ...evidence, channel_id: "b" },
+      { ...evidence, scan_until_exclusive: "2026-10-06" },
+      { ...evidence, since: "2026-10-05" },
+    ],
+  }
+  assert.equal(summarizeAcquisitionRecovery(plan, [wrongReceipt], unrelated).completed_windows, 0)
+  const receipts = [
+    { ...w, daily_run: "original", status: "incomplete" },
+    { ...w, daily_run: "original", status: "window_scanned" },
+  ]
+  const result = summarizeAcquisitionRecovery(plan, receipts, { entries: [evidence, evidence] })
+  assert.equal(result.completed_windows, 1)
+  assert.equal(result.recorded_completed_windows, 1)
+  assert.equal(result.verified_supplemental_windows, 0)
+  assert.equal(result.status, "recorded_windows_reconciled")
+  assert.equal(summarizeAcquisitionRecovery(null, [], {}).status, "missing_plan")
+  assert.equal(renderAcquisitionRecovery(null), "")
+})
 
 test("current full incomplete acquisition stays visible instead of an earlier narrow success", () => {
   const run = (id, fingerprint, routes) => ({

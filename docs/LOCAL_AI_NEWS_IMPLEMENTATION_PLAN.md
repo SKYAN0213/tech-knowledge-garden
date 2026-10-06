@@ -5008,3 +5008,20 @@ private preview2회차·395공개파일에서 기존 주소/회차시각을 보�
 공식 source/processing closure는200의54자료/56members·176651bytes/SHA59eebe2e…와201의64자료/66members·148917bytes/SHAa64d8024…다. 비공개Research Drive1zhCZ5ea_VjL2LtonUV3YCIuXaB7dLvPO / 1fLR89tDIixHtVuEr4t5CNoefXFRLpwHQ에서 actual parent/shared=false·원격raw SHA·전수복원·registry를 확인했다. 복원본 guard가 사실18/1과 동일 승인 기사/ID를 확인했고 원 source2판본·model raw/정정 계보를 보존했다. 별도 사건을 related-run으로 꾸미지 않았다. 최초 복원 입력의 절대 경로는 계약에서 거부돼 실제 내려받은 bytes를 private root-relative에 복사해 복원했다. 목표는 active이며 전체legacy·독립human·정규7회·08시/인증/복구/fullruntime 조건은 남는다. 동일실패1시간 반복0이다.
 
 최종 전달 증거도 별도로 닫았다. operator529자료/531members·2588709bytes/SHAbae6dee70502221ad6ee241668f1d108dff8a39ba4f65314ff90666cd323671f·Research Drive1LzyDZkwYzw7aYGK8PNhQb7dI5Rk0WLWp에서 실제 parent/shared=false·원격raw SHA·전수복원·registry를 확인했다. 전후213작성 원본·Drive authoring 의도/판정·공개17파일·WebsiteData/CI/복원 증거를 포함한다. 이 묶음의 source_versions0은 운영 전달 기록이며 공식2원문은 위 두 source closure에 있다. 비공개 현황판 core-progress-checkpoint-20261007-v16.json/html에 수집 경로와 전체WBS3/22·partial17/not_started2를 유지했다. 파일 열기는 queued 결과였으므로 렌더링 완료로 기록하지 않는다. 문서 정리만 [skip ci]로 커밋하고 테스트·모델·원문HTTP를 다시 반복하지 않는다.
+
+
+## 19.372. 정규 수집의 KUKA 복구와 보완 진척 집계
+
+정규 수집의 직접 차단을 먼저 해결했다. KUKA 독일 공식 POST JSON 목록을 한국시간10월7일05:08/05:11에 각각 한 번 수집해 HTTP200·같은 원문판본/본문SHA26051af9…·20개 날짜 정렬과 종료 경계를 확인했다. 9/29→10/6,10/6→10/7 두 기간 모두 window_scanned·후보0이다. 별도 보완 영수증2개를 기존 공통 reconciliation으로 연결했고 backlog911·SHA bc0dd71e…·공개 기사 수는 바꾸지 않았다. 직전 영어 복구와 합쳐 최초110창 중106저장완료+3검증보완=109창,54/55경로이며 디일렉1창이 남는다. 원래 실패 receipt와 frozen summary는 보존한다. 이번 인접기간은 실제POST2관측이며 raw source version1개를 공유한다.
+
+디일렉 공개160기사와 회원 전용20개의 실제 본문을 구분했다. 회원제 페이지의 content div는 로그인/회원가입 안내뿐이므로 파서 예외·인증 우회·유료API를 추가하지 않는다. 기존 실패 정책은 access_restricted/awaiting_new_observation으로 정확히 분류하고 자동 재요청하지 않는다. 접근 실패를 새 소식 없음으로 바꾸거나 전체 수집 완료로 처리하지 않는다.
+
+현황판은 최신 검증된 보완 영수증으로 실패 큐를1개로 계산하면서 원래 summary의 미완료3경로를 그대로 표시했다. acquisition_recovery에 최초 완료·검증된 보완·현재 미완료 기간/경로를 따로 집계하고 비공개 전체 탭에 표시한다. 같은 채널·정확히 같은 기간인 검증된 보완만 인정하며 중복 receipt를 이중 집계하지 않는다. 기존 최초 상태·전체 코드 버전 관문·WBS·정규7회·발행 승인을 덮어쓰지 않는다. 변경 전 회귀 실패 뒤 현황판/일일수집/편집인계 표적59/59를1회 통과했다. 로컬 전체suite0이다.
+
+이전 daily-20261006-current55-budget-v1의 handoff 재생성은 그 뒤 소급 전환된 edition inventory와 frozen 계획이 달라 계약대로 거부됐다. 같은 명령을 재시도하거나 frozen 입력을 고치지 않는다. 다음 실제 회차는 최신 전체 Drive raw 대조와 새 계획에서 현재 후보와 실제 공개 사건을 다시 대조한다. 수집 보완을 편집 인계·당일 발행·실제08시 실행 성공으로 계산하지 않는다. 기존 ACTIVE08시 예약·모델·조사 범위는 유지한다.
+
+KUKA native 수집2run은 기존 acquisition-group/portable archive를 재사용해20자료/22members·동일원문1판본·25855bytes/SHA8375cd9b84c272e2187c7614170fef3a05d9444cd63597e5c5efbf71760610be로 보관했다. 비공개Research Drive1xqx4JzmUKSPr_ICeiGKNqakN86tCXupj에서 실제 부모/shared=false·원격raw SHA·전수22members 복원·registry를 확인했다. listing만 있고 기사/parse0이므로 등록부의 editorial sources는0이며 기사 근거로 승격하지 않는다. streamed download URL은403이어서 같은 요청을 반복하지 않고 공식 connector raw base64 응답으로 정확한 bytes를 검증했다. 전체runtime 복원 성공으로 확대 해석하지 않는다.
+
+전체WBS3/22·partial17/not_started2·legacy44회차/430구간·metadata10·독립human0·정규0/7을 유지한다. 동일 실패1시간 반복0·goal active다. 다음은 최신 Drive 입력의 실제 정규 회차, 접근 제한 후보의 기존 대체 공식 자료 검토와 독립 평가/복구 관문이다. 추가 모델 호출0·새경로0·새예약0이다. 외장 kuka-de-recovery-*와 core-progress-checkpoint-20261007-v18이 근거다.
+
+현황판v18 실제 저장 집계는109/110창·54/55경로·미완료1이며 private HTML을 생성했다. 브라우저 file URL은 보안 정책에서 거부돼 같은 경로를 다른 브라우저/프로토콜로 우회하지 않았다. open_in_codex는 queued이므로 실제 렌더링·탭 조작 완료로 기록하지 않는다. 생성 HTML/좁은 회귀 검증과 UI 실사용 검증을 구분하며 후자는 미검증으로 남긴다.
