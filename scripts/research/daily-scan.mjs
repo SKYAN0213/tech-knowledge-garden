@@ -4,7 +4,9 @@ import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { canonicalURL, editions } from "../garden.mjs"
 import { registry, coverageGrid } from "./discovery.mjs"
-import { sha256 } from "./contracts.mjs"
+import { sha256, sourceId } from "./contracts.mjs"
+import { assertStoredEvidence } from "./parser.mjs"
+import { sourceFailureRetry, combineRetryFailures } from "./source-retry.mjs"
 import {
   DEFAULT_ROOT,
   atomicCreate,
@@ -62,6 +64,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research-daily.mjs",
     "scripts/research/daily-plan.mjs",
     "scripts/research/daily-scan.mjs",
+    "scripts/research/source-retry.mjs",
     "scripts/research/shadow-collection-basis.mjs",
     "scripts/pull-drive.py",
     "scripts/research/editorial-handoff.mjs",
@@ -699,6 +702,87 @@ function attemptId(plan, window, attempt) {
   return `${plan.run_id}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a${attempt}`
 }
 
+export function dailyRetryAssessment(root, receipt, { loadStored = storedListScan } = {}) {
+  if (receipt.status === "blocked")
+    return { state: "awaiting_new_observation", kind: "blocked_window" }
+  if (!receipt.scan_evidence) return combineRetryFailures([])
+  const runId = receipt.scan_evidence.list_scan_run
+  try {
+    if (!/^[A-Za-z0-9_-]+$/.test(runId || "") || runId !== receipt.attempt_id)
+      throw Error("Retry source run differs from its receipt")
+    // Older callbacks may not have persisted acquisition checkpoints. Their
+    // failure cause is unknown, so retain only the existing bounded retry cap.
+    const state = readJSON(root, `runs/${runId}/state.json`)
+    if (!state) {
+      if (fs.existsSync(safePath(root, `runs/${runId}/list-scan.json`)))
+        throw Error("Persisted retry scan has lost its checkpoints")
+      return combineRetryFailures([])
+    }
+    const scan = loadStored(root, runId)
+    if (
+      scan.summary.channel_id !== receipt.channel_id ||
+      scan.summary.window?.since !== receipt.since ||
+      scan.summary.window?.until_exclusive !== receipt.until_exclusive
+    )
+      throw Error("Retry scan window differs from its receipt")
+    if (state.run_id !== runId) throw Error("Retry checkpoint belongs to another run")
+    const sources = []
+    for (const [name, stage] of Object.entries(state.stages || {})) {
+      if (stage.status !== "complete") continue
+      if (!/^[A-Za-z0-9_-]+$/.test(name) || stage.result_path !== `runs/${runId}/${name}.json`)
+        throw Error("Retry checkpoint path differs")
+      const record = readJSON(root, stage.result_path)
+      if (!record || sha256(JSON.stringify(record)) !== stage.result_hash)
+        throw Error("Retry checkpoint hash mismatch")
+      if (!record.original_url || !record.source_id || !record.fetch_status) continue
+      if (record.source_id !== sourceId(record.original_url))
+        throw Error("Retry source identity differs")
+      if (["captured", "not_modified"].includes(record.fetch_status))
+        assertStoredEvidence(root, [record], [])
+      sources.push(record)
+    }
+    if (scan.documents?.length || scan.parses?.length)
+      assertStoredEvidence(root, scan.documents, scan.parses)
+    const failures = []
+    if (scan.summary.reason === "detail_incomplete" && Array.isArray(scan.summary.details)) {
+      for (const detail of scan.summary.details.filter(
+        (d) => d.status !== "source_parsed_unreviewed",
+      )) {
+        const document = sources.find((d) =>
+          detail.source_version_id
+            ? d.source_version_id === detail.source_version_id
+            : d.original_url === detail.url,
+        )
+        const parsed = scan.parses?.find((p) => p.parse_id === detail.parse_id)
+        if (
+          detail.parse_id &&
+          (!parsed || parsed.source_version_id !== document?.source_version_id)
+        )
+          throw Error("Retry detail parse differs from its source")
+        // A successful parse with a title/date/profile conflict still needs repair.
+        failures.push(sourceFailureRetry(document, parsed))
+      }
+    } else {
+      for (const document of sources.filter(
+        (d) => !["captured", "not_modified"].includes(d.fetch_status),
+      ))
+        failures.push(sourceFailureRetry(document))
+      if (!failures.length && scan.summary.status !== "window_scanned")
+        failures.push({ state: "requires_repair", kind: "listing_or_configuration" })
+    }
+    return { ...combineRetryFailures(failures), source_run: runId }
+  } catch (error) {
+    return { state: "requires_repair", kind: "invalid_retry_evidence", error: error.message }
+  }
+}
+
+function dailyRetryState(assessment, attempts, policy) {
+  if (assessment.state === "requires_repair") return "requires_repair"
+  if (assessment.state === "awaiting_new_observation" && policy.blocked_requires_new_observation)
+    return "awaiting_new_observation"
+  return attempts >= policy.max_attempts_per_window ? "exhausted" : "retryable"
+}
+
 export function dailyRetryQueue(
   root,
   plan,
@@ -716,12 +800,8 @@ export function dailyRetryQueue(
     )
       return []
     const last = attempts.at(-1)
-    const state =
-      last.status === "blocked" && policy.blocked_requires_new_observation
-        ? "awaiting_new_observation"
-        : attempts.length >= policy.max_attempts_per_window
-          ? "exhausted"
-          : "retryable"
+    const assessment = dailyRetryAssessment(root, last, options)
+    const state = dailyRetryState(assessment, attempts.length, policy)
     return [
       {
         channel_id: window.channel_id,
@@ -733,6 +813,7 @@ export function dailyRetryQueue(
           state === "retryable" ? policy.max_attempts_per_window - attempts.length : 0,
         last_attempt_id: last.attempt_id,
         reason: last.reason || last.status,
+        retry_assessment: assessment,
       },
     ]
   })
@@ -990,7 +1071,12 @@ export async function executeDailyPlan({
           sameEventAliases,
         }) ||
         priorAttempts.length >= retryPolicy.max_attempts_per_window ||
-        (lastAttempt?.status === "blocked" && retryPolicy.blocked_requires_new_observation)
+        (lastAttempt &&
+          dailyRetryState(
+            dailyRetryAssessment(root, lastAttempt, { loadStored }),
+            priorAttempts.length,
+            retryPolicy,
+          ) !== "retryable")
       )
         continue
       const outcome = await scanWindow(window, priorAttempts)
@@ -1056,6 +1142,7 @@ export async function executeDailyPlan({
     retry_queue: dailyRetryQueue(root, plan, receipts, current, {
       backlogFile,
       sameEventAliases,
+      loadStored,
     }),
     timing: summarizeDailyTiming(receipts, activeRoutes),
     candidate_published: false,

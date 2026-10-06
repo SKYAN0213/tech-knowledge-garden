@@ -4823,3 +4823,13 @@ Drive213개 전후 raw·기존ID1파일 갱신/212불변, 기존12기사·RSS40 
 검증은 관련 묶음만 수행했다. source audit18/18; archive 최초16중15통과/fixture경로 수정1통과; archive 원문·복원 묶음29/29; 빈 창 보관 수정 묶음30/30; 새 scope/empty 표적2중1통과(빈창)/단일 route fallback 수정 후 해당1통과다. 실행 명령의 nonexistent archive-locations test filename은 실제 시험 파일로 계산하지 않으며 위치 등록 검사는 research-archive-closure.test.mjs에 있다. 전체 로컬suite를 반복하지 않고 릴리스CI에서 한 번 확인한다. 전체 WBS2/22·partial18/not_started2 및 정규0/7 유지; P2-01의 재시도 영향, 독립human/legacy/08시/복구/fullruntime gate는 미완료다. actual CI·공개 보존·보관 ID는 런북452절 후속 결과로 확인한다.
 
 19.359 후속 완료 증거: codeff7de5b/Actions37482298032 Node1,034·Python28/build/site/deploy success. 공개3파일/40 RSS 식별자 보존, private 현황판1440/390px 탭·hash·keyboard 검증, 실행 입력과49frozen refs/delivery218자료의 private Drive actual SHA/220members·217inventory파일 복원을 확인했다. 상세 ID·SHA·재개 지점은 런북452절이다. 코드릴리스CI1·전체로컬suite0, 문서 후속은 skip ci로 보존한다. 전체2/22·정규0/7을 유지한다.
+
+## 19.360. 공통 원인별 retry eligibility와 KUKA 실제 제한 재시도
+
+source-retry.mjs의 공통 정책으로 임시 timeout/DNS·connection 실패와408/429/500/502/503/504를 재시도 대상, 정책/인증/403·404/410를 새 관측 대기, 크기/프로필/파싱·제목·날짜 충돌을 수정 필요로 구분한다. 임시와 영구 실패가 섞인 창은 전체 재실행 대신 targeted repair가 필요하다. dailyRetryQueue와 executeDailyPlan이 같은 판정을 사용한다. 저장된 run/window·checkpoint path/hash·원문 body·불변 parse identity가 변하면 requires_repair로 표시해 반복 재취득하지 않는다. 실제 저장 scan의 checkpoint 유실은 오류이며, 저장 checkpoint가 없는 과거 callback은 원인 미분류로 표시하고 기존2회 상한만 적용한다. 원인 미분류를 일시 오류로 주장하지 않는다.
+
+기존 full55/110 영수증을 읽어 인증 제한20개가 있는 디일렉 주간창을 awaiting_new_observation으로 분류했다. 원문 재요청0/후보 원장 변경0이다. KUKA3실패창은 저장된 POST timeout 근거로 구분했다. 공식EN주간창 standalone retry는 window_scanned/HTTP200/0후보로 끝나고 공통 supplemental reconciliation으로 당시 실패를 보존한 채 coverage와 후보 원장을 대조했다(원장911/changed=false). DE주간창은 source-stage70,449ms 뒤 POST timeout이 남았다. 동일 API/form으로 현재창을 다시 보내지 않았다. 주간창의 원래 실패+이번 standalone2관측과 오늘창의 원래 실패는 별도로 보존한다. 원래 일일 영수증의 attempt 수를 수동 scan으로 소급 변경하지 않는다. wire HTTP 요청/GET robots 내부 retry 횟수는 미계측이다.
+
+현재 safe acquisition 계약의8files는 full55 최초 frozen input과 같고 browser2files는 검증된ff7de5b commit과 같다. daily retry orchestration은 바뀌었으므로 과거 full55가 현재 전체 runtime 검증이라는 주장은 하지 않는다. 원문 안전 취득 P2-01 체크리스트의 완료 증거와 실제 원인별 반복 방지·성공/실패 영향 증거를 확보했으며, 최종 판정은 릴리스CI·Drive 실제 복원 후 반영한다. 장기 가용성/전체 일일 runtime/실제08시/독립human/legacy/정규7회는 별도 항목으로 유지한다.
+
+표적 검사는 daily retry/daily scan/frozen basis34중32통과, 저장 체크포인트가 없는 과거 callback 대조 순서 수정 뒤 실패2/2 통과, 유실된 checkpoint를 추가한 부정 표적1/1 통과다. 새로운4retry 검사도 최초 묶음에서 통과했다. body/parse/경로 위조, 인증 제한의 실제 executor 재개시 scan1회 유지, mixed 실패/기존2회 상한과 실패 유지가 포함된다. 전체 로컬suite는 반복하지 않고 릴리스CI에서1회 확인한다. 동일 실패를1시간 이상 반복한 항목0. 실제source/재시도증거는 외장tkg-daily-core-20261007-v1/source-retry-*와private KUKA run두 개이며 최종 archive·CI는 런북453절에 후속 기록한다.
