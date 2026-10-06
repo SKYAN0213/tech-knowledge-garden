@@ -4475,3 +4475,7 @@ private preview에서 기사·브리핑·MCP 변화 이력, 분야 탭의 Enter�
 원고가 이미 동기화돼도 연결 갱신은 실행하며, dry-run은 파일을 수정하지 않는다. 기존 Apps Script 및 readback 없는 snapshot의 동작은 유지한다. Archive·News·Briefings 등 작성 입력 밖의 기록과 receipt 전체의 과거 검증 시각은 보존한다. 별도의 authoring_source_mapping만 새 관측 시각·raw 영수증 SHA·작성 원본 수를 기록한다. 공개 state에는 Drive ID나 private 영수증을 추가하지 않는다. WebsiteData의 원고 SHA 거부 검사는 유지한다.
 
 종료 조건은 stale 연결의 재현/복구, ID·부모·hash·시각 충돌 차단, 실제 새 원격 전수 조회와 공통 적용, WebsiteData 원고 링크 검증이다. 전체 소급·독립 gold·정규7회·08시/인증/중단·전체 runtime 복구는 별도 미완료다. 이 묶음 이후에는 남은 전체 목표의 핵심인 단일 일일 실행/비교 운영과 미판정 소급을 대조하고 진행한다.
+
+19.333 완료 검증: 코드9645219/Actions37397213960의 Node959/959·Python15+10+3·build/deploy와 공개21파일 actual bytes가 통과했다. WebsiteData11raw 대조에서 조회기록1개만 같은ID로 갱신했고 내용10개는 유지했다. 비공개67자료 ZIP SHAac845c9bf3bb45bab026881bba98676589de1c3d21ecef3cd32fd118f5cef452와 exact manifest SHA93ebba8fe33cbe9e4033c1df72892f81424442aa9e5c0b17ce5c2ec05029a3a8의 실제원격 bytes를 검증해 공통ordinary v1 경로로69파일을 복원했다. source_mapping/public/WebsiteData proof를 복원본에서 다시 읽었다. 전체 dependency/runtime 복구 완료로 집계하지 않는다.
+
+다음 재개: 기존 daily-20261006-canonical54-review-v1의 당시107/108완료 창·523관측 후보와 handoff를 먼저 재사용 가능 여부로 대조한다. AWS 과거 창의 detail_incomplete1건은 실제 실패 상세를 읽고 신규 근거가 있을 때만 재개하며54경로 전체를 다시 돌리지 않는다. handoff의 pending720은 기사 승인 수가 아니고 날짜·원문·기존 사건의 대조가 필요하다. 최초 수집 입력 snapshot이 없는 옛 수집은 새 shadow 비교 증거로 재구성하지 않는다. 다음 묶음의 종료는 실제 후보를 근거검토/편집 승인으로 연결하고 기존 단일 일일 실행의 동일 회차 보관·발행 checkpoint까지 잇는 것이다. 전체legacy47/454·metadata10·독립gold·정규0/7·인증/중단·전체runtime 복구는 유지한다. 1시간 같은 실패 반복 항목은 이번 묶음에서0이다.
