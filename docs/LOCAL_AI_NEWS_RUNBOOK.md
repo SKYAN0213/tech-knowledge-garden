@@ -10603,3 +10603,15 @@ HD 승인 run은 daily-20261006-hd-fabtech-processing-v1, approval-link는 daily
 daily-cell-investigation-v4.json은31원문판본·32칸읽기·기간내확실23칸/나머지9칸·모두부분확인이다. 경계일의 날짜만으로04:30:51Z 이후 발표를확정하지 않는다. AMD/Newdaily추가2원문은기간밖이다. 조사closurev3 Drive1TvM0linoi1NiQRPBTnzVolQE93TkbT9p는31source/31parse 복원을 검증했으며 fullruntime복구가아니다.
 
 다음: freshDrive전수raw대조→기존10월1일회차의 누락사건 historical_addition_review→privatepreview/Drive저장→웹/RSS/GitHub/WebsiteData. 기존회차ID/cutoff/RSSGUID/pubDate를유지하고9월30일소식을오늘새뉴스로발행하지않는다. 지금승인·보관을정규0/7성공으로세지않는다. WBS2/22·legacy47/454·metadata10·독립40/20·08시/인증/fullruntime·goalactive를유지한다. 계획19.339와외장 tkg-daily-core-20261006-v1의proof를확인한다.
+
+## 432. 누락 사건을 기존 회차에 보완한 실제 발행
+
+Roche historical-review-v1은 기존 승인 출력과 원문 근거를 그대로 재사용해 기존10월1일 회차에만 명시적 추가를 승인했다. preview-run은 daily-20261006-roche-historical-reader-v1, publication operation은 daily-20261006-roche-historical-publication-v1이다. 최초15기사·RSS40 GUID/pubDate/link·최신cutoff/10월6일 원고를 보존한다. 승인 계획 밖 기사나 오늘 새 회차를 생성하지 않는다.
+
+fresh 실제 Drive213raw와 두 전체목록→prepare/release→동일 write-session의 같은ID update→post acquisition verified1→post213raw/목록→pull-drive→publish --operation --release→Actions37419846502→public-readback12파일→WebsiteData11raw 순서를 완료했다. 중단 상태만 보고 새 update를 만들지 않으며 post readback은 원격에서 새로 받은 bytes다. 보완 원고1454b29a…·public faee266·배포success·Node971/971·Python15+10+3·public182기사/RSS40이다. 로컬 전체시험은 반복하지 않았다.
+
+private1280/390 UI와 공개 분야 탭·상세를 실제 확인했다. WebsiteData9수정/2불변·11raw SHA 및 새기사의 같은 원고ID/SHA lineage를 검증했다. operation의 browser/WebsiteData boolean을 임의로 승격하지 않고 roche-public-ui-proof-v1.json과 roche-website-data-proof-v1.json에 실제 관측을 둔다.
+
+소급승인closure Drive1MCcfuRZgy2qRF_QuQKxuvvOOftO3YNy3의 rawSHA/110파일복원/approval8verified2deferred 동등성 완료. 발행증거 ZIP1MIylN5FFE0OKMCdf7ywOYW4v8mLxHVDZ와 manifest16ziLYILQTIJxEl-XtWVw-jhjeA3EwtGg도 실제raw 대조·v1복원50파일/48자료 SHA 검증 완료. v1복원은 정확한 원격manifest를 --source-manifest로 제공하며 source/runtime closure 완료로 세지 않는다. 잘못된 절대package 경로와 manifest 없는 첫 복원은 성공으로 집계하지 않았다.
+
+새 모델/원문수집0·기본정책변경0·신규정규0/7·전체목표active. 다음은 완료 checkpoint를 재사용하는 독립 소급 기사/논문 검토 및 다음 정규후보의 승인이다. 계획19.340과 외장 daily-roche-historical-delivery-status-v1.html을 확인한다.

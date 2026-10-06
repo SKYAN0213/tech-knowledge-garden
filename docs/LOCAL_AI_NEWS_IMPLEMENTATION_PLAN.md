@@ -4605,3 +4605,19 @@ private investigation-v4는31원문판본·32/32칸 읽기 근거, 기간 내 �
 추가2source closure13자료15members/98,900bytes는 Research1_O8FApIlOmi_o7QSTxEJVPnkrRbOAWd5의 rawSHA abd4fcedf7ce38de25bc1e3207df058cc92712d3cafb10eb206c3c788e439d80을 대조했다. 조사closurev3는73자료75members/1,350,031bytes, Research1TvM0linoi1NiQRPBTnzVolQE93TkbT9p의 rawSHA71c36150455c7fe110ca97e24817efddfa2c5d17e4a726031d3ccf36cd4b09fe와 복원31documents/31parses 동등성을 검증했다. Roche승인closure86자료88members/581,657bytes는 Research19gbgogN1AsaUZP62dXHv-N2OHulRYzQq의 rawSHA260aa599ea333a151ff5d0cc5d2140a6c182fbe49889ff0dfe0a1443994397f3을 대조하고 loadCurrentApproval에서 기사·승인6파일·8verified/2deferred 동등성을 검증했다. private부모/shared:false·원격raw·복원은 각각 확인했으며 fullruntime복구가 아니다.
 
 새 코드·운영 정책·공개 발행0이다. 승인·JSON/readback만 검증하고 전체suite를 반복하지 않았다. 후보783(verified99/unreviewed673/deferred9/rejected2)이며 WBS2/22·legacy47회차454구간/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime는 미완료다. goal active·동일실패1시간반복0을 유지한다. 다음은 freshDrive4폴더 전수대조→기존10월1일회차의 historical_addition_review→같은 회차 웹/RSS/GitHub 검증이다. HD10월6일12:05사건은 다음 정규후보다. 완료 수집·추출·대조·작성을 재실행하지 않는다.
+
+## 19.340. Roche 누락 사건의 소급 발행과 공개·보관 검증
+
+기존 10월 1일 회차에 9월 30일 Roche 발표를 보완했다. 새 정규 회차가 아니며 기존 15기사를 보존한 16기사다. 완료된 추출·대조·작성 결과를 재사용하고, `daily-20261006-roche-historical-review-v1`의 명시적 historical_addition_review로 원문 날짜·기존 사건 중복·대상 회차 범위를 확인했다. 이번 묶음의 새 모델 호출과 원문 재수집은 0이다. 최종 기사는 사건 e3728daf1bd4be8b, 2문장 요약·3개 설명 항목·5개 설명 문단이다. 우선심사 신청 접수와 판매 허가, 기존 임상 결과와 이번 접수 발표를 구분했다.
+
+Drive 작성 네 폴더 213개를 실제 raw 조회와 동일한 두 전체 목록으로 확인했다. 기존 원고 ID 1j2Xx4Wb0R9nEe-b0_e-YGrq0Jbxuahds를 수정한 뒤 같은 write-session에서 fresh post acquisition을 전달해 verified1/pending0/conflict0/unresolved0을 확인했다. 이후 213개 모두를 다시 실제 raw 조회하여 canonical 사본을 검증했다. 보완 원고 SHA 1454b29ab3e16a6e32c17664e567303e63a33dac3d6a04fd8ac1486fa9635b5b, post source SHA 2b60997b6f07ad63fcfb0e1b0f0acbc5603546637a6f43c313f85153b2003586이다.
+
+공개 커밋 faee266b70239c7aa18dc0ac1e2cff52cf76f796, Actions37419846502 success에서 Node971/971·Python15+10+3·생성·링크·배포를 확인했다. 로컬 전체 suite는 반복하지 않았다. 실제 웹/RSS/해당 commit GitHub 12파일이 승인 preview와 byte/reader 동등성을 유지한다. RSS40 GUID·pubDate·주소, latest_cutoff 2026-10-05T20:21:45.039Z와 최신10월6일 원고 bytes는 그대로다. private1280/390 화면·탭·태그·키보드·뒤로가기를 확인했고, 공개 상세와 바이오 분야 탭의3카드/query/가로 넘침 없음을 실제 브라우저에서 확인했다. 뉴스·브리핑 지도 추가0, 새 전문용어 노드 추가0이다.
+
+WebsiteData는 실제 배포본362페이지·182기사·25용어·22관계다. 기존11파일 ID를 유지하고9개만 수정했으며11개 모두 원격raw SHA를 대조했다. 새 기사와 같은 Drive 원고 ID/SHA의 lineage를 확인했다. 공통 publication operation의 browser_verified/website_data_verified=false는 해당 계약이 이 증거를 저장하지 않는 기존 상태이며, 실제 검증은 별도 private UI/WebsiteData proof에 있다. 이를 자동 인증이나 신규 정규 운영 성공으로 바꾸지 않는다.
+
+소급 승인 closure108자료/110members·681,334bytes는 Drive Research1MCcfuRZgy2qRF_QuQKxuvvOOftO3YNy3의 원격SHA70df2bc17874ef77f0170ab6df5a57ed4ac3db680414222a59dc382bf4691d87와 복원 승인·8verified/2deferred 동등성을 확인했다. 발행 증거 ordinary v1의48자료/49members·1,386,800bytes는 ZIP1MIylN5FFE0OKMCdf7ywOYW4v8mLxHVDZ와 별도 manifest16ziLYILQTIJxEl-XtWVw-jhjeA3EwtGg를 실제raw 대조하고 공통 복원50파일/48자료 SHA를 확인했다. ordinary 증거 묶음은 독립 source/runtime closure가 아니다. root-relative package 및 v1 명시적 manifest 관문을 그대로 지켰으며 기본 모델/정책 변경0이다.
+
+증거는 외장 `tkg-daily-core-20261006-v1`의 roche-publication-preservation-v1.json, roche-public-readback-result-v1.json, roche-website-data-proof-v1.json, roche-historical-approval-restored-proof-v2.json, roche-historical-delivery-restore-proof-v1.json이다. 최신 private 진행 화면은 daily-roche-historical-delivery-status-v1.html이며 한 번 생성한 JSON으로 렌더했다.
+
+전체 목표는 active다. WBS2/22·legacy47회차454구간/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규 정규0/7은 미완료다. 같은 실패를1시간 반복한 항목은 없다. 다음은 이미 수집된 최근 소급 회차의 독립 기사·논문 검토와 다음 정규 후보의 실제 조사/승인이다. HD10월6일12:05 발표는 다음 정규후보로 유지하고 완료 수집·모델 결과를 반복 실행하지 않는다.
