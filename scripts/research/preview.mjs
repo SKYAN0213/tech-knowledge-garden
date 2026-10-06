@@ -31,6 +31,7 @@ import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-s
 import { assertConceptConflicts } from "./knowledge-links.mjs"
 import { assertRetrospectiveAppearance, assertHistoricalAdditionReview } from "./event-date.mjs"
 import { articleDateLabel } from "../article-review.mjs"
+import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
 
 const approvalFiles = [
@@ -304,16 +305,26 @@ export function retrospectiveProjections(
     })
     for (const article of additions) {
       const packet = article.historical_addition_review
+      const start = parseResearchDate(existing.meta.coverage_start)
+      const end = parseResearchDate(existing.meta.coverage_end)
+      const sourceTime = parseResearchDate(article.article_review.source_published_at)
+      const startDay = seoulPublicationDay(existing.meta.coverage_start) || start?.day
+      const endDay = seoulPublicationDay(existing.meta.coverage_end) || end?.day
       if (
         packet.target_sha256 !== sha256(originalBytes) ||
         articles.some((a) => a.id === article.event_id) ||
         article.source_urls.some((url) =>
           revised.some((a) => (a.source_urls || []).includes(url)),
         ) ||
-        !existing.meta.coverage_start ||
-        !existing.meta.coverage_end ||
-        article.article_review.published_at < existing.meta.coverage_start.slice(0, 10) ||
-        article.article_review.published_at > existing.meta.coverage_end.slice(0, 10)
+        !start ||
+        !end ||
+        start.instant > end.instant ||
+        article.article_review.published_at < startDay ||
+        article.article_review.published_at > endDay ||
+        (article.article_review.date_kind === "source-publication-time" &&
+          (sourceTime?.precision !== "timestamp" ||
+            sourceTime.instant <= start.instant ||
+            sourceTime.instant > end.instant))
       )
         throw Error("Historical addition does not match source edition, date or event identity")
       revised.push(article)

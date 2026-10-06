@@ -1459,6 +1459,29 @@ test("a reviewed historical addition enters its original edition without changin
   const withoutReview = structuredClone(addition)
   delete withoutReview.historical_addition_review
   assert.throws(() => retrospectiveProjections(vault, [withoutReview]), /no existing edition/)
+
+  // Daily collection persists UTC cutoffs; editorial publication days use KST.
+  const utc = parseNote(initial.content)
+  utc.meta.coverage_start = "2026-09-26T23:00:00Z"
+  utc.meta.coverage_end = "2026-09-27T23:00:00Z"
+  const utcContent = noteText(utc.meta, utc.body)
+  fs.writeFileSync(file, utcContent)
+  const within = structuredClone(addition)
+  within.historical_addition_review.target_sha256 = sha256(utcContent)
+  within.article_review.published_at = "2026-09-28"
+  within.article_review.reviewed_at = "2026-09-28"
+  within.historical_addition_review.reviewed_at = "2026-09-28"
+  within.article_review.date_kind = "source-publication-time"
+  within.article_review.source_published_at = "2026-09-27T22:00:00Z"
+  const [utcProjection] = retrospectiveProjections(vault, [within])
+  assert.equal(parseNote(utcProjection.content).meta.coverage_end, utc.meta.coverage_end)
+
+  const after = structuredClone(within)
+  after.article_review.source_published_at = "2026-09-28T00:00:00Z"
+  assert.throws(() => retrospectiveProjections(vault, [after]), /does not match/)
+  const malformed = structuredClone(within)
+  malformed.article_review.source_published_at = "2026-09-28"
+  assert.throws(() => retrospectiveProjections(vault, [malformed]), /does not match/)
 })
 
 test("article approval requires current parse evidence and real calendar dates", () => {

@@ -4479,3 +4479,11 @@ private preview에서 기사·브리핑·MCP 변화 이력, 분야 탭의 Enter�
 19.333 완료 검증: 코드9645219/Actions37397213960의 Node959/959·Python15+10+3·build/deploy와 공개21파일 actual bytes가 통과했다. WebsiteData11raw 대조에서 조회기록1개만 같은ID로 갱신했고 내용10개는 유지했다. 비공개67자료 ZIP SHAac845c9bf3bb45bab026881bba98676589de1c3d21ecef3cd32fd118f5cef452와 exact manifest SHA93ebba8fe33cbe9e4033c1df72892f81424442aa9e5c0b17ce5c2ec05029a3a8의 실제원격 bytes를 검증해 공통ordinary v1 경로로69파일을 복원했다. source_mapping/public/WebsiteData proof를 복원본에서 다시 읽었다. 전체 dependency/runtime 복구 완료로 집계하지 않는다.
 
 다음 재개: 기존 daily-20261006-canonical54-review-v1의 당시107/108완료 창·523관측 후보와 handoff를 먼저 재사용 가능 여부로 대조한다. AWS 과거 창의 detail_incomplete1건은 실제 실패 상세를 읽고 신규 근거가 있을 때만 재개하며54경로 전체를 다시 돌리지 않는다. handoff의 pending720은 기사 승인 수가 아니고 날짜·원문·기존 사건의 대조가 필요하다. 최초 수집 입력 snapshot이 없는 옛 수집은 새 shadow 비교 증거로 재구성하지 않는다. 다음 묶음의 종료는 실제 후보를 근거검토/편집 승인으로 연결하고 기존 단일 일일 실행의 동일 회차 보관·발행 checkpoint까지 잇는 것이다. 전체legacy47/454·metadata10·독립gold·정규0/7·인증/중단·전체runtime 복구는 유지한다. 1시간 같은 실패 반복 항목은 이번 묶음에서0이다.
+
+## 19.334. 기존 일일 수집 재사용과 소급 보완의 날짜 경계
+
+현재 작성 원본은 10월 6일 회차의 FDA·옷감 집기 논문·RobCo 3기사를 이미 포함한다. 당시 일일 수집의 handoff는 이후 회차 변경으로 재생성이 거부되며, 이 관문을 완화하거나 옛 수집을 새 운영으로 집계하지 않는다. 정확한 stored URL/version을 `select-source`로 분리해 원문 추출·근거 검토·편집 승인에 재사용한다. 후보 URL의 정규화 ID와 원본 URL 철자의 source ID는 각각 유지하고 기존 `candidate-approval`에서 URL·원문 날짜·판본·본문 SHA를 대조한다. AWS 404 상세 1건은 실패 상태로 보존하고 이미 성공한 71개 상세나 54경로 전체를 재수집하지 않는다.
+
+UTC cutoff의 날짜 문자열을 자르던 retrospective 추가 검사는 KST 기사 날짜와 충돌했다. 기존 날짜 도구로 cutoff의 한국 날짜를 구하고, 명시된 원문 발표 timestamp가 있으면 실제 시작 이후·종료 이하인지도 확인한다. 날짜만 있는 원문에는 시간대를 추측하지 않는다. 기존 회차·cutoff·사건 ID·RSS 식별자는 유지한다. UTC 경계 안의 다음 한국 날짜 허용과 종료 후·잘못된 timestamp 거부를 포함한 projection/event-date 표적47/47을 통과했다.
+
+진행 중인 실제 원고는 AWS Private CA 발급 로그이며 6개 모델 추출 사실과 직접 읽은 원문에서 보완한 기존 기록 차이·EventBridge/Athena 경로 2개를 검토한다. Spot 공공안전 활용 자료는 날짜가 다른 과거 사례를 묶은 신규 회사 게시물로 구분해 저장했다. 이번 완료 수용은 승인한 누락 기사만 같은 회차에 보완해 Drive·웹·RSS·GitHub를 검증하는 것이다. 저장된 수집 성공·근거 비교 성공을 기사 승인이나 공개 성공으로 승격하지 않는다. 전체 legacy47/454·metadata10·독립 gold·실제 정규 비교0/7·08시/인증/중단·전체 runtime 복구는 계속 미완료다.
