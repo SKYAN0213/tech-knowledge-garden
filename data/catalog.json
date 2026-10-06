@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 182,
+  "news_count": 183,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -574,6 +574,8 @@
     "https://www.microsoft.com/en-us/research/feed",
     "https://www.midjourney.com/medical",
     "https://www.midjourney.com/medical/blogpost",
+    "https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf",
+    "https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp2.pdf",
     "https://www.nasa.gov/blogs/wallops/2026/09/13/fourth-balloon-of-nasa-scientific-balloon-campaign-launches",
     "https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch",
     "https://www.nasa.gov/news-release/nasa-awards-contract-to-develop-5g-communications-for-moon",
@@ -806,6 +808,7 @@
     "News/82294a16ed862561",
     "News/cc2b0d13b882971e",
     "News/3287c7f8e2e5e4bd",
+    "News/61fdd67b9300a89e",
     "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE",
     "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing",
     "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing",

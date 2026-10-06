@@ -9,8 +9,8 @@ coverage_end: 2026-10-05T20:21:45.039Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 7
-new_items_count: 7
+source_count: 9
+new_items_count: 8
 linked_knowledge_notes:
   - Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)
 knowledge_notes_created: []
@@ -233,6 +233,9 @@ article_records:
     lead: 미국 에너지부 원자력 담당 조직(Office of Nuclear Energy)은 미국 현지시각 10월 5일 탄화규소(SiC) 연료
       피복재의 연구개발을 지원하는 경쟁 공모를 발표했다. 3년에 걸쳐 최대 5,000만 달러를 지원하며, 연구용 원자로에서 조사 시험을 할
       12피트 길이의 탄화규소 피복재 연료봉 제작이 지원 대상이다. 신청 마감은 2026년 12월 7일이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 연료와 냉각수 사이의 보호벽
         paragraphs:
@@ -246,9 +249,6 @@ article_records:
             필요한 자료라고 설명했다.
         source_urls:
           - https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고
     kind: 사건 뉴스
     region: 국내
@@ -261,6 +261,9 @@ article_records:
       why: 금융권 해킹 사고의 추가 피해와 민간 확산 방지를 위한 대응이라고 전자신문은 보도했다.
     lead: 전자신문은 10월 4일 과학기술정보통신부와 한국인터넷진흥원(KISA)이 금융권 해킹 사고의 민간 확산을 막기 위한 긴급 대응체계를
       가동했다고 보도했다. 두 기관은 최고정보보호책임자(CISO) 신고기업 약 2만8000곳에 이날 보안 점검 권고 메일을 보냈다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 모니터링과 현장 대응
         paragraphs:
@@ -280,6 +283,44 @@ article_records:
             차단 등 필요한 조치를 요청했다고 보도됐다.
         source_urls:
           - https://www.etnews.com/20261004000031
+  - title: 株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 株式会社不二越
+      when: 2026-10-05
+      where: 미기재
+      what: 2026년 11월 결산기 제3분기 누적 실적 발표
+      how: 연결 실적 공시와 제품별 매출 보충자료 공개
+      why: 미기재
+    lead: 株式会社不二越는 10월 5일 공개한 실적 자료에서 2025년 12월 1일~2026년 8월 31일 로봇 매출이 213억 1,400만
+      엔으로 전년 동기보다 16.9% 증가했다고 밝혔다. 같은 기간 연결 매출은 1,923억 2,600만 엔으로 10.4%, 영업이익은
+      114억 5,700만 엔으로 72.8% 늘었다. 회사는 미주와 아세안에서 로봇 수요가 증가했다고 설명했다.
+    explanations:
+      - heading: 로봇 중심 사업 전개
+        paragraphs:
+          - 회사는 로봇과 공구·공작기계·베어링·유압기기·특수강 사업을 함께 보유한 특성을 활용해 신제품과 기술을 제안하고, 미국을
+            중심으로 영업거점을 확대하는 데 주력하고 있다고 밝혔다.
+        source_urls:
+          - https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf
+      - heading: 연간 실적 계획
+        paragraphs:
+          - 2026년 11월 결산기 로봇 매출 연간 계획은 314억 엔으로 전년 대비 24.4% 증가한 수준이다.
+          - 연결 매출 전망은 2,550억 엔, 영업이익 전망은 153억 엔이며 예상 증가율은 각각 8.1%와 56.6%다. 회사는
+            연결 실적 전망을 7월 14일 발표에서 변경하지 않았다.
+        source_urls:
+          - https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf
+          - https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp2.pdf
+      - heading: 수익 개선 활동
+        paragraphs:
+          - 회사는 이익 개선을 위해 설비와 인력을 적정화하고 전 부문 합리화와 내제화 확대를 추진하고 있다고 밝혔다.
+          - 전년 동기 대비 영업이익 증감 요인으로 판매가격 적정화 42억 엔, 가동도 개선 26억 엔, 환율 19억 엔, 비용 절감
+            7억 엔의 증가 효과를 제시했다. 원재료 가격 상승과 고정비·판매관리비·기타 경비 증가는 각각 38억 엔과 8억 엔의 감소
+            요인으로 제시했다.
+          - 같은 누적 기간 지배기업 소유주 귀속 순이익은 66억 2,900만 엔으로 전년 동기보다 82.1% 증가했다.
+        source_urls:
+          - https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf
+          - https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp2.pdf
     papers: []
     relations: []
     topic_ids: []
@@ -322,13 +363,19 @@ article_reviews:
   - title: 미 에너지부, 원전 탄화규소 피복재 연구에 최대 5,000만 달러 공모
     event_id: cc2b0d13b882971e
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
-    concept_ids: []
   - title: 과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고
     event_id: 3287c7f8e2e5e4bd
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-04
+    reviewed_at: 2026-10-06
+  - title: 株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진
+    event_id: 61fdd67b9300a89e
+    review_status: verified
+    published_at: 2026-10-05
     reviewed_at: 2026-10-06
     concept_ids: []
 ---
@@ -513,6 +560,34 @@ DOE는 연구용 원자로의 조사 시험에서 얻을 성능 자료가 미국
 
 과기정통부와 KISA는 금융보안원이 확인한 해외 공격자 IP에 관한 위협 정보를 해당 클라우드 사업자에 전달하고 악성행위 차단 등 필요한 조치를 요청했다고 보도됐다. [S7]
 
+## 株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진
+
+**분야:** 로봇·제조
+**테마:** 실적·재무
+**보조 테마:** 없음
+**세부 태그:** 매출, 수익성, 실적 전망
+**기업·기관:** 株式会社不二越
+
+株式会社不二越는 10월 5일 공개한 실적 자료에서 2025년 12월 1일\~2026년 8월 31일 로봇 매출이 213억 1,400만 엔으로 전년 동기보다 16.9% 증가했다고 밝혔다. 같은 기간 연결 매출은 1,923억 2,600만 엔으로 10.4%, 영업이익은 114억 5,700만 엔으로 72.8% 늘었다. 회사는 미주와 아세안에서 로봇 수요가 증가했다고 설명했다. [S8] [S9]
+
+### 로봇 중심 사업 전개
+
+회사는 로봇과 공구·공작기계·베어링·유압기기·특수강 사업을 함께 보유한 특성을 활용해 신제품과 기술을 제안하고, 미국을 중심으로 영업거점을 확대하는 데 주력하고 있다고 밝혔다. [S8]
+
+### 연간 실적 계획
+
+2026년 11월 결산기 로봇 매출 연간 계획은 314억 엔으로 전년 대비 24.4% 증가한 수준이다.
+
+연결 매출 전망은 2,550억 엔, 영업이익 전망은 153억 엔이며 예상 증가율은 각각 8.1%와 56.6%다. 회사는 연결 실적 전망을 7월 14일 발표에서 변경하지 않았다. [S8] [S9]
+
+### 수익 개선 활동
+
+회사는 이익 개선을 위해 설비와 인력을 적정화하고 전 부문 합리화와 내제화 확대를 추진하고 있다고 밝혔다.
+
+전년 동기 대비 영업이익 증감 요인으로 판매가격 적정화 42억 엔, 가동도 개선 26억 엔, 환율 19억 엔, 비용 절감 7억 엔의 증가 효과를 제시했다. 원재료 가격 상승과 고정비·판매관리비·기타 경비 증가는 각각 38억 엔과 8억 엔의 감소 요인으로 제시했다.
+
+같은 누적 기간 지배기업 소유주 귀속 순이익은 66억 2,900만 엔으로 전년 동기보다 82.1% 증가했다. [S8] [S9]
+
 # 리서치 노트
 
 없음
@@ -542,3 +617,5 @@ DOE는 연구용 원자로의 조사 시험에서 얻을 성능 자료가 미국
 - [S5] https://bostondynamics.com/blog/spot-to-the-rescue/
 - [S6] https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material
 - [S7] https://www.etnews.com/20261004000031
+- [S8] https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf
+- [S9] https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp2.pdf

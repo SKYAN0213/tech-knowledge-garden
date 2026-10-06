@@ -7,7 +7,7 @@ modified: 2026-10-06
 description: 2026-10-06 IT · AI · 로보틱스
 coverage_start: 2026-10-04T01:30:38.099959Z
 coverage_end: 2026-10-05T20:21:45.039Z
-item_count: 7
+item_count: 8
 edition: Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-06_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -51,7 +51,7 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 
 전자신문은 10월 4일 과학기술정보통신부와 한국인터넷진흥원(KISA)이 금융권 해킹 사고의 민간 확산을 막기 위한 긴급 대응체계를 가동했다고 보도했다. 두 기관은 최고정보보호책임자(CISO) 신고기업 약 2만8000곳에 이날 보안 점검 권고 메일을 보냈다.
 
-### 로봇·제조 · 3건
+### 로봇·제조 · 4건
 
 #### [[News/72081e8f67345f20|쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고]]
 
@@ -70,6 +70,12 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 사업·고객 · 고객 도입 · Boston Dynamics · Las Vegas Metro Police Department · Massachusetts State Police · Sheriff’s departments in Camden and Gloucester Counties, New Jersey · Carabinieri
 
 보스턴 다이내믹스는 한국시각 10월 6일 공식 블로그에서 지난 6년간 사족보행 로봇 Spot이 재난 수색, 인질 사건 대응, 마약 제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와 로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과 2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다.
+
+#### [[News/61fdd67b9300a89e|株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진]]
+
+실적·재무 · 매출 · 수익성 · 실적 전망 · 株式会社不二越
+
+株式会社不二越는 10월 5일 공개한 실적 자료에서 2025년 12월 1일~2026년 8월 31일 로봇 매출이 213억 1,400만 엔으로 전년 동기보다 16.9% 증가했다고 밝혔다. 같은 기간 연결 매출은 1,923억 2,600만 엔으로 10.4%, 영업이익은 114억 5,700만 엔으로 72.8% 늘었다. 회사는 미주와 아세안에서 로봇 수요가 증가했다고 설명했다.
 
 ### 에너지·기후기술 · 1건
 
@@ -98,3 +104,5 @@ AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발
 - [S5] https://bostondynamics.com/blog/spot-to-the-rescue/
 - [S6] https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material
 - [S7] https://www.etnews.com/20261004000031
+- [S8] https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp1.pdf
+- [S9] https://www.nachi-fujikoshi.co.jp/dcms_media/other/20261005_jp2.pdf
