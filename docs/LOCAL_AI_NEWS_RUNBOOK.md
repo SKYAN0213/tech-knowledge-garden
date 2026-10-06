@@ -10974,3 +10974,20 @@ retry 정상/실패/무결성 표적34검사32통과·legacy callback 대조순�
 
 
 원격 보관 완료: source-retry-closure-20261007-v1은1018자료/1020ZIP members·12,898,384bytes·SHA344246897fa21565155b3b42d4e75f2d9a4b9ad149048d252d65c21e76b7bf24다. 비공개 Drive Research ID1-PREfyGmNHeGQDbioUB_YOdaF6hKIBmu의 actual metadata/shared=false·원격 raw SHA·전수1020members 복원·위치 등록을 확인했다. 복구 사본의 operator7파일 SHA와 원래4실패 원문 판정/EN supplemental 검증으로 DE2retryable·디일렉1새관측대기를 재현했다. 전체55경로 runtime 재개나 기사 승인/정규 발행을 뜻하지 않는다. CLI 복원은 root-relative package 계약으로 실행하며 최초 절대경로 요청 거부 후 root 아래 원격 ZIP 사본으로 수정했다. 닫힌 group/manifest는 추가 수정하지 않는다. 최신 진척판은 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v1.json/html이며3/22·partial17/not_started2·정규0/7이다. 다음은 기존 원문 검토·원고 승인과 Drive/public 전달 연결을 계속한다.
+
+
+## 454. 일일 원문의 로컬 작성·승인·Drive 복원
+
+기존 full55 수집 원문을 process-daily로 선택했다. daily-20261007-crowdstrike-core-v1-a638ca1541a5에서 qwen3.8:27b-mlx 추출 79,030ms, medium 대조 140,575/104,014ms, think:false 작성 80,534ms를 완료했다. 모델 생성 요청은 4회이며 재생성·신규 원문 HTTP·유료 API·새 adapter는 0이다. 모델 6사실의 단위/조건 구조 실패 4개와 미래 일정의 완료 표기를 직접 정정하고, 원문 23blocks에서 지원과 일정 7사실을 보완해 13verified를 기록했다. 모델 원출력은 보존했다.
+
+사건 28865e31f8cb281c는 원 발표 2026-10-06/검토 2026-10-07, 리드 3문장222자·설명 2항목4문단이다. 회사별 API/에이전트 개발, 파트너 가입/기술 검증/마켓플레이스, NVIDIA 추가지원 자격조건, 최대10곳 RSAC 발표와 선택적 투자심사를 구분했다. 인과 효과나 새 지도 노드를 만들지 않았다. 첫 approval의 ISO reviewed_at은 day정밀도 계약으로 거부돼 KST 날짜의 v2로 수정했다. candidate-approval은 후보1건만 verified로 연결했다. 장부911/verified100·deferred11·rejected2·unreviewed798, 반복승인 SHA불변이다. 새 approved-reuse 실행은 approval_ready와 처리 재사용을 확인했고 추가 모델0이다.
+
+기존 평가 저장소에 crowdstrike-accelerator-20261006-en-dev-v1을 추가했다. 현재29case revisions/27고유 development snapshots·heldout0·independent human0이다. 이번 증가는1고유 원문이며 Codex 검토/후보 출력 노출을 명시한 source_reviewed_candidate다. 원문 보완을 독립 gold나 무인 품질 달성으로 세지 않는다.
+
+source closure126자료/128members/3원문판본/524,032bytes/SHAf72094b31930f8bb724d77055ec6a12cae7197e9594932f1eccf3bdc04a1e30a를 비공개 Research ID1jJyylfWzHDFCeZELZH6parhOSMMYkICu에 보관했다. actual metadata/shared=false/parent, 원격 raw SHA, 128members restore, 위치 등록과 복원 승인6파일/기사/fact packet/평가 manifest·specification·documents·parses 동등성을 확인했다. 평가 로더의 물리root까지 비교한 최초 helper는 실패했으며 별도 복원 경로와 내용 SHA를 각각 확인해 바로잡았다. 닫힌 manifest는 수정하지 않는다.
+
+코드 변경0이므로 전체suite/build/deploy 반복0이다. b570db77의 Node1,038/1,038·Python28·build/site/deploy 성공과 구분한다. canonical 작성4폴더 수정0·이 기사 공개0·새 정규0/7, 전체WBS3/22·partial17/not_started2·goal active다. 다음은 fresh Drive authoring 대조 후 원 발표 기간의 기존 회차 연결·공개와 나머지 legacy/전문용어/독립 평가다. 7월10일 선정분리 pending을 다른 승인 기사 작업의 전체 blocker로 쓰지 않는다. 동일 실패1시간 반복0이다. 증거: 외장 tkg-daily-core-20261007-v1/crowdstrike-*.
+
+승인 독자용 내용은 crowdstrike-six-w-approved-sample-v1.md다. open_in_codex queued는 실제 화면/렌더링 검증이 아니다. 최초 문서 helper의 stdin UTF-8 오류는 파일 수정 전 발생했고 Node UTF-8 쓰기로 기록했다. 기존 전체legacy47/454/metadata10·독립40/20·08시/인증/복구/fullruntime 관문을 유지한다.
+
+최신 비공개 진척판: 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v3.json/html. WBS3/22·partial17/not_started2를 확인했다. 데이터/문서 readback이며 추가 UI 동작 검증 또는 기사 공개가 아니다.

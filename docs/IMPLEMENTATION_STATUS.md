@@ -382,3 +382,7 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 
 
 원격 보관 완료: source-retry-closure-20261007-v1은1018자료/1020ZIP members·12,898,384bytes·SHA344246897fa21565155b3b42d4e75f2d9a4b9ad149048d252d65c21e76b7bf24다. 비공개 Drive Research ID1-PREfyGmNHeGQDbioUB_YOdaF6hKIBmu의 actual metadata/shared=false·원격 raw SHA·전수1020members 복원·위치 등록을 확인했다. 복구 사본의 operator7파일 SHA와 원래4실패 원문 판정/EN supplemental 검증으로 DE2retryable·디일렉1새관측대기를 재현했다. 전체55경로 runtime 재개나 기사 승인/정규 발행을 뜻하지 않는다. CLI 복원은 root-relative package 계약으로 실행하며 최초 절대경로 요청 거부 후 root 아래 원격 ZIP 사본으로 수정했다. 닫힌 group/manifest는 추가 수정하지 않는다. 최신 진척판은 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v1.json/html이며3/22·partial17/not_started2·정규0/7이다. 다음은 기존 원문 검토·원고 승인과 Drive/public 전달 연결을 계속한다.
+
+2026-10-07 후속: 일일 수집 CrowdStrike 원문에서 Qwen 실제 추출 1회·근거 대조 2회·작성 1회, 직접 사실 13개 검토, 원고 승인, 후보 연결, 재사용 및 Drive 원격 복원을 완료했다. 사건 ID는 `28865e31f8cb281c`, 발표일은 10월 6일, 검토일은 10월 7일이다. 리드 3문장·222자와 설명 2항목·4문단으로 지원 내용과 일정을 정리했다. 반복 승인 시 장부 SHA가 같고, 완료된 원고 재사용에는 추가 모델 호출이 없었다. 현재 개발 평가 원문은 29개 판본·27개 고유 snapshot이며 독립 human/heldout은 0이다. 이 기사 공개와 작성 네 폴더 수정은 아직 하지 않았다. 전체 WBS 3/22·정규 0/7을 유지한다. 상세 계획 19.361·런북 454와 외장 `tkg-daily-core-20261007-v1/crowdstrike-*`를 참조한다.
+
+최신 비공개 진척판: 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v3.json/html. WBS3/22·partial17/not_started2를 확인했다. 데이터/문서 readback이며 추가 UI 동작 검증 또는 기사 공개가 아니다.
