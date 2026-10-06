@@ -4487,3 +4487,14 @@ private preview에서 기사·브리핑·MCP 변화 이력, 분야 탭의 Enter�
 UTC cutoff의 날짜 문자열을 자르던 retrospective 추가 검사는 KST 기사 날짜와 충돌했다. 기존 날짜 도구로 cutoff의 한국 날짜를 구하고, 명시된 원문 발표 timestamp가 있으면 실제 시작 이후·종료 이하인지도 확인한다. 날짜만 있는 원문에는 시간대를 추측하지 않는다. 기존 회차·cutoff·사건 ID·RSS 식별자는 유지한다. UTC 경계 안의 다음 한국 날짜 허용과 종료 후·잘못된 timestamp 거부를 포함한 projection/event-date 표적47/47을 통과했다.
 
 진행 중인 실제 원고는 AWS Private CA 발급 로그이며 6개 모델 추출 사실과 직접 읽은 원문에서 보완한 기존 기록 차이·EventBridge/Athena 경로 2개를 검토한다. Spot 공공안전 활용 자료는 날짜가 다른 과거 사례를 묶은 신규 회사 게시물로 구분해 저장했다. 이번 완료 수용은 승인한 누락 기사만 같은 회차에 보완해 Drive·웹·RSS·GitHub를 검증하는 것이다. 저장된 수집 성공·근거 비교 성공을 기사 승인이나 공개 성공으로 승격하지 않는다. 전체 legacy47/454·metadata10·독립 gold·실제 정규 비교0/7·08시/인증/중단·전체 runtime 복구는 계속 미완료다.
+
+
+19.334 완료 검증(2026-10-06): AWS Private CA의 10월5일 공식 발표를 실제 qwen3.8:27b-mlx 추출·근거 비교·작성과 직접 원문 검토로 처리했다. 6개 모델 사실에 원문에서 확인한 2개 사실을 보강한 최종8사실을 승인하고 실제 후보 장부에 연결했다. 성공 API 기록과 서명 전 실패·인증서 내용 기록의 차이, API/통합 서비스 호출자 구분, 교차 계정 CA 소유 계정, 기본 수집과 CloudTrail 요금 조건을 유지했다. 제품·회사 노드나 근거 없는 시장 해석은 추가하지 않았다. 추출·대조 완료 checkpoint는 작성에 재사용했으며 전체54경로 수집을 반복하지 않았다.
+
+코드301287f·공개52a07db5165ac5b6a9696831d549ed44fa680771, Actions37399695336의 Node959/959·Python15+10+3·build/deploy가 통과했다. 날짜 경계 표적47/47 이후 로컬 전체 suite는 반복하지 않았다. 기존10월6일 회차의3기사·coverage·주요 사건을 보존하고 누락 기사 a4e8f23e78c22e95를 추가한4기사로 수정했다. 기존 RSS40 GUID/pubDate를 보존했으며 새 회차나 새 운영 완료로 집계하지 않는다. 실제 웹·RSS·GitHub12파일이 승인 미리보기와 byte/reader 동등성을 보였다. 1280/390 화면의 분야·AWS 필터 query, 뒤로 가기, Enter 기사 이동, 가로 넘침0·뉴스/브리핑 지도0을 확인하고 실제 공개 기사도 열었다.
+
+Drive 작성213원본의 전후 raw/두 목록 검증에서 같은ID의10월6일 원고1개만 수정됐다. guarded writer는 verified1/pending0/conflict0/unresolved0이며 동일 source snapshot/readback을 기존 pull-drive --readback으로 적용했다. WebsiteData358페이지·178기사·25용어·22관계의11raw를 검증했다. 기존ID9개 갱신·2개 불변이며 새 기사의 source lineage가 승인 원고 ID/SHA와 같다.
+
+승인 source closure는72원문 판본/343ZIPmembers·4,835,922bytes이며 비공개 Research1M1sFmDA2j8_vTEnAgQB63g_PBwSs-aSJ의 실제 원격 SHA31200079be3cd44b0e2a1f8e38977f88071ad8f21c7cc160af21aff627d83aaf를 대조했다. 공통 portable 복원에서8사실·기사 승인 동등성을 재검증하고 원문 위치를 등록했다. 발행 운영증거89자료/90members·3,710,477bytes는 Research1tEkn4wYFDa_7A5SgBtWdYP6PidGNWltm 및 exact manifest1SoWpV_Pekie7PzvegERDeEKVJLHVfHCH에 보관했다. 원격 ZIP SHA83d59cc25f5cf338c9e1229ca22eeacc45bf0e96894b88d950f9683d179aef68, manifest SHA0464f7099de94a5bf2b1680f0287d71b498d98f3a65ec4619d2e5886fa80d6e4를 대조해 ordinary v1으로91파일을 복원하고 공개/WebsiteData/승인 근거를 다시 읽었다. 전체 runtime 복구와 구분한다.
+
+다음 재개: 저장된 daily-20261006-spot-source-selected-v1은 아직 기사 승인·공개가 아니다. 공식 게시물의 발표시각과 소개하는 과거 사례 시각을 구분해 직접 검토하고 공통 처리·후보 승인 경로를 사용한다. 다음 실제 일일 실행은 최초 수집 전에 shadow inputs를 고정하고 완료 handoff/발행 근거를 같은 회차에 연결한다. 최초 입력이 없는 옛 수집을 비교 회차로 재구성하거나 수동 소급 발행을 정규7회로 세지 않는다. 기존7월10일08:02의15구간은 다음 소급 묶음이며 metadata 누락 회차는 별도 복구 목록에 유지한다. 전체 legacy47회차454구간·metadata10·독립 human gold40/20·실제 정규 비교0/7·08시/인증/중단·전체 runtime 복구는 미완료, 목표 active다. 이번 묶음에서1시간 동일 실패 반복 항목은0이다.
