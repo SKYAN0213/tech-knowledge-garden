@@ -1899,6 +1899,68 @@ def json_document_parse(raw, url, options):
     return {"status": "extracted" if complete else "partial", "title": title, "title_basis": location(profile["title_pointer"], title_value) if title else None, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": links, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False, "json_issues": issues, "record_count": record_count}}
 
 
+def apply_pdf_table_context(blocks, profile):
+    """Join only an explicitly profiled caption to one nearby native PDF table.
+
+    Preserve each extracted fragment and its coordinates; proximity alone is
+    never evidence that arbitrary paragraphs describe a table.
+    """
+    if profile is None:
+        return []
+    if not isinstance(profile, dict) or set(profile) - {"patterns", "max_gap_pt"}:
+        raise ValueError("Invalid PDF table context profile")
+    patterns = profile.get("patterns")
+    gap = profile.get("max_gap_pt", 24)
+    if (not isinstance(patterns, list) or not 1 <= len(patterns) <= 8
+            or any(not isinstance(p, str) or not 1 <= len(p) <= 1000 for p in patterns)
+            or type(gap) not in (int, float) or not 0 <= gap <= 36):
+        raise ValueError("Invalid PDF table context profile")
+    try:
+        compiled = [re.compile(p) for p in patterns]
+    except re.error as error:
+        raise ValueError("Invalid PDF table context pattern") from error
+    tables = [b for b in blocks if b["kind"] == "table" and b["locator"]["type"] == "pdf"]
+    captions = [b for b in blocks if b["kind"] == "paragraph"
+                and b["locator"]["type"] == "pdf" and not b["locator"].get("method")
+                and any(p.fullmatch(b["text"]) for p in compiled)]
+    assigned, issues, ambiguous_tables = {}, [], set()
+    for caption in captions:
+        c = caption["locator"]["bbox"]
+        eligible = []
+        for index, table in enumerate(tables):
+            t = table["locator"]["bbox"]
+            overlap = min(c[2], t[2]) - max(c[0], t[0])
+            if (caption["locator"]["page"] == table["locator"]["page"]
+                    and 0 <= t[1] - c[3] <= gap and c[2] > c[0]
+                    and overlap >= (c[2] - c[0]) / 2):
+                eligible.append(index)
+        if len(eligible) > 1:
+            ambiguous_tables.update(eligible)
+            issues.append({"reason": "ambiguous-table-context", "caption_locator": caption["locator"],
+                           "table_locators": [tables[i]["locator"] for i in eligible]})
+        elif len(eligible) == 1:
+            assigned.setdefault(eligible[0], []).append(caption)
+    for index, contexts in assigned.items():
+        table = tables[index]
+        if index in ambiguous_tables:
+            continue
+        if len(contexts) != 1:
+            issues.append({"reason": "multiple-table-contexts", "table_locator": table["locator"],
+                           "caption_locators": [c["locator"] for c in contexts]})
+            continue
+        caption = contexts[0]
+        table["context_fragments"] = [
+            {"role": "profiled-context", "text": caption["text"], "locator": copy.deepcopy(caption["locator"])},
+            {"role": "table", "text": table["text"], "locator": copy.deepcopy(table["locator"])},
+        ]
+        table["text"] = caption["text"] + "\n" + table["text"]
+        c, t = caption["locator"]["bbox"], table["locator"]["bbox"]
+        table["locator"]["table_bbox"] = list(t)
+        table["locator"]["bbox"] = [min(c[0], t[0]), min(c[1], t[1]), max(c[2], t[2]), max(c[3], t[3])]
+        table["locator"]["text_hash"] = digest(table["text"])
+    return issues
+
+
 def pdf_parse(raw, options):
     import pymupdf
     doc = pymupdf.open(stream=raw, filetype="pdf")
@@ -2014,6 +2076,7 @@ def pdf_parse(raw, options):
             value = "\n".join(" | ".join(clean(c) for c in row) for row in rows)
             if value:
                 blocks.append({"kind": "table", "text": value, "rows": rows, "locator": {"type": "pdf", "page": number, "bbox": list(table.bbox), "text_hash": digest(value)}})
+    context_issues = apply_pdf_table_context(blocks, options.get("pdf_table_context"))
     title = clean(doc.metadata.get("title")) or options.get("title")
     title_basis = None
     if options.get("pdf_title_pattern"):
@@ -2068,13 +2131,16 @@ def pdf_parse(raw, options):
             "source_version_id": listing_version,
         }
     quality = {"required_fields_present": bool(title and blocks), "missing_pages": missing, "reviewed": False, "ocr_pages": ocr_pages}
+    if options.get("pdf_table_context") is not None:
+        quality["table_context_issues"] = context_issues
+        quality["scoped_table_count"] = sum("context_fragments" in b for b in blocks)
     if profile_accepted_sparse_pages:
         quality["profile_accepted_sparse_pages"] = profile_accepted_sparse_pages
     if ocr_pages:
         quality["ocr_model"] = ocr_model
     if ocr_unavailable:
         quality["ocr_unavailable"] = ocr_unavailable
-    return {"status": "extracted" if title and blocks and not missing else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
+    return {"status": "extracted" if title and blocks and not missing and not context_issues else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
 
 
 def image_parse(raw, options):

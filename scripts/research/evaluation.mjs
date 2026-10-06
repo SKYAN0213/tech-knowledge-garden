@@ -43,6 +43,7 @@ export const evaluationSpecSchema = {
     schema: { type: "string", enum: ["evaluation-spec/v1"] },
     case_id: identity,
     supersedes: identity,
+    supersedes_mode: { type: "string", enum: ["exact-snapshot", "same-source-new-parse"] },
     origin: { type: "string", enum: ["actual-source", "synthetic-fixture"] },
     split: { type: "string", enum: ["development", "heldout"] },
     event_id: { type: ["string", "null"], pattern: "^[a-f0-9]{16}$" },
@@ -141,6 +142,8 @@ function unique(values, label) {
 }
 function assertSpecification(spec, documents, parses) {
   assertSchema(spec, evaluationSpecSchema)
+  if (spec.supersedes_mode && !spec.supersedes)
+    throw Error("Parser revision mode requires supersedes")
   if (!spec.case_id.trim() || !spec.review.reviewer.trim() || !spec.review.notes.trim())
     throw Error("Nonempty case and review provenance required")
   unique(spec.sectors, "sectors")
@@ -186,6 +189,31 @@ function assertSpecification(spec, documents, parses) {
   return spec
 }
 
+function matchesPredecessor(previous, specification, identity) {
+  const changedParser = specification.supersedes_mode === "same-source-new-parse"
+  return (
+    previous.manifest.documents_sha256 === identity.documents_sha256 &&
+    (changedParser
+      ? previous.manifest.parses_sha256 !== identity.parses_sha256 &&
+        previous.specification.event_id === specification.event_id
+      : previous.manifest.parses_sha256 === identity.parses_sha256) &&
+    previous.specification.split === specification.split &&
+    previous.specification.origin === specification.origin
+  )
+}
+
+// Observing identical bytes again or reparsing them is not a new source case.
+// Keep parse/observation hashes on every manifest for reproducibility.
+function immutableSourceKey(documents) {
+  return sha256(
+    JSON.stringify(
+      documents
+        .map((document) => [document.source_id, document.source_version_id, document.body_sha256])
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
+    ),
+  )
+}
+
 // Freeze source-first expectations without invoking a model or changing authoring files.
 // Codex direct reading is kept separate from attested independent human review.
 export async function saveEvaluationCase(root, runId, sourceRun, spec) {
@@ -198,13 +226,7 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
       // Preserve and verify the frozen predecessor even when a later evidence
       // contract rejects its expectations. Only the new case may be evaluated.
       const previous = loadFrozenEvaluationCase(root, spec.supersedes)
-      if (
-        spec.supersedes === spec.case_id ||
-        previous.manifest.documents_sha256 !== stored.identity.documents_sha256 ||
-        previous.manifest.parses_sha256 !== stored.identity.parses_sha256 ||
-        previous.specification.split !== spec.split ||
-        previous.specification.origin !== spec.origin
-      )
+      if (spec.supersedes === spec.case_id || !matchesPredecessor(previous, spec, stored.identity))
         throw Error(
           "Superseded case must be a different case using the same exact source snapshot and split",
         )
@@ -489,10 +511,7 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
     const replacements = cases.filter(
       (replacement) =>
         replacement.specification.supersedes === item.case_id &&
-        replacement.manifest.documents_sha256 === previous.manifest.documents_sha256 &&
-        replacement.manifest.parses_sha256 === previous.manifest.parses_sha256 &&
-        replacement.specification.split === previous.specification.split &&
-        replacement.specification.origin === previous.specification.origin,
+        matchesPredecessor(previous, replacement.specification, replacement.manifest),
     )
     if (!replacements.length) return true
     supersededInvalid.push({
@@ -505,8 +524,8 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
   const actual = cases.filter(({ specification }) => specification.origin === "actual-source")
   const groups = new Map()
   for (const item of actual) {
-    const { manifest, specification } = item
-    const snapshot = `${manifest.documents_sha256}:${manifest.parses_sha256}`
+    const { specification, documents } = item
+    const snapshot = immutableSourceKey(documents)
     const group = groups.get(snapshot) || { split: new Set(), cases: [] }
     group.split.add(specification.split)
     group.cases.push(item)
@@ -618,11 +637,7 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
         group.cases[0].documents.some((document) => mediaType(document) === "pdf"),
       ).length,
     },
-    duplicate_source_snapshot_revisions:
-      actual.length -
-      new Set(
-        actual.map(({ manifest }) => `${manifest.documents_sha256}:${manifest.parses_sha256}`),
-      ).size,
+    duplicate_source_snapshot_revisions: actual.length - groups.size,
     conflicting_split_snapshots: conflictingSnapshots,
     invalid_cases: activeInvalid,
     superseded_invalid_cases: supersededInvalid,

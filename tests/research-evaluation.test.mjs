@@ -209,6 +209,114 @@ test("superseding historical expectations cannot hide tampered bytes or change t
   assert.equal(audit.superseded_invalid_cases.length, 0)
 })
 
+function reparseFixture(root, document, parse) {
+  const revised = structuredClone(parse)
+  revised.parse_id = sha256("caption-aware-fixture-parser")
+  revised.blocks[0].block_id = revised.parse_id + ":block-0001"
+  atomicWrite(root, `parses/${revised.parse_id}/parse.json`, revised)
+  atomicWrite(root, "runs/reparsed/documents.json", [document])
+  atomicWrite(root, "runs/reparsed/parses.json", [revised])
+  return revised
+}
+
+test("parser revision mode rejects a changed original source body", async (t) => {
+  const { root, spec, document, parse } = fixture(t)
+  spec.origin = "actual-source"
+  await saveEvaluationCase(root, "import", "source", spec)
+  const body = Buffer.concat([
+    fs.readFileSync(path.join(root, document.body_path)),
+    Buffer.from("\nchanged original"),
+  ])
+  const changed = {
+    ...document,
+    body_sha256: sha256(body),
+    source_version_id: document.source_id + ":" + sha256(body),
+    body_path: "sources/changed-original/body.bin",
+  }
+  atomicWrite(root, changed.body_path, body)
+  const newParse = { ...structuredClone(parse), source_version_id: changed.source_version_id }
+  const revisedParse = reparseFixture(root, changed, newParse)
+  const revised = structuredClone(spec)
+  revised.case_id = "changed-original-parser-revision"
+  revised.supersedes = spec.case_id
+  revised.supersedes_mode = "same-source-new-parse"
+  revised.facts[0].claim.evidence[0].source_version_id = changed.source_version_id
+  revised.facts[0].claim.evidence[0].parse_id = revisedParse.parse_id
+  revised.facts[0].claim.evidence[0].block_id = revisedParse.blocks[0].block_id
+  await assert.rejects(
+    saveEvaluationCase(root, "changed", "reparsed", revised),
+    /same exact source/,
+  )
+})
+
+test("source-preserving parser revisions require an explicit mode and retain invalid predecessors", async (t) => {
+  const { root, spec, document, parse } = await historicalSplitQuoteCase(t)
+  const revisedParse = reparseFixture(root, document, parse)
+  const revised = structuredClone(spec)
+  revised.case_id = "source-plan-parser-repaired"
+  revised.supersedes = spec.case_id
+  revised.facts[0].claim.evidence[0].parse_id = revisedParse.parse_id
+  revised.facts[0].claim.evidence[0].block_id = revisedParse.blocks[0].block_id
+  await assert.rejects(saveEvaluationCase(root, "repair", "reparsed", revised), /same exact source/)
+  revised.supersedes_mode = "same-source-new-parse"
+  await saveEvaluationCase(root, "repair", "reparsed", revised)
+  const audit = auditEvaluationCases(root)
+  assert.equal(audit.status, "read_only_audit")
+  assert.equal(audit.unique_actual_by_split.development, 1)
+  assert.equal(audit.superseded_invalid_cases[0].case_id, spec.case_id)
+  assert.throws(() => loadEvaluationCase(root, spec.case_id), /number_parts_not_in_same_evidence/)
+  const orphan = { ...revised, case_id: "orphan-parser-revision" }
+  delete orphan.supersedes
+  await assert.rejects(
+    saveEvaluationCase(root, "orphan", "reparsed", orphan),
+    /requires supersedes/,
+  )
+  await assert.rejects(
+    saveEvaluationCase(root, "unchanged", "source", {
+      ...spec,
+      case_id: "unchanged",
+      supersedes: spec.case_id,
+      supersedes_mode: "same-source-new-parse",
+    }),
+    /same exact source/,
+  )
+})
+
+test("one immutable body is counted once across parser revisions and cannot cross evaluation splits", async (t) => {
+  const { root, spec, document, parse } = fixture(t)
+  spec.origin = "actual-source"
+  await saveEvaluationCase(root, "import", "source", spec)
+  const revisedParse = reparseFixture(root, document, parse)
+  const revised = structuredClone(spec)
+  revised.case_id = "same-body-new-parser"
+  revised.facts[0].claim.evidence[0].parse_id = revisedParse.parse_id
+  revised.facts[0].claim.evidence[0].block_id = revisedParse.blocks[0].block_id
+  await saveEvaluationCase(root, "reparsed", "reparsed", revised)
+  let audit = auditEvaluationCases(root)
+  assert.equal(audit.unique_actual_source_snapshots, 1)
+  assert.equal(audit.duplicate_source_snapshot_revisions, 1)
+  const recaptured = { ...document, observed_at: "2026-09-26T02:00:00Z" }
+  const recapturedParse = structuredClone(revisedParse)
+  recapturedParse.parse_id = sha256("recaptured-caption-aware-fixture-parser")
+  recapturedParse.dates.observed_at = recaptured.observed_at
+  recapturedParse.blocks[0].block_id = recapturedParse.parse_id + ":block-0001"
+  atomicWrite(root, `parses/${recapturedParse.parse_id}/parse.json`, recapturedParse)
+  atomicWrite(root, "runs/recaptured/documents.json", [recaptured])
+  atomicWrite(root, "runs/recaptured/parses.json", [recapturedParse])
+  const heldout = {
+    ...revised,
+    case_id: "same-body-heldout",
+    split: "heldout",
+  }
+  heldout.facts[0].claim.evidence[0].parse_id = recapturedParse.parse_id
+  heldout.facts[0].claim.evidence[0].block_id = recapturedParse.blocks[0].block_id
+  await saveEvaluationCase(root, "recaptured", "recaptured", heldout)
+  audit = auditEvaluationCases(root)
+  assert.equal(audit.status, "integrity_review_required")
+  assert.equal(audit.conflicting_split_snapshots, 1)
+  assert.equal(audit.unique_actual_source_snapshots, 0)
+})
+
 test("completed model runs import into an exact frozen source case without rerunning inference", async (t) => {
   const { root, spec, document, parse, claim } = fixture(t)
   await saveEvaluationCase(root, "import", "source", spec)

@@ -344,6 +344,13 @@
         "language": "ja",
         "pdf_title_page": 1,
         "pdf_title_pattern": "^2027年3月期 第1四半期決算短信.*",
+        "pdf_table_context": {
+          "patterns": [
+            ".*連結経営成績\\(累計\\).*％表示は、対前年同四半期増減率.*",
+            "（金額：百万円）"
+          ],
+          "max_gap_pt": 24
+        },
         "publication_date_page": 1,
         "publication_date_pattern": "^[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日",
         "publication_date_format": "%Y年%m月%d日"

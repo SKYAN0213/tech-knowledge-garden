@@ -5124,3 +5124,13 @@ HTTPS 실제 화면에서 분야 탭→LG 기사→기업 태그→뒤로가기,
 평가 원문·원본/수정 기준·검토 인계·표적 검사 기록을 공통 source bundle/closure로 묶었다. 73members/1,330,565bytes·source_versions7이며 실제 관련 수집 lineage를 포함한다. private Drive 업로드와 metadata의 크기·부모·shared=false는 확인했지만 원격 raw 다운로드는403으로 실패했다. 원격 SHA·복원·registry는 미완료로 보존하고 동일 다운로드를 반복하지 않는다. 최초 관련-run은 기사 승인 전용 계약으로 거부되어 평가 custody를 source run 내부에 포함한 v2로 저장했다. 기사 승인·새 회차·추가 예약·전체 런타임 복구로 세지 않는다. 전체 WBS3/22·새 shadow0/7·legacy44/430+metadata10·기존08시 실제 실행 확인은 미완료다.
 
 최종 전달: commit35a67f078586162408a1e0a7c5d3813beb54202a/Actions37545754191의 통합 검사·빌드·배포 성공. 공개 reader.js/reader-index.json/knowledge-graph.json/briefing.xml4파일의 실제 HTTPS bytes는 로컬과 같으며 새 회차 없음. 로컬 ZIP73파일을 전수복원한 별도 root에서 AWS7사실·Google9사실의 원 gold 해시와 현재 loader 통과를 확인했고, FANUC active invalid·Google 과거 superseded 실패도 그대로 복원됐다. 원격 복원이나 전체 런타임 복원으로 세지 않는다. checkpoint-v20은 전체3/22·개발26/보류1·human0/40·0/20과 active invalid1을 실제 읽은 결과다. 추가 로컬 전체검사는 없고 같은 실패의1시간 반복도 없다.
+
+## 19.381. 공통 PDF 표 문맥과 재파싱 평가의 중복 방지
+
+worker의 opt-in pdf_table_context를 구현했다. 출처 profile의 명시적 문구 패턴·같은 페이지·표 위 최대24pt(상한36)·가로 겹침·표 하나에 대한 대응을 모두 만족할 때만 문단과 표를 한 근거 블록으로 저장한다. 원 조각의 text/hash/page/bbox와 원 rows/table_bbox를 보존한다. 원거리·옆·아래·다른 페이지·OCR·미설정 문구는 합치지 않으며 모호한 caption/table 대응은 partial·quality issue로 남긴다. 숫자/단위/조건 검증 규칙을 낮추거나 단위를 삭제하지 않는다. 다른 출처도 같은 옵션을 사용하고 확인된 문구 패턴만 별도로 설정한다.
+
+동일 FANUC PDF 원문 bytes와 관측시각·발표일7월31일·URL을 유지한 native reparse를 실행했다. 새 parse5d70f5de…는 missing_pages0/context issues0/문맥 결속3표다. 원 PDF1/2/4/5/10쪽을 직접 렌더해 분기·연간 전망·로봇 매출·환율·회계 보고 범위를 대조하고6사실 v2를 고정했다. 기존 gold·parse·과거 실패는 그대로 보존했다. 이 작업은 과거 자료 평가이며 새 기사/원문 수집/로컬 모델 평가가 아니다.
+
+평가 supersedes는 기본 exact-snapshot을 유지하고, 명시적인 same-source-new-parse에서만 정확히 같은 document snapshot·event ID·split·origin의 새 parse를 허용한다. 새로운 기준은 현재의 전체 사실 검사를 통과해야 하며 원문/provenance 손상은 계속 실패한다. 평가 집계는 source ID/version/body SHA의 집합으로 고정해 재파싱·같은 bytes의 재관측을 중복 집계하지 않고 개발↔보류 누출도 검출한다. 활성 invalid0, 과거 superseded invalid2, 실제 개발27/40·보류1/20, 독립human0/40·0/20이다.
+
+검증: 새 Python5건과 기존 PDF 날짜/profile3건 통과. Node 표적32건 중31 최초 통과; 새 재관측 fixture의 parse 관측시각을 실제 계약에 맞게 보완하고 실패한1건만 통과했다. 추가 원문 변경 거부1건 통과. CI에는 이미 runtime requirements에 있는 PyMuPDF1.27.2.3과 이 좁은 PDF8건만 추가했다. 추가 의존성·모델 호출·전체 로컬 suite·당일 회차 생성 없음. 실제 로그/원문 렌더/proof는 외장 evidence의 pdf-table-context-*, pdf-context-*, fanuc-table-context-*에 있다. 릴리스 통합/Drive 원격 readback은 다음 확인 단계다. 전체 WBS3/22·legacy44/430+metadata10·새 shadow0/7·기존08시 실제 실행·목표active를 유지한다.
