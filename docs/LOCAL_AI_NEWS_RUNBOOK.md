@@ -11141,3 +11141,11 @@ node scripts/research.mjs process-source --run extraction-interop-sdk-process-20
 463 최종 검증: 007873f7/Actions37517606374 Node1071/Python28·build/site/deploy success·릴리스CI1회/로컬전체0이다. 실제 공개3파일 HTTP200·SHA 동일·RSS40 전체 bytes 불변·새기사0을 확인했다. closure97자료/99members·6원문·1327082bytes/SHAaf8aeb5e33a03d0439dd9298d1afaf9c3ae77ae60d09384a3107d2501a2f29b5를 Research Drive1pLVmo4ceakxSQjiK1MQPNeMz-r2xU5WJ에서 비공개 부모/원격rawSHA·전수restore·registry로 확인했다. 복원된 동일 CLI 결과와 승인 원고를 최종 guard로 읽었고 원 사건ID·draft52acd5d3을 보존했다. 두산은 기존 별도 source closure를 재사용해 최종 guard에서도 미승인6/구조3을 확인했다. unrelated Doosan related-run은 archive 계약에서 거부되어 SDK source closure와 분리했다. 승인 관계를 꾸미거나 규칙을 완화하지 않았다. 전체legacy/독립human/정규7회/08시/인증/복구/fullruntime은 남는다. 동일실패1시간 반복0·goal active다.
 
 463 전달 증거: 별도8자료/10members·77404bytes/SHA79c521fd2b5b3c2dfd2407b071f718091c92944ab22016bc098976000009dbfc/Research Drive1oaZ9soj_LoVOWBcmChi2oIuTsLmbJxwJ도 비공개 부모·원격 rawSHA·전수복원·registry를 확인했다. CI/공개보존/복원 증거 source_versions0이며 원문6판본은 위 SDK source closure다. 외장 extraction-interop-delivery-{closure,metadata,restore,register}-v1.json과 현황판 core-progress-checkpoint-20261007-v14.json/html을 사용한다. 등록195/일일활성55·실제3/22·partial17/not_started2를 유지한다. 문서만 [skip ci]로 정리한다. 다음은 기존 수치 조건/상세 검토와 실제 브리핑 연결이며 새 처리에서 완료CLI extraction-run을 명시한다. 이미 닫힌 run을 새 모듈 해시로 재개하거나 입력을 덮어쓰지 않는다.
+
+## 464. 7월 4일 Claude Code 두 판본의 소급 전환
+
+source run legacy-jul04-claude-official-20261007-v1은 공식 API2개를 수집/parse했다. 처리200-v1은 직접 검토18verified(17변경+공개시각), 처리201-v2는1verified이며 v1 extraction/assessment를 재사용했다. 문자 인용 오류·기능추가 오분류·리드 반복은 기존 정정 경로에서 수정했고 raw 모델 출력은 보존했다. 사건/판본을 합치거나 당일 뉴스 날짜로 바꾸지 않았다. preview legacy-jul04-claude-preview-20261007-v1은 두 기존 회차만 전환했고 broad concept2개는 학습용 용어 근거가 없어 기사에 자동 할당하지 않았다.
+
+기능 변경 taxonomy 회귀 재현 뒤 최종 표적83/83이 통과했다(legacy-jul04-theme-targeted-v1.log). 실제 브라우저에서 분야 탭 URL·기사 상세·두 회차 리드/상세/태그/출처 및 운영문구·지도·빈 분석 미출력을 확인했다. 모바일/키보드 검사를 새로 실행한 것으로 세지 않는다.
+
+실제 Drive 전후213raw·16폴더 stable inventory와 release45c20872…를 사용했다. write-session b5ddd841-4c01-4c86-beb0-3fcd5c2c5108은 같은ID2개 update 후 verified_complete2/pending0/conflict0/unresolved0이다. 새 원고8813/2626bytes·SHA3a1aca94…/36afc14c…이며211개는 불변이다. post connector snapshot 파일SHAfbd7649b…와 원격 raw를 pull-drive --apply로 연결했다. 공개/CI/복원은 별도로 기록하며 전체 목표는 미완료다.

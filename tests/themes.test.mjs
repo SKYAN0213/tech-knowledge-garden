@@ -343,3 +343,47 @@ test("bug fixes share the product tag across authoring, classification and stabl
   const invalid = { ...draft, theme: "실적·재무" }
   assert.ok(draftProblems(invalid, [claim]).includes("tag_theme_mismatch"))
 })
+
+test("ordinary behavior changes retain product classification and event identity", () => {
+  const issue = fixture()
+  issue.body = issue.body
+    .replace("**테마:** 투자·기업거래", "**테마:** 제품·서비스")
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "기능 변경")
+  const article = extractArticles(issue)[0]
+  assert.deepEqual(article.classification.event_tags, ["기능 변경"])
+  assert.ok(classificationMeta(article).tags.includes("event/기능-변경"))
+  const prior = structuredClone(issue)
+  prior.body = prior.body.replace("기능 변경", "기능 추가")
+  assert.equal(article.id, extractArticles(prior)[0].id)
+
+  const claim = {
+    claim_id: "behavior-change",
+    subject: "Example",
+    evidence: [],
+    review: { status: "verified" },
+  }
+  const draft = {
+    title: "Example, 세션의 시스템 메시지 처리 변경",
+    lead: [
+      { text: "Example의 새 버전이 9월 14일 공개됐다.", claim_ids: [claim.claim_id] },
+      { text: "이 버전은 대화 중간 안내의 메시지 역할을 변경했다.", claim_ids: [claim.claim_id] },
+    ],
+    facts: {
+      who: "Example",
+      when: "2026-09-14",
+      where: null,
+      what: "메시지 처리 변경",
+      how: null,
+      why: null,
+    },
+    sector: "소프트웨어·클라우드",
+    theme: "제품·서비스",
+    tags: ["기능 변경"],
+    entities: ["Example"],
+    explanations: [],
+  }
+  assertSchema(draft, draftSchema)
+  assert.deepEqual(draftProblems(draft, [claim]), [])
+  assert.ok(draftProblems({ ...draft, theme: "연구·기술" }, [claim]).includes("tag_theme_mismatch"))
+})
