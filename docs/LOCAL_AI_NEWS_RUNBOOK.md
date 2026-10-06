@@ -11250,3 +11250,15 @@ parser recovery 입력·원고/요약·preview 검증과17호출ledger 등18실�
 470 실제 저장: writer ae2712c2-eb68-491e-84f8-75da5b70e2a4에서 Editions1Ap-qbJlZTCsPcXIAf9sl4PbAEW2pV4kx·용어1SvaIs-XiTRWibTNU2EbupKqzg4YmJy6J·Signals156j0sQpZl8nrYMxRj9b7IwPnsW4-Vriq 생성과 기존 Knowledge index 동일ID update를 각각 실제 raw/metadata로 검증했다. 4/4완료·미확정0·동명중복0이다. post216파일은 전후16폴더 안정 목록과 변경4raw/나머지212개 기존raw·ID·수정시각 불변을 대조했다. 변경 없는 raw의 이전 검증 시각을 보존했고 10분 freshness 안에서 canonical에 적용했다. fullruntime/human/08시/shadow7회로 세지 않는다.
 
 첫 원고 CI37541591178은 tests/trends.test.mjs의 RSS URL 문자열 검사1개에서 실패했다. KAIST 원문 `&mng_no=67870&GotoPage=1`의 실제 href는 보존되어 있으나 HTML 안전 escape가 `&amp;`를 포함하므로 raw includes가 틀렸다. 현재 실제href 파싱 및 query 보존2건 표적 통과이며 공개 RSS bytes는 수정하지 않았다. 최초publication operation/실패 CI는 보존하고 새 복구 operation에서 실제 배포·readback을 확인한다. 독자 화면·용어 이력 모바일390/키보드/필터/뒤로가기/CUA 확인은 current55-oct7-reader-interactions-v2에 있고 독립human gold로 세지 않는다.
+
+## 471. 10월 7일 7기사 공개·WebsiteData·운영 증거 확인
+
+실제 발행 commit1494425d/Actions37542025109 성공. public-readback-v2의28파일이 승인 reader-v2와 같으며, publication-v2에 연결하고 immutable archive.json으로 당시 관측을 보존했다. 이후 HEAD가 바뀌어도 이 관측을 현재 사이트 확인으로 재표현하지 않는다. Drive 원고4쓰기·216원본 대조와 RSS39기존GUID/날짜·7사건·GitHub/원문 일치는 별도 실제 영수증이다.
+
+`TECH_GARDEN_DRIVE_STAGE_DIR=/Volumes/X5Storage/tkg-daily-core-20261007-v1/website-staged-20261007-v1 python3 scripts/export-website-data.py`로 실제 배포4asset와 local catalog를 생성했다. 배포4asset 모두 local bytes 일치,376페이지/194기사/26용어/22관계·원본 연결 누락0이다. 기존 WebsiteData11개 원본을 백업하고 매번 쓰기 직전 ID/수정시각/부모/공유 조건을 대조했다.10개 같은ID 갱신, connections.csv 동일bytes 재사용,11개 실제 remote raw SHA/크기/수정시각 검증. 기존 추가receipt는 유지했다. `current55-oct7-website-delivery-receipt-v1.json`에 결과가 있다.
+
+`current55-oct7-public-reader-interactions-v1.json`은 HTTPS 실제 CUA 분야/기업필터/공유URL/뒤로가기/모바일390/Enter/용어→기사→브리핑 검증이다. viewport는 reset했고 공개 브리핑 탭을 deliverable로 유지했다. 전체 뉴스의 기업 필터 후 전역 심층 탭과 용어 카드 중복 문장은 다음 표적 개선으로 남긴다. 금회 심층 없는 회차의 탭·뉴스/브리핑 지도 제외는 확인됐다.
+
+운영 증거 source run `daily-20261007-seven-article-delivery-evidence-v2`를 기존 archive-closure에 전달했다. `daily-20261007-seven-article-delivery-closure-v2`는107members/4,120,393bytes/SHA87095c13f983baff0124476c0cc46a3d623869b6928f5240449cb798298e8364, Drive private Research1_k_ec62nZL9o8RM2jOTZh8JH-w3Mij8f다. 실제 raw ZIP·shared=false/부모/크기 확인,107파일 전체복원·registry를 완료했다. source_versions0의 운영 증거이며 전체 런타임 또는 기사 원문 복구로 세지 않는다. 첫 부분패키지v1은 파일명 불일치로 custody 없이 생성되어 로컬 보존, 업로드하지 않았다. 복원 CLI는 root-relative package/destination 계약을 사용한다.
+
+새회차 성공은 기존 편집audit8회에만 추가했다. 새 localAI shadow0/7·독립human0/40/0/20·전체3/22·legacy44/430/metadata10은 유지했다. checkpoint-v19(JSON)는 실제 상태1회 조회 결과다. 다음은 기존08시 실행의 실제 관측과 같은 사건/회차 재발행 차단, 새로운 비교 운영·독립평가·기존자료 재검토다. 추가 예약·유료API·모델/수집 재실행·전체로컬검사 반복 없음. 금회1시간 반복blocker 없음.
