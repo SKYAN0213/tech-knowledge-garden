@@ -3212,5 +3212,52 @@
         }
       ]
     }
+  },
+  "nachi-financial-results-ja": {
+    "source_recipe": "dated-html-list-v1",
+    "publisher_id": "nachi",
+    "allowed_hosts": ["www.nachi-fujikoshi.co.jp"],
+    "scan_max_details": 12,
+    "item_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/[^/?#]+\\.(?:pdf|PDF)$",
+    "listing_profile": {
+      "rule_id": "nachi-financial-pdf-index-ja-v1",
+      "order_policy": "complete-index",
+      "scope": "Complete static financial-results section: primary quarterly/annual earnings PDFs, including linked supplemental PDFs. Other IR notices and statutory reports are outside this route.",
+      "supporting_documents": [
+        {
+          "id": "financial-supplement",
+          "from_listing": true,
+          "required": false,
+          "url_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/[^/?#]+\\.(?:pdf|PDF)$"
+        }
+      ]
+    },
+    "parse_options": {
+      "language": "ja",
+      "title_xpath": "//h2[normalize-space(.)='決算資料']",
+      "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' lib-tab__txtarea ')][div/h2[normalize-space(.)='決算資料']]",
+      "content_block_xpath": ".//table[contains(@class,'--ir-library')]//a[contains(.,'決算短信') and not(contains(.,'補足'))]",
+      "publication_date_policy": "not_applicable",
+      "complete_index": {
+        "rule_id": "nachi-financial-pdf-index-ja-v1",
+        "scope_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' lib-tab__txtarea ')][div/h2[normalize-space(.)='決算資料']]",
+        "terminal_xpath": "(.//table[contains(@class,'--ir-library')]//a[contains(.,'決算短信') and not(contains(.,'補足'))])[last()]",
+        "terminal_pattern": "^決算短信（連結・単独）$",
+        "pagination_xpath": "//link[@rel='next' or @rel='prev'] | //nav[contains(@class,'pager')] | //form[.//input[contains(@name,'page')]]"
+      },
+      "listing_link_rules": [
+        {
+          "id": "nachi-financial-pdf-index-ja-v1",
+          "item_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' lib-tab__txtarea ')][div/h2[normalize-space(.)='決算資料']]//table[contains(@class,'--ir-library')]//a[contains(translate(@href,'PDF','pdf'),'.pdf') and contains(.,'決算短信') and not(contains(.,'補足'))]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>(?:https://www\\.nachi-fujikoshi\\.co\\.jp)?/dcms_media/other/[^/?#]+\\.(?:pdf|PDF))",
+          "title_xpath": ".",
+          "date_xpath": "normalize-space((ancestor::tr[1]/th | ancestor::tr[1]/preceding-sibling::tr[th][1]/th)[last()])",
+          "date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日$",
+          "date_format": "%Y年%m月%d日",
+          "supporting_links_xpath": "ancestor::table[1]//a[contains(translate(@href,'PDF','pdf'),'.pdf') and contains(.,'決算短信補足資料')]"
+        }
+      ]
+    }
   }
 }

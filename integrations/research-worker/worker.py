@@ -806,11 +806,36 @@ def html_parse(raw, url, options):
                 categories = [clean(" ".join(n.itertext())) for n in item.xpath(rule["category_xpath"]) if isinstance(n, etree._Element)]
             link = {"url": href, "text": item_title, "dom_path": domtree.getpath(item), "listed_date_text": listed_date or None, "profile_id": rule["id"], "date_kind": date_kind}
             link["published_at" if date_kind == "published_at" else "event_date"] = listed_day
+            support_selector = rule.get("supporting_links_xpath")
+            if support_selector is not None:
+                if not isinstance(support_selector, str) or not 0 < len(support_selector) <= 512:
+                    raise ValueError("Invalid listing supporting link selector")
+                support_nodes = item.xpath(support_selector)
+                if len(support_nodes) > 7 or any(not isinstance(n, etree._Element) or n.tag != "a" or not n.get("href") for n in support_nodes):
+                    raise ValueError("Listing supporting links must be bounded anchors")
+                support_urls = [urljoin(url, n.get("href")) for n in support_nodes]
+                if len(set(support_urls)) != len(support_urls) or href in support_urls or any(urlparse(u).scheme not in ("http", "https") for u in support_urls):
+                    raise ValueError("Listing supporting link identity conflict")
+                link["supporting_links"] = [{"url": u, "text": clean(" ".join(n.itertext())), "dom_path": domtree.getpath(n)} for n, u in zip(support_nodes, support_urls)]
             if rule.get("category_xpath"):
                 link["categories"] = categories
             links.append(link)
             matched += 1
         link_profiles.append({"id": rule["id"], "status": "matched" if matched else "no-match", "selected_items": len(items), "matched_links": matched, "truncated": len(items) > 5000})
+    complete_index = None
+    index_profile = options.get("complete_index")
+    if index_profile is not None:
+        fields = ("rule_id", "scope_xpath", "terminal_xpath", "terminal_pattern", "pagination_xpath")
+        if not isinstance(index_profile, dict) or any(not isinstance(index_profile.get(k), str) or not 0 < len(index_profile[k]) <= 512 for k in fields):
+            raise ValueError("Complete index needs explicit scope, terminal and pagination selectors")
+        matching_rules = [r for r in rules if r["id"] == index_profile["rule_id"]]
+        scopes = dom.xpath(index_profile["scope_xpath"])
+        terminals = scopes[0].xpath(index_profile["terminal_xpath"]) if len(scopes) == 1 and isinstance(scopes[0], etree._Element) else []
+        paging = dom.xpath(index_profile["pagination_xpath"])
+        selected_items = dom.xpath(matching_rules[0]["item_xpath"]) if len(matching_rules) == 1 else []
+        terminal_text = clean(" ".join(terminals[0].itertext())) if len(terminals) == 1 and isinstance(terminals[0], etree._Element) else None
+        confirmed = bool(len(scopes) == 1 and len(terminals) == 1 and selected_items and not paging and terminal_text and re.fullmatch(index_profile["terminal_pattern"], terminal_text) and all(scopes[0] in n.iterancestors() for n in selected_items) and scopes[0] in terminals[0].iterancestors())
+        complete_index = {"status": "confirmed" if confirmed else "incomplete", "profile": copy.deepcopy(index_profile), "rule_id": index_profile["rule_id"], "item_count": len(selected_items), "paging_count": len(paging), "scope_dom_path": domtree.getpath(scopes[0]) if len(scopes) == 1 else None, "terminal_dom_path": domtree.getpath(terminals[0]) if len(terminals) == 1 and isinstance(terminals[0], etree._Element) else None, "terminal_text": terminal_text, "profile_sha256": digest(json.dumps(index_profile, sort_keys=True, separators=(",", ":"), ensure_ascii=False))}
     for a in dom.xpath("//a[@href]")[:5000]:
         href = urljoin(url, a.get("href"))
         if urlparse(href).scheme in ("http", "https"):
@@ -1105,6 +1130,8 @@ def html_parse(raw, url, options):
             result["body_images"].append({"url": target, "dom_path": domtree.getpath(image), "alt": clean(image.get("alt"))})
     if listing_page_summary is not None:
         result["listing_page_summary"] = listing_page_summary
+    if complete_index is not None:
+        result["complete_index"] = complete_index
     if math_expressions:
         result["math_expressions"] = math_expressions
         result["quality"]["missing_math"] = missing_math

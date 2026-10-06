@@ -3,7 +3,7 @@ import path from "node:path"
 import { canonicalURL, editions, extractArticles, parseNote } from "../garden.mjs"
 import { readBacklog, researchWindow } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
-import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
+import { articleContentFingerprint, selectStoredSources, loadStoredSourceRun } from "./parser.mjs"
 import {
   projectIntakeOntology,
   relatedCandidateKeys,
@@ -11,6 +11,8 @@ import {
 } from "./intake-ontology.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
+import { validateListingSupportRelations } from "./supporting-sources.mjs"
+import { parseResearchDate } from "./dates.mjs"
 import { collectedCandidateReceipt } from "./scan-completion.mjs"
 import {
   readDailyReceipts,
@@ -174,6 +176,15 @@ export function selectCandidateSource(root, handoff, candidateKey) {
   const declaredAttachments = new Set(
     (primaryParse.attachments || []).map((attachment) => canonicalURL(attachment.url)),
   )
+  const listingRelations = attempt.supporting_listing_relations || []
+  const linkedFromListing = validateListingSupportRelations(
+    loadStoredSourceRun(root, attempt.attempt_id).parses,
+    matchedDocuments[0],
+    primaryParse,
+    listingRelations,
+    supportURLs,
+  )
+  for (const url of linkedFromListing) declaredAttachments.add(url)
   if (supportURLs.some((url) => !declaredAttachments.has(canonicalURL(url))))
     throw Error("Candidate supporting source is not linked by its exact parent parse")
   const selected = selectStoredSources(root, attempt.attempt_id, [
@@ -190,7 +201,10 @@ export function selectCandidateSource(root, handoff, candidateKey) {
         !supportParse ||
         supportParse.status !== "extracted" ||
         !supportParse.quality?.required_fields_present ||
-        !supportParse.blocks?.length
+        !supportParse.blocks?.length ||
+        (linkedFromListing.has(canonicalURL(selected.documents[index + 1].original_url)) &&
+          parseResearchDate(supportParse.dates?.published_at)?.day !==
+            parseResearchDate(primaryParse.dates?.published_at)?.day)
       )
     })
   )
@@ -556,6 +570,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
       article_parse_id: candidate.article_parse_id || null,
       article_content_sha256: candidate.article_content_sha256 || null,
       supporting_source_urls: candidate.supporting_source_urls || [],
+      supporting_listing_relations: candidate.supporting_listing_relations || [],
     })),
   )
   const backlog = readBacklog(backlogFile)

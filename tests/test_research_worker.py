@@ -16,6 +16,42 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def complete_index_fixture(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = config["nachi-financial-results-ja"]["parse_options"]
+        body = '''<html lang="ja"><head><title>IR archive</title></head><body>
+        <div class="lib-tab__txtarea"><div><h2>決算資料</h2></div>
+        <table class="--ir-library"><tr><th rowspan="2">2026年10月5日</th><td><a href="/dcms_media/other/20261005_jp1.pdf">第3四半期決算短信</a></td></tr>
+        <tr><td><a href="/dcms_media/other/20261005_jp2.pdf">決算短信補足資料</a></td></tr></table>
+        <table class="--ir-library"><tr><th>2026年7月14日</th><td><a href="/dcms_media/other/20260714_1.pdf">第2四半期決算短信</a></td></tr></table>
+        <table class="--ir-library"><tr><th>2026年7月22日</th><td><a href="/dcms_media/other/20260722_1.pdf">決算短信訂正</a></td></tr></table>
+        <table class="--ir-library"><tr><th>2001年1月25日</th><td><a href="/dcms_media/other/0011..pdf">決算短信（連結・単独）</a></td></tr></table>
+        </div><div><a href="/unrelated.pdf">Other IR document</a></div></body></html>'''
+        return body, options
+
+    def test_complete_static_index_retains_dated_primary_and_supplement_locators(self):
+        body, options = self.complete_index_fixture()
+        parsed = self.invoke(body.encode(), options, url="https://www.nachi-fujikoshi.co.jp/ir/earnings.html")["result"]
+        self.assertEqual(parsed["complete_index"]["status"], "confirmed")
+        self.assertEqual(parsed["complete_index"]["item_count"], 4)
+        self.assertEqual(parsed["complete_index"]["paging_count"], 0)
+        self.assertEqual(parsed["complete_index"]["profile"], options["complete_index"])
+        links = [l for l in parsed["links"] if l.get("profile_id")]
+        self.assertEqual(len(links), 4)
+        self.assertEqual(links[0]["published_at"], "2026-10-05")
+        self.assertEqual(len(links[0]["supporting_links"]), 1)
+        self.assertTrue(links[0]["supporting_links"][0]["url"].endswith("20261005_jp2.pdf"))
+        self.assertIn("/a", links[0]["supporting_links"][0]["dom_path"])
+        self.assertEqual(links[2]["published_at"], "2026-07-22")
+
+    def test_complete_static_index_cannot_hide_pagination_missing_terminal_or_duplicate_supports(self):
+        body, options = self.complete_index_fixture()
+        for changed in (body.replace("</body>", '<nav class="pager"><a href="?page=2">Next</a></nav></body>'), body.replace("決算短信（連結・単独）", "決算短信（途中）")):
+            parsed = self.invoke(changed.encode(), options)["result"]
+            self.assertEqual(parsed["complete_index"]["status"], "incomplete")
+        duplicate = body.replace('</tr></table>', '<td><a href="/dcms_media/other/20261005_jp2.pdf">決算短信補足資料</a></td></tr></table>', 1)
+        self.assertEqual(self.invoke(duplicate.encode(), options)["worker_status"], "failed")
+
     def test_common_metadata_basic_offset_retains_instant_and_raw_basis(self):
         raw = b'''<html><head><title>Research funding</title>
         <meta property="article:published_time" content="2026-10-05T11:49:24-0400">

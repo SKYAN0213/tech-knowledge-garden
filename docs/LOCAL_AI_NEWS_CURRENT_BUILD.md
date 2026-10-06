@@ -1742,3 +1742,7 @@ GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 �
 ### 2026-10-06 HFNN 실제 공개 검증
 
 e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/reader equivalence를 확인했다. canonical 색인은 GitHub 원본으로 검증하고 독자 페이지를 요구하지 않도록 수정했다. 공개 검증 표적11/11 통과. 원본213개는 기존 connector snapshot builder와 pull-drive 검증기를 재사용했다. 새 WebsiteData·수정 도구의 배포는 별도 gate이며 전체 목표는 active다.
+
+### 2026-10-06 NACHI IR 공통 수집 슬라이스
+
+정적 전체 IR 목록의 기간 선택과 목록에 실제 연결된 보충 PDF를 기존 수집/장부/일일 handoff에 통합했다. 실제102개 목록→후보1개→본문·보충2PDF/241blocks 및 정상/빈 창·재개·중복 병합·변조 거부를 확인했다. 등록195/활성55/수집증거56이다. Drive 원격ZIP927,899bytes의 SHA·전수 복원·목록 관계 재검증을 완료했다. 표적Node43/Python4 통과. 상세 근거는 런북444/출처87/계획19.351이며 외장 core-progress-checkpoint-20261006-v5가 현황판이다. 코드 릴리스·공개 readback은 별도다. 전체WBS2/22·독립human0·신규정규0/7·전체legacy/08시 운영 미완료는 유지한다.

@@ -4739,3 +4739,13 @@ NACHI 실제 실적 본문·보충·주식분할3PDF와 나치/두산 목록4HTM
 표적5tests와 수정한 NACHI profile1test만 실행했다. Q3 exact 재파싱 재실행3파일 SHA 동일·stock 조건부 재요청 동일 source version을 확인했다. Research Drive raw ZIP691,974bytes/19members/9source versions/3parse의 metadata·SHA·전수 복원을 완료했다. Drive ID1oSbnxiAIflGYZsZUxzYelBRIH2qwd-79, SHA3c76ee1bf8d97d15f0565f9d10a9447bdcec65c25bf746907ab5a3371a3ef832이며 상세 근거는 런북443/출처86과 비공개 proof다.
 
 원문 수집·파서 수정·원격 복구의 진척이다. 새 일일 활성 경로·기사 승인·실제 정규 회차는0이며 WBS2/22를 올리지 않는다. 모델 호출0·전체suite 로컬 반복0·같은 실패1시간 반복0이다. 미완료 IR 경로는 원본을 보존한 채 다음 공통 식별/기간 resolver 대상으로 남겼다. 선정 분리 결정 전 공개 형식·구7월10일 원고는 유지한다. 나머지 전체 완료 조건은 런북443을 따른다.
+
+## 19.351. 정적 IR 자료실의 실제 일일 수집 연결
+
+공통 HTML 목록 scanner/PDF parser/안전 요청/후보 장부/일일 handoff를 확장했다. 검토한 정적 목록의 전체 범위·끝 표지·페이지 이동 부재를 증명하는 complete-index와 목록에 실제 연결된 보충자료 관계를 추가했다. 기존 시간 역순 목록 검증은 유지하고 기간 내 중복 URL·날짜 충돌·잘못된 연결 근거를 거부한다. 상세 계약은 출처87절이다.
+
+NACHI 실적 목록102건 중10월5일 본문·보충PDF를 후보1건으로 수집했다. 정상기간10월1~6일/관측 시점의 빈10월6일 창, 동일 run 재개·격리 장부 반복 병합을 검증한 뒤 기존 일일 설정에 등록했다. 활성 경로55/등록195다. 원문 제목·native 발표일·raw/parse ID를 유지했다. 경로1개만의 일일 실행2창→후보 병합→실제 handoff→정확한PDF2개/241blocks 선택과 변조 거부를 확인했다. local_vault_unreconciled 수집 검사이므로 fresh Drive 작성원본·전체8분야·원고 승인·정규 운영 완료로 세지 않는다.
+
+관련Node4파일43검사·Python4검사 통과, formatting/diff 검증 완료다. 전체 로컬suite와 모델 호출은0이다. 소스3판본/parse3·26manifest파일/28ZIP members를 Research Drive에 보관했고 실제927,899bytes/SHA c3ae3be75537cc072cc7774f98e99b7de20d465f44926116f0d54c166ebf8d42를 재다운로드·전수 복원했다. 복원 원문에서 목록 관계·PDF2개/241blocks를 다시 검증했다. Drive ID13HUUN3vX_ezJ0Bc2gtu5VyyUqxB-ah1P이며 일일 운영 상태를 자동 복구한 것으로 보고하지 않는다.
+
+런북444 및 외장 core-progress-checkpoint-20261006-v5가 현재 증거다. 코드 릴리스 CI/공개 보존 readback은 별도로 기록한다. 전체goal active/WBS2/22·legacy47회차454구간/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규정규0/7은 남는다. 소급 발행의 선정 분리 결정은 pending이며 공개 형식과 원고를 바꾸지 않았다. 같은 실패1시간 반복0이다. 다음 묶음은 공통 IR 상세 프로필의 판본 범위를 넓히거나 미완료 공시 경로를 정상/빈 창까지 연결하는 것이다. 확인 없는 URL/발표일 추정·완료 추론 재실행은 하지 않는다.

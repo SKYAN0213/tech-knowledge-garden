@@ -272,6 +272,11 @@
       "channel_id": "thelec-all-rss",
       "enabled": true,
       "baseline_run": "onboarding-thelec-all-rss-normal-20261004-v2"
+    },
+    {
+      "channel_id": "nachi-financial-results-ja",
+      "enabled": true,
+      "baseline_run": "nachi-financial-live-20261006-v1"
     }
   ]
 }

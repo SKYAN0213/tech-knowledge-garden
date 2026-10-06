@@ -17,6 +17,7 @@ export function scanListImplementationFingerprints(repo = process.cwd()) {
     form_html_scan_sha256: "scripts/research/form-html-scan.mjs",
     parser_sha256: "scripts/research/parser.mjs",
     scan_evidence_sha256: "scripts/research/scan-evidence.mjs",
+    supporting_sources_sha256: "scripts/research/supporting-sources.mjs",
     scan_completion_sha256: "scripts/research/scan-completion.mjs",
     run_state_sha256: "scripts/research/run-state.mjs",
     scan_basis_sha256: "scripts/research/scan-basis.mjs",

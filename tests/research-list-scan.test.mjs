@@ -13,6 +13,7 @@ import { mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { storeParseArtifact } from "../scripts/research/parser.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
+import { validateListingSupportRelations } from "../scripts/research/supporting-sources.mjs"
 
 const base = "https://www.fanuc.co.jp/en/profile/pr/newsrelease/"
 const channel = {
@@ -57,6 +58,209 @@ const listing = {
     { id: "fanuc-index", status: "matched", selected_items: 3, matched_links: 3, truncated: false },
   ],
 }
+
+test("complete static indexes require terminal/no-pagination evidence and keep old URL collisions outside the selected window", () => {
+  const completeProfile = {
+    rule_id: "fanuc-index",
+    scope_xpath: "//main",
+    terminal_xpath: ".//i",
+    terminal_pattern: "End",
+    pagination_xpath: "//a[@rel='next']",
+  }
+  const route = {
+    ...channel,
+    parse_options: { complete_index: completeProfile },
+    listing_profile: { ...channel.listing_profile, order_policy: "complete-index" },
+  }
+  const records = [
+    link("2026-09-11", "New financial report"),
+    link("2026-08-27", "Earlier financial report"),
+    link("2026-09-02", "Middle financial report"),
+    { ...link("2026-08-27", "Archived alternative report"), published_at: "2026-08-28" },
+  ]
+  records.forEach((r, i) => (r.dom_path = `/html/body/main/a[${i + 1}]`))
+  const parsed = {
+    ...listing,
+    links: records,
+    link_profiles: [{ ...listing.link_profiles[0], selected_items: 4, matched_links: 4 }],
+    complete_index: {
+      status: "confirmed",
+      profile: completeProfile,
+      rule_id: "fanuc-index",
+      scope_dom_path: "/html/body/main",
+      terminal_dom_path: "/html/body/main/i",
+      terminal_text: "End",
+      item_count: 4,
+      paging_count: 0,
+    },
+  }
+  const result = assessSinglePageIndex(parsed, route, "2026-09-01", "2026-09-12")
+  assert.equal(result.status, "window_covered")
+  assert.deepEqual(
+    result.links.map((r) => r.published_at),
+    ["2026-09-11", "2026-09-02"],
+  )
+  assert.equal(result.repeated_url_records.length, 1)
+  assert.equal(result.repeated_url_records[0].records.length, 2)
+  for (const proof of [
+    undefined,
+    { ...parsed.complete_index, status: "incomplete" },
+    { ...parsed.complete_index, paging_count: 1 },
+    { ...parsed.complete_index, profile: { ...completeProfile, terminal_pattern: "Other" } },
+  ])
+    assert.equal(
+      assessSinglePageIndex({ ...parsed, complete_index: proof }, route, "2026-09-01", "2026-09-12")
+        .reason,
+      "complete_index_evidence_missing",
+    )
+  const conflicted = structuredClone(parsed)
+  conflicted.links[3].published_at = "2026-09-03"
+  conflicted.links[1].published_at = "2026-09-04"
+  assert.equal(
+    assessSinglePageIndex(conflicted, route, "2026-09-01", "2026-09-12").reason,
+    "listing_selected_url_conflict",
+  )
+  assert.equal(
+    assessSinglePageIndex(
+      { ...parsed, links: records.slice(0, 3), link_profiles: [{ ...listing.link_profiles[0] }] },
+      channel,
+      "2026-09-01",
+      "2026-09-12",
+    ).reason,
+    "listing_not_newest_first",
+  )
+})
+
+test("supporting PDFs linked by a dated listing stay in one candidate and a conflicting support date prevents completion", async (t) => {
+  const root = temporary(t),
+    supp = "https://www.fanuc.co.jp/reports/supplement.pdf",
+    primary = links[0].url
+  const input = structuredClone(listing)
+  input.links[0].supporting_links = [
+    { url: supp, text: "Financial supplement", dom_path: "/html/body/main/ul/li/a[2]" },
+  ]
+  const route = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      supporting_documents: [
+        {
+          id: "supplement",
+          from_listing: true,
+          url_pattern: "^https://www\\.fanuc\\.co\\.jp/reports/supplement\\.pdf$",
+        },
+      ],
+    },
+  }
+  const profiles = [
+    { id: "primary", url_pattern: "notice20260911\\.html$", options: {} },
+    { id: "supplement", url_pattern: "supplement\\.pdf$", options: {} },
+  ]
+  const run = { stage: (_n, _i, f) => f() }
+  const fetchPolicy = async (_r, _f, url) => ({
+    source_id: sourceId(url),
+    source_version_id: `${sourceId(url)}:${"a".repeat(64)}`,
+    original_url: url,
+    final_url: url,
+    fetch_status: "captured",
+    observed_at: "2026-09-28T00:00:00Z",
+  })
+  let supportDay = "2026-09-11"
+  const parse = async (_r, d) =>
+    d.original_url === base
+      ? input
+      : {
+          source_id: d.source_id,
+          source_version_id: d.source_version_id,
+          parse_id: sha256(d.original_url),
+          status: "extracted",
+          title: d.original_url === primary ? links[0].text : "Financial supplement",
+          dates: { published_at: d.original_url === primary ? "2026-09-11" : supportDay },
+          quality: { required_fields_present: true },
+          blocks: [{ text: "Original document and reporting conditions" }],
+          attachments: [],
+        }
+  const scan = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    route,
+    profiles,
+    { since: "2026-09-10", until: "2026-09-12" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(scan.summary.status, "window_scanned")
+  assert.equal(scan.candidates.length, 1)
+  assert.deepEqual(scan.candidates[0].supporting_source_urls, [supp])
+  assert.equal(scan.candidates[0].supporting_listing_relations[0].listing_parse_id, "listing-parse")
+  assert.equal(scan.documents.length, 3)
+  supportDay = "2026-09-12"
+  const conflict = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    route,
+    profiles,
+    { since: "2026-09-10", until: "2026-09-12" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(conflict.summary.status, "incomplete")
+  assert.equal(conflict.candidates.length, 0)
+  assert.equal(conflict.summary.details[0].status, "supporting_document_date_conflict")
+})
+
+test("listing material relations require exact primary, support locator, source version and publication day", () => {
+  const primary = "https://example.org/results.pdf",
+    supp = "https://example.org/supplement.pdf"
+  const parent = {
+    links: [
+      {
+        url: primary,
+        profile_id: "financial",
+        dom_path: "/main/a[1]",
+        published_at: "2026-10-05",
+        supporting_links: [{ url: supp, dom_path: "/main/a[2]" }],
+      },
+    ],
+    parse_id: "listing",
+    source_version_id: "index:version",
+  }
+  const relation = {
+    url: supp,
+    profile_id: "financial",
+    primary_dom_path: "/main/a[1]",
+    support_dom_path: "/main/a[2]",
+    listing_parse_id: "listing",
+    listing_source_version_id: "index:version",
+  }
+  const document = { original_url: primary },
+    parsed = { dates: { published_at: "2026-10-05" } }
+  assert.deepEqual(
+    [...validateListingSupportRelations([parent], document, parsed, [relation], [supp])],
+    [supp],
+  )
+  for (const r of [
+    { ...relation, listing_source_version_id: "index:other" },
+    { ...relation, support_dom_path: "/main/a[3]" },
+    { ...relation, primary_dom_path: "/main/a[2]" },
+    { ...relation, url: "https://example.org/other.pdf" },
+  ])
+    assert.throws(
+      () => validateListingSupportRelations([parent], document, parsed, [r], [supp]),
+      /exact dated listing relation/,
+    )
+  assert.throws(
+    () =>
+      validateListingSupportRelations(
+        [parent],
+        document,
+        { dates: { published_at: "2026-10-06" } },
+        [relation],
+        [supp],
+      ),
+    /exact dated listing relation/,
+  )
+})
 
 test("pinned notices are included once in their own date window without determining the cutoff", () => {
   const pinned = { ...link("2026-09-10", "Pinned security notice"), profile_id: "pinned" }

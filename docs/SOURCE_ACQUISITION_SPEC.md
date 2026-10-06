@@ -2626,3 +2626,15 @@ UTF-8, 중복 object key, 비유한 수, 잘못된 pointer·값 타입·원문 �
 세 PDF의 발표일은2026-10-05이며154/87/56blocks(총297)와 첫 페이지 날짜 근거를 확보했다. 실적과 보충자료는 같은 회계기간의 자료 관계 후보이며 별도 뉴스나 canonical alias로 자동 승인하지 않았다. 주식분할 조건부 재요청은 `not_modified`이고 최초 관측과 source version/raw SHA가 같다. 동일 입력 Q3 재파싱 재실행의 documents/parses/state bytes가 같았다.
 
 일일 경로는 추가하지 않았다. 영문 News와 일문 IR은 여러 사건이 같은 earnings URL로 연결되고 전시는 같은 fragment를 공유한다. 실적 archive 전체는 시간 역순이 아니며 옛 PDF URL 재사용도 있다. 두산 IR 다운로드 행에는 발표일이 없으므로 파일명 월/분기를 발표일로 추정하지 않는다. 저장 원본을 사용한 회계기간/발표 식별자→개별 PDF 해석이 다음 작업이며 동일 probe를 반복하지 않는다. 현재 결과는 최근 기간 수집 완주가 아니다. 보관·검증 근거는 런북443절을 따른다.
+
+## 87. 완전한 정적 IR 목록과 목록에 연결된 보충자료
+
+`dated-html-list-v1`의 기본 시간 역순 검증은 유지한다. 검토한 정적 자료실에만 `listing_profile.order_policy: complete-index`를 지정한다. `parse_options.complete_index`는 원문에서 확인한 목록 범위·마지막 자료 표지·페이지 이동 검사 XPath를 명시한다. 파서는 유일한 범위와 끝 표지, 해당 범위 안의 모든 선택 자료, 페이지 이동 요소 0개를 증명하며 scanner는 원 설정·rule ID·item 수·DOM 범위를 대조한다. 끝 표지 누락, 페이지 이동, 잘린 목록이나 날짜 결손을 완주로 처리하지 않는다. 순서가 섞여 있어도 전체 발표일을 읽은 뒤 요청 기간을 선택한다.
+
+기간 밖의 과거 URL 재사용은 날짜와 DOM 위치를 갖는 `repeated_url_records`로 보존한다. 선택 기간 안에서 같은 URL이 두 번 선택되면 `listing_selected_url_conflict`다. 과거 자료를 합치거나 다른 발표일을 현재 원문의 발표일로 추정하지 않는다. 명시적인 목록 범위 밖의 IR 공지·법정 보고서·전시는 이 경로의 완주 범위가 아니다.
+
+목록 rule의 `supporting_links_xpath`는 실제 같은 자료 묶음의 보충 링크를 최대7개 추출한다. `listing_profile.supporting_documents`의 `from_listing: true`로 기존 안전 요청·PDF 상세 파싱·불변 원문 보관을 재사용한다. `required: false`는 원문에 링크가 없는 경우만 허용하며 중복·여러 일치·날짜 충돌은 실패다. 파일명을 조합하거나 PDF 안에 없는 링크를 생성하지 않는다. 목록 기반 보충자료에는 fallback URL을 사용하지 않는다.
+
+후보의 `supporting_listing_relations`는 목록 source version/parse ID·rule ID·본문/보충자료 DOM 위치를 보존한다. scanner 검증과 일일 편집 선택은 공통 `supporting-sources.mjs`에서 해당 원문 관계를 다시 대조한다. 보충 PDF 발표일은 본문 발표일과 같아야 한다. 보충자료는 같은 후보의 근거이며 별도 기사·동일 사건 alias·발행 승인으로 자동 승격하지 않는다. 편집 입력에는 선택한 두 PDF만 전달하고 전체 자료실은 넣지 않는다. 공통 검증 모듈 해시도 collection basis에 포함한다.
+
+실제 `nachi-financial-results-ja`는102개 실적 본문을 확인해2026-10-05의 본문·보충 PDF를 후보1개로 수집했다. 정상/빈 기간·바이트 불변 재개·격리 장부 반복 병합 검증 뒤 기존 일일 경로에 추가했다(54→55). 경로1개만의 실제 일일 실행→handoff→PDF2개/241blocks 선택·변조 거부를 확인했다. 이는 전체8분야 정규 운영이 아니다. 현재 상세 프로필은 확인한 PDF 판본에 한정되며 향후 다른 양식의 결손은 검토 대기로 남긴다. 실제 Drive raw ZIP·복원과 나머지 범위는 런북444절에 기록한다.

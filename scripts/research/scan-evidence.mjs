@@ -4,6 +4,7 @@ import { sourceId, sha256 } from "./contracts.mjs"
 import { assertStoredEvidence, articleContentFingerprint } from "./parser.mjs"
 import { safePath } from "./run-state.mjs"
 import { parseResearchDate } from "./dates.mjs"
+import { validateListingSupportRelations } from "./supporting-sources.mjs"
 
 function verifyDocument(root, document) {
   if (
@@ -103,6 +104,15 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
     const declaredAttachments = new Set(
       (parsed.attachments || []).map((attachment) => canonicalURL(attachment.url)),
     )
+    const relations = candidate.supporting_listing_relations || []
+    for (const url of validateListingSupportRelations(
+      scan.parses,
+      document,
+      parsed,
+      relations,
+      supportingURLs,
+    ))
+      declaredAttachments.add(url)
     if (supportingURLs.some((url) => !declaredAttachments.has(canonicalURL(url))))
       throw Error("Candidate supporting source is not linked by its exact parent parse")
     for (const url of supportingURLs) {
@@ -121,6 +131,12 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
         !supportParses[0].blocks?.length
       )
         throw Error("Candidate supporting source lacks a complete stored parse")
+      if (
+        relations.some((r) => canonicalURL(r.url) === canonicalURL(url)) &&
+        parseResearchDate(supportParses[0].dates?.published_at)?.day !==
+          parseResearchDate(parsed.dates?.published_at)?.day
+      )
+        throw Error("Candidate listing support publication day conflicts with the original")
     }
   }
   if (

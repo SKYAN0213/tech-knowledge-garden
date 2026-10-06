@@ -97,6 +97,8 @@ export function assessSinglePageIndex(parse, channel, since, until) {
   const links = (parse.links || []).filter((link) => link.profile_id === profileId)
   const ignoredRuleIds = channel.listing_profile?.ignored_rule_ids || []
   const pinnedRuleIds = channel.listing_profile?.pinned_rule_ids || []
+  const orderPolicy = channel.listing_profile.order_policy || "newest-first"
+  const completeIndex = orderPolicy === "complete-index"
   const result = {
     status: "incomplete",
     reason: null,
@@ -110,6 +112,8 @@ export function assessSinglePageIndex(parse, channel, since, until) {
   }
   if (parse.status !== "extracted" || !parse.quality?.required_fields_present)
     return { ...result, reason: "listing_parse_incomplete" }
+  if (!["newest-first", "complete-index"].includes(orderPolicy))
+    return { ...result, reason: "listing_order_policy_invalid" }
   if (
     !profile ||
     profile.status !== "matched" ||
@@ -119,6 +123,27 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     profile.matched_links !== links.length
   )
     return { ...result, reason: "listing_profile_incomplete" }
+  if (completeIndex) {
+    const proof = parse.complete_index
+    if (
+      proof?.status !== "confirmed" ||
+      proof.rule_id !== profileId ||
+      proof.item_count !== links.length ||
+      proof.paging_count !== 0 ||
+      !proof.scope_dom_path ||
+      !proof.terminal_dom_path ||
+      !proof.terminal_text ||
+      !channel.parse_options?.complete_index ||
+      channel.parse_options.complete_index.rule_id !== profileId ||
+      JSON.stringify(proof.profile) !== JSON.stringify(channel.parse_options.complete_index) ||
+      links.some((link) => !link.dom_path?.startsWith(proof.scope_dom_path + "/")) ||
+      ignoredRuleIds.length ||
+      pinnedRuleIds.length
+    )
+      return { ...result, reason: "complete_index_evidence_missing" }
+    result.complete_index = proof
+    result.order_policy = orderPolicy
+  }
   if (
     channel.listing_profile.title_match_policy !== undefined &&
     channel.listing_profile.title_match_policy !== "exact" &&
@@ -184,13 +209,36 @@ export function assessSinglePageIndex(parse, channel, since, until) {
     }
     if (
       !pattern.test(url) ||
-      urls.has(url) ||
+      (!completeIndex && urls.has(url)) ||
       !link.text?.trim() ||
       !validDay(link.published_at) ||
       !link.listed_date_text
     )
       return { ...result, reason: "listing_item_missing_identity_or_date" }
     urls.add(url)
+  }
+  if (completeIndex) {
+    const collisions = new Map()
+    for (const link of links) {
+      const url = canonicalURL(link.url)
+      if (!collisions.has(url)) collisions.set(url, [])
+      collisions.get(url).push(link)
+    }
+    result.repeated_url_records = [...collisions.entries()]
+      .filter(([, records]) => records.length > 1)
+      .map(([url, records]) => ({
+        url,
+        records: records.map(({ text, published_at, dom_path }) => ({
+          text,
+          published_at,
+          dom_path,
+        })),
+      }))
+    const selectedURLs = links
+      .filter((l) => l.published_at >= since && l.published_at < until)
+      .map((l) => canonicalURL(l.url))
+    if (new Set(selectedURLs).size !== selectedURLs.length)
+      return { ...result, reason: "listing_selected_url_conflict" }
   }
   const uniquePins = []
   for (const link of pinnedLinks) {
@@ -223,15 +271,22 @@ export function assessSinglePageIndex(parse, channel, since, until) {
   }
   for (const link of parse.links || []) {
     if (link.profile_id || !pattern.test(link.url || "")) continue
+    // A complete static section explicitly defines its primary records. Other
+    // document types remain in raw/parse evidence, outside this route's scope.
+    if (completeIndex) continue
     if (!urls.has(canonicalURL(link.url))) return { ...result, reason: "unprofiled_article_link" }
   }
-  if (links.some((link, index) => index && link.published_at > links[index - 1].published_at))
+  if (
+    !completeIndex &&
+    links.some((link, index) => index && link.published_at > links[index - 1].published_at)
+  )
     return { ...result, reason: "listing_not_newest_first" }
   const older = links.filter((link) => link.published_at < since)
   const later = links.filter((link) => link.published_at >= until)
   const selected = [...links, ...uniquePins].filter(
     (link) => link.published_at >= since && link.published_at < until,
   )
+  if (completeIndex) selected.sort((a, b) => b.published_at.localeCompare(a.published_at))
   if (pinnedRuleIds.length) {
     selected.sort((a, b) => b.published_at.localeCompare(a.published_at))
     result.pinned_window_items = uniquePins.filter((link) => selected.includes(link)).length
@@ -471,7 +526,13 @@ export async function collectWindowDetails(
         continue
       }
       supportingSources = []
-      const supportRules = profiles[0].supporting_documents || []
+      const profileRules = profiles[0].supporting_documents || []
+      const listingRules = channel.listing_profile?.supporting_documents || []
+      if (!Array.isArray(profileRules) || !Array.isArray(listingRules)) {
+        detail.status = "supporting_document_policy_invalid"
+        continue
+      }
+      const supportRules = [...profileRules, ...listingRules]
       if (
         !Array.isArray(supportRules) ||
         supportRules.length > 7 ||
@@ -484,6 +545,8 @@ export async function collectWindowDetails(
       for (const rule of supportRules) {
         if (
           !rule ||
+          (rule.from_listing !== undefined && typeof rule.from_listing !== "boolean") ||
+          (rule.required !== undefined && typeof rule.required !== "boolean") ||
           typeof rule.id !== "string" ||
           !/^[a-zA-Z0-9_-]+$/.test(rule.id) ||
           typeof rule.url_pattern !== "string" ||
@@ -504,9 +567,13 @@ export async function collectWindowDetails(
           supportingDocumentFailed = true
           break
         }
-        const matches = (parsed.attachments || [])
+        const sourceLinks = rule.from_listing
+          ? link.supporting_links || []
+          : parsed.attachments || []
+        const matches = sourceLinks
           .filter((attachment) => pattern.test(attachment.url || ""))
           .map((attachment) => canonicalURL(attachment.url))
+        if (rule.required === false && matches.length === 0) continue
         if (matches.length !== 1 || supportingSources.some((source) => source.url === matches[0])) {
           detail.status = "supporting_document_missing_or_ambiguous"
           supportingDocumentFailed = true
@@ -515,6 +582,7 @@ export async function collectWindowDetails(
         const url = matches[0]
         const fallbackSources = rule.fallback_sources || []
         if (
+          (rule.from_listing && fallbackSources.length) ||
           !Array.isArray(fallbackSources) ||
           fallbackSources.length > 3 ||
           fallbackSources.some(
@@ -633,8 +701,29 @@ export async function collectWindowDetails(
             supportingFailure = "supporting_document_parse_incomplete"
             continue
           }
+          if (
+            rule.from_listing &&
+            parseResearchDate(attachmentParse.dates?.published_at)?.day !== listingDate.day
+          ) {
+            attempt.status = "date_conflict"
+            supportingFailure = "supporting_document_date_conflict"
+            continue
+          }
           acceptedSupport = {
             id: rule.id,
+            ...(rule.from_listing
+              ? {
+                  listing_relation: {
+                    url,
+                    listing_source_version_id: link.listing_source_version_id,
+                    listing_parse_id: link.listing_parse_id,
+                    profile_id: link.profile_id,
+                    primary_dom_path: link.dom_path,
+                    support_dom_path: sourceLinks.find((item) => canonicalURL(item.url) === url)
+                      .dom_path,
+                  },
+                }
+              : {}),
             attachment_url: url,
             url: source.url,
             status: attachment.fetch_status,
@@ -696,6 +785,13 @@ export async function collectWindowDetails(
         article_content_sha256: articleContentFingerprint(parsed),
         ...(supportingSources.length
           ? { supporting_source_urls: supportingSources.map((source) => source.url) }
+          : {}),
+        ...(supportingSources.some((source) => source.listing_relation)
+          ? {
+              supporting_listing_relations: supportingSources
+                .filter((source) => source.listing_relation)
+                .map((source) => source.listing_relation),
+            }
           : {}),
       })
       detail.status = "source_parsed_unreviewed"

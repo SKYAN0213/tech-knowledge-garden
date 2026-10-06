@@ -2791,6 +2791,26 @@
         },
         "verification_receipt": "source-onboarding/6822c6c9-cd08-4fc0-8948-98de0aa19ab1/verification.json"
       }
+    },
+    {
+      "id": "nachi-financial-results-ja",
+      "name": "NACHI consolidated financial results and supplements",
+      "kind": "filing-ir",
+      "language": "ja",
+      "region": "해외",
+      "axis": "기업·운영",
+      "sectors": ["로봇·제조"],
+      "url": "https://www.nachi-fujikoshi.co.jp/ir/earnings.html",
+      "source_recipe": "dated-html-list-v1",
+      "onboarding": {
+        "status": "verified",
+        "collection_enabled": true,
+        "checked_on": "2026-10-06",
+        "role": "listing",
+        "observation": "Dated quarterly/annual financial PDFs in the complete financial-results section; full company IR/news remains a separate route.",
+        "remaining_checks": [],
+        "verification_receipt": "source-onboarding/06c03e76-5cba-493c-a9be-c759eb6d7a13/verification.json"
+      }
     }
   ]
 }
