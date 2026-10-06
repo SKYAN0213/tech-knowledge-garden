@@ -10659,3 +10659,25 @@ OTel은 원문8에서 빠진 exporter 헤더의 Copilot Chat OTLP 한정 적용�
 7월10일 기존원고SHA37ba45683ceacc6e27edf05d67ffa1649c369306e401c74a0a7cda58dbbccc46와15구간 inventory를 대조해비기사7구간을판정했다. 빈제목3개는omitted_empty,중복요약/흐름추론/일반사용권고3개는omitted_editorial,SourceList는omitted_discovery다. article8구간은별개다. before원고/구간inventory/판정/원문읽기4자료의ordinaryv1 ZIP17oxxfpModQvHKc9k1slhA4BrXlahQTV8(14,386bytes·SHA1ac2b78aaafc92ee9a4a880f5929f2ef657405f8067423911d1cf72c75acadb4)+manifest1uNRIs9apVRtUypPS_Er9yZBlKAhT8ELK(SHA7809f2e1b2fd73498c5043077b97c1562eff22c2256eceb74dd2ef13480115c4)는실제raw bytes/4자료복원동등성을확인했다. v1복원옵션은--source-manifest이고이묶음은fullruntime/sourceclosure가아니다.
 
 누적private승인7고유사건/33verified/1deferred 샘플은 seven-six-w-reviewed-samples-v1.md,이번3건은three-more-copilot-reviewed-samples-v1.md다. 현재7건모두software이며분야당5건을넘으므로이부분묶음을그대로발행하지않는다. source split과5건/40건독서범위는완전한legacy전환에서대조할사항이며정보삭제·별도사건의임의병합·한도회피분류로통과시키지않는다. 독자원고/지도/기존URL/RSSGUID/pubDate/cutoff/예약/기본모델정책변경0이며전체tests반복0이다. 같은실패1시간반복0,모델핸들2032/76194/92963 모두terminal이다. 다음은이미선택된GPT5.6모델배포/JetBrains2원문과기존GPT5.6완료추출·실패대조보존/논문2원문의실제검토다. 전체goalactive·WBS2/22·legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·신규정규0/7은미완료다.
+
+
+## 436. Copilot 두 공지와 사전공개 논문 두 건의 승인·Drive 복원
+
+실제 처리 run은 legacy-20260710-copilot-{gpt56,jetbrains}-processing-20261006-v1과 legacy-20260710-{scireasoner,strace}-abstract-processing-20261006-v1이다. 두 Copilot 공지는 기존 선택 원문을 재사용했다. 논문은 이미 재파싱된 exact arXiv v1 초록을 개별 선택했다. 추가 HTTP 수집과 완료 모델 응답 재실행은 0이다. 네 run의 근거 대조는 source-evidence-ref/v1이며 자유 인용 정정을 위한 추가 모델 호출은 0이다. 모델 supported와 편집 승인은 계속 구분한다.
+
+Copilot GPT-5.6은 8 verified, JetBrains는 7 verified다. 추출 시간은63.555/62.757초, medium 대조는111.095+132.034/129.061+132.874초, 작성은61.326/53.162초다. 기본 모델·정책 변경 없이 실제 호출했다. 두 첫 원고의 날짜 누락·긴 리드와 조건을 정정했고, 최종 사건 e7072d841218baed/f3589f5c7a1073c1 및 KST 발표일7월10일/7월8일을 승인했다. 리드는2문장159/190자다.
+
+SciReasoner/STRACE는 각각4 verified/2 deferred다. exact arxiv:2607.07708v1/arxiv:2607.07702v1과 work_id scireasoner-2607-07708/strace-2607-07702, access 초록·scope abstract_only·status 사전공개를 기존 일반 논문 승인 계약으로 확인했다. 사건 e6f759764f290fa7/27a2def167b365d2의 발표일은 원문 day precision7월8일 그대로이며 시각·한국시간을 발명하지 않았다. 최종 리드는2문장140/110자다. 원문 전체를 읽은 논문 해설이나 교수 창업으로 표시하지 않는다. 실제 모델 시간과 승인/복원 근거는 two-abstract-papers-reference-runtime-proof-v1.json 및 two-abstract-papers-drive-restored-approval-proof-v1.json이다.
+
+네 private Drive Research ZIP과 실제 검증 값:
+
+- GPT-5.6: 1UyEfk2odmAt-kizFRrcnfojsyLFocPZR, 1,991,172bytes/157members, SHA9959e72a147025cee6ebfd188c35321e51cdefc6a9687f6f6974bff525a427ec.
+- JetBrains: 1V74WDoeZqRPQTk5tJ8wcJjWvWKvjp7et, 2,014,931bytes/157members, SHA1724cb9e767a9c1d24b3a7b33c5bf75bc2d46b7dc7f49e782f1f84997e0f4bb6.
+- SciReasoner: 1AvI9pFlUsnScEuPw-x0BjxajIN88IeGp, 183,947bytes/53members, SHAb94dc3a7e4089d679466cbe0ce94ef576e2034adf2bb968ffa16fb960a692eec.
+- STRACE: 1NtVV99LfZyv7qeFLJtVuUVik4e7zN4GQ, 178,224bytes/53members, SHA f024567912a000e52f0864302d593ac3a05717b8f2465382e72662987b794f6f.
+
+Fresh private metadata·다운로드한 실제 ZIP bytes/SHA·전체 복원·승인6파일/기사/fact packet 동등성을 확인하고 기존 research-archives register로 원문·사건 보관 위치를 등록했다. 마지막 두 ZIP은 portable v2 의존 자료 묶음53members이며 전체 runtime 복구본이 아니다. 누적 11 고유 사건/56 verified/5 deferred, 이번4사건/23 verified/4 deferred다. closure 간 반복 원문은 새 수집으로 세지 않는다.
+
+샘플은 four-new-reviewed-samples-v1.md 및 eleven-six-w-reviewed-samples-v1.md이며 운영 안내문을 넣지 않았다. 전체7월10일15구간은 아직 전환하지 않았다. 공개 작성본·URL·RSS GUID/pubDate/cutoff·예약·기본 정책 변경0, 테스트 suite 반복0이다. 승인 품질 관문과 원격/복원 readback은 실제 수행했다. 소프트웨어9건과 분야당5건의 분리 제안은 질문 응답 전 미구현이며 news-briefing-selection-design-observation-v1.json에 검토를 기록했다.
+
+모델 핸들67486/58069/29149/28373/41228/25680은 모두terminal이다. 다음은 기존 GPT-5.6 원 발표18사실과 완료된 과거 창을 보존해 남은 대조를 재개하는 계약을 확인하고, 전체 회차의 동일 사건·원문·legacy15구간·의존 용어를 대조하는 것이다. 전체 목표active와 기존 미완료 관문을 유지한다. 같은 실패를1시간 반복한 항목은0이다.
