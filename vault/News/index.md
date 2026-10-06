@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-06
+date: 2026-10-07
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,13 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/d5bbd37fc92cb75b|LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약]] · 2026-10-07
+- [[News/9fc8bc0338395f2d|누리호 5호기 발사대 이송 시작…7일 발사시각 결정 예정]] · 2026-10-07
+- [[News/2dae24cccb14cc62|AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송]] · 2026-10-07
+- [[News/14ae3c84f2654e37|셀트리온, 옴리클로 미국 출시·옵텀 사보험 처방집 등재]] · 2026-10-07
+- [[News/9059b04353193fee|KAIST, 데이터 추가·삭제에도 검색 연결을 유지하는 CONDA 공개]] · 2026-10-07
+- [[News/28865e31f8cb281c|CrowdStrike·AWS·NVIDIA, 보안 스타트업 육성 확대…개발 도구와 시장 진출 지원]] · 2026-10-07
+- [[News/7cc23b8dc1f502f5|두산로보틱스, AI 반도체 협동로봇·원전 용접 국책과제 선정]] · 2026-10-07
 - [[News/61fdd67b9300a89e|株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진]] · 2026-10-06
 - [[News/3287c7f8e2e5e4bd|과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고]] · 2026-10-06
 - [[News/cc2b0d13b882971e|미 에너지부, 원전 탄화규소 피복재 연구에 최대 5,000만 달러 공모]] · 2026-10-06

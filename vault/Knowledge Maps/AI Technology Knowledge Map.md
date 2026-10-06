@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-10-06
-last_reviewed: 2026-10-06
+updated: 2026-10-07
+last_reviewed: 2026-10-07
 tags:
   - AI
   - KnowledgeMap
@@ -37,6 +37,7 @@ tags:
 - [[Knowledge/Research Methods/Randomized Controlled Trial|무작위 대조 시험]]
 - [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)|옷감 집기용 HFNN]]
 - [[Knowledge/Robotics/Machine Tending|머신 텐딩]]
+- [[Knowledge/Robotics/Welding Weaving|용접 위빙]]
 - [[Knowledge/Security/OpenID Connect|OIDC]]
 - [[Knowledge/Security/Zero-Knowledge Proofs|영지식 증명]]
 - [[Knowledge/Software Engineering/Software Supply Chain Security|소프트웨어 공급망 보안]]

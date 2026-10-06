@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-06
+updated: 2026-10-07
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -98,6 +98,10 @@ tags:
 ### Robotics
 
 - [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)|옷감 집기용 HFNN]]
+
+### Robotics
+
+- [[Knowledge/Robotics/Welding Weaving|용접 위빙]]
 
 ## 개념 경계
 

@@ -2,7 +2,7 @@
 title: 삼성 계열사의 AI 인프라 투자와 공급 참여
 type: briefing-topic
 topic_id: company-samsung-ai-infrastructure
-date: 2026-10-06
+date: 2026-10-07
 description: 2026-09-29 삼성 계열사 6곳은 AI 인프라 기업 Helix에 총 10억달러 투자를 발표했으며, 삼성전자는
   5억달러를 부담한다. 투자 발표는 운영 용량이나 공급 계약 실적을 입증하지 않는다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-samsung-ai-infrastructure.md
@@ -21,7 +21,7 @@ Helix 투자가 실제 데이터센터·전력·통신 인프라 계약과 삼�
 
 2026-09-29 삼성 계열사 6곳은 AI 인프라 기업 Helix에 총 10억달러 투자를 발표했으며, 삼성전자는 5억달러를 부담한다. 투자 발표는 운영 용량이나 공급 계약 실적을 입증하지 않는다.
 
-2026-10-06까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-07까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 1건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

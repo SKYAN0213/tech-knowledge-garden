@@ -2,7 +2,7 @@
 title: 쌓인 옷감의 로봇 집기
 type: briefing-topic
 topic_id: research-stacked-fabric-grasping
-date: 2026-10-06
+date: 2026-10-07
 description: 연구진은 볼록 구조로 후보를 생성하고 HFNN 기반 퍼지 추론으로 선택하는 방법을 발표했다. 총30회 로봇 분류 실험에서
   수작업 점수 방식80.0%, HFNN 방식93.3%의 집기 성공률을 보고했다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/research-stacked-fabric-grasping.md

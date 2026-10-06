@@ -2,7 +2,7 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-10-06
+date: 2026-10-07
 description: NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트워크·서빙 구성을 설명한다.
   9월15일 갱신 성능은 DeepSeek V4 Pro·AgentX에서 GB300 NVL72와 비교한 값이다. Model Connect는 지원
   모델의 체크포인트부터 TensorRT 엔진·전후처리·C++ 실행 자산까지 번들로 묶는 별도 배포 사례다.
