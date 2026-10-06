@@ -1772,3 +1772,5 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 ### 2026-10-06 PDF 출처별 제한과 browser 추가 탐색
 
 공통 SourceFetcher의 profile budget을 일반·일일·검색 수집 경로에 적용하고 PDF21 profile/ABB첨부 rule에 제한값을 등록했다. redirect와304 cache에도 좁은 한도를 유지하며 실패는 유효 원문을 덮어쓰지 않는다. 실제 FANUC size 초과/cache 보존 및 ABB 공식 alternate 수집/parse를 확인했고, Chromium 같은 host 이동·iframe·popup을 즉시 차단했다. 새 수집기·유료 API·예약은 추가하지 않았다. 최초 표적74/78, 실패한 추가 탐색 수정4/4, live header 오류 수정 후 강화한 표적1/1. 통합 검증은 릴리스 CI한번, private source/실패/수정 증거는 런북451절로 연결한다. 두 구현 체크는 완료, 전출처 운영 통계·독립human·정규7회 등의 완료 조건은 유지해 전체WBS2/22/partial18/not_started2·새정규0/7이다.
+
+후속 완료 증거: codef0cced5/Actions37475100558 Node1,027/1,027·Python28·build/site/deploy success. 공개3파일 SHA와RSS40GUID/pubDate가 그대로이며, source4개/parse2개 archive는 비공개Drive actual SHA/30members restore, delivery13자료는 actual SHA/15members restore/registry까지 확인했다. 전체로컬suite는 반복하지 않았고 코드릴리스CI는1회다. 진척판v14/전체2/22·정규0/7, 상세는 런북451절. 다음은 현재55route의 실제 통합 수집/운영 통계 검증이다.
