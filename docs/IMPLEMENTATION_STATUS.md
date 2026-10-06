@@ -377,3 +377,8 @@ NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7�
 완료 증거: ff7de5b/Actions37482298032 Node1,034/1,034·Python28·build/site/deploy success. 공개3파일/40RSS 식별자 보존; source5archive4090members와 delivery220members를 private Drive actual SHA로 전수 복원·등록하고 delivery217inventory/49frozen refs를 확인했다. private 현황판1440/390px 탭/키보드 검증. 전체2/22·정규0/7 유지, 다음 공통 retry eligibility(인증/영구 실패 대기·일시 오류 제한 재시도). 런북452절.
 
 2026-10-07 공통 retry eligibility 구현: queue/executor가 같은 persisted source/parse 원인 판정을 사용한다. 인증/접근 제한은새관측대기, 파싱/identity/예산 및mixed오류는수정필요, 일시서버/네트워크오류만2회상한으로재시도한다. actual디일렉20기사재요청0·기존원장보존, KUKA EN공식주간창복구/대조·DE timeout보존과동일API추가반복중지. 표적34중32통과·수정실패2통과·무결성추가1통과. 기존 source취득8files·browser2files SHA확인. 코드CI/Drive실물보관후P2-01원래완료조건을판정한다. 계획19.360/런북453.
+
+후속 완료: b570db77/Actions37486354169 Node1,038/1,038·Python28·build/site/deploy success/공개3파일·RSS40보존. P2-01 원래11조건을원문/실패/정책/SHA·실제제한재시도와검사로대조해완료판정했다. 전체WBS3/22·partial17/not_started2, 정규0/7·195URL전수가용/전체일일현재runtime·독립human/legacy/08시·fullruntime는별도미완료다. private acceptance: P2-01-acceptance-v1.json. 원격보관·복원은런북453후속증거.
+
+
+원격 보관 완료: source-retry-closure-20261007-v1은1018자료/1020ZIP members·12,898,384bytes·SHA344246897fa21565155b3b42d4e75f2d9a4b9ad149048d252d65c21e76b7bf24다. 비공개 Drive Research ID1-PREfyGmNHeGQDbioUB_YOdaF6hKIBmu의 actual metadata/shared=false·원격 raw SHA·전수1020members 복원·위치 등록을 확인했다. 복구 사본의 operator7파일 SHA와 원래4실패 원문 판정/EN supplemental 검증으로 DE2retryable·디일렉1새관측대기를 재현했다. 전체55경로 runtime 재개나 기사 승인/정규 발행을 뜻하지 않는다. CLI 복원은 root-relative package 계약으로 실행하며 최초 절대경로 요청 거부 후 root 아래 원격 ZIP 사본으로 수정했다. 닫힌 group/manifest는 추가 수정하지 않는다. 최신 진척판은 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v1.json/html이며3/22·partial17/not_started2·정규0/7이다. 다음은 기존 원문 검토·원고 승인과 Drive/public 전달 연결을 계속한다.
