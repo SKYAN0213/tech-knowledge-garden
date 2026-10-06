@@ -11121,3 +11121,19 @@ node scripts/research.mjs extract --run extraction-substance-doosan-20261007-v1 
 462 최종 전달: a8508aa7/Actions37513350843 build/deploy success·Node1058/Python28·릴리스CI1회/로컬전체suite0을 확인했다. 실제 공개3파일 HTTP200·SHA 동등과 RSS40 전체 bytes 보존·새기사0이다. closure47자료/49members·7원문·1260363bytes/SHA7f32a36649879302b4ff0323e07cb152e98225b345d77688a1c5f84d8e9054ff를 Research Drive1VdiMGctYX5PZZhsCdbplokqJsZLJMR0E에 비공개로 저장하고 actual parent/shared=false·원격 rawSHA·전수49members restore·registry를 확인했다. 복원본 source identity/claims SHA·구조검사6/6와3/6을 원본과 대조했다. 자동 승인이나 독립human 평가로 세지 않는다. 닫힌 package는 변경하지 않았다. 상세 증거 extraction-substance-*는 기존 외장 비공개 루트에 있다. 같은 실패1시간 반복0·goal active다.
 
 462 운영 기록 보관: 별도 delivery closure8자료/10members·77444bytes/SHA0bb08a41fd066d941ea6b18c99d0eed5c259cec5147969280b588a2801ff5e23/Drive1gpYmDu21NNZJ5N_jDCr6T6Qpl_szkmUb에서 비공개 부모·원격 rawSHA·전수restore·registry를 확인했다. 원문 중복 보관이 아닌 source_versions0의 CI/공개/복원 증거다. 최신 현황판 core-progress-checkpoint-20261007-v12.json/html은 등록195·일일활성55·WBS3/22/partial17/not_started2다. 문서만 [skip ci]로 정리하고 전체 suite를 반복하지 않는다. 다음은 기존 원문의 수치 조건·상세 검토와 승인 원고의 브리핑 연결이며, 미승인 모델 출력을 발행하거나 실패를 자동 수정하지 않는다.
+
+## 463. 완료 CLI 추출 → 근거 검토 → 작성 재사용
+
+기존 완료 SDK CLI 결과를 loadCompletedExtraction이 processing 전용 checkpoint가 없다는 이유로 거부했다. 원문을 새로 수집하거나 추출을 다시 실행하지 않고 공통 로더의 완료 CLI 계약을 구현했다. 실제 extract와 저장 원출력 재구축이 같은 mapExtractionBatch를 쓴다. 기존 processing guard는 그대로다. 완료 parent/모든 batch·request/response·원문 block/date/scope/예산·최종 facts를 확인하며 partial/live·변조·review 상태 상속을 거부한다. 현재 프롬프트/정책과 다른 완료 요청도 원 요청 그대로 검증한다.
+
+변경 전 단일/분할/빈 완료CLI3개 회귀가 실패했고, 기능 묶음의 extraction-checkpoint/extraction/extraction-reuse/source-processing/archive-closure 표적111/111을 한 번 통과했다. 실제 SDK6원문과 두산1원문의 claims를0모델/0원문HTTP로 재사용하고 원 SHA 동일성을 확인했다. 두산 구조 오류를 재사용 성공이라는 이유로 없애지 않았다. 후속 실제 SDK 실행은 다음 명령이며 fact_extract 모델 호출을 생략한다.
+
+```sh
+node scripts/research.mjs process-source --run extraction-interop-sdk-process-20261007-v1 --source-run legacy-jul07-sdk-selected-20261007-v1 --extraction-run extraction-substance-sdk-20261007-v1 --candidate-key source-3b59b1b88f4cc9fad07c --model-policy data/research-model-policy.json
+```
+
+외장 extraction-interop-{repro,regression-before,targeted,runtime}-v1 자료에 실패·표적로그·실제 재사용을 보존했다. 이후 같은 run의 근거 검토/작성 완료·원 사실 비교·private approval/portable restore를 확인하고 기존 공개 사건3b59b1b88f4cc9fa와 대응을 검토한다. 기존 공개/Drive 작성 원본과 RSS는 수정하지 않는다. WBS3/22·partial17/not_started2·독립human/legacy/정규7회/08시/인증/복구 미완료·goal active를 유지한다. 같은 오류1시간 반복0이다.
+
+463 실제 후속 경로: extraction-interop-sdk-process-20261007-v1에서 추출0·medium대조135429/159207ms·think:false작성56092ms의3실호출을 완료했다. 원 API6개를 직접 읽어 tag/date/patch/dependency 동일성을 확인했고 기존 identity attention6개를 명시적으로 해결해 사실6verified로 판정했다. 원문이 말하지 않은 무결성 보장 설명과 리드 반복은 correct로 삭제하고 private approve(52acd5d3fbc61a2e73cbb13422d17608b7eee9c20df1722d5b8f213daf651afe)까지 확인했다. 같은 사건3b59b1b88f4cc9fa/원문6집합을 유지하며 candidate 장부·canonical vault·Drive 작성 원본·공개 원고는 수정하지 않았다. 자동 승인·독립human 평가로 세지 않는다.
+
+추가 변경 표적2/2는 이전 프롬프트/schema 설명과 다른 fact_extract 정책을 새 추론 없이 수용했다. budget 누락시 기본값 재구성 공백은 실패를 먼저 확인하고 원6budget필드를 요구해 해당 표적1/1을 통과했다. 승인 reviewed_at의 timestamp는 day 계약 때문에 거부됐으며 실패 입력을 보존하고2026-10-07 day로 정정한 뒤 승인했다. guards/원출력은 바꾸지 않았다. 최종 코드의 릴리스CI/공개보존/Drive 원격 SHA·복원·registry를 확인한다. 진척3/22·동일실패1시간 반복0·goal active를 유지한다.

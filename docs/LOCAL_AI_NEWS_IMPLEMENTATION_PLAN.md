@@ -4976,3 +4976,15 @@ P3-02/03은 partial이며 WBS3/22·legacy46/446/metadata10·독립human40/20·�
 portable source closure47자료/49members·7원문·1260363bytes/SHA7f32a36649879302b4ff0323e07cb152e98225b345d77688a1c5f84d8e9054ff를 privateResearch Drive1VdiMGctYX5PZZhsCdbplokqJsZLJMR0E에 보관했다. actual parent/shared=false·원격 rawSHA·전수49members 복원·registry raw_sha256_verified를 확인했다. 복원된 실제7원문과2run의 claims SHA가 원본과 동일하고 기존 검증기로 SDK6/6·두산3/6 및 미승인 상태를 다시 확인했다. 운영 runtime 완전 복원이나 자동 사실 승인을 뜻하지 않는다. 닫힌 archive/원출력은 수정하지 않는다. 외장 extraction-substance-{ci-final,public-preservation,restored-proof,register}-v1.json/log가 근거다. 전체3/22와 남은 legacy·독립평가·08시/인증/복구·정규7회 조건을 유지한다.
 
 최종 전달 기록8자료/10members·77444bytes/SHA0bb08a41fd066d941ea6b18c99d0eed5c259cec5147969280b588a2801ff5e23도 Research Drive1gpYmDu21NNZJ5N_jDCr6T6Qpl_szkmUb에서 actual parent/shared=false·원격 rawSHA·전수restore·registry를 확인했다. source_versions0은 CI/공개보존/복원 기록이며 원문7판본은 위 source closure에 있다. 현황판 core-progress-checkpoint-20261007-v12.json/html은 등록195/일일활성55와 실제 WBS3/22·partial17/not_started2를 표시한다. 추가 코드/데이터 변경 없이 문서 정리만 [skip ci]로 커밋한다. 다음은 이미 확보한 원문의 정확한 수치 조건·상세 검토와 승인 원고의 실제 브리핑 연결을 진행한다. 같은 원문을 조건 없이 재수집·모델 재실행하지 않는다.
+
+## 19.370. 완료 CLI 추출의 후속 처리 재사용
+
+직전 turn은 공통 입력 수정·실제2실행·검증/배포/Drive 복원을 수행한 progress다. 이미 완료한 SDK CLI 추출을 `loadCompletedExtraction`으로 읽었으나 처리기 전용 완료 형식만 인정해 거부된 것을 실제로 재현했다. 이 상태에서 새 `process-source`를 시작하면 완료 추출을 지정할 수 없어 추출 호출이 반복될 수 있었다. source-specific 예외나 가짜 processing checkpoint를 만들지 않고 공통 완료 로더에서 CLI 원 프로토콜을 검증해 재사용한다.
+
+CLI 원문/parse bytes, terminal claims·모든 배치 결과의 해시와 실제 요청/응답, model/digest/think/context/output, JSON pointer/날짜/제목/본문·전체 선택 범위와 예산을 대조한다. 원 모델 출력→근거 block 매핑은 실제 추출과 재사용이 같은 함수를 사용한다. 현재 프롬프트를 재생성하거나 원 기록을 덮어쓰지 않는다. 이전 processing 관문은 유지하며 미완료·진행 중·변조·검토 상태 상속은 거부한다. 기존 구조 오류는 숨기지 않고 후속 검토 대상으로 전달한다.
+
+신규 단일/분할/빈 CLI 완료 회귀3개는 변경 전 실패했다. 전체 기능 묶음의 추출/재사용/후속처리/portable closure 표적111/111을 한 번 통과했다. 실제 저장 SDK6원문·두산1원문의 CLI 결과를 추가 모델·원문HTTP0으로 읽어 원 claims SHA 동일성을 확인했다. 정상 후속 경로를 SDK에서 실제 실행하며 사실 검토→작성→기존 공개 사건 동일성 확인까지 이어간다. 새 article/event/RSS 회차를 만들지 않는다. 독립human 평가·전체legacy·정규7회·08시/인증/복구는 완료로 세지 않으며 WBS3/22·partial17/not_started2·goal active를 유지한다. 외장 extraction-interop-*와 런북463을 사용한다.
+
+실제 SDK 후속 실행은 추출0·대조medium2회(135429/159207ms)·작성think:false1회(56092ms)를 완료했다. 원 API6개 tag_name/published_at/body와 직접 대조해 패치2·의존성4의 사실6개를 검증했고 subject_only_in_title 신호6개는 실제 태그/원문 대응으로 확인했다. 작성 모델이 추가한 근거 없는 무결성 보장 설명과 반복 문단은 삭제하고3개 리드 항목·버전 상세1문단을 기존 correct/approve 경로에서 private 승인했다. 모델 초안/요청/응답과 정정 이력을 보존했다. 기존 공개 사건3b59b1b88f4cc9fa와 원문6주소 집합이 같고 기존 승인 원고/공개 원본은 수정하지 않았다. 신규 발행·후보 승인 변경·정규 회차 증가는0이다.
+
+원 요청의 이전 프롬프트/schema 설명과 다른 fact_extract 정책을 재사용하는 변경 표적2/2도 확인했다. 원 budget이 사라졌을 때 기본값으로 재구성할 수 있었던 검증 공백은 재현 뒤 명시 budget6필드를 필수로 확인하도록 수정했고 해당 실패 표적1/1을 통과했다. 전체111을 다시 반복하지 않았다. 편집 승인 입력의 reviewed_at timestamp는 기존 day 계약에서 거부돼 원 실패 입력을 보존하고 한국시간2026-10-07 day로 정정했다. 저장 아티팩트/검증 규칙은 완화하지 않았다. 최종 guard에서도 같은7원문과 현재 승인 원고를 읽어 확인한다. 다음은 릴리스CI1회·원격 Drive rawSHA/portable restore·실제 공개보존을 마무리한다.

@@ -485,6 +485,20 @@ export function planExtractionBatches(parses, options = {}) {
   }
 }
 
+export function mapExtractionBatch(output, batch, blocks) {
+  assertSchema(output, batch.request.schema)
+  const permitted = new Set(batch.block_keys)
+  const mapped = structuredClone(output)
+  for (const claim of mapped.claims)
+    claim.evidence = claim.evidence.map((evidence) => {
+      const source = blocks.get(evidence.block_key)
+      if (!source || !permitted.has(evidence.block_key)) throw Error("Unknown model evidence block")
+      return { ...source, quote: evidence.quote, support: evidence.support }
+    })
+  assertSchema(mapped, extractionSchema)
+  return mapped.claims
+}
+
 export async function extractClaims(
   ollama,
   parses,
@@ -512,17 +526,7 @@ export async function extractClaims(
       return ollama.structured({ ...request, timeout_ms: Math.min(request.timeout_ms, remaining) })
     }
     const result = checkpoint ? await checkpoint(batch.batch_id, request, action) : await action()
-    assertSchema(result.output, request.schema)
-    const permitted = new Set(batch.block_keys)
-    const output = structuredClone(result.output)
-    for (const c of output.claims)
-      c.evidence = c.evidence.map((e) => {
-        const source = plan.blocks.get(e.block_key)
-        if (!source || !permitted.has(e.block_key)) throw Error("Unknown model evidence block")
-        return { ...source, quote: e.quote, support: e.support }
-      })
-    assertSchema(output, extractionSchema)
-    mapped.push(...output.claims)
+    mapped.push(...mapExtractionBatch(result.output, batch, plan.blocks))
     results.push({
       batch_id: batch.batch_id,
       input_chars: batch.input_chars,
