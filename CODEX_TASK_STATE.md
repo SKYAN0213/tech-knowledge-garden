@@ -994,3 +994,8 @@ Daily1event CXMT G5; Drive170freshreadbacks; final6e4798d Actions35544279623/pub
 - GPTLive 후속완료: legacy-20260710-gptlive-factual-20261006-v1 event3fb14968493dc682/13verified1rejected(7월31일후속 제외)·writer70.534초·2문장200자/3설명5문단 승인. 승인closure99파일 remoteSHA/공통복원/13사실·기사동등/위치등록 확인. 공개0·legacy47/454 유지. 다음동일7월10일08:02회차 GPT5.6/Copilot/Anthropic/논문/릴리스 검토.
 
 - ef556c2/Actions37404941236 실제Node964/Python15+10+3/build/deploy·새12public byte 동등 확인. private status는 canonical장부에서194등록54일일55수집증거/780후보728지문/WBS2/22로갱신. GPT56 processing legacy-20260710-gpt56-processing-20261006-v1: source119블록/추출3batch18후보완료, 근거대조 진행 중. source-run legacy-20260710-gpt56-source-20261006-v2.7월30일/8월21일 가격갱신·현가격의 최초발표 소급 차단은 사실검토에서 판정할 것. owner/root model run을 읽기 전에 재시작/파일수정하지 않는다.
+
+
+- 2026-10-06 continuation: 공통 Anthropic news profile로 저장 원문의 관련 기사 혼입을 수정했다.27→19본문블록·동일raw/날짜·old parse Drive복구본 SHA보존·HTTP0, proof legacy-jul10-anthropic-reparse-proof-v1.json. 신규 본문/누락거부 시험1과 명시 wrapper/각주 복구 시험1 집중 검증 통과. GPT5.6의 추출3배치·대조2배치를 재사용했으나 마지막6사실 호출이300초timeout(03:05:28Z)으로 종료됐다. 원출력/비용장부/앞2checkpoint를 보존하고 같은 요청 재시도·제한증가 없이 Anthropic processing-v1로 이동.1시간반복기준은미충족, GPT5.6승인/공개0. 전체goalactive·legacy47/454·metadata10·WBS2/22/정규0/7 유지. Docs19.335/runbook427.
+
+- Anthropic 실제 추출56.731초·대조2회 완료 후 ID suffix중복1을 재현했다. 공통 명시 claim-ID echo review를 추가해 원request같은행/24hex/정확suffix/원문인용/다른ID전체/SHA고정, verdict변경거부. 신규red→green·관련27/27/syntax/Prettier/diffpass. 추가추론0·2materialized, factual-v1 9verified(6+직접3)/2concerns해결·writer진행. GPT5.6timeout은재시도없음·기사공개0·전체legacy47/454유지. 다음writer편집승인·의존성Drive복구/코드단일CI.

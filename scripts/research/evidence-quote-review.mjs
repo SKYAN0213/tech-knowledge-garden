@@ -16,25 +16,59 @@ const typography = (value) =>
   value.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").trim()
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const reviewMode = (review) =>
-  review?.schema === "research-evidence-quote-review/v1" &&
-  review.quote_only === true &&
+  review?.schema === "research-evidence-claim-id-review/v1" &&
+  review.claim_id_only === true &&
+  review.quote_only === undefined &&
   review.citation_only === undefined &&
   review.window_assessment_only === undefined
-    ? "quote"
-    : review?.schema === "research-evidence-citation-review/v1" &&
-        review.citation_only === true &&
-        review.quote_only === undefined &&
-        review.window_assessment_only === undefined
-      ? "citation"
-      : review?.schema === "research-evidence-window-review/v1" &&
-          review.window_assessment_only === true &&
-          review.quote_only === undefined &&
-          review.citation_only === undefined
-        ? "window"
-        : null
+    ? "claim-id"
+    : review?.claim_id_only !== undefined
+      ? null
+      : review?.schema === "research-evidence-quote-review/v1" &&
+          review.quote_only === true &&
+          review.citation_only === undefined &&
+          review.window_assessment_only === undefined
+        ? "quote"
+        : review?.schema === "research-evidence-citation-review/v1" &&
+            review.citation_only === true &&
+            review.quote_only === undefined &&
+            review.window_assessment_only === undefined
+          ? "citation"
+          : review?.schema === "research-evidence-window-review/v1" &&
+              review.window_assessment_only === true &&
+              review.quote_only === undefined &&
+              review.citation_only === undefined
+            ? "window"
+            : null
 const reviewedTypography = (correction, original, replacement) => {
   const before = typography(original),
     after = typography(replacement)
+  if (correction.citation_wrapper_checked === true) {
+    // A model may retain a link label but omit its tool-only wrapper. Restore
+    // the exact stored span only after explicit review; visible prose and link
+    // labels must match, and the normal exact-block check still applies.
+    const wrapper = /\uE200cite\uE202[0-9]+†([^\uE200\uE202\uE201\uFFFC]+)\uE201/g
+    return (
+      correction.citation_markers_checked === undefined &&
+      correction.sentence_initial_article_checked === undefined &&
+      correction.elision_expansion_checked === undefined &&
+      wrapper.test(after) &&
+      [after, after.replace(/\uE201\s+([,.:;!?])/g, "\uE201$1")].some((candidate) =>
+        [false, true].some(
+          (footnote) =>
+            typography(
+              candidate.replace(wrapper, (_, label) => {
+                const visible = label
+                  .replace(/\u2060?\(opens in a new window\)†[^†]*$/, "")
+                  .replace(/\u2060$/, "")
+                return footnote && /^[0-9]+$/.test(visible) ? `†${visible}†` : visible
+              }),
+            ) === before,
+        ),
+      )
+    )
+  }
+  if (correction.citation_wrapper_checked !== undefined) return false
   if (correction.citation_markers_checked === true) {
     // Restore only the three transport glyphs of an explicitly checked web
     // citation. Reference numbers, link labels and all prose remain unchanged.
@@ -101,6 +135,78 @@ function applyCorrections({
 }) {
   const touched = new Set()
   for (const correction of review.corrections) {
+    if (reviewMode(review) === "claim-id") {
+      const allowed = [
+        "batch",
+        "claim_id",
+        "original_claim_id",
+        "claim_id_echo_checked",
+        "raw_sha256",
+        "reason",
+      ]
+      const batch = correctedBatches[correction.batch - 1]
+      const original = rawBatches[correction.batch - 1]
+      const selected =
+        originalInput.schema === "research-window-evidence-assessment-input/v1"
+          ? originalInput.windows?.[correction.batch - 1]?.claim_ids
+          : claims
+              .slice(
+                (correction.batch - 1) * originalInput.claims_per_batch,
+                correction.batch * originalInput.claims_per_batch,
+              )
+              .map((c) => c.claim_id)
+      const index = selected?.indexOf(correction.claim_id)
+      const row = batch?.output?.assessments?.[index]
+      const claim = claims.find((c) => c.claim_id === correction.claim_id)
+      const suffix =
+        typeof correction.original_claim_id === "string"
+          ? correction.original_claim_id.slice(24)
+          : ""
+      if (
+        Object.keys(correction).some((k) => !allowed.includes(k)) ||
+        !Number.isInteger(correction.batch) ||
+        correction.batch < 1 ||
+        !/^[a-f0-9]{24}$/.test(correction.claim_id || "") ||
+        !suffix ||
+        suffix.length >= 24 ||
+        correction.original_claim_id !== correction.claim_id + suffix ||
+        !correction.claim_id.endsWith(suffix) ||
+        correction.claim_id_echo_checked !== true ||
+        !claim ||
+        !row ||
+        row.claim_id !== correction.original_claim_id ||
+        claims.some((c) => c.claim_id === correction.original_claim_id) ||
+        batch.output.assessments.length !== selected.length ||
+        batch.output.assessments.some((r, i) => i !== index && r.claim_id !== selected[i]) ||
+        !row.evidence.length ||
+        row.evidence.some(
+          (e) =>
+            !claim.evidence.some((c) => c.parse_id === e.parse_id && c.block_id === e.block_id) ||
+            !parses
+              .find((p) => p.parse_id === e.parse_id)
+              ?.blocks.find((b) => b.block_id === e.block_id)
+              ?.text.includes(e.quote),
+        ) ||
+        correction.raw_sha256 !== originals[correction.batch - 1]?.sha256 ||
+        typeof correction.reason !== "string" ||
+        !correction.reason.trim() ||
+        touched.has(correction.batch) ||
+        (rejectCheckpoint && readJSON(root, base + `batch-${correction.batch}-checkpoint.json`))
+      )
+        throw Error("Explicit unique supplied claim ID suffix echo review required")
+      touched.add(correction.batch)
+      row.claim_id = correction.claim_id
+      batch.quote_review = {
+        schema: review.schema,
+        source_run: sourceRun,
+        input_sha256: inputSha,
+        original_response_sha256: sha256(JSON.stringify(original)),
+        review_sha256: sha256(JSON.stringify(review)),
+        reviewer: review.reviewer,
+        reviewed_at: review.reviewed_at,
+      }
+      continue
+    }
     if (reviewMode(review) === "window") {
       const allowed = ["batch", "claim_id", "raw_sha256", "reason", "missing_cited_blocks_checked"]
       const batch = correctedBatches[correction.batch - 1]
@@ -158,6 +264,7 @@ function applyCorrections({
       "sentence_initial_article_checked",
       "elision_expansion_checked",
       "citation_markers_checked",
+      "citation_wrapper_checked",
       ...(reviewMode(review) === "citation"
         ? ["original_block_id", "block_id", "adjacent_locator_checked"]
         : []),
@@ -189,6 +296,7 @@ function applyCorrections({
         correction.sentence_initial_article_checked !== undefined ||
         correction.elision_expansion_checked !== undefined ||
         correction.citation_markers_checked !== undefined ||
+        correction.citation_wrapper_checked !== undefined ||
         !Number.isInteger(originalIndex) ||
         originalIndex < 0 ||
         !Number.isInteger(replacementIndex) ||
@@ -404,6 +512,7 @@ export async function reviewEvidenceQuotes({
       "quote_only",
       "citation_only",
       "window_assessment_only",
+      "claim_id_only",
       "meaning_unchanged",
       "corrections",
     ]
@@ -611,6 +720,7 @@ export async function reviewEvidenceQuotes({
       repaired_quotes: reviewMode(review) === "quote" ? repairedQuotes : 0,
       ...(reviewMode(review) === "citation" ? { repaired_locators: repairedQuotes } : {}),
       ...(reviewMode(review) === "window" ? { lowered_checks: repairedQuotes } : {}),
+      ...(reviewMode(review) === "claim-id" ? { repaired_claim_ids: repairedQuotes } : {}),
       assessment_sha256: sha256(JSON.stringify(result.record)),
       model_calls: completedLedger.attempts.filter((a) => a.status === "complete").length,
       requires_fact_review: true,
@@ -624,6 +734,7 @@ export async function reviewEvidenceQuotes({
       repaired_quotes: reviewMode(review) === "quote" ? repairedQuotes : 0,
       ...(reviewMode(review) === "citation" ? { repaired_locators: repairedQuotes } : {}),
       ...(reviewMode(review) === "window" ? { lowered_checks: repairedQuotes } : {}),
+      ...(reviewMode(review) === "claim-id" ? { repaired_claim_ids: repairedQuotes } : {}),
       model_calls: generatedMissing,
     }
   })

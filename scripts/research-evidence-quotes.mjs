@@ -63,6 +63,9 @@ try {
           ? {}
           : { repaired_locators: result.repaired_locators }),
         ...(result.lowered_checks === undefined ? {} : { lowered_checks: result.lowered_checks }),
+        ...(result.repaired_claim_ids === undefined
+          ? {}
+          : { repaired_claim_ids: result.repaired_claim_ids }),
         requires_fact_review: true,
         public_approved: false,
         candidate_published: false,

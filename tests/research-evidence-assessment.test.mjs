@@ -282,25 +282,40 @@ test("source modified during inference cannot produce a completed assessment", a
   assert.equal(readJSON(f.root, "runs/assessment/evidence-assessment/assessment.json"), null)
 })
 
-async function quoteFixture(t, { partial = false, citationMarkers = false } = {}) {
+async function quoteFixture(
+  t,
+  { partial = false, citationMarkers = false, citationWrapper = false, claimEcho = false } = {},
+) {
   const f = fixture(
     t,
-    citationMarkers
+    citationWrapper
       ? {
-          text: "Example announced plans to ship 50 units in 2027. \uE200cite\uE2027†Official verification tool\uE201 supports this.",
+          text: "Example announced plans to ship 50 units in 2027. \uE200cite\uE2027†Official verification tool\uE201 and \uE200cite\uE2028†Other tool\u2060(opens in a new window)†example.org\uE201 , support this. Footnote^{\uE200cite\uE2029†3\uE201 }.",
         }
-      : {},
+      : citationMarkers
+        ? {
+            text: "Example announced plans to ship 50 units in 2027. \uE200cite\uE2027†Official verification tool\uE201 supports this.",
+          }
+        : {},
   )
   if (partial) {
     f.claims.push({ ...structuredClone(f.claims[0]), claim_id: "c2" })
     f.provider.executionPolicy.settings.provider = "ollama"
   }
-  f.row.evidence[0].quote = citationMarkers
-    ? f.row.evidence[0].quote.replace(
-        /[\uE200\uE202\uE201]/g,
-        citationMarkers === "spaces" ? " " : "\uFFFC",
-      )
-    : f.row.evidence[0].quote.replace("50 units", "50  units")
+  if (claimEcho) {
+    f.claims[0].claim_id = "a1".repeat(12)
+    f.row.claim_id = f.claims[0].claim_id + f.claims[0].claim_id.slice(-8)
+  }
+  f.row.evidence[0].quote = claimEcho
+    ? f.parses[0].blocks[0].text
+    : citationWrapper
+      ? "Example announced plans to ship 50 units in 2027. Official verification tool and Other tool, support this. Footnote^{†3† }."
+      : citationMarkers
+        ? f.row.evidence[0].quote.replace(
+            /[\uE200\uE202\uE201]/g,
+            citationMarkers === "spaces" ? " " : "\uFFFC",
+          )
+        : f.row.evidence[0].quote.replace("50 units", "50  units")
   const generate = f.provider.structured.bind(f.provider)
   let request
   f.provider.structured = async (value) => {
@@ -320,7 +335,7 @@ async function quoteFixture(t, { partial = false, citationMarkers = false } = {}
             { claimsPerBatch: 1 },
           )
         : run(f),
-    /exact stored source/,
+    claimEcho ? /cover each exact candidate/ : /exact stored source/,
   )
   atomicWrite(f.root, "runs/assessment/documents.json", f.documents)
   atomicWrite(f.root, "runs/assessment/parses.json", f.parses)
@@ -441,6 +456,95 @@ for (const citationMarkers of ["replacement-glyph", "spaces"])
     )
     assert.equal(f.calls(), 1)
   })
+
+test("explicit citation wrapper review restores exact source span without changing visible words", async (t) => {
+  const f = await quoteFixture(t, { citationWrapper: true })
+  const correction = f.quoteReview.corrections[0]
+  correction.citation_wrapper_checked = true
+  for (const changes of [
+    { citation_wrapper_checked: undefined },
+    { citation_markers_checked: true },
+    { elision_expansion_checked: true },
+    { quote: correction.quote.replace("7†", "9†") },
+    { quote: correction.quote.replace("50 units", "51 units") },
+    { quote: correction.quote.replace("Official", "Different") },
+    { original_quote: correction.original_quote.replace("Other tool", "Other thing") },
+  ])
+    await assert.rejects(
+      () =>
+        reviewEvidenceQuotes({
+          root: f.root,
+          run: "quote-reviewed",
+          sourceRun: "assessment",
+          review: { ...f.quoteReview, corrections: [{ ...correction, ...changes }] },
+        }),
+      /typography|adjacent/,
+    )
+  const result = await repairQuotes(f)
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.repaired_quotes, 1)
+  await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+    f.originalBytes,
+  )
+  assert.equal(f.calls(), 1)
+})
+
+test("explicit claim ID echo review reuses a uniquely bound assessment without changing its facts", async (t) => {
+  const f = await quoteFixture(t, { claimEcho: true })
+  const { quote_only, ...base } = f.quoteReview
+  f.quoteReview = {
+    ...base,
+    schema: "research-evidence-claim-id-review/v1",
+    claim_id_only: true,
+    corrections: [
+      {
+        batch: 1,
+        claim_id: f.claims[0].claim_id,
+        original_claim_id: f.row.claim_id,
+        claim_id_echo_checked: true,
+        raw_sha256: sha256(f.originalBytes),
+        reason:
+          "Only the exact supplied ID suffix was echoed; source, quote and verdict were read unchanged.",
+      },
+    ],
+  }
+  const correction = f.quoteReview.corrections[0]
+  for (const change of [
+    { claim_id_echo_checked: false },
+    { original_claim_id: f.row.claim_id + "ff" },
+    { claim_id: "b1".repeat(12) },
+    { verdict: "supported" },
+    { raw_sha256: "f".repeat(64) },
+  ])
+    await assert.rejects(
+      () =>
+        reviewEvidenceQuotes({
+          root: f.root,
+          run: "quote-reviewed",
+          sourceRun: "assessment",
+          review: { ...f.quoteReview, corrections: [{ ...correction, ...change }] },
+        }),
+      /claim ID/,
+    )
+  const result = await repairQuotes(f)
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.repaired_claim_ids, 1)
+  assert.equal(result.repaired_quotes, 0)
+  const raw = readJSON(f.root, "runs/quote-reviewed/evidence-assessment/batch-1.json")
+  const original = JSON.parse(f.originalBytes)
+  assert.deepEqual(raw.output.assessments[0], {
+    ...original.output.assessments[0],
+    claim_id: f.claims[0].claim_id,
+  })
+  await loadBoundAssessment(f.root, "quote-reviewed", f.claims, f.documents, f.parses)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/assessment/evidence-assessment/batch-1.json")),
+    f.originalBytes,
+  )
+  assert.equal(f.calls(), 1)
+})
 
 test("quote recovery generates only explicitly requested missing batches and resumes without metadata", async (t) => {
   const f = await quoteFixture(t, { partial: true })

@@ -729,6 +729,16 @@
       }
     },
     {
+      "id": "anthropic-news-article-v1",
+      "url_pattern": "^https://www\\.anthropic\\.com/news/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main/article/div//h1",
+        "content_xpath": "//main/article/div/article",
+        "content_block_xpath": ".//h1 | .//h2 | .//h3 | .//h4 | .//p | .//li | .//table | .//pre"
+      }
+    },
+    {
       "id": "anthropic-demystifying-agent-evals",
       "url_pattern": "^https://www\\.anthropic\\.com/engineering/demystifying-evals-for-ai-agents/?$",
       "options": {
