@@ -4570,3 +4570,18 @@ DOE 공모는 미국 현지 10월5일 발표, 3년간 최대5천만 달러·12�
 19.337 보관 검증: DOE 승인 closure53자료55members/199,426bytes는 Research1_IDyco3iojaGhVQF85YKjHt7EqH52i6w, 원격 SHA6901d9e912f770da071ca33995445f2e9f301e1e5bb210574211f11e947b2b35로 대조했다. 보안 승인 closure788자료790members/6,948,490bytes는 원 수집184판본을 포함하며 Research1-WV8A9AnSeuB3ftzJWMLA_1DMPnZb5Q4의 SHAb00af4458f72c3e1f8fd9429bb800e7cbe6f396d04df215c9e73a95226d39f52를 대조했다. 두 복원본의 승인 기사/승인 파일 SHA와6+5 verified facts·보류3사실을 공통 loadCurrentApproval로 다시 확인했다. 서로 다른 기사에 related-run을 붙이는 closure는 관문이 거부하므로, 기존 단일기사 closure를 각각 재사용했다.
 
 발행 증거94자료95members/2,093,905bytes는 Research1ZKFNimUBv4zEXU6lzbkTEnZpMdyvZZ9W와 exact manifest11WJIJ1Y4ZZcd8JAp0f0_zIQpuD7YchQ5로 보관했다. 원격 ZIP SHA094975e8401b6a9eee22735ce5be2f7345508941ad9a511ba1866d72e8ccac06 및 manifest SHA17e92235a1bdff4da6013e5d4e38072572fa75015735917e14b200d779615db4를 대조하고 ordinary v1으로96파일을 복원했다. 이는 전체 runtime 복구가 아니다. 현황은 동일 status JSON을 HTML로 한 번만 렌더링했다. 실제 후보781건(verified97/deferred9/rejected2/unreviewed673), 등록194/일일활성54/수집근거55이며 조사32칸은 partial31/failed1이다. 새 승인2건과 수동 보완은 정규0/7을 바꾸지 않는다. 다음은 현재 저장된 일일 수집을 재사용하여32칸의 원문 조사/판정을 채우고, 다음 신규 정규 실행의 최초 입력과 결과를 같은 operation에 연결한다.
+
+
+## 19.338. 분야별 실제 검색·원문 읽기와 접근 제한 공통 판정
+
+2026-10-06 실제 MLX 모델의 62검색어를 재사용하여 공통 검색으로 843개 고유 URL 후보를 발견했다. 국내 AI의 해외기업 검색어와 중국어 검색어의 일본어 혼입 2건은 원 출력 SHA를 연결한 reviewed-queries.json으로 명시 정정했다. Techman 기술/기업 및 JAKA 기술의 3검색은 엔진 오류로 남겼다. URL 발견은 기사 승인이나 조사 완료가 아니다. 저장된 54경로/108창을 다시 수집하지 않고 원문 판본을 읽었다. private investigation-v2는 28원문 판본 읽기·32칸 중31칸 읽기 근거를 기록한다. 모든 칸은 부분확인을 유지하며 해외 바이오 기업 칸6-1-1은 원문 읽기 미확보다. 기간 밖 배경 자료와 미승인 보도를 새 기사로 세지 않는다.
+
+공통 HTML 판서에서 로그인 폼 없이 본문 전체가 회원 안내만 있는 경우 blocked/authentication-page로 분류했다. 일반 기사에 로그인 안내가 함께 있는 경우는 추출을 유지한다. 한국어와 영어 notice 3조건 및 기존 보호 동작을 포함한 표적4시험이 통과했다. 실제 Thelec3원문은 HTTP0/model0 재파싱으로 차단했고 원3parse/판본/bytes를 보존했다. 다른 출처 전용 crawler나 유료 API를 추가하지 않았다. 전체 로컬 suite는 반복하지 않는다.
+
+공식5원문을 공통 수집하여 HD현대로보틱스·카카오2건을 미검토 후보로 등록했다. KUKA 독문은 기존 승인된 영문 사건2fa2d03292bbcc0d와 재관측 판본의 본문 지문/발표일이 같아 기존 승인을 초기화하지 않는다. MOTIR/안랩2건의 파서 날짜 미확정은 미확정으로 유지했다. 추가 NVIDIA 뉴스룸/IR2원문은5월31일/본문6월1일의 같은 발표 후보로 읽었으며 이번7일 소식이나2개 신규기사로 발행하지 않는다. 재배포일 차이를 지우거나 자동 별칭 승인하지 않았다.
+
+HD현대로보틱스는 실제 qwen3.8:27b-mlx 추출→근거 대조→작성 후 직접7verified/1deferred 사실 검토와 편집 정정을 완료했다. FABTECH10월21~23일 출품 계획과 이미 미국 조선소에 공급했다는 회사 설명을 구분하며 CAD/3D 경로·용융풀 조건보정·협소공간 운영을 중복 없이 설명한다. 기사825b509098936f76은 승인 후보로 연결했으나 원문 게시가10월6일12:05:10이므로 오늘08시 원고에 소급 삽입하지 않는다. 다음 정규 발행 후보이며 새 회차/공개/RSS 변경0이다. 후보783(verified98/unreviewed674/deferred9/rejected2)이다.
+
+공식5원문 closure26자료28members/435814bytes는 private Research1PLTev4ZHgyfCgQlHuibZgKiHWwLr3xaS의 원격 SHA8a1dda0a6be6e0a2db9bde5ef6a1360df7cfd21ee455665ef79e11cfebb06e6f로 대조하고 공통 복원했다. HD 승인 closure72자료74members/581003bytes는 Research1ao8G-0LM8TuCthQ0is0Eba-US6PvOCeF의 원격 SHA00c57b264bacab430e9586cef6e72d6d0a52e982fc9ea30273d5ca6ffd895eba로 대조했다. 복원 승인 기사/파일/7사실 동등성을 검증했다. 이 보관은 전체 runtime 복구가 아니다. private status JSON을 한 번 수집하고 같은 결과로 HTML을 렌더링했다.
+
+전체 WBS2/22·legacy47회차454구간/metadata10·독립human gold40/20·실제 신규 정규0/7·08시/인증/중단/fullruntime 미완료와 goal active를 유지한다. 이번 묶음의1시간 동일 실패 반복0이다. 다음은 현재 기간과 공식 원문 판정을 채우고 최신 Drive 대조→다음 정규 회차 승인/발행 operation으로 연결한다. 이미 완료한 전체 수집/추출을 재실행하지 않는다.

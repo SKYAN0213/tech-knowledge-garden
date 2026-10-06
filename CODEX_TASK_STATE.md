@@ -1,3 +1,7 @@
+실제 조사 재개(2026-10-06):62검색/843URL/3엔진 실패와 원문28판본·31/32칸 읽기 근거를 private investigation-v2에 기록했다.32칸 모두부분확인, 해외바이오기업 칸은미확보. 회원안내만있는본문의공통blocked판정과4표적시험/실제Thelec3건HTTP0재파싱·원parse보존완료. KUKA기존사건/언어별칭/본문지문동일재관측은새기사0이다. 공식5source와HD승인closure는Drive원격SHA/복원/7facts동등성검증완료. HD현대로보틱스825b509098936f76은7verified/1deferred 편집승인·다음정규후보이며오늘12:05게시이므로08시소급발행0이다. 후보783/verified98. 런북430/계획19.338.
+
+다음 재개:현재기간공식원문 판정→최신Drive대조→다음신규정규승인/발행operation. 완료수집/추출재실행금지. WBS2/22·legacy47/454·metadata10·독립40/20·정규0/7·08시/인증/중단/fullruntime미완료, goal active.1시간동일실패반복0. private진척화면 `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-cell-delivery-status-v1.html`.
+
 보안·에너지 실제 배포(2026-10-06): 공통 ±HHMM 날짜 정규화0951a6b/관련4표적 통과. DOE6·전자신문5사실 승인과 기존5기사 보존한7기사 공개2d37be5/Actions37412685261 success(Node971/971·Python15+10+3·build/deploy). Drive213 전후raw/두목록·동일ID 원고1수정·guard verified1/pending0/conflict0/unresolved0, 공개14파일 byte/reader동등성·1280/390 탭/태그/Enter/뒤로가기 확인. WebsiteData11raw(9갱신/2불변)·181기사와 원고ID/SHA 연결 검증. 두 승인 closure55/790members와 발행 증거95members를 private Research rawSHA로 대조하고6+5사실/ordinary96파일 복원했다. 런북429/계획19.337.
 
 다음 재개: 저장된 일일54경로/108창을 재사용해32조사칸(partial31/failed1)의 실제 원문 판정을 채우고 최초 입력이 고정된 다음 신규 정규 실행을 같은 발행operation에 연결한다. 오늘 보완을 새 성공으로 세지 않는다. 후보781(verified97/deferred9/rejected2/unreviewed673), 등록194/일일활성54/수집근거55. 전체 legacy47/454·metadata10·독립 human gold40/20·정규0/7·08시/인증/중단·전체runtime복구 미완료, goal active다. 동일1시간실패 반복0. private 진척 화면: `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-diversified-delivery-status-v1.html`.

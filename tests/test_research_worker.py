@@ -1141,6 +1141,26 @@ echo 'source command only'
         self.assertEqual(result["status"], "extracted")
         self.assertTrue(result["blocks"])
 
+    def test_members_only_body_without_login_form_is_blocked(self):
+        for notice in ("로그인 또는 회원가입을 해주세요. (회원만 열람가능)",
+                       "Sign in to read this article.", "Members only."):
+            with self.subTest(notice=notice):
+                raw = ('<html><head><title>Battery research</title></head><body>'
+                       '<article><p>' + notice + '</p></article></body></html>').encode()
+                result = self.invoke(raw, {"content_xpath": "//article"})["result"]
+                self.assertEqual(result["status"], "blocked")
+                self.assertEqual(result["quality"]["reason"], "authentication-page")
+                self.assertEqual(result["blocks"], [])
+
+    def test_short_public_article_with_members_prompt_keeps_content(self):
+        raw = '''<html><head><title>Battery research</title></head><body>
+        <article><p>회사는 배터리 연구 결과를 10월 5일 발표했다.</p>
+        <p>로그인 또는 회원가입을 해주세요. (회원만 열람가능)</p></article>
+        </body></html>'''.encode()
+        result = self.invoke(raw, {"content_xpath": "//article"})["result"]
+        self.assertEqual(result["status"], "extracted")
+        self.assertTrue(result["blocks"])
+
     @unittest.skipUnless(
         (WORKER.parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx").is_file()
         and Path("/System/Library/Fonts/Supplemental/AppleGothic.ttf").is_file()

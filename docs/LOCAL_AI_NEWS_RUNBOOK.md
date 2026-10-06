@@ -10576,3 +10576,14 @@ HD현대사이트솔루션의 10월 후보는 6월/8월 공식 자료를 함께 
 
 
 429 실제 결과: 공개2d37be5·Actions37412685261 success, Node971/971·Python15+10+3·build/deploy 통과. Drive213원본 중 동일ID 원고1개 수정·나머지212불변, guard verified1/pending0/conflict0/unresolved0, 실제 공개14파일 byte/reader 동등성이다. WebsiteData11raw(9수정/2불변)·361페이지181기사25용어22관계와 새기사2개 원고 ID/SHA 연결을 확인했다. 승인 closure는 각 단일기사 관문으로55/790members를 보관·복원해6+5사실을 검증했다. 발행 증거 ZIP/manifest도 rawSHA로 대조하고 ordinary v1으로96파일 복원했다. 이 결과는 정규 운영7회나 전체 runtime 복구가 아니다. private 진척 화면은 `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-diversified-delivery-status-v1.html`이며 JSON을 다시 수집하지 않고 같은 자료에서 생성했다. 다음은 현재54경로/108창의 저장 관측을 재사용해32칸 실제 조사·판정을 채운다. 전체 소급/독립 평가/08시 정규0/7 목표는 active다.
+
+
+## 430. 발견·원문 읽기·승인·새 정규 발행을 분리한 조사 재개
+
+원 모델 query 출력은 보존하고 필요한 검색어만 reviewed-queries.json의 original SHA/정정 기록으로 명시한다. `search --query`에 해당 파일을 넘기고 완료한 검색 checkpoint를 재사용한다. 발견 URL의 개수로 coverage complete나 기사 승인을 만들지 않는다. 현재 62검색/843URL/3엔진 실패와 investigation-v2의28판본/31칸 읽기는 별도 증거이며32칸 전부부분확인이다. 저장된 detail 원문/parse/raw SHA를 읽고 대상 기간·공식 근거·이벤트 중복을 판정한다. 개인정보·자료문의·다른 기사 카드·면책문은 원고에서 제외한다.
+
+로그인 폼이 없더라도 선택 본문 전체가 명시적 회원 열람 notice인 경우 공통 파서는 blocked를 반환한다. substantive 기사와 notice가 공존하면 false positive를 만들지 않는다. `reparse --retain-previous-parses`로 원 parse와 current 차단 판정을 함께 보존한다. 실제 회원제3건의 HTTP/model 추가0, 표적4시험과 원문/원parse 불변을 확인했다.
+
+검토된 후보의 다른 판본을 다시 intake하려고 review_status를 미검토로 초기화하지 않는다. KUKA의 경우 기존 언어별칭 검토/원문과 새 판본을 공통 articleContentFingerprint로 대조하여 본문·발표일 동일인 재관측을 별도 기록했다. 검색 제목만으로 사건 합치기를 승인하지 않는다. NVIDIA 뉴스룸/IR 두 주소도 기간 밖 동일발표 후보와 날짜 차이를 보존한다.
+
+HD 승인 run은 daily-20261006-hd-fabtech-processing-v1, approval-link는 daily-20261006-hd-fabtech-approval-link-v1이다. 최종 preview.md와7verified/1deferred 및 실제 복원 proof를 확인한다. 게시12:05는오늘08시 이후이므로 다음 정규후보로 유지한다. 기존cutoff/RSS pubDate를 변경해 억지로 같은 회차에 넣지 않는다. 일반 카드/분석에 운영 설명이나 실패 이유를 추가하지 않는다. source5와HDapproval은 각각 공통 closure→Drive metadata/raw SHA→공통 restore→approval 동등성을 확인했다. private 진척 화면은 `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-cell-delivery-status-v1.html`이며 신규 정규0/7은 유지한다.
