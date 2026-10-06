@@ -4631,3 +4631,8 @@ WebsiteData는 실제 배포본362페이지·182기사·25용어·22관계다. �
 완료 조건: 짧은/긴 원문의 실제 처리 경로 적용, 위조/창 밖/동명이인/판정 불일치 거부 및 과거 checkpoint 재사용의 표적 검사, 실제 저장 원문 1건의 로컬 모델 대조·명시 검토·작성, private Drive 근거 보관과 재읽기. 이 묶음은 전체 소급 검토·human gold·7회 정규 운영을 대체하지 않는다. 독자 원고·주소·RSS·예약·기본 모델 설정 변경은 없다.
 
 19.341 구현/실제 검증 완료: 새 source processor의 짧은/긴 경로에 근거 ref를 적용했고 표적96/96을 확인했다. MDM 실제 Qwen 대조2배치·ref9개는 인용 교정0이며 추출 literal 오류는 structural/explicit review로 계속 차단했다. 과거 개요 대조·추출 재사용 후2원고를 승인했고 Drive 원격 ZIP/복원/기사·승인·packet 동등성을 확인했다. 상세는 런북433절이다. 전체 소급 회차 판정과 정규 운영 관문은 계속 미완료다. 원문 수집/완료 배치 재실행0이며 로컬 전체 suite는 반복하지 않았다.
+
+
+19.341 최종 검증: 공통 코드4564c78/Actions37422826173의 Node981/981·Python·build/site/deploy success와 실제 공개RSS40/reader-index/기존기사 bytes 보존을 확인했다. Copilot 제품 태그를 회사로 처리한 부분은 기존 사실 검토·writer를 재사용해 final-v3에서 정정했고, Vercel7.0.19 릴리스는 실제 공통 ref 대조·직접 사실 검토·작성으로4verified/1deferred를 승인했다. 최종3사건14verified/1deferred의 독립 Drive closure3개를 rawSHA·전체 복원·승인/packet/기사 동등성으로 확인했다. 세 기사 샘플과 현황판은 private이며 공개 회차에는 아직 넣지 않았다. 전체 legacy15구간 판정/독립human gold/신규7회 정규운영과 fullruntime는 계속 미완료다. 상세는 런북434절과 외장 three-article-drive-restored-approval-proof-v2.json이다.
+
+19.341 후속: GitHub Mobile 공지도 실제 같은 공통 처리로4사실 검토·작성·private 승인·Drive raw/157member 복원까지 완료했다. 모델supported가 놓친 요청 제출 조건과3개 reported 상태를 명시 사실 검토에서 바로잡았다. 최종4고유사건/18verified/1deferred는 소급 기사별 승인 수치이며7월10일15구간 전체 검토나 신규 정규 운영 성공으로 집계하지 않는다. OTel/남은5Copilot 공지와 논문이 다음 묶음이다.
