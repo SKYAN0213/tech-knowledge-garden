@@ -71,6 +71,7 @@ export async function renderDocument(root, fetcher, document, options = {}) {
           received = true
           clearTimeout(timer)
           child.stdin.end()
+          child.kill("SIGKILL")
           reject(Error(message.error))
         } else throw Error("Invalid browser protocol")
       } catch (e) {

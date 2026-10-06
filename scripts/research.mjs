@@ -1897,7 +1897,10 @@ export async function main(argv = process.argv.slice(2)) {
       worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
     }
     const run = new RunState(root, v.run, input),
-      fetcher = new SourceFetcher(root)
+      fetcher = new SourceFetcher(root, {
+        pdf_profiles:
+          JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || [],
+      })
     if (command === "discover") {
       const routes = registry(
         JSON.parse(fs.readFileSync("data/research-source-channels.json")),

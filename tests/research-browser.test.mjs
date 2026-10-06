@@ -110,3 +110,71 @@ test("browser-rendered source scripts cannot send writes or open WebSockets", as
   assert.equal(requests.includes(socketURL), false, "WebSocket must not reach source transport")
   assert.equal(requests.filter((url) => url === articleURL).length, 2)
 })
+
+test("source scripts cannot navigate the article, embed documents, or open popup documents", async (t) => {
+  const previousPython = process.env.RESEARCH_PYTHON
+  process.env.RESEARCH_PYTHON =
+    previousPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  t.after(() => {
+    if (previousPython === undefined) delete process.env.RESEARCH_PYTHON
+    else process.env.RESEARCH_PYTHON = previousPython
+  })
+  for (const [mode, script] of [
+    ["navigation", "location.assign(target)"],
+    [
+      "iframe",
+      'const frame=document.createElement("iframe");frame.src=target;document.body.append(frame)',
+    ],
+    ["popup", 'window.open(target,"_blank")'],
+  ])
+    await t.test(mode, async (t) => {
+      const root = fs.realpathSync(
+        fs.mkdtempSync(path.join(os.tmpdir(), "garden-browser-navigation-")),
+      )
+      t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+      const url = "https://publisher.example/article/3",
+        target = "https://publisher.example/unrequested-document"
+      const requests = []
+      const fetcher = new SourceFetcher(root, {
+        interval_ms: 0,
+        resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+        transport: async (u) => {
+          const value = u.toString()
+          requests.push(value)
+          if (value.endsWith("/robots.txt"))
+            return {
+              status: 200,
+              headers: { "content-type": "text/plain" },
+              body: Buffer.from("User-agent: *\nAllow: /\n"),
+            }
+          if (value === url)
+            return {
+              status: 200,
+              headers: { "content-type": "text/html" },
+              body: Buffer.from(
+                `<!doctype html><html><body><p>Captured source</p><script>const target=${JSON.stringify(target)};${script}</script></body></html>`,
+              ),
+            }
+          throw Error("Unexpected document request")
+        },
+      })
+      const original = await fetcher.fetch(url)
+      await assert.rejects(
+        renderDocument(root, fetcher, original, {
+          allowed_hosts: ["publisher.example"],
+          timeout_ms: 10000,
+        }),
+        /Source navigation outside captured document/,
+      )
+      assert.equal(
+        requests.includes(target),
+        false,
+        "even same-host navigation is outside this source capture",
+      )
+      assert.equal(
+        fs.existsSync(path.join(root, "renders")),
+        false,
+        "a replaced document cannot become derived article evidence",
+      )
+    })
+})

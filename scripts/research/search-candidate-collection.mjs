@@ -35,7 +35,7 @@ export async function collectSearchCandidates({
   searchRunId,
   candidateKeys,
   articleProfiles,
-  fetcher = new SourceFetcher(root),
+  fetcher = new SourceFetcher(root, { pdf_profiles: articleProfiles }),
   fetchSource = fetchWithPolicy,
   parseSource = parseDocument,
 }) {

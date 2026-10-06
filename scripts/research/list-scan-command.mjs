@@ -293,7 +293,7 @@ export async function executeListScan(v) {
       ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
       ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
     })
-    const fetcher = new SourceFetcher(root)
+    const fetcher = new SourceFetcher(root, { pdf_profiles: profiles })
     await run.stage("collection-basis", basis, async () => basis)
     const scanner =
       channel.api_profile?.id === "wordpress-rest-posts-json-v1"

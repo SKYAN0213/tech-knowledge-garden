@@ -1,6 +1,6 @@
 import { checkRobots } from "./robots.mjs"
 import { sourceId } from "./contracts.mjs"
-import { assertURL } from "./fetch.mjs"
+import { assertURL, validatePDFBudget } from "./fetch.mjs"
 
 export function createRedirectAuthorizer(root, fetcher, allowedHosts) {
   return async ({ to }) => {
@@ -27,6 +27,7 @@ export function createRedirectAuthorizer(root, fetcher, allowedHosts) {
 }
 
 export async function fetchWithPolicy(root, fetcher, url, options = {}) {
+  if (options.fetch_budget !== undefined) validatePDFBudget(options.fetch_budget)
   const allowed_hosts = options.allowed_hosts || [new URL(url).hostname]
   assertURL(url, allowed_hosts)
   let policy

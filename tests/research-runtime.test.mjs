@@ -157,6 +157,166 @@ test("a PDF response header switches the live request to the PDF body deadline",
     http.request = originalRequest
   }
 })
+test(
+  "an oversized Content-Length rejects a PDF before receiving its body",
+  { timeout: 1000 },
+  async () => {
+    const originalRequest = http.request
+    let stopped = false,
+      destroyed = false
+    http.request = () => {
+      const request = new EventEmitter()
+      request.end = () =>
+        queueMicrotask(() => {
+          const response = new EventEmitter()
+          response.statusCode = 200
+          response.headers = { "content-type": "application/pdf", "content-length": "2048" }
+          response.destroy = () => request.destroy()
+          request.emit("response", response)
+        })
+      request.destroy = (error) => {
+        if (destroyed) return
+        destroyed = true
+        stopped = true
+        if (error) request.emit("error", error)
+      }
+      return request
+    }
+    try {
+      await assert.rejects(
+        requestPinned(
+          new URL("http://example.com/report.pdf"),
+          [{ address: "1.1.1.1", family: 4 }],
+          {},
+          { timeout_ms: 20000, pdf_timeout_ms: 60000, pdf_bytes: 1024, html_bytes: 1024 },
+        ),
+        /BODY_TOO_LARGE/,
+      )
+      assert.equal(stopped, true)
+    } finally {
+      http.request = originalRequest
+    }
+  },
+)
+
+test("PDF profile budgets constrain redirect transfers and retain the failed attempt", async (t) => {
+  const root = temporary(t),
+    url = "https://example.com/attachment",
+    finalURL = "https://example.com/report.pdf"
+  const seen = []
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    attempts: 1,
+    resolve: resolver,
+    pdf_profiles: [
+      {
+        id: "ir",
+        url_pattern: "^https://example\\.com/report\\.pdf$",
+        fetch_budget: { pdf_bytes: 12, pdf_timeout_ms: 15000 },
+      },
+    ],
+    transport: async (u, _addresses, _headers, budget) => {
+      seen.push({
+        url: u.toString(),
+        pdf_bytes: budget.pdf_bytes,
+        pdf_timeout_ms: budget.pdf_timeout_ms,
+      })
+      return u.toString() === url
+        ? { status: 302, headers: { location: finalURL }, body: Buffer.alloc(0) }
+        : {
+            status: 200,
+            headers: { "content-type": "application/pdf" },
+            body: Buffer.from("%PDF-1.7 oversized document"),
+          }
+    },
+  })
+  const record = await fetcher.fetch(url, {
+    allowed_hosts: ["example.com"],
+    fetch_budget: { pdf_bytes: 20, pdf_timeout_ms: 10000 },
+  })
+  assert.equal(record.fetch_status, "too_large")
+  assert.deepEqual(record.fetch_budget, { pdf_bytes: 12, pdf_timeout_ms: 10000 })
+  assert.deepEqual(record.budget_profile_ids, ["ir"])
+  assert.deepEqual(seen, [
+    { url, pdf_bytes: 20, pdf_timeout_ms: 10000 },
+    { url: finalURL, pdf_bytes: 12, pdf_timeout_ms: 10000 },
+  ])
+  assert.equal(record.redirect_chain.length, 1)
+  assert.equal(readJSON(root, `documents/${sourceId(url)}/latest.json`), null)
+  const attempts = fs.readdirSync(path.join(root, `documents/${sourceId(url)}/attempts`))
+  assert.equal(attempts.length, 1)
+  assert.equal(
+    readJSON(root, `documents/${sourceId(url)}/attempts/${attempts[0]}`).fetch_status,
+    "too_large",
+  )
+})
+
+test("a smaller PDF budget cannot accept a larger verified 304 cache or replace its valid version", async (t) => {
+  const root = temporary(t),
+    url = "https://example.com/report.pdf",
+    body = Buffer.from("%PDF-1.7 original")
+  let requests = 0
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: resolver,
+    transport: async () =>
+      ++requests === 1
+        ? { status: 200, headers: { "content-type": "application/pdf", etag: "v1" }, body }
+        : { status: 304, headers: {}, body: Buffer.alloc(0) },
+  })
+  const original = await fetcher.fetch(url)
+  const limited = await fetcher.fetch(url, {
+    fetch_budget: { pdf_bytes: 8, pdf_timeout_ms: 20000 },
+  })
+  assert.equal(limited.fetch_status, "too_large")
+  assert.equal(limited.source_id, original.source_id)
+  assert.deepEqual(readJSON(root, `documents/${original.source_id}/latest.json`), original)
+  assert.equal(fs.readFileSync(safePath(root, original.body_path)).equals(body), true)
+})
+
+test("invalid PDF budgets fail before transport and declared profiles are immutable", async (t) => {
+  const root = temporary(t)
+  const profile = {
+    id: "ir",
+    url_pattern: "^https://example\\.com/report\\.pdf$",
+    fetch_budget: { pdf_bytes: 9, pdf_timeout_ms: 12000 },
+  }
+  const fetcher = new SourceFetcher(root, {
+    interval_ms: 0,
+    resolve: resolver,
+    pdf_profiles: [profile],
+    transport: async (_u, _a, _h, budget) => {
+      assert.equal(budget.pdf_bytes, 9)
+      return {
+        status: 200,
+        headers: { "content-type": "application/octet-stream" },
+        body: Buffer.from("%PDF-1.7 oversized"),
+      }
+    },
+  })
+  profile.fetch_budget.pdf_bytes = 100
+  for (const fetch_budget of [
+    { pdf_bytes: 0 },
+    { pdf_timeout_ms: 60001 },
+    { pdf_bytes: 50 * 1024 ** 2 + 1 },
+    { timeout_ms: 90000 },
+    { pdf_bytes: "8" },
+    {},
+  ]) {
+    await assert.rejects(
+      fetcher.fetch("https://example.com/report.pdf", { fetch_budget }),
+      /Invalid PDF fetch budget/,
+    )
+    assert.throws(
+      () => new SourceFetcher(root, { pdf_profiles: [{ ...profile, fetch_budget }] }),
+      /Invalid PDF fetch budget/,
+    )
+  }
+  assert.equal(fs.existsSync(path.join(root, "documents")), false)
+  const record = await fetcher.fetch("https://example.com/report.pdf")
+  assert.equal(record.fetch_status, "too_large", "PDF magic also constrains generic MIME responses")
+})
+
 test("versioned fetch preserves legacy ID, body, 304 observation and source changes", async (t) => {
   const root = temporary(t),
     responses = [

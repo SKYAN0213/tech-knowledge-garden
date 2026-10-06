@@ -8,6 +8,28 @@ import fs from "node:fs"
 import { sha256, sourceId, sourceVersionId } from "./contracts.mjs"
 import { acquireLock, atomicWrite, readJSON, safePath } from "./run-state.mjs"
 
+export const DEFAULT_PDF_BUDGET = Object.freeze({
+  pdf_bytes: 50 * 1024 ** 2,
+  pdf_timeout_ms: 60000,
+})
+export function validatePDFBudget(budget) {
+  if (
+    !budget ||
+    typeof budget !== "object" ||
+    Array.isArray(budget) ||
+    !Object.keys(budget).length ||
+    Object.entries(budget).some(
+      ([key, value]) =>
+        !Object.hasOwn(DEFAULT_PDF_BUDGET, key) ||
+        !Number.isSafeInteger(value) ||
+        value < 1 ||
+        value > DEFAULT_PDF_BUDGET[key],
+    )
+  )
+    throw Error("Invalid PDF fetch budget")
+  return budget
+}
+
 export function isPublicIP(raw) {
   const address = raw.replace(/^\[|\]$/g, "").toLowerCase()
   if (address.includes("%")) return false
@@ -110,6 +132,10 @@ export function requestPinned(u, addresses, headers, budget, request = { method:
         )
       }
       const limit = isPdf ? budget.pdf_bytes : budget.html_bytes
+      if (/^\d+$/.test(h["content-length"] || "") && Number(h["content-length"]) > limit) {
+        req.destroy(Error("BODY_TOO_LARGE"))
+        return
+      }
       let size = 0,
         wire = 0
       res.on("data", (c) => {
@@ -278,9 +304,8 @@ export class SourceFetcher {
     this.root = root
     this.options = {
       timeout_ms: 20000,
-      pdf_timeout_ms: 60000,
+      ...DEFAULT_PDF_BUDGET,
       html_bytes: 10 * 1024 ** 2,
-      pdf_bytes: 50 * 1024 ** 2,
       redirects: 5,
       attempts: 3,
       interval_ms: 3000,
@@ -288,6 +313,25 @@ export class SourceFetcher {
     }
     this.resolve = options.resolve || dns.lookup
     this.transport = options.transport || requestPinned
+    this.pdfProfiles = (options.pdf_profiles || [])
+      .filter((profile) => profile.fetch_budget !== undefined)
+      .map((profile) => {
+        validatePDFBudget(profile.fetch_budget)
+        if (
+          typeof profile.id !== "string" ||
+          !/^[a-zA-Z0-9_-]+$/.test(profile.id) ||
+          typeof profile.url_pattern !== "string" ||
+          profile.url_pattern.length > 1024 ||
+          !profile.url_pattern.startsWith("^") ||
+          !profile.url_pattern.endsWith("$")
+        )
+          throw Error("Invalid PDF budget profile")
+        return {
+          id: profile.id,
+          pattern: new RegExp(profile.url_pattern),
+          budget: { ...profile.fetch_budget },
+        }
+      })
   }
   async fetch(
     raw,
@@ -299,8 +343,30 @@ export class SourceFetcher {
       method = "GET",
       form,
       interval_ms,
+      fetch_budget,
     } = {},
   ) {
+    if (fetch_budget !== undefined) validatePDFBudget(fetch_budget)
+    const budget = { ...this.options },
+      profileIds = new Set()
+    const constrainBudget = (limits) => {
+      for (const [key, value] of Object.entries(limits)) budget[key] = Math.min(budget[key], value)
+    }
+    if (fetch_budget) constrainBudget(fetch_budget)
+    const applyProfileBudget = (url) => {
+      for (const profile of this.pdfProfiles)
+        if (profile.pattern.test(url)) {
+          constrainBudget(profile.budget)
+          profileIds.add(profile.id)
+        }
+    }
+    const budgetRecord = () =>
+      fetch_budget || profileIds.size
+        ? {
+            fetch_budget: { pdf_bytes: budget.pdf_bytes, pdf_timeout_ms: budget.pdf_timeout_ms },
+            budget_profile_ids: [...profileIds],
+          }
+        : {}
     if (!["GET", "POST"].includes(method)) throw Error("Unsupported fetch method")
     if (method === "GET" && form !== undefined) throw Error("GET request cannot carry a form")
     if (method === "POST") {
@@ -347,6 +413,7 @@ export class SourceFetcher {
         try {
           for (let hop = 0; hop <= this.options.redirects; hop++) {
             const u = assertURL(current, allowed_hosts)
+            applyProfileBudget(current)
             const headers = {
               "user-agent": this.options.user_agent || "TechKnowledgeGarden/1.0",
               accept: "text/html,application/pdf,application/xml,application/json,text/plain;q=0.8",
@@ -373,7 +440,7 @@ export class SourceFetcher {
                   u.hostname,
                   currentInterval,
                   this.options.timeout_ms,
-                  () => this.transport(u, addresses, headers, this.options, { method, body: form }),
+                  () => this.transport(u, addresses, headers, budget, { method, body: form }),
                 )
                 if (response.status !== 429 && response.status < 500) break
               } catch (error) {
@@ -461,6 +528,7 @@ export class SourceFetcher {
             fetch_status: status,
             http_status: response.status,
             redirect_chain,
+            ...budgetRecord(),
             mime_type: response.headers["content-type"] || cache?.mime_type || null,
             etag: response.headers.etag || (status === "not_modified" ? cache?.etag : null),
             last_modified:
@@ -469,6 +537,10 @@ export class SourceFetcher {
           }
           if (["captured", "not_modified"].includes(status)) {
             if (!body.length) throw Error("Empty source response")
+            const isPdf =
+              /pdf/i.test(record.mime_type || "") || body.subarray(0, 5).toString() === "%PDF-"
+            if (body.length > (isPdf ? budget.pdf_bytes : budget.html_bytes))
+              throw Error("BODY_TOO_LARGE")
             record.body_sha256 = sha256(body)
             record.source_version_id = sourceVersionId(id, record.body_sha256)
             record.body_path = `documents/${id}/${record.body_sha256}/body.bin`
@@ -502,6 +574,7 @@ export class SourceFetcher {
             fetch_status: e.message === "BODY_TOO_LARGE" ? "too_large" : "failed",
             error: e.message,
             redirect_chain,
+            ...budgetRecord(),
           }
           atomicWrite(
             this.root,

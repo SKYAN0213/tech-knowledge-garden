@@ -457,6 +457,8 @@ test("a declared official alternate source is used when the article PDF attachme
   const evidenceURL = "https://www.fanuc.co.jp/investor/results.html"
   const evidenceMatch = "Official report links official.pdf"
   const calls = []
+  const budgets = []
+  let attachmentFailure = "blocked"
   const supportListing = {
     ...listing,
     links: [link("2026-09-11", "New welding robot announced"), link("2026-08-27", "Older")],
@@ -475,8 +477,9 @@ test("a declared official alternate source is used when the article PDF attachme
       return action()
     },
   }
-  const fetchPolicy = async (_root, _fetcher, url) => {
+  const fetchPolicy = async (_root, _fetcher, url, options) => {
     calls.push(url)
+    budgets.push({ url, budget: options.fetch_budget })
     if (url === evidenceURL) {
       const body = Buffer.from(evidenceMatch)
       const bodyPath = path.join(root, "evidence.bin")
@@ -497,7 +500,7 @@ test("a declared official alternate source is used when the article PDF attachme
       source_version_id: `${sourceId(url)}:${"a".repeat(64)}`,
       original_url: url,
       final_url: url,
-      fetch_status: url === attachmentURL ? "blocked" : "captured",
+      fetch_status: url === attachmentURL ? attachmentFailure : "captured",
       observed_at: "2026-09-28T00:00:00Z",
     }
   }
@@ -599,6 +602,48 @@ test("a declared official alternate source is used when the article PDF attachme
   assert.equal(unlinkedDetail.supporting_documents[0].attempts[0].status, "blocked")
   assert.equal(unlinkedDetail.supporting_documents[0].attempts[1].status, "evidence_mismatch")
   assert.equal(calls.includes(alternateURL), false)
+  attachmentFailure = "too_large"
+  const limitedProfiles = structuredClone(articleProfiles)
+  const budget = { pdf_bytes: 8 * 1024 ** 2, pdf_timeout_ms: 30000 }
+  limitedProfiles[0].supporting_documents[0].fetch_budget = budget
+  const fallback = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channel,
+    limitedProfiles,
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(fallback.summary.status, "window_scanned")
+  assert.equal(fallback.candidates.length, 1)
+  assert.deepEqual(fallback.candidates[0].supporting_source_urls, [alternateURL])
+  assert.deepEqual(
+    fallback.summary.details[0].supporting_documents[0].attempts.map((a) => a.status),
+    ["too_large", "captured"],
+  )
+  assert.deepEqual(
+    budgets
+      .filter((b) => [attachmentURL, alternateURL].includes(b.url))
+      .slice(-2)
+      .map((b) => b.budget),
+    [budget, budget],
+  )
+  calls.length = 0
+  limitedProfiles[0].supporting_documents[0].fetch_budget.pdf_bytes = 0
+  const invalid = await scanSinglePageRoute(
+    root,
+    run,
+    {},
+    channel,
+    limitedProfiles,
+    { since: "2026-09-01", until: "2026-09-28" },
+    { fetchPolicy, parse },
+  )
+  assert.equal(invalid.summary.status, "incomplete")
+  assert.equal(invalid.candidates.length, 0)
+  assert.equal(invalid.summary.details[0].status, "supporting_document_policy_invalid")
+  assert.equal(calls.includes(attachmentURL), false)
 })
 
 test("a required supporting document that is absent keeps the route incomplete", async (t) => {

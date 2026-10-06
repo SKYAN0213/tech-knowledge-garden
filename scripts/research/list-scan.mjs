@@ -2,7 +2,7 @@ import fs from "node:fs"
 import { canonicalURL } from "../garden.mjs"
 import { sha256, sourceId } from "./contracts.mjs"
 import { candidatesFromLinks } from "./discovery.mjs"
-import { assertURL } from "./fetch.mjs"
+import { assertURL, validatePDFBudget } from "./fetch.mjs"
 import {
   articleContentFingerprint,
   assertStoredEvidence,
@@ -567,6 +567,7 @@ export async function collectWindowDetails(
         let pattern
         try {
           pattern = new RegExp(rule.url_pattern)
+          if (rule.fetch_budget !== undefined) validatePDFBudget(rule.fetch_budget)
         } catch {
           detail.status = "supporting_document_policy_invalid"
           supportingDocumentFailed = true
@@ -675,8 +676,12 @@ export async function collectWindowDetails(
           const attachmentId = sourceId(source.url)
           const attachment = await run.stage(
             "supporting-document-" + attachmentId,
-            { url: source.url },
-            () => fetchPolicy(root, fetcher, source.url, routeFetchOptions(channel)),
+            { url: source.url, ...(rule.fetch_budget ? { fetch_budget: rule.fetch_budget } : {}) },
+            () =>
+              fetchPolicy(root, fetcher, source.url, {
+                ...routeFetchOptions(channel),
+                ...(rule.fetch_budget ? { fetch_budget: rule.fetch_budget } : {}),
+              }),
           )
           attempt.status = attachment.fetch_status
           attempts.push(attempt)

@@ -347,7 +347,6 @@ HTML 200 응답에 로그인 벽이 반환되면 짧은 placeholder를 추출 �
 
 생산 daily executor와 source scanner를 결합한 테스트가 직전 완료 attempt를 `--reuse-listing-run`으로 전달하는 것을 확인했다. FDA 실제 연속 창 한 쌍에서도 source version·parse ID를 보존하며 후속 창이 fetch/parse 없이 0.165초에 완료됐다. 이전 목록 취득은 30.174초였다. 실제 29경로 일일 run에 대한 효과는 아직 검증하지 않았다. Focused 25/25, 전체 Node 515/515 및 TypeScript 통과. [런북 202절](LOCAL_AI_NEWS_RUNBOOK.md#202-fda-인접-날짜-창의-목록-실제-재사용-실행).
 
-
 ## 2026-10-02 29개 출처 통합 수집 및 무중복 재개 검증
 
 활성 29개 route의 58개 window를 한 실행에서 모두 `window_scanned`로 완료했다. Wall span은 8분 48초, retry queue 0, incomplete window 0이다. Handoff의 전체 118개 후보 key 및 이번 실행에서 관측한 68개 key가 각각 고유하며 후보 공개·Drive·사이트 발행은 발생하지 않았다. 후속 `--resume`은 새 수집 없이 receipt-set SHA-256을 보존했다. 분야별 32칸 coverage는 아직 partial/not_attempted를 포함하므로 WBS 1/22, P2-01 partial은 유지한다. [런북 203절](LOCAL_AI_NEWS_RUNBOOK.md#203-29개-출처-통합-수집에서-계획실행재개의-live-검증).
@@ -356,15 +355,16 @@ HTML 200 응답에 로그인 벽이 반환되면 짧은 placeholder를 추출 �
 
 ABB 공식 고객 사례를 보존된 source version/parse에서 검토해 5개 claim을 확인하고 2개를 보류했다. qwen3.8:27b 추출 189.681초, 기사 작성 128.492초였고 provenance상 generation 276.774초가 두 호출 wall의 약 87%다(9.18/8.07 tokens/s). 최종 draft는 자동 편집 검사 문제 0개다. 이미 승인 대기 중인 FANUC/Hitachi 중복 후보는 guard가 차단했다. ABB draft는 아직 공개 승인되지 않았다. OpenAI API adapter는 있으나 이 실행 환경에 `OPENAI_API_KEY`가 없어 성능 비교는 하지 않았다. API 전환은 외부 원문 전송과 별도 사용료가 수반되며, source collection 지연에는 직접 영향을 주지 않는다. [런북 204절](LOCAL_AI_NEWS_RUNBOOK.md#204-로봇업계-후보-한-건의-원문-검토와-육하원칙-기사-초안).
 
-
 ### 2026-10-06 NACHI 기존 회차 보완·공개 검증 완료
 
 NACHI10월5일 승인 기사를 기존10월6일 회차에 추가했다(기존7개 보존, 로봇·제조4건). Drive213개 전후 raw 검증·변경1/기존ID 유지, cf3049f/Actions37464932439 Node1,011/Python15+10+3/build/site/deploy,12파일 공개 동등성·RSS40 GUID/pubDate 보존, 실제 HTTPS 데스크톱/모바일 태그·키보드·뒤로 가기, WebsiteData11raw SHA/링크 누락0을 확인했다. 새 모델 호출0·추가 로컬 전체suite0·릴리스 CI1회다. source closure와 delivery evidence는 비공개 Drive 원격 SHA/전수 복원까지 완료했다. 런북448/계획19.355/외장 core-progress-checkpoint-20261006-v10를 따른다. 전체목표 active/WBS2/22·신규정규0/7 및 전체legacy/독립human/08시 운영 gate는 남는다.
-
 
 ### 2026-10-06 원고 퍼센트 값·단위 관문 배포
 
 문단별 verified 인용 사실 밖의 퍼센트, 다른 fact의 수치, %/%p 혼동을 신규 승인에서 차단한다. 원 NACHI 승인 원고는 통과했고 비공개17.9%변조는 차단됐다. 표적14+새 literal1개 및437d6e9/Actions37467094867 Node1,019·Python15+10+3/build/site/deploy를 확인했다. 기존 공개3파일 bytes/SHA는 동일하고 비공개 Drive 검사 증거11자료의 원격 SHA/전수 복원을 마쳤다. 새 모델 호출0·추가 로컬 전체suite0·새 기사/정규운영0. 지표·기간·인과·분류의 의미 판정은 기존 원문 검토로 확인한다. 런북449/계획19.356을 따른다. 전체목표 active/WBS2/22와 legacy/독립human/08시 운영 gate는 유지한다.
 
-
 2026-10-06 두산 CEO 보완 완료: 기존 승인 원고·6검증 사실을 재사용해9/18선임 사건을9/20회차12→13기사로 반영하고 한국어 공식 공지를 같은 ID에 연결했다. Drive213 전후 raw/기존ID1업데이트·212불변, c5f83b3/Actions37470663227 Node1,019/Python15+10+3/build/site/deploy,12공개파일 동등성·RSS40/기존12 보존, 실제 HTTPS desktop/mobile 태그·키보드·뒤로가기, WebsiteData11raw/링크누락0과 source/delivery 비공개 Drive 원격ZIP SHA·전수 복원을 확인했다. 모델 재호출0·전체 로컬suite 반복0·정규 증가0. 런북450/계획19.357을 따른다. 전체목표 active/WBS2/22·정규0/7·전체legacy/독립human/08시/복구/fullruntime gate는 유지한다.
+
+### 2026-10-06 PDF 출처별 제한과 browser 추가 탐색
+
+공통 SourceFetcher의 profile budget을 일반·일일·검색 수집 경로에 적용하고 PDF21 profile/ABB첨부 rule에 제한값을 등록했다. redirect와304 cache에도 좁은 한도를 유지하며 실패는 유효 원문을 덮어쓰지 않는다. 실제 FANUC size 초과/cache 보존 및 ABB 공식 alternate 수집/parse를 확인했고, Chromium 같은 host 이동·iframe·popup을 즉시 차단했다. 새 수집기·유료 API·예약은 추가하지 않았다. 최초 표적74/78, 실패한 추가 탐색 수정4/4, live header 오류 수정 후 강화한 표적1/1. 통합 검증은 릴리스 CI한번, private source/실패/수정 증거는 런북451절로 연결한다. 두 구현 체크는 완료, 전출처 운영 통계·독립human·정규7회 등의 완료 조건은 유지해 전체WBS2/22/partial18/not_started2·새정규0/7이다.

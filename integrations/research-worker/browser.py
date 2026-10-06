@@ -34,6 +34,13 @@ async def main():
         async def intercept(route):
             nonlocal counter
             request = route.request
+            if request.is_navigation_request() and (
+                request.url != initial["url"] or request.frame.page != page or request.frame != page.main_frame
+            ):
+                failures.append("Source navigation outside captured document")
+                print(json.dumps({"type": "error", "error": "Source navigation outside captured document"}), flush=True)
+                await route.abort()
+                return
             if request.method != "GET" or request.resource_type in ("image", "media", "font") or not request.url.startswith(("http://", "https://")):
                 await route.abort()
                 return
@@ -63,7 +70,12 @@ async def main():
 
         await context.route("**/*", intercept)
         page = await context.new_page()
-        await page.goto(initial["url"], wait_until="domcontentloaded", timeout=45000)
+        try:
+            await page.goto(initial["url"], wait_until="domcontentloaded", timeout=45000)
+        except Exception:
+            if "Source navigation outside captured document" in failures:
+                raise ValueError("Source navigation outside captured document")
+            raise
         if initial.get("wait_selector"):
             await page.wait_for_selector(initial["wait_selector"], timeout=10000)
         else:
@@ -71,6 +83,8 @@ async def main():
                 await page.wait_for_load_state("networkidle", timeout=5000)
             except Exception:
                 failures.append("network-idle-timeout")
+        if "Source navigation outside captured document" in failures:
+            raise ValueError("Source navigation outside captured document")
         result = {"type": "result", "html": await page.content(), "url": page.url, "requests": counter, "resource_failures": failures}
         print(json.dumps(result), flush=True)
         await context.close()
