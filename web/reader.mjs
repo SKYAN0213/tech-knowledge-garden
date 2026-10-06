@@ -112,15 +112,29 @@ function filterNews(updateURL = true) {
       tab.setAttribute("aria-current", "page")
     else tab.removeAttribute("aria-current")
   }
+  let visible = 0
+  let availableDeep = false
+  for (const row of document.querySelectorAll("[data-news-row]")) {
+    const data = { ...JSON.parse(row.dataset.classification || "{}"), text: row.textContent }
+    row.hidden = !matchesNews(data, filters)
+    if (data.deep && matchesNews(data, { ...filters, kind: "" })) availableDeep = true
+    if (!row.hidden) visible++
+  }
   for (const tab of document.querySelectorAll("[data-deep-tab]")) {
+    tab.hidden = !availableDeep
     if (filters.kind === "deep") tab.setAttribute("aria-current", "page")
     else tab.removeAttribute("aria-current")
-  }
-  let visible = 0
-  for (const row of document.querySelectorAll("[data-news-row]")) {
-    const data = JSON.parse(row.dataset.classification || "{}")
-    row.hidden = !matchesNews({ ...data, text: row.textContent }, filters)
-    if (!row.hidden) visible++
+    const deepURL = new URL(location.href)
+    for (const [key, value] of Object.entries({
+      q: filters.query,
+      sector: filters.sector,
+      theme: filters.theme,
+      entity: filters.entity,
+    }))
+      if (value) deepURL.searchParams.set(key, value)
+      else deepURL.searchParams.delete(key)
+    deepURL.searchParams.set("kind", "deep")
+    tab.setAttribute("href", deepURL.href)
   }
   for (const group of document.querySelectorAll("[data-news-day]"))
     group.hidden = ![...group.querySelectorAll("[data-news-row]")].some((row) => !row.hidden)
@@ -167,7 +181,6 @@ if (newsQuery) {
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !newsControls.kind) return
       e.preventDefault()
       newsControls.kind.value = "deep"
-      if (newsControls.sector) newsControls.sector.value = ""
       filterNews()
     })
   newsQuery.addEventListener("input", () => filterNews())
