@@ -3,7 +3,8 @@ title: 뉴스
 type: home
 date: 2026-10-06
 description: FDA, 이보가인 초기 임상시험 설계에 관한 공개 의견 수렴 · 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3%
-  보고 · RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
+  보고 · RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행 · AWS Private CA, 인증서 내용·서명 전 실패까지
+  기록하는 발급 로그 추가
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -32,6 +33,14 @@ generated_by: tech-knowledge-garden
 ### [[News/1c20824a90713fc8|RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행]]
 
 산업용 로봇 업체 RobCo는 10월 5일 기업가치가 10억 달러를 넘어섰으며, 9개월 전보다 두 배가 됐다고 발표했다. 이번 거래는 회사에 대한 신규 투자와 직원 보유 지분의 일부 매각을 함께 진행하는 구조다. 회사는 자율 산업용 로봇 Alfie를 2027년 3월 4일 뮌헨에서 열리는 RobCoN에서 상용 출시할 계획이라고 밝혔다.
+
+
+
+---
+
+### [[News/a4e8f23e78c22e95|AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가]]
+
+AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새 CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명 전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
 
 
 

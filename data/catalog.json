@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 177,
+  "news_count": 178,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -121,6 +121,7 @@
     "https://arxiv.org/list/cs.AI/recent",
     "https://aws.amazon.com/about-aws/whats-new/2026/06/multi-turn-reinforcement-learning-on-sagemaker-ai",
     "https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available",
+    "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs",
     "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-well-architected-agent",
     "https://aws.amazon.com/about-aws/whats-new/2026/10/guardduty-org-enablement-policies",
     "https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint",
@@ -796,6 +797,7 @@
     "News/61b4373c4f6f0682",
     "News/72081e8f67345f20",
     "News/1c20824a90713fc8",
+    "News/a4e8f23e78c22e95",
     "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE",
     "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing",
     "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing",

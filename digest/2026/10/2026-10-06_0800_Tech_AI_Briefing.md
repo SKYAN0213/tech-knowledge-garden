@@ -26,6 +26,34 @@
 
 ## 분야별 브리핑
 
+### 소프트웨어·클라우드 · 1건
+
+#### [AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가](https://skyan0213.github.io/tech-knowledge-garden/news/a4e8f23e78c22e95)
+
+발표 2026-10-05
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새 CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명 전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
+
+##### 인증서 내용과 실패 사유 기록
+
+기존 IssueCertificate API의 CloudTrail 관리 이벤트는 인증서 ARN으로 API 호출 성공을 확인했지만, 인증서 내용과 서명한 CA 정보, 서명 전에 실패한 발급은 기록하지 않았다.
+
+새 이벤트는 서명 대상인 TBS 인증서의 X.509 필드·확장 정보와 함께 주체, 발급자, 일련번호, 유효기간, 템플릿, 서명 알고리즘을 담는다. 이름 제약 위반 같은 서명 전 실패에는 실패 설명도 기록한다.
+
+##### 요청자와 수신 계정
+
+직접 API를 호출하면 요청 계정과 IAM 주체를 식별하고, AWS Private CA 커넥터나 통합 AWS 서비스를 통한 발급이면 서비스 주체를 식별한다. 교차 계정 구성에서는 발급 로그가 CA 소유 계정으로 전달된다.
+
+##### 자동 전달과 처리 경로
+
+이벤트는 별도 설정이나 활성화 신청 없이 CloudTrail 관리 이벤트로 자동 전달된다. 표준 AWS CloudTrail 요금 외에 이 기능의 추가 비용은 없다.
+
+AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 조회해 인증서 감사·목록 관리·추적·모니터링에 활용할 수 있다고 설명했다.
+
+[aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/)
+
 ### 로봇·제조 · 2건
 
 #### [쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고](https://skyan0213.github.io/tech-knowledge-garden/news/72081e8f67345f20)

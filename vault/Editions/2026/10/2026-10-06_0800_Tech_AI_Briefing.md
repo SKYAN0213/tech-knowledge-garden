@@ -9,8 +9,8 @@ coverage_end: 2026-10-05T20:21:45.039Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 3
-new_items_count: 3
+source_count: 4
+new_items_count: 4
 linked_knowledge_notes:
   - Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)
 knowledge_notes_created: []
@@ -64,6 +64,16 @@ article_records:
       AI에 발표했다. 3차원 점군에서 볼록한 영역을 찾아 집기 후보를 만들고, 계층적 퍼지 신경망(HFNN)으로 후보를 평가한다.
       무작위로 쌓은 옷감의 로봇 분류 실험에서 HFNN을 적용한 방식의 집기 성공률은 93.3%, 같은 후보에 수작업 점수를 적용한 방식은
       80.0%로 보고됐다.
+    papers:
+      - work_id: stacked-fabric-grasping-2026
+        identifiers:
+          - doi:10.3389/frobt.2026.1917009
+        access: 전문
+        status: 동료심사
+        evidence_url: https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
+    relations: []
+    topic_ids:
+      - research-stacked-fabric-grasping
     explanations:
       - heading: 옷감이 겹칠 때 집을 위치를 찾는 문제
         paragraphs:
@@ -97,16 +107,6 @@ article_records:
             Local-PointNet 82.0%, HFNN 80.3%로 보고됐다.
         source_urls:
           - https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
-    papers:
-      - work_id: stacked-fabric-grasping-2026
-        identifiers:
-          - doi:10.3389/frobt.2026.1917009
-        access: 전문
-        status: 동료심사
-        evidence_url: https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
-    relations: []
-    topic_ids:
-      - research-stacked-fabric-grasping
   - title: RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
     kind: 사건 뉴스
     region: 해외
@@ -139,6 +139,45 @@ article_records:
             Robotics-as-a-Service(RaaS) 모델을 운영한다고 소개했다.
         source_urls:
           - https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
+  - title: AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: AWS
+      when: 2026-10-05
+      where: AWS Private CA가 제공되는 모든 AWS 리전
+      what: CloudTrail 서비스 이벤트 'IssueCertificateDetails' 추가
+      how: CloudTrail 관리 이벤트로 자동 전달되며, Amazon EventBridge 또는 Amazon Athena 연동 지원
+      why: 미기재
+    lead: AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새
+      CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명
+      전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
+    explanations:
+      - heading: 인증서 내용과 실패 사유 기록
+        paragraphs:
+          - 기존 IssueCertificate API의 CloudTrail 관리 이벤트는 인증서 ARN으로 API 호출 성공을
+            확인했지만, 인증서 내용과 서명한 CA 정보, 서명 전에 실패한 발급은 기록하지 않았다.
+          - 새 이벤트는 서명 대상인 TBS 인증서의 X.509 필드·확장 정보와 함께 주체, 발급자, 일련번호, 유효기간, 템플릿,
+            서명 알고리즘을 담는다. 이름 제약 위반 같은 서명 전 실패에는 실패 설명도 기록한다.
+        source_urls:
+          - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+      - heading: 요청자와 수신 계정
+        paragraphs:
+          - 직접 API를 호출하면 요청 계정과 IAM 주체를 식별하고, AWS Private CA 커넥터나 통합 AWS 서비스를 통한
+            발급이면 서비스 주체를 식별한다. 교차 계정 구성에서는 발급 로그가 CA 소유 계정으로 전달된다.
+        source_urls:
+          - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+      - heading: 자동 전달과 처리 경로
+        paragraphs:
+          - 이벤트는 별도 설정이나 활성화 신청 없이 CloudTrail 관리 이벤트로 자동 전달된다. 표준 AWS CloudTrail
+            요금 외에 이 기능의 추가 비용은 없다.
+          - AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 조회해 인증서 감사·목록
+            관리·추적·모니터링에 활용할 수 있다고 설명했다.
+        source_urls:
+          - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+    papers: []
+    relations: []
+    topic_ids: []
 article_reviews:
   - title: FDA, 이보가인 초기 임상시험 설계에 관한 공개 의견 수렴
     event_id: 61b4373c4f6f0682
@@ -149,10 +188,10 @@ article_reviews:
   - title: 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고
     event_id: 72081e8f67345f20
     review_status: verified
-    published_at: 2026-10-05
-    reviewed_at: 2026-10-06
     concept_ids:
       - fabric-grasping-hfnn
+    published_at: 2026-10-05
+    reviewed_at: 2026-10-06
   - title: RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
     event_id: 1c20824a90713fc8
     review_status: verified
@@ -161,6 +200,12 @@ article_reviews:
     reviewed_at: 2026-10-06
     date_kind: source-stated-event-date
     source_published_at: null
+  - title: AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
+    event_id: a4e8f23e78c22e95
+    review_status: verified
+    published_at: 2026-10-05
+    reviewed_at: 2026-10-06
+    concept_ids: []
 ---
 
 # 이번 호 표지
@@ -251,6 +296,32 @@ RobCo는 미국의 12개가 넘는 주에서 고객 운영을 수행하고 있�
 
 2020년 뮌헨에서 설립된 회사는 초기 투자금 없이 로봇 시스템을 제공하는 Robotics-as-a-Service(RaaS) 모델을 운영한다고 소개했다. [S3]
 
+## AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** AWS
+
+AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새 CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명 전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다. [S4]
+
+### 인증서 내용과 실패 사유 기록
+
+기존 IssueCertificate API의 CloudTrail 관리 이벤트는 인증서 ARN으로 API 호출 성공을 확인했지만, 인증서 내용과 서명한 CA 정보, 서명 전에 실패한 발급은 기록하지 않았다.
+
+새 이벤트는 서명 대상인 TBS 인증서의 X.509 필드·확장 정보와 함께 주체, 발급자, 일련번호, 유효기간, 템플릿, 서명 알고리즘을 담는다. 이름 제약 위반 같은 서명 전 실패에는 실패 설명도 기록한다. [S4]
+
+### 요청자와 수신 계정
+
+직접 API를 호출하면 요청 계정과 IAM 주체를 식별하고, AWS Private CA 커넥터나 통합 AWS 서비스를 통한 발급이면 서비스 주체를 식별한다. 교차 계정 구성에서는 발급 로그가 CA 소유 계정으로 전달된다. [S4]
+
+### 자동 전달과 처리 경로
+
+이벤트는 별도 설정이나 활성화 신청 없이 CloudTrail 관리 이벤트로 자동 전달된다. 표준 AWS CloudTrail 요금 외에 이 기능의 추가 비용은 없다.
+
+AWS는 Amazon EventBridge로 실시간 처리하거나 Amazon Athena로 일괄 조회해 인증서 감사·목록 관리·추적·모니터링에 활용할 수 있다고 설명했다. [S4]
+
 # 리서치 노트
 
 없음
@@ -276,3 +347,4 @@ RobCo는 미국의 12개가 넘는 주에서 고객 운영을 수행하고 있�
 - [S1] https://www.fda.gov/news-events/press-announcements/fda-seeks-public-input-support-ibogaine-research
 - [S2] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
 - [S3] https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
+- [S4] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/

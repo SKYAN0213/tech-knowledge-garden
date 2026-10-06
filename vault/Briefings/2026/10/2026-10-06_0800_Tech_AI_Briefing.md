@@ -7,7 +7,7 @@ modified: 2026-10-06
 description: 2026-10-06 IT · AI · 로보틱스
 coverage_start: 2026-10-04T01:30:38.099959Z
 coverage_end: 2026-10-05T20:21:45.039Z
-item_count: 3
+item_count: 4
 edition: Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-06_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -34,6 +34,14 @@ generated_by: tech-knowledge-garden
 
 
 ## 분야별 브리핑
+
+### 소프트웨어·클라우드 · 1건
+
+#### [[News/a4e8f23e78c22e95|AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가]]
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새 CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명 전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
 
 ### 로봇·제조 · 2건
 
@@ -64,3 +72,4 @@ generated_by: tech-knowledge-garden
 - [S1] https://www.fda.gov/news-events/press-announcements/fda-seeks-public-input-support-ibogaine-research
 - [S2] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
 - [S3] https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
+- [S4] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
