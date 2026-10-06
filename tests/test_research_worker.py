@@ -1668,6 +1668,36 @@ echo 'source command only'
         self.assertIn("Resolved comments", body)
         self.assertNotIn("Unrelated later release", body)
 
+    def test_github_profile_keeps_timestamp_table_and_display_date_evidence(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "github-changelog-article")
+        raw = b'''<html><head><title>GitHub</title>
+        <script type="application/ld+json">{"@type":"TechArticle","datePublished":"2026-07-10T13:06:10-07:00","dateModified":"2026-08-01"}</script>
+        <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-07-10T20:06:10Z"}</script>
+        </head><body><article><header><h1>Detector names</h1><div class="ChangelogHeader-single-meta"><time datetime="2026-07-10">July 10</time></div></header>
+        <div class="PostContent-main"><p>Detection behavior is unchanged.</p><table><thead><tr><th>Before</th><th>Now</th></tr></thead><tbody><tr><td>Non-provider patterns</td><td>Generic patterns</td></tr><tr><td>Copilot secret scanning</td><td>AI-detected secrets</td></tr></tbody></table></div></article>
+        <aside><table><tr><td>Unrelated table</td></tr></table></aside></body></html>'''
+        result = self.invoke(raw, options)["result"]
+        self.assertEqual(result["dates"]["published_at"], "2026-07-10T13:06:10-07:00")
+        self.assertEqual(result["dates"]["precision"], "timestamp")
+        self.assertEqual(result["dates"]["basis"]["display_basis"]["text"], "2026-07-10")
+        self.assertEqual(result["dates"]["basis"]["dom_path"], "/html/head/script[1]")
+        self.assertEqual(len(result["dates"]["basis"]["sources"]), 2)
+        table = next(block for block in result["blocks"] if block["kind"] == "table")
+        self.assertIn(["Non-provider patterns", "Generic patterns"], table["rows"])
+        self.assertIn(["Copilot secret scanning", "AI-detected secrets"], table["rows"])
+        self.assertNotIn("Unrelated table", " ".join(block["text"] for block in result["blocks"]))
+
+    def test_metadata_timestamp_conflict_cannot_be_hidden_by_matching_days(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "github-changelog-article")
+        for second in ["2026-07-10T20:07:10Z", "2026-07-11T20:06:10Z"]:
+            with self.subTest(second=second):
+                raw = ('<html><head><script type="application/ld+json">{"@type":"TechArticle","datePublished":"2026-07-10T13:06:10-07:00"}</script><script type="application/ld+json">{"@type":"NewsArticle","datePublished":"'+second+'"}</script></head><body><article><header><h1>Release</h1><div class="ChangelogHeader-single-meta"><time datetime="2026-07-10">July 10</time></div></header><div class="PostContent-main"><p>Release details.</p></div></article></body></html>').encode()
+                result = self.invoke(raw, options)["result"]
+                self.assertIsNone(result["dates"]["published_at"])
+                self.assertEqual(result["dates"]["profile_status"], "conflict")
+
     def test_title_badge_exclusion_keeps_inline_text_tail_and_source_basis(self):
         raw = '<html><head><title>사이트</title></head><body><h1><strong class="badge">단독</strong> 단독 <em>계약</em> 발표</h1><article><p>확인한 본문.</p></article></body></html>'.encode()
         options = {"content_xpath": "//article", "title_xpath": "//h1", "title_exclude_xpath": ".//strong[@class='badge']"}

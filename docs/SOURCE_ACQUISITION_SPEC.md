@@ -2161,6 +2161,8 @@ KUKA 독일어 공식 목록은 [28절](#28-kuka-독일어-뉴스의-폼-목록�
 
 다음 변경 시에는 월 링크/선택자·카드 수·날짜 형식·상세 profile·RSS 보존 길이를 새 원본으로 비교한다. 새 pagination을 발견하면 기존 `calendar-month` 경로를 성공으로 유지하지 말고 별도 페이지 종료 규칙과 시험을 추가한다. 본문 수정이나 새 언어판은 같은 URL의 새 source version 또는 별개 URL의 사건 동일성 검토를 거친다. 제품 변경 설명의 회사 주장·출시 시점·이용 가능 범위는 기사 단계에서 직접 확인한다.
 
+2026-10-06 보강: GitHub 상세 프로필은 본문의 표도 보존한다. `publication_date_metadata_timestamp: true`는 표시 게시일과 모든 명시적 오프셋의 발행 메타데이터를 대조한 후 정확한 시각으로 승격한다. 동일 순간의 서로 다른 오프셋 표기는 허용하지만, 같은 날짜라도 발행 시각이 다르면 `conflict`로 남긴다. 표시일과 메타데이터 위치·원문 값을 함께 보존하며 수정 시각은 사용하지 않는다. 발행 시각이 없으면 기존 날짜 정밀도를 유지한다. 이 옵션과 JSON-LD `TechArticle` 지원은 다른 출처에서도 사용할 수 있는 공통 파서 기능이며 별도 GitHub crawler를 추가하지 않았다. 7월 10일 발표4건의 저장 raw를 새 parse로 재처리해 세션 필터, CodeQL, 탐지 이름 변경표, 사용자별 예산 상태의 본문 및 시각을 확인했다. 상세 확보·파싱을 기사 승인이나 새 일일 운영 완료로 집계하지 않는다.
+
 ## 35. Google Cloud Threat Intelligence 공식 RSS와 상세 원문
 
 [Google Cloud Threat Intelligence 주제 페이지](https://cloud.google.com/blog/topics/threat-intelligence)는 `https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v`를 공식 RSS로 연결한다. 이 경로는 **사이버보안/해외/기술·제품**의 회사 원문 한 계열이다. `feeds.feedburner.com`은 피드 전달 host이고 기사 발행자는 `cloud.google.com`이다. 등록 시 두 host를 명시적으로 허용하되 `publisher_id`는 Google Cloud로 유지한다. 회사 글과 다른 매체의 독립 취재를 같은 근거 두 건으로 세지 않는다.

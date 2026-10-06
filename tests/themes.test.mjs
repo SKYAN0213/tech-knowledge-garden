@@ -68,6 +68,19 @@ test("Reviewed themes, event tags and entities retain the real summary and stabl
   assert.deepEqual(classifyArticle(body.replaceAll("\n", "\r\n"), "CRLF"), a.classification)
 })
 
+test("Naming changes use a product tag without implying new detection behavior", () => {
+  const classified = classifyArticle(
+    body
+      .replace("**테마:** 투자·기업거래", "**테마:** 제품·서비스")
+      .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+      .replace("투자 유치, 채용 확대", "명칭 변경"),
+    "Detector names",
+  )
+  assert.equal(classified.theme, "제품·서비스")
+  assert.deepEqual(classified.event_tags, ["명칭 변경"])
+  assert.deepEqual(THEMES.find((theme) => theme.id === "products").tags.includes("명칭 변경"), true)
+})
+
 test("Future issues require the theme and sector format, including empty editions", () => {
   const i = fixture()
   delete i.meta.theme_format

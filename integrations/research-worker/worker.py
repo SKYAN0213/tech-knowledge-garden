@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import sys
 from urllib.parse import urljoin, urlparse, unquote
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 VERSION = "research-worker/1"
@@ -585,6 +585,10 @@ def html_parse(raw, url, options):
     if publication_date_policy == "explicit-authoritative" and not options.get("publication_date_xpath"):
         raise ValueError("Explicit-authoritative publication date requires a selector")
     common_date_basis = []
+    for node in dom.xpath('//meta[@property="article:published_time" or @name="date" or @name="pubdate"]'):
+        value = clean(node.get("content"))
+        if value:
+            common_date_basis.append({"type": "meta", "dom_path": domtree.getpath(node), "attribute": "content", "text": value})
     # Common, semantic publication-date metadata works across publishers and
     # keeps its provenance. Do not use arbitrary <time> elements: pages often
     # contain dates for related stories, tickers, or update widgets.
@@ -619,12 +623,12 @@ def html_parse(raw, url, options):
                 continue
             types = item.get("@type", [])
             types = [types] if isinstance(types, str) else types if isinstance(types, list) else []
-            if any(isinstance(value, str) and value.rsplit("/", 1)[-1] in {"Article", "NewsArticle", "BlogPosting", "Report"} for value in types):
+            if any(isinstance(value, str) and value.rsplit("/", 1)[-1] in {"Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"} for value in types):
                 value = item.get("datePublished")
                 if isinstance(value, str) and clean(value):
                     value = clean(value)
                     date_nodes.append(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", value))
-                    common_date_basis.append({"type": "json-ld", "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value})
+                    common_date_basis.append({"type": "json-ld", "dom_path": domtree.getpath(script), "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value})
             pending.extend(value for value in item.values() if isinstance(value, (dict, list)))
     explicit_date = options.get("publication_date_xpath")
     preserve_date_block = options.get("preserve_publication_date_block", False)
@@ -956,6 +960,22 @@ def html_parse(raw, url, options):
             date_basis = {"sources": common_date_basis}
             if published:
                 date_profile_status = "matched"
+    metadata_timestamp = options.get("publication_date_metadata_timestamp", False)
+    if not isinstance(metadata_timestamp, bool):
+        raise ValueError("Publication metadata timestamp option must be boolean")
+    if metadata_timestamp and published:
+        if not explicit_date or date_profile_status != "matched":
+            raise ValueError("Publication metadata timestamp requires a matched display date")
+        timestamp_bases = [basis for basis in common_date_basis if source_date_value(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"])) and "T" in basis["text"]]
+        if timestamp_bases:
+            timestamps = [re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"]) for basis in timestamp_bases]
+            instants = {datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc) for value in timestamps}
+            if len(instants) != 1 or any(known_date(value, calendar_zone) != known_date(published, calendar_zone) for value in timestamps):
+                published = None
+                date_profile_status = "conflict"
+            else:
+                published = timestamps[0]
+                date_basis = {**timestamp_bases[0], "text": published, "display_basis": date_basis, "sources": timestamp_bases}
     if published and source_date_value(published) is None:
         published = None
         date_profile_status = "invalid-date"
