@@ -1,4 +1,6 @@
-보안·에너지 보완 준비(2026-10-06): 실제 MLX와 원문 직접 검토로 DOE6사실·전자신문5사실 기사2건을 승인하고 후보 장부에 연결했다. 공통 ±HHMM 날짜 정규화/원 근거 보존·불가능한 offset 거부 코드0951a6b와 관련4표적 시험 통과. 기존10월6일5기사를 유지한7기사 미리보기의1280/390 탭·태그·Enter·뒤로가기를 실제 확인했다. Drive guarded 작성/공개 operation은 다음 단계이며 아직 공개 성공이 아니다. 런북429/계획19.337. 전체목표active·정규0/7 유지.
+보안·에너지 실제 배포(2026-10-06): 공통 ±HHMM 날짜 정규화0951a6b/관련4표적 통과. DOE6·전자신문5사실 승인과 기존5기사 보존한7기사 공개2d37be5/Actions37412685261 success(Node971/971·Python15+10+3·build/deploy). Drive213 전후raw/두목록·동일ID 원고1수정·guard verified1/pending0/conflict0/unresolved0, 공개14파일 byte/reader동등성·1280/390 탭/태그/Enter/뒤로가기 확인. WebsiteData11raw(9갱신/2불변)·181기사와 원고ID/SHA 연결 검증. 두 승인 closure55/790members와 발행 증거95members를 private Research rawSHA로 대조하고6+5사실/ordinary96파일 복원했다. 런북429/계획19.337.
+
+다음 재개: 저장된 일일54경로/108창을 재사용해32조사칸(partial31/failed1)의 실제 원문 판정을 채우고 최초 입력이 고정된 다음 신규 정규 실행을 같은 발행operation에 연결한다. 오늘 보완을 새 성공으로 세지 않는다. 후보781(verified97/deferred9/rejected2/unreviewed673), 등록194/일일활성54/수집근거55. 전체 legacy47/454·metadata10·독립 human gold40/20·정규0/7·08시/인증/중단·전체runtime복구 미완료, goal active다. 동일1시간실패 반복0. private 진척 화면: `/Volumes/X5Storage/tkg-daily-core-20261006-v1/daily-diversified-delivery-status-v1.html`.
 
 공통복구 배포확인(2026-10-06): 코드078b33c/Actions37409624285 success, CI971/971·Python15+10+3, 실제공개12파일 byte/reader동등성. freshDrive213 raw/metadata·두목록·localbytes일치와 c677107d…sourceSHA를 검증하고 canonical pull 변경0/mapping관측만 갱신했다. AWS복구26.040초/상세1요청/후보71, 404 미완료보존. private진척화면갱신. 전체목표active·정규0/7 유지하며 다음은32칸원문검토→동일회차승인/발행operation이다.
 
