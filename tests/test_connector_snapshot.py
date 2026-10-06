@@ -17,6 +17,9 @@ SPEC.loader.exec_module(snapshot_builder)
 DRIVE_SPEC = importlib.util.spec_from_file_location('pull_drive', ROOT / 'scripts/pull-drive.py')
 pull_drive = importlib.util.module_from_spec(DRIVE_SPEC)
 DRIVE_SPEC.loader.exec_module(pull_drive)
+WEBSITE_SPEC = importlib.util.spec_from_file_location('website_data', ROOT / 'scripts/export-website-data.py')
+website_data = importlib.util.module_from_spec(WEBSITE_SPEC)
+WEBSITE_SPEC.loader.exec_module(website_data)
 
 
 def fixture(repository, now):
@@ -51,6 +54,139 @@ def fixture(repository, now):
 
 
 class ConnectorSnapshotTests(unittest.TestCase):
+    def mapping_fixture(self, repository, receipt):
+        legacy = {'schema': 'tech-drive-receipt/v1', 'destination_folder_id': snapshot_builder.ROOT_ID,
+                  'verified_at': '2026-09-13T00:00:00Z', 'folders': {},
+                  'files': [{'path': row['path'], 'id': row['file_id'], 'parent_id': row['parent_ids'][0],
+                             'sha256': '0' * 64, 'bytes': 0, 'modified_time': '2026-09-13T00:00:00Z'}
+                            for row in receipt['files']] + [
+                      {'path': 'News/old.md', 'id': 'old-projection', 'sha256': 'old-projection-sha'},
+                      {'path': 'Archive/private.md', 'id': 'archive-id', 'sha256': 'old-archive-sha'}]}
+        target = repository / '.local/drive-sync/receipt.json'
+        target.parent.mkdir(parents=True)
+        target.write_text(json.dumps(legacy), encoding='utf-8')
+        return target, legacy
+
+    def test_stale_mapping_refreshes_on_noop_source_pull_and_restores_website_lineage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repository = Path(tmp)
+            now = datetime(2026, 10, 6, tzinfo=timezone.utc)
+            receipt = fixture(repository, now)
+            raw = json.dumps(receipt).encode('utf-8')
+            snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+            pull_drive.synchronize(snapshot, repository, True)
+            target, old = self.mapping_fixture(repository, receipt)
+            lineage = {'mapping': {'news/current': [receipt['files'][0]['path']]},
+                       'sources': {row['path']: {'sha256': row['sha256']} for row in receipt['files']}}
+            with self.assertRaisesRegex(ValueError, 'differs'):
+                website_data.source_note_links(lineage, old)
+            before = target.read_bytes()
+            planned = pull_drive.synchronize(snapshot, repository, readback=receipt, readback_bytes=raw, now=now)
+            self.assertFalse(planned['changed'])
+            self.assertEqual(len(planned['source_mapping']['updated_paths']), 4)
+            self.assertEqual(target.read_bytes(), before)
+            result = pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now)
+            self.assertFalse(result['changed'])
+            current = json.loads(target.read_bytes())
+            self.assertEqual(current['verified_at'], old['verified_at'])
+            self.assertFalse(current['authoring_source_mapping']['projection_files_refreshed'])
+            for path in ('News/old.md', 'Archive/private.md'):
+                self.assertEqual(next(row for row in current['files'] if row['path'] == path),
+                                 next(row for row in old['files'] if row['path'] == path))
+            self.assertIn('/file-0/', website_data.source_note_links(lineage, current)['news/current'][0]['url'])
+            after = target.read_bytes()
+            repeat = pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now)
+            self.assertFalse(repeat['source_mapping']['changed'])
+            self.assertEqual(target.read_bytes(), after)
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+
+    def test_mapping_conflicts_stop_before_any_source_or_state_write(self):
+        changes = [
+            lambda r: r['files'][0].update(id='other-id'),
+            lambda r: r['files'][0].update(parent_id='other-parent'),
+            lambda r: r['files'][-1].update(id=r['files'][0]['id']),
+            lambda r: r['files'].append(copy.deepcopy(r['files'][0])),
+            lambda r: r['folders'].update(Editions='other-folder'),
+            lambda r: r.update(destination_folder_id='other-root'),
+        ]
+        for change in changes:
+            with self.subTest(change=changes.index(change)), tempfile.TemporaryDirectory() as tmp:
+                repository = Path(tmp)
+                now = datetime(2026, 10, 6, tzinfo=timezone.utc)
+                receipt = fixture(repository, now)
+                raw = json.dumps(receipt).encode('utf-8')
+                snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+                target, old = self.mapping_fixture(repository, receipt)
+                change(old)
+                target.write_text(json.dumps(old), encoding='utf-8')
+                source = repository / 'vault' / receipt['files'][0]['path']
+                source.write_bytes(b'local prior bytes')
+                before = target.read_bytes()
+                with self.assertRaises(ValueError):
+                    pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now)
+                self.assertEqual(source.read_bytes(), b'local prior bytes')
+                self.assertEqual(target.read_bytes(), before)
+                self.assertFalse((repository / 'data/drive-source-state.json').exists())
+
+    def test_mapping_requires_exact_fresh_readback_and_preserves_legacy_snapshot_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repository = Path(tmp)
+            now = datetime(2026, 10, 6, tzinfo=timezone.utc)
+            receipt = fixture(repository, now)
+            raw = json.dumps(receipt).encode('utf-8')
+            snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+            target, _ = self.mapping_fixture(repository, receipt)
+            before = target.read_bytes()
+            with self.assertRaisesRegex(ValueError, 'stale'):
+                pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now + timedelta(minutes=11))
+            with self.assertRaisesRegex(ValueError, 'bound'):
+                pull_drive.synchronize(snapshot, repository, True, receipt, raw + b' ', now=now)
+            mismatched = copy.deepcopy(receipt)
+            mismatched['files'][0]['sha256'] = '1' * 64
+            with self.assertRaises(ValueError):
+                pull_drive.synchronize(snapshot, repository, True, mismatched, raw, now=now)
+            pull_drive.synchronize(snapshot, repository, True)
+            self.assertEqual(target.read_bytes(), before)
+            other = copy.deepcopy(snapshot)
+            other['transport'] = 'apps-script-webapp'
+            with self.assertRaisesRegex(ValueError, 'connector'):
+                pull_drive.synchronize(other, repository, True, receipt, raw, now=now)
+
+    def test_mapping_tracks_new_and_deleted_authoring_paths_while_pulling_changed_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repository = Path(tmp)
+            now = datetime(2026, 10, 6, tzinfo=timezone.utc)
+            receipt = fixture(repository, now)
+            raw = json.dumps(receipt).encode('utf-8')
+            snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+            target, old = self.mapping_fixture(repository, receipt)
+            old['files'].pop(0)
+            old['files'].append({'path': 'Knowledge/removed.md', 'id': 'removed-id',
+                                 'parent_id': snapshot_builder.ROOT_IDS[1][1]})
+            target.write_text(json.dumps(old), encoding='utf-8')
+            removed = repository / 'vault/Knowledge/removed.md'
+            removed.write_bytes(b'old')
+            source = repository / 'vault' / receipt['files'][0]['path']
+            source.write_bytes(b'prior')
+            result = pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now)
+            self.assertEqual(result['updated'], [receipt['files'][0]['path']])
+            self.assertEqual(result['source_mapping']['added_paths'], [receipt['files'][0]['path']])
+            self.assertEqual(result['source_mapping']['removed_paths'], ['Knowledge/removed.md'])
+            self.assertFalse(removed.exists())
+            self.assertEqual(source.read_text(), snapshot['files'][0]['content'])
+
+    def test_mapping_private_path_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as other:
+            repository = Path(tmp)
+            now = datetime(2026, 10, 6, tzinfo=timezone.utc)
+            receipt = fixture(repository, now)
+            raw = json.dumps(receipt).encode('utf-8')
+            snapshot = snapshot_builder.build_snapshot(receipt, repository, raw, now=now)
+            (repository / '.local').symlink_to(other, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, 'symlink'):
+                pull_drive.synchronize(snapshot, repository, True, receipt, raw, now=now)
+            self.assertFalse((Path(other) / 'drive-sync').exists())
+
     def test_exact_readback_builds_a_pull_drive_snapshot_even_if_folders_are_reordered(self):
         with tempfile.TemporaryDirectory() as tmp:
             repository = Path(tmp)

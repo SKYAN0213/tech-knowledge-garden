@@ -43,7 +43,9 @@ Google Drive `Projects / Tech Knowledge`가 작성 원본이다. GitHub는 검�
 1. 집필 전에 Drive의 원본 수정과 GitHub 최신 변경을 확인한다. 로컬에 미반영 수정이 있으면 비교·병합한다. Git 변경이 없는 상태에서만 `git pull --ff-only`를 사용한다.
 2. 기존 취재·집필·검증 절차를 유지한다. 로컬 생성 결과를 먼저 GitHub에 올리지 않는다.
 3. `prepare-drive.py --collect`로 저장 목록을 준비하고, 네 원본 폴더의 변경 파일을 먼저 Drive에 업로드·검증한다. 취재·원문 수집 자료는 기존 개인 Drive 경로에 저장한다.
-4. 상시 연결이 설정돼 있으면 `gh workflow run drive-sync.yaml --repo SKYAN0213/tech-knowledge-garden --ref main`으로 즉시 반영을 요청한다. 실제 실행 결과와 공개 브리핑을 확인한다. Google 상시 연결이 아직 없고 Codex가 실행 중이면, 연결된 Drive 도구로 네 원본 폴더를 새로 읽어 완전한 스냅샷을 만들고 `pull-drive.py --snapshot <실제 스냅샷 경로> --apply`로 적용한 다음 `npm run publish`로 단발성 배포할 수 있다. 실제 최신 Drive 읽기 없이 로컬 사본을 대신 발행하지 않는다. 단발성 배포와 상시 자동 반영 미연결을 구분해서 보고한다.
+4. 상시 연결이 설정돼 있으면 `gh workflow run drive-sync.yaml --repo SKYAN0213/tech-knowledge-garden --ref main`으로 즉시 반영을 요청한다. 실제 실행 결과와 공개 브리핑을 확인한다. Google 상시 연결이 아직 없고 Codex가 실행 중이면, 연결된 Drive 도구로 네 원본 폴더를 새로 읽어 완전한 스냅샷을 만들고 `pull-drive.py --snapshot <실제 스냅샷 경로> --readback <같은 raw 영수증 경로> --apply`로 적용한 다음 `npm run publish`로 단발성 배포할 수 있다. 실제 최신 Drive 읽기 없이 로컬 사본을 대신 발행하지 않는다. 단발성 배포와 상시 자동 반영 미연결을 구분해서 보고한다.
+   이 연결 도구 경로에서는 snapshot에 고정된 같은 raw 영수증을 `--readback`으로 전달해 WebsiteData의 작성 원본 ID·SHA 연결도 갱신한다. 원고 변경이 없더라도 private 연결은 갱신할 수 있다. 전체 receipt의 보관·생성 자료 검증 시각은 갱신하지 않는다. [공통 동기화 운영](LOCAL_AI_NEWS_RUNBOOK.md#425-drive-작성-원본-연결-기록의-공통-갱신)을 따른다.
+
 5. 웹 배포가 확인된 뒤 `export-website-data.py`를 실행하여 `WebsiteData`를 갱신·업로드한다. 공개 사이트가 새 원고를 반영하기 전의 데이터를 최신 원고 데이터로 표시하지 않는다.
 
 `npm run publish`는 콘텐츠 외 코드·설정·문서의 미커밋 변경이 있으면 Drive 적용이나 Git push 전에 중단한다. 생성 코드로 만든 결과만 콘텐츠 커밋에 담아 원격의 예전 코드로 배포하는 상황을 막기 위한 관문이다. 코드 변경은 별도로 검토·검증해 발행할 판본에 먼저 반영한다. 로컬 발행과 GitHub 동기화가 Git에 추가하는 경로는 공개용 네 작성 원본, 생성된 `Briefings`·`News`·`Trends`·`Knowledge Maps`와 RSS·공개 진입 페이지, `digest` 및 두 상태 JSON으로 제한한다. `vault/Archive`나 새로운 비공개 폴더는 자동 추가하지 않는다.

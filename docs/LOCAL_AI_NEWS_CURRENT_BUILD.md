@@ -1,5 +1,7 @@
 2026-10-06 최신 완료: 7월11일00:00/08:03 기존 두 회차20구간을 원문부터 재검토해4기사를 반영했다. 공통 수집기에 TechArticle·실제 timestamp/표 보존·시각 충돌 거부를 추가하고 명칭 변경 태그를 도입했다. 원 기사ID/URL·회차coverage·RSS40을 유지하고 중복/시장 추론/독자 조언을 제거했다. 표적 Python6/6·분류1/1과 공개1677fa0/Actions37395500319의 Node959/959·Python15+3·build/deploy가 통과했다. 실제 공개21파일과 승인 preview가 일치하며 1280/390 UI·분야query·Enter 이동·map0/overflow0을 확인했다. Drive 원본213 전후 raw에서는 같은 ID의2회차만 변경됐다. WebsiteData11 actual raw(8갱신/3불변), 네 원문 승인 closure의 원격SHA·독립복원·승인 동등성, 최종 운영증거ZIP212자료/214복원파일의 원격SHA도 검증했다. 공개357페이지/177기사·지도25용어/22관계·RSS40, 소급 미판정47회차454구간·metadata10이다. 정규 비교0/7·독립gold·08시/인증/중단·전체runtime 복구는 남아 목표 active다. 다음은 날짜·경계가 확인된 7월10일08:02의15구간이며 metadata 누락7월11일16:03은 원 작성 근거 복구 목록에 유지한다. [계획19.332](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19332-공통-발행-시각-보존과-본문-표의-실제-재파싱), [운영424](LOCAL_AI_NEWS_RUNBOOK.md#424-표시일과-같은-순간의-메타데이터표-보존). 아래 기록은 당시 상태다.
 
+2026-10-06 최신 공통 구현: Drive 원고와 WebsiteData 원본 연결의 갱신을 기존 pull-drive --readback에 통합했다. 집중10/10·실제213raw/두 목록 대조·canonical no-op 연결 갱신·반복0을 확인했다. 이전7/11 stale SHA2건은 별도 사본의 같은 공통 명령으로 복구했고 원고 lineage 검사를 통과했다. 작성 밖331기록과 전체 receipt의 이전 검증 시각·공개 원고/RSS를 보존했다. 공개 배포와 릴리스 CI는 다음 관문이며 전체 목표 active다. [계획19.333](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19333-검증한-drive-원본의-연결-기록을-공통-동기화에서-갱신), [운영425](LOCAL_AI_NEWS_RUNBOOK.md#425-drive-작성-원본-연결-기록의-공통-갱신). 아래 기록은 당시 상태다.
+
 2026-10-06 최신 완료: 7월 10일16:03 기존 회차의 9구간을 공식 원문부터 재검토해 Claude Code 기사1개와 기존 MCP 설명·변화 이력으로 연결했다. 기사 ID/URL·회차 경계·RSS40 GUID/pubDate를 보존하고 안내·중복·근거 없는 전망을 제거했다. 정당한 편집 후 완료 모델 출력 재사용을 고쳤으며 표적53/53, 공개8d68084/Actions37391137289의 Node958/958·Python15+3·build/deploy가 통과했다. Drive 작성 원본213개 전후 raw 대조와 같은 ID 수정1개, 공개12파일 exact bytes, WebsiteData11개 raw 대조(8갱신/3불변), private ZIP285파일 독립 복원·승인 재검증도 완료했다. 현재 공개173기사·지도25용어/22관계·RSS40, 소급 미판정49회차474구간·metadata10이다. 이 소급 수정은 새 정규 비교 횟수에 넣지 않으며 실제 비교0/7·독립gold·08시/인증/중단·전체runtime 복구는 남아 목표 active다. 다음은 날짜·경계가 보존된 다음 구형 회차를 기존 수집·처리 checkpoint로 검토한다. [계획19.331](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19331-구형-실제-기사-전환과-편집-후-모델-출력-재사용), [운영423](LOCAL_AI_NEWS_RUNBOOK.md#423-편집-후-불변-모델-초안-재사용과-7월-10일-소급-전환). 아래 기록은 당시 상태다.
 
 2026-10-06 최신 개발: 기존 일일 수집에 요청 전 설정/코드40입력과 수집 후 handoff/backlog/coverage/receipts/summary 불변 보관을 연결했다. 승인 후 목록 재생성은 원문·모델 재호출 없이 새 basis를 만들며 옛 근거를 보존한다. 최초 snapshot 없는 옛 수집은 편집 목록만 유지하고 비교 근거로 재구성하지 않는다. 실제 외장 preflight에서 explicit backlog 전달 누락을 발견해 common coverage 검증과 supplemental 경로를 함께 고쳤다. 관련37/37·보강44/44 통과. 실제54경로/108창 계획·40개 원본 입력 고정도 확인했으며 source/model 요청0인 수동 preflight다; 릴리스 CI/Drive/public은 다음 gate다. 현재 마지막 공개 검증은 f6c97e0/Actions37385888379의15파일+지도모듈이며 Node951·Python15+3·build/deploy가 통과했다. 오늘08:00 예약은 실제 preflight를 수행했지만 동시 public-readback 및 fresh Drive 전체 대조 조건으로 신규 취재·발행 전 중단했고 새 비교0/7이다. 독립평가·실제7회·전체소급·08시/인증/중단·전체runtime 복구는 남고 목표 active다. [계획19.330](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19330-수집-전-입력과-수집-후-handoff-자동-고정), [운영422](LOCAL_AI_NEWS_RUNBOOK.md#422-일일-수집의-자동-비교-자료-보존과-승인-후-목록-재생성). 아래는 당시 기록이다.
@@ -1703,21 +1705,17 @@ Ollama 역할 호출의 스트리밍 진행 기록·부분 실패 출력/SHA 검
 
 Next source slice: legacy-20260714-codex-api-sources-20261005-v1 captured two official JSON endpoints with policy-checked HTTP200. Both detailed parses are unsupported (0 blocks); source archive remote SHA and 12-file ordinary restore verified. No article approval or authoring write. Continue with shared profile-based JSON parsing of the stored bytes; see runbook405/plan19.311. Overall goal active, WBS2/22 unchanged.
 
-
 2026-10-06 후속 수직 슬라이스: Drive212 작성본과 신규3기사/3이력 노트를 보관·검증하고0b827e1을 push했다. Actions37372213094는 hosted runner 미배정/공식 Actions 장애로 실행 step0·cancelled/deploy skipped이며, 배포·첫 정규 운영 완료로 집계하지 않는다. 외장 별도 worktree에서 source-processing 체크포인트를 기존 공통 검증기로 평가에 연결했다. 평가25/25와 실제3원출력 가져오기/판정(추가 추론0)이 완료됐다. 개발 실제원문26·독립human0·heldout0이다. HFNN 설명1건은 실제 qwen3.8 초안/원문 검토를 거친 private 승인본이며 공개 반영은 후속이다. 런북416·계획19.323을 따른다. 전체 목표 active, 기존7회/08시·50회차483구간+metadata10·독립평가·fullruntime는 유지한다.
-
 
 ### 2026-10-06 빈 추출 검토 슬라이스
 
 공통 source processing에서 사실0개는 비교·작성을 진행하지 않고 별도 원문 검토로 반환한다. 완료된 추출·모델 ledger와 정확한 원문 판본을 검증하며, 명시적 검토와 기존 복구만 연결한다. 일일 상태와 portable closure까지 연결했다. 처리49/49+추가 보관1/1+기존 보관14/14. 실제 Groq 두 릴리스 원문으로 모델 누락을 확인하고 기존 사실5개 재추출에 연결했으며 원본49개 파일 SHA와 기존 발행을 보존했다. 추가 추론0. 별도 worktree이고 선행0b827e1 배포 대기 상태를 변경하지 않는다. 전체 목표는 계속 active다.
-
 
 ### 2026-10-06 HFNN 연결·원본 복원·1시간 외부 병목
 
 빈 추출 공통 경로 commit7a37591, 처리49+신규 보관1+기존 보관14 표적 검사 통과. 실제 Groq 빈 추출·기존5사실 복구는 원본49개 파일 보존·추가 모델 호출0, Drive 재다운로드 및279payload/281restore 검증 완료. HFNN은 별도 paper-concepts-processing-v6에서 기존 기사72081e8f67345f20의 본문·날짜를 유지해 fabric-grasping-hfnn에 연결했다. 모델 호출0, private380파일 빌드·실제 태그/용어/이력/지도 관련기사1개·390px/키보드·RSS40 GUID/pubDate 검증 완료. Drive4.12MB 원본 재다운로드·426payload/428restore 검증 및 두 archive-location 등록 완료. canonical 노트·후보 장부·선행0b827e1 발행 바인딩은 유지됐다.
 
 GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 기록했다. 공식 investigating/degraded 상태, 테스트 실행0·수동 재실행0. 서비스 복구 후 같은37372213094 run을 한 번 재실행해0b827e1 공개 readback/WebsiteData를 완료한다. 그 뒤 개발 branch 통합과 HFNN v5→v6 lineage를 적용한다. 전체 목표 active, 독립 사람 gold0/heldout0, 신규 로컬AI 운영0.
-
 
 ### 2026-10-06: 배포 복구와 Drive 링크 보강
 
@@ -1726,14 +1724,12 @@ GitHub Actions 실행기 미배정 대기가3,686초를 넘어서 병목으로 �
 - WebsiteData 원본 연결: 고정 사건 ID와 topic ID로347개 source page→175개 canonical note를 정확히 연결. 모든 Drive 링크/SHA 일치. 표적5검사 통과.
 - 아직 별도 gate: WebsiteData 갱신·재다운로드, HFNN canonical/public 반영, 신규7회 운영, 사람 gold/heldout, 무인8시 복구, 전체 legacy 판정.
 
-
 ### 2026-10-06: Drive 보관 검증과 HFNN 소급 원본
 
 - 실제 배포0b827e1 WebsiteData: 11raw SHA·bytes 검증 완료, 링크 누락0, 기존 ID 보존.
 - HFNN 기존 기사에 전문용어 연결·용어 정의·색인 Drive 저장:3/3 verified, canonical213개·삭제0. 새 기사/새 회차로 만들지 않았다.
 - 기존 후보 최초 승인 guard는 공개 원문을 차단했다. 기존v5 승인 유지, 별도 retrospective v6 authoring release를 사용한다.
 - 공개 배포와 다음 WebsiteData는 아직 별도 gate다. 신규 운영 횟수0·독립 사람 gold0·heldout0 및 전체 목표 active를 유지한다.
-
 
 ### 2026-10-06 HFNN 실제 공개 검증
 

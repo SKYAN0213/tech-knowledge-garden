@@ -10341,7 +10341,6 @@ GPT가 전체 원문과 표를 직접 확인했다. 표2의 분리효과 정확�
 
 413 인용 복구 후속: 두 번째 실제 호출은185.591초에 완료했지만 block-0130 인용에 모델 생략점이 들어갔다. 동일 블록에서 HFNN 제안부터 최적 포즈 선택까지572자의 연속 원문을 읽고 `elision_expansion_checked: true`로 복원했다. 공통 quote-only는 한 번의 명시적 생략점 확장만 허용한다. 고정된 앞뒤 문자열과 정확한 원문 포함·같은 block을 요구하고 삭제·수치·주체·판정·설명을 바꾸지 않는다. 자동 보정은 없다. 관련 신규2검사를 통과했다. 새 run `daily-20261006-paper-window-quote-reviewed-v2`는 두 완료 응답을 재호출하지 않고8누락창을 진행한다. 최대8×300초에 맞춰 새 ledger 기본900초+명시1,500초를 확보했으며 원래2호출 비용과 분리한다. 먼저 실패한 v1과 그 원출력은 남겨둔다.
 
-
 ### 414. 장문 인용 위치·불충분 판정의 명시적 복구와 전체 원문 검토
 
 2026-10-06, 공통 장문 창10개의 실제 로컬 대조를 완료했다. 마지막 run은 `daily-20261006-paper-window-assessment-reviewed-v4`이며 완료 응답9개를 보존·재사용하고 마지막 미완료 창1개만 호출했다. 앞선 raw 응답과 비용 ledger를 덮어쓰지 않았다. 자동 대조 결과는 부분 창을 합쳐 사실 승인으로 승격하지 않는다.
@@ -10357,7 +10356,6 @@ GPT가 원문130블록/57,026자와 표2·로봇 실험 조건을 재검토했�
 배포된0df5680의 CI37362286792는 Node911/911·Python15+2·build/site·deploy를 통과했다. 공개14파일은 common readback에서 reader equivalent를 확인했다. 이번 인용 복구 후속 코드는 아직 그 배포에 포함되지 않는다.
 
 fresh Drive 원본208개와16폴더 전후 목록의 실제 raw bytes를2026-10-05T19:40:24Z에 대조했다. 과거 소급 전환 뒤 기존 일일 계획의 canonical inventory가 달라져 재사용이 차단된 것은 정상이다. 새 `daily-20261006-canonical54-review-v1`으로54경로/108창 수집을 실행했다. 옛 계획·실패·수집 관찰은 보존하며 이후 실제 완료 결과를 별도 기록한다. 공개 원고 변경·새 정규 운영은 아직0, 미판정 legacy50회차/483구간·metadata10·독립 평가40/20·7회 운영·08시/인증/중단·전체 runtime 복구는 남는다.
-
 
 ### 415. 심층 원고·이력·재승인 연결과 실제 수집 완료
 
@@ -10379,7 +10377,6 @@ RobCo closure58자료/60members/210589bytes SHA2c830b0ed604f3a03bf014a3796358532
 
 415 후속: 태그 정정본의 실제 원고는 processing-v5, draft61ac8bb2다. 재승인 후보-v2는 동일 사건 ID를 유지하고 원래 approval를 history에 보존했다. private Drive ID1QPkYAxOGEXBAmX2l-b0bMrM21_Wdj7_-에 closure-v3를 보관했고3,505,505bytes SHA9c2f0cc8eeb9eaa61c39af84e90af943b0d05c34b15e23c30c3cfd82fecbdd63 실제 raw download·독립210파일 복구·태그 빈 배열/12사실의 승인 재검증·위치 등록을 완료했다. 이 보관본은 이전 승인과 명시적 lineage review 원본도 포함한다. RobCo 복구 파일 수의 정확한 값은60이다.
 
-
 ## 416. 새 체크포인트 평가 연결과 정규 발행의 외부 차단
 
 0b827e10b221cc2a4df07707433c6b65b3713948에는 실제 Drive212 작성 원본(기존208·신규4)과 새 정규 브리핑3기사·Signals1·TrendTopics2를 반영해 정상 push했다. Actions37372213094는 build 단계에 hosted runner가 배정되지 않아15분 뒤 cancelled, deploy skipped였다. 실행 step0이며 전체 테스트와 실제 배포 성공이 아니다. annotations의 원인은 The job was not acquired by Runner of type hosted even after multiple attempts다. GitHub 공식 상태는 Actions major_outage/Incident with Actions investigating였으며21:05:26 UTC 취소 시각을 보존했다. 새 정규 운영은 아직0, WebsiteData는 이전 실제 배포 보관본을 유지한다. 독자 화면에 장애·발행 안내를 넣지 않는다.
@@ -10396,7 +10393,6 @@ RobCo closure58자료/60members/210589bytes SHA2c830b0ed604f3a03bf014a3796358532
 
 416 최종 보관: 평가3원문/원모델과 실제 검토·HFNN94.8초 생성본/승인·작성authority212·Drive/CI장애 관측·4bdbaf7 코드 patch·복구한 미사용RobCo 증거의346자료를 ordinary v1으로 보관했다. ZIP347members/1,658,992bytes/SHA72f46ed7b31302f6315d55181a06f57fba5452e126ff253f2e38f2a1863a99ba, private Research ID17V6Xb96aHqPTeh2ZHlNHLuX9jHp-M1Rw다. 원 manifest ID1wAqqHa3NN3ZzE3YMZtTv3HWcJrg1fQNd의 SHA c07463c11e8d95c72f27026a3e140f1f6318f3cd0c760e7afe2be98b67efb578와 원격raw를 대조했다. 새 디렉터리348파일 복구 후 평가3판정이 exact idempotent이고 HFNN10검토사실·승인 SHA5af27469…와212authority를 독립 재검증했다. post-package receipt ID1RfAuUYcJYvq16bUynhHgywgfPbU25XPD의 원격SHA7c479052…/2,549bytes·Research 부모/shared:false도 확인했다. source_versions0·dependency_closed:false이며 개발/평가 복구다. 전체 원문 승인 closure·fullruntime·공개 배포로 집계하지 않는다. 첫 restore는 별도worktree에 존재하지 않는 상대 interpreter 경로로 실패해 출력0byte를 보존했고, 기존 실제3.12 interpreter 절대 경로로 실패 단계만 재개했다.
 
-
 ## 417. 모델 빈 추출 검토와 복구
 
 `process-source`의 `empty_extraction_review`는 조사 완료나 새 소식 없음이 아니다. 후속 비교·작성은 중단되며 원문을 읽고 별도 검토를 작성한다. `inspectEmptyExtraction(root, processingRun)`의 binding을 그대로 복사하고 `schema: editorial-empty-extraction-review/v1`, reviewer, 실제 reviewed_at, source_read, reason, anchors(정확한 source_version_id·parse_id·block_id·quote), `public_approved:false`, `candidate_published:false`를 포함한다.
@@ -10409,7 +10405,6 @@ node scripts/research.mjs review-empty-extraction --root PRIVATE_ROOT --run REVI
 
 private root에 있는 검토 입력만 받으며 모델/API 옵션은 거부한다. 결과는 empty_extraction_recovery_required/recovered/source_deferred/no_event로 구분되고 승인·발행은 별도다. 기존 검토는 불변이며 추가 조사는 완료된 추출을 재사용하는 새 processing run으로 진행한다. `archive-closure`가 원문·빈 추출·검토·후속 추출을 함께 추적한다. 실제 검증: 처리49/49, 신규 보관1/1, 기존 보관14/14. Groq 실제 기록2개 원문→빈 원출력→기존 사실5개 복구, 원본49개 파일 보존, 추가 모델 호출0.
 
-
 ## 418. HFNN 승인 연결과 배포 재개 지점
 
 별도 승인 run `daily-20261006-paper-concepts-processing-v6`는 기존 논문 사건72081e8f67345f20에 전문용어 fabric-grasping-hfnn을 연결한다. 원문 사실4개·승인 정의 SHA5af27469c14fe729c1da22056e94d320a773491f87a4252e17018d2aae93fefb를 명시적으로 검토했다. 기존 원고의 본문·발표일을 유지하고 model calls0으로 만들었다. private preview는 daily-20261006-paper-hfnn-reader-preview-v1이다. 브라우저 링크·모바일·키보드·지도 관련 기사1개와 RSS40 GUID/pubDate 보존을 확인했다.
@@ -10418,20 +10413,17 @@ Drive 보관과 독립 복원은 완료됐으며 공통 archive-location에 등�
 
 Actions hosted runner 미배정 대기는1시간 이상이며 수동 재실행0이다. 공식 상태 복구 전 같은 요청을 반복하지 않는다. 기존 daily-20261006-regular-publication-v1은 remote_confirmed이고 배포 완료로 승격하지 않았다. 먼저0b827e1의 CI·실제 공개 readback·WebsiteData를 완료한 뒤 개발 branch 통합과 v5→v6 승인 lineage로 HFNN을 적용한다. private 증거는 외장 tkg-daily-core-20261006-v1/core-development-checkpoint-20261006-v2.json에 재개 입력과 SHA를 보존한다.
 
-
 ## 419. 배포 복구와 WebsiteData 원본 연결 검증
 
 Actions37372213094 attempt2는0b827e1에서 success다. regular-deployment-v1.json, regular-public-readback-v1.json, regular-topic-public-readback-v1.json은 외장 tkg-daily-core-20261006-v1에 있다. hosted runner1시간 차단 기록은 과거 이력으로 보존한다. 이번 배포를 수동 실행이나 예약 완료 횟수로 자동 계산하지 않는다.
 
 export-website-data.py는 기존 garden parser로 고정 사건 ID→모든 Editions 원본, topic ID→실제 TrendTopics 파일을 찾는다. 직접 작성 Knowledge와 briefing edition도 보존한다. Drive SHA 불일치나 live/local assets 불일치는 중단한다. WebsiteData CSV에서 여러 회차는 같은 셀의 줄바꿈으로 제공하며 snapshot.note_lineage에서 각각의 path/url/SHA를 확인한다. 기존 RSS GUID·기사 URL·발표일을 변경하지 않는다. canonical 조사는 다시 실행하지 않으며 모델 호출0이다. 표적 검사는 node --test tests/website-note-lineage.test.mjs, python -m unittest discover -s tests -p test_export_website_data.py이며 각각2/2·3/3이다. 실제 링크 proof는 regular-website-note-link-proof-v1.json이다.
 
-
 ## 420. HFNN 소급 반영의 승인 경계와 Drive 저장
 
 최초 candidate-approval은 이미 공개된 원문을 새로 승인하지 않는다. paper-hfnn-approval-lineage-v1 요청의 실패를 보존했고 guard를 완화하지 않았다. 기존 후보 v5 승인과 approval_history를 유지하며, 검증된 v6·전문용어 note approval을 private-preview와 retrospective authoring release로 연결한다. 다음 최초 후보 승인 재시도는 하지 않는다.
 
 preview daily-20261006-paper-hfnn-reader-preview-v2, release runs/daily-20261006-paper-hfnn-reader-preview-v2/drive-authoring/releases/3c80abf276d8535baa1b2620d26a17f6998f96f449f2da9b77509aac0ac4aa99.json이다. writer는3개 모두 검증 완료했다. post snapshot .local/drive-sync/hfnn-authoring-post-snapshot-20261006-v1.json의213개 원본을 pull-drive로 적용했다. 새 publication operation은 daily-20261006-paper-hfnn-publication-v1이며 scripts/publish.mjs --operation --release가 bind를 수행한다. research-publication CLI의 독립 prepare 모드는 없다. 기존 정규 발행0b827e1의 공개 검증과 WebsiteData11 raw 검증은 완료했고 이 소급 변경의 배포 증거와 섞지 않는다.
-
 
 ### 2026-10-06 HFNN 실제 공개 검증
 
@@ -10488,5 +10480,18 @@ Drive213개 원본의 실제 raw 대조·두 목록 일치는 legacy-jul11-befor
 
 reader legacy-20260711-reader-20261006-v1은 기존00:00/08:03의 coverage와 RSS/주소를 유지하며20구간을 전환한다. private1280/390 렌더링·분야query·키보드 Enter 이동·3카드·원문·map0/overflow0을 확인했다. 원문4closure는 Research에 각각 보관하고 actual raw ZIP SHA·size·private parent를 검증해 register했다. 서로 다른 사건을 related-run으로 합치지 않는다. fresh213원본에서 변경2파일만 same-ID update1회씩 수행한 guarded session f9aed6d8-b21f-4722-94ed-69288e761c49는 verified2/pending0/conflict0/unresolved0다. post raw213/전후16폴더 목록 대조 및 post-snapshot SHA7c27ede63cbe7fce9fcb6b7bbf7dad131596e5f8472e482efcb5609b62f65fd9를 보존했다. 실제 배포·WebsiteData·독립 복원·소급 분모 확정은 다음 gate다.
 
-
 424 최종 검증: 공개1677fa0/Actions37395500319의 build·deploy success, Node959/959·Drive Python15/15·WebsiteData3/3이다. 로컬 전체 suite 반복0이며 실제 웹/RSS/GitHub21파일이 승인 미리보기와 같다. 공개1280/390의3카드·분야query·Enter 기사 이동·명칭변경 태그·map0/overflow0을 확인했다. 처음 수동으로 사용한 대문자 Briefings URL은404여서 배포 검증 영수증의 실제 소문자 canonical URL로 확인했다. 원래 public canonical URL이 바뀐 것으로 집계하지 않는다. WebsiteData 첫 export는 receipt.json에 예전2회차 SHA가 남아 거부됐다. 검증된213 post readback의 동일 file ID/부모와 SHA로 기존 매핑만 갱신해 재개했다. 544개 mapping 전체의 새 검증으로 표시하지 않는다. 이 매핑 반영을 공통 authoring snapshot 적용과 자동 연결하는 개선은 남아 있으며 export guard를 완화하지 않았다. WebsiteData11의actual metadata/raw/목록 중복0·8update/3unchanged를 확인했다. four remote closure의SHA/CRC/member와4 source-bound approvals 동등성을 모델0회로 재검증했다. 운영증거212자료/213ZIPmembers·6,542,230bytes는 Research1biQqVeRlv20L54D9-nEIpcDOMtjT31Er에 저장했다. remote SHA3fe3106c2e69559fd59afcc857f75de456f1ecd729e875fe9a92381275624a81 및 원격 exact manifest SHAf11db3ee2b90c0ae7b2f0ea2e941cd2acefb8be3d5c57c0c60f5feeb385f134b를 대조해 ordinary v1으로214파일을 복원했다. dependency_closed:false/source_versions0이며 승인원문 portable v2·전체runtime 복구와 구분한다. 소급 미판정47회차454구간·metadata10·RSS40·정규 비교0/7을 기록했다. 동일 실패를1시간 반복한 항목0이다. 다음은7월10일08:02의15구간, 날짜/coverage를 잃은7월11일16:03은 복구 근거를 확보하기 전 전환하지 않는다.
+
+## 425. Drive 작성 원본 연결 기록의 공통 갱신
+
+원격 네 작성 폴더의 전수 목록 → 모든 Markdown raw bytes → 같은 목록 재조회로 tech-drive-connector-readback/v1을 만든다. build-connector-snapshot.py는 로컬 bytes·ID·부모·10분 이내 시각을 대조한다. 같은 raw 영수증을 pull-drive에 전달한다.
+
+```sh
+python3 scripts/build-connector-snapshot.py --readback .local/drive-sync/<readback>.json --output .local/drive-sync/<snapshot>.json
+python3 scripts/pull-drive.py --snapshot .local/drive-sync/<snapshot>.json --readback .local/drive-sync/<readback>.json
+python3 scripts/pull-drive.py --snapshot .local/drive-sync/<snapshot>.json --readback .local/drive-sync/<readback>.json --apply
+```
+
+두 번째 명령은 dry-run이다. 원고 변경이 0이어도 source_mapping.changed를 따로 확인한다. apply는 private receipt의 작성 원본 SHA/size/modified_time·정확한 ID 링크를 갱신한다. 원본 ID나 부모가 달라졌으면 적용 전에 중단하므로 원격 이동/대체 여부를 조사한다. 영수증을 원하는 값으로 고쳐 우회하지 않는다. 같은 영수증·snapshot 재실행은 private 연결도 변경0이어야 한다. 관측이 10분을 넘겼다면 시각을 고쳐 쓰지 않고 새 remote 조회를 수행한다. --readback을 생략한 옛 snapshot/Apps Script 경로는 기존 동작이며 연결 갱신 증거가 아니다.
+
+실제 확인(2026-10-06): 작성213파일/1,353,846bytes와 하위12폴더를 두 목록·전수 raw로 대조했다. 새 snapshot SHA7c12d3159ae2babd4652e96618d165c155284e4f7372ab9b2ff802874d2b2333, raw 영수증 SHAceadcb9e58417da1e048cb14b1be3fefe1ac846e94352d64cce44b282aabbbf8이다. canonical apply는 원고/public state 변경0·연결 관측 갱신1, 반복은 모두0이었다. 이전7/11 연결을 별도 사본에서 재생해 실제 stale2원고가 공통 명령으로 복구됐다. WebsiteData source-note guard의 이전 SHA 거부/새 lineage 통과와 작성 밖331기록·전체 과거 verified_at 보존을 확인했다. fixture 집중10/10 통과; 전체 릴리스 CI·현재 배포 확인은 별도로 기록한다. 원격 작성·공개 기사/RSS 내용은 수정하지 않았다. private 증거는 외장 tkg-daily-core-20261006-v1/drive-mapping-*.json에 있다.

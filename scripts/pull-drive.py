@@ -2,8 +2,10 @@
 """Validate a complete Drive export before changing any website source."""
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import tempfile
 import unicodedata
@@ -55,9 +57,86 @@ def validate(snapshot):
         raise ValueError('Snapshot exceeds total source limit')
     return result
 
-def synchronize(snapshot, repository, apply=False):
+def prepare_source_mapping(snapshot, incoming, repository, readback, readback_bytes, now=None):
+    """Bind private file links to the same complete raw readback as the snapshot."""
+    if snapshot.get('transport') != 'codex-drive-connector' or not isinstance(readback_bytes, bytes):
+        raise ValueError('Source mapping requires a connector snapshot and raw readback bytes')
+    if json.loads(readback_bytes) != readback:
+        raise ValueError('Connector readback bytes differ from the supplied receipt')
+    spec = importlib.util.spec_from_file_location(
+        'connector_snapshot', Path(__file__).with_name('build-connector-snapshot.py'))
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    verified = builder.build_snapshot(readback, repository, readback_bytes, now=now, source_contents=incoming)
+    if snapshot.get('readback') != verified['readback'] or snapshot.get('exported_at') != verified['exported_at']:
+        raise ValueError('Connector readback is not bound to this source snapshot')
+    target = repository / '.local/drive-sync/receipt.json'
+    if any(path.is_symlink() for path in (repository / '.local', target.parent, target)):
+        raise ValueError('Private Drive mapping path is a symlink')
+    original = target.read_bytes() if target.exists() else None
+    prior = json.loads(original) if original is not None else {
+        'schema': 'tech-drive-receipt/v1', 'destination_folder_id': ROOT_ID, 'folders': {}, 'files': []}
+    if prior.get('schema') != 'tech-drive-receipt/v1' or prior.get('destination_folder_id') != ROOT_ID:
+        raise ValueError('Private Drive mapping has unexpected scope')
+    rows = prior.get('files')
+    folders = prior.get('folders')
+    if not isinstance(rows, list) or not isinstance(folders, dict):
+        raise ValueError('Private Drive mapping needs files and folders')
+    by_path = {}
+    identities = {}
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('path'), str) or not row.get('id'):
+            raise ValueError('Private Drive mapping has an invalid file identity')
+        if row['path'] in by_path or row['id'] in identities:
+            raise ValueError('Private Drive mapping has duplicate paths or file IDs')
+        by_path[row['path']] = row
+        identities[row['id']] = row['path']
+    actual_folders = dict(builder.ROOT_IDS)
+    actual_folders.update({row['path']: row['id'] for row in readback['folders']})
+    for path, file_id in actual_folders.items():
+        if path in folders and folders[path] != file_id:
+            raise ValueError('Drive folder identity changed: ' + path)
+    updated, added = [], []
+    for row in readback['files']:
+        path, file_id, parent_id = row['path'], row['file_id'], row['parent_ids'][0]
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', file_id):
+            raise ValueError('Drive file ID is not usable as a link: ' + path)
+        old = by_path.get(path)
+        if old and (old['id'] != file_id or old.get('parent_id') != parent_id):
+            raise ValueError('Drive source identity or parent changed: ' + path)
+        if file_id in identities and identities[file_id] != path:
+            raise ValueError('Drive file ID is already mapped to another path: ' + path)
+        current = dict(old or {})
+        current.update(path=path, id=file_id, parent_id=parent_id,
+                       sha256=row['sha256'], bytes=row['size'], modified_time=row['modified_time'])
+        # Keep a stable canonical link; an old URL must not point to another file.
+        current['url'] = 'https://drive.google.com/file/d/' + file_id + '/view?usp=drivesdk'
+        if not old:
+            added.append(path)
+        elif current != old:
+            updated.append(path)
+        by_path[path] = current
+    removed = sorted(path for path in by_path if path.split('/')[0] in ROOTS and path not in incoming)
+    for path in removed:
+        del by_path[path]
+    prior['folders'] = {**folders, **actual_folders}
+    prior['files'] = [by_path[path] for path in sorted(by_path)]
+    proof = {'verified_at': readback['verified_at'], 'receipt_sha256': digest(readback_bytes),
+             'source_files': len(incoming), 'projection_files_refreshed': False}
+    # The top-level receipt also contains archive/projection rows. Its old
+    # verification timestamp remains untouched; only these four roots are fresh.
+    prior['authoring_source_mapping'] = proof
+    encoded = (json.dumps(prior, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+    return target, original, encoded, {'changed': original != encoded, **proof,
+                                      'updated_paths': sorted(updated), 'added_paths': sorted(added),
+                                      'removed_paths': removed}
+
+def synchronize(snapshot, repository, apply=False, readback=None, readback_bytes=None, now=None):
     incoming = validate(snapshot)
     repository = repository.resolve()
+    mapping = None
+    if readback is not None or readback_bytes is not None:
+        mapping = prepare_source_mapping(snapshot, incoming, repository, readback, readback_bytes, now=now)
     vault = repository / 'vault'
     if vault.is_symlink():
         raise ValueError('Vault must not be a symlink')
@@ -92,6 +171,12 @@ def synchronize(snapshot, repository, apply=False):
     state_changed = prior.get('snapshot_sha256') != snapshot_hash or prior.get('transport') != transport
     result = {'changed': bool(changed or deleted or state_changed), 'updated': changed,
               'deleted': deleted, 'source_files': len(incoming), 'snapshot_sha256': snapshot_hash}
+    if mapping:
+        result['source_mapping'] = mapping[3]
+    if apply and mapping:
+        target, original, _, _ = mapping
+        if (target.read_bytes() if target.exists() else None) != original:
+            raise ValueError('Private Drive mapping changed during synchronization')
     if apply and result['changed']:
         # All paths, content hashes, scope and deletion bounds have passed before any write.
         for name in changed:
@@ -110,6 +195,20 @@ def synchronize(snapshot, repository, apply=False):
                  'snapshot_sha256': snapshot_hash, 'source_files': len(incoming),
                  'exported_at': snapshot.get('exported_at'), 'hashes': hashes}
         state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + '\n')
+    # Refresh verified links even when no authoring bytes or public state changed.
+    if apply and mapping and mapping[3]['changed']:
+        target, _, encoded, _ = mapping
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            os.chmod(temporary, 0o600)
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
     return result
 
 def verify_working_copy(repository):
@@ -152,12 +251,16 @@ def verify_source_snapshot(snapshot, repository, snapshot_bytes, now=None, max_a
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--snapshot', type=Path)
+    parser.add_argument('--readback', type=Path,
+                        help='Refresh private Drive links from the exact connector raw-readback receipt')
     parser.add_argument('--repository', type=Path, default=Path.cwd())
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--verify-working-copy', action='store_true')
     parser.add_argument('--verify-source-snapshot', action='store_true')
     parser.add_argument('--allow-stale-snapshot', action='store_true')
     args = parser.parse_args()
+    if args.readback and (not args.snapshot or args.verify_working_copy or args.verify_source_snapshot):
+        raise ValueError('--readback requires snapshot synchronization, not verification-only mode')
     if args.verify_working_copy:
         print(json.dumps(verify_working_copy(args.repository)))
         return
@@ -185,7 +288,9 @@ def main():
         exported = parse_drive_timestamp(snapshot.get('exported_at', ''))
         if exported.tzinfo is None or abs((datetime.now(timezone.utc) - exported).total_seconds()) > 600:
             raise ValueError('Drive export is stale; no source changes applied')
-    result = synchronize(snapshot, args.repository, args.apply)
+    readback_bytes = args.readback.read_bytes() if args.readback else None
+    readback = json.loads(readback_bytes) if readback_bytes is not None else None
+    result = synchronize(snapshot, args.repository, args.apply, readback=readback, readback_bytes=readback_bytes)
     print(json.dumps(result, ensure_ascii=False))
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as output:

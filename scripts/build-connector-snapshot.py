@@ -58,7 +58,7 @@ def one_parent(value, expected):
         raise ValueError('Connector folder parent does not match its path')
 
 
-def build_snapshot(receipt, repository, receipt_bytes, now=None, max_age_seconds=600):
+def build_snapshot(receipt, repository, receipt_bytes, now=None, max_age_seconds=600, source_contents=None):
     if (receipt.get('schema') != 'tech-drive-connector-readback/v1'
             or receipt.get('root_folder_id') != ROOT_ID
             or receipt.get('roots') != [{'name': name, 'id': file_id} for name, file_id in ROOT_IDS]):
@@ -91,19 +91,23 @@ def build_snapshot(receipt, repository, receipt_bytes, now=None, max_age_seconds
         folder_ids[name] = file_id
         seen_ids.add(file_id)
         portable_folders.add(portable)
-    vault = repository.resolve() / 'vault'
-    if vault.is_symlink():
-        raise ValueError('Local vault is a symlink')
-    local_paths = set()
-    for root in ROOT_NAMES:
-        base = vault / root
-        if not base.is_dir() or base.is_symlink():
-            raise ValueError('Local authoring root is missing or linked')
-        for item in base.rglob('*'):
-            if item.is_symlink():
-                raise ValueError('Local authoring tree contains a symlink')
-            if item.is_file() and item.suffix == '.md':
-                local_paths.add(item.relative_to(vault).as_posix())
+    # pull-drive supplies its already validated snapshot bytes; snapshot creation
+    # instead checks the local editing copy. Both use the same identity checks.
+    if source_contents is None:
+        vault = repository.resolve() / 'vault'
+        if vault.is_symlink():
+            raise ValueError('Local vault is a symlink')
+        source_contents = {}
+        for root in ROOT_NAMES:
+            base = vault / root
+            if not base.is_dir() or base.is_symlink():
+                raise ValueError('Local authoring root is missing or linked')
+            for item in base.rglob('*'):
+                if item.is_symlink():
+                    raise ValueError('Local authoring tree contains a symlink')
+                if item.is_file() and item.suffix == '.md':
+                    source_contents[item.relative_to(vault).as_posix()] = item.read_bytes()
+    local_paths = set(source_contents)
     result = []
     total_bytes = 0
     for row in files:
@@ -123,7 +127,7 @@ def build_snapshot(receipt, repository, receipt_bytes, now=None, max_age_seconds
         instant(row.get('modified_time'), 'Connector file modification time')
         if name not in local_paths:
             raise ValueError('Connector file is absent from the local authoring copy')
-        data = (vault / name).read_bytes()
+        data = source_contents[name]
         if len(data) != size or digest(data) != sha:
             raise ValueError('Local bytes differ from the connector raw-byte readback')
         try:

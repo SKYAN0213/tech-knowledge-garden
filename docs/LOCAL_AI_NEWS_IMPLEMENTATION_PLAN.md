@@ -4321,7 +4321,6 @@ PR JSON은 기존 json-document 프로필로 처리한다. 번호/html_url·게�
 
 19.317 결과: 실제54경로/108창과 전자신문 보완의 handoff incomplete0, 후보772를 확인했다. rolling scheduler와 제한적 제목 표지 처리, 보관 의존성/덮어쓰기/파일 수 사전 관문을 구현했다. 표적49통과, 실제 Qwen 추출·대조·작성과 GPT 원문검토 뒤 NASA9/28 원고6사실/후보 승인 및 추가 추론0 재사용을 확인했다. Drive 같은ID v2의 원격24,114,518bytes/SHA와1759파일·nested92파일 복구 및 승인 provenance가 통과했다. 공개 새 회차0·fresh 작성208 대조0·정규 운영0이며 전체WBS2/22/goal active다. 세부 실패/정정·남은 작업·증거는 런북411절을 따른다. 코드80886e1의 통합 Actions37346853728은 Node899/899·Python15+2·build/site/deploy success이고 실제 웹·RSS·GitHub12파일이 exact bytes다. NASA 승인 closure는 별도 private Drive1C0eXQlo0mTv-dX3uKY0nQVVgauT-Q6fk/628,639bytes·원격 SHA/92파일 및6사실 semantic 승인 복구 후 공통 위치 등록·사건 조회를 완료했다. 신규 회차·Drive 작성본 대조·정규 운영 완료로 승격하지 않는다.
 
-
 ## 19.318. 당일 후보 처리·공통 릴리스 파싱·장문 사전 차단
 
 발표일 검토(`review-publication-time`)와 사건 식별 충돌을 구분한다. 날짜가 일 단위인 새 후보도 정확한 저장 원문에서 사실 추출·대조를 진행할 수 있고, 발표 시각을 생성하거나 기사·후보 승인을 자동 처리하지 않는다. 기존 사건 충돌·원문 수정 경로의 승인 관문은 유지한다. 관련 테스트 11/11을 통과했다.
@@ -4354,13 +4353,11 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 
 전체 목표 active·필수 WBS2/22, 미판정50회차/483구간·metadata10·독립40/20·새 정규7회·실제08시/인증/중단·전체 runtime 복구는 유지한다. 현재 첫8분야 정규회차 연결을 우선하며, 9/28 NASA 원고는 현재 취재 구간 밖의 배경 자료로만 재사용한다. 과거 승인 원고를 오늘 새 뉴스로 재발행하지 않는다.
 
-19.320 후속: 두 번째 실제 창도185.591초에 끝났으나 모델이 인용 사이에 ` ... `를 삽입했다. 원문 동일 block의572자 연속 구간을 직접 읽고 `elision_expansion_checked: true`로 복원했다. 정확한 앞뒤 문자열·실제 원문 포함·동일 locator를 요구하며 원문을 제거하거나 판정을 바꾸지 않는다. 이 명시적 복원과 부정관사 정정의2회귀가 통과했다. 새 quote-reviewed-v2에서 완료한2응답을 재사용하고 남은8창만 실행 중이다. 같은 실패 응답의 모델 재호출0이다.
-
+19.320 후속: 두 번째 실제 창도185.591초에 끝났으나 모델이 인용 사이에 `...`를 삽입했다. 원문 동일 block의572자 연속 구간을 직접 읽고 `elision_expansion_checked: true`로 복원했다. 정확한 앞뒤 문자열·실제 원문 포함·동일 locator를 요구하며 원문을 제거하거나 판정을 바꾸지 않는다. 이 명시적 복원과 부정관사 정정의2회귀가 통과했다. 새 quote-reviewed-v2에서 완료한2응답을 재사용하고 남은8창만 실행 중이다. 같은 실패 응답의 모델 재호출0이다.
 
 ### 19.321. 전체 원문 대조 완료와 정규 회차 연결
 
 장문10창은 실제 실행을 완료했고, raw를 보존한 공통 인용 위치 복구·불충분 체크의 보수 복구를 추가했다. 원문 전수 확인의 명시적 판정은12verified/17deferred/1rejected이며 논문 해설의 필수 근거 역할을 등록했다. 실제 작성→편집 승인→후보 연결→Drive closure→정규 회차 공개가 다음 완료 조건이다. 동일 원문 추출이나 완료 모델 응답을 다시 호출하지 않는다. 수집 계획은 canonical 자료 변경을 감지한 뒤 새54경로/108창으로 실행했다. 상세 계약·검증·실제 관찰은 [런북414](LOCAL_AI_NEWS_RUNBOOK.md#414-장문-인용-위치불충분-판정의-명시적-복구와-전체-원문-검토)에 남긴다. 전체 목표와 남은 품질·운영·소급 항목은 유지한다.
-
 
 ### 19.322. 심층 원고와 출처 기반 이력의 실제 연결
 
@@ -4372,7 +4369,6 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 
 다음 수용 기준은 승인3기사(FDA·쌓인 옷감 집기 논문·RobCo)와 topic2/Signals1의 최신 regular preview, 실제 desktop/mobile 상호작용, fresh Drive208 원본과4개 신규 작성 파일, 공개 배포/RSS/GitHub/WebsiteData readback이다. 기존 새 정규 운영0과7회·08시·독립평가·과거50/483+metadata10 미완료를 유지하며 실제 통과한 단계만 갱신한다.
 
-
 ## 19.323. 실제 처리 체크포인트의 평가 재사용
 
 기존 평가 가져오기와 판정 경로가 legacy state.json의 claims 단계만 요구하던 연결 누락을 보강한다. source-processing-input.json이 존재하면 기존 loadCompletedExtraction으로 processing/state.json·extraction 결과·원본 claims·입력 SHA·정확한 원문과 parse를 검증한다. 새 형식의 미완료·변조·공개 상태를 legacy로 우회하지 않는다. 모델 budget과 digest를 확인하고 기존 원출력·배치 시간·원문을 그대로 가져오며 추가 추론은 하지 않는다. legacy 영수증 형식과 불변 검토는 유지한다.
@@ -4380,7 +4376,6 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 수용 증거: 관련 평가25/25, 실제 FDA·Frontiers 장문 논문·RobCo 추출3건 가져오기와 판정 완료, 추가 모델 호출0. 개발용 실제 원문은23→26개이고 독립 사람 gold/heldout은0이다. 원모델 검사는 편집 후 승인과 분리한다. FDA6/6 구조 통과·핵심2누락, 논문23/29 구조 통과·조건3부분, RobCo0/6 구조 통과(발표일 검토 필요6·인용 단위 문제3)·거래구조1부분으로 모두 raw_model_pass:false다. 최종 기사들은 별도의 실제 원문 검토를 거친 승인본이며 이 평가가 승인을 되돌리거나 새 발행을 만들지 않는다.
 
 작업은 외장 별도 worktree의 codex/processed-evaluation-20261006에서 검증한다. 선행0b827e1의 실제 배포와 공개 readback을 마친 후 주 저장소에 통합한다. GitHub hosted runner 미배정/Actions 장애로 중단된 CI는 코드 테스트 실패와 구분하며, 서비스 복구 확인 전 반복 실행하지 않는다. 전체 suite는 통합 릴리스에서 한 번 실행한다.
-
 
 ## 19.324. 빈 추출을 원문 검토와 완료된 복구에 연결
 
@@ -4392,7 +4387,6 @@ FDA 공식 발표는 누락된 대조 배치만 완료하고, GPT가 exact packe
 
 별도 외장 worktree에서 검증했다. 선행0b827e1의 공개 배포 gate를 보존하며 서비스 복구 후 통합한다. 이 묶음은 전체 소급 전환, 독립 사람 gold, 신규7회 운영 및 무인8시 실행 완료를 의미하지 않는다. 다음은 복구 묶음의 독립 ZIP 복원·Drive 보관, 선행 실제 배포 readback, HFNN 승인 용어의 기존 기사 연결이다.
 
-
 ## 19.325. HFNN 전문용어와 기사의 검증된 연결
 
 기존 논문 기사72081e8f67345f20의 문장·실험 조건·발표일을 유지한 별도 processing v6를 만들고, 완료된 추출·의미 비교·작성 checkpoint를 재사용했다. 추가 모델 호출0이며 기존v5 승인·후보 장부·당일 발행 바인딩은 유지했다. 원문에서 확인한 HFNN 구조·27개 퍼지 규칙·학습과 추론의 사실4개로 `fabric-grasping-hfnn` 전문용어와 명시적으로 연결했다. 일반 HFNN 전체로 개념을 확대하거나 공동 등장으로 개념 사이의 선을 만들지 않았다.
@@ -4403,13 +4397,11 @@ Groq 빈 추출 복구 묶음은 Drive ZIP1uHupfrDCvaj6yHawFZ3yhveFVHQI_ZZI, man
 
 외부 병목: Actions37372213094는 hosted runner 미배정으로 실패했고 테스트 단계는 실행되지 않았다. 2026-10-05T20:50:25Z부터 21:51:51Z까지3,686초이며 공식 Actions 상태는 degraded_performance/incident investigating이다. 수동 재실행0. 1시간 이상 병목으로 기록하고 빈 추출·전문용어 슬라이스를 진행했다. 서비스 복구 확인 후 같은0b827e1 run만 한 번 재실행하고 배포·공개 readback·WebsiteData를 확인한다. 다음으로 검증된 개발 branch를 통합하고 명시적 v5→v6 승인 이력과 기존 기사 ID를 유지해 HFNN을 반영한다. 전체 목표는 active이고 독립 사람 gold0·heldout0·신규 로컬AI 운영0은 그대로다.
 
-
 ## 19.326. 실제 배포 복구와 Drive 원본 연결
 
 공식 Actions 복구를 확인한 뒤 기존37372213094를 한 번 재실행했다. attempt2의 전체 검사·빌드·배포는 실제0b827e10b221cc2a4df07707433c6b65b3713948에서 성공했다. 웹11·commit-pinned GitHub8 파일의 byte readback과 추가 주제4 파일을 확인했다. publication은 public_bytes_verified이며 무인8시 실행·신규 운영 횟수로 승격하지 않는다. 실제 브라우저에서 모바일390px·데스크톱1280px, 분야 탭·공유 URL·뒤로 가기·기업 태그·키보드 Enter·기사→누적 기록·기사와 브리핑 지도0·가로 넘침0·console error0을 확인했다.
 
 WebsiteData export에서 최근 생성 기사·브리핑·누적 주제의 Drive 링크 누락을 발견했다. 기존 생성본 업로드 경로에만 의존하던 join을 고정 사건 ID의 실제 회차 원본, briefing의 명시적 edition, topic ID의 실제 TrendTopics 파일, Knowledge 원본으로 바꿨다. 반복 사건의 모든 회차를 최신순으로 보존하며 파일명을 topic ID로 추측하지 않는다. canonical 파일 SHA가 Drive 영수증과 다르면 중단하고, 배포 assets와 로컬 build bytes가 다를 때도 원본 연결을 거부한다. 표적 Node2/2·Python3/3 통과, 실제347개 source page·175개 canonical note의 모든 링크와 SHA가 일치했다. Drive WebsiteData 업로드·재다운로드는 다음 단계이며 HFNN canonical 발행·독립 사람 gold·신규7회 운영·무인8시 실행은 미완료다.
-
 
 ## 19.327. WebsiteData 검증 완료와 HFNN canonical 소급 반영
 
@@ -4418,7 +4410,6 @@ WebsiteData는 실제 배포0b827e1의351페이지·172기사·24개념·22관�
 HFNN 기사 v6를 최초 후보 승인 경로로 다시 연결하려던 요청은 이미 공개된 원문이라는 중복 방지 gate에서 거절됐다. 실패 영수증을 보존하고 후보 장부·기존v5 승인을 변경하지 않았다. 기존 공개 사건72081e8f67345f20에 대한 retrospective authoring 경로로 진행했다. 현재 런타임으로 만든 preview-v2는380공개 파일 중379개가 이전 UI 검증본과 동일하고 유일한 차이는 sitemap.xml 생성 시각이며 digest도 동일하다. 기존 사건 ID·본문·발표일·RSS40 GUID/pubDate를 유지했다.
 
 Drive 작성 원본212개를 실제 raw로 새로 읽고16폴더의 앞뒤 목록을 대조했다. 검토된 소급 release로 기존 회차·용어 색인 업데이트2개와 HFNN 노트 생성1개를 guarded writer에서 확인했다. session cd1e0186-08f6-47fe-8b74-430ac59e479b는 verified_complete, pending/conflict/unresolved0이고 후보 발행·신규 운영 횟수로 승격하지 않는다. HFNN 노트 ID1s4rFAcBMMOm3dXd1SOmrglG2hEr4_2e-와 세 변경의 raw byte 검증을 마쳤다. 원격 전체 목록과212개 사전 raw 및3개 쓰기 후 raw를 합친 일관된213원본 snapshot을 기존 pull-drive.py로 반영했고 삭제0·업데이트3이다. 공개 배포·새 WebsiteData 갱신은 후속 gate이며 사람 독립 gold·신규7회·무인8시 실행·전체 소급은 계속 미완료다.
-
 
 ## 19.328. 용어 색인과 독자 페이지의 공개 검증 경계 수정
 
@@ -4475,5 +4466,12 @@ private preview에서 기사·브리핑·MCP 변화 이력, 분야 탭의 Enter�
 
 19.332 후속(2026-10-06): 7월11일00:00/08:03의 원문4개·기존20구간을 직접 검토했고 Qwen 원출력·수정 chain을 유지하며4기사를 승인했다. 원문 exact 시각·Before/Now 표·페이지 조회·GHES 계획을 보존한다. 명칭만 변경한 사건은 공통 제품·서비스 태그 ‘명칭 변경’으로 분류하며 표적1/1이 통과했다. 독자1280/390 화면·분야query·Enter 이동·지도0·가로넘침0을 확인했다. Drive213 raw 전후 대조에서 승인2회차만 same-ID 수정했고 guarded session verified2/intent0이다. source snapshot SHA7c27ede63cbe7fce9fcb6b7bbf7dad131596e5f8472e482efcb5609b62f65fd9 및 독립4승인 closure의 원격ZIP SHA를 검증했다. 실제 공개와 전환 후 분모·독립복원은 후속 gate다. 소급 작업은 정규 비교0/7을 늘리지 않는다.
 
-
 19.332 공개·보관 완료: 코드42dbd62/콘텐츠1677fa0ebbbc676db0009786e98f10637bbd637c, Actions37395500319의 Node959/959·Python15+3·build/deploy를 확인했다. public21파일 bytes/reader_equivalent:true와 실제1280/390 UI를 검증했다. WebsiteData357pages/177articles/25concepts/22connections의11raw에서8same-ID update·3unchanged가 일치한다. 승인4closure를 실제 원격 ZIP에서 별도 root로 복원하고 원 기사 승인과 동일함을 확인했다. 최종 운영증거는 Research1biQqVeRlv20L54D9-nEIpcDOMtjT31Er의6,542,230bytes/SHA3fe3106c2e69559fd59afcc857f75de456f1ecd729e875fe9a92381275624a81이며 exact manifest17e8S_6MvwCbTcfTX5bm0_fQMbBfhn-z9와 공통v1의214파일 복원을 검증했다. 이는 운영 증거이고 full runtime 복구가 아니다. 미판정47/454·metadata10·정규 비교0/7/goal active. 다음은7월10일08:02의15구간이며 이미 완료한 수집·대조·승인·CI는 반복하지 않는다.
+
+## 19.333. 검증한 Drive 원본의 연결 기록을 공통 동기화에서 갱신
+
+직전 소급 발행에서 전체 작성 원본 raw SHA와 source snapshot은 맞았지만 WebsiteData가 사용하는 private receipt의 두 원고 SHA가 이전 상태로 남았다. 원고별 수동 갱신을 없애기 위해 기존 pull-drive에 --readback을 추가한다. snapshot에 고정된 raw 영수증 SHA·시각·전체 네 폴더·파일 bytes·ID·부모 체인을 같은 build-connector-snapshot 검증 함수로 대조한 후 작성 원본 연결만 갱신한다. 기존 ID/부모 변경과 중복·기존 폴더 ID 충돌은 원고 쓰기 전에 거부한다. 새 경로와 검증된 소규모 삭제는 연결 목록에도 반영한다.
+
+원고가 이미 동기화돼도 연결 갱신은 실행하며, dry-run은 파일을 수정하지 않는다. 기존 Apps Script 및 readback 없는 snapshot의 동작은 유지한다. Archive·News·Briefings 등 작성 입력 밖의 기록과 receipt 전체의 과거 검증 시각은 보존한다. 별도의 authoring_source_mapping만 새 관측 시각·raw 영수증 SHA·작성 원본 수를 기록한다. 공개 state에는 Drive ID나 private 영수증을 추가하지 않는다. WebsiteData의 원고 SHA 거부 검사는 유지한다.
+
+종료 조건은 stale 연결의 재현/복구, ID·부모·hash·시각 충돌 차단, 실제 새 원격 전수 조회와 공통 적용, WebsiteData 원고 링크 검증이다. 전체 소급·독립 gold·정규7회·08시/인증/중단·전체 runtime 복구는 별도 미완료다. 이 묶음 이후에는 남은 전체 목표의 핵심인 단일 일일 실행/비교 운영과 미판정 소급을 대조하고 진행한다.
