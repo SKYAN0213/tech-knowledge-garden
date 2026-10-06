@@ -57,8 +57,6 @@ generated_by: tech-knowledge-garden
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다. [원문 1](<https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent>)
 
-IFR은 같은 해 전신 휴머노이드 판매를 약 7,000대로 집계하면서 안전 기준·훈련비·유지비와 사업성 문제를 보급 장벽으로 들었다. 의료 로봇 중 수술 로봇은 8,400대, 57% 증가로 별도 분류됐다. [원문 1](<https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent>)
-
 
 
 ## 이 소식을 다룬 브리핑

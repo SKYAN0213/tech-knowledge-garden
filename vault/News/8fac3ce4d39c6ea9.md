@@ -63,10 +63,6 @@ generated_by: tech-knowledge-garden
 
 OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다. [원문 1](<https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design>)
 
-모델은 설계 목표에 맞춰 Synopsys 도구를 실행하고 결과를 해석해 변경·검증을 반복하는 방식으로 개발될 예정이다. 전력·성능·면적(PPA) 최적화, 타이밍 분석과 검증 종료가 적용 대상으로 제시됐다. 실제 반도체 설계에서 정확도와 작업시간을 어느 정도 바꾸는지는 공개되지 않았다. [원문 1](<https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design>)
-
-**다음 확인:** 제품 공개 시점, 초기 고객의 실제 사용, PPA·검증 오류·설계 주기 비교와 데이터 보안 통제를 확인한다.
-
 [[Briefings/Topics/performance-path|누적 기록]]
 
 ## 이 소식을 다룬 브리핑

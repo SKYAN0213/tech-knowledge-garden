@@ -4,10 +4,10 @@ type: briefing-index
 date: 2026-10-01
 created: 2026-10-01
 modified: 2026-10-01
-description: AI가 반도체 설계와 클라우드 데이터·실행 환경에 들어오고, 각 분야에서 상용 배치 전 검증 단계가 구체화됐다.
+description: 2026-10-01 IT · AI · 로보틱스
 coverage_start: 2026-09-29T23:17:13.068Z
 coverage_end: 2026-10-01T13:38:20Z
-item_count: 15
+item_count: 16
 edition: Editions/2026/10/2026-10-01_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-01_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -121,7 +121,7 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과 향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다.
 
-### 바이오·의료기술 · 2건
+### 바이오·의료기술 · 3건
 
 #### [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]]
 
@@ -134,6 +134,12 @@ Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상
 연구·기술 · 새로운 방법 · HHS · ARPA-H
 
 HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS, CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새 프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다.
+
+#### [[News/e3728daf1bd4be8b|Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수]]
+
+정책·규제 · 인허가 · Roche
+
+Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다발성경화증 후보약 페네브루티닙(fenebrutinib)의 신약허가신청(NDA)을 우선심사 대상으로 접수했다고 밝혔다. 대상은 재발성 다발성경화증(RMS)과 일차 진행성 다발성경화증(PPMS)이며, 회사는 FENhance 1·2와 FENtrepid 3상 연구 결과를 접수의 근거로 제시했다.
 
 ### 우주·기초과학 · 2건
 
@@ -180,3 +186,4 @@ Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html
 - [S14] https://www.nasa.gov/news-release/nasa-awards-contract-to-develop-5g-communications-for-moon/
 - [S15] https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-secures-largest-ever-electron-commercial-deal-20
+- [S16] https://www.roche.com/media/releases/med-cor-2026-09-30

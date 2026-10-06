@@ -32,6 +32,7 @@ generated_by: tech-knowledge-garden
 - [[News/ab2949406d668c88|Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정]] · 2026-10-04
 - [[News/e37d74d0774d9a49|Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월]] · 2026-10-04
 - [[News/4e48c8fa40d39243|에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획]] · 2026-10-04
+- [[News/e3728daf1bd4be8b|Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수]] · 2026-10-01
 - [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]] · 2026-10-01
 - [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]] · 2026-10-01
 - [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01

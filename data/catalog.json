@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-05T20:21:45.039Z",
   "edition_count": 122,
-  "news_count": 181,
+  "news_count": 182,
   "concept_count": 36,
   "known_sources": [
     "http://export.arxiv.org/api/query?max_results=10&search_query=all%3Aagentic+AI+OR+all%3ALLM+agent+OR+all%3Areasoning+model&sortBy=submittedDate&sortOrder=descending",
@@ -597,6 +597,7 @@
     "https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn",
     "https://www.roche.com/media/releases/med-cor-2026-09-17",
     "https://www.roche.com/media/releases/med-cor-2026-09-22",
+    "https://www.roche.com/media/releases/med-cor-2026-09-30",
     "https://www.roche.com/media/releases/med-cor-2026-10-01",
     "https://www.sec.gov/Archives/edgar/data/1318605/000162828026064366/exhibit991111111.htm",
     "https://www.sec.gov/Archives/edgar/data/1855474/000119312526349663/airj-ex99_1.htm",
@@ -781,6 +782,7 @@
     "News/3cfdb073a82debc3",
     "News/086bdbb3792ca8d9",
     "News/a930c8de646354b3",
+    "News/e3728daf1bd4be8b",
     "News/4e48c8fa40d39243",
     "News/e37d74d0774d9a49",
     "News/ab2949406d668c88",

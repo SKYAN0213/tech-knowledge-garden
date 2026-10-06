@@ -1,6 +1,6 @@
 # 2026-10-01 아침 브리핑
 
-AI가 반도체 설계와 클라우드 데이터·실행 환경에 들어오고, 각 분야에서 상용 배치 전 검증 단계가 구체화됐다.
+2026-10-01 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
@@ -182,7 +182,7 @@ Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation C
 
 [inl.gov 원문](https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/)
 
-### 바이오·의료기술 · 2건
+### 바이오·의료기술 · 3건
 
 #### [Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개](https://skyan0213.github.io/tech-knowledge-garden/news/f795c88cad060d16)
 
@@ -207,6 +207,32 @@ HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·�
 
 
 [hhs.gov 원문](https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html)
+
+#### [Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수](https://skyan0213.github.io/tech-knowledge-garden/news/e3728daf1bd4be8b)
+
+발표 2026-09-30
+
+정책·규제 · 인허가 · Roche
+
+Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다발성경화증 후보약 페네브루티닙(fenebrutinib)의 신약허가신청(NDA)을 우선심사 대상으로 접수했다고 밝혔다. 대상은 재발성 다발성경화증(RMS)과 일차 진행성 다발성경화증(PPMS)이며, 회사는 FENhance 1·2와 FENtrepid 3상 연구 결과를 접수의 근거로 제시했다.
+
+##### 경구용 BTK 억제제
+
+회사는 페네브루티닙을 중추신경계에 도달할 수 있는 가역적·비공유결합 BTK 억제제로 설명한다. 효소에 영구적으로 결합하는 방식과 달리 결합한 뒤 다시 떨어지는 방식이다.
+
+##### 재발성·진행성 질환의 서로 다른 비교 시험
+
+Roche가 인용한 FENhance 1·2 결과에서 페네브루티닙의 연간 환산 재발률은 테리플루노마이드 대비 96주 동안 각각 51.1%, 58.5% 낮았다. 회사 참고문헌에 따르면 두 연구 결과는 2026년 4월 21일 미국신경학회(AAN) 연례회의에서 발표됐다.
+
+PPMS 대상 FENtrepid는 장애 진행 감소에 관한 Ocrevus 대비 비열등성이라는 1차 평가변수를 충족했다고 회사는 밝혔다. cCDP12 발생까지 시간의 위험비는 0.88, 95% 신뢰구간은 0.75\~1.03으로 보고됐다. 이 연구의 1차 결과는 2026년 2월 7일 ACTRIMS에서 발표됐으며, 이번 9월 30일 공지는 신청 접수에 관한 발표다.
+
+##### 비교 약물별 중대한 이상사례
+
+Roche에 따르면 페네브루티닙과 테리플루노마이드의 중대한 이상사례 비율은 FENhance 1에서 9% 대 9%, FENhance 2에서 11% 대 6%였다. FENtrepid에서는 페네브루티닙과 Ocrevus가 각각 19%였다.
+
+PPMS 시험의 간효소 상승은 페네브루티닙에서 Ocrevus보다 더 자주 관찰됐다고 회사는 설명했다. 세 핵심 시험에서 사망 보고의 불균형도 관찰됐으며, 사망 시점과 원인은 다양했다고 덧붙였다.
+
+[roche.com 원문](https://www.roche.com/media/releases/med-cor-2026-09-30)
 
 ### 우주·기초과학 · 2건
 
