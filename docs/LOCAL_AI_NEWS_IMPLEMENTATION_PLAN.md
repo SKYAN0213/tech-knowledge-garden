@@ -4522,3 +4522,8 @@ GPT-Live의 완료된 추출·대조는 재사용한다. 모델이 웹 인용 �
 19.335 후속 완료: GPT-Live12추출 후보를 직접 대조해11verified/1rejected로 판정하고 원문에서API 제공계획·모드별 배경모델2사실을 보강해 총13verified를 승인했다. 계획2건은planned, 출시시 미지원 설명은reported로 교정하고 숫자 비교 조건·추출 인용을 정확한 원문으로 정정했다. 모델이 supported라고 했더라도 구조·시점 검토를 통과시키지 않았다.7월31일 SynthID 갱신은 제외했다. 완료된 추출과 대조3배치를 재사용해 마지막1배치만 호출했으며 실제 작성70.534초 뒤 회사평가의 입증/우위 표현과 반복을 정정했다. 최종기사3fb14968493dc682는 리드2문장200자·설명3항목5문단으로 편집 승인했고 공개/회차변경은0이다.
 
 승인closure97자료99ZIPmembers·679,136bytes를 private Research1cw0qfyyDdSg63hn0gxd16W9EPph38QoT와 manifest1wqj4Ez9UIebOCAdi63I-fK5XOsNPqEiz에 보관했다. 실제 원격 ZIP SHA c9abacc8b0677a09a8e123597a967254caa797d02948da132b2d09c86c56271e 및 manifest SHA762d61a824c3cbef1d3f4be80d302a1258621f97ce43bcf0a89c57860124e61a를 대조해99파일로 복원했다. 복원본의13승인 사실·1제외·기사 동등성·후속업데이트 제외를 재검증하고 원문/사건 위치를 등록했다. 전체15구간 전환 판정은 아직 미완료이며 전체47회차454구간 수는 유지한다. 다음은 같은 회차GPT-5.6·Copilot·Anthropic·논문·도구릴리스의 검토다.
+
+
+19.335 공통 코드 배포 검증: ef556c2355cd49e539085aaa598ce10881e82d9d/Actions37404941236의 Node964/964·Python15+10+3·build/deploy가 통과했다. 로컬은 관련32기존+2신규 인용 경로와 실제4arXiv 재파싱만 검증했고 전체 suite를 다시 실행하지 않았다. 실제 공개12파일은 승인 Spot preview와 byte/reader 동등성을 유지했다. 생성파일이 없는 isolated WT에서 시도한 첫 readback은 ENOENT로 보존했고 기존 canonical checkout의 생성 결과를 사용한 v2만 성공 증거다. 실제 status도 candidate backlog가 있는 canonical checkout에서 읽어 갱신했다. 등록194/일일54/수집증거55, 후보780/내용지문728이며 전체WBS2/22·18partial·2notstarted를 유지한다. 후보 지문 연결을 사건 병합·기사 승인 완료로 집계하지 않는다.
+
+다음GPT-5.6 처리는 legacy-20260710-gpt56-processing-20261006-v1이며 저장119블록을 HTTP0으로 사용했다. 원문추출3구간을 완료해18후보 사실을 확보했다. 같은 페이지의7월30일/8월21일 가격변경과 현재 가격을7월9일 최초 발표로 소급하지 않는다. 이 단계는 기사 승인이나 공개가 아니다. 마지막 근거 대조 상태와 모델 budget/progress를 먼저 읽어 완료 checkpoint를 재사용한다.
