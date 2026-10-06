@@ -190,6 +190,8 @@ generated_by: tech-knowledge-garden
 - [[News/ebd15df645baad20|GitHub Mobile, Copilot 세션의 상태·저장소 필터와 정렬 추가]] · 2026-07-11
 - [[News/060f4905c5779472|Claude Code v2.1.206, 외부 작업공간 진입 확인과 MCP 시간 제한 수정]] · 2026-07-10
 - [[News/3b59b1b88f4cc9fa|AI SDK, 도구 승인 메타데이터와 xAI 스트리밍 결과 처리 수정]] · 2026-07-07
+- [[News/af17286f6e6b237f|Claude Code 2.1.201, Sonnet 5 세션의 시스템 메시지 처리 변경]] · 2026-07-04
+- [[News/3c9c826b5f004bf4|Claude Code 2.1.200, 권한 기본값과 백그라운드 세션 복구 수정]] · 2026-07-04
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
