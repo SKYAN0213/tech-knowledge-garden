@@ -128,7 +128,8 @@ test("fact extraction policy retains bounded segmentation and typed CLI override
     "research_key_findings",
   )
   assert.throws(() => resolveRolePolicy(p, "fact_extract", { extraction_scope: "guess" }), /scope/i)
-  assert.throws(() => resolveRolePolicy(p, "fact_extract", { facts_per_batch: 7 }), /budget/i)
+  assert.equal(resolveRolePolicy(p, "fact_extract", { facts_per_batch: 16 }).facts_per_batch, 16)
+  assert.throws(() => resolveRolePolicy(p, "fact_extract", { facts_per_batch: 17 }), /budget/i)
   assert.throws(() => resolveRolePolicy(p, "fact_extract", { input_char_budget: 40000 }), /budget/i)
 })
 test("role settings reach the actual Ollama request without replacing facts or schema", async (t) => {

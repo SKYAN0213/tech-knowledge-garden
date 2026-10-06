@@ -164,7 +164,7 @@ const extractionSystem = (max, extractionScope) =>
     extractionScope === "research_key_findings"
       ? " For scientific results, prefer the detailed Results or Findings passage over a repeated abstract summary, and report a key result once. When the source gives sample count, per-sample distribution, range, or exceptions alongside a mean, preserve those conditions in the result claim instead of reporting only the mean. Capture stated study limitations and validations that remain planned or pending as their own facts. Do not merge distinct devices, metrics, or measured and projected results."
       : ""
-  } For news or product announcements, use the document title and opening narrative to identify the main announced action, who did it, rollout status, audience, and concrete mechanism. When those paragraphs are present in this batch, capture the main announcement before ancillary examples, pricing, or promotional metrics. Do not spend all fact slots on a price table unless pricing is the main event described by the title and narrative. Use each block's kind to distinguish narrative, headings, and tables. A table is evidence, not automatically the most important news. If the main announcement is not in this batch, extract only what is actually present; do not invent it.`
+  } For news or product announcements, use the document title and opening narrative to identify the main announced action, who did it, rollout status, audience, and concrete mechanism. When those paragraphs are present in this batch, capture the main announcement before ancillary examples, pricing, or promotional metrics. Then capture its concrete mechanisms, eligible participants, support conditions, application and implementation dates, and optional funding or investment separately, before past participant success stories or general spokesperson quotations. A quote containing a detail does not count as capturing it unless the claim statement states that detail. Keep different organizations' actions distinct; do not replace them with a broad program-expansion summary. Do not spend all fact slots on a price table unless pricing is the main event described by the title and narrative. Use each block's kind to distinguish narrative, headings, and tables. A table is evidence, not automatically the most important news. If the main announcement is not in this batch, extract only what is actually present; do not invent it.`
 
 // Keep whole source blocks and their original identities. An oversized block
 // needs an explicit parser decision rather than silent text truncation.
@@ -183,7 +183,7 @@ export function extractionBudget({
     ["num_predict", num_predict, 128, 8192],
     ["call_timeout_ms", call_timeout_ms, 1, 300000],
     ["extraction_timeout_ms", extraction_timeout_ms, 1, 7200000],
-    ["facts_per_batch", facts_per_batch, 1, 6],
+    ["facts_per_batch", facts_per_batch, 1, extractionSchema.properties.claims.maxItems],
   ])
     if (!Number.isInteger(value) || value < minimum || value > maximum)
       throw Error("Extraction budget out of range: " + name)
@@ -355,6 +355,13 @@ export function planExtractionBatches(parses, options = {}) {
   const requestFor = (sections) => {
     const schema = structuredClone(extractionSchema)
     schema.properties.claims.maxItems = facts_per_batch
+    const fields = schema.properties.claims.items.properties
+    fields.event_state.description =
+      "Classify the action itself: future actions are planned even when announced today; current states and company-reported observations are reported; completed requires the discrete action to have finished."
+    fields.numbers.items.properties.unit.description =
+      "Copy an exact unit substring from this claim's supporting quote, such as startups, $, or ms. Use an empty string when no explicit unit occurs. Never invent type labels such as date, currency, count, duration, or multiplier."
+    fields.numbers.items.properties.condition.description =
+      "Copy the applicable qualifier or scope exactly from this claim's supporting quote; use an empty string when none is stated. Do not paraphrase."
     schema.properties.claims.items.properties.evidence.items = {
       type: "object",
       additionalProperties: false,
