@@ -108,6 +108,33 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     const claim = eligible.find((c) => c.claim_id === b.claim_id)
     const stamp = parseResearchDate(b.source_published_at)
     const basis = p?.dates?.basis
+    // Earlier HTML parses retain JSON-LD script index/type/field provenance
+    // without a DOM path. Use only their bounded Article datePublished
+    // records, all agreeing on the exact instant; never dateModified or an
+    // arbitrary WebPage date. Stored parse/source bytes are checked upstream.
+    const structuredBasis =
+      p?.parser?.id === "trafilatura" &&
+      Array.isArray(basis?.sources) &&
+      basis.sources.length > 0 &&
+      basis.sources.length <= 32 &&
+      basis.sources.every(
+        (source) =>
+          source.type === "json-ld" &&
+          Number.isInteger(source.script_index) &&
+          source.script_index >= 0 &&
+          source.script_index < 32 &&
+          source.attribute === "datePublished" &&
+          Array.isArray(source.node_type) &&
+          source.node_type.some(
+            (type) =>
+              typeof type === "string" &&
+              ["Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"].includes(
+                type.split("/").at(-1),
+              ),
+          ) &&
+          parseResearchDate(source.text)?.precision === "timestamp" &&
+          parseResearchDate(source.text)?.instant === stamp?.instant,
+      )
     const jsonBasis =
       p?.parser?.id === "json-document" &&
       basis?.type === "json" &&
@@ -139,8 +166,8 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
       p.dates?.published_at !== b.source_published_at ||
       p.dates.precision !== "timestamp" ||
       p.dates.profile_status !== "matched" ||
-      (!basis?.dom_path && !jsonBasis) ||
-      parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant ||
+      (!basis?.dom_path && !jsonBasis && !structuredBasis) ||
+      (!structuredBasis && parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant) ||
       parseResearchDate(claim.published_at)?.instant !== stamp.instant ||
       !claim.evidence.some(
         (e) =>

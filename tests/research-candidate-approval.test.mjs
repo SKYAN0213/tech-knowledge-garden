@@ -20,7 +20,12 @@ import { selectCandidateSource } from "../scripts/research/editorial-handoff.mjs
 
 function fixture(
   t,
-  { sourcePublishedAt = "2026-09-30", candidatePublishedAt = sourcePublishedAt } = {},
+  {
+    sourcePublishedAt = "2026-09-30",
+    candidatePublishedAt = sourcePublishedAt,
+    reviewedAt = "2026-09-30",
+    seoulPublishedAt = null,
+  } = {},
 ) {
   const workspace = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "candidate-approval-")))
   t.after(() => fs.rmSync(workspace, { recursive: true, force: true }))
@@ -76,6 +81,12 @@ function fixture(
       },
     ],
   }
+  if (seoulPublishedAt)
+    Object.assign(parse.dates, {
+      precision: "timestamp",
+      profile_status: "matched",
+      basis: { dom_path: "/html/head/meta", text: sourcePublishedAt },
+    })
   const claims = recordFactReview(
     [claim],
     [
@@ -90,7 +101,7 @@ function fixture(
         time_checked: true,
       },
     ],
-    { reviewer: "fixture reviewer", reviewed_at: "2026-09-30" },
+    { reviewer: "fixture reviewer", reviewed_at: reviewedAt },
     [parse],
   )
   const draft = {
@@ -126,9 +137,22 @@ function fixture(
     analysis_checked: true,
     event_id: "abcdef0123456789",
     published_at: "2026-09-30",
-    reviewed_at: "2026-09-30",
+    reviewed_at: reviewedAt,
     region: "국내",
   }
+  if (seoulPublishedAt)
+    Object.assign(decision, {
+      published_at: seoulPublishedAt,
+      event_date_basis: {
+        kind: "source-publication-time",
+        source_id,
+        source_version_id,
+        parse_id,
+        claim_id: "c1",
+        source_published_at: sourcePublishedAt,
+        timezone: "Asia/Seoul",
+      },
+    })
   const article = approvedArticle(draftRecord, claims, [document], decision, [parse])
   atomicWrite(root, document.body_path, body)
   atomicWrite(root, `parses/${parse_id}/parse.json`, parse)
@@ -445,6 +469,31 @@ test("timestamp approval rejects a different source instant or publication day w
       fs.existsSync(path.join(f.root, "runs/candidate-link/candidate-approval.json")),
       false,
     )
+  }
+})
+
+test("candidate approval matches the reviewed source instant when Seoul falls on the next day", async (t) => {
+  const timestamp = "2026-09-30T19:23:58Z"
+  for (const candidateDate of ["2026-09-30", timestamp, "2026-09-29", "2026-09-30T19:25:35Z"]) {
+    const f = fixture(t, {
+      sourcePublishedAt: timestamp,
+      candidatePublishedAt: candidateDate,
+      reviewedAt: "2026-10-01",
+      seoulPublishedAt: "2026-10-01",
+    })
+    const before = fs.readFileSync(f.backlogFile)
+    if (["2026-09-30", timestamp].includes(candidateDate)) {
+      const result = await link(f)
+      assert.equal(result.candidate_published, false)
+      assert.equal(result.event_id, f.article.event_id)
+      assert.equal(
+        JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0].source_published_at,
+        candidateDate,
+      )
+    } else {
+      await assert.rejects(link(f), /differ in URL, date or source version/)
+      assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+    }
   }
 })
 

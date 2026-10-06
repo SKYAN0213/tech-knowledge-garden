@@ -10,6 +10,7 @@ import {
   classificationMeta,
   classificationHistory,
   THEMES,
+  entityListText,
 } from "../scripts/themes.mjs"
 import { newsView } from "../scripts/reader-views.mjs"
 import { articleSearchText } from "../scripts/knowledge.mjs"
@@ -270,4 +271,22 @@ test("One source edition carries tags through news, briefing, digest and decoded
     /github.com\/SKYAN0213\/tech-knowledge-garden\/blob\/main\/digest/,
   )
   assert.equal(feed.items[0].guid, feed.items[0].link)
+})
+
+test("entity names containing commas survive classification and shared tag URLs", () => {
+  const entities = [
+    "Sheriff’s departments in Camden and Gloucester Counties, New Jersey",
+    'Example \"A&B\"',
+  ]
+  const encoded = entityListText(entities)
+  const result = classifyArticle(
+    body.replace("Example Robotics", encoded),
+    "Comma-bearing organizations",
+  )
+  assert.deepEqual(result.entities, entities)
+  assert.equal(entityListText(["Example Robotics", "Other Lab"]), "Example Robotics, Other Lab")
+  assert.equal(entityListText([]), "없음")
+  for (const value of ["[null]", '[" "]', '["Example", "Example"]']) {
+    assert.throws(() => classifyArticle(body.replace("Example Robotics", value), "Invalid"))
+  }
 })

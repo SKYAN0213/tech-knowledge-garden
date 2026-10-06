@@ -1311,6 +1311,8 @@ summary:focus-visible {
 .news-labels a,
 .news-labels span {
   display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   background: #edf3f0;
   color: #35634d;
   padding: 4px 9px;

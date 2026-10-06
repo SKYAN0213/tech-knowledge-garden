@@ -19,6 +19,7 @@ import {
 } from "./event-date.mjs"
 import { markdownProse } from "../explanations.mjs"
 import { assertLegacyTransition } from "./legacy-transition.mjs"
+import { entityListText } from "../themes.mjs"
 
 // Pure projection: no Drive write, Git commit or push is performed here.
 export function approvedArticle(draftRecord, claims, documents, review, parses = []) {
@@ -411,7 +412,7 @@ export function editionProjection(
     article_reviews: articles.map((a) => a.article_review),
   }
   const card = (a) =>
-    `## ${a.title}\n\n**분야:** ${a.sector}\n**테마:** ${a.theme}\n**보조 테마:** ${secondaryTheme(a) || "없음"}\n**세부 태그:** ${a.tags.join(", ")}\n**기업·기관:** ${a.entities.length ? a.entities.join(", ") : "없음"}\n\n${markdownProse(a.record.lead)} ${a.source_urls.map(marker).join(" ")}\n\n${(a.record.explanations || []).map((e) => `### ${e.heading}\n\n${e.paragraphs.map(markdownProse).join("\n\n")} ${e.source_urls.map(marker).join(" ")}`).join("\n\n")}${
+    `## ${a.title}\n\n**분야:** ${a.sector}\n**테마:** ${a.theme}\n**보조 테마:** ${secondaryTheme(a) || "없음"}\n**세부 태그:** ${a.tags.join(", ")}\n**기업·기관:** ${entityListText(a.entities)}\n\n${markdownProse(a.record.lead)} ${a.source_urls.map(marker).join(" ")}\n\n${(a.record.explanations || []).map((e) => `### ${e.heading}\n\n${e.paragraphs.map(markdownProse).join("\n\n")} ${e.source_urls.map(marker).join(" ")}`).join("\n\n")}${
       conceptPaths(a).length
         ? "\n\n**개념:** " +
           conceptPaths(a)

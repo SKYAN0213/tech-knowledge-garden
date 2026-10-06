@@ -75,6 +75,14 @@ export const articleProse = (body) =>
     .filter((line) => !isClassificationLine(line))
     .join("\n")
 
+// Preserve punctuation in organization names while retaining old comma lists.
+export const entityListText = (entities) =>
+  entities.length === 0
+    ? "없음"
+    : entities.some((entity) => entity.includes(","))
+      ? JSON.stringify(entities)
+      : entities.join(", ")
+
 export function usesThemes(issue) {
   const format = issue.meta.theme_format
   const required = String(issue.meta.date || "") >= THEME_REQUIRED_FROM
@@ -115,10 +123,25 @@ export function classifyArticle(body, title) {
     event_tags.some((t) => !allowed.has(t))
   )
     throw Error(`Invalid or excessive event tags: ${title}`)
-  const entities = values["기업·기관"] === "없음" ? [] : list(values["기업·기관"])
+  const entityText = values["기업·기관"]
+  let entities
+  try {
+    entities =
+      entityText === "없음"
+        ? []
+        : entityText.startsWith("[")
+          ? JSON.parse(entityText)
+          : list(entityText)
+  } catch (cause) {
+    throw Error(`Invalid entities JSON: ${title}`, { cause })
+  }
   if (
+    !Array.isArray(entities) ||
     new Set(entities).size !== entities.length ||
-    entities.some((e) => !e || e === "없음" || /[<>\[\]`]/.test(e))
+    entities.some(
+      (e) =>
+        typeof e !== "string" || !e.trim() || e !== e.trim() || e === "없음" || /[<>\[\]`]/.test(e),
+    )
   )
     throw Error(`Invalid or repeated entities: ${title}`)
   if (!SECTORS.includes(values["분야"])) throw Error(`Invalid article sector: ${title}`)

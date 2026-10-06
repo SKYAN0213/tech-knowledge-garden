@@ -12,6 +12,16 @@ import { verifyExistingEditorialApproval } from "./existing-editorial-approval.m
 import { assertProcessedFactReview } from "./evidence-review-packet.mjs"
 import { buildCandidateSourceAlternativeResolution } from "./candidate-source-alternative.mjs"
 
+function candidateMatchesEventDate(article, candidateDate, sourceDate) {
+  const review = article.article_review
+  return (
+    samePublicationDate(review.published_at, candidateDate) ||
+    (review.date_kind === "source-publication-time" &&
+      samePublicationDate(candidateDate, review.source_published_at) &&
+      samePublicationDate(review.source_published_at, sourceDate))
+  )
+}
+
 function verifySameSourceRevision({
   root,
   approvedRunId,
@@ -123,7 +133,7 @@ function verifySameSourceRevision({
     primary.current_parse_id !== candidate.article_parse_id ||
     primary.article_content_sha256 !== candidate.article_content_sha256 ||
     !samePublicationDate(primary.published_at, candidate.source_published_at) ||
-    !samePublicationDate(article.article_review.published_at, candidate.source_published_at)
+    !candidateMatchesEventDate(article, candidate.source_published_at, primary.published_at)
   )
     throw Error("Reviewed source revision does not match the current candidate and event date")
   assertReviewDate(review.reviewed_at, {
@@ -334,7 +344,11 @@ async function linkCandidateApproval({
         samePublicationDate(sourceAlternative.published_at, article.article_review.published_at)
       if (
         !article.source_urls.some((articleURL) => canonicalURL(articleURL) === sourceUrl) ||
-        (!samePublicationDate(article.article_review.published_at, candidate.source_published_at) &&
+        (!candidateMatchesEventDate(
+          article,
+          candidate.source_published_at,
+          parse.dates?.published_at,
+        ) &&
           !alternativeConfirmsEventDate) ||
         (!sourceAlternative &&
           !samePublicationDate(candidate.source_published_at, parse.dates?.published_at)) ||

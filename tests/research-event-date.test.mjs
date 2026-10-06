@@ -214,6 +214,61 @@ test("source publication timestamps retain UTC evidence and explicitly project t
   }
 })
 
+test("stored JSON-LD Article publication timestamps support explicit Seoul dates without promoting update metadata", () => {
+  const s = fixture()
+  const timestamp = "2026-10-05T19:23:58+00:00"
+  s.p.parser = { id: "trafilatura" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      sources: [
+        {
+          type: "json-ld",
+          script_index: 0,
+          node_type: ["Article"],
+          attribute: "datePublished",
+          text: timestamp,
+        },
+      ],
+    },
+  }
+  s.claims[0].published_at = timestamp
+  s.review.published_at = "2026-10-06"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-time",
+    source_published_at: timestamp,
+  })
+  for (const mutate of [
+    (p) => (p.dates.basis.sources[0].attribute = "dateModified"),
+    (p) => (p.dates.basis.sources[0].node_type = ["WebPage"]),
+    (p) => (p.dates.basis.sources[0].script_index = -1),
+    (p) => (p.dates.basis.sources[0].script_index = 32),
+    (p) => (p.dates.basis.sources[0].text = "2026-10-05T19:25:35+00:00"),
+    (p) => (p.dates.basis.sources = []),
+    (p) =>
+      p.dates.basis.sources.push({
+        ...p.dates.basis.sources[0],
+        text: "2026-10-04T19:23:58+00:00",
+      }),
+    (p) => (p.parser.id = "json-document"),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]))
+  }
+})
+
 test("JSON publication time requires an exact reviewed root field, not a record or observation date", () => {
   const s = fixture()
   const timestamp = "2026-07-13T22:04:00Z"
