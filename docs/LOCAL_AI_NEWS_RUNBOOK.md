@@ -10878,3 +10878,7 @@ nachi-candidate-approval-20261006-v1에서 기존 후보와 승인 사건을 연
 nachi-approved-closure-20261006-v1은 승인·명시 수정·모델 원출력·추출/대조·후보 승인·원문 선택 계보5run, 원문3판본/parse3·manifest80파일/ZIP82members를 보관했다. Drive Research의 비공개1Bf1HOSsq5naHmMS47sIWyZK6JoZ1oXPQ,1,296,602bytes·SHA fc87ec6cd5a4e610f8bf718bea3c41a0589aa64d4aeac82ceaa7976c14a52362를 실제 원격 다운로드로 대조했다. 전수 복원·공통 archive 위치 등록·복원 승인/ontology 완전 동일을 확인했다. raw ZIP 보관과 모델 자동 품질 승격을 혼동하지 않는다. 외장 nachi-drive-restoration-proof-v1.json 및 nachi-drive-{restore,register}-v1.json이 증거다.
 
 기사 파일 .local/editorial-samples/2026-10-05-nachi-approved.html은 실제 승인 projection과 서비스 articleCard/reader.css를 재사용해 생성했다. 브라우저 file URL 열기는 보안 정책으로 거부되어 렌더링은 미검증이다. 우회하지 않았다. 전체WBS2/22·신규정규0/7·전수legacy47/454/metadata10·독립human40/20·08시/인증/중단/fullruntime·선정 분리 pending은 유지한다. 다음은 승인 묶음의 날짜 관문과 최신 Drive 작성원본을 맞춘 소급 반영 및 다음 유효 원문 처리다.
+
+릴리스 완료: 새 공통 override 코드 d3e84bc0b203e571842e7ba03e0b13b888988a90의 Actions37462269038에서 Node1,011/1,011·Python15+10+3·build/site/deploy success를 확인했다. 전체 로컬suite 반복0·이 코드 릴리스 CI1회다. 2026-10-06T12:21:15.777Z 공개 readback의 RSS606,070bytes·기존기사6,922bytes·reader-index1,239,161bytes는 모두 HTTP200/기존SHA 동일이다. 코드 배포와 신규 기사 발행0을 구분한다. 외장 daily-evidence-override-release-ci-{final-v1.json,log-v1.txt} 및 daily-evidence-override-public-preservation-v1.json이 증거다.
+
+core-progress-checkpoint-20261006-v8.json/html은 일일 처리 승인 준비1·실패2의 실제 receipt와 장부904·verified98·approval receipt 연결46·등록195/활성55/수집근거56을 집계한다. 운영 횟수·전체WBS 판정은 올리지 않았다. 승인 Markdown 파일 열기는 queued이며 독자가 실제 읽었다는 확인은 아니다. 작업 worker는 종료했고 Git 변경은 이번 코드/증거 문서만 포함한다.
