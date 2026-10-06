@@ -11014,3 +11014,12 @@ source-revision-resolution의 replace_approval에 publication_time_revision_run�
 실제 사건28865e31f8cb281c: approved run crowdstrike-publication-time-revision-20261007-v3, 시각2026-10-06T08:15:23-04:00, 13verified facts·기존 육하원칙 리드/설명 그대로·추가 model/원문HTTP0. resolution-v1에서 후보911개 중1개만 정정하고 나머지910개·ID·관측 시각·과거 승인을 보존했다. 반복 resolution은 backlog SHA5c2379d016467d0fd7d3b18c10b4df06030176fc22a8f608286d18cf4b65715a가 같았다. 기존 daily plan의 새 precise-approval-reuse-v1은 approval_ready1/모델0이며 공개나08시 완료는 아니다.
 
 표적 처음32/32·CLI handoff1/1. 연결 추가 검사1실패는 stage 결과와 정정 manifest의 같은 파일명 충돌이었고 stage명을 분리해 해당1통과했다. idempotence 추가1통과. archive 검사2실패는 related-run이 candidate-approval만 받는 계약과 루트 review 경로가 bound dependency 밖인 시험 호출이었다. source 승인 root의 자동 계보 closure를 검증하도록 수정해 해당1통과했으며 guard를 완화하지 않았다. 초기 actual v1/v2는 보존했고 최종 v3만 후보에 연결했다. 신규 정규0/7·WBS3/22·legacy/독립평가/08시/fullruntime 미완료, goal active다. CI·Drive archive·공개 보존은 후속 결과로 기록한다. 동일 실패1시간 반복0이다.
+
+
+후속 릴리스·보관 확인: 코드 6d8cfaf9713d68b8c9b9dc41a0da47a149667d61 / Actions 37496164187에서 Node 1,047/1,047, Python 28, build·site 검증·배포가 성공했다. 릴리스 CI 전체 검사 1회, 로컬 전체 suite 0회다. 공개 3파일은 HTTP 200이며 이전 산출물과 raw SHA가 같고 RSS 40건의 GUID·pubDate·내용을 보존했다. 새 기사 공개 0건이다.
+
+정정 승인 source closure publication-time-approved-source-closure-20261007-v1은 168자료/170 ZIP members, 680,994bytes, SHA21659f462e4696c8f0f6e3cdc26c59532f22baa1f3f524d877e0aca49aae2024다. 비공개 Drive ID1zvqsWiei1GoukP_2kK30TeqD7DMwZ_BL의 Research parent·shared=false·원격 raw SHA·170members 복원·보관 위치 등록을 확인했다. 복원된 승인 기사·사실·원문·parse·승인 파일 hash가 현재 승인 입력과 같았다. actual 후보 정정 영수증은 operator 증거로 보관했으며 전체 backlog/runtime 재가동 검증으로 표시하지 않는다. 닫힌 승인 run·archive manifest는 수정하지 않는다.
+
+릴리스 통합 증빙 JSON은 비공개 Drive ID12wBGQvD3JX4PiNlNF3UrweVRKwMs21S6, 911,766bytes, SHAc433153a8273e1c1755537eeafbe622921c9bc186bbfb3afe9de540e60e27395다. 원격 raw 파일과 로컬 bytes·SHA, parent·shared=false를 재확인했다. 증빙은 외장 tkg-daily-core-20261007-v1/publication-time-revision-release-drive-proof-v1.json에 있다. 최신 비공개 진척판 core-progress-checkpoint-20261007-v5.json/html은 WBS 3/22·partial17/not_started2, 새 정규 0/7이다. UI 동작 변경이 없어 브라우저 검사를 반복하지 않았다.
+
+다음 재개 지점은 정확한 시각으로 승인된 후보를 포함할 수 있는 회차의 작성·전달과 기존 자료 재검토다. 10월6일 기존 회차의 마감을 바꾸거나 과거 수정으로 새 RSS 회차를 만들지 않는다. 전체 legacy·전문용어·독립 평가·실제08시·인증·복구·정규7회는 미완료이며 goal active를 유지한다. 추가 모델·원문 HTTP 호출은 0회, 동일 실패를 1시간 이상 반복한 항목은 0이다.
