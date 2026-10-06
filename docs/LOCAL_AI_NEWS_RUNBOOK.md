@@ -10592,3 +10592,14 @@ HD 승인 run은 daily-20261006-hd-fabtech-processing-v1, approval-link는 daily
 430 최종 관문: 공통 코드ec17abbc006dde037ce3ca0823f307e2ca0e798b/Actions37416254685의 Node971/971·Python15+10+3·build/site/deploy가 통과했다. 로컬 전체 suite는 실행하지 않았다. 실제 웹 브리핑·RSS·해당 commit의 GitHub digest/원고4파일은 이전 승인7기사와 bytes가 일치하며 HD 후보는 공개되지 않았다. 전체 목표 active·신규 정규0/7을 유지한다.
 
 추가 NVIDIA2판본 source closure13자료15members/100417bytes는 Research1mEpiHlMOFxynPt_Mj9np80XYqwRvCQkt의 원격 SHA f1ac89b281a2e2595c90e2bd6626a5ea4bfa0146f76a5a7ff02e9cf8022620e9를 대조하고 공통 복원했다. 검색/검토/회귀 증거의 ordinary v1은165자료166members·원격SHA/167파일 복원까지 확인했으나 canonical parse 경로가 없어 공통 source reader의ENOENT를 보존했다. 이를 독립 원문 읽기 복구 성공으로 기록하지 않는다. 기존 archive-closure를 적용한 최종 v2는199자료201members/3731881bytes이고 Research1TpoMFERHuA0mI5AeJP4ZrR7xbAwMHV1j의 원격 SHA e1f913bf45ceb0a7afc751cf0f4e0eab99ed492bf7a0d0510fd0f9eac3e7af3d를 대조했다. 최종 복원본의31source documents/34old·current parses/131evidence files를 실제 common source reader와 개별SHA로 재검증했다. 수집/모델 추가0이며 전체 runtime 복구가 아니다. 원문 읽기28판본과 회귀 원문3판본의 보관31개를 서로 구분한다.
+
+
+## 431. Roche 승인 복구와 조사 기간 판정
+
+완료된 daily-20261006-roche-filing-processing-v1 추출과 daily-20261006-roche-filing-assessment-repair-v2 대조를 재사용한다. quote-only 검토는 exact input/raw SHA·source_read/meaning_unchanged·같은 block 원문 인용을 요구한다. 첫 quote-review 체크 누락과 첫 writer length 종료는 보존한다. 별도진단 temperature0.2 작성1회49.535초는 완료했지만 기본 data/research-model-policy.json은 변경하지 않았다.
+
+최종 승인 daily-20261006-roche-filing-reviewed-processing-v2, 후보연결 daily-20261006-roche-filing-approval-link-v1, 사건e3728daf1bd4be8b의preview.md를 사용한다.8verified/2deferred·리드2문장·설명3항목5문단·원 발표일·조건·회사귀속을 직접 확인했다. Drive Research19gbgogN1AsaUZP62dXHv-N2OHulRYzQq의 rawZIP/SHA·88파일복원·loadCurrentApproval 동등성 완료. 공개작성원본/RSS는 미반영이다.
+
+daily-cell-investigation-v4.json은31원문판본·32칸읽기·기간내확실23칸/나머지9칸·모두부분확인이다. 경계일의 날짜만으로04:30:51Z 이후 발표를확정하지 않는다. AMD/Newdaily추가2원문은기간밖이다. 조사closurev3 Drive1TvM0linoi1NiQRPBTnzVolQE93TkbT9p는31source/31parse 복원을 검증했으며 fullruntime복구가아니다.
+
+다음: freshDrive전수raw대조→기존10월1일회차의 누락사건 historical_addition_review→privatepreview/Drive저장→웹/RSS/GitHub/WebsiteData. 기존회차ID/cutoff/RSSGUID/pubDate를유지하고9월30일소식을오늘새뉴스로발행하지않는다. 지금승인·보관을정규0/7성공으로세지않는다. WBS2/22·legacy47/454·metadata10·독립40/20·08시/인증/fullruntime·goalactive를유지한다. 계획19.339와외장 tkg-daily-core-20261006-v1의proof를확인한다.

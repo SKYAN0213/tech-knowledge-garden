@@ -4590,3 +4590,18 @@ HD현대로보틱스는 실제 qwen3.8:27b-mlx 추출→근거 대조→작성 �
 19.338 최종 관문: 공통 코드ec17abbc006dde037ce3ca0823f307e2ca0e798b/Actions37416254685의 Node971/971·Python15+10+3·build/site/deploy가 통과했다. 로컬 전체 suite는 실행하지 않았다. 실제 웹 브리핑·RSS·해당 commit의 GitHub digest/원고4파일은 이전 승인7기사와 bytes가 일치하며 HD 후보는 공개되지 않았다. 전체 목표 active·신규 정규0/7을 유지한다.
 
 추가 NVIDIA2판본 source closure13자료15members/100417bytes는 Research1mEpiHlMOFxynPt_Mj9np80XYqwRvCQkt의 원격 SHA f1ac89b281a2e2595c90e2bd6626a5ea4bfa0146f76a5a7ff02e9cf8022620e9를 대조하고 공통 복원했다. 검색/검토/회귀 증거의 ordinary v1은165자료166members·원격SHA/167파일 복원까지 확인했으나 canonical parse 경로가 없어 공통 source reader의ENOENT를 보존했다. 이를 독립 원문 읽기 복구 성공으로 기록하지 않는다. 기존 archive-closure를 적용한 최종 v2는199자료201members/3731881bytes이고 Research1TpoMFERHuA0mI5AeJP4ZrR7xbAwMHV1j의 원격 SHA e1f913bf45ceb0a7afc751cf0f4e0eab99ed492bf7a0d0510fd0f9eac3e7af3d를 대조했다. 최종 복원본의31source documents/34old·current parses/131evidence files를 실제 common source reader와 개별SHA로 재검증했다. 수집/모델 추가0이며 전체 runtime 복구가 아니다. 원문 읽기28판본과 회귀 원문3판본의 보관31개를 서로 구분한다.
+
+
+## 19.339. 완료 단계 재사용과 원문 조사 기간 대조
+
+2026-10-06 Roche 저장 원문을 HTTP0으로 선택했다. 완료 추출6사실·첫 대조를 재사용하고 원문 아포스트로피만 복원하는 explicit quote-review로 누락 대조1배치만 호출했다. 첫 quote-review 필수 체크 누락은 모델 호출 전 거부한 기록으로 보존했다. 직접 원문 대조로 비교 조건·비열등성·신뢰구간·이상사례·기존 학회 발표를 확인해8verified/2deferred를 판정했다.
+
+첫 작성은152,204ms 뒤 length/불완전JSON으로 종료했다. 원출력392자·budget/progress를 보존했다. 같은 모델·think:false·4096출력·시간 상한에서 article_write temperature만0→0.2로 바꾼 별도 private 진단 정책1회는49,535ms에 완료됐다. 운영 기본 정책 변경0이며 한 자료의 복구를 전체 품질 개선으로 집계하지 않는다. 날짜 누락·CNS/연간 환산 재발률 오역·출시 분류를 정정한 최종 기사는 리드2문장201자·설명3항목5문단이다. 사건e3728daf1bd4be8b는 후보에verified로 연결했다. 공개·원고·회차 변경0이다.
+
+기간 내 기업 자료가 없는 두 칸만2검색어/24고유URL로 추가 탐색하고 AMD9월28일 공식 발표·국내ESS9월29일11:05KST 보도2원문을 실제 공통수집/파싱으로 읽었다. 두 원문 모두 discovery_start9월29일04:30:51.767Z보다 앞선다. 인수 계약과 종결, 입찰·설비 계획과 실행을 구분하고 오늘 새기사로 승인하지 않았다. 기존 기사 대조는 common canonicalURL과 extractArticles의urls를 사용한다. 같은 회차 전체본문 문자열 일치를 동일 기사 판정으로 사용하지 않는다. 추가 URL 일괄 backlog 편입0이다.
+
+private investigation-v4는31원문판본·32/32칸 읽기 근거, 기간 내 확실23칸을 기록한다. 나머지9칸은 기간 밖 또는 경계일의 발표 시각 확인이 필요하다. v3의30칸은 달력 날짜 기준이므로 정확한 시각 판정과 구분한다. 모든32칸은부분확인/조사완료false다.
+
+추가2source closure13자료15members/98,900bytes는 Research1_O8FApIlOmi_o7QSTxEJVPnkrRbOAWd5의 rawSHA abd4fcedf7ce38de25bc1e3207df058cc92712d3cafb10eb206c3c788e439d80을 대조했다. 조사closurev3는73자료75members/1,350,031bytes, Research1TvM0linoi1NiQRPBTnzVolQE93TkbT9p의 rawSHA71c36150455c7fe110ca97e24817efddfa2c5d17e4a726031d3ccf36cd4b09fe와 복원31documents/31parses 동등성을 검증했다. Roche승인closure86자료88members/581,657bytes는 Research19gbgogN1AsaUZP62dXHv-N2OHulRYzQq의 rawSHA260aa599ea333a151ff5d0cc5d2140a6c182fbe49889ff0dfe0a1443994397f3을 대조하고 loadCurrentApproval에서 기사·승인6파일·8verified/2deferred 동등성을 검증했다. private부모/shared:false·원격raw·복원은 각각 확인했으며 fullruntime복구가 아니다.
+
+새 코드·운영 정책·공개 발행0이다. 승인·JSON/readback만 검증하고 전체suite를 반복하지 않았다. 후보783(verified99/unreviewed673/deferred9/rejected2)이며 WBS2/22·legacy47회차454구간/metadata10·독립human40/20·신규정규0/7·08시/인증/중단/fullruntime는 미완료다. goal active·동일실패1시간반복0을 유지한다. 다음은 freshDrive4폴더 전수대조→기존10월1일회차의 historical_addition_review→같은 회차 웹/RSS/GitHub 검증이다. HD10월6일12:05사건은 다음 정규후보다. 완료 수집·추출·대조·작성을 재실행하지 않는다.
