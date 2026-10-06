@@ -10991,3 +10991,12 @@ source closure126자료/128members/3원문판본/524,032bytes/SHAf72094b31930f8b
 승인 독자용 내용은 crowdstrike-six-w-approved-sample-v1.md다. open_in_codex queued는 실제 화면/렌더링 검증이 아니다. 최초 문서 helper의 stdin UTF-8 오류는 파일 수정 전 발생했고 Node UTF-8 쓰기로 기록했다. 기존 전체legacy47/454/metadata10·독립40/20·08시/인증/복구/fullruntime 관문을 유지한다.
 
 최신 비공개 진척판: 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v3.json/html. WBS3/22·partial17/not_started2를 확인했다. 데이터/문서 readback이며 추가 UI 동작 검증 또는 기사 공개가 아니다.
+
+
+## 455. 공식 목록 대조와 정확한 게시 시각 보존
+
+기존 공통 publication_date_metadata_timestamp 옵션의 처리 순서를 수정했다. 목록·표시일 대조 후 명시적 오프셋이 있는 Article datePublished 시각을 보존하며, 여러 발행 시각이 충돌하면 null/conflict로 유지한다. 목록 날짜가 충돌을 덮어쓰지 않는다. 원문 시각·표시일·목록 판본 근거를 함께 저장하고 CrowdStrike 공식 상세 profile에 적용했다. 시간대가 없거나 날짜만 있으면 시각을 추정하지 않으며 다른 profile의 기본 날짜 동작은 유지한다.
+
+표적 WorkerTests 7개 통과, 저장된 실제 CrowdStrike 본문 재파싱에서 23blocks와 제목·원문 SHA가 같고 게시 시각 2026-10-06T08:15:23-04:00(한국시간 21:15:23)을 확인했다. 신규 원문 HTTP·모델 호출0, 원 승인·불변 parse·후보 장부는 보존했다. 첫 표적 실행의 도구 출력에서 session 식별자를 보존하지 못해 결과를 회수할 수 없었고, 결과 로그를 남기는 1회 재실행으로 7/7을 확인했다. 전체 로컬 suite는 실행하지 않았다.
+
+19.361의 ‘기존 회차 연결’ 재개 방향을 수정한다. 이 발표는 10월6일 회차의 마감(한국시간05:21:45) 뒤이므로 그 회차에 추가하지 않는다. 날짜만 있던 원 승인을 정확한 시각 승인으로 자동 승격하지 않는다. 이후 대상 회차에서 시각 근거를 연결해 검토하며 기존 URL/GUID/coverage는 유지한다. Drive 작성4폴더 수정0·새 기사 공개0·새 정규0/7·WBS3/22 상태다. 실제 증거는 외장 tkg-daily-core-20261007-v1/publication-timestamp-live-v1.json과 새 run crowdstrike-publication-time-reparse-20261007-v1이다.

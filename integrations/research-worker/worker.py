@@ -1032,19 +1032,6 @@ def html_parse(raw, url, options):
     metadata_timestamp = options.get("publication_date_metadata_timestamp", False)
     if not isinstance(metadata_timestamp, bool):
         raise ValueError("Publication metadata timestamp option must be boolean")
-    if metadata_timestamp and published:
-        if not explicit_date or date_profile_status != "matched":
-            raise ValueError("Publication metadata timestamp requires a matched display date")
-        timestamp_bases = [basis for basis in common_date_basis if source_date_value(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"])) and "T" in basis["text"]]
-        if timestamp_bases:
-            timestamps = [re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"]) for basis in timestamp_bases]
-            instants = {datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc) for value in timestamps}
-            if len(instants) != 1 or any(known_date(value, calendar_zone) != known_date(published, calendar_zone) for value in timestamps):
-                published = None
-                date_profile_status = "conflict"
-            else:
-                published = timestamps[0]
-                date_basis = {**timestamp_bases[0], "text": published, "display_basis": date_basis, "sources": timestamp_bases}
     if published:
         published = source_date_value(published)
         if published is None:
@@ -1100,6 +1087,22 @@ def html_parse(raw, url, options):
                 "source_url": listing_url,
                 "source_version_id": listing_version,
             }
+    # Reconcile visible and official listing dates before retaining the exact
+    # metadata instant. A listing day must never overwrite a timestamp conflict.
+    if metadata_timestamp and published:
+        if not explicit_date or date_profile_status not in {"matched", "official-listing-confirmed-by-display"}:
+            raise ValueError("Publication metadata timestamp requires a matched display date")
+        timestamp_bases = [basis for basis in common_date_basis if source_date_value(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"])) and "T" in basis["text"]]
+        if timestamp_bases:
+            timestamps = [re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", basis["text"]) for basis in timestamp_bases]
+            instants = {datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc) for value in timestamps}
+            if len(instants) != 1 or any(known_date(value, calendar_zone) != known_date(published, calendar_zone) for value in timestamps):
+                published = None
+                date_profile_status = "conflict"
+            else:
+                published = timestamps[0]
+                date_profile_status = "matched"
+                date_basis = {**timestamp_bases[0], "text": published, "display_basis": date_basis, "sources": timestamp_bases}
     modified_days = [known_date(value, calendar_zone) for value in modified_nodes]
     valid_modified = bool(modified_days) and all(modified_days) and len(set(modified_days)) == 1
     modified = (modified_nodes[0] if len(set(modified_nodes)) == 1 else modified_days[0]) if valid_modified else None

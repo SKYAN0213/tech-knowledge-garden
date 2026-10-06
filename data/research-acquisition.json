@@ -1565,7 +1565,8 @@
         "publication_date_format": "%B %d, %Y",
         "publication_date_from_listing": true,
         "publication_date_listing_authoritative": true,
-        "publication_date_policy": "explicit-authoritative"
+        "publication_date_policy": "explicit-authoritative",
+        "publication_date_metadata_timestamp": true
       }
     },
     {

@@ -1914,6 +1914,72 @@ echo 'source command only'
                 self.assertIsNone(result["dates"]["published_at"])
                 self.assertEqual(result["dates"]["profile_status"], "conflict")
 
+    def crowdstrike_timestamp_fixture(self, published="2026-10-06T08:15:23-0400", second=None):
+        metadata = {"@graph": [
+            {"@type": "NewsArticle", "datePublished": published},
+            {"@type": "WebPage", "datePublished": "2099-01-01T00:00:00Z"},
+            {"@type": "NewsArticle", "dateModified": "2026-10-07T00:00:00Z"},
+        ]}
+        if second:
+            metadata["@graph"].append({"@type": "NewsArticle", "datePublished": second})
+        raw = ('<html><head><script type="application/ld+json">'+json.dumps(metadata)+
+               '</script></head><body><article class="node--nir-news--full"><h2>Startup accelerator</h2>'
+               '<div class="field--name-field-nir-news-date">October 6, 2026</div>'
+               '<p>Applications open for the accelerator.</p></article></body></html>').encode()
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = {**next(p["options"] for p in config["article_profiles"] if p["id"] == "crowdstrike-company-news-en-v1"),
+                   "listing_published_at": "2026-10-06", "listing_date_text": "Oct 06, 2026",
+                   "listing_source_url": "https://ir.crowdstrike.com/press-releases",
+                   "listing_source_version_id": "listing:"+hashlib.sha256(b"fixture listing").hexdigest()}
+        return raw, options
+
+    def test_official_listing_keeps_exact_metadata_time_and_both_date_bases(self):
+        # The listing/display day is in the publisher calendar, even when the
+        # exact instant is on the following date in Korea.
+        for stamp in ("2026-10-06T08:15:23-0400", "2026-10-06T23:30:00-0400"):
+            with self.subTest(stamp=stamp):
+                raw, options = self.crowdstrike_timestamp_fixture(stamp)
+                result = self.invoke(raw, options)["result"]
+                self.assertEqual(result["dates"]["published_at"], stamp[:-2]+":"+stamp[-2:])
+                self.assertEqual(result["dates"]["precision"], "timestamp")
+                self.assertEqual(result["dates"]["profile_status"], "matched")
+                basis = result["dates"]["basis"]
+                self.assertEqual(basis["type"], "json-ld")
+                self.assertEqual(basis["dom_path"], "/html/head/script")
+                self.assertEqual(len(basis["sources"]), 1)
+                self.assertEqual(basis["sources"][0]["text"], stamp)
+                self.assertEqual(basis["display_basis"]["display_text"], "October 6, 2026")
+                self.assertEqual(basis["display_basis"]["source_version_id"], options["listing_source_version_id"])
+                self.assertEqual(basis["display_basis"]["published_at"], "2026-10-06")
+
+    def test_official_listing_cannot_overwrite_metadata_time_conflicts(self):
+        for second in ("2026-10-06T12:16:23Z", "2026-10-07T12:15:23Z"):
+            with self.subTest(second=second):
+                raw, options = self.crowdstrike_timestamp_fixture(second=second)
+                result = self.invoke(raw, options)["result"]
+                self.assertIsNone(result["dates"]["published_at"])
+                self.assertEqual(result["dates"]["profile_status"], "conflict")
+        raw, options = self.crowdstrike_timestamp_fixture()
+        mismatched = self.invoke(raw, {**options, "listing_published_at": "2026-10-07"})["result"]
+        self.assertIsNone(mismatched["dates"]["published_at"])
+        self.assertEqual(mismatched["dates"]["profile_status"], "listing-display-mismatch")
+
+    def test_official_listing_does_not_invent_time_or_change_default_day_profile(self):
+        for stamp in ("2026-10-06", "2026-10-06T08:15:23"):
+            with self.subTest(stamp=stamp):
+                raw, options = self.crowdstrike_timestamp_fixture(stamp)
+                result = self.invoke(raw, options)["result"]
+                self.assertEqual(result["dates"]["published_at"], "2026-10-06")
+                self.assertEqual(result["dates"]["precision"], "day")
+                self.assertEqual(result["dates"]["profile_status"], "official-listing-confirmed-by-display")
+        raw, options = self.crowdstrike_timestamp_fixture()
+        default = self.invoke(raw, {**options, "publication_date_metadata_timestamp": False})["result"]
+        self.assertEqual(default["dates"]["published_at"], "2026-10-06")
+        self.assertEqual(default["dates"]["precision"], "day")
+        self.assertEqual(self.invoke(raw, {**options, "publication_date_metadata_timestamp": "true"})["worker_status"], "failed")
+        unbound = self.invoke(raw, {**options, "publication_date_xpath": "//absent", "publication_date_listing_authoritative": False})
+        self.assertEqual(unbound["worker_status"], "failed")
+
     def test_title_badge_exclusion_keeps_inline_text_tail_and_source_basis(self):
         raw = '<html><head><title>사이트</title></head><body><h1><strong class="badge">단독</strong> 단독 <em>계약</em> 발표</h1><article><p>확인한 본문.</p></article></body></html>'.encode()
         options = {"content_xpath": "//article", "title_xpath": "//h1", "title_exclude_xpath": ".//strong[@class='badge']"}
