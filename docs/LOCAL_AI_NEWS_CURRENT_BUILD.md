@@ -1746,3 +1746,7 @@ e7a6ee1의 Actions37381769777 검사·빌드·배포와 공개15파일 byte/read
 ### 2026-10-06 NACHI IR 공통 수집 슬라이스
 
 정적 전체 IR 목록의 기간 선택과 목록에 실제 연결된 보충 PDF를 기존 수집/장부/일일 handoff에 통합했다. 실제102개 목록→후보1개→본문·보충2PDF/241blocks 및 정상/빈 창·재개·중복 병합·변조 거부를 확인했다. 등록195/활성55/수집증거56이다. Drive 원격ZIP927,899bytes의 SHA·전수 복원·목록 관계 재검증을 완료했다. 표적Node43/Python4 통과. 상세 근거는 런북444/출처87/계획19.351이며 외장 core-progress-checkpoint-20261006-v5가 현황판이다. 코드 릴리스·공개 readback은 별도다. 전체WBS2/22·독립human0·신규정규0/7·전체legacy/08시 운영 미완료는 유지한다.
+
+### 2026-10-06 전체 수집 실행과 배포 검증
+
+활성55경로110창을 실제 실행해105창/50경로 완료·5창 미완료를 확인했다. UR/KARI의 원문 위치/목록 배지와 공통 모듈 frozen-input 누락을 수정하고, 해당2경로+NACHI만6창 재검증해 모두 통과했다. 남은 KISA기간 경계·전자신문16페이지 예산·디일렉 로그인 자료는 런북445에 exact 근거/다음 작업을 남겼다. Drive 복구6원문/6parse·모듈 해시 재검증 완료, e98b3ff의 Actions37451920803 Node997/Python15+10+3·build/site/deploy 성공, 실제 RSS·기존기사·reader-index bytes/SHA 보존 확인. 현황판은 core-progress-checkpoint-20261006-v6이다. 전체 목표active/WBS2/22·신규정규0/7 및 전체legacy/사람평가/08시운영 gate는 남는다.
