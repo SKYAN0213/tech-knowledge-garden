@@ -11450,3 +11450,25 @@ npm run research:deliver -- --run authoring-delivery-jul18-20261007-v1 --wait-se
 ```
 
 Actions37568125831은 정확한 코드 commit `7a4b8fe1df71551053096168310a1351e26e43ca`의 build/deploy success와 Node1124/1124를 확인했다. 완료 작업을 두 번 재개해 추가 명령·HTTP0, 두 번째107ms를 기록했다. 별도의 실제 공개 readback2회에서 `briefing.xml`651282bytes/SHA`c496473be4eff6b5861f84d97c6cd46094b9617f8bf48a079bd6047a5bf9e9c1`, `reader-index.json`1290468bytes/SHA`9680f411119464f1b112b361ee82cb0529cbad96f4457905f6279da8a5ef53a8`가 이전 값과 같았다. 증거는 외장 evidence root의 `authoring-delivery-source-inventory-v1.json`, `authoring-delivery-source-readback-v1.json`, `authoring-delivery-live-resume-v1.json`, `authoring-delivery-ci-final-v1.json`, `authoring-delivery-real-replay-v1.json`에 보존한다. 원격 Research/WebsiteData의 새 전달 검증, 신규 회차 운영과 전수 소급은 이 결과에 포함하지 않는다.
+
+## 482. 완료한 일일 처리에서 검토·승인·preview로 이어 실행 (2026-10-07)
+
+기존 수집·source processor가 만든 완료 batch를 `--from-processing`으로 지정한다. 원문 판본·parse·후보·처리 run은 frozen input으로 고정한다. `--daily-run`, `--processing-runs`, `--evidence-think`를 새로 지정해 기존 결속을 바꾸지 않는다. `--candidate-keys`는 기존 batch의 일부를 선택할 때만 사용한다. 먼저 계획을 확인하고 실제로 작성한 사실 검토와 원고 검토 입력을 전달한다.
+
+```sh
+npm run research:process-daily -- --run EDITORIAL_RUN --from-processing STORED_PROCESSING_BATCH --plan-only
+npm run research:process-daily -- --run EDITORIAL_RUN --from-processing STORED_PROCESSING_BATCH --execute --review-files /absolute/fact-review-files.json
+npm run research:process-daily -- --run EDITORIAL_RUN --from-processing STORED_PROCESSING_BATCH --resume --editorial-review-files /absolute/editorial-review-files.json
+```
+
+두 JSON 파일은 `{ "정확한 후보 key": "/absolute/명시적-검토.json" }` 형식이다. 내용과 근거는 기존 review/approve 계약을 따른다. 읽지 않은 원문에 `source_read`를 설정하거나 빈 검토 파일을 자동 채우지 않는다. 검토 파일은 원래 경로·SHA로 고정한다. 사실 검토 없이 writer를 호출하거나 원고 검토 없이 기사 승인을 만들지 않는다. 검토한 사실에서 발행 가능한 내용이 없으면 작성하지 않는다.
+
+`runs/EDITORIAL_RUN/daily-editorial/latest.json`에 실행 중 후보·최신 단계·native 승인·publication handoff가 저장된다. 같은 입력으로 재개하며 실패한 후보는 비공개 실패 기록에 남기고 자동 재시도하지 않는다. 입력·검토를 고쳤으면 원래 실행을 보존하고 새 run ID를 사용한다. 현재 원문이 승인 판본과 다르면 `source_revision_review`; 이미 작성 회차에 있으면 `already_in_edition`이며 둘 다 새 발행 대상에 넣지 않는다. 후자는 공개 배포 검증을 뜻하지 않는다.
+
+승인 handoff의 상대 경로를 그대로 기존 preview에 전달한다. 빈 목록·바뀐 원문/승인·이미 회차에 들어간 사건·다른 vault는 거부한다. 기존 approved-run 목록과 동시에 지정하지 않는다. 원고 검증·fresh Drive와 원격 저장·배포 관문을 생략하지 않는다.
+
+```sh
+npm run research -- preview --run PREVIEW_RUN --publication-handoff runs/EDITORIAL_RUN/daily-editorial/publication-handoffs/EXACT_HASH.json --review /absolute/edition-spec.json
+```
+
+실물 `daily-20261007-four-fields-editorial-v1`의 당시 receipt는 fact_review3/empty_extraction_review1이었다. 실제 native 승인·후보 장부·회차를 읽으면 KAIST CONDA·셀트리온·AWS Batch의 3건이 이미 회차에 있다. 초기 continuation-v2는 승인 판본과 현재 수집 판본을 같은 것으로 요구해 실패했으며 원본을 보존했다. 승인 자체는 native 과거 판본으로 검증하고 현재 판본을 별도 상태로 분리했다. continuation-v3의 실제 실행·재개는 3건을 새 발행에서 제외하고 빈 추출 복구 검토1건을 유지했다. 명령·모델 추가 실행0, raw/승인/장부15입력 SHA 불변이며 v3 측정은652ms/재개301ms다. 최신 code의 실물과 CI는 외장 evidence root의 `daily-editorial-*`에 이어 보존한다. 신규 원고·Drive 변경·정규 운영 완료로 계수하지 않는다.

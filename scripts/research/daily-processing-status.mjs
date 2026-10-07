@@ -163,5 +163,93 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
       return { run_id: run, status: "invalid", error: error.message, candidate_published: false }
     }
   })
-  return { status: runs.length ? "available" : "missing", runs }
+  const editorial = fs
+    .readdirSync(directory, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /^[A-Za-z0-9_-]+$/.test(e.name))
+    .map((e) => ({
+      run: e.name,
+      file: safePath(root, `runs/${e.name}/daily-editorial/latest.json`),
+    }))
+    .filter((e) => fs.existsSync(e.file))
+    .sort((a, b) => fs.statSync(b.file).mtimeMs - fs.statSync(a.file).mtimeMs)
+    .map(({ run }) => {
+      try {
+        const base = `runs/${run}/daily-editorial/`,
+          input = readJSON(root, base + "input.json"),
+          receipt = readJSON(root, base + "latest.json")
+        if (
+          input?.schema !== "research-daily-editorial-input/v1" ||
+          receipt.schema !== "research-daily-editorial/v1" ||
+          receipt.run_id !== run ||
+          receipt.processing_run !== input.processing_run ||
+          receipt.input_sha256 !== sha256(JSON.stringify(input)) ||
+          !Array.isArray(receipt.results) ||
+          !Array.isArray(input.entries) ||
+          receipt.results.length > input.entries.length ||
+          !receipt.results.every((r, i) => r.candidate_key === input.entries[i].candidate_key) ||
+          receipt.results.some(
+            (r) =>
+              !statuses.has(r.status) &&
+              !["already_in_edition", "source_revision_review"].includes(r.status),
+          )
+        )
+          throw Error("Editorial continuation differs from its frozen input")
+        if (receipt.publication_handoff) {
+          const bytes = fs.readFileSync(safePath(root, receipt.publication_handoff.path))
+          const handoff = JSON.parse(bytes)
+          if (
+            sha256(bytes) !== receipt.publication_handoff.sha256 ||
+            handoff.schema !== "research-daily-publication-handoff/v1" ||
+            handoff.run_id !== run ||
+            handoff.input_sha256 !== receipt.input_sha256
+          )
+            throw Error("Daily publication handoff changed")
+        }
+        const parent = readJSON(root, `runs/${input.processing_run}/daily-processing-input.json`)
+        if (!parent || sha256(JSON.stringify(parent)) !== input.parent_input_sha256)
+          throw Error("Editorial parent processing input changed")
+        return {
+          run_id: run,
+          daily_run: parent.daily_run,
+          stage_kind: "editorial",
+          processing_run: input.processing_run,
+          status: receipt.status,
+          live_process:
+            receipt.status === "running"
+              ? processState(readJSON(root, `locks/daily-editorial-${run}.json`)?.pid)
+              : "not_running",
+          active_candidate: receipt.active_candidate || null,
+          total: input.entries.length,
+          counts: Object.fromEntries(
+            [...new Set(receipt.results.map((r) => r.status))].map((s) => [
+              s,
+              receipt.results.filter((r) => r.status === s).length,
+            ]),
+          ),
+          results: receipt.results.map((r) => ({
+            candidate_key: r.candidate_key,
+            status: r.status,
+            processing_run: r.processing_run,
+            packet: r.result?.packet || null,
+            preview: r.result?.preview || null,
+            current_source_matches: r.approval?.current_source_matches ?? null,
+            ...(r.error ? { error: r.error, automatic_retry: false } : {}),
+          })),
+          publication_handoff: receipt.publication_handoff || null,
+          candidate_published: false,
+        }
+      } catch (error) {
+        return {
+          run_id: run,
+          stage_kind: "editorial",
+          status: "invalid",
+          error: error.message,
+          candidate_published: false,
+        }
+      }
+    })
+  return {
+    status: runs.length || editorial.length ? "available" : "missing",
+    runs: [...editorial, ...runs],
+  }
 }

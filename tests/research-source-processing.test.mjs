@@ -3,6 +3,9 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { execFileSync } from "node:child_process"
+import { editionProjection } from "../scripts/research/publish-adapter.mjs"
+import { loadDailyPublicationSelection } from "../scripts/research/daily-publication-handoff.mjs"
 import { processSourceRun } from "../scripts/research/source-processing.mjs"
 import {
   loadFactReviewPacket,
@@ -15,6 +18,7 @@ import { validateEvidence } from "../scripts/research/claims.mjs"
 import { main } from "../scripts/research.mjs"
 import { loadProcessedSourceResult } from "../scripts/research/processed-source-result.mjs"
 import { processDailyCandidates } from "../scripts/research/daily-processing.mjs"
+import { processDailyEditorial } from "../scripts/research/daily-editorial.mjs"
 import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
@@ -1587,4 +1591,346 @@ test("CLI accepts partial assessment reuse and forwards its conflict checks", as
   await assert.rejects(main([...args, "--assessment-run", "prior"]), /mutually exclusive/)
   await assert.rejects(main([...args.slice(0, -1), "processed"]), /Distinct source and processing/)
   assert.equal(readJSON(f.root, "runs/processed/source-processing-input.json"), null)
+})
+
+async function editorialFixture(t) {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const entry = { ...reuseEntry(f), next_route: "historical-review", reuse_run: "processed" }
+  const key = entry.candidate_key
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        key,
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+      },
+    ],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  const input = {
+    schema: "research-daily-processing-input/v1",
+    daily_run: "daily",
+    candidate_keys: [key],
+    entries: [entry],
+  }
+  atomicWrite(f.root, "runs/batch/daily-processing-input.json", input)
+  atomicWrite(f.root, "runs/batch/daily-handoff-reference.json", {
+    path: "handoff.json",
+    sha256: sha256(fs.readFileSync(path.join(f.root, "handoff.json"))),
+  })
+  atomicWrite(f.root, "runs/batch/daily-processing.json", {
+    schema: "research-daily-processing/v1",
+    run_id: "batch",
+    daily_run: "daily",
+    input_sha256: sha256(JSON.stringify(input)),
+    status: "review_pending",
+    total: 1,
+    counts: { fact_review: 1 },
+    results: [{ candidate_key: key, processing_run: "processed", status: "fact_review" }],
+  })
+  const backlogFile = path.join(f.root, "backlog.json"),
+    vault = path.join(f.root, "vault")
+  fs.mkdirSync(vault)
+  fs.writeFileSync(
+    backlogFile,
+    JSON.stringify({
+      schema: "research-candidates/v1",
+      candidates: [
+        {
+          key,
+          title: f.parse.title,
+          source_urls: entry.source_urls,
+          source_published_at: "2026-10-02",
+          review_status: "unreviewed",
+          article_source_version_id: entry.source_version_id,
+          article_parse_id: entry.parse_id,
+          article_content_sha256: entry.content_sha256,
+        },
+      ],
+    }),
+  )
+  const reviewFile = path.join(f.root, "explicit-facts.json")
+  fs.writeFileSync(reviewFile, JSON.stringify(await decision(f)))
+  const options = {
+    root: f.root,
+    runId: "editorial",
+    processingRun: "batch",
+    policyFile: f.policyFile,
+    vault,
+    backlogFile,
+    provider: f.provider,
+  }
+  return { ...f, key, entry, reviewFile, options }
+}
+
+test("daily editorial uses frozen source checkpoints and never generates without reviewed facts", async (t) => {
+  const f = await editorialFixture(t)
+  const result = await processDailyEditorial({ ...f.options, execute: true })
+  assert.equal(result.results[0].status, "fact_review")
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  assert.deepEqual(readJSON(f.root, result.publication_handoff.path).approved_runs, [])
+  const parent = readJSON(f.root, "runs/batch/daily-processing.json")
+  assert.equal(parent.results[0].status, "fact_review")
+})
+
+test("daily editorial resumes native fact review, writing, explicit approval and candidate linkage once", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  const f = await editorialFixture(t)
+  f.options.processor = async (options) => {
+    const status = loadDailyProcessingStatus(f.root).runs.find((r) => r.run_id === "editorial")
+    assert.equal(status.status, "running")
+    assert.equal(status.live_process, "alive")
+    assert.equal(status.active_candidate.candidate_key, f.key)
+    return processSourceRun(options)
+  }
+  const first = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+  })
+  assert.equal(first.results[0].status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  const editorial = path.join(f.root, "explicit-editorial.json")
+  fs.writeFileSync(
+    editorial,
+    JSON.stringify({
+      status: "approved",
+      draft_id: draft.draft_id,
+      reviewer: "Direct fixture editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: "2026-10-04",
+      region: "해외",
+    }),
+  )
+  const complete = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    editorialReviewFiles: { [f.key]: editorial },
+  })
+  assert.equal(complete.results[0].status, "approval_ready")
+  const approved = readJSON(f.root, complete.publication_handoff.path).approved_runs
+  assert.equal(approved.length, 1)
+  assert.equal(approved[0].event_id, "1234567890abcdef")
+  const selected = loadDailyPublicationSelection(f.root, complete.publication_handoff.path, {
+    vault: f.options.vault,
+  })
+  assert.deepEqual(selected.approvedRuns, ["processed"])
+  assert.equal(selected.reference.sha256, complete.publication_handoff.sha256)
+  const calls = f.calls.length
+  const replay = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    processor: () => {
+      throw Error("Unexpected model work")
+    },
+  })
+  assert.equal(replay.publication_handoff.path, complete.publication_handoff.path)
+  assert.equal(f.calls.length, calls)
+  assert.equal(replay.candidate_published, false)
+  assert.equal(
+    readJSON(f.root, "runs/processed/editorial-review.json").reviewer,
+    "Direct fixture editor",
+  )
+  const backlog = JSON.parse(fs.readFileSync(f.options.backlogFile))
+  backlog.candidates[0].article_parse_id = sha256("later unpublished revision")
+  fs.writeFileSync(f.options.backlogFile, JSON.stringify(backlog))
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, complete.publication_handoff.path, {
+        vault: f.options.vault,
+      }),
+    /source changed/,
+  )
+})
+
+test("daily editorial rejects changed selection and explicit review before native writes", async (t) => {
+  const f = await editorialFixture(t)
+  await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+  })
+  fs.appendFileSync(f.reviewFile, " ")
+  await assert.rejects(
+    processDailyEditorial({ ...f.options, execute: true }),
+    /Pinned explicit review changed/,
+  )
+  const parent = readJSON(f.root, "runs/batch/daily-processing.json")
+  parent.results[0].processing_run = "other"
+  atomicWrite(f.root, "runs/batch/daily-processing.json", parent)
+  await assert.rejects(processDailyEditorial(f.options), /frozen candidate selection/)
+  assert.equal(readJSON(f.root, "runs/processed/approved-article.json"), null)
+})
+
+test("daily editorial preserves a failed explicit review and never retries it automatically", async (t) => {
+  const f = await editorialFixture(t)
+  const broken = JSON.parse(fs.readFileSync(f.reviewFile))
+  delete broken.model_assessment
+  fs.writeFileSync(f.reviewFile, JSON.stringify(broken))
+  const first = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+  })
+  assert.equal(first.status, "partial")
+  assert.equal(first.results[0].automatic_retry, false)
+  let nativeCalls = 0
+  const replay = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    command: () => {
+      nativeCalls++
+      throw Error("Unexpected retry")
+    },
+  })
+  assert.equal(replay.results[0].status, "failed")
+  assert.equal(nativeCalls, 0)
+  assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+})
+
+test("daily editorial reuses prior native candidate approvals and excludes articles already in editions", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  const f = await editorialFixture(t)
+  await reviewProcessedClaims(f.root, "processed", JSON.parse(fs.readFileSync(f.reviewFile)))
+  await processSourceRun({
+    root: f.root,
+    run: "processed",
+    sourceRun: "source",
+    policyFile: f.policyFile,
+    provider: f.provider,
+  })
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  const editorial = path.join(f.root, "prior-editorial.json")
+  fs.writeFileSync(
+    editorial,
+    JSON.stringify({
+      status: "approved",
+      draft_id: draft.draft_id,
+      reviewer: "Prior fixture editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: "2026-10-04",
+      region: "해외",
+    }),
+  )
+  await main(["approve", "--root", f.root, "--run", "processed", "--review", editorial])
+  await main([
+    "candidate-approval",
+    "--root",
+    f.root,
+    "--run",
+    "prior-link",
+    "--source-run",
+    "processed",
+    "--candidate-key",
+    f.key,
+    "--backlog",
+    f.options.backlogFile,
+    "--vault",
+    f.options.vault,
+  ])
+  const article = readJSON(f.root, "runs/processed/approved-article.json")
+  const projection = editionProjection([article], {
+    key: "2026-10-04_0800_Tech_AI_Briefing",
+    date: "2026-10-04",
+    coverage_start: "2026-10-01T23:00:00Z",
+    coverage_end: "2026-10-03T23:00:00Z",
+  })
+  const file = path.join(f.options.vault, projection.path)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, projection.content)
+  const changed = JSON.parse(fs.readFileSync(f.options.backlogFile))
+  changed.candidates[0].article_parse_id = sha256("later parse")
+  changed.candidates[0].article_source_version_id = f.parse.source_id + ":" + sha256("later page")
+  fs.writeFileSync(f.options.backlogFile, JSON.stringify(changed))
+  const before = fs.readFileSync(f.options.backlogFile)
+  fs.unlinkSync(file)
+  const pendingRevision = await processDailyEditorial({
+    ...f.options,
+    runId: "revision-editorial",
+    execute: true,
+    command: () => {
+      throw Error("A revision must not repeat native approval")
+    },
+    processor: () => {
+      throw Error("A revision must not generate again")
+    },
+  })
+  assert.equal(pendingRevision.results[0].status, "source_revision_review")
+  assert.deepEqual(readJSON(f.root, pendingRevision.publication_handoff.path).approved_runs, [])
+  fs.writeFileSync(file, projection.content)
+  const result = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    command: () => {
+      throw Error("Existing approval must not repeat a native command")
+    },
+    processor: () => {
+      throw Error("Existing approval must not generate again")
+    },
+  })
+  assert.equal(result.results[0].status, "already_in_edition")
+  assert.equal(result.results[0].approval.current_source_matches, false)
+  assert.equal(
+    result.results[0].approval.candidate_approval.path,
+    "runs/prior-link/candidate-approval.json",
+  )
+  assert.deepEqual(readJSON(f.root, result.publication_handoff.path).approved_runs, [])
+  assert.deepEqual(fs.readFileSync(f.options.backlogFile), before)
+  const status = loadDailyProcessingStatus(f.root).runs.find((r) => r.run_id === "editorial")
+  assert.equal(status.stage_kind, "editorial")
+  assert.equal(status.counts.already_in_edition, 1)
+  const handoff = readJSON(f.root, result.publication_handoff.path)
+  handoff.input_sha256 = "0".repeat(64)
+  atomicWrite(f.root, result.publication_handoff.path, handoff)
+  assert.equal(
+    loadDailyProcessingStatus(f.root).runs.find((r) => r.run_id === "editorial").status,
+    "invalid",
+  )
+})
+
+test("daily editorial CLI reads frozen processing without invoking local models", async (t) => {
+  const f = await editorialFixture(t)
+  const output = execFileSync(
+    process.execPath,
+    [
+      "scripts/research-process-daily.mjs",
+      "--root",
+      f.root,
+      "--run",
+      "cli-editorial",
+      "--from-processing",
+      "batch",
+      "--plan-only",
+      "--backlog",
+      f.options.backlogFile,
+      "--vault",
+      f.options.vault,
+      "--model-policy",
+      f.policyFile,
+    ],
+    { encoding: "utf8" },
+  )
+  const result = JSON.parse(output)
+  assert.equal(result.status, "planned")
+  assert.equal(result.results[0].status, "fact_review")
+  assert.equal(readJSON(f.root, "runs/processed/draft.json"), null)
 })

@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
 import path from "node:path"
 import { spawn } from "node:child_process"
 import { randomUUID } from "node:crypto"
@@ -928,9 +929,20 @@ export async function privatePreview(
     editionSpec = null,
     legacyReviews = [],
     sourceAlternatives = [],
+    publicationHandoff = null,
   } = {},
 ) {
   validRun(run)
+  let dailySelection = null
+  if (publicationHandoff) {
+    if (approvedRuns.length)
+      throw Error("Use one daily publication handoff without explicit approved runs")
+    const selected = loadDailyPublicationSelection(root, publicationHandoff, {
+      vault: path.resolve(repo, vault),
+    })
+    approvedRuns = selected.approvedRuns
+    dailySelection = selected.reference
+  }
   if (
     (!approvedRuns.length && !knowledgeRuns.length && !legacyReviews.length) ||
     new Set(approvedRuns).size !== approvedRuns.length ||
@@ -973,6 +985,7 @@ export async function privatePreview(
     navigation = conceptIndexProjection(vault, notes),
     input = {
       schema: "private-reader-preview/v1",
+      ...(dailySelection ? { daily_editorial_handoff: dailySelection } : {}),
       preview_implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       node_version: process.version,
       approvals,
@@ -1128,6 +1141,7 @@ export async function privatePreview(
     schema: "private-reader-preview/v1",
     run_id: run,
     approved_runs: approvedRuns,
+    ...(dailySelection ? { daily_editorial_handoff: dailySelection } : {}),
     ...(sourceAlternatives.length ? { source_alternatives: sourceAlternatives } : {}),
     ...(editionSpec ? { edition_spec: editionSpec, coverage_complete: false } : {}),
     ...(legacyReviews.length ? { legacy_reviews: legacyReviews } : {}),

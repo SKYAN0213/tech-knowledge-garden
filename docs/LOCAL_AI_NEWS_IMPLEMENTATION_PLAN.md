@@ -436,6 +436,7 @@ FDA 공식 발표 경로까지 수용한 `daily-20260929-v9`은 **10경로/20창
 
 ### P5-01 재시작 가능한 실행기
 
+- 추가 구현(19.389절): 완료한 일일 처리의 frozen source에서 사실 검토·작성·명시적 원고 승인·후보 장부 연결을 이어 실행한다. 기존 승인·회차는 읽어 재사용하고, 새로운 원문 판본은 별도 검토로 보낸다. 승인된 publication handoff를 기존 private preview가 직접 받는다. 독립 평가·전체 소급·실제 정규 운영은 남아 있어 부분 완료를 유지한다.
 - 추가 구현(19.388절): 승인 writer의 scoped readback → 전체 Drive snapshot → canonical import → 기존 전달 실행을 연결했다. 네 작성 폴더의 경로·SHA·ID·수정 시각과 승인 변경 범위를 대조하고 기존 pull-drive를 사용한다. 외장 검토 root의 immutable proof 복사와 stdin 준비 확인을 공통 경로로 옮겼다. 완료 단계 재개는 쓰기 없이 실제 raw 증거를 다시 검사한다. 조사·사실 검토·원고 승인·WebsiteData/Research 전달은 남아 있어 전체는 부분 완료다.
 - 추가 구현(2026-10-07, 19.387절): `research:deliver`가 승인된 Drive 결과 → 기존 publisher → 정확한 commit의 Actions → public-readback을 연결한다. 완료 proof 재사용·명시적 push 복구·대기 체크포인트·중복 실행 잠금이 있다. 수집/편집/Drive 작성 전 구간과 WebsiteData/원문 원격 보관 연결은 남아 있으므로 P5-01 전체는 부분 완료다.
 - 현재 구현 증거: `preview`는 승인 입력·원문·작성 원본·렌더러 해시를 고정하고 workspace/refresh/knowledge/validate/build/verify/consistency/outputs를 재개한다. `research-daily.mjs`는 입력 해시를 고정한 plan, route별 영수증, 원자 저장·잠금·resume·handoff를 수행한다. 독립 완료 scan 재조정과 동일 창 재요청 방지를 추가했다. 같은 입력의 완료 단계 재사용과 private 파일 추가·본문/작성 원본 변경 거부 시험이 있다. 전체 일일 발행기의 완료를 뜻하지 않는다.
@@ -5250,3 +5251,13 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 실물 `authoring-delivery-jul18-20261007-v1`은 기존 승인 7월18일 원고를 사용해 writer 확인·216파일 import·기존 발행·Actions·공개 bytes 검증을 통과했다. 승인 대상1파일은 이미 같은 내용이어서 원격 쓰기와 원본 수정·삭제는0이며, 검토 proof34파일만 canonical에 결속했다. CI 대기 후 같은 run을 재개했고 완료 작업의 추가 재개2회에서 명령·HTTP 호출0, 두 번째107ms였다. `7a4b8fe1df71551053096168310a1351e26e43ca`의 Actions37568125831이 build/deploy success, Node1124/1124를 확인했다. 실제 공개 RSS와 reader-index를 다시 받아 이전 SHA·bytes와 동일함을 확인했다. 비공개 증거는 `/Volumes/X5Storage/tkg-daily-core-20261007-v1/authoring-delivery-*`에 있다. 새 회차 발행이나 정규 운영 횟수로 계수하지 않는다.
 
 가속화 적용 범위는 완료 단계의 재실행 제거와 승인 이후 전달 연결이다. 표적 검사는 변경 묶음당 한 번, 실패 시 해당 검사만 재실행하고 전체 검사는 발행 CI에서 한 번 수행한다. 다음 구현은 기존 수집·사실 검토·편집 승인 checkpoint의 handoff를 연결하고, 소급 처리는 기존 계획의 5회차 묶음으로 진행한다. 원격 Research/WebsiteData 전달 연결과 실제7회 운영·독립 품질 평가는 남아 있다. 전체 WBS는 완료3/22(14%)·부분17·미착수2로 유지한다.
+
+### 19.389 일일 수집 결과의 검토·승인·preview 연결 (2026-10-07)
+
+`research:process-daily --from-processing`은 기존 daily-processing input·receipt와 고정 handoff의 SHA·후보·원문 판본·parse·처리 run을 대조한다. 전체 수집이나 현재 handoff를 다시 생성하지 않는다. 사실 검토 입력이 있으면 native review를, 검토된 사실만 있고 원고가 없으면 source processor의 작성 단계를, 원고 검토 입력이 있으면 native approve를 호출한다. 처리와 원고 검토는 기존 독립 관문이며 입력 없이 승인을 만들지 않는다. 검토 파일은 단계별 create-only 경로·SHA로 고정하고 변경은 새 실행으로 분리한다.
+
+승인된 기사만 native candidate-approval로 장부에 연결한다. 기존 장부 승인과 native receipt가 있으면 재사용한다. 이미 회차에 있는 사건은 `already_in_edition`, 현재 원문 판본이 승인 판본과 달라진 미발행 사건은 `source_revision_review`로 분리하고 발행 handoff에서 뺀다. 과거 승인 판본을 현재 수집 판본에 덮어쓰거나 본문 지문만으로 재승인하지 않는다. 빈 추출·동일 원문·정체성 검토·실패는 해당 상태로 남는다. 실패 기록은 자동 재시도하지 않고 다른 후보를 진행한다.
+
+`preview --publication-handoff`는 같은 승인 목록을 직접 읽는다. 최신 체크포인트·handoff SHA·후보의 현재 원문 연결·native 승인 receipt와 승인 원고 해시를 다시 대조한 뒤 기존 preview의 전체 사실·원고 검증을 수행한다. 승인 목록을 수작업으로 복사하지 않는다. 기존 `--approved-run`, preview·Drive·발행 경로는 유지한다. 실행 중인 후보와 실제 PID 상태, 검토·원고 경로와 승인 handoff는 기존 비공개 일일 처리 현황에 표시한다.
+
+완료 증거는 native source review→writer→editorial approval→candidate linkage→preview selection 시험, 판본 변경·검토 변경·중복 회차·실패 재시도 거부, 실제 저장된 일일 후보의 읽기·재개다. 실물은 이미 승인돼 회차에 들어 있는 3건과 빈 추출 복구 검토1건이며, 신규 원고·Drive·공개 변경이나 정규 운영 횟수로 계수하지 않는다. 최초 표적73개 중 fixture1개가 source processor 인자를 잘못 넘겼고, 수정 후 같은 fixture의 잘못된 회차 key가 native 계약에서 거부됐다. fixture만 고쳐 해당 검사1개를 통과했고, 최신 동작6개와 preview selection 검사1개를 통과했다. full CI·실물 재개 결과는 런북482에 이어 기록한다.

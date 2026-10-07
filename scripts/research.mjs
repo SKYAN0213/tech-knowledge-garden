@@ -176,6 +176,7 @@ export async function main(argv = process.argv.slice(2)) {
       "extraction-scope": { type: "string" },
       "resume-local-budget-ms": { type: "string" },
       "approved-run": { type: "string", multiple: true },
+      "publication-handoff": { type: "string" },
       "knowledge-run": { type: "string", multiple: true },
       vault: { type: "string" },
       format: { type: "string", default: "json" },
@@ -365,7 +366,10 @@ export async function main(argv = process.argv.slice(2)) {
     ].includes(command)
   )
     throw Error("--backlog is only supported for candidate selection or approval")
-  if (command !== "preview" && (v["approved-run"] || v["knowledge-run"]))
+  if (
+    command !== "preview" &&
+    (v["approved-run"] || v["knowledge-run"] || v["publication-handoff"])
+  )
     throw Error("--approved-run and --knowledge-run are only supported for preview")
   if (
     ![
@@ -1414,6 +1418,7 @@ export async function main(argv = process.argv.slice(2)) {
       privatePreview(root, v.run, v["approved-run"] || [], {
         vault: v.vault || "vault",
         knowledgeRuns: v["knowledge-run"] || [],
+        publicationHandoff: v["publication-handoff"] || null,
         ...(specification
           ? specification.schema === "research-legacy-transition-batch/v1"
             ? { legacyReviews: legacyTransitionBatch(specification) }
