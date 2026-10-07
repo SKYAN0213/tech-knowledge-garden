@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-06T22:05:39.063Z",
   "edition_count": 123,
-  "news_count": 201,
+  "news_count": 203,
   "concept_count": 37,
   "known_sources": [
     "https://agibot.com/article/231/detail/82.html",
@@ -635,6 +635,8 @@
     "News/b5e2211dddab87f3",
     "News/661912ab39baa4f1",
     "News/6c31b0895d6be835",
+    "News/c5c5248230951857",
+    "News/a7ef730e554338df",
     "News/80bba25e13259f42",
     "News/e6ab1f9b9683cfdd",
     "News/426d91706ebf17e3",
