@@ -234,6 +234,15 @@ generated_by: tech-knowledge-garden
 - [[News/c1b395091566575d|GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공]] · 2026-07-10
 - [[News/3fb14968493dc682|OpenAI, 동시에 듣고 말하는 GPT-Live 공개]] · 2026-07-10
 - [[News/caaa735c832bdb26|OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시]] · 2026-07-10
+- [[News/67b9774daed42893|AI SDK xAI 어댑터 3.0.103, 완료된 도구 호출 결과 출력 변경]] · 2026-07-07
+- [[News/be8f1792372015fd|AI SDK 6.0.220, 도구 결과 순서와 스트림 공백 처리 수정]] · 2026-07-07
+- [[News/c5f838e53c500f66|LangGraph 1.2.8, 새 스레드의 상태 저장 오류 수정]] · 2026-07-07
+- [[News/ce4cbe901b2add47|OpenCode v1.17.14, MCP 도구를 실행하는 코드 모드 추가]] · 2026-07-07
+- [[News/bdc95c28b5fad7d8|Claude Code v2.1.202, 워크플로 크기 설정·실행 추적 추가]] · 2026-07-07
+- [[News/dc2e14116dca2332|AWS, Amazon SageMaker AI에 MLflow 통합 기능 추가]] · 2026-07-07
+- [[News/fb116c5e01814e4b|AWS, Bedrock의 MiniMax 모델 사양과 두 호출 API를 설명]] · 2026-07-07
+- [[News/0003f5c36a86534e|AWS, Nova·SAM 3·Textract로 이미지 개인정보를 가리는 구조 소개]] · 2026-07-07
+- [[News/31615a71acf2ec76|AWS, Nova 멀티턴 강화학습의 HyperPod 구축 방법 소개]] · 2026-07-07
 - [[News/3b59b1b88f4cc9fa|AI SDK, 도구 승인 메타데이터와 xAI 스트리밍 결과 처리 수정]] · 2026-07-07
 - [[News/a8d066afc8b4014f|Vercel AI SDK, Anthropic AWS 연동 패키지 버전을 2.0.0으로 정정]] · 2026-07-06
 - [[News/c7b2e07cfca0bff5|Vercel AI SDK, OpenAI 채팅 요청의 인라인 이미지를 data URL로 전송]] · 2026-07-06
