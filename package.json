@@ -38,6 +38,7 @@
     "research:publication": "node scripts/research-publication.mjs",
     "research:deliver": "node scripts/research-deliver.mjs",
     "research:shadow": "node scripts/research-shadow.mjs",
+    "research:evaluation-review": "node scripts/research-evaluation-review.mjs",
     "research:runtime": "node scripts/research-runtime.mjs",
     "research:checkpoint": "node scripts/research-workflow-checkpoint.mjs"
   },

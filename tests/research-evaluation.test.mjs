@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { runInNewContext } from "node:vm"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
@@ -12,8 +13,188 @@ import {
   importEvaluationCandidate,
   saveEvaluationAdjudication,
   saveEvaluationCase,
+  loadEvaluationSource,
 } from "../scripts/research/evaluation.mjs"
+import {
+  prepareEvaluationReviewPacket,
+  importEvaluationHumanReview,
+} from "../scripts/research/evaluation-review-packet.mjs"
 import { main } from "../scripts/research.mjs"
+
+test("blind review exports exact source blocks without reading gold or candidate output", async (t) => {
+  const f = fixture(t)
+  f.parse.title = "</textarea><script>unexpectedSourceCode()</script>"
+  atomicWrite(f.root, `parses/${f.parse.parse_id}/parse.json`, f.parse)
+  atomicWrite(f.root, "runs/source/parses.json", [f.parse])
+  await saveEvaluationCase(f.root, "case", "source", { ...f.spec, origin: "actual-source" })
+  fs.unlinkSync(path.join(f.root, `evaluation/gold/${f.spec.case_id}.json`))
+  atomicWrite(f.root, "evaluation/fixtures/source-plan-01/runs/model/claims.json", {
+    secret: "MODEL_OUTPUT_MUST_STAY_HIDDEN",
+  })
+  assert.equal(
+    loadEvaluationSource(f.root, f.spec.case_id).parses[0].blocks[0].text,
+    f.parse.blocks[0].text,
+  )
+  const packet = await prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id])
+  const html = fs.readFileSync(path.join(f.root, packet.html), "utf8")
+  assert.ok(html.includes("&lt;script&gt;unexpectedSourceCode()&lt;/script&gt;"))
+  assert.ok(!html.includes("<script>unexpectedSourceCode()"))
+  assert.ok(!html.includes("MODEL_OUTPUT_MUST_STAY_HIDDEN"))
+  const template = readJSON(f.root, `runs/blind/evaluation-review/templates/${f.spec.case_id}.json`)
+  assert.deepEqual(template.specification.facts, [])
+  assert.equal(template.specification.review.source_read, false)
+  assert.equal(template.specification.review.candidate_output_seen, null)
+  assert.equal(packet.independent_gold, false)
+  assert.deepEqual(
+    fs.readFileSync(
+      path.join(
+        f.root,
+        `runs/blind/evaluation-review/originals/${f.document.source_id}/${f.document.body_sha256}/body.bin`,
+      ),
+    ),
+    fs.readFileSync(path.join(f.root, f.document.body_path)),
+  )
+  let download, handler
+  const parent = {
+    querySelector: (selector) =>
+      selector === "textarea" ? { value: JSON.stringify(template) } : { textContent: "" },
+  }
+  const button = {
+    parentElement: parent,
+    dataset: { download: f.spec.case_id },
+    addEventListener: (_, callback) => {
+      handler = callback
+    },
+  }
+  runInNewContext(html.match(/<script>([\s\S]*)<\/script>/)[1], {
+    document: { querySelectorAll: () => [button], createElement: () => ({ click() {} }) },
+    Blob,
+    URL: {
+      createObjectURL: (blob) => {
+        download = blob
+        return "blob:test"
+      },
+      revokeObjectURL() {},
+    },
+  })
+  handler()
+  assert.deepEqual(JSON.parse(await download.text()), template)
+  assert.equal(
+    (await prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id])).created_files,
+    0,
+  )
+})
+
+test("independent human submission uses native fact validation and counts one source once", async (t) => {
+  const f = fixture(t)
+  const original = { ...f.spec, origin: "actual-source" }
+  await saveEvaluationCase(f.root, "case", "source", original)
+  const packet = await prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id])
+  const submission = readJSON(
+    f.root,
+    `runs/blind/evaluation-review/templates/${f.spec.case_id}.json`,
+  )
+  submission.specification = {
+    ...original,
+    case_id: "zz-human-review",
+    supersedes: f.spec.case_id,
+    supersedes_mode: "exact-snapshot",
+    review: { ...original.review, reviewer_kind: "human" },
+  }
+  atomicWrite(f.root, "reviews/human.json", submission)
+  const saved = await importEvaluationHumanReview(
+    f.root,
+    "human-import",
+    "blind",
+    "reviews/human.json",
+  )
+  assert.equal(saved.status, "independent_gold")
+  assert.equal(saved.candidate_published, false)
+  assert.equal(saved.packet_run, "blind")
+  assert.equal(readJSON(f.root, packet.packet).cases[0].case_id, f.spec.case_id)
+  const audit = auditEvaluationCases(f.root)
+  assert.equal(audit.unique_actual_source_snapshots, 1)
+  assert.equal(audit.independent_human_gold, 1)
+  assert.deepEqual(audit.reviewer_kinds, { human: 1, codex: 0 })
+  assert.equal(audit.duplicate_source_snapshot_revisions, 1)
+  await importEvaluationHumanReview(f.root, "human-import", "blind", "reviews/human.json")
+  const invalid = structuredClone(submission)
+  invalid.specification.case_id = "invalid-quote"
+  invalid.specification.facts[0].claim.evidence[0].quote = "An unsupported claim"
+  atomicWrite(f.root, "reviews/invalid.json", invalid)
+  await assert.rejects(
+    importEvaluationHumanReview(f.root, "bad-import", "blind", "reviews/invalid.json"),
+    /Invalid source-reviewed fact/,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "evaluation/gold/invalid-quote.json")), false)
+})
+
+test("blind review refuses duplicate sources, heldout exposure and changed frozen inputs", async (t) => {
+  const f = fixture(t),
+    actual = { ...f.spec, origin: "actual-source" }
+  await saveEvaluationCase(f.root, "case", "source", actual)
+  await saveEvaluationCase(f.root, "case-two", "source", { ...actual, case_id: "source-plan-02" })
+  await assert.rejects(
+    prepareEvaluationReviewPacket(f.root, "duplicate", [f.spec.case_id, "source-plan-02"]),
+    /Duplicate immutable source/,
+  )
+  assert.equal(
+    fs.existsSync(path.join(f.root, "runs/duplicate/evaluation-review/packet.json")),
+    false,
+  )
+  await saveEvaluationCase(f.root, "heldout-case", "source", {
+    ...actual,
+    case_id: "heldout-source",
+    split: "heldout",
+  })
+  await assert.rejects(
+    prepareEvaluationReviewPacket(f.root, "exposure", ["heldout-source"]),
+    /actual development source/,
+  )
+  await prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id])
+  fs.appendFileSync(
+    path.join(f.root, `evaluation/fixtures/${f.spec.case_id}/${f.document.body_path}`),
+    "changed",
+  )
+  await assert.rejects(
+    prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id]),
+    /source|Source|body|Body/,
+  )
+})
+
+test("unfilled drafts and exposed reviewers cannot register independent gold", async (t) => {
+  const f = fixture(t)
+  await saveEvaluationCase(f.root, "case", "source", { ...f.spec, origin: "actual-source" })
+  await prepareEvaluationReviewPacket(f.root, "blind", [f.spec.case_id])
+  const blank = readJSON(f.root, `runs/blind/evaluation-review/templates/${f.spec.case_id}.json`)
+  atomicWrite(f.root, "reviews/blank.json", blank)
+  await assert.rejects(
+    importEvaluationHumanReview(f.root, "blank-import", "blind", "reviews/blank.json"),
+    /Explicit independent human review/,
+  )
+  const exposed = {
+    ...blank,
+    specification: {
+      ...f.spec,
+      origin: "actual-source",
+      case_id: "exposed-human",
+      supersedes: f.spec.case_id,
+      supersedes_mode: "exact-snapshot",
+      review: { ...f.spec.review, reviewer_kind: "human", candidate_output_seen: true },
+    },
+  }
+  atomicWrite(f.root, "reviews/exposed.json", exposed)
+  await assert.rejects(
+    importEvaluationHumanReview(f.root, "exposed-import", "blind", "reviews/exposed.json"),
+    /Explicit independent human review/,
+  )
+  const wrongBinding = { ...blank, packet_sha256: "0".repeat(64) }
+  atomicWrite(f.root, "reviews/wrong-binding.json", wrongBinding)
+  await assert.rejects(
+    importEvaluationHumanReview(f.root, "binding-import", "blind", "reviews/wrong-binding.json"),
+    /exact frozen packet/,
+  )
+})
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-evaluation-")))

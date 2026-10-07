@@ -204,7 +204,7 @@ function matchesPredecessor(previous, specification, identity) {
 
 // Observing identical bytes again or reparsing them is not a new source case.
 // Keep parse/observation hashes on every manifest for reproducibility.
-function immutableSourceKey(documents) {
+export function immutableSourceKey(documents) {
   return sha256(
     JSON.stringify(
       documents
@@ -297,21 +297,19 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
   })
 }
 
-function loadFrozenEvaluationCase(root, caseId) {
+// Source-only review must not read gold expectations or model outputs.
+export function loadEvaluationSource(root, caseId) {
   if (typeof caseId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(caseId))
     throw Error("Invalid evaluation case id")
   const directory = `evaluation/fixtures/${caseId}`
   const manifest = readJSON(root, `${directory}/manifest.json`)
-  const gold = readJSON(root, `evaluation/gold/${caseId}.json`)
   if (
     !manifest ||
     manifest.schema !== "evaluation-fixture/v1" ||
     manifest.case_id !== caseId ||
-    manifest.gold_path !== `evaluation/gold/${caseId}.json` ||
-    !gold ||
-    sha256(JSON.stringify(gold)) !== manifest.gold_sha256
+    manifest.gold_path !== `evaluation/gold/${caseId}.json`
   )
-    throw Error("Evaluation case manifest/gold mismatch")
+    throw Error("Evaluation source manifest mismatch")
   const caseRoot = safePath(root, directory)
   const { documents, parses, identity } = loadStoredSourceRun(caseRoot, "source")
   if (
@@ -319,12 +317,21 @@ function loadFrozenEvaluationCase(root, caseId) {
     identity.parses_sha256 !== manifest.parses_sha256
   )
     throw Error("Evaluation source snapshot changed")
+  assertStoredEvidence(caseRoot, documents, parses)
+  return { manifest, documents, parses, root: path.resolve(caseRoot) }
+}
+
+function loadFrozenEvaluationCase(root, caseId) {
+  const frozen = loadEvaluationSource(root, caseId)
+  const { manifest, documents, parses } = frozen
+  const gold = readJSON(root, `evaluation/gold/${caseId}.json`)
+  if (!gold || sha256(JSON.stringify(gold)) !== manifest.gold_sha256)
+    throw Error("Evaluation case manifest/gold mismatch")
   const { status, specification: spec } = gold
   assertSchema(spec, evaluationSpecSchema)
   if (sha256(JSON.stringify(spec)) !== manifest.specification_sha256 || status !== manifest.status)
     throw Error("Evaluation expectations changed")
-  assertStoredEvidence(caseRoot, documents, parses)
-  return { manifest, specification: spec, documents, parses, root: path.resolve(caseRoot) }
+  return { ...frozen, specification: spec }
 }
 
 export function loadEvaluationCase(root, caseId) {
@@ -533,6 +540,8 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
   }
   const conflictingSnapshots = [...groups.values()].filter((group) => group.split.size > 1).length
   const uniqueActual = [...groups.values()].filter((group) => group.split.size === 1)
+  const hasIndependentGold = (group) =>
+    group.cases.some(({ manifest }) => manifest.status === "independent_gold")
   const splitCounts = Object.fromEntries(
     ["development", "heldout"].map((split) => [
       split,
@@ -600,17 +609,18 @@ export function auditEvaluationCases(root, targets = { development: 40, heldout:
     reviewer_kinds: Object.fromEntries(
       ["human", "codex"].map((kind) => [
         kind,
-        uniqueActual.filter((group) => group.cases[0].specification.review.reviewer_kind === kind)
-          .length,
+        uniqueActual.filter((group) =>
+          hasIndependentGold(group)
+            ? kind === "human"
+            : group.cases[0].specification.review.reviewer_kind === kind,
+        ).length,
       ]),
     ),
     independent_human_gold: uniqueActual.filter(
-      (group) =>
-        group.split.has("development") && group.cases[0].manifest.status === "independent_gold",
+      (group) => group.split.has("development") && hasIndependentGold(group),
     ).length,
     heldout_independent_human: uniqueActual.filter(
-      (group) =>
-        group.split.has("heldout") && group.cases[0].manifest.status === "independent_gold",
+      (group) => group.split.has("heldout") && hasIndependentGold(group),
     ).length,
     dimensions: {
       languages: countDimension((spec) => spec.languages),

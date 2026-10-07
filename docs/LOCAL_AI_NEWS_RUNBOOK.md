@@ -11695,3 +11695,11 @@ Drive 원문 저장 시 부모 목록에 하위 폴더가 있으면 같은 관�
 수집·파싱·추출·대조·승인 중 통과한 단계는 입력/코드 변경이 없으면 재사용한다. 접근 제한과 과거 판본 문제는 해당 항목의 기존 비공개 기록에 남기고 독립 가능한 원고를 처리한다. 회차별 원고 검토를 모은 뒤 Drive 저장·공개 생성·CI·원격 보관을 한 번에 수행한다. 전체 검사는 최종 코드/발행 묶음에서 한 번, 중간 검증은 변경 범위의 표적 검사만 실행한다. 상태 조회 도입을 실제 수집·기사 전환·정규 운영 완료로 계산하지 않는다.
 
 원문 판본 재검토를 다른 실행의 `runs/<review-run>/...`에 저장한 경우 archive closure는 검토 파일의 SHA와 검토 실행도 의존 목록에 고정한다. 원문 관측 실행만 포함하면 ZIP 생성에서 검토 파일이 범위 밖으로 차단된다. 이 오류는 수집·모델 재실행으로 해결하지 않는다. 기존 실패 manifest는 보존하고 새 archive run으로 생성한 뒤 실제 원격 ZIP 복원과 위치 등록을 확인한다. 회귀 검사는 별도 검토 실행을 사용한 candidate approval의 portable closure 생성·복원 사례다.
+
+## 497. 독립 사람 검토용 개발 원문 묶음
+
+`npm run research:evaluation-review -- prepare --run <packet-run> --cases <case-id>,<case-id>`는 기존 development fixture의 원문 SHA·canonical parse를 검증하고, `runs/<packet-run>/evaluation-review/`에 원문 구간만 담은 HTML·packet.json·빈 제출 양식·실제 원문 bytes를 저장한다. 기존 gold와 모델 출력은 읽거나 화면에 넣지 않는다. 별칭/판본으로 같은 원문을 두 번 넣으면 공통 immutableSourceKey 기준으로 차단한다. 파일 변경을 덮어쓰지 않으며 다른 입력은 새 run으로 저장한다. heldout 원문은 이 개발 검토 도구에서 열지 않는다.
+
+사람은 핵심 사실·인용 구간·수치 조건·필요한 설명·금지 변형을 직접 작성하고 검토자·직접 읽은 시점·모델 출력 미열람 여부를 입력한다. 양식의 facts는 빈 배열이고 검토 여부는 false/null이므로 초안 다운로드는 독립 gold 등록이 아니다. 앱 브라우저의 file 주소 정책 때문에 실제 화면 렌더링은 별도 미검증으로 기록한다. 코드 검사는 HTML escaping·저장 JSON의 파싱·원문 bytes·제출 차단·native gold 등록 경로를 포함한다.
+
+완성한 JSON을 private root 안에 보관한 뒤 `npm run research:evaluation-review -- import --run <import-run> --packet-run <packet-run> --review <root-relative-json>`로 등록한다. packet SHA·원문 snapshot·원 source run 일치, 독립 human provenance와 exact-snapshot successor를 확인하고 기존 saveEvaluationCase의 인용·날짜·수치·필수 필드 검증을 사용한다. 기존 기준안은 유지한다. 검토 양식 생성이나 Codex의 직접 검토를 사람 평가 완료로 계산하지 않는다. 같은 원문에 독립 human revision이 추가되면 한 고유 원문으로 집계하며 human gold의 존재를 반영한다.
