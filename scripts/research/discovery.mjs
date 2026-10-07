@@ -450,7 +450,18 @@ export async function mergeBacklog(file, candidates) {
           c.article_source_version_id &&
           reviewedPrimaryVersion.split(":")[0] !== c.article_source_version_id.split(":")[0],
         )
-        if (relatedRecord) {
+        const reviewedRelatedRecord =
+          relatedRecord &&
+          old.related_source_observations?.some(
+            (o) =>
+              o.decision === "reviewed_publisher_record_alias" &&
+              o.resolution_run &&
+              canonicalURL(o.source_url) === normalized[0] &&
+              o.article_source_version_id === c.article_source_version_id &&
+              o.article_parse_id === c.article_parse_id &&
+              o.article_content_sha256 === c.article_content_sha256,
+          )
+        if (relatedRecord && !reviewedRelatedRecord) {
           old.related_source_observations = mergeUniqueDiscovery(
             old.related_source_observations || [],
             [

@@ -16,6 +16,27 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_kuka_german_header_date_is_distinct_from_page_creation_metadata(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "kuka-de-news-detail")
+        raw = '''<html lang="de"><head><meta property="article:published_time" content="2026-10-06T15:29:13Z"></head><body>
+        <main><section class="mod-page-intro"><h1>KUKA Group und TD SYNNEX: strategische Partnerschaft für Physical AI</h1>
+        <p class="intro">KUKA und TD SYNNEX vereinbaren eine Partnerschaft.</p>
+        <p class="mod-page-intro__date">7. Oktober 2026</p></section>
+        <article class="mod-text"><h2>Partnerschaft</h2><div class="copy">Die Partner planen Schulungen für Vertriebspartner.</div></article>
+        </main></body></html>'''
+        url = "https://www.kuka.com/de-de/unternehmen/presse/news/2026/10/physical-ai"
+        parsed = self.invoke(raw.encode(), options, url=url)["result"]
+        self.assertEqual(parsed["dates"]["published_at"], "2026-10-07")
+        self.assertEqual(parsed["dates"]["profile_status"], "matched")
+        self.assertEqual(parsed["dates"]["basis"]["text"], "7. Oktober 2026")
+        self.assertIn("2026-10-06T15:29:13Z", parsed["dates"]["candidates"])
+        self.assertIn("Die Partner planen Schulungen", " ".join(b["text"] for b in parsed["blocks"]))
+        for invalid in (raw.replace("7. Oktober 2026", "31. Februar 2026"), raw.replace('class="mod-page-intro__date"', 'class="other-date"')):
+            with self.subTest(invalid=invalid):
+                result = self.invoke(invalid.encode(), options, url=url)["result"]
+                self.assertIsNone(result["dates"]["published_at"])
+
     def test_kari_plain_text_body_retains_details_after_line_breaks(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = next(p["options"] for p in config["article_profiles"] if p["id"] == "kari-space-press-article-ko-v1")

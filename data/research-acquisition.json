@@ -417,7 +417,8 @@
         "content_block_xpath": ".//section[contains(@class,'mod-page-intro')]//h1|.//section[contains(@class,'mod-page-intro')]//p[contains(concat(' ',normalize-space(@class),' '),' intro ')]|.//article[contains(@class,'mod-text')]//h2|.//article[contains(@class,'mod-text')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//section[contains(@class,'mod-text-image')]//h2|.//section[contains(@class,'mod-text-image')]//div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' mod-text ')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(@class,'mod-quote')]//blockquote/p",
         "publication_date_xpath": "//main//section[contains(@class, 'mod-page-intro')]//p[contains(@class, 'mod-page-intro__date')]",
         "publication_date_pattern": "^[0-9]{1,2}\\. [A-ZÄÖÜ][a-zäöü]+ [0-9]{4}$",
-        "publication_date_format": "%d. %B %Y"
+        "publication_date_format": "%d. %B %Y",
+        "publication_date_policy": "explicit-authoritative"
       }
     },
     {

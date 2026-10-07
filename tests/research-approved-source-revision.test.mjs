@@ -109,3 +109,43 @@ test("same CMS translation does not replace an approved primary source", async (
   await mergeBacklog(f.file, [translated])
   assert.deepEqual(fs.readFileSync(f.file), bytes)
 })
+
+test("rediscovering the exact reviewed translation does not reopen review but a changed parse does", async (t) => {
+  const f = fixture(t)
+  const incoming = f.incoming(
+    "translated-raw",
+    "translated-content",
+    "https://example.org/news/en/article",
+  )
+  await mergeBacklog(f.file, [incoming])
+  const reviewed = f.read()
+  Object.assign(reviewed.related_source_observations[0], {
+    decision: "reviewed_publisher_record_alias",
+    resolution_run: "related-review",
+  })
+  fs.writeFileSync(
+    f.file,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [reviewed] }),
+  )
+  await mergeBacklog(f.file, [
+    {
+      ...incoming,
+      discovered_at: "2026-10-03T00:00:00Z",
+      article_observed_at: "2026-10-03T00:00:00Z",
+    },
+  ])
+  assert.equal(f.read().related_source_observations.length, 1)
+  assert.equal(f.read().related_source_observations[0].decision, "reviewed_publisher_record_alias")
+  assert.equal(f.read().last_discovered_at, "2026-10-03T00:00:00Z")
+  assert.deepEqual(f.read().approval, f.candidate.approval)
+  await mergeBacklog(f.file, [
+    {
+      ...incoming,
+      article_parse_id: sha256("new-parser"),
+      article_observed_at: "2026-10-04T00:00:00Z",
+    },
+  ])
+  assert.equal(f.read().related_source_observations.length, 2)
+  assert.equal(f.read().related_source_observations[1].decision, "review_required")
+  assert.equal(f.read().related_source_observations[0].decision, "reviewed_publisher_record_alias")
+})

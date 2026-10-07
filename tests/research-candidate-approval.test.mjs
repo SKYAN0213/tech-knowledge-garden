@@ -250,6 +250,115 @@ function currentSource(f, url, text) {
   return { doc, parse }
 }
 
+async function relatedSourceFixture(t) {
+  const f = fixture(t)
+  await link(f)
+  const c = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const { doc, parse } = currentSource(
+    f,
+    "https://example.org/de/article",
+    "Example Lab entwickelte ein weiches Robotermaterial und demonstrierte Sensorik.",
+  )
+  const observation = {
+    source_url: doc.original_url,
+    article_source_version_id: doc.source_version_id,
+    article_parse_id: parse.parse_id,
+    article_content_sha256: articleContentFingerprint(parse),
+    observed_at: doc.observed_at,
+    decision: "review_required",
+  }
+  c.related_source_observations = [observation]
+  c.source_record_aliases = [
+    {
+      source_url: doc.original_url,
+      publisher_id: "example",
+      profile_id: "cms",
+      source_item_id: "item",
+    },
+  ]
+  c.discovery = [{ publisher_id: "example", profile_id: "cms", source_item_id: "item" }]
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [c],
+  })
+  const primary = readJSON(f.root, "runs/approved/parses.json")[0]
+  const matches = [
+    ["identity_marker", "Example Lab", "Example Lab"],
+    ["event_action", "entwickelte ein weiches Robotermaterial", "developed a soft robot material"],
+  ].map(([aspect, candidate_excerpt, published_excerpt]) => ({
+    aspect,
+    candidate_block_id: parse.blocks[0].block_id,
+    candidate_excerpt,
+    published_block_id: primary.blocks[0].block_id,
+    published_excerpt,
+    conclusion: "Direct source comparison of the same announcement",
+  }))
+  const args = revisionReview(f, c, "confirm_related_source", { observation, matches })
+  return { f, c, doc, parse, args }
+}
+
+test("reviewed CMS translation resolves only its pending observation and preserves the approved primary", async (t) => {
+  const { f, c, args } = await relatedSourceFixture(t)
+  const approvedBytes = fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json"))
+  await resolveSourceRevision(args)
+  const after = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  for (const key of [
+    "approval",
+    "event_id",
+    "source_urls",
+    "article_source_version_id",
+    "article_parse_id",
+    "article_content_sha256",
+  ])
+    assert.deepEqual(after[key], c[key], key)
+  assert.equal(after.related_source_observations[0].decision, "reviewed_publisher_record_alias")
+  assert.equal(after.related_source_observations[0].resolution_run, "resolution")
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json")),
+    approvedBytes,
+  )
+  const backlogBytes = fs.readFileSync(f.backlogFile)
+  assert.equal((await resolveSourceRevision(args)).reused, true)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), backlogBytes)
+})
+
+test("related source review rejects false quotations, missing CMS identity, stale observations and changed originals", async (t) => {
+  const { f, c, doc, args } = await relatedSourceFixture(t)
+  const review = readJSON(f.root, args.reviewPath)
+  const bytes = fs.readFileSync(f.backlogFile)
+  for (const invalid of [
+    { ...review, matches: [] },
+    {
+      ...review,
+      matches: review.matches.map((m) => ({
+        ...m,
+        candidate_excerpt: "Unsupported completed investment",
+      })),
+    },
+    { ...review, observation: { ...review.observation, article_parse_id: sha256("wrong") } },
+    { ...review, new_approved_run: "other" },
+  ]) {
+    atomicWrite(f.root, args.reviewPath, invalid)
+    await assert.rejects(resolveSourceRevision(args))
+    assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  }
+  const missingAlias = { ...c, source_record_aliases: [] }
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [missingAlias],
+  })
+  atomicWrite(f.root, args.reviewPath, {
+    ...review,
+    expected_candidate_sha256: sha256(JSON.stringify(missingAlias)),
+  })
+  await assert.rejects(resolveSourceRevision(args), /exact publisher alias/)
+  fs.writeFileSync(f.backlogFile, bytes)
+  atomicWrite(f.root, args.reviewPath, review)
+  fs.appendFileSync(path.join(f.root, doc.body_path), "changed")
+  await assert.rejects(resolveSourceRevision(args), /body hash mismatch/)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+})
+
 test("explicit primary restoration preserves approved identity and the displaced publisher alias", async (t) => {
   const f = fixture(t)
   await link(f)
@@ -644,16 +753,19 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
   const archive = await archiveClosure(f.root, "revision-portable", "approved", ["revision-link"])
   assert.ok(archive.bound_runs.includes("separate-revision-review"))
   const metadataFile = path.join(f.root, "revision-remote-metadata.json")
-  fs.writeFileSync(metadataFile, JSON.stringify({
-    schema: "research-drive-archive-observation/v1",
-    observed_at: new Date().toISOString(),
-    file_id: "revision-drive-archive",
-    name: "revision-portable.zip",
-    mime_type: "application/zip",
-    size: archive.package.bytes,
-    parent_ids: ["research-folder"],
-    shared: false,
-  }))
+  fs.writeFileSync(
+    metadataFile,
+    JSON.stringify({
+      schema: "research-drive-archive-observation/v1",
+      observed_at: new Date().toISOString(),
+      file_id: "revision-drive-archive",
+      name: "revision-portable.zip",
+      mime_type: "application/zip",
+      size: archive.package.bytes,
+      parent_ids: ["research-folder"],
+      shared: false,
+    }),
+  )
   const registration = await registerArchiveLocation({
     root: f.root,
     runId: "revision-portable",

@@ -1,5 +1,15 @@
 # 로컬 AI 뉴스 시스템: 현재 구현과 실행 가이드
 
+## 승인 원문을 유지한 추가 언어 출처 검토
+
+후보 장부가 같은 publisher/profile/source_item_id의 다른 언어 URL을 `source_record_aliases`와 `related_source_observations`로 묶었고 승인 원문을 그대로 유지했다면, 별도 후보를 만들거나 승인 원문을 교체하지 않는다. 기존 `research-revisions.mjs resolve --run RESOLUTION --review runs/RESOLUTION/review.json`의 `confirm_related_source`를 사용한다.
+
+검토는 `research-source-revision-resolution-review/v1`의 기존 필드와 직접 읽기 확인을 유지한다. `prior_approved_run`, `current_source_run`, `candidate_key`, `expected_candidate_sha256`을 고정한다. `observation`에는 장부의 정확한 `source_url`, `article_source_version_id`, `article_parse_id`, `article_content_sha256`, `observed_at`을 전달한다. `matches`는 기존 동일 사건 대조와 같은 `aspect`, `candidate_block_id`, `candidate_excerpt`, `published_block_id`, `published_excerpt`, `conclusion`이며 `identity_marker`와 `event_action`을 양쪽 원문 블록에서 직접 인용한다. 공통 CMS ID만으로 검토를 완료하지 않는다.
+
+새 승인을 지정하거나 날짜·주요 원문·본문 지문·승인·사건을 변경하면 거부한다. 검토한 observation 하나만 `reviewed_publisher_record_alias`로 바꾸고 resolution run을 연결한다. 다른 판본의 검토 대기는 유지한다. 같은 URL·원문 판본·parse·본문 지문이 그대로인 재발견은 검토를 다시 열지 않는다. 원문·parse·본문 중 하나가 바뀌면 새 관측을 검토 대기로 남긴다. 같은 입력 재개는 source/approval/hash를 대조한 뒤 장부를 다시 쓰지 않는다. 원문·검토·승인은 기존 `archive-closure`로 함께 보관한다.
+
+KUKA 독문은 기존 날짜 XPath의 기사 헤더를 `publication_date_policy: explicit-authoritative`로 선택한다. 페이지 생성 metadata가 전날이더라도 직접 표시된 원 발표일을 사용하며 후보 날짜는 보존한다. 없는 날짜나 불가능한 날짜를 metadata로 메우지 않는다. 이 검토와 수집 복구는 신규 기사·정규 비교 운영 성공이 아니다.
+
 ## 같은 조사 기간에서 수정된 작성본 연결
 
 수집 뒤 소급 수정으로 회차 본문이나 과거 회차 inventory가 달라졌다면 원문을 다시 수집하지 않는다. 최신 회차 경로와 coverage_end가 기존 계획과 같을 때만 명시적으로 편집 입력을 갱신한다.

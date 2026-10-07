@@ -18,7 +18,7 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
   const review = JSON.parse(reviewBytes)
   if (
     review.schema !== "research-source-revision-resolution-review/v1" ||
-    !["restore_primary", "replace_approval"].includes(review.action) ||
+    !["restore_primary", "replace_approval", "confirm_related_source"].includes(review.action) ||
     !validRun(review.prior_approved_run) ||
     !validRun(review.current_source_run) ||
     !validRun(review.candidate_key) ||
@@ -94,25 +94,106 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
       )
         throw Error("Prior approval does not match the candidate")
       const current = loadStoredSourceRun(root, review.current_source_run)
+      const related = review.action === "confirm_related_source"
+      const observation = related
+        ? candidate.related_source_observations?.filter(
+            (o) =>
+              o.article_source_version_id === review.observation?.article_source_version_id &&
+              o.article_parse_id === review.observation?.article_parse_id &&
+              o.article_content_sha256 === review.observation?.article_content_sha256 &&
+              canonicalURL(o.source_url) === canonicalURL(review.observation?.source_url),
+          )
+        : null
+      if (related && observation?.length !== 1)
+        throw Error("One exact related source observation required")
+      const observed = related ? observation[0] : candidate
       const observedDoc = current.documents.find(
-        (d) => d.source_version_id === candidate.article_source_version_id,
+        (d) => d.source_version_id === observed.article_source_version_id,
       )
       const observedParse = current.parses.find(
         (p) =>
-          p.parse_id === candidate.article_parse_id &&
-          p.source_version_id === candidate.article_source_version_id,
+          p.parse_id === observed.article_parse_id &&
+          p.source_version_id === observed.article_source_version_id,
       )
       if (
         !observedDoc ||
         !observedParse ||
-        articleContentFingerprint(observedParse) !== candidate.article_content_sha256
+        articleContentFingerprint(observedParse) !== observed.article_content_sha256
       )
         throw Error("Current source does not match the revision candidate")
       const before = structuredClone(candidate),
         next = structuredClone(candidate)
       const inputs = [old]
       let publicationPrecision = null
-      if (review.action === "restore_primary") {
+      if (related) {
+        const primaryDoc = old.documents.find(
+          (d) => d.source_version_id === candidate.approval.source_version_id,
+        )
+        const primaryParse = old.parses.find(
+          (p) =>
+            p.parse_id === candidate.approval.parse_id &&
+            p.source_version_id === primaryDoc?.source_version_id,
+        )
+        const alias = candidate.source_record_aliases?.find(
+          (a) => canonicalURL(a.source_url) === canonicalURL(observedDoc.original_url),
+        )
+        if (
+          review.new_approved_run ||
+          review.publication_time_revision_run ||
+          candidate.review_status !== "verified" ||
+          candidate.source_revision_alert ||
+          !primaryDoc ||
+          !primaryParse ||
+          !alias ||
+          !alias.publisher_id?.trim() ||
+          !alias.profile_id?.trim() ||
+          !alias.source_item_id?.trim() ||
+          primaryDoc.source_id === observedDoc.source_id ||
+          canonicalURL(observed.source_url) !== canonicalURL(observedDoc.original_url) ||
+          observed.observed_at !== observedDoc.observed_at ||
+          candidate.article_source_version_id !== primaryDoc.source_version_id ||
+          candidate.article_parse_id !== primaryParse.parse_id ||
+          candidate.article_content_sha256 !== articleContentFingerprint(primaryParse) ||
+          candidate.source_urls?.length !== 1 ||
+          canonicalURL(candidate.source_urls[0]) !== canonicalURL(primaryDoc.original_url) ||
+          !candidate.discovery?.some(
+            (d) =>
+              d.publisher_id === alias.publisher_id &&
+              d.profile_id === alias.profile_id &&
+              d.source_item_id === alias.source_item_id,
+          ) ||
+          !samePublicationDate(primaryParse.dates.published_at, observedParse.dates.published_at)
+        )
+          throw Error(
+            "Related source review must preserve an unchanged approved primary and exact publisher alias",
+          )
+        const cited = (parse, blockId, excerpt) =>
+          typeof excerpt === "string" &&
+          excerpt.trim().length >= 8 &&
+          parse.blocks.some((b) => b.block_id === blockId && b.text.includes(excerpt))
+        if (
+          !Array.isArray(review.matches) ||
+          review.matches.length < 2 ||
+          !["identity_marker", "event_action"].every((aspect) =>
+            review.matches.some((m) => m.aspect === aspect),
+          ) ||
+          new Set(review.matches.map((m) => m.aspect)).size !== review.matches.length ||
+          review.matches.some(
+            (m) =>
+              !m.conclusion?.trim() ||
+              !cited(observedParse, m.candidate_block_id, m.candidate_excerpt) ||
+              !cited(primaryParse, m.published_block_id, m.published_excerpt),
+          )
+        )
+          throw Error(
+            "Related source review requires exact identity and event quotations in both originals",
+          )
+        next.related_source_observations = next.related_source_observations.map((o) =>
+          hash(o) === hash(observed)
+            ? { ...o, decision: "reviewed_publisher_record_alias", resolution_run: runId }
+            : o,
+        )
+      } else if (review.action === "restore_primary") {
         if (review.publication_time_revision_run)
           throw Error("Publication precision upgrade requires a replacement approval")
         if (review.new_approved_run) throw Error("Primary restoration cannot replace approval")
