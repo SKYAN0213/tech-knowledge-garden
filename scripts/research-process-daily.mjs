@@ -10,6 +10,7 @@ const { values: v } = parseArgs({
     root: { type: "string" },
     run: { type: "string" },
     "daily-run": { type: "string" },
+    "collection-basis": { type: "string" },
     "from-processing": { type: "string" },
     "candidate-keys": { type: "string", multiple: true },
     "model-policy": { type: "string" },
@@ -29,7 +30,10 @@ if ([v["plan-only"], v.execute, v.resume].filter(Boolean).length !== 1)
 if (v.root && !v.backlog) throw Error("A custom processing root requires an explicit --backlog")
 if (v["editorial-review-files"] && !v["from-processing"])
   throw Error("Editorial reviews require --from-processing")
-if (v["from-processing"] && (v["daily-run"] || v["processing-runs"] || v["evidence-think"]))
+if (
+  v["from-processing"] &&
+  (v["daily-run"] || v["processing-runs"] || v["evidence-think"] || v["collection-basis"])
+)
   throw Error("Stored editorial continuation uses the frozen processing input")
 console.log(
   JSON.stringify(
@@ -54,6 +58,7 @@ console.log(
           root: v.root || DEFAULT_ROOT,
           runId: v.run,
           dailyRunId: v["daily-run"],
+          collectionBasis: v["collection-basis"],
           candidateKeys: v["candidate-keys"],
           policyFile: v["model-policy"],
           vault: v.vault,

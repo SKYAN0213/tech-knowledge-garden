@@ -1,9 +1,11 @@
 import fs from "node:fs"
+import path from "node:path"
 import { sha256 } from "./contracts.mjs"
 import { generateDailyHandoff, selectCandidateSource } from "./editorial-handoff.mjs"
 import { saveSourceSelection } from "./source-selection.mjs"
 import { processSourceRun } from "./source-processing.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
+import { loadFrozenDailyProcessingHandoff } from "./frozen-daily-processing-handoff.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const validId = (id) => /^[A-Za-z0-9_-]{1,100}$/.test(id || "")
@@ -39,6 +41,7 @@ export async function processDailyCandidates({
   execute = false,
   reviewFiles = {},
   processingRuns = {},
+  collectionBasis,
   evidenceThink,
   provider,
   handoffLoader = currentHandoff,
@@ -80,9 +83,28 @@ export async function processDailyCandidates({
     throw Error(
       "Daily processing requires distinct run IDs and one to twelve unique candidate keys",
     )
+  if (
+    collectionBasis !== undefined &&
+    (typeof collectionBasis !== "string" ||
+      !collectionBasis.trim() ||
+      Object.keys(reviewFiles).length ||
+      Object.keys(processingRuns).length)
+  )
+    throw Error("Frozen collection is for fact extraction; continue reviews with --from-processing")
   const policyBytes = fs.readFileSync(policyFile)
   return withLock(root, "daily-processing-" + runId, async () => {
-    const handoff = await handoffLoader({ root, dailyRunId, vault, backlogFile })
+    const handoff = collectionBasis
+      ? await withLock(root, "daily-acquisition", () =>
+          withLock(path.dirname(backlogFile), "candidate-backlog", () =>
+            loadFrozenDailyProcessingHandoff(root, {
+              dailyRunId,
+              collectionBasis,
+              candidateKeys,
+              backlogFile,
+            }),
+          ),
+        )
+      : await handoffLoader({ root, dailyRunId, vault, backlogFile })
     if (
       handoff.value?.schema !== "research-editorial-handoff/v1" ||
       handoff.value.daily_run !== dailyRunId
@@ -115,6 +137,17 @@ export async function processDailyCandidates({
         return entry
       }),
     )
+    const base = `runs/${runId}/`
+    const previousInput = readJSON(root, base + "daily-processing-input.json")
+    // Routine daily comparisons do not need a second long reasoning pass.
+    // Preserve a stored run's original setting, including an absent override;
+    // explicit callers may still request the shared policy's reasoning level.
+    const resolvedEvidenceThink =
+      evidenceThink !== undefined
+        ? evidenceThink
+        : previousInput
+          ? previousInput.evidence_overrides?.think
+          : false
     const input = {
       schema: "research-daily-processing-input/v1",
       daily_run: dailyRunId,
@@ -125,10 +158,18 @@ export async function processDailyCandidates({
       reuse_reader_sha256: sha256(
         fs.readFileSync(new URL("./processed-source-result.mjs", import.meta.url)),
       ),
-      ...(evidenceThink === undefined ? {} : { evidence_overrides: { think: evidenceThink } }),
+      ...(handoff.collection_basis
+        ? {
+            collection_basis: handoff.collection_basis,
+            frozen_handoff_reader_sha256: sha256(
+              fs.readFileSync(new URL("./frozen-daily-processing-handoff.mjs", import.meta.url)),
+            ),
+          }
+        : {}),
+      ...(resolvedEvidenceThink === undefined
+        ? {}
+        : { evidence_overrides: { think: resolvedEvidenceThink } }),
     }
-    const base = `runs/${runId}/`
-    const previousInput = readJSON(root, base + "daily-processing-input.json")
     if (previousInput && JSON.stringify(previousInput) !== JSON.stringify(input))
       throw Error("Daily processing inputs changed; preserve results and use a new run")
     if (!previousInput) {
@@ -295,7 +336,7 @@ export async function processDailyCandidates({
           // extractor needs the acquired primary source identity for a grouped
           // event; supporting documents must not replace that primary.
           candidateKey: `source-${selected.selected.documents[0].source_id}`,
-          evidenceThink,
+          evidenceThink: resolvedEvidenceThink,
           provider,
         })
         rows.set(key, {

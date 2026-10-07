@@ -5257,11 +5257,17 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 
 ### 19.389 일일 수집 결과의 검토·승인·preview 연결 (2026-10-07)
 
+일상적인 신규 daily 처리의 근거 대조는 `think:false`로 고정하고, 필요한 심층 비교만 `--evidence-think medium`으로 선택한다. 저장된 실행의 override 또는 공유 정책 사용 여부를 재개 시 보존한다. 완료 추출·대조 재사용과 직접 사실 검토·기사 승인은 기존 관문을 유지한다. 새 기본값, 명시 medium의 재개, override가 없던 과거 입력의 재개, 동일 실행의 설정 변경 거부를 표적 검사한다. 전체 검사는 릴리스 통합 시 한 번만 수행한다.
+
+실측 `daily-20261007-next-core-facts-v1`의 6원문 순차 추출·대조는1,940,070ms였다. 완료 대조12회가1,505,393ms로77.6%를 차지했다. 이 실행의 원 medium 설정은 보존하고 다음 신규 일일 실행부터 빠른 기본값을 사용한다. 새 기본값·설정 보존·변경 거부를 포함한 daily 표적18개가 통과했고 frozen 수집 reader4개도 통과했다. native 새 계획의 `evidence_overrides.think:false`와 model/source request0을 확인했다. 별도 완료6원문의 직접 대조는46verified/6deferred이며 승인·발행으로 세지 않는다. 작성은 `--from-processing`으로 완료 추출·대조를 재사용한다. 검증 증거는 기존 외장 evidence root의 `core-processing-bottleneck-v1.json`, `core-daily-acceleration-tests-v1.log`, `core-frozen-handoff-targeted-tests-v1.log`에 보존한다.
+
 `research:process-daily --from-processing`은 기존 daily-processing input·receipt와 고정 handoff의 SHA·후보·원문 판본·parse·처리 run을 대조한다. 전체 수집이나 현재 handoff를 다시 생성하지 않는다. 사실 검토 입력이 있으면 native review를, 검토된 사실만 있고 원고가 없으면 source processor의 작성 단계를, 원고 검토 입력이 있으면 native approve를 호출한다. 처리와 원고 검토는 기존 독립 관문이며 입력 없이 승인을 만들지 않는다. 검토 파일은 단계별 create-only 경로·SHA로 고정하고 변경은 새 실행으로 분리한다.
 
 승인된 기사만 native candidate-approval로 장부에 연결한다. 기존 장부 승인과 native receipt가 있으면 재사용한다. 이미 회차에 있는 사건은 `already_in_edition`, 현재 원문 판본이 승인 판본과 달라진 미발행 사건은 `source_revision_review`로 분리하고 발행 handoff에서 뺀다. 과거 승인 판본을 현재 수집 판본에 덮어쓰거나 본문 지문만으로 재승인하지 않는다. 빈 추출·동일 원문·정체성 검토·실패는 해당 상태로 남는다. 실패 기록은 자동 재시도하지 않고 다른 후보를 진행한다.
 
 `preview --publication-handoff`는 같은 승인 목록을 직접 읽는다. 최신 체크포인트·handoff SHA·후보의 현재 원문 연결·native 승인 receipt와 승인 원고 해시를 다시 대조한 뒤 기존 preview의 전체 사실·원고 검증을 수행한다. 승인 목록을 수작업으로 복사하지 않는다. 기존 `--approved-run`, preview·Drive·발행 경로는 유지한다. 실행 중인 후보와 실제 PID 상태, 검토·원고 경로와 승인 handoff는 기존 비공개 일일 처리 현황에 표시한다.
+
+소급 전환으로 회차 inventory가 달라졌을 때는 원래 daily plan이나 `generateDailyHandoff`의 inventory 검증을 바꾸지 않는다. 사실 추출에 한해 `research:process-daily --collection-basis ROOT_RELATIVE_BASIS_JSON`으로 명시한 기존 frozen handoff를 사용한다. native shadow basis가 수집 입력·계획·receipt·summary·장부/coverage 해시를 검증하고, 선택 후보의 현재 제목·원문 날짜·URL·원문 판본·parse·본문 지문·미검토 상태·사건 ID가 기존 인계와 같은지 확인한다. 장부 조회는 기존 candidate-backlog lock을 사용한다. 정체성 검토·판본 변경·이미 승인된 후보는 이 경로로 처리하지 않는다. basis 경로/SHA와 공통 reader SHA를 처리 입력에 고정하며 수집 시각·coverage·회차 inventory는 갱신하지 않는다. 이 옵션으로 검토 파일이나 승인 run을 함께 전달할 수 없다. 이후 사실 검토·작성·승인은 기존 `--from-processing` 경로로 이어지고 Drive·공개 검증을 통과해야 한다. 원래 수집이 접근 제한을 포함한 partial이면 그대로 유지한다.
 
 완료 증거는 native source review→writer→editorial approval→candidate linkage→preview selection 시험, 판본 변경·검토 변경·중복 회차·실패 재시도 거부, 실제 저장된 일일 후보의 읽기·재개다. 실물은 이미 승인돼 회차에 들어 있는 3건과 빈 추출 복구 검토1건이며, 신규 원고·Drive·공개 변경이나 정규 운영 횟수로 계수하지 않는다. 최초 표적73개 중 fixture1개가 source processor 인자를 잘못 넘겼고, 수정 후 같은 fixture의 잘못된 회차 key가 native 계약에서 거부됐다. fixture만 고쳐 해당 검사1개를 통과했고, 최신 동작6개와 preview selection 검사1개를 통과했다. full CI·실물 재개 결과는 런북482에 이어 기록한다.
 
@@ -5281,7 +5287,11 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 
 실제 관측 시간들을 고정한 큐 재배치 계산은 FIFO1,055,549ms→longest-first814,580ms다. 약23% 감소는 계산 결과이며 새 네트워크 실행의 실측이나 성능 보장이 아니다. 표적 daily scan/retry/acquisition-status37검사 통과, 전체 수집·전체 suite·새 배포0이다. 코드 변경 이후의 frozen daily plan은 기존 config SHA를 보존하며 무단 갱신/재개하지 않는다. 최신 통합 검증은 최종 코드가 안정된 뒤 수행한다.
 
-개발의 다음 단위는5회차 소급 묶음이다. 기존 legacy-transition-batch와 공통 전달을 쓰고 원문·사건별 검토는 유지한다. 묶음 전체를 검증하고 Drive 작성·배포·Research/WebsiteData 전달은 한 번씩 수행한다. 전체 status 조회는 릴리스/WBS 변경 때만, 일상 진척은 acquisition-status/해당 operation 상태를 조회한다. 동일 실패는 새 관측이 없으면 반복하지 않으며 보류 항목을 기록하고 독립 작업을 진행한다. 독립 human 평가와7회 실제 운영은 별도 완료 기준이며 빠른 개발을 이유로 줄이지 않는다. WBS3/22·소급40회차/394구간은 그대로다.
+다음 작업의 우선순위는 핵심 일일 수집→근거 추출→작성→검토·승인→전달의 미완료 수용 조건, 비공개 정규 비교 운영, 소급 전환 순서다. 소급 전환은 계속 수행하지만 작은 과거 회차의 개별 배포가 핵심 운영 검증을 계속 뒤로 미루지 않도록 한다. 기존 legacy-transition-batch와 공통 전달로 최대5회차를 묶고 원문·사건별 검토는 유지한다. 묶음 전체를 검증하고 Drive 작성·배포·Research/WebsiteData 전달은 한 번씩 수행한다. 전체 status 조회는 릴리스/WBS 변경 때만, 일상 진척은 정확한 run의 acquisition-status/해당 operation 상태를 조회한다. 동일 실패는 새 관측이 없으면 반복하지 않으며 보류 항목을 기록하고 독립 작업을 진행한다. 독립 human 평가와7회 실제 운영은 별도 완료 기준이며 빠른 개발을 이유로 줄이지 않는다.
+
+2026-10-07 실행 방식 점검: `daily-20261007-current55-pdf-integration-v1`의 보존 summary는55경로 중54경로 완료,110개 receipt,109개 완료 시간창,접근 제한1개다. 실제 wall849164ms(약14분9초), 모델 호출0이다. 전자신문635134ms·디일렉577750ms가 긴 경로였다. 07:36 UTC의 가벼운 조회에서도 pending0·동일 receipt110개·현재 acquisition lock 없음이 확인됐다. 접근 제한19개 상세의 `awaiting_new_observation`을 새로운 근거 없이 재개하거나 전체55경로를 다시 수집하지 않는다. 이는55경로 전체 성공 판정이 아니다. 첫 통합 수집의 날짜 범위와 이후 일일 증분 수집을 구분하며14분을 매일 처리 시간으로 단정하지 않는다.
+
+최근 실제 소급 묶음은3회차/25구간/6사건을 처리했다. 원격 전달은14개 변경을1batch/1post 전체 대조로 검증했고 journal→receipt159957ms였다. 실제 속도 비교의 동일 입력 실험은 아니다. 현재 남은 소급33회차/335구간, 독립 평가0/40+0/20, 정규 비교 운영0/7은 그대로 유지한다. 전체 테스트는 코드 릴리스 통합 때 한 번이며 문서·진척 갱신만으로 빌드·배포·전체 대조를 다시 수행하지 않는다.
 
 ### 19.392. 원격 저장 뒤 전체 대조를 묶음당 한 번 수행
 

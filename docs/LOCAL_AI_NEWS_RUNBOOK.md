@@ -11453,6 +11453,17 @@ Actions37568125831은 정확한 코드 commit `7a4b8fe1df71551053096168310a1351e
 
 ## 482. 완료한 일일 처리에서 검토·승인·preview로 이어 실행 (2026-10-07)
 
+신규 `research:process-daily` 실행은 `evidence_compare`에 `think:false`를 기본으로 고정한다. 직접 확인하는 사실 검토·원고 승인·출처 검증은 생략하지 않는다. 심층 비교가 필요한 신규 실행은 `--evidence-think medium`으로 명시한다. 기존 실행을 이어갈 때 옵션을 생략하면 저장 입력의 설정을 사용하며, 과거에 override가 없던 실행은 원래 공유 정책을 유지한다. 공유 모델 정책과 완료 요청·응답은 변경하지 않는다. 속도 향상률은 같은 입력으로 실측하기 전에는 보고하지 않는다.
+
+수집 완료 후 소급 수정으로 회차 inventory가 바뀌어 새 인계문 생성이 거부되면 전체 수집을 반복하지 않는다. 수집 run의 `shadow-basis.json`에서 정확한 `basis.path`를 읽고, 아래 옵션으로 기존 수집의 미검토·exact 후보를 사실 추출에만 연결한다. native basis와 현재 후보의 제목·날짜·URL·원문 판본·parse·본문 지문·승인 상태를 대조한다. 변경 후보·정체성 검토·승인된 후보는 거부한다. 과거 수집을 현재의 새 관측으로 표시하지 않는다.
+
+```sh
+npm run research:process-daily -- --run FACT_BATCH --daily-run STORED_DAILY_RUN --collection-basis evaluation/shadow-bases/STORED_DAILY_RUN/handoffs/EXACT_INPUT_HASH/basis.json --candidate-keys EXACT_KEY --plan-only
+npm run research:process-daily -- --run FACT_BATCH --daily-run STORED_DAILY_RUN --collection-basis evaluation/shadow-bases/STORED_DAILY_RUN/handoffs/EXACT_INPUT_HASH/basis.json --candidate-keys EXACT_KEY --execute
+```
+
+커스텀 `--root`에는 기존 규칙대로 명시적인 `--backlog`가 필요하다. `--collection-basis`와 검토 파일/승인 run을 함께 지정할 수 없다. 같은 입력의 재개는 기존 source processor 체크포인트를 사용하며 원문·완료 모델 호출을 반복하지 않는다. 아래의 `--from-processing`에 collection-basis를 새로 넘기지 않는다. 사실 검토·원고 작성·승인·Drive·발행은 각각 기존 관문을 통과해야 한다.
+
 기존 수집·source processor가 만든 완료 batch를 `--from-processing`으로 지정한다. 원문 판본·parse·후보·처리 run은 frozen input으로 고정한다. `--daily-run`, `--processing-runs`, `--evidence-think`를 새로 지정해 기존 결속을 바꾸지 않는다. `--candidate-keys`는 기존 batch의 일부를 선택할 때만 사용한다. 먼저 계획을 확인하고 실제로 작성한 사실 검토와 원고 검토 입력을 전달한다.
 
 ```sh

@@ -89,6 +89,20 @@ function fixture(t) {
   return { root, handoff, options, calls }
 }
 
+test("frozen collection cannot be combined with review or approval reuse inputs", async (t) => {
+  const f = fixture(t)
+  for (const extra of [
+    { reviewFiles: { "candidate-0": "review.json" } },
+    { processingRuns: { "candidate-0": "approved" } },
+  ]) {
+    await assert.rejects(
+      processDailyCandidates({ ...f.options, collectionBasis: "basis.json", ...extra }),
+      /fact extraction/,
+    )
+  }
+  assert.equal(f.calls.length, 0)
+})
+
 test("legacy verified events require identity review before model processing", async (t) => {
   const f = fixture(t)
   f.handoff.pending[0].review_status = "verified"
@@ -323,6 +337,44 @@ test("daily processing binds a multi-document event to the selected primary sour
   assert.equal(
     readJSON(f.root, `runs/${result.results[0].source_run}/source-selection.json`).candidate_key,
     primary.key,
+  )
+})
+
+test("new daily runs default to non-reasoning comparisons and preserve that choice on execution", async (t) => {
+  const f = fixture(t)
+  await processDailyCandidates(f.options)
+  assert.deepEqual(readJSON(f.root, "runs/batch/daily-processing-input.json").evidence_overrides, {
+    think: false,
+  })
+  await processDailyCandidates({ ...f.options, execute: true })
+  assert.ok(f.calls.every((call) => call.evidenceThink === false))
+})
+
+test("continuations inherit an explicit reasoning level instead of applying the new default", async (t) => {
+  const f = fixture(t)
+  await processDailyCandidates({ ...f.options, evidenceThink: "medium" })
+  await processDailyCandidates({ ...f.options, execute: true })
+  assert.ok(f.calls.every((call) => call.evidenceThink === "medium"))
+  assert.deepEqual(readJSON(f.root, "runs/batch/daily-processing-input.json").evidence_overrides, {
+    think: "medium",
+  })
+})
+
+test("legacy daily inputs without an override retain their original shared-policy comparison", async (t) => {
+  const f = fixture(t)
+  await processDailyCandidates(f.options)
+  // Represent the earlier input contract, which did not store an override.
+  const input = readJSON(f.root, "runs/batch/daily-processing-input.json")
+  delete input.evidence_overrides
+  atomicWrite(f.root, "runs/batch/daily-processing-input.json", input)
+  const receipt = readJSON(f.root, "runs/batch/daily-processing.json")
+  receipt.input_sha256 = sha256(JSON.stringify(input))
+  atomicWrite(f.root, "runs/batch/daily-processing.json", receipt)
+  await processDailyCandidates({ ...f.options, execute: true })
+  assert.ok(f.calls.every((call) => call.evidenceThink === undefined))
+  assert.equal(
+    readJSON(f.root, "runs/batch/daily-processing-input.json").evidence_overrides,
+    undefined,
   )
 })
 
