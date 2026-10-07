@@ -270,4 +270,5 @@ generated_by: tech-knowledge-garden
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
+- [[News/f3c67caad8443881|GitHub, MAI-Code-1-Flash를 Copilot Business·Enterprise에 정식 제공]] · 2026-06-27
 - [[News/bef8ee041d7dc1a0|DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개]] · 2026-06-26
