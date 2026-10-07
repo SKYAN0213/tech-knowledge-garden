@@ -5355,6 +5355,12 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 편집 재개 근거: 처음 software writer 대기열은2개 원고 뒤 LangGraph의 미확정 native 검토 때문에 중단됐다. LangGraph의 계획/완료 및 숫자 조건 concern을 exact release block으로 명시 해결해3사실 검토를 마쳤다. Claude 승인은 JSON /published_at를 인용한 used claim이 없어 거부됐으며 실패를 보존했다. 날짜 관문을 완화하지 않았다. 본문용 metadata를 일찍 deferred 처리한 것이 원인이므로,4개 새 publication-writing run에서 완료 추출·대조를 재사용하고 정확한 발표시각 근거를 검토에 포함했다. Claude13·OpenCode10·LangGraph3·AI core4·xAI3 =33검증 사실(본문 내용28+발표시각5)이다. 내용·사건이 늘어난 것은 아니다. 변경된 fact 입력에 맞는 writer를 단일 대기열로 진행하며 원본 추출·대조는 재생성하지 않는다. native CLI의 단계별 exit code와 stderr를 함께 확인하며 전체 suite는 데이터 검토 때문에 반복하지 않는다.
 
 
+## 19.402. 제목 없는 구형 도구 항목의 공통 전환
+
+구형 `오픈소스와 도구`의 depth1 항목은 새 제목을 과거 h2로 위장하지 않고 `section_event_review`로 실제 원본 단위에 연결한다. 정확한 단위 SHA·원래 사건 문장·직접 인용 주소·검토 판정을 요구한다. 다른 섹션, 누락/변경된 해시, 원문에 없는 문장, 출처 없는 항목, 잘못된 사건 연결은 거부한다. 원래 Source List의 공식 대체 API 연결·발표일·coverage·사건 ID 검증은 그대로 적용하며 검토 문구는 공개하지 않는다. 복수 사건은 기존 명시 split 계약을 유지한다.
+
+표적 검사64/64 통과. 7월3일 Microsoft Frontier Company와 Claude Code199의 공식 원문3개를 재사용해 한 모델 대기열로 사실 추출·대조 중이다. 아직 두 회차의 편집 승인·Drive 저장·공개 완료로 집계하지 않는다. 전체 필수 WBS3완료/17부분/2미착수, 소급 잔여28회차/286단위 및 metadata 복구2, 독립 human0/60·정규 비교0/7은 유지한다. 다음은 fact-review packet을 직접 판정하고 원고를 작성해 same-edition 묶음을 완성한다. 전체 suite는 최종 코드 릴리스에서 한 번 수행한다.
+
 ## 19.401. 구형 출처 목록의 명시 제외와 요약에만 남은 사건 복원
 
 공통 legacy-transition에 두 비공개 검토 계약을 추가했다. source_list_dispositions의 excluded는 원래 기사 단위 ID·SHA·정확한 문장과 대체 공식 주소를 함께 검토해야 한다. 단순 404를 새 소식 없음으로 바꾸거나 수집 경로(discovery)로 위장하지 않는다. 이미 승인·할당된 출처나 본문 인용 주소는 이 목록 처리로 삭제할 수 없다. 공개 결과에는 제외 이유·옛 주장·검토 안내를 출력하지 않는다.

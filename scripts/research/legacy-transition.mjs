@@ -35,6 +35,12 @@ eventSchema.properties.source_list_event_review = object({
   original_event_checked: { type: "boolean", enum: [true] },
   reason: text,
 })
+eventSchema.properties.section_event_review = object({
+  sha256: hash,
+  original_mention: { type: "string", minLength: 8 },
+  original_event_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
 eventSchema.properties.event_split_review = object({
   distinct_event_checked: { type: "boolean", enum: [true] },
   reason: text,
@@ -598,7 +604,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     )
       throw Error("Legacy duplicate review requires one separately anchored source event")
     if (
-      unit.depth === 2 &&
+      (unit.depth === 2 || anchors.some((event) => event.section_event_review)) &&
       decision.decision === "replaced" &&
       !duplicate &&
       !same(anchors.map((event) => event.event_id).sort(), [...decision.event_ids].sort())
@@ -694,6 +700,26 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const sourceListReview = event.source_list_review
     const listEventReview = event.source_list_event_review
     const listAnchor = unit?.depth === 1 && unit.title === "Source List"
+    const sectionReview = event.section_event_review
+    const sectionAnchor = Boolean(sectionReview)
+    if (
+      sectionAnchor &&
+      (!unit ||
+        unit.depth !== 1 ||
+        unit.title !== "오픈소스와 도구" ||
+        sectionReview.sha256 !== unit.sha256 ||
+        !sectionReview.original_mention.trim() ||
+        !before.body
+          .slice(unit.body_start, unit.body_end)
+          .includes(sectionReview.original_mention) ||
+        !sectionReview.reason.trim() ||
+        !inlineSources.length ||
+        !inlineSources.some((url) => assignedSources.includes(url)) ||
+        listEventReview)
+    )
+      throw Error(
+        "Legacy section event requires its exact original tool mention, hash and inline source",
+      )
     if (listEventReview || listAnchor) {
       const mention = units.find((u) => u.unit_id === listEventReview?.mention_unit_id)
       const mentionDecision = packet.units.find((u) => u.unit_id === mention?.unit_id)
@@ -729,7 +755,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       throw Error("Legacy source-list assignment requires reviewed distinct original list sources")
     if (
       !unit ||
-      (unit.depth !== 2 && !listAnchor) ||
+      (unit.depth !== 2 && !listAnchor && !sectionAnchor) ||
       unit.title !== event.previous_title ||
       decision.decision !== "replaced" ||
       !decision.event_ids.includes(event.event_id) ||

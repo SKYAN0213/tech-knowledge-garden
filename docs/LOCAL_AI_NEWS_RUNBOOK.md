@@ -11598,6 +11598,12 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 편집 재개 근거: 처음 software writer 대기열은2개 원고 뒤 LangGraph의 미확정 native 검토 때문에 중단됐다. LangGraph의 계획/완료 및 숫자 조건 concern을 exact release block으로 명시 해결해3사실 검토를 마쳤다. Claude 승인은 JSON /published_at를 인용한 used claim이 없어 거부됐으며 실패를 보존했다. 날짜 관문을 완화하지 않았다. 본문용 metadata를 일찍 deferred 처리한 것이 원인이므로,4개 새 publication-writing run에서 완료 추출·대조를 재사용하고 정확한 발표시각 근거를 검토에 포함했다. Claude13·OpenCode10·LangGraph3·AI core4·xAI3 =33검증 사실(본문 내용28+발표시각5)이다. 내용·사건이 늘어난 것은 아니다. 변경된 fact 입력에 맞는 writer를 단일 대기열로 진행하며 원본 추출·대조는 재생성하지 않는다. native CLI의 단계별 exit code와 stderr를 함께 확인하며 전체 suite는 데이터 검토 때문에 반복하지 않는다.
 
 
+## 495. 제목 없는 구형 도구 원문의 사건 연결
+
+`section_event_review: {sha256, original_mention, original_event_checked: true, reason}`를 event에 기록한다. anchor는 실제 depth1 `오픈소스와 도구` 단위이며 previous_title도 원래 섹션 제목이다. 전체 문서·단위 SHA·직접 원문 URL·원래 문장의 포함과 단위 disposition/event 일치를 검증한다. h2를 삽입하거나 source-only anchor로 바꾸지 않는다. 원문 HTML과 같은 공식 release API가 대체 관계이면 기존 source_alternative_reviews를 사용하며 시간대 변환은 정확한 /published_at used claim으로 입증한다.
+
+64개 표적 검사에서 기존 h2/Source List 전환과 새 depth1 경로의 정상·거짓 문장·해시·검토 누락·다른 섹션·사건/출처 불일치를 확인했다. 두 새 processing 입력은 stored source selection을 사용하고 qwen3.8:27b-mlx 원 추론/대조를 보존한다. multi-source candidate-key는 실제 source ID로 지정한다. 잘못된 key 검증 실패는 모델 호출 전 종료됐으며 임의 key나 후보 장부를 만들지 않았다. 아직 새 원고 승인/발행이 아니다.
+
 ## 494. 구형 출처 제외와 Source List 사건 복원
 
 미확인 기사 주소는 discovery로 분류하지 않는다. excluded disposition에는 정확한 원래 단위·SHA·문장, 서로 다른 대체 공식 주소와 양쪽 확인 결과를 기록한다. 검토 이유는 private packet에만 남기고 공개 문장으로 생성하지 않는다. 본문 인용 출처 제거는 이 기능의 범위가 아니다.

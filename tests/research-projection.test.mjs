@@ -537,6 +537,37 @@ test("legacy source-list-only events retain an exact reviewed cover mention", (t
   }
 })
 
+test("legacy tools without article headings require an exact reviewed section anchor", (t) => {
+  const f = legacyTransitionFixture(t)
+  // The second event is an original top-level tool entry, not a fabricated h2.
+  reviseLegacyFixture(f, f.existing.body.replace("## 이전 두 번째 제목", "# 오픈소스와 도구"))
+  const units = legacyReviewUnits(f.existing.body, f.relative)
+  const event = f.packet.events[1]
+  event.section_event_review = {
+    sha256: units[4].sha256,
+    original_mention: "이전 본문. https://example.com/second",
+    original_event_checked: true,
+    reason: "Read the original tool entry and its exact announcement",
+  }
+  assertLegacyTransition(f.packet, f.articles, f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.equal(projection.content.includes("section_event_review"), false)
+  assert.equal(projection.content.includes(f.articles[1].title), true)
+  for (const mutate of [
+    (p) => delete p.events[1].section_event_review,
+    (p) => (p.events[1].section_event_review.sha256 = "0".repeat(64)),
+    (p) => (p.events[1].section_event_review.original_mention = "Not in the original tool entry"),
+    (p) => (p.events[1].section_event_review.original_event_checked = false),
+    (p) => (p.units[4].event_ids = [p.events[0].event_id]),
+    (p) => (p.events[1].unit_id = p.units[0].unit_id),
+    (p) => (p.events[1].source_urls = ["https://example.com/not-the-tool"]),
+  ]) {
+    const changed = structuredClone(f.packet)
+    mutate(changed)
+    assert.throws(() => assertLegacyTransition(changed, f.articles, f.existing, f.relative))
+  }
+})
+
 test("legacy discovery source roles stay private and cannot remove inline or approved article evidence", (t) => {
   const f = legacyTransitionFixture(t)
   const discovery = "https://api.github.com/repos/vercel/ai/releases?per_page=5"
