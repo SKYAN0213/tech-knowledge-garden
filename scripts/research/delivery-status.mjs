@@ -25,6 +25,7 @@ import { loadDailyProcessingStatus } from "./daily-processing-status.mjs"
 import { loadDailyAcquisitionStatus } from "./daily-acquisition-status.mjs"
 import { loadAuthoringExecutionStatus } from "./authoring-execution.mjs"
 import { loadPublicationOperations } from "./publication-operation.mjs"
+import { deliveryCheckpointStatus } from "./delivery-run.mjs"
 import { auditShadowOperations } from "./shadow-operations.mjs"
 
 export function loadLatestSourceRevisionReview(root, backlogFile) {
@@ -1772,13 +1773,15 @@ export async function buildDeliveryStatus({
     source_kind_distribution: counter(sourceKinds),
     fixed_coverage_cells: 32,
   }
+  const publicationOperations = loadPublicationOperations(absoluteRoot, repo)
   return {
     schema: "research-delivery-status/v1",
     generated_at: new Date().toISOString(),
     access: "local_private",
     daily_processing: loadDailyProcessingStatus(absoluteRoot),
     authoring_execution: loadAuthoringExecutionStatus(absoluteRoot),
-    publication_operations: loadPublicationOperations(absoluteRoot, repo),
+    publication_operations: publicationOperations,
+    delivery_checkpoints: deliveryCheckpointStatus(absoluteRoot, publicationOperations),
     scope,
     current_snapshot: summarizeCurrentSnapshot(scope, backlog),
     overall_completion: {

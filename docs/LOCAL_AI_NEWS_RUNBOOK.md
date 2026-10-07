@@ -11400,3 +11400,31 @@ Drive Research 보관본은 실제 metadata/raw SHA·size와 native restore/regi
 원격 승인 복원본에서는 candidate-only run 대신 실제 extraction 승인 run의 loadCurrentApproval을 실행해 두 사건·원문 날짜·검토일을 재확인했다. 전달 custody는152개 evidence/native 파일(archive155files/157members)을 보관한다. 중복 raw/base64/signedURL wrapper와 모델 설정 누락 first audit는 생략 해시를 남기고 native normalized raw/receipt, 완전 pre/post inventory/readback/post snapshot, WebsiteData bytes, 공개·운영 proof를 보존했다. 오류와 해결은 debug-record-v1에 있다. 전체 runtime·독립 gold·새 shadow 완료는 아니다.
 
 최종 inventory v2 65/203verified·미검토40회차/394units·metadata6·diagnostics0. 후보925/verified111/unreviewed800·receipt58이다. full status1회인 checkpoint-v26에서 WBS3/22(14%), 개발27/40/보류1/20·human0/40/0/20·shadow0/7 유지다. source code 변경0·55경로 전체 재수집0·로컬 전체 suite0·릴리스 CI1회, 같은 실패1시간 반복0·goal active. 다음은7월17일 원본 SHA4e6852252f9b88f16f3edf1b4363a3477ecc2efa2018e133cc9a94e5ab0e1d04의 Google 두 공식 발표다.
+
+## 480. 승인 이후 발행·배포·공개 확인을 이어서 실행 (2026-10-07)
+
+승인 release·실제 Drive 작성/읽기 검증·canonical pull이 끝난 뒤 canonical 저장소에서 실행한다. 필요한 immutable authoring proof가 canonical private root에 있어야 한다. 원고 승인이나 Drive 보관을 이 명령으로 대신하지 않는다. 소스·설정·문서 변경은 기존 publisher 정책에 따라 먼저 검토·commit해야 한다.
+
+```sh
+npm run research:deliver -- --run OPERATION_ID --release runs/PREVIEW_ID/drive-authoring/releases/RELEASE_ID.json --wait-seconds 45
+```
+
+재개는 같은 `--run`을 사용한다. release는 기존 publication-operation에서 복구하므로 재입력하지 않아도 된다. 정확한 CI만 최대 60초 기다린다. CI가 여러 개면 `--actions-run ACTIONS_ID`를 명시한다. 신규 예약·workflow dispatch·CI rerun은 수행하지 않는다.
+
+```sh
+npm run research:deliver -- --run OPERATION_ID --wait-seconds 45
+npm run research:deliver -- --run OPERATION_ID --status
+```
+
+`--status`는 읽기 전용이며 push/CI/public 요청을 하지 않는다. 입력·publish intent·Actions 선택·최신 체크포인트는 `.local/research/local-ai/runs/OPERATION_ID/delivery/`에 있다. 기존 `research status --format json`에도 `delivery_checkpoints`를 포함한다. 전체 status를 작은 변경마다 다시 만들지 않는다.
+
+- `waiting_deployment`: 같은 run을 재개한다. 기존 commit을 다시 빌드·push하지 않는다.
+- `deployment_selection_required`: CI ID를 확인해 명시한다. 고정한 ID를 다른 실행으로 바꾸지 않는다.
+- `publication_recovery_required`: Git과 native push receipt를 먼저 조사한다. 복구 검토 후에만 `--retry-publish`를 명시한다. 기존 publisher의 승인·freshness·dirty tree·remote 검사를 통과해야 한다.
+- `deployment_failed` / `deployment_observation_failed`: 각각 CI 실패와 조회 실패다. 선택을 보존하고 원인을 조사한다.
+- `public_readback_failed`: 같은 run의 native 실패·완료 파일을 조사한다. 원인 해결 후 재개하면 확인된 bytes를 다시 요청하지 않는다. 입력·원격 bytes가 바뀌었으면 원래 증거를 보존하고 새 operation을 쓴다.
+- `public_bytes_verified`: native 저장 증거를 검증했다. `archived_observation`은 과거 관측이다. 현재 원격·WebsiteData·source archive·browser·새 shadow 횟수는 별도로 확인한다.
+
+복구/CI 실패/공개 읽기 실패는 exit 2, 입력 오류는 exit 1이다. 대기/명시 선택 요청은 보류 상태로 반환한다. 알려지지 않은 인증을 만들거나 connector 계정을 CLI 자격 증명으로 재사용하지 않는다. writer/capture·WebsiteData·원문 archive 연결은 다음 묶음에서 기존 native 계약을 재사용한다.
+
+38개 관련 표적 시험과 실제 7월18일 archived proof 재개(두 번+status, 791ms, 추가 명령/네트워크 0)를 통과했다. 새 회차 전체 자동 운영의 완료 판정은 아니다. 다음은 P5-01의 승인 이전 처리와 Drive connector 연결이다. 1시간 이상 같은 실패가 진척 없이 반복되면 기존 병목 기록에 증거를 남기고 독립 다음 슬라이스를 수행한다.

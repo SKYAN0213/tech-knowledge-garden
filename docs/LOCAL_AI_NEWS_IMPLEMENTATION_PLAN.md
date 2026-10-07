@@ -436,6 +436,7 @@ FDA 공식 발표 경로까지 수용한 `daily-20260929-v9`은 **10경로/20창
 
 ### P5-01 재시작 가능한 실행기
 
+- 추가 구현(2026-10-07, 19.387절): `research:deliver`가 승인된 Drive 결과 → 기존 publisher → 정확한 commit의 Actions → public-readback을 연결한다. 완료 proof 재사용·명시적 push 복구·대기 체크포인트·중복 실행 잠금이 있다. 수집/편집/Drive 작성 전 구간과 WebsiteData/원문 원격 보관 연결은 남아 있으므로 P5-01 전체는 부분 완료다.
 - 현재 구현 증거: `preview`는 승인 입력·원문·작성 원본·렌더러 해시를 고정하고 workspace/refresh/knowledge/validate/build/verify/consistency/outputs를 재개한다. `research-daily.mjs`는 입력 해시를 고정한 plan, route별 영수증, 원자 저장·잠금·resume·handoff를 수행한다. 독립 완료 scan 재조정과 동일 창 재요청 방지를 추가했다. 같은 입력의 완료 단계 재사용과 private 파일 추가·본문/작성 원본 변경 거부 시험이 있다. 전체 일일 발행기의 완료를 뜻하지 않는다.
 - [x] 발견 → 수집 단계 체크포인트를 구현하고 실패 영수증과 검증된 독립 수집 증거를 재개 경로에서 대조한다.
 - [ ] 사실 검토 → 편집 → 승인 → Drive → 배포 → 공개 검증까지 연결하는 체크포인트를 완성한다.
@@ -5217,3 +5218,20 @@ Drive pre/post 각각216개 파일의 실제 raw bytes·SHA·크기와 두 recur
 승인 원문 closure2개와 전달 custody1개를 실제 Drive 원격 SHA·size·native 복원·registry로 검증했다. 원격 승인 복원본의 loadCurrentApproval이 두 사건을 다시 확인했다. 전달 custody는 원본·정정·예외·작성/발행·WebsiteData·CI·진척 증거152파일을 보존한다. 정규화한 native acquisition과 완전 readback/snapshot을 보관하고 중복 base64 wrapper는 해시·생략 목록을 남겼다. 전체 runtime 복원·새 shadow·독립 평가 완료를 뜻하지 않는다. 세부 경로와 실패 처리는 런북479절이다.
 
 canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·metadata 필요6·diagnostics0이다. checkpoint-v26의 WBS3/22(14%)·partial17/not_started2, 등록195/일일55/목록profile57/상세profile131, 개발27/40·보류1/20·독립human0/40/0/20·shadow0/7은 유지된다. 전체55경로의 현재 fingerprint 통합 성공은 확인되지 않아 완료로 바꾸지 않았다. source code 변경·유료 API·예약 변경0, 로컬 전체 suite 반복0, 릴리스 CI1회다. 원래 goal은 active이며 같은 실패1시간 이상 반복0이다. 다음 미검토 원본은7월17일 회차 SHA4e6852252f9b88f16f3edf1b4363a3477ecc2efa2018e133cc9a94e5ab0e1d04다.
+
+### 19.387 승인 이후 전달 실행 연결과 반복 비용 축소 (2026-10-07)
+
+회차별 소급 처리보다 P5-01 실행 연결을 먼저 구현했다. `scripts/research/delivery-run.mjs`, `scripts/research-deliver.mjs`, `npm run research:deliver`는 기존 native publication-operation·publisher·public-readback을 호출한다. 별도 승인 체계나 임의 명령 실행 프레임워크를 만들지 않는다.
+
+- 실행 ID·저장소 실제 경로·승인 release 경로/SHA·readback ID를 고정한다. 기존 Drive proof와 승인 원고를 native 검증하며, 변경된 release는 같은 ID로 재개할 수 없다.
+- publication commit이 있으면 빌드·commit·push를 반복하지 않는다. 완료된 공개 관측의 raw/receipt를 다시 검증해 반환한다. 후속 문서 commit 때문에 과거 회차를 재발행하지 않는다.
+- publish 전 durable intent를 보존한다. 실패·응답 유실 후 native 확정 push가 없으면 `publication_recovery_required`로 남긴다. 원격/Git 조사 후에만 `--retry-publish`를 명시한다.
+- 정확한 commit의 Publish Garden CI를 조회한다. 여러 실행이 있으면 정확한 ID 선택이 필요하며 선택을 고정한다. 다른 workflow/head·실패 CI는 성공으로 승격하지 않는다. 최대 60초 대기 후에도 진행 중이면 같은 run의 대기 체크포인트로 반환한다. workflow dispatch·CI rerun은 만들지 않는다.
+- 공개 확인 실패는 `public_readback_failed`로 기록한다. 완료 관측을 보존하고 빠진 파일만 재개한다. 충돌한 bytes를 덮어쓰지 않는다.
+- 통합 status JSON에 `delivery_checkpoints`를 추가했다. 이미 native 검증한 publication 목록을 재사용하여 진행 표시를 위해 같은 proof를 다시 순회하지 않는다. 체크포인트를 승인·새 운영 횟수·WebsiteData 성공으로 해석하지 않는다.
+
+표적 `node --test tests/research-delivery-run.test.mjs tests/research-publication-operation.test.mjs tests/research-delivery-status.test.mjs`는 38/38 통과했다. 기존 fixture를 공통 파일로 옮겨 실제 Git/Drive/public-readback 검증기를 재사용했다. 11개 전달 시험은 freshness·응답 유실·CI 대기/선택·동시 실행·raw 변조·입력 변경·누락 공개 파일 재개·읽기 전용 진척 조회를 다룬다. 시험용 GH/HTTP 응답을 실제 발행으로 계산하지 않는다.
+
+실제 canonical `legacy-jul18-publish-20261007-v1`의 archived native proof를 두 번 재개하고 status를 조회했다. 합계 791ms, subprocess/network/performed 모두 0이며 기존 commit 6dc53eeb1d87dd001a33034233b6bbcad233201b의 세 단계를 재사용했다. 외장 evidence root `delivery-controller-real-replay-v1.json`에 보존했다. 현재 원격의 새 관측이나 새 회차 전체 처리 속도가 아니다. 새 코드의 WebsiteData·원문 원격 보관도 이 proof에 합산하지 않는다.
+
+다음 순서: 검증된 수집·모델 체크포인트를 동일 실행에 연결 → 승인 회차 최대 5개를 묶어 Drive/빌드/배포 → 기존 55경로의 현재 코드 통합 결과 확인 → 별도 품질 판정과 실제 7회 운영. 묶음에서도 사건별 승인·원문 상세를 유지한다. 전체 WBS 완료 3/22(14%), 부분 17, 미착수 2다. 미검토 40회차/394units·독립 평가 0/40+0/20·새 shadow 0/7은 이번 코드 변경으로 줄어들지 않았다.
