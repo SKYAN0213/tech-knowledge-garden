@@ -5359,7 +5359,11 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 
 구형 `오픈소스와 도구`의 depth1 항목은 새 제목을 과거 h2로 위장하지 않고 `section_event_review`로 실제 원본 단위에 연결한다. 정확한 단위 SHA·원래 사건 문장·직접 인용 주소·검토 판정을 요구한다. 다른 섹션, 누락/변경된 해시, 원문에 없는 문장, 출처 없는 항목, 잘못된 사건 연결은 거부한다. 원래 Source List의 공식 대체 API 연결·발표일·coverage·사건 ID 검증은 그대로 적용하며 검토 문구는 공개하지 않는다. 복수 사건은 기존 명시 split 계약을 유지한다.
 
-표적 검사64/64 통과. 7월3일 Microsoft Frontier Company와 Claude Code199의 공식 원문3개를 재사용해 한 모델 대기열로 사실 추출·대조 중이다. 아직 두 회차의 편집 승인·Drive 저장·공개 완료로 집계하지 않는다. 전체 필수 WBS3완료/17부분/2미착수, 소급 잔여28회차/286단위 및 metadata 복구2, 독립 human0/60·정규 비교0/7은 유지한다. 다음은 fact-review packet을 직접 판정하고 원고를 작성해 same-edition 묶음을 완성한다. 전체 suite는 최종 코드 릴리스에서 한 번 수행한다.
+표적 검사64/64 통과. 7월3일 두 회차15단위·원래 Source List52주소를 판정해 Microsoft Frontier Company와 Claude Code2.1.199를 승인했다. 공통 markdownProse는 일반 원고의 모든 #문자를 escape해 #번호·#N·#AI가 임의 태그 링크로 변환되지 않게 한다. 실제 분류 태그는 별도 데이터로 유지하고 역변환·멱등성·roundtrip26/26을 확인했다.
+
+코드55314741/013a7b60·발행db07b12d·Actions37644020868의 전체1,184/1,184·Python/build/site/deploy와 실제 공개 웹/RSS/GitHub raw, desktop/390px UI를 확인했다. Drive216원본 중214불변 raw를 재사용하고 두 기존 ID를 유지해 저장했다. Research2 ZIP·WebsiteData11파일의 raw SHA·복원·위치/매핑까지 remote_delivery_complete이며 WebsiteData8개만 갱신했다. 소급 잔여26회차/271단위·metadata2, 전체 필수 WBS3완료/17부분/2미착수·독립 human0/60·새 정규0/7은 유지한다.
+
+가속화 기본은 완료 checkpoint 재사용→변경 단계만 실행→같은 기간의 작은 회차 묶음 발행이다. 표적 검사는 coherent 코드 묶음에 한 번, 전체 CI는 최종 발행 후보에 한 번 수행한다. 원문·모델·전체 검사·build/push를 근거 없이 재시도하지 않는다. 이번 모델6호출은 실제 wall_ms546,931(약9분7초), 외부 Pages updating_pages는 약7분15초였고 나머지 주요 병목은 구형 문서 연결·#문자 렌더링 결함이었다. 추가 구조 확장은 현재 완료를 막는 결함에 한정하고 남은26회차의 전환을 우선한다. 한시간 반복 병목은 없었으며 전체 WBS와 재개 지점은 외장 core-progress-approved-source-bundle-20261008-v50.md에 있다.
 
 ## 19.401. 구형 출처 목록의 명시 제외와 요약에만 남은 사건 복원
 

@@ -11602,7 +11602,13 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 
 `section_event_review: {sha256, original_mention, original_event_checked: true, reason}`를 event에 기록한다. anchor는 실제 depth1 `오픈소스와 도구` 단위이며 previous_title도 원래 섹션 제목이다. 전체 문서·단위 SHA·직접 원문 URL·원래 문장의 포함과 단위 disposition/event 일치를 검증한다. h2를 삽입하거나 source-only anchor로 바꾸지 않는다. 원문 HTML과 같은 공식 release API가 대체 관계이면 기존 source_alternative_reviews를 사용하며 시간대 변환은 정확한 /published_at used claim으로 입증한다.
 
-64개 표적 검사에서 기존 h2/Source List 전환과 새 depth1 경로의 정상·거짓 문장·해시·검토 누락·다른 섹션·사건/출처 불일치를 확인했다. 두 새 processing 입력은 stored source selection을 사용하고 qwen3.8:27b-mlx 원 추론/대조를 보존한다. multi-source candidate-key는 실제 source ID로 지정한다. 잘못된 key 검증 실패는 모델 호출 전 종료됐으며 임의 key나 후보 장부를 만들지 않았다. 아직 새 원고 승인/발행이 아니다.
+64개 표적 검사에서 기존 h2/Source List 전환과 새 depth1 경로의 정상·거짓 문장·해시·검토 누락·다른 섹션·사건/출처 불일치를 확인했다. 두 processing 입력은 stored source selection을 사용하고 qwen3.8:27b-mlx 원 추론/대조를 보존한다. multi-source candidate-key는 실제 source ID로 지정한다. 잘못된 key 검증 실패는 모델 호출 전 종료됐으며 임의 key나 후보 장부를 만들지 않았다.
+
+일반 원고의 #문자가 generated tag로 오인되면 기사에 inline code를 추가하는 우회를 쓰지 않는다. markdownProse에서 모든 #문자를 escape하고 기존 markdownProseText 역변환을 유지한다. 실제 tags 데이터와 혼합하지 않는다. 기존 plain text 계약·render 비교·멱등성26/26을 확인했고 실패 preview v1/v2와 미사용 inline-code 원고는 보존했다. 최종 v3 preview는 원래 승인 두 원고를 재사용해 모델 호출0·validate/build/site/웹RSSGitHub consistency를 통과했다.
+
+실제 완료(2026-10-08): core-jul03-delivery-20261008-v1, db07b12d/Actions37644020868 전체1,184/1,184·Python/build/site/deploy 성공. 같은 Drive 두 ID 저장→216원본 actual readback→canonical import→한 번 commit/push→public raw 확인까지 완료했다. Research2 ZIP·WebsiteData11파일은 native remote_delivery_complete·raw SHA·복원·위치/매핑을 확인했다. WebsiteData8변경/3불변이며 새 회차·정규 운영 횟수는0이다. 실제 desktop Enter·URL·뒤로 가기·기업 태그,390px 가로 넘침0·지도0·#번호 잘못된 링크0을 확인했다. 전체 WBS3/22·부분17·미착수2, 소급26회차/271단위·metadata2·human0/60·정규0/7은 남는다.
+
+다음 묶음도 기존 raw/parse/추출/대조/승인 checkpoint부터 확인해 변경 단계만 실행한다. 같은 코드의 표적 검사와 최종 발행 후보의 전체 CI를 각각 한 번 수행하며 완료 stage를 다시 호출하지 않는다. Drive metadata가 동일한 bytes와 불변 생성 파일을 재사용하고 connector는 처음부터 tty:true로 실행한다. 외부 Pages 대기는 새 build/push 없이 같은 delivery run으로 재개한다. 이번 모델6호출 약9분7초·Pages 약7분15초를 실제 로그로 기록했고 속도 개선율은 미측정이다. 계획과 전수 WBS의 반복 확장 대신 현재 묶음의 상태·근거·다음 재개 지점을 갱신한다. WBS는 core-progress-approved-source-bundle-20261008-v50.md다.
 
 ## 494. 구형 출처 제외와 Source List 사건 복원
 
