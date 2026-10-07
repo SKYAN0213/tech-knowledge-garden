@@ -223,6 +223,17 @@ const baseMetadata = new Set([
   "knowledge_notes_created",
   "knowledge_notes_updated",
 ])
+// Historical editions used both heading sets. Resolve only these exact section
+// names for review; original text, unit hashes and source identities stay fixed.
+const legacySectionTitle = (title) =>
+  ({
+    "Executive Summary": "한눈에 보기",
+    "Major News": "오늘의 핵심 기사",
+    "Important Papers": "논문과 연구",
+    "Open Source & Tools": "오픈소스와 도구",
+    "Industry Analysis": "흐름 읽기",
+    "Actionable Insights": "바로 써먹을 점",
+  })[title] || title
 
 function assertMetadataReview(packet, meta, relativePath) {
   const fields = Object.keys(meta)
@@ -420,7 +431,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         ) ||
         units.some((unit) => unit.depth !== 1) ||
         !same(
-          units.map((unit) => unit.title),
+          units.map((unit) => legacySectionTitle(unit.title)),
           [
             "한눈에 보기",
             "오늘의 핵심 기사",
@@ -668,7 +679,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         decision.decision === "omitted_editorial" &&
         (unit.depth !== 1 ||
           !["흐름 읽기", "바로 써먹을 점", ...(noArticles ? ["한눈에 보기"] : [])].includes(
-            unit.title,
+            legacySectionTitle(unit.title),
           ))
       )
         throw Error("Legacy transition editorial omission is limited to ancillary sections")

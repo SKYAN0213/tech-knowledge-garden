@@ -76,7 +76,9 @@ function fixture(t, change = () => {}) {
       decision:
         unit.title === "Source List"
           ? "omitted_discovery"
-          : ["한눈에 보기", "흐름 읽기"].includes(unit.title)
+          : ["한눈에 보기", "흐름 읽기", "Executive Summary", "Industry Analysis"].includes(
+                unit.title,
+              )
             ? "omitted_editorial"
             : "omitted_empty",
     })),
@@ -91,6 +93,54 @@ function fixture(t, change = () => {}) {
   }
   return { vault, relative, existing, packet, key }
 }
+
+function englishSections(value) {
+  for (const [before, after] of [
+    ["한눈에 보기", "Executive Summary"],
+    ["오늘의 핵심 기사", "Major News"],
+    ["논문과 연구", "Important Papers"],
+    ["오픈소스와 도구", "Open Source & Tools"],
+    ["흐름 읽기", "Industry Analysis"],
+    ["바로 써먹을 점", "Actionable Insights"],
+  ])
+    value.body = value.body.replace("# " + before + "\n", "# " + after + "\n")
+}
+
+test("English legacy sections reuse the same complete review and preserve original unit identity", (t) => {
+  const f = fixture(t, englishSections)
+  assertLegacyTransition(f.packet, [], f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, [], [], [f.packet])
+  const next = parseNote(projection.content)
+  for (const field of ["date", "time", "coverage_start", "coverage_end"])
+    assert.equal(next.meta[field], f.existing.meta[field])
+  assert.deepEqual(next.meta.article_records, [])
+  assert.deepEqual(next.meta.article_reviews, [])
+  assert.deepEqual(
+    f.packet.units.map((u) => [u.unit_id, u.sha256]),
+    legacyReviewUnits(f.existing.body, f.relative).map((u) => [u.unit_id, u.sha256]),
+  )
+  assert.equal(fs.readFileSync(f.existing.file, "utf8"), f.packet.before_content)
+  assert.doesNotMatch(projection.content, /Executive Summary|근거 없는|https:\/\/example/)
+})
+
+test("English heading recognition cannot hide real articles or an unrecognized section", (t) => {
+  for (const change of [
+    (v) => (v.body = v.body.replace("# Major News\n\n없음", "# Major News\n\n실제 기사 내용.")),
+    (v) => (v.body = v.body.replace("# Important Papers", "# Unknown Papers")),
+    (v) =>
+      (v.body = v.body.replace(
+        "# Industry Analysis\n\n",
+        "# Industry Analysis\n\nhttps://example.org/report\n\n",
+      )),
+    (v) => (v.meta.new_items_count = 1),
+  ]) {
+    const f = fixture(t, (v) => {
+      englishSections(v)
+      change(v)
+    })
+    assert.throws(() => assertLegacyTransition(f.packet, [], f.existing, f.relative))
+  }
+})
 
 test("article-free publication requires a fully reviewed retrospective cleanup", (t) => {
   const f = fixture(t)

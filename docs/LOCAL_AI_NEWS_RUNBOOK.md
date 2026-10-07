@@ -11719,3 +11719,9 @@ Drive 원문 저장 시 부모 목록에 하위 폴더가 있으면 같은 관�
 사람은 핵심 사실·인용 구간·수치 조건·필요한 설명·금지 변형을 직접 작성하고 검토자·직접 읽은 시점·모델 출력 미열람 여부를 입력한다. 양식의 facts는 빈 배열이고 검토 여부는 false/null이므로 초안 다운로드는 독립 gold 등록이 아니다. 앱 브라우저의 file 주소 정책 때문에 실제 화면 렌더링은 별도 미검증으로 기록한다. 코드 검사는 HTML escaping·저장 JSON의 파싱·원문 bytes·제출 차단·native gold 등록 경로를 포함한다.
 
 완성한 JSON을 private root 안에 보관한 뒤 `npm run research:evaluation-review -- import --run <import-run> --packet-run <packet-run> --review <root-relative-json>`로 등록한다. packet SHA·원문 snapshot·원 source run 일치, 독립 human provenance와 exact-snapshot successor를 확인하고 기존 saveEvaluationCase의 인용·날짜·수치·필수 필드 검증을 사용한다. 기존 기준안은 유지한다. 검토 양식 생성이나 Codex의 직접 검토를 사람 평가 완료로 계산하지 않는다. 같은 원문에 독립 human revision이 추가되면 한 고유 원문으로 집계하며 human gold의 존재를 반영한다.
+
+## 498. 영문 과거 회차의 공통 전환
+
+legacy-transition은 기존 여섯 영문 섹션 이름을 정확히 대응되는 한국어 섹션으로 해석한다. 원본·구간 ID·SHA·출처·발표일은 보존하며 누락/순서 변경/알 수 없는 이름/실제 기사 본문은 동일한 전수 검토로 차단한다. 안내 중심 회차는 취재 완료나 새 소식 없음으로 승격하지 않는다. 관련 no-articles/projection 검사 54건을 통과했다.
+
+6월27일 06:01 MAI-Code-1-Flash는 당시 GitHub 발표를 근거로 재작성했다. 현재 Docs의 모델 버전·요금을 과거로 소급하지 않고 제공 범위·정가 기반 사용량 과금·관리자 정책 조건을 보존한다. 6월27일 18:02·28일 18:02·29일 18:03의 안내 중심 회차와 기존 batch로 묶어 Drive 기존 ID로 저장했다. 최종 공개 확인과 WBS는 외장 core-progress-runtime-recovery-20261008-v51.md에 기록한다. 중간 코드는 로컬 commit하고 콘텐츠와 한 번 push해 CI를 중복 실행하지 않는다.
