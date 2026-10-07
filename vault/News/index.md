@@ -213,6 +213,12 @@ generated_by: tech-knowledge-garden
 - [[News/ebd15df645baad20|GitHub Mobile, Copilot 세션의 상태·저장소 필터와 정렬 추가]] · 2026-07-11
 - [[News/060f4905c5779472|Claude Code v2.1.206, 외부 작업공간 진입 확인과 MCP 시간 제한 수정]] · 2026-07-10
 - [[News/3b59b1b88f4cc9fa|AI SDK, 도구 승인 메타데이터와 xAI 스트리밍 결과 처리 수정]] · 2026-07-07
+- [[News/a8d066afc8b4014f|Vercel AI SDK, Anthropic AWS 연동 패키지 버전을 2.0.0으로 정정]] · 2026-07-06
+- [[News/c7b2e07cfca0bff5|Vercel AI SDK, OpenAI 채팅 요청의 인라인 이미지를 data URL로 전송]] · 2026-07-06
+- [[News/830814f3f9f9f11b|Vercel AI SDK, Anthropic의 thinking 비활성화 설정 누락 수정]] · 2026-07-06
+- [[News/72908562dae31ce2|LangChain OpenRouter 연동, 사용자 지정 HTTP 헤더 전달 수정]] · 2026-07-06
+- [[News/188c65c2899f9a3c|LangChain Mistral 연동, 답변의 출처 정보와 stop 시퀀스 지원]] · 2026-07-06
+- [[News/90b363febceab42d|MCP 참조 서버 2026.7.4, 메모리 그래프 리소스·구독 기능 반영]] · 2026-07-05
 - [[News/af17286f6e6b237f|Claude Code 2.1.201, Sonnet 5 세션의 시스템 메시지 처리 변경]] · 2026-07-04
 - [[News/3c9c826b5f004bf4|Claude Code 2.1.200, 권한 기본값과 백그라운드 세션 복구 수정]] · 2026-07-04
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
