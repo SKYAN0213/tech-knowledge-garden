@@ -71,6 +71,29 @@ test("Reviewed themes, event tags and entities retain the real summary and stabl
   assert.deepEqual(classifyArticle(body.replaceAll("\n", "\r\n"), "CRLF"), a.classification)
 })
 
+test("implementation guidance retains its source identity without claiming a product feature", () => {
+  const issue = fixture()
+  const original = extractArticles(issue)[0]
+  issue.body = issue.body
+    .replace("**테마:** 투자·기업거래", "**테마:** 연구·기술")
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "구현·운영 지침")
+  const article = extractArticles(issue)[0]
+  assert.equal(article.id, original.id)
+  assert.equal(article.classification.theme, "연구·기술")
+  assert.deepEqual(article.classification.event_tags, ["구현·운영 지침"])
+  assert.deepEqual(classificationMeta(article).tags, [
+    "sector/robotics-manufacturing",
+    "theme/research",
+    "event/구현-운영-지침",
+  ])
+  assert.throws(
+    () =>
+      classifyArticle(issue.body.replace("**테마:** 연구·기술", "**테마:** 제품·서비스"), "Guide"),
+    /Invalid or excessive/,
+  )
+})
+
 test("Naming changes use a product tag without implying new detection behavior", () => {
   const classified = classifyArticle(
     body

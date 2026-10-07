@@ -7,7 +7,7 @@ export const THEMES = [
   {
     id: "research",
     name: "연구·기술",
-    tags: ["새로운 방법", "성능 개선", "비용 절감", "실증·재현"],
+    tags: ["새로운 방법", "성능 개선", "비용 절감", "실증·재현", "구현·운영 지침"],
   },
   {
     id: "products",
