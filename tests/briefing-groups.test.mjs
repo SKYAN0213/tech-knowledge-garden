@@ -139,6 +139,8 @@ test("web briefing, RSS and GitHub retain every grouped lead, condition, source 
   assert.equal((web.match(/data-news-row/g) || []).length, 11)
   assert.match(rss, /소프트웨어·클라우드 · 5건/)
   assert.match(web, /data-news-day><h2>앱·IDE 업데이트/)
+  assert.match(web, /class="briefing-group" data-news-day><h2>앱·IDE 업데이트/)
+  assert.equal(web.includes('class="news-day" data-news-day><h2>앱·IDE 업데이트'), false)
   const news = newsView(i.items, i, href)
   assert.equal(news.includes("앱·IDE 업데이트"), false)
   assert.equal((news.match(/data-news-row/g) || []).length, 11)

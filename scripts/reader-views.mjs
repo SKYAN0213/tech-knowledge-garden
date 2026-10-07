@@ -57,7 +57,7 @@ export function newsView(
       ? briefingEntries
           .map((entry) =>
             entry.id
-              ? `<section class="news-day" data-news-day><h2>${esc(entry.title)}</h2><div>${entry.items.map(row).join("")}</div></section>`
+              ? `<section class="briefing-group" data-news-day><h2>${esc(entry.title)}</h2><div>${entry.items.map(row).join("")}</div></section>`
               : row(entry.items[0]),
           )
           .join("")

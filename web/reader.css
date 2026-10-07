@@ -913,6 +913,16 @@ dialog input {
   color: #596b61;
   font-variant-numeric: tabular-nums;
 }
+.briefing-group {
+  min-width: 0;
+  margin-bottom: 32px;
+}
+.briefing-group > h2 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #456155;
+}
 .news-row {
   margin: 0 0 32px;
   padding: 0 0 28px;
