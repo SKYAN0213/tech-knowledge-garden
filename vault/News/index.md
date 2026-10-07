@@ -252,6 +252,8 @@ generated_by: tech-knowledge-garden
 - [[News/90b363febceab42d|MCP 참조 서버 2026.7.4, 메모리 그래프 리소스·구독 기능 반영]] · 2026-07-05
 - [[News/af17286f6e6b237f|Claude Code 2.1.201, Sonnet 5 세션의 시스템 메시지 처리 변경]] · 2026-07-04
 - [[News/3c9c826b5f004bf4|Claude Code 2.1.200, 권한 기본값과 백그라운드 세션 복구 수정]] · 2026-07-04
+- [[News/199f1aeef5f0463c|Claude Code 2.1.199, 부분 작업 보존·백그라운드 에이전트 오류 수정]] · 2026-07-03
+- [[News/25c41221dd9a2fb1|Microsoft, 기업 AI 전담 사업에 25억 달러 투자 계획]] · 2026-07-03
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28

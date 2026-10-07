@@ -44,7 +44,7 @@ OpenAI, Anthropic, Google GenAI SDK의 프롬프트 입력 지점도 분석 대�
 
 ##### C#·Go의 데이터 흐름 모델 보강
 
-C#에서는 Razor Page의 OnGet·OnPost·OnPostAsync 같은 처리 함수의 인수를 외부 입력의 출발점으로 인식합니다. 해당 인수를 거치는 취약점 경로를 보안 쿼리로 검사할 수 있습니다.
+C\#에서는 Razor Page의 OnGet·OnPost·OnPostAsync 같은 처리 함수의 인수를 외부 입력의 출발점으로 인식합니다. 해당 인수를 거치는 취약점 경로를 보안 쿼리로 검사할 수 있습니다.
 
 Go에서는 1.21에 도입된 log/slog 패키지의 함수와 Logger 메서드를 분석합니다. go/log-injection과 go/clear-text-logging 쿼리가 해당 로깅 코드의 문제를 찾도록 모델을 추가했습니다.
 
