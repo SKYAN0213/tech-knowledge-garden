@@ -11472,3 +11472,11 @@ npm run research -- preview --run PREVIEW_RUN --publication-handoff runs/EDITORI
 ```
 
 실물 `daily-20261007-four-fields-editorial-v1`의 당시 receipt는 fact_review3/empty_extraction_review1이었다. 실제 native 승인·후보 장부·회차를 읽으면 KAIST CONDA·셀트리온·AWS Batch의 3건이 이미 회차에 있다. 초기 continuation-v2는 승인 판본과 현재 수집 판본을 같은 것으로 요구해 실패했으며 원본을 보존했다. 승인 자체는 native 과거 판본으로 검증하고 현재 판본을 별도 상태로 분리했다. continuation-v3의 실제 실행·재개는 3건을 새 발행에서 제외하고 빈 추출 복구 검토1건을 유지했다. 명령·모델 추가 실행0, raw/승인/장부15입력 SHA 불변이며 v3 측정은652ms/재개301ms다. 최신 code의 실물과 CI는 외장 evidence root의 `daily-editorial-*`에 이어 보존한다. 신규 원고·Drive 변경·정규 운영 완료로 계수하지 않는다.
+
+최종 코드 `cdc12ccc1e2ebac157ad41dc7f1a11d88934813a`의 실제 continuation-v4는692ms, 동일 실행 재개330ms이며 모델·native write 명령0, 보호한15입력 SHA 불변이다. private status는 실행 중 실제 PID와 후보를 표시하고 완료 후 `not_running`으로 반환한다. 발행 가능한 사건이0건인 이 handoff를 실제 preview CLI에 넣으면 원고·Drive 작성 전에 `Nonempty exact daily publication selection required`로 거부한다. 이미 회차에 있는3사건을 새 기사로 재발행하지 않았다.
+
+정확한 commit의 [Actions37570540897](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/37570540897)은 Node1130/1130, build/site/deploy를 통과했다. 변경 묶음의 전체 CI는1회다. 배포 후 실제 HTTPS로 RSS651282bytes와 reader-index1290468bytes를 읽어 이전 SHA·전체 bytes가 동일함을 확인했다. `daily-editorial-live-proof-v4.json`, `daily-editorial-ci-final-v1.json`, `daily-editorial-public-preservation-v1.json`에 실제 관측을 보존한다.
+
+기존 `tech-ai-briefing-08`의 지침을 native automation tool로 갱신하고 실제 TOML readback을 대조했다. 저장 결과의 마지막 줄바꿈 정규화 외에 기존 prompt를 보존하며 오전8시·ACTIVE·모델gpt-6-luna/medium·프로젝트·작업경로 등11개 설정은 유지했다. 공통 검토/승인 handoff와 기존 Drive/배포 실행을 사용하고, 완료 단계·모델·전체 CI를 반복하지 않도록 명시했다. 별도 예약·인증·유료 API는 추가하지 않았다. 설정 저장과 실제 새 예약 실행은 구분하며 새 정규 운영 횟수는0/7이다. `tech-ai-briefing-08-editorial-readback-v1.json`에 설정 관측을 보존한다.
+
+전체 WBS는완료3/22(14%)·부분17·미착수2다. 소급40회차/394구간, 독립 평가0/40+0/20, Research/WebsiteData의 새 전달 연결과 실제 새7회 운영은 남아 있다. 진척 조회는 `core-progress-daily-editorial-20261007-v29.json`을 사용하며, UI status 표시만을 위해 전체 수집·Drive 재획득·전체 status를 반복하지 않는다. 다음 수직 슬라이스는 공통 발행 경로의 비공개 Research/WebsiteData 전달을 연결하고 기존 소급 작업은 최대5회차씩 묶는다.

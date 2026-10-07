@@ -5261,3 +5261,5 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 `preview --publication-handoff`는 같은 승인 목록을 직접 읽는다. 최신 체크포인트·handoff SHA·후보의 현재 원문 연결·native 승인 receipt와 승인 원고 해시를 다시 대조한 뒤 기존 preview의 전체 사실·원고 검증을 수행한다. 승인 목록을 수작업으로 복사하지 않는다. 기존 `--approved-run`, preview·Drive·발행 경로는 유지한다. 실행 중인 후보와 실제 PID 상태, 검토·원고 경로와 승인 handoff는 기존 비공개 일일 처리 현황에 표시한다.
 
 완료 증거는 native source review→writer→editorial approval→candidate linkage→preview selection 시험, 판본 변경·검토 변경·중복 회차·실패 재시도 거부, 실제 저장된 일일 후보의 읽기·재개다. 실물은 이미 승인돼 회차에 들어 있는 3건과 빈 추출 복구 검토1건이며, 신규 원고·Drive·공개 변경이나 정규 운영 횟수로 계수하지 않는다. 최초 표적73개 중 fixture1개가 source processor 인자를 잘못 넘겼고, 수정 후 같은 fixture의 잘못된 회차 key가 native 계약에서 거부됐다. fixture만 고쳐 해당 검사1개를 통과했고, 최신 동작6개와 preview selection 검사1개를 통과했다. full CI·실물 재개 결과는 런북482에 이어 기록한다.
+
+최종 실제 v4 실행692ms/재개330ms, 추가 모델·쓰기 명령0, 보호15입력 SHA 불변이다. 정확한 `cdc12ccc1e2ebac157ad41dc7f1a11d88934813a`의 Actions37570540897이 Node1130/1130·build/site/deploy를 통과했으며 공개 RSS·reader-index의 실제 bytes도 보존됐다. 기존 오전8시 automation은 native tool로 지침만 갱신하고11개 설정을 실제 readback으로 확인했다. 신규 예약 실행은 아직 관측하지 않았다. 전체 WBS3/22(14%)·부분17·미착수2와 새 정규 운영0/7은 유지한다. 최신 focused checkpoint-v29와 런북482에 다음 구간 및 실제 검증 증거를 기록한다.
