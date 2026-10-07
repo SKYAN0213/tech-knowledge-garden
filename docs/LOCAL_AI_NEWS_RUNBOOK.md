@@ -11373,3 +11373,30 @@ Drive Research 실제 원격 bytes·native 복원·registry 완료:
 승인 세 개의 원격 복원본에서 native loadCurrentApproval을 다시 실행해 동일 사건·source 날짜·10월7일 승인일을 확인했다. 전달 custody는 evidence154파일과 native 작성/공개/WebsiteData·post 작성 snapshot을 보존하고 source_versions0이다. 중복 raw wrapper와 큰 archive b64 응답의 생략 목록/원 SHA는 custody에 명시했다. 실제 pre 전수 raw·post 변경1raw·fresh 전수 receipt/inventory·post 작성 bytes·WebsiteData 후속 bytes와 승인 closure는 보존했다. 전체 runtime 복원·독립 평가·새 shadow 완료를 뜻하지 않는다.
 
 최종 canonical inventory v2 64/verified201·미검토41/403·metadata 필요7·diagnostics0, 원장923/verified109/unreviewed800·승인receipt56·회차 내 중복0이다. full status는1회 생성했으며 WBS3/22(14%)·개발27/40·보류1/20·human0/40/0/20·shadow0/7·goal active를 유지한다. 이번 source code 변경0/유료API·예약변경0/55경로 전체수집0/로컬전체suite0/릴리스CI1회다. 이미 empty 판정된7월19·20일은 반복하지 않고 다음7월18일 원본 SHA46616c4e6050ac68d63f422b787380a154d49e161cc32cb16ebb87d77b21f18f에서 이어간다.
+
+
+## 479. 7월18일 OpenAI 평가 제안·Copilot 저장소별 지표 재검토와 전달
+
+canonical repo는 /Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden, 승인 root는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1/combined-v2, evidence는 /Volumes/X5Storage/tkg-daily-core-20261007-v1/legacy-jul18-*와 core-progress-checkpoint-20261007-v26.json이다. fixed context76bf365cdf45ae0759104a59654eadc31b8286fc0e88cfb2cdab9f44688d5704의 두 exact 후보 전체 이력을 읽은 뒤 native candidate approval에 연결했다. 발견 시각은 실제10월7일이다.
+
+shared collect source-collect-20261007-v1에서 GitHub HTTP200/13blocks, OpenAI HTTP403을 기록했다. OpenAI는 실제 공식 web 원문 turn694view0의13~145행과 원문 URL·day-only 날짜를 private raw 결과로 보존하고 import-capture로10631bytes/SHA bdb9f9f2e904c76676e3d51c4b6a9518b095bdef27695b933101aaa2359d96e7·66blocks를 받았다. selected-source, native extract/review/draft/correct/approve/candidate-approval을 수행했다. 기존 canonical Python runtime을 RESEARCH_PYTHON으로 재사용했다.
+
+native model-policy budget의 actual complete11(추출4+5/작성1+1), qwen3.8:27b-mlx/think:false/digest5642e97495e1a088883805981563dcdc4a040c2f53388b7a41d1f24d3622cf7e/runtime0.34.4를 model-call-audit-v2에 보존한다. GitHub verified10/deferred1/rejected1, OpenAI verified10/deferred6이다. GitHub의 잘못된 제목 인용을 거부하고 직접 원문 사실4개를 추가했다. OpenAI의 숫자 조건 오류·홍보·중복 요약을 보류하고 핵심 평가·비용·완료·접근 조건7개를 직접 보강했다. 총20검증 사실이며 독립 human 평가가 아니다. 비용 나눗셈의 한국어 표현을 정정한 승인 원고만 반영했다.
+
+native transition은4938bytes 원본9units를 전부 판정했다. 사건 c5c5248230951857/a7ef730e554338df는7월17일/한국시간18일이며 source date와 검토일은 별도다. 원 취재 cutoff는 원 iCloud와 최초 Git 기록에 없어 null/unrecorded로 유지한다. 독자 화면에 운영 안내·분석 생략 이유·빈 분석 탭·연결지도는 넣지 않았고 회사와 제품을 개념으로 생성하지 않았다.
+
+Drive freshness 만료 시 전체216raw+두 inventory를 실제로 다시 읽어 pre-v2를 만들었다. 두 전체 receipt/pre-post inventory에서 변경은 기존7월18일 파일1개뿐이다. Native writer 첫 비PTY 실행은 stdin이 닫혀 종료됐고 connector update는 수행하지 않았다. durable intent를 삭제하지 않았다. 새 scoped pre-v2에서 원격 기존 bytes를 재확인한 뒤 --resume-intent로 동일 update를 PTY에서 명시적으로 재개했다. canonical outer garden-operation lock 안에서 actual MCP update1회 후 fresh metadata/raw/두 parent listing을 writer에 전달했다. session ab1e5fa2-5343-4a73-a3b2-61c8b0fe2008은 verified_complete(verified1/pending0/conflict0), unresolved0이다. writer의 write_performed:false는 controller 자체가 connector를 호출하지 않았다는 뜻이며 실제 update는1회였다.
+
+새10183bytes/SHA b799f4b77a0d3e292a473bda146b0875b361b02652d69616b6a550262278dbfd를 native post snapshot으로 canonical에 pull(updated1/deleted0)했다. immutable authoring proof26파일을 canonical root에 동일 bytes로 연결하고 publish --operation legacy-jul18-publish-20261007-v1 --release runs/legacy-jul18-reader-20261007-v1/drive-authoring/releases/9398cbe493ae4c48585cf41c7a8ae7ec1887826c6e2e4e3727e0298e6a8d95d4.json을 실행했다. same commit6dc53eeb1d87dd001a33034233b6bbcad233201b/Actions37559793251의 completed/success와 public-readback14개 bytes 일치 후 native publication deployment/public 기록을 완료했다.
+
+CI Node1105통과·Python15+10+3·PDF5+3·build/site/deploy 성공이다. 실제 공개 탭 URL·뒤로 가기·키보드 전체→AI,390px overflow0·지도0을 확인했다. WebsiteData exporter가 배포 전 live/local 불일치를 거부한 첫 시도를 남겼고 정확한 배포 success 후 TECH_GARDEN_DRIVE_STAGE_DIR로 새 export를 수행했다. 11개 같은ID/private/raw bytes 확인(8수정/3불변),385페이지·203기사·26개념·22관계다. RSS40 GUID/pubDate와 XML 전체 SHA c496473be4eff6b5861f84d97c6cd46094b9617f8bf48a079bd6047a5bf9e9c1은 불변이다.
+
+Drive Research 보관본은 실제 metadata/raw SHA·size와 native restore/register를 완료했다:
+
+- github: fileID1riqMYE8Z3JSO2ocdOo47QRB8uCC-GQao,131087bytes/SHA9f5d3929cce0572d46773fade7bc71fe8eb2b20f20d0883e8c197d430f82f1cd.
+- openai: fileID12CwL89DV7vaOjidUSHtTagiFDcVpu61H,196927bytes/SHAfef2dd699434c9188358b4d5b3486b4510809022c8e1dc12ff79cf8eff2e37b1.
+- delivery custody: fileID1qYZXvqWrYEQOV9K1d1jLDJHPuPg5dfhJ,3469295bytes/SHA126e11d628bb838dea2f153829b515cc7c4e471af3f2536da4aa381375f307f4.
+
+원격 승인 복원본에서는 candidate-only run 대신 실제 extraction 승인 run의 loadCurrentApproval을 실행해 두 사건·원문 날짜·검토일을 재확인했다. 전달 custody는152개 evidence/native 파일(archive155files/157members)을 보관한다. 중복 raw/base64/signedURL wrapper와 모델 설정 누락 first audit는 생략 해시를 남기고 native normalized raw/receipt, 완전 pre/post inventory/readback/post snapshot, WebsiteData bytes, 공개·운영 proof를 보존했다. 오류와 해결은 debug-record-v1에 있다. 전체 runtime·독립 gold·새 shadow 완료는 아니다.
+
+최종 inventory v2 65/203verified·미검토40회차/394units·metadata6·diagnostics0. 후보925/verified111/unreviewed800·receipt58이다. full status1회인 checkpoint-v26에서 WBS3/22(14%), 개발27/40/보류1/20·human0/40/0/20·shadow0/7 유지다. source code 변경0·55경로 전체 재수집0·로컬 전체 suite0·릴리스 CI1회, 같은 실패1시간 반복0·goal active. 다음은7월17일 원본 SHA4e6852252f9b88f16f3edf1b4363a3477ecc2efa2018e133cc9a94e5ab0e1d04의 Google 두 공식 발표다.
