@@ -21,6 +21,7 @@ import {
   validateStoredDailyPlan,
   verifiedDriveEdition,
   verifyDailyReceipts,
+  verifyDailyCoverageEvidence,
   verifyStoredListScan,
 } from "../scripts/research/daily-scan.mjs"
 
@@ -29,6 +30,29 @@ const temporary = (t) => {
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   return root
 }
+
+test("missing supplemental receipt fails explicitly before reading a scan", (t) => {
+  const root = temporary(t)
+  const window = { channel_id: "fanuc-en", since: "2026-09-29", until_exclusive: "2026-10-01" }
+  const state = {
+    covered: [
+      {
+        ...window,
+        kind: "verified_supplemental_scan",
+        source_run: "missing-scan",
+        reconciliation_run: "missing-proof",
+      },
+    ],
+  }
+  assert.throws(
+    () => supplementalCoverageReceiptForWindow(root, state, window),
+    /Supplemental coverage receipt is missing/,
+  )
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, window.channel_id, state),
+    /Supplemental coverage receipt is missing/,
+  )
+})
 const route = (channel_id, region) => ({
   channel_id,
   region,

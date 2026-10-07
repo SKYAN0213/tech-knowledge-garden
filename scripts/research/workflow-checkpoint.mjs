@@ -11,7 +11,11 @@ import {
 import { archiveManifest, packageResearchArchive } from "./archive.mjs"
 import { loadShadowHandoffBasis } from "./shadow-collection-basis.mjs"
 import { publicationOperationStatus } from "./publication-operation.mjs"
-import { readDailyReceipts, verifyDailyReceipts } from "./daily-scan.mjs"
+import {
+  readDailyReceipts,
+  verifyDailyReceipts,
+  verifyDailyCoverageEvidence,
+} from "./daily-scan.mjs"
 import { readBacklog } from "../research-window.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { buildArchiveClosure } from "./archive-closure.mjs"
@@ -93,10 +97,33 @@ export function workflowCheckpointPlan({
   tree(root, `daily/runs/${dailyRun}`, add)
   tree(root, `evaluation/shadow-inputs/${dailyRun}`, add)
   tree(root, `evaluation/shadow-bases/${dailyRun}`, add)
-  if (fs.existsSync(safePath(root, "daily/route-coverage.json"))) add("daily/route-coverage.json")
-  for (const receipt of readDailyReceipts(root, dailyRun)) {
-    const run = receipt.scan_evidence?.list_scan_run
-    if (!run) continue
+  const scans = new Set(
+    readDailyReceipts(root, dailyRun)
+      .map((r) => r.scan_evidence?.list_scan_run)
+      .filter(Boolean),
+  )
+  const coverage = readJSON(root, "daily/route-coverage.json")
+  const aliases = loadSameEventSourceAliases(root, backlogFile)
+  if (coverage) {
+    add("daily/route-coverage.json")
+    for (const [channelId, state] of Object.entries(coverage.routes || {})) {
+      const spans = (state.covered || []).filter(
+        (span) => span.kind === "verified_supplemental_scan",
+      )
+      if (!spans.length) continue
+      verifyDailyCoverageEvidence(
+        root,
+        channelId,
+        { covered: spans },
+        { backlogFile, sameEventAliases: aliases },
+      )
+      for (const span of spans) {
+        add(`daily/reconciliations/${id(span.reconciliation_run)}.json`)
+        scans.add(span.source_run)
+      }
+    }
+  }
+  for (const run of scans) {
     id(run)
     for (const file of archiveManifest(root, run).files) add(file.path)
     for (const parse of readJSON(root, `runs/${run}/parses.json`) || [])
@@ -105,7 +132,6 @@ export function workflowCheckpointPlan({
   // URL aliases are reviewed decisions, not title similarity. Their source,
   // review and original-event approval must travel together or restored scans
   // would lose the suppression proof and introduce duplicate candidates.
-  const aliases = loadSameEventSourceAliases(root, backlogFile)
   for (const alias of new Map([...aliases.values()].map((a) => [a.resolution_run, a])).values()) {
     const candidate = backlog.candidates.find((c) => c.key === alias.candidate_key)
     const approvalRun = candidate?.approval?.approved_run
@@ -338,6 +364,20 @@ export async function restoreWorkflowCheckpoint({ root, checkpointRoot = root, r
       receipts,
       { backlogFile },
     )
+    const coverage = readJSON(view, "daily/route-coverage.json")
+    const aliases = loadSameEventSourceAliases(view, backlogFile)
+    for (const [channelId, state] of Object.entries(coverage?.routes || {})) {
+      const spans = (state.covered || []).filter(
+        (span) => span.kind === "verified_supplemental_scan",
+      )
+      if (spans.length)
+        verifyDailyCoverageEvidence(
+          view,
+          channelId,
+          { covered: spans },
+          { backlogFile, sameEventAliases: aliases },
+        )
+    }
     if (
       !backlog ||
       backlog.candidates.length !== manifest.candidates ||

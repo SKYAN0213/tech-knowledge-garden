@@ -334,6 +334,8 @@ export function verifyDailyCoverageEvidence(
       if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
         throw Error("Supplemental coverage has no valid reconciliation run")
       const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
+      if (!receipt)
+        throw Error("Supplemental coverage receipt is missing: " + span.reconciliation_run)
       const scan = storedListScan(root, receipt.scan_run)
       const expectedUntil = scan.summary.window
         ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
@@ -682,6 +684,8 @@ export function supplementalCoverageReceiptForWindow(
     if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
       throw Error("Supplemental coverage has no valid reconciliation run")
     const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
+    if (!receipt)
+      throw Error("Supplemental coverage receipt is missing: " + span.reconciliation_run)
     const scan = storedListScan(root, receipt.scan_run)
     const expectedUntil = scan.summary.window
       ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]

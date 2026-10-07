@@ -18,7 +18,8 @@ import {
   freezeShadowHandoffBasis,
 } from "../scripts/research/shadow-collection-basis.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
-import { sha256 } from "../scripts/research/contracts.mjs"
+import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { supplementalCoverageReceiptForWindow } from "../scripts/research/daily-scan.mjs"
 import { registerArchiveLocation } from "../scripts/research/archive-locations.mjs"
 import {
   workflowCheckpointPlan,
@@ -206,6 +207,83 @@ test("unfrozen daily coordinator state cannot become a checkpoint", async (t) =>
   const { f, options } = await setup(t)
   fs.unlinkSync(path.join(f.root, "daily/runs/daily/shadow-basis.json"))
   assert.throws(() => workflowCheckpointPlan(options), /Frozen daily handoff/)
+})
+
+test("workflow checkpoint restores supplemental coverage receipt and its original scan bytes", async (t) => {
+  const { f, options } = await setup(t)
+  const url = "https://example.com/supplemental"
+  const body = Buffer.from('{"items":[]}')
+  const digest = sha256(body)
+  const bodyPath = `documents/${sourceId(url)}/versions/${digest}/body.bin`
+  const window = { channel_id: "controlled", since: "2026-09-29", until_exclusive: "2026-10-01" }
+  atomicWrite(f.root, bodyPath, body)
+  for (const [file, value] of Object.entries({
+    "list-scan.json": {
+      status: "window_scanned",
+      channel_id: window.channel_id,
+      window,
+      candidate_count: 0,
+    },
+    "list-pages.json": [
+      {
+        original_url: url,
+        source_id: sourceId(url),
+        source_version_id: `${sourceId(url)}:${digest}`,
+        fetch_status: "captured",
+        body_path: bodyPath,
+        body_sha256: digest,
+      },
+    ],
+    "documents.json": [],
+    "parses.json": [],
+    "candidates.json": [],
+  }))
+    atomicWrite(f.root, `runs/supplemental/${file}`, value)
+  const receiptPath = "daily/reconciliations/supplemental-proof.json"
+  atomicWrite(f.root, receiptPath, {
+    schema: "research-supplemental-coverage/v2",
+    reconciliation_run: "supplemental-proof",
+    scan_run: "supplemental",
+    channel_id: window.channel_id,
+    since: window.since,
+    scan_until_exclusive: window.until_exclusive,
+    coverage_until: window.until_exclusive,
+    reconciled_at: "2026-10-01T00:00:00+09:00",
+    candidate_keys: [],
+    candidate_published: false,
+    backlog_merge: { status: "merged", same_event_aliases: [] },
+  })
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      controlled: {
+        covered: [
+          {
+            ...window,
+            source_run: "supplemental",
+            kind: "verified_supplemental_scan",
+            reconciliation_run: "supplemental-proof",
+          },
+        ],
+      },
+    },
+  }
+  atomicWrite(f.root, "daily/route-coverage.json", coverage)
+  const created = await createWorkflowCheckpoint(options)
+  const restored = await restoreWorkflowCheckpoint({
+    root: f.root,
+    run: created.run_id,
+    destination: "workflow-restores/supplemental",
+  })
+  assert.equal(
+    supplementalCoverageReceiptForWindow(restored.root, coverage.routes.controlled, window, {
+      backlogFile: restored.backlog_file,
+    }).scan_run,
+    "supplemental",
+  )
+  assert.deepEqual(fs.readFileSync(path.join(restored.root, bodyPath)), body)
+  fs.unlinkSync(path.join(f.root, receiptPath))
+  assert.throws(() => workflowCheckpointPlan(options), /Supplemental coverage receipt is missing/)
 })
 
 test("workflow archive custody registers exact private bytes without granting dependency closure or a source index", async (t) => {

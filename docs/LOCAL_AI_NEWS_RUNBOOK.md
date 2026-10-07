@@ -11679,3 +11679,11 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 
 
 최종 private 검토 보관: 원래13단위의 before_content·제외 판정·Ollama 공식 태그 raw·Drive 전후 영수증·공개/원격 검증·CI·UI·WBS를30개 파일로 묶었다. core-jul07-0804-reviewed-custody-closure-20261007-v1.zip은 Research의1KEv059RO6tZYilxMl_PtzrjdQ8o1I7-G에 private 저장한 뒤 실제 raw SHA·독립 복원·native 위치 등록을 확인했다. 앞선 기사 근거9 ZIP 및 WebsiteData11파일과는 별도 운영 증거1 ZIP이다. 전체 runtime 복구와 독립 human 평가를 완료한 것으로 집계하지 않는다.
+
+## 495. 보완 조사 근거를 포함한 workflow 복구
+
+workflow checkpoint는 현재 route-coverage의 verified_supplemental_scan마다 daily/reconciliations의 정확한 영수증과 원래 scan의 저장 원문·parse를 함께 포함한다. 선택한 일일 실행의 scan과 중복된 scan은 한 번만 묶는다. 기존 verifyDailyCoverageEvidence로 기간·후보 병합·동일 사건 억제·원문 무결성을 확인하며, snapshot 생성과 복원 양쪽에서 검증한다. 보완 조사 기록은 기사 승인이나 공개·정규 실행 성공으로 승격하지 않는다.
+
+원래 복구 묶음에는 기간 기록만 들어 있고 보완 조사 영수증이 빠져 다음 handoff가 null.scan_run으로 실패했다. 이제 누락된 영수증은 구체적인 reconciliation ID와 함께 명시적으로 차단한다. 수집 재시도나 빈 기간 판정으로 바꾸지 않는다. 이전 checkpoint와 실패 로그는 보존하고 수정된 계약의 새 checkpoint ID를 사용한다.
+
+표적 검증은 tests/research-workflow-checkpoint.test.mjs와 daily-scan의 missing supplemental receipt 테스트다. 복원 후 원래 bytes로 기간 근거를 읽는 회귀 사례와 누락된 입력의 차단을 확인한다. 전체 테스트는 최종 코드 묶음에서 한 번 실행한다. 실제 상태와 재개 지점은 외장 core-progress-runtime-recovery-20261008-v51.md의 최신 기록에 남긴다.
