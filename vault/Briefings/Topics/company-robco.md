@@ -2,7 +2,7 @@
 title: RobCo의 투자와 미국 운영
 type: briefing-topic
 topic_id: company-robco
-date: 2026-10-07
+date: 2026-10-08
 description: RobCo는10월5일 기업가치가10억달러를 넘었다고 발표했다. 미국12개가 넘는 주의 고객 운영, 오스틴 제조·조립
   시설과 샌프란시스코 연구소를 소개했고 Alfie의2027년3월4일 출시 계획을 제시했다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-robco.md

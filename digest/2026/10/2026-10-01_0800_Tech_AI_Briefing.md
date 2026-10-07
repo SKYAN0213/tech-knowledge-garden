@@ -176,7 +176,7 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 [ifr.org 원문](https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent)
 
-### 에너지·기후기술 · 3건
+### 에너지·기후기술 · 4건
 
 #### [Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수](https://skyan0213.github.io/tech-knowledge-garden/news/926dd2776aef7b1b)
 
@@ -226,7 +226,29 @@ NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에
 
 [nlr.gov 원문](https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience)
 
-### 바이오·의료기술 · 3건
+#### [SK하이닉스, AI 데이터센터 전력·냉각 설계 해설](https://skyan0213.github.io/tech-knowledge-garden/news/677a5b5535577a74)
+
+발표 2026-09-30
+
+연구·기술 · 구현·운영 지침
+
+SK하이닉스는 9월 30일 공개한 AI 인프라 해설에서 데이터센터 냉각을 서버·랙의 열을 제거하는 단계와 회수한 열을 시설 밖으로 전달하는 단계로 설명했다. 고밀도 AI 시스템에서는 열 발생원에 더 가까운 곳에서 열을 제거하는 액체 냉각과 near-junction cooling 방식이 활용된다고 설명했다.
+
+##### 냉각과 시스템 효율
+
+해설은 냉각이 부족하면 프로세서가 작동 속도를 낮추고, 성능뿐 아니라 장비 신뢰성·수명·유지보수 비용에도 영향을 줄 수 있다고 설명한다.
+
+전력당 성능은 같은 전력으로 더 많은 추론 요청을 처리하거나, 같은 성능을 더 적은 전력으로 제공하는 관점으로 소개했다.
+
+##### 인용한 전력 전망과 랙 밀도 조사
+
+SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2024년 전력 소비는 약 415TWh로 전체 전력 소비의 약 1.5%였다. IEA의 2030년 전망은 약 945TWh이며, AI와 밀접한 가속 서버의 전력 소비는 2024\~2030년 연평균 30% 증가할 것으로 예상됐다.
+
+글이 인용한 Uptime Institute의 2025년 글로벌 데이터센터 조사에서는 응답자의 82%가 시설 내 최고 밀도 랙을 30kW 미만이라고 답했으며, 일부 캐비닛은 100kW를 초과하는 것으로 보고됐다.
+
+[news.skhynix.com 원문](https://news.skhynix.com/en/ai-infrastructure-insight-ep3/)
+
+### 바이오·의료기술 · 4건
 
 #### [Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개](https://skyan0213.github.io/tech-knowledge-garden/news/f795c88cad060d16)
 
@@ -277,6 +299,28 @@ Roche에 따르면 페네브루티닙과 테리플루노마이드의 중대한 �
 PPMS 시험의 간효소 상승은 페네브루티닙에서 Ocrevus보다 더 자주 관찰됐다고 회사는 설명했다. 세 핵심 시험에서 사망 보고의 불균형도 관찰됐으며, 사망 시점과 원인은 다양했다고 덧붙였다.
 
 [roche.com 원문](https://www.roche.com/media/releases/med-cor-2026-09-30)
+
+#### [국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석](https://skyan0213.github.io/tech-knowledge-garden/news/0921db2a3ce05bb8)
+
+발표 2026-09-30
+
+연구·기술 · 실증·재현 · 국립보건연구원 · 서울아산병원 · 충북의대
+
+국립보건연구원이 9월 30일 웹사이트에 게시한 보도자료에 따르면, 국립보건연구원·서울아산병원·충북의대 연구진은 한국인 특발성 확장성 심근병증 환자 202명의 유전정보와 임상 경과를 분석했다. 전체 환자 중 64명(31.7%)에서 질환 발생에 영향을 줄 수 있는 유전자 변이가 확인됐으며, LMNA 변이는 심장이식·사망 및 부정맥 위험과, TNNT2 변이는 상대적으로 많은 심장기능 회복 사례와 연관됐다.
+
+##### 연구 대상 및 데이터 출처
+
+연구 대상 202명은 심장이식을 받은 환자 56명과 외래 진료 환자 146명으로 구성되었다.
+
+국립보건연구원은 이번 연구에 한국인 급성심부전 등록연구(KorAHF), 확장성 심근병증 등록연구(KDCM), 장기이식 코호트(KOTRY)의 환자 자료를 활용했다고 설명했다.
+
+##### 분석 결과 및 논문 게재
+
+국립보건연구원은 성별과 진단 연령 등을 고려한 뒤에도 LMNA 및 TNNT2 유전자 변이에 따른 임상 경과 차이가 유지됐다고 설명했다.
+
+국립보건연구원은 연구 결과가 The Journal of Heart and Lung Transplantation에 게재됐다고 소개했다.
+
+[nih.go.kr 원문](https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1)
 
 ### 우주·기초과학 · 2건
 

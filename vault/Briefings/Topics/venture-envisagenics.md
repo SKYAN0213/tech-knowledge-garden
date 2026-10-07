@@ -2,7 +2,7 @@
 title: Envisagenics의 RNA 표적 연구 사업화
 type: briefing-topic
 topic_id: venture-envisagenics
-date: 2026-10-07
+date: 2026-10-08
 description: 2026-09-22 다년 연구·옵션 계약을 발표했다. 잠재 지급 합계와 실제 수령액, 연구 표적과 검증된 치료 성과를 구분한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/venture-envisagenics.md
 cssclasses:
@@ -20,7 +20,7 @@ generated_by: tech-knowledge-garden
 
 2026-09-22 다년 연구·옵션 계약을 발표했다. 잠재 지급 합계와 실제 수령액, 연구 표적과 검증된 치료 성과를 구분한다.
 
-2026-10-07까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-08까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

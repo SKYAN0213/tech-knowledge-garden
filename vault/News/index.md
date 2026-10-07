@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-07
+date: 2026-10-08
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,9 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/ae20dc3e235a741f|항우연, 누리호 5차 발사·군집위성 5기와 큐브위성 9기 궤도 투입 발표]] · 2026-10-08
+- [[News/01027b36b4a06b56|MIT, 움직이는 장애물의 속도 상한을 반영한 드론 경로 계획기 SANDO 공개]] · 2026-10-08
+- [[News/bcbd171efb3de844|KUKA·TD SYNNEX, 유럽 AMR 유통 제휴…교육·판매 지원 결합]] · 2026-10-08
 - [[News/66a7dcf7a164baf4|가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성]] · 2026-10-07
 - [[News/789d3f2f135ddb5f|GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용]] · 2026-10-07
 - [[News/d5bbd37fc92cb75b|LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약]] · 2026-10-07
@@ -42,6 +45,8 @@ generated_by: tech-knowledge-garden
 - [[News/ab2949406d668c88|Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정]] · 2026-10-04
 - [[News/e37d74d0774d9a49|Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월]] · 2026-10-04
 - [[News/4e48c8fa40d39243|에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획]] · 2026-10-04
+- [[News/0921db2a3ce05bb8|국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석]] · 2026-10-01
+- [[News/677a5b5535577a74|SK하이닉스, AI 데이터센터 전력·냉각 설계 해설]] · 2026-10-01
 - [[News/ce1e21d4581adaee|NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급]] · 2026-10-01
 - [[News/17f635e65de87807|MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원]] · 2026-10-01
 - [[News/e3728daf1bd4be8b|Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수]] · 2026-10-01

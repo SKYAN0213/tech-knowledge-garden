@@ -9,8 +9,8 @@ coverage_end: 2026-10-01T13:38:20Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 18
-new_items_count: 18
+source_count: 20
+new_items_count: 20
 linked_knowledge_notes: []
 knowledge_notes_created: []
 knowledge_notes_updated: []
@@ -380,6 +380,9 @@ article_records:
       Transit Intelligence Hub(PTIQ)로, 대중교통 기관의 실시간 모니터링, 운영 제어, 승객 소통 시스템을 하나의
       중앙 집중형 AI 플랫폼으로 통합하는 것을 목표로 한다. Google.org는 3년간의 프로젝트 기간 동안 자금 지원과 함께 자체
       엔지니어와 AI 제품 전문가의 무상 지원도 제공할 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: PTIQ의 핵심 목표와 역할
         paragraphs:
@@ -396,9 +399,6 @@ article_records:
             Jinhua Zhao이며, Jim Aloisi MIT 강사가 프로그램 매니저를 맡는다.
         source_urls:
           - https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
-    papers: []
-    relations: []
-    topic_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     kind: 사건 뉴스
     region: 해외
@@ -412,6 +412,9 @@ article_records:
     lead: National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한
       운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는
       2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: REORG의 작동 방식
         paragraphs:
@@ -429,6 +432,69 @@ article_records:
           - NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에 따라 전력을 복구했다고 보고했다.
         source_urls:
           - https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
+  - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: SK하이닉스
+      when: 2026-09-30
+      where: 미기재
+      what: AI 데이터센터 전력·냉각 설계 해설 공개
+      how: 열 제거와 시설 외부 방출, 고밀도 시스템의 냉각 방식 설명
+      why: 미기재
+    lead: SK하이닉스는 9월 30일 공개한 AI 인프라 해설에서 데이터센터 냉각을 서버·랙의 열을 제거하는 단계와 회수한 열을 시설 밖으로
+      전달하는 단계로 설명했다. 고밀도 AI 시스템에서는 열 발생원에 더 가까운 곳에서 열을 제거하는 액체 냉각과 near-junction
+      cooling 방식이 활용된다고 설명했다.
+    explanations:
+      - heading: 냉각과 시스템 효율
+        paragraphs:
+          - 해설은 냉각이 부족하면 프로세서가 작동 속도를 낮추고, 성능뿐 아니라 장비 신뢰성·수명·유지보수 비용에도 영향을 줄 수
+            있다고 설명한다.
+          - 전력당 성능은 같은 전력으로 더 많은 추론 요청을 처리하거나, 같은 성능을 더 적은 전력으로 제공하는 관점으로 소개했다.
+        source_urls:
+          - https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
+      - heading: 인용한 전력 전망과 랙 밀도 조사
+        paragraphs:
+          - SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2024년 전력 소비는 약 415TWh로 전체 전력 소비의
+            약 1.5%였다. IEA의 2030년 전망은 약 945TWh이며, AI와 밀접한 가속 서버의 전력 소비는
+            2024~2030년 연평균 30% 증가할 것으로 예상됐다.
+          - 글이 인용한 Uptime Institute의 2025년 글로벌 데이터센터 조사에서는 응답자의 82%가 시설 내 최고 밀도
+            랙을 30kW 미만이라고 답했으며, 일부 캐비닛은 100kW를 초과하는 것으로 보고됐다.
+        source_urls:
+          - https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
+    kind: 사건 뉴스
+    region: 국내
+    facts:
+      who: 국립보건연구원, 서울아산병원, 충북의대
+      when: 2026-09-30
+      where: 미기재
+      what: 한국인 특발성 확장성 심근병증 환자 202명 유전정보 및 임상 경과 분석
+      how: 국내 심부전 및 심장이식 등록자료 활용
+      why: 미기재
+    lead: 국립보건연구원이 9월 30일 웹사이트에 게시한 보도자료에 따르면, 국립보건연구원·서울아산병원·충북의대 연구진은 한국인 특발성 확장성
+      심근병증 환자 202명의 유전정보와 임상 경과를 분석했다. 전체 환자 중 64명(31.7%)에서 질환 발생에 영향을 줄 수 있는
+      유전자 변이가 확인됐으며, LMNA 변이는 심장이식·사망 및 부정맥 위험과, TNNT2 변이는 상대적으로 많은 심장기능 회복 사례와
+      연관됐다.
+    explanations:
+      - heading: 연구 대상 및 데이터 출처
+        paragraphs:
+          - 연구 대상 202명은 심장이식을 받은 환자 56명과 외래 진료 환자 146명으로 구성되었다.
+          - 국립보건연구원은 이번 연구에 한국인 급성심부전 등록연구(KorAHF), 확장성 심근병증 등록연구(KDCM), 장기이식
+            코호트(KOTRY)의 환자 자료를 활용했다고 설명했다.
+        source_urls:
+          - https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
+      - heading: 분석 결과 및 논문 게재
+        paragraphs:
+          - 국립보건연구원은 성별과 진단 연령 등을 고려한 뒤에도 LMNA 및 TNNT2 유전자 변이에 따른 임상 경과 차이가
+            유지됐다고 설명했다.
+          - 국립보건연구원은 연구 결과가 The Journal of Heart and Lung Transplantation에 게재됐다고
+            소개했다.
+        source_urls:
+          - https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
     papers: []
     relations: []
     topic_ids: []
@@ -532,14 +598,26 @@ article_reviews:
   - title: MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원
     event_id: 17f635e65de87807
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     event_id: ce1e21d4581adaee
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
+  - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
+    event_id: 677a5b5535577a74
+    review_status: verified
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-08
+    concept_ids: []
+  - title: 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
+    event_id: 0921db2a3ce05bb8
+    review_status: verified
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-08
     concept_ids: []
 ---
 
@@ -781,6 +859,50 @@ NLR은 Holy Cross Energy 엔지니어와 함께 본사 캠퍼스 전력을 메�
 
 NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에 따라 전력을 복구했다고 보고했다. [S18]
 
+## SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
+
+**분야:** 에너지·기후기술
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** 없음
+
+SK하이닉스는 9월 30일 공개한 AI 인프라 해설에서 데이터센터 냉각을 서버·랙의 열을 제거하는 단계와 회수한 열을 시설 밖으로 전달하는 단계로 설명했다. 고밀도 AI 시스템에서는 열 발생원에 더 가까운 곳에서 열을 제거하는 액체 냉각과 near-junction cooling 방식이 활용된다고 설명했다. [S19]
+
+### 냉각과 시스템 효율
+
+해설은 냉각이 부족하면 프로세서가 작동 속도를 낮추고, 성능뿐 아니라 장비 신뢰성·수명·유지보수 비용에도 영향을 줄 수 있다고 설명한다.
+
+전력당 성능은 같은 전력으로 더 많은 추론 요청을 처리하거나, 같은 성능을 더 적은 전력으로 제공하는 관점으로 소개했다. [S19]
+
+### 인용한 전력 전망과 랙 밀도 조사
+
+SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2024년 전력 소비는 약 415TWh로 전체 전력 소비의 약 1.5%였다. IEA의 2030년 전망은 약 945TWh이며, AI와 밀접한 가속 서버의 전력 소비는 2024\~2030년 연평균 30% 증가할 것으로 예상됐다.
+
+글이 인용한 Uptime Institute의 2025년 글로벌 데이터센터 조사에서는 응답자의 82%가 시설 내 최고 밀도 랙을 30kW 미만이라고 답했으며, 일부 캐비닛은 100kW를 초과하는 것으로 보고됐다. [S19]
+
+## 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
+
+**분야:** 바이오·의료기술
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 실증·재현
+**기업·기관:** 국립보건연구원, 서울아산병원, 충북의대
+
+국립보건연구원이 9월 30일 웹사이트에 게시한 보도자료에 따르면, 국립보건연구원·서울아산병원·충북의대 연구진은 한국인 특발성 확장성 심근병증 환자 202명의 유전정보와 임상 경과를 분석했다. 전체 환자 중 64명(31.7%)에서 질환 발생에 영향을 줄 수 있는 유전자 변이가 확인됐으며, LMNA 변이는 심장이식·사망 및 부정맥 위험과, TNNT2 변이는 상대적으로 많은 심장기능 회복 사례와 연관됐다. [S20]
+
+### 연구 대상 및 데이터 출처
+
+연구 대상 202명은 심장이식을 받은 환자 56명과 외래 진료 환자 146명으로 구성되었다.
+
+국립보건연구원은 이번 연구에 한국인 급성심부전 등록연구(KorAHF), 확장성 심근병증 등록연구(KDCM), 장기이식 코호트(KOTRY)의 환자 자료를 활용했다고 설명했다. [S20]
+
+### 분석 결과 및 논문 게재
+
+국립보건연구원은 성별과 진단 연령 등을 고려한 뒤에도 LMNA 및 TNNT2 유전자 변이에 따른 임상 경과 차이가 유지됐다고 설명했다.
+
+국립보건연구원은 연구 결과가 The Journal of Heart and Lung Transplantation에 게재됐다고 소개했다. [S20]
+
 # 리서치 노트
 
 없음
@@ -825,3 +947,5 @@ NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에
 - [S16] https://www.roche.com/media/releases/med-cor-2026-09-30
 - [S17] https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
 - [S18] https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
+- [S19] https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
+- [S20] https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1

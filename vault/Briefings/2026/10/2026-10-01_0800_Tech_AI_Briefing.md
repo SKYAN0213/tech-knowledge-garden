@@ -7,7 +7,7 @@ modified: 2026-10-01
 description: 2026-10-01 IT · AI · 로보틱스
 coverage_start: 2026-09-29T23:17:13.068Z
 coverage_end: 2026-10-01T13:38:20Z
-item_count: 18
+item_count: 20
 edition: Editions/2026/10/2026-10-01_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-01_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -113,7 +113,7 @@ Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다.
 
-### 에너지·기후기술 · 3건
+### 에너지·기후기술 · 4건
 
 #### [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]]
 
@@ -133,7 +133,13 @@ Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation C
 
 National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한 운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는 2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
 
-### 바이오·의료기술 · 3건
+#### [[News/677a5b5535577a74|SK하이닉스, AI 데이터센터 전력·냉각 설계 해설]]
+
+연구·기술 · 구현·운영 지침
+
+SK하이닉스는 9월 30일 공개한 AI 인프라 해설에서 데이터센터 냉각을 서버·랙의 열을 제거하는 단계와 회수한 열을 시설 밖으로 전달하는 단계로 설명했다. 고밀도 AI 시스템에서는 열 발생원에 더 가까운 곳에서 열을 제거하는 액체 냉각과 near-junction cooling 방식이 활용된다고 설명했다.
+
+### 바이오·의료기술 · 4건
 
 #### [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]]
 
@@ -152,6 +158,12 @@ HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·�
 정책·규제 · 인허가 · Roche
 
 Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다발성경화증 후보약 페네브루티닙(fenebrutinib)의 신약허가신청(NDA)을 우선심사 대상으로 접수했다고 밝혔다. 대상은 재발성 다발성경화증(RMS)과 일차 진행성 다발성경화증(PPMS)이며, 회사는 FENhance 1·2와 FENtrepid 3상 연구 결과를 접수의 근거로 제시했다.
+
+#### [[News/0921db2a3ce05bb8|국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석]]
+
+연구·기술 · 실증·재현 · 국립보건연구원 · 서울아산병원 · 충북의대
+
+국립보건연구원이 9월 30일 웹사이트에 게시한 보도자료에 따르면, 국립보건연구원·서울아산병원·충북의대 연구진은 한국인 특발성 확장성 심근병증 환자 202명의 유전정보와 임상 경과를 분석했다. 전체 환자 중 64명(31.7%)에서 질환 발생에 영향을 줄 수 있는 유전자 변이가 확인됐으며, LMNA 변이는 심장이식·사망 및 부정맥 위험과, TNNT2 변이는 상대적으로 많은 심장기능 회복 사례와 연관됐다.
 
 ### 우주·기초과학 · 2건
 
@@ -201,3 +213,5 @@ Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기
 - [S16] https://www.roche.com/media/releases/med-cor-2026-09-30
 - [S17] https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
 - [S18] https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
+- [S19] https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
+- [S20] https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
