@@ -11582,3 +11582,13 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 검증: evidence/window56통과, source processing 통합5통과, 마지막 frozen3개/legacy quote 호환3통과.12사실 fixture의 호출 수4→2는 검증했으나 실시간 개선율은 미측정이다. 원문과 상세 기사를 줄이지 않는다. 전체 suite는 코드 릴리스 후보에서 한 번 수행한다. 새 구조·보조 기능 확장은 중단하고 기존 수집→사실 검토→원고→Drive→공개 묶음을 먼저 끝낸다. 승인된 여러 기사를 한 번에 발행하고 full inventory/raw는 동일한 metadata에만 재사용한다.
 
 Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 원본에 보존했다. 같은 경로를 반복하지 않고 공식 tag의 commit 및 변경 파일을 별도로 확인한다. 다른 독립 원문인 MLflow63blocks는 common collect에서 정상 확보했다. 실패를 빈 뉴스로 표기하지 않으며 과거 CUDA 설명을 그대로 공개하지 않는다. 전체WBS3/22·독립평가0/60·정규0/7과 소급 잔여29회차/299구간·metadata2는 유지한다. 전체표와 실제 호출 관측은 외장 `core-progress-batching-acceleration-20261007-v47.md`, `core-source-batching-observation-v1.json`이다.
+
+## 493. 단일 publication meta와 승인 묶음의 보관
+
+공통 HTML parse의 dates.candidates와 basis.sources가 각각 정확한 timestamp/meta1개인 경우, 저장된 trafilatura 버전·adapter/config SHA와 /html/head/meta[n] content 위치를 검증해 원문 시간대를 보존한다. 구형 meta 배열만으로는 승인하지 않는다. dates.published_at·claim 발표 시각·인용 판본과 한국 날짜는 기존 eventDateMetadata로 대조한다. 원본 RL HTML을 직접 확인했고21개 표적 검사가 통과했다.
+
+7월7일 RL·PII·MiniMax·MLflow4기사는 native 승인 상태다. MiniMax의 prompt-caching 연결은 기존 note SHA·정의/별칭·원문 인용을 검토한 명시 assignment다. 승인 결과와 원 모델 출력·정정 이력은 보존한다. archive-closure는 approved processing run을 source-run으로 사용한다. source acquisition group에 processing run을 넣거나 root state를 만들어 우회하지 않는다.
+
+보관본은 private Research에서 exact 이름 충돌을 확인해 한 번 업로드하고 actual raw bytes를 package receipt SHA와 대조한다. 복구의 package/restore-to는 runtime root-relative이며 portable v2는 embedded manifest를 사용하므로 --source-manifest를 전달하지 않는다. ordinary v1에만 exact source manifest를 제공한다. 전수 해시/CRC 확인 뒤 fresh private metadata observation으로 research-archives register를 실행한다. RL101·PII82·MiniMax300파일은 복구/등록 완료, MLflow는 local closure까지다. 공유 URL이나 streamed download 참조만으로 raw 검증 완료라고 보고하지 않는다.
+
+남은5release는 원 수집의 source_version_id로 documents와 parses를 연결한다. fetch 실패가 있는 documents와 성공 parse의 배열 위치를 맞춰 읽지 않는다. select-source→process-source는 exact 저장 원문을 사용하며 모델 대기열은 하나다. 관측 timeout에 run을 새로 만들지 않는다. 이번 승인/보관은 신규 공개·전체 소급 완료·정규 운영 회차를 뜻하지 않는다. 계획19.400과 외장 core-jul07-*에 근거가 있다.

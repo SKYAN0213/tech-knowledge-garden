@@ -5339,3 +5339,13 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 표적56/56, 원문 처리·완료 결과 재사용 통합5/5, 최종 호환3/3 통과했다. 실제 새 AWS PII 실행으로 운영 경로를 확인하고 결과를 재사용한다. 완료된 이전 원문의 추출·대조를 속도 측정 목적으로 다시 생성하지 않는다. 독립적인 수집·직접 원문 검토는 로컬 모델 대기 중 처리하고, 모델 작업은 같은 런타임에 중복 투입하지 않는다. 전체 테스트는 코드 릴리스 후보 CI에서 한 번 수행한다. 원고·Drive·공개는 여러 승인 기사를 모아 한 발행 묶음으로 전달한다. 실제7회 정규 운영과 독립 평가60건을 소급·개발 테스트로 채우지 않는다. 전체 WBS3/22·부분17·미착수2, 소급 잔여29회차/299구간·metadata2를 유지한다. 전체 표는 외장 `core-progress-batching-acceleration-20261007-v47.md`에 있다.
 
 최종 관측: 코드930a6e87/Actions37624814946은 Node1,180/1,180·build/site/deploy success다. 실제 PII11사실은6개·5개로 나눠2호출을 완료했다(199.463/81.090초). RL12사실4호출과 원문이 다르므로 시간 개선율로 표시하지 않는다. RL은 직접 원문 검토로11verified/1중복 deferred를 기록했고 새 writing run에서 원래 추출·대조를 재생성하지 않고 재사용한다. PII는 fact_review이며 두 기사 모두 아직 공개 승인·Drive 원고 저장·새 회차 발행이 아니다. 독립 human 평가·정규 운영·소급 완료 회차는 증가시키지 않는다.
+
+## 19.400. 공통 발표 메타데이터와 완료 검토의 재사용
+
+공통 HTML 파서가 저장한 단일 publication meta를 승인 날짜 검증에 연결했다. 정확한 timestamp 후보1개·head/meta/content 위치·trafilatura 버전 및 adapter/config SHA가 모두 있어야 한다. 수정 시각, 복수 후보, 본문 meta, 다른 파서, 누락된 provenance는 거부한다. AWS 원본 HTML의 실제 발표 시각을 직접 대조했으며 원문·기존 parse·모델 추출은 다시 생성하지 않았다. 날짜/발행 정밀도 표적21/21 통과. 전체 suite는 이번 코드 릴리스 CI에서 한 번 수행한다.
+
+7월7일 RL·이미지 PII·MiniMax·MLflow4기사를 원문 검토와 native 편집 승인까지 완료했다. 예상 reward를 측정 결과로, 개인정보 처리 구조를 준법 보장으로 표현하지 않는다. MiniMax 표의 모델별 컨텍스트와 최대 출력, API 경계, 등급/처리량/리전 조건을 보완했다. MLflow는 기존 endpoint의 벤치마크와 자체 endpoint를 만드는 추천을 구분하고, 실제 지표가 부모 항목 아래 자식 실행에 있음을 유지한다. 근거가 없는 일반 비용 절감 주장은 게재하지 않았다. 기존 Prompt Caching 용어의 정의·별칭·원문 사실을 검토해 MiniMax에 명시 연결했다. 새 노드나 공동 등장 관계는 만들지 않았다.
+
+앞선3승인 closure는 비공개 Research에 저장해 원격 raw SHA와101·82·300파일 복원, native archive-location을 확인했다. MLflow closure는 로컬 패키지이며 원격 보관과 공개 반영 전이다. streamed download403은 보존하고 정상 connector raw 조회를 사용했다. base64 마지막 줄과 root-relative/embedded manifest 계약 오류는 원인을 확인해 바로잡았으며 복구 관문을 완화하지 않았다. 다른5릴리스는 저장된 정확한 판본을 한 모델 대기열에서 처리한다. 완료 결과 재사용·여러 기사 일괄 발행·불변 원격 bytes의 metadata 대조 재사용을 유지한다.
+
+4승인은 아직 Drive 작성 원고·웹/RSS/GitHub 발행이 아니다. 원본 전체13구간 소급 판정도 미완료다. 전체 WBS3/22·부분17·미착수2, 독립human0/60·새 정규0/7·소급 잔여29회차/299구간·metadata2는 유지한다. private 근거는 외장 core-jul07-{rl,pii,minimax,mlflow}-* 및 core-jul07-three-archive-remote-readback-v1.json이다. 다음은 나머지 릴리스 검토→전체 회차 전환→같은 회차 Drive-first 일괄 발행이다.

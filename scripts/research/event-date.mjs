@@ -108,6 +108,24 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     const claim = eligible.find((c) => c.claim_id === b.claim_id)
     const stamp = parseResearchDate(b.source_published_at)
     const basis = p?.dates?.basis
+    // The common HTML resolver also records a single publication meta field
+    // without a configured selector. Retain its exact candidate, parser
+    // identity and head locator; an uncorroborated meta array is insufficient.
+    const meta = basis?.sources?.length === 1 ? basis.sources[0] : null
+    const singlePublicationMeta =
+      p?.parser?.id === "trafilatura" &&
+      typeof p.parser.version === "string" &&
+      p.parser.version.length > 0 &&
+      /^[a-f0-9]{64}$/.test(p.parser.adapter_sha256 || "") &&
+      /^[a-f0-9]{64}$/.test(p.parser.config_hash || "") &&
+      Array.isArray(p.dates.candidates) &&
+      p.dates.candidates.length === 1 &&
+      parseResearchDate(p.dates.candidates[0])?.instant === stamp?.instant &&
+      meta?.type === "meta" &&
+      /^\/html\/head\/meta\[[1-9][0-9]*\]$/.test(meta.dom_path || "") &&
+      meta.attribute === "content" &&
+      parseResearchDate(meta.text)?.precision === "timestamp" &&
+      parseResearchDate(meta.text)?.instant === stamp?.instant
     // Earlier HTML parses retain JSON-LD script index/type/field provenance
     // without a DOM path. Use only their bounded Article datePublished
     // records, all agreeing on the exact instant; never dateModified or an
@@ -174,8 +192,8 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
       p.dates?.published_at !== b.source_published_at ||
       p.dates.precision !== "timestamp" ||
       p.dates.profile_status !== "matched" ||
-      (!basis?.dom_path && !jsonBasis && !structuredBasis) ||
-      (!structuredBasis && parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant) ||
+      (!basis?.dom_path && !jsonBasis && !structuredBasis && !singlePublicationMeta) ||
+      (!structuredBasis && !singlePublicationMeta && parseResearchDate(p.dates.basis.text)?.instant !== stamp.instant) ||
       parseResearchDate(claim.published_at)?.instant !== stamp.instant ||
       !claim.evidence.some(
         (e) =>

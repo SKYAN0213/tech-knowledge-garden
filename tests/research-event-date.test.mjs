@@ -319,6 +319,44 @@ test("matching head metadata may corroborate an Article JSON-LD publication time
   }
 })
 
+test("a single recorded publication meta candidate preserves its exact timestamp", () => {
+  const s = fixture(), timestamp = "2026-07-06T08:58:13-08:00"
+  s.p.parser = { id: "trafilatura", version: "2.2.0", adapter_sha256: "a".repeat(64), config_hash: "b".repeat(64) }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    candidates: [timestamp],
+    basis: { sources: [{ type: "meta", dom_path: "/html/head/meta[20]", attribute: "content", text: timestamp }] },
+  }
+  s.claims[0].published_at = timestamp
+  s.review.published_at = "2026-07-07"
+  s.review.event_date_basis = {
+    kind: "source-publication-time", source_id: "s1", source_version_id: "s1:v1", parse_id: "p1",
+    claim_id: "c1", source_published_at: timestamp, timezone: "Asia/Seoul",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-time", source_published_at: timestamp,
+  })
+  for (const mutate of [
+    (p) => delete p.dates.candidates,
+    (p) => (p.dates.candidates = []),
+    (p) => p.dates.candidates.push("2026-07-06T10:24:34-08:00"),
+    (p) => (p.dates.candidates[0] = "2026-07-06T10:24:34-08:00"),
+    (p) => (p.dates.basis.sources[0].dom_path = "/html/body/meta[20]"),
+    (p) => (p.dates.basis.sources[0].attribute = "datetime"),
+    (p) => (p.dates.basis.sources[0].text = "2026-07-06T10:24:34-08:00"),
+    (p) => p.dates.basis.sources.push({ ...p.dates.basis.sources[0] }),
+    (p) => delete p.parser.adapter_sha256,
+    (p) => (p.parser.config_hash = "not-a-hash"),
+    (p) => (p.parser.id = "json-document"),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]))
+  }
+})
+
 test("JSON publication time requires an exact reviewed root field, not a record or observation date", () => {
   const s = fixture()
   const timestamp = "2026-07-13T22:04:00Z"
