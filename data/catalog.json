@@ -1,7 +1,7 @@
 {
   "latest_cutoff": "2026-10-06T22:05:39.063Z",
   "edition_count": 123,
-  "news_count": 220,
+  "news_count": 221,
   "concept_count": 37,
   "known_sources": [
     "https://agibot.com/article/231/detail/82.html",
@@ -372,6 +372,7 @@
     "https://github.com/vllm-project/vllm/releases/tag/v0.24.0",
     "https://github.com/zai-org/GLM-5",
     "https://global.fujitsu/en-global/pr/news/2026/09/14-02",
+    "https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729",
     "https://huggingface.co/blog",
     "https://huggingface.co/blog/Kseniase/mcp",
     "https://huggingface.co/blog/allenai/discoformer",
@@ -824,6 +825,7 @@
     "News/9fc8bc0338395f2d",
     "News/d5bbd37fc92cb75b",
     "News/789d3f2f135ddb5f",
+    "News/66a7dcf7a164baf4",
     "Briefings/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE",
     "Briefings/2026/06/2026-06-24_0700_Tech_AI_Briefing",
     "Briefings/2026/06/2026-06-26_0005_Tech_AI_Briefing",

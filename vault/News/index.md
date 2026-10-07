@@ -9,6 +9,7 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/66a7dcf7a164baf4|가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성]] · 2026-10-07
 - [[News/789d3f2f135ddb5f|GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용]] · 2026-10-07
 - [[News/d5bbd37fc92cb75b|LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약]] · 2026-10-07
 - [[News/9fc8bc0338395f2d|누리호 5호기 발사대 이송 시작…7일 발사시각 결정 예정]] · 2026-10-07

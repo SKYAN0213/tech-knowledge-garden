@@ -7,7 +7,7 @@ modified: 2026-10-07
 description: 2026-10-07 IT · AI · 로보틱스
 coverage_start: 2026-10-05T20:21:45.039Z
 coverage_end: 2026-10-06T22:05:39.063Z
-item_count: 8
+item_count: 9
 edition: Editions/2026/10/2026-10-07_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-07_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -73,13 +73,19 @@ GitHub은 2026년 10월 7일(한국시간) 스택드 풀 리퀘스트(stacked pu
 
 크라우드스트라이크는 2026년 10월 6일 AWS·NVIDIA와 함께 제4회 글로벌 사이버보안 스타트업 육성 프로그램의 모집을 시작했다고 발표했다. 신청 마감은 11월 2일이며, 초기 스타트업을 대상으로 하는 8주 프로그램은 2027년 1월 11일부터 3월 8일까지 운영할 예정이다. 참가 기업에는 에이전트 개발 도구와 클라우드 기술 검증, 마켓플레이스 등록 및 시장 진출 지원을 제공할 계획이다.
 
-### 로봇·제조 · 1건
+### 로봇·제조 · 2건
 
 #### [[News/7cc23b8dc1f502f5|두산로보틱스, AI 반도체 협동로봇·원전 용접 국책과제 선정]]
 
 연구·기술 · 새로운 방법 · 실증·재현 · 두산로보틱스 · 두산에너빌리티 · 에이딘로보틱스 · 모빌린트 · 딥엑스 · 세이지
 
 두산로보틱스는 2026년 10월 6일 차세대 협동로봇과 지능형 용접 솔루션을 개발하는 국책과제 2건에 선정됐다고 발표했다. 두 과제의 총 연구개발비는 약 989억 원이며, 정부 지원금은 그중 약 681억 원이다. 협동로봇에 국산 AI 반도체를 탑재해 현장에서 인지·판단·제어하게 하고, 숙련공의 동작을 학습하는 원전 기자재 용접 솔루션을 개발할 계획이다.
+
+#### [[News/66a7dcf7a164baf4|가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성]]
+
+제품·서비스 · 신제품 · Kawasaki Heavy Industries
+
+가와사키중공업(Kawasaki Heavy Industries)은 10월 6일 고령자의 자택 생활을 지원하는 돌봄 로봇 Home LEO의 시제품을 완성했다고 밝혔다. 회사는 2028회계연도 출시를 목표로 일본 후생노동성·경제산업성 및 지방자치단체, 의료·요양기관, AI 기술 기업과 실증 시험을 진행할 계획이다.
 
 ### 에너지·기후기술 · 1건
 
@@ -117,3 +123,4 @@ LG전자는 2026년 10월 6일 미국법인이 에어 컨트롤 콘셉트와 총
 - [S6] https://www.kari.re.kr/kor/article/ATCL87374b48c/18726
 - [S7] https://www.lge.co.kr/story/newsroom/236201
 - [S8] https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available
+- [S9] https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729

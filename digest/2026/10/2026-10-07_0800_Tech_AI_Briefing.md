@@ -126,7 +126,7 @@ AWS는 파트너 네트워크 가입, 기술 검증, AWS Marketplace 등록에 �
 
 [ir.crowdstrike.com 원문](https://ir.crowdstrike.com/news-releases/news-release-details/crowdstrike-aws-and-nvidia-expand-global-cybersecurity-startup-0)
 
-### 로봇·제조 · 1건
+### 로봇·제조 · 2건
 
 #### [두산로보틱스, AI 반도체 협동로봇·원전 용접 국책과제 선정](https://skyan0213.github.io/tech-knowledge-garden/news/7cc23b8dc1f502f5)
 
@@ -157,6 +157,30 @@ AWS는 파트너 네트워크 가입, 기술 검증, AWS Marketplace 등록에 �
 두산로보틱스는 인지·판단·제어 기반 기술과 고난도 제조 응용 기술을 활용해 한국형 피지컬 AI 협동로봇 통합 플랫폼을 완성할 계획이다. 박인원 사장은 제조 현장의 인력난과 숙련 인력 고령화가 기존 자동화 설비 확대만으로 해결되지 않는 문제라고 설명했다.
 
 [doosanrobotics.com 원문](https://www.doosanrobotics.com/kr/about/promotion/news/%EB%91%90%EC%82%B0%EB%A1%9C%EB%B3%B4%ED%8B%B1%EC%8A%A4-%EA%B5%AD%EC%82%B0-ai-%EB%B0%98%EB%8F%84%EC%B2%B4-%ED%95%9C%EA%B5%AD%ED%98%95-%ED%94%BC%EC%A7%80%EC%BB%AC-ai-%EA%B5%AC%ED%98%84)
+
+#### [가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성](https://skyan0213.github.io/tech-knowledge-garden/news/66a7dcf7a164baf4)
+
+발표 2026-10-06
+
+제품·서비스 · 신제품 · Kawasaki Heavy Industries
+
+가와사키중공업(Kawasaki Heavy Industries)은 10월 6일 고령자의 자택 생활을 지원하는 돌봄 로봇 Home LEO의 시제품을 완성했다고 밝혔다. 회사는 2028회계연도 출시를 목표로 일본 후생노동성·경제산업성 및 지방자치단체, 의료·요양기관, AI 기술 기업과 실증 시험을 진행할 계획이다.
+
+##### 대화·일상 보조와 의료·요양기관 연계
+
+회사가 제시한 주요 기능은 생활 습관과 선호도를 반영한 맞춤형 대화, 사용자와 주변을 인식해 스스로 이동하고 물건을 찾거나 건네는 일상 보조, 낙상·건강 상태 변화·방치된 화재 위험·방문자를 알아차려 사용자에게 알리고 가족·돌봄 전문가와 연계하는 기능이다.
+
+회사는 안전한 통신 환경에서 돌봄 데이터를 기록하고, 사용자의 동의와 적절한 정보 관리를 전제로 의료·요양기관과 공유하도록 설계했다고 설명했다.
+
+이 주요 기능 목록에는 향후 개발 과정에서 구현할 기능도 포함돼 있다.
+
+##### 의료·요양기관에서 가정으로 확장하는 제품군
+
+가와사키중공업은 Home LEO를 추가해 기존 의료·요양기관 중심의 헬스케어 제공 범위를 가정으로 확장한다고 밝혔다.
+
+기존 제품군에는 수술 로봇 시스템 hinotori, 실내 배송 로봇 FORRO, 반인간형 로봇 Nyokkey, 실내외 위치정보 서비스 mapxus Driven by Kawasaki가 포함된다.
+
+[global.kawasaki.com 원문](https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729)
 
 ### 에너지·기후기술 · 1건
 

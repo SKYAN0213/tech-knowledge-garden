@@ -9,8 +9,8 @@ coverage_end: 2026-10-06T22:05:39.063Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 8
-new_items_count: 8
+source_count: 9
+new_items_count: 9
 linked_knowledge_notes:
   - Knowledge/Robotics/Welding Weaving
 knowledge_notes_created: []
@@ -269,6 +269,9 @@ article_records:
       정식 출시와 함께 GitHub은 리베이스 시 변경되지 않은 코드의 승인 상태를 유지하고 서명된 대체 커밋을 생성하는 등 스택의 생성,
       검토, 병합 과정을 개선하는 기능을 도입했다. 또한 모든 풀 리퀘스트가 준비되고 저장소 병합 요건이 충족되면 그룹으로 함께 병합되는
       자동 병합 기능은 향후 몇 주에 걸쳐 순차적으로 적용될 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 스택드 풀 리퀘스트의 병합 및 권한 처리
         paragraphs:
@@ -286,6 +289,37 @@ article_records:
             릴리스에도 포함될 예정이다.
         source_urls:
           - https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available
+  - title: 가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 가와사키중공업
+      when: 2026-10-06
+      where: 미기재
+      what: 가정용 고령자 돌봄 로봇 Home LEO 시제품 완성과 2028회계연도 출시 목표
+      how: AI와 로봇 기술을 결합해 사용자와 주변을 인식하고 자율적으로 이동·행동하도록 설계
+      why: 고령자가 익숙한 환경에서 안전하게 생활하는 기간을 연장하고 적절한 돌봄을 받도록 지원하기 위함
+    lead: 가와사키중공업(Kawasaki Heavy Industries)은 10월 6일 고령자의 자택 생활을 지원하는 돌봄 로봇 Home
+      LEO의 시제품을 완성했다고 밝혔다. 회사는 2028회계연도 출시를 목표로 일본 후생노동성·경제산업성 및 지방자치단체,
+      의료·요양기관, AI 기술 기업과 실증 시험을 진행할 계획이다.
+    explanations:
+      - heading: 대화·일상 보조와 의료·요양기관 연계
+        paragraphs:
+          - 회사가 제시한 주요 기능은 생활 습관과 선호도를 반영한 맞춤형 대화, 사용자와 주변을 인식해 스스로 이동하고 물건을 찾거나
+            건네는 일상 보조, 낙상·건강 상태 변화·방치된 화재 위험·방문자를 알아차려 사용자에게 알리고 가족·돌봄 전문가와 연계하는
+            기능이다.
+          - 회사는 안전한 통신 환경에서 돌봄 데이터를 기록하고, 사용자의 동의와 적절한 정보 관리를 전제로 의료·요양기관과 공유하도록
+            설계했다고 설명했다.
+          - 이 주요 기능 목록에는 향후 개발 과정에서 구현할 기능도 포함돼 있다.
+        source_urls:
+          - https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729
+      - heading: 의료·요양기관에서 가정으로 확장하는 제품군
+        paragraphs:
+          - 가와사키중공업은 Home LEO를 추가해 기존 의료·요양기관 중심의 헬스케어 제공 범위를 가정으로 확장한다고 밝혔다.
+          - 기존 제품군에는 수술 로봇 시스템 hinotori, 실내 배송 로봇 FORRO, 반인간형 로봇 Nyokkey, 실내외
+            위치정보 서비스 mapxus Driven by Kawasaki가 포함된다.
+        source_urls:
+          - https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729
     papers: []
     relations: []
     topic_ids: []
@@ -338,11 +372,17 @@ article_reviews:
   - title: GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용
     event_id: 789d3f2f135ddb5f
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-07
     reviewed_at: 2026-10-07
-    concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-10-06T13:16:41-07:00
+  - title: 가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성
+    event_id: 66a7dcf7a164baf4
+    review_status: verified
+    published_at: 2026-10-06
+    reviewed_at: 2026-10-07
+    concept_ids: []
 ---
 
 # 이번 호 표지
@@ -529,6 +569,30 @@ GitHub은 스택드 풀 리퀘스트가 기존 저장소 우회 권한을 스택
 
 스택드 풀 리퀘스트는 모든 github.com 플랜에서 사용 가능하며, 향후 GitHub Enterprise Server 릴리스에도 포함될 예정이다. [S8]
 
+## 가와사키중공업, 가정용 돌봄 로봇 Home LEO 시제품 완성
+
+**분야:** 로봇·제조
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품
+**기업·기관:** Kawasaki Heavy Industries
+
+가와사키중공업(Kawasaki Heavy Industries)은 10월 6일 고령자의 자택 생활을 지원하는 돌봄 로봇 Home LEO의 시제품을 완성했다고 밝혔다. 회사는 2028회계연도 출시를 목표로 일본 후생노동성·경제산업성 및 지방자치단체, 의료·요양기관, AI 기술 기업과 실증 시험을 진행할 계획이다. [S9]
+
+### 대화·일상 보조와 의료·요양기관 연계
+
+회사가 제시한 주요 기능은 생활 습관과 선호도를 반영한 맞춤형 대화, 사용자와 주변을 인식해 스스로 이동하고 물건을 찾거나 건네는 일상 보조, 낙상·건강 상태 변화·방치된 화재 위험·방문자를 알아차려 사용자에게 알리고 가족·돌봄 전문가와 연계하는 기능이다.
+
+회사는 안전한 통신 환경에서 돌봄 데이터를 기록하고, 사용자의 동의와 적절한 정보 관리를 전제로 의료·요양기관과 공유하도록 설계했다고 설명했다.
+
+이 주요 기능 목록에는 향후 개발 과정에서 구현할 기능도 포함돼 있다. [S9]
+
+### 의료·요양기관에서 가정으로 확장하는 제품군
+
+가와사키중공업은 Home LEO를 추가해 기존 의료·요양기관 중심의 헬스케어 제공 범위를 가정으로 확장한다고 밝혔다.
+
+기존 제품군에는 수술 로봇 시스템 hinotori, 실내 배송 로봇 FORRO, 반인간형 로봇 Nyokkey, 실내외 위치정보 서비스 mapxus Driven by Kawasaki가 포함된다. [S9]
+
 # 리서치 노트
 
 없음
@@ -559,3 +623,4 @@ GitHub은 스택드 풀 리퀘스트가 기존 저장소 우회 권한을 스택
 - [S6] https://www.kari.re.kr/kor/article/ATCL87374b48c/18726
 - [S7] https://www.lge.co.kr/story/newsroom/236201
 - [S8] https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available
+- [S9] https://global.kawasaki.com/en/corp/newsroom/news/detail/?f=20261006_6729
