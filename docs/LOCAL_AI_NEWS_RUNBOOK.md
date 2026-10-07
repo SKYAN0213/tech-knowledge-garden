@@ -11442,3 +11442,11 @@ npm run research:deliver -- --run OPERATION_ID --authoring-root /absolute/review
 전체 snapshot/readback을 미리 지정하지 않으면 `source_snapshot_required` 이벤트를 보낸다. 그때 전체 네 작성 root의 원격 raw·두 matching inventory에서 native snapshot을 만든 뒤 `{"type":"source_snapshot","snapshot_file":"/absolute/full.json","readback_file":"/absolute/full-readback.json"}`을 보낸다. message는 경로만 담고 본문·키·signed URL을 담지 않는다. connector 대기는 기본 300000ms, 최대 600000ms다. source와 canonical garden 잠금은 기존 검증기를 유지하고 중첩 동일 root 잠금은 피한다.
 
 `runs/OPERATION_ID/authoring-delivery/`에는 승인 결속·최신 단계가, `authoring-import/`에는 실제 source/readback·입력 해시·canonical receipt가 있다. native publication이 생긴 후 같은 run을 재개하면 writer·Drive 전체 읽기·import를 반복하지 않는다. 완료 기록에서 신규 정규 운영·WebsiteData·Research·무인 발행을 추론하지 않는다. 외장 root의 symlink·원본 충돌·승인 범위 밖의 변경은 거부한다. 기존 CLI writer도 공통 JSON-line channel을 사용한다.
+
+실물 검증: `authoring-delivery-jul18-20261007-v1`에서 기존 승인 7월18일 원고와 실제 Drive216파일/16폴더를 사용했다. 두 matching inventory·전체 raw를 대조한 뒤 native writer 확인, canonical import, 발행·배포·공개 검증을 통과했다. 원본은 이미 승인 bytes와 일치해 원격 쓰기·원본 수정·삭제0, immutable proof34파일을 결속했다. 배포 대기 이후에는 아래처럼 run ID만으로 이어 간다.
+
+```sh
+npm run research:deliver -- --run authoring-delivery-jul18-20261007-v1 --wait-seconds 30
+```
+
+Actions37568125831은 정확한 코드 commit `7a4b8fe1df71551053096168310a1351e26e43ca`의 build/deploy success와 Node1124/1124를 확인했다. 완료 작업을 두 번 재개해 추가 명령·HTTP0, 두 번째107ms를 기록했다. 별도의 실제 공개 readback2회에서 `briefing.xml`651282bytes/SHA`c496473be4eff6b5861f84d97c6cd46094b9617f8bf48a079bd6047a5bf9e9c1`, `reader-index.json`1290468bytes/SHA`9680f411119464f1b112b361ee82cb0529cbad96f4457905f6279da8a5ef53a8`가 이전 값과 같았다. 증거는 외장 evidence root의 `authoring-delivery-source-inventory-v1.json`, `authoring-delivery-source-readback-v1.json`, `authoring-delivery-live-resume-v1.json`, `authoring-delivery-ci-final-v1.json`, `authoring-delivery-real-replay-v1.json`에 보존한다. 원격 Research/WebsiteData의 새 전달 검증, 신규 회차 운영과 전수 소급은 이 결과에 포함하지 않는다.

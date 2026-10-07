@@ -5245,4 +5245,8 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 
 기존 writer와 새 전달 CLI는 공통 connector-input을 사용한다. 전달 CLI는 `connector_ready`에 실제 열린 stdin의 `ready` 응답을 받은 뒤 writer를 시작한다. 닫힌 입력으로 durable intent를 만든 뒤 실패하던 경로를 예방한다. 실제 원격 변경은 호출자의 승인된 connector가 수행하고 native writer는 post raw acquisition으로만 확인한다. 로그인이나 유료 API를 추가하지 않는다.
 
-새 시험 8개와 기존 authoring-execution·delivery-run 표적 검사를 수행했다. 최초 실패 3건은 시험용 snapshot이 네 원본 root를 모두 포함하지 않아 native validator가 거부한 것이며, 기존 검증기를 완화하지 않고 fixture를 수정했다. 해당 3개만 재실행해 통과했다. 실제 Drive에서 네 root·16폴더·216개 raw 파일과 두 번의 목록을 확보했고 canonical bytes와 전체 SHA가 일치하는 native source snapshot을 생성했다. 실제 전달·CI·재개 결과는 외장 evidence root의 authoring-delivery 기록에 이어 보존한다. 수집/사실·편집 승인과 원격 Research/WebsiteData 연결, 실제 7회 운영은 별도 미완료다.
+새 시험 8개와 기존 authoring-execution·delivery-run 표적 검사를 수행했다. 최초 실패 3건은 시험용 snapshot이 네 원본 root를 모두 포함하지 않아 native validator가 거부한 것이며, 기존 검증기를 완화하지 않고 fixture를 수정했다. 해당 3개만 재실행해 통과했다. 실제 Drive에서 네 root·16폴더·216개 raw 파일과 두 번의 목록을 확보했고 canonical bytes와 전체 SHA가 일치하는 native source snapshot을 생성했다.
+
+실물 `authoring-delivery-jul18-20261007-v1`은 기존 승인 7월18일 원고를 사용해 writer 확인·216파일 import·기존 발행·Actions·공개 bytes 검증을 통과했다. 승인 대상1파일은 이미 같은 내용이어서 원격 쓰기와 원본 수정·삭제는0이며, 검토 proof34파일만 canonical에 결속했다. CI 대기 후 같은 run을 재개했고 완료 작업의 추가 재개2회에서 명령·HTTP 호출0, 두 번째107ms였다. `7a4b8fe1df71551053096168310a1351e26e43ca`의 Actions37568125831이 build/deploy success, Node1124/1124를 확인했다. 실제 공개 RSS와 reader-index를 다시 받아 이전 SHA·bytes와 동일함을 확인했다. 비공개 증거는 `/Volumes/X5Storage/tkg-daily-core-20261007-v1/authoring-delivery-*`에 있다. 새 회차 발행이나 정규 운영 횟수로 계수하지 않는다.
+
+가속화 적용 범위는 완료 단계의 재실행 제거와 승인 이후 전달 연결이다. 표적 검사는 변경 묶음당 한 번, 실패 시 해당 검사만 재실행하고 전체 검사는 발행 CI에서 한 번 수행한다. 다음 구현은 기존 수집·사실 검토·편집 승인 checkpoint의 handoff를 연결하고, 소급 처리는 기존 계획의 5회차 묶음으로 진행한다. 원격 Research/WebsiteData 전달 연결과 실제7회 운영·독립 품질 평가는 남아 있다. 전체 WBS는 완료3/22(14%)·부분17·미착수2로 유지한다.
