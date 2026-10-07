@@ -1,169 +1,328 @@
 ---
 title: Tech & AI Briefing - 08:05
-date: 2026-07-03
 time: 08:05
-timezone: Asia/Seoul
-coverage_start: 2026-07-03T00:04:02+09:00
-coverage_end: 2026-07-03T08:05:44+09:00
 type: briefing
-source_count: 35
-new_items_count: 4
-linked_knowledge_notes:
-  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]"
-  - "[[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]"
-  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]"
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-03
+timezone: Asia/Seoul
+coverage_start: 2026-07-03T00:04:02+09:00
+coverage_end: 2026-07-03T08:05:44+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 4
+new_items_count: 4
+linked_knowledge_notes:
+  - "[[Knowledge/Software Engineering/Software Supply Chain Security|Software
+    Supply Chain Security]]"
+  - "[[Knowledge/Software Engineering/AI-Assisted Security
+    Engineering|AI-Assisted Security Engineering]]"
+  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security
+    and Governance]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation
+    and Observability]]"
+  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
+  - AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+  - AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개
+  - Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가
+article_records:
+  - title: GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-03
+      where: 미기재
+      what: GitHub Copilot CLI가 GitHub Actions에서 내장 GITHUB_TOKEN을 사용해 실행되도록 업데이트
+      how: "워크플로에 copilot-requests: write 권한을 부여하고, 조직 소유 저장소에서 'Allow use of Copilot
+        CLI billed to the organization' 정책을 활성화"
+      why: 개인 액세스 토큰(PAT) 없이도 Copilot CLI를 구동하고, AI 크레딧 비용을 조직에 직접 청구
+    lead: GitHub는 2026년 7월 3일(한국시간) GitHub Copilot CLI가 GitHub Actions에서 내장
+      GITHUB_TOKEN을 사용해 실행될 수 있도록 업데이트했다고 밝혔다. 이로써 개인 액세스 토큰(PAT) 없이도 워크플로에서
+      Copilot CLI를 구동할 수 있게 됐다.
+    explanations:
+      - heading: 조직 단위 AI 크레딧 청구
+        paragraphs:
+          - 조직 소유 저장소에서 Copilot CLI가 Actions 토큰으로 실행되면, CLI가 소모한 AI 크레딧은 해당 조직에
+            직접 청구된다.
+          - 이 기능을 사용하려면 'Allow use of Copilot CLI billed to the organization'
+            정책이 활성화되어야 하며, 기존 'Copilot CLI' 정책이 켜져 있다면 기본으로 활성화된다.
+          - GitHub는 조직 단위 청구에 사용자별 예산이 적용되지 않는다고 밝혔다. 조직을 비용 센터(cost center)에 묶어
+            예산을 설정하고, 청구·사용량 대시보드로 비용을 확인하며, 각 워크플로에 최대 AI 크레딧 세션 한도를 둘 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-02-copilot-cli-no-longer-needs-a-personal-access-token-in-github-actions/
+      - heading: 실행 조건 및 설정
+        paragraphs:
+          - "내장 GITHUB_TOKEN을 사용하는 워크플로는 copilot-requests: write 권한이 필요하며, 추가
+            시크릿은 요구되지 않는다."
+          - 사용자는 copilot update 명령으로 업데이트하거나 npm install -g @github/copilot로
+            재설치하여 최신 버전의 Copilot CLI를 사용해야 한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-02-copilot-cli-no-longer-needs-a-personal-access-token-in-github-actions/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: AWS
+      when: 2026-07-03
+      where: 미기재
+      what: Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+      how: Amazon Bedrock 파운데이션 모델과 Guardrails를 활용해 이메일의 발신자 행동 패턴, 문맥적 적절성, 통신 이상 징후를
+        분석하고 0~100 범위의 위험 점수를 산출한다.
+      why: 미기재
+    lead: AWS는 2026년 7월 3일(한국시간) Amazon Bedrock을 이용해 AI 생성 피싱 이메일을 분석하는 구현 방법을 공개했다.
+      기존 메일 인증에 발신자의 평소 행동과 업무 맥락을 비교하는 모델 분석을 더하고, 위험 점수에 따라 수신·격리·차단을 나누는 설계다.
+    explanations:
+      - heading: 메일 인증 뒤 행동과 업무 맥락 비교
+        paragraphs:
+          - 소개된 흐름은 먼저 SPF·DKIM·DMARC로 발신 서버와 메시지 인증을 검사한다. 이어 발신자의 평소 어휘·말투·요청
+            유형을 데이터베이스에 둔 기준선과 비교하고, 이메일 내용·조직의 업무 맥락·알려진 피싱 사례를 Amazon Bedrock
+            Knowledge Bases에서 가져와 분석 프롬프트를 구성한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/how-amazon-bedrock-catches-ai-generated-phishing/
+      - heading: 필터 설정과 메시지 처리
+        paragraphs:
+          - AWS는 Bedrock Guardrails로 개인정보를 가릴 수 있지만, 필터가 너무 엄격하면 검토해야 할 의심스러운
+            문구까지 분석 전에 막을 수 있다고 설명했다. 보안 분석에는 해당 콘텐츠를 평가할 수 있도록 설정하면서 다른 용도의
+            입력·출력 보호를 유지하고, 답변이 실제 이메일 내용에 근거하는지도 확인하는 방식이다.
+          - 콘텐츠 이상·행동 편차·맥락의 적절성 점수는 0~100의 위험 점수로 합쳐진다. 안전한 메일은 수신함으로 보내고,
+            의심스러운 메일은 보안팀 검토를 위해 격리하며, 위험한 메일은 차단하도록 구성한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/how-amazon-bedrock-catches-ai-generated-phishing/
+      - heading: 검토 결과를 다음 분석에 반영
+        paragraphs:
+          - 보안팀이 오탐으로 확인한 결과는 발신자 기준선을 수정하는 데 사용한다. 확인된 피싱과 정상 메시지는 검증된 예시로 쌓아
+            다음 프롬프트에 포함하고, 보안팀의 피드백으로 분석 지시를 다듬는다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/how-amazon-bedrock-catches-ai-generated-phishing/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: AWS
+      when: 2026-07-03
+      where: 미기재
+      what: Amazon SageMaker AI 다중 턴 강화학습 모범 사례 및 MTRL 기능 공개
+      how: 신뢰성 있는 학습 환경, 외부 평가, 보상 설계, 턴 예산, 학습 지표 관리 방법 제시
+      why: 미기재
+    lead: AWS는 2026년 7월 3일(한국시간) Amazon SageMaker AI에서 다중 턴 에이전트를 강화학습으로 훈련할 때 적용할
+      설계 지침을 공개했다. SOP-Bench 사례를 바탕으로 실제 서비스와 분리한 학습 환경, 보상과 독립적인 업무 성공 평가, 학습 중
+      점검할 지표를 설명했다.
+    explanations:
+      - heading: 도구 실행을 실제 서비스와 분리
+        paragraphs:
+          - AWS는 실제 도구의 입력·출력 형식과 업무 로직을 유지한 시뮬레이션 또는 샌드박스 환경을 권장했다. 읽기 전용 도구는
+            기록한 응답을 재생하고, 상태를 바꾸는 도구는 학습 에피소드마다 자원을 따로 만든 뒤 실패하거나 종료돼도 정리한다.
+            코드·SQL·수학 결과는 격리된 환경에서 실행해 같은 입력과 상태가 같은 결과를 내도록 한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/best-practices-for-multi-turn-reinforcement-learning-in-amazon-sagemaker-ai/
+      - heading: 보상 점수와 업무 성공을 따로 확인
+        paragraphs:
+          - SOP-Bench의 독립 평가는 final_output 태그에 담긴 최종 JSON의 모든 필드가 정답과 일치해야 성공으로
+            판정한다. 학습 보상에는 부분 점수를 줄 수 있지만, 이를 업무 성공 평가와 동일하게 취급하지 않는다. SageMaker의
+            MultiTurnRLEvaluator도 기본적으로 에이전트가 정의한 보상 함수로 평가하므로, 보상과 독립적인 검증을 하려면
+            같은 실행 결과를 별도의 엄격한 판정기로 확인해야 한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/best-practices-for-multi-turn-reinforcement-learning-in-amazon-sagemaker-ai/
+      - heading: 출력 형식 불일치가 만든 실패 사례
+        paragraphs:
+          - AWS가 소개한 SOP-Bench 실행에서는 보상 계산기가 final_output 대신 final_response 형식도
+            받아들였다. 모델이 평가에 필요한 태그를 생략하면서 학습 보상은 올라갔지만 독립 평가 성능은 내려갔다. AWS는 이런
+            차이를 발견하면 실행 과정을 읽고 보상 계산기와 평가 기준을 대조하도록 설명했다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/best-practices-for-multi-turn-reinforcement-learning-in-amazon-sagemaker-ai/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Vercel
+      when: 2026-07-03
+      where: 미기재
+      what: ai 패키지 7.0.14 버전 정식 출시 및 실험적 스트리밍 전사 기능 추가
+      how: OpenAI gpt-realtime-whisper 및 xAI WebSocket STT 지원 기능 추가와 의존성 버전 업데이트
+      why: 미기재
+    lead: Vercel은 2026년 7월 3일(한국시간) AI SDK의 ai 패키지 7.0.14를 공개했다. OpenAI
+      gpt-realtime-whisper와 xAI WebSocket STT를 포함한 음성 전사 모델에 실험적 스트리밍 지원을 추가했다.
+    explanations: []
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
+    event_id: 4045784f5c7327c9
+    review_status: verified
+    published_at: 2026-07-03
+    reviewed_at: 2026-10-08
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-02T13:25:32-07:00
+  - title: AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+    event_id: 085adc2b94553d8f
+    review_status: verified
+    published_at: 2026-07-03
+    reviewed_at: 2026-10-08
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-02T09:55:41-08:00
+  - title: AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개
+    event_id: bfeae69131afd34f
+    review_status: verified
+    published_at: 2026-07-03
+    reviewed_at: 2026-10-08
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-02T09:50:23-08:00
+  - title: Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가
+    event_id: b435ebb16bb8038a
+    review_status: verified
+    published_at: 2026-07-03
+    reviewed_at: 2026-10-08
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-02T20:43:31Z
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- GitHub가 GitHub Actions 안에서 Copilot CLI를 실행할 때 장기 personal access token 대신 `GITHUB_TOKEN`을 쓰게 했습니다. AI 자동화의 비밀키 관리 부담을 줄이는 변화입니다.
-- AWS는 AI가 만든 피싱 이메일을 Amazon Bedrock으로 분석하는 방어 패턴을 공개했습니다. 오타가 아니라 발신자 행동, 문맥, 요청의 이상함을 보는 방식입니다.
-- AWS는 SageMaker AI에서 다중 턴 agent를 강화학습으로 훈련할 때 필요한 환경, 평가, reward 설계 원칙을 정리했습니다.
-- Vercel AI SDK는 실시간 음성 전사 모델을 스트리밍으로 다루는 실험 기능을 추가했습니다.
-- 논문과 연구: 없음
+GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
 
-# 오늘의 핵심 기사
+# 차례
 
-## GitHub, Copilot CLI 자동화에서 장기 PAT를 없애다
+- GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
+- AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+- AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개
+- Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가
 
-GitHub는 2026년 7월 2일 Copilot CLI를 GitHub Actions에서 실행할 때 workflow의 내장 `GITHUB_TOKEN`으로 인증할 수 있다고 발표했습니다. 지금까지 자동화에서 별도 personal access token, 즉 장기 비밀키를 만들고 저장해야 했던 부담을 줄이는 변화입니다.
-
-핵심 사실
-
-- GitHub Actions workflow는 `copilot-requests: write` 권한으로 Copilot CLI를 호출할 수 있습니다.
-- 조직 저장소에서 이 방식을 쓰면 Copilot CLI가 쓴 AI credit은 개인이 아니라 조직에 직접 과금됩니다.
-- 조직은 Copilot 정책에서 "Allow use of Copilot CLI billed to the organization"을 켜야 합니다.
-- GitHub는 조직 billing dashboard, cost center, session limit으로 비용을 관리하라고 안내했습니다.
-
-왜 중요한가
-
-AI coding 자동화는 CI 안에서 issue 분석, 코드 수정, 테스트 보조 같은 일을 맡기 시작했습니다. 이때 장기 PAT를 저장하면 유출, 회수 누락, 과도한 권한 문제가 커집니다. 기본 workflow token과 명시 권한으로 바꾸면 자동화 보안 경계가 더 작아집니다.
-
-구독자가 알아두면 좋은 점
-
-Copilot CLI를 CI에 넣을 때는 token만 보지 말고 권한, 조직 과금, session limit, cost center를 함께 봐야 합니다. 자동화가 사람 대신 AI credit을 쓰기 때문에 비용 통제도 보안 통제의 일부가 됩니다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-## AWS, AI 피싱을 AI로 잡는 Bedrock 방어 패턴 공개
-
-AWS는 Amazon Bedrock foundation model과 Bedrock Guardrails를 이용해 AI가 만든 피싱 이메일을 탐지하는 구현 패턴을 공개했습니다. 새 피싱은 문법 오류가 거의 없고, 공개 정보와 업무 맥락을 섞어 자연스럽게 보이는 것이 특징입니다.
-
-핵심 사실
-
-- AWS 패턴은 SPF, DKIM, DMARC 같은 기존 메일 인증 뒤에 AI 분석 단계를 추가합니다.
-- 분석 기준은 단어 선택, 평소 문체와의 차이, 요청 내용의 문맥 적절성입니다.
-- 결과는 content anomaly, behavioral deviation, context alignment 같은 점수로 합쳐 위험도를 만듭니다.
-- Guardrails는 PII 노출과 부적절한 출력은 막되, 보안 분석에 필요한 의심 콘텐츠까지 무조건 차단하지 않도록 조정해야 합니다.
-- 확인된 phishing과 false positive feedback은 다음 분석에 쓰는 예시와 발신자 기준선을 업데이트합니다.
-
-왜 중요한가
-
-AI 피싱은 "이상한 문장"으로 구분하기 어렵습니다. 방어도 표면적 문구보다 업무 관계, 요청 이력, 계좌 변경 같은 행동 신호를 봐야 합니다. 보안팀 입장에서는 AI를 탐지기로 쓰더라도 사람 검토, 격리, 차단 라우팅이 같이 있어야 합니다.
-
-구독자가 알아두면 좋은 점
-
-회사 메일 보안을 볼 때 "AI 필터가 있나"보다 어떤 기준선으로 정상 업무를 정의하는지, false positive를 어떻게 되돌리는지, 민감 정보를 모델 분석 중에 어떻게 가리는지를 확인해야 합니다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
-
-## AWS, 다중 턴 agent 강화학습의 실패 지점을 정리하다
-
-AWS는 SageMaker AI에서 multi-turn reinforcement learning, 즉 여러 차례 도구를 쓰고 판단하는 agent를 훈련할 때의 모범 사례를 공개했습니다. 핵심 메시지는 reward 점수만 올리는 agent를 만들지 말고, 실제 업무 성공을 따로 검증하라는 것입니다.
-
-핵심 사실
-
-- SageMaker AI multi-turn RL은 agent가 Bedrock AgentCore, EKS, EC2, Fargate 등에서 실행되도록 연결할 수 있습니다.
-- AWS는 live system 대신 재현 가능한 simulation이나 sandbox 환경에서 훈련을 시작하라고 권장했습니다.
-- 같은 tool call은 같은 결과를 내야 하고, rollout마다 state가 격리되어야 합니다.
-- reward와 별개로 held-out evaluation을 먼저 만들고, 실제 배포 목표를 직접 채점해야 합니다.
-- AWS는 SOP-Bench를 예시로 들며 복잡한 업무 절차를 따르는 agent 평가를 설명했습니다.
-
-왜 중요한가
-
-다중 턴 agent는 한 번 답하고 끝나는 모델보다 실패 방식이 많습니다. 도구를 너무 많이 부르거나, 너무 빨리 결론을 내거나, reward만 만족하는 편법을 배울 수 있습니다. 그래서 학습 환경, 외부 평가, trace 관측이 제품 품질의 핵심이 됩니다.
-
-구독자가 알아두면 좋은 점
-
-agent를 훈련하거나 평가할 때는 "점수가 올랐다"만 보지 말고, 실제 업무 성공률, 도구 호출 기록, 비용, 상태 격리, 재현성을 같이 확인해야 합니다.
-
-더 깊게 보기: [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]], [[Knowledge/AI Systems/AI Agents|AI Agents]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
 
-- 프로젝트: Vercel AI SDK `ai@7.0.14`
-- 쉬운 설명: Vercel AI SDK가 음성 전사 모델을 실시간 스트리밍으로 다루는 실험 기능을 추가했습니다. 예시로 OpenAI `gpt-realtime-whisper`와 xAI WebSocket STT가 언급됐습니다.
-- GitHub: https://github.com/vercel/ai/releases/tag/ai%407.0.14
-- Star 증가 추세: 추세 확인 불가. 현재 공개 star 수는 확인했지만, 같은 기준의 과거 star 수를 검증하지 못했습니다.
-- 어디에 쓸 수 있나: 회의 기록, 상담 녹취, 음성 명령 앱처럼 말소리를 바로 텍스트로 바꾸는 AI 앱에서 provider별 API 차이를 SDK layer로 감싸는 데 쓸 수 있습니다.
-- 더 깊게 보기: [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]
+## GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 2026년 7월 3일(한국시간) GitHub Copilot CLI가 GitHub Actions에서 내장 GITHUB\_TOKEN을 사용해 실행될 수 있도록 업데이트했다고 밝혔다. 이로써 개인 액세스 토큰(PAT) 없이도 워크플로에서 Copilot CLI를 구동할 수 있게 됐다. [S1]
+
+### 조직 단위 AI 크레딧 청구
+
+조직 소유 저장소에서 Copilot CLI가 Actions 토큰으로 실행되면, CLI가 소모한 AI 크레딧은 해당 조직에 직접 청구된다.
+
+이 기능을 사용하려면 'Allow use of Copilot CLI billed to the organization' 정책이 활성화되어야 하며, 기존 'Copilot CLI' 정책이 켜져 있다면 기본으로 활성화된다.
+
+GitHub는 조직 단위 청구에 사용자별 예산이 적용되지 않는다고 밝혔다. 조직을 비용 센터(cost center)에 묶어 예산을 설정하고, 청구·사용량 대시보드로 비용을 확인하며, 각 워크플로에 최대 AI 크레딧 세션 한도를 둘 수 있다. [S1]
+
+### 실행 조건 및 설정
+
+내장 GITHUB\_TOKEN을 사용하는 워크플로는 copilot-requests: write 권한이 필요하며, 추가 시크릿은 요구되지 않는다.
+
+사용자는 copilot update 명령으로 업데이트하거나 npm install -g @github/copilot로 재설치하여 최신 버전의 Copilot CLI를 사용해야 한다. [S1]
+
+## AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개
+
+**분야:** 사이버보안
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** 없음
+
+AWS는 2026년 7월 3일(한국시간) Amazon Bedrock을 이용해 AI 생성 피싱 이메일을 분석하는 구현 방법을 공개했다. 기존 메일 인증에 발신자의 평소 행동과 업무 맥락을 비교하는 모델 분석을 더하고, 위험 점수에 따라 수신·격리·차단을 나누는 설계다. [S2]
+
+### 메일 인증 뒤 행동과 업무 맥락 비교
+
+소개된 흐름은 먼저 SPF·DKIM·DMARC로 발신 서버와 메시지 인증을 검사한다. 이어 발신자의 평소 어휘·말투·요청 유형을 데이터베이스에 둔 기준선과 비교하고, 이메일 내용·조직의 업무 맥락·알려진 피싱 사례를 Amazon Bedrock Knowledge Bases에서 가져와 분석 프롬프트를 구성한다. [S2]
+
+### 필터 설정과 메시지 처리
+
+AWS는 Bedrock Guardrails로 개인정보를 가릴 수 있지만, 필터가 너무 엄격하면 검토해야 할 의심스러운 문구까지 분석 전에 막을 수 있다고 설명했다. 보안 분석에는 해당 콘텐츠를 평가할 수 있도록 설정하면서 다른 용도의 입력·출력 보호를 유지하고, 답변이 실제 이메일 내용에 근거하는지도 확인하는 방식이다.
+
+콘텐츠 이상·행동 편차·맥락의 적절성 점수는 0\~100의 위험 점수로 합쳐진다. 안전한 메일은 수신함으로 보내고, 의심스러운 메일은 보안팀 검토를 위해 격리하며, 위험한 메일은 차단하도록 구성한다. [S2]
+
+### 검토 결과를 다음 분석에 반영
+
+보안팀이 오탐으로 확인한 결과는 발신자 기준선을 수정하는 데 사용한다. 확인된 피싱과 정상 메시지는 검증된 예시로 쌓아 다음 프롬프트에 포함하고, 보안팀의 피드백으로 분석 지시를 다듬는다. [S2]
+
+## AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** AWS
+
+AWS는 2026년 7월 3일(한국시간) Amazon SageMaker AI에서 다중 턴 에이전트를 강화학습으로 훈련할 때 적용할 설계 지침을 공개했다. SOP-Bench 사례를 바탕으로 실제 서비스와 분리한 학습 환경, 보상과 독립적인 업무 성공 평가, 학습 중 점검할 지표를 설명했다. [S3]
+
+### 도구 실행을 실제 서비스와 분리
+
+AWS는 실제 도구의 입력·출력 형식과 업무 로직을 유지한 시뮬레이션 또는 샌드박스 환경을 권장했다. 읽기 전용 도구는 기록한 응답을 재생하고, 상태를 바꾸는 도구는 학습 에피소드마다 자원을 따로 만든 뒤 실패하거나 종료돼도 정리한다. 코드·SQL·수학 결과는 격리된 환경에서 실행해 같은 입력과 상태가 같은 결과를 내도록 한다. [S3]
+
+### 보상 점수와 업무 성공을 따로 확인
+
+SOP-Bench의 독립 평가는 final\_output 태그에 담긴 최종 JSON의 모든 필드가 정답과 일치해야 성공으로 판정한다. 학습 보상에는 부분 점수를 줄 수 있지만, 이를 업무 성공 평가와 동일하게 취급하지 않는다. SageMaker의 MultiTurnRLEvaluator도 기본적으로 에이전트가 정의한 보상 함수로 평가하므로, 보상과 독립적인 검증을 하려면 같은 실행 결과를 별도의 엄격한 판정기로 확인해야 한다. [S3]
+
+### 출력 형식 불일치가 만든 실패 사례
+
+AWS가 소개한 SOP-Bench 실행에서는 보상 계산기가 final\_output 대신 final\_response 형식도 받아들였다. 모델이 평가에 필요한 태그를 생략하면서 학습 보상은 올라갔지만 독립 평가 성능은 내려갔다. AWS는 이런 차이를 발견하면 실행 과정을 읽고 보상 계산기와 평가 기준을 대조하도록 설명했다. [S3]
+
+## Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** Vercel
+
+Vercel은 2026년 7월 3일(한국시간) AI SDK의 ai 패키지 7.0.14를 공개했다. OpenAI gpt-realtime-whisper와 xAI WebSocket STT를 포함한 음성 전사 모델에 실험적 스트리밍 지원을 추가했다. [S4]
+
+
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
 
 # 흐름 읽기
 
-분석: 이번 창의 흐름은 "AI 기능 추가"보다 "AI를 운영 가능한 자동화로 다듬는 일"에 가깝습니다. GitHub는 CI 안의 AI 자동화에서 장기 토큰을 줄였고, AWS는 AI 보안 분석과 agent 학습을 실제 운영 조건에 맞게 설계하는 방법을 공개했습니다. Vercel AI SDK 변화도 텍스트 생성 중심 SDK가 음성 스트리밍 같은 실시간 입력으로 넓어지는 신호입니다.
+없음
 
-확인된 사실과 구분한 해석: 확인된 사실은 GitHub, AWS, Vercel의 공식 발표와 릴리스 내용입니다. 해석은 AI 도입 경쟁이 모델 성능 자체보다 token 권한, 비용 통제, guardrail 조정, simulation 평가, streaming runtime 같은 운영 세부사항으로 이동하고 있다는 점입니다.
+# 오늘의 적용
 
-앞으로 볼 점
+없음
 
-- Copilot CLI의 `GITHUB_TOKEN` 방식이 실제 조직 CI 정책과 비용 한도에 어떻게 자리 잡는지
-- Bedrock 기반 피싱 탐지가 false positive와 민감 정보 처리를 어떻게 줄이는지
-- 다중 턴 agent RL에서 reward hacking을 잡는 평가셋과 trace 도구가 표준화되는지
-- 음성·영상처럼 실시간 입력을 다루는 AI SDK 기능이 provider별로 얼마나 안정화되는지
+# 개념 색인
 
-# 바로 써먹을 점
-
-- 업무 자동화: CI에서 AI 도구를 쓸 때 장기 PAT를 만들기 전에 기본 workflow token과 최소 권한을 먼저 검토합니다.
-- AI 활용: 피싱 방어에는 문법 오류보다 요청 이력, 발신자 행동, 계좌·권한 변경 같은 문맥 신호를 넣습니다.
-- 개발 생산성: agent 평가를 만들 때 reward 점수와 실제 성공률을 분리해서 기록합니다.
-- 연구 개발: agent 훈련은 live system이 아니라 재현 가능한 sandbox에서 시작하고, rollout state 격리를 확인합니다.
-- 개인 프로젝트: 음성 AI 앱을 만들 때 streaming transcription을 별도 모듈로 감싸 provider 교체가 가능하게 둡니다.
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-07-02-copilot-cli-no-longer-needs-a-personal-access-token-in-github-actions/
-- https://docs.github.com/copilot/how-tos/copilot-cli/use-copilot-cli-in-actions
-- https://docs.github.com/billing/concepts/cost-centers
-- https://docs.github.com/copilot/how-tos/copilot-cli/use-copilot-cli/set-session-limit
-- https://aws.amazon.com/blogs/machine-learning/how-amazon-bedrock-catches-ai-generated-phishing/
-- https://aws.amazon.com/bedrock/guardrails/
-- https://aws.amazon.com/bedrock/knowledge-bases/
-- https://aws.amazon.com/blogs/machine-learning/best-practices-for-multi-turn-reinforcement-learning-in-amazon-sagemaker-ai/
-- https://aws.amazon.com/about-aws/whats-new/2026/06/multi-turn-reinforcement-learning-on-sagemaker-ai/
-- https://github.com/amazon-science/SOP-Bench
-- https://aws.amazon.com/sagemaker-ai/experiments/
-- https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/code-interpreter-tool.html
-- https://github.com/vercel/ai/releases/tag/ai%407.0.14
-- https://github.com/vercel/ai/releases/tag/ai%407.0.12
-- https://github.blog/wp-json/wp/v2/changelogs?per_page=30
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/technology/ai/rss/
-- https://blogs.nvidia.com/feed/
-- https://www.microsoft.com/en-us/research/feed/
-- https://huggingface.co/blog/feed.xml
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
-- https://api.github.com/repos/vercel/ai/releases?per_page=5
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://api.github.com/repos/modelcontextprotocol/servers/releases?per_page=5
-- https://api.github.com/repos/openai/openai-python/releases?per_page=5
-- https://api.github.com/repos/vllm-project/vllm/releases?per_page=5
-- https://api.github.com/repos/huggingface/transformers/releases?per_page=5
-- https://api.github.com/repos/langchain-ai/langchain/releases?per_page=5
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.CL&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.CV&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.SE&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:stat.ML&start=0&max_results=5&sortBy=submittedDate&sortOrder=descending
+- [S1] https://github.blog/changelog/2026-07-02-copilot-cli-no-longer-needs-a-personal-access-token-in-github-actions/
+- [S2] https://aws.amazon.com/blogs/machine-learning/how-amazon-bedrock-catches-ai-generated-phishing/
+- [S3] https://aws.amazon.com/blogs/machine-learning/best-practices-for-multi-turn-reinforcement-learning-in-amazon-sagemaker-ai/
+- [S4] https://api.github.com/repos/vercel/ai/releases/tags/ai%407.0.14

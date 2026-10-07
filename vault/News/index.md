@@ -253,6 +253,10 @@ generated_by: tech-knowledge-garden
 - [[News/af17286f6e6b237f|Claude Code 2.1.201, Sonnet 5 세션의 시스템 메시지 처리 변경]] · 2026-07-04
 - [[News/3c9c826b5f004bf4|Claude Code 2.1.200, 권한 기본값과 백그라운드 세션 복구 수정]] · 2026-07-04
 - [[News/199f1aeef5f0463c|Claude Code 2.1.199, 부분 작업 보존·백그라운드 에이전트 오류 수정]] · 2026-07-03
+- [[News/b435ebb16bb8038a|Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가]] · 2026-07-03
+- [[News/bfeae69131afd34f|AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개]] · 2026-07-03
+- [[News/085adc2b94553d8f|AWS, Amazon Bedrock 기반 피싱 탐지 파이프라인 구현 방법 공개]] · 2026-07-03
+- [[News/4045784f5c7327c9|GitHub Copilot CLI, GitHub Actions에서 GITHUB_TOKEN으로 실행 가능]] · 2026-07-03
 - [[News/25c41221dd9a2fb1|Microsoft, 기업 AI 전담 사업에 25억 달러 투자 계획]] · 2026-07-03
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
