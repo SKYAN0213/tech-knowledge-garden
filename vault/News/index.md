@@ -261,6 +261,7 @@ generated_by: tech-knowledge-garden
 - [[News/c2ff68732c7e19e0|Vercel AI SDK, Vertex AI용 Gemini Interactions 호출 추가]] · 2026-07-02
 - [[News/e456906813d94efb|GitHub, 기업 밖 공개 콘텐츠의 비밀정보 유출 감시 프리뷰 공개]] · 2026-07-02
 - [[News/4f2226d872abe871|NVIDIA, AI 클라우드에 수익 공유·신용 지원 조달 모델 도입]] · 2026-07-02
+- [[News/b3b1b85723aa6104|AWS, Fable 5 보호 조치 설명…Anthropic은 7월 1일 재제공 계획]] · 2026-07-01
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28

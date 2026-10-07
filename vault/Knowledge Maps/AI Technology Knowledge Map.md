@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-10-07
-last_reviewed: 2026-10-07
+updated: 2026-10-08
+last_reviewed: 2026-10-08
 tags:
   - AI
   - KnowledgeMap
@@ -29,6 +29,7 @@ tags:
 - [[Knowledge/AI Systems/Model Context Protocol|MCP]]
 - [[Knowledge/AI Systems/Prompt Caching|프롬프트 캐싱]]
 - [[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]]
+- [[Knowledge/AI Systems/Safety Classifier|안전 분류기]]
 - [[Knowledge/AI Systems/Speculative Decoding|추측 디코딩]]
 - [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]]
 - [[Knowledge/AI Systems/Vision-Language-Action Models|시각·언어·행동 모델]]

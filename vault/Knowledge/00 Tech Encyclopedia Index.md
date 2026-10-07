@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-07
+updated: 2026-10-08
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -102,6 +102,10 @@ tags:
 ### Robotics
 
 - [[Knowledge/Robotics/Welding Weaving|용접 위빙]]
+
+### AI Systems
+
+- [[Knowledge/AI Systems/Safety Classifier|안전 분류기]]
 
 ## 개념 경계
 
