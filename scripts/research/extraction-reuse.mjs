@@ -71,6 +71,7 @@ export async function reuseExtraction(
         "number_not_in_evidence",
         "unit_not_in_evidence",
         "condition_not_in_evidence",
+        "number_parts_not_in_same_evidence",
         "ongoing_source_marked_completed",
         "plan_promoted_to_completion",
         "publication_date_requires_review",
@@ -100,7 +101,15 @@ export async function reuseExtraction(
           }
         : {}),
     }
-    const output = { ...extracted, claims, extraction_reuse: receipt }
+    // Processing belongs to the producing run. Retain its provenance, but do
+    // not make the fresh review destination impersonate that workflow.
+    const { source_processing: originProcessing, ...generation } = extracted
+    const output = {
+      ...generation,
+      claims,
+      extraction_reuse: receipt,
+      ...(originProcessing ? { extraction_source_processing: originProcessing } : {}),
+    }
     const base = `runs/${runId}/`
     const previous = readJSON(root, base + "claims.json")
     const previousReceipt = readJSON(root, base + "extraction-reuse.json")

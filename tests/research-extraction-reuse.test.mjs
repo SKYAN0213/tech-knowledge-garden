@@ -80,7 +80,9 @@ function fixture(t) {
 }
 
 test("CLI reuse preserves extraction provenance and exact sources while requiring fresh review without a model call", async (t) => {
-  const { root, claim } = fixture(t)
+  const { root, claim, extraction } = fixture(t)
+  extraction.source_processing = { run: "source", input_sha256: sha256("original-processing") }
+  atomicWrite(root, "runs/source/claims.json", extraction)
   assert.equal(
     (await main(["reuse-extraction", "--root", root, "--run", "bundle", "--source-run", "source"]))
       .reused,
@@ -91,6 +93,8 @@ test("CLI reuse preserves extraction provenance and exact sources while requirin
   assert.equal(result.claims[0].review.status, "unreviewed")
   assert.equal(result.claims[0].event_id, null)
   assert.equal(result.provenance.model, "controlled-fixture")
+  assert.equal(result.source_processing, undefined)
+  assert.deepEqual(result.extraction_source_processing, extraction.source_processing)
   assert.equal(
     result.extraction_reuse.source_claims_sha256,
     sha256(fs.readFileSync(path.join(root, "runs/source/claims.json"))),
@@ -99,6 +103,68 @@ test("CLI reuse preserves extraction provenance and exact sources while requirin
   assert.equal((await reuseExtraction(root, "bundle", "source")).reused, true)
   assert.deepEqual(fs.readFileSync(path.join(root, "runs/bundle/claims.json")), before)
   assert.equal(fs.existsSync(path.join(root, "runs/bundle/reviewed-claims.json")), false)
+  const reviewFile = path.join(root, "fact-review.json")
+  fs.writeFileSync(
+    reviewFile,
+    JSON.stringify({
+      reviewer: "Source reviewer",
+      reviewed_at: "2026-10-04",
+      claims: [
+        {
+          claim_id: claim.claim_id,
+          status: "verified",
+          reason: "Read the exact source block",
+          source_read: true,
+          entailment_checked: true,
+          identity_checked: true,
+          numbers_checked: true,
+          time_checked: true,
+        },
+      ],
+    }),
+  )
+  const reviewed = await main(["review", "--root", root, "--run", "bundle", "--review", reviewFile])
+  assert.equal(reviewed.verified, 1)
+})
+
+test("numeric citation defects can be retained for correction without inheriting approval", async (t) => {
+  const { root, claim, parse, extraction } = fixture(t)
+  claim.numbers = [{ literal: "13", unit: "percent", condition: "compared with the base model" }]
+  atomicWrite(root, "runs/source/claims.json", extraction)
+  await assert.rejects(
+    () => reuseExtraction(root, "bundle", "source"),
+    /number_parts_not_in_same_evidence/,
+  )
+  await reuseExtraction(root, "bundle", "source", { retainUnsupportedClaims: true })
+  const result = readJSON(root, "runs/bundle/claims.json")
+  assert.equal(result.claims[0].review.structural_pass, false)
+  assert.equal(result.claims[0].review.status, "unreviewed")
+  assert.equal(result.claims[0].event_id, null)
+  assert.deepEqual(result.claims[0].numbers, claim.numbers)
+  const decision = {
+    claim_id: claim.claim_id,
+    status: "verified",
+    reason: "Source does not report this number; remove the unsupported numeric assertion.",
+    source_read: true,
+    entailment_checked: true,
+    identity_checked: true,
+    numbers_checked: true,
+    time_checked: true,
+  }
+  const review = { reviewer: "Source reviewer", reviewed_at: "2026-10-04" }
+  assert.throws(
+    () => recordFactReview(result.claims, [decision], review, [parse]),
+    /Verified claim requires/,
+  )
+  const corrected = recordFactReview(
+    result.claims,
+    [{ ...decision, replacement: { numbers: [] } }],
+    review,
+    [parse],
+  )
+  assert.equal(corrected[0].review.status, "verified")
+  assert.equal(corrected[0].previous_claim_id, claim.claim_id)
+  assert.deepEqual(readJSON(root, "runs/source/claims.json"), extraction)
 })
 
 test("reuse rejects different source parses, changed extraction and partial checkpoints before overwriting", async (t) => {

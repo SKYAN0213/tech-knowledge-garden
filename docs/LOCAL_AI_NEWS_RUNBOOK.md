@@ -11629,6 +11629,8 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 
 ## 492. 원문 대조 호출 수를 줄이고 이전 실행을 유지하기
 
+로컬 대조가 실제 timeout으로 종료됐고 편집자가 원문 전체를 직접 읽을 수 있는 경우, 기존 `select-source` → `reuse-extraction` → `review` → `draft` 경로를 사용한다. 원문·parse·추출 provenance는 그대로 재사용하고, 사실별 명시적 검토와 최종 편집 승인은 새로 수행한다. 이는 무인 승인이나 모델 대조 성공으로 집계하지 않는다. 재사용 원고는 생성 실행의 `source_processing`을 `extraction_source_processing`으로 보존하므로 새 검토 실행을 과거 처리 실행으로 오인하지 않는다. `--retain-unsupported-claims`는 수치와 조건의 인용 불일치도 미검토 상태로 보존하며, 수정·보류 없이 승인할 수 없다. 같은 원문 재수집·사실 재추출·실패한 대조 호출의 무차별 반복은 하지 않는다.
+
 새 전체 원문 대조는6사실씩 처리한다. 전체 원문과 조건을 모든 해당 묶음에 전달하며,3사실/quote 방식으로 이미 시작한 실행은 `evidence-assessment/input.json`의 batch 크기·response protocol을 그대로 사용한다. 바뀐 원문·claims·정책은 기존 검증기로 거부한다. 부분 window 및 완료 평가 재사용은 기존 계약을 따른다. 실행 중 모델 worker에 파일 변경을 적용하거나 같은 실행을 재시작하지 않는다.
 
 7월7일 AWS RL 실행 `legacy-jul07-aws-rl-processing-20261007-v1`은12사실/추출2·대조4호출을 완료하고 fact_review 상태다. 다시 모델 대조하지 않는다. 원문93blocks와 비용 표의 최소10인스턴스 중8compute 조건·예상 reward와 실제 성과의 차이를 직접 읽었다. 공개 승인 없이 모델 supported 판정을 기사 검증 완료로 세지 않는다. 새 PII 실행 `legacy-jul07-aws-pii-processing-20261007-v1`은 원본 selection을 재사용하고 evidence-think false로 실행한다. 완료 여부는 native processing/state·progress·fact-review-packet으로 확인하고, 관측 timeout을 이유로 새 run을 만들지 않는다.
