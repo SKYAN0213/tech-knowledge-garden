@@ -5362,3 +5362,9 @@ WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원�
 source_list_event_review는 기사 문단 없이 한눈에 보기와 Source List에만 남은 원래 사건을 복원한다. 원래 요약의 단위 ID·SHA·정확한 문장, 원문·연결 확인, 해당 요약의 사건 ID 보존이 필수다. Source List 이외의 임의 단위에 이 예외를 쓰거나, 무관한 기존 기사에 새 사건을 붙이지 않는다. 기존 날짜 범위·정확한 원문 판본·사건 중복 및 분야별 표시 상한을 그대로 검증한다.
 
 실제7월7일08:04의13구간·18출처를 대조해9사건의 비공개 preview를 완성했다. Ollama API404와 공식 태그의 mlx 커밋만으로는 기존 CUDA 설명이 확인되지 않아 제외했다. MLflow는 원래 요약의 benchmark 추적과 공식 발표를 연결해 같은 회차에 복원했다. AI SDK 코어와 xAI 어댑터는 독립 기사·출처를 유지하고 표시만 묶어 소프트웨어5항목으로 구성했다. 관련63/63 검사를 통과했고9기사의 private Research 원격 raw SHA·복구·native 위치를 등록했다. 기존216개 Drive 파일을 fresh metadata로 확인해215개 불변 원문 bytes를 재사용하고 대상1개는 실제 raw를 다시 읽었다. 이 단계는 전체 소급·독립평가·정규 운영 완료가 아니며 Drive 작성본과 실제 공개는 별도로 확인한다.
+
+
+실제 발행 완료(2026-10-07): 71af1baa/Actions37638509237의 Node1,183/1,183·Python·build/site/deploy가 성공했다. 기존7월7일08:04 Drive 파일 ID를 유지해 승인9기사를 반영하고 native raw readback→canonical import→한 번 commit/push→실제 웹/RSS/GitHub SHA 검증을 완료했다. Research9 ZIP와 WebsiteData11파일은20개 원격 raw·native 복구/위치/매핑까지 remote_delivery_complete다. 바뀐 WebsiteData8개만 갱신하고 불변3개를 유지했다. 브라우저에서 분야 Enter·공유URL·뒤로 가기,390px mobile 가로 넘침0, MiniMax 기사→프롬프트 캐싱→관련 기사와 뉴스/브리핑 canvas0을 확인했다. 과거 회차를 신규 RSS 회차나 정규 운영으로 생성하지 않았다. 최신 inventory는216원본·247검증 사건·diagnostics0·소급 잔여28회차/286단위·metadata2다. 전체 WBS와 독립평가/정규 운영 수는 유지한다.
+
+
+최종 private 검토 보관: 원래13단위의 before_content·제외 판정·Ollama 공식 태그 raw·Drive 전후 영수증·공개/원격 검증·CI·UI·WBS를30개 파일로 묶었다. core-jul07-0804-reviewed-custody-closure-20261007-v1.zip은 Research의1KEv059RO6tZYilxMl_PtzrjdQ8o1I7-G에 private 저장한 뒤 실제 raw SHA·독립 복원·native 위치 등록을 확인했다. 앞선 기사 근거9 ZIP 및 WebsiteData11파일과는 별도 운영 증거1 ZIP이다. 전체 runtime 복구와 독립 human 평가를 완료한 것으로 집계하지 않는다.

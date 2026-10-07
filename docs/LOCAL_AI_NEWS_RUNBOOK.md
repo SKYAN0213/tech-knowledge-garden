@@ -11605,3 +11605,9 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 요약에만 남은 사건은 Source List를 anchor로 삼고 source_list_event_review로 한눈에 보기의 정확한 원문을 고정한다. 기존 depth2 기사의 출처 연결은 기존 source_list_review 및 공식 대체 주소 검토를 그대로 사용한다. 원고·발표일·사건 ID와 브리핑 표시 그룹은 분리한다. native assertLegacyTransition와 privatePreview를 통과한 뒤 기존 회차·같은 Drive ID를 갱신한다. 이 경로는 과거 기사를 신규 회차나 정규 비교 횟수로 집계하지 않는다.
 
 7월7일08:04 preview는 legacy-jul07-0804-preview-20261007-v1, 전체 검토는13단위·18원래주소·9승인 사건이다. 소프트웨어5개의 신규 private closure는 raw SHA·원격 복원과 research-archives register를 확인했다. source/version·추출·대조·모델 writer를 재호출하지 않았다. 관련 테스트63/63; 전체 CI는 최종 코드/발행 묶음에서1회 확인한다.
+
+
+실제 발행 완료(2026-10-07): 71af1baa/Actions37638509237의 Node1,183/1,183·Python·build/site/deploy가 성공했다. 기존7월7일08:04 Drive 파일 ID를 유지해 승인9기사를 반영하고 native raw readback→canonical import→한 번 commit/push→실제 웹/RSS/GitHub SHA 검증을 완료했다. Research9 ZIP와 WebsiteData11파일은20개 원격 raw·native 복구/위치/매핑까지 remote_delivery_complete다. 바뀐 WebsiteData8개만 갱신하고 불변3개를 유지했다. 브라우저에서 분야 Enter·공유URL·뒤로 가기,390px mobile 가로 넘침0, MiniMax 기사→프롬프트 캐싱→관련 기사와 뉴스/브리핑 canvas0을 확인했다. 과거 회차를 신규 RSS 회차나 정규 운영으로 생성하지 않았다. 최신 inventory는216원본·247검증 사건·diagnostics0·소급 잔여28회차/286단위·metadata2다. 전체 WBS와 독립평가/정규 운영 수는 유지한다.
+
+
+최종 private 검토 보관: 원래13단위의 before_content·제외 판정·Ollama 공식 태그 raw·Drive 전후 영수증·공개/원격 검증·CI·UI·WBS를30개 파일로 묶었다. core-jul07-0804-reviewed-custody-closure-20261007-v1.zip은 Research의1KEv059RO6tZYilxMl_PtzrjdQ8o1I7-G에 private 저장한 뒤 실제 raw SHA·독립 복원·native 위치 등록을 확인했다. 앞선 기사 근거9 ZIP 및 WebsiteData11파일과는 별도 운영 증거1 ZIP이다. 전체 runtime 복구와 독립 human 평가를 완료한 것으로 집계하지 않는다.
