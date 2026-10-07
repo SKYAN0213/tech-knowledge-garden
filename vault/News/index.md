@@ -196,10 +196,17 @@ generated_by: tech-knowledge-garden
 - [[News/80bba25e13259f42|GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시]] · 2026-07-21
 - [[News/a7ef730e554338df|GitHub Copilot, 저장소별 PR 생성·병합·리뷰 지표 제공]] · 2026-07-18
 - [[News/c5c5248230951857|OpenAI, AI 비용 평가에 성공 업무당 총비용 제안]] · 2026-07-18
+- [[News/c74104c7d7fe52c0|Gemini Enterprise Agent Platform, Parallel 웹 검색·출처 인용 지원]] · 2026-07-17
+- [[News/16e13c52f7cd02d4|Google DeepMind·Isomorphic Labs, AI 감염병 예방·탐지·대응 계획 공개]] · 2026-07-17
+- [[News/3fbe8ceb6f00f58a|GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가]] · 2026-07-16
+- [[News/55f3f57477bf071c|Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성]] · 2026-07-15
+- [[News/fe469724f5828fb0|GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가]] · 2026-07-15
+- [[News/27d181b6a4903b28|GitHub, PR 자동 AI 보안 검사 공개 미리보기]] · 2026-07-15
 - [[News/6c31b0895d6be835|AI SDK, 음성 전사 취소와 도구 호출 추적 수정]] · 2026-07-14
 - [[News/661912ab39baa4f1|Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가]] · 2026-07-14
 - [[News/b5e2211dddab87f3|Codex 0.144.2, 자동 코드 리뷰 프롬프트 회귀 복구]] · 2026-07-13
 - [[News/18f464ca2bf3c740|Vercel AI SDK, Groq 캐시 입력 토큰을 사용량에 반영하도록 수정]] · 2026-07-12
+- [[News/521cb8f5727237af|OpenAI, Deutsche Telekom의 직원·고객 지원·네트워크 AI 도입 사례 공개]] · 2026-07-11
 - [[News/b94c58885676c1b2|GitHub, 다중 사용자 예산을 페이지별로 조회하는 API 추가]] · 2026-07-11
 - [[News/de3b723b4c4d604c|GitHub, 비밀정보 탐지기 이름을 탐지 방식에 맞춰 변경]] · 2026-07-11
 - [[News/cd5027de226c01e4|CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가]] · 2026-07-11

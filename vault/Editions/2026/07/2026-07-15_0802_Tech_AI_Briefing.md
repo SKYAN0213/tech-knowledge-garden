@@ -1,64 +1,218 @@
 ---
-{}
+title: 2026-07-15 Tech & AI 브리핑
+type: briefing
+schema_version: tech-ai-magazine/v2
+date: 2026-07-15
+timezone: Asia/Seoul
+coverage_start: null
+coverage_end: null
+historical_coverage: unrecorded/v1
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 3
+new_items_count: 3
+linked_knowledge_notes: []
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub, PR 자동 AI 보안 검사 공개 미리보기
+  - GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가
+  - Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
+article_records:
+  - title: GitHub, PR 자동 AI 보안 검사 공개 미리보기
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-15
+      where: github.com
+      what: AI 기반 보안 탐지 기능 공개
+      how: pull request에 AI 탐지 결과 표시 및 자동 실행
+      why: CodeQL 미지원 언어·프레임워크의 취약점 탐지 범위 확대
+    lead: GitHub가 2026년 7월 15일(한국시간) 풀 리퀘스트(PR)에 AI 보안 탐지 결과를 표시하는 공개 미리보기를 시작했다. AI
+      엔진은 PR이 열리거나 갱신될 때 자동으로 실행되며, CodeQL이 지원하지 않는 언어·프레임워크까지 탐지 범위를 넓힌다.
+    explanations:
+      - heading: 결과 표시와 병합
+        paragraphs:
+          - 분석 결과가 나오는 대로 PR에 표시하며, AI로 생성한 경고에는 AI 라벨을 붙여 CodeQL 결과와 구분한다. 결과는
+            정보 제공용으로 PR 병합을 차단하지 않는다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-14-code-scanning-shows-ai-security-detections-on-pull-requests/
+      - heading: 활성화·과금 조건
+        paragraphs:
+          - GitHub Code Security(GitHub Advanced Security) 고객을 대상으로 github.com에서
+            제공한다. 기업 정책의 허용, 조직 단위 활성화, 저장소의 CodeQL 기본 분석 설정이 필요하다. AI 분석은
+            CodeQL 대신 AI 엔진이 수행한다.
+          - 공개 미리보기에서도 GitHub Copilot 라이선스가 필요하고, 탐지를 실행할 때 조직의 AI 크레딧을 사용한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-14-code-scanning-shows-ai-security-detections-on-pull-requests/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-14
+      where: 미기재
+      what: GitHub Copilot 앱에 /security-review 슬래시 명령어 공개 프리뷰 제공
+      how: 진행 중인 코드 변경 사항을 분석해 보안 이슈와 개선 제안을 제시
+      why: 미기재
+    lead: GitHub는 2026년 7월 14일(한국시간) Copilot 앱에 /security-review 명령을 공개 미리보기로 제공한다고
+      밝혔다. 해당 명령어는 진행 중인 코드 변경 사항을 분석해 심각도와 신뢰도 점수를 매긴 보안 이슈와 적용 가능한 개선 제안을
+      제시한다. 공개 미리보기 기간에는 Copilot Free·Pro·Business·Enterprise 사용자가 이용할 수 있다.
+    explanations:
+      - heading: 요청 시 검사하는 로컬 변경
+        paragraphs:
+          - GitHub는 인젝션, 크로스사이트 스크립팅, 안전하지 않은 데이터 처리, 경로 조작, 약한 암호화 등의 취약점을 찾도록
+            설계했다고 설명했다.
+          - 개발자가 작업 중인 로컬 변경을 필요할 때 검사하는 방식이다. 기존 code
+            scanning·Dependabot·secret scanning을 보완한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-14-security-reviews-now-available-in-the-github-copilot-app/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub, Dependabot
+      when: 2026-07-15
+      where: github.com, GitHub Enterprise Server
+      what: Dependabot 버전 업데이트 풀 리퀘스트 생성 전 3일 대기 기간 도입
+      how: 레지스트리 등록 후 3일 경과 시 PR 생성, 보안 업데이트는 즉시 생성, .github/dependabot.yml로 설정 가능
+      why: 미기재
+    lead: GitHub가 2026년 7월 15일(한국시간) Dependabot의 일반 버전 업데이트 기본값을 바꿨다. 새 릴리스가 패키지
+      레지스트리에 공개된 뒤 최소 3일이 지나야 업데이트 풀 리퀘스트(PR)를 생성한다. 보안 업데이트 PR은 기존처럼 즉시 생성한다.
+    explanations:
+      - heading: 적용 범위와 설정
+        paragraphs:
+          - github.com의 모든 지원 생태계에 기본 적용하며, .github/dependabot.yml의 cooldown
+            옵션으로 기간을 바꾸거나 대기를 해제할 수 있다. GitHub Enterprise Server에는 3.23에서 적용할
+            예정이다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-14-dependabot-version-updates-introduce-default-package-cooldown/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub, PR 자동 AI 보안 검사 공개 미리보기
+    event_id: 27d181b6a4903b28
+    review_status: verified
+    published_at: 2026-07-15
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-14T12:12:48-07:00
+  - title: GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가
+    event_id: fe469724f5828fb0
+    review_status: verified
+    published_at: 2026-07-14
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-14T05:54:12-07:00
+  - title: Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
+    event_id: 55f3f57477bf071c
+    review_status: verified
+    published_at: 2026-07-15
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-14T09:42:59-07:00
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- GitHub가 코드 작성 중과 풀 리퀘스트(PR) 단계에 AI 보안 검토를 넣었다. 보안 검사가 별도 사후 작업이 아니라 개발 흐름 안으로 들어오는 변화다.
-- Dependabot의 일반 버전 업데이트는 새 패키지가 공개된 뒤 기본 3일을 기다린다. 보안 업데이트는 지연하지 않는다.
-- 논문과 연구: 없음
-- 오픈소스와 도구: 없음
+GitHub, PR 자동 AI 보안 검사 공개 미리보기
 
-# 오늘의 핵심 기사
+# 차례
 
-## GitHub, AI 보안 검토를 코딩 중과 PR 단계로 확대
+- GitHub, PR 자동 AI 보안 검사 공개 미리보기
+- GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가
+- Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
 
-GitHub가 AI를 이용한 취약점 검사를 개발자가 코드를 쓰는 순간과 PR을 검토하는 순간에 바로 쓸 수 있게 했다. 별도 보안 도구로 이동하기 전에 문제 후보를 발견하고 수정하는 흐름이다.
-
-**핵심 사실:** GitHub Copilot 앱의 공개 미리보기에는 `/security-review` 명령이 추가됐다. 현재 작업 중인 변경에서 인젝션, 크로스사이트 스크립팅, 안전하지 않은 데이터 처리, 경로 조작, 약한 암호화 같은 고위험 문제를 찾고 심각도·신뢰도와 수정 제안을 보여준다. Copilot Free, Pro, Business, Enterprise 사용자가 미리보기 기간에 쓸 수 있다.
-
-GitHub Code Security 고객을 위한 별도 공개 미리보기에서는 PR이 열리거나 갱신될 때 AI 탐지 엔진이 자동으로 검사한다. CodeQL이 기본 지원하지 않는 언어와 프레임워크까지 범위를 넓히며, AI가 만든 결과에는 `AI` 표시가 붙는다. 이 결과는 정보 제공용이라 병합을 자동으로 막지 않는다. 사용하려면 기업 정책 허용, 조직 단위 활성화, 저장소의 CodeQL 기본 설정이 필요하며 Copilot 라이선스와 AI 크레딧을 사용한다.
-
-**왜 중요한가:** 확인된 변화는 보안 검사가 개발 흐름 안으로 더 가까이 들어왔다는 점이다. 다만 AI 탐지는 확정 판정이 아니므로 사람이 재현 가능성, 실제 영향, 수정 뒤 회귀 여부를 검토해야 한다.
-
-**다음에 볼 점:** 공개 미리보기에서 거짓 양성 비율, 언어별 탐지 범위, AI 크레딧 비용, 기존 CodeQL 결과와의 중복 정도가 공개되는지 볼 필요가 있다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]
-
-## Dependabot, 새 패키지 버전을 기본 3일 기다린다
-
-GitHub가 Dependabot의 일반 버전 업데이트 PR에 기본 3일 대기 시간을 적용했다. 막 공개된 손상·탈취 패키지가 자동 업데이트를 타고 바로 들어오는 위험을 줄이려는 조치다.
-
-**핵심 사실:** 이 기본값은 github.com의 모든 지원 생태계에서 별도 설정 없이 적용되며 GitHub Enterprise Server 3.23에도 들어갈 예정이다. 취약점 수정을 위한 보안 업데이트는 즉시 열리므로 늦어지지 않는다. 조직은 `.github/dependabot.yml`의 `cooldown` 옵션으로 기간을 바꾸거나 끌 수 있다.
-
-**왜 중요한가:** 최신 버전을 가장 빨리 받는 것과 안전하게 검증된 버전을 받는 것 사이에 운영 기본값이 생겼다. 새 릴리스 직후 커뮤니티와 유지보수자가 이상을 발견할 시간을 확보하는 간단한 공급망 방어다.
-
-**다음에 볼 점:** 배포 속도가 중요한 프로젝트는 의존성별 예외를 검토하고, 보안 업데이트가 일반 버전 업데이트와 실제로 분리되어 처리되는지 확인해야 한다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
+
+## GitHub, PR 자동 AI 보안 검사 공개 미리보기
+
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub가 2026년 7월 15일(한국시간) 풀 리퀘스트(PR)에 AI 보안 탐지 결과를 표시하는 공개 미리보기를 시작했다. AI 엔진은 PR이 열리거나 갱신될 때 자동으로 실행되며, CodeQL이 지원하지 않는 언어·프레임워크까지 탐지 범위를 넓힌다. [S1]
+
+### 결과 표시와 병합
+
+분석 결과가 나오는 대로 PR에 표시하며, AI로 생성한 경고에는 AI 라벨을 붙여 CodeQL 결과와 구분한다. 결과는 정보 제공용으로 PR 병합을 차단하지 않는다. [S1]
+
+### 활성화·과금 조건
+
+GitHub Code Security(GitHub Advanced Security) 고객을 대상으로 github.com에서 제공한다. 기업 정책의 허용, 조직 단위 활성화, 저장소의 CodeQL 기본 분석 설정이 필요하다. AI 분석은 CodeQL 대신 AI 엔진이 수행한다.
+
+공개 미리보기에서도 GitHub Copilot 라이선스가 필요하고, 탐지를 실행할 때 조직의 AI 크레딧을 사용한다. [S1]
+
+## GitHub Copilot 앱, 코드 변경의 보안 검사 명령 추가
+
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 2026년 7월 14일(한국시간) Copilot 앱에 /security-review 명령을 공개 미리보기로 제공한다고 밝혔다. 해당 명령어는 진행 중인 코드 변경 사항을 분석해 심각도와 신뢰도 점수를 매긴 보안 이슈와 적용 가능한 개선 제안을 제시한다. 공개 미리보기 기간에는 Copilot Free·Pro·Business·Enterprise 사용자가 이용할 수 있다. [S2]
+
+### 요청 시 검사하는 로컬 변경
+
+GitHub는 인젝션, 크로스사이트 스크립팅, 안전하지 않은 데이터 처리, 경로 조작, 약한 암호화 등의 취약점을 찾도록 설계했다고 설명했다.
+
+개발자가 작업 중인 로컬 변경을 필요할 때 검사하는 방식이다. 기존 code scanning·Dependabot·secret scanning을 보완한다. [S2]
+
+## Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
+
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 변경
+**기업·기관:** GitHub
+
+GitHub가 2026년 7월 15일(한국시간) Dependabot의 일반 버전 업데이트 기본값을 바꿨다. 새 릴리스가 패키지 레지스트리에 공개된 뒤 최소 3일이 지나야 업데이트 풀 리퀘스트(PR)를 생성한다. 보안 업데이트 PR은 기존처럼 즉시 생성한다. [S3]
+
+### 적용 범위와 설정
+
+github.com의 모든 지원 생태계에 기본 적용하며, .github/dependabot.yml의 cooldown 옵션으로 기간을 바꾸거나 대기를 해제할 수 있다. GitHub Enterprise Server에는 3.23에서 적용할 예정이다. [S3]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
 
 없음
 
 # 흐름 읽기
 
-**분석:** 이번 업데이트는 AI 보안 기능이 독립된 검사 화면보다 코딩·PR이라는 기존 작업 지점에 붙는 흐름을 보여준다. 동시에 Dependabot의 3일 대기는 자동화 속도만 높이는 대신 위험이 드러날 시간을 운영 기본값으로 확보하는 변화다.
+없음
 
-앞으로는 AI 탐지의 정확도와 비용, 사람이 최종 판단하는 절차, 자동 업데이트의 속도와 안전성 사이 설정이 실제 도입 성패를 가를 가능성이 크다.
+# 오늘의 적용
 
-# 바로 써먹을 점
+없음
 
-- GitHub Copilot 앱을 쓴다면 중요한 변경을 커밋하기 전에 `/security-review`를 실행하고, 결과를 재현 테스트와 함께 검토한다.
-- GitHub Code Security 조직은 AI 탐지를 켜기 전에 Copilot 라이선스·AI 크레딧 예산과 CodeQL 기본 설정을 확인한다.
-- Dependabot 사용 저장소는 기본 3일 대기가 배포 주기에 맞는지 확인하고, 긴급성이 다른 의존성만 `cooldown` 예외로 관리한다.
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-07-14-code-scanning-shows-ai-security-detections-on-pull-requests/
-- https://github.blog/changelog/2026-07-14-security-reviews-now-available-in-the-github-copilot-app/
-- https://github.blog/changelog/2026-07-14-dependabot-version-updates-introduce-default-package-cooldown/
+- [S1] https://github.blog/changelog/2026-07-14-code-scanning-shows-ai-security-detections-on-pull-requests/
+- [S2] https://github.blog/changelog/2026-07-14-security-reviews-now-available-in-the-github-copilot-app/
+- [S3] https://github.blog/changelog/2026-07-14-dependabot-version-updates-introduce-default-package-cooldown/

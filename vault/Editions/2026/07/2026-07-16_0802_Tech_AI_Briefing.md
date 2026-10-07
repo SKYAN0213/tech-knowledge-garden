@@ -1,49 +1,127 @@
 ---
-{}
+title: 2026-07-16 Tech & AI 브리핑
+type: briefing
+schema_version: tech-ai-magazine/v2
+date: 2026-07-16
+timezone: Asia/Seoul
+coverage_start: null
+coverage_end: null
+historical_coverage: unrecorded/v1
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 1
+new_items_count: 1
+linked_knowledge_notes: []
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
+article_records:
+  - title: GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-16
+      where: 미기재
+      what: 시크릿 스캐닝 파트너 추가, 신규 시크릿 유형 자동 감지, VolcEngine 시크릿 푸시 보호 기본 적용, 웹훅 페이로드 필드
+        추가, 공개 모니터링 인사이트 카드 도입
+      how: Resend를 파트너로 등록해 노출된 시크릿을 전달하고, APIclub 및 Resend 키를 자동 감지하며, VolcEngine 키에
+        대한 푸시 보호를 활성화하고, 웹훅에 secret_category 필드를 포함해 감지 유형을 구분하며, 모니터링 화면에 인사이트
+        카드를 배치
+      why: 미기재
+    lead: GitHub는 2026년 7월 16일(한국시간) Resend를 secret scanning 파트너로 추가하고
+      APIclub·Resend 키 탐지를 지원한다고 밝혔다. VolcEngine Ark 키가 포함된 커밋의 기본 차단 대상도 확대하고,
+      보안 경보 웹훅과 기업용 유출 현황 화면을 개선했다.
+    explanations:
+      - heading: 발급사 통보와 커밋 차단
+        paragraphs:
+          - 공개 저장소에서 노출된 Resend 키는 GitHub가 발급사에 전달하고, Resend가 키 폐기나 관리자 통지 등의
+            조치를 한다는 설명이다. 새 탐지 유형은 APIclub의 apiclub_api_key와 Resend의
+            resend_api_key다.
+          - secret scanning이 켜진 저장소는 volcengine_ark_api_key가 포함된 커밋을 기본 push
+            protection으로 차단한다. 무료 공개 저장소도 적용 대상에 포함된다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-15-improvements-to-secret-scanning-and-public-monitoring/
+      - heading: 경보 분류와 유출 귀속
+        paragraphs:
+          - secret_scanning_alert 웹훅의 secret_category는 제공자·사용자 정의 패턴을 default로,
+            일반 패턴·AI 탐지 결과를 generic으로 구분한다.
+          - 기업용 public monitoring은 기업 구성원이 작성한 커밋과 검증된 도메인의 커미터 이메일을 기준으로 유출 경보
+            수를 나눠 보여준다. 기업 구성원 수와 검증된 도메인도 같은 화면에서 확인할 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-15-improvements-to-secret-scanning-and-public-monitoring/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
+    event_id: 3fbe8ceb6f00f58a
+    review_status: verified
+    published_at: 2026-07-16
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-15T15:38:16-07:00
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- GitHub가 저장소에 노출된 API 키와 토큰을 더 잘 찾고, 일부 키는 커밋 전에 자동 차단하도록 secret scanning을 강화했다.
-- 논문과 연구: 없음
-- 오픈소스와 도구: 없음
+GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
 
-# 오늘의 핵심 기사
+# 차례
 
-## GitHub, 노출된 비밀키 탐지와 대응 자동화 강화
+- GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
 
-GitHub가 코드에 실수로 들어간 API 키와 토큰을 찾는 `secret scanning` 기능을 넓혔다. 탐지 대상을 추가하는 데 그치지 않고, 커밋 전 차단과 보안 경보 분류, 공개 저장소 유출 현황 파악까지 한 번에 개선했다.
-
-**핵심 사실:** GitHub는 이메일 API 서비스 Resend를 secret scanning 파트너로 추가했다. 공개 저장소에서 Resend 키가 발견되면 GitHub가 발급사에 전달하고, 발급사는 키 폐기나 관리자 통지 같은 대응을 할 수 있다. APIclub과 Resend 키 탐지가 추가됐고, VolcEngine Ark API 키는 secret scanning이 켜진 저장소에서 기본 push protection 대상이 되어 커밋 전에 차단된다.
-
-`secret_scanning_alert` 웹훅에는 `secret_category` 필드가 추가됐다. 운영팀은 제공자별 패턴과 사용자 정의 패턴을 뜻하는 `default`, 일반 패턴과 AI 탐지를 뜻하는 `generic`을 자동화에서 구분할 수 있다. 기업용 public monitoring 화면은 유출이 직원 활동에서 왔는지, 검증된 회사 도메인에서 왔는지와 기업 구성원·도메인 수를 함께 보여준다.
-
-**왜 중요한가:** 비밀키 유출 대응은 단순히 경보를 많이 찾는 문제보다, 커밋 전에 막고 이미 노출된 키를 발급사와 함께 폐기하며 경보를 올바른 담당자에게 보내는 과정이 중요하다. 이번 변경은 탐지·차단·분류·사고 대응을 하나의 운영 흐름으로 연결한다.
-
-**다음에 볼 점:** 새 웹훅 필드를 기존 보안 자동화가 제대로 처리하는지, AI 탐지와 일반 패턴 탐지의 오탐률이 어떻게 다른지, public monitoring의 유출 귀속 정보가 실제 사고 대응 시간을 줄이는지 확인할 필요가 있다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
+
+## GitHub, Resend 키 탐지·VolcEngine Ark 커밋 차단 추가
+
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가, 기능 변경
+**기업·기관:** GitHub, Resend, APIclub, VolcEngine
+
+GitHub는 2026년 7월 16일(한국시간) Resend를 secret scanning 파트너로 추가하고 APIclub·Resend 키 탐지를 지원한다고 밝혔다. VolcEngine Ark 키가 포함된 커밋의 기본 차단 대상도 확대하고, 보안 경보 웹훅과 기업용 유출 현황 화면을 개선했다. [S1]
+
+### 발급사 통보와 커밋 차단
+
+공개 저장소에서 노출된 Resend 키는 GitHub가 발급사에 전달하고, Resend가 키 폐기나 관리자 통지 등의 조치를 한다는 설명이다. 새 탐지 유형은 APIclub의 apiclub_api_key와 Resend의 resend_api_key다.
+
+secret scanning이 켜진 저장소는 volcengine_ark_api_key가 포함된 커밋을 기본 push protection으로 차단한다. 무료 공개 저장소도 적용 대상에 포함된다. [S1]
+
+### 경보 분류와 유출 귀속
+
+secret_scanning_alert 웹훅의 secret_category는 제공자·사용자 정의 패턴을 default로, 일반 패턴·AI 탐지 결과를 generic으로 구분한다.
+
+기업용 public monitoring은 기업 구성원이 작성한 커밋과 검증된 도메인의 커미터 이메일을 기준으로 유출 경보 수를 나눠 보여준다. 기업 구성원 수와 검증된 도메인도 같은 화면에서 확인할 수 있다. [S1]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
 
 없음
 
 # 흐름 읽기
 
-**분석:** 확인된 변화는 저장소 보안이 사후 경보에서 사전 차단과 자동 회수로 이동하고 있다는 점이다. 여기에 경보 분류와 유출 경로 정보가 붙으면서, 보안팀은 모든 경보를 같은 방식으로 다루기보다 출처와 탐지 방식에 따라 대응을 나눌 수 있게 된다.
+없음
 
-앞으로는 탐지 범위 확대보다 실제 키 폐기까지 걸리는 시간, 오탐 처리 비용, 기업 밖 공개 저장소에서 발견된 유출을 내부 담당자에게 연결하는 속도가 운영 성과를 가를 가능성이 크다.
+# 오늘의 적용
 
-# 바로 써먹을 점
+없음
 
-- GitHub secret scanning 웹훅을 쓰는 조직은 `secret_category`를 수집하고 `default`와 `generic` 경보의 처리 규칙을 분리한다.
-- VolcEngine Ark를 쓰는 공개 저장소는 push protection이 켜졌는지 확인하고, 차단을 우회한 기록도 정기적으로 검토한다.
-- 기업용 public monitoring 사용자는 직원 활동과 검증된 도메인별 유출 수를 기준으로 키 폐기 담당자와 대응 우선순위를 정한다.
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-07-15-improvements-to-secret-scanning-and-public-monitoring/
+- [S1] https://github.blog/changelog/2026-07-15-improvements-to-secret-scanning-and-public-monitoring/
