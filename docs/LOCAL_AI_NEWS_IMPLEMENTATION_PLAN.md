@@ -5175,3 +5175,12 @@ Drive archive ID: 1f9d88eUdNeeXVIhqJQyCciyJJeQWHK7g·1HyqdFt5_zURe6y4jyNiDzjVNck
 비공개 Drive archive5개를 실제 raw SHA/size 확인·native 복원·registry 등록했다. 기사 승인3개 원격복원본에서 native loadCurrentApproval을 재실행해 동일사건/승인 유효를 확인했다(모델/네트워크0, 전체런타임 복원 false). source 재확인 별도2판본과 운영42증거파일도 각각 보관했다. Drive IDs: 1PpDgL3pAP37NJkFvjCdAERitFhIoYSxH / 1dyXdUvc8pMhaM-aR1t_8p6nDb501jrQ6 / 1YEePrNYJMTuXdkxbJDQ9HPplr8p-GUnK / 14qpIufP45Fh1kQES96fOWQlPlxfy090B / 1r9NJuSyKwMO1DpXh11tyJMHl7tQg7Ibh. 원본 회차·전환 packet·원격 작성/공개 영수증·코드·검사를 private delivery custody에 보존했다. archive의 최초 related-run 결속/preview symlink 및 restore root-relative 경계 오류는 기존 조건을 유지하고 기사별 native closure·운영 custody·정확한 복원 root로 해결했다. 같은 실패1시간 반복0이다.
 
 현재 full status는 한 번만 생성해 checkpoint-v23에 보존했다. 등록195/일일55/수집profile57/detail131·평가27/1·goal active다. garden 모듈 변경으로 current collector fingerprint가22b29239…로 바뀌어 이전 current55 실행을 새 코드 통합 성공으로 집계하지 않는다. 그 실제110창/109정상/1부분·원문/복원 증거는 기존fingerprint6216d1b9…로 보존한다. 이번에55경로 전체 수집을 반복하지 않았다. 남은 과거 재검토·평가/운영을 진행하고 코드가 안정된 다음 통합 수집을 새 기준으로 검증한다. 정확한 collector별 빠른 진척 조회는 acquisition-status를 사용한다.
+
+
+## 19.384. 7월22일 보안 사고 회차의 재검토·실제 전달
+
+기존 incident-reviewed native approval의8사실·두 회사 원문을 재사용해 7월22일 원본8units를 모두 판정했다. 현재 OpenAI 원문에 추가된7월28·29일/8월26일 업데이트는 제외하고 최초7월21일 발표와 Hugging Face7월16일 공지만 대조했다. 사고 경로·회사 귀속·포렌식 수치와 대응을 보존하며 일반 방향 추론·조언·빈 섹션을 제거했다. 새 모델 호출·재추출0이며 독립 human gold 또는 로컬 모델 평가로 집계하지 않는다.
+
+실제 Drive 작성216원본의 raw bytes와 두 recursive inventory를 대조하고 과거 회차1개만 same ID로 update했다. native authoring write-session이 verified_complete이고 canonical pull updated1/deleted0이다. 원본 취재 시각은 기록되지 않아 null/unrecorded를 보존한다. 콘텐츠86f3740ce90efd97b8f259ca4d23a10ff865dcd0/Actions37553847967 success, CI Node1105/1105·build/site/deploy 통과, 공개12파일 bytes 일치다. 실제 데스크톱 탭/URL/뒤로 가기와390px 모바일 overflow0·지도0, 공개 페이지 표시를 확인했다. WebsiteData11파일 raw 확인(8수정/3불변), RSS40개 GUID/pubDate·XML bytes 불변이다. 상세 영수증과 원격 복원은 런북477절이다.
+
+canonical inventory는 미검토42회차/412units·metadata 검토 필요8, v2회차63·확인 사건198·RSS40·diagnostics0이다. 외장 approval root 단독 inventory에는 canonical empty-legacy 판정18개가 없으므로 이를 전체 진척으로 사용하지 않는다. core-progress-checkpoint-20261007-v24는 WBS3/22(14%)·등록195/일일55·새 shadow0/7을 유지한다. 모델/독립 평가·55경로 새 fingerprint 통합 완료는 주장하지 않는다. 이번 묶음의 source code 변경과 로컬 전체 suite 반복은0이고 릴리스 CI1회만 실행했다. 다음은7월21일 원본의 credits 관련 두 발표와 Code Quality 발표3원문을 재검토하고 기존 두 사건을 전환한다. 전체 goal active, 1시간 동일 실패 반복0이다.
