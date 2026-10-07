@@ -1,61 +1,268 @@
 ---
-{}
+title: 2026-07-21 Tech & AI 브리핑
+type: briefing
+schema_version: tech-ai-magazine/v2
+date: 2026-07-21
+timezone: Asia/Seoul
+coverage_start: null
+coverage_end: null
+historical_coverage: unrecorded/v1
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 3
+new_items_count: 3
+linked_knowledge_notes: []
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
+  - GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리
+  - GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가
+article_records:
+  - title: GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-21
+      where: GitHub 설정의 Copilot 사용량 페이지
+      what: 결제 주기별 실제 AI 크레딧 사용량 표시
+      how: 예산 설정 여부에 따라 총 사용량 또는 예산 대비 사용량 표시
+      why: 미기재
+    lead: GitHub는 한국시간 7월 21일 Copilot Business·Enterprise 사용자가 개인 예산 없이도 이번 결제 주기의
+      AI 크레딧 사용량을 볼 수 있게 했다. 사용량은 GitHub 설정의 Copilot 사용량 페이지에서 확인한다.
+    explanations:
+      - heading: 예산 설정에 따른 표시
+        paragraphs:
+          - 기존 페이지는 예산 대비 사용 비율만 보여줘, 개인 예산이 없는 사용자는 월간 사용량을 확인하기 어려웠다.
+          - 관리자가 예산을 설정하면 전체 예산 중 사용한 크레딧을 표시하고, 예산이 없으면 현재 결제 주기의 총 사용 크레딧을
+            표시한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-copilot-users-can-now-see-ai-credits-used-per-billing-cycle/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-21
+      where: GitHub Enterprise Cloud 청구 화면
+      what: 비용센터별 AI 크레딧 풀 UI 관리
+      how: 라이선스 기반 자동 한도 계산 및 한도 이후 정책 선택
+      why: 미기재
+    lead: GitHub는 한국시간 7월 21일 비용센터를 만들거나 수정하는 청구 화면에서 Copilot AI 크레딧 풀을 직접 관리할 수 있게
+      했다. 대상은 GitHub Enterprise Cloud에서 Copilot Business·Enterprise를 사용하는 고객이며,
+      기존에는 REST API로만 관리할 수 있었다.
+    explanations:
+      - heading: 한도 계산과 초과 사용 정책
+        paragraphs:
+          - 풀 한도는 해당 비용센터에 배정된 라이선스에 따라 자동 계산되며, 라이선스 추가·제거에 맞춰 조정된다. 관리자가 한도
+            숫자를 직접 지정하는 방식은 아니다.
+          - 한도에 도달하면 포함 사용량을 더 쓰지 못하게 하거나, 기업이 초과 사용을 허용하는 경우 추가 지출로 계속 사용하게 설정할
+            수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/
+      - heading: 포함 크레딧과 추가 요금의 별도 한도
+        paragraphs:
+          - 크레딧 풀은 비용센터의 Copilot 라이선스가 제공하는 포함 AI 크레딧의 사용 한도다. 비용센터 예산은 풀이 소진된 뒤
+            발생하는 사용량 기반 요금을 제한하며, 같은 비용센터에 두 설정을 함께 적용할 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-20
+      where: GitHub Enterprise Cloud와 GitHub Team
+      what: Code Quality 정식 출시
+      how: CodeQL 분석·AI 탐지 및 병합 전 수정 제안
+      why: 미기재
+    lead: GitHub는 한국시간 7월 20일 코드 품질 검사 제품 Code Quality를 GitHub Enterprise Cloud와
+      GitHub Team에 정식 출시했다. CodeQL의 규칙 기반 분석과 AI 탐지로 풀 리퀘스트의 유지보수성·신뢰성 문제를 찾고,
+      Copilot Autofix가 병합 전에 사람이 검토할 수정안을 제안한다.
+    explanations:
+      - heading: 품질 지표와 병합 기준
+        paragraphs:
+          - 조직 전체에서 기능을 켜고 대시보드로 저장소별 유지보수성·신뢰성 점수를 볼 수 있다. 기존 Cobertura XML 테스트
+            보고서의 코드 커버리지도 풀 리퀘스트에 표시한다.
+          - GitHub ruleset으로 커버리지 기준을 포함한 품질 기준을 설정하고, evaluate 모드에서 점진적으로 적용할 수
+            있다. 저장소의 기능 활성화 관리와 발견 항목 조회를 위한 API도 제공한다.
+          - GitHub는 자사 엔지니어링 조직에서 발견 항목의 67.3%를 풀 리퀘스트 병합 전에 해결한다고 밝혔다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/
+      - heading: 기본 요금과 과금 대상
+        paragraphs:
+          - 기본 요금은 활성 커미터 1명당 월 10달러다. 최근 90일 동안 Code Quality가 켜진 저장소에 커밋을 푸시한
+            사용자가 대상이다.
+          - 여러 저장소에 기여해도 조직 내에서는 한 번만 계산하며, 봇 계정은 과금하지 않는다.
+          - GitHub Advanced Security와 별도로 판매하는 유료 제품이며, 출시 시점에는 GitHub
+            Enterprise Server를 지원하지 않는다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/
+      - heading: 별도 사용료
+        paragraphs:
+          - AI 탐지와 Copilot Autofix에는 사용량 기반 요금이 붙는다. 이 기능을 쓰기 위해 GitHub Copilot
+            구독이 필요하지는 않다.
+          - 규칙 기반 CodeQL 분석에는 GitHub Actions 실행 비용이 발생하며, GitHub 호스팅 러너와 자체 호스팅
+            러너를 모두 지원한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/
+      - heading: 공개 시험 운영에서 유료 서비스로 전환
+        paragraphs:
+          - 과금은 정식 출시일인 7월 20일 자동으로 시작된다. GitHub에 따르면 공개 시험 운영에 1만 개가 넘는 기업이
+            참여했으며, 기존 사용자는 이전 작업이나 재설정 없이 기존 GitHub 계약에 따라 유료 제품을 계속 사용한다.
+          - 이후 검사와 과금을 중단하려면 저장소 또는 조직에서 Code Quality를 비활성화해야 한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
+    event_id: 80bba25e13259f42
+    review_status: verified
+    published_at: 2026-07-21
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-20T09:00:14-07:00
+  - title: GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리
+    event_id: e6ab1f9b9683cfdd
+    review_status: verified
+    published_at: 2026-07-21
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-20T11:24:14-07:00
+  - title: GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가
+    event_id: 426d91706ebf17e3
+    review_status: verified
+    published_at: 2026-07-20
+    reviewed_at: 2026-10-07
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-20T06:01:24-07:00
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- GitHub가 Copilot의 실제 AI credits 사용량을 사용자에게 보여주고, 기업은 비용센터별 포함 사용량과 한도 이후 정책을 화면에서 관리할 수 있게 했습니다.
-- GitHub Code Quality가 정식 출시됐습니다. 정적 분석과 AI 탐지·수정 제안, 코드 커버리지, 병합 전 품질 기준을 한데 묶었습니다.
-- 논문과 연구: 없음
-- 오픈소스와 도구: 없음
+GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
 
-# 오늘의 핵심 기사
+# 차례
 
-## Copilot 비용, 사용자와 부서가 직접 확인하고 통제한다
+- GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
+- GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리
+- GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가
 
-GitHub가 AI 코딩 비용을 조직 전체 청구서보다 더 작은 단위에서 볼 수 있게 했습니다. Copilot Business·Enterprise 사용자는 개인 예산이 없어도 이번 결제 주기에 쓴 AI credits 총량을 확인할 수 있습니다.
-
-기업 관리자는 비용센터별 AI credit pool을 관리 화면에서 켤 수 있습니다. 풀의 크기는 해당 비용센터에 배정된 Copilot 라이선스에 따라 자동 계산되며, 한도에 닿으면 포함 사용량을 막거나 회사 정책에 따라 추가 지출로 넘길 수 있습니다. 별도의 비용센터 예산을 함께 두면 포함 credits 소진 뒤의 유료 사용까지 제한할 수 있습니다.
-
-왜 중요한가: AI 사용량이 커질수록 총액만 보는 방식으로는 어느 팀이 가치를 만들고 어느 팀에서 비용이 새는지 알기 어렵습니다. 이번 변화는 [[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]]에서 필요한 부서별 가시성과 한도 집행을 제품 안으로 가져온 것입니다.
-
-앞으로 볼 점: credits 사용량이 실제 완료 업무와 품질 개선으로 이어지는지, 비용센터별 사용 제한이 필요한 업무까지 막지는 않는지 함께 봐야 합니다.
-
-더 깊게 보기: [[Knowledge/AI Systems/Enterprise AI Operating Model|Enterprise AI Operating Model]], [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
-
-## AI가 만든 코드가 늘자, 품질 검사도 AI와 규칙을 함께 쓴다
-
-GitHub Code Quality가 GitHub Enterprise Cloud와 GitHub Team에서 정식 출시됐습니다. CodeQL의 정해진 규칙 기반 분석과 AI 보조 탐지를 결합해 pull request의 유지보수성과 신뢰성 문제를 찾고, Copilot Autofix가 병합 전에 사람이 검토할 수정안을 제안합니다.
-
-조직 전체 대시보드, 기존 Cobertura XML 테스트 보고서에서 가져온 코드 커버리지, GitHub ruleset을 이용한 품질 문턱도 지원합니다. 가격은 활성 커미터 1명당 월 10달러의 기본 요금에 AI 작업 사용량과 분석용 GitHub Actions 실행 비용이 더해지는 구조입니다. GitHub는 자사 조직에서 발견 항목의 67.3%를 병합 전에 해결했다고 밝혔지만, 이는 제품사 내부 사례이지 모든 팀에 그대로 적용되는 성능 보장은 아닙니다.
-
-왜 중요한가: AI가 코드 작성 속도를 높여도 유지보수 책임은 사라지지 않습니다. 정적 분석, AI 제안, 테스트 범위, 병합 규칙을 같은 검토 흐름에 묶는 방식이 중요해지고 있습니다.
-
-앞으로 볼 점: AI 탐지의 오탐률, 수정 제안이 회귀를 만들지 않는지, 사용량 기반 비용이 실제 결함 감소에 비례하는지 확인해야 합니다.
-
-더 깊게 보기: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]], [[Knowledge/Software Engineering/Software Supply Chain Security|Software Supply Chain Security]]
-
-# 논문과 연구
+# 커버 스토리
 
 없음
 
-# 오픈소스와 도구
+# 뉴스 데스크
+
+## GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 한국시간 7월 21일 Copilot Business·Enterprise 사용자가 개인 예산 없이도 이번 결제 주기의 AI 크레딧 사용량을 볼 수 있게 했다. 사용량은 GitHub 설정의 Copilot 사용량 페이지에서 확인한다. [S1]
+
+### 예산 설정에 따른 표시
+
+기존 페이지는 예산 대비 사용 비율만 보여줘, 개인 예산이 없는 사용자는 월간 사용량을 확인하기 어려웠다.
+
+관리자가 예산을 설정하면 전체 예산 중 사용한 크레딧을 표시하고, 예산이 없으면 현재 결제 주기의 총 사용 크레딧을 표시한다. [S1]
+
+## GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 한국시간 7월 21일 비용센터를 만들거나 수정하는 청구 화면에서 Copilot AI 크레딧 풀을 직접 관리할 수 있게 했다. 대상은 GitHub Enterprise Cloud에서 Copilot Business·Enterprise를 사용하는 고객이며, 기존에는 REST API로만 관리할 수 있었다. [S2]
+
+### 한도 계산과 초과 사용 정책
+
+풀 한도는 해당 비용센터에 배정된 라이선스에 따라 자동 계산되며, 라이선스 추가·제거에 맞춰 조정된다. 관리자가 한도 숫자를 직접 지정하는 방식은 아니다.
+
+한도에 도달하면 포함 사용량을 더 쓰지 못하게 하거나, 기업이 초과 사용을 허용하는 경우 추가 지출로 계속 사용하게 설정할 수 있다. [S2]
+
+### 포함 크레딧과 추가 요금의 별도 한도
+
+크레딧 풀은 비용센터의 Copilot 라이선스가 제공하는 포함 AI 크레딧의 사용 한도다. 비용센터 예산은 풀이 소진된 뒤 발생하는 사용량 기반 요금을 제한하며, 같은 비용센터에 두 설정을 함께 적용할 수 있다. [S2]
+
+## GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품, 가격 변경
+**기업·기관:** GitHub
+
+GitHub는 한국시간 7월 20일 코드 품질 검사 제품 Code Quality를 GitHub Enterprise Cloud와 GitHub Team에 정식 출시했다. CodeQL의 규칙 기반 분석과 AI 탐지로 풀 리퀘스트의 유지보수성·신뢰성 문제를 찾고, Copilot Autofix가 병합 전에 사람이 검토할 수정안을 제안한다. [S3]
+
+### 품질 지표와 병합 기준
+
+조직 전체에서 기능을 켜고 대시보드로 저장소별 유지보수성·신뢰성 점수를 볼 수 있다. 기존 Cobertura XML 테스트 보고서의 코드 커버리지도 풀 리퀘스트에 표시한다.
+
+GitHub ruleset으로 커버리지 기준을 포함한 품질 기준을 설정하고, evaluate 모드에서 점진적으로 적용할 수 있다. 저장소의 기능 활성화 관리와 발견 항목 조회를 위한 API도 제공한다.
+
+GitHub는 자사 엔지니어링 조직에서 발견 항목의 67.3%를 풀 리퀘스트 병합 전에 해결한다고 밝혔다. [S3]
+
+### 기본 요금과 과금 대상
+
+기본 요금은 활성 커미터 1명당 월 10달러다. 최근 90일 동안 Code Quality가 켜진 저장소에 커밋을 푸시한 사용자가 대상이다.
+
+여러 저장소에 기여해도 조직 내에서는 한 번만 계산하며, 봇 계정은 과금하지 않는다.
+
+GitHub Advanced Security와 별도로 판매하는 유료 제품이며, 출시 시점에는 GitHub Enterprise Server를 지원하지 않는다. [S3]
+
+### 별도 사용료
+
+AI 탐지와 Copilot Autofix에는 사용량 기반 요금이 붙는다. 이 기능을 쓰기 위해 GitHub Copilot 구독이 필요하지는 않다.
+
+규칙 기반 CodeQL 분석에는 GitHub Actions 실행 비용이 발생하며, GitHub 호스팅 러너와 자체 호스팅 러너를 모두 지원한다. [S3]
+
+### 공개 시험 운영에서 유료 서비스로 전환
+
+과금은 정식 출시일인 7월 20일 자동으로 시작된다. GitHub에 따르면 공개 시험 운영에 1만 개가 넘는 기업이 참여했으며, 기존 사용자는 이전 작업이나 재설정 없이 기존 GitHub 계약에 따라 유료 제품을 계속 사용한다.
+
+이후 검사와 과금을 중단하려면 저장소 또는 조직에서 Code Quality를 비활성화해야 한다. [S3]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
 
 없음
 
 # 흐름 읽기
 
-- 분석: 기업용 AI 도구는 기능 경쟁에서 사용량·비용·품질을 세부 단위로 측정하고 통제하는 운영 경쟁으로 옮겨가고 있습니다.
-- 확인된 사실: GitHub는 같은 날 Copilot credits의 사용자·비용센터 가시성과 Code Quality의 조직 단위 품질 관리를 공개했습니다.
-- 앞으로 볼 점: credits와 AI 수정 횟수 같은 활동량이 아니라, 완료 업무당 비용과 병합 뒤 결함률 같은 결과 지표가 함께 제공되는지가 관건입니다.
+없음
 
-# 바로 써먹을 점
+# 오늘의 적용
 
-- 개발팀은 AI 코딩 도구 비용을 팀별 credits만으로 평가하지 말고, 병합된 변경 수·리뷰 수정률·회귀 결함과 함께 기록하세요.
-- Code Quality를 도입한다면 처음부터 병합 차단으로 쓰기보다 evaluate mode에서 오탐과 비용을 확인한 뒤 품질 문턱을 정하세요.
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-07-20-copilot-users-can-now-see-ai-credits-used-per-billing-cycle/
-- https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/
-- https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/
+- [S1] https://github.blog/changelog/2026-07-20-copilot-users-can-now-see-ai-credits-used-per-billing-cycle/
+- [S2] https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/
+- [S3] https://github.blog/changelog/2026-07-20-github-code-quality-is-now-generally-available/

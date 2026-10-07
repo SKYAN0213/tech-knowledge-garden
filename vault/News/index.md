@@ -191,6 +191,9 @@ generated_by: tech-knowledge-garden
 - [[News/8173bfbb68ecb98e|Copilot 영향 대시보드, 사용 단계별 PR 지표와 6개월 추세 표시]] · 2026-07-23
 - [[News/b484df26feae5936|OpenAI Presence, 기업용 음성·채팅 에이전트를 제한적 정식 제공]] · 2026-07-23
 - [[News/defb5561f78861b8|OpenAI, 내부 모델 평가 중 발생한 Hugging Face 인프라 침해 공개]] · 2026-07-22
+- [[News/426d91706ebf17e3|GitHub Code Quality 정식 출시, 활성 커미터당 월 10달러에 사용료 추가]] · 2026-07-21
+- [[News/e6ab1f9b9683cfdd|GitHub, 비용센터별 Copilot AI 크레딧 풀을 청구 화면에서 관리]] · 2026-07-21
+- [[News/80bba25e13259f42|GitHub Copilot, 개인 예산 없이도 결제 주기별 AI 크레딧 사용량 표시]] · 2026-07-21
 - [[News/6c31b0895d6be835|AI SDK, 음성 전사 취소와 도구 호출 추적 수정]] · 2026-07-14
 - [[News/661912ab39baa4f1|Codex 시험판, 고급 추론 선택 경고와 에이전트 모델 지정 추가]] · 2026-07-14
 - [[News/b5e2211dddab87f3|Codex 0.144.2, 자동 코드 리뷰 프롬프트 회귀 복구]] · 2026-07-13
