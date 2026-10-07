@@ -9,6 +9,7 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/789d3f2f135ddb5f|GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용]] · 2026-10-07
 - [[News/d5bbd37fc92cb75b|LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약]] · 2026-10-07
 - [[News/9fc8bc0338395f2d|누리호 5호기 발사대 이송 시작…7일 발사시각 결정 예정]] · 2026-10-07
 - [[News/2dae24cccb14cc62|AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송]] · 2026-10-07
@@ -40,6 +41,8 @@ generated_by: tech-knowledge-garden
 - [[News/ab2949406d668c88|Satellogic, Merlin.01 등 위성 4기 궤도 투입…10월 중순 탑재체 시험 예정]] · 2026-10-04
 - [[News/e37d74d0774d9a49|Roche, giredestrant 병용 임상 3상 결과 공개…무진행 생존기간 중앙값 8.8개월]] · 2026-10-04
 - [[News/4e48c8fa40d39243|에너지연, 암모니아 선박용 촉매 두 종류 개발…엔진 연계 실증 계획]] · 2026-10-04
+- [[News/ce1e21d4581adaee|NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급]] · 2026-10-01
+- [[News/17f635e65de87807|MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원]] · 2026-10-01
 - [[News/e3728daf1bd4be8b|Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수]] · 2026-10-01
 - [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]] · 2026-10-01
 - [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]] · 2026-10-01
@@ -57,6 +60,7 @@ generated_by: tech-knowledge-garden
 - [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · 2026-10-01
 - [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]] · 2026-10-01
 - [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
+- [[News/96690c067704a88d|ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염]] · 2026-09-30
 - [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
 - [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
 - [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]] · 2026-09-30

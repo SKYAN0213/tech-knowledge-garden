@@ -7,7 +7,7 @@ modified: 2026-10-07
 description: 2026-10-07 IT · AI · 로보틱스
 coverage_start: 2026-10-05T20:21:45.039Z
 coverage_end: 2026-10-06T22:05:39.063Z
-item_count: 7
+item_count: 8
 edition: Editions/2026/10/2026-10-07_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-07_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -51,13 +51,19 @@ AWS는 2026년 10월 6일 AWS Batch가 작업 지표를 Amazon CloudWatch에 자
 
 KAIST가 2026년 10월 6일 공개한 자료에 따르면, 전산학부 김민수 교수 연구팀이 동적 벡터 검색 기술 콘다(CONDA)를 개발했다. 이 기술은 데이터가 추가되거나 삭제될 때 검색망의 중요한 연결을 유지해 필요한 정보가 고립되는 문제를 다룬다. KAIST는 데이터가 계속 바뀌는 실험에서 비교 기술보다 검색 정확도를 최대 24.5%, 데이터 처리 속도를 최대 1.90배 높였다고 밝혔다.
 
-### 소프트웨어·클라우드 · 1건
+### 소프트웨어·클라우드 · 2건
 
 #### [[News/2dae24cccb14cc62|AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송]]
 
 제품·서비스 · 기능 추가 · AWS
 
 AWS는 2026년 10월 6일 AWS Batch가 작업 지표를 Amazon CloudWatch에 자동으로 전송하는 기능을 발표했다. 제출·실행·성공·실패 상태로 진입한 작업 수와 상태 사이의 소요시간을 확인할 수 있으며, AWS Batch를 제공하는 모든 AWS 리전에서 사용할 수 있다.
+
+#### [[News/789d3f2f135ddb5f|GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용]]
+
+제품·서비스 · 기능 추가 · GitHub
+
+GitHub은 2026년 10월 7일(한국시간) 스택드 풀 리퀘스트(stacked pull requests)를 정식 출시했다고 밝혔다. 이번 업데이트로 사용자는 큰 변경 사항을 더 작고 집중된 풀 리퀘스트로 나누어 독립적으로 검토하고 함께 병합할 수 있다. 정식 출시와 함께 GitHub은 리베이스 시 변경되지 않은 코드의 승인 상태를 유지하고 서명된 대체 커밋을 생성하는 등 스택의 생성, 검토, 병합 과정을 개선하는 기능을 도입했다. 또한 모든 풀 리퀘스트가 준비되고 저장소 병합 요건이 충족되면 그룹으로 함께 병합되는 자동 병합 기능은 향후 몇 주에 걸쳐 순차적으로 적용될 예정이다.
 
 ### 사이버보안 · 1건
 
@@ -110,3 +116,4 @@ LG전자는 2026년 10월 6일 미국법인이 에어 컨트롤 콘셉트와 총
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-job-cloudwatch-metrics/
 - [S6] https://www.kari.re.kr/kor/article/ATCL87374b48c/18726
 - [S7] https://www.lge.co.kr/story/newsroom/236201
+- [S8] https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available

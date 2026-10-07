@@ -7,7 +7,7 @@ modified: 2026-09-30
 description: 2026-09-30 IT · AI · 로보틱스
 coverage_start: 2026-09-22T23:17:13.068Z
 coverage_end: 2026-09-29T23:17:13.068Z
-item_count: 13
+item_count: 14
 edition: Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-30_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -77,13 +77,19 @@ Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·E
 
 삼성전자는 2026년 9월 28일 하나금융그룹이 SK텔레콤·삼성전자와 함께 인천 신사옥 16개 층에 5G 특화망 스마트오피스를 구축했다고 발표했다. 삼성전자는 특화망 솔루션 단독 공급자로 무선장치·베이스밴드·클라우드 네이티브 코어를 제공했고 한국 특화망용 4.7GHz 대역을 지원한다. 삼성에 따르면 대상은 하나금융 여러 관계사와 수천 명의 임직원이다.
 
-### 사이버보안 · 1건
+### 사이버보안 · 2건
 
 #### [[News/280289462980857d|Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대]]
 
 제품·서비스 · 기능 추가 · Google Cloud
 
 Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터 보호 기능을 발표했다. IT 관리자는 검증된 AI 도구를 승인하고 생성형 AI 사용 현황을 보고받는 기능을 시험할 수 있으며, 클립보드·화면 캡처·파일 이동을 제어하는 정책은 순차 제공을 예고했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는 것은 아니다.
+
+#### [[News/96690c067704a88d|ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염]]
+
+위험·사고 · 보안 사고
+
+ASEC는 9월 30일 암호화폐 거래소를 사칭한 페이스북 광고를 통해 Node.js 기반 악성코드 JSCEAL이 유포됐다고 밝혔다. 발표 자료에 따르면 최근 두 달간 국내 PC 약 1,500대에서 감염이 확인됐으며, 윈도우와 맥OS가 모두 공격 대상이었다. 공격자는 암호화폐 보상을 내세운 광고로 가짜 사이트에 접속하게 한 뒤 운영체제에 따라 BAT 파일이나 PKG 설치 파일을 제공했다.
 
 ### 반도체·컴퓨팅 · 1건
 
@@ -162,3 +168,4 @@ NASA는 9월 25일 ASCENT 이중 모드 추진 CubeSat의 회전·열진공·누
 - [S11] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
 - [S12] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S13] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
+- [S14] https://asec.ahnlab.com/ko/95643/

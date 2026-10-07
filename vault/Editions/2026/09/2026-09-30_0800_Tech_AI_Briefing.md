@@ -6,14 +6,14 @@ date: 2026-09-30
 timezone: Asia/Seoul
 coverage_start: 2026-09-22T23:17:13.068Z
 coverage_end: 2026-09-29T23:17:13.068Z
-source_count: 13
-new_items_count: 13
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 14
+new_items_count: 14
 linked_knowledge_notes: []
 knowledge_notes_created: []
 knowledge_notes_updated: []
-editorial_format: six-w/v1
-theme_format: news-themes/v1
-briefing_format: sector-five/v1
 headlines:
   - 삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표
   - Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고
@@ -238,94 +238,137 @@ article_records:
     papers: []
     relations: []
     topic_ids: []
+  - title: ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염
+    kind: 사건 뉴스
+    region: 국내
+    facts:
+      who: ASEC
+      when: 2026-09-30
+      where: South Korea
+      what: Node.js 기반 악성코드 JSCEAL이 암호화폐 거래소 사칭 페이스북 광고를 통해 유포되어 국내 약 1,500대 PC 감염
+      how: 가짜 사이트에서 운영체제와 브라우저 정보를 감지한 뒤, 윈도우에는 BAT 파일, 맥OS에는 PKG 설치 파일을 제공하여 악성코드를 실행
+      why: 암호화폐 보상을 미끼로 사용자를 유인
+    lead: ASEC는 9월 30일 암호화폐 거래소를 사칭한 페이스북 광고를 통해 Node.js 기반 악성코드 JSCEAL이 유포됐다고 밝혔다.
+      발표 자료에 따르면 최근 두 달간 국내 PC 약 1,500대에서 감염이 확인됐으며, 윈도우와 맥OS가 모두 공격 대상이었다. 공격자는
+      암호화폐 보상을 내세운 광고로 가짜 사이트에 접속하게 한 뒤 운영체제에 따라 BAT 파일이나 PKG 설치 파일을 제공했다.
+    explanations:
+      - heading: JSCEAL의 운영체제별 동작 방식
+        paragraphs:
+          - 윈도우에서는 BAT 파일이 PowerShell을 통해 추가 코드를 내려받아 실행하는 초기 로더 역할을 한다. 이후 보안
+            설정을 변경하고 예약 작업을 등록하며, Binance가 설치된 것처럼 보이는 가짜 바탕화면 바로가기를 만든다.
+          - 맥OS 환경에서는 브라우저 내에서 PKG 설치 파일을 구성하여 셸 스크립트를 다운로드하고 실행한다. 위장된 대화상자를 통해
+            비밀번호를 입력받아 저장하며, LaunchAgent를 등록해 지속성을 확보한다. 이후 시스템 식별 정보, 클립보드 데이터,
+            컴퓨터 이름, 설치 관련 정보를 외부 서버로 전송한다.
+        source_urls:
+          - https://asec.ahnlab.com/ko/95643/
+      - heading: ASEC의 예방 권고 사항
+        paragraphs:
+          - ASEC는 암호화폐 거래소 프로그램을 공식 웹사이트에서만 다운로드하고, 광고나 신뢰할 수 없는 링크에서 제공하는 BAT
+            또는 PKG 설치 파일을 피할 것을 권고했다. 예상치 못한 비밀번호 입력 대화상자가 나타나면 출처를 확인하는 것이
+            필요하다고 안내했다.
+        source_urls:
+          - https://asec.ahnlab.com/ko/95643/
+    papers: []
+    relations: []
+    topic_ids: []
 article_reviews:
   - title: 삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표
     event_id: 171333c4eead9c69
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-29
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고
     event_id: ef1b3a4772eab837
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
     event_id: 295f6ca27b06224b
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정
     event_id: 461333ec2270a664
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
     event_id: 280289462980857d
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
     event_id: 783ed5a89f40a298
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-28
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: "IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파"
     event_id: bad3d5636979c1ec
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-24
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: 미 에너지부, 26개 주 송전망 개선 31개 사업에 52억5천만달러 선정
     event_id: 8a3306a5bb75996e
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-24
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
     event_id: 53172edb0c5fef70
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-24
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
     event_id: 6362665d03f77e72
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-28
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인
     event_id: d2674c5a4f395eda
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-28
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경
     event_id: 21c224b7f1e72026
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-28
     reviewed_at: 2026-09-30
-    concept_ids: []
   - title: NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료
     event_id: 6d4b8f87819e0cb1
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-09-30
+  - title: ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염
+    event_id: 96690c067704a88d
+    review_status: verified
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-07
     concept_ids: []
 ---
 
 # 이번 호 표지
 
-> 삼성 계열사의 AI 인프라 투자와 8개 기술 분야의 새 발표
+삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표
 
 # 차례
 
-커버 스토리 · 뉴스 데스크 · 리서치 노트
+- 삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표
+- Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고
+- Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
+- SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
+- IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파
 
 # 커버 스토리
 
@@ -481,6 +524,26 @@ Juice는 9월 28일 오후 1시 45분(CEST)에 인도양 상공 8,640km 지점�
 
 다음 지구 근접비행은 2029년 1월로 계획돼 있으며, ESA는 Juice가 2031년 목성에 도착할 예정이라고 설명했다. 예정된 일정은 이후 비행 결과와 임무 운영에 따라 확인할 사항이다. [S12]
 
+## ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염
+
+**분야:** 사이버보안
+**테마:** 위험·사고
+**보조 테마:** 없음
+**세부 태그:** 보안 사고
+**기업·기관:** 없음
+
+ASEC는 9월 30일 암호화폐 거래소를 사칭한 페이스북 광고를 통해 Node.js 기반 악성코드 JSCEAL이 유포됐다고 밝혔다. 발표 자료에 따르면 최근 두 달간 국내 PC 약 1,500대에서 감염이 확인됐으며, 윈도우와 맥OS가 모두 공격 대상이었다. 공격자는 암호화폐 보상을 내세운 광고로 가짜 사이트에 접속하게 한 뒤 운영체제에 따라 BAT 파일이나 PKG 설치 파일을 제공했다. [S14]
+
+### JSCEAL의 운영체제별 동작 방식
+
+윈도우에서는 BAT 파일이 PowerShell을 통해 추가 코드를 내려받아 실행하는 초기 로더 역할을 한다. 이후 보안 설정을 변경하고 예약 작업을 등록하며, Binance가 설치된 것처럼 보이는 가짜 바탕화면 바로가기를 만든다.
+
+맥OS 환경에서는 브라우저 내에서 PKG 설치 파일을 구성하여 셸 스크립트를 다운로드하고 실행한다. 위장된 대화상자를 통해 비밀번호를 입력받아 저장하며, LaunchAgent를 등록해 지속성을 확보한다. 이후 시스템 식별 정보, 클립보드 데이터, 컴퓨터 이름, 설치 관련 정보를 외부 서버로 전송한다. [S14]
+
+### ASEC의 예방 권고 사항
+
+ASEC는 암호화폐 거래소 프로그램을 공식 웹사이트에서만 다운로드하고, 광고나 신뢰할 수 없는 링크에서 제공하는 BAT 또는 PKG 설치 파일을 피할 것을 권고했다. 예상치 못한 비밀번호 입력 대화상자가 나타나면 출처를 확인하는 것이 필요하다고 안내했다. [S14]
+
 # 리서치 노트
 
 ## NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료
@@ -526,3 +589,4 @@ NASA는 공동 탱크가 시스템 질량과 배관 부피를 줄여 장비 공�
 - [S11] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
 - [S12] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S13] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
+- [S14] https://asec.ahnlab.com/ko/95643/

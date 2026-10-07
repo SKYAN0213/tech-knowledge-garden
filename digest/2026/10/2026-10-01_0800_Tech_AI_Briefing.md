@@ -38,7 +38,7 @@ NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스�
 
 ## 분야별 브리핑
 
-### AI · 1건
+### AI · 2건
 
 #### [DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개](https://skyan0213.github.io/tech-knowledge-garden/news/a82ab8c2c2f14be9)
 
@@ -51,6 +51,26 @@ DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도
 
 
 [digitalocean.com 원문](https://www.digitalocean.com/blog/introducing-agent-droplets)
+
+#### [MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원](https://skyan0213.github.io/tech-knowledge-garden/news/17f635e65de87807)
+
+발표 2026-09-30
+
+연구·기술 · 새로운 방법 · MIT Transit Lab · Google.org
+
+MIT는 9월 30일 공개한 자료에서 Google.org가 9월 15일 MIT Transit Lab을 전 세계 지원 프로젝트 15개 중 하나로 선정하고 210만 달러를 지원한다고 발표했다고 밝혔다. 이번에 선정된 MIT Transit Lab의 프로젝트는 Public Transit Intelligence Hub(PTIQ)로, 대중교통 기관의 실시간 모니터링, 운영 제어, 승객 소통 시스템을 하나의 중앙 집중형 AI 플랫폼으로 통합하는 것을 목표로 한다. Google.org는 3년간의 프로젝트 기간 동안 자금 지원과 함께 자체 엔지니어와 AI 제품 전문가의 무상 지원도 제공할 예정이다.
+
+##### PTIQ의 핵심 목표와 역할
+
+Transit Lab 부소장이자 PTIQ 공동 책임 연구자인 Awad Abdelhalim은 PTIQ의 목표가 의사결정을 자동화하는 것이 아니라, 분산된 내부 시스템의 데이터를 통합하고 간소화해 의사결정자가 최선의 정보를 확보하도록 하는 것이라고 밝혔다.
+
+MIT에 따르면 PTIQ는 예측 모델, 최적화 엔진, 대규모 언어 모델 기반의 맥락 추론을 통합하며, 최종 의사결정권은 대중교통 종사자가 유지하게 된다.
+
+##### 프로젝트 주요 인력
+
+공동 책임 연구자는 MIT 도시·교통 분야 교수이자 MIT Mobility Initiative(MMI) 창립자 겸 디렉터인 Jinhua Zhao이며, Jim Aloisi MIT 강사가 프로그램 매니저를 맡는다.
+
+[news.mit.edu 원문](https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930)
 
 ### 소프트웨어·클라우드 · 2건
 
@@ -156,7 +176,7 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 [ifr.org 원문](https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent)
 
-### 에너지·기후기술 · 2건
+### 에너지·기후기술 · 3건
 
 #### [Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수](https://skyan0213.github.io/tech-knowledge-garden/news/926dd2776aef7b1b)
 
@@ -181,6 +201,30 @@ Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation C
 
 
 [inl.gov 원문](https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/)
+
+#### [NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급](https://skyan0213.github.io/tech-knowledge-garden/news/ce1e21d4581adaee)
+
+발표 2026-09-30
+
+연구·기술 · 새로운 방법 · 실증·재현 · National Laboratory of the Rockies (NLR) · Holy Cross Energy · University of Connecticut · Minsait ACS
+
+National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한 운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는 2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
+
+##### REORG의 작동 방식
+
+REORG는 중앙 제어가 마비될 경우 하위 레벨 컨트롤러가 운영을 결정하도록 전력망 구조를 전환한다. 이를 통해 자체적인 '셀'이 마이크로 그리드로 전환되어, 그리드가 재조직될 때까지 현지 발전 및 저장 장치를 활용한다.
+
+NLR에 따르면 독립된 전력망 구역에서는 그리드 포밍 인버터가 전력의 안정성을 맡고 배터리가 전원을 제공한다.
+
+##### 개발 협력 및 현장 시험 결과
+
+REORG는 University of Connecticut의 그리드 전압 제어 알고리즘 지원과 Minsait ACS의 자체 제품 라인용 REORG 제어 설정을 통해 개발되었다.
+
+NLR은 Holy Cross Energy 엔지니어와 함께 본사 캠퍼스 전력을 메인 라인에서 의도적으로 분리하는 라이브 실험을 수행했으며, REORG가 디젤 발전기를 가동하고 SCADA실에 전력을 우선 공급했다.
+
+NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에 따라 전력을 복구했다고 보고했다.
+
+[nlr.gov 원문](https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience)
 
 ### 바이오·의료기술 · 3건
 

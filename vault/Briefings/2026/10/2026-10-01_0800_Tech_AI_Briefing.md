@@ -7,7 +7,7 @@ modified: 2026-10-01
 description: 2026-10-01 IT · AI · 로보틱스
 coverage_start: 2026-09-29T23:17:13.068Z
 coverage_end: 2026-10-01T13:38:20Z
-item_count: 16
+item_count: 18
 edition: Editions/2026/10/2026-10-01_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-01_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -43,13 +43,19 @@ NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스�
 
 ## 분야별 브리핑
 
-### AI · 1건
+### AI · 2건
 
 #### [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]]
 
 제품·서비스 · 사업·고객 · 신제품 · 가격 변경 · DigitalOcean
 
 DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도구 사용료를 월 구독과 단일 청구서로 묶는 Agent Droplets를 공개 프리뷰로 내놨다. Pro는 월 50달러, Team은 월 200달러이며 각각 사용량 할인 15%와 20%를 적용한다고 밝혔다. 구독 허용량을 넘기면 정가 과금이 이어질 수 있어 총비용은 실제 사용량에 따라 달라진다.
+
+#### [[News/17f635e65de87807|MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원]]
+
+연구·기술 · 새로운 방법 · MIT Transit Lab · Google.org
+
+MIT는 9월 30일 공개한 자료에서 Google.org가 9월 15일 MIT Transit Lab을 전 세계 지원 프로젝트 15개 중 하나로 선정하고 210만 달러를 지원한다고 발표했다고 밝혔다. 이번에 선정된 MIT Transit Lab의 프로젝트는 Public Transit Intelligence Hub(PTIQ)로, 대중교통 기관의 실시간 모니터링, 운영 제어, 승객 소통 시스템을 하나의 중앙 집중형 AI 플랫폼으로 통합하는 것을 목표로 한다. Google.org는 3년간의 프로젝트 기간 동안 자금 지원과 함께 자체 엔지니어와 AI 제품 전문가의 무상 지원도 제공할 예정이다.
 
 ### 소프트웨어·클라우드 · 2건
 
@@ -107,7 +113,7 @@ Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다.
 
-### 에너지·기후기술 · 2건
+### 에너지·기후기술 · 3건
 
 #### [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]]
 
@@ -120,6 +126,12 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 연구·기술 · 실증·재현 · Idaho National Laboratory · DOE National Reactor Innovation Center · Deployable Energy
 
 Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과 향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다.
+
+#### [[News/ce1e21d4581adaee|NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급]]
+
+연구·기술 · 새로운 방법 · 실증·재현 · National Laboratory of the Rockies (NLR) · Holy Cross Energy · University of Connecticut · Minsait ACS
+
+National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한 운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는 2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
 
 ### 바이오·의료기술 · 3건
 
@@ -187,3 +199,5 @@ Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기
 - [S14] https://www.nasa.gov/news-release/nasa-awards-contract-to-develop-5g-communications-for-moon/
 - [S15] https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-secures-largest-ever-electron-commercial-deal-20
 - [S16] https://www.roche.com/media/releases/med-cor-2026-09-30
+- [S17] https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
+- [S18] https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience

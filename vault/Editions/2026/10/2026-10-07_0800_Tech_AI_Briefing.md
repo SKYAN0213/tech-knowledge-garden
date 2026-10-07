@@ -9,8 +9,8 @@ coverage_end: 2026-10-06T22:05:39.063Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 7
-new_items_count: 7
+source_count: 8
+new_items_count: 8
 linked_knowledge_notes:
   - Knowledge/Robotics/Welding Weaving
 knowledge_notes_created: []
@@ -35,6 +35,9 @@ article_records:
     lead: 두산로보틱스는 2026년 10월 6일 차세대 협동로봇과 지능형 용접 솔루션을 개발하는 국책과제 2건에 선정됐다고 발표했다. 두 과제의
       총 연구개발비는 약 989억 원이며, 정부 지원금은 그중 약 681억 원이다. 협동로봇에 국산 AI 반도체를 탑재해 현장에서
       인지·판단·제어하게 하고, 숙련공의 동작을 학습하는 원전 기자재 용접 솔루션을 개발할 계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 로봇 내부에 AI 연산과 통신·제어를 통합
         paragraphs:
@@ -67,9 +70,6 @@ article_records:
             문제라고 설명했다.
         source_urls:
           - https://www.doosanrobotics.com/kr/about/promotion/news/%EB%91%90%EC%82%B0%EB%A1%9C%EB%B3%B4%ED%8B%B1%EC%8A%A4-%EA%B5%AD%EC%82%B0-ai-%EB%B0%98%EB%8F%84%EC%B2%B4-%ED%95%9C%EA%B5%AD%ED%98%95-%ED%94%BC%EC%A7%80%EC%BB%AC-ai-%EA%B5%AC%ED%98%84
-    papers: []
-    relations: []
-    topic_ids: []
   - title: CrowdStrike·AWS·NVIDIA, 보안 스타트업 육성 확대…개발 도구와 시장 진출 지원
     kind: 사건 뉴스
     region: 해외
@@ -85,6 +85,9 @@ article_records:
       시작했다고 발표했다. 신청 마감은 11월 2일이며, 초기 스타트업을 대상으로 하는 8주 프로그램은 2027년 1월 11일부터 3월
       8일까지 운영할 예정이다. 참가 기업에는 에이전트 개발 도구와 클라우드 기술 검증, 마켓플레이스 등록 및 시장 진출 지원을 제공할
       계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 개발 도구부터 마켓플레이스 등록까지
         paragraphs:
@@ -102,9 +105,6 @@ article_records:
             선정할 예정이다. 우수 기업은 CrowdStrike Falcon Fund의 투자 검토 대상이 될 수 있다.
         source_urls:
           - https://ir.crowdstrike.com/news-releases/news-release-details/crowdstrike-aws-and-nvidia-expand-global-cybersecurity-startup-0
-    papers: []
-    relations: []
-    topic_ids: []
   - title: KAIST, 데이터 추가·삭제에도 검색 연결을 유지하는 CONDA 공개
     kind: 사건 뉴스
     region: 국내
@@ -118,6 +118,9 @@ article_records:
     lead: KAIST가 2026년 10월 6일 공개한 자료에 따르면, 전산학부 김민수 교수 연구팀이 동적 벡터 검색 기술 콘다(CONDA)를
       개발했다. 이 기술은 데이터가 추가되거나 삭제될 때 검색망의 중요한 연결을 유지해 필요한 정보가 고립되는 문제를 다룬다. KAIST는
       데이터가 계속 바뀌는 실험에서 비교 기술보다 검색 정확도를 최대 24.5%, 데이터 처리 속도를 최대 1.90배 높였다고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: CONDA의 동작 원리
         paragraphs:
@@ -143,9 +146,6 @@ article_records:
             Corporation)가 제1저자, 김민수(KAIST)가 교신저자로 참여했다.
         source_urls:
           - https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67870&GotoPage=1
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 셀트리온, 옴리클로 미국 출시·옵텀 사보험 처방집 등재
     kind: 사건 뉴스
     region: 국내
@@ -161,6 +161,9 @@ article_records:
       오말리주맙 바이오시밀러라고 밝혔다. 옴리클로는 75mg·150mg·300mg의 3개 용량 제형으로 출시됐으며, 오리지널 제품보다 약
       15% 낮은 도매가격(WAC)을 적용했다. 옴리클로는 출시와 동시에 옵텀(Optum)의 사보험 처방집에 선호의약품으로 등재됐으며,
       셀트리온은 다른 대형 PBM과의 등재 협상도 진행 중이라고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 옴리클로 판매 계획
         paragraphs:
@@ -168,9 +171,6 @@ article_records:
             의료진·보험사·유통 채널을 대상으로 현지 마케팅을 본격화할 계획이라고 밝혔다.
         source_urls:
           - https://www.celltrion.com/ko-kr/company/media-center/press-release/4938
-    papers: []
-    relations: []
-    topic_ids: []
   - title: AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송
     kind: 사건 뉴스
     region: 해외
@@ -184,6 +184,9 @@ article_records:
     lead: AWS는 2026년 10월 6일 AWS Batch가 작업 지표를 Amazon CloudWatch에 자동으로 전송하는 기능을 발표했다.
       제출·실행·성공·실패 상태로 진입한 작업 수와 상태 사이의 소요시간을 확인할 수 있으며, AWS Batch를 제공하는 모든 AWS
       리전에서 사용할 수 있다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: CloudWatch 메트릭 구성
         paragraphs:
@@ -192,9 +195,6 @@ article_records:
             추적한다.
         source_urls:
           - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-job-cloudwatch-metrics/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 누리호 5호기 발사대 이송 시작…7일 발사시각 결정 예정
     kind: 사건 뉴스
     region: 국내
@@ -209,6 +209,9 @@ article_records:
       한국항공우주연구원은 누리호를 무인 특수이동차량에 실어 나로우주센터 발사체종합조립동에서 제2발사대까지 약 1시간 30분에 걸쳐 이송할
       예정이라고 밝혔다. 우주항공청은 10월 7일 오전 누리호 발사관리위원회에서 기술적 준비·기상·우주환경·우주물체 충돌 가능성을 검토해
       최종 발사시각을 결정할 예정이라고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 이송 결정과 발사 준비 절차
         paragraphs:
@@ -218,9 +221,6 @@ article_records:
             발사대 설치 작업을 완료할 예정이다.
         source_urls:
           - https://www.kari.re.kr/kor/article/ATCL87374b48c/18726
-    papers: []
-    relations: []
-    topic_ids: []
   - title: LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약
     kind: 사건 뉴스
     region: 국내
@@ -233,6 +233,9 @@ article_records:
       why: 미기재
     lead: LG전자는 2026년 10월 6일 미국법인이 에어 컨트롤 콘셉트와 총 5GW 규모 AI 데이터센터용 칠러 장기 공급 본계약을
       체결했다고 밝혔다. 계약에 따라 북미 데이터센터에 고효율 칠러 등 냉각 솔루션을 순차적으로 공급할 계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 공급 상대와 사업 범위
         paragraphs:
@@ -251,6 +254,38 @@ article_records:
           - LG전자는 2026년 상반기 AI 데이터센터 냉각 솔루션 수주액이 6,000억 원을 넘어섰다고 밝혔다.
         source_urls:
           - https://www.lge.co.kr/story/newsroom/236201
+  - title: GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-10-07
+      where: 미기재
+      what: 스택드 풀 리퀘스트 정식 출시 및 관련 기능 개선
+      how: 리베이스 시 승인 상태 유지, 서명된 대체 커밋 생성, 자동 병합 순차 적용
+      why: 미기재
+    lead: GitHub은 2026년 10월 7일(한국시간) 스택드 풀 리퀘스트(stacked pull requests)를 정식 출시했다고
+      밝혔다. 이번 업데이트로 사용자는 큰 변경 사항을 더 작고 집중된 풀 리퀘스트로 나누어 독립적으로 검토하고 함께 병합할 수 있다.
+      정식 출시와 함께 GitHub은 리베이스 시 변경되지 않은 코드의 승인 상태를 유지하고 서명된 대체 커밋을 생성하는 등 스택의 생성,
+      검토, 병합 과정을 개선하는 기능을 도입했다. 또한 모든 풀 리퀘스트가 준비되고 저장소 병합 요건이 충족되면 그룹으로 함께 병합되는
+      자동 병합 기능은 향후 몇 주에 걸쳐 순차적으로 적용될 예정이다.
+    explanations:
+      - heading: 스택드 풀 리퀘스트의 병합 및 권한 처리
+        paragraphs:
+          - GitHub은 스택드 풀 리퀘스트가 기존 저장소 우회 권한을 스택 내 가장 아래에 있는 미병합 풀 리퀘스트의 규칙에 따라
+            적용한다고 밝혔다. 스택은 단일 병합 그룹으로 병합 큐에 진입하며, 병합 커밋 방식은 해당 스택의 각 풀 리퀘스트마다
+            하나의 커밋을 생성한다.
+          - 풀 리퀘스트가 스택에 추가되거나 제거될 때 타임라인 이벤트가 발생하며, 풀 리퀘스트가 스택에 합류할 때
+            pull_request 웹훅에 stacked 액션이 추가된다. 또한 gh stack 확장 기능은 Git worktrees
+            지원과 함께 초기화, 체크아웃, 탐색 기능의 개선을 제공한다.
+        source_urls:
+          - https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available
+      - heading: 지원 범위
+        paragraphs:
+          - 스택드 풀 리퀘스트는 모든 github.com 플랜에서 사용 가능하며, 향후 GitHub Enterprise Server
+            릴리스에도 포함될 예정이다.
+        source_urls:
+          - https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available
     papers: []
     relations: []
     topic_ids: []
@@ -258,48 +293,56 @@ article_reviews:
   - title: 두산로보틱스, AI 반도체 협동로봇·원전 용접 국책과제 선정
     event_id: 7cc23b8dc1f502f5
     review_status: verified
-    published_at: 2026-10-06
-    reviewed_at: 2026-10-07
     concept_ids:
       - welding-weaving
+    published_at: 2026-10-06
+    reviewed_at: 2026-10-07
   - title: CrowdStrike·AWS·NVIDIA, 보안 스타트업 육성 확대…개발 도구와 시장 진출 지원
     event_id: 28865e31f8cb281c
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
-    concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-10-06T08:15:23-04:00
   - title: KAIST, 데이터 추가·삭제에도 검색 연결을 유지하는 CONDA 공개
     event_id: 9059b04353193fee
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: 셀트리온, 옴리클로 미국 출시·옵텀 사보험 처방집 등재
     event_id: 14ae3c84f2654e37
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송
     event_id: 2dae24cccb14cc62
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: 누리호 5호기 발사대 이송 시작…7일 발사시각 결정 예정
     event_id: 9fc8bc0338395f2d
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: LG전자, 북미 5GW 데이터센터에 냉각 솔루션 공급 계약
     event_id: d5bbd37fc92cb75b
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-06
     reviewed_at: 2026-10-07
+  - title: GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용
+    event_id: 789d3f2f135ddb5f
+    review_status: verified
+    published_at: 2026-10-07
+    reviewed_at: 2026-10-07
     concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-10-06T13:16:41-07:00
 ---
 
 # 이번 호 표지
@@ -466,6 +509,26 @@ LG전자와 에어 컨트롤 콘셉트는 액체냉각 설비인 냉각수 분�
 
 LG전자는 2026년 상반기 AI 데이터센터 냉각 솔루션 수주액이 6,000억 원을 넘어섰다고 밝혔다. [S7]
 
+## GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub은 2026년 10월 7일(한국시간) 스택드 풀 리퀘스트(stacked pull requests)를 정식 출시했다고 밝혔다. 이번 업데이트로 사용자는 큰 변경 사항을 더 작고 집중된 풀 리퀘스트로 나누어 독립적으로 검토하고 함께 병합할 수 있다. 정식 출시와 함께 GitHub은 리베이스 시 변경되지 않은 코드의 승인 상태를 유지하고 서명된 대체 커밋을 생성하는 등 스택의 생성, 검토, 병합 과정을 개선하는 기능을 도입했다. 또한 모든 풀 리퀘스트가 준비되고 저장소 병합 요건이 충족되면 그룹으로 함께 병합되는 자동 병합 기능은 향후 몇 주에 걸쳐 순차적으로 적용될 예정이다. [S8]
+
+### 스택드 풀 리퀘스트의 병합 및 권한 처리
+
+GitHub은 스택드 풀 리퀘스트가 기존 저장소 우회 권한을 스택 내 가장 아래에 있는 미병합 풀 리퀘스트의 규칙에 따라 적용한다고 밝혔다. 스택은 단일 병합 그룹으로 병합 큐에 진입하며, 병합 커밋 방식은 해당 스택의 각 풀 리퀘스트마다 하나의 커밋을 생성한다.
+
+풀 리퀘스트가 스택에 추가되거나 제거될 때 타임라인 이벤트가 발생하며, 풀 리퀘스트가 스택에 합류할 때 pull_request 웹훅에 stacked 액션이 추가된다. 또한 gh stack 확장 기능은 Git worktrees 지원과 함께 초기화, 체크아웃, 탐색 기능의 개선을 제공한다. [S8]
+
+### 지원 범위
+
+스택드 풀 리퀘스트는 모든 github.com 플랜에서 사용 가능하며, 향후 GitHub Enterprise Server 릴리스에도 포함될 예정이다. [S8]
+
 # 리서치 노트
 
 없음
@@ -495,3 +558,4 @@ LG전자는 2026년 상반기 AI 데이터센터 냉각 솔루션 수주액이 6
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-job-cloudwatch-metrics/
 - [S6] https://www.kari.re.kr/kor/article/ATCL87374b48c/18726
 - [S7] https://www.lge.co.kr/story/newsroom/236201
+- [S8] https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available

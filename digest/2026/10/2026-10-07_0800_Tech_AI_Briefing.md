@@ -66,7 +66,7 @@ CONDA 연구 결과는 9월 2일 데이터베이스 분야 국제학술대회 VL
 
 [news.kaist.ac.kr 원문](https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67870&GotoPage=1)
 
-### 소프트웨어·클라우드 · 1건
+### 소프트웨어·클라우드 · 2건
 
 #### [AWS Batch, 작업 상태·소요시간 지표를 CloudWatch로 전송](https://skyan0213.github.io/tech-knowledge-garden/news/2dae24cccb14cc62)
 
@@ -81,6 +81,26 @@ AWS는 2026년 10월 6일 AWS Batch가 작업 지표를 Amazon CloudWatch에 자
 지표는 CloudWatch의 AWS/Batch 네임스페이스에 작업 대기열 이름(JobQueueName)별로 기록된다. 상태 전환 지표는 각 상태에 진입한 작업 수를, 소요시간 지표는 제출부터 실행 가능 상태까지 걸린 시간이나 전체 실행시간을 추적한다.
 
 [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-job-cloudwatch-metrics/)
+
+#### [GitHub, 스택드 풀 리퀘스트 정식 출시…자동 병합 기능 순차 적용](https://skyan0213.github.io/tech-knowledge-garden/news/789d3f2f135ddb5f)
+
+발표 2026-10-07
+
+제품·서비스 · 기능 추가 · GitHub
+
+GitHub은 2026년 10월 7일(한국시간) 스택드 풀 리퀘스트(stacked pull requests)를 정식 출시했다고 밝혔다. 이번 업데이트로 사용자는 큰 변경 사항을 더 작고 집중된 풀 리퀘스트로 나누어 독립적으로 검토하고 함께 병합할 수 있다. 정식 출시와 함께 GitHub은 리베이스 시 변경되지 않은 코드의 승인 상태를 유지하고 서명된 대체 커밋을 생성하는 등 스택의 생성, 검토, 병합 과정을 개선하는 기능을 도입했다. 또한 모든 풀 리퀘스트가 준비되고 저장소 병합 요건이 충족되면 그룹으로 함께 병합되는 자동 병합 기능은 향후 몇 주에 걸쳐 순차적으로 적용될 예정이다.
+
+##### 스택드 풀 리퀘스트의 병합 및 권한 처리
+
+GitHub은 스택드 풀 리퀘스트가 기존 저장소 우회 권한을 스택 내 가장 아래에 있는 미병합 풀 리퀘스트의 규칙에 따라 적용한다고 밝혔다. 스택은 단일 병합 그룹으로 병합 큐에 진입하며, 병합 커밋 방식은 해당 스택의 각 풀 리퀘스트마다 하나의 커밋을 생성한다.
+
+풀 리퀘스트가 스택에 추가되거나 제거될 때 타임라인 이벤트가 발생하며, 풀 리퀘스트가 스택에 합류할 때 pull_request 웹훅에 stacked 액션이 추가된다. 또한 gh stack 확장 기능은 Git worktrees 지원과 함께 초기화, 체크아웃, 탐색 기능의 개선을 제공한다.
+
+##### 지원 범위
+
+스택드 풀 리퀘스트는 모든 github.com 플랜에서 사용 가능하며, 향후 GitHub Enterprise Server 릴리스에도 포함될 예정이다.
+
+[GitHub 원문](https://github.blog/changelog/2026-10-06-stacked-pull-requests-generally-available)
 
 ### 사이버보안 · 1건
 

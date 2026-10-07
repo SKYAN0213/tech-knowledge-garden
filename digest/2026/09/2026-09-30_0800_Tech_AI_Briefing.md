@@ -102,7 +102,7 @@ Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·E
 
 [news.samsung.com 원문](https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector)
 
-### 사이버보안 · 1건
+### 사이버보안 · 2건
 
 #### [Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대](https://skyan0213.github.io/tech-knowledge-garden/news/280289462980857d)
 
@@ -115,6 +115,26 @@ Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터
 
 
 [Google 원문](https://cloud.google.com/blog/products/chrome-enterprise/secure-intelligent-experiences-across-every-endpoint)
+
+#### [ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염](https://skyan0213.github.io/tech-knowledge-garden/news/96690c067704a88d)
+
+발표 2026-09-30
+
+위험·사고 · 보안 사고
+
+ASEC는 9월 30일 암호화폐 거래소를 사칭한 페이스북 광고를 통해 Node.js 기반 악성코드 JSCEAL이 유포됐다고 밝혔다. 발표 자료에 따르면 최근 두 달간 국내 PC 약 1,500대에서 감염이 확인됐으며, 윈도우와 맥OS가 모두 공격 대상이었다. 공격자는 암호화폐 보상을 내세운 광고로 가짜 사이트에 접속하게 한 뒤 운영체제에 따라 BAT 파일이나 PKG 설치 파일을 제공했다.
+
+##### JSCEAL의 운영체제별 동작 방식
+
+윈도우에서는 BAT 파일이 PowerShell을 통해 추가 코드를 내려받아 실행하는 초기 로더 역할을 한다. 이후 보안 설정을 변경하고 예약 작업을 등록하며, Binance가 설치된 것처럼 보이는 가짜 바탕화면 바로가기를 만든다.
+
+맥OS 환경에서는 브라우저 내에서 PKG 설치 파일을 구성하여 셸 스크립트를 다운로드하고 실행한다. 위장된 대화상자를 통해 비밀번호를 입력받아 저장하며, LaunchAgent를 등록해 지속성을 확보한다. 이후 시스템 식별 정보, 클립보드 데이터, 컴퓨터 이름, 설치 관련 정보를 외부 서버로 전송한다.
+
+##### ASEC의 예방 권고 사항
+
+ASEC는 암호화폐 거래소 프로그램을 공식 웹사이트에서만 다운로드하고, 광고나 신뢰할 수 없는 링크에서 제공하는 BAT 또는 PKG 설치 파일을 피할 것을 권고했다. 예상치 못한 비밀번호 입력 대화상자가 나타나면 출처를 확인하는 것이 필요하다고 안내했다.
+
+[asec.ahnlab.com 원문](https://asec.ahnlab.com/ko/95643/)
 
 ### 반도체·컴퓨팅 · 1건
 
