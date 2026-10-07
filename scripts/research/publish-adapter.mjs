@@ -18,7 +18,7 @@ import {
   assertHistoricalAdditionReview,
 } from "./event-date.mjs"
 import { markdownProse } from "../explanations.mjs"
-import { assertLegacyTransition } from "./legacy-transition.mjs"
+import { assertLegacyTransition, legacyTransitionMetadata } from "./legacy-transition.mjs"
 import { entityListText } from "../themes.mjs"
 
 // Pure projection: no Drive write, Git commit or push is performed here.
@@ -258,6 +258,7 @@ export function editionProjection(
     throw Error("Existing edition identity required")
   if (
     existing &&
+    !legacy_review &&
     (existing.meta.date !== date ||
       existing.meta.coverage_start !== coverage_start ||
       existing.meta.coverage_end !== coverage_end)
@@ -273,6 +274,17 @@ export function editionProjection(
       existing,
       `Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,
     )
+    const metadata = legacyTransitionMetadata(
+      legacy_review,
+      existing.meta,
+      `Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,
+    )
+    if (
+      date !== metadata.date ||
+      coverage_start !== metadata.coverage_start ||
+      coverage_end !== metadata.coverage_end
+    )
+      throw Error("Legacy projection must use the reviewed original coverage metadata")
     reviewed_sections = { "흐름 읽기": "없음", "오늘의 적용": "없음", "개념 색인": "없음" }
   } else if (existing) {
     if (existing.meta.schema_version !== "tech-ai-magazine/v2")
@@ -389,6 +401,7 @@ export function editionProjection(
     timezone: "Asia/Seoul",
     coverage_start,
     coverage_end,
+    ...(legacy_review?.unrecorded_coverage_review ? { historical_coverage: "unrecorded/v1" } : {}),
     ...(partial
       ? Object.fromEntries(
           ["briefing_format", "theme_format"]

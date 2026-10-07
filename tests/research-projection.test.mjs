@@ -35,6 +35,7 @@ import { robotsPolicy, checkRobots } from "../scripts/research/robots.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { parseNote, extractArticles, noteText } from "../scripts/garden.mjs"
 import { legacyReviewUnits } from "../scripts/research/legacy-review.mjs"
+import { hasUnrecordedHistoricalCoverage } from "../scripts/historical-coverage.mjs"
 import {
   assertLegacyTransition,
   legacyTransitionBatch,
@@ -148,6 +149,118 @@ function reviseLegacyFixture(f, body) {
   }))
   atomicWrite(f.vault, f.relative, f.packet.before_content)
 }
+
+function unrecordedLegacyFixture(t) {
+  const f = legacyTransitionFixture(t)
+  fs.unlinkSync(f.existing.file)
+  f.key = "2026-07-23_0803_Tech_AI_Briefing"
+  f.relative = `Editions/2026/07/${f.key}.md`
+  f.existing.file = path.join(f.vault, f.relative)
+  f.existing.meta = {}
+  f.packet.target_path = f.relative
+  f.packet.unrecorded_coverage_review = {
+    original_metadata_read: true,
+    original_archive_read: true,
+    edition_identity_checked: true,
+    timezone_checked: true,
+    cutoffs_not_recorded: true,
+    reason: "The original authoring archive has no cutoffs; preserve unknown timestamps.",
+  }
+  for (const article of f.articles) article.article_review.published_at = "2026-07-22"
+  reviseLegacyFixture(f, f.existing.body)
+  return f
+}
+
+test("fully reviewed historical news can retain unknown cutoffs without inventing a research window", (t) => {
+  const f = unrecordedLegacyFixture(t)
+  const original = fs.readFileSync(f.existing.file)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const next = parseNote(projection.content)
+  assert.equal(projection.path, f.relative)
+  assert.equal(next.meta.date, "2026-07-23")
+  assert.equal(next.meta.coverage_start, null)
+  assert.equal(next.meta.coverage_end, null)
+  assert.equal(next.meta.historical_coverage, "unrecorded/v1")
+  assert.equal(hasUnrecordedHistoricalCoverage(next.meta), true)
+  assert.deepEqual(
+    extractArticles({ ...next, file: f.existing.file }).map((a) => a.id),
+    f.articles.map((a) => a.event_id),
+  )
+  assert.deepEqual(fs.readFileSync(f.existing.file), original)
+  assert(!projection.content.includes("original_archive_read"))
+  assert(!projection.content.includes(f.packet.unrecorded_coverage_review.reason))
+})
+
+test("unknown historical coverage requires exact complete source and archive review", (t) => {
+  const f = unrecordedLegacyFixture(t)
+  for (const change of [
+    (p) => delete p.unrecorded_coverage_review,
+    (p) => (p.unrecorded_coverage_review.original_archive_read = false),
+    (p) => (p.unrecorded_coverage_review.reason = " "),
+    (p) => p.events.pop(),
+    (p) => p.units.pop(),
+  ]) {
+    const p = structuredClone(f.packet)
+    change(p)
+    assert.throws(() => retrospectiveProjections(f.vault, f.articles, [], [p]))
+  }
+  const later = structuredClone(f.articles)
+  later[0].article_review.published_at = "2026-07-24"
+  assert.throws(
+    () => retrospectiveProjections(f.vault, later, [], [f.packet]),
+    /reviewed source events/,
+  )
+})
+
+test("unknown cutoff review never replaces recorded or malformed historical timestamps", (t) => {
+  for (const meta of [
+    { coverage_start: "2026-07-22T00:00:00Z" },
+    { coverage_end: "2026-07-23T00:00:00Z" },
+    { coverage_end: "invalid" },
+    { coverage_start: null, coverage_end: null },
+    { date: "2026-07-24" },
+    { timezone: "UTC" },
+  ]) {
+    const f = unrecordedLegacyFixture(t)
+    f.existing.meta = meta
+    reviseLegacyFixture(f, f.existing.body)
+    assert.throws(() => retrospectiveProjections(f.vault, f.articles, [], [f.packet]))
+  }
+})
+
+test("unknown interval marker cannot authorize current, partial, unreviewed or fabricated coverage", (t) => {
+  const f = unrecordedLegacyFixture(t)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const meta = parseNote(projection.content).meta
+  for (const change of [
+    (m) => (m.date = "2026-09-14"),
+    (m) => (m.coverage_end = "2026-07-23T00:00:00Z"),
+    (m) => delete m.coverage_start,
+    (m) => (m.historical_coverage = "other"),
+    (m) => m.article_records.pop(),
+    (m) => (m.article_reviews[0].review_status = "unreviewed"),
+    (m) => (m.article_reviews[0].published_at = "2026-07-24"),
+    (m) => (m.article_reviews[1].event_id = m.article_reviews[0].event_id),
+    (m) => (m.new_items_count = 0),
+  ]) {
+    const changed = structuredClone(meta)
+    change(changed)
+    assert.throws(() => hasUnrecordedHistoricalCoverage(changed))
+  }
+  assert.equal(hasUnrecordedHistoricalCoverage({ coverage_end: null }), false)
+  assert.throws(
+    () =>
+      editionProjection(f.articles, {
+        key: f.key,
+        date: "2026-07-23",
+        coverage_start: null,
+        coverage_end: "2026-07-23T08:03:00+09:00",
+        existing: f.existing,
+        legacy_review: f.packet,
+      }),
+    /reviewed original coverage/,
+  )
+})
 
 test("preview snapshot copies preserve exact bytes, independent writes and drift rejection", (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "preview-clone-")))

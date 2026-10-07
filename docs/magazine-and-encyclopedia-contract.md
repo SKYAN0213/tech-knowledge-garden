@@ -47,6 +47,8 @@ knowledge_notes_updated: []
 
 `source_count` counts unique full URLs in `Source List`. `new_items_count` counts accepted news, paper, and tool items; it does not count analysis or action bullets.
 
+A complete source-reviewed conversion of an issue before 2026-09-14 may preserve genuinely unrecorded research cutoffs as `coverage_start: null`, `coverage_end: null`, and `historical_coverage: unrecorded/v1`. Its private `unrecorded_coverage_review` must confirm the original metadata and archive were read, the fixed edition identity and timezone were checked, and both cutoff fields were absent. This never replaces recorded, partial, null, or malformed original cutoff fields. Every original body unit requires a disposition and every article requires a verified source-publication date no later than the edition date. Keep the original archive and actual review dates. Do not infer a cutoff from filenames or neighboring issues, add an operational notice to reader pages, or create a new RSS item. Current daily issues and the latest publication cutoff still require real timestamps.
+
 In a partial retrospective before 2026-09-14, reviewed articles may replace an original source while unreviewed article bytes retain their existing citations. Remove sources no longer cited by the projected body. When this leaves gaps in numbering, set `source_marker_format: preserved-retrospective/v1`; keep the remaining source IDs unique, positive and ordered. The marker applies only to a historical issue without `editorial_format`, with explicit `article_records` and `article_reviews`. Undefined markers, duplicate URLs, unused sources and mismatched counts remain errors. New issues and complete six-w conversions use consecutive IDs from S1.
 
 ### Required order

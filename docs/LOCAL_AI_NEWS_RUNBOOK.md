@@ -11315,3 +11315,14 @@ code d7a6589f8cbb1cf230307444d5f485c5cadfcc80/Actions37548899604 success(Node110
 Drive archive ID: 1f9d88eUdNeeXVIhqJQyCciyJJeQWHK7g·1HyqdFt5_zURe6y4jyNiDzjVNck5sjVoE·1GXEBKYqZN_5ORgc6ABloigax54MltAHz·1nvf18_OtVr3KveRXctlGEPDN5fBLzmkN·1HrJDCOrptZykCIB8PGeHkQ0O-cLHAlvz. 개별package SHA/metadata/raw/restore/register/cold proof는 외장 evidence의 current55-pdf-acquisition-*에 있다.19.380의 별도ZIP403은 재시도하지 않았다. 전체3/22·legacy44/430+metadata10·개발27/40/보류1/20·독립human0/40/0/20·신규shadow0/7·goal active를 유지한다. 다음은 보류 평가의 미노출 원문 확대·과거 기사 원문 재검토이며 접근 제한 경로는 새 실제 관측 또는 공식 대체 근거를 확보한 뒤 처리한다. 같은 실패1시간 반복은 없다.
 
 최종 운영 기록도 source_versions0인 별도 current55-pdf-delivery-closure-20261007-v1로 보관했다. private Drive1NtTEH83tEFPNx-vtv3IBIy835-bf5WyR의10members/131323bytes/SHA687fcea799c9aa86a2997a1549558ac2ec4b0f1c61b8ae2426f8a2d36240674c는 실제 metadata/raw/전수복원/registry를 확인했다. 실제55경로 결과·110창 원격 검증·원문5archive 위치·현재WBS·CI/공개 불변 관측이 들어 있으며 기사 원문과 전체runtime은 앞의 별도 범위다. 다음 재개는 native research:context를 고정한 후 아직 모델 출력을 보지 않은 보류 평가 원문 확보 또는 기존44회차430기사의 원문 재검토다. collector 코드/설정 변경이 없으면 새 버전 검증을 이유로 동일55경로 전체를 재수집하지 않는다. 완료된 근거는 native 재검증/재사용 계약으로 이어가고 새 날짜·원문 변경·접근 상태 변화만 별도 조사한다.
+
+
+## 476. 취재 시각 미기록 과거 회차의 원문 재검토와 Drive 반영
+
+legacy-jul23-reader-20261007-v1은 기존 presence-reviewed/metrics-reviewed/science-reviewed 3개 native approval을 재사용한다. 원본7월23일{} metadata, iCloud 작성 원본, Git 최초 이력을 직접 읽고 cutoff 미기록을 확인했다. transition packet은 전체10units와3event의 원문·중복·출처 연결을 판정한다. unrecorded_coverage_review는 시각 복원이 아니며 공개 coverage_start/end는 null이다. 기존 저장 시각을 과거 취재 시각으로 바꾸지 않는다. 최신 cutoff는10월7일 실제 수집 기준을 유지한다.
+
+표적 검사: node --test tests/research-projection.test.mjs tests/research-legacy-no-articles.test.mjs tests/research-legacy-projection.test.mjs tests/research-preview-feed.test.mjs tests/research-retrospective.test.mjs —70/70. 새 fixture는 전체 원문/구간 누락, 미검토, 시각 조작, 현재 회차, 중복 사건, 발표일 초과를 거부한다. native preview의 source consistency/build/site check와 실제 모바일/데스크톱 탭·뒤로 가기·지도 부재를 확인했다. 전체 suite는 최종 릴리스 CI1회로 확인한다.
+
+Drive pre raw216/1417978bytes와 두 recursive inventory 일치를 확인했다. authoring release는1update/12620bytes만 허용한다. canonical garden-operation outer lock 안에서 external-root native write-session을 실행해 실제 connector update를 단1회 수행했다. same Drive ID1GkCGj9M8ff3yts8ng3PSgK-YSie7I6r8, desired SHA945e702b35e4775e8deb72eacd0ab269cad7d2654e3244b1228582f528357540, 원격 shared:false를 유지한다. fresh scoped before/after listing·metadata·complete raw readback으로 write-session2288cadd-b98c-471f-a58e-9337c7a507a2 verified_complete를 확인했다. post216파일 inventory 두 번 일치/변경1이며215원본 raw 관측 시각을 재작성하지 않고 변경1raw만 새로 읽었다. native connector snapshot와 canonical pull updated1/deleted0이다.
+
+원본 SHA d24a4f3fc56b35090701b2242413b9e2164dcf5bf453182fe0a5f78267be91fb와 모든 원본·검토 사유는 비공개 packet에 남는다. 공개 분석 문단을 필수로 채우지 않는다. Source List3개와 사건3개·발표일7월22일을 보존한다. RSS 포함 조건에 실제 cutoff가 필요해 해당 과거 회차는 신규 RSS 항목이 되지 않는다. 공개 배포/readback·WebsiteData·비공개 증거 archive의 완료는 실제 확인 뒤 별도로 기록한다.

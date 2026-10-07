@@ -24,7 +24,11 @@ import {
   existingArticleProjection,
 } from "./publish-adapter.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
-import { assertLegacyTransition, legacyTransitionBatch } from "./legacy-transition.mjs"
+import {
+  assertLegacyTransition,
+  legacyTransitionBatch,
+  legacyTransitionMetadata,
+} from "./legacy-transition.mjs"
 import { markdownProseText } from "../explanations.mjs"
 import { loadNoteApproval } from "./note-review.mjs"
 import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-state.mjs"
@@ -268,13 +272,15 @@ export function retrospectiveProjections(
       const originalBytes = fs.readFileSync(existing.file)
       if (sha256(originalBytes) !== legacyReview.target_sha256)
         throw Error("Legacy transition original edition bytes changed")
-      assertLegacyTransition(legacyReview, revised, existing, relativePath)
+      const original = { ...existing, ...parseNote(originalBytes.toString("utf8")) }
+      assertLegacyTransition(legacyReview, revised, original, relativePath)
+      const metadata = legacyTransitionMetadata(legacyReview, original.meta, relativePath)
       const projection = editionProjection(revised, {
         key: path.basename(existing.file, ".md"),
-        date: existing.meta.date,
-        coverage_start: existing.meta.coverage_start,
-        coverage_end: existing.meta.coverage_end,
-        existing,
+        date: metadata.date,
+        coverage_start: metadata.coverage_start,
+        coverage_end: metadata.coverage_end,
+        existing: original,
         legacy_review: legacyReview,
         concept_paths_by_id,
       })

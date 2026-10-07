@@ -10,6 +10,7 @@ import {
 } from "./editorial.mjs"
 import { sectorGroups, sectorMarkdown } from "./sectors.mjs"
 import { coverageDate } from "./time.mjs"
+import { hasUnrecordedHistoricalCoverage } from "./historical-coverage.mjs"
 import {
   usesThemes,
   classifyArticle,
@@ -529,12 +530,18 @@ export function validate(vault = "vault") {
     errors.push(e.message)
   }
   for (const issue of all) {
+    let unrecorded = false
     try {
       requireEditorial(issue)
+      unrecorded = hasUnrecordedHistoricalCoverage(issue.meta)
     } catch (e) {
       errors.push(e.message)
     }
-    if (!issue.meta.coverage_end && issue.meta.schema_version === "tech-ai-magazine/v2")
+    if (
+      !issue.meta.coverage_end &&
+      issue.meta.schema_version === "tech-ai-magazine/v2" &&
+      !unrecorded
+    )
       errors.push(`${issue.file}: missing cutoff`)
     else if (issue.meta.coverage_end && isNaN(Date.parse(issue.meta.coverage_end)))
       errors.push(`${issue.file}: invalid cutoff`)

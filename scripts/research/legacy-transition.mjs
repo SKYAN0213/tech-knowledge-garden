@@ -99,6 +99,14 @@ packetSchema.properties.metadata_review = object({
     }),
   },
 })
+packetSchema.properties.unrecorded_coverage_review = object({
+  original_metadata_read: { type: "boolean", enum: [true] },
+  original_archive_read: { type: "boolean", enum: [true] },
+  edition_identity_checked: { type: "boolean", enum: [true] },
+  timezone_checked: { type: "boolean", enum: [true] },
+  cutoffs_not_recorded: { type: "boolean", enum: [true] },
+  reason: text,
+})
 packetSchema.properties.source_list_dispositions = {
   type: "array",
   minItems: 1,
@@ -185,6 +193,11 @@ function assertMetadataReview(packet, meta, relativePath) {
 }
 
 function eventInsideCoverage(article, meta, day) {
+  if (meta.historical_coverage === "unrecorded/v1")
+    return (
+      parseResearchDate(article.article_review?.published_at)?.precision === "day" &&
+      article.article_review.published_at <= day
+    )
   const review = article.article_review
   if (review?.date_kind === "source-publication-time") {
     const source = parseResearchDate(review.source_published_at)
@@ -223,6 +236,49 @@ export function legacyTransitionReadiness(meta, relativePath) {
           metadata_review_fields: Object.keys(meta).filter((field) => !baseMetadata.has(field)),
         }
       : {}),
+  }
+}
+
+// Called only with the exact original, never editions()'s inferred routing date.
+// A reviewed unknown interval preserves nulls instead of inventing timestamps.
+export function legacyTransitionMetadata(packet, meta, relativePath) {
+  const readiness = legacyTransitionReadiness(meta, relativePath)
+  if (!packet.unrecorded_coverage_review) {
+    if (readiness.issues.length)
+      throw Error("Legacy transition requires preserved edition identity and cutoffs")
+    return meta
+  }
+  const review = packet.unrecorded_coverage_review
+  const day = relativePath.split("/").at(-1).slice(0, 10)
+  if (
+    !review.reason.trim() ||
+    ![
+      "original_metadata_read",
+      "original_archive_read",
+      "edition_identity_checked",
+      "timezone_checked",
+      "cutoffs_not_recorded",
+    ].every((field) => review[field] === true) ||
+    parseResearchDate(day)?.precision !== "day" ||
+    day >= "2026-09-14" ||
+    !readiness.issues.includes("coverage_start") ||
+    !readiness.issues.includes("coverage_end") ||
+    Object.hasOwn(meta, "coverage_start") ||
+    Object.hasOwn(meta, "coverage_end") ||
+    (Object.hasOwn(meta, "date") && meta.date !== day) ||
+    (Object.hasOwn(meta, "timezone") && meta.timezone !== "Asia/Seoul") ||
+    readiness.issues.some(
+      (field) => !["date", "timezone", "coverage_start", "coverage_end"].includes(field),
+    )
+  )
+    throw Error("Unrecorded coverage review cannot replace known, invalid or current cutoffs")
+  return {
+    ...meta,
+    date: day,
+    timezone: "Asia/Seoul",
+    coverage_start: null,
+    coverage_end: null,
+    historical_coverage: "unrecorded/v1",
   }
 }
 
@@ -276,8 +332,9 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   )
     throw Error("Legacy transition requires the exact pre-v2 original")
   const day = packet.target_path.split("/").at(-1).slice(0, 10)
-  if (legacyTransitionReadiness(before.meta, packet.target_path).issues.length)
-    throw Error("Legacy transition requires preserved edition identity and cutoffs")
+  const metadata = legacyTransitionMetadata(packet, before.meta, packet.target_path)
+  if (packet.unrecorded_coverage_review && !articles.length)
+    throw Error("Unrecorded coverage transition requires verified source events")
   assertMetadataReview(packet, before.meta, relativePath)
   assertReviewDate(packet.reviewed_at, {
     notBefore: [day, ...articles.map((a) => a.article_review?.reviewed_at)],
@@ -330,7 +387,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         a.article_review?.review_status !== "verified" ||
         a.retrospective_review ||
         a.historical_addition_review ||
-        !eventInsideCoverage(a, before.meta, day),
+        !eventInsideCoverage(a, metadata, day),
     )
   )
     throw Error("Legacy transition requires exactly all distinct reviewed source events")

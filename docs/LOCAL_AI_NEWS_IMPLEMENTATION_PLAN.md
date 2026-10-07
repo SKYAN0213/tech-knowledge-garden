@@ -5157,3 +5157,14 @@ code d7a6589f8cbb1cf230307444d5f485c5cadfcc80/Actions37548899604 success(Node110
 Drive archive ID: 1f9d88eUdNeeXVIhqJQyCciyJJeQWHK7g·1HyqdFt5_zURe6y4jyNiDzjVNck5sjVoE·1GXEBKYqZN_5ORgc6ABloigax54MltAHz·1nvf18_OtVr3KveRXctlGEPDN5fBLzmkN·1HrJDCOrptZykCIB8PGeHkQ0O-cLHAlvz. 개별package SHA/metadata/raw/restore/register/cold proof는 외장 evidence의 current55-pdf-acquisition-*에 있다.19.380의 별도ZIP403은 재시도하지 않았다. 전체3/22·legacy44/430+metadata10·개발27/40/보류1/20·독립human0/40/0/20·신규shadow0/7·goal active를 유지한다. 다음은 보류 평가의 미노출 원문 확대·과거 기사 원문 재검토이며 접근 제한 경로는 새 실제 관측 또는 공식 대체 근거를 확보한 뒤 처리한다. 같은 실패1시간 반복은 없다.
 
 최종 운영 기록도 source_versions0인 별도 current55-pdf-delivery-closure-20261007-v1로 보관했다. private Drive1NtTEH83tEFPNx-vtv3IBIy835-bf5WyR의10members/131323bytes/SHA687fcea799c9aa86a2997a1549558ac2ec4b0f1c61b8ae2426f8a2d36240674c는 실제 metadata/raw/전수복원/registry를 확인했다. 실제55경로 결과·110창 원격 검증·원문5archive 위치·현재WBS·CI/공개 불변 관측이 들어 있으며 기사 원문과 전체runtime은 앞의 별도 범위다. 다음 재개는 native research:context를 고정한 후 아직 모델 출력을 보지 않은 보류 평가 원문 확보 또는 기존44회차430기사의 원문 재검토다. collector 코드/설정 변경이 없으면 새 버전 검증을 이유로 동일55경로 전체를 재수집하지 않는다. 완료된 근거는 native 재검증/재사용 계약으로 이어가고 새 날짜·원문 변경·접근 상태 변화만 별도 조사한다.
+
+
+## 19.383. 원본 취재 시각이 없는 과거 회차의 완전 재검토 전환
+
+7월23일 원본 frontmatter는{}이고 iCloud 작성 원본과 최초 Git 이력에도 취재 구간이 없다. 인접 회차나 파일명으로 시각을 추정하지 않는다. 기존 승인 Presence·Copilot metrics·국립연구소 과학 지원3건의 원문19사실과 native 승인을 다시 대조하고 원래10구간 전체를 판정했다. 기업 주장의 적용 범위·성과 조건·지원 계획과 집행을 보존하고 근거 없는 전망·적용 조언·개인 보관 문구를 제거했다. 기존3사건 ID·회차 파일명·기사 URL을 유지한다.
+
+공통 legacy transition에 unrecorded_coverage_review를 추가했다. 원본 metadata/archive·회차 identity/timezone·두 cutoff 부재를 명시적으로 검토한 pre-9월14일 완전 전환에만 null/null과 historical_coverage:unrecorded/v1을 쓴다. 원본에 기록된/부분/잘못된 cutoff를 덮지 않으며 최신 회차·일일 취재·RSS 신규 발행으로 인정하지 않는다. 공개 내부 사유·운영 문구는 생성하지 않는다. 전체 구간·원문·승인·원본 SHA 조건을 유지했다.
+
+관련70검사 통과와 native private preview의 생성·본문·링크·RSS40식별자 보존을 확인했다. 실제 브라우저에서 분야 탭 URL/뒤로 가기·390px 가로 넘침0·지도0을 확인했다. fresh Drive4폴더216파일 raw 전수 대조와 두 inventory 일치를 확보한 뒤 원래 Drive ID의1파일만 update했다. native writer의 verified_complete/verified1/pending0/conflict0 및 실제12620bytes를 확인했고 post 전수 inventory는 동일216파일·변경1이다. canonical pull 결과 updated1/deleted0이다. 공개 배포는 이후 실제 결과로 갱신한다.
+
+완료한 모델 출력을 재사용했다. 별도로 시작했던 Presence 재처리는 승인 탐색 후 SIGINT로 중단하고 실제 checkpoint를 보존했다. 새 일일 회차·독립 human 평가·7회 shadow 완료는0이며 목표 active/WBS3/22를 유지한다. 정확한 남은 과거 수는 전환 후 inventory로 갱신한다. 동일 실패1시간 반복은 없다. 근거는 외장 tkg-daily-core-20261007-v1의 legacy-jul23-*와 combined-v2의 native approval/preview/release/write-session이다.
