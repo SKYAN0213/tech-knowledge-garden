@@ -11346,3 +11346,30 @@ legacy-jul22-reader-20261007-v1은 legacy-20260724-23-22-incident-reviewed-20261
 비공개 Research archive 두 개를 실제 metadata·원격 raw SHA/size·native ZIP 복원·registry로 확인했다. 승인 closure: fileID1zMz_bXiBC0BS1c_ueot9ZWFRCgO8FqLJ, SHAef622f24a403eff401ca3c77da30532f9fda2be36555ebdf06a01c5e01aca216, 원격 복원80파일이며 native loadCurrentApproval이 같은 사건·기존 승인일로 통과했다. 전달 custody: fileID1_Ft-XFta_sxWQKCHhjUT-iNNQx2Gxswq, SHAc15ccf78adc4dbccce1284edbf93f40b8af7284b13ab2c76590b845d1eb6d33d, 원격 복원102파일이다. custody는 원문 재확인·원본 전환·작성/공개/WebsiteData·CI 및 진척 증거97파일을 보존하며 source_versions0의 운영 archive다. full runtime 복원·독립 human gold·새 shadow 완료를 의미하지 않는다.
 
 canonical inventory 미검토42/412·metadata 검토8·v2 63·확인 사건198·diagnostics0, status-v24 WBS3/22(14%)·등록195/일일55·shadow0/7·goal active다. 승인 root 단독 inventory는 canonical empty 판정을 포함하지 않아 운영 진척에 사용하지 않는다. 다음 재개 원본은 vault/Editions/2026/07/2026-07-21_0801_Tech_AI_Briefing.md의3원문/2사건이다. 자료 전환만 수행해 코드 수정0·모델 호출0·전체 수집 재시도0·로컬 전체 suite0, 릴리스 CI1회다. evidence는 /Volumes/X5Storage/tkg-daily-core-20261007-v1/legacy-jul22-* 및 core-progress-checkpoint-20261007-v24.json이다.
+
+## 478. 7월21일 원문3개·로컬 모델·사건 분리·원격 전달
+
+실행 root는 /Volumes/X5Storage/tkg-private-preview-20261005-aug04-v1/combined-v2이며 canonical repo는 /Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden이다. evidence는 /Volumes/X5Storage/tkg-daily-core-20261007-v1/legacy-jul21-*와 core-progress-checkpoint-20261007-v25.json이다. 고정 후보 입력 b9019326ab0ac5e92d184153e29067afde6b36dea846416d44b3f153e6cec80b에서 세 exact candidate의 전체 이력을 읽었다. 기존 공통 mergeBacklog로 실제 발견3건을 등록했으며 수집/후보 성공을 승인으로 취급하지 않았다.
+
+source-collect-20261007-v1의 원문3개를 각 selected-source로 분리하고 native extract --max-blocks-per-batch4, review, draft, correct, approve, candidate-approval 순서로 진행했다. 사실30개(6/6/18), 실제 Qwen12호출이며 model-call-audit-v2가 native role budget의 complete12를 확인한다. 새 source adapter나 HTTP 재수집은 추가하지 않았다. 풀 기사의 발행 승인 run은 legacy-jul21-pool-revised-20261007-v2이며 처음의 pool-extract 승인은 발행에 사용하지 않는다.
+
+실패한 UTF-8 정정 입력 뒤 종속 승인 명령을 실행해 최초 비공개 초안 승인이 잘못 만들어졌다. immutable 원 기록을 삭제·변조하지 않고 superseded-unpublished 기록을 남겼다. 같은 원문/추출을 native reuse-extraction으로 새 판본에 이어 실제 정정 원고만 후보에 연결하고 preview/Drive/공개 발행에 사용했다. 이후 입력은 ASCII JSON 파일 전달과 성공 종료 확인을 사용했다. 이 사례는 정상 자동 승인 검증으로 계산하지 않는다. 모델이 차단 선택지를 누락한 원출력도 archive에 보존한다.
+
+외장 승인 root에는 Python runtime이 없어 최초 parse가 ENOENT로 거부됐다. 기존 canonical .local/research/local-ai/runtime/venv/bin/python을 RESEARCH_PYTHON으로 지정해 같은 collection run을 재개했고 먼저 완료한 HTTP fetch는 재사용했다. source 날짜·정정 인용 검사는 실제 현재 시각과 저장 본문으로 바로잡았다. implicit Drive root가 포함된 release observation은 root4개를 제외한 descendant12개로 정정했다. post connector snapshot은 preview repository 내부 .local/drive-sync에 저장해야 한다. WebsiteData 목록은 수정 후 순서가 바뀌므로 정확한 ID/name 집합을 정렬해 대조하며, 실제 변경 없이 write를 재시도하지 않았다. 개별 실패와 해결은 debug-record-v1에 남고 같은 실패1시간 반복은0이다.
+
+legacy transition은 원본4896bytes/SHA195edae4…의9units 및 Source List3개를 모두 판정했다. 첫 기사 unit은 개인 사용량 표시와 비용센터 UI의 두 event_split_review로 분리하고 세 사건80bba25e13259f42/e6ab1f9b9683cfdd/426d91706ebf17e3을 생성했다. 공개 발표일7월21일/21일/20일은 실제 source timezone에서 변환한다. 원 iCloud와 Git 최초 cutoff 미기록은 null/unrecorded로 남기고 원문 modified 시각을 새 발표일로 쓰지 않는다. 기업/제품명은 개념 노드에 넣지 않는다.
+
+pre/post 각각216개의 실제 raw bytes·크기·SHA와 두 inventory를 확인했다. canonical garden-operation outer lock 안에서 native writer가 same fileID12Kkw5TT4P4b81aMLBwqdrER1doDus8S4의1update만 허용했다. actual connector update와 scoped metadata/raw/두 parent listing으로 session d14e4084-2e1f-4877-987c-32614fd6498a verified_complete(verified1/pending0/conflict0)를 확인했다. 새14045bytes/SHAe9c42cd5d688ebc3eda144dbd6549fcd2f764ece2e1d2dda5ab3aceb2fe9239a이며 full post delta1, native pull updated1/deleted0이다. write-session의 write_performed:false는 controller가 connector를 호출하지 않았다는 의미이고 실제 MCP update는 수행했다.
+
+배포122b47308f42c2f1b4208fdab5161e6e3fed39cb/Actions37556761400 success, CI Node1105·Python15+10+3·PDF5+3·build/site/deploy 통과다. native public-readback16개 reader_equivalent와 실제 공개3기사를 확인했다. 데스크톱1280px/모바일390px overflow0·지도0, 분야 URL/뒤로 가기/키보드 focus 확인. WebsiteData383페이지/201기사/26개념/22관계의11파일을 same IDs/private 상태로 raw 확인(8수정/3불변)했다. RSS40식별자·발행일·XML 전체 SHA c496473be4eff6b5861f84d97c6cd46094b9617f8bf48a079bd6047a5bf9e9c1은 불변이다.
+
+Drive Research 실제 원격 bytes·native 복원·registry 완료:
+
+- credits: fileID1MEMsfChC_-zMS0OWGssR3xfRNjFu7fgt,105257bytes/SHA3da1e5e0a51a9b36358ef9e74a3962db1a21e96d6e88981cd3de3f8c927d3570.
+- pool: fileID11a4fBP6EvJOydtbvktPM67X30yYVbKuO,240756bytes/SHAe35f7fb8fc15baae494ac62776fe67b0fb95a354f636a8ff52f107c5a51206e9.
+- quality: fileID1q3ntRf-E42pJlWQiTY6UZ_34mZQmDvvc,157728bytes/SHA48f70e0d3af7b246d2bdc2d0f01237151a3eda7d5079bdf0c9839d4d8f235bb7.
+- delivery custody: fileID1Eti5MbTqdnWaCJ6J1cqslrel8A-F_AkR,6512035bytes/SHA930eee1a3251a0a41667289bd916f328ba973fc0db70acb4093c6b6292c36683.
+
+승인 세 개의 원격 복원본에서 native loadCurrentApproval을 다시 실행해 동일 사건·source 날짜·10월7일 승인일을 확인했다. 전달 custody는 evidence154파일과 native 작성/공개/WebsiteData·post 작성 snapshot을 보존하고 source_versions0이다. 중복 raw wrapper와 큰 archive b64 응답의 생략 목록/원 SHA는 custody에 명시했다. 실제 pre 전수 raw·post 변경1raw·fresh 전수 receipt/inventory·post 작성 bytes·WebsiteData 후속 bytes와 승인 closure는 보존했다. 전체 runtime 복원·독립 평가·새 shadow 완료를 뜻하지 않는다.
+
+최종 canonical inventory v2 64/verified201·미검토41/403·metadata 필요7·diagnostics0, 원장923/verified109/unreviewed800·승인receipt56·회차 내 중복0이다. full status는1회 생성했으며 WBS3/22(14%)·개발27/40·보류1/20·human0/40/0/20·shadow0/7·goal active를 유지한다. 이번 source code 변경0/유료API·예약변경0/55경로 전체수집0/로컬전체suite0/릴리스CI1회다. 이미 empty 판정된7월19·20일은 반복하지 않고 다음7월18일 원본 SHA46616c4e6050ac68d63f422b787380a154d49e161cc32cb16ebb87d77b21f18f에서 이어간다.

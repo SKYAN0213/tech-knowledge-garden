@@ -5184,3 +5184,19 @@ Drive archive ID: 1f9d88eUdNeeXVIhqJQyCciyJJeQWHK7g·1HyqdFt5_zURe6y4jyNiDzjVNck
 실제 Drive 작성216원본의 raw bytes와 두 recursive inventory를 대조하고 과거 회차1개만 same ID로 update했다. native authoring write-session이 verified_complete이고 canonical pull updated1/deleted0이다. 원본 취재 시각은 기록되지 않아 null/unrecorded를 보존한다. 콘텐츠86f3740ce90efd97b8f259ca4d23a10ff865dcd0/Actions37553847967 success, CI Node1105/1105·build/site/deploy 통과, 공개12파일 bytes 일치다. 실제 데스크톱 탭/URL/뒤로 가기와390px 모바일 overflow0·지도0, 공개 페이지 표시를 확인했다. WebsiteData11파일 raw 확인(8수정/3불변), RSS40개 GUID/pubDate·XML bytes 불변이다. 상세 영수증과 원격 복원은 런북477절이다.
 
 canonical inventory는 미검토42회차/412units·metadata 검토 필요8, v2회차63·확인 사건198·RSS40·diagnostics0이다. 외장 approval root 단독 inventory에는 canonical empty-legacy 판정18개가 없으므로 이를 전체 진척으로 사용하지 않는다. core-progress-checkpoint-20261007-v24는 WBS3/22(14%)·등록195/일일55·새 shadow0/7을 유지한다. 모델/독립 평가·55경로 새 fingerprint 통합 완료는 주장하지 않는다. 이번 묶음의 source code 변경과 로컬 전체 suite 반복은0이고 릴리스 CI1회만 실행했다. 다음은7월21일 원본의 credits 관련 두 발표와 Code Quality 발표3원문을 재검토하고 기존 두 사건을 전환한다. 전체 goal active, 1시간 동일 실패 반복0이다.
+
+## 19.385. 7월21일 세 발표의 원문·로컬 모델·실제 발행 검증
+
+기존 두 기사와 Source List 세 원문을 전체 재검토했다. 개인 Copilot 사용량 표시와 Enterprise Cloud 비용센터의 AI 크레딧 풀 관리 UI는 대상·기능·발표 시각이 다른 사건이다. 기존 첫 기사 unit에 두 명시적 event_split_review를 연결하고 Code Quality를 별도 사건으로 유지했다. 원본9units를 모두 판정했으며 업계 추론·행동 권고·빈 섹션과 근거 없는 전문용어 연결을 제거했다. 원 iCloud와 Git 최초 메타데이터에는 취재 cutoff가 없어 null/unrecorded를 유지한다. 회사와 제품명을 지도 노드로 추가하지 않는다.
+
+기존 공통 수집·파서로 실제 GitHub 공식 원문3개를 확보하고 고정 원문 판본으로 모델을 실행했다. qwen3.8:27b-mlx/think:false의 실제 extraction8회·writer4회, 총12호출이 완료됐다. 모델 최초24사실 중 구조 통과22개였고 가격 조건·달력 날짜의 측정량 오류2개를 정정했다. 개인 예산 표시·동시 예산 적용·커버리지·품질 기준·API·별도 실행 비용 등 누락6사실을 정확한 원문 인용으로 보강해30사실을 승인했다. 비용센터 초안의 오역과 차단/조건부 추가 지출 선택지 누락도 정정했다. 모델 원출력·누락·정정은 보존하며 이를 독립 human gold나 자동 발행의 성능 보장으로 집계하지 않는다.
+
+기사 사건ID는80bba25e13259f42/e6ab1f9b9683cfdd/426d91706ebf17e3이다. 원문 발표 시각은 각각2026-07-20T09:00:14-07:00/11:24:14-07:00/06:01:24-07:00이며, Asia/Seoul 발표일은7월21일/21일/20일이다. Source List 재조사에서 발견한3후보의 실제 관측일은10월7일로 기록하고 과거 발견일을 만들어 넣지 않았다. 고정 context의 정확한 후보 전체 이력을 읽은 뒤 native candidate-approval로 새 승인 판본에 연결했다. 최신 원장923개/verified109/unreviewed800·승인 receipt56·회차 내 중복 사건0이다.
+
+Drive pre/post 각각216개 원본을 실제 raw bytes·크기·SHA와 두 recursive inventory로 확인했다. 원격 변경은 기존7월21일 파일1개이며 same Drive ID12Kkw5TT4P4b81aMLBwqdrER1doDus8S4와 private parent/shared:false를 유지했다. 원본 SHA195edae433e453831a1442a0e83c2ddeaa851c61f81c356cd7993ec184369687, 새14045bytes/SHAe9c42cd5d688ebc3eda144dbd6549fcd2f764ece2e1d2dda5ab3aceb2fe9239a다. native write-session d14e4084-2e1f-4877-987c-32614fd6498a가 verified_complete(1/0/0)이며 canonical pull updated1/deleted0이다. 정확한 새 원고 생성·reader/build/link 검증 후 반영했다.
+
+콘텐츠122b47308f42c2f1b4208fdab5161e6e3fed39cb/Actions37556761400 success. CI Node1105/1105·Python15+10+3·PDF5+3·build/site/deploy 통과, native 공개 readback16개 bytes 동일이다. 실제 데스크톱·모바일390px의 탭/URL/뒤로 가기/키보드 탐색·overflow0·지도0과 공개 브리핑3기사를 확인했다. WebsiteData11개 same ID/private/raw SHA·size 검증(8수정/3불변),383페이지/201기사/지도26개념·22관계다. RSS40개 GUID/pubDate와 XML SHA c496473be4eff6b5861f84d97c6cd46094b9617f8bf48a079bd6047a5bf9e9c1을 보존해 과거 수정을 신규 회차로 발행하지 않았다.
+
+비공개 Research 승인 closure3개와 전달 custody1개를 실제 원격 metadata/raw SHA·size, native 복원·registry로 검증했다. 새 승인3개의 원격 복원본에서 loadCurrentApproval이 같은 사건·승인일로 통과했다. 오류·정정·원본·작성/공개/WebsiteData·CI·진척 증거154파일의 custody도 별도 보관했다. 상세 경로·해시·명령과 실패 처리는 런북478절이며 전체 runtime·독립 human·새 shadow 완료를 뜻하지 않는다.
+
+canonical inventory는 v2 64/확인 사건201·미검토41회차/403units·metadata 검토 필요7·diagnostics0이다. checkpoint-v25의 전체 WBS3/22(14%)·partial17/not_started2·개발27/40/보류1/20·독립human0/40/0/20·shadow0/7은 유지된다. 새 source code/유료 API/예약 변경0, 전체55경로 재수집0, 로컬 전체 suite0, 릴리스 CI1회다. 원래 목표는active이며 같은 실패1시간 이상 반복0이다.7월19·20일은 이미 empty 판정되어 재조사 대상으로 세지 않는다. 다음 미검토 원본은7월18일 회차 SHA46616c4e6050ac68d63f422b787380a154d49e161cc32cb16ebb87d77b21f18f다.
