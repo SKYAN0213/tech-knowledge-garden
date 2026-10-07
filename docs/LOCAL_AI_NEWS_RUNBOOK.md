@@ -11480,3 +11480,26 @@ npm run research -- preview --run PREVIEW_RUN --publication-handoff runs/EDITORI
 기존 `tech-ai-briefing-08`의 지침을 native automation tool로 갱신하고 실제 TOML readback을 대조했다. 저장 결과의 마지막 줄바꿈 정규화 외에 기존 prompt를 보존하며 오전8시·ACTIVE·모델gpt-6-luna/medium·프로젝트·작업경로 등11개 설정은 유지했다. 공통 검토/승인 handoff와 기존 Drive/배포 실행을 사용하고, 완료 단계·모델·전체 CI를 반복하지 않도록 명시했다. 별도 예약·인증·유료 API는 추가하지 않았다. 설정 저장과 실제 새 예약 실행은 구분하며 새 정규 운영 횟수는0/7이다. `tech-ai-briefing-08-editorial-readback-v1.json`에 설정 관측을 보존한다.
 
 전체 WBS는완료3/22(14%)·부분17·미착수2다. 소급40회차/394구간, 독립 평가0/40+0/20, Research/WebsiteData의 새 전달 연결과 실제 새7회 운영은 남아 있다. 진척 조회는 `core-progress-daily-editorial-20261007-v29.json`을 사용하며, UI status 표시만을 위해 전체 수집·Drive 재획득·전체 status를 반복하지 않는다. 다음 수직 슬라이스는 공통 발행 경로의 비공개 Research/WebsiteData 전달을 연결하고 기존 소급 작업은 최대5회차씩 묶는다.
+
+## 483. 같은 발행 실행에서 Research·WebsiteData 전달과 복원 확인 (2026-10-07)
+
+기존 `research:deliver`에 `--remote-plan`을 추가했다. native `public_bytes_verified` 이후에만 동작한다. 계획 JSON은 `research-remote-delivery-plan/v1`, `website_stage`는 저장소 밖 절대 경로, `archives`는 기존 portable archive의 `{root, run_id, vault?}` 목록이다. 원고의 모든 approved run과 사건을 포함해야 하며 정확한 ZIP·manifest·의존 SHA를 검사한다. ZIP 준비는 기존 `archive-closure`를 사용한다. `previous_website_receipt`에는 이전에 actual raw로 검증한 WebsiteData의 `{files:[{path,id,sha256}]}` 기록 경로를 지정한다.
+
+```sh
+npm run research:deliver -- --run OPERATION_ID --remote-plan /absolute/remote-plan.json
+npm run research:deliver -- --run OPERATION_ID --remote-acquisition /absolute/fresh-artifact-acquisition.json
+```
+
+첫 실행은 기존 `export-website-data.py`로 실제 배포 데이터를 읽는다. native publication의 네 데이터 파일·현재 로컬 생성본과 일치해야 한다. staging은 `website_stage/OPERATION_ID/WebsiteData`이며11파일을 private run에 고정한다. 재개 시 export·ZIP 준비를 반복하지 않는다. exporter 응답 유실은 소유한11파일/snapshot에서 복구하며 불완전한 결과는 `website_export_recovery_required`로 남긴다.
+
+원격 acquisition은 기존 `research-authoring-drive-acquisition/v1`을 재사용한다. Research·WebsiteData의 실제 private folder metadata, 각 폴더의 동일한 두 전체 목록, 대상 actual raw와 metadata가 필요하다. 일반 하위 폴더도 목록에 보존한다. 작성 원본용 normalizer는 기본적으로 폴더 항목을 계속 거부한다. 원고 네 root를 다시 수집하지 않는다.
+
+열린 stdin의 `connector_ready`에 `{"type":"ready"}`를 받아야 intent를 만든다. `remote_write_intent`의 정확한 ID·부모·staged file·desired SHA만 기존 connector로 저장한다. desired bytes가 있으면 쓰지 않는다. WebsiteData 변경은 이전 verified raw SHA와 같은 ID에서만 허용하고 Research ZIP의 다른 bytes는 덮어쓰지 않는다. 저장 후 matching 두 목록·actual raw를 새 acquisition으로 확보해 `{"type":"remote_readback","acquisition_file":"/absolute/post.json"}`을 보낸다. 응답 유실은 `remote_write_recovery_required`/intent를 보존하며 자동 재시도하지 않는다. 새 raw가 desired SHA면 쓰기를 반복하지 않고 이어 간다. 미적용 intent 재전송은 원격 조사 후 정확한 `--resume-remote-intent INTENT_ID`가 필요하다. 기존 파일의 MIME을 보존한다.
+
+Research는 actual remote ZIP을 기존 `package-archive.py`로 새 private 폴더에 복원하고 모든 의존 SHA를 검사한다. 같은 ID·ZIP·manifest의 기존 registry를 재사용하거나 `registerArchiveLocation`으로 등록한다. 발행 사건 전부의 원문 판본이 registry에 있어야 `source_archive_verified`다. local ZIP만으로 성공하지 않는다. 원문 복원과 live runtime·후보 장부 복구·독립 품질 평가는 구분한다.
+
+WebsiteData11개는 원격 SHA·크기·ID·private parent 확인 뒤 canonical `.local/drive-sync/receipt.json`의 해당 행만 갱신한다. 이전 전체 receipt와 mapping proof를 실행에 보존하고 작성 원본 행·그 관측 시각을 바꾸지 않는다. 완료 재개는 raw·복원·mapping을 검사하고 HTTP/모델/export/push/원격 쓰기를 반복하지 않는다. 과거 raw 관측은 현재 원격 조회와 구분한다. `--status`와 기존 delivery 현황에도 remote 단계와 두 검증 상태를 포함한다.
+
+실물 `authoring-delivery-jul18-20261007-v1`에서 native 배포 proof와 실제 Research2 ZIP/WebsiteData11파일을 연결했다. Research310항목·WebsiteData12항목의 전체 두 목록과13대상 raw를 대조했다. 동일 bytes12개는 재사용하고 `snapshot.json`만 기존 ID `1zfRK_HSvMW7SfhZjRylOhmeoyYblIpo1`/private parent로 갱신했다. actual post raw126182bytes/SHA`ded57ff4c35a05502ab0ebd5920565ce9d301c49a77612025bb6e255b5ed0e58`다. 원격 ZIP native 복원은43/32파일이며 원문·승인 의존 SHA와 두 사건 coverage를 확인했다. 신규 원고·원본 네 root 변경·RSS 회차·모델 호출0, 새 정규 운영0/7이다.
+
+검사는 native ZIP 복원/registry·완료 재사용·응답 유실·raw로 intent 해소·충돌/비공개/중복/잘린 목록·계획 변경·사건 coverage·readonly status/변조·실제 CLI channel을 다룬다. 최초 fixture의 canonical root·macOS `/var` symlink 오류는 fixture만 고쳤다. live 첫 pipe 실행은 stdin EOF로 intent 전에 거부됐고 PTY로 재개해 actual post readback을 완료했다. 실제 재개·최종 CI는 외장 `remote-delivery-*`에 보존한다. 전체 WBS·전수 소급·독립 평가·새7회 운영은 별도다.

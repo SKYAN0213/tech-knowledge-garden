@@ -4,7 +4,13 @@ import { sha256 } from "./contracts.mjs"
 import { atomicCreate, safePath } from "./run-state.mjs"
 
 // Normalize scoped connector reads; signed download URLs and readable duplicates are not retained.
-export function materializeAuthoringReadback(root, binding, acquisitionFile, now) {
+export function materializeAuthoringReadback(
+  root,
+  binding,
+  acquisitionFile,
+  now,
+  { allowListedFolders = false } = {},
+) {
   const acquisitionBytes = fs.readFileSync(acquisitionFile),
     capture = JSON.parse(acquisitionBytes)
   if (
@@ -51,7 +57,7 @@ export function materializeAuthoringReadback(root, binding, acquisitionFile, now
       return files
         .map((f) => {
           if (
-            f.mime_type === "application/vnd.google-apps.folder" ||
+            (!allowListedFolders && f.mime_type === "application/vnd.google-apps.folder") ||
             (f.parent_ids != null &&
               (!Array.isArray(f.parent_ids) ||
                 f.parent_ids.length !== 1 ||

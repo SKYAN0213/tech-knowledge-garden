@@ -436,6 +436,7 @@ FDA 공식 발표 경로까지 수용한 `daily-20260929-v9`은 **10경로/20창
 
 ### P5-01 재시작 가능한 실행기
 
+- 추가 구현(19.390절): 같은 publication에서 Research portable ZIP·WebsiteData11개를 실제 원격 저장/읽기와 native 복원·위치 등록·canonical mapping으로 연결한다. 모든 원문 사건 coverage, 같은 ID update, durable intent/응답 유실과 완료 재사용을 검증한다. 독립 평가·전수 소급·새 정규 운영은 별도로 남는다.
 - 추가 구현(19.389절): 완료한 일일 처리의 frozen source에서 사실 검토·작성·명시적 원고 승인·후보 장부 연결을 이어 실행한다. 기존 승인·회차는 읽어 재사용하고, 새로운 원문 판본은 별도 검토로 보낸다. 승인된 publication handoff를 기존 private preview가 직접 받는다. 독립 평가·전체 소급·실제 정규 운영은 남아 있어 부분 완료를 유지한다.
 - 추가 구현(19.388절): 승인 writer의 scoped readback → 전체 Drive snapshot → canonical import → 기존 전달 실행을 연결했다. 네 작성 폴더의 경로·SHA·ID·수정 시각과 승인 변경 범위를 대조하고 기존 pull-drive를 사용한다. 외장 검토 root의 immutable proof 복사와 stdin 준비 확인을 공통 경로로 옮겼다. 완료 단계 재개는 쓰기 없이 실제 raw 증거를 다시 검사한다. 조사·사실 검토·원고 승인·WebsiteData/Research 전달은 남아 있어 전체는 부분 완료다.
 - 추가 구현(2026-10-07, 19.387절): `research:deliver`가 승인된 Drive 결과 → 기존 publisher → 정확한 commit의 Actions → public-readback을 연결한다. 완료 proof 재사용·명시적 push 복구·대기 체크포인트·중복 실행 잠금이 있다. 수집/편집/Drive 작성 전 구간과 WebsiteData/원문 원격 보관 연결은 남아 있으므로 P5-01 전체는 부분 완료다.
@@ -5263,3 +5264,9 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 완료 증거는 native source review→writer→editorial approval→candidate linkage→preview selection 시험, 판본 변경·검토 변경·중복 회차·실패 재시도 거부, 실제 저장된 일일 후보의 읽기·재개다. 실물은 이미 승인돼 회차에 들어 있는 3건과 빈 추출 복구 검토1건이며, 신규 원고·Drive·공개 변경이나 정규 운영 횟수로 계수하지 않는다. 최초 표적73개 중 fixture1개가 source processor 인자를 잘못 넘겼고, 수정 후 같은 fixture의 잘못된 회차 key가 native 계약에서 거부됐다. fixture만 고쳐 해당 검사1개를 통과했고, 최신 동작6개와 preview selection 검사1개를 통과했다. full CI·실물 재개 결과는 런북482에 이어 기록한다.
 
 최종 실제 v4 실행692ms/재개330ms, 추가 모델·쓰기 명령0, 보호15입력 SHA 불변이다. 정확한 `cdc12ccc1e2ebac157ad41dc7f1a11d88934813a`의 Actions37570540897이 Node1130/1130·build/site/deploy를 통과했으며 공개 RSS·reader-index의 실제 bytes도 보존됐다. 기존 오전8시 automation은 native tool로 지침만 갱신하고11개 설정을 실제 readback으로 확인했다. 신규 예약 실행은 아직 관측하지 않았다. 전체 WBS3/22(14%)·부분17·미착수2와 새 정규 운영0/7은 유지한다. 최신 focused checkpoint-v29와 런북482에 다음 구간 및 실제 검증 증거를 기록한다.
+
+### 19.390 Research·WebsiteData를 기존 전달 실행에 연결 (2026-10-07)
+
+별도 보관 작업을 기존 `research:deliver`의 public 확인 이후에 연결했다. `remote-delivery.mjs`는 기존 scoped raw normalizer, WebsiteData exporter, portable ZIP restore/register를 사용한다. 원고 run·발행 사건 전체를 포함한 native archive만 계획에 지정하며 export·대상 bytes·쓰기 intent·actual post raw·복원·mapping을 같은 private 실행에 고정한다. 완료한 export·원격 쓰기·ZIP 복원·publication은 재개 때 반복하지 않는다. 인증은 기존 caller connector에 유지한다.
+
+실제로7월18일 기존 run에서 WebsiteData11파일/Research2 ZIP을 확인했다. 수집 시각이 바뀐 `snapshot.json`만 same ID/private parent에 update하고12개 동일 파일은 재사용했다. 원격 ZIP을 새 private 폴더에 복원해43/32파일을 확인했다. native source registry가 사건2건을 포함하며 WebsiteData 행만 canonical receipt에 반영한다. 원본 네 root·새 기사/RSS 회차·모델 호출0이다. 완료 재개와 status는 archived raw이며 새 정규 운영/현재 원격 재조회로 계수하지 않는다. 세부 계약은 런북483절과 외장 `remote-delivery-*`를 따른다. 전체 WBS3/22(14%)·부분17·미착수2, 소급40회차/394구간·독립 평가0/40+0/20·새 운영0/7은 유지한다.

@@ -22,10 +22,22 @@ try {
       acquisition: { type: "string" },
       "resume-intent": { type: "string" },
       "connector-wait-ms": { type: "string", default: "300000" },
+      "remote-plan": { type: "string" },
+      "remote-acquisition": { type: "string" },
+      "resume-remote-intent": { type: "string" },
     },
   })
   if (!/^\d+$/.test(v["wait-seconds"])) throw Error("Integer --wait-seconds required")
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(v.run || "")) throw Error("Exact delivery run ID required")
+  if (
+    !/^\d+$/.test(v["connector-wait-ms"]) ||
+    Number(v["connector-wait-ms"]) < 1 ||
+    Number(v["connector-wait-ms"]) > 600000
+  )
+    throw Error("Connector wait must be from 1 to 600000 ms")
+  if (v.status && (v["remote-acquisition"] || v["resume-remote-intent"]))
+    throw Error("Status is read-only")
+  let remoteInput = null
   const options = {
     root: v.root,
     run: v.run,
@@ -34,6 +46,15 @@ try {
     retryPublish: v["retry-publish"],
     actionsRun: v["actions-run"],
     waitSeconds: Number(v["wait-seconds"]),
+    remotePlanFile: v["remote-plan"],
+    remoteAcquisitionFile: v["remote-acquisition"],
+    resumeRemoteIntent: v["resume-remote-intent"],
+    connectorWaitMs: Number(v["connector-wait-ms"]),
+    remoteEmit: (event) => console.log(JSON.stringify(event)),
+    nextRemoteCapture: v["remote-acquisition"]
+      ? async () =>
+          (await remoteInput.read("remote_readback", ["acquisition_file"])).acquisition_file
+      : undefined,
     emit: (state) =>
       console.error(JSON.stringify({ stage: state.status, commit: state.publication.commit })),
   }
@@ -53,59 +74,83 @@ try {
     throw Error("Status is read-only")
   if (!authoring && v["resume-intent"]) throw Error("Authoring connector session required")
   let result
-  if (authoring) {
-    if (
-      !/^\d+$/.test(v["connector-wait-ms"]) ||
-      Number(v["connector-wait-ms"]) < 1 ||
-      Number(v["connector-wait-ms"]) > 600000
-    )
-      throw Error("Connector wait must be from 1 to 600000 ms")
-    const input = !v.status && (v.acquisition || !v["source-snapshot"]) ? connectorInput() : null
-    const stop = () => input?.close()
-    process.once("SIGINT", stop)
-    process.once("SIGTERM", stop)
-    const emit = (event) => console.log(JSON.stringify(event))
-    try {
-      if (v.acquisition) {
-        // Confirm a live caller before the native writer can create an intent.
-        emit({ type: "connector_ready", run_id: v.run })
-        let timer
-        try {
-          await Promise.race([
-            input.read("ready", []),
-            new Promise((_, reject) => {
-              timer = setTimeout(
-                () => reject(Error("Connector readiness timed out")),
-                Number(v["connector-wait-ms"]),
-              )
-            }),
-          ])
-        } finally {
-          clearTimeout(timer)
-        }
+  remoteInput = !v.status && v["remote-acquisition"] ? connectorInput() : null
+  try {
+    if (remoteInput && !v.acquisition) {
+      console.log(JSON.stringify({ type: "connector_ready", run_id: v.run }))
+      let timer
+      try {
+        await Promise.race([
+          remoteInput.read("ready", []),
+          new Promise((_, reject) => {
+            timer = setTimeout(
+              () => reject(Error("Connector readiness timed out")),
+              Number(v["connector-wait-ms"]),
+            )
+          }),
+        ])
+      } finally {
+        clearTimeout(timer)
       }
-      result = await deliverAuthoringSession({
-        ...options,
-        sourceRoot: v["authoring-root"],
-        acquisitionFile: v.acquisition,
-        snapshotFile: v["source-snapshot"],
-        readbackFile: v["source-readback"],
-        resumeIntent: v["resume-intent"] || null,
-        waitMs: Number(v["connector-wait-ms"]),
-        emit,
-        nextCapture: input
-          ? async () => (await input.read("readback", ["acquisition_file"])).acquisition_file
-          : undefined,
-        nextSnapshot: input
-          ? () => input.read("source_snapshot", ["snapshot_file", "readback_file"])
-          : undefined,
-      })
-    } finally {
-      input?.close()
-      process.removeListener("SIGINT", stop)
-      process.removeListener("SIGTERM", stop)
     }
-  } else result = await deliverApprovedPublication(options)
+    if (authoring) {
+      if (
+        !/^\d+$/.test(v["connector-wait-ms"]) ||
+        Number(v["connector-wait-ms"]) < 1 ||
+        Number(v["connector-wait-ms"]) > 600000
+      )
+        throw Error("Connector wait must be from 1 to 600000 ms")
+      const input =
+        remoteInput ||
+        (!v.status && (v.acquisition || !v["source-snapshot"]) ? connectorInput() : null)
+      const stop = () => input?.close()
+      process.once("SIGINT", stop)
+      process.once("SIGTERM", stop)
+      const emit = (event) => console.log(JSON.stringify(event))
+      try {
+        if (v.acquisition) {
+          // Confirm a live caller before the native writer can create an intent.
+          emit({ type: "connector_ready", run_id: v.run })
+          let timer
+          try {
+            await Promise.race([
+              input.read("ready", []),
+              new Promise((_, reject) => {
+                timer = setTimeout(
+                  () => reject(Error("Connector readiness timed out")),
+                  Number(v["connector-wait-ms"]),
+                )
+              }),
+            ])
+          } finally {
+            clearTimeout(timer)
+          }
+        }
+        result = await deliverAuthoringSession({
+          ...options,
+          sourceRoot: v["authoring-root"],
+          acquisitionFile: v.acquisition,
+          snapshotFile: v["source-snapshot"],
+          readbackFile: v["source-readback"],
+          resumeIntent: v["resume-intent"] || null,
+          waitMs: Number(v["connector-wait-ms"]),
+          emit,
+          nextCapture: input
+            ? async () => (await input.read("readback", ["acquisition_file"])).acquisition_file
+            : undefined,
+          nextSnapshot: input
+            ? () => input.read("source_snapshot", ["snapshot_file", "readback_file"])
+            : undefined,
+        })
+      } finally {
+        input?.close()
+        process.removeListener("SIGINT", stop)
+        process.removeListener("SIGTERM", stop)
+      }
+    } else result = await deliverApprovedPublication(options)
+  } finally {
+    remoteInput?.close()
+  }
   console.log(JSON.stringify(result, null, 2))
   if (
     [
@@ -114,7 +159,10 @@ try {
       "deployment_observation_failed",
       "public_readback_failed",
       "authoring_recovery_required",
-    ].includes(result.status)
+    ].includes(result.status) ||
+    ["remote_write_recovery_required", "website_export_recovery_required"].includes(
+      result.remote_delivery?.status,
+    )
   )
     process.exitCode = 2
 } catch (error) {

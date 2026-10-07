@@ -19,16 +19,18 @@ import {
   recordPublicationReadback,
 } from "./publication-operation.mjs"
 import { assertDeploymentProof, verifyPublicReadback } from "./public-readback.mjs"
+import { deliverRemoteArtifacts, inspectRemoteDelivery } from "./remote-delivery.mjs"
 
 const GITHUB = "SKYAN0213/tech-knowledge-garden"
 const WORKFLOW = "Publish Garden"
 const executeFile = promisify(execFile)
-export async function runDeliveryCommand(file, args, repository) {
+export async function runDeliveryCommand(file, args, repository, options = {}) {
   // No shell, arbitrary task runner, automatic workflow dispatch or credentials.
   const result = await executeFile(file, args, {
     cwd: repository,
     timeout: file === "gh" ? 30_000 : 15 * 60_000,
     maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, ...(options.env || {}) },
   })
   return result.stdout
 }
@@ -56,6 +58,7 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
               publication.status !== "public_bytes_verified")))
       )
         throw Error("Invalid delivery checkpoint")
+      const remoteDelivery = inspectRemoteDelivery(root, input.run_id)
       runs.push({
         run_id: input.run_id,
         status: latest?.status || "checkpoint_pending",
@@ -64,7 +67,9 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
         publication_status: publication.status,
         commit: publication.commit,
         new_regular_operation_counted: false,
-        website_data_verified: false,
+        remote_delivery: remoteDelivery,
+        website_data_verified: remoteDelivery?.website_data_verified === true,
+        source_archive_verified: remoteDelivery?.source_archive_verified === true,
       })
     } catch {
       runs.push({
@@ -93,6 +98,12 @@ export async function deliverApprovedPublication({
   now = Date.now,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   emit = () => {},
+  remotePlanFile,
+  remoteAcquisitionFile,
+  nextRemoteCapture,
+  remoteEmit = () => {},
+  resumeRemoteIntent = null,
+  connectorWaitMs = 300000,
 }) {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(run || "")) throw Error("Exact delivery run ID required")
   if (!Number.isInteger(waitSeconds) || waitSeconds < 0 || waitSeconds > 60)
@@ -127,7 +138,12 @@ export async function deliverApprovedPublication({
   if (statusOnly) {
     if (retryPublish || actionsRun || waitSeconds) throw Error("Status is read-only")
     const publication = publicationOperationStatus(options)
-    return { ...publication, delivery: readJSON(root, base + "/latest.json"), status_only: true }
+    return {
+      ...publication,
+      delivery: readJSON(root, base + "/latest.json"),
+      remote_delivery: inspectRemoteDelivery(root, run),
+      status_only: true,
+    }
   }
 
   return withLock(root, "delivery-" + run, async () => {
@@ -167,11 +183,37 @@ export async function deliverApprovedPublication({
       return value
     }
     let publication = publicationOperationStatus(options)
+    const finish = async () => {
+      const remote =
+        remotePlanFile || readJSON(root, `runs/${run}/remote-delivery/input.json`)
+          ? await deliverRemoteArtifacts({
+              root,
+              run,
+              repository,
+              publication,
+              planFile: remotePlanFile,
+              acquisitionFile: remoteAcquisitionFile,
+              nextCapture: nextRemoteCapture,
+              emit: remoteEmit,
+              execute,
+              resumeIntent: resumeRemoteIntent,
+              waitMs: connectorWaitMs,
+              now,
+            })
+          : null
+      return checkpoint("public_bytes_verified", publication, {
+        remote_delivery: remote,
+        website_data_verified: remote?.website_data_verified === true,
+        source_archive_verified: remote?.source_archive_verified === true,
+        next_action:
+          remote?.status === "remote_delivery_complete"
+            ? null
+            : "Continue Research/WebsiteData remote delivery through exact raw-byte receipts",
+      })
+    }
     if (publication.status === "public_bytes_verified") {
       reused.push("publication", "deployment", "public_readback")
-      return checkpoint("public_bytes_verified", publication, {
-        next_action: "Verify WebsiteData and source archive through their separate remote receipts",
-      })
+      return finish()
     }
     if (publication.status === "drive_verified") {
       if (root !== path.resolve(repository, DEFAULT_ROOT))
@@ -346,8 +388,6 @@ export async function deliverApprovedPublication({
     }
     performed.push("public_readback")
     publication = publicationOperationStatus(options)
-    return checkpoint("public_bytes_verified", publication, {
-      next_action: "Verify WebsiteData and source archive through their separate remote receipts",
-    })
+    return finish()
   })
 }
