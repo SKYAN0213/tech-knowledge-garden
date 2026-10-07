@@ -132,6 +132,65 @@ test("all reviewed legacy events switch to the complete six-w and classification
   assert.equal(next.meta.briefing_format, "sector-five/v1")
   assert.equal(extractArticles(next).length, 2)
 })
+function modernFixture() {
+  const legacy = fixture()
+  const source = project(
+    legacy,
+    extractArticles(legacy).map((a, n) => approved(a, "검토 기사 " + n)),
+  )
+  const issue = { ...parseNote(source.content), file: legacy.file }
+  const first = issue.meta.article_records[0]
+  first.kind = "기업 전략"
+  first.topic_ids = ["company-research-strategy"]
+  first.analysis_summary = "공식 발표에 명시된 투자 배분을 비교했다."
+  first.next_check = "후속 실적 발표의 집행액"
+  issue.body = issue.body
+    .replace("# 뉴스 데스크", "# 커버 스토리")
+    .replace(
+      "### 평가 방법",
+      "추가로 확인한 계약 조건이다. [S2]\n\n분석: 공식 발표에 명시된 투자 배분을 비교했다. [S1]\n\n### 평가 방법",
+    )
+  return issue
+}
+test("modern preservation retains deep analysis, extra prose, desk and citation targets during replacement", () => {
+  const issue = modernFixture()
+  const old = extractArticles(issue)
+  const next = {
+    ...parseNote(
+      project(issue, [existingArticleProjection(old[0]), approved(old[1], "새로 검토한 둘째 기사")])
+        .content,
+    ),
+    file: issue.file,
+  }
+  const retained = extractArticles(next).find((a) => a.id === old[0].id)
+  assert.equal(retained.desk, old[0].desk)
+  assert.deepEqual(retained.urls, old[0].urls)
+  assert.deepEqual(retained.review, old[0].review)
+  assert.deepEqual(retained.editorial, old[0].editorial)
+  assert.deepEqual(retained.classification, old[0].classification)
+  // Markers can change when a sibling is replaced; their URL targets cannot.
+  const withoutMarkers = (body) => body.replace(/\[S\d+\]/g, "[SOURCE]")
+  assert.equal(withoutMarkers(retained.body), withoutMarkers(old[0].body))
+  assert(retained.body.includes("추가로 확인한 계약 조건"))
+  assert(retained.body.includes("분석:"))
+})
+test("modern preservation rejects modified prose, record, review, classification, concept and desk", () => {
+  const issue = modernFixture()
+  const old = extractArticles(issue)
+  for (const mutate of [
+    (a) => (a.preserved.body += "\n추가 주장"),
+    (a) => (a.preserved.desk = "뉴스 데스크"),
+    (a) => (a.record.analysis_summary = "다른 판단"),
+    (a) => (a.article_review.reviewed_at = "2026-10-07"),
+    (a) => a.source_urls.push("https://example.org/unreviewed"),
+    (a) => a.tags.push("미검토 태그"),
+    (a) => a.concept_paths.push("Knowledge/Unreviewed"),
+  ]) {
+    const preserved = existingArticleProjection(old[0])
+    mutate(preserved)
+    assert.throws(() => project(issue, [preserved, existingArticleProjection(old[1])]), /preserv/i)
+  }
+})
 test("approved numeric ranges render as literal prose without Markdown strikethrough", () => {
   const issue = fixture(),
     old = extractArticles(issue),

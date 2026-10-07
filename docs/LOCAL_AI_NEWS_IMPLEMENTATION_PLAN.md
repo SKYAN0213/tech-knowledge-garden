@@ -5302,3 +5302,9 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 immutable batch ID는 입력·manifest·정확한 operation 목록을 결속한다. 부분 저장은 완료된 파일을 제외한 나머지만 정확한 batch ID로 재개한다. 응답이 유실돼도 fresh raw가 모두 desired SHA와 기존 ID에 일치하면 추가 쓰기 없이 완료한다. 충돌·ID 변경·변조·intent 이전 관측은 완료되지 않는다. 최종 WebsiteData 전체 대조, native ZIP 복원과 source event coverage·위치 등록·canonical mapping은 유지한다. writer의 네 원본 작성 root 저장 계약은 별도이며 변경하지 않는다.
 
 검증은 remote-delivery 표적14/14 통과, 후속 변경·새 경계4/4 통과다. 실제 Node CLI에서도 격리된 제어 입력의 update2/create1을 한 batch·한 post capture로 처리하고 ZIP을 native 복원했다. 이는 실제 Drive 네트워크의 새 묶음 저장 실측이 아니다. 별도 수집·모델 재실행이나 전체 status 조회 없이 기존8시 실행 지침에 같은 이벤트를 연결한다. 상세 프로토콜·복구는 런북485절을 따른다. 다음 실제 원격 전달은 새 계획16으로 실행하고 소요시간·대조 횟수를 기록한다.
+
+### 19.393. 기존 기사 본문을 보존하며 승인 결과를 묶어 발행
+
+2026-10-07 실제 승인 기사4건의 preview에서 기존 기업 전략 기사의 분석 본문이 누락되는 결함을 확인했다. `existingArticleProjection`이 메타데이터만 보존하고 기존 prose를 리드·explanations에서 다시 생성한 것이 원인이다. 미변경 six-w 기사는 원래 본문·desk·분류·검토·전문용어 연결을 함께 보존하며, 기존 기사와 정확히 일치하는 projection만 허용한다. 인용 번호는 최종 Source List의 동일 URL로 연결한다. 새 원문 재검토와 명시적 승인에 의한 기사 교체는 기존 경로를 사용한다. 검증기를 낮추거나 기존 분석을 삭제하지 않는다.
+
+표적 legacy-projection/deep-dive/event-date 36/36 통과, 실제 `core-four-reader-20261007-v1` preview는 기존3회차·승인4사건으로 생성했다. MIT·NLR은 원문 시각과 기존 조사 경계에 따라10월1일, ASEC는9월30일, GitHub stacked PR은10월7일에 추가한다. 완료된 추출·대조·작성 결과와 검토 기록을 재사용하여 이번 재개에서 모델 호출·원문 취득0이다. 후보 승인·장부 연결은 완료했지만 preview 생성은 Drive 저장·공개 배포 완료가 아니다. 전체 WBS 완료3/22·부분17·미착수2, 독립 평가0/60·실제 정규 비교0/7은 유지한다.

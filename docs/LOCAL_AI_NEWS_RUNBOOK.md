@@ -11542,3 +11542,9 @@ private `remote-delivery/write-batches/BATCH_ID.json`에 전체 승인 operation
 미완료는 `remote_write_recovery_required`와 남은 `paths`, 정확한 batch_id/intent_id를 반환한다. `recovery_reason`은 exact_resume_required, remote_bytes_or_identity_conflict, post_write_capture_failed, batch_incomplete를 구분한다. fresh raw로 저장 여부를 확인한 뒤 미적용 항목만 명시적으로 `--resume-remote-intent BATCH_ID`로 재개한다. 새 원격 충돌을 원래 expected SHA로 덮어쓰지 않는다. 응답 유실 후 모든 파일이 이미 일치하면 추가 쓰기 없이 완료하며 기존 완료 proof를 재사용한다. batch 크기나 입력·manifest·journal을 같은 run에서 수정하지 않는다.
 
 최종 WebsiteData11파일 확인, native source ZIP 복원/원문 사건 coverage/위치 등록, canonical mapping과 완료 재개를 유지한다. source 원고의 네 root 저장 방식은 이번 변경의 대상이 아니다. 표적14개와 후속 변경·새 경계4개가 통과했으며, 실제 CLI의 제어 fixture에서3개 변경/1batch/1post capture를 확인했다. 실제 Drive의 새 batch 전달과 단축률은 아직 미관측이다. 직전 실제 단건 전달은15개 변경/15post 전체 대조/271269ms였다. 전체 CI는 이 코드 묶음의 최종 commit에서 한 번 수행한다. 남은 소급36회차/360구간·독립 평가0/60·정규 비교0/7은 유지한다.
+
+## 486. 새 기사를 추가할 때 기존 본문 보존
+
+`existingArticleProjection`은 미변경 six-w 기사에 `preserved.body`와 `preserved.desk`를 포함한다. `editionProjection`은 기존 원고에서 얻은 정확한 projection과 대조한 뒤 본문을 유지하고 인용을 최종 원문 URL에 다시 연결한다. 임의 본문·검토·분류·용어·desk 수정, 새 기사에 대한 preservation은 거부한다. 기존 분석 레이블이나 추가 설명을 리드만으로 다시 만들지 않는다.
+
+기존 회차에 보완할 승인 기사들은 한 preview에 모은다. 승인 시 원문 발표일·실제 시각·기존 cutoff·target SHA를 확인하고, 이미 완료한 추출·대조·작성의 native 재사용 경로를 이용한다. preview 결함을 수정한 뒤에는 preview만 재개한다. 전체 수집·모델 추론·이미 완료된 승인을 반복하지 않는다. 실제 승인4사건/기존3회차 preview와 관련36검사를 확인했고 Drive/public/remote custody는 각각 별도 관문이다.

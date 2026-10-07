@@ -225,6 +225,7 @@ export function existingArticleProjection(article) {
     ),
     article_review: { title: article.title, ...structuredClone(article.review) },
     concept_paths: [...article.concepts],
+    preserved: { body: article.body, desk: article.desk },
   }
 }
 export function editionProjection(
@@ -298,10 +299,16 @@ export function editionProjection(
     for (const a of articles) {
       const match = old.find((p) => p.id === a.event_id)
       if (!match) {
+        if (a.preserved) throw Error("Article preservation requires an existing event")
         if (!added_event_ids.includes(a.event_id) || !a.historical_addition_review)
           throw Error("Historical addition requires an exact reviewed event and edition")
         continue
       }
+      if (
+        a.preserved &&
+        (!match.editorial || JSON.stringify(a) !== JSON.stringify(existingArticleProjection(match)))
+      )
+        throw Error("Article preservation must retain exact prose, metadata, sources and desk")
       if (
         a.legacy &&
         (match.editorial ||
@@ -317,6 +324,8 @@ export function editionProjection(
     }
   }
   const partial = articles.some((a) => a.legacy)
+  if (!existing && articles.some((a) => a.preserved))
+    throw Error("Article preservation requires an existing edition")
   if (
     partial &&
     (!existing || existing.meta.editorial_format !== undefined || date >= "2026-09-14")
@@ -424,15 +433,24 @@ export function editionProjection(
     article_records: articles.filter((a) => a.record).map((a) => a.record),
     article_reviews: articles.map((a) => a.article_review),
   }
+  const preservedBody = (a) =>
+    a.preserved.body.replace(/\[S\d+\]/g, (value) => {
+      const url = priorSources.get(value.slice(1, -1))
+      if (!url || !a.source_urls.includes(url))
+        throw Error("Preserved article citation must resolve to its existing source")
+      return marker(url)
+    })
   const card = (a) =>
-    `## ${a.title}\n\n**분야:** ${a.sector}\n**테마:** ${a.theme}\n**보조 테마:** ${secondaryTheme(a) || "없음"}\n**세부 태그:** ${a.tags.join(", ")}\n**기업·기관:** ${entityListText(a.entities)}\n\n${markdownProse(a.record.lead)} ${a.source_urls.map(marker).join(" ")}\n\n${(a.record.explanations || []).map((e) => `### ${e.heading}\n\n${e.paragraphs.map(markdownProse).join("\n\n")} ${e.source_urls.map(marker).join(" ")}`).join("\n\n")}${
-      conceptPaths(a).length
-        ? "\n\n**개념:** " +
-          conceptPaths(a)
-            .map((p) => `[[${p}]]`)
-            .join(", ")
-        : ""
-    }`
+    a.preserved
+      ? `## ${a.title}\n\n${preservedBody(a)}`
+      : `## ${a.title}\n\n**분야:** ${a.sector}\n**테마:** ${a.theme}\n**보조 테마:** ${secondaryTheme(a) || "없음"}\n**세부 태그:** ${a.tags.join(", ")}\n**기업·기관:** ${entityListText(a.entities)}\n\n${markdownProse(a.record.lead)} ${a.source_urls.map(marker).join(" ")}\n\n${(a.record.explanations || []).map((e) => `### ${e.heading}\n\n${e.paragraphs.map(markdownProse).join("\n\n")} ${e.source_urls.map(marker).join(" ")}`).join("\n\n")}${
+          conceptPaths(a).length
+            ? "\n\n**개념:** " +
+              conceptPaths(a)
+                .map((p) => `[[${p}]]`)
+                .join(", ")
+            : ""
+        }`
   const priorSections = new Map(
     existing ? sections(existing.body).map((s) => [s.title, s.body]) : [],
   )
@@ -453,7 +471,7 @@ export function editionProjection(
       ...["커버 스토리", "뉴스 데스크", "리서치 노트", "도구 상자"].map((name) => [
         name,
         articles
-          .filter((a) => (partial && a.legacy ? a.legacy.desk : "뉴스 데스크") === name)
+          .filter((a) => (a.legacy?.desk || a.preserved?.desk || "뉴스 데스크") === name)
           .map((a) => (a.legacy ? `## ${a.title}\n\n${a.legacy.body}` : card(a)))
           .join("\n\n") || "없음",
       ]),
