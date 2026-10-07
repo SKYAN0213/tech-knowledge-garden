@@ -11556,3 +11556,9 @@ private `remote-delivery/write-batches/BATCH_ID.json`에 전체 승인 operation
 `--execute` 또는 `--resume`에는 동일한 후보 선택과 mapping을 전달한다. mapping이나 고정 입력이 달라지면 새 편집 실행 ID를 사용한다. 기존 parent·검토·승인을 덮어쓰지 않는다. 이미 발행된 사건은 `already_in_edition`으로 남고 발행 handoff에 넣지 않으므로 RSS·Drive·Git 커밋을 다시 만들지 않는다. 새 승인이 필요한 원고에는 기존 `--editorial-review-files`로 해당 실행의 명시적 검토를 전달한다.
 
 실제 `core-four-native-continuation-20261007-v1`의2회 관측은849ms/462ms, 추가 모델/승인/발행0과 보호된19파일 SHA 불변이다. 관련 표적 검사는 `node --test --test-name-pattern='daily editorial' tests/research-source-processing.test.mjs`9/9 통과다. 이번 재개는 정규 운영7회의 횟수에 포함하지 않는다.
+
+## 488. 일일 handoff로 만든 preview의 Drive 준비
+
+`preview --publication-handoff`로 생성한 결과에는 `daily_editorial_handoff`가 고정된다. `research-authoring prepare/release`는 이 handoff를 다시 native 검증하며, 동시에 명시적 approved-run 목록을 전달하지 않는다. 직접 승인 ID로 만든 기존 preview의 경로는 유지한다. handoff 내용·장부·원문 판본이 바뀌면 기존 실패를 보존하고 변경 원인을 검토한다. 검증기를 우회하거나 parent 입력을 수정하지 않는다.
+
+renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기사와 완료 모델 결과를 재사용한다. 새 Drive 전체 snapshot은 실제 raw 조회 시각을 유지한다. 준비/릴리스의 실패 때문에 원문 수집·추출·작성·승인을 다시 실행하지 않는다. 이번 통합 결함은 관련13검사와 실제 Kawasaki 실행으로 확인하며 새 정규 운영 횟수와 분리한다.

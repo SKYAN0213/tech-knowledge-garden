@@ -4,6 +4,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { acquireLock } from "../scripts/research/run-state.mjs"
+import { authorizeAuthoringTransfer } from "../scripts/research/authoring-release.mjs"
 import {
   authoringDelta,
   compareAuthoringRemote,
@@ -21,6 +22,47 @@ test("preparation shares the existing preview run lock", async () => {
     release()
     fs.rmSync(root, { recursive: true, force: true })
   }
+})
+
+test("authoring preparation and release revalidate the frozen daily handoff before writing", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-authoring-handoff-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const base = path.join(root, "runs/reader")
+  fs.mkdirSync(base, { recursive: true })
+  fs.writeFileSync(
+    path.join(base, "preview-manifest.json"),
+    JSON.stringify({
+      schema: "private-reader-preview/v1",
+      run_id: "reader",
+      approved_runs: ["stored-approved"],
+      knowledge_runs: [],
+      daily_editorial_handoff: {
+        path: "handoff.json",
+        sha256: "0".repeat(64),
+        run_id: "editorial",
+      },
+    }),
+  )
+  // A forged/empty selection must reach the existing selection validator rather
+  // than being silently replaced by the cached approved-run list.
+  fs.writeFileSync(
+    path.join(root, "handoff.json"),
+    JSON.stringify({
+      schema: "research-daily-publication-handoff/v1",
+      run_id: "editorial",
+      approved_runs: [],
+    }),
+  )
+  await assert.rejects(
+    prepareAuthoringTransfer({ root, previewRun: "reader" }),
+    /Nonempty exact daily publication selection/,
+  )
+  await assert.rejects(
+    authorizeAuthoringTransfer({ root, previewRun: "reader" }),
+    /Nonempty exact daily publication selection/,
+  )
+  assert.equal(fs.existsSync(path.join(base, "drive-authoring")), false)
+  assert.equal(fs.existsSync(path.join(root, "runs/stored-approved")), false)
 })
 import { sha256 } from "../scripts/research/contracts.mjs"
 

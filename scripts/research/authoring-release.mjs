@@ -138,14 +138,20 @@ export async function authorizeAuthoringTransfer({
       const manifestPath = `runs/${previewRun}/preview-manifest.json`
       const initial = readJSON(root, manifestPath)
       if (initial?.run_id !== previewRun) throw Error("Existing verified preview required")
-      await privatePreview(root, previewRun, initial.approved_runs, {
-        repo,
-        vault,
-        knowledgeRuns: initial.knowledge_runs,
-        editionSpec: initial.edition_spec || null,
-        legacyReviews: initial.legacy_reviews || [],
-        sourceAlternatives: initial.source_alternatives || [],
-      })
+      await privatePreview(
+        root,
+        previewRun,
+        initial.daily_editorial_handoff ? [] : initial.approved_runs,
+        {
+          repo,
+          vault,
+          publicationHandoff: initial.daily_editorial_handoff?.path || null,
+          knowledgeRuns: initial.knowledge_runs,
+          editionSpec: initial.edition_spec || null,
+          legacyReviews: initial.legacy_reviews || [],
+          sourceAlternatives: initial.source_alternatives || [],
+        },
+      )
       const planPath = `runs/${previewRun}/drive-authoring/transfer-plan.json`
       const paths = {
         plan: safePath(root, planPath),

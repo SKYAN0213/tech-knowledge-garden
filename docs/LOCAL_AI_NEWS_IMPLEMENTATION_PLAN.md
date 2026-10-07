@@ -5316,3 +5316,9 @@ immutable batch ID는 입력·manifest·정확한 operation 목록을 결속한�
 `research:process-daily --from-processing`에 `--editorial-processing-runs`를 추가했다. 고정한 원래 후보의 정확한 원문 판본·parse·본문 SHA·URL에 일치하며 해당 실행 자체의 사실 검토와 원고가 있는 결과만 선택할 수 있다. 기존 수집/처리 입력은 수정하지 않고 원래 실행 ID와 대체 실행 입력 SHA를 새 편집 입력에 고정한다. 후보 충돌·실패·동일 원문 중복 보류를 대체 실행으로 우회할 수 없다. 승인과 후보 장부 연결은 기존 native 검증을 유지하며 새 승인으로 복사하지 않는다.
 
 관련 편집 검사9/9 통과. 실제 발행4건을 공통 경로로 재개한2회는849ms/462ms, 모두 `already_in_edition`이며 추가 모델 호출·승인·발행0이다. 원래 처리 입력, 사실 검토, 원고, 승인, 후보 장부19파일 SHA가 불변이다. 외장 `core-four-native-continuation-proof-v1.json`은 완료 재사용 관측이며 새 기사 처리 속도나 정규 운영 성공을 뜻하지 않는다. 전체 WBS 수용 기준은 유지한다.
+
+### 19.395. 일일 승인 handoff의 Drive 준비·릴리스 연결
+
+새 Kawasaki 공식 원문을 빠른 기본값으로 처리하고 공통 일일 handoff에서 preview를 생성한 뒤, Drive 준비가 `daily_editorial_handoff`를 누락하여 `Run input changed`로 거부되는 실제 통합 결함을 확인했다. 준비와 릴리스의 preview 재검증에 원래 handoff를 전달한다. 저장한 승인 ID 목록으로 대체하지 않으며 native 선택·원문 판본·장부·SHA·기존 발행 중복 검증을 유지한다. 잘린/위조된 handoff는 변경분 준비나 쓰기 전에 거부한다. 관련 검사13/13 통과했다.
+
+새 원문은 모델 답변 열람 전 공식17blocks의 개발용 기준8개를 고정했다. 원출력6사실은 완전2·부분3·누락3, 인용 변경2건이며 독립 human 평가가 아니다. 직접 원문 검토로9verified/2deferred를 기록하고 모델 원출력·정정 이력을 보존했다. 추출77,673ms·빠른 대조73,224/74,166ms·작성67,940ms를 관측했다. 원문이 다르므로 이전 medium 처리와의 개선율로 표현하지 않는다. 공개/Drive 완료는 native 전달 결과로 별도 판정한다.
