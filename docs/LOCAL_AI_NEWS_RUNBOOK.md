@@ -1,5 +1,11 @@
 # 로컬 AI 뉴스 시스템: 현재 구현과 실행 가이드
 
+## RSS 기간 밖 항목과 수집 범위
+
+공통 bounded RSS 수집기는 요청 종료일 이후 항목을 raw feed에 보존하고 날짜·순서·GUID·공개 URL 형식을 검증하되, 해당 창의 상세 기사 호스트·경로 정책을 적용하거나 원문을 요청하지 않는다. 기간 안 항목의 호스트·경로·날짜·제목 대조는 그대로 유지한다. 새 외부 항목 때문에 과거 구간 수집을 차단하지 않으며, 외부 항목이 포함된 현재 구간의 접근 정책을 자동 확장하지 않는다.
+
+실제 IEEE 2026-09-30→2026-10-07(exclusive) 구간은 목록1·상세2개의 요청으로 window_scanned/후보2를 확인했다. 일일 장부는 기존 후보1041개를 유지하며 해당 원문 관측과 coverage를 연결했다. 이는 기사 승인·신규 발행·정규 운영 성공이 아니다. 다음 작업에서는 이 완료 구간을 다시 수집하지 않는다.
+
 ## 승인 원문을 유지한 추가 언어 출처 검토
 
 후보 장부가 같은 publisher/profile/source_item_id의 다른 언어 URL을 `source_record_aliases`와 `related_source_observations`로 묶었고 승인 원문을 그대로 유지했다면, 별도 후보를 만들거나 승인 원문을 교체하지 않는다. 기존 `research-revisions.mjs resolve --run RESOLUTION --review runs/RESOLUTION/review.json`의 `confirm_related_source`를 사용한다.

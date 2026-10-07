@@ -45,6 +45,80 @@ const parse = {
   links,
 }
 
+test("later external feed items cannot block an earlier window or enter its collection", async () => {
+  const external = {
+    ...item("2026-09-29", "whitepaper"),
+    url: "https://other-publisher.example/whitepaper/",
+    guid: "https://other-publisher.example/whitepaper/",
+  }
+  const mixed = { ...parse, links: [external, ...links] }
+  const earlier = assessBoundedRSSFeed(mixed, channel, "2026-09-22", "2026-09-29")
+  assert.equal(earlier.status, "window_covered")
+  assert.equal(earlier.feed_items, 3)
+  assert.equal(earlier.later_items, 1)
+  assert.deepEqual(earlier.links, [links[0]])
+  assert.equal(
+    assessBoundedRSSFeed(mixed, channel, "2026-09-29", "2026-09-30").reason,
+    "feed_article_url_outside_policy",
+  )
+  for (const url of [
+    "https://127.0.0.1/whitepaper",
+    "file:///whitepaper",
+    "https://user:pass@other-publisher.example/whitepaper",
+  ])
+    assert.equal(
+      assessBoundedRSSFeed(
+        { ...mixed, links: [{ ...external, url, guid: url }, ...links] },
+        channel,
+        "2026-09-22",
+        "2026-09-29",
+      ).reason,
+      "feed_article_url_outside_policy",
+    )
+  assert.equal(
+    assessBoundedRSSFeed(
+      { ...mixed, links: [{ ...external, published_timestamp: "2026-09-28T12:00:00Z" }, ...links] },
+      channel,
+      "2026-09-22",
+      "2026-09-29",
+    ).reason,
+    "feed_item_identity_or_date_invalid",
+  )
+  const fetched = [],
+    inspected = []
+  const result = await scanBoundedRSSRoute(
+    "unused",
+    { stage: (_n, _i, fn) => fn() },
+    {},
+    channel,
+    [],
+    { since: "2026-09-22", until: "2026-09-29" },
+    {
+      fetchPolicy: async (_r, _f, url) => {
+        fetched.push(url)
+        return {
+          fetch_status: "captured",
+          source_version_id: "fixture-feed",
+          observed_at: "2026-09-30T00:00:00Z",
+        }
+      },
+      parseFeed: async () => mixed,
+      collectDetails: async (_r, _run, _f, _c, _p, selected) => {
+        inspected.push(...selected.map((l) => l.url))
+        return {
+          documents: [],
+          parses: [],
+          candidates: [],
+          details: selected.map((l) => ({ url: l.url, status: "source_parsed_unreviewed" })),
+        }
+      },
+    },
+  )
+  assert.deepEqual(fetched, [channel.url])
+  assert.deepEqual(inspected, [links[0].url])
+  assert.equal(result.summary.assessment.later_items, 1)
+})
+
 test("stored RSS bytes become immutable parse evidence and a dated discovery list", async () => {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-"))
   try {

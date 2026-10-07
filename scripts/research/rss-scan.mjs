@@ -259,10 +259,13 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
   const urls = new Set(),
     guids = new Set()
   for (const link of links) {
+    const afterWindow = validDay(link.published_at) && link.published_at >= until
     let url
     try {
       url = canonicalURL(link.url)
-      assertURL(url, channel.allowed_hosts)
+      // Later items are retained and validated but never fetched by this
+      // window. Their publisher must not invalidate an earlier collection.
+      assertURL(url, afterWindow ? undefined : channel.allowed_hosts)
     } catch {
       return { ...result, reason: "feed_article_url_outside_policy" }
     }
@@ -306,7 +309,7 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
     // They can establish the older cutoff, but must not become candidates for this window.
     if (link.published_at >= since) {
       if (
-        (!ignored && !pattern.test(url)) ||
+        (!ignored && !afterWindow && !pattern.test(url)) ||
         urls.has(url) ||
         !link.guid ||
         guids.has(link.guid) ||
