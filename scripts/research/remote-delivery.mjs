@@ -39,6 +39,41 @@ const ASSETS = {
 }
 const bytes = (root, relative) => fs.readFileSync(safePath(root, relative))
 const ref = (root, relative) => ({ path: relative, sha256: sha256(bytes(root, relative)) })
+const validBatchSize = (value) => Number.isSafeInteger(value) && value >= 1 && value <= 64
+
+function remoteWriteOperation(root, row, current, previousRows) {
+  const parent = current.observation.listings.find((l) => l.path === path.posix.dirname(row.path))
+  const existing = parent.files.find((f) => f.name === path.posix.basename(row.path))
+  const proof = current.readback.files.find((f) => f.path === row.path)
+  const previous = previousRows.filter((f) => f.path === row.path)
+  if (previous.length > 1) throw Error("Ambiguous prior WebsiteData receipt")
+  if (existing && !proof) throw Error("Raw pre-write bytes required for existing remote artifact")
+  if (previous.length && (!existing || existing.id !== previous[0].id))
+    throw Error("Verified remote artifact identity changed: " + row.path)
+  if (proof?.sha256 === row.sha256) return null
+  if (existing && (row.path.startsWith("Research/") || previous[0]?.sha256 !== proof.sha256))
+    throw Error("Remote artifact conflicts with previous verified bytes: " + row.path)
+  return {
+    path: row.path,
+    action: existing ? "update" : "create",
+    file_id: existing?.id || null,
+    parent_id: parent.id,
+    expected_sha256: proof?.sha256 || null,
+    desired_sha256: row.sha256,
+    staged_file: safePath(root, row.staged_path),
+    mime_type:
+      proof?.mime_type ||
+      (row.path.endsWith(".zip")
+        ? "application/zip"
+        : row.path.endsWith(".json")
+          ? "application/json"
+          : row.path.endsWith(".csv")
+            ? "text/csv"
+            : row.path.endsWith(".md")
+              ? "text/markdown"
+              : "application/xml"),
+  }
+}
 function pinned(root, reference) {
   const value = bytes(root, reference.path)
   if (sha256(value) !== reference.sha256) throw Error("Remote delivery evidence changed")
@@ -126,6 +161,7 @@ export function inspectRemoteDelivery(root, run) {
   if (
     input.schema !== "research-remote-delivery-input/v1" ||
     input.run_id !== run ||
+    (input.write_batch_size !== undefined && !validBatchSize(input.write_batch_size)) ||
     (latest && latest.input_sha256 !== sha256(JSON.stringify(input)))
   )
     throw Error("Invalid remote delivery checkpoint")
@@ -272,6 +308,8 @@ export async function deliverRemoteArtifacts({
       if (!planFile) throw Error("Explicit remote delivery plan required")
       const planBytes = fs.readFileSync(planFile),
         plan = JSON.parse(planBytes)
+      if (plan.write_batch_size !== undefined && !validBatchSize(plan.write_batch_size))
+        throw Error("Remote write batch size must be an integer from 1 to 64")
       if (
         plan.schema !== "research-remote-delivery-plan/v1" ||
         !path.isAbsolute(plan.website_stage || "") ||
@@ -355,6 +393,7 @@ export async function deliverRemoteArtifacts({
               fs.readFileSync(plan.previous_website_receipt),
             )
           : null,
+        ...(plan.write_batch_size !== undefined ? { write_batch_size: plan.write_batch_size } : {}),
       }
       atomicCreate(root, base + "/input.json", input)
     }
@@ -511,87 +550,211 @@ export async function deliverRemoteArtifacts({
     const previousRows = input.previous_website_receipt
       ? pinned(root, input.previous_website_receipt).files
       : []
-    for (const row of manifest.files) {
-      const parent = current.observation.listings.find(
-        (l) => l.path === path.posix.dirname(row.path),
-      )
-      const existing = parent.files.find((f) => f.name === path.posix.basename(row.path))
-      const proof = current.readback.files.find((f) => f.path === row.path)
-      if (existing && !proof)
-        throw Error("Raw pre-write bytes required for existing remote artifact")
-      if (proof?.sha256 === row.sha256) continue
-      const previous = previousRows.find((f) => f.path === row.path)
-      if (previousRows.filter((f) => f.path === row.path).length > 1)
-        throw Error("Ambiguous prior WebsiteData receipt")
-      if (
-        existing &&
-        (row.path.startsWith("Research/") ||
-          previous?.id !== existing.id ||
-          previous?.sha256 !== proof.sha256)
-      )
-        throw Error("Remote artifact conflicts with previous verified bytes: " + row.path)
-      const intentPath = base + "/intents/" + sha256(row.path) + ".json",
-        oldIntent = readJSON(root, intentPath)
-      const operation = {
-        path: row.path,
-        action: existing ? "update" : "create",
-        file_id: existing?.id || null,
-        parent_id: parent.id,
-        expected_sha256: proof?.sha256 || null,
-        desired_sha256: row.sha256,
-        staged_file: safePath(root, row.staged_path),
-        mime_type:
-          proof?.mime_type ||
-          (row.path.endsWith(".zip")
-            ? "application/zip"
-            : row.path.endsWith(".json")
-              ? "application/json"
-              : row.path.endsWith(".csv")
-                ? "text/csv"
-                : row.path.endsWith(".md")
-                  ? "text/markdown"
-                  : "application/xml"),
+    if ((input.write_batch_size || 1) > 1) {
+      const batchBase = base + "/write-batches"
+      const operationStatus = (operation, captured) => {
+        const parent = captured.observation.listings.find(
+          (l) => l.path === path.posix.dirname(operation.path),
+        )
+        const existing = parent.files.find((f) => f.name === path.posix.basename(operation.path))
+        const proof = captured.readback.files.find((f) => f.path === operation.path)
+        if (existing && !proof) throw Error("Complete batch raw proof required")
+        if (operation.file_id && existing?.id !== operation.file_id) return "conflict"
+        if (proof?.sha256 === operation.desired_sha256) return "complete"
+        if (operation.action === "create" && !existing) return "pending"
+        if (operation.action === "update" && proof?.sha256 === operation.expected_sha256)
+          return "pending"
+        return "conflict"
       }
-      if (oldIntent && resumeIntent !== oldIntent.intent_id)
-        return checkpoint("remote_write_recovery_required", {
-          intent_id: oldIntent.intent_id,
-          path: row.path,
+      const completeBatch = (batch) => {
+        if (Date.parse(current.readback.observed_at) < Date.parse(batch.created_at))
+          throw Error("Post-intent batch raw observation required")
+        const completedPath = batchBase + "/completed/" + batch.batch_id + ".json"
+        const existing = readJSON(root, completedPath)
+        if (existing) {
+          if (existing.batch_sha256 !== sha256(JSON.stringify(batch)))
+            throw Error("Remote batch completion changed")
+          const proof = pinned(root, existing.readback)
+          for (const op of batch.operations) {
+            const row = proof.files.find((f) => f.path === op.path)
+            const fresh = current.readback.files.find((f) => f.path === op.path)
+            if (!row || row.sha256 !== op.desired_sha256 || row.file_id !== fresh?.file_id)
+              throw Error("Completed remote batch identity changed")
+          }
+          return
+        }
+        install(root, completedPath, {
+          schema: "research-remote-write-batch-completion/v1",
+          batch_sha256: sha256(JSON.stringify(batch)),
+          readback: ref(root, path.relative(root, current.stored.readback_file)),
         })
-      if (typeof nextCapture !== "function") return checkpoint("remote_connector_required")
-      const intent = oldIntent || {
-        intent_id: sha256(JSON.stringify({ run, operation })),
-        operation,
-        input_sha256: sha256(JSON.stringify(input)),
       }
-      if (JSON.stringify(intent.operation) !== JSON.stringify(operation))
-        throw Error("Remote write intent changed")
-      if (!oldIntent) atomicCreate(root, intentPath, intent)
-      checkpoint("remote_write_pending", { intent_id: intent.intent_id, path: row.path })
-      emit({ type: "remote_write_intent", ...intent })
-      let timer
-      try {
-        const file = await Promise.race([
-          Promise.resolve().then(nextCapture),
-          new Promise((_, reject) => {
-            timer = setTimeout(() => reject(Error("Remote readback timed out")), waitMs)
-          }),
-        ])
-        current = capture(file)
-      } catch {
-        return checkpoint("remote_write_recovery_required", {
-          intent_id: intent.intent_id,
-          path: row.path,
+      const batches = fs.existsSync(safePath(root, batchBase))
+        ? fs.readdirSync(safePath(root, batchBase)).filter((name) => name.endsWith(".json"))
+        : []
+      const recover = (batch, remaining, reason) =>
+        checkpoint("remote_write_recovery_required", {
+          intent_id: batch.batch_id,
+          batch_id: batch.batch_id,
+          paths: remaining.map((op) => op.path),
+          ...(reason ? { recovery_reason: reason } : {}),
         })
-      } finally {
-        clearTimeout(timer)
+      const pending = []
+      for (const name of batches) {
+        const batch = readJSON(root, batchBase + "/" + name)
+        const identity = {
+          run,
+          input_sha256: sha256(JSON.stringify(input)),
+          manifest_sha256: prepared.manifest.sha256,
+          operations: batch?.operations,
+        }
+        if (
+          batch?.schema !== "research-remote-write-batch/v1" ||
+          batch.batch_id !== sha256(JSON.stringify(identity)) ||
+          name !== batch.batch_id + ".json" ||
+          batch.input_sha256 !== identity.input_sha256 ||
+          batch.manifest_sha256 !== identity.manifest_sha256 ||
+          !Number.isFinite(Date.parse(batch.created_at)) ||
+          !Array.isArray(batch.operations) ||
+          !batch.operations.length ||
+          batch.operations.length > input.write_batch_size ||
+          new Set(batch.operations.map((op) => op.path)).size !== batch.operations.length ||
+          batch.operations.some((op) => {
+            const row = manifest.files.find((r) => r.path === op.path)
+            return (
+              !row ||
+              op.desired_sha256 !== row.sha256 ||
+              op.staged_file !== safePath(root, row.staged_path) ||
+              op.parent_id !== REMOTE_DELIVERY_ROOTS[op.path.split("/")[0]] ||
+              !["create", "update"].includes(op.action)
+            )
+          })
+        )
+          throw Error("Remote write batch changed")
+        const remaining = batch.operations.filter(
+          (op) => operationStatus(op, current) !== "complete",
+        )
+        if (!remaining.length) completeBatch(batch)
+        else {
+          if (remaining.some((op) => operationStatus(op, current) === "conflict"))
+            return recover(batch, remaining, "remote_bytes_or_identity_conflict")
+          if (resumeIntent !== batch.batch_id)
+            return recover(batch, remaining, "exact_resume_required")
+          pending.push({ batch, remaining })
+        }
       }
-      const updated = current.readback.files.find((f) => f.path === row.path)
-      if (updated?.sha256 !== row.sha256 || (existing && updated.file_id !== existing.id))
-        return checkpoint("remote_write_recovery_required", {
-          intent_id: intent.intent_id,
-          path: row.path,
+      // Validate all existing targets before issuing any mutations. A conflicting
+      // late row must not leave an earlier approved row unnecessarily written.
+      let operations = manifest.files
+        .map((row) => remoteWriteOperation(root, row, current, previousRows))
+        .filter(Boolean)
+      while (operations.length || pending.length) {
+        let next = pending.shift()
+        if (!next) {
+          const selected = operations.slice(0, input.write_batch_size)
+          const identity = {
+            run,
+            input_sha256: sha256(JSON.stringify(input)),
+            manifest_sha256: prepared.manifest.sha256,
+            operations: selected,
+          }
+          const batch = {
+            schema: "research-remote-write-batch/v1",
+            batch_id: sha256(JSON.stringify(identity)),
+            input_sha256: identity.input_sha256,
+            manifest_sha256: identity.manifest_sha256,
+            created_at: new Date(now()).toISOString(),
+            operations: selected,
+          }
+          if (typeof nextCapture !== "function") return checkpoint("remote_connector_required")
+          atomicCreate(root, batchBase + "/" + batch.batch_id + ".json", batch)
+          next = { batch, remaining: selected }
+        }
+        if (typeof nextCapture !== "function") return checkpoint("remote_connector_required")
+        checkpoint("remote_write_pending", {
+          intent_id: next.batch.batch_id,
+          batch_id: next.batch.batch_id,
+          paths: next.remaining.map((op) => op.path),
         })
-    }
+        emit({
+          type: "remote_write_batch_intent",
+          batch_id: next.batch.batch_id,
+          input_sha256: next.batch.input_sha256,
+          operations: next.remaining,
+        })
+        let timer
+        try {
+          current = capture(
+            await Promise.race([
+              Promise.resolve().then(nextCapture),
+              new Promise((_, reject) => {
+                timer = setTimeout(() => reject(Error("Remote readback timed out")), waitMs)
+              }),
+            ]),
+          )
+        } catch {
+          return recover(next.batch, next.remaining, "post_write_capture_failed")
+        } finally {
+          clearTimeout(timer)
+        }
+        const remaining = next.batch.operations.filter(
+          (op) => operationStatus(op, current) !== "complete",
+        )
+        if (remaining.length) return recover(next.batch, remaining, "batch_incomplete")
+        completeBatch(next.batch)
+        operations = manifest.files
+          .map((row) => remoteWriteOperation(root, row, current, previousRows))
+          .filter(Boolean)
+      }
+    } else
+      for (const row of manifest.files) {
+        const operation = remoteWriteOperation(root, row, current, previousRows)
+        if (!operation) continue
+        const intentPath = base + "/intents/" + sha256(row.path) + ".json",
+          oldIntent = readJSON(root, intentPath)
+        if (oldIntent && resumeIntent !== oldIntent.intent_id)
+          return checkpoint("remote_write_recovery_required", {
+            intent_id: oldIntent.intent_id,
+            path: row.path,
+          })
+        if (typeof nextCapture !== "function") return checkpoint("remote_connector_required")
+        const intent = oldIntent || {
+          intent_id: sha256(JSON.stringify({ run, operation })),
+          operation,
+          input_sha256: sha256(JSON.stringify(input)),
+        }
+        if (JSON.stringify(intent.operation) !== JSON.stringify(operation))
+          throw Error("Remote write intent changed")
+        if (!oldIntent) atomicCreate(root, intentPath, intent)
+        checkpoint("remote_write_pending", { intent_id: intent.intent_id, path: row.path })
+        emit({ type: "remote_write_intent", ...intent })
+        let timer
+        try {
+          const file = await Promise.race([
+            Promise.resolve().then(nextCapture),
+            new Promise((_, reject) => {
+              timer = setTimeout(() => reject(Error("Remote readback timed out")), waitMs)
+            }),
+          ])
+          current = capture(file)
+        } catch {
+          return checkpoint("remote_write_recovery_required", {
+            intent_id: intent.intent_id,
+            path: row.path,
+          })
+        } finally {
+          clearTimeout(timer)
+        }
+        const updated = current.readback.files.find((f) => f.path === row.path)
+        if (
+          updated?.sha256 !== row.sha256 ||
+          (operation.file_id && updated.file_id !== operation.file_id)
+        )
+          return checkpoint("remote_write_recovery_required", {
+            intent_id: intent.intent_id,
+            path: row.path,
+          })
+      }
     if (
       current.readback.files.length !== manifest.files.length ||
       manifest.files.some(

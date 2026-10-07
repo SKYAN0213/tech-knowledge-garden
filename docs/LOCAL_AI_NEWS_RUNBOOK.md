@@ -11519,3 +11519,15 @@ integrated-v1 실제 wall1,055,986ms와 경로별 시간의 고정 재배치 FIF
 남은 디일렉9월29일~10월6일 창은20 access_restricted/awaiting_new_observation이다. 완료 창을 다시 수집하거나 회원 본문을 우회하지 않는다. 기존 config SHA로 고정된 계획도 새 코드의 계획으로 바꾸지 않는다. 다음 소급5회차는 기존 research-legacy-transition-batch/v1로 원문 검토 결과를 묶은 뒤 한 번에 Drive-first 저장/공개/원격 전달한다. 중간 운영 문서·전체 status 재생성·기사별 릴리스는 반복하지 않는다. 상세 WBS 완료 기준·원문과 승인 보존·독립 평가/7회 운영은 유지한다.
 
 소급 묶음에서 확인한 DeepMind 본문은 같은 게시 시각을 head meta와 BlogPosting JSON-LD에 함께 기록했다. 공통 event-date 검증은 유효한 Article 계열 datePublished가 반드시 하나 이상 있고 모든 보조 메타데이터의 시각이 같을 때만 이를 허용한다. 메타데이터만 있는 경우, dateModified, WebPage, 서로 다른 시각은 계속 거부한다. 실패를 재현한 뒤 event-date 표적11/11을 통과했다. 원문·모델 결과를 다시 수집하거나 생성하지 않고 기존 승인을 이어 갔다.
+
+## 485. Research·WebsiteData 묶음 저장과 부분 재개
+
+새 `research-remote-delivery-plan/v1`에는 기존 website_stage·archives·previous_website_receipt와 함께 `"write_batch_size": 16`을 지정한다. 허용 값은 정수1~64다. 미지정/1이면 기존 `remote_write_intent`가 유지되며 이미 고정된 operation의 계획을 바꾸지 않는다. 기존 `research:deliver --remote-plan/--remote-acquisition`, 열린 stdin의 connector_ready/ready, 비공개 폴더·전체 대상 actual raw 확인 계약은 같다.
+
+2 이상이면 stdout의 `remote_write_batch_intent`가 `batch_id`, `input_sha256`, `operations`를 보낸다. 각 operation의 path/action/file_id/parent_id/expected_sha256/desired_sha256/staged_file/mime_type은 native 검증한 정확한 대상이다. 호출자는 그 목록에 대해서만 기존 Drive update/upload를 수행한다. 부분 실패 시 성공한 쓰기를 반복하지 않고 actual 현재 상태를 수집한다. 묶음 처리 뒤 대상 전체 metadata/raw·두 matching inventory로 fresh acquisition을 만들어 기존 메시지 `{"type":"remote_readback","acquisition_file":"/absolute/post.json"}`를 한 번 보낸다. 개별 API의 성공 flag를 완료 근거로 쓰지 않는다. 다음 묶음은 native 검증 뒤에만 진행한다.
+
+private `remote-delivery/write-batches/BATCH_ID.json`에 전체 승인 operation 목록을, `write-batches/completed/BATCH_ID.json`에 input/manifest 결속과 post readback SHA를 고정한다. capture 관측 시각은 intent 생성 이후여야 한다. 모든 대상의 ID·원본 bytes 충돌은 첫 새 batch 요청 전에 검사한다. 이미 desired bytes가 있는 파일은 쓰지 않지만 기존 검증 ID가 달라지면 거부한다.
+
+미완료는 `remote_write_recovery_required`와 남은 `paths`, 정확한 batch_id/intent_id를 반환한다. `recovery_reason`은 exact_resume_required, remote_bytes_or_identity_conflict, post_write_capture_failed, batch_incomplete를 구분한다. fresh raw로 저장 여부를 확인한 뒤 미적용 항목만 명시적으로 `--resume-remote-intent BATCH_ID`로 재개한다. 새 원격 충돌을 원래 expected SHA로 덮어쓰지 않는다. 응답 유실 후 모든 파일이 이미 일치하면 추가 쓰기 없이 완료하며 기존 완료 proof를 재사용한다. batch 크기나 입력·manifest·journal을 같은 run에서 수정하지 않는다.
+
+최종 WebsiteData11파일 확인, native source ZIP 복원/원문 사건 coverage/위치 등록, canonical mapping과 완료 재개를 유지한다. source 원고의 네 root 저장 방식은 이번 변경의 대상이 아니다. 표적14개와 후속 변경·새 경계4개가 통과했으며, 실제 CLI의 제어 fixture에서3개 변경/1batch/1post capture를 확인했다. 실제 Drive의 새 batch 전달과 단축률은 아직 미관측이다. 직전 실제 단건 전달은15개 변경/15post 전체 대조/271269ms였다. 전체 CI는 이 코드 묶음의 최종 commit에서 한 번 수행한다. 남은 소급36회차/360구간·독립 평가0/60·정규 비교0/7은 유지한다.
