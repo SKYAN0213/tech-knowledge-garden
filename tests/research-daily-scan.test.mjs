@@ -12,6 +12,7 @@ import {
   bootstrapCoverage,
   createDailySourceScanner,
   dailyPlanningBasis,
+  dailyRouteTimingHint,
   executeDailyPlan,
   reconcileSupplementalScan,
   supplementalCoverageReceiptForWindow,
@@ -631,6 +632,87 @@ test("daily scans run distinct routes concurrently, serialize each route and com
     route_windows_serialized: true,
     candidate_merges_serialized: true,
   })
+})
+
+test("observed slow routes start first without repeating completed scans or changing window order", async (t) => {
+  const root = temporary(t)
+  const ids = ["a", "b", "c", "d", "e", "f", "slow"]
+  const windows = ids.flatMap((channel_id) => [
+    { channel_id, since: "2026-09-21", until_exclusive: "2026-09-24" },
+    { channel_id, since: "2026-09-24", until_exclusive: "2026-09-28" },
+  ])
+  atomicWrite(root, "daily/runs/previous/summary.json", {
+    schema: "research-daily-summary/v1",
+    run_id: "previous",
+    timing: {
+      by_route: {
+        slow: { measured_attempts: 2, total_ms: 5000 },
+        a: { measured_attempts: 2, total_ms: 100 },
+      },
+    },
+  })
+  const coverage = initialCoverage()
+  coverage.routes = Object.fromEntries(
+    ids.map((id) => [id, structuredClone(coverage.routes["fanuc-en"])]),
+  )
+  const started = [],
+    stored = new Map()
+  const args = {
+    root,
+    plan: { ...plan, windows },
+    coverage,
+    activeRoutes: ids.map((id) => ({ route: route(id, "해외") })),
+    scan: async (window, id) => {
+      started.push([window.channel_id, window.since])
+      const result = {
+        summary: { status: "window_scanned", channel_id: window.channel_id },
+        candidates: [],
+      }
+      stored.set(id, result)
+      return result
+    },
+    verify: async () => {},
+    loadStored: (_, id) => stored.get(id),
+    merge: async () => ({ status: "merged" }),
+  }
+  const result = await executeDailyPlan(args)
+  assert.deepEqual(
+    started.slice(0, 6).map(([id]) => id),
+    ["slow", "a", "b", "c", "d", "e"],
+  )
+  for (const id of ids)
+    assert.deepEqual(
+      started.filter(([channel]) => channel === id).map(([, since]) => since),
+      ["2026-09-21", "2026-09-24"],
+    )
+  assert.equal(result.execution.max_parallel_routes, 6)
+  assert.equal(result.execution.scheduling, "longest-observed-route-first")
+  assert.equal(result.execution.timing_hint.source_evidence, false)
+  assert.equal(
+    result.execution.timing_hint.sha256,
+    sha256(fs.readFileSync(path.join(root, result.execution.timing_hint.path))),
+  )
+  assert.equal(result.status, "configured_routes_scanned")
+  assert.equal(result.receipts, windows.length)
+  await executeDailyPlan(args)
+  assert.equal(started.length, windows.length, "completed receipts must not trigger new scans")
+})
+
+test("route timing hints exclude the active run and reject a mismatched stored identity", (t) => {
+  const root = temporary(t)
+  assert.equal(dailyRouteTimingHint(root, "active"), null)
+  atomicWrite(root, "daily/runs/active/summary.json", {
+    schema: "research-daily-summary/v1",
+    run_id: "active",
+    timing: { by_route: { slow: { measured_attempts: 1, total_ms: 9999 } } },
+  })
+  assert.equal(dailyRouteTimingHint(root, "active"), null)
+  atomicWrite(root, "daily/runs/previous/summary.json", {
+    schema: "research-daily-summary/v1",
+    run_id: "other",
+    timing: { by_route: { slow: { measured_attempts: 1, total_ms: 9999 } } },
+  })
+  assert.throws(() => dailyRouteTimingHint(root, "active"), /identity is invalid/)
 })
 
 test("a slow route does not hold finished slots or delay their durable receipts", async (t) => {

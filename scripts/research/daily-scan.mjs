@@ -50,6 +50,44 @@ function requireExplicitBacklog(root, backlogFile) {
 const COVERAGE_FILE = "daily/route-coverage.json"
 const MAX_PARALLEL_DAILY_ROUTES = 6
 
+// Past elapsed times only influence queue order. They never establish source
+// coverage, authorize a retry, or change the number of concurrent requests.
+export function dailyRouteTimingHint(root, runId) {
+  const base = safePath(root, "daily/runs")
+  if (!fs.existsSync(base)) return null
+  const summaries = fs
+    .readdirSync(base, { withFileTypes: true })
+    .filter(
+      (entry) => entry.isDirectory() && /^[A-Za-z0-9_-]+$/.test(entry.name) && entry.name !== runId,
+    )
+    .map((entry) => ({ id: entry.name, path: `daily/runs/${entry.name}/summary.json` }))
+    .filter((entry) => fs.existsSync(safePath(root, entry.path)))
+    .sort(
+      (a, b) =>
+        fs.statSync(safePath(root, b.path)).mtimeMs - fs.statSync(safePath(root, a.path)).mtimeMs ||
+        b.id.localeCompare(a.id),
+    )
+  for (const entry of summaries.slice(0, 5)) {
+    const bytes = fs.readFileSync(safePath(root, entry.path))
+    const summary = JSON.parse(bytes)
+    if (summary.schema !== "research-daily-summary/v1" || summary.run_id !== entry.id)
+      throw Error("Stored route timing summary identity is invalid")
+    const timings = summary.timing?.by_route
+    if (!timings || typeof timings !== "object" || Array.isArray(timings)) continue
+    const routes = Object.fromEntries(
+      Object.entries(timings).filter(
+        ([, row]) =>
+          Number.isSafeInteger(row?.measured_attempts) &&
+          row.measured_attempts > 0 &&
+          Number.isSafeInteger(row.total_ms) &&
+          row.total_ms > 0,
+      ),
+    )
+    if (Object.keys(routes).length) return { path: entry.path, sha256: sha256(bytes), routes }
+  }
+  return null
+}
+
 export function dailySourcePaths(configFile = DAILY_CONFIG) {
   return [
     configFile,
@@ -908,7 +946,17 @@ export async function executeDailyPlan({
   let current = applyDailyReceipts(coverage, plan, receipts)
   const retryPolicy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
   atomicWrite(root, COVERAGE_FILE, current)
+  const timingHint = dailyRouteTimingHint(root, plan.run_id)
   const pendingRoutes = [...Map.groupBy(plan.windows, (window) => window.channel_id).values()]
+  // Stable sorting preserves configured order for unknown/equally timed routes
+  // and the original order of every route's windows. Start known long routes
+  // early so they overlap short work instead of forming a tail at the end.
+  if (timingHint)
+    pendingRoutes.sort(
+      (a, b) =>
+        (timingHint.routes[b[0].channel_id]?.total_ms || 0) -
+        (timingHint.routes[a[0].channel_id]?.total_ms || 0),
+    )
   let commitQueue = Promise.resolve()
   let stopped = false
   const scanWindow = async (window, priorAttempts) => {
@@ -1135,7 +1183,16 @@ export async function executeDailyPlan({
     retry_policy: retryPolicy,
     execution: {
       max_parallel_routes: MAX_PARALLEL_DAILY_ROUTES,
-      scheduling: "rolling-route-pool",
+      scheduling: timingHint ? "longest-observed-route-first" : "rolling-route-pool",
+      ...(timingHint
+        ? {
+            timing_hint: {
+              path: timingHint.path,
+              sha256: timingHint.sha256,
+              source_evidence: false,
+            },
+          }
+        : {}),
       route_windows_serialized: true,
       candidate_merges_serialized: true,
     },

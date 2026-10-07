@@ -11509,3 +11509,11 @@ WebsiteData11개는 원격 SHA·크기·ID·private parent 확인 뒤 canonical 
 기존 `tech-ai-briefing-08`의 native 실행 지침에 remote plan/acquisition·intent·복원·mapping을 반영하고 actual TOML readback으로11개 설정을 유지한 것을 확인했다. 예약 시각·ACTIVE·모델·프로젝트·작업경로는 같고 새 예약 실행은 관측하지 않았다. 구현/실행/CI/공개/복원/mapping158증거를 기존 operational custody로 보관했다. Drive fileID`16PctKIEdqXy-KYzt9h95Bbf_R4itmYvr`, actual ZIP5577910bytes/SHA`24d54389ff379e1ce407595f85c1f9ac2007a01e563e8a85a541e78eee5c9817`, private Research parent·native 등록·원격 ZIP163파일 복원을 확인했다. 이 custody의 source_versions0은 운영 증거 보관이며 별도 두 원문 ZIP의 판본 검증을 대신하지 않는다. 중복 base64 wrapper는 해시와 생략 이유를 보존하고 normalized raw를 보관했다. 전체 runtime·독립 gold·새 운영 완료가 아니다.
 
 최신 focused WBS는 외장 `core-progress-remote-delivery-20261007-v31.json`이다. 완료3/22·부분17·미착수2, 소급40회차/394구간, 독립 평가0/40+0/20·새 운영0/7을 유지한다. 다음은 기존55경로의 최종 통합 결과와 source 접근 보류를 확인하고 소급5회차 묶음을 같은 공통 경로로 처리한다. 진행 표시 때문에 전체 status·전체 수집·원본 Drive raw·통과한 전체 CI를 다시 수행하지 않는다.
+
+## 484. 관측 시간에 따른 수집 순서 조정과 묶음 처리
+
+daily-scan의 기존6경로 pool에서 최근 이전 summary의 by_route.total_ms가 큰 경로를 먼저 시작한다. 같은 시간/미관측 경로는 원래 순서, 각 경로의 창은 원래 순서다. 최근5개의 이전 summary 안에서 첫 유효한 timing을 사용하고 정확한 path/SHA를 execution.timing_hint에 기록한다. 현재 실행의 summary는 hint 입력에서 제외한다. 이 정보는 수집 완료/새 소식 없음/승인 근거가 아니며 timing_hint.source_evidence=false다. 기존 원문 검증·candidate merge·retry cap·접근 제한 대기는 그대로다. 이후 일반 일일 실행에 자동 적용되며 별도 설정·예약 변경은 없다.
+
+integrated-v1 실제 wall1,055,986ms와 경로별 시간의 고정 재배치 FIFO1,055,549→814,580ms를 외장 `acceleration-observation-v1.json`에 보존했다. hint 조회34.58ms는 단발 실측, 재배치23% 감소는 실측 네트워크 속도 개선이 아니다. 수집을 되풀이하지 않았다. 표적 `node --test tests/research-daily-scan.test.mjs tests/research-daily-retry.test.mjs tests/research-daily-acquisition-status.test.mjs`37/37 통과(2.7초), 새 실행 순서·창 순서·완료 경로 재사용·잘못된 timing identity를 확인했다. 전체 suite/CI/공개 배포는 이번 묶음에서 실행하지 않았다.
+
+남은 디일렉9월29일~10월6일 창은20 access_restricted/awaiting_new_observation이다. 완료 창을 다시 수집하거나 회원 본문을 우회하지 않는다. 기존 config SHA로 고정된 계획도 새 코드의 계획으로 바꾸지 않는다. 다음 소급5회차는 기존 research-legacy-transition-batch/v1로 원문 검토 결과를 묶은 뒤 한 번에 Drive-first 저장/공개/원격 전달한다. 중간 운영 문서·전체 status 재생성·기사별 릴리스는 반복하지 않는다. 상세 WBS 완료 기준·원문과 승인 보존·독립 평가/7회 운영은 유지한다.

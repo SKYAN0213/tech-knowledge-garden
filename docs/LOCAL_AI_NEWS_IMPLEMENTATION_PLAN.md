@@ -5272,3 +5272,11 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 실제로7월18일 기존 run에서 WebsiteData11파일/Research2 ZIP을 확인했다. 수집 시각이 바뀐 `snapshot.json`만 same ID/private parent에 update하고12개 동일 파일은 재사용했다. 원격 ZIP을 새 private 폴더에 복원해43/32파일을 확인했다. native source registry가 사건2건을 포함하며 WebsiteData 행만 canonical receipt에 반영한다. 원본 네 root·새 기사/RSS 회차·모델 호출0이다. 완료 재개와 status는 archived raw이며 새 정규 운영/현재 원격 재조회로 계수하지 않는다. 세부 계약은 런북483절과 외장 `remote-delivery-*`를 따른다. 전체 WBS3/22(14%)·부분17·미착수2, 소급40회차/394구간·독립 평가0/40+0/20·새 운영0/7은 유지한다.
 
 최종 code `0abc49e06358cec098172e9284d15b58b9eeda9b`/Actions37573386332의 Node1137/1137·build/site/deploy success와 actual 공개 RSS·reader-index SHA 보존을 확인했다. 완료 재개111ms·추가 명령/HTTP0이다. 기존8시 automation 지침을 native 저장/11설정 readback으로 확인했으며 새 운영으로 계수하지 않는다. 운영 증거158파일의 private Drive ZIP을 actual raw SHA·native 등록·163파일 복원으로 확인했다. SourceVersions0 custody는 별도 두 원문 ZIP을 대신하지 않는다. 최신 checkpoint-v31에 전체 WBS·진척·남은 항목을 고정했다. 다음은55경로 최종 통합 판정과 소급5회차 묶음이며 전체 CI/수집/status 재실행은 하지 않는다.
+
+### 19.391. 수집 대기열과 개발 묶음 가속
+
+최신 integrated-v1의 실제 수집 wall은1,055,986ms(17분36초)다. 전자신문814,580/디일렉789,141/AWS328,159ms이며 전자신문·디일렉이 누적 수집 시간의 약47%를 차지한다. 이 실행의 모델 호출은0이다. 이미6경로 rolling pool을 쓰지만 등록 순서의 끝에 있는 긴 경로가 늦게 시작했다. 기존 summary의 관측 시간으로 긴 경로를 먼저 배치한다. 같은 경로의 시간창·후보 merge는 직렬, 최대 동시 경로6, 원문 검증·승인·재시도 정책은 유지한다. 시간 정보는 실행 순서용 hint이며 source evidence가 아니다. 최근 이전 summary의 정확한 경로·SHA를 새 실행에 남기며 시간이 없으면 기존 순서를 사용한다. 완료 receipt와 접근 제한은 그대로 건너뛴다.
+
+실제 관측 시간들을 고정한 큐 재배치 계산은 FIFO1,055,549ms→longest-first814,580ms다. 약23% 감소는 계산 결과이며 새 네트워크 실행의 실측이나 성능 보장이 아니다. 표적 daily scan/retry/acquisition-status37검사 통과, 전체 수집·전체 suite·새 배포0이다. 코드 변경 이후의 frozen daily plan은 기존 config SHA를 보존하며 무단 갱신/재개하지 않는다. 최신 통합 검증은 최종 코드가 안정된 뒤 수행한다.
+
+개발의 다음 단위는5회차 소급 묶음이다. 기존 legacy-transition-batch와 공통 전달을 쓰고 원문·사건별 검토는 유지한다. 묶음 전체를 검증하고 Drive 작성·배포·Research/WebsiteData 전달은 한 번씩 수행한다. 전체 status 조회는 릴리스/WBS 변경 때만, 일상 진척은 acquisition-status/해당 operation 상태를 조회한다. 동일 실패는 새 관측이 없으면 반복하지 않으며 보류 항목을 기록하고 독립 작업을 진행한다. 독립 human 평가와7회 실제 운영은 별도 완료 기준이며 빠른 개발을 이유로 줄이지 않는다. WBS3/22·소급40회차/394구간은 그대로다.
