@@ -79,6 +79,22 @@ function pinned(root, reference) {
   if (sha256(value) !== reference.sha256) throw Error("Remote delivery evidence changed")
   return JSON.parse(value)
 }
+function previousWebsiteRows(root, reference) {
+  if (!reference) return []
+  const previous = pinned(root, reference)
+  if (previous.schema === "research-remote-delivery-receipt/v1") {
+    if (previous.website_data_verified !== true || previous.source_archive_verified !== true)
+      throw Error("Verified prior remote delivery receipt required")
+    const readback = pinned(root, previous.readback)
+    if (readback.schema !== "research-authoring-readback/v1" || !Array.isArray(readback.files))
+      throw Error("Pinned prior remote readback required")
+    return readback.files
+      .filter((row) => row.path.startsWith("WebsiteData/"))
+      .map((row) => ({ path: row.path, id: row.file_id, sha256: row.sha256 }))
+  }
+  if (!Array.isArray(previous.files)) throw Error("Prior WebsiteData file receipt required")
+  return previous.files
+}
 function install(root, relative, value) {
   const data = Buffer.isBuffer(value) ? value : Buffer.from(JSON.stringify(value, null, 2) + "\n")
   if (!fs.existsSync(safePath(root, relative))) atomicCreate(root, relative, data)
@@ -547,9 +563,7 @@ export async function deliverRemoteArtifacts({
       return { ...normalized, stored }
     }
     let current = capture(acquisitionFile)
-    const previousRows = input.previous_website_receipt
-      ? pinned(root, input.previous_website_receipt).files
-      : []
+    const previousRows = previousWebsiteRows(root, input.previous_website_receipt)
     if ((input.write_batch_size || 1) > 1) {
       const batchBase = base + "/write-batches"
       const operationStatus = (operation, captured) => {

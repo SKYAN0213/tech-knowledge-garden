@@ -33,7 +33,10 @@ const FILES = [
   "reader-index.json",
   "snapshot.json",
 ]
-async function setup(t, { wrongSourceEvent = false, batchSize, previousFiles = [] } = {}) {
+async function setup(
+  t,
+  { wrongSourceEvent = false, batchSize, previousFiles = [], nativePrevious = false } = {},
+) {
   const f = await fixture(t, ".local/research/local-ai")
   f.put(".local/drive-sync/receipt.json", {
     schema: "tech-drive-receipt/v1",
@@ -119,7 +122,31 @@ async function setup(t, { wrongSourceEvent = false, batchSize, previousFiles = [
     ...(batchSize !== undefined ? { write_batch_size: batchSize } : {}),
     ...(previousFiles.length
       ? {
-          previous_website_receipt: f.privatePut("previous-website.json", { files: previousFiles }),
+          previous_website_receipt: f.privatePut(
+            "previous-website.json",
+            nativePrevious
+              ? {
+                  schema: "research-remote-delivery-receipt/v1",
+                  website_data_verified: true,
+                  source_archive_verified: true,
+                  readback: (() => {
+                    const relative = "prior/readback.json"
+                    atomicCreate(f.root, relative, {
+                      schema: "research-authoring-readback/v1",
+                      files: previousFiles.map((row) => ({
+                        path: row.path,
+                        file_id: row.id,
+                        sha256: row.sha256,
+                      })),
+                    })
+                    return {
+                      path: relative,
+                      sha256: sha256(fs.readFileSync(path.join(f.root, relative))),
+                    }
+                  })(),
+                }
+              : { files: previousFiles },
+          ),
         }
       : {}),
   })
@@ -451,14 +478,14 @@ test("the real delivery CLI shares its live connector channel with remote writes
   assert.equal(inspectRemoteDelivery(f.root, f.run).status, "remote_delivery_complete")
 })
 
-async function batchFixture(t, { batchSize = 16 } = {}) {
+async function batchFixture(t, { batchSize = 16, nativePrevious = false } = {}) {
   const updates = ["WebsiteData/articles.csv", "WebsiteData/snapshot.json"]
   const previousFiles = updates.map((relative) => ({
     path: relative,
     id: sha256(relative).slice(0, 20),
     sha256: sha256("previous:" + relative),
   }))
-  const f = await setup(t, { batchSize, previousFiles })
+  const f = await setup(t, { batchSize, previousFiles, nativePrevious })
   const desired = new Map([...f.remote].map(([relative, record]) => [relative, { ...record }]))
   for (const relative of updates) f.remote.get(relative).value = Buffer.from("previous:" + relative)
   f.remote.delete("Research/portable.zip")
@@ -470,6 +497,40 @@ async function batchFixture(t, { batchSize = 16 } = {}) {
   }
   return { ...f, desired, apply, updates }
 }
+
+test("native prior receipts reuse pinned raw proof for same-ID batch updates", async (t) => {
+  const f = await batchFixture(t, { nativePrevious: true })
+  const result = await deliverRemoteArtifacts({
+    ...f.options,
+    acquisitionFile: f.capture(),
+    nextCapture: () => {
+      f.apply(f.events.findLast((e) => e.type === "remote_write_batch_intent").operations)
+      return f.capture()
+    },
+  })
+  assert.equal(result.status, "remote_delivery_complete")
+  for (const relative of f.updates)
+    assert.equal(f.remote.get(relative).id, f.desired.get(relative).id)
+})
+
+test("native prior receipts reject changed readback bytes before any write", async (t) => {
+  const f = await batchFixture(t, { nativePrevious: true })
+  fs.appendFileSync(path.join(f.root, "prior/readback.json"), "\n")
+  await assert.rejects(
+    deliverRemoteArtifacts({
+      ...f.options,
+      acquisitionFile: f.capture(),
+      nextCapture: () => {
+        throw Error("tampered prior proof must not write")
+      },
+    }),
+    /Remote delivery evidence changed/,
+  )
+  assert.equal(
+    f.events.some((e) => e.type === "remote_write_batch_intent"),
+    false,
+  )
+})
 
 test("one native batch updates two same-ID files and creates a ZIP with one post-write capture", async (t) => {
   const f = await batchFixture(t)
