@@ -18,6 +18,11 @@ test("approved plain identifiers retain literal underscores through production M
   const escaped = markdownProse(source)
   assert.equal(markdownProseText(escaped), source)
   assert.equal(markdownProse(escaped), escaped)
+  const labels = "PR 링크는 #N, 본문은 #번호와 #AI를 문자 그대로 표시한다."
+  const literal = markdownProse(labels)
+  assert.equal(literal, "PR 링크는 \\#N, 본문은 \\#번호와 \\#AI를 문자 그대로 표시한다.")
+  assert.equal(markdownProseText(literal), labels)
+  assert.equal(markdownProse(literal), literal)
   const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
   const options = config.plugins.find(
     (p) => p.source === "@quartz-community/github-flavored-markdown",

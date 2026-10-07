@@ -3,12 +3,12 @@ const esc = (s) =>
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   )
-// Approved prose is plain text. Numeric ranges and issue numbers must not
+// Approved prose is plain text. Numeric ranges and hash-prefixed labels must not
 // become strikethrough, emphasis or Obsidian tags, including code identifiers.
 export const markdownProse = (value) =>
   value
     .replace(/(?<!\\)~/g, "\\~")
-    .replace(/(?<!\\)#(?=\d)/g, "\\#")
+    .replace(/(?<!\\)#/g, "\\#")
     .replace(/(?<!\\)_/g, "\\_")
 export const markdownProseText = (value) => value.replace(/\\([~#_])/g, "$1")
 export const explanationHTML = (a, { level = 4 } = {}) =>
