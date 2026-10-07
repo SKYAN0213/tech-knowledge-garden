@@ -11,7 +11,7 @@ import {
 } from "./briefings.mjs"
 import { stanceLabel } from "./trends.mjs"
 import { THEMES } from "./themes.mjs"
-import { SECTORS } from "./sectors.mjs"
+import { SECTORS, sectorGroups } from "./sectors.mjs"
 import { articleDateLabel } from "./article-review.mjs"
 
 const link = (url, label, attrs = "") => `<a href="${esc(url)}" ${attrs}>${esc(label)}</a>`
@@ -23,7 +23,12 @@ const announcementDate = (a) =>
 export const publicationLinks = (i, href, base) =>
   `<div class="publication-links">${link(href(briefPath(i.key)), "브리핑 읽기 →")} ${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
 
-export function newsView(articles, latest, href, { expanded = false, recentItems = [] } = {}) {
+export function newsView(
+  articles,
+  latest,
+  href,
+  { expanded = false, recentItems = [], briefingEntries = null } = {},
+) {
   const groups = new Map()
   for (const a of [...articles].sort((a, b) =>
     String(b.edition.meta.date).localeCompare(String(a.edition.meta.date)),
@@ -47,7 +52,17 @@ export function newsView(articles, latest, href, { expanded = false, recentItems
       )}${select("entity", "기업·기관", entities)}<button type="button" id="news-reset">초기화</button></div>`
     : ""
   const row = (a) => articleCard(a, href, expanded)
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2>${/^\d{4}-/.test(date) ? `<time datetime="${date}">${dateLabel(date)}</time>` : esc(date)}</h2><div>${items.map(row).join("")}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  const rows = (items, date) =>
+    briefingEntries && date === String(latest.date)
+      ? briefingEntries
+          .map((entry) =>
+            entry.id
+              ? `<section class="news-day" data-news-day><h2>${esc(entry.title)}</h2><div>${entry.items.map(row).join("")}</div></section>`
+              : row(entry.items[0]),
+          )
+          .join("")
+      : items.map(row).join("")
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2>${/^\d{4}-/.test(date) ? `<time datetime="${date}">${dateLabel(date)}</time>` : esc(date)}</h2><div>${rows(items, date)}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review)
@@ -104,7 +119,14 @@ export function issueView(i, href, base, renderedArticle) {
     const top = highlights.length
       ? `<section class="issue-highlights"><h2>주요 소식</h2><ul>${highlights.map((a) => `<li>${link(href("News/" + a.id), a.title)} ${announcementDate(a)}</li>`).join("")}</ul></section>`
       : ""
-    const stream = newsView(i.items, i, href, { expanded: true, recentItems: i.recentItems || [] })
+    const briefingEntries = i.original.meta.briefing_groups
+      ? sectorGroups(i.original, i.items).flatMap((g) => g.entries)
+      : null
+    const stream = newsView(i.items, i, href, {
+      expanded: true,
+      recentItems: i.recentItems || [],
+      briefingEntries,
+    })
       .replace(/^<div class="page-heading">[\s\S]*?<\/a><\/div>/, "")
       .replace(
         /<nav class="sector-tabs"[\s\S]*?<\/nav>/,

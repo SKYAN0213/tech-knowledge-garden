@@ -4,6 +4,7 @@ import { canonicalURL, parseNote } from "../garden.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
 import { assertReviewDate, parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { legacyReviewUnits } from "./legacy-review.mjs"
+import { SECTORS, briefingGroupFields, reviewedBriefingGroups } from "../sectors.mjs"
 
 const object = (properties) => ({
   type: "object",
@@ -86,6 +87,49 @@ packetSchema.properties.no_article_review = object({
   unsupported_no_news_claims_removed: { type: "boolean", enum: [true] },
   reason: text,
 })
+packetSchema.properties.briefing_group_review = object({
+  grouping_basis_checked: { type: "boolean", enum: [true] },
+  article_details_preserved: { type: "boolean", enum: [true] },
+  distinct_events_preserved: { type: "boolean", enum: [true] },
+  reason: text,
+  groups: {
+    type: "array",
+    minItems: 1,
+    maxItems: 20,
+    items: object({
+      id: { type: "string", pattern: "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+      title: { type: "string", minLength: 1, maxLength: 140 },
+      sector: { type: "string", enum: SECTORS },
+      event_ids: { type: "array", minItems: 2, maxItems: 40, items: eventID },
+      source_urls: { type: "array", minItems: 1, items: text },
+      reason: text,
+    }),
+  },
+})
+export function legacyBriefingGroups(packet, articles) {
+  const review = packet?.briefing_group_review
+  if (!review) return null
+  if (!review.reason.trim()) throw Error("Briefing grouping requires an explicit editorial basis")
+  const groups = review.groups.map((group) => {
+    const sources = [
+      ...new Set(
+        group.event_ids
+          .flatMap((id) => articles.find((a) => a.event_id === id)?.source_urls || [])
+          .map(canonicalURL),
+      ),
+    ].sort()
+    if (
+      !group.reason.trim() ||
+      JSON.stringify(sources) !== JSON.stringify(group.source_urls.map(canonicalURL).sort())
+    )
+      throw Error("Briefing group must retain every member's exact approved sources")
+    return Object.fromEntries(briefingGroupFields.map((field) => [field, group[field]]))
+  })
+  return reviewedBriefingGroups(
+    groups,
+    articles.map((a) => ({ id: a.event_id, sector: a.sector, review: a.article_review })),
+  )
+}
 packetSchema.properties.metadata_review = object({
   metadata_read: { type: "boolean", enum: [true] },
   dispositions: {
@@ -392,6 +436,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   )
     throw Error("Legacy transition requires exactly all distinct reviewed source events")
   const byID = new Map(articles.map((a) => [a.event_id, a]))
+  legacyBriefingGroups(packet, articles)
   const sources = legacySources(before.body, units)
   const assigned = new Set(packet.events.flatMap((event) => event.source_urls.map(canonicalURL)))
   const approved = new Set(articles.flatMap((article) => article.source_urls.map(canonicalURL)))

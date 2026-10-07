@@ -11559,3 +11559,11 @@ renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기�
 `preparePublicationOperation`이 검토 완료된 빈 과거 브리핑을 `Approved reader authoring inputs required`로 거부하는 실제 결함을 확인했다. 공통 `assertArticleFreeLegacyPreview`가 원본 전체의 기존 `assertLegacyTransition`을 재사용한다. 회차마다 정확한 경로·원문 SHA·전체 구간·발견 경로 역할·명시적 no_article_review가 필요하며, 일일 원고·미검토 구간·중복·별도 용어 변경은 거부한다. Drive 검증과 실제 canonical SHA 검사는 그대로 유지한다.
 
 빈 기사 목록의 readback은 각 회차의 실제 생성된 Briefings 매핑과 digest 경로를 추가한다. 기사 승인·뉴스 페이지·신규 RSS 회차를 생성하지 않는다. 관련 표적 묶음에서 새 fixture의 macOS /tmp symlink 경로 오류1건을 기록했고 실제 경로로 바꿔 실패 표적만 재검증했다. 실제 공개 화면에서 빈 필터와 “검색 결과 없음”이 나타나는 결함을 확인했다. `issueView`는 기사와 과거 참조가 모두 없는 검토 회차에서 날짜·제목·GitHub/RSS 링크만 반환한다. 일반 기사의 필터와 참조는 유지한다. UI표적15/15과 최종31b3fe60/Actions37614577100 Node1,172/1,172·build/site/deploy가 통과했다. 첫 발행 연결 릴리스와 이 실제 UI수정 릴리스에서 각각CI1회를 수행했다. 공개16파일·실제 브라우저, WebsiteData11파일(4갱신·7불변), 비공개 원본/검토 ZIP의 원격SHA·native127파일 복구를 완료했다. 이 ZIP은 운영 증거 묶음이며 새 연구 원문0·전체runtime복구 아님·정규 운영0이다. private 증거는 외장 `core-empty-july-*`, WBS는 `core-progress-reviewed-empty-publication-20261007-v45`다. 남은 소급30회차/314구간·복구2건과 독립평가·7회 정규 운영은 미완료로 유지한다.
+
+## 491. 사건을 합치지 않는 브리핑 읽기 묶음
+
+소급 검토 packet의 `briefing_group_review`에는 `grouping_basis_checked`, `article_details_preserved`, `distinct_events_preserved`, `reason`, `groups`를 기록한다. 각 group은 `id`, `title`, `sector`, `event_ids`, 모든 소속 기사 승인 원문의 정확한 `source_urls`, 비공개 `reason`을 갖는다. 공개 projection은 마지막 두 필드를 제거하고 `briefing_group_format: related-events/v1` 및 `briefing_groups`만 전달한다. 원 기사·분야를 임의 추정하거나 원문 목록을 축약하지 않는다.
+
+`sectorGroups`는 묶음과 단독 항목의 합으로 분야당5개, 전체 상세 기사40개, 정확한 사건ID·분야·verified 상태·단독 소속을 검증한다. `sectorMarkdown`, 웹 issueView, RSS는 같은 표제·소속 기사 전체를 사용한다. 뉴스 목록에는 묶음을 넣지 않으며 기존 개별 필터·공유·뒤로 가기를 유지한다. 이미 묶음을 가진 회차에 기사를 보완할 때 기존 묶음 메타데이터를 그대로 검증·보존한다.
+
+실제17기사 preview에서 `__proto__`의 underscore가 강조 문법으로 손실되는 오류를 확인했다. 원고를 줄이거나 검증기를 우회하지 않고 기존 `markdownProse`/`markdownProseText`의 literal 보존을 수정한다. 소속 기사 설명의 heading 단계도 부모 기사에 맞춰 한 단계씩 낮춘다. 기존 추출·모델 작성과 승인은 반복하지 않는다. private 증거는 `core-jul10-grouped-*`, `core-jul10-sector-*`; 준비와 실제 발행·원격 보관은 분리한다.

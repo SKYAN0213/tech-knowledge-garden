@@ -289,7 +289,8 @@ export function refresh(vault = "vault") {
       sectorMarkdown(
         issue,
         items,
-        (a) => `#### ${wiki("News/" + a.id, a.title)}\n\n${classificationMarkdown(a)}${a.summary}`,
+        (a, { level }) =>
+          `${"#".repeat(level)} ${wiki("News/" + a.id, a.title)}\n\n${classificationMarkdown(a)}${a.summary}`,
       ) ??
       (items.length
         ? `## 헤드라인\n\n${items.map((a) => `### ${wiki("News/" + a.id, a.title)}\n\n${a.summary}`).join("\n\n")}`

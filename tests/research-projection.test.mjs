@@ -322,6 +322,59 @@ test("complete pre-v2 transition retains edition identity and all source events 
   )
 })
 
+test("reviewed legacy reading groups preserve exact approved events and keep their review private", (t) => {
+  const f = legacyTransitionFixture(t)
+  f.packet.briefing_group_review = {
+    grouping_basis_checked: true,
+    article_details_preserved: true,
+    distinct_events_preserved: true,
+    reason: "PRIVATE editorial reading order; no event or knowledge relation is inferred.",
+    groups: [
+      {
+        id: "research-announcements",
+        title: "연구 발표",
+        sector: f.articles[0].sector,
+        event_ids: f.articles.map((a) => a.event_id),
+        source_urls: f.articles.flatMap((a) => a.source_urls),
+        reason: "PRIVATE read both approved announcements and retain each full article.",
+      },
+    ],
+  }
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = { ...parseNote(projection.content), file: f.existing.file }
+  assert.deepEqual(
+    extractArticles(after).map((a) => a.id),
+    f.articles.map((a) => a.event_id),
+  )
+  assert.equal(after.meta.briefing_group_format, "related-events/v1")
+  assert.deepEqual(Object.keys(after.meta.briefing_groups[0]), [
+    "id",
+    "title",
+    "sector",
+    "event_ids",
+  ])
+  assert.equal(projection.content.includes("PRIVATE"), false)
+  const retained = editionProjection(extractArticles(after).map(existingArticleProjection), {
+    key: f.key,
+    date: after.meta.date,
+    coverage_start: after.meta.coverage_start,
+    coverage_end: after.meta.coverage_end,
+    existing: after,
+  })
+  assert.deepEqual(parseNote(retained.content).meta.briefing_groups, after.meta.briefing_groups)
+  for (const mutate of [
+    (p) => (p.briefing_group_review.grouping_basis_checked = false),
+    (p) => (p.briefing_group_review.groups[0].reason = " "),
+    (p) => p.briefing_group_review.groups[0].source_urls.pop(),
+    (p) => p.briefing_group_review.groups[0].source_urls.push("https://example.org/unreviewed"),
+    (p) => p.briefing_group_review.groups[0].event_ids.push("ffffffffffffffff"),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => retrospectiveProjections(f.vault, f.articles, [], [packet]))
+  }
+})
+
 test("legacy reviewed metadata preserves clocks and tags while retaining obsolete counters privately", (t) => {
   const f = legacyTransitionFixture(t)
   Object.assign(f.existing.meta, {

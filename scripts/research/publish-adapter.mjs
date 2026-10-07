@@ -18,7 +18,12 @@ import {
   assertHistoricalAdditionReview,
 } from "./event-date.mjs"
 import { markdownProse } from "../explanations.mjs"
-import { assertLegacyTransition, legacyTransitionMetadata } from "./legacy-transition.mjs"
+import {
+  assertLegacyTransition,
+  legacyTransitionMetadata,
+  legacyBriefingGroups,
+} from "./legacy-transition.mjs"
+import { BRIEFING_GROUP_FORMAT } from "../sectors.mjs"
 import { entityListText } from "../themes.mjs"
 
 // Pure projection: no Drive write, Git commit or push is performed here.
@@ -429,6 +434,17 @@ export function editionProjection(
     knowledge_notes_updated: [],
     ...knowledge,
     ...navigation,
+    ...(legacy_review?.briefing_group_review
+      ? {
+          briefing_group_format: BRIEFING_GROUP_FORMAT,
+          briefing_groups: legacyBriefingGroups(legacy_review, articles),
+        }
+      : existing?.meta.briefing_groups
+        ? {
+            briefing_group_format: existing.meta.briefing_group_format,
+            briefing_groups: structuredClone(existing.meta.briefing_groups),
+          }
+        : {}),
     headlines,
     article_records: articles.filter((a) => a.record).map((a) => a.record),
     article_reviews: articles.map((a) => a.article_review),

@@ -10,6 +10,33 @@ import YAML from "yaml"
 import { unified } from "unified"
 import remarkParse from "remark-parse"
 import { GitHubFlavoredMarkdown } from "@quartz-community/github-flavored-markdown"
+import { markdownProse, markdownProseText } from "../scripts/explanations.mjs"
+
+test("approved plain identifiers retain literal underscores through production Markdown", async () => {
+  const source =
+    "constructor, toString, valueOf, __proto__와 snake_case를 검사한다. 10~20건과 #123을 구분한다."
+  const escaped = markdownProse(source)
+  assert.equal(markdownProseText(escaped), source)
+  assert.equal(markdownProse(escaped), escaped)
+  const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
+  const options = config.plugins.find(
+    (p) => p.source === "@quartz-community/github-flavored-markdown",
+  ).options
+  const processor = unified()
+    .use(remarkParse)
+    .use(GitHubFlavoredMarkdown(options).markdownPlugins())
+  const tree = await processor.run(processor.parse(escaped))
+  const texts = [],
+    formatting = []
+  function visit(node) {
+    if (node.type === "text") texts.push(node.value)
+    if (["strong", "emphasis", "delete"].includes(node.type)) formatting.push(node.type)
+    for (const child of node.children || []) visit(child)
+  }
+  visit(tree)
+  assert.equal(texts.join(""), source)
+  assert.deepEqual(formatting, [])
+})
 
 test("production Markdown preserves command flags, quotes and numeric punctuation", async () => {
   const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
