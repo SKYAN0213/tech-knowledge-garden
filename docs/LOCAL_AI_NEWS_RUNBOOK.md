@@ -58,14 +58,32 @@
 | Ollama        | 0.34.4                      | 설치된 모델의 로컬 추론                            |
 | SearXNG       | 2026.9.25+12f8b65           | 격리 서비스 시작·실제 검색·소유 프로세스 종료 시험 |
 
-worker 의존성의 버전 원본은 [requirements.txt](../integrations/research-worker/requirements.txt)다. Docling·외부 벡터 DB·새 웹 프레임워크는 도입하지 않았다. SearXNG는 위 requirements와 별도로 공식 저장소의 commit `12f8b6515ca77c3c3bc1498584950ef5daca1433`을 private runtime에 설치했다. 신규 장비의 일괄 설치·복구 스크립트는 아직 없다.
+worker 의존성의 버전 원본은 [requirements.txt](../integrations/research-worker/requirements.txt)다. Docling·외부 벡터 DB·새 웹 프레임워크는 도입하지 않았다. SearXNG의 공식 commit `12f8b6515ca77c3c3bc1498584950ef5daca1433`, build package와 한국어 OCR 모델 SHA는 [research-runtime.json](../data/research-runtime.json)에 고정한다. [research-runtime.mjs](../scripts/research-runtime.mjs)는 별도 private root에 실행환경을 설치·검증한다. 기존 미관리 venv를 덮어쓰지 않으며 같은 root의 설치 입력·코드가 바뀌면 새 root를 요구한다.
 
 ### 2.1 격리 환경 재현
+
+현재 공통 실행 방법은 다음과 같다. `plan`은 Python·의존성·원문 checkout·OCR hash·대상을 확인하며 설치하지 않는다. `install`은 Python→고정 SearXNG 소스→worker 의존성→SearXNG 의존성/패키지→Chromium→OCR의 여섯 단계를 RunState/lock/journal에 기록한다. 이미 완료된 단계는 재실행하지 않으며 실제 pip check·버전·Chromium 실행은 다시 확인한다. SearXNG setup은 자기 모듈을 import하므로 자체 requirements를 패키지 설치보다 먼저 설치한다. 명령은 shell 없이 실행하고 원출력은 private log에만 남긴다. 실패한 단계의 journal은 보존한다.
+
+```bash
+npm run research:runtime -- plan --root /absolute/private-root \
+  --python /absolute/python3.12 --ocr-model /absolute/verified-korean-model.onnx \
+  --searx-checkout /absolute/existing-pinned-searxng-checkout
+npm run research:runtime -- install --root /absolute/private-root \
+  --python /absolute/python3.12 --ocr-model /absolute/verified-korean-model.onnx \
+  --searx-checkout /absolute/existing-pinned-searxng-checkout
+npm run research:runtime -- verify --root /absolute/private-root --port 8891
+```
+
+`--searx-checkout`을 생략하면 공식 저장소에서 clone한다. 로컬 checkout을 주면 git 객체를 재사용하되 고정 commit을 detached checkout하고 실제 HEAD·tracked 변경을 확인한다. OCR 모델은 spec의 exact SHA가 같은 로컬 보관본을 사용한다. Ollama 서버와 기존 qwen3.8:27b-mlx는 새로 설치·삭제·다운로드하지 않고 metadata/digest를 확인한다. `verify`는 해당 venv로 loopback 전용 검색을 시작해 owner/config/PID를 확인한 뒤 자신이 시작한 프로세스를 종료한다. 뉴스 탐색·모델 추론·편집 승인·08시 실행·발행 성공으로 집계하지 않는다.
+
+한국어 PDF/이미지 OCR은 worker의 `--root` 아래 `ocr/models/`에서만 recognizer를 읽는다. 저장소의 다른 root에서 빌려 오지 않으며 누락은 `korean-model-not-installed`, 손상·symlink는 명시 오류다. 모델 유무/hash를 parser config fingerprint에 포함해 미설치 결과와 설치 결과가 같은 parse ID로 충돌하지 않게 한다. 기본 canonical root의 기존 모델은 같은 상대 경로에서 계속 읽는다.
+
+2026-10-08 실제 검증: 외장 `tkg-runtime-recovery-20261008-v2`에 여섯 단계 설치·pip check·고정 버전·Chromium 실행을 완료했다. 같은 입력 재개는 설치6단계 재사용/추가 설치0이었다. 실제 SearXNG owner/PID health·종료와 Ollama0.34.4/qwen3.8:27b-mlx digest를 확인했다. 기존 private 원격 ZIP의 보존 bytes를54자료로 복원하고 새 venv로 원문2개를 재파싱해 본문15/4블록·발표시각이 정확히 같음을 확인했다(HTTP/모델0). Node 표적4/4, 기존 환경 OCR 표적6/6, 새 환경 한국어 PDF/이미지2/2가 통과했다. 원격 archive 재다운로드·전체 runtime/모델/후보/발행 복구·독립 평가·정규 운영은 이 검사로 완료한 것으로 세지 않는다. 초기 repo root 경로 계산과 SearXNG msgspec 선설치 실패는 원래 log/journal을 보존했다. 한시간 반복 병목은 없다.
 
 다음은 환경이 없는 작업 사본에서의 설치 절차다. 기존 venv를 이유 없이 다시 만들지 않는다. 시스템 Python을 교체하지 않는다. Chromium과 OCR 모델은 처음 준비할 때 다운로드가 필요하다.
 
 ```bash
-cd /Users/shinjh/Projects/Personal/Apps/tech-knowledge-garden
+cd /Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden
 "/Users/shinjh/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3" -m venv .local/research/local-ai/runtime/venv
 .local/research/local-ai/runtime/venv/bin/python -m pip install -r integrations/research-worker/requirements.txt
 .local/research/local-ai/runtime/venv/bin/python -m playwright install chromium

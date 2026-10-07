@@ -1961,7 +1961,20 @@ def apply_pdf_table_context(blocks, profile):
     return issues
 
 
-def pdf_parse(raw, options):
+def korean_ocr_model(root):
+    """Resolve only this worker root's pinned recognizer; never borrow another run's model."""
+    if root is None:
+        return None
+    spec = json.loads((Path(__file__).resolve().parents[2] / "data/research-runtime.json").read_text())["korean_ocr"]
+    model = checked_path(root, spec["path"])
+    if not model.is_file():
+        return None
+    if digest(model.read_bytes()) != spec["sha256"]:
+        raise ValueError("Korean OCR model hash mismatch")
+    return model
+
+
+def pdf_parse(raw, options, root=None):
     import pymupdf
     doc = pymupdf.open(stream=raw, filetype="pdf")
     if doc.needs_pass:
@@ -2020,8 +2033,8 @@ def pdf_parse(raw, options):
                     if language == "ko":
                         # PP-OCRv6 has no Korean recognizer. Pin the supported v5
                         # recognizer explicitly and require the locally staged model.
-                        model_path = Path(__file__).resolve().parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx"
-                        if not model_path.is_file():
+                        model_path = korean_ocr_model(root)
+                        if model_path is None:
                             missing.append(number)
                             ocr_unavailable = "korean-model-not-installed"
                             skip_ocr = True
@@ -2143,7 +2156,7 @@ def pdf_parse(raw, options):
     return {"status": "extracted" if title and blocks and not missing and not context_issues else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
 
 
-def image_parse(raw, options):
+def image_parse(raw, options, root=None):
     """Reuse selective PDF OCR on one bounded raster, retaining original-pixel locations."""
     import io
     from PIL import Image
@@ -2166,7 +2179,7 @@ def image_parse(raw, options):
     page = doc.new_page(width=width / scale, height=height / scale)
     page.insert_image(page.rect, stream=raw)
     allowed = {key: options[key] for key in ("title", "language", "ocr_language") if key in options}
-    parsed = pdf_parse(doc.tobytes(), {**allowed, "ocr": True, "max_pages": 1})
+    parsed = pdf_parse(doc.tobytes(), {**allowed, "ocr": True, "max_pages": 1}, root)
     doc.close()
     parsed["dates"] = {"published_at": None, "modified_at": None, "precision": "unknown", "profile_status": "not-configured", "basis": None}
     parsed["quality"].update({"source_format": "raster-image", "source_width": width, "source_height": height,
@@ -2206,13 +2219,13 @@ def run(request, root):
         parsed = json_document_parse(raw, request["url"], options)
         parser = {"id": "json-document", "version": VERSION}
     elif raw.startswith(b"%PDF-"):
-        parsed = pdf_parse(raw, options)
+        parsed = pdf_parse(raw, options, root)
         parser = {"id": "pymupdf", "version": importlib.metadata.version("PyMuPDF")}
     elif options.get("ocr") is True and (raw.startswith(b"\x89PNG\r\n\x1a\n") or raw.startswith(b"\xff\xd8\xff")):
         expected_mime = "image/png" if raw.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg"
         if fragment_mime != expected_mime:
             raise ValueError("Raster OCR requires a matching image response")
-        parsed = image_parse(raw, options)
+        parsed = image_parse(raw, options, root)
         parser = {"id": "pymupdf-raster-rapidocr", "version": importlib.metadata.version("rapidocr")}
     elif options.get("format") == "jats":
         parsed = jats_parse(raw, request["url"], options)
@@ -2230,7 +2243,11 @@ def run(request, root):
     else:
         parsed = {"status": "unsupported", "title": None, "blocks": [], "links": [], "quality": {"required_fields_present": False, "missing_pages": [], "reviewed": False}}
         parser = {"id": "unsupported", "version": VERSION}
-    parser["config_hash"] = digest(json.dumps(options, sort_keys=True, ensure_ascii=False))
+    parser_config = options
+    if options.get("ocr") and (options.get("ocr_language") or options.get("language") or "").replace("_", "-").lower().split("-", 1)[0] == "ko":
+        model = korean_ocr_model(root)
+        parser_config = {"options": options, "korean_ocr_sha256": digest(model.read_bytes()) if model else None}
+    parser["config_hash"] = digest(json.dumps(parser_config, sort_keys=True, ensure_ascii=False))
     parser["adapter_sha256"] = digest(Path(__file__).read_bytes())
     parse_id = digest(json.dumps([request["source_version_id"], parser, "local-research/v1"], separators=(",", ":"), ensure_ascii=False))
     for i, block in enumerate(parsed["blocks"], 1):

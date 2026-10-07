@@ -87,11 +87,18 @@ export function prepareSearchConfig(root, port = 8888) {
 }
 
 // One owned, loopback-only process per search execution. No launchd/cron registration.
-export async function withLocalSearch(root, action, { port = 8888, startup_ms = 20000 } = {}) {
+export async function withLocalSearch(
+  root,
+  action,
+  { port = 8888, startup_ms = 20000, python: requestedPython } = {},
+) {
   return withLock(root, "search-service", async () => {
     const config = prepareSearchConfig(root, port)
     // venv executables intentionally link to the trusted Python runtime; source files do not.
-    const python = process.env.RESEARCH_PYTHON || path.resolve(root, "runtime/venv/bin/python")
+    const python =
+      requestedPython ||
+      process.env.RESEARCH_PYTHON ||
+      path.resolve(root, "runtime/venv/bin/python")
     if (!fs.existsSync(python)) throw Error("Research Python environment is missing")
     const owner = crypto.randomUUID()
     const log = safePath(root, "runtime/search/service.log")

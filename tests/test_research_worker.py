@@ -208,10 +208,14 @@ class WorkerTests(unittest.TestCase):
                 self.assertNotIn("Related paper navigation", text)
                 self.assertNotIn("October 1", text)
 
-    def invoke(self, data, options=None, operation="parse", expected_hash=None, mime_type=None, url="https://example.com/news"):
+    def invoke(self, data, options=None, operation="parse", expected_hash=None, mime_type=None, url="https://example.com/news", ocr_model=None):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()
             (root / "input.bin").write_bytes(data)
+            if ocr_model is not None:
+                asset = root / "ocr/models/korean_PP-OCRv5_rec_mobile.onnx"
+                asset.parent.mkdir(parents=True)
+                asset.write_bytes(Path(ocr_model).read_bytes())
             req = {"schema_version": "research-worker/v1", "request_id": "fixture", "operation": operation, "input_path": "input.bin", "input_sha256": expected_hash or hashlib.sha256(data).hexdigest(), "source_id": "fixture", "source_version_id": "fixture:v1", "url": url, "options": options or {}}
             if mime_type:
                 req["mime_type"] = mime_type
@@ -1187,7 +1191,7 @@ echo 'source command only'
         draw.text((70, 250), "FANUC 2026년 신규 공장 자동화 계획", font=font, fill="black")
         output = io.BytesIO()
         image.save(output, format="PNG")
-        result = self.invoke(output.getvalue(), {"ocr": True, "language": "ko", "title": "원문 이미지"}, mime_type="image/png")["result"]
+        result = self.invoke(output.getvalue(), {"ocr": True, "language": "ko", "title": "원문 이미지"}, mime_type="image/png", ocr_model=WORKER.parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx")["result"]
         self.assertEqual(result["quality"]["ocr_model"], "PP-OCRv5-korean-mobile")
         self.assertIn("산업용 로봇 시장 동향", " ".join(block["text"] for block in result["blocks"]))
         self.assertEqual(result["quality"]["source_width"], 1600)
@@ -1330,6 +1334,9 @@ echo 'source command only'
         with tempfile.TemporaryDirectory(dir=temp_base) as temp:
             root = Path(temp)
             (root / "input.pdf").write_bytes(raw)
+            local_model = root / "ocr/models/korean_PP-OCRv5_rec_mobile.onnx"
+            local_model.parent.mkdir(parents=True)
+            local_model.write_bytes((WORKER.parents[2] / ".local/research/local-ai/ocr/models/korean_PP-OCRv5_rec_mobile.onnx").read_bytes())
             request = {
                 "schema_version": "research-worker/v1", "request_id": "korean-ocr-fixture",
                 "operation": "parse", "input_path": "input.pdf",
@@ -1341,6 +1348,11 @@ echo 'source command only'
                 [sys.executable, str(WORKER), "--root", temp], input=json.dumps(request) + "\n",
                 text=True, capture_output=True, timeout=120,
             )
+            local_model.unlink()
+            missing_process = subprocess.run(
+                [sys.executable, str(WORKER), "--root", temp], input=json.dumps(request) + "\n",
+                text=True, capture_output=True, timeout=120,
+            )
         self.assertEqual(process.returncode, 0, process.stderr)
         result = json.loads(process.stdout)["result"]
         ocr_blocks = [block for block in result["blocks"] if block["locator"].get("method") == "ocr"]
@@ -1348,6 +1360,36 @@ echo 'source command only'
         self.assertIn("산업용 로봇 시장 동향", " ".join(block["text"] for block in ocr_blocks))
         self.assertEqual(result["quality"]["missing_pages"], [])
         self.assertTrue(all(block["locator"].get("bbox") for block in ocr_blocks))
+        self.assertEqual(missing_process.returncode, 0, missing_process.stderr)
+        missing = json.loads(missing_process.stdout)["result"]
+        self.assertEqual(missing["quality"]["ocr_unavailable"], "korean-model-not-installed")
+        self.assertEqual(missing["quality"]["missing_pages"], [1])
+        self.assertNotEqual(missing["parser"]["config_hash"], result["parser"]["config_hash"])
+        self.assertNotEqual(missing["parse_id"], result["parse_id"])
+
+    def test_korean_ocr_model_does_not_borrow_canonical_assets(self):
+        spec = importlib.util.spec_from_file_location("ocr_root_worker", WORKER)
+        worker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(worker)
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertIsNone(worker.korean_ocr_model(Path(temp)))
+        self.assertIsNone(worker.korean_ocr_model(None))
+
+    def test_korean_ocr_model_rejects_corrupt_or_symlinked_assets(self):
+        spec = importlib.util.spec_from_file_location("ocr_pin_worker", WORKER)
+        worker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(worker)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            model = root / "ocr/models/korean_PP-OCRv5_rec_mobile.onnx"
+            model.parent.mkdir(parents=True)
+            model.write_bytes(b"unverified model")
+            with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                worker.korean_ocr_model(root)
+            model.unlink()
+            model.symlink_to(WORKER)
+            with self.assertRaisesRegex(ValueError, "Symlink"):
+                worker.korean_ocr_model(root)
 
     def test_japanese_fanuc_dateline_uses_publisher_day_not_collection_or_url(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
