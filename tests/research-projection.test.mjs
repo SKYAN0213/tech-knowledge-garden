@@ -1534,9 +1534,19 @@ test("private retrospective updates every appearance and retains other articles 
       [a.event_id, b.event_id],
     )
     const retained = current[1]
+    const priorRetained = extractArticles({
+      ...parseNote(before.get(parsed.file).toString()),
+      file: parsed.file,
+    })[1]
     assert.equal(retained.review.review_status, "unreviewed")
     assert.deepEqual(retained.concepts, b.concept_paths)
-    assert.deepEqual(existingArticleProjection(retained), { ...b, secondary_theme: null })
+    assert.equal(retained.body, priorRetained.body)
+    assert.equal(retained.desk, priorRetained.desk)
+    assert.deepEqual(existingArticleProjection(retained), {
+      ...b,
+      secondary_theme: null,
+      preserved: { body: priorRetained.body, desk: priorRetained.desk },
+    })
     retained.editorial.private_notes = "private review must not survive public normalization"
     assert.equal(existingArticleProjection(retained).record.private_notes, undefined)
     assert.equal(current[0].title, updated.title)
