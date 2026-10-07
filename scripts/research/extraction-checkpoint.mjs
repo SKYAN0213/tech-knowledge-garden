@@ -2,7 +2,12 @@ import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
-import { extractionBudget, mapExtractionBatch, selectExtractionScope } from "./claims.mjs"
+import {
+  extractionBudget,
+  mapExtractionBatch,
+  selectExtractionScope,
+  describeExtractionCoverage,
+} from "./claims.mjs"
 import { modelSourceDates } from "./source-context.mjs"
 
 // Validate the original CLI protocol rather than regenerating today's prompt.
@@ -109,6 +114,11 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
       request.messages?.length !== 2 ||
       request.messages[0].role !== "system" ||
       request.messages[1].role !== "user" ||
+      Object.hasOwn(
+        request.format?.properties?.claims?.items?.properties?.evidence?.items?.properties || {},
+        "quote",
+      ) !==
+        ((budget.evidence_quote_mode ?? "model_quote") === "model_quote") ||
       request.format?.properties?.claims?.maxItems !== budget.facts_per_batch
     )
       throw Error("CLI extraction model request/response provenance changed")
@@ -205,6 +215,9 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
           }),
       block_map_sha256: provenance.block_map_sha256,
       extraction_budget: provenance.extraction_budget,
+      ...(Object.hasOwn(provenance, "source_coverage")
+        ? { source_coverage: describeExtractionCoverage(claims, parses, plan.scope.profile) }
+        : {}),
       extraction_plan: plan,
     },
     requires_fact_review: true,

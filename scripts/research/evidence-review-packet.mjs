@@ -2,7 +2,12 @@ import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
 import { assessWindowEvidenceCheckpoint } from "./window-evidence-assessment.mjs"
-import { validateEvidence, recordFactReview, assertVerifiedClaim } from "./claims.mjs"
+import {
+  validateEvidence,
+  recordFactReview,
+  assertVerifiedClaim,
+  describeExtractionCoverage,
+} from "./claims.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 
@@ -79,6 +84,16 @@ export async function loadBoundAssessment(root, run, claims, documents, parses) 
 }
 
 export function factReviewPacket(run, input, extracted, documents, parses, assessment) {
+  let coverage
+  if (Object.hasOwn(extracted.provenance || {}, "source_coverage")) {
+    coverage = describeExtractionCoverage(
+      extracted.claims,
+      parses,
+      extracted.provenance.extraction_plan?.scope?.profile ?? "full_source",
+    )
+    if (JSON.stringify(coverage) !== JSON.stringify(extracted.provenance.source_coverage))
+      throw Error("Extraction source coverage changed")
+  }
   return {
     schema: "research-fact-review-packet/v1",
     run,
@@ -87,6 +102,7 @@ export function factReviewPacket(run, input, extracted, documents, parses, asses
     claims_sha256: sha256(JSON.stringify(extracted.claims)),
     documents_sha256: sha256(JSON.stringify(documents)),
     parses_sha256: sha256(JSON.stringify(parses)),
+    ...(coverage ? { source_coverage: coverage } : {}),
     assessment: {
       run: input.assessment_run,
       record_sha256: sha256(JSON.stringify(assessment)),

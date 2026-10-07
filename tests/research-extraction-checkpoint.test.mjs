@@ -12,7 +12,7 @@ import { buildArchiveClosure } from "../scripts/research/archive-closure.mjs"
 
 // Controlled protocol fixtures; production evidence is checked separately with
 // stored Ollama request/response records, without substituting this provider.
-async function fixture(t, { split = false, empty = false } = {}) {
+async function fixture(t, { split = false, empty = false, quoteMode } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "cli-extraction-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const run = "cli",
@@ -78,6 +78,8 @@ async function fixture(t, { split = false, empty = false } = {}) {
         options: { num_ctx: input.num_ctx, num_predict: input.num_predict, temperature: 0 },
         keep_alive: "5m",
       }
+      if (quoteMode === "source_block")
+        output.claims.forEach((claim) => claim.evidence.forEach((e) => delete e.quote))
       const response_content = JSON.stringify(output)
       return {
         output,
@@ -109,6 +111,7 @@ async function fixture(t, { split = false, empty = false } = {}) {
       candidate_key: `source-${source_id}`,
       model: "fixture:27b",
       think: false,
+      ...(quoteMode ? { evidence_quote_mode: quoteMode } : {}),
       ...(split ? { max_blocks_per_batch: 1 } : {}),
       checkpoint: (id, request, action) => state.stage("claims-batch-" + id, { request }, action),
     }),
@@ -116,13 +119,27 @@ async function fixture(t, { split = false, empty = false } = {}) {
   return { root, run, documents: [doc], parses: [parse], state: state.state }
 }
 
-for (const options of [{}, { split: true }, { empty: true }])
+for (const options of [{}, { split: true }, { empty: true }, { quoteMode: "source_block" }])
   test(`completed CLI extraction is reusable with ${JSON.stringify(options)} and no provider call`, async (t) => {
     const f = await fixture(t, options)
     const expected = fs.readFileSync(path.join(f.root, "runs/cli/claims.json"))
     assert.deepEqual(loadCompletedExtraction(f.root, f.run, f.documents, f.parses), expected)
     assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/cli/claims.json")), expected)
   })
+
+test("CLI reuse recomputes quote coverage even if a stored result hash was updated", async (t) => {
+  const f = await fixture(t)
+  const claims = readJSON(f.root, "runs/cli/claims.json")
+  claims.provenance.source_coverage.semantic_completeness_verified = true
+  atomicWrite(f.root, "runs/cli/claims.json", claims)
+  const state = readJSON(f.root, "runs/cli/state.json")
+  state.stages.claims.result_hash = sha256(JSON.stringify(claims))
+  atomicWrite(f.root, "runs/cli/state.json", state)
+  assert.throws(
+    () => loadCompletedExtraction(f.root, f.run, f.documents, f.parses),
+    /differs from completed model output/,
+  )
+})
 
 test("a completed historical prompt is reused without requiring today's prompt or schema descriptions", async (t) => {
   const f = await fixture(t),

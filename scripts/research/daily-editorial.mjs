@@ -442,7 +442,11 @@ export async function processDailyEditorial({
       result.status = rows.some((r) => r.status === "failed")
         ? "partial"
         : execute
-          ? "review_pending"
+          ? rows.every((r) => r.status === "already_in_edition")
+            ? "completed_no_new_articles"
+            : rows.every((r) => ["approval_ready", "already_in_edition"].includes(r.status))
+              ? "approval_ready"
+              : "review_pending"
           : "planned"
       result.publication_handoff = {
         path: handoffPath,

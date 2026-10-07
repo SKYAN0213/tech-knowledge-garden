@@ -147,7 +147,13 @@ function fixture(
             {
               ...fields,
               evidence: [
-                { block_key: data[0].blocks[0].block_key, quote: text, support: "direct" },
+                {
+                  block_key: data[0].blocks[0].block_key,
+                  ...(this.executionPolicy.settings.evidence_quote_mode === "source_block"
+                    ? {}
+                    : { quote: text }),
+                  support: "direct",
+                },
               ],
             },
           ],
@@ -247,6 +253,24 @@ test("fresh-source processing invokes extraction then assessment but never auto-
       .max_blocks_per_batch,
     4,
   )
+})
+
+test("fresh-source block selection flows through assessment and explicit review without re-generation", async (t) => {
+  const f = fixture(t, { extracted: false })
+  f.policy.roles.fact_extract.evidence_quote_mode = "source_block"
+  fs.writeFileSync(f.policyFile, JSON.stringify(f.policy))
+  const result = await processSourceRun(f.options)
+  assert.equal(result.status, "fact_review")
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
+  const extracted = readJSON(f.root, "runs/processed/claims.json")
+  assert.equal(extracted.provenance.extraction_budget.evidence_quote_mode, "source_block")
+  assert.equal(extracted.claims[0].evidence[0].quote, f.claim.evidence[0].quote)
+  assert.equal(extracted.claims[0].review.status, "unreviewed")
+  assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+  const { packet } = await loadFactReviewPacket(f.root, "processed")
+  assert.deepEqual(packet.source_coverage, extracted.provenance.source_coverage)
+  await processSourceRun(f.options)
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
 })
 
 test("long-source processing retains all blocks and requires full-context resolution before writing", async (t) => {
@@ -1720,6 +1744,7 @@ test("daily editorial resumes native fact review, writing, explicit approval and
     editorialReviewFiles: { [f.key]: editorial },
   })
   assert.equal(complete.results[0].status, "approval_ready")
+  assert.equal(complete.status, "approval_ready")
   const approved = readJSON(f.root, complete.publication_handoff.path).approved_runs
   assert.equal(approved.length, 1)
   assert.equal(approved[0].event_id, "1234567890abcdef")
@@ -1888,6 +1913,7 @@ test("daily editorial reuses prior native candidate approvals and excludes artic
     },
   })
   assert.equal(result.results[0].status, "already_in_edition")
+  assert.equal(result.status, "completed_no_new_articles")
   assert.equal(result.results[0].approval.current_source_matches, false)
   assert.equal(
     result.results[0].approval.candidate_approval.path,
@@ -1898,6 +1924,7 @@ test("daily editorial reuses prior native candidate approvals and excludes artic
   const status = loadDailyProcessingStatus(f.root).runs.find((r) => r.run_id === "editorial")
   assert.equal(status.stage_kind, "editorial")
   assert.equal(status.counts.already_in_edition, 1)
+  assert.equal(status.status, "completed_no_new_articles")
   const handoff = readJSON(f.root, result.publication_handoff.path)
   handoff.input_sha256 = "0".repeat(64)
   atomicWrite(f.root, result.publication_handoff.path, handoff)

@@ -11562,3 +11562,15 @@ private `remote-delivery/write-batches/BATCH_ID.json`에 전체 승인 operation
 `preview --publication-handoff`로 생성한 결과에는 `daily_editorial_handoff`가 고정된다. `research-authoring prepare/release`는 이 handoff를 다시 native 검증하며, 동시에 명시적 approved-run 목록을 전달하지 않는다. 직접 승인 ID로 만든 기존 preview의 경로는 유지한다. handoff 내용·장부·원문 판본이 바뀌면 기존 실패를 보존하고 변경 원인을 검토한다. 검증기를 우회하거나 parent 입력을 수정하지 않는다.
 
 renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기사와 완료 모델 결과를 재사용한다. 새 Drive 전체 snapshot은 실제 raw 조회 시각을 유지한다. 준비/릴리스의 실패 때문에 원문 수집·추출·작성·승인을 다시 실행하지 않는다. 이번 통합 결함은 관련13검사와 실제 Kawasaki 실행으로 확인하며 새 정규 운영 횟수와 분리한다.
+
+## 489. 원문 문단 선택으로 인용문 생성 생략
+
+`roles.fact_extract.evidence_quote_mode`는 `model_quote` 또는 `source_block`이다. 미지정은 기존 model_quote다. source_block에서 모델의 evidence JSON은 `{block_key, support}`이며 quote를 포함하면 Schema 오류다. 저장하는 claim의 기존 evidence 형식에는 원문 문단 전체를 quote로 붙인다. 원문·판본·parse·문단 ID와 당시 요청/응답은 함께 보존한다. claim의 뜻·숫자 조건·계획과 완료·회사 설명 귀속은 기존 검증과 직접 원문 검토의 대상이다. 정확한 인용문을 가져오는 기능은 의미 승인 기능이 아니다.
+
+새 추출의 `provenance.source_coverage`와 fact-review packet의 동일 정보는 원문에서 다시 계산한다. 인용되지 않은 선택 문단과 future development·consent 등의 조건 단서를 검토 보조로 보여준다. 모든 문단을 인용했더라도 claim 문장에서 조건을 생략할 수 있으므로 completeness는 항상 미확정이다. 기존 checkpoint는 필드 없이 그대로 검증·재사용하며, 이미 승인된 원고를 새 추출로 교체하지 않는다.
+
+일일 편집 완료 상태는 `completed_no_new_articles`이고 새 승인 원고 준비는 `approval_ready`다. 후보별 `already_in_edition`과 실제 원문 판본·승인·회차 연결을 확인한 뒤 표시한다. 이미 발행된 실행을 다시 처리하지 않고 새 편집 wrapper에서 결과를 재사용한다. 신규 RSS 회차·모델 호출·승인·발행·정규 운영 횟수를 만들지 않는다.
+
+동일 Kawasaki 공식 원문17문단의 실제 개발 실행은 model_quote86,578ms에서 source_block68,745ms로 바뀌었다. 각각 한 번의 관측이며 프롬프트와 인용 프로토콜이 함께 바뀌었으므로 보편적인 속도 개선율로 사용하지 않는다. source_block 원출력에는 quote 필드가 없고 저장된 인용문은 원문과 같다. 원문 기준8사실의 native 개발 판정은 완전3·부분5·누락0, 구조5/6이다. 가정으로의 사업 확장을 완료로 분류한 오류와 개인화·관찰·일상 지원·정보관리의 상세 누락이 남아 raw_model_pass=false다. 인용문 변경 오류와 의미 오류를 분리하며 새 원출력에 승인·원고 작성·발행을 하지 않았다.
+
+기존 CLI 결과의 native 재사용에서 추가 수집·모델 호출0을 확인했다. 새 일일 편집 wrapper는 실제 승인·회차 연결을 검증한 뒤 `completed_no_new_articles`로 종료했고 모델 호출0·신규 발행false다. 최초 표적69개 중67통과와2실패를 보존했다. 새 오류 메시지의 정확한 필드 경로와 기존 진행형 예제를 복원한 뒤 실패 표적만 통과시켰다. 공통 source-processing→assessment→명시적 review packet→재개 연결의 추가 검사1개도 통과했다. 전체 suite는 최종 릴리스 CI에서 한 번 수행한다. 이번 변경은 필수 WBS3/22·부분17·미착수2, 남은 소급33회차/335구간·복구2건, 독립human0/40+0/20·새 정규0/7을 바꾸지 않는다. 실제 근거는 외장 `tkg-daily-core-20261007-v1/core-source-block-*`, `core-kawasaki-source-block-*`, `core-kawasaki-terminal-continuation-v1.json`에 있다.

@@ -84,6 +84,34 @@ function runtime({ mutateMetadata, chat, clock } = {}) {
     },
   }
 }
+test("source-block evidence is an explicit extraction-only policy with legacy defaults preserved", () => {
+  const p = {
+    schema: "model-execution-policy/v1",
+    roles: { fact_extract: { ...role, evidence_quote_mode: "source_block" } },
+  }
+  assert.equal(validateModelPolicy(p).roles.fact_extract.evidence_quote_mode, "source_block")
+  assert.equal(
+    Object.hasOwn(
+      validateModelPolicy({ schema: p.schema, roles: { fact_extract: { ...role } } }).roles
+        .fact_extract,
+      "evidence_quote_mode",
+    ),
+    false,
+  )
+  assert.throws(
+    () =>
+      validateModelPolicy({
+        ...p,
+        roles: { fact_extract: { ...role, evidence_quote_mode: "repair" } },
+      }),
+    /quote mode/,
+  )
+  assert.throws(
+    () => validateModelPolicy(policy({ evidence_quote_mode: "source_block" })),
+    /Unknown model role setting/,
+  )
+})
+
 test("role policy rejects unknown fields, cloud models, strings as booleans and invalid budgets", () => {
   assert.equal(validateModelPolicy(policy()).roles.article_write.think, false)
   for (const settings of [

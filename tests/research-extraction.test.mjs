@@ -10,7 +10,10 @@ import {
   extractionCandidateKey,
   selectExtractionScope,
   validateEvidence,
+  describeExtractionCoverage,
+  mapExtractionBatch,
 } from "../scripts/research/claims.mjs"
+import { factReviewPacket } from "../scripts/research/evidence-review-packet.mjs"
 import { atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { main } from "../scripts/research.mjs"
 
@@ -30,6 +33,104 @@ function parse(id, count = 1, length = 50) {
     quality: { missing_pages: [] },
   }
 }
+test("source-block evidence copies immutable source text without model quote generation", async () => {
+  const source = parse("block-quote", 2)
+  source.blocks[0].text = 'The company completed "CareBot". Features include future development.'
+  source.blocks[0].locator.text_hash = sha256(source.blocks[0].text)
+  const requests = []
+  const result = await extractClaims(
+    {
+      structured: async (request) => {
+        requests.push(request)
+        const value = response(request)
+        value.output.claims[0].evidence.forEach((e) => delete e.quote)
+        return value
+      },
+    },
+    [source],
+    { candidate_key: "sample", evidence_quote_mode: "source_block" },
+  )
+  assert.equal(requests.length, 1)
+  assert.deepEqual(requests[0].schema.properties.claims.items.properties.evidence.items.required, [
+    "block_key",
+    "support",
+  ])
+  assert.equal(result.claims[0].evidence[0].quote, source.blocks[0].text)
+  assert.equal(result.claims[0].review.status, "unreviewed")
+  assert.equal(result.provenance.extraction_budget.evidence_quote_mode, "source_block")
+  const plan = planExtractionBatches([source], { evidence_quote_mode: "source_block" })
+  const inventedQuote = response(plan.batches[0].request).output
+  assert.throws(
+    () => mapExtractionBatch(inventedQuote, plan.batches[0], plan.blocks),
+    /Unexpected field at \$\.claims\[0\]\.evidence\[0\]\.quote/,
+  )
+  assert.throws(
+    () => planExtractionBatches([source], { evidence_quote_mode: "repair_quotes" }),
+    /quote mode/,
+  )
+})
+
+test("source coverage exposes uncited scope notes and rejects mismatched quote identities", () => {
+  const source = parse("scope-notes", 3)
+  const texts = [
+    'The company introduced "CareBot" as a completed prototype.',
+    "The listed features include functions for future development.",
+    "Data sharing is subject to user consent.",
+  ]
+  source.blocks.forEach((block, i) => {
+    block.text = texts[i]
+    block.locator.text_hash = sha256(block.text)
+  })
+  const reference = (index, quote = texts[index]) => ({
+    source_id: source.source_id,
+    source_version_id: source.source_version_id,
+    parse_id: source.parse_id,
+    block_id: source.blocks[index].block_id,
+    quote,
+  })
+  const claims = [
+    { claim_id: "valid", evidence: [reference(0)] },
+    { claim_id: "altered-quote", evidence: [reference(1, "future implementation")] },
+    { claim_id: "wrong-version", evidence: [{ ...reference(2), source_version_id: "old" }] },
+  ]
+  const report = describeExtractionCoverage(claims, [source])
+  assert.equal(report.selected_blocks, 3)
+  assert.equal(report.unquoted_selected_blocks, 2)
+  assert.equal(report.condition_attention_blocks, 2)
+  assert.deepEqual(report.blocks[0].quoted_by_claim_ids, ["valid"])
+  assert.deepEqual(report.blocks[1].unmatched_reference_claim_ids, ["altered-quote"])
+  assert.deepEqual(report.blocks[2].quoted_by_claim_ids, [])
+  assert.ok(report.blocks[2].unquoted_condition_cues.includes("user consent"))
+  assert.equal(report.semantic_completeness_verified, false)
+  assert.equal(report.requires_explicit_source_review, true)
+  const complete = describeExtractionCoverage(
+    [...claims, { claim_id: "scope", evidence: [reference(1), reference(2)] }],
+    [source],
+  )
+  assert.equal(complete.condition_attention_blocks, 0)
+  assert.equal(complete.semantic_completeness_verified, false)
+})
+
+test("fact-review packets bind new coverage without rewriting older packets", () => {
+  const source = parse("packet-coverage")
+  const extracted = { claims: [], provenance: {} }
+  const documents = [
+    { source_version_id: source.source_version_id, original_url: "https://example.com/news" },
+  ]
+  const assessment = { input_sha256: "unchanged", assessments: [] }
+  const input = { source_run: "stored", assessment_run: "comparison" }
+  const old = factReviewPacket("review", input, extracted, documents, [source], assessment)
+  assert.equal(Object.hasOwn(old, "source_coverage"), false)
+  extracted.provenance.source_coverage = describeExtractionCoverage([], [source])
+  const current = factReviewPacket("review", input, extracted, documents, [source], assessment)
+  assert.deepEqual(current.source_coverage, extracted.provenance.source_coverage)
+  extracted.provenance.source_coverage.unquoted_selected_blocks = 0
+  assert.throws(
+    () => factReviewPacket("review", input, extracted, documents, [source], assessment),
+    /coverage changed/,
+  )
+})
+
 test("numeric evidence comparison ignores English capitalization but still requires the quoted condition", () => {
   const source = parse("case-fold")
   const quote =
@@ -169,7 +270,10 @@ test("structured source fields reach extraction without losing body versus metad
   const plan = planExtractionBatches([source])
   const request = plan.batches[0].request
   const [document] = JSON.parse(request.messages[1].content)
-  assert.deepEqual(document.blocks.map((block) => [block.source_field, block.text]), fields)
+  assert.deepEqual(
+    document.blocks.map((block) => [block.source_field, block.text]),
+    fields,
+  )
   assert.deepEqual(source, original)
   assert.deepEqual(
     document.blocks.map((block) => plan.blocks.get(block.block_key).block_id),
@@ -184,7 +288,9 @@ test("structured source fields reach extraction without losing body versus metad
 test("non-JSON sources do not acquire a guessed structured field", () => {
   const source = parse("unstructured-source")
   source.blocks[0].locator.json_pointer = "/published_at"
-  const [document] = JSON.parse(planExtractionBatches([source]).batches[0].request.messages[1].content)
+  const [document] = JSON.parse(
+    planExtractionBatches([source]).batches[0].request.messages[1].content,
+  )
   assert.equal(Object.hasOwn(document.blocks[0], "source_field"), false)
 })
 function researchPaper(id = "paper") {

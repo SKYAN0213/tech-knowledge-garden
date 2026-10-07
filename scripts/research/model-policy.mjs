@@ -30,6 +30,7 @@ const extractionFields = [
   "max_blocks_per_batch",
   "extraction_timeout_ms",
   "extraction_scope",
+  "evidence_quote_mode",
 ]
 const object = (value) => value && typeof value === "object" && !Array.isArray(value)
 
@@ -95,6 +96,7 @@ function roleSettings(role, input) {
         facts_per_batch: settings.facts_per_batch,
         max_blocks_per_batch: settings.max_blocks_per_batch,
         extraction_timeout_ms: settings.extraction_timeout_ms ?? settings.total_timeout_ms,
+        evidence_quote_mode: settings.evidence_quote_mode,
       }),
     )
   return settings

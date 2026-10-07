@@ -196,6 +196,7 @@ export async function processSourceRun({
               "max_blocks_per_batch",
               "call_timeout_ms",
               "extraction_timeout_ms",
+              "evidence_quote_mode",
             ]
               .map((key) => [key, settings[key]])
               .filter(([, value]) => value !== undefined),

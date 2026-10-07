@@ -1132,13 +1132,16 @@ export async function main(argv = process.argv.slice(2)) {
     v.think = settings.think
     if (command === "extract") {
       extractionScope = settings.extraction_scope ?? extractionScope
-      budget = extractionBudget(
-        Object.fromEntries(
+      budget = extractionBudget({
+        ...Object.fromEntries(
           budgetFields
             .map((field) => field.replaceAll("-", "_"))
             .map((key) => [key, settings[key]]),
         ),
-      )
+        ...(settings.evidence_quote_mode
+          ? { evidence_quote_mode: settings.evidence_quote_mode }
+          : {}),
+      })
     }
   }
   if (command === "knowledge-draft")

@@ -18,7 +18,8 @@
       "total_timeout_ms": 900000,
       "input_char_budget": 20000,
       "facts_per_batch": 6,
-      "extraction_timeout_ms": 900000
+      "extraction_timeout_ms": 900000,
+      "evidence_quote_mode": "source_block"
     },
     "article_write": {
       "model": "qwen3.8:27b-mlx",
