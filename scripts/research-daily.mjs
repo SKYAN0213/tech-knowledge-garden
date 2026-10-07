@@ -1,5 +1,9 @@
 import { parseArgs } from "node:util"
-import { dailyScan, reconcileSupplementalScan } from "./research/daily-scan.mjs"
+import {
+  dailyScan,
+  reconcileSupplementalScan,
+  reconcileDailyEdition,
+} from "./research/daily-scan.mjs"
 import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 
 const { values } = parseArgs({
@@ -13,6 +17,7 @@ const { values } = parseArgs({
     backlog: { type: "string" },
     "drive-snapshot": { type: "string" },
     "reconcile-scan": { type: "string" },
+    "reconcile-edition": { type: "boolean", default: false },
     "plan-only": { type: "boolean", default: false },
     execute: { type: "boolean", default: false },
     resume: { type: "boolean", default: false },
@@ -21,17 +26,26 @@ const { values } = parseArgs({
 })
 const modes = ["plan-only", "execute", "resume", "handoff"].filter((mode) => values[mode])
 if (values["reconcile-scan"]) modes.push("reconcile")
+if (values["reconcile-edition"]) modes.push("reconcile-edition")
 if (!values.run || modes.length !== 1)
   throw Error(
-    "Usage: research-daily.mjs --run ID --plan-only|--execute|--resume|--handoff [--drive-snapshot complete-export.json] | --run ID --reconcile-scan STORED_SCAN_RUN",
+    "Usage: research-daily.mjs --run ID --plan-only|--execute|--resume|--handoff [--drive-snapshot complete-export.json] | --run ID --reconcile-scan STORED_SCAN_RUN | --run ID --reconcile-edition --vault PATH",
   )
-if (modes[0] === "reconcile" && values["drive-snapshot"])
-  throw Error("Drive snapshot is not supported for scan reconciliation")
+if (["reconcile", "reconcile-edition"].includes(modes[0]) && values["drive-snapshot"])
+  throw Error("Drive snapshot is not supported for reconciliation")
 if (modes[0] !== "reconcile" && values["reconcile-scan"])
   throw Error("--reconcile-scan is only supported for scan reconciliation")
 const root = values.root || DEFAULT_ROOT
 await withGardenOperationLock(root, async () => {
-  if (modes[0] === "reconcile") {
+  if (modes[0] === "reconcile-edition") {
+    console.log(
+      JSON.stringify(
+        await reconcileDailyEdition({ root, runId: values.run, vault: values.vault || "vault" }),
+        null,
+        2,
+      ),
+    )
+  } else if (modes[0] === "reconcile") {
     const options = {
       reconciliationRun: values.run,
       scanRun: values["reconcile-scan"],

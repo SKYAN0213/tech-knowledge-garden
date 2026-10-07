@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { loadEditorialContext } from "./editorial-context.mjs"
 
 const id = (value) => {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(value || "")) throw Error("Exact daily collection ID required")
@@ -153,6 +154,13 @@ export function loadShadowHandoffBasis(root, ref) {
     throw Error("Frozen collection receipts and summary differ from handoff")
   if (basis.backlog) pinnedBytes(root, basis.backlog)
   if (basis.coverage) pinnedBytes(root, basis.coverage)
+  if (handoff.inputs.editorial_context)
+    loadEditorialContext(
+      root,
+      JSON.parse(pinnedBytes(root, basis.plan)),
+      handoff.inputs.edition_inventory_sha256,
+      handoff.inputs.editorial_context,
+    )
   return basis
 }
 

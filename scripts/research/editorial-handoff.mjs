@@ -13,6 +13,7 @@ import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { validateListingSupportRelations } from "./supporting-sources.mjs"
 import { parseResearchDate } from "./dates.mjs"
+import { loadEditorialContext } from "./editorial-context.mjs"
 import { collectedCandidateReceipt } from "./scan-completion.mjs"
 import {
   readDailyReceipts,
@@ -589,8 +590,10 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
   })
   if (!plan.edition?.inventory_sha256)
     throw Error("Stored daily plan lacks an edition inventory pin; plan a new run")
-  if (plan.edition.inventory_sha256 !== sha256(JSON.stringify(inventory)))
-    throw Error("Local edition inventory changed after daily planning; reconcile with a new run")
+  const context =
+    plan.edition.inventory_sha256 !== sha256(JSON.stringify(inventory))
+      ? loadEditorialContext(root, plan, sha256(JSON.stringify(inventory)))
+      : null
   const observedAt = receipts.length
     ? receipts
         .map((receipt) => receipt.finished_at)
@@ -611,7 +614,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     return receipt ? [window] : []
   })
   const handoff = buildEditorialHandoff({
-    plan,
+    plan: context ? { ...plan, edition: context.value.current_edition } : plan,
     receipts,
     observations,
     backlog,
@@ -625,6 +628,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
   })
   const input = {
     plan_sha256: sha256(fs.readFileSync(safePath(root, prefix + "plan.json"))),
+    ...(context ? { editorial_context: context.reference } : {}),
     receipts_sha256: sha256(JSON.stringify(receipts)),
     backlog_sha256: backlogBytes ? sha256(backlogBytes) : null,
     edition_inventory_sha256: sha256(JSON.stringify(inventory)),
@@ -650,6 +654,7 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
         fs.readFileSync(new URL("../research-window.mjs", import.meta.url)),
         fs.readFileSync(new URL("./intake-ontology.mjs", import.meta.url)),
         fs.readFileSync(new URL("./daily-scan.mjs", import.meta.url)),
+        fs.readFileSync(new URL("./editorial-context.mjs", import.meta.url)),
         fs.readFileSync(new URL("../article-identity.mjs", import.meta.url)),
       ]
         .map((bytes) => sha256(bytes))

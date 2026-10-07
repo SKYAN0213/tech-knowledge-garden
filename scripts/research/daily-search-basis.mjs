@@ -2,6 +2,7 @@ import fs from "node:fs"
 import { coverageGrid } from "./discovery.mjs"
 import { sha256 } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
+import { loadEditorialContext } from "./editorial-context.mjs"
 import {
   DAILY_CONFIG,
   dailySources,
@@ -74,10 +75,15 @@ export function loadDailySearchBasis(
   const local = localEditionSnapshot(vault)
   if (
     plan.edition?.cutoff !== local.cutoff ||
-    plan.edition?.inventory_sha256 !== local.inventory_sha256 ||
-    plan.edition?.file_sha256 !== local.file_sha256
+    plan.edition?.edition !== local.edition ||
+    (plan.edition?.inventory_sha256 === local.inventory_sha256 &&
+      plan.edition?.file_sha256 !== local.file_sha256)
   )
     throw Error("Daily search basis no longer matches the local edition inventory")
+  const context =
+    plan.edition.inventory_sha256 !== local.inventory_sha256
+      ? loadEditorialContext(root, plan, local.inventory_sha256)
+      : null
   const receipts = readDailyReceipts(root, runId)
   verifyDailyReceipts(root, plan, receipts)
   const { activeRoutes } = dailySources(configFile)
@@ -88,11 +94,12 @@ export function loadDailySearchBasis(
       schema: "research-daily-search-basis/v1",
       daily_run: runId,
       kst_day: plan.kst_day,
-      authority: plan.edition.authority,
+      authority: context ? context.value.current_edition.authority : plan.edition.authority,
       plan_sha256: sha256(fs.readFileSync(planPath)),
       summary_sha256: sha256(fs.readFileSync(summaryPath)),
       receipts_sha256: sha256(JSON.stringify(receipts)),
       edition_inventory_sha256: local.inventory_sha256,
+      ...(context ? { editorial_context: context.reference } : {}),
     },
   }
 }

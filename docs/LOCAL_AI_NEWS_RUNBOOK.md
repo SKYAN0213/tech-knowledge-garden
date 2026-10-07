@@ -1,5 +1,20 @@
 # 로컬 AI 뉴스 시스템: 현재 구현과 실행 가이드
 
+## 같은 조사 기간에서 수정된 작성본 연결
+
+수집 뒤 소급 수정으로 회차 본문이나 과거 회차 inventory가 달라졌다면 원문을 다시 수집하지 않는다. 최신 회차 경로와 coverage_end가 기존 계획과 같을 때만 명시적으로 편집 입력을 갱신한다.
+
+```bash
+node scripts/research-daily.mjs --run DAILY_ID --root /absolute/private-root \
+  --vault /absolute/vault --reconcile-edition
+node scripts/research-daily.mjs --run DAILY_ID --root /absolute/private-root \
+  --vault /absolute/vault --backlog /absolute/backlog.json --handoff
+```
+
+첫 명령은 원래 plan을 보존하고 변경된 작성본의 경로·SHA·본문 SHA를 immutable editorial-context에 고정한다. 두 번째 명령은 기존 원문·parse·receipt·중복 판정을 재사용해 새 편집 인계를 만든다. 동일 입력은 context를 재사용하며 frozen handoff는 이후 active pointer가 바뀌어도 당시 context를 읽는다. 새 회차나 cutoff 변경은 새 수집 계획이 필요하다. 변경된 작성본은 local_vault_unreconciled이며 기존 Drive 권한을 승계하지 않는다. 승인·Drive·공개 검증은 기존 절차를 따른다.
+
+가속화 단위는 기존 수집 결과 → 실제 원고 → 승인 → 배포다. 통과한 환경 설치·상태 복구를 다음 구현으로 반복하지 않는다. 변경 없는 원문·추출·검토 결과는 재사용하고, 변경 묶음의 표적 검사와 최종 릴리스 CI를 각각 한 번 실행한다. 누락된 복구 의존성은 기존 private WBS에 원인·재개 지점을 기록하고, 자료가 완전한 canonical 작업 경로에서 독립 가능한 기사 처리를 진행한다.
+
 2026-10-06 진행 checkpoint: 공통 inline discovery 검토 계약과 관련42개 표적 검사를 완료했다. Groq 릴리스2개/5사실을 원문 대조해 기존7월12일3회차22구간의 preview를 승인했다. 새 source snapshot의208raw/16폴더가 기준선과 일치했고 기존Drive ID3개를 각각 update1회 했다. 실제 post raw와 공통 write-session은 verified_complete3/pending0/conflict0/미해결intent0이다. canonical 반영·e7c9edb 공개 배포·통합903검사·공개14파일·대상UI·WebsiteData11raw를 확인했다. 현재미판정50/483·전체목표active다. [계획19.319](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19319-본문-발견-경로-구분과-7월-12일-소급-묶음).
 
 2026-10-06 후속: 발표일 검토 후보의 사실 처리, GitHub scoped tag 파싱, 장문 입력 사전 차단을 `516ce68`에 반영했다. Actions37352329442의 Node902/902·Python15+2·build/site/deploy와 공개12파일 exact bytes를 확인했다. Frontiers 원문130블록/29후보는 보존하며 새 장문 재개는 모델 호출0으로 중단한다. 장문 전체 대조는 남은 작업이다. 실제 Groq 릴리스2건의 UTC 시각은 추가 HTTP 없이 복원했다. FDA 공식 원문12블록을 직접 검토해8사실을 확인했고, 원인용 표기1개를 복원한 뒤 누락된 대조1배치만 실행했다. 완료된 추출·대조를 재사용해 로컬 기사 작성과 GPT 편집 승인을 완료했다. 공청회로 잘못 표현한 제목과6문장/반복 초안을 고쳐3문장 리드·2설명으로 승인했으며 원출력과 수정 이력을 보존했다. Private Drive `1GqUmvpXOtAD1FVvOVV8s-AInc26QfVg1`의247,314bytes/SHA07402b9f…와 실제71파일 복구·8사실·승인 원고를 검증했다. 사건61b4373c4f6f0682의 후보 승인·보관 위치 조회와 daily-linked-v4의approval_ready1/model_calls0을 확인했다. 증거는 외장 `tkg-daily-core-20261006-v1`과 `daily-20261006-fda-processing-v3`에 보존한다. 잘못된 archive related-run 및 observation schema 입력은 거부됐고 정확한 공통 계약으로 수정했다. 새 공개 기사·정규 회차는0, 전체 목표 active/WBS2/22·구형53회차505구간·metadata10·human40/20·정규7회·08시/full runtime은 남는다. [계획19.318](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#19318-당일-후보-처리공통-릴리스-파싱장문-사전-차단).

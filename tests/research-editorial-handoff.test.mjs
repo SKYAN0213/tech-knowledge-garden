@@ -10,7 +10,11 @@ import {
 import { main } from "../scripts/research.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
-import { dailyScan, storedListScan } from "../scripts/research/daily-scan.mjs"
+import {
+  dailyScan,
+  storedListScan,
+  reconcileDailyEdition,
+} from "../scripts/research/daily-scan.mjs"
 import { articleContentFingerprint, storeParseArtifact } from "../scripts/research/parser.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 
@@ -940,6 +944,37 @@ test("daily execution creates a private handoff and resume leaves it unchanged",
   assert.deepEqual(
     fs.readFileSync(path.join(root, driveResult.editorial_handoff.path)),
     originalHandoff,
+  )
+  const originalPlan = fs.readFileSync(path.join(root, `daily/runs/${driveRun}/plan.json`))
+  const context = await reconcileDailyEdition({ root, runId: driveRun, vault })
+  const reconciled = await dailyScan({ ...options, runId: driveRun, mode: "handoff" })
+  const reconciledHandoff = readJSON(root, reconciled.path)
+  assert.equal(reconciledHandoff.authority, "local_vault_unreconciled")
+  assert.equal(reconciledHandoff.drive_verified, false)
+  assert.deepEqual(reconciledHandoff.inputs.editorial_context, {
+    path: context.path,
+    sha256: context.sha256,
+  })
+  assert.notEqual(reconciled.path, driveResult.editorial_handoff.path)
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, `daily/runs/${driveRun}/plan.json`)),
+    originalPlan,
+  )
+  assert.deepEqual(
+    fs.readFileSync(path.join(root, driveResult.editorial_handoff.path)),
+    originalHandoff,
+  )
+  loadShadowHandoffBasis(root, reconciled.shadow_collection_basis)
+  const callsBefore = calls.length
+  const reused = await reconcileDailyEdition({ root, runId: driveRun, vault })
+  assert.equal(reused.reused, true)
+  assert.equal(calls.length, callsBefore, "editorial reconciliation makes no source requests")
+  fs.appendFileSync(path.join(vault, "Editions/2026-09-29.md"), "\nCorrected source-backed text.\n")
+  await reconcileDailyEdition({ root, runId: driveRun, vault })
+  loadShadowHandoffBasis(root, reconciled.shadow_collection_basis)
+  assert.notEqual(
+    (await dailyScan({ ...options, runId: driveRun, mode: "handoff" })).path,
+    reconciled.path,
   )
 })
 

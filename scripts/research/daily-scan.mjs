@@ -2,11 +2,12 @@ import fs from "node:fs"
 import path from "node:path"
 import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
-import { canonicalURL, editions } from "../garden.mjs"
+import { canonicalURL } from "../garden.mjs"
 import { registry, coverageGrid } from "./discovery.mjs"
 import { sha256, sourceId } from "./contracts.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { sourceFailureRetry, combineRetryFailures } from "./source-retry.mjs"
+import { editorialInventory, reconcileEditorialContext } from "./editorial-context.mjs"
 import {
   DEFAULT_ROOT,
   atomicCreate,
@@ -40,6 +41,11 @@ import {
 
 export const DAILY_CONFIG = "data/research-daily-routes.json"
 export const DAILY_BACKLOG = ".local/research/candidate-backlog.json"
+export function reconcileDailyEdition(options) {
+  return withLock(options.root || DEFAULT_ROOT, "daily-acquisition", () =>
+    reconcileEditorialContext({ ...options, root: options.root || DEFAULT_ROOT }),
+  )
+}
 function requireExplicitBacklog(root, backlogFile) {
   if (backlogFile === undefined && path.resolve(root) !== path.resolve(DEFAULT_ROOT))
     throw Error("A custom research root requires an explicit --backlog path")
@@ -106,6 +112,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/shadow-collection-basis.mjs",
     "scripts/pull-drive.py",
     "scripts/research/editorial-handoff.mjs",
+    "scripts/research/editorial-context.mjs",
     "scripts/research/contracts.mjs",
     "scripts/research/dates.mjs",
     "scripts/research/discovery.mjs",
@@ -160,21 +167,7 @@ export function dailySources(configFile = DAILY_CONFIG) {
 }
 
 export function localEditionSnapshot(vault = "vault") {
-  const all = editions(vault)
-  const latest = all.at(-1)
-  if (!latest?.meta.coverage_end || !Number.isFinite(Date.parse(latest.meta.coverage_end)))
-    throw Error("Latest local edition coverage_end required for discovery planning")
-  const inventory = all.map((edition) => ({
-    path: path.relative(vault, edition.file),
-    sha256: sha256(fs.readFileSync(edition.file)),
-  }))
-  return {
-    cutoff: latest.meta.coverage_end,
-    edition: latest.slug,
-    file_sha256: sha256(fs.readFileSync(latest.file)),
-    inventory_sha256: sha256(JSON.stringify(inventory)),
-    authority: "local_vault_unreconciled",
-  }
+  return editorialInventory(vault).snapshot
 }
 
 export function verifiedDriveEdition(snapshotFile, vault = "vault", { allowStale = false } = {}) {
