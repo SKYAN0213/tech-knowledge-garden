@@ -269,6 +269,56 @@ test("stored JSON-LD Article publication timestamps support explicit Seoul dates
   }
 })
 
+test("matching head metadata may corroborate an Article JSON-LD publication time", () => {
+  const s = fixture(),
+    timestamp = "2026-07-16T11:00:00+00:00"
+  s.p.parser = { id: "trafilatura" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      sources: [
+        { type: "meta", dom_path: "/html/head/meta[13]", attribute: "content", text: timestamp },
+        {
+          type: "json-ld",
+          script_index: 0,
+          node_type: ["BlogPosting"],
+          attribute: "datePublished",
+          text: timestamp,
+        },
+      ],
+    },
+  }
+  s.claims[0].published_at = timestamp
+  s.review.published_at = "2026-07-16"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-time",
+    source_published_at: timestamp,
+  })
+  for (const mutate of [
+    (p) => p.dates.basis.sources.pop(),
+    (p) => (p.dates.basis.sources[0].text = "2026-07-23T09:43:51+00:00"),
+    (p) => (p.dates.basis.sources[0].dom_path = "/html/body/meta[13]"),
+    (p) => (p.dates.basis.sources[0].attribute = "datetime"),
+    (p) => (p.dates.basis.sources[1].attribute = "dateModified"),
+    (p) => (p.dates.basis.sources[1].node_type = ["WebPage"]),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]))
+  }
+})
+
 test("JSON publication time requires an exact reviewed root field, not a record or observation date", () => {
   const s = fixture()
   const timestamp = "2026-07-13T22:04:00Z"

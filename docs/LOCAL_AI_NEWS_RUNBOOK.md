@@ -11517,3 +11517,5 @@ daily-scan의 기존6경로 pool에서 최근 이전 summary의 by_route.total_m
 integrated-v1 실제 wall1,055,986ms와 경로별 시간의 고정 재배치 FIFO1,055,549→814,580ms를 외장 `acceleration-observation-v1.json`에 보존했다. hint 조회34.58ms는 단발 실측, 재배치23% 감소는 실측 네트워크 속도 개선이 아니다. 수집을 되풀이하지 않았다. 표적 `node --test tests/research-daily-scan.test.mjs tests/research-daily-retry.test.mjs tests/research-daily-acquisition-status.test.mjs`37/37 통과(2.7초), 새 실행 순서·창 순서·완료 경로 재사용·잘못된 timing identity를 확인했다. 전체 suite/CI/공개 배포는 이번 묶음에서 실행하지 않았다.
 
 남은 디일렉9월29일~10월6일 창은20 access_restricted/awaiting_new_observation이다. 완료 창을 다시 수집하거나 회원 본문을 우회하지 않는다. 기존 config SHA로 고정된 계획도 새 코드의 계획으로 바꾸지 않는다. 다음 소급5회차는 기존 research-legacy-transition-batch/v1로 원문 검토 결과를 묶은 뒤 한 번에 Drive-first 저장/공개/원격 전달한다. 중간 운영 문서·전체 status 재생성·기사별 릴리스는 반복하지 않는다. 상세 WBS 완료 기준·원문과 승인 보존·독립 평가/7회 운영은 유지한다.
+
+소급 묶음에서 확인한 DeepMind 본문은 같은 게시 시각을 head meta와 BlogPosting JSON-LD에 함께 기록했다. 공통 event-date 검증은 유효한 Article 계열 datePublished가 반드시 하나 이상 있고 모든 보조 메타데이터의 시각이 같을 때만 이를 허용한다. 메타데이터만 있는 경우, dateModified, WebPage, 서로 다른 시각은 계속 거부한다. 실패를 재현한 뒤 event-date 표적11/11을 통과했다. 원문·모델 결과를 다시 수집하거나 생성하지 않고 기존 승인을 이어 갔다.

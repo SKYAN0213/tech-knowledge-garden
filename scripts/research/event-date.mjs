@@ -112,28 +112,36 @@ export function eventDateMetadata(review, used, parses, eventClaimIds = null) {
     // without a DOM path. Use only their bounded Article datePublished
     // records, all agreeing on the exact instant; never dateModified or an
     // arbitrary WebPage date. Stored parse/source bytes are checked upstream.
+    const articlePublicationSource = (source) =>
+      source.type === "json-ld" &&
+      Number.isInteger(source.script_index) &&
+      source.script_index >= 0 &&
+      source.script_index < 32 &&
+      source.attribute === "datePublished" &&
+      Array.isArray(source.node_type) &&
+      source.node_type.some(
+        (type) =>
+          typeof type === "string" &&
+          ["Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"].includes(
+            type.split("/").at(-1),
+          ),
+      ) &&
+      parseResearchDate(source.text)?.precision === "timestamp" &&
+      parseResearchDate(source.text)?.instant === stamp?.instant
     const structuredBasis =
       p?.parser?.id === "trafilatura" &&
       Array.isArray(basis?.sources) &&
       basis.sources.length > 0 &&
       basis.sources.length <= 32 &&
+      basis.sources.some(articlePublicationSource) &&
       basis.sources.every(
         (source) =>
-          source.type === "json-ld" &&
-          Number.isInteger(source.script_index) &&
-          source.script_index >= 0 &&
-          source.script_index < 32 &&
-          source.attribute === "datePublished" &&
-          Array.isArray(source.node_type) &&
-          source.node_type.some(
-            (type) =>
-              typeof type === "string" &&
-              ["Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"].includes(
-                type.split("/").at(-1),
-              ),
-          ) &&
-          parseResearchDate(source.text)?.precision === "timestamp" &&
-          parseResearchDate(source.text)?.instant === stamp?.instant,
+          articlePublicationSource(source) ||
+          (source.type === "meta" &&
+            /^\/html\/head\/meta\[[1-9][0-9]*\]$/.test(source.dom_path || "") &&
+            source.attribute === "content" &&
+            parseResearchDate(source.text)?.precision === "timestamp" &&
+            parseResearchDate(source.text)?.instant === stamp?.instant),
       )
     const jsonBasis =
       p?.parser?.id === "json-document" &&
