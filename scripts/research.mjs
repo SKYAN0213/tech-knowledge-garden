@@ -5,6 +5,7 @@ import { SourceFetcher } from "./research/fetch.mjs"
 import { executeListScan } from "./research/list-scan-command.mjs"
 import { writeDraftCheckpoint } from "./research/draft-checkpoint.mjs"
 import { processSourceRun } from "./research/source-processing.mjs"
+import { loadProcessingRunStatus } from "./research/daily-processing-status.mjs"
 import { recordEmptyExtractionReview } from "./research/empty-extraction-review.mjs"
 import {
   reviewProcessedClaims,
@@ -240,11 +241,12 @@ export async function main(argv = process.argv.slice(2)) {
       "reconcile-content-fingerprint-evidence",
       "status",
       "acquisition-status",
+      "processing-status",
       "recover-lock",
     ].includes(command)
   )
     throw Error(
-      "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review-empty-extraction|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; acquisition-status [--run ID] [--root PATH]; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
+      "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review-empty-extraction|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; acquisition-status [--run ID] [--root PATH]; processing-status --run ID [--root PATH]; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
   const budgetFields = [
     "num-ctx",
@@ -564,6 +566,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === "model-info") return ollama.metadata(v.model)
   if (command === "acquisition-status")
     return loadDailyAcquisitionStatus(root, { runId: v.run || null })
+  if (command === "processing-status") return loadProcessingRunStatus(root, v.run)
   if (command === "status") {
     if (!["json", "html"].includes(v.format)) throw Error("Status accepts --format json|html")
     const status = await buildDeliveryStatus({ root })

@@ -34,11 +34,19 @@ function inspectProcess(pid) {
   }
 }
 
-export function loadDailyProcessingStatus(root, { processState = inspectProcess } = {}) {
+export function loadDailyProcessingStatus(
+  root,
+  { processState = inspectProcess, runId = null } = {},
+) {
+  if (runId !== null && !/^[A-Za-z0-9_-]+$/.test(runId))
+    throw Error("Exact processing run required")
   const directory = safePath(root, "runs")
   if (!fs.existsSync(directory)) return { status: "missing", runs: [] }
-  const files = fs
-    .readdirSync(directory, { withFileTypes: true })
+  // A single-run observation must not scan or validate unrelated history.
+  const entries = runId
+    ? [{ name: runId, isDirectory: () => true }]
+    : fs.readdirSync(directory, { withFileTypes: true })
+  const files = entries
     .filter((e) => e.isDirectory() && /^[A-Za-z0-9_-]+$/.test(e.name))
     .map((e) => ({ run: e.name, file: safePath(root, `runs/${e.name}/daily-processing.json`) }))
     .filter((e) => fs.existsSync(e.file))
@@ -163,8 +171,7 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
       return { run_id: run, status: "invalid", error: error.message, candidate_published: false }
     }
   })
-  const editorial = fs
-    .readdirSync(directory, { withFileTypes: true })
+  const editorial = entries
     .filter((e) => e.isDirectory() && /^[A-Za-z0-9_-]+$/.test(e.name))
     .map((e) => ({
       run: e.name,
@@ -251,5 +258,113 @@ export function loadDailyProcessingStatus(root, { processState = inspectProcess 
   return {
     status: runs.length || editorial.length ? "available" : "missing",
     runs: [...editorial, ...runs],
+  }
+}
+
+// Lightweight observation only. Publication and resume still use their bound
+// source, fact-review, approval and delivery validators.
+export function loadProcessingRunStatus(
+  root,
+  runId,
+  { now = Date.now(), processState = inspectProcess } = {},
+) {
+  if (!/^[A-Za-z0-9_-]+$/.test(runId || "") || !Number.isFinite(now))
+    throw Error("Exact processing run and observation time required")
+  const daily = loadDailyProcessingStatus(root, { runId, processState })
+  if (daily.status === "available") return { ...daily, scope: "single-run", observation_only: true }
+  const base = `runs/${runId}/`
+  const input = readJSON(root, base + "source-processing-input.json")
+  const state = readJSON(root, base + "processing/state.json")
+  if (!input || !state) return { status: "missing", run_id: runId, observation_only: true }
+  if (
+    state.run_id !== runId ||
+    state.schema !== "research-run/v1" ||
+    state.input_hash !== sha256(JSON.stringify(input))
+  )
+    throw Error("Processing state differs from its pinned input")
+  const stages = Object.entries(state.stages || {}).map(([name, stage]) => {
+    const start = Date.parse(stage.started_at)
+    const finish = stage.finished_at
+      ? Date.parse(stage.finished_at)
+      : stage.status === "running"
+        ? now
+        : null
+    if (
+      !Number.isFinite(start) ||
+      (finish !== null && (!Number.isFinite(finish) || finish < start))
+    )
+      throw Error("Invalid processing stage time: " + name)
+    return {
+      name,
+      status: stage.status,
+      elapsed_ms: finish === null ? null : finish - start,
+      // A stopped/failed stage has no measured completion duration.
+      ...(stage.finished_at ? { finished_at: stage.finished_at } : {}),
+    }
+  })
+  const modelCalls = []
+  for (const [role, owner] of [
+    ["fact_extract", input.extraction_run || runId],
+    ["evidence_compare", input.assessment_run || runId],
+    ["article_write", input.draft_run || runId],
+  ]) {
+    if (!/^[A-Za-z0-9_-]+$/.test(owner)) throw Error("Invalid model role run")
+    const ledger = readJSON(root, `runs/${owner}/model-policy/${role}/budget.json`)
+    if (!ledger) continue
+    const { sha256: seal, ...payload } = ledger
+    if (seal !== sha256(JSON.stringify(payload)) || !Array.isArray(ledger.attempts))
+      throw Error("Model observation ledger changed: " + role)
+    for (const attempt of ledger.attempts) {
+      const start = Date.parse(attempt.started_at)
+      const finish = attempt.finished_at ? Date.parse(attempt.finished_at) : now
+      if (!Number.isFinite(start) || !Number.isFinite(finish) || finish < start)
+        throw Error("Invalid model observation time: " + role)
+      modelCalls.push({
+        role,
+        run_id: owner,
+        attempt_id: attempt.id,
+        status: attempt.status,
+        elapsed_ms: attempt.finished_at || attempt.status === "running" ? finish - start : null,
+        reused_run: owner !== runId,
+      })
+    }
+  }
+  // Writing is checkpointed outside processing/state.json. Observe its role
+  // ledger too, so an active writer is never mistaken for a finished run.
+  const activeModel = modelCalls.find((attempt) => attempt.status === "running")
+  const active = activeModel
+    ? { name: activeModel.role, elapsed_ms: activeModel.elapsed_ms }
+    : stages.find((stage) => stage.status === "running") || null
+  const lock = readJSON(root, `locks/run-${runId}.json`)
+  const live = active ? processState(lock?.pid) : "not_running"
+  const saved = Object.fromEntries(
+    ["claims", "fact-review-packet", "reviewed-claims", "draft", "approved-article"].map((name) => [
+      name,
+      fs.existsSync(safePath(root, base + name + ".json")),
+    ]),
+  )
+  return {
+    scope: "single-run",
+    observation_only: true,
+    run_id: runId,
+    source_run: input.source_run,
+    status: active
+      ? live === "alive"
+        ? "running"
+        : "requires_attention"
+      : stages.some((stage) => stage.status === "failed") ||
+          modelCalls.some((attempt) => attempt.status === "failed")
+        ? "requires_attention"
+        : "available",
+    live_process: live,
+    phase: active?.name || null,
+    stages,
+    model_calls: modelCalls,
+    saved_artifacts: saved,
+    stalled_over_hour: Boolean(active && active.elapsed_ms >= 3600000),
+    automatic_retry: false,
+    // On-disk presence is deliberately not an approval/publication verdict.
+    approval_verified: false,
+    publication_verified: false,
   }
 }

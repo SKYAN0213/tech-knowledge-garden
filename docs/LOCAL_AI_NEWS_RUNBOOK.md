@@ -11687,3 +11687,11 @@ workflow checkpoint는 현재 route-coverage의 verified_supplemental_scan마다
 원래 복구 묶음에는 기간 기록만 들어 있고 보완 조사 영수증이 빠져 다음 handoff가 null.scan_run으로 실패했다. 이제 누락된 영수증은 구체적인 reconciliation ID와 함께 명시적으로 차단한다. 수집 재시도나 빈 기간 판정으로 바꾸지 않는다. 이전 checkpoint와 실패 로그는 보존하고 수정된 계약의 새 checkpoint ID를 사용한다.
 
 표적 검증은 tests/research-workflow-checkpoint.test.mjs와 daily-scan의 missing supplemental receipt 테스트다. 복원 후 원래 bytes로 기간 근거를 읽는 회귀 사례와 누락된 입력의 차단을 확인한다. 전체 테스트는 최종 코드 묶음에서 한 번 실행한다. 실제 상태와 재개 지점은 외장 core-progress-runtime-recovery-20261008-v51.md의 최신 기록에 남긴다.
+
+## 496. 반복 조회를 줄이는 실행별 진척 확인
+
+작업 중에는 `node scripts/research.mjs processing-status --run <정확한 실행 ID>`로 해당 source-processing 또는 daily processing/editorial 실행만 읽는다. 전체 delivery status는 묶음 종료 시 사용한다. 단일 조회는 다른 실행 폴더를 순회하지 않고 원문 HTTP·모델·Drive 조회·발행을 수행하지 않는다. 단계별 시간, 모델 호출별 시간, 현재 작업과 프로세스 생존 여부, 저장 파일 존재 여부를 반환한다. writer는 processing state 밖의 기존 모델 ledger에 기록되므로 함께 확인한다.
+
+`observation_only`와 `saved_artifacts`는 관측값이다. 승인 파일이 있어도 `approval_verified`·`publication_verified`는 false이며, 승인·재개·발행에서는 기존 근거/중복/검토/Drive 검증기를 그대로 사용한다. 종료된 핸들은 `requires_attention`으로 표시하고 재시작하지 않는다. 한 시간 이상 실행 중인 단계는 `stalled_over_hour`로 표시한다. 실패 단계에 종료 시간이 없으면 소요 시간을 null로 둔다. 재사용 역할은 원 실행 ID로 구분하며 모델 요청·원 응답 본문은 출력하지 않는다.
+
+수집·파싱·추출·대조·승인 중 통과한 단계는 입력/코드 변경이 없으면 재사용한다. 접근 제한과 과거 판본 문제는 해당 항목의 기존 비공개 기록에 남기고 독립 가능한 원고를 처리한다. 회차별 원고 검토를 모은 뒤 Drive 저장·공개 생성·CI·원격 보관을 한 번에 수행한다. 전체 검사는 최종 코드/발행 묶음에서 한 번, 중간 검증은 변경 범위의 표적 검사만 실행한다. 상태 조회 도입을 실제 수집·기사 전환·정규 운영 완료로 계산하지 않는다.
