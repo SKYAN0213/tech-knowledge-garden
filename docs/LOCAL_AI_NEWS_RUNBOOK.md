@@ -11572,3 +11572,13 @@ renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기�
 최종 완료(2026-10-07): 같은 Drive ID1원고를 저장하고 실제 raw SHA를 확인했다. 216작성 원본 중215불변 raw를 fresh metadata와 대조해 재사용했다. 최종 코드855fe05b/Actions37621193551 Node1,177/1,177·build/site/deploy success이며 17개 뉴스·브리핑·RSS·GitHub 공개44파일을 실제 대조했다. 기존 RSS40 GUID/pubDate와 사건ID·원문·상세 조건은 보존했다. 실제1280/390 브라우저에서 분야 탭·Enter·공유URL·뒤로가기·빈 묶음 숨김·지도0·넘침0을 확인했다. 최초 공개 화면에서 날짜용2열 배치를 중첩 적용한 직접 UI결함을 발견해 별도 briefing-group 배치로 수정했고, 그 실패/두 서로 다른 CI를 보존한다. 같은 코드의 전체 suite 반복은 없다.
 
 WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원문 ZIP17개는 재사용하고 정정 승인 closure 및 운영 custody2개만 추가했다. 30원격 대상 actual raw SHA·private parent·19ZIP의 native 복원/의존 SHA·17사건 원문 coverage와 mapping을 확인해 remote_delivery_complete다. source/WebsiteData 읽기에서도19불변 raw를 fresh metadata 대조 후 재사용했다. 새 정규 횟수0·독립평가0/60·전체runtime복구 아님·전체WBS3/22 유지. 소급 잔여29회차/299구간·metadata2이며 다음 묶음에서도 원문·추론·승인 완료 checkpoint를 재사용한다. 전수 WBS는 외장 core-progress-jul10-grouped-publication-20261007-v46.md/json에 기록했다.
+
+## 492. 원문 대조 호출 수를 줄이고 이전 실행을 유지하기
+
+새 전체 원문 대조는6사실씩 처리한다. 전체 원문과 조건을 모든 해당 묶음에 전달하며,3사실/quote 방식으로 이미 시작한 실행은 `evidence-assessment/input.json`의 batch 크기·response protocol을 그대로 사용한다. 바뀐 원문·claims·정책은 기존 검증기로 거부한다. 부분 window 및 완료 평가 재사용은 기존 계약을 따른다. 실행 중 모델 worker에 파일 변경을 적용하거나 같은 실행을 재시작하지 않는다.
+
+7월7일 AWS RL 실행 `legacy-jul07-aws-rl-processing-20261007-v1`은12사실/추출2·대조4호출을 완료하고 fact_review 상태다. 다시 모델 대조하지 않는다. 원문93blocks와 비용 표의 최소10인스턴스 중8compute 조건·예상 reward와 실제 성과의 차이를 직접 읽었다. 공개 승인 없이 모델 supported 판정을 기사 검증 완료로 세지 않는다. 새 PII 실행 `legacy-jul07-aws-pii-processing-20261007-v1`은 원본 selection을 재사용하고 evidence-think false로 실행한다. 완료 여부는 native processing/state·progress·fact-review-packet으로 확인하고, 관측 timeout을 이유로 새 run을 만들지 않는다.
+
+검증: evidence/window56통과, source processing 통합5통과, 마지막 frozen3개/legacy quote 호환3통과.12사실 fixture의 호출 수4→2는 검증했으나 실시간 개선율은 미측정이다. 원문과 상세 기사를 줄이지 않는다. 전체 suite는 코드 릴리스 후보에서 한 번 수행한다. 새 구조·보조 기능 확장은 중단하고 기존 수집→사실 검토→원고→Drive→공개 묶음을 먼저 끝낸다. 승인된 여러 기사를 한 번에 발행하고 full inventory/raw는 동일한 metadata에만 재사용한다.
+
+Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 원본에 보존했다. 같은 경로를 반복하지 않고 공식 tag의 commit 및 변경 파일을 별도로 확인한다. 다른 독립 원문인 MLflow63blocks는 common collect에서 정상 확보했다. 실패를 빈 뉴스로 표기하지 않으며 과거 CUDA 설명을 그대로 공개하지 않는다. 전체WBS3/22·독립평가0/60·정규0/7과 소급 잔여29회차/299구간·metadata2는 유지한다. 전체표와 실제 호출 관측은 외장 `core-progress-batching-acceleration-20261007-v47.md`, `core-source-batching-observation-v1.json`이다.

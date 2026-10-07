@@ -6,6 +6,7 @@ import path from "node:path"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { assessEvidenceCheckpoint } from "../scripts/research/evidence-assessment.mjs"
+import { assessSourceEvidenceCheckpoint } from "../scripts/research/window-evidence-assessment.mjs"
 import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 import {
@@ -445,6 +446,64 @@ test("seven claims use three complete default batches and reuse them", async (t)
   assert.equal(result.generated_batches, 3)
   await run(f)
   assert.equal(f.calls(), 3)
+})
+
+test("source processing assesses twelve claims in two full-source batches and reuses them", async (t) => {
+  const f = fixture(t)
+  f.claims = Array.from({ length: 12 }, (_, n) => ({
+    ...structuredClone(f.claims[0]),
+    claim_id: `c${n + 1}`,
+  }))
+  const process = () =>
+    assessSourceEvidenceCheckpoint(f.root, "source-fast", f.provider, f.claims, f.documents, f.parses)
+  const first = await process()
+  assert.equal(first.generated_batches, 2)
+  assert.equal(first.record.assessments.length, 12)
+  assert.deepEqual(first.record.assessments.map((r) => r.claim_id), f.claims.map((c) => c.claim_id))
+  assert.equal(readJSON(f.root, "runs/source-fast/evidence-assessment/input.json").claims_per_batch, 6)
+  const second = await process()
+  assert.equal(second.reused_batches, 2)
+  assert.equal(f.calls(), 2)
+  for (const n of [1, 2]) {
+    const raw = readJSON(f.root, `runs/source-fast/evidence-assessment/batch-${n}.json`)
+    assert.equal(raw.output.assessments.length, 6)
+  }
+})
+
+test("source processing preserves an existing three-claim assessment without new calls", async (t) => {
+  const f = fixture(t)
+  f.claims = Array.from({ length: 12 }, (_, n) => ({
+    ...structuredClone(f.claims[0]),
+    claim_id: `c${n + 1}`,
+  }))
+  await referenceRun(f, "source-existing")
+  const input = fs.readFileSync(path.join(f.root, "runs/source-existing/evidence-assessment/input.json"))
+  const second = await assessSourceEvidenceCheckpoint(
+    f.root, "source-existing", f.provider, f.claims, f.documents, f.parses,
+  )
+  assert.equal(second.generated_batches, 0)
+  assert.equal(second.reused_batches, 4)
+  assert.equal(f.calls(), 4)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/source-existing/evidence-assessment/input.json")), input)
+  f.claims[0].statement = "Different claim"
+  await assert.rejects(
+    () => assessSourceEvidenceCheckpoint(f.root, "source-existing", f.provider, f.claims, f.documents, f.parses),
+    /input changed/,
+  )
+  assert.equal(f.calls(), 4)
+})
+
+test("source processing preserves a legacy quote assessment without changing its protocol", async (t) => {
+  const f = fixture(t)
+  await run(f, "source-legacy-quotes")
+  const input = fs.readFileSync(path.join(f.root, "runs/source-legacy-quotes/evidence-assessment/input.json"))
+  const result = await assessSourceEvidenceCheckpoint(
+    f.root, "source-legacy-quotes", f.provider, f.claims, f.documents, f.parses,
+  )
+  assert.equal(result.generated_batches, 0)
+  assert.equal(result.reused_batches, 1)
+  assert.equal(f.calls(), 1)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/source-legacy-quotes/evidence-assessment/input.json")), input)
 })
 
 test("batch size changes require a new run and never truncate source blocks", async (t) => {

@@ -494,6 +494,12 @@ export async function assessSourceEvidenceCheckpoint(
 ) {
   // New source runs use references in both paths. Direct legacy functions
   // remain available for replaying their exact archived quote requests.
+  const previous = readJSON(root, `runs/${run}/evidence-assessment/input.json`)
+  if (previous?.schema === "research-evidence-assessment-input/v1")
+    return assessEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
+      claimsPerBatch: previous.claims_per_batch,
+      responseProtocol: previous.response_protocol ?? QUOTE_PROTOCOL,
+    })
   const sourceSize = parses.reduce(
     (n, p) => n + JSON.stringify(p.blocks.map(({ block_id, text }) => ({ block_id, text }))).length,
     0,
@@ -508,6 +514,7 @@ export async function assessSourceEvidenceCheckpoint(
       reuseRun,
     })
   return assessEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
+    claimsPerBatch: 6,
     responseProtocol: REFERENCE_PROTOCOL,
   })
 }

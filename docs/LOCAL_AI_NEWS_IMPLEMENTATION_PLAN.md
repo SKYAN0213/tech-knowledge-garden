@@ -5329,3 +5329,11 @@ immutable batch ID는 입력·manifest·정확한 operation 목록을 결속한�
 최종 완료(2026-10-07): 같은 Drive ID1원고를 저장하고 실제 raw SHA를 확인했다. 216작성 원본 중215불변 raw를 fresh metadata와 대조해 재사용했다. 최종 코드855fe05b/Actions37621193551 Node1,177/1,177·build/site/deploy success이며 17개 뉴스·브리핑·RSS·GitHub 공개44파일을 실제 대조했다. 기존 RSS40 GUID/pubDate와 사건ID·원문·상세 조건은 보존했다. 실제1280/390 브라우저에서 분야 탭·Enter·공유URL·뒤로가기·빈 묶음 숨김·지도0·넘침0을 확인했다. 최초 공개 화면에서 날짜용2열 배치를 중첩 적용한 직접 UI결함을 발견해 별도 briefing-group 배치로 수정했고, 그 실패/두 서로 다른 CI를 보존한다. 같은 코드의 전체 suite 반복은 없다.
 
 WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원문 ZIP17개는 재사용하고 정정 승인 closure 및 운영 custody2개만 추가했다. 30원격 대상 actual raw SHA·private parent·19ZIP의 native 복원/의존 SHA·17사건 원문 coverage와 mapping을 확인해 remote_delivery_complete다. source/WebsiteData 읽기에서도19불변 raw를 fresh metadata 대조 후 재사용했다. 새 정규 횟수0·독립평가0/60·전체runtime복구 아님·전체WBS3/22 유지. 소급 잔여29회차/299구간·metadata2이며 다음 묶음에서도 원문·추론·승인 완료 checkpoint를 재사용한다. 전수 WBS는 외장 core-progress-jul10-grouped-publication-20261007-v46.md/json에 기록했다.
+
+## 19.399. 전체 원문 대조의 반복 호출 축소
+
+실제7월7일 AWS RL 원문93blocks에서12사실을 추출한 실행은 사실 추출2호출, 근거 대조3사실씩4호출을 수행했다. 대조는 각각176.075·148.936·44.426·45.627초였으며, 앞선 두 호출 동안 동일 모델을 사용하는 다른 작업도 관측했다. 동시 작업의 영향량을 확정하거나 원문이 다른 실행을 같은 조건의 성능 비교로 해석하지 않는다. 수집은9원문을 확보했으나 Ollama release API404와 tag page의 본문 selector 실패는 별도 기록한다. 공식 tag의 MLX commit과 과거 CUDA 요약이 일치하지 않으므로 검토 없이 승격하지 않는다.
+
+새 공통 `assessSourceEvidenceCheckpoint`의 전체 원문 경로는 기존 검증기가 허용하는6사실 단위를 사용한다.12사실의 호출 수는4에서2로 줄지만 시간 단축률은 실제 관측 전까지 미확정이다. 원문 전체·주장·수치 조건·근거·명시적 사실 검토는 유지한다. 기존 실행은 frozen input의3사실 또는 quote protocol을 그대로 재사용하고 입력 변경은 거부한다. window 분할과 부분 완료 상속 계약은 유지한다. 실행 중 worker의 파일은 바꾸지 않고 기존 실행이 fact_review로 종료된 뒤 적용했다.
+
+표적56/56, 원문 처리·완료 결과 재사용 통합5/5, 최종 호환3/3 통과했다. 실제 새 AWS PII 실행으로 운영 경로를 확인하고 결과를 재사용한다. 완료된 이전 원문의 추출·대조를 속도 측정 목적으로 다시 생성하지 않는다. 독립적인 수집·직접 원문 검토는 로컬 모델 대기 중 처리하고, 모델 작업은 같은 런타임에 중복 투입하지 않는다. 전체 테스트는 코드 릴리스 후보 CI에서 한 번 수행한다. 원고·Drive·공개는 여러 승인 기사를 모아 한 발행 묶음으로 전달한다. 실제7회 정규 운영과 독립 평가60건을 소급·개발 테스트로 채우지 않는다. 전체 WBS3/22·부분17·미착수2, 소급 잔여29회차/299구간·metadata2를 유지한다. 전체 표는 외장 `core-progress-batching-acceleration-20261007-v47.md`에 있다.
