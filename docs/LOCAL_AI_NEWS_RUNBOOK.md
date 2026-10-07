@@ -11596,3 +11596,12 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 후속 확인(2026-10-07): 634366f7/Actions37631051495는 Node1,181/1,181·Python·build/site/deploy success다. 실제 공개 briefing.xml·reader-index·기존 기사3파일은 로컬 생성 bytes/SHA와 일치한다. MLflow도 private Drive 원격 raw SHA35dfc76936b3193bb3c2aa077e668aa120f747a4a3252e71227f9f2c7549038e·52파일 복원·native 위치 등록을 마쳤다. source queue5개는 모두 fact_review로 정상 종료했고 Claude12·OpenCode9·LangGraph2·AI core3·xAI2의28사실을 직접 검토했다. 기존 model extraction/assessment를 재사용해 원고5개를 단일 큐에서 작성하며 아직 편집 승인/공개가 아니다. 전체13구간·Drive 작성본·공개는 다음 gate다. 전수 WBS와 실제 재개 지점은 외장 core-progress-approved-source-bundle-20261007-v48.md, CI/public 증거는 core-publication-meta-*에 있다. 전체/소급/독립평가/정규 운영 완료 수는 유지한다.
 
 편집 재개 근거: 처음 software writer 대기열은2개 원고 뒤 LangGraph의 미확정 native 검토 때문에 중단됐다. LangGraph의 계획/완료 및 숫자 조건 concern을 exact release block으로 명시 해결해3사실 검토를 마쳤다. Claude 승인은 JSON /published_at를 인용한 used claim이 없어 거부됐으며 실패를 보존했다. 날짜 관문을 완화하지 않았다. 본문용 metadata를 일찍 deferred 처리한 것이 원인이므로,4개 새 publication-writing run에서 완료 추출·대조를 재사용하고 정확한 발표시각 근거를 검토에 포함했다. Claude13·OpenCode10·LangGraph3·AI core4·xAI3 =33검증 사실(본문 내용28+발표시각5)이다. 내용·사건이 늘어난 것은 아니다. 변경된 fact 입력에 맞는 writer를 단일 대기열로 진행하며 원본 추출·대조는 재생성하지 않는다. native CLI의 단계별 exit code와 stderr를 함께 확인하며 전체 suite는 데이터 검토 때문에 반복하지 않는다.
+
+
+## 494. 구형 출처 제외와 Source List 사건 복원
+
+미확인 기사 주소는 discovery로 분류하지 않는다. excluded disposition에는 정확한 원래 단위·SHA·문장, 서로 다른 대체 공식 주소와 양쪽 확인 결과를 기록한다. 검토 이유는 private packet에만 남기고 공개 문장으로 생성하지 않는다. 본문 인용 출처 제거는 이 기능의 범위가 아니다.
+
+요약에만 남은 사건은 Source List를 anchor로 삼고 source_list_event_review로 한눈에 보기의 정확한 원문을 고정한다. 기존 depth2 기사의 출처 연결은 기존 source_list_review 및 공식 대체 주소 검토를 그대로 사용한다. 원고·발표일·사건 ID와 브리핑 표시 그룹은 분리한다. native assertLegacyTransition와 privatePreview를 통과한 뒤 기존 회차·같은 Drive ID를 갱신한다. 이 경로는 과거 기사를 신규 회차나 정규 비교 횟수로 집계하지 않는다.
+
+7월7일08:04 preview는 legacy-jul07-0804-preview-20261007-v1, 전체 검토는13단위·18원래주소·9승인 사건이다. 소프트웨어5개의 신규 private closure는 raw SHA·원격 복원과 research-archives register를 확인했다. source/version·추출·대조·모델 writer를 재호출하지 않았다. 관련 테스트63/63; 전체 CI는 최종 코드/발행 묶음에서1회 확인한다.

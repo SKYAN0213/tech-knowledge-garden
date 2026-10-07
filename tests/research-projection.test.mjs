@@ -446,6 +446,97 @@ test("legacy reviewed metadata preserves clocks and tags while retaining obsolet
   }
 })
 
+test("legacy unconfirmed list sources require exact private exclusion reviews", (t) => {
+  const f = legacyTransitionFixture(t)
+  const url = "https://example.org/unconfirmed-release"
+  reviseLegacyFixture(f, f.existing.body + `\n${url}\n`)
+  const unit = legacyReviewUnits(f.existing.body, f.relative)[3]
+  f.packet.source_list_dispositions = [
+    {
+      url,
+      role: "excluded",
+      source_role_checked: true,
+      reason: "Original and alternative do not confirm the old statement",
+      exclusion_review: {
+        unit_id: unit.unit_id,
+        sha256: unit.sha256,
+        original_statement: "이전 본문. https://example.com/announcement",
+        alternative_url: "https://example.org/official-tag",
+        original_source_checked: true,
+        alternative_source_checked: true,
+        core_facts_unconfirmed: true,
+        reason: "Official tag has no supporting release body",
+      },
+    },
+  ]
+  assertLegacyTransition(f.packet, f.articles, f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.equal(projection.content.includes(url), false)
+  assert.equal(projection.content.includes("unconfirmed"), false)
+  for (const mutate of [
+    (p) => delete p.source_list_dispositions[0].exclusion_review,
+    (p) => (p.source_list_dispositions[0].exclusion_review.sha256 = "0".repeat(64)),
+    (p) =>
+      (p.source_list_dispositions[0].exclusion_review.original_statement =
+        "Unrelated old statement"),
+    (p) => (p.source_list_dispositions[0].exclusion_review.alternative_url = url),
+    (p) => (p.source_list_dispositions[0].exclusion_review.alternative_source_checked = false),
+    (p) => (p.source_list_dispositions[0].role = "discovery"),
+    (p) => (p.source_list_dispositions[0].url = f.articles[0].source_urls[0]),
+  ]) {
+    const changed = structuredClone(f.packet)
+    mutate(changed)
+    assert.throws(() => assertLegacyTransition(changed, f.articles, f.existing, f.relative))
+  }
+})
+
+test("legacy source-list-only events retain an exact reviewed cover mention", (t) => {
+  const f = legacyTransitionFixture(t)
+  reviseLegacyFixture(f, f.existing.body.replace("이전 요약.", "두 번째 연구 발표를 소개했다."))
+  const units = legacyReviewUnits(f.existing.body, f.relative)
+  // This event had no article section; its mention and source were retained separately.
+  const second = f.packet.events[1]
+  second.unit_id = units[8].unit_id
+  second.previous_title = units[8].title
+  second.source_list_review = {
+    source_list_read: true,
+    article_source_read: true,
+    association_checked: true,
+    reason: "The cover mention refers to the original listed second announcement",
+  }
+  second.source_list_event_review = {
+    mention_unit_id: units[0].unit_id,
+    mention_sha256: units[0].sha256,
+    original_mention: "두 번째 연구 발표를 소개했다.",
+    original_event_checked: true,
+    reason: "Reviewed original cover mention and official announcement",
+  }
+  // Remove the old second section while retaining the fixture unit indices.
+  reviseLegacyFixture(f, f.existing.body.replace("이전 본문. https://example.com/second", "없음"))
+  const refreshed = legacyReviewUnits(f.existing.body, f.relative)
+  second.source_list_event_review.mention_unit_id = refreshed[0].unit_id
+  second.source_list_event_review.mention_sha256 = refreshed[0].sha256
+  f.packet.units[4].decision = "omitted_empty"
+  f.packet.units[4].event_ids = []
+  assertLegacyTransition(f.packet, f.articles, f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.equal(projection.content.includes("source_list_event_review"), false)
+  assert.equal(projection.content.includes(f.articles[1].title), true)
+  for (const mutate of [
+    (p) => delete p.events[1].source_list_event_review,
+    (p) => delete p.events[1].source_list_review,
+    (p) => (p.events[1].source_list_event_review.mention_sha256 = "0".repeat(64)),
+    (p) =>
+      (p.events[1].source_list_event_review.original_mention = "Not present in the original cover"),
+    (p) => (p.units[0].event_ids = [p.events[0].event_id]),
+    (p) => (p.events[1].source_list_event_review.original_event_checked = false),
+  ]) {
+    const changed = structuredClone(f.packet)
+    mutate(changed)
+    assert.throws(() => assertLegacyTransition(changed, f.articles, f.existing, f.relative))
+  }
+})
+
 test("legacy discovery source roles stay private and cannot remove inline or approved article evidence", (t) => {
   const f = legacyTransitionFixture(t)
   const discovery = "https://api.github.com/repos/vercel/ai/releases?per_page=5"

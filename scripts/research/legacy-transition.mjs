@@ -28,6 +28,13 @@ eventSchema.properties.source_list_review = object({
   association_checked: { type: "boolean", enum: [true] },
   reason: text,
 })
+eventSchema.properties.source_list_event_review = object({
+  mention_unit_id: unitID,
+  mention_sha256: hash,
+  original_mention: { type: "string", minLength: 8 },
+  original_event_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
 eventSchema.properties.event_split_review = object({
   distinct_event_checked: { type: "boolean", enum: [true] },
   reason: text,
@@ -157,11 +164,21 @@ packetSchema.properties.source_list_dispositions = {
   maxItems: 500,
   items: object({
     url: text,
-    role: { type: "string", enum: ["discovery"] },
+    role: { type: "string", enum: ["discovery", "excluded"] },
     source_role_checked: { type: "boolean", enum: [true] },
     reason: text,
   }),
 }
+packetSchema.properties.source_list_dispositions.items.properties.exclusion_review = object({
+  unit_id: unitID,
+  sha256: hash,
+  original_statement: { type: "string", minLength: 8 },
+  alternative_url: text,
+  original_source_checked: { type: "boolean", enum: [true] },
+  alternative_source_checked: { type: "boolean", enum: [true] },
+  core_facts_unconfirmed: { type: "boolean", enum: [true] },
+  reason: text,
+})
 packetSchema.properties.inline_discovery_dispositions = {
   type: "array",
   minItems: 1,
@@ -446,6 +463,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       .flatMap((unit) => sources.forContent(before.body.slice(unit.body_start, unit.body_end))),
   )
   const discovery = new Set()
+  const excluded = new Set()
   for (const row of packet.source_list_dispositions || []) {
     const url = canonicalURL(row.url)
     if (
@@ -454,13 +472,37 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       assigned.has(url) ||
       approved.has(url) ||
       inline.has(url) ||
-      discovery.has(url)
+      discovery.has(url) ||
+      excluded.has(url)
     ) {
       throw Error(
         "Legacy discovery disposition must name an unused original list route, never cited article evidence",
       )
     }
-    discovery.add(url)
+    if (row.role === "excluded") {
+      const review = row.exclusion_review
+      const unit = units.find((u) => u.unit_id === review?.unit_id)
+      const alternative = review ? canonicalURL(review.alternative_url) : ""
+      if (
+        !review ||
+        !unit ||
+        unit.depth !== 2 ||
+        review.sha256 !== unit.sha256 ||
+        !review.original_statement.trim() ||
+        !before.body.slice(unit.body_start, unit.body_end).includes(review.original_statement) ||
+        !/^https?:\/\//.test(alternative) ||
+        alternative === url ||
+        !review.reason.trim()
+      )
+        throw Error(
+          "Legacy source exclusion requires an exact original article statement and checked alternative",
+        )
+      excluded.add(url)
+    } else {
+      if (row.exclusion_review)
+        throw Error("Legacy discovery disposition cannot carry an article exclusion")
+      discovery.add(url)
+    }
   }
   // Retain original citation identity privately. A reviewed official alternative
   // may support that event, but must actually be cited by its approved article.
@@ -585,7 +627,11 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         !decision.event_ids.length ||
         urls.some(
           (url) =>
-            !(unit.depth === 1 && unit.title === "Source List" && discovery.has(url)) &&
+            !(
+              unit.depth === 1 &&
+              unit.title === "Source List" &&
+              (discovery.has(url) || excluded.has(url))
+            ) &&
             !decision.event_ids.some((id) =>
               packet.events.some(
                 (event) =>
@@ -646,9 +692,33 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       : false
     const assignedSources = [...new Set(event.source_urls.map(canonicalURL))].sort()
     const sourceListReview = event.source_list_review
+    const listEventReview = event.source_list_event_review
+    const listAnchor = unit?.depth === 1 && unit.title === "Source List"
+    if (listEventReview || listAnchor) {
+      const mention = units.find((u) => u.unit_id === listEventReview?.mention_unit_id)
+      const mentionDecision = packet.units.find((u) => u.unit_id === mention?.unit_id)
+      if (
+        !listAnchor ||
+        !sourceListReview ||
+        !listEventReview ||
+        !mention ||
+        mention.depth !== 1 ||
+        mention.title !== "한눈에 보기" ||
+        listEventReview.mention_sha256 !== mention.sha256 ||
+        !listEventReview.original_mention.trim() ||
+        !before.body
+          .slice(mention.body_start, mention.body_end)
+          .includes(listEventReview.original_mention) ||
+        mentionDecision.decision !== "replaced" ||
+        !mentionDecision.event_ids.includes(event.event_id) ||
+        !listEventReview.reason.trim()
+      )
+        throw Error("Legacy list-only event requires its exact reviewed original cover mention")
+    }
     if (
       sourceListReview &&
-      ((inlineSources.length &&
+      ((!listAnchor &&
+        inlineSources.length &&
         (assignedSources.length <= inlineSources.length ||
           inlineSources.some((url) => !assignedSources.includes(url)))) ||
         sourceMarkers ||
@@ -659,7 +729,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       throw Error("Legacy source-list assignment requires reviewed distinct original list sources")
     if (
       !unit ||
-      unit.depth !== 2 ||
+      (unit.depth !== 2 && !listAnchor) ||
       unit.title !== event.previous_title ||
       decision.decision !== "replaced" ||
       !decision.event_ids.includes(event.event_id) ||
