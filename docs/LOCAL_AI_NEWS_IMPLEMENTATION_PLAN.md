@@ -26,7 +26,7 @@ FDA 공식 발표 경로까지 수용한 `daily-20260929-v9`은 **10경로/20창
 
 ## 현재 진척과 다음 완료 증거
 
-최신 묶음 기준: 원문 재검토·Drive 동일 ID 저장·공개 배포를 이어 진행했고 남은 소급은 **33회차/335구간**, 별도 metadata 복구2건이다. 아래 표의 이전 inventory는 해당 단계의 관측값이다. 필수 WBS는 완료3/22·부분17·미착수2, 독립 평가0/40+0/20·실제 정규 비교 운영0/7을 유지한다. 공통 인용 재사용과 완료 결과의 반복 방지는 19.396절을 따른다. 이 완료율은 필수 묶음의 수용 기준이며 구현된 기능의 비율과 다르다.
+최신 묶음 기준: 원문 재검토·Drive 동일 ID 저장·공개 배포를 이어 진행했고 남은 소급은 **26회차/271단위**, 별도 metadata 복구2건이다. 아래 표의 이전 inventory는 해당 단계의 관측값이다. 필수 WBS는 완료3/22·부분17·미착수2, 독립 평가0/40+0/20·실제 정규 비교 운영0/7을 유지한다. 공통 인용 재사용과 완료 결과의 반복 방지는 19.396절을 따른다. 이 완료율은 필수 묶음의 수용 기준이며 구현된 기능의 비율과 다르다.
 
 기준일 2026-10-07. 이번 갱신은 원문 대조 재개·편집·보관·코드 배포의 확인 결과를 반영한다. 각 행의 과거 수집·Drive inventory 수치는 명시된 당시 관측값이며 이번 날짜의 전수 재조회로 간주하지 않는다. `부분`은 해당 코드 또는 일부 시험이 있으나 작업의 모든 수용 조건을 충족하지 않은 상태다. 아래 진행표가 과거 문서의 0%·전부 미구현 설명을 대체한다. 본문의 체크박스는 전체 목표의 세부 완료 조건이다. 상태 화면은 이 표의 22개 필수 WBS 항목을 전체 완료 기준으로 집계하며, `부분`은 완료 분자에 포함하지 않는다.
 
@@ -2041,6 +2041,9 @@ node scripts/research.mjs preview --run <preview-run> --approved-run <approved-r
 - Drive는 최종 작성 원본, `.local/research/local-ai`는 private 취재/검토/복구, `vault`는 작업·생성 사본이다. private 원문·검토 이유는 공개 저장소 파일에 넣지 않는다. 권위 원본 revision/SHA와 로컬 preview가 다르면 발행을 막고 원인을 판정한다.
 
 #### 19.25.2 각 묶음의 필수 검증
+
+일일 상태 복구(2026-10-08): `npm run research:checkpoint -- plan|create|restore`에서 기존 일일 입력/receipt/handoff/원문·parse·후보 장부·네 작성 폴더와 선택한 발행 증거를 묶는다. 동일 사건 억제 결정은 기존 alias loader/archive closure의 검토·원 사건 승인을 보존하고, 복원 전후 native receipt 검증을 적용한다. 큰 입력은 기존 ZIP 한도를 유지해 자동 분할하며 목적지 전수 preflight 후 분리된 작업 사본으로 복원한다. 실행환경 재설치·원문 재수집·모델 호출은 하지 않는다. 명령·범위는 [런북2.1.1](LOCAL_AI_NEWS_RUNBOOK.md#211-일일-입력후보발행-상태의-공통-복구)을 따른다. 전체 역사 원문/후보별 승인과08시·독립평가·정규 운영 완료는 별도다.
+
 
 실행환경 재현(2026-10-08): `research-runtime.mjs plan|install|verify`는 별도 private root에서 Python3.12·worker 고정 의존성·고정 SearXNG commit·Chromium·한국어 OCR SHA를 여섯 단계로 설치한다. 완료 단계 재사용, 실제 pip check/버전/browser, owned loopback 검색 시작/종료, 기존 Ollama 모델 metadata를 확인한다. OCR의 repository 절대 경로 의존성을 제거해 worker root 안의 검증된 모델만 사용하며 모델 유무를 parse fingerprint에 연결했다. 실제 새 venv 설치/추가 설치0 재개·원격 보관 bytes 복원·2원문 본문/날짜 재파싱 동등성·새 환경 한국어 PDF/이미지를 확인했다. 명령과 실패 기록은 [런북2.1](LOCAL_AI_NEWS_RUNBOOK.md#21-격리-환경-재현)에 있다. 전체 runtime 및 후보/승인/발행 복구, 인증·08시·독립40/20·정규0/7은 계속 남는다. 7a456e99/Actions37649416337 전체1,188·Python/build/site/deploy 및 공개6파일 byte 불변을 확인했다. 복원한8verified/1deferred 승인·26근거노드/42관계도 native 입력/ontology SHA 동등성을 확인했다. 다음은 같은 복구 원문/승인을 기존 일일 handoff·backlog·발행 영수증과 대조하는 전체 상태 복구 경계다.
 

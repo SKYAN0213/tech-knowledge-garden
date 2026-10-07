@@ -98,6 +98,27 @@ GitHub Pages의 두 workflow는 private `.local/` venv를 checkout하지 않는�
 
 Drive 인계의 `staging`은 기본적으로 `.local/drive-sync/staging`이다. 로컬 여유 공간이 부족하면 절대 경로이며 저장소 밖인 `TECH_GARDEN_DRIVE_STAGE_DIR`을 `prepare-drive.py`와 `export-website-data.py`에 함께 전달한다. `--collect`의 원문 응답 캐시는 기본적으로 `.local/drive-sync/source-cache`이며, 별도의 외부 절대 경로가 필요하면 `TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR`을 지정한다. 이때 기존 캐시를 자동 이전하지 않는다. 파일별 SHA-256 대조로 복사를 검증하고 기존 사본은 보존한다. staging과 캐시 경로는 겹치지 않아야 한다. 원문·판정·영수증과 화면 검증 자료는 보존하되 여러 실행에 중복된 `preview-workspace` 생성 사본은 인계 파일과 ZIP에서 제외한다. 2026-09-29 외부 staging의 첫 시험은 `--collect` 없이 인계 목록 12,826개를 생성했다. 기존 캐시 2,594파일을 외부에 파일별 SHA-256 일치로 복사한 뒤 별도 외부 staging에서 `--collect`를 실행해 등록 URL 1,215개 중 1,132개 응답을 보관하고 83개 접근 실패를 구분했다. 결과 manifest는 12,828파일, `source-snapshots.zip`은 2,907개 파일과 보관 응답 1,132개의 해시가 모두 일치했다. 출처 등록의 미해결 메타데이터 1건은 남아 있으며, 이 시험은 Drive 업로드나 예약 실행이 아니다.
 
+### 2.1.1 일일 입력·후보·발행 상태의 공통 복구
+
+`research:checkpoint`는 특정 일일 실행과 발행 작업의 상태를 함께 고정한다. 실제 원문 재요청·모델 호출·승인·발행은 하지 않는다. 일일 plan/receipt/고정 handoff/config/backlog/coverage, 선택한 수집 run의 원문·parse, 현재 후보 장부, 네 작성 폴더, 발행/Drive/readback 증거를 포함한다. 동일 사건 URL 억제 결정은 기존 alias loader와 archive closure로 원문·검토·원 사건 승인까지 묶고, 복구 전후 기존 일일 receipt 검증기를 통과해야 한다. 타 발행 작업·전체 역사 원문·credentials·runtime·preview workspace는 별도 범위다.
+
+```bash
+npm run research:checkpoint -- plan --root /absolute/private-root \
+  --daily DAILY_RUN --publication PUBLICATION_RUN --backlog /absolute/backlog.json --vault /absolute/vault
+npm run research:checkpoint -- create --root /absolute/private-root --run CHECKPOINT_ID \
+  --daily DAILY_RUN --publication PUBLICATION_RUN --backlog /absolute/backlog.json --vault /absolute/vault
+npm run research:checkpoint -- restore --root /absolute/recovered-worker \
+  --checkpoint-root /absolute/checkpoint-root --run CHECKPOINT_ID --to workflow-restores/REVIEW_ID
+```
+
+`create`는 기존 private archive 보관기의 파일/크기 한도에 맞춰 최대1,000파일/120MiB씩 자동 분할한다. 결과의 main `package`와 모든 `parts`를 함께 보관한다. 같은 ID의 입력 변경은 거부한다. 각 ZIP은 기존 `package-archive.py`로 exact manifest/SHA 대조 후 복원할 수 있고, main과 part의 `runs/` 구조를 보존해 checkpoint-root에 모은다. 복원 CLI는 모든 파일 hash·경로·누락·기존 목적지 충돌을 먼저 확인하며 canonical 후보 장부나 기존 venv에 덮어쓰지 않는다. 반환한 `root`, `vault`, `backlog_file`이 분리된 작업 사본 경로다. 동일 bytes는 재개할 수 있으며 변경된 목적지는 보존하고 중단한다.
+
+고정 handoff·후보 장부·일일 원문 증거·과거 발행 proof를 복원해도 신규 조사, 전체 후보별 승인 의존성 복구, 현재 Drive/사이트 관측, 기존08시 실행이나 새 정규 운영을 완료한 것은 아니다. `full_runtime_recovered`, `new_regular_operation_counted`, `candidate_published`는 false다. 복원 이후의 새 작업은 기존 원문·identity·편집 승인·Drive/발행 검증 경로를 그대로 따른다.
+
+실제2026-10-08 복구: 후보938건·4,699파일을 별도 외장 작업 사본으로 복원했다. native 일일receipt110개·검토된 동일 사건 URL 억제·고정 handoff/config 및 과거 public_bytes_verified 증거를 다시 검증했다. 기존 Python/Chromium/OCR/Ollama는 변경하지 않았으며 원문 HTTP·모델 호출0이다. 과거 일일 계획으로 새 handoff 생성은 이후 수정된 작성본 inventory가 달라 기존 검사기가 차단했다. 계획의 해시를 덮어쓰지 않으며, 고정 handoff의 정확한 후보로 사실 처리를 재개하거나 최신 작성본/Drive를 대조해 새 일일 계획으로 진행한다. 신규 브리핑·정규 운영 완료로 계산하지 않는다.
+
+워크플로 보관본은 main+모든part의 raw ZIP SHA/CRC/정확한 원 manifest 대조 후 private 위치를 등록한다. `storage_kind: workflow_checkpoint`, `dependency_closed: false`, 빈 `sources`로 보관 위치만 기록한다. source/기사 인덱스로 승격하는 reindex는 거부하며 기존 v2 원문·승인 archive 검증을 완화하지 않는다.
+
 ### 2.2 로컬 검색 서비스의 현재 수명주기
 
 `search` 명령은 `SEARXNG_URL`이 없으면 자신이 소유하는 SearXNG 프로세스를 필요할 때 시작하고 실행 뒤 종료한다. 영구 서비스나 새 예약을 등록하지 않는다. 외부 인터넷에는 검색 질의와 원문 요청이 전송되지만 기사 작성의 모델 호출은 로컬 Ollama로 전달한다. 로컬 추론과 네트워크 없는 뉴스 탐색은 다른 개념이다.

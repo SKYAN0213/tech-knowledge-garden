@@ -45,13 +45,27 @@ export async function registerArchiveLocation({
     const receipt = readJSON(root, `archive-staging/${runId}/package-receipt.json`)
     const manifestBytes = fs.readFileSync(safePath(root, `runs/${runId}/archive-manifest.json`))
     const manifest = JSON.parse(manifestBytes)
+    const operational =
+      manifest.schema === "research-archive/v1" &&
+      Array.isArray(manifest.files) &&
+      manifest.files.length > 0 &&
+      manifest.files.every(
+        (f) =>
+          f.public === false &&
+          f.drive_root === "Research" &&
+          (f.path === `runs/${runId}/workflow-checkpoint/manifest.json` ||
+            new RegExp(`^runs/${runId}/workflow-files/[0-9]+\\.bin$`).test(f.path)),
+      )
+    if (operational && reindex)
+      throw Error("Workflow custody has no source or article index to promote")
+    const boundRuns = operational ? [runId] : manifest.bound_runs
     if (
       receipt?.schema !== "research-archive-package-receipt/v1" ||
       receipt.run_id !== runId ||
-      manifest.schema !== "research-archive/v2" ||
+      (!operational && manifest.schema !== "research-archive/v2") ||
       manifest.run_id !== runId ||
       receipt.manifest_sha256 !== sha256(manifestBytes) ||
-      !manifest.bound_runs?.includes(manifest.source_run)
+      (!operational && !manifest.bound_runs?.includes(manifest.source_run))
     )
       throw Error("Portable archive receipt and manifest disagree")
     const localPackage = fs.readFileSync(safePath(root, receipt.path))
@@ -89,7 +103,7 @@ export async function registerArchiveLocation({
       })
       reviewedRuns.add(run)
     }
-    for (const run of manifest.bound_runs) {
+    for (const run of boundRuns) {
       if (!validRun(run)) throw Error("Invalid bound archive run")
       const base = `runs/${run}/`
       if (readJSON(root, base + "documents.json") || readJSON(root, base + "parses.json")) {
@@ -208,6 +222,7 @@ export async function registerArchiveLocation({
       package_sha256: receipt.sha256,
       package_bytes: receipt.bytes,
       manifest_sha256: receipt.manifest_sha256,
+      ...(operational ? { storage_kind: "workflow_checkpoint", dependency_closed: false } : {}),
       metadata_sha256: sha256(metadataBytes),
       verified_at: metadata.observed_at,
       drive: {
