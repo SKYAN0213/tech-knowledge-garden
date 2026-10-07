@@ -10946,6 +10946,7 @@ Chromium은 초기 captured final URL의 주 문서 탐색만 허용한다. 같�
 공통 createSourceAcquisitionGroup(root, runId, sourceRuns)와 archiveClosure를 사용했다. run당24leaf 이하/총32run·2000자료·256MiB 기존 상한을 유지한다. docs/parse가 빈 뉴스창의 initial archive 실패는 pinned group만 허용하도록 수정했으며 편집 loader의 원문 요구는 그대로다. 목록 페이지/완료 source-stage raw body도 포함해 원격 복구 때 목록 무결성 검증이 가능하다. 원문 원장을 기사 승인의 source-bundle로 합치지 않았다.
 
 5개 closure/Drive IDs:
+
 - 01: 19alYFC8tRMw4SYfvG6E20YYp-1mqJ62v, ZIP17,717,623bytes/SHA52406dfd0cabc012ea067b40d623834545bb5d8f57ca902cd90a2751086ff03d,1746members.
 - 02: 1CbbrGWmzFOQ2mxs5yYbsfYWSqM94wQrh,8,088,025bytes/SHA2f2c7e2f4e0a8fe4afe60db2ab2a9861132ae2e74329ef1f842db865b09233cb,516members.
 - 03: 1XsRtpYZX3joJd1vq4ZHJJhgpvCFHgOkc,2,788,759bytes/SHA9d615551f598a49882ba6f771acf203e806f4abe3cf422b9b5b8dc5cbe45ea52,334members.
@@ -10972,9 +10973,7 @@ retry 정상/실패/무결성 표적34검사32통과·legacy callback 대조순�
 
 릴리스 b570db7761fca146c82967547a3f5c58ff8febc2/Actions37486354169에서 Node1,038/1,038·Python15+10+3·build/site/deploy success를확인했다. 실제공개3파일이HTTP200/기존산출물SHA와같고RSS40식별자와내용을보존했다. P2-01의원래11체크를source취득계약10file SHA·실물55경로830관측/실패·정책·원인별retry/성공·실패보존과릴리스회귀로대조했다. P2-01-acceptance-v1.json의 Codex판정으로안전취득항목을완료했다. 이는독립human평가나등록195URL현재가용성·일일통합현재fingerprint/정규08시완료판정이아니다. 전체WBS3/22·partial17/not_started2, 새정규0/7. 원래DE2창은미완료이며operator의주간원문추가실패를daily원래attempt수로소급변경하지않았다.
 
-
 원격 보관 완료: source-retry-closure-20261007-v1은1018자료/1020ZIP members·12,898,384bytes·SHA344246897fa21565155b3b42d4e75f2d9a4b9ad149048d252d65c21e76b7bf24다. 비공개 Drive Research ID1-PREfyGmNHeGQDbioUB_YOdaF6hKIBmu의 actual metadata/shared=false·원격 raw SHA·전수1020members 복원·위치 등록을 확인했다. 복구 사본의 operator7파일 SHA와 원래4실패 원문 판정/EN supplemental 검증으로 DE2retryable·디일렉1새관측대기를 재현했다. 전체55경로 runtime 재개나 기사 승인/정규 발행을 뜻하지 않는다. CLI 복원은 root-relative package 계약으로 실행하며 최초 절대경로 요청 거부 후 root 아래 원격 ZIP 사본으로 수정했다. 닫힌 group/manifest는 추가 수정하지 않는다. 최신 진척판은 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v1.json/html이며3/22·partial17/not_started2·정규0/7이다. 다음은 기존 원문 검토·원고 승인과 Drive/public 전달 연결을 계속한다.
-
 
 ## 454. 일일 원문의 로컬 작성·승인·Drive 복원
 
@@ -10992,7 +10991,6 @@ source closure126자료/128members/3원문판본/524,032bytes/SHAf72094b31930f8b
 
 최신 비공개 진척판: 외장 tkg-daily-core-20261007-v1/core-progress-checkpoint-20261007-v3.json/html. WBS3/22·partial17/not_started2를 확인했다. 데이터/문서 readback이며 추가 UI 동작 검증 또는 기사 공개가 아니다.
 
-
 ## 455. 공식 목록 대조와 정확한 게시 시각 보존
 
 기존 공통 publication_date_metadata_timestamp 옵션의 처리 순서를 수정했다. 목록·표시일 대조 후 명시적 오프셋이 있는 Article datePublished 시각을 보존하며, 여러 발행 시각이 충돌하면 null/conflict로 유지한다. 목록 날짜가 충돌을 덮어쓰지 않는다. 원문 시각·표시일·목록 판본 근거를 함께 저장하고 CrowdStrike 공식 상세 profile에 적용했다. 시간대가 없거나 날짜만 있으면 시각을 추정하지 않으며 다른 profile의 기본 날짜 동작은 유지한다.
@@ -11001,9 +10999,7 @@ source closure126자료/128members/3원문판본/524,032bytes/SHAf72094b31930f8b
 
 19.361의 ‘기존 회차 연결’ 재개 방향을 수정한다. 이 발표는 10월6일 회차의 마감(한국시간05:21:45) 뒤이므로 그 회차에 추가하지 않는다. 날짜만 있던 원 승인을 정확한 시각 승인으로 자동 승격하지 않는다. 이후 대상 회차에서 시각 근거를 연결해 검토하며 기존 URL/GUID/coverage는 유지한다. Drive 작성4폴더 수정0·새 기사 공개0·새 정규0/7·WBS3/22 상태다. 실제 증거는 외장 tkg-daily-core-20261007-v1/publication-timestamp-live-v1.json과 새 run crowdstrike-publication-time-reparse-20261007-v1이다.
 
-
 455/19.362 후속 완료: code 204f1ae0d28067f26bf01498640511d796f06578 / Actions37492396995 build·deploy success. 릴리스CI 전체검사1회·로컬 전체suite0, 공개3파일 raw SHA 동일·RSS40 GUID/pubDate/내용을 보존했다. 새 기사 공개0·정규0/7이다. source closure publication-time-source-closure-20261007-v1은16자료/18members/124,369bytes/SHA2e2d09a03fb3928837125918b7a961acd10c3bba6d800d1254bbf7eb2bbc25c1이다. private Drive ID1uAmTbz_0AVqEf-fe2Q-muCFHPdyUnqNY의 Research parent/shared=false·원격 raw SHA·18members restore·위치 등록을 확인했고 복원된2원문판본/1parse가 원본과 같았다. 닫힌 run/group/manifest는 추가 수정하지 않는다. 최신 비공개 진척판 core-progress-checkpoint-20261007-v4.json/html은 WBS3/22·partial17/not_started2다. UI 동작 변경이 없어 브라우저 검사는 반복하지 않았다. 다음은 정확한 게시 시각의 승인 연결과 해당 마감을 포함하는 회차 연결이며, 10월6일 기존 회차에 넣지 않는다. 기존 승인과 후보 장부는 보존했으므로 날짜 정밀도 변경은 별도 검토가 필요하다. 전체legacy·전문용어/독립 평가·실제08시/인증/복구/정규7회는 미완료이고 goal active를 유지한다. 동일 실패1시간 반복0이다.
-
 
 ## 456. 승인 원고의 게시 시각 정밀도 정정과 재사용
 
@@ -11014,7 +11010,6 @@ source-revision-resolution의 replace_approval에 publication_time_revision_run�
 실제 사건28865e31f8cb281c: approved run crowdstrike-publication-time-revision-20261007-v3, 시각2026-10-06T08:15:23-04:00, 13verified facts·기존 육하원칙 리드/설명 그대로·추가 model/원문HTTP0. resolution-v1에서 후보911개 중1개만 정정하고 나머지910개·ID·관측 시각·과거 승인을 보존했다. 반복 resolution은 backlog SHA5c2379d016467d0fd7d3b18c10b4df06030176fc22a8f608286d18cf4b65715a가 같았다. 기존 daily plan의 새 precise-approval-reuse-v1은 approval_ready1/모델0이며 공개나08시 완료는 아니다.
 
 표적 처음32/32·CLI handoff1/1. 연결 추가 검사1실패는 stage 결과와 정정 manifest의 같은 파일명 충돌이었고 stage명을 분리해 해당1통과했다. idempotence 추가1통과. archive 검사2실패는 related-run이 candidate-approval만 받는 계약과 루트 review 경로가 bound dependency 밖인 시험 호출이었다. source 승인 root의 자동 계보 closure를 검증하도록 수정해 해당1통과했으며 guard를 완화하지 않았다. 초기 actual v1/v2는 보존했고 최종 v3만 후보에 연결했다. 신규 정규0/7·WBS3/22·legacy/독립평가/08시/fullruntime 미완료, goal active다. CI·Drive archive·공개 보존은 후속 결과로 기록한다. 동일 실패1시간 반복0이다.
-
 
 후속 릴리스·보관 확인: 코드 6d8cfaf9713d68b8c9b9dc41a0da47a149667d61 / Actions 37496164187에서 Node 1,047/1,047, Python 28, build·site 검증·배포가 성공했다. 릴리스 CI 전체 검사 1회, 로컬 전체 suite 0회다. 공개 3파일은 HTTP 200이며 이전 산출물과 raw SHA가 같고 RSS 40건의 GUID·pubDate·내용을 보존했다. 새 기사 공개 0건이다.
 
@@ -11042,7 +11037,6 @@ source closure crowdstrike-extraction-comparison-closure-20261007-v1은47자료/
 
 재개 지점: 최종 v2의 누락2사실·시간 상태·숫자 단위를 source-review 경로에서 보완하고, 다른 이미 수집한 국내·로봇 원문으로 적용 범위를 검증한다. 같은 원문의 조건 없는 모델 재실행은 하지 않는다. 전체WBS3/22·partial17/not_started2·새정규0/7·legacy/독립평가/08시/인증/복구 미완료를 유지한다. 같은 실패를1시간 이상 반복한 항목0, goal active다. 외장 증거 dense-source-content-comparison-v1.json, dense-source-drive-restored-proof-v1.json, dense-source-public-preservation-v1.json 및 core-progress-checkpoint-20261007-v6.json을 따른다.
 
-
 ## 458. 수치 인용 결합과 미래 상태 검토 보강
 
 다른 인용문의 수치와 조건을 결합하거나 150에서 50을 부분 일치시키는 경우, 과거 완료 인용이 함께 있어 미래 계획을 completed로 통과시키는 경우를 재현했다. validateEvidence는 수치 literal·unit·condition을 동일 인용문에서 확인하고 숫자 크기/단어 경계를 확인한다. 명시적 미래·조건부 문장의 completed를 거부하며, 실제 완료된 발표와 미래 발표 내용은 기존 보고 동사 근거로 구분한다. 자동 정정이나 검토 생략은 추가하지 않았다.
@@ -11051,11 +11045,9 @@ source closure crowdstrike-extraction-comparison-closure-20261007-v1은47자료/
 
 저장된 CrowdStrike 미승인 wide-v2 출력에서 기존 통과하던 선택적 투자 심사의 completed 오류를 추가 검출했다. 신규 모델·원문 HTTP·기사 승인·공개0, 로컬 전체suite0이다. 기존 13사실 승인 원고는 수정하지 않았다. 전체WBS3/22·partial17/not_started2·정규0/7 및 독립평가/legacy/08시/인증/복구 미완료를 유지한다. 외장 claim-consistency-approval-audit-v2.json은 정확한 별도 root를 포함하며 v1의 main-root 누락 판정과 구분한다. 다음은 릴리스 CI와 이 비공개 대조의 Drive 보관 확인 후 기존 수집 원문의 검토를 이어간다. 같은 실패1시간 반복0, goal active다.
 
-
 458/19.365 완료 증거: code160f823f907702d2f6796842e4d6e5c76d098147 / Actions37502154780에서 Node1,052/1,052·Python15+10+3·build/site/deploy가 성공했다. 코드 릴리스CI1회·로컬전체suite0회. 공개3파일 HTTP200·raw bytes/SHA 동일, RSS40GUID/기존내용·후보 장부SHA 보존, 새기사0이다. source closure claim-consistency-audit-closure-20261007-v1은18자료/20members·89,019bytes·SHA18e7d0a9416d08618c68074ccdb10df1f5fe717e9cf443ee9590a75611fb2eeb다. 비공개 Research Drive ID1metMlcGhfsCf7i1dDfxM_dLyz11GinY1에서 actual parent/shared=false·원격 raw SHA·20members restore·보관 위치 등록을 확인했다. 복원된 operator7자료의 SHA, 원문parse 동등성과 미승인16사실 중 구조통과6을 재현했다. 닫힌 manifest/원출력은 수정하지 않는다.
 
 비공개 진척판 core-progress-checkpoint-20261007-v7.json/html은 실제 수집목록195/활성55경로, 전체WBS3/22·partial17/not_started2를 표시한다. UI 변경이 없어 브라우저 검사를 반복하지 않았다. 전체legacy·독립human평가·08시실행/인증/복구·정규7회는 미완료이며 새정규0/7·goal active다. 이번에는 새 원문 재조사/기사 발행을 수행하지 않았다. 다음은 이미 수집한 국내·로봇 원문 검토와 승인·Drive/public 전달 연결을 이어간다. 동일 실패1시간 반복0이다. 외장 claim-consistency-ci-final-v1.json/log, claim-consistency-public-preservation-v1.json, claim-consistency-drive-restored-proof-v1.json이 증거다.
-
 
 ## 459. 국내 로봇 공식 원문에서 승인·중복 연결·전문용어 이력까지
 
@@ -11101,7 +11093,6 @@ source closure71자료/73members·176157bytes·SHA b0df287e74a827c12b7c493b47c7a
 
 461 최종 보관: 전달 증거의 portable closure126자료/128members·3495935bytes/SHA5d4dcf6eaf8bd4a2b3af2a1e7dddcb334ad171f7d6a210a498a3d7156624910e는 privateResearch Drive1OSEg8_dzaQtXx6Quef28z9k6SLb6E8ra에서 actual parent/shared=false·원격 rawSHA·전수128members 복원·registry raw_sha256_verified를 확인했다. source_versions0이며 기사 원문6판본은 별도 source closure를 참조한다. 처음의 일반 archive/v1은 portable restore 계약에 맞지 않아 restore/등록이 거부됐다. 원 패키지와 원격 파일1Vbs8A0CH7sXmInHSGzyuydL3J3pU52tX는 보존하고 기존 archiveClosure로 새 v2 dependency package를 생성해 확인했다. 보호 규칙을 완화하거나 닫힌 manifest를 수정하지 않았다. 최신 비공개 현황판 core-progress-checkpoint-20261007-v10.json/html은 실제 WBS3/22·partial17/not_started2와 공개 전달 operation을 반영한다. 동일실패1시간 반복0·목표active다.
 
-
 ## 462. 구조화 본문·메타데이터 구분을 공통 추출에 보존
 
 JSON locator의 pointer를 input source_field에 그대로 넣고 전체 요청 예산에 포함한다. JSON 이름/값은 신뢰하지 않는 원문이다. 실제 변경을 먼저 추출하되 태그·날짜는 변경의 동일성으로 보존하며, 버전/날짜에 가짜 numbers 단위를 만들지 않는다. 실제 수량/금액/성능과 조건은 유지한다. 비JSON 원문·블록 식별·인용 검사·완료 재사용 규칙은 유지했다. 출처 전용 adapter나 옵션은 없다.
@@ -11114,7 +11105,7 @@ node scripts/research.mjs extract --run extraction-substance-doosan-20261007-v1 
 ```
 
 두 run은 terminal이며 추가 모델 실행 없이 저장 request/response를 대조했다.
- 원문 context는 source_field만 제거하면 양쪽 동일하다. model/digest/runtime/think/context/output/temperature와 max6도 동일하다. SDK 실제 변경0→6/구조통과0→6, 두산구조4→3이다. SDK 패치2/의존성4의 원문 인용을 확인했다. 두산 수치 조건3개와 시험기관·현장실증·시간 단축 등 누락은 품질 미완료로 남는다. 수동 정정이나 기존 승인14사실을 새 모델 성공으로 세지 않았다. 새 출력은 unreviewed, 승인·public기사·새 정규회차0이다.
+원문 context는 source_field만 제거하면 양쪽 동일하다. model/digest/runtime/think/context/output/temperature와 max6도 동일하다. SDK 실제 변경0→6/구조통과0→6, 두산구조4→3이다. SDK 패치2/의존성4의 원문 인용을 확인했다. 두산 수치 조건3개와 시험기관·현장실증·시간 단축 등 누락은 품질 미완료로 남는다. 수동 정정이나 기존 승인14사실을 새 모델 성공으로 세지 않았다. 새 출력은 unreviewed, 승인·public기사·새 정규회차0이다.
 
 외장 /Volumes/X5Storage/tkg-daily-core-20261007-v1/extraction-substance-*에 재현 실패/표적83로그·실제2실행·정확한 원문/설정 비교를 보존한다. 계획19.369/P3-02/03 partial·전체WBS3/22·legacy46/446/metadata10·독립human라벨0·정규0/7을 유지한다. 다음은 릴리스CI/실제공개보존/비공개Drive 원격SHA·전수복원·registry를 확인한 뒤 수치 조건과 상세 포착을 검토한다. 동일 실패1시간 반복0·목표active다.
 
@@ -11156,7 +11147,6 @@ source run legacy-jul04-claude-official-20261007-v1은 공식 API2개를 수집/
 
 최종 전달 증거도 별도로 닫았다. operator529자료/531members·2588709bytes/SHAbae6dee70502221ad6ee241668f1d108dff8a39ba4f65314ff90666cd323671f·Research Drive1LzyDZkwYzw7aYGK8PNhQb7dI5Rk0WLWp에서 실제 parent/shared=false·원격raw SHA·전수복원·registry를 확인했다. 전후213작성 원본·Drive authoring 의도/판정·공개17파일·WebsiteData/CI/복원 증거를 포함한다. 이 묶음의 source_versions0은 운영 전달 기록이며 공식2원문은 위 두 source closure에 있다. 비공개 현황판 core-progress-checkpoint-20261007-v16.json/html에 수집 경로와 전체WBS3/22·partial17/not_started2를 유지했다. 파일 열기는 queued 결과였으므로 렌더링 완료로 기록하지 않는다. 문서 정리만 [skip ci]로 커밋하고 테스트·모델·원문HTTP를 다시 반복하지 않는다.
 
-
 ## 465. 정규 수집 복구와 최초/보완 상태 분리
 
 KUKA 독일 run kuka-de-{current,next}-window-recovery-20261007-v1은 각각9/29→10/6·10/6→10/7의 공식 POST JSON HTTP200·동일rawSHA·20정렬항목·기간후보0을 확인했다. research-daily --run kuka-de-{current,next}-window-reconciliation-20261007-v1 --reconcile-scan corresponding-run으로 기존 backlog/coverage에 반영했다. 새 원고/후보 승인/공개 발행은0이다. 기존 실패 관측과 날짜 경계를 보존한다.
@@ -11173,13 +11163,11 @@ source closure kuka-de-recovery-source-closure-20261007-v1·20자료/22members·
 
 최종 전달 기록은15자료/17members·185025bytes·SHAad2bffa2ce93a5c610501278cef0a922e6b63c2effea4d3b43012ea85d5200eb·비공개Research Drive1sc7dPiWLEew7rrXh7yuPzJ0cGRqCTUXG에서 실제 부모/shared=false·원격rawSHA·전수restore·registry를 검증했다. source_versions0인 운영 기록이며 native1판본은 별도source closure에 있다. 현황판v18은 생성한 실제109/110집계 파일이며 브라우저file 프로토콜 거부/open_in_codex queued로 실제UI 렌더링·조작은 미검증이다. 같은 동작을 우회하지 않는다. 문서 최종 기록만 [skip ci]로 커밋하고 같은 시험/모델/수집을 반복하지 않는다. 남은1창의 회원전용 원문과 최신Drive/새계획 정규 회차·독립평가·08시/인증/복구/fullruntime 관문을 다음 재개 지점으로 남기며 goal active다.
 
-
 ## 466. 일일 수집과 공통 context 페이지
 
 현재 run daily-20261007-current55-integrated-v1/55경로110창은 fresh213Drive의 동일 원본/clean판본에서 시작했다. 외장 current55-oct7-{plan,execution,context}-v1과 fresh connector-readback/source-snapshot-daily-oct7-pre-20261007-v1을 보존한다. 활성 worker는 재시작하거나 입력을 바꾸지 않는다. terminal 뒤 handoff/32칸/검토 대기와 실제 원문 상태를 확인한다.
 
 공통 조회는 `npm run research:context --silent`로 원본을 고정하고 snapshot.input·sha256으로 `--section NAME --offset N`, `--route ROUTE`, `--candidate KEY`를 읽는다. 정확한 다음 cursor는 page.next_offset이다. 첫850건43페이지·원순서/고유key850·첫61979/최대73541bytes 확인; context-page-runtime-proof-v1.json과 context-page-targeted-v1.log의 표적4/4가 근거다. 승인을 위한 전체 이력과 source/parse/사건 판정은 별도 원 기록으로 읽는다. 전체수집 fingerprint/원 장부는 변경하지 않는다. 기존 npm run context는 호환 전체 출력으로 유지한다.
-
 
 466 실제 검증: ab226b6c/Actions37528975520 Node1078/Python28·build/site/deploy success. 자동화 입력 지침의 actualTOML before/after/proof-v3는 끝newline 제거 외 본문동등과 시간/모델/project/cwd/status 불변을 확인했다. tool의 cwds 미지원/초기 raw exactfalse 결과를 보존했다. 공개3파일 실제HTTP200/rawSHA 보존이며 actual08시/정규 횟수는0이다.
 
@@ -11193,7 +11181,6 @@ private-reader-slice-v1의 Signals 누락 실패는 보존했고 source-bound da
 
 source archive plan은 실제109terminal observation run을 공통closure6개로 나눴다. 6remote ZIP은 각16MiB 이하의 기존 bounded raw compatibility 호출로 받아 실제SHA·member전수restore·registry를 확인한다. source register의 rawSHA 검증은 기사승인/정규발행과 구분한다. 새progress/전체suite를 반복하지 않고 최종 후보의CI와 전달 증거를 이어서 남긴다.
 
-
 467 최종 검증: code a6a155a0/Actions37531187024의 Node1078/1078·Python28·build/site/deploy가 success다. source-binding-public-preservation-v1.json의 실제 공개3파일 HTTP200/rawSHA·RSS40 전체bytes 불변을 확인했다. 승인2기사/위빙/Signals는 private preview v2에서만 검증했으며 공개 신규 회차·정규 성공 횟수에는 포함하지 않는다. 추가 모델 실행0·같은 원문 재요청0·로컬 전체suite0이다.
 
 실제 수집6패키지46686416bytes/4059members의 원격 rawSHA·전수복원·등록은 current55-oct7-source-{restore-proof-v1,register-proof-v2}.json, 복원된108완료/1부분 관측은 current55-oct7-restored-observations-v1.json이다. 최초 provider metadata 직접 전달은 schema 요구에서 거부되어 변경 없이 보존됐고 fresh metadata를 실제 관측 wrapper로 작성한v2만 등록했다. 각 native/member 제한 관측과 원문 판본770을 그대로 보존한다.
@@ -11202,13 +11189,11 @@ source archive plan은 실제109terminal observation run을 공통closure6개로
 
 다음 입력: terminal run daily-20261007-current55-integrated-v1 및 daily-20261007-approved-intake-slice-v1. 남은 분야의 원문/중복/날짜/상세 검토→정규 원고→fresh Drive 작성 원본 확인·보관→공개 readback 순서다. 현재 preview v2는 coverage_complete/drive_verified/browser_verified/candidate_published=false이고 canonical580파일은 불변이다. 기존 예약의 실제08시/7회 성공, legacy44회차430구간·metadata10, 독립human 평가와 인증/복구/fullruntime은 미완료이며 WBS3/22와 goal active를 유지한다. 문서 최종 기록은 [skip ci]로 커밋하고 통과한 검사/수집/모델을 재실행하지 않는다.
 
-
 ## 468. 네 분야 실제 편집과 항우연 본문 재사용
 
 입력 context b75f02ef90be507ee94e2805d5797417b6b804a7e612d38d89d7a5424875191d에서 exact candidate 상세4개를 읽고 daily-20261007-four-fields-editorial-v1에 frozen handoff458c81e0/원문 version·parse를 고정했다. 모델 처리 handle16038의 live 진행을 확인하며 같은 실행을 재시작하지 않는다. 완료된 수집55경로를 다시 실행하지 않는다. local qwen3.8:27b-mlx fact_extract/evidence_compare의 실제 provenance와 원출력은 해당 child run에 보존한다. 사실/편집 검토·신규 발행은 별도 단계다.
 
 항우연 원 HTML21e392ed…의 실제 br/direct-text 내용을 읽어 누락을 재현했다(kari-body-regression-before-v1.log). 기존 common XPath 설정만 수정한 뒤 Python 표적2/2와 missing/ambiguous body 차단을 확인했다(kari-body-targeted-v1.log). select-source kari-body-current-selection-20261007-v1→reparse kari-body-current-reparse-20261007-v1은 raw·게시일2026-10-06·원 URL을 그대로 유지했고 새parse6357e1ba…에654자 본문이 있다. kari-body-runtime-proof-v1.json은 원19자 parse·원문 보존·HTTP0·승인false를 기록한다. 진행 중 모델의 기존 title-only input은 변경하지 않았으며 그 결과를 새 본문 결과로 표시하지 않는다. 다음 source processing은 이 새parse를 사용한다.
-
 
 ## 469. 원문 검토·파싱 연결 복구·여섯 기사 전달
 
@@ -11231,7 +11216,6 @@ kari-body-current-editorial-20261007-v1은 복구parse6357e1ba로 실제 처리�
 원래 두산/보안 승인2를 유지한 여섯 기사와 위빙/Signals2노트로 daily-20261007-six-article-reader-slice-v1을 생성했다. 새 Signals는 여섯 승인 source-events에 결속된 reviewed-empty로, 단일 발표를 성장·인과관계로 해석하지 않는다. 실제 refresh/knowledge sync/check/validate/build/verify가 모두 완료됐다. consistency에6고유 event와 웹·RSS·GitHub 링크/요약 동등성, 기존39 RSS identity 보존/preview 새GUID1(총40 cap), 위빙 상호링크를 기록했다. coverage_complete/drive_written/browser_verified/candidate_published는 false다. 공개 새기사/정규 성공 횟수는0이다.
 
 외장 증거 루트 /Volumes/X5Storage/tkg-daily-core-20261007-v1의 current55-oct7-{four-fields-execution,new-editorial-archives,new-editorial-roundtrip,new-editorial-remote-approval,six-article-selection,six-article-signals-review,six-article-reader}-v1과 kari-body-{empty-review-v4,candidate-parse-recovery-v2,remote-restore-v1,remote-approval-v1}을 사용한다. private reader 출력은 runs/daily-20261007-six-article-reader-slice-v1/preview-workspace/public/briefings/2026/10/2026-10-07_0800_tech_ai_briefing.html이다. 기존 dashboard의 browser file 거부를 우회하지 않았으며 이 preview의 실화면 검증도 미완료다. 전체3/22·legacy44/430/metadata10·독립human0/40·0/20·actual08시 및 정규0/7·goal active를 유지한다.
-
 
 469 최종 전달: code282faaa57b203cfe6fbab856d4f6da47e3d1c32d/Actions37537130232는 Node1082/1082·Python15+10+3·build/site/deploy success다. candidate-parse-recovery-ci-status/full-v1과 actual public-preservation-v1의3파일 HTTP200/rawSHA·기존RSS40 전체bytes 불변을 확인했다. 새 코드 묶음의 릴리스CI1회·추가 로컬전체0이며 승인 여섯 기사는 공개하지 않았다. 별도 six-approved-intake-v1은 review_pending/approval_ready6로 완료됐고 처리/HTTP 재호출0이다. 원 private-preview/Signals/용어/생성파일 검증을 다시 실행하지 않았다.
 
@@ -11299,7 +11283,6 @@ source closure v1은 새 parse만 담아 보존했고 동일 source version의 b
 
 Drive Research1UCS1AlxzY41oVJzu7Ik-eOaFUWKjBQZn metadata·raw size/parent/shared:false·SHA417b0e9222501086b6c40235cc96ff2543b1a05fb9be10d06c14b2e4553e9570·37파일 remote restore·registry를 완료했다. 복원된 current source와 predecessor custody만으로 두 frozen evaluation case를 구성해 native loader의6사실·원 spec 해시0f573653…·invalid0·과거 superseded 실패1을 확인했다(fanuc-pdf-context-remote-roundtrip-v4.json). 모델/뉴스/독립human/fullruntime false다. 새 archive 읽기 성공이라는 새 근거로 이전 평가 ZIP1vh4…를 한 번 재조회했으나403이므로 미완료를 유지했다(current55-evaluation-closure-raw-recheck-v3.json). 추가 반복 없이 다음 현재55경로 재검증·새 모델 비교·보류 원문 확보·독립 검토를 진행한다. checkpoint-v21은 WBS3/22·개발27/보류1·human0/40/0/20·legacy44/430+metadata10·goal active다.
 
-
 ## 475. 실행이 끝나기 전의 수집 진척 조회
 
 `node scripts/research.mjs acquisition-status --run daily-20261007-current55-pdf-integration-v1`로 plan/receipt/checkpoint를 빠르게 읽는다. `--run` 생략 시 최신 계획을 선택하고, full `research status`에도 daily_acquisition이 있다. 완료 summary 없는 실행의55경로/110창, 영수증별 정상/미완료/대기 창, detail 단계 시작 시각과 완료 stage 수를 관측한다. 원문 전체 검증·모델·네트워크·기사 승인·Drive 저장·발행을 실행하지 않는다. raw 검증과 공개 완료를 이 카운터로 대체하지 않는다. global lock의 bound_run은 null이며 running checkpoint가 live worker를 증명하지 않는다. corrupted exact evidence는 invalid로 표시한다.
@@ -11316,7 +11299,6 @@ Drive archive ID: 1f9d88eUdNeeXVIhqJQyCciyJJeQWHK7g·1HyqdFt5_zURe6y4jyNiDzjVNck
 
 최종 운영 기록도 source_versions0인 별도 current55-pdf-delivery-closure-20261007-v1로 보관했다. private Drive1NtTEH83tEFPNx-vtv3IBIy835-bf5WyR의10members/131323bytes/SHA687fcea799c9aa86a2997a1549558ac2ec4b0f1c61b8ae2426f8a2d36240674c는 실제 metadata/raw/전수복원/registry를 확인했다. 실제55경로 결과·110창 원격 검증·원문5archive 위치·현재WBS·CI/공개 불변 관측이 들어 있으며 기사 원문과 전체runtime은 앞의 별도 범위다. 다음 재개는 native research:context를 고정한 후 아직 모델 출력을 보지 않은 보류 평가 원문 확보 또는 기존44회차430기사의 원문 재검토다. collector 코드/설정 변경이 없으면 새 버전 검증을 이유로 동일55경로 전체를 재수집하지 않는다. 완료된 근거는 native 재검증/재사용 계약으로 이어가고 새 날짜·원문 변경·접근 상태 변화만 별도 조사한다.
 
-
 ## 476. 취재 시각 미기록 과거 회차의 원문 재검토와 Drive 반영
 
 legacy-jul23-reader-20261007-v1은 기존 presence-reviewed/metrics-reviewed/science-reviewed 3개 native approval을 재사용한다. 원본7월23일{} metadata, iCloud 작성 원본, Git 최초 이력을 직접 읽고 cutoff 미기록을 확인했다. transition packet은 전체10units와3event의 원문·중복·출처 연결을 판정한다. unrecorded_coverage_review는 시각 복원이 아니며 공개 coverage_start/end는 null이다. 기존 저장 시각을 과거 취재 시각으로 바꾸지 않는다. 최신 cutoff는10월7일 실제 수집 기준을 유지한다.
@@ -11327,13 +11309,11 @@ Drive pre raw216/1417978bytes와 두 recursive inventory 일치를 확인했다.
 
 원본 SHA d24a4f3fc56b35090701b2242413b9e2164dcf5bf453182fe0a5f78267be91fb와 모든 원본·검토 사유는 비공개 packet에 남는다. 공개 분석 문단을 필수로 채우지 않는다. Source List3개와 사건3개·발표일7월22일을 보존한다. RSS 포함 조건에 실제 cutoff가 필요해 해당 과거 회차는 신규 RSS 항목이 되지 않는다. 공개 배포/readback·WebsiteData·비공개 증거 archive의 완료는 실제 확인 뒤 별도로 기록한다.
 
-
 최종 전달: 구현9472f5bf·콘텐츠2c4f0409/Actions37552174883 success, CI Node1105통과·기존Python/PDF·build/site/deploy 통과다. 공개16산출물 원격 bytes 동일, RSS40개 GUID/pubDate와 XML 전체 bytes 불변, 실제 공개 탭/뒤로 가기도 확인했다. WebsiteData11개 raw·같은ID·비공개 확인(8수정/3불변), 과거기사197·페이지379·지도개념26/관계22다. 소급 inventory는 미검토43회차/420구간·metadata 미기록9회차이며 이번 전환1회차의 cutoff는 계속 unknown이다. WBS3/22(14%)·개발27/40·보류1/20·독립human0/40/0/20·신규shadow0/7·goal active를 유지한다.
 
 비공개 Drive archive5개를 실제 raw SHA/size 확인·native 복원·registry 등록했다. 기사 승인3개 원격복원본에서 native loadCurrentApproval을 재실행해 동일사건/승인 유효를 확인했다(모델/네트워크0, 전체런타임 복원 false). source 재확인 별도2판본과 운영42증거파일도 각각 보관했다. Drive IDs: 1PpDgL3pAP37NJkFvjCdAERitFhIoYSxH / 1dyXdUvc8pMhaM-aR1t_8p6nDb501jrQ6 / 1YEePrNYJMTuXdkxbJDQ9HPplr8p-GUnK / 14qpIufP45Fh1kQES96fOWQlPlxfy090B / 1r9NJuSyKwMO1DpXh11tyJMHl7tQg7Ibh. 원본 회차·전환 packet·원격 작성/공개 영수증·코드·검사를 private delivery custody에 보존했다. archive의 최초 related-run 결속/preview symlink 및 restore root-relative 경계 오류는 기존 조건을 유지하고 기사별 native closure·운영 custody·정확한 복원 root로 해결했다. 같은 실패1시간 반복0이다.
 
 현재 full status는 한 번만 생성해 checkpoint-v23에 보존했다. 등록195/일일55/수집profile57/detail131·평가27/1·goal active다. garden 모듈 변경으로 current collector fingerprint가22b29239…로 바뀌어 이전 current55 실행을 새 코드 통합 성공으로 집계하지 않는다. 그 실제110창/109정상/1부분·원문/복원 증거는 기존fingerprint6216d1b9…로 보존한다. 이번에55경로 전체 수집을 반복하지 않았다. 남은 과거 재검토·평가/운영을 진행하고 코드가 안정된 다음 통합 수집을 새 기준으로 검증한다. 정확한 collector별 빠른 진척 조회는 acquisition-status를 사용한다.
-
 
 ## 477. 7월22일 원문 재검토 결과의 Drive·웹·원격 복원
 
@@ -11373,7 +11353,6 @@ Drive Research 실제 원격 bytes·native 복원·registry 완료:
 승인 세 개의 원격 복원본에서 native loadCurrentApproval을 다시 실행해 동일 사건·source 날짜·10월7일 승인일을 확인했다. 전달 custody는 evidence154파일과 native 작성/공개/WebsiteData·post 작성 snapshot을 보존하고 source_versions0이다. 중복 raw wrapper와 큰 archive b64 응답의 생략 목록/원 SHA는 custody에 명시했다. 실제 pre 전수 raw·post 변경1raw·fresh 전수 receipt/inventory·post 작성 bytes·WebsiteData 후속 bytes와 승인 closure는 보존했다. 전체 runtime 복원·독립 평가·새 shadow 완료를 뜻하지 않는다.
 
 최종 canonical inventory v2 64/verified201·미검토41/403·metadata 필요7·diagnostics0, 원장923/verified109/unreviewed800·승인receipt56·회차 내 중복0이다. full status는1회 생성했으며 WBS3/22(14%)·개발27/40·보류1/20·human0/40/0/20·shadow0/7·goal active를 유지한다. 이번 source code 변경0/유료API·예약변경0/55경로 전체수집0/로컬전체suite0/릴리스CI1회다. 이미 empty 판정된7월19·20일은 반복하지 않고 다음7월18일 원본 SHA46616c4e6050ac68d63f422b787380a154d49e161cc32cb16ebb87d77b21f18f에서 이어간다.
-
 
 ## 479. 7월18일 OpenAI 평가 제안·Copilot 저장소별 지표 재검토와 전달
 
@@ -11574,3 +11553,9 @@ renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기�
 동일 Kawasaki 공식 원문17문단의 실제 개발 실행은 model_quote86,578ms에서 source_block68,745ms로 바뀌었다. 각각 한 번의 관측이며 프롬프트와 인용 프로토콜이 함께 바뀌었으므로 보편적인 속도 개선율로 사용하지 않는다. source_block 원출력에는 quote 필드가 없고 저장된 인용문은 원문과 같다. 원문 기준8사실의 native 개발 판정은 완전3·부분5·누락0, 구조5/6이다. 가정으로의 사업 확장을 완료로 분류한 오류와 개인화·관찰·일상 지원·정보관리의 상세 누락이 남아 raw_model_pass=false다. 인용문 변경 오류와 의미 오류를 분리하며 새 원출력에 승인·원고 작성·발행을 하지 않았다.
 
 기존 CLI 결과의 native 재사용에서 추가 수집·모델 호출0을 확인했다. 새 일일 편집 wrapper는 실제 승인·회차 연결을 검증한 뒤 `completed_no_new_articles`로 종료했고 모델 호출0·신규 발행false다. 최초 표적69개 중67통과와2실패를 보존했다. 새 오류 메시지의 정확한 필드 경로와 기존 진행형 예제를 복원한 뒤 실패 표적만 통과시켰다. 공통 source-processing→assessment→명시적 review packet→재개 연결의 추가 검사1개도 통과했다. 전체 suite는 최종 릴리스 CI에서 한 번 수행한다. 이번 변경은 필수 WBS3/22·부분17·미착수2, 남은 소급33회차/335구간·복구2건, 독립human0/40+0/20·새 정규0/7을 바꾸지 않는다. 실제 근거는 외장 `tkg-daily-core-20261007-v1/core-source-block-*`, `core-kawasaki-source-block-*`, `core-kawasaki-terminal-continuation-v1.json`에 있다.
+
+## 490. 기사 없는 과거 회차의 검토 결과도 같은 발행 경로로 전달
+
+`preparePublicationOperation`이 검토 완료된 빈 과거 브리핑을 `Approved reader authoring inputs required`로 거부하는 실제 결함을 확인했다. 공통 `assertArticleFreeLegacyPreview`가 원본 전체의 기존 `assertLegacyTransition`을 재사용한다. 회차마다 정확한 경로·원문 SHA·전체 구간·발견 경로 역할·명시적 no_article_review가 필요하며, 일일 원고·미검토 구간·중복·별도 용어 변경은 거부한다. Drive 검증과 실제 canonical SHA 검사는 그대로 유지한다.
+
+빈 기사 목록의 readback은 각 회차의 실제 생성된 Briefings 매핑과 digest 경로를 추가한다. 기사 승인·뉴스 페이지·신규 RSS 회차를 생성하지 않는다. 관련 표적 묶음에서 새 fixture의 macOS /tmp symlink 경로 오류1건을 기록했고 실제 경로로 바꿔 실패 표적만 재검증했다. 전체 테스트는 최종 배포 CI에서 한 번 수행한다. private 증거는 외장 `core-empty-july-*`; 준비·Drive 수정·공개 배포·실제 readback을 각각 구분한다.

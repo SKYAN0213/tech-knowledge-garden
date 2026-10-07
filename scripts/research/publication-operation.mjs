@@ -4,6 +4,7 @@ import { sha256 } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { inspectedAuthoringRelease } from "./authoring-execution.mjs"
 import { assertDeploymentProof, loadVerifiedPublicReadback } from "./public-readback.mjs"
+import { assertArticleFreeLegacyPreview } from "./legacy-transition.mjs"
 
 const id = (value) => {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(value || "")) throw Error("Publication operation ID required")
@@ -21,6 +22,20 @@ const gitBytes = (repository, args) => {
   const result = spawnSync("git", args, { cwd: repository, maxBuffer: 16 * 1024 * 1024 })
   if (result.status !== 0) throw Error("Cannot verify publication commit content")
   return result.stdout
+}
+
+// Only an explicitly reviewed historical cleanup may publish without articles.
+export function assertPublicationAuthoringInputs(manifest, release) {
+  const authoring = [
+    ...(manifest.editions || []),
+    ...(manifest.knowledge || []),
+    ...(manifest.navigation ? [manifest.navigation] : []),
+  ]
+  if (!authoring.length) throw Error("Approved reader authoring inputs required")
+  if (manifest.consistency?.articles?.length) return authoring
+  if (release.kind !== "retrospective") throw Error("Approved reader authoring inputs required")
+  assertArticleFreeLegacyPreview(manifest)
+  return authoring
 }
 function binding(root, run) {
   const input = readJSON(root, directory(run) + "/input.json")
@@ -55,13 +70,7 @@ export async function preparePublicationOperation({
     const current = inspectedAuthoringRelease(root, releasePath, { fresh, now })
     const previewPath = `runs/${current.release.preview_run}/preview-manifest.json`
     const manifest = readJSON(root, previewPath)
-    const authoring = [
-      ...(manifest.editions || []),
-      ...(manifest.knowledge || []),
-      ...(manifest.navigation ? [manifest.navigation] : []),
-    ]
-    if (!authoring.length || !manifest.consistency?.articles?.length)
-      throw Error("Approved reader authoring inputs required")
+    const authoring = assertPublicationAuthoringInputs(manifest, current.release)
     for (const row of authoring)
       if (sha256(bytes(repository, "vault/" + row.path)) !== row.sha256)
         throw Error("Canonical authoring differs from the approved preview")

@@ -10,6 +10,8 @@ import { legacyReviewUnits } from "../scripts/research/legacy-review.mjs"
 import { assertLegacyTransition } from "../scripts/research/legacy-transition.mjs"
 import { retrospectiveProjections } from "../scripts/research/preview.mjs"
 import { editionProjection } from "../scripts/research/publish-adapter.mjs"
+import { assertPublicationAuthoringInputs } from "../scripts/research/publication-operation.mjs"
+import { publicReadbackPlan } from "../scripts/research/public-readback.mjs"
 
 function fixture(t, change = () => {}) {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-no-articles-"))
@@ -88,6 +90,97 @@ function fixture(t, change = () => {}) {
   }
   return { vault, relative, existing, packet, key }
 }
+
+test("article-free publication requires a fully reviewed retrospective cleanup", (t) => {
+  const f = fixture(t)
+  const manifest = {
+    editions: [{ path: f.relative }],
+    knowledge: [],
+    consistency: { articles: [] },
+    legacy_reviews: [f.packet],
+  }
+  assert.deepEqual(
+    assertPublicationAuthoringInputs(manifest, { kind: "retrospective" }),
+    manifest.editions,
+  )
+  for (const change of [
+    { legacy_reviews: [] },
+    { legacy_reviews: [{ ...f.packet, no_article_review: undefined }] },
+    { legacy_reviews: [{ ...f.packet, units: f.packet.units.slice(1) }] },
+    { editions: [{ path: "Editions/2026/07/unreviewed.md" }] },
+    { legacy_reviews: [f.packet, f.packet], editions: manifest.editions.concat(manifest.editions) },
+    { knowledge: [{ path: "Knowledge/unreviewed.md" }] },
+    { edition_spec: {} },
+  ])
+    assert.throws(() =>
+      assertPublicationAuthoringInputs({ ...manifest, ...change }, { kind: "retrospective" }),
+    )
+  assert.throws(() => assertPublicationAuthoringInputs(manifest, { kind: "daily" }))
+})
+
+test("article-free readback includes each historical briefing and digest without creating news", (t) => {
+  const f = fixture(t)
+  const [projection] = retrospectiveProjections(f.vault, [], [], [f.packet])
+  const repository = path.join(fs.realpathSync(f.vault), "website")
+  const put = (file, value) => {
+    const target = path.join(repository, file)
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.writeFileSync(target, value)
+  }
+  const slug = "briefings/2026/07/" + f.key.toLowerCase()
+  put("vault/" + f.relative, projection.content)
+  put(
+    ".local/site-notes.json",
+    JSON.stringify([{ path: f.relative.replace(/^Editions\//, "Briefings/").slice(0, -3), slug }]),
+  )
+  for (const file of [
+    "drive-sync.json",
+    "briefing.xml",
+    "reader-index.json",
+    "knowledge-graph.json",
+    "static/contentIndex.json",
+    "reader.css",
+    slug + ".html",
+  ])
+    put("public/" + file, "published:" + file)
+  put("public/reader.js", 'import("./chunks/connection-map-AAA111.js");')
+  put("public/chunks/connection-map-AAA111.js", "map")
+  const digest = f.relative.replace(/^Editions\//, "digest/")
+  put(digest, "reviewed digest")
+  const commit = "a".repeat(40)
+  const preview = {
+    schema: "private-reader-preview/v1",
+    editions: [{ path: f.relative, sha256: sha256(projection.content) }],
+    knowledge: [],
+    consistency: { articles: [] },
+    legacy_reviews: [f.packet],
+  }
+  const options = {
+    repository,
+    preview,
+    commit,
+    deployment: {
+      status: "completed",
+      conclusion: "success",
+      headSha: commit,
+      url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/123",
+      jobs: ["build", "deploy"].map((name) => ({
+        name,
+        status: "completed",
+        conclusion: "success",
+      })),
+    },
+  }
+  const plan = publicReadbackPlan(options)
+  assert.ok(plan.files.some((row) => row.kind === "web" && row.path === slug + ".html"))
+  assert.ok(plan.files.some((row) => row.kind === "github" && row.path === digest))
+  assert.ok(
+    !plan.files.some((row) => row.path.startsWith("news/") || row.path.startsWith("vault/News/")),
+  )
+  assert.throws(() =>
+    publicReadbackPlan({ ...options, preview: { ...preview, legacy_reviews: [] } }),
+  )
+})
 
 test("reviewed article-free legacy projection removes unsupported prose and discovery routes, preserving identity", (t) => {
   const f = fixture(t)

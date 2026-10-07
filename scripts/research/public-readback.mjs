@@ -3,6 +3,7 @@ import path from "node:path"
 import crypto from "node:crypto"
 import { sha256, PUBLIC_ROOTS } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
+import { assertArticleFreeLegacyPreview } from "./legacy-transition.mjs"
 
 const SITE = "https://skyan0213.github.io/tech-knowledge-garden/"
 const GITHUB = "https://raw.githubusercontent.com/SKYAN0213/tech-knowledge-garden/"
@@ -59,10 +60,11 @@ function readbackPlan({ preview, commit, deployment, read }) {
     !Array.isArray(preview.editions) ||
     !preview.editions.length ||
     !Array.isArray(preview.knowledge) ||
-    !Array.isArray(preview.consistency?.articles) ||
-    !preview.consistency.articles.length
+    !Array.isArray(preview.consistency?.articles)
   )
     throw Error("Verified reader preview required")
+  const articleFree = preview.consistency.articles.length === 0
+  if (articleFree) assertArticleFreeLegacyPreview(preview)
   if (preview.navigation && preview.navigation.path !== "Knowledge/00 Tech Encyclopedia Index.md")
     throw Error("Authoring navigation must use the canonical encyclopedia index")
   const mapping = JSON.parse(read(".local/site-notes.json"))
@@ -88,6 +90,12 @@ function readbackPlan({ preview, commit, deployment, read }) {
     if (sha256(read(local)) !== row.sha256)
       throw Error("Approved preview authoring bytes changed: " + row.path)
     github.add(local)
+    if (articleFree && row.path.startsWith("Editions/")) {
+      const slug = slugs.get(row.path.replace(/^Editions\//, "Briefings/"))
+      if (!slug?.startsWith("briefings/")) throw Error("Missing historical briefing mapping")
+      web.add(relativePath(slug + ".html"))
+      github.add(relativePath(row.path.replace(/^Editions\//, "digest/")))
+    }
     // Signals are authoring records, not reader pages.
     if (row.path.startsWith("Knowledge/") && row.path !== preview.navigation?.path) {
       const slug = slugs.get(row.path)

@@ -627,6 +627,33 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   return packet
 }
 
+// Reuse the full original-unit review when an article-free legacy cleanup is delivered.
+export function assertArticleFreeLegacyPreview(manifest) {
+  const reviews = manifest.legacy_reviews
+  if (
+    !Array.isArray(manifest.consistency?.articles) ||
+    manifest.consistency.articles.length ||
+    !Array.isArray(manifest.editions) ||
+    !manifest.editions.length ||
+    !Array.isArray(reviews) ||
+    !reviews.length ||
+    (manifest.knowledge || []).length ||
+    manifest.navigation ||
+    manifest.edition_spec ||
+    reviews.length !== manifest.editions.length ||
+    new Set(reviews.map((review) => review.target_path)).size !== reviews.length ||
+    reviews.some(
+      (review) =>
+        !review.no_article_review ||
+        review.events?.length !== 0 ||
+        !manifest.editions.some((edition) => edition.path === review.target_path),
+    )
+  )
+    throw Error("Reviewed article-free legacy preview required")
+  for (const review of reviews)
+    assertLegacyTransition(review, [], parseNote(review.before_content), review.target_path)
+}
+
 export function legacyTransitionBatch(value) {
   assertSchema(
     value,
