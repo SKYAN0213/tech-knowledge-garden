@@ -1,35 +1,50 @@
 ---
 title: Tech & AI Briefing - 00:04
-date: 2026-07-05
 time: 00:04
-timezone: Asia/Seoul
-coverage_start: 2026-07-04T16:03:59+09:00
-coverage_end: 2026-07-05T00:04:21+09:00
 type: briefing
-source_count: 14
-new_items_count: 0
-linked_knowledge_notes: []
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-05
+timezone: Asia/Seoul
+coverage_start: 2026-07-04T16:03:59+09:00
+coverage_end: 2026-07-05T00:04:21+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 0
+new_items_count: 0
+linked_knowledge_notes: []
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines: []
+article_records: []
+article_reviews: []
 ---
 
-# 한눈에 보기
-
-- 오늘의 핵심 기사: 없음
-- 논문과 연구: 없음
-- 오픈소스와 도구: 없음
-
-# 오늘의 핵심 기사
+# 이번 호 표지
 
 없음
 
-# 논문과 연구
+# 차례
 
 없음
 
-# 오픈소스와 도구
+# 커버 스토리
+
+없음
+
+# 뉴스 데스크
+
+없음
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
 
 없음
 
@@ -37,23 +52,14 @@ tags:
 
 없음
 
-# 바로 써먹을 점
+# 오늘의 적용
+
+없음
+
+# 개념 색인
 
 없음
 
 # Source List
 
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=10
-- https://api.github.com/repos/vercel/ai/releases?per_page=10
-- https://api.github.com/repos/vllm-project/vllm/releases?per_page=10
-- https://api.github.com/repos/openai/openai-python/releases?per_page=10
-- https://api.github.com/repos/huggingface/transformers/releases?per_page=10
-- https://api.github.com/repos/modelcontextprotocol/servers/releases?per_page=10
-- https://api.github.com/repos/microsoft/semantic-kernel/releases?per_page=10
-- https://github.blog/wp-json/wp/v2/changelogs?per_page=50
-- https://openai.com/news/rss.xml
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blogs.nvidia.com/feed/
-- https://mistral.ai/rss.xml
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.LG&sortBy=submittedDate&sortOrder=descending&max_results=20
+없음
