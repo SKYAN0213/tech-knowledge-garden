@@ -16,7 +16,7 @@ LangChain의 Mistral 연동 패키지 1.1.6이 2026년 7월 6일(한국시간) �
 
 발표 2026-07-06
 
-LangChain의 OpenRouter 연동 패키지 0.2.6이 2026년 7월 6일(한국시간) 공개됐다. default_headers로 사용자 지정 HTTP 헤더를 요청에 전달할 수 있도록 수정했다.
+LangChain의 OpenRouter 연동 패키지 0.2.6이 2026년 7월 6일(한국시간) 공개됐다. default\_headers로 사용자 지정 HTTP 헤더를 요청에 전달할 수 있도록 수정했다.
 
 ## 분야별 브리핑
 
@@ -44,7 +44,7 @@ LangChain의 Mistral 연동 패키지 1.1.6이 2026년 7월 6일(한국시간) �
 
 제품·서비스 · 오류 수정 · LangChain
 
-LangChain의 OpenRouter 연동 패키지 0.2.6이 2026년 7월 6일(한국시간) 공개됐다. default_headers로 사용자 지정 HTTP 헤더를 요청에 전달할 수 있도록 수정했다.
+LangChain의 OpenRouter 연동 패키지 0.2.6이 2026년 7월 6일(한국시간) 공개됐다. default\_headers로 사용자 지정 HTTP 헤더를 요청에 전달할 수 있도록 수정했다.
 
 ##### 함께 갱신한 데이터
 

@@ -217,6 +217,23 @@ generated_by: tech-knowledge-garden
 - [[News/cd5027de226c01e4|CodeQL 2.26.0, 시스템 프롬프트 인젝션 탐지 추가]] · 2026-07-11
 - [[News/ebd15df645baad20|GitHub Mobile, Copilot 세션의 상태·저장소 필터와 정렬 추가]] · 2026-07-11
 - [[News/060f4905c5779472|Claude Code v2.1.206, 외부 작업공간 진입 확인과 MCP 시간 제한 수정]] · 2026-07-10
+- [[News/414c9891d5ccd917|Claude Code v2.1.205, 자동 모드 승인·Windows 파일 삭제 보호 보강]] · 2026-07-10
+- [[News/2f4818ccad349c12|Claude Code v2.1.204, 원격 작업 중 훅 이벤트 전송 오류 수정]] · 2026-07-10
+- [[News/aa3c9fe0f3678a1e|Claude Code v2.1.203, 백그라운드 작업 복구·작업 폴더 격리 오류 수정]] · 2026-07-10
+- [[News/5df7e6aa93ded5c9|AI SDK 7.0.19, MCP 도구 정의 변경을 감지하는 기능 추가]] · 2026-07-10
+- [[News/27a2def167b365d2|STRACE, 대표 실패 기록과 의존 그래프로 에이전트 최적화]] · 2026-07-10
+- [[News/e6f759764f290fa7|단백질·분자·결정 구조를 함께 다루는 SciReasoner 제안]] · 2026-07-10
+- [[News/8dbb2238c30b71eb|Anthropic, AI의 일자리·사회 영향에 관한 질문 공개 접수]] · 2026-07-10
+- [[News/f3589f5c7a1073c1|JetBrains Copilot에 Codex 미리보기·도구 승인 설정 추가]] · 2026-07-10
+- [[News/e7072d841218baed|GitHub Copilot, GPT-5.6 세 모델 점진적 배포]] · 2026-07-10
+- [[News/be4ba95581839c4c|GitHub Copilot 데스크톱 앱, 무료·교육 요금제까지 이용 대상 확대]] · 2026-07-10
+- [[News/d7c1335c53efecf3|GitHub Mobile, 원격 Copilot CLI 작업 상태를 실시간 알림으로 제공]] · 2026-07-10
+- [[News/25cd2c8cb0feed28|GitHub Copilot, 기업이 원격측정 데이터 전송과 수집 범위 관리]] · 2026-07-10
+- [[News/95b6379f6bf2e5be|GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청]] · 2026-07-10
+- [[News/8380dfc46fdb5389|GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포]] · 2026-07-10
+- [[News/c1b395091566575d|GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공]] · 2026-07-10
+- [[News/3fb14968493dc682|OpenAI, 동시에 듣고 말하는 GPT-Live 공개]] · 2026-07-10
+- [[News/caaa735c832bdb26|OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시]] · 2026-07-10
 - [[News/3b59b1b88f4cc9fa|AI SDK, 도구 승인 메타데이터와 xAI 스트리밍 결과 처리 수정]] · 2026-07-07
 - [[News/a8d066afc8b4014f|Vercel AI SDK, Anthropic AWS 연동 패키지 버전을 2.0.0으로 정정]] · 2026-07-06
 - [[News/c7b2e07cfca0bff5|Vercel AI SDK, OpenAI 채팅 요청의 인라인 이미지를 data URL로 전송]] · 2026-07-06

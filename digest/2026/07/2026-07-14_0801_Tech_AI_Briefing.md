@@ -26,7 +26,7 @@ AI SDK의 ai 패키지는 7월 14일(한국시각) 7.0.23·7.0.25·7.0.26 패치
 
 ##### 7.0.25: 음성 전사 준비 단계까지 취소
 
-experimental_streamTranscribe의 fullStream을 취소하면 아직 완료되지 않은 doStream 준비도 중단한다. doStream이 완료되기 전에 취소한 작업이 남는 문제를 수정했다. gateway 문자열 모델 ID가 스트리밍 전사를 지원할 수 있다는 점을 반영해 unsupported-model 오류 메시지도 바꿨다.
+experimental\_streamTranscribe의 fullStream을 취소하면 아직 완료되지 않은 doStream 준비도 중단한다. doStream이 완료되기 전에 취소한 작업이 남는 문제를 수정했다. gateway 문자열 모델 ID가 스트리밍 전사를 지원할 수 있다는 점을 반영해 unsupported-model 오류 메시지도 바꿨다.
 
 ##### 7.0.23·7.0.26: 실행 추적 문맥 연결
 

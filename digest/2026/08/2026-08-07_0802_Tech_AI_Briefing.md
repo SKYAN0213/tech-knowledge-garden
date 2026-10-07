@@ -118,7 +118,7 @@ Cloudflare는 2026년 8월 6일 새 MCP 규격을 자사 플랫폼에서 사용�
 
 ##### 사용자 입력과 기존 서버의 이전 방식
 
-MRTR은 서버가 input_required 결과로 필요한 입력을 요청하면 클라이언트가 답을 inputResponses에 담아 원래 작업을 다시 요청하는 방식이다. 사용자 답변을 기다리는 동안 양방향 스트림을 계속 열어 둘 필요가 없다.
+MRTR은 서버가 input\_required 결과로 필요한 입력을 요청하면 클라이언트가 답을 inputResponses에 담아 원래 작업을 다시 요청하는 방식이다. 사용자 답변을 기다리는 동안 양방향 스트림을 계속 열어 둘 필요가 없다.
 
 새 Streamable HTTP 요청에는 Mcp-Method와 Mcp-Name 헤더가 필요하다. Cloudflare의 /mcp 경로는 2025년 Streamable HTTP 클라이언트의 무상태 요청도 받지만, 이전 세션이나 독립 스트림에 의존하는 서버에는 별도 이전 작업이 필요하다고 설명했다.
 
@@ -148,7 +148,7 @@ Cloudflare는 HTMLRewriter로 같은 출처의 스크립트를 HTML 응답에 �
 
 Site MCP Server 팩은 도구를 찾은 뒤 등록하고, 방문자의 기존 세션을 사용해 페이지에서 사이트의 MCP 엔드포인트로 직접 연결한다.
 
-Content Credentials의 inspect_image_c2pa는 이미지의 작성자·편집 이력·서명 인증서가 담긴 메타데이터를 읽는다. 이 프리뷰는 암호학적 서명 검증을 수행하지 않으며 결과에 signatureVerified: false를 표시한다.
+Content Credentials의 inspect\_image\_c2pa는 이미지의 작성자·편집 이력·서명 인증서가 담긴 메타데이터를 읽는다. 이 프리뷰는 암호학적 서명 검증을 수행하지 않으며 결과에 signatureVerified: false를 표시한다.
 
 [blog.cloudflare.com 원문](https://blog.cloudflare.com/webmcp/)
 

@@ -1,232 +1,1287 @@
 ---
 title: Tech & AI Briefing - 08:02
-date: 2026-07-10
 time: 08:02
-timezone: Asia/Seoul
-coverage_start: 2026-07-07T08:04:00+09:00
-coverage_end: 2026-07-10T08:02:00+09:00
 type: briefing
-source_count: 18
-new_items_count: 8
-linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/Conversational Voice AI|Conversational Voice AI]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]"
-  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]"
-  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]"
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-07-10
+timezone: Asia/Seoul
+coverage_start: 2026-07-07T08:04:00+09:00
+coverage_end: 2026-07-10T08:02:00+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 17
+new_items_count: 17
+linked_knowledge_notes:
+  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
+  - "[[Knowledge/AI Systems/Conversational Voice AI|Conversational Voice AI]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation
+    and Observability]]"
+  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security
+    and Governance]]"
+  - "[[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific
+    Discovery]]"
+  - Knowledge/AI Systems/Prompt Caching
+knowledge_notes_created: []
+knowledge_notes_updated: []
+briefing_group_format: related-events/v1
+briefing_groups:
+  - id: copilot-clients
+    title: "Copilot: 저장소 개요·앱·IDE·모델"
+    sector: 소프트웨어·클라우드
+    event_ids:
+      - c1b395091566575d
+      - be4ba95581839c4c
+      - e7072d841218baed
+      - f3589f5c7a1073c1
+  - id: copilot-enterprise
+    title: "Copilot: 기업 설정·원격측정"
+    sector: 소프트웨어·클라우드
+    event_ids:
+      - 8380dfc46fdb5389
+      - 25cd2c8cb0feed28
+  - id: copilot-mobile
+    title: "GitHub Mobile: 충돌 해결·작업 알림"
+    sector: 소프트웨어·클라우드
+    event_ids:
+      - 95b6379f6bf2e5be
+      - d7c1335c53efecf3
+  - id: claude-code-releases
+    title: "Claude Code: v2.1.203·v2.1.204·v2.1.205"
+    sector: 소프트웨어·클라우드
+    event_ids:
+      - aa3c9fe0f3678a1e
+      - 2f4818ccad349c12
+      - 414c9891d5ccd917
+headlines:
+  - OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
+  - OpenAI, 동시에 듣고 말하는 GPT-Live 공개
+  - GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공
+  - GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포
+  - GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청
+article_records:
+  - title: OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: OpenAI
+      when: 2026-07-09
+      where: ChatGPT·Codex·OpenAI API
+      what: GPT-5.6 Sol·Terra·Luna 정식 출시
+      how: 전 세계 순차 배포 시작과 향후 24시간의 제공 확대 계획
+      why: 미기재
+    lead: OpenAI가 7월 9일 GPT-5.6 제품군의 Sol·Terra·Luna 세 모델을 정식 출시한다고 발표했다.
+      ChatGPT·Codex·OpenAI API에서 전 세계 배포를 시작하며, 이후 24시간에 걸쳐 순차적으로 제공 범위를 넓힌다고
+      밝혔다.
+    explanations:
+      - heading: 모델과 요금제별 사용 범위
+        paragraphs:
+          - OpenAI는 Sol을 주력 모델, Terra를 일상 업무용 균형형 모델, Luna를 제품군에서 비용이 가장 낮은 모델로
+            소개했다. Chat에서는 Plus·Pro·Business·Enterprise 사용자가 medium 이상의 추론 설정으로
+            Sol을 이용하고, Pro·Enterprise 사용자는 Sol Pro도 선택할 수 있다.
+          - ChatGPT Work와 Codex에서는 Free·Go에 Terra를 제공하고,
+            Plus·Pro·Business·Enterprise에는 세 모델을 선택할 수 있게 한다. max 설정은 이 두 제품에서
+            GPT-5.6을 이용할 수 있는 모든 사용자에게 제공된다. ultra는 ChatGPT Work에서
+            Pro·Enterprise, Codex에서 Plus 이상 요금제에 제공된다.
+        source_urls:
+          - https://openai.com/index/gpt-5-6/
+      - heading: API의 도구 실행과 캐시
+        paragraphs:
+          - Responses API의 Programmatic Tool Calling은 모델이 메모리 안에서 프로그램을 작성·실행해
+            도구를 조정하고 중간 결과를 처리하는 방식이다. OpenAI는 이 기능이 Zero Data Retention(ZDR)과
+            호환된다고 설명했다. 베타 기능인 Multi-agent는 한 요청 안에서 여러 서브에이전트를 동시에 실행하고 결과를
+            종합한다.
+          - 프롬프트 캐시에는 명시적인 캐시 경계 지정과 최소 30분의 유지 시간이 도입됐다. GPT-5.6 이후 모델의 캐시 작성
+            요금은 비캐시 입력 요금의 1.25배이며, 캐시 읽기는 입력 요금의 90% 할인율을 유지한다.
+        source_urls:
+          - https://openai.com/index/gpt-5-6/
+      - heading: OpenAI가 공개한 평가 결과
+        paragraphs:
+          - OpenAI는 55개 분야의 장시간 전문 업무를 평가하는 Agents' Last Exam에서 Sol이 53.6을 기록해
+            Claude Fable 5의 adaptive reasoning보다 13.1점 높았다고 발표했다. Artificial
+            Analysis Coding Agent Index에서는 max 추론 설정의 Sol이 80점으로 Fable 5보다 2.8점
+            높았고, BrowseComp와 OSWorld 2.0 결과는 각각 92.2%와 62.6%라고 밝혔다.
+          - 보안 평가에서는 비슷한 출력 토큰 예산의 ExploitBench에서 GPT-5.6이 73.5%, GPT-5.5가
+            47.9%를 기록했다고 설명했다. ExploitGym의 2시간 제한에서는 각각 24.9%와 15.1%였으며,
+            GPT-5.6에 6시간을 부여한 결과는 33.7%였다.
+        source_urls:
+          - https://openai.com/index/gpt-5-6/
+      - heading: 문서 작업과 고객 사례
+        paragraphs:
+          - OpenAI는 Sol이 편집 가능한 프레젠테이션을 처음부터 만들고 문서·스프레드시트의 형식과 정확도를 개선했다고 설명했다.
+            발표문에 실린 Model ML 공동 창업자 Chaz Englander의 발언에서는 FinBench의 고객 업무 20종과
+            수백 개 프레젠테이션을 평가했을 때 Fable보다 프레젠테이션 한 벌당 토큰을 39% 적게 사용했다고 밝혔다.
+          - 같은 발표문에서 Lovable 공동 창업자 Fabian Hedin은 프로덕션 앱 작업에서 이전 모델보다 수행 단계가 약
+            25%, 도구 호출이 35~48% 줄고 진행이 멈춘 실행이 15% 감소했다고 설명했다.
+        source_urls:
+          - https://openai.com/index/gpt-5-6/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: OpenAI, 동시에 듣고 말하는 GPT-Live 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: OpenAI
+      when: 2026-07-08
+      where: 전 세계
+      what: GPT-Live-1 및 GPT-Live-1 mini 음성 모델 출시 및 ChatGPT 적용
+      how: 입력과 출력의 동시 처리, 별도 GPT-5.5 모델로 검색·추론 위임
+      why: 미기재
+    lead: OpenAI가 2026년 7월 8일 음성 모델 GPT-Live-1과 GPT-Live-1 mini를 공개하고
+      iOS·Android·ChatGPT.com 사용자에게 전 세계 순차 배포를 시작했다. 회사는 입력을 들으면서 동시에 말을 생성하는
+      풀듀플렉스 구조를 적용하고, 검색이나 심층 추론은 별도 GPT-5.5 모델에 맡겨 대화를 이어가도록 설계했다고 설명했다.
+    explanations:
+      - heading: 음성 모드별 배경 모델
+        paragraphs:
+          - GPT-Live-1 Instant와 mini는 GPT-5.5 Instant를 사용한다. Medium·High 모드는
+            GPT-5.5 Thinking을 각각 중간·높은 추론 수준으로 사용한다.
+        source_urls:
+          - https://openai.com/index/introducing-gpt-live/
+      - heading: OpenAI의 비교 평가
+        paragraphs:
+          - OpenAI는 5~10분의 길이를 맞춘 대화 비교에서 두 모델이 기존 Advanced Voice Mode보다 선호됐다고
+            밝혔다. 평가 항목은 전반적 선호도, 발언 순서, 끼어들기, 대화 흐름과 자연스러움이었다.
+          - 회사는 생물학·화학·물리학의 전문가 수준 과학 추론을 평가하는 GPQA에서도 GPT-Live-1이 Advanced
+            Voice Mode를 크게 앞섰다고 설명했다.
+        source_urls:
+          - https://openai.com/index/introducing-gpt-live/
+      - heading: 제공 범위
+        paragraphs:
+          - GPT-Live-1은 Go·Plus·Pro 요금제의 ChatGPT Voice 기본 모델로, mini는 Free 요금제의
+            기본 모델로 전환할 예정이다. API 제공도 계획으로 발표했으며 개발자·기업의 알림 신청을 받기 시작했다.
+          - 출시 당시 GPT-Live는 음성과 함께 쓰는 영상·화면 공유를 지원하지 않았다. 이 기능은 기존
+            Standard·Advanced Voice Mode에서 계속 사용할 수 있었다. OpenAI는 일부 언어의 억양·유창성을
+            개선하고 있다고 밝혔다.
+        source_urls:
+          - https://openai.com/index/introducing-gpt-live/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub Copilot
+      when: 2026-07-09
+      where: github.com
+      what: 저장소 개요 요청 기능 제공
+      how: 미기여 저장소의 홈에서 개요 생성을 제안하며 Copilot Chat의 Give me a high-level overview를 선택하면
+        저장소 맥락을 모아 요약
+      why: 미기재
+    lead: GitHub는 7월 9일 github.com에서 저장소 개요를 요청하는 GitHub Copilot 기능을 모든 요금제에 제공한다고
+      밝혔다. 아직 기여하지 않은 저장소를 처음 살펴볼 때 개요 생성을 제안하고, Copilot Chat에서 요청하면 목적·사용 기술·기여
+      지침을 요약한다.
+    explanations:
+      - heading: README가 없는 저장소
+        paragraphs:
+          - GitHub는 README가 없는 저장소라면 Copilot으로 README를 생성할 수 있다고 설명했다. 저장소가 무엇을
+            하는지, 어떤 기술을 사용하는지 파악하도록 돕는 기능이다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-09-ask-copilot-for-a-repository-overview/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub Copilot
+      when: 2026-07-09 (한국시각; 원문 2026-07-08 PDT)
+      where: VS Code와 GitHub Copilot CLI
+      what: MDM·파일 기반 기업용 관리 설정 배포 정식 제공
+      how: Native MDM, Server-managed, File-based 배포 채널
+      why: 미기재
+    lead: GitHub는 한국시간 7월 9일(미국 태평양시간 7월 8일) Copilot의 기업용 설정을 기기에 직접 배포하는 기능을 VS
+      Code와 Copilot CLI에 정식 제공한다고 밝혔다. 기업 관리자는 기존 서버 설정에 더해 기기 관리 도구인 MDM이나 설정
+      파일로 Copilot 정책을 전달할 수 있다.
+    explanations:
+      - heading: 기기 관리 도구로 같은 설정 배포
+        paragraphs:
+          - Microsoft Intune, Jamf, Group Policy로 설정을 보내거나 Chef, Puppet,
+            Ansible로 설정 파일을 배포할 수 있다. GitHub는 기기에서 설정을 읽기 때문에 개발자가 로그인하는 방식과
+            관계없이 VS Code와 Copilot CLI에 일관되게 적용된다고 설명했다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-deploy-managed-copilot-settings-via-mdm-in-vs-code-and-cli/
+      - heading: 여러 채널이 설정을 전달할 때
+        paragraphs:
+          - 적용 우선순위는 네이티브 MDM, 서버 관리, 파일 기반 순서다. 둘 이상의 채널이 설정을 제공하면 가장 우선하는 채널의
+            설정이 통째로 적용된다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-deploy-managed-copilot-settings-via-mdm-in-vs-code-and-cli/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub Mobile
+      when: 2026-07-08
+      where: iOS와 Android
+      what: Copilot 클라우드 에이전트에 풀 리퀘스트 병합 충돌 해결 요청
+      how: Fix with Copilot으로 요청 댓글을 미리 채운 뒤 제출
+      why: 미기재
+    lead: GitHub는 7월 8일 모바일 앱에서 코드 변경을 병합할 때 생기는 충돌을 Copilot 클라우드 에이전트에 해결하도록 요청하는
+      기능을 제공한다고 밝혔다. iOS와 Android의 최신 배포판에서 풀 리퀘스트의 병합 영역을 통해 요청을 시작할 수 있다.
+    explanations:
+      - heading: 요청 댓글을 제출해야 에이전트 실행
+        paragraphs:
+          - 충돌이 있는 풀 리퀘스트에서 Fix with Copilot을 누르면 해결을 요청하는 댓글이 미리 채워진다. 사용자가 이
+            댓글을 제출하면 Copilot 클라우드 에이전트가 시작된다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-github-mobile-fix-merge-conflicts-with-copilot-cloud-agent/
+      - heading: 기존 댓글 요청도 계속 지원
+        paragraphs:
+          - 풀 리퀘스트 댓글에서 @copilot을 호출하는 기존 방식도 이용할 수 있다. 실패한 GitHub Actions 작업
+            수정, 코드 리뷰 의견 반영, 테스트 추가나 후속 코드 변경을 요청하는 방식이다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-github-mobile-fix-merge-conflicts-with-copilot-cloud-agent/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot, 기업이 원격측정 데이터 전송과 수집 범위 관리
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub Copilot
+      when: 2026-07-09 (한국시각; 원문 2026-07-08 PDT)
+      where: VS Code와 Copilot CLI
+      what: 기업 관리 설정을 통한 OpenTelemetry 데이터 전송 및 수집 범위 제어
+      how: telemetry block으로 관리 값을 배포
+      why: 미기재
+    lead: GitHub는 한국시간 7월 9일(미국 태평양시간 7월 8일) 기업 관리 설정으로 Copilot의 OpenTelemetry 데이터
+      전송 경로를 지정할 수 있다고 밝혔다. 이 설정은 VS Code의 Copilot Chat 확장 프로그램과 Copilot CLI를
+      실행하는 에이전트 호스트에 적용된다.
+    explanations:
+      - heading: 수집 서버와 기록 범위 지정
+        paragraphs:
+          - 관리자는 데이터를 받는 서버의 주소와 OTLP 전송 방식인 otlp-http 또는 otlp-grpc, 서비스 이름과 리소스
+            속성을 설정할 수 있다.
+          - 프롬프트·응답·도구 내용의 기록 여부와 개발자가 그 설정을 바꿀 수 있는지도 관리한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli/
+      - heading: 관리 설정을 우선 적용
+        paragraphs:
+          - 관리 값은 환경변수와 사용자 설정보다 우선한다. 네이티브 MDM, 로그인한 GitHub 계정에서 받는 서버 관리 설정,
+            managed-settings.json 파일로 전달할 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli/
+      - heading: 인증 헤더의 적용 범위
+        paragraphs:
+          - GitHub는 수집 서버의 인증 토큰 같은 관리 헤더가 Copilot Chat 확장 프로그램의 OTLP 내보내기에만
+            적용된다고 설명했다. 이 헤더를 환경변수로 전달하지 않아 에이전트 호스트가 생성하는 도구 하위 프로세스에 넘기지 않는다는
+            설명이다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Mobile, 원격 Copilot CLI 작업 상태를 실시간 알림으로 제공
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub Mobile
+      when: 2026-07-08
+      where: iOS와 Android
+      what: 원격 Copilot CLI 세션 실시간 알림 제공
+      how: iOS live activities와 Android live update notifications
+      why: 미기재
+    lead: GitHub는 7월 8일 모바일 앱에서 원격 Copilot CLI 세션의 진행 상황을 확인하는 실시간 알림을 지원한다고 밝혔다.
+      iOS와 Android의 최신 앱 배포판에서 작업 상태와 사용자 입력이 필요한 시점을 확인할 수 있다.
+    explanations:
+      - heading: 상태 확인 뒤 세션 로그로 이동
+        paragraphs:
+          - 알림은 진행 중, 사용자 입력 대기, 유휴, 완료 상태를 표시한다. 알림을 누르면 GitHub Mobile에서 해당 세션의
+            로그 화면이 열린다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-github-mobile-live-notifications-for-copilot-cli-sessions/
+      - heading: 운영체제별 지원 조건
+        paragraphs:
+          - iOS의 라이브 액티비티는 iOS 17.2 이상, Android의 라이브 업데이트 알림은 Android 16 이상에서
+            지원된다. 이보다 이전 Android에서도 기존 진행 상황 알림은 받을 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-08-github-mobile-live-notifications-for-copilot-cli-sessions/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot 데스크톱 앱, 무료·교육 요금제까지 이용 대상 확대
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-08 (한국시각; 원문 2026-07-07 PDT)
+      where: macOS·Windows·Linux
+      what: Copilot 데스크톱 앱을 모든 Copilot 요금제에 제공
+      how: GitHub 계정 로그인 또는 BYOK 제공사 연결
+      why: 미기재
+    lead: GitHub는 한국시간 7월 8일(미국 태평양시간 7월 7일) Copilot 데스크톱 앱을 모든 Copilot 요금제에서 제공한다고
+      밝혔다. Copilot Free와 GitHub Education 이용자도 macOS·Windows·Linux 앱에서 GitHub
+      계정으로 로그인해 사용할 수 있다.
+    explanations:
+      - heading: Copilot 구독 없이 자체 제공사 연결
+        paragraphs:
+          - BYOK는 사용자가 자신의 모델 제공사 API 키를 연결해 세션을 실행하는 방식이다. GitHub는 이 방식에는
+            Copilot 구독이 필요하지 않다고 설명했다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-github-copilot-app-available-to-all/
+      - heading: 기업 요금제의 정책 조건
+        paragraphs:
+          - Copilot Business 또는 Enterprise에서 앱을 이용하려면 조직이나 기업 관리자가 정책 설정에서
+            Copilot CLI를 활성화해야 한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-github-copilot-app-available-to-all/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot, GPT-5.6 세 모델 점진적 배포
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-10
+      where: GitHub Copilot
+      what: GPT-5.6 Sol·Terra·Luna 점진적 배포
+      how: 지원 요금제의 모델 선택 메뉴와 기업 관리자 정책
+      why: 미기재
+    lead: GitHub가 7월 10일(한국시간, 미국 태평양시간 7월 9일) Copilot에 OpenAI의 GPT-5.6
+      Sol·Terra·Luna를 순차적으로 배포한다고 발표했다. 모델별 지원 요금제가 다르며, Business·Enterprise
+      사용자는 관리자의 모델 정책 활성화가 필요하다.
+    explanations:
+      - heading: 세 모델의 용도
+        paragraphs:
+          - GitHub는 Sol을 대규모 코드베이스의 복잡한 추론과 장시간 에이전트 작업에, Terra를 일상적인 대화형·에이전트
+            코딩에 맞는 선택지로 소개했다. Luna는 작고 빠른 작업용 경량 모델이자 이 제품군에서 비용이 가장 낮은 모델로
+            설명했다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/
+      - heading: 요금제와 사용 조건
+        paragraphs:
+          - Sol의 지원 대상은 Pro+·Max·Business·Enterprise이며, Terra와 Luna는 여기에 Pro를
+            포함한다. 기업 관리자가 켜야 하는 GPT-5.6 모델 정책은 기본적으로 꺼져 있다.
+          - 사용량 기반 과금에서는 제공사의 표시 가격을 적용한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/
+      - heading: 모델 선택 메뉴
+        paragraphs:
+          - 공지된 선택 경로는 VS Code·Visual Studio·Copilot CLI·Copilot cloud
+            agent·Copilot app·github.com·GitHub
+            Mobile(iOS·Android)·JetBrains·Xcode·Eclipse다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: JetBrains Copilot에 Codex 미리보기·도구 승인 설정 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-07-08
+      where: JetBrains IDE용 GitHub Copilot
+      what: Codex 공개 미리보기와 에이전트 제어 기능 추가
+      how: Copilot 플러그인의 에이전트·권한·맞춤 설정 메뉴
+      why: 미기재
+    lead: GitHub가 7월 8일(한국시간, 미국 태평양시간 7월 7일) JetBrains IDE용 Copilot에 Codex 에이전트 공개
+      미리보기를 추가하고 Inline Chat을 정식 제공한다고 발표했다. Codex 사용에는 로컬 CLI 설치가 필요하며,
+      Business·Enterprise 사용자는 관리자가 편집기 미리보기 정책을 켜야 한다.
+    explanations:
+      - heading: Codex 연결
+        paragraphs:
+          - Settings → Tools → GitHub Copilot → Chat에서 Codex를 활성화하고 설치한 CLI의 경로를
+            지정한다. 이후 Copilot Chat의 에이전트 선택 메뉴에서 Codex를 선택해 세션을 시작한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
+      - heading: 도구 승인과 확인 질문
+        paragraphs:
+          - Copilot CLI의 Default Approvals는 설정한 정책에 따라 확인을 요청한다. Bypass
+            Approvals는 도구 호출을 자동 승인하지만 필요한 확인 질문은 남긴다. 미리보기인 Autopilot은 도구 호출뿐
+            아니라 확인 질문에도 자동으로 응답하며 작업을 이어간다.
+          - Claude 에이전트 세션에는 권한 모드 선택과 에이전트 디버그 로그 지원이 추가됐다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
+      - heading: Hooks와 MCP 서버
+        paragraphs:
+          - Agent Customizations에서 로컬·Copilot CLI 세션의 Hooks를 관리할 수 있다. CLI 세션의
+            MCP 서버는 명령 실행형과 HTTP형을 지원하며, 상태 확인과 시작·중지·재시작·제거가 가능하다. 프로젝트의
+            .github/mcp.json에는 작업 공간 단위 서버를 정의한다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
+      - heading: 기업 맞춤 모델과 BYOK 수정
+        paragraphs:
+          - Business·Enterprise 관리자가 GitHub 설정에서 구성한 맞춤 모델은 조직 구성원에게 자동으로 제공된다.
+          - GitHub는 BYOK 세션이 Copilot 하위 에이전트를 호출해 Copilot 사용량을 소모하던 오류를 수정했다고
+            밝혔다. 하위 에이전트 로직이 현재 선택한 BYOK 제공사를 따르도록 바뀌었다.
+        source_urls:
+          - https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Anthropic, AI의 일자리·사회 영향에 관한 질문 공개 접수
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Anthropic
+      when: 2026-07-09T16:00:00.000Z (한국시각 2026-07-10 01:00)
+      where: 미기재
+      what: AI 관련 대중의 질문을 받는 Hard Questions 이니셔티브 발표
+      how: 전용 웹사이트의 질문 접수와 향후 대응 조치 공개
+      why: AI에 대한 대중의 기대와 우려를 이해하고 공익 목표의 진전을 공개하려는 회사의 계획
+    lead: Anthropic은 7월 9일(한국시각 10일) AI가 일자리·사회·가족에 미치는 영향과 과학·의료 활용에 관한 질문을 받는
+      ‘Hard Questions’ 이니셔티브를 발표했다. 회사는 전용 웹사이트에서 대중의 질문을 받고 다른 사람들이 제출한 질문도
+      보여준다고 밝혔다.
+    explanations:
+      - heading: 대응 조치 공개 계획
+        paragraphs:
+          - Anthropic은 질문에 대응하기 위해 취하는 구체적인 조치를 공개적으로 추적·보고하고, 그 조치가 회사의 목표에 미치지
+            못하는 부분도 밝힐 계획이라고 설명했다.
+        source_urls:
+          - https://www.anthropic.com/news/hard-questions
+      - heading: 앞서 실시한 조사
+        paragraphs:
+          - 회사는 기존 Anthropic Public Record의 첫 조사에서 미국인 5만 2,000명에게 AI에 대한 기대와
+            우려를 물었다고 밝혔다.
+          - 또한 Anthropic Interviewer를 통해 159개국·70개 언어의 Claude 사용자 8만 1,000명을
+            조사했다고 설명했다. 이 수치는 이번 질문 접수 발표에 앞서 진행한 조사에 해당한다.
+        source_urls:
+          - https://www.anthropic.com/news/hard-questions
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: 단백질·분자·결정 구조를 함께 다루는 SciReasoner 제안
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: SciReasoner 연구진
+      when: 2026-07-08
+      where: arXiv
+      what: 세 구조 영역을 다루는 멀티모달 과학 모델 제안
+      how: 구조 정보를 공통 어휘와 지정 가능한 근거 토큰으로 변환
+      why: 미기재
+    lead: 연구진은 7월 8일 arXiv에 공개한 사전공개 논문에서 단백질·소분자·무기 결정의 구조를 직접 다루는 멀티모달 모델
+      SciReasoner를 제안했다. 좌표·위상·주기적 연결을 공통 어휘로 바꾸고, 추론 중 구조 토큰을 근거 단위로 가리키는 방식이다.
+    explanations:
+      - heading: 단백질 기능 예측
+        paragraphs:
+          - 저자들은 초록에서 단백질 상동성을 통제한 Gene Ontology 예측 결과를 보고했다. 상동성이 낮거나 고아 단백질과
+            유사한 단백질의 Cellular Component 주석 과제에서 F_max가 0.42에서 0.55로 높아졌다고 밝혔다.
+        source_urls:
+          - https://arxiv.org/abs/2607.07708v1
+      - heading: 한 단계 역합성
+        paragraphs:
+          - 화학 영역에서는 한 단계 역합성 정확도가 0.63에서 0.72로 높아졌다고 보고했다. 분자 조각 수준의 절단과 전구체 검증
+            과정을 담은 추론 기록도 생성한다고 설명했다.
+        source_urls:
+          - https://arxiv.org/abs/2607.07708v1
+    papers:
+      - work_id: scireasoner-2607-07708
+        identifiers:
+          - arxiv:2607.07708v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2607.07708v1
+    relations: []
+    topic_ids: []
+  - title: STRACE, 대표 실패 기록과 의존 그래프로 에이전트 최적화
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: STRACE 연구진
+      when: 2026-07-08
+      where: arXiv
+      what: 실행 기록의 구조 분석과 원인 추출을 통한 에이전트 최적화 방법 제안
+      how: 실패 유형을 이용한 대표 기록 선별과 텍스트 의존 그래프의 원인 국소화
+      why: 미기재
+    lead: 연구진은 7월 8일 arXiv에 공개한 사전공개 논문에서 에이전트 실행 기록을 정리해 최적화에 쓰는 STRACE를 제안했다. 형식
+      검증 과제에서는 전문가가 설계한 에이전트의 성공률 개선도 보고했다.
+    explanations:
+      - heading: 대표 기록 선별과 원인 단계 추출
+        paragraphs:
+          - 여러 실행 기록을 묶어 실패 유형을 찾고, 중복 기록을 걸러 대표 실패 사례를 남긴다.
+          - 선별된 개별 기록에서는 텍스트 의존 관계 그래프로 원인 국소화를 수행한다. 저자들은 원인과 무관한 단계를 제거하고 최적화할
+            원인 모듈을 찾는다고 설명했다.
+        source_urls:
+          - https://arxiv.org/abs/2607.07702v1
+      - heading: 형식 검증 과제의 결과
+        paragraphs:
+          - 저자들은 초록에서 VeruSAGE-Bench 형식 검증 과제의 결과를 제시했다. 전문가 설계 에이전트를 최적화했을 때
+            성공률이 42.5%에서 58.5%로 높아졌다고 보고했다.
+        source_urls:
+          - https://arxiv.org/abs/2607.07702v1
+    papers:
+      - work_id: strace-2607-07702
+        identifiers:
+          - arxiv:2607.07702v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2607.07702v1
+    relations: []
+    topic_ids: []
+  - title: AI SDK 7.0.19, MCP 도구 정의 변경을 감지하는 기능 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: ai@7.0.19
+      when: 2026-07-10 (한국시각; 원문 2026-07-09T18:07:30Z)
+      where: 미기재
+      what: MCP 도구 정의 변경 감지·승인 처리 수정·동영상 참조 입력 지원
+      how: fingerprintTools로 신뢰 시점의 도구 정의를 고정하고 detectToolDrift로 이후 정의와 비교
+      why: 미기재
+    lead: 한국시간 7월 10일 공개된 AI SDK의 ai@7.0.19 패치는 MCP 서버의 도구 정의가 이전과 달라졌는지 확인하는 기능을
+      추가했다. 도구 승인의 서명 보존과 등록 여부 검사도 손보고, 동영상 생성의 참조 입력에 기존 이미지 외에 동영상을 지원한다.
+    explanations:
+      - heading: 처음 신뢰한 도구 정의와 비교
+        paragraphs:
+          - fingerprintTools는 처음 도구를 신뢰할 때 서버가 제공하는 설명, 입력 스키마, 제목을 고정한다.
+            detectToolDrift는 나중에 가져온 정의와 비교해 도구를 모델에 넘기기 전에 설명의 변경이나 입력 스키마의 확장을
+            찾아낸다.
+          - 비교 기준의 보관과 변경을 발견한 뒤의 대응은 애플리케이션이 맡는다.
+        source_urls:
+          - https://github.com/vercel/ai/releases/tag/ai%407.0.19
+      - heading: 등록하지 않은 이름의 처리
+        paragraphs:
+          - 도구 이름이나 승인 ID가 constructor, toString, valueOf, __proto__ 같은 상속 속성과
+            같아도 등록된 도구나 승인으로 읽지 않고 미설정 또는 없는 값으로 처리한다. 직접 등록된 객체 속성인지 확인하는
+            own-property 검사를 적용한 변경이다.
+        source_urls:
+          - https://github.com/vercel/ai/releases/tag/ai%407.0.19
+      - heading: 승인과 동영상 참조 입력
+        paragraphs:
+          - 도구 승인의 상태가 responded로 전환될 때 승인 서명을 보존한다. 동영상 생성의 inputReferences 입력은
+            기존 이미지 참조와 함께 동영상 참조도 받을 수 있도록 확장했다.
+        source_urls:
+          - https://github.com/vercel/ai/releases/tag/ai%407.0.19
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Claude Code v2.1.203, 백그라운드 작업 복구·작업 폴더 격리 오류 수정
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Anthropic
+      when: 2026-07-08
+      where: Claude Code
+      what: v2.1.203 백그라운드 세션·작업 폴더 격리·실행 환경 수정과 설정 기능 추가
+      how: 미기재
+      why: 미기재
+    lead: Anthropic은 7월 8일(한국시간) Claude Code v2.1.203을 공개하고 백그라운드 세션과 작업 폴더 격리 관련
+      오류를 수정했다고 밝혔다. macOS에서 세션을 열거나 전환할 때 잘못된 메모리 부족 판정으로 15~20초 멈추던 문제를 고쳤으며,
+      데몬의 세션 토큰이 오래돼 연결·응답·중지에 실패하던 경우 자동 복구하도록 바꿨다. 로그인 만료 전에 경고해 사용자가 백그라운드 세션
+      중단 전에 다시 인증할 수 있도록 하는 기능도 추가했다.
+    explanations:
+      - heading: 진행 중인 작업을 유지하는 복구
+        paragraphs:
+          - claude agents 화면으로 돌아올 때 실행 중인 하위 에이전트를 멈추고 프롬프트를 처음부터 다시 실행하던 오류를
+            수정해, 진행하던 작업을 이어가도록 했다. 데몬 자동 업그레이드 실패가 실행 중인 모든 백그라운드 세션을 조용히 종료하던
+            문제도 고쳤다.
+          - 작업 디렉터리가 삭제되거나 파일로 교체되고 경로가 유효하지 않아질 때 백그라운드 에이전트가 반복 충돌하던 동작은 오류를 한
+            번 보고하는 방식으로 바뀌었다. TaskStop·TaskOutput이 다른 에이전트가 만든 백그라운드 작업을 찾지 못하던
+            문제도 수정했으며, 관련 오류에는 실행 중인 에이전트의 ID와 설명을 표시한다.
+          - 백그라운드 에이전트 시작 실패에 실제 오류 대신 exit_with_message만 나오던 표시를 고쳤다. 데몬을 통해
+            분기한 세션에서 settings.json의 effortLevel 변경이 무시되던 문제도 수정했다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.203
+      - heading: 분리된 작업 폴더와 실행 환경
+        paragraphs:
+          - 격리된 worktree에서 실행해야 할 하위 에이전트의 셸 명령이 부모 체크아웃에서 실행되던 오류를 수정했다. 여러
+            저장소가 있는 작업공간에서 중첩 저장소 때문에 worktree 생성이 거부되던 문제와, git worktree가 많은
+            저장소에서 Bash가 argument list too long 오류를 내던 문제도 고쳤다.
+          - Windows 백그라운드 에이전트가 작업을 보낸 셸 대신 데몬의 오래된 PATH를 물려받아 도구를 찾지 못하던 문제를
+            수정했다. 셸에서 내보낸 ANTHROPIC_BASE_URL이 백그라운드·에이전트 화면 세션에서 누락돼 API 키가 기본
+            엔드포인트로 전송되고 401 오류가 발생하던 문제도 릴리스 노트에 명시했다.
+          - git 저장소가 아닌 디렉터리에서 시작한 백그라운드 세션도 WorktreeCreate 훅이 설정돼 있으면 파일을 편집하지
+            못하던 오류를 고쳤다. claude agents의 @ 디렉터리 선택기에 등록된 git worktree가 나오지 않던 문제도
+            수정했다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.203
+      - heading: MCP·편집기 설정과 작업 화면
+        paragraphs:
+          - 세션의 추가 작업 디렉터리를 MCP roots/list에 포함하고 디렉터리 집합이 바뀌면
+            notifications/roots/list_changed를 보내도록 했다. VS Code 설정에는 모든 세션에
+            Remote Control을 활성화하는 토글을 추가했다.
+          - 진단이나 코드 탐색 요청에 응답하는 LSP 전용 플러그인이 사용되지 않는 플러그인으로 잘못 표시되던 문제를 수정했다.
+            Windows에서는 /clear 뒤 백그라운드 작업 출력이 빈 파일로 계속 대체되던 오류를 고쳤다.
+          - 수동 권한 모드에서는 화면 하단에 회색 일시정지 배지를 표시한다. 백그라운드 작업·차이·워크플로 상세 화면을 닫는 키는
+            왼쪽 화살표 대신 Esc로 바뀌었다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.203
+      - heading: 메모리 처리와 응답 화면
+        paragraphs:
+          - 대화 세션의 컨텍스트 사용량 표시기가 매 턴마다 대화 전체를 다시 분석하던 동작을 없애 메모리·턴별 CPU 사용 관련
+            회귀를 수정했다. 긴 응답이 스트리밍될 때 실시간 미리보기 갱신이 화면 전체를 다시 그리지 않도록 바꿨다.
+          - 큰 번들 의존성을 실행 파일에 인라인으로 넣는 대신 지연 로딩하도록 바꿔, 릴리스 노트 기준 바이너리 크기와 시작 시
+            메모리 사용량이 각각 약 7 MB 줄었다. 하위 에이전트가 자신에게 맡겨진 작업 전체를 다른 하위 에이전트에 다시 위임하는
+            동작도 줄였다고 설명했다.
+          - macOS의 15~20초 멈춤 현상은 v2.1.196에서 발생한 회귀로 명시됐다. 수정 대상은 백그라운드 에이전트 세션을
+            열거나 전환할 때의 잘못된 메모리 부족 판정이다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.203
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Claude Code v2.1.204, 원격 작업 중 훅 이벤트 전송 오류 수정
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Anthropic
+      when: 2026-07-08
+      where: Claude Code
+      what: v2.1.204의 헤드리스 세션 SessionStart 훅 이벤트 전송 오류 수정
+      how: 미기재
+      why: 미기재
+    lead: Anthropic이 7월 8일 Claude Code v2.1.204를 공개하고, 헤드리스 세션에서 SessionStart 훅의
+      이벤트가 전송되지 않던 오류를 수정했다고 밝혔다. 릴리스 노트는 이 오류로 원격 작업 프로세스가 훅 실행 도중 유휴 상태로 처리돼
+      종료될 수 있었다고 설명했다.
+    explanations: []
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Claude Code v2.1.205, 자동 모드 승인·Windows 파일 삭제 보호 보강
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: Anthropic
+      when: 2026-07-09
+      where: Claude Code
+      what: v2.1.205 자동 모드 권한 처리·작업 폴더 삭제·구조화 출력·백그라운드 작업 상태 수정
+      how: 미기재
+      why: 미기재
+    lead: Anthropic은 7월 9일(한국시간) Claude Code v2.1.205를 공개하고 자동 모드에서 세션 대화 기록 파일의 변조를
+      차단하는 규칙을 추가했다. Windows에서는 worktree 내부의 NTFS junction이나 디렉터리 심볼릭 링크 때문에
+      worktree를 지울 때 바깥 파일까지 삭제되던 오류를 수정했다.
+    explanations:
+      - heading: 자동 모드의 승인 처리
+        paragraphs:
+          - 자동 모드는 문맥에서 값을 알아낼 수 없는 변수를 대상으로 rm -rf를 실행하려 할 때 먼저 확인하도록 바뀌었다.
+            백그라운드 작업 알림에는 사람이 입력하지 않았다는 사실을 명시해, 대화 기록 안의 가짜 승인이 실행 근거로 쓰이지 않도록
+            했다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.205
+      - heading: 구조화 출력과 작업 메시지
+        paragraphs:
+          - --json-schema에 잘못된 스키마를 전달했을 때 구조 없는 출력이 조용히 생성되던 오류와, format 키워드를
+            사용하는 스키마가 거부되던 오류를 수정했다. 작업 도중 보낸 메시지가 --max-turns 한도에 도달한 턴 종료 시
+            사라지던 문제도 고쳤다.
+          - Bash 호출의 출력이 30K 인라인 한도를 넘으면 그 호출에서 만든 PR과 세션의 연결이 누락되던 문제를 수정했다. 기존
+            PR을 편집·병합하거나 댓글·push 작업을 하는 세션도 claude agents에서 해당 PR로 연결한다.
+          - 프로젝트 검증 스킬은 매 세션 다시 쓰는 대신 문서화된 명령이 바뀔 때만 갱신하도록 수정했다. /doctor는 문제를
+            진단하고 수정할 수 있는 전체 설정 점검으로 바뀌었으며 /checkup이 별칭으로 추가됐다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.205
+      - heading: MCP·실행 환경과 업데이트
+        paragraphs:
+          - claude mcp add-from-claude-desktop에서 지원하지 않는 문자가 들어간 서버명 때문에 가져오기가
+            멈추던 오류를 고쳤다. 잘못된 이름을 알리고 나머지 서버는 계속 가져온다. 사용자 설정 MCP 서버는 Claude
+            Browser와 Claude Preview라는 예약된 이름으로 등록할 수 없게 했다.
+          - 한 플러그인의 LSP 서버 초기화 실패가 같은 확장자를 처리하는 다른 플러그인의 정상 서버를 막던 오류를 수정했다. CLI
+            2.1.203 이상에서 Cowork VM 모드의 로컬 에이전트 세션이 로그인 오류로 시작되지 않던 문제도 고쳤다.
+          - Windows에서 명령 실행 중 시작 디렉터리가 삭제·잠금·마운트 해제될 때 발생하던 충돌과, 디렉터리 스캔이 진행되는
+            동안 파일 감시기가 닫혀 발생하던 충돌을 수정했다. 자동 업데이트용 바이너리를 메모리에 버퍼링하는 대신 디스크로
+            스트리밍하도록 바꿨다. 릴리스 노트는 이 변경으로 업데이트 프로그램의 최대 메모리 사용량이 약 400 MB 줄었다고
+            설명했다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.205
+      - heading: 재개 상태와 원격 작업 화면
+        paragraphs:
+          - SendMessage로 재개한 백그라운드 에이전트가 목록에 계속 failed 또는 completed로 남던 표시를
+            수정했다. 턴에 읽을 수 있는 텍스트가 없으면 needs input 상태가 working으로 되돌아가던 문제도 고쳤다.
+          - 백그라운드 에이전트가 업그레이드로 재시작하는 동안 claude attach가 오류를 내는 대신 에이전트가 돌아올 때까지
+            기다리도록 바꿨다. 웹·모바일 Remote Control의 작업 구성이 바뀔 때 전체 작업 상태를 전달해 Running
+            표시가 오래 남던 오류도 수정했다.
+          - 에이전트 목록의 행에는 색으로 구분한 상태 단어와 분류기가 작성한 제목을 표시한다. 미리보기에서는 전체 상태를 보여주고
+            막힌 세션이 요청한 내용을 정확히 표시하도록 했다. 작업 목록이 화면을 조금 넘을 때 에이전트 화면이 한 줄 위에 그려져
+            헤더가 잘리던 오류도 고쳤다.
+        source_urls:
+          - https://github.com/anthropics/claude-code/releases/tag/v2.1.205
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
+    event_id: caaa735c832bdb26
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids:
+      - prompt-caching
+  - title: OpenAI, 동시에 듣고 말하는 GPT-Live 공개
+    event_id: 3fb14968493dc682
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+  - title: GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공
+    event_id: c1b395091566575d
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids: []
+  - title: GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포
+    event_id: 8380dfc46fdb5389
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-08T13:38:56-07:00
+  - title: GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청
+    event_id: 95b6379f6bf2e5be
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-08T02:45:22-07:00
+  - title: GitHub Copilot, 기업이 원격측정 데이터 전송과 수집 범위 관리
+    event_id: 25cd2c8cb0feed28
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-08T13:50:07-07:00
+  - title: GitHub Mobile, 원격 Copilot CLI 작업 상태를 실시간 알림으로 제공
+    event_id: d7c1335c53efecf3
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-08T02:45:09-07:00
+  - title: GitHub Copilot 데스크톱 앱, 무료·교육 요금제까지 이용 대상 확대
+    event_id: be4ba95581839c4c
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-07T08:10:14-07:00
+  - title: GitHub Copilot, GPT-5.6 세 모델 점진적 배포
+    event_id: e7072d841218baed
+    review_status: verified
+    published_at: 2026-07-10
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-09T09:41:29-07:00
+  - title: JetBrains Copilot에 Codex 미리보기·도구 승인 설정 추가
+    event_id: f3589f5c7a1073c1
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-07T19:55:53-07:00
+  - title: Anthropic, AI의 일자리·사회 영향에 관한 질문 공개 접수
+    event_id: 8dbb2238c30b71eb
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids: []
+  - title: 단백질·분자·결정 구조를 함께 다루는 SciReasoner 제안
+    event_id: e6f759764f290fa7
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+  - title: STRACE, 대표 실패 기록과 의존 그래프로 에이전트 최적화
+    event_id: 27a2def167b365d2
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+  - title: AI SDK 7.0.19, MCP 도구 정의 변경을 감지하는 기능 추가
+    event_id: 5df7e6aa93ded5c9
+    review_status: verified
+    published_at: 2026-07-10
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-09T18:07:30Z
+  - title: Claude Code v2.1.203, 백그라운드 작업 복구·작업 폴더 격리 오류 수정
+    event_id: aa3c9fe0f3678a1e
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-07T21:06:12Z
+  - title: Claude Code v2.1.204, 원격 작업 중 훅 이벤트 전송 오류 수정
+    event_id: 2f4818ccad349c12
+    review_status: verified
+    published_at: 2026-07-08
+    reviewed_at: 2026-10-07
+    concept_ids: []
+  - title: Claude Code v2.1.205, 자동 모드 승인·Windows 파일 삭제 보호 보강
+    event_id: 414c9891d5ccd917
+    review_status: verified
+    published_at: 2026-07-09
+    reviewed_at: 2026-10-06
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-07-08T21:22:06Z
 ---
 
-# 한눈에 보기
+# 이번 호 표지
 
-- 오늘의 핵심 기사: OpenAI가 GPT-5.6과 GPT-Live를 공개하며, 긴 agent 작업과 자연스러운 음성 대화를 동시에 밀고 있습니다.
-- 개발 도구: GitHub Copilot은 데스크톱 앱, JetBrains, 모바일, 기업 관리 설정까지 agent 사용 표면과 통제 기능을 넓혔습니다.
-- 논문과 연구: SciReasoner는 과학 구조 데이터를 근거로 설명하는 모델을, STRACE는 agent 실패 trace에서 원인을 추출하는 방법을 제안했습니다.
-- 오픈소스와 도구: Vercel AI SDK는 MCP tool 정의 변조 감지를 추가했고, Claude Code는 background agent와 transcript 안전성을 보강했습니다.
-- 흐름: "더 똑똑한 모델"만이 아니라 agent 실행, 음성 인터페이스, tool drift 방어, 조직 단위 관측·통제가 함께 중요해지고 있습니다.
+OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
 
-# 오늘의 핵심 기사
+# 차례
 
-## OpenAI, GPT-5.6으로 agent와 지식 작업 성능을 전면 갱신하다
+- OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
+- OpenAI, 동시에 듣고 말하는 GPT-Live 공개
+- GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공
+- GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포
+- GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청
 
-OpenAI는 2026-07-09에 GPT-5.6 Sol, Terra, Luna를 일반 공개했습니다. Sol은 가장 강한 모델, Terra는 균형형, Luna는 빠르고 저렴한 모델이라는 식으로 역할을 나눴습니다.
+# 커버 스토리
 
-핵심 사실:
-- GPT-5.6은 ChatGPT, Codex, OpenAI API에 순차 배포됩니다.
-- OpenAI는 `ultra` 설정이 여러 agent를 병렬로 조율해 복잡한 작업을 빠르게 끝내는 방식이라고 설명했습니다.
-- API에는 Programmatic Tool Calling, multi-agent beta, explicit cache breakpoints, 최소 30분 cache life가 포함됩니다.
-- GitHub는 같은 날 GPT-5.6 Sol, Terra, Luna를 GitHub Copilot model picker에 추가한다고 발표했습니다.
-- Copilot Business와 Enterprise에서는 관리자가 GPT-5.6 모델 정책을 켜야 사용할 수 있습니다.
+없음
 
-왜 중요한가:
-모델 경쟁의 초점이 단일 답변 점수에서 "긴 작업을 얼마나 적은 비용과 도구 호출로 끝내는가"로 이동하고 있습니다. 특히 Codex, Copilot, API가 같은 모델 계열을 공유하면 개발자는 모델 성능뿐 아니라 작업 유형별 비용, cache, agent 병렬화, 조직 정책까지 함께 봐야 합니다.
+# 뉴스 데스크
 
-구독자가 알아두면 좋은 점:
-팀에서 새 모델을 바로 켜기보다, 긴 코드 작업, 문서 작업, 보안 분석처럼 비용이 커지는 업무부터 작은 비교 실험을 잡는 편이 좋습니다. 같은 GPT-5.6이라도 Sol, Terra, Luna는 쓰임새가 다릅니다.
+## OpenAI, GPT-5.6 Sol·Terra·Luna 정식 출시
 
-더 깊게 보기: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]
+**분야:** AI
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품, 기능 추가
+**기업·기관:** OpenAI
 
-## GPT-Live, 음성 AI를 더 자연스러운 agent 인터페이스로 밀다
+OpenAI가 7월 9일 GPT-5.6 제품군의 Sol·Terra·Luna 세 모델을 정식 출시한다고 발표했다. ChatGPT·Codex·OpenAI API에서 전 세계 배포를 시작하며, 이후 24시간에 걸쳐 순차적으로 제공 범위를 넓힌다고 밝혔다. [S1]
 
-OpenAI는 GPT-Live라는 새 음성 모델을 공개했습니다. 핵심은 사람이 말하는 중간에도 듣고 반응할 수 있는 full-duplex 구조입니다.
+### 모델과 요금제별 사용 범위
 
-핵심 사실:
-- GPT-Live는 ChatGPT Voice에 들어가는 새 음성 모델 계열입니다.
-- 사용자가 말을 끊거나 잠깐 생각할 때 대화 흐름을 유지하도록 설계됐습니다.
-- 더 어려운 질문은 배경의 frontier model에 넘기고, 음성 대화는 계속 유지하는 구조를 설명했습니다.
-- 출시 시점에는 GPT-Live-1과 GPT-Live-1 mini가 ChatGPT 사용자에게 순차 배포되고, API는 추후 제공 예정입니다.
+OpenAI는 Sol을 주력 모델, Terra를 일상 업무용 균형형 모델, Luna를 제품군에서 비용이 가장 낮은 모델로 소개했다. Chat에서는 Plus·Pro·Business·Enterprise 사용자가 medium 이상의 추론 설정으로 Sol을 이용하고, Pro·Enterprise 사용자는 Sol Pro도 선택할 수 있다.
 
-왜 중요한가:
-음성 AI가 단순히 "말을 텍스트로 바꾸는 기능"에서 벗어나고 있습니다. 긴 작업을 AI에게 맡겨 놓고, 진행 중에 말로 방향을 바꾸거나 질문하는 방식이 가능해질 수 있습니다.
+ChatGPT Work와 Codex에서는 Free·Go에 Terra를 제공하고, Plus·Pro·Business·Enterprise에는 세 모델을 선택할 수 있게 한다. max 설정은 이 두 제품에서 GPT-5.6을 이용할 수 있는 모든 사용자에게 제공된다. ultra는 ChatGPT Work에서 Pro·Enterprise, Codex에서 Plus 이상 요금제에 제공된다. [S1]
 
-구독자가 알아두면 좋은 점:
-회의, 운전, 현장 업무처럼 손을 쓰기 어려운 상황에서는 음성 agent가 유용할 수 있습니다. 다만 실제로 어떤 도구를 호출했는지, 어떤 작업을 끝냈는지는 화면과 로그로 확인할 수 있어야 합니다.
+### API의 도구 실행과 캐시
 
-더 깊게 보기: [[Knowledge/AI Systems/Conversational Voice AI|Conversational Voice AI]], [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
+Responses API의 Programmatic Tool Calling은 모델이 메모리 안에서 프로그램을 작성·실행해 도구를 조정하고 중간 결과를 처리하는 방식이다. OpenAI는 이 기능이 Zero Data Retention(ZDR)과 호환된다고 설명했다. 베타 기능인 Multi-agent는 한 요청 안에서 여러 서브에이전트를 동시에 실행하고 결과를 종합한다.
 
-## GitHub Copilot, agent를 모든 표면으로 넓히고 기업 통제를 강화하다
+프롬프트 캐시에는 명시적인 캐시 경계 지정과 최소 30분의 유지 시간이 도입됐다. GPT-5.6 이후 모델의 캐시 작성 요금은 비캐시 입력 요금의 1.25배이며, 캐시 읽기는 입력 요금의 90% 할인율을 유지한다. [S1]
 
-GitHub는 2026-07-07부터 2026-07-09 사이 Copilot 관련 업데이트를 여러 건 공개했습니다. 방향은 분명합니다. agent는 더 많은 화면에서 쓰게 하고, 기업은 더 강하게 통제하게 하는 것입니다.
+### OpenAI가 공개한 평가 결과
 
-핵심 사실:
-- GitHub Copilot app이 모든 Copilot plan에 제공됩니다. macOS, Windows, Linux에서 agent-driven development를 시작할 수 있습니다.
-- JetBrains IDE에서는 Codex가 agent provider public preview로 추가됐고, Hooks와 MCP server 관리가 Agent Customizations 화면에 들어갔습니다.
-- GitHub Mobile은 Copilot cloud agent로 merge conflict 해결을 시작하고, remote Copilot CLI session의 live notification을 볼 수 있게 했습니다.
-- VS Code와 Copilot CLI는 native MDM, server-managed, file-based `managed-settings.json`로 조직 관리 설정을 받을 수 있습니다.
-- GitHub는 Copilot OpenTelemetry export endpoint와 prompt/response/tool content capture 정책도 기업 설정으로 강제할 수 있게 했습니다.
+OpenAI는 55개 분야의 장시간 전문 업무를 평가하는 Agents' Last Exam에서 Sol이 53.6을 기록해 Claude Fable 5의 adaptive reasoning보다 13.1점 높았다고 발표했다. Artificial Analysis Coding Agent Index에서는 max 추론 설정의 Sol이 80점으로 Fable 5보다 2.8점 높았고, BrowseComp와 OSWorld 2.0 결과는 각각 92.2%와 62.6%라고 밝혔다.
 
-왜 중요한가:
-AI coding agent는 이제 "개인이 터미널에서 쓰는 도구"가 아니라 회사의 개발 환경 일부가 되고 있습니다. 그래서 모델 선택, 플러그인 허용 목록, 권한 우회 금지, telemetry 수집 범위가 보안·운영 정책이 됩니다.
+보안 평가에서는 비슷한 출력 토큰 예산의 ExploitBench에서 GPT-5.6이 73.5%, GPT-5.5가 47.9%를 기록했다고 설명했다. ExploitGym의 2시간 제한에서는 각각 24.9%와 15.1%였으며, GPT-5.6에 6시간을 부여한 결과는 33.7%였다. [S1]
 
-구독자가 알아두면 좋은 점:
-조직에서 Copilot이나 Codex류 agent를 도입한다면, 먼저 `권한 모드`, `허용 plugin/marketplace`, `telemetry 수집 범위`, `모델 정책`, `BYOK 사용 조건`을 문서화해야 합니다.
+### 문서 작업과 고객 사례
 
-더 깊게 보기: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]], [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
+OpenAI는 Sol이 편집 가능한 프레젠테이션을 처음부터 만들고 문서·스프레드시트의 형식과 정확도를 개선했다고 설명했다. 발표문에 실린 Model ML 공동 창업자 Chaz Englander의 발언에서는 FinBench의 고객 업무 20종과 수백 개 프레젠테이션을 평가했을 때 Fable보다 프레젠테이션 한 벌당 토큰을 39% 적게 사용했다고 밝혔다.
 
-## Anthropic, 어려운 AI 질문을 공개적으로 받겠다고 발표하다
+같은 발표문에서 Lovable 공동 창업자 Fabian Hedin은 프로덕션 앱 작업에서 이전 모델보다 수행 단계가 약 25%, 도구 호출이 35\~48% 줄고 진행이 멈춘 실행이 15% 감소했다고 설명했다. [S1]
 
-Anthropic은 2026-07-09에 대중이 가진 AI의 어려운 질문을 모으고, 그 질문에 어떻게 대응하는지 공개적으로 추적하겠다고 발표했습니다.
+**개념:** [[Knowledge/AI Systems/Prompt Caching]]
 
-핵심 사실:
-- Anthropic은 일자리, 창작, 인간 주체성, 위험한 사용, 과학·의료 가능성 같은 주제를 언급했습니다.
-- 기존에 52,000명 규모의 미국 설문, 159개국 70개 언어의 Claude 사용자 81,000명 조사, focus group을 진행했다고 설명했습니다.
-- 앞으로 질문에 대응하는 구체적 행동과 부족한 점을 공개적으로 보고하겠다고 밝혔습니다.
+## OpenAI, 동시에 듣고 말하는 GPT-Live 공개
 
-왜 중요한가:
-이 발표는 새 모델 기능보다 AI 거버넌스 성격이 강합니다. 대형 AI 회사들이 성능 발표뿐 아니라 사회적 질문, 위험 관리, public benefit 목표를 어떻게 검증 가능한 형태로 보여줄지 압박받고 있다는 신호입니다.
+**분야:** AI
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품
+**기업·기관:** OpenAI
 
-구독자가 알아두면 좋은 점:
-기업 AI 도입에서도 "좋은 의도"보다 중요한 것은 질문, 답변, 조치, 한계를 기록하는 체계입니다. 내부 AI 정책도 추상 원칙보다 실제 사례와 공개 가능한 증거를 남겨야 합니다.
+OpenAI가 2026년 7월 8일 음성 모델 GPT-Live-1과 GPT-Live-1 mini를 공개하고 iOS·Android·ChatGPT.com 사용자에게 전 세계 순차 배포를 시작했다. 회사는 입력을 들으면서 동시에 말을 생성하는 풀듀플렉스 구조를 적용하고, 검색이나 심층 추론은 별도 GPT-5.5 모델에 맡겨 대화를 이어가도록 설계했다고 설명했다. [S2]
 
-더 깊게 보기: [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
+### 음성 모드별 배경 모델
 
-# 논문과 연구
+GPT-Live-1 Instant와 mini는 GPT-5.5 Instant를 사용한다. Medium·High 모드는 GPT-5.5 Thinking을 각각 중간·높은 추론 수준으로 사용한다. [S2]
 
-## SciReasoner: 과학 구조를 근거로 설명하는 AI
+### OpenAI의 비교 평가
 
-논문 제목: Accurate, Interdisciplinary and Transparent Structure-property Understanding with Deep Native Structural Reasoning
+OpenAI는 5\~10분의 길이를 맞춘 대화 비교에서 두 모델이 기존 Advanced Voice Mode보다 선호됐다고 밝혔다. 평가 항목은 전반적 선호도, 발언 순서, 끼어들기, 대화 흐름과 자연스러움이었다.
 
-쉬운 설명:
-SciReasoner는 단백질, 작은 분자, 무기 결정 구조를 AI가 읽을 수 있는 공통 구조 토큰으로 바꾸고, 예측 결과가 어떤 구조 근거에서 나왔는지 보여주려는 과학 AI 모델입니다.
+회사는 생물학·화학·물리학의 전문가 수준 과학 추론을 평가하는 GPQA에서도 GPT-Live-1이 Advanced Voice Mode를 크게 앞섰다고 설명했다. [S2]
 
-핵심 아이디어:
-좌표, 결합, 주기적 연결 같은 구조 정보를 단순 부가 정보가 아니라 reasoning evidence로 다룹니다. 논문은 86개 benchmark 중 67개에서 최고 성능을 냈다고 보고했습니다.
+### 제공 범위
 
-왜 중요한가:
-과학 분야에서는 "정답처럼 보이는 예측"보다 왜 그런 결론이 나왔는지가 중요합니다. 구조 자체를 근거로 남기면 생물학, 화학, 재료과학에서 전문가 검토가 쉬워질 수 있습니다.
+GPT-Live-1은 Go·Plus·Pro 요금제의 ChatGPT Voice 기본 모델로, mini는 Free 요금제의 기본 모델로 전환할 예정이다. API 제공도 계획으로 발표했으며 개발자·기업의 알림 신청을 받기 시작했다.
 
-한계:
-arXiv preprint 단계입니다. 실제 실험 성공률, 외부 재현, 산업 환경 적용성은 별도 검증이 필요합니다.
+출시 당시 GPT-Live는 음성과 함께 쓰는 영상·화면 공유를 지원하지 않았다. 이 기능은 기존 Standard·Advanced Voice Mode에서 계속 사용할 수 있었다. OpenAI는 일부 언어의 억양·유창성을 개선하고 있다고 밝혔다. [S2]
 
-더 깊게 보기: [[Knowledge/AI Systems/AI for Scientific Discovery|AI for Scientific Discovery]]
+## GitHub Copilot, 저장소 개요를 대화로 요청하는 기능 제공
 
-원문 링크: https://arxiv.org/abs/2607.07708v1
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
 
-## STRACE: agent 실패 원인을 trace에서 뽑아내는 방법
+GitHub는 7월 9일 github.com에서 저장소 개요를 요청하는 GitHub Copilot 기능을 모든 요금제에 제공한다고 밝혔다. 아직 기여하지 않은 저장소를 처음 살펴볼 때 개요 생성을 제안하고, Copilot Chat에서 요청하면 목적·사용 기술·기여 지침을 요약한다. [S3]
 
-논문 제목: From Noisy Traces to Root Causes: Structural Trajectory Analysis and Causal Extraction for Agent Optimization
+### README가 없는 저장소
 
-쉬운 설명:
-STRACE는 긴 agent 실행 기록에서 불필요한 단계를 줄이고, 실패 원인에 가까운 단계만 골라 agent를 개선하는 방법입니다.
+GitHub는 README가 없는 저장소라면 Copilot으로 README를 생성할 수 있다고 설명했다. 저장소가 무엇을 하는지, 어떤 기술을 사용하는지 파악하도록 돕는 기능이다. [S3]
 
-핵심 아이디어:
-여러 실패 trace에서 대표 실패 패턴을 찾고, 각 trace 안에서는 텍스트 의존 그래프를 만들어 원인과 관련 없는 단계를 제거합니다. 논문은 formal verification task에서 성공률이 42.5%에서 58.5%로 올랐다고 보고했습니다.
+## GitHub Copilot, 기업용 설정을 기기 관리 도구와 파일로 배포
 
-왜 중요한가:
-agent를 개선할 때 전체 대화 기록을 모두 넣으면 비싸고, 오히려 잘못된 신호가 섞일 수 있습니다. 실패 원인을 좁히는 기술은 agent 평가와 자동 개선의 핵심입니다.
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
 
-한계:
-특정 benchmark 중심 결과입니다. 다른 업무, 다른 agent 구조, 실제 제품 trace에서도 같은 효과가 나는지는 추가 검증이 필요합니다.
+GitHub는 한국시간 7월 9일(미국 태평양시간 7월 8일) Copilot의 기업용 설정을 기기에 직접 배포하는 기능을 VS Code와 Copilot CLI에 정식 제공한다고 밝혔다. 기업 관리자는 기존 서버 설정에 더해 기기 관리 도구인 MDM이나 설정 파일로 Copilot 정책을 전달할 수 있다. [S4]
 
-더 깊게 보기: [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
+### 기기 관리 도구로 같은 설정 배포
 
-원문 링크: https://arxiv.org/abs/2607.07702v1
+Microsoft Intune, Jamf, Group Policy로 설정을 보내거나 Chef, Puppet, Ansible로 설정 파일을 배포할 수 있다. GitHub는 기기에서 설정을 읽기 때문에 개발자가 로그인하는 방식과 관계없이 VS Code와 Copilot CLI에 일관되게 적용된다고 설명했다. [S4]
 
-# 오픈소스와 도구
+### 여러 채널이 설정을 전달할 때
 
-## Vercel AI SDK 7.0.19, MCP tool drift 감지를 추가
+적용 우선순위는 네이티브 MDM, 서버 관리, 파일 기반 순서다. 둘 이상의 채널이 설정을 제공하면 가장 우선하는 채널의 설정이 통째로 적용된다. [S4]
 
-프로젝트: Vercel AI SDK
+## GitHub Mobile, Copilot에 코드 병합 충돌 해결 요청
 
-쉬운 설명: AI 앱 개발용 SDK가 MCP tool의 설명과 input schema가 나중에 바뀌었는지 감지하는 기능을 추가했습니다.
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
 
-GitHub: https://github.com/vercel/ai/releases/tag/ai%407.0.19
+GitHub는 7월 8일 모바일 앱에서 코드 변경을 병합할 때 생기는 충돌을 Copilot 클라우드 에이전트에 해결하도록 요청하는 기능을 제공한다고 밝혔다. iOS와 Android의 최신 배포판에서 풀 리퀘스트의 병합 영역을 통해 요청을 시작할 수 있다. [S5]
 
-핵심 사실:
-- `fingerprintTools`와 `detectToolDrift`가 추가됐습니다.
-- tool description, input schema, title 같은 server-controlled field를 신뢰 시점에 고정하고 이후 변경을 비교할 수 있습니다.
-- tool approval signature 보존과 inherited object property 이름을 악용한 approval resolution 문제도 보강됐습니다.
+### 요청 댓글을 제출해야 에이전트 실행
 
-Star 증가 추세: 추세 확인 불가
+충돌이 있는 풀 리퀘스트에서 Fix with Copilot을 누르면 해결을 요청하는 댓글이 미리 채워진다. 사용자가 이 댓글을 제출하면 Copilot 클라우드 에이전트가 시작된다. [S5]
 
-어디에 쓸 수 있나:
-MCP server를 연결한 agent 앱에서 도구 설명이나 schema가 조용히 바뀌어 모델이 더 넓은 권한을 쓰는 상황을 막는 데 쓸 수 있습니다.
+### 기존 댓글 요청도 계속 지원
 
-더 깊게 보기: [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]], [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]]
+풀 리퀘스트 댓글에서 @copilot을 호출하는 기존 방식도 이용할 수 있다. 실패한 GitHub Actions 작업 수정, 코드 리뷰 의견 반영, 테스트 추가나 후속 코드 변경을 요청하는 방식이다. [S5]
 
-## Claude Code 2.1.203~2.1.205, background agent와 안전성을 보강
+## GitHub Copilot, 기업이 원격측정 데이터 전송과 수집 범위 관리
 
-프로젝트: Claude Code
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
 
-쉬운 설명: Anthropic의 coding agent 도구가 background session 복구, worktree 격리, transcript 조작 방지, remote control 상태 동기화를 보강했습니다.
+GitHub는 한국시간 7월 9일(미국 태평양시간 7월 8일) 기업 관리 설정으로 Copilot의 OpenTelemetry 데이터 전송 경로를 지정할 수 있다고 밝혔다. 이 설정은 VS Code의 Copilot Chat 확장 프로그램과 Copilot CLI를 실행하는 에이전트 호스트에 적용된다. [S6]
 
-GitHub: https://github.com/anthropics/claude-code/releases
+### 수집 서버와 기록 범위 지정
 
-핵심 사실:
-- v2.1.203은 stale token, worktree isolation, background agent attach/reply/stop 문제를 다수 수정했습니다.
-- v2.1.205는 session transcript 파일 조작을 막는 auto mode rule을 추가했습니다.
-- background task notification은 사람이 입력하지 않았음을 명시해 transcript 안의 가짜 승인처럼 보이는 내용을 실행 근거로 쓰지 않게 했습니다.
-- `/doctor`가 setup checkup 역할을 하도록 바뀌었습니다.
+관리자는 데이터를 받는 서버의 주소와 OTLP 전송 방식인 otlp-http 또는 otlp-grpc, 서비스 이름과 리소스 속성을 설정할 수 있다.
 
-Star 증가 추세: 추세 확인 불가
+프롬프트·응답·도구 내용의 기록 여부와 개발자가 그 설정을 바꿀 수 있는지도 관리한다. [S6]
 
-어디에 쓸 수 있나:
-여러 background agent를 돌리는 coding workflow에서 session 상태, 승인 경계, worktree 격리를 안정적으로 유지하는 데 중요합니다.
+### 관리 설정을 우선 적용
 
-더 깊게 보기: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
+관리 값은 환경변수와 사용자 설정보다 우선한다. 네이티브 MDM, 로그인한 GitHub 계정에서 받는 서버 관리 설정, managed-settings.json 파일로 전달할 수 있다. [S6]
+
+### 인증 헤더의 적용 범위
+
+GitHub는 수집 서버의 인증 토큰 같은 관리 헤더가 Copilot Chat 확장 프로그램의 OTLP 내보내기에만 적용된다고 설명했다. 이 헤더를 환경변수로 전달하지 않아 에이전트 호스트가 생성하는 도구 하위 프로세스에 넘기지 않는다는 설명이다. [S6]
+
+## GitHub Mobile, 원격 Copilot CLI 작업 상태를 실시간 알림으로 제공
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
+
+GitHub는 7월 8일 모바일 앱에서 원격 Copilot CLI 세션의 진행 상황을 확인하는 실시간 알림을 지원한다고 밝혔다. iOS와 Android의 최신 앱 배포판에서 작업 상태와 사용자 입력이 필요한 시점을 확인할 수 있다. [S7]
+
+### 상태 확인 뒤 세션 로그로 이동
+
+알림은 진행 중, 사용자 입력 대기, 유휴, 완료 상태를 표시한다. 알림을 누르면 GitHub Mobile에서 해당 세션의 로그 화면이 열린다. [S7]
+
+### 운영체제별 지원 조건
+
+iOS의 라이브 액티비티는 iOS 17.2 이상, Android의 라이브 업데이트 알림은 Android 16 이상에서 지원된다. 이보다 이전 Android에서도 기존 진행 상황 알림은 받을 수 있다. [S7]
+
+## GitHub Copilot 데스크톱 앱, 무료·교육 요금제까지 이용 대상 확대
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 한국시간 7월 8일(미국 태평양시간 7월 7일) Copilot 데스크톱 앱을 모든 Copilot 요금제에서 제공한다고 밝혔다. Copilot Free와 GitHub Education 이용자도 macOS·Windows·Linux 앱에서 GitHub 계정으로 로그인해 사용할 수 있다. [S8]
+
+### Copilot 구독 없이 자체 제공사 연결
+
+BYOK는 사용자가 자신의 모델 제공사 API 키를 연결해 세션을 실행하는 방식이다. GitHub는 이 방식에는 Copilot 구독이 필요하지 않다고 설명했다. [S8]
+
+### 기업 요금제의 정책 조건
+
+Copilot Business 또는 Enterprise에서 앱을 이용하려면 조직이나 기업 관리자가 정책 설정에서 Copilot CLI를 활성화해야 한다. [S8]
+
+## GitHub Copilot, GPT-5.6 세 모델 점진적 배포
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub, OpenAI
+
+GitHub가 7월 10일(한국시간, 미국 태평양시간 7월 9일) Copilot에 OpenAI의 GPT-5.6 Sol·Terra·Luna를 순차적으로 배포한다고 발표했다. 모델별 지원 요금제가 다르며, Business·Enterprise 사용자는 관리자의 모델 정책 활성화가 필요하다. [S9]
+
+### 세 모델의 용도
+
+GitHub는 Sol을 대규모 코드베이스의 복잡한 추론과 장시간 에이전트 작업에, Terra를 일상적인 대화형·에이전트 코딩에 맞는 선택지로 소개했다. Luna는 작고 빠른 작업용 경량 모델이자 이 제품군에서 비용이 가장 낮은 모델로 설명했다. [S9]
+
+### 요금제와 사용 조건
+
+Sol의 지원 대상은 Pro+·Max·Business·Enterprise이며, Terra와 Luna는 여기에 Pro를 포함한다. 기업 관리자가 켜야 하는 GPT-5.6 모델 정책은 기본적으로 꺼져 있다.
+
+사용량 기반 과금에서는 제공사의 표시 가격을 적용한다. [S9]
+
+### 모델 선택 메뉴
+
+공지된 선택 경로는 VS Code·Visual Studio·Copilot CLI·Copilot cloud agent·Copilot app·github.com·GitHub Mobile(iOS·Android)·JetBrains·Xcode·Eclipse다. [S9]
+
+## JetBrains Copilot에 Codex 미리보기·도구 승인 설정 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub가 7월 8일(한국시간, 미국 태평양시간 7월 7일) JetBrains IDE용 Copilot에 Codex 에이전트 공개 미리보기를 추가하고 Inline Chat을 정식 제공한다고 발표했다. Codex 사용에는 로컬 CLI 설치가 필요하며, Business·Enterprise 사용자는 관리자가 편집기 미리보기 정책을 켜야 한다. [S10]
+
+### Codex 연결
+
+Settings → Tools → GitHub Copilot → Chat에서 Codex를 활성화하고 설치한 CLI의 경로를 지정한다. 이후 Copilot Chat의 에이전트 선택 메뉴에서 Codex를 선택해 세션을 시작한다. [S10]
+
+### 도구 승인과 확인 질문
+
+Copilot CLI의 Default Approvals는 설정한 정책에 따라 확인을 요청한다. Bypass Approvals는 도구 호출을 자동 승인하지만 필요한 확인 질문은 남긴다. 미리보기인 Autopilot은 도구 호출뿐 아니라 확인 질문에도 자동으로 응답하며 작업을 이어간다.
+
+Claude 에이전트 세션에는 권한 모드 선택과 에이전트 디버그 로그 지원이 추가됐다. [S10]
+
+### Hooks와 MCP 서버
+
+Agent Customizations에서 로컬·Copilot CLI 세션의 Hooks를 관리할 수 있다. CLI 세션의 MCP 서버는 명령 실행형과 HTTP형을 지원하며, 상태 확인과 시작·중지·재시작·제거가 가능하다. 프로젝트의 .github/mcp.json에는 작업 공간 단위 서버를 정의한다. [S10]
+
+### 기업 맞춤 모델과 BYOK 수정
+
+Business·Enterprise 관리자가 GitHub 설정에서 구성한 맞춤 모델은 조직 구성원에게 자동으로 제공된다.
+
+GitHub는 BYOK 세션이 Copilot 하위 에이전트를 호출해 Copilot 사용량을 소모하던 오류를 수정했다고 밝혔다. 하위 에이전트 로직이 현재 선택한 BYOK 제공사를 따르도록 바뀌었다. [S10]
+
+## Anthropic, AI의 일자리·사회 영향에 관한 질문 공개 접수
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 새로운 방법
+**기업·기관:** Anthropic
+
+Anthropic은 7월 9일(한국시각 10일) AI가 일자리·사회·가족에 미치는 영향과 과학·의료 활용에 관한 질문을 받는 ‘Hard Questions’ 이니셔티브를 발표했다. 회사는 전용 웹사이트에서 대중의 질문을 받고 다른 사람들이 제출한 질문도 보여준다고 밝혔다. [S11]
+
+### 대응 조치 공개 계획
+
+Anthropic은 질문에 대응하기 위해 취하는 구체적인 조치를 공개적으로 추적·보고하고, 그 조치가 회사의 목표에 미치지 못하는 부분도 밝힐 계획이라고 설명했다. [S11]
+
+### 앞서 실시한 조사
+
+회사는 기존 Anthropic Public Record의 첫 조사에서 미국인 5만 2,000명에게 AI에 대한 기대와 우려를 물었다고 밝혔다.
+
+또한 Anthropic Interviewer를 통해 159개국·70개 언어의 Claude 사용자 8만 1,000명을 조사했다고 설명했다. 이 수치는 이번 질문 접수 발표에 앞서 진행한 조사에 해당한다. [S11]
+
+## 단백질·분자·결정 구조를 함께 다루는 SciReasoner 제안
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 새로운 방법
+**기업·기관:** 없음
+
+연구진은 7월 8일 arXiv에 공개한 사전공개 논문에서 단백질·소분자·무기 결정의 구조를 직접 다루는 멀티모달 모델 SciReasoner를 제안했다. 좌표·위상·주기적 연결을 공통 어휘로 바꾸고, 추론 중 구조 토큰을 근거 단위로 가리키는 방식이다. [S12]
+
+### 단백질 기능 예측
+
+저자들은 초록에서 단백질 상동성을 통제한 Gene Ontology 예측 결과를 보고했다. 상동성이 낮거나 고아 단백질과 유사한 단백질의 Cellular Component 주석 과제에서 F\_max가 0.42에서 0.55로 높아졌다고 밝혔다. [S12]
+
+### 한 단계 역합성
+
+화학 영역에서는 한 단계 역합성 정확도가 0.63에서 0.72로 높아졌다고 보고했다. 분자 조각 수준의 절단과 전구체 검증 과정을 담은 추론 기록도 생성한다고 설명했다. [S12]
+
+## STRACE, 대표 실패 기록과 의존 그래프로 에이전트 최적화
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 새로운 방법
+**기업·기관:** 없음
+
+연구진은 7월 8일 arXiv에 공개한 사전공개 논문에서 에이전트 실행 기록을 정리해 최적화에 쓰는 STRACE를 제안했다. 형식 검증 과제에서는 전문가가 설계한 에이전트의 성공률 개선도 보고했다. [S13]
+
+### 대표 기록 선별과 원인 단계 추출
+
+여러 실행 기록을 묶어 실패 유형을 찾고, 중복 기록을 걸러 대표 실패 사례를 남긴다.
+
+선별된 개별 기록에서는 텍스트 의존 관계 그래프로 원인 국소화를 수행한다. 저자들은 원인과 무관한 단계를 제거하고 최적화할 원인 모듈을 찾는다고 설명했다. [S13]
+
+### 형식 검증 과제의 결과
+
+저자들은 초록에서 VeruSAGE-Bench 형식 검증 과제의 결과를 제시했다. 전문가 설계 에이전트를 최적화했을 때 성공률이 42.5%에서 58.5%로 높아졌다고 보고했다. [S13]
+
+## AI SDK 7.0.19, MCP 도구 정의 변경을 감지하는 기능 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** 없음
+
+한국시간 7월 10일 공개된 AI SDK의 ai@7.0.19 패치는 MCP 서버의 도구 정의가 이전과 달라졌는지 확인하는 기능을 추가했다. 도구 승인의 서명 보존과 등록 여부 검사도 손보고, 동영상 생성의 참조 입력에 기존 이미지 외에 동영상을 지원한다. [S14]
+
+### 처음 신뢰한 도구 정의와 비교
+
+fingerprintTools는 처음 도구를 신뢰할 때 서버가 제공하는 설명, 입력 스키마, 제목을 고정한다. detectToolDrift는 나중에 가져온 정의와 비교해 도구를 모델에 넘기기 전에 설명의 변경이나 입력 스키마의 확장을 찾아낸다.
+
+비교 기준의 보관과 변경을 발견한 뒤의 대응은 애플리케이션이 맡는다. [S14]
+
+### 등록하지 않은 이름의 처리
+
+도구 이름이나 승인 ID가 constructor, toString, valueOf, \_\_proto\_\_ 같은 상속 속성과 같아도 등록된 도구나 승인으로 읽지 않고 미설정 또는 없는 값으로 처리한다. 직접 등록된 객체 속성인지 확인하는 own-property 검사를 적용한 변경이다. [S14]
+
+### 승인과 동영상 참조 입력
+
+도구 승인의 상태가 responded로 전환될 때 승인 서명을 보존한다. 동영상 생성의 inputReferences 입력은 기존 이미지 참조와 함께 동영상 참조도 받을 수 있도록 확장했다. [S14]
+
+## Claude Code v2.1.203, 백그라운드 작업 복구·작업 폴더 격리 오류 수정
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 오류 수정, 기능 추가
+**기업·기관:** 없음
+
+Anthropic은 7월 8일(한국시간) Claude Code v2.1.203을 공개하고 백그라운드 세션과 작업 폴더 격리 관련 오류를 수정했다고 밝혔다. macOS에서 세션을 열거나 전환할 때 잘못된 메모리 부족 판정으로 15\~20초 멈추던 문제를 고쳤으며, 데몬의 세션 토큰이 오래돼 연결·응답·중지에 실패하던 경우 자동 복구하도록 바꿨다. 로그인 만료 전에 경고해 사용자가 백그라운드 세션 중단 전에 다시 인증할 수 있도록 하는 기능도 추가했다. [S15]
+
+### 진행 중인 작업을 유지하는 복구
+
+claude agents 화면으로 돌아올 때 실행 중인 하위 에이전트를 멈추고 프롬프트를 처음부터 다시 실행하던 오류를 수정해, 진행하던 작업을 이어가도록 했다. 데몬 자동 업그레이드 실패가 실행 중인 모든 백그라운드 세션을 조용히 종료하던 문제도 고쳤다.
+
+작업 디렉터리가 삭제되거나 파일로 교체되고 경로가 유효하지 않아질 때 백그라운드 에이전트가 반복 충돌하던 동작은 오류를 한 번 보고하는 방식으로 바뀌었다. TaskStop·TaskOutput이 다른 에이전트가 만든 백그라운드 작업을 찾지 못하던 문제도 수정했으며, 관련 오류에는 실행 중인 에이전트의 ID와 설명을 표시한다.
+
+백그라운드 에이전트 시작 실패에 실제 오류 대신 exit\_with\_message만 나오던 표시를 고쳤다. 데몬을 통해 분기한 세션에서 settings.json의 effortLevel 변경이 무시되던 문제도 수정했다. [S15]
+
+### 분리된 작업 폴더와 실행 환경
+
+격리된 worktree에서 실행해야 할 하위 에이전트의 셸 명령이 부모 체크아웃에서 실행되던 오류를 수정했다. 여러 저장소가 있는 작업공간에서 중첩 저장소 때문에 worktree 생성이 거부되던 문제와, git worktree가 많은 저장소에서 Bash가 argument list too long 오류를 내던 문제도 고쳤다.
+
+Windows 백그라운드 에이전트가 작업을 보낸 셸 대신 데몬의 오래된 PATH를 물려받아 도구를 찾지 못하던 문제를 수정했다. 셸에서 내보낸 ANTHROPIC\_BASE\_URL이 백그라운드·에이전트 화면 세션에서 누락돼 API 키가 기본 엔드포인트로 전송되고 401 오류가 발생하던 문제도 릴리스 노트에 명시했다.
+
+git 저장소가 아닌 디렉터리에서 시작한 백그라운드 세션도 WorktreeCreate 훅이 설정돼 있으면 파일을 편집하지 못하던 오류를 고쳤다. claude agents의 @ 디렉터리 선택기에 등록된 git worktree가 나오지 않던 문제도 수정했다. [S15]
+
+### MCP·편집기 설정과 작업 화면
+
+세션의 추가 작업 디렉터리를 MCP roots/list에 포함하고 디렉터리 집합이 바뀌면 notifications/roots/list\_changed를 보내도록 했다. VS Code 설정에는 모든 세션에 Remote Control을 활성화하는 토글을 추가했다.
+
+진단이나 코드 탐색 요청에 응답하는 LSP 전용 플러그인이 사용되지 않는 플러그인으로 잘못 표시되던 문제를 수정했다. Windows에서는 /clear 뒤 백그라운드 작업 출력이 빈 파일로 계속 대체되던 오류를 고쳤다.
+
+수동 권한 모드에서는 화면 하단에 회색 일시정지 배지를 표시한다. 백그라운드 작업·차이·워크플로 상세 화면을 닫는 키는 왼쪽 화살표 대신 Esc로 바뀌었다. [S15]
+
+### 메모리 처리와 응답 화면
+
+대화 세션의 컨텍스트 사용량 표시기가 매 턴마다 대화 전체를 다시 분석하던 동작을 없애 메모리·턴별 CPU 사용 관련 회귀를 수정했다. 긴 응답이 스트리밍될 때 실시간 미리보기 갱신이 화면 전체를 다시 그리지 않도록 바꿨다.
+
+큰 번들 의존성을 실행 파일에 인라인으로 넣는 대신 지연 로딩하도록 바꿔, 릴리스 노트 기준 바이너리 크기와 시작 시 메모리 사용량이 각각 약 7 MB 줄었다. 하위 에이전트가 자신에게 맡겨진 작업 전체를 다른 하위 에이전트에 다시 위임하는 동작도 줄였다고 설명했다.
+
+macOS의 15\~20초 멈춤 현상은 v2.1.196에서 발생한 회귀로 명시됐다. 수정 대상은 백그라운드 에이전트 세션을 열거나 전환할 때의 잘못된 메모리 부족 판정이다. [S15]
+
+## Claude Code v2.1.204, 원격 작업 중 훅 이벤트 전송 오류 수정
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 오류 수정
+**기업·기관:** 없음
+
+Anthropic이 7월 8일 Claude Code v2.1.204를 공개하고, 헤드리스 세션에서 SessionStart 훅의 이벤트가 전송되지 않던 오류를 수정했다고 밝혔다. 릴리스 노트는 이 오류로 원격 작업 프로세스가 훅 실행 도중 유휴 상태로 처리돼 종료될 수 있었다고 설명했다. [S16]
+
+
+
+## Claude Code v2.1.205, 자동 모드 승인·Windows 파일 삭제 보호 보강
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 오류 수정, 기능 추가
+**기업·기관:** 없음
+
+Anthropic은 7월 9일(한국시간) Claude Code v2.1.205를 공개하고 자동 모드에서 세션 대화 기록 파일의 변조를 차단하는 규칙을 추가했다. Windows에서는 worktree 내부의 NTFS junction이나 디렉터리 심볼릭 링크 때문에 worktree를 지울 때 바깥 파일까지 삭제되던 오류를 수정했다. [S17]
+
+### 자동 모드의 승인 처리
+
+자동 모드는 문맥에서 값을 알아낼 수 없는 변수를 대상으로 rm -rf를 실행하려 할 때 먼저 확인하도록 바뀌었다. 백그라운드 작업 알림에는 사람이 입력하지 않았다는 사실을 명시해, 대화 기록 안의 가짜 승인이 실행 근거로 쓰이지 않도록 했다. [S17]
+
+### 구조화 출력과 작업 메시지
+
+--json-schema에 잘못된 스키마를 전달했을 때 구조 없는 출력이 조용히 생성되던 오류와, format 키워드를 사용하는 스키마가 거부되던 오류를 수정했다. 작업 도중 보낸 메시지가 --max-turns 한도에 도달한 턴 종료 시 사라지던 문제도 고쳤다.
+
+Bash 호출의 출력이 30K 인라인 한도를 넘으면 그 호출에서 만든 PR과 세션의 연결이 누락되던 문제를 수정했다. 기존 PR을 편집·병합하거나 댓글·push 작업을 하는 세션도 claude agents에서 해당 PR로 연결한다.
+
+프로젝트 검증 스킬은 매 세션 다시 쓰는 대신 문서화된 명령이 바뀔 때만 갱신하도록 수정했다. /doctor는 문제를 진단하고 수정할 수 있는 전체 설정 점검으로 바뀌었으며 /checkup이 별칭으로 추가됐다. [S17]
+
+### MCP·실행 환경과 업데이트
+
+claude mcp add-from-claude-desktop에서 지원하지 않는 문자가 들어간 서버명 때문에 가져오기가 멈추던 오류를 고쳤다. 잘못된 이름을 알리고 나머지 서버는 계속 가져온다. 사용자 설정 MCP 서버는 Claude Browser와 Claude Preview라는 예약된 이름으로 등록할 수 없게 했다.
+
+한 플러그인의 LSP 서버 초기화 실패가 같은 확장자를 처리하는 다른 플러그인의 정상 서버를 막던 오류를 수정했다. CLI 2.1.203 이상에서 Cowork VM 모드의 로컬 에이전트 세션이 로그인 오류로 시작되지 않던 문제도 고쳤다.
+
+Windows에서 명령 실행 중 시작 디렉터리가 삭제·잠금·마운트 해제될 때 발생하던 충돌과, 디렉터리 스캔이 진행되는 동안 파일 감시기가 닫혀 발생하던 충돌을 수정했다. 자동 업데이트용 바이너리를 메모리에 버퍼링하는 대신 디스크로 스트리밍하도록 바꿨다. 릴리스 노트는 이 변경으로 업데이트 프로그램의 최대 메모리 사용량이 약 400 MB 줄었다고 설명했다. [S17]
+
+### 재개 상태와 원격 작업 화면
+
+SendMessage로 재개한 백그라운드 에이전트가 목록에 계속 failed 또는 completed로 남던 표시를 수정했다. 턴에 읽을 수 있는 텍스트가 없으면 needs input 상태가 working으로 되돌아가던 문제도 고쳤다.
+
+백그라운드 에이전트가 업그레이드로 재시작하는 동안 claude attach가 오류를 내는 대신 에이전트가 돌아올 때까지 기다리도록 바꿨다. 웹·모바일 Remote Control의 작업 구성이 바뀔 때 전체 작업 상태를 전달해 Running 표시가 오래 남던 오류도 수정했다.
+
+에이전트 목록의 행에는 색으로 구분한 상태 단어와 분류기가 작성한 제목을 표시한다. 미리보기에서는 전체 상태를 보여주고 막힌 세션이 요청한 내용을 정확히 표시하도록 했다. 작업 목록이 화면을 조금 넘을 때 에이전트 화면이 한 줄 위에 그려져 헤더가 잘리던 오류도 고쳤다. [S17]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
 
 # 흐름 읽기
 
-분석: 이번 창의 흐름은 AI가 "대화형 제품"과 "실행형 agent" 양쪽에서 동시에 운영 문제로 들어가는 것입니다. OpenAI는 모델 성능, 음성 대화, API tool orchestration을 묶었고, GitHub는 agent 사용 표면을 넓히면서 기업 관리 설정과 관측 통제를 강화했습니다. Vercel AI SDK와 Claude Code 릴리스는 tool drift, transcript tampering, background task 상태 같은 더 낮은 수준의 실패·보안 문제를 직접 다룹니다.
+없음
 
-확인된 사실과 구분한 해석: 확인된 사실은 OpenAI, Anthropic, GitHub, GitHub release page/API, arXiv에 게시된 날짜와 변경 내용입니다. 해석은 agent 제품이 모델 발표만으로 경쟁하기보다 음성 인터페이스, 조직 통제, 관측성, MCP 보안, 실패 trace 분석으로 확장되고 있다는 점입니다.
+# 오늘의 적용
 
-앞으로 볼 점:
-- GPT-5.6의 Programmatic Tool Calling과 multi-agent beta가 실제 API 비용과 trace 구조를 어떻게 바꾸는지
-- GPT-Live API가 공개될 때 기업용 데이터 처리와 실시간 agent trace가 어떻게 제공되는지
-- Copilot의 MDM/telemetry 관리 설정이 실제 enterprise rollout에서 기본 요구사항이 되는지
-- MCP tool fingerprinting이 다른 SDK와 agent framework에도 확산되는지
-- STRACE 같은 trace 원인 분석 연구가 production agent debugging 도구로 이어지는지
+없음
 
-# 바로 써먹을 점
+# 개념 색인
 
-- 업무 자동화: agent workflow에는 run id, tool list fingerprint, approval signature, background task state를 함께 남깁니다.
-- AI 활용: 음성 AI를 쓸 때는 답변 자연스러움보다 어떤 작업을 실제로 실행했는지 확인 가능한 화면과 로그를 우선 봅니다.
-- 개발 생산성: Copilot, Codex, Claude Code 같은 agent 도구는 개인 설정이 아니라 팀의 permission mode와 model policy부터 맞춥니다.
-- 연구 개발: 과학 AI 결과는 예측 점수와 함께 근거 구조, 재현성, 전문가 검토 가능성을 확인합니다.
-- 개인 프로젝트: MCP 도구를 붙일 때 처음 신뢰한 tool schema를 저장하고, 이후 schema drift가 생기면 agent 실행 전에 멈추는 방식을 고려합니다.
+없음
 
 # Source List
 
-- https://openai.com/index/gpt-5-6/
-- https://openai.com/index/introducing-gpt-live/
-- https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/
-- https://github.blog/changelog/2026-07-09-ask-copilot-for-a-repository-overview/
-- https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli/
-- https://github.blog/changelog/2026-07-08-deploy-managed-copilot-settings-via-mdm-in-vs-code-and-cli/
-- https://github.blog/changelog/2026-07-08-github-mobile-fix-merge-conflicts-with-copilot-cloud-agent/
-- https://github.blog/changelog/2026-07-08-github-mobile-live-notifications-for-copilot-cli-sessions/
-- https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
-- https://github.blog/changelog/2026-07-07-github-copilot-app-available-to-all/
-- https://www.anthropic.com/news/hard-questions
-- https://github.com/anthropics/claude-code/releases
-- https://github.com/vercel/ai/releases/tag/ai%407.0.19
-- https://github.com/vercel/ai/releases/tag/ai%406.0.222
-- https://github.com/vercel/ai/releases/tag/%40ai-sdk/xai%404.0.10
-- https://arxiv.org/abs/2607.07708v1
-- https://arxiv.org/abs/2607.07702v1
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CL+OR+cat:cs.LG+OR+cat:cs.CV+OR+cat:cs.RO&sortBy=submittedDate&sortOrder=descending&max_results=15
+- [S1] https://openai.com/index/gpt-5-6/
+- [S2] https://openai.com/index/introducing-gpt-live/
+- [S3] https://github.blog/changelog/2026-07-09-ask-copilot-for-a-repository-overview/
+- [S4] https://github.blog/changelog/2026-07-08-deploy-managed-copilot-settings-via-mdm-in-vs-code-and-cli/
+- [S5] https://github.blog/changelog/2026-07-08-github-mobile-fix-merge-conflicts-with-copilot-cloud-agent/
+- [S6] https://github.blog/changelog/2026-07-08-enterprise-managed-opentelemetry-export-for-vs-code-and-cli/
+- [S7] https://github.blog/changelog/2026-07-08-github-mobile-live-notifications-for-copilot-cli-sessions/
+- [S8] https://github.blog/changelog/2026-07-07-github-copilot-app-available-to-all/
+- [S9] https://github.blog/changelog/2026-07-09-openais-gpt-5-6-sol-terra-and-luna-are-now-available-in-github-copilot/
+- [S10] https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/
+- [S11] https://www.anthropic.com/news/hard-questions
+- [S12] https://arxiv.org/abs/2607.07708v1
+- [S13] https://arxiv.org/abs/2607.07702v1
+- [S14] https://github.com/vercel/ai/releases/tag/ai%407.0.19
+- [S15] https://github.com/anthropics/claude-code/releases/tag/v2.1.203
+- [S16] https://github.com/anthropics/claude-code/releases/tag/v2.1.204
+- [S17] https://github.com/anthropics/claude-code/releases/tag/v2.1.205

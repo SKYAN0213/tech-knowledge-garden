@@ -70,7 +70,7 @@ GitHub는 7월 22일 기업 관리자와 조직 소유자를 위한 Copilot 사�
 
 ##### 분류 기간과 접근 권한
 
-집단 분류는 최근 28일의 제품 사용에 따른 ai_adoption_phase를 사용한다. 대시보드는 Copilot 사용 지표 접근 권한을 가진 기업 관리자와 조직 소유자가 사용할 수 있다.
+집단 분류는 최근 28일의 제품 사용에 따른 ai\_adoption\_phase를 사용한다. 대시보드는 Copilot 사용 지표 접근 권한을 가진 기업 관리자와 조직 소유자가 사용할 수 있다.
 
 [GitHub 원문](https://github.blog/changelog/2026-07-22-new-copilot-usage-metrics-impact-dashboard/)
 

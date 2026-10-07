@@ -32,7 +32,7 @@ Max와 Ultra는 일반 추론 단계와 분리된 More reasoning… 항목에서
 
 ##### 에이전트별 모델 지정과 허용 조건
 
-다중 에이전트 v2의 spawn_agent는 기본 설정에서 model과 reasoning_effort를 노출한다. features.multi_agent_v2.expose_spawn_agent_model_overrides 설정으로 이 기능을 독립적으로 끌 수 있으며, 다른 spawn 메타정보가 숨겨져도 모델 지정 기능은 유지된다.
+다중 에이전트 v2의 spawn\_agent는 기본 설정에서 model과 reasoning\_effort를 노출한다. features.multi\_agent\_v2.expose\_spawn\_agent\_model\_overrides 설정으로 이 기능을 독립적으로 끌 수 있으며, 다른 spawn 메타정보가 숨겨져도 모델 지정 기능은 유지된다.
 
 모델과 추론 수준을 지정할 때는 명시적 허가와 부분 문맥 또는 문맥 없는 fork에서 사용하라는 지침이 적용된다.
 

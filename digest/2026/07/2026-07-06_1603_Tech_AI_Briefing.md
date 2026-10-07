@@ -40,7 +40,7 @@ Vercel AI SDK의 Anthropic 연동 패키지 3.0.93이 2026년 7월 6일(한국�
 
 이전에는 providerOptions.anthropic.thinking = { type: 'disabled' } 값을 설정해도 스키마 검사만 통과하고 전송 요청에서는 빠졌다.
 
-릴리스 문서는 생각 기능이 기본으로 켜진 모델에서 이 문제 때문에 작은 max_tokens 예산을 모두 소모할 수 있었다고 설명한다.
+릴리스 문서는 생각 기능이 기본으로 켜진 모델에서 이 문제 때문에 작은 max\_tokens 예산을 모두 소모할 수 있었다고 설명한다.
 
 [api.github.com 원문](https://api.github.com/repos/vercel/ai/releases/tags/%40ai-sdk%2Fanthropic%403.0.93)
 

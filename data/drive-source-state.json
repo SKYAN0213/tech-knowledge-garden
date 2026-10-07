@@ -9,9 +9,9 @@
     "Signals",
     "TrendTopics"
   ],
-  "snapshot_sha256": "293b8e62def0665aba07ca3522ea5a5cfd1e071ce41f8c69fa05f2dcfcabc8bc",
+  "snapshot_sha256": "3f58b9735a42d372a734d7a8467352ab40a2b7947cd035425855fc7ffe8eff01",
   "source_files": 216,
-  "exported_at": "2026-10-07T11:17:43.033Z",
+  "exported_at": "2026-10-07T12:21:15.097Z",
   "hashes": {
     "Editions/2026/06/2026-06-23_1700_Tech_AI_Briefing_SAMPLE.md": "27f7cbb5d767ff47ef76a3cef2ff488730c20bae3a3a4a3e03f7e43634ac9c0b",
     "Editions/2026/06/2026-06-24_0700_Tech_AI_Briefing.md": "3781e0f9aadad101b9cf1be838fcb9d02e0baf91c6dba947f13ba9420d9acb49",
@@ -54,7 +54,7 @@
     "Editions/2026/07/2026-07-06_1603_Tech_AI_Briefing.md": "8537b317aec902f4665672e7577f291ce4b9e77f2307304e81378f88370f98ac",
     "Editions/2026/07/2026-07-07_0003_Tech_AI_Briefing.md": "b7971ce4cdf942f7238c81d50a93fa7051f65f9d6d781cf01047294f696300ef",
     "Editions/2026/07/2026-07-07_0804_Tech_AI_Briefing.md": "6f0112e32778f3daaa3f464efb4ef72d653dd7709be7f7243016996c49032ecd",
-    "Editions/2026/07/2026-07-10_0802_Tech_AI_Briefing.md": "37ba45683ceacc6e27edf05d67ffa1649c369306e401c74a0a7cda58dbbccc46",
+    "Editions/2026/07/2026-07-10_0802_Tech_AI_Briefing.md": "af3bd38e19ac437f6db28f5286d41583c9529b34bb72ba00e441ef414d3b131b",
     "Editions/2026/07/2026-07-10_1603_Tech_AI_Briefing.md": "20c162032bd7769bd8f3b065ffefb6b9434939b3653133ed0baa235f1f73ad77",
     "Editions/2026/07/2026-07-11_0000_Tech_AI_Briefing.md": "5d2cf81a7d3ee7c974fc484c2e58c20324b7bff1978557f0a59841822c374d9f",
     "Editions/2026/07/2026-07-11_0803_Tech_AI_Briefing.md": "48a75fd4cd9b2a0177fd55a902650ce29a147d43c0d16d915b0cf5c0fbd511e9",

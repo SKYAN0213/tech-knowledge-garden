@@ -26,7 +26,7 @@ Vercel AI SDK의 Groq 연동 패키지 @ai-sdk/groq가 한국시간 7월 12일 4
 
 ##### 캐시 사용량 필드의 연결
 
-기존 convertGroqUsage는 Groq 응답의 prompt_tokens_details.cached_tokens를 전달받아도 읽지 않아 cacheRead를 undefined로 두고 입력 토큰 전체를 noCache로 기록했다. 수정 후에는 캐시 입력 토큰을 usage.cachedInputTokens와 cacheRead에 반영하고, 그만큼을 noCache에서 뺀다.
+기존 convertGroqUsage는 Groq 응답의 prompt\_tokens\_details.cached\_tokens를 전달받아도 읽지 않아 cacheRead를 undefined로 두고 입력 토큰 전체를 noCache로 기록했다. 수정 후에는 캐시 입력 토큰을 usage.cachedInputTokens와 cacheRead에 반영하고, 그만큼을 noCache에서 뺀다.
 
 ##### cacheWrite 값의 처리
 

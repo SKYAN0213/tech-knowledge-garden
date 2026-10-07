@@ -32,7 +32,7 @@ resources.subscribe 기능 선언과 구독·해제 처리기를 추가했다. �
 
 ##### 배포 인증과 사전 테스트
 
-npm 배포 작업은 OIDC trusted publishing으로 전환하고 NPM_CONFIG_PROVENANCE 설정을 추가했다. npm CLI 갱신 버전은 ^11.5.1로 고정했다.
+npm 배포 작업은 OIDC trusted publishing으로 전환하고 NPM\_CONFIG\_PROVENANCE 설정을 추가했다. npm CLI 갱신 버전은 ^11.5.1로 고정했다.
 
 npm 배포 전에는 npm test --if-present를, PyPI 배포 전에는 테스트 디렉터리가 있는 경우 pytest를 실행하도록 했다. README의 .md 변경도 배포 대상 판단에 반영하도록 수정했다.
 
