@@ -11567,3 +11567,8 @@ renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기�
 `sectorGroups`는 묶음과 단독 항목의 합으로 분야당5개, 전체 상세 기사40개, 정확한 사건ID·분야·verified 상태·단독 소속을 검증한다. `sectorMarkdown`, 웹 issueView, RSS는 같은 표제·소속 기사 전체를 사용한다. 뉴스 목록에는 묶음을 넣지 않으며 기존 개별 필터·공유·뒤로 가기를 유지한다. 이미 묶음을 가진 회차에 기사를 보완할 때 기존 묶음 메타데이터를 그대로 검증·보존한다.
 
 실제17기사 preview에서 `__proto__`의 underscore가 강조 문법으로 손실되는 오류를 확인했다. 원고를 줄이거나 검증기를 우회하지 않고 기존 `markdownProse`/`markdownProseText`의 literal 보존을 수정한다. 소속 기사 설명의 heading 단계도 부모 기사에 맞춰 한 단계씩 낮춘다. 기존 추출·모델 작성과 승인은 반복하지 않는다. private 증거는 `core-jul10-grouped-*`, `core-jul10-sector-*`; 준비와 실제 발행·원격 보관은 분리한다.
+
+
+최종 완료(2026-10-07): 같은 Drive ID1원고를 저장하고 실제 raw SHA를 확인했다. 216작성 원본 중215불변 raw를 fresh metadata와 대조해 재사용했다. 최종 코드855fe05b/Actions37621193551 Node1,177/1,177·build/site/deploy success이며 17개 뉴스·브리핑·RSS·GitHub 공개44파일을 실제 대조했다. 기존 RSS40 GUID/pubDate와 사건ID·원문·상세 조건은 보존했다. 실제1280/390 브라우저에서 분야 탭·Enter·공유URL·뒤로가기·빈 묶음 숨김·지도0·넘침0을 확인했다. 최초 공개 화면에서 날짜용2열 배치를 중첩 적용한 직접 UI결함을 발견해 별도 briefing-group 배치로 수정했고, 그 실패/두 서로 다른 CI를 보존한다. 같은 코드의 전체 suite 반복은 없다.
+
+WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원문 ZIP17개는 재사용하고 정정 승인 closure 및 운영 custody2개만 추가했다. 30원격 대상 actual raw SHA·private parent·19ZIP의 native 복원/의존 SHA·17사건 원문 coverage와 mapping을 확인해 remote_delivery_complete다. source/WebsiteData 읽기에서도19불변 raw를 fresh metadata 대조 후 재사용했다. 새 정규 횟수0·독립평가0/60·전체runtime복구 아님·전체WBS3/22 유지. 소급 잔여29회차/299구간·metadata2이며 다음 묶음에서도 원문·추론·승인 완료 checkpoint를 재사용한다. 전수 WBS는 외장 core-progress-jul10-grouped-publication-20261007-v46.md/json에 기록했다.

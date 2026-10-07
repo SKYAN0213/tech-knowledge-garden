@@ -5324,3 +5324,8 @@ immutable batch ID는 입력·manifest·정확한 operation 목록을 결속한�
 70개 표적 검사가 통과했고 실제17기사 변환에서 승인 원고와 정확한 리드·설명·원문 일치를 확인했다. Claude Code v2.1.204의 개발 도구 수정이 AI로 분류된 오류는 원 추출·대조·작성 결과와 사실 판정을 재사용한 새 편집 실행에서 정정했다. 처음 원 모델 출력을 재사용할 때 옛 편집 수정을 누락해 승인에 실패한 기록도 보존했고, 원 승인 원고를 복원한 뒤 sector만 수정했다. 원 사건·본문·출처·발표일은 같고 편집 재검토일만 현재 날짜다. 모델·원문 재수집0이다.
 
 실제 native 미리보기는 AI SDK 원고의 `__proto__`가 Markdown 강조로 렌더링돼 표기가 손실되는 직접 결함을 발견했다. 기존 plain-prose 변환과 역변환에서 underscore를 보존하도록 수정한다. 검증기를 완화하지 않으며 수정된 코드의 새 미리보기에서 실제17개 뉴스와 브리핑·digest를 대조한다. Drive-first 저장·공개·원격 보관은 각각 다음 관문이며 이 문서만으로 완료 판정하지 않는다. 전체WBS·독립평가·7회 정규 운영 분모는 유지한다.
+
+
+최종 완료(2026-10-07): 같은 Drive ID1원고를 저장하고 실제 raw SHA를 확인했다. 216작성 원본 중215불변 raw를 fresh metadata와 대조해 재사용했다. 최종 코드855fe05b/Actions37621193551 Node1,177/1,177·build/site/deploy success이며 17개 뉴스·브리핑·RSS·GitHub 공개44파일을 실제 대조했다. 기존 RSS40 GUID/pubDate와 사건ID·원문·상세 조건은 보존했다. 실제1280/390 브라우저에서 분야 탭·Enter·공유URL·뒤로가기·빈 묶음 숨김·지도0·넘침0을 확인했다. 최초 공개 화면에서 날짜용2열 배치를 중첩 적용한 직접 UI결함을 발견해 별도 briefing-group 배치로 수정했고, 그 실패/두 서로 다른 CI를 보존한다. 같은 코드의 전체 suite 반복은 없다.
+
+WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원문 ZIP17개는 재사용하고 정정 승인 closure 및 운영 custody2개만 추가했다. 30원격 대상 actual raw SHA·private parent·19ZIP의 native 복원/의존 SHA·17사건 원문 coverage와 mapping을 확인해 remote_delivery_complete다. source/WebsiteData 읽기에서도19불변 raw를 fresh metadata 대조 후 재사용했다. 새 정규 횟수0·독립평가0/60·전체runtime복구 아님·전체WBS3/22 유지. 소급 잔여29회차/299구간·metadata2이며 다음 묶음에서도 원문·추론·승인 완료 checkpoint를 재사용한다. 전수 WBS는 외장 core-progress-jul10-grouped-publication-20261007-v46.md/json에 기록했다.
