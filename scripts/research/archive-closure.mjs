@@ -384,6 +384,9 @@ export function buildArchiveClosure(
         if (reviewed.sha256 !== revision.review_sha256)
           throw Error("Source revision archive review changed")
         add(reviewed)
+        const reviewRun = revision.review_path.match(/^runs\/([A-Za-z0-9_-]+)\/.+$/)?.[1]
+        if (!reviewRun) throw Error("Source revision archive review needs a bound run")
+        if (reviewRun !== id) reference(reviewRun, "source_revision_review")
         reference(revision.observation_run, "reviewed_source_revision", () => {
           verifyPinnedSourceRevision({
             root,

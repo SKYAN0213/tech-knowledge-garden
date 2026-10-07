@@ -598,7 +598,7 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
     JSON.stringify({ schema: "research-candidates/v1", candidates: [currentCandidate] }),
   )
   atomicWrite(f.root, `runs/${currentRun}/candidates.json`, [currentCandidate])
-  const reviewPath = "runs/current-observation/revision-review.json"
+  const reviewPath = "runs/separate-revision-review/revision-review.json"
   atomicWrite(f.root, reviewPath, {
     schema: "research-candidate-approval-source-revision-review/v1",
     candidate_key: currentCandidate.key,
@@ -641,6 +641,27 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
     receipt.source_revision.sources[0].article_content_sha256,
     currentCandidate.article_content_sha256,
   )
+  const archive = await archiveClosure(f.root, "revision-portable", "approved", ["revision-link"])
+  assert.ok(archive.bound_runs.includes("separate-revision-review"))
+  const metadataFile = path.join(f.root, "revision-remote-metadata.json")
+  fs.writeFileSync(metadataFile, JSON.stringify({
+    schema: "research-drive-archive-observation/v1",
+    observed_at: new Date().toISOString(),
+    file_id: "revision-drive-archive",
+    name: "revision-portable.zip",
+    mime_type: "application/zip",
+    size: archive.package.bytes,
+    parent_ids: ["research-folder"],
+    shared: false,
+  }))
+  const registration = await registerArchiveLocation({
+    root: f.root,
+    runId: "revision-portable",
+    remotePackageFile: path.join(f.root, archive.package.path),
+    metadataFile,
+    expectedParentId: "research-folder",
+  })
+  assert.equal(registration.drive.raw_sha256_verified, true)
 })
 
 test("legacy candidate with missing source identity is enriched from its exact approved source", async (t) => {
