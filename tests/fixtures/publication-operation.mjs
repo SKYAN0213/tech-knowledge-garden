@@ -10,7 +10,7 @@ import {
 import { reconcileAuthoringExecution } from "../../scripts/research/authoring-execution.mjs"
 import { publicReadbackPlan } from "../../scripts/research/public-readback.mjs"
 
-export async function fixture(t, rootRelative = ".local/research") {
+export async function fixture(t, rootRelative = ".local/research", destinationFolder = "root") {
   const repository = fs.realpathSync(
     fs.mkdtempSync(path.join(os.tmpdir(), "publication-operation-")),
   )
@@ -55,7 +55,7 @@ export async function fixture(t, rootRelative = ".local/research") {
     schema: "research-authoring-transfer/v1",
     preview_run: previewRun,
     preview_sha256: sha256(fs.readFileSync(manifest)),
-    destination_folder_id: "root",
+    destination_folder_id: destinationFolder,
     roots: DRIVE_AUTHORING_ROOTS,
     files: [
       {
@@ -74,7 +74,7 @@ export async function fixture(t, rootRelative = ".local/research") {
     month = { path: "Editions/2026/01", id: "month", parent_id: "year" }
   const observation = {
     schema: "research-authoring-remote-observation/v1",
-    root_folder_id: "root",
+    root_folder_id: destinationFolder,
     observed_at: new Date(now).toISOString(),
     folders: [folder, month],
     listings: [

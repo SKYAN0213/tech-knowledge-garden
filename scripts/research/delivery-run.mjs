@@ -23,7 +23,7 @@ import { assertDeploymentProof, verifyPublicReadback } from "./public-readback.m
 const GITHUB = "SKYAN0213/tech-knowledge-garden"
 const WORKFLOW = "Publish Garden"
 const executeFile = promisify(execFile)
-async function command(file, args, repository) {
+export async function runDeliveryCommand(file, args, repository) {
   // No shell, arbitrary task runner, automatic workflow dispatch or credentials.
   const result = await executeFile(file, args, {
     cwd: repository,
@@ -88,7 +88,7 @@ export async function deliverApprovedPublication({
   retryPublish = false,
   actionsRun,
   waitSeconds = 0,
-  execute = command,
+  execute = runDeliveryCommand,
   fetchImpl = fetch,
   now = Date.now,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),

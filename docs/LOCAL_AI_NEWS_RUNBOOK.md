@@ -11428,3 +11428,17 @@ npm run research:deliver -- --run OPERATION_ID --status
 복구/CI 실패/공개 읽기 실패는 exit 2, 입력 오류는 exit 1이다. 대기/명시 선택 요청은 보류 상태로 반환한다. 알려지지 않은 인증을 만들거나 connector 계정을 CLI 자격 증명으로 재사용하지 않는다. writer/capture·WebsiteData·원문 archive 연결은 다음 묶음에서 기존 native 계약을 재사용한다.
 
 38개 관련 표적 시험과 실제 7월18일 archived proof 재개(두 번+status, 791ms, 추가 명령/네트워크 0)를 통과했다. 새 회차 전체 자동 운영의 완료 판정은 아니다. 다음은 P5-01의 승인 이전 처리와 Drive connector 연결이다. 1시간 이상 같은 실패가 진척 없이 반복되면 기존 병목 기록에 증거를 남기고 독립 다음 슬라이스를 수행한다.
+
+## 481. 외장 승인 원고에서 Drive 확인과 canonical 가져오기를 연결 (2026-10-07)
+
+동일 `research:deliver`에 `--authoring-root`와 정확한 release를 전달한다. 이미 승인된 release만 받으며 후보·기사 승인을 자동 생성하지 않는다. 기존 writer용 fresh scoped acquisition, 실제 전체 원본의 raw readback과 같은 snapshot을 사용한다. 새 원격 write가 필요하면 post-write snapshot을 다시 확보해야 한다. 변경 없이 이미 승인 원고가 존재하면 동일 실제 acquisition을 scoped/full 증거로 사용할 수 있고 시각을 새로 만들지 않는다.
+
+```sh
+npm run research:deliver -- --run OPERATION_ID --authoring-root /absolute/review/root --release runs/PREVIEW_ID/drive-authoring/releases/RELEASE_ID.json --acquisition /absolute/fresh-scoped.json --source-snapshot /absolute/fresh-full-source.json --source-readback /absolute/matching-full-readback.json --wait-seconds 60
+```
+
+입력을 열어 두는 connector 호출자가 필요하다. 시작 시 stdout의 `connector_ready`에 stdin으로 `{"type":"ready"}`를 보낸다. native `write_intent`의 정확한 ID/부모/원고 bytes로 connector를 한 번 호출하고 새로운 metadata/raw·두 목록을 확보한 acquisition 경로를 `{"type":"readback","acquisition_file":"/absolute/post.json"}`으로 응답한다. 실제 API 성공 메시지만으로 다음 단계에 가지 않는다.
+
+전체 snapshot/readback을 미리 지정하지 않으면 `source_snapshot_required` 이벤트를 보낸다. 그때 전체 네 작성 root의 원격 raw·두 matching inventory에서 native snapshot을 만든 뒤 `{"type":"source_snapshot","snapshot_file":"/absolute/full.json","readback_file":"/absolute/full-readback.json"}`을 보낸다. message는 경로만 담고 본문·키·signed URL을 담지 않는다. connector 대기는 기본 300000ms, 최대 600000ms다. source와 canonical garden 잠금은 기존 검증기를 유지하고 중첩 동일 root 잠금은 피한다.
+
+`runs/OPERATION_ID/authoring-delivery/`에는 승인 결속·최신 단계가, `authoring-import/`에는 실제 source/readback·입력 해시·canonical receipt가 있다. native publication이 생긴 후 같은 run을 재개하면 writer·Drive 전체 읽기·import를 반복하지 않는다. 완료 기록에서 신규 정규 운영·WebsiteData·Research·무인 발행을 추론하지 않는다. 외장 root의 symlink·원본 충돌·승인 범위 밖의 변경은 거부한다. 기존 CLI writer도 공통 JSON-line channel을 사용한다.

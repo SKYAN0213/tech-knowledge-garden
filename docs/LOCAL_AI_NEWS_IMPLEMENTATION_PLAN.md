@@ -436,6 +436,7 @@ FDA 공식 발표 경로까지 수용한 `daily-20260929-v9`은 **10경로/20창
 
 ### P5-01 재시작 가능한 실행기
 
+- 추가 구현(19.388절): 승인 writer의 scoped readback → 전체 Drive snapshot → canonical import → 기존 전달 실행을 연결했다. 네 작성 폴더의 경로·SHA·ID·수정 시각과 승인 변경 범위를 대조하고 기존 pull-drive를 사용한다. 외장 검토 root의 immutable proof 복사와 stdin 준비 확인을 공통 경로로 옮겼다. 완료 단계 재개는 쓰기 없이 실제 raw 증거를 다시 검사한다. 조사·사실 검토·원고 승인·WebsiteData/Research 전달은 남아 있어 전체는 부분 완료다.
 - 추가 구현(2026-10-07, 19.387절): `research:deliver`가 승인된 Drive 결과 → 기존 publisher → 정확한 commit의 Actions → public-readback을 연결한다. 완료 proof 재사용·명시적 push 복구·대기 체크포인트·중복 실행 잠금이 있다. 수집/편집/Drive 작성 전 구간과 WebsiteData/원문 원격 보관 연결은 남아 있으므로 P5-01 전체는 부분 완료다.
 - 현재 구현 증거: `preview`는 승인 입력·원문·작성 원본·렌더러 해시를 고정하고 workspace/refresh/knowledge/validate/build/verify/consistency/outputs를 재개한다. `research-daily.mjs`는 입력 해시를 고정한 plan, route별 영수증, 원자 저장·잠금·resume·handoff를 수행한다. 독립 완료 scan 재조정과 동일 창 재요청 방지를 추가했다. 같은 입력의 완료 단계 재사용과 private 파일 추가·본문/작성 원본 변경 거부 시험이 있다. 전체 일일 발행기의 완료를 뜻하지 않는다.
 - [x] 발견 → 수집 단계 체크포인트를 구현하고 실패 영수증과 검증된 독립 수집 증거를 재개 경로에서 대조한다.
@@ -5235,3 +5236,13 @@ canonical inventory는 v2 65/검증 사건203·미검토40회차/394구간·meta
 실제 canonical `legacy-jul18-publish-20261007-v1`의 archived native proof를 두 번 재개하고 status를 조회했다. 합계 791ms, subprocess/network/performed 모두 0이며 기존 commit 6dc53eeb1d87dd001a33034233b6bbcad233201b의 세 단계를 재사용했다. 외장 evidence root `delivery-controller-real-replay-v1.json`에 보존했다. 현재 원격의 새 관측이나 새 회차 전체 처리 속도가 아니다. 새 코드의 WebsiteData·원문 원격 보관도 이 proof에 합산하지 않는다.
 
 다음 순서: 검증된 수집·모델 체크포인트를 동일 실행에 연결 → 승인 회차 최대 5개를 묶어 Drive/빌드/배포 → 기존 55경로의 현재 코드 통합 결과 확인 → 별도 품질 판정과 실제 7회 운영. 묶음에서도 사건별 승인·원문 상세를 유지한다. 전체 WBS 완료 3/22(14%), 부분 17, 미착수 2다. 미검토 40회차/394units·독립 평가 0/40+0/20·새 shadow 0/7은 이번 코드 변경으로 줄어들지 않았다.
+
+### 19.388 Drive 원고 검증·canonical 반영·전달 실행 연결 (2026-10-07)
+
+`research:deliver`에 외장 승인 root와 기존 native writer를 연결했다. `authoring-delivery.mjs`는 쓰기/충돌 판정을 native authoringWriteSession에 맡기고 전체 원본 snapshot과 실제 readback을 받은 뒤 `authoring-import.mjs`를 호출한다. import는 네 작성 폴더의 전체 경로를 보존하며 승인 변경 이외의 수정·삭제, 다른 원격 ID/부모/수정 시각, 충돌한 immutable evidence를 먼저 거부한다. 기존 `pull-drive.py`의 dry-run·apply·working-copy 검증을 사용하며 source mapping도 같은 readback으로 갱신한다. 검토 workspace 전체나 중복 지식 저장소를 복사하지 않는다.
+
+외장 승인 원고와 native proof를 한 번 결속하고 canonical 준비가 끝나면 기존 전달 실행으로 이어진다. 이미 publication-operation이 있는 재개는 writer·전체 원본 재획득·canonical import를 반복하지 않는다. importer의 완료 재개도 실제 원고와 native working-copy를 확인하며 apply를 반복하지 않는다. 입력·중간 상태·결과는 기존 private runs 안에 저장한다.
+
+기존 writer와 새 전달 CLI는 공통 connector-input을 사용한다. 전달 CLI는 `connector_ready`에 실제 열린 stdin의 `ready` 응답을 받은 뒤 writer를 시작한다. 닫힌 입력으로 durable intent를 만든 뒤 실패하던 경로를 예방한다. 실제 원격 변경은 호출자의 승인된 connector가 수행하고 native writer는 post raw acquisition으로만 확인한다. 로그인이나 유료 API를 추가하지 않는다.
+
+새 시험 8개와 기존 authoring-execution·delivery-run 표적 검사를 수행했다. 최초 실패 3건은 시험용 snapshot이 네 원본 root를 모두 포함하지 않아 native validator가 거부한 것이며, 기존 검증기를 완화하지 않고 fixture를 수정했다. 해당 3개만 재실행해 통과했다. 실제 Drive에서 네 root·16폴더·216개 raw 파일과 두 번의 목록을 확보했고 canonical bytes와 전체 SHA가 일치하는 native source snapshot을 생성했다. 실제 전달·CI·재개 결과는 외장 evidence root의 authoring-delivery 기록에 이어 보존한다. 수집/사실·편집 승인과 원격 Research/WebsiteData 연결, 실제 7회 운영은 별도 미완료다.

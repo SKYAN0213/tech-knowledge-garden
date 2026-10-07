@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import { parseArgs } from "node:util"
-import { createInterface } from "node:readline"
+import { connectorInput } from "./research/connector-input.mjs"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { prepareAuthoringTransfer, compareAuthoringRemote } from "./research/authoring-transfer.mjs"
 import { authorizeAuthoringTransfer } from "./research/authoring-release.mjs"
@@ -54,26 +54,8 @@ try {
     !values.observation &&
     !values.readback
   ) {
-    const lines = createInterface({ input: process.stdin, crlfDelay: Infinity })
-    const queue = [],
-      keepAlive = setInterval(() => {}, 1000)
-    let waiting,
-      closed = false
-    const stop = () => lines.close()
-    lines.on("line", (line) => {
-      if (waiting) {
-        const current = waiting
-        waiting = null
-        current.resolve(line)
-      } else queue.push(line)
-    })
-    lines.on("close", () => {
-      closed = true
-      if (waiting) {
-        waiting.reject(Error("Writer input closed"))
-        waiting = null
-      }
-    })
+    const channel = connectorInput()
+    const stop = () => channel.close()
     process.once("SIGTERM", stop)
     process.once("SIGINT", stop)
     try {
@@ -84,30 +66,11 @@ try {
         waitMs: values["wait-ms"] ? Number(values["wait-ms"]) : 300000,
         resumeIntent: values["resume-intent"] || null,
         emit: (event) => console.log(JSON.stringify(event)),
-        nextCapture: async () => {
-          const line = queue.length
-            ? queue.shift()
-            : closed
-              ? (() => {
-                  throw Error("Writer input closed")
-                })()
-              : await new Promise((resolve, reject) => {
-                  waiting = { resolve, reject }
-                })
-          if (line.length > 4096) throw Error("Writer message too long")
-          const message = JSON.parse(line)
-          if (
-            message?.type !== "readback" ||
-            typeof message.acquisition_file !== "string" ||
-            Object.keys(message).sort().join() !== "acquisition_file,type"
-          )
-            throw Error("Post-write acquisition required")
-          return message.acquisition_file
-        },
+        nextCapture: async () =>
+          (await channel.read("readback", ["acquisition_file"])).acquisition_file,
       })
     } finally {
-      clearInterval(keepAlive)
-      lines.close()
+      channel.close()
       process.removeListener("SIGTERM", stop)
       process.removeListener("SIGINT", stop)
     }
