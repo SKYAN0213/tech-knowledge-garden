@@ -31,6 +31,7 @@ export async function processDailyEditorial({
   execute = false,
   reviewFiles = {},
   editorialReviewFiles = {},
+  editorialProcessingRuns = {},
   provider,
   processor = processSourceRun,
   command = research,
@@ -102,6 +103,15 @@ export async function processDailyEditorial({
           )
         )
           throw Error("Review files must name selected daily candidates")
+      if (
+        !editorialProcessingRuns ||
+        typeof editorialProcessingRuns !== "object" ||
+        Array.isArray(editorialProcessingRuns) ||
+        Object.entries(editorialProcessingRuns).some(
+          ([key, run]) => !keys.includes(key) || !validId(run),
+        )
+      )
+        throw Error("Editorial processing runs must name selected daily candidates")
       const entries = keys.map((key) => {
         const row = parent.results.find((r) => r.candidate_key === key)
         const matches = parentInput.entries.filter((e) => e.candidate_key === key)
@@ -126,6 +136,24 @@ export async function processDailyEditorial({
           primary_candidate_key: row.primary_candidate_key || null,
         }
       })
+      // Bind an explicitly selected, already reviewed continuation to the original
+      // source. Never rewrite the frozen collection or copy an approval between runs.
+      for (const entry of entries) {
+        const replacement = editorialProcessingRuns[entry.candidate_key]
+        if (!replacement || replacement === entry.processing_run) continue
+        if (
+          !entry.processing_run ||
+          ["failed", "same_source", "identity_review"].includes(entry.initial_status) ||
+          blockedRoutes.has(entry.next_route)
+        )
+          throw Error("Blocked daily candidates cannot replace their processing run")
+        const completed = await loadProcessedSourceResult(root, replacement, entry, { vault })
+        if (!["editorial_review", "approved"].includes(completed.status))
+          throw Error("Editorial continuation requires its own reviewed facts and exact draft")
+        entry.original_processing_run = entry.processing_run
+        entry.processing_run = replacement
+        entry.processing_input_sha256 = completed.processing_input_sha256
+      }
       const input = {
         schema: "research-daily-editorial-input/v1",
         processing_run: processingRun,

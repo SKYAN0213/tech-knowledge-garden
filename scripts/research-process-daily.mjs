@@ -18,6 +18,7 @@ const { values: v } = parseArgs({
     backlog: { type: "string" },
     "review-files": { type: "string" },
     "editorial-review-files": { type: "string" },
+    "editorial-processing-runs": { type: "string" },
     "processing-runs": { type: "string" },
     "evidence-think": { type: "string" },
     "plan-only": { type: "boolean", default: false },
@@ -30,6 +31,8 @@ if ([v["plan-only"], v.execute, v.resume].filter(Boolean).length !== 1)
 if (v.root && !v.backlog) throw Error("A custom processing root requires an explicit --backlog")
 if (v["editorial-review-files"] && !v["from-processing"])
   throw Error("Editorial reviews require --from-processing")
+if (v["editorial-processing-runs"] && !v["from-processing"])
+  throw Error("Editorial processing runs require --from-processing")
 if (
   v["from-processing"] &&
   (v["daily-run"] || v["processing-runs"] || v["evidence-think"] || v["collection-basis"])
@@ -52,6 +55,9 @@ console.log(
             : {},
           editorialReviewFiles: v["editorial-review-files"]
             ? JSON.parse(fs.readFileSync(v["editorial-review-files"], "utf8"))
+            : {},
+          editorialProcessingRuns: v["editorial-processing-runs"]
+            ? JSON.parse(fs.readFileSync(v["editorial-processing-runs"], "utf8"))
             : {},
         })
       : await processDailyCandidates({

@@ -11548,3 +11548,11 @@ private `remote-delivery/write-batches/BATCH_ID.json`에 전체 승인 operation
 `existingArticleProjection`은 미변경 six-w 기사에 `preserved.body`와 `preserved.desk`를 포함한다. `editionProjection`은 기존 원고에서 얻은 정확한 projection과 대조한 뒤 본문을 유지하고 인용을 최종 원문 URL에 다시 연결한다. 임의 본문·검토·분류·용어·desk 수정, 새 기사에 대한 preservation은 거부한다. 기존 분석 레이블이나 추가 설명을 리드만으로 다시 만들지 않는다.
 
 기존 회차에 보완할 승인 기사들은 한 preview에 모은다. 승인 시 원문 발표일·실제 시각·기존 cutoff·target SHA를 확인하고, 이미 완료한 추출·대조·작성의 native 재사용 경로를 이용한다. preview 결함을 수정한 뒤에는 preview만 재개한다. 전체 수집·모델 추론·이미 완료된 승인을 반복하지 않는다. 실제 승인4사건/기존3회차 preview와 관련36검사를 확인했고 Drive/public/remote custody는 각각 별도 관문이다.
+
+## 487. 별도 실행에서 끝낸 검토 결과 재사용
+
+고정한 일일 처리 이후 별도 실행에서 사실 검토·원고 검토를 마쳤다면 `--editorial-processing-runs <비공개 JSON 경로>`를 `--from-processing <원래 처리 ID>`와 함께 전달한다. JSON은 `{ "정확한 후보 key": "검토 완료 처리 ID" }`다. 사실 추출 단계의 `--processing-runs`와 구분한다. 미검토 사실, 원고가 없는 결과, 다른 원문 판본/parse/본문/URL, 선택 밖 후보, 실패·identity 보류의 대체는 거부한다. native 원고/승인/후보 검증은 그대로 수행한다.
+
+`--execute` 또는 `--resume`에는 동일한 후보 선택과 mapping을 전달한다. mapping이나 고정 입력이 달라지면 새 편집 실행 ID를 사용한다. 기존 parent·검토·승인을 덮어쓰지 않는다. 이미 발행된 사건은 `already_in_edition`으로 남고 발행 handoff에 넣지 않으므로 RSS·Drive·Git 커밋을 다시 만들지 않는다. 새 승인이 필요한 원고에는 기존 `--editorial-review-files`로 해당 실행의 명시적 검토를 전달한다.
+
+실제 `core-four-native-continuation-20261007-v1`의2회 관측은849ms/462ms, 추가 모델/승인/발행0과 보호된19파일 SHA 불변이다. 관련 표적 검사는 `node --test --test-name-pattern='daily editorial' tests/research-source-processing.test.mjs`9/9 통과다. 이번 재개는 정규 운영7회의 횟수에 포함하지 않는다.

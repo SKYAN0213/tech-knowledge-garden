@@ -1934,3 +1934,123 @@ test("daily editorial CLI reads frozen processing without invoking local models"
   assert.equal(result.results[0].status, "fact_review")
   assert.equal(readJSON(f.root, "runs/processed/draft.json"), null)
 })
+
+async function reviewedEditorialContinuation(f) {
+  const review = await decision(f)
+  await reviewProcessedClaims(f.root, "processed", review)
+  await processSourceRun({ ...f.options, run: "processed", sourceRun: "source" })
+  const options = {
+    ...f.options,
+    run: "continued",
+    sourceRun: "source",
+    assessmentRun: "processed",
+    draftRun: "processed",
+  }
+  await processSourceRun(options)
+  review.model_assessment.packet_sha256 = (
+    await loadFactReviewPacket(f.root, "continued")
+  ).packet_sha256
+  await reviewProcessedClaims(f.root, "continued", review)
+  await processSourceRun(options)
+}
+
+test("daily editorial pins a separately reviewed continuation without repeating model work", async (t) => {
+  const f = await editorialFixture(t)
+  await reviewedEditorialContinuation(f)
+  const parentFiles = ["daily-processing-input.json", "daily-processing.json"].map((name) =>
+    path.join(f.root, "runs/batch", name),
+  )
+  const before = parentFiles.map((file) => fs.readFileSync(file))
+  const calls = f.calls.length
+  const options = {
+    ...f.options,
+    editorialProcessingRuns: { [f.key]: "continued" },
+    execute: true,
+    processor: () => {
+      throw Error("Unexpected model generation")
+    },
+    command: () => {
+      throw Error("Unexpected native approval")
+    },
+  }
+  const result = await processDailyEditorial(options)
+  assert.equal(result.results[0].processing_run, "continued")
+  assert.equal(result.results[0].status, "editorial_review")
+  const entry = readJSON(f.root, "runs/editorial/daily-editorial/input.json").entries[0]
+  assert.equal(entry.original_processing_run, "processed")
+  assert.equal(
+    entry.processing_input_sha256,
+    sha256(fs.readFileSync(path.join(f.root, "runs/continued/source-processing-input.json"))),
+  )
+  const replay = await processDailyEditorial(options)
+  assert.equal(replay.publication_handoff.sha256, result.publication_handoff.sha256)
+  assert.equal(f.calls.length, calls)
+  parentFiles.forEach((file, i) => assert.deepEqual(fs.readFileSync(file), before[i]))
+  await assert.rejects(processDailyEditorial(f.options), /input changed/)
+})
+
+test("daily editorial rejects unreviewed or mismatched replacements before creating its input", async (t) => {
+  const f = await editorialFixture(t)
+  await processSourceRun({
+    ...f.options,
+    run: "unreviewed",
+    sourceRun: "source",
+    assessmentRun: "processed",
+  })
+  await assert.rejects(
+    processDailyEditorial({
+      ...f.options,
+      editorialProcessingRuns: { [f.key]: "unreviewed" },
+    }),
+    /own reviewed facts/,
+  )
+  assert.equal(readJSON(f.root, "runs/editorial/daily-editorial/input.json"), null)
+  await reviewedEditorialContinuation(f)
+  const binding = readJSON(f.root, "runs/continued/source-processing-input.json")
+  binding.candidate_key = "source-other"
+  atomicWrite(f.root, "runs/continued/source-processing-input.json", binding)
+  await assert.rejects(
+    processDailyEditorial({
+      ...f.options,
+      editorialProcessingRuns: { [f.key]: "continued" },
+    }),
+    /same exact candidate/,
+  )
+  await assert.rejects(
+    processDailyEditorial({
+      ...f.options,
+      editorialProcessingRuns: { unselected: "continued" },
+    }),
+    /selected daily candidates/,
+  )
+  assert.equal(readJSON(f.root, "runs/editorial/daily-editorial/input.json"), null)
+  assert.equal(readJSON(f.root, "runs/continued/approved-article.json"), null)
+})
+
+test("daily editorial CLI accepts an exact reviewed continuation map", async (t) => {
+  const f = await editorialFixture(t)
+  await reviewedEditorialContinuation(f)
+  const mapping = path.join(f.root, "continuations.json")
+  fs.writeFileSync(mapping, JSON.stringify({ [f.key]: "continued" }))
+  const args = [
+    "scripts/research-process-daily.mjs",
+    "--root",
+    f.root,
+    "--run",
+    "cli-continuation",
+    "--from-processing",
+    "batch",
+    "--plan-only",
+    "--backlog",
+    f.options.backlogFile,
+    "--vault",
+    f.options.vault,
+    "--model-policy",
+    f.policyFile,
+    "--editorial-processing-runs",
+    mapping,
+  ]
+  const result = JSON.parse(execFileSync(process.execPath, args, { encoding: "utf8" }))
+  assert.equal(result.results[0].processing_run, "continued")
+  assert.equal(result.results[0].status, "editorial_review")
+})

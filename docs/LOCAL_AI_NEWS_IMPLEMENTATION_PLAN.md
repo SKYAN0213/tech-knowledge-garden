@@ -5308,3 +5308,11 @@ immutable batch ID는 입력·manifest·정확한 operation 목록을 결속한�
 2026-10-07 실제 승인 기사4건의 preview에서 기존 기업 전략 기사의 분석 본문이 누락되는 결함을 확인했다. `existingArticleProjection`이 메타데이터만 보존하고 기존 prose를 리드·explanations에서 다시 생성한 것이 원인이다. 미변경 six-w 기사는 원래 본문·desk·분류·검토·전문용어 연결을 함께 보존하며, 기존 기사와 정확히 일치하는 projection만 허용한다. 인용 번호는 최종 Source List의 동일 URL로 연결한다. 새 원문 재검토와 명시적 승인에 의한 기사 교체는 기존 경로를 사용한다. 검증기를 낮추거나 기존 분석을 삭제하지 않는다.
 
 표적 legacy-projection/deep-dive/event-date 36/36 통과, 실제 `core-four-reader-20261007-v1` preview는 기존3회차·승인4사건으로 생성했다. MIT·NLR은 원문 시각과 기존 조사 경계에 따라10월1일, ASEC는9월30일, GitHub stacked PR은10월7일에 추가한다. 완료된 추출·대조·작성 결과와 검토 기록을 재사용하여 이번 재개에서 모델 호출·원문 취득0이다. 후보 승인·장부 연결은 완료했지만 preview 생성은 Drive 저장·공개 배포 완료가 아니다. 전체 WBS 완료3/22·부분17·미착수2, 독립 평가0/60·실제 정규 비교0/7은 유지한다.
+
+후속 native 전달 `core-four-delivery-20261007-v1`에서 공개24파일·WebsiteData11파일·Research 원문 ZIP4개(복원452파일)를 확인했다. Drive 원본216파일의 raw 대조와 동일 ID 수정3개를 완료했고 기존 RSS40식별자를 보존했다. 결과와 전체 WBS는 외장 비공개 `core-progress-acceleration-20261007-v39`에 기록했다. 소급 보완은 새 정규 운영으로 계산하지 않는다.
+
+### 19.394. 별도 검토를 완료한 결과를 일일 흐름에 재연결
+
+`research:process-daily --from-processing`에 `--editorial-processing-runs`를 추가했다. 고정한 원래 후보의 정확한 원문 판본·parse·본문 SHA·URL에 일치하며 해당 실행 자체의 사실 검토와 원고가 있는 결과만 선택할 수 있다. 기존 수집/처리 입력은 수정하지 않고 원래 실행 ID와 대체 실행 입력 SHA를 새 편집 입력에 고정한다. 후보 충돌·실패·동일 원문 중복 보류를 대체 실행으로 우회할 수 없다. 승인과 후보 장부 연결은 기존 native 검증을 유지하며 새 승인으로 복사하지 않는다.
+
+관련 편집 검사9/9 통과. 실제 발행4건을 공통 경로로 재개한2회는849ms/462ms, 모두 `already_in_edition`이며 추가 모델 호출·승인·발행0이다. 원래 처리 입력, 사실 검토, 원고, 승인, 후보 장부19파일 SHA가 불변이다. 외장 `core-four-native-continuation-proof-v1.json`은 완료 재사용 관측이며 새 기사 처리 속도나 정규 운영 성공을 뜻하지 않는다. 전체 WBS 수용 기준은 유지한다.
