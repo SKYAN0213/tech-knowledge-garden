@@ -43,6 +43,17 @@ const fixture = () => ({
   body: `# 뉴스 데스크\n\n## 투자 유치와 채용 계획\n\n${body}\n# Source List\n\n- [S1] https://example.org/funding\n`,
 })
 
+test("A business model announcement is classified without claiming a contract or market entry", () => {
+  const prose =
+    "**분야:** 소프트웨어·클라우드\n**테마:** 사업·고객\n**보조 테마:** 없음\n**세부 태그:** 사업 모델\n**기업·기관:** NVIDIA\n"
+  const classification = classifyArticle(prose, "수익 공유 모델 발표")
+  assert.equal(classification.theme, "사업·고객")
+  assert.deepEqual(classification.event_tags, ["사업 모델"])
+  assert.throws(() =>
+    classifyArticle(prose.replace("사업·고객", "실적·재무"), "수익 공유 모델 발표"),
+  )
+})
+
 test("Reviewed themes, event tags and entities retain the real summary and stable source identity", () => {
   const issue = fixture(),
     a = extractArticles(issue)[0]

@@ -22,7 +22,11 @@ export const THEMES = [
       "서비스 종료",
     ],
   },
-  { id: "business", name: "사업·고객", tags: ["고객 도입", "수주·계약", "시장 진출", "사업 철수"] },
+  {
+    id: "business",
+    name: "사업·고객",
+    tags: ["사업 모델", "고객 도입", "수주·계약", "시장 진출", "사업 철수"],
+  },
   {
     id: "financials",
     name: "실적·재무",
