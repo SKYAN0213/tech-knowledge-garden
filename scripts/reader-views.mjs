@@ -99,6 +99,7 @@ export function briefingHub(library, href, base) {
 export function issueView(i, href, base, renderedArticle) {
   if (i.original.meta.article_reviews) {
     const heading = `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time></div><h1>${esc(i.date)} 아침 브리핑</h1><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
+    if (!i.items.length && !i.recentItems?.length) return heading
     const highlights = topArticles(i)
     const top = highlights.length
       ? `<section class="issue-highlights"><h2>주요 소식</h2><ul>${highlights.map((a) => `<li>${link(href("News/" + a.id), a.title)} ${announcementDate(a)}</li>`).join("")}</ul></section>`

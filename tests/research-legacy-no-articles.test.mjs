@@ -12,6 +12,7 @@ import { retrospectiveProjections } from "../scripts/research/preview.mjs"
 import { editionProjection } from "../scripts/research/publish-adapter.mjs"
 import { assertPublicationAuthoringInputs } from "../scripts/research/publication-operation.mjs"
 import { publicReadbackPlan } from "../scripts/research/public-readback.mjs"
+import { issueView } from "../scripts/reader-views.mjs"
 
 function fixture(t, change = () => {}) {
   const vault = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-no-articles-"))
@@ -186,6 +187,15 @@ test("reviewed article-free legacy projection removes unsupported prose and disc
   const f = fixture(t)
   const [projection] = retrospectiveProjections(f.vault, [], [], [f.packet])
   const next = parseNote(projection.content)
+  const html = issueView(
+    { original: next, date: next.meta.date, key: f.key, items: [], recentItems: [] },
+    (value) => "/" + value,
+    "https://example.org",
+    "",
+  )
+  assert.match(html, /GitHub 정리/)
+  assert.match(html, /RSS 구독/)
+  assert.doesNotMatch(html, /검색 결과 없음|검색·필터|news-query|news-kind|sector-tabs/)
   assert.equal(next.meta.schema_version, "tech-ai-magazine/v2")
   assert.equal(next.meta.source_count, 0)
   assert.equal(next.meta.new_items_count, 0)
