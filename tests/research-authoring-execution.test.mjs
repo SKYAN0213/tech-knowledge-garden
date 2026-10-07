@@ -479,6 +479,89 @@ test("connector capture normalizes actual scoped evidence and excludes download 
   assert.equal(JSON.parse(cli.stdout).files, 1)
 })
 
+function addListedFolder(capture, name = "sub") {
+  const listing = capture.listings[0]
+  const metadata = {
+    id: "verified-child-folder",
+    title: name,
+    mime_type: "application/vnd.google-apps.folder",
+    parent_ids: [listing.id],
+    shared: false,
+    modified_time: capture.observed_at,
+  }
+  capture.folders.push({ path: listing.path + "/" + name, metadata })
+  listing.before.push({ ...metadata, parent_ids: null })
+  listing.after.push({ ...metadata, parent_ids: null })
+}
+
+test("connector capture distinguishes verified child folders from authoring files", async (t) => {
+  const f = fixture(t),
+    capture = connectorCapture(f)
+  addListedFolder(capture)
+  const staged = await stageAuthoringReadback({
+    root: f.root,
+    releasePath: f.releasePath,
+    acquisitionFile: f.put("connector-with-child.json", capture),
+    now: f.now,
+  })
+  const observation = JSON.parse(fs.readFileSync(staged.observation_file))
+  assert.deepEqual(
+    observation.listings[0].files.map((r) => r.name),
+    ["topic.md"],
+  )
+  assert.equal(observation.folders[0].id, "verified-child-folder")
+  assert.equal(observation.listings[0].complete, true)
+  const result = await f.reconcile({
+    observationFile: staged.observation_file,
+    readbackFile: staged.readback_file,
+  })
+  assert.equal(result.status, "pending")
+  assert.deepEqual(
+    result.next_operations.map((r) => r.action),
+    ["update", "create"],
+  )
+})
+
+test("connector capture rejects unproven, changed or shadowing child folders", async (t) => {
+  for (const mutate of [
+    (c) => {
+      c.folders = []
+    },
+    (c) => {
+      c.folders[0].metadata.parent_ids = ["another-parent"]
+    },
+    (c) => {
+      c.listings[0].after.at(-1).title = "renamed"
+    },
+    (c) => {
+      c.folders[0].metadata.modified_time = "2020-01-01T00:00:00Z"
+    },
+    (c) => {
+      c.listings[0].after.push({ ...c.listings[0].after.at(-1) })
+    },
+    (c) => {
+      c.folders[0].path = "Knowledge/topic.md"
+      c.folders[0].metadata.title = "topic.md"
+      c.listings[0].before.at(-1).title = "topic.md"
+      c.listings[0].after.at(-1).title = "topic.md"
+    },
+  ]) {
+    const f = fixture(t),
+      capture = connectorCapture(f)
+    addListedFolder(capture)
+    mutate(capture)
+    await assert.rejects(
+      stageAuthoringReadback({
+        root: f.root,
+        releasePath: f.releasePath,
+        acquisitionFile: f.put("invalid-child.json", capture),
+        now: f.now,
+      }),
+    )
+    assert.equal(loadAuthoringExecutionStatus(f.root).releases[0].status, "readback_required")
+  }
+})
+
 test("connector capture rejects truncated, changing, corrupt or mismatched raw acquisitions", async (t) => {
   for (const mutate of [
     (c) => (c.listings[0].limit = 1),

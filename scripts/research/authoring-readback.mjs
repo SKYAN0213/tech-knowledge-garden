@@ -54,18 +54,42 @@ export function materializeAuthoringReadback(
         listing.limit < 1
       )
         throw Error("Connector listing may be truncated")
+      const names = new Set(),
+        ids = new Set()
+      for (const file of files) {
+        if (!file?.title || !file.id || names.has(file.title) || ids.has(file.id))
+          throw Error("Ambiguous connector listing identity")
+        names.add(file.title)
+        ids.add(file.id)
+      }
       return files
         .map((f) => {
           if (
-            (!allowListedFolders && f.mime_type === "application/vnd.google-apps.folder") ||
-            (f.parent_ids != null &&
-              (!Array.isArray(f.parent_ids) ||
-                f.parent_ids.length !== 1 ||
-                f.parent_ids[0] !== listing.id))
+            f.parent_ids != null &&
+            (!Array.isArray(f.parent_ids) ||
+              f.parent_ids.length !== 1 ||
+              f.parent_ids[0] !== listing.id)
           )
             throw Error("Unexpected file or parent in scoped listing")
+          if (!allowListedFolders && f.mime_type === "application/vnd.google-apps.folder") {
+            const folder = capture.folders.find(
+              (r) =>
+                r.path === listing.path + "/" + f.title &&
+                r.metadata.id === f.id &&
+                r.metadata.title === f.title &&
+                r.metadata.modified_time === f.modified_time &&
+                r.metadata.shared === false &&
+                JSON.stringify(r.metadata.parent_ids) === JSON.stringify([listing.id]),
+            )
+            if (!folder || binding.plan.files.some((r) => r.path === folder.path))
+              throw Error("Unexpected file or parent in scoped listing")
+            // Retain the verified folder in the folder chain. It is not a
+            // Markdown file and must not duplicate its ID in the file listing.
+            return null
+          }
           return { name: f.title, id: f.id, parent_id: listing.id, modified_at: f.modified_time }
         })
+        .filter(Boolean)
         .sort((a, b) => String(a.name).localeCompare(String(b.name)))
     }
     const before = normalize(listing.before),

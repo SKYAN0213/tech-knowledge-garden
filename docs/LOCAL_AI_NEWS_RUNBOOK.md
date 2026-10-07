@@ -11622,7 +11622,6 @@ renderer/runtime 코드가 바뀌었다면 새 preview ID로 기존 승인 기�
 
 실제17기사 preview에서 `__proto__`의 underscore가 강조 문법으로 손실되는 오류를 확인했다. 원고를 줄이거나 검증기를 우회하지 않고 기존 `markdownProse`/`markdownProseText`의 literal 보존을 수정한다. 소속 기사 설명의 heading 단계도 부모 기사에 맞춰 한 단계씩 낮춘다. 기존 추출·모델 작성과 승인은 반복하지 않는다. private 증거는 `core-jul10-grouped-*`, `core-jul10-sector-*`; 준비와 실제 발행·원격 보관은 분리한다.
 
-
 최종 완료(2026-10-07): 같은 Drive ID1원고를 저장하고 실제 raw SHA를 확인했다. 216작성 원본 중215불변 raw를 fresh metadata와 대조해 재사용했다. 최종 코드855fe05b/Actions37621193551 Node1,177/1,177·build/site/deploy success이며 17개 뉴스·브리핑·RSS·GitHub 공개44파일을 실제 대조했다. 기존 RSS40 GUID/pubDate와 사건ID·원문·상세 조건은 보존했다. 실제1280/390 브라우저에서 분야 탭·Enter·공유URL·뒤로가기·빈 묶음 숨김·지도0·넘침0을 확인했다. 최초 공개 화면에서 날짜용2열 배치를 중첩 적용한 직접 UI결함을 발견해 별도 briefing-group 배치로 수정했고, 그 실패/두 서로 다른 CI를 보존한다. 같은 코드의 전체 suite 반복은 없다.
 
 WebsiteData11파일은9같은ID 갱신·2불변으로 확인했다. 기존 원문 ZIP17개는 재사용하고 정정 승인 closure 및 운영 custody2개만 추가했다. 30원격 대상 actual raw SHA·private parent·19ZIP의 native 복원/의존 SHA·17사건 원문 coverage와 mapping을 확인해 remote_delivery_complete다. source/WebsiteData 읽기에서도19불변 raw를 fresh metadata 대조 후 재사용했다. 새 정규 횟수0·독립평가0/60·전체runtime복구 아님·전체WBS3/22 유지. 소급 잔여29회차/299구간·metadata2이며 다음 묶음에서도 원문·추론·승인 완료 checkpoint를 재사용한다. 전수 WBS는 외장 core-progress-jul10-grouped-publication-20261007-v46.md/json에 기록했다.
@@ -11653,7 +11652,6 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 
 편집 재개 근거: 처음 software writer 대기열은2개 원고 뒤 LangGraph의 미확정 native 검토 때문에 중단됐다. LangGraph의 계획/완료 및 숫자 조건 concern을 exact release block으로 명시 해결해3사실 검토를 마쳤다. Claude 승인은 JSON /published_at를 인용한 used claim이 없어 거부됐으며 실패를 보존했다. 날짜 관문을 완화하지 않았다. 본문용 metadata를 일찍 deferred 처리한 것이 원인이므로,4개 새 publication-writing run에서 완료 추출·대조를 재사용하고 정확한 발표시각 근거를 검토에 포함했다. Claude13·OpenCode10·LangGraph3·AI core4·xAI3 =33검증 사실(본문 내용28+발표시각5)이다. 내용·사건이 늘어난 것은 아니다. 변경된 fact 입력에 맞는 writer를 단일 대기열로 진행하며 원본 추출·대조는 재생성하지 않는다. native CLI의 단계별 exit code와 stderr를 함께 확인하며 전체 suite는 데이터 검토 때문에 반복하지 않는다.
 
-
 ## 495. 제목 없는 구형 도구 원문의 사건 연결
 
 `section_event_review: {sha256, original_mention, original_event_checked: true, reason}`를 event에 기록한다. anchor는 실제 depth1 `오픈소스와 도구` 단위이며 previous_title도 원래 섹션 제목이다. 전체 문서·단위 SHA·직접 원문 URL·원래 문장의 포함과 단위 disposition/event 일치를 검증한다. h2를 삽입하거나 source-only anchor로 바꾸지 않는다. 원문 HTML과 같은 공식 release API가 대체 관계이면 기존 source_alternative_reviews를 사용하며 시간대 변환은 정확한 /published_at used claim으로 입증한다.
@@ -11674,9 +11672,7 @@ Ollama release API404와 공식 tag page parser의 selector 실패는 비공개 
 
 7월7일08:04 preview는 legacy-jul07-0804-preview-20261007-v1, 전체 검토는13단위·18원래주소·9승인 사건이다. 소프트웨어5개의 신규 private closure는 raw SHA·원격 복원과 research-archives register를 확인했다. source/version·추출·대조·모델 writer를 재호출하지 않았다. 관련 테스트63/63; 전체 CI는 최종 코드/발행 묶음에서1회 확인한다.
 
-
 실제 발행 완료(2026-10-07): 71af1baa/Actions37638509237의 Node1,183/1,183·Python·build/site/deploy가 성공했다. 기존7월7일08:04 Drive 파일 ID를 유지해 승인9기사를 반영하고 native raw readback→canonical import→한 번 commit/push→실제 웹/RSS/GitHub SHA 검증을 완료했다. Research9 ZIP와 WebsiteData11파일은20개 원격 raw·native 복구/위치/매핑까지 remote_delivery_complete다. 바뀐 WebsiteData8개만 갱신하고 불변3개를 유지했다. 브라우저에서 분야 Enter·공유URL·뒤로 가기,390px mobile 가로 넘침0, MiniMax 기사→프롬프트 캐싱→관련 기사와 뉴스/브리핑 canvas0을 확인했다. 과거 회차를 신규 RSS 회차나 정규 운영으로 생성하지 않았다. 최신 inventory는216원본·247검증 사건·diagnostics0·소급 잔여28회차/286단위·metadata2다. 전체 WBS와 독립평가/정규 운영 수는 유지한다.
-
 
 최종 private 검토 보관: 원래13단위의 before_content·제외 판정·Ollama 공식 태그 raw·Drive 전후 영수증·공개/원격 검증·CI·UI·WBS를30개 파일로 묶었다. core-jul07-0804-reviewed-custody-closure-20261007-v1.zip은 Research의1KEv059RO6tZYilxMl_PtzrjdQ8o1I7-G에 private 저장한 뒤 실제 raw SHA·독립 복원·native 위치 등록을 확인했다. 앞선 기사 근거9 ZIP 및 WebsiteData11파일과는 별도 운영 증거1 ZIP이다. 전체 runtime 복구와 독립 human 평가를 완료한 것으로 집계하지 않는다.
 
@@ -11689,6 +11685,8 @@ workflow checkpoint는 현재 route-coverage의 verified_supplemental_scan마다
 표적 검증은 tests/research-workflow-checkpoint.test.mjs와 daily-scan의 missing supplemental receipt 테스트다. 복원 후 원래 bytes로 기간 근거를 읽는 회귀 사례와 누락된 입력의 차단을 확인한다. 전체 테스트는 최종 코드 묶음에서 한 번 실행한다. 실제 상태와 재개 지점은 외장 core-progress-runtime-recovery-20261008-v51.md의 최신 기록에 남긴다.
 
 ## 496. 반복 조회를 줄이는 실행별 진척 확인
+
+Drive 원문 저장 시 부모 목록에 하위 폴더가 있으면 같은 관측의 폴더 metadata에서 ID·이름·부모·변경 시각·비공개 여부를 확인한다. 확인한 폴더는 폴더 계보에 보존하고 Markdown 파일 목록과 구분한다. 확인되지 않은 폴더, 바뀐 이름·시각, 중복 ID·이름, 저장 대상과 같은 이름의 폴더는 차단한다. 실제 전체 목록을 임의로 잘라 전달하지 않는다.
 
 작업 중에는 `node scripts/research.mjs processing-status --run <정확한 실행 ID>`로 해당 source-processing 또는 daily processing/editorial 실행만 읽는다. 전체 delivery status는 묶음 종료 시 사용한다. 단일 조회는 다른 실행 폴더를 순회하지 않고 원문 HTTP·모델·Drive 조회·발행을 수행하지 않는다. 단계별 시간, 모델 호출별 시간, 현재 작업과 프로세스 생존 여부, 저장 파일 존재 여부를 반환한다. writer는 processing state 밖의 기존 모델 ledger에 기록되므로 함께 확인한다.
 
