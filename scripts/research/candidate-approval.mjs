@@ -22,7 +22,7 @@ function candidateMatchesEventDate(article, candidateDate, sourceDate) {
   )
 }
 
-function verifySameSourceRevision({
+export function verifySameSourceRevision({
   root,
   approvedRunId,
   candidateSourceRunId,
@@ -165,6 +165,32 @@ function verifySameSourceRevision({
     reviewed_at: parseResearchDate(review.reviewed_at)?.day || null,
     sources,
   }
+}
+
+// Re-read both stored sources and the explicit review on resume/publication.
+// A pinned receipt is not a substitute for unchanged source evidence.
+export function verifyPinnedSourceRevision({
+  root,
+  approvedRunId,
+  candidateKey,
+  candidate,
+  sourceRevision,
+}) {
+  const stored = loadStoredSourceRun(root, approvedRunId)
+  const verified = verifySameSourceRevision({
+    root,
+    approvedRunId,
+    candidateKey,
+    candidate,
+    candidateSourceRunId: sourceRevision.observation_run,
+    sourceRevisionReviewPath: sourceRevision.review_path,
+    article: readJSON(root, `runs/${approvedRunId}/approved-article.json`),
+    approvedDocuments: stored.documents,
+    approvedParses: stored.parses,
+  })
+  if (JSON.stringify(verified) !== JSON.stringify(sourceRevision))
+    throw Error("Pinned source revision review or evidence changed")
+  return verified
 }
 
 // Link an already reviewed private article to its discovery candidate. This

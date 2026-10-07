@@ -4,6 +4,7 @@ import { editions, extractArticles } from "../garden.mjs"
 import { readBacklog } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
+import { verifyPinnedSourceRevision } from "./candidate-approval.mjs"
 
 // Routing metadata only: privatePreview must still validate every native approval.
 export function loadDailyPublicationSelection(root, relative, { vault = "vault" } = {}) {
@@ -52,6 +53,31 @@ export function loadDailyPublicationSelection(root, relative, { vault = "vault" 
     const linkBytes = fs.readFileSync(safePath(root, approval.candidate_approval.path))
     const link = JSON.parse(linkBytes)
     const article = readJSON(root, `runs/${approval.approved_run}/approved-article.json`)
+    const revised = entry?.source_revision?.sources.find(
+      (s) =>
+        s.approved_source_version_id === entry.source_version_id &&
+        s.approved_parse_id === entry.parse_id,
+    )
+    if (entry?.source_revision) {
+      verifyPinnedSourceRevision({
+        root,
+        approvedRunId: approval.approved_run,
+        candidateKey: row.candidate_key,
+        candidate,
+        sourceRevision: entry.source_revision,
+      })
+      if (
+        !revised ||
+        JSON.stringify(link.source_revision) !== JSON.stringify(entry.source_revision) ||
+        JSON.stringify(candidate.approval?.source_revision) !==
+          JSON.stringify(entry.source_revision) ||
+        link.reviewed_source_version_id !== entry.source_version_id ||
+        link.reviewed_parse_id !== entry.parse_id
+      )
+        throw Error("Daily publication source revision binding changed")
+    }
+    const sourceVersion = revised?.current_source_version_id || entry?.source_version_id
+    const parseId = revised?.current_parse_id || entry?.parse_id
     if (
       matches?.length !== 1 ||
       !entry ||
@@ -68,8 +94,12 @@ export function loadDailyPublicationSelection(root, relative, { vault = "vault" 
       candidate.event_id !== approval.event_id ||
       candidate.approval?.approved_run !== approval.approved_run ||
       candidate.approval.article_sha256 !== approval.article_sha256 ||
-      candidate.article_source_version_id !== entry.source_version_id ||
-      candidate.article_parse_id !== entry.parse_id ||
+      link.source_version_id !== sourceVersion ||
+      link.parse_id !== parseId ||
+      candidate.approval.source_version_id !== sourceVersion ||
+      candidate.approval.parse_id !== parseId ||
+      candidate.article_source_version_id !== sourceVersion ||
+      candidate.article_parse_id !== parseId ||
       candidate.article_content_sha256 !== entry.content_sha256 ||
       existing.has(approval.event_id)
     )

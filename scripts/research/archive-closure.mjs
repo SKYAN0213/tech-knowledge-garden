@@ -9,6 +9,7 @@ import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { planConceptAuthority } from "./concept-archive.mjs"
 import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
 import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
+import { verifyPinnedSourceRevision } from "./candidate-approval.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
@@ -371,6 +372,38 @@ export function buildArchiveClosure(
         if (!article || sha256(JSON.stringify(article)) !== approval.article_sha256)
           throw Error("Candidate approval article changed")
       })
+      if (approval.source_revision) {
+        const revision = approval.source_revision
+        const primary = revision.sources.find(
+          (source) =>
+            source.current_source_version_id === approval.source_version_id &&
+            source.current_parse_id === approval.parse_id,
+        )
+        if (!primary) throw Error("Source revision archive lacks its reviewed primary source")
+        const reviewed = pinFile(revision.review_path)
+        if (reviewed.sha256 !== revision.review_sha256)
+          throw Error("Source revision archive review changed")
+        add(reviewed)
+        reference(revision.observation_run, "reviewed_source_revision", () => {
+          verifyPinnedSourceRevision({
+            root,
+            approvedRunId: approval.approved_run,
+            candidateKey: approval.candidate_key,
+            sourceRevision: revision,
+            candidate: {
+              source_urls: [primary.url],
+              article_source_version_id: approval.source_version_id,
+              article_parse_id: approval.parse_id,
+              article_content_sha256: approval.article_content_sha256,
+              source_published_at: primary.published_at,
+              approval: {
+                approved_run: approval.approved_run,
+                reviewed_parse_id: approval.reviewed_parse_id,
+              },
+            },
+          })
+        })
+      }
       const lineage = approval.existing_editorial_approval
       if (lineage) {
         const reviewed = pinFile(lineage.review_path)

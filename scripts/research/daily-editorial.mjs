@@ -6,6 +6,8 @@ import { readBacklog } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
 import { processSourceRun } from "./source-processing.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
+import { verifySameSourceRevision, verifyPinnedSourceRevision } from "./candidate-approval.mjs"
+import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const validId = (id) => /^[A-Za-z0-9_-]{1,160}$/.test(id || "")
@@ -32,6 +34,7 @@ export async function processDailyEditorial({
   reviewFiles = {},
   editorialReviewFiles = {},
   editorialProcessingRuns = {},
+  sourceRevisionReviews = {},
   provider,
   processor = processSourceRun,
   command = research,
@@ -112,6 +115,22 @@ export async function processDailyEditorial({
         )
       )
         throw Error("Editorial processing runs must name selected daily candidates")
+      if (
+        !sourceRevisionReviews ||
+        typeof sourceRevisionReviews !== "object" ||
+        Array.isArray(sourceRevisionReviews) ||
+        Object.entries(sourceRevisionReviews).some(
+          ([key, ref]) =>
+            !keys.includes(key) ||
+            !ref ||
+            !validId(ref.source_run) ||
+            typeof ref.review_path !== "string" ||
+            !ref.review_path.trim(),
+        )
+      )
+        throw Error(
+          "Source revision reviews must name selected daily candidates and stored sources",
+        )
       const entries = keys.map((key) => {
         const row = parent.results.find((r) => r.candidate_key === key)
         const matches = parentInput.entries.filter((e) => e.candidate_key === key)
@@ -153,6 +172,40 @@ export async function processDailyEditorial({
         entry.original_processing_run = entry.processing_run
         entry.processing_run = replacement
         entry.processing_input_sha256 = completed.processing_input_sha256
+      }
+      // Preflight all equivalence reviews before changing any candidate approval.
+      for (const entry of entries) {
+        const revision = sourceRevisionReviews[entry.candidate_key]
+        if (!revision) continue
+        if (
+          !entry.processing_run ||
+          ["failed", "same_source", "identity_review"].includes(entry.initial_status) ||
+          blockedRoutes.has(entry.next_route) ||
+          revision.source_run === entry.processing_run
+        )
+          throw Error("Blocked daily candidates cannot use source revision reviews")
+        safePath(root, revision.review_path)
+        const completed = await loadProcessedSourceResult(root, entry.processing_run, entry, {
+          vault,
+        })
+        if (completed.status !== "approved")
+          throw Error("Source revision reuse requires an already approved exact article")
+        const candidates = readBacklog(backlogFile)?.candidates.filter(
+          (c) => c.key === entry.candidate_key,
+        )
+        if (candidates?.length !== 1) throw Error("One exact source revision candidate required")
+        const stored = loadStoredSourceRun(root, entry.processing_run)
+        entry.source_revision = verifySameSourceRevision({
+          root,
+          approvedRunId: entry.processing_run,
+          candidateKey: entry.candidate_key,
+          candidateSourceRunId: revision.source_run,
+          sourceRevisionReviewPath: revision.review_path,
+          candidate: candidates[0],
+          article: readJSON(root, `runs/${entry.processing_run}/approved-article.json`),
+          approvedDocuments: stored.documents,
+          approvedParses: stored.parses,
+        })
       }
       const input = {
         schema: "research-daily-editorial-input/v1",
@@ -315,6 +368,16 @@ export async function processDailyEditorial({
           }
           let approval = null
           if (execute && current.status === "approved") {
+            const revisionSource = entry.source_revision?.sources.find(
+              (s) =>
+                s.approved_source_version_id === entry.source_version_id &&
+                s.approved_parse_id === entry.parse_id,
+            )
+            if (entry.source_revision && !revisionSource)
+              throw Error("Reviewed source revision differs from frozen daily source")
+            const sourceVersion =
+              revisionSource?.current_source_version_id || entry.source_version_id
+            const parseId = revisionSource?.current_parse_id || entry.parse_id
             const linkRun = `${runId}-${sha256(key).slice(0, 12)}-approval`
             const refPath = base + `approvals/${sha256(key)}.json`
             let ref = readJSON(root, refPath)
@@ -324,7 +387,7 @@ export async function processDailyEditorial({
               )
               if (priorCandidates?.length !== 1)
                 throw Error("One exact discovery candidate required")
-              if (priorCandidates[0].approval) {
+              if (priorCandidates[0].approval && !entry.source_revision) {
                 ref = priorLink(key, child, current)
               } else {
                 await command([
@@ -341,6 +404,14 @@ export async function processDailyEditorial({
                   backlogFile,
                   "--vault",
                   vault,
+                  ...(entry.source_revision
+                    ? [
+                        "--candidate-source-run",
+                        entry.source_revision.observation_run,
+                        "--source-revision-review",
+                        entry.source_revision.review_path,
+                      ]
+                    : []),
                 ])
                 const linkPath = `runs/${linkRun}/candidate-approval.json`
                 ref = { path: linkPath, sha256: sha256(fs.readFileSync(safePath(root, linkPath))) }
@@ -351,6 +422,22 @@ export async function processDailyEditorial({
               link = JSON.parse(bytes)
             const candidates = readBacklog(backlogFile)?.candidates.filter((c) => c.key === key)
             const candidate = candidates?.[0]
+            if (entry.source_revision) {
+              verifyPinnedSourceRevision({
+                root,
+                approvedRunId: child,
+                candidateKey: key,
+                candidate,
+                sourceRevision: entry.source_revision,
+              })
+              if (
+                !same(link.source_revision, entry.source_revision) ||
+                !same(candidate.approval?.source_revision, entry.source_revision) ||
+                link.reviewed_source_version_id !== entry.source_version_id ||
+                link.reviewed_parse_id !== entry.parse_id
+              )
+                throw Error("Source revision approval differs from its explicit reviewed binding")
+            }
             if (
               sha256(bytes) !== ref.sha256 ||
               link.schema !== "research-candidate-approval/v1" ||
@@ -358,16 +445,16 @@ export async function processDailyEditorial({
               link.approved_run !== child ||
               link.event_id !== current.event_id ||
               link.article_sha256 !== current.article_sha256 ||
-              link.source_version_id !== entry.source_version_id ||
-              link.parse_id !== entry.parse_id ||
+              link.source_version_id !== sourceVersion ||
+              link.parse_id !== parseId ||
               link.article_content_sha256 !== entry.content_sha256 ||
               candidates?.length !== 1 ||
               candidate.event_id !== link.event_id ||
               candidate.review_status !== "verified" ||
               candidate.approval?.approved_run !== child ||
               candidate.approval.article_sha256 !== link.article_sha256 ||
-              candidate.approval.source_version_id !== entry.source_version_id ||
-              candidate.approval.parse_id !== entry.parse_id ||
+              candidate.approval.source_version_id !== sourceVersion ||
+              candidate.approval.parse_id !== parseId ||
               candidate.approval.article_content_sha256 !== entry.content_sha256
             )
               throw Error("Candidate approval handoff differs from its exact source or backlog")
@@ -375,8 +462,8 @@ export async function processDailyEditorial({
               .flatMap(extractArticles)
               .some((a) => a.id === link.event_id)
             const currentSourceMatches =
-              candidate.article_source_version_id === entry.source_version_id &&
-              candidate.article_parse_id === entry.parse_id &&
+              candidate.article_source_version_id === sourceVersion &&
+              candidate.article_parse_id === parseId &&
               candidate.article_content_sha256 === entry.content_sha256
             approval = {
               approved_run: child,

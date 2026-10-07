@@ -3170,6 +3170,10 @@
         "url_template": "https://www.etnews.com/news/section.html?id1=04&id2=046&page={page}",
         "max_pages": 24,
         "rule_id": "etnews-ai-archive-v1",
+        "page_overlap_policy": {
+          "mode": "adjacent-prefix",
+          "max_items": 1
+        },
         "rss_title_policy": "source_title_authoritative",
         "excluded_categories": [],
         "parse_options": {

@@ -26,6 +26,12 @@ flowchart LR
 
 현재 활성 목록은 로봇 제조사 여섯 경로, GitHub Changelog, Google Cloud Threat Intelligence, ASEC 공개 보안 연구, NVIDIA 보도자료, NASA Technology, FDA 발표, MIT Robotics·AI, Frontiers Robotics and AI, Samsung Global Newsroom RSS, KAIST 로봇·AI 연구뉴스, SK하이닉스 공식 RSS, 카카오 기술 블로그, 한국에너지기술연구원 보도자료, NLR 뉴스, AMD 공식 IR RSS의 **23경로**다. 분야와 축의 표지는 조사 경로를 나타내며 개별 기사 분류나 주장 승인을 자동으로 결정하지 않는다([출처 명세 34~50절](SOURCE_ACQUISITION_SPEC.md#34-github-changelog-월별-아카이브의-기간-수집)). 주 체크아웃의 `daily-20260930-main23-integrated-v1`은 **23경로/46창 모두 `window_scanned`**로 완료했고 32칸 중 17칸은 `partial`, 15칸은 `not_attempted`다. 비공개 후보 인계의 `pending` 91건(이번 실행에서 관측 62건)은 검토 대기이지 승인 기사 수가 아니다. 동일 계획의 재개에서 receipt·계획·요약·coverage·후보 장부·handoff JSON 51개는 변경되지 않았다. 이후 ASEC의 `Public` 필수 검사는 새 baseline과 해당 경로 전용 일일 실행으로 다시 수용했고, 변경된 전체 설정의 23경로/46창 계획만 재확인했다. 출처별 세부 증거는 4.23절에 기록한다. 앞선 21·22경로 단일 실행과 AMD IR 2창 별도 실행도 각각 보존한다. 첫 20경로 통합 실행은 40창 중 39개 완료·SK하이닉스 1개 미완료였고, 혼합 피드 차이를 공통 옵션으로 수용한 뒤 21~23경로 실행에서 해당 경로도 완료됐다. 마지막 Drive 작성 원본 일치 입력을 사용한 **분리 작업 트리 이전** 통합 실행은 `daily-20260929-v17`의 15경로/30창이었다. 이 로컬 실행들은 작성 원본 기반이며 `candidate_published`, `drive_verified`, `public_verified`는 모두 `false`다. 별도 9월 30일 오전 8시 작업은 13건을 Drive 작성 원본에 저장하고 웹·RSS·GitHub 공개 결과를 확인했다. 이 발행은 위 로컬 수집 실행의 승인이나 발행 증거로 합산하지 않는다. **당일 관측은 실행 시점까지의 스냅샷**이고 그날 전체 뉴스 없음의 근거가 아니다.
 
+### 같은 본문 판본의 승인 재사용
+
+일일 편집 CLI의 `--from-processing`에는 `--source-revision-reviews <JSON>`를 함께 지정할 수 있다. JSON은 선택한 후보 key별 `{ "source_run": "현재 관측 run", "review_path": "비공개 root 상대 검토 JSON" }` 매핑이다. 기존 승인 원고를 고르는 `--editorial-processing-runs`와 함께 사용하며, 검토 JSON은 기존 `research-candidate-approval-source-revision-review/v1` 계약을 따른다.
+
+기존 `candidate-approval` 검증기로 원문 URL·제목·모든 본문 블록·발표일·수치와 관측 판본을 대조한다. 같다고 확인한 경우에만 기존 사건 ID·승인 원고를 현재 판본에 연결하며 추출·작성 모델을 다시 호출하지 않는다. 원래 고정 수집 입력의 판본은 보존한다. 검토와 이전/현재 근거를 고정하고 재개·발행 선택에서도 다시 확인한다. 숫자·날짜·본문 변경, 미승인 원고, 검토 경로 이탈 또는 판본 변조는 차단한다. 이 인계는 Drive 보관이나 공개 발행의 완료 판정이 아니다.
+
 ## 2. 공개 결과와 조사 범위
 
 - 기존 **8개 분야 × 국내/해외 × 기술·제품/기업·운영**의 32칸을 매일 조사한다. 제조사 경로는 로봇 분야에 *추가*하며 다른 일곱 분야를 대체하지 않는다. 기업 IR·공시, 전문지·지역 매체, 고객·공급사, 학회·논문, 대학·TLO·교수 창업 경로를 분리한다.

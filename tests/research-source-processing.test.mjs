@@ -2081,3 +2081,178 @@ test("daily editorial CLI accepts an exact reviewed continuation map", async (t)
   assert.equal(result.results[0].processing_run, "continued")
   assert.equal(result.results[0].status, "editorial_review")
 })
+
+async function sourceRevisionEditorialFixture(t, mutation = null) {
+  const f = await editorialFixture(t)
+  f.document = readJSON(f.root, "runs/source/documents.json")[0]
+  await reviewProcessedClaims(f.root, "processed", JSON.parse(fs.readFileSync(f.reviewFile)))
+  await processSourceRun({
+    root: f.root,
+    run: "processed",
+    sourceRun: "source",
+    policyFile: f.policyFile,
+    provider: f.provider,
+  })
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  const editorial = path.join(f.root, "revision-editorial.json")
+  fs.writeFileSync(
+    editorial,
+    JSON.stringify({
+      status: "approved",
+      draft_id: draft.draft_id,
+      reviewer: "Fixture editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: "2026-10-04",
+      region: "해외",
+    }),
+  )
+  await main(["approve", "--root", f.root, "--run", "processed", "--review", editorial])
+  const currentBody =
+    fs.readFileSync(path.join(f.root, f.document.body_path), "utf8") + "\nPage chrome changed."
+  const hash = sha256(currentBody),
+    parseId = sha256("revised source parse")
+  const document = {
+    ...f.document,
+    source_version_id: f.document.source_id + ":" + hash,
+    body_sha256: hash,
+    body_path: `documents/${f.document.source_id}/${hash}/body.bin`,
+    observed_at: "2026-10-04T00:15:00Z",
+  }
+  const parse = {
+    ...structuredClone(f.parse),
+    source_version_id: document.source_version_id,
+    parse_id: parseId,
+    dates: { ...f.parse.dates, observed_at: document.observed_at },
+  }
+  parse.blocks = parse.blocks.map((b, i) => ({ ...b, block_id: `${parseId}:b${i + 1}` }))
+  if (mutation) {
+    mutation(parse)
+    for (const block of parse.blocks) block.locator.text_hash = sha256(block.text)
+  }
+  atomicWrite(f.root, document.body_path, currentBody)
+  atomicWrite(f.root, `parses/${parseId}/parse.json`, parse)
+  atomicWrite(f.root, "runs/current-observation/documents.json", [document])
+  atomicWrite(f.root, "runs/current-observation/parses.json", [parse])
+  const backlog = JSON.parse(fs.readFileSync(f.options.backlogFile))
+  Object.assign(backlog.candidates[0], {
+    article_source_version_id: document.source_version_id,
+    article_parse_id: parseId,
+    article_content_sha256: articleContentFingerprint(parse),
+    source_published_at: parse.dates.published_at,
+  })
+  fs.writeFileSync(f.options.backlogFile, JSON.stringify(backlog))
+  atomicWrite(f.root, "runs/current-observation/candidates.json", backlog.candidates)
+  const reviewPath = "runs/current-observation/revision-review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-candidate-approval-source-revision-review/v1",
+    candidate_key: f.key,
+    event_id: "1234567890abcdef",
+    approved_run: "processed",
+    candidate_source_run: "current-observation",
+    reviewer: "Fixture source editor",
+    reviewed_at: "2026-10-04",
+    source_read: true,
+    revision_read: true,
+    title_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+    source_urls: [f.document.original_url],
+    same_content_reason:
+      "The HTML wrapper changed while the cited title, body and publication date remain identical.",
+  })
+  return {
+    ...f,
+    revisionOptions: {
+      sourceRevisionReviews: {
+        [f.key]: { source_run: "current-observation", review_path: reviewPath },
+      },
+    },
+  }
+}
+
+test("daily editorial accepts reviewed source revisions without regenerating and rechecks publication selection", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  const f = await sourceRevisionEditorialFixture(t)
+  const before = [...f.calls]
+  const result = await processDailyEditorial({
+    ...f.options,
+    ...f.revisionOptions,
+    execute: true,
+    processor: () => {
+      throw Error("An identical article must not generate again")
+    },
+  })
+  assert.equal(result.results[0].status, "approval_ready")
+  assert.deepEqual(f.calls, before)
+  const link = readJSON(f.root, result.results[0].approval.candidate_approval.path)
+  assert.equal(link.reviewed_source_version_id, f.document.source_version_id)
+  assert.notEqual(link.source_version_id, f.document.source_version_id)
+  assert.equal(link.source_revision.sources[0].body_bytes_identical, false)
+  assert.deepEqual(
+    loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+      vault: f.options.vault,
+    }).approvedRuns,
+    ["processed"],
+  )
+  const linkRun = result.results[0].approval.candidate_approval.path.split("/")[1]
+  const closure = buildArchiveClosure(f.root, "revision-archive", "processed", [linkRun], {
+    vault: f.options.vault,
+  })
+  assert.ok(closure.files.some((file) => file.path === link.source_revision.review_path))
+  assert.ok(closure.files.some((file) => file.path === `parses/${link.parse_id}/parse.json`))
+  const replay = await processDailyEditorial({
+    ...f.options,
+    ...f.revisionOptions,
+    execute: true,
+    processor: () => {
+      throw Error("Resume must not generate again")
+    },
+  })
+  assert.equal(replay.results[0].status, "approval_ready")
+  const parsePath = `parses/${link.parse_id}/parse.json`
+  const parse = readJSON(f.root, parsePath)
+  parse.blocks[0].text = parse.blocks[0].text.replace("50", "500")
+  atomicWrite(f.root, parsePath, parse)
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+        vault: f.options.vault,
+      }),
+    /changed|differ|content|parse/i,
+  )
+})
+
+test("daily editorial source revision rejects changed numbers, dates and out-of-root review paths", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  for (const mutate of [
+    (p) => {
+      p.blocks[0].text = p.blocks[0].text.replace("50", "500")
+    },
+    (p) => {
+      p.dates.published_at = "2026-10-03"
+    },
+  ]) {
+    const f = await sourceRevisionEditorialFixture(t, mutate)
+    const before = fs.readFileSync(f.options.backlogFile)
+    await assert.rejects(
+      processDailyEditorial({ ...f.options, ...f.revisionOptions, execute: true }),
+      /content|dates|differ|source/i,
+    )
+    assert.deepEqual(fs.readFileSync(f.options.backlogFile), before)
+  }
+  const f = await sourceRevisionEditorialFixture(t)
+  f.revisionOptions.sourceRevisionReviews[f.key].review_path = "../outside.json"
+  await assert.rejects(
+    processDailyEditorial({ ...f.options, ...f.revisionOptions, execute: true }),
+    /outside|escape|relative|path/i,
+  )
+})

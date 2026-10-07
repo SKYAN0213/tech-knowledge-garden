@@ -19,6 +19,7 @@ const { values: v } = parseArgs({
     "review-files": { type: "string" },
     "editorial-review-files": { type: "string" },
     "editorial-processing-runs": { type: "string" },
+    "source-revision-reviews": { type: "string" },
     "processing-runs": { type: "string" },
     "evidence-think": { type: "string" },
     "plan-only": { type: "boolean", default: false },
@@ -33,6 +34,8 @@ if (v["editorial-review-files"] && !v["from-processing"])
   throw Error("Editorial reviews require --from-processing")
 if (v["editorial-processing-runs"] && !v["from-processing"])
   throw Error("Editorial processing runs require --from-processing")
+if (v["source-revision-reviews"] && !v["from-processing"])
+  throw Error("Source revision reviews require --from-processing")
 if (
   v["from-processing"] &&
   (v["daily-run"] || v["processing-runs"] || v["evidence-think"] || v["collection-basis"])
@@ -58,6 +61,9 @@ console.log(
             : {},
           editorialProcessingRuns: v["editorial-processing-runs"]
             ? JSON.parse(fs.readFileSync(v["editorial-processing-runs"], "utf8"))
+            : {},
+          sourceRevisionReviews: v["source-revision-reviews"]
+            ? JSON.parse(fs.readFileSync(v["source-revision-reviews"], "utf8"))
             : {},
         })
       : await processDailyCandidates({
