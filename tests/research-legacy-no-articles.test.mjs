@@ -244,7 +244,7 @@ test("reviewed article-free legacy projection removes unsupported prose and disc
     "",
   )
   assert.match(html, /GitHub 정리/)
-  assert.match(html, /RSS 구독/)
+  assert.doesNotMatch(html, /RSS|\/rss/)
   assert.doesNotMatch(html, /검색 결과 없음|검색·필터|news-query|news-kind|sector-tabs/)
   assert.equal(next.meta.schema_version, "tech-ai-magazine/v2")
   assert.equal(next.meta.source_count, 0)
