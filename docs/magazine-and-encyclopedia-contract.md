@@ -49,7 +49,7 @@ knowledge_notes_updated: []
 
 A complete source-reviewed conversion of an issue before 2026-09-14 may preserve genuinely unrecorded research cutoffs as `coverage_start: null`, `coverage_end: null`, and `historical_coverage: unrecorded/v1`. Its private `unrecorded_coverage_review` must confirm the original metadata and archive were read, the fixed edition identity and timezone were checked, and both cutoff fields were absent. This never replaces recorded, partial, null, or malformed original cutoff fields. Every original body unit requires a disposition and every article requires a verified source-publication date no later than the edition date. Keep the original archive and actual review dates. Do not infer a cutoff from filenames or neighboring issues, add an operational notice to reader pages, or create a new RSS item. Current daily issues and the latest publication cutoff still require real timestamps.
 
-In a partial retrospective before 2026-09-14, reviewed articles may replace an original source while unreviewed article bytes retain their existing citations. Remove sources no longer cited by the projected body. When this leaves gaps in numbering, set `source_marker_format: preserved-retrospective/v1`; keep the remaining source IDs unique, positive and ordered. The marker applies only to a historical issue without `editorial_format`, with explicit `article_records` and `article_reviews`. Undefined markers, duplicate URLs, unused sources and mismatched counts remain errors. New issues and complete six-w conversions use consecutive IDs from S1.
+In a partial retrospective before 2026-09-14, reviewed articles may replace an original source while unreviewed article bytes retain their existing citations. Remove sources no longer cited by the projected body. When this leaves gaps in numbering, set `source_marker_format: preserved-retrospective/v1`; keep the remaining source IDs unique, positive and ordered. The marker applies only to a historical issue without `editorial_format`, with explicit `article_records` and `article_reviews`. A classified six-w retrospective may also preserve exact sibling prose and citations when all article records and verified review identities match the complete container; the native projection checks the preserved bytes and source targets. Undefined markers, duplicate URLs, unused sources and mismatched counts remain errors. New issues and complete six-w conversions use consecutive IDs from S1.
 
 ### Required order
 
@@ -222,7 +222,7 @@ tags: []
 
 ### Required concept sections
 
-Use these level-2 headings exactly and in this order:
+For reviewed specialist concepts with `concept_id`, use the following allowed level-2 headings in this relative order. `한 문장 정의` and `출처` are required. Include other sections only when their explanations or confirmed relationships have evidence; a present section cannot be empty. Historical entries without `concept_id` keep the complete existing template.
 
 1. `## 한 문장 정의`
 2. `## 용어 카드`
@@ -237,7 +237,7 @@ Use these level-2 headings exactly and in this order:
 11. `## 최근 변화`
 12. `## 출처`
 
-The definition must stand on its own and must not depend on a company announcement. `범위` states what is included and excluded. `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` records confirmed associations as `- [[Knowledge/…|Concept]] — a concrete reason`. Direction, reference type and citation are not mandatory for connections. Reviewed concepts preserve `concept_id`, Korean `label`, `group`, source-reviewed `keywords`, `verified_sources` and `last_reviewed`; new `connections` contain the target concept ID and reason, plus optional evidence URLs. Preserve historical typed `relations` with their source/inference distinction and evidence. See [CONNECTION_MAP.md](CONNECTION_MAP.md). Empty parent/child/contrast placeholders are not required. Historical entries without `concept_id` retain their original taxonomy format.
+The definition must stand on its own and must not depend on a company announcement. When present, `범위` states what is included and excluded; `혼동하기 쉬운 개념` uses explicit distinctions, preferably a table. `관련 개념` records confirmed associations as `- [[Knowledge/…|Concept]] — a concrete reason`. Direction, reference type and citation are not mandatory for connections. Reviewed concepts preserve `concept_id`, Korean `label`, `group`, source-reviewed `keywords`, `verified_sources` and `last_reviewed`; new `connections` contain the target concept ID and reason, plus optional evidence URLs. Preserve historical typed `relations` with their source/inference distinction and evidence. See [CONNECTION_MAP.md](CONNECTION_MAP.md). Empty parent/child/contrast placeholders are not required. Historical entries without `concept_id` retain their original taxonomy format.
 
 `최근 변화` is a short evidence ledger, not a news dump. Keep only signals that changed how the concept is understood or implemented. Format each as `YYYY-MM-DD — fact and why it changes the concept. [source]`. Daily product details remain in the issue.
 

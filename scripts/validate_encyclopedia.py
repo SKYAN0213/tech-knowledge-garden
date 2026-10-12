@@ -7,6 +7,7 @@ import argparse
 import re
 import sys
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Iterable
 
@@ -152,6 +153,89 @@ def parse_frontmatter(text: str) -> tuple[dict[str, object], str]:
             metadata[key] = parse_scalar(value)
             active_list = None
     return metadata, "\n".join(lines[end + 1 :])
+
+
+def frontmatter_record_scalars(text: str, field: str) -> list[dict[str, object]]:
+    """Read scalar identities from native record arrays, without parsing nested prose."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return []
+    try:
+        end = lines.index("---", 1)
+        start = lines.index(f"{field}:", 1, end)
+    except ValueError:
+        return []
+    records: list[dict[str, str]] = []
+    active_key: str | None = None
+    for raw in lines[start + 1 : end]:
+        if raw and not raw[0].isspace():
+            break
+        item = re.fullmatch(r"  - ([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)", raw)
+        prop = re.fullmatch(r"    ([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)", raw)
+        if item:
+            records.append({})
+        match = item or prop
+        if match and records:
+            key, value = match.groups()
+            records[-1][key] = value
+            active_key = key if value else None
+        elif active_key and raw.startswith("    ") and raw.strip():
+            records[-1][active_key] += " " + raw.strip()
+        elif raw.strip():
+            active_key = None
+    return [{key: parse_scalar(value) for key, value in row.items()} for row in records]
+
+
+def is_iso_day(value: object) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return False
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
+
+
+def classified_source_preservation(
+    text: str, metadata: dict[str, object], section_map: dict[str, str], item_count: int
+) -> bool:
+    # Exact previous prose, citation URLs and classification are verified by
+    # existingArticleProjection. This structural gate does not approve articles.
+    if (
+        metadata.get("editorial_format") != "six-w/v1"
+        or metadata.get("briefing_format") != "sector-five/v1"
+        or metadata.get("theme_format") != "news-themes/v1"
+        or not is_iso_day(metadata.get("date"))
+        or item_count <= 0
+    ):
+        return False
+    titles = [title for name in ITEM_HEADINGS for title in headings(section_map.get(name, ""), 2)]
+    records = frontmatter_record_scalars(text, "article_records")
+    reviews = frontmatter_record_scalars(text, "article_reviews")
+    if len(titles) != item_count or len(set(titles)) != item_count:
+        return False
+    if len(records) != item_count or len(reviews) != item_count:
+        return False
+    if any(not isinstance(row.get("title"), str) for row in records + reviews):
+        return False
+    if {row.get("title") for row in records} != set(titles):
+        return False
+    if {row.get("title") for row in reviews} != set(titles):
+        return False
+    event_ids = [row.get("event_id") for row in reviews]
+    if any(
+        not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{16}", value)
+        for value in event_ids
+    ):
+        return False
+    if len(set(event_ids)) != item_count:
+        return False
+    return all(
+        row.get("review_status") == "verified"
+        and is_iso_day(row.get("published_at"))
+        and is_iso_day(row.get("reviewed_at"))
+        and row["reviewed_at"] >= row["published_at"]
+        for row in reviews
+    )
 
 
 def headings(body: str, level: int) -> list[str]:
@@ -334,12 +418,15 @@ def validate_briefing(
             add_error(findings, path, "Source List contains duplicate URLs")
         expected_ids = list(range(1, len(source_ids) + 1))
         preserved_markers = metadata.get("source_marker_format") == "preserved-retrospective/v1"
-        if preserved_markers and (
+        partial_history = not (
             metadata.get("editorial_format") is not None
             or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(metadata.get("date", "")))
             or str(metadata.get("date", "")) >= "2026-09-14"
             or not metadata.get("article_records")
             or not metadata.get("article_reviews")
+        )
+        if preserved_markers and not (
+            partial_history or classified_source_preservation(text, metadata, section_map, item_count)
         ):
             add_error(findings, path, "preserved source markers require a partial historical review")
         if preserved_markers and (
@@ -424,19 +511,38 @@ def validate_knowledge_file(
     if h1 != [title]:
         add_error(findings, path, f"expected one level-1 heading equal to title: {title}")
     h2 = headings(body, 2)
-    if h2 != expected_h2:
+    specialist = entry_type == "concept" and bool(metadata.get("concept_id"))
+    if specialist:
+        # Match native specialist-note approval: keep canonical order, but do
+        # not require filler for explanations or relationships without evidence.
+        positions = [
+            CONCEPT_HEADINGS.index(name) if name in CONCEPT_HEADINGS else -1 for name in h2
+        ]
+        valid_headings = (
+            bool(h2)
+            and h2[0] == "한 문장 정의"
+            and h2[-1] == "출처"
+            and all(position >= 0 for position in positions)
+            and all(left < right for left, right in zip(positions, positions[1:]))
+        )
+    else:
+        valid_headings = h2 == expected_h2
+    if not valid_headings:
         add_error(findings, path, f"level-2 heading order mismatch: {h2}")
 
     _, section_map = sections(body, 2)
-    for name in expected_h2:
+    for name in h2 if specialist else expected_h2:
         if not section_map.get(name, "").strip():
             add_error(findings, path, f"empty body under heading: {name}")
     if entry_type == "concept":
         scope = section_map.get("범위", "")
-        if "**포함:**" not in scope or "**포함하지 않음:**" not in scope:
+        if (not specialist or "범위" in section_map) and (
+            "**포함:**" not in scope or "**포함하지 않음:**" not in scope
+        ):
             add_error(findings, path, "범위 must state both 포함 and 포함하지 않음")
         related = section_map.get("관련 개념", "")
-        validate_relationships(related, bool(metadata.get("concept_id")), path, findings)
+        if not specialist or "관련 개념" in section_map:
+            validate_relationships(related, specialist, path, findings)
         if not unique_urls(section_map.get("출처", "")):
             add_error(findings, path, "canonical concept must include at least one source URL")
     validate_links(body, path, catalog, entry_types, findings, require_atomic=False)

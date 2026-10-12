@@ -329,6 +329,8 @@ export function editionProjection(
     }
   }
   const partial = articles.some((a) => a.legacy)
+  const preserveFormatFlags = partial || articles.some((a) => a.preserved && a.theme === undefined)
+  const preserveSourceMarkers = partial || articles.some((a) => a.preserved)
   if (!existing && articles.some((a) => a.preserved))
     throw Error("Article preservation requires an existing edition")
   if (
@@ -391,11 +393,11 @@ export function editionProjection(
   const priorSources = existing ? sourceMap(existing.body) : new Map()
   const all_urls = [
     ...new Set([
-      ...(partial ? [...priorSources.values()] : []),
+      ...(preserveSourceMarkers ? [...priorSources.values()] : []),
       ...articles.flatMap((a) => a.source_urls),
     ]),
   ]
-  const sourceMarkers = partial ? new Map(priorSources) : new Map()
+  const sourceMarkers = preserveSourceMarkers ? new Map(priorSources) : new Map()
   let nextMarker = Math.max(0, ...[...sourceMarkers.keys()].map((k) => Number(k.slice(1))))
   for (const url of all_urls)
     if (![...sourceMarkers.values()].includes(url)) sourceMarkers.set(`S${++nextMarker}`, url)
@@ -416,9 +418,9 @@ export function editionProjection(
     coverage_start,
     coverage_end,
     ...(legacy_review?.unrecorded_coverage_review ? { historical_coverage: "unrecorded/v1" } : {}),
-    ...(partial
+    ...(preserveFormatFlags
       ? Object.fromEntries(
-          ["briefing_format", "theme_format"]
+          ["editorial_format", "briefing_format", "theme_format"]
             .filter((k) => Object.hasOwn(existing.meta, k))
             .map((k) => [k, existing.meta[k]]),
         )
@@ -452,9 +454,9 @@ export function editionProjection(
   const preservedBody = (a) =>
     a.preserved.body.replace(/\[S\d+\]/g, (value) => {
       const url = priorSources.get(value.slice(1, -1))
-      if (!url || !a.source_urls.includes(url))
+      if (!url || !a.source_urls.includes(url) || sourceMarkers.get(value.slice(1, -1)) !== url)
         throw Error("Preserved article citation must resolve to its existing source")
-      return marker(url)
+      return value
     })
   const card = (a) =>
     a.preserved
@@ -524,7 +526,7 @@ export function editionProjection(
   const usedMarkers = new Set([...articleBody.matchAll(/\[(S\d+)\]/g)].map((match) => match[1]))
   const usedSources = [...sourceMarkers].filter(([key]) => usedMarkers.has(key))
   meta.source_count = usedSources.length
-  if (partial && usedSources.some(([key], index) => key !== `S${index + 1}`))
+  if (preserveSourceMarkers && usedSources.some(([key], index) => key !== `S${index + 1}`))
     meta.source_marker_format = "preserved-retrospective/v1"
   const body =
     articleBody +
