@@ -36,7 +36,7 @@ export function makeResolver(notes) {
     return { note, hash }
   }
 }
-export function projectLinks(body, current, resolve, publicPaths) {
+export function projectLinks(body, current, resolve, publicPaths, { verifiedSources = [] } = {}) {
   // Code is literal; only prose links participate in the note resolver.
   return body
     .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`+[^`]*?`+)/g)
@@ -44,9 +44,26 @@ export function projectLinks(body, current, resolve, publicPaths) {
       if (part.startsWith("`") || part.startsWith("~~~")) return part
       part = part.replace(
         /(?<!!)\[([^\[\]]+)\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)/g,
-        (all, label, destination) => {
+        (all, label, destination, offset, prose) => {
           const target = destination.replace(/^<|>$/g, "")
           if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(target)) return all
+          // A reviewed source ledger may cite an older article that has not
+          // been projected into this publication. Keep its label and the exact
+          // verified source on that line; do not invent a public News page.
+          if (/(?:^|\/)News\/[a-f0-9]{16}\.md(?:#[^\s]*)?$/.test(target)) {
+            try {
+              resolve(target, current)
+            } catch (error) {
+              if (!String(error.message).startsWith("Unresolved link: ")) throw error
+              const start = prose.lastIndexOf("\n", offset) + 1
+              const end = prose.indexOf("\n", offset)
+              const line = prose.slice(start, end < 0 ? undefined : end)
+              const cited = [...line.matchAll(/\[[^\]]+\]\((https?:\/\/[^\s)]+)\)/g)]
+                .some((match) => verifiedSources.includes(match[1]))
+              if (cited) return label
+              throw error
+            }
+          }
           return `[[${target}|${label}]]`
         },
       )

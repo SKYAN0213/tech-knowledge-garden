@@ -74,7 +74,7 @@ export function prepare(vault = "vault", target = staging) {
     if (n.path === MAP) body = '# 지식 지도\n\n<div id="knowledge-map"></div>'
     // Convert Obsidian block IDs to explicit HTML IDs so both platforms keep the same target.
     body = body.replace(/\s+\^([\w-]+)\s*$/gm, (_, id) => ` <span id="block-${id}"></span>`)
-    body = projectLinks(body, n.path, resolve, allowed).replace(
+    body = projectLinks(body, n.path, resolve, allowed, { verifiedSources: n.meta.verified_sources || [] }).replace(
       /\[\[([^\]|]+)#\^([^\]|]+)(\|[^\]]+)?\]\]/g,
       "[[$1#block-$2$3]]",
     )
