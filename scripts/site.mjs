@@ -12,7 +12,7 @@ import { walk, parseNote, noteText, editions, extractArticles, sections } from "
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 import { briefingLibrary, publisher } from "./briefings.mjs"
 import { articleTags, sourceLinkLabel } from "./reader-cards.mjs"
-import { newsView, briefingHub, issueView, homeView } from "./reader-views.mjs"
+import { newsView, briefingOverview, primaryNavigation, issueView } from "./reader-views.mjs"
 import { buildReaderKnowledge } from "./reader-knowledge.mjs"
 import { knowledgeHubView, companiesView, weeklyView, termView } from "./reader-knowledge-views.mjs"
 import { coverageDate } from "./time.mjs"
@@ -157,21 +157,7 @@ export async function finish(output = "public", input = staging) {
   const embed = (focus = "", className = "article-connections") =>
     `<section class="${className}"><h2><a href="${href(MAP)}${focus ? "?focus=" + encodeURIComponent(focus) : ""}">연결 지도</a></h2><div class="connections compact" data-connections data-mode="compact" data-focus="${esc(focus)}"><p class="graph-loading">연결 지도를 불러오는 중…</p></div></section>`
   const shell = (title, body, kind = "article", description = "") =>
-    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><a class="site-brand" href="${href("index")}"><span class="brand-name">Tech Knowledge</span><span class="brand-caption">IT · AI · 로봇</span></a><div class="utilities"><button id="search-open" aria-label="검색">검색</button></div></header><div class="reader-shell"><aside class="reader-rail"><nav class="rail-nav" aria-label="주요 메뉴">${[
-      ["index", "최근 브리핑", kind === "home"],
-      ["News/index", "뉴스", ["news", "news-index"].includes(kind)],
-      ["Briefings/index", "브리핑", kind.startsWith("briefing-")],
-      ["Knowledge/index", "지식", ["knowledge", "knowledge-hub"].includes(kind)],
-      ["Companies/index", "기업", kind === "companies"],
-      [MAP, "연결 지도", kind === "map-page"],
-    ]
-      .map(
-        ([target, label, selected]) =>
-          `<a href="${href(target)}"${selected ? ' aria-current="page"' : ""}>${label}</a>`,
-      )
-      .join(
-        "",
-      )}</nav><div class="rail-links"><a href="${href("Briefings/weekly")}">기간별 기록</a></div></aside><main id="main" class="${kind}">${body}</main></div><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="예: FANUC 제휴, MCP 권한" autocomplete="off"><label for="search-type">자료 종류</label><select id="search-type"><option value="">전체</option>${["뉴스", "키워드", "기업", "누적 주제", "브리핑"].map((type) => `<option value="${type}">${type}</option>`).join("")}</select><div id="search-results" aria-live="polite"></div></dialog></body></html>`
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><a class="site-brand" href="${href("index")}"><span class="brand-name">Tech Knowledge</span><span class="brand-caption">IT · AI · 로봇</span></a><div class="utilities"><button id="search-open" aria-label="검색">검색</button></div></header><div class="reader-shell"><aside class="reader-rail">${primaryNavigation(href, kind, MAP)}</aside><main id="main" class="${kind}">${body}</main></div><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="예: FANUC 제휴, MCP 권한" autocomplete="off"><label for="search-type">자료 종류</label><select id="search-type"><option value="">전체</option>${["뉴스", "키워드", "기업", "누적 주제", "브리핑"].map((type) => `<option value="${type}">${type}</option>`).join("")}</select><div id="search-results" aria-live="polite"></div></dialog></body></html>`
   for (const n of notes) {
     const file = path.join(output, n.slug + ".html")
     const tree = fromHtml(fs.readFileSync(file, "utf8"))
@@ -259,12 +245,12 @@ export async function finish(output = "public", input = staging) {
       }
     }
     let body = toHtml(article)
-    const type =
-      n.path === "Briefings/index"
-        ? "briefing-hub"
-        : n.path === "News/index"
-          ? "news-index"
-          : n.meta.type || "article"
+    const isOverview = n.path === "index" || n.path === "Briefings/index"
+    const type = isOverview
+      ? "home"
+      : n.path === "News/index"
+        ? "news-index"
+        : n.meta.type || "article"
     const isConcept = n.meta.entry_type === "concept"
     const focus = resolveFocus(graph, isConcept ? n.meta.concept_id : "news:" + n.meta.event_id)
     const date = readerDate(n.meta)
@@ -299,19 +285,18 @@ export async function finish(output = "public", input = staging) {
       else if (related.length)
         body += `<section class="related-news"><h2>변화 이력</h2>${related.map((x) => `<p><time>${esc(x.meta.published_at || x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a> ${x.meta.sources.map((u) => `<a href="${esc(u)}">원문</a>`).join(" · ")}</p>`).join("")}</section>`
     }
-    if (n.path === "index")
-      body = homeView(newsArticles, library, href, prefix, {
+    if (isOverview)
+      body = briefingOverview(newsArticles, library, href, prefix, {
         knowledge,
         topics: library.current?.topics || [],
       })
     else if (n.path === "News/index") body = newsView(newsArticles, library.latest, href)
-    else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
       body = `<div class="article-meta"><a href="${href("News/index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
-      n.path === "index" ? "최근 브리핑 · Tech Knowledge" : meta.title,
+      isOverview ? "브리핑 · Tech Knowledge" : meta.title,
       body,
       n.path === MAP ? "map-page" : isConcept ? "knowledge" : type,
       meta.description || "",

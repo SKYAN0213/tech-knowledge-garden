@@ -16,29 +16,6 @@ const eventsFor = (model, ids) => model.events.filter((event) => ids.includes(ev
 function assertModel(model) {
   if (model?.schema !== "reader-knowledge/v1") throw Error("Public reader knowledge model required")
 }
-function navigation(model, href, active) {
-  const entries = [
-    ["knowledge", "Knowledge/index", "전문용어"],
-    ["companies", "Companies/index", "기업"],
-    ["weekly", "Briefings/weekly", "기간별 소식"],
-  ].filter(([kind]) =>
-    kind === "knowledge"
-      ? model.terms.length || model.topics.length
-      : kind === "companies"
-        ? model.companies.length
-        : model.events.length,
-  )
-  if (!entries.length) return ""
-  return `<nav class="reading-tabs" aria-label="지식 탐색">${entries
-    .map(([kind, path, label]) =>
-      link(
-        href(path),
-        label,
-        `data-explore-view="${kind}"${kind === active ? ' aria-current="page"' : ""}`,
-      ),
-    )
-    .join("")}</nav>`
-}
 function tags(event, href) {
   const values = [
     ["sector", event.sector],
@@ -88,7 +65,7 @@ export function knowledgeHubView(model, href) {
         )
         .join("")}</div></section>`
     : ""
-  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>전문용어와 누적 주제</h1></div>${navigation(model, href, "knowledge")}${model.terms.length ? `<form class="reader-explore-controls" data-reader-knowledge-search role="search"><label for="knowledge-query">용어·정의에서 찾기</label><input id="knowledge-query" type="search" name="q" placeholder="용어 · 작동 원리 · 적용 조건" autocomplete="off"><span id="knowledge-count" role="status">${model.terms.length}개</span></form><div class="term-grid" id="knowledge-results">${cards}</div><p id="knowledge-empty" hidden>검색 결과 없음</p>` : ""}${topics}</section>`
+  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>전문용어와 누적 주제</h1></div>${model.terms.length ? `<form class="reader-explore-controls" data-reader-knowledge-search role="search"><label for="knowledge-query">용어·정의에서 찾기</label><input id="knowledge-query" type="search" name="q" placeholder="용어 · 작동 원리 · 적용 조건" autocomplete="off"><span id="knowledge-count" role="status">${model.terms.length}개</span></form><div class="term-grid" id="knowledge-results">${cards}</div><p id="knowledge-empty" hidden>검색 결과 없음</p>` : ""}${topics}</section>`
 }
 
 export function companiesView(model, href, selected = "") {
@@ -112,7 +89,7 @@ export function companiesView(model, href, selected = "") {
           .join("")}</div></section>`,
     )
     .join("")
-  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기업별 소식</h1></div>${navigation(model, href, "companies")}${model.companies.length ? `<form class="reader-explore-controls"><label for="company-select">기업</label><select id="company-select" name="company"><option value=""${!selection ? " selected" : ""}>전체</option>${options}</select><span id="company-count" role="status">${visible.length}곳</span></form>${sections}<p id="company-empty"${visible.length ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
+  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기업별 소식</h1></div>${model.companies.length ? `<form class="reader-explore-controls"><label for="company-select">기업</label><select id="company-select" name="company"><option value=""${!selection ? " selected" : ""}>전체</option>${options}</select><span id="company-count" role="status">${visible.length}곳</span></form>${sections}<p id="company-empty"${visible.length ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
 }
 
 export function weeklyView(model, href, { from, to } = {}) {
@@ -129,19 +106,8 @@ export function weeklyView(model, href, { from, to } = {}) {
     groups.get(key).push(event)
   }
   const count = model.events.filter(within).length
-  const periods = model.periods.length
-    ? `<nav class="reader-explore-periods" aria-label="발표 주간">${model.periods
-        .slice(0, 8)
-        .map((item) =>
-          link(
-            href("Briefings/weekly") + "?" + new URLSearchParams({ from: item.from, to: item.to }),
-            `${date(item.from)} – ${date(item.to)}`,
-            `data-weekly-period${item.from === start && item.to === end ? ' aria-current="page"' : ""}`,
-          ),
-        )
-        .join("")}</nav>`
-    : ""
-  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기간별 소식</h1></div>${navigation(model, href, "weekly")}${model.events.length ? `<form class="reader-explore-controls"><label for="weekly-from">발표 시작일<input id="weekly-from" name="from" type="date" value="${esc(start)}"></label><label for="weekly-to">발표 종료일<input id="weekly-to" name="to" type="date" value="${esc(end)}"></label><span id="weekly-count" role="status">${count}건</span></form>${periods}${[...groups].map(([sector, events]) => `<section class="weekly-group" data-weekly-group${events.some(within) ? "" : " hidden"}><h2>${esc(sector)}</h2>${events.map((event) => eventView(event, href, { weekly: true, hidden: !within(event) })).join("")}</section>`).join("")}<p id="weekly-empty"${count ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
+  const periods = `<label class="weekly-presets" for="weekly-period">주간 선택<select id="weekly-period"><option value="">직접 선택</option>${model.periods.map((item) => `<option value="${esc(item.from + "/" + item.to)}"${item.from === start && item.to === end ? " selected" : ""}>${date(item.from)} – ${date(item.to)}</option>`).join("")}</select></label>`
+  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기간별 소식</h1></div>${model.events.length ? `<form class="reader-explore-controls weekly-controls">${periods}<label for="weekly-from">발표 시작일<input id="weekly-from" name="from" type="date" value="${esc(start)}"></label><label for="weekly-to">발표 종료일<input id="weekly-to" name="to" type="date" value="${esc(end)}"></label><span id="weekly-count" role="status">${count}건</span></form>${[...groups].map(([sector, events]) => `<section class="weekly-group" data-weekly-group${events.some(within) ? "" : " hidden"}><h2>${esc(sector)}</h2>${events.map((event) => eventView(event, href, { weekly: true, hidden: !within(event) })).join("")}</section>`).join("")}<p id="weekly-empty"${count ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
 }
 
 export function termView(model, href, conceptId, { renderedBody } = {}) {

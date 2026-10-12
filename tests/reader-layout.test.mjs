@@ -7,6 +7,7 @@ import {
   briefingHub,
   publicationLinks,
   issueView,
+  primaryNavigation,
 } from "../scripts/reader-views.mjs"
 import { articlePreview, articleTags } from "../scripts/reader-cards.mjs"
 import { SECTORS } from "../scripts/sectors.mjs"
@@ -123,7 +124,9 @@ test("home is a bounded latest briefing with explicit headlines and no repeated 
 
 test("all eight populated sectors link to the existing URL filters", () => {
   const f = fixture()
-  const html = homeView(f.articles, f.library, href, base)
+  const html =
+    primaryNavigation(href, "home", "Knowledge Maps/AI Technology Knowledge Map") +
+    homeView(f.articles, f.library, href, base)
   for (const sector of SECTORS) {
     assert.ok(html.includes(href("News/index") + "?" + new URLSearchParams({ sector })))
   }

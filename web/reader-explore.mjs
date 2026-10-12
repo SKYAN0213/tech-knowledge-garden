@@ -23,7 +23,8 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
   const query = document.querySelector("#knowledge-query")
   const company = document.querySelector("#company-select")
   const from = document.querySelector("#weekly-from"),
-    to = document.querySelector("#weekly-to")
+    to = document.querySelector("#weekly-to"),
+    period = document.querySelector("#weekly-period")
   if (!query && !company && !from) return
   const defaults = { from: from?.value || "", to: to?.value || "" }
   const terms = [...document.querySelectorAll("[data-knowledge-term]")]
@@ -49,6 +50,12 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
       count("company", companies.filter((section) => !section.hidden).length, "곳")
     }
     if (from && to) {
+      if (period) {
+        const selected = `${start}/${end}`
+        period.value = [...period.options].some((option) => option.value === selected)
+          ? selected
+          : ""
+      }
       for (const event of events)
         event.hidden = !readerEventWithin(event.dataset.publishedDay, start, end)
       for (const group of groups)
@@ -95,6 +102,14 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
   company?.addEventListener("change", () => update())
   from?.addEventListener("change", () => update())
   to?.addEventListener("change", () => update())
+  period?.addEventListener("change", () => {
+    if (!period.value || !from || !to) return
+    const [start, end] = period.value.split("/")
+    if (!start || !end || !validReaderDay(start) || !validReaderDay(end) || start > end) return
+    from.value = start
+    to.value = end
+    update()
+  })
   for (const form of document.querySelectorAll(".reader-explore-controls"))
     form.addEventListener("submit", (event) => {
       event.preventDefault()

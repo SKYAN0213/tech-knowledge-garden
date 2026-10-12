@@ -22,7 +22,11 @@ function fixture(kind, search = "") {
     company: element(),
     from: element("2026-10-05"),
     to: element("2026-10-11"),
+    period: element(),
   }
+  controls.period.options = ["", "2026-10-05/2026-10-11", "2026-09-28/2026-10-04"].map((value) => ({
+    value,
+  }))
   const terms = [
     element("", { search: "MCP Model Context Protocol 연결 규격" }),
     element("", { search: "Bin Picking 빈 피킹 집기 위치" }),
@@ -50,7 +54,11 @@ function fixture(kind, search = "") {
       ? { "#knowledge-query": controls.query }
       : kind === "companies"
         ? { "#company-select": controls.company }
-        : { "#weekly-from": controls.from, "#weekly-to": controls.to },
+        : {
+            "#weekly-from": controls.from,
+            "#weekly-to": controls.to,
+            "#weekly-period": controls.period,
+          },
   )
   const groups = [{ hidden: false, querySelectorAll: () => events }]
   const lists = {
@@ -147,4 +155,43 @@ test("calendar validation preserves leap dates and rejects reversed or impossibl
   assert.equal(validReaderDay("2026-02-29"), false)
   assert.equal(readerEventWithin("2026-10-07", "2026-10-08", "2026-10-05"), false)
   assert.equal(readerEventWithin("2026-10-07", "2026-10-01", "2026-10-07"), true)
+})
+
+test("week selection updates both dates, results and shared URL, and browser back restores the preset", () => {
+  const f = fixture("weekly")
+  assert.equal(f.controls.period.value, "2026-10-05/2026-10-11")
+  f.controls.period.value = "2026-09-28/2026-10-04"
+  f.controls.period.handlers.change()
+  assert.equal(f.controls.from.value, "2026-09-28")
+  assert.equal(f.controls.to.value, "2026-10-04")
+  assert.deepEqual(
+    f.events.map((e) => e.hidden),
+    [false, true],
+  )
+  assert.equal(new URL(f.location.href).searchParams.get("from"), "2026-09-28")
+  assert.equal(new URL(f.location.href).searchParams.get("to"), "2026-10-04")
+  assert.deepEqual(f.calls, ["pushState"])
+  f.location.href = "https://fixture.example/reader?from=2026-10-05&to=2026-10-11"
+  f.window.handlers.popstate()
+  assert.equal(f.controls.period.value, "2026-10-05/2026-10-11")
+  assert.deepEqual(
+    f.events.map((e) => e.hidden),
+    [true, false],
+  )
+})
+
+test("custom and malformed ranges clear the preset without replacing their date or result semantics", () => {
+  const f = fixture("weekly")
+  f.controls.from.value = "2026-10-06"
+  f.controls.to.value = "2026-10-08"
+  f.controls.to.handlers.change()
+  assert.equal(f.controls.period.value, "")
+  assert.deepEqual(
+    f.events.map((e) => e.hidden),
+    [true, false],
+  )
+  f.location.href = "https://fixture.example/reader?from=2026-10-11&to=2026-10-05"
+  f.window.handlers.popstate()
+  assert.equal(f.controls.period.value, "")
+  assert.equal(f.counts.weekly.textContent, "0건")
 })
