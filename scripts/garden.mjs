@@ -138,13 +138,14 @@ export function extractArticles(edition) {
         const review = articleReview(edition, strip(part.title), digest(canonicalURL(urls[0])))
         const id = review.event_id
         const concepts = wikiTargets(part.body).filter((p) => p.startsWith("Knowledge/"))
-        // A reviewed replacement in a legacy edition carries its own explicit
-        // classification. Unreviewed siblings keep their original metadata.
+        // A reviewed replacement carries its own explicit classification even
+        // when the edition preserves older format flags. Missing sibling
+        // classification remains absent, including older six-w records.
         const reviewedRecord =
-          edition.meta.editorial_format === undefined &&
           review.review_status === "verified" &&
           Array.isArray(edition.meta.article_records) &&
-          edition.meta.article_records.some((r) => r.title === strip(part.title))
+          edition.meta.article_records.some((r) => r.title === strip(part.title)) &&
+          /^\*\*(?:테마|보조 테마|세부 태그|기업·기관):\*\*/m.test(part.body)
         const classification =
           themed || reviewedRecord ? classifyArticle(part.body, part.title) : undefined
         const leadLines = part.body

@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import YAML from "yaml"
+import { assertSignalDateMetadata, signalHistoryDate } from "./research/signal-dates.mjs"
 
 const text = (s) => typeof s === "string" && s.trim().length > 0
 const day = (s) =>
@@ -32,6 +33,24 @@ function records(dir) {
 export function loadTrends(vault, issues, { requireLatest = true } = {}) {
   const topics = records(path.join(vault, "TrendTopics"))
   const reviews = records(path.join(vault, "Signals"))
+  return validateTrendRecords(topics, reviews, issues, {
+    requireLatest,
+    knowledgeResolver: (k) => {
+      const f = path.join(vault, k + ".md")
+      if (!fs.existsSync(f) || fs.lstatSync(f).isSymbolicLink()) fail("missing knowledge " + k)
+      const m = fs.readFileSync(f, "utf8").match(/^---\r?\n([\s\S]*?)\r?\n---/)
+      return !!m && YAML.parse(m[1]).entry_type === "concept"
+    },
+  })
+}
+
+// Native reviewed notes and the authority vault share the same validation.
+export function validateTrendRecords(
+  topics,
+  reviews,
+  issues,
+  { requireLatest = true, knowledgeResolver = () => false } = {},
+) {
   const byTopic = new Map(),
     byIssue = new Map(issues.map((i, order) => [i.key, { ...i, order }])),
     byReview = new Map(),
@@ -49,12 +68,7 @@ export function loadTrends(vault, issues, { requireLatest = true } = {}) {
     for (const k of t.knowledge_notes) {
       if (!/^Knowledge\/(?!.*(?:^|\/)\.\.(?:\/|$))[^\n]+$/.test(k))
         fail(t.id + ": invalid knowledge path")
-      const f = path.join(vault, k + ".md")
-      if (!fs.existsSync(f) || fs.lstatSync(f).isSymbolicLink())
-        fail(t.id + ": missing knowledge " + k)
-      const m = fs.readFileSync(f, "utf8").match(/^---\r?\n([\s\S]*?)\r?\n---/)
-      if (!m || YAML.parse(m[1]).entry_type !== "concept")
-        fail(t.id + ": knowledge must be an atomic concept")
+      if (!knowledgeResolver(k)) fail(t.id + ": knowledge must be an atomic concept")
     }
     byTopic.set(t.id, t)
   }
@@ -79,10 +93,11 @@ export function loadTrends(vault, issues, { requireLatest = true } = {}) {
       for (const k of ["change", "meaning", "limit", "next_check"])
         if (!text(s[k])) fail(`${s.id}: missing ${k}`)
       if (!["support", "challenge", "context"].includes(s.stance)) fail(s.id + ": invalid stance")
+      assertSignalDateMetadata(s, { articles: [item] })
       pairs.add(pair)
       bySignal.set(s.id, {
         ...s,
-        date: r.date,
+        date: signalHistoryDate(s, { publishedAt: item.review?.published_at, fallback: r.date }),
         reviewed: r.reviewed,
         review_basis: r.review_basis,
         issue: r.edition,
@@ -129,7 +144,9 @@ export function loadTrends(vault, issues, { requireLatest = true } = {}) {
   return {
     topics,
     reviews: byReview,
-    signals: [...bySignal.values()].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)),
+    signals: [...bySignal.values()].sort(
+      (a, b) => a.date.localeCompare(b.date) || a.order - b.order || a.id.localeCompare(b.id),
+    ),
     issues: byIssue,
   }
 }
@@ -165,7 +182,12 @@ export function trendSnapshot(data, issueKey) {
       }
     })
     .filter((t) => t.history.length)
-    .sort((a, b) => b.latest.order - a.latest.order || a.title.localeCompare(b.title))
+    .sort(
+      (a, b) =>
+        b.latest.date.localeCompare(a.latest.date) ||
+        b.latest.order - a.latest.order ||
+        a.title.localeCompare(b.title),
+    )
   const windowIssues = [...data.issues.values()].filter(
     (i) => i.order <= issue.order && inDays(i.date, 0, 7),
   )

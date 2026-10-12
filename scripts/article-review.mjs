@@ -3,7 +3,11 @@ import { seoulPublicationDay } from "./research/dates.mjs"
 // Public review metadata contains no private review notes or reasoning.
 export const ARTICLE_REVIEW_STATES = ["unreviewed", "verified", "excluded"]
 export const articleDateLabel = (review) =>
-  review?.date_kind === "dated-update" ? "업데이트" : "발표"
+  review?.date_kind === "dated-update"
+    ? "업데이트"
+    : ["source-reported-event-date", "source-original-publication-date"].includes(review?.date_kind)
+      ? "원문 게시"
+      : "발표"
 
 export function articleReview(edition, title, fallbackId) {
   const records = edition.meta.article_reviews
@@ -22,6 +26,7 @@ export function articleReview(edition, title, fallbackId) {
     "reviewed_at",
     "date_kind",
     "source_published_at",
+    "occurred_at",
     "reason",
     "private_notes",
   ])
@@ -47,7 +52,11 @@ export function articleReview(edition, title, fallbackId) {
     throw Error("Invalid concept IDs")
   if (r.review_status !== "verified" && r.concept_ids.length)
     throw Error("Only verified articles may add concept evidence")
-  if (r.date_kind !== undefined || r.source_published_at !== undefined)
+  if (
+    r.date_kind !== undefined ||
+    r.source_published_at !== undefined ||
+    r.occurred_at !== undefined
+  )
     if (
       r.review_status !== "verified" ||
       !(
@@ -55,9 +64,21 @@ export function articleReview(edition, title, fallbackId) {
           day(r.source_published_at) &&
           r.source_published_at < r.published_at) ||
         (r.date_kind === "source-stated-event-date" && r.source_published_at === null) ||
+        (r.date_kind === "source-original-publication-date" &&
+          day(r.source_published_at) &&
+          r.source_published_at === r.published_at) ||
+        (r.date_kind === "source-reported-event-date" &&
+          day(r.occurred_at) &&
+          day(r.source_published_at) &&
+          r.source_published_at === r.published_at &&
+          r.occurred_at <= r.published_at) ||
+        (r.date_kind === "source-publication-day" &&
+          day(r.source_published_at) &&
+          r.source_published_at === r.published_at) ||
         (r.date_kind === "source-publication-time" &&
           seoulPublicationDay(r.source_published_at) === r.published_at)
-      )
+      ) ||
+      (r.occurred_at !== undefined && r.date_kind !== "source-reported-event-date")
     )
       throw Error("Event date metadata needs a verified, source-supported date basis")
   return {
@@ -67,6 +88,7 @@ export function articleReview(edition, title, fallbackId) {
     ...(r.published_at ? { published_at: r.published_at } : {}),
     ...(r.reviewed_at ? { reviewed_at: r.reviewed_at } : {}),
     ...(r.date_kind ? { date_kind: r.date_kind, source_published_at: r.source_published_at } : {}),
+    ...(r.occurred_at ? { occurred_at: r.occurred_at } : {}),
   }
 }
 

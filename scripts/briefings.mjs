@@ -112,25 +112,21 @@ export function issueTrendsMarkdown(i) {
 }
 export function topicMarkdown(t, date) {
   if (t.reader_format === "source-events/v1") {
+    const historyDate = (signal) => signal.date ?? signal.article.review.published_at
     const history = [
       ...new Map(
         t.history
           .filter((s) => s.article.review?.review_status === "verified")
           .map((s) => [s.event_id, s]),
       ).values(),
-    ].sort(
-      (a, b) =>
-        String(b.article.review.published_at).localeCompare(
-          String(a.article.review.published_at),
-        ) || b.order - a.order,
-    )
+    ].sort((a, b) => historyDate(b).localeCompare(historyDate(a)) || b.order - a.order)
     return `${t.reviewed <= date ? t.thesis : t.latest.meaning}\n\n${wiki("Briefings/index", "← 브리핑")} · ${mdLink("GitHub 정리", githubTopic(t.id))}${
       history.length
         ? "\n\n## 사건 이력\n\n" +
           history
             .map(
               (s) =>
-                `<span id="${s.id}"></span>\n\n### ${s.article.review.published_at} · ${wiki("News/" + s.event_id, s.article.title)}\n\n${markdownProse(s.article.summary)}\n\n${sourceLinks(s)} · ${wiki(briefPath(s.issue), "당일 브리핑")}`,
+                `<span id="${s.id}"></span>\n\n### ${historyDate(s)} · ${wiki("News/" + s.event_id, s.article.title)}\n\n${markdownProse(s.article.summary)}\n\n${sourceLinks(s)} · ${wiki(briefPath(s.issue), "당일 브리핑")}`,
             )
             .join("\n\n")
         : ""
