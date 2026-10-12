@@ -1,4 +1,6 @@
 import { matchesNews } from "./news-filter.mjs"
+import { searchReaderEntries, readerSearchEvidence } from "./reader-search.mjs"
+import { bindReaderExplore } from "./reader-explore.mjs"
 
 const base = document.body.dataset.base || ""
 const el = (tag, attrs = {}, text) => {
@@ -8,17 +10,24 @@ const el = (tag, attrs = {}, text) => {
   return e
 }
 const searchDialog = document.querySelector("#search-dialog"),
-  search = document.querySelector("#site-search")
+  search = document.querySelector("#site-search"),
+  searchType = document.querySelector("#search-type")
 let searchData
+let searchLoading
 const searchResults = document.querySelector("#search-results")
 async function showSearch() {
-  searchDialog.showModal()
+  if (!searchDialog.open) searchDialog.showModal()
   search.focus()
   try {
-    searchData ||= await fetch(base + "/reader-index.json").then((r) => {
-      if (!r.ok) throw Error()
-      return r.json()
-    })
+    searchData ||= await (searchLoading ||= fetch(base + "/reader-index.json")
+      .then((r) => {
+        if (!r.ok) throw Error("Search data unavailable")
+        return r.json()
+      })
+      .catch((error) => {
+        searchLoading = undefined
+        throw error
+      }))
     renderSearch()
   } catch {
     searchResults.textContent = "검색 데이터를 불러오지 못했습니다."
@@ -26,37 +35,91 @@ async function showSearch() {
 }
 function renderSearch() {
   if (!searchData) return
-  const query = search.value.normalize("NFC").toLowerCase().trim()
   searchResults.replaceChildren()
-  if (!query) return
-  const terms = query.split(/\s+/)
-  const rows = searchData
-    .map((n) => {
-      const title = (n.title + " " + n.aliases.join(" ") + " " + n.keywords.join(" ")).toLowerCase()
-      const all = title + " " + n.text.toLowerCase()
-      return {
-        ...n,
-        score: terms.every((t) => all.includes(t))
-          ? terms.reduce((s, t) => s + (title.includes(t) ? 5 : 1), 0)
-          : 0,
-      }
-    })
-    .filter((n) => n.score)
-    .sort((a, b) => b.score - a.score || b.date.localeCompare(a.date))
-    .slice(0, 40)
+  if (!search.value.trim()) return
+  const rows = searchReaderEntries(searchData, search.value, { type: searchType?.value || "" })
   for (const n of rows) {
-    const a = el("a", { href: n.url }, n.title)
-    a.prepend(el("small", {}, n.type + " · " + n.date.slice(0, 10) + " "))
-    searchResults.append(a)
+    const evidence = readerSearchEvidence(n)
+    const result = el("article", { class: "search-result" })
+    result.append(
+      el(
+        "small",
+        { class: "search-result-meta" },
+        [n.type, evidence.dateLabel].filter(Boolean).join(" · "),
+      ),
+    )
+    const title = el("h3")
+    title.append(el("a", { href: n.url }, n.title))
+    result.append(title)
+    for (const fact of evidence.facts) {
+      result.append(el("p", { class: "search-snippet" }, fact.text))
+      if (fact.published_at || fact.article_url) {
+        const reference = el("div", { class: "search-sources" })
+        if (fact.published_at)
+          reference.append(
+            el("time", { datetime: fact.published_at }, fact.published_at.slice(0, 10)),
+          )
+        if (fact.article_url) reference.append(el("a", { href: fact.article_url }, "기사 보기 →"))
+        result.append(reference)
+      }
+    }
+    const sources = el("div", { class: "search-sources" })
+    for (const url of evidence.sourceUrls.slice(0, 3)) {
+      sources.append(
+        el("a", { href: url }, new URL(url).hostname.replace(/^www\./, "") + " 원문 ↗"),
+      )
+    }
+    if (sources.childElementCount) result.append(sources)
+    searchResults.append(result)
   }
   if (!rows.length) searchResults.textContent = "검색 결과 없음"
 }
-document.querySelector("#search-open")?.addEventListener("click", showSearch)
-search?.addEventListener("input", renderSearch)
+function searchURL() {
+  const url = new URL(location.href)
+  for (const [key, value] of [
+    ["search", search.value.trim()],
+    ["search_type", searchType?.value || ""],
+  ])
+    if (value) url.searchParams.set(key, value)
+    else url.searchParams.delete(key)
+  history.replaceState(null, "", url)
+}
+function restoreSearch() {
+  const params = new URL(location.href).searchParams
+  search.value = params.get("search") || ""
+  if (searchType) searchType.value = params.get("search_type") || ""
+  if (params.has("search")) void showSearch()
+  else if (searchDialog.open) searchDialog.close()
+}
+document.querySelector("#search-open")?.addEventListener("click", () => void showSearch())
+search?.addEventListener("input", () => {
+  searchURL()
+  renderSearch()
+})
+searchType?.addEventListener("change", () => {
+  searchURL()
+  renderSearch()
+})
+if (searchDialog) {
+  searchDialog.addEventListener("close", () => {
+    const url = new URL(location.href)
+    url.searchParams.delete("search")
+    url.searchParams.delete("search_type")
+    history.replaceState(null, "", url)
+  })
+  window.addEventListener("popstate", restoreSearch)
+  restoreSearch()
+}
 searchDialog?.addEventListener("click", (e) => {
   if (e.target === searchDialog) searchDialog.close()
 })
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && searchDialog?.open) {
+    e.preventDefault()
+    searchDialog.close()
+    document.querySelector("#search-open")?.focus()
+    return
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === "k") {
     e.preventDefault()
     if (!searchDialog.open) showSearch()
@@ -194,3 +257,10 @@ if (newsQuery) {
   window.addEventListener("popstate", restoreNewsFilters)
   restoreNewsFilters()
 }
+bindReaderExplore({
+  document,
+  window,
+  location,
+  history,
+  makeOption: (value) => new Option(value, value),
+})

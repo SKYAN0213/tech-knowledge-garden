@@ -1,7 +1,10 @@
-import { articleCard, sectorTabs } from "./reader-cards.mjs"
+import { articleCard, articlePreview, sectorTabs } from "./reader-cards.mjs"
+import { sections } from "./garden.mjs"
+import { markdownProseText } from "./explanations.mjs"
 import { topArticles } from "./editorial.mjs"
 import {
   esc,
+  plain,
   publisher,
   briefPath,
   topicPath,
@@ -21,7 +24,119 @@ const announcementDate = (a) =>
     ? `<small class="announcement-date">${articleDateLabel(a.review)} <time datetime="${esc(a.review.published_at)}">${dateLabel(a.review.published_at)}</time></small>`
     : ""
 export const publicationLinks = (i, href, base) =>
-  `<div class="publication-links">${link(href(briefPath(i.key)), "브리핑 읽기 →")} ${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
+  `<div class="publication-links">${link(href(briefPath(i.key)), "브리핑 읽기 →")} ${link(githubIssue(i.key), "GitHub 정리")}</div>`
+
+const distinctArticles = (items) =>
+  [
+    ...new Map(
+      items.filter((article) => article?.id).map((article) => [article.id, article]),
+    ).values(),
+  ].filter((article) => article.review?.review_status === "verified")
+const newestArticle = (a, b) =>
+  String(b.review.published_at).localeCompare(String(a.review.published_at)) ||
+  a.id.localeCompare(b.id)
+
+export function homeView(articles, library, href, base, { knowledge = [], topics } = {}) {
+  const latest = library.latest
+  const current = library.current || latest?.snapshot || {}
+  const selected = latest
+    ? distinctArticles(topArticles({ ...latest, original: latest.original || { meta: {} } }))
+    : []
+  const currentItems = distinctArticles(latest?.items || [])
+  const highlights = selected.length ? selected.slice(0, 5) : currentItems.slice(0, 5)
+  const seen = new Set(highlights.map((article) => article.id))
+  const recent = distinctArticles(articles).sort(newestArticle)
+  const sectorSections = SECTORS.flatMap((sector) => {
+    const items = recent
+      .filter((article) => article.sector === sector && !seen.has(article.id))
+      .slice(0, 2)
+    if (!items.length) return []
+    items.forEach((article) => seen.add(article.id))
+    const url = href("News/index") + "?" + new URLSearchParams({ sector })
+    return [{ sector, url, items }]
+  })
+  const involvedTerms = new Set(
+    currentItems.flatMap((article) => article.review?.concept_ids || []),
+  )
+  const terms = knowledge
+    .filter(
+      (note) =>
+        note?.path &&
+        note.meta?.entry_type === "concept" &&
+        note.meta.map_review?.decision === "include" &&
+        note.meta.verified_sources?.length,
+    )
+    .map((note) => ({
+      ...note,
+      definition: note.body
+        ? plain(
+            markdownProseText(
+              sections(note.body, 2)
+                .find((section) => section.title === "한 문장 정의")
+                ?.body.split("\n\n")[0] || "",
+            ).replace(/\[[^\]]+\]\(https?:[^)]+\)/g, ""),
+          ).replace(/[\s·]+$/, "")
+        : "",
+    }))
+    .sort(
+      (a, b) =>
+        Number(involvedTerms.has(b.meta.concept_id)) -
+          Number(involvedTerms.has(a.meta.concept_id)) ||
+        String(b.meta.last_reviewed || "").localeCompare(String(a.meta.last_reviewed || "")) ||
+        a.path.localeCompare(b.path),
+    )
+    .slice(0, 4)
+  const topicItems = (topics || current.topics || [])
+    .filter(
+      (topic) =>
+        topic?.id &&
+        topic.title &&
+        topic.history?.some((signal) => signal.article?.review?.review_status === "verified"),
+    )
+    .map((topic) => ({
+      topic,
+      newest: topic.history
+        .filter((signal) => signal.article?.review?.review_status === "verified")
+        .sort((a, b) =>
+          String(b.article.review.published_at).localeCompare(
+            String(a.article.review.published_at),
+          ),
+        )[0],
+    }))
+    .sort(
+      (a, b) =>
+        String(b.newest.article.review.published_at).localeCompare(
+          String(a.newest.article.review.published_at),
+        ) || a.topic.id.localeCompare(b.topic.id),
+    )
+    .slice(0, 5)
+  const previous = (library.issues || [])
+    .filter(
+      (issue) =>
+        issue.key !== latest?.key &&
+        issue.items?.some((article) => article.review?.review_status === "verified"),
+    )
+    .toReversed()
+    .slice(0, 3)
+  const heading = `<div class="home-heading"><div><p class="home-date">${latest?.date ? `<time datetime="${esc(latest.date)}">${dateLabel(latest.date)}</time>` : ""}</p><h1>아침 브리핑</h1></div><div class="home-heading-links">${latest ? link(href(briefPath(latest.key)), "브리핑 전문 →") : ""}</div></div>`
+  const top = highlights.length
+    ? `<section class="home-highlights" aria-labelledby="home-highlights-heading"><div class="home-section-heading"><h2 id="home-highlights-heading">주요 소식</h2>${link(href("News/index"), "전체 뉴스 →")}</div>${highlights.map((article, index) => articlePreview(article, href, { featured: index === 0 })).join("")}</section>`
+    : ""
+  const sectors = sectorSections.length
+    ? `<section class="home-sectors" aria-labelledby="home-sectors-heading"><div class="home-section-heading"><h2 id="home-sectors-heading">분야별 최근 소식</h2>${link(href("News/index"), "뉴스 전체 →")}</div><div class="home-sector-grid">${sectorSections.map(({ sector, url, items }) => `<section class="home-sector"><h3 class="home-sector-label">${link(url, sector + " →")}</h3>${items.map((article) => articlePreview(article, href, { compact: true })).join("")}</section>`).join("")}</div></section>`
+    : ""
+  const termsView = terms.length
+    ? `<section class="home-knowledge" aria-labelledby="home-knowledge-heading"><div class="home-section-heading"><h2 id="home-knowledge-heading">뉴스 속 전문용어</h2>${link(href("Knowledge/index"), "지식 →")}</div><div class="home-term-list">${terms.map((note) => `<article class="home-term"><h3>${link(href(note.path), note.meta.label || note.meta.title)}</h3>${note.definition ? `<p>${esc(note.definition)}</p>` : ""}</article>`).join("")}</div></section>`
+    : ""
+  const topicsView = topicItems.length
+    ? `<section class="home-topics" aria-labelledby="home-topics-heading"><div class="home-section-heading"><h2 id="home-topics-heading">누적 주제</h2>${link(href("Briefings/index") + "#ongoing-topics", "전체 →")}</div><ul class="home-topic-list">${topicItems.map(({ topic, newest }) => `<li><time datetime="${esc(newest.article.review.published_at)}">${dateLabel(newest.article.review.published_at).slice(5)}</time>${link(href(topicPath(topic.id)), topic.title)}</li>`).join("")}</ul></section>`
+    : ""
+  const previousView = previous.length
+    ? `<section class="home-previous" aria-labelledby="home-previous-heading"><div class="home-section-heading"><h2 id="home-previous-heading">지난 브리핑</h2>${link(href("Briefings/index"), "모두 →")}</div><ul>${previous.map((issue) => `<li><time datetime="${esc(issue.date)}">${dateLabel(issue.date)}</time>${link(href(briefPath(issue.key)), issue.lead)}</li>`).join("")}</ul></section>`
+    : ""
+  const destinations = `<nav class="home-destinations" aria-label="기록 탐색">${link(href("Briefings/weekly"), "최근 7일")} ${link(href("Companies/index"), "기업 동향")}</nav>`
+  return `${heading}<div class="home-layout"><div class="home-main">${top}${sectors}</div><aside class="home-sidebar" aria-label="지식과 누적 기록">${termsView}${topicsView}${previousView}${destinations}</aside></div>`
+}
 
 export function newsView(
   articles,
@@ -65,9 +180,7 @@ export function newsView(
   return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2>${/^\d{4}-/.test(date) ? `<time datetime="${date}">${dateLabel(date)}</time>` : esc(date)}</h2><div>${rows(items, date)}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
-  if (!i.snapshot.review)
-    return `<p class="muted">트렌드 기록 미정리 · ${link(href(briefPath(i.key)), "당일 브리핑")}</p>`
-  if (!i.snapshot.today.length) return "<p>새로 기록할 트렌드 변화 없음.</p>"
+  if (!i.snapshot.review || !i.snapshot.today?.length) return ""
   return `<ol class="change-list">${i.snapshot.today.map((s) => `<li><div class="change-topic">${link(href(topicPath(s.topic_id)), i.snapshot.topics.find((t) => t.id === s.topic_id).title)}${s.stance !== "support" ? " · " + stanceLabel(s.stance) : ""}</div><h3>${esc(s.change)}</h3><p>${esc(s.meaning)}</p>${detailed ? `<details class="evidence-detail"><summary>근거 · 한계 · 다음 확인</summary><p>${link(href("News/" + s.event_id), s.article.title)}</p><p>${s.article.urls.map((u) => link(u, publisher(u) + " 원문 ↗")).join(" · ")}</p><dl><dt>한계</dt><dd>${esc(s.limit)}</dd><dt>다음 확인</dt><dd>${esc(s.next_check)}</dd></dl></details>` : ""}</li>`).join("")}</ol>`
 }
 export function briefingHub(library, href, base) {
@@ -79,7 +192,7 @@ export function briefingHub(library, href, base) {
     if (!months.has(month)) months.set(month, [])
     months.get(month).push(row)
   }
-  return `<div class="page-heading"><h1>브리핑</h1><div>${link(base + "/rss", "RSS 구독")} · ${link(GITHUB + "digest/README.md", "GitHub 모음")}</div></div><section class="issue-feature"><div class="issue-date"><time datetime="${i.date}">${dateLabel(i.date)}</time><span>아침 브리핑</span><small>뉴스 ${i.items.length}건</small></div><div><h2 class="issue-lead">${esc(i.lead)}</h2>${
+  return `<div class="page-heading"><h1>브리핑</h1><div>${link(GITHUB + "digest/README.md", "GitHub 모음")}</div></div><section class="issue-feature"><div class="issue-date"><time datetime="${i.date}">${dateLabel(i.date)}</time><span>아침 브리핑</span><small>뉴스 ${i.items.length}건</small></div><div><h2 class="issue-lead">${esc(i.lead)}</h2>${
     i.original.meta.editorial_format
       ? `<ol class="change-list">${topArticles(i)
           .map(
@@ -113,7 +226,7 @@ export function briefingHub(library, href, base) {
 }
 export function issueView(i, href, base, renderedArticle) {
   if (i.original.meta.article_reviews) {
-    const heading = `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time></div><h1>${esc(i.date)} 아침 브리핑</h1><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>`
+    const heading = `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time></div><h1>${esc(i.date)} 아침 브리핑</h1><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")}</div>`
     if (!i.items.length && !i.recentItems?.length) return heading
     const highlights = topArticles(i)
     const top = highlights.length
@@ -134,5 +247,5 @@ export function issueView(i, href, base, renderedArticle) {
       )
     return heading + top + stream
   }
-  return `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time> · 뉴스 ${i.items.length}건</div><h1>${esc(i.date)} 아침 브리핑</h1><p class="reading-lead">${esc(i.lead)}</p><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")} ${link(base + "/rss", "RSS 구독")}</div>${i.snapshot.review && !i.original.meta.editorial_format ? `<section class="daily-changes"><h2 id="오늘의-변화">오늘의 변화</h2>${changeRows(i, href, true)}<p class="provenance">${esc(reviewText(i.snapshot.review))}</p></section>` : ""}${renderedArticle}`
+  return `<div class="article-meta">${link(href("Briefings/index"), "← 브리핑")} · <time>${esc(i.date)}</time> · 뉴스 ${i.items.length}건</div><h1>${esc(i.date)} 아침 브리핑</h1><p class="reading-lead">${esc(i.lead)}</p><div class="publication-links">${link(githubIssue(i.key), "GitHub 정리")}</div>${i.snapshot.review && !i.original.meta.editorial_format ? `<section class="daily-changes"><h2 id="오늘의-변화">오늘의 변화</h2>${changeRows(i, href, true)}<p class="provenance">${esc(reviewText(i.snapshot.review))}</p></section>` : ""}${renderedArticle}`
 }

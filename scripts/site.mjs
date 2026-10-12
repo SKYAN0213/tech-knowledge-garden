@@ -12,7 +12,9 @@ import { walk, parseNote, noteText, editions, extractArticles, sections } from "
 import { resolveFocus, relatedNews } from "../web/graph-model.mjs"
 import { briefingLibrary, publisher } from "./briefings.mjs"
 import { articleTags, sourceLinkLabel } from "./reader-cards.mjs"
-import { newsView, briefingHub, issueView } from "./reader-views.mjs"
+import { newsView, briefingHub, issueView, homeView } from "./reader-views.mjs"
+import { buildReaderKnowledge } from "./reader-knowledge.mjs"
+import { knowledgeHubView, companiesView, weeklyView, termView } from "./reader-knowledge-views.mjs"
 import { coverageDate } from "./time.mjs"
 import { articleDateLabel } from "./article-review.mjs"
 
@@ -110,7 +112,12 @@ export async function finish(output = "public", input = staging) {
   const newsArticles = [
     ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
   ]
-  const knowledge = notes.filter((n) => n.meta.entry_type === "concept")
+  const knowledge = notes
+    .filter((n) => n.meta.entry_type === "concept")
+    .map((n) => ({
+      ...n,
+      body: parseNote(fs.readFileSync(path.join("vault", n.path + ".md"), "utf8")).body,
+    }))
   const conceptLinks = (ids = []) =>
     ids.map((id) => {
       const k = knowledge.find((k) => k.meta.concept_id === id)
@@ -119,6 +126,19 @@ export async function finish(output = "public", input = staging) {
     })
   for (const items of issueArticles.values())
     for (const a of items) a.conceptLinks = conceptLinks(a.review?.concept_ids)
+
+  const watchlist = JSON.parse(fs.readFileSync("data/research-watchlist.json", "utf8"))
+  const readerKnowledge = buildReaderKnowledge({
+    articles: newsArticles,
+    knowledge,
+    topics: library.current?.topics || [],
+    href,
+    excludedEventIds: notes.filter((n) => n.meta.type === "withdrawn").map((n) => n.meta.event_id),
+    companyLabels: [...(watchlist.companies || []), ...(watchlist.robot_manufacturers || [])]
+      .flatMap((company) => [company.name, ...(company.aliases || [])])
+      // Existing public tag, kept distinct from KUKA; not an identity merge.
+      .concat("KUKA Group"),
+  })
 
   const graph = JSON.parse(fs.readFileSync(path.join(output, "knowledge-graph.json")))
   const learningTerms = new Set(graph.nodes.map((n) => n.id))
@@ -137,7 +157,21 @@ export async function finish(output = "public", input = staging) {
   const embed = (focus = "", className = "article-connections") =>
     `<section class="${className}"><h2><a href="${href(MAP)}${focus ? "?focus=" + encodeURIComponent(focus) : ""}">연결 지도</a></h2><div class="connections compact" data-connections data-mode="compact" data-focus="${esc(focus)}"><p class="graph-loading">연결 지도를 불러오는 중…</p></div></section>`
   const shell = (title, body, kind = "article", description = "") =>
-    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><nav aria-label="주요 메뉴"><a href="${href("index")}" ${["home", "news", "news-index"].includes(kind) ? 'aria-current="page"' : ""}>뉴스</a><a href="${href("Briefings/index")}" ${kind.startsWith("briefing-") ? 'aria-current="page"' : ""}>브리핑</a><a href="${href(MAP)}" ${kind === "map-page" ? 'aria-current="page"' : ""}>연결 지도</a></nav><div class="utilities"><button id="search-open" aria-label="검색">검색</button><a href="${prefix}/rss">RSS</a></div></header><main id="main" class="${kind}">${body}</main><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="뉴스 · 브리핑 · 키워드" autocomplete="off"><div id="search-results" aria-live="polite"></div></dialog></body></html>`
+    `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(description)}"><link rel="alternate" type="application/rss+xml" title="아침 브리핑" href="${base}/briefing.xml"><link rel="stylesheet" href="${prefix}/reader.css?v=${assets}"><script type="module" src="${prefix}/reader.js?v=${assets}"></script></head><body data-base="${prefix}" data-assets="${assets}" class="page-${kind}"><a class="skip" href="#main">본문으로</a><header class="site-header"><a class="site-brand" href="${href("index")}"><span class="brand-name">Tech Knowledge</span><span class="brand-caption">IT · AI · 로봇</span></a><div class="utilities"><button id="search-open" aria-label="검색">검색</button></div></header><div class="reader-shell"><aside class="reader-rail"><nav class="rail-nav" aria-label="주요 메뉴">${[
+      ["index", "최근 브리핑", kind === "home"],
+      ["News/index", "뉴스", ["news", "news-index"].includes(kind)],
+      ["Briefings/index", "브리핑", kind.startsWith("briefing-")],
+      ["Knowledge/index", "지식", ["knowledge", "knowledge-hub"].includes(kind)],
+      ["Companies/index", "기업", kind === "companies"],
+      [MAP, "연결 지도", kind === "map-page"],
+    ]
+      .map(
+        ([target, label, selected]) =>
+          `<a href="${href(target)}"${selected ? ' aria-current="page"' : ""}>${label}</a>`,
+      )
+      .join(
+        "",
+      )}</nav><div class="rail-links"><a href="${href("Briefings/weekly")}">기간별 기록</a></div></aside><main id="main" class="${kind}">${body}</main></div><dialog id="search-dialog"><form method="dialog"><button aria-label="검색 닫기">닫기</button></form><label for="site-search">검색</label><input id="site-search" type="search" placeholder="예: FANUC 제휴, MCP 권한" autocomplete="off"><label for="search-type">자료 종류</label><select id="search-type"><option value="">전체</option>${["뉴스", "키워드", "기업", "누적 주제", "브리핑"].map((type) => `<option value="${type}">${type}</option>`).join("")}</select><div id="search-results" aria-live="polite"></div></dialog></body></html>`
   for (const n of notes) {
     const file = path.join(output, n.slug + ".html")
     const tree = fromHtml(fs.readFileSync(file, "utf8"))
@@ -260,18 +294,24 @@ export async function finish(output = "public", input = staging) {
             (x.meta.concept_ids || []).includes(n.meta.concept_id),
         )
         .sort((a, b) => String(b.meta.published_at).localeCompare(String(a.meta.published_at)))
-      if (related.length)
+      if (readerKnowledge.terms.some((term) => term.concept_id === n.meta.concept_id))
+        body = termView(readerKnowledge, href, n.meta.concept_id, { renderedBody: body })
+      else if (related.length)
         body += `<section class="related-news"><h2>변화 이력</h2>${related.map((x) => `<p><time>${esc(x.meta.published_at || x.meta.date)}</time><a href="${href(x.path)}">${esc(x.meta.title)}</a> ${x.meta.sources.map((u) => `<a href="${esc(u)}">원문</a>`).join(" · ")}</p>`).join("")}</section>`
     }
-    if (n.path === "index" || n.path === "News/index")
-      body = newsView(newsArticles, library.latest, href)
+    if (n.path === "index")
+      body = homeView(newsArticles, library, href, prefix, {
+        knowledge,
+        topics: library.current?.topics || [],
+      })
+    else if (n.path === "News/index") body = newsView(newsArticles, library.latest, href)
     else if (n.path === "Briefings/index") body = briefingHub(library, href, prefix)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
-      body = `<div class="article-meta"><a href="${href("index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
+      body = `<div class="article-meta"><a href="${href("News/index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
-      meta.title,
+      n.path === "index" ? "최근 브리핑 · Tech Knowledge" : meta.title,
       body,
       n.path === MAP ? "map-page" : isConcept ? "knowledge" : type,
       meta.description || "",
@@ -310,6 +350,40 @@ export async function finish(output = "public", input = staging) {
       text: textContent(fromHtml(body, { fragment: true })).slice(0, 16000),
     })
   }
+  const explorerPages = [
+    {
+      path: "Knowledge/index",
+      title: "지식",
+      kind: "knowledge-hub",
+      body: knowledgeHubView(readerKnowledge, href),
+    },
+    {
+      path: "Companies/index",
+      title: "기업",
+      kind: "companies",
+      body: companiesView(readerKnowledge, href),
+    },
+    {
+      path: "Briefings/weekly",
+      title: "기간별 기록",
+      kind: "briefing-weekly",
+      body: weeklyView(readerKnowledge, href),
+    },
+  ]
+  for (const page of explorerPages) {
+    write(path.join(output, slug(page.path) + ".html"), shell(page.title, page.body, page.kind))
+    rows.push({
+      slug: slug(page.path),
+      url: href(page.path),
+      title: page.title,
+      type:
+        page.kind === "companies" ? "기업" : page.kind === "knowledge-hub" ? "키워드" : "브리핑",
+      date: readerKnowledge.events[0]?.published_at || "",
+      aliases: [],
+      keywords: [],
+      text: textContent(fromHtml(page.body, { fragment: true })).slice(0, 16000),
+    })
+  }
   const issues = editions("vault")
     .toReversed()
     .filter((i) => i.meta.coverage_end)
@@ -317,8 +391,8 @@ export async function finish(output = "public", input = staging) {
   write(
     path.join(output, "rss.html"),
     shell(
-      "브리핑 RSS",
-      `<h1>브리핑 RSS</h1><label for="feed-url">구독 주소</label><div class="feed-url"><input id="feed-url" readonly value="${base}/briefing.xml"><button id="copy-feed">주소 복사</button></div><p id="copy-status" role="status"></p><p><a data-router-ignore="true" href="${base}/briefing.xml">XML 피드 열기</a> · <a download="briefing.xml" href="${prefix}/briefing.xml">다운로드</a></p><h2>최근 브리핑</h2><ul>${issues.map((i) => `<li><a href="${href(i.slug.replace(/^Editions\//, "Briefings/"))}">${esc(i.meta.date)} 아침 브리핑</a></li>`).join("")}</ul>`,
+      "브리핑 피드",
+      `<h1>브리핑 피드</h1><label for="feed-url">피드 주소</label><div class="feed-url"><input id="feed-url" readonly value="${base}/briefing.xml"><button id="copy-feed">주소 복사</button></div><p id="copy-status" role="status"></p><p><a data-router-ignore="true" href="${base}/briefing.xml">XML 피드 열기</a> · <a download="briefing.xml" href="${prefix}/briefing.xml">다운로드</a></p><h2>최근 브리핑</h2><ul>${issues.map((i) => `<li><a href="${href(i.slug.replace(/^Editions\//, "Briefings/"))}">${esc(i.meta.date)} 아침 브리핑</a></li>`).join("")}</ul>`,
       "rss-page",
     ),
   )
@@ -329,14 +403,35 @@ export async function finish(output = "public", input = staging) {
       `<h1>페이지를 찾을 수 없습니다</h1><a href="${href("index")}">뉴스</a>`,
     ),
   )
-  const keep = new Set([...notes.map((n) => n.slug + ".html"), "rss.html", "404.html"])
+  const keep = new Set([
+    ...notes.map((n) => n.slug + ".html"),
+    ...explorerPages.map((page) => slug(page.path) + ".html"),
+    "rss.html",
+    "404.html",
+  ])
   for (const f of walk(output).filter((f) => f.endsWith(".html")))
     if (!keep.has(path.relative(output, f))) fs.unlinkSync(f)
-  write(path.join(output, "reader-index.json"), JSON.stringify(rows))
+  const reviewedTermURLs = new Set(readerKnowledge.terms.map((term) => term.url))
+  const directoryURLs = new Set(
+    ["index", "News/index", "Briefings/index", ...explorerPages.map((page) => page.path)].map(href),
+  )
+  const searchRows = new Map(
+    rows
+      .filter((row) => !directoryURLs.has(row.url))
+      .filter((row) => row.type !== "지식" || reviewedTermURLs.has(row.url))
+      .map((row) => [row.url, row]),
+  )
+  for (const row of readerKnowledge.search)
+    searchRows.set(row.url, { ...searchRows.get(row.url), ...row })
+  const publicRows = [...searchRows.values()]
+  write(path.join(output, "reader-index.json"), JSON.stringify(publicRows))
+  write(path.join(output, "reader-knowledge.json"), JSON.stringify(readerKnowledge))
   // Search data is limited to the same reader projection, not raw vault content.
   write(
     path.join(output, "static/contentIndex.json"),
-    JSON.stringify(Object.fromEntries(rows.map((r) => [r.slug, r]))),
+    JSON.stringify(
+      Object.fromEntries(publicRows.map((r) => [r.slug || r.url.slice(prefix.length + 1), r])),
+    ),
   )
   fs.copyFileSync("web/reader.css", path.join(output, "reader.css"))
   await build({

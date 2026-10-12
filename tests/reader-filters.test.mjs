@@ -3,6 +3,8 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import vm from "node:vm"
 import { matchesNews } from "../web/news-filter.mjs"
+import { searchReaderEntries } from "../web/reader-search.mjs"
+import { bindReaderExplore } from "../web/reader-explore.mjs"
 
 // Exercise the actual reader event handlers; these fixtures never enter publication.
 function reader(search = "") {
@@ -97,6 +99,8 @@ function reader(search = "") {
     window,
     URL,
     matchesNews,
+    searchReaderEntries,
+    bindReaderExplore,
     history: {
       pushState(state, title, url) {
         location.href = String(url)
@@ -109,7 +113,7 @@ function reader(search = "") {
   }
   const source = fs.readFileSync(new URL("../web/reader.mjs", import.meta.url), "utf8")
   assert.ok(source.startsWith('import { matchesNews } from "./news-filter.mjs"\n'))
-  vm.runInNewContext(source.replace(/^import[^\n]+\n/, ""), context)
+  vm.runInNewContext(source.replace(/^(?:import[^\n]+\n)+/, ""), context)
   return { query, controls, deepTab, rows, count, empty, reset, group, location, window }
 }
 
