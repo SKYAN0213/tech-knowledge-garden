@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-05
 created: 2026-09-05
 modified: 2026-09-05
-description: Copilot에 GPT-6 Astra 추가 · 저장소 스타 이력 API 공개
+description: 2026-09-05 IT · AI · 로보틱스
 coverage_start: 2026-09-04T08:02:54+09:00
 coverage_end: 2026-09-05T08:01:29+09:00
 item_count: 2

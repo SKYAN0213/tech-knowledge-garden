@@ -1,6 +1,6 @@
 # 2026-09-11 아침 브리핑
 
-DeepSeek의 비대칭 모델 구조, KUKA의 자율 지게차, NVIDIA·Palantir의 공급망 AI
+2026-09-11 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-11_0800_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
@@ -46,7 +46,7 @@ OpenAI는 9월 10일 Codex의 실행 관리 기능을 제공하는 Agents API를
 
 제품·서비스 · 신제품 · OpenAI
 
-OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다. 모델은 들어오는 음성과 나가는 음성을 함께 처리하며, 깊은 추론과 도구 호출을 연결된 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로 말투·속도·대화 스타일을 조정하고 전화 상담 등의 음성 서비스에 적용할 수 있다.
+OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다고 발표했다. 하나의 모델이 입력과 출력 음성을 함께 처리하며, 깊은 추론과 도구 호출은 연결된 백엔드 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로 말투·속도·대화 스타일을 조정하고 전화 예약이나 고객 지원 같은 음성 서비스에 적용할 수 있다.
 
 
 
@@ -62,11 +62,11 @@ DeepSeek은 9월 10일 이미지 이해를 기본 지원하는 V4.1-Flash를 API
 
 ##### 전체 크기와 한 번에 쓰는 계산량은 다르다
 
-5,520억 개는 모델 전체의 매개변수 수다. MoE는 입력마다 일부 전문가만 활성화하는 구조이고, 이번 모델은 읽는 단계와 답을 생성하는 단계의 활성 규모도 다르게 설계했다. 따라서 5,520억 개와 80억·160억 개는 서로 다른 대상을 나타내는 수치다.
+5,520억 개는 모델 전체의 매개변수 수다. 이번 모델은 읽는 단계와 답을 생성하는 단계의 활성 규모를 다르게 설계했다. 따라서 5,520억 개와 80억·160억 개는 서로 다른 대상을 나타내는 수치다.
 
-KV 캐시는 앞서 처리한 토큰의 계산 정보를 보관해 다음 토큰 생성 때 재사용한다. DeepSeek이 제시한 HBM·SSD 절감 수치는 이 캐시의 이전 세대 대비 저장 요구량에 관한 회사 발표다.
+DeepSeek이 제시한 HBM·SSD 절감 수치는 KV 캐시의 이전 세대 대비 저장 요구량에 관한 회사 발표다.
 
-[deepseek.com 원문](https://www.deepseek.com/en/news/deepseek-v4-1-flash/)
+[deepseek.com 원문](https://www.deepseek.com/en/news/deepseek-v4-1-flash)
 
 ### 소프트웨어·클라우드 · 2건
 
@@ -108,7 +108,13 @@ OpenAI는 9월 10일 기업 데이터에 질문하고 분석 결과를 대시보
 
 GitHub는 9월 10일 모든 요금제에 GitHub Actions의 cache-mode 설정을 정식 제공한다고 발표했다. 워크플로 또는 작업 단위에서 캐시 읽기, 읽기·쓰기, 쓰기 전용, 접근 차단 중 하나를 선택할 수 있다. 작업 단위 설정이 우선하며, 재사용 워크플로는 호출자가 부여한 캐시 권한을 초과할 수 없다.
 
+##### 이벤트별 기본 권한
 
+pull\_request\_target 같은 낮은 신뢰 이벤트는 캐시 복원만 가능한 read가 기본이다. push 같은 신뢰 이벤트는 복원과 저장이 가능한 write가 기본이며, write-only는 저장만 하고 none은 접근을 차단한다.
+
+##### 명시적 쓰기 설정은 기본값을 덮어쓴다
+
+낮은 신뢰 이벤트라도 cache-mode를 write 또는 write-only로 명시하면 읽기 전용 기본값을 덮어쓴다. GitHub는 이 경우 캐시 오염 위험이 커질 수 있다고 설명하며 쓰기 권한에 대한 경고를 표시한다.
 
 [GitHub 원문](https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/)
 

@@ -3,12 +3,14 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/09/2026-09-14_0800_Tech_AI_Briefing
 date: 2026-09-14
-reviewed: 2026-09-14
+reviewed: 2026-10-10
 review_basis: primary-research
 observations:
   - id: samsung-asset-ai-monitoring-plan
     topic_id: company-samsung-asset-management
     event_id: 18ebc7c21cf04849
+    event_date: "2026-09-13"
+    source_published_at: "2026-09-13"
     stance: context
     change: 삼성자산운용 관계자가 스플렁크 도입 결정과 감시 시스템 구축 추진을 확인했다.
     meaning: 이 회사의 생성형 AI 이용 감시 체계를 도입 결정·구축 단계부터 추적한다.

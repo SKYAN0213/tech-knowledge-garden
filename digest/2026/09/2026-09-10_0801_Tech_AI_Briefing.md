@@ -1,6 +1,6 @@
 # 2026-09-10 아침 브리핑
 
-Astra의 기업 접근 관리와 GitHub의 실행·병합 권한 기능
+2026-09-10 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-10_0801_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
@@ -10,13 +10,13 @@ Astra의 기업 접근 관리와 GitHub의 실행·병합 권한 기능
 
 발표 2026-09-09
 
-OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고 업로드·다운로드와 브라우징 기록을 관리할 수 있다. 회사는 업무 시스템 접근 범위를 제한한 구성에서 시작할 수 있도록 했으며, Enterprise 접근은 출시 당시 기본 비활성화 상태로 계약에 따라 관리자가 활성화한다고 밝혔다.
+OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고 업로드·다운로드와 브라우징 기록을 관리할 수 있다.
 
 ### [Copilot, 조직 정책으로 셸·파일·네트워크 작업 권한을 관리](https://skyan0213.github.io/tech-knowledge-garden/news/faa37362568657fb)
 
 발표 2026-09-09
 
-GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 셸 명령, 파일 읽기·편집, 네트워크 도메인의 이용 권한을 중앙에서 정하는 기능을 정식 제공한다고 발표했다. 작업별로 차단·사람 승인·자동 허용을 지정할 수 있으며, 사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를 사용하는 VS Code 세션이다.
+GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 에이전트 작업 권한을 중앙에서 지정하는 기능을 정식 제공한다고 발표했다. 셸 명령·파일 읽기와 편집·네트워크 도메인의 작업별로 차단·사람 승인·자동 허용을 정하며, 사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를 사용하는 Visual Studio Code 세션이다.
 
 ### [GitHub, 비밀정보 경보가 남은 PR의 병합을 막는 규칙 공개](https://skyan0213.github.io/tech-knowledge-garden/news/0ef68bd8a0105dab)
 
@@ -34,11 +34,15 @@ GitHub는 9월 9일 비밀정보 경보가 남아 있는 풀 리퀘스트(PR)의
 
 제품·서비스 · 기능 추가 · OpenAI
 
-OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고 업로드·다운로드와 브라우징 기록을 관리할 수 있다. 회사는 업무 시스템 접근 범위를 제한한 구성에서 시작할 수 있도록 했으며, Enterprise 접근은 출시 당시 기본 비활성화 상태로 계약에 따라 관리자가 활성화한다고 밝혔다.
+OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 관리자는 허용한 웹사이트와 데스크톱 앱으로 접근을 제한하고 업로드·다운로드와 브라우징 기록을 관리할 수 있다.
 
+##### 조직이 정하는 접근과 활성화 범위
 
+OpenAI는 조직이 업무 시스템 접근 범위를 제한한 구성에서 시작하고 이후 접근을 넓힐 수 있다고 설명했다.
 
-[OpenAI 원문](https://openai.com/index/gpt-6-astra-next-generation-work/)
+Enterprise의 Astra 접근은 출시 당시 기본 비활성화 상태다. 관리자는 적용 요금표와 계약에 따라 활성화할 수 있다.
+
+[OpenAI 원문](https://openai.com/index/gpt-6-astra-next-generation-work/) · [OpenAI 원문](https://openai.com/news/rss.xml)
 
 ### 사이버보안 · 2건
 
@@ -48,7 +52,7 @@ OpenAI는 9월 9일 기업용 Astra의 관리자 통제 기능을 소개했다. 
 
 제품·서비스 · 기능 추가 · GitHub
 
-GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 셸 명령, 파일 읽기·편집, 네트워크 도메인의 이용 권한을 중앙에서 정하는 기능을 정식 제공한다고 발표했다. 작업별로 차단·사람 승인·자동 허용을 지정할 수 있으며, 사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를 사용하는 VS Code 세션이다.
+GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 에이전트 작업 권한을 중앙에서 지정하는 기능을 정식 제공한다고 발표했다. 셸 명령·파일 읽기와 편집·네트워크 도메인의 작업별로 차단·사람 승인·자동 허용을 정하며, 사용자·워크스페이스 설정이나 이전 승인이 조직의 제한을 완화할 수 없다. 적용 범위는 Copilot 앱·CLI와 Agent Host를 사용하는 Visual Studio Code 세션이다.
 
 
 
@@ -62,6 +66,12 @@ GitHub는 9월 9일 Copilot Business·Enterprise 관리자가 셸 명령, 파일
 
 GitHub는 9월 9일 비밀정보 경보가 남아 있는 풀 리퀘스트(PR)의 병합을 차단하는 저장소 규칙을 공개 미리보기로 제공한다고 발표했다. GitHub Secret Protection 또는 Advanced Security 고객이 규칙을 켜면 최신 커밋의 비밀정보 검사가 완료되고 해당 PR이 도입한 비밀정보의 열린 경보가 없어야 병합할 수 있다. 기본 탐지 대상은 서비스 제공자 패턴이며, 사용자 정의·일반 패턴은 추가로 설정할 수 있고 우회 권한이 없는 개발자는 경보를 해결해야 차단을 해제할 수 있다.
 
+##### 푸시 단계와 병합 단계의 보호
 
+푸시 보호는 비밀정보가 저장소에 들어오기 전에 차단한다. 새 규칙은 PR 병합 단계에서 추가로 검사하므로, 푸시 보호에서 검사하지 않도록 설정한 일반 패턴도 병합 규칙의 대상으로 지정할 수 있다.
+
+##### 브랜치별 규칙과 API 설정
+
+저장소·조직·엔터프라이즈의 Repository → Rulesets에서 보호할 브랜치를 지정하고 Require secret scanning alerts are resolved를 선택한다. REST API에서는 require\_secret\_scanning\_alert\_resolution과 secret\_types로 같은 규칙을 설정할 수 있다.
 
 [GitHub 원문](https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/)

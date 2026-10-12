@@ -9,7 +9,7 @@ event_id: 8fac3ce4d39c6ea9
 review_status: verified
 concept_ids: []
 published_at: 2026-09-30
-reviewed_at: 2026-10-01
+reviewed_at: 2026-10-10
 source_url: https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design
 sources:
   - https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design
@@ -46,13 +46,10 @@ facts:
   what: 다년 협력과 수익 배분 계약을 체결하고 GPT-Synopsys 공동 개발·판매를 추진
   how: OpenAI 모델을 Synopsys EDA 도구에 특화해 설계·검증 작업을 반복 실행하도록 설계
   why: 엔지니어가 설계 후보와 PPA를 더 빨리 탐색하도록 돕겠다는 양사 구상
+explanations: []
 papers: []
 relations: []
-topic_ids:
-  - performance-path
-analysis_summary: 범용 모델을 반도체 설계 도구와 반복 작업에 결합하려는 계약으로, AI 협력이 칩 설계의 실제 업무흐름으로
-  들어가는 경로를 구체화했다. 다만 현 단계는 공동 개발 발표와 초기 고객 협의이며, 양산 가능한 설계의 수·시간 절감·검증 정확도는 공개되지
-  않았다.
+topic_ids: []
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -63,7 +60,7 @@ generated_by: tech-knowledge-garden
 
 OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다. [원문 1](<https://news.synopsys.com/2026-09-30-OpenAI-and-Synopsys-Announce-GPT-Synopsys-Frontier-Intelligence-to-Revolutionize-Chip-Design>)
 
-[[Briefings/Topics/performance-path|누적 기록]]
+
 
 ## 이 소식을 다룬 브리핑
 

@@ -19,21 +19,21 @@ generated_by: tech-knowledge-garden
 
 ## 주요 소식
 
-### [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]]
+### [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 미국 달러 투자 발표]]
 
-삼성전자는 2026년 9월 29일 삼성 계열사 5곳과 함께 AI 인프라 기업 Helix에 총 10억 달러를 투자한다고 발표했다. 삼성전자 투자액은 5억 달러이며 나머지 5개 계열사가 합산 5억 달러를 투자한다. KKR이 설립한 Helix는 데이터센터뿐 아니라 전력 생산·송배전과 광섬유망을 함께 개발·운영하려는 사업 구상을 공개했다.
+삼성전자와 삼성 계열사 5곳은 9월 29일 AI 인프라 기업 Helix Digital Infrastructure에 총 10억 미국 달러를 투자한다고 발표했다. 삼성전자가 5억 미국 달러를, 삼성물산·삼성SDS·삼성SDI·삼성생명·삼성화재가 나머지 금액를 투자하는 구상이다. KKR이 설립한 Helix는 하이퍼스케일 데이터센터 개발·운영과 발전·송배전·광섬유망을 통합하는 인프라 제공을 목표로 한다고 삼성은 설명했다.
 
 ### [[News/ef1b3a4772eab837|Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고]]
 
-Anthropic은 9월 23일 Claude를 이용해 생명과학 데이터를 분석하고 후보를 실험하는 연구팀과 연구실을 공개했다. 회사는 여러 Claude 에이전트가 약 21시간 동안 2억1천만 토큰으로 DNA 서열을 조사해 역전사효소 주변의 반복 서열과 부속 단백질이 결합된 ART 후보를 찾았다고 설명했다. 단백질의 기능은 아직 규명되지 않았고 결과는 사전공개 논문으로 발표됐다.
+Anthropic은 9월 23일 Claude로 DNA 데이터를 분석하고 실험을 진행하는 생명과학 연구 그룹과 자체 연구실을 공개했다. 회사에 따르면 약 950개 에이전트가 21시간 동안 2억 1,000만 토큰을 사용한 탐색에 이어 연구진이 ART라는 역전사효소 관련 계열을 분석·보고했다. ART의 주요 기능을 확인하는 실험은 계속 진행 중이다.
 
 ### [[News/295f6ca27b06224b|Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표]]
 
-Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·Excel·PowerPoint 파일을 직접 만들고 편집하는 기능을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 월말 비공개 프리뷰로 넓힐 계획이다. Code는 자연어로 앱과 자동화를 만드는 기능으로 소개됐으며 자사 조직 환경 내 적용을 내세웠다.
+Microsoft는 9월 25일 Copilot의 Home·Code·Autopilot 작업공간과 Word·Excel·PowerPoint 통합을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 9월 말 비공개 프리뷰로 확대할 계획이다. Code는 GitHub Copilot 기술을 바탕으로 자연어로 앱과 자동화를 만드는 기능으로 소개됐다.
 
 ### [[News/783ed5a89f40a298|SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시]]
 
-SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OIP 행사에서 TSMC와 CoWoS 기반 HBM5 검증을 초기부터 함께 진행했다고 9월 28일 밝혔다. 이 회사는 NVIDIA Vera Rubin 슈퍼칩에 장착한 12단 36GB HBM4와 96GB SOCAMM2를 전시했고 3D Fabric-HBM Integration 부문 Partner of the Year를 2년 연속 받았다고 설명했다. 전시와 공동 검증은 양산 출하나 고객 매출을 입증하지 않는다.
+SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OIP 행사에서 TSMC와 CoWoS 기반 HBM5 검증을 초기부터 함께 진행했다고 9월 28일 밝혔다. 이 회사는 현장에서 NVIDIA Vera Rubin 슈퍼칩에 장착한 12단 36GB HBM4와 96GB SOCAMM2를 전시했고, 3DFabric-HBM Integration 부문 Partner of the Year 상을 2년 연속 받았다고 설명했다. PCIe 6·7세대용 칩렛 기반 SSD 솔루션은 준비 중이라고 밝혔다.
 
 ### [[News/bad3d5636979c1ec|IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파]]
 
@@ -45,17 +45,17 @@ SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OI
 
 ### AI · 2건
 
-#### [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]]
+#### [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 미국 달러 투자 발표]]
 
-투자·기업거래 · 지분 투자 · 삼성전자 · 삼성 계열사 · Helix · KKR
+투자·기업거래 · 지분 투자 · Samsung Electronics · Helix Digital Infrastructure · KKR
 
-삼성전자는 2026년 9월 29일 삼성 계열사 5곳과 함께 AI 인프라 기업 Helix에 총 10억 달러를 투자한다고 발표했다. 삼성전자 투자액은 5억 달러이며 나머지 5개 계열사가 합산 5억 달러를 투자한다. KKR이 설립한 Helix는 데이터센터뿐 아니라 전력 생산·송배전과 광섬유망을 함께 개발·운영하려는 사업 구상을 공개했다.
+삼성전자와 삼성 계열사 5곳은 9월 29일 AI 인프라 기업 Helix Digital Infrastructure에 총 10억 미국 달러를 투자한다고 발표했다. 삼성전자가 5억 미국 달러를, 삼성물산·삼성SDS·삼성SDI·삼성생명·삼성화재가 나머지 금액를 투자하는 구상이다. KKR이 설립한 Helix는 하이퍼스케일 데이터센터 개발·운영과 발전·송배전·광섬유망을 통합하는 인프라 제공을 목표로 한다고 삼성은 설명했다.
 
 #### [[News/ef1b3a4772eab837|Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고]]
 
 연구·기술 · 새로운 방법 · 실증·재현 · Anthropic
 
-Anthropic은 9월 23일 Claude를 이용해 생명과학 데이터를 분석하고 후보를 실험하는 연구팀과 연구실을 공개했다. 회사는 여러 Claude 에이전트가 약 21시간 동안 2억1천만 토큰으로 DNA 서열을 조사해 역전사효소 주변의 반복 서열과 부속 단백질이 결합된 ART 후보를 찾았다고 설명했다. 단백질의 기능은 아직 규명되지 않았고 결과는 사전공개 논문으로 발표됐다.
+Anthropic은 9월 23일 Claude로 DNA 데이터를 분석하고 실험을 진행하는 생명과학 연구 그룹과 자체 연구실을 공개했다. 회사에 따르면 약 950개 에이전트가 21시간 동안 2억 1,000만 토큰을 사용한 탐색에 이어 연구진이 ART라는 역전사효소 관련 계열을 분석·보고했다. ART의 주요 기능을 확인하는 실험은 계속 진행 중이다.
 
 ### 소프트웨어·클라우드 · 3건
 
@@ -63,7 +63,7 @@ Anthropic은 9월 23일 Claude를 이용해 생명과학 데이터를 분석하�
 
 제품·서비스 · 기능 추가 · Microsoft
 
-Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·Excel·PowerPoint 파일을 직접 만들고 편집하는 기능을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 월말 비공개 프리뷰로 넓힐 계획이다. Code는 자연어로 앱과 자동화를 만드는 기능으로 소개됐으며 자사 조직 환경 내 적용을 내세웠다.
+Microsoft는 9월 25일 Copilot의 Home·Code·Autopilot 작업공간과 Word·Excel·PowerPoint 통합을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 9월 말 비공개 프리뷰로 확대할 계획이다. Code는 GitHub Copilot 기술을 바탕으로 자연어로 앱과 자동화를 만드는 기능으로 소개됐다.
 
 #### [[News/461333ec2270a664|Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정]]
 
@@ -73,9 +73,9 @@ Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·E
 
 #### [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]]
 
-사업·고객 · 고객 도입 · 삼성전자 · 하나금융그룹 · SK텔레콤
+사업·고객 · 고객 도입 · Samsung Electronics · Hana Financial Group · SK Telecom
 
-삼성전자는 2026년 9월 28일 하나금융그룹이 SK텔레콤·삼성전자와 함께 인천 신사옥 16개 층에 5G 특화망 스마트오피스를 구축했다고 발표했다. 삼성전자는 특화망 솔루션 단독 공급자로 무선장치·베이스밴드·클라우드 네이티브 코어를 제공했고 한국 특화망용 4.7GHz 대역을 지원한다. 삼성에 따르면 대상은 하나금융 여러 관계사와 수천 명의 임직원이다.
+삼성전자는 2026년 9월 28일 하나금융그룹이 SK텔레콤·삼성전자와 함께 인천 신사옥 16개 층에 5G 특화망 스마트오피스를 구축했다고 발표했다. 삼성전자는 이 사업의 특화망 솔루션 단독 공급자로서 무선장치·베이스밴드·클라우드 네이티브 코어를 제공했고, 한국의 특화망용 4.7GHz 대역을 지원한다. 삼성에 따르면 이 스마트오피스 사업은 하나금융의 여러 관계사와 수천 명의 임직원을 대상으로 한다.
 
 ### 사이버보안 · 2건
 
@@ -83,7 +83,7 @@ Microsoft는 9월 25일 Copilot에 Home·Code·Autopilot을 배치하고 Word·E
 
 제품·서비스 · 기능 추가 · Google Cloud
 
-Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터 보호 기능을 발표했다. IT 관리자는 검증된 AI 도구를 승인하고 생성형 AI 사용 현황을 보고받는 기능을 시험할 수 있으며, 클립보드·화면 캡처·파일 이동을 제어하는 정책은 순차 제공을 예고했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는 것은 아니다.
+Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터 보호 기능을 발표했다. IT 관리자는 trusted tester 프로그램에서 회사가 검토한 AI Skills를 배포하고, 개선된 보고서에서 생성형 AI·SaaS 사용을 확인해 접근 차단·정책 변경을 할 수 있다. 클립보드에 복사되기 전에 민감한 자료를 차단하는 기능은 제공 예정이며, 모바일의 파일 다운로드·붙여넣기·화면 캡처·공유 통제 확대도 설명했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는 것은 아니다.
 
 #### [[News/96690c067704a88d|ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염]]
 
@@ -97,7 +97,7 @@ ASEC는 9월 30일 암호화폐 거래소를 사칭한 페이스북 광고를 �
 
 표준·생태계 · 기술 제휴 · SK hynix · TSMC
 
-SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OIP 행사에서 TSMC와 CoWoS 기반 HBM5 검증을 초기부터 함께 진행했다고 9월 28일 밝혔다. 이 회사는 NVIDIA Vera Rubin 슈퍼칩에 장착한 12단 36GB HBM4와 96GB SOCAMM2를 전시했고 3D Fabric-HBM Integration 부문 Partner of the Year를 2년 연속 받았다고 설명했다. 전시와 공동 검증은 양산 출하나 고객 매출을 입증하지 않는다.
+SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OIP 행사에서 TSMC와 CoWoS 기반 HBM5 검증을 초기부터 함께 진행했다고 9월 28일 밝혔다. 이 회사는 현장에서 NVIDIA Vera Rubin 슈퍼칩에 장착한 12단 36GB HBM4와 96GB SOCAMM2를 전시했고, 3DFabric-HBM Integration 부문 Partner of the Year 상을 2년 연속 받았다고 설명했다. PCIe 6·7세대용 칩렛 기반 SSD 솔루션은 준비 중이라고 밝혔다.
 
 ### 로봇·제조 · 1건
 
@@ -109,25 +109,25 @@ SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OI
 
 ### 에너지·기후기술 · 1건
 
-#### [[News/8a3306a5bb75996e|미 에너지부, 26개 주 송전망 개선 31개 사업에 52억5천만달러 선정]]
+#### [[News/8a3306a5bb75996e|미 에너지부, 26개 주 전력망 사업 31건에 19억 달러 지원 추진]]
 
-정책·규제 · 보조금 · U.S. Department of Energy · 사업 수령기관
+정책·규제 · 보조금 · U.S. Department of Energy
 
-미 에너지부는 9월 24일 26개 주의 송전망 개선 사업 31건을 선정했다고 발표했다. 총 사업 규모는 52억5천만달러로 연방 지원 19억달러와 수령기관 부담 33억5천만달러로 구성된다. 연방 지원액은 19억달러이고 수령기관 부담금은 33억5천만달러이며, 사업은 1,500마일 이상의 송전선 재도체·재건과 약 2만1천마일에 걸친 계통 개선 기술 적용을 계획한다. 사업이 제시한 추가 전력 수용 능력은 추정치이며 현재 확보된 가동 용량이 아니다.
+미국 에너지부 전력청은 2026년 9월 24일 SPARK 사업을 통해 26개 주의 전력망 개선 사업 31건에 연방자금 19억 달러를 지원할 계획이라고 발표했다. 에너지부가 제시한 총 사업 자금 52억 5,000만 달러에는 사업 수혜기관의 분담 예정액 33억 5,000만 달러가 포함된다.
 
 ### 바이오·의료기술 · 2건
 
-#### [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여]]
+#### [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여]]
 
 연구·기술 · 실증·재현 · Lakewood-Amedex Biotherapeutics
 
-Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다.
+Lakewood-Amedex Biotherapeutics는 2026년 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 하는 Nu-3 2a상 임상시험에서 첫 환자에게 투여했다고 발표했다. 진행 중인 시험은 제1형 또는 제2형 당뇨병이 있고 경증 감염성 당뇨발 궤양이 있는 성인을 대상으로 하며, Nu-3 겔 2%, 5%, 10%의 안전성과 유효성을 평가한다. 회사는 2a상 주요 데이터를 2027년 1분기에 공개할 것으로 예상한다고 밝혔다. 회사는 2a상 이후 서로 다른 Nu-3 겔 농도를 하루 한 번 또는 두 번 투여해 위약과 비교하는 2b상 시험을 계획하고 있다.
 
 #### [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]]
 
 정책·규제 · 인허가 · FDA · Egetis Therapeutics US Inc.
 
-미국 식품의약국(FDA)은 2026년 9월 28일 MCT8 결핍증 환자의 말초 갑상선중독증 치료에 Emcitate(성분 tiratricol)를 승인했다. 경구 현탁액용 정제인 이 약은 해당 희귀질환의 증상 치료에 FDA가 처음 허가한 약물이며, 승인을 받은 기업은 Egetis Therapeutics US Inc.다. 이번 허가는 말초 증상 대상이며 신경학적 증상 회복이나 질환 전체의 치료 승인을 뜻하지 않는다.
+미국 식품의약국(FDA)은 2026년 9월 28일 MCT8 결핍증 환자의 말초 갑상선중독증 치료에 Emcitate(성분 tiratricol)를 승인했다. 경구 현탁액용 정제인 이 약은 해당 희귀질환의 증상 치료에 FDA가 처음 허가한 약물이며, 승인을 받은 기업은 Egetis Therapeutics US Inc.다.
 
 ### 우주·기초과학 · 2건
 
@@ -135,37 +135,30 @@ Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 
 
 연구·기술 · 실증·재현 · European Space Agency
 
-유럽우주국(ESA)의 목성 탐사선 Juice는 2026년 9월 28일 지구 근접비행을 마쳤다. ESA에 따르면 지구 중력을 이용한 이 비행으로 진행 경로가 비행 전보다 20도 바뀌고 속도가 초속 3.5km 늘었다. 이 기동은 목성으로 향하는 항로 조정에 사용됐다.
+유럽우주국(ESA)의 목성 탐사선 Juice는 2026년 9월 28일 지구 근접비행을 마쳤다. ESA에 따르면 지구 중력을 이용한 이 비행으로 진행 경로가 비행 전보다 20도 바뀌고 속도가 초속 3.5km 늘었다.
 
 #### [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]]
 
-연구·기술 · 새로운 방법 · 실증·재현 · NASA · MIT · Plasma Processes · Georgia Institute of Technology
+연구·기술 · 새로운 방법 · 실증·재현 · NASA · Massachusetts Institute of Technology · Plasma Processes · Georgia Institute of Technology
 
-NASA는 9월 25일 ASCENT 이중 모드 추진 CubeSat의 회전·열진공·누설 시험을 마쳤다고 발표했다. 6U 위성은 하나의 무독성 추진제 탱크를 화학식 고추력 엔진과 전기식 저추력 엔진에 함께 연결하는 설계다. 발사는 SpaceX Falcon 9 rideshare 탑재체로 10월 1일 이후 예정돼 있어, 우주 환경에서의 작동은 아직 검증되지 않았다.
-
-## 오늘의 심층 분석
-
-### [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]]
-
-삼성 계열사 6곳의 Helix 투자는 AI 인프라 전략을 칩 공급 바깥의 데이터센터·전력·통신망까지 확장하려는 자본 배분 신호다. 공개된 투자 의향과 사업 구상은 확인되지만, 투자 완료·개별 공급 계약·운영 용량은 아직 확인된 실적으로 간주할 수 없다.
-
-[[Briefings/Topics/company-samsung-ai-infrastructure|누적 기록]]
+NASA는 9월 25일 미국 앨라배마주 Marshall Space Flight Center에서 ASCENT 이중 모드 추진 실증용 6U CubeSat의 회전·열진공·누설 지상시험을 마쳤다고 발표했다. 이 위성은 하나의 무독성 추진제 탱크를 고추력 연소 엔진과 저추력 전기분무 추진기에 함께 연결한다. NASA는 캘리포니아주 Vandenberg Space Force Base에서 SpaceX Falcon 9에 탑재해 10월 1일 이후 발사할 예정이라고 밝혔다.
 
 
 
 ## 출처
 
 - [S1] https://news.samsung.com/global/samsung-to-invest-usd-1-billion-in-ai-infrastructure-company-helix
-- [S2] https://www.anthropic.com/news/claude-discovers-novel-enzyme-system
-- [S3] https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/
-- [S4] https://news.samsung.com/global/samsung-at-the-forefront-of-koreas-ai-ran-projects-with-kt-and-sk-telecom
-- [S5] https://cloud.google.com/blog/products/chrome-enterprise/secure-intelligent-experiences-across-every-endpoint
-- [S6] https://news.skhynix.com/en/tsmc-oip-conference-2026/
-- [S7] https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally
-- [S8] https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
-- [S9] https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers
-- [S10] https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector
-- [S11] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
-- [S12] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
-- [S13] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
+- [S2] https://news.samsung.com/global/samsung-electronics-completes-acquisition-of-hvac-company-flaktgroup
+- [S3] https://www.anthropic.com/news/claude-discovers-novel-enzyme-system
+- [S4] https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/
+- [S5] https://news.samsung.com/global/samsung-at-the-forefront-of-koreas-ai-ran-projects-with-kt-and-sk-telecom
+- [S6] https://cloud.google.com/blog/products/chrome-enterprise/secure-intelligent-experiences-across-every-endpoint
+- [S7] https://news.skhynix.com/en/tsmc-oip-conference-2026/
+- [S8] https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally
+- [S9] https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
+- [S10] https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html
+- [S11] https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector
+- [S12] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
+- [S13] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S14] https://asec.ahnlab.com/ko/95643/
+- [S15] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/

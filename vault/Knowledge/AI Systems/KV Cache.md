@@ -6,8 +6,8 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-09-13
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - KV 캐시
   - KV cache
@@ -31,7 +31,7 @@ map_review:
   decision: include
   kind: mechanism
   reason: 문맥이 길어질 때 추론 메모리와 속도가 달라지는 이유를 어텐션의 키·값 재사용으로 설명하는 기술이다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 connections:
   - target: inference
     reason: 모델 서빙에서 이전 토큰의 어텐션 키·값을 재사용해 반복 계산을 줄인다.

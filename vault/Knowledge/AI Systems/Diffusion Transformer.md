@@ -9,8 +9,8 @@ group: 생성 모델
 concept_id: diffusion-transformer
 label: 확산 트랜스포머
 created: 2026-10-05
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - DiT
   - 확산 트랜스포머
@@ -26,6 +26,7 @@ tags:
   - 영상 생성
 verified_sources:
   - https://arxiv.org/html/2512.03451v1
+  - https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy
 connections:
   - target: classifier-free-guidance
     reason: 영상 생성의 DiT 조건부·무조건부 경로 출력은 CFG 결합에 사용된다.
@@ -35,7 +36,7 @@ map_review:
   decision: include
   kind: architecture
   reason: 모델 구조와 조건부 생성 계산을 구분하는 전문용어이며 독립 정의와 실제 계산 흐름을 논문 전문에서 확인했다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 ---
 
 # Diffusion Transformer
@@ -93,8 +94,9 @@ DiT는 모델의 계산 구조이고 CFG는 두 확산 경로의 예측 결합�
 
 ## 최근 변화
 
-- 2026-07-26 — NVIDIA가 소개한 GalaxyDiT는 Wan2.1과 Cosmos-Predict2의 영상 확산 계산을 재사용한다. [[News/a9911e33a5a858b4|기사]] · [논문 전문](https://arxiv.org/html/2512.03451v1)
+- 2026-07-26 — NVIDIA가 소개한 GalaxyDiT는 Wan2.1과 Cosmos-Predict2의 영상 확산 계산을 재사용한다. [[News/a9911e33a5a858b4|기사]] · [NVIDIA 연구 페이지](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy) · [논문 전문](https://arxiv.org/html/2512.03451v1)
 
 ## 출처
 
 - [GalaxyDiT · arXiv 2512.03451v1](https://arxiv.org/html/2512.03451v1)
+- [NVIDIA · GalaxyDiT](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy)

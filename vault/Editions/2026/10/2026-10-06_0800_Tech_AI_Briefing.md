@@ -11,8 +11,7 @@ briefing_format: sector-five/v1
 theme_format: news-themes/v1
 source_count: 9
 new_items_count: 8
-linked_knowledge_notes:
-  - Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)
+linked_knowledge_notes: []
 knowledge_notes_created: []
 knowledge_notes_updated: []
 headlines:
@@ -34,9 +33,6 @@ article_records:
       요청(RFI)을 통해 의견과 자료를 받는다고 발표했다. 의견 수렴 대상은 연구 설계, 용량 선택·증량, 안전 고려 사항, 윤리·감독의
       네 영역이다. 제출 마감은 11월 20일이며, regulations.gov에서 FDA-2026-N-10429를 검색해 의견을 제출할
       수 있다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 시험 설계에서 검토하는 안전·감독 조건
         paragraphs:
@@ -50,6 +46,9 @@ article_records:
             신약(IND) 신청에 따라 진행되도록 허용했다고 밝혔다.
         source_urls:
           - https://www.fda.gov/news-events/press-announcements/fda-seeks-public-input-support-ibogaine-research
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고
     kind: 논문 해설
     region: 해외
@@ -64,16 +63,6 @@ article_records:
       AI에 발표했다. 3차원 점군에서 볼록한 영역을 찾아 집기 후보를 만들고, 계층적 퍼지 신경망(HFNN)으로 후보를 평가한다.
       무작위로 쌓은 옷감의 로봇 분류 실험에서 HFNN을 적용한 방식의 집기 성공률은 93.3%, 같은 후보에 수작업 점수를 적용한 방식은
       80.0%로 보고됐다.
-    papers:
-      - work_id: stacked-fabric-grasping-2026
-        identifiers:
-          - doi:10.3389/frobt.2026.1917009
-        access: 전문
-        status: 동료심사
-        evidence_url: https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
-    relations: []
-    topic_ids:
-      - research-stacked-fabric-grasping
     explanations:
       - heading: 옷감이 겹칠 때 집을 위치를 찾는 문제
         paragraphs:
@@ -107,6 +96,16 @@ article_records:
             Local-PointNet 82.0%, HFNN 80.3%로 보고됐다.
         source_urls:
           - https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
+    papers:
+      - work_id: stacked-fabric-grasping-2026
+        identifiers:
+          - doi:10.3389/frobt.2026.1917009
+        access: 전문
+        status: 동료심사
+        evidence_url: https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1917009/full
+    relations: []
+    topic_ids:
+      - research-stacked-fabric-grasping
   - title: RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
     kind: 사건 뉴스
     region: 해외
@@ -120,9 +119,6 @@ article_records:
     lead: 산업용 로봇 업체 RobCo는 10월 5일 기업가치가 10억 달러를 넘어섰으며, 9개월 전보다 두 배가 됐다고 발표했다. 이번 거래는
       회사에 대한 신규 투자와 직원 보유 지분의 일부 매각을 함께 진행하는 구조다. 회사는 자율 산업용 로봇 Alfie를 2027년 3월
       4일 뮌헨에서 열리는 RobCoN에서 상용 출시할 계획이라고 밝혔다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 거래에 참여하는 투자자
         paragraphs:
@@ -139,6 +135,9 @@ article_records:
             Robotics-as-a-Service(RaaS) 모델을 운영한다고 소개했다.
         source_urls:
           - https://www.rob.co/en-us/resources/news/press/robco-becomes-a-unicorn
+    papers: []
+    relations: []
+    topic_ids: []
   - title: AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
     kind: 사건 뉴스
     region: 해외
@@ -152,9 +151,6 @@ article_records:
     lead: AWS는 10월 5일 사설 인증서 발급 서비스 AWS Private CA에 상세 발급 로그를 추가했다고 발표했다. 새
       CloudTrail 이벤트 IssueCertificateDetails는 인증서 내용과 발급 CA·요청자·서명 상태를 기록하며, 서명
       전 오류를 포함한 발급 성공과 실패 모두를 남긴다. AWS Private CA가 제공되는 모든 AWS 리전에서 사용할 수 있다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 인증서 내용과 실패 사유 기록
         paragraphs:
@@ -178,6 +174,9 @@ article_records:
             관리·추적·모니터링에 활용할 수 있다고 설명했다.
         source_urls:
           - https://aws.amazon.com/about-aws/whats-new/2026/10/aws-private-ca-certificate-issuance-logs/
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개
     kind: 사건 뉴스
     region: 해외
@@ -192,9 +191,6 @@ article_records:
       제조시설 조사와 구조물 점검에 쓰인 사례를 소개했다. 회사는 계단과 좁은 공간을 이동하는 로봇에 카메라, 원격 조작용 무선 통신장비와
       로봇팔을 결합해 현장을 확인하는 구성을 설명했다. 소개된 사례에는 2026년 2월 라스베이거스 경찰의 의심 생물실험실 수색과
       2024년 3월 매사추세츠 주 경찰의 대치 현장 투입이 포함됐다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 원격 조작과 현장 확인
         paragraphs:
@@ -220,6 +216,9 @@ article_records:
             국가경찰기관 카라비니에리는 2025년 로마 주빌리 행사를 앞두고 Spot을 도입한 사례로 소개됐다.
         source_urls:
           - https://bostondynamics.com/blog/spot-to-the-rescue/
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 미 에너지부, 원전 탄화규소 피복재 연구에 최대 5,000만 달러 공모
     kind: 사건 뉴스
     region: 해외
@@ -233,9 +232,6 @@ article_records:
     lead: 미국 에너지부 원자력 담당 조직(Office of Nuclear Energy)은 미국 현지시각 10월 5일 탄화규소(SiC) 연료
       피복재의 연구개발을 지원하는 경쟁 공모를 발표했다. 3년에 걸쳐 최대 5,000만 달러를 지원하며, 연구용 원자로에서 조사 시험을 할
       12피트 길이의 탄화규소 피복재 연료봉 제작이 지원 대상이다. 신청 마감은 2026년 12월 7일이다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 연료와 냉각수 사이의 보호벽
         paragraphs:
@@ -249,6 +245,9 @@ article_records:
             필요한 자료라고 설명했다.
         source_urls:
           - https://www.energy.gov/ne/articles/doe-office-nuclear-energy-announces-50m-funding-revolutionize-reactor-cladding-material
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고
     kind: 사건 뉴스
     region: 국내
@@ -261,9 +260,6 @@ article_records:
       why: 금융권 해킹 사고의 추가 피해와 민간 확산 방지를 위한 대응이라고 전자신문은 보도했다.
     lead: 전자신문은 10월 4일 과학기술정보통신부와 한국인터넷진흥원(KISA)이 금융권 해킹 사고의 민간 확산을 막기 위한 긴급 대응체계를
       가동했다고 보도했다. 두 기관은 최고정보보호책임자(CISO) 신고기업 약 2만8000곳에 이날 보안 점검 권고 메일을 보냈다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 모니터링과 현장 대응
         paragraphs:
@@ -283,6 +279,9 @@ article_records:
             차단 등 필요한 조치를 요청했다고 보도됐다.
         source_urls:
           - https://www.etnews.com/20261004000031
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진
     kind: 사건 뉴스
     region: 해외
@@ -328,50 +327,49 @@ article_reviews:
   - title: FDA, 이보가인 초기 임상시험 설계에 관한 공개 의견 수렴
     event_id: 61b4373c4f6f0682
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
+    concept_ids: []
   - title: 쌓인 옷감을 집는 로봇 기술, 실험 성공률 93.3% 보고
     event_id: 72081e8f67345f20
     review_status: verified
-    concept_ids:
-      - fabric-grasping-hfnn
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
+    concept_ids: []
   - title: RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
     event_id: 1c20824a90713fc8
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-05
     reviewed_at: 2026-10-06
+    concept_ids: []
     date_kind: source-stated-event-date
     source_published_at: null
   - title: AWS Private CA, 인증서 내용·서명 전 실패까지 기록하는 발급 로그 추가
     event_id: a4e8f23e78c22e95
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-05
-    reviewed_at: 2026-10-06
+    reviewed_at: 2026-10-13
+    concept_ids: []
   - title: 보스턴 다이내믹스, Spot의 경찰·소방 활용 사례 공개
     event_id: 82294a16ed862561
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-06
-    reviewed_at: 2026-10-06
+    reviewed_at: 2026-10-13
+    concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-10-05T19:23:58+00:00
   - title: 미 에너지부, 원전 탄화규소 피복재 연구에 최대 5,000만 달러 공모
     event_id: cc2b0d13b882971e
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-05
-    reviewed_at: 2026-10-06
+    reviewed_at: 2026-10-13
+    concept_ids: []
   - title: 과기정통부·KISA, 약 2만8천 기업에 보안 점검 권고
     event_id: 3287c7f8e2e5e4bd
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-04
-    reviewed_at: 2026-10-06
+    reviewed_at: 2026-10-13
+    concept_ids: []
   - title: 株式会社不二越, 로봇 누적 매출 16.9% 증가…미국 영업거점 확대 추진
     event_id: 61fdd67b9300a89e
     review_status: verified
@@ -445,8 +443,6 @@ FDA는 이보가인 유도체인 노리보가인 염산염의 알코올 사용 �
 로봇 실험의 두 방식은 동일한 볼록 구조 기반 후보 생성을 사용했다. 수작업으로 설계한 점수로 후보를 선택한 방식의 집기 성공률은 80.0%, HFNN 기반 퍼지 추론으로 선택한 방식은 93.3%였다.
 
 별도의 속성 예측 비교에서는 같은 학습·시험 분할, 학습 전략과 평가 지표를 적용했다. 표 2의 평균 예측 정확도는 HFNN 91.7%, Direct-fusion 90.9%였다. 집었을 때 옷감이 분리되는 효과의 예측 정확도는 Local-PointNet 82.0%, HFNN 80.3%로 보고됐다. [S2]
-
-**개념:** [[Knowledge/Robotics/Hierarchical Fuzzy Neural Network (Fabric Grasping)]]
 
 ## RobCo, 기업가치 10억 달러 돌파 발표…직원 구주 거래 병행
 

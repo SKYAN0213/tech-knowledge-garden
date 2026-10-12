@@ -1,5 +1,5 @@
 ---
-title: FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표
+title: FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발
 type: news
 schema_version: tech-news/v1
 date: 2026-09-13
@@ -10,15 +10,17 @@ review_status: verified
 concept_ids:
   - agents
 published_at: 2026-09-11
-reviewed_at: 2026-09-14
-source_url: https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
+reviewed_at: 2026-10-09
+source_url: https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
 sources:
+  - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
   - https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
 concepts:
   - Knowledge/AI Systems/AI Agents
-description: FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를
-  발표했다. 설계 도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수
-  있다. 회사는 9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다.
+description: FANUC는 9월 11일 Google Cloud의 Gemini Enterprise를 활용해 부품 도면에서 로봇 아크용접
+  프로그램을 생성·실행하는 AI Welding Agent를 개발했다고 발표했다. 시스템은 재료와 완성 형상을 읽어 전류·전압 조건과 로봇
+  동작을 생성하며, 작업자는 생성 결과를 그대로 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 빅사이트에서 시작하는
+  국제용접전시회에서 시연하고 2026년 12월 말 출하를 시작할 예정이라고 밝혔다.
 theme_format: news-themes/v1
 sector: 로봇·제조
 theme: 제품·서비스
@@ -38,25 +40,30 @@ tags:
 editorial_format: six-w/v1
 kind: 사건 뉴스
 region: 해외
-lead: FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를 발표했다. 설계
-  도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수 있다. 회사는
-  9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다.
+lead: FANUC는 9월 11일 Google Cloud의 Gemini Enterprise를 활용해 부품 도면에서 로봇 아크용접 프로그램을
+  생성·실행하는 AI Welding Agent를 개발했다고 발표했다. 시스템은 재료와 완성 형상을 읽어 전류·전압 조건과 로봇 동작을
+  생성하며, 작업자는 생성 결과를 그대로 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 빅사이트에서 시작하는 국제용접전시회에서
+  시연하고 2026년 12월 말 출하를 시작할 예정이라고 밝혔다.
 facts:
-  who: FANUC·Google Cloud
-  when: 2026-09-11 발표; 9월16일 실연·12월말 출하 예정
-  where: 일본; 도쿄 국제웰딩쇼 예정
-  what: AI 용접 에이전트 개발
-  how: CRX 태블릿 TP 내장 카메라로 도면 입력, Gemini Enterprise로 조건·동작 생성
-  why: 회사가 밝힌 숙련 용접 조건 설정·로봇 교시 인력 부족 대응
+  who: FANUC, Google Cloud
+  when: 2026-09-11 개발 발표; 9월 16일 시연·12월 말 출하 예정
+  where: 일본 도쿄 빅사이트 국제용접전시회
+  what: AI Welding Agent 개발
+  how: 도면 해석으로 용접 조건·로봇 동작 생성 및 실행
+  why: 미기재
 explanations:
-  - heading: 도면 입력부터 프로그램 생성까지
+  - heading: 도면 입력과 용접 전원 연결
     paragraphs:
-      - CRX의 태블릿 조작기 내장 카메라로 부품 도면을 입력하면 AI가 재료와 형상을 읽어 용접 조건과 로봇 동작을 만든다는 구조다.
-        여기서 교시는 로봇이 움직일 경로와 작업을 지정하는 과정이며, 회사가 제시한 자동화 범위는 이 프로그램 작성과 조건 설정이다.
-      - FANUC은 기존 계약을 통한 구독 방식으로 제공하며 Google Cloud와 별도 기업 계약을 반드시 체결할 필요는 없다고
-        설명했다. 연결된 특정 용접 전원에 종속되지 않도록 지원한다는 점도 발표에 포함됐다.
+      - CRX 태블릿 티치 펜던트에 내장된 카메라로 도면을 촬영하므로 별도 카메라나 전용 장치를 추가할 필요가 없다고 FANUC는
+        설명했다. FANUC 로봇에 연결된 용접 전원은 특정 제조사 제품으로 제한하지 않는다는 설명이다.
     source_urls:
-      - https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
+      - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
+  - heading: 기존 FANUC 계약을 통한 구독
+    paragraphs:
+      - FANUC는 기존 FANUC 계약을 통해 서비스를 구독할 수 있으며, 별도의 Google Cloud 기업 계약이 반드시 필요한
+        것은 아니라고 안내했다.
+    source_urls:
+      - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
 papers: []
 relations: []
 topic_ids: []
@@ -65,18 +72,20 @@ cssclasses:
 generated_by: tech-knowledge-garden
 ---
 
-# FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표
+# FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발
 
 
-FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를 발표했다. 설계 도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
+FANUC는 9월 11일 Google Cloud의 Gemini Enterprise를 활용해 부품 도면에서 로봇 아크용접 프로그램을 생성·실행하는 AI Welding Agent를 개발했다고 발표했다. 시스템은 재료와 완성 형상을 읽어 전류·전압 조건과 로봇 동작을 생성하며, 작업자는 생성 결과를 그대로 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 빅사이트에서 시작하는 국제용접전시회에서 시연하고 2026년 12월 말 출하를 시작할 예정이라고 밝혔다. [원문 1](<https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html>) [원문 2](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
 
-### 도면 입력부터 프로그램 생성까지
+### 도면 입력과 용접 전원 연결
 
-CRX의 태블릿 조작기 내장 카메라로 부품 도면을 입력하면 AI가 재료와 형상을 읽어 용접 조건과 로봇 동작을 만든다는 구조다. 여기서 교시는 로봇이 움직일 경로와 작업을 지정하는 과정이며, 회사가 제시한 자동화 범위는 이 프로그램 작성과 조건 설정이다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
+CRX 태블릿 티치 펜던트에 내장된 카메라로 도면을 촬영하므로 별도 카메라나 전용 장치를 추가할 필요가 없다고 FANUC는 설명했다. FANUC 로봇에 연결된 용접 전원은 특정 제조사 제품으로 제한하지 않는다는 설명이다. [원문 1](<https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html>)
 
-FANUC은 기존 계약을 통한 구독 방식으로 제공하며 Google Cloud와 별도 기업 계약을 반드시 체결할 필요는 없다고 설명했다. 연결된 특정 용접 전원에 종속되지 않도록 지원한다는 점도 발표에 포함됐다. [원문 1](<https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html>)
+### 기존 FANUC 계약을 통한 구독
 
-**개념:** [[Knowledge/AI Systems/AI Agents|AI 에이전트]]
+FANUC는 기존 FANUC 계약을 통해 서비스를 구독할 수 있으며, 별도의 Google Cloud 기업 계약이 반드시 필요한 것은 아니라고 안내했다. [원문 1](<https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html>)
+
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
 
 

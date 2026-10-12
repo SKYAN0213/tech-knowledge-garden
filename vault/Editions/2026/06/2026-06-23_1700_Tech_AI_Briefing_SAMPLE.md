@@ -1,13 +1,21 @@
 ---
 title: Tech & AI Briefing Sample - 17:00
-date: 2026-06-23
 time: 17:00
-timezone: Asia/Seoul
-status: sample
-coverage_start: 2026-06-23 07:00
-coverage_end: 2026-06-23 17:00
 type: briefing
-source_count: 10
+tags:
+  - AI
+  - TechBriefing
+  - Obsidian
+status: sample
+schema_version: tech-ai-magazine/v2
+date: 2026-06-23
+timezone: Asia/Seoul
+coverage_start: 2026-06-23T07:00:00+09:00
+coverage_end: 2026-06-23T17:00:00+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 6
 new_items_count: 6
 linked_knowledge_notes:
   - AI Agents
@@ -16,156 +24,385 @@ linked_knowledge_notes:
   - Retrieval-Augmented Generation
   - Model Context Protocol
   - AI-Assisted Security Engineering
-tags:
-  - AI
-  - TechBriefing
-  - Obsidian
+  - Knowledge/AI Systems/AI Agents
+  - Knowledge/AI Systems/Model Context Protocol
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - 에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
+  - SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안
+  - CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록
+  - LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개
+  - OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표
+article_records:
+  - title: 에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-05-23
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 연구진은 2026년 5월 23일 arXiv에, 언어 모델 에이전트의 보안을 사람과 에이전트의 상호작용 문제로 다루는 사전공개 논문을
+      제출했다. v1 초록은 정책 명세·실행 시점 승인·권한 범위 설정이 실제 시스템에서 널리 쓰이는 반면, 학계의 연구 관심은 다른 방어
+      방식에 집중돼 있다고 설명한다.
+    explanations:
+      - heading: 분석에 포함한 자료와 시스템
+        paragraphs:
+          - 연구진은 2026년 4월까지의 학술 논문 59편, 운영 에이전트 시스템 21개, 보안 플러그인 26개를 체계적으로
+            분석했다. 정책 명세·실행 시점 승인·권한 설정은 조사한 시스템에서 각각 14개·15개·16개에 채택돼 있었다.
+          - 초록은 사람이 반복 승인을 수행할 때의 인지 부담과 보안 보장 사이에 상충이 있다고 지적한다. 조사 대상 운영 시스템에서는
+            intent anchoring과 trust labeling의 도입 사례를 찾지 못했다고 보고하며, 사람의 참여를
+            설계·평가하는 연구 의제를 제안했다.
+        source_urls:
+          - https://arxiv.org/abs/2605.24309v1
+    papers:
+      - work_id: arxiv-2605-24309
+        identifiers:
+          - arxiv:2605.24309v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2605.24309v1
+    relations: []
+    topic_ids: []
+  - title: SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-02-27
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 연구진은 2026년 2월 27일 arXiv에, AI 에이전트 스킬 공급망을 형식적으로 분석하는 SkillFortify 사전공개 논문을
+      제출했다. v1 초록은 공격자 모델·정적 분석·권한 기반 샌드박스·의존성 그래프를 결합하는 구성을 제안한다.
+    explanations:
+      - heading: 분석과 의존성 처리
+        paragraphs:
+          - 정적 분석은 추상 해석에 기반하며, 스킬의 실행 권한을 제한하는 샌드박스와 SAT 기반 의존성 해결·잠금 파일 의미를 함께
+            다룬다. 연구진은 공격자 모델의 최대성과 격리 범위에 대한 증명을 제시한다고 설명했다.
+        source_urls:
+          - https://arxiv.org/abs/2603.00195v1
+      - heading: 초록이 보고한 평가 조건
+        paragraphs:
+          - 연구진은 스킬 540개로 구성한 SkillFortifyBench에서 F1 96.95%, 정밀도 100%, 거짓 양성률
+            0%를 보고했다. 이 수치는 해당 벤치마크의 평가 결과다.
+        source_urls:
+          - https://arxiv.org/abs/2603.00195v1
+    papers:
+      - work_id: arxiv-2603-00195
+        identifiers:
+          - arxiv:2603.00195v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2603.00195v1
+    relations: []
+    topic_ids: []
+  - title: CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-03-26
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 2026년 3월 26일 CycloneDX 명세 저장소에 AI 에이전트의 구성 요소를 추적하는 Agent BOM 제안이 등록됐다.
+      제안은 MCP 서버·도구·모델·자격증명을 에이전트의 구성 명세에 포함하자는 내용이다.
+    explanations:
+      - heading: 제안에 포함한 식별 정보
+        paragraphs:
+          - MCP 서버는 이름·버전·해시를, 도구는 정의와 기능 권한 범위를 기록하도록 제안했다. 모델 항목에는 모델
+            ID·버전·출처, 신원 항목에는 에이전트 ID·신뢰 수준·서명 키 지문을 포함한다.
+          - 글은 제재 목록 확인 상태와 지출 한도·금융 권한도 추적 대상으로 제시했다. 자율 에이전트가 어떤 구성 요소를 사용하고
+            어떤 작업을 허용받았는지를 확인하려는 저장소 제안이다.
+        source_urls:
+          - https://github.com/CycloneDX/specification/issues/895
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-12
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: LangChain은 2026년 6월 12일 에이전트 개발·운영 현황을 조사한 State of Agent Engineering 보고서를
+      공개했다. 보고서는 응답 조직에서 에이전트 관측 도구의 도입이 오프라인 평가보다 널리 보고됐다고 설명한다.
+    explanations:
+      - heading: 응답자와 조사 시기
+        paragraphs:
+          - 공개 설문은 2025년 11월 18일부터 12월 2일까지 진행됐으며 응답은 1,340건이었다. 응답자의 63%는 기술
+            업종에 속했다.
+        source_urls:
+          - https://www.langchain.com/state-of-agent-engineering
+      - heading: 관측과 평가를 구분한 결과
+        paragraphs:
+          - 보고서는 응답 조직의 89%가 어떤 형태로든 에이전트 관측을 수행하고, 62%가 개별 단계·도구 호출을 보는 상세 추적을
+            사용한다고 밝혔다. 오프라인 평가는 응답자의 52.4%, 온라인 평가는 37.3%가 도입했다고 보고했다.
+        source_urls:
+          - https://www.langchain.com/state-of-agent-engineering
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-22
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: OpenAI는 2026년 6월 22일 취약점의 발견부터 패치까지 지원하는 Daybreak의 확대를 발표했다. 발표 도입부는 Codex
+      Security 플러그인 업데이트와 신뢰할 수 있는 방어자를 대상으로 한 GPT-5.5-Cyber의 제한 제공을 소개했다.
+    explanations:
+      - heading: 업데이트가 겨냥한 작업
+        paragraphs:
+          - 회사는 내부·고객 사용 경험을 반영한 Codex Security 플러그인으로 기존 시스템의 취약점 발견과 패치를 가속하려
+            한다고 설명했다.
+          - GPT-5.5-Cyber는 초기 프리뷰에 이어 정식 버전을 내놓지만, 제공 경로는 신뢰할 수 있는 방어자에 대한 제한
+            출시로 유지한다고 밝혔다.
+        source_urls:
+          - https://openai.com/index/daybreak-securing-the-world/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: OpenAI·Trail of Bits, 오픈소스 유지보수자를 위한 Patch the Planet 소개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-22
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: OpenAI는 2026년 6월 22일 Trail of Bits와 구축한 Daybreak 프로그램 Patch the Planet을
+      소개했다. AI를 이용한 보안 조사와 전문가 검토를 결합해 오픈소스 유지보수자의 취약점 수정 작업을 지원하는 방식이다.
+    explanations:
+      - heading: 보고서 전달 전 검토와 패치 지원
+        paragraphs:
+          - 발표 도입부에 따르면 보안 엔지니어는 조사 결과를 유지보수자에게 전달하기 전에 검토한다. 이후 프로젝트와 함께
+            패치·테스트를 개발하고, 첫 수정 이후에도 사용할 수 있는 작업 절차를 만든다.
+        source_urls:
+          - https://openai.com/index/patch-the-planet/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: 에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
+    event_id: fe3330c7939347da
+    review_status: verified
+    published_at: 2026-05-23
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - agents
+    date_kind: source-publication-day
+    source_published_at: 2026-05-23
+  - title: SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안
+    event_id: b3a348949ed015de
+    review_status: verified
+    published_at: 2026-02-27
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - agents
+    date_kind: source-publication-day
+    source_published_at: 2026-02-27
+  - title: CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록
+    event_id: a57895f3e29f9a2f
+    review_status: verified
+    published_at: 2026-03-26
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - mcp
+    date_kind: source-publication-day
+    source_published_at: 2026-03-26
+  - title: LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개
+    event_id: 2253bdfec0d930ce
+    review_status: verified
+    published_at: 2026-06-12
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - agents
+    date_kind: source-publication-day
+    source_published_at: 2026-06-12
+  - title: OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표
+    event_id: 88ca535a278fef4f
+    review_status: verified
+    published_at: 2026-06-22
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-day
+    source_published_at: 2026-06-22
+  - title: OpenAI·Trail of Bits, 오픈소스 유지보수자를 위한 Patch the Planet 소개
+    event_id: 172674afcb8f94fb
+    review_status: verified
+    published_at: 2026-06-22
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-day
+    source_published_at: 2026-06-22
 ---
 
-# Tech & AI Briefing Sample - 17:00
+# 이번 호 표지
 
-> 이 문서는 최신 변화의 입구입니다.  
-> 오래 남길 개념과 기술 설명은 연결된 지식 노트에서 관리합니다.
+에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
 
-## 1. 결론 먼저
+# 차례
 
-이번 샘플 구간에서 가장 중요한 흐름은 **AI 에이전트가 "답변하는 모델"에서 "권한을 가진 소프트웨어 시스템"으로 다뤄지기 시작했다**는 점입니다.
+- 에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
+- SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안
+- CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록
+- LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개
+- OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표
 
-그래서 앞으로 브리핑은 단순히 "어떤 회사가 무엇을 발표했다"가 아니라 다음 세 가지를 함께 봅니다.
+# 커버 스토리
 
-1. 어떤 기술 변화가 새로 나왔는가
-2. 그 변화가 실제 개발, 보안, 업무 자동화에 어떤 영향을 주는가
-3. 이 변화가 기존 지식 노트 중 어디에 연결되는가
+없음
 
-## 2. 신규 변화 요약
+# 뉴스 데스크
 
-| 중요도 | 신규 변화 | 구체적 의미 | 연결 지식 |
-|---|---|---|---|
-| 높음 | 에이전트 보안 논의가 권한, 도구, 감사 로그 중심으로 이동 | AI가 외부 도구를 호출하면 모델 안전성만으로는 부족함 | [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]] |
-| 높음 | Agent BOM, AI BOM, Skill BOM 같은 명세 개념이 등장 | 에이전트가 무엇에 접근하고 무엇을 실행하는지 목록화해야 함 | [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]] |
-| 높음 | 에이전트 운영에서 observability가 기본 요건으로 부상 | 실패 원인이 코드가 아니라 추론 과정일 수 있어 trace가 중요함 | [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]] |
-| 중간 | RAG와 MCP의 역할 구분이 더 중요해짐 | RAG는 지식 검색, MCP는 도구와 시스템 연결에 가까움 | [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]] / [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]] |
-| 중간 | AI 보안 자동화가 취약점 탐지에서 패치 검증까지 확장 | 보안팀의 병목은 알림보다 재현 가능한 수정으로 이동 | [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]] |
-| 중간 | 에이전트 논문 큐레이션이 Memory, Tooling, Eval, Security로 분화 | 논문 수집보다 주제별 지식화가 더 중요함 | [[Knowledge/AI Systems/AI Agents|AI Agents]] |
+## 에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석
 
-## 3. 자세히 볼 변화
+**분야:** 사이버보안
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** 없음
 
-### 3.1 에이전트는 이제 "모델"보다 "권한 있는 시스템"에 가깝다
+연구진은 2026년 5월 23일 arXiv에, 언어 모델 에이전트의 보안을 사람과 에이전트의 상호작용 문제로 다루는 사전공개 논문을 제출했다. v1 초록은 정책 명세·실행 시점 승인·권한 범위 설정이 실제 시스템에서 널리 쓰이는 반면, 학계의 연구 관심은 다른 방어 방식에 집중돼 있다고 설명한다. [S1]
 
-최근 에이전트 보안 논의에서 반복적으로 나오는 질문은 "모델이 안전한가?"보다 훨씬 구체적입니다.
+### 분석에 포함한 자료와 시스템
 
-- 이 에이전트가 어떤 파일을 읽을 수 있는가
-- 어떤 API나 MCP 서버에 연결되어 있는가
-- 브라우저, 터미널, GitHub, 캘린더 같은 도구를 호출할 수 있는가
-- 사람이 승인하지 않아도 파일을 만들거나 수정할 수 있는가
-- 실행 과정이 trace로 남는가
+연구진은 2026년 4월까지의 학술 논문 59편, 운영 에이전트 시스템 21개, 보안 플러그인 26개를 체계적으로 분석했다. 정책 명세·실행 시점 승인·권한 설정은 조사한 시스템에서 각각 14개·15개·16개에 채택돼 있었다.
 
-예를 들어 Obsidian 브리핑 자동화도 에이전트입니다. 이 자동화는 웹에서 자료를 찾고, 파일을 만들고, 기존 지식 노트와 연결합니다. 따라서 "글을 잘 쓰는가"뿐 아니라 **쓰기 권한이 어느 폴더로 제한되어 있는지**, **이전 브리핑과 중복을 어떻게 피하는지**, **출처가 약한 내용을 어떻게 제외하는지**가 중요합니다.
+초록은 사람이 반복 승인을 수행할 때의 인지 부담과 보안 보장 사이에 상충이 있다고 지적한다. 조사 대상 운영 시스템에서는 intent anchoring과 trust labeling의 도입 사례를 찾지 못했다고 보고하며, 사람의 참여를 설계·평가하는 연구 의제를 제안했다. [S1]
 
-관련 지식: [[Knowledge/AI Systems/AI Agents|AI Agents]], [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
-### 3.2 Agent BOM은 에이전트 시대의 "부품 명세서" 역할을 한다
+## SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안
 
-소프트웨어 보안에서는 SBOM이 널리 쓰입니다. SBOM은 어떤 라이브러리와 의존성이 들어 있는지 기록한 목록입니다. AI 시스템에서는 AI BOM, Model BOM, Agent BOM 같은 개념이 확장되고 있습니다.
+**분야:** 사이버보안
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 새로운 방법
+**기업·기관:** 없음
 
-Agent BOM에서 봐야 할 항목은 다음과 같습니다.
+연구진은 2026년 2월 27일 arXiv에, AI 에이전트 스킬 공급망을 형식적으로 분석하는 SkillFortify 사전공개 논문을 제출했다. v1 초록은 공격자 모델·정적 분석·권한 기반 샌드박스·의존성 그래프를 결합하는 구성을 제안한다. [S2]
 
-| 항목 | 확인 질문 | 브리핑 자동화 예시 |
-|---|---|---|
-| 데이터 접근 | 무엇을 읽는가 | 공식 발표, arXiv, Hugging Face, GitHub, 기존 Obsidian 노트 |
-| 쓰기 권한 | 무엇을 바꾸는가 | `Briefings/`, `Knowledge/` 아래 Markdown 생성 |
-| 도구 연결 | 어떤 도구를 호출하는가 | 웹 검색, 파일 작성, 필요 시 GitHub/Hugging Face 확인 |
-| 기억 | 무엇을 누적하는가 | 이전 브리핑, 지식 노트, 사용자 선호 |
-| 감사 가능성 | 나중에 검토 가능한가 | 출처 링크, 생성 시간, coverage window, 제외 항목 |
+### 분석과 의존성 처리
 
-이 개념은 아직 표준이 완전히 굳은 것은 아니지만, CycloneDX 쪽에서도 agent BOM 구성 요소 논의가 있고, 연구 쪽에서는 agentic AI skill의 supply chain을 분석하는 방향이 나오고 있습니다.
+정적 분석은 추상 해석에 기반하며, 스킬의 실행 권한을 제한하는 샌드박스와 SAT 기반 의존성 해결·잠금 파일 의미를 함께 다룬다. 연구진은 공격자 모델의 최대성과 격리 범위에 대한 증명을 제시한다고 설명했다. [S2]
 
-관련 지식: [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]
+### 초록이 보고한 평가 조건
 
-### 3.3 Observability는 에이전트 운영의 기본 안전장치가 되고 있다
+연구진은 스킬 540개로 구성한 SkillFortifyBench에서 F1 96.95%, 정밀도 100%, 거짓 양성률 0%를 보고했다. 이 수치는 해당 벤치마크의 평가 결과다. [S2]
 
-LangChain의 State of Agent Engineering에 따르면, agent observability 도입은 eval adoption보다 더 빠르게 퍼지고 있습니다. 이 신호가 중요한 이유는 명확합니다. 에이전트는 한 번의 함수 호출처럼 실패하지 않습니다. 검색, 판단, 도구 호출, 중간 요약, 재시도, 파일 수정 같은 여러 단계를 거칩니다.
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
-기존 소프트웨어 오류는 stack trace로 추적할 수 있지만, 에이전트 오류는 다음처럼 나타납니다.
+## CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록
 
-- 처음 검색한 출처가 부정확했다
-- 중간 요약에서 중요한 조건을 빠뜨렸다
-- 잘못된 도구를 선택했다
-- 비용이 높은 루프에 빠졌다
-- 사용자의 승인 없이 너무 많은 변경을 시도했다
+**분야:** 사이버보안
+**테마:** 표준·생태계
+**보조 테마:** 없음
+**세부 태그:** 오픈소스
+**기업·기관:** CycloneDX
 
-그래서 에이전트 운영에서는 trace, tool call log, intermediate reasoning summary, evaluation set이 함께 필요합니다.
+2026년 3월 26일 CycloneDX 명세 저장소에 AI 에이전트의 구성 요소를 추적하는 Agent BOM 제안이 등록됐다. 제안은 MCP 서버·도구·모델·자격증명을 에이전트의 구성 명세에 포함하자는 내용이다. [S3]
 
-관련 지식: [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]
+### 제안에 포함한 식별 정보
 
-### 3.4 RAG와 MCP는 비슷해 보이지만 역할이 다르다
+MCP 서버는 이름·버전·해시를, 도구는 정의와 기능 권한 범위를 기록하도록 제안했다. 모델 항목에는 모델 ID·버전·출처, 신원 항목에는 에이전트 ID·신뢰 수준·서명 키 지문을 포함한다.
 
-최근 AI 개발 글에서 RAG, MCP, Agentic AI가 자주 함께 등장합니다. 하지만 세 개는 같은 개념이 아닙니다.
+글은 제재 목록 확인 상태와 지출 한도·금융 권한도 추적 대상으로 제시했다. 자율 에이전트가 어떤 구성 요소를 사용하고 어떤 작업을 허용받았는지를 확인하려는 저장소 제안이다. [S3]
 
-| 개념 | 한 줄 설명 | 브리핑 자동화에서의 역할 |
-|---|---|---|
-| RAG | 문서나 DB를 검색해 답변 근거로 쓰는 방식 | 기존 Obsidian 지식 노트와 새 소식을 연결 |
-| MCP | 모델이 외부 도구와 데이터를 표준 방식으로 연결하는 프로토콜 | 검색, 파일, 캘린더, GitHub 같은 도구 연결 |
-| Agentic AI | 목표를 받고 여러 도구를 사용해 작업을 수행하는 시스템 | 07:00/17:00 브리핑 생성 자동화 자체 |
+**개념:** [[Knowledge/AI Systems/Model Context Protocol]]
 
-쉽게 말하면 RAG는 "무엇을 알고 답할 것인가"에 가깝고, MCP는 "어떤 도구와 연결될 것인가"에 가깝습니다. 에이전트는 이 둘을 사용해 실제 작업을 수행합니다.
+## LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개
 
-관련 지식: [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]], [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]], [[Knowledge/AI Systems/AI Agents|AI Agents]]
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** LangChain
 
-### 3.5 AI 보안 자동화는 "발견"보다 "수정 가능한 증거"가 중요해지고 있다
+LangChain은 2026년 6월 12일 에이전트 개발·운영 현황을 조사한 State of Agent Engineering 보고서를 공개했다. 보고서는 응답 조직에서 에이전트 관측 도구의 도입이 오프라인 평가보다 널리 보고됐다고 설명한다. [S4]
 
-OpenAI의 Daybreak와 Patch the Planet 흐름은 보안 AI의 방향을 잘 보여줍니다. 단순히 취약점 후보를 많이 찾는 것은 유지보수자에게 부담을 줄 수 있습니다. 실제로 필요한 것은 다음입니다.
+### 응답자와 조사 시기
 
-- 취약점이 발생하는 입력
-- 영향을 받는 코드 경로
-- 실제 공격 가능성
-- 패치 초안
-- 회귀 테스트
-- 사람이 검토할 수 있는 보고서
+공개 설문은 2025년 11월 18일부터 12월 2일까지 진행됐으며 응답은 1,340건이었다. 응답자의 63%는 기술 업종에 속했다. [S4]
 
-따라서 앞으로 보안 AI 도구는 "몇 개 찾았는가"보다 **얼마나 재현 가능하고 병합 가능한 수정을 제안하는가**로 평가해야 합니다.
+### 관측과 평가를 구분한 결과
 
-관련 지식: [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]]
+보고서는 응답 조직의 89%가 어떤 형태로든 에이전트 관측을 수행하고, 62%가 개별 단계·도구 호출을 보는 상세 추적을 사용한다고 밝혔다. 오프라인 평가는 응답자의 52.4%, 온라인 평가는 37.3%가 도입했다고 보고했다. [S4]
 
-## 4. 이번 브리핑에서 지식 노트로 승격한 항목
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
-| 지식 노트 | 승격 이유 |
-|---|---|
-| [[Knowledge/AI Systems/AI Agents|AI Agents]] | 에이전트 관련 뉴스와 논문을 해석하기 위한 상위 개념 |
-| [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]] | 권한, 도구, 감사 로그, Agent BOM을 함께 관리해야 함 |
-| [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]] | 에이전트 운영 품질을 판단하는 핵심 기준 |
-| [[Knowledge/AI Systems/Retrieval-Augmented Generation|Retrieval-Augmented Generation]] | Obsidian 지식 창고화의 검색 기반 개념 |
-| [[Knowledge/AI Systems/Model Context Protocol|Model Context Protocol]] | 에이전트와 외부 도구 연결을 이해하는 핵심 프로토콜 |
-| [[Knowledge/Software Engineering/AI-Assisted Security Engineering|AI-Assisted Security Engineering]] | 보안 자동화와 패치 자동화를 장기 추적할 주제 |
+## OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표
 
-## 5. 제외하거나 보류한 것
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 변경
+**기업·기관:** OpenAI
 
-| 항목 | 처리 | 이유 |
-|---|---|---|
-| 단순 전망형 AI 트렌드 글 | 제외 | 기술 사례나 구현 근거가 약함 |
-| 출처가 SNS 요약뿐인 주장 | 보류 | 원문 확인 전까지 지식 노트에 반영하지 않음 |
-| 오래된 MCP/RAG 비교 글 | 부분 참고 | 개념 설명에는 유용하지만 최신 변화로 보기는 어려움 |
-| 기업 홍보성 agent framework 비교 | 부분 참고 | 체크리스트로는 쓸 수 있으나 독립 근거로는 약함 |
+OpenAI는 2026년 6월 22일 취약점의 발견부터 패치까지 지원하는 Daybreak의 확대를 발표했다. 발표 도입부는 Codex Security 플러그인 업데이트와 신뢰할 수 있는 방어자를 대상으로 한 GPT-5.5-Cyber의 제한 제공을 소개했다. [S5]
 
-## 6. 다음 브리핑에서 추적할 질문
+### 업데이트가 겨냥한 작업
 
-- Agent BOM이나 AI BOM이 실제 표준 형식으로 굳어지는가
-- MCP 서버 보안, 권한 스코프, 인증 방식에 대한 실무 가이드가 나오는가
-- 에이전트 평가가 단순 성공률을 넘어 비용, 안정성, 보안까지 포함하는가
-- 보안 AI 도구가 실제 오픈소스 프로젝트에 패치를 병합시키는 사례가 늘어나는가
-- RAG 기반 지식베이스가 최신성 문제를 어떻게 해결하는가
+회사는 내부·고객 사용 경험을 반영한 Codex Security 플러그인으로 기존 시스템의 취약점 발견과 패치를 가속하려 한다고 설명했다.
 
-## 참고 링크
+GPT-5.5-Cyber는 초기 프리뷰에 이어 정식 버전을 내놓지만, 제공 경로는 신뢰할 수 있는 방어자에 대한 제한 출시로 유지한다고 밝혔다. [S5]
 
-- [LangChain - State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering)
-- [LangChain - Agent observability and evaluation](https://www.langchain.com/blog/agent-observability-powers-agent-evaluation)
-- [LangChain - AI agent frameworks in 2026](https://www.langchain.com/resources/ai-agent-frameworks)
-- [Hugging Face Blog](https://huggingface.co/blog)
-- [Hugging Face Papers](https://huggingface.co/papers)
-- [Hugging Face - Awesome AI Agent Papers dataset](https://huggingface.co/datasets/molmohsen/awesome-ai-agent-papers)
-- [arXiv - Formal Analysis and Supply Chain Security for Agentic AI Skills](https://arxiv.org/html/2603.00195v1)
-- [arXiv - Reframing LLM Agent Security as an Agent-Human Interaction Problem](https://arxiv.org/html/2605.24309v1)
-- [CycloneDX - Agent Bill of Materials discussion](https://github.com/CycloneDX/specification/issues/895)
-- [OpenAI - Daybreak](https://openai.com/index/daybreak-securing-the-world/)
-- [OpenAI - Patch the Planet](https://openai.com/index/patch-the-planet/)
-- [Hugging Face - What is MCP](https://huggingface.co/blog/Kseniase/mcp)
+## OpenAI·Trail of Bits, 오픈소스 유지보수자를 위한 Patch the Planet 소개
+
+**분야:** 사이버보안
+**테마:** 표준·생태계
+**보조 테마:** 없음
+**세부 태그:** 기술 제휴
+**기업·기관:** OpenAI, Trail of Bits
+
+OpenAI는 2026년 6월 22일 Trail of Bits와 구축한 Daybreak 프로그램 Patch the Planet을 소개했다. AI를 이용한 보안 조사와 전문가 검토를 결합해 오픈소스 유지보수자의 취약점 수정 작업을 지원하는 방식이다. [S6]
+
+### 보고서 전달 전 검토와 패치 지원
+
+발표 도입부에 따르면 보안 엔지니어는 조사 결과를 유지보수자에게 전달하기 전에 검토한다. 이후 프로젝트와 함께 패치·테스트를 개발하고, 첫 수정 이후에도 사용할 수 있는 작업 절차를 만든다. [S6]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
+
+# 흐름 읽기
+
+없음
+
+# 오늘의 적용
+
+없음
+
+# 개념 색인
+
+없음
+
+# Source List
+
+- [S1] https://arxiv.org/abs/2605.24309v1
+- [S2] https://arxiv.org/abs/2603.00195v1
+- [S3] https://github.com/CycloneDX/specification/issues/895
+- [S4] https://www.langchain.com/state-of-agent-engineering
+- [S5] https://openai.com/index/daybreak-securing-the-world/
+- [S6] https://openai.com/index/patch-the-planet/

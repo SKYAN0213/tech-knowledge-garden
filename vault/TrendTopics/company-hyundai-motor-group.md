@@ -8,7 +8,7 @@ thesis: 3월 발표가 엔비디아 기술의 선제 적용과 데이터 기반 
   제시했다. 실제 운영 중인 데이터 수집 차량과 개발 조직을 두 경로의 공통 기반으로 둔 전략이다.
 watch_for: 2028년 엔비디아 기반 양산, 2029년 Atria AI 양산, 광주 실증과 실제 적용 차종 발표.
 disconfirming: 양산 일정·적용 차종·공통 센서 체계의 수정 발표가 있으면 해당 이력을 추가한다.
-reviewed: 2026-09-14
+reviewed: 2026-10-10
 knowledge_notes:
   - Knowledge/AI Systems/Vision-Language-Action Models
 lessons: []

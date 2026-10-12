@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-08
+date: 2026-10-12
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,26 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/64849ef73d1ceb1b|Amazon EC2 R8gd, 독일 AWS 유럽 소버린 클라우드 리전에 출시]] · 2026-10-12
+- [[News/9435cd6c4da8359c|경기도 AI 집적단지 조례안 입법예고…전석훈 의원, 12일 의견 수렴 후 발의 계획]] · 2026-10-12
+- [[News/ed9bdc946ab2c892|우드맥킨지 조사서 “4시간 배터리, 43개 시장서 개방형 가스터빈보다 저렴”]] · 2026-10-12
+- [[News/220655e9da92e779|AWS, GovCloud에 S3 Vectors 메타데이터 사전 필터링 제공]] · 2026-10-12
+- [[News/24beabc691ccd09b|CodeQL 2.27.2, C++ 정규표현식 파서 추가·Go 그래프 표현 변경]] · 2026-10-12
+- [[News/6a2caa49d34a5248|ASML, 국내 노광장비 교체 부품값 내년 1월부터 일괄 10% 인상]] · 2026-10-12
+- [[News/c9b37864105fbf8c|Cloudflare, Deno 인수 발표…Workers 개선에 활용 계획]] · 2026-10-12
+- [[News/34e69e3cee501b59|앤트로픽, 클로드 오피스 도구 정식 출시하고 대시보드·애니메이션 기능 추가]] · 2026-10-12
+- [[News/f1a0f1f4964d636b|소량 포장 폐기물 분류용 협동로봇 작업대, 실험실 통합 검증]] · 2026-10-12
+- [[News/4c4dce735e8ae75f|앤트로픽, 내부 AI 평가 인터넷 차단…필라델피아 경찰에 허위 살인 제보]] · 2026-10-12
+- [[News/11e3f74b3b8c7f1c|AWS Security Hub, findings를 S3에 CSV·JSON으로 내보내기 지원]] · 2026-10-12
+- [[News/dd7d78b72787c1ea|TypeSafe AI, Jev 공개 후 투자 유치…기업가치 75억 달러 평가]] · 2026-10-12
+- [[News/ae944eccd92e56cb|Roche, vamikibart 3상 52주 결과 발표…미 FDA BLA 접수]] · 2026-10-12
+- [[News/26b962ebc25d94a3|Amazon Quick, 조직 브랜드 템플릿으로 문서·발표자료 생성 지원]] · 2026-10-12
+- [[News/5da1eb4c04b7b47a|AWS Lambda, 자체 운영 Kafka ESM에 OAuth 인증 지원]] · 2026-10-12
+- [[News/4bcd2fd0c785c2fb|바른손M카드, 데이터베이스 침입 확인 후 고객에게 유출 가능성 통지]] · 2026-10-12
+- [[News/c62f1944dafdd37d|Xona, 6기 위성 발사로 정밀 GPS 대안 Pulsar 시험 준비]] · 2026-10-12
+- [[News/8aa5b51690777ac2|Roche, 3기 dMMR 결장암 Tecentriq 병용 보조요법의 FDA 승인 발표]] · 2026-10-12
+- [[News/def2eb410a87c028|AWS GovCloud Kiro에서 Claude Sonnet 5.5·Opus 5.5 이용 가능]] · 2026-10-12
+- [[News/ce50b256a6fcc14e|Danu Robotics, 재활용 로봇 H.E.R.O. 출하]] · 2026-10-12
 - [[News/ae20dc3e235a741f|항우연, 누리호 5차 발사·군집위성 5기와 큐브위성 9기 궤도 투입 발표]] · 2026-10-08
 - [[News/01027b36b4a06b56|MIT, 움직이는 장애물의 속도 상한을 반영한 드론 경로 계획기 SANDO 공개]] · 2026-10-08
 - [[News/bcbd171efb3de844|KUKA·TD SYNNEX, 유럽 AMR 유통 제휴…교육·판매 지원 결합]] · 2026-10-08
@@ -55,10 +75,10 @@ generated_by: tech-knowledge-garden
 - [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01
 - [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]] · 2026-10-01
 - [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]] · 2026-10-01
-- [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]] · 2026-10-01
+- [[News/926dd2776aef7b1b|Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작]] · 2026-10-01
 - [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]] · 2026-10-01
 - [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]] · 2026-10-01
-- [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]] · 2026-10-01
+- [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표]] · 2026-10-01
 - [[News/2000861d5f1c75c8|AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고]] · 2026-10-01
 - [[News/0b883a59e5850ce3|Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개]] · 2026-10-01
 - [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · 2026-10-01
@@ -70,15 +90,15 @@ generated_by: tech-knowledge-garden
 - [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
 - [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
 - [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]] · 2026-09-30
-- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
-- [[News/8a3306a5bb75996e|미 에너지부, 26개 주 송전망 개선 31개 사업에 52억5천만달러 선정]] · 2026-09-30
+- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
+- [[News/8a3306a5bb75996e|미 에너지부, 26개 주 전력망 사업 31건에 19억 달러 지원 추진]] · 2026-09-30
 - [[News/bad3d5636979c1ec|IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파]] · 2026-09-30
 - [[News/783ed5a89f40a298|SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시]] · 2026-09-30
 - [[News/280289462980857d|Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대]] · 2026-09-30
 - [[News/461333ec2270a664|Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정]] · 2026-09-30
 - [[News/295f6ca27b06224b|Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표]] · 2026-09-30
 - [[News/ef1b3a4772eab837|Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고]] · 2026-09-30
-- [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 달러 투자 발표]] · 2026-09-30
+- [[News/171333c4eead9c69|삼성 6개 계열사, AI 인프라 기업 Helix에 10억 미국 달러 투자 발표]] · 2026-09-30
 - [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]] · 2026-09-23
 - [[News/6bbcd64185c1cd83|우주항공청, 제2우주센터 설계에 민간 발사 수요 의견 수렴]] · 2026-09-23
 - [[News/66c52fd129c04f36|Roche, enicepatide 2상에서 48주 혈당·체중 결과 공개]] · 2026-09-23
@@ -86,7 +106,7 @@ generated_by: tech-knowledge-garden
 - [[News/8eef4c45f7f30411|LG에너지솔루션 ESS, NVIDIA DSX Ready 요건 충족]] · 2026-09-23
 - [[News/3742191de5126dd0|Cadence, 설계 사양을 RTL로 만드는 에이전트 공개…4분기 제한 제공]] · 2026-09-23
 - [[News/c2d62bc474a75d21|Intrinsic 로봇 경진대회, 실제 케이블 삽입 시험에서 두 팀 성공률 100%]] · 2026-09-23
-- [[News/94d03e7f8181fafd|LS일렉트릭, 부산 변압기 공장에 사족보행 로봇 Spot 도입]] · 2026-09-23
+- [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]] · 2026-09-23
 - [[News/c2a48879e9e88507|네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시]] · 2026-09-23
 - [[News/f73f3c73e2cee66d|Proofpoint, 데이터·AI 보안을 묶는 세 가지 에이전트 발표]] · 2026-09-23
 - [[News/48f3b502c43f955e|VAST, 데이터·모델을 보호하는 DataEnclave 공개…출하는 내년 1분기]] · 2026-09-23
@@ -114,12 +134,12 @@ generated_by: tech-knowledge-garden
 - [[News/3280c67c6030a293|삼성전자, 한국 Galaxy S26부터 One UI 9 업데이트 시작]] · 2026-09-20
 - [[News/49c6c9190303aebd|네이버지도, 대화로 장소를 찾고 동의 후 예약하는 플레이스 에이전트 출시]] · 2026-09-20
 - [[News/25823e681aab7b46|Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개]] · 2026-09-20
-- [[News/ebcefe563a8a7faf|Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개]] · 2026-09-20
+- [[News/ebcefe563a8a7faf|Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합]] · 2026-09-20
 - [[News/845ee65994660acf|NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험]] · 2026-09-14
 - [[News/18ebc7c21cf04849|삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진]] · 2026-09-14
 - [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]] · 2026-09-14
 - [[News/67402935155ca6d3|RubyGems, 5월 악성 패키지 500개 이상 제거한 사건의 조사 결과 공개]] · 2026-09-13
-- [[News/eb739a02acad3ab9|FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표]] · 2026-09-13
+- [[News/eb739a02acad3ab9|FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발]] · 2026-09-13
 - [[News/902d86854fec2b7d|HD현대로보틱스, 에이딘에 130억 원 투자…로봇손·표면가공 공동 개발]] · 2026-09-13
 - [[News/f5b7434d849eacf1|Copilot, 수정된 코드 리뷰 댓글을 재검토 때 자동 정리]] · 2026-09-13
 - [[News/28ba300194033bae|VS Code Agents 전용 창의 사용량을 별도로 집계]] · 2026-09-13
@@ -146,7 +166,7 @@ generated_by: tech-knowledge-garden
 - [[News/13cebc4d5ec60b11|CodeQL 2.26.4, Go 1.27과 GitHub Actions 보안 탐지 개선]] · 2026-09-04
 - [[News/473fea8bb1cbf9cb|GitHub Actions, 실행기 지원 종료 API와 취약점 읽기 권한 추가]] · 2026-09-04
 - [[News/322b7c88af36f3ac|npm, 패키지 하나에 여러 OIDC 배포 설정 지원]] · 2026-09-04
-- [[News/bcb54aceb5f739d9|Longfellow Zero-Knowledge Proof 라이브러리]] · 2026-09-03
+- [[News/bcb54aceb5f739d9|Google, Longfellow 영지식 증명 라이브러리의 재단 기부 발표]] · 2026-09-03
 - [[News/fe8d5b0d3b3b1415|Microsoft Fabric, 미국 정부용 GCC High에서 공개 미리보기]] · 2026-09-03
 - [[News/ef239918f16e1482|Gemini 3.8 Flash Cyber, 제한 접근 안에서 탐지부터 패치까지 묶다]] · 2026-09-03
 - [[News/5cd085900610be52|Gemini Agentic Video Understanding]] · 2026-09-02
@@ -267,8 +287,27 @@ generated_by: tech-knowledge-garden
 - [[News/e456906813d94efb|GitHub, 기업 밖 공개 콘텐츠의 비밀정보 유출 감시 프리뷰 공개]] · 2026-07-02
 - [[News/4f2226d872abe871|NVIDIA, AI 클라우드에 수익 공유·신용 지원 조달 모델 도입]] · 2026-07-02
 - [[News/b3b1b85723aa6104|AWS, Fable 5 보호 조치 설명…Anthropic은 7월 1일 재제공 계획]] · 2026-07-01
+- [[News/940d319c8ef1fe0c|AI SDK 7.0.8, 비디오 생성에 프레임 이미지·참조 입력 옵션 추가]] · 2026-06-30
+- [[News/a3d36f8b621698a5|Claude Code v2.1.196, 조직 모델 설정·MCP 승인·백그라운드 복구 개선]] · 2026-06-30
+- [[News/2987e3b3c79a3a0a|Google·Public First, 영국 직장 내 AI 활용 비율 73% 보고]] · 2026-06-30
+- [[News/559a10d0dfda2d93|Base44, 앱 생성용 자체 모델 Base1 운영 시작]] · 2026-06-30
+- [[News/12b14cdd73636e1c|vLLM 0.24.0, 스트리밍 도구 파서·모델 지원·서버 보안 변경]] · 2026-06-30
+- [[News/f870f3c172e9d7ad|NVIDIA, Azure GB300 기반 Claude의 Microsoft Foundry 정식 제공 발표]] · 2026-06-30
+- [[News/84b7a491c35da1a6|AWS, Quick Sight 자산·사용자 정보를 분리 백업하는 도구 공개]] · 2026-06-30
+- [[News/bd1bd59784866649|AWS, Nova 2 Lite 추출·Claude 공간 추론으로 연감 사진과 이름 연결]] · 2026-06-30
+- [[News/0be6e69d8c04db75|AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개]] · 2026-06-30
+- [[News/ed903f9a68cea8a4|PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개]] · 2026-06-30
+- [[News/65854015519164e0|AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개]] · 2026-06-30
+- [[News/6c26cbb466f80e14|GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가]] · 2026-06-30
+- [[News/3ab1311f879e64a8|GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대]] · 2026-06-30
 - [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
 - [[News/f3c67caad8443881|GitHub, MAI-Code-1-Flash를 Copilot Business·Enterprise에 정식 제공]] · 2026-06-27
 - [[News/bef8ee041d7dc1a0|DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개]] · 2026-06-26
+- [[News/172674afcb8f94fb|OpenAI·Trail of Bits, 오픈소스 유지보수자를 위한 Patch the Planet 소개]] · 2026-06-23
+- [[News/88ca535a278fef4f|OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표]] · 2026-06-23
+- [[News/2253bdfec0d930ce|LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개]] · 2026-06-23
+- [[News/a57895f3e29f9a2f|CycloneDX 저장소에 Agent BOM 구성 요소 추적안 등록]] · 2026-06-23
+- [[News/b3a348949ed015de|SkillFortify, 에이전트 스킬의 정적 분석·권한 격리·의존성 해결 제안]] · 2026-06-23
+- [[News/fe3330c7939347da|에이전트 보안 연구, 사람의 정책·승인·권한 설정을 분석]] · 2026-06-23

@@ -1,6 +1,6 @@
 # 2026-09-08 아침 브리핑
 
-비행운 회피 경로 시험과 초음파 AI의 외부 기관 평가
+2026-09-08 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-08_0801_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 
@@ -23,6 +23,8 @@ Haiman Guo 등 연구진은 9월 7일 Nature Communications에 우상복부 초�
 ### [Google·Cathay Pacific, 비행운 회피 2단계 시험 확대](https://skyan0213.github.io/tech-knowledge-garden/news/1908c6027b69920e)
 
 발표 2026-09-07
+
+연구·기술 · 실증·재현 · Google · Cathay Pacific
 
 Google은 9월 7일 Cathay Pacific과 아시아·태평양 지역의 비행운 회피 시험을 확대한다고 발표했다. 초기 시험은 100편 넘는 항공편을 대상으로 했고, 80편 이상이 회피 경로를 따랐다. Google은 위성 영상 분석으로 해당 항공편의 비행운 온난화 영향이 약 40% 줄었다고 추정했으며, 더 큰 2단계 시험과 Contrails.org 협력을 진행한다.
 

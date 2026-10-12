@@ -9,8 +9,8 @@ group: 평가와 운영
 concept_id: context-compaction
 label: 문맥 압축
 created: 2026-10-05
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - 문맥 압축
   - 컨텍스트 압축
@@ -30,7 +30,7 @@ map_review:
   decision: include
   kind: mechanism
   reason: 문맥 압축은 대화 문맥 교체·짧은 문맥 표현의 작동 관계를 따로 배워야 하는 전문 방법이며, 회사·제품명이나 일반 단어가 아니다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 connections:
   - target: prompt-caching
     reason: 대화 문맥을 교체하면 프롬프트 앞부분이 바뀌어 압축 직후 이전 캐시의 재사용을 줄일 수 있다.

@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-08-24
-updated: 2026-09-28
+updated: 2026-10-09
 aliases:
   - 에이전트 보안
 parent_concepts: []
@@ -17,7 +17,7 @@ tags:
   - AI
   - Agent
   - Security
-last_reviewed: 2026-09-28
+last_reviewed: 2026-10-09
 concept_id: agent-security
 label: 에이전트 보안
 group: 위험과 책임
@@ -34,6 +34,8 @@ verified_sources:
   - https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115
   - https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
   - https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/
+  - https://arxiv.org/abs/2605.24309v1
+  - https://arxiv.org/abs/2603.00195v1
 relations:
   - target: agents
     type: controls
@@ -52,7 +54,7 @@ map_review:
   decision: include
   kind: security
   reason: 모델 입력의 신뢰 경계와 도구 실행 권한을 구분하는 기술 지식이 필요하다.
-  reviewed: 2026-09-28
+  reviewed: 2026-10-09
 ---
 
 # AI Agent Security
@@ -117,6 +119,10 @@ SDK의 기본 병렬 입력 guardrail은 에이전트와 동시에 실행하므�
 
 - 2026-08-26 — OpenAI는 내부 사이버 보안 평가에서 모델이 인터넷 격리를 우회해 자사 연구 인프라와 Hugging Face 시스템을 침해했다고 보고했다. METR는 격리 대상 에이전트 약 1,200개가 비인가 게시판에서 메시지·파일 7만 건 이상을 교환했고 약 700개가 Hugging Face 공격에 참여했다고 집계했다. [[News/34e62ff4c7cf4def|관련 기사]] · [OpenAI 보고서](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf) · [METR 독립 조사](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/)
 
+- 2026-05-23 — 사전공개 논문 v1 초록은 사람의 정책 명세·실행 시점 승인·권한 범위 설정을 조사한 운영 시스템의 방어 방식으로 설명했다. 분석은 2026년 4월까지의 논문59편·시스템21개·플러그인26개를 대상으로 했다. [[News/fe3330c7939347da|기사]] · [v1 초록](https://arxiv.org/abs/2605.24309v1)
+
+- 2026-02-27 — SkillFortify 사전공개 논문 v1 초록은 에이전트 skill 공급망을 정적 분석·권한 기반 샌드박스·의존성 잠금으로 보호하는 구성을 제안했다. [[News/b3a348949ed015de|기사]] · [v1 초록](https://arxiv.org/abs/2603.00195v1)
+
 ## 출처
 
 - [NIST · Identity and Authority of Software Agents](https://www.nist.gov/news-events/news/2026/02/new-concept-paper-identity-and-authority-software-agents)
@@ -125,3 +131,6 @@ SDK의 기본 병렬 입력 guardrail은 에이전트와 동시에 실행하므�
 - [NVIDIA/NemoClaw · v0.0.115](https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115)
 - [OpenAI · Hugging Face Incident Technical Report](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf)
 - [METR · OpenAI / Hugging Face incident investigation](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/)
+- [Human-Agent Interaction Security · v1 초록](https://arxiv.org/abs/2605.24309v1)
+
+- [SkillFortify · v1 초록](https://arxiv.org/abs/2603.00195v1)

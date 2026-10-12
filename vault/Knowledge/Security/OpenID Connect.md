@@ -6,8 +6,8 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Security
 created: 2026-09-13
-updated: 2026-09-13
-last_reviewed: 2026-09-13
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - OIDC
   - OpenID Connect
@@ -31,7 +31,7 @@ map_review:
   decision: include
   kind: protocol
   reason: OAuth 2.0의 권한 위임과 신원 확인을 구별하고 배포 작업이 장기 비밀 없이 인증하는 원리를 이해해야 한다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-09
 connections:
   - target: supply-chain
     reason: 배포 워크플로의 신원을 확인해 단기 자격 증명을 발급하는 방식으로 빌드·배포 경로를 보호할 수 있다.
@@ -71,7 +71,7 @@ OAuth 2.0 위에 신원 확인 계층을 더해, 인증 결과와 신원 정보�
 
 ## 작동 원리
 
-검증 주체가 서명·발급자·대상·만료 등 토큰 조건을 확인한다. 접근을 허용할지는 서비스의 정책으로 결정한다.
+ID 토큰에는 발급자·주체·대상·만료 등의 정보가 들어간다. GitHub Actions의 작업이 클라우드에 토큰을 제시하면, 클라우드는 subject와 claim을 미리 설정한 역할의 신뢰 조건에 대조한 뒤 단기 access token을 발급한다. [OpenID 명세](https://openid.net/specs/openid-connect-core-1_0.html) · [GitHub](https://docs.github.com/en/actions/concepts/security/openid-connect)
 
 ## 실제 예시
 
@@ -89,9 +89,6 @@ OAuth 2.0은 접근 권한 위임을 다룬다. OIDC는 그 위에서 신원 확
 
 - [[Knowledge/Software Engineering/Software Supply Chain Security|소프트웨어 공급망 보안]] — 배포 워크플로의 신원을 확인해 단기 자격 증명을 발급하는 방식으로 빌드·배포 경로를 보호할 수 있다.
 
-## 최근 변화
-
-없음
 
 ## 출처
 

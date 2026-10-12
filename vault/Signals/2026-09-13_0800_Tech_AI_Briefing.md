@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/09/2026-09-13_0800_Tech_AI_Briefing
 date: 2026-09-13
-reviewed: 2026-09-13
+reviewed: 2026-10-10
 review_basis: saved-coverage
 observations:
   - id: performance-habitat
@@ -14,6 +14,7 @@ observations:
     meaning: 지연을 데이터베이스 처리와 이벤트 루프 대기로 나누면 평균이 가린 병목을 찾을 수 있다.
     limit: OpenAI의 내부 운영 사례로 다른 서비스의 성능 개선을 보장하지 않는다.
     next_check: 자체 부하 시험의 p99와 오류율이 함께 개선되는지.
+    event_date: 2026-09-11
   - id: evaluation-usage
     topic_id: evaluation
     event_id: 28ba300194033bae
@@ -22,6 +23,7 @@ observations:
     meaning: 도입 범위와 활동량을 볼 수 있지만 업무 정확성을 뜻하지는 않는다.
     limit: 필드 생략·null은 0이 아니며 편집기 Agent Mode와도 다른 집계다.
     next_check: 측정 권한·누락률을 확인한 뒤 동일 업무의 성공률과 나란히 비교.
+    event_date: 2026-09-11
   - id: evaluation-review
     topic_id: evaluation
     event_id: f5b7434d849eacf1
@@ -30,6 +32,7 @@ observations:
     meaning: 리뷰 활동과 실제 코드 수정·테스트 결과를 나란히 남길 필요가 있다.
     limit: 댓글 종료가 결함 제거를 보증하지 않으며 회사 실험은 독립 평가가 아니다.
     next_check: 자동 종료된 지적의 실제 수정 여부와 결함 재발률.
+    event_date: 2026-09-11
 ---
 
 # 2026-09-13 트렌드 기록

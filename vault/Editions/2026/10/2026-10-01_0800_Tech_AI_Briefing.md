@@ -17,7 +17,7 @@ knowledge_notes_updated: []
 headlines:
   - OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
   - Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
-  - Micron, 2026 회계연도 매출 1,332억 달러 기록
+  - Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
   - Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
   - NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
 article_records:
@@ -34,160 +34,210 @@ article_records:
     lead: OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께
       제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고,
       양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다.
+    explanations: []
     papers: []
     relations: []
-    topic_ids:
-      - performance-path
-    analysis_summary: 범용 모델을 반도체 설계 도구와 반복 작업에 결합하려는 계약으로, AI 협력이 칩 설계의 실제 업무흐름으로
-      들어가는 경로를 구체화했다. 다만 현 단계는 공동 개발 발표와 초기 고객 협의이며, 양산 가능한 설계의 수·시간 절감·검증 정확도는
-      공개되지 않았다.
-    next_check: 제품 공개 시점, 초기 고객의 실제 사용, PPA·검증 오류·설계 주기 비교와 데이터 보안 통제의 운영 결과를 확인한다.
+    topic_ids: []
   - title: DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
     kind: 사건 뉴스
     region: 해외
     facts:
       who: DigitalOcean
-      when: 2026-10-01 발표
-      where: DigitalOcean Managed Agents
-      what: Agent Droplets 월 구독제를 공개하고 Managed Agents 공개 프리뷰에 제공
-      how: 전용 microVM, 호스팅 추론, 저장공간, 1만6천여 도구 접근을 한 요금 잔액과 청구서로 묶음
-      why: 개별 과금 단위가 나뉜 에이전트 운영 비용을 단순화하려는 제품 전략
-    lead: DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도구 사용료를 월 구독과 단일 청구서로 묶는 Agent
-      Droplets를 공개 프리뷰로 내놨다. Pro는 월 50달러, Team은 월 200달러이며 각각 사용량 할인 15%와 20%를
-      적용한다고 밝혔다. 구독 허용량을 넘기면 정가 과금이 이어질 수 있어 총비용은 실제 사용량에 따라 달라진다.
+      when: 2026-10-01
+      where: Managed Agents 공개 프리뷰
+      what: Agent Droplets 월간 요금과 실행 환경 제공
+      how: 전용 microVM·자동 일시정지·AI 선불 잔액
+      why: 에이전트 실행·추론·저장 사용을 함께 관리
+    lead: DigitalOcean은 10월 1일 Managed Agents 공개 프리뷰에 Agent Droplets를 도입했다. 월간 Pro는
+      50달러, Team은 200달러이며 에이전트 사용료를 각각 15%와 20% 할인한다. 기존 에이전트 실행 도구를 전용
+      microVM에서 이용하고 유휴 상태에는 자동으로 일시정지하는 방식이다.
+    explanations:
+      - heading: 실행 상태와 잔액 소진 후 재개
+        paragraphs:
+          - 회사 설명에 따르면 microVM은 일시정지 상태에서 약 300밀리초에 재개한다. AI 잔액이 모두 소진되면 세션은 다음
+            안전한 지점에서 정지하며 스냅샷에 작업 상태를 보존한다. 자금을 추가하면 그 상태에서 작업을 이어 갈 수 있다.
+        source_urls:
+          - https://www.digitalocean.com/blog/introducing-agent-droplets
+      - heading: AI 선불 잔액과 일반 클라우드 요금
+        paragraphs:
+          - Agent Droplet 이용 한도를 소진하면 에이전트가 Inference and Agents Balance를 사용한다.
+            이 선불 잔액은 AI 제품에만 적용되며 일반 Droplets·Spaces·Managed Databases 비용은 기존 결제
+            주기에 따로 청구된다. 월간 요금과 할인율만으로 전체 클라우드 비용이 고정된다고 볼 수 없다.
+        source_urls:
+          - https://www.digitalocean.com/blog/introducing-agent-droplets
     papers: []
     relations: []
-    topic_ids:
-      - agent-runtime
-    analysis_summary: 제품은 모델·도구·격리된 실행환경을 묶는 동시에 운영비의 표시 방식을 바꾼다. 월 요금만으로 총비용이 고정되는
-      것은 아니므로 사용량 잔액과 초과 과금 조건을 살펴야 한다.
-    next_check: 공개 프리뷰의 지원 지역·실제 청구 단위·초과 사용액, microVM 격리와 재개 성능의 독립 검증을 확인한다.
+    topic_ids: []
   - title: Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가
     kind: 사건 뉴스
     region: 해외
     facts:
       who: Google Cloud
-      when: 2026-09-30 정식 제공 발표
-      where: VS Code 계열 IDE·명령줄 에이전트와 Google Cloud 데이터 제품
-      what: Data Agent Kit를 정식 제공하고 BigQuery Graph, Bigtable, Managed Spark 연동을 추가
-      how: MCP 도구와 Google 작성 에이전트 기술을 묶어 스키마 조회·쿼리·로그 확인·리소스 관리를 지원
-      why: 코딩 에이전트가 실제 클라우드 데이터 환경과 권한을 이용하도록 연결
-    lead: Google Cloud는 9월 30일 Data Agent Kit를 정식 제공하고 BigQuery Graph, Bigtable,
-      Managed Service for Apache Spark 지원을 추가했다. 이 도구 묶음은 15개가 넘는 데이터 서비스의 스키마와
-      작업 로그를 읽고 쿼리·리소스 관리를 수행하며, 사용자의 IAM 권한을 따른다고 회사는 설명했다. 키트 자체는 무료지만 에이전트가
-      호출하는 클라우드 서비스 비용은 별도다.
+      when: 2026-09-30
+      where: Google Cloud 데이터 제품
+      what: Data Agent Kit 정식 제공 및 지원 확장
+      how: MCP 도구·skills와 사용자 또는 서비스 계정 권한
+      why: 기존 코딩 에이전트에서 데이터 작업 수행
+    lead: Google Cloud는 9월 30일 Data Agent Kit을 정식 제공하며 BigQuery
+      Graph·Bigtable·Managed Service for Apache Spark 지원을 추가했다. MCP 도구와 에이전트
+      skills를 통해 기존 코딩 에이전트가 Google Cloud 데이터 제품을 사용하도록 하는 구성이다. 도구 묶음 자체는 무료지만
+      실제 클라우드 서비스 사용에는 표준 요금이 적용된다.
+    explanations:
+      - heading: 사용자·서비스 계정 권한을 따르는 데이터 접근
+        paragraphs:
+          - 에이전트는 사용자 본인이나 impersonate한 서비스 계정으로 연결하며 행·열 보안 정책을 적용받는다. 회사는 관리자가
+            IAM으로 접근을 관리하고 Model Armor로 MCP 트래픽을 검사하며 VPC Service Controls와
+            Principal Access Boundary로 범위를 제한할 수 있다고 설명했다.
+        source_urls:
+          - https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/
+      - heading: 쿼리 실행 전 비용 점검
+        paragraphs:
+          - skills는 파티션 키 확인과 BigQuery 쿼리의 dry run처럼 전체 테이블을 불필요하게 스캔하지 않는 방법을
+            안내한다. 에이전트가 이용한 클라우드 서비스의 사용료는 Data Agent Kit의 무료 제공과 별개다.
+        source_urls:
+          - https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/
     papers: []
     relations: []
-    topic_ids:
-      - agent-runtime
-      - execution-permissions
-    analysis_summary: 범용 코딩 에이전트에 클라우드 데이터의 스키마·권한·운영 도구를 연결하는 정식 제품이다. 자연어로 데이터 작업을
-      만들 수 있어도 에이전트의 쿼리·변경이 정확하다는 보장은 아니며, 실제 권한 범위와 사용량 통제가 중요하다.
-    next_check: Bigtable·Spark·BigQuery Graph의 실제 고객 사용 사례와 권한 경계, 잘못된 쿼리·비용 방지 통제의
-      운영 사례를 확인한다.
+    topic_ids: []
   - title: Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
     kind: 사건 뉴스
     region: 해외
     facts:
       who: Google Cloud
-      when: 2026-10-01 9월 제품 업데이트 게시
-      where: Google Kubernetes Engine과 Compute Engine
-      what: 에이전트용 격리 실행 환경·저장소·VM 업데이트를 발표
-      how: GKE Agent Substrate는 샌드박스 밀도를 높이고, M4N·Z4D는 고속 저장·저지연 실행을 제공
-      why: 병렬 에이전트·강화학습 실행에서 격리와 자원 활용을 개선하려는 인프라 확장
-    lead: Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식
-      제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배
-      높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대
-      25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수
-      있도록 설계했다고 설명했다.
+      when: 2026-09-30의 9월 월간 업데이트
+      where: GKE·Compute Engine·Filestore
+      what: 에이전트 샌드박스 실행·저장 인프라 변경 소개
+      how: 커널·네트워크 격리와 VM·전용 파일 작업공간
+      why: 에이전트 실행 밀도와 상태·저장 관리 지원
+    lead: Google Cloud는 9월 30일 월간 인프라 업데이트에서 GKE Agent Substrate의 샌드박스 실행·격리와
+      M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은
+      500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore
+      agent volumes는 프리뷰 접근 신청 단계다.
+    explanations:
+      - heading: 샌드박스 재개와 영구 작업공간
+        paragraphs:
+          - GKE Agent Substrate는 커널·네트워크 격리를 적용하며 회사가 제시한 suspend/resume 활성화 수는
+            초당 500회를 넘는다. Filestore agent volumes는 Agent Substrate·Agent
+            Sandbox와 연계해 전용 격리 파일 작업공간을 연결하는 별도 저장 구성으로 소개됐다.
+        source_urls:
+          - https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month
+      - heading: M4N 저장 성능과 Z4D bare metal 구성
+        paragraphs:
+          - M4N은 Titanium과 Hyperdisk Extreme 조합에서 최대 25,000MiB/s 호스트 저장 성능과 최대
+            100만 IOPS를 제공한다고 회사는 설명했다. Z4D는 bare metal 구성의 로컬 SSD 용량과 지연을 에이전트
+            microVM 실행에 활용하는 VM이다. 해당 수치는 회사가 제시한 구성과 최대치 조건을 따른다.
+        source_urls:
+          - https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month
     papers: []
     relations: []
-    topic_ids:
-      - agent-runtime
-      - performance-path
-    analysis_summary: 클라우드 사업자들이 에이전트의 실행 격리와 저장 지연을 개별 VM 사양이 아니라 반복·병렬 워크로드 전체로
-      최적화하려는 움직임이다. 회사 수치는 워크로드별 성능과 가격을 보장하지 않는다.
-    next_check: GKE Agent Substrate 실제 이용 범위, 독립 비교 조건, 에이전트 작업당 비용과 격리 사고 여부를 확인한다.
+    topic_ids: []
   - title: Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개
     kind: 사건 뉴스
     region: 해외
     facts:
       who: Cisco PSIRT
-      when: 2026-09-30 13:00 GMT 최초 공지
-      where: Cisco Catalyst SD-WAN Manager API
-      what: CVE-2026-76504 인증 관리 결함에 CVSS 9.8 Critical 부여
-      how: 원격 비인증 공격자가 관리자 권한으로 접근할 수 있는 취약점
-      why: SD-WAN 관리면에 대한 즉각적인 업데이트·침해 점검 필요
-    lead: Cisco는 9월 30일 Catalyst SD-WAN Manager API 세션 인증 취약점 CVE-2026-76504를 공개했다.
-      원격 비인증 공격자가 관리자 권한으로 접근할 수 있으며 CVSS 기본 점수는 9.8이고 Cisco는 우회책이 없다고 밝혔다.
-      Cisco는 영향 버전 사용자의 즉시 업그레이드와 관리자 진단 자료 점검을 안내했다.
+      when: 2026-09-30 공개·2026-10-02 개정
+      where: Catalyst SD-WAN Manager API
+      what: 인증 우회 취약점과 수정 소프트웨어 공개
+      how: 영향 판본을 확인하고 수정 버전으로 업그레이드
+      why: 실제 악용이 확인된 관리자 API 접근 위험 대응
+    lead: Cisco는 9월 30일 Catalyst SD-WAN Manager API 인증 우회 취약점 CVE-2026-76504를 공개했다.
+      영향받는 시스템에서는 인증되지 않은 원격 공격자가 관리자 권한으로 API에 접근할 수 있으며, Cisco PSIRT는 9월 실제
+      악용을 인지했다고 밝혔다. 회사는 수정된 소프트웨어로 업그레이드할 것을 권고했다.
+    explanations:
+      - heading: 수정 버전과 임시 부분 보호
+        paragraphs:
+          - 취약·수정 소프트웨어 판본은 Cisco의 수정 버전 표에서 구분한다. 10월 2일 개정판에 추가된 Live Protect
+            shield는 업그레이드 준비 시간을 위한 임시 부분 보호로 소개됐으며, 취약점을 해결하는 조치는 수정 버전 업그레이드다.
+        source_urls:
+          - https://www.cisco.com/c/en/us/support/docs/csa/cisco-sa-sdwan-webauth-xr8beuuU.html
+      - heading: 관리형 클라우드와 온프레미스 대응
+        paragraphs:
+          - Cisco 관리형 SD-WAN Cloud에는 수정 릴리스의 조치가 반영돼 사용자 추가 조치가 필요 없다고 회사는 설명했다.
+            온프레미스 환경에서 신뢰할 수 없는 네트워크의 접근을 제한하는 것은 완화 조치이며 소프트웨어 수정을 대체하지 않는다.
+        source_urls:
+          - https://www.cisco.com/c/en/us/support/docs/csa/cisco-sa-sdwan-webauth-xr8beuuU.html
     papers: []
     relations: []
-    topic_ids:
-      - execution-permissions
-    analysis_summary: 네트워크 제어면의 원격 관리자 권한 취득 가능성과 우회책 부재가 핵심 위험이다. 실제 노출 여부는 배포
-      버전·인터넷 접근 경로·로그 분석을 통해 확인해야 한다.
-    next_check: Cisco 수정 버전 목록·공격 관측 업데이트와 각 운영자의 외부 노출·인증 로그 점검 결과를 확인한다.
+    topic_ids: []
   - title: AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: AMD 제품 보안 대응팀
-      when: 2026-09-30 보안 공지
-      where: AMD ROCm Communication Collectives Library
-      what: CVE-2026-43598 공개, CVSS 7.7 부여
-      how: 통신 프록시 경로 입력 검증 부족으로 공격자 지정 포인터 역참조 가능
-      why: 다중 GPU·노드 통신을 사용하는 ROCm 시스템의 업데이트 필요
-    lead: AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 취약점
-      CVE-2026-43598을 공지했다. 공격 조건이 충족되면 메모리 노출과 ASLR 우회를 거쳐 RCCL 프로세스 권한으로 원격 코드
-      실행이 가능할 수 있으며, 기본 CVSS는 7.7이다. AMD는 완화 버전을 안내했지만 영향 제품 표 일부에 다른 CVE 식별자가
-      함께 표시돼 설치 환경별 확인이 필요하다.
+      who: AMD
+      when: 2026-09-30 공개·2026-10-06 제품 표 정정
+      where: ROCm RCCL 프록시 통신 경로
+      what: 입력 검증 취약점과 완화 버전 안내
+      how: 열거한 Instinct 제품에 권고 완화 버전 적용
+      why: 메모리 노출·ASLR 우회·프로세스 내 코드 실행 가능성 대응
+    lead: AMD는 9월 30일 ROCm RCCL 프록시 통신 경로의 입력 검증 취약점 CVE-2026-43598을 공개했다. 손상된 peer
+      rank 또는 네트워크 인접 공격자 조건에서 메모리 노출과 ASLR 우회, RCCL 프로세스 내 원격 코드 실행으로 이어질 가능성이
+      있으며 CVSS 4.0 기본 점수는 7.7이다. 회사는 열거한 Instinct 제품에 ROCm 7.14 완화 버전을 적용할 것을
+      권고했다.
+    explanations:
+      - heading: 공격 조건과 완화 버전
+        paragraphs:
+          - 권고문은 공격 조건으로 손상된 peer rank 또는 네트워크 인접 공격자를 명시한다. CVSS 기본 점수는 구현 환경에
+            따라 달라질 수 있으며 실제 시스템의 조건과 대조해야 한다. 제품 표의 완화 버전 ROCm 7.14는 7월 15일 공개된
+            것으로 기록돼 있다.
+        source_urls:
+          - https://www.amd.com/en/resources/product-security/bulletin/amd-sb-6033.html
+      - heading: 제품 표의 CVE 정정
+        paragraphs:
+          - AMD는 10월 6일 제품 표의 CVE를 정정했다. 현재 표에는 본문과 같은 CVE-2026-43598이 기재돼 있으며,
+            최초 공개일인 9월 30일과 정정일을 구분한다.
+        source_urls:
+          - https://www.amd.com/en/resources/product-security/bulletin/amd-sb-6033.html
     papers: []
     relations: []
-    topic_ids:
-      - execution-permissions
-    analysis_summary: AI·고성능컴퓨팅용 GPU 통신 라이브러리도 클러스터 보안 경계의 일부라는 점을 보여준다. AMD 공지의 영향
-      제품 표에 식별자 불일치가 보여 설치 환경별 수정 버전 확인이 필요하다.
-    next_check: AMD가 영향 제품·완화 버전 표기를 정정하는지, 해당 RCCL 버전을 포함한 배포판의 패치 공지를 확인한다.
-  - title: Micron, 2026 회계연도 매출 1,332억 달러 기록
+    topic_ids: []
+  - title: Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
     kind: 사건 뉴스
     region: 해외
     facts:
       who: Micron Technology
-      when: 2026-09-30 FY2026 실적 발표; 회계연도 종료 2026-09-03
-      where: 미국 SEC 공시와 회사 투자자 공지
-      what: 연매출 1,331억 9천만 달러, 전년 373억 8천만 달러 발표
-      how: FY4 매출 542억 3천만 달러, 전 분기 414억 6천만 달러와 비교
-      why: 데이터센터·클라우드 메모리 사업 성과와 AI 메모리 투자 계획 공개
-    lead: Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표했다. 전년도 373억 8천만 달러에서 증가했으며,
-      4분기 매출은 542억 3천만 달러로 직전 분기보다 늘었다. 회사는 FY2027 1분기 매출을 615억 달러±15억 달러로 전망했으며
-      이는 아직 실적이 아닌 회사 가이던스다.
+      when: 2026-09-30 실적 발표; FY2026 종료일 2026-09-03
+      where: 미국 Idaho의 Boise; SEC 회사 실적 공시
+      what: 2026 회계연도 매출 1,331억 9천만 달러 발표
+      how: 연간 및 분기 매출과 직전 회계기간을 비교하고 FY2027 1분기 매출 전망을 제시
+      why: 미기재
+    lead: Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은
+      373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027
+      회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: Micron의 당기 실적과 AI 데이터센터용 메모리·저장장치 수요가 강하게 늘어난 사실을 보여준다. 매출 증가는
-      회사 전체 기준이며, 장기 수요·가격·공급능력이나 개별 AI 사업 수익성을 단독으로 입증하지 않는다.
-    next_check: FY2027 분기 실적에서 가이던스 이행, 사업부별 매출·마진, 신규 제품 고객 인증과 실제 출하를 비교한다.
   - title: Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
     kind: 사건 뉴스
-    region: 국제 공동
+    region: 해외
     facts:
-      who: Hitachi와 FANUC
-      when: 2026-09-30 파트너십 발표; 고객 배치는 FY2027 목표
-      where: Hitachi 이바라키 제조시설과 양사 글로벌 고객망
-      what: Hitachi HMAX Industry AI와 FANUC 산업용 로봇의 공동 상용화 협력
-      how: 부품 피킹과 품목 전환을 초기 대상으로 인식 정확도·동작·택트타임·품질 검증
-      why: 작업자 경험 의존 공정의 자동화와 현장 데이터 기반 Physical AI 구현
-    lead: Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결합하는 Physical AI
-      협력을 발표했다. 양사는 Hitachi 이바라키 제조시설을 시험 현장으로 삼아 부품 피킹과 생산 품목 전환을 검증하고, 인식
-      정확도·로봇 동작·택트타임·품질을 평가할 계획이다. 고객 공동 배치는 FY2027부터 시작하겠다고 밝혔으므로 발표된 협약은 현재
-      수주나 생산라인 성과와 구분된다.
+      who: Hitachi, FANUC
+      when: 2026-09-30 전략적 제휴 발표
+      where: 일본 이바라키 제조시설
+      what: Physical AI 공동 검증과 고객 배치 계획
+      how: HMAX Industry 등 AI와 산업용 로봇 결합
+      why: 미기재
+    lead: Hitachi와 FANUC는 9월 30일 일본에서 HMAX Industry 등 Hitachi의 AI 기술과 FANUC의 산업용 로봇을
+      결합하는 전략적 제휴를 발표했다. 먼저 Hitachi의 이바라키 제조시설에서 여러 형태의 부품을 집고 생산 품목을 바꾸는 작업을
+      검증할 계획이다. 양사는 검증에서 얻은 구현·운영 경험을 바탕으로 회계연도 2027년부터 고객사 배치를 시작하고 반도체·자동차·물류
+      등으로 적용을 넓히겠다고 밝혔다.
+    explanations:
+      - heading: 공장에서 학습하고 평가할 작업
+        paragraphs:
+          - Hitachi Group 공장을 첫 적용 현장인 Customer Zero로 삼아 생산 현장별 규칙을 AI가 계속 학습하도록
+            한다. 검증에서는 인식 정확도, 로봇 동작, 택트 타임과 품질 효과를 평가하고 Hitachi의 엣지 AI 반도체를
+            FANUC 로봇과 결합하는 효과도 확인할 계획이다.
+        source_urls:
+          - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
+      - heading: 택트 타임의 기준
+        paragraphs:
+          - 발표 자료에서 택트 타임은 제품 하나를 생산·처리하거나 작업 하나를 완료하는 데 배정하는 표준 시간을 뜻한다.
+        source_urls:
+          - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 로봇업체와 제조·IT 사업자가 자사 공장을 먼저 검증 장소로 삼고 실제 공정 작업부터 고객 배치까지 이어가는
-      구조를 제시했다. 발표된 협약은 상용 제품 배치나 고객 수주 실적을 뜻하지 않는다.
-    next_check: 이바라키 시험 일정·작업 성공률·사람 개입률·품질 기준, FY2027 고객 배치와 수주·가동 확인 자료를 살핀다.
   - title: IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
     kind: 사건 뉴스
     region: 국제 공동
@@ -201,31 +251,36 @@ article_records:
     lead: IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류
       로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇
       설치·가동 재고와 같은 지표가 아니다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 전문 서비스 로봇의 2025년 출하 증가에서 물류 자동화가 가장 큰 응용군으로 집계됐다. IFR 자료는 세계
-      시장의 범주별 기준선이며 개별 제조사의 점유율이나 특정 응용의 수익성을 보여주지 않는다.
-    next_check: 다음 IFR 자료에서 같은 분류·기간의 출하량, 물류 로봇의 고객 산업·가격·RaaS 비중을 확인한다.
-  - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
+  - title: Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: Ørsted Americas Onshore
-      when: 2026-09-30 착공 발표; 상업운전은 2027년 말 목표
-      where: 미국 뉴멕시코주 Roosevelt County
-      what: Blackwater Solar 200MW 사업의 실제 건설 시작
-      how: 장기 전력구매계약 기반으로 First Solar 패널 조달
-      why: 뉴멕시코 산업 전력수요 공급과 지역 재생에너지 확대
-    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고
-      발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다.
-      56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+      who: Ørsted
+      when: 2026년 9월 30일 착공 발표; 상업운전은 2027년 말 예상
+      where: 미국 뉴멕시코주 Roosevelt County; 보전 대상은 멜로스 인근
+      what: 200 MW Blackwater Solar 건설 시작 및 습지 보전을 위한 회사 기여 발표
+      how: 장기 전력구매계약으로 프로젝트를 뒷받침하고 First Solar 패널을 조달
+      why: 뉴멕시코 산업용 전력 수요와 지역 습지 보전 지원
+    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고
+      발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint
+      Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될
+      것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기
+      전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는
+      Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로
+      예상했으며, 상업운전은 2027년 말로 전망했다.
+    explanations:
+      - heading: 패널 조달
+        paragraphs:
+          - Ørsted는 Blackwater Solar용 태양광 패널을 미국 제조업체 First Solar에서 조달했다고 밝혔다.
+        source_urls:
+          - https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다.
-      완공과 계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
-    next_check: 공사 진척, 계통 연결, 장기계약 인도 시점과 2027년 말 상업운전 달성 여부를 확인한다.
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     kind: 사건 뉴스
     region: 해외
@@ -240,12 +295,10 @@ article_records:
       Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear
       Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과
       향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 공공 시험시설 선정은 기술이 실험 단계에서 전출력 검증 준비로 이동하는 이정표다. 원자로 출력 사양과 선정만으로
-      안전성·운전 신뢰성·비용 경쟁력을 판단할 수 없다.
-    next_check: DOME 시험 일정·시험 결과와 별도 인허가·수송·상업 배치 경로를 확인한다.
   - title: Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
     kind: 사건 뉴스
     region: 해외
@@ -254,18 +307,16 @@ article_records:
       when: 2026-09-30 회사 발표; 3상 추적 중앙값 58개월
       where: 전립선암 3상 PrTK03 중간위험군과 2상 PrTK05
       what: 임상결과·조직생검·혈액 면역 지표를 통합해 발표
-      how: 3상 635명 중간위험군 분석과 2상 혈액 표본 19건의 탐색 분석
+      how: 3상 635명 중간위험군 분석과 2상 병용군13명·표준치료군6명의 혈액 탐색 분석
       why: 방사선 치료에 아글라티마진을 더했을 때의 임상·면역 반응 탐색
     lead: Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상 중간위험군 분석과 PrTK05 2상 면역
       지표를 공개했다. 3상 중간위험군 635명 분석에서 방사선 치료 병용군은 대조군보다 재발 또는 전립선암 사망 위험이 낮았다고 회사는
       보고했다(HR 0.59, 95% CI 0.41–0.84, p=0.0034). 2상 혈액 비교는 병용군 13명과 표준치료군 6명의 탐색
       분석이며, 대조군과의 정식 비교는 진행 중이다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 장기간 추적한 3상 하위집단 결과와 작은 초기 바이오마커 표본을 함께 제시한 회사 발표다. 2상 기전 신호는
-      임상 효과를 독립적으로 확증하지 않으며, 데이터의 전체 논문 검토와 규제 심사가 남아 있다.
-    next_check: 학술대회 포스터·전문 공개, 사전 정의된 전체 분석군 결과, FDA 제출과 규제 판단을 확인한다.
   - title: ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
     kind: 사건 뉴스
     region: 해외
@@ -279,50 +330,46 @@ article_records:
     lead: HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS,
       CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새
       프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 임상시험을 개별 연구 설계에서 반복 가능한 공통 인프라·데이터·통계 도구의 문제로 다루려는 정부 연구투자
-      계획이다. 아직 개발·검증 이전이므로 비용 절감이나 환자 수 감소를 실적처럼 표현할 수 없다.
-    next_check: 프로그램 선정 과제·예산·규제기관 협의, 검증된 임상시험 적용 사례와 안전성·통계 성능을 확인한다.
   - title: NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: NASA Glenn Research Center와 Modulate Space Corporation
-      when: 2026-09-30 계약 발표; 기술 시연은 2028년 계획
-      where: NASA Glenn과 미래 달 표면 통신 환경
-      what: 달 기지용 5G·Wi-Fi 6 통신 시스템 개발 계약 약 3,800만 달러 체결
-      how: 고정가격 계약의 실험실 시연 및 달 표면 통합 네트워크 비행 시연 2단계
-      why: 향후 Moon Base 표면 운영용 표준 기반 통신 기술 확보
-    lead: NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스템 개발 계약을 수여했다고 발표했다.
-      고정가격 계약 규모는 약 3,800만 달러이며 실험실 시연은 2028년 1월까지, 달 표면 통합 네트워크 비행 시연은 2028년 말로
-      계획됐다. 현재 달에서 통신망이 구축됐거나 시험이 시작된 것은 아니다.
+      who: NASA Glenn Research Center, Modulate Space Corporation
+      when: 2026-09-30 계약 발표; 수행 기간은 각각 2028-01-31과 2028-12-31까지
+      where: 미국 Cleveland의 Glenn Research Center; 향후 달 표면 시연
+      what: 달 표면용 5G·Wi-Fi 6 핵심 요소 개발 계약 수여
+      how: 약 3,800만 달러의 고정가격 계약으로 실험실과 달 표면 시연 과제를 추진
+      why: 미래 달 기지 표면 운영을 지원할 확장 가능한 표준 기반 통신 기술 개발
+    lead: NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 표면용 5G·Wi-Fi 6 통신 시스템 개발
+      계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실
+      시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두
+      과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: NASA의 달 탐사 준비가 발사체·착륙선 외에 통신 표준과 지상·비행 시연 계약으로 확장됐다. 실제 성능은 후속
-      시험이 완료돼야 검증된다.
-    next_check: 2028년 실험실 시연·달 표면 비행 시험의 계약 이행, 통신 범위·지연·간섭 결과를 확인한다.
   - title: Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
     kind: 사건 뉴스
     region: 국제 공동
     facts:
-      who: Rocket Lab과 일본 Synspective
-      when: 2026-09-30 다년 발사 계약 발표
-      where: Rocket Lab 뉴질랜드 Launch Complex 1에서 태양동기궤도
-      what: StriX 합성개구레이더 위성 20회의 Electron 전용 발사 계약 체결
-      how: 2028~2031년 연례 발사 일정 계획; 이전 계약 포함 총 47회
-      why: Synspective 지구관측 위성군 확장을 위한 발사 슬롯 확보
-    lead: Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기를 2028~2031년에 발사하는 다년
-      계약을 발표했다. 회사는 이번 계약이 Electron의 단일 최대 상업 발사 계약이며 양사의 총 계약 발사 수가 47회가 된다고
-      밝혔다. 계약 금액은 비공개이고 20회 발사는 향후 일정이다.
+      who: Rocket Lab, 일본 Synspective
+      when: 2026-09-30 미국 현지 발표(한국시간 2026-10-01); 2028–2031년 발사 예정
+      where: Rocket Lab Launch Complex 1에서 태양동기궤도
+      what: Synspective의 신규 Electron 발사 20회 다년 계약 체결
+      how: StriX 합성개구레이더 위성을 2028–2031년에 매년 발사
+      why: Synspective의 지구관측 위성군 확장
+    lead: Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Synspective와 신규 Electron 발사
+      20회의 다년 계약을 체결했다고 발표했다. StriX 합성개구레이더(SAR) 위성 20기를 Launch Complex 1에서
+      태양동기궤도로 보내며, 발사는 2028~2031년에 매년 진행할 예정이다. 회사는 이번 계약으로 Synspective를 위한
+      Electron 총 발사 계약이 47회가 됐으며, 단일 계약 기준 Electron의 최대 상업 발사 계약이라고 밝혔다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 소형 발사 시장에서 단일 계약이 여러 해의 전용 발사 슬롯을 확보해 위성군 확장과 발사 수요를 연결한다. 비공개
-      계약액과 2028년 이후 일정의 실행 위험은 남아 있다.
-    next_check: 첫 후속 발사 일정·위성 인도, 실제 발사 성공과 Rocket Lab의 계약 잔고 매출 전환을 추적한다.
   - title: Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
     kind: 사건 뉴스
     region: 해외
@@ -336,9 +383,6 @@ article_records:
     lead: Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다발성경화증 후보약 페네브루티닙(fenebrutinib)의
       신약허가신청(NDA)을 우선심사 대상으로 접수했다고 밝혔다. 대상은 재발성 다발성경화증(RMS)과 일차 진행성
       다발성경화증(PPMS)이며, 회사는 FENhance 1·2와 FENtrepid 3상 연구 결과를 접수의 근거로 제시했다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 경구용 BTK 억제제
         paragraphs:
@@ -364,6 +408,9 @@ article_records:
             사망 보고의 불균형도 관찰됐으며, 사망 시점과 원인은 다양했다고 덧붙였다.
         source_urls:
           - https://www.roche.com/media/releases/med-cor-2026-09-30
+    papers: []
+    relations: []
+    topic_ids: []
   - title: MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원
     kind: 사건 뉴스
     region: 해외
@@ -380,9 +427,6 @@ article_records:
       Transit Intelligence Hub(PTIQ)로, 대중교통 기관의 실시간 모니터링, 운영 제어, 승객 소통 시스템을 하나의
       중앙 집중형 AI 플랫폼으로 통합하는 것을 목표로 한다. Google.org는 3년간의 프로젝트 기간 동안 자금 지원과 함께 자체
       엔지니어와 AI 제품 전문가의 무상 지원도 제공할 예정이다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: PTIQ의 핵심 목표와 역할
         paragraphs:
@@ -399,6 +443,9 @@ article_records:
             Jinhua Zhao이며, Jim Aloisi MIT 강사가 프로그램 매니저를 맡는다.
         source_urls:
           - https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
+    papers: []
+    relations: []
+    topic_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     kind: 사건 뉴스
     region: 해외
@@ -412,9 +459,6 @@ article_records:
     lead: National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한
       운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는
       2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: REORG의 작동 방식
         paragraphs:
@@ -432,6 +476,9 @@ article_records:
           - NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에 따라 전력을 복구했다고 보고했다.
         source_urls:
           - https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
+    papers: []
+    relations: []
+    topic_ids: []
   - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
     kind: 사건 뉴스
     region: 해외
@@ -502,122 +549,122 @@ article_reviews:
   - title: OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
     event_id: 8fac3ce4d39c6ea9
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
     event_id: a82ab8c2c2f14be9
     review_status: verified
-    concept_ids: []
     published_at: 2026-10-01
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가
     event_id: 294333117691a99b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
     event_id: 72249bd53d8a5849
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개
     event_id: 0b883a59e5850ce3
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고
     event_id: 2000861d5f1c75c8
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
-  - title: Micron, 2026 회계연도 매출 1,332억 달러 기록
+    reviewed_at: 2026-10-10
+    concept_ids: []
+  - title: Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
     event_id: 20af87012182fbd4
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
     event_id: 28543c78d1a0a3ec
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-09
+    concept_ids: []
   - title: IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
     event_id: 1e78f5fd4a5acdc8
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
-  - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
+    reviewed_at: 2026-10-10
+    concept_ids: []
+  - title: Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
     event_id: 926dd2776aef7b1b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-12
+    concept_ids: []
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     event_id: f89187a6288f099b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
     event_id: f795c88cad060d16
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
     event_id: 3cfdb073a82debc3
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
     event_id: 086bdbb3792ca8d9
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
     event_id: a930c8de646354b3
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
     event_id: e3728daf1bd4be8b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-06
+    concept_ids: []
   - title: MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원
     event_id: 17f635e65de87807
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
+    concept_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     event_id: ce1e21d4581adaee
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
+    concept_ids: []
   - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
     event_id: 677a5b5535577a74
     review_status: verified
     published_at: 2026-09-30
-    reviewed_at: 2026-10-08
+    reviewed_at: 2026-10-13
     concept_ids: []
   - title: 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
     event_id: 0921db2a3ce05bb8
     review_status: verified
     published_at: 2026-09-30
-    reviewed_at: 2026-10-08
+    reviewed_at: 2026-10-13
     concept_ids: []
 ---
 
@@ -629,7 +676,7 @@ OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
 
 - OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
 - Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
-- Micron, 2026 회계연도 매출 1,332억 달러 기록
+- Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
 - Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
 - NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
 
@@ -649,6 +696,8 @@ OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
 
 OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다. [S1]
 
+
+
 ## DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
 
 **분야:** AI
@@ -657,7 +706,15 @@ OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Syno
 **세부 태그:** 신제품, 가격 변경
 **기업·기관:** DigitalOcean
 
-DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도구 사용료를 월 구독과 단일 청구서로 묶는 Agent Droplets를 공개 프리뷰로 내놨다. Pro는 월 50달러, Team은 월 200달러이며 각각 사용량 할인 15%와 20%를 적용한다고 밝혔다. 구독 허용량을 넘기면 정가 과금이 이어질 수 있어 총비용은 실제 사용량에 따라 달라진다. [S2]
+DigitalOcean은 10월 1일 Managed Agents 공개 프리뷰에 Agent Droplets를 도입했다. 월간 Pro는 50달러, Team은 200달러이며 에이전트 사용료를 각각 15%와 20% 할인한다. 기존 에이전트 실행 도구를 전용 microVM에서 이용하고 유휴 상태에는 자동으로 일시정지하는 방식이다. [S2]
+
+### 실행 상태와 잔액 소진 후 재개
+
+회사 설명에 따르면 microVM은 일시정지 상태에서 약 300밀리초에 재개한다. AI 잔액이 모두 소진되면 세션은 다음 안전한 지점에서 정지하며 스냅샷에 작업 상태를 보존한다. 자금을 추가하면 그 상태에서 작업을 이어 갈 수 있다. [S2]
+
+### AI 선불 잔액과 일반 클라우드 요금
+
+Agent Droplet 이용 한도를 소진하면 에이전트가 Inference and Agents Balance를 사용한다. 이 선불 잔액은 AI 제품에만 적용되며 일반 Droplets·Spaces·Managed Databases 비용은 기존 결제 주기에 따로 청구된다. 월간 요금과 할인율만으로 전체 클라우드 비용이 고정된다고 볼 수 없다. [S2]
 
 ## Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가
 
@@ -667,7 +724,15 @@ DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도
 **세부 태그:** 신제품, 기능 추가
 **기업·기관:** Google Cloud
 
-Google Cloud는 9월 30일 Data Agent Kit를 정식 제공하고 BigQuery Graph, Bigtable, Managed Service for Apache Spark 지원을 추가했다. 이 도구 묶음은 15개가 넘는 데이터 서비스의 스키마와 작업 로그를 읽고 쿼리·리소스 관리를 수행하며, 사용자의 IAM 권한을 따른다고 회사는 설명했다. 키트 자체는 무료지만 에이전트가 호출하는 클라우드 서비스 비용은 별도다. [S3]
+Google Cloud는 9월 30일 Data Agent Kit을 정식 제공하며 BigQuery Graph·Bigtable·Managed Service for Apache Spark 지원을 추가했다. MCP 도구와 에이전트 skills를 통해 기존 코딩 에이전트가 Google Cloud 데이터 제품을 사용하도록 하는 구성이다. 도구 묶음 자체는 무료지만 실제 클라우드 서비스 사용에는 표준 요금이 적용된다. [S3]
+
+### 사용자·서비스 계정 권한을 따르는 데이터 접근
+
+에이전트는 사용자 본인이나 impersonate한 서비스 계정으로 연결하며 행·열 보안 정책을 적용받는다. 회사는 관리자가 IAM으로 접근을 관리하고 Model Armor로 MCP 트래픽을 검사하며 VPC Service Controls와 Principal Access Boundary로 범위를 제한할 수 있다고 설명했다. [S3]
+
+### 쿼리 실행 전 비용 점검
+
+skills는 파티션 키 확인과 BigQuery 쿼리의 dry run처럼 전체 테이블을 불필요하게 스캔하지 않는 방법을 안내한다. 에이전트가 이용한 클라우드 서비스의 사용료는 Data Agent Kit의 무료 제공과 별개다. [S3]
 
 ## Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
 
@@ -677,7 +742,15 @@ Google Cloud는 9월 30일 Data Agent Kit를 정식 제공하고 BigQuery Graph,
 **세부 태그:** 기능 추가, 성능 개선
 **기업·기관:** Google Cloud
 
-Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식 제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배 높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대 25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수 있도록 설계했다고 설명했다. [S4]
+Google Cloud는 9월 30일 월간 인프라 업데이트에서 GKE Agent Substrate의 샌드박스 실행·격리와 M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은 500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore agent volumes는 프리뷰 접근 신청 단계다. [S4]
+
+### 샌드박스 재개와 영구 작업공간
+
+GKE Agent Substrate는 커널·네트워크 격리를 적용하며 회사가 제시한 suspend/resume 활성화 수는 초당 500회를 넘는다. Filestore agent volumes는 Agent Substrate·Agent Sandbox와 연계해 전용 격리 파일 작업공간을 연결하는 별도 저장 구성으로 소개됐다. [S4]
+
+### M4N 저장 성능과 Z4D bare metal 구성
+
+M4N은 Titanium과 Hyperdisk Extreme 조합에서 최대 25,000MiB/s 호스트 저장 성능과 최대 100만 IOPS를 제공한다고 회사는 설명했다. Z4D는 bare metal 구성의 로컬 SSD 용량과 지연을 에이전트 microVM 실행에 활용하는 VM이다. 해당 수치는 회사가 제시한 구성과 최대치 조건을 따른다. [S4]
 
 ## Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개
 
@@ -687,7 +760,15 @@ Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate
 **세부 태그:** 보안 사고
 **기업·기관:** Cisco
 
-Cisco는 9월 30일 Catalyst SD-WAN Manager API 세션 인증 취약점 CVE-2026-76504를 공개했다. 원격 비인증 공격자가 관리자 권한으로 접근할 수 있으며 CVSS 기본 점수는 9.8이고 Cisco는 우회책이 없다고 밝혔다. Cisco는 영향 버전 사용자의 즉시 업그레이드와 관리자 진단 자료 점검을 안내했다. [S5]
+Cisco는 9월 30일 Catalyst SD-WAN Manager API 인증 우회 취약점 CVE-2026-76504를 공개했다. 영향받는 시스템에서는 인증되지 않은 원격 공격자가 관리자 권한으로 API에 접근할 수 있으며, Cisco PSIRT는 9월 실제 악용을 인지했다고 밝혔다. 회사는 수정된 소프트웨어로 업그레이드할 것을 권고했다. [S5]
+
+### 수정 버전과 임시 부분 보호
+
+취약·수정 소프트웨어 판본은 Cisco의 수정 버전 표에서 구분한다. 10월 2일 개정판에 추가된 Live Protect shield는 업그레이드 준비 시간을 위한 임시 부분 보호로 소개됐으며, 취약점을 해결하는 조치는 수정 버전 업그레이드다. [S5]
+
+### 관리형 클라우드와 온프레미스 대응
+
+Cisco 관리형 SD-WAN Cloud에는 수정 릴리스의 조치가 반영돼 사용자 추가 조치가 필요 없다고 회사는 설명했다. 온프레미스 환경에서 신뢰할 수 없는 네트워크의 접근을 제한하는 것은 완화 조치이며 소프트웨어 수정을 대체하지 않는다. [S5]
 
 ## AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고
 
@@ -697,9 +778,17 @@ Cisco는 9월 30일 Catalyst SD-WAN Manager API 세션 인증 취약점 CVE-2026
 **세부 태그:** 보안 사고
 **기업·기관:** AMD
 
-AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 취약점 CVE-2026-43598을 공지했다. 공격 조건이 충족되면 메모리 노출과 ASLR 우회를 거쳐 RCCL 프로세스 권한으로 원격 코드 실행이 가능할 수 있으며, 기본 CVSS는 7.7이다. AMD는 완화 버전을 안내했지만 영향 제품 표 일부에 다른 CVE 식별자가 함께 표시돼 설치 환경별 확인이 필요하다. [S6]
+AMD는 9월 30일 ROCm RCCL 프록시 통신 경로의 입력 검증 취약점 CVE-2026-43598을 공개했다. 손상된 peer rank 또는 네트워크 인접 공격자 조건에서 메모리 노출과 ASLR 우회, RCCL 프로세스 내 원격 코드 실행으로 이어질 가능성이 있으며 CVSS 4.0 기본 점수는 7.7이다. 회사는 열거한 Instinct 제품에 ROCm 7.14 완화 버전을 적용할 것을 권고했다. [S6]
 
-## Micron, 2026 회계연도 매출 1,332억 달러 기록
+### 공격 조건과 완화 버전
+
+권고문은 공격 조건으로 손상된 peer rank 또는 네트워크 인접 공격자를 명시한다. CVSS 기본 점수는 구현 환경에 따라 달라질 수 있으며 실제 시스템의 조건과 대조해야 한다. 제품 표의 완화 버전 ROCm 7.14는 7월 15일 공개된 것으로 기록돼 있다. [S6]
+
+### 제품 표의 CVE 정정
+
+AMD는 10월 6일 제품 표의 CVE를 정정했다. 현재 표에는 본문과 같은 CVE-2026-43598이 기재돼 있으며, 최초 공개일인 9월 30일과 정정일을 구분한다. [S6]
+
+## Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
 
 **분야:** 반도체·컴퓨팅
 **테마:** 실적·재무
@@ -707,7 +796,9 @@ AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 
 **세부 태그:** 매출, 실적 전망
 **기업·기관:** Micron Technology
 
-Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표했다. 전년도 373억 8천만 달러에서 증가했으며, 4분기 매출은 542억 3천만 달러로 직전 분기보다 늘었다. 회사는 FY2027 1분기 매출을 615억 달러±15억 달러로 전망했으며 이는 아직 실적이 아닌 회사 가이던스다. [S7]
+Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은 373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027 회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다. [S7]
+
+
 
 ## Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
 
@@ -717,27 +808,41 @@ Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표�
 **세부 태그:** 기술 제휴, 실증·재현
 **기업·기관:** Hitachi, FANUC
 
-Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결합하는 Physical AI 협력을 발표했다. 양사는 Hitachi 이바라키 제조시설을 시험 현장으로 삼아 부품 피킹과 생산 품목 전환을 검증하고, 인식 정확도·로봇 동작·택트타임·품질을 평가할 계획이다. 고객 공동 배치는 FY2027부터 시작하겠다고 밝혔으므로 발표된 협약은 현재 수주나 생산라인 성과와 구분된다. [S8]
+Hitachi와 FANUC는 9월 30일 일본에서 HMAX Industry 등 Hitachi의 AI 기술과 FANUC의 산업용 로봇을 결합하는 전략적 제휴를 발표했다. 먼저 Hitachi의 이바라키 제조시설에서 여러 형태의 부품을 집고 생산 품목을 바꾸는 작업을 검증할 계획이다. 양사는 검증에서 얻은 구현·운영 경험을 바탕으로 회계연도 2027년부터 고객사 배치를 시작하고 반도체·자동차·물류 등으로 적용을 넓히겠다고 밝혔다. [S8]
+
+### 공장에서 학습하고 평가할 작업
+
+Hitachi Group 공장을 첫 적용 현장인 Customer Zero로 삼아 생산 현장별 규칙을 AI가 계속 학습하도록 한다. 검증에서는 인식 정확도, 로봇 동작, 택트 타임과 품질 효과를 평가하고 Hitachi의 엣지 AI 반도체를 FANUC 로봇과 결합하는 효과도 확인할 계획이다. [S8]
+
+### 택트 타임의 기준
+
+발표 자료에서 택트 타임은 제품 하나를 생산·처리하거나 작업 하나를 완료하는 데 배정하는 표준 시간을 뜻한다. [S8]
 
 ## IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
 
 **분야:** 로봇·제조
-**테마:** 연구·기술
+**테마:** 사업·고객
 **보조 테마:** 없음
-**세부 태그:** 성능 개선
+**세부 태그:** 시장평가
 **기업·기관:** International Federation of Robotics
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다. [S9]
 
-## Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
+
+
+## Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
 
 **분야:** 에너지·기후기술
 **테마:** 생산·공급망
 **보조 테마:** 사업·고객
 **세부 태그:** 설비 투자, 수주·계약
-**기업·기관:** Ørsted, First Solar
+**기업·기관:** Ørsted, Playa Lakes Joint Venture (PLJV), First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다. [S10]
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고 발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될 것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기 전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는 Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로 예상했으며, 상업운전은 2027년 말로 전망했다. [S10]
+
+### 패널 조달
+
+Ørsted는 Blackwater Solar용 태양광 패널을 미국 제조업체 First Solar에서 조달했다고 밝혔다. [S10]
 
 ## Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
 
@@ -749,6 +854,8 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과 향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다. [S11]
 
+
+
 ## Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
 
 **분야:** 바이오·의료기술
@@ -758,6 +865,8 @@ Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation C
 **기업·기관:** Candel Therapeutics
 
 Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상 중간위험군 분석과 PrTK05 2상 면역 지표를 공개했다. 3상 중간위험군 635명 분석에서 방사선 치료 병용군은 대조군보다 재발 또는 전립선암 사망 위험이 낮았다고 회사는 보고했다(HR 0.59, 95% CI 0.41–0.84, p=0.0034). 2상 혈액 비교는 병용군 13명과 표준치료군 6명의 탐색 분석이며, 대조군과의 정식 비교는 진행 중이다. [S12]
+
+
 
 ## ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
 
@@ -769,6 +878,8 @@ Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상
 
 HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS, CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새 프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다. [S13]
 
+
+
 ## NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
 
 **분야:** 우주·기초과학
@@ -777,7 +888,9 @@ HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·�
 **세부 태그:** 수주·계약, 새로운 방법
 **기업·기관:** NASA, Modulate Space Corporation
 
-NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스템 개발 계약을 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러이며 실험실 시연은 2028년 1월까지, 달 표면 통합 네트워크 비행 시연은 2028년 말로 계획됐다. 현재 달에서 통신망이 구축됐거나 시험이 시작된 것은 아니다. [S14]
+NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 표면용 5G·Wi-Fi 6 통신 시스템 개발 계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실 시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두 과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다. [S14]
+
+
 
 ## Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
 
@@ -787,7 +900,9 @@ NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스�
 **세부 태그:** 수주·계약
 **기업·기관:** Rocket Lab, Synspective
 
-Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기를 2028\~2031년에 발사하는 다년 계약을 발표했다. 회사는 이번 계약이 Electron의 단일 최대 상업 발사 계약이며 양사의 총 계약 발사 수가 47회가 된다고 밝혔다. 계약 금액은 비공개이고 20회 발사는 향후 일정이다. [S15]
+Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Synspective와 신규 Electron 발사 20회의 다년 계약을 체결했다고 발표했다. StriX 합성개구레이더(SAR) 위성 20기를 Launch Complex 1에서 태양동기궤도로 보내며, 발사는 2028\~2031년에 매년 진행할 예정이다. 회사는 이번 계약으로 Synspective를 위한 Electron 총 발사 계약이 47회가 됐으며, 단일 계약 기준 Electron의 최대 상업 발사 계약이라고 밝혔다. [S15]
+
+
 
 ## Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
 
@@ -938,7 +1053,7 @@ SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
+- [S10] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html

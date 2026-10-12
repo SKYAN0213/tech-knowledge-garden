@@ -25,19 +25,19 @@ OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Syno
 
 ### [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]]
 
-Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식 제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배 높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대 25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수 있도록 설계했다고 설명했다.
+Google Cloud는 9월 30일 월간 인프라 업데이트에서 GKE Agent Substrate의 샌드박스 실행·격리와 M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은 500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore agent volumes는 프리뷰 접근 신청 단계다.
 
-### [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]]
+### [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표]]
 
-Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표했다. 전년도 373억 8천만 달러에서 증가했으며, 4분기 매출은 542억 3천만 달러로 직전 분기보다 늘었다. 회사는 FY2027 1분기 매출을 615억 달러±15억 달러로 전망했으며 이는 아직 실적이 아닌 회사 가이던스다.
+Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은 373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027 회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다.
 
 ### [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]]
 
-Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결합하는 Physical AI 협력을 발표했다. 양사는 Hitachi 이바라키 제조시설을 시험 현장으로 삼아 부품 피킹과 생산 품목 전환을 검증하고, 인식 정확도·로봇 동작·택트타임·품질을 평가할 계획이다. 고객 공동 배치는 FY2027부터 시작하겠다고 밝혔으므로 발표된 협약은 현재 수주나 생산라인 성과와 구분된다.
+Hitachi와 FANUC는 9월 30일 일본에서 HMAX Industry 등 Hitachi의 AI 기술과 FANUC의 산업용 로봇을 결합하는 전략적 제휴를 발표했다. 먼저 Hitachi의 이바라키 제조시설에서 여러 형태의 부품을 집고 생산 품목을 바꾸는 작업을 검증할 계획이다. 양사는 검증에서 얻은 구현·운영 경험을 바탕으로 회계연도 2027년부터 고객사 배치를 시작하고 반도체·자동차·물류 등으로 적용을 넓히겠다고 밝혔다.
 
 ### [[News/086bdbb3792ca8d9|NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약]]
 
-NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스템 개발 계약을 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러이며 실험실 시연은 2028년 1월까지, 달 표면 통합 네트워크 비행 시연은 2028년 말로 계획됐다. 현재 달에서 통신망이 구축됐거나 시험이 시작된 것은 아니다.
+NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 표면용 5G·Wi-Fi 6 통신 시스템 개발 계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실 시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두 과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다.
 
 
 
@@ -49,7 +49,7 @@ NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스�
 
 제품·서비스 · 사업·고객 · 신제품 · 가격 변경 · DigitalOcean
 
-DigitalOcean은 10월 1일 에이전트 실행 환경·추론·저장공간·도구 사용료를 월 구독과 단일 청구서로 묶는 Agent Droplets를 공개 프리뷰로 내놨다. Pro는 월 50달러, Team은 월 200달러이며 각각 사용량 할인 15%와 20%를 적용한다고 밝혔다. 구독 허용량을 넘기면 정가 과금이 이어질 수 있어 총비용은 실제 사용량에 따라 달라진다.
+DigitalOcean은 10월 1일 Managed Agents 공개 프리뷰에 Agent Droplets를 도입했다. 월간 Pro는 50달러, Team은 200달러이며 에이전트 사용료를 각각 15%와 20% 할인한다. 기존 에이전트 실행 도구를 전용 microVM에서 이용하고 유휴 상태에는 자동으로 일시정지하는 방식이다.
 
 #### [[News/17f635e65de87807|MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원]]
 
@@ -63,13 +63,13 @@ MIT는 9월 30일 공개한 자료에서 Google.org가 9월 15일 MIT Transit La
 
 제품·서비스 · 표준·생태계 · 신제품 · 기능 추가 · Google Cloud
 
-Google Cloud는 9월 30일 Data Agent Kit를 정식 제공하고 BigQuery Graph, Bigtable, Managed Service for Apache Spark 지원을 추가했다. 이 도구 묶음은 15개가 넘는 데이터 서비스의 스키마와 작업 로그를 읽고 쿼리·리소스 관리를 수행하며, 사용자의 IAM 권한을 따른다고 회사는 설명했다. 키트 자체는 무료지만 에이전트가 호출하는 클라우드 서비스 비용은 별도다.
+Google Cloud는 9월 30일 Data Agent Kit을 정식 제공하며 BigQuery Graph·Bigtable·Managed Service for Apache Spark 지원을 추가했다. MCP 도구와 에이전트 skills를 통해 기존 코딩 에이전트가 Google Cloud 데이터 제품을 사용하도록 하는 구성이다. 도구 묶음 자체는 무료지만 실제 클라우드 서비스 사용에는 표준 요금이 적용된다.
 
 #### [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]]
 
 제품·서비스 · 연구·기술 · 기능 추가 · 성능 개선 · Google Cloud
 
-Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식 제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배 높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대 25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수 있도록 설계했다고 설명했다.
+Google Cloud는 9월 30일 월간 인프라 업데이트에서 GKE Agent Substrate의 샌드박스 실행·격리와 M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은 500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore agent volumes는 프리뷰 접근 신청 단계다.
 
 ### 사이버보안 · 2건
 
@@ -77,13 +77,13 @@ Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate
 
 위험·사고 · 제품·서비스 · 보안 사고 · Cisco
 
-Cisco는 9월 30일 Catalyst SD-WAN Manager API 세션 인증 취약점 CVE-2026-76504를 공개했다. 원격 비인증 공격자가 관리자 권한으로 접근할 수 있으며 CVSS 기본 점수는 9.8이고 Cisco는 우회책이 없다고 밝혔다. Cisco는 영향 버전 사용자의 즉시 업그레이드와 관리자 진단 자료 점검을 안내했다.
+Cisco는 9월 30일 Catalyst SD-WAN Manager API 인증 우회 취약점 CVE-2026-76504를 공개했다. 영향받는 시스템에서는 인증되지 않은 원격 공격자가 관리자 권한으로 API에 접근할 수 있으며, Cisco PSIRT는 9월 실제 악용을 인지했다고 밝혔다. 회사는 수정된 소프트웨어로 업그레이드할 것을 권고했다.
 
 #### [[News/2000861d5f1c75c8|AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고]]
 
 위험·사고 · 제품·서비스 · 보안 사고 · AMD
 
-AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 취약점 CVE-2026-43598을 공지했다. 공격 조건이 충족되면 메모리 노출과 ASLR 우회를 거쳐 RCCL 프로세스 권한으로 원격 코드 실행이 가능할 수 있으며, 기본 CVSS는 7.7이다. AMD는 완화 버전을 안내했지만 영향 제품 표 일부에 다른 CVE 식별자가 함께 표시돼 설치 환경별 확인이 필요하다.
+AMD는 9월 30일 ROCm RCCL 프록시 통신 경로의 입력 검증 취약점 CVE-2026-43598을 공개했다. 손상된 peer rank 또는 네트워크 인접 공격자 조건에서 메모리 노출과 ASLR 우회, RCCL 프로세스 내 원격 코드 실행으로 이어질 가능성이 있으며 CVSS 4.0 기본 점수는 7.7이다. 회사는 열거한 Instinct 제품에 ROCm 7.14 완화 버전을 적용할 것을 권고했다.
 
 ### 반도체·컴퓨팅 · 2건
 
@@ -93,11 +93,11 @@ AMD는 9월 30일 ROCm Communication Collectives Library(RCCL)의 입력 검증 
 
 OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다.
 
-#### [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,332억 달러 기록]]
+#### [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표]]
 
 실적·재무 · 생산·공급망 · 매출 · 실적 전망 · Micron Technology
 
-Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표했다. 전년도 373억 8천만 달러에서 증가했으며, 4분기 매출은 542억 3천만 달러로 직전 분기보다 늘었다. 회사는 FY2027 1분기 매출을 615억 달러±15억 달러로 전망했으며 이는 아직 실적이 아닌 회사 가이던스다.
+Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은 373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027 회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다.
 
 ### 로봇·제조 · 2건
 
@@ -105,21 +105,21 @@ Micron은 9월 30일 2026 회계연도 매출 1,331억 9천만 달러를 발표�
 
 표준·생태계 · 연구·기술 · 기술 제휴 · 실증·재현 · Hitachi · FANUC
 
-Hitachi와 FANUC은 9월 30일 HMAX Industry AI와 FANUC 산업용 로봇을 결합하는 Physical AI 협력을 발표했다. 양사는 Hitachi 이바라키 제조시설을 시험 현장으로 삼아 부품 피킹과 생산 품목 전환을 검증하고, 인식 정확도·로봇 동작·택트타임·품질을 평가할 계획이다. 고객 공동 배치는 FY2027부터 시작하겠다고 밝혔으므로 발표된 협약은 현재 수주나 생산라인 성과와 구분된다.
+Hitachi와 FANUC는 9월 30일 일본에서 HMAX Industry 등 Hitachi의 AI 기술과 FANUC의 산업용 로봇을 결합하는 전략적 제휴를 발표했다. 먼저 Hitachi의 이바라키 제조시설에서 여러 형태의 부품을 집고 생산 품목을 바꾸는 작업을 검증할 계획이다. 양사는 검증에서 얻은 구현·운영 경험을 바탕으로 회계연도 2027년부터 고객사 배치를 시작하고 반도체·자동차·물류 등으로 적용을 넓히겠다고 밝혔다.
 
 #### [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]]
 
-연구·기술 · 성능 개선 · International Federation of Robotics
+사업·고객 · 시장평가 · International Federation of Robotics
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다.
 
 ### 에너지·기후기술 · 4건
 
-#### [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]]
+#### [[News/926dd2776aef7b1b|Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작]]
 
-생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · First Solar
+생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · Playa Lakes Joint Venture (PLJV) · First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고 발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될 것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기 전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는 Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로 예상했으며, 상업운전은 2027년 말로 전망했다.
 
 #### [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]]
 
@@ -171,13 +171,13 @@ Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다�
 
 사업·고객 · 연구·기술 · 수주·계약 · 새로운 방법 · NASA · Modulate Space Corporation
 
-NASA는 9월 30일 Modulate Space에 달 표면용 5G와 Wi-Fi 6 통신 시스템 개발 계약을 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러이며 실험실 시연은 2028년 1월까지, 달 표면 통합 네트워크 비행 시연은 2028년 말로 계획됐다. 현재 달에서 통신망이 구축됐거나 시험이 시작된 것은 아니다.
+NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 표면용 5G·Wi-Fi 6 통신 시스템 개발 계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실 시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두 과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다.
 
 #### [[News/a930c8de646354b3|Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약]]
 
 사업·고객 · 수주·계약 · Rocket Lab · Synspective
 
-Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기를 2028~2031년에 발사하는 다년 계약을 발표했다. 회사는 이번 계약이 Electron의 단일 최대 상업 발사 계약이며 양사의 총 계약 발사 수가 47회가 된다고 밝혔다. 계약 금액은 비공개이고 20회 발사는 향후 일정이다.
+Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Synspective와 신규 Electron 발사 20회의 다년 계약을 체결했다고 발표했다. StriX 합성개구레이더(SAR) 위성 20기를 Launch Complex 1에서 태양동기궤도로 보내며, 발사는 2028~2031년에 매년 진행할 예정이다. 회사는 이번 계약으로 Synspective를 위한 Electron 총 발사 계약이 47회가 됐으며, 단일 계약 기준 Electron의 최대 상업 발사 계약이라고 밝혔다.
 
 
 
@@ -204,7 +204,7 @@ Rocket Lab은 9월 30일 Synspective의 StriX 합성개구레이더 위성 20기
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
+- [S10] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html

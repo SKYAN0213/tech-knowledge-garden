@@ -4,13 +4,14 @@
 
 ## 누적 주제
 
+- [소량 배치 포장 폐기물 분류용 협동로봇 작업대](topics/research-small-batch-packaging-waste-sorting.md) — 원문 1건 · 0개 원칙
 - [RobCo의 투자와 미국 운영](topics/company-robco.md) — 원문 1건 · 0개 원칙
 - [쌓인 옷감의 로봇 집기](topics/research-stacked-fabric-grasping.md) — 원문 1건 · 0개 원칙
-- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 10건 · 0개 원칙
-- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 1개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 11건 · 0개 원칙
-- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙
+- [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 10건 · 0개 원칙
+- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 0개 원칙
 - [삼성 계열사의 AI 인프라 투자와 공급 참여](topics/company-samsung-ai-infrastructure.md) — 원문 1건 · 0개 원칙
+- [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙
 - [Envisagenics의 RNA 표적 연구 사업화](topics/venture-envisagenics.md) — 원문 1건 · 0개 원칙
 - [가정용 배터리의 전력망 공급 실적](topics/grid-home-batteries.md) — 원문 2건 · 0개 원칙
 - [Magnachip의 SiC 기술 이전과 사업화](topics/company-magnachip-sic.md) — 원문 1건 · 0개 원칙
@@ -25,6 +26,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-10-12 · 0800](2026/10/2026-10-12_0800_Tech_AI_Briefing.md) — 2026-10-12 IT · AI · 로보틱스
 - [2026-10-08 · 0800](2026/10/2026-10-08_0800_Tech_AI_Briefing.md) — 2026-10-08 IT · AI · 로보틱스
 - [2026-10-07 · 0800](2026/10/2026-10-07_0800_Tech_AI_Briefing.md) — 2026-10-07 IT · AI · 로보틱스
 - [2026-10-06 · 0800](2026/10/2026-10-06_0800_Tech_AI_Briefing.md) — 2026-10-06 IT · AI · 로보틱스
@@ -35,16 +37,16 @@
 - [2026-09-22 · 0800](2026/09/2026-09-22_0800_Tech_AI_Briefing.md) — 2026-09-22 IT · AI · 로보틱스
 - [2026-09-21 · 0800](2026/09/2026-09-21_0800_Tech_AI_Briefing.md) — 2026-09-21 IT · AI · 로보틱스
 - [2026-09-20 · 0800](2026/09/2026-09-20_0800_Tech_AI_Briefing.md) — 2026-09-20 IT · AI · 로보틱스
-- [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접
-- [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — HD현대로보틱스의 감각 센서 투자와 FANUC의 AI 용접 프로그램 생성
-- [2026-09-11 · 0800](2026/09/2026-09-11_0800_Tech_AI_Briefing.md) — DeepSeek의 비대칭 모델 구조, KUKA의 자율 지게차, NVIDIA·Palantir의 공급망 AI
-- [2026-09-10 · 0801](2026/09/2026-09-10_0801_Tech_AI_Briefing.md) — Astra의 기업 접근 관리와 GitHub의 실행·병합 권한 기능
-- [2026-09-09 · 0802](2026/09/2026-09-09_0802_Tech_AI_Briefing.md) — 나비에–스토크스 증명안 공개 · GHES 3.22 출시 · Dependabot 패키지 인증
-- [2026-09-08 · 0801](2026/09/2026-09-08_0801_Tech_AI_Briefing.md) — 비행운 회피 경로 시험과 초음파 AI의 외부 기관 평가
+- [2026-09-14 · 0800](2026/09/2026-09-14_0800_Tech_AI_Briefing.md) — 2026-09-14 IT · AI · 로보틱스
+- [2026-09-13 · 0800](2026/09/2026-09-13_0800_Tech_AI_Briefing.md) — 2026-09-13 IT · AI · 로보틱스
+- [2026-09-11 · 0800](2026/09/2026-09-11_0800_Tech_AI_Briefing.md) — 2026-09-11 IT · AI · 로보틱스
+- [2026-09-10 · 0801](2026/09/2026-09-10_0801_Tech_AI_Briefing.md) — 2026-09-10 IT · AI · 로보틱스
+- [2026-09-09 · 0802](2026/09/2026-09-09_0802_Tech_AI_Briefing.md) — 2026-09-09 IT · AI · 로보틱스
+- [2026-09-08 · 0801](2026/09/2026-09-08_0801_Tech_AI_Briefing.md) — 2026-09-08 IT · AI · 로보틱스
 - [2026-09-07 · 0801](2026/09/2026-09-07_0801_Tech_AI_Briefing.md) — 2026-09-07 IT · AI · 로보틱스
 - [2026-09-06 · 0802](2026/09/2026-09-06_0802_Tech_AI_Briefing.md) — 검증된 새 소식 없음.
-- [2026-09-05 · 0801](2026/09/2026-09-05_0801_Tech_AI_Briefing.md) — Copilot에 GPT-6 Astra 추가 · 저장소 스타 이력 API 공개
-- [2026-09-04 · 0802](2026/09/2026-09-04_0802_Tech_AI_Briefing.md) — npm 다중 OIDC 설정 · Actions 실행기·권한 업데이트 · CodeQL 2.26.4
+- [2026-09-05 · 0801](2026/09/2026-09-05_0801_Tech_AI_Briefing.md) — 2026-09-05 IT · AI · 로보틱스
+- [2026-09-04 · 0802](2026/09/2026-09-04_0802_Tech_AI_Briefing.md) — 2026-09-04 IT · AI · 로보틱스
 - [2026-09-03 · 0803](2026/09/2026-09-03_0803_Tech_AI_Briefing.md) — 2026-09-03 IT · AI · 로보틱스
 - [2026-09-02 · 0801](2026/09/2026-09-02_0801_Tech_AI_Briefing.md) — 2026-09-02 IT · AI · 로보틱스
 - [2026-09-01 · 0801](2026/09/2026-09-01_0801_Tech_AI_Briefing.md) — 2026-09-01 IT · AI · 로보틱스

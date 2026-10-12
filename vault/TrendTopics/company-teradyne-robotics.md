@@ -8,7 +8,7 @@ thesis: 2026년 9월 Universal Robots는 Gen 7을 공개했고 Teradyne Robotics
   총괄하는 CCO를 선임했다. 두 발표는 제품과 조직의 변화이며 실제 수주 증가를 입증하지 않는다.
 watch_for: Gen 7의 실제 인도 시점과 고객 공정 도입, UR·MiR 사업별 공개 실적.
 disconfirming: 제품 출시 지연, 고객 도입 범위 축소나 조직 역할 변경이 공개되면 해당 사실을 추가한다.
-reviewed: 2026-09-20
+reviewed: 2026-10-10
 knowledge_notes: []
 lessons: []
 ---

@@ -2,7 +2,7 @@
 title: 삼성전자 공조 생산거점 확대
 type: briefing-topic
 topic_id: company-samsung-hvac
-date: 2026-10-08
+date: 2026-10-12
 description: 광주 생산라인은 2026-09-21 착공했고 가동은 2028년 초 계획이다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-samsung-hvac.md
 cssclasses:
@@ -20,7 +20,7 @@ generated_by: tech-knowledge-garden
 
 광주 생산라인은 2026-09-21 착공했고 가동은 2028년 초 계획이다.
 
-2026-10-08까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-12까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -38,15 +38,15 @@ generated_by: tech-knowledge-garden
 
 <span id="20260922-samsung-company-samsung-hvac"></span>
 
-### 2026-09-22 · 참고
+### 2026-09-21 · 참고
 
-**삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획**
+**삼성전자, 광주 HVAC 생산라인 착공…약 2,400억원 투자·2028년 초 가동 계획**
 
 동아시아 고객 공조 수요 대응이라는 회사 설명
 
 - 한계: 완공되면 FläktGroup의 세계 15번째 제조거점이 된다. 이번에 확인된 진행 단계는 착공이며, 투자 총액은 계획 금액이다. 실제 가동과 품목별 공급 확대는 2028년 일정 및 후속 생산 발표로 확인해야 한다.
 - 다음 확인: 실제 가동 일정, 품목별 생산·고객 공급.
-- [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · [news.samsung.com 원문](https://news.samsung.com/kr/삼성전자-플랙트그룹-hvac-생산라인-착공) · [[Briefings/2026/09/2026-09-22_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-09-22 원문 검토
+- [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · [news.samsung.com 원문](https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%94%8C%EB%9E%99%ED%8A%B8%EA%B7%B8%EB%A3%B9-hvac-%EC%83%9D%EC%82%B0%EB%9D%BC%EC%9D%B8-%EC%B0%A9%EA%B3%B5) · [[Briefings/2026/09/2026-09-22_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-10 원문 검토
 
 ## 관련 개념

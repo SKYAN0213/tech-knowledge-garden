@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-14
 created: 2026-09-14
 modified: 2026-09-14
-description: 현대차그룹의 자율주행 양산 일정, HD현대로보틱스의 센서 투자, FANUC의 AI 용접
+description: 2026-09-14 IT · AI · 로보틱스
 coverage_start: 2026-09-13T08:01:40+09:00
 coverage_end: 2026-09-13T23:12:04.828Z
 item_count: 3
@@ -25,11 +25,11 @@ generated_by: tech-knowledge-garden
 
 ### [[News/902d86854fec2b7d|HD현대로보틱스, 에이딘에 130억 원 투자…로봇손·표면가공 공동 개발]]
 
-HD현대로보틱스가 에이딘로보틱스 지분을 130억 원에 취득했다고 9월 11일 밝혔다고 뉴스핌이 보도했다. 양사는 힘·촉각 센서와 로봇 제어 기술을 결합해 조선·중공업용 다섯 손가락 로봇손과 연마·그라인딩 자동화 솔루션을 공동 개발한다. 에이딘은 HD현대로보틱스와 삼성벤처투자가 참여한 총 160억 원 투자 유치를 마쳤으며, 연간 힘·토크 센서 3만 대 생산체제를 구축할 계획이라고 이데일리가 전했다.
+HD현대로보틱스는 9월 11일 힘·촉각 센서 기업 에이딘로보틱스의 지분을 130억 원에 취득했다고 밝혔다. 자사 로봇 플랫폼에 에이딘의 센서·제어 기술을 결합하고, 조선·중공업용 다섯 손가락 로봇손과 표면처리 자동화 솔루션을 공동 개발할 계획이다. 에이딘은 HD현대로보틱스와 삼성벤처투자가 참여한 160억 원 규모 투자 유치를 마쳤다고 9월 10일 발표했으며, 투자금을 생산설비·품질 검증·연구개발 인력 확충에 투입하겠다고 밝혔다.
 
-### [[News/eb739a02acad3ab9|FANUC, 도면을 읽어 용접 조건·로봇 동작을 만드는 AI 에이전트 발표]]
+### [[News/eb739a02acad3ab9|FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발]]
 
-FANUC은 9월 11일 Google Cloud의 Gemini Enterprise를 활용한 AI 용접 에이전트를 발표했다. 설계 도면을 읽어 전류·전압 등 용접 조건과 로봇 동작 프로그램을 자동 생성하며, 작업자는 생성 결과를 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 국제웰딩쇼에서 실연하고 12월 말 출하를 시작할 계획이다.
+FANUC는 9월 11일 Google Cloud의 Gemini Enterprise를 활용해 부품 도면에서 로봇 아크용접 프로그램을 생성·실행하는 AI Welding Agent를 개발했다고 발표했다. 시스템은 재료와 완성 형상을 읽어 전류·전압 조건과 로봇 동작을 생성하며, 작업자는 생성 결과를 그대로 실행하거나 미세 조정할 수 있다. 회사는 9월 16일 도쿄 빅사이트에서 시작하는 국제용접전시회에서 시연하고 2026년 12월 말 출하를 시작할 예정이라고 밝혔다.
 
 ### [[News/90208487c77211d8|DeepSeek V4.1-Flash, 입력·출력 계산을 나눈 5,520억 매개변수 모델 공개]]
 
@@ -49,13 +49,13 @@ NVIDIA와 Palantir는 9월 10일 엔비디아의 공급망 운영에 맞춤형 A
 
 사업·고객 · 고객 도입 · 삼성자산운용
 
-삼성자산운용이 임직원의 비인가 생성형 AI 사용에 따른 정보 유출을 감시하기 위해 스플렁크 도입을 결정하고 시스템 구축을 추진하고 있다고 전자신문이 9월 13일 보도했다. 회사 관계자는 도입 결정과 구축 추진 사실을 확인했다. 회사는 민감정보 입력, 대량 문서 분석, 업무시간 외 이용 등 12가지 행동 유형을 중심으로 이상 징후를 탐지할 계획이다.
+삼성자산운용이 임직원의 비인가 생성형 AI 사용에 따른 정보 유출을 감시하기 위해 스플렁크 도입을 결정하고 시스템 구축을 추진한다고 전자신문이 9월 13일 보도했다. 회사 관계자는 도입 결정과 구축 추진 사실을 확인했다. 민감정보 입력·대량 문서 분석·업무시간 외 이용 등 12가지 행동 유형을 탐지·분석 대상으로 계획하고 있다.
 
 ### 로봇·제조 · 1건
 
 #### [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]]
 
-사업·고객 · 표준·생태계 · 시장 진출 · 기술 제휴 · 현대자동차그룹 · 42dot · NVIDIA
+사업·고객 · 표준·생태계 · 시장 진출 · 기술 제휴 · Hyundai Motor Group · 42dot · NVIDIA
 
 현대자동차그룹은 9월 13일 자율주행 전략을 공개하며 엔비디아 솔루션 기반 차량은 2028년, 자체 Atria AI 기반 차량은 2029년 하반기 양산을 목표로 제시했다. AVP본부와 42dot은 실제 주행 데이터를 수집해 학습·검증한 뒤 차량에 반영하는 개발 체계를 운영하며, 현재 약 40대의 전용 수집 차량을 운행한다고 밝혔다. 양산 기술 개발과 함께 연말 광주에서 Atria AI를 탑재한 차량의 레벨 4 실증을 추진한다.
 
@@ -67,19 +67,11 @@ NVIDIA와 Palantir는 9월 10일 엔비디아의 공급망 운영에 맞춤형 A
 
 NASA는 9월 13일 오전 8시 3분(미국 산악 하계시간) 뉴멕시코주 포트섬너에서 과학기구 BOOP!를 띄워 미래 탐사 임무에 사용할 장비들을 시험했다. 기구는 행성 탐사용 소형 도구, 고에너지 우주 방사선 지도 작성 장비, 새 비행 카메라 시스템을 싣고 약 12만 3천 피트 고도에 도달했다. NASA가 발표한 총 비행시간은 4시간 29분이다.
 
-## 오늘의 심층 분석
-
-### [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]]
-
-3월 발표가 엔비디아 기술의 선제 적용과 데이터 기반 구축에 초점을 뒀다면, 9월에는 외부 솔루션과 자체 모델의 양산 시점을 나눠 제시했다. 실제 운영 중인 데이터 수집 차량과 개발 조직을 두 경로의 공통 기반으로 둔 전략이다.
-
-[[Briefings/Topics/company-hyundai-motor-group|누적 기록]]
-
 
 
 ## 출처
 
-- [S1] https://www.etnews.com/20260911000249
-- [S2] https://www.nasa.gov/blogs/wallops/2026/09/13/fourth-balloon-of-nasa-scientific-balloon-campaign-launches/
-- [S3] https://org.hyundai.com/worldwide/en/newsroom/detail/0000001273
-- [S4] https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion
+- [S1] https://org.hyundai.com/worldwide/en/newsroom/detail/0000001273
+- [S2] https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion
+- [S3] https://www.etnews.com/20260911000249
+- [S4] https://www.nasa.gov/blogs/wallops/2026/09/13/fourth-balloon-of-nasa-scientific-balloon-campaign-launches/

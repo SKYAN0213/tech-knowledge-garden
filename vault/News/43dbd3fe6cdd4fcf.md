@@ -9,7 +9,7 @@ event_id: 43dbd3fe6cdd4fcf
 review_status: verified
 concept_ids: []
 published_at: 2026-09-18
-reviewed_at: 2026-10-06
+reviewed_at: 2026-10-01
 source_url: https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
 sources:
   - https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo

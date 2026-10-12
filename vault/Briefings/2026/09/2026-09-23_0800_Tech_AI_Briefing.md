@@ -21,15 +21,15 @@ generated_by: tech-knowledge-garden
 
 ### [[News/73461b3e97af0d93|OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하]]
 
-OpenAI는 9월 22일 GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공하기 시작했다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 이전 GPT-5.6 Sol의 4달러·20달러, Luna의 0.20달러·1.20달러보다 낮다.
+OpenAI는 한국시간 9월 23일(원문 게시일 9월 22일) GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공한다고 밝혔다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 비교표에 제시한 이전 GPT-5.6 프로모션 가격은 Sol이 4달러·20달러, Luna가 0.20달러·1.20달러다.
 
-### [[News/94d03e7f8181fafd|LS일렉트릭, 부산 변압기 공장에 사족보행 로봇 Spot 도입]]
+### [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]]
 
-LS일렉트릭은 9월 22일 최근 증설한 부산사업장에 Boston Dynamics의 사족보행 로봇 Spot을 도입했다고 발표했다. 초고압 변압기 생산 공정과 시험설비를 모니터링해 품질·안전 관리에 활용하는 현장 적용이다. 회사는 수집 데이터의 AI 분석을 바탕으로 전 사업장 확대를 검토한다.
+LS ELECTRIC은 2026년 9월 22일 보스턴 다이내믹스의 4족 보행로봇 Spot을 부산사업장에 도입했다고 밝혔다. 현대오토에버와 7월부터 약 2개월간 시험 운용한 뒤 Spot 2대를 정식 운용 중이다. 회사는 생산설비 모니터링과 품질·안전 관리에 활용한다고 설명했다. 보도자료는 변압기 공정 점검과 주요 설비 예지보전, 부산사업장 데이터를 활용한 AI 분석 및 국내외 생산기지 확대 계획을 제시했다.
 
 ### [[News/3742191de5126dd0|Cadence, 설계 사양을 RTL로 만드는 에이전트 공개…4분기 제한 제공]]
 
-Cadence는 9월 22일 자연어 설계 사양을 RTL로 변환하고 전력·성능·면적을 최적화하는 ChipStack RTL Generation Agent를 발표했다. 기존 RTL도 새 기능이나 구조 요구에 맞춰 수정하고 EDA 도구로 검증하는 방식이다. 확대된 기능은 2026년 4분기 일부 조기 접근 고객에게 제공할 예정이다.
+Cadence는 한국시간 2026년 9월 22일 자연어 설계 사양에서 RTL 코드를 생성하고 전력·성능·면적(PPA)을 최적화하는 ChipStack RTL Generation Agent를 발표했다. 새 기능은 기존 RTL을 새로운 설계 요구에 맞춰 수정하고 기능과 PPA를 분석·검증한다. 확대된 ChipStack·InnoStack 기능은 2026년 4분기 일부 조기 접근 고객에게 제공할 예정이다.
 
 ### [[News/66c52fd129c04f36|Roche, enicepatide 2상에서 48주 혈당·체중 결과 공개]]
 
@@ -37,7 +37,7 @@ Roche는 9월 22일 과체중·비만을 동반한 성인 제2형 당뇨병 환�
 
 ### [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]]
 
-Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 검증하는 다년간 연구 협업·옵션 계약을 발표했다. 자체 SpliceCore 플랫폼으로 찾은 종양 특이적 표적을 연구하고, 성공적으로 검증되면 베링거가 선택한 표적의 독점 개발·사업화 권리를 확보할 수 있는 구조다. 선급금·연구비·옵션료·개발 및 상업화 단계별 지급금을 합친 잠재 금액은 10억달러 이상이며 향후 판매 로열티는 별도다.
+Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 검증하는 다년간 연구 협업·옵션 계약을 발표했다. 자체 SpliceCore 플랫폼으로 찾은 종양 특이적 표적을 연구하고, 성공적으로 검증되면 베링거가 선택한 표적의 독점 개발·사업화 권리를 확보할 수 있는 구조다. 선급금·연구비·옵션료·개발·규제·상업화 단계별 지급금을 합친 잠재 금액은 10억 달러 초과이며 향후 판매 로열티는 별도다.
 
 
 
@@ -49,7 +49,7 @@ Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 �
 
 제품·서비스 · 신제품 · 가격 변경 · OpenAI
 
-OpenAI는 9월 22일 GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공하기 시작했다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 이전 GPT-5.6 Sol의 4달러·20달러, Luna의 0.20달러·1.20달러보다 낮다.
+OpenAI는 한국시간 9월 23일(원문 게시일 9월 22일) GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공한다고 밝혔다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 비교표에 제시한 이전 GPT-5.6 프로모션 가격은 Sol이 4달러·20달러, Luna가 0.20달러·1.20달러다.
 
 ### 소프트웨어·클라우드 · 1건
 
@@ -57,7 +57,7 @@ OpenAI는 9월 22일 GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Code
 
 투자·기업거래 · 인수합병 · Nutanix · Ryax Technologies
 
-Nutanix는 9월 22일 프랑스의 AI 연산 조율 소프트웨어 기업 Ryax Technologies를 인수했다고 발표했다. Ryax의 GPU·CPU 자원 최적화와 작업 배치 기술을 Nutanix Kubernetes Platform 및 Enterprise AI에 통합할 계획이다. 회사는 거래가 재무에 미치는 영향이 중요하지 않은 수준이라고 밝혔지만 인수 금액은 공개하지 않았다.
+Nutanix는 9월 22일 프랑스의 AI 연산 조율 소프트웨어 기업 Ryax Technologies를 인수했다고 발표했다. Ryax의 GPU·CPU 자원 최적화와 작업 배치 기술을 Nutanix Kubernetes Platform 및 Enterprise AI의 후속 제품에 통합할 계획이다. 회사는 거래가 재무에 미치는 영향이 중요하지 않은 수준이라고 밝혔다.
 
 ### 사이버보안 · 3건
 
@@ -71,13 +71,13 @@ VAST Data는 9월 22일 민감한 기업 데이터와 AI 모델을 보호된 연
 
 제품·서비스 · 기능 추가 · Proofpoint
 
-Proofpoint는 9월 22일 데이터 보호와 AI 사용 통제를 결합한 Agentic Data and AI Security 기능을 발표했다. 탐지·조사·대응 에이전트가 사용자 신원, 접근 권한, 데이터와 의도를 연결한 공통 그래프를 활용한다. 제공 시점은 2026년 말까지로 예고했다.
+Proofpoint는 9월 22일 데이터 보호와 AI 사용 통제를 결합한 Agentic Data and AI Security 기능을 발표했다. 탐지·조사·대응 에이전트가 신원·접근·데이터·행동·의도를 연결한 공통 그래프를 활용하도록 설계됐다. 제공 시점은 2026년 말까지로 예고했다.
 
 #### [[News/c2a48879e9e88507|네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시]]
 
-제품·서비스 · 신제품 · NAVER
+제품·서비스 · 신제품 · 네이버클라우드
 
-네이버클라우드는 9월 22일 데이터베이스와 서버의 접근 권한·작업 이력을 통합 관리하는 DSAC를 출시했다고 밝혔다. 고객의 가상 네트워크 안에 프록시를 자동 구성하고, 이를 거쳐 DB와 서버에 접속하도록 하는 서비스다. 관리자는 콘솔에서 사용자별 접근 정책과 작업 기록을 확인할 수 있다.
+네이버클라우드는 9월 22일 데이터베이스와 서버의 접근 권한·작업 이력을 통합 관리하는 DSAC를 출시했다고 밝혔다. 고객의 가상 네트워크 안에 프록시를 자동 구성해 DB와 서버의 접속 경로를 관리한다. 관리자는 콘솔에서 사용자별 접근 권한과 작업 기록을 확인할 수 있다.
 
 ### 반도체·컴퓨팅 · 1건
 
@@ -85,21 +85,21 @@ Proofpoint는 9월 22일 데이터 보호와 AI 사용 통제를 결합한 Agent
 
 제품·서비스 · 기능 추가 · Cadence · Honda R&D
 
-Cadence는 9월 22일 자연어 설계 사양을 RTL로 변환하고 전력·성능·면적을 최적화하는 ChipStack RTL Generation Agent를 발표했다. 기존 RTL도 새 기능이나 구조 요구에 맞춰 수정하고 EDA 도구로 검증하는 방식이다. 확대된 기능은 2026년 4분기 일부 조기 접근 고객에게 제공할 예정이다.
+Cadence는 한국시간 2026년 9월 22일 자연어 설계 사양에서 RTL 코드를 생성하고 전력·성능·면적(PPA)을 최적화하는 ChipStack RTL Generation Agent를 발표했다. 새 기능은 기존 RTL을 새로운 설계 요구에 맞춰 수정하고 기능과 PPA를 분석·검증한다. 확대된 ChipStack·InnoStack 기능은 2026년 4분기 일부 조기 접근 고객에게 제공할 예정이다.
 
 ### 로봇·제조 · 2건
 
-#### [[News/94d03e7f8181fafd|LS일렉트릭, 부산 변압기 공장에 사족보행 로봇 Spot 도입]]
+#### [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]]
 
-사업·고객 · 고객 도입 · LS ELECTRIC · Boston Dynamics
+연구·기술 · 실증·재현 · LS ELECTRIC · Boston Dynamics · 현대오토에버
 
-LS일렉트릭은 9월 22일 최근 증설한 부산사업장에 Boston Dynamics의 사족보행 로봇 Spot을 도입했다고 발표했다. 초고압 변압기 생산 공정과 시험설비를 모니터링해 품질·안전 관리에 활용하는 현장 적용이다. 회사는 수집 데이터의 AI 분석을 바탕으로 전 사업장 확대를 검토한다.
+LS ELECTRIC은 2026년 9월 22일 보스턴 다이내믹스의 4족 보행로봇 Spot을 부산사업장에 도입했다고 밝혔다. 현대오토에버와 7월부터 약 2개월간 시험 운용한 뒤 Spot 2대를 정식 운용 중이다. 회사는 생산설비 모니터링과 품질·안전 관리에 활용한다고 설명했다. 보도자료는 변압기 공정 점검과 주요 설비 예지보전, 부산사업장 데이터를 활용한 AI 분석 및 국내외 생산기지 확대 계획을 제시했다.
 
 #### [[News/c2d62bc474a75d21|Intrinsic 로봇 경진대회, 실제 케이블 삽입 시험에서 두 팀 성공률 100%]]
 
 연구·기술 · 실증·재현 · Intrinsic · Open Robotics · Universal Robots
 
-Intrinsic은 9월 22일 AI for Industry Challenge의 실제 로봇 작업셀 최종 시험에서 두 팀이 성공률 100%를 기록했다고 발표했다. 참가팀은 미국 캘리포니아의 UR5e 작업셀에 원격으로 소프트웨어를 배포해 케이블 커넥터를 찾아 집고 지정 포트에 끼우는 과제를 수행했다. 미국 Flex 팀이 우승하고 인도 TCS-PLGRM 팀이 2위를 차지했다.
+Intrinsic은 9월 22일 AI for Industry Challenge의 실제 로봇 작업셀 최종 시험에서 두 팀이 성공률 100%를 기록했다고 발표했다. 참가팀은 캘리포니아의 UR5e 작업셀에 원격으로 소프트웨어를 배포해 케이블 커넥터를 찾아 집고 지정 포트에 끼우는 과제를 수행했다. 미국 Flex 팀이 우승하고 인도 TCS-PLGRM 팀이 2위를 차지했다.
 
 ### 에너지·기후기술 · 2건
 
@@ -113,7 +113,7 @@ LG에너지솔루션은 9월 22일 자사 배터리 에너지저장장치가 NVI
 
 사업·고객 · 고객 도입 · Pila Energy · Brooklyn SolarWorks
 
-Pila Energy는 9월 22일 뉴욕에서 Brooklyn SolarWorks의 옥상 태양광에 플러그형 가정용 배터리를 결합하는 시범사업을 발표했다. 회사에 따르면 브루클린·퀸스의 참여 가구가 이미 태양광 발전량을 저장하고 있으며, 가을에 참여 가구를 늘릴 예정이다. 이웃이 함께 신청하면 공동 할인 혜택을 받는 Pila Neighborhoods도 발표했다.
+Pila Energy는 9월 22일 뉴욕에서 Brooklyn SolarWorks의 옥상 태양광과 플러그형 배터리를 결합하는 시범사업을 발표했다. 회사에 따르면 브루클린·퀸스 가구들이 기존 태양광 패널과 배터리를 이미 결합해 발전량을 저장하고, 전기요금이 높은 시간에 사용하고 있다. 이웃이 공동으로 신청하면 배터리 할인 혜택을 받는 Pila Neighborhoods도 발표했다.
 
 ### 바이오·의료기술 · 2건
 
@@ -127,7 +127,7 @@ Roche는 9월 22일 과체중·비만을 동반한 성인 제2형 당뇨병 환�
 
 사업·고객 · 수주·계약 · Envisagenics · Boehringer Ingelheim
 
-Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 검증하는 다년간 연구 협업·옵션 계약을 발표했다. 자체 SpliceCore 플랫폼으로 찾은 종양 특이적 표적을 연구하고, 성공적으로 검증되면 베링거가 선택한 표적의 독점 개발·사업화 권리를 확보할 수 있는 구조다. 선급금·연구비·옵션료·개발 및 상업화 단계별 지급금을 합친 잠재 금액은 10억달러 이상이며 향후 판매 로열티는 별도다.
+Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 검증하는 다년간 연구 협업·옵션 계약을 발표했다. 자체 SpliceCore 플랫폼으로 찾은 종양 특이적 표적을 연구하고, 성공적으로 검증되면 베링거가 선택한 표적의 독점 개발·사업화 권리를 확보할 수 있는 구조다. 선급금·연구비·옵션료·개발·규제·상업화 단계별 지급금을 합친 잠재 금액은 10억 달러 초과이며 향후 판매 로열티는 별도다.
 
 ### 우주·기초과학 · 1건
 
@@ -137,31 +137,23 @@ Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 �
 
 우주항공청은 9월 22일 한국항공우주연구원에서 국내 발사체 관련 5개 기업과 제2우주센터 민간 활용 간담회를 열었다. 기업들은 향후 발사 수요와 상업 발사 시작 시점을 고려한 인프라 우선순위, 시설 요건과 기업 활용 공간에 관한 요구를 제시했다. 우주항공청은 설계 단계부터 이러한 수요를 반영하겠다고 밝혔다.
 
-## 오늘의 심층 분석
-
-### [[News/cab7656fd9930f79|Envisagenics·베링거, RNA 스플라이싱 기반 항암 표적 공동 검증 계약]]
-
-연구실 유래 표적 발굴 플랫폼을 제약사 검증·독점 옵션으로 연결한 계약이다. 잠재 지급 총액과 실제 연구 성과·현금 수령은 구분한다.
-
-[[Briefings/Topics/venture-envisagenics|누적 기록]]
-
 
 
 ## 출처
 
 - [S1] https://openai.com/index/introducing-gpt-6-sol-and-luna/
-- [S2] https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives
-- [S3] https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure
-- [S4] https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security
-- [S5] https://navercorp.com/media/pressReleasesDetail?seq=10034680
-- [S6] https://lsholdings.co.kr/ko/media/news/306c38774167465a5137683163335633354a6952646459724d77734f74753645
-- [S7] https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge
-- [S8] https://www.businesswire.com/news/home/20260922021231/en/
+- [S2] https://openai.com/news/rss.xml
+- [S3] https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives
+- [S4] https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure
+- [S5] https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security
+- [S6] https://navercorp.com/media/pressReleasesDetail?seq=10034680
+- [S7] https://lsholdings.co.kr/ko/media/news/306c38774167465a5137683163335633354a6952646459724d77734f74753645
+- [S8] https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge
 - [S9] https://fwnbc.marketminute.com/article/bizwire-2026-9-22-cadence-expands-chipstack-ai-super-agent-with-a-new-agent-for-rtl-generation-and-early-ppa-optimization
 - [S10] https://lgcorp.com/media/release/30596
 - [S11] https://www.prweb.com/releases/pila-energy-launches-first-plug-in-path-to-home-battery-storage-in-new-york-city-302886178.html
 - [S12] https://www.roche.com/media/releases/med-cor-2026-09-22
-- [S13] https://envisagenics.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers
-- [S14] https://www.cshl.edu/envisagenics-and-biogen-partner-for-rna-splicing-research/
-- [S15] https://envisagenics.com/about
-- [S16] https://www.kasa.go.kr/prog/plcyBrf/brief/kor/sub01_01_04/view.do?plcyBrfNo=498
+- [S13] https://www.kasa.go.kr/prog/plcyBrf/brief/kor/sub01_01_04/view.do?plcyBrfNo=498
+- [S14] https://envisagenics.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers
+- [S15] https://www.cshl.edu/envisagenics-and-biogen-partner-for-rna-splicing-research/
+- [S16] https://envisagenics.com/about

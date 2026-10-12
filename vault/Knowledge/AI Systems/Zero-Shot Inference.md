@@ -6,8 +6,8 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-09-13
-updated: 2026-09-13
-last_reviewed: 2026-09-13
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - 제로샷 추론
   - 제로샷
@@ -27,11 +27,12 @@ keywords:
   - 추가 학습 없음
 verified_sources:
   - https://arxiv.org/abs/2403.07815
+  - https://arxiv.org/html/2403.07815v3
 map_review:
   decision: include
   kind: evaluation
   reason: 추가 학습 없이 새 데이터에 적용한다는 조건을 모델의 정확도나 학습 데이터 부재와 혼동하지 않도록 익혀야 한다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-09
 connections:
   - target: timeseries
     reason: 사전학습한 시계열 모델을 새 데이터셋에 추가 학습 없이 적용할 때 사용하는 평가 조건이다.
@@ -43,7 +44,7 @@ connections:
 
 ## 한 문장 정의
 
-여기서 제로샷 추론은 새 대상 데이터셋에 맞춘 추가 학습 없이 사전학습 모델을 적용하는 조건을 뜻한다. [Chronos 논문](https://arxiv.org/abs/2403.07815)
+여기서 제로샷 추론은 새 대상 데이터셋에 맞춘 추가 학습 없이 사전학습 모델을 적용하는 조건을 뜻한다. [Chronos · v3 전문](https://arxiv.org/html/2403.07815v3)
 
 ## 용어 카드
 
@@ -89,10 +90,8 @@ Chronos는 여러 시계열에서 사전학습한 패턴을 활용해 학습에 
 
 - [[Knowledge/AI Systems/Time-Series Foundation Models|시계열 파운데이션 모델]] — 사전학습한 시계열 모델을 새 데이터셋에 추가 학습 없이 적용할 때 사용하는 평가 조건이다.
 
-## 최근 변화
-
-없음
 
 ## 출처
 
 - [Chronos: Learning the Language of Time Series](https://arxiv.org/abs/2403.07815)
+- [Chronos · v3 전문](https://arxiv.org/html/2403.07815v3)

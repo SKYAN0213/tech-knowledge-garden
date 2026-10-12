@@ -8,7 +8,7 @@
 
 CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세대 대비 웨이퍼당 다이 수 개선은 8Gb 환산 기준이며 양품 수율이나 출하 증가와 구분한다.
 
-2026-10-08까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-12까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -26,7 +26,7 @@ CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세
 
 <a id="20260921-cxmt-g5"></a>
 
-### 2026-09-21 · 참고
+### 2026-09-20 · 참고
 
 **CXMT가 G5 공정과 24Gb LPDDR5X 두 패키지 제품의 양산을 발표했다.**
 
@@ -34,8 +34,8 @@ CXMT는 2026-09-20 G5와 24Gb LPDDR5X 두 제품의 양산을 발표했다. 4세
 
 - 한계: 회사 양산 발표이며 수율·출하량·고객별 도입 수치로 확대하지 않는다. 이전 회차에 같은 기업의 검토된 관측이 없어 시계열 성과 비교는 하지 않는다.
 - 다음 확인: 제품별 고객 도입과 실제 출하, 동일 기준의 공정 수율과 생산량.
-- [CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표](https://skyan0213.github.io/tech-knowledge-garden/news/43924fdd4d64f158) · [cxmt.com 원문](https://www.cxmt.com/en/news/info_22.html) · [cxmt.com 원문](https://www.cxmt.com/news/info_97.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-21_0800_tech_ai_briefing)
-- 2026-09-21 원문 검토
+- [CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표](https://skyan0213.github.io/tech-knowledge-garden/news/43924fdd4d64f158) · [cxmt.com 원문](https://www.cxmt.com/news/info_97.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-21_0800_tech_ai_briefing)
+- 2026-10-10 원문 검토
 
 ## 관련 개념
 

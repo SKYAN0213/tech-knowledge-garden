@@ -6,19 +6,17 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-23
-updated: 2026-10-05
+updated: 2026-10-09
 aliases:
   - AI Agent
   - AI 에이전트
 parent_concepts: []
 related_concepts:
   - "[[Knowledge/AI Systems/Model Context Protocol|MCP]]"
-  - "[[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]]"
 tags:
   - AI
   - Agent
-last_reviewed: 2026-10-05
+last_reviewed: 2026-10-09
 concept_id: agents
 label: AI 에이전트
 group: 에이전트
@@ -28,9 +26,9 @@ keywords:
   - 상태
   - handoff
 verified_sources:
+  - https://api.github.com/repos/anthropics/claude-code/releases/tags/v2.1.196
   - https://openai.github.io/openai-agents-python/agents/
   - https://arxiv.org/abs/2005.11401
-  - https://docs.vllm.ai/en/latest/
 relations:
   - target: mcp
     type: uses
@@ -38,25 +36,11 @@ relations:
     basis: source
     evidence:
       - https://openai.github.io/openai-agents-python/agents/
-  - target: rag
-    type: uses
-    reason: 문서 검색 도구와 생성 모델을 결합하는 에이전트 작업에 RAG 구성을 사용할 수 있다.
-    basis: inference
-    evidence:
-      - https://openai.github.io/openai-agents-python/agents/
-      - https://arxiv.org/abs/2005.11401
-  - target: inference
-    type: uses
-    reason: 모델을 호출하는 실행은 해당 모델의 추론 실행 기반을 사용한다.
-    basis: inference
-    evidence:
-      - https://openai.github.io/openai-agents-python/agents/
-      - https://docs.vllm.ai/en/latest/
 map_review:
   decision: include
   kind: mechanism
   reason: 챗봇 응답과 구별되는 도구 선택·실행 루프를 이해해야 기사 내용을 해석할 수 있다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 ---
 
 # AI Agents
@@ -80,27 +64,11 @@ map_review:
 
 [원문](https://openai.github.io/openai-agents-python/agents/)
 
-## 왜 중요한가
-
-없음
-
-## 핵심 구성 요소
-
-없음
-
 ## 작동 원리
 
 OpenAI Agents SDK에서 Agent는 모델·지시·도구를 설정하고 Runner가 모델 호출, 도구 실행, 이관과 세션을 관리한다. 기본 동작은 도구 결과를 받은 뒤 모델을 다시 호출하는 것이다. 결과 처리 함수로 실행을 종료하거나 이어 갈 수도 있다. [원문](https://openai.github.io/openai-agents-python/agents/)
 
 handoff는 다른 에이전트에 대화 이력과 제어를 넘기는 동작이다. guardrail은 입력과 출력에 검사를 수행한다. 두 기능은 선택 가능한 실행 구성으로, 모든 에이전트가 반드시 사용하는 요소는 아니다. [원문](https://openai.github.io/openai-agents-python/agents/)
-
-## 실제 예시
-
-없음
-
-## 한계와 실패 조건
-
-없음
 
 ## 혼동하기 쉬운 개념
 
@@ -109,15 +77,12 @@ handoff는 다른 에이전트에 대화 이력과 제어를 넘기는 동작이
 ## 관련 개념
 
 - → 활용: [[Knowledge/AI Systems/Model Context Protocol|MCP]] — 외부 도구 연결에 MCP를 사용할 수 있다. SDK의 MCP 서버 설정은 선택 사항이다. (원문; [근거](https://openai.github.io/openai-agents-python/agents/))
-- → 활용: [[Knowledge/AI Systems/Retrieval-Augmented Generation|검색 증강 생성]] — 문서 검색 도구와 생성 모델을 결합하는 에이전트 작업에 RAG 구성을 사용할 수 있다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://arxiv.org/abs/2005.11401))
-- → 활용: [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] — 모델을 호출하는 실행은 해당 모델의 추론 실행 기반을 사용한다. (해석; [근거](https://openai.github.io/openai-agents-python/agents/) · [근거](https://docs.vllm.ai/en/latest/))
 
 ## 최근 변화
 
-없음
+- 2026-06-30 — Claude Code v2.1.196은 긴 백그라운드 명령과 작업을 프로세스 중지·재시작·업데이트 이후에도 유지하고, daemon 재시작으로 종료된 에이전트 worker를 다음 agents 화면 열기 때 이어서 실행하도록 개선했다. [[News/a3d36f8b621698a5|기사]] · [공식 릴리스](https://github.com/anthropics/claude-code/releases/tag/v2.1.196)
 
 ## 출처
 
 - [OpenAI Agents SDK의 에이전트 설정](https://openai.github.io/openai-agents-python/agents/)
 - [Lewis et al. RAG 원논문 초록](https://arxiv.org/abs/2005.11401)
-- [vLLM 추론·서빙 문서](https://docs.vllm.ai/en/latest/)

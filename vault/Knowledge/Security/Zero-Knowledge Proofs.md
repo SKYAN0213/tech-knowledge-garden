@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Security
 created: 2026-09-03
-updated: 2026-09-13
+updated: 2026-10-09
 aliases:
   - 영지식 증명
   - ZKP
@@ -17,7 +17,7 @@ tags:
   - Security
   - Privacy
   - Cryptography
-last_reviewed: 2026-09-13
+last_reviewed: 2026-10-09
 concept_id: zkp
 label: 영지식 증명
 group: 위험과 책임
@@ -30,6 +30,7 @@ keywords:
 verified_sources:
   - https://csrc.nist.gov/glossary/term/zero_knowledge_proof
   - https://airc.nist.gov/airmf-resources/airmf/5-sec-core/
+  - https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/
 relations:
   - target: governance
     type: informs
@@ -42,7 +43,7 @@ map_review:
   decision: include
   kind: security
   reason: 비밀을 공개하지 않고 명제의 참을 보이는 암호학적 증명 원리를 따로 익혀야 한다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-09
 ---
 
 # Zero-Knowledge Proofs
@@ -59,39 +60,17 @@ map_review:
 | 영어 | Zero-Knowledge Proofs |
 | 키워드 | ZKP · 증명자 · 검증자 · 비공개 증거 · 명제 |
 
-## 범위
-
-**포함:** 명제·증거·검증 알고리즘과 공개 정보의 경계.
-
-**포함하지 않음:** 네트워크 식별이나 발급자 신뢰까지 자동으로 없애는 익명성 보증.
-
-## 왜 중요한가
-
-검증에 필요한 조건만 입증하고 원본 정보 공개를 줄일 수 있다. 정보 최소화와 검증을 함께 설계하는 선택지를 제공한다.
-
 ## 핵심 구성 요소
 
-- ZKP
-- 증명자
-- 검증자
-- 비공개 증거
-- 명제
+증명자는 명제의 참을 입증하고 검증자는 그 증명을 확인한다. NIST의 정의에서 검증자에게 추가로 제공하는 정보는 해당 명제가 참이라는 사실에 한정된다. [NIST](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
 
 ## 작동 원리
 
-증명자는 비공개 증거를 이용해 증명을 만든다. 검증자는 공개된 명제와 증명으로 참인지 확인하며 비밀 증거를 직접 받지 않는다. [NIST · Zero-Knowledge Proof](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
+원본 개인정보 전체를 전달하는 대신 확인할 조건에 대한 증명을 전달한다. Google은 디지털 신원과 결합했을 때 다른 개인정보를 공유하지 않고 성인 여부를 증명하는 예를 설명한다. [Google](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)
 
 ## 실제 예시
 
-생년월일 전체를 공개하지 않고 나이 조건을 만족한다는 명제를 입증하는 적용 예.
-
-## 한계와 실패 조건
-
-무엇을 증명하는지와 원천 정보의 신뢰가 별도 문제다. 공개 입력이나 사용 방식에서 정보가 드러날 수 있다.
-
-## 혼동하기 쉬운 개념
-
-암호화는 내용을 감추고, 영지식 증명은 내용을 드러내지 않은 검증을 다룬다.
+웹사이트에 만 18세를 넘는다는 조건을 입증하는 경우다. 생년월일 등 다른 개인정보를 함께 공유하는 방식과 구분된다. [Google](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)
 
 ## 관련 개념
 
@@ -99,9 +78,10 @@ map_review:
 
 ## 최근 변화
 
-- 2026-09-02 — Google은 디지털 신원용 Longfellow ZKP 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 이관한다고 발표했습니다. 구현의 관리 주체가 단일 공급자에서 공개 재단으로 이동하지만, 표준 채택과 양자 안전성은 별도 기술 검증이 필요합니다. [source](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)
+- 2026-09-02 — Google은 Longfellow ZKP 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 기증한다고 발표했다. [원문](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)
 
 ## 출처
 
 - [NIST · Zero-Knowledge Proof](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)
 - [NIST · AI RMF Core 1.0](https://airc.nist.gov/airmf-resources/airmf/5-sec-core/)
+- [Google · Longfellow ZKP 기증](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)

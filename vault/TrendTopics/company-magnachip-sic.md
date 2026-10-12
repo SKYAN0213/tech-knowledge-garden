@@ -7,7 +7,7 @@ question: 라이선스와 자본 제휴가 제조 인증·출하로 이어지는
 thesis: 7월 SiC 협력에 이어 9월21일 500만달러 지분 투자 계약을 발표했다. 종결·양산 인증은 구분한다.
 watch_for: 거래 종결 공시, 한국 공정 인증, 고객 출하.
 disconfirming: 종결 지연·취소, 기술 이전·인증 지연.
-reviewed: 2026-09-22
+reviewed: 2026-10-10
 knowledge_notes: []
 lessons: []
 ---

@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-09
 created: 2026-09-09
 modified: 2026-09-09
-description: 나비에–스토크스 증명안 공개 · GHES 3.22 출시 · Dependabot 패키지 인증
+description: 2026-09-09 IT · AI · 로보틱스
 coverage_start: 2026-09-08T08:01:15+09:00
 coverage_end: 2026-09-09T08:02:08+09:00
 item_count: 3
@@ -55,7 +55,7 @@ GitHub는 9월 8일 Dependabot이 개인 액세스 토큰 없이 비공개 GitHu
 
 #### [[News/2c827cba158d2f26|OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개]]
 
-제품·서비스 · 기능 추가 · OpenAI
+연구·기술 · 연구 소개 · OpenAI
 
 OpenAI는 9월 8일 나비에–스토크스 존재성과 매끄러움 문제에 대한 증명안과 Lean 형식화를 공개했다. 회사는 매끄러운 외력이 작용하는 유체에서 에너지가 유한하게 유지되면서도 유한 시간 안에 특이점이 생기는 구성을 제시했다고 밝혔다. 내부 모델을 활용한 다중 에이전트 탐색으로 증명안을 만들고 GPT-6 Astra로 형식화와 검증을 진행했다고 설명했다.
 

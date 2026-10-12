@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-11
 created: 2026-09-11
 modified: 2026-09-11
-description: DeepSeek의 비대칭 모델 구조, KUKA의 자율 지게차, NVIDIA·Palantir의 공급망 AI
+description: 2026-09-11 IT · AI · 로보틱스
 coverage_start: 2026-09-10T08:01:46+09:00
 coverage_end: 2026-09-11T08:00:52+09:00
 item_count: 7
@@ -49,7 +49,7 @@ OpenAI는 9월 10일 Codex의 실행 관리 기능을 제공하는 Agents API를
 
 제품·서비스 · 신제품 · OpenAI
 
-OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다. 모델은 들어오는 음성과 나가는 음성을 함께 처리하며, 깊은 추론과 도구 호출을 연결된 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로 말투·속도·대화 스타일을 조정하고 전화 상담 등의 음성 서비스에 적용할 수 있다.
+OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다고 발표했다. 하나의 모델이 입력과 출력 음성을 함께 처리하며, 깊은 추론과 도구 호출은 연결된 백엔드 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로 말투·속도·대화 스타일을 조정하고 전화 예약이나 고객 지원 같은 음성 서비스에 적용할 수 있다.
 
 #### [[News/90208487c77211d8|DeepSeek V4.1-Flash, 입력·출력 계산을 나눈 5,520억 매개변수 모델 공개]]
 
@@ -103,6 +103,6 @@ KUKA는 9월 10일 최대 1,500kg의 팔레트와 컨테이너를 운반하는 �
 - [S2] https://openai.com/index/introducing-gpt-live-1-in-the-api/
 - [S3] https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/
 - [S4] https://www.kuka.com/en-sg/company/press/news/2026/09/kuka-mobile-forklift-launch
-- [S5] https://www.deepseek.com/en/news/deepseek-v4-1-flash/
+- [S5] https://www.deepseek.com/en/news/deepseek-v4-1-flash
 - [S6] https://nvidianews.nvidia.com/news/nvidia-and-palantir-bring-sovereign-intelligence-to-critical-supply-chains
 - [S7] https://openai.com/index/put-data-to-work/

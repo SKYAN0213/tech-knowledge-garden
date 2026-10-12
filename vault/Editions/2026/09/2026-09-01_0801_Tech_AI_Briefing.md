@@ -11,7 +11,9 @@ briefing_format: sector-five/v1
 theme_format: news-themes/v1
 source_count: 2
 new_items_count: 2
-linked_knowledge_notes: []
+linked_knowledge_notes:
+  - Knowledge/AI Systems/Time-Series Foundation Models
+  - Knowledge/AI Systems/AI Content Access
 knowledge_notes_created:
   - "[[Knowledge/AI Systems/Time-Series Foundation Models|Time-Series Foundation
     Models]]"
@@ -82,14 +84,16 @@ article_reviews:
     event_id: 09a390c59d8969e0
     review_status: verified
     published_at: 2026-08-31
-    reviewed_at: 2026-09-27
-    concept_ids: []
+    reviewed_at: 2026-10-13
+    concept_ids:
+      - timeseries
   - title: Google, 생성형 검색 제어·노출 정보를 전 세계 웹사이트로 확대
     event_id: 89b2997d0ccfa477
     review_status: verified
     published_at: 2026-08-31
-    reviewed_at: 2026-09-27
-    concept_ids: []
+    reviewed_at: 2026-10-13
+    concept_ids:
+      - content-access
     date_kind: dated-update
     source_published_at: 2026-06-03
 ---
@@ -133,6 +137,8 @@ Google Research는 8월 31일 3억 3천만 매개변수의 다변량 시계열 �
 
 개발팀은 Gift-Eval·FEV-Bench·Time에서 비교한 사전학습 기반 모델 중 점 예측과 확률 예측의 평균 순위가 가장 좋았다고 보고했다. [S1]
 
+**개념:** [[Knowledge/AI Systems/Time-Series Foundation Models]]
+
 ## Google, 생성형 검색 제어·노출 정보를 전 세계 웹사이트로 확대
 
 **분야:** AI
@@ -146,6 +152,8 @@ Google은 8월 31일 업데이트에서 Search Console의 생성형 검색 제�
 ### 생성형 검색에서 제외했을 때의 적용 범위
 
 Google은 이 제어에서 제외한 사이트가 생성형 AI 기능의 트래픽과 노출을 받지 않는다고 밝혔다. 이 제어 자체를 생성형 기능 밖의 일반 검색 결과 순위를 판단하는 신호로 사용하지 않는다고 설명했다. [S2]
+
+**개념:** [[Knowledge/AI Systems/AI Content Access]]
 
 # 리서치 노트
 

@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/10/2026-10-06_0800_Tech_AI_Briefing
 date: 2026-10-06
-reviewed: 2026-10-06
+reviewed: 2026-10-09
 review_basis: primary-research
 observations:
   - id: 20261006-stacked-fabric-grasping

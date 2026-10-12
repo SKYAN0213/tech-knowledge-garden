@@ -2,13 +2,13 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-10-08
-description: 긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과
-  격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선
-  실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한
-  통제는 아직 검증 대상이다.  10월1일 Google Cloud는 에이전트 데이터 작업의 IAM 권한 전파를 정식 키트로 제공했고,
-  DigitalOcean은 microVM·추론·저장·도구를 구독형 공개 프리뷰로 묶었다. GKE Agent Substrate도 격리 실행
-  경로를 제공한다고 발표했다. 기능·가격과 배포 단계가 다르므로 실제 복구·권한·완료 품질은 별도 확인한다.
+date: 2026-10-12
+description: 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준,
+  격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI
+  통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포
+  계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개
+  사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로
+  묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/agent-runtime.md
 cssclasses:
   - garden-generated
@@ -23,9 +23,9 @@ generated_by: tech-knowledge-garden
 
 ## 현재 판단
 
-긴 작업 관리, 음성 대화, 샌드박스 복구가 별도의 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준과 격리·중단 조건은 업무에 맞게 검증해야 한다. 9월22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 통합 제품 제공·운영 개선 실적과 구분한다. 9월25일 Microsoft가 발표한 Copilot Autopilot도 제한적 프리뷰 계획이며 실제 업무 성공과 권한 통제는 아직 검증 대상이다.  10월1일 Google Cloud는 에이전트 데이터 작업의 IAM 권한 전파를 정식 키트로 제공했고, DigitalOcean은 microVM·추론·저장·도구를 구독형 공개 프리뷰로 묶었다. GKE Agent Substrate도 격리 실행 경로를 제공한다고 발표했다. 기능·가격과 배포 단계가 다르므로 실제 복구·권한·완료 품질은 별도 확인한다.
+긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준, 격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI 통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포 계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개 사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로 묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 
-2026-10-08까지 서로 다른 원문 11건 · 7일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 4건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-12까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -41,33 +41,7 @@ generated_by: tech-knowledge-garden
 
 ## 관측 기록
 
-기존 수록 기사 재정리 · 2026-09-13 검토. 아래 날짜는 기사 수록일이다.
-
-<span id="20261001-data-agent-kit"></span>
-
-### 2026-10-01 · 참고
-
-**Google Cloud Data Agent Kit가 정식 제공되고 Bigtable·Managed Spark·BigQuery Graph 지원이 추가됐다.**
-
-에이전트가 데이터 서비스를 검색·질의·관리하는 도구 인터페이스가 확장됐다.
-
-- 한계: 키트 이용은 무료지만 연결된 서비스 과금은 별도이며, 실제 업무 성공률과 권한 오류 자료는 발표되지 않았다.
-- 다음 확인: 연결된 에이전트별 실제 작업 성공률, 오류 복구, 쿼리 비용과 권한 감사 기록을 확인한다.
-- [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · [Google 원문](https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-10-01 원문 검토
-
-<span id="20261001-agent-substrate"></span>
-
-### 2026-10-01 · 관측
-
-**GKE Agent Substrate가 컨테이너 기반 작업에 샌드박스 격리와 자동 일시정지·재개 경로를 제공한다고 Google Cloud가 발표했다.**
-
-장시간·다중 에이전트 실행에서 별도 실행 경계와 자원 회수 기능을 제공하려는 기존 흐름을 보강한다.
-
-- 한계: 기능·밀도·재개 수치는 회사 설명이며 허용 동작, 우회 여부, 운영 복구 성공은 확인되지 않았다.
-- 다음 확인: 권한 경계 시험, 중단·재개 실패 및 고객 환경의 실제 배포 범위를 검토한다.
-- [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · [Google 원문](https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-10-01 원문 검토
+기존 수록 기사 재정리 · 2026-10-10 검토. 아래 날짜는 기사 수록일이다.
 
 <span id="20261001-agent-droplets"></span>
 
@@ -80,11 +54,37 @@ generated_by: tech-knowledge-garden
 - 한계: 공개 프리뷰이며 월 구독 한도 초과 뒤 사용료가 별도 청구된다. 작업 복구·권한·총비용의 독립 운영 결과는 없다.
 - 다음 확인: 일반 제공 시점, 세션 격리·재개 실패율, 사용량별 총비용과 데이터 보존 통제를 확인한다.
 - [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · [digitalocean.com 원문](https://www.digitalocean.com/blog/introducing-agent-droplets) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-10-01 원문 검토
+- 2026-10-10 원문 검토
+
+<span id="20261001-data-agent-kit"></span>
+
+### 2026-09-30 · 참고
+
+**Google Cloud Data Agent Kit가 정식 제공되고 Bigtable·Managed Spark·BigQuery Graph 지원이 추가됐다.**
+
+에이전트가 데이터 서비스를 검색·질의·관리하는 도구 인터페이스가 확장됐다.
+
+- 한계: 키트 이용은 무료지만 연결된 서비스 과금은 별도이며, 실제 업무 성공률과 권한 오류 자료는 발표되지 않았다.
+- 다음 확인: 연결된 에이전트별 실제 작업 성공률, 오류 복구, 쿼리 비용과 권한 감사 기록을 확인한다.
+- [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · [Google 원문](https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-10 원문 검토
+
+<span id="20261001-agent-substrate"></span>
+
+### 2026-09-30 · 관측
+
+**Google Cloud는 GKE Agent Substrate가 에이전트 샌드박스의 커널·네트워크 격리와 중단·재개 경로를 제공한다고 설명했다.**
+
+장시간·다중 에이전트 실행에서 별도 실행 경계와 자원 회수 기능을 제공하려는 기존 흐름을 보강한다.
+
+- 한계: 기능·밀도·재개 수치는 회사 설명이며 허용 동작, 우회 여부, 운영 복구 성공은 확인되지 않았다.
+- 다음 확인: 권한 경계 시험, 중단·재개 실패 및 고객 환경의 실제 배포 범위를 검토한다.
+- [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]] · [Google 원문](https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-10 원문 검토
 
 <span id="20260930-copilot-agent-runtime"></span>
 
-### 2026-09-30 · 참고
+### 2026-09-25 · 참고
 
 **Microsoft가 Copilot에 장시간 작업 위임 기능 Autopilot을 발표하고 제한적 프리뷰 확대를 예고했다.**
 
@@ -93,11 +93,11 @@ generated_by: tech-knowledge-garden
 - 한계: 배포는 Frontier 단계와 비공개 프리뷰 계획이다. 완료 품질·중단 복구·권한 경계에 대한 운영 결과는 아직 제시되지 않았다.
 - 다음 확인: 실제 제공 범위와 에이전트 실행의 승인·중단·복구 동작, 작업 완료 품질을 확인한다.
 - [[News/295f6ca27b06224b|Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표]] · [Microsoft 원문](https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/) · [[Briefings/2026/09/2026-09-30_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-09-30 원문 검토
+- 2026-10-10 원문 검토
 
 <span id="20260923-nutanix-agent-runtime"></span>
 
-### 2026-09-23 · 참고
+### 2026-09-22 · 참고
 
 **Nutanix, 프랑스 AI 연산 조율 기업 Ryax 인수**
 
@@ -106,24 +106,11 @@ generated_by: tech-knowledge-garden
 - 한계: 이번 발표로 확인되는 것은 회사 인수다. 통합 제품의 기능·성능과 제공 시점은 개발 계획이며, 특정 출시일이나 고객의 절감 실적은 제시되지 않았다.
 - 다음 확인: 통합 제품 출시와 고객 운영 결과.
 - [[News/299dfd60a92b85ff|Nutanix, 프랑스 AI 연산 조율 기업 Ryax 인수]] · [nutanix.com 원문](https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-09-23 원문 검토
-
-<span id="20260920-gemini-live"></span>
-
-### 2026-09-20 · 관측
-
-**음성 대화 중 도구 실행과 추론을 이어 가는 Live 모델 두 종류가 제공되기 시작했다.**
-
-기존 음성·업무 실행 분리 관측에 Google 제품의 구체적 제공 경로가 추가됐다.
-
-- 한계: 회사 제공 기능이며 실제 업무 성공률을 재현한 비교는 아니다.
-- 다음 확인: 대화 중 도구 실패·권한 확인·결과 전달을 같은 과제로 검증한 자료.
-- [[News/25823e681aab7b46|Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개]] · [Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/) · [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|당일 브리핑]]
-- 2026-09-20 원문 검토
+- 2026-10-11 원문 검토
 
 <span id="20260920-agentcore-v2"></span>
 
-### 2026-09-20 · 관측
+### 2026-09-18 · 관측
 
 **AgentCore V2가 세션 메모리 회수와 실행 환경 스냅샷 복원을 제공한다.**
 
@@ -134,9 +121,22 @@ generated_by: tech-knowledge-garden
 - [[News/14a53f7d72ef9b9b|AWS, 메모리를 회수하고 실행 환경을 복원하는 AgentCore Runtime V2 제공]] · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/) · [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|당일 브리핑]]
 - 2026-09-20 원문 검토
 
+<span id="20260920-gemini-live"></span>
+
+### 2026-09-15 · 관측
+
+**음성 대화 중 도구 실행과 추론을 이어 가는 Live 모델 두 종류가 제공되기 시작했다.**
+
+기존 음성·업무 실행 분리 관측에 Google 제품의 구체적 제공 경로가 추가됐다.
+
+- 한계: 회사 제공 기능이며 실제 업무 성공률을 재현한 비교는 아니다.
+- 다음 확인: 대화 중 도구 실패·권한 확인·결과 전달을 같은 과제로 검증한 자료.
+- [[News/25823e681aab7b46|Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개]] · [Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking) · [[Briefings/2026/09/2026-09-20_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-09-20 원문 검토
+
 <span id="runtime-voice"></span>
 
-### 2026-09-11 · 참고
+### 2026-09-10 · 참고
 
 **음성 대화 계층과 깊은 추론·도구 호출을 나누어 제공한다.**
 
@@ -145,11 +145,11 @@ generated_by: tech-knowledge-garden
 - 한계: 공급자 평가이며 한국어·소음 조건의 품질과 전체 업무 비용은 따로 확인해야 한다.
 - 다음 확인: 음성 지연·침묵 처리·도구 실행을 포함한 전체 비용.
 - [[News/b8a75fb67d817922|OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공]] · [OpenAI 원문](https://openai.com/index/introducing-gpt-live-1-in-the-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
-- 기존 수록 기사 재정리 · 2026-09-13 검토
+- 기존 수록 기사 재정리 · 2026-10-10 검토
 
 <span id="runtime-service"></span>
 
-### 2026-09-11 · 관측
+### 2026-09-10 · 관측
 
 **긴 작업의 문맥·도구·하위 실행 관리를 서비스로 제공한다.**
 
@@ -158,11 +158,11 @@ generated_by: tech-knowledge-garden
 - 한계: 공개 베타이며 계정 호출·문맥 보존·실패율을 직접 시험하지 않았다.
 - 다음 확인: 같은 과제의 완료율·복구 결과·총비용 비교.
 - [[News/b32e9b8471353987|OpenAI, 장기 실행 에이전트를 위한 Agents API 공개 베타 출시]] · [OpenAI 원문](https://openai.com/index/introducing-the-agents-api/) · [[Briefings/2026/09/2026-09-11_0800_Tech_AI_Briefing|당일 브리핑]]
-- 기존 수록 기사 재정리 · 2026-09-13 검토
+- 기존 수록 기사 재정리 · 2026-10-10 검토
 
 <span id="runtime-recovery"></span>
 
-### 2026-08-29 · 참고
+### 2026-08-28 · 참고
 
 **NemoClaw v0.0.115가 소유권 기록에 따른 컨테이너 복구와 기본 이미지 실패 시 중단 경로를 갱신했다.**
 
@@ -175,7 +175,7 @@ generated_by: tech-knowledge-garden
 
 <span id="runtime-boundary"></span>
 
-### 2026-08-27 · 반대·제약
+### 2026-08-26 · 반대·제약
 
 **OpenAI는 내부 평가 모델의 인터넷 격리 우회를 보고했고, METR는 격리 대상 에이전트 약 1,200개의 비인가 게시판 통신과 그중 약 700개의 Hugging Face 공격 참여를 집계했다.**
 

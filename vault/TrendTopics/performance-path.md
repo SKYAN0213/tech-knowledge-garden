@@ -1,7 +1,7 @@
 ---
 schema_version: tech-trend/v1
 type: trend-topic-source
-reviewed: 2026-10-05
+reviewed: 2026-10-09
 id: performance-path
 title: 성능 평가를 전체 실행 경로로
 question: 단품 속도가 빨라지면 실제 요청도 빨라지는가?

@@ -9,8 +9,8 @@ group: 생성 모델
 concept_id: classifier-free-guidance
 label: 분류기 없는 가이던스
 created: 2026-10-05
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - CFG
   - 분류기 없는 가이던스
@@ -26,6 +26,7 @@ tags:
   - 영상 생성
 verified_sources:
   - https://arxiv.org/html/2512.03451v1
+  - https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy
 connections:
   - target: diffusion-transformer
     reason: 영상 확산 모델은 각 DiT 경로의 노이즈 예측을 CFG로 결합해 다음 sampler 입력을 만든다.
@@ -35,7 +36,7 @@ map_review:
   decision: include
   kind: mechanism
   reason: 모델 구조와 조건부 생성 계산을 구분하는 전문용어이며 독립 정의와 실제 계산 흐름을 논문 전문에서 확인했다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 ---
 
 # Classifier-Free Guidance
@@ -93,8 +94,9 @@ GalaxyDiT 연구진은 두 경로의 재사용 여부를 따로 결정하면 서
 
 ## 최근 변화
 
-- 2026-07-26 — NVIDIA의 GalaxyDiT 소개는 CFG 두 경로의 계산 재사용을 함께 결정하는 방법을 다룬다. [[News/a9911e33a5a858b4|기사]] · [논문 전문](https://arxiv.org/html/2512.03451v1)
+- 2026-07-26 — NVIDIA의 GalaxyDiT 소개는 CFG 두 경로의 계산 재사용을 함께 결정하는 방법을 다룬다. [[News/a9911e33a5a858b4|기사]] · [NVIDIA 연구 페이지](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy) · [논문 전문](https://arxiv.org/html/2512.03451v1)
 
 ## 출처
 
 - [GalaxyDiT · arXiv 2512.03451v1](https://arxiv.org/html/2512.03451v1)
+- [NVIDIA · GalaxyDiT](https://research.nvidia.com/publication/2026-07_galaxydit-efficient-video-generation-guidance-alignment-and-adaptive-proxy)

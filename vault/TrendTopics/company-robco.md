@@ -8,7 +8,7 @@ thesis: RobCo는10월5일 기업가치가10억달러를 넘었다고 발표했�
   샌프란시스코 연구소를 소개했고 Alfie의2027년3월4일 출시 계획을 제시했다.
 watch_for: 제품의 실제 출시와 고객 도입, 미국 제조·조립 운영에 관한 날짜별 발표를 확인한다.
 disconfirming: 원문 정정과 비교 조건 변경은 각각의 발표일로 기록한다.
-reviewed: 2026-10-06
+reviewed: 2026-10-09
 reader_format: source-events/v1
 knowledge_notes: []
 lessons: []

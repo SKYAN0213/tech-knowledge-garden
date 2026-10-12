@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-08
 created: 2026-09-08
 modified: 2026-09-08
-description: 비행운 회피 경로 시험과 초음파 AI의 외부 기관 평가
+description: 2026-09-08 IT · AI · 로보틱스
 coverage_start: 2026-09-07T08:01:13+09:00
 coverage_end: 2026-09-08T08:01:15+09:00
 item_count: 2

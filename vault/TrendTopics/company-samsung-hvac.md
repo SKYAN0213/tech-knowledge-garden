@@ -7,7 +7,7 @@ question: 착공한 공조 생산거점이 언제 어떤 제품의 공급으로 
 thesis: 광주 생산라인은 2026-09-21 착공했고 가동은 2028년 초 계획이다.
 watch_for: 공정 진척, 품목별 인증·가동·고객 공급.
 disconfirming: 일정 지연, 투자 규모 수정, 품목 변경.
-reviewed: 2026-09-22
+reviewed: 2026-10-10
 knowledge_notes: []
 lessons: []
 ---

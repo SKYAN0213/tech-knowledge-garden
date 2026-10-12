@@ -3,15 +3,16 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/09/2026-09-22_0800_Tech_AI_Briefing
 date: 2026-09-22
-reviewed: 2026-09-22
+reviewed: 2026-10-10
 review_basis: primary-research
 observations:
   - id: 20260922-samsung-company-samsung-hvac
     topic_id: company-samsung-hvac
     event_id: d37e6feb52f811ed
-    event_date: 2026-09-21
+    event_date: "2026-09-21T10:00:00+09:00"
+    source_published_at: "2026-09-21T10:00:00+09:00"
     stance: context
-    change: 삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획
+    change: 삼성전자, 광주 HVAC 생산라인 착공…약 2,400억원 투자·2028년 초 가동 계획
     meaning: 동아시아 고객 공조 수요 대응이라는 회사 설명
     limit: 완공되면 FläktGroup의 세계 15번째 제조거점이 된다. 이번에 확인된 진행 단계는 착공이며, 투자 총액은 계획 금액이다.
       실제 가동과 품목별 공급 확대는 2028년 일정 및 후속 생산 발표로 확인해야 한다.
@@ -23,13 +24,14 @@ observations:
     stance: context
     change: RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류
     meaning: 화학적 신호를 전사체와 연결하면 세포 분류를 보완한다. 세포 분할 시험과 독립 집단 일반화는 구분해야 한다.
-    limit: MIT는 현재 약 1㎟ 조직 촬영에 30시간이 걸린다고 설명했다. 다음 확인은 독립 집단 검증, 다른 노화 표지자와의 비교, 촬영
-      속도 개선이다.
+    limit: 논문은 p21 양성 노화 세포군과 생쥐 폐·피부의 세포 분할 평가에 한정되며 독립 동물·사람 집단의 검증이나 인과관계를 확립하지
+      않았다. MIT는 약 1㎟ 조직 분석에 약 30시간이 걸린다고 설명했다.
     next_check: 독립 동물·사람 조직 검증, 다중 노화 표지자 및 영상 취득 속도.
   - id: 20260922-magnachip-company-magnachip-sic
     topic_id: company-magnachip-sic
     event_id: a49bfbd297aaeae9
-    event_date: 2026-09-21
+    event_date: "2026-09-21T11:19:21+00:00"
+    source_published_at: "2026-09-21T11:19:21+00:00"
     stance: context
     change: Navitas, Magnachip에 500만달러 지분 투자 계약
     meaning: 고전압 전력반도체 공동 개발 확대 계획
@@ -51,10 +53,11 @@ observations:
     event_id: 4db79fe713e8de1c
     event_date: 2026-09-21
     stance: context
-    change: Sunrun·Tesla, 캘리포니아 가정용 배터리 580MW 공급 실적 공개
+    change: Sunrun·Tesla는 9월 9일 캘리포니아 가정용 배터리의 최대 출력 580MW 초과 공급을 9월 21일 발표했다.
     meaning: 전력 피크 시간의 공급 지원
-    limit: 9월21일 발표한 9월9일 실적. 최대출력은 공급에너지·연중신뢰도와 다르다.
+    limit: 회사 집계인 최대 출력은 공급 에너지량·연중 신뢰도와 다르다. 당일 저녁 세 시간의 배터리 방전을 장기 공급 실적으로 확대하지 않는다.
     next_check: 동일 범위 후속 원문과 실제 집행 결과.
+    occurred_at: 2026-09-09
   - id: 20260922-openai-evaluation
     topic_id: evaluation
     event_id: 10538c022345675d
@@ -72,8 +75,8 @@ observations:
     stance: context
     change: 60개 기관, 5년 내 저자원 언어 AI 접근성 확대 공동 목표
     meaning: AI 학습 자료와 도구가 부족한 언어의 접근성 개선
-    limit: 세부 조직 구조와 운영 체계는 앞으로 1년에 걸쳐 공동 설계할 예정이다. 언어별 성능 개선이나 제공 완료를 판단하려면 평가 결과와
-      실제 서비스 범위를 확인해야 한다.
+    limit: 약 34억명 대상의 접근성 확대는 5년 공동 목표다. 공개 언어 데이터, 평가·벤치마크, 모델·도구와 개인정보·동의·데이터 주권을
+      고려한 제공은 협력 계획이며 언어별 성능 개선이나 서비스 제공 완료를 입증하지 않는다.
     next_check: 언어별 벤치마크와 실제 제공 도구, 운영체계.
 ---
 

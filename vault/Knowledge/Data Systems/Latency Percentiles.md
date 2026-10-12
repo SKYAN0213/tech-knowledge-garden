@@ -6,8 +6,8 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Data Systems
 created: 2026-09-13
-updated: 2026-09-13
-last_reviewed: 2026-09-13
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - p95·p99 지연
   - 지연 백분위수
@@ -32,7 +32,7 @@ map_review:
   decision: include
   kind: metric
   reason: 평균이 숨기는 느린 요청을 백분위수로 해석하고 서로 다른 집계의 p95·p99를 잘못 평균 내지 않도록 배워야 한다.
-  reviewed: 2026-09-13
+  reviewed: 2026-10-09
 connections:
   - target: inference
     reason: 모델 서빙의 느린 요청 구간을 지연 분포로 평가할 때 사용한다.
@@ -95,9 +95,6 @@ p99가 2초라는 측정은 약 99%의 요청이 2초 이내였다는 뜻이다.
 - [[Knowledge/AI Systems/AI Inference Infrastructure|AI 추론 인프라]] — 모델 서빙의 느린 요청 구간을 지연 분포로 평가할 때 사용한다.
 - [[Knowledge/AI Systems/Agent Observability|에이전트 관측성]] — 실행 과정에서 수집한 지연을 분포로 집계해 느린 요청이 얼마나 발생하는지 확인한다.
 
-## 최근 변화
-
-없음
 
 ## 출처
 

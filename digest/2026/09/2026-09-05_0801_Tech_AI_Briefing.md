@@ -1,6 +1,6 @@
 # 2026-09-05 아침 브리핑
 
-Copilot에 GPT-6 Astra 추가 · 저장소 스타 이력 API 공개
+2026-09-05 IT · AI · 로보틱스
 
 [웹 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-05_0801_tech_ai_briefing) · [브리핑 모음](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/README.md) · [RSS](https://skyan0213.github.io/tech-knowledge-garden/briefing.xml)
 

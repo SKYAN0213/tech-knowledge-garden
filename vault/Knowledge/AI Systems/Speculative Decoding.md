@@ -9,8 +9,8 @@ group: 평가와 운영
 concept_id: speculative-decoding
 label: 추측 디코딩
 created: 2026-10-05
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - 추측 디코딩
   - 추정 디코딩
@@ -29,7 +29,7 @@ map_review:
   decision: include
   kind: mechanism
   reason: 추측 디코딩은 보조 모델·후보 토큰 검증의 작동 관계를 따로 배워야 하는 전문 방법이며, 회사·제품명이나 일반 단어가 아니다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 connections:
   - target: inference
     reason: 작은 모델의 후보 토큰을 주 모델이 검증해 비싼 순차 추론 횟수를 줄이는 서빙 기법이다.

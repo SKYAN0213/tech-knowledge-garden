@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-08
+updated: 2026-10-09
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -106,6 +106,23 @@ tags:
 ### AI Systems
 
 - [[Knowledge/AI Systems/Safety Classifier|안전 분류기]]
+
+### Software Engineering
+
+- [[Knowledge/Software Engineering/Insecure Direct Object Reference|IDOR]]
+- [[Knowledge/Software Engineering/Code Coverage|코드 커버리지]]
+
+### AI Systems
+
+- [[Knowledge/AI Systems/x402|x402]]
+- [[Knowledge/AI Systems/Row-Level Security|행 단위 보안]]
+- [[Knowledge/AI Systems/Air-Gapped Deployment|에어갭 배포]]
+- [[Knowledge/AI Systems/OpenUSD|OpenUSD 장면 기술]]
+- [[Knowledge/AI Systems/Metadata Filtering|메타데이터 필터링]]
+
+### Research Methods
+
+- [[Knowledge/Research Methods/High Performance Linpack|HPL]]
 
 ## 개념 경계
 

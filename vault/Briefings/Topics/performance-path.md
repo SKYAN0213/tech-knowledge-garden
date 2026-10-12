@@ -2,7 +2,7 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-10-08
+date: 2026-10-12
 description: NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트워크·서빙 구성을 설명한다.
   9월15일 갱신 성능은 DeepSeek V4 Pro·AgentX에서 GB300 NVL72와 비교한 값이다. Model Connect는 지원
   모델의 체크포인트부터 TensorRT 엔진·전후처리·C++ 실행 자산까지 번들로 묶는 별도 배포 사례다.
@@ -24,7 +24,7 @@ NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트�
 
 ### 2026-09-30 · [[News/72249bd53d8a5849|Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개]]
 
-Google Cloud는 10월 1일 게시한 9월 업데이트에서 GKE Agent Substrate와 M4N·Z4D 인스턴스의 정식 제공 등 에이전트 인프라 변경을 발표했다. Google은 Agent Substrate가 표준 컨테이너 실행보다 샌드박스 밀도를 10배 높이고 500밀리초 미만 재개를 지원한다고 밝혔다. M4N은 Hyperdisk Extreme 구성에서 호스트 저장 성능 최대 25,000 MiB/s·100만 IOPS를 제시했으며, Z4D 베어메탈은 한 호스트에서 수천 개 microVM 샌드박스를 실행할 수 있도록 설계했다고 설명했다.
+Google Cloud는 9월 30일 월간 인프라 업데이트에서 GKE Agent Substrate의 샌드박스 실행·격리와 M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은 500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore agent volumes는 프리뷰 접근 신청 단계다.
 
 [Google 원문](https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month) · [[Briefings/2026/10/2026-10-01_0800_Tech_AI_Briefing|당일 브리핑]]
 
@@ -38,11 +38,11 @@ OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Syno
 
 <span id="20260923-sol-performance-path"></span>
 
-### 2026-09-22 · [[News/73461b3e97af0d93|OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하]]
+### 2026-09-23 · [[News/73461b3e97af0d93|OpenAI, GPT-6 Sol·Luna 출시…API 입력·출력 요금 인하]]
 
-OpenAI는 9월 22일 GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공하기 시작했다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 이전 GPT-5.6 Sol의 4달러·20달러, Luna의 0.20달러·1.20달러보다 낮다.
+OpenAI는 한국시간 9월 23일(원문 게시일 9월 22일) GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공한다고 밝혔다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 비교표에 제시한 이전 GPT-5.6 프로모션 가격은 Sol이 4달러·20달러, Luna가 0.20달러·1.20달러다.
 
-[OpenAI 원문](https://openai.com/index/introducing-gpt-6-sol-and-luna/) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
+[OpenAI 원문](https://openai.com/index/introducing-gpt-6-sol-and-luna/) · [OpenAI 원문](https://openai.com/news/rss.xml) · [[Briefings/2026/09/2026-09-23_0800_Tech_AI_Briefing|당일 브리핑]]
 
 <span id="performance-habitat"></span>
 

@@ -6,11 +6,11 @@
 
 ## 주요 소식
 
-### [Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개](https://skyan0213.github.io/tech-knowledge-garden/news/ebcefe563a8a7faf)
+### [Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합](https://skyan0213.github.io/tech-knowledge-garden/news/ebcefe563a8a7faf)
 
 발표 2026-09-14
 
-Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-Series 협동로봇 3종을 공개했다. UR10g-1750, UR17g-1300, UR18g-950은 힘·토크 감지와 센서 연결을 통합하고, CB7 제어기와 PolyScope X 소프트웨어를 함께 사용한다. 로봇에 카메라나 도구를 붙이고 외부 AI·컴퓨터와 연결하는 자동화 구성을 지원한다.
+Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다.
 
 ### [네이버지도, 대화로 장소를 찾고 동의 후 예약하는 플레이스 에이전트 출시](https://skyan0213.github.io/tech-knowledge-garden/news/49c6c9190303aebd)
 
@@ -46,13 +46,15 @@ Roche는 9월 17일 재발성·불응성 여포성 림프종 환자를 대상으
 
 제품·서비스 · 신제품 · Google
 
-Google은 9월 15일 음성 대화 모델 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내에서 Gemini API와 AI Studio 등을 통한 순차 제공 범위를 설명했다. 두 모델은 시각 정보를 대화에 반영하고, 도구나 API가 배경에서 실행되는 동안에도 사용자와 대화를 이어 간다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 함께 수행하도록 설계됐다.
+Google은 9월 15일 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내문에서 Gemini API와 Google AI Studio 등의 순차 제공 범위를 설명했다. Gemini 3.8 Live는 시각 입력을 대화에 반영하고 도구·API를 배경에서 실행하는 동안 사용자와 대화를 이어 간다고 회사는 설명했다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 동시에 수행하도록 설계됐다.
 
-##### 대화를 멈추지 않고 작업 진행을 전달
+##### 대화 중 언어 전환과 제품별 제공 범위
 
-Live는 97개 언어를 인식해 대화 중 언어를 전환한다. Extended Thinking은 요청을 받았다는 짧은 응답을 먼저 하고, 여러 단계의 배경 작업이 진행되는 상황을 말로 전달한다. 기업용 Gemini Enterprise 제공은 비공개 프리뷰이며, 개인용 앱과 Workspace의 제공 대상은 제품·구독별로 다르다.
+Live는 지원하는 97개 언어를 대화 중 자동 전환한다. Extended Thinking은 요청 접수와 배경 작업 진행 상황을 말로 전달한다.
 
-[Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/)
+기업용 Gemini Enterprise는 비공개 프리뷰이며, 일반 사용자용 제공은 Search Live·Gemini Live와 Workspace의 제품·구독에 따라 범위가 다르다.
+
+[Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking)
 
 #### [네이버지도, 대화로 장소를 찾고 동의 후 예약하는 플레이스 에이전트 출시](https://skyan0213.github.io/tech-knowledge-garden/news/49c6c9190303aebd)
 
@@ -82,7 +84,7 @@ Live는 97개 언어를 인식해 대화 중 언어를 전환한다. Extended Th
 
 워런티 케어는 연결된 기기의 보증 정보, 진단, 예상 수리 비용과 서비스 예약을 한곳에 모은다. 보안 브리프는 의심스러운 앱이나 권한 등 보안 정보를 알려 준다. 개인정보 알림과 음성 변조 탐지는 지원 모델·지역 조건이 달라 모든 기기에서 같은 기능을 제공하는 것은 아니다.
 
-[news.samsung.com 원문](https://news.samsung.com/kr/삼성전자-one-ui-9-공식-버전-업데이트-시작)
+[news.samsung.com 원문](https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-one-ui-9-%EA%B3%B5%EC%8B%9D-%EB%B2%84%EC%A0%84-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EC%8B%9C%EC%9E%91)
 
 #### [AWS, 메모리를 회수하고 실행 환경을 복원하는 AgentCore Runtime V2 제공](https://skyan0213.github.io/tech-knowledge-garden/news/14a53f7d72ef9b9b)
 
@@ -90,11 +92,11 @@ Live는 97개 언어를 인식해 대화 중 언어를 전환한다. Extended Th
 
 제품·서비스 · 기능 추가 · Amazon Web Services
 
-AWS는 9월 18일 Amazon Bedrock AgentCore에 새 Runtime V2를 제공하기 시작했다. 에이전트 세션에 필요한 메모리를 늘렸다가 사용하지 않는 부분을 회수하고, 미리 준비한 실행 환경의 스냅샷을 복원해 새 인스턴스를 시작한다. 미국 3개 리전과 아일랜드·도쿄에서 런타임 생성 또는 수정 시 platformVersion을 V2로 지정해 사용할 수 있다.
+AWS는 9월 18일 Amazon Bedrock AgentCore의 새 Runtime V2를 제공하기 시작했다. 에이전트 세션에 필요한 메모리를 늘렸다가 사용하지 않는 부분을 회수하고, 미리 준비한 실행 환경의 스냅샷을 복원해 새 인스턴스를 시작한다. us-east-1·us-east-2·us-west-2·eu-west-1·ap-northeast-1에서 런타임 생성 또는 수정 시 platformVersion을 V2로 지정해 사용할 수 있다.
 
-##### 전체 작업시간과 구분해야 하는 시작 지연
+##### AWS 자체 시험의 시작 지연
 
-AWS 자체 시험에서 200MB\~2GB 컨테이너 이미지의 시작 지연 P75는 V2가 1.9\~2.0초, V1이 5.4\~30초였다. P75는 측정값의 75%가 그 시간 이하였다는 뜻이며, 에이전트의 전체 업무 완료시간은 아니다. 메모리 과금도 세션 최고점 대신 실제 사용량을 따르도록 바뀐다.
+AWS 자체 시험에서 200MB\~2GB 컨테이너 이미지의 시작 지연 P75는 V2가 1.9\~2.0초, V1이 5.4\~30초였다. 사용하지 않는 메모리를 세션 종료까지 유지하지 않고 회수하는 방식도 적용했다.
 
 [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/)
 
@@ -146,19 +148,31 @@ CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026
 
 ### 로봇·제조 · 3건
 
-#### [Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개](https://skyan0213.github.io/tech-knowledge-garden/news/ebcefe563a8a7faf)
+#### [Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합](https://skyan0213.github.io/tech-knowledge-garden/news/ebcefe563a8a7faf)
 
 발표 2026-09-14
 
 제품·서비스 · 신제품 · Universal Robots · Teradyne Robotics
 
-Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-Series 협동로봇 3종을 공개했다. UR10g-1750, UR17g-1300, UR18g-950은 힘·토크 감지와 센서 연결을 통합하고, CB7 제어기와 PolyScope X 소프트웨어를 함께 사용한다. 로봇에 카메라나 도구를 붙이고 외부 AI·컴퓨터와 연결하는 자동화 구성을 지원한다.
+Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다.
 
-##### 로봇 끝단에서 감지하고 연결
+##### 로봇팔과 센서 연결
 
-끝단 플랜지에는 데이터·전원·안전 연결을 제공해 카메라와 센서를 붙일 수 있다. 내장 힘·토크 센서와 임피던스 제어는 접촉 힘에 따라 로봇이 반응하도록 하는 기능이다. PolyScope X는 API와 ROS 2를 통해 외부 컴퓨터와 연결하며, 신형 CB7 제어기는 기존 e-Series와 UR-Series도 지원한다.
+새 로봇팔의 이름은 가반하중 kg와 도달거리 mm를 나타낸다. g-Series 툴 플랜지는 카메라·센서에 데이터·전원·안전 기능을 제공하며, 내장 힘·토크 감지와 임피던스 제어, RTDE 실시간 데이터 교환으로 조작과 힘에 민감한 조립 작업을 지원한다고 회사는 설명했다.
 
-[universal-robots.com 원문](https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai/)
+##### CB7의 연산 능력과 설치 면적
+
+회사는 이전 세대 대비 CB7의 연산 능력이 40% 늘고 설치 면적은 30% 줄었다고 밝혔다. PLC·HMI·MES·산업용 PC·비전 시스템과 연결하며, 출시 형태는 독립 컨트롤 박스와 자동화 캐비닛에 넣는 소형 버전이다.
+
+##### PolyScope X의 소프트웨어 연결
+
+PolyScope X는 공개 API와 ROS2 통신으로 산업용 PC 및 외부 AI 처리를 활용하는 엣지 AI 응용을 지원한다. ProfiSafe·OPC-UA 등의 추가 기능은 별도 소프트웨어 패키지로 제공한다.
+
+##### TP7 조작과 안전 구성
+
+TP7 티치 펜던트는 이전 세대보다 무게가 20% 초과 감소했다고 회사는 밝혔다. 설정 가능한 버튼, 풀 HD 화면과 가상 조이스틱을 갖췄다. 회사는 Gen 7의 협동 안전 기능이 ISO 13849-1의 PLd·Category 3 인증 구조를 제공한다고 설명했다.
+
+[universal-robots.com 원문](https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai)
 
 #### [Teradyne Robotics, UR·MiR 영업을 총괄할 CCO 선임](https://skyan0213.github.io/tech-knowledge-garden/news/2558745b2bfe7d79)
 
@@ -166,7 +180,7 @@ Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-
 
 인력·조직 · 핵심 인재 이동 · Teradyne Robotics · Universal Robots · Mobile Industrial Robots
 
-Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)로 선임했다. 그는 Universal Robots와 Mobile Industrial Robots의 글로벌 영업 활동을 총괄한다. 앞서 Universal Robots에서 10년 넘게 일했고, 최근에는 Trener Robotics의 글로벌 영업 부사장을 맡았다.
+Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)로 선임했다. 그는 Universal Robots와 MiR의 글로벌 사업 조직을 총괄한다. 앞서 Universal Robots에서 10년 넘게 사업 리더십을 맡았고, 최근에는 Trener Robotics의 글로벌 영업 부사장으로 일했다.
 
 
 
@@ -234,4 +248,4 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 
 임무 페이지가 밝힌 궤도 경사각은 38도다. Rocket Lab은 Synspective 위성군을 위해 2030년 전까지 수행할 15건의 추가 발사를 예약받았다고 설명한다. 이 수치는 이번에 완료한 12번째 고객 발사와 구분되는 향후 계약 물량이다.
 
-[rocketlabcorp.com 원문](https://rocketlabcorp.com/missions/launches/owl-by-the-dozen/)
+[rocketlabcorp.com 원문](https://rocketlabcorp.com/missions/launches/owl-by-the-dozen)

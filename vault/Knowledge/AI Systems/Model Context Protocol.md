@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-23
-updated: 2026-10-05
+updated: 2026-10-09
 aliases:
   - MCP
 parent_concepts: []
@@ -17,7 +17,7 @@ tags:
   - AI
   - MCP
   - Protocol
-last_reviewed: 2026-10-05
+last_reviewed: 2026-10-09
 concept_id: mcp
 label: MCP
 group: 지식과 연결
@@ -29,6 +29,7 @@ keywords:
   - JSON-RPC
   - 도구
 verified_sources:
+  - https://api.github.com/repos/anthropics/claude-code/releases/tags/v2.1.196
   - https://modelcontextprotocol.io/specification/2025-11-25/architecture
   - https://blog.modelcontextprotocol.io/posts/2026-07-28/
   - https://blog.cloudflare.com/mcp-v2/
@@ -39,7 +40,7 @@ map_review:
   decision: include
   kind: protocol
   reason: AI 호스트와 외부 도구 서버의 통신 역할과 메시지 규격을 별도로 익혀야 한다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 ---
 
 # Model Context Protocol
@@ -63,25 +64,9 @@ AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트�
 
 [원문](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
 
-## 왜 중요한가
-
-없음
-
-## 핵심 구성 요소
-
-없음
-
 ## 작동 원리
 
 2025-11-25 아키텍처에서 호스트는 서버별 클라이언트, 연결 권한과 동의를 관리하고 여러 클라이언트의 문맥을 모은다. 서버는 도구·리소스·프롬프트를 노출하며 필요한 문맥만 받는다. 서버 사이의 정보 격리는 호스트가 관리한다. [원문](https://modelcontextprotocol.io/specification/2025-11-25/architecture)
-
-## 실제 예시
-
-없음
-
-## 한계와 실패 조건
-
-없음
 
 ## 혼동하기 쉬운 개념
 
@@ -94,9 +79,10 @@ AI 호스트와 외부 기능 제공 서버가 도구·리소스·프롬프트�
 
 ## 최근 변화
 
-- 2026-07-23 — GitHub는 7월 28일 공개 예정인 차기 규격을 공식 MCP Server에서 사전 지원한다고 발표했다. Redis 세션과 초기화·요청별 데이터베이스 작업을 제거했으며 이전 클라이언트 호환을 유지한 Go SDK 베타 지원과 적합성 시험을 안내했다. [[News/12e0b107d161c130|기사]] · [원문](https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/)
-- 2026-07-28 — MCP 유지관리팀이 무상태 요청·응답 코어와 MRTR을 포함한 새 규격을 공개했다. [원문](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
 - 2026-08-06 — Cloudflare가 Workers에서 새 규격을 지원한다고 발표했다. 애플리케이션 자체에 상태가 필요한 경우에는 Durable Objects를 계속 사용할 수 있다고 설명했다. [원문](https://blog.cloudflare.com/mcp-v2/)
+- 2026-07-28 — MCP 유지관리팀이 무상태 요청·응답 코어와 MRTR을 포함한 새 규격을 공개했다. [원문](https://blog.modelcontextprotocol.io/posts/2026-07-28/)
+- 2026-07-23 — GitHub는 7월 28일 공개 예정인 차기 규격을 공식 MCP Server에서 사전 지원한다고 발표했다. Redis 세션과 초기화·요청별 데이터베이스 작업을 제거했으며 이전 클라이언트 호환을 유지한 Go SDK 베타 지원과 적합성 시험을 안내했다. [[News/12e0b107d161c130|기사]] · [원문](https://github.blog/changelog/2026-07-23-github-mcp-server-supports-the-next-mcp-specification/)
+- 2026-06-30 — Claude Code v2.1.196은 저장소에 커밋된 설정의 자체 승인만으로 claude mcp list/get이 MCP 서버를 실행하지 않도록 변경하고, 명시한 scope 없이 인증 서버의 전체 scope 목록을 요청하던 OAuth 오류를 수정했다. [[News/a3d36f8b621698a5|기사]] · [공식 릴리스](https://github.com/anthropics/claude-code/releases/tag/v2.1.196)
 
 ## 출처
 

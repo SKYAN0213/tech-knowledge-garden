@@ -4,7 +4,7 @@ type: briefing-index
 date: 2026-09-04
 created: 2026-09-04
 modified: 2026-09-04
-description: npm 다중 OIDC 설정 · Actions 실행기·권한 업데이트 · CodeQL 2.26.4
+description: 2026-09-04 IT · AI · 로보틱스
 coverage_start: 2026-09-03T08:03:00+09:00
 coverage_end: 2026-09-04T08:02:54+09:00
 item_count: 3

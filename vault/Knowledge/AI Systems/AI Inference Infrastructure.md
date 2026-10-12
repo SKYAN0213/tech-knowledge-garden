@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: AI Systems
 created: 2026-06-24
-updated: 2026-09-28
+updated: 2026-10-09
 aliases:
   - AI 추론 인프라
 parent_concepts: []
@@ -16,7 +16,7 @@ tags:
   - AI
   - Inference
   - Infrastructure
-last_reviewed: 2026-09-28
+last_reviewed: 2026-10-09
 concept_id: inference
 label: AI 추론 인프라
 group: 평가와 운영
@@ -46,7 +46,7 @@ map_review:
   decision: include
   kind: architecture
   reason: 학습과 추론을 구별하고 서빙의 계산·메모리·스케줄링 구조를 이해해야 한다.
-  reviewed: 2026-09-28
+  reviewed: 2026-10-09
 ---
 
 # AI Inference Infrastructure

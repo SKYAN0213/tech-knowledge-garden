@@ -1,166 +1,653 @@
 ---
 title: Tech & AI Briefing - 06:02
-date: 2026-06-30
 time: 06:02
-timezone: Asia/Seoul
-coverage_start: 2026-06-30T00:04:59+09:00
-coverage_end: 2026-06-30T06:02:28+09:00
 type: briefing
-source_count: 42
-new_items_count: 4
-linked_knowledge_notes:
-  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
-  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]"
-  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]"
-  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]"
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-06-30
+timezone: Asia/Seoul
+coverage_start: 2026-06-30T00:04:59+09:00
+coverage_end: 2026-06-30T06:02:28+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 9
+new_items_count: 9
+linked_knowledge_notes:
+  - "[[Knowledge/AI Systems/AI Agents|AI Agents]]"
+  - "[[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security
+    and Governance]]"
+  - "[[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation
+    and Observability]]"
+  - "[[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference
+    Infrastructure]]"
+  - Knowledge/AI Systems/Row-Level Security
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
+  - GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가
+  - AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개
+  - PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개
+  - AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개
+article_records:
+  - title: GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: GitHub는 2026년 6월 30일(한국시간) Copilot에 Claude Opus 4.8 fast mode 프리뷰를 순차
+      제공한다고 발표했다. Pro+·Max·Business·Enterprise 이용자가 대상이며, 기업용 플랜에서는 관리자가 기본 꺼짐
+      상태인 정책을 활성화해야 한다.
+    explanations:
+      - heading: 접근 조건과 비용
+        paragraphs:
+          - GitHub는 fast mode가 표준 Opus 4.8의 지능을 유지하면서 출력 토큰 속도를 높인다고 설명했다.
+          - 모델 선택기는 VS Code·Visual Studio·Copilot CLI·cloud agent·Copilot
+            앱·github.com·모바일·JetBrains·Xcode·Eclipse에서 제공된다. 점진 배포이므로 모든 이용자에게
+            동시에 나타나는 방식은 아니다.
+          - 사용량 기반 과금에서는 공급자 정가를 적용한다. GitHub에 따르면 이전 fast mode보다는 저렴하지만 표준 Opus
+            4.8보다는 비용이 높다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-29-claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: GitHub는 2026년 6월 30일(한국시간) 저장소 관리자가 이슈 생성자를 쓰기 권한이 있는 협업자로 한정할 수 있도록 했다.
+      옵션을 켜면 쓰기 권한이 없는 이용자는 Issues·Comments·Discussions·Projects·Copilot에서 새 이슈를
+      만들 수 없다.
+    explanations:
+      - heading: 설정 위치와 적용 범위
+        paragraphs:
+          - 저장소 Settings의 Features에서 Issues를 선택한 뒤, Creation allowed by를
+            Collaborators only로 설정한다. GitHub는 원치 않는 이슈 생성을 줄이면서 유지보수자와 기여자의 작업
+            흐름을 유지하기 위한 기능이라고 설명했다.
+          - 제한 대상은 이슈 생성이다. GitHub는 기존의 협업자 전용 풀 리퀘스트 생성 권한과 설정 방식을 맞추는 변경이라고
+            밝혔다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-29-restrict-issue-creation-to-collaborators-only
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: AWS는 2026년 6월 30일(한국시간) Amazon Bedrock AgentCore Observability로 운영 중 에이전트의
+      반복 실행과 도구 호출 오류를 진단하는 구현 지침을 공개했다. CloudWatch 지표·추적·구조화 로그를 함께 보고, 오류율이
+      낮아도 토큰 사용량과 세션 시간이 늘어나는 무한 루프를 찾아내는 방식이다.
+    explanations:
+      - heading: 정상 종료와 올바른 답변을 구분하는 추적
+        paragraphs:
+          - AWS는 문제를 품질·신뢰성·효율로 구분했다. 품질 문제는 실행이 끝났어도 답이 틀린 경우이며, 신뢰성 문제는 도구 오류나
+            상태 유실로 작업을 마치지 못하는 경우다. 지연·과도한 토큰 사용은 효율 문제로 분리한다.
+          - OpenTelemetry 형식으로 추적·span 로그·지표를 내보내며 CloudWatch가 기본 수신처다. 같은 데이터를
+            Datadog·Grafana Cloud·Elastic Observability로도 보낼 수 있다. CloudWatch
+            Transaction Search를 켠 뒤, 개별 실행의 추론 단계·도구 호출·메모리 조회를 따라간다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/debugging-production-agents-with-amazon-bedrock-agentcore-observability/
+      - heading: 반복 실행과 권한 오류를 다르게 처리
+        paragraphs:
+          - 무한 루프에서는 토큰 사용량이 많은 세션을 먼저 찾고 동일 도구 호출과 추론 패턴을 대조한다. AWS는 종료 조건을
+            명시하고 같은 행동이 세 번 반복되면 멈추는 로직을 넣는 예를 제시했다.
+          - 도구 오류는 인증 401·인가 403·입력 형식 400·리소스 없음 404·실행 오류 500으로 나누어 원인을 좁힌다.
+            인증·권한 오류는 Gateway 서비스 역할과 자격 증명을 확인하고, 입력 형식 오류는 에이전트가 전달한 값과 도구
+            스키마를 대조한다.
+          - 진단 쿼리는 대시보드와 경보로 옮기고, AgentCore Evaluators는 세션을 품질 기준으로 평가한다. 실행 경로를
+            기록하는 관측성과 답변 품질을 판단하는 평가는 서로 다른 단계다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/debugging-production-agents-with-amazon-bedrock-agentcore-observability/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: PAR Technology는 2026년 6월 30일(한국시간) AWS 공식 블로그에서 다중 고객용 자연어 분석 에이전트의 보안 구조를
+      소개했다. AWS SigV4 요청 서명, Bedrock의 질문 검토, 서버가 생성하는 행 단위 데이터 필터를 결합해 LLM이 조회할
+      수 있는 범위를 먼저 한정한다.
+    explanations:
+      - heading: 권한은 프롬프트가 아니라 서버에서 결정
+        paragraphs:
+          - 요청에는 Tenant ID·Business ID·Admin ID를 넣고 SigV4로 서명한다. 검증 뒤 세 값을 합친 세션
+            키를 만들어 후속 처리를 해당 사용자 문맥에 묶는다. PAR는 처음에는 프롬프트에 사업체 ID 필터를 지시했지만, 운영
+            단계에서는 모델의 필터 누락 가능성을 보안 경계로 받아들일 수 없어 구조를 바꿨다고 설명했다.
+          - 질문이 지원되는 지표에 해당하는지 확인하는 단계는 인증 뒤, 데이터 접근 전에 실행한다. 매출 금액과 매출 건수처럼 의미가
+            모호하면 질문 구체화를 요청하고 SQL 생성을 진행하지 않는다.
+          - 서버는 검증된 사용자 ID를 기준으로 공통 테이블 식(CTE)을 생성해 허용된 행만 남긴다. 모델에는 원본 테이블이 아니라
+            이 CTE의 열 이름·자료형만 전달하고, 모델이 만든 분석 SQL을 서버의 CTE와 결합해 Databricks에서
+            실행한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/multi-tenant-llm-analytics-with-row-level-security-how-we-built-a-secure-agent-on-aws/
+      - heading: 회사에서 보고한 운영 결과
+        paragraphs:
+          - PAR는 해당 구조로 운영 환경에서 5만 건이 넘는 쿼리를 처리했으며 고객 간 데이터 노출 사고는 없었다고 밝혔다. 이는
+            회사가 보고한 해당 구현의 운영 결과다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/multi-tenant-llm-analytics-with-row-level-security-how-we-built-a-secure-agent-on-aws/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: AWS는 2026년 6월 30일(한국시간) Bedrock Data Automation·AgentCore·HealthLake를 연결한
+      의료 청구 처리 샘플을 공개했다. CMS-1500 PDF를 S3에 올리면 서류를 JSON으로 추출하고, 에이전트가 환자·의료진·보험
+      기록과 대조한 뒤 조건을 충족한 청구를 FHIR 자원으로 저장한다.
+    explanations:
+      - heading: 고정 처리 순서와 에이전트 검색을 분리
+        paragraphs:
+          - Lambda는 문서 업로드에 반응해 처리를 시작하고, 처리 완료 또는 예외 큐 전달 여부를 감독한다. Bedrock
+            Data Automation의 blueprint는 서식 차이가 있는 CMS-1500에서 필요한 항목을 일정한 JSON
+            구조로 추출하며 필드 신뢰도와 위치 정보도 제공한다.
+          - Strands 에이전트는 HealthLake 검색과 FHIR 청구 생성을 위한 두 도구를 사용한다. 기본 검색으로 참조
+            기록을 찾지 못하면 추출 신뢰도가 높은 속성으로 두 번 더 검색하고, 식별 근거를 설명하도록 구성했다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/build-an-agentic-ai-healthcare-claims-pipeline-with-amazon-bedrock-and-aws-healthlake/
+      - heading: 담당자·환자에게 전달하는 처리 결과
+        paragraphs:
+          - 처리 결과는 청구 담당자용 기술 요약과 환자에게 전달할 쉬운 설명으로 나누어 SNS로 보낸다. 샘플의 성공 시나리오는
+            식별자 끝의 숫자 0과 문자 O가 다른 상황을 넣어 다른 검색 정보로 기록을 대조하는 과정을 보여준다.
+          - 이 글은 샘플 데이터로 실패·성공 흐름을 시연한다. AWS는 알려진 처리 순서를 코드로 정하고 Lambda를 최종
+            성공·실패 판단자로 두는 설계 방식을 설명했다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/build-an-agentic-ai-healthcare-claims-pipeline-with-amazon-bedrock-and-aws-healthlake/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, Nova 2 Lite 추출·Claude 공간 추론으로 연감 사진과 이름 연결
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: AWS는 2026년 6월 30일(한국시간) Nova 2 Lite와 Claude Sonnet 4.6을 나눠 쓰는 스캔 연감 디지털화
+      구현을 소개했다. Nova가 사진·이름의 위치를 추출하고 Claude가 배치를 해석해 연결하며, AWS는 336쪽에서 이름과 얼굴의
+      연결 3,122건을 생성했다고 보고했다.
+    explanations:
+      - heading: 추출과 공간 추론을 서로 다른 모델에 맡김
+        paragraphs:
+          - Nova는 사진 경계 상자·이름 위치·페이지 메타데이터를 한 번의 호출로 반환한다. 전체 OCR 텍스트 대신 이름만 요청해
+            출력량을 줄였다. 두 모델은 같은 좌표계를 사용하고 Claude는 캡션과 열 배치를 고려해 이름과 얼굴을 연결한다.
+          - AWS는 이 추출 작업에서 LOW·MEDIUM·HIGH 추론 수준 간 의미 있는 정확도 차이를 보지 못해 Nova를
+            LOW로 설정했다고 설명했다. Claude에는 adaptive thinking을 사용하고, 최종 단계는 신뢰도 기준과
+            rapidfuzz 이름 대조로 결과를 거른다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/pair-nova-2-lite-with-claude-for-cost-optimized-document-processing/
+      - heading: 실험 규모·신뢰도·비용 조건
+        paragraphs:
+          - 연결 결과의 93.3%가 0.95 이상의 신뢰도를 받았다. 이 점수는 Claude가 부여한 연결 확신도이며 정답률
+            측정치와는 다르다. 텍스트만 있는 페이지는 건너뛰었고, 캡션이 모호한 단체 사진은 연결하지 않았다.
+          - AWS는 페이지당 비용을 두 모델 구성 약 0.033달러, Claude에 OCR·사진 탐지·이름 연결을 모두 맡긴 비교
+            구성 약 0.10달러로 추산했다. 사용한 Bedrock 가격, 이름 밀도, 추론 토큰 수에 따라 달라지는 추정치다.
+          - 두 호출이 순차 실행되는 구성에서 Nova 추출은 2~5초, Claude 공간 추론은 20~30초, 전체는 페이지당 약
+            22~35초였다고 보고했다. 비용을 낮춘 구성에서도 공간 추론 단계가 처리 시간을 대부분 차지했다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/pair-nova-2-lite-with-claude-for-cost-optimized-document-processing/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, Quick Sight 자산·사용자 정보를 분리 백업하는 도구 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: AWS는 2026년 6월 30일(한국시간) Quick Sight의 대시보드·분석·데이터셋 등을 백업하는 AssetsAsBundle
+      API 지침과 샘플 도구를 공개했다. 자산 묶음은 S3에, 사용자·그룹·그룹 구성원 정보는 DynamoDB에 나누어 보관한다.
+    explanations:
+      - heading: 대시보드와 의존 자산을 함께 내보냄
+        paragraphs:
+          - 대시보드에는 데이터셋·데이터 소스·VPC 연결·테마 등의 의존성이 있다. 샘플은 기본적으로 의존 자산을 함께 내보내고,
+            자산 종류별로 최대 100개씩 묶어 비동기 export 작업을 시작한다.
+          - 완료 상태는 DescribeAssetBundleExportJob으로 조회한다. 반환되는 다운로드 URL은 5분 동안
+            유효하며 같은 API를 다시 호출해 갱신할 수 있다. 다운로드한 묶음은 지속 보관용 S3 위치로 옮긴다.
+          - 사용자와 그룹은 AssetsAsBundle API에 포함되지 않는다. 별도 API로 조회해 날짜를 붙인 DynamoDB
+            테이블에 저장하며, identity_region과 자산의 aws_region을 따로 설정해 두 리전이 다른 계정을
+            처리한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/
+      - heading: 샘플 도구의 실행 범위
+        paragraphs:
+          - 도구는 전체·사용자 전용·자산 전용 모드를 제공하고 이전 백업을 덮어쓰지 않는다. 일부 데이터 소스와 연결된
+            SageMaker 추론 열이 있는 데이터셋은 export 대상에서 제외해야 한다.
+          - 이 샘플은 요청 시 실행하는 도구다. EventBridge·Step Functions·Lambda를 이용한 정기 백업은
+            별도의 설계안으로 소개됐으며, 그 구조의 구현 코드는 글에 포함되지 않았다. 같은 계정에서 샘플 도구를 동시에 여러 번
+            실행하면 API 제한에 걸릴 수 있어 동시 실행을 피하도록 안내한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: NVIDIA, Azure GB300 기반 Claude의 Microsoft Foundry 정식 제공 발표
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: NVIDIA는 2026년 6월 30일(한국시간) Azure에서 GB300 Blackwell Ultra GPU로 실행되는
+      Anthropic Claude 모델의 Microsoft Foundry 정식 제공을 발표했다. 구성에는 GB300 NVL72 시스템과
+      Quantum-X800 InfiniBand 네트워킹을 사용한다.
+    explanations:
+      - heading: 인프라 제공과 에이전트 실행 환경
+        paragraphs:
+          - NVIDIA는 도메인별 에이전트 기능을 위해 자사의 도구와 verified agent skills를 Anthropic
+            스택에 통합하는 협업도 진행한다고 설명했다. 이번 공지는 Microsoft·NVIDIA·Anthropic이 앞서 발표한
+            협력의 연장선으로 소개됐다.
+          - Azure에서 Claude 에이전트를 실행하는 Secure Agent Workspace Reference Design은
+            신원·네트워크 접근·자격 증명·실행 정책을 인프라 계층에서 관리하는 청사진이다.
+        source_urls:
+          - https://blogs.nvidia.com/blog/anthropic-nvidia-gb300-blackwell-ultra-microsoft-azure/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: vLLM 0.24.0, 스트리밍 도구 파서·모델 지원·서버 보안 변경
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-30
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: vLLM 프로젝트는 2026년 6월 30일(한국시간) 0.24.0을 공개했다. MiniMax-M3·DiffusionGemma 지원,
+      모델별 도구 호출과 추론 출력을 통합하는 Streaming Parser Engine, Rust 프런트엔드 인증 기능 등을 추가했다.
+    explanations:
+      - heading: 모델 실행과 응답 파싱
+        paragraphs:
+          - Model Runner V2는 양자화 모델을 기본 지원하고 Qwen·DeepSeek-V2 MoE 실행 경로와 DFlash
+            추측 디코딩을 확장했다. DiffusionGemma에는 CPU 실행 경로와 구조화 출력 제어가 추가됐다.
+          - 새 스트리밍 파서 엔진에는 Qwen3·MiniMax-M2·GLM·Nemotron 계열 파서가 포함된다. Chat
+            Completions와 Responses API의 도구 호출에는 strict mode를 추가했다.
+        source_urls:
+          - https://api.github.com/repos/vllm-project/vllm/releases/tags/v0.24.0
+      - heading: 운영 시 달라지는 서버 설정
+        paragraphs:
+          - Rust 프런트엔드는 API 키 인증·CORS·토큰화·요청 중단·일시 정지와 재개를 지원한다.
+            thinking_token_budget, parallel_tool_calls 설정 및 사용량 통계도 추가됐다.
+          - 장치 선택에서는 vLLM이 내부에서 CUDA_VISIBLE_DEVICES를 설정하던 동작을 없애고 device_ids
+            인자를 제공한다. ROCm에서는 기존 환경 변수에 대해 폐기 전환 기간을 시작했다.
+        source_urls:
+          - https://api.github.com/repos/vllm-project/vllm/releases/tags/v0.24.0
+      - heading: 서비스 거부와 의존성 보안 수정
+        paragraphs:
+          - 보안 변경에는 오디오 압축 폭탄·잘못된 복구 토큰 재삽입·prompt_embeds를 이용한 서비스 거부 대응, 오디오
+            업로드 크기와 디코딩 시간 제한, 구조화 출력의 정규식 컴파일 시간 제한이 포함된다.
+          - Starlette 의존성은 CVE-2026-48710 대응을 위해 1.0.1 이상으로 올렸다.
+        source_urls:
+          - https://api.github.com/repos/vllm-project/vllm/releases/tags/v0.24.0
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
+    event_id: 3ab1311f879e64a8
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:47:16-07:00
+  - title: GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가
+    event_id: 6c26cbb466f80e14
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:08:23-07:00
+  - title: AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개
+    event_id: "65854015519164e0"
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:25:21-08:00
+  - title: PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개
+    event_id: ed903f9a68cea8a4
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - row-level-security
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:39:29-08:00
+  - title: AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개
+    event_id: 0be6e69d8c04db75
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:36:34-08:00
+  - title: AWS, Nova 2 Lite 추출·Claude 공간 추론으로 연감 사진과 이름 연결
+    event_id: bd1bd59784866649
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T09:52:33-08:00
+  - title: AWS, Quick Sight 자산·사용자 정보를 분리 백업하는 도구 공개
+    event_id: 84b7a491c35da1a6
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T10:15:14-08:00
+  - title: NVIDIA, Azure GB300 기반 Claude의 Microsoft Foundry 정식 제공 발표
+    event_id: f870f3c172e9d7ad
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T17:00:19+00:00
+  - title: vLLM 0.24.0, 스트리밍 도구 파서·모델 지원·서버 보안 변경
+    event_id: 12b14cdd73636e1c
+    review_status: verified
+    published_at: 2026-06-30
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-29T19:41:59Z
 ---
 
-# Executive Summary
+# 이번 호 표지
 
-- GitHub는 Claude Opus 4.8 fast mode를 Copilot preview로 공개했고, 별도로 repository issue 생성을 write collaborator로 제한하는 설정을 추가했습니다. coding agent가 더 빠른 interactive loop와 더 엄격한 repository 권한 경계로 동시에 이동하는 신호입니다.
-- AWS는 Bedrock AgentCore Observability, multi-tenant row-level security agent, HealthLake claims pipeline, Nova 2 Lite plus Claude 문서 처리 등 여러 production agent 패턴을 같은 창에 공개했습니다. agent 운영의 초점이 demo에서 trace, tenant isolation, validation, cost-aware model routing으로 옮겨가고 있습니다.
-- NVIDIA는 Anthropic Claude 모델이 Microsoft Foundry on Azure에서 GB300 Blackwell Ultra 기반으로 generally available이라고 발표했습니다. frontier model serving 경쟁이 모델 API뿐 아니라 accelerator, cloud region, enterprise platform 통합으로 확장됩니다.
-- vLLM 0.24.0은 MiniMax-M3, DeepSeek-V4 최적화, streaming parser engine, DiffusionGemma, Rust frontend 기능, 보안 hardening을 포함한 큰 릴리스입니다.
-- Important Papers는 arXiv AI/ML/CL/CV/RO/CR category feed 기준 post-cutoff 고신뢰 제출이 없어 `없음`입니다.
+GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
 
-# Major News
+# 차례
 
-## GitHub Copilot의 Claude Opus 4.8 fast mode preview와 repository issue 권한 제한
+- GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
+- GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가
+- AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개
+- PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개
+- AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개
 
-검증된 사실: GitHub는 2026-06-29 16:47:16 UTC에 Claude Opus 4.8 fast mode가 GitHub Copilot preview로 rollout 중이라고 발표했습니다. GitHub 설명에 따르면 fast mode는 Claude Opus 4.8과 같은 intelligence를 유지하면서 output token 속도를 높이고, Copilot Pro+, Max, Business, Enterprise에서 gradual rollout됩니다. Business와 Enterprise 관리자는 Copilot settings에서 해당 정책을 켜야 하며 기본값은 off입니다.
-
-검증된 사실: GitHub는 2026-06-29 16:08:23 UTC에 repository admin이 issue 생성을 write access collaborator로 제한할 수 있다고 발표했습니다. 이 제한은 Issues, Comments, Discussions, Projects, Copilot 진입점에 적용된다고 설명했습니다.
-
-핵심 포인트
-
-- coding agent UX는 모델 품질뿐 아니라 응답 지연시간과 interactive loop 속도에 민감합니다.
-- enterprise Copilot에서는 fast model 사용이 plan availability, usage-based billing, admin policy와 연결됩니다.
-- Copilot을 통한 issue 생성도 repository permission boundary 안으로 들어갑니다.
-
-실무 영향
-
-Copilot Business/Enterprise 운영자는 fast mode를 단순 모델 옵션으로 보지 말고, 비용 정책, 팀별 enablement, repository write boundary와 함께 관리해야 합니다. 관련 지식 노트는 [[Knowledge/AI Systems/AI Agents|AI Agents]]와 [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]입니다.
-
-출처
-
-- https://github.blog/changelog/2026-06-29-claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot
-- https://github.blog/changelog/2026-06-29-restrict-issue-creation-to-collaborators-only
-
-## AWS의 production agent 운영 패턴 공개
-
-검증된 사실: AWS는 2026-06-29 17:25:21 UTC에 Amazon Bedrock AgentCore Observability로 production agent failure를 debugging하는 글을 공개했습니다. 글은 silent failure, infinite reasoning loop, wrong tool selection, tool invocation failure를 예시로 들고, metrics, traces, structured logs, CloudWatch Logs Insights, AgentCore Evaluators를 통해 원인을 추적하는 방식을 설명했습니다.
-
-검증된 사실: AWS는 같은 창에 multi-tenant LLM analytics with row-level security, Bedrock and HealthLake 기반 healthcare claims pipeline, Nova 2 Lite plus Claude 문서 처리, Quick Sight BI asset backup 전략도 공개했습니다. 특히 multi-tenant analytics 글은 SigV4 request signing, Bedrock semantic validation, Split-Plane SQL을 조합해 LLM이 조작되더라도 tenant 간 데이터 노출 위험을 줄이는 구조를 제시했습니다.
-
-핵심 포인트
-
-- production agent의 실패는 HTTP error만이 아니라 plausible wrong answer, tool loop, wrong tool selection으로 나타납니다.
-- 관측성은 session volume, latency, token usage, error rate뿐 아니라 reasoning step과 tool invocation trace까지 포함합니다.
-- enterprise analytics agent는 자연어-to-SQL보다 tenant isolation, row-level security, semantic validation이 더 큰 운영 리스크입니다.
-
-실무 영향
-
-사내 agent를 만들 때는 "답변이 맞는가"와 별도로 trace 저장, tool error budget, tenant별 데이터 경계, SQL 생성 검증, 비용 귀속을 설계해야 합니다. 관련 지식 노트는 [[Knowledge/AI Systems/Agent Evaluation and Observability|Agent Evaluation and Observability]]와 [[Knowledge/AI Systems/AI Agent Security and Governance|AI Agent Security and Governance]]입니다.
-
-출처
-
-- https://aws.amazon.com/blogs/machine-learning/debugging-production-agents-with-amazon-bedrock-agentcore-observability/
-- https://aws.amazon.com/blogs/machine-learning/multi-tenant-llm-analytics-with-row-level-security-how-we-built-a-secure-agent-on-aws/
-- https://aws.amazon.com/blogs/machine-learning/build-an-agentic-ai-healthcare-claims-pipeline-with-amazon-bedrock-and-aws-healthlake/
-- https://aws.amazon.com/blogs/machine-learning/pair-nova-2-lite-with-claude-for-cost-optimized-document-processing/
-- https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/
-
-## Anthropic Claude on Microsoft Foundry가 NVIDIA GB300 기반 Azure에서 GA
-
-검증된 사실: NVIDIA는 2026-06-29 17:00:19 UTC feed와 공식 글에서 Anthropic Claude models in Microsoft Foundry, hosted on Microsoft Azure and running on NVIDIA GB300 Blackwell Ultra GPUs, are now generally available라고 발표했습니다. NVIDIA 설명은 enterprise가 autonomous and domain-specific AI agents를 만들기 위해 Azure-native 환경에서 Claude를 사용할 수 있다는 점과, GB300 NVL72 및 Quantum-X800 InfiniBand 기반 inference performance를 강조했습니다.
-
-핵심 포인트
-
-- foundation model availability는 이제 cloud marketplace, accelerator generation, networking fabric, enterprise platform integration과 함께 발표됩니다.
-- Claude가 Azure-native enterprise 환경에서 제공되면서 Microsoft Foundry, Azure, NVIDIA infrastructure의 결합이 강화됩니다.
-- agentic workload가 커질수록 model latency와 throughput이 product capability의 일부가 됩니다.
-
-실무 영향
-
-기업 AI 도입에서는 어떤 모델을 쓰는가뿐 아니라 어떤 cloud와 accelerator stack에서 실행되는지, region/data boundary가 맞는지, cost/performance SLA가 맞는지 확인해야 합니다. 관련 지식 노트는 [[Knowledge/AI Systems/AI Inference Infrastructure|AI Inference Infrastructure]]입니다.
-
-출처
-
-- https://blogs.nvidia.com/blog/anthropic-nvidia-gb300-blackwell-ultra-microsoft-azure/
-
-# Important Papers
+# 커버 스토리
 
 없음
 
-# Open Source & Tools
+# 뉴스 데스크
 
-## vLLM 0.24.0
+## GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대
 
-- 프로젝트: vLLM
-- 설명: 2026-06-29 19:41:59 UTC에 공개된 vLLM 0.24.0은 571 commits, 256 contributors를 포함한 대형 릴리스입니다. 주요 변경은 MiniMax-M3 지원, DeepSeek-V4 최적화, Model Runner V2 확장, tool-call/reasoning parsing을 통합하는 Streaming Parser Engine, DiffusionGemma 지원, Rust frontend의 API key/CORS/tokenize/pause-resume 기능, 보안 hardening입니다.
-- GitHub: https://github.com/vllm-project/vllm/releases/tag/v0.24.0
-- Star 증가 추세: 추세 확인 불가
-- 활용 가능성: self-hosted inference를 쓰는 팀은 model support, parser engine, Rust frontend, security fixes를 기준으로 upgrade test를 검토할 만합니다. 특히 tool calling, Responses API, Anthropic Messages API 호환성이 agent serving과 직접 연결됩니다.
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-# Industry Analysis
+GitHub는 2026년 6월 30일(한국시간) Copilot에 Claude Opus 4.8 fast mode 프리뷰를 순차 제공한다고 발표했다. Pro+·Max·Business·Enterprise 이용자가 대상이며, 기업용 플랜에서는 관리자가 기본 꺼짐 상태인 정책을 활성화해야 한다. [S1]
 
-분석: 이번 창의 핵심은 "agent를 운영 제품으로 만들기 위한 하부 구조"입니다. GitHub는 interactive coding loop와 repository permission을 다뤘고, AWS는 trace와 tenant security를 다뤘으며, NVIDIA/Microsoft/Anthropic 조합은 model serving의 cloud-accelerator 결합을 다뤘고, vLLM은 open inference runtime의 model/parser/security surface를 넓혔습니다.
+### 접근 조건과 비용
 
-확인된 사실과 구분한 해석: 새 모델 발표보다 더 중요한 흐름은 운영 경계입니다. agent가 실제 업무에 들어가면 빠른 모델 선택, 관리자 정책, 도구 호출 trace, tenant별 SQL 격리, GPU/네트워크 성능, runtime 보안 패치가 모두 같은 제품 품질 문제로 묶입니다.
+GitHub는 fast mode가 표준 Opus 4.8의 지능을 유지하면서 출력 토큰 속도를 높인다고 설명했다.
 
-# Actionable Insights
+모델 선택기는 VS Code·Visual Studio·Copilot CLI·cloud agent·Copilot 앱·github.com·모바일·JetBrains·Xcode·Eclipse에서 제공된다. 점진 배포이므로 모든 이용자에게 동시에 나타나는 방식은 아니다.
 
-- 업무 자동화: agent workflow에는 최종 답변 로그만 남기지 말고 tool invocation, reasoning loop, token usage, failed validation을 별도 필드로 저장합니다.
-- AI 활용: Copilot fast mode 같은 옵션은 개인 생산성 기능이 아니라 조직 정책, 비용, enablement 범위와 함께 평가합니다.
-- 개발 생산성: vLLM 0.24.0은 tool-calling parser와 Responses/Anthropic API 호환 변경이 많으므로 agent serving 실험 환경에서 먼저 regression test를 돌립니다.
-- 연구 개발: multi-tenant analytics agent를 만들 때는 LLM prompt보다 row-level security, semantic validation, query rewrite/SQL isolation 계층을 우선 설계합니다.
-- 개인 프로젝트: self-hosted LLM 서버를 운영한다면 vLLM 보안 hardening과 Starlette CVE 대응 여부를 upgrade checklist에 포함합니다.
+사용량 기반 과금에서는 공급자 정가를 적용한다. GitHub에 따르면 이전 fast mode보다는 저렴하지만 표준 Opus 4.8보다는 비용이 높다. [S1]
+
+## GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
+
+GitHub는 2026년 6월 30일(한국시간) 저장소 관리자가 이슈 생성자를 쓰기 권한이 있는 협업자로 한정할 수 있도록 했다. 옵션을 켜면 쓰기 권한이 없는 이용자는 Issues·Comments·Discussions·Projects·Copilot에서 새 이슈를 만들 수 없다. [S2]
+
+### 설정 위치와 적용 범위
+
+저장소 Settings의 Features에서 Issues를 선택한 뒤, Creation allowed by를 Collaborators only로 설정한다. GitHub는 원치 않는 이슈 생성을 줄이면서 유지보수자와 기여자의 작업 흐름을 유지하기 위한 기능이라고 설명했다.
+
+제한 대상은 이슈 생성이다. GitHub는 기존의 협업자 전용 풀 리퀘스트 생성 권한과 설정 방식을 맞추는 변경이라고 밝혔다. [S2]
+
+## AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** Amazon Bedrock AgentCore
+
+AWS는 2026년 6월 30일(한국시간) Amazon Bedrock AgentCore Observability로 운영 중 에이전트의 반복 실행과 도구 호출 오류를 진단하는 구현 지침을 공개했다. CloudWatch 지표·추적·구조화 로그를 함께 보고, 오류율이 낮아도 토큰 사용량과 세션 시간이 늘어나는 무한 루프를 찾아내는 방식이다. [S3]
+
+### 정상 종료와 올바른 답변을 구분하는 추적
+
+AWS는 문제를 품질·신뢰성·효율로 구분했다. 품질 문제는 실행이 끝났어도 답이 틀린 경우이며, 신뢰성 문제는 도구 오류나 상태 유실로 작업을 마치지 못하는 경우다. 지연·과도한 토큰 사용은 효율 문제로 분리한다.
+
+OpenTelemetry 형식으로 추적·span 로그·지표를 내보내며 CloudWatch가 기본 수신처다. 같은 데이터를 Datadog·Grafana Cloud·Elastic Observability로도 보낼 수 있다. CloudWatch Transaction Search를 켠 뒤, 개별 실행의 추론 단계·도구 호출·메모리 조회를 따라간다. [S3]
+
+### 반복 실행과 권한 오류를 다르게 처리
+
+무한 루프에서는 토큰 사용량이 많은 세션을 먼저 찾고 동일 도구 호출과 추론 패턴을 대조한다. AWS는 종료 조건을 명시하고 같은 행동이 세 번 반복되면 멈추는 로직을 넣는 예를 제시했다.
+
+도구 오류는 인증 401·인가 403·입력 형식 400·리소스 없음 404·실행 오류 500으로 나누어 원인을 좁힌다. 인증·권한 오류는 Gateway 서비스 역할과 자격 증명을 확인하고, 입력 형식 오류는 에이전트가 전달한 값과 도구 스키마를 대조한다.
+
+진단 쿼리는 대시보드와 경보로 옮기고, AgentCore Evaluators는 세션을 품질 기준으로 평가한다. 실행 경로를 기록하는 관측성과 답변 품질을 판단하는 평가는 서로 다른 단계다. [S3]
+
+## PAR, 고객별 데이터 경계를 SQL 앞단에서 강제하는 분석 에이전트 공개
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** PAR
+
+PAR Technology는 2026년 6월 30일(한국시간) AWS 공식 블로그에서 다중 고객용 자연어 분석 에이전트의 보안 구조를 소개했다. AWS SigV4 요청 서명, Bedrock의 질문 검토, 서버가 생성하는 행 단위 데이터 필터를 결합해 LLM이 조회할 수 있는 범위를 먼저 한정한다. [S4]
+
+### 권한은 프롬프트가 아니라 서버에서 결정
+
+요청에는 Tenant ID·Business ID·Admin ID를 넣고 SigV4로 서명한다. 검증 뒤 세 값을 합친 세션 키를 만들어 후속 처리를 해당 사용자 문맥에 묶는다. PAR는 처음에는 프롬프트에 사업체 ID 필터를 지시했지만, 운영 단계에서는 모델의 필터 누락 가능성을 보안 경계로 받아들일 수 없어 구조를 바꿨다고 설명했다.
+
+질문이 지원되는 지표에 해당하는지 확인하는 단계는 인증 뒤, 데이터 접근 전에 실행한다. 매출 금액과 매출 건수처럼 의미가 모호하면 질문 구체화를 요청하고 SQL 생성을 진행하지 않는다.
+
+서버는 검증된 사용자 ID를 기준으로 공통 테이블 식(CTE)을 생성해 허용된 행만 남긴다. 모델에는 원본 테이블이 아니라 이 CTE의 열 이름·자료형만 전달하고, 모델이 만든 분석 SQL을 서버의 CTE와 결합해 Databricks에서 실행한다. [S4]
+
+### 회사에서 보고한 운영 결과
+
+PAR는 해당 구조로 운영 환경에서 5만 건이 넘는 쿼리를 처리했으며 고객 간 데이터 노출 사고는 없었다고 밝혔다. 이는 회사가 보고한 해당 구현의 운영 결과다. [S4]
+
+**개념:** [[Knowledge/AI Systems/Row-Level Security]]
+
+## AWS, 의료 청구 PDF를 FHIR로 변환하는 에이전트 구현 예시 공개
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** AWS HealthLake
+
+AWS는 2026년 6월 30일(한국시간) Bedrock Data Automation·AgentCore·HealthLake를 연결한 의료 청구 처리 샘플을 공개했다. CMS-1500 PDF를 S3에 올리면 서류를 JSON으로 추출하고, 에이전트가 환자·의료진·보험 기록과 대조한 뒤 조건을 충족한 청구를 FHIR 자원으로 저장한다. [S5]
+
+### 고정 처리 순서와 에이전트 검색을 분리
+
+Lambda는 문서 업로드에 반응해 처리를 시작하고, 처리 완료 또는 예외 큐 전달 여부를 감독한다. Bedrock Data Automation의 blueprint는 서식 차이가 있는 CMS-1500에서 필요한 항목을 일정한 JSON 구조로 추출하며 필드 신뢰도와 위치 정보도 제공한다.
+
+Strands 에이전트는 HealthLake 검색과 FHIR 청구 생성을 위한 두 도구를 사용한다. 기본 검색으로 참조 기록을 찾지 못하면 추출 신뢰도가 높은 속성으로 두 번 더 검색하고, 식별 근거를 설명하도록 구성했다. [S5]
+
+### 담당자·환자에게 전달하는 처리 결과
+
+처리 결과는 청구 담당자용 기술 요약과 환자에게 전달할 쉬운 설명으로 나누어 SNS로 보낸다. 샘플의 성공 시나리오는 식별자 끝의 숫자 0과 문자 O가 다른 상황을 넣어 다른 검색 정보로 기록을 대조하는 과정을 보여준다.
+
+이 글은 샘플 데이터로 실패·성공 흐름을 시연한다. AWS는 알려진 처리 순서를 코드로 정하고 Lambda를 최종 성공·실패 판단자로 두는 설계 방식을 설명했다. [S5]
+
+## AWS, Nova 2 Lite 추출·Claude 공간 추론으로 연감 사진과 이름 연결
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침, 비용 절감
+**기업·기관:** Amazon Nova 2 Lite, Claude Sonnet 4.6
+
+AWS는 2026년 6월 30일(한국시간) Nova 2 Lite와 Claude Sonnet 4.6을 나눠 쓰는 스캔 연감 디지털화 구현을 소개했다. Nova가 사진·이름의 위치를 추출하고 Claude가 배치를 해석해 연결하며, AWS는 336쪽에서 이름과 얼굴의 연결 3,122건을 생성했다고 보고했다. [S6]
+
+### 추출과 공간 추론을 서로 다른 모델에 맡김
+
+Nova는 사진 경계 상자·이름 위치·페이지 메타데이터를 한 번의 호출로 반환한다. 전체 OCR 텍스트 대신 이름만 요청해 출력량을 줄였다. 두 모델은 같은 좌표계를 사용하고 Claude는 캡션과 열 배치를 고려해 이름과 얼굴을 연결한다.
+
+AWS는 이 추출 작업에서 LOW·MEDIUM·HIGH 추론 수준 간 의미 있는 정확도 차이를 보지 못해 Nova를 LOW로 설정했다고 설명했다. Claude에는 adaptive thinking을 사용하고, 최종 단계는 신뢰도 기준과 rapidfuzz 이름 대조로 결과를 거른다. [S6]
+
+### 실험 규모·신뢰도·비용 조건
+
+연결 결과의 93.3%가 0.95 이상의 신뢰도를 받았다. 이 점수는 Claude가 부여한 연결 확신도이며 정답률 측정치와는 다르다. 텍스트만 있는 페이지는 건너뛰었고, 캡션이 모호한 단체 사진은 연결하지 않았다.
+
+AWS는 페이지당 비용을 두 모델 구성 약 0.033달러, Claude에 OCR·사진 탐지·이름 연결을 모두 맡긴 비교 구성 약 0.10달러로 추산했다. 사용한 Bedrock 가격, 이름 밀도, 추론 토큰 수에 따라 달라지는 추정치다.
+
+두 호출이 순차 실행되는 구성에서 Nova 추출은 2\~5초, Claude 공간 추론은 20\~30초, 전체는 페이지당 약 22\~35초였다고 보고했다. 비용을 낮춘 구성에서도 공간 추론 단계가 처리 시간을 대부분 차지했다. [S6]
+
+## AWS, Quick Sight 자산·사용자 정보를 분리 백업하는 도구 공개
+
+**분야:** 소프트웨어·클라우드
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** Amazon Quick Sight
+
+AWS는 2026년 6월 30일(한국시간) Quick Sight의 대시보드·분석·데이터셋 등을 백업하는 AssetsAsBundle API 지침과 샘플 도구를 공개했다. 자산 묶음은 S3에, 사용자·그룹·그룹 구성원 정보는 DynamoDB에 나누어 보관한다. [S7]
+
+### 대시보드와 의존 자산을 함께 내보냄
+
+대시보드에는 데이터셋·데이터 소스·VPC 연결·테마 등의 의존성이 있다. 샘플은 기본적으로 의존 자산을 함께 내보내고, 자산 종류별로 최대 100개씩 묶어 비동기 export 작업을 시작한다.
+
+완료 상태는 DescribeAssetBundleExportJob으로 조회한다. 반환되는 다운로드 URL은 5분 동안 유효하며 같은 API를 다시 호출해 갱신할 수 있다. 다운로드한 묶음은 지속 보관용 S3 위치로 옮긴다.
+
+사용자와 그룹은 AssetsAsBundle API에 포함되지 않는다. 별도 API로 조회해 날짜를 붙인 DynamoDB 테이블에 저장하며, identity\_region과 자산의 aws\_region을 따로 설정해 두 리전이 다른 계정을 처리한다. [S7]
+
+### 샘플 도구의 실행 범위
+
+도구는 전체·사용자 전용·자산 전용 모드를 제공하고 이전 백업을 덮어쓰지 않는다. 일부 데이터 소스와 연결된 SageMaker 추론 열이 있는 데이터셋은 export 대상에서 제외해야 한다.
+
+이 샘플은 요청 시 실행하는 도구다. EventBridge·Step Functions·Lambda를 이용한 정기 백업은 별도의 설계안으로 소개됐으며, 그 구조의 구현 코드는 글에 포함되지 않았다. 같은 계정에서 샘플 도구를 동시에 여러 번 실행하면 API 제한에 걸릴 수 있어 동시 실행을 피하도록 안내한다. [S7]
+
+## NVIDIA, Azure GB300 기반 Claude의 Microsoft Foundry 정식 제공 발표
+
+**분야:** AI
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** NVIDIA, Anthropic
+
+NVIDIA는 2026년 6월 30일(한국시간) Azure에서 GB300 Blackwell Ultra GPU로 실행되는 Anthropic Claude 모델의 Microsoft Foundry 정식 제공을 발표했다. 구성에는 GB300 NVL72 시스템과 Quantum-X800 InfiniBand 네트워킹을 사용한다. [S8]
+
+### 인프라 제공과 에이전트 실행 환경
+
+NVIDIA는 도메인별 에이전트 기능을 위해 자사의 도구와 verified agent skills를 Anthropic 스택에 통합하는 협업도 진행한다고 설명했다. 이번 공지는 Microsoft·NVIDIA·Anthropic이 앞서 발표한 협력의 연장선으로 소개됐다.
+
+Azure에서 Claude 에이전트를 실행하는 Secure Agent Workspace Reference Design은 신원·네트워크 접근·자격 증명·실행 정책을 인프라 계층에서 관리하는 청사진이다. [S8]
+
+## vLLM 0.24.0, 스트리밍 도구 파서·모델 지원·서버 보안 변경
+
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가, 오류 수정
+**기업·기관:** vLLM
+
+vLLM 프로젝트는 2026년 6월 30일(한국시간) 0.24.0을 공개했다. MiniMax-M3·DiffusionGemma 지원, 모델별 도구 호출과 추론 출력을 통합하는 Streaming Parser Engine, Rust 프런트엔드 인증 기능 등을 추가했다. [S9]
+
+### 모델 실행과 응답 파싱
+
+Model Runner V2는 양자화 모델을 기본 지원하고 Qwen·DeepSeek-V2 MoE 실행 경로와 DFlash 추측 디코딩을 확장했다. DiffusionGemma에는 CPU 실행 경로와 구조화 출력 제어가 추가됐다.
+
+새 스트리밍 파서 엔진에는 Qwen3·MiniMax-M2·GLM·Nemotron 계열 파서가 포함된다. Chat Completions와 Responses API의 도구 호출에는 strict mode를 추가했다. [S9]
+
+### 운영 시 달라지는 서버 설정
+
+Rust 프런트엔드는 API 키 인증·CORS·토큰화·요청 중단·일시 정지와 재개를 지원한다. thinking\_token\_budget, parallel\_tool\_calls 설정 및 사용량 통계도 추가됐다.
+
+장치 선택에서는 vLLM이 내부에서 CUDA\_VISIBLE\_DEVICES를 설정하던 동작을 없애고 device\_ids 인자를 제공한다. ROCm에서는 기존 환경 변수에 대해 폐기 전환 기간을 시작했다. [S9]
+
+### 서비스 거부와 의존성 보안 수정
+
+보안 변경에는 오디오 압축 폭탄·잘못된 복구 토큰 재삽입·prompt\_embeds를 이용한 서비스 거부 대응, 오디오 업로드 크기와 디코딩 시간 제한, 구조화 출력의 정규식 컴파일 시간 제한이 포함된다.
+
+Starlette 의존성은 CVE-2026-48710 대응을 위해 1.0.1 이상으로 올렸다. [S9]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
+
+# 흐름 읽기
+
+없음
+
+# 오늘의 적용
+
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.blog/changelog/2026-06-29-claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot
-- https://github.blog/changelog/2026-06-29-restrict-issue-creation-to-collaborators-only
-- https://aws.amazon.com/blogs/machine-learning/debugging-production-agents-with-amazon-bedrock-agentcore-observability/
-- https://aws.amazon.com/blogs/machine-learning/multi-tenant-llm-analytics-with-row-level-security-how-we-built-a-secure-agent-on-aws/
-- https://aws.amazon.com/blogs/machine-learning/build-an-agentic-ai-healthcare-claims-pipeline-with-amazon-bedrock-and-aws-healthlake/
-- https://aws.amazon.com/blogs/machine-learning/pair-nova-2-lite-with-claude-for-cost-optimized-document-processing/
-- https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/
-- https://blogs.nvidia.com/blog/anthropic-nvidia-gb300-blackwell-ultra-microsoft-azure/
-- https://github.com/vllm-project/vllm/releases/tag/v0.24.0
-- https://openai.com/news/rss.xml
-- https://github.blog/changelog/feed/
-- https://huggingface.co/blog/feed.xml
-- https://huggingface.co/blog/allenai/discoformer
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://blog.google/innovation-and-ai/technology/ai/rss/
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://mistral.ai/rss.xml
-- https://blogs.nvidia.com/feed/
-- https://www.nature.com/subjects/machine-learning.rss
-- https://www.theverge.com/rss/index.xml
-- https://techcrunch.com/category/artificial-intelligence/feed/
-- https://techcrunch.com/2026/06/29/cursor-now-has-a-mobile-app-for-guiding-your-coding-agent-on-the-go/
-- https://cursor.com/blog/ios-mobile-app
-- https://export.arxiv.org/api/query?search_query=cat:cs.AI&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.CL&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.CV&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.RO&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://export.arxiv.org/api/query?search_query=cat:cs.CR&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending
-- https://github.blog/wp-json/wp/v2/changelogs?per_page=12
-- https://github.blog/wp-json/wp/v2/changelogs?slug=claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot
-- https://github.blog/wp-json/wp/v2/changelogs?slug=restrict-issue-creation-to-collaborators-only
-- https://api.github.com/repos/openai/codex/releases?per_page=5
-- https://api.github.com/repos/anthropics/claude-code/releases?per_page=5
-- https://api.github.com/repos/microsoft/vscode/releases?per_page=5
-- https://api.github.com/repos/modelcontextprotocol/typescript-sdk/releases?per_page=5
-- https://api.github.com/repos/modelcontextprotocol/python-sdk/releases?per_page=5
-- https://api.github.com/repos/huggingface/transformers/releases?per_page=5
-- https://api.github.com/repos/vllm-project/vllm/releases?per_page=5
-- https://api.github.com/repos/vllm-project/vllm/releases/tags/v0.24.0
-- https://api.github.com/repos/langchain-ai/langchain/releases?per_page=5
-- https://api.github.com/repos/vercel/ai/releases?per_page=5
+- [S1] https://github.blog/changelog/2026-06-29-claude-opus-4-8-fast-mode-is-now-in-preview-for-github-copilot
+- [S2] https://github.blog/changelog/2026-06-29-restrict-issue-creation-to-collaborators-only
+- [S3] https://aws.amazon.com/blogs/machine-learning/debugging-production-agents-with-amazon-bedrock-agentcore-observability/
+- [S4] https://aws.amazon.com/blogs/machine-learning/multi-tenant-llm-analytics-with-row-level-security-how-we-built-a-secure-agent-on-aws/
+- [S5] https://aws.amazon.com/blogs/machine-learning/build-an-agentic-ai-healthcare-claims-pipeline-with-amazon-bedrock-and-aws-healthlake/
+- [S6] https://aws.amazon.com/blogs/machine-learning/pair-nova-2-lite-with-claude-for-cost-optimized-document-processing/
+- [S7] https://aws.amazon.com/blogs/machine-learning/implement-a-backup-strategy-for-amazon-quick-sight-bi-assets/
+- [S8] https://blogs.nvidia.com/blog/anthropic-nvidia-gb300-blackwell-ultra-microsoft-azure/
+- [S9] https://api.github.com/repos/vllm-project/vllm/releases/tags/v0.24.0

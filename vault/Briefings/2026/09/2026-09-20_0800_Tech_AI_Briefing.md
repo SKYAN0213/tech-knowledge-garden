@@ -19,9 +19,9 @@ generated_by: tech-knowledge-garden
 
 ## 주요 소식
 
-### [[News/ebcefe563a8a7faf|Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개]]
+### [[News/ebcefe563a8a7faf|Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합]]
 
-Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-Series 협동로봇 3종을 공개했다. UR10g-1750, UR17g-1300, UR18g-950은 힘·토크 감지와 센서 연결을 통합하고, CB7 제어기와 PolyScope X 소프트웨어를 함께 사용한다. 로봇에 카메라나 도구를 붙이고 외부 AI·컴퓨터와 연결하는 자동화 구성을 지원한다.
+Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다.
 
 ### [[News/49c6c9190303aebd|네이버지도, 대화로 장소를 찾고 동의 후 예약하는 플레이스 에이전트 출시]]
 
@@ -49,7 +49,7 @@ Roche는 9월 17일 재발성·불응성 여포성 림프종 환자를 대상으
 
 제품·서비스 · 신제품 · Google
 
-Google은 9월 15일 음성 대화 모델 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내에서 Gemini API와 AI Studio 등을 통한 순차 제공 범위를 설명했다. 두 모델은 시각 정보를 대화에 반영하고, 도구나 API가 배경에서 실행되는 동안에도 사용자와 대화를 이어 간다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 함께 수행하도록 설계됐다.
+Google은 9월 15일 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내문에서 Gemini API와 Google AI Studio 등의 순차 제공 범위를 설명했다. Gemini 3.8 Live는 시각 입력을 대화에 반영하고 도구·API를 배경에서 실행하는 동안 사용자와 대화를 이어 간다고 회사는 설명했다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 동시에 수행하도록 설계됐다.
 
 #### [[News/49c6c9190303aebd|네이버지도, 대화로 장소를 찾고 동의 후 예약하는 플레이스 에이전트 출시]]
 
@@ -69,7 +69,7 @@ Google은 9월 15일 음성 대화 모델 Gemini 3.8 Live와 Extended Thinking�
 
 제품·서비스 · 기능 추가 · Amazon Web Services
 
-AWS는 9월 18일 Amazon Bedrock AgentCore에 새 Runtime V2를 제공하기 시작했다. 에이전트 세션에 필요한 메모리를 늘렸다가 사용하지 않는 부분을 회수하고, 미리 준비한 실행 환경의 스냅샷을 복원해 새 인스턴스를 시작한다. 미국 3개 리전과 아일랜드·도쿄에서 런타임 생성 또는 수정 시 platformVersion을 V2로 지정해 사용할 수 있다.
+AWS는 9월 18일 Amazon Bedrock AgentCore의 새 Runtime V2를 제공하기 시작했다. 에이전트 세션에 필요한 메모리를 늘렸다가 사용하지 않는 부분을 회수하고, 미리 준비한 실행 환경의 스냅샷을 복원해 새 인스턴스를 시작한다. us-east-1·us-east-2·us-west-2·eu-west-1·ap-northeast-1에서 런타임 생성 또는 수정 시 platformVersion을 V2로 지정해 사용할 수 있다.
 
 #### [[News/9bddd51aa2915e80|AWS PrivateLink, 개별 자원 대신 네트워크 구간을 공유하는 터널 추가]]
 
@@ -95,17 +95,17 @@ Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버�
 
 ### 로봇·제조 · 3건
 
-#### [[News/ebcefe563a8a7faf|Universal Robots, 센서 연결과 힘 제어를 통합한 Gen 7 협동로봇 공개]]
+#### [[News/ebcefe563a8a7faf|Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합]]
 
 제품·서비스 · 신제품 · Universal Robots · Teradyne Robotics
 
-Universal Robots는 9월 14일 미국 시카고 IMTS에서 Gen 7 플랫폼과 g-Series 협동로봇 3종을 공개했다. UR10g-1750, UR17g-1300, UR18g-950은 힘·토크 감지와 센서 연결을 통합하고, CB7 제어기와 PolyScope X 소프트웨어를 함께 사용한다. 로봇에 카메라나 도구를 붙이고 외부 AI·컴퓨터와 연결하는 자동화 구성을 지원한다.
+Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다.
 
 #### [[News/2558745b2bfe7d79|Teradyne Robotics, UR·MiR 영업을 총괄할 CCO 선임]]
 
 인력·조직 · 핵심 인재 이동 · Teradyne Robotics · Universal Robots · Mobile Industrial Robots
 
-Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)로 선임했다. 그는 Universal Robots와 Mobile Industrial Robots의 글로벌 영업 활동을 총괄한다. 앞서 Universal Robots에서 10년 넘게 일했고, 최근에는 Trener Robotics의 글로벌 영업 부사장을 맡았다.
+Teradyne Robotics는 9월 15일 Jacob Pascual Pape를 최고사업책임자(CCO)로 선임했다. 그는 Universal Robots와 MiR의 글로벌 사업 조직을 총괄한다. 앞서 Universal Robots에서 10년 넘게 사업 리더십을 맡았고, 최근에는 Trener Robotics의 글로벌 영업 부사장으로 일했다.
 
 #### [[News/43dbd3fe6cdd4fcf|두산로보틱스, 권영민 사장 신임 CEO로 선임]]
 
@@ -141,10 +141,7 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 
 ## 출처
 
-- [S1] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai/
-- [S2] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking/
 - [S3] https://navercorp.com/media/pressReleasesDetail?seq=10034667
-- [S4] https://news.samsung.com/kr/삼성전자-one-ui-9-공식-버전-업데이트-시작
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
 - [S6] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
 - [S7] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
@@ -152,6 +149,9 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 - [S9] https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/
 - [S10] https://www.navercorp.com/media/pressReleasesDetail?seq=10034661
 - [S11] https://www.roche.com/media/releases/med-cor-2026-09-17
-- [S12] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen/
 - [S13] https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
 - [S14] https://www.yna.co.kr/amp/view/AKR20260918151800003
+- [S15] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai
+- [S16] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking
+- [S17] https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-one-ui-9-%EA%B3%B5%EC%8B%9D-%EB%B2%84%EC%A0%84-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EC%8B%9C%EC%9E%91
+- [S18] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen

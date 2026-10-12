@@ -8,7 +8,7 @@
 
 7월 SiC 협력에 이어 9월21일 500만달러 지분 투자 계약을 발표했다. 종결·양산 인증은 구분한다.
 
-2026-10-08까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-12까지 서로 다른 원문 1건 · 1일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -26,7 +26,7 @@
 
 <a id="20260922-magnachip-company-magnachip-sic"></a>
 
-### 2026-09-22 · 참고
+### 2026-09-21 · 참고
 
 **Navitas, Magnachip에 500만달러 지분 투자 계약**
 
@@ -34,8 +34,8 @@
 
 - 한계: 이번 지분 계약은 기술의 양산 인증 완료나 고객 출하를 뜻하지 않는다. 거래 종결 공시와 제조공정 인증, 실제 공급 제품이 후속 확인 대상이다.
 - 다음 확인: 지분 거래 종결 공시와 기술 이전·공정 인증.
-- [Navitas, Magnachip에 500만달러 지분 투자 계약](https://skyan0213.github.io/tech-knowledge-garden/news/a49bfbd297aaeae9) · [magnachip.com 원문](https://www.magnachip.com/cn/magnachip-announces-strategic-investment-by-navitas-semiconductor-share/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-22_0800_tech_ai_briefing)
-- 2026-09-22 원문 검토
+- [Navitas, Magnachip에 500만달러 지분 투자 계약](https://skyan0213.github.io/tech-knowledge-garden/news/a49bfbd297aaeae9) · [magnachip.com 원문](https://www.magnachip.com/cn/magnachip-announces-strategic-investment-by-navitas-semiconductor-share) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-22_0800_tech_ai_briefing)
+- 2026-10-10 원문 검토
 
 ## 관련 개념
 

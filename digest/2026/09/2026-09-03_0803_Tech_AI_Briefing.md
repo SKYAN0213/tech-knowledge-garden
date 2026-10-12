@@ -18,11 +18,11 @@ Google은 9월 2일 Gemini 3.8 Flash와 보안 작업용 Flash Cyber를 발표�
 
 Microsoft는 9월 2일부터 미국 정부용 GCC High 고객에게 Fabric 공개 미리보기를 제공한다고 발표했다. 정식 제공 시작일은 10월 1일로 제시했으며, 지원 기능은 작업 유형별로 다르고 점차 확대될 예정이라고 밝혔다. 기존 Power BI Premium 용량을 이용하거나 신규 Fabric 용량을 구매하는 방식으로 접근한다.
 
-### [Longfellow Zero-Knowledge Proof 라이브러리](https://skyan0213.github.io/tech-knowledge-garden/news/bcb54aceb5f739d9)
+### [Google, Longfellow 영지식 증명 라이브러리의 재단 기부 발표](https://skyan0213.github.io/tech-knowledge-garden/news/bcb54aceb5f739d9)
 
 발표 2026-09-02
 
-Google은 9월 2일 Longfellow 영지식 증명 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 기부한다고 발표했다. 2025년 공개한 코드를 공급업체 중립적인 공동 관리 체계로 옮기며, Google도 공개 개발과 지원을 계속한다는 내용이다. 디지털 신원에서 필요한 조건만 증명하는 구현을 공동 검토·활용하도록 하는 조직적 변화다.
+Google은 9월 2일 Longfellow 영지식 증명 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 기부한다고 발표했다. 공개 라이브러리를 공급업체 중립적인 공동 관리 체계로 옮겨 커뮤니티가 검토하고 활용하도록 한다는 내용이다. Google은 세계 각지의 전문가와 협력해 공개 개발과 지원을 계속하겠다고 밝혔다.
 
 ## 분야별 브리핑
 
@@ -62,18 +62,16 @@ Fairwind 참여 조직은 내부 보안·사고 대응·침투 테스트 담당�
 
 [Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/) · [Google 원문](https://blog.google/innovation-and-ai/technology/safety-security/fairwind-program/)
 
-#### [Longfellow Zero-Knowledge Proof 라이브러리](https://skyan0213.github.io/tech-knowledge-garden/news/bcb54aceb5f739d9)
+#### [Google, Longfellow 영지식 증명 라이브러리의 재단 기부 발표](https://skyan0213.github.io/tech-knowledge-garden/news/bcb54aceb5f739d9)
 
 발표 2026-09-02
 
 표준·생태계 · 오픈소스 · Google · Linux Foundation Europe · Post-Quantum Cryptography Alliance
 
-Google은 9월 2일 Longfellow 영지식 증명 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 기부한다고 발표했다. 2025년 공개한 코드를 공급업체 중립적인 공동 관리 체계로 옮기며, Google도 공개 개발과 지원을 계속한다는 내용이다. 디지털 신원에서 필요한 조건만 증명하는 구현을 공동 검토·활용하도록 하는 조직적 변화다.
+Google은 9월 2일 Longfellow 영지식 증명 라이브러리를 Linux Foundation Europe 산하 Post-Quantum Cryptography Alliance에 기부한다고 발표했다. 공개 라이브러리를 공급업체 중립적인 공동 관리 체계로 옮겨 커뮤니티가 검토하고 활용하도록 한다는 내용이다. Google은 세계 각지의 전문가와 협력해 공개 개발과 지원을 계속하겠다고 밝혔다.
 
 ##### 신분증 정보와 조건의 증명을 구분한다
 
 영지식 증명은 증명의 대상이 되는 비밀 자체를 드러내지 않고 명제가 참임을 확인하는 암호 방식이다. 디지털 신원과 결합하면 생년월일 전체를 전달하는 대신 일정 연령 이상이라는 조건을 증명하는 데 사용할 수 있다.
 
-이번 발표의 확인된 변화는 라이브러리 기부와 공동 관리 방향이다. 재단 이관이 구현의 보안 감사 완료나 표준 채택, 모든 환경의 상호운용성을 자동으로 입증하지는 않는다.
-
-[Google 원문](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/)
+[Google 원문](https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/) · [csrc.nist.gov 원문](https://csrc.nist.gov/glossary/term/zero_knowledge_proof)

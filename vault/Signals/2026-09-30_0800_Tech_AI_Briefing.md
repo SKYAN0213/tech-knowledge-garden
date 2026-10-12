@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing
 date: 2026-09-30
-reviewed: 2026-09-30
+reviewed: 2026-10-10
 review_basis: primary-research
 observations:
   - id: 20260930-samsung-ai-infrastructure
@@ -31,7 +31,7 @@ observations:
     stance: context
     change: Anthropic이 DNA 후보 탐색에 Claude 에이전트를 적용한 연구팀을 공개하고 ART 후보의 사전공개 결과를 발표했다.
     meaning: 생물학 후보 탐색과 실험 검증을 하나의 연구 흐름에 연결한 사례지만 토큰 사용량이나 후보 발견만으로 연구 성과를 계량할 수는 없다.
-    limit: 회사가 공개한 초기 연구이며 ART의 생물학적 기능은 규명되지 않았다. 사전공개 단계이고 독립 재현 자료가 없다.
+    limit: 회사가 공개한 초기 연구이며 ART의 주요 기능을 확인하는 연구는 진행 중이다. 사전공개 단계이며 이번 회사 발표에는 독립 재현 자료가 제시되지 않았다.
     next_check: 사전공개 전문의 실험 결과, 독립 연구진 재현, ART 기능 규명과 후속 검증을 확인한다.
 ---
 

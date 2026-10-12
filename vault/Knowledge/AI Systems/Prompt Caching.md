@@ -9,8 +9,8 @@ group: 평가와 운영
 concept_id: prompt-caching
 label: 프롬프트 캐싱
 created: 2026-10-05
-updated: 2026-10-05
-last_reviewed: 2026-10-05
+updated: 2026-10-09
+last_reviewed: 2026-10-09
 aliases:
   - 프롬프트 캐싱
   - 프롬프트 캐시
@@ -28,8 +28,9 @@ verified_sources:
 map_review:
   decision: include
   kind: mechanism
-  reason: 프롬프트 캐싱은 동일한 프롬프트 접두부·KV 텐서 재사용의 작동 관계를 따로 배워야 하는 전문 방법이며, 회사·제품명이나 일반 단어가 아니다.
-  reviewed: 2026-10-05
+  reason: 프롬프트 캐싱은 동일한 프롬프트 접두부·KV 텐서 재사용의 작동 관계를 따로 배워야 하는 전문 방법이며, 회사·제품명이나 일반
+    단어가 아니다.
+  reviewed: 2026-10-09
 connections:
   - target: kv-cache
     reason: 동일한 입력 앞부분에 대한 KV 텐서를 저장하고 후속 요청에서 재사용한다.

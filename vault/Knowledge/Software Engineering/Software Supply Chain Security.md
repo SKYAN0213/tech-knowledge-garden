@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: evergreen
 domain: Software Engineering
 created: 2026-06-26
-updated: 2026-10-05
+updated: 2026-10-09
 aliases:
   - 소프트웨어 공급망 보안
 parent_concepts: []
@@ -17,7 +17,7 @@ tags:
   - SoftwareEngineering
   - Security
   - SupplyChain
-last_reviewed: 2026-10-05
+last_reviewed: 2026-10-09
 concept_id: supply-chain
 label: 소프트웨어 공급망 보안
 group: 위험과 책임
@@ -43,7 +43,7 @@ map_review:
   decision: include
   kind: security
   reason: 빌드 출처와 산출물 무결성을 검증하는 기술이 일반적인 코드 보안 검토와 어떻게 다른지 배워야 한다.
-  reviewed: 2026-10-05
+  reviewed: 2026-10-09
 ---
 
 # Software Supply Chain Security
@@ -97,7 +97,7 @@ Build L1의 provenance는 존재하더라도 우회·위조하기 쉬울 수 있
 
 ## 관련 개념
 
-- ← 활용: [[Knowledge/Software Engineering/AI-Assisted Security Engineering#한 문장 정의|AI 보조 보안 개발]] — AI가 제안한 의존성 변경도 검토·시험하고 산출물 제작 경로를 검증하는 과정과 연결할 수 있다. (해석; [근거](https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features) · [근거](https://slsa.dev/spec/v1.1/levels))
+- ← 활용: [[Knowledge/Software Engineering/AI-Assisted Security Engineering#한 문장 정의|AI 보조 보안 개발]] — AI가 생성한 보안 검사 규칙을 검토하는 절차와 빌드 산출물의 제작 경로를 확인하는 절차는 검증 대상이 다르다. (해석; [근거](https://docs.github.com/en/code-security/responsible-use/security-and-quality-ai-features) · [근거](https://slsa.dev/spec/v1.1/levels))
 
 ## 최근 변화
 
