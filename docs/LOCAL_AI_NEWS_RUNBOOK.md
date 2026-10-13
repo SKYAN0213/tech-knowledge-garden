@@ -11727,3 +11727,13 @@ legacy-transition은 기존 여섯 영문 섹션 이름을 정확히 대응되�
 6월27일 06:01 MAI-Code-1-Flash는 당시 GitHub 발표를 근거로 재작성했다. 현재 Docs의 모델 버전·요금을 과거로 소급하지 않고 제공 범위·정가 기반 사용량 과금·관리자 정책 조건을 보존한다. 6월27일 18:02·28일 18:02·29일 18:03의 안내 중심 회차와 기존 batch로 묶어 Drive 기존 ID로 저장했다. 최종 공개 확인과 WBS는 외장 core-progress-runtime-recovery-20261008-v51.md에 기록한다. 중간 코드는 로컬 commit하고 콘텐츠와 한 번 push해 CI를 중복 실행하지 않는다.
 
 기존 원격 배포 완료 영수증도 다음 묶음의 기준으로 직접 재사용한다. 완료 표시와 SHA로 고정된 raw readback을 확인한 뒤 WebsiteData의 기존 ID·SHA를 대조하며 별도 수동 기준 JSON을 만들지 않아도 된다. 바뀐 readback은 쓰기 전 차단한다. 관련 원격 저장 검사 18건을 통과했다. 이 후속 로컬 수정은 다음 콘텐츠 묶음과 함께 push해 완료된 웹 배포를 재실행하지 않는다.
+
+## 499. 9월 이후 뉴스 공백 재조사와 발행
+
+2026-09-05, 09-06, 09-13, 09-20, 09-30 회차에서 빈도가 낮거나 빠진 날짜를 원문 조사부터 보완했다. 최신 Drive raw snapshot 230개 파일과 16개 폴더 목록을 대조하고, 14개 사건을 원문·발표일·중복·편집 검토한 뒤 기존 9월 회차 원고 5개를 같은 Drive ID로 저장했다. `research-authoring.mjs write-session` 실제 결과는 `verified_complete`, verified 5, pending/conflict 0, unresolved intent 없음이다. 기존 작성 원본과 진행 중인 기본 checkout 변경은 보존했다.
+
+콘텐츠 커밋 `38ab1538bffb43b90d611ee1133f2c3af706c25a`는 14개 News와 5개 회차 수정 및 파생 결과를 발행했다. 승인 기사에서 보조 분야 태그가 보존되도록 한 `07efc9ff`와 URL 기반 기업 검색 항목 19개를 slug 없이 검증·보관하도록 한 exporter 수정 `499241b5f164e0280b42f53ed25e425898c28eb5`를 포함한다. 로컬 Node 전체 1,292/1,292, Python exporter 표적 6/6이 통과했다. Actions [38460017534](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/38460017534) 및 [38461265082](https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/38461265082)은 각각 테스트·빌드·사이트 검증·Pages 배포에 성공했다.
+
+실제 공개 페이지 21개(홈, RSS, 9월 회차 5개, 기사 14개)는 최신 배포 후 HTTP 200과 로컬 생성 바이트/SHA가 모두 일치했다. RSS 40개다. post-deploy WebsiteData는 고정 경로 496개, reader 검색 항목 515개(기업별 URL 기반 19개 포함), 기사 316개, 개념 35개, 관계 22개다. Drive WebsiteData 기존 ID 9개를 갱신하고 같은 bytes인 2개는 유지했다. 이전 업로드 영수증을 포함한 폴더 12개 항목의 실제 raw SHA·부모·비공개 상태를 다시 읽었고, 기존 영수증은 그대로 보존했다.
+
+근거는 `.local/drive-sync/public-readback-sepbackfill-final-v2.json`, `.local/drive-sync/website-data-postwrite-readback-sepbackfill-20261014.json` 및 외장 prewrite raw backup에 있다. 소급 자료 발행 1회로 기록하며, 이를 정규 04:00 무인 실행의 운영 검증으로 집계하지 않는다. 이번 작업 세션에서 Luna 모델 전환은 확인되지 않았다.
