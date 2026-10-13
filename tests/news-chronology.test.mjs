@@ -240,7 +240,15 @@ test("a stale built page reuses the same filtered cards and hides empty new grou
 test("Korean midnight, restored pages and foreground return update dates with a single scheduled timer", () => {
   const f = browserFixture()
   let current = new Date("2026-10-14T14:59:59Z")
-  bindNewsChronology({ document: f.document, window: f.window, now: () => current })
+  let dateChanges = 0
+  bindNewsChronology({
+    document: f.document,
+    window: f.window,
+    now: () => current,
+    onChange: () => {
+      dateChanges++
+    },
+  })
   assert.equal(f.window.timers[0].delay, 1000)
   current = new Date("2026-10-14T15:00:00Z")
   f.window.timers[0].fn()
@@ -255,4 +263,5 @@ test("Korean midnight, restored pages and foreground return update dates with a 
   f.document.hidden = false
   f.document.handlers.visibilitychange()
   assert.deepEqual(f.window.cleared.slice(1), [1, 2, 3])
+  assert.equal(dateChanges, 2)
 })

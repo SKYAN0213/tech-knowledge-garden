@@ -8,7 +8,7 @@ export const sourceLinkLabel = (url, index, sources) => {
   const repeated = sources.filter((source) => publisher(source) === name).length > 1
   return `${name} 원문${repeated ? ` ${index + 1}` : ""} ↗`
 }
-export function articleTags(a, href, { limit } = {}) {
+export function articleTags(a, href, { limit, offset = 0 } = {}) {
   const c = a.classification || {}
   const entries = [
     ["sector", a.sector],
@@ -26,8 +26,23 @@ export function articleTags(a, href, { limit } = {}) {
       (k) => `<a href="${esc(href(k.path))}">#${esc(k.label.replaceAll(" ", ""))}</a>`,
     ),
   ]
-  const visible = Number.isSafeInteger(limit) && limit > 0 ? labels.slice(0, limit) : labels
+  const start = Number.isSafeInteger(offset) && offset > 0 ? offset : 0
+  const visible = labels.slice(
+    start,
+    Number.isSafeInteger(limit) && limit > 0 ? start + limit : undefined,
+  )
   return visible.length ? `<div class="news-labels">${visible.join("")}</div>` : ""
+}
+
+export function compactCardContent(a, href, detailHTML = "") {
+  const lead = a.summary ? `<p>${esc(a.summary)}</p>` : ""
+  const moreTags = articleTags(a, href, { offset: 3 })
+  const content = `${lead}${moreTags}${detailHTML}`
+  return `${articleTags(a, href, { limit: 3 })}${a.summary ? `<p class="reader-card-preview">${esc(a.summary)}</p>` : ""}${content ? `<details class="reader-card-detail"><summary aria-label="${esc(a.title)} 상세 내용"><span class="reader-card-expand">내용 펼치기</span><span class="reader-card-collapse">접기</span></summary><div class="reader-card-full">${content}</div></details>` : ""}`
+}
+
+export function moreNewsButton(id, controls) {
+  return `<button class="reader-list-more" type="button" id="${esc(id)}" aria-controls="${esc(controls)}" hidden>더 보기</button>`
 }
 
 // A bounded editorial preview links to the complete article. It never replaces
@@ -47,7 +62,10 @@ export function articleCard(a, href, expanded = false) {
     deep: hasDeepAnalysis(a),
   }
   const dateLabels = `${a.review?.published_at ? `<time datetime="${esc(a.review.published_at)}">${articleDateLabel(a.review)} ${esc(a.review.published_at.replaceAll("-", "."))}</time>` : ""}${briefingDate && briefingDate !== publishedAt ? `<time class="news-briefing-date" datetime="${esc(briefingDate)}">브리핑 발행 ${briefingDate.replaceAll("-", ".")}</time>` : ""}`
-  return `<article class="news-row" data-news-row data-event-id="${esc(a.id)}" data-published-at="${esc(publishedAt)}" data-briefing-date="${esc(briefingDate)}" data-classification="${esc(JSON.stringify(data))}"><h3><a href="${esc(href("News/" + a.id))}">${esc(a.title)}</a></h3>${dateLabels ? `<div class="news-row-dates">${dateLabels}</div>` : ""}${articleTags(a, href)}<p>${esc(a.summary)}</p>${expanded ? explanationHTML(a) : ""}<div class="news-actions">${a.urls.map((u, i) => `<a href="${esc(u)}">${esc(sourceLinkLabel(u, i, a.urls))}</a>`).join("")}</div></article>`
+  const content = expanded
+    ? `${articleTags(a, href)}<p>${esc(a.summary)}</p>${explanationHTML(a)}`
+    : compactCardContent(a, href)
+  return `<article class="news-row${expanded ? "" : " reader-card"}" data-news-row data-event-id="${esc(a.id)}" data-published-at="${esc(publishedAt)}" data-briefing-date="${esc(briefingDate)}" data-classification="${esc(JSON.stringify(data))}"><h3><a href="${esc(href("News/" + a.id))}">${esc(a.title)}</a></h3>${dateLabels ? `<div class="news-row-dates">${dateLabels}</div>` : ""}${content}<div class="news-actions">${a.urls.map((u, i) => `<a href="${esc(u)}">${esc(sourceLinkLabel(u, i, a.urls))}</a>`).join("")}</div></article>`
 }
 export function sectorTabs(articles, href) {
   const sectors = [...new Set(articles.map((a) => a.sector).filter(Boolean))]

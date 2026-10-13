@@ -1,4 +1,4 @@
-import { articleCard, articlePreview, sectorTabs } from "./reader-cards.mjs"
+import { articleCard, articlePreview, sectorTabs, moreNewsButton } from "./reader-cards.mjs"
 import { sections } from "./garden.mjs"
 import { markdownProseText } from "./explanations.mjs"
 import { topArticles } from "./editorial.mjs"
@@ -225,7 +225,7 @@ export function newsView(
         : ""
     return /^\d{4}-/.test(key) ? `<time datetime="${esc(key)}">${dateLabel(key)}</time>` : esc(key)
   }
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream"${dateGrouping === "rolling" ? ` data-news-stream="rolling" data-news-today="${esc(today)}"` : ""}>${[...groups].map(([key, items]) => `<section class="news-day" data-news-day${dates.has(key) ? ` data-date-basis="${dates.get(key).basis}"` : ""}>${heading(key) ? `<h2>${heading(key)}</h2>` : ""}<div>${rows(items, key)}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream"${dateGrouping === "rolling" ? ` id="news-stream" data-news-stream="rolling" data-news-today="${esc(today)}"` : ""}>${[...groups].map(([key, items]) => `<section class="news-day" data-news-day${dates.has(key) ? ` data-date-basis="${dates.get(key).basis}"` : ""}>${heading(key) ? `<h2>${heading(key)}</h2>` : ""}<div>${rows(items, key)}</div></section>`).join("")}</div>${dateGrouping === "rolling" ? moreNewsButton("news-more", "news-stream") : ""}<p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review || !i.snapshot.today?.length) return ""

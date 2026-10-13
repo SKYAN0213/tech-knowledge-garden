@@ -1,5 +1,6 @@
 import { esc, publisher } from "./briefings.mjs"
 import { articleDateLabel } from "./article-review.mjs"
+import { compactCardContent, moreNewsButton } from "./reader-cards.mjs"
 
 const link = (url, label, attrs = "") =>
   `<a href="${esc(url)}"${attrs ? " " + attrs : ""}>${esc(label)}</a>`
@@ -16,22 +17,33 @@ const eventsFor = (model, ids) => model.events.filter((event) => ids.includes(ev
 function assertModel(model) {
   if (model?.schema !== "reader-knowledge/v1") throw Error("Public reader knowledge model required")
 }
-function tags(event, href) {
-  const values = [
-    ["sector", event.sector],
-    ["theme", event.theme],
-    ["theme", event.secondary_theme],
-    ...event.entities.map((entity) => ["entity", entity]),
-  ].filter(([, value]) => value)
-  return `<div class="news-labels">${values.map(([key, value]) => link(href("News/index") + "?" + new URLSearchParams({ [key]: value }), "#" + value.replaceAll(" ", ""))).join("")}${event.tags.map((tag) => `<span>#${esc(tag.replaceAll(" ", ""))}</span>`).join("")}</div>`
-}
 function eventView(event, href, { heading = 3, hidden = false, weekly = false } = {}) {
   const dates = `${articleDateLabel(event)} ${date(event.published_at)}`
   const additionalDate =
     event.source_published_at && event.source_published_at.slice(0, 10) !== event.published_at
       ? ` · 원문 최초 게시 ${date(event.source_published_at.slice(0, 10))}`
       : ""
-  return `<article class="reader-explore-event news-row"${weekly ? ` data-weekly-event data-published-day="${esc(event.published_at)}"` : ""}${hidden ? " hidden" : ""}><h${heading}>${link(event.url || href(event.article_path), event.title)}</h${heading}><div class="article-meta"><time datetime="${esc(event.published_at)}">${esc(dates)}</time>${esc(additionalDate)}${event.occurred_at ? ` · 사건 ${esc(date(event.occurred_at))}` : ""}</div>${tags(event, href)}${event.lead ? `<p>${esc(event.lead)}</p>` : ""}${event.explanations.length ? `<details class="reader-explore-detail"><summary>상세 내용</summary>${event.explanations.map((section) => `<section><h${Math.min(heading + 1, 6)}>${esc(section.heading)}</h${Math.min(heading + 1, 6)}>${section.paragraphs.map((text) => `<p>${esc(text)}</p>`).join("")}</section>`).join("")}</details>` : ""}${sourceLinks(event.source_urls)}</article>`
+  const content = compactCardContent(
+    {
+      title: event.title,
+      summary: event.lead,
+      sector: event.sector,
+      classification: {
+        theme: event.theme,
+        secondary_theme: event.secondary_theme,
+        entities: event.entities,
+        event_tags: event.tags,
+      },
+    },
+    href,
+    event.explanations
+      .map(
+        (section) =>
+          `<section><h${Math.min(heading + 1, 6)}>${esc(section.heading)}</h${Math.min(heading + 1, 6)}>${section.paragraphs.map((text) => `<p>${esc(text)}</p>`).join("")}</section>`,
+      )
+      .join(""),
+  )
+  return `<article class="reader-explore-event news-row reader-card"${weekly ? ` data-weekly-event data-published-day="${esc(event.published_at)}"` : ""}${hidden ? " hidden" : ""}><h${heading}>${link(event.url || href(event.article_path), event.title)}</h${heading}><div class="article-meta"><time datetime="${esc(event.published_at)}">${esc(dates)}</time>${esc(additionalDate)}${event.occurred_at ? ` · 사건 ${esc(date(event.occurred_at))}` : ""}</div>${content}${sourceLinks(event.source_urls)}</article>`
 }
 
 export function knowledgeHubView(model, href) {
@@ -107,7 +119,7 @@ export function weeklyView(model, href, { from, to } = {}) {
   }
   const count = model.events.filter(within).length
   const periods = `<label class="weekly-presets" for="weekly-period">주간 선택<select id="weekly-period"><option value="">직접 선택</option>${model.periods.map((item) => `<option value="${esc(item.from + "/" + item.to)}"${item.from === start && item.to === end ? " selected" : ""}>${date(item.from)} – ${date(item.to)}</option>`).join("")}</select></label>`
-  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기간별 소식</h1></div>${model.events.length ? `<form class="reader-explore-controls weekly-controls">${periods}<label for="weekly-from">발표 시작일<input id="weekly-from" name="from" type="date" value="${esc(start)}"></label><label for="weekly-to">발표 종료일<input id="weekly-to" name="to" type="date" value="${esc(end)}"></label><span id="weekly-count" role="status">${count}건</span></form>${[...groups].map(([sector, events]) => `<section class="weekly-group" data-weekly-group${events.some(within) ? "" : " hidden"}><h2>${esc(sector)}</h2>${events.map((event) => eventView(event, href, { weekly: true, hidden: !within(event) })).join("")}</section>`).join("")}<p id="weekly-empty"${count ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
+  return `<section class="reader-workspace reader-explore-workspace"><div class="page-heading"><h1>기간별 소식</h1></div>${model.events.length ? `<form class="reader-explore-controls weekly-controls">${periods}<label for="weekly-from">발표 시작일<input id="weekly-from" name="from" type="date" value="${esc(start)}"></label><label for="weekly-to">발표 종료일<input id="weekly-to" name="to" type="date" value="${esc(end)}"></label><span id="weekly-count" role="status">${count}건</span></form><div id="weekly-results">${[...groups].map(([sector, events]) => `<section class="weekly-group" data-weekly-group${events.some(within) ? "" : " hidden"}><h2>${esc(sector)}</h2>${events.map((event) => eventView(event, href, { weekly: true, hidden: !within(event) })).join("")}</section>`).join("")}</div>${moreNewsButton("weekly-more", "weekly-results")}<p id="weekly-empty"${count ? " hidden" : ""}>검색 결과 없음</p>` : ""}</section>`
 }
 
 export function termView(model, href, conceptId, { renderedBody } = {}) {

@@ -1771,7 +1771,7 @@ summary:focus-visible {
   font-size: 22px;
 }
 .reader-explore-workspace .reader-explore-event {
-  padding: 18px 0;
+  padding: 18px 22px;
   border-top: 1px solid #e9eeea;
 }
 .reader-explore-workspace .reader-explore-event h3 {
@@ -2095,5 +2095,93 @@ summary:focus-visible {
   }
   .home-heading-links {
     font-size: 10px;
+  }
+}
+
+/* Compact list cards keep the full sourced text inside native disclosures. */
+.news-row.reader-card,
+.news-row.reader-card:last-child {
+  padding: 16px 22px;
+  margin: 12px 0;
+  border: 1px solid var(--reader-line);
+  border-radius: 12px;
+}
+.news-row.reader-card > h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.news-row.reader-card .article-meta {
+  margin: 0;
+  line-height: 1.6;
+}
+.news-row.reader-card .news-labels {
+  margin: 8px 0;
+}
+.news-row.reader-card > .reader-card-preview {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.reader-card:has(> .reader-card-detail[open]) > .reader-card-preview {
+  display: none;
+}
+.reader-card-detail > summary {
+  padding: 4px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+  color: var(--reader-green);
+}
+.reader-card-detail:not([open]) .reader-card-collapse,
+.reader-card-detail[open] .reader-card-expand {
+  display: none;
+}
+.news-row.reader-card .reader-card-full p {
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 8px 0 12px;
+}
+.news-row.reader-card .news-actions {
+  margin-top: 6px;
+  gap: 4px 14px;
+  font-size: 12px;
+}
+.reader-list-more {
+  display: block;
+  margin: 20px auto 0;
+  min-height: 44px;
+  padding: 10px 24px;
+  border: 1px solid var(--reader-line);
+  border-radius: 8px;
+  background: #f7faf8;
+  color: var(--reader-green);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.reader-list-more[hidden] {
+  display: none;
+}
+.reader-list-more:focus-visible,
+.reader-card-detail > summary:focus-visible {
+  outline: 2px solid var(--reader-green);
+  outline-offset: 4px;
+}
+@media (max-width: 650px) {
+  .news-row.reader-card,
+  .news-row.reader-card:last-child {
+    padding: 14px 18px;
+  }
+  .news-row.reader-card > h3 {
+    font-size: 16px;
   }
 }

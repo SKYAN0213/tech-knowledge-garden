@@ -2,6 +2,7 @@ import { matchesNews } from "./news-filter.mjs"
 import { searchReaderEntries, readerSearchEvidence } from "./reader-search.mjs"
 import { bindReaderExplore } from "./reader-explore.mjs"
 import { bindNewsChronology } from "./news-chronology.mjs"
+import { bindReaderList } from "./reader-list.mjs"
 
 const base = document.body.dataset.base || ""
 const el = (tag, attrs = {}, text) => {
@@ -163,7 +164,16 @@ for (const root of roots) {
 }
 
 const newsQuery = document.querySelector("#news-query")
-if (document.querySelector('[data-news-stream="rolling"]')) bindNewsChronology({ document, window })
+const newsMore = document.querySelector("#news-more")
+const newsList = newsMore
+  ? bindReaderList({
+      button: newsMore,
+      location,
+      history,
+      onChange: () => filterNews(false),
+      rowSelector: "[data-news-row]",
+    })
+  : null
 const newsControls = Object.fromEntries(
   ["sector", "theme", "entity", "kind"].map((key) => [key, document.querySelector(`#news-${key}`)]),
 )
@@ -206,6 +216,7 @@ function filterNews(updateURL = true) {
   document.querySelector("#news-count").textContent = `${visible}건`
   document.querySelector("#news-empty").hidden = visible > 0
   if (updateURL) {
+    url.searchParams.delete("show")
     for (const [key, value] of Object.entries({
       q: filters.query,
       sector: filters.sector,
@@ -217,6 +228,10 @@ function filterNews(updateURL = true) {
       else url.searchParams.delete(key)
     if (url.href !== location.href) history.pushState(null, "", url)
   }
+  newsList?.apply(
+    [...document.querySelectorAll("[data-news-row]")].filter((row) => !row.hidden),
+    [...document.querySelectorAll("[data-news-day]")],
+  )
 }
 function restoreNewsFilters() {
   const params = new URL(location.href).searchParams
@@ -259,6 +274,8 @@ if (newsQuery) {
   window.addEventListener("popstate", restoreNewsFilters)
   restoreNewsFilters()
 }
+if (document.querySelector('[data-news-stream="rolling"]'))
+  bindNewsChronology({ document, window, onChange: () => filterNews(false) })
 bindReaderExplore({
   document,
   window,

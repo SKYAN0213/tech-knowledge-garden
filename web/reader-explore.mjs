@@ -1,3 +1,5 @@
+import { bindReaderList } from "./reader-list.mjs"
+
 const normalize = (value) =>
   String(value || "")
     .normalize("NFKC")
@@ -31,6 +33,16 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
   const companies = [...document.querySelectorAll("[data-company-section]")]
   const events = [...document.querySelectorAll("[data-weekly-event]")]
   const groups = [...document.querySelectorAll("[data-weekly-group]")]
+  const more = document.querySelector("#weekly-more")
+  const list = more
+    ? bindReaderList({
+        button: more,
+        location,
+        history,
+        onChange: () => restore(),
+        rowSelector: "[data-weekly-event]",
+      })
+    : null
   const count = (id, visible, suffix) => {
     const status = document.querySelector("#" + id + "-count")
     if (status) status.textContent = visible + suffix
@@ -63,6 +75,10 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
           (event) => !event.hidden,
         )
       count("weekly", events.filter((event) => !event.hidden).length, "건")
+      list?.apply(
+        events.filter((event) => !event.hidden),
+        groups,
+      )
     }
   }
   const restore = () => {
@@ -91,6 +107,7 @@ export function bindReaderExplore({ document, window, location, history, makeOpt
       else url.searchParams.delete("company")
     }
     if (from && to) {
+      url.searchParams.delete("show")
       // Empty dates explicitly mean all dates and must survive sharing/reload.
       url.searchParams.set("from", from.value)
       url.searchParams.set("to", to.value)

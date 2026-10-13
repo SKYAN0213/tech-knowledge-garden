@@ -95,11 +95,16 @@ export function refreshNewsChronology({ document, now = new Date() }) {
   return true
 }
 
-export function bindNewsChronology({ document, window, now = () => new Date() }) {
+export function bindNewsChronology({
+  document,
+  window,
+  now = () => new Date(),
+  onChange = () => {},
+}) {
   let timer
   const refresh = () => {
     const current = now()
-    refreshNewsChronology({ document, now: current })
+    if (refreshNewsChronology({ document, now: current })) onChange()
     window.clearTimeout(timer)
     const midnight = Date.parse(newsToday(current) + "T00:00:00+09:00") + DAY
     timer = window.setTimeout(refresh, midnight - current.getTime())
