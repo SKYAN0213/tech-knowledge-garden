@@ -1,6 +1,7 @@
 import { matchesNews } from "./news-filter.mjs"
 import { searchReaderEntries, readerSearchEvidence } from "./reader-search.mjs"
 import { bindReaderExplore } from "./reader-explore.mjs"
+import { bindNewsChronology } from "./news-chronology.mjs"
 
 const base = document.body.dataset.base || ""
 const el = (tag, attrs = {}, text) => {
@@ -162,6 +163,7 @@ for (const root of roots) {
 }
 
 const newsQuery = document.querySelector("#news-query")
+if (document.querySelector('[data-news-stream="rolling"]')) bindNewsChronology({ document, window })
 const newsControls = Object.fromEntries(
   ["sector", "theme", "entity", "kind"].map((key) => [key, document.querySelector(`#news-${key}`)]),
 )

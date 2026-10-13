@@ -17,6 +17,7 @@ import { buildReaderKnowledge } from "./reader-knowledge.mjs"
 import { knowledgeHubView, companiesView, weeklyView, termView } from "./reader-knowledge-views.mjs"
 import { coverageDate } from "./time.mjs"
 import { articleDateLabel } from "./article-review.mjs"
+import { firstBriefingDates } from "../web/news-chronology.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
 const staging = ".local/site-content"
@@ -109,9 +110,7 @@ export async function finish(output = "public", input = staging) {
   const allIssues = editions("vault")
   const issueArticles = new Map(allIssues.map((i) => [i.slug, extractArticles(i)]))
   const library = briefingLibrary("vault", allIssues, issueArticles)
-  const newsArticles = [
-    ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
-  ]
+  const firstDates = firstBriefingDates([...issueArticles.values()].flat())
   const knowledge = notes
     .filter((n) => n.meta.entry_type === "concept")
     .map((n) => ({
@@ -126,6 +125,9 @@ export async function finish(output = "public", input = staging) {
     })
   for (const items of issueArticles.values())
     for (const a of items) a.conceptLinks = conceptLinks(a.review?.concept_ids)
+  const newsArticles = [
+    ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
+  ].map((article) => ({ ...article, firstBriefingDate: firstDates.get(article.id) }))
 
   const watchlist = JSON.parse(fs.readFileSync("data/research-watchlist.json", "utf8"))
   const readerKnowledge = buildReaderKnowledge({

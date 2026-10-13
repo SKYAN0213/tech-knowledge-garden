@@ -16,6 +16,7 @@ import { stanceLabel } from "./trends.mjs"
 import { THEMES } from "./themes.mjs"
 import { SECTORS, sectorGroups } from "./sectors.mjs"
 import { articleDateLabel } from "./article-review.mjs"
+import { groupNewsDates, newsArticleDates, newsToday } from "../web/news-chronology.mjs"
 
 const link = (url, label, attrs = "") => `<a href="${esc(url)}" ${attrs}>${esc(label)}</a>`
 const dateLabel = (date) => date.replaceAll("-", ".")
@@ -161,15 +162,35 @@ export function newsView(
   articles,
   latest,
   href,
-  { expanded = false, recentItems = [], briefingEntries = null } = {},
+  {
+    expanded = false,
+    recentItems = [],
+    briefingEntries = null,
+    dateGrouping = "rolling",
+    today = newsToday(),
+  } = {},
 ) {
   const groups = new Map()
-  for (const a of [...articles].sort((a, b) =>
-    String(b.edition.meta.date).localeCompare(String(a.edition.meta.date)),
-  )) {
-    const date = String(a.edition.meta.date)
-    if (!groups.has(date)) groups.set(date, [])
-    groups.get(date).push(a)
+  const dates = new Map()
+  if (dateGrouping === "rolling") {
+    for (const group of groupNewsDates(
+      articles.map((article) => ({ ...newsArticleDates(article), id: article.id, article })),
+      { today },
+    )) {
+      groups.set(
+        group.key,
+        group.items.map(({ article }) => article),
+      )
+      dates.set(group.key, group)
+    }
+  } else {
+    for (const a of [...articles].sort((a, b) =>
+      String(b.edition.meta.date).localeCompare(String(a.edition.meta.date)),
+    )) {
+      const date = String(a.edition.meta.date)
+      if (!groups.has(date)) groups.set(date, [])
+      groups.get(date).push(a)
+    }
   }
   if (recentItems.length) groups.set("지난 7일 주요 발표", recentItems)
   articles = [...articles, ...recentItems]
@@ -196,7 +217,15 @@ export function newsView(
           )
           .join("")
       : items.map(row).join("")
-  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream">${[...groups].map(([date, items]) => `<section class="news-day" data-news-day><h2>${/^\d{4}-/.test(date) ? `<time datetime="${date}">${dateLabel(date)}</time>` : esc(date)}</h2><div>${rows(items, date)}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
+  const heading = (key) => {
+    const group = dates.get(key)
+    if (group)
+      return group.date
+        ? `<time datetime="${esc(group.date)}">${dateLabel(group.date)}</time><span class="news-date-basis">${group.label}</span>`
+        : ""
+    return /^\d{4}-/.test(key) ? `<time datetime="${esc(key)}">${dateLabel(key)}</time>` : esc(key)
+  }
+  return `<div class="page-heading"><h1>뉴스</h1><a href="${href(briefPath(latest.key))}">${esc(latest.date)} 브리핑 →</a></div>${sectorTabs(articles, href("News/index"))}<details class="article-filters"><summary>검색·필터</summary><div class="news-tools"><label for="news-query">뉴스에서 찾기</label><input id="news-query" type="search" placeholder="제목 · 요약 · 출처 · 태그" autocomplete="off"><span id="news-count" role="status">${articles.length}건</span></div>${filters}<select id="news-kind" aria-label="기사 종류" hidden><option value="">전체</option><option value="deep">심층 분석</option></select></details><div class="news-stream"${dateGrouping === "rolling" ? ` data-news-stream="rolling" data-news-today="${esc(today)}"` : ""}>${[...groups].map(([key, items]) => `<section class="news-day" data-news-day${dates.has(key) ? ` data-date-basis="${dates.get(key).basis}"` : ""}>${heading(key) ? `<h2>${heading(key)}</h2>` : ""}<div>${rows(items, key)}</div></section>`).join("")}</div><p id="news-empty" hidden>검색 결과 없음</p>`
 }
 function changeRows(i, href, detailed = false) {
   if (!i.snapshot.review || !i.snapshot.today?.length) return ""
@@ -265,6 +294,7 @@ export function issueView(i, href, base, renderedArticle) {
       : null
     const stream = newsView(i.items, i, href, {
       expanded: true,
+      dateGrouping: "briefing",
       recentItems: i.recentItems || [],
       briefingEntries,
     })

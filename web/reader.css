@@ -1335,6 +1335,22 @@ summary:focus-visible {
   color: #5b6861;
   font-variant-numeric: tabular-nums;
 }
+.news-row-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.news-row-dates time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.news-date-basis {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--reader-muted);
+}
 .news-row h3 {
   text-wrap: balance;
 }
