@@ -38,7 +38,7 @@ Roche는 9월 17일 재발성·불응성 여포성 림프종 환자를 대상으
 
 ## 분야별 브리핑
 
-### AI · 2건
+### AI · 3건
 
 #### [Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개](https://skyan0213.github.io/tech-knowledge-garden/news/25823e681aab7b46)
 
@@ -69,6 +69,20 @@ Live는 지원하는 97개 언어를 대화 중 자동 전환한다. Extended Th
 첫 추천 뒤에도 대화를 이어 가며 필요한 조건을 더할 수 있다. 이용 대상은 로그인한 만 14세 이상 사용자이며, 지도 검색 영역의 에이전트 아이콘으로 시작한다. 장소 추천과 예약 신청은 연결되지만, 예약 실행에는 사용자의 동의 단계가 들어간다.
 
 [navercorp.com 원문](https://navercorp.com/media/pressReleasesDetail?seq=10034667)
+
+#### [Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도](https://skyan0213.github.io/tech-knowledge-garden/news/6e9415b20331e0b7)
+
+발표 2026-09-19
+
+표준·생태계 · 투자·기업거래 · 기술 제휴 · 자본 배분 · Anthropic · Accenture
+
+Anthropic은 9월 19일(한국시간) Accenture와 프런티어 AI 독립 평가 파트너십을 발표했다. Anthropic에 따르면 Accenture의 전문 AI 사업부 Faculty가 파트너십을 이끌며, 모델 평가·레드팀·정렬 평가·보호 장치 시험을 맡을 예정이다. 두 회사는 관련 역량 구축에 향후 5년 동안 각각 최소 10억 달러를 투자할 것으로 예상한다고 밝혔다.
+
+##### 평가자의 접근과 책임
+
+Anthropic은 임베디드 평가자가 AI 기업 안에서 직원과 비슷한 접근 권한으로 모델 훈련 과정을 살피고, 모델의 구축·배포 결정을 따라가며 직원과 직접 대화할 수 있다고 설명했다. 이들은 안전 약속 이행과 사각지대를 확인하고 사고를 보고할 수 있지만, 접근·보고 기준과 독립 평가 재원 방식은 아직 정해지지 않았다. 외부 평가를 도입해도 모델 안전의 책임은 Anthropic에 남는다고 회사는 밝혔다.
+
+[Anthropic 원문](https://www.anthropic.com/news/accenture-embedded-evaluation)
 
 ### 소프트웨어·클라우드 · 3건
 
@@ -114,7 +128,7 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 
 [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/)
 
-### 사이버보안 · 1건
+### 사이버보안 · 2건
 
 #### [캐나다 사이버센터, 실제 악용 중인 Cisco ISE 취약점 패치 권고](https://skyan0213.github.io/tech-knowledge-garden/news/60d190b7985f9093)
 
@@ -130,7 +144,27 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 
 [cyber.gc.ca 원문](https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460)
 
-### 반도체·컴퓨팅 · 1건
+#### [구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개](https://skyan0213.github.io/tech-knowledge-garden/news/d56b87bf0ad247f9)
+
+발표 2026-09-19
+
+연구·기술 · 표준·생태계 · 구현·운영 지침 · 오픈소스 · Google
+
+구글 AI·인프라 팀은 9월 19일 취약점 스캔과 패치를 AI 에이전트로 구글의 소프트웨어 개발 수명주기에 통합했다고 밝혔다. 구글은 자체 인프라에 배포하는 수억 줄 규모의 코드에서 변경 건을 계속 검사해, 매월 수백 건의 취약점이 코드베이스나 프로덕션에 도달하기 전에 막고 있다고 밝혔다. 구글은 Mantis 하네스를 오픈소스로 제공하며, 일부 사례에서 오탐률을 3%까지 낮췄고 분류 에이전트가 92% 초과 정밀도로 1분 미만에 작업한다고 밝혔다.
+
+##### 코드 제출 전후로 취약점을 검사
+
+사전 제출 검사는 각 코드 체크인 때 실시간으로 실행된다. 야간 통합 테스트의 사후 제출 스캔은 여러 변경에 걸쳐 들어온 취약점을 확인하는 두 번째 방어층이다.
+
+##### 공격 경로를 확인하고 수정안은 사람이 검토
+
+Mantis는 실시간 코드베이스 메타데이터를 쓰는 지역화 위협 모델을 보안 에이전트에 연결하고, 패키지·라이브러리 의존성 호출 그래프로 스캔 문맥을 보강한다.
+
+분류 에이전트는 코드 구조와 호출 경로, 사전 색인한 도메인 안전 규칙을 살펴 취약 경로가 공격자에게 실제로 도달 가능한지 검증한다. 수정 에이전트는 스캔 결과와 재현 증거를 바탕으로 내부 코딩 기준에 맞는 수정안을 만들고, 원래 변경 요청의 검토 과정에 제출한다.
+
+[Google 원문](https://cloud.google.com/blog/topics/systems/using-ai-agents-to-secure-google-infrastructure/)
+
+### 반도체·컴퓨팅 · 2건
 
 #### [Fujitsu, MONAKA CPU 판매는 11월·서버 출하는 내년 4월부터 예고](https://skyan0213.github.io/tech-knowledge-garden/news/6f3a6e0e59363e45)
 
@@ -145,6 +179,18 @@ Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버�
 CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026회계연도 4분기 공급을 계획한다. 발표한 서버는 행렬 연산 가속·SVE2 벡터 연산과 Arm CCA의 메모리 보호 기능을 활용한다. 주문·판매를 받는 시점과 고객에게 하드웨어가 전달되는 시점은 서로 다르다.
 
 [global.fujitsu 원문](https://global.fujitsu/en-global/pr/news/2026/09/14-02)
+
+#### [KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발](https://skyan0213.github.io/tech-knowledge-garden/news/b0ca57e570da44cc)
+
+발표 2026-09-16
+
+연구·기술 · 연구 소개 · 새로운 방법 · 연세대학교 · 베이징 계산과학연구센터 · KIST · UNIST · 삼성전자
+
+KAIST는 2026년 9월 16일 서준기 교수 연구팀이 연세대학교, 베이징 계산과학연구센터, 한국과학기술연구원(KIST), 울산과학기술원(UNIST), 삼성전자 연구진과 공동으로 범용 반데르발스 터널링 주입기를 개발했다고 밝혔다. 연구팀은 이셀레늄화주석(SnSe2)을 이용해 서로 다른 두 종류의 초박막 반도체에 전기를 공급하는 장치를 구현했다. 연구 결과는 반도체를 더 얇게 만들고 여러 층으로 쌓아 성능을 높이는 차세대 AI·저전력 반도체 개발에 활용될 것으로 기대된다.
+
+
+
+[news.kaist.ac.kr 원문](https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67090&GotoPage=1)
 
 ### 로봇·제조 · 3건
 

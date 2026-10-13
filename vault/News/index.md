@@ -85,6 +85,13 @@ generated_by: tech-knowledge-garden
 - [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · 2026-10-01
 - [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · 2026-10-01
 - [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]] · 2026-10-01
+- [[News/81d5b6aebc2eb93b|움직임의 흐름 읽는 반도체 기술 개발]] · 2026-09-30
+- [[News/0f6e29456a9ff768|공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의]] · 2026-09-30
+- [[News/d68cbb31349ae1a7|알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성]] · 2026-09-30
+- [[News/126635115c76bf5f|근육 세포로 움직이는 얇은 수영 로봇 설계 발표]] · 2026-09-30
+- [[News/cdc600a0d8ffa349|구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험]] · 2026-09-30
+- [[News/b208f191c6cdf5c1|arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안]] · 2026-09-30
+- [[News/f44e650da992b3ee|Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사]] · 2026-09-30
 - [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
 - [[News/96690c067704a88d|ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염]] · 2026-09-30
 - [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
@@ -122,6 +129,9 @@ generated_by: tech-knowledge-garden
 - [[News/a49bfbd297aaeae9|Navitas, Magnachip에 500만달러 지분 투자 계약]] · 2026-09-22
 - [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · 2026-09-22
 - [[News/43924fdd4d64f158|CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표]] · 2026-09-21
+- [[News/b0ca57e570da44cc|KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발]] · 2026-09-20
+- [[News/d56b87bf0ad247f9|구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개]] · 2026-09-20
+- [[News/6e9415b20331e0b7|Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도]] · 2026-09-20
 - [[News/43dbd3fe6cdd4fcf|두산로보틱스, 권영민 사장 신임 CEO로 선임]] · 2026-09-20
 - [[News/c8c055684e1b9e3a|Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료]] · 2026-09-20
 - [[News/21e5701b8e5bea51|Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표]] · 2026-09-20
@@ -138,6 +148,8 @@ generated_by: tech-knowledge-garden
 - [[News/845ee65994660acf|NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험]] · 2026-09-14
 - [[News/18ebc7c21cf04849|삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진]] · 2026-09-14
 - [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]] · 2026-09-14
+- [[News/73424d904c85be55|Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지]] · 2026-09-13
+- [[News/e0a07521cdf8fed3|Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속]] · 2026-09-13
 - [[News/67402935155ca6d3|RubyGems, 5월 악성 패키지 500개 이상 제거한 사건의 조사 결과 공개]] · 2026-09-13
 - [[News/eb739a02acad3ab9|FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발]] · 2026-09-13
 - [[News/902d86854fec2b7d|HD현대로보틱스, 에이딘에 130억 원 투자…로봇손·표면가공 공동 개발]] · 2026-09-13
@@ -161,6 +173,8 @@ generated_by: tech-knowledge-garden
 - [[News/1908c6027b69920e|Google·Cathay Pacific, 비행운 회피 2단계 시험 확대]] · 2026-09-08
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 - [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · 2026-09-07
+- [[News/741b58198e7087a0|OpenAI, 에이전트 위키 사건 인정…미스얼라인먼트 공개 기준 마련 추진]] · 2026-09-06
+- [[News/7fd12243f203b819|연구진, OpenAI 식별자 에이전트의 위키 평가 협업 추적…회사 소속은 미확인]] · 2026-09-05
 - [[News/c96e7378059165d6|GitHub, 사용자 신원 없이 저장소 스타 이력을 조회하는 API 공개]] · 2026-09-05
 - [[News/cf45e2be25e062a0|GitHub Copilot, GPT-6 Astra를 유료 플랜에 순차 제공]] · 2026-09-05
 - [[News/13cebc4d5ec60b11|CodeQL 2.26.4, Go 1.27과 GitHub Actions 보안 탐지 개선]] · 2026-09-04

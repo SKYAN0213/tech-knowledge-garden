@@ -7,7 +7,7 @@ modified: 2026-09-13
 description: 2026-09-13 IT · AI · 로보틱스
 coverage_start: 2026-09-11T08:00:52+09:00
 coverage_end: 2026-09-13T08:01:40+09:00
-item_count: 6
+item_count: 8
 edition: Editions/2026/09/2026-09-13_0800_Tech_AI_Briefing
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/09/2026-09-13_0800_Tech_AI_Briefing.md
 cssclasses:
@@ -42,6 +42,20 @@ GitHub는 9월 11일 Copilot 사용량 보고서에 VS Code Agents 전용 창의
 
 
 ## 분야별 브리핑
+
+### AI · 2건
+
+#### [[News/e0a07521cdf8fed3|Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속]]
+
+정책·규제 · 정책 제안 · Anthropic
+
+2026년 9월 12일 보도에 따르면, Anthropic CEO Dario Amodei는 프런티어 AI 역량 향상 속도를 늦추되 모델 훈련과 기술 진전은 이어가는 3단계 속도 조절안을 제안했다. 첫 단계로 Anthropic은 외부 평가자에게 시스템의 직원 수준 상시 접근을 제공해 안전 조치 준수와 사고를 확인·보고하고 학습 중 모델 정렬을 평가하게 하겠다고 밝혔으며, Amodei는 다른 프런티어 기업도 따르도록 정부에 요구했다. 나머지 두 단계는 민주국가 내 기업 간 공동 안전 기준·개발 속도 조정과, 가능한 범위에서 미국 등 민주국가 정부가 권위주의 정부와 협력하는 국제 조정이다.
+
+#### [[News/73424d904c85be55|Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지]]
+
+정책·규제 · 정책 제안 · Y Combinator · Garry Tan
+
+2026년 9월 11일 TechCrunch 보도에 따르면 Y Combinator CEO Garry Tan은 미국의 소규모 공개 가중치 AI 연구소도 미국 프런티어 모델에 증류 기법을 적용해 중국계가 아닌 선택지를 늘려야 한다고 주장했다. Tan은 중국 연구소의 증류에는 규제 당국이 개입하지 않기를 바라며 CNBC에 “아무것도 하지 않겠다”고 말했고, 미국식 증류 제도를 둘 수 있다는 주장도 제기했다. 그는 미국 연구소가 도난 자격 증명을 쓰지 않고 정식으로 접근해 증류할 수 있어야 한다고 선을 그었다. TechCrunch는 증류를 다른 모델에 광범위하게 질의해 작동 방식과 추론을 배우는 과정으로 설명했고, Tan은 API 결과 이용 통제가 제약적이며 공개 데이터로 훈련된 지능에 대한 접근을 공공재에 가깝게 다뤄야 한다고 말했다.
 
 ### 소프트웨어·클라우드 · 3건
 
@@ -97,3 +111,7 @@ FANUC는 9월 11일 Google Cloud의 Gemini Enterprise를 활용해 부품 도면
 - [S6] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
 - [S7] https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
 - [S8] https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html
+- [S9] https://techcrunch.com/2026/09/12/anthropic-ceo-outlines-plan-to-pace-the-frontier/
+- [S10] https://www.theguardian.com/technology/2026/sep/12/we-must-slow-the-pace-ceo-of-anthropic-calls-for-an-ai-slowdown
+- [S11] https://darioamodei.com/post/we-must-pace-the-frontier
+- [S12] https://techcrunch.com/2026/09/11/y-combinators-garry-tan-wants-u-s-open-weight-ai-labs-to-distill-frontier-models-too/
