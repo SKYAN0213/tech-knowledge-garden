@@ -1673,6 +1673,28 @@ test("unchecked facts and a changed draft cannot be approved", () => {
   )
 })
 
+test("secondary theme permits its tags and survives article approval", () => {
+  const s = sample()
+  s.record.draft.secondary_theme = "사업·고객"
+  s.record.draft.tags = ["신제품", "사업 모델"]
+  s.record.draft_id = sha256(JSON.stringify(s.record.draft))
+  s.review.draft_id = s.record.draft_id
+
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, s.parses)
+  assert.equal(article.secondary_theme, "사업·고객")
+  assert.deepEqual(draftProblems(s.record.draft, s.claims), [])
+  assert.ok(
+    draftProblems({ ...s.record.draft, secondary_theme: s.record.draft.theme }, s.claims).includes(
+      "secondary_theme_repeats_primary",
+    ),
+  )
+  assert.ok(
+    draftProblems({ ...s.record.draft, tags: ["법률 변경"] }, s.claims).includes(
+      "tag_theme_mismatch",
+    ),
+  )
+})
+
 test("private retrospective updates every appearance and retains other articles and reviews", (t) => {
   const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-retrospective-")))
   t.after(() => fs.rmSync(vault, { recursive: true, force: true }))

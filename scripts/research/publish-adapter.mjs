@@ -161,6 +161,7 @@ export function approvedArticle(draftRecord, claims, documents, review, parses =
     source_urls,
     sector: d.sector,
     theme: d.theme,
+    ...(Object.hasOwn(d, "secondary_theme") ? { secondary_theme: d.secondary_theme } : {}),
     tags: d.tags,
     entities: d.entities,
     record,

@@ -40,6 +40,7 @@ export const draftSchema = {
     },
     sector: { type: "string", enum: SECTORS },
     theme: { type: "string", enum: THEMES.map((t) => t.name) },
+    secondary_theme: { type: ["string", "null"], enum: [...THEMES.map((t) => t.name), null] },
     tags: {
       type: "array",
       minItems: 1,
@@ -115,10 +116,16 @@ export function draftProblems(draft, claims, deepContext = null) {
   )
     problems.push("operational_or_generic_prose")
   if (!/[가-힣]/.test(prose)) problems.push("korean_prose_required")
+  const selectedThemes = THEMES.filter(
+    (theme) => theme.name === draft.theme || theme.name === draft.secondary_theme,
+  )
+  const allowedTags = new Set(selectedThemes.flatMap((theme) => theme.tags))
+  if (draft.secondary_theme && draft.secondary_theme === draft.theme)
+    problems.push("secondary_theme_repeats_primary")
   if (
     !draft.tags.length ||
     draft.tags.length > 3 ||
-    draft.tags.some((t) => !THEMES.find((th) => th.name === draft.theme).tags.includes(t))
+    draft.tags.some((tag) => !allowedTags.has(tag))
   )
     problems.push("tag_theme_mismatch")
   const names = new Set(claims.map((c) => c.subject))
