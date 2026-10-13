@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from datetime import datetime, timezone
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -60,6 +60,28 @@ def source_note_links(lineage, receipt):
             links[slug].append({'path': path, 'url': drive.get(path, ''), 'sha256': expected})
     return links
 
+def reader_entry_key(row):
+    """Use the content-index key for both note pages and query-backed entries."""
+    slug = row.get('slug')
+    if isinstance(slug, str) and slug:
+        return slug
+    url = row.get('url')
+    if not isinstance(url, str) or not url:
+        raise ValueError('Reader entry without a slug must have a URL')
+    parsed = urlsplit(url)
+    base = urlsplit(BASE)
+    if (parsed.scheme or parsed.netloc) and (parsed.scheme, parsed.netloc) != (base.scheme, base.netloc):
+        raise ValueError('Reader entry URL is outside the website: ' + url)
+    base_path = base.path.rstrip('/')
+    if not parsed.path.startswith(base_path + '/'):
+        raise ValueError('Reader entry URL is outside the website: ' + url)
+    key = parsed.path[len(base_path) + 1:]
+    if parsed.query:
+        key += '?' + parsed.query
+    if parsed.fragment:
+        key += '#' + parsed.fragment
+    return key
+
 def main():
     WORK.mkdir(parents=True, exist_ok=True)
     if not STAGE.is_absolute() or (STAGE != WORK / 'staging' and STAGE.resolve().is_relative_to(ROOT)):
@@ -89,13 +111,16 @@ def main():
                     'etag': response.headers.get('ETag'),
                     'last_modified': response.headers.get('Last-Modified'),
                     'matches_local_build_bytes': local.exists() and local.read_bytes() == data})
-        pages = values['reader-index.json']
+        entries = values['reader-index.json']
         graph = values['knowledge-graph.json']
         content = values['static/contentIndex.json']
-        assert isinstance(pages, list) and isinstance(content, dict)
-        assert len({p['slug'] for p in pages}) == len(pages)
-        assert set(content) == {p['slug'] for p in pages}, 'Deployed search indexes disagree; retry after deployment completes'
-        assert all(content[p['slug']] == p for p in pages), 'Deployed search rows disagree; retry after deployment completes'
+        assert isinstance(entries, list) and isinstance(content, dict)
+        entry_keys = [reader_entry_key(p) for p in entries]
+        assert len(set(entry_keys)) == len(entries), 'Duplicate reader entry keys'
+        assert set(content) == set(entry_keys), 'Deployed search indexes disagree; retry after deployment completes'
+        assert all(content[key] == p for key, p in zip(entry_keys, entries)), 'Deployed search rows disagree; retry after deployment completes'
+        pages = [p for p in entries if p.get('slug')]
+        dynamic_entries = [p for p in entries if not p.get('slug')]
         nodes = graph['nodes']; edges = graph['edges']; articles = graph['articles']
         ids = {n['id'] for n in nodes}
         assert len(ids) == len(nodes)
@@ -123,7 +148,8 @@ def main():
             references = source_links.get(slug, [])
             return all(r['url'] for r in references) if references else bool(drive.get(paths.get(slug, '')))
         table(output / 'pages.csv', ['제목', '유형', '날짜', '웹페이지', 'Drive 노트 경로', 'Drive 노트 링크', '검색 키워드'],
-            [[p['title'], p['type'], p.get('date', ''), urljoin(BASE, p['url']), *note(p['slug']), p.get('keywords', [])] for p in pages])
+            [[p['title'], p['type'], p.get('date', ''), urljoin(BASE, p['url']), *note(key), p.get('keywords', [])]
+             for p, key in zip(entries, entry_keys)])
         table(output / 'articles.csv', ['기사 ID', '제목', '날짜', '요약', '웹페이지', 'Drive 노트 경로', 'Drive 노트 링크', '연결 개념 ID'],
             [[a['id'], a['title'], a.get('date', ''), a.get('description', ''), urljoin(BASE, a['slug']), *note(a['slug']), a.get('termIds', [])] for a in articles])
         table(output / 'concepts.csv', ['개념 ID', '한글 이름', '정의', '분류', '학습 이유', '웹페이지', 'Drive 노트 경로', 'Drive 노트 링크', '원문 출처'],
@@ -135,20 +161,23 @@ def main():
         json.loads(data)
         (output / 'catalog.json').write_bytes(data)
         provenance.append({'file': 'catalog.json', 'origin': 'local-build-input', 'path': 'data/catalog.json', 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()})
-        counts = {'pages': len(pages), 'articles': len(articles), 'concepts': len(nodes), 'connections': len(edges)}
+        counts = {'pages': len(pages), 'reader_entries': len(entries), 'dynamic_entries': len(dynamic_entries),
+                  'articles': len(articles), 'concepts': len(nodes), 'connections': len(edges)}
         write_json(output / 'snapshot.json', {'schema': 'website-data-archive/v1', 'website': BASE, 'counts': counts,
             'note_mapping_basis': 'exact source event IDs, edition metadata and topic IDs joined to byte-verified Drive authoring notes; remaining pages use projection receipt paths',
             'note_lineage': source_links,
-            'unmapped_pages': [p['slug'] for p in pages if not mapped(p['slug'])], 'assets': provenance})
+            'unmapped_pages': [p['slug'] for p in pages if not mapped(p['slug'])],
+            'unmapped_search_entries': [key for p, key in zip(entries, entry_keys) if not p.get('slug') and not mapped(key)],
+            'assets': provenance})
         (output / 'README.md').write_text(f'''# 웹사이트에서 사용하는 데이터
 
 [뉴스 웹사이트]({BASE})가 실제 제공하는 데이터를 내려받은 보관본입니다. 수집 시각과 파일 해시, 로컬 생성본과의 일치 여부는 `snapshot.json`에서 확인합니다.
 
-현재 페이지 {len(pages)}개, 기사 {len(articles)}개, 지도 개념 {len(nodes)}개, 개념 연결 {len(edges)}개입니다.
+현재 고정 경로 페이지 {len(pages)}개와 검색 항목 {len(entries)}개(이 중 URL 기반 동적 항목 {len(dynamic_entries)}개), 기사 {len(articles)}개, 지도 개념 {len(nodes)}개, 개념 연결 {len(edges)}개입니다. `pages.csv`는 검색 색인의 모든 행을 담고, 동적 기업 항목도 실제 기업별 URL로 표시합니다.
 
 | 파일 | 확인할 내용 |
 |---|---|
-| pages.csv | 전체 공개 페이지 → 웹주소 → Drive 원본 노트 |
+| pages.csv | 공개 검색 항목 → 웹주소 → Drive 원본 노트 |
 | articles.csv | 기사 제목·요약·날짜·연결 개념·Drive 노트 |
 | concepts.csv | 지도 개념·정의·학습 이유·원문 출처 |
 | connections.csv | 개념 사이의 확인된 연결과 근거 |

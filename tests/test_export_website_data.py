@@ -41,5 +41,21 @@ class DriveLinksTests(unittest.TestCase):
             website_data.source_note_links(lineage, receipt)
 
 
+class ReaderEntryKeyTests(unittest.TestCase):
+    def test_note_page_uses_its_slug(self):
+        self.assertEqual(website_data.reader_entry_key({
+            'slug': 'News/example', 'url': '/tech-knowledge-garden/news/example'
+        }), 'News/example')
+
+    def test_query_backed_company_entry_uses_content_index_url_key(self):
+        self.assertEqual(website_data.reader_entry_key({
+            'url': '/tech-knowledge-garden/companies/index?company=Roche'
+        }), 'companies/index?company=Roche')
+
+    def test_url_based_entry_must_stay_under_site_path(self):
+        with self.assertRaisesRegex(ValueError, 'outside the website'):
+            website_data.reader_entry_key({'url': '/elsewhere/company'})
+
+
 if __name__ == '__main__':
     unittest.main()
