@@ -1,3 +1,4 @@
+import fs from "node:fs"
 import path from "node:path"
 import { canonicalURL } from "../garden.mjs"
 import { BACKLOG_PATH } from "../research-window.mjs"
@@ -5,9 +6,14 @@ import { sourceId, sha256 } from "./contracts.mjs"
 import { assertReviewDate, samePublicationDate } from "./dates.mjs"
 import { articleContentFingerprint, selectStoredSources } from "./parser.mjs"
 import { atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { loadCurrentApproval } from "./preview.mjs"
 
 const REQUIRED_ASPECTS = ["identity_marker", "event_action"]
-const IDENTITY_DECISIONS = new Set(["same_published_event", "same_published_source_revision"])
+const IDENTITY_DECISIONS = new Set([
+  "same_published_event",
+  "same_published_source_revision",
+  "same_approved_event",
+])
 
 function checkedSource(root, runId, evidence) {
   const selected = selectStoredSources(root, runId, [evidence?.source_url])
@@ -48,6 +54,7 @@ export async function recordCandidateIdentity({
   reviewPath,
   backlogFile = BACKLOG_PATH,
   publishedArticles,
+  vault = "vault",
 }) {
   if (
     !/^[a-zA-Z0-9_-]+$/.test(runId || "") ||
@@ -73,10 +80,50 @@ export async function recordCandidateIdentity({
   )
     throw Error("Complete private same-event review required")
 
+  let approvedTarget = null
+  let approvedSourceFiles = null
+  if (review.decision === "same_approved_event") {
+    if (review.approved_run !== publishedSourceRunId)
+      throw Error("Approved identity requires the exact target approval run")
+    const approved = loadCurrentApproval(root, review.approved_run, { vault })
+    approvedTarget = {
+      run: approved.run,
+      files: approved.files,
+      article_sha256: sha256(JSON.stringify(approved.article)),
+    }
+    publishedArticles = [
+      ...publishedArticles,
+      {
+        event_id: approved.article.event_id,
+        title: approved.article.title,
+        published_at: approved.article.article_review.published_at,
+        review_status: approved.article.article_review.review_status,
+        source_urls: approved.article.source_urls,
+      },
+    ]
+  } else if (review.approved_run !== undefined) {
+    throw Error("A private approval target requires same_approved_event")
+  }
   const candidate = checkedSource(root, sourceRunId, review.candidate)
   const published = checkedSource(root, publishedSourceRunId, review.published)
   const sameSourceURL =
     canonicalURL(review.candidate.source_url) === canonicalURL(review.published.source_url)
+  if (approvedTarget) {
+    const files = [
+      `runs/${sourceRunId}/documents.json`,
+      `runs/${sourceRunId}/parses.json`,
+      `runs/${publishedSourceRunId}/documents.json`,
+      `runs/${publishedSourceRunId}/parses.json`,
+      candidate.document.body_path,
+      published.document.body_path,
+      `parses/${candidate.parse.parse_id}/parse.json`,
+      `parses/${published.parse.parse_id}/parse.json`,
+    ]
+    approvedSourceFiles = [...new Set(files)].map((file) => ({
+      path: file,
+      sha256: sha256(fs.readFileSync(safePath(root, file))),
+    }))
+  }
   const candidateContentSha = articleContentFingerprint(candidate.parse)
   const publishedContentSha = articleContentFingerprint(published.parse)
   if (sameSourceURL) {
@@ -90,7 +137,7 @@ export async function recordCandidateIdentity({
       throw Error(
         "Same-source link requires identical article content, title and exact source identity",
       )
-  } else if (review.decision !== "same_published_event") {
+  } else if (!["same_published_event", "same_approved_event"].includes(review.decision)) {
     throw Error("Cross-source identity requires a reviewed same-event comparison")
   }
   if (!/^[a-f0-9]{16,64}$/.test(review.published.event_id || ""))
@@ -101,7 +148,7 @@ export async function recordCandidateIdentity({
   )
   if (
     !publicationDatesMatch &&
-    (review.decision !== "same_published_event" ||
+    (!["same_published_event", "same_approved_event"].includes(review.decision) ||
       !samePublicationDate(review.event_date, review.published.published_at) ||
       !review.matches.some((match) => match.aspect === "event_date"))
   )
@@ -216,6 +263,9 @@ export async function recordCandidateIdentity({
     review_path: reviewPath,
     review_sha256: reviewHash,
     candidate_published: false,
+    ...(approvedTarget
+      ? { approved_target: approvedTarget, source_files: approvedSourceFiles }
+      : {}),
     event_date: review.event_date || review.published.published_at,
     publication_dates_match: publicationDatesMatch,
   }
@@ -275,6 +325,13 @@ export async function recordCandidateIdentity({
       old.article_content_sha256 = articleContentSha
       old.identity = {
         decision: review.decision,
+        ...(approvedTarget
+          ? {
+              approved_target: approvedTarget,
+              source_files: approvedSourceFiles,
+              resolution_run: runId,
+            }
+          : {}),
         event_date: review.event_date || review.published.published_at,
         publication_dates_match: publicationDatesMatch,
         candidate_run: candidateRunId,

@@ -6,9 +6,15 @@ import hashlib
 import json
 import os
 import re
+import sys
 from pathlib import Path, PurePosixPath
 import tempfile
 import zipfile
+import importlib.util
+
+_storage_spec = importlib.util.spec_from_file_location('garden_cold_storage', Path(__file__).with_name('cold-storage.py'))
+_storage = importlib.util.module_from_spec(_storage_spec)
+_storage_spec.loader.exec_module(_storage)
 
 
 def sha256(data):
@@ -27,7 +33,7 @@ def safe_file(root, relative):
         current = current / part
         if current.is_symlink():
             raise ValueError("Symlink in private archive path")
-    return target
+    return _storage.ensure_local(target)
 
 
 def archive_member(manifest, item):
@@ -269,4 +275,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except _storage.StoragePending as exc:
+        print(json.dumps({"code": "STORAGE_PENDING", "storage_request": exc.storage_request}), file=sys.stderr)
+        sys.exit(2)

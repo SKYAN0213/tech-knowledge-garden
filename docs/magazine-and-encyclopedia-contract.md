@@ -220,9 +220,11 @@ related_concepts: []
 tags: []
 ```
 
-### Required concept sections
+### Reviewed concept sections
 
-For reviewed specialist concepts with `concept_id`, use the following allowed level-2 headings in this relative order. `한 문장 정의` and `출처` are required. Include other sections only when their explanations or confirmed relationships have evidence; a present section cannot be empty. Historical entries without `concept_id` keep the complete existing template.
+`한 문장 정의`와 `출처`는 필수다. 나머지 섹션은 원문 근거와 설명 가치가 있을 때만 작성하고, 아래 상대 순서를 유지한다. 빈 섹션을 `없음`이나 분석 생략 안내로 채우지 않는다. 작성한 섹션의 본문·명칭·중복·순서와 실제 출처 연결은 승인기에 의해 검사된다. `범위`를 작성하면 포함·제외 항목을 함께 명시한다. 기존 전체 소제목을 가진 승인 기록은 보존한다.
+
+Allowed level-2 headings, in this relative order:
 
 1. `## 한 문장 정의`
 2. `## 용어 카드`

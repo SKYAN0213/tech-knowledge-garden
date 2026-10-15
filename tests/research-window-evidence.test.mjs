@@ -12,7 +12,10 @@ import {
 } from "../scripts/research/window-evidence-assessment.mjs"
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.mjs"
-import { REFERENCE_PROTOCOL } from "../scripts/research/assessment-references.mjs"
+import {
+  REFERENCE_PROTOCOL,
+  CLAIM_SPAN_FORMAT,
+} from "../scripts/research/assessment-references.mjs"
 
 function fixture(t, { article = false } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "window-evidence-")))
@@ -159,6 +162,52 @@ function fixture(t, { article = false } = {}) {
 const run = (f, id = "windowed") =>
   assessWindowEvidenceCheckpoint(f.root, id, f.provider, f.claims, f.documents, f.parses)
 
+test("compact windows keep every source block and do not repeat quotes from other windows", (t) => {
+  const f = fixture(t)
+  const plan = evidenceWindowPlan(
+    f.claims,
+    f.documents,
+    f.parses,
+    f.provider.executionPolicy.settings,
+    6,
+    REFERENCE_PROTOCOL,
+  )
+  assert.ok(plan.length > 1)
+  assert.deepEqual(
+    plan.flatMap((b) => b.entries.map((e) => e.block)),
+    f.parses[0].blocks.map(({ block_id, text }) => ({ block_id, text })),
+  )
+  for (const b of plan) {
+    const data = JSON.parse(b.messages[1].content)
+    const citation = data.claims[0].evidence[0]
+    const sourceBlock = data.sources[0].blocks.find((block) => block.block_id === citation.block_id)
+    assert.equal(citation.quote, undefined)
+    if (sourceBlock)
+      assert.equal(
+        sourceBlock.text.slice(citation.quote_span.start, citation.quote_span.end),
+        f.claims[0].evidence[0].quote,
+      )
+    else {
+      assert.equal(citation.quote_scope, "outside-window")
+      assert.equal(citation.quote_span, undefined)
+    }
+  }
+  const legacy = evidenceWindowPlan(
+    f.claims,
+    f.documents,
+    f.parses,
+    f.provider.executionPolicy.settings,
+    6,
+    REFERENCE_PROTOCOL,
+    null,
+  )
+  assert.equal(
+    JSON.parse(legacy[0].messages[1].content).claims[0].evidence[0].quote,
+    f.claims[0].evidence[0].quote,
+  )
+  assert.ok(CLAIM_SPAN_FORMAT)
+})
+
 test("bounded references retain full context and resolve only the supplied window", async (t) => {
   const f = fixture(t),
     generate = f.provider.structured
@@ -230,6 +279,80 @@ test("every source block is retained in order for each bounded claim group", (t)
       ),
     /atomic block/,
   )
+})
+
+test("shared source windows run consecutively without changing checkpoint IDs or review order", async (t) => {
+  const f = fixture(t)
+  f.claims = [f.claims[0], { ...f.claims[0], claim_id: "c2" }]
+  const options = { claimsPerBatch: 1 }
+  const plan = evidenceWindowPlan(
+    f.claims,
+    f.documents,
+    f.parses,
+    f.provider.executionPolicy.settings,
+    options.claimsPerBatch,
+  )
+  const execute = () =>
+    assessWindowEvidenceCheckpoint(
+      f.root,
+      "shared-windows",
+      f.provider,
+      f.claims,
+      f.documents,
+      f.parses,
+      options,
+    )
+  const result = await execute()
+  const sources = f.requests.map((request) => JSON.parse(request.messages[1].content).sources)
+  assert.ok(sources.length > 2)
+  assert.equal(sha256(JSON.stringify(sources[0])), sha256(JSON.stringify(sources[1])))
+  assert.notEqual(sha256(JSON.stringify(sources[1])), sha256(JSON.stringify(sources[2])))
+  for (const [index, batch] of plan.entries()) {
+    assert.ok(
+      readJSON(
+        f.root,
+        `runs/shared-windows/evidence-assessment/batch-${index + 1}-checkpoint.json`,
+      ),
+    )
+    const row = result.record.assessments.find((row) => row.claim_id === batch.claims[0].claim_id)
+    assert.ok(row.window_assessments.some((frame) => frame.batch === index + 1))
+  }
+  for (const row of result.record.assessments)
+    assert.deepEqual(
+      row.window_assessments.map((frame) => frame.batch),
+      row.window_assessments.map((frame) => frame.batch).toSorted((a, b) => a - b),
+    )
+  const calls = f.calls()
+  assert.deepEqual((await execute()).record, result.record)
+  assert.equal(f.calls(), calls)
+})
+
+test("shared-window interruption resumes missing frame IDs without repeating completed requests", async (t) => {
+  const f = fixture(t)
+  f.claims = [f.claims[0], { ...f.claims[0], claim_id: "c2" }]
+  const execute = () =>
+    assessWindowEvidenceCheckpoint(
+      f.root,
+      "shared-interruption",
+      f.provider,
+      f.claims,
+      f.documents,
+      f.parses,
+      { claimsPerBatch: 1 },
+    )
+  f.fail(3)
+  await assert.rejects(execute(), /Fixture interruption/)
+  const completed = f.requests.slice(0, 2).map((request) => sha256(JSON.stringify(request)))
+  const before = f.requests.length
+  f.fail(null)
+  const result = await execute()
+  assert.ok(
+    f.requests
+      .slice(before)
+      .every((request) => !completed.includes(sha256(JSON.stringify(request)))),
+  )
+  assert.equal(result.reused_batches, 2)
+  assert.equal(result.record.assessments.length, 2)
 })
 
 test("window results require whole-document review and resume without model calls", async (t) => {

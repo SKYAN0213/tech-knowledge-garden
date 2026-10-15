@@ -3,6 +3,48 @@ import { assertSchema, sha256 } from "./contracts.mjs"
 const baseURL = "https://api.openai.com/v1"
 const reasoningEfforts = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 
+function responsesSchema(schema) {
+  const wire = structuredClone(schema)
+  const visit = (node) => {
+    if (!node || typeof node !== "object" || Array.isArray(node)) return
+    // Structured Outputs does not document uniqueItems. Keep the internal
+    // check; visit schema nodes only, never data property names or enum values.
+    delete node.uniqueItems
+    for (const key of [
+      "properties",
+      "$defs",
+      "definitions",
+      "patternProperties",
+      "dependentSchemas",
+    ])
+      for (const child of Object.values(node[key] ?? {})) visit(child)
+    for (const key of [
+      "items",
+      "additionalProperties",
+      "additionalItems",
+      "contains",
+      "propertyNames",
+      "unevaluatedProperties",
+      "unevaluatedItems",
+      "contentSchema",
+      "not",
+      "if",
+      "then",
+      "else",
+      "anyOf",
+      "oneOf",
+      "allOf",
+      "prefixItems",
+    ]) {
+      const child = node[key]
+      if (Array.isArray(child)) child.forEach(visit)
+      else visit(child)
+    }
+  }
+  visit(wire)
+  return wire
+}
+
 function outputText(response) {
   const parts = []
   for (const item of response.output ?? []) {
@@ -94,6 +136,8 @@ export class OpenAIResponses {
       throw Error("Invalid OpenAI structured request")
 
     const started = performance.now()
+    const internalSchema = structuredClone(schema)
+    const wireSchema = responsesSchema(internalSchema)
     const metadata = await this.metadata(model, { timeout_ms })
     if (!metadata.capabilities.includes("completion"))
       throw Error("OpenAI model cannot complete text")
@@ -109,7 +153,7 @@ export class OpenAIResponses {
         content,
       })),
       text: {
-        format: { type: "json_schema", name: "research_output", strict: true, schema },
+        format: { type: "json_schema", name: "research_output", strict: true, schema: wireSchema },
       },
     }
     if (effort === "none") request.temperature = temperature
@@ -125,7 +169,17 @@ export class OpenAIResponses {
     } catch {
       throw Error("OpenAI returned invalid JSON")
     }
-    assertSchema(output, schema)
+    assertSchema(output, internalSchema)
+    const internalSchemaJSON = JSON.stringify(internalSchema)
+    const wireSchemaJSON = JSON.stringify(wireSchema)
+    const internalSchemaHash = sha256(internalSchemaJSON)
+    const schemaProjection =
+      internalSchemaJSON !== wireSchemaJSON
+        ? {
+            internal_schema_sha256: internalSchemaHash,
+            wire_schema_sha256: sha256(wireSchemaJSON),
+          }
+        : null
     return {
       output,
       artifacts: {
@@ -135,6 +189,7 @@ export class OpenAIResponses {
         response_content_sha256: sha256(content),
         response_id: response.id ?? null,
         response_status: response.status,
+        ...(schemaProjection ? { internal_schema: internalSchema, ...schemaProjection } : {}),
       },
       provenance: {
         ...metadata,
@@ -143,7 +198,8 @@ export class OpenAIResponses {
         temperature: effort === "none" ? temperature : null,
         call_timeout_ms: timeout_ms,
         prompt_sha256: sha256(JSON.stringify(messages)),
-        schema_sha256: sha256(JSON.stringify(schema)),
+        schema_sha256: internalSchemaHash,
+        ...(schemaProjection ?? {}),
         wall_ms: Math.round(performance.now() - started),
         response_id: response.id ?? null,
         service_tier: response.service_tier ?? null,

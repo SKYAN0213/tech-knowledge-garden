@@ -4,12 +4,14 @@ import { canonicalURL, parseNote, walk } from "../garden.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { assertReviewDate } from "./dates.mjs"
+import { assertSignalOccurredAt } from "./signal-dates.mjs"
 import { sha256 } from "./contracts.mjs"
 import { atomicWrite, assertAbsent, readJSON, safePath, RunState } from "./run-state.mjs"
 import {
   assertNewConceptMetadata,
   assertNewConceptBody,
   assertConceptConflicts,
+  assertPreservedConceptIdentities,
   assertConceptConnections,
 } from "./knowledge-links.mjs"
 
@@ -37,7 +39,7 @@ const notePath = (p) => {
   return p
 }
 
-function sourceReview(root, run) {
+export function loadReviewedNoteSource(root, run) {
   validRun(run)
   const files = Object.fromEntries(
     ["documents.json", "parses.json", "reviewed-claims.json"].map((name) => {
@@ -66,7 +68,12 @@ export function evaluateNoteReview(root, decision, { vault = "vault", sourceVaul
   return evaluateNoteReviewInternal(root, decision, { vault, sourceVault })
 }
 
-function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, applied = null) {
+function evaluateNoteReviewInternal(
+  root,
+  decision,
+  { vault, sourceVault, historical = false },
+  applied = null,
+) {
   const v2 = decision?.schema === "knowledge-note-review/v2"
   const allowed = ["schema", "reviewer", "reason", "reviewed_at", ...checks, "notes"]
   if (
@@ -93,7 +100,7 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
   )
     throw Error("Distinct canonical note replacements required")
   const runs = [...new Set(decision.notes.flatMap((n) => (n.evidence || []).map((e) => e.run_id)))]
-  const sources = runs.map((r) => sourceReview(root, r))
+  const sources = runs.map((r) => loadReviewedNoteSource(root, r))
   const approved = decision.notes.map((n) => {
     if (
       Object.keys(n).some(
@@ -233,6 +240,7 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
             "New topic requires a fixed identity, complete source-bound content and an original source link",
           )
         if (
+          !historical &&
           walk(path.join(vault, "TrendTopics"))
             .filter(
               (file) =>
@@ -289,6 +297,41 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
               "New Signals observation needs a reviewed source event and complete judgment",
             )
       }
+      // Preserve the v1 publication contract and approval shape when absent.
+      // An article file only constrains this optional date; source-only fact
+      // review never becomes an article approval through this path.
+      for (const observation of next.meta.observations) {
+        if (observation.occurred_at === undefined) continue
+        const prior = original?.meta.observations?.find((row) => row.id === observation.id)
+        // A legacy ledger may have stored the actual day in event_date. Split
+        // it only when that same day is preserved as occurred_at; the exact
+        // reviewed publication/effective-period checks below still apply.
+        const legacyDateSplit =
+          prior?.occurred_at === undefined &&
+          prior?.source_published_at === undefined &&
+          prior?.event_id === observation.event_id &&
+          prior?.event_date === observation.occurred_at
+        if (
+          prior &&
+          (prior.event_id !== observation.event_id ||
+            (prior.event_date !== observation.event_date && !legacyDateSplit) ||
+            (prior.source_published_at !== undefined &&
+              prior.source_published_at !== observation.source_published_at))
+        )
+          throw Error("Signal event identity and source publication date must be retained")
+        const articles = [...new Set(facts.map(({ source }) => source.run))]
+          .map((run) => readJSON(root, `runs/${run}/approved-article.json`))
+          .filter(Boolean)
+        const bound = facts.flatMap(({ source, claim }) =>
+          claim.evidence.flatMap((e) => {
+            const doc = source.documents.find((d) => d.source_version_id === e.source_version_id)
+            return doc?.original_url
+              ? [{ event_id: sha256(canonicalURL(doc.original_url)).slice(0, 16), claim }]
+              : []
+          }),
+        )
+        assertSignalOccurredAt(observation, { facts: bound, articles })
+      }
     }
     return {
       ...(v2 ? { operation: n.operation } : {}),
@@ -300,7 +343,8 @@ function evaluateNoteReviewInternal(root, decision, { vault, sourceVault }, appl
       evidence: n.evidence,
     }
   })
-  assertConceptConflicts(vault, approved)
+  if (historical) assertPreservedConceptIdentities(approved)
+  else assertConceptConflicts(vault, approved)
   return {
     schema: v2 ? "approved-knowledge-notes/v2" : "approved-knowledge-notes/v1",
     reviewed_at: decision.reviewed_at,
@@ -358,6 +402,16 @@ export function loadNoteApproval(root, run, { vault = "vault" } = {}) {
 // Reading a completed transfer is separate from authorizing a replacement.
 // Every destination must be exactly applied; mixed or changed states fail closed.
 export function loadAppliedNoteApproval(root, run, { vault = "vault" } = {}) {
+  return readPreservedNoteApproval(root, run, vault, true)
+}
+
+// Read-only evidence lookup. Original before/after bytes and source reviews
+// remain mandatory even when the current canonical note has since changed.
+export function loadHistoricalNoteApproval(root, run, { vault = "vault" } = {}) {
+  return readPreservedNoteApproval(root, run, vault, false)
+}
+
+function readPreservedNoteApproval(root, run, vault, requireApplied) {
   validRun(run)
   const decisionBytes = fs.readFileSync(safePath(root, `runs/${run}/note-review.json`))
   const bytes = fs.readFileSync(safePath(root, `runs/${run}/approved-notes.json`))
@@ -385,13 +439,13 @@ export function loadAppliedNoteApproval(root, run, { vault = "vault" } = {}) {
           sha256(note.before_content) !== note.previous_sha256)
     )
       throw Error("Preserved before and approved after bytes differ from the review")
-    if (sha256(fs.readFileSync(safePath(vault, relative))) !== note.sha256)
+    if (requireApplied && sha256(fs.readFileSync(safePath(vault, relative))) !== note.sha256)
       throw Error("Approval is not fully applied or canonical content changed")
   }
   const current = evaluateNoteReviewInternal(
     root,
     decision,
-    { vault, sourceVault: stored.vault || vault },
+    { vault, sourceVault: stored.vault || vault, historical: !requireApplied },
     stored,
   )
   if (sha256(JSON.stringify(current)) !== sha256(JSON.stringify(stored)))

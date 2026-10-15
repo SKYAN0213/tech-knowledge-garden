@@ -2,7 +2,7 @@
 
 확인일: 2026-10-03 · 범위: 기존 8개 분야, 기술·제품/기업·운영, 국내외 논문·연구 사업화·로봇업계
 
-이후 구현: 조사 결과는 `data/research-source-catalog.json`으로 구조화했고 [등록 명령과 공유 레시피](SOURCE_REGISTRATION.md)를 추가했다. 아래 138개/50개는 조사 당시 기준이며, 현재 연결은 `npm run research:sources -- list`로 확인한다. 등록과 자동 수집 활성화는 별도다.
+이후 구현: 조사 결과는 `data/research-source-catalog.json`으로 구조화했고 [등록 명령과 공유 레시피](SOURCE_REGISTRATION.md)를 추가했다. 2026-10-10 기준 catalog73개·registry200개·정기 활성60개다. 200주소 전수 감사·용도 판정, 새5개 정기 수집과 남은 검증은 [최신 수집 범위와 비용](SOURCE_COLLECTION_ANALYSIS.md)에 기록했다. 아래138개/50개와 최초 조사 표는 당시 기준이며, 현재 연결은 `npm run research:sources -- list`와 `node scripts/research-collection.mjs --inventory`로 확인한다. 등록과 자동 수집 활성화는 별도다.
 
 ## 현재 기준과 확인 수준
 

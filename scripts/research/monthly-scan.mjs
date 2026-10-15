@@ -3,6 +3,7 @@ import { collectWindowDetails, validDay } from "./list-scan.mjs"
 import { parseDocument } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
+import { isCollectedDetail } from "./source-access.mjs"
 
 function monthKeys(since, until) {
   if (!validDay(since) || !validDay(until) || since >= until)
@@ -224,10 +225,14 @@ export async function scanCalendarMonthRoute(
   details.push(...inspected.details)
   summary.status =
     details.length === selected.length &&
-    details.every((detail) => detail.status === "source_parsed_unreviewed")
+    details.every(isCollectedDetail)
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
   summary.candidate_count = candidates.length
+  if (channel.access_policy === "public-only") {
+    summary.access_scope = "public-only"
+    summary.access_excluded_count = details.filter((detail) => detail.status === "public_access_excluded").length
+  }
   return { summary, indexDocuments, documents, parses, candidates }
 }

@@ -1,0 +1,16 @@
+{
+  "schema": "research-curation-policy/v1",
+  "version": "1",
+  "weights": {
+    "novelty": 30,
+    "impact": 25,
+    "specificity": 20,
+    "knowledge_value": 15,
+    "timeliness": 10
+  },
+  "minimum_score": 70,
+  "priority_score": 85,
+  "max_articles": 40,
+  "max_per_sector": 5,
+  "require_reviewed_scores": true
+}

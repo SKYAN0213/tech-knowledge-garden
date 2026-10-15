@@ -1,6 +1,71 @@
+// Availability is an evidence assessment, never a claim about future permanence.
+export function sourceAvailability(document, parsed) {
+  if (!document) return { status: "undetermined", reason: "missing_source_evidence" }
+  if (document.availability?.status && !parsed)
+    return { status: document.availability.status, reason: document.availability.reason }
+  const failure = document.policy_failure || document
+  if (failure.availability?.status === "temporary_unavailable")
+    return { status: "temporary_unavailable", reason: "temporary_redirect_policy_failure" }
+  if (document.policy_status === "denied")
+    return {
+      status: "policy_restricted",
+      reason: document.policy?.allowed === false ? "robots_disallow" : "redirect_scope_restricted",
+    }
+  if (parsed?.status === "blocked" && parsed.quality?.reason === "authentication-page")
+    return { status: "policy_restricted", reason: "public_access_restricted" }
+  if (
+    failure.fetch_status === "rate_limited" ||
+    [408, 429, 500, 502, 503, 504].includes(failure.http_status)
+  )
+    return {
+      status: "temporary_unavailable",
+      reason: document.policy_failure ? "temporary_policy_fetch_failure" : "temporary_http_failure",
+    }
+  if (
+    failure.fetch_status === "failed" &&
+    (["Fetch deadline exceeded", "PDF body deadline exceeded"].includes(failure.error) ||
+      /\b(?:EAI_AGAIN|ECONNRESET|ETIMEDOUT|ECONNREFUSED|EHOSTUNREACH|ENETUNREACH)\b/.test(
+        failure.error_code || failure.error || "",
+      ))
+  )
+    return { status: "temporary_unavailable", reason: "temporary_transport_failure" }
+  if (document.policy_status === "failed")
+    return { status: "undetermined", reason: "policy_check_failed" }
+  if (
+    parsed &&
+    (parsed.status !== "extracted" ||
+      !parsed.quality?.required_fields_present ||
+      !parsed.blocks?.length)
+  )
+    return { status: "undetermined", reason: "parse_or_identity_requires_review" }
+  if (["captured", "not_modified"].includes(document.fetch_status))
+    return { status: "available", reason: "public_response_observed" }
+  return {
+    status: "undetermined",
+    reason:
+      document.http_status === 410 ? "resource_reported_gone" : "access_or_availability_unknown",
+  }
+}
+
+export function retryAfterAt(value, now = Date.now()) {
+  if (typeof value !== "string" || !value.trim()) return null
+  const text = value.trim()
+  const at = /^\d+$/.test(text) ? now + Number(text) * 1000 : Date.parse(text)
+  return Number.isSafeInteger(at) && at >= now && at <= 8640000000000000 ? at : null
+}
+
 // Retry eligibility describes acquisition work, never article approval.
 export function sourceFailureRetry(document, parsed) {
   if (!document) return { state: "requires_repair", kind: "missing_source_evidence" }
+  const availability = sourceAvailability(document, parsed)
+  if (availability.status === "temporary_unavailable")
+    return {
+      state: "retryable",
+      kind:
+        availability.reason === "temporary_transport_failure"
+          ? "transient_transport"
+          : "transient_response",
+    }
   if (["denied", "failed"].includes(document.policy_status))
     return { state: "awaiting_new_observation", kind: "source_policy" }
   if (parsed?.status === "blocked")

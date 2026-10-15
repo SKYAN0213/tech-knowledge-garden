@@ -17,7 +17,9 @@ import {
   publicationOperationStatus,
   recordPublicationDeployment,
   recordPublicationReadback,
+  assertPublicationFallbackSelection,
 } from "./publication-operation.mjs"
+import { inspectAuthoringReleaseInputs } from "./authoring-execution.mjs"
 import { assertDeploymentProof, verifyPublicReadback } from "./public-readback.mjs"
 import { deliverRemoteArtifacts, inspectRemoteDelivery } from "./remote-delivery.mjs"
 
@@ -148,6 +150,9 @@ export async function deliverApprovedPublication({
 
   return withLock(root, "delivery-" + run, async () => {
     checkInput()
+    const approved = inspectAuthoringReleaseInputs(root, releasePath)
+    const manifest = readJSON(root, `runs/${approved.release.preview_run}/preview-manifest.json`)
+    assertPublicationFallbackSelection({ root, run, preview: manifest, releasePath })
     if (!existing)
       await withGardenOperationLock(root, () =>
         preparePublicationOperation({
@@ -216,6 +221,7 @@ export async function deliverApprovedPublication({
       return finish()
     }
     if (publication.status === "drive_verified") {
+      assertPublicationFallbackSelection({ root, run, preview: manifest, releasePath })
       if (root !== path.resolve(repository, DEFAULT_ROOT))
         throw Error("Publishing requires the canonical repository runtime root")
       const intent = readJSON(root, base + "/publish-intent.json")

@@ -2,11 +2,13 @@ import fs from "node:fs"
 import path from "node:path"
 import { PUBLIC_ROOTS, sha256 } from "./contracts.mjs"
 import { verifiedDriveEdition } from "./daily-scan.mjs"
-import { privatePreview } from "./preview.mjs"
+import { loadPreviewPublicationInputs, previewEditionProjections, privatePreview } from "./preview.mjs"
+import { loadCurationSelection } from "./curation.mjs"
 import {
   authoringDelta,
   authoringInventory,
   compareAuthoringRemote,
+  inspectCompletedAuthoringPreview,
 } from "./authoring-transfer.mjs"
 import { validResearchCoverage } from "../research-audit.mjs"
 import {
@@ -30,14 +32,34 @@ const sameSet = (a, b) =>
   new Set(a).size === a.length &&
   JSON.stringify([...a].sort()) === JSON.stringify([...b].sort())
 
+export function assertCuratedReleaseProjectionBinding({
+  projected,
+  manifest,
+  combinedEventIds,
+  selectedNewEditionEventIds,
+  selectedNewEditionRunCount,
+}) {
+  const consistencyEventIds = manifest.consistency.articles.map((row) => row.event_id)
+  if (
+    JSON.stringify(projected) !== JSON.stringify(manifest.editions) ||
+    !sameSet(combinedEventIds, consistencyEventIds) ||
+    selectedNewEditionEventIds.length !== selectedNewEditionRunCount ||
+    !sameSet(selectedNewEditionEventIds, [...new Set(selectedNewEditionEventIds)]) ||
+    selectedNewEditionEventIds.some((id) => !combinedEventIds.includes(id))
+  )
+    throw Error("Curated selection no longer produces the reviewed edition")
+}
+
 // This is an explicit editorial decision, separate from collection or build success.
 export function assertAuthoringReleaseReview({
   plan,
   manifest,
   snapshot,
   review,
+  curation = null,
   now = Date.now(),
 }) {
+  const curated = Boolean(curation)
   const expected = [
     "schema",
     "kind",
@@ -47,7 +69,7 @@ export function assertAuthoringReleaseReview({
     "event_ids",
     "note_paths",
     "checks",
-    ...(manifest.edition_spec ? ["coverage"] : []),
+    ...(manifest.edition_spec ? (curated ? ["curation_selection"] : ["coverage"]) : []),
   ]
   if (
     review?.schema !== "research-authoring-release-review/v1" ||
@@ -75,24 +97,39 @@ export function assertAuthoringReleaseReview({
   )
     throw Error("Explicit complete editorial release review required")
   if (manifest.edition_spec) {
-    if (
-      review.kind !== "daily" ||
-      !validResearchCoverage(review.coverage, { requireAttempt: true })
-    )
-      throw Error("Daily release requires all 32 research cells with investigation evidence")
-    if (
-      review.coverage.some((row) =>
-        row.urls.some((url) => {
-          try {
-            return !["https:", "http:"].includes(new URL(url).protocol)
-          } catch {
-            return true
-          }
-        }),
+    if (curated) {
+      if (
+        review.kind !== "curated" ||
+        curation.briefing_date !== manifest.edition_spec.date ||
+        !sameSet(curation.event_ids, [...new Set(curation.event_ids)]) ||
+        curation.event_ids.some(
+          (id) => !manifest.consistency.articles.some((row) => row.event_id === id),
+        ) ||
+        Object.keys(review.curation_selection || {}).length !== 2 ||
+        review.curation_selection?.path !== curation.reference.path ||
+        review.curation_selection?.sha256 !== curation.reference.sha256
       )
-    )
-      throw Error("Research coverage needs source URLs")
-  } else if (review.kind !== "retrospective" || "coverage" in review) {
+        throw Error("Curated release requires the exact native selection for this briefing")
+    } else {
+      if (
+        review.kind !== "daily" ||
+        !validResearchCoverage(review.coverage, { requireAttempt: true })
+      )
+        throw Error("Daily release requires all 32 research cells with investigation evidence")
+      if (
+        review.coverage.some((row) =>
+          row.urls.some((url) => {
+            try {
+              return !["https:", "http:"].includes(new URL(url).protocol)
+            } catch {
+              return true
+            }
+          }),
+        )
+      )
+        throw Error("Research coverage needs source URLs")
+    }
+  } else if (curated || review.kind !== "retrospective" || "coverage" in review) {
     throw Error("Retrospective release cannot create a new operational run")
   }
   if (
@@ -118,6 +155,7 @@ export function assertAuthoringReleaseReview({
   return {
     kind: review.kind,
     reviewed_event_ids: review.event_ids,
+    ...(curated ? { curation_selection: curation.reference } : {}),
     coverage_reviewed: review.kind === "daily",
     new_operational_run: review.kind === "daily",
   }
@@ -138,20 +176,23 @@ export async function authorizeAuthoringTransfer({
       const manifestPath = `runs/${previewRun}/preview-manifest.json`
       const initial = readJSON(root, manifestPath)
       if (initial?.run_id !== previewRun) throw Error("Existing verified preview required")
-      await privatePreview(
-        root,
-        previewRun,
-        initial.daily_editorial_handoff ? [] : initial.approved_runs,
-        {
-          repo,
-          vault,
-          publicationHandoff: initial.daily_editorial_handoff?.path || null,
-          knowledgeRuns: initial.knowledge_runs,
-          editionSpec: initial.edition_spec || null,
-          legacyReviews: initial.legacy_reviews || [],
-          sourceAlternatives: initial.source_alternatives || [],
-        },
-      )
+      const consumption = inspectCompletedAuthoringPreview({ root, previewRun, repo, vault })
+      if (!consumption)
+        await privatePreview(
+          root,
+          previewRun,
+          initial.daily_editorial_handoff ? [] : initial.approved_runs,
+          {
+            repo,
+            vault,
+            publicationHandoff: initial.daily_editorial_handoff?.path || null,
+            knowledgeRuns: initial.knowledge_runs,
+            editionSpec: initial.edition_spec || null,
+            legacyReviews: initial.legacy_reviews || [],
+            sourceAlternatives: initial.source_alternatives || [],
+            retrospectiveRuns: (initial.retrospective_runs || []).map((row) => row.run_id),
+          },
+        )
       const planPath = `runs/${previewRun}/drive-authoring/transfer-plan.json`
       const paths = {
         plan: safePath(root, planPath),
@@ -188,7 +229,71 @@ export async function authorizeAuthoringTransfer({
         if (staged.length !== row.bytes || sha256(staged) !== row.sha256)
           throw Error("Staged authoring bytes changed")
       }
-      const decision = assertAuthoringReleaseReview(values)
+      let curation = null
+      if (values.manifest.daily_editorial_handoff) {
+        const selected = loadPreviewPublicationInputs(root, previewRun, [], {
+          vault: path.resolve(repo, vault),
+          knowledgeRuns: values.manifest.knowledge_runs,
+          publicationHandoff: values.manifest.daily_editorial_handoff.path,
+          editionSpec: values.manifest.edition_spec || null,
+          legacyReviews: values.manifest.legacy_reviews || [],
+          sourceAlternatives: values.manifest.source_alternatives || [],
+          retrospectiveRuns: (values.manifest.retrospective_runs || []).map((row) => row.run_id),
+        })
+        if (
+          JSON.stringify(selected.dailySelection) !==
+            JSON.stringify(values.manifest.daily_editorial_handoff) ||
+          JSON.stringify(selected.approvedRuns) !== JSON.stringify(values.manifest.approved_runs) ||
+          JSON.stringify(selected.knowledgeRuns) !== JSON.stringify(values.manifest.knowledge_runs) ||
+          JSON.stringify(selected.retrospectiveReferences) !==
+            JSON.stringify(values.manifest.retrospective_runs || []) ||
+          (selected.curation &&
+            JSON.stringify(selected.newEditionRuns) !==
+              JSON.stringify(values.manifest.new_edition_runs || []))
+        )
+          throw Error("Curated publication handoff differs from the preview")
+        if (selected.curation) {
+          if (!values.manifest.edition_spec)
+            throw Error("Curated release requires an explicit new-edition specification")
+          const verified = loadCurationSelection(
+            { root, vault: path.resolve(repo, vault) },
+            selected.curation,
+            { checkHistory: false },
+          )
+          const notes = selected.knowledge.flatMap((row) => row.approval.notes)
+          const projections = previewEditionProjections(
+            path.resolve(repo, vault),
+            selected,
+            {
+              editionSpec: values.manifest.edition_spec,
+              notes,
+              legacyReviews: values.manifest.legacy_reviews || [],
+              root,
+            },
+          )
+          const projected = projections.map((row) => ({
+            path: row.path,
+            sha256: sha256(row.content),
+            event_ids: row.event_ids,
+          }))
+          const eventIds = selected.approvals
+            .filter((row) => selected.newEditionRuns.includes(row.run))
+            .map((row) => row.article.event_id)
+          assertCuratedReleaseProjectionBinding({
+            projected,
+            manifest: values.manifest,
+            combinedEventIds: selected.approvals.map((row) => row.article.event_id),
+            selectedNewEditionEventIds: eventIds,
+            selectedNewEditionRunCount: selected.newEditionRuns.length,
+          })
+          curation = {
+            reference: selected.curation,
+            briefing_date: verified.briefing_date,
+            event_ids: eventIds,
+          }
+        }
+      }
+      const decision = assertAuthoringReleaseReview({ ...values, curation })
       // The existing full-snapshot validator also verifies all content hashes and local bytes.
       const drive = verifiedDriveEdition(paths.snapshot, path.resolve(repo, vault))
       const comparison = compareAuthoringRemote(values.plan, values.observation)
@@ -216,7 +321,11 @@ export async function authorizeAuthoringTransfer({
       if (prior && JSON.stringify(prior) !== JSON.stringify(result))
         throw Error("Release receipt changed")
       if (!prior) atomicCreate(root, relative, result)
-      return { ...result, receipt: relative }
+      return {
+        ...result,
+        receipt: relative,
+        ...(consumption ? { preview_consumption: consumption } : {}),
+      }
     }),
   )
 }

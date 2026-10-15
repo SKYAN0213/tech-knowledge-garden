@@ -6,6 +6,7 @@ import path from "node:path"
 import { Ollama } from "../scripts/research/ollama.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
+import { extractionBudget } from "../scripts/research/claims.mjs"
 import {
   validateModelPolicy,
   resolveRolePolicy,
@@ -110,6 +111,19 @@ test("source-block evidence is an explicit extraction-only policy with legacy de
     () => validateModelPolicy(policy({ evidence_quote_mode: "source_block" })),
     /Unknown model role setting/,
   )
+})
+
+test("shared local queue accepts explicit fact timeouts within the same role policy bound", () => {
+  const p = {
+    schema: "model-execution-policy/v1",
+    roles: { fact_extract: { ...role, call_timeout_ms: 600000, total_timeout_ms: 3600000 } },
+  }
+  assert.equal(validateModelPolicy(p).roles.fact_extract.call_timeout_ms, 600000)
+  assert.equal(resolveRolePolicy(p, "fact_extract").extraction_timeout_ms, 3600000)
+  assert.equal(extractionBudget().call_timeout_ms, 300000)
+  assert.equal(extractionBudget({ call_timeout_ms: 3600000 }).call_timeout_ms, 3600000)
+  for (const invalid of [0, -1, 3600001, 600000.5, "600000"])
+    assert.throws(() => extractionBudget({ call_timeout_ms: invalid }), /budget out of range/)
 })
 
 test("role policy rejects unknown fields, cloud models, strings as booleans and invalid budgets", () => {

@@ -1,0 +1,9 @@
+{
+  "schema": "research-local-drive-policy/v1",
+  "root_folder_id": "1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD",
+  "archive_parent_id": "11Mu9qSiR8Pk32k53-i032qSRPTdsozV7",
+  "timeout_ms": 60000,
+  "chunk_bytes": 4194304,
+  "maximum_bundle_bytes": 268435456,
+  "automatic_retry": false
+}

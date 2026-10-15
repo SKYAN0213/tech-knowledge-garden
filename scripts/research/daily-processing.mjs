@@ -5,6 +5,12 @@ import { generateDailyHandoff, selectCandidateSource } from "./editorial-handoff
 import { saveSourceSelection } from "./source-selection.mjs"
 import { processSourceRun } from "./source-processing.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
+import {
+  assertProcessingRecoveryRequest,
+  findReusableDailyProcessing,
+  loadProcessingRecovery,
+  processingSourceFingerprint,
+} from "./processing-reuse.mjs"
 import { loadFrozenDailyProcessingHandoff } from "./frozen-daily-processing-handoff.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
@@ -17,9 +23,15 @@ const identityRoutes = new Set([
   "verify-original-date",
 ])
 
-async function currentHandoff({ root, dailyRunId, vault, backlogFile }) {
+async function currentHandoff({ root, dailyRunId, vault, backlogFile, articleImageIntakes }) {
   return withLock(root, "daily-acquisition", () => {
-    const ref = generateDailyHandoff({ root, runId: dailyRunId, vault, backlogFile })
+    const ref = generateDailyHandoff({
+      root,
+      runId: dailyRunId,
+      vault,
+      backlogFile,
+      articleImageIntakes,
+    })
     return { path: ref.path, value: readJSON(root, ref.path) }
   })
 }
@@ -41,13 +53,23 @@ export async function processDailyCandidates({
   execute = false,
   reviewFiles = {},
   processingRuns = {},
+  processingRecoveries = {},
+  reuseCompleted = false,
+  reuseIndex,
+  reuseFinder = findReusableDailyProcessing,
   collectionBasis,
+  articleImageIntakes = [],
   evidenceThink,
   provider,
   handoffLoader = currentHandoff,
   processor = processSourceRun,
 }) {
   if (
+    !Array.isArray(articleImageIntakes) ||
+    articleImageIntakes.length > 12 ||
+    new Set(articleImageIntakes).size !== articleImageIntakes.length ||
+    articleImageIntakes.some((id) => !validId(id)) ||
+    (collectionBasis && articleImageIntakes.length) ||
     !validId(runId) ||
     !validId(dailyRunId) ||
     runId === dailyRunId ||
@@ -72,6 +94,12 @@ export async function processDailyCandidates({
         id === runId ||
         reviewFiles[key],
     ) ||
+    !processingRecoveries ||
+    typeof processingRecoveries !== "object" ||
+    Array.isArray(processingRecoveries) ||
+    Object.keys(processingRecoveries).some(
+      (key) => !candidateKeys.includes(key) || processingRuns[key] || reviewFiles[key],
+    ) ||
     (evidenceThink !== undefined &&
       typeof evidenceThink !== "boolean" &&
       !(
@@ -91,8 +119,18 @@ export async function processDailyCandidates({
       Object.keys(processingRuns).length)
   )
     throw Error("Frozen collection is for fact extraction; continue reviews with --from-processing")
+  for (const request of Object.values(processingRecoveries))
+    assertProcessingRecoveryRequest(request)
   const policyBytes = fs.readFileSync(policyFile)
   return withLock(root, "daily-processing-" + runId, async () => {
+    const base = `runs/${runId}/`
+    const previousInput = readJSON(root, base + "daily-processing-input.json")
+    const resolvedEvidenceThink =
+      evidenceThink !== undefined
+        ? evidenceThink
+        : previousInput
+          ? previousInput.evidence_overrides?.think
+          : false
     const handoff = collectionBasis
       ? await withLock(root, "daily-acquisition", () =>
           withLock(path.dirname(backlogFile), "candidate-backlog", () =>
@@ -104,7 +142,7 @@ export async function processDailyCandidates({
             }),
           ),
         )
-      : await handoffLoader({ root, dailyRunId, vault, backlogFile })
+      : await handoffLoader({ root, dailyRunId, vault, backlogFile, articleImageIntakes })
     if (
       handoff.value?.schema !== "research-editorial-handoff/v1" ||
       handoff.value.daily_run !== dailyRunId
@@ -129,25 +167,72 @@ export async function processDailyCandidates({
           content_sha256: row.article_content_sha256,
           source_urls: row.source_urls,
         }
-        if (processingRuns[key]) {
+        const previousEntry = previousInput?.entries.find((old) => old.candidate_key === key)
+        const recovery = processingRecoveries[key] || previousEntry?.processing_recovery?.request
+        if (recovery) {
+          if (
+            row.review_status !== "unreviewed" ||
+            row.event_id ||
+            row.source_evidence_state !== "exact"
+          )
+            throw Error("Processing recovery requires an exact unreviewed candidate")
+          const selection = selectCandidateSource(root, handoff.value, key)
+          entry.processing_recovery = {
+            request: recovery,
+            ...(await loadProcessingRecovery(root, recovery, entry, selection.selected)),
+          }
+        } else if (processingRuns[key]) {
           const reused = await loadProcessedSourceResult(root, processingRuns[key], entry)
           entry.reuse_run = processingRuns[key]
           entry.reuse_input_sha256 = reused.processing_input_sha256
+        } else if (
+          reuseCompleted &&
+          !reviewFiles[key] &&
+          row.review_status === "unreviewed" &&
+          !row.event_id &&
+          ["historical-review", "review-publication-time"].includes(row.next_route) &&
+          row.source_evidence_state === "exact"
+        ) {
+          const selection = selectCandidateSource(root, handoff.value, key)
+          const previousEntry = previousInput?.entries.find((old) => old.candidate_key === key)
+          if (previousEntry) {
+            if (
+              previousEntry.reuse_source_fingerprint &&
+              previousEntry.reuse_source_fingerprint !==
+                processingSourceFingerprint(selection.selected)
+            )
+              throw Error("Automatically reused supporting source context changed")
+            for (const field of [
+              "reuse_run",
+              "reuse_input_sha256",
+              "reuse_source_fingerprint",
+              "reuse_parent",
+              "reuse_observation",
+            ])
+              if (previousEntry[field] !== undefined) entry[field] = previousEntry[field]
+          } else {
+            const reused = await reuseFinder(root, entry, selection.selected, {
+              index: reuseIndex,
+              policyBytes,
+              evidenceThink: resolvedEvidenceThink,
+              vault,
+            })
+            if (reused?.run)
+              Object.assign(entry, {
+                reuse_run: reused.run,
+                reuse_input_sha256: reused.input_sha256,
+                reuse_source_fingerprint: reused.source_fingerprint,
+                reuse_parent: reused.parent,
+              })
+            if (reused?.observation) entry.reuse_observation = reused.observation
+          }
         }
         return entry
       }),
     )
-    const base = `runs/${runId}/`
-    const previousInput = readJSON(root, base + "daily-processing-input.json")
     // Routine daily comparisons do not need a second long reasoning pass.
     // Preserve a stored run's original setting, including an absent override;
     // explicit callers may still request the shared policy's reasoning level.
-    const resolvedEvidenceThink =
-      evidenceThink !== undefined
-        ? evidenceThink
-        : previousInput
-          ? previousInput.evidence_overrides?.think
-          : false
     const input = {
       schema: "research-daily-processing-input/v1",
       daily_run: dailyRunId,
@@ -158,6 +243,14 @@ export async function processDailyCandidates({
       reuse_reader_sha256: sha256(
         fs.readFileSync(new URL("./processed-source-result.mjs", import.meta.url)),
       ),
+      ...(reuseCompleted
+        ? {
+            automatic_source_reuse: true,
+            reuse_selector_sha256: sha256(
+              fs.readFileSync(new URL("./processing-reuse.mjs", import.meta.url)),
+            ),
+          }
+        : {}),
       ...(handoff.collection_basis
         ? {
             collection_basis: handoff.collection_basis,
@@ -240,6 +333,12 @@ export async function processDailyCandidates({
           continue
         }
         sourceOwners.set(sourceKey, key)
+        if (
+          entry.reuse_parent &&
+          sha256(fs.readFileSync(safePath(root, entry.reuse_parent.path))) !==
+            entry.reuse_parent.sha256
+        )
+          throw Error("Automatically reused parent processing input changed")
         const result = await loadProcessedSourceResult(root, entry.reuse_run, entry)
         if (result.processing_input_sha256 !== entry.reuse_input_sha256)
           throw Error("Pinned reused processing input changed")
@@ -289,6 +388,8 @@ export async function processDailyCandidates({
       sourceOwners.set(sourceKey, key)
       const child = `${runId}-${sha256(key).slice(0, 12)}`,
         selectionRun = child + "-source"
+      if (entry.processing_recovery?.request.run === child)
+        throw Error("Processing recovery requires a new child run")
       const storedFailure = readJSON(root, base + `failures/${sha256(key)}.json`)
       if (storedFailure) {
         if (
@@ -326,11 +427,24 @@ export async function processDailyCandidates({
           handoff_path: reference.path,
           handoff_sha256: reference.sha256,
         })
+        const recovery = entry.processing_recovery
+        if (recovery)
+          for (const ref of recovery.references)
+            if (sha256(fs.readFileSync(safePath(root, ref.path))) !== ref.sha256)
+              throw Error("Pinned processing recovery changed")
         const result = await processor({
           root,
           run: child,
           sourceRun: selectionRun,
           policyFile,
+          ...(recovery
+            ? {
+                extractionRun: recovery.extraction_run,
+                ...(recovery.assessment_reuse_run
+                  ? { assessmentReuseRun: recovery.assessment_reuse_run }
+                  : {}),
+              }
+            : {}),
           reviewFile: reviewFiles[key],
           // Backlog keys can use canonical URLs or editorial identifiers. The
           // extractor needs the acquired primary source identity for a grouped

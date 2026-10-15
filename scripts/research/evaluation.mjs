@@ -140,12 +140,17 @@ export const evaluationAdjudicationInputSchema = {
 function unique(values, label) {
   if (new Set(values).size !== values.length) throw Error(`Unique ${label} required`)
 }
+function assertReviewerKind(reviewer, kind) {
+  if (kind === "human" && /^(codex|chatgpt|ollama|gpt[- ]\d)(?:\b|[-_ ])/i.test(reviewer.trim()))
+    throw Error("AI reviewer provenance cannot be promoted to human review")
+}
 function assertSpecification(spec, documents, parses) {
   assertSchema(spec, evaluationSpecSchema)
   if (spec.supersedes_mode && !spec.supersedes)
     throw Error("Parser revision mode requires supersedes")
   if (!spec.case_id.trim() || !spec.review.reviewer.trim() || !spec.review.notes.trim())
     throw Error("Nonempty case and review provenance required")
+  assertReviewerKind(spec.review.reviewer, spec.review.reviewer_kind)
   unique(spec.sectors, "sectors")
   unique(spec.languages, "languages")
   unique(
@@ -216,11 +221,77 @@ export function immutableSourceKey(documents) {
 
 // Freeze source-first expectations without invoking a model or changing authoring files.
 // Codex direct reading is kept separate from attested independent human review.
-export async function saveEvaluationCase(root, runId, sourceRun, spec) {
+export function loadEvaluationSourceScope(root, sourceRun, scope = {}) {
+  if (
+    !scope ||
+    typeof scope !== "object" ||
+    Array.isArray(scope) ||
+    Object.keys(scope).some((k) => !["source_version_ids", "parse_ids"].includes(k))
+  )
+    throw Error("Only exact source versions and parses may scope an evaluation source")
+  if (typeof sourceRun !== "string" || !/^[a-zA-Z0-9_-]+$/.test(sourceRun))
+    throw Error("Invalid evaluation source run")
+  const stored = Object.keys(scope).length
+    ? {
+        documents: readJSON(root, `runs/${sourceRun}/documents.json`),
+        parses: readJSON(root, `runs/${sourceRun}/parses.json`),
+      }
+    : loadStoredSourceRun(root, sourceRun)
+  if (!Array.isArray(stored.documents) || !Array.isArray(stored.parses))
+    throw Error("Stored evaluation source arrays required")
+  for (const key of ["source_version_ids", "parse_ids"])
+    if (
+      scope[key] &&
+      (!Array.isArray(scope[key]) ||
+        !scope[key].length ||
+        new Set(scope[key]).size !== scope[key].length)
+    )
+      throw Error("Distinct nonempty evaluation source scope required")
+  const documents = scope.source_version_ids
+    ? stored.documents.filter((d) => scope.source_version_ids.includes(d.source_version_id))
+    : stored.documents
+  const parses = stored.parses.filter(
+    (p) =>
+      documents.some((d) => d.source_version_id === p.source_version_id) &&
+      (!scope.parse_ids || scope.parse_ids.includes(p.parse_id)),
+  )
+  if (
+    !documents.length ||
+    !parses.length ||
+    scope.source_version_ids?.some((id) => !documents.some((d) => d.source_version_id === id)) ||
+    scope.parse_ids?.some((id) => !parses.some((p) => p.parse_id === id)) ||
+    documents.some((d) => !parses.some((p) => p.source_version_id === d.source_version_id))
+  )
+    throw Error("Evaluation scope must bind each stored source to its exact parse")
+  if (documents.some((d) => !["captured", "not_modified"].includes(d.fetch_status)))
+    throw Error("Evaluation scope contains an unacquired source")
+  assertStoredEvidence(root, documents, parses)
+  return {
+    documents,
+    parses,
+    identity: {
+      source_run: sourceRun,
+      documents_sha256: sha256(JSON.stringify(documents)),
+      parses_sha256: sha256(JSON.stringify(parses)),
+    },
+    root: path.resolve(root),
+  }
+}
+
+export async function saveEvaluationCase(root, runId, sourceRun, spec, options = {}) {
   if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid evaluation import run id")
   assertSchema(spec, evaluationSpecSchema)
   return withLock(root, "evaluation-case-" + spec.case_id, async () => {
-    const stored = loadStoredSourceRun(root, sourceRun)
+    const shared = options.storage === "shared-source/v1"
+    if (
+      Object.keys(options).some((k) => !["storage", "source_scope"].includes(k)) ||
+      (options.storage !== undefined && !shared) ||
+      (options.source_scope && !shared)
+    )
+      throw Error("Unsupported evaluation source storage")
+    const stored = shared
+      ? loadEvaluationSourceScope(root, sourceRun, options.source_scope)
+      : loadStoredSourceRun(root, sourceRun)
     assertSpecification(spec, stored.documents, stored.parses)
     if (spec.supersedes) {
       // Preserve and verify the frozen predecessor even when a later evidence
@@ -245,12 +316,14 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
         throw Error("Evaluation case input changed; use a new case id")
       loadEvaluationCase(root, spec.case_id)
     } else {
-      for (const doc of stored.documents)
-        atomicWrite(caseRoot, doc.body_path, fs.readFileSync(safePath(root, doc.body_path)))
-      for (const parse of stored.parses)
-        atomicWrite(caseRoot, `parses/${parse.parse_id}/parse.json`, parse)
-      atomicWrite(caseRoot, "runs/source/documents.json", stored.documents)
-      atomicWrite(caseRoot, "runs/source/parses.json", stored.parses)
+      if (!shared) {
+        for (const doc of stored.documents)
+          atomicWrite(caseRoot, doc.body_path, fs.readFileSync(safePath(root, doc.body_path)))
+        for (const parse of stored.parses)
+          atomicWrite(caseRoot, `parses/${parse.parse_id}/parse.json`, parse)
+        atomicWrite(caseRoot, "runs/source/documents.json", stored.documents)
+        atomicWrite(caseRoot, "runs/source/parses.json", stored.parses)
+      }
       const status =
         spec.origin === "synthetic-fixture"
           ? "synthetic"
@@ -268,6 +341,18 @@ export async function saveEvaluationCase(root, runId, sourceRun, spec) {
         schema: "evaluation-fixture/v1",
         case_id: spec.case_id,
         source_run: sourceRun,
+        ...(shared
+          ? {
+              source_storage: "shared-source/v1",
+              source_scope: options.source_scope || {},
+              source_files: Object.fromEntries(
+                ["documents.json", "parses.json"].map((name) => [
+                  name,
+                  sha256(fs.readFileSync(safePath(root, `runs/${sourceRun}/${name}`))),
+                ]),
+              ),
+            }
+          : {}),
         specification_sha256,
         documents_sha256: stored.identity.documents_sha256,
         parses_sha256: stored.identity.parses_sha256,
@@ -310,8 +395,22 @@ export function loadEvaluationSource(root, caseId) {
     manifest.gold_path !== `evaluation/gold/${caseId}.json`
   )
     throw Error("Evaluation source manifest mismatch")
-  const caseRoot = safePath(root, directory)
-  const { documents, parses, identity } = loadStoredSourceRun(caseRoot, "source")
+  const shared = manifest.source_storage === "shared-source/v1"
+  if (manifest.source_storage !== undefined && !shared)
+    throw Error("Unsupported evaluation source storage")
+  const caseRoot = shared ? path.resolve(root) : safePath(root, directory)
+  if (
+    shared &&
+    ["documents.json", "parses.json"].some(
+      (name) =>
+        sha256(fs.readFileSync(safePath(root, `runs/${manifest.source_run}/${name}`))) !==
+        manifest.source_files?.[name],
+    )
+  )
+    throw Error("Shared evaluation source files changed")
+  const { documents, parses, identity } = shared
+    ? loadEvaluationSourceScope(root, manifest.source_run, manifest.source_scope)
+    : loadStoredSourceRun(caseRoot, "source")
   if (
     identity.documents_sha256 !== manifest.documents_sha256 ||
     identity.parses_sha256 !== manifest.parses_sha256
@@ -670,6 +769,7 @@ export async function saveEvaluationAdjudication(root, runId, caseId, candidateR
   if (caseId !== input?.case_id || candidateRun !== input?.candidate_run)
     throw Error("Review case and candidate run must match the command inputs")
   assertSchema(input, evaluationAdjudicationInputSchema)
+  assertReviewerKind(input.reviewer, input.reviewer_kind)
   if (input.independent_human_review && input.reviewer_kind !== "human")
     throw Error("Independent human adjudication requires a human reviewer")
 

@@ -3,7 +3,11 @@ import { randomUUID } from "node:crypto"
 import { sha256 } from "./contracts.mjs"
 import { extractionBudget } from "./claims.mjs"
 import { atomicWrite, readJSON, safePath } from "./run-state.mjs"
-import { validateLocalOllamaURL } from "./ollama.mjs"
+import {
+  validateLocalOllamaURL,
+  assertStructuredRequestBudget,
+  modelFailureWithCode,
+} from "./ollama.mjs"
 
 export const MODEL_ROLES = [
   "search_plan",
@@ -41,7 +45,7 @@ function roleSettings(role, input) {
   for (const key of ["model", "think", "num_ctx", "num_predict"])
     if (!Object.hasOwn(input, key)) throw Error("Required model role setting: " + key)
   const provider = input.provider ?? "ollama"
-  if (!["ollama", "openai"].includes(provider)) throw Error("Unknown model provider")
+  if (!["ollama", "openai", "codex"].includes(provider)) throw Error("Unknown model provider")
   if (typeof input.model !== "string" || !/^[\w./:-]{1,200}$/.test(input.model))
     throw Error("Invalid model identifier")
   if (provider === "ollama" && /:cloud$/i.test(input.model))
@@ -215,10 +219,14 @@ export async function prepareRoleProvider(
     overrides = {},
     additionalBudgetMs = 0,
     extensionReason = "",
+    retryFailed = false,
+    executionWindow,
     now = () => performance.now(),
   } = {},
 ) {
   const settings = resolveRolePolicy(policy, role, overrides)
+  if (typeof retryFailed !== "boolean")
+    throw Error("Explicit failed-attempt resume must be boolean")
   if (typeof base?.metadata !== "function" || typeof base?.structured !== "function")
     throw Error("Model provider must implement metadata and structured")
   if (!root || !/^[a-zA-Z0-9_-]+$/.test(run || "")) throw Error("Policy root and run required")
@@ -234,9 +242,25 @@ export async function prepareRoleProvider(
     throw Error("A reason is required for a model budget extension")
   const file = `runs/${run}/model-policy/${role}/budget.json`
   safePath(root, file)
+  const windowRemaining = () => executionWindow?.remainingMs() ?? Infinity
+  const budgetFailure = (message, code = "MODEL_TIME_BUDGET_EXCEEDED") => {
+    const error = Error(message)
+    error.code = code
+    error.model_budget = {
+      role,
+      run,
+      budget_path: file,
+      request_sent: false,
+      requires_explicit_resume: true,
+    }
+    return error
+  }
   const started = now()
+  const metadataTimeout = Math.floor(Math.min(settings.call_timeout_ms, 20000, windowRemaining()))
+  if (metadataTimeout <= 0)
+    throw budgetFailure("Invocation model time budget exceeded before metadata")
   const metadata = await base.metadata(settings.model, {
-    timeout_ms: Math.min(settings.call_timeout_ms, 20000),
+    timeout_ms: metadataTimeout,
   })
   function checkMetadata(value) {
     if (
@@ -284,17 +308,26 @@ export async function prepareRoleProvider(
   scoped.executionPolicy = executionPolicy
   scoped.metadata = async (model, options = {}) => {
     if (model !== settings.model) throw Error("Model does not match role policy")
+    const timeout = Math.floor(
+      Math.min(options.timeout_ms ?? settings.call_timeout_ms, 20000, windowRemaining()),
+    )
+    if (timeout <= 0) throw budgetFailure("Invocation model time budget exceeded before metadata")
     return checkMetadata(
       await base.metadata(model, {
-        timeout_ms: Math.min(options.timeout_ms ?? settings.call_timeout_ms, 20000),
+        timeout_ms: timeout,
       }),
     )
   }
   scoped.json = (endpoint, body, options = {}) => {
     const remaining = Math.floor(deadline - now())
-    if (remaining <= 0) throw Error("Role model time budget exceeded")
+    if (remaining <= 0 || windowRemaining() <= 0)
+      throw budgetFailure("Role model time budget exceeded")
     return base.json(endpoint, body, {
-      timeout_ms: Math.min(options.timeout_ms ?? settings.call_timeout_ms, remaining),
+      timeout_ms: Math.min(
+        options.timeout_ms ?? settings.call_timeout_ms,
+        remaining,
+        windowRemaining(),
+      ),
     })
   }
   scoped.structured = async (request) => {
@@ -308,6 +341,7 @@ export async function prepareRoleProvider(
       num_predict: settings.num_predict,
       temperature: settings.temperature,
     }
+    const requestBudget = assertStructuredRequestBudget(configured)
     const requestFingerprint = sha256(
       JSON.stringify({
         binding: executionPolicy.fingerprint,
@@ -330,6 +364,35 @@ export async function prepareRoleProvider(
       return structuredClone(cached.result)
     }
     if (
+      ledger.attempts.some(
+        (a) => a.status === "running" && a.request_fingerprint === requestFingerprint,
+      )
+    )
+      throw budgetFailure(
+        "Unsettled model reservation exists; inspect the original attempt before explicit recovery",
+        "MODEL_RUNNING_ATTEMPT",
+      )
+    const previousFailure = ledger.attempts.findLast(
+      (a) => a.status === "failed" && a.request_fingerprint === requestFingerprint,
+    )
+    if (settings.provider === "ollama" && previousFailure && !retryFailed) {
+      const error = budgetFailure(
+        "Local model attempt previously failed; inspect preserved budget/artifacts and resume explicitly",
+        "MODEL_RETRY_REQUIRED",
+      )
+      Object.assign(error.model_budget, {
+        attempt_id: previousFailure.id,
+        request_fingerprint: requestFingerprint,
+        previous_error: previousFailure.error,
+        retry_option: "retry_failed",
+      })
+      throw error
+    }
+    // Delegation is a durable wait, not a failed generation or time reservation.
+    // The task uses the same configured input and execution-policy binding.
+    if (typeof base.prepareStructured === "function")
+      await base.prepareStructured.call(scoped, configured)
+    if (
       settings.provider === "openai" &&
       ledger.attempts.some(
         (attempt) =>
@@ -345,9 +408,12 @@ export async function prepareRoleProvider(
         request.timeout_ms ?? settings.call_timeout_ms,
         totalBudgetMs - spent(ledger),
         deadline - now(),
+        windowRemaining(),
       ),
     )
-    if (allowance <= 0) throw Error("Role model time budget exceeded; earlier attempts preserved")
+    if (allowance <= 0)
+      throw budgetFailure("Role model time budget exceeded; earlier attempts preserved")
+    executionWindow?.reserveCall()
     const callStart = now()
     const attempt = {
       id: randomUUID(),
@@ -356,6 +422,8 @@ export async function prepareRoleProvider(
       request_fingerprint: requestFingerprint,
       started_at: new Date().toISOString(),
       request: { ...configured, timeout_ms: allowance },
+      request_budget: requestBudget,
+      ...(previousFailure ? { resumed_from_attempt_id: previousFailure.id } : {}),
     }
     ledger.attempts.push(attempt)
     saveBudget(root, file, ledger)
@@ -400,12 +468,23 @@ export async function prepareRoleProvider(
       }
       saveBudget(root, file, ledger)
       return recorded
-    } catch (error) {
+    } catch (originalError) {
+      const error =
+        typeof originalError.code === "string"
+          ? originalError
+          : modelFailureWithCode(
+              originalError,
+              ["TimeoutError", "AbortError"].includes(originalError.name)
+                ? "MODEL_CALL_TIMEOUT"
+                : "MODEL_ATTEMPT_FAILED",
+            )
       Object.assign(attempt, {
         status: "failed",
         wall_ms: Math.max(0, Math.ceil(now() - callStart)),
         finished_at: new Date().toISOString(),
         error: error.message,
+        error_code: error.code,
+        ...(error.native_error ? { native_error: error.native_error } : {}),
       })
       if (latestProgress) {
         onProgress({ ...latestProgress, status: "failed", error: error.message }, true)
@@ -418,6 +497,20 @@ export async function prepareRoleProvider(
       delete attempt.result
       delete attempt.result_sha256
       saveBudget(root, file, ledger)
+      error.model_budget = {
+        ...error.model_budget,
+        role,
+        run,
+        budget_path: file,
+        attempt_id: attempt.id,
+        request_fingerprint: requestFingerprint,
+        request_budget: requestBudget,
+        ...(attempt.progress_path ? { progress_path: attempt.progress_path } : {}),
+        ...(attempt.failure_artifacts_sha256
+          ? { failure_artifacts_sha256: attempt.failure_artifacts_sha256 }
+          : {}),
+        requires_explicit_resume: true,
+      }
       throw error
     }
   }

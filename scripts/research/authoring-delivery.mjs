@@ -12,6 +12,7 @@ import {
 import { authoringWriteSession, inspectedAuthoringRelease } from "./authoring-execution.mjs"
 import { importVerifiedAuthoring } from "./authoring-import.mjs"
 import { deliverApprovedPublication } from "./delivery-run.mjs"
+import { assertPublicationFallbackSelection } from "./publication-operation.mjs"
 
 export async function deliverAuthoringSession({
   root,
@@ -70,6 +71,10 @@ export async function deliverAuthoringSession({
         }
   }
   return withLock(root, "authoring-delivery-" + run, async () => {
+    const approved = readJSON(sourceRoot, releasePath)
+    const preview = readJSON(sourceRoot, `runs/${approved.preview_run}/preview-manifest.json`)
+    assertPublicationFallbackSelection({ root: sourceRoot, run, preview, releasePath })
+    if (sourceRoot !== root) assertPublicationFallbackSelection({ root, run, preview, releasePath })
     const checkpoint = (status, details = {}) => {
       const value = {
         schema: "research-authoring-delivery-checkpoint/v1",

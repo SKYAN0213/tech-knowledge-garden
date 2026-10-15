@@ -127,3 +127,25 @@ test("CLI replays pinned bytes and rejects a changed snapshot or unknown flags",
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test("exact lookup preserves resolved candidate history and rejects duplicate keys across both queues", () => {
+  const context = fixture()
+  const closed = {
+    ...context.discovery_window.pending.pop(),
+    review_status: "verified",
+    next_route: "same-approved-event",
+    identity: { decision: "same_approved_event", approved_target: { run: "approved" } },
+  }
+  context.discovery_window.resolved.push(closed)
+  const before = JSON.stringify(context)
+  const result = buildContextPage(context, { ...pinned, candidate: closed.key })
+  assert.equal(result.page.section, "resolved")
+  assert.deepEqual(result.page.items, [closed])
+  assert.equal(result.page.items[0].discovery.length, 40)
+  assert.equal(JSON.stringify(context), before)
+  context.discovery_window.pending.push(closed)
+  assert.throws(
+    () => buildContextPage(context, { ...pinned, candidate: closed.key }),
+    /exactly one/,
+  )
+})

@@ -13,6 +13,7 @@ import {
   createDailySourceScanner,
   dailyPlanningBasis,
   dailyRouteTimingHint,
+  dailyRouteProgress,
   executeDailyPlan,
   reconcileSupplementalScan,
   supplementalCoverageReceiptForWindow,
@@ -89,6 +90,135 @@ const plan = {
     { channel_id: "route-hd-news-ko", since: "2026-09-21", until_exclusive: "2026-09-28" },
   ],
 }
+
+function slicedExecution(t, routeIds = ["route-a", "route-b", "route-c", "route-d"]) {
+  const root = temporary(t),
+    stored = new Map(),
+    calls = [],
+    merges = []
+  const windows = routeIds.flatMap((channel_id) => [
+    { channel_id, since: "2026-09-21", until_exclusive: "2026-09-24" },
+    { channel_id, since: "2026-09-24", until_exclusive: "2026-09-28" },
+  ])
+  const coverage = initialCoverage()
+  coverage.routes = Object.fromEntries(
+    routeIds.map((id) => [id, structuredClone(coverage.routes["fanuc-en"])]),
+  )
+  const args = {
+    root,
+    plan: { ...plan, windows },
+    coverage,
+    sameEventAliases: new Map(),
+    activeRoutes: routeIds.map((id) => ({ route: route(id, "해외") })),
+    scan: async (window, id) => {
+      calls.push(id)
+      await new Promise((resolve) => setTimeout(resolve, 15))
+      const result = { summary: { status: "window_scanned" }, candidates: [{ key: id }] }
+      stored.set(id, result)
+      return result
+    },
+    loadStored: (_, id) => stored.get(id),
+    verify: () => true,
+    merge: async (result) => {
+      merges.push(result.candidates[0].key)
+      return { status: "merged" }
+    },
+  }
+  return { root, args, calls, merges, windows }
+}
+
+test("daily execution slices reserve concurrent windows and resume without duplicate requests", async (t) => {
+  const { root, args, calls, merges, windows } = slicedExecution(t)
+  const first = await executeDailyPlan({ ...args, maxWindows: 2 })
+  assert.equal(first.status, "partial")
+  assert.equal(first.receipts, 2)
+  assert.equal(first.execution.slice.started_windows, 2)
+  assert.equal(first.execution.slice.stop_reason, "max_windows")
+  assert.equal(first.execution.slice.live_scans_drained, true)
+  assert.equal(calls.length, 2)
+  assert.equal(merges.length, 2)
+  assert.equal(first.routes.filter((r) => r.status === "not_attempted").length, 2)
+  assert(first.routes.every((r) => r.window_progress.failed === 0))
+  assert(first.coverage_grid.every((cell) => cell.failed_route_ids.length === 0))
+  assert.equal(
+    first.coverage_grid.find(
+      (cell) => cell.sector === "로봇·제조" && cell.region === "해외" && cell.axis === "기술·제품",
+    ).status,
+    "incomplete",
+  )
+  const receipts = fs
+    .readdirSync(path.join(root, "daily/runs", plan.run_id, "receipts"))
+    .map((file) => [
+      file,
+      fs.readFileSync(path.join(root, "daily/runs", plan.run_id, "receipts", file)),
+    ])
+  const second = await executeDailyPlan({ ...args, maxWindows: 2 })
+  assert.equal(second.receipts, 4)
+  assert.equal(calls.length, 4)
+  for (const [file, bytes] of receipts)
+    assert.deepEqual(
+      fs.readFileSync(path.join(root, "daily/runs", plan.run_id, "receipts", file)),
+      bytes,
+    )
+  const final = await executeDailyPlan(args)
+  assert.equal(final.status, "configured_routes_scanned")
+  assert.equal(final.receipts, windows.length)
+  assert.equal(new Set(calls).size, windows.length)
+  assert.equal(merges.length, windows.length)
+  await executeDailyPlan({ ...args, maxWindows: 2 })
+  assert.equal(calls.length, windows.length)
+})
+
+test("daily slice time budget drains started scans and leaves later windows untouched", async (t) => {
+  const { root, args, calls } = slicedExecution(t, ["route-a"])
+  const first = await executeDailyPlan({ ...args, timeBudgetMs: 5 })
+  assert.equal(first.status, "partial")
+  assert.equal(first.execution.slice.stop_reason, "time_budget")
+  assert.equal(first.receipts, 1)
+  assert.equal(calls.length, 1)
+  assert.equal(
+    readJSON(root, "daily/route-coverage.json").routes["route-a"].last_contiguous_until,
+    "2026-09-24",
+  )
+  const second = await executeDailyPlan(args)
+  assert.equal(second.status, "configured_routes_scanned")
+  assert.equal(second.receipts, 2)
+  assert.equal(new Set(calls).size, 2)
+})
+
+test("invalid daily execution limits fail before writing coverage or making requests", async (t) => {
+  const { root, args, calls } = slicedExecution(t)
+  for (const value of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    await assert.rejects(executeDailyPlan({ ...args, maxWindows: value }), /positive safe integer/)
+    await assert.rejects(
+      executeDailyPlan({ ...args, timeBudgetMs: value }),
+      /positive safe integer/,
+    )
+  }
+  assert.equal(calls.length, 0)
+  assert.equal(fs.existsSync(path.join(root, "daily/route-coverage.json")), false)
+})
+
+test("daily route progress separates missing windows, successful partial routes and real failures", (t) => {
+  const { root, args } = slicedExecution(t, ["route-a", "route-b", "route-c"])
+  const receipts = [
+    { ...args.plan.windows[0], status: "window_scanned" },
+    { ...args.plan.windows[2], status: "incomplete" },
+  ]
+  const rows = dailyRouteProgress({ ...args, receipts })
+  assert.deepEqual(
+    rows.map((r) => r.status),
+    ["incomplete", "failed", "not_attempted"],
+  )
+  assert.deepEqual(
+    rows.map((r) => r.window_progress),
+    [
+      { total: 2, verified: 1, failed: 0, pending: 1 },
+      { total: 2, verified: 0, failed: 1, pending: 1 },
+      { total: 2, verified: 0, failed: 0, pending: 2 },
+    ],
+  )
+})
 
 test("daily detail repair binds the failed attempt and takes precedence over adjacent listing reuse", async (t) => {
   const root = temporary(t),
@@ -720,6 +850,41 @@ test("observed slow routes start first without repeating completed scans or chan
   assert.equal(result.receipts, windows.length)
   await executeDailyPlan(args)
   assert.equal(started.length, windows.length, "completed receipts must not trigger new scans")
+})
+
+test("a recent one-route retry retains older timings for other slow routes", (t) => {
+  const root = temporary(t)
+  const write = (id, by_route, seconds) => {
+    const file = `daily/runs/${id}/summary.json`
+    atomicWrite(root, file, {
+      schema: "research-daily-summary/v1",
+      run_id: id,
+      timing: { by_route },
+    })
+    fs.utimesSync(path.join(root, file), seconds, seconds)
+    return file
+  }
+  const old = write(
+    "full",
+    {
+      slow: { measured_attempts: 2, total_ms: 10000 },
+      short: { measured_attempts: 2, total_ms: 200 },
+    },
+    100,
+  )
+  const recent = write("retry", { short: { measured_attempts: 1, total_ms: 50 } }, 200)
+  const hint = dailyRouteTimingHint(root, "active")
+  assert.equal(hint.path, recent)
+  assert.equal(hint.routes.short.total_ms, 50)
+  assert.equal(hint.routes.slow.total_ms, 10000)
+  assert.deepEqual(
+    hint.sources.map((row) => row.path),
+    [recent, old],
+  )
+  assert.deepEqual(
+    hint.sources.map((row) => row.channel_ids),
+    [["short"], ["slow"]],
+  )
 })
 
 test("route timing hints exclude the active run and reject a mismatched stored identity", (t) => {

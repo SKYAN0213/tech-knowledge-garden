@@ -8,6 +8,18 @@ export const SECTORS = [
   "바이오·의료기술",
   "우주·기초과학",
 ]
+// Editorial scope describes the affected technology or business, not the
+// publisher's name, delivery channel or incidental mention of AI.
+export const SECTOR_SCOPES = {
+  AI: "모델·평가·학습·추론·에이전트",
+  "소프트웨어·클라우드": "언어·OS·데이터베이스·분산 시스템·네트워크·개발 도구",
+  사이버보안: "취약점·공급망 보안·암호·인증·보안 대응",
+  "반도체·컴퓨팅": "CPU·메모리·제조 공정·패키징·시스템·양자 컴퓨팅",
+  "로봇·제조": "제어·센서·구동기·자동화·생산 공정·산업 장비",
+  "에너지·기후기술": "배터리·전력망·발전·저장·효율·기후 관측",
+  "바이오·의료기술": "실험 방법·진단·의료기기·생명공학·임상 연구·의약품 규제",
+  "우주·기초과학": "우주 임무·천문·물리·화학·재료 연구",
+}
 export const SECTOR_FORMAT = "sector-five/v1"
 export const BRIEFING_GROUP_FORMAT = "related-events/v1"
 export const briefingGroupFields = ["id", "title", "sector", "event_ids"]

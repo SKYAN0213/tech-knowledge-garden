@@ -4,7 +4,7 @@ import { canonicalURL } from "../garden.mjs"
 import { loadStoredSourceRun, articleContentFingerprint } from "./parser.mjs"
 import { loadFactReviewPacket, assertProcessedFactReview } from "./evidence-review-packet.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
-import { loadCurrentApproval } from "./preview.mjs"
+import { loadHistoricalApproval } from "./preview.mjs"
 import { draftMarkdown } from "./editor.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
@@ -44,7 +44,7 @@ export async function loadProcessedSourceResult(root, run, entry, { vault = "vau
   if (
     !source ||
     !document ||
-    articleContentFingerprint(source) !== entry.content_sha256 ||
+    articleContentFingerprint(source, parses) !== entry.content_sha256 ||
     !entry.source_urls?.some((url) => canonicalURL(url) === canonicalURL(document.original_url))
   )
     throw Error("Reused processing differs from the candidate source version, parse or URL")
@@ -103,7 +103,7 @@ export async function loadProcessedSourceResult(root, run, entry, { vault = "vau
   if (fs.readFileSync(preview, "utf8") !== draftMarkdown(working, reviewed.claims, documents))
     throw Error("Reused working preview changed")
   if (approval) {
-    const current = loadCurrentApproval(root, run, { vault })
+    const current = loadHistoricalApproval(root, run, { vault })
     if (entry.event_id && current.article.event_id !== entry.event_id)
       throw Error("Reused approval differs from the existing event")
     return {

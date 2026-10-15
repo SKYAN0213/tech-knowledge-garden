@@ -1,6 +1,9 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { assertAuthoringReleaseReview } from "../scripts/research/authoring-release.mjs"
+import {
+  assertAuthoringReleaseReview,
+  assertCuratedReleaseProjectionBinding,
+} from "../scripts/research/authoring-release.mjs"
 import { validResearchCoverage, auditRuns } from "../scripts/research-audit.mjs"
 import { SECTORS } from "../scripts/sectors.mjs"
 import { PUBLIC_ROOTS, sha256 } from "../scripts/research/contracts.mjs"
@@ -64,6 +67,85 @@ test("explicit retrospective review releases only the pinned source baseline", (
   assert.equal(r.kind, "retrospective")
   assert.equal(r.new_operational_run, false)
   assert.equal(r.coverage_reviewed, false)
+})
+test("curated release is bound to the native selection and exact new-edition event subset", () => {
+  const f = fixture(),
+    reference = {
+      path: "curation/runs/curation-1/selection.json",
+      sha256: sha256("native curation selection"),
+    }
+  f.manifest.edition_spec = {
+    schema: "research-private-edition/v1",
+    intent: "private_slice",
+    date: "2026-10-04",
+    coverage_start: "2026-10-03T00:00:00Z",
+    coverage_end: "2026-10-04T00:00:00Z",
+  }
+  f.review.kind = "curated"
+  f.review.curation_selection = reference
+  const curation = { reference, briefing_date: "2026-10-04", event_ids: ["event"] }
+  const result = assertAuthoringReleaseReview({ ...f, curation })
+  assert.equal(result.kind, "curated")
+  assert.deepEqual(result.curation_selection, reference)
+  assert.equal(result.coverage_reviewed, false)
+  assert.equal(result.new_operational_run, false)
+
+  for (const change of [
+    (review) => (review.curation_selection.sha256 = sha256("other selection")),
+    (review) => (review.curation_selection.path = "curation/runs/other/selection.json"),
+  ]) {
+    const bad = structuredClone(f)
+    change(bad.review)
+    assert.throws(() => assertAuthoringReleaseReview({ ...bad, curation }))
+  }
+  assert.throws(() =>
+    assertAuthoringReleaseReview({ ...f, curation: { ...curation, briefing_date: "2026-10-03" } }),
+  )
+  assert.throws(() =>
+    assertAuthoringReleaseReview({ ...f, curation: { ...curation, event_ids: ["other"] } }),
+  )
+  assert.throws(() => assertAuthoringReleaseReview(f))
+})
+
+test("curated preview binds all combined event checks separately from the selected new-edition subset", () => {
+  const combined = Array.from({ length: 183 }, (_, i) => `event-${i}`)
+  const selected = combined.slice(0, 20)
+  const projected = [{ path: "Editions/2026/10/briefing.md", sha256: sha256("edition"), event_ids: selected }]
+  const manifest = {
+    editions: structuredClone(projected),
+    consistency: { articles: combined.map((event_id) => ({ event_id })) },
+  }
+  assert.doesNotThrow(() =>
+    assertCuratedReleaseProjectionBinding({
+      projected,
+      manifest,
+      combinedEventIds: combined,
+      selectedNewEditionEventIds: selected,
+      selectedNewEditionRunCount: 20,
+    }),
+  )
+  assert.throws(
+    () =>
+      assertCuratedReleaseProjectionBinding({
+        projected,
+        manifest,
+        combinedEventIds: combined.slice(1),
+        selectedNewEditionEventIds: selected,
+        selectedNewEditionRunCount: 20,
+      }),
+    /reviewed edition/,
+  )
+  assert.throws(
+    () =>
+      assertCuratedReleaseProjectionBinding({
+        projected,
+        manifest,
+        combinedEventIds: combined,
+        selectedNewEditionEventIds: selected.slice(1),
+        selectedNewEditionRunCount: 20,
+      }),
+    /reviewed edition/,
+  )
 })
 test("private new edition cannot pass without every research cell", () => {
   for (const mutate of [

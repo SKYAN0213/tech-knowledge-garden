@@ -9,11 +9,17 @@ import {
   DEFAULT_ROOT,
   atomicCreate,
   atomicWrite,
+  readJSON,
   safePath,
   withGardenOperationLock,
 } from "./run-state.mjs"
-import { sourceRecipe } from "./source-recipes.mjs"
+import {
+  sourceRecipe,
+  declaredSourceGeography,
+  sourceGeographyInventory,
+} from "./source-recipes.mjs"
 import { validateDailyRoutes } from "./daily-plan.mjs"
+import { collectionRoute } from "./scan-basis.mjs"
 
 const channelsFile = "data/research-source-channels.json"
 const configFiles = [
@@ -41,7 +47,39 @@ function publicURL(raw) {
   return url
 }
 
-export function validateSourceCatalog(catalog, routes, recipes) {
+// This permits reading/reusing an already activated registration. It does not
+// rerun onboarding or attest that historical scan code is current.
+function completedCatalogRegistration(entry, routes, { daily, root = DEFAULT_ROOT } = {}) {
+  const route = routes.find(
+    (row) =>
+      row.channel_id === entry.channel_id && canonicalURL(row.url) === canonicalURL(entry.url),
+  )
+  const active = daily?.routes?.find(
+    (row) => row.channel_id === entry.channel_id && row.enabled === true,
+  )
+  const onboarding = route?.onboarding
+  if (
+    !active ||
+    onboarding?.status !== "verified" ||
+    onboarding.collection_enabled !== true ||
+    !Array.isArray(onboarding.remaining_checks) ||
+    onboarding.remaining_checks.length ||
+    typeof onboarding.verification_receipt !== "string" ||
+    !/^source-onboarding\/[A-Za-z0-9_-]+\/verification\.json$/.test(onboarding.verification_receipt)
+  )
+    return false
+  const receipt = readJSON(root, onboarding.verification_receipt)
+  return Boolean(
+    receipt?.schema === "research-source-onboarding/v1" &&
+    receipt.channel_id === route.channel_id &&
+    receipt.collection_basis?.channel_id === route.channel_id &&
+    receipt.collection_basis.route_sha256 === sha256(JSON.stringify(collectionRoute(route))) &&
+    receipt.baseline?.run_id === active.baseline_run &&
+    receipt.checkpoints_reused === true,
+  )
+}
+
+export function validateSourceCatalog(catalog, routes, recipes, context = {}) {
   if (
     catalog?.schema !== "research-source-catalog/v1" ||
     !Array.isArray(catalog.entries) ||
@@ -52,6 +90,7 @@ export function validateSourceCatalog(catalog, routes, recipes) {
     channelIds = new Set(),
     known = new Set(routes.map((route) => route.channel_id))
   for (const entry of catalog.entries) {
+    declaredSourceGeography(entry)
     if (
       !safeId(entry.id) ||
       !safeId(entry.channel_id) ||
@@ -66,7 +105,7 @@ export function validateSourceCatalog(catalog, routes, recipes) {
       typeof entry.acquisition_notes !== "string" ||
       !entry.acquisition_notes.trim() ||
       !Array.isArray(entry.remaining_checks) ||
-      !entry.remaining_checks.length ||
+      (!entry.remaining_checks.length && !completedCatalogRegistration(entry, routes, context)) ||
       entry.remaining_checks.some((check) => !safeId(check)) ||
       !Array.isArray(entry.related_channel_ids) ||
       entry.related_channel_ids.some((id) => !known.has(id)) ||
@@ -102,6 +141,7 @@ function routeFromEntry(entry) {
     axis: entry.axis,
     sectors: entry.sectors,
     source_recipe: entry.source_recipe,
+    ...declaredSourceGeography(entry),
     catalog_ids: [entry.id],
     onboarding: {
       status: "registered",
@@ -126,9 +166,10 @@ export function planSourceRegistration({
   recipes,
   daily,
   ids = [],
+  root = DEFAULT_ROOT,
 }) {
   const routes = registry(channels, watchlist, adapters, recipes)
-  validateSourceCatalog(catalog, routes, recipes)
+  validateSourceCatalog(catalog, routes, recipes, { daily, root })
   if (
     new Set(ids).size !== ids.length ||
     ids.some((id) => !catalog.entries.some((entry) => entry.id === id))
@@ -155,6 +196,8 @@ export function planSourceRegistration({
         channel_id: matches[0].channel_id,
         action: "reuse",
         url: entry.url,
+        ...sourceGeographyInventory(matches[0]),
+        catalog_geography: sourceGeographyInventory(entry),
       })
       continue
     }
@@ -167,6 +210,7 @@ export function planSourceRegistration({
       channel_id: route.id,
       action: "register_pending",
       url: route.url,
+      ...sourceGeographyInventory(route),
     })
   }
   const after = registry(next, watchlist, adapters, recipes)
@@ -196,6 +240,7 @@ export function loadSourceRegistration({
   repo = process.cwd(),
   input = "data/research-source-catalog.json",
   ids = [],
+  root = DEFAULT_ROOT,
 } = {}) {
   const base = path.resolve(repo)
   const snapshots = configFiles.map((file) => ({
@@ -214,6 +259,7 @@ export function loadSourceRegistration({
     recipes: values[3],
     daily: values[4],
     ids,
+    root: path.resolve(base, root),
   })
   return { plan, snapshots, catalogFile, catalogBytes, catalog, recipes: values[3] }
 }

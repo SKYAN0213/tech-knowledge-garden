@@ -2,7 +2,7 @@ import fs from "node:fs"
 import { spawnSync } from "node:child_process"
 import { sha256 } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
-import { inspectedAuthoringRelease } from "./authoring-execution.mjs"
+import { inspectedAuthoringRelease, inspectAuthoringReleaseInputs } from "./authoring-execution.mjs"
 import { assertDeploymentProof, loadVerifiedPublicReadback } from "./public-readback.mjs"
 import { assertArticleFreeLegacyPreview } from "./legacy-transition.mjs"
 
@@ -22,6 +22,150 @@ const gitBytes = (repository, args) => {
   const result = spawnSync("git", args, { cwd: repository, maxBuffer: 16 * 1024 * 1024 })
   if (result.status !== 0) throw Error("Cannot verify publication commit content")
   return result.stdout
+}
+
+const issuePaths = (preview) => (preview.editions || []).map((row) => row.path)
+const eventIds = (preview) => (preview.consistency?.articles || []).map((row) => row.event_id)
+const overlap = (a, b) => a.some((value) => b.includes(value))
+
+export function loadPublicationFallbacks(root) {
+  const relative = "publication/fallbacks"
+  if (!fs.existsSync(safePath(root, relative))) return []
+  return fs.readdirSync(safePath(root, relative)).map((name) => {
+    if (!/^[a-f0-9]{64}\.json$/.test(name)) throw Error("Invalid publication fallback receipt")
+    const receipt = readJSON(root, relative + "/" + name)
+    if (
+      receipt?.schema !== "research-publication-fallback/v1" ||
+      receipt.status !== "legacy_selected" ||
+      receipt.candidate_published !== false ||
+      !Array.isArray(receipt.edition_paths) ||
+      !receipt.edition_paths.length ||
+      !Array.isArray(receipt.native_event_ids) ||
+      !receipt.native_event_ids.length ||
+      receipt.native_run === receipt.legacy_run ||
+      name !== sha256(JSON.stringify([receipt.edition_paths, receipt.native_event_ids])) + ".json"
+    )
+      throw Error("Invalid publication fallback selection")
+    id(receipt.native_run)
+    id(receipt.legacy_run)
+    const review = pinned(root, receipt.review)
+    const request = pinned(root, receipt.native_request)
+    pinned(root, request.handoff)
+    const native = pinned(root, receipt.native_preview)
+    const legacy = pinned(root, receipt.legacy_preview)
+    const release = inspectAuthoringReleaseInputs(root, receipt.legacy_release.path)
+    const execution = pinned(root, receipt.legacy_execution)
+    if (receipt.native_checkpoint) pinned(root, receipt.native_checkpoint)
+    for (const failure of receipt.native_failures || []) pinned(root, failure)
+    if (
+      review.schema !== "research-publication-fallback-review/v1" ||
+      !["human", "codex"].includes(review.reviewer_kind) ||
+      !review.reviewer?.trim() ||
+      !review.reason?.trim() ||
+      !Number.isFinite(Date.parse(review.reviewed_at)) ||
+      !Number.isFinite(Date.parse(receipt.observed_at)) ||
+      Date.parse(review.reviewed_at) > Date.parse(receipt.observed_at) ||
+      review.legacy_run !== receipt.legacy_run ||
+      request.run_id !== receipt.native_run ||
+      receipt.native_request.path !==
+        `runs/${receipt.native_run}/publication-delivery/input.json` ||
+      JSON.stringify(review.native_request) !== JSON.stringify(receipt.native_request) ||
+      JSON.stringify(review.native_preview) !== JSON.stringify(receipt.native_preview) ||
+      JSON.stringify(review.legacy_release) !== JSON.stringify(receipt.legacy_release) ||
+      JSON.stringify(review.legacy_preview) !== JSON.stringify(receipt.legacy_preview) ||
+      release.release_sha256 !== receipt.legacy_release.sha256 ||
+      execution.release_sha256 !== receipt.legacy_release.sha256 ||
+      execution.drive_verified !== true ||
+      execution.counts?.pending !== 0 ||
+      execution.counts?.conflict !== 0 ||
+      receipt.legacy_preview.path !== `runs/${release.release.preview_run}/preview-manifest.json` ||
+      native.candidate_published !== false ||
+      JSON.stringify([...issuePaths(native)].sort()) !== JSON.stringify(receipt.edition_paths) ||
+      JSON.stringify([...issuePaths(legacy)].sort()) !== JSON.stringify(receipt.edition_paths) ||
+      !receipt.native_event_ids.every((value) => eventIds(native).includes(value))
+    )
+      throw Error("Publication fallback evidence changed")
+    return { ...receipt, receipt: reference(root, relative + "/" + name) }
+  })
+}
+
+// A fallback owns the original issue and events, not a worker ID or code hash.
+// Only the already approved legacy bytes may proceed through normal Drive/publish gates.
+export function assertPublicationFallbackSelection({
+  root,
+  run,
+  preview,
+  releasePath,
+  events = [],
+}) {
+  for (const selected of loadPublicationFallbacks(root)) {
+    if (
+      run !== selected.native_run &&
+      !overlap(issuePaths(preview || {}), selected.edition_paths) &&
+      !overlap([...eventIds(preview || {}), ...events], selected.native_event_ids)
+    )
+      continue
+    if (run !== selected.legacy_run)
+      throw Error("Legacy fallback owns this issue; native re-entry or a new operation is blocked")
+    if (
+      !preview ||
+      !releasePath ||
+      selected.legacy_preview.path !== `runs/${preview.run_id}/preview-manifest.json` ||
+      reference(root, selected.legacy_preview.path).sha256 !== selected.legacy_preview.sha256 ||
+      selected.legacy_release.path !== releasePath ||
+      reference(root, releasePath).sha256 !== selected.legacy_release.sha256
+    )
+      throw Error("Exact selected legacy preview and release required")
+  }
+}
+
+export function publicationFallbackHazards(root, preview, legacyRun) {
+  const runs = safePath(root, "runs"),
+    hazards = []
+  if (!fs.existsSync(runs)) return hazards
+  for (const run of fs.readdirSync(runs)) {
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(run)) continue
+    const request = readJSON(root, `runs/${run}/publication-delivery/input.json`)
+    if (request) {
+      const events = request.approved_runs.map(
+        (writer) => readJSON(root, `runs/${writer}/approved-article.json`).event_id,
+      )
+      if (overlap(eventIds(preview), events)) {
+        const latest = readJSON(root, `runs/${run}/publication-delivery/latest.json`)
+        const state =
+          latest &&
+          readJSON(
+            root,
+            `runs/${run}/publication-delivery/executions/${latest.execution_id}/state.json`,
+          )
+        if (state?.state === "running") {
+          try {
+            process.kill(state.pid, 0)
+            hazards.push({ run_id: run, reason: "native_worker_running" })
+          } catch (error) {
+            if (error.code !== "ESRCH") throw error
+          }
+        }
+      }
+    }
+    const input = readJSON(root, directory(run) + "/input.json")
+    if (!input) continue
+    const candidate = pinned(root, input.preview)
+    if (
+      !overlap(issuePaths(preview), issuePaths(candidate)) &&
+      !overlap(eventIds(preview), eventIds(candidate))
+    )
+      continue
+    const intent = readJSON(root, `runs/${run}/delivery/publish-intent.json`)
+    const push = readJSON(root, directory(run) + "/push.json")
+    if (intent && !push) hazards.push({ run_id: run, reason: "publication_outcome_unknown" })
+    else if (push && run !== legacyRun)
+      hazards.push({
+        run_id: run,
+        reason: "native_publication_committed_requires_rollback_readback",
+      })
+  }
+  return hazards
 }
 
 // Only an explicitly reviewed historical cleanup may publish without articles.
@@ -70,6 +214,7 @@ export async function preparePublicationOperation({
     const current = inspectedAuthoringRelease(root, releasePath, { fresh, now })
     const previewPath = `runs/${current.release.preview_run}/preview-manifest.json`
     const manifest = readJSON(root, previewPath)
+    assertPublicationFallbackSelection({ root, run, preview: manifest, releasePath })
     const authoring = assertPublicationAuthoringInputs(manifest, current.release)
     for (const row of authoring)
       if (sha256(bytes(repository, "vault/" + row.path)) !== row.sha256)

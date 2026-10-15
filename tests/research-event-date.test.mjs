@@ -12,7 +12,7 @@ import { approvedArticle, editionProjection } from "../scripts/research/publish-
 import { retrospectiveProjections } from "../scripts/research/preview.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
-import { articleReview } from "../scripts/article-review.mjs"
+import { articleReview, articleDateLabel } from "../scripts/article-review.mjs"
 import { articleCard } from "../scripts/reader-cards.mjs"
 import { parseNote, extractArticles, noteText } from "../scripts/garden.mjs"
 
@@ -269,6 +269,62 @@ test("stored JSON-LD Article publication timestamps support explicit Seoul dates
   }
 })
 
+test("SocialMediaPosting publication timestamps require the reviewed source and current page identity", () => {
+  const s = fixture()
+  const url = "https://example.com/blog/release"
+  const timestamp = "2026-06-30T18:32:50.094Z"
+  s.p.source_id = sha256(url).slice(0, 20)
+  s.p.parser = { id: "trafilatura" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      sources: [
+        {
+          type: "json-ld",
+          script_index: 0,
+          node_type: ["SocialMediaPosting"],
+          attribute: "datePublished",
+          text: timestamp,
+          source_url: url,
+          main_entity_url: url,
+          posting_url: url,
+        },
+      ],
+    },
+  }
+  s.claims[0].published_at = timestamp
+  s.claims[0].evidence[0].source_id = s.p.source_id
+  s.review.published_at = "2026-07-01"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: s.p.source_id,
+    source_version_id: s.p.source_version_id,
+    parse_id: s.p.parse_id,
+    claim_id: s.claims[0].claim_id,
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.equal(eventDateMetadata(s.review, s.claims, [s.p]).source_published_at, timestamp)
+  for (const mutate of [
+    (b) => delete b.source_url,
+    (b) => delete b.main_entity_url,
+    (b) => (b.source_url = "https://other.example/blog/release"),
+    (b) => (b.main_entity_url = url + "#comment"),
+    (b) => (b.posting_url = url + "#comment"),
+    (b) => {
+      b.node_type = ["Article", "SocialMediaPosting"]
+      b.posting_url = url + "#comment"
+    },
+    (b) => (b.attribute = "dateModified"),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p.dates.basis.sources[0])
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]))
+  }
+})
+
 test("matching head metadata may corroborate an Article JSON-LD publication time", () => {
   const s = fixture(),
     timestamp = "2026-07-16T11:00:00+00:00"
@@ -320,23 +376,39 @@ test("matching head metadata may corroborate an Article JSON-LD publication time
 })
 
 test("a single recorded publication meta candidate preserves its exact timestamp", () => {
-  const s = fixture(), timestamp = "2026-07-06T08:58:13-08:00"
-  s.p.parser = { id: "trafilatura", version: "2.2.0", adapter_sha256: "a".repeat(64), config_hash: "b".repeat(64) }
+  const s = fixture(),
+    timestamp = "2026-07-06T08:58:13-08:00"
+  s.p.parser = {
+    id: "trafilatura",
+    version: "2.2.0",
+    adapter_sha256: "a".repeat(64),
+    config_hash: "b".repeat(64),
+  }
   s.p.dates = {
     published_at: timestamp,
     precision: "timestamp",
     profile_status: "matched",
     candidates: [timestamp],
-    basis: { sources: [{ type: "meta", dom_path: "/html/head/meta[20]", attribute: "content", text: timestamp }] },
+    basis: {
+      sources: [
+        { type: "meta", dom_path: "/html/head/meta[20]", attribute: "content", text: timestamp },
+      ],
+    },
   }
   s.claims[0].published_at = timestamp
   s.review.published_at = "2026-07-07"
   s.review.event_date_basis = {
-    kind: "source-publication-time", source_id: "s1", source_version_id: "s1:v1", parse_id: "p1",
-    claim_id: "c1", source_published_at: timestamp, timezone: "Asia/Seoul",
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
   }
   assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
-    date_kind: "source-publication-time", source_published_at: timestamp,
+    date_kind: "source-publication-time",
+    source_published_at: timestamp,
   })
   for (const mutate of [
     (p) => delete p.dates.candidates,
@@ -421,6 +493,108 @@ test("JSON publication time requires an exact reviewed root field, not a record 
     () => eventDateMetadata(s.review, s.claims, [s.p], ["other-claim"]),
     /exact used source timestamp/,
   )
+})
+
+test("original publication notices preserve the first date without inferring a new update event", () => {
+  const s = fixture()
+  const notice = "Updated Aug. 5 (originally published July 1)"
+  s.p.dates = { published_at: "2026-08-05T13:00:47+00:00", profile_status: "matched" }
+  s.p.blocks = [{ block_id: "p1:b1", text: notice, locator: { text_hash: sha256(notice) } }]
+  const c = structuredClone(s.claims[0])
+  c.evidence = [
+    {
+      source_id: "s1",
+      source_version_id: "s1:v1",
+      parse_id: "p1",
+      block_id: "p1:b1",
+      quote: notice,
+      support: "direct",
+    },
+  ]
+  const basis = {
+    kind: "source-original-publication-date",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    block_id: "p1:b1",
+    claim_id: "c1",
+    notice_text: notice,
+    page_published_at: s.p.dates.published_at,
+  }
+  const review = { ...s.review, published_at: "2026-07-01", event_date_basis: basis }
+  const expected = { date_kind: basis.kind, source_published_at: "2026-07-01" }
+  assert.deepEqual(eventDateMetadata(review, [c], [s.p]), expected)
+  const publicReview = articleReview(
+    {
+      meta: {
+        article_reviews: [
+          {
+            title: "Original",
+            event_id: s.review.event_id,
+            review_status: "verified",
+            concept_ids: [],
+            published_at: "2026-07-01",
+            reviewed_at: "2026-09-27",
+            ...expected,
+          },
+        ],
+      },
+    },
+    "Original",
+    s.review.event_id,
+  )
+  assert.equal(publicReview.published_at, "2026-07-01")
+  assert.equal(articleDateLabel(publicReview), "원문 게시")
+  const mutations = [
+    (r) => {
+      r.published_at = "2026-08-05"
+    },
+    (r) => {
+      r.event_date_basis.page_published_at = "2026-08-06T13:00:47+00:00"
+    },
+    (r, p) => {
+      p.blocks[0].locator.text_hash = sha256("changed")
+    },
+    (r, p, c) => {
+      c.evidence[0].quote = "Originally published July 1"
+    },
+    (r, p, c) => {
+      c.evidence[0].support = "context"
+    },
+    (r, p) => {
+      p.dates.profile_status = "unmatched"
+    },
+  ]
+  for (const mutate of mutations) {
+    const r = structuredClone(review),
+      p = structuredClone(s.p),
+      claim = structuredClone(c)
+    mutate(r, p, claim)
+    assert.throws(() => eventDateMetadata(r, [claim], [p]), /Original publication/)
+  }
+  assert.throws(() => eventDateMetadata(review, [c], [s.p], []), /Original publication/)
+  for (const bad of [
+    "originally published July 1",
+    "Updated July 5 (originally published July 1)",
+    "Updated Aug. 5 (originally published December 1)",
+  ]) {
+    const r = structuredClone(review),
+      p = structuredClone(s.p),
+      claim = structuredClone(c)
+    r.event_date_basis.notice_text = bad
+    p.blocks[0] = { block_id: "p1:b1", text: bad, locator: { text_hash: sha256(bad) } }
+    claim.evidence[0].quote = bad
+    assert.throws(() => eventDateMetadata(r, [claim], [p]), /Original publication/)
+  }
+  const explicit = "Originally published July 1, 2025"
+  const r = structuredClone(review),
+    p = structuredClone(s.p),
+    claim = structuredClone(c)
+  r.event_date_basis.notice_text = explicit
+  r.published_at = "2025-07-01"
+  p.blocks[0] = { block_id: "p1:b1", text: explicit, locator: { text_hash: sha256(explicit) } }
+  claim.evidence[0].quote = explicit
+  assert.equal(eventDateMetadata(r, [claim], [p]).source_published_at, "2025-07-01")
 })
 
 test("dated update preserves source publication and requires the visible event's explicit date", () => {
@@ -752,4 +926,378 @@ test("reader metadata and cards distinguish updates without disclosing review no
     () => articleReview({ meta: { article_reviews: [invalid] } }, a.title, a.event_id),
     /Event date metadata/,
   )
+})
+
+function reportedFixture(
+  published = "2026-10-07",
+  dateText = "지난달 30일",
+  occurred = "2026-09-30",
+) {
+  const s = fixture()
+  const quote = `위원회는 ${dateText} 서울에서 자문회의를 열고 산업 분류를 검토했다.`
+  s.p.dates = { published_at: published, profile_status: "matched", precision: "day" }
+  s.p.blocks[0] = { ...s.p.blocks[0], text: quote, locator: { text_hash: sha256(quote) } }
+  s.claims[0] = {
+    ...s.claims[0],
+    statement: "위원회는 자문회의를 열고 산업 분류를 검토했다.",
+    published_at: published,
+    event_state: "completed",
+    effective_period: null,
+    evidence: [{ ...s.claims[0].evidence[0], quote }],
+  }
+  s.claims = recordFactReview(
+    s.claims,
+    [
+      {
+        ...s.claims[0].review.checks,
+        status: "verified",
+        reason: "Reviewed meeting date and publication anchor",
+      },
+    ],
+    { reviewer: "test", reviewed_at: "2026-10-09" },
+    [s.p],
+  )
+  s.record.draft.lead = [
+    { text: `위원회는 ${occurred} 서울에서 자문회의를 열었다.`, claim_ids: ["c1"] },
+    { text: "회의에서는 산업 분류를 검토했다.", claim_ids: ["c1"] },
+  ]
+  s.record.draft.facts = {
+    who: "위원회",
+    when: occurred,
+    where: "서울",
+    what: "자문회의 개최",
+    how: null,
+    why: null,
+  }
+  s.record.draft_id = sha256(JSON.stringify(s.record.draft))
+  s.review = {
+    ...s.review,
+    draft_id: s.record.draft_id,
+    published_at: published,
+    reviewed_at: "2026-10-09",
+    event_date_basis: {
+      kind: "source-reported-event-date",
+      source_id: "s1",
+      source_version_id: "s1:v1",
+      parse_id: "p1",
+      block_id: "p1:b1",
+      claim_id: "c1",
+      date_text: dateText,
+      event_context_text: "자문회의",
+      source_published_at: published,
+      occurred_at: occurred,
+    },
+  }
+  return s
+}
+
+test("reviewed Korean occurrence dates preserve article publication and reader identity", () => {
+  const s = reportedFixture()
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])
+  assert.equal(article.event_id, s.review.event_id)
+  assert.equal(article.article_review.published_at, "2026-10-07")
+  assert.equal(article.article_review.occurred_at, "2026-09-30")
+  const review = articleReview(
+    { meta: { article_reviews: [article.article_review] } },
+    article.title,
+  )
+  assert.equal(review.occurred_at, "2026-09-30")
+  const card = articleCard(
+    {
+      id: article.event_id,
+      title: article.title,
+      summary: article.record.lead,
+      urls: article.source_urls,
+      review,
+    },
+    (p) => "/" + p,
+  )
+  assert.match(card, /원문 게시 2026\.10\.07/)
+  assert.doesNotMatch(card, /발표 2026\.10\.07/)
+  for (const [pub, text, date] of [
+    ["2026-01-07", "지난달 30일", "2025-12-30"],
+    ["2026-10-05", "지난 9월 30일", "2026-09-30"],
+    ["2026-10-05", "지난 10월 3일", "2026-10-03"],
+    ["2024-03-02", "지난달 29일", "2024-02-29"],
+  ]) {
+    const sample = reportedFixture(pub, text, date)
+    assert.equal(eventDateMetadata(sample.review, sample.claims, [sample.p]).occurred_at, date)
+  }
+})
+
+test("occurrence dates reject unknown anchors, unrelated claims and impossible or future dates", () => {
+  const mutations = [
+    (s) => {
+      s.review.event_date_basis.source_published_at = "2026-10-08"
+    },
+    (s) => {
+      s.review.published_at = "2026-09-30"
+    },
+    (s) => {
+      s.p.dates.profile_status = "not-configured"
+    },
+    (s) => {
+      s.claims[0].event_state = "planned"
+    },
+    (s) => {
+      s.claims[0].review.status = "unreviewed"
+    },
+    (s) => {
+      s.review.event_date_basis.claim_id = "another-claim"
+    },
+    (s) => {
+      s.review.event_date_basis.event_context_text = "다른 행사"
+    },
+    (s) => {
+      s.p.blocks[0].locator.text_hash = "changed"
+    },
+    (s) => {
+      s.claims[0].evidence[0].quote = "지난달 30일 자문회의에 없던 인용"
+    },
+  ]
+  for (const mutate of mutations) {
+    const s = reportedFixture()
+    mutate(s)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [s.p]), /Reported event date/)
+  }
+  for (const [pub, text, date] of [
+    ["2026-03-02", "지난달 29일", "2026-02-29"],
+    ["2026-10-05", "지난달 31일", "2026-09-31"],
+    ["2026-10-05", "지난 10월 30일", "2026-10-30"],
+    ["2026-10-05", "지난 8월 30일", "2026-08-30"],
+    ["2026-10-05", "오는 10월 30일", "2026-10-30"],
+  ]) {
+    const s = reportedFixture(pub, text, date)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [s.p]), /Reported event date/)
+  }
+  const s = reportedFixture()
+  assert.throws(() => eventDateMetadata(s.review, s.claims, [s.p], []), /Reported event date/)
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, [s.p])
+  for (const patch of [
+    { occurred_at: "2026-10-30" },
+    { occurred_at: "2026-09-31" },
+    { date_kind: "source-publication-time" },
+    { source_published_at: "2026-10-08" },
+  ])
+    assert.throws(
+      () =>
+        articleReview(
+          { meta: { article_reviews: [{ ...article.article_review, ...patch }] } },
+          article.title,
+        ),
+      /Event date metadata/,
+    )
+})
+
+test("JSON publication metadata dates a used body claim without generating a date-only fact", () => {
+  const s = fixture(),
+    timestamp = "2026-06-29T23:27:32Z"
+  const header = {
+    block_id: "p1:date",
+    text: timestamp,
+    locator: {
+      type: "json",
+      json_pointer: "/published_at",
+      field_sha256: sha256(timestamp),
+      text_hash: sha256(timestamp),
+    },
+  }
+  const body = s.p.blocks[0]
+  body.locator = {
+    type: "json",
+    json_pointer: "/body",
+    field_sha256: sha256(body.text),
+    text_hash: sha256(body.text),
+  }
+  s.p.blocks.unshift(header)
+  s.p.parser = { id: "json-document" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      type: "json",
+      json_pointer: "/published_at",
+      text: timestamp,
+      text_hash: sha256(timestamp),
+    },
+  }
+  s.claims[0].published_at = timestamp
+  s.review.published_at = "2026-06-30"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-time",
+    source_published_at: timestamp,
+  })
+  for (const mutate of [
+    (p, c) => {
+      p.blocks.shift()
+    },
+    (p, c) => {
+      p.blocks[0].locator.record = { id: "other-release" }
+    },
+    (p, c) => {
+      p.blocks[0].locator.field_sha256 = "0".repeat(64)
+    },
+    (p, c) => {
+      p.dates.basis.json_pointer = "/updated_at"
+    },
+    (p, c) => {
+      c[0].evidence[0].source_version_id = "s1:other-version"
+    },
+    (p, c) => {
+      c[0].evidence[0].quote = "Unrelated evidence"
+    },
+    (p, c) => {
+      c[0].published_at = "2026-06-30T23:27:32Z"
+    },
+  ]) {
+    const p = structuredClone(s.p),
+      c = structuredClone(s.claims)
+    mutate(p, c)
+    assert.throws(() => eventDateMetadata(s.review, c, [p]), /exact used source timestamp/)
+  }
+})
+
+test("day-only source publication preserves exact civil dates without inferred timezone", () => {
+  const s = fixture()
+  s.p.dates.profile_status = "matched"
+  s.p.dates.basis = { dom_path: "/main/div[1]", text: "[Submitted on 3 Jun 2026]" }
+  s.review.published_at = "2026-06-03"
+  s.review.event_date_basis = {
+    kind: "source-publication-day",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: "2026-06-03",
+  }
+  assert.deepEqual(eventDateMetadata(s.review, s.claims, [s.p]), {
+    date_kind: "source-publication-day",
+    source_published_at: "2026-06-03",
+  })
+  const published = {
+    title: "date-only",
+    event_id: "1234567890abcdef",
+    review_status: "verified",
+    published_at: "2026-06-03",
+    reviewed_at: "2026-09-27",
+    concept_ids: [],
+    ...eventDateMetadata(s.review, s.claims, [s.p]),
+  }
+  assert.equal(
+    articleReview({ meta: { article_reviews: [published] } }, "date-only").source_published_at,
+    "2026-06-03",
+  )
+  for (const mutate of [
+    (x) => (x.review.event_date_basis.source_published_at = "2026-06-04"),
+    (x) => (x.review.event_date_basis.source_published_at = "2026-06-03T00:00:00Z"),
+    (x) => (x.review.event_date_basis.timezone = "Asia/Seoul"),
+    (x) => (x.p.dates.profile_status = "not-configured"),
+    (x) => (x.p.dates.basis.text = ""),
+    (x) => (x.claims[0].published_at = "2026-06-04"),
+    (x) => (x.claims[0].evidence[0].source_version_id = "wrong-version"),
+    (x) => (x.review.event_date_basis.claim_id = "not-used"),
+  ]) {
+    const changed = structuredClone(s)
+    mutate(changed)
+    assert.throws(() => eventDateMetadata(changed.review, changed.claims, [changed.p]))
+  }
+})
+
+test("stored JSON-LD compact offsets and matching publication time elements retain one instant", () => {
+  const s = fixture()
+  const timestamp = "2026-06-24T09:00:48-04:00"
+  s.p.parser = { id: "trafilatura" }
+  s.p.dates = {
+    published_at: timestamp,
+    precision: "timestamp",
+    profile_status: "matched",
+    basis: {
+      sources: [
+        {
+          type: "json-ld",
+          script_index: 0,
+          node_type: ["NewsArticle"],
+          attribute: "datePublished",
+          text: "2026-06-24T09:00:48-0400",
+        },
+        {
+          type: "time-itemprop",
+          dom_path: "/html/body/main/header/p/time",
+          attribute: "datetime",
+          text: "2026-06-24T13:00:48Z",
+        },
+      ],
+    },
+  }
+  s.claims[0].published_at = timestamp
+  s.review.published_at = "2026-06-24"
+  s.review.event_date_basis = {
+    kind: "source-publication-time",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: timestamp,
+    timezone: "Asia/Seoul",
+  }
+  assert.equal(eventDateMetadata(s.review, s.claims, [s.p]).source_published_at, timestamp)
+  for (const mutate of [
+    (p) => (p.dates.basis.sources[0].text = "2026-06-24T09:00:48-0500"),
+    (p) => (p.dates.basis.sources[0].attribute = "dateModified"),
+    (p) => (p.dates.basis.sources[1].text = "2026-06-24T13:00:49Z"),
+    (p) => (p.dates.basis.sources[1].attribute = "dateModified"),
+    (p) => (p.dates.basis.sources[1].dom_path = "/html/body/footer/div"),
+    (p) => p.dates.basis.sources.shift(),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]), /exact used source timestamp/)
+  }
+})
+
+test("day-only Markdown publication requires its exact source line and block hashes", () => {
+  const s = fixture()
+  const text = "June 3, 2026"
+  const locator = {
+    type: "markdown",
+    line_start: 3,
+    line_end: 3,
+    text_hash: sha256(text),
+    source_text_hash: sha256(text + "\n"),
+  }
+  s.p.blocks.push({ block_id: "date-header", kind: "paragraph", text, locator })
+  s.p.dates.profile_status = "matched"
+  s.p.dates.basis = { ...locator, text }
+  s.review.published_at = "2026-06-03"
+  s.review.event_date_basis = {
+    kind: "source-publication-day",
+    source_id: "s1",
+    source_version_id: "s1:v1",
+    parse_id: "p1",
+    claim_id: "c1",
+    source_published_at: "2026-06-03",
+  }
+  assert.equal(eventDateMetadata(s.review, s.claims, [s.p]).source_published_at, "2026-06-03")
+  for (const mutate of [
+    (p) => (p.dates.basis.line_start = 2),
+    (p) => (p.dates.basis.line_end = 4),
+    (p) => (p.dates.basis.text_hash = "0".repeat(64)),
+    (p) => (p.dates.basis.source_text_hash = "0".repeat(64)),
+    (p) => (p.blocks.at(-1).text = "June 4, 2026"),
+    (p) => p.blocks.pop(),
+  ]) {
+    const p = structuredClone(s.p)
+    mutate(p)
+    assert.throws(() => eventDateMetadata(s.review, s.claims, [p]), /exact used source date/)
+  }
 })

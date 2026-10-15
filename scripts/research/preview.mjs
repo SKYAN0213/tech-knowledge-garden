@@ -31,14 +31,17 @@ import {
   legacyTransitionMetadata,
 } from "./legacy-transition.mjs"
 import { markdownProseText } from "../explanations.mjs"
-import { loadNoteApproval } from "./note-review.mjs"
+import { loadHistoricalNoteApproval, loadReferencedNoteApproval } from "./note-review.mjs"
 import { atomicWrite, atomicCreate, readJSON, safePath, RunState } from "./run-state.mjs"
-import { assertConceptConflicts } from "./knowledge-links.mjs"
+import { assertConceptConflicts, conceptRegistry } from "./knowledge-links.mjs"
 import { assertRetrospectiveAppearance, assertHistoricalAdditionReview } from "./event-date.mjs"
 import { articleDateLabel } from "../article-review.mjs"
 import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
 import { loadPreviewSourceAlternatives } from "./preview-source-alternatives.mjs"
+import { loadCurationSelection } from "./curation.mjs"
+import { checkedPlan, loadSelectedEvent } from "./event-pipeline.mjs"
+import { assertEditorialCoverage } from "./editorial-completeness.mjs"
 
 const approvalFiles = [
   "draft.json",
@@ -52,7 +55,17 @@ const validRun = (run) => {
   if (typeof run !== "string" || !/^[a-zA-Z0-9_-]+$/.test(run)) throw Error("Invalid run id")
 }
 
-export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
+export function loadCurrentApproval(root, run, { vault = "vault", approvedNotes = [] } = {}) {
+  return readApproval(root, run, vault, false, approvedNotes)
+}
+
+// Evidence/history projections can read immutable approved concept snapshots.
+// Preview/publication still use loadCurrentApproval and current canonical gates.
+export function loadHistoricalApproval(root, run, { vault = "vault" } = {}) {
+  return readApproval(root, run, vault, true)
+}
+
+function readApproval(root, run, vault, historical, approvedNotes = []) {
   validRun(run)
   const entries = Object.fromEntries(
     approvalFiles.map((name) => {
@@ -86,7 +99,7 @@ export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
       value("editorial-review.json"),
       // The location records where review happened; byte identity and current
       // validation use the supplied vault, including a verified archive copy.
-      { vault, sourceVault: concepts?.source_vault || vault },
+      { vault, sourceVault: concepts?.source_vault || vault, historical, approvedNotes },
     )
     if (!concepts || JSON.stringify(concepts) !== JSON.stringify(current))
       throw Error("Saved article concept assignment differs from current evidence")
@@ -97,6 +110,16 @@ export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
   return {
     run,
     article,
+    ...(value("draft.json").completeness_context
+      ? {
+          editorial_completeness: assertEditorialCoverage(
+            value("draft.json"),
+            value("reviewed-claims.json").claims,
+            value("editorial-review.json").completeness_review,
+            { documents, parses },
+          ),
+        }
+      : {}),
     ...(concepts ? { concept_review: concepts } : {}),
     source_observed_at: documents.map((document) => document.observed_at),
     files: Object.fromEntries(Object.entries(entries).map(([name, entry]) => [name, entry.sha256])),
@@ -105,17 +128,52 @@ export function loadCurrentApproval(root, run, { vault = "vault" } = {}) {
 
 // A concept selected from a private note approval must use that exact reviewed
 // definition in the reader, even if an older note with the same ID exists.
-export function assertPreviewConceptNotes(approvals, knowledge) {
+export function assertPreviewConceptNotes(
+  approvals,
+  knowledge,
+  { root = null, vault = "vault" } = {},
+) {
   for (const approval of approvals)
     for (const selected of approval.concept_review?.notes || []) {
       if (selected.approval_run === undefined) continue
       const included = knowledge.find((k) => k.run === selected.approval_run)
       if (
-        !included?.approval.notes.some(
+        included?.approval.notes.some(
           (n) => n.path === selected.path && n.sha256 === selected.sha256,
         )
       )
+        continue
+      if (!root || !selected.approval_files)
         throw Error("Private reader requires the exact approved concept note: " + selected.path)
+      const original = loadHistoricalNoteApproval(root, selected.approval_run, { vault })
+      const sourceNote = original.approval.notes.find(
+        (n) => n.path === selected.path && n.sha256 === selected.sha256,
+      )
+      const targetApproval = knowledge.find((k) =>
+        k.approval.notes.some((n) => n.path === selected.path && n.sha256 === selected.sha256),
+      )
+      const target = targetApproval?.approval.notes.find(
+        (n) => n.path === selected.path && n.sha256 === selected.sha256,
+      )
+      if (JSON.stringify(original.files) !== JSON.stringify(selected.approval_files) || !sourceNote)
+        throw Error("Private reader requires the exact approved concept note: " + selected.path)
+      if (target) {
+        const verified = loadReferencedNoteApproval(root, targetApproval.run, { vault })
+        if (
+          sha256(JSON.stringify(verified)) !== sha256(JSON.stringify(targetApproval)) ||
+          target.content !== sourceNote.content ||
+          JSON.stringify(target.evidence) !== JSON.stringify(sourceNote.evidence)
+        )
+          throw Error("Private reader requires the exact approved concept note: " + selected.path)
+      } else {
+        const targetPath = safePath(vault, selected.path)
+        if (
+          !fs.existsSync(targetPath) ||
+          sha256(fs.readFileSync(targetPath)) !== selected.sha256 ||
+          fs.readFileSync(targetPath, "utf8") !== sourceNote.content
+        )
+          throw Error("Private reader requires the exact approved concept note: " + selected.path)
+      }
     }
 }
 
@@ -155,12 +213,24 @@ export function verifyReviewedConceptOutputs(workspace, approvals) {
         fs.readFileSync(safePath(workspace, `public/news/${eventId}.html`), "utf8"),
       )
       const termLinks = links(termTree)
+      const publishedAt = approval.article.article_review.published_at
+      const datedHistory = collect(
+        termTree,
+        (node) => node.tagName === "article" && hasPath(node, "news/" + eventId),
+      ).some(
+        (row) =>
+          collect(
+            row,
+            (node) =>
+              node.tagName === "time" &&
+              node.properties?.dateTime === publishedAt &&
+              normalizedText(htmlText(node)).includes(publishedAt.replaceAll("-", ".")),
+          ).length,
+      )
       if (
         !hasPath(newsTree, slug) ||
         !hasPath(termTree, "news/" + eventId) ||
-        !normalizedText(htmlText(termTree)).includes(
-          approval.article.article_review.published_at,
-        ) ||
+        !datedHistory ||
         approval.article.source_urls.some((url) => !termLinks.has(url))
       )
         throw Error("Reader concept tag, dated event history or original source missing")
@@ -211,6 +281,7 @@ export function retrospectiveProjections(
   approvals,
   knowledgeNotes = [],
   legacyReviews = [],
+  { root } = {},
 ) {
   if (
     (!approvals.length && !legacyReviews.length) ||
@@ -274,7 +345,7 @@ export function retrospectiveProjections(
       if (sha256(originalBytes) !== legacyReview.target_sha256)
         throw Error("Legacy transition original edition bytes changed")
       const original = { ...existing, ...parseNote(originalBytes.toString("utf8")) }
-      assertLegacyTransition(legacyReview, revised, original, relativePath)
+      assertLegacyTransition(legacyReview, revised, original, relativePath, { root })
       const metadata = legacyTransitionMetadata(legacyReview, original.meta, relativePath)
       const projection = editionProjection(revised, {
         key: path.basename(existing.file, ".md"),
@@ -283,6 +354,7 @@ export function retrospectiveProjections(
         coverage_end: metadata.coverage_end,
         existing: original,
         legacy_review: legacyReview,
+        source_root: root,
         concept_paths_by_id,
       })
       projections.push({ ...projection, event_ids: revised.map((a) => a.event_id) })
@@ -378,6 +450,7 @@ export function newEditionProjections(
   spec,
   knowledgeNotes = [],
   sourceOriginals = new Map(),
+  { root, curation } = {},
 ) {
   if (
     !spec ||
@@ -421,6 +494,37 @@ export function newEditionProjections(
   const priorIds = new Set(prior.map((a) => a.id))
   const priorUrls = new Set(prior.flatMap((a) => a.urls.map(canonicalURL)))
   const firstDay = kstDay(spec.coverage_start)
+  const carried = new Map()
+  if (curation) {
+    if (!root) throw Error("Curated first-feature projection requires its private root")
+    const selected = loadCurationSelection({ root, vault }, curation)
+    if (selected.briefing_date !== spec.date)
+      throw Error("Curated first-feature date differs from the new briefing")
+    for (const item of selected.selected) {
+      const plan = checkedPlan({ root }, item.execution.plan, item.execution.group_id)
+      const binding = readJSON(
+        root,
+        `event-plans/${plan.run_id}/selections/${item.execution.group_id}.json`,
+      )
+      if (!binding || !readJSON(root, `runs/${binding.writer_run}/approved-article.json`)) continue
+      const native = loadSelectedEvent(
+        { root },
+        {
+          run_id: binding.writer_run,
+          selection_path: binding.selection.path,
+          selection_sha256: binding.selection.sha256,
+        },
+        { requireProcessed: true },
+      )
+      if (
+        JSON.stringify(native.plan) !== JSON.stringify(item.execution.plan) ||
+        native.group_id !== item.execution.group_id
+      )
+        throw Error("Curated first-feature approval has a different source selection")
+      const approval = loadCurrentApproval(root, binding.writer_run, { vault })
+      carried.set(approval.article.event_id, JSON.stringify(approval.article))
+    }
+  }
   for (const article of approvals) {
     const published = article.article_review.published_at
     // Keep fixed IDs from approvals made before URL canonicalization. Only
@@ -430,16 +534,17 @@ export function newEditionProjections(
       sha256(article.source_urls[0]).slice(0, 16),
     ])
     const original = sourceOriginals.get(article.event_id)
+    const exactCarried = carried.get(article.event_id) === JSON.stringify(article)
     if (original) {
       sourceIDs.add(sha256(original).slice(0, 16))
       sourceIDs.add(sha256(canonicalURL(original)).slice(0, 16))
     }
     if (
-      !sourceIDs.has(article.event_id) ||
+      (!sourceIDs.has(article.event_id) && !exactCarried) ||
       priorIds.has(article.event_id) ||
       article.source_urls.some((url) => priorUrls.has(canonicalURL(url))) ||
       (original && priorUrls.has(canonicalURL(original))) ||
-      published < firstDay ||
+      (published < firstDay && !exactCarried) ||
       published > spec.date
     )
       throw Error("New edition contains a duplicate or out-of-window event")
@@ -567,8 +672,26 @@ function htmlText(node) {
   return textBlocks.has(node.tagName) ? "\n" + text + "\n" : text
 }
 const normalizedText = (value) => value.normalize("NFC").replace(/\s+/g, " ").trim()
+const normalizedProseText = (value) =>
+  normalizedText(value.replace(/`([^`]+)`/g, "$1")).replace(
+    /([A-Za-z0-9_$])\s+(은|는|이|가|을|를|의|도|에|로|과|와|만|까지|부터|에서|처럼|보다|마다)/g,
+    "$1$2",
+  )
 const links = (tree) =>
   new Set(collect(tree, (n) => n.tagName === "a").map((n) => n.properties?.href))
+
+export function approvedArticleMatchesRenderedContent(article, renderedText, sourceLinks) {
+  const phrases = [
+    article.title,
+    article.record.lead,
+    ...article.record.explanations.flatMap((e) => e.paragraphs),
+  ]
+  const text = normalizedProseText(renderedText)
+  return (
+    !phrases.some((phrase) => !text.includes(normalizedProseText(phrase))) &&
+    article.source_urls.every((url) => sourceLinks.has(url))
+  )
+}
 
 export async function verifyRetrospectiveOutputs(
   workspace,
@@ -610,20 +733,17 @@ export async function verifyRetrospectiveOutputs(
       )
     )
       throw Error("Reviewed article concept missing from the generated map: " + article.event_id)
-    const newsPath = `public/news/${article.event_id}.html`,
-      news = fromHtml(fs.readFileSync(safePath(workspace, newsPath), "utf8")),
-      phrases = [
+    const phrases = [
         article.title,
         article.record.lead,
         ...article.record.explanations.flatMap((e) => e.paragraphs),
       ],
+      newsPath = `public/news/${article.event_id}.html`,
+      news = fromHtml(fs.readFileSync(safePath(workspace, newsPath), "utf8")),
       text = normalizedText(htmlText(news)),
       sourceLinks = links(news),
       dateText = `${articleDateLabel(article.article_review)} ${article.article_review.published_at}`
-    if (
-      phrases.some((p) => !text.includes(normalizedText(p))) ||
-      article.source_urls.some((u) => !sourceLinks.has(u))
-    )
+    if (!approvedArticleMatchesRenderedContent(article, text, sourceLinks))
       throw Error("Private news differs from approved prose or source URLs: " + article.event_id)
     if (!text.includes(dateText))
       throw Error("Private news must distinguish publication from dated updates")
@@ -655,8 +775,8 @@ export async function verifyRetrospectiveOutputs(
       if (
         phrases.some(
           (p) =>
-            !normalizedText(htmlText(issue)).includes(normalizedText(p)) ||
-            !markdownProseText(markdown).includes(p),
+            !normalizedProseText(htmlText(issue)).includes(normalizedProseText(p)) ||
+            !normalizedProseText(markdownProseText(markdown)).includes(normalizedProseText(p)),
         ) ||
         article.source_urls.some((u) => !links(issue).has(u) || !markdown.includes(u)) ||
         !markdown.includes(dateText)
@@ -664,9 +784,9 @@ export async function verifyRetrospectiveOutputs(
         throw Error("Private briefing/digest differs from approved prose or URLs: " + key)
       if (rssItem) {
         const content = fromHtml(rssItem.content || "", { fragment: true }),
-          contentText = normalizedText(htmlText(content))
+          contentText = normalizedProseText(htmlText(content))
         if (
-          phrases.some((p) => !contentText.includes(normalizedText(p))) ||
+          phrases.some((p) => !contentText.includes(normalizedProseText(p))) ||
           article.source_urls.some((u) => !links(content).has(u)) ||
           !contentText.includes(dateText)
         )
@@ -875,26 +995,55 @@ export function stageApprovedNote(vault, note, { creationReceipt = null } = {}) 
   return { path: note.path, sha256: note.sha256, created: false }
 }
 
-// The canonical index is navigation, not a second concept approval. Derive only
-// links to approved new concepts, while preserving its existing prose and dates.
+// Navigation adds no concept approval. Repair links to existing reviewed
+// specialist notes and separately approved creations without rewriting notes.
 export function conceptIndexProjection(vault, notes) {
   const created = notes.filter((n) => n.operation === "create" && n.path.startsWith("Knowledge/"))
-  if (!created.length) return null
+  const reviewed = conceptRegistry(vault).filter(
+    ({ meta }) =>
+      meta.type === "knowledge" &&
+      meta.entry_type === "concept" &&
+      meta.schema_version === "tech-encyclopedia/v2" &&
+      meta.status === "evergreen" &&
+      typeof meta.label === "string" &&
+      meta.label.trim() &&
+      typeof meta.domain === "string" &&
+      meta.domain.trim() &&
+      parseResearchDate(meta.last_reviewed) &&
+      parseResearchDate(meta.map_review.reviewed) &&
+      typeof meta.map_review.reason === "string" &&
+      meta.map_review.reason.trim(),
+  )
+  if (!created.length && !reviewed.length) return null
   const relative = "Knowledge/00 Tech Encyclopedia Index.md"
   const before = fs.readFileSync(safePath(vault, relative)),
     index = parseNote(before.toString("utf8"))
   if (index.meta.entry_type !== "index" || index.meta.schema_version !== "tech-encyclopedia/v2")
     throw Error("Canonical concept navigation index required")
+  const existing = new Set(
+    [...index.body.matchAll(/\[\[([^\]|#]+)(?:[^\]]*)\]\]/g)].map((m) => m[1].replace(/\.md$/, "")),
+  )
+  const missing = reviewed.filter((n) => !existing.has(n.path))
+  if (!created.length && !missing.length) return null
   const current = sections(index.body, 2).find((s) => s.title === "포함하는 개념")
   if (!current) throw Error("Canonical index concept section required")
   const groups = new Map(),
     days = []
-  for (const n of created) {
+  for (const n of created)
+    if (existing.has(n.path.replace(/\.md$/, "")))
+      throw Error("New concept already appears in canonical navigation")
+  const additions = [
+    ...missing.map((n) => ({ path: n.path + ".md", meta: n.meta })),
+    ...created.map((n) => ({ path: n.path, meta: parseNote(n.content).meta })),
+  ]
+  if (new Set(additions.map((n) => n.path)).size !== additions.length)
+    throw Error("Ambiguous concept navigation additions")
+  for (const n of additions) {
     if (/[\[\]|#]/.test(n.path)) throw Error("New concept path cannot contain wiki delimiters")
-    const meta = parseNote(n.content).meta,
+    const meta = n.meta,
       key = n.path.replace(/\.md$/, "")
-    const existing = [...index.body.matchAll(/\[\[([^\]|#]+)(?:[^\]]*)\]\]/g)].map((m) => m[1])
-    if (existing.includes(key)) throw Error("New concept already appears in canonical navigation")
+    if (/[\[\]|<>\x00-\x1f\x7f]/.test(meta.label) || /[\r\n]/.test(meta.domain))
+      throw Error("Concept navigation labels must preserve literal display text")
     if (!groups.has(meta.domain)) groups.set(meta.domain, [])
     groups.get(meta.domain).push(`- [[${key}|${meta.label}]]`)
     days.push(meta.last_reviewed)
@@ -915,6 +1064,166 @@ export function conceptIndexProjection(vault, notes) {
   return { path: relative, previous_sha256: sha256(before), sha256: sha256(content), content }
 }
 
+// Read-only approval preflight shared by preview and bounded local verification.
+export function groupPreviewApprovalRuns({
+  run,
+  approvedRuns,
+  handoffRuns = null,
+  retrospectiveRuns = [],
+  publicationHandoff = null,
+  curation = null,
+  editionSpec = null,
+}) {
+  const checkRuns = (runs) =>
+    Array.isArray(runs) &&
+    new Set(runs).size === runs.length &&
+    runs.every((id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id))
+  if (
+    !checkRuns(approvedRuns) ||
+    !checkRuns(retrospectiveRuns) ||
+    (handoffRuns !== null && !checkRuns(handoffRuns))
+  )
+    throw Error("Distinct native approval run IDs required")
+  if (publicationHandoff && approvedRuns.length)
+    throw Error("Use one daily publication handoff without explicit approved runs")
+  const newEditionRuns = handoffRuns ?? (editionSpec ? approvedRuns : [])
+  if (retrospectiveRuns.length && (!publicationHandoff || !curation || !editionSpec))
+    throw Error("Additional retrospective approvals require a curated new-edition handoff")
+  if (retrospectiveRuns.some((id) => newEditionRuns.includes(id)))
+    throw Error("New-edition and retrospective approval runs must be disjoint")
+  const combined = handoffRuns ? [...handoffRuns, ...retrospectiveRuns] : approvedRuns
+  if (new Set(combined).size !== combined.length || combined.includes(run))
+    throw Error("Distinct approved input runs required")
+  return {
+    approvedRuns: combined,
+    newEditionRuns,
+    retrospectiveRuns,
+    retrospectiveProjectionRuns: curation ? retrospectiveRuns : editionSpec ? [] : combined,
+  }
+}
+
+export function loadPreviewPublicationInputs(
+  root,
+  run,
+  approvedRuns,
+  {
+    vault = "vault",
+    knowledgeRuns = [],
+    editionSpec = null,
+    legacyReviews = [],
+    sourceAlternatives = [],
+    publicationHandoff = null,
+    retrospectiveRuns = [],
+  } = {},
+) {
+  validRun(run)
+  let dailySelection = null
+  let curation = null
+  let handoffRuns = null
+  if (publicationHandoff) {
+    const selected = loadDailyPublicationSelection(root, publicationHandoff, {
+      vault,
+    })
+    handoffRuns = selected.approvedRuns
+    knowledgeRuns = [
+      ...knowledgeRuns,
+      ...(selected.knowledgeRuns || []).filter((id) => !knowledgeRuns.includes(id)),
+    ]
+    dailySelection = selected.reference
+    curation = selected.curation || null
+  }
+  const groups = groupPreviewApprovalRuns({
+    run,
+    approvedRuns,
+    handoffRuns,
+    retrospectiveRuns,
+    publicationHandoff,
+    curation,
+    editionSpec,
+  })
+  if (curation && !editionSpec)
+    throw Error("Curated publication selection requires an explicit new-edition specification")
+  approvedRuns = groups.approvedRuns
+  if (
+    (!approvedRuns.length && !knowledgeRuns.length && !legacyReviews.length) ||
+    new Set(knowledgeRuns).size !== knowledgeRuns.length ||
+    knowledgeRuns.includes(run)
+  )
+    throw Error("Distinct approved input runs required")
+  const knowledge = knowledgeRuns.map((id) => loadReferencedNoteApproval(root, id, { vault }))
+  const approvals = approvedRuns.map((id) =>
+    loadCurrentApproval(root, id, { vault, approvedNotes: knowledge }),
+  )
+  if (new Set(approvals.map((row) => row.article.event_id)).size !== approvals.length)
+    throw Error("New-edition and retrospective approvals must have distinct event IDs")
+  if (sourceAlternatives.length && !editionSpec)
+    throw Error("New-edition alternate-source references required")
+  const sourceOriginals = loadPreviewSourceAlternatives(root, sourceAlternatives, approvals)
+  assertPreviewConceptNotes(approvals, knowledge, { root, vault })
+  return {
+    approvedRuns,
+    newEditionRuns: groups.newEditionRuns,
+    retrospectiveRuns: groups.retrospectiveProjectionRuns,
+    retrospectiveReferences: groups.retrospectiveRuns.map((id) => {
+      const approval = approvals.find((row) => row.run === id)
+      return { run_id: id, files: approval.files }
+    }),
+    knowledgeRuns,
+    dailySelection,
+    approvals,
+    knowledge,
+    sourceOriginals,
+    curation,
+  }
+}
+
+// Rebuild the new issue from its handoff-selected approvals and any explicitly
+// grouped retrospective approvals from the same unchanged authority vault.
+export function previewEditionProjections(
+  vault,
+  selected,
+  { editionSpec = null, notes = [], legacyReviews = [], root } = {},
+) {
+  const byRun = new Map(selected.approvals.map((approval) => [approval.run, approval]))
+  if (!editionSpec)
+    return retrospectiveProjections(
+      vault,
+      selected.approvals.map((approval) => approval.article),
+      notes,
+      legacyReviews,
+      { root },
+    )
+  if (!selected.curation)
+    return newEditionProjections(
+      vault,
+      selected.approvals.map((approval) => approval.article),
+      editionSpec,
+      notes,
+      selected.sourceOriginals,
+      { root },
+    )
+  const newArticles = selected.newEditionRuns.map((id) => byRun.get(id)?.article),
+    retrospectiveArticles = selected.retrospectiveRuns.map((id) => byRun.get(id)?.article)
+  if (newArticles.some((article) => !article) || retrospectiveArticles.some((article) => !article))
+    throw Error("Combined preview approval run partition changed")
+  const newest = newEditionProjections(
+    vault,
+    newArticles,
+    editionSpec,
+    notes,
+    selected.sourceOriginals,
+    { root, curation: selected.curation },
+  )
+  const retrospective =
+    retrospectiveArticles.length || legacyReviews.length
+      ? retrospectiveProjections(vault, retrospectiveArticles, notes, legacyReviews, { root })
+      : []
+  const paths = [...newest, ...retrospective].map((projection) => projection.path)
+  if (new Set(paths).size !== paths.length)
+    throw Error("Combined preview edition projections overlap")
+  return [...newest, ...retrospective]
+}
+
 // Copy the trusted renderer and authoring vault into a private working directory.
 // Only installed dependencies are shared; Quartz caches and all generated output
 // belong to this copy. No model, Drive, Git or publication command is invoked.
@@ -930,55 +1239,34 @@ export async function privatePreview(
     legacyReviews = [],
     sourceAlternatives = [],
     publicationHandoff = null,
+    retrospectiveRuns = [],
   } = {},
 ) {
-  validRun(run)
-  let dailySelection = null
-  if (publicationHandoff) {
-    if (approvedRuns.length)
-      throw Error("Use one daily publication handoff without explicit approved runs")
-    const selected = loadDailyPublicationSelection(root, publicationHandoff, {
-      vault: path.resolve(repo, vault),
-    })
-    approvedRuns = selected.approvedRuns
-    dailySelection = selected.reference
-  }
-  if (
-    (!approvedRuns.length && !knowledgeRuns.length && !legacyReviews.length) ||
-    new Set(approvedRuns).size !== approvedRuns.length ||
-    new Set(knowledgeRuns).size !== knowledgeRuns.length ||
-    approvedRuns.includes(run) ||
-    knowledgeRuns.includes(run)
-  )
-    throw Error("Distinct approved input runs required")
   repo = path.resolve(repo)
   vault = path.resolve(repo, vault)
-  const approvals = approvedRuns.map((id) => loadCurrentApproval(root, id, { vault }))
-  if (sourceAlternatives.length && !editionSpec)
-    throw Error("New-edition alternate-source references required")
-  const sourceOriginals = loadPreviewSourceAlternatives(root, sourceAlternatives, approvals)
-  const knowledge = knowledgeRuns.map((id) => loadNoteApproval(root, id, { vault }))
-  assertPreviewConceptNotes(approvals, knowledge)
+  const selected = loadPreviewPublicationInputs(root, run, approvedRuns, {
+    vault,
+    knowledgeRuns,
+    editionSpec,
+    legacyReviews,
+    sourceAlternatives,
+    publicationHandoff,
+    retrospectiveRuns,
+  })
+  const { approvals, knowledge, dailySelection, sourceOriginals, curation } = selected
+  approvedRuns = selected.approvedRuns
+  knowledgeRuns = selected.knowledgeRuns
   const notes = knowledge.flatMap((k) => k.approval.notes)
-  if (legacyReviews.length && editionSpec)
+  if (legacyReviews.length && editionSpec && !selected.curation)
     throw Error("Legacy transition requires retrospective approved articles")
-  if (editionSpec) assertNewEditionSourceCutoff(approvals, editionSpec)
+  if (editionSpec)
+    assertNewEditionSourceCutoff(
+      approvals.filter((approval) => selected.newEditionRuns.includes(approval.run)),
+      editionSpec,
+    )
   const projections =
       approvals.length || legacyReviews.length
-        ? editionSpec
-          ? newEditionProjections(
-              vault,
-              approvals.map((a) => a.article),
-              editionSpec,
-              notes,
-              sourceOriginals,
-            )
-          : retrospectiveProjections(
-              vault,
-              approvals.map((a) => a.article),
-              notes,
-              legacyReviews,
-            )
+        ? previewEditionProjections(vault, selected, { editionSpec, notes, legacyReviews, root })
         : [],
     sourceFiles = fingerprints(vault),
     runtime = runtimeFiles(repo),
@@ -986,6 +1274,10 @@ export async function privatePreview(
     input = {
       schema: "private-reader-preview/v1",
       ...(dailySelection ? { daily_editorial_handoff: dailySelection } : {}),
+      ...(curation ? { new_edition_runs: selected.newEditionRuns } : {}),
+      ...(selected.retrospectiveReferences.length
+        ? { retrospective_runs: selected.retrospectiveReferences }
+        : {}),
       preview_implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       node_version: process.version,
       approvals,
@@ -1104,8 +1396,11 @@ export async function privatePreview(
   assertFiles(repo, runtime, "Original renderer changed during private preview")
   for (const approval of approvals)
     if (
-      sha256(JSON.stringify(loadCurrentApproval(root, approval.run, { vault }))) !==
-      sha256(JSON.stringify(approval))
+      sha256(
+        JSON.stringify(
+          loadCurrentApproval(root, approval.run, { vault, approvedNotes: knowledge }),
+        ),
+      ) !== sha256(JSON.stringify(approval))
     )
       throw Error("Editorial approval changed during private preview")
   if (
@@ -1115,7 +1410,7 @@ export async function privatePreview(
     throw Error("Alternate-source identity changed during private preview")
   for (const approved of knowledge)
     if (
-      sha256(JSON.stringify(loadNoteApproval(root, approved.run, { vault }))) !==
+      sha256(JSON.stringify(loadReferencedNoteApproval(root, approved.run, { vault }))) !==
       sha256(JSON.stringify(approved))
     )
       throw Error("Knowledge approval changed during private preview")
@@ -1142,6 +1437,10 @@ export async function privatePreview(
     run_id: run,
     approved_runs: approvedRuns,
     ...(dailySelection ? { daily_editorial_handoff: dailySelection } : {}),
+    ...(curation ? { new_edition_runs: selected.newEditionRuns } : {}),
+    ...(selected.retrospectiveReferences.length
+      ? { retrospective_runs: selected.retrospectiveReferences }
+      : {}),
     ...(sourceAlternatives.length ? { source_alternatives: sourceAlternatives } : {}),
     ...(editionSpec ? { edition_spec: editionSpec, coverage_complete: false } : {}),
     ...(legacyReviews.length ? { legacy_reviews: legacyReviews } : {}),

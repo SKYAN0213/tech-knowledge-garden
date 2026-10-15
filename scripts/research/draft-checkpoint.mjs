@@ -5,6 +5,7 @@ import { draftFingerprint, draftProblems, schemaForDraft, writeDraft } from "./e
 import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { loadRoleBudget } from "./model-policy.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
+import { assertCompletenessContext } from "./editorial-completeness.mjs"
 
 function validator(claims, options) {
   const usable = options.deepContext
@@ -19,13 +20,27 @@ function validator(claims, options) {
       )
   return (record) => {
     assertSchema(record?.draft, schemaForDraft(options.deepContext))
+    if (record.completeness_context)
+      assertCompletenessContext(record.completeness_context, claims, {
+        documents: options.documents || [],
+        parses: options.parses || [],
+      })
     if (
       record.schema !== "research-draft/v1" ||
       record.draft_id !== draftFingerprint(record.draft, options.deepContext) ||
       JSON.stringify(record.deep_context || null) !== JSON.stringify(options.deepContext || null) ||
+      JSON.stringify(record.completeness_context || null) !==
+        JSON.stringify(options.completenessContext || null) ||
       JSON.stringify(record.claim_ids) !== JSON.stringify(usable.map((c) => c.claim_id)) ||
       JSON.stringify(record.problems) !==
-        JSON.stringify(draftProblems(record.draft, usable, options.deepContext)) ||
+        JSON.stringify(
+          draftProblems(
+            record.draft,
+            options.completenessContext ? claims : usable,
+            options.deepContext,
+            options.completenessContext,
+          ),
+        ) ||
       record.public_approved !== false
     )
       throw Error("Stored model draft no longer matches its input")
@@ -48,6 +63,7 @@ export function loadDraftCheckpoint(root, runId, claims, options = {}) {
     input.documents_sha256 !== sha256(JSON.stringify(options.documents || [])) ||
     input.parses_sha256 !== sha256(JSON.stringify(options.parses || [])) ||
     input.deep_context_sha256 !== sha256(JSON.stringify(options.deepContext || null)) ||
+    (input.completeness_context_sha256 || null) !== (options.completenessContext?.sha256 || null) ||
     input.provisional !== (options.provisional === true)
   )
     throw Error("Draft source or reviewed input changed")
@@ -85,8 +101,6 @@ export function loadBoundDraftCheckpoint(root, runId, claims, options) {
     // Reuse the immutable model output, never the other run's editorial approval.
     // A legitimate correction may coexist with that output; validate its full
     // history instead of forcing another model request after editing.
-    if (!readJSON(root, `runs/${runId}/draft-generation-reference.json`))
-      throw Error("Working draft differs from the generation checkpoint")
     loadProcessedDraft(root, runId, { claims }, options.documents || [], options.parses || [])
   }
   return result
@@ -104,6 +118,9 @@ export async function writeDraftCheckpoint(root, runId, ollama, claims, options,
     documents_sha256: sha256(JSON.stringify(options.documents || [])),
     parses_sha256: sha256(JSON.stringify(options.parses || [])),
     deep_context_sha256: sha256(JSON.stringify(options.deepContext || null)),
+    ...(options.completenessContext
+      ? { completeness_context_sha256: options.completenessContext.sha256 }
+      : {}),
     model: options.model,
     think: options.think ?? false,
     provisional: options.provisional === true,
@@ -113,6 +130,7 @@ export async function writeDraftCheckpoint(root, runId, ollama, claims, options,
       [
         "scripts/research/draft-checkpoint.mjs",
         "scripts/research/editor.mjs",
+        ...(options.completenessContext ? ["scripts/research/editorial-completeness.mjs"] : []),
         "scripts/research/dates.mjs",
         "scripts/research/deep-dive.mjs",
         "scripts/research/contracts.mjs",

@@ -4,10 +4,18 @@ import { parseNote, noteText } from "../garden.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
-import { atomicWrite, assertAbsent, safePath, RunState } from "./run-state.mjs"
+import {
+  atomicWrite,
+  atomicCreate,
+  readJSON,
+  assertAbsent,
+  safePath,
+  RunState,
+} from "./run-state.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { assertNewConceptMetadata, assertConceptConflicts } from "./knowledge-links.mjs"
 import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
+import { loadRoleBudget } from "./model-policy.mjs"
 
 export const KNOWLEDGE_DRAFT_HEADINGS = [
   "한 문장 정의",
@@ -200,6 +208,7 @@ export function knowledgeDraftProblems(draft, claims) {
 export function knowledgeDraftMarkdown(record, claims, documents) {
   return (
     record.draft.sections
+      .filter((section) => section.paragraphs.length)
       .map(
         (section) =>
           `## ${section.heading}\n\n${
@@ -228,6 +237,96 @@ export function knowledgeDraftMarkdown(record, claims, documents) {
   )
 }
 
+// Read a completed native generation without consulting the installed model.
+// Exact selection, source bytes and the original execution binding stay pinned.
+export function loadCompletedKnowledgeDraft(root, run, input, { vault = "vault" } = {}) {
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "")) throw Error("Exact knowledge draft run required")
+  const context = loadKnowledgeDraftInput(root, input, { vault }),
+    base = `runs/${run}/`
+  const state = readJSON(root, base + "knowledge-draft/state.json")
+  if (!state?.stages?.draft || state.stages.draft.status !== "complete") return null
+  const frozen = readJSON(root, base + "knowledge-draft-input.json")
+  if (
+    !frozen ||
+    JSON.stringify(frozen.input) !== JSON.stringify(input) ||
+    frozen.vault !== path.resolve(vault) ||
+    JSON.stringify(frozen.source_files) !== JSON.stringify(context.sourceFiles) ||
+    !/^[a-f0-9]{64}$/.test(frozen.implementation || "") ||
+    !/^[a-f0-9]{64}$/.test(frozen.digest || "") ||
+    typeof frozen.model !== "string" ||
+    !frozen.model ||
+    typeof frozen.runtime !== "string" ||
+    !frozen.runtime ||
+    state.run_id !== run ||
+    state.input_hash !== sha256(JSON.stringify(frozen)) ||
+    state.candidate_published !== false ||
+    state.published_by !== null
+  )
+    throw Error("Completed knowledge draft frozen input changed or missing")
+  const stageInput = {
+    input,
+    source_files: context.sourceFiles,
+    model: frozen.model,
+    implementation: frozen.implementation,
+    ...(frozen.model_policy ? { model_policy: frozen.model_policy } : {}),
+  }
+  const checkpoint = state.stages.draft
+  if (
+    checkpoint.input_hash !== sha256(JSON.stringify(stageInput)) ||
+    checkpoint.result_path !== base + "knowledge-draft/draft.json"
+  )
+    throw Error("Completed knowledge draft checkpoint changed")
+  const record = readJSON(root, checkpoint.result_path),
+    saved = readJSON(root, base + "knowledge-draft.json")
+  if (
+    !record ||
+    sha256(JSON.stringify(record)) !== checkpoint.result_hash ||
+    JSON.stringify(saved) !== JSON.stringify(record) ||
+    record.schema !==
+      (input.schema === "knowledge-draft-input/v2" ? "knowledge-draft/v2" : "knowledge-draft/v1") ||
+    (input.schema === "knowledge-draft-input/v2" && record.operation !== input.operation) ||
+    (input.operation === "create" &&
+      JSON.stringify(record.note_metadata) !== JSON.stringify(context.note.meta)) ||
+    record.path !== input.path ||
+    record.previous_sha256 !== context.original_sha256 ||
+    record.concept_id !== context.note.meta.concept_id ||
+    JSON.stringify(record.source_files) !== JSON.stringify(context.sourceFiles) ||
+    record.provenance?.model !== frozen.model ||
+    record.provenance?.digest !== frozen.digest ||
+    record.provenance?.runtime !== frozen.runtime ||
+    record.candidate_published !== false ||
+    record.drive_verified !== false ||
+    record.status !== "editorial_review" ||
+    JSON.stringify(knowledgeDraftProblems(record.draft, context.claims)) !==
+      JSON.stringify(record.problems)
+  )
+    throw Error("Completed knowledge draft output changed")
+  if (frozen.model_policy) {
+    const ledger = loadRoleBudget(root, run, "concept_write")
+    if (
+      JSON.stringify(ledger.binding) !== JSON.stringify(frozen.model_policy) ||
+      !ledger.attempts.some(
+        (a) =>
+          a.status === "complete" &&
+          JSON.stringify(a.result.output) === JSON.stringify(record.draft) &&
+          JSON.stringify(a.result.provenance) === JSON.stringify(record.provenance),
+      )
+    )
+      throw Error("Knowledge writer role ledger changed")
+  }
+  const preview = fs.readFileSync(safePath(root, base + "knowledge-preview.md"), "utf8")
+  if (preview !== knowledgeDraftMarkdown(record, context.claims, context.documents))
+    throw Error("Completed knowledge preview changed")
+  return {
+    record,
+    record_path: base + "knowledge-draft.json",
+    record_sha256: sha256(fs.readFileSync(safePath(root, base + "knowledge-draft.json"))),
+    reused: true,
+    candidate_published: false,
+    drive_verified: false,
+  }
+}
+
 export async function writeKnowledgeDraft(
   root,
   run,
@@ -237,21 +336,22 @@ export async function writeKnowledgeDraft(
   const context = loadKnowledgeDraftInput(root, input, { vault })
   const implementation = sha256(fs.readFileSync(new URL(import.meta.url)))
   const metadata = await ollama.metadata(model)
-  const state = new RunState(
-    root,
-    run,
-    {
-      input,
-      source_files: context.sourceFiles,
-      vault: path.resolve(vault),
-      model,
-      digest: metadata.digest,
-      runtime: metadata.runtime,
-      ...(ollama.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
-      implementation,
-    },
-    { scope: "knowledge-draft" },
-  )
+  const frozenInput = {
+    input,
+    source_files: context.sourceFiles,
+    vault: path.resolve(vault),
+    model,
+    digest: metadata.digest,
+    runtime: metadata.runtime,
+    ...(ollama.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
+    implementation,
+  }
+  const state = new RunState(root, run, frozenInput, { scope: "knowledge-draft" })
+  const frozenPath = `runs/${run}/knowledge-draft-input.json`,
+    existingInput = readJSON(root, frozenPath)
+  if (existingInput && JSON.stringify(existingInput) !== JSON.stringify(frozenInput))
+    throw Error("Knowledge draft input changed; use a new run")
+  if (!existingInput) atomicCreate(root, frozenPath, frozenInput)
   const record = await state.stage(
     "draft",
     {

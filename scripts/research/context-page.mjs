@@ -74,16 +74,18 @@ export function buildContextPage(
   if (route && section !== "pending")
     throw Error("Route filtering is supported only for pending candidates")
   const pending = rows(context, "pending")
+  const resolved = rows(context, "resolved")
   const counts = {}
   for (const row of pending)
     counts[row.next_route ?? "unassigned"] = (counts[row.next_route ?? "unassigned"] ?? 0) + 1
   if (route && !Object.hasOwn(counts, route)) throw Error(`Unknown pending route: ${route}`)
   const selected = candidate
-    ? pending.filter((row) => row.key === candidate)
+    ? [...pending, ...resolved].filter((row) => row.key === candidate)
     : rows(context, section).filter((row) => !route || row.next_route === route)
   if (candidate && selected.length !== 1)
-    throw Error(`Candidate lookup must match exactly one pending record: ${candidate}`)
+    throw Error(`Candidate lookup must match exactly one pending or resolved record: ${candidate}`)
   if (offset > selected.length) throw Error("offset exceeds section size")
+  const selectedSection = candidate && resolved.includes(selected[0]) ? "resolved" : section
   const base = {
     schema_version: "research-context-page/v1",
     snapshot: { input, sha256 },
@@ -106,7 +108,7 @@ export function buildContextPage(
       json_pointer: "/" + sections[name].join("/"),
     })),
     page: {
-      section,
+      section: selectedSection,
       route: route ?? null,
       candidate: candidate ?? null,
       offset,

@@ -90,6 +90,22 @@ flowchart LR
 
 원래 표 행은 rows에, 두 원문 조각의 텍스트·페이지·bbox·SHA는 context_fragments에 유지한다. locator.table_bbox는 원 표 영역이며 locator.bbox는 문단과 표를 포함한 영역이다. 숫자·단위·조건의 동일 인용문 검증은 유지한다. 출처별로 확인한 문구 패턴만 설정하며 새 crawler나 제조사별 표 파서는 만들지 않는다. FANUC 분기 실적 PDF에서 전년 대비 기준과 별도 금액 단위를3표에 연결한 실물 검증은 런북474절을 따른다. 원문 bytes·발표일·URL은 재파싱으로 변경되지 않는다.
 
+### 3.4 HTML 본문 표의 누락 검사
+
+같은 원본을 더 완전하게 파싱한 결과는 `research-reconcile-parse.mjs`의 native 복구 기록으로 연결한다. 후보의 `parse_recovery_run`은 원본·제목·발표일·관측 시각을 유지한 이전/새 parse와 각각의 본문 fingerprint를 가리킨다. 이미 고정된 편집 대기열은 이 기록과 새 기사 승인 원본을 다시 확인한 뒤 새 처리 run을 사용한다. 원 대기열·추출·승인 기록을 덮어쓰지 않으며 원 판본 변경, 다른 후보, 변조된 복구 기록은 이 경로로 통과하지 못한다. 새 파싱 결과의 사실 검토와 작성·기사는 각각 승인해야 한다. 복구 자체는 수집·모델 호출0이고 새로 확보한 내용의 추출·대조는 별도 처리한다.
+
+상세 profile의 `options.required_content_xpath`는 명시한 `content_xpath` 컨테이너 안에서 반드시 독립 블록으로 보존할 요소를 고른다. 상대 XPath만 허용하고 컨테이너 이탈·텍스트/속성 결과·script/style/noscript·5,000개 초과 선택을 거부한다. 표가 있는 원문에는 `.//table`을 설정하고 공통 `content_block_xpath`에도 `.//table`을 포함한다. 필요한 소제목·목록·코드도 해당 원문에서 확인해 같은 블록 선택기에 추가한다. 출처별 crawler를 만들지 않는다.
+
+파서는 `content_coverage`에 각 요구 요소의 DOM 위치·텍스트 SHA·`extracted`/`flattened`/`omitted`와 요구/누락 수를 기록한다. 표는 같은 DOM 위치의 `table` 블록과 비어 있지 않은 `rows`가 있어야 확보된 것으로 센다. 부모 div에 텍스트만 붙은 표는 `flattened`이며, 누락된 요구 요소가 있으면 본문 문단을 보존하되 `partial` 및 `quality.reason: required-content-incomplete`로 반환한다. 이 검사는 구조 보존 검사이며 표의 의미·각주·수치 검토나 기사 승인을 대신하지 않는다. 옵션을 지정하지 않은 기존 profile의 동작은 유지한다. 요구 selector에 맞는 비어 있지 않은 요소가 없는 원문도 그 수를 0으로 기록하며, 전체 내용이 완전하다는 별도 의미 판정으로 사용하지 않는다.
+
+AWS What's New profile은 이 공통 기능을 사용한다. 저장한 AWS Config 원문에서 이전 문단4개에 빠졌던 표26행/77개 고유 리소스 유형을 새 native reparse `core-aws-config-tables-20261008-v1`의5블록으로 확보했다. 원문 재요청/모델0·원 발표일2026-10-07·원 bytes와 이전 parse는 보존한다. 기존4사실 처리 결과를 새 parse의 검토/승인으로 자동 승격하지 않는다.
+
+### 3.5 저장 원문의 후속 자료 수집
+
+`research-followups.mjs`는 기존 일일 `--handoff` 또는 `--parent-source-run` 중 하나에서 시작한다. 저장 원문 방식은 명시한 `--backlog`의 현재 후보와 원문 판본·parse·본문 fingerprint·URL이 일치해야 한다. 기존 native 원문 검증기를 재사용하며 손상된 bytes나 바뀐 후보는 등록 전에 거부한다. 저장 자료를 현재 일일 창의 새 관측으로 기록하지 않는다.
+
+본문 구간에 실제로 포함된 anchor만 조사 후보로 받고, `--target URL`을 반복 지정해 필요한 원문을 선택할 수 있다. 같은 URL·추적 매개변수 차이는 기존 후보 병합을 사용한다. `--intake --collect-run ID`는 공통 안전 요청·원문 보관·상세 parser로 선택한 자료만 수집한다. 제목·발표일은 링크된 원문에서 다시 확보하며 부모의 날짜·사건·승인은 상속하지 않는다. 읽을 수 있는 결과는 사실 검토, 빈 본문은 내용 검토, 접근 실패는 접근 검토로 분리한다. 별도 crawler·모델 호출·일일 활성화·자동 승인은 추가하지 않는다.
+
 ## 4. 구현된 로컬 일일 수집기와 다음 연결 계약
 
 ### 4.1 활성 경로 설정
@@ -491,7 +507,7 @@ node scripts/research-context.mjs --input PATH --sha256 SHA --candidate EXACT_KE
 node scripts/research-context.mjs --input PATH --sha256 SHA --section sources
 ```
 
-기본 pending20건, limit1~100이며 UTF-8 출력120,000bytes 안에서 반환 수를 줄인다. 다음 페이지는 요청 limit이 아니라 page.next_offset을 사용한다. 원 순서·total·returned·전체 작업별 건수를 보존한다. 단일 자료도 예산을 넘으면 잘림 없이 실패하고 고정 원본을 직접 읽는다. 잘못된 key·route·section·cursor·SHA는 실패한다. 정정 경고·원문 판본·parse·검토 상태·승인 정보는 요약에도 보존한다. 반복 이력 배열만 건수/마지막 기록으로 표시하며 승인 전 정확한 candidate 조회로 전체 이력을 읽는다. 수집·사실 검증·승인 관문은 그대로다.
+기본 pending20건, limit1~100이며 UTF-8 출력120,000bytes 안에서 반환 수를 줄인다. 다음 페이지는 요청 limit이 아니라 page.next_offset을 사용한다. 원 순서·total·returned·전체 작업별 건수를 보존한다. 단일 자료도 예산을 넘으면 잘림 없이 실패하고 고정 원본을 직접 읽는다. 잘못된 key·route·section·cursor·SHA는 실패한다. 정정 경고·원문 판본·parse·검토 상태·승인 정보는 요약에도 보존한다. 반복 이력 배열만 건수/마지막 기록으로 표시하며 승인 전 정확한 candidate 조회로 전체 이력을 읽는다. 정확한 --candidate 조회는 pending과 resolved 전체에서 고유 key를 찾고 실제 소속을 page.section에 표시한다. 해결된 후보도 발견·승인·정정 이력을 그대로 읽으며 두 목록에 같은 key가 있으면 실패한다. --candidate와 --section/--route/offset의 조합은 허용하지 않는다. 수집·사실 검증·승인 관문은 그대로다.
 
 섹션은 pending/resolved/sources/companies/institutions/robot-manufacturers/known-sources/entities/events/terms/evidence/deep이다. 추적 대상·탐색 범위와 기존 사건·원문·용어·심층 이력은 해당 섹션의 전 페이지를 읽는다. 첫 pending 페이지만 읽고 조사 완료로 표시하지 않는다. 공개 UI·RSS에 운영 형식을 노출하지 않는다. 기존 npm run context 전체 출력도 유지한다.
 

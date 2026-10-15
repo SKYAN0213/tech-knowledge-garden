@@ -20,6 +20,7 @@ test("IEEE Spectrum Robotics uses the shared bounded RSS contract and preserves 
   assert.deepEqual(route.allowed_hosts, ["spectrum.ieee.org", "robotsguide.com"])
   assert.equal(route.listing_profile.pagination, "bounded-feed")
   assert.equal(route.listing_profile.feed_title, "IEEE Spectrum")
+  assert.equal(route.listing_profile.outside_policy_items, "retain_uncollected")
 
   const links = [
     {
@@ -55,14 +56,22 @@ test("IEEE Spectrum Robotics uses the shared bounded RSS contract and preserves 
   }
   const result = assessBoundedRSSFeed(parse, route, "2026-09-25", "2026-10-02")
   assert.equal(result.status, "window_covered")
-  assert.deepEqual(result.links.map((link) => link.url), links.slice(0, 2).map((link) => link.url))
+  assert.deepEqual(
+    result.links.map((link) => link.url),
+    links.slice(0, 2).map((link) => link.url),
+  )
 
   const unexpectedHost = {
     ...parse,
     links: [{ ...parse.links[0], url: "https://outside.example/robot-news" }],
   }
   assert.equal(
-    assessBoundedRSSFeed(unexpectedHost, route, "2026-09-25", "2026-10-02").reason,
+    assessBoundedRSSFeed(
+      unexpectedHost,
+      { ...route, listing_profile: { ...route.listing_profile, outside_policy_items: "reject" } },
+      "2026-09-25",
+      "2026-10-02",
+    ).reason,
     "feed_article_url_outside_policy",
   )
 })

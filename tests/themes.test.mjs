@@ -15,7 +15,7 @@ import {
 import { newsView } from "../scripts/reader-views.mjs"
 import { articleSearchText } from "../scripts/knowledge.mjs"
 import { matchesNews } from "../web/news-filter.mjs"
-import { draftSchema, draftProblems } from "../scripts/research/editor.mjs"
+import { draftSchema, draftProblems, writeDraft } from "../scripts/research/editor.mjs"
 import { assertSchema } from "../scripts/research/contracts.mjs"
 
 const body = `**분야:** 로봇·제조
@@ -43,6 +43,18 @@ const fixture = () => ({
   body: `# 뉴스 데스크\n\n## 투자 유치와 채용 계획\n\n${body}\n# Source List\n\n- [S1] https://example.org/funding\n`,
 })
 
+test("committee recruitment retains medical sector without implying a policy proposal or employee hiring", () => {
+  const prose =
+    "**분야:** 바이오·의료기술\n**테마:** 인력·조직\n**보조 테마:** 없음\n**세부 태그:** 위원 모집\n**기업·기관:** U.S. Food and Drug Administration\n"
+  const classification = classifyArticle(prose, "FDA 자문위원 모집")
+  const issue = fixture()
+  issue.body = `# 뉴스 데스크\n\n## FDA 자문위원 모집\n\n${prose}\n**핵심:** FDA가 자문위원을 공개 모집한다. [S1]\n\n# Source List\n\n- [S1] https://example.org/committee\n`
+  assert.equal(extractArticles(issue)[0].sector, "바이오·의료기술")
+  assert.equal(classification.theme, "인력·조직")
+  assert.deepEqual(classification.event_tags, ["위원 모집"])
+  assert.throws(() => classifyArticle(prose.replace("인력·조직", "정책·규제"), "FDA 자문위원 모집"))
+})
+
 test("A business model announcement is classified without claiming a contract or market entry", () => {
   const prose =
     "**분야:** 소프트웨어·클라우드\n**테마:** 사업·고객\n**보조 테마:** 없음\n**세부 태그:** 사업 모델\n**기업·기관:** NVIDIA\n"
@@ -51,6 +63,18 @@ test("A business model announcement is classified without claiming a contract or
   assert.deepEqual(classification.event_tags, ["사업 모델"])
   assert.throws(() =>
     classifyArticle(prose.replace("사업·고객", "실적·재무"), "수익 공유 모델 발표"),
+  )
+})
+
+test("AI education programs have an education tag without implying government policy or hiring", () => {
+  const prose =
+    "**분야:** AI\n**테마:** 인력·조직\n**보조 테마:** 없음\n**세부 태그:** 교육·훈련\n**기업·기관:** MIT\n"
+  const classification = classifyArticle(prose, "MIT의 AI 교육 확대 계획")
+  assert.equal(classification.theme, "인력·조직")
+  assert.deepEqual(classification.event_tags, ["교육·훈련"])
+  assert.ok(draftSchema.properties.tags.items.enum.includes("교육·훈련"))
+  assert.throws(() =>
+    classifyArticle(prose.replace("인력·조직", "정책·규제"), "MIT의 AI 교육 확대 계획"),
   )
 })
 
@@ -80,6 +104,31 @@ test("Reviewed themes, event tags and entities retain the real summary and stabl
   assert.equal(extractArticles(old)[0].classification, undefined)
   assert.deepEqual(classificationMeta(extractArticles(old)[0]), {})
   assert.deepEqual(classifyArticle(body.replaceAll("\n", "\r\n"), "CRLF"), a.classification)
+})
+
+test("research profiles retain article identity and share the research filter without claiming novelty", () => {
+  const issue = fixture()
+  const original = extractArticles(issue)[0]
+  issue.body = issue.body
+    .replace("**테마:** 투자·기업거래", "**테마:** 연구·기술")
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "연구 소개")
+  const article = extractArticles(issue)[0]
+  assert.equal(article.id, original.id)
+  assert.deepEqual(article.classification.event_tags, ["연구 소개"])
+  assert.deepEqual(classificationMeta(article).tags, [
+    "sector/robotics-manufacturing",
+    "theme/research",
+    "event/연구-소개",
+  ])
+  assert.throws(
+    () =>
+      classifyArticle(
+        issue.body.replace("**테마:** 연구·기술", "**테마:** 제품·서비스"),
+        "Profile",
+      ),
+    /Invalid or excessive/,
+  )
 })
 
 test("implementation guidance retains its source identity without claiming a product feature", () => {
@@ -378,6 +427,23 @@ test("bug fixes share the product tag across authoring, classification and stabl
   assert.ok(draftProblems(invalid, [claim]).includes("tag_theme_mismatch"))
 })
 
+test("stock quotes have a capital tag without changing event identity", () => {
+  const issue = fixture(),
+    before = extractArticles(issue)[0].id
+  issue.body = issue.body
+    .replace("**보조 테마:** 인력·조직", "**보조 테마:** 없음")
+    .replace("투자 유치, 채용 확대", "주가")
+  const article = extractArticles(issue)[0]
+  assert.equal(article.id, before)
+  assert.equal(article.classification.theme, "투자·기업거래")
+  assert.deepEqual(article.classification.event_tags, ["주가"])
+  assert.ok(classificationMeta(article).tags.includes("event/주가"))
+  assert.throws(
+    () => classifyArticle(issue.body.replace("투자·기업거래", "실적·재무"), "wrong"),
+    /tag|태그/i,
+  )
+})
+
 test("ordinary behavior changes retain product classification and event identity", () => {
   const issue = fixture()
   issue.body = issue.body
@@ -420,4 +486,85 @@ test("ordinary behavior changes retain product classification and event identity
   assertSchema(draft, draftSchema)
   assert.deepEqual(draftProblems(draft, [claim]), [])
   assert.ok(draftProblems({ ...draft, theme: "연구·기술" }, [claim]).includes("tag_theme_mismatch"))
+})
+
+test("Policy proposals remain proposals across article filters and writer classification", async () => {
+  const prose =
+    "**분야:** AI\n**테마:** 정책·규제\n**보조 테마:** 없음\n**세부 태그:** 정책 제안\n**기업·기관:** 서울AI재단\n"
+  const classification = classifyArticle(prose, "고위험 AI 서비스 사전 평가 제안")
+  assert.equal(classification.theme, "정책·규제")
+  assert.deepEqual(classification.event_tags, ["정책 제안"])
+  const article = {
+    text: "고위험 AI 서비스 사전 평가 제안",
+    themes: [classification.theme],
+    tags: classification.event_tags,
+  }
+  assert.ok(matchesNews(article, { theme: "정책·규제", query: "정책 제안" }))
+  assert.equal(matchesNews(article, { query: "법률 변경" }), false)
+  const claim = {
+    claim_id: "proposal-1",
+    subject: "서울AI재단",
+    review: { status: "verified" },
+    evidence: [],
+  }
+  const draft = {
+    title: "고위험 AI 서비스 사전 평가 제안",
+    lead: [
+      { text: "서울AI재단이 10월 7일 포럼을 개최했다.", claim_ids: [claim.claim_id] },
+      { text: "참석자는 AI 도입 전 위험 평가를 제안했다.", claim_ids: [claim.claim_id] },
+    ],
+    facts: {
+      who: "서울AI재단",
+      when: "2026-10-07",
+      where: null,
+      what: "포럼 개최와 정책 제안",
+      how: null,
+      why: null,
+    },
+    sector: "AI",
+    theme: "정책·규제",
+    tags: ["정책 제안"],
+    entities: ["서울AI재단"],
+    explanations: [],
+  }
+  assertSchema(draft, draftSchema)
+  assert.deepEqual(draftProblems(draft, [claim]), [])
+  assert.ok(draftProblems({ ...draft, theme: "연구·기술" }, [claim]).includes("tag_theme_mismatch"))
+  assert.ok(THEMES.find((t) => t.name === "정책·규제").tags.includes("법률 변경"))
+  let called = 0
+  const result = await writeDraft(
+    {
+      structured: async (request) => {
+        called++
+        const instructions = request.messages.find((m) => m.role === "system").content
+        assert.match(instructions, /제언은 정책·규제의 정책 제안/)
+        assert.match(instructions, /정부의 정책 채택·시행이나 법률 변경으로 바꾸지 않는다/)
+        const payload = JSON.parse(request.messages.find((m) => m.role === "user").content)
+        assert.ok(payload.themes.find((t) => t.name === "정책·규제").tags.includes("정책 제안"))
+        return { output: draft, provenance: { fixture: true } }
+      },
+    },
+    [claim],
+  )
+  assert.equal(called, 1)
+  assert.deepEqual(result.problems, [])
+  assert.equal(result.public_approved, false)
+})
+
+test("awards, vendor assessments and conferences retain distinct controlled classifications", () => {
+  for (const [theme, tag] of [
+    ["인력·조직", "수상"],
+    ["사업·고객", "시장평가"],
+    ["사업·고객", "행사·컨퍼런스"],
+  ]) {
+    const prose = `**분야:** 사이버보안\n**테마:** ${theme}\n**보조 테마:** 없음\n**세부 태그:** ${tag}\n**기업·기관:** Example Security\n`
+    const classification = classifyArticle(prose, "확인된 발표")
+    assert.equal(classification.theme, theme)
+    assert.deepEqual(classification.event_tags, [tag])
+    assert.ok(draftSchema.properties.tags.items.enum.includes(tag))
+    const article = { sector: "사이버보안", classification }
+    const meta = classificationMeta(article)
+    assert.ok(meta.tags.some((value) => value.startsWith("event/")))
+    assert.throws(() => classifyArticle(prose.replace(theme, "연구·기술"), "확인된 발표"))
+  }
 })

@@ -44,6 +44,15 @@ async def main():
             if request.method != "GET" or request.resource_type in ("image", "media", "font") or not request.url.startswith(("http://", "https://")):
                 await route.abort()
                 return
+            # Use the exact captured navigation bytes instead of another HTTP
+            # request that could drift to a new source version during rendering.
+            if request.is_navigation_request():
+                captured = initial["document"]
+                data = checked_path(root, captured["body_path"]).read_bytes()
+                if hashlib.sha256(data).hexdigest() != captured["body_sha256"]:
+                    raise ValueError("Browser navigation body hash mismatch")
+                await route.fulfill(status=200, body=data, content_type=captured.get("mime_type") or "text/html")
+                return
             counter += 1
             if counter > initial.get("request_limit", 80):
                 failures.append("request-budget")

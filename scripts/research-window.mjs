@@ -3,6 +3,7 @@ import { approvalSourceChange } from "./article-identity.mjs"
 import { sha256 } from "./research/contracts.mjs"
 import { parseResearchDate } from "./research/dates.mjs"
 import { DEFAULT_ROOT, safePath } from "./research/run-state.mjs"
+import { loadApprovedCandidateIdentity } from "./research/candidate-approved-identity.mjs"
 
 export const BACKLOG_PATH = ".local/research/candidate-backlog.json"
 const day = 86400000
@@ -105,7 +106,8 @@ export function researchWindow(
                 .map((entry) => [entry.event_id, entry]),
             ).values(),
           ]
-    const approvedDate = approvedPublicationDay(c, approvalRoot)
+    const relatedApproval = loadApprovedCandidateIdentity(approvalRoot, c)
+    const approvedDate = relatedApproval?.published_at || approvedPublicationDay(c, approvalRoot)
     // A later report can describe an older event. An alternate source needs the
     // reviewed article's pinned date; the discovery date cannot substitute for it.
     const publicationDate =
@@ -115,8 +117,9 @@ export function researchWindow(
       approved_published_at: approvedDate,
       publication,
       possible_publications,
-      next_route:
-        (c.source_revision_alert || approvalSourceChange(c)) && (publication || c.approval)
+      next_route: relatedApproval
+        ? "same-approved-event"
+        : (c.source_revision_alert || approvalSourceChange(c)) && (publication || c.approval)
           ? "review-source-revision"
           : publication
             ? "already-published"

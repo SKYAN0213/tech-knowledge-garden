@@ -1,4 +1,307 @@
+## 535. GPT 개발 종료·판본 고정·다음 운영 (2026-10-16)
+
+기본 경로는 계정 GPT(Codex)와 기존 Drive 연결이다. 새 MCP/독립 모듈은 data/research-model-policy-codex.json을 기본으로 사용한다. 로컬 operator는 명시 로컬 정책을 유지하지만 정규 실행은 별도 수용 전 executor_not_ready다. 로컬 OAuth 최초 동의·장치별 모델 평가·과거 기사 전수 정리·7회 운영 관찰은 GPT 개발 종료의 필수 검사를 늘리지 않는다.
+
+```sh
+node scripts/research/operation-policy.mjs status --executor codex
+node scripts/research/operation-policy.mjs status --executor ollama
+```
+
+GPT는 phase ready, v2 완료 영수증, 실제 구현/실행 설정 manifest가 모두 맞을 때만 정규 운영한다. 파일 목록/bytes/실행 설정이 바뀌면 기존 근거로 허용하지 않는다. 새 개발 전 phase development로 두고, 변경 구간에 필요한 표적 확인만 마친 뒤 새 release_id의 검토 JSON으로 finalize한다. 완료 영수증·실패 attempts·이전 release는 덮어쓰지 않는다. 상태 조회가 원문·모델·Drive를 실행하지 않으며, 큰 근거 payload를 매회 다시 복원하지 않는다.
+
+```sh
+node scripts/research/operation-policy.mjs finalize --review .local/research/<run>/review.json --review-sha256 <review-SHA>
+```
+
+이번 실제 연결은 .local/research/development-close-20261016에 기록한다. GPT 요청 대기→원문을 읽은 Codex 제출→동일 요청 재개→완료 결과 재사용, native 승인 SHA 불변과 기존 Drive raw ZIP→member 검증→cold 복원을 확인했다. 기존 원문·기사·큐레이션·온톨로지·발행 인계를 재사용하고 재수집/재작성/전체 suite는 반복하지 않는다.
+
+선정 기사 조회에서 보류 후보 전체의 raw bytes를 다시 요구하던 소비 결함을 수정했다. curation selection·발행 인계·새 회차 projection은 정확히 선정된 group만 원문 검증하며, 풀/계획/관계 검토 SHA와 선정 기사의 원문·승인 검사는 유지한다. 전체 풀을 명시 조회하거나 새로 선정할 때는 전체 후보를 그대로 검사한다. 선정되지 않은 cold 파일이 없다는 이유로 이미 승인된 다른 기사의 발행 준비를 막지 않는다.
+
+기존4시 heartbeat는 같은 gate를 읽는다. 개발 완료는 정규 회차/신규 공개 배포 성공을 뜻하지 않는다. 실제 운영의 날짜별 수집 편중·기사 품질·시간·중복·복구는 첫7회 관찰에서 별도로 기록하고, 공개 발행은 기존 native 승인·fresh Drive·원격 충돌/readback 관문을 통과한다.
+
+## 534. 간결한 뉴스 카드와12건 이어 읽기 (2026-10-14)
+
+카드 본문은 compactCardContent를 공통 사용한다. 기본3태그·요약2줄이며 native details에 전문·나머지 태그·있는 상세 설명을 보존한다. CSS의 reader-card는 모바일18px/PC22px 좌우 여백과 마지막 카드의 정상 하단 경계를 보장한다. 과거 expanded 브리핑 본문과 원문/기사 연결은 유지한다.
+
+reader-list의 apply에는 표시 상한을 적용하기 전 모든 일치 행을 전달한다. 전체 건수/빈 결과/심층 가능 여부는 표시 상한과 별도다. show는12건부터 추가 노출을 복원하며 필터·기간 변경 시 지운다. 날짜 재배치가 일어났을 때 filterNews(false)를 재적용해 같은 필터와 상한을 유지한다. 한 날짜를 위해 새 기사나 회차를 생성하지 않는다.
+
+3496d922 / Actions38447027135를 실제 공개 UI와 데이터 bytes에서 검증했다. 소스230/302기사·35용어·RSS40 불변, 표적22개·릴리스CI1,291개 pass다. CUA에서 내용 펼치기·Space 접기·39건의12/24/뒤로12·분야 변경·모바일/PC 여백·넘침0을 확인했다. 기존 dirty 원고/다른 수정은 그대로 유지하며 완료 검사·원문·모델을 반복하지 않는다. 상세 증거와 이미지 경로는 `.local/research/compact-news-cards-20261014/`다.
+
+## 533. 뉴스 목록의 7일 경계와 발표일 묶음 (2026-10-14)
+
+`web/news-chronology.mjs`를 생성/브라우저에서 공통으로 사용한다. 최초 발행 날짜는 같은 사건 ID의 기존 회차 중 가장 이른 날짜이며 이후 수정/재수록일로 갱신하지 않는다. 한국시간 달력 차이가7 미만이면 발행일,7 이상이면 확인된 발표일을 사용한다. 발표일이 없을 때 발행일을 발표일로 표기하지 않는다. 원 날짜·ID·주소·출처·RSS는 수정하지 않는다.
+
+뉴스 목록만 rolling이고 `issueView`는 고정된 briefing 묶음을 사용한다. 브라우저는 현재 날짜가 생성 날짜와 다르면 기존 카드 요소를 재배치하고 필터 hidden 상태를 유지한다. 다음 한국시간 자정의 단일 timer와 pageshow/foreground 재확인으로 추가 발행 없이 전환한다. 날짜마다 새로운 기사를 만들거나 새 모델/원문 요청을 수행하지 않는다.
+
+0609ec3f / Actions38441146487 공개본을 실제 읽어 검증했다. latest source230/302기사·35용어·RSS40 bytes 전후 일치, 모바일/데스크톱 넘침0·오류0, 필터/뒤로가기 통과다. 현재 로컬 main19e8cfcf의 미발행 작업본은 보호하며 UI patch만 적용했다. 다음 공개 작업도 최신 원격·Drive 상태를 확인하고 작업 원고 전체를 자동 병합하지 않는다. 직접 표적28개와 릴리스 전체1,285개는 이미 완료했으므로 같은 상태에서 반복하지 않는다. 상세 증거는 `.local/research/news-chronology-20261014/`다.
+
+## 532. 브리핑·메뉴 통합과 기간 선택 (2026-10-12)
+
+브리핑의 최신 소식·누적 주제·월별 회차는 홈에 통합한다. 기존 브리핑 목록 URL과 fragment는 같은 본문을 제공한다. 주요 메뉴6개로 모든 독자 화면에 접근하고 Knowledge/Companies/weekly에 보조 탐색 탭을 중복 생성하지 않는다. 기간 화면은 `weekly-period`의 개별 주간 선택과 기존 `from/to` 날짜 입력을 사용한다. 선택·직접 입력·URL·popstate를 같은 결과 계산으로 연결한다.
+
+UI-only 후보는 이미 공개한219원본이 있는 exact HEAD에서 임시 분리 checkout을 만들고 UI packet9파일만 적용했다. 원본 snapshot·RSS40 GUID와 기존 주소를 보존하며 작업 vault351/35를 새로 발행하지 않았다. 로컬 표적33개·생성/링크, release CI1,261개·실제 공개 브라우저와 원격 모델/RSS 대조를 완료했다. 공개본19e8cfcf / Actions38219401078 build·deploy success이며 모바일390px/데스크톱1280px 넘침0·오류0이다. 기존 캐시 화면은 새로고침 뒤 확인한다.
+
+상세 readback·화면은 `.local/research/parallel-20261012/navigation-unification/`에 보존한다. 원문/모델/승인·전체 테스트를 같은 증거를 위해 다시 수행하지 않는다. 이전351/35의 Drive 전환과 기존 정규 운영 수용은 별도 남은 작업이다.
+
+## 531. 기존 공개 원본을 유지한 UI 배포 (2026-10-12)
+
+현재 공개 UI는 commit4931e14e, Publish Garden38210708784 success다. 화면 RSS 구독/반복 링크는 제거하고 기존 XML·/rss 호환 주소·head 자동 발견은 유지한다. 화면만 배포할 때는 원고 변경을 함께 stage하지 않는다. 기록된 Drive source state와 commit된 원본의 SHA 일치를 확인하고 isolate된 base에서 UI 의존성·tests·refresh/validate/build/site check를 수행한다. 기존 Publish Garden을 변경하지 않고 normal commit/push 뒤 실제 deploy·공개 파일/화면을 확인한다.
+
+이번 공개 원본219개/기사263·용어27는 local 재정리351·35와 다르다. UI-source9·tests6·문서1만 commit했고, legacy RSS 표시 기대값1줄은 다른 개발47줄을 보존해 HEAD blob으로 부분 stage했다. 최초 CI의1실패는 유지하고 해당 target만 명시 Python runtime에서 로컬 확인했다. 최종 CI1254pass와7개 공개 파일의 실제 Actions artifact SHA 일치를 확인했다. source/config/package/workflow/원고0변경, RSS GUID40/Drive sync 불변이다.
+
+[현재 구현19.524](LOCAL_AI_NEWS_CURRENT_BUILD.md), [공개 결과](../.local/research/parallel-20261012/rss-public-release/result.md), [live readback](../.local/research/parallel-20261012/rss-public-release/live-readback.json)를 사용한다. 새 원고·재정리 자료의 Drive/native 발행은 이 UI-only 결과에 포함하지 않는다.
+
+## 530. 공개 읽기 화면과 native 질문 후속 경로 통합 (2026-10-12)
+
+홈은 최근 브리핑의 주요 소식과 분야별 최근 기사, 전문용어·누적 주제·지난 브리핑 진입점으로 구성한다. 전체 뉴스는 기존 `News/index`이며 기사 URL과 RSS GUID를 보존한다. `Knowledge/index`, `Companies/index`, `Briefings/weekly`는 검토된 canonical 공개 자료를 기존 Vault에서 생성한 읽기 투영이다. 별도 지식 DB·모델·수집·예약을 추가하지 않는다. 현재 공개 기사351·전문용어35·누적 주제18·관심 회사 태그20·발표 주간19이다.
+
+`node scripts/build-site.mjs`로 현재 사이트를 생성하고 `node scripts/verify-site.mjs`로 공개 HTML·링크·RSS·제외 자료 경계를 확인한다. 현재 작업본의 읽기 화면은 `node scripts/serve.mjs`와 `http://127.0.0.1:8088/tech-knowledge-garden/`에서 확인한다. 이 서버는 `public`만 제공하며 `.local` 또는 원 Vault를 노출하지 않는다.
+
+뉴스 필터는 `sector/theme/entity/kind/q`, 전문용어는 `q`, 기업은 `company`, 기간은 `from/to`, 전체 검색은 `search/search_type`에 선택을 보존한다. 기간은 원 발표일의 닫힌 구간이며 빈 날짜는 전체 기간이다. 미등록 기업·잘못된/뒤집힌 기간은 전체 결과로 바꾸지 않는다. 검색은 이미 공개한 문장을 찾아 기사·해당 원문과 연결한다. 정의의 검토일과 기업/주제의 최근 기사 날짜를 구분하고 각 인용 사실은 자신의 발표일을 유지한다. 다른 사건의 원문을 검색 인용의 근거로 덧붙이지 않는다.
+
+`collection.inquiries`의 `followup_parents[].next_parameters`로 현재 검토 native 부모 material을 기존 `collection.followups`에 연결한다. 원 계획/SHA/질문/원문·parse를 유지하고 후속 링크 자체의 날짜·정체성은 미확인 상태로 남긴다. 같은 모듈은 독립 CLI/worker와 compact MCP5도구로 이용한다. 오래 실행 중인 기존 연결은 새 계약을 읽는 MCP 재연결이 필요하며 다른 작업의 서버를 임의 재시작하지 않는다.
+
+이번 UI·접점 완료는 원고 신규 승인·미발행 native 공개 전환·Drive 업로드·Git push·예약 재개와 다르다. [현재 구현](LOCAL_AI_NEWS_CURRENT_BUILD.md), [통합 결과](../.local/research/parallel-20261012/reader-integration/result.md)에 실제 표적·화면·완료 조건을 기록한다.
+
+## 529. 핵심 정보·질문 추적·지식 탐색 보강 (2026-10-12)
+
+기본 MCP는5도구, 현재 내부12모듈65작업이다. 독립 CLI와 `research_execute`는 같은 계약을 사용한다. `research_modules`에 module/operation을 지정해 해당 Schema만 확인한다. 파일이 바뀌면 새로운 module job을 쓰고, 같은 고정 입력의 완료 결과는 재사용한다. 완료한 모델·전체 suite·대량 원문 수집을 기능 확인 때문에 반복하지 않는다.
+
+**핵심 정보 검토**: 검증 사실이 있는 run에서 `validation.completeness {run_id}`를 조회하면 전체 원문·사실, 중요 사실 검토 템플릿을 읽는다. 모든 사실의 중요/배경 여부와 이유를 원문에 대조해 기록한다. 새 `curation.advance`는 기본 `require_completeness: true`이며 후보 ID별 `completeness_reviews`로 검토 파일을 전달한다. 직접 `writing.draft`는 `completeness_review_file`을 선택할 수 있다. 원문/사실 판본이 바뀌면 오래된 검토를 사용할 수 없다.
+
+작성 이후 `validation.reader {run_id}`의 전달 대조 템플릿으로 최종 문장·문장 SHA·수치/비교 조건·귀속·계획/완료를 확인한다. `coverage_reviews`와 기존 `editorial_reviews`를 함께 전달해 재개한다. `validation.approve`의 독립 호출은 `coverage_review_file`을 사용한다. 회차 `edition.advance`의 맵은 group ID, `curation.advance`의 맵은 candidate ID가 key다. 기존 `research:core`는 `--event-completeness-reviews`와 `--event-coverage-reviews`의 JSON 파일을 같은 회차 맵으로 받는다. 검토는 Codex/편집 수행자가 원문을 직접 읽어 작성할 수 있으며 로컬 planner가 자기 응답을 승인할 수 없다.
+
+**구성·비공개 운영 조회**: 점수 검토에 선택적 `composition`을 추가할 수 있다. 조직은 `{name,evidence}`, 주제는 `topics`, 정보 단위는 `{statement,evidence}`이며 evidence는 기존 `{material_id,block_id,quote}`다. 회사명과 인용을 실제 원문으로 확인한다. 같은 우선순위·3점 범위에서 편중을 줄이고 명시적으로 검토한 정보 전체가 반복되면 보류한다. 중요도 점수와 분야5/총40 상한은 유지한다. `curation.status`는 선정 path/SHA와 선택적인 workflow path/SHA로 고득점 미수록·구성·native writer 예산·재사용을 읽는다. 저장 writer 시간 합계와 하루 전체 시간은 다르며 없는 수치는 null이다.
+
+`curation.feedback`는 run_id, 선정 path/SHA, review_file을 받는다. `research-curation-feedback/v1`에 정확한 selection, reviewer_kind(user/editor), reviewer, reviewed_at, items(candidate_id, native draft path/SHA, judgments, reason)를 기록한다. judgments는 useful/already_known/explanation_missing/repetitive/needs_followup이다. 비공개 판본 피드백이며 점수·사실·기사 승인을 자동 바꾸지 않는다. 임의의 원고나 다른 선정에는 기록하지 않는다.
+
+**후속 질문**: `collection.inquiries`의 prepare/review/plan/status를 사용한다. prepare는 기존 Signals.next_check와 TrendTopics.watch_for/disconfirming을 노트 판본에 고정한 질문 후보로 제공한다. review에서 실제 원 사건의 인용·검증 기준·대상 단계를 고정해 activate하고 후속 원 사건의 인용으로 observe한다. 계획/진행/완료/발표와 발표일/관측일/검토일을 분리한다. 원문이 바뀌면 requires_recheck다. 활성 질문의 plan은 허용된 공통 등록 경로로 검색 계획을 만든다. `collection.targeted`와 `collection.followups`에 inquiry_plan_path/inquiry_plan_sha256를 전달한다. followups의 question_id는 하나의 질문을 선택하며 기존 후보/parse의 정확한 참조가 필요하다. 접근 실패를 새 소식 없음으로 바꾸거나 의미 검토를 자동 완료하지 않는다.
+
+**지식 탐색**: `knowledge.explore`는 mode(search/concept/weekly/companies), index_file/index_sha256, graph_file/graph_sha256를 필수로 받는다. question, concept_id, company_ids, from/to/as_of, themes/event_states, offset/limit, facts_per_group를 선택한다. 회사 정체성은 company_review_file/company_review_sha256, 비교 축은 comparison_review_file/comparison_review_sha256의 정확한 root 상대 파일 쌍을 사용한다. `knowledge.index`도 같은 회사 검토 쌍을 전달해 회사 이력을 구성할 수 있다.
+
+회사는 제품군·적용 산업·고객·투자/생산·실적, 용어는 방법·적용 조건·검증 결과를 검토한 사건/claim ID로 선택한다. 기간/범위/단위/조건/계획 상태가 같은 수치만 나란히 제시한다. 정체성 미검토 이름은 준비 후보이며 독자 기업 비교로 출력하지 않는다. 현재 정의의 SHA와 새 create 승인/기존 replace 판본을 구분하고 존재하지 않는 용어 URL을 만들지 않는다. 공개 제외/미승인/판본 불일치를 차단한다.
+
+`scripts/research/knowledge-explorer-view.mjs`의 `renderKnowledgeExplorerHTML`과 `renderKnowledgeExplorerMarkdown`은 reader만 투영한다. 기존 날짜·#태그·원문·기사 링크, 내용이 있는 탭·문단만 출력하고 운영 과정·빈 분석·지도는 넣지 않는다. 실제 사용 입력은 `.local/research/parallel-20261012/knowledge-explorer/*-input.json`에 있다. 예를 들어 아래 CLI는 원문·모델·canonical 쓰기 없이 HD 포함5사를 조회한다.
+
+```sh
+npm run module:knowledge -- explore --input .local/research/parallel-20261012/knowledge-explorer/companies-input.json
+```
+
+이번 HTML/Markdown의 실제 데이터와 생성 구조는 확인했다. 브라우저의 file 프로토콜 제한으로 모바일/데스크톱 시각 확인은 미수행이며 해당 보안 정책을 우회하지 않았다. 커밋·배포·예약·Drive 수용과 구현 완료를 구분한다. [현재 결과](LOCAL_AI_NEWS_CURRENT_BUILD.md)와 `.local/research/parallel-20261012/common/result.md`를 따른다.
+
+## 528. 큐레이션 모듈과 미수록 기사의 첫 소개 (2026-10-12)
+
+구조는 `원문 수집/파싱 → 회차 고정 → 사건 관계 검토 → 큐레이션 → 선정 원문 근거 추출/대조 → 작성/승인 → 지식/발행 인계`다. 큐레이션 독립 실행은 `npm run module:curation -- <prepare|evaluate|select|advance> --input <repo-relative-JSON>`이며 입력 참조의 SHA를 함께 전달한다. 기본 MCP는 `research_modules`에서 `module: "curation"`을 조회한 후 `research_execute`로 동일 작업을 호출한다. 기본 도구는5개다.
+
+1. `prepare`: `run_id`, `briefing_date`, `plans: [{path,sha256}]`, 선택적인 `include_backlog: true`, `max_articles`를 전달한다. 기존 계획 대기 큐를 읽어 오늘과 이전 미수록을 함께 고정한다. 원문/parse/기사 본문을 복사하지 않는다. 현재 예시는 [실제48사건 풀](../.local/research/local-ai/curation/runs/curation-current63-20261012-v1/pool.json)이다.
+2. `evaluate`: 반환한 `pool_path/pool_sha256`과 `execute: true`를 전달하면 역할별 Gemma/Codex의 비공개 점수 제안이 생긴다. 선택적인 `candidate_ids`, 호출/시간 예산으로 처리 분량을 제한한다. 새 `review_file`은 `research-curation-review/v1`, pool_sha256, reviewer, reviewed_at, evaluations 배열을 사용한다. 각 평가는 candidate_id, 실제 sector, 다섯 checks, 다섯 ratings의0~5 정수/value와 reason, 원문 material_id/block_id/정확한 quote, 비교한 모든 article ID, valid_until(null 또는 근거 있는 날짜)을 요구한다. [원문 대조 예시](../.local/research/local-ai/curation/runs/curation-current63-20261012-v1/source-history-review-v2.json)를 따른다. 제안만으로 사실/기사/선정을 승인하지 않는다.
+3. `select`: 같은 풀 참조로 명시 점수를 검증해 불변 selection을 만든다. 정책은 `data/research-curation-policy.json`의30/25/20/15/10, 최소70/우선85·전체40/분야5다. 선택을 만든 뒤 평가를 바꾸려면 새 풀 run을 사용한다. 점수가 낮거나 상한에서 밀린 사건은 대기 큐에 남는다. 날짜만으로 삭제하지 않는다.
+4. `advance`: selection_path/sha256, 새 run_id, 선택적인 execute/max_items/max_model_calls/time_budget_ms를 전달한다. candidate_id별 fact/editorial/revision 검토 파일을 연결한다. 원 회차/계획·기존 writer 결속을 유지하고 완료 단계는 재사용한다. 실제 작성은 execute가 참일 때만 진행하며 기존 승인 읽기는 거짓에서도 가능하다. 여러 원 회차의 native 인계는 하나로 묶되 원 승인 검사와 실패/검토 대기는 유지한다.
+
+`edition.advance`의 새 round는 관계 검토 뒤 `curation_required`를 반환한다. 큐레이션 후 curation_path/sha256을 한 번 연결하며 입력을 교체하지 않는다. `research:core --round`도 같은 관문이고 `--curation/--curation-sha256`으로 참조를 연결한다. 이전 원 회차가 선정되면 반환된 `curation.advance` 입력을 사용한다. 직접 native API와 고정된 과거 입력은 보존한다. 현재 기본 모델은 Gemma, Codex 수행자 교체는 기존 policy를 사용한다. 로컬 planner는 점수 제안을 만든 뒤 `curation_review`에서 검토 대기한다.
+
+오늘 브리핑의 첫 소개는 기존 `privatePreview`에 통합 publication_handoff와 명시적인 new-edition `editionSpec`을 전달한다. 날짜는 큐레이션의 briefing_date와 일치해야 하며 exact native 승인·현재 공개 이력과 대조한다. 원 발표일이 수집 구간보다 앞서도 미수록 선정 사건만 처음 담을 수 있다. 최초 수록 완료는 실제 canonical 반영 뒤 확인하며 선별/승인으로 미리 표시하지 않는다. 과거 기사의 정정·보완은 기존 처리 경로를 따른다. 점수·취재 실패·보류 이유를 독자 본문에 넣지 않는다.
+
+이번 검증은 신규 큐레이션 표적 사례·로컬 planner 승인 경계·기존 native 공개 경계와 실제 저장 원문2건/5도구 MCP의 readback이다. 원문 재수집, 완료 모델 진단, 전체 suite, 전체 preview/build, Drive 보관/배포는 반복하지 않았다. 현재 결과는 [CURRENT_BUILD19.521](LOCAL_AI_NEWS_CURRENT_BUILD.md)이며 실제 첫 소개 projection도 비공개다.
+
+## 527. Gemma 기본 모델과 제한된 기사 작성의 시간 계산 (2026-10-12)
+
+기본 정책은`data/research-model-policy.json`, 기본 로컬 모델은 설치된`gemma4:31b-mlx`다. 최소 사건 후보·사실 추출·기사/개념 작성은`think: false`, 근거 대조는`think: true`다. Gemma는 현재 설치 메타데이터에서`medium`문자열을 지원하지 않는다. `--model-policy`를 생략하는 새 CLI/MCP 실행과 `research:operator`의 기본 모델에 적용된다. Codex 위임 정책은`data/research-model-policy-codex.json`을 그대로 사용한다.
+
+정책 SHA가 고정된 이전 실행의 모델을 덮어쓰지 않는다. 새 Gemma 작업은 새 job/run과 필요한 새 사건 계획에서 시작하고 기존 완료 응답·검토·승인·기사 참조는 당시 바인딩으로 재사용한다. `reasoning.execute`는 원 위임 요청을 수정하지 않고 현재 로컬 역할 정책의 모델을 선택한다. 해당 모델의 thinking은 그 로컬 역할 정책을 따르며 원 메시지·Schema·context/output 예산은 유지한다. 실제 정책/think는`local-execution.json`에 별도로 기록한다. 다른 모델을 명시적으로 지정할 때는 원 요청의 thinking 값이 그대로 전달되므로 해당 모델이 지원해야 한다.
+
+실행 시간에서 수집 경로 수·원문 수·사건 수·기사 수를 혼합하지 않는다. 다음 항을 따로 더한다.
+
+1. 원문 수집·파싱의 wall-clock. 병렬 worker elapsed 합은 전체 시간과 다르다.
+2. 신규/변경 판본의 최소 사건 분류 배치. 현재는 원문별 최대8블록 배치이며 같은 정책·코드·원문의 완료 결과는 재사용한다.
+3. 선별 사건이 사용하는 고유 원문/블록의 사실 추출과 필요한 근거 대조. 여러 기사가 같은 원문 범위를 쓰면 공유 추출을 재사용한다.
+4. 신규 작성/수정 기사 수에 따른 작성·필요한 개념 작성.
+5. 지식 갱신·Drive 보관·발행·확인과 명시 검토 대기. 로컬 운영자가 도구를 고르면 그 계획 호출도 별도다.
+
+기사 수는 검토된 사건 계획에서 제한한다. `defer/reuse`는 새 작성 호출을 만들지 않는다. RSS/화면의 노출 수만 제한해 이미 작성한 기사를 숨기는 것은 작성 시간 절감이 아니다. 여러 원문을 한 기사로 종합할 때도 원문 근거·수치 조건·귀속을 생략해 시간을 맞추지 않는다. 기존 분야당 최대5·전체 최대40 운영 기준은 유지한다.
+
+Gemma 진단4호출은 최소 후보22.704초, 사실 추출72.804초, 근거 대조187.166초, 작성99.444초였다. 같은 저장 입력의 정형 출력 검사이며 하루 전체 실행·의미 검토·편집 승인이 아니다. 실제 원문1건당 후보1배치/기사1건당 위3역할을 가정한 수집→기사 처리 추정은 [CURRENT_BUILD19.520](LOCAL_AI_NEWS_CURRENT_BUILD.md)와 [저장 readback](../.local/research/local-ai/runs/model-switch-gemma-20261012-v1/verification.json)을 따른다. 장문·원문 종합·캐시·외부 대기 때문에 전체 운영 시간은 달라진다. 전체 suite·완료 검증·모델 호출을 같은 입력으로 반복해 측정치를 늘리지 않는다.
+
+## 526. 저장소 밖 공통 회차 CLI·수집 계획과 제한된 모델 재개 (2026-10-11)
+
+현재는 [CURRENT_BUILD19.519](LOCAL_AI_NEWS_CURRENT_BUILD.md)와 [시스템 WBS](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#현재-진척과-다음-완료-증거)를 따른다. S6-02 회차 연결과 S3-04 실제 장문212블록/103574자 전체 처리·같은 입력 재개를 완료했다. **시스템12/12 완료·부분0**이며 콘텐츠/평가/발행/예약은 별도 운영 항목이다. 아래525절의10/2는 당시 계획 SHA의 결과다.
+
+`scripts/research-core.mjs --round`는 현재 호출 디렉터리와 무관하게 저장소 native 경로를 사용한다. 명시한 config/정책/검토 파일은 호출자 디렉터리에서 먼저 해석한다. 연구 실행 참조는 선택한 연구 root 상대 경로다. 실행 중 source/config/정책 SHA를 바꾸지 않는다. 기존 회차의 재개는 같은 `--run`을 사용하며 최초 입력을 다시 바꾸지 않는다.
+
+이번 실제 plan-only 입력은 다음과 같다. 완료된 결과는 [저장 CLI 결과](../.local/research/parallel-20261010/common/system-round-collection-cli-readback-20261011-v3.json)를 읽고 새로운 회차에는 새 ID를 사용한다.
+
+```bash
+node /Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden/scripts/research-core.mjs \
+  --round --run system-round-collection-cli-20261011-v2 \
+  --daily-run daily-20261011-system-collection-plan-v2 --collect --plan-only
+```
+
+`daily_run`은 한국 날짜가 포함된 `daily-YYYYMMDD-*` ID이며 수집 baseline이 등록된 연구 root를 사용한다. plan-only에는 `--collection-max-windows`와 `--collection-time-budget-ms`를 넣지 않는다. 실제 수집 제한은 `--collect --execute`에서만 지정한다. 부분 보고서는 성공·실패·미시도를 유지하며 미시도 창이 있으면 회차를 고정하지 않고 필요한 수집 재개 입력을 반환한다.
+
+이미 수집된 보고서에서 시작할 때는 `--report`와 `--report-sha256`를 함께 전달하고 새 수집을 요청하지 않는다. 검토된 사건 plan은 `--event-plan`/`--event-plan-sha256` 쌍으로 연결한다. 초기 회차 고정 뒤에는 같은 `--run`으로 재개하며 완료 단계·승인된 원고·지식/발행 준비 참조를 재사용한다. 미제출 사실/편집/추론 결과는 명시 `next_inputs`를 따라 제출한다. [MCP 계약](RESEARCH_MODULES.md)의 `edition.advance`에 `round:true`를 넣어도 같은 경로를 사용한다.
+
+Ollama의 역할 호출 기본값300000ms는 유지한다. 명시 호출/HTTP header/body 예산은1..3600000ms, 역할 전체·추출 전체·회차 시간/새 호출 수는 별도의 상한이다. HTTP dispatcher는 Ollama에만 붙이며 전역 dispatcher를 변경하지 않는다. 공유 모델의 대기 시간도 실제 소비 시간에 포함한다. 실패를 자동 반복하지 않고 native 원인·부분 응답·완료 checkpoint·남은 범위를 보존한다. 예산 또는 정책이 바뀌면 새 binding으로 고정하고 이전 provenance를 덮어쓰지 않는다.
+
+완료된 블록을 새 요청에 넣지 않도록 정확한 원 parse의 `block_scope`로 남은 범위만 계획할 수 있다. 8블록 같은 선택적 상한보다 실제 메시지·Schema·출력 예약을 합친 입력 예산을 우선한다. 재계획도 source/parse/블록 ID를 보존하고 합친 결과의 블록 범위를 대조해야 한다. 글자 수 기반 예산 추정은 tokenizer 검증이나 전체32k 수용 증거가 아니다.
+
+`TKG_OLLAMA_KEEP_ALIVE=1s`는 해당 프로세스의 모델 유휴 보존 시간을 지정한다. 기본값5m, 허용값1..300초이며0/무기한 해제는 거부한다. 다른 프로젝트의 실행 중 요청·Ollama 서비스·예약은 변경하지 않는다. [실제 장문 검증·재개](../.local/research/local-ai/runs/system-s3-04-frontiers-pending-20261011-v8/full-source-final-audit.json)는 완료10배치를 보존하고 남은2배치만 생성했다. 신규 출력36사실은 미검토이며 다음 기사 작성에는 기존 사실/편집 승인 경로를 사용한다.
+
+현재 WBS를 읽으려면 새 job으로 기존 `validation.progress`를 호출한다. [이번 실제 결과](../.local/research/parallel-20261010/common/system-final-wbs-mcp-readback-20261011-v2.json)는12/12와 별도 운영22개를 나눠 반환한다. 완료한 모델 검증이나 이전 SHA의 job을 반복하지 않는다.
+
+## 525. 시스템 구축 WBS와 운영 지표 분리 (2026-10-11)
+
+최신 목표는 시스템 구축이며 [CURRENT_BUILD19.518](LOCAL_AI_NEWS_CURRENT_BUILD.md)과 [계획의 시스템12항목](LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md#현재-진척과-다음-완료-증거)을 따른다. 이전524절·개발14/14·운영22항목의 수치를 주 시스템 완료율로 사용하지 않는다.
+
+```json
+{"module":"validation","operation":"progress","parameters":{"plan_file":"docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md"}}
+```
+
+새 job ID로 호출하면 `completion_scope: system_construction`, `status: current_system_wbs`, `required:12`, `completed:10`, `partial:2`를 반환한다. `rows`에서 S3-04 로컬 입력/시간 예산과 S6-02 회차 조정기를 재개한다. 계획 SHA가 달라진 옛 완료 job을 다시 실행하거나 결과 지문을 고치지 않는다. `operational_acceptance`는 이전22개4완료·16부분·2미착수를 보존하고 `work_queue`는 `is_primary_completion_scope:false`로 완료 묶음/운영 입력을 구분한다.
+
+기사 미작성26·보류18·과거 원문4·독립60판정·실제7회는 별도 운영 지표다. 전체 잔량 소진이나 사용자 release를 기다리며 S3-04/S6-02를 중단하지 않는다. 대신 시스템의 중복/보류 처리, 승인 조건, 근거 연결, source 변경 거부와 명시 공개 경계는 유지한다. 로컬 입력 budget과 조정기를 묶은 대표 전 구간·실패/재개를 확인한 뒤에만 해당2행을 완료한다. 실제 공개·예약 재개와 무인 승격은 별도 운영 선택이다.
+
+새 시스템 표의12행·라벨·기존 WBS 참조가 손상되면 `invalid_system_wbs`와 issues를 반환한다. 이때 이전 운영 숫자로 구축 성공을 대신하지 않는다. 시스템 표가 없는 역사 문서는 기존 운영 범위로 읽는다. 조회 자체는 `evidence_verified:false`이며 모델·취재·승인·발행을 수행하지 않는다. [실제 compact MCP 조회](../.local/research/parallel-20261010/common/system-wbs-mcp-readback-20261011-v1.json)는1job/attempt1과8보호 참조 불변을 고정한다.
+
+검증은 변경한 공통 집계의 직접15표적(신규5·기존10)만 실행해 통과했다. 전체 suite·기존 수집/승인/출력·모델·Drive·공개·예약 실행은0이다.
+
+## 524. 고정 회차의 후속 조사·기사 승인·현재 WBS 소비 (2026-10-11)
+
+현재 계약은 [조사 모듈/MCP](RESEARCH_MODULES.md), 현재 결과는 [CURRENT_BUILD19.517](LOCAL_AI_NEWS_CURRENT_BUILD.md)다. 기본 MCP는5도구이며11모듈56작업을 실행한다. 명시 상세 프로필은60도구다. 아래 과거37작업·41도구 초기화 기록을 현재 수치로 사용하지 않는다.
+
+- 원문 수집 결과를 `collection.report`와 `edition.freeze`로 고정한 후 같은 사건의 원문을 검토·묶고 작성 대상을 선별한다. 저장된53자료는48사건/작성30·보류18로 분류했다. AWS2사건은 먼저 만든 별도 plan을 유지한다. 분류·전문 열람·사실 검토·기사 승인·공개는 각각 별도 상태다.
+- `collection.targeted`에는 `daily_run_id` 또는 `report_path`와`report_sha256` 한 쌍 중 하나를 준다. 이번 입력은 `daily/runs/daily-20261011-source-frontier-v1/collection-reports/6ed54665914607e7c9d76583bc7e88c36ac7dbd0815e4f454f153b0e990c5551.json`과 동일 SHA다. `mode: plan-only`, `slot_ids: ["2-1-0","4-1-0","6-0-1"]`, `max_queries: 8`을 사용했다. 실패·미시도 경로를 부분 수집 칸에서도 보존하고 미수집을 새 소식 없음으로 바꾸지 않는다.
+- RSS 전달 호스트와 등록된 실제 발행 호스트가 다르면 허용 목록으로 확인한 발행 사이트를 검색한다. `source_url`은 검색 사이트, `source_listing_url`은 원 RSS이며 route/recovery ID는 그대로다. 이 계획 생성은 실제 검색·원문 GET·coverage 완료가 아니다.
+- Codex 추론은 `reasoning.pending/read/submit` 후 **동일 대기 job**을 `research_job_resume`한다. 사실 추출은 현재 요청에 포함된4블록 단위로 제출하고 다음 요청을 이어 전체 추출을 마친다. 완료된 추출·writer·reader를 다시 만들지 않는다. 명시 사실 검토와 편집 승인을 거쳐 원문 판본·parse·event ID에 private 후보를 결속한다.
+- 승인 메타데이터의 `published_at`은 근거 원문이 표시한 달력 날짜다. 시각이 명시돼 한국 날짜가 다음 날이어도 source-day와 본문 한국 표시일을 분리한다. 잘못된 private 입력은 새 명시 검토 입력으로 교정하며 제품의 날짜 guard를 완화하지 않는다.
+- 같은 논문 `work_id`에 식별자를 연결할 때는 정규화된 공유 식별자 또는 원문 검토한 bridge appearance가 있어야 한다. 서로 단절된 DOI/arXiv 집합을 work ID만으로 합치지 않는다. 기존 source-bound 검토와 판본 충돌 검사는 유지한다.
+
+최종 조회는 [v5 입력](../.local/research/parallel-20261010/common/remaining-wbs-consumer-inputs-20261011-v5.json)의 collection.targeted plan-only·validation.progress·publication.delivery_status 세 작업을 새 compact MCP에서 각각 한 번 소비한다. [v5 readback](../.local/research/parallel-20261010/common/remaining-wbs-mcp-readback-20261011-v5.json)은 실제 결과·입력·구현 SHA와 보호 참조 불변을 함께 기록한다. 과거v4의10/10·Drive117/9를 이번14/14·120/6의 확인으로 대신하지 않는다.
+
+개발14/14와 운영22개4완료·16부분·2미착수는 다른 분모다. 남은26작성 사건·18보류 사건은 편집 잔량이며 사용자 승인 대기로 분류하지 않는다. 독립 사람0/60·정규0/7·허용 원문4·권위 원본의 최신 raw 증거와 실제 공개/복귀는 남아 있다. 기존 예약은 PAUSED, exact native 공개 요청은 release_required다. 이 개발 묶음은 예약·Drive·공개·서비스·모델을 변경하지 않는다.
+
+## 당시 재개점: 사건 중심 독립 모듈 (2026-10-10)
+
+현재 기준은 CURRENT_BUILD19.508과 [조사 모듈/MCP 계약](RESEARCH_MODULES.md)이다. 새 회차는 원문 수집 마감→고정 회차→사건 추출/원문 관계 검토→선별→공유 사실 추출/검토→기사 작성/명시 승인→불변 발행 인계로 실행한다. 실제10모듈·37작업·41도구를 독립 호출하며 `edition.advance`가 같은 단계들을 연결한다. 기존 고정 큐는 원래 native core로 재개한다.
+
+현재 Codex 호스트에는 `tech-knowledge-research`가 등록되어 있고 설치된 Codex app-server의 실제 초기화·41도구 조회를 확인했다. 새 대화나 MCP 설정 다시 읽기 후 사용한다. 로컬 점검은 `npm run research:mcp:check --silent`, 기존 승인 인계 조회까지는 `-- --publication-run parallel-publication-20261010-integrated-v1`을 덧붙인다. 점검은 실제 inventory/상태 worker와 저장 결과 SHA를 확인하며 수집·모델·build·Drive/공개 발행을 실행하지 않는다. 실패/중단은 조회 후 원인을 해결하고 명시 재개하며, 이미 실패한 작업의 재호출도 `isError=true`로 전달한다.
+
+반환된 `publication_handoff.path`를 기존 preview의 `--publication-handoff`에 전달하면 승인 때 선택한 정확한 `knowledge_runs`도 자동 검사·전달한다. 미검토/보류/실패/재사용 행은 새 작성 대상이 아니다. 전체preview/build를 수행하기 전 동일 관문을 `loadPreviewPublicationInputs`로 읽기 전용 검사할 수 있다. 기존 승인 실물 연결 근거는 `.local/research/parallel-20261010/publication/integration-live-readback.json`이며, 모델/재수집 없이6개 원본 파일 SHA 불변과 기존 회차의 메모리상 투영을 확인했다.
+
+실물 `event-core-live-writer-20261010-v1`은 최종 승인과 온톨로지 반영을 마쳤다. 원고를 다시 생성하지 않고 `.local/research/event-core-live-input-20261010-v1.json`의 정확한 회차·판정·선별 참조와 `event-core-live-readback-20261010-v1.json`을 사용한다. 같은 `event-workflow-live-20261010-v1` 재개는 모델0/작성0이다. 실패 사건은 원인을 고친 뒤 `retry_groups`에만 명시한다. 검토 대기·완료·실패가 뒤의 선별 사건을 막지 않는다. 실제 readback과 순수 기사 `preview.md`는 비공개 연구 폴더에 보존했다. 공개 발행·Drive·운영 평가 완료로 올리지 않는다.
+
+## 핵심 재개점: 저장 원문·승인 원고의 공통 경로 재사용 (2026-10-09)
+
+## 현재 핵심 재개점: 주·보조 테마·로봇5기사 연결 (2026-10-09)
+
+**최신 핵심 결과: CURRENT_BUILD19.502.** 배포·Drive·보관 확장은 유보한다. 심층4기사와 Jalapeño를 저장 원문·공통 작성 경로로 승인하고 기존5회차에 반영했다. native 연결248/351(70.7%, 잔여103), graph296사건1,961사용 사실, Signals18/33·TrendTopics4/18·현재 정의 선택35/35. 기존 URL/RSS 식별자·논문·창업 역할·VLA/추론 연결을 유지한다. 다음은 남은 기사·관측·주제 연결이다. 전체 운영 수용3완료/17부분/2미착수와 독립0/60·정규0/7은 유지한다. 공식 보충 원문2개 외 재수집·모델·전체suite·build·Drive·배포0.
+
+로봇5기사 승인 및 기존4회차 반영 helper는 완료됐다. graph `core-five-robot-current-linked-20261009-v1`, 읽기 모델 `core-five-robot-knowledge-index-20261009-v1.json`, 기존 knowledge 선택v2·trend 선택v6를 재사용한다. native 연결243/351·잔여108(후보 미연결103·심층 차이4·사실 의미1), Signals17/33·주제4/18이다. 완료된 source/parse/approval/graph/projection을 다시 실행하지 않는다. 다음은 저장된 심층4건의 상세·논문·역할 보존과 Jalapeño 사실 의미 재검토다. 배포·Drive·전체suite·보관 확장은 핵심 다음이며 전체 운영 수용은 미완료다.
+
+현재 기준 CURRENT_BUILD19.500, graph `core-eleven-stored-current-linked-20261009-v1`이다. 현재 기사238/351(잔여113), graph286사건1,876사용 사실·42정의, 작업 기사351/351 verified·현재 정의 선택35/35다. Signals17/33·TrendTopics4/18 native 연결. source catalog68·daily route 설정55·article profile137은 등록/설정 건수이며 전체 운영 수용 완료 건수가 아니다.
+
+knowledge 선택 `core-reviewed-knowledge-selections-20261009-v2.json`, trend 선택 `core-reviewed-trend-runs-20261009-v6.json`, 읽기 모델 `core-eleven-stored-knowledge-index-20261009-v1.json`을 재사용한다. `core-eleven-stored-projection-resume-20261009-v1.mjs`까지 완료됐다. 승인11기사·graph 확장·기존7회차 반영을 다시 실행하지 않는다. `core-core-progress-20261009-v1.json`이 현재 분모다.
+
+관측의 재검토 날짜를 갱신하면 과거 lesson의 의존 날짜도 검토한다. 과거 판단 날짜를 현재 날짜로 조용히 바꾸지 않는다. 이번 `verify-each-boundary` 원 판단과 topic bytes는 `core-execution-permissions-derived-invalidation-20261009-v1.json`에 보존했고 그 파생 요약만 공개에서 제거했다. 큰 주제의 나머지 이력·본문을 삭제하거나 전체 주제를 native 승인했다고 세지 않는다. 기사·관측의 원 ID와 날짜는 보존한다.
+
+다음은 기존 승인 원고와 다른9개 및 현행 사실 의미 검토에 미달하는Jalapeño1개를 저장 원문·현재 상세 문장·논문/역할/전문용어에 대조한다. 미연결103기사가 새 원문 수집을 필요로 한다고 가정하지 않는다. Signals16·주제14와 관계 의존 판정을 이어간다. 배포·Drive·보관 확장·전체suite는 핵심 묶음 다음이며 전체 수용3/17/2·독립0/60·정규0/7은 미완료다.
+
+`research-editorial-author.mjs --deep`은 기존 검토된 deep-context와 최종 GPT 심층 원고를 받는다. 독립 편집 run에 저장 원문/parse/검토 사실을 재사용한다. 일반 기사·로컬 모델 checkpoint·native 승인 관문은 보존한다. 실제 GalaxyDiT 기사 본문·논문 식별자·CFG/DiT 연결은 그대로이며9사실을 새 승인에 연결했다. 원문 날짜와 한국시간 날짜가 달라도 관측의 정확한 원문 시각을 유지한다. 같은 본문 근거 재승인은 새 내용 판본으로 만들지 않는다.
+
+## 직전 재개점: 초기 문서 공통 전환 (2026-10-09)
+
+현재 기준은 CURRENT_BUILD19.494이다. 6월28일06:04의8단위를 승인된1기사4사실2설명 문단으로 실제 전환했다. 잔여1회차13단위·metadata검토1, 전체 WBS 완료3/부분17/미착수2다. 결과 core-jun28-dawn-result-20261009-v1.json과 기존 승인을 재사용하며 전체 apply를 반복하지 않는다. 최신 ontology core-jun28-dawn-one-reviewed-20261009-v1은138사건880사실17용어다. 사용자 지시에 따라 원격 보관·배포·전체 검증 반복은 핵심 구현 다음에 진행한다. 다음6월23일 SAMPLE은 일반 개념 설명과 실제 사건을 구분하고 기록된 naive cutoff·sample 상태·원본 경로를 검토한다. 날짜 없는 현재 홈페이지를 과거 사건으로 만들지 않는다.
+
+보도가 미열람 원문을 인용했다면 `source_citation_reviews`로 관계를 기록한다. 원 URL·실제 인용 링크·보도 URL·승인 run·source version·parse·block·정확한 문장을 고정하고 귀속·링크 정체성·미열람 원문 미사용을 명시적으로 검토한다. `retrospectiveProjections`의 마지막 옵션에 `{root}`를 전달한다. 공통 저장 원문 무결성과 승인 원고 일치가 다시 검증되며, `editionProjection`에는 `source_root`가 전달된다. 기존 공식 대체 검토에 `official_source_checked:true`를 허위로 넣지 않는다. 이 인용 관계는 읽지 않은 원문을 acquired나 verified facts로 만들지 않는다.
+
+### 초기 번호형 문서
+
+`outline_review`는 `format: numbered-news/v1`, `original_outline_checked`, `source_list_checked`, `article_boundaries_checked` 모두 true와 사유를 요구한다. 기존 정확한 표지·10개 섹션 순서·3/4/6번 구간의 연속 하위 제목만 지원한다. 기사·원문 연결은 원 제목·단위 hash와 명시적 `source_list_review`를 요구한다. 지원하지 않는 SAMPLE이나 임의 h3 구조를 자동 승인하지 않는다. 원본 텍스트를 먼저 재작성하여 검토 hash를 바꾸지 않는다.
+
+기사 없는 미기록 회차는 `no_article_review`와 `unrecorded_coverage_review`를 모두 요구한다. 알려진 cutoff나 양수 기사 수를 지우는 데 사용할 수 없다. 실제 기사 구간은 전부 비어 있어야 하며 원문 인용·하위 기사·지식 연결을 생략할 수 없다. 운영 원본은 비공개 packet에 보존하고 공개 결과에는 unsupported absence-of-news 문구나 추정 시각을 넣지 않는다.
+
+## 직전 재개점: 두 회차 전환·공통 코드 파싱·로컬 모델 완료 (2026-10-09)
+
+현재 기준은 CURRENT_BUILD19.491이다. 6월26일00:05에10기사49사실29설명 문단을 실제 반영했다. 잔여4회차52단위·metadata복구2, WBS 완료3/부분17/미착수2다. 최신 ontology는 core-jun26-midnight-ten-reviewed-20261009-v1(127사건830사실17용어). 고정 논문v1·초록 범위·실험 조건·정정한 기업 자격증명 회수와 Pi/Pipecat을 보존했다. 저장된 실제 결과와 원고를 재사용하며 전체 apply helper를 반복하지 않는다. 다음 초기6월24일/23일 문서와7월14일metadata복구다. 배포·Drive·전체suite는 유보한다.
+
+공통 원문 재파싱은 새 `--run`으로 기존 `--source-run`의 bytes를 읽는다. `text/plain` 주소의 `.md`/`.markdown` 확장자에는 기존 Markdown 파서를 사용하며 다른 일반 텍스트는 줄 위치와 hash를 보존한다. 빈 텍스트·HTML 차단·잘못된 UTF-8은 정상 기사로 승격하지 않는다. 날짜가 없는 README·LICENSE에서는 날짜를 추측하지 않는다. 실제 재파싱 run은 `core-jun29-noon-official-text-20261009-v1`이며 다시 다운로드할 필요 없다. 공식 JS 본문 복구는 기존 `reparse --render-empty-html`을 쓴다. 이미 성공한 `core-jun29-noon-zai-rendered-20261009-v1`을 재사용한다.
+
+### 공통 코드 본문과 소급 조사 메모 처리
+
+HTML의 `pre`/`code`는 `code` 블록으로 보존한다. 명시적 `content_block_xpath`에 `.//pre`를 포함하고 `required_content_xpath`로 `.//table|.//pre`를 지정하면 누락·평탄화가 partial이 된다. 토큰 사이에 공백을 삽입하지 않으며 코드 내부 줄바꿈·들여쓰기를 유지한다. AWS 구현 글은 `aws-ml-rich-article-v1` profile의 기존 section XPath를 재사용한다. 같은 bytes는 `reparse --source-run`으로 처리하며 모델 추출·HTTP 수집을 다시 실행하지 않는다.
+
+legacy 연구·도구 구간의 운영 메모는 `decision: omitted_operations`와 `operations_review`를 함께 지정한다. 정확한 단위/hash·전체 `original_content`, `operational_only_checked`, `no_article_facts_removed`, `candidate_eligibility_checked`, `source_roles_checked`, 원래 `source_urls` 전부와 사유가 필요하다. 해당 단위의 사건 anchor·승인 근거 URL·다른 섹션에는 적용하지 않는다. 하위 기사가 있으면 모든 하위 단위가 depth2의 replaced 결정과 독립적인 승인 사건 anchor를 가져야 한다. 미검토·누락 하위 기사는 거부한다. 원문은 비공개 packet의 `before_content`에 보존하고 공개 projection에서는 검토 기록을 제외한다. 실제 논문 기사에 적용하는 생략 승인이 아니다.
+
+같은 사건의 중복 h2에 다른 원 인용이 있을 때는 `duplicate_event_review.source_alternative_reviews`에 원 URL·실제 승인 기사에서 인용한 공식 대체 URL·원문/공식/동일 사건/날짜 검토를 기록한다. 일반 중복 검토만으로 출처를 버릴 수 없고 다른 사건이나 승인하지 않은 URL로 매핑할 수 없다. 원 사건 ID·원 인용은 보존한다.
+
+### 시각이 없는 원문 날짜
+
+`event_date_basis.kind: source-publication-day`에 정확한 `source_id`·`source_version_id`·`parse_id`·사용 `claim_id`·원문 날짜를 지정한다. matched 날짜 profile의 실제 DOM 위치/텍스트, parse·사용 사실·원고 발표일의 동일 날짜, 같은 parse의 direct 근거를 요구한다. Markdown 원문은 날짜 헤더의 단일 줄 위치와 실제 본문 블록·텍스트/원문 hash가 일치해야 한다. timezone 필드는 허용하지 않는다. 논문은 기존 `paper_review`로 실제 확보한 판본과 초록/전문 접근 범위를 별도 확인한다.
+
+JSON-LD의 compact ISO offset은 헤더 원문을 그대로 보존하고 정확한 시각 비교에만 정규화한다. Article datePublished와 함께 동일 시각의 time-itemprop/datetime 위치를 확인한다. dateModified·일치하지 않는 시각·잘못된 DOM 위치는 거부한다.
+
+### 소급 수록 사건의 cutoff 이전 발표일
+
+원본에 이미 수록된 사건의 실제 최초 발표가 저장된 coverage 시작보다 이른 경우 `events[].historical_date_review`로만 처리한다. `original_inclusion_checked`, `earlier_publication_checked`, `historical_only` 모두 true, native 승인 원고와 정확히 일치하는 `source_published_at`·`published_at`, 사유를 요구한다. `source-publication-time`은 timezone 있는 최초 발표 시각과 한국시간 날짜를 대조한다. `source-publication-day`는 원문 날짜 그대로 사용하며 coverage 시작일보다 엄격히 이전 날짜여야 한다. 같은 날의 cutoff 앞뒤를 추정하지 않는다. 정확한 원 기사 unit/title/source anchor는 기존 검증기로 함께 확인한다. cutoff와 회차 ID를 수정하지 않고 원본·검토 이력은 비공개 packet에 보존한다. 이후 발표·수집일로 날짜 대체·다른 사건 추가는 거부한다. 신규 일일 발행의 범위 검증에는 이 소급 전환 예외를 적용하지 않는다.
+
+### 검토한 GPT 원고를 중복 집필 없이 받기
+
+```sh
+node scripts/research-editorial-author.mjs --run EDITORIAL_RUN --review REVIEW_INPUT.json
+```
+
+기업 전략·논문 해설·연구 사업화의 심층 원고도 같은 편집 경로를 사용한다. 먼저 기존 `research.mjs deep-review`로 해당 run의 `deep-context.json`을 검토한 뒤 위 명령에 `--deep`을 전달한다. 본문은 기존 심층 schema의 설명 역할과 `analysis`(근거가 없으면 `null`)를 사용한다. 전문/초록 범위, 논문 식별자·버전, 기업 전략 비교의 날짜, 창업·기술이전 관계와 사실 fingerprint를 기존 검증기로 대조한다. 심층 문맥이 없거나 바뀌면 저장·재사용을 거부한다. 이 명령은 로컬 모델이나 유료 API를 호출하지 않고, 승인된 모델 결과로 가장하지도 않는다. 최종 native 기사 승인과 전문용어 연결 검토는 별도다.
+
+기본 root는 기존 research root이며 `--root`로 명시할 수 있다. 먼저 독립 편집 run에 `documents.json`, `parses.json`, native 사실 검토를 마친 `reviewed-claims.json`이 있어야 한다. 로컬 processing run은 직접 수정하지 않고 별도 편집 run을 사용한다. 입력은 `reviewer`, `reviewed_at`, `reason`, `source_read: true`, `final_prose_read: true`, 기존 기사 계약의 `draft`다. 실제로 원문·최종 원고를 읽은 검토만 기록한다.
+
+CLI는 원문 저장 bytes·사실 검토·날짜·문단의 사실 연결·원고 형식을 검사하고 입력과 원고를 고정한다. `claims.json`이 없을 때만 검증된 직접 사실 장부를 생성해 native 승인 계약과 연결한다. 기존 장부는 그대로 보존하고 `local_model_generated: false`, `model_extraction_completed: false`를 기록한다. 동일 입력은 재사용한다. 입력만 저장된 중단은 정확히 같은 입력으로 원고만 복구한다. 변경된 입력 또는 교정된 기존 원고는 덮어쓰지 않는다. 결과는 `editorial_review`, `public_approved: false`이며 기존 `research.mjs approve`와 후보 승인·회차 전환이 별도로 필요하다. 자동 실패 대체나 자동 승인 기능은 아니다.
+
+이전 tenant 로컬 대조는 v1 제한 실패와 v2 완료4창·실패1창을 그대로 보존한다. 다른 프로젝트의 동일 모델 작업을 임의로 중단하거나 이 결과를 로컬 완주로 세지 않는다. 이번 회차의 GPT 원고·승인·적용을 다시 모델에 입력할 필요는 없다.
+
+JSON 게시 시각은 정확한 root 필드·hash 및 동일 출처의 사용 사실로 확인한다. 동일 원고 교정은 no-op으로 기존 수정 체인을 보존한다. 이전 canonical-only 정의는 native 교체 기록의 exact before_content와 원문 검토를 자동 재검증해 과거 승인·그래프 조회에 사용한다. 기록 없는 변경은 허용하지 않으며 새 공개 승인에는 현재 정의 검사를 적용한다. 별도 과거 vault 복사나 모델 재호출은 필요하지 않다. 관련64검사와 실제 현재 vault의 동일 온톨로지 재계산을 확인했다. 로컬 briefing.xml 생성은 공개 피드 배포가 아니다.
+
+## 523. 원문 변경의 지식 영향 조회 재사용 (2026-10-09)
+
+현재 기준은 구현19.471과 core-source-impact-slice-result-20261009-v1.json이다. 원문 변경은 native source-revision 영수증의 이전 승인 판본으로 조회한다. 새 관측 판본만 조회해 빈 결과를 정정 영향 없음으로 해석하지 않는다. 일일 core의 source_revision_impacts가 exact 기사·정의·이력을 연결한다. CLI impact는 source-version-id, event-id 또는 claim-id+run 중 하나만 사용한다. Signals/TrendTopics는 note-review-run으로 명시한 승인 판본만 포함한다. 조회는 정정·제외·재승인 권한이 아니다. canonical AI Agents/MCP 정의의 native 근거 연결 보강이 남고 기존 모델·수집·완료 검사를 반복하지 않는다. 핵심 뒤에 배포·보관을 수행한다.
+
+## 522. 제조사 처리와 언어별 동일 사건의 재사용 (2026-10-09)
+
+현재 기준은 구현19.470과 core-manufacturer-slice-result-20261009-v1.json이다. 최신 ontology는 core-manufacturer-safety-linked-20261009-v1, 승인10개 매핑은 core-current-ten-approved-processing-runs-20261009-v1.json이다. 야스카와 처리 parent=core-manufacturer-safety-process-20261009-v2, 편집=core-manufacturer-safety-editorial-20261009-v1을 재사용한다. 동일 source·model·검토를 재실행하지 않는다. 두산 영문 원문의 native same_published_event 검토는 core-doosan-bilingual-identity-20261009-v1이며 이미 공개한 기존 사건에 연결했다. 새 기사로 작성하지 않는다. 해당 원문을 exact 관측하지 않은 다른 경로의 frozen basis는 거부되며, 사실 검토 이후에는 --from-processing으로 계속한다. 다음은 저장 후보·소급 자료 핵심 처리이며 배포·보관·전체suite는 뒤로 둔다.
+
+## 521. 전문용어 승인과 기존 기사 수정 결과 재사용 (2026-10-09)
+
+현재 기준은 구현19.469와 core-sim2real-slice-result-20261009-v1.json이다. core-sim2real-note-approved-20261009-v1의 정의와 core-ieee-sim2real-reuse-20261009-v1의 기사 명시 연결을 재사용한다. 최신 ontology는 core-sim2real-linked-20261009-v2, 승인9개 매핑은 core-current-nine-approved-processing-runs-20261009-v2.json이다. 기존 기사와 용어 모델을 다시 실행하지 않는다. 기존 승인 교체는 prior/current 기사 SHA와 exact 후보 SHA가 모두 있는 native revision 검토를 사용하며, 관련 없는 수집 run의 frozen basis로 다른 경로 후보를 처리하지 않는다. 배포·보관·전체suite는 핵심 구현 뒤에 수행한다.
+
+## 520. 공통 RSS 부분 수집에서 정상 기사 처리 재사용 (2026-10-09)
+
+혼합 피드의 외부 링크는 `outside_policy_items: retain_uncollected`로 보존만 하고, 정상 원문은 기존 partial intake·편집 handoff를 사용한다. 전체 기간 완료/외부 host 등록/자동 승인을 뜻하지 않는다. 설정과 수집 코드가 달라진 이전 daily 실행은 재개하지 않는다.
+
+실제 실행 `daily-20261009-core-ieee-partial-v1` → `core-ieee-partial-process-20261009-v1` → `core-ieee-partial-editorial-20261009-v2`가 정상 기사 승인까지 연결됐다. 마지막 재개는0모델 호출이다. 최종 온톨로지 `core-ieee-partial-linked-20261009-v1`, 승인9개 재사용 매핑 `core-current-nine-approved-processing-runs-20261009-v1.json`을 후속 입력으로 사용한다. 외부 카메라·박사과정·실험 조건과 앞선 실패 기록을 보존한다. 배포·보관·전체suite는 핵심 구현의 선행 작업으로 두지 않는다.
+
+## 519. 배포보다 핵심 원문·기사·지식 연결 우선 (2026-10-09)
+
+현재 기준은 구현계획/현재 구현19.467과 `.local/research/core-current-strategy-research-slice-result-20261009-v1.json`이다. 기본55경로는 보존한다. 미시도44경로 run `daily-20261009-core-unattempted-v1`은88창 완료다. 기존 성공 창은 `research-daily --reconcile-scan`으로 원본 판본·stored scan proof를 확인해 재사용한다. 남은4경로 run `daily-20261009-core-incomplete-v1`에서 KUKA/가와사키/AWS는완료, IEEE는피드내 Wiley URL 정책 충돌로 실패다. 기존 디일렉 상세 접근 실패도 유지하며 같은 요청을 근거 없이 반복하지 않는다.
+
+실제3기사 processing=`core-current-strategy-research-process-20261009-v1`, editorial=`core-current-strategy-research-editorial-20261009-v1`, ontology=`core-current-strategy-research-linked-20261009-v1`이다. 세 candidate native 승인과 publication handoff를 만들었고 공개/Drive는 실행하지 않았다. 후속 승인 재사용은 `core-current-eight-approved-processing-runs-20261009-v1.json`을 쓴다. 최초 실패·모델 원고·원문 판본·정정 chain은 보존한다.
+
+대학 연구진/기존 도구 소개는 `연구 소개` 태그로 분류한다. 원문 게시일을 도구 개발일로 표현하지 않는다. 영문 원화 금액 단위 `trillion Korean won`은 숫자·단위가 명시된 검토 사실을 통해서만 조원으로 대조한다. 범위 양 끝의 통화 단위를 원고에 모두 적는다. 동일 인용문에 나온 미검토 수치나 다른 문단의 사실을 가져오지 않는다. 후속은 저장 후보 처리·소급 전환·지식 이력이며 배포/보관/전체 검증은 이번 핵심 완료를 막는 선행 작업으로 두지 않는다.
+
+## 518. 전문용어의 선택 섹션과 실제 기사·이력 연결 (2026-10-09)
+
+원문 처리 core-kuka-vision-process-20261009-v1-a9240711e882의 세 모델 checkpoint는 재사용한다. 최종 run core-kuka-vision-canonical-20261009-v2는 새 packet SHA를 명시 확인하고 같은 사실 결정·원 검토 날짜를 유지해 0모델로 읽는다. 승인 사건 ID는 canonical 원문 URL의 sha256 앞16자리다. 최초 잘못된 private ID/preview는 덮어쓰지 않았고 최종 graph에 포함하지 않는다. candidate-approval=core-kuka-vision-candidate-approved-20261009-v2.
+
+배경자료 core-bin-picking-background-20261009-v1의 정의·3단계/입력 배열은 manual-source-extraction와 native direct_source_addition으로 검토했다. core-bin-picking-note-approved-20261009-v1은 정의·처리 원리·제품 발표·실제 날짜를 승인한다. 관계는 자동 추론하지 않는다. Python 생성 검증기도 native 선택 소제목 계약을 따른다. 신규 회차 preview에는 research-private-edition/v1·intent=private_slice와 명시 Signals review가 필요하다. 빈 observations는 선택 기사에서 추가할 근거 있는 주제 판단이 없다는 검토이며 전체 취재 완료가 아니다. Signals 생성은 primary-research와 원고 wikilink를 사용한다. 최종 reader=core-kuka-bin-picking-reader-20261009-v4; authority vault·공개 회차는 변경하지 않는다.
+
+수집 코드 지문이 바뀌면 기존 daily 계획은 재개하지 않는다. 이번 새 묶음 설정 .local/research/core-unattempted-source-batch-20261009-v1.json은 이전55경로 중 미시도44개만 포함하며 기본 목록을 축소하지 않는다. daily-20261009-core-unattempted-v1을 같은 설정으로 재개해 완료 창을 건너뛴다. 시간 예산은 신규 시작 제한이므로 전자신문처럼 많은 상세가 있는 실행은 진행 중 작업을 마칠 때까지 drain한다. candidate-approval와 공통 mergeBacklog는 같은 candidate-backlog lock으로 장부 변경을 직렬화한다.
+
 # 로컬 AI 뉴스 시스템: 현재 구현과 실행 가이드
+
+## 517. 승인된 기사 재관측과 작성 큐 재사용 (2026-10-09)
+
+동일 본문 재수집은 공통 `mergeBacklog`가 승인 근거 ID를 보존하며 관측만 추가한다. 실제 내용이 바뀌면 고정 큐의 원고를 재작성하지 않고 `review-source-revision`으로 넘긴다. 새 원문의 저장 bytes/parse/지문과 이전 native 승인을 확인하고 비공개 source-revision checkpoint를 남긴다. `source_review`는 완료·승인·발행이 아니다. 승인 검증과 source-review 분기는 작성 예산에서 제외한다.
+
+이전 결함으로 승인 ID가 덮인 경우 `research-revisions.mjs resolve --run RESOLUTION --review runs/RESOLUTION/review.json`의 `restore_equivalent_primary`를 사용한다. 기존 resolution review 필드·현재 후보 SHA·직접 원문 검토를 요구한다. 동일 URL·제목·전체 본문·정확한 게시일과 native 원 승인을 확인하고 재관측을 보존한다. 내용·날짜·출처가 다르거나 미해결 revision alert가 있으면 이 복구를 거부한다. 실제 5건의 명시 검토/복구는 `runs/core-equivalent-source-restoration-20261009-v1/result.json`, 고정 큐의 재실행은 `daily-20261009-core-frontier-v3`다. 처음 실패한 실행/검토 파일은 덮지 않는다.
+
+재개 기준과 수집16/110창·편집 source_review2·전처리 source_review1은 현재 구현19.464 및 `.local/research/core-current-approval-slice-result-20261009-v1.json`에 있다. 같은 원문·완료 모델·전체 검사를 다시 실행하지 않는다. 새 코드 때문에 입력 해시가 달라진 옛 실행은 새 run으로 진행한다. 배포·원격 보관은 후순위다.
 
 ## RSS 기간 밖 항목과 수집 범위
 
@@ -1779,6 +2082,20 @@ npm run research -- reparse --run 20260927-retrospective-sep01-google-sources-pr
 
 공개 기사에는 `date_kind`, `source_published_at`만 추가한다. 근거의 내부 claim/parse ID·검토 사유·이전 원본은 출력하지 않는다. 날짜 라벨은 모두 `업데이트`이며 회차의 `date`, coverage, RSS pubDate와 다르다.
 
+### 23.2.0 공통 JSON-LD 커뮤니티 게시물의 게시 시각
+
+SocialMediaPosting은 Article 하위 형식이며 공통 파서에서 지원한다. 게시물의 url과 mainEntityOfPage(문자열 또는 @id)가 수집한 현재 페이지와 정확히 일치해야 한다. 상대 주소는 현재 페이지에서 해석하며 끝의 슬래시만 비교에서 허용한다. 댓글 fragment·다른 글·페이지 정체성이 없는 record는 무시한다. datePublished만 읽고 생성/수정 날짜 및 임의 time 태그는 사용하지 않는다. 기존 날짜 충돌·크기/노드 상한을 유지한다. 근거에 source_url·posting_url·main_entity_url을 보존하고 한국시간 날짜 승인에서도 원래 source ID와 일치 여부를 확인한다.
+
+공식 형식: https://schema.org/SocialMediaPosting . 실제 수용: core-jul01-scarf-date-reparse-20261009-v1은 저장 body를 재사용해 June30 UTC 게시 시각을 복구했다. 새 fetch와 출처 전용 파서는 없다. 표적은 WorkerTests.test_common_social_media_posting_requires_current_page_identity 및 research-event-date.test.mjs의 SocialMediaPosting이다. 기존 semantic JSON-LD/time/conflict 및 Article/head-metadata 표적을 함께 확인했다.
+
+### 23.2.1 최초 게시 안내와 후속 페이지 날짜 분리
+
+`event_date_basis.kind=source-original-publication-date`는 `source_id`, `source_version_id`, `parse_id`, `block_id`, `claim_id`, `notice_text`, `page_published_at`을 요구한다. 정확한 안내 문자열이 저장 블록과 공개 원고에 사용한 직접 검증 사실에 있어야 하며 matched profile의 게시 날짜와 page_published_at이 일치해야 한다. 공개 결과에는 date_kind와 최초 날짜 source_published_at만 전달하며 라벨은 `원문 게시`다.
+
+연도가 명시된 영어 최초 게시 안내는 날짜가 유효하고 페이지 날짜보다 늦지 않을 때만 허용한다. `Updated Aug. 5 (originally published July 1)`처럼 연도 없는 안내는 함께 명시한 갱신 월·일이 페이지 게시일과 일치하는 같은 연도 안에서만 해석한다. 이전 연도를 추정하지 않는다. 안내가 없는 날짜·다른 근거·미사용 사실·잘못된 블록 hash는 거부한다. 이 분기는 후속 업데이트 사건을 새로 만들지 않는다.
+
+현재 본문이 최초 게시 뒤 갱신됐다면 과거에 보존된 기사와 원문 날짜별 내용을 따로 검토한다. 최초 게시일 근거만으로 현재의 모든 문단을 과거 사실로 옮기지 않는다. 실제 사용 사례는 core-jul02-america-process-20261009-v1이며, 표적 검사는 research-event-date.test.mjs의 original publication notices다.
+
 ### 23.3 날짜 누락·오류를 고치는 비공개 소급 결정
 
 선택 필드 `retrospective_review`는 `retrospective-article-review/v1`이다. 외부 원문 검토와 최종 편집 승인의 검토자·사건 ID·검토일이 일치해야 한다.
@@ -2893,14 +3210,14 @@ PPE의 최근 변화는8월27일에서 최초 제출일8월26일로 정정하고
 
 `publish-adapter.mjs`는 Source List를 붙이기 전의 최종 본문에서 실제 `[S번호]` 사용을 수집하고 해당 항목만 출력하며 `source_count`를 다시 계산한다. 기사뿐 아니라 남긴 누적 섹션에서 쓰는 인용도 포함한다. 기존 URL을 계속 인용하는 미검토 기사·누적 섹션은 보존한다.
 
-미검토 기사 bytes를 유지하면 Source List에 S1·S2·S4처럼 간격이 생길 수 있다. 그 경우 부분 소급 원고에만 `source_marker_format: preserved-retrospective/v1`을 기록한다. Python 검사기는 아래 조건을 모두 요구한다.
+기존 기사 bytes와 출처 번호를 보존하면서 다른 기사의 URL을 제거하면 Source List에 S1·S2·S4처럼 간격이 생길 수 있다. 이때 명시적인 `source_marker_format: preserved-retrospective/v1`을 기록한다. Python 검사기는 기존 부분 소급과 완전 분류 기사 보존을 아래 조건으로 구분한다.
 
-- 날짜가 YYYY-MM-DD 형식이며2026-09-14보다 이전이다.
-- `editorial_format`이 없고 `article_records`, `article_reviews`가 명시돼 있다.
-- 남은 인용 번호가 양수·중복 없음·오름차순이다.
-- 미정의 인용, 미사용 Source List, 중복 URL, source_count 불일치는 계속 오류다.
+- 부분 소급은 날짜가 YYYY-MM-DD 형식이며 2026-09-14보다 이전이고, `editorial_format`이 없으며 `article_records`, `article_reviews`가 명시돼 있어야 한다.
+- 완전 분류 보존은 `editorial_format: six-w/v1`, `briefing_format: sector-five/v1`, `theme_format: news-themes/v1`을 모두 갖추고, 실제 유효한 회차 날짜와 양수 기사 수를 요구한다.
+- 완전 분류 보존의 `article_records`, `article_reviews`는 실제 본문 기사 제목·개수와 정확히 일치해야 한다. 사건 ID는 고유한 16자리 hex이며 모든 review가 `verified`이고, 유효한 발표일·검토일 및 검토일이 발표일보다 이르지 않은 조건을 충족해야 한다.
+- 두 경로 모두 남은 인용 번호가 양수·중복 없음·오름차순이어야 한다. 미정의 인용, 미사용 Source List, 중복 URL, source_count 불일치는 계속 오류다.
 
-Node의 `extractArticles`·기존 partial 검사에서 실제 기사 ID/검토/본문 보존 계약을 추가 확인한다. Python의 frontmatter 존재 검사만으로 전체 의미 검증을 통과했다고 계산하지 않는다. 신규 회차와 전체 육하원칙 전환에는 S1부터 연속 번호를 계속 요구한다.
+Node의 `extractArticles`·기존 projection 검사는 실제 기사 ID·검토와 보존한 판본의 본문·분류·출처 URL·desk가 정확히 유지됐는지 확인한다. Python의 구조 검사는 정본 재검토나 자동 승인이 아니며 원문·기사 승인을 대체하지 않는다. 명시적인 보존 계약이 없는 신규 회차와 전체 육하원칙 전환에는 S1부터 연속 번호를 계속 요구한다.
 
 회귀는 `research-legacy-projection.test.mjs`에2개, `test_source_markers.py`에5개를 추가했다. 오래된 미사용 URL 제거·미검토 본문/S2 보존·새 S3·남긴 누적 인용의 보존과, 제한된 sparse 형식·기본 연속 번호·신규/전체 전환 거부·역순/중복/0·미정의/미사용 차단을 검증한다. adapter의 실제 수정 전 실패는 `ppe-source-prune-red-20260928-v1.log`에 있다.
 
@@ -6691,7 +7008,7 @@ handoff는 미검토·기존 후보를 포함해 118개 고유 key를 유지했�
 
 ### opt-in extraction scope
 
-기본 `full_source`는 기존 계약대로 원문 parse 전체를 사용한다. 명시적 `--extraction-scope research_key_findings`는 heading tree에서 Abstract, conceptual framework, planned deployment, evaluation, results/findings, discussion, limitations, conclusion 구간을 선택한다. 참고문헌·배경·방법 구간은 이 profile의 claim 추출 입력에서 제외한다. 이는 논문 전체 검토가 아니라 핵심 결과 후보를 빠르게 얻는 profile이다.
+기본 `full_source`는 기존 계약대로 원문 parse 전체를 사용한다. 명시적 `--extraction-scope research_key_findings`는 heading tree에서 Abstract, conceptual framework, planned deployment, evaluation, results/findings, discussion, limitations, conclusion 구간을 선택한다. 선택한 절 바깥의 참고문헌·배경·방법 구간은 이 profile의 claim 추출 입력에서 제외한다. 선택한 실험 절의 하위 방법·조건·비교는 유지한다. 이는 논문 전체 검토가 아니라 핵심 결과 후보를 빠르게 얻는 profile이다. `Direct/Indirect/Empirical/Experimental (supporting) evidence`와 `Validation (studies)`로 시작하는 실험 절도 공통 evaluation 범위로 인식한다. Related work나 evidence gaps 제목을 실험 근거로 승격하지 않으며, 선택한 구간의 사실 판정은 별도 원문 검토가 필요하다.
 
 선택 profile은 Abstract와 함께 empirical `evaluation/findings` 구간 또는 review형 `Discussion`과 `Conclusion`을 요구하고, limitations/conclusion 근거도 포함해야 한다. heading depth로 구간 경계를 정하며 heading을 신뢰성 있게 분류하지 못하거나 필수 범주가 없으면 거부한다. `full_source`로 조용히 fallback하지 않는다. provenance는 profile, 전체/포함/제외 block 개수, 포함·제외 block ID hash, 선택 heading과 원본 `parse_id`를 기록한다. 배치 안에서는 compact key를 쓰지만 모델 quote와 claim evidence는 원본 source/parse/block identity로 되돌린다. extraction scope는 model-policy fingerprint와 CLI reuse identity의 일부다.
 
@@ -11737,3 +12054,178 @@ legacy-transition은 기존 여섯 영문 섹션 이름을 정확히 대응되�
 실제 공개 페이지 21개(홈, RSS, 9월 회차 5개, 기사 14개)는 최신 배포 후 HTTP 200과 로컬 생성 바이트/SHA가 모두 일치했다. RSS 40개다. post-deploy WebsiteData는 고정 경로 496개, reader 검색 항목 515개(기업별 URL 기반 19개 포함), 기사 316개, 개념 35개, 관계 22개다. Drive WebsiteData 기존 ID 9개를 갱신하고 같은 bytes인 2개는 유지했다. 이전 업로드 영수증을 포함한 폴더 12개 항목의 실제 raw SHA·부모·비공개 상태를 다시 읽었고, 기존 영수증은 그대로 보존했다.
 
 근거는 `.local/drive-sync/public-readback-sepbackfill-final-v2.json`, `.local/drive-sync/website-data-postwrite-readback-sepbackfill-20261014.json` 및 외장 prewrite raw backup에 있다. 소급 자료 발행 1회로 기록하며, 이를 정규 04:00 무인 실행의 운영 검증으로 집계하지 않는다. 이번 작업 세션에서 Luna 모델 전환은 확인되지 않았다.
+
+## 499. 일일 core의 전문용어 공통 작성 큐
+
+`research-core.mjs --knowledge-inputs FILE`은 기존 일일 처리 옵션에 추가한다. FILE은 명시적인 용어 작성 run ID를 기존 knowledge-draft-input/v1 또는 v2 JSON 파일에 연결하는 비공개 지도다. 최대40개이며 한 지도에서 같은 전문용어 ID를 두 번 선택하지 않는다. 회사·제품·일반 키워드를 자동 선택하거나 공동 등장 관계를 생성하지 않는다.
+
+```json
+{
+  "term-draft-run": ".local/research/selected-term-input.json"
+}
+```
+
+실행 전 모든 입력·원문/검토 파일 SHA·현재 노트·새 ID/별칭 충돌을 확인한다. 완료 초안은 원래 native 입력·stage·raw 결과·작업 사본·preview·concept_write budget과 대조해 재사용한다. 이후 남은 작업만 core 잔여 건수·시간 안에서 로컬 모델에 전달한다. 초안이 준비됐다는 상태는 노트 승인이나 발행 승인이 아니다. 기존 note-review→기사 concept_review→candidate-approval→ontology/knowledge-index 관문을 그대로 따른다.
+
+별도 큐 결과는 `runs/<core-run>-knowledge/knowledge-queue/latest.json`에 있으며 core의 knowledge_drafts와 knowledge_draft_counts로 조회한다. 상태는 pending/running/draft_ready/failed다. 실패·중단된 native 추론은 자동 반복하지 않는다. 명시 검토 이후 다른 실행에서 정확한 초안이 완성됐다면 모델 호출 없이 읽을 수 있다. 입력·정책·writer·결과가 변경되면 같은 큐 run을 덮어쓰지 않고 새 run을 사용한다.
+
+이전 버전의 완료 초안에 knowledge-draft-input.json이 없으면 입력을 추측하거나 다시 생성하지 않는다. 원래 입력·모델 provenance·implementation으로 native input_hash/stage input_hash/result_hash를 모두 재현할 수 있을 때만 정확한 입력을 고정한다. 설치 모델 정보가 달라져도 역사적 완료 결과는 원래 실행 근거로 읽지만 새 작성은 현재 로컬 정책을 따른다.
+
+2026-10-09 실제 core에서 sandbox 초안을 재사용하고 전력당 성능 초안을1회36.229초 작성했다. 원문 대조 뒤 반복·효과 단정을 제거하고 정의와 기사1건을 연결했다. 최종 core는 두 초안을 모두 재사용했고 원문 큐·기사 수·다른40사건·기존5용어를 보존했다. 실제 작성/승인 결과는 비공개 개발 데이터이며 배포·정기 운영 수용과 구분한다.
+
+## 500. 승인 조회의 실행 단위 목록 재사용
+
+공통 approval-receipts의 snapshot은 한 읽기 단계에서만 사용한다. 처리/편집/core/수정 계보의 반복 조회는 처음 읽은 native 영수증 목록을 공유하며, 선택된 파일은 매번 raw SHA로 대조한다. 결과 수용 전 assertCurrent가 전체 목록의 추가·삭제·변경을 다시 확인한다. 목록이 바뀌면 같은 단계 결과를 수용하지 않고 새 단계에서 다시 읽는다. 단독 조회는 새 목록을 사용한다. 영구 승인 캐시가 아니며 기존 원문·사건·검토·충돌 관문은 그대로다.
+
+core의 approval_lookup_counts는 scans/lookups/readbacks/receipts를 비공개로 표시한다. 실제 daily-20261009-core-approval-fast-v1은33조회에 전체 탐색3회이며41사건246사실·6전문용어와 graph/index/원문 queue SHA가 이전과 동일하다. 표적88검사를 한 번 수행해 통과했고 전체 suite는 실행하지 않았다.
+
+## 501. 검토한 주제와 관측을 일일 누적 색인에 연결
+
+`research-core.mjs --trend-reviews FILE`에서 FILE은 명시 native note-review 승인 run의 JSON 배열이다. 기존 Signals/TrendTopics를 loadHistoricalNoteApproval로 읽고 현재 graph의 승인 사건/사용된 verified 사실에만 연결한다. 원문 timestamp, 기사 한국 날짜와 실제 검토일은 별도로 보존한다. 준비·종료의 파일/근거 SHA가 달라지면 결과를 수용하지 않는다. 같은 입력을 바꾸거나 구현 hash가 변경되면 새 core run을 사용한다.
+
+knowledge-index의 trend_topics는 전문용어 ID, 최신순 실제 사건과 검토한 사실/원문을 제공한다. 내부 조사 문구는 포함하지 않는다. lesson이 없으면 분석 필드를 생략한다. lesson은 기존 공통 validator와 실제 원문 사건의 서로 다른 날짜/ID를 모두 통과해야 한다. 표시 빈도는 성장으로 해석하지 않는다. 여러 노트 판본에는 before/after SHA 계보가 필요하며 현재 승인 graph에 없는 자료는 자동 연결하지 않는다.
+
+이 결과는 일일 작성 원본을 위한 비공개 읽기 산출물이다. 실제 회차 적용/발행에는 기존 loadTrends가 회차별 사건·Signals 일치와 발행 관문을 다시 확인한다. core에서 관측을 읽었다는 것만으로 회차 발행, 권위 vault 반영, 정규 운영 수용을 주장하지 않는다. 실제 core-trend-history는 Claude Code/Copilot 두 사건과 local-sandboxing 한 용어만 연결했고 새 분석/지도 노드는 만들지 않았다.
+
+## 502. 장문 PDF를 구간별로 파싱하고 완료 결과 재사용
+
+기존 article_profiles.options에 `pdf_chunk_pages: 4`처럼1~40페이지를 설정한다. 전체 페이지 제한은 max_pages(기본200, 구간 방식 최대1000), 전체 실행 시간은 timeout_ms(기본120000, 최대120000)다. 합계 parse 출력은20MiB 이내다. 원본 PDF만 지원하며 HTML·이미지에 이 옵션을 넣지 않는다. worker 내부 pdf_page_range는 공개 전체 원문이 아닌 partial 구간이고 직접 기사 승인에 사용하지 않는다.
+
+parseDocument는 원본 SHA를 확인한 뒤 완료 구간의 native parse/영수증과 설정·원본 판본·worker/helper hash를 대조한다. 완료 구간은 Python을 다시 호출하지 않는다. 시간 초과/실패 구간은 자동 완료나 빈 기사로 바꾸지 않고 기존 명시 reparse 경로로 이어간다. 동일 실패를 반복하지 말고 실제 완료 구간이나 입력/원인 변화가 있는지 확인한다. source run은 보존하며 새 reparse run으로 읽는다.
+
+모든 페이지 범위가 연속으로 모여야 최종 불변 parse가 생긴다. 원문 블록·표 행·좌표·본문에서 확인한 제목/날짜·OCR 누락/실패·표 단위 이슈를 보존한다. 표/날짜 충돌과 파일 변조는 차단한다. 중간 구간은 pdf-chunks/<binding-sha>/와 기존 parses/에 있으며 새 승인/지식 저장소가 아니다. 승인 원문과 과거 ID는 변경하지 않는다.
+
+2026-10-09 나치후지코시 결산/보충 두 기존 profile에 동일4페이지 옵션을 적용했다. 저장된 실제10/1페이지,154/87블록의 원문/표/좌표/발표일 일치와 완료 재조회 파서0호출을 확인했다. 추출 성공은 기사 검토·후보 승인·발행·정규 운영 완료와 구분한다.
+
+## 503. 검증기 변경 뒤 과거 진단과 현재 사실 검사 구분
+
+loadFactReviewPacket은 raw packet checkpoint부터 확인하고 assessment의 source/claim/policy/request/checkpoint와 packet에 묶인 record SHA를 대조한다. claims validator가 바뀌었을 때만 당시 structural 진단을 정확한 frozen 기록으로 읽으며 다른 모델 판단/인용/요청 변경은 거부한다. 현재 recordFactReview와 assertVerifiedClaim이 승인 사실을 다시 검사한다. 이미 거절/보류한 후보의 과거 진단 차이는 재추론이나 승인 사유가 아니다. 새 평가에는 현재 진단을 저장한다.
+
+기업 identity assignment의 reviewed_at은 선택 항목이다. 생략하면 기존 ledger 날짜를 사용하고, 지정하면 사건/기사 검토 이후이며 ledger 날짜 이하인지 검사한다. 기업 목록 확장 시 과거 assignment의 날짜를 명시해 보존한다. company_timelines.events.facts는 명시 claim_ids의 검증 사실만 포함한다. 수치 조건·사건 상태·원 발표/검토일·원문 인용을 유지하며 기사 빈도/공동 등장으로 성장을 판단하지 않는다. 두 기능은 기존 native 저장소를 재사용하며 공개 발행을 실행하지 않는다.
+
+## 504. 발행한 같은 사건의 원문 재결합과 별도 root 승인 재사용
+
+발행한 같은 사건은 candidate-approval에서 정확한 source-revision-review와 native 이전 승인에 근거해 원문 binding만 재결합할 수 있다. 기존 기사 SHA/ID/제목/발표일과 실제 vault 발행 관측을 대조한다. receipt의 published_event_rebind는 이전 영수증 raw SHA·발행 관측을 고정하고 new_article/candidate_published=false로 유지한다. 모든 인용 자료를 명시 재검토하며 다른 사건·날짜·편집 교체·대체 원문은 이 경로에서 차단한다. 원래 기사나 RSS GUID를 새로 만들지 않는다.
+
+별도 root에서 이미 승인한 원문과 기사는 아래 공통 명령으로 native 증거를 재사용한다. --plan-only로 전체 충돌을 확인하고 --execute로 가져온다. 기존 root는 유지하며 새 승인이나 모델 응답을 만들지 않는다.
+
+`npm run research:import-approved -- --source-root <PRIVATE_ROOT> --run <IMPORT_RUN> --approved-run <APPROVED_RUN> --plan-only`
+
+`npm run research:import-approved -- --source-root <PRIVATE_ROOT> --run <IMPORT_RUN> --approved-run <APPROVED_RUN> --execute`
+
+related-run은 기존 closure의 명시 의존 검증에만 사용한다. 동일 입력은 완료 파일을 재사용하고 부분 완료부터 이어간다. 입력/구현/원본 변경이나 대상 충돌은 새 run 또는 원인 수정이 필요하며 기존 파일을 덮어쓰지 않는다. 양쪽 checkpoint가 실행 중이면 가져오지 않는다. canonical parse는 공통 parser가 허용하는 관측 시각 차이만 재사용하고 run-local 원본 시각을 보존한다. 이후 research-ontology extend와 명시 company-review를 사용해 기존 graph에 합친다. 회사/그룹/제품을 자동 병합하지 않는다. core --ontology-base는 private root에 대한 상대 경로다.
+
+실제 야스카와 native 승인33파일/사용 사실16개를 재사용해 기존43사건275사실의 일일 core를 완료했다. 전체 처리 status는 미확인 상세가 남아 source_review_pending이며 배포·Drive·정규 운영 수용을 뜻하지 않는다.
+
+## 505. OCR 원문 위치와 숫자 검토를 보존하는 공통 파싱
+
+PDF/image options의 max_ocr_pixels는 기본12,000,000·최대20,000,000이며 raster 한 변은 최대12,000픽셀이다. PDF는 OCR이 필요한 페이지에서 할당/엔진 초기화 전에 검사한다. 초과는 실패로 남기고 원문을 임의 축소하지 않는다. 이미지 max_image_pixels와 별개로 사용할 수 있으며 생략하면 이미지의 기존 픽셀 예산을 공통 OCR에도 적용한다.
+
+글자·좌표·confidence 행 개수 불일치, 비정상 confidence/좌표는 원문 누락으로 덮지 않고 실패 처리한다. quality.ocr_review_blocks는 원문 locator와 low-confidence/numeric-review, 인식 숫자 literal을 제공한다. literal은 교정한 값이 아니다. 높은 confidence도 numeric_verification/table_structure를 verified로 바꾸지 않는다. 이미지는 원본 pixel, PDF와 구간 합침은 원래 page/bbox를 유지한다. 기존 fact-review-packet의 sources에 같은 전체 parse가 실리므로 별도 지식 저장소나 승인 우회가 없다. 실제 기사 승인에는 기존 원문/사실 검토와 공개 관문이 필요하다.
+
+19.452의 저장 PNG2개는 기존542블록/좌표/신뢰도를 유지하며 검토 위치458개를 추가했다. 낮은 신뢰도51곳과 숫자 포함446곳은 일부 겹친다. partial/미검토 숫자·표를 유지하고 기존 원문·후보 장부를 바꾸지 않았다. 실제 원문 검토 전 새 기사로 발행하지 않는다.
+
+## 506. OCR 사실의 원본 위치 검토와 공통 기사 승인
+
+recordFactReview의 verified decision은 해당 사실이 인용한 모든 OCR/이미지 위치에 ocr_evidence 배열을 제공한다. fact-review-packet.claims[].ocr_attention.evidence에서 evidence_ref와 원본 URL/body 경로/SHA·locator·quote를 읽는다. 원본 이미지/PDF 페이지를 실제로 확인한 뒤 각 항목에 evidence_ref, visual_checked=true, layout_checked=true, 숫자가 있으면 numbers_checked=true 및 구체적인 reason을 기록한다. 인식 confidence만으로 이를 채우지 않는다. 진짜 원본을 읽는 GPT 검토에도 같은 형식을 사용하며 독립 human gold와 구분한다.
+
+ref는 사실 내용·모든 인용 조건과 원문 위치를 고정한다. 문장/quote/좌표를 수정했으면 새 ref에 대해 검토한다. 누락/중복/없는 ref·원본 좌표 불명확·false 검토는 verified를 차단한다. 보류/거절에는 긍정 시각 검토를 요구하지 않는다. 직접 source addition과 approvedArticle도 동일 관문을 통과한다. 검토 정보가 없는 옛 OCR 승인을 자동으로 통과시키지 않으며 기존 packet bytes는 보존한다. 이 검토는 일부 사실의 승인 근거이고 이미지 표 전체/기사 본문 완전성/후보 승인/발행을 대신하지 않는다.
+
+실제 core-ocr-visual-fact-review-20261009-v1은 저장 로봇신문 PNG에서4위치·확인 사실1개와 거절 머리글1개를 기록했다. 재수집/LLM 없이 수행했고 승인43개·275사용 사실의 기존 누적 graph는 바꾸지 않았다.
+
+## 507. 원본 좌표에 묶인 공통 이미지 표 전사
+
+`npm run research:ocr-table -- --run RUN --source-run SOURCE_RUN --parse-id EXACT_PARSE_ID --review ROOT_RELATIVE_REVIEW --plan-only`로 준비하고 `--execute`로 기록한다. 기존 private root를 기본 사용하며 다른 root에는 `--root`를 명시한다. 저장된 PNG/JPEG의 native raster parse를 사용하고 재수집/모델 호출은 없다. 검토 파일은 `research-ocr-table-review/v1`, source_parse(path/raw sha256), reviewer, reviewed_at, tables 배열이다. 각 table은 table_id, contexts, headers, rows를 사용한다. 예시는 실제 비공개 `core-ocr-table-review-20261009-v1.json`에 있다.
+
+각 셀은 cell_id/text/bbox/block_ids/visual_checked/layout_checked/reason을 지정하고 숫자에는 numbers_checked=true를 추가한다. bbox는 원본 픽셀이다. 기존 OCR block_ids는 같은 원본 셀에 속해야 하며 중복 사용하지 않는다. 인식 누락 셀은 빈 block_ids와 원본에서 직접 읽은 전사/이유를 사용한다. 단위·표 제목은 contexts, 기간·열 의미는 headers에 보존한다. OCR text를 고쳐 원본 파일을 덮지 않는다. 열 위치·행 순서·모든 열 개수·숫자 검토를 확인하며 일부 검토의 결과는 partial/source_document_complete=false다.
+
+새 native source run의 table 블록은 원본 전사·원래 OCR text/locator·단위/조건을 함께 제공한다. 공통 loadStoredSourceRun은 원본 parse/검토 SHA와 정확한 전사 재구축을 검사한다. 기존 사실 검토기의 OCR 위치 검토도 계속 필요하다. 이 결과는 source input이며 후보/기사 승인, 전체 표 완전성이나 발행 완료가 아니다. 입력/원본/결과가 바뀌면 새 run을 사용한다. 계획 모드는 파일을 생성하지 않고 충돌은 기록 전에 확인한다.
+
+실제 core-ocr-table-rows-20261009-v1은26셀/8열/2기업 행을 확인했다. 마지막 머리글의 정확한 원문은 등락률/週이며19.453의 등락률(%) 설명은 잘못된 원문 설명이다. 이전 거절 기록은 유지하며 현재 표/검토에서는 정확한 전사를 사용한다. 전체 기사 발표일과 기간의 연도는 이미지에서 추론하지 않는다.
+
+## 508. 기사 메타데이터와 본문 이미지의 공통 source 연결
+
+`npm run research:article-images -- --run RUN --source-run ORIGINAL_RUN --parse-id ORIGINAL_HTML_PARSE_ID --image-run REVIEWED_IMAGE_RUN --plan-only`로 검사하고 `--execute`로 기록한다. 본문 이미지가 여러 개면 body_images 순서대로 --image-run을 반복한다(최대7). 각 image run은 정확한 이미지1개/parse1개이며 원본 PNG/JPEG와 native parse 검증을 통과해야 한다. 현재는 빈 본문의 image-only HTML과 matched 제목/게시일 근거만 지원한다. 본문이 이미 있는 HTML을 이 경로로 대체하지 않는다.
+
+생성한 RUN-meta는 h1/게시일 원문 위치를 보존하는 부분 metadata parse다. RUN은 기존 source-bundle과 article-image-source.json을 사용해 HTML 및 본문 이미지를 독립 근거로 제공한다. 이미지에 게시일을 복사하거나 이미지 값을 HTML 인용으로 쓰지 않는다. loadStoredSourceRun이 원본 parse, 관계, source identities와 현재 저장 자료를 대조한다. 계획 모드에는 생성이 없고 충돌은 생성 전에 확인하며 재개는 동일 결과를 재사용한다. 일부 표의 source_document_complete=false/partial과 미선택 원문은 유지한다.
+
+기존 `research.mjs extract --run EXTRACT_RUN --source-run RUN --candidate-key source-HTML_SOURCE_ID --model-policy data/research-model-policy.json`으로 로컬 추출한다. 검증된 기사 메타데이터를 해당 이미지 구간마다 함께 넣되 독립 원문은 기존 개별 예산을 유지한다. 블록 예산은 metadata+본문의 합계이며 날짜 블록도 인용할 수 있다. 완료 extraction 검증은 각 구간 안의 중복, 본문 중복과 source_role 변경을 거부한다. 원문 게시 연도로 이미지 기간의 연도를 채우지 않는다. source 연결/모델 추출은 사실·기사·후보 승인과 별개다.
+
+실제 19.455의 로컬 추출2문장은 기간 연도를 추론해 거절했다. 직접 원문 대조한4사실로 작성한 초안은 리드2/상세2이며 주가를 매출로 붙인 태그는 정확한 correction 기록으로 교정했다. 과거 모델 결과는 유지하고 새 호출로 덮지 않는다. 추가 수집/자동 후보 승인/권위 vault/공개 발행은 하지 않았다.
+
+## 509. 이미지 전체 프레임 검토의 공통 계약
+
+research:ocr-table의 기존 research-ocr-table-review/v1에 선택적 coverage를 지정한다. scope=whole-image, bbox=[0,0,원본폭,원본높이], full_frame_checked=true, no_omitted_content=true와 원본 누락 셀까지 읽은 구체적인 reason이 필요하다. 모든 native OCR block은 한 셀에서만 참조한다. 전체 이미지에 보이는 제목·날짜·단위·구획·표를 직접 검토해야 하며 OCR 전체 선택만으로 완전성을 선언하지 않는다. OCR가 놓친 머리글/회사명은 block_ids=[]의 원본 좌표 셀로 명시 전사한다. 원본에 없는 단위나 해석을 추가하지 않는다. coverage 없으면 기존 partial/범위 검토 결과를 유지한다. 원본 raster page1 검토 대기는 resolved_ocr_review_pages에 보존하고 다른 누락 페이지는 해소하지 않는다.
+
+research:article-images는 모든 선언된 body image가 native reviewed-raster-table/whole-image/extracted일 때만 그룹의 source_document_complete=true를 반환한다. HTML metadata는 별도 partial parse이며 이미지 published_at=null은 그대로다. 그룹 완전성은 후보 등록·자동 기사 승인·발행을 뜻하지 않는다. 기존 완료 metadata의 parser identity는 재사용한다. 다음 단계는 본문 전체를 포함한 기사 지문과 기존 후보/일일 인계 연결이다.
+
+실제 명령은 node scripts/research-ocr-table.mjs --run core-whole-image-table-20261009-v1 --source-run core-ocr-review-locations-20261009-v1 --parse-id f51f86893f148114a65a68d75540074ed400b36794f5a2e3f3b3e4cf09504c5c --review core-whole-image-review-20261009-v1.json --execute 이다. 리뷰 파일은 private root 기준 상대 경로다. 완료 원문·추출·작성은 재사용하며 같은 요청을 반복하지 않는다. 실제 19.456의 로컬 추출/작성은 각1회, 원본 대조6사실 교정과 원고 correction을 거쳤다. 근거 없는 기업/종목 개수는 reader-quality unsupported_count가 제목·리드·facts·설명에서 차단한다.
+
+### 510. 전체 이미지 기사 지문·후보 등록과 승인된 intake 재사용
+
+research:article-images --execute의 --intake-run/--select-run은 native whole-image body+HTML 제목/게시일로 기사 지문을 고정하고 공통 mergeBacklog/source-selection을 사용한다. 전체 본문 이미지가 모두 검토되지 않으면 intake를 차단한다. 원문 요청/검색 scan을 만들지 않는다. 정확히 같은 원래 intake는 승인 후에도 읽기만 하며, 기존 selection은 원본과 문맥이 같을 때만 재사용한다. 다른 intake는 승인 사건의 기존 reconciliation이 필요하다.
+
+research-process-daily --article-image-intakes RUN(반복 가능)은 원래 수집 계획과 native intake 영수증 SHA·전체 이미지 판본을 대조한다. 기사 발견/검토가 수집 기간 전체 완료를 뜻하지 않는다. 현재 vault 회차/coverage cutoff가 달라진 오래된 live 계획은 새 날짜 계획으로 이어간다. 옛 날짜의 plan·수집 완료 영수증을 현재 내용으로 다시 만들거나 실패를 수집 완료로 기록하지 않는다. native 원문 처리→현재 후보 전체 이력 조회→명시 기사/후보 승인→ontology extend는 별도로 이어갈 수 있다.
+
+독립 research draft/correct 실행은 자체 model-draft-input/checkpoint/raw 모델 결과와 전체 교정 계보를 검증해 완료 작성으로 재사용한다. processing 실행의 transfer reference는 필수로 유지한다. 직접 `loadBoundDraftCheckpoint`는 원 모델 출력만 반환한다. `processSourceRun --draft-run`은 같은 원문·검토 사실에 연결된 현재 교정 원고와 전체 교정 이력을 검증해 복사한다. 원 모델 checkpoint는 보존하고 사실·기사 승인은 별도로 유지한다. 교정/이전 원고가 변조됐거나 입력 사실·원문이 달라지면 재사용을 거부한다. 승인 결과 파일은 복사하지 않는다.
+
+19.457 실제 후보 source-475ab26a423fae95bfe4, 처리 core-image-candidate-process-20261009-v1, 승인 core-image-candidate-approval-20261009-v1, 사건475ab26a423fae95. 원 게시2026-10-02/검토2026-10-09를 유지한다. core-image-linked-result-20261009-v1.json이44사건281사용 사실·모델0재호출인 최신 core 결과다. 이 항목은 핵심 개발 기록이며 정규 운영/공개 발행/Drive 보관 완료가 아니다.
+
+### 511. 전체 원문을 유지하는 compact 근거 대조
+
+새 reference 요청은 claim-source-span/v1를 자동 사용한다. 원문 블록은 전부 유지하고 후보의 같은 인용은 UTF-16 quote_span/quote_sha256로 표시한다. 원본 claims/evidence와 사실 검토기는 바꾸지 않는다. window 밖 인용은 quote_scope=outside-window로 표기하며 근거를 제공하지 않는다. 일치하지 않는 인용은 unmatched 후보 텍스트로 유지한다.
+
+완료/부분 실행은 input.json의 원래 형식을 고정한다. 구형 요청에 새 형식을 강제로 적용하거나 완료 모델 호출을 다시 실행하지 않는다. 원문·후보·정책·native 체크포인트 검증은 그대로다. 19.458 실제6후보의 입력 토큰13406→5357/대조271.672→113.042초(think도 medium→false), 검토6사실·작성 추가 호출0·완료 원고 재사용을 확인했다. 다음 실행은 새 기간 계획/대기 기사로 진행하며 기존 core를 다시 만들지 않는다.
+
+### 512. 일일 수집을 구간 묶음으로 이어가기
+
+`npm run research:daily -- --run RUN --execute --max-windows 12 --time-budget-ms 600000`로 새 수집을 시작하고 같은 RUN의 `--resume`으로 이어간다. 두 제한은 선택 사항이며 생략하면 기존 전체 실행이다. 양의 정수만 허용하며 계획/인계/재조정에는 지정하지 않는다. 계획의 전체 경로·기간은 바뀌지 않고, 완료·재시도 대기 구간은 새 요청 수에서 제외한다. 동시 worker가 새 구간 수를 초과하지 않도록 시작 전에 예약한다.
+
+시간 예산은 기존 근거 검사를 마친 뒤 새 구간 시작을 제한한다. 이미 시작한 수집/장부 쓰기는 끝까지 drain하므로 실행 전체의 강제 종료 시간이 아니다. 미실행 구간에 실패 영수증이나 완료 coverage를 만들지 않는다. partial summary와 실제 완료 원문으로 편집 인계를 생성하며 남은 구간은 같은 계획에서 이어간다. 원문/코드/회차 입력이 달라졌으면 원래 계획을 수정하지 않고 새 RUN을 사용한다.
+
+### 513. 묶음 수집의 진척과 현재 승인 재사용
+
+일일 summary.routes.window_progress는 전체/검증/실패/미실행 구간 수를 제공한다. coverageGrid는 not_attempted/incomplete 경로를 failed_route_ids에 넣지 않는다. 전체 구간이 완료되지 않으면 configured_routes_scanned로 승격하지 않는다. 기존 summary는 수집 당시 기록으로 유지하고, dailyRouteProgress로 원 receipt/coverage의 최신 검토 결과를 별도 읽는다. 진척 카운터는 원문 승인·발행을 대신하지 않는다.
+
+19.460은 현재 기간 native handoff에 image intake/승인 원문과 실제 신규 OpenSearch 기사 승인을 연결했다. --processing-runs 지도는 core-current-approved-processing-runs-20261009-v1.json이며 기사/사실/원문/기존 체크포인트를 검증해 승인 원고2개를 모델0재호출로 재사용한다. 과거 발표일과 기존 event/RSS identity는 유지한다. 새 후보의 최신 context와 원문을 읽고 사실 검토·correct·approve·candidate-approval을 순서대로 진행했다. 입력/코드가 바뀐 old run은 보존하며 같은 수집 요청을 반복하지 않는다.
+
+### 514. 핵심 실행기의 수집 묶음과 발행된 기사의 전문용어 연결
+
+새 실행은 research:core --run CORE --daily-run DAILY --collect --execute --collection-max-windows 2 --collection-time-budget-ms 120000 --max-items 4 --time-budget-ms 600000으로 시작한다. 두 collection 제한은 명시 수집 실행에서만 허용하며 생략하면 기존 전체 수집이다. 수집과 기사 처리 예산은 각각 독립적이다. 이미 시작한 수집은 끝까지 처리하므로 강제 종료 시간이 아니다. 전체 계획·미실행 coverage는 보존하고 부분 인계로 기사 처리를 이어간다. 같은 core의 --resume은 기존 basis/queue를 재사용하며 새 구간 수집을 시작하지 않는다. 남은 수집은 같은 daily의 research:daily --resume으로 진행한 뒤 새 core run과 새 basis로 연결한다. 코드·원본 입력이 바뀐 옛 계획은 덮지 않는다.
+
+이미 발행된 기사의 전문용어 연결은 원문·원고 재사용→사실 재검토→note-review→명시 article-concept-review→approve→candidate-approval --existing-editorial-review의 기존 경로를 따른다. 변경 가능한 공개 기사 값은 검토일과 전문용어 ID뿐이다. 전문용어 ID가 같아도 선택된 같은 경로의 정의 SHA 또는 native 승인 run이 달라지면 명시 검토로 최신 정의를 연결할 수 있다. 변경된 정의에는 native note-review 승인이 필요하며 검토 문구·날짜만 다른 무변경 재승인은 거부한다. 이전 승인 검증은 그 concept receipt의 source_vault를 사용한다. 다중 원문에서 양쪽 모두 게시일이 없는 동일 보조 자료는 허용하되, 원 기사 발표일과 각 원문의 전체 본문·제목·판본 대조는 유지한다. 이전 native 후보 승인 영수증, 같은 본문/분류/원문/발표일/사건 ID, 현재 모든 공개 등장 위치의 ID·제목·날짜 및 명시 연결 검토를 확인한다. 이 경로는 실제 vault·RSS·공개 회차를 쓰지 않고 재발행도 하지 않는다. 다른 원고 정정은 기존 소급 전환을 따른다.
+
+KUKA AMR 학습 profile은 기존 XPath parser로 main의 본문·FAQ 질문/답변을 읽는다. 저장된 HTML의 reparse를 사용하고 제품 학습 페이지 날짜는 not_applicable이다. 이번 실제 native 결과와 다음 재개 지점은19.461이다.
+
+## 515. 저장된 신규 후보 처리와 승인 결과 재사용 (2026-10-09)
+
+계획19.462/현재 구현19.462를 따른다. core-current-secondaries-process-20261009-v1은 원 frozen collection basis로 두 저장 후보를 추출·대조했고 native review/draft/correct/approve/candidate-approval로 마쳤다. 후속 일일 실행의 processing-runs 매핑은 `.local/research/core-current-four-approved-processing-runs-20261009-v1.json`이며 같은 daily-run의 새 handoff로 실행한다. --collection-basis와 매핑을 동시에 전달하지 않는다. 승인 CLI의 원고 입력은 --source-run이다(--approved-run은 preview 전용). 옛 collection/모델 출력·검토와 최초 실패를 보존한다.
+
+원문 게시일과 실제 행사 날짜를 혼동하지 않는다. source-date는 원문5일/7일, 본문9월30일, review10월9일이다. 4비트 조건·전체 메모리/GPU할당·회원사 조사 범위·제안과 실행을 직접 확인했다. 공통 숫자 지침은 조사/어순을 유지하는 예시를 추가했고 numeric 검증은 기존 관문 그대로다.
+
+최신 graph/index와 독자 원고·모델6호출/4완료 재사용 증거는 `.local/research/core-current-secondaries-slice-result-20261009-v1.json`이다. 기존45event view와 용어7·기업7·주제1/이력2·논문2/인물2는 exact 보존됐다. 모델 이후 원문 교정은 native correction으로 남기며 자동 승인·공개 배포·Drive 보관 완료로 승격하지 않는다. 다음은 다음 수집 구간의 유효 저장 후보를 공통 처리하고 전수 소급·추가 전문용어 이력의 잔여를 진행한다.
+
+## 516. 원문 게시일과 실제 사건일을 각각 보존 (2026-10-09)
+
+편집 검토 `event_date_basis.kind=source-reported-event-date`는 원 source_id/source_version_id/parse_id/block_id/claim_id와 정확한 date_text/event_context_text/source_published_at/occurred_at을 요구한다. 완료·verified·사용 사실의 직접 인용과 matched 원문 게시일을 확인한다. 현재/직전 달의 한국어 과거 날짜만 해석하며 수집/검토 시간을 연도 기준으로 쓰지 않는다. 공개 기사의 published_at은 그대로이고 occurred_at은 이 근거를 검토했을 때만 생성한다. 미검토 사건일은 자동 채우지 않는다.
+
+native 원문 처리의 재사용 입력은 regular assessment의 경우 assessmentRun이다. assessmentReuseRun은 frozen window assessment 전용이다. 최초 잘못된 실행은 보존하고 새 이름에서 올바른 입력을 사용한다. 사실 재검토→correct→approve→existing-editorial candidate binding→ontology extend를 이어가며 원 source/모델 결과를 다시 생성하지 않는다. 19.463 결과 파일과 두 원문 재승인 run이 실제 예시다. 이전 승인·사건 ID/주소·원고·게시일을 보존하고 새 이력 판본으로 기록한다.
+
+
+## 517. MCP 기본5도구와 공통 재개 보강 (2026-10-10)
+
+CURRENT_BUILD19.511과 RESEARCH_MODULES의 현재 계약을 따른다. 기본 서버/현재 Codex 등록은 compact5이고 내부11모듈·45작업을 유지한다. `--tool-profile detailed`는49도구의 기존 호환 경로다. 작은 단계는 `--modules collection --operations collection.inventory`처럼 시작 시 범위를 고정한다. 목록은 `research_modules {"include_schemas":false}`, 실제 계약은 `{"module":"collection","operation":"inventory"}`로 조회한다. scope를 바꾼 operator resume이나 scope 밖 job 조회·결과·재개는 거부한다.
+
+혼합 partial은 `reasoning_tasks`, `review_rows`, `failures` 전체를 전달한다. 기존 한 요청의 ID/SHA로 reasoning.read/submit/execute를 이어가고, 사실/관계/편집 검토·원고 수정·failed group 재시도·잠금 회수는 명시 운영자가 처리한다. publication.deliver/delivery_receipt는 자동 planner에 제공하지 않는다. 실제 connector intent·raw capture·release 관문은 기존 전달 실행기를 사용한다.
+
+관계 승인은 core 또는 ontology knowledge-index/impact에 `--connection-review-run <정확한 기존 승인 run>`으로 전달한다. 승인 파일 path/SHA와 graph basis가 바뀌면 새 입력을 사용한다. 코드 변경으로 기존 module job 지문이 달라졌다면 옛 job/state를 고치지 않고 새 ID를 사용한다.
+
+후보0인 detail_incomplete의 원문 복구는 `--repair-source-run <저장 원문 run>`에서 별도 detail 검증을 사용한다. 실제 captured 실패 detail와 exact parse·covered listing·기간·정책·경계를 확인하고 저장 bytes를 다시 파싱한다. 공개 partial 후보 편입은 기존1개 이상·완전한 기사 근거를 유지한다. 실패 기록·원문·관측 시간·기사 승인을 수정하지 않는다. 이번 actual RunState4개 완료 단계 대조를 전체 현재 수집/onboarding 재인증으로 표시하지 않는다.
+
+## 518. 남은 구현·사용자 결정·외부 조건을 한 번에 조회 (2026-10-11)
+
+CURRENT_BUILD19.516과 RESEARCH_MODULES의 계약을 따른다. 기존 validation.progress에 plan_file과 선택적 workflow_id/evaluation_packet_run/publication_run_id를 지정한다. 문서의 work_queue 라벨·마지막 설치 지식 checkpoint·독립 사람 실제 제출 수·exact 전달 next_actions를 각각 읽으며 전체 원문 재수집·지식 sync·모델·승인·예약·배포를 실행하지 않는다. 개발4/4를 운영22개 완료로 승격하지 않는다.
+
+완료 preview를 prepare/release가 소비할 때 generation checkpoint/input hash와 새 consumer 구현 SHA를 구분한다. 현재 승인·canonical projection·출력 bytes를 확인하고 renderer를 재호출하지 않는다. 기존 manifest·원 실패·상태 파일은 고치지 않는다. 실제 v2의 전달3파일/26,294bytes는 비공개 staged 상태이며 upload/release 승인과 별개다.
+
+next_actions의 user_decisions는 기존08시 재개와 선택한 native/legacy 경로의 명시 결정, external_requirements는 fresh Drive raw·정규 complete 수집·같은 invocation 비교·공개/복귀 근거다. local_requirements는 아직 필요한 비공개 준비, failures는 보존 오류다. 기존 global ledger가 충돌을 알리면 과거 작업을 재발행하거나 같은 요청을 다시 전송하지 않는다. 조건을 만족한 실제 비교만7회에 산입한다.

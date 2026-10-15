@@ -1,6 +1,11 @@
 import test from "node:test"
 import assert from "node:assert/strict"
+import fs from "node:fs"
+import os from "node:os"
+import path from "node:path"
 import { captureArticleBodyImages, collectWindowDetails } from "../scripts/research/list-scan.mjs"
+import { RunState, readJSON } from "../scripts/research/run-state.mjs"
+import { sourceId } from "../scripts/research/contracts.mjs"
 
 const url = "https://publisher.example/news/1"
 const imageURL = "https://cdn.publisher.example/news/photo/202610/table.png"
@@ -41,7 +46,7 @@ test("image-only article keeps original metadata and separate OCR evidence witho
     {},
     channel,
     [profile],
-    [{ url, published_at: "2026-10-02" }],
+    [{ url, text: parsed.title, published_at: "2026-10-02" }],
     {
       fetchPolicy: async (_root, _fetcher, target) => {
         calls.push(target)
@@ -133,4 +138,79 @@ test("an image fetch failure is retained and never invokes OCR", async () => {
   assert.equal(result.images[0].fetch_status, "blocked")
   assert.equal(result.documents.length, 0)
   assert.equal(result.parses.length, 0)
+})
+
+test("image metadata conflicts stop asset requests and OCR before body review", async () => {
+  for (const [link, expected] of [
+    [{ url, text: "Different original title", published_at: "2026-10-02" }, "title_conflict"],
+    [{ url, text: parsed.title, published_at: "2026-10-03" }, "date_conflict"],
+  ]) {
+    const calls = []
+    const result = await collectWindowDetails("private", run, {}, channel, [profile], [link], {
+      fetchPolicy: async (_root, _fetcher, target) => {
+        calls.push(target)
+        assert.equal(target, url)
+        return parent
+      },
+      parse: async () => parsed,
+    })
+    assert.deepEqual(calls, [url])
+    assert.equal(result.details[0].status, expected)
+    assert.equal(result.candidates.length, 0)
+    assert.equal(result.documents.length, 1)
+    assert.equal(result.details[0].body_images, undefined)
+  }
+})
+
+test("source-authoritative RSS titles still reach separate image review", async () => {
+  const result = await collectWindowDetails("private", run, {}, {
+    ...channel,
+    listing_profile: { rss_title_policy: "source_title_authoritative" },
+  }, [profile], [{ url, text: "RSS title variant", published_at: "2026-10-02" }], {
+    fetchPolicy: async (_root, _fetcher, target) => target === url ? parent : image,
+    parse: async (_root, document) => document === parent ? parsed : {
+      status: "partial", parse_id: "image-parse", blocks: [], quality: { missing_pages: [1] },
+    },
+  })
+  assert.equal(result.details[0].status, "article_image_body_requires_review")
+  assert.equal(result.details[0].title_relation, "rss_variant_source_title_authoritative")
+  assert.equal(result.candidates.length, 0)
+})
+
+test("OCR exceptions retain acquired images, continue adjacent assets and resume without refetching", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "body-image-failure-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const secondURL = imageURL.replace("table.png", "second.png")
+  const input = { ...parsed, body_images: [...parsed.body_images, { url: secondURL, dom_path: "/html/body/article/img[2]" }] }
+  let fetches = 0, fail = true
+  const execute = () => collectWindowDetails(root, new RunState(root, "image-failure", {}), {}, channel, [profile], [{ url, text: parsed.title, published_at: "2026-10-02" }], {
+    fetchPolicy: async (_root, _fetcher, target) => {
+      fetches++
+      return target === url ? parent : { ...image, final_url: target, source_version_id: `${sourceId(target)}:v1` }
+    },
+    parse: async (_root, document) => {
+      if (document.final_url === url) return input
+      if (document.final_url === imageURL && fail) throw Error("OCR runtime unavailable")
+      return { status: "partial", parse_id: `parse-${sourceId(document.final_url)}`, blocks: [{ text: "Unreviewed OCR cells" }], quality: { missing_pages: [1] } }
+    },
+  })
+  const failed = await execute()
+  assert.equal(failed.documents.length, 3)
+  assert.equal(failed.parses.length, 2)
+  assert.equal(failed.candidates.length, 0)
+  assert.equal(failed.details[0].status, "article_image_body_parse_failed")
+  assert.equal(failed.details[0].body_images[0].error, "OCR runtime unavailable")
+  assert.equal(failed.details[0].body_images[0].numeric_verification, "unreviewed")
+  assert.equal(failed.details[0].body_images[1].parse_status, "partial")
+  assert.equal(readJSON(root, "runs/image-failure/state.json").stages[`parse-body-image-${sourceId(imageURL)}`].status, "failed")
+  assert.equal(fetches, 3)
+  fail = false
+  const resumed = await execute()
+  assert.equal(fetches, 3)
+  assert.deepEqual(resumed.documents, failed.documents)
+  assert.equal(resumed.parses.length, 3)
+  assert.equal(resumed.details[0].status, "article_image_body_requires_review")
+  assert.equal(resumed.details[0].body_images[0].numeric_verification, "unreviewed")
+  assert.equal(resumed.details[0].body_images[0].error, undefined)
+  assert.equal(resumed.candidates.length, 0)
 })

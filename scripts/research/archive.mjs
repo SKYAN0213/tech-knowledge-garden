@@ -8,6 +8,7 @@ import { atomicCreate, atomicWrite, safePath, readJSON } from "./run-state.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { assertURL } from "./fetch.mjs"
 import { canonicalURL } from "../garden.mjs"
+import { assertRenderedCaptureEvidence } from "./browser.mjs"
 
 // Preserve the original capture and select only an independently stored,
 // byte-matching observation when its URL metadata needs reconciliation.
@@ -77,7 +78,7 @@ export function buildSourceRegister(root, { url_reference_path = null } = {}) {
           parseResearchDate(record.observed_at)?.precision === "timestamp"
         ))
           return false
-        if (record.capture_method === "manual-readable-tool") {
+        if (record.capture_method === "manual-readable-tool" || record.rendered_from) {
           try {
             assertReadableCaptureEvidence(root, record, body)
           } catch {
@@ -301,33 +302,41 @@ export function inspectManualCapture(root, manifestPath, blockedRunId) {
     let readableEvidence = null
     if (readable) {
       const evidencePath = path.posix.join(path.posix.dirname(manifestPath), `${source.name}.txt`)
-      if (
-        source.readable?.transcript_path !== `${source.name}.txt` ||
-        !/^[a-f0-9]{64}$/.test(source.readable?.transcript_sha256 || "") ||
-        (source.parse_options?.markdown_title_line !== undefined &&
-          (!Number.isInteger(source.parse_options.markdown_title_line) ||
-            source.parse_options.markdown_title_line < 1 ||
-            source.parse_options.markdown_title_line >
-              source.readable.last_line - source.readable.first_line + 1)) ||
-        !Number.isInteger(source.parse_options?.markdown_publication_date_line) ||
-        source.parse_options.markdown_publication_date_line < 1 ||
-        source.parse_options.markdown_publication_date_line >
-          source.readable.last_line - source.readable.first_line + 1 ||
-        ![
-          source.parse_options.publication_date_pattern,
-          source.parse_options.publication_date_format,
-        ].every((value) => typeof value === "string" && value.length > 0 && value.length <= 512) ||
-        Object.keys(source.parse_options).some(
-          (key) =>
-            ![
+      const options = source.parse_options
+      // A readable article may have no observed publication header. Preserve
+      // that absence instead of copying a date from another source into it.
+      // Approval still requires an independently quoted native date source.
+      const undated = options?.publication_date_policy === "not-observed"
+      const validDateOptions = undated
+        ? Object.keys(options).every((key) =>
+            ["markdown_title_line", "publication_date_policy"].includes(key),
+          )
+        : Number.isInteger(options?.markdown_publication_date_line) &&
+          options.markdown_publication_date_line >= 1 &&
+          options.markdown_publication_date_line <=
+            source.readable?.last_line - source.readable?.first_line + 1 &&
+          [options.publication_date_pattern, options.publication_date_format].every(
+            (value) => typeof value === "string" && value.length > 0 && value.length <= 512,
+          ) &&
+          Object.keys(options).every((key) =>
+            [
               "markdown_publication_date_line",
               "publication_date_pattern",
               "publication_date_format",
               "markdown_title_line",
             ].includes(key),
-        )
+          )
+      if (
+        source.readable?.transcript_path !== `${source.name}.txt` ||
+        !/^[a-f0-9]{64}$/.test(source.readable?.transcript_sha256 || "") ||
+        (options?.markdown_title_line !== undefined &&
+          (!Number.isInteger(options.markdown_title_line) ||
+            options.markdown_title_line < 1 ||
+            options.markdown_title_line >
+              source.readable.last_line - source.readable.first_line + 1)) ||
+        !validDateOptions
       )
-        throw Error("Readable capture needs exact transcript and explicit date parse options")
+        throw Error("Readable capture needs exact transcript and explicit date parse options or not-observed policy")
       const transcript = fs.readFileSync(safePath(root, evidencePath))
       if (
         transcript.length > 10 * 1024 ** 2 ||
@@ -423,6 +432,7 @@ export function storeManualCapture(root, inspected) {
 // A readable snapshot is evidence only while its exact tool observation and
 // failed collector observation remain available, including after restoration.
 export function assertReadableCaptureEvidence(root, document, body) {
+  assertRenderedCaptureEvidence(root, document, body)
   if (document.capture_method !== "manual-readable-tool") return
   const provenance = document.capture_provenance
   const paths = provenance?.evidence_paths
@@ -538,8 +548,12 @@ export function archiveManifest(root, runId) {
     if (sha256(body) !== document.body_sha256)
       throw Error("Captured source body hash mismatch: " + document.source_version_id)
     assertReadableCaptureEvidence(root, document, body)
-    if (document.capture_method === "manual-readable-tool") {
-      for (const relative of document.capture_provenance.evidence_paths) {
+    const capturePaths =
+      document.capture_method === "manual-readable-tool"
+        ? document.capture_provenance.evidence_paths
+        : assertRenderedCaptureEvidence(root, document, body)
+    if (capturePaths.length) {
+      for (const relative of capturePaths) {
         const evidence = fs.readFileSync(safePath(root, relative))
         if (!results.some((file) => file.path === relative))
           results.push({
@@ -582,8 +596,19 @@ export function packageResearchArchive(root, runId) {
     maxBuffer: 1024 * 1024,
   })
   if (result.error) throw Error("Research archive packaging failed: " + result.error.message)
-  if (result.status !== 0)
+  if (result.status !== 0) {
+    let pending
+    try {
+      pending = JSON.parse(result.stderr)
+    } catch {}
+    if (pending?.code === "STORAGE_PENDING" && pending.storage_request) {
+      const error = Error("Drive archive inputs need materialization before packaging")
+      error.code = "STORAGE_PENDING"
+      error.storage_request = pending.storage_request
+      throw error
+    }
     throw Error("Research archive packaging failed: " + (result.stderr || "unknown error").trim())
+  }
   try {
     return JSON.parse(result.stdout)
   } catch {

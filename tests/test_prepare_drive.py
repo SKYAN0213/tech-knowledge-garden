@@ -4,6 +4,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
+import subprocess
+import sys
 import zipfile
 
 spec = importlib.util.spec_from_file_location('prepare_drive', Path(__file__).parents[1] / 'scripts/prepare-drive.py')
@@ -77,6 +80,82 @@ class LocalSourceArchiveTests(unittest.TestCase):
                 prepare.prepare_local_ai_sources(root, stage, 'test-corrupt')
             self.assertFalse((stage / 'Sources/LocalAI/source-register.json').exists())
             self.assertFalse((stage / 'Sources/LocalAI/source-versions.zip').exists())
+
+
+class ColdStorageReadersTests(unittest.TestCase):
+    def storage(self, root, action, parameters=None):
+        result = subprocess.run([sys.executable, str(prepare.ROOT / 'scripts/research/cold-storage.py'), action, '--root', str(root)],
+                                input=json.dumps(parameters or {}), capture_output=True, text=True, check=True)
+        return json.loads(result.stdout)
+
+    def setup_store(self, root, cold_metadata=False):
+        cache = root / 'drive-sync/source-cache'
+        cache.mkdir(parents=True)
+        body = b'Original primary source.\n' * 4000
+        snapshot = cache / 'source.response.html'
+        snapshot.write_bytes(body)
+        record = {'status': 'captured_unreviewed', 'snapshot': snapshot.name, 'sha256': prepare.sha(body),
+                  'bytes': len(body), 'attempted_at': prepare.now()}
+        if cold_metadata:
+            record['response_metadata'] = 'metadata' * 5000
+        (cache / 'source.json').write_text(json.dumps(record))
+        self.storage(root, 'prepare', {'parent_id': 'private-parent'})
+        for bundle in self.storage(root, 'pending')['uploads']:
+            self.storage(root, 'verify', {'bundle_id': bundle['id'], 'download_path': bundle['local_path'],
+                'observed_at': prepare.now(), 'metadata': {'id': 'private-file', 'title': bundle['name'],
+                'mime_type': 'application/zip', 'size': str(bundle['bytes']), 'parent_ids': ['private-parent'],
+                'modified_time': prepare.now(), 'shared': False}})
+        self.storage(root, 'enable')
+        self.storage(root, 'evict', {'cache_bytes': 0})
+        return cache, record
+
+    def test_collect_reuses_verified_cold_original_without_network_or_hydration(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            cache, record = self.setup_store(root)
+            with mock.patch.object(prepare, 'source_cache_dir', return_value=cache), mock.patch.object(prepare, 'public_url') as network:
+                result = prepare.collect({'source_id': 'source', 'url': 'https://example.com/original'})
+            network.assert_not_called()
+            self.assertEqual(result['sha256'], record['sha256'])
+            self.assertFalse((cache / record['snapshot']).exists())
+            self.assertEqual(self.storage(root, 'pending')['downloads'], [])
+
+    def test_cold_metadata_and_tree_enumeration_wait_instead_of_returning_partial_data(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            cache, _ = self.setup_store(root, cold_metadata=True)
+            with mock.patch.object(prepare, 'source_cache_dir', return_value=cache), mock.patch.object(prepare, 'public_url') as network:
+                with self.assertRaises(prepare._storage.StoragePending):
+                    prepare.collect({'source_id': 'source', 'url': 'https://example.com/original'})
+            network.assert_not_called()
+            with self.assertRaises(prepare._storage.StoragePending) as pending:
+                prepare.files(cache)
+            self.assertEqual(pending.exception.storage_request['request_count'], 2)
+
+    def test_missing_unarchived_payload_is_an_error_even_during_tree_enumeration(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            cache, _ = self.setup_store(root)
+            missing = cache / 'new.response.html'
+            missing.write_bytes(b'New unarchived source' * 4000)
+            self.storage(root, 'prepare', {'parent_id': 'private-parent'})
+            missing.unlink()
+            for tree in [False, True]:
+                with self.assertRaisesRegex(ValueError, 'Indexed payload is missing'):
+                    prepare._storage.ensure_local(cache if tree else missing, tree=tree)
+
+    def test_collect_rejects_symlinked_existing_metadata_before_reading_or_fetching(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            cache, _ = self.setup_store(root)
+            meta = cache / 'source.json'
+            preserved = root / 'original-metadata.json'
+            meta.rename(preserved)
+            meta.symlink_to(preserved)
+            with mock.patch.object(prepare, 'source_cache_dir', return_value=cache), mock.patch.object(prepare, 'public_url') as network:
+                with self.assertRaisesRegex(ValueError, 'Symlink'):
+                    prepare.collect({'source_id': 'source', 'url': 'https://example.com/original'})
+            network.assert_not_called()
 
 
 if __name__ == '__main__':

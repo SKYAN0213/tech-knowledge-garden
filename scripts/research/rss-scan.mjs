@@ -8,6 +8,7 @@ import { collectWindowDetails, validDay } from "./list-scan.mjs"
 import { parseDocument, storeParseArtifact } from "./parser.mjs"
 import { safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
+import { isCollectedDetail } from "./source-access.mjs"
 
 const require = createRequire(import.meta.url)
 const parserVersion = require("rss-parser/package.json").version
@@ -74,9 +75,10 @@ function localizedRSSInstant(pubDate, format, timeZone) {
 
 function calendarDayRSSDate(pubDate, format) {
   if (format !== "weekday-mdy-day-v1") return null
-  const match = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(20\d\d) - (?:[01]\d|2[0-3]):[0-5]\d$/.exec(
-    pubDate?.trim() || "",
-  )
+  const match =
+    /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(20\d\d) - (?:[01]\d|2[0-3]):[0-5]\d$/.exec(
+      pubDate?.trim() || "",
+    )
   if (!match) return null
   const [, weekday, month, day, year] = match
   const published_at = `${year}-${month}-${day}`
@@ -110,6 +112,13 @@ function feedCategories(channel, option) {
   return categories
 }
 
+function outsidePolicyItems(channel) {
+  const value = channel.listing_profile?.outside_policy_items ?? "reject"
+  if (!["reject", "retain_uncollected"].includes(value))
+    throw Error("Invalid RSS outside-policy item handling")
+  return value
+}
+
 export async function parseStoredRSSFeed(
   root,
   document,
@@ -124,6 +133,7 @@ export async function parseStoredRSSFeed(
   const timeZone = publicationTimeZone(channel)
   const ignoredCategories = feedCategories(channel, "ignored_categories")
   const requiredCategories = feedCategories(channel, "required_categories")
+  const outsidePolicy = outsidePolicyItems(channel)
   const settings = {
     rule_id: channel.listing_profile?.rule_id,
     feed_title: channel.listing_profile?.feed_title,
@@ -136,6 +146,9 @@ export async function parseStoredRSSFeed(
       ? {}
       : { retention_business_days: channel.listing_profile.retention_business_days }),
     ignored_categories: ignoredCategories,
+    ...(channel.listing_profile?.outside_policy_items === undefined
+      ? {}
+      : { outside_policy_items: outsidePolicy }),
     ...(channel.listing_profile?.required_categories === undefined
       ? {}
       : { required_categories: requiredCategories }),
@@ -152,16 +165,9 @@ export async function parseStoredRSSFeed(
   const links = (feed.items || []).map((item, index) => {
     const published_timestamp =
       item.isoDate ||
-      localizedRSSInstant(
-        item.pubDate,
-        channel.listing_profile?.pub_date_format,
-        timeZone,
-      )
+      localizedRSSInstant(item.pubDate, channel.listing_profile?.pub_date_format, timeZone)
     const listed_date_text = item.pubDate?.trim() || null
-    const calendar_day = calendarDayRSSDate(
-      item.pubDate,
-      channel.listing_profile?.pub_date_format,
-    )
+    const calendar_day = calendarDayRSSDate(item.pubDate, channel.listing_profile?.pub_date_format)
     return {
       url: absoluteRSSURL(item.link, document.final_url || document.original_url),
       text: item.title?.trim() || null,
@@ -256,6 +262,8 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
   const timeZone = publicationTimeZone(channel)
   const ignoredCategories = feedCategories(channel, "ignored_categories")
   const requiredCategories = feedCategories(channel, "required_categories")
+  const retainOutside = outsidePolicyItems(channel) === "retain_uncollected"
+  const outsideURLs = new Set()
   const urls = new Set(),
     guids = new Set()
   for (const link of links) {
@@ -265,7 +273,16 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
       url = canonicalURL(link.url)
       // Later items are retained and validated but never fetched by this
       // window. Their publisher must not invalidate an earlier collection.
-      assertURL(url, afterWindow ? undefined : channel.allowed_hosts)
+      const parsedURL = assertURL(
+        url,
+        afterWindow || retainOutside ? undefined : channel.allowed_hosts,
+      )
+      if (
+        retainOutside &&
+        channel.allowed_hosts &&
+        !channel.allowed_hosts.includes(parsedURL.hostname)
+      )
+        outsideURLs.add(url)
     } catch {
       return { ...result, reason: "feed_article_url_outside_policy" }
     }
@@ -309,7 +326,7 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
     // They can establish the older cutoff, but must not become candidates for this window.
     if (link.published_at >= since) {
       if (
-        (!ignored && !afterWindow && !pattern.test(url)) ||
+        (!ignored && !afterWindow && !outsideURLs.has(url) && !pattern.test(url)) ||
         urls.has(url) ||
         !link.guid ||
         guids.has(link.guid) ||
@@ -320,11 +337,7 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
       guids.add(link.guid)
     }
   }
-  if (
-    links.some(
-      (link, index) => index && link.published_at > links[index - 1].published_at,
-    )
-  )
+  if (links.some((link, index) => index && link.published_at > links[index - 1].published_at))
     return { ...result, reason: "feed_not_newest_first" }
   const older = links.filter((link) => link.published_at < since)
   const later = links.filter((link) => link.published_at >= until)
@@ -368,6 +381,9 @@ export function assessBoundedRSSFeed(parse, channel, since, until) {
     retention_covered: retentionCoversWindow,
     later_items: later.length,
     links: selected,
+    ...(retainOutside
+      ? { uncollected_links: selected.filter((link) => outsideURLs.has(canonicalURL(link.url))) }
+      : {}),
   }
 }
 
@@ -438,7 +454,13 @@ export async function scanBoundedRSSRoute(
   parses.push(parsed)
   summary.listing_parse_id = parsed.parse_id
   const assessment = assessBoundedRSSFeed(parsed, channel, since, until)
-  summary.assessment = { ...assessment, links: undefined }
+  summary.assessment = {
+    ...assessment,
+    links: undefined,
+    ...(assessment.uncollected_links
+      ? { uncollected_links: undefined, uncollected_items: assessment.uncollected_links.length }
+      : {}),
+  }
   if (assessment.status !== "window_covered")
     return {
       summary: { ...summary, reason: assessment.reason },
@@ -447,30 +469,59 @@ export async function scanBoundedRSSRoute(
       parses,
       candidates,
     }
+  const uncollected = new Set(
+    (assessment.uncollected_links || []).map((link) => canonicalURL(link.url)),
+  )
   const inspected = await collectDetails(
     root,
     run,
     fetcher,
     channel,
     articleProfiles,
-    assessment.links.map((link) => ({
-      ...link,
-      listing_source_version_id: listing.source_version_id,
-      listing_parse_id: parsed.parse_id,
-      discovered_at: listing.observed_at,
-    })),
+    assessment.links
+      .filter((link) => !uncollected.has(canonicalURL(link.url)))
+      .map((link) => ({
+        ...link,
+        listing_source_version_id: listing.source_version_id,
+        listing_parse_id: parsed.parse_id,
+        discovered_at: listing.observed_at,
+      })),
     { fetchPolicy, parse: parseArticle },
   )
   documents.push(...inspected.documents)
   parses.push(...inspected.parses)
   candidates.push(...inspected.candidates)
-  summary.details = inspected.details
+  const inspectedByURL = uncollected.size
+    ? new Map(inspected.details.map((detail) => [canonicalURL(detail.url), detail]))
+    : null
+  summary.details = uncollected.size
+    ? assessment.links.map((link) =>
+        uncollected.has(canonicalURL(link.url))
+          ? {
+              url: link.url,
+              listed_at: link.published_at,
+              listed_title: link.text,
+              guid: link.guid,
+              listing_source_version_id: listing.source_version_id,
+              listing_parse_id: parsed.parse_id,
+              status: "article_outside_source_policy",
+              fetched: false,
+            }
+          : inspectedByURL.get(canonicalURL(link.url)),
+      )
+    : inspected.details
+  if (summary.details.some((detail) => !detail))
+    throw Error("RSS detail result lacks a selected article")
   summary.status =
     inspected.details.length === assessment.window_items &&
-    inspected.details.every((detail) => detail.status === "source_parsed_unreviewed")
+    inspected.details.every(isCollectedDetail)
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
   summary.candidate_count = candidates.length
+  if (channel.access_policy === "public-only") {
+    summary.access_scope = "public-only"
+    summary.access_excluded_count = inspected.details.filter((detail) => detail.status === "public_access_excluded").length
+  }
   return { summary, indexDocuments, documents, parses, candidates }
 }

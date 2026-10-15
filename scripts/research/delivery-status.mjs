@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import os from "node:os"
 import { registry } from "./discovery.mjs"
 import {
   dailyRetryQueue,
@@ -23,10 +24,365 @@ import { projectVerifiedCandidateContentFingerprints } from "./candidate-content
 import { inspectSourceRevisionQueue } from "./source-revision-queue.mjs"
 import { loadDailyProcessingStatus } from "./daily-processing-status.mjs"
 import { loadDailyAcquisitionStatus } from "./daily-acquisition-status.mjs"
-import { loadAuthoringExecutionStatus } from "./authoring-execution.mjs"
-import { loadPublicationOperations } from "./publication-operation.mjs"
+import {
+  loadAuthoringExecutionStatus,
+  loadAuthoringWriteStatus,
+  inspectAuthoringExecution,
+  inspectedAuthoringRelease,
+} from "./authoring-execution.mjs"
+import {
+  loadPublicationOperations,
+  publicationFallbackHazards,
+  loadPublicationFallbacks,
+} from "./publication-operation.mjs"
+import { publicationDeliveryStatus } from "./authoring-delivery-request.mjs"
+import { inspectCompletedAuthoringPreview } from "./authoring-transfer.mjs"
 import { deliveryCheckpointStatus } from "./delivery-run.mjs"
 import { auditShadowOperations } from "./shadow-operations.mjs"
+import { loadPlanProgress } from "./plan-progress.mjs"
+
+// Selected native request only. This observes existing approvals and operations;
+// it never prepares previews, releases, remote proofs, schedules or success.
+export function loadPublicationNextActions({
+  root,
+  runId,
+  repository = process.cwd(),
+  scheduleFile,
+  now = Date.now(),
+  nativeStatus,
+}) {
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(runId || ""))
+    throw Error("Exact publication request run required")
+  const requestPath = `runs/${runId}/publication-delivery/input.json`
+  const requestBytes = fs.readFileSync(safePath(root, requestPath)),
+    request = JSON.parse(requestBytes)
+  const status =
+    nativeStatus ||
+    publicationDeliveryStatus({ root, repo: repository, vault: request.vault }, { run_id: runId })
+  if (
+    status.run_id !== runId ||
+    status.request?.path !== requestPath ||
+    status.request?.sha256 !== sha256(requestBytes)
+  )
+    throw Error("Publication next-action request binding changed")
+  const reference = (relative) => ({
+    path: relative,
+    sha256: sha256(fs.readFileSync(safePath(root, relative))),
+  })
+  const pinned = (ref) => {
+    if (!ref || reference(ref.path).sha256 !== ref.sha256)
+      throw Error("Publication next-action input changed")
+    return JSON.parse(fs.readFileSync(safePath(root, ref.path)))
+  }
+  const handoff = pinned(status.handoff),
+    previewRef = status.private_preview.manifest
+  const preview = previewRef ? pinned(previewRef) : null
+  const user_decisions = [],
+    external_requirements = [],
+    local_requirements = [],
+    failures = []
+  const add = (rows, route, reason, details = {}) => rows.push({ route, reason, ...details })
+  let consumption = null
+  if (preview) {
+    try {
+      consumption = inspectCompletedAuthoringPreview({
+        root,
+        previewRun: preview.run_id,
+        repo: repository,
+        vault: request.vault,
+      })
+    } catch (error) {
+      add(failures, "all", "native_preview_evidence_invalid", {
+        detail: error.message,
+        preview: previewRef,
+      })
+    }
+    if (!consumption && !failures.length)
+      add(external_requirements, "all", "native_preview_completed_checkpoint_required", {
+        preview: previewRef,
+      })
+  } else
+    add(local_requirements, "all", "native_private_preview_required", {
+      status: status.private_preview.status,
+      request: status.request,
+      handoff: status.handoff,
+    })
+  if (status.private_preview.failure)
+    add(failures, "all", "native_preview_failed", { detail: status.private_preview.failure })
+  if (status.execution?.state === "failed")
+    add(failures, "native_release", "native_delivery_failed", { execution: status.execution })
+  if (status.execution?.worker_alive)
+    add(external_requirements, "all", "native_worker_running", {
+      execution_id: status.execution.execution_id,
+    })
+  const writes = loadAuthoringWriteStatus(root)
+  if (writes.status === "invalid")
+    add(failures, "all", "authoring_intent_evidence_invalid", { detail: writes.reason })
+  else if (writes.unresolved)
+    add(external_requirements, "all", "unresolved_authoring_write", {
+      intents: writes.entries.filter((x) => !x.resolved),
+      automatic_retry_allowed: false,
+    })
+  if (status.pending_request || status.interrupted_request)
+    add(external_requirements, "native_release", "connector_capture_required", {
+      request: status.pending_request || status.interrupted_request,
+      automatic_retry_allowed: false,
+    })
+  if (
+    status.remote_delivery?.intent_id &&
+    status.remote_delivery.status !== "remote_delivery_complete"
+  )
+    add(external_requirements, "native_release", "unresolved_remote_write", {
+      intent_id: status.remote_delivery.intent_id,
+      status: status.remote_delivery.status,
+      automatic_retry_allowed: false,
+    })
+  const selected = loadPublicationFallbacks(root).filter(
+    (row) =>
+      row.native_run === runId ||
+      (preview && row.edition_paths.some((p) => preview.editions.some((e) => e.path === p))) ||
+      (preview &&
+        row.native_event_ids.some((id) =>
+          preview.consistency.articles.some((a) => a.event_id === id),
+        )),
+  )
+  if (preview)
+    for (const hazard of publicationFallbackHazards(root, preview, selected[0]?.legacy_run))
+      add(external_requirements, "fallback", hazard.reason, hazard)
+  const planPath = preview ? `runs/${preview.run_id}/drive-authoring/transfer-plan.json` : null
+  const planRef = planPath && fs.existsSync(safePath(root, planPath)) ? reference(planPath) : null
+  if (
+    planRef &&
+    (pinned(planRef).preview_sha256 !== previewRef.sha256 ||
+      pinned(planRef).preview_run !== preview.run_id)
+  )
+    add(failures, "native_release", "authoring_plan_preview_mismatch", {
+      plan: planRef,
+      preview: previewRef,
+    })
+  else if (preview && !planRef)
+    add(local_requirements, "native_release", "authoring_transfer_plan_required", {
+      preview: previewRef,
+      command: {
+        file: "node",
+        args: [
+          "scripts/research-authoring.mjs",
+          "prepare",
+          "--root",
+          root,
+          "--vault",
+          request.vault,
+          "--preview-run",
+          preview.run_id,
+        ],
+      },
+      expected_path: planPath,
+    })
+  if (preview && !status.binding && !selected.length)
+    add(user_decisions, "native_release", "native_release_explicit_review_required", {
+      preview: previewRef,
+      request: status.request,
+      handoff: status.handoff,
+      review_schema: "research-authoring-release-review/v1",
+      kind: preview.edition_spec ? "daily" : "retrospective",
+      preview_sha256: previewRef.sha256,
+      event_ids: preview.consistency.articles.map((a) => a.event_id),
+      note_paths: [...preview.knowledge, ...(preview.navigation ? [preview.navigation] : [])].map(
+        (n) => n.path,
+      ),
+      required_checks: [
+        "source_fidelity",
+        "detail_preservation",
+        "dependent_knowledge",
+        "reader_content",
+        "reader_interactions",
+      ],
+      required: false,
+      condition:
+        "Only if an explicit native publication is authorized; P6-01 keeps this candidate private",
+    })
+  if (preview && !status.binding && !selected.length)
+    add(external_requirements, "native_release", "fresh_complete_drive_inputs_required", {
+      snapshot_schema: "tech-drive-source/v1",
+      observation_schema: "research-authoring-remote-observation/v1",
+      acquisition_schema: "research-authoring-drive-acquisition/v1",
+      destination_folder_id: "1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD",
+      maximum_age_ms: 600000,
+      required_pins: [
+        "snapshot path/SHA",
+        "observation path/SHA",
+        "pre-write acquisition path/SHA",
+      ],
+      root_metadata_is_not_raw_proof: true,
+    })
+  if (status.binding) {
+    const binding = pinned(status.binding)
+    try {
+      const proof = inspectAuthoringExecution(root, binding.release.path)
+      if (!proof.execution?.drive_verified)
+        add(external_requirements, "native_release", "authoring_raw_readback_required", {
+          release: binding.release,
+          counts: proof.execution?.counts || null,
+        })
+      else
+        try {
+          inspectedAuthoringRelease(root, binding.release.path, { fresh: true, now })
+        } catch (error) {
+          add(external_requirements, "native_release", "authoring_fresh_raw_readback_required", {
+            release: binding.release,
+            detail: error.message,
+            maximum_age_ms: 600000,
+          })
+        }
+    } catch (error) {
+      add(failures, "native_release", "authoring_release_evidence_invalid", {
+        release: binding.release,
+        detail: error.message,
+      })
+    }
+  }
+  if (preview && !status.public_verified)
+    add(external_requirements, "native_release", "public_delivery_evidence_required", {
+      operation: "publication.deliver",
+      stage: "publication",
+      required_pins: [
+        "approved release path/SHA",
+        "fresh source snapshot path/SHA",
+        "source raw readback path/SHA",
+        "confirmed push/commit",
+        "Actions deployment proof",
+        "web/RSS/Markdown readback",
+      ],
+      automatic_publish_retry_allowed: false,
+    })
+  if (preview && !selected.length) {
+    add(user_decisions, "fallback", "legacy_fallback_explicit_review_required", {
+      required: false,
+      condition: "Only after choosing the already approved same-issue legacy path",
+      review_schema: "research-publication-fallback-review/v1",
+      native_request: status.request,
+      native_preview: previewRef,
+      handoff: status.handoff,
+    })
+    add(external_requirements, "fallback", "approved_legacy_path_required", {
+      required_pins: [
+        "legacy run",
+        "same-issue approved legacy release path/SHA",
+        "distinct legacy preview path/SHA",
+        "fresh legacy raw Drive execution path/SHA",
+      ],
+      maximum_age_ms: 600000,
+      do_not_republish_existing_legacy: true,
+    })
+  }
+  if (!request.invocation || !request.collection_basis || handoff.collection_status !== "complete")
+    add(external_requirements, "legacy_shadow", "new_scheduled_complete_collection_required", {
+      current_collection_status: handoff.collection_status || null,
+      invocation_attached: !!request.invocation,
+      collection_basis_attached: !!request.collection_basis,
+      current_request_cannot_be_relabelled: true,
+      required_pins: [
+        "actual same-invocation raw capture path/SHA",
+        "frozen complete collection basis path/SHA",
+        "native v3 handoff path/SHA",
+      ],
+    })
+  add(external_requirements, "legacy_shadow", "same_invocation_legacy_public_comparison_required", {
+    required_pins: [
+      "legacy release/preview",
+      "actual legacy Drive execution",
+      "archived legacy public readback",
+      "native private preview",
+      "explicit comparison review path/SHA",
+    ],
+    published_by: "legacy",
+    candidate_published: false,
+    required_distinct_actual_operations: 7,
+    do_not_republish_existing_legacy: true,
+  })
+  const file =
+    scheduleFile ||
+    path.join(
+      process.env.CODEX_HOME || path.join(os.homedir(), ".codex"),
+      "automations",
+      "tech-ai-briefing-08",
+      "automation.toml",
+    )
+  let schedule
+  if (fs.existsSync(file)) {
+    const bytes = fs.readFileSync(file),
+      toml = bytes.toString("utf8"),
+      field = (name) =>
+        toml.match(new RegExp(`^${name}\\s*=\\s*"([^"\\n]*)"\\s*$`, "m"))?.[1] || null
+    schedule = {
+      path: file,
+      sha256: sha256(bytes),
+      status: field("status"),
+      rrule: field("rrule"),
+      model: field("model"),
+      modified: false,
+    }
+    if (schedule.status === "PAUSED")
+      add(user_decisions, "legacy_shadow", "resume_existing_08_schedule", {
+        schedule,
+        required: true,
+        pending_human_response: true,
+        create_new_schedule: false,
+      })
+    else if (schedule.status !== "ACTIVE")
+      add(external_requirements, "legacy_shadow", "existing_schedule_observation_invalid", {
+        schedule,
+      })
+  } else {
+    schedule = { path: file, status: "unobserved", modified: false }
+    add(external_requirements, "legacy_shadow", "existing_schedule_observation_required", {
+      schedule,
+    })
+  }
+  return {
+    schema: "research-publication-next-actions/v1",
+    run_id: runId,
+    request: status.request,
+    handoff: status.handoff,
+    preview: previewRef,
+    request_status: status.status,
+    private_preview_status: status.private_preview.status,
+    preview_consumption: consumption,
+    scope: {
+      kind: preview?.edition_spec ? "new_edition" : "retrospective",
+      collection_status: handoff.collection_status || null,
+      invocation_attached: !!request.invocation,
+      collection_basis_attached: !!request.collection_basis,
+    },
+    user_decisions,
+    external_requirements,
+    local_requirements,
+    failures,
+    development_gaps: [],
+    schedule,
+    selected_fallback: selected,
+    next_inputs: {
+      native_release: {
+        preview: previewRef,
+        plan: planRef,
+        operation: "publication.deliver",
+        required_parameters: ["run_id", "execution_id", "stage", "release_path", "release_sha256"],
+      },
+      fallback: {
+        operation: "publication.fallback",
+        run_id: runId,
+        required_parameters: ["review_path", "review_sha256"],
+      },
+      legacy_shadow: {
+        operation: "publication.shadow_record",
+        required_parameters: ["run_id", "review_path", "review_sha256"],
+      },
+    },
+    approval_granted: false,
+    candidate_published: false,
+    new_regular_operation_counted: false,
+  }
+}
 
 export function loadLatestSourceRevisionReview(root, backlogFile) {
   const directory = path.join(root, "review-queues")
@@ -1353,62 +1709,6 @@ function loadRunAudit(repo) {
   return auditRuns(records)
 }
 
-function loadPlanProgress(repo) {
-  const file = path.join(repo, "docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md")
-  if (!fs.existsSync(file)) return { status: "missing", required: 0, completed: 0, rows: [] }
-  const document = fs.readFileSync(file, "utf8")
-  const sectionStart = document.indexOf("## 현재 진척과 다음 완료 증거")
-  const sectionEnd = document.indexOf("## 5. P0", sectionStart)
-  if (sectionStart < 0 || sectionEnd < 0)
-    return { status: "unreadable", required: 0, completed: 0, rows: [] }
-  const rows = document
-    .slice(sectionStart, sectionEnd)
-    .split("\n")
-    .flatMap((line) => {
-      const match = line.match(/^\|\s*(P[0-6]-\d{2})\s*\|\s*([^|]+)\|\s*([^|]+)\|/)
-      if (!match) return []
-      const [, id, detail, next] = match
-      const label = detail.match(/^\s*(완료|부분|미완료|미승격)\s*:/)?.[1]
-      if (!label) return []
-      const status = {
-        완료: "complete",
-        부분: "partial",
-        미완료: "not_started",
-        미승격: "not_promoted",
-      }[label]
-      return [
-        {
-          id,
-          status,
-          required: status !== "not_promoted",
-          evidence: detail.replace(/^\s*(?:완료|부분|미완료|미승격)\s*:\s*/, "").trim(),
-          next: next.trim(),
-        },
-      ]
-    })
-  const expectedIds = Array.from({ length: 7 }, (_, phase) =>
-    Array.from(
-      { length: [3, 5].includes(phase) ? 4 : 3 },
-      (_, index) => `P${phase}-${String(index + 1).padStart(2, "0")}`,
-    ),
-  ).flat()
-  const valid =
-    rows.length === expectedIds.length &&
-    expectedIds.every((id) => rows.filter((row) => row.id === id).length === 1)
-  if (!valid) return { status: "invalid_plan_rows", required: 0, completed: 0, rows }
-  const requiredRows = rows.filter((row) => row.required)
-  return {
-    status: "current_plan_wbs",
-    plan_as_of: document.match(/기준일[:：]?\s*(\d{4}-\d{2}-\d{2})/)?.[1] || null,
-    required: requiredRows.length,
-    completed: requiredRows.filter((row) => row.status === "complete").length,
-    partial: requiredRows.filter((row) => row.status === "partial").length,
-    not_started: requiredRows.filter((row) => row.status === "not_started").length,
-    excluded_from_assisted_completion: rows.filter((row) => !row.required).map((row) => row.id),
-    rows,
-  }
-}
-
 function approvalReconciliation(
   repo,
   publishedArticles,
@@ -1785,6 +2085,9 @@ export async function buildDeliveryStatus({
     scope,
     current_snapshot: summarizeCurrentSnapshot(scope, backlog),
     overall_completion: {
+      completion_scope: planProgress.completion_scope || "operational_acceptance",
+      evidence_verified: false,
+      percentage_basis: "completed_wbs_rows",
       numerator: planProgress.completed,
       denominator: planProgress.required,
       percent:
@@ -1798,6 +2101,9 @@ export async function buildDeliveryStatus({
       excluded_from_assisted_completion: planProgress.excluded_from_assisted_completion,
       workstreams: planProgress.rows,
     },
+    ...(planProgress.operational_acceptance
+      ? { operational_acceptance: planProgress.operational_acceptance }
+      : {}),
     current_integrated_evidence: currentCodeEvidence(
       dailyRuns,
       config_sha256,

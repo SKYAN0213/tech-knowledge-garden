@@ -294,6 +294,53 @@ test("article-free transition rejects missing review, partial units and discover
   }
 })
 
+test("article-free missing metadata preserves unknown cutoffs only after complete original review", (t) => {
+  const f = fixture(t, (value) => {
+    value.meta = {}
+    value.body = value.body.replace("- https://example.org/news/rss.xml", "없음")
+  })
+  delete f.packet.metadata_review
+  delete f.packet.source_list_dispositions
+  f.packet.units.at(-1).decision = "omitted_empty"
+  f.packet.unrecorded_coverage_review = {
+    original_metadata_read: true,
+    original_archive_read: true,
+    edition_identity_checked: true,
+    timezone_checked: true,
+    cutoffs_not_recorded: true,
+    reason:
+      "The original has no recorded interval; the filename identifies the historical edition only.",
+  }
+  assertLegacyTransition(f.packet, [], f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, [], [], [f.packet])
+  const next = parseNote(projection.content)
+  assert.equal(next.meta.date, "2026-07-13")
+  assert.equal(next.meta.coverage_start, null)
+  assert.equal(next.meta.coverage_end, null)
+  assert.equal(next.meta.historical_coverage, "unrecorded/v1")
+  assert.deepEqual(next.meta.article_records, [])
+  assert.doesNotMatch(projection.content, /근거 없는|주말|unsupported_no_news/)
+  for (const mutate of [
+    (packet) => delete packet.unrecorded_coverage_review,
+    (packet) => (packet.unrecorded_coverage_review.original_archive_read = false),
+    (packet) => delete packet.no_article_review,
+    (packet) => packet.units.pop(),
+    (packet) => (packet.units[1].decision = "omitted_editorial"),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, [], f.existing, f.relative))
+  }
+  for (const meta of [{ new_items_count: 1 }, { coverage_end: null }]) {
+    const packet = structuredClone(f.packet)
+    packet.before_content = noteText(meta, f.existing.body)
+    packet.target_sha256 = sha256(packet.before_content)
+    assert.throws(() =>
+      assertLegacyTransition(packet, [], parseNote(packet.before_content), f.relative),
+    )
+  }
+})
+
 test("article-free review cannot remove articles, inline event sources, positive counts or linked knowledge", (t) => {
   for (const change of [
     (v) =>

@@ -19,6 +19,8 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { parseNote, extractArticles } from "../scripts/garden.mjs"
 import { main } from "../scripts/research.mjs"
 import { sectorTabs, articleCard } from "../scripts/reader-cards.mjs"
+import { prepareEditorialDraft } from "../scripts/research/editorial-authoring.mjs"
+import { main as authorEditorial } from "../scripts/research-editorial-author.mjs"
 import { digestMarkdown, feedDescription } from "../scripts/briefings.mjs"
 
 // Synthetic regression inputs exercise contracts; they are not research or gold cases.
@@ -523,7 +525,7 @@ test("deep writer uses kind roles, binds its context and includes separately lab
   assert.equal(correction.draft_id, record.draft_id)
 })
 
-test("deep approval rejects changed context, wrong event date, later relation and reader IDs in analysis", () => {
+test("deep approval preserves later reviewed relationships and rejects changed context, wrong dates and reader IDs", () => {
   const s = fixture("연구 사업화"),
     changed = structuredClone(s.record)
   changed.deep_context.input.relations[0].person_name = "Someone Else"
@@ -560,17 +562,66 @@ test("deep approval rejects changed context, wrong event date, later relation an
   futureInput.relations[0].as_of = "2026-09-03"
   const context = recordDeepDiveReview(futureInput, s.claims, s.parses, s.documents, s.review)
   const later = { ...s.record, deep_context: context, draft_id: draftFingerprint(s.draft, context) }
-  assert.throws(
-    () =>
-      approvedArticle(
-        later,
-        s.claims,
-        s.documents,
-        { ...s.editorialReview, draft_id: later.draft_id },
-        s.parses,
-      ),
-    /cannot follow/,
+  const article = approvedArticle(
+    later,
+    s.claims,
+    s.documents,
+    { ...s.editorialReview, draft_id: later.draft_id },
+    s.parses,
   )
+  assert.equal(article.article_review.published_at, "2026-09-02")
+  assert.equal(article.article_review.reviewed_at, "2026-09-27")
+  assert.equal(article.record.relations[0].as_of, "2026-09-03")
+  const unobserved = structuredClone(s.input)
+  unobserved.relations[0].as_of = "2026-09-28"
+  assert.throws(
+    () => recordDeepDiveReview(unobserved, s.claims, s.parses, s.documents, s.review),
+    /Review date precedes/,
+  )
+})
+
+test("GPT deep editorial authoring binds reviewed full text and enters native paper approval without a model", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-gpt-deep-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const s = fixture("논문 해설"), run = "direct-paper", dir = `runs/${run}`
+  s.documents.forEach((doc, i) => {
+    atomicWrite(root, doc.body_path, s.parses[i].blocks.map((b) => b.text).join("\n"))
+    atomicWrite(root, `parses/${s.parses[i].parse_id}/parse.json`, s.parses[i])
+  })
+  atomicWrite(root, `${dir}/documents.json`, s.documents)
+  atomicWrite(root, `${dir}/parses.json`, s.parses)
+  atomicWrite(root, `${dir}/reviewed-claims.json`, { claims: s.claims })
+  const input = {
+    reviewer: "synthetic-editor", reviewed_at: "2026-09-27", reason: "Synthetic full-text fixture",
+    source_read: true, final_prose_read: true, draft: { ...s.draft, analysis: null },
+  }
+  atomicWrite(root, "author.json", input)
+  const args = ["--root", root, "--run", run, "--review", path.join(root, "author.json"), "--deep"]
+  await assert.rejects(authorEditorial(args), /Reviewed deep-dive context required/)
+  assert.equal(readJSON(root, `${dir}/draft.json`), null)
+  atomicWrite(root, `${dir}/deep-context.json`, s.context)
+  await authorEditorial(args)
+  const record = readJSON(root, `${dir}/draft.json`)
+  assert.equal(record.provenance.local_model_generated, false)
+  assert.equal(record.public_approved, false)
+  assert.equal(record.draft_id, draftFingerprint(input.draft, s.context))
+  assert.equal((await authorEditorial(args)).reused, true)
+  const approved = approvedArticle(record, s.claims, s.documents,
+    { ...s.editorialReview, draft_id: record.draft_id }, s.parses)
+  assert.equal(approved.record.kind, "논문 해설")
+  assert.equal(approved.record.papers[0].access, "전문")
+  assert.equal(approved.record.analysis, undefined)
+  const changed = structuredClone(s.context)
+  changed.input.papers[0].access = "초록"
+  assert.throws(() => prepareEditorialDraft(input, s.claims, s.parses,
+    { deepContext: changed, documents: s.documents }))
+  const unsupported = structuredClone(input)
+  unsupported.draft.explanations[0].paragraphs[0].claim_ids = ["unknown"]
+  assert.throws(() => prepareEditorialDraft(unsupported, s.claims, s.parses,
+    { deepContext: s.context, documents: s.documents }), /correction/)
+  atomicWrite(root, `${dir}/deep-context.json`, { ...s.context, fingerprints: {} })
+  await assert.rejects(authorEditorial(args), /evidence changed/)
+  assert.deepEqual(readJSON(root, `${dir}/draft.json`), record)
 })
 
 test("deep CLI binds source files and preserves existing news mode without starting a model for review", async (t) => {

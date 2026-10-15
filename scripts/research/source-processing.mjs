@@ -6,9 +6,9 @@ import {
   extractionBudget,
   validateEvidence,
 } from "./claims.mjs"
-import { loadStoredSourceRun, assertStoredEvidence } from "./parser.mjs"
+import { loadStoredSourceRun, assertStoredEvidence, articleContentFingerprint } from "./parser.mjs"
 import { prepareRoleProvider, resolveRolePolicy } from "./model-policy.mjs"
-import { Ollama, localOllamaURL } from "./ollama.mjs"
+import { createModelProvider } from "./model-provider.mjs"
 import {
   assessSourceEvidenceCheckpoint,
   assertSegmentableSource,
@@ -22,12 +22,15 @@ import {
 } from "./evidence-review-packet.mjs"
 import { writeDraftCheckpoint, loadBoundDraftCheckpoint } from "./draft-checkpoint.mjs"
 import { draftMarkdown } from "./editor.mjs"
-import { loadProcessedDraft } from "./processed-draft.mjs"
+import { loadProcessedDraft, loadProcessedDraftHistory } from "./processed-draft.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
 import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { atomicCreate, readJSON, safePath, RunState, withLock } from "./run-state.mjs"
 import { loadCompletedExtraction } from "./extraction-checkpoint.mjs"
 import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
+import { loadProcessedSourceResult } from "./processed-source-result.mjs"
+import { bindEditorialCompleteness, assertCompletenessContext } from "./editorial-completeness.mjs"
+import { loadSelectedEvent } from "./event-pipeline.mjs"
 
 function createOnce(root, relative, value) {
   const current = readJSON(root, relative)
@@ -75,6 +78,7 @@ export async function processSourceRun({
   draftRun,
   evidenceThink,
   reviewFile,
+  completenessReviewFile,
   provider,
   candidateKey: requestedCandidateKey,
 }) {
@@ -120,17 +124,11 @@ export async function processSourceRun({
     })
     const policy = JSON.parse(fs.readFileSync(policyFile, "utf8"))
     for (const role of ["fact_extract", "evidence_compare", "article_write"])
-      if (resolveRolePolicy(policy, role).provider !== "ollama")
-        throw Error("Source processing requires local Ollama roles")
+      resolveRolePolicy(policy, role)
     const overrides = evidenceThink === undefined ? {} : { think: evidenceThink }
     const assessmentPolicy = resolveRolePolicy(policy, "evidence_compare", overrides)
     assertSegmentableSource(parses, assessmentPolicy)
-    const baseProvider =
-      provider ||
-      new Ollama({
-        url:
-          process.env.TECH_KNOWLEDGE_OLLAMA_URL ?? policy.runtime?.ollama_url ?? localOllamaURL(),
-      })
+    const baseProvider = provider
     const input = {
       schema: "research-source-processing-input/v1",
       source_run: sourceRun,
@@ -181,10 +179,15 @@ export async function processSourceRun({
       async () => {
         if (sourceExtraction)
           return candidatesFromExtraction(sourceExtraction, candidateKey, parses)
-        const scoped = await prepareRoleProvider(baseProvider, policy, "fact_extract", {
-          root,
-          run,
-        })
+        const scoped = await prepareRoleProvider(
+          baseProvider || createModelProvider(policy, "fact_extract", { root, run }),
+          policy,
+          "fact_extract",
+          {
+            root,
+            run,
+          },
+        )
         const settings = scoped.executionPolicy.settings
         const budgets = extractionBudget(
           Object.fromEntries(
@@ -242,11 +245,17 @@ export async function processSourceRun({
       : null
     const scoped = assessmentRun
       ? null
-      : await prepareRoleProvider(baseProvider, policy, "evidence_compare", {
-          root,
-          run: input.assessment_run,
-          overrides,
-        })
+      : await prepareRoleProvider(
+          baseProvider ||
+            createModelProvider(policy, "evidence_compare", { root, run: input.assessment_run }),
+          policy,
+          "evidence_compare",
+          {
+            root,
+            run: input.assessment_run,
+            overrides,
+          },
+        )
     const assessmentBinding = assessmentRun
       ? readJSON(root, `runs/${assessmentRun}/model-policy/evidence_compare/budget.json`).binding
       : scoped.executionPolicy
@@ -345,53 +354,228 @@ export async function processSourceRun({
         candidate_published: false,
       }
     }
-    const writer = draftRun
-      ? null
-      : await prepareRoleProvider(baseProvider, policy, "article_write", {
+    return writeReviewedSourceDraft({
+      root,
+      run,
+      input,
+      reviewed,
+      documents,
+      parses,
+      deepContext,
+      baseProvider,
+      policy,
+      draftRun,
+      completenessContext: await bindEditorialCompleteness(root, run, completenessReviewFile),
+    })
+  })
+}
+
+// The completed source input stays immutable. A new writer checkpoint binds
+// current editorial code to the exact, explicitly reviewed source facts.
+export async function continueProcessedSourceWriting({
+  root,
+  run,
+  entry,
+  policyFile = "data/research-model-policy.json",
+  provider,
+  executionWindow,
+  retryFailed = false,
+  vault = "vault",
+  completenessReviewFile,
+}) {
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "") || entry === null)
+    throw Error("Exact processed source and candidate entry required for writing")
+  return withLock(root, "run-" + run, async () => {
+    if (entry === undefined) {
+      // A CLI continuation can recover its exact candidate from the frozen
+      // processing input. Never choose between competing source versions.
+      const input = readJSON(root, `runs/${run}/source-processing-input.json`)
+      const stored = loadStoredSourceRun(root, run)
+      const documents = stored.documents.filter(
+        (document) => input?.candidate_key === `source-${document.source_id}`,
+      )
+      const parses = stored.parses.filter(
+        (parse) => parse.source_version_id === documents[0]?.source_version_id,
+      )
+      if (documents.length !== 1 || parses.length !== 1)
+        throw Error(
+          "Exact processing candidate entry required for multiple or missing source versions",
+        )
+      entry = {
+        candidate_key: input.candidate_key,
+        source_version_id: documents[0].source_version_id,
+        parse_id: parses[0].parse_id,
+        content_sha256: articleContentFingerprint(parses[0], stored.parses),
+        source_urls: [documents[0].original_url],
+      }
+    }
+    const current = await loadProcessedSourceResult(root, run, entry, { vault })
+    if (current.status !== "writer_required") {
+      if (completenessReviewFile) {
+        const existingContext = readJSON(root, `runs/${run}/draft.json`)?.completeness_context
+        if (!existingContext)
+          throw Error(
+            "Completed draft cannot receive a new completeness review; use a new writing run",
+          )
+        await bindEditorialCompleteness(root, run, completenessReviewFile)
+      }
+      return current
+    }
+    const input = readJSON(root, `runs/${run}/source-processing-input.json`)
+    const policy = JSON.parse(fs.readFileSync(policyFile, "utf8"))
+    if (input.policy_sha256 !== sha256(JSON.stringify(policy)))
+      throw Error("Reviewed source writing policy changed; use an explicit new processing run")
+    const { documents, parses } = loadStoredSourceRun(root, run)
+    const reviewed = readJSON(root, `runs/${run}/reviewed-claims.json`)
+    const deepContext = readJSON(root, `runs/${run}/deep-context.json`)
+    if (deepContext) assertDeepDiveContext(deepContext, reviewed.claims, parses, documents)
+    const baseProvider = provider
+    return writeReviewedSourceDraft({
+      root,
+      run,
+      input,
+      reviewed,
+      documents,
+      parses,
+      deepContext,
+      baseProvider,
+      executionWindow,
+      retryFailed,
+      policy,
+      draftRun: input.draft_run === run ? undefined : input.draft_run,
+      completenessContext: await bindEditorialCompleteness(root, run, completenessReviewFile),
+    })
+  })
+}
+
+// Event runs already have an exact multi-source selection and reviewed facts.
+// They are not legacy single-candidate processing runs. Reuse the same writer
+// checkpoint rather than reconstructing or re-assessing a candidate entry.
+export async function writeSelectedEventDraft(
+  ctx,
+  p,
+  { baseProvider, executionWindow, retryFailed = false } = {},
+) {
+  return withLock(ctx.root, "run-" + p.run_id, async () => {
+    loadSelectedEvent(ctx, p, { requireProcessed: true })
+    const { documents, parses } = loadStoredSourceRun(ctx.root, p.run_id)
+    const reviewed = readJSON(ctx.root, `runs/${p.run_id}/reviewed-claims.json`)
+    const deepContext = readJSON(ctx.root, `runs/${p.run_id}/deep-context.json`)
+    if (deepContext) assertDeepDiveContext(deepContext, reviewed.claims, parses, documents)
+    const policy = JSON.parse(fs.readFileSync(ctx.policy, "utf8"))
+    const completenessContext = await bindEditorialCompleteness(
+      ctx.root,
+      p.run_id,
+      p.completeness_review_file ? safePath(ctx.repo, p.completeness_review_file) : undefined,
+    )
+    return writeReviewedSourceDraft({
+      root: ctx.root,
+      run: p.run_id,
+      input: { draft_run: p.run_id },
+      reviewed,
+      documents,
+      parses,
+      deepContext,
+      baseProvider,
+      executionWindow,
+      retryFailed,
+      policy,
+      completenessContext,
+    })
+  })
+}
+
+async function writeReviewedSourceDraft({
+  root,
+  run,
+  input,
+  reviewed,
+  documents,
+  parses,
+  deepContext,
+  baseProvider,
+  executionWindow,
+  retryFailed = false,
+  policy,
+  draftRun,
+  completenessContext = null,
+}) {
+  const base = `runs/${run}/`
+  const reusedContext = draftRun
+    ? readJSON(root, `runs/${draftRun}/draft.json`)?.completeness_context || null
+    : null
+  if (
+    draftRun &&
+    completenessContext &&
+    JSON.stringify(completenessContext) !== JSON.stringify(reusedContext)
+  )
+    throw Error("Reused draft is bound to another important fact review; use a new writing run")
+  const boundCompleteness = completenessContext || reusedContext
+  if (boundCompleteness)
+    assertCompletenessContext(boundCompleteness, reviewed.claims, { documents, parses })
+  const writer = draftRun
+    ? null
+    : await prepareRoleProvider(
+        baseProvider ||
+          createModelProvider(policy, "article_write", { root, run: input.draft_run }),
+        policy,
+        "article_write",
+        {
           root,
           run: input.draft_run,
-        })
-    const generated = draftRun
-      ? loadBoundDraftCheckpoint(root, draftRun, reviewed.claims, {
+          executionWindow,
+          retryFailed,
+        },
+      )
+  const generated = draftRun
+    ? loadBoundDraftCheckpoint(root, draftRun, reviewed.claims, {
+        parses,
+        documents,
+        deepContext,
+        completenessContext: boundCompleteness,
+      })
+    : await writeDraftCheckpoint(
+        root,
+        input.draft_run,
+        writer,
+        reviewed.claims,
+        {
+          model: writer.executionPolicy.settings.model,
+          think: writer.executionPolicy.settings.think,
           parses,
           documents,
           deepContext,
-        })
-      : await writeDraftCheckpoint(
-          root,
-          input.draft_run,
-          writer,
-          reviewed.claims,
-          {
-            model: writer.executionPolicy.settings.model,
-            think: writer.executionPolicy.settings.think,
-            parses,
-            documents,
-            deepContext,
-          },
-          await writer.metadata(writer.executionPolicy.settings.model),
-        )
-    const generation = readJSON(root, `runs/${input.draft_run}/model-draft-checkpoint.json`)
-    createOnce(root, base + "draft-generation-reference.json", {
-      run: input.draft_run,
-      input_sha256: generation.input_sha256,
-      output_sha256: generation.output_sha256,
-    })
-    createOnce(root, base + "draft.json", generated.record)
-    const preview = draftMarkdown(generated.record, reviewed.claims, documents)
-    const previewPath = base + "preview.md"
-    if (fs.existsSync(safePath(root, previewPath))) {
-      if (fs.readFileSync(safePath(root, previewPath), "utf8") !== preview)
-        throw Error("Processing preview changed")
-    } else atomicCreate(root, previewPath, preview)
-    return {
-      status: "editorial_review",
-      verified: verified.length,
-      draft_reused: generated.reused,
-      problems: generated.record.problems,
-      preview: safePath(root, previewPath),
-      public_approved: false,
-      candidate_published: false,
-    }
+          completenessContext: boundCompleteness,
+        },
+        await writer.metadata(writer.executionPolicy.settings.model),
+      )
+  const corrected =
+    draftRun && readJSON(root, `runs/${draftRun}/draft.json`)
+      ? loadProcessedDraftHistory(root, draftRun, reviewed, documents, parses)
+      : null
+  const record = corrected?.record || generated.record
+  const generation = readJSON(root, `runs/${input.draft_run}/model-draft-checkpoint.json`)
+  createOnce(root, base + "draft-generation-reference.json", {
+    run: input.draft_run,
+    input_sha256: generation.input_sha256,
+    output_sha256: generation.output_sha256,
   })
+  for (const artifact of corrected?.artifacts || [])
+    createOnce(root, base + artifact.relative, artifact.value)
+  createOnce(root, base + "draft.json", record)
+  const preview = draftMarkdown(record, reviewed.claims, documents)
+  const previewPath = base + "preview.md"
+  if (fs.existsSync(safePath(root, previewPath))) {
+    if (fs.readFileSync(safePath(root, previewPath), "utf8") !== preview)
+      throw Error("Processing preview changed")
+  } else atomicCreate(root, previewPath, preview)
+  return {
+    status: "editorial_review",
+    verified: reviewed.claims.filter((claim) => claim.review.status === "verified").length,
+    draft_reused: generated.reused,
+    problems: record.problems,
+    preview: safePath(root, previewPath),
+    public_approved: false,
+    candidate_published: false,
+  }
 }

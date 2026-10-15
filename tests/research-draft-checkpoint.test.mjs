@@ -5,6 +5,9 @@ import os from "node:os"
 import path from "node:path"
 import { writeDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
+import { loadProcessedDraft } from "../scripts/research/processed-draft.mjs"
+import { correctDraft } from "../scripts/research/editor.mjs"
+import { sha256 } from "../scripts/research/contracts.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "model-draft-")))
@@ -58,6 +61,44 @@ function fixture(t) {
       writeDraftCheckpoint(root, "case", provider, facts, opts, meta),
   }
 }
+
+test("standalone correction history reuses its own native generation without a transfer receipt", async (t) => {
+  const f = fixture(t),
+    first = await f.run()
+  const replacement = { ...first.record.draft, title: "기업이 공개한 제품 출시 계획" }
+  const review = {
+    draft_id: first.record.draft_id,
+    reviewer: "Synthetic reviewer",
+    reviewed_at: "2026-10-09",
+    reason: "Synthetic explicit title correction",
+  }
+  const decision = { ...review, draft: replacement },
+    hash = sha256(JSON.stringify(decision))
+  const corrected = {
+    ...correctDraft(first.record, replacement, f.claims, review),
+    correction_input_sha256: hash,
+  }
+  atomicWrite(f.root, `runs/case/drafts/${first.record.draft_id}.json`, first.record)
+  atomicWrite(f.root, `runs/case/corrections/${hash}.json`, decision)
+  atomicWrite(f.root, "runs/case/draft.json", corrected)
+  assert.deepEqual(
+    loadProcessedDraft(f.root, "case", { claims: f.claims }, f.options.documents, []),
+    corrected,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "runs/case/draft-generation-reference.json")), false)
+  atomicWrite(f.root, "runs/case/source-processing-input.json", { schema: "synthetic" })
+  assert.throws(
+    () => loadProcessedDraft(f.root, "case", { claims: f.claims }, f.options.documents, []),
+    /generation reference/,
+  )
+  fs.unlinkSync(path.join(f.root, "runs/case/source-processing-input.json"))
+  atomicWrite(f.root, `runs/case/corrections/${hash}.json`, { ...decision, reason: "Changed" })
+  assert.throws(
+    () => loadProcessedDraft(f.root, "case", { claims: f.claims }, f.options.documents, []),
+    /history changed/,
+  )
+  assert.equal(f.calls(), 1)
+})
 
 test("identical reviewed input reuses one generation; changed sources, review, model or policy cannot overwrite it", async (t) => {
   const f = fixture(t),

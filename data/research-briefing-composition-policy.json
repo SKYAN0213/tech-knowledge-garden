@@ -1,0 +1,7 @@
+{
+  "schema": "research-briefing-composition-policy/v1",
+  "version": "1",
+  "near_score_band": 3,
+  "organization_repeat_weight": 2,
+  "topic_repeat_weight": 1
+}

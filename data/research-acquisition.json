@@ -1,6 +1,298 @@
 {
   "article_profiles": [
     {
+      "id": "wpi-adaptive-time-delay-pdf-layout-v1",
+      "url_pattern": "^https://web\\.cs\\.wpi\\.edu/~claypool/papers/adaptive-fdg-26/paper\\.pdf$",
+      "options": {
+        "language": "en",
+        "pdf_layout_profile": {
+          "id": "wpi-adaptive-source-layout-v1",
+          "source_sha256": "01ad665b10f4bf9287709125f3d289c1bd2a596c9bb02dd0d66effaaa219232d",
+          "pages": [
+            {
+              "page": 5,
+              "columns": [
+                [
+                  50,
+                  82,
+                  300,
+                  711
+                ],
+                [
+                  315,
+                  82,
+                  562,
+                  711
+                ]
+              ],
+              "regions": [
+                {
+                  "id": "figure-6",
+                  "kind": "figure",
+                  "bbox": [
+                    88.5,
+                    471.5,
+                    259.5,
+                    481.5
+                  ],
+                  "expected_text_hashes": [
+                    "a5a70789cddc2733886e95150afff05d65ede263c112e874d9a53a344973aa2a"
+                  ]
+                },
+                {
+                  "id": "footnote-1",
+                  "kind": "paragraph",
+                  "bbox": [
+                    317.5,
+                    691.5,
+                    559,
+                    709.3
+                  ],
+                  "expected_text_hashes": [
+                    "5c609a4188fc1d46ef097875a6f1b8f8aa8cc8caa45e054678a8802cb02700cb"
+                  ],
+                  "role": "footnote",
+                  "label": "1",
+                  "callout_bbox": [
+                    317,
+                    156,
+                    560,
+                    626
+                  ],
+                  "callout_text": "FPS Animation Framework1"
+                },
+                {
+                  "id": "study-2",
+                  "kind": "heading",
+                  "bbox": [
+                    317.95501708984375,
+                    141.68359375,
+                    439.438720703125,
+                    152.5926971435547
+                  ],
+                  "expected_text_hashes": [
+                    "895b03edb20dce112d901f692a597354502f9968b4bb71169924b59f84f95679"
+                  ],
+                  "role": "heading"
+                }
+              ]
+            },
+            {
+              "page": 7,
+              "columns": [
+                [
+                  50,
+                  82,
+                  300,
+                  711
+                ],
+                [
+                  315,
+                  82,
+                  562,
+                  711
+                ]
+              ],
+              "regions": [
+                {
+                  "id": "table-1",
+                  "kind": "table",
+                  "bbox": [
+                    53.3,
+                    331,
+                    296,
+                    442
+                  ],
+                  "expected_text_hashes": [
+                    "ec734c05a50fc6db92545580d76c1da39119ad1c115b03655de19e7d7a80891c",
+                    "8026bdbc876685f420414f2f7a47c7557620acf8af74ddf7d4d1d20b59c89e61",
+                    "28314ddd60fe014334e3d86636b6111a43dc6d5707d4b762b2127bf61dbb02c6",
+                    "36ddc41184e500495c6fc210a7344ad875425de3f26e4234f7b9a975a5455ef4"
+                  ],
+                  "column_edges": [
+                    53.3,
+                    110,
+                    175,
+                    238,
+                    296
+                  ],
+                  "expected_rows": 13,
+                  "condition_refs": [
+                    {
+                      "bbox": [
+                        53.3,
+                        476.8,
+                        296,
+                        541.5
+                      ],
+                      "text_hash": "528dfecd24db2578dee1bcc619f696b94be3793ae4193517051a620f26aab87c"
+                    }
+                  ]
+                },
+                {
+                  "id": "table-2",
+                  "kind": "table",
+                  "bbox": [
+                    328,
+                    107,
+                    548,
+                    172
+                  ],
+                  "expected_text_hashes": [
+                    "8a9b3903812118d1752864e8e9977acafb66b77f006e02438cd96e3424857da4",
+                    "1912dd19910252d3cf72e15764e52997ff2c53d8bcf3fca6aaa38774deb9ce02"
+                  ],
+                  "column_edges": [
+                    328,
+                    383,
+                    413,
+                    486,
+                    548
+                  ],
+                  "expected_rows": 5,
+                  "condition_refs": [
+                    {
+                      "bbox": [
+                        53,
+                        634,
+                        295,
+                        710
+                      ],
+                      "text_hash": "b831c09fcdaec1e9a5a01eba859c7cd002b77df879aa5353ffe961e8925004b3"
+                    }
+                  ]
+                },
+                {
+                  "id": "caption-table-1",
+                  "kind": "paragraph",
+                  "bbox": [
+                    97,
+                    308.5,
+                    250,
+                    319
+                  ],
+                  "expected_text_hashes": [
+                    "1d68dc7d2ce5288efadbb9be16fbbe62486dd7eb4cfb037afa902b67278f6791"
+                  ],
+                  "role": "table-caption"
+                },
+                {
+                  "id": "caption-table-2",
+                  "kind": "paragraph",
+                  "bbox": [
+                    347,
+                    84,
+                    529,
+                    94.2
+                  ],
+                  "expected_text_hashes": [
+                    "09d58c2c4ac0442d1c1f94eb49cee18ebffba0ae96c7f1043a529ceabb29e15b"
+                  ],
+                  "role": "table-caption"
+                },
+                {
+                  "id": "summary",
+                  "kind": "heading",
+                  "bbox": [
+                    53.79800033569336,
+                    462.465576171875,
+                    126.7907943725586,
+                    473.3746643066406
+                  ],
+                  "expected_text_hashes": [
+                    "86877a7054713b384471d8a00140d2f8d1fc770a5ae14e822648ddd8d6265b69"
+                  ],
+                  "role": "heading"
+                },
+                {
+                  "id": "analysis",
+                  "kind": "heading",
+                  "bbox": [
+                    53.79800033569336,
+                    552.0185546875,
+                    113.0889663696289,
+                    562.9276733398438
+                  ],
+                  "expected_text_hashes": [
+                    "edc0be3b41ff0c5fc11c6216f5bcc8d47a08b36bdf73657ecce2d43b5db5612e"
+                  ],
+                  "role": "heading"
+                },
+                {
+                  "id": "demographics",
+                  "kind": "heading",
+                  "bbox": [
+                    53.79800033569336,
+                    619.652587890625,
+                    149.91807556152344,
+                    630.5617065429688
+                  ],
+                  "expected_text_hashes": [
+                    "18abc2f5a8fdb7dabf955de2fb1dfa2ad47fec0b260dfc07266585f9e831b8f2"
+                  ],
+                  "role": "heading"
+                },
+                {
+                  "id": "responsiveness",
+                  "kind": "heading",
+                  "bbox": [
+                    317.9549865722656,
+                    423.97955322265625,
+                    420.24957275390625,
+                    434.8886413574219
+                  ],
+                  "expected_text_hashes": [
+                    "acedf8f3f8cc2004cff0ac1b50b179502ce399c86acdb996ad34501824a4014e"
+                  ],
+                  "role": "heading"
+                }
+              ]
+            }
+          ]
+        },
+        "pdf_table_context": {
+          "patterns": [
+            "Table\\ 1:\\ Summary\\ of\\ the\\ user\\ studies\\.",
+            "Table\\ 2:\\ Participant\\ demographics\\ summary\\."
+          ],
+          "max_gap_pt": 24
+        }
+      }
+    },
+    {
+      "id": "micron-sec-fy2026-q4-ex991-20260930-v1",
+      "url_pattern": "^https://www\\.sec\\.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease\\.htm$",
+      "options": {
+        "language": "en",
+        "encoding": "utf-8",
+        "content_xpath": "//document//text",
+        "content_block_xpath": "./div[normalize-space(.) and not(.//table)]|.//table",
+        "required_content_xpath": ".//table",
+        "title_xpath": "//document//text/div[normalize-space(.)='MICRON TECHNOLOGY, INC. REPORTS RECORD FISCAL']",
+        "publication_date_policy": "explicit-authoritative",
+        "publication_date_xpath": "//document//text/div[starts-with(normalize-space(.), 'BOISE, Idaho,')]",
+        "publication_date_pattern": "(September\\s+30,\\s+2026)",
+        "publication_date_format": "%B %d, %Y",
+        "preserve_publication_date_block": true,
+        "preserve_table_layout": true
+      }
+    },
+    {
+      "id": "agibot-news-article-en-v1",
+      "url_pattern": "^https://(?:www\\.)?agibot\\.com/article/[0-9]+/detail/[0-9]+\\.html$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' newsxq-title ')]/strong",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' newsxq-editbox ')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li",
+        "publication_date_policy": "explicit-authoritative",
+        "preserve_publication_date_block": true,
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' newsxq-editbox ')]/p[1]",
+        "publication_date_pattern": "([A-Za-z]+ [0-9]{1,2}, [0-9]{4})",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
       "id": "github-release-json-v1",
       "url_pattern": "^https://api\\.github\\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/tags/[^?#]+$",
       "options": {
@@ -1063,14 +1355,25 @@
       }
     },
     {
+      "id": "nasa-blog-article-v1",
+      "url_pattern": "^https://www\\.nasa\\.gov/blogs/(?:[^/?#]+/)+[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "publication_date_xpath": "//meta[@name='parsely-pub-date']",
+        "publication_date_attribute": "content",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
       "id": "nasa-technology-article-v1",
-      "url_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?:[^/?#]+/)+[^/?#]+/?$",
+      "url_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?!blogs/)(?:[^/?#]+/)+[^/?#]+/?$",
       "options": {
         "language": "en",
         "title_xpath": "//main[@id='primary']/article//h1",
         "content_xpath": "//main[@id='primary']/article//div[contains(concat(' ', normalize-space(@class), ' '), ' usa-article-content ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' entry-content ')]",
-        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote]",
-        "publication_date_xpath": "//meta[@property='article:published_time']",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote or (self::div and contains(concat(' ', normalize-space(@class), ' '), ' hds-caption-text '))]",
+        "publication_date_xpath": "//meta[@property='article:published_time'] | //meta[@name='searchgov_custom5' and not(../meta[@property='article:published_time'])]",
         "publication_date_attribute": "content",
         "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
         "publication_date_format": "%Y-%m-%d"
@@ -1299,7 +1602,8 @@
         "language": "en",
         "title_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/h1[contains(concat(' ', normalize-space(@class), ' '), ' wn-title ')]",
         "content_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' wn-body ')][2]",
-        "content_block_xpath": ".//p[normalize-space(.)]",
+        "content_block_xpath": ".//p[normalize-space(.)]|.//h2|.//h3|.//h4|.//li|.//table|.//pre",
+        "required_content_xpath": ".//table",
         "publication_date_xpath": "//main[contains(concat(' ', normalize-space(@class), ' '), ' wn-post ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' wn-body ')][1]",
         "publication_date_pattern": "^Posted on: [A-Z][a-z]{2} [0-9]{1,2}, 20[0-9]{2}$",
         "publication_date_format": "Posted on: %b %d, %Y"
@@ -1842,7 +2146,8 @@
         "pdf_title_pattern": "^2026年11月期 第３四半期決算短信〔日本基準〕（連結）$",
         "publication_date_page": 1,
         "publication_date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日",
-        "publication_date_format": "%Y年%m月%d日"
+        "publication_date_format": "%Y年%m月%d日",
+        "pdf_chunk_pages": 4
       },
       "fetch_budget": {
         "pdf_bytes": 16777216,
@@ -1858,7 +2163,8 @@
         "pdf_title_pattern": "^決算短信補足資料$",
         "publication_date_page": 1,
         "publication_date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日$",
-        "publication_date_format": "%Y年%m月%d日"
+        "publication_date_format": "%Y年%m月%d日",
+        "pdf_chunk_pages": 4
       },
       "fetch_budget": {
         "pdf_bytes": 16777216,
@@ -1880,11 +2186,173 @@
         "pdf_bytes": 8388608,
         "pdf_timeout_ms": 30000
       }
+    },
+    {
+      "id": "kuka-en-amr-learning",
+      "url_pattern": "^https://www\\.kuka\\.com/en-[a-z]{2}/products/amr-autonomous-mobile-robotics/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//h1|.//article[contains(@class,'mod-text')]//h2|.//article[contains(@class,'mod-text')]/div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//section[contains(@class,'mod-text-image')]//h2|.//section[contains(@class,'mod-text-image')]//div[contains(concat(' ',normalize-space(@class),' '),' copy ')]|.//div[contains(concat(' ',normalize-space(@class),' '),' m-faq-list__item ')]/h4|.//div[contains(concat(' ',normalize-space(@class),' '),' m-faq-list__item-content ')]//div[@itemprop='text']",
+        "publication_date_policy": "not_applicable"
+      }
+    },
+    {
+      "id": "static-hpl-document-v1",
+      "url_pattern": "^https://www\\.netlib\\.org/benchmark/hpl/?$",
+      "options": {
+        "content_xpath": "//html",
+        "content_block_xpath": "./body",
+        "title_xpath": "//h3"
+      }
+    },
+    {
+      "id": "aws-ml-rich-article-v1",
+      "url_pattern": "^https://aws\\.amazon\\.com/blogs/machine-learning/[^/?#]+/?$",
+      "options": {
+        "content_xpath": "//section[contains(concat(' ',normalize-space(@class),' '),' blog-post-content ')]",
+        "title_xpath": "//article[contains(concat(' ',normalize-space(@class),' '),' blog-post ')]/h1",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//h4|.//h5|.//h6|.//table|.//pre|.//li[not(.//pre) and not(.//table)]",
+        "required_content_xpath": ".//table|.//pre"
+      }
+    },
+    {
+      "id": "langchain-state-agent-engineering",
+      "url_pattern": "^https://www\\.langchain\\.com/state-of-agent-engineering/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//h1|.//h2|.//h3|.//p|.//li",
+        "publication_date_xpath": "//main/section[1]//h1/../p[2]",
+        "publication_date_pattern": "^([0-9]{1,2} [A-Z][a-z]+, [0-9]{4})$",
+        "publication_date_format": "%d %B, %Y",
+        "preserve_publication_date_block": true
+      }
+    },
+    {
+      "id": "github-cyclonedx-agent-bom-proposal",
+      "url_pattern": "^https://github\\.com/CycloneDX/specification/issues/895$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//react-app//h1",
+        "content_xpath": "(//div[contains(concat(\" \",normalize-space(@class),\" \"),\" markdown-body \")])[1]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//table",
+        "publication_date_xpath": "(//react-app//relative-time)[1]",
+        "publication_date_pattern": "([A-Z][a-z]{2} [0-9]{1,2}, [0-9]{4})",
+        "publication_date_format": "%b %d, %Y",
+        "preserve_publication_date_block": true
+      }
+    },
+    {
+      "id": "ifr-press-release-en-v1",
+      "url_pattern": "^https://ifr\\.org/ifr-press-releases/news/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//section[@id='details']//h1",
+        "content_xpath": "//section[@id='details']//div[h1]",
+        "content_block_xpath": "./h3|./div[@class='lead']|./p[normalize-space(.)]|./h2|./ul",
+        "publication_date_xpath": "//section[@id='details']//div[@class='lead']/i",
+        "publication_date_pattern": "([A-Z][a-z]{2} [0-9]{2}, 20[0-9]{2})",
+        "publication_date_format": "%b %d, %Y"
+      }
+    },
+    {
+      "id": "a3-press-article-en-v1",
+      "url_pattern": "^https://www\\.automate\\.org/[^?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@class='title']",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' article ')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li",
+        "publication_date_xpath": "//div[@class='article']//div[@class='meta-item'][i[contains(@class,'fa-calendar')]]",
+        "publication_date_pattern": "^[0-9]{2}/[0-9]{2}/20[0-9]{2}$",
+        "publication_date_format": "%m/%d/%Y"
+      }
+    },
+    {
+      "id": "techman-official-news-en-v1",
+      "url_pattern": "^https://www\\.tm-robot\\.com/en/company/news/[^/?#]+$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//main//h1",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' main-content_body ')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//tr",
+        "publication_date_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' main-content_header ')]/p[contains(concat(' ',normalize-space(@class),' '),' subtitle ')]",
+        "publication_date_pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "cambridge-enterprise-news-en-v1",
+      "url_pattern": "^https://www\\.enterprise\\.cam\\.ac\\.uk/news/[^/?#]+/$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1",
+        "content_xpath": "//main",
+        "content_block_xpath": ".//div[contains(concat(' ',normalize-space(@class),' '),' prose ')]/*[self::p or self::h2 or self::h3 or self::ul or self::ol]",
+        "publication_date_xpath": "(//span[contains(concat(' ',normalize-space(@class),' '),' text-20sr ')])[1]",
+        "publication_date_pattern": "^([0-9]{2} [A-Z][a-z]+ 20[0-9]{2})",
+        "publication_date_format": "%d %B %Y"
+      }
+    },
+    {
+      "id": "robot-report-article-en-v1",
+      "url_pattern": "^https://www\\.therobotreport\\.com/[^/?#]+/$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@class='entry-title']",
+        "content_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' entry-content ')]",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li|.//tr"
+      }
+    },
+    {
+      "id": "sciencedaily-research-article-en-v1",
+      "url_pattern": "^https://www\\.sciencedaily\\.com/releases/20[0-9]{2}/[0-9]{2}/[0-9]+\\.htm$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[@id='headline']",
+        "content_xpath": "//div[@id='story_text']",
+        "content_block_xpath": ".//p|.//h2|.//h3|.//li",
+        "publication_date_xpath": "//dd[@id='date_posted']",
+        "publication_date_pattern": "^[A-Z][a-z]+ [0-9]{1,2}, 20[0-9]{2}$",
+        "publication_date_format": "%B %d, %Y"
+      }
+    },
+    {
+      "id": "bioin-kribb-research-article-v1",
+      "url_pattern": "^https://www\\.bioin\\.or\\.kr/rsrch_Rslt\\.do\\?(?=[^#]*\\bnum=[0-9]+\\b)(?=[^#]*\\bbid=research\\b)(?=[^#]*\\bcmd=view\\b)[a-zA-Z0-9_=&]+$",
+      "options": {
+        "language": "ko",
+        "title_xpath": "//article[@class=\"board_view\"]/h1[@class=\"title\"]",
+        "content_xpath": "//article[@class=\"board_view\"]/div[@class=\"contents\"]",
+        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table][normalize-space(.)][not(self::p and @class=\"list1\")]",
+        "publication_date_xpath": "//article[@class=\"board_view\"]/ul[@class=\"info\"]/li[@class=\"date\"]/span",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%d"
+      }
+    },
+    {
+      "id": "techcrunch-article-en-v1",
+      "url_pattern": "^https://techcrunch\\.com/20[0-9]{2}/[0-9]{2}/[0-9]{2}/[^/?#]+/?$",
+      "options": {
+        "language": "en",
+        "title_xpath": "//h1[contains(concat(' ', normalize-space(@class), ' '), ' wp-block-post-title ')]",
+        "content_xpath": "//div[contains(concat(' ', normalize-space(@class), ' '), ' entry-content ') and contains(concat(' ', normalize-space(@class), ' '), ' wp-block-post-content ')]",
+        "publication_date_xpath": "//time[@datetime and not(contains(concat(' ', normalize-space(@class), ' '), ' loop-card__time '))]",
+        "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$",
+        "publication_date_format": "%Y-%m-%dT%H:%M:%S%z",
+        "publication_date_timezone": "America/Los_Angeles",
+        "publication_date_attribute": "datetime"
+      }
     }
   ],
   "route-crowdstrike-company-news-en": {
     "publisher_id": "crowdstrike",
-    "allowed_hosts": ["ir.crowdstrike.com"],
+    "allowed_hosts": [
+      "ir.crowdstrike.com"
+    ],
     "item_pattern": "^https://ir\\.crowdstrike\\.com/news-releases/news-release-details/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -1913,11 +2381,14 @@
         }
       ]
     },
-    "verification": "observed-official-investor-list-and-detail-2026-10-03"
+    "verification": "observed-official-investor-list-and-detail-2026-10-03",
+    "collection_mode": "automatic"
   },
   "route-ahnlab-company-press-ko": {
     "publisher_id": "ahnlab",
-    "allowed_hosts": ["company.ahnlab.com"],
+    "allowed_hosts": [
+      "company.ahnlab.com"
+    ],
     "item_pattern": "^https://company\\.ahnlab\\.com/kr/news/press_release_view\\.do\\?seqPressRelease=[1-9][0-9]{2,7}$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -1949,11 +2420,14 @@
         }
       ]
     },
-    "verification": "observed-official-xml-list-and-detail-2026-10-03"
+    "verification": "observed-official-xml-list-and-detail-2026-10-03",
+    "collection_mode": "automatic"
   },
   "fda-press-announcements": {
     "publisher_id": "fda.gov",
-    "allowed_hosts": ["www.fda.gov"],
+    "allowed_hosts": [
+      "www.fda.gov"
+    ],
     "item_pattern": "^https://www\\.fda\\.gov/news-events/press-announcements/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -1979,11 +2453,14 @@
           "date_format": "%B %d, %Y"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "kaist-robotics-research": {
     "publisher_id": "news.kaist.ac.kr",
-    "allowed_hosts": ["news.kaist.ac.kr"],
+    "allowed_hosts": [
+      "news.kaist.ac.kr"
+    ],
     "item_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?GotoPage=[0-9]+&mng_no=[0-9]+&mode=V$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -2010,11 +2487,14 @@
           "date_format": "%Y.%m.%d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "kaist-ai-research": {
     "publisher_id": "news.kaist.ac.kr",
-    "allowed_hosts": ["news.kaist.ac.kr"],
+    "allowed_hosts": [
+      "news.kaist.ac.kr"
+    ],
     "item_pattern": "^https://news\\.kaist\\.ac\\.kr/researchnews/html/news/\\?GotoPage=[0-9]+&mng_no=[0-9]+&mode=V$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -2041,11 +2521,14 @@
           "date_format": "%Y.%m.%d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "kier-energy-press": {
     "publisher_id": "energium.kier.re.kr",
-    "allowed_hosts": ["energium.kier.re.kr"],
+    "allowed_hosts": [
+      "energium.kier.re.kr"
+    ],
     "item_pattern": "^https://energium\\.kier\\.re\\.kr/sub040101/articles/view/tableid/news/category/2/id/[0-9]+$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2071,11 +2554,14 @@
           "date_format": "%Y.%m.%d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "kribb-bio-research": {
     "publisher_id": "www.kribb.re.kr",
-    "allowed_hosts": ["www.kribb.re.kr"],
+    "allowed_hosts": [
+      "www.kribb.re.kr"
+    ],
     "item_pattern": "^https://www\\.kribb\\.re\\.kr/kor/sub02/sub02_02_01_view\\.jsp\\?b_idx=[0-9]+(?:&[^#]*)?$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -2101,11 +2587,14 @@
           "date_format": "%Y-%m-%d"
         }
       ]
-    }
+    },
+    "collection_mode": "discovery"
   },
   "nih-korea-bio-research": {
     "publisher_id": "nih.go.kr",
-    "allowed_hosts": ["nih.go.kr"],
+    "allowed_hosts": [
+      "nih.go.kr"
+    ],
     "item_pattern": "^https://nih\\.go\\.kr/ko/bbs/B0000130/view\\.do\\?menuNo=300829&nttId=[0-9]+&pageIndex=[0-9]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2131,11 +2620,14 @@
           "date_format": "%Y-%m-%d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "nlr-energy-news": {
     "publisher_id": "nlr.gov",
-    "allowed_hosts": ["www.nlr.gov"],
+    "allowed_hosts": [
+      "www.nlr.gov"
+    ],
     "item_pattern": "^https://www\\.nlr\\.gov/news/(?:detail/[a-z-]+|feature)/[0-9]{4}/[^/?#]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2161,11 +2653,14 @@
           "date_format": "%B %d, %Y"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "amd-ir-press": {
     "publisher_id": "ir.amd.com",
-    "allowed_hosts": ["ir.amd.com"],
+    "allowed_hosts": [
+      "ir.amd.com"
+    ],
     "item_pattern": "^https://ir\\.amd\\.com/news-events/press-releases/detail/[0-9]+/[^/?#]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2176,11 +2671,15 @@
       "guid_is_permalink": true,
       "date_timezone": "America/New_York",
       "scope": "The official investor-relations feed mixes earnings, acquisitions, partnerships and product releases. The route discovers company operations; each article's actual subject and announced-versus-completed status require separate review."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "nasa-technology-rss": {
     "publisher_id": "nasa.gov",
-    "allowed_hosts": ["www.nasa.gov", "science.nasa.gov"],
+    "allowed_hosts": [
+      "www.nasa.gov",
+      "science.nasa.gov"
+    ],
     "item_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?:[^/?#]+/)+[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2190,11 +2689,15 @@
       "max_items": 100,
       "guid_is_permalink": false,
       "scope": "Official Technology feed; WordPress GUID may differ from permalink. Each selected item needs a dated full original and the feed needs an older date boundary."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "google-cloud-threat-intelligence": {
     "publisher_id": "cloud.google.com",
-    "allowed_hosts": ["feeds.feedburner.com", "cloud.google.com"],
+    "allowed_hosts": [
+      "feeds.feedburner.com",
+      "cloud.google.com"
+    ],
     "item_pattern": "^https://cloud\\.google\\.com/blog/topics/threat-intelligence/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2204,11 +2707,14 @@
       "max_items": 100,
       "guid_is_permalink": true,
       "scope": "The official RSS feed must include an older item than the requested window; each selected permalink must match a dated full article."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "asec-public-ko": {
     "publisher_id": "asec.ahnlab.com",
-    "allowed_hosts": ["asec.ahnlab.com"],
+    "allowed_hosts": [
+      "asec.ahnlab.com"
+    ],
     "item_pattern": "^https://asec\\.ahnlab\\.com/ko/[0-9]+/?$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2218,14 +2724,21 @@
       "max_items": 30,
       "guid_is_permalink": false,
       "date_timezone": "Asia/Seoul",
-      "ignored_categories": ["Private"],
-      "required_categories": ["Public"],
+      "ignored_categories": [
+        "Private"
+      ],
+      "required_categories": [
+        "Public"
+      ],
       "scope": "The official WordPress feed uses a language-neutral GUID and contains Public and member-only Private categories. Retain all dated items for the older boundary, collect only Public full articles, and compare the Korean displayed publication day with UTC metadata in the declared Korea calendar."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "samsung-global-press-releases": {
     "publisher_id": "news.samsung.com",
-    "allowed_hosts": ["news.samsung.com"],
+    "allowed_hosts": [
+      "news.samsung.com"
+    ],
     "item_pattern": "^https://news\\.samsung\\.com/global/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2235,11 +2748,14 @@
       "max_items": 50,
       "guid_is_permalink": false,
       "scope": "Official press-release RSS; use its UTC calendar date and verify full article titles and printed publication dates before accepting a window."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "samsung-sds-company-news-ko": {
     "publisher_id": "www.samsungsds.com",
-    "allowed_hosts": ["www.samsungsds.com"],
+    "allowed_hosts": [
+      "www.samsungsds.com"
+    ],
     "item_pattern": "^https://www\\.samsungsds\\.com/kr/news/(?!index(?:\\.html)?$)[^/?#]+\\.html$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2252,11 +2768,14 @@
       "pub_date_format": "korean-local-ampm-v1",
       "rss_title_policy": "must_match",
       "scope": "Official Samsung SDS Korean newsroom feed. The archive feed includes third-party media coverage as well as company press releases; retain each item's category and author evidence from the full article and do not attribute coverage to Samsung SDS as a company statement."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "kakao-tech-blog": {
     "publisher_id": "tech.kakao.com",
-    "allowed_hosts": ["tech.kakao.com"],
+    "allowed_hosts": [
+      "tech.kakao.com"
+    ],
     "item_pattern": "^https://tech\\.kakao\\.com/posts/[0-9]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2267,11 +2786,14 @@
       "guid_is_permalink": true,
       "date_timezone": "Asia/Seoul",
       "scope": "Official feed timestamps are UTC while the article releaseDate uses Korea local calendar days. The shared RSS scanner checks an older boundary and every selected full Nuxt article."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "skhynix-newsroom-en": {
     "publisher_id": "news.skhynix.com",
-    "allowed_hosts": ["news.skhynix.com"],
+    "allowed_hosts": [
+      "news.skhynix.com"
+    ],
     "item_pattern": "^https://news\\.skhynix\\.com/en/(?!all(?:/|$)|category(?:/|$)|page(?:/|$)|tag(?:/|$))[^/?#]+/?$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -2281,14 +2803,18 @@
       "max_items": 10,
       "guid_is_permalink": false,
       "date_timezone": "Asia/Seoul",
-      "ignored_categories": ["Media"],
+      "ignored_categories": [
+        "Media"
+      ],
       "scope": "Official WordPress feed. GUID uses a post ID distinct from the article permalink. Retain dated Media items as boundary evidence, but inspect full article categories only. Compare article dates in the publisher's Korea calendar day. If the bounded feed cannot reach the requested older boundary, use the configured official paginated All archive; never treat an incomplete feed as an empty window.",
       "fallback_archive": {
         "pagination": "path-pages",
         "url_template": "https://news.skhynix.com/en/all/page/{page}/",
         "max_pages": 10,
         "rule_id": "skhynix-newsroom-en-archive-v1",
-        "excluded_categories": ["MEDIA"],
+        "excluded_categories": [
+          "MEDIA"
+        ],
         "parse_options": {
           "language": "en",
           "title_xpath": "//title[starts-with(normalize-space(.), 'All')]",
@@ -2309,11 +2835,14 @@
           ]
         }
       }
-    }
+    },
+    "collection_mode": "automatic"
   },
   "nvidia-press-releases": {
     "publisher_id": "nvidianews.nvidia.com",
-    "allowed_hosts": ["nvidianews.nvidia.com"],
+    "allowed_hosts": [
+      "nvidianews.nvidia.com"
+    ],
     "item_pattern": "^https://nvidianews\\.nvidia\\.com/news/[^/?#]+/?$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -2323,11 +2852,14 @@
       "max_items": 20,
       "guid_is_permalink": true,
       "scope": "Official press-release RSS feed. A window is complete only with an older feed item and dated full originals whose titles match the feed."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "aws-whats-new-rss": {
     "publisher_id": "aws.amazon.com",
-    "allowed_hosts": ["aws.amazon.com"],
+    "allowed_hosts": [
+      "aws.amazon.com"
+    ],
     "item_pattern": "^https://aws\\.amazon\\.com/about-aws/whats-new/20[0-9]{2}/(?:0?[1-9]|1[0-2])/(?:[^/?#]+/)*[^/?#]+/?$",
     "scan_max_details": 85,
     "listing_profile": {
@@ -2338,11 +2870,15 @@
       "guid_is_permalink": false,
       "date_timezone": "UTC",
       "scope": "Official AWS What's New RSS feed. Complete a window only after matching dated detail articles and an older feed boundary."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "ieee-spectrum-robotics": {
     "publisher_id": "spectrum.ieee.org",
-    "allowed_hosts": ["spectrum.ieee.org", "robotsguide.com"],
+    "allowed_hosts": [
+      "spectrum.ieee.org",
+      "robotsguide.com"
+    ],
     "item_pattern": "^https://(?:spectrum\\.ieee\\.org/[^/?#]+|robotsguide\\.com/learn/[^/?#]+)$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -2353,12 +2889,19 @@
       "guid_is_permalink": true,
       "date_timezone": "UTC",
       "rss_title_policy": "source_title_authoritative",
-      "scope": "IEEE Spectrum's official Robotics feed. Its one Robots Guide feature keeps that original host; inspect dated originals and an older feed item before completing a window."
-    }
+      "outside_policy_items": "retain_uncollected",
+      "scope": "Public editorial robotics news. Type-whitepaper sponsored material remains in the stored feed, outside this news window.",
+      "ignored_categories": [
+        "Type-whitepaper"
+      ]
+    },
+    "collection_mode": "automatic"
   },
   "fanuc-en": {
     "item_pattern": "^https://www\\.fanuc\\.co\\.jp/en/profile/pr/newsrelease/20\\d\\d/(?:notice|news)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html$",
-    "allowed_hosts": ["www.fanuc.co.jp"],
+    "allowed_hosts": [
+      "www.fanuc.co.jp"
+    ],
     "verification": "local-fixture-2026-09-27",
     "listing_profile": {
       "rule_id": "fanuc-en-dated-index-v1",
@@ -2379,16 +2922,21 @@
           "date_format": "%Y %B %d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "fanuc-ja": {
     "item_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/profile/pr/newsrelease/20\\d\\d/(?:news|osirase)\\d{8}(?:[-_a-zA-Z0-9]+)?\\.html$",
-    "allowed_hosts": ["www.fanuc.co.jp"],
+    "allowed_hosts": [
+      "www.fanuc.co.jp"
+    ],
     "scan_max_details": 12,
     "listing_profile": {
       "rule_id": "fanuc-ja-dated-index-v1",
       "pagination": "single-page",
-      "ignored_rule_ids": ["fanuc-ja-announcements-ignored-v1"],
+      "ignored_rule_ids": [
+        "fanuc-ja-announcements-ignored-v1"
+      ],
       "scope": "FANUC Japanese News Release index with year/day headings; confirms this index window only."
     },
     "parse_options": {
@@ -2416,11 +2964,14 @@
         }
       ]
     },
-    "verification": "common-list-scan-fanuc-ja-20261002-v5"
+    "verification": "common-list-scan-fanuc-ja-20261002-v5",
+    "collection_mode": "automatic"
   },
   "route-fanuc-ir-disclosures-ja": {
     "item_pattern": "^https://www\\.fanuc\\.co\\.jp/ja/ir/announce_other/pdf/[0-9]{4}/[A-Za-z0-9_-]+\\.pdf$",
-    "allowed_hosts": ["www.fanuc.co.jp"],
+    "allowed_hosts": [
+      "www.fanuc.co.jp"
+    ],
     "scan_max_details": 12,
     "listing_profile": {
       "rule_id": "fanuc-ja-dated-ir-disclosures-v1",
@@ -2444,7 +2995,8 @@
         }
       ]
     },
-    "verification": "captured-index-and-two-pdfs-2026-09-28"
+    "verification": "captured-index-and-two-pdfs-2026-09-28",
+    "collection_mode": "automatic"
   },
   "mit-robotics": {
     "source_recipe": "mit-news-rss-v1",
@@ -2452,7 +3004,8 @@
       "rule_id": "mit-robotics-rss-v1",
       "feed_title": "MIT News - Robotics",
       "scope": "Official MIT Robotics topic feed; selected dated full originals and an older feed item are required for window completion."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "mit-ai-research": {
     "source_recipe": "mit-news-rss-v1",
@@ -2460,17 +3013,22 @@
       "rule_id": "mit-ai-rss-v1",
       "feed_title": "MIT News - Artificial intelligence",
       "scope": "Official MIT AI topic feed; selected dated full originals and an older feed item are required for window completion. Topic labels are not publication approval."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "frontiers-robotics-papers": {
     "publisher_id": "frontiersin.org",
-    "allowed_hosts": ["www.frontiersin.org"],
+    "allowed_hosts": [
+      "www.frontiersin.org"
+    ],
     "item_pattern": "^https://www\\.frontiersin\\.org/journals/robotics-and-ai/articles/10\\.3389/frobt\\.20\\d\\d\\.\\d+/full$",
     "scan_max_details": 20,
     "listing_profile": {
       "pagination": "single-page",
       "rule_id": "frontiers-frobt-published-v1",
-      "ignored_rule_ids": ["frontiers-frobt-accepted-v1"],
+      "ignored_rule_ids": [
+        "frontiers-frobt-accepted-v1"
+      ],
       "require_title_match": true,
       "scope": "Official most-recent journal cards. Accepted manuscripts are accounted for but excluded. A published article older than the requested window and dated full articles are required for completion."
     },
@@ -2501,11 +3059,14 @@
           "date_format": "%d %b %Y"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "github-changelog": {
     "item_pattern": "^https://github\\.blog/changelog/20[0-9]{2}-[0-9]{2}-[0-9]{2}-[^/?#]+/?$",
-    "allowed_hosts": ["github.blog"],
+    "allowed_hosts": [
+      "github.blog"
+    ],
     "scan_max_details": 40,
     "listing_profile": {
       "rule_id": "github-changelog-month-v1",
@@ -2535,7 +3096,8 @@
         }
       ]
     },
-    "verification": "completed-september-and-month-boundary-windows-2026-09-29"
+    "verification": "completed-september-and-month-boundary-windows-2026-09-29",
+    "collection_mode": "automatic"
   },
   "route-kuka-news-de": {
     "item_pattern": "^https://www\\.kuka\\.com/de-de/unternehmen/presse/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
@@ -2549,7 +3111,8 @@
       "max_pages": 15,
       "max_details": 25
     },
-    "verification": "captured-form-profile-2026-09-28"
+    "verification": "captured-form-profile-2026-09-28",
+    "collection_mode": "automatic"
   },
   "route-kuka-news-en": {
     "item_pattern": "^https://www\\.kuka\\.com/en-[a-z]{2}/company/press/news/20\\d\\d/[0-9]{2}/[^/?#]+/?$",
@@ -2563,7 +3126,8 @@
       "max_pages": 15,
       "max_details": 25
     },
-    "verification": "english-window-and-detail-verified-2026-10-02"
+    "verification": "english-window-and-detail-verified-2026-10-02",
+    "collection_mode": "automatic"
   },
   "kind-ir-schedule-ko": {
     "item_pattern": "^https://kind\\.krx\\.co\\.kr/corpgeneral/irschedule\\.do\\?irSeq=[0-9]+&method=searchIRScheduleDetail$",
@@ -2622,11 +3186,14 @@
         ]
       }
     },
-    "verification": "kind-ir-post-fragment-captured-2026-10-02"
+    "verification": "kind-ir-post-fragment-captured-2026-10-02",
+    "collection_mode": "discovery"
   },
   "route-kawasaki-heavy-robot-news-en": {
     "item_pattern": "^https://global\\.kawasaki\\.com/en/corp/newsroom/news/detail/\\?f=20[0-9]{6}_[0-9]+$",
-    "allowed_hosts": ["global.kawasaki.com"],
+    "allowed_hosts": [
+      "global.kawasaki.com"
+    ],
     "scan_max_details": 10,
     "listing_profile": {
       "rule_id": "kawasaki-robotics-dated-news-v1",
@@ -2654,11 +3221,14 @@
         }
       ]
     },
-    "verification": "captured-category-and-detail-source-probe-20261002"
+    "verification": "captured-category-and-detail-source-probe-20261002",
+    "collection_mode": "automatic"
   },
   "route-doosan-news-en": {
     "item_pattern": "^https://www\\.doosanrobotics\\.com/en/about/promotion/news/(?:[a-z0-9][a-z0-9-]+|view/[0-9]+)/?$",
-    "allowed_hosts": ["www.doosanrobotics.com"],
+    "allowed_hosts": [
+      "www.doosanrobotics.com"
+    ],
     "listing_profile": {
       "rule_id": "doosan-en-dated-index-v1",
       "pagination": "single-page",
@@ -2685,11 +3255,14 @@
         }
       ]
     },
-    "verification": "captured-single-page-profile-2026-09-28"
+    "verification": "captured-single-page-profile-2026-09-28",
+    "collection_mode": "automatic"
   },
   "route-doosan-news-ko": {
     "item_pattern": "^https://www\\.doosanrobotics\\.com/kr/about/promotion/news/(?:[A-Za-z0-9-]|%[A-Fa-f0-9]{2})+/?$|^https://www\\.doosanrobotics\\.com/kr/about/promotion/news/view/[0-9]+/?$",
-    "allowed_hosts": ["www.doosanrobotics.com"],
+    "allowed_hosts": [
+      "www.doosanrobotics.com"
+    ],
     "listing_profile": {
       "rule_id": "doosan-ko-dated-index-v1",
       "pagination": "single-page",
@@ -2717,11 +3290,14 @@
         }
       ]
     },
-    "verification": "window-scanned-2026-06-15-to-2026-06-23; today-2026-10-01; 41-of-41"
+    "verification": "window-scanned-2026-06-15-to-2026-06-23; today-2026-10-01; 41-of-41",
+    "collection_mode": "automatic"
   },
   "route-abb-robotics-en": {
     "item_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
-    "allowed_hosts": ["www.abb.com"],
+    "allowed_hosts": [
+      "www.abb.com"
+    ],
     "api_profile": {
       "id": "abb-newsbank-json-pages-v1",
       "endpoint": "https://www.abb.com/conf/abbcommon/services/newsbank.json",
@@ -2731,11 +3307,14 @@
       "max_pages": 30,
       "max_details": 25
     },
-    "verification": "captured-news-list-component-and-page-2026-09-28"
+    "verification": "captured-news-list-component-and-page-2026-09-28",
+    "collection_mode": "automatic"
   },
   "epson-robots-news": {
     "item_pattern": "^https://news\\.epson\\.com/news/[A-Za-z0-9][A-Za-z0-9-]+/?$",
-    "allowed_hosts": ["news.epson.com"],
+    "allowed_hosts": [
+      "news.epson.com"
+    ],
     "scan_max_details": 25,
     "listing_profile": {
       "pagination": "path-pages",
@@ -2762,11 +3341,14 @@
         }
       ]
     },
-    "verification": "official-robots-tag-and-paginated-html-reviewed-2026-10-03"
+    "verification": "official-robots-tag-and-paginated-html-reviewed-2026-10-03",
+    "collection_mode": "automatic"
   },
   "epson-collaborative-robot-news": {
     "item_pattern": "^https://news\\.epson\\.com/news/[A-Za-z0-9][A-Za-z0-9-]+/?$",
-    "allowed_hosts": ["news.epson.com"],
+    "allowed_hosts": [
+      "news.epson.com"
+    ],
     "scan_max_details": 25,
     "listing_profile": {
       "pagination": "path-pages",
@@ -2794,7 +3376,8 @@
         }
       ]
     },
-    "verification": "official-collaborative-robot-tag-and-article-reviewed-2026-10-03"
+    "verification": "official-collaborative-robot-tag-and-article-reviewed-2026-10-03",
+    "collection_mode": "automatic"
   },
   "route-abb-investor-releases-en": {
     "item_pattern": "^https://www\\.abb\\.com/global/en/news/[0-9]+/[a-z0-9-]+/?$",
@@ -2816,11 +3399,14 @@
       "max_pages": 20,
       "max_details": 15
     },
-    "verification": "abb-investor-newsbank-feed-2026-10-02"
+    "verification": "abb-investor-newsbank-feed-2026-10-02",
+    "collection_mode": "automatic"
   },
   "route-ur-news-en": {
     "item_pattern": "^https://www\\.universal-robots\\.com/news-and-media/news-center/[a-z0-9][a-z0-9-]+/?$",
-    "allowed_hosts": ["www.universal-robots.com"],
+    "allowed_hosts": [
+      "www.universal-robots.com"
+    ],
     "api_profile": {
       "id": "ur-news-center-json-pages-v1",
       "page_parameter": "page",
@@ -2830,11 +3416,14 @@
       "max_pages": 20,
       "max_details": 25
     },
-    "verification": "official-page-service-bundle-and-robots-checked-json-page-2026-10-01"
+    "verification": "official-page-service-bundle-and-robots-checked-json-page-2026-10-01",
+    "collection_mode": "automatic"
   },
   "route-yaskawa-company-news-en": {
     "item_pattern": "^https://www\\.yaskawa-global\\.com/(?:newsrelease/news/[0-9]+|wp-content/uploads/2026/05/20260522_en\\.pdf)/?$",
-    "allowed_hosts": ["www.yaskawa-global.com"],
+    "allowed_hosts": [
+      "www.yaskawa-global.com"
+    ],
     "scan_max_details": 20,
     "listing_profile": {
       "pagination": "single-page",
@@ -2859,11 +3448,14 @@
         }
       ]
     },
-    "verification": "window-scanned-2026-09-24-to-2026-10-01; business-plan-PDFs-profiled"
+    "verification": "window-scanned-2026-09-24-to-2026-10-01; business-plan-PDFs-profiled",
+    "collection_mode": "automatic"
   },
   "route-yaskawa-product-en": {
     "item_pattern": "^https://www\\.yaskawa-global\\.com/newsrelease/product/[0-9]+/?$",
-    "allowed_hosts": ["www.yaskawa-global.com"],
+    "allowed_hosts": [
+      "www.yaskawa-global.com"
+    ],
     "scan_max_details": 20,
     "listing_profile": {
       "pagination": "single-page",
@@ -2888,11 +3480,14 @@
         }
       ]
     },
-    "verification": "window-scanned-2026-09-24-to-2026-10-01; hc12-detail-parsed-2026-09-14"
+    "verification": "window-scanned-2026-09-24-to-2026-10-01; hc12-detail-parsed-2026-09-14",
+    "collection_mode": "automatic"
   },
   "route-yaskawa-ir-en": {
     "item_pattern": "^(?:https://www\\.yaskawa-global\\.com/wp-content/uploads/(?:[0-9]{4}/[0-9]{2}/[0-9]{8}_(?:en|haifu_en)|2026/01/202601019_haihu_en|2025/10/20251003_haihu_en|2023/07/230707_(?:en|haifu_en))\\.pdf|https://www\\.yaskawa-global\\.com/ir/materials/annual)$",
-    "allowed_hosts": ["www.yaskawa-global.com"],
+    "allowed_hosts": [
+      "www.yaskawa-global.com"
+    ],
     "scan_max_details": 20,
     "listing_profile": {
       "pagination": "single-page",
@@ -2918,7 +3513,8 @@
         }
       ]
     },
-    "verification": "official-ir-results-and-yaskawa-report-2026-window-scanned-2026-10-02"
+    "verification": "official-ir-results-and-yaskawa-report-2026-window-scanned-2026-10-02",
+    "collection_mode": "automatic"
   },
   "route-hd-news-ko": {
     "item_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/news/[0-9]+$",
@@ -2945,7 +3541,8 @@
         }
       ]
     },
-    "verification": "captured-list-profile-2026-09-27"
+    "verification": "captured-list-profile-2026-09-27",
+    "collection_mode": "automatic"
   },
   "route-hd-disclosure-ko": {
     "item_pattern": "^https://www\\.hd-hyundairobotics\\.com/company/disclosure/[0-9]+$",
@@ -2963,11 +3560,14 @@
     "parse_options": {
       "language": "ko"
     },
-    "verification": "official-list-api-empty-contract-2026-10-01"
+    "verification": "official-list-api-empty-contract-2026-10-01",
+    "collection_mode": "automatic"
   },
   "boston-dynamics-blog": {
     "item_pattern": "^https://bostondynamics\\.com/blog/[^/?#]+/?$",
-    "allowed_hosts": ["bostondynamics.com"],
+    "allowed_hosts": [
+      "bostondynamics.com"
+    ],
     "api_profile": {
       "id": "wordpress-rest-posts-json-v1",
       "endpoint": "https://bostondynamics.com/wp-json/wp/v2/blog",
@@ -2975,11 +3575,14 @@
       "max_pages": 5,
       "max_details": 25
     },
-    "verification": "official-wp-rest-api-article-profile-and-window-scan-2026-10-02"
+    "verification": "official-wp-rest-api-article-profile-and-window-scan-2026-10-02",
+    "collection_mode": "automatic"
   },
   "dart-samsung-filings": {
     "publisher_id": "dart.fss.or.kr",
-    "allowed_hosts": ["dart.fss.or.kr"],
+    "allowed_hosts": [
+      "dart.fss.or.kr"
+    ],
     "item_pattern": "^https://dart\\.fss\\.or\\.kr/api/link\\.jsp\\?rcpNo=[0-9]{14}$",
     "scan_max_details": 50,
     "listing_profile": {
@@ -2992,11 +3595,14 @@
       "retention_business_days": 5,
       "scope": "Official company-specific filing RSS. DART states it contains filings from the latest five business days; each disclosure is a candidate source, not an approved news article."
     },
-    "verification": "official-dart-common-rss-route-2026-10-03"
+    "verification": "official-dart-common-rss-route-2026-10-03",
+    "collection_mode": "discovery"
   },
   "route-celltrion-company-news-ko": {
     "publisher_id": "www.celltrion.com",
-    "allowed_hosts": ["www.celltrion.com"],
+    "allowed_hosts": [
+      "www.celltrion.com"
+    ],
     "item_pattern": "^https://www\\.celltrion\\.com/ko-kr/company/media-center/press-release/[0-9]+$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -3021,11 +3627,14 @@
         }
       ]
     },
-    "verification": "observed-article-list-and-detail-profile-2026-10-03"
+    "verification": "observed-article-list-and-detail-profile-2026-10-03",
+    "collection_mode": "automatic"
   },
   "route-samsung-sdi-company-news-ko": {
     "publisher_id": "samsungsdi.co.kr",
-    "allowed_hosts": ["www.samsungsdi.co.kr"],
+    "allowed_hosts": [
+      "www.samsungsdi.co.kr"
+    ],
     "item_pattern": "^https://www\\.samsungsdi\\.co\\.kr/sdi-now/sdi-news/[1-9][0-9]{2,6}\\.html$",
     "scan_max_details": 20,
     "listing_profile": {
@@ -3054,11 +3663,14 @@
         }
       ]
     },
-    "verification": "official-korean-news-list-and-detail-observed-2026-10-03"
+    "verification": "official-korean-news-list-and-detail-observed-2026-10-03",
+    "collection_mode": "automatic"
   },
   "roche-media-releases-rss": {
     "publisher_id": "www.roche.com",
-    "allowed_hosts": ["www.roche.com"],
+    "allowed_hosts": [
+      "www.roche.com"
+    ],
     "item_pattern": "^https://www\\.roche\\.com/media/releases/med-cor-[0-9]{4}-[0-9]{2}-[0-9]{2}[a-z]?/?$",
     "scan_max_details": 12,
     "listing_profile": {
@@ -3071,11 +3683,14 @@
       "rss_title_policy": "must_match",
       "scope": "Official Roche Media Releases RSS feed discovered from the Roche subscribe page. Complete a date window only after full release pages match feed title and publication date and an older dated item establishes the feed boundary."
     },
-    "verification": "official-roche-media-releases-rss-captured-2026-10-03"
+    "verification": "official-roche-media-releases-rss-captured-2026-10-03",
+    "collection_mode": "automatic"
   },
   "kari-space-press-ko": {
     "publisher_id": "www.kari.re.kr",
-    "allowed_hosts": ["www.kari.re.kr"],
+    "allowed_hosts": [
+      "www.kari.re.kr"
+    ],
     "item_pattern": "^https://www\\.kari\\.re\\.kr/kor/article/ATCL87374b48c/[0-9]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -3102,11 +3717,14 @@
         }
       ]
     },
-    "verification": "official-kari-korean-press-list-and-detail-observed-2026-10-03"
+    "verification": "official-kari-korean-press-list-and-detail-observed-2026-10-03",
+    "collection_mode": "automatic"
   },
   "airbus-space-press-rss": {
     "publisher_id": "www.airbus.com",
-    "allowed_hosts": ["www.airbus.com"],
+    "allowed_hosts": [
+      "www.airbus.com"
+    ],
     "item_pattern": "^https://www\\.airbus\\.com/en/newsroom/(?:press-releases|stories)/[^?#]+$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -3119,11 +3737,14 @@
       "pub_date_format": "weekday-mdy-day-v1",
       "pub_date_precision": "day",
       "scope": "Airbus official Space feed lists calendar day and local clock without a declared timezone. Preserve the publisher-listed text and compare publication at day precision; full detail metadata is checked separately."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "innospace-company-news-ko": {
     "publisher_id": "www.innospc.com",
-    "allowed_hosts": ["www.innospc.com"],
+    "allowed_hosts": [
+      "www.innospc.com"
+    ],
     "item_pattern": "^https://www\\.innospc\\.com/shop_contents/myboard_read\\.htm\\?[^#]*myboard_code=sub04_04[^#]*idx=[0-9]+[^#]*$",
     "scan_max_details": 10,
     "listing_profile": {
@@ -3150,12 +3771,16 @@
         }
       ]
     },
-    "verification": "official-innospace-korean-news-list-observed-2026-10-03"
+    "verification": "official-innospace-korean-news-list-observed-2026-10-03",
+    "collection_mode": "automatic"
   },
   "etnews-ai-rss": {
     "source_recipe": "bounded-rss-v1",
     "publisher_id": "etnews.com",
-    "allowed_hosts": ["rss.etnews.com", "www.etnews.com"],
+    "allowed_hosts": [
+      "rss.etnews.com",
+      "www.etnews.com"
+    ],
     "scan_max_details": 240,
     "item_pattern": "^https://www\\.etnews\\.com/20[0-9]{12}$",
     "listing_profile": {
@@ -3164,7 +3789,9 @@
       "max_items": 100,
       "guid_is_permalink": false,
       "date_timezone": "Asia/Seoul",
-      "title_prefix_labels": ["단독"],
+      "title_prefix_labels": [
+        "단독"
+      ],
       "scope": "Official AI XML feed, day-boundary and full originals required.",
       "fallback_archive": {
         "pagination": "path-pages",
@@ -3196,22 +3823,30 @@
           ]
         }
       }
-    }
+    },
+    "collection_mode": "automatic"
   },
   "irobotnews-all-rss": {
     "source_recipe": "ndsoft-news-rss-v1",
     "publisher_id": "irobotnews.com",
-    "allowed_hosts": ["cdn.irobotnews.com", "www.irobotnews.com"],
+    "allowed_hosts": [
+      "cdn.irobotnews.com",
+      "www.irobotnews.com"
+    ],
     "listing_profile": {
       "rule_id": "irobotnews-all-rss-v1",
       "feed_title": "로봇신문 - 전체기사",
       "scope": "Official HTML-declared RSS; retain primary report attribution and verify article dates/bodies."
-    }
+    },
+    "collection_mode": "automatic"
   },
   "thelec-all-rss": {
     "source_recipe": "ndsoft-news-rss-v1",
     "publisher_id": "thelec.kr",
-    "allowed_hosts": ["cdn.thelec.kr", "www.thelec.kr"],
+    "allowed_hosts": [
+      "cdn.thelec.kr",
+      "www.thelec.kr"
+    ],
     "listing_profile": {
       "rule_id": "thelec-all-rss-v1",
       "feed_title": "디일렉(THE ELEC) - 전체기사",
@@ -3247,17 +3882,23 @@
         }
       }
     },
-    "scan_max_details": 400
+    "scan_max_details": 400,
+    "collection_mode": "automatic",
+    "access_policy": "public-only"
   },
   "catalog-x46": {
     "source_recipe": "path-html-list-v1",
-    "allowed_hosts": ["www.krcert.or.kr"],
+    "allowed_hosts": [
+      "www.krcert.or.kr"
+    ],
     "scan_max_details": 20,
     "item_pattern": "^https://www\\.krcert\\.or\\.kr/kr/bbs/view\\.do\\?[^#]*bbsId=B0000133[^#]*nttId=[0-9]+[^#]*$",
     "listing_profile": {
       "rule_id": "kisa-dated-advisories-ko-v1",
       "require_title_match": true,
-      "pinned_rule_ids": ["kisa-pinned-advisories-ko-v1"],
+      "pinned_rule_ids": [
+        "kisa-pinned-advisories-ko-v1"
+      ],
       "url_template": "https://www.krcert.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020&pageIndex={page}",
       "max_pages": 12
     },
@@ -3291,11 +3932,14 @@
           "source_item_id_group": "item_id"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "catalog-x50": {
     "source_recipe": "dated-html-list-v1",
-    "allowed_hosts": ["www.kitech.re.kr"],
+    "allowed_hosts": [
+      "www.kitech.re.kr"
+    ],
     "scan_max_details": 20,
     "item_pattern": "^https://www\\.kitech\\.re\\.kr/pages/61\\?id=[0-9]+[^#]*menuMode=READ[^#]*$",
     "listing_profile": {
@@ -3320,12 +3964,15 @@
           "date_format": "%Y-%m-%d"
         }
       ]
-    }
+    },
+    "collection_mode": "automatic"
   },
   "nachi-financial-results-ja": {
     "source_recipe": "dated-html-list-v1",
     "publisher_id": "nachi",
-    "allowed_hosts": ["www.nachi-fujikoshi.co.jp"],
+    "allowed_hosts": [
+      "www.nachi-fujikoshi.co.jp"
+    ],
     "scan_max_details": 12,
     "item_pattern": "^https://www\\.nachi-fujikoshi\\.co\\.jp/dcms_media/other/[^/?#]+\\.(?:pdf|PDF)$",
     "listing_profile": {
@@ -3365,6 +4012,689 @@
           "date_pattern": "^[0-9０-９]{4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日$",
           "date_format": "%Y年%m月%d日",
           "supporting_links_xpath": "ancestor::table[1]//a[contains(translate(@href,'PDF','pdf'),'.pdf') and contains(.,'決算短信補足資料')]"
+        }
+      ]
+    },
+    "collection_mode": "automatic"
+  },
+  "irobotnews": {
+    "collection_mode": "discovery"
+  },
+  "thelec": {
+    "collection_mode": "discovery"
+  },
+  "kipost": {
+    "collection_mode": "discovery"
+  },
+  "etnews": {
+    "collection_mode": "discovery"
+  },
+  "robot-report": {
+    "collection_mode": "discovery"
+  },
+  "fanuc-ir": {
+    "collection_mode": "discovery"
+  },
+  "kuka-en": {
+    "collection_mode": "discovery"
+  },
+  "kuka-de": {
+    "collection_mode": "discovery"
+  },
+  "abb-robotics": {
+    "collection_mode": "discovery"
+  },
+  "hd-robotics": {
+    "collection_mode": "discovery"
+  },
+  "ifr": {
+    "collection_mode": "discovery"
+  },
+  "a3": {
+    "collection_mode": "discovery"
+  },
+  "kind": {
+    "collection_mode": "discovery"
+  },
+  "dart": {
+    "collection_mode": "discovery"
+  },
+  "mit-startups": {
+    "collection_mode": "discovery"
+  },
+  "kaist-news": {
+    "collection_mode": "discovery"
+  },
+  "arxiv-robotics": {
+    "collection_mode": "discovery"
+  },
+  "iea": {
+    "collection_mode": "discovery"
+  },
+  "nih": {
+    "collection_mode": "discovery"
+  },
+  "nasa": {
+    "collection_mode": "discovery"
+  },
+  "cisa": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x01": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x04": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x05": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x06": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x07": {
+    "collection_mode": "excluded"
+  },
+  "catalog-x08": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x09": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x10": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x11": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x12": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x13": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x14": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x15": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x16": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x17": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x18": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x19": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x20": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x21": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x22": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x23": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x24": {
+    "collection_mode": "automatic",
+    "source_recipe": "dated-html-list-v1",
+    "method": "html-list",
+    "allowed_hosts": [
+      "www.tm-robot.com"
+    ],
+    "item_pattern": "^https://www\\.tm-robot\\.com/en/company/news/[^/?#]+$",
+    "scan_max_details": 30,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "techman-news-list-v1",
+      "require_title_match": true
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//h1",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//h3|.//li|.//p|.//a[.//p]",
+      "listing_link_rules": [
+        {
+          "id": "techman-news-list-v1",
+          "item_xpath": "//div[contains(concat(' ',normalize-space(@class),' '),' article-card ')]/a[contains(concat(' ',normalize-space(@class),' '),' article-card_body ')]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/en/company/news/[^/?#]+)",
+          "title_xpath": "./p[contains(concat(' ',normalize-space(@class),' '),' article-card_title ')]",
+          "date_xpath": "./div[contains(concat(' ',normalize-space(@class),' '),' article-card_date ')]",
+          "date_pattern": "20[0-9]{2} / [0-9]{2} / [0-9]{2}",
+          "date_format": "%Y / %m / %d"
+        }
+      ]
+    }
+  },
+  "catalog-x25": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x26": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x27": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x28": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x29": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x30": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x31": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x32": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x33": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x35": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x36": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x37": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x38": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x39": {
+    "collection_mode": "automatic",
+    "source_recipe": "dated-html-list-v1",
+    "method": "html-list",
+    "allowed_hosts": [
+      "ifr.org"
+    ],
+    "item_pattern": "^https://ifr\\.org/ifr-press-releases/news/[^/?#]+$",
+    "scan_max_details": 30,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "ifr-press-list-v1",
+      "require_title_match": true
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//section[@id='page']//h1[normalize-space(.)='Press Releases']",
+      "content_xpath": "//section[@id='page']",
+      "content_block_xpath": ".//h3|.//li|.//p|.//a[.//p]",
+      "listing_link_rules": [
+        {
+          "id": "ifr-press-list-v1",
+          "item_xpath": "//section[@id='page']//li[i and a/h3]/a",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/ifr-press-releases/news/[^/?#]+)",
+          "title_xpath": "./h3",
+          "date_xpath": "normalize-space(substring-before(concat(../i, '—'), '—'))",
+          "date_pattern": "[A-Z][a-z]{2} [0-9]{2}, 20[0-9]{2}",
+          "date_format": "%b %d, %Y"
+        }
+      ],
+      "listing_scope_xpath": "//section[@id='page']//ul[li/i and li/a/h3]"
+    }
+  },
+  "catalog-x40": {
+    "collection_mode": "automatic",
+    "source_recipe": "dated-html-list-v1",
+    "method": "html-list",
+    "allowed_hosts": [
+      "www.automate.org"
+    ],
+    "item_pattern": "^https://www\\.automate\\.org/(?:[^/?#]+/)?news/[^/?#]+/?$",
+    "scan_max_details": 30,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "a3-press-list-v1",
+      "require_title_match": true
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//h1",
+      "content_xpath": "//main[@id='content']",
+      "content_block_xpath": ".//h3|.//li|.//p|.//a[.//p]",
+      "listing_link_rules": [
+        {
+          "id": "a3-press-list-v1",
+          "item_xpath": "//section[@id='section-list']//div[contains(concat(' ',normalize-space(@class),' '),' itemContent ')]/h3/a",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://www\\.automate\\.org/(?:[^/?#]+/)?news/[^/?#]+/?)",
+          "title_xpath": ".",
+          "date_xpath": "normalize-space(substring-before(../../p[contains(concat(' ',normalize-space(@class),' '),' memberCompanyName ')], '|'))",
+          "date_pattern": "[0-9]{2}/[0-9]{2}/20[0-9]{2}",
+          "date_format": "%m/%d/%Y"
+        }
+      ]
+    }
+  },
+  "catalog-x42": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x43": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x44": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x45": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x47": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x48": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x49": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x51": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x52": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x53": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x55": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x56": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x57": {
+    "collection_mode": "discovery"
+  },
+  "catalog-x58": {
+    "collection_mode": "discovery"
+  },
+  "watch-naver-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-kakao-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-microsoft-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-alphabet-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-samsung-sds-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-douzone-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-amazon-0": {
+    "collection_mode": "discovery"
+  },
+  "route-amazon-sec-filings": {
+    "collection_mode": "automatic"
+  },
+  "watch-oracle-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-ahnlab-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-s1-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-palo-alto-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-crowdstrike-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-samsung-electronics-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-sk-hynix-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-nvidia-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-tsmc-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-hyundai-motor-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-doosan-robotics-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-siemens-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-fanuc-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-lg-energy-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-samsung-sdi-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-tesla-0": {
+    "collection_mode": "discovery"
+  },
+  "route-tesla-sec-filings": {
+    "collection_mode": "automatic"
+  },
+  "watch-vestas-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-samsung-biologics-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-celltrion-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-roche-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-roche-1": {
+    "collection_mode": "discovery"
+  },
+  "watch-thermo-fisher-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-hanwha-aerospace-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-kai-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-airbus-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-lockheed-martin-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-kaist-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-snu-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-postech-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-unist-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-gist-0": {
+    "collection_mode": "excluded"
+  },
+  "watch-kist-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-yonsei-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-hanyang-0": {
+    "collection_mode": "excluded"
+  },
+  "watch-stanford-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-berkeley-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-cmu-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-eth-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-cambridge-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-oxford-0": {
+    "collection_mode": "discovery"
+  },
+  "watch-nus-0": {
+    "collection_mode": "discovery"
+  },
+  "route-doosan-ir-en": {
+    "collection_mode": "discovery"
+  },
+  "route-kuka-ir-de": {
+    "collection_mode": "discovery"
+  },
+  "route-yaskawa-news-ja": {
+    "collection_mode": "discovery"
+  },
+  "route-yaskawa-news-en": {
+    "collection_mode": "discovery"
+  },
+  "route-kawasaki-news-ja": {
+    "collection_mode": "discovery"
+  },
+  "route-kawasaki-robotics-en": {
+    "collection_mode": "discovery"
+  },
+  "route-nachi-news-en": {
+    "collection_mode": "discovery"
+  },
+  "route-nachi-start-ja": {
+    "collection_mode": "discovery"
+  },
+  "route-techman-news-en": {
+    "collection_mode": "discovery"
+  },
+  "route-techman-news-zh": {
+    "collection_mode": "discovery"
+  },
+  "route-rainbow-start-en": {
+    "collection_mode": "discovery"
+  },
+  "route-estun-start-zh": {
+    "collection_mode": "discovery"
+  },
+  "route-estun-start-en": {
+    "collection_mode": "discovery"
+  },
+  "route-efort-start-zh": {
+    "collection_mode": "discovery"
+  },
+  "route-jaka-start-en": {
+    "collection_mode": "discovery"
+  },
+  "route-aubo-news-zh": {
+    "collection_mode": "discovery"
+  },
+  "robot-report-industrial-rss": {
+    "collection_mode": "automatic",
+    "publisher_id": "www.therobotreport.com",
+    "allowed_hosts": [
+      "www.therobotreport.com"
+    ],
+    "item_pattern": "^https://www\\.therobotreport\\.com/[^/?#]+/?$",
+    "scan_max_details": 60,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "robot-report-industrial-rss-v1",
+      "feed_title": "Industrial Robotics News and Technologies from the Robot Report",
+      "max_items": 80,
+      "guid_is_permalink": false,
+      "date_timezone": "UTC"
+    }
+  },
+  "sciencedaily-all-rss": {
+    "collection_mode": "discovery",
+    "publisher_id": "www.sciencedaily.com",
+    "allowed_hosts": [
+      "www.sciencedaily.com"
+    ],
+    "item_pattern": "^https://www\\.sciencedaily\\.com/releases/20[0-9]{2}/[0-9]{2}/[0-9]+\\.htm$",
+    "scan_max_details": 60,
+    "listing_profile": {
+      "pagination": "bounded-feed",
+      "rule_id": "sciencedaily-all-rss-v1",
+      "feed_title": "Latest Science News -- ScienceDaily",
+      "max_items": 80,
+      "guid_is_permalink": false,
+      "date_timezone": "America/New_York"
+    }
+  },
+  "cambridge-enterprise-news": {
+    "collection_mode": "automatic",
+    "source_recipe": "dated-html-list-v1",
+    "method": "html-list",
+    "allowed_hosts": [
+      "www.enterprise.cam.ac.uk"
+    ],
+    "item_pattern": "^https://www\\.enterprise\\.cam\\.ac\\.uk/news/[^/?#]+/?$",
+    "scan_max_details": 30,
+    "listing_profile": {
+      "pagination": "single-page",
+      "rule_id": "cambridge-enterprise-news-list-v1",
+      "require_title_match": true,
+      "title_match_policy": "truncated_prefix",
+      "rss_title_policy": "source_title_authoritative",
+      "scope": "Official dated Cambridge Enterprise news cards; full article heading is authoritative, publication day and exact source URL must agree."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//h1",
+      "content_xpath": "//main",
+      "content_block_xpath": ".//h3|.//li|.//p|.//a[.//p]",
+      "listing_link_rules": [
+        {
+          "id": "cambridge-enterprise-news-list-v1",
+          "item_xpath": "//main//a[@class='group' and .//h3 and .//span[contains(concat(' ',normalize-space(@class),' '),' text-20sr ')]]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://www\\.enterprise\\.cam\\.ac\\.uk/news/[^/?#]+/)",
+          "title_xpath": ".//h3",
+          "date_xpath": ".//span[contains(concat(' ',normalize-space(@class),' '),' text-20sr ')]/text()[1]",
+          "date_pattern": "[0-9]{2} [A-Z][a-z]+ 20[0-9]{2}",
+          "date_format": "%d %B %Y"
+        }
+      ],
+      "listing_scope_xpath": "//main"
+    }
+  },
+  "techcrunch-rss": {
+    "collection_mode": "discovery"
+  },
+  "pmlr-volumes-feed": {
+    "collection_mode": "discovery"
+  },
+  "bioin-kribb-research": {
+    "source_recipe": "dated-html-list-v1",
+    "publisher_id": "bioin.or.kr",
+    "allowed_hosts": [
+      "www.bioin.or.kr"
+    ],
+    "item_pattern": "^https://www\\.bioin\\.or\\.kr/rsrch_Rslt\\.do\\?(?=[^#]*\\bnum=[0-9]+\\b)(?=[^#]*\\bbid=research\\b)(?=[^#]*\\bcmd=view\\b)[a-zA-Z0-9_=&]+$",
+    "access_policy": "public-only",
+    "request_interval_ms": 1000,
+    "scan_max_details": 12,
+    "collection_mode": "automatic",
+    "listing_profile": {
+      "rule_id": "bioin-kribb-research-dated-v1",
+      "require_title_match": true,
+      "scope": "BioIN public research-results cards whose research-institution metadata contains 한국생명공학연구원. Independently identified BioIN publications, not complete coverage of the blocked KRIBB news board. Original KRIBB links remain citations and are not fetched. A complete window requires the newest-first matched cards to reach an older dated item; otherwise preserve incomplete coverage.",
+      "ignored_rule_ids": [
+        "bioin-non-kribb-research-ignored-v1"
+      ]
+    },
+    "parse_options": {
+      "language": "ko",
+      "title_xpath": "//title",
+      "content_xpath": "//ul[contains(concat(' ', normalize-space(@class), ' '), ' blog_list ') and contains(concat(' ', normalize-space(@class), ' '), ' img_list ')]",
+      "content_block_xpath": ".//strong[@class=\"title\"]",
+      "listing_link_rules": [
+        {
+          "id": "bioin-kribb-research-dated-v1",
+          "item_xpath": "//ul[contains(concat(' ', normalize-space(@class), ' '), ' research-list-meta ')]/parent::div[.//span[@class='name'][contains(normalize-space(.), '한국생명공학연구원')]]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/rsrch_Rslt\\.do\\?num=(?P<num>[0-9]+)&cmd=view&bid=research&cPage=1&listCnt=50)",
+          "source_item_id_group": "num",
+          "title_xpath": ".//strong[@class=\"title\"]",
+          "date_xpath": "following-sibling::ul[contains(@class,\"research-list-meta\")]//span[@class=\"date\"]",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d",
+          "category_xpath": "following-sibling::ul[contains(@class,\"research-list-meta\")]//span[@class=\"name\"]"
+        },
+        {
+          "id": "bioin-non-kribb-research-ignored-v1",
+          "item_xpath": "//ul[contains(concat(' ', normalize-space(@class), ' '), ' research-list-meta ')]/parent::div[.//span[@class='name'][normalize-space(.)]][not(.//span[@class='name'][contains(normalize-space(.), '한국생명공학연구원')])]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>/rsrch_Rslt\\.do\\?num=(?P<num>[0-9]+)&cmd=view&bid=research&cPage=1&listCnt=50)",
+          "source_item_id_group": "num",
+          "title_xpath": ".//strong[@class=\"title\"]",
+          "date_xpath": "following-sibling::ul[contains(@class,\"research-list-meta\")]//span[@class=\"date\"]",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "date_format": "%Y-%m-%d",
+          "category_xpath": "following-sibling::ul[contains(@class,\"research-list-meta\")]//span[@class=\"name\"]"
+        }
+      ],
+      "listing_scope_xpath": "//ul[contains(concat(' ', normalize-space(@class), ' '), ' blog_list ') and contains(concat(' ', normalize-space(@class), ' '), ' img_list ')]"
+    }
+  },
+  "sciencedaily-latest-news": {
+    "collection_mode": "discovery",
+    "publisher_id": "www.sciencedaily.com",
+    "allowed_hosts": [
+      "www.sciencedaily.com"
+    ],
+    "access_policy": "public-only",
+    "request_interval_ms": 1000
+  },
+  "techcrunch-latest-archive": {
+    "collection_mode": "automatic",
+    "publisher_id": "techcrunch.com",
+    "allowed_hosts": [
+      "techcrunch.com"
+    ],
+    "access_policy": "public-only",
+    "request_interval_ms": 1000,
+    "source_recipe": "path-html-list-v1",
+    "item_pattern": "^https://techcrunch\\.com/20[0-9]{2}/[0-9]{2}/[0-9]{2}/[^/?#]+/?$",
+    "scan_max_details": 80,
+    "listing_profile": {
+      "rule_id": "techcrunch-latest-dated-v1",
+      "url_template": "https://techcrunch.com/latest/page/{page}/",
+      "max_pages": 10,
+      "max_items": 500,
+      "require_title_match": true,
+      "scope": "Official latest-news archive, same-host dated articles including TechCrunch Events. Each complete requested window must reach an older dated record, with title/full-text publication-date agreement. The RSS20-item cutoff is not used as archive completeness."
+    },
+    "parse_options": {
+      "language": "en",
+      "title_xpath": "//title",
+      "content_xpath": "(//main//ul[contains(concat(' ', normalize-space(@class), ' '), ' wp-block-post-template ')])[1]",
+      "listing_scope_xpath": "(//main//ul[contains(concat(' ', normalize-space(@class), ' '), ' wp-block-post-template ')])[1]",
+      "listing_link_rules": [
+        {
+          "id": "techcrunch-latest-dated-v1",
+          "item_xpath": "(//main//ul[contains(concat(' ', normalize-space(@class), ' '), ' wp-block-post-template ')])[1]/li//h3[contains(concat(' ', normalize-space(@class), ' '), ' loop-card__title ')]/a[@href]",
+          "url_attribute": "href",
+          "url_pattern": "(?P<url>https://techcrunch\\.com/20[0-9]{2}/[0-9]{2}/[0-9]{2}/[^/?#]+/)",
+          "title_xpath": ".",
+          "date_xpath": "ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' loop-card__content ')][1]//time/@datetime",
+          "date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$",
+          "date_format": "%Y-%m-%dT%H:%M:%S%z"
         }
       ]
     }

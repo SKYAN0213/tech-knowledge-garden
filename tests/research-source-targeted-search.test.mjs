@@ -2,6 +2,45 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import { researchSlots, queryMatchesLanguage } from "../scripts/research/search.mjs"
 import { targetedSourceQueries } from "../scripts/research/source-targeted-search.mjs"
+import { coverageGrid } from "../scripts/research/discovery.mjs"
+
+test("incomplete coverage and additive sectors remain searchable with unattempted cells first", () => {
+  const failed = {
+    channel_id: "incomplete-ko",
+    sectors: ["AI"],
+    coverage_sectors: ["소프트웨어·클라우드"],
+    region: "국내",
+    axis: "기술·제품",
+    status: "incomplete",
+    language: "ko",
+    url: "https://example.org/news",
+    kind: "research",
+  }
+  const pending = {
+    channel_id: "pending-en",
+    sectors: ["바이오·의료기술"],
+    region: "해외",
+    axis: "기업·운영",
+    status: "not_attempted",
+    language: "en",
+    url: "https://example.net/news",
+    kind: "company",
+  }
+  const coverage = coverageGrid([failed, pending])
+  const before = JSON.stringify(coverage)
+  const result = targetedSourceQueries(coverage, [failed, pending], "2026-10-10")
+  assert.equal(result.queries.length, 3)
+  assert.equal(result.queries[0].source_channel_id, pending.channel_id)
+  assert.equal(result.queries[0].coverage_status, "not_attempted")
+  assert.ok(result.queries.slice(1).every((q) => q.coverage_status === "incomplete"))
+  assert.ok(
+    result.queries.some(
+      (q) => q.sector === "소프트웨어·클라우드" && q.source_channel_id === failed.channel_id,
+    ),
+  )
+  assert.equal(JSON.stringify(coverage), before)
+  assert.ok(result.queries.every((q) => queryMatchesLanguage(q.query, q.language)))
+})
 
 test("unattempted daily cells receive distinct registered-source searches without claiming articles", () => {
   const coverage = researchSlots().map((slot) => ({ ...slot, status: "partial" }))

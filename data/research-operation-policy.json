@@ -1,0 +1,27 @@
+{
+  "schema": "research-operation-policy/v1",
+  "phase": "ready",
+  "schedule_id": "tech-knowledge-garden-04",
+  "default_executor": "codex",
+  "storage_backend": "connected_drive",
+  "optional_execution": {
+    "ollama": {
+      "enabled": false,
+      "development_completion": null
+    }
+  },
+  "model_policies": {
+    "codex": "data/research-model-policy-codex.json",
+    "ollama": "data/research-model-policy.json"
+  },
+  "development_completion": {
+    "path": ".local/research/development-releases/gpt-publication-20261016-v2/receipt.json",
+    "sha256": "df77b1ff45a4088ef8f36844a35b38d2e02dc38728c4361e77f70ec93a6472ac"
+  },
+  "recovery": {
+    "automatic_retry": false,
+    "reuse_completed": true,
+    "same_input_required": true,
+    "uncertain_write": "readback_before_resume"
+  }
+}

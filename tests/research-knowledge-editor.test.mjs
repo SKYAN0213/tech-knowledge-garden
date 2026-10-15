@@ -12,8 +12,255 @@ import {
   loadKnowledgeDraftInput,
   knowledgeDraftProblems,
   writeKnowledgeDraft,
+  knowledgeDraftMarkdown,
+  loadCompletedKnowledgeDraft,
 } from "../scripts/research/knowledge-editor.mjs"
+import {
+  prepareKnowledgeJobs,
+  processKnowledgeQueue,
+} from "../scripts/research/knowledge-queue.mjs"
+import { prepareRoleProvider, loadRoleBudget } from "../scripts/research/model-policy.mjs"
 import { main } from "../scripts/research.mjs"
+import { submitReasoningResult } from "../scripts/research/reasoning-tasks.mjs"
+
+test("knowledge queue delegates without a failed generation and resumes the same native draft after Codex submits", async (t) => {
+  const f = queueFixture(t)
+  const policy = JSON.parse(fs.readFileSync(f.options.policyFile))
+  policy.roles.concept_write.provider = "codex"
+  policy.roles.concept_write.model = "codex"
+  atomicWrite(f.root, "policy.json", policy)
+  const options = { ...f.options, maxItems: 1, providerFactory: undefined }
+  const first = await processKnowledgeQueue(options)
+  const waiting = first.results.find((row) => row.status === "waiting_for_reasoning")
+  assert.ok(waiting?.reasoning_task)
+  assert.equal(first.counts.failed, 0)
+  assert.equal(f.calls(), 0)
+  const nativeStage = readJSON(f.root, "runs/term-a/knowledge-draft/state.json").stages.draft
+  assert.equal(nativeStage.status, "waiting_for_reasoning")
+  await submitReasoningResult(f.root, {
+    ...waiting.reasoning_task,
+    executor: "codex",
+    output: f.draft,
+  })
+  const resumed = await processKnowledgeQueue(options)
+  assert.equal(resumed.counts.draft_ready, 1)
+  assert.equal(resumed.counts.failed, 0)
+  assert.equal(f.calls(), 0)
+  assert.equal(loadRoleBudget(f.root, "term-a", "concept_write").attempts.length, 1)
+  assert.equal(
+    loadCompletedKnowledgeDraft(f.root, "term-a", f.first, { vault: f.vault }).record.provenance
+      .executor,
+    "codex",
+  )
+  assert.equal(resumed.approvals_created, false)
+  assert.equal(fs.existsSync(path.join(f.vault, f.first.path)), false)
+})
+
+function queueFixture(t) {
+  const f = fixture(t),
+    policyFile = path.join(f.root, "policy.json")
+  atomicWrite(
+    f.root,
+    "policy.json",
+    JSON.parse(fs.readFileSync(new URL("../data/research-model-policy.json", import.meta.url))),
+  )
+  const first = creation(f),
+    second = structuredClone(first)
+  second.path = "Knowledge/Second.md"
+  Object.assign(second.note_metadata, {
+    title: "Second",
+    label: "두 번째 전문용어",
+    concept_id: "second",
+    aliases: ["Second Concept"],
+  })
+  atomicWrite(f.root, "first.json", first)
+  atomicWrite(f.root, "second.json", second)
+  let prepared = 0
+  return {
+    ...f,
+    first,
+    second,
+    prepared: () => prepared,
+    options: {
+      root: f.root,
+      vault: f.vault,
+      runId: "knowledge-queue",
+      policyFile,
+      inputFiles: {
+        "term-a": path.join(f.root, "first.json"),
+        "term-b": path.join(f.root, "second.json"),
+      },
+      execute: true,
+      providerFactory: async ({ root, run, policy, remainingMs }) => {
+        prepared++
+        assert.ok(remainingMs > 0)
+        assert.equal(new URL(policy.runtime.ollama_url).hostname, "127.0.0.1")
+        return prepareRoleProvider(f.ollama, policy, "concept_write", { root, run })
+      },
+    },
+  }
+}
+
+test("knowledge queue resumes bounded native drafts with no repeated model access and no authority writes", async (t) => {
+  const f = queueFixture(t)
+  const first = await processKnowledgeQueue({ ...f.options, maxItems: 1 })
+  assert.deepEqual(first.counts, { pending: 1, running: 0, draft_ready: 1, failed: 0 })
+  assert.equal(first.status, "yielded")
+  const bytes = fs.readFileSync(path.join(f.root, "runs/term-a/knowledge-draft.json"))
+  const second = await processKnowledgeQueue({ ...f.options, maxItems: 1 })
+  assert.equal(second.status, "review_pending")
+  assert.equal(second.counts.draft_ready, 2)
+  assert.equal(f.calls(), 2)
+  assert.equal(f.prepared(), 2)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/term-a/knowledge-draft.json")), bytes)
+  for (const run of ["term-a", "term-b"]) {
+    assert.equal(loadRoleBudget(f.root, run, "concept_write").attempts.length, 1)
+    assert.ok(
+      loadCompletedKnowledgeDraft(f.root, run, run === "term-a" ? f.first : f.second, {
+        vault: f.vault,
+      }),
+    )
+  }
+  const resumed = await processKnowledgeQueue({
+    ...f.options,
+    maxItems: 0,
+    providerFactory: () => {
+      throw Error("Completed drafts must not consult a model")
+    },
+  })
+  assert.deepEqual(resumed, second)
+  const cached = await processKnowledgeQueue({
+    ...f.options,
+    runId: "new-cache-reader",
+    maxItems: 0,
+    providerFactory: () => {
+      throw Error("Model is offline")
+    },
+  })
+  assert.ok(cached.results.every((row) => row.generation_reused))
+  assert.equal(cached.approvals_created, false)
+  assert.equal(cached.candidate_published, false)
+  assert.equal(fs.existsSync(path.join(f.vault, f.first.path)), false)
+  assert.equal(fs.existsSync(path.join(f.vault, f.second.path)), false)
+  assert.equal(fs.readFileSync(path.join(f.vault, f.input.path), "utf8"), f.original)
+})
+
+test("knowledge queue validates every selection and cross-job aliases before inference", async (t) => {
+  const f = queueFixture(t)
+  const bad = structuredClone(f.second)
+  bad.note_metadata.aliases = f.first.note_metadata.aliases
+  atomicWrite(f.root, "second.json", bad)
+  assert.throws(
+    () => prepareKnowledgeJobs(f.root, f.options.inputFiles, { vault: f.vault }),
+    /alias|collision|conflict/i,
+  )
+  await assert.rejects(processKnowledgeQueue(f.options))
+  assert.equal(f.calls(), 0)
+  assert.equal(f.prepared(), 0)
+  assert.equal(
+    fs.existsSync(path.join(f.root, "runs/knowledge-queue/knowledge-queue/input.json")),
+    false,
+  )
+})
+
+test("knowledge queue preserves failure and proceeds with independent terms without automatic retries", async (t) => {
+  const f = queueFixture(t)
+  let failed = 0
+  const providerFactory = async (args) => {
+    if (args.run === "term-a") {
+      failed++
+      throw Error("Private provider failure")
+    }
+    return f.options.providerFactory(args)
+  }
+  const result = await processKnowledgeQueue({ ...f.options, providerFactory })
+  assert.equal(result.status, "partial")
+  assert.equal(result.counts.failed, 1)
+  assert.equal(result.counts.draft_ready, 1)
+  assert.equal(result.results[0].automatic_retry, false)
+  await processKnowledgeQueue({ ...f.options, providerFactory })
+  assert.equal(failed, 1)
+  assert.equal(f.calls(), 1)
+})
+
+test("knowledge queue preserves interrupted native generation and expires its shared time budget", async (t) => {
+  const f = queueFixture(t)
+  atomicWrite(f.root, "runs/term-a/knowledge-draft/state.json", {
+    stages: { draft: { status: "running" } },
+  })
+  const result = await processKnowledgeQueue(f.options)
+  assert.equal(result.counts.failed, 1)
+  assert.equal(result.counts.draft_ready, 1)
+  assert.equal(f.calls(), 1)
+  assert.ok(result.results[0].error.includes("explicit review"))
+  const g = queueFixture(t)
+  let tick = 0
+  const expired = await processKnowledgeQueue({
+    ...g.options,
+    timeBudgetMs: 1,
+    clock: () => tick++,
+  })
+  assert.equal(expired.counts.pending, 2)
+  assert.equal(g.prepared(), 0)
+  assert.equal(g.calls(), 0)
+})
+
+test("completed knowledge reader rejects changed selection, source, preview, binding and native output", async (t) => {
+  const f = queueFixture(t)
+  await processKnowledgeQueue({ ...f.options, maxItems: 1 })
+  const load = (input = f.first) =>
+    loadCompletedKnowledgeDraft(f.root, "term-a", input, { vault: f.vault })
+  const changed = structuredClone(f.first)
+  changed.note_metadata.label = "Changed selection"
+  assert.throws(() => load(changed), /frozen input/)
+  for (const [file, mutate] of [
+    ["runs/term-a/knowledge-draft-input.json", (value) => ({ ...value, model: "different-model" })],
+    ["runs/term-a/knowledge-draft.json", (value) => ({ ...value, status: "approved" })],
+    ["runs/term-a/model-policy/concept_write/budget.json", (value) => ({ ...value, attempts: [] })],
+  ]) {
+    const full = path.join(f.root, file),
+      bytes = fs.readFileSync(full)
+    atomicWrite(f.root, file, mutate(JSON.parse(bytes)))
+    assert.throws(() => load())
+    fs.writeFileSync(full, bytes)
+    assert.ok(load())
+  }
+  const previewFile = path.join(f.root, "runs/term-a/knowledge-preview.md"),
+    preview = fs.readFileSync(previewFile)
+  fs.writeFileSync(previewFile, "changed preview")
+  assert.throws(() => load(), /preview changed/)
+  fs.writeFileSync(previewFile, preview)
+  fs.writeFileSync(path.join(f.root, f.document.body_path), "different original bytes")
+  assert.throws(() => load(), /body hash/)
+  assert.equal(f.calls(), 1)
+})
+
+test("knowledge queue freezes policy and native output and cannot silently resume a changed checkpoint", async (t) => {
+  const f = queueFixture(t)
+  const result = await processKnowledgeQueue({ ...f.options, maxItems: 1 })
+  const latest = readJSON(f.root, result.receipt)
+  latest.results[0].draft.sha256 = sha256("wrong")
+  atomicWrite(f.root, result.receipt, latest)
+  await assert.rejects(processKnowledgeQueue(f.options), /output changed/)
+  atomicWrite(
+    f.root,
+    result.receipt,
+    Object.fromEntries(Object.entries(result).filter(([key]) => key !== "receipt")),
+  )
+  fs.appendFileSync(f.options.policyFile, "\n")
+  await assert.rejects(processKnowledgeQueue(f.options), /input changed/)
+  assert.equal(f.calls(), 1)
+})
+
+test("knowledge Markdown hides empty optional sections while preserving exact fact source links", (t) => {
+  const f = fixture(t)
+  const body = knowledgeDraftMarkdown({ draft: f.draft }, f.claims, [f.document])
+  assert.ok(body.includes("## 한 문장 정의"))
+  assert.ok(body.includes(f.document.original_url))
+  assert.ok(!body.includes("없음"))
+  for (const heading of KNOWLEDGE_DRAFT_HEADINGS.slice(1))
+    assert.ok(!body.includes(`## ${heading}`))
+})
 
 test("direct knowledge writing uses MLX by default and preserves explicit overrides", async (t) => {
   const f = fixture(t)
@@ -141,7 +388,13 @@ function fixture(t) {
     })),
   }
   let calls = 0
-  const metadata = { digest: sha256("model-v1"), runtime: "fixture" }
+  const metadata = {
+    model: "qwen3.8:27b-mlx",
+    digest: sha256("model-v1"),
+    runtime: "fixture",
+    capabilities: ["completion"],
+    thinking: { values: [false] },
+  }
   const ollama = {
     metadata: async () => metadata,
     structured: async (request) => {
@@ -155,7 +408,7 @@ function fixture(t) {
       assert.ok(request.messages[0].content.includes("하나의 구현만 설명"))
       return {
         output: draft,
-        provenance: { ...metadata },
+        provenance: { ...metadata, model: request.model },
         artifacts: { response_content: JSON.stringify(draft) },
       }
     },

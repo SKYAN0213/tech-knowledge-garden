@@ -39,6 +39,10 @@ jobs:
       - if: steps.pull.outputs.changed == 'true'
         run: npm ci
       - if: steps.pull.outputs.changed == 'true'
+        run: npm ci --prefix integrations/research-mcp --ignore-scripts --no-audit --no-fund
+      - if: steps.pull.outputs.changed == 'true'
+        run: npm test --prefix integrations/research-mcp
+      - if: steps.pull.outputs.changed == 'true'
         run: python -m unittest discover -s tests -p 'test_*drive*.py' -v
       - if: steps.pull.outputs.changed == 'true'
         run: python -m unittest discover -s tests -p 'test_connector_snapshot.py' -v

@@ -6,6 +6,8 @@ import path from "node:path"
 import {
   candidateParseRecovery,
   recoverCandidateParse,
+  loadCandidateParseRecovery,
+  recoveredProcessingEntry,
 } from "../scripts/research/candidate-parse-recovery.mjs"
 import { sourceId, sha256 } from "../scripts/research/contracts.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
@@ -165,6 +167,26 @@ test("actual stored-byte recovery preserves neighbors, resumes, and rejects rece
   assert.deepEqual(after.candidates[1], neighbor)
   assert.equal(after.candidates[0].review_status, "unreviewed")
   assert.equal(after.candidates[0].key, f.candidate.key)
+  assert.equal(after.candidates[0].parse_recovery_run, "recovery")
+  const native = loadCandidateParseRecovery(root, after.candidates[0])
+  const frozen = {
+    candidate_key: f.candidate.key,
+    source_version_id: f.candidate.article_source_version_id,
+    parse_id: f.candidate.article_parse_id,
+    content_sha256: f.candidate.article_content_sha256,
+    source_urls: f.candidate.source_urls,
+  }
+  const continued = recoveredProcessingEntry(native, frozen)
+  assert.equal(continued.parse_id, f.recovered.parses[0].parse_id)
+  assert.equal(continued.original_parse_id, frozen.parse_id)
+  assert.equal(continued.source_version_id, frozen.source_version_id)
+  assert.equal(frozen.parse_id, f.original.parses[0].parse_id)
+  assert.throws(() => recoveredProcessingEntry(native, {
+    ...frozen, content_sha256: sha256("unrelated frozen input"),
+  }), /exact frozen/)
+  assert.deepEqual(loadCandidateParseRecovery(root, {
+    ...after.candidates[0], review_status: "verified", event_id: "a".repeat(16),
+  }), native)
   assert.equal((await recoverCandidateParse(args)).reused, true)
   const changedObservation = structuredClone(after)
   changedObservation.candidates[0].article_observed_at = "2026-10-06T01:00:00Z"
@@ -174,6 +196,7 @@ test("actual stored-byte recovery preserves neighbors, resumes, and rejects rece
   const receipt = `runs/recovery/candidate-parse-recovery.json`
   const originalReceipt = JSON.parse(fs.readFileSync(path.join(root, receipt)))
   atomicWrite(root, receipt, { ...originalReceipt, candidate_approved: true })
+  assert.throws(() => loadCandidateParseRecovery(root, after.candidates[0]), /receipt changed/)
   await assert.rejects(recoverCandidateParse(args), /Recorded parse recovery/)
   atomicWrite(root, receipt, originalReceipt)
   fs.writeFileSync(raw, "changed bytes")

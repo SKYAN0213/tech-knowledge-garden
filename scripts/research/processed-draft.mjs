@@ -3,12 +3,26 @@ import { sha256, assertSchema } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { draftFingerprint, schemaForDraft, draftProblems, correctDraft } from "./editor.mjs"
 import { assertDeepDiveContext } from "./deep-dive.mjs"
+import { assertCompletenessContext } from "./editorial-completeness.mjs"
 
 // Validate the frozen model generation and each explicit correction. Resume
 // must preserve editorial work rather than overwrite it with model output.
 export function loadProcessedDraft(root, run, reviewed, documents, parses) {
+  return loadProcessedDraftHistory(root, run, reviewed, documents, parses).record
+}
+
+// Return only validated drafting artifacts. Editorial approval is deliberately
+// absent: another run can reuse corrected prose but must approve it separately.
+export function loadProcessedDraftHistory(root, run, reviewed, documents, parses) {
   const base = `runs/${run}/`
-  const reference = readJSON(root, base + "draft-generation-reference.json")
+  let reference = readJSON(root, base + "draft-generation-reference.json")
+  if (!reference && !readJSON(root, base + "source-processing-input.json")) {
+    // Standalone research draft/correct runs own a native generation checkpoint;
+    // they do not have a processing transfer reference. Validate that original
+    // checkpoint and the correction chain rather than inventing a receipt.
+    const own = readJSON(root, base + "model-draft-checkpoint.json")
+    if (own) reference = { run, input_sha256: own.input_sha256, output_sha256: own.output_sha256 }
+  }
   const current = readJSON(root, base + "draft.json")
   const deepContext = readJSON(root, base + "deep-context.json")
   const usable = deepContext
@@ -35,20 +49,34 @@ export function loadProcessedDraft(root, run, reviewed, documents, parses) {
   const bytes = fs.readFileSync(safePath(root, checkpoint.output_path))
   if (sha256(bytes) !== checkpoint.output_sha256) throw Error("Processing model draft changed")
   const original = JSON.parse(bytes)
+  const completenessContext = original.completeness_context || null
+  if ((input.completeness_context_sha256 || null) !== (completenessContext?.sha256 || null))
+    throw Error("Processing completeness review differs from its frozen generation input")
+  if (completenessContext)
+    assertCompletenessContext(completenessContext, reviewed.claims, { documents, parses })
   const validate = (record) => {
     assertSchema(record.draft, schemaForDraft(deepContext))
     if (
       record.draft_id !== draftFingerprint(record.draft, deepContext) ||
       JSON.stringify(record.deep_context || null) !== JSON.stringify(deepContext || null) ||
+      JSON.stringify(record.completeness_context || null) !== JSON.stringify(completenessContext) ||
       record.public_approved !== false ||
       JSON.stringify(record.claim_ids) !== JSON.stringify(usable.map((c) => c.claim_id)) ||
       JSON.stringify(record.problems) !==
-        JSON.stringify(draftProblems(record.draft, usable, deepContext))
+        JSON.stringify(
+          draftProblems(
+            record.draft,
+            completenessContext ? reviewed.claims : usable,
+            deepContext,
+            completenessContext,
+          ),
+        )
     )
       throw Error("Processing working draft differs from its reviewed facts")
   }
   validate(original)
   const visited = new Set()
+  const artifacts = []
   function follow(record) {
     validate(record)
     if (
@@ -80,7 +108,11 @@ export function loadProcessedDraft(root, run, reviewed, documents, parses) {
     }
     if (JSON.stringify(record) !== JSON.stringify(expected))
       throw Error("Processing correction no longer matches its decision")
+    artifacts.push(
+      { relative: `drafts/${record.previous_draft_id}.json`, value: previous },
+      { relative: `corrections/${record.correction_input_sha256}.json`, value: correction },
+    )
   }
   follow(current)
-  return current
+  return { record: current, artifacts }
 }

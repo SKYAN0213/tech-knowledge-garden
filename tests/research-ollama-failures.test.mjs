@@ -1,5 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
+import { sha256 } from "../scripts/research/contracts.mjs"
 import { Ollama } from "../scripts/research/ollama.mjs"
 
 const schema = {
@@ -8,7 +9,12 @@ const schema = {
   required: ["status"],
   properties: { status: { type: "string", enum: ["ready"] } },
 }
-const request = { model: "local", think: false, messages: [], schema }
+const request = {
+  model: "local",
+  think: false,
+  messages: [{ role: "user", content: "Return the stored status using the exact schema." }],
+  schema,
+}
 const metadata = (url) =>
   url.endsWith("/show")
     ? { capabilities: ["completion"], thinking: { values: [false] } }
@@ -61,4 +67,27 @@ test("local transport failures and abort budgets remain explicit failures", asyn
       }),
   })
   await assert.rejects(stalled.structured(request), { name: "TimeoutError" })
+})
+
+test("non-stream completion failures retain original response and exact request for diagnosis", async () => {
+  for (const response of [
+    { done: true, done_reason: "length", message: { content: '{"status":' } },
+    { done: true, done_reason: "stop", message: { content: "invalid JSON" } },
+  ]) {
+    const api = new Ollama({
+      fetchImpl: async (url) => Response.json(url.endsWith("/chat") ? response : metadata(url)),
+    })
+    await assert.rejects(api.structured(request), (error) => {
+      const artifacts = error.model_artifacts
+      assert.equal(artifacts.request.stream, false)
+      assert.equal(artifacts.request_sha256, sha256(JSON.stringify(artifacts.request)))
+      assert.equal(artifacts.partial_response_content, response.message.content)
+      assert.equal(artifacts.partial_response_content_sha256, sha256(response.message.content))
+      assert.equal(artifacts.done_reason, response.done_reason)
+      assert.equal(artifacts.done, true)
+      assert.equal(artifacts.tool_calls_count, 0)
+      assert.equal(artifacts.progress, undefined)
+      return true
+    })
+  }
 })

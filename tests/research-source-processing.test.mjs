@@ -4,9 +4,16 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { execFileSync } from "node:child_process"
+import { recordCandidateIdentity } from "../scripts/research/candidate-identity.mjs"
+import { loadApprovedCandidateIdentity } from "../scripts/research/candidate-approved-identity.mjs"
+import { researchWindow } from "../scripts/research-window.mjs"
+import { mergeBacklog } from "../scripts/research/discovery.mjs"
 import { editionProjection } from "../scripts/research/publish-adapter.mjs"
 import { loadDailyPublicationSelection } from "../scripts/research/daily-publication-handoff.mjs"
-import { processSourceRun } from "../scripts/research/source-processing.mjs"
+import {
+  processSourceRun,
+  continueProcessedSourceWriting,
+} from "../scripts/research/source-processing.mjs"
 import {
   loadFactReviewPacket,
   reviewProcessedClaims,
@@ -19,6 +26,13 @@ import { main } from "../scripts/research.mjs"
 import { loadProcessedSourceResult } from "../scripts/research/processed-source-result.mjs"
 import { processDailyCandidates } from "../scripts/research/daily-processing.mjs"
 import { processDailyEditorial } from "../scripts/research/daily-editorial.mjs"
+import { processDailyQueueEditorial } from "../scripts/research/daily-queue-editorial.mjs"
+import {
+  buildDailyProcessingReuseIndex,
+  findReusableDailyProcessing,
+  loadProcessingRecovery,
+} from "../scripts/research/processing-reuse.mjs"
+import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
 import { loadDailyProcessingStatus } from "../scripts/research/daily-processing-status.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
@@ -30,6 +44,179 @@ import {
   recordEmptyExtractionReview,
 } from "../scripts/research/empty-extraction-review.mjs"
 import { recordDeepDiveReview } from "../scripts/research/deep-dive.mjs"
+
+async function queueEditorialFixture(t) {
+  const f = await editorialFixture(t)
+  const queueRun = "queue-core",
+    child = `${queueRun}-${sha256(f.key).slice(0, 12)}`
+  const parentInput = readJSON(f.root, "runs/batch/daily-processing-input.json")
+  const parent = {
+    ...readJSON(f.root, "runs/batch/daily-processing.json"),
+    run_id: child,
+    public_approved: false,
+    candidate_published: false,
+  }
+  atomicWrite(f.root, `runs/${child}/daily-processing-input.json`, parentInput)
+  atomicWrite(f.root, `runs/${child}/daily-processing.json`, parent)
+  atomicWrite(
+    f.root,
+    `runs/${child}/daily-handoff-reference.json`,
+    readJSON(f.root, "runs/batch/daily-handoff-reference.json"),
+  )
+  const queueInput = {
+    schema: "research-daily-processing-queue-input/v1",
+    run_id: queueRun,
+    candidate_keys: [f.key],
+    handoff: readJSON(f.root, "runs/batch/daily-handoff-reference.json"),
+  }
+  const hash = sha256(JSON.stringify(queueInput)),
+    row = { candidate_key: f.key, status: "processed", processing_run: child }
+  const native = `runs/${child}/daily-processing.json`
+  atomicWrite(f.root, `runs/${queueRun}/daily-queue-input.json`, queueInput)
+  atomicWrite(f.root, `runs/${queueRun}/daily-queue.json`, {
+    schema: "research-daily-processing-queue/v1",
+    run_id: queueRun,
+    status: "yielded",
+    input_sha256: hash,
+    results: [row],
+  })
+  atomicWrite(f.root, `runs/${queueRun}/queue-outcomes/${sha256(f.key)}.json`, {
+    input_sha256: hash,
+    row,
+    native_receipt: { path: native, sha256: sha256(fs.readFileSync(path.join(f.root, native))) },
+  })
+  return {
+    ...f,
+    queueRun,
+    options: {
+      root: f.root,
+      runId: "queue-editorial",
+      queueRun,
+      policyFile: f.policyFile,
+      vault: f.options.vault,
+      backlogFile: f.options.backlogFile,
+      processor: (opts) => processDailyEditorial({ ...opts, provider: f.provider }),
+    },
+  }
+}
+
+test("queue editorial connects native facts, writing, approval and combined publication without repeating models", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  const f = await queueEditorialFixture(t)
+  const first = await processDailyQueueEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+  })
+  assert.equal(first.results[0].status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const draft = readJSON(f.root, "runs/processed/draft.json"),
+    editorial = path.join(f.root, "queue-editorial-review.json")
+  fs.writeFileSync(
+    editorial,
+    JSON.stringify({
+      status: "approved",
+      draft_id: draft.draft_id,
+      reviewer: "Direct fixture editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      reader_quality_review: { repetition_checked: true },
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: new Date().toISOString().slice(0, 10),
+      region: "해외",
+    }),
+  )
+  const complete = await processDailyQueueEditorial({
+    ...f.options,
+    execute: true,
+    editorialReviewFiles: { [f.key]: editorial },
+  })
+  assert.equal(complete.status, "approval_ready", JSON.stringify(complete.results))
+  assert.equal(complete.candidate_published, false)
+  const selected = loadDailyPublicationSelection(f.root, complete.publication_handoff.path, {
+    vault: f.options.vault,
+  })
+  assert.deepEqual(selected.approvedRuns, ["processed"])
+  const graph = readJSON(f.root, complete.evidence_ontology.path)
+  assert.equal(graph.nodes.filter((node) => node.type === "Event").length, 1)
+  assert.equal(graph.nodes.filter((node) => node.type === "Claim").length, 1)
+  const graphFile = path.join(f.root, complete.evidence_ontology.path)
+  const graphBytes = fs.readFileSync(graphFile)
+  fs.appendFileSync(graphFile, " ")
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, complete.publication_handoff.path, {
+        vault: f.options.vault,
+      }),
+    /ontology bytes changed/,
+  )
+  fs.writeFileSync(graphFile, graphBytes)
+  const calls = f.calls.length
+  const replay = await processDailyQueueEditorial({
+    ...f.options,
+    execute: true,
+    processor: () => {
+      throw Error("Completed editorial must reuse its native receipt")
+    },
+  })
+  assert.equal(replay.status, "approval_ready")
+  assert.equal(f.calls.length, calls)
+  const cumulative = await processDailyQueueEditorial({
+    ...f.options,
+    runId: "queue-cumulative",
+    ontologyBase: complete.evidence_ontology.path,
+    execute: true,
+  })
+  assert.equal(cumulative.status, "approval_ready")
+  assert.equal(f.calls.length, calls)
+  assert.deepEqual(
+    loadDailyPublicationSelection(f.root, cumulative.publication_handoff.path, {
+      vault: f.options.vault,
+    }).approvedRuns,
+    ["processed"],
+  )
+  assert.deepEqual(readJSON(f.root, cumulative.evidence_ontology.path), graph)
+  const backlog = JSON.parse(fs.readFileSync(f.options.backlogFile, "utf8"))
+  backlog.candidates[0].article_parse_id = "changed"
+  fs.writeFileSync(f.options.backlogFile, JSON.stringify(backlog))
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, complete.publication_handoff.path, {
+        vault: f.options.vault,
+      }),
+    /source changed/,
+  )
+})
+
+test("queue editorial review preflight rejects missing or changed inputs before another native action", async (t) => {
+  const f = await queueEditorialFixture(t)
+  await assert.rejects(
+    processDailyQueueEditorial({
+      ...f.options,
+      execute: true,
+      reviewFiles: { [f.key]: path.join(f.root, "missing.json") },
+    }),
+    /ENOENT/,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  const first = await processDailyQueueEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+  })
+  assert.equal(first.results[0].status, "editorial_review")
+  fs.writeFileSync(f.reviewFile, "{}")
+  await assert.rejects(
+    processDailyQueueEditorial({ ...f.options, execute: true }),
+    /Pinned queue review changed/,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+})
 
 function fixture(
   t,
@@ -226,6 +413,104 @@ async function decision(f, status = "verified") {
     model_assessment: { packet_sha256: context.packet_sha256, resolutions: [] },
   }
 }
+
+function freezeHistoricalDiagnostics(f, { unsafe = false } = {}) {
+  const base = "runs/processed/",
+    assessmentBase = base + "evidence-assessment/"
+  const input = readJSON(f.root, assessmentBase + "input.json")
+  if (input.dependencies) input.dependencies["claims.mjs"] = "f".repeat(64)
+  else input.claims_validator_sha256 = "f".repeat(64)
+  atomicWrite(f.root, assessmentBase + "input.json", input)
+  const inputHash = sha256(JSON.stringify(input))
+  for (let i = 1; ; i++) {
+    const file = assessmentBase + `batch-${i}-checkpoint.json`
+    const checkpoint = readJSON(f.root, file)
+    if (!checkpoint) break
+    atomicWrite(f.root, file, { ...checkpoint, input_sha256: inputHash })
+  }
+  const assessment = readJSON(f.root, assessmentBase + "assessment.json")
+  assessment.input_sha256 = inputHash
+  const diagnostic = {
+    status: "unreviewed",
+    structural_pass: unsafe,
+    reviewed_at: null,
+    problems: unsafe ? [] : ["historical_fixture_diagnostic"],
+  }
+  for (const row of assessment.assessments) {
+    row.structural = diagnostic
+    row.requires_attention =
+      Array.isArray(row.window_assessments) || !unsafe || row.verdict !== "supported"
+  }
+  atomicWrite(f.root, assessmentBase + "assessment.json", assessment)
+  const packet = readJSON(f.root, base + "fact-review-packet.json")
+  packet.assessment.input_sha256 = inputHash
+  packet.assessment.record_sha256 = sha256(JSON.stringify(assessment))
+  for (const row of packet.claims) {
+    row.structural = diagnostic
+    row.model_assessment = assessment.assessments.find((a) => a.claim_id === row.claim.claim_id)
+  }
+  const stored = atomicWrite(f.root, base + "fact-review-packet.json", packet)
+  const checkpoint = readJSON(f.root, base + "fact-review-packet-checkpoint.json")
+  atomicWrite(f.root, base + "fact-review-packet-checkpoint.json", {
+    ...checkpoint,
+    packet_sha256: stored.sha256,
+  })
+  return packet
+}
+
+for (const windowed of [false, true])
+  test(`historical ${windowed ? "window" : "whole-source"} diagnostics retain frozen facts without repeating models`, async (t) => {
+    const f = fixture(t)
+    if (windowed) configureLongSource(f)
+    await processSourceRun(f.options)
+    const packet = freezeHistoricalDiagnostics(f),
+      calls = f.calls.length
+    const context = await loadFactReviewPacket(f.root, "processed")
+    assert.deepEqual(context.packet, packet)
+    const d = await decision(f)
+    d.model_assessment.resolutions = context.packet.claims.map((row) => ({
+      claim_id: row.claim.claim_id,
+      outcome: "confirmed",
+      reason: "원문 출하 계획과 조건을 직접 확인했다.",
+      evidence: row.claim.evidence.map(({ parse_id, block_id, quote }) => ({
+        parse_id,
+        block_id,
+        quote,
+      })),
+    }))
+    const reviewed = await reviewProcessedClaims(f.root, "processed", d)
+    await assertProcessedFactReview(f.root, "processed", reviewed)
+    assert.equal(f.calls.length, calls)
+    const file = "runs/processed/evidence-assessment/assessment.json"
+    const changed = readJSON(f.root, file)
+    changed.assessments[0].explanation = "Altered model judgment"
+    atomicWrite(f.root, file, changed)
+    await assert.rejects(
+      () => loadFactReviewPacket(f.root, "processed"),
+      /bound record|assessment.*changed/,
+    )
+    assert.equal(f.calls.length, calls)
+  })
+
+test("frozen positive diagnostics cannot approve numbers split across evidence quotes", async (t) => {
+  const f = fixture(t)
+  f.claim.evidence[0].quote = "Example plans to ship 50"
+  f.claim.evidence.push({ ...f.claim.evidence[0], quote: "units in 2027." })
+  f.claim.claim_id = sha256(
+    JSON.stringify([f.claim.candidate_key, f.claim.statement, f.claim.evidence]),
+  ).slice(0, 24)
+  const extracted = readJSON(f.root, "runs/source/claims.json")
+  extracted.claims[0] = f.claim
+  atomicWrite(f.root, "runs/source/claims.json", extracted)
+  await processSourceRun(f.options)
+  freezeHistoricalDiagnostics(f, { unsafe: true })
+  const d = await decision(f)
+  await assert.rejects(
+    () => reviewProcessedClaims(f.root, "processed", d),
+    /Verified claim requires source.*numeric/,
+  )
+  assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+})
 
 test("processing reuses raw extraction and pauses at explicit fact review without writing", async (t) => {
   const f = fixture(t)
@@ -716,6 +1001,86 @@ test("a new processing run reuses exact reviewed generation without duplicate in
   await assert.rejects(() => processSourceRun(options), /generation binding changed/)
 })
 
+test("new processing reuses corrected prose and history without inheriting approval", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const review = await decision(f)
+  await reviewProcessedClaims(f.root, "processed", review)
+  await processSourceRun(f.options)
+  const original = readJSON(f.root, "runs/processed/draft.json")
+  const correctionFile = path.join(f.root, "correction.json")
+  for (const title of ["Example, 2027년 출하 계획", "Example, 2027년 50대 출하 계획"]) {
+    const current = readJSON(f.root, "runs/processed/draft.json")
+    fs.writeFileSync(
+      correctionFile,
+      JSON.stringify({
+        draft_id: current.draft_id,
+        reviewer: "source editor",
+        reason: "원문의 출하 계획 시점과 수량을 제목에 명시한다.",
+        reviewed_at: new Date().toISOString(),
+        draft: { ...current.draft, title },
+      }),
+    )
+    await main(["correct", "--root", f.root, "--run", "processed", "--review", correctionFile])
+  }
+  const corrected = readJSON(f.root, "runs/processed/draft.json")
+  const approvalFile = path.join(f.root, "approval.json")
+  fs.writeFileSync(
+    approvalFile,
+    JSON.stringify({
+      status: "approved",
+      draft_id: corrected.draft_id,
+      reviewer: "source editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: new Date().toISOString().slice(0, 10),
+      region: "해외",
+    }),
+  )
+  await main(["approve", "--root", f.root, "--run", "processed", "--review", approvalFile])
+  const reuse = async (run) => {
+    const options = { ...f.options, run, assessmentRun: "processed", draftRun: "processed" }
+    await processSourceRun(options)
+    await reviewProcessedClaims(f.root, run, {
+      ...review,
+      model_assessment: {
+        ...review.model_assessment,
+        packet_sha256: (await loadFactReviewPacket(f.root, run)).packet_sha256,
+      },
+    })
+    return { options, result: await processSourceRun(options) }
+  }
+  const { options, result } = await reuse("corrected-reuse")
+  assert.equal(result.status, "editorial_review")
+  assert.equal(result.public_approved, false)
+  assert.equal(result.draft_reused, true)
+  assert.deepEqual(readJSON(f.root, "runs/corrected-reuse/draft.json"), corrected)
+  assert.notEqual(corrected.draft_id, original.draft_id)
+  assert.equal(readJSON(f.root, "runs/corrected-reuse/editorial-review.json"), null)
+  assert.equal(readJSON(f.root, "runs/corrected-reuse/approved-article.json"), null)
+  assert.equal(fs.readdirSync(path.join(f.root, "runs/corrected-reuse/corrections")).length, 2)
+  const preview = fs.readFileSync(result.preview, "utf8")
+  assert.ok(preview.includes(corrected.draft.title))
+  assert.equal((await processSourceRun(options)).status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  // The transferred chain is frozen locally, independent of later origin edits.
+  const relative = `corrections/${corrected.correction_input_sha256}.json`
+  const correction = readJSON(f.root, `runs/processed/${relative}`)
+  atomicWrite(f.root, `runs/processed/${relative}`, { ...correction, reason: "tampered" })
+  assert.equal((await processSourceRun(options)).draft_reused, true)
+  await assert.rejects(() => reuse("corrupt-origin-reuse"), /correction history changed/)
+  assert.equal(readJSON(f.root, "runs/corrupt-origin-reuse/draft.json"), null)
+  atomicWrite(f.root, `runs/corrected-reuse/${relative}`, { ...correction, reason: "tampered" })
+  await assert.rejects(() => processSourceRun(options), /correction history changed/)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+})
+
 test("completed writer reuse survives model replacement without metadata or budget writes", async (t) => {
   const f = fixture(t)
   await processSourceRun(f.options)
@@ -885,6 +1250,119 @@ function reuseEntry(f) {
     source_urls: [document.original_url],
   }
 }
+
+async function automaticReuseFixture(t) {
+  const f = fixture(t)
+  await processSourceRun({ ...f.options, evidenceThink: false })
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const input = {
+    schema: "research-daily-processing-input/v1",
+    daily_run: "previous-day",
+    candidate_keys: [key],
+    entries: [entry],
+    policy_sha256: sha256(fs.readFileSync(f.policyFile)),
+  }
+  atomicWrite(f.root, "runs/previous-cache/daily-processing-input.json", input)
+  atomicWrite(f.root, "runs/previous-cache/daily-processing.json", {
+    schema: "research-daily-processing/v1",
+    run_id: "previous-cache",
+    daily_run: "previous-day",
+    input_sha256: sha256(JSON.stringify(input)),
+    status: "review_pending",
+    total: 1,
+    counts: { fact_review: 1 },
+    results: [{ candidate_key: key, status: "fact_review", processing_run: "processed" }],
+    public_approved: false,
+    candidate_published: false,
+  })
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        ...entry,
+        key,
+        review_status: "unreviewed",
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+        source_attempts: [
+          {
+            attempt_id: "source",
+            article_source_version_id: entry.source_version_id,
+            article_parse_id: entry.parse_id,
+            article_content_sha256: entry.content_sha256,
+          },
+        ],
+      },
+    ],
+  }
+  atomicWrite(f.root, "handoff.json", handoff)
+  return {
+    ...f,
+    entry,
+    key,
+    options: {
+      root: f.root,
+      runId: "automatic-first",
+      dailyRunId: "daily",
+      candidateKeys: [key],
+      policyFile: f.policyFile,
+      reuseCompleted: true,
+      handoffLoader: async () => ({ path: "handoff.json", value: handoff }),
+      processor: () => {
+        throw Error("Automatic reuse must not invoke a model processor")
+      },
+    },
+  }
+}
+
+test("automatic reuse finds exact completed facts across different daily processing runs without model calls", async (t) => {
+  const f = await automaticReuseFixture(t)
+  assert.equal(buildDailyProcessingReuseIndex(f.root).records.length, 1)
+  const first = await processDailyCandidates({ ...f.options, execute: true })
+  assert.equal(first.results[0].reused_processing, true)
+  assert.equal(first.results[0].processing_run, "processed")
+  assert.equal(first.results[0].result.model_calls, 0)
+  const second = await processDailyCandidates({
+    ...f.options,
+    runId: "automatic-second",
+    execute: true,
+  })
+  assert.equal(second.results[0].processing_run, "processed")
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  const input = readJSON(f.root, "runs/automatic-first/daily-processing-input.json")
+  assert.equal(input.automatic_source_reuse, true)
+  assert.ok(input.entries[0].reuse_source_fingerprint)
+  const replay = await processDailyCandidates({ ...f.options, execute: true })
+  assert.deepEqual(replay.counts, first.counts)
+})
+
+test("automatic reuse separates changed supporting sources and reasoning policy and blocks corrupted matched evidence", async (t) => {
+  const f = await automaticReuseFixture(t),
+    selected = loadStoredSourceRun(f.root, "source")
+  const opts = { policyBytes: fs.readFileSync(f.policyFile), evidenceThink: false }
+  const reasoning = await findReusableDailyProcessing(f.root, f.entry, selected, {
+    ...opts,
+    evidenceThink: true,
+  })
+  assert.equal(reasoning.run, null)
+  assert.equal(reasoning.observation.policy_changed, 1)
+  const context = structuredClone(selected)
+  context.parses[0].title = "A changed parse must not share a source cache"
+  const different = await findReusableDailyProcessing(f.root, f.entry, context, opts)
+  assert.equal(different.run, null)
+  assert.equal(different.observation.source_context_changed, 1)
+  const cached = readJSON(f.root, "runs/previous-cache/daily-processing.json")
+  cached.input_sha256 = "0".repeat(64)
+  atomicWrite(f.root, "runs/previous-cache/daily-processing.json", cached)
+  await assert.rejects(
+    () => processDailyCandidates({ ...f.options, execute: true }),
+    /Matched processing receipt/,
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+})
 
 function emptyReview(f, decision = "extraction_missed_event") {
   return {
@@ -1474,6 +1952,14 @@ test("new CLI approvals enforce reader quality while preserving original model d
   assert.equal(check.model_calls, 0)
   await assert.rejects(() => approve(), /lead_sentence_count.*lead_date_missing/)
   assert.equal(readJSON(f.root, "runs/processed/approved-article.json"), null)
+  const money = structuredClone(original.draft)
+  money.lead[1].text = "회사에는 5억원의 투자가 발생한다."
+  await correct(money)
+  await assert.rejects(
+    () => approve({ reader_quality_review: { repetition_checked: true } }),
+    /unsupported_amount/,
+  )
+  assert.equal(readJSON(f.root, "runs/processed/approved-article.json"), null)
   const detail = structuredClone(original.draft)
   detail.explanations = [
     {
@@ -1691,6 +2177,124 @@ async function editorialFixture(t) {
   return { ...f, key, entry, reviewFile, options }
 }
 
+// Synthetic routing fixture only; it is not research evidence or a gold evaluation.
+function deepDecisionFile(f, { scope = "full_document" } = {}) {
+  const documents = readJSON(f.root, "runs/processed/documents.json")
+  const ids = [f.claim.claim_id]
+  const roles = ["problem", "method", "conditions", "comparison", "results"]
+  const file = path.join(f.root, "explicit-deep.json")
+  fs.writeFileSync(
+    file,
+    JSON.stringify({
+      input: {
+        schema: "deep-dive-input/v1",
+        kind: "논문 해설",
+        topic_ids: ["synthetic-paper-topic"],
+        event_claim_ids: ids,
+        basis: roles.map((role) => ({ role, claim_ids: ids })),
+        sources: [
+          {
+            source_version_id: documents[0].source_version_id,
+            organization_id: "example-university",
+            organization_kind: "university",
+            scope,
+          },
+        ],
+        papers: [
+          {
+            work_id: "synthetic-paper",
+            identifiers: ["url:" + documents[0].original_url],
+            access: "전문",
+            status: null,
+            evidence_url: documents[0].original_url,
+            full_text_source_version_id: documents[0].source_version_id,
+            claim_ids: ids,
+          },
+        ],
+        relations: [],
+      },
+      review: {
+        reviewer: "synthetic source reviewer",
+        reviewed_at: new Date().toISOString(),
+        source_read: true,
+        source_roles_checked: true,
+        basis_checked: true,
+        identities_checked: true,
+        scope_checked: true,
+      },
+    }),
+  )
+  return { file, ids, roles }
+}
+
+test("queue deep review reaches the native writer once and pins its reviewed evidence", async (t) => {
+  const f = await queueEditorialFixture(t)
+  const { file, ids, roles } = deepDecisionFile(f)
+  const generate = f.provider.structured
+  f.provider.structured = async function (request) {
+    const result = await generate.call(this, request)
+    if (this.executionPolicy.role === "article_write") {
+      assert.equal(JSON.parse(request.messages[1].content).deep_basis.kind, "논문 해설")
+      result.output.analysis = null
+      result.output.explanations = roles.map((role) => ({
+        role,
+        heading: "Synthetic " + role,
+        paragraphs: [{ text: f.claim.statement, claim_ids: ids }],
+      }))
+    }
+    return result
+  }
+  const opts = {
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+    deepReviewFiles: { [f.key]: file },
+  }
+  const result = await processDailyQueueEditorial(opts)
+  assert.equal(result.results[0].status, "editorial_review")
+  const context = readJSON(f.root, "runs/processed/deep-context.json")
+  assert.equal(context.input.kind, "논문 해설")
+  assert.deepEqual(readJSON(f.root, "runs/processed/draft.json").deep_context, context)
+  await processDailyQueueEditorial(opts)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const changed = JSON.parse(fs.readFileSync(file))
+  changed.review.reviewer = "different reviewer"
+  fs.writeFileSync(file, JSON.stringify(changed))
+  await assert.rejects(processDailyQueueEditorial(opts), /Pinned queue review changed/)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+})
+
+test("daily deep review refuses abstract-only evidence before any writer call", async (t) => {
+  const f = await editorialFixture(t)
+  const { file } = deepDecisionFile(f, { scope: "abstract_only" })
+  const result = await processDailyEditorial({
+    ...f.options,
+    execute: true,
+    reviewFiles: { [f.key]: f.reviewFile },
+    deepReviewFiles: { [f.key]: file },
+  })
+  assert.equal(result.results[0].status, "failed")
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  assert.equal(readJSON(f.root, "runs/processed/deep-context.json"), null)
+  assert.equal(readJSON(f.root, "runs/processed/draft.json"), null)
+})
+
+test("daily deep review preflights malformed decisions before writing reviewed facts", async (t) => {
+  const f = await editorialFixture(t)
+  const { file } = deepDecisionFile(f)
+  fs.writeFileSync(file, "{}")
+  await assert.rejects(
+    processDailyEditorial({
+      ...f.options,
+      execute: true,
+      reviewFiles: { [f.key]: f.reviewFile },
+      deepReviewFiles: { [f.key]: file },
+    }),
+  )
+  assert.equal(readJSON(f.root, "runs/processed/reviewed-claims.json"), null)
+  assert.deepEqual(f.calls, ["evidence_compare"])
+})
+
 test("daily editorial uses frozen source checkpoints and never generates without reviewed facts", async (t) => {
   const f = await editorialFixture(t)
   const result = await processDailyEditorial({ ...f.options, execute: true })
@@ -1709,7 +2313,7 @@ test("daily editorial resumes native fact review, writing, explicit approval and
     assert.equal(status.status, "running")
     assert.equal(status.live_process, "alive")
     assert.equal(status.active_candidate.candidate_key, f.key)
-    return processSourceRun(options)
+    return continueProcessedSourceWriting(options)
   }
   const first = await processDailyEditorial({
     ...f.options,
@@ -2255,4 +2859,494 @@ test("daily editorial source revision rejects changed numbers, dates and out-of-
     processDailyEditorial({ ...f.options, ...f.revisionOptions, execute: true }),
     /outside|escape|relative|path/i,
   )
+})
+
+function recoveryDailyFixture(f, recovery) {
+  f.parse = readJSON(f.root, "runs/source/parses.json")[0]
+  const entry = reuseEntry(f),
+    key = entry.candidate_key
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      {
+        ...entry,
+        key,
+        review_status: "unreviewed",
+        article_source_version_id: entry.source_version_id,
+        article_parse_id: entry.parse_id,
+        article_content_sha256: entry.content_sha256,
+        source_attempts: [
+          {
+            attempt_id: "source",
+            article_source_version_id: entry.source_version_id,
+            article_parse_id: entry.parse_id,
+            article_content_sha256: entry.content_sha256,
+          },
+        ],
+      },
+    ],
+  }
+  atomicWrite(f.root, "recovery-handoff.json", handoff)
+  return {
+    key,
+    entry,
+    options: {
+      root: f.root,
+      runId: "recovery-day",
+      dailyRunId: "daily",
+      candidateKeys: [key],
+      policyFile: f.policyFile,
+      execute: true,
+      processingRecoveries: { [key]: recovery },
+      handoffLoader: async () => ({ path: "recovery-handoff.json", value: handoff }),
+      processor: (opts) => processSourceRun({ ...opts, provider: f.provider }),
+    },
+  }
+}
+
+test("daily explicit recovery reuses completed extraction after failed evidence without repeating or approving", async (t) => {
+  const f = fixture(t, { extracted: false }),
+    generate = f.provider.structured
+  f.provider.structured = function (request) {
+    if (this.executionPolicy.role === "evidence_compare") throw Error("Failed after extraction")
+    return generate.call(this, request)
+  }
+  await assert.rejects(processSourceRun(f.options), /Failed after extraction/)
+  const original = fs.readFileSync(path.join(f.root, "runs/processed/claims.json")),
+    state = fs.readFileSync(path.join(f.root, "runs/processed/processing/state.json"))
+  f.provider.structured = generate
+  const daily = recoveryDailyFixture(f, { run: "processed" })
+  const result = await processDailyCandidates(daily.options)
+  assert.equal(result.results[0].status, "fact_review")
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
+  const child = result.results[0].processing_run
+  assert.equal(
+    readJSON(f.root, `runs/${child}/source-processing-input.json`).extraction_run,
+    "processed",
+  )
+  assert.equal(readJSON(f.root, `runs/${child}/reviewed-claims.json`), null)
+  assert.equal(readJSON(f.root, `runs/${child}/approved-article.json`), null)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/claims.json")), original)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/processing/state.json")),
+    state,
+  )
+  const replay = await processDailyCandidates({ ...daily.options, processingRecoveries: {} })
+  assert.equal(replay.results[0].status, "fact_review")
+  assert.deepEqual(f.calls, ["fact_extract", "evidence_compare"])
+})
+
+test("daily explicit recovery carries only completed windows through the native missing-window processor", async (t) => {
+  const f = fixture(t)
+  configureLongSource(f)
+  const generate = f.provider.structured
+  let comparisons = 0
+  f.provider.structured = function (request) {
+    if (this.executionPolicy.role === "evidence_compare" && ++comparisons === 2)
+      throw Error("Interrupted recovery window")
+    return generate.call(this, request)
+  }
+  await assert.rejects(processSourceRun(f.options), /Interrupted recovery window/)
+  const original = fs.readFileSync(
+    path.join(f.root, "runs/processed/evidence-assessment/batch-1.json"),
+  )
+  const daily = recoveryDailyFixture(f, { run: "processed", assessment: "partial" })
+  const result = await processDailyCandidates(daily.options)
+  assert.equal(result.results[0].status, "fact_review")
+  const child = result.results[0].processing_run,
+    assessment = readJSON(f.root, `runs/${child}/evidence-assessment/input.json`)
+  assert.equal(assessment.reused_windows.length, 1)
+  assert.equal(assessment.reused_windows[0].run, "processed")
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, `runs/${child}/evidence-assessment/batch-1.json`)),
+    original,
+  )
+  assert.equal(f.calls.includes("article_write"), false)
+  const count = comparisons
+  await processDailyCandidates({ ...daily.options, processingRecoveries: {} })
+  assert.equal(comparisons, count)
+  const closure = buildArchiveClosure(f.root, "recoverable", child)
+  assert.ok(closure.bound_runs.includes("processed"))
+})
+
+test("daily explicit recovery rejects a corrupted extraction or changed source before model execution", async (t) => {
+  const f = fixture(t, { extracted: false }),
+    generate = f.provider.structured
+  f.provider.structured = function (request) {
+    if (this.executionPolicy.role === "evidence_compare") throw Error("Interrupted")
+    return generate.call(this, request)
+  }
+  await assert.rejects(processSourceRun(f.options), /Interrupted/)
+  const daily = recoveryDailyFixture(f, { run: "processed" })
+  const source = loadStoredSourceRun(f.root, "source")
+  const changed = structuredClone(source)
+  changed.parses[0].blocks[0].text += " Different condition."
+  await assert.rejects(
+    loadProcessingRecovery(f.root, { run: "processed" }, daily.entry, changed),
+    /source context changed/,
+  )
+  const extraction = readJSON(f.root, "runs/processed/claims.json")
+  extraction.claims[0].statement = "Unrelated event"
+  atomicWrite(f.root, "runs/processed/claims.json", extraction)
+  const before = f.calls.length
+  await assert.rejects(
+    processDailyCandidates(daily.options),
+    /Completed source-bound extraction checkpoint/,
+  )
+  assert.equal(f.calls.length, before)
+  assert.equal(readJSON(f.root, "runs/recovery-day/daily-processing-input.json"), null)
+})
+
+test("reviewed writer continuation preserves completed source stages and generates only the writer", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  const files = [
+    "source-processing-input.json",
+    "claims.json",
+    "processing/state.json",
+    "processing/extraction.json",
+    "processing/assessment.json",
+    "fact-review-packet.json",
+    "reviewed-claims.json",
+  ]
+  const before = files.map((file) => fs.readFileSync(path.join(f.root, "runs/processed", file)))
+  const options = { ...f.options, entry: reuseEntry(f) }
+  const result = await continueProcessedSourceWriting(options)
+  assert.equal(result.status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  assert.equal(result.public_approved, false)
+  for (const [i, file] of files.entries())
+    assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed", file)), before[i])
+  const model = fs.readFileSync(path.join(f.root, "runs/processed/model-draft-checkpoint.json"))
+  f.provider.metadata = () => {
+    throw Error("Completed writing cannot probe a provider")
+  }
+  const resumed = await continueProcessedSourceWriting(options)
+  assert.equal(resumed.status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/processed/model-draft-checkpoint.json")),
+    model,
+  )
+  assert.equal(
+    await loadProcessedSourceResult(f.root, "processed", reuseEntry(f)).then((r) => r.status),
+    "editorial_review",
+  )
+})
+
+test("processed draft CLI resumes the native writer path without unbound output or repeated generation", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const args = ["draft", "--root", f.root, "--run", "processed", "--model-policy", f.policyFile]
+  await assert.rejects(main(args), /explicit processing fact review/)
+  assert.equal(readJSON(f.root, "runs/processed/draft.json"), null)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  // The CLI entry is recovered from frozen source bytes, not a new queue or
+  // a guessed candidate. The provider fixture exercises native role binding.
+  const written = await continueProcessedSourceWriting(f.options)
+  assert.equal(written.status, "editorial_review")
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  const files = [
+    "source-processing-input.json",
+    "reviewed-claims.json",
+    "draft-generation-reference.json",
+    "model-draft-checkpoint.json",
+    "draft.json",
+  ]
+  const before = files.map((file) => fs.readFileSync(path.join(f.root, "runs/processed", file)))
+  const resumed = await main(args)
+  assert.equal(resumed.status, "editorial_review")
+  assert.equal(resumed.model_calls, 0)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+  for (const [index, file] of files.entries())
+    assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed", file)), before[index])
+  await assert.rejects(main([...args, "--model", "different-model"]), /frozen model policy/)
+  await assert.rejects(main([...args, "--num-ctx", "4096"]), /Extraction budgets/)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
+})
+
+test("implicit processed writer entries reject competing versions and altered source bytes before generation", async (t) => {
+  for (const corrupt of [
+    (f) => {
+      const documents = readJSON(f.root, "runs/processed/documents.json")
+      documents.push(documents[0])
+      atomicWrite(f.root, "runs/processed/documents.json", documents)
+    },
+    (f) => {
+      const documents = readJSON(f.root, "runs/processed/documents.json")
+      atomicWrite(f.root, documents[0].body_path, "Changed unreviewed source")
+    },
+  ]) {
+    const f = fixture(t)
+    await processSourceRun(f.options)
+    await reviewProcessedClaims(f.root, "processed", await decision(f))
+    corrupt(f)
+    const before = f.calls.length
+    await assert.rejects(continueProcessedSourceWriting(f.options))
+    assert.equal(f.calls.length, before)
+    assert.equal(readJSON(f.root, "runs/processed/draft.json"), null)
+  }
+})
+
+test("reviewed writer continuation never promotes unreviewed or deferred facts", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  const options = { ...f.options, entry: reuseEntry(f) }
+  assert.equal((await continueProcessedSourceWriting(options)).status, "fact_review")
+  await reviewProcessedClaims(f.root, "processed", await decision(f, "deferred"))
+  assert.equal(
+    (await continueProcessedSourceWriting(options)).status,
+    "reviewed_without_publishable_facts",
+  )
+  assert.deepEqual(f.calls, ["evidence_compare"])
+  assert.equal(fs.existsSync(path.join(f.root, "runs/processed/draft.json")), false)
+})
+
+test("reviewed writer continuation rejects changed policy, candidate, facts and missing assessment before inference", async (t) => {
+  for (const name of ["policy", "candidate", "facts", "assessment"]) {
+    await t.test(name, async (t) => {
+      const f = fixture(t)
+      await processSourceRun(f.options)
+      await reviewProcessedClaims(f.root, "processed", await decision(f))
+      const options = { ...f.options, entry: reuseEntry(f) }
+      if (name === "policy") {
+        f.policy.roles.article_write.think = true
+        fs.writeFileSync(f.policyFile, JSON.stringify(f.policy))
+      }
+      if (name === "candidate") options.entry.parse_id = "0".repeat(64)
+      if (name === "facts") {
+        const facts = readJSON(f.root, "runs/processed/reviewed-claims.json")
+        facts.claims[0].statement = "변조된 사실"
+        atomicWrite(f.root, "runs/processed/reviewed-claims.json", facts)
+      }
+      if (name === "assessment")
+        fs.unlinkSync(path.join(f.root, "runs/processed/evidence-assessment/assessment.json"))
+      await assert.rejects(
+        continueProcessedSourceWriting(options),
+        /changed|source|candidate|assessment|ENOENT|policy/i,
+      )
+      assert.deepEqual(f.calls, ["evidence_compare"])
+      assert.equal(fs.existsSync(path.join(f.root, "runs/processed/draft.json")), false)
+    })
+  }
+})
+
+async function approvedIdentityFixture(t) {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-10-04T01:00:00Z") })
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  await processSourceRun(f.options)
+  const draft = readJSON(f.root, "runs/processed/draft.json")
+  const editorial = path.join(f.root, "approve-identity-target.json")
+  fs.writeFileSync(
+    editorial,
+    JSON.stringify({
+      status: "approved",
+      draft_id: draft.draft_id,
+      reviewer: "Direct fixture editor",
+      source_read: true,
+      final_prose_read: true,
+      title_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      analysis_checked: true,
+      reader_quality_review: { repetition_checked: true },
+      event_id: "1234567890abcdef",
+      published_at: "2026-10-02",
+      reviewed_at: new Date().toISOString().slice(0, 10),
+      region: "해외",
+    }),
+  )
+  await main(["approve", "--root", f.root, "--run", "processed", "--review", editorial])
+  const original = loadStoredSourceRun(f.root, "processed")
+  const article = readJSON(f.root, "runs/processed/approved-article.json")
+  const url = "https://example.org/photo-of-same-plan",
+    id = sourceId(url)
+  const text = "Example plans to ship 50 units in 2027. The company spoke at the event."
+  const hash = sha256(text),
+    parseId = sha256("alternate-plan")
+  const document = {
+    ...original.documents[0],
+    source_id: id,
+    source_version_id: id + ":" + hash,
+    original_url: url,
+    final_url: url,
+    body_sha256: hash,
+    body_path: `documents/${id}/${hash}/body.bin`,
+  }
+  const parse = {
+    ...original.parses[0],
+    source_id: id,
+    source_version_id: document.source_version_id,
+    parse_id: parseId,
+    title: "Plan event photo",
+    blocks: [{ block_id: parseId + ":b1", text, locator: { text_hash: hash } }],
+  }
+  atomicWrite(f.root, document.body_path, text)
+  atomicWrite(f.root, `parses/${parseId}/parse.json`, parse)
+  atomicWrite(f.root, "runs/alternate/documents.json", [document])
+  atomicWrite(f.root, "runs/alternate/parses.json", [parse])
+  const candidate = {
+    key: "source-" + id,
+    title: parse.title,
+    source_urls: [url],
+    source_published_at: "2026-10-02",
+    discovered_at: document.observed_at,
+    review_status: "unreviewed",
+    priority: "normal",
+    article_source_version_id: document.source_version_id,
+    article_parse_id: parseId,
+    article_content_sha256: articleContentFingerprint(parse),
+  }
+  atomicWrite(f.root, "runs/alternate/candidates.json", [candidate])
+  const backlogFile = path.join(f.root, "identity-backlog.json")
+  atomicWrite(f.root, "identity-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [candidate],
+  })
+  const evidence = (doc, p) => ({
+    source_url: doc.original_url,
+    source_id: doc.source_id,
+    source_version_id: doc.source_version_id,
+    body_sha256: doc.body_sha256,
+    parse_id: p.parse_id,
+    published_at: p.dates.published_at,
+  })
+  const review = {
+    schema: "editorial-candidate-identity/v1",
+    decision: "same_approved_event",
+    approved_run: "processed",
+    reviewer: "Direct fixture source comparison",
+    reviewed_at: new Date().toISOString().slice(0, 10),
+    candidate: evidence(document, parse),
+    published: {
+      ...evidence(original.documents[0], original.parses[0]),
+      event_id: article.event_id,
+      title: article.title,
+    },
+    new_article: false,
+    candidate_published: false,
+    same_event_reason: "Exact company, planned quantity and delivery period are the same.",
+    matches: ["identity_marker", "event_action"].map((aspect) => ({
+      aspect,
+      candidate_block_id: parse.blocks[0].block_id,
+      candidate_excerpt: "Example plans to ship 50 units in 2027.",
+      published_block_id: original.parses[0].blocks[0].block_id,
+      published_excerpt: "Example plans to ship 50 units in 2027.",
+      conclusion: "Both originals describe the same planned shipment.",
+    })),
+  }
+  atomicWrite(f.root, "review/approved-identity.json", review)
+  return {
+    ...f,
+    candidate,
+    review,
+    backlogFile,
+    options: {
+      root: f.root,
+      runId: "approved-identity",
+      sourceRunId: "alternate",
+      publishedSourceRunId: "processed",
+      reviewPath: "review/approved-identity.json",
+      backlogFile,
+      publishedArticles: [],
+    },
+  }
+}
+
+test("private approved identity closes a repeated event before publication without drafting another article", async (t) => {
+  const f = await approvedIdentityFixture(t)
+  const before = f.calls.length
+  await recordCandidateIdentity(f.options)
+  const bytes = fs.readFileSync(f.backlogFile)
+  const candidate = JSON.parse(bytes).candidates[0]
+  assert.equal(loadApprovedCandidateIdentity(f.root, candidate).approved_run, "processed")
+  const window = researchWindow(
+    "2026-10-01T00:00:00Z",
+    new Date().toISOString(),
+    { candidates: [candidate] },
+    [],
+    { approvalRoot: f.root },
+  )
+  assert.equal(window.pending.length, 0)
+  assert.equal(window.resolved[0].next_route, "same-approved-event")
+  assert.equal(window.resolved[0].publication, null)
+  assert.equal(
+    researchWindow(
+      "2026-10-01T00:00:00Z",
+      new Date().toISOString(),
+      { candidates: [candidate] },
+      [],
+      { approvalRoot: null },
+    ).pending.length,
+    1,
+  )
+  await recordCandidateIdentity(f.options)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  await mergeBacklog(f.backlogFile, [f.candidate])
+  assert.equal(
+    JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0].event_id,
+    candidate.event_id,
+  )
+  assert.equal(f.calls.length, before)
+  assert.equal(readJSON(f.root, "runs/alternate/draft.json"), null)
+  const original = readJSON(f.root, "runs/processed/approved-article.json")
+  original.title = "A changed approved target"
+  atomicWrite(f.root, "runs/processed/approved-article.json", original)
+  assert.throws(
+    () => loadApprovedCandidateIdentity(f.root, candidate),
+    /approval|reviewed|changed/i,
+  )
+})
+
+test("private approved identity cannot use an unapproved target or invalid original quote", async (t) => {
+  for (const condition of ["unapproved", "quote"])
+    await t.test(condition, async (t) => {
+      const f = await approvedIdentityFixture(t)
+      if (condition === "unapproved")
+        fs.unlinkSync(path.join(f.root, "runs/processed/editorial-review.json"))
+      else {
+        f.review.matches[0].candidate_excerpt = "Invented matching product"
+        atomicWrite(f.root, "review/approved-identity.json", f.review)
+      }
+      const before = fs.readFileSync(f.backlogFile)
+      await assert.rejects(recordCandidateIdentity(f.options), /ENOENT|exact text|comparison/i)
+      assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+      assert.equal(readJSON(f.root, "runs/approved-identity/candidate-identity.json"), null)
+    })
+})
+
+test("private approved identity entrypoints initialize without test import-order dependencies", () => {
+  execFileSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      'await import("./scripts/research/parser.mjs"); await import("./scripts/research.mjs"); await import("./scripts/research-window.mjs");',
+    ],
+    { cwd: path.resolve(import.meta.dirname, "..") },
+  )
+})
+
+test("identical prose correction preserves the valid chain instead of pointing to itself", async (t) => {
+  const f = fixture(t)
+  await processSourceRun(f.options)
+  await reviewProcessedClaims(f.root, "processed", await decision(f))
+  await processSourceRun(f.options)
+  const original = readJSON(f.root, "runs/processed/draft.json")
+  const file = path.join(f.root, "same-prose-correction.json")
+  const input = { draft_id: original.draft_id, reviewer: "source editor", reason: "출하 시점을 명시한다.", reviewed_at: new Date().toISOString(), draft: { ...original.draft, title: "Example, 2027년 50대 출하 계획" } }
+  fs.writeFileSync(file, JSON.stringify(input))
+  await main(["correct", "--root", f.root, "--run", "processed", "--review", file])
+  const before = fs.readFileSync(path.join(f.root, "runs/processed/draft.json"))
+  const current = JSON.parse(before)
+  fs.writeFileSync(file, JSON.stringify({ ...input, draft_id: current.draft_id, reason: "재개 중 같은 원고를 다시 확인했다." }))
+  const result = await main(["correct", "--root", f.root, "--run", "processed", "--review", file])
+  assert.equal(result.reused, true)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/processed/draft.json")), before)
+  assert.equal((await processSourceRun(f.options)).draft_reused, true)
+  assert.deepEqual(f.calls, ["evidence_compare", "article_write"])
 })

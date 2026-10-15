@@ -7,9 +7,11 @@ import {
   recordFactReview,
   assertVerifiedClaim,
   describeExtractionCoverage,
+  ocrEvidenceRequirements,
 } from "./claims.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
+import { historicalDiagnosticRecord } from "./assessment-references.mjs"
 
 const normalized = (text) =>
   text.normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("en-US")
@@ -55,7 +57,14 @@ export function isProcessedRun(root, run) {
 // Use the same assessment validator without a generation-capable provider.
 // Source review must remain possible without starting a model or editing its
 // immutable output, and cannot manufacture a missing assessment checkpoint.
-export async function loadBoundAssessment(root, run, claims, documents, parses) {
+export async function loadBoundAssessment(
+  root,
+  run,
+  claims,
+  documents,
+  parses,
+  { historicalRecordSha256 } = {},
+) {
   const base = `runs/${run}/`
   const input = readJSON(root, base + "evidence-assessment/input.json")
   const record = readJSON(root, base + "evidence-assessment/assessment.json")
@@ -78,12 +87,21 @@ export async function loadBoundAssessment(root, run, claims, documents, parses) 
     responseProtocol: input.response_protocol || "verbatim-quote/v1",
     readOnly: true,
     reuseRun: input.reuse_run,
+    historicalRecordSha256,
   })
   if (result.generated_batches !== 0) throw Error("Assessment reader cannot generate results")
   return result.record
 }
 
-export function factReviewPacket(run, input, extracted, documents, parses, assessment) {
+export function factReviewPacket(
+  run,
+  input,
+  extracted,
+  documents,
+  parses,
+  assessment,
+  { includeOCRAttention = true } = {},
+) {
   let coverage
   if (Object.hasOwn(extracted.provenance || {}, "source_coverage")) {
     coverage = describeExtractionCoverage(
@@ -116,11 +134,30 @@ export function factReviewPacket(run, input, extracted, documents, parses, asses
     })),
     claims: extracted.claims.map((claim) => {
       const attention = titleOnlySubject(claim, parses)
+      const ocr = includeOCRAttention ? ocrEvidenceRequirements(claim, parses) : []
       return {
         claim,
         structural: validateEvidence(claim, parses),
         model_assessment: assessment.assessments.find((row) => row.claim_id === claim.claim_id),
         ...(attention ? { identity_attention: attention } : {}),
+        ...(ocr.length
+          ? {
+              ocr_attention: {
+                reason: "original_visual_review_required",
+                evidence: ocr.map((row) => {
+                  const document = documents.find(
+                    (d) => d.source_version_id === row.source_version_id,
+                  )
+                  return {
+                    ...row,
+                    original_url: document.original_url,
+                    source_body_path: document.body_path,
+                    source_body_sha256: document.body_sha256,
+                  }
+                }),
+              },
+            }
+          : {}),
       }
     }),
     requires_explicit_review: true,
@@ -130,6 +167,11 @@ export function factReviewPacket(run, input, extracted, documents, parses, asses
 
 export async function loadFactReviewPacket(root, run) {
   const base = `runs/${run}/`
+  const bytes = fs.readFileSync(safePath(root, base + "fact-review-packet.json"))
+  const packet = JSON.parse(bytes)
+  const receipt = readJSON(root, base + "fact-review-packet-checkpoint.json")
+  if (!receipt || receipt.packet_sha256 !== sha256(bytes))
+    throw Error("Fact review packet or source binding changed")
   const input = readJSON(root, base + "source-processing-input.json")
   if (!input) throw Error("Source processing input required")
   const source = loadStoredSourceRun(root, run)
@@ -145,25 +187,43 @@ export async function loadFactReviewPacket(root, run) {
     extracted?.claims,
     source.documents,
     source.parses,
+    { historicalRecordSha256: packet.assessment?.record_sha256 },
   )
-  const expected = factReviewPacket(
+  let expected = factReviewPacket(
     run,
     input,
     extracted,
     source.documents,
     source.parses,
     assessment,
+    { includeOCRAttention: packet.claims.some((row) => Object.hasOwn(row, "ocr_attention")) },
   )
-  const bytes = fs.readFileSync(safePath(root, base + "fact-review-packet.json"))
-  const packet = JSON.parse(bytes)
-  const receipt = readJSON(root, base + "fact-review-packet-checkpoint.json")
+  const assessmentInput = readJSON(
+    root,
+    `runs/${input.assessment_run}/evidence-assessment/input.json`,
+  )
+  const historicalValidator =
+    assessmentInput?.dependencies?.["claims.mjs"] || assessmentInput?.claims_validator_sha256
+  const validatorChanged =
+    historicalValidator !== sha256(fs.readFileSync(new URL("./claims.mjs", import.meta.url)))
+  expected = historicalDiagnosticRecord(expected, packet, {
+    expectedSha256: sha256(JSON.stringify(packet)),
+    validatorChanged,
+    rows: "claims",
+  })
   if (
     !receipt ||
     receipt.packet_sha256 !== sha256(bytes) ||
     JSON.stringify(packet) !== JSON.stringify(expected)
   )
     throw Error("Fact review packet or source binding changed")
-  return { packet, packet_sha256: sha256(bytes), extracted, ...source }
+  return {
+    packet,
+    packet_sha256: sha256(bytes),
+    extracted,
+    validator_changed: validatorChanged,
+    ...source,
+  }
 }
 
 function validateAcknowledgment(context, decision) {
@@ -242,6 +302,30 @@ export async function reviewProcessedClaims(root, run, decision) {
   const base = `runs/${run}/`
   const current = readJSON(root, base + "reviewed-claims.json")
   const priorDecision = readJSON(root, base + "fact-review-decision.json")
+  if (
+    current &&
+    context.validator_changed &&
+    JSON.stringify(priorDecision) === JSON.stringify(decision)
+  ) {
+    for (let i = 0; i < envelope.claims.length; i++) {
+      const claim = envelope.claims[i],
+        old = current.claims?.[i]
+      // Rejected/deferred diagnostics remain historical bookkeeping. All
+      // verified claims have already passed the current validator above and
+      // their review fingerprints must match exactly, without substitution.
+      if (
+        ["rejected", "deferred"].includes(claim.review.status) &&
+        old?.claim_id === claim.claim_id &&
+        old.review?.status === claim.review.status &&
+        Array.isArray(old.review.problems) &&
+        old.review.problems.every((value) => typeof value === "string" && value.trim()) &&
+        old.review.structural_pass === (old.review.problems.length === 0)
+      ) {
+        claim.review.structural_pass = old.review.structural_pass
+        claim.review.problems = [...old.review.problems]
+      }
+    }
+  }
   if (current || priorDecision) {
     if (
       JSON.stringify(current) !== JSON.stringify(envelope) ||

@@ -18,6 +18,63 @@ const fields = [
   "article_observed_at",
 ]
 
+// A frozen selection may keep the earlier parse, but only this native receipt
+// can bridge it to a complete parse of the exact same captured response.
+export function loadCandidateParseRecovery(root, candidate) {
+  const run = candidate?.parse_recovery_run
+  if (!run) return null
+  if (!/^[A-Za-z0-9_-]+$/.test(run)) throw Error("Invalid candidate parse recovery reference")
+  const base = `runs/${run}/`
+  const input = readJSON(root, base + "parse-recovery-input.json")
+  const receipt = readJSON(root, base + "candidate-parse-recovery.json")
+  if (!input || !receipt) throw Error("Native candidate parse recovery evidence missing")
+  const original = loadStoredSourceRun(root, input.original_source?.source_run, {
+    allowUnacquired: true,
+  })
+  const recovered = loadStoredSourceRun(root, input.recovered_source?.source_run)
+  const expected = candidateParseRecovery(input.candidate_before, original, recovered)
+  const expectedReceipt = {
+    schema: "research-candidate-parse-recovery/v1",
+    run_id: run,
+    candidate_key: input.candidate_key,
+    input_sha256: sha256(JSON.stringify(expected)),
+    original_parse_id: input.candidate_before.article_parse_id,
+    ...expected.recovered_fields,
+    raw_version_preserved: true,
+    candidate_approved: false,
+    candidate_published: false,
+    model_calls: 0,
+    source_requests: 0,
+  }
+  if (
+    JSON.stringify(input) !== JSON.stringify(expected) ||
+    JSON.stringify(receipt) !== JSON.stringify(expectedReceipt) ||
+    candidate.key !== input.candidate_key ||
+    candidate.source_published_at !== input.candidate_before.source_published_at ||
+    JSON.stringify(candidate.source_urls) !== JSON.stringify(input.candidate_before.source_urls) ||
+    !fields.every((field) => candidate[field] === input.recovered_fields[field])
+  ) throw Error("Candidate parse recovery source or receipt changed")
+  return input
+}
+
+export function recoveredProcessingEntry(recovery, entry) {
+  const before = recovery.candidate_before
+  if (
+    entry.candidate_key !== before.key ||
+    entry.source_version_id !== before.article_source_version_id ||
+    entry.parse_id !== before.article_parse_id ||
+    entry.content_sha256 !== before.article_content_sha256 ||
+    JSON.stringify(entry.source_urls) !== JSON.stringify(before.source_urls)
+  ) throw Error("Parse recovery does not match the exact frozen processing entry")
+  return {
+    ...entry,
+    original_parse_id: entry.parse_id,
+    original_content_sha256: entry.content_sha256,
+    parse_id: recovery.recovered_fields.article_parse_id,
+    content_sha256: recovery.recovered_fields.article_content_sha256,
+  }
+}
+
 // Parser recovery is separate from a changed publication or an editorial decision.
 export function candidateParseRecovery(candidate, original, recovered) {
   if (
@@ -109,6 +166,8 @@ export async function recoverCandidateParse({
           if (matches.length !== 1) throw Error("One exact backlog candidate required")
           const current = matches[0],
             base = `runs/${runId}/`
+          if (current.parse_recovery_run && current.parse_recovery_run !== runId)
+            throw Error("Candidate already has another parse recovery; preserve its native chain")
           const pinned = readJSON(root, base + "parse-recovery-input.json")
           const input = candidateParseRecovery(
             pinned?.candidate_before || current,
@@ -143,13 +202,19 @@ export async function recoverCandidateParse({
                 JSON.stringify(input.candidate_before.source_urls)
             )
               throw Error("Recorded parse recovery or current candidate changed")
+            if (!current.parse_recovery_run) {
+              current.parse_recovery_run = runId
+              backlog.updated_at = new Date().toISOString()
+              atomicWrite(path.dirname(backlogFile), path.basename(backlogFile), backlog)
+            }
             return { ...existing, reused: true }
           }
           if (
             JSON.stringify(current) !== JSON.stringify(input.candidate_before) &&
             (!pinned ||
               JSON.stringify(current) !==
-                JSON.stringify({ ...input.candidate_before, ...input.recovered_fields }))
+                JSON.stringify({ ...input.candidate_before, ...input.recovered_fields,
+                  ...(current.parse_recovery_run ? { parse_recovery_run: runId } : {}) }))
           )
             throw Error("Candidate changed during parse recovery")
           if (!pinned) atomicCreate(root, base + "parse-recovery-input.json", input)
@@ -157,6 +222,7 @@ export async function recoverCandidateParse({
           // response, so it must not invent a newer HTTP observation timestamp.
           if (!atTarget) {
             Object.assign(current, input.recovered_fields)
+            current.parse_recovery_run = runId
             backlog.updated_at = new Date().toISOString()
             atomicWrite(path.dirname(backlogFile), path.basename(backlogFile), backlog)
           }

@@ -23,6 +23,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: npm ci
+      - run: npm ci --prefix integrations/research-mcp --ignore-scripts --no-audit --no-fund
+      - run: npm test --prefix integrations/research-mcp
       - run: python -m unittest discover -s tests -p 'test_*drive*.py' -v
       - run: python -m unittest discover -s tests -p 'test_connector_snapshot.py' -v
       - run: python -m unittest discover -s tests -p 'test_export_website_data.py' -v

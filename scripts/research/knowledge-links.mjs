@@ -140,15 +140,19 @@ export function assertConceptConnections(meta, sourceURLs) {
 
 export function assertNewConceptBody(note) {
   const parts = sections(note.body, 2)
+  const headings = parts.map((s) => s.title)
+  const positions = headings.map((heading) => CONCEPT_NOTE_HEADINGS.indexOf(heading))
+  const scope = parts.find((s) => s.title === "범위")
   if (
     JSON.stringify(sections(note.body, 1).map((s) => s.title)) !==
       JSON.stringify([note.meta.title]) ||
-    JSON.stringify(parts.map((s) => s.title)) !== JSON.stringify(CONCEPT_NOTE_HEADINGS) ||
+    headings[0] !== "한 문장 정의" ||
+    headings.at(-1) !== "출처" ||
+    positions.some((position, i) => position < 0 || (i > 0 && position <= positions[i - 1])) ||
     parts.some((s) => !s.body.trim()) ||
     !/[가-힣]/.test(parts[0]?.body || "") ||
     parts[0]?.body === "없음" ||
-    !parts.find((s) => s.title === "범위")?.body.includes("**포함:**") ||
-    !parts.find((s) => s.title === "범위")?.body.includes("**포함하지 않음:**")
+    (scope && (!scope.body.includes("**포함:**") || !scope.body.includes("**포함하지 않음:**")))
   )
     throw Error("Complete canonical concept headings, definition and scope required")
   const sourceSection = parts.find((s) => s.title === "출처").body
@@ -188,6 +192,27 @@ export function assertConceptConflicts(vault, proposals) {
     if (!concepts.some((c) => c.path === n.path))
       concepts.push({ path: n.path, meta: parseNote(n.content).meta })
   }
+  assertConceptIdentitySet(concepts, new Set(changed.keys()))
+  for (const concept of concepts.filter((n) => changed.has(n.path))) {
+    for (const edge of [...(concept.meta.relations || []), ...(concept.meta.connections || [])])
+      if (!concepts.some((c) => c.meta.concept_id === edge.target))
+        throw Error("Unknown concept connection target")
+  }
+}
+
+// Historical reads validate the exact approved set, not today's registry.
+// External targets remain the recorded review's statements; this grants no
+// authorization to add those targets or overwrite a current canonical note.
+export function assertPreservedConceptIdentities(proposals) {
+  if (proposals.some((n) => n.operation === "create" && /[\[\]|#]/.test(n.path)))
+    throw Error("New concept path cannot contain wiki delimiters")
+  const concepts = proposals
+    .filter((n) => n.path.startsWith("Knowledge/"))
+    .map((n) => ({ path: n.path, meta: parseNote(n.content).meta }))
+  assertConceptIdentitySet(concepts, new Set(concepts.map((n) => n.path)))
+}
+
+function assertConceptIdentitySet(concepts, changed) {
   for (const concept of concepts.filter((n) => changed.has(n.path))) {
     const names = new Set(
       [
@@ -213,9 +238,6 @@ export function assertConceptConflicts(vault, proposals) {
       )
         throw Error("Concept identity or exact alias conflicts with another canonical note")
     }
-    for (const edge of [...(concept.meta.relations || []), ...(concept.meta.connections || [])])
-      if (!concepts.some((c) => c.meta.concept_id === edge.target))
-        throw Error("Unknown concept connection target")
   }
 }
 
@@ -304,13 +326,38 @@ export function correctionImpact(
   }
 }
 export function reconcilePaperVersions(papers) {
-  const works = new Map()
+  const works = new Map(),
+    appearances = new Map()
   for (const p of papers) {
+    const identifiers = new Set()
     for (const identifier of p.identifiers) {
       const key = paperKey(identifier)
       if (works.has(key) && works.get(key) !== p.work_id)
         throw Error("Paper version identity conflict")
       works.set(key, p.work_id)
+      identifiers.add(key)
+    }
+    if (!appearances.has(p.work_id)) appearances.set(p.work_id, [])
+    appearances.get(p.work_id).push(identifiers)
+  }
+  // Each appearance's identifiers are checked together by the existing source
+  // review. Shared normalized identifiers or those reviewed bridges establish
+  // identity; the work ID alone cannot join disconnected papers. Inspect all
+  // appearances before checking so a later bridge also works in any order.
+  for (const [workId, sets] of appearances) {
+    const connected = new Set(sets[0])
+    let pending = sets.slice(1)
+    while (pending.length) {
+      const remaining = pending.filter((identifiers) => {
+        if (![...identifiers].some((key) => connected.has(key))) return true
+        for (const key of identifiers) connected.add(key)
+        return false
+      })
+      if (remaining.length === pending.length)
+        throw Error(
+          `Paper work identity conflict: ${workId}; disjoint identifiers require a source-reviewed bridging appearance`,
+        )
+      pending = remaining
     }
   }
   return [...works.entries()]
@@ -327,4 +374,97 @@ export function assertPersonIdentity(person, existing) {
     throw Error("Person identity conflict requires evidence-based reconciliation")
   // Similar names and coauthorship never automatically create a founder relation.
   return person
+}
+
+// Explicit IDs, not equal names, establish identity. Affiliations remain dated
+// observations in their reviewed relationships and are not overwritten here.
+export function reconcilePersonNames(relations) {
+  const names = new Map()
+  for (const relation of relations) {
+    if (!nonempty(relation.person_id) || !nonempty(relation.person_name))
+      throw Error("Explicit reviewed person ID and name required")
+    if (names.has(relation.person_id) && names.get(relation.person_id) !== relation.person_name)
+      throw Error("Person identity conflict in reviewed relationships")
+    names.set(relation.person_id, relation.person_name)
+  }
+  return [...names].map(([person_id, person_name]) => ({ person_id, person_name }))
+}
+
+// This is a private review over existing approvals, not a company registry or
+// permission to attach every article that happens to use the same name.
+export function assertCompanyIdentityReview(review) {
+  const keys = (value, allowed) =>
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).every((key) => allowed.includes(key))
+  const slug = (value) => typeof value === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
+  const distinct = (values) =>
+    Array.isArray(values) &&
+    values.length &&
+    values.every(nonempty) &&
+    new Set(values).size === values.length
+  if (
+    !keys(review, ["schema", "reviewer", "reviewed_at", "companies"]) ||
+    review.schema !== "research-company-identity-review/v1" ||
+    !nonempty(review.reviewer) ||
+    !Array.isArray(review.companies) ||
+    !review.companies.length
+  )
+    throw Error("Explicit private company identity review required")
+  assertReviewDate(review.reviewed_at)
+  const ids = new Set(),
+    mentions = new Set()
+  for (const company of review.companies) {
+    if (
+      !keys(company, ["company_id", "label", "kind", "assignments"]) ||
+      !slug(company.company_id) ||
+      ids.has(company.company_id) ||
+      !nonempty(company.label) ||
+      !["company", "legal_entity", "corporate_group", "brand", "division"].includes(company.kind) ||
+      !Array.isArray(company.assignments) ||
+      !company.assignments.length
+    )
+      throw Error("Distinct explicit company ID, kind and scoped assignments required")
+    ids.add(company.company_id)
+    for (const assignment of company.assignments) {
+      if (
+        !keys(assignment, [
+          "run",
+          "event_id",
+          "approval_files_sha256",
+          "entity_label",
+          "source_names",
+          "claim_ids",
+          "as_of",
+          "reviewed_at",
+          "identity_checked",
+          "kind_checked",
+          "reason",
+        ]) ||
+        !/^[a-zA-Z0-9_-]+$/.test(assignment.run || "") ||
+        !/^[a-f0-9]{16}$/.test(assignment.event_id || "") ||
+        !/^[a-f0-9]{64}$/.test(assignment.approval_files_sha256 || "") ||
+        !nonempty(assignment.entity_label) ||
+        !distinct(assignment.source_names) ||
+        !distinct(assignment.claim_ids) ||
+        assignment.identity_checked !== true ||
+        assignment.kind_checked !== true ||
+        !nonempty(assignment.reason)
+      )
+        throw Error("Source-bound reviewed company assignment required")
+      assertReviewDate(assignment.as_of)
+      const reviewedAt = Object.hasOwn(assignment, "reviewed_at")
+        ? assignment.reviewed_at
+        : review.reviewed_at
+      assertReviewDate(reviewedAt)
+      if (assignment.as_of > reviewedAt || reviewedAt > review.reviewed_at)
+        throw Error("Company identity observation cannot follow its review")
+      const key =
+        assignment.event_id + "|" + exactName(assignment.entity_label).replace(/\s+/g, " ")
+      if (mentions.has(key)) throw Error("Company mention assigned more than once in one event")
+      mentions.add(key)
+    }
+  }
+  return review
 }

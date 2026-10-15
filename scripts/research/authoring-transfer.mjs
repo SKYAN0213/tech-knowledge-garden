@@ -1,7 +1,12 @@
 import fs from "node:fs"
 import path from "node:path"
 import { PUBLIC_ROOTS, sha256 } from "./contracts.mjs"
-import { privatePreview } from "./preview.mjs"
+import {
+  privatePreview,
+  loadPreviewPublicationInputs,
+  previewEditionProjections,
+  conceptIndexProjection,
+} from "./preview.mjs"
 import {
   atomicCreate,
   readJSON,
@@ -86,6 +91,162 @@ export function authoringDelta(manifest, before, after) {
   return changed.sort((a, b) => a.path.localeCompare(b.path))
 }
 
+// Consume completed generation evidence without regenerating it under today's code.
+// Missing/partial checkpoints still take the existing preparation path.
+export function inspectCompletedAuthoringPreview({
+  root,
+  previewRun,
+  repo = process.cwd(),
+  vault = "vault",
+}) {
+  validRun(previewRun)
+  const manifestPath = `runs/${previewRun}/preview-manifest.json`
+  const manifestBytes = fs.readFileSync(safePath(root, manifestPath))
+  const manifest = JSON.parse(manifestBytes)
+  const statePath = `runs/${previewRun}/preview/state.json`
+  const state = readJSON(root, statePath)
+  if (!state || state.stages?.outputs?.status !== "complete") return null
+  const required = [
+    "workspace",
+    "refresh",
+    "knowledge-sync",
+    "knowledge-check",
+    "validate",
+    "build",
+    "verify",
+    "consistency",
+    "outputs",
+  ]
+  if (
+    state.schema !== "research-run/v1" ||
+    state.run_id !== previewRun ||
+    !/^[a-f0-9]{64}$/.test(state.input_hash || "") ||
+    manifest.schema !== "private-reader-preview/v1" ||
+    manifest.run_id !== previewRun ||
+    manifest.workspace !== `runs/${previewRun}/preview-workspace` ||
+    manifest.candidate_published !== false ||
+    manifest.drive_verified !== false ||
+    required.some((name) => state.stages[name]?.status !== "complete")
+  )
+    throw Error("Exact completed private preview checkpoints required")
+  for (const [name, stage] of Object.entries(state.stages)) {
+    if (
+      stage.status !== "complete" ||
+      stage.result_path !== `runs/${previewRun}/preview/${name}.json`
+    )
+      throw Error("Completed preview stage changed")
+    const resultBytes = fs.readFileSync(safePath(root, stage.result_path)),
+      result = JSON.parse(resultBytes)
+    if (sha256(JSON.stringify(result)) !== stage.result_hash)
+      throw Error("Completed preview checkpoint bytes changed")
+    if (result.log && sha256(fs.readFileSync(safePath(root, result.log))) !== result.log_sha256)
+      throw Error("Completed preview generation log changed")
+    if (name === "outputs" && !resultBytes.equals(manifestBytes))
+      throw Error("Completed preview manifest bytes changed")
+  }
+  const sourceVault = path.resolve(repo, vault)
+  const selected = loadPreviewPublicationInputs(
+    root,
+    previewRun,
+    manifest.daily_editorial_handoff ? [] : manifest.approved_runs,
+    {
+      vault: sourceVault,
+      knowledgeRuns: manifest.knowledge_runs,
+      publicationHandoff: manifest.daily_editorial_handoff?.path || null,
+      editionSpec: manifest.edition_spec || null,
+      legacyReviews: manifest.legacy_reviews || [],
+      sourceAlternatives: manifest.source_alternatives || [],
+      retrospectiveRuns: (manifest.retrospective_runs || []).map((row) => row.run_id),
+    },
+  )
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+  if (
+    !same(selected.approvedRuns, manifest.approved_runs) ||
+    !same(selected.knowledgeRuns, manifest.knowledge_runs) ||
+    !same(selected.dailySelection, manifest.daily_editorial_handoff || null) ||
+    !same(selected.retrospectiveReferences, manifest.retrospective_runs || []) ||
+    (selected.curation && !same(selected.newEditionRuns, manifest.new_edition_runs || []))
+  )
+    throw Error("Completed preview approval selection changed")
+  const notes = selected.knowledge.flatMap((k) => k.approval.notes)
+  const projections = selected.approvals.length || manifest.legacy_reviews?.length
+    ? previewEditionProjections(sourceVault, selected, {
+        editionSpec: manifest.edition_spec || null,
+        notes,
+        legacyReviews: manifest.legacy_reviews || [],
+        root,
+      })
+    : []
+  const projected = projections.map((p) => ({
+    path: p.path,
+    sha256: sha256(p.content),
+    event_ids: p.event_ids,
+  }))
+  const navigation = conceptIndexProjection(sourceVault, notes)
+  const navRef = navigation
+    ? {
+        path: navigation.path,
+        previous_sha256: navigation.previous_sha256,
+        sha256: navigation.sha256,
+      }
+    : null
+  if (
+    !same(projected, manifest.editions) ||
+    !same(
+      notes.map((n) => ({ path: n.path, sha256: n.sha256 })),
+      manifest.knowledge,
+    ) ||
+    !same(navRef, manifest.navigation || null)
+  )
+    throw Error("Completed preview canonical source or approval bytes changed")
+  const workspace = safePath(root, manifest.workspace)
+  for (const [directory, rows] of [
+    [
+      "vault",
+      [
+        ...manifest.editions,
+        ...manifest.knowledge,
+        ...(manifest.navigation ? [manifest.navigation] : []),
+      ],
+    ],
+    ["public", manifest.public],
+    ["digest", manifest.digest],
+  ]) {
+    if (
+      !Array.isArray(rows) ||
+      !rows.length ||
+      new Set(rows.map((r) => r.path)).size !== rows.length
+    )
+      throw Error("Completed preview exact outputs required")
+    for (const row of rows)
+      if (
+        !/^[a-f0-9]{64}$/.test(row.sha256 || "") ||
+        sha256(fs.readFileSync(safePath(path.join(workspace, directory), row.path))) !== row.sha256
+      )
+        throw Error("Completed preview output bytes changed")
+  }
+  authoringDelta(
+    manifest,
+    authoringInventory(sourceVault),
+    authoringInventory(path.join(workspace, "vault")),
+  )
+  return {
+    schema: "research-completed-preview-consumption/v1",
+    preview: { path: manifestPath, sha256: sha256(manifestBytes) },
+    generation: {
+      observed_at: manifest.observed_at,
+      input_hash: state.input_hash,
+      state: { path: statePath, sha256: sha256(fs.readFileSync(safePath(root, statePath))) },
+    },
+    consumer: {
+      observed_at: new Date().toISOString(),
+      implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
+    },
+    renderer_reexecuted: false,
+    approval_granted: false,
+  }
+}
+
 export async function prepareAuthoringTransfer({
   root,
   previewRun,
@@ -99,20 +260,23 @@ export async function prepareAuthoringTransfer({
       const initial = readJSON(root, manifestPath)
       if (initial?.run_id !== previewRun) throw Error("Existing verified preview required")
       // Reuse the existing evidence, approval, source snapshot, build and output checks.
-      await privatePreview(
-        root,
-        previewRun,
-        initial.daily_editorial_handoff ? [] : initial.approved_runs,
-        {
-          repo,
-          vault,
-          publicationHandoff: initial.daily_editorial_handoff?.path || null,
-          knowledgeRuns: initial.knowledge_runs,
-          editionSpec: initial.edition_spec || null,
-          legacyReviews: initial.legacy_reviews || [],
-          sourceAlternatives: initial.source_alternatives || [],
-        },
-      )
+      const consumption = inspectCompletedAuthoringPreview({ root, previewRun, repo, vault })
+      if (!consumption)
+        await privatePreview(
+          root,
+          previewRun,
+          initial.daily_editorial_handoff ? [] : initial.approved_runs,
+          {
+            repo,
+            vault,
+            publicationHandoff: initial.daily_editorial_handoff?.path || null,
+            knowledgeRuns: initial.knowledge_runs,
+            editionSpec: initial.edition_spec || null,
+            legacyReviews: initial.legacy_reviews || [],
+            sourceAlternatives: initial.source_alternatives || [],
+            retrospectiveRuns: (initial.retrospective_runs || []).map((row) => row.run_id),
+          },
+        )
       const manifestBytes = fs.readFileSync(safePath(root, manifestPath))
       const manifest = JSON.parse(manifestBytes)
       const sourceVault = path.resolve(repo, vault)
@@ -162,6 +326,7 @@ export async function prepareAuthoringTransfer({
         bytes: plan.files.reduce((sum, row) => sum + row.bytes, 0),
         changed: !prior,
         upload_allowed: false,
+        ...(consumption ? { preview_consumption: consumption } : {}),
       }
     }),
   )

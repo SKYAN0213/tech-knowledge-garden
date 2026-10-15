@@ -36,10 +36,200 @@ import { recordFactReview } from "../scripts/research/claims.mjs"
 import { parseNote, extractArticles, noteText } from "../scripts/garden.mjs"
 import { legacyReviewUnits } from "../scripts/research/legacy-review.mjs"
 import { hasUnrecordedHistoricalCoverage } from "../scripts/historical-coverage.mjs"
+import { assertLegacyCitationEvidence } from "../scripts/research/legacy-citation.mjs"
 import {
   assertLegacyTransition,
   legacyTransitionBatch,
+  legacyTransitionUnits,
+  legacyTransitionMetadata,
 } from "../scripts/research/legacy-transition.mjs"
+
+test("sample outline preserves its identity and requires explicit background and local-time review", (t) => {
+  const f = legacyTransitionFixture(t)
+  const relative = f.relative.replace(/\.md$/, "_SAMPLE.md")
+  const meta = {
+    ...f.existing.meta,
+    status: "sample",
+    coverage_start: "2026-09-27 08:01",
+    coverage_end: "2026-09-28 08:01",
+  }
+  const body =
+    [
+      "# " + meta.title,
+      "## 1. 결론 먼저",
+      "Old summary.",
+      "## 2. 신규 변화 요약",
+      "Old summaries.",
+      "## 3. 자세히 볼 변화",
+      "### 3.1 First original",
+      "https://example.com/announcement",
+      "### 3.2 Second original",
+      "https://example.com/second",
+      "### 3.3 Original empty",
+      "없음",
+      "### 3.4 RAG와 MCP는 비슷해 보이지만 역할이 다르다",
+      "Concept explanation without a dated event.",
+      "### 3.5 Original empty",
+      "없음",
+      "## 4. 이번 브리핑에서 지식 노트로 승격한 항목",
+      "Old workflow.",
+      "## 5. 제외하거나 보류한 것",
+      "Old criteria.",
+      "## 6. 다음 브리핑에서 추적할 질문",
+      "Old questions.",
+      "## 참고 링크",
+      "https://example.com/announcement",
+      "https://example.com/second",
+    ].join("\n\n") + "\n"
+  const before = { meta, body }
+  const raw = legacyReviewUnits(body, relative)
+  const background = raw.find((u) => u.title?.startsWith("3.4 "))
+  const packet = {
+    outline_review: {
+      format: "numbered-sample/v1",
+      original_outline_checked: true,
+      source_list_checked: true,
+      article_boundaries_checked: true,
+      reason: "Read exact original sample.",
+      background_review: {
+        unit_id: background.unit_id,
+        sha256: background.sha256,
+        concept_explanation_only_checked: true,
+        no_dated_event_checked: true,
+        source_notes_checked: true,
+        reason: "Read original background and canonical definitions.",
+      },
+    },
+    local_coverage_review: {
+      original_metadata_read: true,
+      timezone_checked: true,
+      original_start: meta.coverage_start,
+      original_end: meta.coverage_end,
+      normalized_start: "2026-09-27T08:01:00+09:00",
+      normalized_end: "2026-09-28T08:01:00+09:00",
+      reason: "Exact local clock in explicit Seoul timezone.",
+    },
+  }
+  const normalized = legacyTransitionMetadata(packet, meta, relative)
+  assert.equal(normalized.coverage_start, packet.local_coverage_review.normalized_start)
+  assert.equal(normalized.coverage_end, packet.local_coverage_review.normalized_end)
+  const units = legacyTransitionUnits(packet, before, relative)
+  assert.deepEqual(
+    units.map((u) => [u.unit_id, u.sha256, u.body_start, u.body_end]),
+    raw.map((u) => [u.unit_id, u.sha256, u.body_start, u.body_end]),
+  )
+  assert.equal(units.find((u) => u.unit_id === background.unit_id).section_title, "흐름 읽기")
+  assert.equal(units.filter((u) => u.depth === 2).length, 4)
+  assert.equal(units.at(-1).section_title, "Source List")
+  for (const mutate of [
+    (p) => delete p.outline_review.background_review,
+    (p) => (p.outline_review.background_review.sha256 = "0".repeat(64)),
+    (p) => (p.outline_review.background_review.no_dated_event_checked = false),
+    (p) => (p.outline_review.format = "numbered-news/v1"),
+  ]) {
+    const changed = structuredClone(packet)
+    mutate(changed)
+    assert.throws(() => legacyTransitionUnits(changed, before, relative))
+  }
+  assert.throws(() =>
+    legacyTransitionUnits(
+      packet,
+      {
+        ...before,
+        body: body.replace(
+          "Concept explanation without a dated event.",
+          "Actual event https://example.com/event",
+        ),
+      },
+      relative,
+    ),
+  )
+  assert.throws(() =>
+    legacyTransitionUnits(packet, { ...before, meta: { ...meta, status: "published" } }, relative),
+  )
+  for (const mutate of [
+    (p) => (p.local_coverage_review.normalized_start = "2026-09-27T08:02:00+09:00"),
+    (p) => (p.local_coverage_review.normalized_end = "2026-09-28T08:01:00Z"),
+    (p) => (p.local_coverage_review.timezone_checked = false),
+    (p) => (p.local_coverage_review.original_start = "2026-09-26 08:01"),
+    (p) => (p.unrecorded_coverage_review = {}),
+  ]) {
+    const changed = structuredClone(packet)
+    mutate(changed)
+    assert.throws(() => legacyTransitionMetadata(changed, meta, relative))
+  }
+  assert.throws(() => legacyTransitionMetadata(packet, { ...meta, timezone: "UTC" }, relative))
+  assert.throws(() =>
+    legacyTransitionMetadata({ ...packet, local_coverage_review: undefined }, meta, relative),
+  )
+})
+
+test("legacy citation chains retain unread originals without promoting them to official evidence", () => {
+  const reporting = "https://example.com/report"
+  const original = "https://publisher.example/original"
+  const cited = original + "?ref=report"
+  const version = "source:version"
+  const article = { source_urls: [reporting] }
+  const review = {
+    original_url: original,
+    reporting_url: reporting,
+    cited_url: cited,
+    source_version_id: version,
+    parse_id: "parsed-report",
+    block_id: "report:block-1",
+    quote: "The publisher reports that the company is considering a supplier.",
+    link_text: "Publisher",
+    reporting_source_read: true,
+    attribution_checked: true,
+    citation_identity_checked: true,
+    unread_original_not_used: true,
+    reason: "Exact report citation, retained privately; original not read or used as facts.",
+  }
+  const stored = {
+    documents: [{ original_url: reporting, source_version_id: version, fetch_status: "captured" }],
+    parses: [
+      {
+        parse_id: review.parse_id,
+        source_version_id: version,
+        status: "extracted",
+        blocks: [{ block_id: review.block_id, text: review.quote }],
+        links: [{ url: cited, text: review.link_text }],
+      },
+    ],
+  }
+  assert.equal(assertLegacyCitationEvidence(review, article, stored), reporting)
+  for (const mutate of [
+    (r) => (r.quote += " Invented confirmation."),
+    (r) => (r.cited_url = original),
+    (r) => (r.original_url = "https://publisher.example/different-article"),
+    (r) => (r.original_url = "https://publisher.example/original?version=2"),
+    (r) => (r.original_url = "https://other.example/original"),
+    (r) => (r.reporting_url = "https://example.com/unread-report"),
+    (r) => (r.source_version_id = "other:version"),
+    (r) => (r.parse_id = "other-parse"),
+    (r) => (r.block_id = "other-block"),
+    (r) => (r.link_text = "Unrelated publisher"),
+    (r) => (r.attribution_checked = false),
+    (r) => (r.unread_original_not_used = false),
+    (r) => (r.reason = " "),
+  ]) {
+    const changed = structuredClone(review)
+    mutate(changed)
+    assert.throws(() => assertLegacyCitationEvidence(changed, article, stored))
+  }
+  assert.throws(() =>
+    assertLegacyCitationEvidence(review, { source_urls: [reporting, original] }, stored),
+  )
+  for (const mutate of [
+    (s) => (s.parses[0].status = "blocked"),
+    (s) => (s.parses[0].links = []),
+    (s) => (s.documents[0].fetch_status = "blocked"),
+  ]) {
+    const changed = structuredClone(stored)
+    mutate(changed)
+    assert.throws(() => assertLegacyCitationEvidence(review, article, changed))
+  }
+})
 
 function legacyTransitionFixture(t, { sourceListOnly = false, sourceMarkers = false } = {}) {
   const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "legacy-transition-")))
@@ -149,6 +339,126 @@ function reviseLegacyFixture(f, body) {
   }))
   atomicWrite(f.vault, f.relative, f.packet.before_content)
 }
+
+test("numbered legacy outline preserves original anchors and explicitly reviewed source-list assignments", (t) => {
+  const f = legacyTransitionFixture(t)
+  const body =
+    [
+      "# " + f.existing.meta.title,
+      "> Original coverage note.",
+      "## 1. 결론 먼저",
+      "Old summary.",
+      "## 2. 신규 변화 요약",
+      "| News | Summary |\n| --- | --- |\n| First | Old first summary |",
+      "## 3. 자세히 볼 변화",
+      "### 3.1 이전 첫 제목",
+      "Original first article without an inline source.",
+      "## 4. Important Papers",
+      "### 4.1 이전 두 번째 제목",
+      "Original second article without an inline source.",
+      "## 5. Open Source & Tools",
+      "없음",
+      "## 6. Industry Analysis",
+      "Original inference.",
+      "### 6.1 Old opinion",
+      "Unsupported opinion.",
+      "## 7. Actionable Insights",
+      "Old advice.",
+      "## 8. 제외하거나 보류한 것",
+      "Original internal exclusion note.",
+      "## 9. 다음 브리핑에서 추적할 질문",
+      "Original internal questions.",
+      "## 10. Source List",
+      ...f.articles.flatMap((article) => article.source_urls),
+    ].join("\n\n") + "\n"
+  f.packet.before_content = noteText(f.existing.meta, body)
+  f.packet.target_sha256 = sha256(f.packet.before_content)
+  f.existing = { ...parseNote(f.packet.before_content), file: f.existing.file }
+  f.packet.outline_review = {
+    format: "numbered-news/v1",
+    original_outline_checked: true,
+    source_list_checked: true,
+    article_boundaries_checked: true,
+    reason: "Read exact cover, ordered sections, article boundaries and original source list.",
+  }
+  const raw = legacyReviewUnits(f.existing.body, f.relative)
+  const interpreted = legacyTransitionUnits(f.packet, f.existing, f.relative)
+  assert.deepEqual(
+    interpreted.map((unit) => [
+      unit.unit_id,
+      unit.sha256,
+      unit.title,
+      unit.body_start,
+      unit.body_end,
+    ]),
+    raw.map((unit) => [unit.unit_id, unit.sha256, unit.title, unit.body_start, unit.body_end]),
+  )
+  f.packet.events = f.articles.map((article, index) => {
+    const unit = raw.find((unit) => unit.title.startsWith(index ? "4.1 " : "3.1 "))
+    return {
+      event_id: article.event_id,
+      unit_id: unit.unit_id,
+      previous_title: unit.title,
+      source_urls: article.source_urls,
+      source_list_review: {
+        source_list_read: true,
+        article_source_read: true,
+        association_checked: true,
+        reason: "Read the exact listed source and its corresponding original article.",
+      },
+    }
+  })
+  f.packet.units = interpreted.map((unit) => {
+    const anchor = f.packet.events.find((event) => event.unit_id === unit.unit_id)
+    const all = ["한눈에 보기", "Source List"].includes(unit.section_title)
+    const empty = ["오늘의 핵심 기사", "논문과 연구", "오픈소스와 도구"].includes(
+      unit.section_title,
+    )
+    return {
+      unit_id: unit.unit_id,
+      sha256: unit.sha256,
+      decision: anchor || all ? "replaced" : empty ? "omitted_empty" : "omitted_editorial",
+      event_ids: anchor
+        ? [anchor.event_id]
+        : all
+          ? f.articles.map((article) => article.event_id)
+          : [],
+      reason: "Individually reviewed exact original unit.",
+    }
+  })
+  atomicWrite(f.vault, f.relative, f.packet.before_content)
+  assertLegacyTransition(f.packet, f.articles, f.existing, f.relative)
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.deepEqual(
+    extractArticles({ ...parseNote(projection.content), file: f.existing.file }).map((a) => a.id),
+    f.articles.map((a) => a.event_id),
+  )
+  assert.equal(fs.readFileSync(f.existing.file, "utf8"), f.packet.before_content)
+  assert.doesNotMatch(projection.content, /outline_review|Old opinion|internal questions/)
+  for (const mutate of [
+    (packet) => delete packet.outline_review,
+    (packet) => (packet.outline_review.article_boundaries_checked = false),
+    (packet) => delete packet.events[0].source_list_review,
+    (packet) => (packet.events[0].source_urls = f.articles[1].source_urls),
+    (packet) => packet.units.splice(4, 1),
+    (packet) => (packet.events[0].previous_title = "이전 첫 제목"),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
+  for (const changed of [
+    body.replace("3.1 이전", "4.1 이전"),
+    body.replace("3.1 이전", "3.2 이전"),
+    body.replace("### 3.1", "#### 3.1"),
+    body.replace("## 10. Source List", "## Sources"),
+    body.replace("### 6.1", "### 7.1"),
+    body + "\n## Unreviewed section\n\nAnother event.\n",
+  ])
+    assert.throws(() =>
+      legacyTransitionUnits(f.packet, parseNote(noteText(f.existing.meta, changed)), f.relative),
+    )
+})
 
 function unrecordedLegacyFixture(t) {
   const f = legacyTransitionFixture(t)
@@ -959,6 +1269,233 @@ test("legacy duplicate article sections require explicit same-event review and p
     () => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative),
     /retain/,
   )
+})
+
+test("legacy pre-cutoff source dates require explicit historical inclusion review", (t) => {
+  const f = legacyTransitionFixture(t)
+  const review = f.articles[0].article_review
+  review.date_kind = "source-publication-time"
+  review.source_published_at = "2026-09-26T10:00:00Z"
+  review.published_at = "2026-09-26"
+  assert.throws(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  f.packet.events[0].historical_date_review = {
+    original_inclusion_checked: true,
+    earlier_publication_checked: true,
+    historical_only: true,
+    source_published_at: review.source_published_at,
+    published_at: review.published_at,
+    reason:
+      "Original article was already included with the wrong cutoff claim; preserve its source date and edition identity.",
+  }
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  const after = parseNote(projection.content)
+  assert.equal(after.meta.coverage_start, f.existing.meta.coverage_start)
+  assert.equal(after.meta.article_reviews[0].published_at, "2026-09-26")
+  assert.doesNotMatch(projection.content, /historical_date_review|wrong cutoff/)
+  for (const mutate of [
+    (p) => delete p.events[0].historical_date_review,
+    (p) => (p.events[0].historical_date_review.original_inclusion_checked = false),
+    (p) => (p.events[0].historical_date_review.historical_only = false),
+    (p) => (p.events[0].historical_date_review.source_published_at = "2026-09-28T01:00:00Z"),
+    (p) => (p.events[0].historical_date_review.published_at = "2026-09-27"),
+    (p) => (p.events[0].historical_date_review.reason = " "),
+    (p) => (p.events[0].previous_title = "An article not originally included"),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
+  const future = structuredClone(f.articles)
+  future[0].article_review.source_published_at = "2026-09-29T10:00:00Z"
+  future[0].article_review.published_at = "2026-09-29"
+  const packet = structuredClone(f.packet)
+  packet.events[0].historical_date_review.source_published_at = "2026-09-29T10:00:00Z"
+  packet.events[0].historical_date_review.published_at = "2026-09-29"
+  assert.throws(() => assertLegacyTransition(packet, future, f.existing, f.relative))
+  // Date-only publisher notices retain their civil day, without inventing UTC.
+  review.date_kind = "source-publication-day"
+  review.source_published_at = "2026-09-26"
+  f.packet.events[0].historical_date_review.source_published_at = "2026-09-26"
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  // A date without a time cannot establish which side of a same-day cutoff it lies on.
+  review.source_published_at = review.published_at = "2026-09-27"
+  f.packet.events[0].historical_date_review.source_published_at = "2026-09-27"
+  f.packet.events[0].historical_date_review.published_at = "2026-09-27"
+  assert.throws(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+})
+
+test("legacy operational research notes require an exact private review without removing articles", (t) => {
+  const f = legacyTransitionFixture(t)
+  reviseLegacyFixture(
+    f,
+    f.existing.body
+      .replace("# 논문과 연구\n\n## 이전", "# 오늘의 핵심 기사\n\n## 이전")
+      .replace(
+        "# 오늘의 핵심 기사\n\n없음",
+        "# Important Papers\n\n검토 근거: published 시각이 cutoff 이전인 후보만 확인했다. https://arxiv.org/list/cs.AI/recent",
+      ),
+  )
+  const unit = legacyReviewUnits(f.existing.body, f.relative)[1]
+  const row = f.packet.units[1]
+  row.decision = "omitted_operations"
+  row.operations_review = {
+    original_content: f.existing.body.slice(unit.body_start, unit.body_end),
+    operational_only_checked: true,
+    no_article_facts_removed: true,
+    candidate_eligibility_checked: true,
+    source_roles_checked: true,
+    source_urls: ["https://arxiv.org/list/cs.AI/recent"],
+    reason: "Only research eligibility bookkeeping; original bytes and routes stay private.",
+  }
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.doesNotMatch(projection.content, /검토 근거|operations_review|arxiv.org/)
+  assert.equal(
+    extractArticles({ ...parseNote(projection.content), file: f.existing.file }).length,
+    2,
+  )
+  for (const mutate of [
+    (p) => delete p.units[1].operations_review,
+    (p) => (p.units[1].operations_review.original_content += "altered"),
+    (p) => p.units[1].operations_review.source_urls.pop(),
+    (p) => (p.units[1].operations_review.no_article_facts_removed = false),
+    (p) => (p.units[1].operations_review.candidate_eligibility_checked = false),
+    (p) => (p.units[1].operations_review.reason = " "),
+    (p) => p.units[1].event_ids.push(f.articles[0].event_id),
+    (p) => (p.units[1].decision = "omitted_empty"),
+    (p) => {
+      p.units[3].decision = "omitted_operations"
+      p.units[3].operations_review = structuredClone(row.operations_review)
+    },
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
+  // A research section containing a real child article cannot use this omission.
+  const real = legacyTransitionFixture(t)
+  real.packet.units[2].decision = "omitted_operations"
+  real.packet.units[2].operations_review = structuredClone(row.operations_review)
+  assert.throws(() =>
+    assertLegacyTransition(real.packet, real.articles, real.existing, real.relative),
+  )
+  const tools = legacyTransitionFixture(t)
+  reviseLegacyFixture(
+    tools,
+    tools.existing.body.replace(
+      "# 오픈소스와 도구\n\n없음",
+      "# 오픈소스와 도구\n\n추세 확인 불가: 검토할 새 프로젝트 없이 운영 기준만 기록했다.",
+    ),
+  )
+  const toolUnit = legacyReviewUnits(tools.existing.body, tools.relative)[5]
+  tools.packet.units[5].decision = "omitted_operations"
+  tools.packet.units[5].operations_review = {
+    ...structuredClone(row.operations_review),
+    original_content: tools.existing.body.slice(toolUnit.body_start, toolUnit.body_end),
+    source_urls: [],
+  }
+  assert.doesNotThrow(() =>
+    assertLegacyTransition(tools.packet, tools.articles, tools.existing, tools.relative),
+  )
+  const wrong = structuredClone(tools.packet)
+  wrong.units[5].operations_review.no_article_facts_removed = false
+  assert.throws(() => assertLegacyTransition(wrong, tools.articles, tools.existing, tools.relative))
+  const preface = legacyTransitionFixture(t)
+  reviseLegacyFixture(
+    preface,
+    preface.existing.body.replace(
+      "# 논문과 연구\n\n",
+      "# 논문과 연구\n\n검토 근거: cutoff 이전에 등록된 후보를 확인했다.\n\n",
+    ),
+  )
+  const prefaceUnit = legacyReviewUnits(preface.existing.body, preface.relative)[2]
+  preface.packet.units[2].decision = "omitted_operations"
+  preface.packet.units[2].operations_review = {
+    ...structuredClone(row.operations_review),
+    original_content: preface.existing.body.slice(prefaceUnit.body_start, prefaceUnit.body_end),
+    source_urls: [],
+  }
+  assert.doesNotThrow(() =>
+    assertLegacyTransition(preface.packet, preface.articles, preface.existing, preface.relative),
+  )
+  const [preserved] = retrospectiveProjections(
+    preface.vault,
+    preface.articles,
+    [],
+    [preface.packet],
+  )
+  assert.equal(
+    extractArticles({ ...parseNote(preserved.content), file: preface.existing.file }).length,
+    2,
+  )
+  const missingChild = structuredClone(preface.packet)
+  missingChild.units[3].decision = "omitted_empty"
+  missingChild.units[3].event_ids = []
+  assert.throws(() =>
+    assertLegacyTransition(missingChild, preface.articles, preface.existing, preface.relative),
+  )
+})
+
+test("legacy duplicate alternatives bind exact original citations to the one reviewed event", (t) => {
+  const f = legacyTransitionFixture(t)
+  // The second section is a duplicate using the project's root URL.
+  const original = "https://example.com/second"
+  f.articles.pop()
+  f.packet.events.pop()
+  const id = f.articles[0].event_id
+  for (const row of f.packet.units) row.event_ids = row.event_ids.filter((v) => v === id)
+  f.packet.units[4].event_ids = [id]
+  f.packet.units[4].duplicate_event_review = {
+    original_read: true,
+    source_read: true,
+    same_event_checked: true,
+    dates_checked: true,
+    reason: "Direct source review confirms the same release, not another event.",
+    source_alternative_reviews: [
+      {
+        original_url: original,
+        alternative_url: f.articles[0].source_urls[0],
+        alternative_source_read: true,
+        official_source_checked: true,
+        same_event_checked: true,
+        event_date_checked: true,
+        reason: "Official dated announcement confirms this duplicate project release.",
+      },
+    ],
+  }
+  // Keep the root citation in the private original duplicate, not the source list.
+  reviseLegacyFixture(f, f.existing.body.replace("\nhttps://example.com/second", ""))
+  assert.doesNotThrow(() => assertLegacyTransition(f.packet, f.articles, f.existing, f.relative))
+  const [projection] = retrospectiveProjections(f.vault, f.articles, [], [f.packet])
+  assert.equal(
+    extractArticles({ ...parseNote(projection.content), file: f.existing.file }).length,
+    1,
+  )
+  assert.doesNotMatch(projection.content, /duplicate_event_review|example.com\/second/)
+  for (const mutate of [
+    (p) => delete p.units[4].duplicate_event_review.source_alternative_reviews,
+    (p) =>
+      (p.units[4].duplicate_event_review.source_alternative_reviews[0].original_url =
+        "https://example.com/unrelated"),
+    (p) =>
+      (p.units[4].duplicate_event_review.source_alternative_reviews[0].alternative_url =
+        "https://example.com/unapproved"),
+    (p) =>
+      (p.units[4].duplicate_event_review.source_alternative_reviews[0].official_source_checked = false),
+    (p) =>
+      (p.units[4].duplicate_event_review.source_alternative_reviews[0].same_event_checked = false),
+    (p) =>
+      (p.units[4].duplicate_event_review.source_alternative_reviews[0].event_date_checked = false),
+    (p) =>
+      p.units[4].duplicate_event_review.source_alternative_reviews.push(
+        p.units[4].duplicate_event_review.source_alternative_reviews[0],
+      ),
+  ]) {
+    const packet = structuredClone(f.packet)
+    mutate(packet)
+    assert.throws(() => assertLegacyTransition(packet, f.articles, f.existing, f.relative))
+  }
 })
 
 test("legacy official alternatives retain original citations and use only the same event's approved sources", (t) => {

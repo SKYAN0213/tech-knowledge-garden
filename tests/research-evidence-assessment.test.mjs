@@ -11,6 +11,8 @@ import { reviewEvidenceQuotes } from "../scripts/research/evidence-quote-review.
 import { loadBoundAssessment } from "../scripts/research/evidence-review-packet.mjs"
 import {
   assessmentReferences,
+  assessmentClaimContext,
+  CLAIM_SPAN_FORMAT,
   REFERENCE_PROTOCOL,
 } from "../scripts/research/assessment-references.mjs"
 
@@ -127,6 +129,94 @@ const referenceRun = (f, id = "referenced", options = {}) =>
     responseProtocol: REFERENCE_PROTOCOL,
     ...options,
   })
+
+test("claim spans share full source text without changing numbers, identity or original quotes", (t) => {
+  const f = fixture(t, {
+    text: "앞문장🙂 Example announced plans to ship 50 units in 2027. 뒷문장",
+  })
+  f.claims[0].evidence[0].quote = "Example announced plans to ship 50 units in 2027."
+  const original = JSON.stringify(f.claims)
+  const compact = assessmentClaimContext(f.claims, f.parses, CLAIM_SPAN_FORMAT)
+  const citation = compact[0].evidence[0]
+  assert.equal(citation.quote, undefined)
+  assert.equal(
+    f.parses[0].blocks[0].text.slice(citation.quote_span.start, citation.quote_span.end),
+    f.claims[0].evidence[0].quote,
+  )
+  assert.equal(citation.quote_sha256, sha256(f.claims[0].evidence[0].quote))
+  assert.equal(citation.source_version_id, f.documents[0].source_version_id)
+  assert.deepEqual(compact[0].numbers, f.claims[0].numbers)
+  assert.equal(compact[0].event_state, "planned")
+  assert.equal(compact[0].effective_period, "2027")
+  assert.equal(JSON.stringify(f.claims), original)
+  const unrelated = structuredClone(f.parses)
+  unrelated[0].source_version_id = "different-original"
+  const invalid = assessmentClaimContext(f.claims, unrelated, CLAIM_SPAN_FORMAT)
+  assert.equal(invalid[0].evidence[0].quote_span, undefined)
+  assert.equal(invalid[0].evidence[0].quote_scope, "unmatched")
+  assert.equal(invalid[0].evidence[0].quote, f.claims[0].evidence[0].quote)
+})
+
+test("six whole-block citations use one source body and smaller bounded reference requests", async (t) => {
+  const sentence = "Example announced plans to ship 50 units in 2027."
+  const f = fixture(t, { text: sentence + "\n원문 전체 맥락을 보존한다. ".repeat(250) })
+  f.claims = Array.from({ length: 6 }, (_, n) => ({
+    ...structuredClone(f.claims[0]),
+    statement: sentence,
+    claim_id: `c${n + 1}`,
+  }))
+  f.provider.executionPolicy.settings.num_ctx = 32768
+  const requests = [],
+    generate = f.provider.structured
+  f.provider.structured = async (request) => {
+    requests.push(request)
+    return generate(request)
+  }
+  const beforeClaims = JSON.stringify(f.claims)
+  await referenceRun(f, "legacy-citations", { claimsPerBatch: 6, claimEvidenceFormat: null })
+  await referenceRun(f, "compact-citations", { claimsPerBatch: 6 })
+  const [legacy, compact] = requests.map((r) => JSON.parse(r.messages[1].content))
+  assert.equal(compact.sources[0].blocks[0].text, f.parses[0].blocks[0].text)
+  assert.equal(compact.claims.length, 6)
+  assert.ok(JSON.stringify(compact).length < JSON.stringify(legacy).length * 0.5)
+  for (const c of compact.claims) {
+    const e = c.evidence[0]
+    assert.equal(e.quote, undefined)
+    assert.equal(
+      compact.sources[0].blocks[0].text.slice(e.quote_span.start, e.quote_span.end),
+      f.claims[0].evidence[0].quote,
+    )
+  }
+  const input = readJSON(f.root, "runs/compact-citations/evidence-assessment/input.json")
+  assert.equal(input.claim_evidence_format, CLAIM_SPAN_FORMAT)
+  assert.equal(JSON.stringify(f.claims), beforeClaims)
+  assert.equal(
+    (await referenceRun(f, "compact-citations", { claimsPerBatch: 6 })).generated_batches,
+    0,
+  )
+  assert.equal(f.calls(), 2)
+})
+
+test("legacy reference input resumes its exact quote request without adopting the compact format", async (t) => {
+  const f = fixture(t)
+  await referenceRun(f, "legacy-reference", { claimEvidenceFormat: null })
+  const base = "runs/legacy-reference/evidence-assessment/"
+  const files = ["input.json", "batch-1.json", "batch-1-checkpoint.json", "assessment.json"]
+  const bytes = files.map((p) => fs.readFileSync(path.join(f.root, base + p)))
+  assert.equal(readJSON(f.root, base + "input.json").claim_evidence_format, undefined)
+  f.provider.structured = async () => {
+    throw Error("No generation during replay")
+  }
+  const result = await referenceRun(f, "legacy-reference", { readOnly: true })
+  assert.equal(result.generated_batches, 0)
+  assert.equal(f.calls(), 1)
+  for (const [i, p] of files.entries())
+    assert.deepEqual(fs.readFileSync(path.join(f.root, base + p)), bytes[i])
+  await assert.rejects(
+    () => referenceRun(f, "legacy-reference", { claimEvidenceFormat: CLAIM_SPAN_FORMAT }),
+    /format changed/,
+  )
+})
 
 test("reference output resolves exact source typography and reuses immutable model response", async (t) => {
   const f = fixture(t, { text: "Example’s ‘plans’ are to ship 50 units in 2027." })

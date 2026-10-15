@@ -2,7 +2,7 @@
   "schema": "model-execution-policy/v1",
   "roles": {
     "search_plan": {
-      "model": "qwen3.8:27b-mlx",
+      "model": "gemma4:31b-mlx",
       "think": false,
       "num_ctx": 16384,
       "num_predict": 4096,
@@ -10,7 +10,7 @@
       "total_timeout_ms": 1800000
     },
     "fact_extract": {
-      "model": "qwen3.8:27b-mlx",
+      "model": "gemma4:31b-mlx",
       "think": false,
       "num_ctx": 16384,
       "num_predict": 4096,
@@ -22,7 +22,7 @@
       "evidence_quote_mode": "source_block"
     },
     "article_write": {
-      "model": "qwen3.8:27b-mlx",
+      "model": "gemma4:31b-mlx",
       "think": false,
       "num_ctx": 16384,
       "num_predict": 4096,
@@ -30,7 +30,7 @@
       "total_timeout_ms": 600000
     },
     "concept_write": {
-      "model": "qwen3.8:27b-mlx",
+      "model": "gemma4:31b-mlx",
       "think": false,
       "num_ctx": 16384,
       "num_predict": 4096,
@@ -38,8 +38,8 @@
       "total_timeout_ms": 600000
     },
     "evidence_compare": {
-      "model": "qwen3.8:27b-mlx",
-      "think": "medium",
+      "model": "gemma4:31b-mlx",
+      "think": true,
       "num_ctx": 32768,
       "num_predict": 4096,
       "call_timeout_ms": 300000,

@@ -1,5 +1,7 @@
 # Drive 원본 → GitHub 웹사이트
 
+사건 중심 개발은 [로컬 승인 인계](DRIVE_STORAGE.md#사건-중심-승인-결과의-로컬-발행-인계)까지 원격 연결과 독립적으로 진행한다. `research-publication.mjs handoff/handoff-status`는 native 승인과 원문 판본을 고정하고 검토 대기·재사용·실패를 구분하며, 업로드·OAuth·Git·배포를 실행하지 않는다. 인계의 `approval_ready`를 Drive 저장·발행·정규 운영 완료로 집계하지 않는다. 실제 전달을 재개할 때 기존 preview→명시적 release 검토→Codex Drive 커넥터→원격 raw bytes 검증→canonical import→publisher 경로를 따른다. 별도 로컬 Drive 인증은 이 개발 준비 단계의 필수 조건이 아니다.
+
 Google Drive `Projects / Tech Knowledge`가 작성 원본이다. GitHub는 검증된 사본의 변경 이력과 웹사이트를 제공한다. 최종 완료 기준은 실제 Drive 읽기, 변경 적용·중복 실행 검증, GitHub 배포 성공, 공개 사이트의 `drive-sync.json`과 원본 해시 일치다. Google 읽기 연결이 없는 상태를 자동 연동 완료로 보고하지 않는다.
 
 ## 데이터 흐름

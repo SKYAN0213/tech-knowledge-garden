@@ -3,6 +3,9 @@ import { coverageGrid } from "./discovery.mjs"
 import { sha256 } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { loadEditorialContext } from "./editorial-context.mjs"
+import { buildCollectionReport } from "./collection-report.mjs"
+import { parseResearchDate } from "./dates.mjs"
+import { sourceGeographyInventory } from "./source-recipes.mjs"
 import {
   DAILY_CONFIG,
   dailySources,
@@ -10,6 +13,75 @@ import {
   readDailyReceipts,
   verifyDailyReceipts,
 } from "./daily-scan.mjs"
+
+// A source frontier has exact native windows, rather than a seven-day daily
+// plan. Revalidate its original observations without inventing daily receipts.
+export function loadStoredReportSearchBasis(root, reference, { configFile = DAILY_CONFIG } = {}) {
+  const bytes = fs.readFileSync(safePath(root, reference?.path))
+  if (!/^[a-f0-9]{64}$/.test(reference?.sha256 || "") || sha256(bytes) !== reference.sha256)
+    throw Error("Exact stored search collection report SHA-256 required")
+  const report = JSON.parse(bytes)
+  if (
+    report.schema !== "research-collection-report/v1" ||
+    !/^[A-Za-z0-9_-]{1,100}$/.test(report.daily_run || "") ||
+    report.acquisition_basis?.kind !== "stored-source-frontier" ||
+    reference.path !== `daily/runs/${report.daily_run}/collection-reports/${reference.sha256}.json`
+  )
+    throw Error("Native stored-frontier collection report required for search")
+  const rebuilt = buildCollectionReport({ root, runId: report.daily_run })
+  if (JSON.stringify(rebuilt) !== JSON.stringify(report))
+    throw Error("Stored search collection report differs from native source evidence")
+  const frontierPath = `daily/runs/${report.daily_run}/source-frontier-inputs.json`
+  const frontierBytes = fs.readFileSync(safePath(root, frontierPath))
+  const frontier = JSON.parse(frontierBytes)
+  const observations = [...frontier.source_runs, ...frontier.held_sources]
+  const latest = observations.reduce((prior, row) => {
+    const parsed = parseResearchDate(row.observed_at)
+    if (parsed?.precision !== "timestamp")
+      throw Error("Original source observation timestamp required")
+    return !prior || parsed.instant > prior.instant ? { ...parsed, value: row.observed_at } : prior
+  }, null)
+  if (!latest) throw Error("Stored search report has no source observation")
+  const { activeRoutes } = dailySources(configFile)
+  const routes = activeRoutes.map((entry) => {
+    const row = report.routes.find((route) => route.channel_id === entry.channel_id)
+    return {
+      ...entry.route,
+      status: !row
+        ? "not_attempted"
+        : row.status === "collected"
+          ? "partial"
+          : row.status === "incomplete"
+            ? "failed"
+            : "incomplete",
+    }
+  })
+  return {
+    coverage: coverageGrid(routes),
+    reference: {
+      schema: "research-daily-search-basis/v1",
+      basis_kind: "native-stored-frontier-report",
+      daily_run: report.daily_run,
+      kst_day: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(
+        new Date(latest.instant),
+      ),
+      observation_day_basis: "latest_original_source_observation",
+      latest_source_observed_at: latest.value,
+      collection_report: { path: reference.path, sha256: reference.sha256 },
+      source_frontier: { path: frontierPath, sha256: sha256(frontierBytes) },
+      collection_status: report.status,
+      coverage_scope: report.acquisition_basis.coverage_scope,
+      failure_observations: report.missing,
+      held_observations: report.held_observations,
+      route_geography: routes.map((route) => ({
+        channel_id: route.channel_id,
+        ...sourceGeographyInventory(route),
+      })),
+      source_requests_performed: 0,
+      coverage_complete: false,
+    },
+  }
+}
 
 export function validateDailySearchCoverage(plan, summary, receipts, activeRoutes) {
   if (
@@ -66,6 +138,15 @@ export function loadDailySearchBasis(
 ) {
   if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid daily search basis run ID")
   const prefix = `daily/runs/${runId}/`
+  if (readJSON(root, prefix + "source-frontier-inputs.json")) {
+    const report = buildCollectionReport({ root, runId })
+    const digest = sha256(Buffer.from(JSON.stringify(report, null, 2) + "\n"))
+    return loadStoredReportSearchBasis(
+      root,
+      { path: prefix + `collection-reports/${digest}.json`, sha256: digest },
+      { configFile },
+    )
+  }
   const planPath = safePath(root, prefix + "plan.json")
   const summaryPath = safePath(root, prefix + "summary.json")
   const plan = readJSON(root, prefix + "plan.json")

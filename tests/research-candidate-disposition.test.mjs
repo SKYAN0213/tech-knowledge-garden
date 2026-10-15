@@ -3,19 +3,22 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { recordCandidateDisposition } from "../scripts/research/candidate-disposition.mjs"
+import {
+  recordCandidateDisposition,
+  loadCurrentCandidateDisposition,
+} from "../scripts/research/candidate-disposition.mjs"
+import { SECTORS } from "../scripts/sectors.mjs"
 import { mergeBacklog } from "../scripts/research/discovery.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 
-function fixture(t) {
+function fixture(t, body = "An evergreen overview of existing equipment.") {
   const base = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-disposition-")))
   t.after(() => fs.rmSync(base, { recursive: true, force: true }))
   const root = path.join(base, "local-ai")
   const backlogFile = path.join(base, "candidate-backlog.json")
   const url = "https://example.org/news/background-feature"
-  const body = "An evergreen overview of existing equipment."
   const id = sourceId(url)
   const bodyHash = sha256(body)
   const version = `${id}:${bodyHash}`
@@ -100,6 +103,74 @@ const apply = (f, changes = {}) =>
     backlogFile: f.backlogFile,
     ...changes,
   })
+
+test("outside-scope review preserves an actual event and is revalidated from native evidence", async (t) => {
+  const body = "A humanities teaching program signed a new funding contract."
+  const f = fixture(t, body)
+  Object.assign(f.review, {
+    decision: "outside_editorial_scope",
+    observed_event_preserved: true,
+    scope_review: {
+      full_text_read: true,
+      technical_and_corporate_axes_checked: true,
+      sectors_checked: SECTORS,
+      article_focus: "Humanities education",
+      notes: "A teaching program funding event, outside the existing technology sectors.",
+    },
+    claims_not_promoted: [
+      {
+        block_id: f.review.claims_not_promoted[0].block_id,
+        claim: "Teaching program funding contract",
+        quote: body,
+      },
+    ],
+  })
+  f.review.event_check.new_contract_or_investment = true
+  atomicWrite(f.root, "review/disposition.json", f.review)
+  await apply(f)
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  const evidence = loadCurrentCandidateDisposition(f.root, candidate)
+  assert.equal(evidence.decision, "outside_editorial_scope")
+  assert.equal(candidate.disposition.resolution_run, "decision")
+  assert.equal(
+    readJSON(f.root, "review/disposition.json").event_check.new_contract_or_investment,
+    true,
+  )
+  assert.equal(candidate.event_id, undefined)
+  const before = fs.readFileSync(f.backlogFile)
+  await apply(f)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+  atomicWrite(f.root, "review/disposition.json", { ...f.review, reviewer: "changed" })
+  assert.throws(() => loadCurrentCandidateDisposition(f.root, candidate), /native evidence/)
+})
+
+test("outside-scope reviews require all sectors, both axes, preserved events and exact quotations", async (t) => {
+  for (const defect of ["sectors", "axes", "events", "quote"]) {
+    await t.test(defect, async (t) => {
+      const f = fixture(t)
+      Object.assign(f.review, {
+        decision: "outside_editorial_scope",
+        observed_event_preserved: true,
+        scope_review: {
+          full_text_read: true,
+          technical_and_corporate_axes_checked: true,
+          sectors_checked: SECTORS,
+          article_focus: "Unrelated background",
+          notes: "Direct full-text scope comparison.",
+        },
+      })
+      f.review.claims_not_promoted[0].quote = "An evergreen overview"
+      if (defect === "sectors") f.review.scope_review.sectors_checked = SECTORS.slice(1)
+      if (defect === "axes") f.review.scope_review.technical_and_corporate_axes_checked = false
+      if (defect === "events") f.review.observed_event_preserved = false
+      if (defect === "quote") f.review.claims_not_promoted[0].quote = "A nonexistent new event"
+      atomicWrite(f.root, "review/disposition.json", f.review)
+      await assert.rejects(apply(f), /Outside-scope|missing source block/)
+      assert.equal(fs.existsSync(f.backlogFile), false)
+    })
+  }
+})
 
 test("source-bound background decision closes only its candidate and survives rediscovery", async (t) => {
   const f = fixture(t)
@@ -327,4 +398,39 @@ test("disposition refuses changed evidence, an invented block, a published URL a
   const before = fs.readFileSync(f.backlogFile)
   await assert.rejects(apply(f), /verified candidate/)
   assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+})
+
+test("caption-only disposition preserves the dated observation without claiming no event occurred", async (t) => {
+  const f = fixture(t)
+  f.review.decision = "insufficient_standalone_news"
+  f.review.caption_read = true
+  f.review.standalone_details_checked = true
+  f.review.observed_event_preserved = true
+  f.review.event_check.notes =
+    "The observation is preserved privately; no standalone technical or business detail is present."
+  f.review.claims_not_promoted[0].quote = "An evergreen overview of existing equipment."
+  atomicWrite(f.root, "review/disposition.json", f.review)
+  await apply(f)
+  const closed = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(closed.disposition.decision, "insufficient_standalone_news")
+  assert.equal(closed.event_id, undefined)
+  assert.equal(readJSON(f.root, "runs/source/candidates.json")[0].review_status, "unreviewed")
+  const before = fs.readFileSync(f.backlogFile)
+  await apply(f)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+})
+
+test("caption-only disposition rejects absent reading checks and invented observation quotes", async (t) => {
+  for (const condition of ["checks", "quote"])
+    await t.test(condition, async (t) => {
+      const f = fixture(t)
+      f.review.decision = "insufficient_standalone_news"
+      f.review.caption_read = condition !== "checks"
+      f.review.standalone_details_checked = true
+      f.review.observed_event_preserved = true
+      f.review.claims_not_promoted[0].quote = "Invented event observation"
+      atomicWrite(f.root, "review/disposition.json", f.review)
+      await assert.rejects(apply(f), /Caption-only|missing source block/)
+      assert.equal(readJSON(f.root, "runs/decision/candidate-disposition.json"), null)
+    })
 })

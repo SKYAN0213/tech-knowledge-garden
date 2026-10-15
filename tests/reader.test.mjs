@@ -12,6 +12,13 @@ import remarkParse from "remark-parse"
 import { GitHubFlavoredMarkdown } from "@quartz-community/github-flavored-markdown"
 import { markdownProse, markdownProseText } from "../scripts/explanations.mjs"
 
+test("canonical specialist validation accepts omitted sections and rejects broken content", () => {
+  const result = spawnSync("python3", ["tests/test_encyclopedia_sections.py"], {
+    encoding: "utf8",
+  })
+  assert.equal(result.status, 0, result.stderr || result.stdout)
+})
+
 test("approved plain identifiers retain literal underscores through production Markdown", async () => {
   const source =
     "constructor, toString, valueOf, __proto__와 snake_case를 검사한다. 10~20건과 #123을 구분한다."

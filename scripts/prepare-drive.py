@@ -18,12 +18,16 @@ import urllib.request
 import urllib.error
 from urllib.parse import urlsplit
 import zipfile
+import importlib.util
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/drive-sync'
 STAGE = Path(os.environ.get('TECH_GARDEN_DRIVE_STAGE_DIR', WORK / 'staging')).expanduser()
 DEST = '1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD'
+_storage_spec = importlib.util.spec_from_file_location('garden_cold_storage', ROOT / 'scripts/research/cold-storage.py')
+_storage = importlib.util.module_from_spec(_storage_spec)
+_storage_spec.loader.exec_module(_storage)
 
 def source_cache_dir():
     configured = os.environ.get('TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR')
@@ -47,6 +51,7 @@ def write_json(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
 
 def files(base):
+    _storage.ensure_local(base, tree=True)
     return sorted(p for p in base.rglob('*') if p.is_file() and not p.is_symlink() and p.name != '.DS_Store')
 
 def evidence_files(base):
@@ -73,11 +78,14 @@ def collect(row):
     cache = source_cache_dir()
     cache.mkdir(parents=True, exist_ok=True)
     meta = cache / (row['source_id'] + '.json')
+    _storage.ensure_local(meta)
     if meta.exists():
         previous = json.loads(meta.read_text())
         if previous.get('status') == 'captured_unreviewed':
             snapshot = cache / previous['snapshot']
-            if not snapshot.exists() or sha(snapshot.read_bytes()) != previous['sha256']:
+            reference = _storage.cold_reference(snapshot)
+            verified_cold = not snapshot.exists() and reference and reference['sha256'] == previous['sha256'] and reference['bytes'] == previous.get('bytes')
+            if not verified_cold and (not snapshot.exists() or sha(snapshot.read_bytes()) != previous['sha256']):
                 raise RuntimeError('Cached snapshot missing or changed: ' + row['source_id'])
         age = (datetime.now(timezone.utc) - datetime.fromisoformat(previous['attempted_at'])).total_seconds()
         if previous.get('status') != 'failed' or age < 86400:

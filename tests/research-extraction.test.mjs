@@ -166,6 +166,99 @@ test("numeric evidence comparison ignores English capitalization but still requi
   )
 })
 
+test("fictional scenario scope guards customer outcomes across nested headings", () => {
+  const source = parse("fictional-scope")
+  const rows = [
+    ["heading", "Use cases", "h2[1]"],
+    ["paragraph", "The following scenarios feature fictional organizations.", "p[1]"],
+    ["heading", "Financial services", "h3[1]"],
+    ["paragraph", "Octank Financial reduced evaluation time from 8 hours to 25 minutes.", "p[2]"],
+    ["heading", "Healthcare", "h3[2]"],
+    ["paragraph", "Octank Health selected a lower-cost model.", "p[3]"],
+    ["heading", "Prerequisites", "h2[2]"],
+    ["paragraph", "The tool requires read-only AWS credentials.", "p[4]"],
+  ]
+  source.blocks = rows.map(([kind, text, element], n) => ({
+    block_id: `${source.parse_id}:b${n}`,
+    kind,
+    text,
+    locator: { dom_path: `/html/body/article/${element}`, text_hash: sha256(text) },
+  }))
+  const claim = (index, statement, claim_kind = "fact") => ({
+    statement,
+    claim_kind,
+    event_state: "reported",
+    numbers: [],
+    evidence: [
+      {
+        source_id: source.source_id,
+        source_version_id: source.source_version_id,
+        parse_id: source.parse_id,
+        block_id: source.blocks[index].block_id,
+        quote: source.blocks[index].text,
+        support: "direct",
+      },
+    ],
+  })
+  for (const [index, statement, kind] of [
+    [3, "Octank Financial reduced evaluation time.", "fact"],
+    [3, "AWS reported that Octank Financial reduced evaluation time.", "attributed_fact"],
+    [5, "Octank Health selected a lower-cost model.", "fact"],
+    [
+      3,
+      "This is not a fictional customer example: Octank Financial reduced evaluation time.",
+      "fact",
+    ],
+    [3, "가상 사례가 아닌 Octank Financial은 평가 시간을 줄였다.", "fact"],
+    [3, "These are not fictional organizations: Octank Financial reduced evaluation time.", "fact"],
+  ])
+    assert.ok(
+      validateEvidence(claim(index, statement, kind), [source]).problems.includes(
+        "fictional_scenario_presented_as_observed",
+      ),
+    )
+  for (const statement of [
+    "In a fictional customer example, Octank Financial reduced evaluation time.",
+    "AWS는 가상 고객 사례에서 Octank Financial의 평가 시간을 설명했다.",
+    "The use cases feature fictional organizations, including Octank Financial.",
+    "These hypothetical companies illustrate model selection.",
+    "The fictional customer examples use illustrative workload assumptions.",
+  ])
+    assert.equal(validateEvidence(claim(3, statement), [source]).structural_pass, true)
+  assert.equal(validateEvidence(claim(7, source.blocks[7].text), [source]).structural_pass, true)
+  source.blocks[1].text = "The following examples describe actual customers."
+  source.blocks[1].locator.text_hash = sha256(source.blocks[1].text)
+  assert.equal(validateEvidence(claim(3, source.blocks[3].text), [source]).structural_pass, true)
+})
+
+test("fictional scenario guard preserves measured simulation experiments", () => {
+  const source = parse("measured-simulation")
+  source.blocks[0].text = "The study measured accuracy in a simulated environment."
+  source.blocks[0].locator.text_hash = sha256(source.blocks[0].text)
+  assert.equal(
+    validateEvidence(
+      {
+        statement: source.blocks[0].text,
+        claim_kind: "fact",
+        event_state: "reported",
+        numbers: [],
+        evidence: [
+          {
+            source_id: source.source_id,
+            source_version_id: source.source_version_id,
+            parse_id: source.parse_id,
+            block_id: source.blocks[0].block_id,
+            quote: source.blocks[0].text,
+            support: "direct",
+          },
+        ],
+      },
+      [source],
+    ).structural_pass,
+    true,
+  )
+})
+
 test("ongoing source activity cannot be marked as completed", () => {
   const source = parse("ongoing-state")
   const quote = "안랩은 지난 2013년부터 AV-TEST 평가에 꾸준히 참여하고 있고"
@@ -193,6 +286,39 @@ test("ongoing source activity cannot be marked as completed", () => {
       "ongoing_source_marked_completed",
     ),
   )
+})
+
+test("Korean capacity qualifiers retain exact particles and keep GPU allocation separate", async () => {
+  const source = parse("capacity")
+  const quote = "메모리 용량을 최대 192GB로 확대했다. 이 중 160GB는 그래픽처리장치(GPU)에 할당한다."
+  source.blocks[0].text = quote
+  source.blocks[0].locator.text_hash = sha256(quote)
+  const provider = {
+    structured: async (request) => {
+      const value = response(request)
+      value.output.claims[0].statement = "전체 메모리는 최대 192GB이며 GPU 할당은 160GB다."
+      value.output.claims[0].evidence[0].quote = quote
+      value.output.claims[0].numbers = [
+        { literal: "192GB", unit: "", condition: "메모리 용량을 최대" },
+        { literal: "160GB", unit: "", condition: "그래픽처리장치(GPU)에 할당" },
+      ]
+      return value
+    },
+  }
+  const result = await extractClaims(provider, [source], { candidate_key: "capacity-event" })
+  const claim = result.claims[0]
+  assert.equal(claim.review.structural_pass, true)
+  assert.equal(claim.review.status, "unreviewed")
+  assert.deepEqual(
+    claim.numbers.map((number) => number.literal),
+    ["192GB", "160GB"],
+  )
+  const paraphrased = structuredClone(claim)
+  paraphrased.numbers[0].condition = "메모리 용량 최대"
+  const invalid = validateEvidence(paraphrased, [source])
+  assert.equal(invalid.structural_pass, false)
+  assert.ok(invalid.problems.includes("condition_not_in_evidence"))
+  assert.ok(invalid.problems.includes("number_parts_not_in_same_evidence"))
 })
 function response(request) {
   const doc = JSON.parse(request.messages[1].content)[0],
@@ -454,6 +580,133 @@ test("research key-findings scope keeps results context and exact source identit
   assert.ok(focused.scope.documents[0].excluded_block_count > 0)
 })
 
+test("research key-findings keeps nested JATS comparisons after selected experimental setup", () => {
+  const source = researchPaper()
+  const items = [
+    ["heading", "Abstract", "/article/front/article-meta/abstract"],
+    [
+      "paragraph",
+      "We propose a risk-adaptive planning method.",
+      "/article/front/article-meta/abstract/p",
+    ],
+    ["heading", "Experimental validation and analysis", "/article/body/sec[4]/title"],
+    ["heading", "Experimental setup", "/article/body/sec[4]/sec[1]/title"],
+    ["paragraph", "Tests used 130 constructed scenarios.", "/article/body/sec[4]/sec[1]/p"],
+    ["heading", "Perception module validation", "/article/body/sec[4]/sec[2]/title"],
+    ["heading", "Model comparison", "/article/body/sec[4]/sec[2]/sec[1]/title"],
+    [
+      "table",
+      "Condition | Baseline | Proposed: high risk | 0.8246 | 0.3067",
+      "/article/body/sec[4]/sec[2]/sec[1]/table-wrap/table",
+    ],
+    ["heading", "Conclusion", "/article/body/sec[5]/title"],
+    [
+      "paragraph",
+      "The study tested a single UAV in a structured road environment.",
+      "/article/body/sec[5]/p",
+    ],
+    ["heading", "References", "/article/back/ref-list/title"],
+    ["paragraph", "Unrelated reference.", "/article/back/ref-list/ref"],
+  ]
+  source.blocks = items.map(([kind, text, xml_path], i) => ({
+    block_id: source.parse_id + ":jats-" + i,
+    kind,
+    text,
+    locator: { type: "jats", xml_path, text_hash: sha256(text) },
+  }))
+  const before = JSON.stringify(source)
+  const scope = selectExtractionScope([source], "research_key_findings")
+  const selected = source.blocks.filter((b) =>
+    scope.includedByParse.get(source.parse_id).has(b.block_id),
+  )
+  assert.deepEqual(selected, source.blocks.slice(0, 10))
+  assert.equal(JSON.stringify(source), before)
+})
+
+test("research key-findings retains selected HTML parent scope through recognized children", () => {
+  const source = researchPaper()
+  const items = [
+    ["heading", "Abstract", "h2"],
+    ["paragraph", "Study summary.", "p"],
+    ["heading", "Experiments", "h2"],
+    ["heading", "Experimental setup", "h3"],
+    ["paragraph", "Fixed test conditions.", "p"],
+    ["heading", "Ablation comparison", "h3"],
+    ["paragraph", "Comparison result retained.", "p"],
+    ["heading", "Conclusion", "h2"],
+    ["paragraph", "Single-agent validation only.", "p"],
+    ["heading", "References", "h2"],
+    ["paragraph", "Reference excluded.", "p"],
+  ]
+  source.blocks = items.map(([kind, text, tag], i) => ({
+    block_id: source.parse_id + ":html-" + i,
+    kind,
+    text,
+    locator: {
+      type: "html",
+      dom_path: "/html/body/article/" + tag + "[" + (i + 1) + "]",
+      text_hash: sha256(text),
+    },
+  }))
+  const scope = selectExtractionScope([source], "research_key_findings")
+  assert.deepEqual(
+    source.blocks.filter((b) => scope.includedByParse.get(source.parse_id).has(b.block_id)),
+    source.blocks.slice(0, 9),
+  )
+})
+
+test("research key-findings recognizes evidence and validation sections without dropping nested conditions", () => {
+  for (const heading of [
+    "6 Indirect supporting evidence for individual mechanisms",
+    "6 Empirical evidence",
+    "6 Validation studies",
+  ]) {
+    const source = parse("evidence-sections")
+    const items = [
+      ["heading", "Abstract", "h2"],
+      ["paragraph", "The paper proposes a hypothesis.", "p"],
+      ["heading", "1 Introduction", "h2"],
+      ["paragraph", "Background is excluded from the focused input.", "p"],
+      ["heading", heading, "h2"],
+      ["heading", "6.1 Mechanism validation", "h3"],
+      ["paragraph", "Method, baseline and test conditions.", "p"],
+      ["paragraph", "The measured result and comparison.", "p"],
+      ["heading", "7 Limitations", "h2"],
+      ["paragraph", "The experiments test individual mechanisms only.", "p"],
+      ["heading", "8 Conclusion", "h2"],
+      ["paragraph", "The wider hypothesis remains a hypothesis.", "p"],
+      ["heading", "References", "h2"],
+      ["paragraph", "Reference metadata.", "p"],
+    ]
+    source.blocks = items.map(([kind, text, tag], index) => ({
+      kind,
+      text,
+      block_id: `${source.parse_id}:evidence-${index}`,
+      locator: {
+        type: "html",
+        dom_path: `/html/body/article/${tag}[${index + 1}]`,
+        text_hash: sha256(text),
+      },
+    }))
+    const before = JSON.stringify(source)
+    const scope = selectExtractionScope([source], "research_key_findings")
+    assert.deepEqual(
+      source.blocks.filter((b) => scope.includedByParse.get(source.parse_id).has(b.block_id)),
+      [...source.blocks.slice(0, 2), ...source.blocks.slice(4, 12)],
+      heading,
+    )
+    assert.equal(JSON.stringify(source), before)
+    assert.equal(selectExtractionScope([source]).documents[0].included_block_count, 14)
+
+    source.blocks[4].text = "6 Related work and evidence gaps"
+    source.blocks[4].locator.text_hash = sha256(source.blocks[4].text)
+    assert.throws(
+      () => selectExtractionScope([source], "research_key_findings"),
+      /sections cannot be resolved/,
+    )
+  }
+})
+
 test("research key-findings scope supports concept-review papers without an empirical Results section", () => {
   const source = parse("review-paper")
   const sections = [
@@ -578,6 +831,35 @@ test("short source runs keep one request and exact evidence identities", async (
   assert.equal(output.claims[0].review.status, "unreviewed")
   assert.ok(output.model_artifacts.request)
   assert.equal(output.batches, undefined)
+})
+
+test("multi-source events give every source its own fact budget even when all text fits", async () => {
+  const sources = [parse("strategy-current", 2), parse("strategy-previous", 2)]
+  const before = JSON.stringify(sources)
+  const requests = []
+  const output = await extractClaims(
+    {
+      structured: async (request) => {
+        requests.push(request)
+        // A bounded model may select only the leading source in a combined
+        // request. Separate source requests must prevent that starvation.
+        return response(request)
+      },
+    },
+    sources,
+    { candidate_key: "strategy", facts_per_batch: 1 },
+  )
+  assert.deepEqual(
+    [...new Set(output.claims.flatMap((claim) => claim.evidence.map((e) => e.source_id)))],
+    sources.map((source) => source.source_id),
+  )
+  assert.ok(requests.every((request) => JSON.parse(request.messages[1].content).length === 1))
+  assert.ok(requests.every((request) => request.schema.properties.claims.maxItems === 1))
+  assert.deepEqual(
+    output.batches.flatMap((batch) => batch.block_keys),
+    ["d1b1", "d1b2", "d2b1", "d2b2"],
+  )
+  assert.equal(JSON.stringify(sources), before)
 })
 
 test("claim extraction does not classify ongoing activity as completed", async () => {
@@ -706,7 +988,7 @@ test("explicit extraction budgets preserve all blocks and control each model req
 
 test("block bounds read short dense sources completely without lifting per-batch fact or context limits", async () => {
   const sources = [parse("dense", 13, 40), parse("supplement", 3, 40)]
-  assert.equal(planExtractionBatches(sources).batches.length, 1)
+  assert.equal(planExtractionBatches(sources).batches.length, 2)
   const options = { max_blocks_per_batch: 4, input_char_budget: 20000 }
   const plan = planExtractionBatches(sources, options)
   assert.deepEqual(

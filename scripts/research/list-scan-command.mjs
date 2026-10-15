@@ -2,13 +2,13 @@ import fs from "node:fs"
 import path from "node:path"
 import { SourceFetcher } from "./fetch.mjs"
 import { registry } from "./discovery.mjs"
-import { collectionArticleProfiles, collectionBasis } from "./scan-basis.mjs"
+import { collectionArticleProfiles, collectionBasis, collectionRoute } from "./scan-basis.mjs"
 import { DEFAULT_ROOT, RunState, atomicWrite, readJSON, withLock } from "./run-state.mjs"
 import { loadStoredSourceRun, assertStoredEvidence, retainParse } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 import { sha256 } from "./contracts.mjs"
-import { verifyStoredPartialCandidates } from "./scan-evidence.mjs"
+import { verifyStoredListScan, verifyStoredDetailRepair } from "./scan-evidence.mjs"
 
 export function rssArchiveChannel(channel) {
   const { parse_options, ...listing_profile } = channel.listing_profile.fallback_archive
@@ -33,7 +33,7 @@ export function createArchiveSourceReuse(
   channel,
   basis,
   window,
-  { now = Date.now(), fetchPolicy = fetchWithPolicy, detailRepair = false } = {},
+  { now = Date.now(), fetchPolicy = fetchWithPolicy, detailRepair = false, policy_recheck_limit } = {},
 ) {
   if (!/^[A-Za-z0-9_-]+$/.test(sourceRun || "")) throw Error("Exact archive source run required")
   const previous = readJSON(root, `runs/${sourceRun}/state.json`)
@@ -56,6 +56,7 @@ export function createArchiveSourceReuse(
     until_exclusive: summary?.window?.until_exclusive,
     reuse_listing_run: summary?.listing_reused_from_run || null,
     collection_basis: old,
+    ...listScanPolicyRecheckOptions(policy_recheck_limit),
     ...(earlierReuse ? { reuse_source_run: earlierReuse.source_run?.source_run } : {}),
     ...(earlierRepair ? { repair_source_run: earlierRepair.source_run?.source_run } : {}),
   }
@@ -117,7 +118,9 @@ export function createArchiveSourceReuse(
     }
   } else stored = loadStoredSourceRun(root, sourceRun)
   if (detailRepair) {
-    verifyStoredPartialCandidates(
+    const verify =
+      summary.status === "window_scanned" ? verifyStoredListScan : verifyStoredDetailRepair
+    verify(
       root,
       {
         ...stored,
@@ -235,7 +238,15 @@ import { intakeCompletedScan, intakePartialScan } from "./scan-completion.mjs"
 
 // Used by the compatibility CLI, standalone collection CLI and daily runner.
 // Only acquisition code/settings bind collection checkpoints.
+export function listScanPolicyRecheckOptions(value) {
+  if (value === undefined) return {}
+  if (!Number.isSafeInteger(value) || value < 0 || value > 3)
+    throw Error("List policy recheck limit must be 0..3")
+  return { policy_recheck_limit: value }
+}
+
 export async function executeListScan(v) {
+  const policyOptions = listScanPolicyRecheckOptions(v["policy-recheck-limit"])
   if (
     !/^[A-Za-z0-9_-]+$/.test(v.run || "") ||
     v.channel?.length !== 1 ||
@@ -256,10 +267,15 @@ export async function executeListScan(v) {
     JSON.parse(fs.readFileSync("data/research-watchlist.json")),
     acquisition,
   )
-  const channel = routes.find((route) => route.channel_id === v.channel[0])
+  let channel = routes.find((route) => route.channel_id === v.channel[0])
   if (!channel) throw Error("Unknown channel: " + v.channel[0])
+  if (channel.collection_mode && channel.collection_mode !== "automatic")
+    throw Error("Source is not an automatic collection route: " + channel.channel_id)
   if (channel.onboarding && channel.onboarding.collection_enabled !== true)
     throw Error("Source registration is pending collection configuration: " + channel.channel_id)
+  // Permission stays above; operational registration notes must not invalidate
+  // fetch/parse checkpoints after onboarding verification or activation.
+  channel = collectionRoute(channel)
   if (
     v["reuse-source-run"] &&
     (v["reuse-source-run"] === v.run ||
@@ -290,10 +306,11 @@ export async function executeListScan(v) {
       until_exclusive: v.until,
       reuse_listing_run: v["reuse-listing-run"] || null,
       collection_basis: basis,
+      ...policyOptions,
       ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
       ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
     })
-    const fetcher = new SourceFetcher(root, { pdf_profiles: profiles })
+    const fetcher = new SourceFetcher(root, { pdf_profiles: profiles, ...policyOptions })
     await run.stage("collection-basis", basis, async () => basis)
     const scanner =
       channel.api_profile?.id === "wordpress-rest-posts-json-v1"
@@ -348,7 +365,7 @@ export async function executeListScan(v) {
           channel,
           basis,
           { since: v.since, until: v.until },
-          { now: Date.parse(run.state.started_at), detailRepair: true },
+          { now: Date.parse(run.state.started_at), detailRepair: true, ...policyOptions },
         )
       : null
     let result = await scanner(
@@ -384,7 +401,7 @@ export async function executeListScan(v) {
               since: v.since,
               until: v.until,
             },
-            { now: Date.parse(run.state.started_at) },
+            { now: Date.parse(run.state.started_at), ...policyOptions },
           )
         : null
       const fallback = await scanPathPagesRoute(

@@ -1,5 +1,7 @@
 import { sha256 } from "./contracts.mjs"
-import { draftFingerprint } from "./editor.mjs"
+import { draftFingerprint, inspectLeadRepetition } from "./editor.mjs"
+import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
+import { inspectEditorialCompleteness } from "./editorial-completeness.mjs"
 
 // Deterministic editorial checks only. Shared references are a prompt to read,
 // not a semantic duplicate verdict or a substitute for source review.
@@ -21,7 +23,10 @@ export function readerSentences(text) {
   return result
 }
 
-const day = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || "")
+const publicationDay = (value) => {
+  const date = parseResearchDate(value)
+  return date?.precision === "timestamp" ? seoulPublicationDay(value) : date?.day
+}
 function hasDate(text, date) {
   const [year, month, dateDay] = date.split("-").map(Number)
   const full = new RegExp(`(?<!\\d)${year}[./-]0?${month}[./-]0?${dateDay}(?!\\d)`)
@@ -83,13 +88,190 @@ function supportedRates(claims) {
   )
 }
 
+// Nominal amounts only: exact decimal/scaling arithmetic, never FX conversion.
+// Qualified dollar currencies remain distinct from an unqualified "$"/달러.
+const currencyAliases = {
+  KRW: ["KRW", "₩", "원", "Korean won", "won"],
+  USD: ["USD", "US$", "미국 달러", "미달러"],
+  dollar: ["$", "달러", "dollars?"],
+  EUR: ["EUR", "€", "유로", "euros?"],
+  JPY: ["JPY", "엔", "yen", "円"],
+  currency_symbol_yen_yuan: ["¥"],
+  CNY: ["CNY", "RMB", "위안", "yuan", "元"],
+  GBP: ["GBP", "£", "파운드", "pounds?"],
+  CAD: ["CAD", "CA$", "캐나다 달러"],
+  AUD: ["AUD", "AU$", "호주 달러"],
+  HKD: ["HKD", "HK$", "홍콩 달러"],
+  SGD: ["SGD", "SG$", "싱가포르 달러"],
+}
+const currencyPatterns = Object.entries(currencyAliases).map(([unit, aliases]) => ({
+  unit,
+  pattern: aliases
+    .map((alias) =>
+      alias.includes("?")
+        ? alias
+        : alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "\\s*"),
+    )
+    .join("|"),
+}))
+const currencyPattern = currencyPatterns.map((c) => c.pattern).join("|")
+const amountScalePowers = {
+  trillion: 12,
+  billion: 9,
+  million: 6,
+  thousand: 3,
+  兆: 12,
+  億: 8,
+  亿: 8,
+  万: 4,
+  조: 12,
+  천억: 11,
+  백억: 10,
+  십억: 9,
+  억: 8,
+  천만: 7,
+  백만: 6,
+  십만: 5,
+  만: 4,
+  천: 3,
+  백: 2,
+  십: 1,
+  t: 12,
+  b: 9,
+  m: 6,
+  k: 3,
+}
+const amountScalePattern = Object.keys(amountScalePowers).join("|")
+const numericPattern = "(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?"
+const amountTerm = `${numericPattern}\\s*(?:${amountScalePattern})?`
+const amountExpression = `[+−-]?${amountTerm}(?:\\s*${amountTerm})*`
+const amountPrefixPattern = new RegExp(
+  `(${currencyPattern})\\s*(${amountExpression})(?!\\d|[.,]\\d|[a-z])`,
+  "giu",
+)
+const amountSuffixPattern = new RegExp(
+  // Currency names may take Korean particles, but must not consume the start
+  // of a technical word such as "1 엔드포인트" or "1 원칙".
+  `(?<![\\d.,a-z])(${amountExpression})\\s*(${currencyPattern})(?=$|[^\\p{L}\\p{N}]|[이가은는을를의과와에로]|으로|보다|만|씩)`,
+  "giu",
+)
+function amountUnit(raw) {
+  return currencyPatterns.find((c) => new RegExp(`^(?:${c.pattern})$`, "iu").test(raw))?.unit
+}
+function amountValue(raw) {
+  const text = raw.normalize("NFKC").trim().replaceAll("−", "-"),
+    negative = text.startsWith("-"),
+    unsigned = text.replace(/^[+-]/, "")
+  const pattern = new RegExp(`(${numericPattern})\\s*(${amountScalePattern})?`, "giu")
+  const terms = [...unsigned.matchAll(pattern)]
+  if (!terms.length || unsigned.replace(pattern, "").trim()) return null
+  const numbers = terms.map((m) => {
+    const value = rateValue(m[1]),
+      [whole, fraction = ""] = value.split(".")
+    return {
+      coefficient: BigInt(whole + fraction),
+      power: (amountScalePowers[(m[2] || "").toLowerCase()] || 0) - fraction.length,
+    }
+  })
+  const power = Math.min(0, ...numbers.map((n) => n.power))
+  let digits = numbers
+    .reduce((sum, n) => sum + n.coefficient * 10n ** BigInt(n.power - power), 0n)
+    .toString()
+  if (power < 0) {
+    digits = digits.padStart(1 - power, "0")
+    digits = digits.slice(0, power) + "." + digits.slice(power)
+  }
+  return rateValue((negative ? "-" : "") + digits)
+}
+function explicitAmounts(raw) {
+  const text = raw.normalize("NFKC").replace(/https?:\/\/\S+/g, " ")
+  return [
+    ...[...text.matchAll(amountPrefixPattern)].map((m) => ({
+      unit: amountUnit(m[1]),
+      value: amountValue(m[2]),
+    })),
+    ...[...text.matchAll(amountSuffixPattern)].map((m) => ({
+      unit: amountUnit(m[2]),
+      value: amountValue(m[1]),
+    })),
+  ].filter((a) => a.unit && a.value !== null)
+}
+function supportedAmounts(claims) {
+  return new Set(
+    claims
+      .filter((c) => c.review.status === "verified")
+      .flatMap((c) => [
+        ...explicitAmounts(c.statement || "").map(rateKey),
+        ...(c.numbers || []).flatMap((n) => {
+          const declared =
+            amountUnit(n.unit.normalize("NFKC").trim()) ||
+            amountUnit(
+              n.unit
+                .normalize("NFKC")
+                .trim()
+                .replace(new RegExp(`^(?:${amountScalePattern})\\s*`, "iu"), ""),
+            )
+          if (!declared) return []
+          const literal = explicitAmounts(n.literal)
+          const amounts = literal.length ? literal : explicitAmounts(`${n.literal} ${n.unit}`)
+          return amounts.filter((a) => a.unit === declared).map(rateKey)
+        }),
+      ]),
+  )
+}
+
+// Explicit counts only. Match value and object against cited verified facts,
+// not incidental figures in source quotations. Conditions and attribution still
+// require source review; this is not a semantic entailment decision.
+const countPatterns = [
+  [
+    "person",
+    "(?:명|인)(?=$|[^\\p{L}\\p{N}]|[이가은는을를의과와에]|보다|만|씩)|people|persons?|patients?|participants?|security\\s+leaders|leaders|researchers?|employees?|workers?(?!\\s+(?:processes?|threads?|nodes?|agents?|instances?)\\b)",
+  ],
+  ["organization", "(?:개\\s*)?조직|organizations?"],
+  [
+    "company",
+    "(?:개\\s*)?(?:(?:로봇|관련|상장|국내|해외|기술|글로벌)\\s*){0,3}(?:기업|업체)|companies|firms?",
+  ],
+  ["stock", "(?:개\\s*)?종목|stocks?"],
+  ["session", "(?:개\\s*)?세션|sessions?"],
+  ["workshop", "(?:개\\s*)?(?:실습\\s*)?워크숍|(?:hands-on\\s+)?workshops?"],
+].map(([unit, pattern]) => ({
+  unit,
+  regex: new RegExp(
+    `(?<![\\d.,a-z])(${amountExpression})\\s*(?:\\+\\s*)?(?:(?:개(?:가|를)?\\s*)?(?:넘는|초과(?:의)?|이상(?:의)?|이하(?:의)?|미만(?:의)?)\\s*)?(${pattern})(?![a-z])`,
+    "giu",
+  ),
+}))
+function explicitCounts(raw) {
+  const text = raw.normalize("NFKC").replace(/https?:\/\/\S+/g, " ")
+  return countPatterns
+    .flatMap(({ unit, regex }) =>
+      [...text.matchAll(regex)].map((m) => ({ unit, value: amountValue(m[1]) })),
+    )
+    .filter((count) => count.value !== null)
+}
+function supportedCounts(claims) {
+  return new Set(
+    claims
+      .filter((c) => c.review.status === "verified")
+      .flatMap((c) => [
+        ...explicitCounts(c.statement || ""),
+        ...(c.numbers || []).flatMap((n) => explicitCounts(`${n.literal} ${n.unit}`)),
+      ])
+      .map(rateKey),
+  )
+}
+
 export function inspectReaderQuality(record, claims, { publishedAt = null } = {}) {
   const draft = record.draft
   if (record.draft_id !== draftFingerprint(draft, record.deep_context))
     throw Error("Reader quality requires the exact draft")
   const lead = draft.lead.map((s) => s.text).join(" ")
   const leadSentences = readerSentences(lead)
-  const findings = []
+  const findings = inspectLeadRepetition(draft)
+  const completeness = inspectEditorialCompleteness(record, claims)
+  if (completeness) findings.push(...completeness.findings)
   const add = (code, severity, locations, details = {}) =>
     findings.push({ code, severity, locations, ...details })
   if (leadSentences.length < 2 || leadSentences.length > 4)
@@ -97,15 +279,17 @@ export function inspectReaderQuality(record, claims, { publishedAt = null } = {}
   if ([...lead].length > 900)
     add("lead_length", "block", ["lead"], { actual: [...lead].length, max: 900 })
   const references = new Set(draft.lead.flatMap((s) => s.claim_ids))
+  const sourceDates = [
+    publishedAt,
+    ...claims
+      .filter((c) => references.has(c.claim_id) && c.review.status === "verified")
+      .map((c) => c.published_at),
+  ]
+    .map(publicationDay)
+    .filter(Boolean)
   const dates = [
     ...new Set(
-      [
-        publishedAt,
-        draft.facts.when,
-        ...claims
-          .filter((c) => references.has(c.claim_id) && c.review.status === "verified")
-          .map((c) => c.published_at),
-      ].filter(day),
+      sourceDates.length ? sourceDates : [publicationDay(draft.facts.when)].filter(Boolean),
     ),
   ]
   if (dates.length && !dates.some((date) => hasDate(lead, date)))
@@ -155,6 +339,24 @@ export function inspectReaderQuality(record, claims, { publishedAt = null } = {}
     })),
   ]
   for (const location of rateLocations) {
+    const countFacts = supportedCounts(citedClaims(location.claim_ids))
+    const unknownCounts = explicitCounts(location.text).filter(
+      (count) => !countFacts.has(rateKey(count)),
+    )
+    if (unknownCounts.length)
+      add("unsupported_count", "block", [location.location], {
+        values: [...new Map(unknownCounts.map((c) => [rateKey(c), c])).values()],
+        claim_ids: location.claim_ids,
+      })
+    const amountFacts = supportedAmounts(citedClaims(location.claim_ids))
+    const unknownAmounts = explicitAmounts(location.text).filter(
+      (amount) => !amountFacts.has(rateKey(amount)),
+    )
+    if (unknownAmounts.length)
+      add("unsupported_amount", "block", [location.location], {
+        values: [...new Map(unknownAmounts.map((a) => [rateKey(a), a])).values()],
+        claim_ids: location.claim_ids,
+      })
     const allowed = supportedRates(citedClaims(location.claim_ids))
     const unsupported = explicitRates(location.text).filter((rate) => !allowed.has(rateKey(rate)))
     if (unsupported.length)
@@ -172,6 +374,7 @@ export function inspectReaderQuality(record, claims, { publishedAt = null } = {}
     findings,
     blocked: findings.some((f) => f.severity === "block"),
     requires_repetition_review: findings.some((f) => f.severity === "review"),
+    ...(completeness ? { completeness } : {}),
     candidate_published: false,
   }
 }
@@ -189,4 +392,6 @@ export function assertReaderQuality(report, decision) {
     decision.reader_quality_review?.repetition_checked !== true
   )
     throw Error("Explicit repetition review required for shared lead/explanation facts")
+  if (report.completeness && !decision.completeness_review)
+    throw Error("Explicit important fact coverage review required for this exact draft")
 }

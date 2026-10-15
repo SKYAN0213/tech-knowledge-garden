@@ -13,6 +13,7 @@ import {
   loadNoteApproval,
   loadAppliedNoteApproval,
   loadReferencedNoteApproval,
+  loadHistoricalNoteApproval,
 } from "../scripts/research/note-review.mjs"
 import { main } from "../scripts/research.mjs"
 
@@ -189,6 +190,36 @@ function creation(f) {
   }
   return { ...f.decision, schema: "knowledge-note-review/v2", notes: [note] }
 }
+
+test("v2 concept creation omits unsupported optional sections but retains definition and exact sources", (t) => {
+  const f = fixture(t),
+    decision = creation(f)
+  const meta = parseNote(decision.notes[0].content).meta
+  const definition = "## 한 문장 정의\n\n관측과 행동을 함께 학습하는 모델이다."
+  const mechanism = "## 작동 원리\n\n관측과 행동을 공동 학습한다."
+  const sources = `## 출처\n\n[원문](${f.doc.original_url})`
+  const body = `${definition}\n\n${mechanism}\n\n${sources}`
+  const make = (content) => ({
+    ...decision,
+    notes: [{ ...decision.notes[0], content: noteText(meta, `# ${meta.title}\n\n${content}\n`) }],
+  })
+  const result = evaluateNoteReview(f.root, make(body), { vault: f.vault })
+  assert.ok(result.notes[0].content.includes(mechanism))
+  assert.ok(!result.notes[0].content.includes("없음"))
+  for (const invalid of [
+    `${mechanism}\n\n${sources}`,
+    `${definition}\n\n${mechanism}`,
+    `${sources}\n\n${definition}`,
+    `${definition}\n\n${definition}\n\n${sources}`,
+    `${definition}\n\n## 알 수 없는 제목\n\n설명.\n\n${sources}`,
+    `${definition}\n\n## 작동 원리\n\n${sources}`,
+    `${definition}\n\n## 범위\n\n포함 항목만 있다.\n\n${sources}`,
+  ])
+    assert.throws(
+      () => evaluateNoteReview(f.root, make(invalid), { vault: f.vault }),
+      /canonical concept/,
+    )
+})
 
 test("v2 creates a source-bound private approval without an artificial authority note and keeps v1 bytes", async (t) => {
   const f = fixture(t),
@@ -650,6 +681,67 @@ test("exact applied creations are readable while creation absence remains mandat
   assert.deepEqual(loadReferencedNoteApproval(f.root, "created", options), pending)
   assert.throws(() => loadNoteApproval(f.root, "created", options), /already exists/)
   await assert.rejects(approveNoteReview(f.root, "new-write", decision, options), /already exists/)
+})
+
+test("historical note reads preserve native creation and replacement proofs after canonical changes", async (t) => {
+  const f = fixture(t),
+    options = { vault: f.vault },
+    created = creation(f)
+  await approveNoteReview(f.root, "created-history", created, options)
+  await approveNoteReview(f.root, "replaced-history", f.decision, options)
+  const original = ["created-history", "replaced-history"].map((run) =>
+    loadReferencedNoteApproval(f.root, run, options),
+  )
+  atomicWrite(f.vault, created.notes[0].path, created.notes[0].content + "Later definition")
+  atomicWrite(f.vault, f.relative, f.decision.notes[0].content + "Later definition")
+  // An alias introduced today cannot invalidate yesterday's preserved evidence.
+  atomicWrite(
+    f.vault,
+    "Knowledge/Later Alias.md",
+    noteText({ ...f.meta, concept_id: "later-alias", title: "Later Alias" }, "Later content"),
+  )
+  for (const [index, run] of ["created-history", "replaced-history"].entries()) {
+    assert.deepEqual(loadHistoricalNoteApproval(f.root, run, options), original[index])
+    assert.throws(() => loadReferencedNoteApproval(f.root, run, options))
+    assert.throws(() => loadAppliedNoteApproval(f.root, run, options))
+  }
+  await assert.rejects(approveNoteReview(f.root, "rewrite-history", f.decision, options))
+  fs.rmSync(path.join(f.vault, "Knowledge"), { recursive: true })
+  for (const [index, run] of ["created-history", "replaced-history"].entries())
+    assert.deepEqual(loadHistoricalNoteApproval(f.root, run, options), original[index])
+})
+
+test("historical note reads reject changed native before bytes, review decisions and source evidence", async (t) => {
+  for (const corrupt of [
+    (f, stored) => {
+      stored.notes[0].before_content += "Changed before"
+    },
+    (f, stored) => {
+      stored.notes[0].content += "Changed after"
+    },
+    (f, stored) => {
+      stored.source_files[0].files["parses.json"] = "0".repeat(64)
+    },
+    (f, stored) => {
+      stored.candidate_published = true
+    },
+    (f) => {
+      const decision = readJSON(f.root, "runs/history/note-review.json")
+      decision.connections_checked = false
+      atomicWrite(f.root, "runs/history/note-review.json", decision)
+    },
+    (f) => {
+      atomicWrite(f.root, f.doc.body_path, "Changed original source")
+    },
+  ]) {
+    const f = fixture(t),
+      options = { vault: f.vault }
+    await approveNoteReview(f.root, "history", f.decision, options)
+    const stored = readJSON(f.root, "runs/history/approved-notes.json")
+    corrupt(f, stored)
+    atomicWrite(f.root, "runs/history/approved-notes.json", stored)
+    assert.throws(() => loadHistoricalNoteApproval(f.root, "history", options))
+  }
 })
 
 test("applied reads reject partial batches, drift and symlinks without changing saved receipts", async (t) => {

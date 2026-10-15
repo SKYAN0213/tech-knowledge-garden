@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import { parseArgs } from "node:util"
-import { Ollama, localOllamaURL } from "./research/ollama.mjs"
-import { prepareRoleProvider, resolveRolePolicy } from "./research/model-policy.mjs"
+import { prepareRoleProvider } from "./research/model-policy.mjs"
+import { createModelProvider } from "./research/model-provider.mjs"
 import { DEFAULT_ROOT, readJSON, withLock } from "./research/run-state.mjs"
 import { loadStoredSourceRun } from "./research/parser.mjs"
 import { assessEvidenceCheckpoint } from "./research/evidence-assessment.mjs"
@@ -27,10 +27,8 @@ try {
     const claims = readJSON(root, `runs/${values["source-run"]}/claims.json`)?.claims
     if (!claims?.length) throw Error("Stored extracted candidate claims required")
     const policy = JSON.parse(fs.readFileSync(values["model-policy"], "utf8"))
-    if (resolveRolePolicy(policy, "evidence_compare").provider !== "ollama")
-      throw Error("Evidence review CLI requires the configured local Ollama provider")
     const provider = await prepareRoleProvider(
-      new Ollama({ url: localOllamaURL() }),
+      createModelProvider(policy, "evidence_compare", { root, run: values.run }),
       policy,
       "evidence_compare",
       {

@@ -5,6 +5,7 @@ import { sha256 } from "./contracts.mjs"
 import { assertReviewDate, samePublicationDate } from "./dates.mjs"
 import { loadApprovedOntologyInput } from "./ontology.mjs"
 import { articleContentFingerprint, loadStoredSourceRun } from "./parser.mjs"
+import { loadCurrentCandidateApproval } from "./candidate-approval.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const hash = (value) => sha256(JSON.stringify(value))
@@ -18,7 +19,12 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
   const review = JSON.parse(reviewBytes)
   if (
     review.schema !== "research-source-revision-resolution-review/v1" ||
-    !["restore_primary", "replace_approval", "confirm_related_source"].includes(review.action) ||
+    ![
+      "restore_primary",
+      "restore_equivalent_primary",
+      "replace_approval",
+      "confirm_related_source",
+    ].includes(review.action) ||
     !validRun(review.prior_approved_run) ||
     !validRun(review.current_source_run) ||
     !validRun(review.candidate_key) ||
@@ -193,7 +199,7 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
             ? { ...o, decision: "reviewed_publisher_record_alias", resolution_run: runId }
             : o,
         )
-      } else if (review.action === "restore_primary") {
+      } else if (["restore_primary", "restore_equivalent_primary"].includes(review.action)) {
         if (review.publication_time_revision_run)
           throw Error("Publication precision upgrade requires a replacement approval")
         if (review.new_approved_run) throw Error("Primary restoration cannot replace approval")
@@ -208,25 +214,55 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
         const alias = candidate.source_record_aliases?.find(
           (a) => canonicalURL(a.source_url) === canonicalURL(observedDoc.original_url),
         )
+        const equivalent = review.action === "restore_equivalent_primary"
+        const equivalentSource =
+          equivalent &&
+          primaryParse &&
+          primaryDoc &&
+          candidate.review_status === "verified" &&
+          !candidate.source_revision_alert &&
+          !candidate.disposition &&
+          !candidate.identity &&
+          canonicalURL(primaryDoc.original_url) === canonicalURL(observedDoc.original_url) &&
+          primaryDoc.source_id === observedDoc.source_id &&
+          primaryParse.title === observedParse.title &&
+          primaryParse.dates?.published_at === observedParse.dates?.published_at &&
+          JSON.stringify(primaryParse.blocks.map((block) => block.text)) ===
+            JSON.stringify(observedParse.blocks.map((block) => block.text)) &&
+          articleContentFingerprint(primaryParse) === articleContentFingerprint(observedParse)
         if (
           !primaryDoc ||
           !primaryParse ||
-          !alias ||
-          primaryDoc.source_id === observedDoc.source_id ||
+          (equivalent
+            ? !equivalentSource
+            : !alias || primaryDoc.source_id === observedDoc.source_id) ||
           candidate.source_urls?.length !== 1 ||
           canonicalURL(primaryDoc.original_url) !== canonicalURL(candidate.source_urls[0]) ||
           articleContentFingerprint(primaryParse) !== candidate.approval.article_content_sha256 ||
-          !candidate.discovery?.some(
-            (d) =>
-              d.publisher_id === alias.publisher_id &&
-              d.profile_id === alias.profile_id &&
-              d.source_item_id === alias.source_item_id,
-          ) ||
+          (!equivalent &&
+            !candidate.discovery?.some(
+              (d) =>
+                d.publisher_id === alias.publisher_id &&
+                d.profile_id === alias.profile_id &&
+                d.source_item_id === alias.source_item_id,
+            )) ||
           !samePublicationDate(primaryParse.dates.published_at, observedParse.dates.published_at)
         )
           throw Error(
-            "Primary restoration requires an exact approved source and explicit publisher record alias",
+            equivalent
+              ? "Equivalent restoration requires unchanged approved title, body, date and source"
+              : "Primary restoration requires an exact approved source and explicit publisher record alias",
           )
+        if (
+          equivalent &&
+          !(await loadCurrentCandidateApproval(root, {
+            ...candidate,
+            article_source_version_id: primaryDoc.source_version_id,
+            article_parse_id: primaryParse.parse_id,
+            article_content_sha256: articleContentFingerprint(primaryParse),
+          }))
+        )
+          throw Error("Equivalent restoration requires a native prior approval")
         next.source_observation_history = [
           ...(next.source_observation_history || []),
           {
@@ -234,21 +270,23 @@ export async function resolveSourceRevision({ root, runId, backlogFile, reviewPa
             parse_id: before.article_parse_id,
             article_content_sha256: before.article_content_sha256,
             observed_at: before.article_observed_at,
+            ...(equivalent ? { basis: "same_approved_content" } : {}),
             resolution_run: runId,
           },
         ]
-        next.related_source_observations = [
-          ...(next.related_source_observations || []),
-          {
-            source_url: observedDoc.original_url,
-            article_source_version_id: observedDoc.source_version_id,
-            article_parse_id: observedParse.parse_id,
-            article_content_sha256: before.article_content_sha256,
-            observed_at: observedDoc.observed_at,
-            decision: "reviewed_publisher_record_alias",
-            resolution_run: runId,
-          },
-        ]
+        if (!equivalent)
+          next.related_source_observations = [
+            ...(next.related_source_observations || []),
+            {
+              source_url: observedDoc.original_url,
+              article_source_version_id: observedDoc.source_version_id,
+              article_parse_id: observedParse.parse_id,
+              article_content_sha256: before.article_content_sha256,
+              observed_at: observedDoc.observed_at,
+              decision: "reviewed_publisher_record_alias",
+              resolution_run: runId,
+            },
+          ]
         next.article_source_version_id = primaryDoc.source_version_id
         next.article_parse_id = primaryParse.parse_id
         next.article_content_sha256 = articleContentFingerprint(primaryParse)

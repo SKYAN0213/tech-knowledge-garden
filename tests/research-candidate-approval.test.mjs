@@ -5,8 +5,23 @@ import os from "node:os"
 import path from "node:path"
 import { canonicalURL } from "../scripts/garden.mjs"
 import { researchWindow } from "../scripts/research-window.mjs"
-import { verifyExistingEditorialApproval } from "../scripts/research/existing-editorial-approval.mjs"
-import { recordCandidateApproval } from "../scripts/research/candidate-approval.mjs"
+import {
+  verifyExistingEditorialApproval,
+  loadExistingEditorialRevision,
+} from "../scripts/research/existing-editorial-approval.mjs"
+import {
+  loadApprovedOntologyInput,
+  projectEvidenceOntology,
+  extendEvidenceOntology,
+} from "../scripts/research/ontology.mjs"
+import { ontologyKnowledgeIndex } from "../scripts/research/ontology-knowledge.mjs"
+import {
+  recordCandidateApproval,
+  loadCurrentCandidateApproval,
+  resolveFrozenCandidateApproval,
+} from "../scripts/research/candidate-approval.mjs"
+import { processDailyQueue } from "../scripts/research/daily-processing-queue.mjs"
+import { advanceDailyCore } from "../scripts/research/daily-core.mjs"
 import { resolveSourceRevision } from "../scripts/research/source-revision-resolution.mjs"
 import { archiveClosure } from "../scripts/research/archive-closure.mjs"
 import { registerArchiveLocation } from "../scripts/research/archive-locations.mjs"
@@ -17,6 +32,7 @@ import { approvedArticle } from "../scripts/research/publish-adapter.mjs"
 import { articleContentFingerprint } from "../scripts/research/parser.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { selectCandidateSource } from "../scripts/research/editorial-handoff.mjs"
+import { importNativeApproval } from "../scripts/research/native-approval-import.mjs"
 
 function fixture(
   t,
@@ -195,6 +211,325 @@ function link(f, more = {}) {
     ...more,
   })
 }
+
+test("native editorial revision preserves an identical undated supplementary source", async (t) => {
+  const f = fixture(t)
+  const document = {
+    ...f.document,
+    source_id: sourceId("https://example.org/technical-background"),
+    original_url: "https://example.org/technical-background",
+    final_url: "https://example.org/technical-background",
+  }
+  document.source_version_id = document.source_id + ":" + document.body_sha256
+  document.body_path = `documents/${document.source_id}/${document.body_sha256}/body.bin`
+  const parse = structuredClone(readJSON(f.root, "runs/approved/parses.json")[0])
+  parse.source_id = document.source_id
+  parse.source_version_id = document.source_version_id
+  parse.parse_id = sha256("undated supplementary parse")
+  parse.title = "Technical background"
+  parse.dates.published_at = null
+  parse.blocks[0].block_id = parse.parse_id + ":b1"
+  atomicWrite(f.root, document.body_path, fs.readFileSync(path.join(f.root, f.document.body_path)))
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  const documents = [...readJSON(f.root, "runs/approved/documents.json"), document]
+  const parses = [...readJSON(f.root, "runs/approved/parses.json"), parse]
+  atomicWrite(f.root, "runs/approved/documents.json", documents)
+  atomicWrite(f.root, "runs/approved/parses.json", parses)
+  await link(f)
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  const reviewPath = "runs/editorial-link/review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-existing-editorial-approval-review/v1",
+    candidate_key: candidate.key,
+    event_id: f.article.event_id,
+    approved_run: "revised",
+    prior_approved_run: "approved",
+    expected_candidate_sha256: sha256(JSON.stringify(candidate)),
+    decision: "attach_reverified_approval",
+    reviewer: "fixture reviewer",
+    reviewed_at: "2026-10-01",
+    reason: "Exact existing article and both stored source documents checked.",
+    source_read: true,
+    prior_article_read: true,
+    article_read: true,
+    identity_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+    prior_article_sha256: sha256(JSON.stringify(f.article)),
+    article_sha256: sha256(JSON.stringify(f.article)),
+  })
+  const args = {
+    root: f.root,
+    runId: "editorial-link",
+    approvedRunId: "revised",
+    candidate,
+    article: f.article,
+    parses,
+    reviewPath,
+  }
+  const receipt = await verifyExistingEditorialApproval(args)
+  assert.equal(receipt.prior_approved_run, "approved")
+  assert.equal(parses[1].dates.published_at, null, "no date manufactured for the background")
+  const dated = structuredClone(parses)
+  dated[1].dates.published_at = "2026-09-30"
+  await assert.rejects(
+    verifyExistingEditorialApproval({ ...args, parses: dated }),
+    /original text or publication date differs/,
+  )
+  const changed = structuredClone(parses)
+  changed[1].blocks[0].text = "Different technical background"
+  await assert.rejects(
+    verifyExistingEditorialApproval({ ...args, parses: changed }),
+    /original text or publication date differs/,
+  )
+})
+
+function queueForApproval(f) {
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  const handoff = {
+    schema: "research-editorial-handoff/v1",
+    daily_run: "daily",
+    pending: [
+      { ...candidate, next_route: "review-publication-time", source_evidence_state: "exact" },
+    ],
+  }
+  const handoffRef = atomicWrite(f.root, "handoff.json", handoff)
+  atomicWrite(f.root, "basis.json", {
+    daily_run: "daily",
+    handoff: { path: "handoff.json", sha256: handoffRef.sha256 },
+  })
+  const policyFile = path.join(f.root, "policy.json")
+  fs.writeFileSync(policyFile, "{}")
+  return {
+    root: f.root,
+    runId: "queue",
+    dailyRunId: "daily",
+    collectionBasis: "basis.json",
+    policyFile,
+    backlogFile: f.backlogFile,
+    vault: path.join(f.root, "vault"),
+    basisLoader: () => readJSON(f.root, "basis.json"),
+    processor: () => {
+      throw Error("Approved candidate must not invoke source processing")
+    },
+  }
+}
+
+test("resolved queues follow native editorial revision chains without rewriting completed receipts", async (t) => {
+  const f = fixture(t),
+    options = queueForApproval(f)
+  await processDailyQueue(options)
+  await link(f)
+  const queue = await processDailyQueue({ ...options, execute: true })
+  const frozen = queue.results[0].resolution
+  const queueBytes = fs.readFileSync(path.join(f.root, "runs/queue/daily-queue.json"))
+  const coreOptions = {
+    ...options,
+    runId: "core-before",
+    queueRun: "queue",
+    execute: true,
+    queueProcessor: (input) =>
+      processDailyQueue({
+        ...input,
+        basisLoader: options.basisLoader,
+        processor: options.processor,
+      }),
+    editorialProcessor: () => {
+      throw Error("Revision cannot regenerate editorial work")
+    },
+  }
+  const before = await advanceDailyCore(coreOptions)
+  let prior = "approved"
+  for (const run of ["revision-one", "revision-two"]) {
+    for (const file of [
+      "documents.json",
+      "parses.json",
+      "draft.json",
+      "reviewed-claims.json",
+      "editorial-review.json",
+      "approved-article.json",
+    ])
+      atomicWrite(f.root, `runs/${run}/${file}`, readJSON(f.root, `runs/${prior}/${file}`))
+    const candidate = JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0]
+    const reviewPath = `runs/${run}-link/review.json`
+    atomicWrite(f.root, reviewPath, {
+      schema: "research-existing-editorial-approval-review/v1",
+      candidate_key: candidate.key,
+      event_id: f.article.event_id,
+      prior_approved_run: prior,
+      approved_run: run,
+      expected_candidate_sha256: sha256(JSON.stringify(candidate)),
+      prior_article_sha256: sha256(JSON.stringify(f.article)),
+      article_sha256: sha256(JSON.stringify(f.article)),
+      reviewer: "fixture source reviewer",
+      reviewed_at: "2026-10-04",
+      reason: "Explicit same-source editorial continuation",
+      decision: "attach_reverified_approval",
+      source_read: true,
+      prior_article_read: true,
+      article_read: true,
+      identity_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      new_article: false,
+      candidate_published: false,
+    })
+    await link(f, {
+      runId: run + "-link",
+      approvedRunId: run,
+      existingEditorialReviewPath: reviewPath,
+    })
+    prior = run
+  }
+  const candidate = JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0]
+  const current = await loadCurrentCandidateApproval(f.root, candidate, { vault: options.vault })
+  assert.deepEqual(
+    resolveFrozenCandidateApproval(f.root, frozen, current, { vault: options.vault }),
+    current,
+  )
+  assert.throws(
+    () =>
+      resolveFrozenCandidateApproval(
+        f.root,
+        { ...frozen, article_sha256: "0".repeat(64) },
+        current,
+        { vault: options.vault },
+      ),
+    /approval changed/,
+  )
+  assert.throws(
+    () =>
+      resolveFrozenCandidateApproval(
+        f.root,
+        frozen,
+        { ...current, event_id: "other" },
+        { vault: options.vault },
+      ),
+    /resolution evidence changed/,
+  )
+  assert.deepEqual((await processDailyQueue({ ...options, readOnly: true })).results, queue.results)
+  const after = await advanceDailyCore({
+    ...coreOptions,
+    runId: "core-after",
+    ontologyBase: before.evidence_ontology.path,
+  })
+  const graph = readJSON(f.root, after.evidence_ontology.path)
+  assert.equal(graph.nodes.filter((n) => n.type === "Event").length, 1)
+  assert.equal(graph.inputs[0].run, "revision-two")
+  const fresh = await advanceDailyCore({ ...coreOptions, runId: "core-fresh" })
+  const freshGraph = readJSON(f.root, fresh.evidence_ontology.path)
+  assert.equal(freshGraph.inputs[0].run, "revision-two")
+  assert.equal(freshGraph.revision_history.length, 2)
+  const resumed = await advanceDailyCore({
+    ...coreOptions,
+    runId: "core-current-base",
+    ontologyBase: after.evidence_ontology.path,
+  })
+  assert.deepEqual(readJSON(f.root, resumed.evidence_ontology.path), graph)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/queue/daily-queue.json")), queueBytes)
+  const reviewPath = "runs/revision-two-link/review.json",
+    reviewBytes = fs.readFileSync(path.join(f.root, reviewPath))
+  fs.appendFileSync(path.join(f.root, reviewPath), "\n")
+  assert.throws(
+    () => resolveFrozenCandidateApproval(f.root, frozen, current, { vault: options.vault }),
+    /review changed/,
+  )
+  fs.writeFileSync(path.join(f.root, reviewPath), reviewBytes)
+})
+
+test("native approvals close frozen and newly created queues and automatically accumulate in core", async (t) => {
+  const f = fixture(t)
+  const options = queueForApproval(f)
+  await processDailyQueue(options)
+  await link(f)
+  const bytes = fs.readFileSync(f.backlogFile)
+  const result = await processDailyQueue({ ...options, execute: true, timeBudgetMs: 1 })
+  assert.equal(result.counts.resolved, 1)
+  assert.equal(result.results[0].resolution.approved_run, "approved")
+  assert.equal(result.results[0].model_calls, 0)
+  assert.deepEqual(await processDailyQueue({ ...options, execute: true }), result)
+  assert.equal(
+    (await processDailyQueue({ ...options, runId: "new-queue", execute: true })).counts.resolved,
+    1,
+  )
+  const coreOptions = {
+    ...options,
+    runId: "core",
+    queueRun: "queue",
+    execute: true,
+    queueProcessor: (input) =>
+      processDailyQueue({
+        ...input,
+        basisLoader: options.basisLoader,
+        processor: options.processor,
+      }),
+    editorialProcessor: () => {
+      throw Error("Approved candidate must not regenerate editorial work")
+    },
+  }
+  const core = await advanceDailyCore(coreOptions)
+  assert.equal(core.status, "approval_ready")
+  assert.equal(core.resolved_approval_count, 1)
+  const graph = readJSON(f.root, core.evidence_ontology.path)
+  assert.equal(graph.nodes.filter((node) => node.type === "Event").length, 1)
+  assert.equal(graph.nodes.filter((node) => node.type === "Claim").length, 1)
+  assert.deepEqual((await advanceDailyCore(coreOptions)).evidence_ontology, core.evidence_ontology)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+})
+
+test("native alternate-source approval closes its original queue and rejects altered comparison evidence", async (t) => {
+  const f = fixture(t)
+  await makeAlternativeResolution(f)
+  const options = queueForApproval(f)
+  await processDailyQueue(options)
+  await link(f, { sourceAlternativeResolutionRunId: "alternative-resolution" })
+  const candidate = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+    .candidates[0]
+  const resolution = await loadCurrentCandidateApproval(f.root, candidate)
+  assert.equal(resolution.approved_run, "approved")
+  assert.equal((await processDailyQueue({ ...options, execute: true })).counts.resolved, 1)
+  const linkPath = "runs/candidate-link/candidate-approval.json"
+  const originalLink = fs.readFileSync(path.join(f.root, linkPath))
+  const changedLink = JSON.parse(originalLink)
+  changedLink.source_alternative.published_at = "2026-09-29"
+  atomicWrite(f.root, linkPath, changedLink)
+  await assert.rejects(
+    loadCurrentCandidateApproval(f.root, candidate),
+    /alternate-source approval evidence changed/,
+  )
+  fs.writeFileSync(path.join(f.root, linkPath), originalLink)
+  const reviewPath = "runs/alternative-resolution/candidate-source-alternative-review.json"
+  const review = readJSON(f.root, reviewPath)
+  review.reason = "Changed comparison"
+  atomicWrite(f.root, reviewPath, review)
+  await assert.rejects(
+    processDailyQueue({ ...options, execute: true }),
+    /alternate-source approval evidence changed/,
+  )
+})
+
+test("native approval queue reuse cannot trust labels or changed source bytes", async (t) => {
+  const f = fixture(t)
+  const options = queueForApproval(f)
+  await processDailyQueue(options)
+  await link(f)
+  const backlog = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile))
+  const candidate = backlog.candidates[0]
+  const changed = {
+    ...candidate,
+    approval: { ...candidate.approval, article_sha256: sha256("unreviewed") },
+  }
+  await assert.rejects(loadCurrentCandidateApproval(f.root, changed), /current article or binding/)
+  atomicWrite(f.root, f.document.body_path, "Altered source bytes")
+  await assert.rejects(
+    processDailyQueue({ ...options, execute: true }),
+    /(?:Stored|Source|source|bytes)/,
+  )
+})
 
 function revisionReview(f, candidate, action, extra = {}) {
   const reviewPath = "runs/resolution/review.json"
@@ -403,6 +738,79 @@ test("explicit primary restoration preserves approved identity and the displaced
   atomicWrite(f.root, receiptPath, receipt)
   fs.appendFileSync(path.join(f.root, doc.body_path), " changed")
   await assert.rejects(resolveSourceRevision(args), /body hash mismatch/)
+})
+
+test("equivalent primary restoration repairs a broken parse binding without changing frozen approvals", async (t) => {
+  const f = fixture(t)
+  const options = queueForApproval(f)
+  await processDailyQueue(options)
+  await link(f)
+  await processDailyQueue({ ...options, execute: true })
+  const queueBytes = fs.readFileSync(path.join(f.root, "runs/queue/daily-queue.json"))
+  const c = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const original = structuredClone(c)
+  const oldParse = readJSON(f.root, "runs/approved/parses.json")[0]
+  const { doc, parse } = currentSource(f, f.document.original_url, oldParse.blocks[0].text)
+  Object.assign(c, {
+    article_source_version_id: doc.source_version_id,
+    article_parse_id: parse.parse_id,
+    article_content_sha256: articleContentFingerprint(parse),
+    article_observed_at: doc.observed_at,
+  })
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [c],
+  })
+  await assert.rejects(loadCurrentCandidateApproval(f.root, c), /source, date or parse changed/)
+  const args = revisionReview(f, c, "restore_equivalent_primary")
+  await resolveSourceRevision(args)
+  const after = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.deepEqual(after.approval, original.approval)
+  assert.equal(after.event_id, original.event_id)
+  assert.equal(after.article_parse_id, original.article_parse_id)
+  assert.equal(after.source_published_at, original.source_published_at)
+  assert.equal(after.source_observation_history[0].parse_id, parse.parse_id)
+  assert.equal(after.source_observation_history[0].basis, "same_approved_content")
+  assert.equal(after.related_source_observations, undefined)
+  await loadCurrentCandidateApproval(f.root, after)
+  await processDailyQueue({ ...options, readOnly: true })
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/queue/daily-queue.json")), queueBytes)
+  assert.equal((await resolveSourceRevision(args)).reused, true)
+})
+
+test("equivalent restoration refuses changed body, date, title, source and an unresolved revision", async (t) => {
+  for (const difference of ["body", "date", "title", "source", "alert"]) {
+    const f = fixture(t)
+    await link(f)
+    const c = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+    const text = readJSON(f.root, "runs/approved/parses.json")[0].blocks[0].text
+    const { doc, parse } = currentSource(
+      f,
+      difference === "source" ? "https://example.org/other" : f.document.original_url,
+      difference === "body" ? text + " Updated." : text,
+    )
+    if (difference === "date") parse.dates.published_at = "2026-10-01"
+    if (difference === "title") parse.title = "Changed title"
+    atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+    atomicWrite(f.root, "runs/current-source/parses.json", [parse])
+    Object.assign(c, {
+      article_source_version_id: doc.source_version_id,
+      article_parse_id: parse.parse_id,
+      article_content_sha256: articleContentFingerprint(parse),
+      article_observed_at: doc.observed_at,
+    })
+    if (difference === "alert") c.source_revision_alert = { change_basis: "content" }
+    atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+      schema: "research-candidates/v1",
+      candidates: [c],
+    })
+    const bytes = fs.readFileSync(f.backlogFile)
+    await assert.rejects(
+      resolveSourceRevision(revisionReview(f, c, "restore_equivalent_primary")),
+      /unchanged approved title, body, date and source/,
+    )
+    assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  }
 })
 
 test("approval replacement requires a freshly reviewed same-event source revision and keeps history", async (t) => {
@@ -774,6 +1182,93 @@ test("same-source revision reuses a reviewed article only when cited parsed cont
     expectedParentId: "research-folder",
   })
   assert.equal(registration.drive.raw_sha256_verified, true)
+  // A source revision must not strand later specialist/editorial corrections.
+  // Both source comparisons and the explicit same-event lineage remain native.
+  const frozen = await loadCurrentCandidateApproval(f.root, updated)
+  for (const file of [
+    "documents.json",
+    "parses.json",
+    "draft.json",
+    "reviewed-claims.json",
+    "editorial-review.json",
+    "approved-article.json",
+  ])
+    atomicWrite(
+      f.root,
+      `runs/editorial-after-source/${file}`,
+      readJSON(f.root, `runs/approved/${file}`),
+    )
+  const nextSourceReview = "runs/editorial-after-source-link/source-review.json"
+  atomicWrite(f.root, nextSourceReview, {
+    ...readJSON(f.root, reviewPath),
+    approved_run: "editorial-after-source",
+    reviewed_at: "2026-10-04",
+  })
+  const nextEditorialReview = "runs/editorial-after-source-link/editorial-review.json"
+  atomicWrite(f.root, nextEditorialReview, {
+    schema: "research-existing-editorial-approval-review/v1",
+    candidate_key: updated.key,
+    event_id: f.article.event_id,
+    prior_approved_run: "approved",
+    approved_run: "editorial-after-source",
+    expected_candidate_sha256: sha256(JSON.stringify(updated)),
+    prior_article_sha256: sha256(JSON.stringify(f.article)),
+    article_sha256: sha256(JSON.stringify(f.article)),
+    reviewer: "fixture source reviewer",
+    reviewed_at: "2026-10-04",
+    reason: "Explicit editorial continuation preserves both reviewed source versions",
+    decision: "attach_reverified_approval",
+    source_read: true,
+    prior_article_read: true,
+    article_read: true,
+    identity_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+  })
+  const continuation = {
+    root: f.root,
+    runId: "editorial-after-source-link",
+    approvedRunId: "editorial-after-source",
+    candidateKey: updated.key,
+    backlogFile: f.backlogFile,
+    existingEditorialReviewPath: nextEditorialReview,
+    candidateSourceRunId: currentRun,
+    sourceRevisionReviewPath: nextSourceReview,
+  }
+  const before = fs.readFileSync(f.backlogFile)
+  await assert.rejects(
+    recordCandidateApproval({
+      ...continuation,
+      candidateSourceRunId: null,
+      sourceRevisionReviewPath: null,
+    }),
+  )
+  assert.deepEqual(fs.readFileSync(f.backlogFile), before)
+  await recordCandidateApproval(continuation)
+  const latestCandidate = JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0]
+  assert.equal(latestCandidate.approval.reviewed_source_version_id, f.document.source_version_id)
+  assert.equal(latestCandidate.approval.source_version_id, currentVersion)
+  assert.equal(latestCandidate.approval_history[0].approval.approved_run, "approved")
+  const latest = await loadCurrentCandidateApproval(f.root, latestCandidate)
+  assert.deepEqual(resolveFrozenCandidateApproval(f.root, frozen, latest), latest)
+  const oldInput = loadApprovedOntologyInput(f.root, "approved")
+  const graph = extendEvidenceOntology(f.root, projectEvidenceOntology([oldInput]), [
+    "editorial-after-source",
+  ])
+  assert.equal(ontologyKnowledgeIndex(f.root, graph).events.length, 1)
+  const after = fs.readFileSync(f.backlogFile)
+  await recordCandidateApproval(continuation)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), after)
+  const priorSourceReview = readJSON(f.root, reviewPath)
+  atomicWrite(f.root, reviewPath, { ...priorSourceReview, source_read: false })
+  assert.throws(() => resolveFrozenCandidateApproval(f.root, frozen, latest), /revision review/)
+  atomicWrite(f.root, reviewPath, priorSourceReview)
+  const currentSourceReview = readJSON(f.root, nextSourceReview)
+  atomicWrite(f.root, nextSourceReview, { ...currentSourceReview, new_article: true })
+  await assert.rejects(loadCurrentCandidateApproval(f.root, latestCandidate), /revision review/)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), after)
 })
 
 test("legacy candidate with missing source identity is enriched from its exact approved source", async (t) => {
@@ -873,11 +1368,283 @@ test("an existing approved article can rebind identical parsed content after an 
   const bytes = fs.readFileSync(f.backlogFile)
   assert.deepEqual(await recordCandidateApproval(args), result)
   assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  assert.equal((await loadCurrentCandidateApproval(f.root, updated)).approved_run, "approved")
   parse.blocks[0].text = "A different article fact"
   parse.blocks[0].locator.text_hash = sha256(parse.blocks[0].text)
   atomicWrite(f.root, "runs/current-revision/parses.json", [parse])
   await assert.rejects(() => recordCandidateApproval(args), /Stored parse differs/)
 })
+
+async function publishedRebindFixture(t) {
+  const f = fixture(t)
+  await link(f)
+  const before = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  const document = { ...f.document, observed_at: "2026-10-02T00:00:00Z" }
+  const parse = structuredClone(readJSON(f.root, "runs/approved/parses.json")[0])
+  parse.parse_id = sha256("published-revision-parse")
+  parse.dates.observed_at = document.observed_at
+  parse.blocks = parse.blocks.map((block, i) => ({ ...block, block_id: parse.parse_id + ":b" + i }))
+  const publication = {
+    event_id: f.article.event_id,
+    edition: "Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing",
+    published_at: "2026-09-30",
+  }
+  const candidate = {
+    ...before,
+    article_parse_id: parse.parse_id,
+    publication,
+    review_status: "deferred",
+    source_revision_alert: { change_basis: "parse_version" },
+  }
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [candidate],
+  })
+  atomicWrite(f.root, `parses/${parse.parse_id}/parse.json`, parse)
+  for (const [file, data] of Object.entries({
+    "documents.json": [document],
+    "parses.json": [parse],
+    "candidates.json": [candidate],
+  }))
+    atomicWrite(f.root, "runs/published-observation/" + file, data)
+  const reviewPath = "runs/published-observation/revision-review.json"
+  atomicWrite(f.root, reviewPath, {
+    schema: "research-candidate-approval-source-revision-review/v1",
+    candidate_key: candidate.key,
+    event_id: f.article.event_id,
+    approved_run: "approved",
+    candidate_source_run: "published-observation",
+    reviewer: "fixture original-source reviewer",
+    reviewed_at: "2026-10-03",
+    source_read: true,
+    revision_read: true,
+    title_checked: true,
+    dates_checked: true,
+    numbers_checked: true,
+    new_article: false,
+    candidate_published: false,
+    same_content_reason: "Source bytes, full body and dates are unchanged.",
+    source_urls: f.article.source_urls,
+  })
+  return {
+    ...f,
+    before,
+    candidate,
+    parse,
+    args: {
+      root: f.root,
+      runId: "published-rebind",
+      approvedRunId: "approved",
+      candidateKey: candidate.key,
+      candidateSourceRunId: "published-observation",
+      sourceRevisionReviewPath: reviewPath,
+      backlogFile: f.backlogFile,
+      publishedArticles: [
+        {
+          event_id: f.article.event_id,
+          title: f.article.title,
+          published_at: publication.published_at,
+          source_urls: f.article.source_urls,
+        },
+      ],
+    },
+  }
+}
+
+test("published identical source rebind keeps its original article, event and native approval chain", async (t) => {
+  const f = await publishedRebindFixture(t)
+  const article = fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json"))
+  const result = await recordCandidateApproval(f.args)
+  const updated = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(result.candidate_published, false)
+  assert.equal(updated.event_id, f.before.event_id)
+  assert.deepEqual(updated.publication, f.candidate.publication)
+  assert.deepEqual(updated.approval_history[0].approval, f.before.approval)
+  assert.equal(updated.approval.parse_id, f.parse.parse_id)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json")),
+    article,
+  )
+  assert.equal((await loadCurrentCandidateApproval(f.root, updated)).event_id, f.article.event_id)
+  const bytes = fs.readFileSync(f.backlogFile)
+  assert.deepEqual(await recordCandidateApproval(f.args), result)
+  assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+  const archived = await archiveClosure(f.root, "published-portable", "approved", [
+    "published-rebind",
+  ])
+  assert.ok(archived.bound_runs.includes("candidate-link"))
+  fs.appendFileSync(path.join(f.root, "runs/candidate-link/candidate-approval.json"), " ")
+  await assert.rejects(
+    () => loadCurrentCandidateApproval(f.root, updated),
+    /prior native approval changed/,
+  )
+})
+
+test("published rebind uses the vault-derived edition without adding publication to the backlog", async (t) => {
+  const f = await publishedRebindFixture(t)
+  f.args.publishedArticles[0].edition = f.candidate.publication.edition
+  delete f.candidate.publication
+  atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+    schema: "research-candidates/v1",
+    candidates: [f.candidate],
+  })
+  const result = await recordCandidateApproval(f.args)
+  const updated = readJSON(path.dirname(f.backlogFile), path.basename(f.backlogFile)).candidates[0]
+  assert.equal(result.candidate_published, false)
+  assert.equal(updated.publication, undefined)
+  assert.equal((await loadCurrentCandidateApproval(f.root, updated)).event_id, f.article.event_id)
+  assert.deepEqual(await recordCandidateApproval(f.args), result)
+})
+
+for (const failure of [
+  "event",
+  "date",
+  "title",
+  "publication",
+  "missing-prior",
+  "changed-prior",
+  "no-review",
+])
+  test(`published source rebind rejects ${failure} without changing backlog or article`, async (t) => {
+    const f = await publishedRebindFixture(t)
+    if (failure === "event") f.args.publishedArticles[0].event_id = "0123456789abcdef"
+    if (failure === "date") f.args.publishedArticles[0].published_at = "2026-10-01"
+    if (failure === "title") f.args.publishedArticles[0].title = "Changed published title"
+    if (failure === "publication") {
+      delete f.candidate.publication
+      atomicWrite(path.dirname(f.backlogFile), path.basename(f.backlogFile), {
+        schema: "research-candidates/v1",
+        candidates: [f.candidate],
+      })
+    }
+    if (failure === "missing-prior")
+      fs.unlinkSync(path.join(f.root, "runs/candidate-link/candidate-approval.json"))
+    if (failure === "changed-prior") {
+      const receipt = readJSON(f.root, "runs/candidate-link/candidate-approval.json")
+      receipt.article_sha256 = "0".repeat(64)
+      atomicWrite(f.root, "runs/candidate-link/candidate-approval.json", receipt)
+    }
+    if (failure === "no-review") {
+      delete f.args.candidateSourceRunId
+      delete f.args.sourceRevisionReviewPath
+    }
+    const bytes = fs.readFileSync(f.backlogFile)
+    const article = fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json"))
+    await assert.rejects(() => recordCandidateApproval(f.args))
+    assert.deepEqual(fs.readFileSync(f.backlogFile), bytes)
+    assert.deepEqual(
+      fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json")),
+      article,
+    )
+    assert.equal(readJSON(f.root, "runs/published-rebind/candidate-approval.json"), null)
+  })
+
+test("native approval import preserves source bytes, dependencies and approval without generation", async (t) => {
+  const f = await publishedRebindFixture(t)
+  await recordCandidateApproval(f.args)
+  const root = path.join(path.dirname(f.root), "destination")
+  const options = {
+    sourceRoot: f.root,
+    root,
+    run: "native-transfer",
+    approvedRun: "approved",
+    relatedRuns: ["published-rebind"],
+  }
+  const plan = await importNativeApproval(options)
+  assert.equal(plan.status, "planned")
+  assert.equal(fs.existsSync(path.join(root, "runs")), false)
+  assert.ok(plan.bound_runs.includes("candidate-link"))
+  const result = await importNativeApproval({ ...options, execute: true })
+  assert.equal(result.status, "imported")
+  assert.equal(result.new_approval, false)
+  assert.equal(result.candidate_published, false)
+  const imported = loadApprovedOntologyInput(root, "approved")
+  assert.deepEqual(imported.file_hashes, loadApprovedOntologyInput(f.root, "approved").file_hashes)
+  for (const file of result.files)
+    assert.deepEqual(
+      fs.readFileSync(path.join(root, file.path)),
+      fs.readFileSync(path.join(f.root, file.path)),
+    )
+  const replay = await importNativeApproval({ ...options, execute: true })
+  assert.equal(replay.copied_files, 0)
+  assert.equal(replay.reused_files, result.files.length)
+  assert.equal(replay.reused, true)
+  assert.deepEqual(
+    JSON.parse(fs.readFileSync(f.backlogFile)).candidates[0].publication,
+    f.candidate.publication,
+  )
+})
+
+test("native approval import reuses identical canonical parse content across different observations", async (t) => {
+  const f = fixture(t)
+  const root = path.join(path.dirname(f.root), "destination")
+  const parse = readJSON(f.root, "runs/approved/parses.json")[0]
+  const cached = structuredClone(parse)
+  cached.dates.observed_at = "2026-09-29T00:00:00Z"
+  atomicWrite(root, `parses/${parse.parse_id}/parse.json`, cached)
+  const bytes = fs.readFileSync(path.join(root, `parses/${parse.parse_id}/parse.json`))
+  const options = {
+    sourceRoot: f.root,
+    root,
+    run: "native-transfer",
+    approvedRun: "approved",
+    execute: true,
+  }
+  const imported = await importNativeApproval(options)
+  assert.equal(imported.files.filter((f) => f.reused_parse).length, 1)
+  assert.deepEqual(fs.readFileSync(path.join(root, `parses/${parse.parse_id}/parse.json`)), bytes)
+  assert.equal(
+    loadApprovedOntologyInput(root, "approved").parses[0].dates.observed_at,
+    parse.dates.observed_at,
+  )
+  assert.equal((await importNativeApproval(options)).copied_files, 0)
+  cached.blocks[0].text = "Changed canonical source content"
+  atomicWrite(root, `parses/${parse.parse_id}/parse.json`, cached)
+  await assert.rejects(() => importNativeApproval(options), /identity collision|parse.*differs/)
+})
+
+for (const failure of [
+  "conflict",
+  "source-change",
+  "source-lock",
+  "destination-lock",
+  "symlink",
+  "running-state",
+])
+  test(`native approval import rejects ${failure} before copying or overwriting`, async (t) => {
+    const f = fixture(t)
+    const root = path.join(path.dirname(f.root), "destination")
+    const options = {
+      sourceRoot: f.root,
+      root,
+      run: "native-transfer",
+      approvedRun: "approved",
+      execute: true,
+    }
+    if (failure === "conflict")
+      atomicWrite(root, "runs/approved/approved-article.json", { preserve: true })
+    if (failure === "source-change")
+      fs.appendFileSync(path.join(f.root, f.document.body_path), "changed")
+    if (failure === "source-lock")
+      atomicWrite(f.root, "locks/run-approved.json", { preserve: true })
+    if (failure === "destination-lock")
+      atomicWrite(root, "locks/run-approved.json", { preserve: true })
+    if (failure === "running-state")
+      atomicWrite(f.root, "runs/approved/state.json", { stages: { draft: { status: "running" } } })
+    if (failure === "symlink") {
+      fs.mkdirSync(root, { recursive: true })
+      fs.symlinkSync(f.root, path.join(root, "runs"))
+    }
+    const sourceArticle = fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json"))
+    await assert.rejects(() => importNativeApproval(options))
+    assert.deepEqual(
+      fs.readFileSync(path.join(f.root, "runs/approved/approved-article.json")),
+      sourceArticle,
+    )
+    if (failure === "conflict")
+      assert.deepEqual(readJSON(root, "runs/approved/approved-article.json"), { preserve: true })
+    assert.equal(readJSON(root, "imports/native-transfer/receipt.json"), null)
+  })
 
 test("approval link rejects changed evidence, article and conflicting identity before writing", async (t) => {
   const f = fixture(t)
@@ -1200,6 +1967,32 @@ test("explicit legacy private approval linkage retains event and history and res
     fs.readFileSync(path.join(f.root, "runs/candidate-link/candidate-approval.json")),
     receipt,
   )
+})
+
+test("ontology consumes native editorial lineage and rejects altered review or source identity", async (t) => {
+  const f = existingEditorialFixture(t)
+  const previous = loadApprovedOntologyInput(f.root, "prior"),
+    current = loadApprovedOntologyInput(f.root, "approved")
+  assert.throws(
+    () => loadExistingEditorialRevision(f.root, previous, current),
+    /explicit revision review/,
+  )
+  await link(f, { existingEditorialReviewPath: f.existingReviewPath })
+  const revision = loadExistingEditorialRevision(f.root, previous, current)
+  const graph = extendEvidenceOntology(f.root, projectEvidenceOntology([previous]), ["approved"])
+  assert.deepEqual(graph.revision_history, [revision])
+  const index = ontologyKnowledgeIndex(f.root, graph)
+  assert.equal(index.events.length, 1)
+  assert.equal(index.events[0].previous_versions.length, 1)
+  assert.equal(index.events[0].article_path, index.events[0].previous_versions[0].article_path)
+  const changed = structuredClone(current)
+  changed.parses[0].blocks[0].text += " changed"
+  assert.throws(() => loadExistingEditorialRevision(f.root, previous, changed), /original text/)
+  const oldHashes = structuredClone(previous)
+  oldHashes.file_hashes["draft.json"] = "0".repeat(64)
+  assert.throws(() => loadExistingEditorialRevision(f.root, oldHashes, current), /approved inputs/)
+  atomicWrite(f.root, f.existingReviewPath, { ...f.decision, source_read: false })
+  assert.throws(() => extendEvidenceOntology(f.root, graph, []), /review changed/)
 })
 
 test("existing approval rejects missing checks, mismatched event, stale candidate and projection", async (t) => {

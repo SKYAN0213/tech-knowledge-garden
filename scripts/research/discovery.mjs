@@ -7,10 +7,10 @@ import { parseDocument } from "./parser.mjs"
 import { assertURL } from "./fetch.mjs"
 import { atomicWrite, readJSON, withLock } from "./run-state.mjs"
 import { sourceId, sha256 } from "./contracts.mjs"
-import { checkRobots } from "./robots.mjs"
-import { createRedirectAuthorizer } from "./source-policy.mjs"
+import { fetchWithPolicy } from "./source-policy.mjs"
 import { crossrefLinks, secLinks } from "./api.mjs"
 import { resolveSourceRecipe } from "./source-recipes.mjs"
+import { parseResearchDate } from "./dates.mjs"
 
 export function mergeUniqueDiscovery(...groups) {
   const seen = new Set()
@@ -67,6 +67,9 @@ export function registry(channels, watchlist, adapters = {}, recipes) {
       !["국내", "해외"].includes(c.region) ||
       !["기술·제품", "기업·운영"].includes(c.axis) ||
       (c.kind && !sourceKinds.has(c.kind)) ||
+      (c.collection_mode !== undefined &&
+        !["automatic", "discovery", "excluded"].includes(c.collection_mode)) ||
+      (c.access_policy !== undefined && c.access_policy !== "public-only") ||
       (c.onboarding !== undefined &&
         (!c.onboarding ||
           !["registered", "configured", "verified"].includes(c.onboarding.status) ||
@@ -195,13 +198,22 @@ export function coverageGrid(routes) {
             r.axis === axis,
         )
         const usable = attempts.filter((r) => r.status === "partial")
+        const pending = attempts.filter((r) => ["not_attempted", "incomplete"].includes(r.status))
+        const failed = attempts.filter((r) => r.status !== "partial" && !pending.includes(r))
         return {
           sector,
           region,
           axis,
-          status: !attempts.length ? "not_attempted" : usable.length ? "partial" : "failed",
+          status: usable.length
+            ? "partial"
+            : failed.length
+              ? "failed"
+              : pending.some((r) => r.status === "incomplete")
+                ? "incomplete"
+                : "not_attempted",
           route_ids: attempts.map((r) => r.channel_id),
-          failed_route_ids: attempts.filter((r) => r.status !== "partial").map((r) => r.channel_id),
+          failed_route_ids: failed.map((r) => r.channel_id),
+          ...(pending.length ? { pending_route_ids: pending.map((r) => r.channel_id) } : {}),
           usable_route_count: usable.length,
         }
       }),
@@ -300,17 +312,21 @@ export async function discoverChannel(root, fetcher, channel) {
       status: "failed",
       candidates: [],
     }
-  if (channel.onboarding && channel.onboarding.collection_enabled !== true)
+  if (channel.collection_mode === "excluded") return { ...record, status: "collection_excluded" }
+  if (
+    channel.collection_mode !== "discovery" &&
+    channel.onboarding &&
+    channel.onboarding.collection_enabled !== true
+  )
     return { ...record, status: "registration_pending" }
   try {
     const allowed_hosts = channel.allowed_hosts || [new URL(channel.url).hostname]
-    const policy = await checkRobots(root, fetcher, channel.url, { allowed_hosts })
-    if (!policy.allowed) return { ...record, status: "policy_blocked" }
-    fetcher.options.interval_ms = Math.max(fetcher.options.interval_ms, policy.delay_ms)
-    const document = await fetcher.fetch(channel.url, {
+    const document = await fetchWithPolicy(root, fetcher, channel.url, {
       allowed_hosts,
-      authorize_redirect: createRedirectAuthorizer(root, fetcher, allowed_hosts),
+      request_interval_ms: channel.request_interval_ms,
     })
+    record.availability = document.availability
+    if (document.policy_status === "denied") return { ...record, status: "policy_blocked" }
     record.fetch_status = document.fetch_status
     record.final_url = document.final_url
     if (document.redirect_chain?.some((hop) => hop.policy_status !== "allowed"))
@@ -340,6 +356,28 @@ export async function discoverChannel(root, fetcher, channel) {
       links = parse.links || []
       record.parse_id = parse.parse_id
       record.link_profiles = parse.link_profiles || []
+    }
+    if (channel.collection_mode === "discovery") {
+      const sourceLinks = []
+      const seen = new Set()
+      for (const link of links) {
+        try {
+          assertURL(link.url)
+          const url = canonicalURL(link.url)
+          if (!link.text?.trim() || seen.has(url)) continue
+          seen.add(url)
+          sourceLinks.push({ ...link, url })
+        } catch {
+          // A discovery page is not authority to request unsafe links.
+        }
+      }
+      return {
+        ...record,
+        status: "discovery_only",
+        source_version_id: document.source_version_id,
+        source_links: sourceLinks,
+        discovered_count: sourceLinks.length,
+      }
     }
     const candidates = candidatesFromLinks(
       links,
@@ -478,7 +516,26 @@ export async function mergeBacklog(file, candidates) {
         }
         if (c.article_source_version_id && !relatedRecord) {
           const observedAt = c.article_observed_at || c.discovered_at
-          const previousObservedAt = old.article_observed_at || old.discovered_at
+          // A search/body-link discovery time is not an earlier captured
+          // article observation. Allow the first exact stored article even
+          // when it predates discovery; keep all reviewed/versioned gates.
+          const firstUnreviewedSource =
+            old.review_status === "unreviewed" &&
+            !old.article_source_version_id &&
+            !old.disposition &&
+            !old.identity &&
+            !old.approval
+          const previousObservedAt = firstUnreviewedSource
+            ? null
+            : [
+                old.article_observed_at || old.discovered_at,
+                ...(old.source_observation_history || [])
+                  .filter((record) => record.basis === "same_approved_content")
+                  .map((record) => record.observed_at),
+              ]
+                .filter(Boolean)
+                .sort()
+                .at(-1)
           const observedMs = Date.parse(observedAt)
           const previousMs = previousObservedAt ? Date.parse(previousObservedAt) : null
           if (previousObservedAt && !Number.isFinite(previousMs))
@@ -582,9 +639,50 @@ export async function mergeBacklog(file, candidates) {
               old.source_revision_alert.current_content_sha256 = c.article_content_sha256 || null
               old.source_revision_alert.detected_at = observedAt
             }
+            // Equivalent captures are observations, not new editorial bindings.
+            // Keep the exact evidence IDs used by the native approval; later
+            // content changes still reopen review through the existing branch.
+            const preserveApprovedBinding = Boolean(
+              !changeBasis &&
+              sameApprovedSource &&
+              old.review_status === "verified" &&
+              !old.source_revision_alert &&
+              c.article_parse_id &&
+              c.article_content_sha256 &&
+              old.article_source_version_id === old.approval.source_version_id &&
+              old.article_parse_id === old.approval.parse_id &&
+              old.article_content_sha256 === old.approval.article_content_sha256,
+            )
+            if (preserveApprovedBinding) {
+              old.source_observation_history = mergeUniqueDiscovery(
+                old.source_observation_history || [],
+                [
+                  {
+                    source_version_id: c.article_source_version_id,
+                    parse_id: c.article_parse_id,
+                    article_content_sha256: c.article_content_sha256,
+                    observed_at: observedAt,
+                    basis: "same_approved_content",
+                  },
+                ],
+              )
+              if (JSON.stringify(old) !== before) changed = true
+              continue
+            }
             old.article_source_version_id = c.article_source_version_id
             old.article_observed_at = observedAt
             if (c.article_parse_id) old.article_parse_id = c.article_parse_id
+            // A body-linked discovery has no target publication date yet.
+            // Fill that unknown only from a current captured article; never
+            // replace chronology already established by an editorial review.
+            if (
+              old.review_status === "unreviewed" &&
+              old.source_published_at == null &&
+              c.article_parse_id &&
+              c.article_content_sha256 &&
+              parseResearchDate(c.source_published_at)
+            )
+              old.source_published_at = c.source_published_at
             if (c.article_content_sha256) old.article_content_sha256 = c.article_content_sha256
             else if (previousVersion !== c.article_source_version_id)
               delete old.article_content_sha256

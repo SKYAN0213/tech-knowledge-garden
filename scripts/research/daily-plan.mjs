@@ -71,6 +71,8 @@ export function validateDailyRoutes(config, routes) {
     .map((entry) => {
       const route = byId.get(entry.channel_id)
       if (!route) throw Error("Daily route is absent from registry: " + entry.channel_id)
+      if (route.collection_mode && route.collection_mode !== "automatic")
+        throw Error("Daily route is discovery-only or excluded: " + entry.channel_id)
       if (
         route.onboarding &&
         (route.onboarding.status !== "verified" || route.onboarding.collection_enabled !== true)

@@ -7,6 +7,7 @@ import zlib from "node:zlib"
 import fs from "node:fs"
 import { sha256, sourceId, sourceVersionId } from "./contracts.mjs"
 import { acquireLock, atomicWrite, readJSON, safePath } from "./run-state.mjs"
+import { retryAfterAt } from "./source-retry.mjs"
 
 export const DEFAULT_PDF_BUDGET = Object.freeze({
   pdf_bytes: 50 * 1024 ** 2,
@@ -237,15 +238,26 @@ async function sharedHostRequest(root, host, interval, timeoutMs, action) {
         previous.host !== host ||
         !Number.isInteger(previous.interval_ms) ||
         previous.interval_ms < 0 ||
-        !Number.isFinite(Date.parse(previous.last_request_at || "")))
+        !Number.isFinite(Date.parse(previous.last_request_at || "")) ||
+        (previous.retry_after_at && !Number.isFinite(Date.parse(previous.retry_after_at))))
     )
       throw Error("Host request timing record is invalid")
+    if (Date.parse(previous?.retry_after_at || "") > Date.now()) {
+      const error = Error("Host Retry-After cooldown is still active")
+      error.code = "SOURCE_HOST_COOLDOWN"
+      error.retry_after = previous.retry_after_at
+      error.observed_at = previous.last_request_at
+      throw error
+    }
     const lastRequest = previous ? Date.parse(previous.last_request_at) : 0
     const enforcedInterval = Math.max(interval, previous?.interval_ms || 0)
     await sleep(Math.max(0, lastRequest + enforcedInterval - Date.now()))
     const startedAt = new Date().toISOString()
+    let retryAt = null
     try {
-      return await action()
+      const response = await action()
+      if ([429, 503].includes(response?.status)) retryAt = retryAfterAt(response.headers?.["retry-after"])
+      return response
     } finally {
       // Keep the host lock until the actual start has been persisted, including
       // failed requests. Disk latency must not shorten the next request's gap.
@@ -254,6 +266,7 @@ async function sharedHostRequest(root, host, interval, timeoutMs, action) {
         host,
         interval_ms: enforcedInterval,
         last_request_at: startedAt,
+        ...(retryAt ? { retry_after_at: new Date(retryAt).toISOString() } : {}),
       })
     }
   } finally {
@@ -446,6 +459,9 @@ export class SourceFetcher {
               } catch (error) {
                 if (!isRetryableTransportError(error) || attempt + 1 >= attempts) throw error
               }
+              // A long server cooldown belongs in durable policy state, not a
+              // capped sleep followed by an early request.
+              if ((retryAfterAt(response?.headers?.["retry-after"]) || 0) - Date.now() > 60000) break
               if (attempt + 1 < attempts)
                 await sleep(retryDelay(response?.headers?.["retry-after"], attempt))
             }
@@ -492,6 +508,8 @@ export class SourceFetcher {
                       ? { matched_rule: authorization.matched_rule }
                       : {}),
                     ...(authorization.error ? { policy_error: authorization.error } : {}),
+                    ...(authorization.policy_failure ? { policy_failure: authorization.policy_failure } : {}),
+                    ...(authorization.availability ? { availability: authorization.availability } : {}),
                   }
                 : {}),
             })
@@ -527,6 +545,7 @@ export class SourceFetcher {
             observed_at,
             fetch_status: status,
             http_status: response.status,
+            ...(response.headers["retry-after"] ? { retry_after: response.headers["retry-after"] } : {}),
             redirect_chain,
             ...budgetRecord(),
             mime_type: response.headers["content-type"] || cache?.mime_type || null,
@@ -570,9 +589,11 @@ export class SourceFetcher {
             request_method: method,
             ...(method === "POST" ? { request_body_sha256: sha256(form) } : {}),
             final_url: current,
-            observed_at,
-            fetch_status: e.message === "BODY_TOO_LARGE" ? "too_large" : "failed",
+            observed_at: e.observed_at || observed_at,
+            fetch_status: e.code === "SOURCE_HOST_COOLDOWN" ? "rate_limited" : e.message === "BODY_TOO_LARGE" ? "too_large" : "failed",
             error: e.message,
+            ...(e.code ? { error_code: e.code } : {}),
+            ...(e.retry_after ? { retry_after: e.retry_after, request_performed: false, decision_at: observed_at } : {}),
             redirect_chain,
             ...budgetRecord(),
           }

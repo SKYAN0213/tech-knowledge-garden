@@ -35,6 +35,7 @@ function fixture(t) {
   }
   const window = { since: "2026-09-27", until: "2026-10-04" },
     channel = { channel_id: "archive", allowed_hosts: ["example.org"] }
+  basis.route_sha256 = sha256(JSON.stringify(channel))
   const input = {
     schema: "research-list-run-input/v2",
     channel_id: channel.channel_id,
@@ -60,6 +61,22 @@ function fixture(t) {
   })
   return { root, doc, basis, window, channel, now: Date.parse("2026-10-04T00:10:00Z") }
 }
+
+test("reparsing a completed archive validates complete evidence and preserves source time", async (t) => {
+  const f = fixture(t), parse_id = sha256("complete listing parse")
+  const parsed = { schema_version: "source-parse/v1", source_id: f.doc.source_id, source_version_id: f.doc.source_version_id, parse_id, status: "extracted", title: "Archive", blocks: [{ block_id: parse_id + ":1", text: "Recorded original.", locator: { text_hash: sha256("Recorded original.") } }], dates: { observed_at: f.doc.observed_at }, quality: { required_fields_present: true } }
+  storeParseArtifact(f.root, parsed)
+  atomicWrite(f.root, "runs/old/parses.json", [parsed])
+  const summary = JSON.parse(fs.readFileSync(path.join(f.root, "runs/old/list-scan.json")))
+  atomicWrite(f.root, "runs/old/list-scan.json", { ...summary, status: "window_scanned", reason: null, candidate_count: 0 })
+  atomicWrite(f.root, "runs/old/candidates.json", [])
+  const reuse = createArchiveSourceReuse(f.root, "old", f.channel, f.basis, f.window, { detailRepair: true, fetchPolicy: () => { throw Error("existing bytes must be reused") } })
+  const document = await reuse.fetchPolicy(f.root, {}, f.doc.original_url, { allowed_hosts: f.channel.allowed_hosts })
+  assert.equal(document.observed_at, f.doc.observed_at)
+  assert.equal(reuse.detailRepair, true)
+  fs.writeFileSync(path.join(f.root, f.doc.body_path), "changed")
+  assert.throws(() => createArchiveSourceReuse(f.root, "old", f.channel, f.basis, f.window, { detailRepair: true }), /body hash mismatch/)
+})
 
 test("archive source reuse verifies stored bytes, keeps original time and requests only missing URLs", async (t) => {
   const f = fixture(t),

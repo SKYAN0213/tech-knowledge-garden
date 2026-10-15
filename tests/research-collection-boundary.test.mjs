@@ -158,6 +158,9 @@ test("collection evidence ignores editorial/archive commands and still binds col
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
   for (const file of [
     ...dailySourcePaths(),
+    "scripts/research/article-image-review-cache.mjs",
+    "scripts/research/article-image-source.mjs",
+    "scripts/research/ocr-table.mjs",
     "scripts/research.mjs",
     "scripts/research/archive-closure.mjs",
     "scripts/research/editor.mjs",
@@ -187,6 +190,15 @@ test("collection evidence ignores editorial/archive commands and still binds col
     assert.ok(dailySourcePaths().includes(file))
     const previous = collectionBasis(route, [], repo)
     fs.appendFileSync(path.join(repo, file), "\n# collection change\n")
+    assert.notDeepEqual(collectionBasis(route, [], repo), previous)
+  }
+  for (const file of [
+    "scripts/research/article-image-review-cache.mjs",
+    "scripts/research/article-image-source.mjs",
+    "scripts/research/ocr-table.mjs",
+  ]) {
+    const previous = collectionBasis(route, [], repo)
+    fs.appendFileSync(path.join(repo, file), "\n// collection change\n")
     assert.notDeepEqual(collectionBasis(route, [], repo), previous)
   }
   assert.notDeepEqual(

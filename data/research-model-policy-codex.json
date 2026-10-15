@@ -1,0 +1,54 @@
+{
+  "schema": "model-execution-policy/v1",
+  "roles": {
+    "search_plan": {
+      "model": "codex",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 1800000,
+      "provider": "codex"
+    },
+    "fact_extract": {
+      "model": "codex",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 900000,
+      "input_char_budget": 20000,
+      "facts_per_batch": 6,
+      "extraction_timeout_ms": 900000,
+      "evidence_quote_mode": "source_block",
+      "provider": "codex"
+    },
+    "article_write": {
+      "model": "codex",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 600000,
+      "provider": "codex"
+    },
+    "concept_write": {
+      "model": "codex",
+      "think": false,
+      "num_ctx": 16384,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 600000,
+      "provider": "codex"
+    },
+    "evidence_compare": {
+      "model": "codex",
+      "think": "medium",
+      "num_ctx": 32768,
+      "num_predict": 4096,
+      "call_timeout_ms": 300000,
+      "total_timeout_ms": 900000,
+      "provider": "codex"
+    }
+  }
+}

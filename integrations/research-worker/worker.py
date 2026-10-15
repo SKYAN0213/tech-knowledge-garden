@@ -5,6 +5,7 @@ import copy
 import hashlib
 import importlib.metadata
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -84,6 +85,33 @@ def source_date_value(value):
     return value
 
 
+def publication_timestamp_value(value):
+    """Normalize only an explicit ISO/RFC2822 offset; keep raw text in basis."""
+    iso = source_date_value(value)
+    if iso is not None and "T" in iso:
+        return iso
+    if not isinstance(value, str) or len(value) > 64:
+        return None
+    match = re.fullmatch(
+        r"(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{1,2}) "
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
+        r"(\d{4}) (\d{2}):(\d{2}):(\d{2}) (GMT|[+-]\d{4})", value,
+    )
+    if not match:
+        return None
+    offset = "+0000" if match[8] == "GMT" else match[8]
+    if int(offset[1:3]) > 23 or int(offset[3:]) > 59:
+        return None
+    try:
+        normalized = value.rsplit(" ", 1)[0] + " " + offset
+        stamp = datetime.strptime(normalized, "%a, %d %b %Y %H:%M:%S %z")
+        if stamp.strftime("%a") != match[1]:
+            return None
+        return stamp.isoformat(timespec="seconds").replace("+00:00", "Z")
+    except ValueError:
+        return None
+
+
 def checked_path(root, relative):
     rel = Path(relative)
     if rel.is_absolute() or ".." in rel.parts:
@@ -120,7 +148,13 @@ def presentation_math_text(node, preserve_bold=False):
     }
     if preserve_bold:
         variant_commands["bold"] = "mathbf"
+        variant_commands["bold-italic"] = "boldsymbol"
+        variant_commands["bold-script"] = "boldsymbol"
     if variant and variant not in variant_commands:
+        return None
+    # A token's bold italic vector is distinct from an upright bold symbol.
+    # Container-level style inheritance needs a separate implementation.
+    if variant in ("bold-italic", "bold-script") and tag not in ("mi", "mn", "mo", "mtext"):
         return None
     if tag == "mspace":
         width = node.get("width", "")
@@ -137,6 +171,10 @@ def presentation_math_text(node, preserve_bold=False):
             if tag == "mtext" and (node.text or "").strip() == "":
                 return "\\,"
             return None
+        if variant == "bold-italic":
+            return f"\\boldsymbol{{\\mathit{{{value}}}}}"
+        if variant == "bold-script":
+            return f"\\boldsymbol{{\\mathcal{{{value}}}}}"
         return f"\\{variant_commands[variant]}{{{value}}}" if variant else value
     if tag == "semantics":
         presentation = [child for child in children if math_local_name(child) not in ("annotation", "annotation-xml")]
@@ -544,11 +582,114 @@ def nextjs_page_data_article(dom, url, options):
     return result
 
 
+def html_table_layout(node, tree, budget):
+    """Retain source cells and bounded span coordinates without approving numbers."""
+    row_nodes = [row for row in node.iter() if math_local_name(row) in ("tr", "row")
+                 and next((parent for parent in row.iterancestors()
+                           if math_local_name(parent) == "table"), None) is node]
+    if len(row_nodes) > 1000:
+        raise ValueError("HTML table row budget exceeded")
+    source_cells = []
+    groups = []
+    count = 0
+    for row_index, row in enumerate(row_nodes):
+        group = next((parent for parent in row.iterancestors()
+                      if parent is node or math_local_name(parent) in ("thead", "tbody", "tfoot")), node)
+        groups.append(group)
+        values = []
+        for cell in row:
+            if math_local_name(cell) not in ("td", "th", "cell"):
+                continue
+            count += 1
+            if count > 10000:
+                raise ValueError("HTML table source cell budget exceeded")
+            values.append({"text": clean(" ".join(cell.itertext())), "dom_path": tree.getpath(cell),
+                           "source_row": row_index, "header": math_local_name(cell) == "th",
+                           "source_rowspan": cell.get("rowspan", "1"),
+                           "source_colspan": cell.get("colspan", "1")})
+        source_cells.append(values)
+    result = {"rows": [[cell["text"] for cell in row] for row in source_cells],
+              "source_cells": source_cells, "layout_issues": []}
+
+    def incomplete(reason, cell=None, **details):
+        result["layout_issues"].append({"table_dom_path": tree.getpath(node),
+                                         **({"cell_dom_path": cell["dom_path"]} if cell else {}),
+                                         "reason": reason, **details})
+        return result
+
+    if any(math_local_name(child) == "table" for child in node.iterdescendants()):
+        return incomplete("nested-table-content")
+    source_bytes = sum(len(json.dumps(cell, ensure_ascii=False).encode("utf-8")) + 4
+                       for row in source_cells for cell in row)
+    if source_bytes > budget["bytes"]:
+        result.pop("source_cells")
+        return incomplete("source-metadata-budget")
+    budget["bytes"] -= source_bytes
+    occupied = {}
+    width = 0
+    for row_index, cells in enumerate(source_cells):
+        group_end = row_index + 1
+        while group_end < len(groups) and groups[group_end] is groups[row_index]:
+            group_end += 1
+        column = 0
+        for cell in cells:
+            spans = {}
+            for attribute in ("rowspan", "colspan"):
+                value = cell["source_" + attribute]
+                if len(value) > 4 or not re.fullmatch(r"[0-9]+", value):
+                    return incomplete("invalid-span", cell, attribute=attribute, value=value)
+                span = int(value)
+                if attribute == "rowspan" and span == 0:
+                    span = group_end - row_index
+                if not 1 <= span <= 1000:
+                    return incomplete("invalid-span", cell, attribute=attribute, value=value)
+                if attribute == "rowspan" and row_index + span > group_end:
+                    return incomplete("rowspan-exceeds-group", cell, attribute=attribute, value=value)
+                spans[attribute] = span
+            while (row_index, column) in occupied:
+                column += 1
+            rowspan, colspan = spans["rowspan"], spans["colspan"]
+            width = max(width, column + colspan)
+            if width > 1000 or len(row_nodes) * width > budget["slots"] or len(occupied) + rowspan * colspan > budget["slots"]:
+                return incomplete("expanded-cell-budget", cell)
+            layout_cell = {**cell, "origin_row": row_index, "origin_column": column,
+                           "rowspan": rowspan, "colspan": colspan, "continuation": False}
+            # Grid text and cell metadata are duplicated in the JSON response.
+            # Bound their serialized bytes across the entire document before
+            # expanding an untrusted span, within the native 20 MiB output cap.
+            expanded_bytes = rowspan * colspan * (
+                len(json.dumps(layout_cell, ensure_ascii=False).encode("utf-8"))
+                + len(json.dumps(cell["text"], ensure_ascii=False).encode("utf-8")) + 4)
+            if expanded_bytes > budget["bytes"]:
+                return incomplete("expanded-byte-budget", cell)
+            budget["bytes"] -= expanded_bytes
+            for row_offset in range(rowspan):
+                for column_offset in range(colspan):
+                    position = (row_index + row_offset, column + column_offset)
+                    if position in occupied:
+                        return incomplete("overlapping-spans", cell)
+                    occupied[position] = {**cell, "origin_row": row_index, "origin_column": column,
+                                          "rowspan": rowspan, "colspan": colspan,
+                                          "continuation": bool(row_offset or column_offset)}
+            column += colspan
+    budget["slots"] -= len(row_nodes) * width
+    result["cell_layout"] = [[occupied.get((row, column)) for column in range(width)]
+                              for row in range(len(row_nodes))]
+    result["grid"] = [[cell["text"] if cell else None for cell in row]
+                       for row in result["cell_layout"]]
+    return result
+
+
 def html_parse(raw, url, options):
     import trafilatura
     from lxml import html, etree
     from charset_normalizer import from_bytes
 
+    preserve_table_layout = options.get("preserve_table_layout", False)
+    if type(preserve_table_layout) is not bool:
+        raise ValueError("preserve_table_layout must be boolean")
+    if preserve_table_layout and not options.get("content_xpath"):
+        raise ValueError("HTML table layout requires an explicit source content selector")
     xml_fragment_profile = options.get("format") == "xml-fragment"
     charset = options.get("encoding")
     if charset:
@@ -631,12 +772,28 @@ def html_parse(raw, url, options):
                 continue
             types = item.get("@type", [])
             types = [types] if isinstance(types, str) else types if isinstance(types, list) else []
-            if any(isinstance(value, str) and value.rsplit("/", 1)[-1] in {"Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"} for value in types):
+            article_type = any(isinstance(value, str) and value.rsplit("/", 1)[-1] in {"Article", "NewsArticle", "TechArticle", "BlogPosting", "Report"} for value in types)
+            # SocialMediaPosting is an Article subtype used by community blogs.
+            # Require both identities to describe this page, not a comment or
+            # an embedded related post. Never substitute dateCreated/Modified.
+            social_type = any(isinstance(value, str) and value.rsplit("/", 1)[-1] == "SocialMediaPosting" for value in types)
+            social_basis = {}
+            if social_type:
+                main_entity = item.get("mainEntityOfPage")
+                if isinstance(main_entity, dict):
+                    main_entity = main_entity.get("@id")
+                posting_url = item.get("url")
+                if isinstance(main_entity, str) and isinstance(posting_url, str):
+                    main_entity = urljoin(url, main_entity)
+                    posting_url = urljoin(url, posting_url)
+                    if main_entity.rstrip("/") == url.rstrip("/") and posting_url.rstrip("/") == url.rstrip("/"):
+                        social_basis = {"source_url": url, "main_entity_url": main_entity, "posting_url": posting_url}
+            if (article_type and not social_type) or social_basis:
                 value = item.get("datePublished")
                 if isinstance(value, str) and clean(value):
                     value = clean(value)
                     date_nodes.append(re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", value))
-                    common_date_basis.append({"type": "json-ld", "dom_path": domtree.getpath(script), "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value})
+                    common_date_basis.append({"type": "json-ld", "dom_path": domtree.getpath(script), "script_index": script_index, "node_type": types, "attribute": "datePublished", "text": value, **social_basis})
             pending.extend(value for value in item.values() if isinstance(value, (dict, list)))
     explicit_date = options.get("publication_date_xpath")
     preserve_date_block = options.get("preserve_publication_date_block", False)
@@ -664,10 +821,11 @@ def html_parse(raw, url, options):
                 try:
                     parsed = datetime.strptime(date_for_strptime(matched_date, options["publication_date_format"], language), options["publication_date_format"])
                     if options.get("publication_date_preserve_time"):
-                        if parsed.tzinfo is None or source_date_value(matched_date) is None:
+                        timestamp = publication_timestamp_value(matched_date)
+                        if timestamp is None:
                             raise ValueError("Publisher timestamp needs an explicit offset")
-                        date_nodes.append(matched_date)
-                        explicit_publication_date = matched_date
+                        date_nodes.append(timestamp)
+                        explicit_publication_date = timestamp
                     else:
                         explicit_publication_date = parsed.strftime("%Y-%m-%d")
                         date_nodes.append(explicit_publication_date)
@@ -734,6 +892,18 @@ def html_parse(raw, url, options):
     rules = options.get("listing_link_rules", [])
     if not isinstance(rules, list) or len(rules) > 10:
         raise ValueError("Invalid listing link rules")
+    listing_scope = None
+    listing_scope_node = None
+    context_links = []
+    scope_xpath = options.get("listing_scope_xpath")
+    if scope_xpath is not None:
+        if not rules or not isinstance(scope_xpath, str) or not 0 < len(scope_xpath) <= 512:
+            raise ValueError("Listing scope requires a selector and listing rules")
+        scopes = dom.xpath(scope_xpath)
+        if len(scopes) != 1 or not isinstance(scopes[0], etree._Element):
+            raise ValueError("Listing scope must identify exactly one element")
+        listing_scope_node = scopes[0]
+        listing_scope = {"status": "matched", "xpath": scope_xpath, "dom_path": domtree.getpath(listing_scope_node)}
     for rule in rules:
         if not isinstance(rule, dict) or not all(isinstance(rule.get(k), str) and 0 < len(rule[k]) <= 512 for k in ("id", "item_xpath", "url_pattern", "title_xpath")):
             raise ValueError("Incomplete listing link rule")
@@ -767,6 +937,8 @@ def html_parse(raw, url, options):
         if url_template is not None and any(name not in pattern.groupindex for name in template_fields):
             raise ValueError("Listing URL template needs matching named groups")
         items = dom.xpath(rule["item_xpath"])
+        if listing_scope_node is not None and any(not isinstance(item, etree._Element) or (item is not listing_scope_node and listing_scope_node not in item.iterancestors()) for item in items):
+            raise ValueError("Listing rule selects outside its declared scope")
         matched = 0
         for item in items[:5000]:
             if not isinstance(item, etree._Element):
@@ -847,9 +1019,15 @@ def html_parse(raw, url, options):
     for a in dom.xpath("//a[@href]")[:5000]:
         href = urljoin(url, a.get("href"))
         if urlparse(href).scheme in ("http", "https"):
-            links.append({"url": href, "text": clean(" ".join(a.itertext())), "dom_path": domtree.getpath(a)})
+            destination = context_links if listing_scope_node is not None and listing_scope_node not in a.iterancestors() else links
+            destination.append({"url": href, "text": clean(" ".join(a.itertext())), "dom_path": domtree.getpath(a)})
     # Challenge/paywall signals cannot be treated as readable article bodies.
-    if re.search(r"(?:just a moment|access denied|attention required|verify you are human)", title or "", re.I):
+    challenge_heading = None
+    if not title and len(clean(" ".join(dom.itertext()))) <= 1000:
+        headings = dom.xpath("//h1")
+        if len(headings) == 1:
+            challenge_heading = clean(" ".join(headings[0].itertext()))
+    if re.search(r"(?:just a moment|access denied|attention required|verify you are human)", title or challenge_heading or "", re.I):
         return {"status": "blocked", "title": title, "language": language, "blocks": [], "links": links, "dates": {}, "quality": {"required_fields_present": False, "missing_pages": [], "reviewed": False, "reason": "challenge-page"}}
     selected = options.get("content_xpath")
     if selected:
@@ -918,11 +1096,13 @@ def html_parse(raw, url, options):
             if any(p.tag in ("script", "style", "noscript") for p in [node, *node.iterancestors()]):
                 raise ValueError("Block profile selected non-reader content")
     blocks = []
+    html_table_layout_issues = []
+    html_table_layout_budget = {"slots": 20000, "bytes": 4 * 1024**2}
     for node in selected_blocks if selected_blocks is not None else container.iter():
         if node is explicit_date_node and not preserve_date_block:
             continue
         tag = etree.QName(node).localname if isinstance(node.tag, str) else ""
-        if selected_blocks is None and tag not in ("p", "head", "h1", "h2", "h3", "h4", "h5", "h6", "table", "item", "li", "quote", "blockquote"):
+        if selected_blocks is None and tag not in ("p", "head", "h1", "h2", "h3", "h4", "h5", "h6", "table", "item", "li", "quote", "blockquote", "pre", "code"):
             continue
         if selected_blocks is not None and any(p in selected_blocks for p in node.iterancestors()):
             continue
@@ -932,17 +1112,24 @@ def html_parse(raw, url, options):
                 if parent is container:
                     break
                 ancestors.append(parent)
-        if selected_blocks is None and any(p.tag in ("table", "p", "li", "item", "quote", "blockquote") for p in ancestors):
+        if selected_blocks is None and any(p.tag in ("table", "p", "li", "item", "quote", "blockquote", "pre", "code") for p in ancestors):
             continue
-        value = clean(" ".join(node.itertext()))
-        if not value:
+        is_code = tag in ("pre", "code")
+        # Inline syntax spans must not add spaces between tokens. Keep code
+        # indentation and line breaks as evidence, without executing it.
+        value = "".join(node.itertext()).replace("\r\n", "\n").strip("\n") if is_code else clean(" ".join(node.itertext()))
+        if not value.strip():
             continue
-        matches = [n for n in dom.xpath("//p|//h1|//h2|//h3|//h4|//h5|//h6|//table|//li|//blockquote") if clean(" ".join(n.itertext())) == value]
+        matches = [n for n in dom.xpath("//pre|//code") if "".join(n.itertext()).replace("\r\n", "\n").strip("\n") == value] if is_code else [n for n in dom.xpath("//p|//h1|//h2|//h3|//h4|//h5|//h6|//table|//li|//blockquote") if clean(" ".join(n.itertext())) == value]
         locator = {"type": "html", "dom_path": domtree.getpath(node) if selected else domtree.getpath(matches[0]) if len(matches) == 1 else None, "extracted_order": len(blocks), "text_hash": digest(value)}
-        kind = "table" if tag == "table" else "heading" if tag in ("head", "h1", "h2", "h3", "h4", "h5", "h6") else "paragraph"
+        kind = "code" if is_code else "table" if tag == "table" else "heading" if tag in ("head", "h1", "h2", "h3", "h4", "h5", "h6") else "paragraph"
         b = {"kind": kind, "text": value, "locator": locator}
         if kind == "table":
             b["rows"] = [[clean(" ".join(c.itertext())) for c in row if c.tag in ("td", "th", "cell")] for row in node.iter() if row.tag in ("tr", "row")]
+            if preserve_table_layout:
+                layout = html_table_layout(node, domtree, html_table_layout_budget)
+                html_table_layout_issues.extend(layout.pop("layout_issues"))
+                b.update(layout)
         blocks.append(b)
     title_access_wall = bool(
         re.match(
@@ -976,7 +1163,15 @@ def html_parse(raw, url, options):
         r"(?:\s+(?:this|the)\s+(?:article|report))?[.!]?|members\s+only[.!]?)$",
         re.I,
     )
-    wall_only_body = bool(blocks) and all(
+    preview_notice = re.compile(
+        r"^(?:[^.!?\n]{1,120}\bor\s+)?(?:log[\s-]?in|sign[\s-]?in|subscribe)\s+to\s+"
+        r"(?:keep\s+reading|read\s+the\s+rest|continue\s+reading\s+(?:this|the)\s+(?:article|report))[.:!]?$",
+        re.I,
+    )
+    preview_boundary = next((index for index, block in enumerate(blocks)
+                             if preview_notice.fullmatch(clean(block["text"]))), None)
+    preview_access_notice = blocks[preview_boundary] if preview_boundary is not None else None
+    wall_only_body = preview_boundary == 0 or bool(blocks) and all(
         body_access_notice.fullmatch(clean(block["text"])) for block in blocks
     )
     if title_access_wall or wall_only_body or (auth_forms and auth_copy and len(body_text) < 1000):
@@ -1029,6 +1224,24 @@ def html_parse(raw, url, options):
             date_basis = {"sources": common_date_basis}
             if published:
                 date_profile_status = "matched"
+                # Metadata order must not discard a corroborated publication
+                # instant. Preserve display-day profiles unless they explicitly
+                # opt into timestamps; this is the common, unprofiled resolver.
+                timestamp_bases = [basis for basis in common_date_basis
+                                   if source_date_value(basis["text"]) and "T" in basis["text"]]
+                if timestamp_bases:
+                    instants = {datetime.fromisoformat(basis["text"].replace("Z", "+00:00")).astimezone(timezone.utc)
+                                for basis in timestamp_bases}
+                    if len(instants) != 1:
+                        published = None
+                        date_profile_status = "conflict"
+                    else:
+                        published = timestamp_bases[0]["text"]
+                        date_basis = {
+                            "sources": timestamp_bases,
+                            "calendar_basis": common_date_basis,
+                            "calendar_timezone": calendar_zone.key if calendar_zone else None,
+                        }
     metadata_timestamp = options.get("publication_date_metadata_timestamp", False)
     if not isinstance(metadata_timestamp, bool):
         raise ValueError("Publication metadata timestamp option must be boolean")
@@ -1127,11 +1340,58 @@ def html_parse(raw, url, options):
         date_profile_status = "not-applicable"
         modified_profile_status = "not-applicable"
     dates = {"published_at": published, "modified_at": modified, "precision": "timestamp" if published and "T" in published else "day" if published else "unknown", "candidates": date_nodes, "basis": date_basis, "profile_status": date_profile_status, "modified_candidates": modified_nodes, "modified_basis": modified_basis, "modified_profile_status": modified_profile_status}
+    # Explicit reader profiles can require structural nodes (for example the
+    # article's tables). Selecting only paragraphs must not report a complete
+    # body, and text captured by a parent div is not a structured table.
+    content_coverage = None
+    if "required_content_xpath" in options:
+        required_selector = options["required_content_xpath"]
+        if (not selected or not isinstance(required_selector, str)
+                or not required_selector.startswith(".") or not 0 < len(required_selector) <= 1024):
+            raise ValueError("Required content needs a relative selector and explicit reader container")
+        required_nodes = container.xpath(required_selector)
+        if not isinstance(required_nodes, list) or len(required_nodes) > 5000:
+            raise ValueError("Required content node budget exceeded")
+        block_by_path = {block["locator"]["dom_path"]: block for block in blocks}
+        coverage_nodes = []
+        for node in required_nodes:
+            if (not isinstance(node, etree._Element) or not isinstance(node.tag, str)
+                    or (node is not container and container not in node.iterancestors())
+                    or any(parent.tag in ("script", "style", "noscript") for parent in [node, *node.iterancestors()])):
+                raise ValueError("Required content selector must identify reader elements inside the container")
+            is_code = node.tag in ("pre", "code")
+            value = "".join(node.itertext()).replace("\r\n", "\n").strip("\n") if is_code else clean(" ".join(node.itertext()))
+            if not value.strip():
+                continue
+            dom_path = domtree.getpath(node)
+            kind = "code" if is_code else "table" if node.tag == "table" else "element"
+            block = block_by_path.get(dom_path)
+            extracted = bool(block and block["text"] == value)
+            if kind == "table":
+                extracted = extracted and block["kind"] == "table" and any(any(cell for cell in row) for row in block.get("rows", []))
+            elif kind == "code":
+                extracted = extracted and block["kind"] == "code"
+            ancestor_paths = {domtree.getpath(parent) for parent in node.iterancestors()}
+            status = "extracted" if extracted else "flattened" if ancestor_paths.intersection(block_by_path) else "omitted"
+            coverage_nodes.append({"kind": kind, "dom_path": dom_path, "text_hash": digest(value), "status": status})
+        content_coverage = {"schema": "html-required-content-coverage/v1", "required_nodes": len(coverage_nodes), "missing_nodes": sum(node["status"] != "extracted" for node in coverage_nodes), "nodes": coverage_nodes}
     # Parser date inference is kept as a candidate, never promoted to original publication time.
     missing_math = [{"dom_path": value["dom_path"], "reason": value["reason"]} for value in math_expressions if value["reason"]]
-    complete = bool(title and blocks) and not missing_math
+    if preview_boundary is not None:
+        blocks = blocks[:preview_boundary]
+    complete = bool(title and blocks) and preview_boundary is None and not missing_math and not html_table_layout_issues and not (content_coverage and content_coverage["missing_nodes"])
     status = "extracted" if complete else "partial"
     result = {"status": status, "title": title, "title_basis": title_basis, "title_profile_status": title_profile_status, "language": language, "dates": dates, "blocks": blocks, "links": links, "link_profiles": link_profiles, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False}}
+    if preview_access_notice is not None:
+        result["quality"].update({"reason": "paywall-preview", "access_scope": "public-preview", "source_document_complete": False, "access_notice": preview_access_notice})
+    if content_coverage is not None:
+        result["content_coverage"] = content_coverage
+        if content_coverage["missing_nodes"]:
+            result["quality"]["reason"] = "required-content-incomplete"
+    if preserve_table_layout:
+        result["quality"]["table_layout_issues"] = html_table_layout_issues
+        if html_table_layout_issues:
+            result["quality"]["reason"] = "table-layout-incomplete"
     image_profile = options.get("body_images")
     if image_profile is not None and not blocks:
         if not selected or not isinstance(image_profile, dict):
@@ -1156,6 +1416,9 @@ def html_parse(raw, url, options):
             result["body_images"].append({"url": target, "dom_path": domtree.getpath(image), "alt": clean(image.get("alt"))})
     if listing_page_summary is not None:
         result["listing_page_summary"] = listing_page_summary
+    if listing_scope is not None:
+        result["listing_scope"] = listing_scope
+        result["context_links"] = context_links
     if complete_index is not None:
         result["complete_index"] = complete_index
     if math_expressions:
@@ -1714,6 +1977,33 @@ def markdown_parse(raw, url, options):
     return {"status": "extracted" if complete else "partial", "title": title, "title_basis": title_basis, "title_profile_status": "matched" if title else "ambiguous" if titles else "missing", "language": options.get("language"), "dates": dates, "blocks": blocks, "links": links, "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False}}
 
 
+def plain_text_parse(raw, url, options):
+    """Keep readable source paragraphs and exact line locators, without guessing dates."""
+    decoded = raw.decode("utf-8-sig", errors="strict")
+    if "\x00" in decoded:
+        raise ValueError("NUL bytes in plain text source")
+    lines = decoded.splitlines(keepends=True)
+    blocks, start = [], None
+    for index in range(len(lines) + 1):
+        if index < len(lines) and lines[index].strip():
+            if start is None:
+                start = index
+            continue
+        if start is None:
+            continue
+        source_text = "".join(lines[start:index])
+        text = clean(source_text)
+        blocks.append({"kind": "paragraph", "text": text, "locator": {"type": "text", "line_start": start + 1, "line_end": index, "text_hash": digest(text), "source_text_hash": digest(source_text)}})
+        if len(blocks) > 5000:
+            raise ValueError("Plain text block budget exceeded")
+        start = None
+    title_index = next((i for i, line in enumerate(lines) if line.strip()), None)
+    title = clean(lines[title_index]) if title_index is not None else None
+    title_basis = {"type": "text", "line_start": title_index + 1, "line_end": title_index + 1, "text_hash": digest(title), "source_text_hash": digest(lines[title_index])} if title else None
+    complete = bool(title and blocks)
+    return {"status": "extracted" if complete else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": {"published_at": None, "modified_at": None, "precision": "unknown", "candidates": [], "basis": None, "profile_status": "not-configured"}, "blocks": blocks, "links": [], "quality": {"required_fields_present": complete, "missing_pages": [], "reviewed": False}}
+
+
 def json_document_parse(raw, url, options):
     """Parse configured JSON fields, preserving pointers and separate record dates."""
     import math
@@ -1961,6 +2251,237 @@ def apply_pdf_table_context(blocks, profile):
     return issues
 
 
+def pdf_layout_rect(value, page):
+    if (not isinstance(value, list) or len(value) != 4
+            or any(type(v) not in (int, float) or not math.isfinite(v) for v in value)
+            or not page.rect.x0 <= value[0] < value[2] <= page.rect.x1
+            or not page.rect.y0 <= value[1] < value[3] <= page.rect.y1):
+        raise ValueError("Invalid profiled PDF rectangle")
+    return value
+
+
+def pdf_rect_contains(outer, inner, tolerance=0.5):
+    return (outer[0] - tolerance <= inner[0] and outer[1] - tolerance <= inner[1]
+            and inner[2] <= outer[2] + tolerance and inner[3] <= outer[3] + tolerance)
+
+
+def profiled_pdf_table(page, region, fragments, budget):
+    """Explicit column boundaries only; unsupported wrapping/coverage stays partial."""
+    import pymupdf
+    bbox, edges = region["bbox"], region.get("column_edges")
+    if (not isinstance(edges, list) or not 3 <= len(edges) <= 33
+            or any(type(v) not in (int, float) or not math.isfinite(v) for v in edges)
+            or any(b - a < 3 for a, b in zip(edges, edges[1:]))
+            or abs(edges[0] - bbox[0]) > 0.5 or abs(edges[-1] - bbox[2]) > 0.5
+            or type(region.get("expected_rows")) is not int
+            or not 1 <= region["expected_rows"] <= 1000):
+        raise ValueError("Invalid explicit PDF table columns/rows")
+    words = page.get_text("words", clip=pymupdf.Rect(*bbox))
+    budget["words"] += len(words)
+    if len(words) > 10000 or budget["words"] > 20000:
+        return None, "table-word-budget"
+    if sorted(w[4] for w in words) != sorted(" ".join(b["text"] for b in fragments).split()):
+        return None, "table-word-coverage"
+    groups = []
+    for word in sorted(words, key=lambda w: (w[1], w[0])):
+        if not groups or abs(word[1] - groups[-1][0][1]) > 1.5:
+            groups.append([])
+        groups[-1].append(word)
+    if len(groups) != region["expected_rows"]:
+        return None, "table-row-count-or-wrapped-cell"
+    rows, cells = [], []
+    for row_index, words_in_row in enumerate(groups):
+        bins = [[] for _ in edges[1:]]
+        for word in words_in_row:
+            columns = [i for i, (a, b) in enumerate(zip(edges, edges[1:]))
+                       if a - 0.5 <= word[0] and word[2] <= b + 0.5]
+            if len(columns) != 1:
+                return None, "table-column-boundary"
+            bins[columns[0]].append(word)
+        row, locations = [], []
+        for column, values in enumerate(bins):
+            values.sort(key=lambda w: w[0])
+            text = clean(" ".join(w[4] for w in values))
+            row.append(text)
+            cell_bbox = ([min(w[0] for w in values), min(w[1] for w in values),
+                          max(w[2] for w in values), max(w[3] for w in values)] if values else None)
+            locations.append({"row": row_index, "column": column, "bbox": cell_bbox,
+                              "text_hash": digest(text), "source_word_count": len(values)})
+        rows.append(row)
+        cells.append(locations)
+    budget["cells"] += len(rows) * len(edges[1:])
+    if budget["cells"] > 10000:
+        return None, "table-cell-budget"
+    text = "\n".join(" | ".join(row) for row in rows)
+    table = {"kind": "table", "table_id": region["id"], "text": text, "rows": rows,
+             "cell_layout": cells,
+             "source_fragments": [{"locator": copy.deepcopy(b["locator"])} for b in fragments],
+             "locator": {"type": "pdf", "page": page.number + 1, "bbox": list(bbox),
+                         "section_id": region["id"], "text_hash": digest(text)}}
+    budget["bytes"] += len(json.dumps(table, ensure_ascii=False).encode())
+    if budget["bytes"] > 4 * 1024**2:
+        return None, "table-layout-byte-budget"
+    return table, None
+
+
+def apply_profiled_pdf_layout(blocks, doc, profile, source_sha256):
+    """Source-bound page regions; no automatic column or semantic-kind inference."""
+    if profile is None:
+        return blocks, [], None
+    if (not isinstance(profile, dict) or set(profile) - {"id", "source_sha256", "pages"}
+            or not isinstance(profile.get("id"), str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", profile["id"])
+            or not isinstance(profile.get("source_sha256"), str)
+            or not re.fullmatch(r"[a-f0-9]{64}", profile["source_sha256"])
+            or not isinstance(profile.get("pages"), list)
+            or not 1 <= len(profile["pages"]) <= 200):
+        raise ValueError("Invalid PDF layout profile")
+    issues, page_profiles, region_ids, region_count = [], {}, set(), 0
+    for rule in profile["pages"]:
+        if (not isinstance(rule, dict) or set(rule) - {"page", "columns", "regions"}
+                or type(rule.get("page")) is not int or not 1 <= rule["page"] <= len(doc)
+                or rule["page"] in page_profiles
+                or not isinstance(rule.get("columns"), list) or not 1 <= len(rule["columns"]) <= 4
+                or not isinstance(rule.get("regions", []), list)):
+            raise ValueError("Invalid PDF layout page")
+        page = doc[rule["page"] - 1]
+        columns = [pdf_layout_rect(v, page) for v in rule["columns"]]
+        if any(a[2] > b[0] for a, b in zip(columns, columns[1:])):
+            raise ValueError("Overlapping PDF layout columns")
+        for region in rule.get("regions", []):
+            region_count += 1
+            if (region_count > 64 or not isinstance(region, dict)
+                    or set(region) - {"id", "kind", "role", "bbox", "expected_text_hashes",
+                                      "column_edges", "expected_rows", "label", "callout_bbox",
+                                      "callout_text", "condition_refs"}
+                    or region.get("kind") not in ("table", "figure", "paragraph", "heading")
+                    or not isinstance(region.get("id"), str)
+                    or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", region["id"])
+                    or region["id"] in region_ids
+                    or not isinstance(region.get("expected_text_hashes"), list)
+                    or not 1 <= len(region["expected_text_hashes"]) <= 1000
+                    or any(not isinstance(h, str) or not re.fullmatch(r"[a-f0-9]{64}", h)
+                           for h in region["expected_text_hashes"])
+                    or not isinstance(region.get("condition_refs", []), list)
+                    or len(region.get("condition_refs", [])) > 8
+                    or (region.get("role") is not None and region["role"] not in
+                        ("table-caption", "footnote", "paragraph", "heading", "figure"))):
+                raise ValueError("Invalid PDF layout region")
+            pdf_layout_rect(region.get("bbox"), page)
+            if sum(pdf_rect_contains(c, region["bbox"]) for c in columns) != 1:
+                raise ValueError("PDF region must fit exactly one column")
+            region_ids.add(region["id"])
+        page_profiles[rule["page"]] = rule
+    summary = {"id": profile["id"], "pages": sorted(page_profiles),
+               "unprofiled_pages": [p for p in range(1, len(doc) + 1) if p not in page_profiles],
+               "source_sha256": profile["source_sha256"]}
+    if source_sha256 != profile["source_sha256"]:
+        return blocks, [{"reason": "layout-source-version-mismatch"}], summary
+    budget = {"words": 0, "cells": 0, "bytes": 0}
+    transformed = []
+    for number in range(1, len(doc) + 1):
+        original = [b for b in blocks if b["locator"].get("page") == number]
+        rule = page_profiles.get(number)
+        if rule is None:
+            transformed.extend(original)
+            continue
+        page_blocks, consumed = list(original), set()
+        for region in rule.get("regions", []):
+            selected = [(i, b) for i, b in enumerate(original) if b["kind"] == "paragraph"
+                        and not b["locator"].get("method")
+                        and pdf_rect_contains(region["bbox"], b["locator"]["bbox"])]
+            if (not selected or any(i in consumed for i, _ in selected)
+                    or sorted(b["locator"]["text_hash"] for _, b in selected) != sorted(region["expected_text_hashes"])):
+                issues.append({"reason": "layout-region-missing-or-ambiguous", "page": number,
+                               "region_id": region["id"], "bbox": region["bbox"]})
+                continue
+            fragments = [b for _, b in selected]
+            if region["kind"] == "table":
+                block, reason = profiled_pdf_table(doc[number - 1], region, fragments, budget)
+                if reason:
+                    issues.append({"reason": reason, "page": number, "region_id": region["id"]})
+                    continue
+                block["condition_refs"] = []
+                for reference in region.get("condition_refs", []):
+                    if (not isinstance(reference, dict) or set(reference) != {"bbox", "text_hash"}
+                            or not isinstance(reference["text_hash"], str)
+                            or not re.fullmatch(r"[a-f0-9]{64}", reference["text_hash"])):
+                        raise ValueError("Invalid PDF table condition reference")
+                    pdf_layout_rect(reference["bbox"], doc[number - 1])
+                    candidates = [b for b in original if b["locator"]["text_hash"] == reference["text_hash"]
+                                  and pdf_rect_contains(reference["bbox"], b["locator"]["bbox"])]
+                    if len(candidates) != 1:
+                        issues.append({"reason": "table-condition-missing-or-ambiguous", "page": number,
+                                       "region_id": region["id"]})
+                    else:
+                        block["condition_refs"].append({"role": "table-condition",
+                            "text": candidates[0]["text"], "locator": copy.deepcopy(candidates[0]["locator"])})
+            else:
+                if len(fragments) != 1:
+                    issues.append({"reason": "layout-semantic-region-multiple-blocks", "page": number,
+                                   "region_id": region["id"]})
+                    continue
+                block = copy.deepcopy(fragments[0])
+                block["kind"] = region["kind"]
+                block["role"] = region.get("role", region["kind"])
+                block["locator"]["section_id"] = region["id"]
+                if region["kind"] == "figure":
+                    block.update({"figure_id": region["id"], "caption": block["text"], "media_urls": []})
+                if region.get("role") == "footnote":
+                    block["footnote_id"] = region["id"]
+                    if not isinstance(region.get("label"), str) or not 1 <= len(region["label"]) <= 20:
+                        raise ValueError("Invalid PDF footnote label")
+                    block["label"] = region["label"]
+                    callout_bbox = pdf_layout_rect(region.get("callout_bbox"), doc[number - 1])
+                    callout_text = region.get("callout_text")
+                    if not isinstance(callout_text, str) or not 1 <= len(callout_text) <= 200:
+                        raise ValueError("Invalid PDF footnote callout")
+                    candidates = [b for b in page_blocks if b["kind"] == "paragraph"
+                                  and pdf_rect_contains(callout_bbox, b["locator"]["bbox"])
+                                  and callout_text in b["text"]]
+                    if len(candidates) == 1:
+                        candidates[0].setdefault("footnote_refs", []).append({
+                            "id": region["id"], "label": region["label"],
+                            "callout_text": callout_text, "locator": copy.deepcopy(block["locator"])})
+                    else:
+                        issues.append({"reason": "footnote-callout-missing-or-ambiguous",
+                                       "page": number, "region_id": region["id"]})
+            consumed.update(i for i, _ in selected)
+            page_blocks = [b for b in page_blocks if all(b is not old for old in fragments)]
+            # Default native tables may duplicate the same text layer. Keep one source region.
+            if region["kind"] == "table":
+                page_blocks = [b for b in page_blocks if not (b["kind"] == "table"
+                               and pdf_rect_contains(region["bbox"], b["locator"]["bbox"]))]
+            page_blocks.append(block)
+        ordered, ambiguous = [], False
+        top = min(c[1] for c in rule["columns"])
+        bottom = max(c[3] for c in rule["columns"])
+        for block in page_blocks:
+            box = block["locator"]["bbox"]
+            columns = [i for i, c in enumerate(rule["columns"]) if pdf_rect_contains(c, box)]
+            if len(columns) == 1:
+                rank, column = columns[0] + 1, columns[0]
+            elif box[3] <= top:
+                rank, column = 0, None
+            elif box[1] >= bottom:
+                rank, column = len(rule["columns"]) + 1, None
+            else:
+                ambiguous = True
+                issues.append({"reason": "layout-column-missing-or-ambiguous", "page": number,
+                               "locator": copy.deepcopy(block["locator"])})
+                rank, column = len(rule["columns"]) + 2, None
+            ordered.append((rank, box[1], box[0], block, column))
+        if not ambiguous:
+            ordered.sort(key=lambda item: item[:3])
+        for order, (_, _, _, block, column) in enumerate(ordered):
+            block["locator"].update({"layout_profile_id": profile["id"], "column": column,
+                                     "reading_order": order})
+            transformed.append(block)
+    if summary["unprofiled_pages"]:
+        issues.append({"reason": "layout-unprofiled-pages", "pages": summary["unprofiled_pages"]})
+    return transformed, issues, summary
+
+
 def korean_ocr_model(root):
     """Resolve only this worker root's pinned recognizer; never borrow another run's model."""
     if root is None:
@@ -1974,6 +2495,62 @@ def korean_ocr_model(root):
     return model
 
 
+def ocr_raster_budget(page, options):
+    """Reject oversized OCR images before raster allocation; never downsample evidence."""
+    maximum = options.get("max_ocr_pixels", 12_000_000)
+    if type(maximum) is not int or not 1 <= maximum <= 20_000_000:
+        raise ValueError("Invalid OCR pixel budget")
+    scale = 200 / 72
+    width = math.ceil(page.rect.width * scale)
+    height = math.ceil(page.rect.height * scale)
+    if width <= 0 or height <= 0 or width * height > maximum or max(width, height) > 12_000:
+        raise ValueError("OCR raster pixel budget exceeded")
+    return scale
+
+
+def pdf_ocr_blocks(result, number, scale):
+    """Keep one source location per recognition row; truncation is not successful OCR."""
+    boxes = list(result.boxes) if result.boxes is not None else []
+    texts = list(result.txts) if result.txts is not None else []
+    scores = list(result.scores) if result.scores is not None else []
+    if not len(boxes) == len(texts) == len(scores):
+        raise ValueError("OCR row/position/confidence counts differ")
+    blocks = []
+    for box, value, confidence in zip(boxes, texts, scores):
+        coords = box.tolist() if hasattr(box, "tolist") else box
+        if (not isinstance(value, str) or isinstance(confidence, (bool, str))
+                or not math.isfinite(float(confidence)) or not 0 <= float(confidence) <= 1
+                or len(coords) != 4 or any(len(point) != 2 for point in coords)
+                or any(not math.isfinite(float(coordinate)) for point in coords for coordinate in point)):
+            raise ValueError("Invalid OCR text/position/confidence")
+        value = clean(value)
+        if value:
+            bbox = [min(p[0] for p in coords) / scale, min(p[1] for p in coords) / scale,
+                    max(p[0] for p in coords) / scale, max(p[1] for p in coords) / scale]
+            if bbox[0] >= bbox[2] or bbox[1] >= bbox[3]:
+                raise ValueError("Invalid OCR text/position/confidence")
+            blocks.append({"kind": "paragraph", "text": value, "locator": {
+                "type": "pdf", "page": number, "bbox": bbox, "text_hash": digest(value),
+                "method": "ocr", "confidence": float(confidence)}})
+    return blocks
+
+
+def ocr_review_blocks(blocks):
+    """Private review locations; OCR confidence never verifies numbers or table cells."""
+    review = []
+    for block in blocks:
+        locator = block.get("locator", {})
+        if locator.get("method") != "ocr":
+            continue
+        numbers = re.findall(r"[+＋\-−－]?\d+(?:[.,，．]\d+)*(?:[%％])?", block["text"])
+        reasons = (["low-confidence"] if locator["confidence"] < 0.90 else [])
+        if numbers:
+            reasons.append("numeric-review")
+        if reasons:
+            review.append({"locator": copy.deepcopy(locator), "reasons": reasons, "numeric_tokens": numbers})
+    return review
+
+
 def pdf_parse(raw, options, root=None):
     import pymupdf
     doc = pymupdf.open(stream=raw, filetype="pdf")
@@ -1981,12 +2558,22 @@ def pdf_parse(raw, options, root=None):
         return {"status": "blocked", "title": None, "blocks": [], "quality": {"reason": "encrypted-pdf", "missing_pages": [], "reviewed": False}}
     if len(doc) > options.get("max_pages", 200):
         raise ValueError("PDF page budget exceeded")
+    page_range = options.get("pdf_page_range")
+    start, stop = 1, len(doc)
+    if page_range is not None:
+        if (not isinstance(page_range, list) or len(page_range) != 2
+                or any(type(n) is not int for n in page_range)
+                or not 1 <= page_range[0] <= page_range[1]
+                or page_range[0] > len(doc)):
+            raise ValueError("Invalid PDF page range")
+        start, stop = page_range[0], min(page_range[1], len(doc))
     blocks, missing, ocr_pages, profile_accepted_sparse_pages = [], [], [], []
     sparse_page_patterns = options.get("sparse_page_patterns", [])
     engine = None
     ocr_model = None
     ocr_unavailable = None
-    for number, page in enumerate(doc, 1):
+    for number in range(start, stop + 1):
+        page = doc[number - 1]
         text_blocks = page.get_text("blocks", sort=True)
         usable = sum(len(b[4].strip()) for b in text_blocks if b[6] == 0)
         page_text_parts = [clean(b[4]) for b in text_blocks if b[6] == 0]
@@ -2011,6 +2598,7 @@ def pdf_parse(raw, options, root=None):
         ):
             # Selective OCR: only pages whose text layer is missing/broken.
             if options.get("ocr"):
+                scale = ocr_raster_budget(page, options)
                 import numpy as np
                 from rapidocr import RapidOCR
                 skip_ocr = False
@@ -2061,20 +2649,16 @@ def pdf_parse(raw, options, root=None):
                     if not skip_ocr:
                         engine = RapidOCR(params=params)
                 if not skip_ocr:
-                    scale = 200 / 72
                     pix = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False)
+                    if pix.width * pix.height > options.get("max_ocr_pixels", 12_000_000):
+                        raise ValueError("OCR raster pixel budget exceeded")
                     image = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
                     result = engine(image)
                     ocr_pages.append(number)
                     text_blocks = []
-                    for box, value, confidence in zip(result.boxes if result.boxes is not None else [], result.txts or [], result.scores or []):
-                        value = clean(value)
-                        if not value:
-                            continue
-                        coords = box.tolist()
-                        bbox = [min(p[0] for p in coords) / scale, min(p[1] for p in coords) / scale, max(p[0] for p in coords) / scale, max(p[1] for p in coords) / scale]
-                        blocks.append({"kind": "paragraph", "text": value, "locator": {"type": "pdf", "page": number, "bbox": bbox, "text_hash": digest(value), "method": "ocr", "confidence": float(confidence)}})
-                    if not result.txts or any(s < 0.90 for s in result.scores):
+                    recognized = pdf_ocr_blocks(result, number, scale)
+                    blocks.extend(recognized)
+                    if not recognized or any(s < 0.90 for s in result.scores):
                         missing.append(number)
             else:
                 missing.append(number)
@@ -2089,7 +2673,21 @@ def pdf_parse(raw, options, root=None):
             value = "\n".join(" | ".join(clean(c) for c in row) for row in rows)
             if value:
                 blocks.append({"kind": "table", "text": value, "rows": rows, "locator": {"type": "pdf", "page": number, "bbox": list(table.bbox), "text_hash": digest(value)}})
+    blocks, layout_issues, layout_summary = apply_profiled_pdf_layout(
+        blocks, doc, options.get("pdf_layout_profile"), digest(raw))
     context_issues = apply_pdf_table_context(blocks, options.get("pdf_table_context"))
+    if layout_summary is not None:
+        # A profiled caption has a stable role/location; do not duplicate its quote in two blocks.
+        attached = {tuple(f["locator"]["bbox"]) + (f["locator"]["page"],)
+                    for b in blocks if b["kind"] == "table"
+                    for f in b.get("context_fragments", []) if f["role"] == "profiled-context"}
+        blocks = [b for b in blocks if not (b.get("role") == "table-caption"
+                  and tuple(b["locator"]["bbox"]) + (b["locator"]["page"],) in attached)]
+        for table in [b for b in blocks if b["kind"] == "table" and b.get("table_id")]:
+            contexts = [f for f in table.get("context_fragments", []) if f["role"] == "profiled-context"]
+            if len(contexts) == 1:
+                table["caption"] = contexts[0]["text"]
+                table["caption_locator"] = copy.deepcopy(contexts[0]["locator"])
     title = clean(doc.metadata.get("title")) or options.get("title")
     title_basis = None
     if options.get("pdf_title_pattern"):
@@ -2144,6 +2742,12 @@ def pdf_parse(raw, options, root=None):
             "source_version_id": listing_version,
         }
     quality = {"required_fields_present": bool(title and blocks), "missing_pages": missing, "reviewed": False, "ocr_pages": ocr_pages}
+    if layout_summary is not None:
+        quality.update({"pdf_layout_profile": layout_summary, "pdf_layout_issues": layout_issues,
+                        "numeric_verification": "unreviewed",
+                        "source_document_complete": not layout_issues})
+        if layout_issues:
+            quality.update({"required_fields_present": False, "reason": "pdf-layout-incomplete"})
     if options.get("pdf_table_context") is not None:
         quality["table_context_issues"] = context_issues
         quality["scoped_table_count"] = sum("context_fragments" in b for b in blocks)
@@ -2151,9 +2755,17 @@ def pdf_parse(raw, options, root=None):
         quality["profile_accepted_sparse_pages"] = profile_accepted_sparse_pages
     if ocr_pages:
         quality["ocr_model"] = ocr_model
+        quality["ocr_review_blocks"] = ocr_review_blocks(blocks)
+        quality["numeric_verification"] = "unreviewed"
+        quality["table_structure"] = "unreviewed"
     if ocr_unavailable:
         quality["ocr_unavailable"] = ocr_unavailable
-    return {"status": "extracted" if title and blocks and not missing and not context_issues else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
+    if page_range is not None:
+        quality["page_range"] = [start, stop]
+        quality["unparsed_pages"] = [n for n in range(1, len(doc) + 1) if not start <= n <= stop]
+        quality["required_fields_present"] = bool(title and blocks and not quality["unparsed_pages"])
+    complete = title and blocks and not missing and not context_issues and not layout_issues and not quality.get("unparsed_pages")
+    return {"status": "extracted" if complete else "partial", "title": title, "title_basis": title_basis, "language": options.get("language"), "dates": dates, "blocks": blocks, "links": [], "page_count": len(doc), "quality": quality}
 
 
 def image_parse(raw, options, root=None):
@@ -2178,7 +2790,8 @@ def image_parse(raw, options, root=None):
     scale = 200 / 72
     page = doc.new_page(width=width / scale, height=height / scale)
     page.insert_image(page.rect, stream=raw)
-    allowed = {key: options[key] for key in ("title", "language", "ocr_language") if key in options}
+    allowed = {key: options[key] for key in ("title", "language", "ocr_language", "max_ocr_pixels") if key in options}
+    allowed.setdefault("max_ocr_pixels", maximum)
     parsed = pdf_parse(doc.tobytes(), {**allowed, "ocr": True, "max_pages": 1}, root)
     doc.close()
     parsed["dates"] = {"published_at": None, "modified_at": None, "precision": "unknown", "profile_status": "not-configured", "basis": None}
@@ -2190,6 +2803,8 @@ def image_parse(raw, options, root=None):
         locator["coordinate_space"] = "source-pixels"
         locator["bbox"] = [coordinate * scale for coordinate in locator["bbox"]]
         locator.pop("page", None)
+    if parsed["quality"].get("ocr_pages"):
+        parsed["quality"]["ocr_review_blocks"] = ocr_review_blocks(parsed["blocks"])
     return parsed
 
 
@@ -2203,7 +2818,8 @@ def run(request, root):
     if digest(raw) != request["input_sha256"]:
         raise ValueError("Worker input hash mismatch")
     options = request.get("options", {})
-    markdown_mime = request.get("mime_type", "").split(";")[0].strip().lower() in ("text/markdown", "text/x-markdown", "application/markdown")
+    source_mime = request.get("mime_type", "").split(";")[0].strip().lower()
+    markdown_mime = source_mime in ("text/markdown", "text/x-markdown", "application/markdown") or (source_mime == "text/plain" and urlparse(request["url"]).path.lower().endswith((".md", ".markdown")))
     html_fragment_profile = options.get("format") == "html-fragment"
     xml_fragment_profile = options.get("format") == "xml-fragment"
     fragment_mime = request.get("mime_type", "").split(";")[0].strip().lower()
@@ -2240,6 +2856,9 @@ def run(request, root):
     elif markdown_mime:
         parsed = markdown_parse(raw, request["url"], options)
         parser = {"id": "markdown-it-py", "version": importlib.metadata.version("markdown-it-py")}
+    elif source_mime == "text/plain":
+        parsed = plain_text_parse(raw, request["url"], options)
+        parser = {"id": "plain-text", "version": VERSION}
     else:
         parsed = {"status": "unsupported", "title": None, "blocks": [], "links": [], "quality": {"required_fields_present": False, "missing_pages": [], "reviewed": False}}
         parser = {"id": "unsupported", "version": VERSION}

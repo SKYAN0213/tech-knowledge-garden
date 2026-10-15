@@ -13,6 +13,7 @@ import {
 import { CLAIM_REVIEW_STATES } from "../scripts/research/claims.mjs"
 import { ARTICLE_REVIEW_STATES } from "../scripts/article-review.mjs"
 import { validateEvidence } from "../scripts/research/claims.mjs"
+import { validateArguments } from "../scripts/research/modules/contracts.mjs"
 
 const fixture = JSON.parse(fs.readFileSync("tests/fixtures/editorial-contract-v1.json", "utf8"))
 
@@ -58,4 +59,43 @@ test("cross-layer status fixture matches runtime contracts without collapsing re
   for (const state of CANDIDATE_STATES)
     for (const next of CANDIDATE_TRANSITIONS[state]) assert.ok(CANDIDATE_STATES.includes(next))
   assert.notDeepEqual(CLAIM_REVIEW_STATES, ARTICLE_REVIEW_STATES)
+})
+
+test("schema uniqueItems rejects repeated references and JSON-equal nested objects", () => {
+  const schema = { type: "array", uniqueItems: true, items: {} }
+  assert.throws(() => assertSchema(["claim-a", "claim-a"], schema), /Duplicate items at \$/)
+  assert.throws(
+    () =>
+      assertSchema(
+        [
+          { a: [0, { b: 1 }], c: 2 },
+          { c: 2, a: [-0, { b: 1 }] },
+        ],
+        schema,
+      ),
+    /Duplicate items/,
+  )
+  assert.deepEqual(assertSchema([{ a: [1, 2] }, { a: [2, 1] }], schema), [
+    { a: [1, 2] },
+    { a: [2, 1] },
+  ])
+  assert.deepEqual(assertSchema(["claim-a", "claim-a"], { type: "array", items: {} }), [
+    "claim-a",
+    "claim-a",
+  ])
+})
+
+test("schema uniqueItems is enforced for declared module arrays before native execution", () => {
+  const schema = {
+    type: "object",
+    properties: {
+      note_review_runs: { type: "array", uniqueItems: true, items: { type: "string" } },
+    },
+  }
+  assert.throws(
+    () => validateArguments({ note_review_runs: ["review-a", "review-a"] }, schema, {}),
+    /Duplicate items at \$parameters.note_review_runs/,
+  )
+  const input = { note_review_runs: ["review-a", "review-b"] }
+  assert.equal(validateArguments(input, schema, {}), input)
 })

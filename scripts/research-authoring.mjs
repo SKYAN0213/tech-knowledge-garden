@@ -4,6 +4,8 @@ import { connectorInput } from "./research/connector-input.mjs"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { prepareAuthoringTransfer, compareAuthoringRemote } from "./research/authoring-transfer.mjs"
 import { authorizeAuthoringTransfer } from "./research/authoring-release.mjs"
+import { captureAuthoringSourceSnapshot } from "./research/authoring-source-snapshot.mjs"
+import { prepareAuthoringSourceReconciliation } from "./research/authoring-source-reconcile.mjs"
 import {
   reconcileAuthoringExecution,
   loadAuthoringExecutionStatus,
@@ -26,18 +28,29 @@ try {
       release: { type: "string" },
       readback: { type: "string" },
       acquisition: { type: "string" },
+      "capture-run": { type: "string" },
+      "reconcile-input": { type: "string" },
       "wait-ms": { type: "string" },
       "resume-intent": { type: "string" },
     },
   })
   let result
   if (positionals.length !== 1)
-    throw Error("Use prepare, compare, release, capture, reconcile, write-session or status")
+    throw Error(
+      "Use prepare, compare, release, capture, capture-source, reconcile-source, reconcile, write-session or status",
+    )
+  if (values["reconcile-input"] && positionals[0] !== "reconcile-source")
+    throw Error("Source reconciliation input requires reconcile-source")
+  if (values["capture-run"] && positionals[0] !== "capture-source")
+    throw Error("Source capture run requires capture-source")
   if (!["capture", "reconcile", "write-session"].includes(positionals[0]) && values.release)
     throw Error("Release receipt requires capture, reconcile or write-session")
   if (positionals[0] !== "reconcile" && values.readback)
     throw Error("Release receipt and raw readback require reconcile")
-  if (!["capture", "write-session"].includes(positionals[0]) && values.acquisition)
+  if (
+    !["capture", "capture-source", "write-session"].includes(positionals[0]) &&
+    values.acquisition
+  )
     throw Error("Connector acquisition requires capture or write-session")
   if (positionals[0] !== "write-session" && values["wait-ms"])
     throw Error("Wait budget requires write-session")
@@ -46,6 +59,38 @@ try {
   if (positionals[0] !== "release" && (values.review || values.snapshot))
     throw Error("Review and snapshot require release")
   if (
+    positionals[0] === "reconcile-source" &&
+    values["reconcile-input"] &&
+    !values["preview-run"] &&
+    !values["capture-run"] &&
+    !values.acquisition &&
+    !values.release &&
+    !values.plan &&
+    !values.observation &&
+    !values.readback
+  )
+    result = prepareAuthoringSourceReconciliation({
+      root: values.root,
+      inputFile: values["reconcile-input"],
+      vault: values.vault,
+    })
+  else if (
+    positionals[0] === "capture-source" &&
+    values.acquisition &&
+    values["capture-run"] &&
+    !values["preview-run"] &&
+    !values.release &&
+    !values.plan &&
+    !values.observation &&
+    !values.readback
+  )
+    result = captureAuthoringSourceSnapshot({
+      root: values.root,
+      runId: values["capture-run"],
+      acquisitionFile: values.acquisition,
+      vault: values.vault,
+    })
+  else if (
     positionals[0] === "write-session" &&
     values.release &&
     values.acquisition &&
@@ -147,7 +192,7 @@ try {
     })
   else
     throw Error(
-      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000] [--resume-intent ROOT_RELATIVE_UPDATE_INTENT]; status",
+      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture-source --capture-run ID --acquisition FILE; reconcile-source --reconcile-input ROOT_RELATIVE_INPUT; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000] [--resume-intent ROOT_RELATIVE_UPDATE_INTENT]; status",
     )
   console.log(
     JSON.stringify(

@@ -9,7 +9,12 @@ const schema = {
   additionalProperties: false,
   properties: { value: { type: "string" } },
 }
-const request = { model: "local", think: false, messages: [], schema }
+const request = {
+  model: "local",
+  think: false,
+  messages: [{ role: "user", content: "Return the exact stored value using the schema." }],
+  schema,
+}
 const metadata = (url) =>
   url.endsWith("/show")
     ? { capabilities: ["completion"], thinking: { values: [false] } }
@@ -23,6 +28,29 @@ const apiFor = (response) =>
   new Ollama({
     fetchImpl: async (url) => (url.endsWith("/chat") ? response : Response.json(metadata(url))),
   })
+
+test("bounded idle leases change only the recorded lease and reject forced or indefinite unload settings", async () => {
+  let sent
+  const api = new Ollama({
+    keep_alive: "1s",
+    fetchImpl: async (url, options) => {
+      if (!url.endsWith("/chat")) return Response.json(metadata(url))
+      sent = JSON.parse(options.body)
+      return ndjson(frame('{"value":"exact"}', true, { done_reason: "stop" }))
+    },
+  })
+  const value = await api.structured({ ...request, on_progress: () => {} })
+  assert.equal(sent.keep_alive, "1s")
+  assert.equal(sent.truncate, false)
+  assert.equal(sent.shift, false)
+  assert.deepEqual(sent.messages, request.messages)
+  assert.deepEqual(sent.format, schema)
+  assert.equal(value.artifacts.request.keep_alive, "1s")
+  assert.equal(value.provenance.model_keep_alive, "1s")
+  assert.deepEqual(value.output, { value: "exact" })
+  for (const keep_alive of ["0", "-1", "0s", "6m", "forever", 1])
+    assert.throws(() => new Ollama({ keep_alive }), /bounded idle lease/)
+})
 
 test("fragmented UTF-8 streams retain exact content and final timing statistics", async () => {
   const content = '{"value":"한국어"}',

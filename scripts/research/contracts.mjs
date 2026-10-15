@@ -81,6 +81,20 @@ export function assertSchema(value, schema, at = "$", root = schema) {
   if (Array.isArray(value)) {
     if (schema.minItems && value.length < schema.minItems) throw Error(`Missing items at ${at}`)
     if (schema.maxItems && value.length > schema.maxItems) throw Error(`Too many items at ${at}`)
+    if (schema.uniqueItems === true) {
+      const keys = value.map((entry) =>
+        JSON.stringify(entry, (_key, item) =>
+          item && typeof item === "object" && !Array.isArray(item)
+            ? Object.fromEntries(
+                Object.keys(item)
+                  .sort()
+                  .map((key) => [key, item[key]]),
+              )
+            : item,
+        ),
+      )
+      if (new Set(keys).size !== value.length) throw Error(`Duplicate items at ${at}`)
+    }
     value.forEach((v, i) => assertSchema(v, schema.items || {}, `${at}[${i}]`, root))
   } else if (typeof value === "object") {
     for (const k of schema.required || [])
@@ -93,6 +107,39 @@ export function assertSchema(value, schema, at = "$", root = schema) {
   }
   return value
 }
+
+const sourceGeographyDeclarationSchema = {
+  type: ["object", "null"],
+  additionalProperties: false,
+  required: ["value", "official_evidence"],
+  properties: Object.assign(Object.create(null), {
+    value: { type: "string", minLength: 1, maxLength: 120, pattern: "\\S" },
+    official_evidence: {
+      type: "object",
+      additionalProperties: false,
+      required: ["url", "quote"],
+      properties: Object.assign(Object.create(null), {
+        url: { type: "string", minLength: 1, maxLength: 2000, pattern: "^https://[^\\s]+$" },
+        quote: { type: "string", minLength: 1, maxLength: 1500, pattern: "\\S" },
+      }),
+    },
+  }),
+}
+
+// Explicit source registration metadata. Publisher country describes the
+// material's issuing body; regulatory jurisdiction describes the filing or
+// regulation's scope. Neither is inferred from language, host or company HQ.
+// A declaration retains its cited official material; it is not a live check.
+// Own-property maps keep this opt-in strict under the existing schema validator.
+export const sourceGeographySchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: Object.assign(Object.create(null), {
+    publisher_country: sourceGeographyDeclarationSchema,
+    regulatory_jurisdiction: sourceGeographyDeclarationSchema,
+  }),
+}
+
 export function assertParse(parse) {
   if (parse.schema_version !== "source-parse/v1" || !PARSE_STATES.includes(parse.status))
     throw Error("Invalid parse contract")

@@ -73,6 +73,21 @@ function loadRelease(root, relative) {
   return { release, plan, base, release_sha256: sha256(bytes) }
 }
 
+// Validate the approved local inputs without claiming a remote observation.
+export function inspectAuthoringReleaseInputs(root, releasePath) {
+  return { ...loadRelease(root, releasePath), release_path: releasePath }
+}
+
+export function inspectAuthoringExecution(root, releasePath) {
+  const binding = inspectAuthoringReleaseInputs(root, releasePath)
+  const latest = executionFiles(root, binding).at(-1)
+  return {
+    ...binding,
+    execution_path: latest?.path || null,
+    execution: latest?.receipt || null,
+  }
+}
+
 export async function stageAuthoringReadback({
   root,
   releasePath,

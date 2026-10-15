@@ -7,6 +7,7 @@ import {
   mapExtractionBatch,
   selectExtractionScope,
   describeExtractionCoverage,
+  articleMetadataContext,
 } from "./claims.mjs"
 import { modelSourceDates } from "./source-context.mjs"
 
@@ -58,6 +59,7 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
     throw Error("CLI extraction scope or batch plan changed")
   const blocks = new Map(),
     sourceContext = new Map()
+  const metadataParse = articleMetadataContext(parses)
   parses.forEach((parse, i) =>
     parse.blocks.forEach((block, j) => {
       if (!scope.includedByParse.get(parse.parse_id).has(block.block_id)) return
@@ -139,7 +141,8 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
     )
       throw Error("CLI extraction request budget or identity changed")
     const documents = JSON.parse(request.messages[1].content),
-      keys = []
+      keys = [],
+      batchSeen = new Set()
     if (!Array.isArray(documents) || !documents.length)
       throw Error("CLI extraction source context required")
     for (const document of documents) {
@@ -149,7 +152,9 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
         document.title !== parse.title ||
         JSON.stringify(document.dates) !== JSON.stringify(modelSourceDates(parse.dates)) ||
         !Array.isArray(document.blocks) ||
-        !document.blocks.length
+        !document.blocks.length ||
+        (Object.hasOwn(document, "source_role") &&
+          document.source_role !== (parse === metadataParse ? "article_metadata" : "body_image"))
       )
         throw Error("CLI extraction document context changed")
       for (const block of document.blocks) {
@@ -157,7 +162,8 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
         if (
           !source ||
           source.document !== document.document ||
-          seen.has(block.block_key) ||
+          batchSeen.has(block.block_key) ||
+          (seen.has(block.block_key) && parse !== metadataParse) ||
           block.text !== source.block.text ||
           block.kind !== (source.block.kind ?? "paragraph") ||
           (Object.hasOwn(block, "source_field") &&
@@ -166,6 +172,7 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
         )
           throw Error("CLI extraction source block context changed")
         seen.add(block.block_key)
+        batchSeen.add(block.block_key)
         keys.push(block.block_key)
       }
     }

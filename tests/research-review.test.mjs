@@ -493,6 +493,33 @@ test("robots rate limiting remains distinct from a permanent source block", asyn
   assert.deepEqual(calls, ["https://example.com/robots.txt"])
 })
 
+test("failed robots requests retain HTTP diagnosis and never fetch the article or claim a denial", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-policy-diagnosis-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  for (const status of [400, 403, 429, 503]) {
+    const calls = []
+    const fetcher = new SourceFetcher(root, {
+      attempts: 1, interval_ms: 0,
+      resolve: async () => [{ address: "1.1.1.1", family: 4 }],
+      transport: async (url) => {
+        calls.push(url.href)
+        return { status, headers: { "content-type": "text/html" }, body: Buffer.from("Synthetic policy error") }
+      },
+    })
+    // Isolate diagnoses: a prior failed URL now has a durable cooldown.
+    const result = await fetchWithPolicy(root, fetcher, `https://source.example/story-${status}`)
+    assert.equal(result.fetch_status, status === 429 ? "rate_limited" : "blocked")
+    assert.equal(result.policy_status, "failed")
+    assert.equal(result.policy_failure.stage, "robots")
+    assert.equal(result.policy_failure.http_status, status)
+    assert.equal(result.policy_failure.url, "https://source.example/robots.txt")
+    assert.ok(result.policy_failure.observed_at)
+    assert.match(result.error, new RegExp(`HTTP ${status}`))
+    assert.deepEqual(calls, ["https://source.example/robots.txt"])
+    assert.equal(result.source_version_id, null)
+  }
+})
+
 test("redirects require an allowed host and an allowed destination robots rule", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-redirect-policy-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))

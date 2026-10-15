@@ -86,6 +86,59 @@ test("approved content revision reopens review while preserving the approved art
   assert.deepEqual(fs.readFileSync(f.file), bytes)
 })
 
+test("equivalent recaptures preserve exact native approval evidence and record observations once", async (t) => {
+  const f = fixture(t)
+  const incoming = f.incoming("wrapper-v2")
+  await mergeBacklog(f.file, [incoming])
+  const current = f.read()
+  for (const field of [
+    "article_source_version_id",
+    "article_parse_id",
+    "article_content_sha256",
+    "article_observed_at",
+    "event_id",
+    "approval",
+  ])
+    assert.deepEqual(current[field], f.candidate[field])
+  assert.equal(current.source_revision_alert, undefined)
+  assert.deepEqual(current.source_observation_history, [
+    {
+      source_version_id: incoming.article_source_version_id,
+      parse_id: incoming.article_parse_id,
+      article_content_sha256: incoming.article_content_sha256,
+      observed_at: incoming.article_observed_at,
+      basis: "same_approved_content",
+    },
+  ])
+  const bytes = fs.readFileSync(f.file)
+  await mergeBacklog(f.file, [incoming])
+  assert.deepEqual(fs.readFileSync(f.file), bytes)
+})
+
+test("older captures cannot override a later equivalent approved-source observation", async (t) => {
+  const f = fixture(t)
+  await mergeBacklog(f.file, [
+    { ...f.incoming("wrapper-v3"), article_observed_at: "2026-10-03T00:00:00Z" },
+  ])
+  await mergeBacklog(f.file, [f.incoming("older-changed-body", "changed-content")])
+  assert.equal(f.read().review_status, "verified")
+  assert.equal(f.read().source_revision_alert, undefined)
+  assert.equal(f.read().article_source_version_id, f.candidate.article_source_version_id)
+})
+
+test("equivalent captures do not silently repair a previously broken approval binding", async (t) => {
+  const f = fixture(t)
+  const broken = { ...f.candidate, article_parse_id: sha256("unreviewed-parse") }
+  fs.writeFileSync(
+    f.file,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [broken] }),
+  )
+  await mergeBacklog(f.file, [f.incoming("wrapper-v2")])
+  assert.notEqual(f.read().article_parse_id, f.candidate.approval.parse_id)
+  assert.equal(f.read().source_observation_history, undefined)
+  assert.deepEqual(f.read().approval, f.candidate.approval)
+})
+
 test("same CMS translation does not replace an approved primary source", async (t) => {
   const f = fixture(t),
     translated = f.incoming(

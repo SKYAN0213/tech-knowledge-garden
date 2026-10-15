@@ -4,10 +4,12 @@ import { main as research } from "../research.mjs"
 import { editions, extractArticles } from "../garden.mjs"
 import { readBacklog } from "../research-window.mjs"
 import { sha256 } from "./contracts.mjs"
-import { processSourceRun } from "./source-processing.mjs"
+import { continueProcessedSourceWriting } from "./source-processing.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
 import { verifySameSourceRevision, verifyPinnedSourceRevision } from "./candidate-approval.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
+import { loadCandidateParseRecovery, recoveredProcessingEntry } from "./candidate-parse-recovery.mjs"
+import { assertDeepReviewDecision, recordDeepDiveReview } from "./deep-dive.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const validId = (id) => /^[A-Za-z0-9_-]{1,160}$/.test(id || "")
@@ -32,11 +34,12 @@ export async function processDailyEditorial({
   backlogFile = ".local/research/candidate-backlog.json",
   execute = false,
   reviewFiles = {},
+  deepReviewFiles = {},
   editorialReviewFiles = {},
   editorialProcessingRuns = {},
   sourceRevisionReviews = {},
   provider,
-  processor = processSourceRun,
+  processor = continueProcessedSourceWriting,
   command = research,
 }) {
   if (
@@ -96,7 +99,7 @@ export async function processDailyEditorial({
         keys.some((k) => !parentInput.candidate_keys.includes(k))
       )
         throw Error("One to twelve selected daily candidates required")
-      for (const mapping of [reviewFiles, editorialReviewFiles])
+      for (const mapping of [reviewFiles, deepReviewFiles, editorialReviewFiles])
         if (
           !mapping ||
           typeof mapping !== "object" ||
@@ -166,6 +169,11 @@ export async function processDailyEditorial({
           blockedRoutes.has(entry.next_route)
         )
           throw Error("Blocked daily candidates cannot replace their processing run")
+        const candidate = readBacklog(backlogFile)?.candidates.find(
+          (item) => item.key === entry.candidate_key,
+        )
+        const recovery = loadCandidateParseRecovery(root, candidate)
+        if (recovery) Object.assign(entry, recoveredProcessingEntry(recovery, entry))
         const completed = await loadProcessedSourceResult(root, replacement, entry, { vault })
         if (!["editorial_review", "approved"].includes(completed.status))
           throw Error("Editorial continuation requires its own reviewed facts and exact draft")
@@ -229,7 +237,10 @@ export async function processDailyEditorial({
         const previous = readJSON(root, target)
         const file = supplied || previous?.path
         if (!file) return null
-        const ref = { path: path.resolve(file), sha256: sha256(fs.readFileSync(file)) }
+        const bytes = fs.readFileSync(file)
+        const decision = JSON.parse(bytes)
+        if (kind === "deep") assertDeepReviewDecision(decision)
+        const ref = { path: path.resolve(file), sha256: sha256(bytes) }
         if (previous && !same(previous, ref))
           throw Error("Pinned explicit review changed; use a new run")
         if (execute && !previous) atomicCreate(root, target, ref)
@@ -241,6 +252,7 @@ export async function processDailyEditorial({
           e.candidate_key,
           {
             fact: reviewPath(e.candidate_key, "fact", reviewFiles[e.candidate_key]),
+            deep: reviewPath(e.candidate_key, "deep", deepReviewFiles[e.candidate_key]),
             editorial: reviewPath(
               e.candidate_key,
               "editorial",
@@ -331,21 +343,46 @@ export async function processDailyEditorial({
             await command(["review", "--root", root, "--run", child, "--review", explicit.fact])
             current = await loadProcessedSourceResult(root, child, entry, { vault })
           }
+          if (execute && explicit.deep) {
+            // Reuse the existing source/scope/identity validator. A deep input
+            // cannot upgrade unreviewed facts, an abstract or a finished draft.
+            const decision = JSON.parse(fs.readFileSync(explicit.deep, "utf8"))
+            const { documents, parses } = loadStoredSourceRun(root, child)
+            const reviewed = readJSON(root, `runs/${child}/reviewed-claims.json`)
+            if (
+              !reviewed ||
+              !["writer_required", "editorial_review", "approved"].includes(current.status)
+            )
+              throw Error("Deep source review requires explicitly reviewed facts before writing")
+            const expected = recordDeepDiveReview(
+              decision.input,
+              reviewed.claims,
+              parses,
+              documents,
+              decision.review,
+            )
+            const stored = readJSON(root, `runs/${child}/deep-context.json`)
+            if (stored) {
+              if (!same(stored, expected))
+                throw Error("Pinned deep source context changed; use a new reviewed processing run")
+            } else {
+              if (current.status !== "writer_required")
+                throw Error("Deep source review cannot change an already written ordinary article")
+              await command([
+                "deep-review",
+                "--root",
+                root,
+                "--run",
+                child,
+                "--review",
+                explicit.deep,
+              ])
+              if (!same(readJSON(root, `runs/${child}/deep-context.json`), expected))
+                throw Error("Native deep source context differs from its reviewed evidence")
+            }
+          }
           if (execute && current.status === "writer_required") {
-            const binding = readJSON(root, `runs/${child}/source-processing-input.json`)
-            await processor({
-              root,
-              run: child,
-              sourceRun: binding.source_run,
-              policyFile,
-              candidateKey: binding.candidate_key,
-              extractionRun: binding.extraction_run,
-              assessmentRun: binding.assessment_run === child ? undefined : binding.assessment_run,
-              assessmentReuseRun: binding.assessment_reuse_run,
-              draftRun: binding.draft_run === child ? undefined : binding.draft_run,
-              evidenceThink: binding.evidence_overrides?.think,
-              provider,
-            })
+            await processor({ root, run: child, entry, policyFile, provider, vault })
             current = await loadProcessedSourceResult(root, child, entry, { vault })
           }
           if (execute && explicit.editorial) {

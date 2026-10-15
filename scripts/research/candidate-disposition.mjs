@@ -1,5 +1,6 @@
 import path from "node:path"
 import { canonicalURL } from "../garden.mjs"
+import { SECTORS } from "../sectors.mjs"
 import { BACKLOG_PATH } from "../research-window.mjs"
 import { sourceId, sha256 } from "./contracts.mjs"
 import { assertReviewDate, samePublicationDate } from "./dates.mjs"
@@ -17,35 +18,67 @@ const PUBLIC_CHANNELS = ["news", "briefing", "rss", "digest", "keyword_timeline"
 // This is an editorial, private disposition of one already captured source.
 // It cannot infer that the source lacks an event; a reviewer must supply that
 // conclusion with an exact source version and a written reading record.
-export async function recordCandidateDisposition({
+function readDispositionEvidence({
   root,
-  runId,
   sourceRunId,
   candidateRunId = sourceRunId,
   reviewPath,
-  backlogFile = BACKLOG_PATH,
   publishedURLs = [],
   publishedContent = [],
 }) {
-  if (!/^[a-zA-Z0-9_-]+$/.test(runId || "") || runId === sourceRunId || runId === candidateRunId)
-    throw Error("A distinct disposition run ID is required")
   if (!reviewPath || !Array.isArray(publishedURLs) || !Array.isArray(publishedContent))
     throw Error("Private review and publication inventory required")
   const review = readJSON(root, reviewPath)
   if (
     review?.schema !== "editorial-candidate-disposition/v1" ||
-    review.decision !== "background_only_no_news_event" ||
+    ![
+      "background_only_no_news_event",
+      "insufficient_standalone_news",
+      "outside_editorial_scope",
+    ].includes(review.decision) ||
     review.source_read !== true ||
     review.original_candidate_preserved !== true ||
     review.candidate_published !== false ||
     typeof review.reviewer !== "string" ||
     !review.reviewer.trim() ||
-    !CHECKS.every((key) => review.event_check?.[key] === false) ||
+    !CHECKS.every((key) =>
+      review.decision === "outside_editorial_scope"
+        ? typeof review.event_check?.[key] === "boolean"
+        : review.event_check?.[key] === false,
+    ) ||
     typeof review.event_check?.notes !== "string" ||
     !review.event_check.notes.trim() ||
     !PUBLIC_CHANNELS.every((key) => review.public_projection?.[key] === false)
   )
-    throw Error("Complete, private background-only review required")
+    throw Error("Complete, private candidate disposition review required")
+  if (
+    review.decision === "insufficient_standalone_news" &&
+    (review.caption_read !== true ||
+      review.standalone_details_checked !== true ||
+      review.observed_event_preserved !== true ||
+      !review.claims_not_promoted?.length)
+  )
+    throw Error(
+      "Caption-only disposition requires preserved observations and explicit detail review",
+    )
+  if (
+    review.decision === "outside_editorial_scope" &&
+    (review.observed_event_preserved !== true ||
+      review.scope_review?.full_text_read !== true ||
+      review.scope_review?.technical_and_corporate_axes_checked !== true ||
+      typeof review.scope_review?.article_focus !== "string" ||
+      !review.scope_review.article_focus.trim() ||
+      typeof review.scope_review?.notes !== "string" ||
+      !review.scope_review.notes.trim() ||
+      !Array.isArray(review.scope_review?.sectors_checked) ||
+      review.scope_review.sectors_checked.length !== SECTORS.length ||
+      new Set(review.scope_review.sectors_checked).size !== SECTORS.length ||
+      !SECTORS.every((sector) => review.scope_review.sectors_checked.includes(sector)) ||
+      !review.claims_not_promoted?.length)
+  )
+    throw Error(
+      "Outside-scope disposition requires full-text review of all existing sectors and preserved events",
+    )
   const selected = selectStoredSources(root, sourceRunId, [review.source_url])
   const [document] = selected.documents
   const [parse] = selected.parses
@@ -68,7 +101,15 @@ export async function recordCandidateDisposition({
     !Array.isArray(review.claims_not_promoted) ||
     review.claims_not_promoted.some(
       (claim) =>
-        !blockIds.has(claim.block_id) || typeof claim.claim !== "string" || !claim.claim.trim(),
+        !blockIds.has(claim.block_id) ||
+        typeof claim.claim !== "string" ||
+        !claim.claim.trim() ||
+        (["insufficient_standalone_news", "outside_editorial_scope"].includes(review.decision) &&
+          (typeof claim.quote !== "string" ||
+            claim.quote.trim().length < 8 ||
+            !parse.blocks
+              .find((block) => block.block_id === claim.block_id)
+              .text.includes(claim.quote))),
     )
   )
     throw Error("Disposition cites a missing source block")
@@ -97,7 +138,80 @@ export async function recordCandidateDisposition({
     !samePublicationDate(matches[0].source_published_at, review.source_published_at)
   )
     throw Error("One matching, dated, unreviewed discovery candidate required")
-  const candidate = matches[0]
+  return { review, candidate: matches[0], document, parse, articleContentSha }
+}
+
+// Reuse the native source/quote/date checks when a queue encounters a decision
+// made after its input was frozen. A status label alone cannot skip processing.
+export function loadCurrentCandidateDisposition(root, candidate) {
+  const disposition = candidate?.disposition
+  if (candidate?.review_status !== "rejected" || !disposition?.resolution_run) return null
+  if (
+    candidate.event_id ||
+    candidate.source_revision_alert ||
+    !/^[A-Za-z0-9_-]+$/.test(disposition.resolution_run)
+  )
+    throw Error("Candidate disposition identity changed")
+  const { review, document, parse, articleContentSha } = readDispositionEvidence({
+    root,
+    sourceRunId: disposition.source_run,
+    candidateRunId: disposition.candidate_run,
+    reviewPath: disposition.review_path,
+  })
+  const receiptPath = `runs/${disposition.resolution_run}/candidate-disposition.json`
+  const receipt = readJSON(root, receiptPath)
+  if (
+    receipt?.schema !== "research-candidate-disposition/v1" ||
+    receipt.candidate_key !== candidate.key ||
+    receipt.candidate_run !== disposition.candidate_run ||
+    receipt.source_run !== disposition.source_run ||
+    receipt.source_version_id !== document.source_version_id ||
+    receipt.parse_id !== parse.parse_id ||
+    receipt.review_path !== disposition.review_path ||
+    receipt.review_sha256 !== disposition.review_sha256 ||
+    receipt.review_status !== "rejected" ||
+    receipt.candidate_published !== false ||
+    sha256(JSON.stringify(review)) !== disposition.review_sha256 ||
+    disposition.decision !== review.decision ||
+    disposition.source_version_id !== document.source_version_id ||
+    disposition.parse_id !== parse.parse_id ||
+    disposition.article_content_sha256 !== articleContentSha ||
+    candidate.article_content_sha256 !== articleContentSha ||
+    candidate.source_urls?.length !== 1 ||
+    candidate.source_urls[0] !== review.source_url ||
+    !samePublicationDate(candidate.source_published_at, review.source_published_at)
+  )
+    throw Error("Current candidate disposition differs from native evidence")
+  return {
+    decision: review.decision,
+    receipt: receiptPath,
+    source_version_id: document.source_version_id,
+    parse_id: parse.parse_id,
+    article_content_sha256: articleContentSha,
+  }
+}
+
+export async function recordCandidateDisposition({
+  root,
+  runId,
+  sourceRunId,
+  candidateRunId = sourceRunId,
+  reviewPath,
+  backlogFile = BACKLOG_PATH,
+  publishedURLs = [],
+  publishedContent = [],
+}) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(runId || "") || runId === sourceRunId || runId === candidateRunId)
+    throw Error("A distinct disposition run ID is required")
+  const { review, candidate, document, parse, articleContentSha } = readDispositionEvidence({
+    root,
+    sourceRunId,
+    candidateRunId,
+    reviewPath,
+    publishedURLs,
+    publishedContent,
+  })
+  const url = canonicalURL(review.source_url)
   const reviewHash = sha256(JSON.stringify(review))
   const receiptPath = `runs/${runId}/candidate-disposition.json`
   const receipt = {
@@ -175,6 +289,7 @@ export async function recordCandidateDisposition({
         article_content_sha256: articleContentSha,
         disposition: {
           decision: review.decision,
+          resolution_run: runId,
           candidate_run: candidateRunId,
           source_run: sourceRunId,
           source_version_id: document.source_version_id,

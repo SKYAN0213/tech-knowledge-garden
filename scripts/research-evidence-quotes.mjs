@@ -2,7 +2,7 @@ import fs from "node:fs"
 import { parseArgs } from "node:util"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { reviewEvidenceQuotes } from "./research/evidence-quote-review.mjs"
-import { Ollama, localOllamaURL } from "./research/ollama.mjs"
+import { createModelProvider } from "./research/model-provider.mjs"
 import { prepareRoleProvider } from "./research/model-policy.mjs"
 
 try {
@@ -34,11 +34,12 @@ try {
               "utf8",
             ),
           )
+          const policy = JSON.parse(
+            fs.readFileSync(values["model-policy"] || "data/research-model-policy.json", "utf8"),
+          )
           return prepareRoleProvider(
-            new Ollama({ url: localOllamaURL() }),
-            JSON.parse(
-              fs.readFileSync(values["model-policy"] || "data/research-model-policy.json", "utf8"),
-            ),
+            createModelProvider(policy, "evidence_compare", { root, run: values.run }),
+            policy,
             "evidence_compare",
             {
               root,

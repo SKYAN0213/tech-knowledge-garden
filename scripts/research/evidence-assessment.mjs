@@ -6,7 +6,11 @@ import { atomicCreate, readJSON, safePath } from "./run-state.mjs"
 import { modelSourceDates } from "./source-context.mjs"
 import {
   assessmentReferences,
+  assessmentClaimContext,
+  assessmentClaimFormat,
+  claimSpanInstruction,
   historicalAssessmentInput,
+  historicalDiagnosticRecord,
   QUOTE_PROTOCOL,
   REFERENCE_PROTOCOL,
   referenceInstruction,
@@ -121,7 +125,14 @@ export async function assessEvidenceCheckpoint(
   claims,
   documents,
   parses,
-  { claimsPerBatch = 3, responseProtocol = QUOTE_PROTOCOL, readOnly = false, historicalInput } = {},
+  {
+    claimsPerBatch = 3,
+    responseProtocol = QUOTE_PROTOCOL,
+    readOnly = false,
+    historicalInput,
+    historicalRecordSha256,
+    claimEvidenceFormat,
+  } = {},
 ) {
   if (!/^[A-Za-z0-9_-]+$/.test(run || "") || !Array.isArray(claims) || !claims.length)
     throw Error("Exact assessment run and candidate claims required")
@@ -131,6 +142,13 @@ export async function assessEvidenceCheckpoint(
   if (provider?.executionPolicy?.role !== "evidence_compare" || !settings)
     throw Error("Bound evidence_compare execution policy required")
   assertStoredEvidence(root, documents, parses)
+  const base = `runs/${run}/evidence-assessment/`
+  const previous = readJSON(root, base + "input.json")
+  const claimFormat = assessmentClaimFormat(
+    responseProtocol,
+    historicalInput || previous,
+    claimEvidenceFormat,
+  )
   const fields = Object.keys(extractionSchema.properties.claims.items.properties)
   const candidates = claims.map((claim) => ({
     claim_id: claim.claim_id,
@@ -155,15 +173,21 @@ export async function assessEvidenceCheckpoint(
       {
         role: "system",
         content:
-          responseProtocol === REFERENCE_PROTOCOL
+          (responseProtocol === REFERENCE_PROTOCOL
             ? system.replace(
                 "Include exact source block quotes supporting your judgment; supported or contradicted requires at least one quote.",
                 referenceInstruction,
               )
-            : system,
+            : system) + (claimFormat ? " " + claimSpanInstruction : ""),
       },
       // Identical source blocks form a reusable prompt prefix across batches.
-      { role: "user", content: JSON.stringify({ sources: references.sources, claims: selected }) },
+      {
+        role: "user",
+        content: JSON.stringify({
+          sources: references.sources,
+          claims: assessmentClaimContext(selected, context, claimFormat),
+        }),
+      },
     ]
     if (
       JSON.stringify(references.schema).length +
@@ -177,6 +201,7 @@ export async function assessEvidenceCheckpoint(
   }
   let input = {
     schema: "research-evidence-assessment-input/v1",
+    ...(claimFormat ? { claim_evidence_format: claimFormat } : {}),
     claims_per_batch: claimsPerBatch,
     claims_sha256: sha256(JSON.stringify(claims)),
     documents_sha256: sha256(JSON.stringify(documents)),
@@ -203,8 +228,6 @@ export async function assessEvidenceCheckpoint(
         }
       : {}),
   }
-  const base = `runs/${run}/evidence-assessment/`
-  const previous = readJSON(root, base + "input.json")
   if (readOnly || historicalInput)
     input = historicalAssessmentInput(input, historicalInput || previous)
   if (previous && JSON.stringify(previous) !== JSON.stringify(input))
@@ -259,7 +282,7 @@ export async function assessEvidenceCheckpoint(
   // Recheck immutable bytes after model calls; a concurrent source edit must
   // never be represented as a completed assessment of the current source.
   assertStoredEvidence(root, documents, parses)
-  const record = {
+  let record = {
     schema: "research-evidence-assessment/v1",
     input_sha256: sha256(JSON.stringify(input)),
     assessments,
@@ -269,6 +292,13 @@ export async function assessEvidenceCheckpoint(
   }
   const finalPath = base + "assessment.json"
   const current = readJSON(root, finalPath)
+  if (readOnly && current && historicalRecordSha256)
+    record = historicalDiagnosticRecord(record, current, {
+      expectedSha256: historicalRecordSha256,
+      validatorChanged:
+        input.claims_validator_sha256 !==
+        sha256(fs.readFileSync(new URL("./claims.mjs", import.meta.url))),
+    })
   if (current && JSON.stringify(current) !== JSON.stringify(record))
     throw Error("Stored evidence assessment differs from its checkpoints")
   if (!current) {

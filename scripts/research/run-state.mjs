@@ -2,10 +2,11 @@ import fs from "node:fs"
 import path from "node:path"
 import crypto from "node:crypto"
 import { sha256 } from "./contracts.mjs"
+import { resolveColdStorageRead, recordColdStorageWrite } from "./cold-storage.mjs"
 
 export const DEFAULT_ROOT = ".local/research/local-ai"
 export const GARDEN_OPERATION_LOCK = "garden-operation"
-export function safePath(root, relative) {
+export function safePath(root, relative, { materialize = true } = {}) {
   const base = path.resolve(root),
     target = path.resolve(base, relative)
   if (path.isAbsolute(relative) || target === base || !target.startsWith(base + path.sep))
@@ -16,7 +17,7 @@ export function safePath(root, relative) {
     if (fs.lstatSync(current, { throwIfNoEntry: false })?.isSymbolicLink())
       throw Error("Symlink in private path")
   }
-  return target
+  return materialize ? resolveColdStorageRead(root, target) : target
 }
 export function assertAbsent(root, relative) {
   const file = safePath(root, relative)
@@ -54,10 +55,12 @@ export function atomicCreate(root, relative, value) {
   } finally {
     fs.closeSync(dir)
   }
-  return { path: relative, sha256: sha256(data) }
+  const digest = sha256(data)
+  recordColdStorageWrite(root, file, digest, Buffer.byteLength(data))
+  return { path: relative, sha256: digest }
 }
 export function atomicWrite(root, relative, value) {
-  const file = safePath(root, relative)
+  const file = safePath(root, relative, { materialize: false })
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const tmp = file + "." + crypto.randomUUID() + ".tmp"
   const data =
@@ -78,7 +81,9 @@ export function atomicWrite(root, relative, value) {
   } finally {
     fs.closeSync(dir)
   }
-  return { path: relative, sha256: sha256(data) }
+  const digest = sha256(data)
+  recordColdStorageWrite(root, file, digest, Buffer.byteLength(data))
+  return { path: relative, sha256: digest }
 }
 export function readJSON(root, relative) {
   const file = safePath(root, relative)
@@ -213,9 +218,11 @@ export class RunState {
     } catch (e) {
       this.record(name, {
         ...record,
-        status: "failed",
+        status: e.code === "REASONING_PENDING" ? "waiting_for_reasoning" : e.code === "STORAGE_PENDING" ? "waiting_for_storage" : "failed",
         finished_at: new Date().toISOString(),
         error: e.message,
+        ...(e.reasoning_task ? { reasoning_task: e.reasoning_task } : {}),
+        ...(e.storage_request ? { storage_request: e.storage_request } : {}),
       })
       throw e
     }

@@ -1,12 +1,20 @@
 # Tech Knowledge Garden
 
+## 개발 완료 전 정규 운영 금지 (2026-10-16 사용자 지정)
+
+정규 예약은 먼저 `node scripts/research/operation-policy.mjs status`를 읽는다. `data/research-operation-policy.json`의 phase가 development이거나 개발 완료 근거 검증을 통과하지 못하면 `development_pending`으로 정상 대기한다. 이 상태에서는 정규 원문 수집·새 context 고정·모델 호출·기사 작성·Drive 쓰기·배포·전체 테스트를 시작하지 않는다. 이전 WBS 완료 비율·Git 변경 개수·저장 전환 완료를 개발 완료로 대신 판정하지 않는다. 개발자가 명시적으로 수행하는 비공개 기능 구현·표적 검증은 정규 운영과 구분한다. 새 예약·개발 전 운영용 checkout을 만들지 않는다.
+
+개발 완료 후 기본 수행자는 계정 구독의 GPT(Codex)이며 기존 Drive 연결을 사용한다. MCP/독립 모듈의 기본 정책도 `data/research-model-policy-codex.json`이다. GPT 완료는 수집/파싱·큐레이션/작성·GPT 재개·Drive 복원 재개·발행 복구·표적 회귀의6개 실제 근거와 코드/설정 manifest를 v2 완료 기록으로 고정한다. 구현 파일이나 실행 설정이 달라지면 이전 완료 기록으로 운영하지 않는다. `operation-policy.mjs finalize`에 원문 대조한 검토 기록의 정확한 path/SHA를 전달하며 완료 라벨만 임의로 작성하지 않는다. 로컬은 같은 MCP 모듈/체크포인트를 쓰는 선택 기능이다. 로컬 정규 실행은 `status --executor ollama`와 별도의 선택 기능 완료 근거를 요구하며 GPT ready로 허용되지 않는다. 로컬 명시 개발 실행은 기존 로컬 정책을 직접 선택한다. 자동 로컬 planner의 검토·발행·Drive 인증 경계는 유지한다. 실제 원문 대조를 수행한 GPT의 명시 검토 제출과 근거 없이 승인 표시를 작성하는 행위를 구분한다.
+
+실패 복구는 기존 작업 ID/입력·정책·구현 SHA와 저장 결과를 확인한 뒤 필요한 단계만 명시 재개한다. `waiting_for_storage`, `waiting_for_reasoning`, 검토 대기, 실패, worker 확인 불가를 구분한다. 프로세스 조회 권한 오류는 worker 종료의 증거가 아니며 대체 worker 실행이나 잠금 회수를 허용하지 않는다. 기존 실패는 attempts의 불변 기록에 보존한다. uncertain write는 동일 Drive/발행 ID의 실제 readback을 먼저 수행한다. 자세한 절차는 `docs/RESEARCH_MODULES.md`의 개발 완료 관문과 실패 복구 절을 따른다.
+
 ## 조사 입력의 페이지별 조회 (2026-10-07)
 
 조사 입력은 `npm run research:context --silent`로 한 번 고정한다. snapshot.input·sha256을 후속 `--input`·`--sha256`에 함께 전달하고 page.next_offset으로 필요한 구간의 전 페이지를 읽는다. pending_by_route는 작업 분류이며 자동 제외 기준이 아니다. sources·companies·institutions·robot-manufacturers·entities·events·terms·evidence·deep·known-sources는 `--section`으로 조회한다. 승인·정정 전에는 `--candidate 정확한-key`로 전체 발견·승인·정정 이력을 읽고 기존 원문/승인 검증기를 통과한다. history_summary와 목록은 사실 근거나 승인 결과를 대신하지 않는다. 원본 npm run context와 비공개 장부는 유지한다. docs/DAILY_NEWS_INGESTION_IMPLEMENTATION.md 7.4절을 따른다.
 
 ## 브리핑 내용 보강 (2026-09-14)
 
-매회 `docs/BRIEFING_QUALITY.md`를 읽는다. context의 discovery_window로 최근 7일을 겹쳐 탐색하고 비공개 candidate-backlog를 실제 발행 기사와 대조한다. cutoff 이전이라는 이유만으로 미수록 중요 사건을 버리지 않는다. 해당 과거 회차에 보완하고 오늘에는 날짜를 표시한 참조만 제공한다. 육하원칙 2~4문장은 리드이며, 원문에 근거한 구체적 설명을 explanations에 작성해 웹·RSS·GitHub에서 바로 읽게 한다. 운영 안내·분석 부족 해명·억지 전망을 쓰지 않는다. 기존 예약·조사 범위를 유지한다.
+매회 `docs/BRIEFING_QUALITY.md`를 읽는다. context의 discovery_window로 최근 7일을 겹쳐 탐색하고 비공개 candidate-backlog를 실제 발행 기사와 대조한다. cutoff 이전이라는 이유만으로 미수록 중요 사건을 버리지 않는다. 2026-10-12 사용자 요청에 따라 `curation`에서 오늘 후보와 과거 미수록 사건을 함께 평가하고, 높은 정보 가치의 미수록 사건은 오늘 브리핑에 처음 소개할 수 있다. 정확한 선정 참조·native 승인을 사용하고 원 발표일·검토일·처음 소개한 회차 날짜를 분리한다. 이미 발행한 사건의 과거 정정·보완은 기존 회차/ID/GUID를 유지한다. 육하원칙 2~4문장은 리드이며, 원문에 근거한 구체적 설명을 explanations에 작성해 웹·RSS·GitHub에서 바로 읽게 한다. 운영 안내·분석 부족 해명·억지 전망을 쓰지 않는다. 기존 예약·조사 범위를 유지한다.
 
 ## 출처 다양화 (2026-09-14)
 
@@ -39,6 +47,8 @@ Keep .local, credentials and backups out of Git. The repository is public; prese
 Scope GitHub CLI operations with `--repo SKYAN0213/tech-knowledge-garden`; this checkout also has a Quartz upstream remote. The daily publication and verification target is the user's garden repository.
 
 ## Google Drive 최종 보관 (2026-09-13 사용자 지정)
+
+2026-10-14부터 비공개 payload는 공통 Drive cold storage를 사용한다. `.local/.storage/catalog.sqlite`와2GiB 캐시, native ID/승인 및 원본 네 폴더를 유지한다. 자료가 로컬에 없으면 collection.storage pending의 정확한 Drive ID를 기존 연결 또는 사전 인증된 로컬 OAuth adapter의 remote-pull로 받아 hydrate하고 같은 작업을 명시 재개한다. STORAGE_PENDING을 새 소식 없음/빈 자료로 처리하거나 원문을 다시 GET하지 않는다. 새 조사 자료는 prepare→pending→Drive 저장/실제 bytes verify→catalog export/보관 순으로 연결하고 검증된 사본만 evict한다. 일일 작성 원본은 기존 approved-preview 경로를 사용한다. 전체 연구·미리보기 사본의 반복 ZIP 생성을 기본으로 하지 않는다. 로컬 모델은 원격 검증 metadata를 자체 작성하거나 캐시 정리를 임의 실행하지 않는다. 로컬 OAuth는 scripts/research-drive.mjs의 Desktop client/Google 동의로 별도 설정하며 토큰·인증 코드·session URI를 모델·MCP 결과·Git에 전달하지 않는다. 기존 Drive 연결도 유지한다. docs/DRIVE_STORAGE.md의 독립 로컬 Drive OAuth 절을 따른다.
 
 최종 자료 저장 위치는 Google Drive `Projects / Tech Knowledge`(폴더 ID `1VKWSC2IYOtOd__3NKEzD-BK34qVqtlAD`)다. 로컬 vault는 작업·검증·웹 생성용 사본으로 유지한다. 과거의 로컬 전용 저장 설명보다 이 규칙이 우선한다. 매회 `docs/DRIVE_STORAGE.md`를 읽고 원문 수집 상태·취재 기록·관련 노트를 함께 Drive에 업로드하고 원격 메타데이터를 검증한다. 로컬 저장만으로 작업 완료를 보고하지 않는다.
 

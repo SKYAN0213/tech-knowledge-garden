@@ -2,8 +2,10 @@ import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { deepClaimIds } from "./deep-dive.mjs"
-import { loadCurrentApproval } from "./preview.mjs"
+import { loadHistoricalApproval } from "./preview.mjs"
 import { safePath } from "./run-state.mjs"
+import { loadExistingEditorialRevision } from "./existing-editorial-approval.mjs"
+import { loadSelectedEventFollowup } from "./event-publication.mjs"
 
 export const ONTOLOGY = {
   schema: "research-evidence-ontology/v1",
@@ -54,7 +56,7 @@ function referencedClaims(draft) {
 // fact-review fingerprints. Recheck file hashes after reading for projection.
 export function loadApprovedOntologyInput(root, run, options = {}) {
   if (!validRun(run)) throw Error("Invalid approved run ID")
-  const approval = loadCurrentApproval(root, run, options)
+  const approval = loadHistoricalApproval(root, run, options)
   const files = Object.fromEntries(
     Object.entries(approval.files).map(([name, expected]) => {
       const bytes = fs.readFileSync(safePath(root, `runs/${run}/${name}`))
@@ -65,6 +67,7 @@ export function loadApprovedOntologyInput(root, run, options = {}) {
   return {
     run,
     article: approval.article,
+    ...readJSONFollowup(root, run, approval.article, options),
     ...(approval.concept_review ? { concept_review: approval.concept_review } : {}),
     file_hashes: approval.files,
     draft: files["draft.json"],
@@ -72,6 +75,11 @@ export function loadApprovedOntologyInput(root, run, options = {}) {
     documents: files["documents.json"],
     parses: files["parses.json"],
   }
+}
+
+function readJSONFollowup(root, run, article, options) {
+  const relation = loadSelectedEventFollowup(root, run, article, options)
+  return relation ? { event_relation: relation } : {}
 }
 
 export function projectEvidenceOntology(inputs) {
@@ -113,6 +121,9 @@ export function projectEvidenceOntology(inputs) {
       type: "Event",
       title: article.title,
       published_at: article.article_review.published_at,
+      ...(article.article_review.occurred_at
+        ? { occurred_at: article.article_review.occurred_at }
+        : {}),
       reviewed_at: article.article_review.reviewed_at,
       sector: article.sector,
       theme: article.theme,
@@ -258,10 +269,101 @@ export function projectEvidenceOntology(inputs) {
     inputs: receipts,
     nodes: [...nodes.values()].sort(byId),
     edges: [...edges.values()].sort(byId),
+    ...(inputs.some((input) => input.event_relation)
+      ? {
+          event_relations: inputs
+            .filter((input) => input.event_relation)
+            .map((input) => input.event_relation)
+            .sort((a, b) => a.current_event_id.localeCompare(b.current_event_id)),
+        }
+      : {}),
   }
   const graph = { ...body, sha256: sha256(JSON.stringify(body)) }
   assertEvidenceOntology(graph)
   return graph
+}
+
+// Reuse stored approvals, never regenerate facts or merge events by similarity.
+// The previous graph is a checkpoint, not authority for a changed approval.
+export function extendEvidenceOntology(
+  root,
+  graph,
+  incomingRuns,
+  {
+    vault = "vault",
+    inputLoader = loadApprovedOntologyInput,
+    revisionLoader = loadExistingEditorialRevision,
+  } = {},
+) {
+  assertEvidenceOntology(graph)
+  if (
+    !Array.isArray(incomingRuns) ||
+    incomingRuns.some((run) => !validRun(run)) ||
+    new Set(incomingRuns).size !== incomingRuns.length
+  )
+    throw Error("Distinct incoming approved runs required")
+  const previous = graph.inputs.map((receipt) => {
+    const input = inputLoader(root, receipt.run, { vault })
+    if (
+      input.run !== receipt.run ||
+      input.article.event_id !== receipt.event_id ||
+      JSON.stringify(input.file_hashes) !== JSON.stringify(receipt.files)
+    )
+      throw Error("Previous ontology approval changed: " + receipt.run)
+    return input
+  })
+  const history = structuredClone(graph.revision_history || [])
+  for (const revision of history) {
+    const old = inputLoader(root, revision.previous.run, { vault })
+    const current = inputLoader(root, revision.current.run, { vault })
+    if (JSON.stringify(revisionLoader(root, old, current)) !== JSON.stringify(revision))
+      throw Error("Ontology revision evidence changed")
+  }
+  const withHistory = (projection, revisions) => {
+    if (!revisions.length) return projection
+    const { sha256: _hash, ...body } = projection
+    body.revision_history = revisions
+    return assertEvidenceOntology({ ...body, sha256: sha256(JSON.stringify(body)) })
+  }
+  if (
+    JSON.stringify(withHistory(projectEvidenceOntology(previous), history)) !==
+    JSON.stringify(graph)
+  )
+    throw Error("Previous ontology differs from its current approved inputs")
+  const byRun = new Map(previous.map((input) => [input.run, input]))
+  const byEvent = new Map(previous.map((input) => [input.article.event_id, input.run]))
+  for (const run of incomingRuns) {
+    if (byRun.has(run)) continue
+    if (history.some((revision) => revision.previous.run === run))
+      throw Error("Superseded ontology approval cannot be reactivated")
+    const input = inputLoader(root, run, { vault })
+    if (input.run !== run) throw Error("Incoming ontology approval run differs")
+    if (byEvent.has(input.article.event_id)) {
+      const priorRun = byEvent.get(input.article.event_id)
+      const revision = revisionLoader(root, byRun.get(priorRun), input)
+      if (
+        revision.event_id !== input.article.event_id ||
+        JSON.stringify(revision.previous) !==
+          JSON.stringify({
+            run: priorRun,
+            event_id: input.article.event_id,
+            files: byRun.get(priorRun).file_hashes,
+          }) ||
+        JSON.stringify(revision.current) !==
+          JSON.stringify({
+            run,
+            event_id: input.article.event_id,
+            files: input.file_hashes,
+          })
+      )
+        throw Error("Ontology revision differs from its approved inputs")
+      history.push(revision)
+      byRun.delete(priorRun)
+    }
+    byRun.set(run, input)
+    byEvent.set(input.article.event_id, run)
+  }
+  return withHistory(projectEvidenceOntology([...byRun.values()]), history)
 }
 
 export function assertEvidenceOntology(graph) {
@@ -280,6 +382,62 @@ export function assertEvidenceOntology(graph) {
     !Array.isArray(graph.edges)
   )
     throw Error("Incomplete ontology snapshot")
+  if (graph.revision_history !== undefined) {
+    if (!Array.isArray(graph.revision_history) || !graph.revision_history.length)
+      throw Error("Nonempty ontology revision history required")
+    const latest = new Map(),
+      superseded = new Set()
+    for (const revision of graph.revision_history) {
+      const { previous, current, receipt, event_id } = revision
+      if (
+        !validRun(previous?.run) ||
+        !validRun(current?.run) ||
+        previous.run === current.run ||
+        previous.event_id !== event_id ||
+        current.event_id !== event_id ||
+        !previous.files ||
+        !current.files ||
+        !Object.keys(previous.files).length ||
+        !Object.keys(current.files).length ||
+        typeof receipt?.path !== "string" ||
+        !receipt.path ||
+        !/^[a-f0-9]{64}$/.test(receipt.sha256 || "") ||
+        superseded.has(previous.run) ||
+        superseded.has(current.run) ||
+        (latest.has(event_id) && latest.get(event_id) !== previous.run)
+      )
+        throw Error("Invalid or conflicting ontology revision chain")
+      superseded.add(previous.run)
+      latest.set(event_id, current.run)
+    }
+    for (const [event, run] of latest)
+      if (graph.inputs.find((input) => input.event_id === event)?.run !== run)
+        throw Error("Ontology current approval differs from its revision chain")
+    if (graph.inputs.some((input) => superseded.has(input.run)))
+      throw Error("Superseded approval cannot remain an active ontology input")
+  }
+  if (
+    graph.event_relations !== undefined &&
+    (!Array.isArray(graph.event_relations) ||
+      !graph.event_relations.length ||
+      new Set(graph.event_relations.map((r) => r.current_event_id)).size !==
+        graph.event_relations.length ||
+      graph.event_relations.some(
+        (r) =>
+          r.relation !== "followup" ||
+          !/^[a-f0-9]{16}$/.test(r.previous_event_id || "") ||
+          !/^[a-f0-9]{16}$/.test(r.current_event_id || "") ||
+          r.previous_event_id === r.current_event_id ||
+          !validRun(r.previous_run) ||
+          !validRun(r.current_run) ||
+          !graph.inputs.some(
+            (input) => input.run === r.current_run && input.event_id === r.current_event_id,
+          ) ||
+          r.receipt?.path !== `runs/${r.current_run}/event-followup.json` ||
+          !/^[a-f0-9]{64}$/.test(r.receipt.sha256 || ""),
+      ))
+  )
+    throw Error("Invalid reviewed event follow-up relations")
   const nodes = new Map()
   for (const node of graph.nodes) {
     if (!node?.id || nodes.has(node.id) || !ONTOLOGY.classes.includes(node.type))
@@ -339,74 +497,102 @@ const related = (graph, from, property) =>
   graph.edges.filter((edge) => edge.from === from && edge.property === property)
 
 export function traceOntologyClaim(graph, claimId, run = null) {
-  assertEvidenceOntology(graph)
-  const matches = graph.nodes.filter(
-    (node) => node.type === "Claim" && node.claim_id === claimId && (!run || node.run === run),
-  )
-  if (matches.length !== 1)
-    throw Error(matches.length ? "Claim ID needs an explicit run" : "Claim not found")
-  const claim = matches[0],
-    nodes = new Map(graph.nodes.map((node) => [node.id, node])),
-    eventEdge = graph.edges.find((edge) => edge.property === "supportedBy" && edge.to === claim.id),
-    event = nodes.get(eventEdge.from),
-    articleEdge = graph.edges.find((edge) => edge.property === "describes" && edge.to === event.id),
-    article = nodes.get(articleEdge.from)
-  const evidence = related(graph, claim.id, "evidencedBy").map((edge) => {
-    const block = nodes.get(edge.to),
-      parse = nodes.get(related(graph, block.id, "locatedIn")[0].to),
-      source = nodes.get(related(graph, parse.id, "parsedFrom")[0].to)
-    return {
-      quote: edge.quote,
-      source_url: source.original_url,
-      source_version_id: source.source_version_id,
-      source_sha256: source.body_sha256,
-      parse_id: parse.parse_id,
-      block_id: block.block_id,
-      locator: block.locator,
-    }
-  })
-  return { claim, event, article, evidence }
+  return createOntologyReader(graph).traceClaim(claimId, run)
 }
 
 export function ontologyEntityTimeline(graph, name) {
-  assertEvidenceOntology(graph)
-  if (typeof name !== "string" || !normalName(name)) throw Error("Exact entity name required")
-  const nodes = new Map(graph.nodes.map((node) => [node.id, node])),
-    entityIds = new Set(
-      graph.nodes
-        .filter(
-          (node) => node.type === "EntityMention" && normalName(node.label) === normalName(name),
-        )
-        .map((node) => node.id),
-    )
-  const events = graph.edges
-    .filter((edge) => edge.property === "involves" && entityIds.has(edge.to))
-    .map((edge) => {
-      const event = nodes.get(edge.from),
-        article = nodes.get(
-          graph.edges.find((item) => item.property === "describes" && item.to === event.id).from,
-        ),
-        claims = related(graph, event.id, "supportedBy").map((item) => nodes.get(item.to))
+  return createOntologyReader(graph).entityTimeline(name)
+}
+
+// One bounded read owns an immutable, validated snapshot and provenance indexes.
+// No global cache or validation bypass: a new reader checks a changed graph, and
+// neither caller mutation nor editing a returned trace can alter this snapshot.
+export function createOntologyReader(graph) {
+  const snapshot = assertEvidenceOntology(structuredClone(graph))
+  const nodes = new Map(snapshot.nodes.map((node) => [node.id, node]))
+  const outgoing = new Map(),
+    incoming = new Map(),
+    claimsById = new Map(),
+    entities = new Map()
+  const append = (map, key, value) => {
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(value)
+  }
+  for (const edge of snapshot.edges) {
+    append(outgoing, edge.from + "|" + edge.property, edge)
+    append(incoming, edge.to + "|" + edge.property, edge)
+  }
+  for (const node of snapshot.nodes) {
+    if (node.type === "Claim") append(claimsById, node.claim_id, node)
+    if (node.type === "EntityMention") append(entities, normalName(node.label), node.id)
+  }
+  const out = (id, property) => outgoing.get(id + "|" + property) || []
+  const into = (id, property) => incoming.get(id + "|" + property) || []
+  const trace = (claimId, run) => {
+    const matches = (claimsById.get(claimId) || []).filter((node) => !run || node.run === run)
+    if (matches.length !== 1)
+      throw Error(matches.length ? "Claim ID needs an explicit run" : "Claim not found")
+    const claim = matches[0],
+      event = nodes.get(into(claim.id, "supportedBy")[0].from)
+    const article = nodes.get(into(event.id, "describes")[0].from)
+    const evidence = out(claim.id, "evidencedBy").map((edge) => {
+      const block = nodes.get(edge.to),
+        parse = nodes.get(out(block.id, "locatedIn")[0].to)
+      const source = nodes.get(out(parse.id, "parsedFrom")[0].to)
       return {
-        event_id: event.id.slice("event:".length),
-        published_at: event.published_at,
-        title: event.title,
-        states_in_verified_claims: unique(claims.map((claim) => claim.event_state)).sort(),
-        source_urls: article.source_urls,
-        claims: claims.map((claim) => ({
-          claim_id: claim.claim_id,
-          statement: claim.statement,
-          claim_kind: claim.claim_kind,
-          event_state: claim.event_state,
-          effective_period: claim.effective_period,
-        })),
+        quote: edge.quote,
+        source_url: source.original_url,
+        source_version_id: source.source_version_id,
+        source_sha256: source.body_sha256,
+        parse_id: parse.parse_id,
+        block_id: block.block_id,
+        locator: block.locator,
       }
     })
-    .sort(
-      (a, b) =>
-        a.published_at.localeCompare(b.published_at) || a.event_id.localeCompare(b.event_id),
-    )
-  return { entity_label: name, identity_scope: "exact_editorial_label_only", events }
+    return { claim, event, article, evidence }
+  }
+  return Object.freeze({
+    traceClaim: (claimId, run = null) => structuredClone(trace(claimId, run)),
+    entityTimeline: (name) => {
+      if (typeof name !== "string" || !normalName(name)) throw Error("Exact entity name required")
+      const events = (entities.get(normalName(name)) || [])
+        .flatMap((id) => into(id, "involves"))
+        .map((edge) => {
+          const event = nodes.get(edge.from),
+            article = nodes.get(into(event.id, "describes")[0].from)
+          const claims = out(event.id, "supportedBy").map((item) => nodes.get(item.to))
+          return {
+            event_id: event.id.slice("event:".length),
+            published_at: event.published_at,
+            ...(event.occurred_at ? { occurred_at: event.occurred_at } : {}),
+            reviewed_at: event.reviewed_at,
+            article_path: `news/${event.id.slice("event:".length)}`,
+            title: event.title,
+            states_in_verified_claims: unique(claims.map((claim) => claim.event_state)).sort(),
+            source_urls: article.source_urls,
+            claims: claims.map((claim) => ({
+              claim_id: claim.claim_id,
+              statement: claim.statement,
+              claim_kind: claim.claim_kind,
+              event_state: claim.event_state,
+              effective_period: claim.effective_period,
+              reviewed_at: claim.reviewed_at,
+              evidence: trace(claim.claim_id, claim.run).evidence,
+            })),
+          }
+        })
+        .sort(
+          (a, b) =>
+            (a.occurred_at || a.published_at).localeCompare(b.occurred_at || b.published_at) ||
+            a.event_id.localeCompare(b.event_id),
+        )
+      return structuredClone({
+        entity_label: name,
+        identity_scope: "exact_editorial_label_only",
+        events,
+      })
+    },
+  })
 }
 
 export function ontologyConceptArticles(graph, conceptId) {
@@ -421,13 +607,15 @@ export function ontologyConceptArticles(graph, conceptId) {
       return {
         event_id: event.id.slice("event:".length),
         published_at: event.published_at,
+        ...(event.occurred_at ? { occurred_at: event.occurred_at } : {}),
         title: article.title,
         source_urls: article.source_urls,
       }
     })
     .sort(
       (a, b) =>
-        b.published_at.localeCompare(a.published_at) || a.event_id.localeCompare(b.event_id),
+        (b.occurred_at || b.published_at).localeCompare(a.occurred_at || a.published_at) ||
+        a.event_id.localeCompare(b.event_id),
     )
   return { concept_id: conceptId, association_basis: "explicit_article_review", articles }
 }

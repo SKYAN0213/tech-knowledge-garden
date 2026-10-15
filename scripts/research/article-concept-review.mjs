@@ -8,9 +8,13 @@ import {
   conceptRegistry,
   verifiedConceptLinks,
   assertConceptConflicts,
+  assertPreservedConceptIdentities,
 } from "./knowledge-links.mjs"
-import { loadReferencedNoteApproval } from "./note-review.mjs"
-import { safePath } from "./run-state.mjs"
+import {
+  loadReferencedNoteApproval,
+  loadHistoricalNoteApproval,
+} from "./note-review.mjs"
+import { safePath, readJSON } from "./run-state.mjs"
 import { learningKinds } from "../../web/graph-model.mjs"
 
 const checks = ["definition_read", "article_source_read", "relationship_checked", "aliases_checked"]
@@ -19,6 +23,59 @@ const exactKeys = (value, allowed) =>
   typeof value === "object" &&
   !Array.isArray(value) &&
   Object.keys(value).every((key) => allowed.includes(key))
+
+export function historicalCanonicalContent(
+  root,
+  note,
+  vault,
+  { noteApprovalLoader = loadHistoricalNoteApproval } = {},
+) {
+  const current = fs.readFileSync(safePath(vault, note.path), "utf8")
+  if (sha256(current) === note.sha256) return current
+  const runs = safePath(root, "runs")
+  if (!fs.existsSync(runs)) return current
+  for (const entry of fs.readdirSync(runs, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !/^[A-Za-z0-9_-]{1,160}$/.test(entry.name)) continue
+    const stored = readJSON(root, `runs/${entry.name}/approved-notes.json`)
+    const candidate = stored?.notes?.find(
+      (n) =>
+        n.path === note.path &&
+        n.previous_sha256 === note.sha256 &&
+        typeof n.before_content === "string" &&
+        sha256(n.before_content) === note.sha256,
+    )
+    if (!candidate) continue
+    // A matching hash alone is insufficient. Validate the native replacement,
+    // its preserved before/after bytes and all source reviews before reuse.
+    const approved = noteApprovalLoader(root, entry.name, { vault })
+    return approved.approval.notes.find((n) => n.path === note.path).before_content
+  }
+  // No preserved native authority: retain the existing hash-change rejection.
+  return current
+}
+
+function approvedCurrentReplacement(root, path, expectedSha, current, approvedNotes, vault) {
+  const replacements = []
+  for (const candidate of approvedNotes) {
+    const offered = candidate.approval?.notes?.find(
+      (note) =>
+        note.path === path &&
+        note.sha256 === expectedSha &&
+        note.previous_sha256 === sha256(current) &&
+        note.before_content === current &&
+        note.operation !== "create",
+    )
+    if (!offered) continue
+    const verified = loadReferencedNoteApproval(root, candidate.run, { vault })
+    if (sha256(JSON.stringify(verified)) !== sha256(JSON.stringify(candidate)))
+      throw Error("Approved specialist note receipt changed")
+    const note = verified.approval.notes.find((entry) => entry.path === path)
+    if (note && note.content === offered.content) replacements.push(note)
+  }
+  if (replacements.length > 1)
+    throw Error("Distinct approved specialist note replacement required")
+  return replacements[0]?.content ?? null
+}
 
 // Assignment evidence is private. The public projection retains only specialist
 // IDs; no relation is inferred from entities, aliases or simultaneous appearance.
@@ -29,7 +86,7 @@ export function evaluateArticleConceptReview(
   claims,
   parses,
   decision,
-  { vault = "vault", sourceVault = vault } = {},
+  { vault = "vault", sourceVault = vault, historical = false, approvedNotes = [] } = {},
 ) {
   const ids = decision.concept_ids ?? []
   const review = decision.concept_review
@@ -58,7 +115,10 @@ export function evaluateArticleConceptReview(
     ].flatMap((p) => p.claim_ids),
   )
   const publicClaims = claims.filter((c) => publicIDs.has(c.claim_id))
-  const registry = conceptRegistry(vault)
+  const registry =
+    !historical || review.assignments.some((a) => a.note?.approval_run === undefined)
+      ? conceptRegistry(vault)
+      : []
   const selected = []
   const proposals = new Map()
   const propose = (note) => {
@@ -104,7 +164,31 @@ export function evaluateArticleConceptReview(
     let content,
       approvalFiles = null
     if (assignment.note.approval_run !== undefined) {
-      const approved = loadReferencedNoteApproval(root, assignment.note.approval_run, { vault })
+      let approved
+      try {
+        approved = historical
+          ? loadHistoricalNoteApproval(root, assignment.note.approval_run, { vault })
+          : loadReferencedNoteApproval(root, assignment.note.approval_run, { vault })
+      } catch (error) {
+        if (historical) throw error
+        try {
+          const snapshot = loadHistoricalNoteApproval(root, assignment.note.approval_run, { vault })
+          const referenced = snapshot.approval.notes.find((n) => n.path === assignment.note.path)
+          const current = fs.readFileSync(safePath(vault, assignment.note.path), "utf8")
+          const replacement = approvedCurrentReplacement(
+            root,
+            assignment.note.path,
+            assignment.note.sha256,
+            current,
+            approvedNotes,
+            vault,
+          )
+          if (!referenced || referenced.content !== replacement) throw error
+          approved = snapshot
+        } catch {
+          throw error
+        }
+      }
       const note = approved.approval.notes.find((n) => n.path === assignment.note.path)
       if (!note) throw Error("Selected specialist note missing from knowledge approval")
       content = note.content
@@ -116,7 +200,20 @@ export function evaluateArticleConceptReview(
       for (const sibling of approved.approval.notes)
         if (sibling.path.startsWith("Knowledge/")) propose(sibling)
     } else {
-      content = fs.readFileSync(safePath(vault, assignment.note.path), "utf8")
+      content = historical
+        ? historicalCanonicalContent(root, assignment.note, vault)
+        : fs.readFileSync(safePath(vault, assignment.note.path), "utf8")
+      if (!historical && sha256(content) !== assignment.note.sha256) {
+        content =
+          approvedCurrentReplacement(
+            root,
+            assignment.note.path,
+            assignment.note.sha256,
+            content,
+            approvedNotes,
+            vault,
+          ) || content
+      }
       if (
         !registry.some(
           (n) =>
@@ -165,7 +262,8 @@ export function evaluateArticleConceptReview(
       ...(approvalFiles ? { approval_files: approvalFiles } : {}),
     })
   }
-  assertConceptConflicts(vault, [...proposals.values()])
+  if (historical) assertPreservedConceptIdentities([...proposals.values()])
+  else assertConceptConflicts(vault, [...proposals.values()])
   const links = verifiedConceptLinks(
     {
       review_status: "verified",

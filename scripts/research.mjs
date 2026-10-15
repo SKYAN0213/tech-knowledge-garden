@@ -2,9 +2,10 @@ import fs from "node:fs"
 import path from "node:path"
 import { parseArgs } from "node:util"
 import { SourceFetcher } from "./research/fetch.mjs"
+import { recoverEmptyHTML } from "./research/body-recovery.mjs"
 import { executeListScan } from "./research/list-scan-command.mjs"
 import { writeDraftCheckpoint } from "./research/draft-checkpoint.mjs"
-import { processSourceRun } from "./research/source-processing.mjs"
+import { processSourceRun, continueProcessedSourceWriting } from "./research/source-processing.mjs"
 import { loadProcessingRunStatus } from "./research/daily-processing-status.mjs"
 import { recordEmptyExtractionReview } from "./research/empty-extraction-review.mjs"
 import {
@@ -23,7 +24,6 @@ import {
   retainParse,
 } from "./research/parser.mjs"
 import { Ollama, localOllamaURL, DEFAULT_LOCAL_OLLAMA_MODEL } from "./research/ollama.mjs"
-import { OpenAIResponses } from "./research/openai.mjs"
 import {
   extractClaims,
   recordFactReview,
@@ -63,6 +63,10 @@ import { inspectReaderQuality, assertReaderQuality } from "./research/reader-qua
 import { evaluateArticleConceptReview } from "./research/article-concept-review.mjs"
 import { loadProcessedDraft } from "./research/processed-draft.mjs"
 import {
+  bindEditorialCompleteness,
+  loadEditorialCoverageFile,
+} from "./research/editorial-completeness.mjs"
+import {
   archiveManifest,
   packageResearchArchive,
   buildSourceRegister,
@@ -88,6 +92,7 @@ import { buildCandidateEvidenceReviewBatch } from "./research/candidate-evidence
 import { buildHistoricalSourceReconciliation } from "./research/historical-source-reconciliation.mjs"
 import { writeKnowledgeDraft } from "./research/knowledge-editor.mjs"
 import { prepareRoleProvider } from "./research/model-policy.mjs"
+import { createModelProvider } from "./research/model-provider.mjs"
 import { recordCandidateDisposition } from "./research/candidate-disposition.mjs"
 import { recordCandidateIdentity } from "./research/candidate-identity.mjs"
 import { recordCandidateApproval } from "./research/candidate-approval.mjs"
@@ -133,6 +138,8 @@ export async function main(argv = process.argv.slice(2)) {
       "draft-run": { type: "string" },
       "evidence-think": { type: "string" },
       review: { type: "string" },
+      "completeness-review": { type: "string" },
+      "coverage-review": { type: "string" },
       provisional: { type: "boolean", default: false },
       "merge-backlog": { type: "boolean", default: false },
       query: { type: "string" },
@@ -149,6 +156,8 @@ export async function main(argv = process.argv.slice(2)) {
       "batch-manifest": { type: "string" },
       "source-run": { type: "string" },
       "retain-previous-parses": { type: "boolean", default: false },
+      "render-empty-html": { type: "boolean", default: false },
+      "policy-recheck-limit": { type: "string" },
       "retain-unsupported-claims": { type: "boolean", default: false },
       "approved-root": { type: "string" },
       "candidate-source-run": { type: "string" },
@@ -248,6 +257,10 @@ export async function main(argv = process.argv.slice(2)) {
     throw Error(
       "Usage: research.mjs baseline|inventory|review-legacy-empty|reconcile-approved-inventory|prepare-identity-review-batch|reconcile-historical-source-evidence|reconcile-content-fingerprint-evidence|discover|scan-list|collect|collect-search-candidates|process-search-candidates|reparse|bundle|select-source|select-candidate|intake-search-candidate|intake-search-batch|select-search-candidate|candidate-approval|legacy-candidate-approval|candidate-source-alternative|event-material-link|import-capture|candidate-disposition|candidate-identity|extract|process-source|review-empty-extraction|review|deep-review|draft|correct|preview|note-review|knowledge-draft|model-info|queries|localize-queries|search|editorial-check|approve|archive|archive-closure|gold-case|evaluation-import-candidate|evaluation-review|source-register --run ID; acquisition-status [--run ID] [--root PATH]; processing-status --run ID [--root PATH]; recover-lock --lock NAME --expected-owner UUID [--root PATH]; review-legacy-empty requires --review [--vault PATH]; reconcile-approved-inventory requires --daily-run --drive-snapshot --drive-readback --inventory; prepare-identity-review-batch requires --daily-run --reconciliation; reconcile-historical-source-evidence requires --daily-run --reconciliation --review-batch; evaluation-import-candidate requires --case-id --candidate-run; evaluation-review requires --case-id --candidate-run --review",
     )
+  if (v["completeness-review"] && !["draft", "process-source"].includes(command))
+    throw Error("--completeness-review is only supported for reviewed source writing")
+  if (v["coverage-review"] && command !== "approve")
+    throw Error("--coverage-review is only supported for exact draft approval")
   const budgetFields = [
     "num-ctx",
     "input-char-budget",
@@ -259,8 +272,18 @@ export async function main(argv = process.argv.slice(2)) {
   ]
   if (v["retain-previous-parses"] && (command !== "reparse" || !v["source-run"] || v.url?.length))
     throw Error("--retain-previous-parses requires reparse --source-run without --url")
+  if (
+    v["render-empty-html"] &&
+    (!["collect", "reparse"].includes(command) || v["retain-previous-parses"])
+  )
+    throw Error("--render-empty-html requires collect or reparse without retained previous parses")
   if (v["retain-unsupported-claims"] && command !== "reuse-extraction")
     throw Error("--retain-unsupported-claims is only supported for reuse-extraction")
+  if (v["policy-recheck-limit"] !== undefined) {
+    if (command !== "collect") throw Error("--policy-recheck-limit is only supported for collect")
+    if (!/^[0-3]$/.test(v["policy-recheck-limit"]))
+      throw Error("--policy-recheck-limit must be an integer between 0 and 3")
+  }
   if (v["resume-local-budget-ms"] !== undefined) {
     if (command !== "extract") throw Error("--resume-local-budget-ms is only supported for extract")
     if (!/^\d+$/.test(v["resume-local-budget-ms"]))
@@ -683,6 +706,7 @@ export async function main(argv = process.argv.slice(2)) {
         title: article.title,
         published_at: article.review?.published_at,
         source_urls: article.urls,
+        edition: edition.slug,
       })),
     )
     return recordCandidateApproval({
@@ -1064,6 +1088,7 @@ export async function main(argv = process.argv.slice(2)) {
       "draft-run",
       "evidence-think",
       "review",
+      "completeness-review",
       "candidate-key",
     ]
     if (
@@ -1085,6 +1110,7 @@ export async function main(argv = process.argv.slice(2)) {
       assessmentReuseRun: v["assessment-reuse-run"],
       draftRun: v["draft-run"],
       reviewFile: v.review,
+      completenessReviewFile: v["completeness-review"],
       candidateKey: v["candidate-key"],
       evidenceThink:
         v["evidence-think"] === "false"
@@ -1092,6 +1118,28 @@ export async function main(argv = process.argv.slice(2)) {
           : v["evidence-think"] === "true"
             ? true
             : v["evidence-think"],
+    })
+  }
+  if (command === "draft" && isProcessedRun(root, v.run)) {
+    const reviewed = readJSON(root, `runs/${v.run}/reviewed-claims.json`)
+    await assertProcessedFactReview(root, v.run, reviewed)
+    if (!reviewed.claims.some((claim) => claim.review.status === "verified"))
+      throw Error("Reviewed facts required before drafting a processed source")
+    if (
+      v.deep ||
+      v.provisional ||
+      ["model", "think"].some((key) =>
+        argv.some((arg) => arg === `--${key}` || arg.startsWith(`--${key}=`)),
+      )
+    )
+      throw Error(
+        "Processed source drafting uses its frozen model policy and reviewed context; omit direct generation overrides",
+      )
+    return continueProcessedSourceWriting({
+      root,
+      run: v.run,
+      policyFile: v["model-policy"] || "data/research-model-policy.json",
+      completenessReviewFile: v["completeness-review"],
     })
   }
   if (v["model-policy"]) {
@@ -1106,18 +1154,15 @@ export async function main(argv = process.argv.slice(2)) {
         : {}),
     }
     let modelPolicy = JSON.parse(fs.readFileSync(v["model-policy"], "utf8"))
-    const configuredProvider = modelPolicy.roles?.[policyRole]?.provider ?? "ollama"
-    if (configuredProvider === "openai") ollama = new OpenAIResponses()
-    else if (configuredProvider === "ollama") {
-      const environmentEndpoint = process.env.TECH_KNOWLEDGE_OLLAMA_URL
-      const endpoint = environmentEndpoint ?? modelPolicy.runtime?.ollama_url
-      ollama = new Ollama(endpoint === undefined ? undefined : { url: endpoint })
-      if (environmentEndpoint !== undefined)
-        modelPolicy = {
-          ...modelPolicy,
-          runtime: { ...(modelPolicy.runtime || {}), ollama_url: ollama.url },
-        }
-    } else throw Error("Unknown model provider")
+    ollama = createModelProvider(modelPolicy, policyRole, { root, run: v.run, overrides })
+    if (
+      (modelPolicy.roles?.[policyRole]?.provider ?? "ollama") === "ollama" &&
+      process.env.TECH_KNOWLEDGE_OLLAMA_URL !== undefined
+    )
+      modelPolicy = {
+        ...modelPolicy,
+        runtime: { ...(modelPolicy.runtime || {}), ollama_url: ollama.url },
+      }
     ollama = await prepareRoleProvider(ollama, modelPolicy, policyRole, {
       root,
       run: v.run,
@@ -1463,8 +1508,19 @@ export async function main(argv = process.argv.slice(2)) {
           manifest = JSON.parse(bytes)
         if (
           manifest.capture_id !== item.name ||
-          sha256(fs.readFileSync(safePath(root, `renders/${item.name}/body.html`))) !==
-            manifest.body_sha256 ||
+          (manifest.schema === "browser-render-capture/v2" &&
+            manifest.body_path !==
+              `documents/${manifest.original_document?.source_id}/${manifest.body_sha256}/body.bin`) ||
+          sha256(
+            fs.readFileSync(
+              safePath(
+                root,
+                manifest.schema === "browser-render-capture/v2"
+                  ? manifest.body_path
+                  : `renders/${item.name}/body.html`,
+              ),
+            ),
+          ) !== manifest.body_sha256 ||
           sha256(
             JSON.stringify([
               manifest.original_source_version_id,
@@ -1724,8 +1780,18 @@ export async function main(argv = process.argv.slice(2)) {
           corrected = {
             ...correctDraft(original, replacement, reviewed.claims, review),
             correction_input_sha256: inputHash,
-          },
-          historyPath = `runs/${v.run}/drafts/${original.draft_id}.json`,
+          }
+        // A resumed editor may submit the same prose with its current ID.
+        // Preserve the prior correction chain instead of creating a self-link.
+        if (corrected.draft_id === original.draft_id)
+          return {
+            status: "editorial_review",
+            draft_id: original.draft_id,
+            reused: true,
+            problems: corrected.problems,
+            candidate_published: false,
+          }
+        const historyPath = `runs/${v.run}/drafts/${original.draft_id}.json`,
           existingHistory = safePath(root, historyPath)
         if (
           fs.existsSync(existingHistory) &&
@@ -1756,8 +1822,20 @@ export async function main(argv = process.argv.slice(2)) {
         await assertProcessedFactReview(root, v.run, reviewed)
         if (isProcessedRun(root, v.run))
           draft = loadProcessedDraft(root, v.run, reviewed, documents, parses)
-        const decision = JSON.parse(fs.readFileSync(v.review, "utf8")),
-          article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
+        const decision = JSON.parse(fs.readFileSync(v.review, "utf8"))
+        if (v["coverage-review"]) {
+          const coverage = loadEditorialCoverageFile(v["coverage-review"], draft, reviewed.claims, {
+            documents,
+            parses,
+          })
+          if (
+            decision.completeness_review &&
+            JSON.stringify(decision.completeness_review) !== JSON.stringify(coverage)
+          )
+            throw Error("Editorial review and separate important fact coverage differ")
+          decision.completeness_review = coverage
+        }
+        const article = approvedArticle(draft, reviewed.claims, documents, decision, parses)
         // Existing immutable approvals remain readable. A new approval checks
         // current reader rules without rewriting historical model checkpoints.
         const existing = readJSON(root, `runs/${v.run}/approved-article.json`)
@@ -1864,6 +1942,11 @@ export async function main(argv = process.argv.slice(2)) {
           think: false,
           provisional: v.provisional,
           deepContext,
+          completenessContext: await bindEditorialCompleteness(
+            root,
+            v.run,
+            v["completeness-review"],
+          ),
           parses,
           documents,
         },
@@ -1890,8 +1973,21 @@ export async function main(argv = process.argv.slice(2)) {
       : null
     const input = {
       command,
+      ...(v["render-empty-html"]
+        ? {
+            render_empty_html: true,
+            browser_sha256: sha256(fs.readFileSync("scripts/research/browser.mjs")),
+            recovery_sha256: sha256(fs.readFileSync("scripts/research/body-recovery.mjs")),
+            browser_worker_sha256: sha256(
+              fs.readFileSync("integrations/research-worker/browser.py"),
+            ),
+          }
+        : {}),
       urls: v.url || [],
       channels: v.channel || [],
+      ...(v["policy-recheck-limit"] !== undefined
+        ? { policy_recheck_limit: Number(v["policy-recheck-limit"]) }
+        : {}),
       model: v.model,
       think: v.think,
       ...(ollama?.executionPolicy ? { model_policy: ollama.executionPolicy } : {}),
@@ -1915,6 +2011,9 @@ export async function main(argv = process.argv.slice(2)) {
     }
     const run = new RunState(root, v.run, input),
       fetcher = new SourceFetcher(root, {
+        ...(v["policy-recheck-limit"] !== undefined
+          ? { policy_recheck_limit: Number(v["policy-recheck-limit"]) }
+          : {}),
         pdf_profiles:
           JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || [],
       })
@@ -1958,33 +2057,39 @@ export async function main(argv = process.argv.slice(2)) {
       }
     }
     if (!stored && !v.url?.length) throw Error("At least one --url or --source-run required")
-    const documents = stored?.documents || [],
+    const documents = structuredClone(stored?.documents || []),
       parses =
         command === "reparse" && !v["retain-previous-parses"]
           ? []
           : structuredClone(stored?.parses || [])
+    const recoveries = []
+    const recover = async (document, parsed, options) => {
+      if (!v["render-empty-html"]) return { document, parse: parsed }
+      const result = await recoverEmptyHTML(root, run, fetcher, document, parsed, options)
+      recoveries.push({ url: document.original_url, status: result.status, ...result.observation })
+      atomicWrite(root, `runs/${v.run}/body-recovery.json`, recoveries)
+      return result
+    }
     if (command === "reparse") {
       const profiles =
         JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
-      // Failed captures remain in documents.json; only readable stored bodies
-      // are reparsed. Extraction and evaluation still require acquired sources.
-      for (const document of documents.filter((d) =>
-        ["captured", "not_modified"].includes(d.fetch_status),
-      )) {
+      for (let index = 0; index < documents.length; index++) {
+        const document = documents[index]
+        if (!["captured", "not_modified"].includes(document.fetch_status)) continue
         const options =
           profiles.find((p) => new RegExp(p.url_pattern).test(document.final_url))?.options || {}
-        retainParse(
-          parses,
-          await run.stage(
-            `parse-${document.source_id}-${document.body_sha256.slice(0, 12)}`,
-            {
-              document,
-              options,
-              worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
-            },
-            () => parseDocument(root, document, options),
-          ),
+        const parsed = await run.stage(
+          `parse-${document.source_id}-${document.body_sha256.slice(0, 12)}`,
+          {
+            document,
+            options,
+            worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
+          },
+          () => parseDocument(root, document, options),
         )
+        const result = await recover(document, parsed, options)
+        documents[index] = result.document
+        retainParse(parses, result.parse)
       }
     }
     for (const url of v.url || []) {
@@ -1997,20 +2102,23 @@ export async function main(argv = process.argv.slice(2)) {
         JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles || []
       const options =
         profiles.find((p) => new RegExp(p.url_pattern).test(document.final_url))?.options || {}
-      if (["captured", "not_modified"].includes(document.fetch_status))
-        parses.push(
-          await run.stage(
-            "parse-" + id,
-            {
-              document,
-              options,
-              worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
-            },
-            () => parseDocument(root, document, options),
-          ),
+      if (["captured", "not_modified"].includes(document.fetch_status)) {
+        const parsed = await run.stage(
+          "parse-" + id,
+          {
+            document,
+            options,
+            worker_sha256: sha256(fs.readFileSync("integrations/research-worker/worker.py")),
+          },
+          () => parseDocument(root, document, options),
         )
+        const result = await recover(document, parsed, options)
+        documents[documents.length - 1] = result.document
+        parses.push(result.parse)
+      }
     }
-    if (v["retain-previous-parses"]) assertStoredEvidence(root, documents, parses)
+    if (v["retain-previous-parses"] || v["render-empty-html"])
+      assertStoredEvidence(root, documents, parses)
     atomicWrite(root, `runs/${v.run}/documents.json`, documents)
     atomicWrite(root, `runs/${v.run}/parses.json`, parses)
     if (command === "extract") {
@@ -2082,6 +2190,7 @@ export async function main(argv = process.argv.slice(2)) {
     return {
       sources: documents.map((d) => ({ url: d.original_url, status: d.fetch_status })),
       parses: parses.map((p) => ({ id: p.parse_id, status: p.status, blocks: p.blocks.length })),
+      ...(v["render-empty-html"] ? { body_recovery: recoveries } : {}),
       candidate_published: false,
     }
   })

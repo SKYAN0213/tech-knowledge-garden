@@ -7,6 +7,49 @@ import { main, scanListImplementationFingerprints } from "../scripts/research.mj
 import { dailySourcePaths } from "../scripts/research/daily-scan.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { acquireLock, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { fixture, source } from "./fixtures/research-event-fixtures.mjs"
+
+test("collect policy maintenance limit rejects unrelated commands and pins an explicit zero", async (t) => {
+  const f = fixture(t)
+  for (const value of ["-1", "4", "0.0", "01", "NaN"])
+    await assert.rejects(
+      main([
+        "collect",
+        "--root",
+        f.root,
+        "--run",
+        "invalid-limit",
+        `--policy-recheck-limit=${value}`,
+      ]),
+      /integer between 0 and 3/,
+    )
+  for (const command of ["discover", "reparse", "status"])
+    await assert.rejects(
+      main([command, "--root", f.root, "--run", "invalid-limit", "--policy-recheck-limit", "0"]),
+      /only supported for collect/,
+    )
+  assert.equal(fs.existsSync(path.join(f.root, "runs")), false)
+  const stored = source(f.root, 0)
+  const original = fs.readFileSync(path.join(f.root, `runs/${stored.origin}/documents.json`))
+  const args = [
+    "collect",
+    "--root",
+    f.root,
+    "--run",
+    "zero-maintenance",
+    "--url",
+    "https://127.0.0.1/no-network",
+  ]
+  await assert.rejects(main([...args, "--policy-recheck-limit", "0"]), /non-public/i)
+  const state = readJSON(f.root, "runs/zero-maintenance/state.json")
+  await assert.rejects(main([...args, "--policy-recheck-limit", "1"]), /Run input changed/)
+  assert.equal(readJSON(f.root, "runs/zero-maintenance/state.json").input_hash, state.input_hash)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, `runs/${stored.origin}/documents.json`)),
+    original,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "source-policy")), false)
+})
 
 test("discover rejects ignored URL overrides before creating a run or fetching sources", async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "research-discover-url-"))

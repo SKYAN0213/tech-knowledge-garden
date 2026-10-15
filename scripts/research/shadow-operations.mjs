@@ -15,7 +15,16 @@ import { candidateCheckpoint } from "./evaluation.mjs"
 import { loadRoleBudget } from "./model-policy.mjs"
 import { loadProcessedSourceResult } from "./processed-source-result.mjs"
 import { publicationOperationStatus } from "./publication-operation.mjs"
-import { verifyRetrospectiveOutputs } from "./preview.mjs"
+import {
+  loadCurrentApproval,
+  verifyRetrospectiveOutputs,
+  verifyReviewedConceptOutputs,
+} from "./preview.mjs"
+import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
+import {
+  publicationDeliveryStatus,
+  loadScheduledPublicationInputs,
+} from "./authoring-delivery-request.mjs"
 
 import {
   freezeShadowHandoffBasis,
@@ -46,9 +55,233 @@ function pinned(root, reference, json = true) {
   return json ? JSON.parse(bytes) : bytes
 }
 
+const comparisonReviewed = (review) =>
+  SHADOW_CRITERIA.every(
+    (key) =>
+      ["accepted", "rejected"].includes(review.comparison?.[key]?.decision) &&
+      review.comparison[key].reason?.trim(),
+  )
+
+function scheduledPublicationObservation(root, run, repository, started, reviewed, status) {
+  const publication = status || publicationOperationStatus({ root, run, repository })
+  if (
+    publication.status !== "public_bytes_verified" ||
+    publication.observation_basis !== "archived_observation"
+  )
+    throw Error("Archived Drive, deployment and channel readback required")
+  const input = readJSON(root, `runs/${run}/publication-operation/input.json`)
+  const preview = pinned(root, input.preview)
+  const proof = readJSON(root, `runs/${run}/publication-operation/public.json`)
+  const observation = pinned(root, proof.readback)
+  if (
+    !observation.files.every(
+      (row) =>
+        Number.isFinite(Date.parse(row.observed_at)) &&
+        Date.parse(row.observed_at) >= started &&
+        Date.parse(row.observed_at) <= reviewed,
+    )
+  )
+    throw Error("Publication observations must belong to this scheduled execution")
+  return { publication, input, preview }
+}
+
+function privateReaderArtifacts(root, reference, edition, started, reviewed) {
+  const preview = pinned(root, reference)
+  if (
+    preview.schema !== "private-reader-preview/v1" ||
+    preview.candidate_published !== false ||
+    !Number.isFinite(Date.parse(preview.observed_at)) ||
+    Date.parse(preview.observed_at) < started ||
+    Date.parse(preview.observed_at) > reviewed ||
+    !preview.editions?.some((row) => row.path === edition) ||
+    reference.path !== `runs/${id(preview.run_id)}/preview-manifest.json`
+  )
+    throw Error("Exact same-scope unpublished candidate preview required")
+  const workspace = safePath(root, preview.workspace)
+  for (const row of [
+    ...preview.editions,
+    ...preview.knowledge,
+    ...(preview.navigation ? [preview.navigation] : []),
+  ])
+    pinned(root, { path: preview.workspace + "/vault/" + row.path, sha256: row.sha256 }, false)
+  for (const [directory, rows] of [
+    ["public", preview.public],
+    ["digest", preview.digest],
+  ]) {
+    if (
+      !Array.isArray(rows) ||
+      !rows.length ||
+      new Set(rows.map((row) => row.path)).size !== rows.length
+    )
+      throw Error("Complete immutable candidate reader outputs required")
+    for (const row of rows)
+      pinned(
+        root,
+        { path: preview.workspace + "/" + directory + "/" + row.path, sha256: row.sha256 },
+        false,
+      )
+  }
+  return { preview, workspace }
+}
+
+// P6-01 retains one legacy publication. The native output is a private
+// comparison; a release or worker completion cannot promote it to publication.
+async function verifyNativeShadowReview({ root, review, repository }) {
+  if (
+    !/^[A-Za-z0-9_-]{1,100}$/.test(review.run_id || "") ||
+    !["human", "codex"].includes(review.reviewer_kind) ||
+    !review.reviewer?.trim() ||
+    !Number.isFinite(Date.parse(review.reviewed_at)) ||
+    Date.parse(review.reviewed_at) > Date.now() ||
+    review.published_by !== "legacy" ||
+    review.candidate_published !== false ||
+    !comparisonReviewed(review) ||
+    !Number.isFinite(review.processing_seconds) ||
+    review.processing_seconds < 0
+  )
+    throw Error("Attributed scheduled comparison review required")
+  id(review.delivery_run)
+  id(review.legacy_publication_run)
+  if (review.delivery_run === review.legacy_publication_run)
+    throw Error("Distinct legacy publication and private native request required")
+  const request = pinned(root, review.delivery_request)
+  if (
+    review.delivery_request.path !==
+      `runs/${review.delivery_run}/publication-delivery/input.json` ||
+    request.run_id !== review.delivery_run ||
+    !request.invocation ||
+    !request.collection_basis
+  )
+    throw Error("Scheduled native delivery request required")
+  const ctx = { root, repo: repository, vault: request.vault }
+  const selected = loadDailyPublicationSelection(root, request.handoff.path, { vault: ctx.vault })
+  const scheduled = loadScheduledPublicationInputs(ctx, request, selected.selection, {
+    notAfter: review.reviewed_at,
+  })
+  const day = scheduled.plan.kst_day
+  if (
+    JSON.stringify(review.invocation) !== JSON.stringify(scheduled.invocation) ||
+    JSON.stringify(review.handoff) !== JSON.stringify(request.handoff) ||
+    JSON.stringify(review.collection_basis) !== JSON.stringify(request.collection_basis) ||
+    review.edition !==
+      `Editions/${day.slice(0, 4)}/${day.slice(5, 7)}/${day}_0800_Tech_AI_Briefing.md` ||
+    scheduled.report.status !== "collected" ||
+    scheduled.report.counts.incomplete_windows !== 0 ||
+    scheduled.report.counts.pending_windows !== 0 ||
+    scheduled.report.missing.length !== 0 ||
+    pinned(root, scheduled.basis.handoff).incomplete_windows?.length !== 0
+  )
+    throw Error("Completed same-scope scheduled collection and exact native handoff required")
+  const config = pinned(root, scheduled.basis.config)
+  validateStoredDailyPlan(scheduled.plan, {
+    runId: scheduled.basis.daily_run,
+    config,
+    activeRoutes: scheduled.basis.active_routes,
+    configSha: scheduled.basis.config_sha256,
+    edition: scheduled.plan.edition,
+  })
+  verifyDailyReceipts(root, scheduled.plan, scheduled.receipts, {
+    backlogFile: safePath(root, scheduled.basis.backlog.path),
+  })
+  for (const key of SHADOW_CRITERIA) pinned(root, review.comparison[key].evidence, false)
+  const delivery = publicationDeliveryStatus(ctx, { run_id: review.delivery_run })
+  if (
+    delivery.request.sha256 !== review.delivery_request.sha256 ||
+    delivery.binding ||
+    delivery.execution ||
+    delivery.authoring?.drive_verified ||
+    delivery.publication ||
+    delivery.public_verified
+  )
+    throw Error("Native comparison must remain private without a delivery execution or publication")
+  const started = Date.parse(scheduled.invocation.started_at)
+  const reviewed = Date.parse(review.reviewed_at)
+  const { preview, workspace } = privateReaderArtifacts(
+    root,
+    review.candidate_preview,
+    review.edition,
+    started,
+    reviewed,
+  )
+  const legacy = scheduledPublicationObservation(
+    root,
+    review.legacy_publication_run,
+    repository,
+    started,
+    reviewed,
+  )
+  if (
+    preview.run_id === legacy.preview.run_id ||
+    !legacy.preview.editions.some((row) => row.path === review.edition) ||
+    preview.daily_editorial_handoff?.path !== request.handoff.path ||
+    preview.daily_editorial_handoff?.sha256 !== request.handoff.sha256 ||
+    JSON.stringify([...preview.approved_runs].sort()) !==
+      JSON.stringify([...selected.approvedRuns].sort()) ||
+    new Set(preview.approved_runs).size !== preview.approved_runs.length ||
+    !selected.knowledgeRuns.every((run) => preview.knowledge_runs.includes(run)) ||
+    selected.approvedRuns.some((run) => legacy.preview.approved_runs?.includes(run))
+  )
+    throw Error("Distinct same-issue legacy and exact private native reader outputs required")
+  const authoring = pinned(root, legacy.input.execution)
+  if (
+    !Number.isFinite(Date.parse(authoring.observed_at)) ||
+    Date.parse(authoring.observed_at) < started ||
+    Date.parse(authoring.observed_at) > reviewed
+  )
+    throw Error("Legacy Drive observation must belong to this scheduled execution")
+  const approvals = selected.approvedRuns.map((run) =>
+    loadCurrentApproval(root, run, { vault: ctx.vault }),
+  )
+  verifyReviewedConceptOutputs(workspace, approvals)
+  const reader = await verifyRetrospectiveOutputs(
+    workspace,
+    approvals.map((row) => row.article),
+    preview.editions,
+    pinned(root, preview.source_feed || review.rss_baseline, false).toString("utf8"),
+    { newEdition: !!preview.edition_spec },
+  )
+  const models = selected.approvedRuns.map((run) => {
+    const claims = ref(root, `runs/${run}/claims.json`)
+    return { processing_run: run, claims, provenance: pinned(root, claims).provenance || null }
+  })
+  const accepted = SHADOW_CRITERIA.every((key) => review.comparison[key].decision === "accepted")
+  return {
+    schema: "research-shadow-operation/v2",
+    run_id: review.run_id,
+    day,
+    edition: review.edition,
+    daily_run: scheduled.basis.daily_run,
+    execution_id: scheduled.invocation.execution_id,
+    invocation_evidence_sha256: scheduled.invocation.evidence.sha256,
+    reviewed_at: review.reviewed_at,
+    status: accepted ? "completed_comparison" : "review_rejected",
+    invocation_basis: "attributed_review_with_pinned_execution_evidence",
+    published_by: "legacy",
+    candidate_validated: true,
+    candidate_published: false,
+    legacy_publication_run: review.legacy_publication_run,
+    legacy_commit: legacy.publication.commit,
+    delivery_run: review.delivery_run,
+    candidate_preview_run: preview.run_id,
+    candidate_preview: review.candidate_preview,
+    events: selected.selection.approved_runs.map((row) => row.event_id),
+    delivery_request: review.delivery_request,
+    invocation: request.invocation,
+    collection_basis: request.collection_basis,
+    handoff: request.handoff,
+    legacy_release: legacy.input.release,
+    models,
+    native_inputs: selected.selection.approved_runs,
+    local_reader: reader,
+    operational_promotion_verified: false,
+  }
+}
+
 // The invocation and comparison are attributed editorial attestations, not
 // claims inferred from an edition's nominal 08:00 timestamp or an mtime.
 export async function verifyShadowReview({ root, review, repository = process.cwd() }) {
+  if (review?.schema === "research-shadow-review/v2")
+    return verifyNativeShadowReview({ root, review, repository })
   if (
     review?.schema !== "research-shadow-review/v1" ||
     !/^[A-Za-z0-9_-]{1,100}$/.test(review.run_id || "") ||
@@ -65,11 +298,7 @@ export async function verifyShadowReview({ root, review, repository = process.cw
     !Array.isArray(review.candidates) ||
     !review.candidates.length ||
     new Set(review.candidates.map((row) => row.processing_run)).size !== review.candidates.length ||
-    !SHADOW_CRITERIA.every(
-      (key) =>
-        ["accepted", "rejected"].includes(review.comparison?.[key]?.decision) &&
-        review.comparison[key].reason?.trim(),
-    ) ||
+    !comparisonReviewed(review) ||
     !Number.isFinite(review.processing_seconds) ||
     review.processing_seconds < 0
   )
@@ -216,35 +445,15 @@ export async function verifyShadowReview({ root, review, repository = process.cw
     review.candidate_preview.path !== `runs/${preview.run_id}/preview-manifest.json`
   )
     throw Error("Completed same-scope collection and unpublished candidate preview required")
-  const legacy = publicationOperationStatus({
+  const observedLegacy = scheduledPublicationObservation(
     root,
-    run: review.legacy_publication_run,
+    review.legacy_publication_run,
     repository,
-  })
-  if (
-    legacy.status !== "public_bytes_verified" ||
-    legacy.observation_basis !== "archived_observation"
+    started,
+    reviewed,
   )
-    throw Error("Archived legacy Drive, deployment and channel readback required")
-  const legacyInput = readJSON(
-    root,
-    `runs/${review.legacy_publication_run}/publication-operation/input.json`,
-  )
-  const legacyPreview = pinned(root, legacyInput.preview)
-  const publicProof = readJSON(
-    root,
-    `runs/${review.legacy_publication_run}/publication-operation/public.json`,
-  )
-  const observation = pinned(root, publicProof.readback)
-  if (
-    !observation.files.every(
-      (row) =>
-        Number.isFinite(Date.parse(row.observed_at)) &&
-        Date.parse(row.observed_at) >= started &&
-        Date.parse(row.observed_at) <= reviewed,
-    )
-  )
-    throw Error("Publication observations must belong to this scheduled execution")
+  const legacy = observedLegacy.publication
+  const legacyPreview = observedLegacy.preview
   if (
     !legacyPreview.editions.some((row) => row.path === review.edition) ||
     legacy.preview_run === preview.run_id
@@ -408,10 +617,18 @@ export async function saveShadowCollectionBasis({
   return pointer.basis
 }
 
-export async function recordShadowOperation({ root, run, reviewPath, repository = process.cwd() }) {
+export async function recordShadowOperation({
+  root,
+  run,
+  reviewPath,
+  reviewSha256,
+  repository = process.cwd(),
+}) {
   id(run)
   return withLock(root, "shadow-operation-" + run, async () => {
     const reference = ref(root, reviewPath)
+    if (reviewSha256 !== undefined && reference.sha256 !== reviewSha256)
+      throw Error("Exact comparison review SHA required")
     const review = pinned(root, reference)
     if (review.run_id !== run) throw Error("Shadow review run differs")
     const verified = await verifyShadowReview({ root, review, repository })
@@ -428,20 +645,27 @@ export async function recordShadowOperation({ root, run, reviewPath, repository 
 export function summarizeShadowOperations(runs, rejected = []) {
   const days = new Set(),
     editions = new Set(),
-    executions = new Set()
+    executions = new Set(),
+    invocationEvidence = new Set()
   const counted = [],
     duplicates = []
   for (const row of [...runs].sort(
     (a, b) => a.reviewed_at.localeCompare(b.reviewed_at) || a.run_id.localeCompare(b.run_id),
   )) {
     if (row.status !== "completed_comparison") continue
-    if (days.has(row.day) || editions.has(row.edition) || executions.has(row.execution_id)) {
+    if (
+      days.has(row.day) ||
+      editions.has(row.edition) ||
+      executions.has(row.execution_id) ||
+      (row.invocation_evidence_sha256 && invocationEvidence.has(row.invocation_evidence_sha256))
+    ) {
       duplicates.push(row.run_id)
       continue
     }
     days.add(row.day)
     editions.add(row.edition)
     executions.add(row.execution_id)
+    if (row.invocation_evidence_sha256) invocationEvidence.add(row.invocation_evidence_sha256)
     counted.push(row.run_id)
   }
   return {

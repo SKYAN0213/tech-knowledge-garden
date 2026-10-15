@@ -110,3 +110,45 @@ test("product profile selects robot control content instead of unrelated promoti
   )
   assert(parsed.blocks.every((b) => b.locator.dom_path && b.locator.text_hash === sha256(b.text)))
 })
+
+test("AGIBOT article profile recovers saved prose and uses its dateline instead of a hidden timestamp", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "agibot-news-profile-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const oldPython = process.env.RESEARCH_PYTHON
+  process.env.RESEARCH_PYTHON = oldPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  t.after(() => {
+    if (oldPython === undefined) delete process.env.RESEARCH_PYTHON
+    else process.env.RESEARCH_PYTHON = oldPython
+  })
+  const url = "https://agibot.com/article/231/detail/82.html"
+  const matches = JSON.parse(fs.readFileSync("data/research-acquisition.json"))
+    .article_profiles.filter((p) => new RegExp(p.url_pattern).test(url))
+  assert.equal(matches.length, 1)
+  const bytes = Buffer.from('<html><head><meta charset="utf-8"><title>Company menu</title></head><body><nav>Unrelated news: 2027</nav><div class="newsCon"><div class="newsxq-title"><strong>15,000th robot rolls off the line</strong><!-- <span>2026-06-28 10:51:01</span> --></div><div class="newsxq-editbox"><p><strong>【SHANGHAI, China, June 28, 2026】</strong>Company announced production.</p><p><br></p><p>G2 tablet quality inspection: approximately 100 cumulative hours.</p></div></div><footer>Unrelated shipments: 30,000</footer></body></html>')
+  const hash = sha256(bytes), id = sourceId(url)
+  atomicWrite(root, "article.html", bytes)
+  const source = { original_url: url, final_url: url, source_id: id,
+    source_version_id: `${id}:${hash}`, body_sha256: hash, body_path: "article.html",
+    fetch_status: "captured", mime_type: "text/html", observed_at: "2026-10-09T00:00:00Z" }
+  const result = await parseDocument(root, source, matches[0].options)
+  assert.equal(result.status, "extracted")
+  assert.equal(result.title, "15,000th robot rolls off the line")
+  assert.equal(result.dates.published_at, "2026-06-28")
+  assert.equal(result.dates.profile_status, "matched")
+  assert.match(result.dates.basis.text, /SHANGHAI, China, June 28, 2026/)
+  assert.equal(result.blocks.length, 2)
+  assert(result.blocks.some((b) => b.text.includes("100 cumulative hours")))
+  assert(!result.blocks.some((b) => /Unrelated|10:51:01/.test(b.text)))
+  const missing = bytes.toString().replace("June 28, 2026", "Undated")
+  atomicWrite(root, "undated.html", Buffer.from(missing))
+  const undatedHash = sha256(Buffer.from(missing))
+  const undated = await parseDocument(root, {
+    ...source, body_path: "undated.html", body_sha256: undatedHash,
+    source_version_id: `${id}:${undatedHash}`,
+  }, matches[0].options)
+  // Body extraction and publication-date readiness are separate contracts.
+  assert.equal(undated.status, "extracted")
+  assert.equal(undated.dates.published_at, null)
+  assert.equal(undated.dates.profile_status, "no-match")
+  assert.equal(undated.dates.basis, null)
+})

@@ -22,6 +22,8 @@ const { values } = parseArgs({
     execute: { type: "boolean", default: false },
     resume: { type: "boolean", default: false },
     handoff: { type: "boolean", default: false },
+    "max-windows": { type: "string" },
+    "time-budget-ms": { type: "string" },
   },
 })
 const modes = ["plan-only", "execute", "resume", "handoff"].filter((mode) => values[mode])
@@ -33,6 +35,11 @@ if (!values.run || modes.length !== 1)
   )
 if (["reconcile", "reconcile-edition"].includes(modes[0]) && values["drive-snapshot"])
   throw Error("Drive snapshot is not supported for reconciliation")
+if (
+  (values["max-windows"] !== undefined || values["time-budget-ms"] !== undefined) &&
+  !["execute", "resume"].includes(modes[0])
+)
+  throw Error("Daily execution limits require --execute or --resume")
 if (modes[0] !== "reconcile" && values["reconcile-scan"])
   throw Error("--reconcile-scan is only supported for scan reconciliation")
 const root = values.root || DEFAULT_ROOT
@@ -61,6 +68,9 @@ await withGardenOperationLock(root, async () => {
     if (values.vault) options.vault = values.vault
     if (values.backlog) options.backlogFile = values.backlog
     if (values["drive-snapshot"]) options.driveSnapshotFile = values["drive-snapshot"]
+    if (values["max-windows"] !== undefined) options.maxWindows = Number(values["max-windows"])
+    if (values["time-budget-ms"] !== undefined)
+      options.timeBudgetMs = Number(values["time-budget-ms"])
     console.log(JSON.stringify(await dailyScan(options), null, 2))
   }
 })

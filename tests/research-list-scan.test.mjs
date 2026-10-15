@@ -12,7 +12,8 @@ import {
 import { mergeCompletedScan } from "../scripts/research/scan-completion.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { storeParseArtifact } from "../scripts/research/parser.mjs"
-import { atomicWrite } from "../scripts/research/run-state.mjs"
+import { atomicWrite, RunState } from "../scripts/research/run-state.mjs"
+import { collectionRoute } from "../scripts/research/scan-basis.mjs"
 import { validateListingSupportRelations } from "../scripts/research/supporting-sources.mjs"
 
 const base = "https://www.fanuc.co.jp/en/profile/pr/newsrelease/"
@@ -58,6 +59,35 @@ const listing = {
     { id: "fanuc-index", status: "matched", selected_items: 3, matched_links: 3, truncated: false },
   ],
 }
+
+test("onboarding activation reuses fetch/parse checkpoints; acquisition changes refetch", async (t) => {
+  const root = temporary(t)
+  const run = new RunState(root, "registration-resume", { fixture: "empty-window" })
+  let fetches = 0, parses = 0
+  const dependencies = {
+    fetchPolicy: async () => {
+      fetches++
+      return { original_url: base, final_url: base, source_id: sourceId(base),
+        source_version_id: `${sourceId(base)}:${sha256("listing")}`,
+        fetch_status: "captured", observed_at: "2026-09-13T00:00:00Z" }
+    },
+    parse: async () => { parses++; return listing },
+  }
+  const scan = (registered) => scanSinglePageRoute(root, run, {}, collectionRoute(registered), [],
+    { since: "2026-09-12", until: "2026-09-13" }, dependencies)
+  const configured = { ...channel, onboarding: { status: "configured", collection_enabled: true } }
+  assert.equal((await scan(configured)).summary.status, "window_scanned")
+  const checkpoints = JSON.stringify(run.state.stages)
+  const activated = { ...configured, onboarding: { status: "verified", collection_enabled: true,
+    verification_receipt: "source-onboarding/verification.json", remaining_checks: [] } }
+  assert.equal((await scan(activated)).summary.status, "window_scanned")
+  assert.equal(fetches, 1)
+  assert.equal(parses, 1)
+  assert.equal(JSON.stringify(run.state.stages), checkpoints)
+  await scan({ ...activated, request_interval_ms: 2000 })
+  assert.equal(fetches, 2)
+  assert.deepEqual(configured.onboarding, { status: "configured", collection_enabled: true })
+})
 
 test("complete static indexes require terminal/no-pagination evidence and keep old URL collisions outside the selected window", () => {
   const completeProfile = {

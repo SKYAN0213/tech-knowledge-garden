@@ -629,27 +629,61 @@ export class SearxSearch {
     this.fetch = fetchImpl
   }
   async search(query) {
+    // Explicitly select an existing language-aware public provider for native
+    // and registered-source searches. Do not repeat known DDG parser/Google
+    // access failures as a prerequisite for using this independent provider.
+    const primary_engines =
+      query.language !== "en" || query.scope === "registered-source" ? ["yahoo"] : []
     const url = new URL("/search", this.url)
     url.search = new URLSearchParams({
-      q: query.query,
+      q: primary_engines.length ? `!yahoo ${query.query}` : query.query,
       format: "json",
       language: query.language,
       categories: "general",
       time_range: "month",
     }).toString()
-    const response = await this.fetch(url, {
-      redirect: "error",
-      signal: AbortSignal.timeout(20000),
-    })
-    if (!response.ok) throw Error("Search service HTTP " + response.status)
-    const body = await response.json()
-    if (!Array.isArray(body.results)) throw Error("Invalid SearXNG response")
+    const provider_requests = []
+    const primaryRequest = {
+      engines: primary_engines,
+      query: url.searchParams.get("q"),
+      language: query.language,
+      time_range: "month",
+      checked_at: new Date().toISOString(),
+    }
+    let body
+    try {
+      const response = await this.fetch(url, {
+        redirect: "error",
+        signal: AbortSignal.timeout(20000),
+      })
+      primaryRequest.http_status = response.status ?? null
+      if (!response.ok) throw Error("Search service HTTP " + response.status)
+      body = await response.json()
+      if (!Array.isArray(body.results)) throw Error("Invalid SearXNG response")
+    } catch (error) {
+      const failures = [[primary_engines[0] || "search-service", error.message]]
+      provider_requests.push({ ...primaryRequest, status: "failed", failures })
+      error.engine_failures = failures
+      error.engine_count = 0
+      error.result_count = 0
+      error.primary_engines = primary_engines
+      error.provider_requests = provider_requests
+      throw error
+    }
     const resultLinks = (results) =>
       results.slice(0, 25).map((r) => ({ url: r.url, text: r.title }))
     const engines = new Set(
       body.results.flatMap((result) => (Array.isArray(result.engines) ? result.engines : [])),
     )
     const failures = Array.isArray(body.unresponsive_engines) ? [...body.unresponsive_engines] : []
+    provider_requests.push({
+      ...primaryRequest,
+      status: failures.length ? (body.results.length ? "partial" : "failed") : "observed",
+      result_count: body.results.length,
+      failures: [...failures],
+      // This is a requested search window, never publication-date evidence.
+      source_dates_verified: false,
+    })
     const supplemental_engines =
       query.language === "en" && query.scope !== "registered-source" ? ["mwmbl", "yahoo"] : []
     const links = resultLinks(body.results)
@@ -664,29 +698,48 @@ export class SearxSearch {
           language: "en",
           categories: "general",
         }).toString()
+        const request = {
+          engines: [engine],
+          query: supplementalURL.searchParams.get("q"),
+          language: "en",
+          time_range: null,
+          checked_at: new Date().toISOString(),
+          source_dates_verified: false,
+        }
         try {
           const supplementalResponse = await this.fetch(supplementalURL, {
             redirect: "error",
             signal: AbortSignal.timeout(5000),
           })
           if (!supplementalResponse.ok)
-            return { engine, failures: [[engine, `HTTP_${supplementalResponse.status}`]] }
+            return {
+              engine,
+              request: { ...request, http_status: supplementalResponse.status },
+              failures: [[engine, `HTTP_${supplementalResponse.status}`]],
+            }
           const supplementalBody = await supplementalResponse.json()
           if (!Array.isArray(supplementalBody.results))
-            return { engine, failures: [[engine, "invalid response"]] }
+            return { engine, request, failures: [[engine, "invalid response"]] }
           return {
             engine,
+            request: { ...request, http_status: supplementalResponse.status ?? null },
             results: supplementalBody.results,
             failures: Array.isArray(supplementalBody.unresponsive_engines)
               ? supplementalBody.unresponsive_engines
               : [],
           }
         } catch {
-          return { engine, failures: [[engine, "request failed"]] }
+          return { engine, request, failures: [[engine, "request failed"]] }
         }
       }),
     )
     for (const result of supplementalResponses) {
+      provider_requests.push({
+        ...result.request,
+        status: result.failures.length ? (result.results?.length ? "partial" : "failed") : "observed",
+        result_count: result.results?.length ?? 0,
+        failures: result.failures,
+      })
       failures.push(...result.failures)
       if (!result.results) continue
       links.push(...resultLinks(result.results))
@@ -705,6 +758,8 @@ export class SearxSearch {
       failures: uniqueFailures,
       query,
       engines: engineNames,
+      primary_engines,
+      provider_requests,
       supplemental_engines,
       engine_count: engineNames.length,
     }
@@ -743,6 +798,8 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
           error.engine_failures = result.failures
           error.engine_count = result.engine_count
           error.result_count = result.links.length
+          error.primary_engines = result.primary_engines
+          error.provider_requests = result.provider_requests
           throw error
         }
         const found = candidatesFromLinks(result.links, channel, new Date().toISOString())
@@ -759,6 +816,8 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
             source_type: query.source_type || null,
             failures: result.failures,
             engines: Array.isArray(result.engines) ? result.engines : [],
+            primary_engines: Array.isArray(result.primary_engines) ? result.primary_engines : [],
+            provider_requests: Array.isArray(result.provider_requests) ? result.provider_requests : [],
             supplemental_engines: Array.isArray(result.supplemental_engines)
               ? result.supplemental_engines
               : [],
@@ -805,6 +864,8 @@ export async function discoverSearch(root, run, search, queries, { state } = {})
         ...(Array.isArray(e.engine_failures) ? { failures: e.engine_failures } : {}),
         ...(Number.isInteger(e.engine_count) ? { engine_count: e.engine_count } : {}),
         ...(Number.isInteger(e.result_count) ? { result_count: e.result_count } : {}),
+        ...(Array.isArray(e.primary_engines) ? { primary_engines: e.primary_engines } : {}),
+        ...(Array.isArray(e.provider_requests) ? { provider_requests: e.provider_requests } : {}),
         candidate_count: 0,
       })
     }

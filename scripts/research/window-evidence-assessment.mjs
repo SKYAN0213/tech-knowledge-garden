@@ -8,7 +8,12 @@ import { loadRoleBudget } from "./model-policy.mjs"
 import { assessEvidenceCheckpoint } from "./evidence-assessment.mjs"
 import {
   assessmentReferences,
+  assessmentClaimContext,
+  assessmentClaimFormat,
+  claimSpanInstruction,
+  CLAIM_SPAN_FORMAT,
   historicalAssessmentInput,
+  historicalDiagnosticRecord,
   QUOTE_PROTOCOL,
   REFERENCE_PROTOCOL,
   referenceInstruction,
@@ -89,7 +94,9 @@ export function evidenceWindowPlan(
   settings,
   claimsPerBatch = 6,
   responseProtocol = QUOTE_PROTOCOL,
+  claimEvidenceFormat,
 ) {
+  const claimFormat = assessmentClaimFormat(responseProtocol, null, claimEvidenceFormat)
   if (
     !claims.length ||
     !Number.isInteger(claimsPerBatch) ||
@@ -150,18 +157,20 @@ export function evidenceWindowPlan(
           {
             role: "system",
             content:
-              responseProtocol === REFERENCE_PROTOCOL
+              (responseProtocol === REFERENCE_PROTOCOL
                 ? system.replace(
                     "Supported/contradicted needs exact verbatim block quotes.",
                     referenceInstruction,
                   )
-                : system,
+                : system) + (claimFormat ? " " + claimSpanInstruction : ""),
           },
           {
             role: "user",
             content: JSON.stringify({
               sources: references.sources,
-              claims: selected,
+              claims: assessmentClaimContext(selected, references.sources, claimFormat, {
+                windowed: true,
+              }),
             }),
           },
         ],
@@ -246,6 +255,8 @@ export async function assessWindowEvidenceCheckpoint(
     responseProtocol = QUOTE_PROTOCOL,
     readOnly = false,
     historicalInput,
+    historicalRecordSha256,
+    claimEvidenceFormat,
     reuseRun,
     partial = false,
     ancestors = [],
@@ -258,6 +269,16 @@ export async function assessWindowEvidenceCheckpoint(
     throw Error("Bound window assessment execution required")
   assertStoredEvidence(root, documents, parses)
   const settings = provider.executionPolicy.settings
+  const base = `runs/${run}/evidence-assessment/`
+  const prior = readJSON(root, base + "input.json")
+  const oldInput = reuseRun
+    ? readJSON(root, `runs/${reuseRun}/evidence-assessment/input.json`)
+    : null
+  const claimFormat = assessmentClaimFormat(
+    responseProtocol,
+    historicalInput || prior || oldInput,
+    claimEvidenceFormat,
+  )
   let batches = evidenceWindowPlan(
     claims,
     documents,
@@ -265,13 +286,13 @@ export async function assessWindowEvidenceCheckpoint(
     settings,
     claimsPerBatch,
     responseProtocol,
+    claimFormat,
   )
   const inherited = new Map()
   if (reuseRun) {
     if (!/^[A-Za-z0-9_-]{1,160}$/.test(reuseRun) || reuseRun === run)
       throw Error("Distinct window reuse run required")
     const oldBase = `runs/${reuseRun}/evidence-assessment/`
-    const oldInput = readJSON(root, oldBase + "input.json")
     if (oldInput?.schema !== "research-window-evidence-assessment-input/v1")
       throw Error("Frozen window assessment reuse input required")
     const ledger = loadRoleBudget(root, reuseRun, "evidence_compare")
@@ -323,6 +344,7 @@ export async function assessWindowEvidenceCheckpoint(
   }
   let input = {
     schema: "research-window-evidence-assessment-input/v1",
+    ...(claimFormat ? { claim_evidence_format: claimFormat } : {}),
     claims_per_batch: claimsPerBatch,
     claims_sha256: sha256(JSON.stringify(claims)),
     documents_sha256: sha256(JSON.stringify(documents)),
@@ -367,8 +389,6 @@ export async function assessWindowEvidenceCheckpoint(
         }
       : {}),
   }
-  const base = `runs/${run}/evidence-assessment/`
-  const prior = readJSON(root, base + "input.json")
   if (readOnly || historicalInput)
     input = historicalAssessmentInput(input, historicalInput || prior)
   const inputSHA = sha256(JSON.stringify(input))
@@ -381,7 +401,24 @@ export async function assessWindowEvidenceCheckpoint(
   const observations = new Map(claims.map((c) => [c.claim_id, []]))
   const completed = []
   let generated = 0
-  for (const [index, batch] of batches.entries()) {
+  const execution = [...batches.entries()]
+  if (!readOnly) {
+    // Keep the frozen frame IDs and requests. Frames starting at the same
+    // source block share a long prompt prefix even when their final block
+    // differs with the claim budget. Run them together instead of alternating
+    // between the beginning and end of a document for every claim group.
+    const prefix = (batch) =>
+      JSON.stringify([
+        batch.messages[0].content,
+        batch.entries[0].parse_id,
+        batch.entries[0].block.block_id,
+      ])
+    execution.sort(
+      ([leftIndex, left], [rightIndex, right]) =>
+        prefix(left).localeCompare(prefix(right)) || leftIndex - rightIndex,
+    )
+  }
+  for (const [index, batch] of execution) {
     const rawPath = base + `batch-${index + 1}.json`,
       checkpointPath = base + `batch-${index + 1}-checkpoint.json`
     let raw = readJSON(root, rawPath)
@@ -426,19 +463,19 @@ export async function assessWindowEvidenceCheckpoint(
       checkpoint_sha256: sha256(fs.readFileSync(safePath(root, checkpointPath))),
     })
     for (const row of output.assessments)
-      observations
-        .get(row.claim_id)
-        .push({
-          batch: index + 1,
-          window: batch.window,
-          windows: batch.windows,
-          ...row,
-          ...(reuse ? { reused_from: reuse.origin } : {}),
-        })
+      observations.get(row.claim_id).push({
+        batch: index + 1,
+        window: batch.window,
+        windows: batch.windows,
+        ...row,
+        ...(reuse ? { reused_from: reuse.origin } : {}),
+      })
   }
   assertStoredEvidence(root, documents, parses)
+  completed.sort((left, right) => left.index - right.index)
+  for (const rows of observations.values()) rows.sort((left, right) => left.batch - right.batch)
   if (partial) return { input_sha256: inputSHA, completed_windows: completed, generated_batches: 0 }
-  const record = {
+  let record = {
     schema: "research-evidence-assessment/v1",
     input_sha256: inputSHA,
     assessments: claims.map((claim) => {
@@ -469,6 +506,13 @@ export async function assessWindowEvidenceCheckpoint(
     candidate_published: false,
   }
   const current = readJSON(root, base + "assessment.json")
+  if (readOnly && current && historicalRecordSha256)
+    record = historicalDiagnosticRecord(record, current, {
+      expectedSha256: historicalRecordSha256,
+      validatorChanged:
+        input.dependencies["claims.mjs"] !==
+        sha256(fs.readFileSync(new URL("./claims.mjs", import.meta.url))),
+    })
   if (current && JSON.stringify(current) !== JSON.stringify(record))
     throw Error("Stored window assessment differs from its checkpoints")
   if (!current) {
@@ -500,13 +544,21 @@ export async function assessSourceEvidenceCheckpoint(
       claimsPerBatch: previous.claims_per_batch,
       responseProtocol: previous.response_protocol ?? QUOTE_PROTOCOL,
     })
+  if (previous?.schema === "research-window-evidence-assessment-input/v1")
+    return assessWindowEvidenceCheckpoint(root, run, provider, claims, documents, parses, {
+      claimsPerBatch: previous.claims_per_batch,
+      responseProtocol: previous.response_protocol ?? QUOTE_PROTOCOL,
+      reuseRun: previous.reuse_run,
+    })
   const sourceSize = parses.reduce(
     (n, p) => n + JSON.stringify(p.blocks.map(({ block_id, text }) => ({ block_id, text }))).length,
     0,
   )
   if (
     reuseRun ||
-    sourceSize + JSON.stringify(claims).length + 12000 >
+    sourceSize +
+      JSON.stringify(assessmentClaimContext(claims, parses, CLAIM_SPAN_FORMAT)).length +
+      12000 >
       provider.executionPolicy.settings.num_ctx * 2
   )
     return assessWindowEvidenceCheckpoint(root, run, provider, claims, documents, parses, {

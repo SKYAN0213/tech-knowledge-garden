@@ -12,8 +12,11 @@ import {
 import { parseResearchDate } from "./dates.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
+import { matchingAccessExclusion, rememberAccessExclusion, accessExclusionDetail, isCollectedDetail } from "./source-access.mjs"
+import { collectionRoute } from "./scan-basis.mjs"
+import { matchingArticleImageReview, reviewedArticleImageParses } from "./article-image-review-cache.mjs"
 
-const singlePageConfigHash = (channel) => sha256(JSON.stringify(channel))
+const singlePageConfigHash = (channel) => sha256(JSON.stringify(collectionRoute(channel)))
 const routeFetchOptions = (channel) => ({
   allowed_hosts: channel.allowed_hosts,
   request_interval_ms: channel.request_interval_ms,
@@ -356,6 +359,7 @@ export async function captureArticleBodyImages(
       throw Error("Article body image lacks a declared parent position")
   }
   const result = { documents: [], parses: [], images: [] }
+  const fetchedImages = new Map()
   for (const image of images) {
     const id = sourceId(image.url)
     const record = {
@@ -373,16 +377,57 @@ export async function captureArticleBodyImages(
     record.fetch_status = asset.fetch_status
     if (!["captured", "not_modified"].includes(asset.fetch_status)) continue
     result.documents.push(asset)
+    fetchedImages.set(image.url, asset)
     record.source_version_id = asset.source_version_id
+  }
+  let reviewed
+  try {
+    reviewed = matchingArticleImageReview(root, document, parsed, result.documents)
+  } catch (error) {
+    result.review_error = error.message
+    for (const record of result.images) record.parse_status = "review_failed"
+    return result
+  }
+  const reviewedParses = reviewed
+    ? reviewedArticleImageParses(root, reviewed, [document, ...result.documents])
+    : []
+  if (reviewed) {
+    result.review_reference = reviewed.reference
+    result.metadata = reviewedParses[0]
+  }
+  for (const image of images) {
+    const id = sourceId(image.url)
+    const record = result.images.find((item) => item.url === image.url)
+    const asset = fetchedImages.get(image.url)
+    if (!asset) continue
     const options = { ...rule.parse_options, title: parsed.title }
-    const extracted = await run.stage("parse-body-image-" + id, { document: asset, options }, () =>
-      parse(root, asset, options),
-    )
-    result.parses.push(extracted)
-    record.parse_id = extracted.parse_id
-    record.parse_status = extracted.status
-    record.block_count = extracted.blocks.length
-    record.ocr_quality = extracted.quality
+    const expectedReview = reviewedParses.find((p) => p.source_version_id === asset.source_version_id)
+    try {
+      const extracted = reviewed
+        ? await run.stage("review-body-image-" + id, { document: asset, review: reviewed.reference }, () =>
+            structuredClone(expectedReview),
+          )
+        : await run.stage("parse-body-image-" + id, { document: asset, options }, () =>
+            parse(root, asset, options),
+          )
+      record.parse_id = extracted.parse_id
+      if (reviewed && JSON.stringify(extracted) !== JSON.stringify(expectedReview))
+        throw Error("Reviewed image stage differs from its verified native cells")
+      record.parse_status = extracted.status
+      record.block_count = extracted.blocks.length
+      record.ocr_quality = extracted.quality
+      if (reviewed) {
+        record.numeric_verification = extracted.quality.numeric_verification
+        record.table_structure = extracted.quality.table_structure
+        record.review = reviewed.reference
+      }
+      result.parses.push(extracted)
+    } catch (error) {
+      // Keep the acquired image even when OCR fails, so repair can reuse its
+      // exact bytes. The native failed stage and this diagnostic stay visible.
+      record.parse_status = "failed"
+      record.error = error.message
+    }
   }
   return result
 }
@@ -417,6 +462,19 @@ export async function collectWindowDetails(
     details.push(detail)
     let supportingSources = []
     try {
+      const access = channel.access_policy === "public-only"
+        ? await run.stage("access-check-" + id, { access_policy: channel.access_policy, link }, () => ({ exclusion: matchingAccessExclusion(root, channel, link) }))
+        : { exclusion: null }
+      if (access.exclusion) {
+        // Verify the immutable proof on every read, including resumed stages.
+        const exclusion = matchingAccessExclusion(root, channel, link)
+        if (!exclusion || exclusion.reference.sha256 !== access.exclusion.reference.sha256)
+          throw Error("Recorded access exclusion changed; use a new run")
+        documents.push(exclusion.proof.document)
+        parses.push(exclusion.proof.parse)
+        Object.assign(detail, accessExclusionDetail(link, exclusion))
+        continue
+      }
       const document = await run.stage("detail-" + id, { url: link.url }, () =>
         fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
       )
@@ -454,36 +512,24 @@ export async function collectWindowDetails(
       detail.parse_id = parsed.parse_id
       detail.article_profile_id = profiles[0].id
       detail.source_published_at = parsed.dates?.published_at || null
-      if (
+      const exclusion = await rememberAccessExclusion(root, channel, link, document, parsed, run.id)
+      if (exclusion) {
+        Object.assign(detail, accessExclusionDetail(link, exclusion, true))
+        continue
+      }
+      const imageBodyRequiresReview = Boolean(
         parsed.status === "partial" &&
         !parsed.blocks?.length &&
         parsed.title &&
         parsed.dates?.published_at &&
         parsed.body_images?.length &&
-        options.body_images
-      ) {
-        const assets = await captureArticleBodyImages(
-          root,
-          run,
-          fetcher,
-          channel,
-          document,
-          parsed,
-          profiles[0],
-          { fetchPolicy, parse },
-        )
-        documents.push(...assets.documents)
-        parses.push(...assets.parses)
-        detail.body_images = assets.images
-        // OCR text and table numbers remain separate source evidence. Never
-        // replace the article body or promote its review status implicitly.
-        detail.status = "article_image_body_requires_review"
-        continue
-      }
+        options.body_images,
+      )
       if (
-        parsed.status !== "extracted" ||
-        !parsed.quality?.required_fields_present ||
-        !parsed.blocks?.length
+        !imageBodyRequiresReview &&
+        (parsed.status !== "extracted" ||
+          !parsed.quality?.required_fields_present ||
+          !parsed.blocks?.length)
       ) {
         detail.status = "article_parse_incomplete"
         continue
@@ -528,6 +574,55 @@ export async function collectWindowDetails(
       const listingDate = parseResearchDate(link.published_at)
       if (!articleDate || !listingDate || articleDate.day !== listingDate.day) {
         detail.status = "date_conflict"
+        continue
+      }
+      if (imageBodyRequiresReview) {
+        const assets = await captureArticleBodyImages(
+          root,
+          run,
+          fetcher,
+          channel,
+          document,
+          parsed,
+          profiles[0],
+          { fetchPolicy, parse },
+        )
+        documents.push(...assets.documents)
+        parses.push(...assets.parses)
+        detail.body_images = assets.images
+        if (assets.review_reference && assets.metadata && !assets.images.some((image) => image.parse_status === "failed")) {
+          const metadata = assets.metadata
+          const found = candidatesFromLinks([link], {
+            ...channel, method: link.discovery_method || channel.method,
+            source_version_id: link.listing_source_version_id, parse_id: link.listing_parse_id,
+          }, link.discovered_at)
+          if (found.length !== 1) {
+            detail.status = "candidate_rejected"
+            continue
+          }
+          // Keep independent HTML metadata and reviewed image bodies. The
+          // original partial parse is retained in its immutable artifact/run.
+          parses.splice(parses.indexOf(parsed), 1, metadata)
+          detail.parse_id = metadata.parse_id
+          detail.article_image_review = assets.review_reference
+          detail.status = "source_parsed_unreviewed"
+          candidates.push({
+            ...found[0], title: metadata.title,
+            source_published_at: metadata.dates.published_at,
+            article_source_version_id: document.source_version_id,
+            article_parse_id: metadata.parse_id,
+            article_observed_at: document.observed_at,
+            article_content_sha256: articleContentFingerprint(metadata, [metadata, ...assets.parses]),
+            supporting_source_urls: assets.images.map((image) => image.url),
+            article_image_review: assets.review_reference,
+          })
+          continue
+        }
+        // Unreviewed OCR never supplies an article body or numeric approval.
+        detail.status = assets.images.some((image) => image.parse_status === "failed")
+          ? "article_image_body_parse_failed"
+          : assets.review_error ? "article_image_review_invalid" : "article_image_body_requires_review"
+        if (assets.review_error) detail.error = assets.review_error
         continue
       }
       supportingSources = []
@@ -905,12 +1000,16 @@ export async function scanSinglePageRoute(
   candidates.push(...inspected.candidates)
   details.push(...inspected.details)
   summary.status =
-    details.every((detail) => detail.status === "source_parsed_unreviewed") &&
+    details.every(isCollectedDetail) &&
     details.length === assessment.window_items
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
   summary.candidate_count = candidates.length
+  if (channel.access_policy === "public-only") {
+    summary.access_scope = "public-only"
+    summary.access_excluded_count = details.filter((detail) => detail.status === "public_access_excluded").length
+  }
   return { summary, documents, parses, candidates }
 }
 
@@ -1114,8 +1213,9 @@ export async function resolveYearlessArchiveDates(
         return { ...result, reason: "archive_yearless_date_invalid" }
       seen.add(canonicalURL(link.url))
       const id = sourceId(link.url)
+      const exclusion = matchingAccessExclusion(root, channel, link)
       const document = await run.stage("detail-" + id, { url: link.url }, () =>
-        fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
+        exclusion ? exclusion.proof.document : fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
       )
       if (!["captured", "not_modified"].includes(document.fetch_status))
         return { ...result, reason: "archive_date_source_" + document.fetch_status }
@@ -1127,7 +1227,7 @@ export async function resolveYearlessArchiveDates(
         return { ...result, reason: "archive_date_profile_missing_or_circular" }
       const options = profiles[0].options
       const parsed = await run.stage("parse-" + id, { document, options }, () =>
-        parse(root, document, options),
+        exclusion ? exclusion.proof.parse : parse(root, document, options),
       )
       result.parses.push(parsed)
       const date = parseResearchDate(parsed.dates?.published_at)
@@ -1142,6 +1242,8 @@ export async function resolveYearlessArchiveDates(
         comparableTitle(parsed.title) !== comparableTitle(link.text)
       )
         return { ...result, reason: "archive_article_date_missing_or_conflict" }
+      if (metadataOnly)
+        await rememberAccessExclusion(root, channel, { ...link, published_at: date.day }, document, parsed, run.id)
       const evidence = {
         url: link.url,
         listed_date_text: printed,
@@ -1423,9 +1525,13 @@ export async function scanPathPagesRoute(
   summary.candidate_count = candidates.length
   summary.status =
     inspected.details.length === selected.length &&
-    inspected.details.every((detail) => detail.status === "source_parsed_unreviewed")
+    inspected.details.every(isCollectedDetail)
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
+  if (channel.access_policy === "public-only") {
+    summary.access_scope = "public-only"
+    summary.access_excluded_count = inspected.details.filter((detail) => detail.status === "public_access_excluded").length
+  }
   return { summary, indexDocuments, documents, parses, candidates }
 }

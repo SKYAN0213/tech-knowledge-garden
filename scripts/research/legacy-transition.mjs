@@ -5,6 +5,7 @@ import { assertSchema, sha256 } from "./contracts.mjs"
 import { assertReviewDate, parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { legacyReviewUnits } from "./legacy-review.mjs"
 import { SECTORS, briefingGroupFields, reviewedBriefingGroups } from "../sectors.mjs"
+import { loadLegacyCitationEvidence } from "./legacy-citation.mjs"
 
 const object = (properties) => ({
   type: "object",
@@ -58,6 +59,34 @@ eventSchema.properties.source_alternative_reviews = {
     reason: text,
   }),
 }
+eventSchema.properties.source_citation_reviews = {
+  type: "array",
+  minItems: 1,
+  items: object({
+    original_url: text,
+    reporting_url: text,
+    cited_url: text,
+    approved_run: { type: "string", pattern: "^[a-zA-Z0-9_-]+$" },
+    source_version_id: text,
+    parse_id: hash,
+    block_id: text,
+    quote: text,
+    link_text: text,
+    reporting_source_read: { type: "boolean", enum: [true] },
+    attribution_checked: { type: "boolean", enum: [true] },
+    citation_identity_checked: { type: "boolean", enum: [true] },
+    unread_original_not_used: { type: "boolean", enum: [true] },
+    reason: text,
+  }),
+}
+eventSchema.properties.historical_date_review = object({
+  original_inclusion_checked: { type: "boolean", enum: [true] },
+  earlier_publication_checked: { type: "boolean", enum: [true] },
+  historical_only: { type: "boolean", enum: [true] },
+  source_published_at: text,
+  published_at: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+  reason: text,
+})
 const packetSchema = object({
   schema: { type: "string", enum: ["research-legacy-edition-transition/v1"] },
   reviewer: text,
@@ -68,7 +97,8 @@ const packetSchema = object({
   reason: text,
   target_path: {
     type: "string",
-    pattern: "^Editions/\\d{4}/\\d{2}/\\d{4}-\\d{2}-\\d{2}_\\d{4}_Tech_AI_Briefing\\.md$",
+    pattern:
+      "^Editions/\\d{4}/\\d{2}/\\d{4}-\\d{2}-\\d{2}_\\d{4}_Tech_AI_Briefing(?:_SAMPLE)?\\.md$",
   },
   target_sha256: hash,
   before_content: { type: "string", minLength: 1, maxLength: 262144 },
@@ -86,7 +116,13 @@ const packetSchema = object({
       sha256: hash,
       decision: {
         type: "string",
-        enum: ["replaced", "omitted_empty", "omitted_editorial", "omitted_discovery"],
+        enum: [
+          "replaced",
+          "omitted_empty",
+          "omitted_editorial",
+          "omitted_discovery",
+          "omitted_operations",
+        ],
       },
       event_ids: { type: "array", items: eventID },
       reason: text,
@@ -98,6 +134,30 @@ packetSchema.properties.no_article_review = object({
   article_sections_checked: { type: "boolean", enum: [true] },
   discovery_routes_checked: { type: "boolean", enum: [true] },
   unsupported_no_news_claims_removed: { type: "boolean", enum: [true] },
+  reason: text,
+})
+packetSchema.properties.outline_review = object({
+  format: { type: "string", enum: ["numbered-news/v1", "numbered-sample/v1"] },
+  original_outline_checked: { type: "boolean", enum: [true] },
+  source_list_checked: { type: "boolean", enum: [true] },
+  article_boundaries_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
+packetSchema.properties.outline_review.properties.background_review = object({
+  unit_id: unitID,
+  sha256: hash,
+  concept_explanation_only_checked: { type: "boolean", enum: [true] },
+  no_dated_event_checked: { type: "boolean", enum: [true] },
+  source_notes_checked: { type: "boolean", enum: [true] },
+  reason: text,
+})
+packetSchema.properties.local_coverage_review = object({
+  original_metadata_read: { type: "boolean", enum: [true] },
+  timezone_checked: { type: "boolean", enum: [true] },
+  original_start: text,
+  original_end: text,
+  normalized_start: text,
+  normalized_end: text,
   reason: text,
 })
 packetSchema.properties.briefing_group_review = object({
@@ -148,9 +208,9 @@ packetSchema.properties.metadata_review = object({
   dispositions: {
     type: "array",
     minItems: 1,
-    maxItems: 4,
+    maxItems: 5,
     items: object({
-      field: { type: "string", enum: ["time", "type", "tags", "excluded_items_count"] },
+      field: { type: "string", enum: ["time", "type", "tags", "status", "excluded_items_count"] },
       action: { type: "string", enum: ["preserve", "private_only"] },
       reason: text,
     }),
@@ -207,6 +267,17 @@ packetSchema.properties.units.items.properties.duplicate_event_review = object({
   dates_checked: { type: "boolean", enum: [true] },
   reason: text,
 })
+packetSchema.properties.units.items.properties.duplicate_event_review.properties.source_alternative_reviews =
+  eventSchema.properties.source_alternative_reviews
+packetSchema.properties.units.items.properties.operations_review = object({
+  original_content: text,
+  operational_only_checked: { type: "boolean", enum: [true] },
+  no_article_facts_removed: { type: "boolean", enum: [true] },
+  candidate_eligibility_checked: { type: "boolean", enum: [true] },
+  source_roles_checked: { type: "boolean", enum: [true] },
+  source_urls: { type: "array", items: text },
+  reason: text,
+})
 const markdown = unified().use(remarkParse)
 const urlsIn = (content) =>
   [...new Set((content.match(/https?:\/\/[^\s<>\]\)]+/g) || []).map(canonicalURL))].sort()
@@ -234,6 +305,122 @@ const legacySectionTitle = (title) =>
     "Industry Analysis": "흐름 읽기",
     "Actionable Insights": "바로 써먹을 점",
   })[title] || title
+const reviewSectionTitle = (unit) => unit.section_title || legacySectionTitle(unit.title)
+
+// Interpret the known early outline without rewriting its source text, offsets,
+// IDs, hashes or exact article titles. Unknown layouts require a separate review.
+export function legacyTransitionUnits(packet, before, relativePath) {
+  const original = legacyReviewUnits(before.body, relativePath)
+  if (!packet.outline_review) return original
+  const review = packet.outline_review
+  const sample = review.format === "numbered-sample/v1"
+  const headings = sample
+    ? [
+        "1. 결론 먼저",
+        "2. 신규 변화 요약",
+        "3. 자세히 볼 변화",
+        "4. 이번 브리핑에서 지식 노트로 승격한 항목",
+        "5. 제외하거나 보류한 것",
+        "6. 다음 브리핑에서 추적할 질문",
+        "참고 링크",
+      ]
+    : [
+        "1. 결론 먼저",
+        "2. 신규 변화 요약",
+        "3. 자세히 볼 변화",
+        "4. Important Papers",
+        "5. Open Source & Tools",
+        "6. Industry Analysis",
+        "7. Actionable Insights",
+        "8. 제외하거나 보류한 것",
+        "9. 다음 브리핑에서 추적할 질문",
+        "10. Source List",
+      ]
+  const sections = sample
+    ? [
+        "한눈에 보기",
+        "한눈에 보기",
+        "오늘의 핵심 기사",
+        "흐름 읽기",
+        "흐름 읽기",
+        "바로 써먹을 점",
+        "Source List",
+      ]
+    : [
+        "한눈에 보기",
+        "한눈에 보기",
+        "오늘의 핵심 기사",
+        "논문과 연구",
+        "오픈소스와 도구",
+        "흐름 읽기",
+        "바로 써먹을 점",
+        "흐름 읽기",
+        "바로 써먹을 점",
+        "Source List",
+      ]
+  if (
+    !["numbered-news/v1", "numbered-sample/v1"].includes(review.format) ||
+    (sample && (before.meta.status !== "sample" || !relativePath.endsWith("_SAMPLE.md"))) ||
+    (!sample && (relativePath.endsWith("_SAMPLE.md") || review.background_review)) ||
+    !review.reason?.trim() ||
+    !["original_outline_checked", "source_list_checked", "article_boundaries_checked"].every(
+      (field) => review[field] === true,
+    ) ||
+    original[0]?.depth !== 1 ||
+    original[0].title !== before.meta.title ||
+    original.filter((unit) => unit.depth === 1).length !== 1 ||
+    !same(
+      original.filter((unit) => unit.depth === 2).map((unit) => unit.title),
+      headings,
+    )
+  )
+    throw Error("Numbered legacy outline requires the exact reviewed cover and section sequence")
+  if (sample) {
+    const background = review.background_review
+    const unit = original.find((u) => u.title === "3.4 RAG와 MCP는 비슷해 보이지만 역할이 다르다")
+    if (
+      !unit ||
+      !background ||
+      original.filter((u) => u.depth === 3).length !== 5 ||
+      background.unit_id !== unit.unit_id ||
+      background.sha256 !== unit.sha256 ||
+      !["concept_explanation_only_checked", "no_dated_event_checked", "source_notes_checked"].every(
+        (field) => background[field] === true,
+      ) ||
+      !background.reason.trim() ||
+      urlsIn(before.body.slice(unit.body_start, unit.body_end)).length
+    )
+      throw Error("Sample background requires its exact source-free concept section review")
+  }
+  let parent = -1
+  const numbers = new Map()
+  return original.map((unit, index) => {
+    if (index === 0) return { ...unit, section_title: "한눈에 보기" }
+    if (unit.depth === 2) {
+      parent = headings.indexOf(unit.title)
+      return { ...unit, depth: 1, section_title: sections[parent] }
+    }
+    const match = unit.title?.match(/^(3|4|6)\.(\d+)\s+\S/)
+    const next = (numbers.get(parent) || 0) + 1
+    if (
+      unit.depth !== 3 ||
+      !match ||
+      (sample && parent !== 2) ||
+      Number(match[1]) !== parent + 1 ||
+      Number(match[2]) !== next
+    )
+      throw Error("Numbered legacy article boundaries must match their original parent and order")
+    numbers.set(parent, next)
+    return {
+      ...unit,
+      depth:
+        (!sample && parent === 5) || unit.unit_id === review.background_review?.unit_id ? 1 : 2,
+      ...((!sample && parent === 5) || unit.unit_id === review.background_review?.unit_id
+        ? { section_title: "흐름 읽기" }
+        : {}),
+    }
+  })
+}
 
 function assertMetadataReview(packet, meta, relativePath) {
   const fields = Object.keys(meta)
@@ -256,6 +443,10 @@ function assertMetadataReview(packet, meta, relativePath) {
       (!/^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/.test(meta.time) ||
         meta.time !== `${key.slice(11, 13)}:${key.slice(13, 15)}`)) ||
     (fields.includes("type") && meta.type !== "briefing") ||
+    (fields.includes("status") &&
+      (meta.status !== "sample" ||
+        packet.outline_review?.format !== "numbered-sample/v1" ||
+        !relativePath.endsWith("_SAMPLE.md"))) ||
     (fields.includes("tags") &&
       (!Array.isArray(meta.tags) ||
         meta.tags.length > 64 ||
@@ -270,7 +461,36 @@ function assertMetadataReview(packet, meta, relativePath) {
   }
 }
 
-function eventInsideCoverage(article, meta, day) {
+function eventInsideCoverage(article, meta, day, event) {
+  const historical = event?.historical_date_review
+  if (historical) {
+    const review = article.article_review
+    const source = parseResearchDate(historical.source_published_at)
+    const start = parseResearchDate(meta.coverage_start)
+    const exactTime =
+      review?.date_kind === "source-publication-time" &&
+      source?.precision === "timestamp" &&
+      seoulPublicationDay(historical.source_published_at) === historical.published_at &&
+      source.instant <= start?.instant
+    const exactDay =
+      review?.date_kind === "source-publication-day" &&
+      source?.precision === "day" &&
+      source.day === historical.published_at &&
+      source.day < meta.coverage_start?.slice(0, 10)
+    if (
+      !historical.reason.trim() ||
+      meta.historical_coverage ||
+      (!exactTime && !exactDay) ||
+      historical.source_published_at !== review.source_published_at ||
+      historical.published_at !== review.published_at ||
+      start?.precision !== "timestamp" ||
+      historical.published_at > day
+    )
+      throw Error(
+        "Historical date review must preserve an originally included pre-cutoff source event",
+      )
+    return true
+  }
   if (meta.historical_coverage === "unrecorded/v1")
     return (
       parseResearchDate(article.article_review?.published_at)?.precision === "day" &&
@@ -320,6 +540,42 @@ export function legacyTransitionReadiness(meta, relativePath) {
 // Called only with the exact original, never editions()'s inferred routing date.
 // A reviewed unknown interval preserves nulls instead of inventing timestamps.
 export function legacyTransitionMetadata(packet, meta, relativePath) {
+  if (
+    relativePath.endsWith("_SAMPLE.md") &&
+    (meta.status !== "sample" || packet.outline_review?.format !== "numbered-sample/v1")
+  )
+    throw Error("Original sample identity requires its explicit reviewed sample outline")
+  if (packet.local_coverage_review) {
+    const review = packet.local_coverage_review
+    const convert = (value) =>
+      typeof value === "string" && /^\d{4}-\d{2}-\d{2} (?:[01]\d|2[0-3]):[0-5]\d$/.test(value)
+        ? value.replace(" ", "T") + ":00+09:00"
+        : null
+    if (
+      packet.unrecorded_coverage_review ||
+      !review.reason.trim() ||
+      review.original_metadata_read !== true ||
+      review.timezone_checked !== true ||
+      review.original_start !== meta.coverage_start ||
+      review.original_end !== meta.coverage_end ||
+      meta.timezone !== "Asia/Seoul" ||
+      convert(review.original_start) !== review.normalized_start ||
+      convert(review.original_end) !== review.normalized_end
+    )
+      throw Error(
+        "Local coverage review must preserve exact recorded wall-clock times and Seoul timezone",
+      )
+    const normalized = {
+      ...meta,
+      coverage_start: review.normalized_start,
+      coverage_end: review.normalized_end,
+    }
+    if (legacyTransitionReadiness(normalized, relativePath).issues.length)
+      throw Error(
+        "Normalized local coverage must retain valid edition identity and ordered cutoffs",
+      )
+    return normalized
+  }
   const readiness = legacyTransitionReadiness(meta, relativePath)
   if (!packet.unrecorded_coverage_review) {
     if (readiness.issues.length)
@@ -364,7 +620,7 @@ export function legacyTransitionMetadata(packet, meta, relativePath) {
 // never silently become source-free prose eligible for manual reassignment.
 function legacySources(body, units) {
   const list = units
-    .filter((unit) => unit.depth === 1 && unit.title === "Source List")
+    .filter((unit) => unit.depth === 1 && reviewSectionTitle(unit) === "Source List")
     .map((unit) => body.slice(unit.body_start, unit.body_end))
     .join("\n")
   const markers = new Map()
@@ -391,7 +647,7 @@ function legacySources(body, units) {
 
 // Every original unit must have an explicit disposition. This prevents the
 // pre-v2 extractor's empty article list from authorizing a partial replacement.
-export function assertLegacyTransition(packet, articles, existing, relativePath) {
+export function assertLegacyTransition(packet, articles, existing, relativePath, { root } = {}) {
   assertSchema(packet, packetSchema)
   if (
     !packet.reviewer.trim() ||
@@ -411,37 +667,33 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     throw Error("Legacy transition requires the exact pre-v2 original")
   const day = packet.target_path.split("/").at(-1).slice(0, 10)
   const metadata = legacyTransitionMetadata(packet, before.meta, packet.target_path)
-  if (packet.unrecorded_coverage_review && !articles.length)
-    throw Error("Unrecorded coverage transition requires verified source events")
   assertMetadataReview(packet, before.meta, relativePath)
   assertReviewDate(packet.reviewed_at, {
     notBefore: [day, ...articles.map((a) => a.article_review?.reviewed_at)],
   })
-  const units = legacyReviewUnits(before.body, relativePath)
+  const units = legacyTransitionUnits(packet, before, relativePath)
   const noArticles = packet.events.length === 0
   if (
     noArticles
       ? !packet.no_article_review?.reason.trim() ||
         articles.length !== 0 ||
-        before.meta.new_items_count !== 0 ||
+        (before.meta.new_items_count !== 0 &&
+          !(packet.unrecorded_coverage_review && !Object.hasOwn(before.meta, "new_items_count"))) ||
         ["linked_knowledge_notes", "knowledge_notes_created", "knowledge_notes_updated"].some(
           (field) =>
             before.meta[field] !== undefined &&
             (!Array.isArray(before.meta[field]) || before.meta[field].length !== 0),
         ) ||
         units.some((unit) => unit.depth !== 1) ||
-        !same(
-          units.map((unit) => legacySectionTitle(unit.title)),
-          [
-            "한눈에 보기",
-            "오늘의 핵심 기사",
-            "논문과 연구",
-            "오픈소스와 도구",
-            "흐름 읽기",
-            "바로 써먹을 점",
-            "Source List",
-          ],
-        )
+        !same(units.map(reviewSectionTitle), [
+          "한눈에 보기",
+          "오늘의 핵심 기사",
+          "논문과 연구",
+          "오픈소스와 도구",
+          "흐름 읽기",
+          "바로 써먹을 점",
+          "Source List",
+        ])
       : packet.no_article_review !== undefined
   )
     throw Error(
@@ -465,7 +717,12 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         a.article_review?.review_status !== "verified" ||
         a.retrospective_review ||
         a.historical_addition_review ||
-        !eventInsideCoverage(a, metadata, day),
+        !eventInsideCoverage(
+          a,
+          metadata,
+          day,
+          packet.events.find((e) => e.event_id === a.event_id),
+        ),
     )
   )
     throw Error("Legacy transition requires exactly all distinct reviewed source events")
@@ -476,7 +733,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
   const approved = new Set(articles.flatMap((article) => article.source_urls.map(canonicalURL)))
   const inline = new Set(
     units
-      .filter((unit) => !(unit.depth === 1 && unit.title === "Source List"))
+      .filter((unit) => !(unit.depth === 1 && reviewSectionTitle(unit) === "Source List"))
       .flatMap((unit) => sources.forContent(before.body.slice(unit.body_start, unit.body_end))),
   )
   const discovery = new Set()
@@ -547,6 +804,12 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         )
       alternatives.set(original, alternative)
     }
+    for (const review of event.source_citation_reviews || []) {
+      const original = canonicalURL(review.original_url)
+      if (!assigned.has(original) || approved.has(original) || alternatives.has(original))
+        throw Error("Legacy citation must retain a unique unread original of its own event")
+      alternatives.set(original, loadLegacyCitationEvidence(root, review, byID.get(event.event_id)))
+    }
     alternativesByEvent.set(event.event_id, alternatives)
   }
   const retainsSource = (id, url) => {
@@ -604,6 +867,9 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const urls = eventSourcesForUnit(unit)
     const anchors = anchorsByUnit.get(unit.unit_id) || []
     const duplicate = decision.duplicate_event_review
+    const operations = decision.operations_review
+    if (operations && decision.decision !== "omitted_operations")
+      throw Error("Operational review cannot replace an article disposition")
     if (
       duplicate &&
       (unit.depth !== 2 ||
@@ -614,6 +880,24 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         !duplicate.reason.trim())
     )
       throw Error("Legacy duplicate review requires one separately anchored source event")
+    const duplicateAlternatives = new Map()
+    for (const review of duplicate?.source_alternative_reviews || []) {
+      const original = canonicalURL(review.original_url)
+      const alternative = canonicalURL(review.alternative_url)
+      const article = byID.get(decision.event_ids[0])
+      if (
+        !urls.includes(original) ||
+        original === alternative ||
+        article.source_urls.map(canonicalURL).includes(original) ||
+        !article.source_urls.map(canonicalURL).includes(alternative) ||
+        duplicateAlternatives.has(original) ||
+        !review.reason.trim()
+      )
+        throw Error(
+          "Duplicate alternative requires its exact original source and cited approved event",
+        )
+      duplicateAlternatives.set(original, alternative)
+    }
     if (
       (unit.depth === 2 || anchors.some((event) => event.section_event_review)) &&
       decision.decision === "replaced" &&
@@ -646,9 +930,10 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
           (url) =>
             !(
               unit.depth === 1 &&
-              unit.title === "Source List" &&
+              reviewSectionTitle(unit) === "Source List" &&
               (discovery.has(url) || excluded.has(url))
             ) &&
+            !duplicateAlternatives.has(url) &&
             !decision.event_ids.some((id) =>
               packet.events.some(
                 (event) =>
@@ -661,11 +946,42 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
       )
         throw Error("Legacy transition must retain every reviewed original source")
     } else {
+      if (decision.decision === "omitted_operations") {
+        const section = units.indexOf(unit)
+        let end = section + 1
+        while (end < units.length && units[end].depth > 1) end++
+        const childrenPreserved = units.slice(section + 1, end).every((child) => {
+          const row = packet.units[units.indexOf(child)]
+          return (
+            child.depth === 2 &&
+            row.decision === "replaced" &&
+            row.event_ids.length > 0 &&
+            (anchorsByUnit.get(child.unit_id) || []).length > 0
+          )
+        })
+        if (
+          !operations ||
+          unit.depth !== 1 ||
+          !["논문과 연구", "오픈소스와 도구"].includes(reviewSectionTitle(unit)) ||
+          !childrenPreserved ||
+          anchors.length ||
+          decision.event_ids.length ||
+          operations.original_content !== content ||
+          !operations.reason.trim() ||
+          !same(operations.source_urls.map(canonicalURL).sort(), urls) ||
+          urls.some((url) => assigned.has(url) || approved.has(url)) ||
+          !/(?:coverage|cutoff|검토 근거|published|updated|추세 확인 불가)/i.test(content)
+        )
+          throw Error(
+            "Operational omission requires exact article-free research bookkeeping review",
+          )
+        continue
+      }
       if (decision.decision === "omitted_discovery") {
         if (
           !noArticles ||
           unit.depth !== 1 ||
-          unit.title !== "Source List" ||
+          reviewSectionTitle(unit) !== "Source List" ||
           decision.event_ids.length ||
           urls.some((url) => !discovery.has(url)) ||
           sources.listed.size !== discovery.size
@@ -679,7 +995,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         decision.decision === "omitted_editorial" &&
         (unit.depth !== 1 ||
           !["흐름 읽기", "바로 써먹을 점", ...(noArticles ? ["한눈에 보기"] : [])].includes(
-            legacySectionTitle(unit.title),
+            reviewSectionTitle(unit),
           ))
       )
         throw Error("Legacy transition editorial omission is limited to ancillary sections")
@@ -710,14 +1026,14 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
     const assignedSources = [...new Set(event.source_urls.map(canonicalURL))].sort()
     const sourceListReview = event.source_list_review
     const listEventReview = event.source_list_event_review
-    const listAnchor = unit?.depth === 1 && unit.title === "Source List"
+    const listAnchor = unit?.depth === 1 && reviewSectionTitle(unit) === "Source List"
     const sectionReview = event.section_event_review
     const sectionAnchor = Boolean(sectionReview)
     if (
       sectionAnchor &&
       (!unit ||
         unit.depth !== 1 ||
-        unit.title !== "오픈소스와 도구" ||
+        reviewSectionTitle(unit) !== "오픈소스와 도구" ||
         sectionReview.sha256 !== unit.sha256 ||
         !sectionReview.original_mention.trim() ||
         !before.body
@@ -740,7 +1056,7 @@ export function assertLegacyTransition(packet, articles, existing, relativePath)
         !listEventReview ||
         !mention ||
         mention.depth !== 1 ||
-        mention.title !== "한눈에 보기" ||
+        reviewSectionTitle(mention) !== "한눈에 보기" ||
         listEventReview.mention_sha256 !== mention.sha256 ||
         !listEventReview.original_mention.trim() ||
         !before.body

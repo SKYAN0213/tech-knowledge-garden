@@ -2,6 +2,13 @@ import fs from "node:fs"
 import { safePath } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
 
+export const ROBOTS_MAX_AGE_MS = 24 * 60 * 60 * 1000
+export function policyNow(fetcher) {
+  const now = fetcher.options?.policy_now?.() ?? Date.now()
+  if (!Number.isSafeInteger(now) || now < 0) throw Error("Invalid policy clock")
+  return now
+}
+
 export function robotsPolicy(text, userAgent, url) {
   const groups = []
   let current = { agents: [], rules: [], delay: 0 },
@@ -62,8 +69,16 @@ export function robotsPolicy(text, userAgent, url) {
 export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
   const origin = new URL(url).origin
   const hosts = allowed_hosts || [new URL(url).hostname]
+  const now = policyNow(fetcher)
+  const ttl = fetcher.options?.robots_cache_ttl_ms ?? ROBOTS_MAX_AGE_MS
+  if (!Number.isSafeInteger(ttl) || ttl < 0 || ttl > ROBOTS_MAX_AGE_MS)
+    throw Error("Robots cache lifetime must be within 24 hours")
   fetcher.robotsCache ||= new Map()
+  fetcher.robotsCacheTimes ||= new Map()
+  if (now - (fetcher.robotsCacheTimes.get(origin) ?? -Infinity) >= ttl)
+    fetcher.robotsCache.delete(origin)
   if (!fetcher.robotsCache.has(origin)) {
+    fetcher.robotsCacheTimes.set(origin, now)
     fetcher.robotsCache.set(
       origin,
       (async () => {
@@ -73,10 +88,27 @@ export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
           const body = fs.readFileSync(safePath(root, record.body_path))
           if (body.length > 512 * 1024) throw Error("Robots policy is too large")
           if (sha256(body) !== record.body_sha256) throw Error("Robots policy hash mismatch")
+          if (/<(?:!doctype\s+html|html)\b/i.test(body.toString("utf8")))
+            throw Error("Robots response is an HTML page")
           return { text: body.toString("utf8"), record }
         }
-        const error = Error("Robots policy could not be checked: " + record.fetch_status)
+        const error = Error(
+          "Robots policy could not be checked: " +
+            record.fetch_status +
+            (record.http_status ? ` (HTTP ${record.http_status})` : ""),
+        )
         error.fetch_status = record.fetch_status
+        error.policy_document = {
+          url: record.original_url,
+          final_url: record.final_url || null,
+          observed_at: record.observed_at,
+          fetch_status: record.fetch_status,
+          http_status: record.http_status || null,
+          error: record.error || null,
+          retry_after: record.retry_after || null,
+          error_code: record.error_code || null,
+          request_performed: record.request_performed ?? true,
+        }
         throw error
       })(),
     )
@@ -88,5 +120,6 @@ export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
     policy_source_version_id: record.source_version_id || null,
     policy_observed_at: record.observed_at || null,
     policy_fetch_status: record.fetch_status,
+    policy_document: record,
   }
 }

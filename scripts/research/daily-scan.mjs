@@ -73,6 +73,8 @@ export function dailyRouteTimingHint(root, runId) {
         fs.statSync(safePath(root, b.path)).mtimeMs - fs.statSync(safePath(root, a.path)).mtimeMs ||
         b.id.localeCompare(a.id),
     )
+  const routes = {},
+    sources = []
   for (const entry of summaries.slice(0, 5)) {
     const bytes = fs.readFileSync(safePath(root, entry.path))
     const summary = JSON.parse(bytes)
@@ -80,7 +82,7 @@ export function dailyRouteTimingHint(root, runId) {
       throw Error("Stored route timing summary identity is invalid")
     const timings = summary.timing?.by_route
     if (!timings || typeof timings !== "object" || Array.isArray(timings)) continue
-    const routes = Object.fromEntries(
+    const observed = Object.fromEntries(
       Object.entries(timings).filter(
         ([, row]) =>
           Number.isSafeInteger(row?.measured_attempts) &&
@@ -89,9 +91,16 @@ export function dailyRouteTimingHint(root, runId) {
           row.total_ms > 0,
       ),
     )
-    if (Object.keys(routes).length) return { path: entry.path, sha256: sha256(bytes), routes }
+    const ids = Object.keys(observed).filter((id) => !Object.hasOwn(routes, id))
+    if (!ids.length) continue
+    for (const id of ids) routes[id] = observed[id]
+    sources.push({ path: entry.path, sha256: sha256(bytes), channel_ids: ids })
   }
-  return null
+  // A one-route retry must not hide previously measured slow routes. Use the
+  // newest measurement per route, keeping each contributing summary pinned.
+  return sources.length
+    ? { path: sources[0].path, sha256: sources[0].sha256, sources, routes }
+    : null
 }
 
 export function dailySourcePaths(configFile = DAILY_CONFIG) {
@@ -109,6 +118,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/daily-plan.mjs",
     "scripts/research/daily-scan.mjs",
     "scripts/research/source-retry.mjs",
+    "scripts/research/source-access.mjs",
     "scripts/research/shadow-collection-basis.mjs",
     "scripts/pull-drive.py",
     "scripts/research/editorial-handoff.mjs",
@@ -126,6 +136,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/candidate-source-alternative.mjs",
     "scripts/research/legacy-candidate-approval.mjs",
     "scripts/research/source-policy.mjs",
+    "scripts/research/source-policy-state.mjs",
     "scripts/research/list-scan.mjs",
     "scripts/research/scan-basis.mjs",
     "scripts/research/rss-scan.mjs",
@@ -738,7 +749,7 @@ function attemptId(plan, window, attempt) {
 }
 
 export function dailyRetryAssessment(root, receipt, { loadStored = storedListScan } = {}) {
-  if (receipt.status === "blocked")
+  if (receipt.status === "blocked" && !receipt.scan_evidence)
     return { state: "awaiting_new_observation", kind: "blocked_window" }
   if (!receipt.scan_evidence) return combineRetryFailures([])
   const runId = receipt.scan_evidence.list_scan_run
@@ -751,7 +762,7 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
     if (!state) {
       if (fs.existsSync(safePath(root, `runs/${runId}/list-scan.json`)))
         throw Error("Persisted retry scan has lost its checkpoints")
-      return combineRetryFailures([])
+      return receipt.status === "blocked" ? { state: "awaiting_new_observation", kind: "blocked_window" } : combineRetryFailures([])
     }
     const scan = loadStored(root, runId)
     if (
@@ -781,7 +792,7 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
     const failures = []
     if (scan.summary.reason === "detail_incomplete" && Array.isArray(scan.summary.details)) {
       for (const detail of scan.summary.details.filter(
-        (d) => d.status !== "source_parsed_unreviewed",
+        (d) => !["source_parsed_unreviewed", "public_access_excluded"].includes(d.status),
       )) {
         const document = sources.find((d) =>
           detail.source_version_id
@@ -805,7 +816,8 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
       if (!failures.length && scan.summary.status !== "window_scanned")
         failures.push({ state: "requires_repair", kind: "listing_or_configuration" })
     }
-    return { ...combineRetryFailures(failures), source_run: runId }
+    const nextChecks = sources.map((source) => Date.parse(source.availability?.next_check_at || "")).filter(Number.isFinite)
+    return { ...combineRetryFailures(failures), source_run: runId, ...(nextChecks.length ? { next_check_at: new Date(Math.max(...nextChecks)).toISOString() } : {}) }
   } catch (error) {
     return { state: "requires_repair", kind: "invalid_retry_evidence", error: error.message }
   }
@@ -815,6 +827,7 @@ function dailyRetryState(assessment, attempts, policy) {
   if (assessment.state === "requires_repair") return "requires_repair"
   if (assessment.state === "awaiting_new_observation" && policy.blocked_requires_new_observation)
     return "awaiting_new_observation"
+  if (Date.parse(assessment.next_check_at || "") > Date.now()) return "awaiting_retry_time"
   return attempts >= policy.max_attempts_per_window ? "exhausted" : "retryable"
 }
 
@@ -849,6 +862,7 @@ export function dailyRetryQueue(
         last_attempt_id: last.attempt_id,
         reason: last.reason || last.status,
         retry_assessment: assessment,
+        ...(assessment.next_check_at ? { next_check_at: assessment.next_check_at } : {}),
       },
     ]
   })
@@ -916,6 +930,56 @@ export function verifyDailyReceipts(
   return true
 }
 
+function assertDailyExecutionLimits(maxWindows, timeBudgetMs) {
+  for (const [name, value] of [
+    ["maxWindows", maxWindows],
+    ["timeBudgetMs", timeBudgetMs],
+  ])
+    if (value !== undefined && (!Number.isSafeInteger(value) || value < 1))
+      throw Error(`Daily ${name} must be a positive safe integer`)
+}
+
+export function dailyRouteProgress({
+  root,
+  plan,
+  receipts,
+  coverage,
+  activeRoutes,
+  backlogFile,
+  sameEventAliases,
+}) {
+  return activeRoutes.map(({ route }) => {
+    const windows = plan.windows.filter((item) => item.channel_id === route.channel_id)
+    let verified = 0,
+      failed = 0
+    for (const window of windows) {
+      const attempts = receipts.filter((receipt) => sameWindow(receipt, window))
+      if (
+        attempts.some((receipt) => receipt.status === "window_scanned") ||
+        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window, {
+          backlogFile,
+          sameEventAliases,
+        })
+      )
+        verified++
+      else if (attempts.length) failed++
+    }
+    const pending = windows.length - verified - failed
+    return {
+      ...route,
+      status:
+        verified === windows.length
+          ? "partial"
+          : failed
+            ? "failed"
+            : verified
+              ? "incomplete"
+              : "not_attempted",
+      window_progress: { total: windows.length, verified, failed, pending },
+    }
+  })
+}
+
 export async function executeDailyPlan({
   root,
   plan,
@@ -927,7 +991,10 @@ export async function executeDailyPlan({
   verify = verifyStoredListScan,
   merge = mergeCompletedScan,
   sameEventAliases = null,
+  maxWindows,
+  timeBudgetMs,
 }) {
+  assertDailyExecutionLimits(maxWindows, timeBudgetMs)
   const receipts = readDailyReceipts(root, plan.run_id)
   verifyDailyReceipts(root, plan, receipts, {
     loadStored,
@@ -956,6 +1023,11 @@ export async function executeDailyPlan({
     )
   let commitQueue = Promise.resolve()
   let stopped = false
+  // Limit new work, not the plan or its coverage. Reserve synchronously before
+  // awaiting a scan so concurrent route workers cannot exceed the slice.
+  const sliceStarted = performance.now()
+  let startedWindows = 0
+  let stopReason = null
   const scanWindow = async (window, priorAttempts) => {
     const attempt = priorAttempts.length + 1
     const id = attemptId(plan, window, attempt)
@@ -1124,6 +1196,16 @@ export async function executeDailyPlan({
           ) !== "retryable")
       )
         continue
+      if (
+        (maxWindows !== undefined && startedWindows >= maxWindows) ||
+        (timeBudgetMs !== undefined && performance.now() - sliceStarted >= timeBudgetMs)
+      ) {
+        stopReason =
+          maxWindows !== undefined && startedWindows >= maxWindows ? "max_windows" : "time_budget"
+        stopped = true
+        return
+      }
+      startedWindows++
       const outcome = await scanWindow(window, priorAttempts)
       // Commit completed scans immediately, one at a time. The next window of
       // this route starts only after its verified receipt and backlog exist.
@@ -1150,19 +1232,14 @@ export async function executeDailyPlan({
   const failed = results.find((result) => result.status === "rejected")
   if (failed) throw failed.reason
 
-  const routeResults = activeRoutes.map(({ route }) => {
-    const windows = plan.windows.filter((item) => item.channel_id === route.channel_id)
-    const complete = windows.every(
-      (window) =>
-        receipts.some(
-          (receipt) => sameWindow(receipt, window) && receipt.status === "window_scanned",
-        ) ||
-        hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window, {
-          backlogFile,
-          sameEventAliases,
-        }),
-    )
-    return { ...route, status: complete ? "partial" : "failed" }
+  const routeResults = dailyRouteProgress({
+    root,
+    plan,
+    receipts,
+    coverage,
+    activeRoutes,
+    backlogFile,
+    sameEventAliases,
   })
   const summary = {
     schema: "research-daily-summary/v1",
@@ -1172,7 +1249,13 @@ export async function executeDailyPlan({
       : "partial",
     routes: routeResults.map((route) => ({
       channel_id: route.channel_id,
-      status: route.status === "partial" ? "window_scanned" : "incomplete",
+      status:
+        route.status === "partial"
+          ? "window_scanned"
+          : route.status === "not_attempted"
+            ? "not_attempted"
+            : "incomplete",
+      window_progress: route.window_progress,
       last_contiguous_until: current.routes[route.channel_id].last_contiguous_until,
     })),
     coverage_grid: coverageGrid(routeResults),
@@ -1186,12 +1269,24 @@ export async function executeDailyPlan({
             timing_hint: {
               path: timingHint.path,
               sha256: timingHint.sha256,
+              sources: timingHint.sources,
               source_evidence: false,
             },
           }
         : {}),
       route_windows_serialized: true,
       candidate_merges_serialized: true,
+      ...(maxWindows !== undefined || timeBudgetMs !== undefined
+        ? {
+            slice: {
+              max_windows: maxWindows ?? null,
+              time_budget_ms: timeBudgetMs ?? null,
+              started_windows: startedWindows,
+              stop_reason: stopReason,
+              live_scans_drained: true,
+            },
+          }
+        : {}),
     },
     retry_queue: dailyRetryQueue(root, plan, receipts, current, {
       backlogFile,
@@ -1314,7 +1409,15 @@ export async function dailyScan({
   scan,
   verify,
   merge,
+  maxWindows,
+  timeBudgetMs,
 }) {
+  assertDailyExecutionLimits(maxWindows, timeBudgetMs)
+  if (
+    (maxWindows !== undefined || timeBudgetMs !== undefined) &&
+    !["execute", "resume"].includes(mode)
+  )
+    throw Error("Daily execution limits require execute or resume")
   backlogFile = requireExplicitBacklog(root, backlogFile)
   if (!/^[a-zA-Z0-9_-]+$/.test(runId || "")) throw Error("Invalid daily run ID")
   if (!["plan-only", "execute", "resume", "handoff"].includes(mode))
@@ -1410,6 +1513,8 @@ export async function dailyScan({
       verify,
       merge: mergeScan,
       sameEventAliases: sourceAliases,
+      maxWindows,
+      timeBudgetMs,
     })
     const { generateDailyHandoff } = await import("./editorial-handoff.mjs")
     const handoff = generateDailyHandoff({ root, runId, vault, backlogFile })

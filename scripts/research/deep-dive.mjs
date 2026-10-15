@@ -2,7 +2,7 @@ import { DEEP_KINDS } from "../editorial.mjs"
 import { assertSchema, sha256 } from "./contracts.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { assertReviewDate, parseResearchDate } from "./dates.mjs"
-import { paperKey, reconcilePaperVersions } from "./knowledge-links.mjs"
+import { paperKey, reconcilePaperVersions, reconcilePersonNames } from "./knowledge-links.mjs"
 
 const text = { type: "string", minLength: 1 }
 const id = { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
@@ -494,13 +494,10 @@ function validateInput(input, claims, parses, documents) {
     )
       throw Error("Paper explanation roles require full-text facts")
   }
-  const people = new Map()
+  reconcilePersonNames(input.relations)
   for (const relation of input.relations) {
     if (!parseResearchDate(relation.as_of) || parseResearchDate(relation.as_of).precision !== "day")
       throw Error("Valid relationship date required")
-    if (people.has(relation.person_id) && people.get(relation.person_id) !== relation.person_name)
-      throw Error("Person identity conflict in deep-dive relationships")
-    people.set(relation.person_id, relation.person_name)
     const relatedVersions = evidenceVersions(relation.claim_ids)
     const evidenceDocs = [...relatedVersions].map((version) => docs.get(version))
     const allowedURLs = new Set(evidenceDocs.map((d) => d.original_url))
@@ -596,6 +593,13 @@ export function recordDeepDiveReview(input, claims, parses, documents, review) {
     ),
     fingerprints: fingerprints(input, used, parses, documents),
   }
+}
+// Cheap admission check before acquisition/model work. Evidence-dependent
+// scope, identity and claim checks still belong to recordDeepDiveReview.
+export function assertDeepReviewDecision(decision) {
+  assertSchema(decision?.input, deepDiveInputSchema)
+  assertReview(decision?.review, decision.input, [], [])
+  return decision
 }
 export function assertDeepDiveContext(context, claims, parses, documents) {
   if (context?.schema !== "deep-dive-context/v1") throw Error("Reviewed deep-dive context required")

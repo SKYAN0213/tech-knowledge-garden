@@ -16,6 +16,110 @@ WORKER = Path(__file__).resolve().parents[1] / "integrations/research-worker/wor
 
 
 class WorkerTests(unittest.TestCase):
+    def test_listing_scope_preserves_context_and_unknown_primary_links(self):
+        raw = b'''<html><body><h1>News</h1><nav><a href="/news/banner">Featured announcement</a></nav>
+        <main id="list"><p>Official dated news list</p><div><a href="/news/one">One</a><time>2026-10-08</time></div>
+        <a href="/news/unknown">Unmatched article in the same list</a></main></body></html>'''
+        options = {"title_xpath": "//h1", "content_xpath": "//main", "listing_scope_xpath": "//main[@id='list']", "listing_link_rules": [{"id": "news", "item_xpath": "//main/div/a", "url_attribute": "href", "url_pattern": "(?P<url>/news/one)", "title_xpath": ".", "date_xpath": "../time"}]}
+        parsed = self.invoke(raw, options)["result"]
+        self.assertEqual(parsed["listing_scope"]["dom_path"], "/html/body/main")
+        self.assertTrue(any(link["url"].endswith("/news/unknown") for link in parsed["links"]))
+        self.assertFalse(any(link["url"].endswith("/news/banner") for link in parsed["links"]))
+        self.assertEqual([link["url"] for link in parsed["context_links"]], ["https://example.com/news/banner"])
+        unscoped = self.invoke(raw, {key: value for key, value in options.items() if key != "listing_scope_xpath"})["result"]
+        self.assertTrue(any(link["url"].endswith("/news/banner") for link in unscoped["links"]))
+        self.assertNotIn("listing_scope", unscoped)
+
+    def test_listing_scope_cannot_hide_profile_records_or_fail_open(self):
+        raw = b'''<html><body><h1>News</h1><nav><a href="/news/outside">Outside</a></nav><main><p>News list</p><a href="/news/inside">Inside</a></main></body></html>'''
+        options = {"title_xpath": "//h1", "content_xpath": "//main", "listing_scope_xpath": "//main", "listing_link_rules": [{"id": "news", "item_xpath": "//nav/a", "url_attribute": "href", "url_pattern": "(?P<url>/news/outside)", "title_xpath": "."}]}
+        self.assertIn("outside its declared scope", self.invoke(raw, options).get("error", ""))
+        self.assertIn("exactly one", self.invoke(raw, {**options, "listing_scope_xpath": "//section"}).get("error", ""))
+
+    def test_required_html_code_preserves_tokens_lines_and_indentation(self):
+        raw = b'''<html><body><h1>PDF extractor</h1><aside><pre>unrelated()</pre></aside>
+        <article><p>Read the <code>bucket</code> parameter.</p><div>
+        <pre><code><span>def</span> <span>extract</span>(bucket):
+    return bucket + "file.pdf"
+</code></pre></div><pre>   \n   </pre></article></body></html>'''
+        options = {"title_xpath": "//h1", "content_xpath": "//article", "required_content_xpath": ".//pre"}
+        expected = 'def extract(bucket):\n    return bucket + "file.pdf"'
+        for selector, status in [(".//p", "omitted"), (".//p|.//div", "flattened")]:
+            with self.subTest(selector=selector):
+                parsed = self.invoke(raw, {**options, "content_block_xpath": selector})["result"]
+                self.assertEqual(parsed["status"], "partial")
+                self.assertEqual(parsed["content_coverage"]["missing_nodes"], 1)
+                self.assertEqual(parsed["content_coverage"]["nodes"][0]["status"], status)
+        for extra in [{}, {"content_block_xpath": ".//p|.//pre|.//code"}]:
+            with self.subTest(options=extra):
+                parsed = self.invoke(raw, {**options, **extra})["result"]
+                self.assertEqual(parsed["status"], "extracted")
+                self.assertEqual(parsed["content_coverage"]["missing_nodes"], 0)
+                self.assertEqual(parsed["content_coverage"]["nodes"][0]["kind"], "code")
+                codes = [block for block in parsed["blocks"] if block["kind"] == "code"]
+                self.assertEqual(len(codes), 1)
+                self.assertEqual(codes[0]["text"], expected)
+                self.assertEqual(codes[0]["locator"]["text_hash"], hashlib.sha256(expected.encode()).hexdigest())
+                self.assertEqual(codes[0]["locator"]["dom_path"], "/html/body/article/div/pre")
+                self.assertEqual(parsed["blocks"][0]["text"], "Read the bucket parameter.")
+
+    def test_required_html_tables_detect_omission_and_flattening_in_reader_scope(self):
+        raw = b'''<html><body><nav><table><tr><td>Navigation</td></tr></table></nav>
+        <h1>Resource coverage</h1><article><p>Two additional resources are supported.</p>
+        <div><table><tr><th>Resource</th><th>Region</th></tr><tr><td>Queue</td><td>Available regions</td></tr></table></div>
+        </article></body></html>'''
+        options = {"title_xpath": "//h1", "content_xpath": "//article", "required_content_xpath": ".//table"}
+        for selector, status in [(".//p", "omitted"), (".//p|.//div", "flattened")]:
+            with self.subTest(selector=selector):
+                parsed = self.invoke(raw, {**options, "content_block_xpath": selector})["result"]
+                self.assertEqual(parsed["status"], "partial")
+                self.assertFalse(parsed["quality"]["required_fields_present"])
+                audit = parsed["content_coverage"]
+                self.assertEqual(audit["schema"], "html-required-content-coverage/v1")
+                self.assertEqual(audit["required_nodes"], 1)
+                self.assertEqual(audit["nodes"][0]["status"], status)
+                self.assertEqual(audit["nodes"][0]["kind"], "table")
+                self.assertEqual(len(audit["nodes"][0]["text_hash"]), 64)
+                self.assertEqual(parsed["quality"]["reason"], "required-content-incomplete")
+                self.assertNotIn("Navigation", " ".join(block["text"] for block in parsed["blocks"]))
+        parsed = self.invoke(raw, {**options, "content_block_xpath": ".//p|.//table"})["result"]
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertEqual(parsed["content_coverage"]["missing_nodes"], 0)
+        self.assertEqual(parsed["content_coverage"]["nodes"][0]["status"], "extracted")
+        self.assertEqual(parsed["blocks"][1]["rows"], [["Resource", "Region"], ["Queue", "Available regions"]])
+
+    def test_required_html_content_selector_is_explicit_scoped_and_bounded(self):
+        raw = b'<html><body><h1>Update</h1><article><p id="scope">No table in this article.</p></article><aside><table><tr><td>Other news</td></tr></table></aside></body></html>'
+        options = {"title_xpath": "//h1", "content_xpath": "//article", "content_block_xpath": ".//p"}
+        for selector in ("//aside/table", ".//p | //aside/table", ".//p/text()", ".//p/@id", "", True):
+            with self.subTest(selector=selector):
+                self.assertEqual(self.invoke(raw, {**options, "required_content_xpath": selector})["worker_status"], "failed")
+        self.assertEqual(self.invoke(raw, {"required_content_xpath": ".//table"})["worker_status"], "failed")
+        parsed = self.invoke(raw, {**options, "required_content_xpath": ".//table"})["result"]
+        self.assertEqual(parsed["content_coverage"]["required_nodes"], 0)
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertNotIn("content_coverage", self.invoke(raw, options)["result"])
+        oversized = b'<html><body><h1>Tables</h1><article><p>Resource types.</p>' + b'<table><tr><td>x</td></tr></table>' * 5001 + b'</article></body></html>'
+        rejected = self.invoke(oversized, {**options, "required_content_xpath": ".//table"})
+        self.assertEqual(rejected["worker_status"], "failed")
+        self.assertIn("Required content node budget exceeded", rejected["error"])
+
+    def test_aws_whats_new_profile_retains_resource_table_and_article_date(self):
+        config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
+        options = next(p["options"] for p in config["article_profiles"] if p["id"] == "aws-whats-new-article-v1")
+        raw = b'''<html><body><table><tr><td>Navigation</td></tr></table><main class="wn-post">
+        <h1 class="wn-title">AWS Config now supports additional types</h1><div class="wn-body">Posted on: Oct 7, 2026</div>
+        <div class="wn-body"><p>Recording is available where the resources are supported.</p>
+        <table><tr><td>AWS::S3Files::FileSystem</td><td>AWS::QBusiness::Index</td></tr></table>
+        <p>All resource types recording must be enabled.</p></div></main></body></html>'''
+        parsed = self.invoke(raw, options, url="https://aws.amazon.com/about-aws/whats-new/2026/10/config-types/")["result"]
+        self.assertEqual(parsed["dates"]["published_at"], "2026-10-07")
+        self.assertEqual(parsed["status"], "extracted")
+        self.assertEqual([block["kind"] for block in parsed["blocks"]], ["paragraph", "table", "paragraph"])
+        self.assertEqual(parsed["blocks"][1]["rows"], [["AWS::S3Files::FileSystem", "AWS::QBusiness::Index"]])
+        self.assertEqual(parsed["content_coverage"]["required_nodes"], 1)
+        self.assertEqual(parsed["content_coverage"]["missing_nodes"], 0)
+
     def test_kuka_german_header_date_is_distinct_from_page_creation_metadata(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         options = next(p["options"] for p in config["article_profiles"] if p["id"] == "kuka-de-news-detail")
@@ -613,6 +717,31 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result["dates"]["basis"]["sources"][0]["type"], "json-ld")
         self.assertEqual(result["dates"]["basis"]["sources"][0]["attribute"], "datePublished")
 
+    def test_common_social_media_posting_requires_current_page_identity(self):
+        url = "https://example.com/blog/release"
+        stamp = "2026-06-30T18:32:50.094Z"
+        def fixture(record, extra=None):
+            structured = {"@graph": [record] + ([extra] if extra else [])}
+            return ('<html><head><title>Release</title><script type="application/ld+json">' + json.dumps(structured) + '</script></head><body><article><h1>Release</h1><time datetime="2026-05-22">Comment date</time><p>Researchers published an evaluation tool.</p></article></body></html>').encode()
+        record = {"@type": "SocialMediaPosting", "url": url, "mainEntityOfPage": url, "datePublished": stamp, "dateModified": "2026-09-15"}
+        for target in (url, {"@id": "/blog/release"}):
+            with self.subTest(target=target):
+                result = self.invoke(fixture({**record, "mainEntityOfPage": target}, {**record, "url": url + "#comment", "datePublished": "2099-01-01"}), url=url)["result"]
+                self.assertEqual(result["dates"]["published_at"], stamp)
+                self.assertEqual(result["dates"]["candidates"], [stamp])
+                self.assertEqual(result["dates"]["profile_status"], "matched")
+                basis = result["dates"]["basis"]["sources"][0]
+                self.assertEqual(basis["source_url"], url)
+                self.assertEqual(basis["posting_url"], url)
+                self.assertEqual(basis["main_entity_url"], url)
+        for changes in ({"url": url + "#comment"}, {"mainEntityOfPage": "https://other.example/blog/release"}, {"mainEntityOfPage": None}, {"url": None}, {"@type": ["Article", "SocialMediaPosting"], "url": url + "#comment"}, {"datePublished": None}):
+            with self.subTest(changes=changes):
+                result = self.invoke(fixture({**record, **changes}), url=url)["result"]
+                self.assertIsNone(result["dates"]["published_at"])
+        result = self.invoke(fixture(record, {**record, "datePublished": "2026-07-02"}), url=url)["result"]
+        self.assertIsNone(result["dates"]["published_at"])
+        self.assertEqual(result["dates"]["profile_status"], "conflict")
+
     def test_vast_dataenclave_profile_selects_published_date_and_article_body(self):
         config = json.loads((WORKER.parents[2] / "data/research-acquisition.json").read_text())
         profile = next(p for p in config["article_profiles"] if p["id"] == "vast-dataenclave-press-release-v1")
@@ -723,6 +852,47 @@ class WorkerTests(unittest.TestCase):
         self.assertIsNone(result["dates"]["published_at"])
         self.assertEqual(result["dates"]["profile_status"], "conflict")
         self.assertEqual(result["dates"]["candidates"], ["2026-09-09", "2026-09-08"])
+
+    def test_common_publication_resolution_keeps_correlated_timestamp_not_metadata_order(self):
+        day = '<meta property="article:published_time" content="2026-06-30">'
+        precise = '<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-30T21:00:00+00:00"}</script>'
+        for metadata in (day + precise, precise + day):
+            with self.subTest(metadata=metadata):
+                raw = ('<html><head><title>Release</title>' + metadata +
+                       '</head><body><article><h1>Release</h1><p>Company announced a release.</p></article></body></html>').encode()
+                result = self.invoke(raw)["result"]
+                dates = result["dates"]
+                self.assertEqual(dates["published_at"], "2026-06-30T21:00:00+00:00")
+                self.assertEqual(dates["precision"], "timestamp")
+                self.assertEqual(dates["profile_status"], "matched")
+                self.assertEqual(len(dates["basis"]["sources"]), 1)
+                self.assertEqual(len(dates["basis"]["calendar_basis"]), 2)
+                self.assertCountEqual(dates["candidates"], ["2026-06-30", "2026-06-30T21:00:00+00:00"])
+
+    def test_common_publication_timestamps_must_agree_on_instant_not_just_day(self):
+        for timestamp, expected in (("2026-06-30T23:00:00+02:00", "2026-06-30T21:00:00Z"),
+                                    ("2026-06-30T22:00:00Z", None)):
+            with self.subTest(timestamp=timestamp):
+                raw = ('<html><head><title>Release</title>'
+                       '<meta property="article:published_time" content="2026-06-30T21:00:00Z">'
+                       '<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"' + timestamp + '"}</script>'
+                       '</head><body><article><h1>Release</h1><p>Company announced a release.</p></article></body></html>').encode()
+                dates = self.invoke(raw)["result"]["dates"]
+                self.assertEqual(dates["published_at"], expected)
+                self.assertEqual(dates["profile_status"], "matched" if expected else "conflict")
+
+    def test_common_timestamp_resolution_preserves_explicit_calendar_day_profiles(self):
+        raw = b'''<html><head><title>Release</title>
+        <meta property="article:published_time" content="2026-06-30">
+        <script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-06-30T21:00:00Z"}</script>
+        </head><body><article><h1>Release</h1><time>June 30, 2026</time><p>Company announced a release.</p></article></body></html>'''
+        options = {"content_xpath": "//article", "publication_date_xpath": "//article/time",
+                   "publication_date_pattern": r"[A-Za-z]+ \d{2}, \d{4}",
+                   "publication_date_format": "%B %d, %Y"}
+        for precise in (False, True):
+            with self.subTest(precise=precise):
+                dates = self.invoke(raw, {**options, "publication_date_metadata_timestamp": precise})["result"]["dates"]
+                self.assertEqual(dates["published_at"], "2026-06-30T21:00:00Z" if precise else "2026-06-30")
 
     def test_offset_html_timestamps_and_day_metadata_are_preserved(self):
         for value in (b'2026-08-26', b'2026-08-26T21:09:39.124Z', b'2026-08-26T21:09:39+09:00'):
@@ -982,6 +1152,31 @@ echo 'source command only'
         invalid = self.invoke(raw.replace(b'August 28', b'August 32'), options, mime_type="text/markdown")["result"]
         self.assertIsNone(invalid["dates"]["published_at"])
         self.assertEqual(invalid["dates"]["profile_status"], "invalid-date")
+
+    def test_plain_text_markdown_extension_reuses_source_aware_markdown_parser(self):
+        raw = b'# Model\n\n| Setting | Value |\n|---|---|\n| Context | 1M |\n\n[License](LICENSE)\n'
+        parsed = self.invoke(raw, mime_type="text/plain; charset=utf-8", url="https://raw.example.org/model/README.md?version=1")["result"]
+        self.assertEqual(parsed["parser"]["id"], "markdown-it-py")
+        self.assertEqual(parsed["blocks"][1]["rows"], [["Setting", "Value"], ["Context", "1M"]])
+        self.assertEqual(parsed["links"][0]["url"], "https://raw.example.org/model/LICENSE")
+        self.assertEqual(parsed["blocks"][1]["locator"]["line_start"], 3)
+        self.assertIsNone(parsed["dates"]["published_at"])
+
+    def test_plain_text_preserves_license_lines_and_rejects_binary_or_empty_success(self):
+        raw = b'\xef\xbb\xbfApache License\nVersion 2.0, January 2004\n\nTerms and conditions.\n'
+        parsed = self.invoke(raw, mime_type="text/plain", url="https://raw.example.org/model/LICENSE")["result"]
+        self.assertEqual(parsed["parser"]["id"], "plain-text")
+        self.assertEqual(parsed["title"], "Apache License")
+        self.assertEqual(parsed["blocks"][0]["locator"]["line_end"], 2)
+        self.assertEqual(parsed["blocks"][1]["locator"]["line_start"], 4)
+        self.assertEqual(parsed["blocks"][1]["locator"]["source_text_hash"], hashlib.sha256(b'Terms and conditions.\n').hexdigest())
+        self.assertIsNone(parsed["dates"]["published_at"])
+        self.assertEqual(parsed["dates"]["precision"], "unknown")
+        self.assertEqual(self.invoke(b'\n  \n', mime_type="text/plain")["result"]["status"], "partial")
+        for invalid in (b'\xff', b'text\x00binary'):
+            self.assertEqual(self.invoke(invalid, mime_type="text/plain")["worker_status"], "failed")
+        challenge = b'<html><body><h1>Just a moment...</h1>Checking your browser</body></html>'
+        self.assertEqual(self.invoke(challenge, mime_type="text/plain", url="https://raw.example.org/README.md")["result"]["status"], "blocked")
 
     def test_markdown_mime_does_not_promote_html_challenge_or_invalid_utf8(self):
         challenge = b'<!doctype html><html><title>Just a moment</title></html>'
@@ -1271,6 +1466,26 @@ echo 'source command only'
         result = self.invoke(form_wall)["result"]
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["quality"]["reason"], "authentication-page")
+
+    def test_public_preview_keeps_evidence_without_promoting_paywall_to_complete_article(self):
+        raw = b'''<html><head><title>Engineering update</title>
+        <meta property="article:published_time" content="2026-06-25T14:53:12Z"></head><body>
+        <article><p>Over three years, the company hired 350 engineers.</p>
+        <h2>Learn more about the publisher or Log In to keep reading:</h2>
+        <p>Membership gives access to reports.</p><h3>Already a subscriber?</h3>
+        <p>Log in to keep reading or access tools.</p></article></body></html>'''
+        result = self.invoke(raw, {"content_xpath": "//article"})["result"]
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual([b["text"] for b in result["blocks"]], ["Over three years, the company hired 350 engineers."])
+        self.assertFalse(result["quality"]["required_fields_present"])
+        self.assertFalse(result["quality"]["source_document_complete"])
+        self.assertEqual(result["quality"]["access_scope"], "public-preview")
+        self.assertEqual(result["dates"]["published_at"], "2026-06-25T14:53:12Z")
+        self.assertEqual(result["blocks"][0]["locator"]["text_hash"], hashlib.sha256(result["blocks"][0]["text"].encode()).hexdigest())
+        reporting = raw.replace(b'Learn more about the publisher or Log In to keep reading:', b'The report describes why readers log in to keep reading.')
+        self.assertEqual(self.invoke(reporting, {"content_xpath": "//article"})["result"]["status"], "extracted")
+        no_excerpt = raw.replace(b'<p>Over three years, the company hired 350 engineers.</p>', b'')
+        self.assertEqual(self.invoke(no_excerpt, {"content_xpath": "//article"})["result"]["status"], "blocked")
 
     def test_blocked_article_retains_only_explicit_publication_metadata(self):
         raw = b'''<html><head><title>Technology update</title>
@@ -2439,6 +2654,29 @@ echo 'source command only'
         self.assertIn("\\left[x\\;y\\right]", paragraph["text"])
         self.assertIn("\\mathbf{D}", paragraph["text"])
         self.assertEqual(paragraph["locator"]["text_hash"], hashlib.sha256(paragraph["text"].encode()).hexdigest())
+
+    def test_jats_preserves_bold_italic_vectors_without_flattening_other_styles(self):
+        xml = b'''<article><front><article-meta>
+          <title-group><article-title>Vector notation</article-title></title-group>
+          <pub-date pub-type="epub"><year>2026</year><month>10</month><day>05</day></pub-date>
+          </article-meta></front><body><sec><title>Methods</title><p>Position
+          <inline-formula><math><msub><mi mathvariant="bold-italic">P</mi><mi>agent</mi></msub></math></inline-formula>
+          differs from <inline-formula><math><mi mathvariant="bold">P</mi></math></inline-formula>
+          and <inline-formula><math><mi mathvariant="italic">P</mi></math></inline-formula>.
+          Training set <inline-formula><math><mi mathvariant="bold-script">T</mi></math></inline-formula>.</p>
+          <p>Unsupported inherited vector <inline-formula><math><mstyle mathvariant="bold-italic"><mi>P</mi></mstyle></math></inline-formula>.</p>
+          </sec></body></article>'''
+        result = self.invoke(xml, {"format": "jats"})["result"]
+        paragraph = next(b for b in result["blocks"] if b["kind"] == "paragraph" and "Position" in b["text"])
+        self.assertIn(r"\boldsymbol{\mathit{P}}_{agent}", paragraph["text"])
+        self.assertIn(r"\mathbf{P}", paragraph["text"])
+        self.assertIn(r"\mathit{P}", paragraph["text"])
+        self.assertIn(r"\boldsymbol{\mathcal{T}}", paragraph["text"])
+        self.assertEqual(result["status"], "partial")
+        self.assertEqual(len(result["quality"]["missing_math"]), 1)
+        missing = result["quality"]["missing_math"][0]
+        self.assertIn('mstyle mathvariant="bold-italic"', missing["source_xml"])
+        self.assertEqual(missing["source_xml_sha256"], hashlib.sha256(missing["source_xml"].encode()).hexdigest())
 
     def test_jats_table_expands_spans_and_resolves_scoped_footnotes(self):
         xml = b'''<article article-type="research-article"><front><article-meta>

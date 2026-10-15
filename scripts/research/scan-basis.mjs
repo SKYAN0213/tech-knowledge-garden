@@ -54,6 +54,10 @@ export function scanListImplementationFingerprints(repo = process.cwd()) {
     parser_sha256: "scripts/research/parser.mjs",
     scan_evidence_sha256: "scripts/research/scan-evidence.mjs",
     supporting_sources_sha256: "scripts/research/supporting-sources.mjs",
+    article_image_review_cache_sha256: "scripts/research/article-image-review-cache.mjs",
+    article_image_source_sha256: "scripts/research/article-image-source.mjs",
+    ocr_table_sha256: "scripts/research/ocr-table.mjs",
+    robots_sha256: "scripts/research/robots.mjs",
     scan_completion_sha256: "scripts/research/scan-completion.mjs",
     run_state_sha256: "scripts/research/run-state.mjs",
     scan_basis_sha256: "scripts/research/scan-basis.mjs",
@@ -68,15 +72,23 @@ export function scanListImplementationFingerprints(repo = process.cwd()) {
   )
 }
 
-export function collectionBasis(channel, articleProfiles, repo = process.cwd()) {
+export function collectionRoute(channel) {
   const route = structuredClone(channel)
   // Editorial progress notes and registration status do not change selectors,
   // allowed hosts or parsing. Collection permission is checked separately.
   delete route.onboarding
+  return route
+}
+
+export function collectionBasis(channel, articleProfiles, repo = process.cwd()) {
+  const route = collectionRoute(channel)
   const files = [
     "scripts/research/fetch.mjs",
     "scripts/research/discovery.mjs",
     "scripts/research/source-policy.mjs",
+    "scripts/research/source-policy-state.mjs",
+    "scripts/research/source-retry.mjs",
+    "scripts/research/source-access.mjs",
     "scripts/research/source-recipes.mjs",
     "integrations/research-worker/worker.py",
   ]

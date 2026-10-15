@@ -277,6 +277,46 @@
       "channel_id": "nachi-financial-results-ja",
       "enabled": true,
       "baseline_run": "nachi-financial-live-20261006-v1"
+    },
+    {
+      "channel_id": "catalog-x24",
+      "enabled": true,
+      "baseline_run": "catalog-x24-expand-20261010-normal-v6"
+    },
+    {
+      "channel_id": "catalog-x39",
+      "enabled": true,
+      "baseline_run": "catalog-x39-expand-20261010-normal-v6"
+    },
+    {
+      "channel_id": "catalog-x40",
+      "enabled": true,
+      "baseline_run": "catalog-x40-expand-20261010-normal-v6"
+    },
+    {
+      "channel_id": "cambridge-enterprise-news",
+      "enabled": true,
+      "baseline_run": "cambridge-enterprise-news-expand-20261010-normal-v6"
+    },
+    {
+      "channel_id": "robot-report-industrial-rss",
+      "enabled": true,
+      "baseline_run": "robot-report-industrial-rss-expand-20261010-normal-v6"
+    },
+    {
+      "channel_id": "irobotnews-all-rss",
+      "enabled": true,
+      "baseline_run": "parallel-collection-20261010-irobotnews-normal-v2"
+    },
+    {
+      "channel_id": "bioin-kribb-research",
+      "enabled": true,
+      "baseline_run": "bioin-kribb-normal-20261010-v2"
+    },
+    {
+      "channel_id": "techcrunch-latest-archive",
+      "enabled": true,
+      "baseline_run": "collection-c2-techcrunch-normal-20261010-v3"
     }
   ]
 }

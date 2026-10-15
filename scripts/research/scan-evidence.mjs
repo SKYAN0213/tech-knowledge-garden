@@ -9,6 +9,8 @@ import {
 import { safePath } from "./run-state.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { validateListingSupportRelations } from "./supporting-sources.mjs"
+import { verifyAccessExclusionDetail } from "./source-access.mjs"
+import { verifyReviewedImageCandidate } from "./article-image-review-cache.mjs"
 
 function verifyDocument(root, document) {
   if (
@@ -42,6 +44,14 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
     assertStoredEvidence(root, scan.documents, scan.parses)
   }
   const provedOverlaps = new Set()
+  const exclusions = (scan.summary.details || []).filter(
+    (detail) => detail.status === "public_access_excluded",
+  )
+  if (exclusions.length) {
+    if (scan.summary.access_excluded_count !== exclusions.length)
+      throw Error("Public access exclusion count changed")
+    for (const detail of exclusions) verifyAccessExclusionDetail(root, detail, scan)
+  }
   if (scan.summary.page_overlaps !== undefined) {
     if (!Array.isArray(scan.summary.page_overlaps) || scan.summary.page_overlaps.length > 100)
       throw Error("Invalid archive overlap evidence")
@@ -153,10 +163,13 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
         parseResearchDate(parsed.dates?.published_at)?.day
     )
       throw Error("Candidate lacks a matching stored detail source, parse and publication day")
+    const reviewedImage = parsed.parser?.id === "article-image-metadata"
+    if (reviewedImage) verifyReviewedImageCandidate(root, scan, candidate, document, parsed)
     if (
-      parsed.status !== "extracted" ||
-      !parsed.quality?.required_fields_present ||
-      !parsed.blocks?.length
+      !reviewedImage &&
+      (parsed.status !== "extracted" ||
+        !parsed.quality?.required_fields_present ||
+        !parsed.blocks?.length)
     )
       throw Error("Candidate requires a complete readable article")
     const supportingURLs = candidate.supporting_source_urls || []
@@ -169,6 +182,8 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
     const declaredAttachments = new Set(
       (parsed.attachments || []).map((attachment) => canonicalURL(attachment.url)),
     )
+    if (reviewedImage)
+      for (const image of parsed.body_images) declaredAttachments.add(canonicalURL(image.url))
     const relations = candidate.supporting_listing_relations || []
     for (const url of validateListingSupportRelations(
       scan.parses,
@@ -221,11 +236,38 @@ export function verifyStoredListScan(root, scan, expected, options) {
 // Positive article evidence can be used while the route window stays incomplete.
 // No image OCR or failed detail becomes a candidate through this path.
 export function verifyStoredPartialCandidates(root, scan, expected) {
+  return verifyStoredPartialScan(root, scan, expected, true)
+}
+
+// Recovery can reparse captured failed details even when none became a candidate.
+// It neither merges candidates nor certifies a completed collection window.
+export function verifyStoredDetailRepair(root, scan, expected) {
+  verifyStoredPartialScan(root, scan, expected, false)
+  if (
+    !scan.candidates.length &&
+    !scan.summary.details.some((detail) => {
+      const document = scan.documents.find((d) => d.source_version_id === detail.source_version_id)
+      const parsed = scan.parses.find((p) => p.parse_id === detail.parse_id)
+      return (
+        detail.status !== "source_parsed_unreviewed" &&
+        document?.policy_status === "checked" &&
+        ["captured", "not_modified"].includes(document.fetch_status) &&
+        parsed?.source_version_id === document.source_version_id &&
+        canonicalURL(detail.url) === canonicalURL(document.original_url)
+      )
+    })
+  )
+    throw Error("Empty-candidate repair requires a captured detail and exact stored parse")
+  return true
+}
+
+function verifyStoredPartialScan(root, scan, expected, requireCandidates) {
   if (
     scan?.summary?.status !== "incomplete" ||
     scan.summary.reason !== "detail_incomplete" ||
     scan.summary.assessment?.status !== "window_covered" ||
-    !scan.candidates?.length ||
+    !Array.isArray(scan.candidates) ||
+    (requireCandidates && !scan.candidates.length) ||
     !Array.isArray(scan.summary.details) ||
     new Set(scan.candidates.map((c) => c.key)).size !== scan.candidates.length
   )
@@ -305,6 +347,8 @@ export function verifyStoredPartialCandidates(root, scan, expected) {
         canonicalURL(d.url) === canonicalURL(document.original_url),
     )
     const day = parseResearchDate(candidate.source_published_at)?.day
+    const reviewedImage = parsed?.parser?.id === "article-image-metadata"
+    if (reviewedImage) verifyReviewedImageCandidate(root, scan, candidate, document, parsed)
     if (
       scan.summary.pagination === "path-pages" &&
       !(candidate.discovery || []).some((record) => {
@@ -327,10 +371,11 @@ export function verifyStoredPartialCandidates(root, scan, expected) {
     if (
       document.policy_status !== "checked" ||
       parsed.source_version_id !== document.source_version_id ||
-      parsed.status !== "extracted" ||
-      !parsed.quality?.required_fields_present ||
-      !parsed.blocks?.length ||
-      candidate.article_content_sha256 !== articleContentFingerprint(parsed) ||
+      (!reviewedImage &&
+        (parsed.status !== "extracted" ||
+          !parsed.quality?.required_fields_present ||
+          !parsed.blocks?.length ||
+          candidate.article_content_sha256 !== articleContentFingerprint(parsed))) ||
       detail.length !== 1 ||
       !day ||
       day < expected.since ||

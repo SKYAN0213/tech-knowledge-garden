@@ -25,6 +25,7 @@ import {
 } from "./legacy-transition.mjs"
 import { BRIEFING_GROUP_FORMAT } from "../sectors.mjs"
 import { entityListText } from "../themes.mjs"
+import { assertEditorialCoverage } from "./editorial-completeness.mjs"
 
 // Pure projection: no Drive write, Git commit or push is performed here.
 export function approvedArticle(draftRecord, claims, documents, review, parses = []) {
@@ -46,7 +47,8 @@ export function approvedArticle(draftRecord, claims, documents, review, parses =
   if (draftRecord.draft_id !== draftFingerprint(d, deepContext))
     throw Error("Draft changed after review")
   if (deepContext) assertDeepDiveContext(deepContext, claims, parses, documents)
-  const problems = draftProblems(d, claims, deepContext)
+  assertEditorialCoverage(draftRecord, claims, review.completeness_review, { documents, parses })
+  const problems = draftProblems(d, claims, deepContext, draftRecord.completeness_context)
   if (problems.length) throw Error("Draft has unresolved problems: " + problems.join(", "))
   if (
     !/^[a-f0-9]{16}$/.test(review.event_id) ||
@@ -74,6 +76,12 @@ export function approvedArticle(draftRecord, claims, documents, review, parses =
       ...used.map((c) => c.review.reviewed_at),
       ...sourceDocuments.map((doc) => doc.observed_at),
       ...(deepContext ? [deepContext.review.reviewed_at] : []),
+      ...(draftRecord.completeness_context
+        ? [
+            draftRecord.completeness_context.review.reviewed_at,
+            review.completeness_review.reviewed_at,
+          ]
+        : []),
     ],
   })
   const eventDate = eventDateMetadata(
@@ -87,8 +95,10 @@ export function approvedArticle(draftRecord, claims, documents, review, parses =
     assertHistoricalAdditionReview(review.historical_addition_review, review)
   if (review.retrospective_review && review.historical_addition_review)
     throw Error("An event cannot be both a correction and a historical addition")
-  if (deepContext && deepContext.input.relations.some((r) => r.as_of > review.published_at))
-    throw Error("Relationship date cannot follow the original article event")
+  // Retrospective review may confirm a relationship after the original event.
+  // Preserve its actual date instead of backdating it to the article.
+  if (deepContext && deepContext.input.relations.some((r) => r.as_of > review.reviewed_at))
+    throw Error("Relationship date cannot follow the article review")
   const urlsFor = (ids) => [
     ...new Set(
       used
@@ -201,17 +211,28 @@ export function existingArticleProjection(article) {
       legacy: { body: article.body, desk: article.desk },
     }
   }
-  if (!article.editorial || !article.classification)
-    throw Error("Retrospective requires an existing six-w article with classification")
+  if (
+    !article.classification &&
+    (!article.edition ||
+      article.edition.meta.editorial_format !== "six-w/v1" ||
+      article.edition.meta.theme_format !== undefined)
+  )
+    throw Error("Unclassified preservation requires an existing six-w article without theme format")
   return {
     event_id: article.id,
     title: article.title,
     source_urls: [...article.urls],
-    sector: article.sector,
-    theme: article.classification.theme,
-    secondary_theme: article.classification.secondary_theme,
-    tags: [...article.classification.event_tags],
-    entities: [...article.classification.entities],
+    ...(article.classification
+      ? {
+          sector: article.sector,
+          theme: article.classification.theme,
+          secondary_theme: article.classification.secondary_theme,
+          tags: [...article.classification.event_tags],
+          entities: [...article.classification.entities],
+        }
+      : article.sector !== undefined
+        ? { sector: article.sector }
+        : {}),
     record: Object.fromEntries(
       [
         "title",
@@ -246,6 +267,7 @@ export function editionProjection(
     added_event_ids = [],
     concept_paths_by_id = {},
     legacy_review = null,
+    source_root,
   },
 ) {
   if (
@@ -261,7 +283,11 @@ export function editionProjection(
     new Set(articles.map((a) => a.event_id)).size !== articles.length
   )
     throw Error("Unique approved articles required")
-  if (!/^\d{4}-\d{2}-\d{2}_\d{4}_Tech_AI_Briefing$/.test(key) || date !== key.slice(0, 10))
+  if (
+    !/^\d{4}-\d{2}-\d{2}_\d{4}_Tech_AI_Briefing(?:_SAMPLE)?$/.test(key) ||
+    date !== key.slice(0, 10) ||
+    (key.endsWith("_SAMPLE") && (!legacy_review || existing?.meta.status !== "sample"))
+  )
     throw Error("Existing edition identity required")
   if (
     existing &&
@@ -280,6 +306,7 @@ export function editionProjection(
       articles,
       existing,
       `Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,
+      { root: source_root },
     )
     const metadata = legacyTransitionMetadata(
       legacy_review,
@@ -330,7 +357,11 @@ export function editionProjection(
     }
   }
   const partial = articles.some((a) => a.legacy)
+  // An exact preserved six-w sibling may predate classification. Keep its
+  // original format flags without relaxing legacy scope.
   const preserveFormatFlags = partial || articles.some((a) => a.preserved && a.theme === undefined)
+  // Every preserved body retains its original citation numbers, including
+  // classified siblings when another article retires one of its sources.
   const preserveSourceMarkers = partial || articles.some((a) => a.preserved)
   if (!existing && articles.some((a) => a.preserved))
     throw Error("Article preservation requires an existing edition")

@@ -9,12 +9,22 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
 import { draftFingerprint } from "../scripts/research/editor.mjs"
 import { noteText, parseNote } from "../scripts/garden.mjs"
-import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
+import { loadStoredSourceRun, articleContentFingerprint } from "../scripts/research/parser.mjs"
+import {
+  recordCandidateApproval,
+  loadCurrentCandidateApproval,
+} from "../scripts/research/candidate-approval.mjs"
 import { approvedArticle } from "../scripts/research/publish-adapter.mjs"
 import { evaluateArticleConceptReview } from "../scripts/research/article-concept-review.mjs"
 import { main } from "../scripts/research.mjs"
-import { loadCurrentApproval, assertPreviewConceptNotes } from "../scripts/research/preview.mjs"
-import { approveNoteReview } from "../scripts/research/note-review.mjs"
+import {
+  loadCurrentApproval,
+  loadHistoricalApproval,
+  assertPreviewConceptNotes,
+  loadPreviewPublicationInputs,
+} from "../scripts/research/preview.mjs"
+import { ontologyKnowledgeIndex } from "../scripts/research/ontology-knowledge.mjs"
+import { approveNoteReview, loadNoteApproval } from "../scripts/research/note-review.mjs"
 import { CONCEPT_NOTE_HEADINGS } from "../scripts/research/knowledge-links.mjs"
 import { archiveClosure } from "../scripts/research/archive-closure.mjs"
 import { loadArchivedConceptApproval } from "../scripts/research/concept-archive.mjs"
@@ -225,6 +235,219 @@ function restoreArchive(f, result, destination = "restore/concepts") {
   assert.equal(restored.status, 0, restored.stderr)
   return path.join(f.root, destination)
 }
+
+for (const sameIDs of [false, true])
+  test(`published specialist ${sameIDs ? "definition revision" : "linkage"} preserves the event and prose and requires native prior approval`, async (t) => {
+    const f = fixture(t)
+    for (const name of [
+      "documents.json",
+      "parses.json",
+      "draft.json",
+      "claims.json",
+      "reviewed-claims.json",
+    ])
+      atomicWrite(f.root, `runs/prior/${name}`, readJSON(f.root, `runs/${f.run}/${name}`))
+    const { concept_review, ...priorReview } = f.review
+    atomicWrite(f.root, "prior-review.json", {
+      ...priorReview,
+      ...(sameIDs ? { concept_review } : {}),
+      concept_ids: sameIDs ? f.review.concept_ids : [],
+      reviewed_at: sameIDs ? "2026-10-03" : "2026-10-02",
+    })
+    await main([
+      "approve",
+      "--root",
+      f.root,
+      "--run",
+      "prior",
+      "--review",
+      path.join(f.root, "prior-review.json"),
+      "--vault",
+      f.vault,
+    ])
+    if (sameIDs) {
+      const old = parseNote(f.content)
+      const content = noteText(
+        {
+          ...old.meta,
+          type: "knowledge",
+          status: "evergreen",
+          domain: "AI Systems",
+          group: "실행 통제",
+          created: "2026-10-02",
+          updated: "2026-10-03",
+          last_reviewed: "2026-10-03",
+          keywords: ["Agent Security"],
+          parent_concepts: [],
+          related_concepts: [],
+          tags: ["Security"],
+          map_review: { ...old.meta.map_review, reviewed: "2026-10-03" },
+        },
+        "# Agent Security\n\n" +
+          CONCEPT_NOTE_HEADINGS.map(
+            (heading) =>
+              "## " +
+              heading +
+              "\n\n" +
+              ({
+                "한 문장 정의": "에이전트 동작을 추적하고 정책을 적용하는 실행 통제다.",
+                범위: "**포함:** 실행 추적과 정책 적용.\n\n**포함하지 않음:** 회사와 제품 이름.",
+                출처: "[원문](https://example.org/runtime)",
+              }[heading] || "없음"),
+          ).join("\n\n") +
+          "\n",
+      )
+      await approveNoteReview(
+        f.root,
+        "definition",
+        {
+          schema: "knowledge-note-review/v2",
+          reviewer: "fixture editor",
+          reason: "원문과 정의의 실행 추적 및 정책 적용을 대조했다.",
+          reviewed_at: "2026-10-03",
+          source_read: true,
+          final_prose_read: true,
+          aliases_checked: true,
+          connections_checked: true,
+          histories_checked: true,
+          notes: [
+            {
+              operation: "replace",
+              path: f.notePath,
+              previous_sha256: sha256(f.content),
+              content,
+              evidence: [{ run_id: f.run, claim_ids: ["c1"] }],
+            },
+          ],
+        },
+        { vault: f.vault },
+      )
+      f.review.concept_review.assignments[0].note = {
+        path: f.notePath,
+        sha256: sha256(content),
+        approval_run: "definition",
+      }
+      fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+    }
+    await main([
+      "approve",
+      "--root",
+      f.root,
+      "--run",
+      f.run,
+      "--review",
+      f.reviewFile,
+      "--vault",
+      f.vault,
+    ])
+    const candidate = {
+      key: "source-" + f.parse.source_id,
+      title: "Runtime",
+      source_urls: ["https://example.org/runtime"],
+      source_published_at: "2026-10-01",
+      review_status: "unreviewed",
+      article_source_version_id: f.parse.source_version_id,
+      article_parse_id: f.parse.parse_id,
+      article_content_sha256: articleContentFingerprint(f.parse),
+    }
+    const backlogFile = path.join(f.root, "backlog.json")
+    fs.writeFileSync(
+      backlogFile,
+      JSON.stringify({ schema: "research-candidates/v1", candidates: [candidate] }),
+    )
+    const options = { root: f.root, backlogFile, candidateKey: candidate.key }
+    await recordCandidateApproval({ ...options, runId: "prior-link", approvedRunId: "prior" })
+    const before = fs.readFileSync(backlogFile)
+    const linked = JSON.parse(before).candidates[0]
+    const prior = readJSON(f.root, "runs/prior/approved-article.json")
+    const current = readJSON(f.root, `runs/${f.run}/approved-article.json`)
+    atomicWrite(f.root, "published-concept-review.json", {
+      schema: "research-existing-editorial-approval-review/v1",
+      candidate_key: candidate.key,
+      event_id: current.event_id,
+      prior_approved_run: "prior",
+      approved_run: f.run,
+      expected_candidate_sha256: sha256(JSON.stringify(linked)),
+      prior_article_sha256: sha256(JSON.stringify(prior)),
+      article_sha256: sha256(JSON.stringify(current)),
+      reviewer: "fixture primary-source editor",
+      reviewed_at: "2026-10-03",
+      reason:
+        "Preserve the published event and full prose while attaching a source-backed specialist definition.",
+      decision: "attach_reverified_approval",
+      source_read: true,
+      prior_article_read: true,
+      article_read: true,
+      identity_checked: true,
+      dates_checked: true,
+      numbers_checked: true,
+      new_article: false,
+      candidate_published: false,
+    })
+    const published = {
+      event_id: prior.event_id,
+      title: prior.title,
+      source_urls: prior.source_urls,
+      published_at: "2026-10-01",
+      edition: "Editions/2026/10/issue",
+    }
+    const revision = {
+      ...options,
+      runId: "concept-link",
+      approvedRunId: f.run,
+      existingEditorialReviewPath: "published-concept-review.json",
+    }
+    for (const patch of [
+      { event_id: "1111111111111111" },
+      { title: "Another event" },
+      { published_at: "2026-10-02" },
+      { edition: undefined },
+    ]) {
+      await assert.rejects(
+        recordCandidateApproval({ ...revision, publishedArticles: [{ ...published, ...patch }] }),
+        /already appears/,
+      )
+      assert.deepEqual(fs.readFileSync(backlogFile), before)
+    }
+    const conceptFile = `runs/${f.run}/article-concept-review.json`
+    const receipt = readJSON(f.root, conceptFile)
+    atomicWrite(f.root, conceptFile, { ...receipt, links: [] })
+    await assert.rejects(
+      recordCandidateApproval({ ...revision, publishedArticles: [published] }),
+      /already appears/,
+    )
+    assert.deepEqual(fs.readFileSync(backlogFile), before)
+    atomicWrite(f.root, conceptFile, receipt)
+    if (sameIDs) {
+      const unchanged = readJSON(f.root, "runs/prior/article-concept-review.json")
+      atomicWrite(f.root, conceptFile, { ...receipt, notes: unchanged.notes })
+      await assert.rejects(
+        recordCandidateApproval({ ...revision, publishedArticles: [published] }),
+        /already appears/,
+      )
+      assert.deepEqual(fs.readFileSync(backlogFile), before)
+      atomicWrite(f.root, conceptFile, receipt)
+    }
+    const priorReceiptPath = path.join(f.root, "runs/prior-link/candidate-approval.json")
+    const priorReceiptBytes = fs.readFileSync(priorReceiptPath)
+    fs.unlinkSync(priorReceiptPath)
+    await assert.rejects(
+      recordCandidateApproval({ ...revision, publishedArticles: [published] }),
+      /native.*receipt|native prior approval|native approval/i,
+    )
+    assert.deepEqual(fs.readFileSync(backlogFile), before)
+    fs.writeFileSync(priorReceiptPath, priorReceiptBytes)
+    await recordCandidateApproval({ ...revision, publishedArticles: [published] })
+    const result = JSON.parse(fs.readFileSync(backlogFile)).candidates[0]
+    assert.equal(result.event_id, prior.event_id)
+    assert.equal(result.approval.approved_run, f.run)
+    assert.deepEqual(result.approval_history[0].approval, linked.approval)
+    assert.deepEqual(readJSON(f.root, "runs/prior/approved-article.json"), prior)
+    assert.deepEqual(current.record, prior.record)
+    const bytes = fs.readFileSync(backlogFile)
+    await recordCandidateApproval({ ...revision, publishedArticles: [published] })
+    assert.deepEqual(fs.readFileSync(backlogFile), bytes)
+  })
 
 test("standalone editorial event locations bind only cited versions and reindex without rewriting old evidence", async (t) => {
   const f = fixture(t)
@@ -507,6 +730,277 @@ test("ontology concept edges retain reviewed claim and specialist note provenanc
   assert.equal(edge.basis, "reviewed_article_concept_assignment")
   assert.deepEqual(edge.evidence_claim_ids, ["c1"])
   assert.equal(edge.note_sha256, sha256(f.content))
+})
+
+test("native concept history survives an approved canonical replacement while publication stays strict", async (t) => {
+  const f = fixture(t),
+    options = { vault: f.vault }
+  const firstNote = parseNote(f.content)
+  const version = (day, definition) =>
+    noteText(
+      {
+        ...firstNote.meta,
+        last_reviewed: day,
+        map_review: { ...firstNote.meta.map_review, reviewed: day },
+      },
+      `# Agent Security\n\n## 한 문장 정의\n\n${definition}\n`,
+    )
+  const firstContent = version("2026-10-03", "에이전트 도구 실행 경계를 보호하는 통제다.")
+  const noteReview = (day, before, content) => ({
+    schema: "knowledge-note-review/v1",
+    reviewer: "fixture editor",
+    reason: "원문 실행 통제 근거와 정의 판본을 대조했다.",
+    reviewed_at: day,
+    source_read: true,
+    final_prose_read: true,
+    aliases_checked: true,
+    connections_checked: true,
+    histories_checked: true,
+    notes: [
+      {
+        path: f.notePath,
+        previous_sha256: sha256(before),
+        content,
+        evidence: [{ run_id: f.run, claim_ids: f.claims.map((c) => c.claim_id) }],
+      },
+    ],
+  })
+  await approveNoteReview(
+    f.root,
+    "definition-first",
+    noteReview("2026-10-03", f.content, firstContent),
+    options,
+  )
+  f.review.concept_review.assignments[0].note = {
+    path: f.notePath,
+    sha256: sha256(firstContent),
+    approval_run: "definition-first",
+  }
+  fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const approved = loadCurrentApproval(f.root, f.run, options)
+  const source = loadStoredSourceRun(f.root, f.run)
+  const document = source.documents[0]
+  const key = `source-${document.source_id}`
+  const backlogFile = path.join(f.root, "history-backlog.json")
+  atomicWrite(f.root, "history-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [
+      {
+        key,
+        title: f.parse.title,
+        source_urls: [document.original_url],
+        source_published_at: f.parse.dates.published_at,
+        discovered_at: document.observed_at,
+        review_status: "unreviewed",
+        priority: "normal",
+        article_source_version_id: document.source_version_id,
+        article_parse_id: f.parse.parse_id,
+        article_content_sha256: articleContentFingerprint(f.parse),
+      },
+    ],
+  })
+  await recordCandidateApproval({
+    root: f.root,
+    runId: "candidate-history",
+    approvedRunId: f.run,
+    candidateKey: key,
+    backlogFile,
+  })
+  const candidate = readJSON(f.root, "history-backlog.json").candidates[0]
+  const candidateProof = await loadCurrentCandidateApproval(f.root, candidate, options)
+  const input = loadApprovedOntologyInput(f.root, f.run, options)
+  const graph = projectEvidenceOntology([input])
+  const index = ontologyKnowledgeIndex(f.root, graph, options)
+  atomicWrite(f.vault, f.notePath, firstContent)
+  const nextContent = version("2026-10-04", "에이전트의 도구 실행에 정책을 적용하는 통제다.")
+  await approveNoteReview(
+    f.root,
+    "definition-next",
+    noteReview("2026-10-04", firstContent, nextContent),
+    options,
+  )
+  atomicWrite(f.vault, f.notePath, nextContent)
+  assert.throws(() => loadCurrentApproval(f.root, f.run, options), /Canonical note changed/)
+  assert.deepEqual(loadHistoricalApproval(f.root, f.run, options), approved)
+  assert.deepEqual(await loadCurrentCandidateApproval(f.root, candidate, options), candidateProof)
+  assert.deepEqual(loadApprovedOntologyInput(f.root, f.run, options), input)
+  assert.deepEqual(ontologyKnowledgeIndex(f.root, graph, options), index)
+  assert.equal(index.events.length, 1)
+  assert.equal(index.concepts[0].current.definition, "에이전트 도구 실행 경계를 보호하는 통제다.")
+  assert.equal(fs.readFileSync(path.join(f.vault, f.notePath), "utf8"), nextContent)
+  const altered = readJSON(f.root, "runs/definition-first/approved-notes.json")
+  altered.notes[0].content += "Unreviewed archived edit"
+  atomicWrite(f.root, "runs/definition-first/approved-notes.json", altered)
+  assert.throws(() => loadHistoricalApproval(f.root, f.run, options), /bytes differ/)
+  assert.throws(() => ontologyKnowledgeIndex(f.root, graph, options), /bytes differ/)
+  await assert.rejects(loadCurrentCandidateApproval(f.root, candidate, options), /bytes differ/)
+})
+
+test("current article approval can read an exact approved after-note over the unchanged before-vault", async (t) => {
+  const f = fixture(t)
+  const original = f.content
+  const before = parseNote(original)
+  const after = noteText(
+    {
+      ...before.meta,
+      last_reviewed: "2026-10-04",
+      map_review: { ...before.meta.map_review, reviewed: "2026-10-04" },
+    },
+    before.body + "\n\n승인된 판본의 원문 근거를 추가했다.\n",
+  )
+  await approveNoteReview(
+    f.root,
+    "overlay-note",
+    {
+      schema: "knowledge-note-review/v2",
+      reviewer: "fixture editor",
+      reason: "원문과 specialist 정의의 after 판본을 대조하고 승인했다.",
+      reviewed_at: "2026-10-04",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: [
+        {
+          operation: "replace",
+          path: f.notePath,
+          previous_sha256: sha256(original),
+          content: after,
+          evidence: [{ run_id: f.run, claim_ids: ["c1"] }],
+        },
+      ],
+    },
+    { vault: f.vault },
+  )
+  fs.writeFileSync(path.join(f.vault, f.notePath), after)
+  f.review.concept_review.assignments[0].note.sha256 = sha256(after)
+  f.review.concept_review.assignments[0].reviewed_at = "2026-10-04"
+  f.review.reviewed_at = "2026-10-04"
+  fs.writeFileSync(f.reviewFile, JSON.stringify(f.review))
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  fs.writeFileSync(path.join(f.vault, f.notePath), original)
+  assert.throws(
+    () => loadPreviewPublicationInputs(f.root, "preview", [f.run], { vault: f.vault }),
+    /Specialist definition identity or reviewed note hash changed/,
+  )
+  const preflight = loadPreviewPublicationInputs(f.root, "preview", [f.run], {
+    vault: f.vault,
+    knowledgeRuns: ["overlay-note"],
+  })
+  assert.equal(preflight.approvals[0].concept_review.notes[0].sha256, sha256(after))
+  assert.equal(preflight.knowledge[0].approval.notes[0].before_content, original)
+  assert.equal(fs.readFileSync(path.join(f.vault, f.notePath), "utf8"), original)
+})
+
+test("private preview accepts a separately approved exact note binding and rejects altered provenance", async (t) => {
+  const f = fixture(t)
+  const before = parseNote(f.content)
+  const after = noteText(
+    {
+      ...before.meta,
+      last_reviewed: "2026-10-04",
+      map_review: { ...before.meta.map_review, reviewed: "2026-10-04" },
+    },
+    before.body + "\n\n동일한 승인 판본이다.\n",
+  )
+  const review = {
+    schema: "knowledge-note-review/v2",
+    reviewer: "fixture editor",
+    reason: "원문과 specialist 정의 판본의 내용과 근거를 검토했다.",
+    reviewed_at: "2026-10-04",
+    source_read: true,
+    final_prose_read: true,
+    aliases_checked: true,
+    connections_checked: true,
+    histories_checked: true,
+    notes: [
+      {
+        operation: "replace",
+        path: f.notePath,
+        previous_sha256: sha256(f.content),
+        content: after,
+        evidence: [{ run_id: f.run, claim_ids: ["c1"] }],
+      },
+    ],
+  }
+  await approveNoteReview(f.root, "original-note", review, { vault: f.vault })
+  await approveNoteReview(f.root, "overlay-note", review, { vault: f.vault })
+  const original = loadNoteApproval(f.root, "original-note", { vault: f.vault })
+  const overlay = loadNoteApproval(f.root, "overlay-note", { vault: f.vault })
+  const approvals = [
+    {
+      concept_review: {
+        notes: [
+          {
+            path: f.notePath,
+            sha256: sha256(after),
+            approval_run: "original-note",
+            approval_files: original.files,
+          },
+        ],
+      },
+    },
+  ]
+  assert.doesNotThrow(() =>
+    assertPreviewConceptNotes(approvals, [overlay], { root: f.root, vault: f.vault }),
+  )
+  const tampered = structuredClone(overlay)
+  tampered.approval.notes[0].evidence = []
+  assert.throws(
+    () => assertPreviewConceptNotes(approvals, [tampered], { root: f.root, vault: f.vault }),
+    /exact approved concept note/,
+  )
+})
+
+test("historical concept reads never invent a snapshot for a changed canonical-only assignment", async (t) => {
+  const f = fixture(t),
+    options = { vault: f.vault }
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  assert.deepEqual(
+    loadHistoricalApproval(f.root, f.run, options),
+    loadCurrentApproval(f.root, f.run, options),
+  )
+  atomicWrite(f.vault, f.notePath, f.content + "Unreviewed new definition")
+  assert.throws(
+    () => loadHistoricalApproval(f.root, f.run, options),
+    /definition identity|hash changed/,
+  )
+  assert.throws(
+    () => loadApprovedOntologyInput(f.root, f.run, options),
+    /definition identity|hash changed/,
+  )
 })
 
 test("existing specialist assignments reject a conflicting canonical alias", (t) => {
@@ -1015,6 +1509,26 @@ test("a not-yet-installed specialist approval binds exact source facts and requi
     "--review",
     f.reviewFile,
   ])
+  assert.throws(
+    () => loadPreviewPublicationInputs(f.root, "preview", [f.run], { vault: f.vault }),
+    /exact approved concept/,
+  )
+  const preflight = loadPreviewPublicationInputs(f.root, "preview", [f.run], {
+    vault: f.vault,
+    knowledgeRuns: [noteRun],
+  })
+  assert.equal(preflight.approvals[0].article.event_id, f.review.event_id)
+  assert.deepEqual(preflight.knowledgeRuns, [noteRun])
+  assert.equal(preflight.knowledge[0].approval.notes[0].sha256, sha256(content))
+  assert.throws(
+    () =>
+      loadPreviewPublicationInputs(f.root, "preview", [f.run], {
+        vault: f.vault,
+        knowledgeRuns: [noteRun, noteRun],
+      }),
+    /Distinct approved input/,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "runs/preview")), false)
   const portable = await archiveClosure(f.root, "private-note-portable", f.run, [], {
     vault: f.vault,
   })
@@ -1063,4 +1577,76 @@ test("a not-yet-installed specialist approval binds exact source facts and requi
   changedNotes.source_files[0].files["documents.json"] = "0".repeat(64)
   atomicWrite(f.root, `runs/${noteRun}/approved-notes.json`, changedNotes)
   assert.throws(f.evaluate, /differs from current evidence/)
+})
+
+test("canonical-only historical assignments reuse the exact preserved native replacement bytes", async (t) => {
+  const f = fixture(t),
+    options = { vault: f.vault }
+  await main([
+    "approve",
+    "--root",
+    f.root,
+    "--run",
+    f.run,
+    "--vault",
+    f.vault,
+    "--review",
+    f.reviewFile,
+  ])
+  const original = loadHistoricalApproval(f.root, f.run, options),
+    note = parseNote(f.content)
+  const next = noteText(
+    {
+      ...note.meta,
+      type: "knowledge",
+      last_reviewed: "2026-10-04",
+      map_review: { ...note.meta.map_review, reviewed: "2026-10-04" },
+    },
+    note.body + "\n\n원문에 따른 실행 정책 설명이다.\n",
+  )
+  await approveNoteReview(
+    f.root,
+    "canonical-replacement",
+    {
+      schema: "knowledge-note-review/v1",
+      reviewer: "fixture editor",
+      reason: "원문과 기존 정의 판본을 검토하여 교체한다.",
+      reviewed_at: "2026-10-04",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: [
+        {
+          path: f.notePath,
+          previous_sha256: sha256(f.content),
+          content: next,
+          evidence: [{ run_id: f.run, claim_ids: ["c1"] }],
+        },
+      ],
+    },
+    options,
+  )
+  atomicWrite(f.vault, f.notePath, next)
+  assert.deepEqual(loadHistoricalApproval(f.root, f.run, options), original)
+  assert.equal(
+    loadApprovedOntologyInput(f.root, f.run, options).article.event_id,
+    original.article.event_id,
+  )
+  const graph = projectEvidenceOntology([loadApprovedOntologyInput(f.root, f.run, options)])
+  const before = ontologyKnowledgeIndex(f.root, graph, options).concepts[0]
+  assert.equal(before.current.sha256, sha256(f.content))
+  const updated = ontologyKnowledgeIndex(f.root, graph, {
+    ...options,
+    knowledgeSelections: [{ run: "canonical-replacement", path: f.notePath, sha256: sha256(next) }],
+  }).concepts[0]
+  assert.equal(updated.current.sha256, sha256(next))
+  assert.deepEqual(updated.events, before.events)
+  assert.equal(updated.definition_versions[1].sha256, sha256(f.content))
+  assert.throws(() => loadCurrentApproval(f.root, f.run, options), /identity|hash changed/)
+  const stored = readJSON(f.root, "runs/canonical-replacement/approved-notes.json")
+  stored.notes[0].content += "Tampered approved prose"
+  atomicWrite(f.root, "runs/canonical-replacement/approved-notes.json", stored)
+  assert.throws(() => loadHistoricalApproval(f.root, f.run, options), /bytes differ/)
 })

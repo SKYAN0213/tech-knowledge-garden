@@ -1,7 +1,92 @@
 import { assertSchema, sha256 } from "./contracts.mjs"
+import { Agent } from "undici"
+
+let localDispatcher
+const sharedLocalDispatcher = () => (localDispatcher ??= new Agent())
 
 export const DEFAULT_LOCAL_OLLAMA_URL = "http://127.0.0.1:11434"
-export const DEFAULT_LOCAL_OLLAMA_MODEL = "qwen3.8:27b-mlx"
+export const DEFAULT_LOCAL_OLLAMA_MODEL = "gemma4:31b-mlx"
+
+// This is an admission estimate, not a tokenizer measurement. Count the actual
+// message/schema serialization and reserve output plus chat-template space.
+// The local request also disables server truncation/context shifting; an
+// underestimated token count must fail instead of dropping source conditions.
+export function structuredRequestBudget({ messages, schema, num_ctx = 8192, num_predict = 4096 }) {
+  if (
+    !Array.isArray(messages) ||
+    !messages.length ||
+    messages.some((m) => typeof m?.role !== "string" || typeof m.content !== "string") ||
+    !schema ||
+    typeof schema !== "object" ||
+    Array.isArray(schema) ||
+    !Number.isInteger(num_ctx) ||
+    num_ctx < 4096 ||
+    num_ctx > 32768 ||
+    !Number.isInteger(num_predict) ||
+    num_predict < 128 ||
+    num_predict > 8192
+  )
+    throw Error("Actual structured messages, schema and bounded context/output required")
+  const serialized = JSON.stringify({ messages, format: schema })
+  const templateReserve = 256
+  const available = num_ctx - num_predict - templateReserve
+  return {
+    schema: "structured-request-budget/v1",
+    input_chars: serialized.length,
+    input_utf8_bytes: Buffer.byteLength(serialized),
+    messages_sha256: sha256(JSON.stringify(messages)),
+    schema_sha256: sha256(JSON.stringify(schema)),
+    estimated_input_tokens: Math.ceil(serialized.length / 2),
+    tokenizer_verified: false,
+    num_ctx,
+    output_reserved_tokens: num_predict,
+    template_reserved_tokens: templateReserve,
+    input_char_limit: Math.max(0, available * 2),
+    fits: available > 0 && serialized.length <= available * 2,
+    source_truncation_allowed: false,
+  }
+}
+
+export function assertStructuredRequestBudget(request) {
+  const budget = structuredRequestBudget(request)
+  if (!budget.fits) {
+    const error = Error(
+      "Actual prompt/schema exceeds context budget after output reserve; split explicitly",
+    )
+    error.code = "MODEL_INPUT_BUDGET_EXCEEDED"
+    error.model_budget = { ...budget, request_sent: false, requires_explicit_resume: true }
+    throw error
+  }
+  return budget
+}
+
+// DOMException.code is a read-only numeric getter. Preserve the native error
+// and stream evidence in a writable wrapper instead of masking the timeout.
+export function modelFailureWithCode(error, code) {
+  const failure = new Error(error.message, { cause: error })
+  Object.assign(failure, error)
+  failure.name = error.name
+  failure.code =
+    code === "MODEL_ATTEMPT_FAILED" &&
+    ["UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT"].includes(error.cause?.code)
+      ? "MODEL_CALL_TIMEOUT"
+      : code
+  failure.native_error = {
+    name: error.name,
+    code: error.code ?? null,
+    message: error.message,
+    ...(typeof error.cause?.message === "string"
+      ? {
+          cause: {
+            name: error.cause.name,
+            code: error.cause.code ?? null,
+            message: error.cause.message,
+          },
+        }
+      : {}),
+  }
+  return failure
+}
 
 export function validateLocalOllamaURL(url) {
   let parsed
@@ -27,13 +112,84 @@ export function localOllamaURL(env = process.env) {
   return validateLocalOllamaURL(env.TECH_KNOWLEDGE_OLLAMA_URL ?? DEFAULT_LOCAL_OLLAMA_URL)
 }
 
+// MLX runners can retain the soft limit from their first load even when a later
+// request asks for a larger context. Observe the exact installed model; never
+// unload a shared runner or treat a reported limit as a tested context window.
+export function inspectOllamaLoadedContext(response, { model, digest, num_ctx }) {
+  if (
+    typeof model !== "string" ||
+    !model.trim() ||
+    !/^[a-f0-9]{64}$/.test(digest || "") ||
+    !Number.isInteger(num_ctx) ||
+    num_ctx < 4096 ||
+    num_ctx > 32768
+  )
+    throw Error("Exact installed model and requested context required")
+  if (!Array.isArray(response?.models) || response.models.length > 64)
+    throw Error("Bounded native running-model response required for context observation")
+  const matching = response.models.filter((row) => row.name === model || row.model === model)
+  if (matching.length > 1) throw Error("Ambiguous loaded model context")
+  const row = matching[0]
+  if (row && row.digest !== digest) throw Error("Loaded context model digest changed")
+  if (!row && response.models.some((other) => other.digest === digest))
+    throw Error("Loaded digest uses another model identity; context cannot be attributed")
+  if (row && (!Number.isSafeInteger(row.context_length) || row.context_length <= 0))
+    throw Error("Loaded model context length must be explicitly reported")
+  return {
+    schema: "ollama-loaded-context-observation/v1",
+    endpoint: "/api/ps",
+    model,
+    digest,
+    requested_context_length: num_ctx,
+    target_loaded: Boolean(row),
+    other_loaded_models: response.models.length - matching.length,
+    reported_context_length: row?.context_length ?? null,
+    status: !row ? "not_loaded" : row.context_length < num_ctx ? "insufficient" : "sufficient",
+    response_sha256: sha256(JSON.stringify(response)),
+    target: row ? structuredClone(row) : null,
+    full_context_window_verified: false,
+  }
+}
+
 export class Ollama {
-  constructor({ url = DEFAULT_LOCAL_OLLAMA_URL, fetchImpl = fetch, timeout_ms = 300000 } = {}) {
+  constructor({
+    url = DEFAULT_LOCAL_OLLAMA_URL,
+    fetchImpl = fetch,
+    dispatcher,
+    timeout_ms = 300000,
+    keep_alive = process.env.TKG_OLLAMA_KEEP_ALIVE || "5m",
+  } = {}) {
     if (!Number.isInteger(timeout_ms) || timeout_ms <= 0 || timeout_ms > 3600000)
       throw Error("Invalid local model timeout")
+    const lease = /^([1-9][0-9]*)(s|m)$/.exec(keep_alive)
+    const leaseSeconds = lease ? Number(lease[1]) * (lease[2] === "m" ? 60 : 1) : NaN
+    if (!Number.isSafeInteger(leaseSeconds) || leaseSeconds < 1 || leaseSeconds > 300)
+      throw Error("Local model keep-alive must be a bounded idle lease from 1s to 5m")
     this.url = validateLocalOllamaURL(url)
     this.fetch = fetchImpl
+    if (dispatcher !== undefined && typeof dispatcher?.dispatch !== "function")
+      throw Error("Local model HTTP dispatcher required")
+    this.dispatcher = dispatcher ?? (fetchImpl === fetch ? sharedLocalDispatcher() : null)
     this.timeout = timeout_ms
+    this.keepAlive = keep_alive
+  }
+  transportOptions(timeout_ms) {
+    return {
+      signal: AbortSignal.timeout(timeout_ms),
+      ...(this.dispatcher
+        ? {
+            // Node fetch otherwise ends a queued model request after its own
+            // 300-second HTTP limit, before the explicit role deadline.
+            dispatcher: {
+              dispatch: (options, handler) =>
+                this.dispatcher.dispatch(
+                  { ...options, headersTimeout: timeout_ms, bodyTimeout: timeout_ms },
+                  handler,
+                ),
+            },
+          }
+        : {}),
+    }
   }
   async json(endpoint, body, { timeout_ms = this.timeout } = {}) {
     if (!Number.isInteger(timeout_ms) || timeout_ms <= 0)
@@ -42,7 +198,7 @@ export class Ollama {
       method: body ? "POST" : "GET",
       headers: { "content-type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(timeout_ms),
+      ...this.transportOptions(timeout_ms),
       redirect: "error",
     })
     if (!r.ok) throw Error(`Ollama HTTP ${r.status}`)
@@ -92,7 +248,7 @@ export class Ollama {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(request),
-        signal: AbortSignal.timeout(timeout_ms),
+        ...this.transportOptions(timeout_ms),
         redirect: "error",
       })
       if (!response.ok) throw Error(`Ollama HTTP ${response.status}`)
@@ -184,30 +340,77 @@ export class Ollama {
       temperature > 2
     )
       throw Error("Invalid local model call budget")
+    const request_budget = assertStructuredRequestBudget({ messages, schema, num_ctx, num_predict })
     const started = performance.now()
     const metadata = await this.metadata(model, { timeout_ms })
     const metadata_wall_ms = Math.round(performance.now() - started)
     if (think !== undefined && !metadata.thinking?.values?.some((v) => v === think))
       throw Error("Unsupported think setting for model: " + String(think))
     if (!metadata.capabilities?.includes("completion")) throw Error("Model cannot complete text")
-    // Conservative input bound; oversized sources are split upstream instead of silently truncated.
-    const chars = messages.reduce((n, m) => n + m.content.length, 0) + JSON.stringify(schema).length
-    if (chars > num_ctx * 2) throw Error("Input exceeds conservative context budget")
     const request = {
       model,
       think,
       messages,
       format: schema,
       stream: typeof on_progress === "function",
+      truncate: false,
+      shift: false,
       options: { num_ctx, num_predict, temperature },
-      keep_alive: "5m",
+      keep_alive: this.keepAlive,
+    }
+    let context_preflight, context_after
+    const observeContext = async () =>
+      inspectOllamaLoadedContext(
+        await this.json("/api/ps", undefined, {
+          timeout_ms: Math.min(5000, Math.floor(timeout_ms - (performance.now() - started))),
+        }),
+        { model, digest: metadata.digest, num_ctx },
+      )
+    // GGUF runners have a separate reload contract. Preserve that request path.
+    if (metadata.details?.format === "safetensors") {
+      try {
+        context_preflight = await observeContext()
+        if (context_preflight.status === "insufficient")
+          throw Error(
+            "Loaded MLX context is smaller than requested; wait for natural expiry before a larger first-load request",
+          )
+      } catch (error) {
+        error.model_artifacts = {
+          request,
+          request_sha256: sha256(JSON.stringify(request)),
+          request_sent: false,
+          request_budget,
+          ...(context_preflight ? { context_preflight } : {}),
+        }
+        throw error
+      }
     }
     const remaining = Math.floor(timeout_ms - (performance.now() - started))
-    const response = request.stream
-      ? await this.streamedChat(request, { timeout_ms: remaining, on_progress })
-      : await this.json("/api/chat", request, { timeout_ms: remaining })
+    let response
+    try {
+      response = request.stream
+        ? await this.streamedChat(request, { timeout_ms: remaining, on_progress })
+        : await this.json("/api/chat", request, { timeout_ms: remaining })
+    } catch (error) {
+      error.model_artifacts = {
+        request,
+        request_sha256: sha256(JSON.stringify(request)),
+        request_sent: true,
+        request_budget,
+        ...error.model_artifacts,
+        ...(context_preflight ? { context_preflight } : {}),
+      }
+      throw ["TimeoutError", "AbortError"].includes(error.name)
+        ? modelFailureWithCode(error, "MODEL_CALL_TIMEOUT")
+        : error
+    }
     let output
     try {
+      if (context_preflight) {
+        context_after = await observeContext()
+        if (context_after.status !== "sufficient")
+          throw Error("MLX completion did not report the requested loaded context")
+      }
       if (
         response.done !== true ||
         !["stop", undefined].includes(response.done_reason) ||
@@ -222,17 +425,23 @@ export class Ollama {
       }
       assertSchema(output, schema)
     } catch (error) {
-      if (response.stream_progress)
-        error.model_artifacts = {
-          request,
-          request_sha256: sha256(JSON.stringify(request)),
-          partial_response_content: response.message.content,
-          partial_response_content_sha256: sha256(response.message.content),
-          progress: { ...response.stream_progress, status: "failed" },
-          done: response.done,
-          done_reason: response.done_reason ?? null,
-        }
-      if (error.model_artifacts) await on_progress(error.model_artifacts.progress)
+      error.model_artifacts = {
+        request,
+        request_sha256: sha256(JSON.stringify(request)),
+        request_budget,
+        partial_response_content: response.message?.content ?? "",
+        partial_response_content_sha256: sha256(response.message?.content ?? ""),
+        ...(response.stream_progress
+          ? { progress: { ...response.stream_progress, status: "failed" } }
+          : {}),
+        done: response.done,
+        done_reason: response.done_reason ?? null,
+        tool_calls_count: response.message?.tool_calls?.length ?? 0,
+        ...(context_preflight ? { context_preflight } : {}),
+        ...(context_after ? { context_after } : {}),
+      }
+      if (error.model_artifacts.progress && typeof on_progress === "function")
+        await on_progress(error.model_artifacts.progress)
       throw error
     }
     return {
@@ -240,11 +449,13 @@ export class Ollama {
       artifacts: {
         request,
         request_sha256: sha256(JSON.stringify(request)),
+        request_budget,
         response_content: response.message.content,
         response_content_sha256: sha256(response.message.content),
         done: response.done,
         done_reason: response.done_reason ?? null,
         ...(response.stream_progress ? { stream_progress: response.stream_progress } : {}),
+        ...(context_preflight ? { context_preflight, context_after } : {}),
       },
       provenance: {
         ...metadata,
@@ -253,7 +464,9 @@ export class Ollama {
         num_predict,
         temperature,
         call_timeout_ms: timeout_ms,
+        model_keep_alive: this.keepAlive,
         metadata_wall_ms,
+        request_budget,
         prompt_sha256: sha256(JSON.stringify(messages)),
         schema_sha256: sha256(JSON.stringify(schema)),
         wall_ms: Math.round(performance.now() - started),
@@ -263,6 +476,12 @@ export class Ollama {
         prompt_eval_count: response.prompt_eval_count,
         eval_count: response.eval_count,
         eval_duration: response.eval_duration,
+        ...(context_after
+          ? {
+              loaded_context_length: context_after.reported_context_length,
+              full_context_window_verified: false,
+            }
+          : {}),
       },
     }
   }

@@ -8,7 +8,7 @@ import { storedListScan, verifyStoredListScan } from "./daily-scan.mjs"
 import { validateDailyRoutes, kstDay, shiftDay } from "./daily-plan.mjs"
 import { mergeCompletedScan } from "./scan-completion.mjs"
 import { articleContentFingerprint } from "./parser.mjs"
-import { sha256 } from "./contracts.mjs"
+import { sha256, sourceId } from "./contracts.mjs"
 import {
   atomicCreate,
   atomicWrite,
@@ -111,13 +111,30 @@ function checkedScan(ctx, run) {
   }
   for (const candidate of scan.candidates) {
     const parsed = scan.parses.find((p) => p.parse_id === candidate.article_parse_id)
-    if (!parsed || candidate.article_content_sha256 !== articleContentFingerprint(parsed))
+    const bodies =
+      parsed?.parser?.id === "article-image-metadata"
+        ? scan.parses.filter((p) =>
+            parsed.body_images.some((image) => p.source_id === sourceId(image.url)),
+          )
+        : []
+    if (!parsed || candidate.article_content_sha256 !== articleContentFingerprint(parsed, bodies))
       throw Error("Candidate content fingerprint changed")
   }
   return { scan, basis, stage_hash: stageSnapshot(ctx.root, run), artifacts: hashes(ctx.root, run) }
 }
 
 async function defaultResume(ctx, run, window) {
+  const reuse = readJSON(ctx.root, `runs/${run}/archive-reuse.json`)
+  const repair = readJSON(ctx.root, `runs/${run}/detail-repair-reuse.json`)
+  const reuseArgs = []
+  for (const [flag, receipt] of [
+    ["--reuse-source-run", reuse],
+    ["--repair-source-run", repair],
+  ]) {
+    if (!receipt) continue
+    if (!safeId(receipt.source_run?.source_run)) throw Error("Invalid stored source reuse reference")
+    reuseArgs.push(flag, receipt.source_run.source_run)
+  }
   const output = execFileSync(
     process.execPath,
     [
@@ -133,6 +150,7 @@ async function defaultResume(ctx, run, window) {
       window.since,
       "--until",
       window.until_exclusive,
+      ...reuseArgs,
     ],
     { cwd: ctx.repo, encoding: "utf8", timeout: 60000, maxBuffer: 1024 * 1024 },
   )

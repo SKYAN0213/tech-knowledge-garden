@@ -25,6 +25,8 @@ import {
   buildEditorialHandoff,
   selectCandidateSource,
 } from "../scripts/research/editorial-handoff.mjs"
+import { scanBoundedRSSRoute } from "../scripts/research/rss-scan.mjs"
+import { createArchiveSourceReuse } from "../scripts/research/list-scan-command.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "partial-source-")))
@@ -129,6 +131,76 @@ function fixture(t) {
   return { root, result, window, save, candidate }
 }
 
+test("zero-candidate detail repair reuses stored originals without admitting a partial article or completing coverage", async (t) => {
+  const { root, result, window, save } = fixture(t)
+  result.candidates = []
+  result.summary.candidate_count = 0
+  result.summary.details[0].status = "title_conflict"
+  for (const doc of [...result.documents, ...result.indexDocuments]) doc.policy = { allowed: true }
+  save("zero-candidate")
+  const channel = { channel_id: window.channel_id, allowed_hosts: ["example.com"] }
+  const basis = {
+    route_sha256: sha256(JSON.stringify(channel)),
+    dependencies: {},
+    implementation: {},
+  }
+  atomicWrite(root, "runs/zero-candidate/collection-basis.json", basis)
+  atomicWrite(root, "runs/zero-candidate/state.json", {
+    input_hash: sha256(
+      JSON.stringify({
+        schema: "research-list-run-input/v2",
+        channel_id: window.channel_id,
+        since: window.since,
+        until_exclusive: window.until_exclusive,
+        reuse_listing_run: null,
+        collection_basis: basis,
+      }),
+    ),
+  })
+  const before = fs.readFileSync(path.join(root, "runs/zero-candidate/list-scan.json"))
+  const options = {
+    detailRepair: true,
+    now: Date.parse("2026-10-04T00:10:00Z"),
+    fetchPolicy: () => {
+      throw Error("No new HTTP request allowed")
+    },
+  }
+  const reuse = createArchiveSourceReuse(
+    root,
+    "zero-candidate",
+    channel,
+    basis,
+    { since: window.since, until: window.until_exclusive },
+    options,
+  )
+  const document = await reuse.fetchPolicy(root, {}, result.documents[0].original_url, {
+    allowed_hosts: channel.allowed_hosts,
+  })
+  assert.deepEqual(document, result.documents[0])
+  assert.throws(
+    () => verifyStoredPartialCandidates(root, result, window),
+    /Partial candidate intake/,
+  )
+  const backlog = path.join(root, "empty-repair-backlog.json")
+  await assert.rejects(mergePartialScan(root, result, backlog), /Partial candidate intake/)
+  assert.equal(fs.existsSync(backlog), false)
+  assert.deepEqual(fs.readFileSync(path.join(root, "runs/zero-candidate/list-scan.json")), before)
+  assert.equal(result.summary.status, "incomplete")
+  fs.writeFileSync(path.join(root, document.body_path), "changed")
+  assert.throws(
+    () =>
+      createArchiveSourceReuse(
+        root,
+        "zero-candidate",
+        channel,
+        basis,
+        { since: window.since, until: window.until_exclusive },
+        options,
+      ),
+    /hash mismatch/,
+  )
+})
+
 test("partial intake preserves the failed detail, refuses complete-window merge and deduplicates valid articles", async (t) => {
   const { root, result } = fixture(t)
   const backlog = path.join(root, "backlog.json")
@@ -143,6 +215,91 @@ test("partial intake preserves the failed detail, refuses complete-window merge 
   assert.deepEqual(fs.readFileSync(backlog), bytes)
   assert.equal(result.summary.status, "incomplete")
   assert.equal(result.summary.details[1].status, "article_image_body_requires_review")
+})
+
+test("mixed RSS reuses native partial candidate intake without claiming external source coverage", async (t) => {
+  const { root, result, window } = fixture(t)
+  const listing = result.indexDocuments[0]
+  const source = result.documents[0]
+  const route = {
+    channel_id: window.channel_id,
+    method: "rss",
+    url: listing.original_url,
+    allowed_hosts: ["example.com"],
+    item_pattern: "^https://example\\.com/news/[^/?#]+$",
+    listing_profile: {
+      pagination: "bounded-feed",
+      rule_id: "feed",
+      feed_title: "Official Feed",
+      guid_is_permalink: true,
+      outside_policy_items: "retain_uncollected",
+    },
+  }
+  const link = (url, day) => ({
+    url,
+    guid: url,
+    text: "Confirmed article",
+    published_at: day,
+    published_timestamp: day + "T00:00:00Z",
+    listed_date_text: day + " 00:00:00 GMT",
+  })
+  const parsedListing = {
+    ...result.parses[0],
+    source_id: listing.source_id,
+    source_version_id: listing.source_version_id,
+    parse_id: sha256("mixed feed fixture"),
+    title: "Official Feed",
+    links: [
+      link(source.original_url, "2026-10-02"),
+      link("https://outside.example/research", "2026-10-02"),
+      link("https://example.com/news/older", "2026-10-01"),
+    ],
+  }
+  parsedListing.blocks = [
+    {
+      ...result.parses[0].blocks[0],
+      block_id: parsedListing.parse_id + ":block-0001",
+      text: "Covered dated listing",
+      locator: { type: "rss", item_index: 0, text_hash: sha256("Covered dated listing") },
+    },
+  ]
+  storeParseArtifact(root, parsedListing)
+  let selected
+  const scan = await scanBoundedRSSRoute(
+    root,
+    { stage: (_n, _i, fn) => fn() },
+    {},
+    route,
+    [],
+    { since: window.since, until: window.until_exclusive },
+    {
+      fetchPolicy: async () => listing,
+      parseFeed: async () => parsedListing,
+      collectDetails: async (_r, _run, _fetcher, _channel, _profiles, links) => {
+        selected = links
+        return {
+          documents: result.documents,
+          parses: result.parses,
+          candidates: result.candidates,
+          details: result.summary.details.slice(0, 1),
+        }
+      },
+    },
+  )
+  assert.deepEqual(
+    selected.map((l) => l.url),
+    [source.original_url],
+  )
+  assert.equal(scan.summary.status, "incomplete")
+  assert.equal(scan.summary.details[1].fetched, false)
+  assert.equal(verifyStoredPartialCandidates(root, scan, window), true)
+  assert.throws(() => verifyStoredListScan(root, scan, window), /does not prove/)
+  const backlog = path.join(root, "rss-backlog.json")
+  const intake = await mergePartialScan(root, scan, backlog)
+  assert.equal(intake.status, "merged_partial")
+  assert.equal(intake.window_complete, false)
+  assert.equal(readJSON(root, "rss-backlog.json").candidates.length, 1)
+  assert.equal(readJSON(root, "rss-backlog.json").candidates[0].review_status, "unreviewed")
 })
 
 test("path archive partial intake requires an original dated boundary and exact discovery linkage", async (t) => {

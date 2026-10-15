@@ -14,6 +14,7 @@ import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { validateListingSupportRelations } from "./supporting-sources.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { loadEditorialContext } from "./editorial-context.mjs"
+import { selectIntakenArticleImageCandidate } from "./article-image-intake.mjs"
 import { collectedCandidateReceipt } from "./scan-completion.mjs"
 import {
   readDailyReceipts,
@@ -156,6 +157,22 @@ export function selectCandidateSource(root, handoff, candidateKey) {
   )
   if (!attempts.length) throw Error("Candidate has no exact completed source attempt")
   const attempt = attempts.at(-1)
+  if (attempt.article_image_intake) {
+    const intake = attempt.article_image_intake,
+      receiptPath = `runs/${intake.run_id}/article-image-intake.json`
+    if (sha256(fs.readFileSync(safePath(root, receiptPath))) !== intake.sha256)
+      throw Error("Native image intake handoff receipt changed")
+    const receipt = readJSON(root, receiptPath),
+      verified = selectIntakenArticleImageCandidate({
+        root,
+        intakeRun: intake.run_id,
+        sourceRun: attempt.attempt_id,
+        backlogFile: intake.backlog_file,
+        allowReviewed: true,
+      })
+    if (receipt.candidate_key !== candidateKey || verified.candidate.key !== candidateKey)
+      throw Error("Native image intake handoff candidate changed")
+  }
   const documents = readJSON(root, `runs/${attempt.attempt_id}/documents.json`)
   const matchedDocuments = documents?.filter(
     (document) =>
@@ -177,6 +194,9 @@ export function selectCandidateSource(root, handoff, candidateKey) {
   const declaredAttachments = new Set(
     (primaryParse.attachments || []).map((attachment) => canonicalURL(attachment.url)),
   )
+  if (primaryParse.parser?.id === "article-image-metadata")
+    for (const image of primaryParse.body_images || [])
+      declaredAttachments.add(canonicalURL(image.url))
   const listingRelations = attempt.supporting_listing_relations || []
   const linkedFromListing = validateListingSupportRelations(
     loadStoredSourceRun(root, attempt.attempt_id).parses,
@@ -217,7 +237,7 @@ export function selectCandidateSource(root, handoff, candidateKey) {
   if (
     document.source_version_id !== candidate.article_source_version_id ||
     parse.parse_id !== candidate.article_parse_id ||
-    articleContentFingerprint(parse) !== candidate.article_content_sha256
+    articleContentFingerprint(parse, selected.parses) !== candidate.article_content_sha256
   )
     throw Error("Selected source differs from the candidate evidence")
   return { candidate, source_attempt_id: attempt.attempt_id, selected }
@@ -234,6 +254,8 @@ export function buildEditorialHandoff({
   supplementalWindows = [],
   sameEventAliases = new Map(),
   approvalRoot = null,
+  articleImageIntakes = [],
+  backlogFile,
 }) {
   if (
     !Array.isArray(supplementalWindows) ||
@@ -333,6 +355,57 @@ export function buildEditorialHandoff({
       attemptsByKey.get(key).add(observation)
     }
   const sourceRecordAliases = []
+  if (
+    !Array.isArray(articleImageIntakes) ||
+    articleImageIntakes.length > 12 ||
+    new Set(articleImageIntakes).size !== articleImageIntakes.length ||
+    articleImageIntakes.some((id) => !/^[A-Za-z0-9_-]{1,100}$/.test(id)) ||
+    (articleImageIntakes.length && (!approvalRoot || !backlogFile))
+  )
+    throw Error("Explicit native image intake runs and backlog required")
+  for (const run of [...articleImageIntakes].sort()) {
+    const receiptPath = `runs/${run}/article-image-intake.json`,
+      receipt = readJSON(approvalRoot, receiptPath),
+      sourceRun = receipt?.input?.source_identity?.source_run,
+      verified = selectIntakenArticleImageCandidate({
+        root: approvalRoot,
+        intakeRun: run,
+        sourceRun,
+        backlogFile,
+        allowReviewed: true,
+      }),
+      candidate = verified.candidate,
+      current = candidateByKey.get(candidate.key)
+    if (
+      !current ||
+      [
+        "title",
+        "source_urls",
+        "source_published_at",
+        "article_source_version_id",
+        "article_parse_id",
+        "article_content_sha256",
+      ].some((k) => JSON.stringify(current[k]) !== JSON.stringify(candidate[k]))
+    )
+      throw Error("Handoff backlog differs from native image intake")
+    const observation = {
+      attempt_id: sourceRun,
+      key: candidate.key,
+      source_urls: candidate.source_urls,
+      article_source_version_id: candidate.article_source_version_id,
+      article_parse_id: candidate.article_parse_id,
+      article_content_sha256: candidate.article_content_sha256,
+      source_observed_at: candidate.article_observed_at,
+      supporting_source_urls: verified.selected.documents.slice(1).map((d) => d.original_url),
+      article_image_intake: {
+        run_id: run,
+        sha256: sha256(fs.readFileSync(safePath(approvalRoot, receiptPath))),
+        backlog_file: backlogFile,
+      },
+    }
+    if (!attemptsByKey.has(candidate.key)) attemptsByKey.set(candidate.key, new Set())
+    attemptsByKey.get(candidate.key).add(observation)
+  }
   const missing = []
   for (const [key, attempts] of attemptsByKey) {
     if (backlogKeys.has(key)) continue
@@ -546,7 +619,13 @@ export function buildEditorialHandoff({
   }
 }
 
-export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
+export function generateDailyHandoff({
+  root,
+  runId,
+  vault,
+  backlogFile,
+  articleImageIntakes = [],
+}) {
   const prefix = `daily/runs/${runId}/`
   const plan = readJSON(root, prefix + "plan.json")
   const summary = readJSON(root, prefix + "summary.json")
@@ -621,12 +700,22 @@ export function generateDailyHandoff({ root, runId, vault, backlogFile }) {
     issues,
     observedAt,
     approvalRoot: root,
+    articleImageIntakes,
+    backlogFile,
     supplementalWindows,
     sameEventAliases: fs.existsSync(backlogFile)
       ? loadSameEventSourceAliases(root, backlogFile)
       : new Map(),
   })
   const input = {
+    ...(articleImageIntakes.length
+      ? {
+          article_image_intakes: [...articleImageIntakes].sort().map((id) => ({
+            run_id: id,
+            sha256: sha256(fs.readFileSync(safePath(root, `runs/${id}/article-image-intake.json`))),
+          })),
+        }
+      : {}),
     plan_sha256: sha256(fs.readFileSync(safePath(root, prefix + "plan.json"))),
     ...(context ? { editorial_context: context.reference } : {}),
     receipts_sha256: sha256(JSON.stringify(receipts)),

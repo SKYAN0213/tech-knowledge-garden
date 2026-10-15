@@ -26,8 +26,12 @@
       "checked_on": "2026-10-03",
       "observation": "문서 확인",
       "acquisition_notes": "안내에 게시된 분야별 RSS → 기사 HTML. AI/SW/보안/장비/바이오 feed 선택; HTTP 주소의 HTTPS 지원과 현재 XML은 별도 확인",
-      "related_channel_ids": ["etnews"],
-      "evidence_urls": ["https://www.etnews.com/rss/?Id=1"],
+      "related_channel_ids": [
+        "etnews"
+      ],
+      "evidence_urls": [
+        "https://www.etnews.com/rss/?Id=1"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -47,15 +51,21 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 기사 본문. 제조사·SI·수주·현장 사례 탐색; 행사 공지와 기사 구분",
-      "related_channel_ids": ["irobotnews"],
-      "evidence_urls": ["https://www.irobotnews.com/"],
+      "related_channel_ids": [
+        "irobotnews"
+      ],
+      "evidence_urls": [
+        "https://www.irobotnews.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -74,15 +84,23 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["반도체·컴퓨팅", "로봇·제조", "에너지·기후기술"],
+      "sectors": [
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "분야 목록 → 기자 본문. 부품·공급망·설비 투자 탐색; 공개 본문 범위 확인",
-      "related_channel_ids": ["thelec"],
-      "evidence_urls": ["https://www.thelec.kr/"],
+      "related_channel_ids": [
+        "thelec"
+      ],
+      "evidence_urls": [
+        "https://www.thelec.kr/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -101,7 +119,12 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "반도체·컴퓨팅"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -109,7 +132,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "분야별 날짜 목록 → HTML. 기업 전략·인력·제품 기사; 아직 공식 RSS 주소는 확인하지 않음",
       "related_channel_ids": [],
-      "evidence_urls": ["https://zdnet.co.kr/"],
+      "evidence_urls": [
+        "https://zdnet.co.kr/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -128,7 +153,12 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "소프트웨어·클라우드", "에너지·기후기술", "바이오·의료기술"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "에너지·기후기술",
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -136,7 +166,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "분야 목록 → 공개 본문",
       "related_channel_ids": [],
-      "evidence_urls": ["https://techcrunch.com/"],
+      "evidence_urls": [
+        "https://techcrunch.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -155,7 +187,12 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "우주·기초과학"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -163,7 +200,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "분야 목록 → 공개 기사. 접근 가능한 개별 본문만 사용; 회원 전용 제외",
       "related_channel_ids": [],
-      "evidence_urls": ["https://arstechnica.com/"],
+      "evidence_urls": [
+        "https://arstechnica.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -182,7 +221,12 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "반도체·컴퓨팅"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -190,7 +234,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "분야별 목록 → 기자 본문. 기업 운영·클라우드·보안 취재와 기고 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.theregister.com/"],
+      "evidence_urls": [
+        "https://www.theregister.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -209,7 +255,11 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "반도체·컴퓨팅", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "반도체·컴퓨팅",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -217,7 +267,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 공개 본문. 기술 취재·기고·파트너 콘텐츠 귀속 보존",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.eetimes.com/"],
+      "evidence_urls": [
+        "https://www.eetimes.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -236,7 +288,12 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "에너지·기후기술", "바이오·의료기술", "우주·기초과학"],
+      "sectors": [
+        "AI",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -244,7 +301,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "연구 발견용 목록 → 표시된 대학/학술지 원문. 재배포는 독립 근거로 중복 집계하지 않음",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.sciencedaily.com/"],
+      "evidence_urls": [
+        "https://www.sciencedaily.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -263,15 +322,21 @@
       "kind": "industry-press",
       "region": "해외",
       "language": "en",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "접근 보류",
       "acquisition_notes": "직접 열람 실패; 등록된 산업용 로봇 목록과 공식 feed 유무를 재확인한 후 도입",
-      "related_channel_ids": ["robot-report"],
-      "evidence_urls": ["https://www.therobotreport.com/"],
+      "related_channel_ids": [
+        "robot-report"
+      ],
+      "evidence_urls": [
+        "https://www.therobotreport.com/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -291,7 +356,12 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "로봇·제조", "바이오·의료기술", "우주·기초과학"],
+      "sectors": [
+        "AI",
+        "로봇·제조",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -299,7 +369,9 @@
       "observation": "검색 확인·접근 보류",
       "acquisition_notes": "직접 열람 실패; 연구실·출연연·교수 창업 취재 원문을 확보한 뒤 날짜 목록 profile 작성",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.hellodd.com/"],
+      "evidence_urls": [
+        "https://www.hellodd.com/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -319,14 +391,21 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "반도체·컴퓨팅", "로봇·제조", "우주·기초과학"],
+      "sectors": [
+        "AI",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "bounded-rss-v1",
       "checked_on": "2026-10-03",
       "observation": "문서 확인",
       "acquisition_notes": "분야 feed/Atom → 고정 ID·판본 → 공개 HTML/PDF. 신규 제출·교차등재·교체판을 구분; 짧은 feed의 과거 빈 구간은 API 날짜 검색으로 보완",
-      "related_channel_ids": ["arxiv-robotics"],
+      "related_channel_ids": [
+        "arxiv-robotics"
+      ],
       "evidence_urls": [
         "https://info.arxiv.org/help/rss.html",
         "https://info.arxiv.org/help/api/user-manual.html"
@@ -350,7 +429,10 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -358,7 +440,9 @@
       "observation": "문서 확인",
       "acquisition_notes": "API v2 공개 Note·학회/공개일 필터 → 논문 PDF·공개 decision. 공식 안내는 계정 인증을 요구; 비공개 review 제외",
       "related_channel_ids": [],
-      "evidence_urls": ["https://docs.openreview.net/getting-started/using-the-api"],
+      "evidence_urls": [
+        "https://docs.openreview.net/getting-started/using-the-api"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -378,7 +462,10 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -386,7 +473,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "학회 volume → 논문 HTML·PDF·보충자료. 논문집 발행일과 행사일·사전공개일 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://proceedings.mlr.press/"],
+      "evidence_urls": [
+        "https://proceedings.mlr.press/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -405,7 +494,10 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -413,7 +505,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "연도/volume → 논문 HTML·PDF. RSS라는 학회 이름을 구독 RSS와 혼동하지 않음",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.roboticsproceedings.org/"],
+      "evidence_urls": [
+        "https://www.roboticsproceedings.org/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -432,7 +526,10 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -440,7 +537,9 @@
       "observation": "접근 보류",
       "acquisition_notes": "CVPR/ICCV 등 행사별 논문집·PDF 후보. 직접 접근 실패; 제목·저자·PDF 링크와 공개일 확인 후 도입",
       "related_channel_ids": [],
-      "evidence_urls": ["https://openaccess.thecvf.com/"],
+      "evidence_urls": [
+        "https://openaccess.thecvf.com/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -477,7 +576,9 @@
       "observation": "문서 확인",
       "acquisition_notes": "DOI·저자·학술지·날짜 검색과 publisher 원문 연결. metadata API 자체는 전문이 아님; cursor·정정/철회 관계 보존",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.crossref.org/documentation/retrieve-metadata/rest-api/"],
+      "evidence_urls": [
+        "https://www.crossref.org/documentation/retrieve-metadata/rest-api/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -537,7 +638,9 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["바이오·의료기술"],
+      "sectors": [
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -545,7 +648,9 @@
       "observation": "문서 확인",
       "acquisition_notes": "PMID·검색 결과·abstract → PMC/학술지 원문. API 문서는 확인; Books 상세 문서 주소는 CAPTCHA 반환, 전문 수집과 분리",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.ncbi.nlm.nih.gov/home/develop/api/"],
+      "evidence_urls": [
+        "https://www.ncbi.nlm.nih.gov/home/develop/api/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -565,7 +670,10 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "바이오·의료기술"],
+      "sectors": [
+        "AI",
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -573,7 +681,9 @@
       "observation": "문서 확인",
       "acquisition_notes": "공식 OAI/XML → 재사용 허용 전문 JATS → 문단·표·그림·참조. 모든 PMC 전문이 자동 수집 허용되는 것은 아님",
       "related_channel_ids": [],
-      "evidence_urls": ["https://pmc.ncbi.nlm.nih.gov/tools/oai/"],
+      "evidence_urls": [
+        "https://pmc.ncbi.nlm.nih.gov/tools/oai/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -593,7 +703,9 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["바이오·의료기술"],
+      "sectors": [
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -601,7 +713,9 @@
       "observation": "공식 문서 내용 확인·직접 열람 실패",
       "acquisition_notes": "공식 검색 반환에서 JSON/XML 검색·OA fullTextXML 명세 확인. PMID/PMCID/DOI 교차 매칭; endpoint 응답은 미확인",
       "related_channel_ids": [],
-      "evidence_urls": ["https://europepmc.org/RestfulWebService"],
+      "evidence_urls": [
+        "https://europepmc.org/RestfulWebService"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -621,7 +735,9 @@
       "kind": "research",
       "region": "해외",
       "language": "en",
-      "sectors": ["바이오·의료기술"],
+      "sectors": [
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -629,7 +745,9 @@
       "observation": "진입점 확인",
       "acquisition_notes": "문서 화면이 동적 shell. 실제 API 명세·study JSON을 먼저 확인; NCT ID·결과/등록·갱신 시각을 분리",
       "related_channel_ids": [],
-      "evidence_urls": ["https://clinicaltrials.gov/data-api/api"],
+      "evidence_urls": [
+        "https://clinicaltrials.gov/data-api/api"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -649,15 +767,21 @@
       "kind": "filing-ir",
       "region": "해외",
       "language": "ja",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "페이지 번호 → 날짜별 IR·PDF. 회사 전체와 로봇 부문 실적 분리; 과거 영문 news 주소 대신 확인한 일문 경로 사용",
-      "related_channel_ids": ["route-nachi-start-ja"],
-      "evidence_urls": ["https://www.nachi-fujikoshi.co.jp/media/ir"],
+      "related_channel_ids": [
+        "route-nachi-start-ja"
+      ],
+      "evidence_urls": [
+        "https://www.nachi-fujikoshi.co.jp/media/ir"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -676,15 +800,22 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "분류·날짜 목록 → 원문. 기존 `www2` 사이트와 새 사이트 동일 사건 대조; 언어판 중복 보존/병합",
-      "related_channel_ids": ["route-techman-news-en"],
-      "evidence_urls": ["https://www.tm-robot.com/en/company/news?categoryId=3"],
+      "related_channel_ids": [
+        "route-techman-news-en"
+      ],
+      "evidence_urls": [
+        "https://www.tm-robot.com/en/company/news?categoryId=3"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -703,15 +834,22 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "News/Blog/Events 분류 → 상세 HTML. 범용 SEO 블로그·전시 초청과 제품/사업 사건 구분; 지역 언어판 날짜 차이 확인",
-      "related_channel_ids": ["route-jaka-start-en"],
-      "evidence_urls": ["https://www.jaka.com/en/news"],
+      "related_channel_ids": [
+        "route-jaka-start-en"
+      ],
+      "evidence_urls": [
+        "https://www.jaka.com/en/news"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -730,7 +868,9 @@
       "kind": "company",
       "region": "해외",
       "language": "ja",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -738,7 +878,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "일문 날짜 목록 → 제품·첨부 PDF. 감속기·구동장치 사양 변경과 행사 자료 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://precision.nabtesco.com/ja/news/"],
+      "evidence_urls": [
+        "https://precision.nabtesco.com/ja/news/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -757,7 +899,10 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["반도체·컴퓨팅", "로봇·제조"],
+      "sectors": [
+        "반도체·컴퓨팅",
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -765,7 +910,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "보도자료 목록 → HTML·기술 PDF. 제어기·motion·통합 사례, 자료 다운로드와 게시일 대조",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.beckhoff.com/en-en/company/press/"],
+      "evidence_urls": [
+        "https://www.beckhoff.com/en-en/company/press/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -784,15 +931,22 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["소프트웨어·클라우드", "로봇·제조"],
+      "sectors": [
+        "소프트웨어·클라우드",
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "사업부·분야 뉴스 목록 특정 → 발표·제품·첨부. 회사 전사와 Digital Industries 부문 귀속 구분",
-      "related_channel_ids": ["watch-siemens-0"],
-      "evidence_urls": ["https://press.siemens.com/global/en"],
+      "related_channel_ids": [
+        "watch-siemens-0"
+      ],
+      "evidence_urls": [
+        "https://press.siemens.com/global/en"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -812,7 +966,9 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -820,7 +976,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "생산/물류 분야·날짜 목록 → 원문·첨부. 제조사 홍보와 고객의 실제 설치/운영 근거 대조",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.press.bmwgroup.com/global"],
+      "evidence_urls": [
+        "https://www.press.bmwgroup.com/global"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -839,7 +997,10 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "반도체·컴퓨팅"],
+      "sectors": [
+        "AI",
+        "반도체·컴퓨팅"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -847,7 +1008,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "공식 newsroom의 분야별 날짜 목록 → 원문. 이전 newsroom 도메인 redirect 보존",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.intel.com/content/www/us/en/newsroom/home.html"],
+      "evidence_urls": [
+        "https://www.intel.com/content/www/us/en/newsroom/home.html"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -866,7 +1029,9 @@
       "kind": "filing-ir",
       "region": "해외",
       "language": "en",
-      "sectors": ["반도체·컴퓨팅"],
+      "sectors": [
+        "반도체·컴퓨팅"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -874,7 +1039,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "발표 목록 → HTML·PDF. 구 `/en/news/press-releases`에서 IR 사이트로 이동 확인",
       "related_channel_ids": [],
-      "evidence_urls": ["https://investor.asml.com/news/press-releases-and-announcements"],
+      "evidence_urls": [
+        "https://investor.asml.com/news/press-releases-and-announcements"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -893,7 +1060,9 @@
       "kind": "filing-ir",
       "region": "해외",
       "language": "en",
-      "sectors": ["반도체·컴퓨팅"],
+      "sectors": [
+        "반도체·컴퓨팅"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -901,7 +1070,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "연도·분기 → 발표·재무 PDF·Excel·prepared remarks. call 날짜·발표 시각·분기말 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://investor.asml.com/quarterly-results"],
+      "evidence_urls": [
+        "https://investor.asml.com/quarterly-results"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -920,14 +1091,19 @@
       "kind": "filing-ir",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "소프트웨어·클라우드"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
       "checked_on": "2026-10-03",
       "observation": "진입점 및 상세 1건 확인",
       "acquisition_notes": "hub는 동적 shell; 공식 분기 발표 HTML/첨부를 선택. SEC CIK와 연결하여 전략·매출·투자 대조",
-      "related_channel_ids": ["watch-microsoft-0"],
+      "related_channel_ids": [
+        "watch-microsoft-0"
+      ],
       "evidence_urls": [
         "https://www.microsoft.com/en-us/Investor/earnings/",
         "https://www.microsoft.com/en-us/Investor/earnings/FY-2026-Q4/press-release-webcast"
@@ -951,15 +1127,22 @@
       "kind": "filing-ir",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "소프트웨어·클라우드"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "Results/Financials·뉴스 실제 목록 특정 → 실적·경영진 발표. Google 제품 뉴스와 회사 공시를 동일 사건으로 자동 병합하지 않음",
-      "related_channel_ids": ["watch-alphabet-0"],
-      "evidence_urls": ["https://abc.xyz/investor/"],
+      "related_channel_ids": [
+        "watch-alphabet-0"
+      ],
+      "evidence_urls": [
+        "https://abc.xyz/investor/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -979,7 +1162,10 @@
       "kind": "company",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "소프트웨어·클라우드"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -987,7 +1173,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 발표 HTML. 투자·제휴·AI 인프라; RSS 발견 시 공식 선언 주소만 채택",
       "related_channel_ids": [],
-      "evidence_urls": ["https://news.sktelecom.com/"],
+      "evidence_urls": [
+        "https://news.sktelecom.com/"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1006,15 +1194,22 @@
       "kind": "company",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "소프트웨어·클라우드"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "메뉴·shell만 확인. 공개 목록 endpoint 또는 허용 브라우저 경로 확인 후 공통 파서 사용",
-      "related_channel_ids": ["watch-naver-0"],
-      "evidence_urls": ["https://d2.naver.com/helloworld"],
+      "related_channel_ids": [
+        "watch-naver-0"
+      ],
+      "evidence_urls": [
+        "https://d2.naver.com/helloworld"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1034,15 +1229,21 @@
       "kind": "company",
       "region": "해외",
       "language": "en",
-      "sectors": ["반도체·컴퓨팅"],
+      "sectors": [
+        "반도체·컴퓨팅"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "접근 보류",
       "acquisition_notes": "직접 접근 실패. IR/공식 발표 PDF 등 대체 자료 후보; 무료 본문 확보 전 활성화하지 않음",
-      "related_channel_ids": ["watch-tsmc-0"],
-      "evidence_urls": ["https://pr.tsmc.com/english/news"],
+      "related_channel_ids": [
+        "watch-tsmc-0"
+      ],
+      "evidence_urls": [
+        "https://pr.tsmc.com/english/news"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1062,15 +1263,21 @@
       "kind": "company",
       "region": "국내",
       "language": "ko",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "검색 확인·접근 보류",
       "acquisition_notes": "기존 회사 시작 주소와 PR 목록 연결을 확인하고 날짜·원문·매체 재전재를 분리",
-      "related_channel_ids": ["route-rainbow-start-en"],
-      "evidence_urls": ["https://rainbowrobotics.com/pr"],
+      "related_channel_ids": [
+        "route-rainbow-start-en"
+      ],
+      "evidence_urls": [
+        "https://rainbowrobotics.com/pr"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1090,15 +1297,21 @@
       "kind": "industry-body",
       "region": "해외",
       "language": "en",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 공개 통계 발표. 설치·가동 stock·robot density 지표와 기준연도 구분; 유료 보고서 전문 제외",
-      "related_channel_ids": ["ifr"],
-      "evidence_urls": ["https://ifr.org/ifr-press-releases"],
+      "related_channel_ids": [
+        "ifr"
+      ],
+      "evidence_urls": [
+        "https://ifr.org/ifr-press-releases"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1117,15 +1330,21 @@
       "kind": "industry-body",
       "region": "해외",
       "language": "en",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "A3 자체 발표 목록 → HTML. 회원사 발표와 협회 통계의 출처 구분; 기존 오래된 news-center 주소 대체 후보",
-      "related_channel_ids": ["a3"],
-      "evidence_urls": ["https://www.automate.org/a3/press-center"],
+      "related_channel_ids": [
+        "a3"
+      ],
+      "evidence_urls": [
+        "https://www.automate.org/a3/press-center"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1144,15 +1363,21 @@
       "kind": "industry-body",
       "region": "해외",
       "language": "en",
-      "sectors": ["에너지·기후기술"],
+      "sectors": [
+        "에너지·기후기술"
+      ],
       "axis": "기업·운영",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 발표·공개 보고서. forecast·실측·국가/기간·기준 시나리오 보존",
-      "related_channel_ids": ["iea"],
-      "evidence_urls": ["https://www.iea.org/news"],
+      "related_channel_ids": [
+        "iea"
+      ],
+      "evidence_urls": [
+        "https://www.iea.org/news"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1171,7 +1396,12 @@
       "kind": "regulator",
       "region": "해외",
       "language": "en",
-      "sectors": ["AI", "사이버보안", "반도체·컴퓨팅", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1179,7 +1409,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "날짜·topic 목록 → 원문·표준/보고서. 초안·최종안·모집/집행 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.nist.gov/news-events/news"],
+      "evidence_urls": [
+        "https://www.nist.gov/news-events/news"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1198,7 +1430,9 @@
       "kind": "regulator",
       "region": "해외",
       "language": "en",
-      "sectors": ["에너지·기후기술"],
+      "sectors": [
+        "에너지·기후기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1206,7 +1440,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "날짜 목록 → 발표·사업 자료. 공고·선정·계약·실제 집행 구분",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.energy.gov/newsroom"],
+      "evidence_urls": [
+        "https://www.energy.gov/newsroom"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1242,7 +1478,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "부처·날짜 목록 → 본문·PDF/HWP. 원부처 발표와 재배포를 한 자료 계보로 묶고 PDF/HTML 우선",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.korea.kr/briefing/pressReleaseList.do"],
+      "evidence_urls": [
+        "https://www.korea.kr/briefing/pressReleaseList.do"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1278,7 +1516,9 @@
       "observation": "진입점 확인",
       "acquisition_notes": "정책브리프·R&D 예산/성과 목록 구체화 → 보고서 PDF. 일일 사건보다 주간 배경/전략 기록에 적합",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.kistep.re.kr/"],
+      "evidence_urls": [
+        "https://www.kistep.re.kr/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1298,7 +1538,10 @@
       "kind": "regulator",
       "region": "국내",
       "language": "ko",
-      "sectors": ["소프트웨어·클라우드", "사이버보안"],
+      "sectors": [
+        "소프트웨어·클라우드",
+        "사이버보안"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1306,8 +1549,12 @@
       "observation": "보안공지 날짜 목록과 10-03 원문 1건 검증. 상단 공지는 기간 내 포함하되 과거 도달 판정에서 분리. 빈 기간·재개·격리 병합 확인.",
       "acquisition_notes": "페이지 번호·게시일 → 공지·첨부. 상단 고정 공지 날짜로 기간 종료 판단 금지; CVE·vendor advisory 대조",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.krcert.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020"],
-      "remaining_checks": ["daily_baseline_review"],
+      "evidence_urls": [
+        "https://www.krcert.or.kr/kr/bbs/list.do?bbsId=B0000133&menuNo=205020"
+      ],
+      "remaining_checks": [
+        "daily_baseline_review"
+      ],
       "live_evidence": {
         "checked_on": "2026-10-03",
         "run_id": "source-live-catalog-x46-window-20261003-v2",
@@ -1327,7 +1574,9 @@
       "kind": "regulator",
       "region": "해외",
       "language": "en",
-      "sectors": ["우주·기초과학"],
+      "sectors": [
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "bounded-rss-v1",
@@ -1335,7 +1584,9 @@
       "observation": "문서 확인",
       "acquisition_notes": "공식 안내에서 topic feed 주소 선택 → 원문. feed 응답/과거 보존 범위는 미확인",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.esa.int/Services/RSS_Feeds"],
+      "evidence_urls": [
+        "https://www.esa.int/Services/RSS_Feeds"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1355,7 +1606,9 @@
       "kind": "regulator",
       "region": "해외",
       "language": "en",
-      "sectors": ["우주·기초과학"],
+      "sectors": [
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1363,7 +1616,9 @@
       "observation": "목록 확인",
       "acquisition_notes": "연도별 날짜 목록 → 발표·PDF; 일문 원발표와 영어판 날짜를 분리",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.jaxa.jp/press/index_e.html"],
+      "evidence_urls": [
+        "https://www.jaxa.jp/press/index_e.html"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1398,8 +1653,13 @@
       "checked_on": "2026-10-03",
       "observation": "검색 문서 확인·직접 접근 보류",
       "acquisition_notes": "무료 계정 API key 필요. 기업 고유번호·접수번호·정정본 → 공시 원문. 기존 기업 RSS가 충분한 경우 우선 재사용",
-      "related_channel_ids": ["dart", "dart-samsung-filings"],
-      "evidence_urls": ["https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001"],
+      "related_channel_ids": [
+        "dart",
+        "dart-samsung-filings"
+      ],
+      "evidence_urls": [
+        "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019001"
+      ],
       "remaining_checks": [
         "access_recheck",
         "collection_endpoint",
@@ -1420,7 +1680,12 @@
       "kind": "research",
       "region": "국내",
       "language": "ko",
-      "sectors": ["반도체·컴퓨팅", "로봇·제조", "에너지·기후기술", "바이오·의료기술"],
+      "sectors": [
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1428,8 +1693,12 @@
       "observation": "9-28 보도자료 1건과 10-03 빈 기간 검증. 날짜 목록/상세 일치·저장 해시·재개·격리 병합 확인.",
       "acquisition_notes": "날짜 목록 → 연구 발표·PDF·논문 DOI. 제조·자동화 실증 자료; 첨부만 읽고 본문 누락하지 않음",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.kitech.re.kr/pages/61"],
-      "remaining_checks": ["daily_baseline_review"],
+      "evidence_urls": [
+        "https://www.kitech.re.kr/pages/61"
+      ],
+      "remaining_checks": [
+        "daily_baseline_review"
+      ],
       "live_evidence": {
         "checked_on": "2026-10-03",
         "run_id": "source-live-catalog-x50-window-20261003-v2",
@@ -1449,15 +1718,24 @@
       "kind": "research",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "반도체·컴퓨팅", "에너지·기후기술", "바이오·의료기술"],
+      "sectors": [
+        "AI",
+        "반도체·컴퓨팅",
+        "에너지·기후기술",
+        "바이오·의료기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "예전 `news.unist.ac.kr/kor/`가 현재 대학 사이트로 redirect. 연구성과 목록·새 상세 URL 구체화 필요",
-      "related_channel_ids": ["watch-unist-0"],
-      "evidence_urls": ["https://www.unist.ac.kr/unist/index.do"],
+      "related_channel_ids": [
+        "watch-unist-0"
+      ],
+      "evidence_urls": [
+        "https://www.unist.ac.kr/unist/index.do"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1477,7 +1755,12 @@
       "kind": "research",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "반도체·컴퓨팅", "바이오·의료기술", "우주·기초과학"],
+      "sectors": [
+        "AI",
+        "반도체·컴퓨팅",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": null,
@@ -1485,7 +1768,9 @@
       "observation": "진입점 확인",
       "acquisition_notes": "연구성과·보도자료 목록 → 원문·논문·PDF. 확인된 페이지의 오래된 표시를 오늘 새 발표로 해석하지 않음",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.ibs.re.kr/kor.do"],
+      "evidence_urls": [
+        "https://www.ibs.re.kr/kor.do"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1505,7 +1790,13 @@
       "kind": "research",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI", "소프트웨어·클라우드", "사이버보안", "반도체·컴퓨팅", "로봇·제조"],
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "dated-html-list-v1",
@@ -1513,7 +1804,9 @@
       "observation": "검색 확인·접근 보류",
       "acquisition_notes": "공식 검색 반환에 보도자료 내용 확인, 직접 열람 실패. 실제 게시판 ID·공개 첨부/상세를 확인 후 도입",
       "related_channel_ids": [],
-      "evidence_urls": ["https://www.etri.re.kr/kor/main/main.etri"],
+      "evidence_urls": [
+        "https://www.etri.re.kr/kor/main/main.etri"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1549,8 +1842,12 @@
       "checked_on": "2026-10-03",
       "observation": "검색 확인·접근 보류",
       "acquisition_notes": "직접 열람 timeout. 창업기업·교원창업·뉴스 목록과 교수/회사 명시 역할부터 확인",
-      "related_channel_ids": ["watch-kaist-0"],
-      "evidence_urls": ["https://startup.kaist.ac.kr/"],
+      "related_channel_ids": [
+        "watch-kaist-0"
+      ],
+      "evidence_urls": [
+        "https://startup.kaist.ac.kr/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1586,8 +1883,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "우수 스타트업·동문 기업·언론보도 목록 → 상세. 교원/학생/동문 구분",
-      "related_channel_ids": ["watch-snu-0"],
-      "evidence_urls": ["https://startup.snu.ac.kr/"],
+      "related_channel_ids": [
+        "watch-snu-0"
+      ],
+      "evidence_urls": [
+        "https://startup.snu.ac.kr/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1623,8 +1924,12 @@
       "checked_on": "2026-10-03",
       "observation": "검색 링크 확인·접근 보류",
       "acquisition_notes": "서울대 공식 기사에 기술지주 주소 확인; 직접 열람 실패. 투자기업·회사 소개·연구 기반을 대조",
-      "related_channel_ids": ["watch-snu-0"],
-      "evidence_urls": ["https://www.snuholdings.com/"],
+      "related_channel_ids": [
+        "watch-snu-0"
+      ],
+      "evidence_urls": [
+        "https://www.snuholdings.com/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1660,8 +1965,12 @@
       "checked_on": "2026-10-03",
       "observation": "검색 확인·접근 보류",
       "acquisition_notes": "공식 검색 결과에서 사이트 확인, 직접 열람 실패. 포트폴리오·투자/사업화 소식과 연구실 연결 검토",
-      "related_channel_ids": ["watch-postech-0"],
-      "evidence_urls": ["https://www.postechholdings.com/"],
+      "related_channel_ids": [
+        "watch-postech-0"
+      ],
+      "evidence_urls": [
+        "https://www.postechholdings.com/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1697,8 +2006,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "기술창업·기업 지원·사업화 뉴스 목록 → 회사·교수·기술이전 원문",
-      "related_channel_ids": ["watch-unist-0"],
-      "evidence_urls": ["https://industry.unist.ac.kr/industry/index.do"],
+      "related_channel_ids": [
+        "watch-unist-0"
+      ],
+      "evidence_urls": [
+        "https://industry.unist.ac.kr/industry/index.do"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1734,8 +2047,12 @@
       "checked_on": "2026-10-03",
       "observation": "목록 확인",
       "acquisition_notes": "기술 기반 기업 목록 → 회사·TLO 원문. 신규 추가일 없는 회사 목록은 background",
-      "related_channel_ids": ["mit-startups"],
-      "evidence_urls": ["https://tlo.mit.edu/industry-entrepreneurs/startups"],
+      "related_channel_ids": [
+        "mit-startups"
+      ],
+      "evidence_urls": [
+        "https://tlo.mit.edu/industry-entrepreneurs/startups"
+      ],
       "remaining_checks": [
         "policy_and_access",
         "dated_original",
@@ -1770,8 +2087,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "OTL 뉴스·기술·HIT Fund 포트폴리오 → 상세. 지원·라이선스·설립 관계를 따로 기록",
-      "related_channel_ids": ["watch-stanford-0"],
-      "evidence_urls": ["https://otl.stanford.edu/"],
+      "related_channel_ids": [
+        "watch-stanford-0"
+      ],
+      "evidence_urls": [
+        "https://otl.stanford.edu/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1807,8 +2128,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "news·venture investment·spinout 상세 → 대학/회사 근거",
-      "related_channel_ids": ["watch-cambridge-0"],
-      "evidence_urls": ["https://www.enterprise.cam.ac.uk/"],
+      "related_channel_ids": [
+        "watch-cambridge-0"
+      ],
+      "evidence_urls": [
+        "https://www.enterprise.cam.ac.uk/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1844,8 +2169,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "news/reports·spinout 소개 → 대학/회사 원문. 이전 웹 경로 변경 확인 후 목록 설정",
-      "related_channel_ids": ["watch-oxford-0"],
-      "evidence_urls": ["https://innovation.ox.ac.uk/"],
+      "related_channel_ids": [
+        "watch-oxford-0"
+      ],
+      "evidence_urls": [
+        "https://innovation.ox.ac.uk/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1881,8 +2210,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "공식 spin-off 목록·news → 회사/연구실 소개. 학내 spin-off 인정과 교수 공동창업 구분",
-      "related_channel_ids": ["watch-eth-0"],
-      "evidence_urls": ["https://ethz.ch/en/industry/entrepreneurship.html"],
+      "related_channel_ids": [
+        "watch-eth-0"
+      ],
+      "evidence_urls": [
+        "https://ethz.ch/en/industry/entrepreneurship.html"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1918,8 +2251,12 @@
       "checked_on": "2026-10-03",
       "observation": "진입점 확인",
       "acquisition_notes": "startup·news 상세 → 교수/학생·연구 기반 원문. 인큐베이터 참여를 창업자 소속으로 확대하지 않음",
-      "related_channel_ids": ["watch-cmu-0"],
-      "evidence_urls": ["https://www.cmu.edu/swartz-center-for-entrepreneurship/"],
+      "related_channel_ids": [
+        "watch-cmu-0"
+      ],
+      "evidence_urls": [
+        "https://www.cmu.edu/swartz-center-for-entrepreneurship/"
+      ],
       "remaining_checks": [
         "collection_endpoint",
         "policy_and_access",
@@ -1955,8 +2292,12 @@
       "checked_on": "2026-10-03",
       "observation": "접근 보류",
       "acquisition_notes": "직접 열람 실패. 공개 기술 라이선스·startup/news 목록 접근부터 확인",
-      "related_channel_ids": ["watch-berkeley-0"],
-      "evidence_urls": ["https://ipira.berkeley.edu/"],
+      "related_channel_ids": [
+        "watch-berkeley-0"
+      ],
+      "evidence_urls": [
+        "https://ipira.berkeley.edu/"
+      ],
       "remaining_checks": [
         "access_recheck",
         "policy_and_access",
@@ -1976,16 +2317,26 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["AI"],
+      "sectors": [
+        "AI"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "bounded-rss-v1",
       "checked_on": "2026-10-03",
       "observation": "공식 AI RSS와 기사 원문 3건의 제목·본문·발표일·저장 해시 검증. 날짜 창 완료 및 재개/격리 장부 반복 병합 확인.",
       "acquisition_notes": "안내에 게시된 분야별 RSS → 기사 HTML. AI/SW/보안/장비/바이오 feed 선택; HTTP 주소의 HTTPS 지원과 현재 XML은 별도 확인",
-      "related_channel_ids": ["etnews"],
-      "evidence_urls": ["https://www.etnews.com/rss/?Id=1", "https://rss.etnews.com/04046.xml"],
-      "remaining_checks": ["empty_window", "daily_baseline_review"],
+      "related_channel_ids": [
+        "etnews"
+      ],
+      "evidence_urls": [
+        "https://www.etnews.com/rss/?Id=1",
+        "https://rss.etnews.com/04046.xml"
+      ],
+      "remaining_checks": [
+        "empty_window",
+        "daily_baseline_review"
+      ],
       "live_evidence": {
         "checked_on": "2026-10-03",
         "run_id": "source-live-etnews-ai-rss-window-20261003-v3",
@@ -2005,14 +2356,18 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["로봇·제조"],
+      "sectors": [
+        "로봇·제조"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "bounded-rss-v1",
       "checked_on": "2026-10-03",
       "observation": "10-02 정상 기사 11건 유지. 이미지 본문 2건을 기사 DOM/원문 해시에 연결하고 한국어 OCR 335/207블록 추출. 낮은 인식 신뢰도·숫자/표 검토로 기간 미완료 유지.",
       "acquisition_notes": "날짜 목록 → 기사 본문. 제조사·SI·수주·현장 사례 탐색; 행사 공지와 기사 구분",
-      "related_channel_ids": ["irobotnews"],
+      "related_channel_ids": [
+        "irobotnews"
+      ],
       "evidence_urls": [
         "https://www.irobotnews.com/",
         "https://cdn.irobotnews.com/rss/gn_rss_allArticle.xml"
@@ -2044,19 +2399,28 @@
       "kind": "industry-press",
       "region": "국내",
       "language": "ko",
-      "sectors": ["반도체·컴퓨팅", "로봇·제조", "에너지·기후기술"],
+      "sectors": [
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술"
+      ],
       "axis": "기술·제품",
       "source_recipe": "registered-route-v1",
       "suggested_recipe": "bounded-rss-v1",
       "checked_on": "2026-10-03",
       "observation": "공식 전체 RSS와 기사 원문 2건의 제목·본문·발표일·저장 해시 검증. 날짜 창 완료 및 재개/격리 장부 반복 병합 확인.",
       "acquisition_notes": "분야 목록 → 기자 본문. 부품·공급망·설비 투자 탐색; 공개 본문 범위 확인",
-      "related_channel_ids": ["thelec"],
+      "related_channel_ids": [
+        "thelec"
+      ],
       "evidence_urls": [
         "https://www.thelec.kr/",
         "https://cdn.thelec.kr/rss/gn_rss_allArticle.xml"
       ],
-      "remaining_checks": ["empty_window", "daily_baseline_review"],
+      "remaining_checks": [
+        "empty_window",
+        "daily_baseline_review"
+      ],
       "live_evidence": {
         "checked_on": "2026-10-03",
         "run_id": "source-live-thelec-all-rss-window-20261003-v2",
@@ -2066,6 +2430,282 @@
         "candidate_approved": false,
         "candidate_published": false
       }
+    },
+    {
+      "id": "X10-industrial-rss",
+      "channel_id": "robot-report-industrial-rss",
+      "name": "The Robot Report 산업용 로봇 RSS",
+      "url": "https://www.therobotreport.com/category/robots-platforms/industrial-robots/feed/",
+      "role": "listing",
+      "kind": "industry-press",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "로봇·제조"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "bounded-rss-v1",
+      "checked_on": "2026-10-10",
+      "observation": "공식 산업용 로봇 분야 피드와 상세 원문·발표일 대조.",
+      "acquisition_notes": "공식 산업용 로봇 분야 피드와 상세 원문·발표일 대조.",
+      "related_channel_ids": [
+        "robot-report"
+      ],
+      "evidence_urls": [
+        "https://www.therobotreport.com/",
+        "https://www.therobotreport.com/category/robots-platforms/industrial-robots/feed/"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window_and_resume",
+        "candidate_merge"
+      ]
+    },
+    {
+      "id": "X09-rss",
+      "channel_id": "sciencedaily-all-rss",
+      "name": "ScienceDaily 연구 뉴스 RSS",
+      "url": "https://www.sciencedaily.com/rss/all.xml",
+      "role": "listing",
+      "kind": "industry-press",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "bounded-rss-v1",
+      "checked_on": "2026-10-10",
+      "observation": "공식 RSS의 날짜 순서가 불규칙해 발견용으로 유지.",
+      "acquisition_notes": "공식 RSS의 날짜 순서가 불규칙해 발견용으로 유지.",
+      "related_channel_ids": [
+        "catalog-x09"
+      ],
+      "evidence_urls": [
+        "https://www.sciencedaily.com/",
+        "https://www.sciencedaily.com/rss/all.xml"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window_and_resume",
+        "candidate_merge"
+      ]
+    },
+    {
+      "id": "X61-news",
+      "channel_id": "cambridge-enterprise-news",
+      "name": "Cambridge Enterprise 사업화 뉴스",
+      "url": "https://www.enterprise.cam.ac.uk/stories/?post_types=news",
+      "role": "listing",
+      "kind": "commercialization",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "axis": "기업·운영",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "dated-html-list-v1",
+      "checked_on": "2026-10-10",
+      "observation": "공식 사업화 뉴스 목록과 상세 원문·발표일 대조.",
+      "acquisition_notes": "공식 사업화 뉴스 목록과 상세 원문·발표일 대조.",
+      "related_channel_ids": [
+        "watch-cambridge-0"
+      ],
+      "evidence_urls": [
+        "https://www.enterprise.cam.ac.uk/",
+        "https://www.enterprise.cam.ac.uk/stories/?post_types=news"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window_and_resume",
+        "candidate_merge"
+      ]
+    },
+    {
+      "id": "X05-rss",
+      "channel_id": "techcrunch-rss",
+      "name": "TechCrunch RSS",
+      "url": "https://techcrunch.com/feed/",
+      "role": "listing",
+      "kind": "industry-press",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "에너지·기후기술",
+        "바이오·의료기술"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "bounded-rss-v1",
+      "checked_on": "2026-10-10",
+      "observation": "피드 보존 기간이 짧아 발견 링크·공개 원문 후보 탐색용. 날짜 범위 완료로 승격하지 않음.",
+      "acquisition_notes": "피드 보존 기간이 짧아 발견 링크·공개 원문 후보 탐색용. 날짜 범위 완료로 승격하지 않음.",
+      "related_channel_ids": [
+        "catalog-x05"
+      ],
+      "evidence_urls": [
+        "https://techcrunch.com/",
+        "https://techcrunch.com/feed/"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window_and_resume",
+        "candidate_merge"
+      ]
+    },
+    {
+      "id": "X14-feed",
+      "channel_id": "pmlr-volumes-feed",
+      "name": "PMLR 논문집 Atom",
+      "url": "https://proceedings.mlr.press/feed.xml",
+      "role": "listing",
+      "kind": "research",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "로봇·제조"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "bounded-rss-v1",
+      "checked_on": "2026-10-10",
+      "observation": "논문집 목록 Atom이며 개별 논문 발표일이 없다. 권·논문·전문 탐색용 메타데이터.",
+      "acquisition_notes": "논문집 목록 Atom이며 개별 논문 발표일이 없다. 권·논문·전문 탐색용 메타데이터.",
+      "related_channel_ids": [
+        "catalog-x14"
+      ],
+      "evidence_urls": [
+        "https://proceedings.mlr.press/",
+        "https://proceedings.mlr.press/feed.xml"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window_and_resume",
+        "candidate_merge"
+      ]
+    },
+    {
+      "id": "X74",
+      "channel_id": "bioin-kribb-research",
+      "name": "BioIN KRIBB 연구성과",
+      "url": "https://www.bioin.or.kr/rsrch_Rslt.do?bid=research&cPage=1&listCnt=50",
+      "role": "listing",
+      "kind": "research",
+      "region": "국내",
+      "language": "ko",
+      "sectors": [
+        "바이오·의료기술"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "dated-html-list-v1",
+      "checked_on": "2026-10-10",
+      "observation": "생명공학정책연구센터 공식 RSS 안내와 공개 robots Allow, 연구성과 목록 및 KRIBB 기사 본문 두 건을 native 원문으로 확인했다.",
+      "acquisition_notes": "BioIN 부처연구성과 목록의 연구기관에 한국생명공학연구원이 명시된 카드만 수집한다. BioIN 자체 HTML 본문과 등록일을 보존한다. 원 KRIBB 보도자료 전체를 대체하는 범위가 아니며 원 도메인 정책 실패는 우회하지 않는다. RSS는 외부 원문 링크와 혼합 날짜 순서를 포함하므로 자동 기간 수집기로 사용하지 않는다.",
+      "related_channel_ids": [
+        "kribb-bio-research"
+      ],
+      "evidence_urls": [
+        "https://www.bioin.or.kr/rsrch_Rslt.do?bid=research&cPage=1&listCnt=50",
+        "https://www.bioin.or.kr/bioin.do?cmd=rss",
+        "https://www.bioin.or.kr/bioin.do?cmd=greeting",
+        "https://www.bioin.or.kr/rsrch_Rslt.do?num=317179&cmd=view&bid=research&cPage=1&listCnt=50",
+        "https://www.bioin.or.kr/rsrch_Rslt.do?num=317177&cmd=view&bid=research&cPage=1&listCnt=50"
+      ],
+      "remaining_checks": [
+        "normal_window",
+        "empty_window",
+        "resume",
+        "candidate_merge",
+        "activation"
+      ]
+    },
+    {
+      "id": "X75",
+      "channel_id": "sciencedaily-latest-news",
+      "name": "ScienceDaily Latest News archive",
+      "url": "https://www.sciencedaily.com/news/",
+      "role": "listing",
+      "kind": "industry-press",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "dated-html-list-v1",
+      "checked_on": "2026-10-10",
+      "observation": "공식 /news/를 정책 checked HTTP200으로 수집했다. 실제 latest/earlier headline의 날짜 순서가 섞여 있어 기간 전체 수집은 입증되지 않았다.",
+      "acquisition_notes": "sciencedaily-latest-news는 discovery로 유지. 공식 dated archive/API의 순서·페이지·기간 종료 근거가 제공되면 기존 공통 recipe로 재검증한다. 기존 RSS의 순서를 재정렬하여 완료로 바꾸지 않는다.",
+      "related_channel_ids": [
+        "sciencedaily-all-rss"
+      ],
+      "evidence_urls": [
+        "https://www.sciencedaily.com/news/",
+        "https://www.sciencedaily.com/"
+      ],
+      "remaining_checks": [
+        "verified_dated_archive",
+        "window_completion"
+      ]
+    },
+    {
+      "id": "X76",
+      "channel_id": "techcrunch-latest-archive",
+      "name": "TechCrunch Latest News archive",
+      "url": "https://techcrunch.com/latest/",
+      "role": "listing",
+      "kind": "industry-press",
+      "region": "해외",
+      "language": "en",
+      "sectors": [
+        "AI",
+        "소프트웨어·클라우드",
+        "사이버보안",
+        "반도체·컴퓨팅",
+        "로봇·제조",
+        "에너지·기후기술",
+        "바이오·의료기술",
+        "우주·기초과학"
+      ],
+      "axis": "기술·제품",
+      "source_recipe": "registered-route-v1",
+      "suggested_recipe": "path-html-list-v1",
+      "checked_on": "2026-10-10",
+      "observation": "공식 /latest/의20항목·발행 datetime·Next 및3페이지 기간 경계를 확인했다. 정상29후보/32원문, 저장 원문 복구·실제 CLI 재개·격리 반복 병합을 검증해 정기 활성화했다. 빈 관측0은 2026-10-10T07:43:28.511Z까지의 snapshot이다.",
+      "acquisition_notes": "기존 path-html-list-v1과 공통 HTML article profile을 사용한다. native 검증 receipt source-onboarding/38aaa132-855c-4f1e-95a8-0454c1b7478b/verification.json. 원 techcrunch-rss는 discovery로 보존하며 관측 빈 결과를 아직 끝나지 않은 하루 전체 뉴스 없음으로 확대하지 않는다.",
+      "related_channel_ids": [
+        "techcrunch-rss"
+      ],
+      "evidence_urls": [
+        "https://techcrunch.com/latest/",
+        "https://techcrunch.com/"
+      ],
+      "remaining_checks": []
     }
   ]
 }

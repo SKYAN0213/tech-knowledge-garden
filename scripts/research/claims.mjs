@@ -1,7 +1,7 @@
-import { assertParse, assertSchema, extractionSchema, sha256 } from "./contracts.mjs"
+import { assertParse, assertSchema, extractionSchema, sha256, sourceId } from "./contracts.mjs"
 import { parseResearchDate, samePublicationDate, assertReviewDate } from "./dates.mjs"
 import { modelSourceDates } from "./source-context.mjs"
-import { DEFAULT_LOCAL_OLLAMA_MODEL } from "./ollama.mjs"
+import { DEFAULT_LOCAL_OLLAMA_MODEL, structuredRequestBudget } from "./ollama.mjs"
 
 export function extractionCandidateKey(
   documents,
@@ -44,10 +44,40 @@ function quotedNumber(quote, literal) {
   }
   return false
 }
+function fictionalScenarioBlocks(parse) {
+  const scoped = new Set()
+  let sectionDepth = 0,
+    fictionalDepth = null
+  for (const block of parse.blocks) {
+    if (block.kind === "heading") {
+      const depth = headingDepth(block)
+      if (fictionalDepth !== null && depth <= fictionalDepth) fictionalDepth = null
+      sectionDepth = depth
+    }
+    if (
+      /\b(?:following|these) (?:customer )?(?:scenarios|examples)\b[^.!?]{0,100}\b(?:fictional|hypothetical) (?:organizations|companies|customers)\b|(?:다음|아래)\s*(?:고객\s*)?(?:사례|시나리오)[^.!?]{0,60}(?:가상|가상의)\s*(?:기업|회사|고객|조직)/iu.test(
+        block.text,
+      )
+    )
+      fictionalDepth = sectionDepth || 1
+    if (fictionalDepth !== null) scoped.add(block.block_id)
+  }
+  return scoped
+}
+function hasFictionalScenarioQualifier(statement) {
+  const text = (statement || "").replace(
+    /\b(?:not\s+(?:(?:a|an)\s+)?|non[- ]?)(?:fictional|hypothetical)\b|가상(?:의)?\s*(?:사례|시나리오|기업|회사|고객|조직)?\s*(?:이|가)?\s*아닌/giu,
+    "",
+  )
+  return /\b(?:fictional|hypothetical) (?:customers? |organizations? |compan(?:y|ies) )?(?:examples?|scenarios?|organizations?|compan(?:y|ies)|customers?)\b|가상(?:의)?\s*(?:고객\s*)?(?:사례|시나리오|기업|회사|고객|조직)/iu.test(
+    text,
+  )
+}
 export function validateEvidence(claim, parses) {
   const problems = [],
     quotes = [],
-    supportingParses = []
+    supportingParses = [],
+    fictionalScopes = new Map()
   for (const e of claim.evidence || []) {
     const parse = parses.find(
       (p) =>
@@ -66,6 +96,13 @@ export function validateEvidence(claim, parses) {
     )
       problems.push("evidence_integrity_failed")
     if (!normalize(block.text).includes(normalize(e.quote))) problems.push("quote_not_in_block")
+    if (!fictionalScopes.has(parse.parse_id))
+      fictionalScopes.set(parse.parse_id, fictionalScenarioBlocks(parse))
+    if (
+      fictionalScopes.get(parse.parse_id).has(block.block_id) &&
+      !hasFictionalScenarioQualifier(claim.statement)
+    )
+      problems.push("fictional_scenario_presented_as_observed")
     if (e.quote.includes("[수식 원문 확인 필요]")) problems.push("unresolved_math_in_evidence")
     if (e.support !== "direct") problems.push("non_direct_support")
     quotes.push(e.quote)
@@ -175,6 +212,91 @@ function assertParseSet(parses) {
     throw Error("Unique source parse identities required")
 }
 
+// OCR text is an extraction aid. Bind visual review to the original location,
+// quote and proposed fact rather than treating recognition confidence as proof.
+export function ocrEvidenceRequirements(claim, parses) {
+  const rows = new Map()
+  for (const evidence of claim.evidence || []) {
+    const parse = parses.find(
+      (p) =>
+        p.parse_id === evidence.parse_id &&
+        p.source_id === evidence.source_id &&
+        p.source_version_id === evidence.source_version_id,
+    )
+    const block = parse?.blocks.find((b) => b.block_id === evidence.block_id)
+    if (
+      !block ||
+      !(
+        block.locator?.method === "ocr" ||
+        block.locator?.type === "image" ||
+        parse.quality?.ocr_pages?.includes(block.locator?.page)
+      )
+    )
+      continue
+    const locator = block.locator
+    if (
+      !["pdf", "image"].includes(locator.type) ||
+      !Array.isArray(locator.bbox) ||
+      locator.bbox.length !== 4 ||
+      locator.bbox.some((n) => !Number.isFinite(n)) ||
+      locator.bbox[0] >= locator.bbox[2] ||
+      locator.bbox[1] >= locator.bbox[3] ||
+      (locator.type === "image" && locator.coordinate_space !== "source-pixels") ||
+      (locator.type === "pdf" && (!Number.isSafeInteger(locator.page) || locator.page < 1)) ||
+      (locator.method === "ocr" &&
+        (!Number.isFinite(locator.confidence) || locator.confidence < 0 || locator.confidence > 1))
+    )
+      throw Error("OCR evidence requires an exact original image/page position")
+    const row = {
+      source_id: parse.source_id,
+      source_version_id: parse.source_version_id,
+      parse_id: parse.parse_id,
+      block_id: block.block_id,
+      quote: evidence.quote,
+      locator: structuredClone(block.locator),
+      numbers_check_required: Boolean(claim.numbers?.length || /\d/u.test(evidence.quote || "")),
+    }
+    row.evidence_ref = sha256(
+      JSON.stringify([row, Object.fromEntries(claimFields.map((key) => [key, claim[key]]))]),
+    )
+    rows.set(row.evidence_ref, row)
+  }
+  return [...rows.values()]
+}
+
+export function assertOCRFactReview(claim, parses, decisions) {
+  const requirements = ocrEvidenceRequirements(claim, parses)
+  if (!requirements.length && decisions === undefined) return
+  if (
+    !Array.isArray(decisions) ||
+    decisions.length !== requirements.length ||
+    new Set(decisions.map((d) => d?.evidence_ref)).size !== decisions.length
+  )
+    throw Error("OCR fact requires exact original visual review for every cited location")
+  for (const required of requirements) {
+    const decision = decisions.find((d) => d?.evidence_ref === required.evidence_ref)
+    if (
+      !decision ||
+      Object.keys(decision).some(
+        (key) =>
+          ![
+            "evidence_ref",
+            "visual_checked",
+            "layout_checked",
+            "numbers_checked",
+            "reason",
+          ].includes(key),
+      ) ||
+      decision.visual_checked !== true ||
+      decision.layout_checked !== true ||
+      (required.numbers_check_required && decision.numbers_checked !== true) ||
+      typeof decision.reason !== "string" ||
+      !decision.reason.trim()
+    )
+      throw Error("OCR fact requires explicit image/page, layout and numeric review")
+  }
+}
+
 export function assertVerifiedClaim(claim, parses) {
   assertParseSet(parses)
   if (!parses.length) throw Error("Verified claim requires source parses")
@@ -192,6 +314,7 @@ export function assertVerifiedClaim(claim, parses) {
     reviewChecks.some((key) => review.checks?.[key] !== true)
   )
     throw Error("Verified claim requires source, meaning, entity, numeric and temporal review")
+  assertOCRFactReview(claim, parses, review.checks.ocr_evidence)
   if (
     review.claim_sha256 !== claimFingerprint(claim) ||
     review.source_parses_sha256 !== sourceFingerprint(claim, parses)
@@ -213,9 +336,12 @@ const extractionSystem = (max, extractionScope, quoteMode) =>
       : "Copy supporting quotes exactly with their block_key, original quotation marks, spelling and product names. Never translate quotes or change double quotes to apostrophes. Statements may use the source language. Publication date comes only from dates.published_at, otherwise null.",
     'Preserve entities, dates, numbers, units, conditions and planned versus finished actions. Use event_state "completed" only for a discrete action the source says has finished; "continues to participate" or "참여하고 있다" are reported facts, not completed actions. Future action is planned even when announced today. A company claim is attributed_fact. For reported assertions preserve the named speaker and stated role/organization. Keep subject as the entity the claim is about, distinct from the speaker.',
     "Use document title and opening narrative for the main announcement before ancillary examples, pricing, names, dimensions, promotional metrics or spokesperson quotations. Capture who did what, audience, rollout, mechanisms, support/eligibility conditions, implementation dates and explicit business/product scope expansion. Keep different organizations/actions distinct. Combine related mechanisms with their conditions when useful within the fact budget; do not discard conditions to make room for incidental details. A detail in a quote is not captured unless the statement states it. If the main announcement is not in this batch, use only present facts.",
+    "Allocate the limited fact slots by the document's actual subject, not paragraph order or numerical prominence. For implementation guides, first capture the workflow purpose, inputs/outputs, component roles, processing steps and deployment constraints; introductory surveys, market forecasts and customer performance figures must not crowd out those mechanisms. For company announcements, capture the announced action, resource allocation, intended customers and rollout stages before background company scale or revenue projections. When core facts are present, use at least half the available slots for them before optional supporting examples. This priority does not authorize inventing absent facts, discarding source conditions or labeling a plan as completed.",
     "Preserve source-wide scope notes: a feature list including future development is not a list of completed features. State that qualification in feature claims; cite both feature and scope-note blocks when separate. State consent, data handling, safety and access conditions, not just in quotes. Attribute explicit business expansion without predicting results. Do not invent absent conditions or infer missing sections.",
+    "Customer scenarios explicitly labeled fictional are illustrative examples. Retain that qualification in every claim about those organizations, product adoption, performance or costs; never present them as observed customer outcomes. A simulation experiment is not automatically a fictional customer scenario.",
     "Use block kind for narrative/headings/tables; a table is evidence, not automatically the main news. source_field is an exact stored JSON pointer. Prefer substantive body/release-note changes to metadata, and preserve package/version identity without merging packages. Versions, dates, timestamps, hashes and document IDs are identifiers: keep them exact in statements or temporal fields, not numbers entries.",
     'Use numbers entries only for quantities stated in the claim, never omit real measurements or qualifiers. Copy literal, unit and condition as exact substrings from the same quote, preserving spelling, capitalization, and symbols. Do not paraphrase a condition or expand abbreviations: use "ms", not "milliseconds". If no unit/condition is given use an empty string, never invent date/currency/count/duration/multiplier labels.',
+    'Keep qualifier word order and grammatical particles exactly as written, even when the statement paraphrases them. For a quote "메모리 용량을 최대 192GB로 확대했다", use condition "메모리 용량을 최대", never "메모리 용량 최대". For "전작 제품(2000억개) 대비 1.5배", use condition "전작 제품", never join the separated words into "전작 제품 대비". Keep total memory and GPU allocation as distinct quantities; a model-parameter capacity comparison is not an inference-speed result.',
     ...(extractionScope === "research_key_findings"
       ? [
           "For research prefer detailed Results/Findings to repeated abstract summaries. When sample count, distribution, range or exceptions accompany a mean, preserve those conditions in the result claim instead of reporting only the mean. Capture stated study limitations and validations that remain planned or pending. Do not merge distinct devices, metrics, measured and projected results.",
@@ -324,7 +450,7 @@ export function extractionBudget({
     ["num_ctx", num_ctx, 4096, 32768],
     ["input_char_budget", input_char_budget, 4096, num_ctx * 2],
     ["num_predict", num_predict, 128, 8192],
-    ["call_timeout_ms", call_timeout_ms, 1, 300000],
+    ["call_timeout_ms", call_timeout_ms, 1, 3600000],
     ["extraction_timeout_ms", extraction_timeout_ms, 1, 7200000],
     ["facts_per_batch", facts_per_batch, 1, extractionSchema.properties.claims.maxItems],
   ])
@@ -360,6 +486,8 @@ const RESEARCH_KEY_FINDING_CATEGORIES = new Set([
   "conclusion",
 ])
 function headingDepth(block) {
+  if (block.locator?.type === "jats" && typeof block.locator.xml_path === "string")
+    return Math.max(1, block.locator.xml_path.match(/\/sec(?:\[\d+\])?(?=\/|$)/g)?.length || 0)
   const domHeading = block.locator?.dom_path?.match(/\/h([1-6])(?:\[\d+\])?$/i)
   if (domHeading) return Number(domHeading[1])
   const numbered = block.text.match(/^\s*\d+(?:\.\d+)*[.)]?\s+/)
@@ -387,7 +515,10 @@ function classifyResearchHeading(value) {
   )
     return "deployment"
   if (
-    /^(evaluation|experiments?|experimental setup|test protocol|평가|실험 설계|실험 방법|实验|评估|評価|実験)(\b|$)/u.test(
+    /^(evaluation|experiments?|experimental (?:setup|validation|evaluation|results)|test protocol|평가|실험 설계|실험 방법|实验|评估|評価|実験)(\b|$)/u.test(
+      title,
+    ) ||
+    /^(?:(?:direct|indirect|empirical|experimental) (?:supporting )?evidence|validation(?: studies)?)(\b|$)/u.test(
       title,
     )
   )
@@ -401,11 +532,35 @@ function classifyResearchHeading(value) {
   return null
 }
 
-export function selectExtractionScope(parses, extraction_scope = "full_source") {
+export function selectExtractionScope(parses, extraction_scope = "full_source", blockScope = null) {
   if (!["full_source", "research_key_findings"].includes(extraction_scope))
     throw Error("Unknown extraction scope")
+  if (
+    blockScope !== null &&
+    (!Array.isArray(blockScope) ||
+      blockScope.length !== parses.length ||
+      new Set(blockScope.map((s) => s.parse_id)).size !== parses.length ||
+      blockScope.some((s) => !parses.some((p) => p.parse_id === s.parse_id)))
+  )
+    throw Error("Exact source parse block scope required")
   const documents = parses.map((parse) => {
     const all = parse.blocks.map((block) => block.block_id)
+    if (blockScope !== null) {
+      const selected = blockScope.find((s) => s.parse_id === parse.parse_id)?.block_ids
+      if (
+        !Array.isArray(selected) ||
+        !selected.length ||
+        new Set(selected).size !== selected.length ||
+        selected.some((id) => !all.includes(id))
+      )
+        throw Error("Extraction block scope differs from the complete stored parse")
+      return {
+        parse_id: parse.parse_id,
+        included_block_ids: all.filter((id) => selected.includes(id)),
+        excluded_block_ids: all.filter((id) => !selected.includes(id)),
+        selected_sections: [],
+      }
+    }
     if (extraction_scope === "full_source")
       return {
         parse_id: parse.parse_id,
@@ -423,7 +578,8 @@ export function selectExtractionScope(parses, extraction_scope = "full_source") 
         const category = classifyResearchHeading(block.text)
         if (category) {
           sections.push({ category, heading: block.text, block_id: block.block_id })
-          if (RESEARCH_KEY_FINDING_CATEGORIES.has(category)) activeDepth = depth
+          if (RESEARCH_KEY_FINDING_CATEGORIES.has(category))
+            activeDepth = Math.min(activeDepth ?? depth, depth)
         }
         if (activeDepth !== null) included.add(block.block_id)
       } else if (activeDepth !== null) included.add(block.block_id)
@@ -450,7 +606,7 @@ export function selectExtractionScope(parses, extraction_scope = "full_source") 
     }
   })
   return {
-    profile: extraction_scope,
+    profile: blockScope === null ? extraction_scope : "event_blocks",
     documents: documents.map((document) => ({
       parse_id: document.parse_id,
       source_block_count: document.included_block_ids.length + document.excluded_block_ids.length,
@@ -466,6 +622,26 @@ export function selectExtractionScope(parses, extraction_scope = "full_source") 
   }
 }
 
+export function articleMetadataContext(parses) {
+  const metadataParses = parses.filter((p) => p.parser?.id === "article-image-metadata")
+  const metadata = metadataParses[0],
+    bodies = parses.filter((p) => p !== metadata)
+  if (!metadataParses.length) return null
+  if (
+    metadataParses.length !== 1 ||
+    !metadata.quality?.metadata_only ||
+    metadata.body_images?.length !== bodies.length ||
+    new Set(bodies.map((p) => p.source_id)).size !== bodies.length ||
+    bodies.some(
+      (p) =>
+        p.quality?.source_format !== "raster-image" ||
+        !metadata.body_images.some((i) => sourceId(i.url) === p.source_id),
+    )
+  )
+    throw Error("Article metadata requires its exact linked body image sources")
+  return metadata
+}
+
 export function planExtractionBatches(parses, options = {}) {
   assertParseSet(parses)
   const {
@@ -477,14 +653,18 @@ export function planExtractionBatches(parses, options = {}) {
     evidence_quote_mode = "model_quote",
   } = extractionBudget(options)
   const extractionScope = options.extraction_scope ?? "full_source"
-  const scope = selectExtractionScope(parses, extractionScope)
+  const scope = selectExtractionScope(parses, extractionScope, options.block_scope ?? null)
   if (!parses.length) throw Error("Readable parses and supported extraction context required")
   if (parses.some((p) => !["extracted", "partial"].includes(p.status) || !p.blocks.length))
     throw Error("No readable source for claims")
+  const metadataParse = articleMetadataContext(parses)
   const blocks = new Map()
   const input = parses.map((p, n) => ({
     document: n + 1,
     title: p.title,
+    ...(metadataParse
+      ? { source_role: p === metadataParse ? "article_metadata" : "body_image" }
+      : {}),
     // Date provenance can contain an entire embedded page script. The model
     // needs the parsed dates; the stored parse retains the full evidence.
     dates: modelSourceDates(p.dates),
@@ -511,7 +691,7 @@ export function planExtractionBatches(parses, options = {}) {
   }))
   if (input.some((document) => !document.blocks.length))
     throw Error("Extraction scope selected no source blocks")
-  const requestFor = (sections) => {
+  const factRequestFor = (sections) => {
     const schema = structuredClone(extractionSchema)
     schema.properties.claims.maxItems = facts_per_batch
     const fields = schema.properties.claims.items.properties
@@ -544,43 +724,98 @@ export function planExtractionBatches(parses, options = {}) {
     const messages = [
       {
         role: "system",
-        content: extractionSystem(facts_per_batch, extractionScope, evidence_quote_mode),
+        content:
+          extractionSystem(facts_per_batch, extractionScope, evidence_quote_mode) +
+          (metadataParse
+            ? " Article metadata and its linked body image are one source article, not independent events. Extract substantive facts from body_image. article_metadata supports only the original title and publication date; cite its exact block as well when using that date. Never copy that date into the image source or infer a period's year. Metadata alone is not a new announcement."
+            : ""),
       },
       { role: "user", content: JSON.stringify(sections) },
     ]
     return { schema, messages, num_ctx, num_predict }
   }
-  const chars = (request) =>
-    request.messages.reduce((n, m) => n + m.content.length, 0) +
-    JSON.stringify(request.schema).length
-  const limit = input_char_budget
+  if (options.request_factory !== undefined && typeof options.request_factory !== "function")
+    throw Error("Role request factory must be a function")
+  const requestFor = (sections) => {
+    const request = options.request_factory
+      ? options.request_factory(sections)
+      : factRequestFor(sections)
+    if (
+      request.num_ctx !== num_ctx ||
+      request.num_predict !== num_predict ||
+      request.messages?.[1]?.role !== "user" ||
+      request.messages[1].content !== JSON.stringify(sections)
+    )
+      throw Error("Actual role request must preserve exact source sections and configured budget")
+    structuredRequestBudget(request)
+    return request
+  }
+  const chars = (request) => structuredRequestBudget(request).input_chars
+  const limit = Math.min(
+    input_char_budget,
+    structuredRequestBudget({
+      messages: [{ role: "user", content: "" }],
+      schema: {},
+      num_ctx,
+      num_predict,
+    }).input_char_limit,
+  )
+  const oversizedBlock = () => {
+    const error = Error(
+      "Source block exceeds actual prompt/schema/output budget; reparse explicitly without truncation",
+    )
+    error.code = "MODEL_INPUT_BUDGET_EXCEEDED"
+    error.model_budget = {
+      input_char_limit: limit,
+      num_ctx,
+      output_reserved_tokens: num_predict,
+      request_sent: false,
+      requires_explicit_resume: true,
+    }
+    return error
+  }
   const requests = []
   const all = requestFor(input)
+  const metadataInput = metadataParse
+    ? input.find((p) => p.source_role === "article_metadata")
+    : null
+  const withMetadata = (sections) => (metadataInput ? [metadataInput, ...sections] : sections)
   const blockLimit = max_blocks_per_batch ?? Infinity
-  if (chars(all) <= limit && input.reduce((n, d) => n + d.blocks.length, 0) <= blockLimit)
+  const bodyBlockLimit = blockLimit - (metadataInput?.blocks.length || 0)
+  if (metadataInput && bodyBlockLimit < 1)
+    throw Error("Article metadata and one body block must fit the extraction block budget")
+  // Each source gets a separate bounded fact budget. A bundle fitting in one
+  // context must not let its first document consume every extraction slot,
+  // losing the dated comparison or independent institutional evidence.
+  if (
+    (input.length === 1 || (metadataInput && input.length === 2)) &&
+    chars(all) <= limit &&
+    input.reduce((n, d) => n + d.blocks.length, 0) <= blockLimit
+  )
     requests.push(all)
   else
-    for (const document of input) {
+    for (const document of input.filter((p) => p !== metadataInput)) {
       let section = []
       for (const block of document.blocks) {
-        const request = requestFor([{ ...document, blocks: [...section, block] }])
-        if (chars(request) <= limit && section.length < blockLimit) section.push(block)
+        const request = requestFor(withMetadata([{ ...document, blocks: [...section, block] }]))
+        if (chars(request) <= limit && section.length < bodyBlockLimit) section.push(block)
         else {
-          if (!section.length)
-            throw Error("Source block exceeds extraction context; reparse explicitly")
-          requests.push(requestFor([{ ...document, blocks: section }]))
+          if (!section.length) throw oversizedBlock()
+          requests.push(requestFor(withMetadata([{ ...document, blocks: section }])))
           section = [block]
-          if (chars(requestFor([{ ...document, blocks: section }])) > limit)
-            throw Error("Source block exceeds extraction context; reparse explicitly")
+          if (chars(requestFor(withMetadata([{ ...document, blocks: section }]))) > limit)
+            throw oversizedBlock()
         }
       }
-      if (section.length) requests.push(requestFor([{ ...document, blocks: section }]))
+      if (section.length)
+        requests.push(requestFor(withMetadata([{ ...document, blocks: section }])))
     }
   if (requests.length > 64)
     throw Error("Extraction exceeds 64 batches; narrow source run explicitly")
   const batches = requests.map((request, index) => ({
     batch_id: `${String(index + 1).padStart(3, "0")}-${sha256(JSON.stringify(request)).slice(0, 16)}`,
     input_chars: chars(request),
+    request_budget: structuredRequestBudget(request),
     block_keys: JSON.parse(request.messages[1].content).flatMap((p) =>
       p.blocks.map((b) => b.block_key),
     ),
@@ -629,31 +864,68 @@ export async function extractClaims(
   {
     candidate_key,
     extraction_scope = "full_source",
+    block_scope = null,
     model = DEFAULT_LOCAL_OLLAMA_MODEL,
     think = "medium",
     checkpoint,
+    max_model_calls,
     now = () => performance.now(),
     ...options
   } = {},
 ) {
   const budget = extractionBudget(options)
-  const plan = planExtractionBatches(parses, { ...budget, extraction_scope })
+  const plan = planExtractionBatches(parses, { ...budget, extraction_scope, block_scope })
+  if (
+    max_model_calls !== undefined &&
+    (!Number.isInteger(max_model_calls) || max_model_calls < 1 || max_model_calls > 64)
+  )
+    throw Error("Extraction model call limit must be 1..64")
   const deadline = now() + budget.extraction_timeout_ms
   const results = [],
     mapped = []
+  let freshCalls = 0
   for (const batch of plan.batches) {
     const request = { ...batch.request, model, think, timeout_ms: budget.call_timeout_ms }
     const action = () => {
       const remaining = Math.floor(deadline - now())
-      if (remaining <= 0)
-        throw Error("Extraction time budget exceeded; completed batches preserved")
+      if (remaining <= 0 || (max_model_calls !== undefined && freshCalls >= max_model_calls)) {
+        const error = Error("Extraction time/call budget exceeded; completed batches preserved")
+        error.code = remaining <= 0 ? "MODEL_TIME_BUDGET_EXCEEDED" : "MODEL_CALL_LIMIT"
+        throw error
+      }
+      freshCalls++
       return ollama.structured({ ...request, timeout_ms: Math.min(request.timeout_ms, remaining) })
     }
-    const result = checkpoint ? await checkpoint(batch.batch_id, request, action) : await action()
+    let result
+    try {
+      result = checkpoint ? await checkpoint(batch.batch_id, request, action) : await action()
+    } catch (error) {
+      error.extraction_checkpoint = {
+        schema: "research-extraction-checkpoint/v1",
+        status: error.code === "REASONING_PENDING" ? "waiting_for_reasoning" : "requires_resume",
+        completed_batch_ids: results.map((r) => r.batch_id),
+        pending_batches: plan.batches.slice(results.length).map((b) => ({
+          batch_id: b.batch_id,
+          request_sha256: sha256(
+            JSON.stringify({ ...b.request, model, think, timeout_ms: budget.call_timeout_ms }),
+          ),
+          block_keys: b.block_keys,
+          source_blocks: b.block_keys.map((key) => plan.blocks.get(key)),
+          request_budget: b.request_budget,
+        })),
+        scope: plan.scope,
+        budget,
+        fresh_calls: freshCalls,
+        requires_fact_review: true,
+        partial_claims_approved: false,
+      }
+      throw error
+    }
     mapped.push(...mapExtractionBatch(result.output, batch, plan.blocks))
     results.push({
       batch_id: batch.batch_id,
       input_chars: batch.input_chars,
+      request_budget: batch.request_budget,
       block_keys: batch.block_keys,
       ...result,
     })
@@ -684,7 +956,10 @@ export async function extractClaims(
           }),
       block_map_sha256: sha256(JSON.stringify([...plan.blocks])),
       extraction_budget: budget,
-      source_coverage: describeExtractionCoverage(claims, parses, extraction_scope),
+      source_coverage:
+        block_scope === null
+          ? describeExtractionCoverage(claims, parses, extraction_scope)
+          : { profile: "event_blocks", documents: plan.scope.documents },
       extraction_plan: {
         input_char_limit: plan.input_char_limit,
         scope: plan.scope,
@@ -767,6 +1042,7 @@ export function recordFactReview(
       (!c.review.structural_pass || reviewChecks.some((key) => d[key] !== true))
     )
       throw Error("Verified claim requires source, meaning, entity, numeric and temporal review")
+    if (d.status === "verified") assertOCRFactReview(c, parses, d.ocr_evidence)
     return {
       ...c,
       review: {
@@ -800,7 +1076,7 @@ export function recordFactReview(
       throw Error("Direct source addition must identify a reviewed candidate and claim")
     const d = addition.decision
     if (
-      Object.keys(d).some((key) => !["reason", ...reviewChecks].includes(key)) ||
+      Object.keys(d).some((key) => !["reason", "ocr_evidence", ...reviewChecks].includes(key)) ||
       !d.reason?.trim() ||
       reviewChecks.some((key) => d[key] !== true)
     )
@@ -832,6 +1108,7 @@ export function recordFactReview(
       ],
     })
     const checks = { claim_id: c.claim_id, status: "verified", ...d }
+    assertOCRFactReview(c, parses, d.ocr_evidence)
     c.review = {
       ...evidenceReview,
       status: "verified",

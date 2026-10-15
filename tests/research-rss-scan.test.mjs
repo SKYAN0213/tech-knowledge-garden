@@ -119,6 +119,104 @@ test("later external feed items cannot block an earlier window or enter its coll
   assert.equal(result.summary.assessment.later_items, 1)
 })
 
+test("opt-in retains an external feed item without requesting it or marking its window complete", async () => {
+  const external = {
+    ...item("2026-09-24", "research"),
+    url: "https://other-publisher.example/research/",
+    guid: "https://other-publisher.example/research/",
+  }
+  const mixed = { ...parse, parse_id: "feed-parse", links: [links[0], external, links[1]] }
+  const route = {
+    ...channel,
+    listing_profile: { ...channel.listing_profile, outside_policy_items: "retain_uncollected" },
+  }
+  const assessed = assessBoundedRSSFeed(mixed, route, "2026-09-22", "2026-09-29")
+  assert.equal(assessed.status, "window_covered")
+  assert.equal(assessed.window_items, 2)
+  assert.deepEqual(assessed.uncollected_links, [external])
+  const requested = [],
+    inspected = []
+  const result = await scanBoundedRSSRoute(
+    "unused",
+    { stage: (_n, _i, fn) => fn() },
+    {},
+    route,
+    [],
+    { since: "2026-09-22", until: "2026-09-29" },
+    {
+      fetchPolicy: async (_r, _f, url) => {
+        requested.push(url)
+        return { fetch_status: "captured", source_version_id: "feed-version" }
+      },
+      parseFeed: async () => mixed,
+      collectDetails: async (_r, _run, _f, _c, _p, selected) => {
+        inspected.push(...selected.map((l) => l.url))
+        return {
+          documents: [],
+          parses: [],
+          candidates: [],
+          details: selected.map((l) => ({ url: l.url, status: "source_parsed_unreviewed" })),
+        }
+      },
+    },
+  )
+  assert.deepEqual(requested, [channel.url])
+  assert.deepEqual(inspected, [links[0].url])
+  assert.equal(result.summary.status, "incomplete")
+  assert.equal(result.summary.reason, "detail_incomplete")
+  assert.equal(result.summary.assessment.uncollected_items, 1)
+  assert.deepEqual(result.summary.details[1], {
+    url: external.url,
+    listed_at: external.published_at,
+    listed_title: external.text,
+    guid: external.guid,
+    listing_source_version_id: "feed-version",
+    listing_parse_id: "feed-parse",
+    status: "article_outside_source_policy",
+    fetched: false,
+  })
+  for (const url of [
+    "https://127.0.0.1/research",
+    "file:///research",
+    "https://user:pass@other-publisher.example/research",
+  ])
+    assert.equal(
+      assessBoundedRSSFeed(
+        { ...mixed, links: [links[0], { ...external, url, guid: url }, links[1]] },
+        route,
+        "2026-09-22",
+        "2026-09-29",
+      ).reason,
+      "feed_article_url_outside_policy",
+    )
+  for (const bad of [
+    { ...external, guid: "not-the-item" },
+    { ...external, published_timestamp: "2026-09-25T12:00:00Z" },
+  ])
+    assert.equal(
+      assessBoundedRSSFeed(
+        { ...mixed, links: [links[0], bad, links[1]] },
+        route,
+        "2026-09-22",
+        "2026-09-29",
+      ).reason,
+      "feed_item_identity_or_date_invalid",
+    )
+  assert.throws(
+    () =>
+      assessBoundedRSSFeed(
+        mixed,
+        {
+          ...route,
+          listing_profile: { ...route.listing_profile, outside_policy_items: "fetch_anything" },
+        },
+        "2026-09-22",
+        "2026-09-29",
+      ),
+    /outside-policy/,
+  )
+})
+
 test("stored RSS bytes become immutable parse evidence and a dated discovery list", async () => {
   const root = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "research-rss-"))
   try {

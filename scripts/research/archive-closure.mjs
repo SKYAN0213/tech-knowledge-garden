@@ -9,7 +9,9 @@ import { loadReferencedNoteApproval } from "./note-review.mjs"
 import { planConceptAuthority } from "./concept-archive.mjs"
 import { assertProcessingExtractionOrigin } from "./extraction-checkpoint.mjs"
 import { loadEmptyExtractionResult } from "./empty-extraction-review.mjs"
-import { verifyPinnedSourceRevision } from "./candidate-approval.mjs"
+import { verifyPinnedSourceRevision, assertPublishedEventRebind } from "./candidate-approval.mjs"
+import { loadOCRTableDependencies } from "./ocr-table.mjs"
+import { loadArticleImageMetadataDependencies } from "./article-image-source.mjs"
 
 const validRun = (id) => typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)
 
@@ -190,6 +192,16 @@ export function buildArchiveClosure(
       })
     }
     const bundle = readJSON(root, base + "source-bundle.json")
+    const imageSource = readJSON(root, base + "article-image-source.json")
+    if (imageSource) {
+      reference(imageSource.original_source?.source_run, "article_image_parent", () => {
+        const original = loadStoredSourceRun(root, imageSource.original_source.source_run, {
+          allowUnacquired: true,
+        })
+        if (JSON.stringify(original.identity) !== JSON.stringify(imageSource.original_source))
+          throw Error("Article image parent source changed")
+      })
+    }
     const acquisitionGroup = readJSON(root, base + "acquisition-group.json")
     if (acquisitionGroup) {
       const sources = acquisitionGroup.source_runs
@@ -364,6 +376,11 @@ export function buildArchiveClosure(
       })
     }
     const approval = readJSON(root, base + "candidate-approval.json")
+    if (approval?.published_event_rebind) {
+      const prior = assertPublishedEventRebind(root, approval)
+      add(pinFile(prior.path))
+      reference(prior.path.split("/")[1], "published_event_prior_approval")
+    }
     if (approval) {
       if (approval.schema !== "research-candidate-approval/v1")
         throw Error("Invalid candidate approval")
@@ -554,6 +571,14 @@ export function buildArchiveClosure(
     for (const parsed of stored?.parses || []) {
       parseIds.add(parsed.parse_id)
       add(pinFile(`parses/${parsed.parse_id}/parse.json`))
+      for (const ref of [
+        ...loadOCRTableDependencies(root, parsed),
+        ...loadArticleImageMetadataDependencies(root, parsed),
+      ]) {
+        const file = pinFile(ref.path)
+        if (file.sha256 !== ref.sha256) throw Error("Derived source dependency changed")
+        add(file)
+      }
     }
     runs.set(id, { run_id: id, source_identity: stored?.identity || null })
     visiting.delete(id)
