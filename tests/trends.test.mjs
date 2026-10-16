@@ -288,14 +288,18 @@ test("Real daily RSS retains stable permalinks and carries originals, reviewed c
   )
   assert.ok(feed.items[0].content.includes(githubIssue(lib.latest.key)))
   const sourceHrefs = new Set()
-  visit(fromHtml(feed.items[0].content, { fragment: true }), "element", (node) => {
+  const document = fromHtml(feed.items[0].content, { fragment: true })
+  const text = []
+  visit(document, "text", (node) => text.push(node.value))
+  const readerText = text.join("")
+  visit(document, "element", (node) => {
     if (node.tagName === "a") sourceHrefs.add(node.properties.href)
   })
   for (const a of lib.latest.items)
     for (const url of a.urls) assert.ok(sourceHrefs.has(url), `Missing original href: ${url}`)
   if (lib.latest.original.meta.article_reviews) {
     assert.doesNotMatch(feed.items[0].content, /다음 확인|트렌드 기록 미정리|수록 없음/)
-    for (const a of lib.latest.items) assert.ok(feed.items[0].content.includes(a.summary))
+    for (const a of lib.latest.items) assert.ok(readerText.includes(a.summary))
   } else if (lib.latest.snapshot.today.length) assert.match(feed.items[0].content, /다음 확인/)
   assert.ok(lib.latest.snapshot.topics.length > 0)
   for (const issue of lib.issues)
@@ -303,6 +307,7 @@ test("Real daily RSS retains stable permalinks and carries originals, reviewed c
 })
 test("RSS original query parameters survive safe HTML escaping as exact navigable hrefs", () => {
   const original = "https://example.org/news/?mode=V&mng_no=67870&GotoPage=1"
+  const summary = "R&D teams compare <targets> and \"release\" conditions"
   const html = feedDescription(
     {
       key: "Editions/2026/10/2026-10-07_0800_Tech_AI_Briefing",
@@ -312,7 +317,7 @@ test("RSS original query parameters survive safe HTML escaping as exact navigabl
         {
           id: "source-event",
           title: "Source announcement",
-          summary: "Reviewed facts",
+          summary,
           urls: [original],
         },
       ],
@@ -326,6 +331,10 @@ test("RSS original query parameters survive safe HTML escaping as exact navigabl
   })
   assert.equal(hrefs.filter((href) => href === original).length, 1)
   assert.equal(hrefs.includes(original.replaceAll("&", "&amp;")), false)
+  const text = []
+  visit(fromHtml(html, { fragment: true }), "text", (node) => text.push(node.value))
+  assert.ok(text.join("").includes(summary))
+  assert.doesNotMatch(html, /<targets>/)
 })
 test("Feed summaries escape editorial HTML rather than executing it in readers", () => {
   const i = {
