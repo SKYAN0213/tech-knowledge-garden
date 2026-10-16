@@ -15,13 +15,20 @@ import {
 } from "../scripts/research/curation.mjs"
 import { advanceCuration } from "../scripts/research/curation-workflow.mjs"
 import { loadDailyPublicationSelection } from "../scripts/research/daily-publication-handoff.mjs"
-import { loadCurrentApproval, newEditionProjections } from "../scripts/research/preview.mjs"
+import {
+  loadCurrentApproval,
+  newEditionProjections,
+  loadPreviewPublicationInputs,
+} from "../scripts/research/preview.mjs"
+import { advanceEventWorkflow } from "../scripts/research/event-workflow.mjs"
+import { approveNoteReview } from "../scripts/research/note-review.mjs"
+import { requestPublicationDelivery } from "../scripts/research/authoring-delivery-request.mjs"
 import { reviewEditionEvents } from "../scripts/research/event-pipeline.mjs"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import { atomicWrite, readJSON, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
-import { noteText, parseNote } from "../scripts/garden.mjs"
+import { noteText, parseNote, canonicalURL } from "../scripts/garden.mjs"
 
 function setup(t) {
   const f = editionFixture(t)
@@ -743,5 +750,225 @@ test("curated native approvals project knowledge and keep exact publication line
         vault: f.ctx.vault,
       }),
     /child changed/,
+  )
+})
+
+// Real native note approval against the fixture's exact reviewed source facts.
+// These notes remain private; this helper never applies or publishes them.
+async function approvedPublicationNotes(f, run) {
+  const claims = readJSON(f.root, "runs/writer/reviewed-claims.json").claims
+  const documents = readJSON(f.root, "runs/writer/documents.json")
+  const edition = "Editions/2026/10/2026-10-12_0800_Tech_AI_Briefing"
+  const signal = "Signals/2026-10-12_0800_Tech_AI_Briefing.md"
+  const topic = "TrendTopics/fixture-contract.md"
+  const source = documents.find(
+    (doc) => doc.source_version_id === claims[0].evidence[0].source_version_id,
+  )
+  const notes = [
+    {
+      path: signal,
+      content: noteText(
+        {
+          schema_version: "tech-signals/v1",
+          type: "trend-observations",
+          edition,
+          date: "2026-10-12",
+          reviewed: "2026-10-12",
+          review_basis: "primary-research",
+          observations: [
+            {
+              id: "fixture-contract",
+              topic_id: "fixture-contract",
+              event_id: sha256(canonicalURL(source.original_url)).slice(0, 16),
+              event_date: "2026-09-27",
+              stance: "context",
+              change: "Fixture Robotics와 Partner가 Contract-123 주문을 발표했다.",
+              meaning: "계약 발표 이력에 연결한다.",
+              limit: "공개된 계약 발표 범위다.",
+              next_check: "후속 계약 공개를 확인한다.",
+            },
+          ],
+        },
+        `[[${edition}|회차]]\n`,
+      ),
+    },
+    {
+      path: topic,
+      content: noteText(
+        {
+          schema_version: "tech-trend/v1",
+          type: "trend-topic-source",
+          id: "fixture-contract",
+          title: "계약 발표 이력",
+          question: "어떤 계약이 발표됐는가?",
+          thesis: "원문은 Contract-123 주문을 발표했다.",
+          watch_for: "후속 계약 발표",
+          disconfirming: "원문의 계약 정정",
+          reviewed: "2026-10-12",
+          reader_format: "source-events/v1",
+          knowledge_notes: [],
+          lessons: [],
+        },
+        `[원문](${source.original_url})\n`,
+      ),
+    },
+  ]
+  await approveNoteReview(
+    f.root,
+    run,
+    {
+      schema: "knowledge-note-review/v2",
+      reviewer: "test-original-and-trend-reader",
+      reviewed_at: "2026-10-12",
+      reason: "Read the exact original, verified facts and full signal/topic notes",
+      source_read: true,
+      final_prose_read: true,
+      aliases_checked: true,
+      connections_checked: true,
+      histories_checked: true,
+      notes: notes.map((note) => ({
+        ...note,
+        operation: "create",
+        previous_sha256: null,
+        evidence: [{ run_id: "writer", claim_ids: [claims[0].claim_id] }],
+      })),
+    },
+    { vault: f.ctx.vault },
+  )
+  return { run, signal, topic }
+}
+
+test("explicit native signal approvals survive event handoff and delivery with exact approval hashes", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "notes-vault")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  const notes = await approvedPublicationNotes(f, "explicit-trend-notes")
+  const calls = f.provider.calls
+  const result = await advanceEventWorkflow(
+    f.ctx,
+    {
+      run_id: "event-with-trends",
+      edition_path: f.editionRef.path,
+      edition_sha256: f.editionRef.sha256,
+      plan_path: f.plan.path,
+      plan_sha256: f.plan.sha256,
+      execute: false,
+      note_review_runs: [notes.run],
+    },
+    { baseProvider: f.provider },
+  )
+  const selection = loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+    vault: f.ctx.vault,
+  })
+  assert.deepEqual(selection.approvedRuns, ["writer"])
+  assert.deepEqual(selection.knowledgeRuns, [notes.run])
+  const saved = readJSON(f.root, result.publication_handoff.path)
+  assert.equal(
+    saved.note_review_runs[0].files.approval_sha256,
+    sha256(fs.readFileSync(safePath(f.root, `runs/${notes.run}/approved-notes.json`))),
+  )
+  const preview = loadPreviewPublicationInputs(f.root, "notes-reader", [], {
+    vault: f.ctx.vault,
+    publicationHandoff: result.publication_handoff.path,
+  })
+  assert.deepEqual(preview.knowledgeRuns, [notes.run])
+  assert.deepEqual(
+    preview.knowledge[0].approval.notes.map((note) => note.path),
+    [notes.signal, notes.topic],
+  )
+  const parameters = {
+    run_id: "notes-delivery",
+    handoff_path: result.publication_handoff.path,
+    handoff_sha256: result.publication_handoff.sha256,
+  }
+  await requestPublicationDelivery(f.ctx, parameters)
+  assert.deepEqual(
+    readJSON(f.root, "runs/notes-delivery/publication-delivery/input.json").knowledge_runs,
+    [notes.run],
+  )
+  assert.equal(f.provider.calls, calls)
+  assert.equal(fs.existsSync(path.join(f.ctx.vault, notes.signal)), false)
+  const file = safePath(f.root, `runs/${notes.run}/approved-notes.json`)
+  const before = fs.readFileSync(file)
+  fs.writeFileSync(file, Buffer.concat([before, Buffer.from("\n")]))
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+        vault: f.ctx.vault,
+      }),
+    /approval files changed/,
+  )
+  await assert.rejects(
+    requestPublicationDelivery(f.ctx, { ...parameters, run_id: "tampered-notes-delivery" }),
+    /approval files changed/,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "runs/tampered-notes-delivery")), false)
+  fs.writeFileSync(file, before)
+})
+
+test("curated native child handoffs retain explicit Signals and topic approval unions without rewriting articles", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "curated-notes-vault")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+  })
+  const notes = await approvedPublicationNotes(f, "curated-trend-notes")
+  const p = await pool(f, "curated-notes", [f.plan], 1)
+  const candidate = p.value.candidates.find((row) => row.group_id === "order")
+  await review(f, p, [rating(f, candidate, 5)])
+  const selected = await choose(f, p)
+  const parameters = {
+    run_id: "curated-notes-workflow",
+    selection_path: selected.path,
+    selection_sha256: selected.sha256,
+    execute: false,
+    note_review_runs: [notes.run],
+  }
+  const calls = f.provider.calls
+  const result = await executeModule(f.ctx, "curation", "advance", parameters)
+  assert.equal(result.status, "complete")
+  assert.equal(result.model_calls, 0)
+  assert.equal(result.article_writes, 0)
+  const nativeInput = readJSON(f.root, `event-workflows/${result.workflows[0].run_id}/input.json`)
+  assert.equal(nativeInput.note_review_runs[0].run, notes.run)
+  const child = loadDailyPublicationSelection(
+    f.root,
+    result.workflows[0].publication_handoff.path,
+    { vault: f.ctx.vault },
+  )
+  const combined = loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+    vault: f.ctx.vault,
+  })
+  assert.deepEqual(child.knowledgeRuns, [notes.run])
+  assert.deepEqual(combined.knowledgeRuns, [...new Set(child.knowledgeRuns)])
+  assert.deepEqual(combined.approvedRuns, ["writer"])
+  const preview = loadPreviewPublicationInputs(f.root, "curated-notes-reader", [], {
+    vault: f.ctx.vault,
+    publicationHandoff: result.publication_handoff.path,
+    editionSpec: {
+      schema: "research-private-edition/v1",
+      intent: "private_slice",
+      key: "2026-10-12_0800_Tech_AI_Briefing",
+      date: "2026-10-12",
+      coverage_start: "2026-10-10T15:00:00Z",
+      coverage_end: "2026-10-11T15:00:00Z",
+    },
+  })
+  assert.deepEqual(
+    preview.knowledge[0].approval.notes.map((note) => note.path),
+    [notes.signal, notes.topic],
+  )
+  assert.equal(f.provider.calls, calls)
+  const file = safePath(f.root, `runs/${notes.run}/note-review.json`)
+  fs.appendFileSync(file, "\n")
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, result.publication_handoff.path, {
+        vault: f.ctx.vault,
+      }),
+    /approval files changed/,
   )
 })

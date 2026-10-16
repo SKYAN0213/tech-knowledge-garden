@@ -5,6 +5,7 @@ import { loadCurationSelection } from "./curation.mjs"
 import { advanceEventWorkflow } from "./event-workflow.mjs"
 import { createModelExecutionWindow } from "./model-provider.mjs"
 import { projectEvidenceOntology, loadApprovedOntologyInput } from "./ontology.mjs"
+import { loadPublicationNoteReferences } from "./daily-publication-handoff.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 
 const ref = (root, file) => ({ path: file, sha256: sha256(fs.readFileSync(safePath(root, file))) })
@@ -15,12 +16,15 @@ export async function advanceCuration(
 ) {
   const selectionRef = { path: p.selection_path, sha256: p.selection_sha256 }
   const selection = loadCurationSelection(ctx, selectionRef)
+  const noteReviewRuns = p.note_review_runs || []
+  const noteRefs = loadPublicationNoteReferences(ctx, noteReviewRuns)
   const base = `curation/runs/${selection.run_id}/workflows/${p.run_id}/`
   const input = {
     schema: "research-curation-workflow-input/v1",
     run_id: p.run_id,
     selection: selectionRef,
     model_policy_sha256: sha256(fs.readFileSync(ctx.policy)),
+    ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
   }
   return withLock(ctx.root, "curation-workflow-" + p.run_id, async () => {
     const before = readJSON(ctx.root, base + "input.json")
@@ -90,6 +94,7 @@ export async function advanceCuration(
         time_budget_ms: Math.max(1, Math.floor(window.remainingMs())),
         max_model_calls: Math.max(1, (p.max_model_calls ?? 4) - window.model_calls),
         retry_failed: p.retry_failed === true,
+        ...(noteRefs.length ? { note_review_runs: noteReviewRuns } : {}),
         ...(p.retry_candidates?.includes(item.candidate_id)
           ? { retry_groups: [item.execution.group_id] }
           : {}),

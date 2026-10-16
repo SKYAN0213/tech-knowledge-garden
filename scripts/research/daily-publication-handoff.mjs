@@ -10,6 +10,35 @@ import { loadCurrentApproval } from "./preview.mjs"
 import { checkedEdition, checkedPlan, loadSelectedEvent } from "./event-pipeline.mjs"
 import { loadSelectedEventRevision, loadSelectedEventFollowup } from "./event-publication.mjs"
 import { loadCurationSelection, curationGroupsForPlan } from "./curation.mjs"
+import { loadHistoricalNoteApproval } from "./note-review.mjs"
+
+// Additional Signals/topics are explicit native note approvals, independently
+// of the concept approvals attached to individual articles.
+export function loadPublicationNoteReferences(ctx, runs = []) {
+  if (
+    !Array.isArray(runs) ||
+    runs.length > 64 ||
+    new Set(runs).size !== runs.length ||
+    runs.some((run) => typeof run !== "string" || !/^[A-Za-z0-9_-]+$/.test(run))
+  )
+    throw Error("Distinct explicit signal/topic approval runs required")
+  return runs.map((run) => {
+    const approved = loadHistoricalNoteApproval(ctx.root, run, { vault: ctx.vault })
+    if (!approved.approval.notes.some((note) => /^(Signals|TrendTopics)\//.test(note.path)))
+      throw Error("Additional impact approvals require Signals or TrendTopics")
+    return { run, files: approved.files }
+  })
+}
+
+function checkedNoteReferences(ctx, refs = []) {
+  if (!Array.isArray(refs)) throw Error("Pinned signal/topic approval references required")
+  const current = loadPublicationNoteReferences(
+    ctx,
+    refs.map((ref) => ref?.run),
+  )
+  if (!same(refs, current)) throw Error("Signal/topic approval files changed")
+  return current
+}
 
 // Routing metadata only: privatePreview must still validate every native approval.
 export function loadDailyPublicationSelection(root, relative, { vault = "vault" } = {}) {
@@ -38,8 +67,13 @@ export function loadDailyPublicationSelection(root, relative, { vault = "vault" 
     })
     const runs = [...new Set(children.flatMap((child) => child.approvedRuns))]
     if (!runs.length) throw Error("Curated handoff has no approved authoring changes")
+    const knowledgeRuns = [...new Set(children.flatMap((child) => child.knowledgeRuns || []))]
+    const noteRefs = checkedNoteReferences({ root, vault }, input.note_review_runs)
+    if (noteRefs.some((ref) => !knowledgeRuns.includes(ref.run)))
+      throw Error("Curated signal/topic approvals are missing from native child handoffs")
     return {
       approvedRuns: runs,
+      knowledgeRuns,
       reference: { path: relative, sha256: sha256(bytes), run_id: selection.run_id },
       curation: selection.curation,
     }
@@ -225,6 +259,7 @@ function eventSelection(ctx, input, workflow, workflowReference) {
     workflow.candidate_published !== false
   )
     throw Error("Event publication differs from its frozen workflow input")
+  const noteRefs = checkedNoteReferences(ctx, nativeInput.note_review_runs)
   let rows = [],
     approved = [],
     reused = [],
@@ -418,6 +453,7 @@ function eventSelection(ctx, input, workflow, workflowReference) {
     approved_runs: approved,
     reused_runs: reused,
     excluded_groups: excluded,
+    ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
     ...(workflow.ontology ? { evidence_ontology: workflow.ontology } : {}),
     candidate_published: false,
     drive_verified: false,
@@ -567,11 +603,12 @@ function publicationState(selection, reference) {
 
 function requiredKnowledgeRuns(selection) {
   return [
-    ...new Set(
-      selection.approved_runs.flatMap((row) =>
+    ...new Set([
+      ...selection.approved_runs.flatMap((row) =>
         row.knowledge_approvals.map((note) => note.approval_run),
       ),
-    ),
+      ...(selection.note_review_runs || []).map((ref) => ref.run),
+    ]),
   ]
 }
 

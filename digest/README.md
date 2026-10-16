@@ -4,6 +4,8 @@
 
 ## 누적 주제
 
+- [산업용 로봇의 현장 재학습과 운전 수명주기](topics/industrial-robot-learning-lifecycle.md) — 원문 1건 · 0개 원칙
+- [야스카와 로봇 사업의 실적과 전망](topics/company-yaskawa-robotics.md) — 원문 1건 · 0개 원칙
 - [소량 배치 포장 폐기물 분류용 협동로봇 작업대](topics/research-small-batch-packaging-waste-sorting.md) — 원문 1건 · 0개 원칙
 - [RobCo의 투자와 미국 운영](topics/company-robco.md) — 원문 1건 · 0개 원칙
 - [쌓인 옷감의 로봇 집기](topics/research-stacked-fabric-grasping.md) — 원문 1건 · 0개 원칙
@@ -26,6 +28,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-10-16 · 0800](2026/10/2026-10-16_0800_Tech_AI_Briefing.md) — 2026-10-16 IT · AI · 로보틱스
 - [2026-10-12 · 0800](2026/10/2026-10-12_0800_Tech_AI_Briefing.md) — 2026-10-12 IT · AI · 로보틱스
 - [2026-10-08 · 0800](2026/10/2026-10-08_0800_Tech_AI_Briefing.md) — 2026-10-08 IT · AI · 로보틱스
 - [2026-10-07 · 0800](2026/10/2026-10-07_0800_Tech_AI_Briefing.md) — 2026-10-07 IT · AI · 로보틱스

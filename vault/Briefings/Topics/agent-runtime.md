@@ -2,7 +2,7 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-10-12
+date: 2026-10-16
 description: 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준,
   격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI
   통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포
@@ -25,7 +25,7 @@ generated_by: tech-knowledge-garden
 
 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준, 격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI 통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포 계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개 사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로 묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 
-2026-10-12까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-16까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 

@@ -73,6 +73,8 @@ flowchart LR
 
 `curation.advance`는 점수 순서대로 원래 회차/계획의 선정 사건만 native 근거 추출·작성기로 보낸다. 이전 `defer`를 선정하면 같은 원문 회차에 새 명시 사건 판정을 남긴다. `max_items`, 시간, 모델 호출 예산을 공유하며 완료 원고와 다른 원 회차의 checkpoint를 재사용한다. `fact_reviews/editorial_reviews/revision_reviews`는 **candidate_id**별 파일 지도다. 여러 원 회차의 승인 인계는 하나의 `research-curation-publication-handoff/v1`로 합치되 각 native source/사실/편집 승인 검사는 유지한다.
 
+기사에 딸린 용어 승인 외에 이번 회차의 누적 기록을 발행할 때는 `curation.advance.note_review_runs`에 native 승인된 Signals/TrendTopics의 run ID를 명시한다. 승인·검토 파일의 SHA와 사실 근거를 다시 검증하고, 원 회차의 handoff에서 합친 `knowledgeRuns`를 최종 미리보기와 Drive 전송까지 보존한다. 기존 입력의 승인 목록이 달라지면 새 workflow/delivery ID로 진행하며, 완료된 기사와 모델 결과는 재사용한다.
+
 새 브리핑의 `privatePreview`는 이 인계와 명시적 `editionSpec`을 함께 받는다. 선정일이 브리핑 날짜와 같고 정확한 native 승인 원고일 때만 수집 구간 이전 미수록 사건의 첫 소개를 허용한다. 공개 기사/원문 중복, 미래 발표, 원문 관측 cutoff, 수록 이력 변경, 원고 변조는 차단한다. 브리핑 날짜와 원 발표일을 분리하고 기존 사건 ID를 유지한다. 과거 손상/정정 처리와 이미 발행한 기사의 재참조는 기존 경로를 따른다.
 
 ### 같은 회차를 통합 실행·재개

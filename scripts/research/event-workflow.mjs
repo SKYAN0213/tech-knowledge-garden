@@ -11,7 +11,10 @@ import {
 import { extractEditionEventProposals, extractSelectedEventEvidence } from "./event-inference.mjs"
 import { approveSelectedEvent } from "./event-publication.mjs"
 import { prepareEditorialCompleteness } from "./editorial-completeness.mjs"
-import { prepareEventPublicationHandoff } from "./daily-publication-handoff.mjs"
+import {
+  prepareEventPublicationHandoff,
+  loadPublicationNoteReferences,
+} from "./daily-publication-handoff.mjs"
 import { nativeResearch } from "./modules/contracts.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
 import {
@@ -21,7 +24,6 @@ import {
   assertEvidenceOntology,
 } from "./ontology.mjs"
 import { ontologyImpact, loadKnowledgeConnectionApproval } from "./ontology-knowledge.mjs"
-import { loadHistoricalNoteApproval } from "./note-review.mjs"
 import { createModelExecutionWindow } from "./model-provider.mjs"
 import { writeSelectedEventDraft } from "./source-processing.mjs"
 import { curationGroupsForPlan } from "./curation.mjs"
@@ -98,19 +100,7 @@ export async function advanceEventWorkflow(
   )
     throw Error("Exact reviewed event groups required for retry")
   const noteReviewRuns = p.note_review_runs || []
-  if (
-    !Array.isArray(noteReviewRuns) ||
-    noteReviewRuns.length > 64 ||
-    new Set(noteReviewRuns).size !== noteReviewRuns.length ||
-    noteReviewRuns.some((run) => typeof run !== "string" || !/^[A-Za-z0-9_-]+$/.test(run))
-  )
-    throw Error("Distinct explicit signal/topic approval runs required")
-  const noteRefs = noteReviewRuns.map((run) => {
-    const approved = loadHistoricalNoteApproval(ctx.root, run, { vault: ctx.vault })
-    if (!approved.approval.notes.some((note) => /^(Signals|TrendTopics)\//.test(note.path)))
-      throw Error("Additional impact approvals require Signals or TrendTopics")
-    return { run, files: approved.files }
-  })
+  const noteRefs = loadPublicationNoteReferences(ctx, noteReviewRuns)
   const connectionReviewRun = p.connection_review_run
   if (
     connectionReviewRun !== undefined &&

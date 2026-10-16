@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-10-12
+date: 2026-10-16
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,6 +11,8 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/industrial-robot-learning-lifecycle|산업용 로봇의 현장 재학습과 운전 수명주기]] · 1건 · 원칙 0개
+- [[Briefings/Topics/company-yaskawa-robotics|야스카와 로봇 사업의 실적과 전망]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-small-batch-packaging-waste-sorting|소량 배치 포장 폐기물 분류용 협동로봇 작업대]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-robco|RobCo의 투자와 미국 운영]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-stacked-fabric-grasping|쌓인 옷감의 로봇 집기]] · 1건 · 원칙 0개
@@ -33,6 +35,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-16_0800_Tech_AI_Briefing|2026-10-16 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-12_0800_Tech_AI_Briefing|2026-10-12 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-08_0800_Tech_AI_Briefing|2026-10-08 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-07_0800_Tech_AI_Briefing|2026-10-07 · 0800 브리핑]]

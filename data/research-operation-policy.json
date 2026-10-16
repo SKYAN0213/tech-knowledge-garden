@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/gpt-publication-20261016-v3/receipt.json",
-    "sha256": "086a78c9ba1cc8f227abce00e4247bd22c1b25cf98caf0fbd4e815c072476a26"
+    "path": ".local/research/development-releases/gpt-publication-20261016-v4/receipt.json",
+    "sha256": "0f2c2209bd255c589b8eebfc1d960875711eb50914eb8ea75cf7af1994612027"
   },
   "recovery": {
     "automatic_retry": false,

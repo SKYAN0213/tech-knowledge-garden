@@ -102,6 +102,7 @@ export const module = {
           revision_reviews: { type: "object", additionalProperties: file() },
           completeness_reviews: { type: "object", additionalProperties: file() },
           coverage_reviews: { type: "object", additionalProperties: file() },
+          note_review_runs: { type: "array", maxItems: 64, uniqueItems: true, items: id },
         },
         ["run_id", "selection_path", "selection_sha256"],
       ),
