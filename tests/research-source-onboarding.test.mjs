@@ -203,6 +203,47 @@ test("incomplete, future or empty-as-normal evidence cannot pass verification", 
   )
 })
 
+test("native activation rejects changed or missing private receipts before modifying source configuration", async (t) => {
+  const options = fixture(t)
+  const verified = await verifySourceOnboarding(options, reuse)
+  const receiptFile = path.join(options.root, verified.receipt)
+  const receipt = read(receiptFile)
+  const sourceFile = path.join(options.repo, "data/research-source-channels.json")
+  const dailyFile = path.join(options.repo, "data/research-daily-routes.json")
+  const beforeSource = fs.readFileSync(sourceFile)
+  const beforeDaily = fs.readFileSync(dailyFile)
+  for (const [changed, expected] of [
+    [{ ...receipt, channel_id: "different-channel" }, /Onboarding receipt does not match channel/],
+    [
+      {
+        ...receipt,
+        collection_basis: { ...receipt.collection_basis, route_sha256: "0".repeat(64) },
+      },
+      /Onboarding scan evidence changed/,
+    ],
+    [
+      { ...receipt, baseline: { ...receipt.baseline, run_id: "different-baseline" } },
+      /Daily scan run artifacts are missing or malformed/,
+    ],
+    [{ ...receipt, checkpoints_reused: false }, /Onboarding receipt does not match channel/],
+  ]) {
+    fs.writeFileSync(receiptFile, JSON.stringify(changed))
+    await assert.rejects(
+      activateSourceOnboarding({ ...options, receipt: verified.receipt, apply: true }),
+      expected,
+    )
+    assert.deepEqual(fs.readFileSync(sourceFile), beforeSource)
+    assert.deepEqual(fs.readFileSync(dailyFile), beforeDaily)
+  }
+  fs.rmSync(receiptFile)
+  await assert.rejects(
+    activateSourceOnboarding({ ...options, receipt: verified.receipt, apply: true }),
+    /Onboarding receipt does not match channel/,
+  )
+  assert.deepEqual(fs.readFileSync(sourceFile), beforeSource)
+  assert.deepEqual(fs.readFileSync(dailyFile), beforeDaily)
+})
+
 test("stale collection code and settings fail while progress metadata does not change collection basis", async (t) => {
   const o = fixture(t),
     file = path.join(o.repo, "data/research-source-channels.json")

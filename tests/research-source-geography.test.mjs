@@ -13,7 +13,6 @@ import {
   sourceRecipe,
 } from "../scripts/research/source-recipes.mjs"
 import { registry } from "../scripts/research/discovery.mjs"
-import { collectionRoute } from "../scripts/research/scan-basis.mjs"
 import { planSourceRegistration } from "../scripts/research/source-registration.mjs"
 import { sourceCollectionInventory } from "../scripts/research/collection-report.mjs"
 
@@ -307,7 +306,7 @@ test("sources list projects declarations and unknown values without writing regi
   )
 })
 
-test("empty catalog checks reuse only an activated exact route with a matching stored onboarding receipt", (t) => {
+test("empty catalog checks reuse only a verified exact public route declaration without verifying private evidence", (t) => {
   const f = inputs()
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "completed-catalog-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
@@ -325,20 +324,11 @@ test("empty catalog checks reuse only an activated exact route with a matching s
     verification_receipt: "source-onboarding/fixture-native/verification.json",
   }
   f.daily.routes[0].enabled = true
-  const registered = registry(f.channels, f.watchlist, f.adapters, f.recipes)[0]
-  const receipt = {
-    schema: "research-source-onboarding/v1",
-    channel_id: route.id,
-    collection_basis: {
-      channel_id: route.id,
-      route_sha256: sha256(JSON.stringify(collectionRoute(registered))),
-    },
-    baseline: { run_id: f.daily.routes[0].baseline_run },
-    checkpoints_reused: true,
-  }
   const file = path.join(root, route.onboarding.verification_receipt)
   fs.mkdirSync(path.dirname(file), { recursive: true })
-  fs.writeFileSync(file, JSON.stringify(receipt))
+  // Listing configuration must not read or attest to private receipt contents.
+  // Receipt integrity is exercised by the native activation tests.
+  fs.writeFileSync(file, "Private native evidence is outside public configuration lookup.\n")
   const inputBefore = JSON.stringify(f)
   const receiptBefore = fs.readFileSync(file)
   const plan = planSourceRegistration(f)
@@ -368,20 +358,22 @@ test("empty catalog checks reuse only an activated exact route with a matching s
     (copy) => {
       copy.channels.channels = []
     },
+    (copy) => {
+      copy.channels.channels[0].onboarding.verification_receipt = "invalid-reference"
+    },
+    (copy) => {
+      copy.daily.routes[0].baseline_run = "invalid/baseline"
+    },
   ]) {
     const copy = structuredClone(f)
     change(copy)
     assert.throws(() => planSourceRegistration(copy), /Invalid source catalog entry/)
   }
-  for (const changed of [
-    { ...receipt, channel_id: "different-channel" },
-    { ...receipt, collection_basis: { ...receipt.collection_basis, route_sha256: "0".repeat(64) } },
-    { ...receipt, baseline: { run_id: "different-baseline" } },
-    { ...receipt, checkpoints_reused: false },
-  ]) {
-    fs.writeFileSync(file, JSON.stringify(changed))
-    assert.throws(() => planSourceRegistration(f), /Invalid source catalog entry/)
-  }
   fs.rmSync(file)
-  assert.throws(() => planSourceRegistration(f), /Invalid source catalog entry/)
+  assert.deepEqual(planSourceRegistration(f), plan)
+  assert.equal(
+    fs.existsSync(file),
+    false,
+    "configuration lookup does not recreate private evidence",
+  )
 })

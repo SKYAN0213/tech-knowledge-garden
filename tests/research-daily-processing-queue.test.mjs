@@ -235,25 +235,22 @@ test("a reviewed detail requirement yields its slot, preserves candidate and rev
   const again = await processDailyQueue(options)
   assert.deepEqual(again, first)
   assert.equal(f.calls.length, 1)
-  const automatic = await processDailyQueue({
+  let elapsed = 0
+  const automaticOptions = {
     ...options,
     runId: "automatic-review-queue",
     sourceReviewFiles: undefined,
     timeBudgetMs: 1,
-  })
+    // Expire before a pending processor on both first read and resume. Native
+    // detail-review bookkeeping remains outside the generation slot budget.
+    clock: () => elapsed++,
+  }
+  const automatic = await processDailyQueue(automaticOptions)
   assert.equal(automatic.counts.source_review, 1)
   assert.equal(automatic.counts.processed, 0)
   assert.equal(automatic.results[0].source_review.receipt, receipt.path)
   assert.equal(f.calls.length, 1)
-  assert.deepEqual(
-    await processDailyQueue({
-      ...options,
-      runId: "automatic-review-queue",
-      sourceReviewFiles: undefined,
-      timeBudgetMs: 1,
-    }),
-    automatic,
-  )
+  assert.deepEqual(await processDailyQueue(automaticOptions), automatic)
   const changedHandoff = path.join(f.root, "changed-handoff.json")
   fs.writeFileSync(
     changedHandoff,
