@@ -9,6 +9,7 @@ import { loadCompletedExtraction } from "../scripts/research/extraction-checkpoi
 import { atomicWrite, readJSON, RunState } from "../scripts/research/run-state.mjs"
 import { processSourceRun } from "../scripts/research/source-processing.mjs"
 import { buildArchiveClosure } from "../scripts/research/archive-closure.mjs"
+import { structuredRequestBudget } from "../scripts/research/ollama.mjs"
 
 // Controlled protocol fixtures; production evidence is checked separately with
 // stored Ollama request/response records, without substituting this provider.
@@ -164,9 +165,8 @@ test("a completed historical prompt is reused without requiring today's prompt o
   const batch = {
     ...oldBatch,
     batch_id: "001-" + sha256(JSON.stringify(internal)).slice(0, 16),
-    input_chars:
-      request.messages.reduce((n, message) => n + message.content.length, 0) +
-      JSON.stringify(request.format).length,
+    input_chars: JSON.stringify({ messages: request.messages, format: request.format }).length,
+    request_budget: structuredRequestBudget(internal),
   }
   const name = "claims-batch-" + batch.batch_id,
     oldProvenance = claims.provenance
@@ -189,6 +189,41 @@ test("a completed historical prompt is reused without requiring today's prompt o
   atomicWrite(f.root, base + "state.json", state)
   const expected = fs.readFileSync(path.join(f.root, base + "claims.json"))
   assert.deepEqual(loadCompletedExtraction(f.root, f.run, f.documents, f.parses), expected)
+})
+
+test("completed pre-budget extraction remains reusable under its exact historical accounting", async (t) => {
+  const f = await fixture(t),
+    base = "runs/cli/",
+    claims = readJSON(f.root, base + "claims.json"),
+    state = readJSON(f.root, base + "state.json")
+  const batch = claims.provenance.extraction_plan.batches[0]
+  const request = claims.model_artifacts.request
+  delete batch.request_budget
+  batch.input_chars =
+    request.messages.reduce((n, message) => n + message.content.length, 0) +
+    JSON.stringify(request.format).length
+  claims.provenance.extraction_plan.input_char_limit =
+    claims.provenance.extraction_budget.input_char_budget
+  state.stages.claims.result_hash = sha256(JSON.stringify(claims))
+  atomicWrite(f.root, base + "claims.json", claims)
+  atomicWrite(f.root, base + "state.json", state)
+  const expected = fs.readFileSync(path.join(f.root, base + "claims.json"))
+  assert.deepEqual(loadCompletedExtraction(f.root, f.run, f.documents, f.parses), expected)
+})
+
+test("completed CLI extraction refuses altered serialized request budgets even with a resealed result", async (t) => {
+  const f = await fixture(t),
+    base = "runs/cli/",
+    claims = readJSON(f.root, base + "claims.json"),
+    state = readJSON(f.root, base + "state.json")
+  claims.provenance.extraction_plan.batches[0].request_budget.input_chars--
+  state.stages.claims.result_hash = sha256(JSON.stringify(claims))
+  atomicWrite(f.root, base + "claims.json", claims)
+  atomicWrite(f.root, base + "state.json", state)
+  assert.throws(
+    () => loadCompletedExtraction(f.root, f.run, f.documents, f.parses),
+    /request budget/,
+  )
 })
 
 test("CLI reuse refuses partial batches, altered results and inherited verification", async (t) => {

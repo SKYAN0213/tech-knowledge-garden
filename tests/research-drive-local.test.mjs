@@ -42,9 +42,14 @@ function fixture(t) {
   fs.mkdirSync(root)
   fs.mkdirSync(path.join(dir, "data"))
   fs.writeFileSync(path.join(dir, "data/research-drive-policy.json"), JSON.stringify(policy))
-  fs.copyFileSync(
-    path.join(repo, "data/research-operation-policy.json"),
+  const operationPolicy = JSON.parse(
+    fs.readFileSync(path.join(repo, "data/research-operation-policy.json"), "utf8"),
+  )
+  operationPolicy.phase = "development"
+  operationPolicy.development_completion = null
+  fs.writeFileSync(
     path.join(dir, "data/research-operation-policy.json"),
+    JSON.stringify(operationPolicy),
   )
   const client = path.join(dir, "desktop-client.json")
   fs.writeFileSync(
@@ -591,6 +596,35 @@ test("regular transfers hold before credentials or network; setup errors retain 
     driveStorageAction(f.repo, f.root, "remote-pull", {}, options),
     (e) => e.code === "DRIVE_SETUP_REQUIRED",
   )
+  assert.equal(calls, 0)
+  assert.deepEqual(fs.readdirSync(f.root), [])
+})
+
+test("ready phase keeps optional local transfers disabled before credentials or network", async (t) => {
+  const f = fixture(t)
+  const policyFile = path.join(f.repo, "data/research-operation-policy.json")
+  const operationPolicy = JSON.parse(fs.readFileSync(policyFile, "utf8"))
+  operationPolicy.phase = "ready"
+  operationPolicy.optional_execution.ollama.enabled = false
+  fs.writeFileSync(policyFile, JSON.stringify(operationPolicy))
+  let calls = 0
+  const result = await driveStorageAction(
+    f.repo,
+    f.root,
+    "remote-push",
+    { regular: true },
+    {
+      fetchImpl: () => {
+        calls++
+        throw Error("unexpected")
+      },
+    },
+  )
+  assert.equal(result.status, "executor_not_ready")
+  assert.equal(result.operation_gate.reason, "local_executor_not_enabled")
+  assert.equal(result.operation_gate.regular_execution_allowed, false)
+  assert.equal(result.remote_requests, 0)
+  assert.equal(result.remote_writes, 0)
   assert.equal(calls, 0)
   assert.deepEqual(fs.readdirSync(f.root), [])
 })

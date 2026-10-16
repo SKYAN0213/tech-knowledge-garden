@@ -38,7 +38,7 @@ const settings = {
 }
 const policy = (role = "article_write") => ({
   schema: "model-execution-policy/v1",
-  roles: { [role]: settings },
+  roles: { [role]: structuredClone(settings) },
 })
 const metadata = async () => ({
   model,

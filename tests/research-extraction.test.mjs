@@ -407,8 +407,7 @@ test("structured source fields reach extraction without losing body versus metad
   )
   assert.equal(
     plan.batches[0].input_chars,
-    request.messages.reduce((length, message) => length + message.content.length, 0) +
-      JSON.stringify(request.schema).length,
+    JSON.stringify({ messages: request.messages, format: request.schema }).length,
   )
 })
 test("non-JSON sources do not acquire a guessed structured field", () => {
@@ -466,7 +465,9 @@ function researchPaper(id = "paper") {
         "Unrelated citation metadata.",
       ].includes(block.text)
     ) {
-      block.text += " " + "Supporting source details. ".repeat(750)
+      // Each atomic block fits the bounded request; their combined source still
+      // requires batching. Atomic oversize rejection has its own regression.
+      block.text += " " + "Supporting source details. ".repeat(400)
       block.locator.text_hash = sha256(block.text)
     }
   }
@@ -527,8 +528,7 @@ test("long multi-document extraction covers each original block once within the 
     assert.ok(batch.input_chars <= a.input_char_limit)
     assert.equal(
       batch.input_chars,
-      batch.request.messages.reduce((s, m) => s + m.content.length, 0) +
-        JSON.stringify(batch.request.schema).length,
+      JSON.stringify({ messages: batch.request.messages, format: batch.request.schema }).length,
     )
     assert.deepEqual(
       batch.request.schema.properties.claims.items.properties.evidence.items.properties.block_key
@@ -1046,7 +1046,7 @@ test("deadline expiry stops the next batch while retaining a completed checkpoin
   }
   await assert.rejects(
     extractClaims(model, sources, { ...options, checkpoint, now: () => time }),
-    /Extraction time budget exceeded/,
+    /Extraction time\/call budget exceeded/,
   )
   assert.equal(calls, 1)
   assert.equal(Object.values(run.state.stages).filter((s) => s.status === "complete").length, 1)

@@ -489,8 +489,9 @@ test("curation is independently callable through the same strict CLI/MCP module 
   const catalog = moduleCatalog(["curation"])
   assert.deepEqual(
     catalog.modules[0].operations.map((op) => op.id),
-    ["prepare", "evaluate", "select", "advance"],
+    ["prepare", "evaluate", "select", "status", "feedback", "advance"],
   )
+  assert.equal(catalog.modules[0].operations.find((op) => op.id === "status").readOnly, true)
   await assert.rejects(
     executeModule(f.ctx, "curation", "prepare", {
       run_id: "x",

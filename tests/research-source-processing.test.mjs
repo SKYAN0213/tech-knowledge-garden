@@ -1146,6 +1146,27 @@ test("historical writer reuse rejects changed facts, source, output, budget and 
         sha256: sha256(JSON.stringify(ledger)),
       })
     },
+    request_budget: (f) => {
+      const receipt = readJSON(f.root, "runs/processed/model-draft-checkpoint.json")
+      const record = readJSON(f.root, receipt.output_path)
+      record.provenance.request_budget.input_chars--
+      const changed = atomicWrite(f.root, receipt.output_path, record)
+      atomicWrite(f.root, "runs/processed/model-draft-checkpoint.json", {
+        ...receipt,
+        output_sha256: changed.sha256,
+      })
+    },
+    ledger_request_budget: (f) => {
+      const { sha256: seal, ...ledger } = readJSON(
+        f.root,
+        "runs/processed/model-policy/article_write/budget.json",
+      )
+      ledger.attempts[0].request_budget.input_chars--
+      atomicWrite(f.root, "runs/processed/model-policy/article_write/budget.json", {
+        ...ledger,
+        sha256: sha256(JSON.stringify(ledger)),
+      })
+    },
     working: (f) => {
       const draft = readJSON(f.root, "runs/processed/draft.json")
       draft.draft.title = "Edited working draft"

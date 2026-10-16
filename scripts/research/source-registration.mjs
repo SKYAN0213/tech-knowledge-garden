@@ -9,7 +9,6 @@ import {
   DEFAULT_ROOT,
   atomicCreate,
   atomicWrite,
-  readJSON,
   safePath,
   withGardenOperationLock,
 } from "./run-state.mjs"
@@ -19,7 +18,6 @@ import {
   sourceGeographyInventory,
 } from "./source-recipes.mjs"
 import { validateDailyRoutes } from "./daily-plan.mjs"
-import { collectionRoute } from "./scan-basis.mjs"
 
 const channelsFile = "data/research-source-channels.json"
 const configFiles = [
@@ -47,9 +45,11 @@ function publicURL(raw) {
   return url
 }
 
-// This permits reading/reusing an already activated registration. It does not
-// rerun onboarding or attest that historical scan code is current.
-function completedCatalogRegistration(entry, routes, { daily, root = DEFAULT_ROOT } = {}) {
+// A public checkout can read/reuse an already activated declaration without
+// downloading private onboarding artifacts. This does not verify native
+// onboarding, activate a route, or attest that historical scan code is current;
+// source-onboarding's activation gate still requires the actual stored proofs.
+function declaredCatalogRegistration(entry, routes, { daily } = {}) {
   const route = routes.find(
     (row) =>
       row.channel_id === entry.channel_id && canonicalURL(row.url) === canonicalURL(entry.url),
@@ -60,6 +60,7 @@ function completedCatalogRegistration(entry, routes, { daily, root = DEFAULT_ROO
   const onboarding = route?.onboarding
   if (
     !active ||
+    !safeId(active.baseline_run) ||
     onboarding?.status !== "verified" ||
     onboarding.collection_enabled !== true ||
     !Array.isArray(onboarding.remaining_checks) ||
@@ -68,15 +69,7 @@ function completedCatalogRegistration(entry, routes, { daily, root = DEFAULT_ROO
     !/^source-onboarding\/[A-Za-z0-9_-]+\/verification\.json$/.test(onboarding.verification_receipt)
   )
     return false
-  const receipt = readJSON(root, onboarding.verification_receipt)
-  return Boolean(
-    receipt?.schema === "research-source-onboarding/v1" &&
-    receipt.channel_id === route.channel_id &&
-    receipt.collection_basis?.channel_id === route.channel_id &&
-    receipt.collection_basis.route_sha256 === sha256(JSON.stringify(collectionRoute(route))) &&
-    receipt.baseline?.run_id === active.baseline_run &&
-    receipt.checkpoints_reused === true,
-  )
+  return true
 }
 
 export function validateSourceCatalog(catalog, routes, recipes, context = {}) {
@@ -105,7 +98,7 @@ export function validateSourceCatalog(catalog, routes, recipes, context = {}) {
       typeof entry.acquisition_notes !== "string" ||
       !entry.acquisition_notes.trim() ||
       !Array.isArray(entry.remaining_checks) ||
-      (!entry.remaining_checks.length && !completedCatalogRegistration(entry, routes, context)) ||
+      (!entry.remaining_checks.length && !declaredCatalogRegistration(entry, routes, context)) ||
       entry.remaining_checks.some((check) => !safeId(check)) ||
       !Array.isArray(entry.related_channel_ids) ||
       entry.related_channel_ids.some((id) => !known.has(id)) ||

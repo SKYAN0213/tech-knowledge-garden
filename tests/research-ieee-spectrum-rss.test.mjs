@@ -52,13 +52,22 @@ test("IEEE Spectrum Robotics uses the shared bounded RSS contract and preserves 
     status: "extracted",
     title: "IEEE Spectrum",
     quality: { required_fields_present: true },
-    links: links.map((link) => ({ ...link, categories: [] })),
+    links: links.map((link) => ({ ...link, categories: ["Robotics"] })),
   }
   const result = assessBoundedRSSFeed(parse, route, "2026-09-25", "2026-10-02")
   assert.equal(result.status, "window_covered")
   assert.deepEqual(
     result.links.map((link) => link.url),
     links.slice(0, 2).map((link) => link.url),
+  )
+
+  const missingCategory = {
+    ...parse,
+    links: [{ ...parse.links[0], categories: [] }, ...parse.links.slice(1)],
+  }
+  assert.equal(
+    assessBoundedRSSFeed(missingCategory, route, "2026-09-25", "2026-10-02").reason,
+    "feed_item_category_missing",
   )
 
   const unexpectedHost = {

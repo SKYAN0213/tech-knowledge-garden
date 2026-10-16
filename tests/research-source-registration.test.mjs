@@ -16,7 +16,9 @@ import {
   loadSourceRegistration,
   planSourceRegistration,
   registerSourceCatalog,
+  validateSourceCatalog,
 } from "../scripts/research/source-registration.mjs"
+import { activateSourceOnboarding } from "../scripts/research/source-onboarding.mjs"
 const load = (file) => JSON.parse(fs.readFileSync(file, "utf8"))
 const recipes = DEFAULT_SOURCE_RECIPES
 
@@ -35,14 +37,9 @@ function fixture(t) {
     fs.copyFileSync(`data/${file}.json`, path.join(repo, `data/${file}.json`))
   const file = path.join(repo, "data/research-source-channels.json"),
     channels = load(file)
-  const active = new Set(
-    load(path.join(repo, "data/research-daily-routes.json"))
-      .routes.filter((r) => r.enabled)
-      .map((r) => r.channel_id),
-  )
-  channels.channels = channels.channels.filter(
-    (route) => !route.id.startsWith("catalog-") || active.has(route.id),
-  )
+  // Remove only the route this fixture registers. Other catalog routes remain
+  // valid identities for related_channel_ids, including inactive discoveries.
+  channels.channels = channels.channels.filter((route) => route.id !== "catalog-x04")
   fs.writeFileSync(file, JSON.stringify(channels, null, 2) + "\n")
   return repo
 }
@@ -73,6 +70,67 @@ test("researched routes and newly confirmed endpoints preserve every active coll
   assert.equal(again.reused, before.catalog.entries.length)
   assert.equal(again.registered_after, plan.registered_after)
   assert.deepEqual(again.next_channels, plan.next_channels)
+})
+
+test("public registered configuration can be reused without private onboarding evidence, while activation cannot", async (t) => {
+  const repo = fixture(t)
+  const loaded = loadSourceRegistration({ repo, ids: ["X76"] })
+  assert.equal(loaded.plan.new_routes, 0)
+  assert.equal(loaded.plan.results[0].action, "reuse")
+  assert.equal(fs.existsSync(path.join(repo, ".local")), false)
+  const entry = loaded.catalog.entries.find((row) => row.id === "X76")
+  const channels = load(path.join(repo, "data/research-source-channels.json"))
+  const routes = registry(
+    channels,
+    load(path.join(repo, "data/research-watchlist.json")),
+    load(path.join(repo, "data/research-acquisition.json")),
+  )
+  const daily = load(path.join(repo, "data/research-daily-routes.json"))
+  const catalog = { ...loaded.catalog, entries: [entry] }
+  const route = routes.find((row) => row.channel_id === entry.channel_id)
+  for (const change of [
+    {
+      daily: {
+        ...daily,
+        routes: daily.routes.filter((row) => row.channel_id !== entry.channel_id),
+      },
+    },
+    {
+      routes: routes.map((row) =>
+        row === route ? { ...row, onboarding: { ...row.onboarding, status: "configured" } } : row,
+      ),
+    },
+    {
+      routes: routes.map((row) =>
+        row === route
+          ? { ...row, onboarding: { ...row.onboarding, verification_receipt: "invalid" } }
+          : row,
+      ),
+    },
+  ])
+    assert.throws(
+      () =>
+        validateSourceCatalog(catalog, change.routes || routes, recipes, {
+          daily: change.daily || daily,
+        }),
+      /Invalid source catalog entry/,
+    )
+  const beforeChannels = fs.readFileSync(path.join(repo, "data/research-source-channels.json"))
+  const beforeDaily = fs.readFileSync(path.join(repo, "data/research-daily-routes.json"))
+  await assert.rejects(
+    activateSourceOnboarding({
+      repo,
+      channel: entry.channel_id,
+      receipt: route.onboarding.verification_receipt,
+      apply: true,
+    }),
+    /Onboarding receipt/,
+  )
+  assert.deepEqual(
+    fs.readFileSync(path.join(repo, "data/research-source-channels.json")),
+    beforeChannels,
+  )
+  assert.deepEqual(fs.readFileSync(path.join(repo, "data/research-daily-routes.json")), beforeDaily)
 })
 
 test("recipes inherit nested rules and replace arrays, rejecting cycles and unsafe identity overrides", () => {
@@ -165,13 +223,29 @@ test("two MIT feeds retain their complete previously deployed options while shar
 })
 
 test("pending documentation/list registrations perform no discovery request and cannot enter daily routes", async () => {
-  const loaded = loadSourceRegistration({ ids: ["X20"] })
+  const catalog = load("data/research-source-catalog.json")
+  const entry = {
+    ...catalog.entries.find((row) => row.id === "X20"),
+    id: "pending-documentation-fixture",
+    channel_id: "pending-documentation-fixture",
+    url: "https://example.org/reference",
+    related_channel_ids: [],
+    evidence_urls: ["https://example.org/reference"],
+  }
+  const plan = planSourceRegistration({
+    catalog: { ...catalog, entries: [entry] },
+    channels: load("data/research-source-channels.json"),
+    watchlist: load("data/research-watchlist.json"),
+    adapters: load("data/research-acquisition.json"),
+    recipes,
+    daily: load("data/research-daily-routes.json"),
+  })
   const routes = registry(
-    loaded.plan.next_channels,
+    plan.next_channels,
     load("data/research-watchlist.json"),
     load("data/research-acquisition.json"),
   )
-  const item = loaded.plan.results[0],
+  const item = plan.results[0],
     route = routes.find((entry) => entry.channel_id === item.channel_id)
   assert.equal(route.onboarding.role, "documentation")
   const fetcher = { fetch: () => assert.fail("unverified source fetched"), options: {} }

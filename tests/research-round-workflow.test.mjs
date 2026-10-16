@@ -159,6 +159,15 @@ function coordinationFixture(t, { pending = false, eventStatus = "complete" } = 
                 ? "waiting_for_reasoning"
                 : state.rowStatus,
         ...(event.action !== "defer" ? { writer_run: "fixture-writer" } : {}),
+        ...(state.rowStatus === "editorial_review" && event.action !== "defer"
+          ? {
+              next_input: {
+                module: "validation",
+                operation: "reader",
+                parameters: { run_id: "fixture-writer" },
+              },
+            }
+          : {}),
         ...(status === "waiting_for_reasoning" && event.action !== "defer"
           ? {
               reasoning_task: {
@@ -728,6 +737,11 @@ test("event review and delegated reasoning return exact next inputs without know
       stage: "writing",
       group_id: "order",
       writer_run: "fixture-writer",
+      next_input: {
+        module: "validation",
+        operation: "reader",
+        parameters: { run_id: "fixture-writer" },
+      },
       required: ["editorial_reviews"],
     },
   ])

@@ -89,7 +89,7 @@ test("direct inference and planning use the installed MLX default and preserve e
       planSearchQueries(root, "plan", provider, { date: "2026-10-04", ...options }),
   ]
   for (const options of [{}, { model: "explicit-local-model" }]) {
-    const expected = options.model ?? "qwen3.8:27b-mlx"
+    const expected = options.model ?? "gemma4:31b-mlx"
     for (const call of calls) {
       const stopped = Error("Stop before inference or metadata access")
       const requested = []
@@ -110,5 +110,5 @@ test("direct inference and planning use the installed MLX default and preserve e
   const policy = JSON.parse(
     fs.readFileSync(new URL("../data/research-model-policy.json", import.meta.url)),
   )
-  assert.ok(Object.values(policy.roles).every((role) => role.model === "qwen3.8:27b-mlx"))
+  assert.ok(Object.values(policy.roles).every((role) => role.model === "gemma4:31b-mlx"))
 })

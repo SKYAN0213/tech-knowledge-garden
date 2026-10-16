@@ -262,6 +262,24 @@ test("completed output tampering, stale approval and partial checkpoints cannot 
   state.stages.outputs.status = "failed"
   f.put(`runs/${f.previewRun}/preview/state.json`, state)
   assert.equal(f.inspect(), null)
-  await assert.rejects(prepareAuthoringTransfer(f.options), /Run input changed/)
+  // The partial-preview path fingerprints a renderer before comparing the
+  // saved generation input. Keep this rejection fixture independent of a
+  // generated .quartz/plugins tree (absent in a clean checkout before build).
+  const rendererRepo = path.join(f.root, "renderer-rejection-fixture")
+  for (const directory of ["scripts", "quartz", "web", "data", ".quartz/plugins"])
+    fs.mkdirSync(path.join(rendererRepo, directory), { recursive: true })
+  for (const file of [
+    "package.json",
+    "package-lock.json",
+    "quartz.config.yaml",
+    "quartz.ts",
+    "tsconfig.json",
+    ".quartz/plugins/index.ts",
+  ])
+    fs.writeFileSync(path.join(rendererRepo, file), "Explicit rejection-only renderer fixture\n")
+  await assert.rejects(
+    prepareAuthoringTransfer({ ...f.options, repo: rendererRepo }),
+    /Run input changed/,
+  )
   assert.equal(f.renders(), 1)
 })

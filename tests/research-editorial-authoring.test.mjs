@@ -163,7 +163,10 @@ test("source-reviewed GPT authoring stays unapproved and has no fake local model
 test("unknown paragraph facts and oversized explanations fail before a draft is stored", () => {
   const f = fixture()
   f.input.draft.lead[0].claim_ids = ["unknown"]
-  assert.throws(() => prepareEditorialDraft(f.input, f.claims, f.parses), /correction/)
+  assert.throws(
+    () => prepareEditorialDraft(f.input, f.claims, f.parses),
+    /Invalid enum at \$\.lead\[0\]\.claim_ids\[0\]/,
+  )
   const g = fixture()
   g.input.draft.explanations = [
     {

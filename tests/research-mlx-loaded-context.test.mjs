@@ -11,7 +11,14 @@ const model = "development-mlx",
     required: ["status"],
     properties: { status: { type: "string", enum: ["ready"] } },
   },
-  request = { model, think: false, num_ctx: 32768, num_predict: 128, messages: [], schema },
+  request = {
+    model,
+    think: false,
+    num_ctx: 32768,
+    num_predict: 128,
+    messages: [{ role: "user", content: "Report the ready status as structured JSON." }],
+    schema,
+  },
   row = (context_length, extra = {}) => ({ name: model, digest, context_length, ...extra })
 
 // Injected responses test the adapter contract only; they are not model trials.

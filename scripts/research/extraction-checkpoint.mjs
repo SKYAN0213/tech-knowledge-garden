@@ -10,6 +10,7 @@ import {
   articleMetadataContext,
 } from "./claims.mjs"
 import { modelSourceDates } from "./source-context.mjs"
+import { structuredRequestBudget } from "./ollama.mjs"
 
 // Validate the original CLI protocol rather than regenerating today's prompt.
 // A prompt/policy update must not require repeating a completed model request.
@@ -48,11 +49,28 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
     throw Error("Original CLI extraction budget required")
   const budget = extractionBudget(provenance?.extraction_budget)
   const scope = selectExtractionScope(parses, plan?.scope?.profile)
+  // Preserve completed requests from before protocol accounting was added.
+  // New checkpoints bind the actual serialized messages/schema and reserve
+  // output/template space, rather than using the source-character cap alone.
+  const hasRequestBudget =
+    Array.isArray(plan?.batches) && plan.batches.some((b) => Object.hasOwn(b, "request_budget"))
+  const inputCharLimit = hasRequestBudget
+    ? Math.min(
+        budget.input_char_budget,
+        structuredRequestBudget({
+          messages: [{ role: "user", content: "" }],
+          schema: {},
+          num_ctx: budget.num_ctx,
+          num_predict: budget.num_predict,
+        }).input_char_limit,
+      )
+    : budget.input_char_budget
   if (
     !Array.isArray(plan?.batches) ||
     !plan.batches.length ||
     plan.batches.length > 64 ||
-    plan.input_char_limit !== budget.input_char_budget ||
+    plan.input_char_limit !== inputCharLimit ||
+    (hasRequestBudget && !plan.batches.every((b) => Object.hasOwn(b, "request_budget"))) ||
     JSON.stringify(plan.scope) !==
       JSON.stringify({ profile: scope.profile, documents: scope.documents })
   )
@@ -130,14 +148,19 @@ function assertCompletedCLIExtraction(root, run, extracted, parses) {
       num_ctx: request.options.num_ctx,
       num_predict: request.options.num_predict,
     }
-    const chars =
-      request.messages.reduce((n, message) => n + message.content.length, 0) +
-      JSON.stringify(request.format).length
+    const requestBudget = hasRequestBudget ? structuredRequestBudget(originalRequest) : null
+    const chars = requestBudget
+      ? requestBudget.input_chars
+      : request.messages.reduce((n, message) => n + message.content.length, 0) +
+        JSON.stringify(request.format).length
     if (
       batch.batch_id !==
         `${String(index + 1).padStart(3, "0")}-${sha256(JSON.stringify(originalRequest)).slice(0, 16)}` ||
       batch.input_chars !== chars ||
-      chars > plan.input_char_limit
+      chars > plan.input_char_limit ||
+      (requestBudget &&
+        (!requestBudget.fits ||
+          JSON.stringify(batch.request_budget) !== JSON.stringify(requestBudget)))
     )
       throw Error("CLI extraction request budget or identity changed")
     const documents = JSON.parse(request.messages[1].content),

@@ -794,14 +794,13 @@ test("Ollama rejects unsupported think types, cloud-only models and truncated ou
             : { done: true, done_reason: "length", message: { content: "{}" } },
   })
   const o = new Ollama({ fetchImpl: f })
-  await assert.rejects(
-    o.structured({ model: "local", think: true, messages: [], schema: {} }),
-    /Unsupported/,
-  )
-  await assert.rejects(
-    o.structured({ model: "local", think: "medium", messages: [], schema: {} }),
-    /Incomplete/,
-  )
+  const request = {
+    model: "local",
+    messages: [{ role: "user", content: "Return the source-backed result." }],
+    schema: { type: "object" },
+  }
+  await assert.rejects(o.structured({ ...request, think: true }), /Unsupported/)
+  await assert.rejects(o.structured({ ...request, think: "medium" }), /Incomplete/)
   await assert.rejects(o.metadata("remote:cloud"), /Local model/)
   assert.throws(() => new Ollama({ url: "https://other.example.com" }), /local endpoint/)
 })
@@ -893,7 +892,7 @@ test("local model budgets reject invalid settings before metadata and record bou
   const result = await adapter.structured({
     model: "local",
     think: false,
-    messages: [],
+    messages: [{ role: "user", content: "Return the source-backed result." }],
     schema: { type: "object" },
     timeout_ms: 1000,
     num_ctx: 8192,

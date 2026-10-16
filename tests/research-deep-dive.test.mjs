@@ -583,7 +583,9 @@ test("deep approval preserves later reviewed relationships and rejects changed c
 test("GPT deep editorial authoring binds reviewed full text and enters native paper approval without a model", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "research-gpt-deep-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  const s = fixture("논문 해설"), run = "direct-paper", dir = `runs/${run}`
+  const s = fixture("논문 해설"),
+    run = "direct-paper",
+    dir = `runs/${run}`
   s.documents.forEach((doc, i) => {
     atomicWrite(root, doc.body_path, s.parses[i].blocks.map((b) => b.text).join("\n"))
     atomicWrite(root, `parses/${s.parses[i].parse_id}/parse.json`, s.parses[i])
@@ -592,8 +594,12 @@ test("GPT deep editorial authoring binds reviewed full text and enters native pa
   atomicWrite(root, `${dir}/parses.json`, s.parses)
   atomicWrite(root, `${dir}/reviewed-claims.json`, { claims: s.claims })
   const input = {
-    reviewer: "synthetic-editor", reviewed_at: "2026-09-27", reason: "Synthetic full-text fixture",
-    source_read: true, final_prose_read: true, draft: { ...s.draft, analysis: null },
+    reviewer: "synthetic-editor",
+    reviewed_at: "2026-09-27",
+    reason: "Synthetic full-text fixture",
+    source_read: true,
+    final_prose_read: true,
+    draft: { ...s.draft, analysis: null },
   }
   atomicWrite(root, "author.json", input)
   const args = ["--root", root, "--run", run, "--review", path.join(root, "author.json"), "--deep"]
@@ -606,19 +612,34 @@ test("GPT deep editorial authoring binds reviewed full text and enters native pa
   assert.equal(record.public_approved, false)
   assert.equal(record.draft_id, draftFingerprint(input.draft, s.context))
   assert.equal((await authorEditorial(args)).reused, true)
-  const approved = approvedArticle(record, s.claims, s.documents,
-    { ...s.editorialReview, draft_id: record.draft_id }, s.parses)
+  const approved = approvedArticle(
+    record,
+    s.claims,
+    s.documents,
+    { ...s.editorialReview, draft_id: record.draft_id },
+    s.parses,
+  )
   assert.equal(approved.record.kind, "논문 해설")
   assert.equal(approved.record.papers[0].access, "전문")
   assert.equal(approved.record.analysis, undefined)
   const changed = structuredClone(s.context)
   changed.input.papers[0].access = "초록"
-  assert.throws(() => prepareEditorialDraft(input, s.claims, s.parses,
-    { deepContext: changed, documents: s.documents }))
+  assert.throws(() =>
+    prepareEditorialDraft(input, s.claims, s.parses, {
+      deepContext: changed,
+      documents: s.documents,
+    }),
+  )
   const unsupported = structuredClone(input)
   unsupported.draft.explanations[0].paragraphs[0].claim_ids = ["unknown"]
-  assert.throws(() => prepareEditorialDraft(unsupported, s.claims, s.parses,
-    { deepContext: s.context, documents: s.documents }), /correction/)
+  assert.throws(
+    () =>
+      prepareEditorialDraft(unsupported, s.claims, s.parses, {
+        deepContext: s.context,
+        documents: s.documents,
+      }),
+    /Invalid enum at \$\.explanations\[0\]\.paragraphs\[0\]\.claim_ids\[0\]/,
+  )
   atomicWrite(root, `${dir}/deep-context.json`, { ...s.context, fingerprints: {} })
   await assert.rejects(authorEditorial(args), /evidence changed/)
   assert.deepEqual(readJSON(root, `${dir}/draft.json`), record)

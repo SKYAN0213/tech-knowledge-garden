@@ -6,6 +6,7 @@ import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { loadRoleBudget } from "./model-policy.mjs"
 import { loadProcessedDraft } from "./processed-draft.mjs"
 import { assertCompletenessContext } from "./editorial-completeness.mjs"
+import { structuredRequestBudget } from "./ollama.mjs"
 
 function validator(claims, options) {
   const usable = options.deepContext
@@ -88,12 +89,28 @@ export function loadBoundDraftCheckpoint(root, runId, claims, options) {
     result.input.execution_policy_sha256 !== sha256(JSON.stringify(ledger.binding)) ||
     result.input.model !== ledger.binding.settings?.model ||
     result.input.think !== ledger.binding.settings?.think ||
-    !ledger.attempts.some(
-      (attempt) =>
-        attempt.status === "complete" &&
-        JSON.stringify(attempt.result.output) === JSON.stringify(result.record.draft) &&
-        JSON.stringify(attempt.result.provenance) === JSON.stringify(result.record.provenance),
-    )
+    !ledger.attempts.some((attempt) => {
+      if (
+        attempt.status !== "complete" ||
+        JSON.stringify(attempt.result.output) !== JSON.stringify(result.record.draft)
+      )
+        return false
+      let provenance = attempt.result.provenance
+      if (attempt.request_budget) {
+        // The editor adds admission accounting even when a delegated provider
+        // omits it. Bind that addition to the original immutable role request;
+        // provider provenance and the ledger budget must still agree exactly.
+        const budget = structuredRequestBudget(attempt.request)
+        if (
+          JSON.stringify(attempt.request_budget) !== JSON.stringify(budget) ||
+          (Object.hasOwn(provenance, "request_budget") &&
+            JSON.stringify(provenance.request_budget) !== JSON.stringify(budget))
+        )
+          return false
+        provenance = { ...provenance, request_budget: budget }
+      }
+      return JSON.stringify(provenance) === JSON.stringify(result.record.provenance)
+    })
   )
     throw Error("Article writer role ledger changed")
   const current = readJSON(root, `runs/${runId}/draft.json`)

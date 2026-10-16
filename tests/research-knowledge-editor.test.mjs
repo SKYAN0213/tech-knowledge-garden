@@ -280,7 +280,7 @@ test("direct knowledge writing uses MLX by default and preserves explicit overri
       }),
       (error) => error === stopped,
     )
-    assert.deepEqual(requested, [model ?? "qwen3.8:27b-mlx"])
+    assert.deepEqual(requested, [model ?? "gemma4:31b-mlx"])
   }
 })
 
@@ -389,7 +389,7 @@ function fixture(t) {
   }
   let calls = 0
   const metadata = {
-    model: "qwen3.8:27b-mlx",
+    model: "gemma4:31b-mlx",
     digest: sha256("model-v1"),
     runtime: "fixture",
     capabilities: ["completion"],
