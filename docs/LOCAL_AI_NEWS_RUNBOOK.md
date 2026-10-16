@@ -1,3 +1,13 @@
+## 537. 개발 Sol·기사 처리 GPT-6 Luna와 누락일 (2026-10-16)
+
+기본 정책의 search_plan/fact_extract/article_write/concept_write/evidence_compare는 모두 `gpt-6-luna`다. 탐색 계획은 medium, 나머지는 high다. 구현은 Sol에서 계속하며 앱의 전역 모델을 바꾸지 않는다. 기존04시 heartbeat의 시각·대상·상태를 보존하고 기사 처리만 실제 Luna에 위임한다.
+
+`reasoning.pending/read`의 requested_model/requested_thinking을 확인하고 실제 실행 모델로 결과를 제출한다. 명시 Luna 요청에 Sol이나 모델 없는 Codex 결과를 제출하면 저장하지 않는다. 모델 정보는 호출자 선언이며 자체 실행 인증으로 표시하지 않는다. 과거 generic codex 요청과 명시 로컬 교체의 계약은 유지한다. 이전 run의 바인딩을 고치지 않고 새 run을 쓴다.
+
+누락 과거 회차는 `research-private-edition/v1`의 `intent: historical_backfill`로 생성한다. key/date는 대상 과거일, coverage_start/end는 실제 조사 범위와 관측 완료 cutoff다. source_observed_at을 과거로 바꾸지 않는다. 해당 발표일의 미수록 사건만 허용하고 기존 회차·기사ID/URL·RSS GUID는 보존한다. backfilled_at으로 소급 검토 판본을 구분하며 운영 안내를 독자 본문에 넣지 않는다.
+
+실제10월13일9건·14일10건·15일9건을 Luna가 검토했고 native 큐레이션·사실·원고 승인·후보 연결을 통과했다. 검증 사실에 없는 제목41%는 수정했다. `.NET`은 문장 종결로 세지 않는다. 모델8·회차2·문장6개의 표적 검사를 확인했고 전체 로컬 suite·완료 수집은 반복하지 않았다. Drive240개 원본의 actual raw와559페이지 빌드/링크를 확인했다. 최종 배포·보관 근거는 `.local/research/luna-backfill-20261016/`에서 확인한다. 소급3회차는 새 정규 예약 실행 횟수로 세지 않는다.
+
 ## 536. 미완료 수집만 보완하기 (2026-10-16)
 
 `collection.recover`는 기존 보고서의 정확한 경로/SHA에서 실패 창만 선택한다. `plan-only → execute → resume`를 같은 복구 `run_id`로 호출한다. 완료한 출처·정상 원문·동일 설정의 완료 파싱을 반복하지 않는다. `max_routes`와 `time_budget_ms`는 새 창 착수를 제한하고 출처별 `detail_batch_size`는 새 본문 요청을 제한한다. 예산으로 미룬 본문이 남으면 재개하며, 일반 오류만 남으면 원인을 수정한 뒤 `retry_incomplete: true`로 명시한다.
