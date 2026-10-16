@@ -1,6 +1,6 @@
 {
   "schema": "research-operation-policy/v1",
-  "phase": "development",
+  "phase": "ready",
   "schedule_id": "tech-knowledge-garden-04",
   "default_executor": "codex",
   "storage_backend": "connected_drive",
@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/gpt-collection-recovery-20261016-v1/receipt.json",
-    "sha256": "6ba2e027cbf87a242dd912f9afb169afdb27e172cff1f737d2141bfc74a0eaad"
+    "path": ".local/research/development-releases/gpt-luna-backfill-20261016-v1/receipt.json",
+    "sha256": "810097fab1bbb98f15a38f406a76026a8eacbc8c65c97264f1cda2c4bc5af267"
   },
   "recovery": {
     "automatic_retry": false,

@@ -6,7 +6,9 @@
 
 누락 과거 회차는 `research-private-edition/v1`의 `intent: historical_backfill`로 생성한다. key/date는 대상 과거일, coverage_start/end는 실제 조사 범위와 관측 완료 cutoff다. source_observed_at을 과거로 바꾸지 않는다. 해당 발표일의 미수록 사건만 허용하고 기존 회차·기사ID/URL·RSS GUID는 보존한다. backfilled_at으로 소급 검토 판본을 구분하며 운영 안내를 독자 본문에 넣지 않는다.
 
-실제10월13일9건·14일10건·15일9건을 Luna가 검토했고 native 큐레이션·사실·원고 승인·후보 연결을 통과했다. 검증 사실에 없는 제목41%는 수정했다. `.NET`은 문장 종결로 세지 않는다. 모델8·회차2·문장6개의 표적 검사를 확인했고 전체 로컬 suite·완료 수집은 반복하지 않았다. Drive240개 원본의 actual raw와559페이지 빌드/링크를 확인했다. 최종 배포·보관 근거는 `.local/research/luna-backfill-20261016/`에서 확인한다. 소급3회차는 새 정규 예약 실행 횟수로 세지 않는다.
+실제10월13일9건·14일10건·15일9건을 Luna가 검토했고 native 큐레이션·사실·원고 승인·선정 사건의 원문 연결을 통과했다. 독립 legacy 후보 backlog는 보존했다. 검증 사실에 없는 제목41%는 수정했다. `.NET`은 문장 종결로 세지 않는다. 모델8·회차2·문장6·이전 수집 fixture3개의 표적 검사를 확인했고 전체 로컬 suite·완료 수집은 반복하지 않았다. Drive240개 원본의 actual raw와559페이지 빌드/링크를 확인했다.
+
+배포 완료 commit은0579feb75165be602851a5f206bacb198803b21b, Actions38851119052의 build/deploy는 success다. 브리핑3·기사28·GitHub 요약3·RSS의35개 공개 결과가 생성본과 byte 일치했다. WebsiteData11개·원문 보관6개·편집 근거 JSON의 실제 Drive raw SHA를 확인했다. 기존128개 로컬 작업물과37개 공통 RSS 항목의 GUID/pubDate를 보존했다. GPT 개발 완료 관문은gpt-luna-backfill-20261016-v1이며 ready다. `.local/research/luna-backfill-20261016/execution-report.json`이 최종 실행 근거다. 소급3회차는 새 정규 예약 실행 횟수로 세지 않는다.
 
 ## 536. 미완료 수집만 보완하기 (2026-10-16)
 
