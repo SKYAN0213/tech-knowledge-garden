@@ -36,6 +36,9 @@ generated_by: tech-knowledge-garden
 ## 날짜별 브리핑
 
 - [[Briefings/2026/10/2026-10-16_0800_Tech_AI_Briefing|2026-10-16 · 0800 브리핑]]
+- [[Briefings/2026/10/2026-10-15_0800_Tech_AI_Briefing|2026-10-15 · 0800 브리핑]]
+- [[Briefings/2026/10/2026-10-14_0800_Tech_AI_Briefing|2026-10-14 · 0800 브리핑]]
+- [[Briefings/2026/10/2026-10-13_0800_Tech_AI_Briefing|2026-10-13 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-12_0800_Tech_AI_Briefing|2026-10-12 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-08_0800_Tech_AI_Briefing|2026-10-08 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-07_0800_Tech_AI_Briefing|2026-10-07 · 0800 브리핑]]
