@@ -17,6 +17,7 @@ export async function main(args = process.argv.slice(2)) {
       "reuse-listing-run": { type: "string" },
       "reuse-source-run": { type: "string" },
       "repair-source-run": { type: "string" },
+      "recovery-source-run": { type: "string" },
       "merge-backlog": { type: "boolean", default: false },
       "policy-recheck-limit": { type: "string" },
     },

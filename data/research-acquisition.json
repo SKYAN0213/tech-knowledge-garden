@@ -1370,9 +1370,9 @@
       "url_pattern": "^https://(?:www|science)\\.nasa\\.gov/(?!blogs/)(?:[^/?#]+/)+[^/?#]+/?$",
       "options": {
         "language": "en",
-        "title_xpath": "//main[@id='primary']/article//h1",
+        "title_xpath": "(//main[@id='primary']/article//h1)[1]",
         "content_xpath": "//main[@id='primary']/article//div[contains(concat(' ', normalize-space(@class), ' '), ' usa-article-content ')]/div[contains(concat(' ', normalize-space(@class), ' '), ' entry-content ')]",
-        "content_block_xpath": ".//*[self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote or (self::div and contains(concat(' ', normalize-space(@class), ' '), ' hds-caption-text '))]",
+        "content_block_xpath": ".//*[self::h1 or self::h2 or self::h3 or self::h4 or self::p or self::li or self::table or self::blockquote or (self::div and contains(concat(' ', normalize-space(@class), ' '), ' hds-caption-text '))]",
         "publication_date_xpath": "//meta[@property='article:published_time'] | //meta[@name='searchgov_custom5' and not(../meta[@property='article:published_time'])]",
         "publication_date_attribute": "content",
         "publication_date_pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}",
@@ -2695,7 +2695,7 @@
   "google-cloud-threat-intelligence": {
     "publisher_id": "cloud.google.com",
     "allowed_hosts": [
-      "feeds.feedburner.com",
+      "cloudblog.withgoogle.com",
       "cloud.google.com"
     ],
     "item_pattern": "^https://cloud\\.google\\.com/blog/topics/threat-intelligence/[^/?#]+/?$",
@@ -2848,6 +2848,7 @@
     "listing_profile": {
       "pagination": "bounded-feed",
       "rule_id": "nvidia-newsroom-press-rss-v1",
+      "publication_date_reconciliation": "explicit-original-within-window",
       "feed_title": "Press Release - NVIDIA Newsroom",
       "max_items": 20,
       "guid_is_permalink": true,
@@ -3782,6 +3783,7 @@
       "www.etnews.com"
     ],
     "scan_max_details": 240,
+    "detail_batch_size": 40,
     "item_pattern": "^https://www\\.etnews\\.com/20[0-9]{12}$",
     "listing_profile": {
       "rule_id": "etnews-ai-feed-v1",
@@ -3799,8 +3801,8 @@
         "max_pages": 24,
         "rule_id": "etnews-ai-archive-v1",
         "page_overlap_policy": {
-          "mode": "adjacent-prefix",
-          "max_items": 1
+          "mode": "identical-rows",
+          "max_items": 3
         },
         "rss_title_policy": "source_title_authoritative",
         "excluded_categories": [],
@@ -3827,7 +3829,7 @@
     "collection_mode": "automatic"
   },
   "irobotnews-all-rss": {
-    "source_recipe": "ndsoft-news-rss-v1",
+    "source_recipe": "ndsoft-news-rss-archive-v1",
     "publisher_id": "irobotnews.com",
     "allowed_hosts": [
       "cdn.irobotnews.com",
@@ -3836,7 +3838,10 @@
     "listing_profile": {
       "rule_id": "irobotnews-all-rss-v1",
       "feed_title": "로봇신문 - 전체기사",
-      "scope": "Official HTML-declared RSS; retain primary report attribution and verify article dates/bodies."
+      "scope": "Official HTML-declared RSS; retain primary report attribution and verify article dates/bodies.",
+      "fallback_archive": {
+        "url_template": "https://www.irobotnews.com/news/articleList.html?page={page}&sc_order_by=E&view_type=sm"
+      }
     },
     "collection_mode": "automatic"
   },
@@ -4671,7 +4676,8 @@
     "request_interval_ms": 1000,
     "source_recipe": "path-html-list-v1",
     "item_pattern": "^https://techcrunch\\.com/20[0-9]{2}/[0-9]{2}/[0-9]{2}/[^/?#]+/?$",
-    "scan_max_details": 80,
+    "scan_max_details": 240,
+    "detail_batch_size": 40,
     "listing_profile": {
       "rule_id": "techcrunch-latest-dated-v1",
       "url_template": "https://techcrunch.com/latest/page/{page}/",

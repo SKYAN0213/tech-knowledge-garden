@@ -26,10 +26,10 @@ import {
   selectedFixture,
 } from "./fixtures/research-event-fixtures.mjs"
 
-test("twelve independently selectable modules share 66 strict operation contracts", () => {
+test("twelve independently selectable modules share 67 strict operation contracts", () => {
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 66)
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 67)
   assert.deepEqual(
     moduleCatalog(["publication"]).modules[0].operations.map((operation) => ({
       name: operation.tool_name,
@@ -249,6 +249,20 @@ test("changed original evidence and verified facts from another event are blocke
     () => executeModule(f.ctx, "evidence", "extract", f.selectedParameters),
     /changed|integrity|hash/,
   )
+})
+
+test("completed jobs from a former checkout do not block new work and foreign live owners stay protected", async (t) => {
+  const { ctx, root } = fixture(t), id = "module-historical"
+  const input = { job_id: id, context: { ...ctx, repo: ctx.repo + "-previous", root: ctx.root + "-previous" } }
+  const state = { schema: "research-module-job/v1", job_id: id, input_sha256: sha256(JSON.stringify(input)), state: "completed" }
+  atomicWrite(root, `module-jobs/${id}/input.json`, input)
+  atomicWrite(root, `module-jobs/${id}/state.json`, state)
+  const result = await submitModuleJob(ctx, "collection", "inventory", {}, { jobId: "module-new-location", background: false })
+  assert.equal(result.state, "completed")
+  assert.throws(() => moduleJobStatus(ctx, id), /context changed/)
+  atomicWrite(root, `module-jobs/${id}/state.json`, { ...state, state: "running", pid: process.pid })
+  await assert.rejects(submitModuleJob(ctx, "collection", "inventory", {}, { jobId: "module-protect-owner", background: false }), /context changed/)
+  assert.deepEqual(readJSON(root, `module-jobs/${id}/input.json`), input)
 })
 
 test("detached CLI worker persists results, pages by verified hash and reuses the same job without another attempt", async (t) => {

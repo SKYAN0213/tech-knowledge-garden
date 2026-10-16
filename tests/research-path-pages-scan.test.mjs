@@ -209,6 +209,28 @@ test("explicit adjacent-prefix policy deduplicates only matching last-to-first r
   pages.set(2, parsed([item("2026-09-29", "overlap")], 2))
   assert.equal((await execute()).summary.reason, "archive_duplicate_across_pages")
 })
+test("bounded identical rows may change order across adjacent pages without losing new rows", async () => {
+  const c = { ...channel, listing_profile: { ...channel.listing_profile, page_overlap_policy: { mode: "identical-rows", max_items: 2 } } }
+  const pages = new Map([
+    [1, parsed([item("2026-09-30", "new"), item("2026-09-29", "a"), item("2026-09-29", "b")], 1)],
+    [2, parsed([item("2026-09-29", "b"), item("2026-09-29", "a"), item("2026-09-28", "newer"), item("2026-09-21", "boundary")], 2)],
+  ])
+  const execute = () => scanPathPagesRoute("unused", run, {}, c, [], { since: "2026-09-23", until: "2026-10-01" }, {
+    fetchPolicy: async (_r, _f, url) => ({ original_url: url, final_url: url, fetch_status: "captured", source_version_id: url + ":v1", observed_at: "2026-09-30T00:00:00Z" }),
+    parse: async (_r, d) => pages.get(Number(new URL(d.original_url).pathname.match(/page\/(\d+)/)[1])),
+    collectDetails: async (_r, _run, _f, _c, _p, links) => ({ documents: [], parses: [], candidates: links, details: links.map(() => ({ status: "source_parsed_unreviewed" })) }),
+  })
+  const result = await execute()
+  assert.equal(result.summary.status, "window_scanned")
+  assert.equal(result.candidates.length, 4)
+  assert.equal(new Set(result.candidates.map((l) => l.url)).size, 4)
+  assert.equal(result.summary.page_overlaps[0].mode, "identical-rows")
+  pages.get(2).links[0].text = "Changed title"
+  assert.equal((await execute()).summary.reason, "archive_duplicate_across_pages")
+  pages.set(2, parsed([item("2026-09-29", "b"), item("2026-09-29", "a")], 2))
+  assert.equal((await execute()).summary.reason, "archive_duplicate_across_pages")
+})
+
 const pinned = (day, id, page = 1, categories) => ({
   ...item(day, `notice-${id}?page=${page}`, categories),
   url: `https://news.skhynix.com/en/notice-${id}/?page=${page}`,

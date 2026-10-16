@@ -173,7 +173,7 @@ function previewOptions(ctx, p) {
   if (
     edition_spec &&
     (editionSpec?.schema !== "research-private-edition/v1" ||
-      editionSpec.intent !== "private_slice")
+      !["private_slice", "historical_backfill"].includes(editionSpec.intent))
   )
     throw Error("Exact native private edition specification required")
   return { edition_spec, editionSpec }

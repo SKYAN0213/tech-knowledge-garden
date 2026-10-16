@@ -1,6 +1,6 @@
 # 로컬 모델 운영 실행기
 
-정규 운영은 개발 완료 뒤에만 허용한다. `data/research-operation-policy.json`은 현재 development이며, 정규 실행에 `--regular`를 전달하면 MCP/모델/잠금/체크포인트 생성 전에 같은 완료 관문을 읽는다. development_pending은 정상 종료다. 아래 inventory 예제는 범위를 지정한 개발 검증이며 정규 브리핑 실행이 아니다. GPT 기본 운영은 기존 Codex 추론 정책, 로컬 선택지는 기존 Gemma 정책을 사용한다. 이 차이는 수집 모듈이나 승인 기준을 바꾸지 않는다.
+정규 운영은 개발 완료 뒤에만 허용한다. `data/research-operation-policy.json`의 현재 phase와 완료 판본을 확인하며, 정규 실행에 `--regular`를 전달하면 MCP/모델/잠금/체크포인트 생성 전에 같은 완료 관문을 읽는다. development_pending은 정상 종료다. 아래 inventory 예제는 범위를 지정한 개발 검증이며 정규 브리핑 실행이 아니다. GPT 기본 운영은 기존 Codex 추론 정책, 로컬 선택지는 기존 Gemma 정책을 사용한다. 이 차이는 수집 모듈이나 승인 기준을 바꾸지 않는다.
 
 `operator.mjs`는 로컬 Ollama 모델이 다음 MCP 도구를 선택하고, 같은 연구 서버의 작업 결과를 읽어 다음 행동을 결정하는 실행기다. 원문 수집기나 별도의 지식 저장소를 만들지 않는다. Codex와 로컬 운영 실행기가 같은 MCP 모듈, 원문, 작업 ID와 검토 관문을 사용한다.
 
@@ -24,7 +24,9 @@ node integrations/research-mcp/operator.mjs \
 
 기본 운영 모델은 `gemma4:31b-mlx`다. `--model`로 설치된 다른 로컬 모델을 선택할 수 있다. 운영 모델의 계획 호출은 `think: false`, 출력 4096토큰을 사용한다. 응답은 `action`, `tool_name`, 구조화 객체인 `arguments`, 최대160자의 `reason`으로 제한한다. 도구 인수 Schema는 활성 작업의 원래 계약을 재사용한다. 종료 응답은 `tool_name: null`, `arguments: {}`다. 문자열 인수를 수선하거나 추가 파싱하지 않는다. 전달하는 도구 계약과 직전 결과의 크기에 따라 컨텍스트를 16384 또는 32768로 제한한다. 원문 추출·작성 모델의 선택은 `--policy`가 지정하는 기존 정책과 별개다. 기본 정책의 모델도 Gemma이며 기존 실행의 고정 정책·완료 응답은 덮어쓰지 않는다.
 
-서버에는 기본적으로 `--tool-profile compact`으로 연결한다. `--tool-profile detailed`도 지원하며, 두 표현은 동일한 모듈과 입력 검증기를 호출한다. `--modules collection,parsing,edition,curation`처럼 사용할 범위를 좁힌다. `--operations collection.inventory`처럼 단계별 작업을 지정하면 해당 계약만 planner에 전달하며 서버도 다른 작업 실행·job 조회·결과·재개를 거부한다. 현재 catalog는12모듈/66작업이고 외부 노출은5도구다. 독립 사람 평가와 실제 예약 비교를 포함한 명시 검토·발행 작업은 자동 선택에서 제외한다. 2026-10-10의45작업 catalog에서 측정한 당시 자동 선택36개는18,927자, inventory 한 작업은238자였다. 현재66작업의 입력 크기나 실제 모델 토큰·지연 측정값을 뜻하지 않는다.
+서버에는 기본적으로 `--tool-profile compact`으로 연결한다. `--tool-profile detailed`도 지원하며, 두 표현은 동일한 모듈과 입력 검증기를 호출한다. `--modules collection,parsing,edition,curation`처럼 사용할 범위를 좁힌다. `--operations collection.inventory`처럼 단계별 작업을 지정하면 해당 계약만 planner에 전달하며 서버도 다른 작업 실행·job 조회·결과·재개를 거부한다. 현재 catalog는12모듈/67작업이고 외부 노출은5도구다. 독립 사람 평가와 실제 예약 비교를 포함한 명시 검토·발행 작업은 자동 선택에서 제외한다. 2026-10-10의45작업 catalog에서 측정한 당시 자동 선택36개는18,927자, inventory 한 작업은238자였다. 현재67작업의 입력 크기나 실제 모델 토큰·지연 측정값을 뜻하지 않는다.
+
+수집 보고서에 미완료 창이 있으면 `collection.recover`의 `plan-only`로 원인별 보완 대상을 확인하고 같은 복구 ID로 `execute`한다. 저장된 원문·같은 설정의 완료 파싱과 완료 출처는 재사용한다. 묶음 예산으로 미룬 본문은 `resume`로 계속하고, 일반 오류만 남으면 원인 수정이나 정책 관측 후 `retry_incomplete: true`로 제한해서 재시도한다. Drive 파일 대기는 사이트 실패가 아니며 정확한 묶음을 복원한 뒤 같은 run을 재개한다. 코드 수정 뒤에는 `source_runs`에 동일 창의 이전 native 체크포인트를 지정해 새 복구 ID로 이어갈 수 있다. 기본 반환값의 `report_sources`를 필요한 범위의 `collection.report`로 고정하고, 기존 전체와 통합한 보고서 재생성은 `build_report: true`로 명시한다. 보고서 보관 대기는 수집 완료를 되돌리지 않는다. 이미 발행한 회차·기사·승인을 바꾸지 않는다. 상세 계약은 [미완료 수집 보완](../../docs/RESEARCH_MODULES.md#미완료-수집-보완)을 따른다. 기존에 연결된 MCP는 계약을 캐시하므로 새 연결에서 최신 작업을 조회한다.
 
 작성 대상은 관계 검토 뒤 `curation.prepare/evaluate/select`로 오늘과 이전 미수록 후보를 함께 평가한다. `evaluate`의 모델 점수는 `curation_review`로 대기하며 planner는 review_file을 만들어 자체 승인하지 않는다. Codex 등 큐레이터가 원문·기존 기사·점수 근거를 대조한 뒤 선정한다. 여러 원 회차의 선정은 `curation.advance`가 기존 native writer/checkpoint와 공유 호출·시간 예산으로 처리한다. planner가 `require_curation: false`나 `retry_candidates`로 검토/재시도를 우회할 수 없다. 기존 사실·편집·발행 승인은 그대로다.
 

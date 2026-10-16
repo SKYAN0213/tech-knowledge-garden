@@ -1889,6 +1889,33 @@ test("approved projection uses existing editorial contract and omits private not
   assert.equal(projection.content.includes("분석 생략"), false)
 })
 
+test("historical backfill creates only a missing past day using the actual research cutoff", (t) => {
+  const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "backfill-edition-")))
+  t.after(() => fs.rmSync(vault, { recursive: true, force: true }))
+  const relative = "Editions/2026/09/2026-09-30_0800_Tech_AI_Briefing.md"
+  fs.mkdirSync(path.dirname(path.join(vault, relative)), { recursive: true })
+  fs.mkdirSync(path.join(vault, "Knowledge"))
+  const prior = noteText({ title: "later issue", date: "2026-09-30", coverage_end: "2026-09-30T00:00:00Z" }, "# Source List\n")
+  fs.writeFileSync(path.join(vault, relative), prior)
+  const s = sample()
+  s.review.event_id = sha256("https://example.com/announcement").slice(0, 16)
+  const article = approvedArticle(s.record, s.claims, s.documents, s.review, s.parses)
+  const date = article.article_review.published_at
+  const spec = { schema: "research-private-edition/v1", intent: "historical_backfill",
+    key: `${date}_0800_Tech_AI_Briefing`, date,
+    coverage_start: "2026-09-26T00:00:00Z", coverage_end: "2026-10-01T00:00:00Z" }
+  const [projection] = newEditionProjections(vault, [article], spec)
+  assert.equal(parseNote(projection.content).meta.backfilled_at, spec.coverage_end)
+  assert.equal(fs.readFileSync(path.join(vault, relative), "utf8"), prior)
+  assert.equal(fs.existsSync(path.join(vault, projection.path)), false)
+  assertNewEditionSourceCutoff([{ source_observed_at: ["2026-09-30T10:00:00Z"] }], spec)
+  assert.throws(() => assertNewEditionSourceCutoff([{ source_observed_at: ["2026-10-02T00:00:00Z"] }], spec), /observed after/)
+  assert.throws(() => newEditionProjections(vault, [{ ...article, article_review: { ...article.article_review, published_at: "2026-09-26" } }], spec), /out-of-window/)
+  assert.throws(() => newEditionProjections(vault, [article], { ...spec, date: "2026-10-02", key: "2026-10-02_0800_Tech_AI_Briefing" }), /missing past day/)
+  fs.writeFileSync(path.join(vault, projection.path), projection.content)
+  assert.throws(() => newEditionProjections(vault, [article], spec), /missing past day/)
+})
+
 test("private new-edition slice continues the cutoff without reusing an event or changing the vault", (t) => {
   const vault = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "new-edition-slice-")))
   t.after(() => fs.rmSync(vault, { recursive: true, force: true }))

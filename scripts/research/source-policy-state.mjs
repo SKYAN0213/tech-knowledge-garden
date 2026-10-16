@@ -84,7 +84,7 @@ function save(root, record, index) {
   return { ...record, reference }
 }
 
-export function readSourcePolicyState(root, raw) {
+export function readSourcePolicyState(root, raw, { metadataOnly = false } = {}) {
   const url = canonicalURL(raw)
   const index = readJSON(root, statePath(url))
   if (!index) return null
@@ -99,13 +99,15 @@ export function readSourcePolicyState(root, raw) {
     )
   )
     throw Error("Policy state identity differs")
-  evidence(root, record.document, record.parsed)
-  evidence(root, record.access_evidence?.document, record.access_evidence?.parsed)
-  evidence(root, record.last_robots_policy?.policy_document)
+  if (!metadataOnly) {
+    evidence(root, record.document, record.parsed)
+    evidence(root, record.access_evidence?.document, record.access_evidence?.parsed)
+    evidence(root, record.last_robots_policy?.policy_document)
+  }
   return { ...record, reference: index.reference }
 }
 
-export function readPolicyWatch(root, raw) {
+export function readPolicyWatch(root, raw, { metadataOnly = false } = {}) {
   const origin = new URL(raw).origin
   const index = readJSON(root, watchPath(origin))
   if (!index) return null
@@ -116,7 +118,7 @@ export function readPolicyWatch(root, raw) {
     index.url !== origin
   )
     throw Error("Policy watch identity differs")
-  for (const item of record.documents) evidence(root, item.document)
+  if (!metadataOnly) for (const item of record.documents) evidence(root, item.document)
   return { ...record, reference: index.reference }
 }
 
@@ -417,7 +419,7 @@ export function policyDeferredDocument(state, { now = Date.now(), watch } = {}) 
   }
 }
 
-export function listSourcePolicyChecks(root, { now = Date.now(), dueOnly = false } = {}) {
+export function listSourcePolicyChecks(root, { now = Date.now(), dueOnly = false, metadataOnly = false } = {}) {
   const directory = safePath(root, "source-policy/index")
   if (!fs.existsSync(directory)) return []
   return fs
@@ -425,7 +427,7 @@ export function listSourcePolicyChecks(root, { now = Date.now(), dueOnly = false
     .filter((file) => /^[a-f0-9]{20}\.json$/.test(file))
     .map((file) => {
       const index = readJSON(root, "source-policy/index/" + file)
-      const state = readSourcePolicyState(root, index.url)
+      const state = readSourcePolicyState(root, index.url, { metadataOnly })
       return {
         url: state.url,
         ...state.assessment,
@@ -443,7 +445,7 @@ export function listSourcePolicyChecks(root, { now = Date.now(), dueOnly = false
     )
 }
 
-export function listPolicyWatches(root) {
+export function listPolicyWatches(root, { metadataOnly = false } = {}) {
   const directory = safePath(root, "source-policy/watches")
   if (!fs.existsSync(directory)) return []
   return fs
@@ -451,7 +453,7 @@ export function listPolicyWatches(root) {
     .filter((file) => /^[a-f0-9]{20}\.json$/.test(file))
     .map((file) => {
       const index = readJSON(root, "source-policy/watches/" + file)
-      return readPolicyWatch(root, index.url)
+      return readPolicyWatch(root, index.url, { metadataOnly })
     })
 }
 

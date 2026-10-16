@@ -8,6 +8,7 @@ import {
 } from "./parser.mjs"
 import { safePath } from "./run-state.mjs"
 import { parseResearchDate } from "./dates.mjs"
+import { reconcilePublicationDay, hasImagePublicationMetadata } from "./publication-date-reconciliation.mjs"
 import { validateListingSupportRelations } from "./supporting-sources.mjs"
 import { verifyAccessExclusionDetail } from "./source-access.mjs"
 import { verifyReviewedImageCandidate } from "./article-image-review-cache.mjs"
@@ -56,6 +57,8 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
     if (!Array.isArray(scan.summary.page_overlaps) || scan.summary.page_overlaps.length > 100)
       throw Error("Invalid archive overlap evidence")
     for (const overlap of scan.summary.page_overlaps) {
+      if (overlap.mode !== undefined && overlap.mode !== "identical-rows")
+        throw Error("Invalid archive overlap mode")
       const previousPage = scan.summary.pages?.find((p) => p.page === overlap.previous_page)
       const page = scan.summary.pages?.find((p) => p.page === overlap.page)
       const previous = scan.parses.find((p) => p.parse_id === overlap.previous_parse_id)
@@ -75,9 +78,10 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
         !current ||
         before.length < count ||
         overlap.urls.some((url, index) => {
-          const a = before[before.length - count + index],
-            b = after[index]
+          const a = overlap.mode === "identical-rows" ? before.find((l) => canonicalURL(l.url) === canonicalURL(url)) : before[before.length - count + index],
+            b = overlap.mode === "identical-rows" ? after.find((l) => canonicalURL(l.url) === canonicalURL(url)) : after[index]
           return (
+            !a || !b ||
             canonicalURL(url) !== canonicalURL(a.url) ||
             canonicalURL(url) !== canonicalURL(b.url) ||
             a.text !== b.text ||
@@ -128,8 +132,10 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
         listing.source_version_id !== evidence.listing_source_version_id ||
         (evidence.access_scope === "metadata-only"
           ? !hasBlockedPublicationMetadata(article)
+          : evidence.access_scope === "image-metadata-only"
+            ? !hasImagePublicationMetadata(article)
           : article.status !== "extracted" || !article.quality?.required_fields_present) ||
-        (evidence.access_scope !== undefined && evidence.access_scope !== "metadata-only") ||
+        (evidence.access_scope !== undefined && !["metadata-only", "image-metadata-only"].includes(evidence.access_scope)) ||
         day !== evidence.published_at ||
         day.slice(5) !== printed[1]
       )
@@ -163,6 +169,17 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
         parseResearchDate(parsed.dates?.published_at)?.day
     )
       throw Error("Candidate lacks a matching stored detail source, parse and publication day")
+    if (candidate.publication_date_reconciliation) {
+      const resolution = candidate.publication_date_reconciliation
+      const listing = scan.parses.find((p) => p.parse_id === resolution.listing_parse_id && p.source_version_id === resolution.listing_source_version_id)
+      const link = listing?.links?.find((l) => canonicalURL(l.url) === canonicalURL(document.original_url) && l.published_at === resolution.listed_at)
+      const original = link && reconcilePublicationDay({ ...link, listing_parse_id: listing.parse_id, listing_source_version_id: listing.source_version_id }, parsed, { since: expected.since, until: expected.until_exclusive }, resolution.rule)
+      const detail = scan.summary.details?.find((d) => d.source_version_id === document.source_version_id && d.parse_id === parsed.parse_id)
+      if (!original || JSON.stringify(original) !== JSON.stringify(resolution) ||
+          JSON.stringify(detail?.publication_date_reconciliation) !== JSON.stringify(resolution) ||
+          !scan.indexDocuments.some((d) => d.source_version_id === listing.source_version_id))
+        throw Error("Publication date reconciliation lacks exact independent source and listing evidence")
+    }
     const reviewedImage = parsed.parser?.id === "article-image-metadata"
     if (reviewedImage) verifyReviewedImageCandidate(root, scan, candidate, document, parsed)
     if (

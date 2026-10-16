@@ -9,6 +9,7 @@ import { assertURL } from "./fetch.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
 import { sha256 } from "./contracts.mjs"
 import { verifyStoredListScan, verifyStoredDetailRepair } from "./scan-evidence.mjs"
+import { createRecoverySourceReuse, preserveRecoverySourceReuse } from "./source-run-recovery.mjs"
 
 export function rssArchiveChannel(channel) {
   const { parse_options, ...listing_profile } = channel.listing_profile.fallback_archive
@@ -41,6 +42,7 @@ export function createArchiveSourceReuse(
   const old = readJSON(root, `runs/${sourceRun}/collection-basis.json`)
   const earlierReuse = readJSON(root, `runs/${sourceRun}/archive-reuse.json`)
   const earlierRepair = readJSON(root, `runs/${sourceRun}/detail-repair-reuse.json`)
+  const earlierRecovery = readJSON(root, `runs/${sourceRun}/source-recovery-reuse.json`)
   // The worker only parses saved bytes. A repair runs the current parser again;
   // network policy and route dependencies must still match the original scan.
   const fetchDependencies = (dependencies) =>
@@ -59,6 +61,7 @@ export function createArchiveSourceReuse(
     ...listScanPolicyRecheckOptions(policy_recheck_limit),
     ...(earlierReuse ? { reuse_source_run: earlierReuse.source_run?.source_run } : {}),
     ...(earlierRepair ? { repair_source_run: earlierRepair.source_run?.source_run } : {}),
+    ...(earlierRecovery ? { recovery_source_run: earlierRecovery.source_run?.source_run } : {}),
   }
   if (
     !previous ||
@@ -257,6 +260,9 @@ export async function executeListScan(v) {
   )
     throw Error("scan-list requires one --channel and a [--since, --until) day window")
   const root = v.root
+  if (v["recovery-source-run"] &&
+      (v["recovery-source-run"] === v.run || v["repair-source-run"] || v["reuse-source-run"] || v["reuse-listing-run"]))
+    throw Error("Recovery requires a distinct source run without other reuse modes")
   if (v["merge-backlog"] && path.resolve(root) !== path.resolve(DEFAULT_ROOT))
     throw Error(
       "A custom research root cannot use --merge-backlog; use daily collection with explicit --backlog",
@@ -299,7 +305,7 @@ export async function executeListScan(v) {
   const profiles = collectionArticleProfiles(channel, acquisition.article_profiles || [])
   const basis = collectionBasis(channel, profiles)
   return withLock(root, "run-" + v.run, async () => {
-    const run = new RunState(root, v.run, {
+    const input = {
       schema: "research-list-run-input/v2",
       channel_id: channel.channel_id,
       since: v.since,
@@ -309,7 +315,13 @@ export async function executeListScan(v) {
       ...policyOptions,
       ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
       ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
-    })
+      ...(v["recovery-source-run"] ? { recovery_source_run: v["recovery-source-run"] } : {}),
+    }
+    const run = new RunState(root, v.run, input)
+    const previousInput = readJSON(root, `runs/${v.run}/collection-input.json`)
+    if (previousInput && JSON.stringify(previousInput) !== JSON.stringify(input))
+      throw Error("Stored collection input changed")
+    if (!previousInput) atomicWrite(root, `runs/${v.run}/collection-input.json`, input)
     const fetcher = new SourceFetcher(root, { pdf_profiles: profiles, ...policyOptions })
     await run.stage("collection-basis", basis, async () => basis)
     const scanner =
@@ -358,6 +370,9 @@ export async function executeListScan(v) {
         listingReuseError = error.message
       }
     }
+    const recovery = v["recovery-source-run"]
+      ? createRecoverySourceReuse(root, v["recovery-source-run"], channel, basis, { since: v.since, until: v.until })
+      : null
     const repair = v["repair-source-run"]
       ? createArchiveSourceReuse(
           root,
@@ -382,6 +397,7 @@ export async function executeListScan(v) {
         listingEvidence,
         listingReuseError,
         ...(repair ? { fetchPolicy: repair.fetchPolicy } : {}),
+        ...(recovery ? { fetchPolicy: recovery.fetchPolicy, parse: recovery.parse, parseArticle: recovery.parse } : {}),
       },
     )
     const archive = channel.listing_profile?.fallback_archive
@@ -411,7 +427,7 @@ export async function executeListScan(v) {
         archiveChannel,
         profiles,
         { since: v.since, until: v.until },
-        reuse || repair ? { fetchPolicy: (reuse || repair).fetchPolicy } : {},
+        reuse || repair ? { fetchPolicy: (reuse || repair).fetchPolicy } : recovery ? { fetchPolicy: recovery.fetchPolicy, parse: recovery.parse } : {},
       )
       if (reuse) preserveArchiveReuseReceipt(root, v.run, reuse)
       fallback.summary.fallback = {
@@ -435,6 +451,10 @@ export async function executeListScan(v) {
         coverage_scope: "original_listing_observation",
         fresh_listing_observation: false,
       }
+    }
+    if (recovery) {
+      const reference = preserveRecoverySourceReuse(root, v.run, recovery)
+      result.summary.source_recovery = { source_run: v["recovery-source-run"], reference, coverage_reused: false }
     }
     atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
     if (result.indexDocuments)

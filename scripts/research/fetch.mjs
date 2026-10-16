@@ -414,8 +414,12 @@ export class SourceFetcher {
         const cache = readJSON(this.root, `documents/${id}/latest.json`)
         let cachedBody = null
         if (cache?.body_path) {
-          cachedBody = fs.readFileSync(safePath(this.root, cache.body_path))
-          if (sha256(cachedBody) !== cache.body_sha256) throw Error("Cached source hash mismatch")
+          const physical = safePath(this.root, cache.body_path, { materialize: false })
+          const needsConditionalBody = method === "GET" && conditional && (cache.etag || cache.last_modified)
+          if (fs.existsSync(physical) || needsConditionalBody) {
+            cachedBody = fs.readFileSync(needsConditionalBody ? safePath(this.root, cache.body_path) : physical)
+            if (sha256(cachedBody) !== cache.body_sha256) throw Error("Cached source hash mismatch")
+          }
         }
         let current = request_url,
           currentInterval = requestInterval,
@@ -563,7 +567,9 @@ export class SourceFetcher {
             record.body_sha256 = sha256(body)
             record.source_version_id = sourceVersionId(id, record.body_sha256)
             record.body_path = `documents/${id}/${record.body_sha256}/body.bin`
-            const existing = safePath(this.root, record.body_path)
+            // Newly received bytes are already hash-bound; writing this exact
+            // body must not download an evicted copy of the same hash first.
+            const existing = safePath(this.root, record.body_path, { materialize: false })
             if (fs.existsSync(existing) && sha256(fs.readFileSync(existing)) !== record.body_sha256)
               throw Error("Stored source version corrupted")
             if (!fs.existsSync(existing)) atomicWrite(this.root, record.body_path, body)
@@ -582,6 +588,7 @@ export class SourceFetcher {
           )
           return record
         } catch (e) {
+          if (e.code === "STORAGE_PENDING") throw e
           const record = {
             schema_version: "source-document/v1",
             source_id: id,

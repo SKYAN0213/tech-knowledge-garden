@@ -126,10 +126,12 @@ function checkedScan(ctx, run) {
 async function defaultResume(ctx, run, window) {
   const reuse = readJSON(ctx.root, `runs/${run}/archive-reuse.json`)
   const repair = readJSON(ctx.root, `runs/${run}/detail-repair-reuse.json`)
+  const recovery = readJSON(ctx.root, `runs/${run}/source-recovery-reuse.json`)
   const reuseArgs = []
   for (const [flag, receipt] of [
     ["--reuse-source-run", reuse],
     ["--repair-source-run", repair],
+    ["--recovery-source-run", recovery],
   ]) {
     if (!receipt) continue
     if (!safeId(receipt.source_run?.source_run)) throw Error("Invalid stored source reuse reference")

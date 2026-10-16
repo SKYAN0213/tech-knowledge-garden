@@ -262,6 +262,7 @@ export function editionProjection(
     date,
     coverage_start,
     coverage_end,
+    intent,
     existing,
     reviewed_sections = {},
     added_event_ids = [],
@@ -449,6 +450,9 @@ export function editionProjection(
     timezone: "Asia/Seoul",
     coverage_start,
     coverage_end,
+    ...(existing?.meta.backfilled_at || intent === "historical_backfill"
+      ? { backfilled_at: existing?.meta.backfilled_at || coverage_end }
+      : {}),
     ...(legacy_review?.unrecorded_coverage_review ? { historical_coverage: "unrecorded/v1" } : {}),
     ...(preserveFormatFlags
       ? Object.fromEntries(

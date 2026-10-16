@@ -60,6 +60,40 @@
         }
       }
     },
+    "ndsoft-news-rss-archive-v1": {
+      "extends": "ndsoft-news-rss-v1",
+      "description": "NDSoft 공식 RSS가 날짜 경계에 못 미치면 날짜 목록과 원문으로 이어서 수집한다. 매체별 archive URL만 지정한다.",
+      "config": {
+        "scan_max_details": 400,
+        "detail_batch_size": 40,
+        "listing_profile": {
+          "fallback_archive": {
+            "pagination": "path-pages",
+            "max_pages": 20,
+            "rule_id": "ndsoft-dated-archive-v1",
+            "excluded_categories": [],
+            "article_date_resolution": "yearless-month-day",
+            "max_date_resolution_details": 400,
+            "page_overlap_policy": { "mode": "adjacent-prefix", "max_items": 1 },
+            "parse_options": {
+              "encoding": "utf-8",
+              "language": "ko",
+              "title_xpath": "//title",
+              "content_xpath": "//article[@id='section-list']",
+              "listing_link_rules": [{
+                "id": "ndsoft-dated-archive-v1",
+                "item_xpath": "//article[@id='section-list']/ul[@class='altlist-webzine']/li[contains(@class,'altlist-webzine-item')]//h2[@class='altlist-subject']/a[@href]",
+                "url_attribute": "href",
+                "url_pattern": "(?P<url>https://www\\.(?:irobotnews\\.com|thelec\\.kr)/news/articleView\\.html\\?idxno=[0-9]+)",
+                "title_xpath": ".//text()[not(ancestor::strong[contains(concat(' ',normalize-space(@class),' '),' user-point ')])]",
+                "date_xpath": "ancestor::li[1]//div[@class='altlist-info-item'][last()]",
+                "category_xpath": "ancestor::li[1]//div[@class='altlist-info-item'][1]"
+              }]
+            }
+          }
+        }
+      }
+    },
     "ndsoft-news-rss-v1": {
       "extends": "bounded-rss-v1",
       "description": "공식 NDSoft 매체 RSS와 동일 기사 DOM 공통 규칙. 매체별 feed 이름과 host는 개별 지정.",

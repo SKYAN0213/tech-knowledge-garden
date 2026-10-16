@@ -126,6 +126,7 @@ function sourceFrontierObservation(root, declaration, held = false) {
   const basis = readJSON(root, prefix + "collection-basis.json")
   const archive = readJSON(root, prefix + "archive-reuse.json")
   const repair = readJSON(root, prefix + "detail-repair-reuse.json")
+  const recovery = readJSON(root, prefix + "source-recovery-reuse.json")
   const input = {
     schema: "research-list-run-input/v2",
     channel_id: scan.summary.channel_id,
@@ -136,6 +137,7 @@ function sourceFrontierObservation(root, declaration, held = false) {
     ...listScanPolicyRecheckOptions(declaration.policy_recheck_limit),
     ...(archive ? { reuse_source_run: archive.source_run?.source_run } : {}),
     ...(repair ? { repair_source_run: repair.source_run?.source_run } : {}),
+    ...(recovery ? { recovery_source_run: recovery.source_run?.source_run } : {}),
   }
   const window = { channel_id: scan.summary.channel_id, ...checkedWindow(scan.summary.window) }
   if (
@@ -181,7 +183,7 @@ function sourceFrontierObservation(root, declaration, held = false) {
     pins.push(ref(root, stage.result_path))
     addDocument(readJSON(root, stage.result_path))
   }
-  for (const file of ["state.json", "collection-basis.json", "list-scan.json", "documents.json", "parses.json", "candidates.json", "list-pages.json", "archive-reuse.json", "detail-repair-reuse.json"])
+  for (const file of ["state.json", "collection-basis.json", "collection-input.json", "list-scan.json", "documents.json", "parses.json", "candidates.json", "list-pages.json", "archive-reuse.json", "detail-repair-reuse.json", "source-recovery-reuse.json"])
     if (fs.existsSync(safePath(root, prefix + file))) pins.push(ref(root, prefix + file))
   if (scan.documents.length || scan.parses.length) assertStoredEvidence(root, scan.documents, scan.parses)
   for (const document of [...scan.documents, ...scan.indexDocuments]) addDocument(document)

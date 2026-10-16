@@ -216,6 +216,9 @@ export async function recheckDueSourcePolicies(
     timeBudgetMs > 60000
   )
     throw Error("Policy maintenance needs 0..20 checks and a bounded time budget")
+  // Disabled maintenance must not enumerate unrelated cold policy payloads.
+  // The requested URL still passes its normal policy check in fetchWithPolicy.
+  if (maxChecks === 0) return { status: "disabled", checks: [] }
   const now = policyNow(fetcher)
   let release
   try {
@@ -225,8 +228,8 @@ export async function recheckDueSourcePolicies(
     return { status: "deferred_to_owner", checks: [] }
   }
   try {
-    const queue = listSourcePolicyChecks(root, { now, dueOnly: true })
-    for (const watch of listPolicyWatches(root))
+    const queue = listSourcePolicyChecks(root, { now, dueOnly: true, metadataOnly: true })
+    for (const watch of listPolicyWatches(root, { metadataOnly: true }))
       if (
         Date.parse(watch.next_check_at) <= now &&
         !queue.some((row) => new URL(row.url).origin === watch.url)
@@ -239,7 +242,12 @@ export async function recheckDueSourcePolicies(
       started = Date.now()
     for (const item of queue) {
       if (checks.length >= maxChecks || Date.now() - started >= timeBudgetMs) break
-      checks.push(await recheckSourcePolicy(root, fetcher, item.url, { repo }))
+      try {
+        checks.push(await recheckSourcePolicy(root, fetcher, item.url, { repo }))
+      } catch (error) {
+        if (error.code !== "STORAGE_PENDING") throw error
+        checks.push({ url: item.url, status: "waiting_for_storage", storage_request: error.storage_request })
+      }
     }
     const report = {
       schema: "research-source-policy-maintenance/v1",
@@ -364,6 +372,7 @@ export async function fetchWithPolicy(root, fetcher, url, options = {}) {
   try {
     policy = await checkRobots(root, fetcher, url, { allowed_hosts })
   } catch (error) {
+    if (error.code === "STORAGE_PENDING") throw error
     const fetchStatus = error?.fetch_status === "rate_limited" ? "rate_limited" : "blocked"
     return observe({
       source_id: sourceId(url),

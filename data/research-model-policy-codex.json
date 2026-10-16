@@ -2,8 +2,8 @@
   "schema": "model-execution-policy/v1",
   "roles": {
     "search_plan": {
-      "model": "codex",
-      "think": false,
+      "model": "gpt-6-luna",
+      "think": "medium",
       "num_ctx": 16384,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
@@ -11,8 +11,8 @@
       "provider": "codex"
     },
     "fact_extract": {
-      "model": "codex",
-      "think": false,
+      "model": "gpt-6-luna",
+      "think": "high",
       "num_ctx": 16384,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
@@ -24,8 +24,8 @@
       "provider": "codex"
     },
     "article_write": {
-      "model": "codex",
-      "think": false,
+      "model": "gpt-6-luna",
+      "think": "high",
       "num_ctx": 16384,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
@@ -33,8 +33,8 @@
       "provider": "codex"
     },
     "concept_write": {
-      "model": "codex",
-      "think": false,
+      "model": "gpt-6-luna",
+      "think": "high",
       "num_ctx": 16384,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
@@ -42,8 +42,8 @@
       "provider": "codex"
     },
     "evidence_compare": {
-      "model": "codex",
-      "think": "medium",
+      "model": "gpt-6-luna",
+      "think": "high",
       "num_ctx": 32768,
       "num_predict": 4096,
       "call_timeout_ms": 300000,

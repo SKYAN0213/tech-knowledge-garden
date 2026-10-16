@@ -1,3 +1,21 @@
+## 536. 미완료 수집만 보완하기 (2026-10-16)
+
+`collection.recover`는 기존 보고서의 정확한 경로/SHA에서 실패 창만 선택한다. `plan-only → execute → resume`를 같은 복구 `run_id`로 호출한다. 완료한 출처·정상 원문·동일 설정의 완료 파싱을 반복하지 않는다. `max_routes`와 `time_budget_ms`는 새 창 착수를 제한하고 출처별 `detail_batch_size`는 새 본문 요청을 제한한다. 예산으로 미룬 본문이 남으면 재개하며, 일반 오류만 남으면 원인을 수정한 뒤 `retry_incomplete: true`로 명시한다.
+
+MCP 기본5도구의 `research_execute`에 `module: "collection", operation: "recover"`와 매개변수를 넘기거나 독립 CLI를 사용한다.
+
+```sh
+npm run research:modules -- run collection recover --json '{"run_id":"repair-YYYYMMDD","mode":"plan-only","report_path":"daily/runs/대상/collection-reports/보고서.json","report_sha256":"정확한64자리SHA"}'
+npm run research:modules -- run collection recover --json '{"run_id":"repair-YYYYMMDD","mode":"execute","max_routes":3,"time_budget_ms":600000}'
+npm run research:modules -- run collection recover --json '{"run_id":"repair-YYYYMMDD","mode":"resume"}'
+```
+
+코드·설정 수정 뒤에는 새 복구 ID를 사용한다. `source_runs: {"출처ID": "이전-native-run-ID"}`로 같은 창의 중단 체크포인트도 지정할 수 있다. `collection-input.json`의 원래 입력 해시와 모든 완료 단계의 실제 원문/파싱을 대조한다. 기존 run의 실패·관측 시각·승인은 바꾸지 않는다. 원래 입력이 없는 과거 run의 입력 보완은 원 state의 input_hash가 정확히 일치할 때만 허용한다. 활동 중이거나 소유자가 남은 run은 자동 회수하지 않는다.
+
+기본 결과의 `base_report`와 `report_sources`를 보존하고, 필요한 범위의 `collection.report`를 한 번 생성한다. 보완을 할 때마다 전체 기존 출처를 다시 읽지 않는다. 전체 통합 보고서가 필요하면 `build_report: true`를 명시한다. cold 자료가 없으면 `report_wait`를 확인해 정확한 묶음을 복원하며 완료 수집은 재실행하지 않는다. 실패한 parser 단계가 있는 run은 `unreported_attempts`에 남기고 완료 보고서로 승격하지 않는다.
+
+2026-10-16 실제 보완은 `.local/research/collection-recovery-20261016/verification.json`과 `remaining-source-checks.json`에 기록했다. 전체56→61/63, 전자신문230·TechCrunch105·로봇신문 일반96건/이미지4건을 확인했다. 원고128파일의 SHA를 보존했고 전체 suite/배포/신규 작성·승인/추가 예약은 반복하지 않았다. 상위 시스템 WBS12/12와 보완 기능4/4를 유지하며 셀트리온 정책 및 이미지4건 검토는 자료 상태로 구분한다.
+
 ## 535. GPT 개발 종료·판본 고정·다음 운영 (2026-10-16)
 
 기본 경로는 계정 GPT(Codex)와 기존 Drive 연결이다. 새 MCP/독립 모듈은 data/research-model-policy-codex.json을 기본으로 사용한다. 로컬 operator는 명시 로컬 정책을 유지하지만 정규 실행은 별도 수용 전 executor_not_ready다. 로컬 OAuth 최초 동의·장치별 모델 평가·과거 기사 전수 정리·7회 운영 관찰은 GPT 개발 종료의 필수 검사를 늘리지 않는다.

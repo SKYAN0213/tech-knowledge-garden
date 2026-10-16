@@ -40,7 +40,15 @@ function completed(root, request) {
   )
     throw Error("Reasoning result binding changed")
   assertSchema(result.output, request.input.schema)
+  assertExecutorModel(request, result)
   return stored
+}
+function assertExecutorModel(request, { executor, model }) {
+  const requested = request.binding.settings?.model
+  // Legacy generic Codex requests and explicit local handoffs keep their
+  // original contract. Named Codex requests require that exact executor model.
+  if (executor === "codex" && requested && requested !== "codex" && model !== requested)
+    throw Error("Reasoning executor model must match requested model: " + requested)
 }
 export class ReasoningPending extends Error {
   constructor(request) {
@@ -77,7 +85,11 @@ export function reasoningTasks(root, { offset = 0, limit = 40, run_id } = {}) {
     .map((id) => load(root, id))
     .filter((r) => !run_id || r.run === run_id)
     .filter((r) => !completed(root, r))
-    .map(({ task_id, request_sha256, run, role }) => ({ task_id, request_sha256, run, role }))
+    .map(({ task_id, request_sha256, run, role, binding }) => ({
+      task_id, request_sha256, run, role,
+      requested_model: binding.settings?.model ?? null,
+      requested_thinking: binding.settings?.think ?? null,
+    }))
   return {
     status: "reasoning_pending",
     tasks: tasks.slice(offset, offset + limit),
@@ -103,6 +115,8 @@ export function readReasoningTask(root, { task_id, request_sha256, offset = 0, l
     task_id,
     request_sha256: request.request_sha256,
     status: result ? "completed" : "reasoning_pending",
+    requested_model: request.binding.settings?.model ?? null,
+    requested_thinking: request.binding.settings?.think ?? null,
     ...(result
       ? {
           result: {
@@ -126,6 +140,7 @@ export async function submitReasoningResult(root, parameters) {
     const request = load(root, task_id, request_sha256),
       value = bounded(output)
     assertSchema(value, request.input.schema)
+    assertExecutorModel(request, { executor, model })
     const prior = completed(root, request)
     if (prior) {
       if (JSON.stringify(prior.output) !== JSON.stringify(value))

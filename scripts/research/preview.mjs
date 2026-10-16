@@ -455,7 +455,7 @@ export function newEditionProjections(
   if (
     !spec ||
     spec.schema !== "research-private-edition/v1" ||
-    spec.intent !== "private_slice" ||
+    !["private_slice", "historical_backfill"].includes(spec.intent) ||
     Object.keys(spec).some(
       (key) => !["schema", "intent", "key", "date", "coverage_start", "coverage_end"].includes(key),
     )
@@ -472,15 +472,23 @@ export function newEditionProjections(
     throw Error("New-edition identity and completed coverage interval required")
   const kstDay = (value) =>
     new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date(value))
-  if (kstDay(spec.coverage_end) !== spec.date)
+  const backfill = spec.intent === "historical_backfill"
+  if (!backfill && kstDay(spec.coverage_end) !== spec.date)
     throw Error("New-edition day must match the KST coverage cutoff")
   const existing = editions(vault)
   if (
     !existing.length ||
-    existing.at(-1).meta.coverage_end !== spec.coverage_start ||
-    existing.at(-1).meta.date >= spec.date
+    (backfill
+      ? spec.date >= existing.at(-1).meta.date ||
+        spec.date >= kstDay(spec.coverage_end) ||
+        kstDay(spec.coverage_start) > spec.date ||
+        existing.some((edition) => edition.meta.date === spec.date)
+      : existing.at(-1).meta.coverage_end !== spec.coverage_start ||
+        existing.at(-1).meta.date >= spec.date)
   )
-    throw Error("New edition must continue the latest authority cutoff")
+    throw Error(backfill
+      ? "Historical backfill requires a missing past day and actual later research cutoff"
+      : "New edition must continue the latest authority cutoff")
   const destination = `Editions/${spec.date.slice(0, 4)}/${spec.date.slice(5, 7)}/${spec.key}.md`
   if (fs.existsSync(path.join(vault, destination)))
     throw Error("New-edition destination already exists")
@@ -544,6 +552,7 @@ export function newEditionProjections(
       priorIds.has(article.event_id) ||
       article.source_urls.some((url) => priorUrls.has(canonicalURL(url))) ||
       (original && priorUrls.has(canonicalURL(original))) ||
+      (backfill && published !== spec.date) ||
       (published < firstDay && !exactCarried) ||
       published > spec.date
     )

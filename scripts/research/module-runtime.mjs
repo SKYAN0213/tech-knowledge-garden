@@ -182,6 +182,9 @@ function inputFingerprint(moduleId) {
     : moduleId === "collection"
       ? [
           "collection-report.mjs",
+          "collection-recovery.mjs",
+          "source-run-recovery.mjs",
+          "publication-date-reconciliation.mjs",
           "drive-auth.mjs",
           "drive-client.mjs",
           "drive-storage.mjs",
@@ -291,7 +294,7 @@ function fileFingerprints(ctx, parameters, schema) {
   visit(parameters, schema)
   return files
 }
-function checkedInput(ctx, id) {
+function checkedInput(ctx, id, { requireContext = true } = {}) {
   const input = readJSON(ctx.root, base(id) + "input.json")
   const state = readJSON(ctx.root, base(id) + "state.json")
   if (
@@ -299,8 +302,7 @@ function checkedInput(ctx, id) {
     !state ||
     state.input_sha256 !== sha256(JSON.stringify(input)) ||
     input.job_id !== id ||
-    input.context.repo !== ctx.repo ||
-    input.context.root !== ctx.root
+    (requireContext && (input.context.repo !== ctx.repo || input.context.root !== ctx.root))
   )
     throw Error("Module job input or context changed")
   return { input, state }
@@ -347,7 +349,14 @@ function activeJobs(ctx) {
   return fs
     .readdirSync(directory)
     .filter(validJob)
-    .map((id) => moduleJobStatus(ctx, id))
+    .flatMap((id) => {
+      // Completed historical jobs can belong to the repository's former
+      // location. Verify their saved identity without treating them as live
+      // workers. A foreign queued/running owner still fails closed below.
+      const { state } = checkedInput(ctx, id, { requireContext: false })
+      if (!["queued", "running", "finishing"].includes(state.state)) return []
+      return [moduleJobStatus(ctx, id)]
+    })
     .filter((job) => job.worker_alive !== false)
 }
 

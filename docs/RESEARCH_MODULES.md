@@ -2,7 +2,21 @@
 
 수집 단위는 출처와 원문 판본이고, 작성 단위는 선별된 사건이다. 독립 CLI와 MCP가 같은 JSON Schema·모듈 함수·native 실행기를 사용한다. 출처별 crawler나 별도 지식 DB를 새로 만들지 않는다.
 
-현재12모듈66작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
+현재12모듈67작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
+
+### 미완료 수집 보완
+
+`collection.recover`는 정확한 `report_path/report_sha256`에서 미완료 날짜 창만 골라 `plan-only → execute → resume`로 처리한다. 완료 출처를 다시 수집하지 않는다. 원래 실패 보고서·run을 보존하며 `base_report`와 보완한 창의 `report_sources`를 반환한다. 수집과 보고서 생성을 분리하므로 묶음마다 기존 전체 원문을 다시 검증하지 않는다. 필요한 범위의 `collection.report`를 한 번 생성해 다음 회차에 연결한다. 기존 전체와 통합한 보고서가 필요할 때만 `build_report: true`로 요청하며, 그 과정의 cold 자료 대기는 `report_wait`로 반환하고 완료 수집을 반복하지 않는다. 이미 고정한 브리핑 입력은 교체하지 않는다.
+
+첫 요청은 `run_id`, `mode`, 보고서 참조를 주고 선택적으로 `channels`, `max_attempts`를 지정한다. 재개는 같은 `run_id`와 `mode: "resume"`이면 된다. `max_routes`(기본10), `time_budget_ms`(기본600000)는 호출별 새 경로 착수 제한이며 시작한 원문의 timeout은 별도다. `detail_batch_size`를 선언한 출처는 새 본문 요청만 묶음 예산을 소비한다. 저장된 원문과 동일 worker·parser·옵션의 완료된 파싱은 재사용하고, 원래의 partial/blocked 판정도 그대로 유지한다. 예산으로 미룬 본문은 다른 실패가 섞여 있어도 다음 묶음에서 처리한다. 일반 오류만 남았을 때의 재시도는 `retry_incomplete: true`로 명시하고 출처별 시도 상한을 유지한다.
+
+수집 설정·코드가 바뀌면 새 복구 ID를 만든다. `scan.recovery_source_run` 또는 독립 CLI `scan-list --recovery-source-run ID`는 바뀐 설정으로도 같은 출처·같은 창의 검증된 원문을 재사용한다. 원문 시각을 현재로 바꾸거나 과거 완료·승인을 승계하지 않는다. URL은 현재 허용 host 안이어야 한다. `STORAGE_PENDING`은 사이트 접근 실패로 기록하지 않고 정확한 Drive 묶음 요청과 같은 native run을 보존한다. 복원 후 같은 복구 ID를 재개한다.
+
+결과 파일을 쓰기 전에 중단된 수집도 `collection-input.json`과 native 체크포인트의 해시·원문을 검증해 재사용한다. 코드 수정 뒤에는 `source_runs: {"출처ID": "이전-native-run-ID"}`로 정확한 같은 창의 체크포인트를 지정할 수 있다. 활동 중인 run 소유자나 아직 실행 중인 단계는 재사용하지 않는다. 실패·보관 대기 단계는 새 완료로 바꾸지 않으며 `unreported_attempts`에 남긴다. 원문·파싱의 정상 단계를 다시 실행하지 않는다.
+
+조건부 요청에 쓸 ETag/Last-Modified가 없는 cold HTTP 캐시는 과거 본문을 먼저 복원하지 않는다. 새로 받은 동일 해시의 응답은 정확한 bytes로 복원하고 과거 immutable 메타데이터는 보존한다. 304에 필요한 캐시와 실제 원문 검증은 기존 관문을 유지한다. 정책 점검 목록은 메타데이터로 고르고 선택한 정책만 원문을 확인한다. 검토 대기는 독자 화면·기사 본문에 출력하지 않는다.
+
+RSS 범위가 짧은 NDSoft 매체는 공통 `ndsoft-news-rss-archive-v1`에 매체별 공식 archive URL만 지정할 수 있다. 연도가 없는 목록 날짜는 원문의 명시 날짜로 대조한다. 페이지의 반복 행은 기본 오류이며, 확인한 출처에만 `identical-rows` 상한을 선언한다. 같은 URL·제목·날짜의 인접 페이지 행만 합치고 전체 페이지 반복·내용 변경은 계속 차단한다. NVIDIA의 RSS 재노출일은 명시된 원문 발표일과 두 날짜가 모두 조사 창 안에 있을 때만 원문 날짜로 연결하며 두 근거를 함께 보존한다.
 
 ## 기본 흐름
 
@@ -531,3 +545,8 @@ KUKA·TD SYNNEX의 2026-10-07 공동 발표 영문/독문과 공식 AMR 기술 �
 혼합 `partial` 결과는 모든 `reasoning_tasks`, 검토 대기 rows, 실패를 인계하고 planner를 멈춘다. 첫 `reasoning_task`는 기존 소비자용으로 함께 보존한다. 지식·발행 작업은 ontology/link 및 실제 전달 helper의 코드 SHA를 고정하며 다른 구현의 저장 job은 현재 결과로 재개하지 않는다.
 
 `research:core`와 `research-ontology.mjs knowledge-index/impact`는 `--connection-review-run`으로 기존 명시 관계 승인을 전달한다. 승인 path/SHA는 불변 입력에 포함되며 새 관계 승인이나 graph를 자동 생성하지 않는다. 과거 수집 receipt와 current code fingerprint는 구분한다. R1-e의 저장4개 checkpoint 확인은 현재 RunState의 완료 단계 재사용만 증명하고 현재 구현으로 전체 onboarding을 다시 인증한 것은 아니다.
+
+
+### 기사 처리 모델 고정 (2026-10-16)
+
+개발은 Sol, 기본 Codex 추론 다섯 역할은 `gpt-6-luna`다. `reasoning.pending/read`의 `requested_model`·`requested_thinking`으로 실행 대상을 확인한다. 실제 Luna에서 실행한 결과만 `reasoning.submit`에 `executor: codex`, `model: gpt-6-luna`로 제출한다. 이 값은 호출자 선언이며 서버가 실제 모델 실행을 자동 증명하거나 시작하지 않는다. 명시 모델 요청의 모델 누락/불일치는 저장 전에 거부한다. 기존 generic `codex` 요청/완료 결과는 변경하지 않으며, 명시적인 Ollama 교체의 실제 실행 모델 기록과 승인 경계도 유지한다. 모델 변경 후 옛 run의 바인딩을 수정하지 않고 새 run을 사용한다.

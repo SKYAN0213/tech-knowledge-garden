@@ -640,7 +640,7 @@
         "사이버보안"
       ],
       "method": "rss",
-      "url": "https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v",
+      "url": "https://cloudblog.withgoogle.com/topics/threat-intelligence/rss/",
       "route_check": {
         "date": "2026-09-29",
         "method": "local-source-fetch",

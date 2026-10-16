@@ -19,6 +19,7 @@ import {
 } from "../collection-report.mjs"
 import { auditSourceRoutes } from "../source-route-audit.mjs"
 import { executeListScan } from "../list-scan-command.mjs"
+import { recoverCollection } from "../collection-recovery.mjs"
 import { dailyScan } from "../daily-scan.mjs"
 import { executeTargetedSourceSearch } from "../source-targeted-search.mjs"
 import { executeCandidateFollowups } from "../source-followups.mjs"
@@ -128,6 +129,7 @@ export const module = {
           since: day,
           until: day,
           repair_source_run: id,
+          recovery_source_run: id,
           policy_recheck_limit: integer(0, 3),
         },
         ["run_id", "channel", "since", "until"],
@@ -140,10 +142,33 @@ export const module = {
           since: p.since,
           until: p.until,
           ...(p.repair_source_run ? { "repair-source-run": p.repair_source_run } : {}),
+          ...(p.recovery_source_run ? { "recovery-source-run": p.recovery_source_run } : {}),
           ...(p.policy_recheck_limit !== undefined
             ? { "policy-recheck-limit": p.policy_recheck_limit }
             : {}),
         }),
+      { network: true },
+    ),
+    recover: operation(
+      "고정된 수집 보고서에서 미완료 출처만 계획·보완·재개한다. 성공 원문과 동일 설정의 파싱을 재사용하고 누락 본문을 제한된 묶음으로 이어서 처리한다. 변경된 수집 설정으로도 원 관측 시각·실패 기록을 보존하며 승인·작성·발행은 수행하지 않는다.",
+      schema({
+        run_id: { type: "string", pattern: "^[A-Za-z0-9_-]{1,70}$" },
+        mode: { type: "string", enum: ["plan-only", "execute", "resume"] },
+        report_path: file("root"),
+        report_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        channels: list(id, 250), max_routes: integer(1, 250),
+        source_runs: { type: "object", maxProperties: 250, additionalProperties: id },
+        max_attempts: integer(1, 10), time_budget_ms: integer(1, 3600000),
+        retry_incomplete: { type: "boolean" },
+        build_report: { type: "boolean" },
+      }, ["run_id", "mode"]),
+      (ctx, p) => recoverCollection({
+        repo: ctx.repo, root: ctx.root, runId: p.run_id, mode: p.mode,
+        reportPath: p.report_path, reportSha256: p.report_sha256,
+        channels: p.channels, sourceRuns: p.source_runs, maxRoutes: p.max_routes, maxAttempts: p.max_attempts,
+        timeBudgetMs: p.time_budget_ms, retryIncomplete: p.retry_incomplete,
+        publishReport: p.build_report,
+      }),
       { network: true },
     ),
     daily: operation(

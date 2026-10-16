@@ -85,11 +85,17 @@ export async function checkRobots(root, fetcher, url, { allowed_hosts } = {}) {
         const record = await fetcher.fetch(origin + "/robots.txt", { allowed_hosts: hosts })
         if (record.fetch_status === "not_found") return { text: "", record }
         if (["captured", "not_modified"].includes(record.fetch_status)) {
+          const invalidPolicy = (message) => {
+            const error = Error(message)
+            error.fetch_status = "invalid_policy"
+            error.policy_document = record
+            throw error
+          }
           const body = fs.readFileSync(safePath(root, record.body_path))
-          if (body.length > 512 * 1024) throw Error("Robots policy is too large")
-          if (sha256(body) !== record.body_sha256) throw Error("Robots policy hash mismatch")
+          if (body.length > 512 * 1024) invalidPolicy("Robots policy is too large")
+          if (sha256(body) !== record.body_sha256) invalidPolicy("Robots policy hash mismatch")
           if (/<(?:!doctype\s+html|html)\b/i.test(body.toString("utf8")))
-            throw Error("Robots response is an HTML page")
+            invalidPolicy("Robots response is an HTML page")
           return { text: body.toString("utf8"), record }
         }
         const error = Error(

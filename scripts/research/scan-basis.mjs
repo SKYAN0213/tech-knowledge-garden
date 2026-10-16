@@ -63,6 +63,8 @@ export function scanListImplementationFingerprints(repo = process.cwd()) {
     scan_basis_sha256: "scripts/research/scan-basis.mjs",
     collection_cli_sha256: "scripts/research-scan.mjs",
     collection_command_sha256: "scripts/research/list-scan-command.mjs",
+    source_run_recovery_sha256: "scripts/research/source-run-recovery.mjs",
+    publication_date_reconciliation_sha256: "scripts/research/publication-date-reconciliation.mjs",
   }
   return Object.fromEntries(
     Object.entries(modules).map(([key, file]) => [

@@ -97,6 +97,43 @@ function fixture(t) {
   }
 }
 
+test("disabled maintenance never reads unrelated cold policy observations", async (t) => {
+  const f = fixture(t)
+  atomicWrite(f.root, "source-policy/index/" + "f".repeat(20) + ".json", { url: "https://unrelated.example/story", reference: { path: "missing-cold-payload" } })
+  const report = await recheckDueSourcePolicies(f.root, f.fetcher(), { maxChecks: 0 })
+  assert.equal(report.status, "disabled")
+  assert.deepEqual(report.checks, [])
+  assert.equal((await fetchWithPolicy(f.root, f.fetcher(), f.url)).fetch_status, "captured")
+})
+
+test("malformed robots HTML retains its exact failed policy evidence and never authorizes the article", async (t) => {
+  const f = fixture(t)
+  f.responses.robots.body = "<!DOCTYPE html><html><body>Website landing page</body></html>"
+  const result = await fetchWithPolicy(f.root, f.fetcher(), f.url)
+  assert.equal(result.fetch_status, "blocked")
+  assert.equal(result.request_performed, false)
+  assert.match(result.error, /HTML page/)
+  assert.ok(result.policy_failure.body_path)
+  assert.equal(fs.readFileSync(path.join(f.root, result.policy_failure.body_path), "utf8"), f.responses.robots.body)
+  assert.ok(f.calls.every((url) => url.endsWith("/robots.txt")))
+})
+
+test("a missing Drive policy payload propagates as storage recovery rather than a website failure", async (t) => {
+  const f = fixture(t), fetcher = f.fetcher()
+  fetcher.fetch = async () => { throw Object.assign(Error("Exact Drive payload required"), { code: "STORAGE_PENDING" }) }
+  await assert.rejects(fetchWithPolicy(f.root, fetcher, f.url), { code: "STORAGE_PENDING" })
+  assert.equal(readSourcePolicyState(f.root, f.url), null)
+})
+
+test("policy maintenance lists metadata without hydrating an unrelated available article", async (t) => {
+  const f = fixture(t), first = await fetchWithPolicy(f.root, f.fetcher(), f.url)
+  fs.unlinkSync(path.join(f.root, first.body_path))
+  const next = await fetchWithPolicy(f.root, f.fetcher({ policy_recheck_limit: 1 }), "https://publisher.example/new-story")
+  assert.equal(next.fetch_status, "captured")
+  assert.throws(() => readSourcePolicyState(f.root, f.url), /ENOENT/)
+  assert.ok(listSourcePolicyChecks(f.root, { metadataOnly: true }).some((row) => row.url === f.url))
+})
+
 test("availability separates temporary responses, confirmed restrictions and unknown failures", () => {
   for (const status of [408, 429, 500, 502, 503, 504])
     assert.equal(

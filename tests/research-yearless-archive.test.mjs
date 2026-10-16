@@ -78,6 +78,32 @@ const article = (url, date) => ({
 })
 const run = { stage: async (_name, _input, operation) => operation() }
 
+test("explicit image-only headers resolve the listing year while bodies stay incomplete and ordinary articles continue", async () => {
+  const stages = new Map(), cachedRun = { stage: async (name, _input, fn) => {
+    if (!stages.has(name)) stages.set(name, await fn())
+    return stages.get(name)
+  } }
+  const result = await scanPathPagesRoute("unused", cachedRun, {}, route, profiles, { since: "2026-10-02", until: "2026-10-04" }, {
+    fetchPolicy: async (_r, _f, url) => document(url),
+    parse: async (_r, d) => {
+      const url = d.original_url
+      if (url.includes("news?page=")) return url.endsWith("=1")
+        ? listing([link("image", "10-03 09:00"), link("free", "10-02 08:30")])
+        : listing([link("boundary", "10-01 17:00")], 2)
+      if (url.endsWith("image")) return { ...article(url, "2026-10-03"), status: "partial", title_profile_status: "matched",
+        quality: { required_fields_present: false }, blocks: [], body_images: [{ url: "https://example.org/table.png" }],
+        dates: { published_at: "2026-10-03", profile_status: "matched", basis: { dom_path: "/html/head/meta", text: "2026-10-03T09:00:00+09:00" } } }
+      return article(url, url.endsWith("free") ? "2026-10-02" : "2026-10-01")
+    },
+  })
+  assert.equal(result.summary.assessment.status, "window_covered")
+  assert.equal(result.summary.date_resolutions[0].access_scope, "image-metadata-only")
+  assert.equal(result.summary.status, "incomplete")
+  assert.equal(result.summary.details[0].status, "article_parse_incomplete")
+  assert.equal(result.candidates.length, 1)
+  assert.equal(result.candidates[0].title, "Article free")
+})
+
 test("yearless archive dates use the exact original across a year boundary and retain both sources", async () => {
   const old = link("old", "12-31 08:30")
   const result = await resolveYearlessArchiveDates(

@@ -443,6 +443,7 @@ export async function scanBoundedRSSRoute(
       parseFeed(root, listing, channel),
     )
   } catch (error) {
+    if (error.code === "STORAGE_PENDING") throw error
     return {
       summary: { ...summary, reason: "listing_parse_failed", error: error.message },
       indexDocuments,
@@ -486,7 +487,7 @@ export async function scanBoundedRSSRoute(
         listing_parse_id: parsed.parse_id,
         discovered_at: listing.observed_at,
       })),
-    { fetchPolicy, parse: parseArticle },
+    { fetchPolicy, parse: parseArticle, window: { since, until } },
   )
   documents.push(...inspected.documents)
   parses.push(...inspected.parses)

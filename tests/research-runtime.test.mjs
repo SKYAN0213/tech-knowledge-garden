@@ -359,6 +359,23 @@ test("versioned fetch preserves legacy ID, body, 304 observation and source chan
     sha256("second"),
   )
 })
+test("a cold unconditional cache does not require old bytes and a fresh identical response restores its exact body", async (t) => {
+  const root = temporary(t), requests = []
+  const fetcher = new SourceFetcher(root, { interval_ms: 0, resolve: resolver, transport: async (_url, _addresses, headers) => {
+    requests.push(headers)
+    return { status: 200, headers: { "content-type": "text/html" }, body: Buffer.from("Unchanged original body") }
+  } })
+  const first = await fetcher.fetch("https://example.com/article")
+  const originalMetadata = fs.readFileSync(path.join(root, `documents/${first.source_id}/${first.body_sha256}/document.json`))
+  fs.unlinkSync(path.join(root, first.body_path))
+  const next = await fetcher.fetch(first.original_url)
+  assert.equal(next.fetch_status, "captured")
+  assert.equal(next.source_version_id, first.source_version_id)
+  assert.equal(fs.readFileSync(path.join(root, next.body_path), "utf8"), "Unchanged original body")
+  assert.equal(requests[1]["if-none-match"], undefined)
+  assert.deepEqual(fs.readFileSync(path.join(root, `documents/${first.source_id}/${first.body_sha256}/document.json`)), originalMetadata)
+})
+
 test("concurrent fetches for one source serialize and reuse the first response", async (t) => {
   const root = temporary(t),
     requests = []

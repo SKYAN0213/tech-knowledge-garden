@@ -11,6 +11,7 @@ const profiles = JSON.parse(
 ).article_profiles
 const doe = profiles.find((profile) => profile.id === "doe-spark-grid-investment-20260924")
 const esa = profiles.find((profile) => profile.id === "esa-juice-earth-flyby-20260928")
+const nasa = profiles.find((profile) => profile.id === "nasa-technology-article-v1")
 const doeURL =
   "https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity"
 const esaURL =
@@ -44,6 +45,20 @@ async function parseFixture(t, url, html, profile) {
     profile.options,
   )
 }
+
+test("NASA reads the article title once while retaining H1 subheadings in the body", async (t) => {
+  const parsed = await parseFixture(t,
+    "https://www.nasa.gov/centers-and-facilities/langley/batteries/",
+    `<html><head><title>NASA</title><meta property="article:published_time" content="2026-10-14T10:41:21-04:00"></head><body><main id="primary"><article>
+    <h1>NASA develops lunar batteries</h1><div class="usa-article-content"><div class="entry-content">
+    <p>NASA researchers developed batteries for extremely cold lunar conditions.</p><h1>Splashy problem, solid solution</h1><p>The team tested cells in a thermal vacuum chamber.</p>
+    <h1>Power for Moon, Earth</h1><p>The research investigates performance under defined laboratory conditions.</p></div></div>
+    </article></main></body></html>`, nasa)
+  assert.equal(parsed.status, "extracted")
+  assert.equal(parsed.title, "NASA develops lunar batteries")
+  assert.ok(parsed.blocks.some((b) => b.text === "Splashy problem, solid solution"))
+  assert.ok(parsed.blocks.some((b) => b.text === "Power for Moon, Earth"))
+})
 
 test("DOE article uses its own displayed date and body, not neighboring releases", async (t) => {
   assert.match(doeURL, new RegExp(doe.url_pattern))

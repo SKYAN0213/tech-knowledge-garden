@@ -1,6 +1,6 @@
 {
   "schema": "research-operation-policy/v1",
-  "phase": "ready",
+  "phase": "development",
   "schedule_id": "tech-knowledge-garden-04",
   "default_executor": "codex",
   "storage_backend": "connected_drive",
@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/gpt-canonical-20261016-final/receipt.json",
-    "sha256": "68a316685212b62dcc129838f8278ce1d2df3b930241e4bba4b86bdb57289c0d"
+    "path": ".local/research/development-releases/gpt-collection-recovery-20261016-v1/receipt.json",
+    "sha256": "6ba2e027cbf87a242dd912f9afb169afdb27e172cff1f737d2141bfc74a0eaad"
   },
   "recovery": {
     "automatic_retry": false,

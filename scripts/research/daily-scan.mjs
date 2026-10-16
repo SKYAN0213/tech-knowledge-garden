@@ -794,6 +794,10 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
       for (const detail of scan.summary.details.filter(
         (d) => !["source_parsed_unreviewed", "public_access_excluded"].includes(d.status),
       )) {
+        if (detail.status === "deferred_by_budget") {
+          failures.push({ state: "retryable", kind: "detail_batch_remaining" })
+          continue
+        }
         const document = sources.find((d) =>
           detail.source_version_id
             ? d.source_version_id === detail.source_version_id
