@@ -633,7 +633,10 @@ test("existing collection.storage exposes local transfer actions without adding 
   const f = fixture(t)
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 66)
+  // Collection recovery is a separate operation; local Drive actions still
+  // share the existing storage operation.
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 67)
+  assert.equal(catalog.modules.find((m) => m.id === "collection").operations.filter((o) => o.id === "storage").length, 1)
   const result = await executeModule({ repo: f.repo, root: f.root }, "collection", "storage", {
     action: "remote-status",
   })

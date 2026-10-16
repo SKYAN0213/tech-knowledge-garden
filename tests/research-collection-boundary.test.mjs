@@ -161,6 +161,8 @@ test("collection evidence ignores editorial/archive commands and still binds col
     "scripts/research/article-image-review-cache.mjs",
     "scripts/research/article-image-source.mjs",
     "scripts/research/ocr-table.mjs",
+    "scripts/research/source-run-recovery.mjs",
+    "scripts/research/publication-date-reconciliation.mjs",
     "scripts/research.mjs",
     "scripts/research/archive-closure.mjs",
     "scripts/research/editor.mjs",
@@ -183,6 +185,8 @@ test("collection evidence ignores editorial/archive commands and still binds col
   for (const file of [
     "scripts/research-scan.mjs",
     "scripts/research/list-scan-command.mjs",
+    "scripts/research/source-run-recovery.mjs",
+    "scripts/research/publication-date-reconciliation.mjs",
     "scripts/research/parser.mjs",
     "scripts/research/supporting-sources.mjs",
     "integrations/research-worker/worker.py",
