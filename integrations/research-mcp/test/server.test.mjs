@@ -298,10 +298,14 @@ test("default compact MCP exposes five tools, discovers native contracts and enf
   for (let i = 0; i < 120; i++) {
     status = (await rpc("tools/call", { name: "research_job_status", arguments: { job_id } }))
       .result.structuredContent
-    if (["completed", "failed", "interrupted"].includes(status.state)) break
+    // Status reads the saved state before checking worker liveness. A fast
+    // worker can commit completion and exit between those reads, yielding one
+    // stale interrupted snapshot. Poll only; never resubmit or resume the job.
+    // A real interruption still fails the completed assertion at the bound.
+    if (["completed", "failed"].includes(status.state)) break
     await new Promise((resolve) => setTimeout(resolve, 25))
   }
-  assert.equal(status.state, "completed", state.stderr)
+  assert.equal(status.state, "completed", JSON.stringify({ status, stderr: state.stderr }))
   let saved,
     content = "",
     offset = 0
