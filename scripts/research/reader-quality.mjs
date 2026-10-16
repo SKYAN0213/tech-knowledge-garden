@@ -8,11 +8,16 @@ import { inspectEditorialCompleteness } from "./editorial-completeness.mjs"
 const segmenter = new Intl.Segmenter("ko", { granularity: "sentence" })
 export function readerSentences(text) {
   const result = []
-  for (const part of segmenter.segment(text.normalize("NFC"))) {
+  const normalized = text.normalize("NFC")
+  // A leading period in .NET is an identifier, not a Korean sentence end.
+  // Mask only that character while segmenting, then read the original span.
+  const segmentation = normalized.replace(/(?<=^|\s)\.(?=NET\b)/gu, "\uE000")
+  for (const part of segmenter.segment(segmentation)) {
+    const original = normalized.slice(part.index, part.index + part.segment.length)
     // Unicode sentence rules can treat a period followed by lowercase Latin
     // text as an abbreviation, even after a complete Korean sentence.
     // Split these Korean endings without touching decimals, versions or URLs.
-    for (const segment of part.segment.split(/(?<=(?:다|요|죠)[.!?])\s+(?=[a-z])/u)) {
+    for (const segment of original.split(/(?<=(?:다|요|죠)[.!?])\s+(?=[a-z])/u)) {
       const sentence = segment.trim()
       if (!sentence) continue
       if (result.length && /^(?:[”’"')\]]*)(?:이라고|라고|라며|고|며)\s/.test(sentence))

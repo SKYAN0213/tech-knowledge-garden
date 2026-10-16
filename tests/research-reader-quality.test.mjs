@@ -63,6 +63,14 @@ test("reader sentence boundaries preserve numbers, versions, URLs and reported K
   assert.equal(readerSentences("“공개했다.”라고 밝혔다. 상태 조회를 제공한다.").length, 2)
   assert.equal(readerSentences("“가능하다!”고 밝혔다. 다음 요청을 받는다.").length, 2)
 })
+test("leading .NET identifiers retain the original prose without splitting a sentence", () => {
+  const first = "첫 로더는 이미지를 복원해 .NET DLL을 적재했다."
+  const second = "다음 단계는 또 다른 .NET 파일을 복원했다."
+  assert.deepEqual(readerSentences(first + " " + second), [first, second])
+  assert.deepEqual(readerSentences(".NET 로더를 분석했다. NET 표기는 그대로다."), [
+    ".NET 로더를 분석했다.", "NET 표기는 그대로다.",
+  ])
+})
 test("Korean news sentences followed by lowercase technical names remain separate", () => {
   const prose =
     "GitHub는 7월 28일 악성 패키지 보고를 자동 반영한다고 발표했다. npm과 PyPI의 경보 범위가 넓어졌다."
