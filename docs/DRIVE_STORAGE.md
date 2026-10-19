@@ -134,7 +134,6 @@ Drive 폴더 전체 목록을 확인할 때는 직접 폴더 열거를 사용한
 
 `docs/DRIVE_GITHUB_SYNC.md`가 발행 순서를 정한다. 작성 원본 네 폴더를 먼저 Drive에 저장하고 GitHub가 읽어 사이트를 생성한다. `WebsiteData`는 배포 결과를 다시 확인하는 자료이며 작성 원본이 아니다. Google 내보내기 연결과 성공한 동기화 실행을 확인하기 전에는 상시 자동 반영 완료라고 보고하지 않는다.
 
-
 ## 로컬 수집·검토 묶음의 독립 복구
 
 새 검토 자료를 보관할 때 기존 archive 외에 archive-closure로 실제 참조된 이전 추출·원문 묶음·후보 승인·대체 원보도 검토와 불변 parse store를 포함할 수 있다. source-run은 원고 run, related-run은 그 원고의 후보 승인 run이다. 추가 원문이나 모델 추론 없이 저장 bytes/hash를 확인하며 기존 ZIP을 덮어쓰지 않는다.
@@ -154,8 +153,6 @@ prepare-drive.py --approved-preview의 준비 결과는 업로드 승인이 아�
 
 업데이트 직전 원본 raw SHA를 확인하고 동일 파일 ID로 저장한 뒤 원격 bytes를 재조회해 desired SHA와 ID/부모를 확인한다. 저장 결과는 release receipt를 고치지 않고 별도 execution proof로 보관한다. post snapshot으로 local vault를 동기화하고 재실행은 동일 bytes 쓰기를 생략한다. 이 단계의 성공은 공개 사이트 배포 성공을 뜻하지 않는다.
 
-
-
 ## 정확한 원문 판본에서 검증된 Drive 보관본 찾기
 
 새 `scripts/research-archives.mjs`는 기존 portable archive의 불변 receipt와 실제 Drive raw ZIP을 대조해 비공개 위치 기록을 만든다. 메타데이터 JSON은 `research-drive-archive-observation/v1`이며 `observed_at`(timezone 명시·10분 이내), `file_id`, `name`, `mime_type: application/zip`, `size`, `parent_ids`, `shared: false`가 필요하다. 업로드 응답이나 원격 이름만으로 등록할 수 없다.
@@ -172,18 +169,18 @@ node scripts/research-archives.mjs lookup --event <exact-event-id>
 
 compact MCP의 `research_execute`에 `module: publication`과 아래 `operation`, 해당 `parameters`를 전달한다. 작업별 상세 계약은 `research_modules`의 module/operation 조회로 확인한다. `prepare/status`의 로컬 인계 계약은 유지하고, 새 작업은 같은 authoring/delivery 실행기를 사용한다.
 
-| 작업 | 필요한 입력과 역할 | 완료 경계 |
-|---|---|---|
-| `request_delivery` | `run_id`, 정확한 `handoff_path/sha256`. 기존 native 승인·필수 지식 run을 전달 요청으로 고정 | `release_required`이며 원격 쓰기나 승인 생성 없음 |
-| `deliver` | `run_id`, 별도의 `execution_id`, `stage`, 정확한 `release_path/sha256`. `authoring`과 `publication`을 명시 선택 | 명시적 외부 운영 실행용; 자동 로컬 planner에서 제외 |
-| `delivery_receipt` | 대기 중인 `execution_id/event_id`와 실제 `acquisition_path/sha256` 제출 | `receipt_submitted`는 원격 완료를 뜻하지 않음 |
-| `delivery_status` | `run_id`의 고정 선택·단계·connector intent·native receipt를 조회 | 저장 관측이며 현재 원격 조회/쓰기를 수행하지 않음 |
+| 작업               | 필요한 입력과 역할                                                                                              | 완료 경계                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `request_delivery` | `run_id`, 정확한 `handoff_path/sha256`. 기존 native 승인·필수 지식 run을 전달 요청으로 고정                     | `release_required`이며 원격 쓰기나 승인 생성 없음   |
+| `deliver`          | `run_id`, 별도의 `execution_id`, `stage`, 정확한 `release_path/sha256`. `authoring`과 `publication`을 명시 선택 | 명시적 외부 운영 실행용; 자동 로컬 planner에서 제외 |
+| `delivery_receipt` | 대기 중인 `execution_id/event_id`와 실제 `acquisition_path/sha256` 제출                                         | `receipt_submitted`는 원격 완료를 뜻하지 않음       |
+| `delivery_status`  | `run_id`의 고정 선택·단계·connector intent·native receipt를 조회                                                | 저장 관측이며 현재 원격 조회/쓰기를 수행하지 않음   |
 
 `deliver`는 기존 release receipt를 검사하여 preview의 정확한 handoff·기사 run/사건 ID·필수 지식 run과 일치할 때만 실행한다. release 검토는 기존 `research-authoring.mjs release` 경로에서 먼저 수행한다. 이 호출의 입력이나 모델 판단이 편집 승인을 대신하지 않는다.
 
 `stage: authoring`에는 최초 실제 connector 획득 파일의 `acquisition_path/sha256`를 전달한다. `wait_ms`는 1~60000이며 기본60000이다. 실행 중 `delivery_status`의 `pending_request`에는 고정 event ID와 native write intent의 원래 파일 ID·부모·전/후 SHA·원본 staged `file_uri`·만료 시각이 나온다. 승인된 intent를 연결된 Drive 도구로 처리한 뒤 metadata·부모 목록 전후·실제 raw bytes가 담긴 `research-authoring-drive-acquisition/v1` JSON을 같은 연구 root 아래에 저장하고 `delivery_receipt`를 제출한다. 인증 정보는 연결 도구에 남긴다. 기존 native 검증기가 이를 소비한 뒤에만 `drive_verified`가 true가 된다. 미확정 create 의도는 기본적으로 재전송하지 않는다. 운영자가 connector 호출 자체가 전송되지 않았음을 확인한 경우에만 `resume_intent`와 `connector_call_not_dispatched: true`를 명시할 수 있으며, 기존 프로세스 종료·동일한 승인 작업·의도 발생 이후의 완전하고 안정적인 Drive 목록에서 대상 부재까지 검증된 경우 같은 intent를 재개한다. 이 확인은 자동 재시도나 새 승인으로 기록되지 않고 별도 복구 근거로 남는다.
 
-`stage: publication`은 이미 검증된 authoring 실행을 요구한다. 최신 전수 Drive 작성 원본의 `source_snapshot_path/sha256`와 `source_readback_path/sha256`를 함께 전달하면 기존 canonical import·publisher·Actions 확인·공개 raw readback을 이어간다. 원본 snapshot이 없으면 `source_snapshot_required`로 대기한다. 선택한 Actions run은 `actions_run`으로 고정하며 자동 workflow dispatch나 재실행은 하지 않는다. 원격 Research/WebsiteData 전달은 기존 `remote_plan_path/sha256`, `remote_acquisition_path/sha256` 계약을 사용하고 같은 durable capture 요청을 통해 후속 bytes를 제출한다.
+`stage: publication`은 이미 검증된 authoring 실행을 요구한다. 최신 전수 Drive 작성 원본의 `source_snapshot_path/sha256`와 `source_readback_path/sha256`를 함께 전달하면 기존 canonical import·publisher·Actions 확인·공개 raw readback을 이어간다. 원본 snapshot이 없으면 `source_snapshot_required`로 대기한다. 선택한 Actions run은 `actions_run`으로 고정하며 자동 workflow dispatch나 재실행은 하지 않는다. 원래 콘텐츠 push 이후 코드만 main에 추가로 반영했다면 `deployment_commit`과 그 커밋을 빌드·배포한 정확한 `actions_run`을 함께 지정할 수 있다. 이 경우 해당 커밋은 원래 콘텐츠 커밋의 후손이어야 하고 `publicationContentPaths`의 모든 파일이 그대로여야 하며, 승인 원고의 Git bytes도 일치해야 한다. 원래 push 영수증은 보존하고 같은 publication run에서 배포·공개 readback만 마친다. 원격 Research/WebsiteData 전달은 기존 `remote_plan_path/sha256`, `remote_acquisition_path/sha256` 계약을 사용하고 같은 durable capture 요청을 통해 후속 bytes를 제출한다.
 
 요청은 `runs/<run>/publication-delivery/input.json`, release 연결은 `binding.json`, 각 실행·대기·응답은 `executions/<execution_id>/`에 저장한다. 같은 execution ID/입력의 완료 결과는 재사용하여 외부 단계를 반복하지 않는다. `research_job_status/result`는 worker 완료와 native 상태를 구분한다. 부분 결과나 source snapshot 대기는 새 입력과 명시적 새 execution ID로 이어간다. 실패/중단 후에는 먼저 기존 writer·publisher intent와 실제 bytes/receipt를 대조하고 잠금 소유권을 확인한다. `resume_intent`, `retry_publish`, `resume_remote_intent`는 기존 명시 재개 조건에서만 사용한다. 미확정 create는 새 요청으로 바꾸지 않는다. connector 호출 자체가 전송되지 않았음을 운영자가 확인한 경우에만 정확한 `resume_intent`와 `connector_call_not_dispatched: true`를 사용하며, 원래 writer 종료·동일 승인/작업·의도 이후의 완전한 안정 목록이 native 검증된 때 같은 intent를 재개하고 해당 확인을 durable resumption record에 남긴다.
 

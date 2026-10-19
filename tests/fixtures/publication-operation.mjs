@@ -166,6 +166,7 @@ export async function fixture(t, rootRelative = ".local/research", destinationFo
   const deployment = {
     status: "completed",
     conclusion: "success",
+    headBranch: "main",
     headSha: commit,
     url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/123",
     jobs: ["build", "deploy"].map((name) => ({ name, status: "completed", conclusion: "success" })),
@@ -205,6 +206,7 @@ export async function fixture(t, rootRelative = ".local/research", destinationFo
     releasePath,
     pushPath,
     push,
+    preview,
     deployment,
     privatePut,
     put,

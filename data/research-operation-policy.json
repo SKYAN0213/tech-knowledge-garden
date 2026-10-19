@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-authoring-create-write-resume-20261019-v1/receipt.json",
-    "sha256": "a34fcb50d77dc538c83381be5824641390d38a960797c6e1f71be45e924225db"
+    "path": ".local/research/development-releases/tkg-publication-worker-visibility-continuation-20261019-v1/receipt.json",
+    "sha256": "c7d9038b84b4837a50318b2d10eede5339ef21b742d6102129a370753bff0ac4"
   },
   "recovery": {
     "automatic_retry": false,

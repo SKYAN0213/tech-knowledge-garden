@@ -12,10 +12,16 @@ import {
   publicationOperationStatus,
   recordPublicationPush,
 } from "../scripts/research/publication-operation.mjs"
+import { publicReadbackPlan } from "../scripts/research/public-readback.mjs"
 
 const proof = (f) => ({ ...f.deployment, workflowName: "Publish Garden" })
 const ready = (f) => [
-  { databaseId: 123, headSha: f.push.local_commit, workflowName: "Publish Garden" },
+  {
+    databaseId: 123,
+    headBranch: "main",
+    headSha: f.push.local_commit,
+    workflowName: "Publish Garden",
+  },
 ]
 const options = (f) => ({ ...f.options, releasePath: f.releasePath, fetchImpl: f.fetchImpl })
 
@@ -71,6 +77,52 @@ test("single delivery resumes pending CI without a second push, then reuses ever
   assert.equal(again.status, "public_bytes_verified")
   assert.deepEqual([pushes, queries, f.calls()], count)
   assert.deepEqual(again.reused, ["publication", "deployment", "public_readback"])
+})
+
+test("same approved issue can finish on a successful code-only descendant deployment", async (t) => {
+  const f = await fixture(t, ".local/research/local-ai")
+  await preparePublicationOperation({ ...f.options, releasePath: f.releasePath })
+  await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
+  f.put("scripts/worker-visibility-fix.mjs", "// Code-only continuation.\n")
+  f.git("add", "scripts/worker-visibility-fix.mjs")
+  f.git("commit", "-qm", "Fix worker visibility")
+  const deploymentCommit = f.git("rev-parse", "HEAD"),
+    deployment = {
+      ...proof(f),
+      headSha: deploymentCommit,
+      url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/456",
+      workflowName: "Publish Garden",
+    },
+    plan = publicReadbackPlan({
+      repository: f.options.repository,
+      preview: f.preview,
+      commit: deploymentCommit,
+      deployment,
+    })
+  const fetchImpl = async (url) => {
+    const row = plan.files.find((file) => file.url === url)
+    return new Response(
+      fs.readFileSync(path.join(f.options.repository, row?.local || plan.reader_module.local)),
+    )
+  }
+  let commands = 0
+  const result = await deliverApprovedPublication({
+    ...options(f),
+    actionsRun: "456",
+    deploymentCommit,
+    execute: async (file, args) => {
+      commands++
+      assert.equal(file, "gh")
+      assert.deepEqual(args.slice(0, 3), ["run", "view", "456"])
+      return JSON.stringify(deployment)
+    },
+    fetchImpl,
+  })
+  assert.equal(commands, 1)
+  assert.equal(result.status, "public_bytes_verified")
+  assert.equal(result.publication.commit, f.push.local_commit)
+  assert.equal(result.publication.deployment_commit, deploymentCommit)
+  assert.equal(publicationOperationStatus(f.options).status, "public_bytes_verified")
 })
 
 test("unknown publication outcome persists an intent and requires explicit recovery instead of automatic retry", async (t) => {

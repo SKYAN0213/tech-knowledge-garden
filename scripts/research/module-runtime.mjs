@@ -317,7 +317,11 @@ function workerAlive(ctx, id, state) {
     return error.code === "ESRCH" ? false : null
   }
   try {
-    const command = execFileSync("ps", ["-p", String(pid), "-o", "command="], { encoding: "utf8" })
+    // CI runners have long checkout paths and no terminal width. Ask ps for
+    // untruncated argv so a live worker is not mistaken for an exited one.
+    const command = execFileSync("ps", ["-ww", "-p", String(pid), "-o", "command="], {
+      encoding: "utf8",
+    })
     return command.includes(worker) && command.includes(`--job ${id}`)
   } catch {
     // An inaccessible process table does not establish that the writer exited.

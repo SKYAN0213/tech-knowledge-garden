@@ -29,6 +29,7 @@ export function assertDeploymentProof(proof, commit) {
     !/^[a-f0-9]{40}$/.test(commit || "") ||
     proof?.status !== "completed" ||
     proof.conclusion !== "success" ||
+    proof.headBranch !== "main" ||
     proof.headSha !== commit ||
     !/^https:\/\/github\.com\/SKYAN0213\/tech-knowledge-garden\/actions\/runs\/\d+$/.test(
       proof.url || "",

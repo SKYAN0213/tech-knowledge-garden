@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import {
+  publicReadbackPlan,
   verifyPublicReadback,
   loadVerifiedPublicReadback,
 } from "../scripts/research/public-readback.mjs"
@@ -36,6 +37,68 @@ test("publication operation binds real Git authoring bytes and resumes all compl
   assert.equal(publicationOperationStatus(f.options).status, "public_bytes_verified")
   assert.equal(first.new_regular_operation_counted, false)
   assert.equal(first.browser_verified, false)
+})
+
+test("an exact successful main deployment on a code-only descendant completes the same issue", async (t) => {
+  const f = await fixture(t)
+  await preparePublicationOperation({ ...f.options, releasePath: f.releasePath })
+  await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
+  f.put("scripts/worker-visibility-fix.mjs", "// Code-only continuation.\n")
+  f.git("add", "scripts/worker-visibility-fix.mjs")
+  f.git("commit", "-qm", "Fix worker visibility")
+  const deploymentCommit = f.git("rev-parse", "HEAD"),
+    deployment = {
+      ...f.deployment,
+      headSha: deploymentCommit,
+      url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/456",
+    }
+  await recordPublicationDeployment({ ...f.options, deployment })
+  const plan = publicReadbackPlan({
+    repository: f.options.repository,
+    preview: f.preview,
+    commit: deploymentCommit,
+    deployment,
+  })
+  const fetchImpl = async (url) => {
+    const row = plan.files.find((file) => file.url === url)
+    return new Response(
+      fs.readFileSync(path.join(f.options.repository, row?.local || plan.reader_module.local)),
+    )
+  }
+  const readback = {
+    ...f.rbOptions,
+    run: "readback-code-continuation",
+    commit: deploymentCommit,
+    deployment,
+  }
+  await verifyPublicReadback({ ...readback, fetchImpl })
+  const receipt = await recordPublicationReadback({
+    ...f.options,
+    readbackRun: readback.run,
+  })
+  const status = publicationOperationStatus(f.options)
+  assert.equal(status.status, "public_bytes_verified")
+  assert.equal(status.commit, f.push.local_commit)
+  assert.equal(status.deployment_commit, deploymentCommit)
+  assert.equal(receipt.commit, deploymentCommit)
+})
+
+test("a descendant deployment cannot change any publication content path", async (t) => {
+  const f = await fixture(t)
+  await preparePublicationOperation({ ...f.options, releasePath: f.releasePath })
+  await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
+  f.put("vault/" + f.edition, "Changed approved article bytes\n")
+  f.git("add", "vault/" + f.edition)
+  f.git("commit", "-qm", "Change publication content")
+  const deploymentCommit = f.git("rev-parse", "HEAD")
+  f.put("vault/" + f.edition, "# Reviewed news\n")
+  await assert.rejects(
+    recordPublicationDeployment({
+      ...f.options,
+      deployment: { ...f.deployment, headSha: deploymentCommit },
+    }),
+    /Deployment commit changes publication content/,
+  )
 })
 
 test("publication operation rejects stale new writes, changed canonical and changed commit bytes", async (t) => {
@@ -97,7 +160,7 @@ test("publication operation cannot accept an unrelated CI head or downgrade its 
       ...f.options,
       deployment: { ...f.deployment, headSha: "a".repeat(40) },
     }),
-    /exact commit/,
+    /commit|ancestor/,
   )
 })
 

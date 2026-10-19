@@ -896,6 +896,7 @@ export async function executePublicationDelivery(
       p.source_readback_path ||
       p.retry_publish ||
       p.actions_run ||
+      p.deployment_commit ||
       p.remote_plan_path ||
       p.remote_acquisition_path ||
       p.resume_remote_intent)
@@ -943,6 +944,7 @@ export async function executePublicationDelivery(
     ...(p.connector_call_not_dispatched === true ? { connector_call_not_dispatched: true } : {}),
     ...(p.retry_publish ? { retry_publish: true } : {}),
     ...(p.actions_run ? { actions_run: p.actions_run } : {}),
+    ...(p.deployment_commit ? { deployment_commit: p.deployment_commit } : {}),
     ...(p.resume_remote_intent ? { resume_remote_intent: p.resume_remote_intent } : {}),
   }
   return withLock(ctx.root, "publication-delivery-execute-" + p.run_id, async () => {
@@ -1063,6 +1065,7 @@ export async function executePublicationDelivery(
                 : undefined,
               retryPublish: p.retry_publish === true,
               actionsRun: p.actions_run,
+              deploymentCommit: p.deployment_commit,
               waitSeconds: 0,
               waitMs,
               now,
@@ -1094,7 +1097,12 @@ export async function executePublicationDelivery(
       save()
       return pinned(ctx, state.result)
     } catch (error) {
-      if (error?.code === "STORAGE_PENDING" && error.storage_request && !lastIntent && !state.pending_event) {
+      if (
+        error?.code === "STORAGE_PENDING" &&
+        error.storage_request &&
+        !lastIntent &&
+        !state.pending_event
+      ) {
         state.state = "waiting_for_storage"
         state.native_status = "storage_pending"
         state.storage_request = error.storage_request

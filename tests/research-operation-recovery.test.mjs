@@ -252,3 +252,39 @@ test("an inaccessible process table never becomes proof that a worker exited or 
   assert.equal(observed.after.attempt, complete.attempt)
   assert.equal(fs.existsSync(path.join(f.root, `module-jobs/${id}/attempts`)), false)
 })
+
+test("a wide process-table read keeps a live worker with a long CI command line visible", async (t) => {
+  const f = nativeFixture(t),
+    id = "module-wide-worker"
+  const complete = await submitModuleJob(
+    f.ctx,
+    "collection",
+    "inventory",
+    {},
+    { jobId: id, background: false },
+  )
+  assert.equal(complete.state, "completed")
+  atomicWrite(f.root, `module-jobs/${id}/state.json`, {
+    ...readJSON(f.root, `module-jobs/${id}/state.json`),
+    state: "running",
+    pid: process.pid,
+  })
+  const bin = path.join(f.root, "wide-fake-bin"),
+    worker = path.join(repo, "scripts/research-module-worker.mjs")
+  fs.mkdirSync(bin)
+  fs.writeFileSync(
+    path.join(bin, "ps"),
+    `#!/bin/sh\nif [ "$1" = "-ww" ]; then\n  printf '%s\\n' '${worker} --repo ${repo} --root ${f.root} --job ${id}'\nelse\n  printf '%s\\n' '${worker} --repo ${repo} --root ${f.root}'\nfi\n`,
+    { mode: 0o700 },
+  )
+  const code = `import { moduleJobStatus } from ${JSON.stringify(new URL("../scripts/research/module-runtime.mjs", import.meta.url).href)}; const ctx=JSON.parse(process.argv[1]); const id=process.argv[2]; console.log(JSON.stringify(moduleJobStatus(ctx,id)));`
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", code, JSON.stringify(f.ctx), id],
+    { encoding: "utf8", env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } },
+  )
+  assert.equal(result.status, 0, result.stderr)
+  const observed = JSON.parse(result.stdout)
+  assert.equal(observed.state, "running")
+  assert.equal(observed.worker_alive, true)
+})

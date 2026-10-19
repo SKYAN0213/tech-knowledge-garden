@@ -213,6 +213,7 @@ test("article-free readback includes each historical briefing and digest without
     deployment: {
       status: "completed",
       conclusion: "success",
+      headBranch: "main",
       headSha: commit,
       url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/123",
       jobs: ["build", "deploy"].map((name) => ({

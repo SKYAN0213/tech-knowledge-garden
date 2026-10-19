@@ -55,7 +55,14 @@ async function setup(
         }
         return JSON.stringify(
           args[1] === "list"
-            ? [{ databaseId: 123, headSha: f.push.local_commit, workflowName: "Publish Garden" }]
+            ? [
+                {
+                  databaseId: 123,
+                  headBranch: "main",
+                  headSha: f.push.local_commit,
+                  workflowName: "Publish Garden",
+                },
+              ]
             : { ...f.deployment, workflowName: "Publish Garden" },
         )
       },

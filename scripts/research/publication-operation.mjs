@@ -5,6 +5,7 @@ import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { inspectedAuthoringRelease, inspectAuthoringReleaseInputs } from "./authoring-execution.mjs"
 import { assertDeploymentProof, loadVerifiedPublicReadback } from "./public-readback.mjs"
 import { assertArticleFreeLegacyPreview } from "./legacy-transition.mjs"
+import { publicationContentPaths } from "../publication-state.mjs"
 
 const id = (value) => {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(value || "")) throw Error("Publication operation ID required")
@@ -201,6 +202,38 @@ function binding(root, run) {
   return { input, release, current }
 }
 
+export function assertPublicationDeploymentCommit({ root, run, repository, commit }) {
+  repository = fs.realpathSync(repository)
+  const { input } = binding(root, run)
+  const push = readJSON(root, directory(run) + "/push.json")
+  if (!push || !/^[a-f0-9]{40}$/.test(commit || ""))
+    throw Error("Confirmed publication commit and exact deployment commit required")
+  if (commit === push.commit) return commit
+  const ancestry = spawnSync("git", ["merge-base", "--is-ancestor", push.commit, commit], {
+    cwd: repository,
+    encoding: "utf8",
+  })
+  if (ancestry.error || ancestry.status !== 0)
+    throw Error("Deployment commit must descend from the confirmed publication commit")
+  const contentDiff = spawnSync(
+    "git",
+    ["diff", "--name-only", push.commit, commit, "--", ...publicationContentPaths],
+    { cwd: repository, encoding: "utf8" },
+  )
+  if (contentDiff.error || contentDiff.status !== 0)
+    throw Error("Cannot verify publication content on the deployment commit")
+  if (contentDiff.stdout.trim()) throw Error("Deployment commit changes publication content")
+  const preview = pinned(root, input.preview)
+  for (const row of [
+    ...preview.editions,
+    ...preview.knowledge,
+    ...(preview.navigation ? [preview.navigation] : []),
+  ])
+    if (sha256(gitBytes(repository, ["show", `${commit}:vault/${row.path}`])) !== row.sha256)
+      throw Error("Deployment commit differs from the approved authoring bytes")
+  return commit
+}
+
 // An operation connects existing proofs; it never grants editorial approval.
 export async function preparePublicationOperation({
   root,
@@ -297,13 +330,24 @@ export async function recordPublicationPush({ root, run, pushPath, repository = 
   })
 }
 
-export async function recordPublicationDeployment({ root, run, deployment }) {
+export async function recordPublicationDeployment({
+  root,
+  run,
+  deployment,
+  repository = process.cwd(),
+}) {
   return withLock(root, "publication-operation-" + id(run), () => {
     binding(root, run)
     const push = readJSON(root, directory(run) + "/push.json")
     if (!push || pinned(root, push.push).local_commit !== push.commit)
       throw Error("Confirmed operation push required")
-    assertDeploymentProof(deployment, push.commit)
+    const deployedCommit = assertPublicationDeploymentCommit({
+      root,
+      run,
+      repository,
+      commit: deployment?.headSha,
+    })
+    assertDeploymentProof(deployment, deployedCommit)
     const file = directory(run) + "/deployment.json",
       previous = readJSON(root, file)
     if (previous && JSON.stringify(previous) !== JSON.stringify(deployment))
@@ -325,19 +369,25 @@ export async function recordPublicationReadback({
     const deployment = readJSON(root, directory(run) + "/deployment.json")
     if (!push || pinned(root, push.push).local_commit !== push.commit)
       throw Error("Confirmed operation push required")
-    assertDeploymentProof(deployment, push.commit)
+    const deploymentCommit = assertPublicationDeploymentCommit({
+      root,
+      run,
+      repository,
+      commit: deployment?.headSha,
+    })
+    assertDeploymentProof(deployment, deploymentCommit)
     const proof = loadVerifiedPublicReadback({
       root,
       run: readbackRun,
       previewRun: input.preview_run,
       repository,
-      commit: push.commit,
+      commit: deploymentCommit,
     })
     if (proof.actions_url !== deployment.url)
       throw Error("Operation and readback deployment differ")
     const result = {
       schema: "research-publication-operation-readback/v1",
-      commit: push.commit,
+      commit: deploymentCommit,
       input_sha256: sha256(JSON.stringify(input)),
       deployment_sha256: sha256(JSON.stringify(deployment)),
       readback: reference(root, proof.path),
@@ -372,15 +422,17 @@ export function publicationOperationStatus({ root, run, repository = process.cwd
       throw Error("Stored operation push changed")
     status = "remote_confirmed"
   }
+  const deploymentCommit = deployment?.headSha || null
   if (deployment) {
-    assertDeploymentProof(deployment, push?.commit)
+    assertPublicationDeploymentCommit({ root, run, repository, commit: deploymentCommit })
+    assertDeploymentProof(deployment, deploymentCommit)
     status = "deployment_verified"
   }
   if (publicProof) {
     if (
       publicProof.input_sha256 !== sha256(JSON.stringify(input)) ||
       publicProof.deployment_sha256 !== sha256(JSON.stringify(deployment)) ||
-      publicProof.commit !== push?.commit
+      publicProof.commit !== deploymentCommit
     )
       throw Error("Stored operation publication changed")
     const rb = loadVerifiedPublicReadback({
@@ -388,7 +440,7 @@ export function publicationOperationStatus({ root, run, repository = process.cwd
       run: publicProof.readback_run,
       previewRun: input.preview_run,
       repository,
-      commit: push.commit,
+      commit: deploymentCommit,
       historical: fs.existsSync(
         safePath(root, `runs/${publicProof.readback_run}/public-readback/archive.json`),
       ),
@@ -407,6 +459,7 @@ export function publicationOperationStatus({ root, run, repository = process.cwd
     status,
     preview_run: input.preview_run,
     commit: push?.commit || null,
+    deployment_commit: deploymentCommit,
     observation_basis: observationBasis,
     new_regular_operation_counted: false,
     browser_verified: false,

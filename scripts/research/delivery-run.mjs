@@ -18,6 +18,7 @@ import {
   recordPublicationDeployment,
   recordPublicationReadback,
   assertPublicationFallbackSelection,
+  assertPublicationDeploymentCommit,
 } from "./publication-operation.mjs"
 import { inspectAuthoringReleaseInputs } from "./authoring-execution.mjs"
 import { assertDeploymentProof, verifyPublicReadback } from "./public-readback.mjs"
@@ -94,6 +95,7 @@ export async function deliverApprovedPublication({
   statusOnly = false,
   retryPublish = false,
   actionsRun,
+  deploymentCommit: requestedDeploymentCommit,
   waitSeconds = 0,
   execute = runDeliveryCommand,
   fetchImpl = fetch,
@@ -111,6 +113,8 @@ export async function deliverApprovedPublication({
   if (!Number.isInteger(waitSeconds) || waitSeconds < 0 || waitSeconds > 60)
     throw Error("Delivery wait must be an integer from 0 to 60 seconds")
   if (actionsRun && !/^\d+$/.test(actionsRun)) throw Error("Exact Actions run ID required")
+  if (requestedDeploymentCommit && !/^[a-f0-9]{40}$/.test(requestedDeploymentCommit))
+    throw Error("Exact deployment commit required")
   repository = fs.realpathSync(repository)
   root = path.resolve(repository, root)
   const base = `runs/${run}/delivery`,
@@ -138,7 +142,8 @@ export async function deliverApprovedPublication({
   }
   checkInput()
   if (statusOnly) {
-    if (retryPublish || actionsRun || waitSeconds) throw Error("Status is read-only")
+    if (retryPublish || actionsRun || requestedDeploymentCommit || waitSeconds)
+      throw Error("Status is read-only")
     const publication = publicationOperationStatus(options)
     return {
       ...publication,
@@ -188,6 +193,17 @@ export async function deliverApprovedPublication({
       return value
     }
     let publication = publicationOperationStatus(options)
+    let deploymentCommit =
+      requestedDeploymentCommit || publication.deployment_commit || publication.commit
+    if (requestedDeploymentCommit && publication.commit)
+      assertPublicationDeploymentCommit({
+        root,
+        run,
+        repository,
+        commit: requestedDeploymentCommit,
+      })
+    if (requestedDeploymentCommit && !publication.commit)
+      throw Error("Confirmed publication commit required before selecting a deployment commit")
     const finish = async () => {
       const remote =
         remotePlanFile || readJSON(root, `runs/${run}/remote-delivery/input.json`)
@@ -254,6 +270,8 @@ export async function deliverApprovedPublication({
           command_failed: failed,
           next_action: "Inspect the saved publish intent, Git state and native push receipts",
         })
+      if (!requestedDeploymentCommit)
+        deploymentCommit = publication.deployment_commit || publication.commit
     } else reused.push("publication")
 
     const deadline = now() + waitSeconds * 1000
@@ -264,7 +282,8 @@ export async function deliverApprovedPublication({
         let selection = readJSON(root, base + "/actions-selection.json")
         if (
           selection &&
-          (selection.commit !== publication.commit ||
+          (selection.commit !== deploymentCommit ||
+            (selection.base_commit || publication.commit) !== publication.commit ||
             (actionsRun && selection.actions_run !== actionsRun))
         )
           throw Error("Pinned deployment selection changed")
@@ -282,9 +301,9 @@ export async function deliverApprovedPublication({
                   "--workflow",
                   WORKFLOW,
                   "--commit",
-                  publication.commit,
+                  deploymentCommit,
                   "--json",
-                  "databaseId,headSha,workflowName",
+                  "databaseId,headBranch,headSha,workflowName",
                   "--limit",
                   "100",
                 ],
@@ -293,7 +312,12 @@ export async function deliverApprovedPublication({
             )
             if (
               !Array.isArray(runs) ||
-              runs.some((r) => r.headSha !== publication.commit || r.workflowName !== WORKFLOW)
+              runs.some(
+                (r) =>
+                  r.headBranch !== "main" ||
+                  r.headSha !== deploymentCommit ||
+                  r.workflowName !== WORKFLOW,
+              )
             )
               throw Error("Unexpected deployment discovery result")
             if (runs.length > 1)
@@ -303,7 +327,14 @@ export async function deliverApprovedPublication({
               })
             selected = runs.length ? String(runs[0].databaseId) : null
           }
-          if (selected) selection = { commit: publication.commit, actions_run: selected }
+          if (selected)
+            selection = {
+              commit: deploymentCommit,
+              ...(deploymentCommit !== publication.commit
+                ? { base_commit: publication.commit }
+                : {}),
+              actions_run: selected,
+            }
         }
         if (selection) {
           if (!/^\d+$/.test(selection.actions_run)) throw Error("Invalid deployment identity")
@@ -317,13 +348,14 @@ export async function deliverApprovedPublication({
                 "--repo",
                 GITHUB,
                 "--json",
-                "status,conclusion,headSha,jobs,url,workflowName",
+                "status,conclusion,headBranch,headSha,jobs,url,workflowName",
               ],
               repository,
             ),
           )
           if (
-            observation.headSha !== publication.commit ||
+            observation.headSha !== deploymentCommit ||
+            observation.headBranch !== "main" ||
             observation.workflowName !== WORKFLOW ||
             observation.url !== `https://github.com/${GITHUB}/actions/runs/${selection.actions_run}`
           )
@@ -338,9 +370,9 @@ export async function deliverApprovedPublication({
                 next_action: "Inspect the failed workflow; no automatic rerun or replacement",
               })
             const { workflowName, ...proof } = observation
-            assertDeploymentProof(proof, publication.commit)
+            assertDeploymentProof(proof, deploymentCommit)
             deployment = await withGardenOperationLock(root, () =>
-              recordPublicationDeployment({ ...options, deployment: proof }),
+              recordPublicationDeployment({ ...options, deployment: proof, repository }),
             )
             performed.push("deployment")
             break
@@ -380,7 +412,7 @@ export async function deliverApprovedPublication({
           run: input.readback_run,
           previewRun: publication.preview_run,
           repository,
-          commit: publication.commit,
+          commit: publication.deployment_commit || deploymentCommit,
           deployment,
           fetchImpl,
         })
