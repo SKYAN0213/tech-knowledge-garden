@@ -21,6 +21,8 @@ import {
   assertReviewDate,
 } from "../scripts/research/dates.mjs"
 import { assertStoredEvidence } from "../scripts/research/parser.mjs"
+import { storageAction } from "../scripts/research/cold-storage.mjs"
+import { verifyStoredListScan } from "../scripts/research/scan-evidence.mjs"
 
 function facts() {
   const text = "Example plans to ship 50 units in 2027."
@@ -293,6 +295,100 @@ test("stored evidence checks original bytes, version identity and the immutable 
   )
   atomicWrite(root, "body.bin", "Corrupt original")
   assert.throws(() => assertStoredEvidence(root, [document], [parsed]), /body hash/)
+})
+
+test("stored evidence batches every missing cold body and parse path", (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "review-cold-evidence-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const documents = [],
+    parses = []
+  for (const ordinal of [1, 2]) {
+    const url = `https://example.com/cold-announcement-${ordinal}`
+    const body = Buffer.from(`Original announcement ${ordinal}`)
+    const id = sourceId(url)
+    const parse_id = sha256(`cold-parse-${ordinal}`)
+    const base = facts().parse
+    const parsed = {
+      ...base,
+      source_id: id,
+      source_version_id: `${id}:${sha256(body)}`,
+      parse_id,
+      blocks: base.blocks.map((block) => ({ ...block, block_id: `${parse_id}:b1` })),
+    }
+    const document = {
+      source_id: id,
+      source_version_id: parsed.source_version_id,
+      original_url: url,
+      fetch_status: "captured",
+      observed_at: "2026-09-27T00:00:00Z",
+      body_path: `documents/${id}/${sha256(body)}/body.bin`,
+      body_sha256: sha256(body),
+    }
+    atomicWrite(root, document.body_path, body)
+    atomicWrite(root, `parses/${parse_id}/parse.json`, parsed)
+    documents.push(document)
+    parses.push(parsed)
+  }
+  assert.doesNotThrow(() => assertStoredEvidence(root, documents, parses))
+
+  storageAction(root, "prepare", { minimum_payload_bytes: 0, parent_id: "private-parent" })
+  const bundles = storageAction(root, "pending").uploads
+  assert.ok(bundles.length > 0)
+  for (const bundle of bundles)
+    storageAction(root, "verify", {
+      bundle_id: bundle.id,
+      download_path: bundle.local_path,
+      metadata: {
+        id: `drive-${bundle.id}`,
+        title: bundle.name,
+        mime_type: "application/zip",
+        size: String(bundle.bytes),
+        parent_ids: ["private-parent"],
+        modified_time: new Date().toISOString(),
+        shared: false,
+      },
+      observed_at: new Date().toISOString(),
+    })
+  storageAction(root, "enable")
+  storageAction(root, "evict", { cache_bytes: 0 })
+
+  const expected = new Set([
+    ...documents.map((document) => document.body_path),
+    ...parses.map((parse) => `parses/${parse.parse_id}/parse.json`),
+  ])
+  assert.throws(
+    () => assertStoredEvidence(root, documents, parses),
+    (error) =>
+      error.code === "STORAGE_PENDING" &&
+      error.storage_request.request_count === expected.size &&
+      error.storage_request.requests.length === expected.size &&
+      error.storage_request.requests.every((request) => expected.has(request.path)),
+  )
+
+  const scan = {
+    summary: {
+      status: "window_scanned",
+      channel_id: "cold-batch-test",
+      window: { since: "2026-09-27", until_exclusive: "2026-09-28" },
+    },
+    indexDocuments: [],
+    documents,
+    parses,
+    candidates: [],
+  }
+  assert.throws(
+    () =>
+      verifyStoredListScan(root, scan, {
+        channel_id: "cold-batch-test",
+        since: "2026-09-27",
+        until_exclusive: "2026-09-28",
+      }),
+    (error) =>
+      error.code === "STORAGE_PENDING" &&
+      error.storage_request.request_count === expected.size &&
+      error.storage_request.requests.length === expected.size &&
+      error.storage_request.requests.every((request) => expected.has(request.path)),
+  )
 })
 
 test("a deferred fact remains private and duplicate decisions are refused", () => {

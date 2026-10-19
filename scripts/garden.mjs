@@ -42,6 +42,7 @@ import {
   topicAsOf,
   feedDescription,
 } from "./briefings.mjs"
+import { formatStoragePendingDiagnostic } from "./research/storage-diagnostics.mjs"
 
 export const walk = (dir) =>
   fs.existsSync(dir)
@@ -693,7 +694,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       )
     } else throw new Error("Usage: node scripts/garden.mjs refresh|validate|feeds|context")
   } catch (e) {
-    console.error(e.message)
+    const diagnostic =
+      process.argv[2] === "context" ? formatStoragePendingDiagnostic(e) : null
+    console.error(diagnostic || e.message)
     process.exitCode = 1
   }
 }

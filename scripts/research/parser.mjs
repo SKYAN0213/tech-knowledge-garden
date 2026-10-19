@@ -9,6 +9,7 @@ import { atomicCreate, atomicWrite, safePath, readJSON } from "./run-state.mjs"
 import { assertReadableCaptureEvidence } from "./archive.mjs"
 import { parsePDFChunks } from "./pdf-chunks.mjs"
 import { loadOCRTableDependencies } from "./ocr-table.mjs"
+import { combineStoragePendingErrors } from "./cold-storage.mjs"
 import {
   loadArticleImageMetadataDependencies,
   assertArticleImageSource,
@@ -293,6 +294,7 @@ export function assertStoredEvidence(root, documents, parses) {
     throw Error("Stored source documents and parses required")
   if (new Set(parses.map((p) => p.parse_id)).size !== parses.length)
     throw Error("Unique stored parse identities required")
+  const storageErrors = []
   for (const document of documents.filter((d) =>
     ["captured", "not_modified"].includes(d.fetch_status),
   )) {
@@ -308,9 +310,14 @@ export function assertStoredEvidence(root, documents, parses) {
       !parseResearchDate(document.observed_at)
     )
       throw Error("Captured source and valid observation timestamp required")
-    const body = fs.readFileSync(safePath(root, document.body_path))
-    if (sha256(body) !== document.body_sha256) throw Error("Stored original body hash mismatch")
-    assertReadableCaptureEvidence(root, document, body)
+    try {
+      const body = fs.readFileSync(safePath(root, document.body_path))
+      if (sha256(body) !== document.body_sha256) throw Error("Stored original body hash mismatch")
+      assertReadableCaptureEvidence(root, document, body)
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+    }
   }
   for (const parse of parses) {
     assertParse(parse)
@@ -327,14 +334,29 @@ export function assertStoredEvidence(root, documents, parses) {
     // parser supplies it, its run-local value must match that observation.
     if (parse.dates?.observed_at && parse.dates.observed_at !== document.observed_at)
       throw Error("Parse observation does not match its stored source")
-    const stored = JSON.parse(
-      fs.readFileSync(safePath(root, `parses/${parse.parse_id}/parse.json`), "utf8"),
-    )
-    if (parseContentFingerprint(stored) !== parseContentFingerprint(parse))
-      throw Error("Stored parse differs from the run's copied source evidence")
-    loadOCRTableDependencies(root, parse)
-    loadArticleImageMetadataDependencies(root, parse)
+    try {
+      const stored = JSON.parse(
+        fs.readFileSync(safePath(root, `parses/${parse.parse_id}/parse.json`), "utf8"),
+      )
+      if (parseContentFingerprint(stored) !== parseContentFingerprint(parse))
+        throw Error("Stored parse differs from the run's copied source evidence")
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+    }
+    for (const verifyDependencies of [
+      loadOCRTableDependencies,
+      loadArticleImageMetadataDependencies,
+    ]) {
+      try {
+        verifyDependencies(root, parse)
+      } catch (error) {
+        if (error?.code !== "STORAGE_PENDING") throw error
+        storageErrors.push(error)
+      }
+    }
   }
+  if (storageErrors.length) throw combineStoragePendingErrors(storageErrors)
   return parses
 }
 

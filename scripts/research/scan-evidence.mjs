@@ -12,6 +12,7 @@ import { reconcilePublicationDay, hasImagePublicationMetadata } from "./publicat
 import { validateListingSupportRelations } from "./supporting-sources.mjs"
 import { verifyAccessExclusionDetail } from "./source-access.mjs"
 import { verifyReviewedImageCandidate } from "./article-image-review-cache.mjs"
+import { combineStoragePendingErrors } from "./cold-storage.mjs"
 
 function verifyDocument(root, document) {
   if (
@@ -38,12 +39,26 @@ function verifyScanEvidence(root, scan, expected, { allowLegacyCandidates = fals
     throw Error("Stored scan does not prove the requested route window")
   if (![...scan.indexDocuments, ...scan.documents].length)
     throw Error("A covered route window needs stored listing bytes")
-  for (const document of [...scan.indexDocuments, ...scan.documents]) verifyDocument(root, document)
+  const storageErrors = []
+  for (const document of [...scan.indexDocuments, ...scan.documents]) {
+    try {
+      verifyDocument(root, document)
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+    }
+  }
   if (scan.parses.length || scan.documents.length) {
     if (!scan.parses.length || !scan.documents.length)
       throw Error("Stored detail documents and parses must agree")
-    assertStoredEvidence(root, scan.documents, scan.parses)
+    try {
+      assertStoredEvidence(root, scan.documents, scan.parses)
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+    }
   }
+  if (storageErrors.length) throw combineStoragePendingErrors(storageErrors)
   const provedOverlaps = new Set()
   const exclusions = (scan.summary.details || []).filter(
     (detail) => detail.status === "public_access_excluded",

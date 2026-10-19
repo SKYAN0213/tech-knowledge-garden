@@ -4,7 +4,11 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { buildContextPage, contextHash } from "../scripts/research/context-page.mjs"
-import { main } from "../scripts/research-context.mjs"
+import { captureContextBytes, main } from "../scripts/research-context.mjs"
+import {
+  formatStoragePendingDiagnostic,
+  parseStoragePendingDiagnostic,
+} from "../scripts/research/storage-diagnostics.mjs"
 
 function fixture() {
   return {
@@ -148,4 +152,50 @@ test("exact lookup preserves resolved candidate history and rejects duplicate ke
     () => buildContextPage(context, { ...pinned, candidate: closed.key }),
     /exactly one/,
   )
+})
+
+test("storage pending diagnostics preserve the exact hydrate request through CLI boundaries", () => {
+  const storage_request = {
+    schema: "research-storage-download-request/v1",
+    root: "/repo/.local",
+    path: "research/local-ai/runs/run-1/documents.json",
+    request_count: 1,
+    requests: [
+      {
+        request_id: "request-1",
+        path: "research/local-ai/runs/run-1/documents.json",
+        sha256: "a".repeat(64),
+        file_id: "drive-file-1",
+        bundle_id: "payload-1",
+        package_sha256: "b".repeat(64),
+      },
+    ],
+  }
+  const encoded = formatStoragePendingDiagnostic(
+    Object.assign(Error("Exact Drive payload required"), {
+      code: "STORAGE_PENDING",
+      storage_request,
+    }),
+  )
+  assert.ok(encoded)
+  const expected = {
+    schema: "research-cli-error/v1",
+    code: "STORAGE_PENDING",
+    message: "Exact Drive payload required",
+    storage_request,
+  }
+  assert.deepEqual(parseStoragePendingDiagnostic(encoded), expected)
+  assert.deepEqual(parseStoragePendingDiagnostic(`ordinary stderr\n${encoded}\n`), expected)
+  assert.throws(
+    () =>
+      captureContextBytes("/repo", () => {
+        throw Object.assign(Error("Command failed"), { stderr: Buffer.from(encoded) })
+      }),
+    (error) =>
+      error.code === "STORAGE_PENDING" &&
+      error.message === expected.message &&
+      assert.deepEqual(error.storage_request, storage_request) === undefined,
+  )
+  assert.equal(parseStoragePendingDiagnostic('{"code":"STORAGE_PENDING"}'), null)
+  assert.equal(formatStoragePendingDiagnostic(Error("Other failure")), null)
 })

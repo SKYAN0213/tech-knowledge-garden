@@ -564,12 +564,14 @@ export async function authoringWriteSession({
   now = Date.now,
   waitMs = 300000,
   resumeIntent = null,
+  connectorCallNotDispatched = false,
 }) {
   if (
     typeof nextCapture !== "function" ||
     !Number.isSafeInteger(waitMs) ||
     waitMs < 1 ||
-    waitMs > 600000
+    waitMs > 600000 ||
+    (connectorCallNotDispatched && !resumeIntent)
   )
     throw Error("Bounded post-write capture callback required")
   return withGardenOperationLock(root, () =>
@@ -598,15 +600,22 @@ export async function authoringWriteSession({
         const selected = pending.find((r) => r.path === resumeIntent)
         if (selected) {
           const original = selected.intent
+          const updateResume = original.operation.action === "update" && original.operation.file_id
+          const createResume =
+            original.operation.action === "create" &&
+            original.operation.file_id === null &&
+            connectorCallNotDispatched === true
           if (
             pending.length !== 1 ||
             original.release_path !== releasePath ||
-            original.operation.action !== "update" ||
-            !original.operation.file_id ||
+            (!updateResume && !createResume) ||
+            (connectorCallNotDispatched && original.operation.action !== "create") ||
             Date.parse(receipt.observed_at) < Date.parse(original.started_at) ||
             JSON.stringify(receipt.next_operations[0]) !== JSON.stringify(original.operation)
           )
-            throw Error("Explicit resume requires the unchanged existing file and original update")
+            throw Error(
+              "Explicit resume requires the unchanged original operation and fresh matching readback",
+            )
           try {
             process.kill(original.pid, 0)
           } catch (error) {
@@ -672,14 +681,23 @@ export async function authoringWriteSession({
             }
         const isResume = Boolean(resume)
         if (isResume) {
+          const createResumption = resume.intent.operation.action === "create"
           atomicCreate(root, path.posix.dirname(relative) + `/resumptions/${sessionID}.json`, {
-            schema: "research-authoring-update-resumption/v1",
+            schema: createResumption
+              ? "research-authoring-create-resumption/v1"
+              : "research-authoring-update-resumption/v1",
             intent_path: relative,
             intent_sha256: resume.sha256,
             execution_receipt: receipt.receipt,
             execution_sha256: sha256(fs.readFileSync(safePath(root, receipt.receipt))),
             observed_at: receipt.observed_at,
             resumed_at: new Date(now()).toISOString(),
+            ...(createResumption
+              ? {
+                  connector_call_not_dispatched: true,
+                  acquisition_sha256: sha256(fs.readFileSync(acquisitionFile)),
+                }
+              : {}),
             pid: process.pid,
             lock_owner: lock.owner,
             automatic_retry: false,

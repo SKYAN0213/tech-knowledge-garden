@@ -32,6 +32,7 @@ try {
       "reconcile-input": { type: "string" },
       "wait-ms": { type: "string" },
       "resume-intent": { type: "string" },
+      "confirm-create-not-dispatched": { type: "boolean", default: false },
     },
   })
   let result
@@ -55,7 +56,9 @@ try {
   if (positionals[0] !== "write-session" && values["wait-ms"])
     throw Error("Wait budget requires write-session")
   if (positionals[0] !== "write-session" && values["resume-intent"])
-    throw Error("Explicit update resumption requires write-session")
+    throw Error("Explicit write-intent resumption requires write-session")
+  if (positionals[0] !== "write-session" && values["confirm-create-not-dispatched"])
+    throw Error("Create-intent operator confirmation requires write-session")
   if (positionals[0] !== "release" && (values.review || values.snapshot))
     throw Error("Review and snapshot require release")
   if (
@@ -110,6 +113,7 @@ try {
         acquisitionFile: values.acquisition,
         waitMs: values["wait-ms"] ? Number(values["wait-ms"]) : 300000,
         resumeIntent: values["resume-intent"] || null,
+        connectorCallNotDispatched: values["confirm-create-not-dispatched"] === true,
         emit: (event) => console.log(JSON.stringify(event)),
         nextCapture: async () =>
           (await channel.read("readback", ["acquisition_file"])).acquisition_file,
@@ -192,7 +196,7 @@ try {
     })
   else
     throw Error(
-      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture-source --capture-run ID --acquisition FILE; reconcile-source --reconcile-input ROOT_RELATIVE_INPUT; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000] [--resume-intent ROOT_RELATIVE_UPDATE_INTENT]; status",
+      "prepare --preview-run ID; compare --plan FILE --observation FILE; release --preview-run ID --review FILE --snapshot FILE --observation FILE; capture-source --capture-run ID --acquisition FILE; reconcile-source --reconcile-input ROOT_RELATIVE_INPUT; capture --release ROOT_RELATIVE_RECEIPT --acquisition FILE; reconcile --release ROOT_RELATIVE_RECEIPT --observation FILE --readback FILE; write-session --release ROOT_RELATIVE_RECEIPT --acquisition FILE [--wait-ms 300000] [--resume-intent ROOT_RELATIVE_INTENT] [--confirm-create-not-dispatched]; status",
     )
   console.log(
     JSON.stringify(

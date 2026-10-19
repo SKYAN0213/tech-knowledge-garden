@@ -650,6 +650,97 @@ test("explicit update resume reuses a dead writer intent with fresh unchanged ra
   assertNoUnresolvedAuthoringWrites(f.root)
 })
 
+test("explicit create resume requires a dead writer, fresh absent-target readback and a no-dispatch attestation", async (t) => {
+  const f = fixture(t),
+    contents = new Map([["Knowledge/topic.md", "new"]])
+  appliedNow(f, "update")
+  const acquisition = liveCapture(f, contents, "initial-create.json"),
+    child = spawn(
+      process.execPath,
+      [
+        path.resolve("scripts/research-authoring.mjs"),
+        "write-session",
+        "--root",
+        f.root,
+        "--release",
+        f.releasePath,
+        "--acquisition",
+        acquisition,
+      ],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    )
+  let stderr = ""
+  child.stderr.on("data", (data) => (stderr += data))
+  const firstEvent = await new Promise((resolve, reject) => {
+    let buffer = ""
+    const timeout = setTimeout(() => reject(Error("Writer did not emit create intent: " + stderr)), 5000)
+    child.stdout.on("data", (data) => {
+      buffer += data
+      const index = buffer.indexOf("\n")
+      if (index < 0) return
+      clearTimeout(timeout)
+      resolve(JSON.parse(buffer.slice(0, index)))
+    })
+    child.once("exit", () => {
+      clearTimeout(timeout)
+      reject(Error("Writer exited before create intent: " + stderr))
+    })
+  })
+  assert.equal(firstEvent.type, "write_intent")
+  assert.equal(firstEvent.operation.action, "create")
+  const garden = JSON.parse(fs.readFileSync(path.join(f.root, "locks/garden-operation.json"))),
+    execution = JSON.parse(fs.readFileSync(path.join(f.root, "locks/authoring-execution.json")))
+  const exited = once(child, "exit")
+  child.kill("SIGKILL")
+  await exited
+  assert.throws(() => process.kill(child.pid, 0), { code: "ESRCH" })
+  recoverLock(f.root, "authoring-execution", execution.owner)
+  recoverLock(f.root, "garden-operation", garden.owner)
+
+  const unresolved = loadAuthoringWriteStatus(f.root).entries.filter((r) => !r.resolved)
+  assert.equal(unresolved.length, 1)
+  assert.equal(unresolved[0].path, "Signals/new.md")
+  const intentFile = path.join(f.root, unresolved[0].intent_path),
+    intentBytes = fs.readFileSync(intentFile),
+    intent = JSON.parse(intentBytes)
+  assert.equal(intent.operation.action, "create")
+  assert.throws(() => process.kill(intent.pid, 0), { code: "ESRCH" })
+
+  const events = [],
+    resumedAcquisition = liveCapture(f, contents, "explicit-create-resume.json"),
+    acquisitionSha = sha256(fs.readFileSync(resumedAcquisition))
+  const result = await session(f, resumedAcquisition, {
+    resumeIntent: unresolved[0].intent_path,
+    connectorCallNotDispatched: true,
+    emit: (event) => events.push(event),
+    nextCapture: async (resumeEvent) => {
+      assert.equal(resumeEvent.operation.action, "create")
+      assert.equal(events.at(-1).intent_path, unresolved[0].intent_path)
+      appliedNow(f, "create")
+      contents.set("Signals/new.md", "signals")
+      return liveCapture(f, contents, "create-resume-post-write.json")
+    },
+  })
+  assert.equal(result.status, "verified_complete")
+  assert.deepEqual(result.resumed_intents, [unresolved[0].intent_path])
+  assert.equal(result.created_intents.length, 0)
+  assert.equal(events.length, 1)
+  assert.equal(events[0].resumed, true)
+  const attestationPath = path.join(
+    f.root,
+    path.posix.dirname(unresolved[0].intent_path),
+    "resumptions",
+    `${result.session_id}.json`,
+  )
+  const attestation = JSON.parse(fs.readFileSync(attestationPath, "utf8"))
+  assert.equal(attestation.schema, "research-authoring-create-resumption/v1")
+  assert.equal(attestation.connector_call_not_dispatched, true)
+  assert.equal(attestation.acquisition_sha256, acquisitionSha)
+  assert.equal(attestation.intent_sha256, sha256(intentBytes))
+  assert.deepEqual(fs.readFileSync(intentFile), intentBytes)
+  assertNoUnresolvedAuthoringWrites(f.root)
+})
+
 test("explicit update resume rejects live owners, changed metadata, other releases and create intents", async (t) => {
   for (const kind of ["live", "modified", "release", "create"]) {
     const f = fixture(t),
@@ -681,7 +772,7 @@ test("explicit update resume rejects live owners, changed metadata, other releas
         emit: () => assert.fail("Rejected resumption must not request a write"),
         nextCapture: () => assert.fail(),
       }),
-      kind === "live" ? /still live/ : /unchanged existing file and original update/,
+      kind === "live" ? /still live/ : /unchanged original operation and fresh matching readback/,
     )
     assert.equal(loadAuthoringWriteStatus(f.root).unresolved, 1)
   }

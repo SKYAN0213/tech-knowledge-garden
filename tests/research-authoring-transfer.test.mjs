@@ -163,6 +163,31 @@ test("remote updates retain ID, new files require complete parent listings", () 
   assert.equal(result.upload_allowed, false)
   assert.equal(result.drive_written, false)
 })
+test("full Drive captures may include the four fixed roots when their pinned IDs and parent match", () => {
+  const f = fixture()
+  f.observation.folders = Object.entries(DRIVE_AUTHORING_ROOTS).map(([path, id]) => ({
+    path,
+    id,
+    parent_id: f.plan.destination_folder_id,
+  }))
+  assert.deepEqual(
+    compareAuthoringRemote(f.plan, f.observation, f.options).operations.map((row) => row.action),
+    ["update", "create"],
+  )
+
+  for (const change of [
+    (folder) => (folder.id = "unexpected-root"),
+    (folder) => (folder.parent_id = "unexpected-parent"),
+    (folder, observation) => observation.folders.push({ ...folder }),
+  ]) {
+    const invalid = structuredClone(f)
+    change(invalid.observation.folders[0], invalid.observation)
+    assert.throws(
+      () => compareAuthoringRemote(invalid.plan, invalid.observation, invalid.options),
+      /Invalid Drive folder chain/,
+    )
+  }
+})
 test("unknown write outcome is resolved by same bytes instead of duplicate write", () => {
   const f = fixture()
   f.observation.listings[0].files[0].sha256 = sha256("new")

@@ -1,8 +1,10 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
+import { createRequire } from "node:module"
 import os from "node:os"
 import path from "node:path"
+import { storageAction } from "../scripts/research/cold-storage.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { planDailyWindows } from "../scripts/research/daily-plan.mjs"
 import { storeParseArtifact } from "../scripts/research/parser.mjs"
@@ -31,6 +33,7 @@ const temporary = (t) => {
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   return root
 }
+const require = createRequire(import.meta.url)
 
 test("missing supplemental receipt fails explicitly before reading a scan", (t) => {
   const root = temporary(t)
@@ -538,8 +541,12 @@ test("stored scan accepts a canonical candidate URL matching its exact article s
   )
 })
 
-function writeStoredEmptyScan(root, runId, { channel_id, since, until_exclusive, url }) {
-  const body = Buffer.from('{"items":[]}')
+function writeStoredEmptyScan(
+  root,
+  runId,
+  { channel_id, since, until_exclusive, url, body = Buffer.from('{"items":[]}') },
+) {
+  body = Buffer.from(body)
   const body_sha256 = sha256(body)
   const body_path = `sources/${sourceId(url)}.html`
   atomicWrite(root, body_path, body)
@@ -574,6 +581,272 @@ function writeStoredEmptyScan(root, runId, { channel_id, since, until_exclusive,
     atomicWrite(root, `runs/${runId}/${file}`, value)
   return { result, body_path }
 }
+
+function coldStoreFixture(root, { evict = true } = {}) {
+  storageAction(root, "prepare", { parent_id: "private-parent" })
+  const uploads = storageAction(root, "pending").uploads
+  assert.ok(uploads.length > 0)
+  for (const bundle of uploads)
+    storageAction(root, "verify", {
+      bundle_id: bundle.id,
+      download_path: bundle.local_path,
+      metadata: {
+        id: `drive-${bundle.id}`,
+        title: bundle.name,
+        mime_type: "application/zip",
+        size: String(bundle.bytes),
+        parent_ids: ["private-parent"],
+        modified_time: new Date().toISOString(),
+        shared: false,
+      },
+      observed_at: new Date().toISOString(),
+    })
+  storageAction(root, "enable")
+  if (evict) storageAction(root, "evict", { cache_bytes: 0 })
+  return uploads
+}
+
+test("verified daily coverage reuses immutable proof after cold source eviction", (t) => {
+  const root = temporary(t)
+  const runId = "daily-20260922-proof-cache"
+  const { body_path } = writeStoredEmptyScan(root, runId, {
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-23",
+    url: "https://example.com/proof-cache",
+    body: Buffer.from("verified listing bytes\n".repeat(5000)),
+  })
+  const state = {
+    covered: [
+      {
+        since: "2026-09-20",
+        until_exclusive: "2026-09-22",
+        source_run: runId,
+        kind: "daily_scan",
+      },
+    ],
+  }
+
+  coldStoreFixture(root, { evict: false })
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  const proofRoot = path.join(root, "daily/scan-verifications", runId)
+  const proofDirectory = fs.readdirSync(proofRoot).find((name) => /^[a-f0-9]{64}$/.test(name))
+  assert.ok(proofDirectory)
+  const proofFile = path.join(proofRoot, proofDirectory, "verification.json")
+  assert.ok(fs.existsSync(proofFile))
+
+  storageAction(root, "evict", { cache_bytes: 0 })
+  assert.equal(fs.existsSync(path.join(root, body_path)), false)
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  assert.equal(fs.existsSync(path.join(root, body_path)), false)
+
+  const db = new (require("node:sqlite").DatabaseSync)(path.join(root, ".storage/catalog.sqlite"))
+  const binding = db
+    .prepare(
+      "SELECT b.id,b.file_id FROM files f JOIN objects o ON f.sha256=o.sha256 JOIN bundles b ON o.bundle_id=b.id WHERE f.path=?",
+    )
+    .get(body_path)
+  assert.ok(binding?.id && binding.file_id)
+  db.prepare("UPDATE bundles SET file_id=? WHERE id=?").run("changed-drive-file-id", binding.id)
+  db.close()
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, "fanuc-en", state),
+    (error) => error.code === "STORAGE_PENDING",
+  )
+
+  const restore = new (require("node:sqlite").DatabaseSync)(
+    path.join(root, ".storage/catalog.sqlite"),
+  )
+  restore.prepare("UPDATE bundles SET file_id=? WHERE id=?").run(binding.file_id, binding.id)
+  restore.close()
+
+  const proof = JSON.parse(fs.readFileSync(proofFile, "utf8"))
+  proof.candidates.push({ key: "tampered", source_urls: [] })
+  fs.writeFileSync(proofFile, JSON.stringify(proof))
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, "fanuc-en", state),
+    (error) => error.code === "STORAGE_PENDING",
+  )
+})
+
+test("daily scan proof rejects changed local bytes and falls back to raw verification", (t) => {
+  const root = temporary(t)
+  const runId = "daily-20260922-proof-bytes"
+  const { body_path } = writeStoredEmptyScan(root, runId, {
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-23",
+    url: "https://example.com/proof-bytes",
+    body: Buffer.from("verified listing bytes\n".repeat(5000)),
+  })
+  const state = {
+    covered: [
+      {
+        since: "2026-09-20",
+        until_exclusive: "2026-09-22",
+        source_run: runId,
+        kind: "daily_scan",
+      },
+    ],
+  }
+  coldStoreFixture(root, { evict: false })
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  fs.writeFileSync(path.join(root, body_path), Buffer.from("xxxxxxxxxxxxxxx"))
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, "fanuc-en", state),
+    /original body hash mismatch/,
+  )
+})
+
+test("supplemental coverage revalidates its reconciliation receipt when scan bytes are cold", (t) => {
+  const root = temporary(t)
+  const scanRun = "supplemental-proof-scan"
+  const reconciliationRun = "supplemental-proof-reconciliation"
+  const { body_path } = writeStoredEmptyScan(root, scanRun, {
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-23",
+    url: "https://example.com/supplemental-proof",
+    body: Buffer.from("verified listing bytes\n".repeat(5000)),
+  })
+  const reconciledAt = "2026-09-22T03:00:00.000Z"
+  const receiptPath = `daily/reconciliations/${reconciliationRun}.json`
+  const receipt = {
+    schema: "research-supplemental-coverage/v2",
+    scan_run: scanRun,
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    scan_until_exclusive: "2026-09-23",
+    coverage_until: "2026-09-22",
+    reconciled_at: reconciledAt,
+    candidate_keys: [],
+    backlog_merge: { status: "merged", same_event_aliases: [] },
+    candidate_published: false,
+  }
+  atomicWrite(root, receiptPath, receipt)
+  const state = {
+    covered: [
+      {
+        since: receipt.since,
+        until_exclusive: receipt.coverage_until,
+        source_run: scanRun,
+        kind: "verified_supplemental_scan",
+        reconciliation_run: reconciliationRun,
+      },
+    ],
+  }
+
+  coldStoreFixture(root, { evict: false })
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  storageAction(root, "evict", { cache_bytes: 0 })
+  assert.equal(fs.existsSync(path.join(root, body_path)), false)
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  assert.equal(fs.existsSync(path.join(root, body_path)), false)
+
+  atomicWrite(root, receiptPath, { ...receipt, candidate_keys: ["tampered"] })
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, "fanuc-en", state),
+    /Supplemental coverage receipt does not match its interval/,
+  )
+})
+
+test("daily coverage batches cold scan artifacts before returning storage pending", (t) => {
+  const root = temporary(t)
+  const runId = "cold-scan-artifacts"
+  const large = (value) => ({ ...value, retained: "x".repeat(90_000) })
+  for (const [name, value] of Object.entries({
+    "list-scan.json": large({ status: "window_scanned", window: {} }),
+    "documents.json": [large({})],
+    "parses.json": [large({})],
+    "candidates.json": [large({})],
+    "list-pages.json": [large({})],
+  }))
+    atomicWrite(root, `runs/${runId}/${name}`, value)
+  coldStoreFixture(root)
+
+  assert.throws(
+    () => storedListScan(root, runId),
+    (error) =>
+      error.code === "STORAGE_PENDING" &&
+      error.storage_request.request_count === 5 &&
+      error.storage_request.requests.length === 5,
+  )
+})
+
+test("daily coverage reports cold source bytes across every covered scan in one batch", (t) => {
+  const root = temporary(t)
+  const routeId = "fanuc-en"
+  const baseline = "baseline-cold"
+  const first = "daily-20260918_fanuc-en_20260915_20260918_a1"
+  const second = "daily-20260921_fanuc-en_20260918_20260921_a1"
+  const body = (id) => Buffer.from(`${id}\n${"verified original source.\n".repeat(4000)}`)
+  const sources = [
+    writeStoredEmptyScan(root, baseline, {
+      channel_id: routeId,
+      since: "2026-09-01",
+      until_exclusive: "2026-09-15",
+      url: "https://example.com/baseline-cold",
+      body: body("baseline"),
+    }),
+    writeStoredEmptyScan(root, first, {
+      channel_id: routeId,
+      since: "2026-09-15",
+      until_exclusive: "2026-09-18",
+      url: "https://example.com/first-cold",
+      body: body("first"),
+    }),
+    writeStoredEmptyScan(root, second, {
+      channel_id: routeId,
+      since: "2026-09-18",
+      until_exclusive: "2026-09-21",
+      url: "https://example.com/second-cold",
+      body: body("second"),
+    }),
+  ]
+  coldStoreFixture(root)
+  const coverage = {
+    schema: "research-daily-coverage/v1",
+    routes: {
+      [routeId]: {
+        baseline_run: baseline,
+        anchor_since: "2026-09-01",
+        covered: [
+          {
+            since: "2026-09-01",
+            until_exclusive: "2026-09-15",
+            source_run: baseline,
+            kind: "verified_baseline",
+          },
+          {
+            since: "2026-09-15",
+            until_exclusive: "2026-09-18",
+            source_run: first,
+            kind: "daily_scan",
+          },
+          {
+            since: "2026-09-18",
+            until_exclusive: "2026-09-21",
+            source_run: second,
+            kind: "daily_scan",
+          },
+        ],
+        unresolved: [],
+      },
+    },
+  }
+
+  assert.throws(
+    () => bootstrapCoverage(root, [{ channel_id: routeId, baseline_run: baseline }], coverage),
+    (error) => {
+      const requested = new Set(error.storage_request?.requests.map((row) => row.path))
+      return (
+        error.code === "STORAGE_PENDING" &&
+        error.storage_request.request_count === sources.length &&
+        sources.every((source) => requested.has(source.body_path))
+      )
+    },
+  )
+})
 
 test("daily receipts measure scan, verification and candidate merge time across resume", async (t) => {
   const root = temporary(t)

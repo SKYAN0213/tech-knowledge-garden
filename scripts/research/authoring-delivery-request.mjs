@@ -474,6 +474,44 @@ function executionBase(run, execution) {
   if (!validID(execution)) throw Error("Exact delivery execution ID required")
   return base(run) + "/executions/" + execution
 }
+
+function exactStorageRequestHydrated(ctx, request) {
+  if (
+    request?.schema !== "research-storage-download-request/v1" ||
+    typeof request.root !== "string" ||
+    !path.isAbsolute(request.root) ||
+    !Array.isArray(request.requests) ||
+    !request.requests.length ||
+    request.request_count !== request.requests.length
+  )
+    return false
+  try {
+    const localRoot = fs.realpathSync(path.resolve(ctx.repo, ".local"))
+    const storageRoot = fs.realpathSync(request.root)
+    const relativeRoot = path.relative(localRoot, storageRoot)
+    if (
+      relativeRoot === ".." ||
+      relativeRoot.startsWith(".." + path.sep) ||
+      path.isAbsolute(relativeRoot)
+    )
+      return false
+    return request.requests.every((row) => {
+      if (
+        typeof row.path !== "string" ||
+        path.isAbsolute(row.path) ||
+        !/^[a-f0-9]{64}$/.test(row.sha256 || "") ||
+        !Number.isSafeInteger(row.bytes) ||
+        row.bytes < 0
+      )
+        return false
+      const file = fs.readFileSync(safePath(storageRoot, row.path))
+      return file.length === row.bytes && sha256(file) === row.sha256
+    })
+  } catch {
+    return false
+  }
+}
+
 function loadExecution(ctx, input, execution) {
   const directory = executionBase(input.run_id, execution)
   const spec = readJSON(ctx.root, directory + "/input.json")
@@ -487,7 +525,7 @@ function loadExecution(ctx, input, execution) {
       sha256(JSON.stringify(readJSON(ctx.root, base(input.run_id) + "/binding.json"))) ||
     !state ||
     state.input_sha256 !== sha256(JSON.stringify(spec)) ||
-    !["running", "completed", "failed"].includes(state.state)
+    !["running", "waiting_for_storage", "completed", "failed"].includes(state.state)
   )
     throw Error("Delivery execution checkpoint changed")
   return { directory, spec, state }
@@ -842,6 +880,7 @@ export async function executePublicationDelivery(
     now = Date.now,
     sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     deliveryOptions = {},
+    authoringWriter = authoringWriteSession,
   } = {},
 ) {
   const input = loadRequest(ctx, p.run_id)
@@ -862,8 +901,13 @@ export async function executePublicationDelivery(
       p.resume_remote_intent)
   )
     throw Error(
-      "Authoring stage accepts only authoring connector capture and explicit update resumption",
+      "Authoring stage accepts only connector capture or explicit update/create-intent resumption",
     )
+  if (
+    p.connector_call_not_dispatched === true &&
+    (p.stage !== "authoring" || !p.resume_intent || !p.acquisition_path)
+  )
+    throw Error("Create-intent resumption requires an exact authoring intent and fresh acquisition")
   if (p.stage === "publication" && (p.acquisition_path || p.resume_intent))
     throw Error("Publication stage requires an already verified authoring execution")
   if (Boolean(p.source_snapshot_path) !== Boolean(p.source_readback_path))
@@ -896,6 +940,7 @@ export async function executePublicationDelivery(
     wait_ms: waitMs,
     captures,
     ...(p.resume_intent ? { resume_intent: p.resume_intent } : {}),
+    ...(p.connector_call_not_dispatched === true ? { connector_call_not_dispatched: true } : {}),
     ...(p.retry_publish ? { retry_publish: true } : {}),
     ...(p.actions_run ? { actions_run: p.actions_run } : {}),
     ...(p.resume_remote_intent ? { resume_remote_intent: p.resume_remote_intent } : {}),
@@ -909,31 +954,50 @@ export async function executePublicationDelivery(
     const previous = readJSON(ctx.root, directory + "/input.json")
     if (previous && !same(previous, spec))
       throw Error("Delivery execution input changed; use a new ID")
+    let state
     if (previous) {
       const prior = loadExecution(ctx, input, p.execution_id)
       if (prior.state.state === "completed") {
         publicationDeliveryStatus(ctx, { run_id: p.run_id })
         return { ...pinned(ctx, prior.state.result), reused: true }
       }
-      throw Error(
-        "Interrupted or failed delivery needs a new explicit execution ID and native reconciliation",
+      if (
+        prior.state.state !== "waiting_for_storage" ||
+        prior.state.pending_event ||
+        !exactStorageRequestHydrated(ctx, prior.state.storage_request)
       )
-    }
-    install(ctx, base(p.run_id) + "/binding.json", binding)
-    install(ctx, directory + "/input.json", spec)
-    const state = {
-      input_sha256: sha256(JSON.stringify(spec)),
-      state: "running",
-      pid: process.pid,
-      started_at: new Date(now()).toISOString(),
-      pending_event: null,
+        throw Error(
+          "Interrupted or failed delivery needs a new explicit execution ID and native reconciliation",
+        )
+      state = {
+        ...prior.state,
+        state: "running",
+        pid: process.pid,
+        resumed_at: new Date(now()).toISOString(),
+        storage_recoveries: [
+          ...(prior.state.storage_recoveries || []),
+          { request: prior.state.storage_request, hydrated_at: new Date(now()).toISOString() },
+        ],
+      }
+      delete state.storage_request
+      atomicWrite(ctx.root, directory + "/state.json", state)
+    } else {
+      install(ctx, base(p.run_id) + "/binding.json", binding)
+      install(ctx, directory + "/input.json", spec)
+      state = {
+        input_sha256: sha256(JSON.stringify(spec)),
+        state: "running",
+        pid: process.pid,
+        started_at: new Date(now()).toISOString(),
+        pending_event: null,
+      }
+      atomicWrite(ctx.root, directory + "/state.json", state)
+      atomicWrite(ctx.root, base(p.run_id) + "/latest.json", {
+        execution_id: p.execution_id,
+        input_sha256: state.input_sha256,
+      })
     }
     const save = () => atomicWrite(ctx.root, directory + "/state.json", state)
-    save()
-    atomicWrite(ctx.root, base(p.run_id) + "/latest.json", {
-      execution_id: p.execution_id,
-      input_sha256: state.input_sha256,
-    })
     let lastIntent = null
     const emit = (event) => {
       if (["write_intent", "remote_write_intent", "remote_write_batch_intent"].includes(event.type))
@@ -973,7 +1037,7 @@ export async function executePublicationDelivery(
     try {
       const native =
         p.stage === "authoring"
-          ? await authoringWriteSession({
+          ? await authoringWriter({
               root: ctx.root,
               releasePath: release.path,
               acquisitionFile: safePath(ctx.root, captures.acquisition.path),
@@ -982,6 +1046,7 @@ export async function executePublicationDelivery(
               waitMs,
               now,
               resumeIntent: p.resume_intent || null,
+              connectorCallNotDispatched: p.connector_call_not_dispatched === true,
             })
           : await deliverAuthoringSession({
               ...deliveryOptions,
@@ -1029,9 +1094,16 @@ export async function executePublicationDelivery(
       save()
       return pinned(ctx, state.result)
     } catch (error) {
-      state.state = "failed"
-      state.native_status = "recovery_required"
-      state.failed_at = new Date(now()).toISOString()
+      if (error?.code === "STORAGE_PENDING" && error.storage_request && !lastIntent && !state.pending_event) {
+        state.state = "waiting_for_storage"
+        state.native_status = "storage_pending"
+        state.storage_request = error.storage_request
+        state.storage_waiting_at = new Date(now()).toISOString()
+      } else {
+        state.state = "failed"
+        state.native_status = "recovery_required"
+        state.failed_at = new Date(now()).toISOString()
+      }
       save()
       throw error
     }

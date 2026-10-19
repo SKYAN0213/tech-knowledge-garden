@@ -53,6 +53,10 @@ finalize 검토 파일은 research-development-review/v1, executor codex, storag
 | 입력·정책·구현 변경 | 원 job과 오류는 보존; 새 job에서 유효한 선행 결과를 재사용 |
 | 원격 쓰기 결과 불명 | 동일 대상 ID·raw bytes·receipt를 readback한 뒤 미적용 단계만 수행 |
 
+authoring delivery 내부에서 connector write intent와 capture event가 만들어지기 전에 발생한 `STORAGE_PENDING`은 실행 ID·입력 SHA를 고정한 `waiting_for_storage`로 보존한다. 정확히 요청한 파일의 SHA·크기를 복원한 뒤 같은 모듈 job과 execution ID를 재개한다. write intent 또는 connector event가 이미 생긴 경우에는 이 경로를 쓰지 않고 새 execution ID와 원격 readback으로 불확실 쓰기를 먼저 조정한다.
+
+일일 계획 검증은 보관된 coverage의 모든 참조 회차를 계속 확인한다. 첫 성공 검증은 실제로 읽은 scan artifact·원문·parse 및 parse 종속 경로와 검증기 코드 지문, 검증된 cold-storage/Drive 묶음 바인딩을 `daily/scan-verifications/<run>/<proof-sha>/verification.json`에 불변 저장한다. 이후에는 코드와 각 입력 SHA 또는 원격 묶음 식별이 그대로일 때만 이 영수증을 재사용한다. 파일·카탈로그·묶음·검증기 지문이 달라지거나 영수증이 손상되면 기존 원문 검증으로 되돌아간다. 첫 검증에서 cold payload가 필요하면 검증기는 본문·parse·OCR·이미지 parse 종속 경로를 순회하며 정확한 요청을 모아 `STORAGE_PENDING`으로 반환한다. 요청된 raw bytes만 검증·hydrate한 뒤 같은 계획을 재개한다. cold 증거가 완전히 복원되어야 영수증을 만들며, 누락 증거를 건너뛰거나 coverage를 완료로 표시하지 않는다.
+
 MCP는 기존5도구를 유지한다. `research_job_status`의 recovery는 구체적인 다음 행동과 자동 재시도 금지를 반환한다. `research_job_resume`은 입력/구현/정책 검증을 유지하며, 재개 직전에 이전 state와 SHA를 `module-jobs/<job>/attempts/<번호>-before-resume.json`에 불변 저장한다. 결과가 이미 저장된 worker는 정확한 결과를 복구하고 완료 모듈 호출을 반복하지 않는다. 로컬 운영자는 중단 지점을 조회하고, 원인을 해결한 native job이 완료된 뒤 자신의 `--resume`으로 이어간다.
 
 Drive 인증은 기존 Codex/GPT 연결과 선택적인 로컬 OAuth adapter를 지원한다. 로컬 Desktop client를 등록하고 Google 동의를 마치면 supervisor가 collection.storage remote-pull/push/import를 명시 호출할 수 있다. 인증이 없거나 취소됐으면 waiting_for_storage를 유지한다. adapter는 실제 원격 metadata·raw bytes를 받아 기존 pending/verify/hydrate에 넘기며, 인증 설정을 모델에게 넘기거나 검증 metadata를 스스로 만들어 해결하지 않는다. 독립 CLI는 scripts/research-drive.mjs이고 실제 계정 최초 동의와 live 왕복은 코드·fixture 통과와 별도로 판정한다. [Ollama 도구 호출](https://docs.ollama.com/capabilities/tool-calling), [Google Drive 로컬 OAuth 예제](https://developers.google.com/workspace/drive/api/quickstart/python).

@@ -8,7 +8,10 @@ import {
   captureAuthoringSourceSnapshot,
   loadAuthoringSourceCapture,
 } from "../scripts/research/authoring-source-snapshot.mjs"
-import { DRIVE_AUTHORING_ROOTS } from "../scripts/research/authoring-transfer.mjs"
+import {
+  compareAuthoringRemote,
+  DRIVE_AUTHORING_ROOTS,
+} from "../scripts/research/authoring-transfer.mjs"
 import { sha256, PUBLIC_ROOTS } from "../scripts/research/contracts.mjs"
 
 const repository = process.cwd(),
@@ -130,6 +133,82 @@ test("missing raw, shared sources, changed or truncated listings and corrupt byt
       false,
     )
   }
+})
+
+test("captured child folders stay in the verified folder chain, not the remote file listings", (t) => {
+  const f = fixture(t),
+    folderPath = "Editions/2026",
+    folderId = "editions-year",
+    folderMetadata = {
+      id: folderId,
+      title: "2026",
+      mime_type: "application/vnd.google-apps.folder",
+      size: null,
+      modified_time: f.acquisition.observed_at,
+      shared: false,
+      parent_ids: [DRIVE_AUTHORING_ROOTS.Editions],
+    },
+    content = "# Nested edition\n",
+    bytes = Buffer.from(content),
+    metadata = {
+      id: "nested-edition-file",
+      title: "nested.md",
+      mime_type: "text/markdown",
+      size: String(bytes.length),
+      modified_time: f.acquisition.observed_at,
+      parent_ids: [folderId],
+      shared: false,
+    }
+  fs.mkdirSync(path.join(f.vault, folderPath), { recursive: true })
+  fs.writeFileSync(path.join(f.vault, folderPath, metadata.title), bytes)
+  f.acquisition.folders.push({ path: folderPath, metadata: folderMetadata })
+  f.acquisition.files.push({
+    path: folderPath + "/" + metadata.title,
+    metadata,
+    raw: { ...metadata, b64_string: bytes.toString("base64"), file_size_bytes: bytes.length },
+  })
+  const rootListing = f.acquisition.listings.find((listing) => listing.path === "Editions")
+  rootListing.before.push(folderMetadata)
+  rootListing.after.push(folderMetadata)
+  f.acquisition.listings.push({
+    path: folderPath,
+    id: folderId,
+    limit: 500,
+    before: [metadata],
+    after: [metadata],
+  })
+  f.write()
+
+  const result = f.run("source-nested")
+  const observation = JSON.parse(
+    fs.readFileSync(path.join(f.root, result.remote_observation.path), "utf8"),
+  )
+  assert.ok(observation.folders.some((folder) => folder.path === folderPath && folder.id === folderId))
+  assert.equal(
+    observation.listings.find((listing) => listing.path === "Editions").files.some(
+      (file) => file.name === "2026",
+    ),
+    false,
+  )
+  assert.equal(observation.listings.find((listing) => listing.path === folderPath).files.length, 1)
+  const comparison = compareAuthoringRemote(
+    {
+      schema: "research-authoring-transfer/v1",
+      destination_folder_id: rootId,
+      roots: DRIVE_AUTHORING_ROOTS,
+      files: [
+        {
+          path: folderPath + "/" + metadata.title,
+          sha256: sha256(bytes),
+          operation: "create",
+          previous_sha256: null,
+        },
+      ],
+    },
+    observation,
+    { now: f.now },
+  )
+  assert.deepEqual(comparison.operations.map((row) => row.action), ["already_applied"])
 })
 
 test("capture-source CLI consumes the existing acquisition into private proof only", (t) => {

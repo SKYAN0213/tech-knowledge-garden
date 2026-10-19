@@ -4,6 +4,27 @@ import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 import { buildContextPage, contextHash } from "./research/context-page.mjs"
+import {
+  formatStoragePendingDiagnostic,
+  parseStoragePendingDiagnostic,
+} from "./research/storage-diagnostics.mjs"
+
+export function captureContextBytes(cwd = process.cwd(), execute = execFileSync) {
+  try {
+    return execute(
+      process.execPath,
+      [fileURLToPath(new URL("./garden.mjs", import.meta.url)), "context"],
+      { cwd, maxBuffer: 32 * 1024 * 1024 },
+    )
+  } catch (error) {
+    const diagnostic = parseStoragePendingDiagnostic(error.stderr)
+    if (!diagnostic) throw error
+    const pending = Error(diagnostic.message)
+    pending.code = diagnostic.code
+    pending.storage_request = diagnostic.storage_request
+    throw pending
+  }
+}
 
 export function main(args = process.argv.slice(2)) {
   const { values } = parseArgs({
@@ -24,14 +45,7 @@ export function main(args = process.argv.slice(2)) {
   if (input) bytes = fs.readFileSync(input)
   else {
     if (values.sha256) throw Error("--sha256 requires --input")
-    bytes = execFileSync(
-      process.execPath,
-      [fileURLToPath(new URL("./garden.mjs", import.meta.url)), "context"],
-      {
-        cwd: process.cwd(),
-        maxBuffer: 32 * 1024 * 1024,
-      },
-    )
+    bytes = captureContextBytes()
     const directory = ".local/research/local-ai/context"
     fs.mkdirSync(directory, { recursive: true })
     input = path.join(directory, contextHash(bytes) + ".json")
@@ -60,7 +74,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     console.log(JSON.stringify(main(), null, 2))
   } catch (error) {
-    console.error(error.message)
+    console.error(formatStoragePendingDiagnostic(error) || error.message)
     process.exitCode = 1
   }
 }

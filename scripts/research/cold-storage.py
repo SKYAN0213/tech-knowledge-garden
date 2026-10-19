@@ -21,7 +21,7 @@ HASH = re.compile(r"^[a-f0-9]{64}$")
 EXCLUDED = {CONTROL, "node_modules", ".git", "runtime", "venv", ".venv", "__pycache__"}
 HOT_NAMES = {"state.json", "summary.json", "input.json", "manifest.json", "archive-manifest.json",
              "package-receipt.json", "drive-location.json", "drive-location-v2.json", "receipt.json",
-             "candidate-backlog.json", "stdout.log", "stderr.log", "journal.jsonl"}
+             "candidate-backlog.json", "stdout.log", "stderr.log", "journal.jsonl", "verification.json"}
 
 
 def now():

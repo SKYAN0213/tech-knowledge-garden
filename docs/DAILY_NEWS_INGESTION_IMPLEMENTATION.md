@@ -509,6 +509,8 @@ node scripts/research-context.mjs --input PATH --sha256 SHA --section sources
 
 기본 pending20건, limit1~100이며 UTF-8 출력120,000bytes 안에서 반환 수를 줄인다. 다음 페이지는 요청 limit이 아니라 page.next_offset을 사용한다. 원 순서·total·returned·전체 작업별 건수를 보존한다. 단일 자료도 예산을 넘으면 잘림 없이 실패하고 고정 원본을 직접 읽는다. 잘못된 key·route·section·cursor·SHA는 실패한다. 정정 경고·원문 판본·parse·검토 상태·승인 정보는 요약에도 보존한다. 반복 이력 배열만 건수/마지막 기록으로 표시하며 승인 전 정확한 candidate 조회로 전체 이력을 읽는다. 정확한 --candidate 조회는 pending과 resolved 전체에서 고유 key를 찾고 실제 소속을 page.section에 표시한다. 해결된 후보도 발견·승인·정정 이력을 그대로 읽으며 두 목록에 같은 key가 있으면 실패한다. --candidate와 --section/--route/offset의 조합은 허용하지 않는다. 수집·사실 검증·승인 관문은 그대로다.
 
+Context 생성 도중 cold payload가 필요하면 `garden context`는 stderr 한 줄에 `research-cli-error/v1` 진단을 출력한다. `npm run research:context --silent`는 이 구조를 보존해 `STORAGE_PENDING`과 정확한 `storage_request`(상대 경로, payload SHA-256, Drive file ID, bundle ID 및 묶음 SHA-256)를 출력한다. 이 요청으로 collection.storage의 해당 ID/해시만 hydrate한다. 임의의 pending 목록 전체를 내려받지 않는다. Context snapshot 저장은 원본 context 생성 뒤에 수행하므로 대기 오류가 나면 불완전 snapshot은 만들지 않는다.
+
 섹션은 pending/resolved/sources/companies/institutions/robot-manufacturers/known-sources/entities/events/terms/evidence/deep이다. 추적 대상·탐색 범위와 기존 사건·원문·용어·심층 이력은 해당 섹션의 전 페이지를 읽는다. 첫 pending 페이지만 읽고 조사 완료로 표시하지 않는다. 공개 UI·RSS에 운영 형식을 노출하지 않는다. 기존 npm run context 전체 출력도 유지한다.
 
 실제850건을43페이지로 순서·고유 key 손실 없이 조회했다. 첫61,979bytes·최대73,541bytes이며 첫 입력99.13% 감소다. 이는 입력 크기이며 모델 사실 품질·전체 조사 시간·승인 기사 수의 개선으로 확대 해석하지 않는다. 기존08시의 실제 새 조회 실행은 예약 지침 적용과 구분해 확인한다.

@@ -118,7 +118,6 @@ export function captureAuthoringSourceSnapshot({
     },
     acquisitionFile,
     now,
-    { allowListedFolders: true },
   )
   const receipt = {
     schema: "tech-drive-connector-readback/v1",

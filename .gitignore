@@ -3,6 +3,7 @@ public/
 .quartz/
 .quartz-cache/
 .local/
+.storage/
 .DS_Store
 .obsidian/
 tsconfig.tsbuildinfo

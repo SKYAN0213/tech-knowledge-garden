@@ -71,7 +71,7 @@ export const module = {
       requestPublicationDelivery,
     ),
     deliver: operation(
-      "명시적 실행 ID·단계·release를 기존 전달 실행기에 연결한다. authoring 단계는 durable 요청을 통해 연결 도구가 원격 쓰기 후 raw capture를 제출해야 하며 publication 단계는 검증된 Drive 원본 import·publisher·공개 readback을 실행한다. 미확인 쓰기/발행은 자동 재시도하지 않고 완료된 실행은 재사용한다. 외부 발행의 명시적 운영 실행에만 사용한다.",
+      "명시적 실행 ID·단계·release를 기존 전달 실행기에 연결한다. authoring 단계는 durable 요청을 통해 연결 도구가 원격 쓰기 후 raw capture를 제출해야 하며 publication 단계는 검증된 Drive 원본 import·publisher·공개 readback을 실행한다. 미확정 create 재개에는 기존 intent, 새 원문 목록, 사망한 이전 writer와 connector 호출 미전송에 대한 운영자 확인을 모두 요구한다. 미확인 쓰기/발행은 자동 재시도하지 않고 완료된 실행은 재사용한다. 외부 발행의 명시적 운영 실행에만 사용한다.",
       schema(
         {
           run_id: id,
@@ -90,6 +90,7 @@ export const module = {
           remote_acquisition_path: file("root"),
           remote_acquisition_sha256: digest,
           resume_intent: file("root"),
+          connector_call_not_dispatched: { type: "boolean" },
           resume_remote_intent: file("root"),
           retry_publish: { type: "boolean" },
           actions_run: { type: "string", pattern: "^[0-9]+$", maxLength: 30 },

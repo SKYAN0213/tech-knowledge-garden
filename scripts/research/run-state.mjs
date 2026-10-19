@@ -6,6 +6,22 @@ import { resolveColdStorageRead, recordColdStorageWrite } from "./cold-storage.m
 
 export const DEFAULT_ROOT = ".local/research/local-ai"
 export const GARDEN_OPERATION_LOCK = "garden-operation"
+let activeSafePathTrace = null
+
+export function traceSafePathReads(root, operation) {
+  const trace = { root: path.resolve(root), paths: new Set() }
+  const previous = activeSafePathTrace
+  activeSafePathTrace = trace
+  try {
+    const value = operation()
+    if (value && typeof value.then === "function")
+      throw Error("Safe-path read tracing requires a synchronous operation")
+    return { value, paths: [...trace.paths].sort() }
+  } finally {
+    activeSafePathTrace = previous
+  }
+}
+
 export function safePath(root, relative, { materialize = true } = {}) {
   const base = path.resolve(root),
     target = path.resolve(base, relative)
@@ -17,6 +33,7 @@ export function safePath(root, relative, { materialize = true } = {}) {
     if (fs.lstatSync(current, { throwIfNoEntry: false })?.isSymbolicLink())
       throw Error("Symlink in private path")
   }
+  if (activeSafePathTrace?.root === base) activeSafePathTrace.paths.add(relative)
   return materialize ? resolveColdStorageRead(root, target) : target
 }
 export function assertAbsent(root, relative) {

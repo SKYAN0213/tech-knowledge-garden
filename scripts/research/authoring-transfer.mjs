@@ -347,10 +347,24 @@ export function compareAuthoringRemote(plan, observation, { now = Date.now() } =
     throw Error("Fresh scoped Drive observation required")
   const folders = new Map(Object.entries(DRIVE_AUTHORING_ROOTS))
   const ids = new Set(folders.values())
+  const observedRoots = new Set()
   const listings = new Map()
   for (const folder of [...observation.folders].sort(
     (a, b) => a.path.split("/").length - b.path.split("/").length,
   )) {
+    // Source captures include metadata for the four fixed roots. Their IDs are
+    // already pinned by the transfer plan, so validate them against the fixed
+    // destination instead of treating them as variable child folders.
+    if (typeof folder.path === "string" && Object.hasOwn(DRIVE_AUTHORING_ROOTS, folder.path)) {
+      if (
+        observedRoots.has(folder.path) ||
+        folder.id !== DRIVE_AUTHORING_ROOTS[folder.path] ||
+        folder.parent_id !== plan.destination_folder_id
+      )
+        throw Error("Invalid Drive folder chain")
+      observedRoots.add(folder.path)
+      continue
+    }
     if (
       typeof folder.path !== "string" ||
       folder.path.split("/").some((p) => !p || p.startsWith(".")) ||

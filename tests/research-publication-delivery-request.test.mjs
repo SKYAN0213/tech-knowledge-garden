@@ -61,6 +61,81 @@ test("publication delivery request pins native approval selection and never repo
   assert.equal(fs.existsSync(safePath(f.root, "runs/unknown")), false)
 })
 
+test("pre-intent cold storage waits preserve the exact delivery execution for hydrated resume", async (t) => {
+  const f = await deliveryFixture(t)
+  await requestPublicationDelivery(f.ctx, f.request)
+  const parameters = { ...f.deliver, execution_id: "cold-storage-resume" },
+    path = "cold-storage/exact-payload.bin",
+    payload = Buffer.from("verified cold payload\n")
+  let writerCalls = 0
+  const authoringWriter = async () => {
+    writerCalls++
+    if (writerCalls === 1)
+      throw Object.assign(Error("Cold bytes must be hydrated"), {
+        code: "STORAGE_PENDING",
+        storage_request: {
+          schema: "research-storage-download-request/v1",
+          root: f.root,
+          request_count: 1,
+          requests: [{ path, sha256: sha256(payload), bytes: payload.length }],
+        },
+      })
+    return { status: "verified_complete", drive_verified: true }
+  }
+  await assert.rejects(
+    executePublicationDelivery(f.ctx, parameters, { authoringWriter }),
+    (error) => error.code === "STORAGE_PENDING",
+  )
+  const statePath = `runs/${parameters.run_id}/publication-delivery/executions/${parameters.execution_id}/state.json`
+  const waiting = readJSON(f.root, statePath)
+  assert.equal(waiting.state, "waiting_for_storage")
+  assert.equal(waiting.native_status, "storage_pending")
+  assert.equal(waiting.pending_event, null)
+  assert.equal(writerCalls, 1)
+
+  await assert.rejects(
+    executePublicationDelivery(f.ctx, parameters, { authoringWriter }),
+    /new explicit execution ID/,
+  )
+  assert.equal(writerCalls, 1)
+  f.put(path, payload)
+  const result = await executePublicationDelivery(f.ctx, parameters, { authoringWriter })
+  assert.equal(result.status, "verified_complete")
+  assert.equal(writerCalls, 2)
+  const resumed = readJSON(f.root, statePath)
+  assert.equal(resumed.state, "completed")
+  assert.equal(resumed.storage_recoveries.length, 1)
+  assert.equal(resumed.storage_recoveries[0].request.requests[0].path, path)
+})
+
+test("cold storage after a native write intent remains recovery-required", async (t) => {
+  const f = await deliveryFixture(t)
+  await requestPublicationDelivery(f.ctx, f.request)
+  const parameters = { ...f.deliver, execution_id: "cold-storage-after-intent" },
+    authoringWriter = async ({ emit }) => {
+      emit({ type: "write_intent" })
+      throw Object.assign(Error("Cold bytes required after intent"), {
+        code: "STORAGE_PENDING",
+        storage_request: { schema: "research-storage-download-request/v1" },
+      })
+    }
+  await assert.rejects(
+    executePublicationDelivery(f.ctx, parameters, { authoringWriter }),
+    (error) => error.code === "STORAGE_PENDING",
+  )
+  const state = readJSON(
+    f.root,
+    `runs/${parameters.run_id}/publication-delivery/executions/${parameters.execution_id}/state.json`,
+  )
+  assert.equal(state.state, "failed")
+  assert.equal(state.native_status, "recovery_required")
+  assert.equal(state.pending_event, null)
+  await assert.rejects(
+    executePublicationDelivery(f.ctx, parameters, { authoringWriter }),
+    /new explicit execution ID/,
+  )
+})
+
 test("durable connector receipt reaches the native raw-byte verifier and completed calls reuse without writes", async (t) => {
   const f = await deliveryFixture(t)
   await requestPublicationDelivery(f.ctx, f.request)

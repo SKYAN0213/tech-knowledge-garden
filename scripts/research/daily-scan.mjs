@@ -14,8 +14,14 @@ import {
   atomicWrite,
   readJSON,
   safePath,
+  traceSafePathReads,
   withLock,
 } from "./run-state.mjs"
+import {
+  coldStorageManifest,
+  coldStorageManifestMatches,
+  combineStoragePendingErrors,
+} from "./cold-storage.mjs"
 import {
   DEFAULT_DAILY_RETRY_POLICY,
   coveredFrontier,
@@ -130,9 +136,13 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/parser.mjs",
     "scripts/research/robots.mjs",
     "scripts/research/run-state.mjs",
+    "scripts/research/cold-storage.mjs",
+    "scripts/research/cold-storage.py",
     "scripts/research/scan-completion.mjs",
     "scripts/research/scan-evidence.mjs",
     "scripts/research/supporting-sources.mjs",
+    "scripts/research/publication-date-reconciliation.mjs",
+    "scripts/research/article-image-review-cache.mjs",
     "scripts/research/candidate-source-alternative.mjs",
     "scripts/research/legacy-candidate-approval.mjs",
     "scripts/research/source-policy.mjs",
@@ -174,6 +184,177 @@ export function dailySources(configFile = DAILY_CONFIG) {
     config_sha256: sha256(
       sourcePaths.map((file) => `${file}:${sha256(fs.readFileSync(file))}`).join("\n"),
     ),
+  }
+}
+
+const DAILY_SCAN_PROOF_SCHEMA = "research-daily-scan-verification/v1"
+const dailyScanProofDirectory = (runId) => `daily/scan-verifications/${runId}`
+let dailyCoverageVerifierFingerprint
+
+function dailyCoverageVerifierSha256() {
+  dailyCoverageVerifierFingerprint ||= sha256(
+    dailySourcePaths()
+      .map((file) => `${file}:${sha256(fs.readFileSync(file))}`)
+      .join("\n"),
+  )
+  return dailyCoverageVerifierFingerprint
+}
+
+function validDailyScanProof(proof, { runId, verifierSha256, expected, allowLegacyCandidates }) {
+  if (
+    proof?.schema !== DAILY_SCAN_PROOF_SCHEMA ||
+    proof.scan_run !== runId ||
+    proof.verifier_sha256 !== verifierSha256 ||
+    proof.allow_legacy_candidates !== allowLegacyCandidates ||
+    proof.status !== "window_scanned" ||
+    typeof proof.channel_id !== "string" ||
+    !proof.channel_id ||
+    typeof proof.window?.since !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(proof.window.since) ||
+    typeof proof.window?.until_exclusive !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(proof.window.until_exclusive) ||
+    proof.window.since >= proof.window.until_exclusive ||
+    !Array.isArray(proof.candidates) ||
+    proof.candidate_count !== proof.candidates.length ||
+    !Array.isArray(proof.input_manifest) ||
+    !Number.isFinite(Date.parse(proof.verified_at || "")) ||
+    !/^[a-f0-9]{64}$/.test(proof.proof_sha256 || "")
+  )
+    return false
+  if (expected?.channel_id && proof.channel_id !== expected.channel_id) return false
+  if (expected?.since && proof.window.since !== expected.since) return false
+  if (expected?.until_exclusive && proof.window.until_exclusive !== expected.until_exclusive)
+    return false
+  const candidateKeys = new Set()
+  for (const candidate of proof.candidates) {
+    if (
+      typeof candidate?.key !== "string" ||
+      !candidate.key ||
+      candidateKeys.has(candidate.key) ||
+      !Array.isArray(candidate.source_urls) ||
+      candidate.source_urls.some((url) => typeof url !== "string" || !url)
+    )
+      return false
+    candidateKeys.add(candidate.key)
+  }
+  const { proof_sha256: _proofSha, ...payload } = proof
+  return proof.proof_sha256 === sha256(JSON.stringify(payload))
+}
+
+function readReusableDailyScanProof(root, runId, verifierSha256, expected, allowLegacyCandidates) {
+  const directory = dailyScanProofDirectory(runId)
+  const pathOnDisk = safePath(root, directory, { materialize: false })
+  if (!fs.existsSync(pathOnDisk)) return null
+  const entries = fs.readdirSync(pathOnDisk, { withFileTypes: true })
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !/^[a-f0-9]{64}$/.test(entry.name)) continue
+    const relative = `${directory}/${entry.name}/verification.json`
+    let proof
+    try {
+      proof = readJSON(root, relative)
+    } catch (error) {
+      if (error?.code === "STORAGE_PENDING") throw error
+      continue
+    }
+    if (
+      entry.isSymbolicLink() ||
+      !validDailyScanProof(proof, {
+        runId,
+        verifierSha256,
+        expected,
+        allowLegacyCandidates,
+      }) ||
+      proof.proof_sha256 !== entry.name ||
+      !coldStorageManifestMatches(root, proof.input_manifest)
+    )
+      continue
+    return {
+      summary: {
+        status: proof.status,
+        channel_id: proof.channel_id,
+        window: proof.window,
+        candidate_count: proof.candidate_count,
+      },
+      candidates: proof.candidates,
+    }
+  }
+  return null
+}
+
+function verifiedDailyScan(root, runId, expected, { allowLegacyCandidates = false } = {}) {
+  if (!/^[A-Za-z0-9_-]+$/.test(runId || "")) throw Error("Valid stored scan run required")
+  const verifierSha256 = dailyCoverageVerifierSha256()
+  const cached = readReusableDailyScanProof(
+    root,
+    runId,
+    verifierSha256,
+    expected,
+    allowLegacyCandidates,
+  )
+  if (cached) return cached
+
+  const traced = traceSafePathReads(root, () => {
+    const scan = storedListScan(root, runId)
+    if (!scan.summary?.window || !scan.summary.channel_id)
+      throw Error("Stored scan has no route window: " + runId)
+    const verifiedExpected = {
+      channel_id: expected?.channel_id || scan.summary.channel_id,
+      ...scan.summary.window,
+    }
+    if (
+      (expected?.channel_id && scan.summary.channel_id !== expected.channel_id) ||
+      (expected?.since && scan.summary.window.since !== expected.since) ||
+      (expected?.until_exclusive &&
+        scan.summary.window.until_exclusive !== expected.until_exclusive)
+    )
+      throw Error("Stored scan does not match the requested verification route window")
+    verifyStoredListScan(root, scan, verifiedExpected, { allowLegacyCandidates })
+    return { scan, verifiedExpected }
+  })
+  const { scan, verifiedExpected } = traced.value
+  const tracePaths = new Set(traced.paths)
+  const requiredPaths = [
+    `runs/${runId}/list-scan.json`,
+    `runs/${runId}/list-pages.json`,
+    `runs/${runId}/documents.json`,
+    `runs/${runId}/parses.json`,
+    `runs/${runId}/candidates.json`,
+    ...[...scan.indexDocuments, ...scan.documents].map((document) => document.body_path),
+  ]
+  if (requiredPaths.some((file) => !tracePaths.has(file)))
+    throw Error("Stored scan verification did not trace every source artifact")
+
+  const inputManifest = coldStorageManifest(root, traced.paths)
+  const manifestPaths = new Set(inputManifest.map((entry) => entry.path))
+  if (requiredPaths.some((file) => !manifestPaths.has(file)))
+    throw Error("Stored scan verification manifest is incomplete")
+  const proofPayload = {
+    schema: DAILY_SCAN_PROOF_SCHEMA,
+    scan_run: runId,
+    channel_id: verifiedExpected.channel_id,
+    window: {
+      since: verifiedExpected.since,
+      until_exclusive: verifiedExpected.until_exclusive,
+    },
+    status: scan.summary.status,
+    candidate_count: scan.candidates.length,
+    candidates: scan.candidates.map(({ key, source_urls }) => ({ key, source_urls })),
+    allow_legacy_candidates: allowLegacyCandidates,
+    verifier_sha256: verifierSha256,
+    input_manifest: inputManifest,
+    verified_at: new Date().toISOString(),
+  }
+  const proofSha256 = sha256(JSON.stringify(proofPayload))
+  const proof = { ...proofPayload, proof_sha256: proofSha256 }
+  atomicCreate(root, `${dailyScanProofDirectory(runId)}/${proofSha256}/verification.json`, proof)
+  return {
+    summary: {
+      status: proof.status,
+      channel_id: proof.channel_id,
+      window: proof.window,
+      candidate_count: proof.candidate_count,
+    },
+    candidates: proof.candidates,
   }
 }
 
@@ -274,11 +455,26 @@ export function validateStoredDailyPlan(plan, { runId, config, activeRoutes, con
 
 export function storedListScan(root, runId) {
   const prefix = `runs/${runId}/`
-  const summary = readJSON(root, prefix + "list-scan.json")
-  const documents = readJSON(root, prefix + "documents.json")
-  const parses = readJSON(root, prefix + "parses.json")
-  const candidates = readJSON(root, prefix + "candidates.json")
-  const indexDocuments = readJSON(root, prefix + "list-pages.json") || []
+  const paths = {
+    summary: prefix + "list-scan.json",
+    documents: prefix + "documents.json",
+    parses: prefix + "parses.json",
+    candidates: prefix + "candidates.json",
+    indexDocuments: prefix + "list-pages.json",
+  }
+  const values = {}
+  const storageErrors = []
+  for (const [key, relative] of Object.entries(paths)) {
+    try {
+      values[key] = readJSON(root, relative)
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+    }
+  }
+  if (storageErrors.length) throw combineStoragePendingErrors(storageErrors)
+  const { summary, documents, parses, candidates } = values
+  const indexDocuments = values.indexDocuments || []
   if (
     !summary ||
     !Array.isArray(documents) ||
@@ -340,69 +536,74 @@ export function verifyDailyCoverageEvidence(
   state,
   { backlogFile = DAILY_BACKLOG, sameEventAliases = null } = {},
 ) {
+  const storageErrors = []
   for (const span of state.covered) {
-    if (span.kind === "verified_supplemental_scan") {
-      if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
-        throw Error("Supplemental coverage has no valid reconciliation run")
-      const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
-      if (!receipt)
-        throw Error("Supplemental coverage receipt is missing: " + span.reconciliation_run)
-      const scan = storedListScan(root, receipt.scan_run)
-      const expectedUntil = scan.summary.window
-        ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
-        : null
+    try {
+      if (span.kind === "verified_supplemental_scan") {
+        if (!/^[a-zA-Z0-9_-]+$/.test(span.reconciliation_run || ""))
+          throw Error("Supplemental coverage has no valid reconciliation run")
+        const receipt = readJSON(root, reconciliationPath(span.reconciliation_run))
+        if (!receipt)
+          throw Error("Supplemental coverage receipt is missing: " + span.reconciliation_run)
+        const scan = verifiedDailyScan(root, receipt.scan_run, { channel_id: channelId })
+        const expectedUntil = scan.summary.window
+          ? [scan.summary.window.until_exclusive, kstDay(receipt.reconciled_at)].sort()[0]
+          : null
+        if (
+          !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
+            receipt?.schema,
+          ) ||
+          receipt.scan_run !== span.source_run ||
+          receipt.channel_id !== channelId ||
+          receipt.since !== span.since ||
+          receipt.scan_until_exclusive !== scan.summary.window?.until_exclusive ||
+          receipt.coverage_until !== span.until_exclusive ||
+          receipt.coverage_until !== expectedUntil ||
+          receipt.backlog_merge?.status !== "merged" ||
+          receipt.candidate_published !== false ||
+          JSON.stringify(receipt.candidate_keys) !==
+            JSON.stringify(scan.candidates.map((candidate) => candidate.key))
+        )
+          throw Error("Supplemental coverage receipt does not match its interval")
+        verifySameEventSuppressionRecord(
+          root,
+          scan.candidates,
+          receipt.backlog_merge?.same_event_aliases,
+          {
+            backlogFile,
+            sameEventAliases,
+            asOf: receipt.reconciled_at,
+            required: receipt.schema === "research-supplemental-coverage/v2",
+            label: "Supplemental coverage receipt",
+          },
+        )
+        if (
+          scan.summary.status !== "window_scanned" ||
+          scan.summary.channel_id !== channelId ||
+          scan.summary.window?.since !== span.since ||
+          scan.summary.window?.until_exclusive < span.until_exclusive
+        )
+          throw Error("Supplemental coverage disagrees with its completed scan window")
+        continue
+      }
+      if (span.kind !== "daily_scan") continue
+      const scan = verifiedDailyScan(root, span.source_run, { channel_id: channelId })
+      const window = scan.summary.window
+      const match = /^daily-(\d{4})(\d{2})(\d{2})/.exec(span.source_run || "")
+      const runDay = match && `${match[1]}-${match[2]}-${match[3]}`
       if (
-        !["research-supplemental-coverage/v1", "research-supplemental-coverage/v2"].includes(
-          receipt?.schema,
-        ) ||
-        receipt.scan_run !== span.source_run ||
-        receipt.channel_id !== channelId ||
-        receipt.since !== span.since ||
-        receipt.scan_until_exclusive !== scan.summary.window?.until_exclusive ||
-        receipt.coverage_until !== span.until_exclusive ||
-        receipt.coverage_until !== expectedUntil ||
-        receipt.backlog_merge?.status !== "merged" ||
-        receipt.candidate_published !== false ||
-        JSON.stringify(receipt.candidate_keys) !==
-          JSON.stringify(scan.candidates.map((candidate) => candidate.key))
+        !window ||
+        span.since !== window.since ||
+        span.until_exclusive > window.until_exclusive ||
+        span.until_exclusive > runDay
       )
-        throw Error("Supplemental coverage receipt does not match its interval")
-      verifySameEventSuppressionRecord(
-        root,
-        scan.candidates,
-        receipt.backlog_merge?.same_event_aliases,
-        {
-          backlogFile,
-          sameEventAliases,
-          asOf: receipt.reconciled_at,
-          required: receipt.schema === "research-supplemental-coverage/v2",
-          label: "Supplemental coverage receipt",
-        },
-      )
-      if (
-        scan.summary.status !== "window_scanned" ||
-        scan.summary.channel_id !== channelId ||
-        scan.summary.window?.since !== span.since ||
-        scan.summary.window?.until_exclusive < span.until_exclusive
-      )
-        throw Error("Supplemental coverage disagrees with its completed scan window")
-      verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
-      continue
+        throw Error("Daily coverage interval disagrees with its stored scan window")
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
     }
-    if (span.kind !== "daily_scan") continue
-    const scan = storedListScan(root, span.source_run)
-    const window = scan.summary.window
-    const match = /^daily-(\d{4})(\d{2})(\d{2})/.exec(span.source_run || "")
-    const runDay = match && `${match[1]}-${match[2]}-${match[3]}`
-    if (
-      !window ||
-      span.since !== window.since ||
-      span.until_exclusive > window.until_exclusive ||
-      span.until_exclusive > runDay
-    )
-      throw Error("Daily coverage interval disagrees with its stored scan window")
-    verifyStoredListScan(root, scan, { channel_id: channelId, ...window })
   }
+  if (storageErrors.length) throw combineStoragePendingErrors(storageErrors)
   return true
 }
 
@@ -539,56 +740,80 @@ export function bootstrapCoverage(
   if (previous && (previous.schema !== "research-daily-coverage/v1" || !previous.routes))
     throw Error("Unsupported daily coverage state")
   const coverage = structuredClone(previous || { schema: "research-daily-coverage/v1", routes: {} })
+  const storageErrors = []
   for (const entry of activeRoutes) {
-    const scan = storedListScan(root, entry.baseline_run)
-    const expected = { channel_id: entry.channel_id, ...scan.summary.window }
-    verifyStoredListScan(root, scan, expected, { allowLegacyCandidates: true })
-    const baseline = {
-      since: expected.since,
-      until_exclusive: expected.until_exclusive,
-      source_run: entry.baseline_run,
-      kind: "verified_baseline",
-    }
-    const current = coverage.routes[entry.channel_id]
-    if (current?.baseline_run && current.baseline_run !== entry.baseline_run) {
-      const previousScan = storedListScan(root, current.baseline_run)
-      const previousWindow = previousScan.summary.window
-      verifyStoredListScan(
+    try {
+      const scan = verifiedDailyScan(
         root,
-        previousScan,
-        {
-          channel_id: entry.channel_id,
-          ...previousWindow,
-        },
+        entry.baseline_run,
+        { channel_id: entry.channel_id },
         { allowLegacyCandidates: true },
       )
-      const previousSpans = current.covered.filter(
-        (span) => span.kind === "verified_baseline" && span.source_run === current.baseline_run,
-      )
-      if (
-        previousSpans.length !== 1 ||
-        previousWindow.since !== expected.since ||
-        previousWindow.until_exclusive !== expected.until_exclusive ||
-        previousSpans[0].since !== expected.since ||
-        previousSpans[0].until_exclusive !== expected.until_exclusive
-      )
-        throw Error("Daily route baseline changed; reconcile coverage before continuing")
-      current.covered = current.covered.map((span) => (span === previousSpans[0] ? baseline : span))
-      current.baseline_run = entry.baseline_run
+      const expected = { channel_id: entry.channel_id, ...scan.summary.window }
+      const baseline = {
+        since: expected.since,
+        until_exclusive: expected.until_exclusive,
+        source_run: entry.baseline_run,
+        kind: "verified_baseline",
+      }
+      const current = coverage.routes[entry.channel_id]
+      if (current?.baseline_run && current.baseline_run !== entry.baseline_run) {
+        const previousScan = verifiedDailyScan(
+          root,
+          current.baseline_run,
+          { channel_id: entry.channel_id },
+          { allowLegacyCandidates: true },
+        )
+        const previousWindow = previousScan.summary.window
+        const previousSpans = current.covered.filter(
+          (span) => span.kind === "verified_baseline" && span.source_run === current.baseline_run,
+        )
+        if (
+          previousSpans.length !== 1 ||
+          previousWindow.since !== expected.since ||
+          previousWindow.until_exclusive !== expected.until_exclusive ||
+          previousSpans[0].since !== expected.since ||
+          previousSpans[0].until_exclusive !== expected.until_exclusive
+        )
+          throw Error("Daily route baseline changed; reconcile coverage before continuing")
+        current.covered = current.covered.map((span) =>
+          span === previousSpans[0] ? baseline : span,
+        )
+        current.baseline_run = entry.baseline_run
+      }
+      const state = current || {
+        baseline_run: entry.baseline_run,
+        anchor_since: expected.since,
+        covered: [],
+        unresolved: [],
+      }
+      if (!state.covered.some((span) => span.source_run === entry.baseline_run))
+        state.covered.push(baseline)
+      state.anchor_since = [state.anchor_since, expected.since].sort()[0]
+      const repaired = repairDailyCoverageState(state)
+      verifyDailyCoverageEvidence(root, entry.channel_id, repaired, {
+        backlogFile,
+        sameEventAliases,
+      })
+      coverage.routes[entry.channel_id] = repaired
+    } catch (error) {
+      if (error?.code !== "STORAGE_PENDING") throw error
+      storageErrors.push(error)
+      const current = coverage.routes[entry.channel_id]
+      if (current) {
+        try {
+          verifyDailyCoverageEvidence(root, entry.channel_id, current, {
+            backlogFile,
+            sameEventAliases,
+          })
+        } catch (coverageError) {
+          if (coverageError?.code !== "STORAGE_PENDING") throw coverageError
+          storageErrors.push(coverageError)
+        }
+      }
     }
-    const state = current || {
-      baseline_run: entry.baseline_run,
-      anchor_since: expected.since,
-      covered: [],
-      unresolved: [],
-    }
-    if (!state.covered.some((span) => span.source_run === entry.baseline_run))
-      state.covered.push(baseline)
-    state.anchor_since = [state.anchor_since, expected.since].sort()[0]
-    const repaired = repairDailyCoverageState(state)
-    verifyDailyCoverageEvidence(root, entry.channel_id, repaired, { backlogFile, sameEventAliases })
-    coverage.routes[entry.channel_id] = repaired
   }
+  if (storageErrors.length) throw combineStoragePendingErrors(storageErrors)
   return coverage
 }
 
