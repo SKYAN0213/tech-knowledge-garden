@@ -568,13 +568,28 @@ test("the real delivery CLI shares its live connector channel with remote writes
   assert.equal(inspectRemoteDelivery(f.root, f.run).status, "remote_delivery_complete")
 })
 
-async function batchFixture(t, { batchSize = 16, nativePrevious = false } = {}) {
+async function batchFixture(
+  t,
+  { batchSize = 16, nativePrevious = false, legacyPrevious = false } = {},
+) {
   const updates = ["WebsiteData/articles.csv", "WebsiteData/snapshot.json"]
-  const previousFiles = updates.map((relative) => ({
-    path: relative,
-    id: sha256(relative).slice(0, 20),
-    sha256: sha256("previous:" + relative),
-  }))
+  const previousFiles = updates.map((relative) =>
+    legacyPrevious
+      ? {
+          name: path.basename(relative),
+          file_id: sha256(relative).slice(0, 20),
+          sha256: sha256("previous:" + relative),
+          bytes: Buffer.byteLength("previous:" + relative),
+          parent_ids: [REMOTE_DELIVERY_ROOTS.WebsiteData],
+          shared: false,
+          verified: true,
+        }
+      : {
+          path: relative,
+          id: sha256(relative).slice(0, 20),
+          sha256: sha256("previous:" + relative),
+        },
+  )
   const f = await setup(t, { batchSize, previousFiles, nativePrevious })
   const desired = new Map([...f.remote].map(([relative, record]) => [relative, { ...record }]))
   for (const relative of updates) f.remote.get(relative).value = Buffer.from("previous:" + relative)
@@ -599,6 +614,23 @@ test("native prior receipts reuse pinned raw proof for same-ID batch updates", a
     },
   })
   assert.equal(result.status, "remote_delivery_complete")
+  for (const relative of f.updates)
+    assert.equal(f.remote.get(relative).id, f.desired.get(relative).id)
+})
+
+test("verified legacy Drive WebsiteData receipts bind name and file ID before same-ID updates", async (t) => {
+  const f = await batchFixture(t, { legacyPrevious: true })
+  const result = await deliverRemoteArtifacts({
+    ...f.options,
+    acquisitionFile: f.capture(),
+    nextCapture: () => {
+      f.apply(f.events.findLast((e) => e.type === "remote_write_batch_intent").operations)
+      return f.capture()
+    },
+  })
+  assert.equal(result.status, "remote_delivery_complete")
+  assert.equal(result.website_data_verified, true)
+  assert.equal(result.source_archive_verified, true)
   for (const relative of f.updates)
     assert.equal(f.remote.get(relative).id, f.desired.get(relative).id)
 })

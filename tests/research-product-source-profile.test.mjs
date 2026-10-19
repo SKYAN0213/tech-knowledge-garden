@@ -10,6 +10,13 @@ import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 test("Anthropic news profile excludes sibling related stories and preserves the announcement date", async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "anthropic-news-profile-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const oldPython = process.env.RESEARCH_PYTHON
+  process.env.RESEARCH_PYTHON =
+    oldPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  t.after(() => {
+    if (oldPython === undefined) delete process.env.RESEARCH_PYTHON
+    else process.env.RESEARCH_PYTHON = oldPython
+  })
   const url = "https://www.anthropic.com/news/hard-questions"
   const matches = JSON.parse(
     fs.readFileSync("data/research-acquisition.json"),

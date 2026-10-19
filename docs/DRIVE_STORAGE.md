@@ -121,6 +121,8 @@ node scripts/research-publication.mjs handoff-status --root .local/research/loca
 
 Drive 폴더 전체 목록을 확인할 때는 직접 폴더 열거를 사용한다. 텍스트 검색 결과에는 CSV·JSON·XML이 빠질 수 있으므로, 검색 결과만으로 같은 이름의 파일이 없다고 판단하지 않는다. 기존 파일 ID·원격 raw SHA·수정 시각과 부모 폴더를 대조한 후 같은 ID로 갱신하고, 저장 후 직접 폴더 목록과 실제 다운로드 bytes를 다시 확인한다.
 
+`remote-delivery`는 기존 WebsiteData 검증 영수증의 두 형식을 읽는다. native 영수증은 `path/file_id/sha256`, 이전 readback은 `name/file_id/sha256`를 사용한다. 이전 형식은 개별 행의 `verified: true`, 비공개 상태, WebsiteData 부모 ID가 일치할 때만 경로로 정규화하며, 쓰기 전 실제 raw bytes와 파일 ID가 그 영수증의 SHA·ID에 일치해야 갱신한다. 원격 바이트가 이전 검증 내용과 다르면 새 기준으로 덮어쓰지 않고 충돌로 멈춘다.
+
 로컬 `staging` 공간이 부족하면 두 스크립트에 동일한 `TECH_GARDEN_DRIVE_STAGE_DIR` 절대 경로를 지정한다. `--collect`의 응답 캐시 공간도 부족하면 `TECH_GARDEN_DRIVE_SOURCE_CACHE_DIR`에 별도의 저장소 밖 절대 경로를 지정한다. 이 변수는 기존 캐시를 자동 이전하지 않으므로, 이전 캐시를 파일별 SHA-256으로 검증해 복사한 뒤 실행해야 성공 응답을 재사용한다. staging과 캐시 경로는 겹칠 수 없다. 기존 캐시는 검증 전 삭제하지 않는다. 반복 생성되는 `preview-workspace` 사본은 보관 목록에서 빼되 원문·검토 기록과 미리보기 영수증은 유지한다.
 
 ## 기존 자료 이전 기준

@@ -93,7 +93,25 @@ function previousWebsiteRows(root, reference) {
       .map((row) => ({ path: row.path, id: row.file_id, sha256: row.sha256 }))
   }
   if (!Array.isArray(previous.files)) throw Error("Prior WebsiteData file receipt required")
-  return previous.files
+  return previous.files.map((row) => {
+    if (row.path && (row.id || row.file_id) && row.sha256)
+      return { path: row.path, id: row.id || row.file_id, sha256: row.sha256 }
+    if (
+      typeof row.name !== "string" ||
+      !WEBSITE_FILES.includes(row.name) ||
+      typeof row.file_id !== "string" ||
+      !/^[a-f0-9]{64}$/.test(row.sha256 || "") ||
+      row.verified !== true ||
+      row.shared !== false ||
+      !row.parent_ids?.includes(REMOTE_DELIVERY_ROOTS.WebsiteData)
+    )
+      throw Error("Verified prior WebsiteData file receipt required")
+    return {
+      path: "WebsiteData/" + row.name,
+      id: row.file_id,
+      sha256: row.sha256,
+    }
+  })
 }
 function install(root, relative, value) {
   const data = Buffer.isBuffer(value) ? value : Buffer.from(JSON.stringify(value, null, 2) + "\n")

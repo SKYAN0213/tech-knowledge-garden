@@ -20,6 +20,13 @@ const html = `<html><head><title>Release · repository</title></head><body>
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "github-release-profile-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const oldPython = process.env.RESEARCH_PYTHON
+  process.env.RESEARCH_PYTHON =
+    oldPython || path.resolve(".local/research/local-ai/runtime/venv/bin/python")
+  t.after(() => {
+    if (oldPython === undefined) delete process.env.RESEARCH_PYTHON
+    else process.env.RESEARCH_PYTHON = oldPython
+  })
   return async (raw = html, url = "https://github.com/vercel/ai/releases/tag/ai%407.0.25") => {
     const bytes = Buffer.from(raw),
       hash = sha256(bytes),
