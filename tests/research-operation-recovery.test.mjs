@@ -288,3 +288,38 @@ test("a wide process-table read keeps a live worker with a long CI command line 
   assert.equal(observed.state, "running")
   assert.equal(observed.worker_alive, true)
 })
+
+test("a live PID with an unmatched command line stays unknown and cannot be resumed", async (t) => {
+  const f = nativeFixture(t),
+    id = "module-unmatched-worker"
+  const complete = await submitModuleJob(
+    f.ctx,
+    "collection",
+    "inventory",
+    {},
+    { jobId: id, background: false },
+  )
+  atomicWrite(f.root, `module-jobs/${id}/state.json`, {
+    ...readJSON(f.root, `module-jobs/${id}/state.json`),
+    state: "running",
+    pid: process.pid,
+  })
+  const bin = path.join(f.root, "unmatched-fake-bin")
+  fs.mkdirSync(bin)
+  fs.writeFileSync(path.join(bin, "ps"), "#!/bin/sh\nprintf '%s\\n' 'node unrelated process'\n", {
+    mode: 0o700,
+  })
+  const code = `import { moduleJobStatus, resumeModuleJob } from ${JSON.stringify(new URL("../scripts/research/module-runtime.mjs", import.meta.url).href)}; const ctx=JSON.parse(process.argv[1]); const id=process.argv[2]; console.log(JSON.stringify({before:moduleJobStatus(ctx,id),after:await resumeModuleJob(ctx,id,{background:false})}));`
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", code, JSON.stringify(f.ctx), id],
+    { encoding: "utf8", env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH } },
+  )
+  assert.equal(result.status, 0, result.stderr)
+  const observed = JSON.parse(result.stdout)
+  assert.equal(observed.before.state, "worker_status_unknown")
+  assert.equal(observed.before.worker_alive, null)
+  assert.equal(observed.before.resume_available, false)
+  assert.equal(observed.after.attempt, complete.attempt)
+  assert.equal(readJSON(f.root, `module-jobs/${id}/state.json`).state, "running")
+})

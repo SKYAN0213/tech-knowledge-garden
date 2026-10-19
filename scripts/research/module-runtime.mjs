@@ -322,7 +322,8 @@ function workerAlive(ctx, id, state) {
     const command = execFileSync("ps", ["-ww", "-p", String(pid), "-o", "command="], {
       encoding: "utf8",
     })
-    return command.includes(worker) && command.includes(`--job ${id}`)
+    // A live but unmatched PID may be reused or have an unobservable argv; it is not proof of exit.
+    return command.includes(worker) && command.includes(`--job ${id}`) ? true : null
   } catch {
     // An inaccessible process table does not establish that the writer exited.
     return null
