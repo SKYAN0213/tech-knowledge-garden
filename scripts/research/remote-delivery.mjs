@@ -315,7 +315,18 @@ export async function deliverRemoteArtifacts({
     let input = readJSON(root, base + "/input.json")
     const operation = readJSON(root, `runs/${run}/publication-operation/input.json`)
     const publicProof = readJSON(root, `runs/${run}/publication-operation/public.json`)
-    if (!operation || publicProof?.commit !== publication.commit)
+    const deployment = readJSON(root, `runs/${run}/publication-operation/deployment.json`)
+    const deploymentCommit = publication.deployment_commit || publication.commit
+    if (
+      !operation ||
+      operation.run_id !== run ||
+      !deployment ||
+      deployment.headSha !== deploymentCommit ||
+      publicProof?.status !== "public_bytes_verified" ||
+      publicProof.input_sha256 !== sha256(JSON.stringify(operation)) ||
+      publicProof.deployment_sha256 !== sha256(JSON.stringify(deployment)) ||
+      publicProof.commit !== deploymentCommit
+    )
       throw Error("Exact native publication required")
     if (input && planFile && sha256(fs.readFileSync(planFile)) !== input.plan.sha256)
       throw Error("Remote delivery plan changed; use a new operation")
@@ -415,7 +426,7 @@ export async function deliverRemoteArtifacts({
     }
     if (
       input.commit !== publication.commit ||
-      pinned(root, input.publication).commit !== publication.commit
+      pinned(root, input.publication).commit !== deploymentCommit
     )
       throw Error("Remote delivery publication changed")
     const prior = inspectRemoteDelivery(root, run)

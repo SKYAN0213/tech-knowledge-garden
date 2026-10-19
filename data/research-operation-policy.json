@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-publication-worker-visibility-continuation-20261019-v1/receipt.json",
-    "sha256": "c7d9038b84b4837a50318b2d10eede5339ef21b742d6102129a370753bff0ac4"
+    "path": ".local/research/development-releases/tkg-remote-deployment-binding-20261019-v1/receipt.json",
+    "sha256": "6cb769911a2949c06681f35e61e3de6d2b206128635f111c7d2daf4fca86334b"
   },
   "recovery": {
     "automatic_retry": false,

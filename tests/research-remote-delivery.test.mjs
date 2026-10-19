@@ -19,6 +19,7 @@ import {
   inspectRemoteDelivery,
   REMOTE_DELIVERY_ROOTS,
 } from "../scripts/research/remote-delivery.mjs"
+import { publicReadbackPlan } from "../scripts/research/public-readback.mjs"
 
 const FILES = [
   "README.md",
@@ -35,7 +36,13 @@ const FILES = [
 ]
 async function setup(
   t,
-  { wrongSourceEvent = false, batchSize, previousFiles = [], nativePrevious = false } = {},
+  {
+    wrongSourceEvent = false,
+    batchSize,
+    previousFiles = [],
+    nativePrevious = false,
+    codeOnlyDeployment = false,
+  } = {},
 ) {
   const f = await fixture(t, ".local/research/local-ai")
   f.put(".local/drive-sync/receipt.json", {
@@ -43,31 +50,85 @@ async function setup(
     verified_at: "2026-10-04T00:00:00Z",
     files: [{ path: "Editions/controlled.md", id: "original-id", sha256: "original-hash" }],
   })
-  const publication = (
-    await deliverApprovedPublication({
+  let publication
+  if (codeOnlyDeployment) {
+    const initial = await deliverApprovedPublication({
       ...f.options,
       releasePath: f.releasePath,
       fetchImpl: f.fetchImpl,
-      execute: async (file, args) => {
+      execute: async (file) => {
         if (file === process.execPath) {
           await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
           return ""
         }
-        return JSON.stringify(
-          args[1] === "list"
-            ? [
-                {
-                  databaseId: 123,
-                  headBranch: "main",
-                  headSha: f.push.local_commit,
-                  workflowName: "Publish Garden",
-                },
-              ]
-            : { ...f.deployment, workflowName: "Publish Garden" },
-        )
+        return JSON.stringify([])
       },
     })
-  ).publication
+    assert.equal(initial.status, "waiting_deployment")
+    f.put("scripts/code-only-continuation.mjs", "// Publication content is unchanged.\n")
+    f.git("add", "scripts/code-only-continuation.mjs")
+    f.git("commit", "-qm", "Code-only deployment continuation")
+    const deploymentCommit = f.git("rev-parse", "HEAD")
+    const deployment = {
+      ...f.deployment,
+      headBranch: "main",
+      headSha: deploymentCommit,
+      url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/456",
+      workflowName: "Publish Garden",
+    }
+    const plan = publicReadbackPlan({
+      repository: f.options.repository,
+      preview: f.preview,
+      commit: deploymentCommit,
+      deployment,
+    })
+    const fetchImpl = async (url) => {
+      const row = plan.files.find((file) => file.url === url)
+      return new Response(
+        fs.readFileSync(path.join(f.options.repository, row?.local || plan.reader_module.local)),
+      )
+    }
+    const resumed = await deliverApprovedPublication({
+      ...f.options,
+      releasePath: f.releasePath,
+      actionsRun: "456",
+      deploymentCommit,
+      fetchImpl,
+      execute: async (file, args) => {
+        assert.equal(file, "gh")
+        assert.deepEqual(args.slice(0, 3), ["run", "view", "456"])
+        return JSON.stringify(deployment)
+      },
+    })
+    assert.equal(resumed.status, "public_bytes_verified")
+    publication = resumed.publication
+  } else {
+    publication = (
+      await deliverApprovedPublication({
+        ...f.options,
+        releasePath: f.releasePath,
+        fetchImpl: f.fetchImpl,
+        execute: async (file, args) => {
+          if (file === process.execPath) {
+            await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
+            return ""
+          }
+          return JSON.stringify(
+            args[1] === "list"
+              ? [
+                  {
+                    databaseId: 123,
+                    headBranch: "main",
+                    headSha: f.push.local_commit,
+                    workflowName: "Publish Garden",
+                  },
+                ]
+              : { ...f.deployment, workflowName: "Publish Garden" },
+          )
+        },
+      })
+    ).publication
+  }
   const state = new RunState(f.root, "custody", { kind: "controlled-operational-custody" })
   await state.stage("custody", { inputs: ["reviewed operational record"] }, async () => ({
     files: [
@@ -330,6 +391,28 @@ test("native remote delivery restores and registers a raw ZIP and reuses complet
   )
   fs.writeFileSync(restored, "tampered")
   assert.throws(() => inspectRemoteDelivery(f.root, f.run), /dependency changed/)
+})
+
+test("remote delivery binds WebsiteData to the verified code-only deployment while retaining the approved content commit", async (t) => {
+  const f = await setup(t, { codeOnlyDeployment: true })
+  assert.equal(f.options.publication.status, "public_bytes_verified")
+  assert.equal(f.options.publication.commit, f.push.local_commit)
+  assert.notEqual(f.options.publication.deployment_commit, f.options.publication.commit)
+  const proof = readJSON(f.root, `runs/${f.run}/publication-operation/public.json`)
+  assert.equal(proof.commit, f.options.publication.deployment_commit)
+  const complete = await deliverRemoteArtifacts({
+    ...f.options,
+    acquisitionFile: f.capture(),
+  })
+  assert.equal(complete.status, "remote_delivery_complete")
+  assert.equal(complete.website_data_verified, true)
+  assert.equal(complete.source_archive_verified, true)
+  const input = readJSON(f.root, `runs/${f.run}/remote-delivery/input.json`)
+  assert.equal(input.commit, f.options.publication.commit)
+  assert.equal(
+    readJSON(f.root, input.publication.path).commit,
+    f.options.publication.deployment_commit,
+  )
 })
 
 test("lost connector response preserves an exact write intent; fresh raw readback resolves it without a second write", async (t) => {
