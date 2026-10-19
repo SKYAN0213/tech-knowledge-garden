@@ -92,6 +92,9 @@ article_records:
       Post-Quantum Cryptography Alliance에 기부한다고 발표했다. 공개 라이브러리를 공급업체 중립적인 공동 관리
       체계로 옮겨 커뮤니티가 검토하고 활용하도록 한다는 내용이다. Google은 세계 각지의 전문가와 협력해 공개 개발과 지원을
       계속하겠다고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 신분증 정보와 조건의 증명을 구분한다
         paragraphs:
@@ -100,9 +103,6 @@ article_records:
         source_urls:
           - https://blog.google/products-and-platforms/platforms/google-pay/zero-knowledge-proof-library-linux-foundation/
           - https://csrc.nist.gov/glossary/term/zero_knowledge_proof
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: Gemini 3.8 Flash Cyber, 제한 접근 안에서 탐지부터 패치까지 묶다
     event_id: ef239918f16e1482
@@ -121,10 +121,10 @@ article_reviews:
   - title: Google, Longfellow 영지식 증명 라이브러리의 재단 기부 발표
     event_id: bcb54aceb5f739d9
     review_status: verified
-    published_at: 2026-09-02
-    reviewed_at: 2026-10-09
     concept_ids:
       - zkp
+    published_at: 2026-09-02
+    reviewed_at: 2026-10-09
 ---
 
 # 이번 호 표지

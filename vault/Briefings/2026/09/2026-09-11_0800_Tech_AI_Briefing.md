@@ -103,6 +103,6 @@ KUKA는 9월 10일 최대 1,500kg의 팔레트와 컨테이너를 운반하는 �
 - [S2] https://openai.com/index/introducing-gpt-live-1-in-the-api/
 - [S3] https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/
 - [S4] https://www.kuka.com/en-sg/company/press/news/2026/09/kuka-mobile-forklift-launch
-- [S5] https://www.deepseek.com/en/news/deepseek-v4-1-flash
 - [S6] https://nvidianews.nvidia.com/news/nvidia-and-palantir-bring-sovereign-intelligence-to-critical-supply-chains
 - [S7] https://openai.com/index/put-data-to-work/
+- [S8] https://www.deepseek.com/en/news/deepseek-v4-1-flash

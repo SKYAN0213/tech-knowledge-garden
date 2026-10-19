@@ -9,7 +9,7 @@ event_id: e6ab1f9b9683cfdd
 review_status: verified
 concept_ids: []
 published_at: 2026-07-21
-reviewed_at: 2026-10-07
+reviewed_at: 2026-10-10
 date_kind: source-publication-time
 source_published_at: 2026-07-20T11:24:14-07:00
 source_url: https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/

@@ -1,119 +1,215 @@
 ---
 title: Tech & AI Briefing - 00:04
-date: 2026-06-27
 time: 00:04
-timezone: Asia/Seoul
-coverage_start: 2026-06-26T18:02:04+09:00
-coverage_end: 2026-06-27T00:04:57+09:00
 type: briefing
-source_count: 11
-new_items_count: 2
-linked_knowledge_notes:
-  - AI Agents
-  - Model Context Protocol
 tags:
   - AI
   - TechBriefing
   - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-06-27
+timezone: Asia/Seoul
+coverage_start: 2026-06-26T18:02:04+09:00
+coverage_end: 2026-06-27T00:04:57+09:00
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 2
+new_items_count: 2
+linked_knowledge_notes:
+  - AI Agents
+  - Model Context Protocol
+  - Knowledge/AI Systems/Model Context Protocol
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
+  - AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개
+article_records:
+  - title: GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: GitHub
+      when: 2026-06-26
+      where: 미기재
+      what: GitHub Desktop 3.6 기능에 관한 6월 26일 공식 발표
+      how: Copilot SDK를 기반으로 커밋 메시지 작성과 병합 충돌 해결에 AI 지원 제공, 모델 선택기 및 BYOK 기능 추가
+      why: 미기재
+    lead: GitHub는 2026년 6월 26일(한국시간) Desktop 3.6의 Git 워크트리 지원과 Copilot 기반 커밋·병합 기능을
+      발표했다. Copilot 기능은 공통 SDK로 동작하며, 모델 선택기와 외부 제공사·로컬 모델 연결을 지원한다.
+    explanations:
+      - heading: 여러 브랜치에서 작업하기
+        paragraphs:
+          - Git 워크트리 지원으로 변경사항을 반복적으로 임시 저장하거나 브랜치를 전환하지 않고 여러 브랜치에서 작업할 수 있다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
+      - heading: 커밋 메시지와 병합 충돌
+        paragraphs:
+          - 커밋 메시지 생성은 .github/copilot-instructions.md와 AGENTS.md의 지침, 저장소의 커밋
+            메타데이터 규칙을 반영한다.
+          - Copilot이 병합 충돌을 설명하고 해결안을 제안하면, 사용자가 검토·수정한 뒤 병합을 완료한다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
+      - heading: 모델 선택과 이용 조건
+        paragraphs:
+          - 각 Copilot 기능에서 GitHub를 통해 이용 가능한 모델을 선택할 수 있다. BYOK로 외부 제공사나 로컬 모델을
+            연결하는 방식도 제공한다.
+          - Desktop 3.6.0은 macOS·Windows에서 무료로 내려받아 사용할 수 있으며, Copilot 기능에는
+            GitHub Copilot 접근 권한이 필요하다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-26
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: AWS는 2026년 6월 26일(한국시간) Amazon S3의 PDF를 필요할 때 읽어 AI 도우미에 전달하는 MCP 서버 구현 글을
+      공개했다. 예제는 텍스트가 포함된 PDF를 대상으로 하며, Kiro CLI에서 문서를 요청하는 개발·개념검증 환경을 다룬다.
+    explanations:
+      - heading: 요청과 결과의 흐름
+        paragraphs:
+          - 클라이언트가 S3 버킷 이름과 객체 키를 전달하면 MCP 서버가 PDF를 내려받고 텍스트를 추출해 반환한다. CLI·MCP
+            통신 계층·서버·S3가 구성 요소이며 IAM이 S3 접근을 제어한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/
+      - heading: 예제 도구의 구현
+        paragraphs:
+          - Python 예제의 extract_s3_pdf_text 도구는 bucket·key를 필수 입력으로 받는다. boto3로
+            파일을 가져오고 PyPDF2의 PdfReader로 페이지별 텍스트를 읽은 뒤 MCP TextContent로 반환한다.
+          - Kiro CLI의 MCP 설정에는 Python으로 실행할 서버 파일 경로를 등록한다. 서버 예제는 임시 파일을 사용하고
+            처리가 끝나면 해당 파일을 삭제한다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/
+      - heading: 문서와 접근 범위
+        paragraphs:
+          - AWS는 기존 AWS 자격 증명을 사용하고 PDF가 있는 특정 버킷에 읽기 권한만 부여하도록 설명했다. 추출은 요청 시
+            수행하며, S3 접근 요청은 CloudTrail에 기록된다는 안내다.
+          - 이 예제는 PDF에 포함된 텍스트를 읽으며 OCR·표 구조 복원·폼 추출은 수행하지 않는다. AWS는 스캔 문서, 복잡한
+            레이아웃과 대규모 운영 처리를 Textract의 적용 범위로 구분했다.
+        source_urls:
+          - https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/
+    papers: []
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
+    event_id: 90489b85fa53d76c
+    review_status: verified
+    published_at: 2026-06-26
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-26T03:32:58-07:00
+  - title: AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개
+    event_id: e0f27b504657fd4a
+    review_status: verified
+    published_at: 2026-06-26
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - mcp
+    date_kind: source-publication-time
+    source_published_at: 2026-06-26T06:47:45-08:00
 ---
 
-# Executive Summary
+# 이번 호 표지
 
-- GitHub는 `2026-06-26 19:32:58 KST`에 GitHub Desktop 3.6 changelog를 게시했습니다. 내용: Git worktree 지원, Copilot 기반 merge conflict resolution, commit message generation 개선, Copilot SDK 기반 model picker/BYOK를 Desktop 안으로 넣었습니다. 왜 중요한가: coding agent가 병렬 worktree를 쓰는 흐름이 데스크톱 Git 클라이언트의 기본 워크플로로 들어오고 있습니다. 실무 영향: 여러 agent 세션이나 긴급 hotfix를 같은 repo에서 병렬로 운용할 때 worktree, branch, commit policy를 명시적으로 관리해야 합니다.
-- AWS Machine Learning Blog는 `2026-06-26 23:47:45 KST`에 S3 PDF 텍스트 추출용 MCP 서버 구현 글을 게시했습니다. 내용: Amazon S3의 text-based PDF를 MCP server로 직접 읽어 CLI/AI assistant가 즉시 질의할 수 있게 하는 패턴입니다. 왜 중요한가: MCP가 단순 데모가 아니라 문서 저장소, 권한, 비용, Textract와의 역할 구분까지 포함한 실무 통합 패턴으로 확장되고 있습니다. 실무 영향: Obsidian, S3, 사내 문서 저장소에 AI를 붙일 때 OCR/배치 처리와 MCP 기반 on-demand extraction을 분리해 설계할 수 있습니다.
-- OpenAI RSS, Hugging Face Blog feed, Microsoft Research feed, arXiv recent/API를 확인했지만 이번 cutoff 이후로 확정 가능한 새 OpenAI/HF/논문 항목은 찾지 못했습니다. 왜 중요한가: 날짜가 같은 항목이라도 `published/updated` 시각이 cutoff 이전이면 제외해야 중복이 줄어듭니다. 실무 영향: 다음 run은 `2026-06-27T00:04:57+09:00` 이후의 공식 게시/수정 시각을 기준으로 이어가면 됩니다.
+GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
 
-# Major News
+# 차례
 
-## GitHub Desktop 3.6: worktree와 Copilot 통합 강화
+- GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
+- AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개
 
-요약
+# 커버 스토리
 
-GitHub는 GitHub Desktop 3.6 changelog를 게시했습니다. RSS 기준 게시 시각은 `Fri, 26 Jun 2026 10:32:58 +0000`이며, 이는 이번 cutoff 이후입니다. 이번 버전은 Git worktree 지원, Copilot 기반 merge conflict 설명/해결 제안, commit message generation 개선, Copilot SDK 기반 model picker와 BYOK 연결을 포함합니다.
+없음
 
-핵심 포인트
+# 뉴스 데스크
 
-- GitHub Desktop은 같은 repository의 여러 working directory를 관리하는 Git worktree를 지원합니다.
-- merge conflict가 발생하면 Desktop 안에서 Copilot이 충돌 내용을 설명하고 사용자가 검토/수정할 수 있는 resolution을 제안합니다.
-- commit message generation은 `.github/copilot-instructions.md`, `AGENTS.md`, repository metadata rule을 반영하도록 개선되었습니다.
-- GitHub는 Desktop의 Copilot 기능이 Copilot SDK 기반으로 동작한다고 설명하며, 모델 선택과 BYOK/local model 연결 가능성을 언급했습니다.
+## GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원
 
-실무 영향
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-coding agent가 별도 worktree를 만들어 병렬 작업을 수행하는 방식이 더 일반화될 가능성이 큽니다. 개인/팀 repo에서는 worktree naming, branch cleanup, agent별 commit policy, generated commit message 검토 기준을 문서화하는 것이 좋습니다.
+GitHub는 2026년 6월 26일(한국시간) Desktop 3.6의 Git 워크트리 지원과 Copilot 기반 커밋·병합 기능을 발표했다. Copilot 기능은 공통 SDK로 동작하며, 모델 선택기와 외부 제공사·로컬 모델 연결을 지원한다. [S1]
 
-출처
+### 여러 브랜치에서 작업하기
 
-- https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
-- https://github.com/desktop/desktop/releases/tag/release-3.6.0
-- https://github.com/github/copilot-sdk
+Git 워크트리 지원으로 변경사항을 반복적으로 임시 저장하거나 브랜치를 전환하지 않고 여러 브랜치에서 작업할 수 있다. [S1]
 
-## AWS: Amazon S3 PDF를 MCP 서버로 대화형 추출
+### 커밋 메시지와 병합 충돌
 
-요약
+커밋 메시지 생성은 .github/copilot-instructions.md와 AGENTS.md의 지침, 저장소의 커밋 메타데이터 규칙을 반영한다.
 
-AWS Machine Learning Blog는 Amazon S3에 저장된 PDF에서 텍스트를 실시간 추출하는 MCP 서버 구현 글을 게시했습니다. RSS 기준 게시 시각은 `Fri, 26 Jun 2026 14:47:45 +0000`이며, 이번 cutoff 이후입니다.
+Copilot이 병합 충돌을 설명하고 해결안을 제안하면, 사용자가 검토·수정한 뒤 병합을 완료한다. [S1]
 
-핵심 포인트
+### 모델 선택과 이용 조건
 
-- 구성은 CLI client, MCP layer, custom MCP server, Amazon S3 storage, IAM 권한으로 설명됩니다.
-- 대상은 OCR이 필요 없는 text-based PDF입니다.
-- AWS는 scanned document, form/table extraction, complex layout, production SLA가 필요하면 Amazon Textract를 쓰고, 이미 텍스트가 들어 있는 PDF의 interactive query에는 MCP server 접근이 맞는다고 구분합니다.
-- 예시 구현은 Python, `mcp`, `boto3`, `PyPDF2`를 사용합니다.
+각 Copilot 기능에서 GitHub를 통해 이용 가능한 모델을 선택할 수 있다. BYOK로 외부 제공사나 로컬 모델을 연결하는 방식도 제공한다.
 
-실무 영향
+Desktop 3.6.0은 macOS·Windows에서 무료로 내려받아 사용할 수 있으며, Copilot 기능에는 GitHub Copilot 접근 권한이 필요하다. [S1]
 
-문서 AI를 만들 때 모든 문서를 OCR/배치 파이프라인으로 보내지 않아도 됩니다. 이미 text layer가 있는 PDF는 MCP tool로 즉시 읽게 하고, 스캔/복잡한 layout 문서는 Textract 같은 관리형 문서 처리 서비스로 분리하는 아키텍처가 현실적입니다.
+## AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개
 
-출처
+**분야:** 소프트웨어·클라우드
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** AWS
 
-- https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/
+AWS는 2026년 6월 26일(한국시간) Amazon S3의 PDF를 필요할 때 읽어 AI 도우미에 전달하는 MCP 서버 구현 글을 공개했다. 예제는 텍스트가 포함된 PDF를 대상으로 하며, Kiro CLI에서 문서를 요청하는 개발·개념검증 환경을 다룬다. [S2]
 
-# Important Papers
+### 요청과 결과의 흐름
 
-이번 coverage window 안에서 새로 게시되었거나 실질 수정된 것으로 확인 가능한 고신뢰 논문 항목은 없었습니다.
+클라이언트가 S3 버킷 이름과 객체 키를 전달하면 MCP 서버가 PDF를 내려받고 텍스트를 추출해 반환한다. CLI·MCP 통신 계층·서버·S3가 구성 요소이며 IAM이 S3 접근을 제어한다. [S2]
 
-검토 근거:
+### 예제 도구의 구현
 
-- arXiv `cs.AI` recent list는 `Fri, 26 Jun 2026` 항목을 표시하지만, API로 확인한 대표 후보 `2606.27288`, `2606.27334`의 `published/updated`는 각각 `2026-06-25T17:06:06Z`, `2026-06-25T17:45:53Z`로 이번 cutoff인 `2026-06-26T09:02:04Z` 이전입니다.
-- Microsoft Research의 generative causal testing 블로그/출판물은 기술적으로 중요하지만 RSS 게시 시각과 publication metadata가 모두 이번 cutoff 이전입니다.
+Python 예제의 extract\_s3\_pdf\_text 도구는 bucket·key를 필수 입력으로 받는다. boto3로 파일을 가져오고 PyPDF2의 PdfReader로 페이지별 텍스트를 읽은 뒤 MCP TextContent로 반환한다.
 
-# Open Source & Tools
+Kiro CLI의 MCP 설정에는 Python으로 실행할 서버 파일 경로를 등록한다. 서버 예제는 임시 파일을 사용하고 처리가 끝나면 해당 파일을 삭제한다. [S2]
 
-## GitHub Desktop
+### 문서와 접근 범위
 
-- 프로젝트: GitHub Desktop
-- 설명: GitHub의 오픈소스 데스크톱 Git 클라이언트입니다. 이번 changelog는 worktree와 Copilot 기반 conflict/commit workflow를 강조했습니다.
-- GitHub: https://github.com/desktop/desktop
-- Star 증가 추세: 추세 확인 불가. 현재/과거 comparable star count를 같은 기준으로 검증하지 못했습니다.
-- 활용 가능성: coding agent나 Codex류 작업을 병렬 worktree로 운용할 때 GUI에서 worktree 상태를 확인하고, conflict resolution과 commit message 초안을 검토하는 보조 도구로 쓸 수 있습니다.
+AWS는 기존 AWS 자격 증명을 사용하고 PDF가 있는 특정 버킷에 읽기 권한만 부여하도록 설명했다. 추출은 요청 시 수행하며, S3 접근 요청은 CloudTrail에 기록된다는 안내다.
 
-# Industry Analysis
+이 예제는 PDF에 포함된 텍스트를 읽으며 OCR·표 구조 복원·폼 추출은 수행하지 않는다. AWS는 스캔 문서, 복잡한 레이아웃과 대규모 운영 처리를 Textract의 적용 범위로 구분했다. [S2]
 
-분석입니다. 아래 해석은 이번 run에서 확인한 공식 발표 2건을 바탕으로 한 것이며, 새 사실과 구분합니다.
+**개념:** [[Knowledge/AI Systems/Model Context Protocol]]
 
-- 현재 기술 트렌드 분석: AI coding 도구는 "코드를 제안하는 모델"에서 "Git workflow와 문서 저장소에 붙는 운영 도구"로 이동하고 있습니다. GitHub Desktop 3.6은 worktree와 Copilot을 결합하고, AWS의 S3 PDF MCP 글은 문서 저장소를 agent-readable tool로 바꾸는 패턴을 보여줍니다.
-- 시장 영향: 개발자 도구와 클라우드 문서 처리 시장 모두에서 AI 기능의 차별점은 모델 자체보다 기존 업무 표면에 얼마나 자연스럽게 들어가는가가 되고 있습니다. Desktop client, CLI, MCP server, IAM, repository policy가 한 묶음으로 평가됩니다.
-- 향후 전망: agent platform은 병렬 작업 격리(worktree), tool 권한(MCP/IAM), 검토 가능한 산출물(commit/message/conflict resolution), 문서 접근 경계(text extraction vs OCR)를 함께 제공하는 방향으로 성숙할 가능성이 큽니다.
+# 리서치 노트
 
-# Actionable Insights
+없음
 
-- 업무 자동화: PDF 자동화는 먼저 문서가 text-based인지 scanned image인지 분류하고, text-based PDF만 MCP/on-demand extraction 후보로 둡니다.
-- AI 활용: coding agent 작업을 여러 갈래로 돌릴 때 worktree 단위로 작업 폴더, branch, 목적, cleanup 상태를 기록합니다.
-- 개발 생산성: Copilot이나 Codex가 생성한 commit message는 repository instruction, AGENTS.md, metadata rule과 충돌하지 않는지 검토합니다.
-- 연구 개발: RAG와 MCP를 같은 것으로 보지 말고, "검색/근거"는 RAG, "행동/시스템 접근"은 MCP로 나눠 평가합니다.
-- 개인 프로젝트: Obsidian/iCloud 문서에 AI를 붙일 때도 읽기 전용 MCP tool과 쓰기 가능한 tool을 분리하고, source note와 generated note 경계를 남깁니다.
+# 도구 상자
+
+없음
+
+# 흐름 읽기
+
+없음
+
+# 오늘의 적용
+
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://github.blog/changelog/feed/
-- https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
-- https://github.com/desktop/desktop/releases/tag/release-3.6.0
-- https://github.com/github/copilot-sdk
-- https://aws.amazon.com/blogs/machine-learning/feed/
-- https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/
-- https://openai.com/news/rss.xml
-- https://huggingface.co/blog/feed.xml
-- https://www.microsoft.com/en-us/research/blog/feed/
-- https://arxiv.org/list/cs.AI/recent
-- https://export.arxiv.org/api/query?id_list=2606.27288,2606.27334
+- [S1] https://github.blog/changelog/2026-06-26-github-desktop-3-6-worktrees-and-deeper-copilot-integration
+- [S2] https://aws.amazon.com/blogs/machine-learning/build-interactive-pdf-text-extraction-from-amazon-s3/

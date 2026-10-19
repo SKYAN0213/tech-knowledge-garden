@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-10-16
+date: 2026-10-19
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -35,6 +35,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-19_0800_Tech_AI_Briefing|2026-10-19 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-16_0800_Tech_AI_Briefing|2026-10-16 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-15_0800_Tech_AI_Briefing|2026-10-15 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-14_0800_Tech_AI_Briefing|2026-10-14 · 0800 브리핑]]

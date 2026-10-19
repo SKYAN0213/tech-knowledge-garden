@@ -6,7 +6,6 @@ date: 2026-07-11
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -53,7 +52,7 @@ article_reviews:
     event_id: 521cb8f5727237af
     review_status: verified
     published_at: 2026-07-10
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 

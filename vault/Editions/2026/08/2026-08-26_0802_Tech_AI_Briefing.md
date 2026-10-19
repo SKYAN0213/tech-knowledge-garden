@@ -87,6 +87,9 @@ article_records:
       관리자는 두 서비스의 활동과 크레딧 사용량을 조회하고, 구성원·그룹, 역할별 기능·모델 접근, 사용 한도를 관리할 수 있다고 회사는
       설명했다. 사용 요청을 Slack이나 Microsoft Teams의 승인 담당자에게 보내거나 미리 정한 기준에 맞는 접근 요청을
       처리하는 기능도 소개했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 기존 권한과 변경 검토
         paragraphs:
@@ -94,24 +97,21 @@ article_records:
             승인 절차를 적용한다. 관리자는 작업의 완료 여부와 변경 내역을 확인하고 영향이 큰 작업은 적용 전에 검토할 수 있다.
         source_urls:
           - https://openai.com/index/introducing-admin-plugin/
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: OpenAI, 자체 추론 칩 Jalapeño의 세 모델 시험 결과 발표
     event_id: b9406ae170bd9133
     review_status: verified
     published_at: 2026-08-25
-    reviewed_at: 2026-09-28
+    reviewed_at: 2026-10-09
     concept_ids:
       - inference
   - title: OpenAI, ChatGPT Work·Codex 관리용 Admin 플러그인 발표
     event_id: 33eae878317d27dc
     review_status: verified
-    published_at: 2026-08-25
-    reviewed_at: 2026-09-28
     concept_ids:
       - enterprise
+    published_at: 2026-08-25
+    reviewed_at: 2026-09-28
 ---
 
 # 이번 호 표지

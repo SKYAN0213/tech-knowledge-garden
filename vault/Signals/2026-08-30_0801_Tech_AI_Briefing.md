@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/08/2026-08-30_0801_Tech_AI_Briefing
 date: 2026-08-30
-reviewed: 2026-09-13
+reviewed: 2026-10-09
 review_basis: saved-coverage
 observations:
   - id: evaluation-layers
@@ -14,6 +14,7 @@ observations:
     meaning: 빌드 통과, 업무 정확성, 운영 동등성을 별도 증거로 다루는 참고 틀이다.
     limit: 현장 전문가의 의견 프레임워크이며 효과를 입증한 독립 실험은 아니다.
     next_check: 층별 결함 발견률과 검증 구축·유지 비용.
+    event_date: 2026-08-29T12:45:11+00:00
 ---
 
 # 2026-08-30 트렌드 기록

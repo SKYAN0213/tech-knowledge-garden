@@ -52,7 +52,7 @@ article_reviews:
     event_id: 9cfe677975551bb6
     review_status: verified
     published_at: 2026-07-24
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 

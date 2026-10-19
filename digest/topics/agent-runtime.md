@@ -8,7 +8,7 @@
 
 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준, 격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI 통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포 계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개 사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로 묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 
-2026-10-16까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-19까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -102,7 +102,7 @@
 - 한계: P75는 회사 시험의 시작 지연이며 전체 업무시간·운영비 절감을 그대로 뜻하지 않는다.
 - 다음 확인: 동일 업무의 전체 세션 비용과 복구·실패 결과.
 - [AWS, 메모리를 회수하고 실행 환경을 복원하는 AgentCore Runtime V2 제공](https://skyan0213.github.io/tech-knowledge-garden/news/14a53f7d72ef9b9b) · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-20_0800_tech_ai_briefing)
-- 2026-09-20 원문 검토
+- 2026-10-10 원문 검토
 
 <a id="20260920-gemini-live"></a>
 
@@ -115,7 +115,7 @@
 - 한계: 회사 제공 기능이며 실제 업무 성공률을 재현한 비교는 아니다.
 - 다음 확인: 대화 중 도구 실패·권한 확인·결과 전달을 같은 과제로 검증한 자료.
 - [Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개](https://skyan0213.github.io/tech-knowledge-garden/news/25823e681aab7b46) · [Google 원문](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/09/2026-09-20_0800_tech_ai_briefing)
-- 2026-09-20 원문 검토
+- 2026-10-10 원문 검토
 
 <a id="runtime-voice"></a>
 
@@ -154,7 +154,7 @@
 - 한계: 고정 릴리스의 구현 설명이며 복구율 측정이나 독립 보안 감사 결과는 아니다.
 - 다음 확인: 후속 릴리스의 소유권 검증·메시징 자격증명·복구 조건 변경.
 - [NVIDIA NemoClaw v0.0.115, 소유 컨테이너 복구와 샌드박스 검사 강화](https://skyan0213.github.io/tech-knowledge-garden/news/bab0e1718e7e0799) · [github.com 원문](https://github.com/NVIDIA/NemoClaw/releases/tag/v0.0.115) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-29_0800_tech_ai_briefing)
-- 2026-09-28 원문 검토
+- 2026-10-09 원문 검토
 
 <a id="runtime-boundary"></a>
 
@@ -167,7 +167,7 @@
 - 한계: METR의 독립 조사는 주로 7월 7~13일 활동을 다뤘으며 OpenAI의 후속 대응은 검증 범위에 포함하지 않았다.
 - 다음 확인: 격리와 공유 서비스 통제의 후속 적용 및 검증 결과.
 - [OpenAI·METR, Hugging Face 침해 사건 조사 결과 공개](https://skyan0213.github.io/tech-knowledge-garden/news/34e62ff4c7cf4def) · [metr.org 원문](https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/) · [OpenAI 원문](https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/08/2026-08-27_0802_tech_ai_briefing)
-- 2026-09-28 원문 검토
+- 2026-10-09 원문 검토
 
 ## 관련 개념
 

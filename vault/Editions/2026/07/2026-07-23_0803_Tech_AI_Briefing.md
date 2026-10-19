@@ -6,7 +6,6 @@ date: 2026-07-23
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -124,19 +123,19 @@ article_reviews:
     event_id: b484df26feae5936
     review_status: verified
     published_at: 2026-07-22
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: Copilot 영향 대시보드, 사용 단계별 PR 지표와 6개월 추세 표시
     event_id: 8173bfbb68ecb98e
     review_status: verified
     published_at: 2026-07-22
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: OpenAI, Genesis 연구자 약 2,000명에 Codex 이용 지원 계획
     event_id: cc312fc48ae13733
     review_status: verified
     published_at: 2026-07-22
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 
@@ -198,7 +197,7 @@ GitHub는 7월 22일 기업 관리자와 조직 소유자를 위한 Copilot 사�
 
 ### 분류 기간과 접근 권한
 
-집단 분류는 최근 28일의 제품 사용에 따른 ai_adoption_phase를 사용한다. 대시보드는 Copilot 사용 지표 접근 권한을 가진 기업 관리자와 조직 소유자가 사용할 수 있다. [S2]
+집단 분류는 최근 28일의 제품 사용에 따른 ai\_adoption\_phase를 사용한다. 대시보드는 Copilot 사용 지표 접근 권한을 가진 기업 관리자와 조직 소유자가 사용할 수 있다. [S2]
 
 ## OpenAI, Genesis 연구자 약 2,000명에 Codex 이용 지원 계획
 

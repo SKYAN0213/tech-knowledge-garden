@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/08/2026-08-29_0800_Tech_AI_Briefing
 date: 2026-08-29
-reviewed: 2026-09-28
+reviewed: 2026-10-09
 review_basis: primary-research
 observations:
   - id: performance-bundle
@@ -14,6 +14,7 @@ observations:
     meaning: 준비 과정의 Python 사용과 배포 후 C++ 실행을 구분한다.
     limit: 지원 모델의 구현 설명이며 비교 성능 측정이나 모든 공개 모델의 자동 변환 보장은 아니다.
     next_check: 지원 모델 목록과 체크포인트 매핑·전후처리·번들 API의 후속 변경.
+    event_date: 2026-08-28T17:06:28+00:00
   - id: runtime-recovery
     topic_id: agent-runtime
     event_id: bab0e1718e7e0799
@@ -22,6 +23,7 @@ observations:
     meaning: 중지된 컨테이너의 시작과 이미 실행 중인 대상의 대기를 구분하며 복구가 시작한 대상만 되돌린다.
     limit: 고정 릴리스의 구현 설명이며 복구율 측정이나 독립 보안 감사 결과는 아니다.
     next_check: 후속 릴리스의 소유권 검증·메시징 자격증명·복구 조건 변경.
+    event_date: 2026-08-28
 ---
 
 # 2026-08-29 트렌드 기록

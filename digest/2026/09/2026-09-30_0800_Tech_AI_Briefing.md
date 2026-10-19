@@ -38,7 +38,7 @@ SK하이닉스는 2026년 9월 23일 미국 산타클라라에서 열린 TSMC OI
 
 ## 분야별 브리핑
 
-### AI · 5건
+### AI · 2건
 
 #### [삼성 6개 계열사, AI 인프라 기업 Helix에 10억 미국 달러 투자 발표](https://skyan0213.github.io/tech-knowledge-garden/news/171333c4eead9c69)
 
@@ -81,42 +81,6 @@ Claude 에이전트가 DNA 데이터에서 후보를 탐색한 뒤 연구진이 
 회사는 ART의 반복 DNA 배열이 서로 다른 짧은 RNA로 발현되는 초기 관찰과 preprint 공개를 소개했다. ART의 주요 기능을 밝히는 추가 실험이 진행 중이며, 이 발표만으로 완성된 유전자 편집 기술이나 독립 재현 성과를 확정할 수 없다.
 
 [Anthropic 원문](https://www.anthropic.com/news/claude-discovers-novel-enzyme-system)
-
-#### [arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안](https://skyan0213.github.io/tech-knowledge-garden/news/b208f191c6cdf5c1)
-
-발표 2026-09-27
-
-연구·기술 · 연구 소개 · 새로운 방법 · 성능 개선
-
-2026년 9월 27일 arXiv에 등록된 프리프린트는 장기 에이전트의 온폴리시 자기증류에서 교사 신호와 학생 결정의 시점·시간 범위가 어긋나는 문제를 ‘Decision--Timestamp Mismatch’로 정의했다. 저자들은 형제 rollout의 기능적으로 일치하는 문맥에서 같은 학생 응답을 재평가하는 단계와, 가변 길이 결정 구간에 결과 기반 credit을 배분하는 Semi-Markov 계층형 할당을 결합한 AlignOPSD를 제안했다. 프리프린트는 Qwen2.5-3B와 Qwen2.5-7B를 ALFWorld·WebShop·Search-QA에서 평가했고, 저자들은 8개 백본·집계 지표 비교 모두에서 GRPO와 StepOPSD를 앞섰으며 GRPO보다 5.5\~8.7% 개선하고 여섯 비교에서 1위를 기록했다고 보고했다.
-
-
-
-[arXiv 원문](https://arxiv.org/abs/2609.33391)
-
-#### [구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험](https://skyan0213.github.io/tech-knowledge-garden/news/cdc600a0d8ffa349)
-
-발표 2026-09-26
-
-제품·서비스 · 기능 추가 · Google · Flipkart
-
-2026년 9월 26일 보도에서 TechCrunch는 구글이 인도에서 Gemini와 AI Mode를 통해 Flipkart 상품을 직접 구매하는 초기 시험을 시작했다고 전했다. TechCrunch가 관찰한 시험에서는 일부 상품 목록의 Buy 버튼이 사용자를 AI 인터페이스 안에서 Flipkart 결제로 연결하며, 시험 대상은 일부 사용자와 제한된 상품 선택에 그친다. 취재원 한 명은 구글이 이 경험을 10월 후반에 더 넓게 출시할 계획이라고 TechCrunch에 전했다. TechCrunch가 본 Flipkart 브랜드 결제 흐름은 이전에 구글이 시연한 Google 호스팅 결제와 달라 보였으며, 시험을 구동하는 기술은 확인되지 않았다.
-
-
-
-[techcrunch.com 원문](https://techcrunch.com/2026/09/26/google-tests-buying-from-walmart-owned-flipkart-through-gemini-and-ai-mode-in-india/)
-
-#### [알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성](https://skyan0213.github.io/tech-knowledge-garden/news/d68cbb31349ae1a7)
-
-발표 2026-09-29
-
-연구·기술 · 연구 소개 · 새로운 방법
-
-2026년 9월 29일 공개된 연구에서 연구진은 알고리즘 모노컬처에 대한 주요 반론을 체계적으로 평가하고, 체계적 배제를 포함한 여러 주장이 모든 형태의 모노컬처에 반대하는 결정적 근거는 아니라고 결론지었다. 연구진은 모노컬처가 탐색을 방해할 수 있는 정보적 에코 챔버를 만든다는 점을 수학적으로 증명했다. 채용에서는 모노컬처가 최고의 후보자가 일자리를 얻을 가능성을 낮출 수 있지만, 연구진은 여러 채용 알고리즘을 하나의 “ensemble”로 묶으면 이 한계를 극복할 수 있다고 보였다. 연구진에 따르면 이 방식은 때로 여러 기업이 서로 다른 알고리즘을 쓰는 폴리컬처만큼, 또는 그보다 더 나은 성과를 낼 수 있다.
-
-
-
-[news.mit.edu 원문](https://news.mit.edu/2026/algorithmic-monoculture-effects-depend-on-details-0929)
 
 ### 소프트웨어·클라우드 · 3건
 
@@ -162,7 +126,7 @@ Home은 Chat과 작업 위임용 Cowork를 모으며, Autopilot은 사용자가 
 
 [news.samsung.com 원문](https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector)
 
-### 사이버보안 · 3건
+### 사이버보안 · 2건
 
 #### [Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대](https://skyan0213.github.io/tech-knowledge-garden/news/280289462980857d)
 
@@ -196,19 +160,7 @@ ASEC는 암호화폐 거래소 프로그램을 공식 웹사이트에서만 다�
 
 [asec.ahnlab.com 원문](https://asec.ahnlab.com/ko/95643/)
 
-#### [공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의](https://skyan0213.github.io/tech-knowledge-garden/news/0f6e29456a9ff768)
-
-발표 2026-09-29
-
-위험·사고 · 보안 사고
-
-2026년 9월 29일 공개된 보고에 따르면 공공기관과 금융기관 등을 사칭해 개인정보를 탈취하거나 모바일 악성앱 설치를 유도하는 해킹메일이 지속적으로 유포되고 있다. 이메일은 ‘범죄 연루’, ‘법규 위반’, ‘개인정보 유출 피해 보상’ 등의 문구로 피싱사이트 접속과 모바일 악성앱 설치를 유도한다. 보고는 이 같은 메일로 인한 피해가 발생하지 않도록 주의를 당부했다.
-
-
-
-[krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=2&categoryCode=&nttId=72202)
-
-### 반도체·컴퓨팅 · 2건
+### 반도체·컴퓨팅 · 1건
 
 #### [SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시](https://skyan0213.github.io/tech-knowledge-garden/news/783ed5a89f40a298)
 
@@ -224,19 +176,7 @@ SK하이닉스가 설명한 설계는 기존 단일 칩 컨트롤러의 기능�
 
 [news.skhynix.com 원문](https://news.skhynix.com/en/tsmc-oip-conference-2026/)
 
-#### [움직임의 흐름 읽는 반도체 기술 개발](https://skyan0213.github.io/tech-knowledge-garden/news/81d5b6aebc2eb93b)
-
-발표 2026-09-29
-
-연구·기술 · 연구 소개 · 새로운 방법 · UNIST · POSTECH
-
-한국 연구진은 2026년 9월 29일, 반응 속도가 다른 반도체를 여러 층으로 쌓아 방금 일어난 변화와 앞선 변화를 함께 읽는 기술을 개발했다고 밝혔다. 권지민 교수 연구팀은 UNIST·POSTECH 연구진과 함께 이온을 담은 소재를 단단한 얇은 막으로 만들고, 이를 이용해 반응 속도가 다른 반도체 소자를 여러 층으로 쌓는 데 성공했다고 밝혔다. 연구진은 이 기술이 향후 몸에 붙이거나 착용하는 작은 기기가 움직임과 몸의 신호를 분석하는 데 활용될 수 있다고 설명했다.
-
-
-
-[news.kaist.ac.kr 원문](https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67670&GotoPage=1)
-
-### 로봇·제조 · 2건
+### 로봇·제조 · 1건
 
 #### [IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파](https://skyan0213.github.io/tech-knowledge-garden/news/bad3d5636979c1ec)
 
@@ -249,18 +189,6 @@ SK하이닉스가 설명한 설계는 기존 단일 칩 컨트롤러의 기능�
 
 
 [ifr.org 원문](https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally)
-
-#### [근육 세포로 움직이는 얇은 수영 로봇 설계 발표](https://skyan0213.github.io/tech-knowledge-garden/news/126635115c76bf5f)
-
-발표 2026-09-29
-
-연구·기술 · 연구 소개
-
-연구팀은 2026년 9월 29일 얇은 근육 세포 구동 수영 로봇 설계를 발표했다. 로봇은 껌 막대 정도 크기의 젤 필름 골격과 빛에 반응하도록 유전적으로 조작된 근육 세포 지느러미로 구성됐다. 연구자들은 양쪽 지느러미에 빛을 번갈아 비추는 간격을 조절해 로봇의 방향과 속도를 제어할 수 있다고 설명했다.
-
-
-
-[news.mit.edu 원문](https://news.mit.edu/2026/powered-by-muscle-cells-paper-thin-robot-swims-through-watery-maze-0929)
 
 ### 에너지·기후기술 · 1건
 
@@ -282,21 +210,17 @@ SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로�
 
 ### 바이오·의료기술 · 2건
 
-#### [Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여](https://skyan0213.github.io/tech-knowledge-garden/news/53172edb0c5fef70)
+#### [Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여](https://skyan0213.github.io/tech-knowledge-garden/news/53172edb0c5fef70)
 
 발표 2026-09-24
 
 연구·기술 · 실증·재현 · Lakewood-Amedex Biotherapeutics
 
-Lakewood-Amedex Biotherapeutics는 2026년 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 하는 Nu-3 2a상 임상시험에서 첫 환자에게 투여했다고 발표했다. 진행 중인 시험은 제1형 또는 제2형 당뇨병이 있고 경증 감염성 당뇨발 궤양이 있는 성인을 대상으로 하며, Nu-3 겔 2%, 5%, 10%의 안전성과 유효성을 평가한다. 회사는 2a상 주요 데이터를 2027년 1분기에 공개할 것으로 예상한다고 밝혔다. 회사는 2a상 이후 서로 다른 Nu-3 겔 농도를 하루 한 번 또는 두 번 투여해 위약과 비교하는 2b상 시험을 계획하고 있다.
+Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다.
 
-##### 임상시험 설계와 평가 항목
 
-회사는 이 2a상 시험을 여러 기관에서 진행하는 단일 맹검 용량 탐색 연구로 설계했다고 밝혔다. 시험은 Nu-3가 미생물 부담을 줄이고 감염을 해소하는지 평가한다.
 
-회사는 상처 치료와 족부 임상 연구를 전문으로 하는 계약 연구 기관 Professional Education and Research Institute LLC(PERI)가 시험을 관리하고 있다고 밝혔다.
-
-[prnewswire.com 원문](https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html)
+[lakewoodamedex.investorroom.com 원문](https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers)
 
 #### [FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인](https://skyan0213.github.io/tech-knowledge-garden/news/d2674c5a4f395eda)
 
@@ -318,7 +242,7 @@ FDA는 영아부터 성인까지 참여한 두 연구에서 효과를 평가했�
 
 [fda.gov 원문](https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency)
 
-### 우주·기초과학 · 3건
+### 우주·기초과학 · 2건
 
 #### [ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경](https://skyan0213.github.io/tech-knowledge-garden/news/21c224b7f1e72026)
 
@@ -351,21 +275,3 @@ NASA는 9월 25일 미국 앨라배마주 Marshall Space Flight Center에서 ASC
 
 
 [nasa.gov 원문](https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/)
-
-#### [Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사](https://skyan0213.github.io/tech-knowledge-garden/news/f44e650da992b3ee)
-
-발표 2026-09-26
-
-사업·고객 · 고객 도입 · Rocket Lab · Synspective
-
-Rocket Lab은 2026년 9월 26일 뉴질랜드에서 지구 관측 위성 운영사 Synspective를 위한 Electron 전용 임무를 발사했다. ‘Owlright Owlright Owlright’ 임무는 현지 시각 오후 12시 39분 NZST에 Rocket Lab Launch Complex 1에서 출발해 13번째 StriX 위성을 559km 저궤도에 배치했다. 회사는 이번 발사가 Electron의 97번째이자 2026년 18번째였고, 다년 파트너십 동안 StriX 위성 13기 모두를 궤도에 배치하며 100% 임무 성공을 거뒀다고 밝혔다.
-
-##### SAR 영상 위성군 확대
-
-Synspective의 합성개구레이더(SAR) 위성군은 지표를 고해상도로 촬영하며, 회사 보도자료는 전천후·주야간 영상 제공을 특성으로 소개했다.
-
-##### 10년 말까지 추가 발사 일정
-
-Rocket Lab은 나머지 Synspective 위성군을 10년 말까지 배치하기 위한 추가 14회 발사가 일정에 남아 있다고 밝혔다.
-
-[rocketlabcorp.com 원문](https://rocketlabcorp.com/updates/mission-success-rocket-lab-launches-97th-electron-mission/)

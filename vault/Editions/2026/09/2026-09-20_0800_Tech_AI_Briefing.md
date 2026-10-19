@@ -9,8 +9,8 @@ coverage_end: 2026-09-19T23:16:34.765Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 17
-new_items_count: 16
+source_count: 14
+new_items_count: 13
 linked_knowledge_notes:
   - Knowledge/AI Systems/Conversational Voice AI
 knowledge_notes_created: []
@@ -203,9 +203,6 @@ article_records:
     lead: 캐나다 사이버보안센터는 9월 17일 Cisco ISE와 ISE-PIC에 영향을 주는 취약점 3건에 대한 업데이트 적용을 권고했다.
       Cisco는 이 가운데 인증을 우회해 관리자 수준 접근으로 이어질 수 있는 CVE-2026-76460의 실제 악용을 확인했다. 미국
       CISA도 전날 이 취약점을 실제 악용 목록에 추가했다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 설치 계열별 수정 버전 확인
         paragraphs:
@@ -214,6 +211,9 @@ article_records:
             설치 버전에 맞는 Cisco 안내를 확인해 패치와 침해 여부 점검을 진행해야 한다.
         source_urls:
           - https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
+    papers: []
+    relations: []
+    topic_ids: []
   - title: Fujitsu, MONAKA CPU 판매는 11월·서버 출하는 내년 4월부터 예고
     kind: 사건 뉴스
     region: 해외
@@ -294,9 +294,6 @@ article_records:
       충족했다고 발표했다. 이전 치료를 한 차례 이상 받은 환자에서 모수네투주맙·레날리도마이드 병용을 리툭시맙·레날리도마이드와 비교한
       시험이다. 회사는 질병 진행이나 사망까지의 기간인 무진행생존기간이 통계적으로 유의하게 개선됐다고 밝혔지만, 발표문에 구체적인 효과
       크기는 제시하지 않았다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 중간 결과와 허가 신청 구분
         paragraphs:
@@ -305,6 +302,9 @@ article_records:
             이번 발표 자체가 새 적응증 허가를 뜻하지 않는다.
         source_urls:
           - https://www.roche.com/media/releases/med-cor-2026-09-17
+    papers: []
+    relations: []
+    topic_ids: []
   - title: Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료
     kind: 사건 뉴스
     region: 해외
@@ -319,9 +319,6 @@ article_records:
       1기를 572km 궤도로 발사했다. ‘Owl By The Dozen’ 임무는 Launch Complex 1에서 이뤄졌으며, 회사의
       전체 96번째이자 Synspective를 위한 12번째 발사다. 이 위성군은 합성개구레이더(SAR) 관측 데이터를 도시계획·기반시설
       감시·재난 대응에 제공한다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 이번 발사와 남은 계약 물량
         paragraphs:
@@ -330,6 +327,9 @@ article_records:
             물량이다.
         source_urls:
           - https://rocketlabcorp.com/missions/launches/owl-by-the-dozen
+    papers: []
+    relations: []
+    topic_ids: []
   - title: 두산로보틱스, 권영민 사장 신임 CEO로 선임
     kind: 사건 뉴스
     region: 국내
@@ -353,82 +353,6 @@ article_records:
         source_urls:
           - https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
           - https://www.yna.co.kr/amp/view/AKR20260918151800003
-  - title: Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: Anthropic과 Accenture
-      when: 2026년 9월 19일(한국시간) 발표
-      where: 미기재
-      what: 프런티어 AI 독립 평가 파트너십 발표
-      how: Accenture의 전문 AI 사업부 Faculty가 모델 평가·레드팀·정렬 평가·보호 장치 시험을 주도할 계획이다.
-      why: 미기재
-    lead: Anthropic은 9월 19일(한국시간) Accenture와 프런티어 AI 독립 평가 파트너십을 발표했다. Anthropic에
-      따르면 Accenture의 전문 AI 사업부 Faculty가 파트너십을 이끌며, 모델 평가·레드팀·정렬 평가·보호 장치 시험을 맡을
-      예정이다. 두 회사는 관련 역량 구축에 향후 5년 동안 각각 최소 10억 달러를 투자할 것으로 예상한다고 밝혔다.
-    explanations:
-      - heading: 평가자의 접근과 책임
-        paragraphs:
-          - Anthropic은 임베디드 평가자가 AI 기업 안에서 직원과 비슷한 접근 권한으로 모델 훈련 과정을 살피고, 모델의
-            구축·배포 결정을 따라가며 직원과 직접 대화할 수 있다고 설명했다. 이들은 안전 약속 이행과 사각지대를 확인하고 사고를
-            보고할 수 있지만, 접근·보고 기준과 독립 평가 재원 방식은 아직 정해지지 않았다. 외부 평가를 도입해도 모델 안전의
-            책임은 Anthropic에 남는다고 회사는 밝혔다.
-        source_urls:
-          - https://www.anthropic.com/news/accenture-embedded-evaluation
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: Google AI and Infrastructure team
-      when: 2026년 9월 19일
-      where: Google의 소프트웨어 개발 수명주기
-      what: 취약점 스캔·패치를 AI 에이전트로 통합하고 오픈소스 Mantis를 제공
-      how: 코드 변경별 사전 제출 검사와 야간 사후 제출 검사, 지역화 위협 모델, 분류 에이전트 검증, 사람 검토용 수정안 제출을 결합
-      why: 미기재
-    lead: 구글 AI·인프라 팀은 9월 19일 취약점 스캔과 패치를 AI 에이전트로 구글의 소프트웨어 개발 수명주기에 통합했다고 밝혔다. 구글은
-      자체 인프라에 배포하는 수억 줄 규모의 코드에서 변경 건을 계속 검사해, 매월 수백 건의 취약점이 코드베이스나 프로덕션에 도달하기
-      전에 막고 있다고 밝혔다. 구글은 Mantis 하네스를 오픈소스로 제공하며, 일부 사례에서 오탐률을 3%까지 낮췄고 분류 에이전트가
-      92% 초과 정밀도로 1분 미만에 작업한다고 밝혔다.
-    explanations:
-      - heading: 코드 제출 전후로 취약점을 검사
-        paragraphs:
-          - 사전 제출 검사는 각 코드 체크인 때 실시간으로 실행된다. 야간 통합 테스트의 사후 제출 스캔은 여러 변경에 걸쳐 들어온
-            취약점을 확인하는 두 번째 방어층이다.
-        source_urls:
-          - https://cloud.google.com/blog/topics/systems/using-ai-agents-to-secure-google-infrastructure/
-      - heading: 공격 경로를 확인하고 수정안은 사람이 검토
-        paragraphs:
-          - Mantis는 실시간 코드베이스 메타데이터를 쓰는 지역화 위협 모델을 보안 에이전트에 연결하고, 패키지·라이브러리 의존성
-            호출 그래프로 스캔 문맥을 보강한다.
-          - 분류 에이전트는 코드 구조와 호출 경로, 사전 색인한 도메인 안전 규칙을 살펴 취약 경로가 공격자에게 실제로 도달 가능한지
-            검증한다. 수정 에이전트는 스캔 결과와 재현 증거를 바탕으로 내부 코딩 기준에 맞는 수정안을 만들고, 원래 변경 요청의
-            검토 과정에 제출한다.
-        source_urls:
-          - https://cloud.google.com/blog/topics/systems/using-ai-agents-to-secure-google-infrastructure/
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발
-    kind: 사건 뉴스
-    region: 국내
-    facts:
-      who: 서준기 교수 연구팀과 연세대학교, 베이징 계산과학연구센터, 한국과학기술연구원(KIST), 울산과학기술원(UNIST), 삼성전자 연구진
-      when: 2026년 9월 16일
-      where: 미기재
-      what: 이셀레늄화주석(SnSe2)을 이용해 서로 다른 두 종류의 초박막 반도체에 전기를 공급할 수 있는 범용 반데르발스 터널링 주입기 개발
-      how: 공동 연구진이 이셀레늄화주석(SnSe2)을 이용
-      why: 차세대 AI·저전력 반도체 개발에 활용될 것으로 기대
-    lead: KAIST는 2026년 9월 16일 서준기 교수 연구팀이 연세대학교, 베이징 계산과학연구센터, 한국과학기술연구원(KIST),
-      울산과학기술원(UNIST), 삼성전자 연구진과 공동으로 범용 반데르발스 터널링 주입기를 개발했다고 밝혔다. 연구팀은
-      이셀레늄화주석(SnSe2)을 이용해 서로 다른 두 종류의 초박막 반도체에 전기를 공급하는 장치를 구현했다. 연구 결과는 반도체를 더
-      얇게 만들고 여러 층으로 쌓아 성능을 높이는 차세대 AI·저전력 반도체 개발에 활용될 것으로 기대된다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합
     event_id: ebcefe563a8a7faf
@@ -470,9 +394,9 @@ article_reviews:
   - title: 캐나다 사이버센터, 실제 악용 중인 Cisco ISE 취약점 패치 권고
     event_id: 60d190b7985f9093
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-17
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Fujitsu, MONAKA CPU 판매는 11월·서버 출하는 내년 4월부터 예고
     event_id: 6f3a6e0e59363e45
     review_status: verified
@@ -494,15 +418,15 @@ article_reviews:
   - title: Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표
     event_id: 21e5701b8e5bea51
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-17
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료
     event_id: c8c055684e1b9e3a
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-19
     reviewed_at: 2026-10-10
+    concept_ids: []
     date_kind: source-stated-event-date
     source_published_at: null
   - title: 두산로보틱스, 권영민 사장 신임 CEO로 선임
@@ -510,27 +434,7 @@ article_reviews:
     review_status: verified
     concept_ids: []
     published_at: 2026-09-18
-    reviewed_at: 2026-10-01
-  - title: Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도
-    event_id: 6e9415b20331e0b7
-    review_status: verified
-    published_at: 2026-09-19
-    reviewed_at: 2026-10-14
-    concept_ids: []
-    date_kind: source-publication-time
-    source_published_at: 2026-09-18T16:00:00.000Z
-  - title: 구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개
-    event_id: d56b87bf0ad247f9
-    review_status: verified
-    published_at: 2026-09-19
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발
-    event_id: b0ca57e570da44cc
-    review_status: verified
-    published_at: 2026-09-16
-    reviewed_at: 2026-10-14
-    concept_ids: []
+    reviewed_at: 2026-10-06
 source_marker_format: preserved-retrospective/v1
 ---
 
@@ -560,23 +464,23 @@ Universal Robots, Gen 7 공개…새 로봇팔 3종과 CB7·TP7 통합
 **세부 태그:** 신제품
 **기업·기관:** Universal Robots, Teradyne Robotics
 
-Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다. [S15]
+Teradyne Robotics 계열 Universal Robots는 9월 14일 미국 시카고 IMTS에서 일곱 번째 로봇 플랫폼 Gen 7을 공개했다. PolyScope X를 기반으로 컨트롤러·티치 펜던트·툴 플랜지를 개편하고 UR10g-1750, UR17g-1300, UR18g-950 로봇팔을 추가했다. 새 CB7 컨트롤러는 공장 시스템과 연결되며 기존 e-Series와 UR Series 로봇팔에도 호환된다고 회사는 밝혔다. [S1]
 
 ### 로봇팔과 센서 연결
 
-새 로봇팔의 이름은 가반하중 kg와 도달거리 mm를 나타낸다. g-Series 툴 플랜지는 카메라·센서에 데이터·전원·안전 기능을 제공하며, 내장 힘·토크 감지와 임피던스 제어, RTDE 실시간 데이터 교환으로 조작과 힘에 민감한 조립 작업을 지원한다고 회사는 설명했다. [S15]
+새 로봇팔의 이름은 가반하중 kg와 도달거리 mm를 나타낸다. g-Series 툴 플랜지는 카메라·센서에 데이터·전원·안전 기능을 제공하며, 내장 힘·토크 감지와 임피던스 제어, RTDE 실시간 데이터 교환으로 조작과 힘에 민감한 조립 작업을 지원한다고 회사는 설명했다. [S1]
 
 ### CB7의 연산 능력과 설치 면적
 
-회사는 이전 세대 대비 CB7의 연산 능력이 40% 늘고 설치 면적은 30% 줄었다고 밝혔다. PLC·HMI·MES·산업용 PC·비전 시스템과 연결하며, 출시 형태는 독립 컨트롤 박스와 자동화 캐비닛에 넣는 소형 버전이다. [S15]
+회사는 이전 세대 대비 CB7의 연산 능력이 40% 늘고 설치 면적은 30% 줄었다고 밝혔다. PLC·HMI·MES·산업용 PC·비전 시스템과 연결하며, 출시 형태는 독립 컨트롤 박스와 자동화 캐비닛에 넣는 소형 버전이다. [S1]
 
 ### PolyScope X의 소프트웨어 연결
 
-PolyScope X는 공개 API와 ROS2 통신으로 산업용 PC 및 외부 AI 처리를 활용하는 엣지 AI 응용을 지원한다. ProfiSafe·OPC-UA 등의 추가 기능은 별도 소프트웨어 패키지로 제공한다. [S15]
+PolyScope X는 공개 API와 ROS2 통신으로 산업용 PC 및 외부 AI 처리를 활용하는 엣지 AI 응용을 지원한다. ProfiSafe·OPC-UA 등의 추가 기능은 별도 소프트웨어 패키지로 제공한다. [S1]
 
 ### TP7 조작과 안전 구성
 
-TP7 티치 펜던트는 이전 세대보다 무게가 20% 초과 감소했다고 회사는 밝혔다. 설정 가능한 버튼, 풀 HD 화면과 가상 조이스틱을 갖췄다. 회사는 Gen 7의 협동 안전 기능이 ISO 13849-1의 PLd·Category 3 인증 구조를 제공한다고 설명했다. [S15]
+TP7 티치 펜던트는 이전 세대보다 무게가 20% 초과 감소했다고 회사는 밝혔다. 설정 가능한 버튼, 풀 HD 화면과 가상 조이스틱을 갖췄다. 회사는 Gen 7의 협동 안전 기능이 ISO 13849-1의 PLd·Category 3 인증 구조를 제공한다고 설명했다. [S1]
 
 ## Google, 대화와 배경 작업을 함께 처리하는 Gemini 3.8 Live 공개
 
@@ -586,13 +490,13 @@ TP7 티치 펜던트는 이전 세대보다 무게가 20% 초과 감소했다고
 **세부 태그:** 신제품
 **기업·기관:** Google
 
-Google은 9월 15일 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내문에서 Gemini API와 Google AI Studio 등의 순차 제공 범위를 설명했다. Gemini 3.8 Live는 시각 입력을 대화에 반영하고 도구·API를 배경에서 실행하는 동안 사용자와 대화를 이어 간다고 회사는 설명했다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 동시에 수행하도록 설계됐다. [S16]
+Google은 9월 15일 Gemini 3.8 Live와 Extended Thinking을 공개하고, 17일 갱신한 안내문에서 Gemini API와 Google AI Studio 등의 순차 제공 범위를 설명했다. Gemini 3.8 Live는 시각 입력을 대화에 반영하고 도구·API를 배경에서 실행하는 동안 사용자와 대화를 이어 간다고 회사는 설명했다. Extended Thinking은 여러 단계의 추론이 필요한 작업에서 말하기와 추론을 동시에 수행하도록 설계됐다. [S2]
 
 ### 대화 중 언어 전환과 제품별 제공 범위
 
 Live는 지원하는 97개 언어를 대화 중 자동 전환한다. Extended Thinking은 요청 접수와 배경 작업 진행 상황을 말로 전달한다.
 
-기업용 Gemini Enterprise는 비공개 프리뷰이며, 일반 사용자용 제공은 Search Live·Gemini Live와 Workspace의 제품·구독에 따라 범위가 다르다. [S16]
+기업용 Gemini Enterprise는 비공개 프리뷰이며, 일반 사용자용 제공은 Search Live·Gemini Live와 Workspace의 제품·구독에 따라 범위가 다르다. [S2]
 
 **개념:** [[Knowledge/AI Systems/Conversational Voice AI]]
 
@@ -618,11 +522,11 @@ Live는 지원하는 97개 언어를 대화 중 자동 전환한다. Extended Th
 **세부 태그:** 기능 추가
 **기업·기관:** 삼성전자
 
-삼성전자는 9월 17일 One UI 9 공식 업데이트를 전날 한국 Galaxy S26 시리즈부터 시작했다고 발표했다. 선택한 인물을 따라 영상을 구성하는 ‘마이 팬캠’과 기기의 보증·수리 정보를 모으는 ‘워런티 케어’ 등을 추가했다. 업데이트는 이후 다른 국가와 Galaxy 기기로 확대할 예정이다. [S17]
+삼성전자는 9월 17일 One UI 9 공식 업데이트를 전날 한국 Galaxy S26 시리즈부터 시작했다고 발표했다. 선택한 인물을 따라 영상을 구성하는 ‘마이 팬캠’과 기기의 보증·수리 정보를 모으는 ‘워런티 케어’ 등을 추가했다. 업데이트는 이후 다른 국가와 Galaxy 기기로 확대할 예정이다. [S4]
 
 ### 보증 확인부터 수리 예약까지
 
-워런티 케어는 연결된 기기의 보증 정보, 진단, 예상 수리 비용과 서비스 예약을 한곳에 모은다. 보안 브리프는 의심스러운 앱이나 권한 등 보안 정보를 알려 준다. 개인정보 알림과 음성 변조 탐지는 지원 모델·지역 조건이 달라 모든 기기에서 같은 기능을 제공하는 것은 아니다. [S17]
+워런티 케어는 연결된 기기의 보증 정보, 진단, 예상 수리 비용과 서비스 예약을 한곳에 모은다. 보안 브리프는 의심스러운 앱이나 권한 등 보안 정보를 알려 준다. 개인정보 알림과 음성 변조 탐지는 지원 모델·지역 조건이 달라 모든 기기에서 같은 기능을 제공하는 것은 아니다. [S4]
 
 ## AWS, 메모리를 회수하고 실행 환경을 복원하는 AgentCore Runtime V2 제공
 
@@ -726,11 +630,11 @@ Roche는 9월 17일 재발성·불응성 여포성 림프종 환자를 대상으
 **세부 태그:** 고객 도입
 **기업·기관:** Rocket Lab, Synspective
 
-Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의 StriX 지구관측 위성 1기를 572km 궤도로 발사했다. ‘Owl By The Dozen’ 임무는 Launch Complex 1에서 이뤄졌으며, 회사의 전체 96번째이자 Synspective를 위한 12번째 발사다. 이 위성군은 합성개구레이더(SAR) 관측 데이터를 도시계획·기반시설 감시·재난 대응에 제공한다. [S18]
+Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의 StriX 지구관측 위성 1기를 572km 궤도로 발사했다. ‘Owl By The Dozen’ 임무는 Launch Complex 1에서 이뤄졌으며, 회사의 전체 96번째이자 Synspective를 위한 12번째 발사다. 이 위성군은 합성개구레이더(SAR) 관측 데이터를 도시계획·기반시설 감시·재난 대응에 제공한다. [S15]
 
 ### 이번 발사와 남은 계약 물량
 
-임무 페이지가 밝힌 궤도 경사각은 38도다. Rocket Lab은 Synspective 위성군을 위해 2030년 전까지 수행할 15건의 추가 발사를 예약받았다고 설명한다. 이 수치는 이번에 완료한 12번째 고객 발사와 구분되는 향후 계약 물량이다. [S18]
+임무 페이지가 밝힌 궤도 경사각은 38도다. Rocket Lab은 Synspective 위성군을 위해 2030년 전까지 수행할 15건의 추가 발사를 예약받았다고 설명한다. 이 수치는 이번에 완료한 12번째 고객 발사와 구분되는 향후 계약 물량이다. [S15]
 
 ## 두산로보틱스, 권영민 사장 신임 CEO로 선임
 
@@ -747,52 +651,6 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 권 사장은 2000년 ㈜두산 전략기획본부에 입사했다.
 
 2018년부터 2020년까지 두산밥캣 최고전략책임자(CSO)를 지냈고, 2021년부터 두산모트롤 대표이사로 재직했다. [S13] [S14]
-
-## Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도
-
-**분야:** AI
-**테마:** 표준·생태계
-**보조 테마:** 투자·기업거래
-**세부 태그:** 기술 제휴, 자본 배분
-**기업·기관:** Anthropic, Accenture
-
-Anthropic은 9월 19일(한국시간) Accenture와 프런티어 AI 독립 평가 파트너십을 발표했다. Anthropic에 따르면 Accenture의 전문 AI 사업부 Faculty가 파트너십을 이끌며, 모델 평가·레드팀·정렬 평가·보호 장치 시험을 맡을 예정이다. 두 회사는 관련 역량 구축에 향후 5년 동안 각각 최소 10억 달러를 투자할 것으로 예상한다고 밝혔다. [S19]
-
-### 평가자의 접근과 책임
-
-Anthropic은 임베디드 평가자가 AI 기업 안에서 직원과 비슷한 접근 권한으로 모델 훈련 과정을 살피고, 모델의 구축·배포 결정을 따라가며 직원과 직접 대화할 수 있다고 설명했다. 이들은 안전 약속 이행과 사각지대를 확인하고 사고를 보고할 수 있지만, 접근·보고 기준과 독립 평가 재원 방식은 아직 정해지지 않았다. 외부 평가를 도입해도 모델 안전의 책임은 Anthropic에 남는다고 회사는 밝혔다. [S19]
-
-## 구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개
-
-**분야:** 사이버보안
-**테마:** 연구·기술
-**보조 테마:** 표준·생태계
-**세부 태그:** 구현·운영 지침, 오픈소스
-**기업·기관:** Google
-
-구글 AI·인프라 팀은 9월 19일 취약점 스캔과 패치를 AI 에이전트로 구글의 소프트웨어 개발 수명주기에 통합했다고 밝혔다. 구글은 자체 인프라에 배포하는 수억 줄 규모의 코드에서 변경 건을 계속 검사해, 매월 수백 건의 취약점이 코드베이스나 프로덕션에 도달하기 전에 막고 있다고 밝혔다. 구글은 Mantis 하네스를 오픈소스로 제공하며, 일부 사례에서 오탐률을 3%까지 낮췄고 분류 에이전트가 92% 초과 정밀도로 1분 미만에 작업한다고 밝혔다. [S20]
-
-### 코드 제출 전후로 취약점을 검사
-
-사전 제출 검사는 각 코드 체크인 때 실시간으로 실행된다. 야간 통합 테스트의 사후 제출 스캔은 여러 변경에 걸쳐 들어온 취약점을 확인하는 두 번째 방어층이다. [S20]
-
-### 공격 경로를 확인하고 수정안은 사람이 검토
-
-Mantis는 실시간 코드베이스 메타데이터를 쓰는 지역화 위협 모델을 보안 에이전트에 연결하고, 패키지·라이브러리 의존성 호출 그래프로 스캔 문맥을 보강한다.
-
-분류 에이전트는 코드 구조와 호출 경로, 사전 색인한 도메인 안전 규칙을 살펴 취약 경로가 공격자에게 실제로 도달 가능한지 검증한다. 수정 에이전트는 스캔 결과와 재현 증거를 바탕으로 내부 코딩 기준에 맞는 수정안을 만들고, 원래 변경 요청의 검토 과정에 제출한다. [S20]
-
-## KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발
-
-**분야:** 반도체·컴퓨팅
-**테마:** 연구·기술
-**보조 테마:** 없음
-**세부 태그:** 연구 소개, 새로운 방법
-**기업·기관:** 연세대학교, 베이징 계산과학연구센터, KIST, UNIST, 삼성전자
-
-KAIST는 2026년 9월 16일 서준기 교수 연구팀이 연세대학교, 베이징 계산과학연구센터, 한국과학기술연구원(KIST), 울산과학기술원(UNIST), 삼성전자 연구진과 공동으로 범용 반데르발스 터널링 주입기를 개발했다고 밝혔다. 연구팀은 이셀레늄화주석(SnSe2)을 이용해 서로 다른 두 종류의 초박막 반도체에 전기를 공급하는 장치를 구현했다. 연구 결과는 반도체를 더 얇게 만들고 여러 층으로 쌓아 성능을 높이는 차세대 AI·저전력 반도체 개발에 활용될 것으로 기대된다. [S21]
-
-
 
 # 리서치 노트
 
@@ -816,7 +674,10 @@ KAIST는 2026년 9월 16일 서준기 교수 연구팀이 연세대학교, 베�
 
 # Source List
 
+- [S1] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai
+- [S2] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking
 - [S3] https://navercorp.com/media/pressReleasesDetail?seq=10034667
+- [S4] https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-one-ui-9-%EA%B3%B5%EC%8B%9D-%EB%B2%84%EC%A0%84-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EC%8B%9C%EC%9E%91
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
 - [S6] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
 - [S7] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
@@ -826,10 +687,4 @@ KAIST는 2026년 9월 16일 서준기 교수 연구팀이 연세대학교, 베�
 - [S11] https://www.roche.com/media/releases/med-cor-2026-09-17
 - [S13] https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
 - [S14] https://www.yna.co.kr/amp/view/AKR20260918151800003
-- [S15] https://www.universal-robots.com/news-and-media/news-center/universal-robots-unveils-gen-7-new-platform-industrial-automation-physical-ai
-- [S16] https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-8-live-gemini-3-8-live-extended-thinking
-- [S17] https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-one-ui-9-%EA%B3%B5%EC%8B%9D-%EB%B2%84%EC%A0%84-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EC%8B%9C%EC%9E%91
-- [S18] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen
-- [S19] https://www.anthropic.com/news/accenture-embedded-evaluation
-- [S20] https://cloud.google.com/blog/topics/systems/using-ai-agents-to-secure-google-infrastructure/
-- [S21] https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67090&GotoPage=1
+- [S15] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen

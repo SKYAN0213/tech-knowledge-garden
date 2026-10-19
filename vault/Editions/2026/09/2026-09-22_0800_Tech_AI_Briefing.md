@@ -34,6 +34,9 @@ article_records:
     lead: 삼성전자는 9월 21일 광주사업장에서 FläktGroup 냉난방공조 생산라인 착공식을 열었다. 약 2,400억원을 투자해 제3
       캠퍼스에 연면적 2만1,800㎡ 규모 시설을 짓고 2028년 초 가동할 계획이다. 회사는 한국·동아시아 데이터센터와 반도체·배터리
       제조시설, 상업시설의 공조 수요에 대응하는 생산거점으로 추진한다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 냉각·중앙공조 장비의 계획 품목
         paragraphs:
@@ -41,9 +44,6 @@ article_records:
             공기조화기(AHU)다. 새 시설은 FläktGroup의 15번째 글로벌 생산거점이 될 예정이다.
         source_urls:
           - https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%94%8C%EB%9E%99%ED%8A%B8%EA%B7%B8%EB%A3%B9-hvac-%EC%83%9D%EC%82%B0%EB%9D%BC%EC%9D%B8-%EC%B0%A9%EA%B3%B5
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Navitas, Magnachip에 500만달러 지분 투자 계약
     kind: 사건 뉴스
     region: 국내
@@ -57,6 +57,9 @@ article_records:
     lead: Magnachip은 9월 21일 Navitas가 자사에 500만달러를 지분 투자하기로 합의했다고 발표했다. 계약상 보통주
       146만1,988주를 주당 3.42달러에 발행하며, 통상적인 종결 조건 충족 또는 면제를 전제로 9월 24일 전후 거래를 마칠
       예정이다. 이번 투자는 양사가 7월 발표한 고전압 탄화규소(SiC) 기술 협력에 자본 참여를 더한다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 한국 공장으로 GeneSiC 공정 이전 추진
         paragraphs:
@@ -64,9 +67,6 @@ article_records:
             적용 대상으로 에너지·전력망, 저장 시스템, 산업 전기화와 자동차 분야를 제시했다.
         source_urls:
           - https://www.magnachip.com/cn/magnachip-announces-strategic-investment-by-navitas-semiconductor-share
-    papers: []
-    relations: []
-    topic_ids: []
   - title: GitHub Enterprise, 토큰·SSH 키 목록을 CSV와 API로 제공
     kind: 사건 뉴스
     region: 해외
@@ -80,6 +80,9 @@ article_records:
     lead: GitHub는 9월 21일 Enterprise Cloud에서 기업 자격증명 목록을 내보내는 기능을 공개했다. 기업 소유자 또는
       자격증명 열람 권한을 가진 구성원은 설정 화면이나 페이지 단위 REST API로 목록을 가져올 수 있다. CSV는 사용자·앱·자격증명
       유형·조직별로 필터링할 수 있다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 자격증명 메타데이터와 감사 로그 대조
         paragraphs:
@@ -88,9 +91,6 @@ article_records:
           - Enterprise Server 지원은 향후 릴리스에서 제공할 예정이다.
         source_urls:
           - https://github.blog/changelog/2026-09-21-github-enterprise-adds-credential-inventory-exports/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Sunrun·Tesla, 캘리포니아 가정용 배터리 580MW 공급 실적 공개
     kind: 사건 뉴스
     region: 해외
@@ -104,6 +104,9 @@ article_records:
     lead: Sunrun과 Tesla는 9월 21일, 9월 9일 저녁 캘리포니아의 가정용 배터리 14만대 이상이 전력망에 580MW를 넘는 최대
       출력을 공급했다고 발표했다. 캘리포니아 에너지위원회와 전력회사의 요청에 따라 저녁 3시간 동안 고객 배터리를 방전한 실적이다. 방전은
       주정부의 DSGS와 ELRP 전력망 지원 프로그램을 통해 조정됐다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 회사 집계의 출력과 참여 배터리
         paragraphs:
@@ -112,9 +115,6 @@ article_records:
             방전했다.
         source_urls:
           - https://investors.sunrun.com/news-events/press-releases/detail/381/sunrun-and-tesla-dispatch-580-megawatts-to-californias
-    papers: []
-    relations: []
-    topic_ids: []
   - title: OpenAI, AI 능력·감독·사고 보고의 국제 공통 기준 제안
     kind: 사건 뉴스
     region: 해외
@@ -153,6 +153,9 @@ article_records:
     lead: Gates Foundation이 공개한 9월 21일 뉴욕 공동 발표에서 60개 서명 기관이 언어·음성 AI 접근성 확대의 공동 목표에
       뜻을 모았다. AI에서 충분히 지원되지 않는 언어를 사용하는 약 34억명이 5년 안에 자기 언어와 음성으로 AI 도구를 이용하도록
       돕겠다는 구상이다. 34억명은 현재 확보한 이용자 수가 아니라 목표의 대상 인구 추정치다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 데이터·평가·모델·안전한 제공의 공동 과제
         paragraphs:
@@ -160,9 +163,6 @@ article_records:
             고려한 제공 방식에 협력할 계획이다. 발표는 음성과 방언·문화적 맥락도 언어 성능의 중요한 조건으로 설명했다.
         source_urls:
           - https://www.gatesfoundation.org/ideas/media-center/press-releases/2026/09/ai-language-partnership
-    papers: []
-    relations: []
-    topic_ids: []
   - title: RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류
     kind: 논문 해설
     region: 해외
@@ -176,6 +176,16 @@ article_records:
     lead: MIT와 매사추세츠종합병원 등의 연구진은 9월 21일 Nature Aging에 RamanOmics 연구를 발표했다. 같은 조직 절편의
       라만 영상과 유전자 발현 정보를 세포별로 연결해 생화학적 상태와 전사체를 함께 읽는 방법이다. 생후 2개월과 26개월 생쥐군 각각
       3마리에서 얻은 폐·피부 조직으로 노화 세포 분류 실험을 진행했다.
+    papers:
+      - work_id: ramanomics-senescence-2026
+        identifiers:
+          - doi:10.1038/s43587-026-01219-7
+        access: 전문
+        status: 동료심사
+        evidence_url: https://www.nature.com/articles/s43587-026-01219-7
+    relations: []
+    topic_ids:
+      - research-ramanomics
     explanations:
       - heading: 같은 조직에서 화학·유전자 신호를 맞춘다
         paragraphs:
@@ -205,16 +215,6 @@ article_records:
         source_urls:
           - https://www.nature.com/articles/s43587-026-01219-7
           - https://news.mit.edu/2026/unmasking-zombie-cells-aging-tissue-ai-powered-barcode-0921
-    papers:
-      - work_id: ramanomics-senescence-2026
-        identifiers:
-          - doi:10.1038/s43587-026-01219-7
-        access: 전문
-        status: 동료심사
-        evidence_url: https://www.nature.com/articles/s43587-026-01219-7
-    relations: []
-    topic_ids:
-      - research-ramanomics
   - title: MIT, 위장관에서 분해되는 1.84V 배터리 실험 공개
     kind: 사건 뉴스
     region: 해외
@@ -269,27 +269,27 @@ article_reviews:
   - title: 삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획
     event_id: d37e6feb52f811ed
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Navitas, Magnachip에 500만달러 지분 투자 계약
     event_id: a49bfbd297aaeae9
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: GitHub Enterprise, 토큰·SSH 키 목록을 CSV와 API로 제공
     event_id: f631d543deb02b09
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Sunrun·Tesla, 캘리포니아 가정용 배터리 580MW 공급 실적 공개
     event_id: 4db79fe713e8de1c
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: OpenAI, AI 능력·감독·사고 보고의 국제 공통 기준 제안
     event_id: 10538c022345675d
     review_status: verified
@@ -299,15 +299,15 @@ article_reviews:
   - title: 60개 기관, 5년 내 저자원 언어 AI 접근성 확대 공동 목표
     event_id: 8980fabc70784290
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: RamanOmics, 빛의 산란과 유전자 정보를 결합해 노화 세포 분류
     event_id: 12d7d589a995c908
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-21
     reviewed_at: 2026-10-09
-    concept_ids: []
   - title: MIT, 위장관에서 분해되는 1.84V 배터리 실험 공개
     event_id: a79face44324947c
     review_status: verified

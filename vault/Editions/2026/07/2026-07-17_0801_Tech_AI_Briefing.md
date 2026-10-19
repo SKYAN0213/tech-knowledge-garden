@@ -6,7 +6,6 @@ date: 2026-07-17
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -86,15 +85,13 @@ article_reviews:
     event_id: 16e13c52f7cd02d4
     review_status: verified
     published_at: 2026-07-16
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
-    date_kind: source-publication-time
-    source_published_at: 2026-07-16T11:00:00+00:00
   - title: Gemini Enterprise Agent Platform, Parallel 웹 검색·출처 인용 지원
     event_id: c74104c7d7fe52c0
     review_status: verified
     published_at: 2026-07-16
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 

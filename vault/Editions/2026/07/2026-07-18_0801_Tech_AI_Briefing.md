@@ -6,7 +6,6 @@ date: 2026-07-18
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -99,13 +98,13 @@ article_reviews:
     event_id: c5c5248230951857
     review_status: verified
     published_at: 2026-07-17
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: GitHub Copilot, 저장소별 PR 생성·병합·리뷰 지표 제공
     event_id: a7ef730e554338df
     review_status: verified
     published_at: 2026-07-18
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-07-17T15:05:18-07:00

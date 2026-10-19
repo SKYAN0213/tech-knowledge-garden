@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/08/2026-08-01_0801_Tech_AI_Briefing
 date: 2026-08-01
-reviewed: 2026-09-30
+reviewed: 2026-10-09
 review_basis: primary-research
 observations: []
 ---

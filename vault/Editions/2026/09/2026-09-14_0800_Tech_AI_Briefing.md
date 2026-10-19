@@ -48,6 +48,10 @@ article_records:
       2029년 하반기 양산을 목표로 제시했다. AVP본부와 42dot은 실제 주행 데이터를 수집해 학습·검증한 뒤 차량에 반영하는 개발
       체계를 운영하며, 현재 약 40대의 전용 수집 차량을 운행한다고 밝혔다. 양산 기술 개발과 함께 연말 광주에서 Atria AI를
       탑재한 차량의 레벨 4 실증을 추진한다.
+    papers: []
+    relations: []
+    topic_ids:
+      - company-hyundai-motor-group
     explanations:
       - heading: 2028년과 2029년의 두 양산 경로
         paragraphs:
@@ -77,10 +81,6 @@ article_records:
         source_urls:
           - https://org.hyundai.com/worldwide/en/newsroom/detail/0000001273
           - https://www.hyundaimotorgroup.com/ko/news/hyundai-kia-nvidia-next-generation-autonomous-driving-partnership-expansion
-    papers: []
-    relations: []
-    topic_ids:
-      - company-hyundai-motor-group
   - title: 삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진
     kind: 사건 뉴스
     region: 국내
@@ -125,10 +125,10 @@ article_reviews:
   - title: 현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시
     event_id: 9935b37c854178f3
     review_status: verified
-    published_at: 2026-09-13
-    reviewed_at: 2026-10-09
     concept_ids:
       - vla
+    published_at: 2026-09-13
+    reviewed_at: 2026-10-09
   - title: 삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진
     event_id: 18ebc7c21cf04849
     review_status: verified

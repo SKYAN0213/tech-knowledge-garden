@@ -9,8 +9,8 @@ coverage_end: 2026-09-13T08:01:40+09:00
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 12
-new_items_count: 8
+source_count: 8
+new_items_count: 6
 linked_knowledge_notes:
   - "[[Knowledge/Data Systems/Latency Percentiles|p95·p99 지연]]"
   - Knowledge/AI Systems/AI Agents
@@ -37,9 +37,6 @@ article_records:
     lead: OpenAI는 9월 11일 온라인 저장소 서비스 Habitat의 확장 경험을 공개했다. 회사에 따르면 엔지니어 2명이 Codex와
       GPT-5.5를 이용해 2026년 2분기에 서비스를 Rust로 재작성했으며, 발표 당시 운영 요청의 95%를 처리하고 있었다.
       OpenAI는 자사 측정에서 Python 버전 대비 CPU 효율 6배, 메모리 효율 15배를 기록했다고 밝혔다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 느린 요청을 추적한 배경
         paragraphs:
@@ -48,6 +45,9 @@ article_records:
           - 회사 측정에서는 Rust 서비스가 Python 버전보다 평균 지연과 꼬리 지연도 낮았다고 밝혔다.
         source_urls:
           - https://openai.com/index/scaling-storage-one-billion-users-part-one/
+    papers: []
+    relations: []
+    topic_ids: []
   - title: VS Code Agents 전용 창의 사용량을 별도로 집계
     kind: 사건 뉴스
     region: 해외
@@ -176,74 +176,14 @@ article_records:
             에이전트와 연결했지만, 운영팀은 AI가 패키지를 만들거나 게시했는지 판단할 수 없다고 했다.
         source_urls:
           - https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html
-  - title: Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: Anthropic CEO Dario Amodei
-      when: 2026-09-12 (보도일)
-      where: 미기재
-      what: 프런티어 AI 개발 속도 조절을 위한 3단계 제안과 Anthropic의 제3자 평가자 도입 약속
-      how: 상시 평가자 접근, 민주국가 내 공동 안전 기준, 국제 협력
-      why: 역량 향상 속도를 조절해 위험 예방과 안전 평가에 필요한 시간을 확보하기 위해
-    lead: 2026년 9월 12일 보도에 따르면, Anthropic CEO Dario Amodei는 프런티어 AI 역량 향상 속도를 늦추되 모델
-      훈련과 기술 진전은 이어가는 3단계 속도 조절안을 제안했다. 첫 단계로 Anthropic은 외부 평가자에게 시스템의 직원 수준 상시
-      접근을 제공해 안전 조치 준수와 사고를 확인·보고하고 학습 중 모델 정렬을 평가하게 하겠다고 밝혔으며, Amodei는 다른 프런티어
-      기업도 따르도록 정부에 요구했다. 나머지 두 단계는 민주국가 내 기업 간 공동 안전 기준·개발 속도 조정과, 가능한 범위에서 미국 등
-      민주국가 정부가 권위주의 정부와 협력하는 국제 조정이다.
-    explanations:
-      - heading: 평가자의 접근과 공개 권한
-        paragraphs:
-          - Anthropic은 평가팀에 사무실 책상·출입증·회사 노트북을 제공하고, 내부 위험평가팀과 대체로 비슷한 공간·도구·권한을
-            줄 계획이다. 법률·계약상 의무나 고객·파트너 개인정보 보호에는 예외를 두고 직원과의 실시간 대화도 허용하겠다고 밝혔다.
-          - 별도 계약안은 평가자가 위험 수준·사고·관행과 실제로 받은 권한뿐 아니라 받지 못한 권한도 Anthropic의 편집 통제
-            없이 공개하도록 한다. 회사가 정보를 가릴 수 있는 범위는 보안 민감·법률상 특권·상업 민감·제3자 기밀 정보로 한정하고,
-            불리한 결과라는 이유만으로 삭제할 수 없으며 평가자는 중요한 내용이 가려졌다고 공개할 수도 있다.
-        source_urls:
-          - https://techcrunch.com/2026/09/12/anthropic-ceo-outlines-plan-to-pace-the-frontier/
-          - https://darioamodei.com/post/we-must-pace-the-frontier
-      - heading: 국내 공조와 국제 합의
-        paragraphs:
-          - 미국 내 조정에 대해 Amodei는 자발적 참여를 거부하는 업체까지 포함하도록 모든 미국 프런티어 AI 기업을 대상으로
-            하는 규제가 가장 효과적이라고 주장했다. 법제화와 병행해 업계가 자율 기준을 마련하고, 정부는 반독점 우려를 고려해 논의를
-            중재하거나 일부 안전 대화에 한정된 면제를 마련할 수 있다고 제안했다.
-          - 국제 합의안은 생물무기 생산 등 좁고 명백히 위험한 AI 사용 금지, 출시 전 급성 위험 평가, 재귀적 자기개선 속도
-            제한, AI 개발 전반의 속도 제한이나 일시 중단 순으로 난도가 높아진다. Amodei는 전면 제한·중단은 가까운 시일
-            안에 성사되기 어렵고 높은 검증 신뢰가 필요하다고 봤으며, 중국과의 협력이 민주국가 내부에서 속도를 조절할 시간을 늘릴 수
-            있다고 주장했다.
-        source_urls:
-          - https://darioamodei.com/post/we-must-pace-the-frontier
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: Y Combinator CEO Garry Tan
-      when: 2026-09-11 (보도일)
-      where: TechCrunch 인터뷰
-      what: 미국 공개 가중치 AI 연구소의 프런티어 모델 증류 허용 주장
-      how: 정식 접근을 전제로 미국 연구소도 미국 프런티어 모델을 증류해 공개 가중치 선택지를 늘리자는 제안
-      why: 비중국계 공개 가중치 모델의 선택지를 늘리고, 학습 지능에 대한 접근을 공공재에 가깝게 보자는 견해
-    lead: 2026년 9월 11일 TechCrunch 보도에 따르면 Y Combinator CEO Garry Tan은 미국의 소규모 공개 가중치
-      AI 연구소도 미국 프런티어 모델에 증류 기법을 적용해 중국계가 아닌 선택지를 늘려야 한다고 주장했다. Tan은 중국 연구소의
-      증류에는 규제 당국이 개입하지 않기를 바라며 CNBC에 “아무것도 하지 않겠다”고 말했고, 미국식 증류 제도를 둘 수 있다는 주장도
-      제기했다. 그는 미국 연구소가 도난 자격 증명을 쓰지 않고 정식으로 접근해 증류할 수 있어야 한다고 선을 그었다.
-      TechCrunch는 증류를 다른 모델에 광범위하게 질의해 작동 방식과 추론을 배우는 과정으로 설명했고, Tan은 API 결과 이용
-      통제가 제약적이며 공개 데이터로 훈련된 지능에 대한 접근을 공공재에 가깝게 다뤄야 한다고 말했다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: OpenAI, 저장소 서비스 Rust로 재작성…발표 당시 요청 95% 처리
     event_id: 46fcf5bb7b99520f
     review_status: verified
-    concept_ids:
-      - latency-percentiles
     published_at: 2026-09-11
     reviewed_at: 2026-10-10
+    concept_ids:
+      - latency-percentiles
   - title: VS Code Agents 전용 창의 사용량을 별도로 집계
     event_id: 28ba300194033bae
     review_status: verified
@@ -276,18 +216,6 @@ article_reviews:
       - supply-chain
     published_at: 2026-09-11
     reviewed_at: 2026-09-28
-  - title: Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속
-    event_id: e0a07521cdf8fed3
-    review_status: verified
-    published_at: 2026-09-12
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지
-    event_id: 73424d904c85be55
-    review_status: verified
-    published_at: 2026-09-11
-    reviewed_at: 2026-10-14
-    concept_ids: []
 ---
 
 # 이번 호 표지
@@ -408,40 +336,6 @@ Nightingale Collective는 일부 패키지가 공유 Ruby 인프라에서 코드
 
 **개념:** [[Knowledge/Software Engineering/Software Supply Chain Security]]
 
-## Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속
-
-**분야:** AI
-**테마:** 정책·규제
-**보조 테마:** 없음
-**세부 태그:** 정책 제안
-**기업·기관:** Anthropic
-
-2026년 9월 12일 보도에 따르면, Anthropic CEO Dario Amodei는 프런티어 AI 역량 향상 속도를 늦추되 모델 훈련과 기술 진전은 이어가는 3단계 속도 조절안을 제안했다. 첫 단계로 Anthropic은 외부 평가자에게 시스템의 직원 수준 상시 접근을 제공해 안전 조치 준수와 사고를 확인·보고하고 학습 중 모델 정렬을 평가하게 하겠다고 밝혔으며, Amodei는 다른 프런티어 기업도 따르도록 정부에 요구했다. 나머지 두 단계는 민주국가 내 기업 간 공동 안전 기준·개발 속도 조정과, 가능한 범위에서 미국 등 민주국가 정부가 권위주의 정부와 협력하는 국제 조정이다. [S9] [S10] [S11]
-
-### 평가자의 접근과 공개 권한
-
-Anthropic은 평가팀에 사무실 책상·출입증·회사 노트북을 제공하고, 내부 위험평가팀과 대체로 비슷한 공간·도구·권한을 줄 계획이다. 법률·계약상 의무나 고객·파트너 개인정보 보호에는 예외를 두고 직원과의 실시간 대화도 허용하겠다고 밝혔다.
-
-별도 계약안은 평가자가 위험 수준·사고·관행과 실제로 받은 권한뿐 아니라 받지 못한 권한도 Anthropic의 편집 통제 없이 공개하도록 한다. 회사가 정보를 가릴 수 있는 범위는 보안 민감·법률상 특권·상업 민감·제3자 기밀 정보로 한정하고, 불리한 결과라는 이유만으로 삭제할 수 없으며 평가자는 중요한 내용이 가려졌다고 공개할 수도 있다. [S9] [S11]
-
-### 국내 공조와 국제 합의
-
-미국 내 조정에 대해 Amodei는 자발적 참여를 거부하는 업체까지 포함하도록 모든 미국 프런티어 AI 기업을 대상으로 하는 규제가 가장 효과적이라고 주장했다. 법제화와 병행해 업계가 자율 기준을 마련하고, 정부는 반독점 우려를 고려해 논의를 중재하거나 일부 안전 대화에 한정된 면제를 마련할 수 있다고 제안했다.
-
-국제 합의안은 생물무기 생산 등 좁고 명백히 위험한 AI 사용 금지, 출시 전 급성 위험 평가, 재귀적 자기개선 속도 제한, AI 개발 전반의 속도 제한이나 일시 중단 순으로 난도가 높아진다. Amodei는 전면 제한·중단은 가까운 시일 안에 성사되기 어렵고 높은 검증 신뢰가 필요하다고 봤으며, 중국과의 협력이 민주국가 내부에서 속도를 조절할 시간을 늘릴 수 있다고 주장했다. [S11]
-
-## Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지
-
-**분야:** AI
-**테마:** 정책·규제
-**보조 테마:** 없음
-**세부 태그:** 정책 제안
-**기업·기관:** Y Combinator, Garry Tan
-
-2026년 9월 11일 TechCrunch 보도에 따르면 Y Combinator CEO Garry Tan은 미국의 소규모 공개 가중치 AI 연구소도 미국 프런티어 모델에 증류 기법을 적용해 중국계가 아닌 선택지를 늘려야 한다고 주장했다. Tan은 중국 연구소의 증류에는 규제 당국이 개입하지 않기를 바라며 CNBC에 “아무것도 하지 않겠다”고 말했고, 미국식 증류 제도를 둘 수 있다는 주장도 제기했다. 그는 미국 연구소가 도난 자격 증명을 쓰지 않고 정식으로 접근해 증류할 수 있어야 한다고 선을 그었다. TechCrunch는 증류를 다른 모델에 광범위하게 질의해 작동 방식과 추론을 배우는 과정으로 설명했고, Tan은 API 결과 이용 통제가 제약적이며 공개 데이터로 훈련된 지능에 대한 접근을 공공재에 가깝게 다뤄야 한다고 말했다. [S12]
-
-
-
 # 리서치 노트
 
 없음
@@ -472,7 +366,3 @@ Anthropic은 평가팀에 사무실 책상·출입증·회사 노트북을 제�
 - [S6] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260911.html
 - [S7] https://www.fanuc.co.jp/ja/profile/pr/newsrelease/2026/news20260911.html
 - [S8] https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html
-- [S9] https://techcrunch.com/2026/09/12/anthropic-ceo-outlines-plan-to-pace-the-frontier/
-- [S10] https://www.theguardian.com/technology/2026/sep/12/we-must-slow-the-pace-ceo-of-anthropic-calls-for-an-ai-slowdown
-- [S11] https://darioamodei.com/post/we-must-pace-the-frontier
-- [S12] https://techcrunch.com/2026/09/11/y-combinators-garry-tan-wants-u-s-open-weight-ai-labs-to-distill-frontier-models-too/

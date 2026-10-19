@@ -222,6 +222,9 @@ article_records:
       결합하는 전략적 제휴를 발표했다. 먼저 Hitachi의 이바라키 제조시설에서 여러 형태의 부품을 집고 생산 품목을 바꾸는 작업을
       검증할 계획이다. 양사는 검증에서 얻은 구현·운영 경험을 바탕으로 회계연도 2027년부터 고객사 배치를 시작하고 반도체·자동차·물류
       등으로 적용을 넓히겠다고 밝혔다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 공장에서 학습하고 평가할 작업
         paragraphs:
@@ -235,9 +238,6 @@ article_records:
           - 발표 자료에서 택트 타임은 제품 하나를 생산·처리하거나 작업 하나를 완료하는 데 배정하는 표준 시간을 뜻한다.
         source_urls:
           - https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
-    papers: []
-    relations: []
-    topic_ids: []
   - title: IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
     kind: 사건 뉴스
     region: 국제 공동
@@ -255,32 +255,25 @@ article_records:
     papers: []
     relations: []
     topic_ids: []
-  - title: Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
+  - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: Ørsted
-      when: 2026년 9월 30일 착공 발표; 상업운전은 2027년 말 예상
-      where: 미국 뉴멕시코주 Roosevelt County; 보전 대상은 멜로스 인근
-      what: 200 MW Blackwater Solar 건설 시작 및 습지 보전을 위한 회사 기여 발표
-      how: 장기 전력구매계약으로 프로젝트를 뒷받침하고 First Solar 패널을 조달
-      why: 뉴멕시코 산업용 전력 수요와 지역 습지 보전 지원
-    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고
-      발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint
-      Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될
-      것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기
-      전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는
-      Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로
-      예상했으며, 상업운전은 2027년 말로 전망했다.
-    explanations:
-      - heading: 패널 조달
-        paragraphs:
-          - Ørsted는 Blackwater Solar용 태양광 패널을 미국 제조업체 First Solar에서 조달했다고 밝혔다.
-        source_urls:
-          - https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
+      who: Ørsted Americas Onshore
+      when: 2026-09-30 착공 발표; 상업운전은 2027년 말 목표
+      where: 미국 뉴멕시코주 Roosevelt County
+      what: Blackwater Solar 200MW 사업의 실제 건설 시작
+      how: 장기 전력구매계약 기반으로 First Solar 패널 조달
+      why: 뉴멕시코 산업 전력수요 공급과 지역 재생에너지 확대
+    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고
+      발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다.
+      56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
     papers: []
     relations: []
     topic_ids: []
+    analysis_summary: 이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다.
+      완공과 계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
+    next_check: 공사 진척, 계통 연결, 장기계약 인도 시점과 2027년 말 상업운전 달성 여부를 확인한다.
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     kind: 사건 뉴스
     region: 해외
@@ -348,10 +341,10 @@ article_records:
       계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실
       시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두
       과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
     kind: 사건 뉴스
     region: 국제 공동
@@ -366,10 +359,10 @@ article_records:
       20회의 다년 계약을 체결했다고 발표했다. StriX 합성개구레이더(SAR) 위성 20기를 Launch Complex 1에서
       태양동기궤도로 보내며, 발사는 2028~2031년에 매년 진행할 예정이다. 회사는 이번 계약으로 Synspective를 위한
       Electron 총 발사 계약이 47회가 됐으며, 단일 계약 기준 Electron의 최대 상업 발사 계약이라고 밝혔다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
     kind: 사건 뉴스
     region: 해외
@@ -383,6 +376,9 @@ article_records:
     lead: Roche는 9월 30일 미국 식품의약국(FDA)이 개발 중인 경구용 다발성경화증 후보약 페네브루티닙(fenebrutinib)의
       신약허가신청(NDA)을 우선심사 대상으로 접수했다고 밝혔다. 대상은 재발성 다발성경화증(RMS)과 일차 진행성
       다발성경화증(PPMS)이며, 회사는 FENhance 1·2와 FENtrepid 3상 연구 결과를 접수의 근거로 제시했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 경구용 BTK 억제제
         paragraphs:
@@ -408,9 +404,6 @@ article_records:
             사망 보고의 불균형도 관찰됐으며, 사망 시점과 원인은 다양했다고 덧붙였다.
         source_urls:
           - https://www.roche.com/media/releases/med-cor-2026-09-30
-    papers: []
-    relations: []
-    topic_ids: []
   - title: MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원
     kind: 사건 뉴스
     region: 해외
@@ -427,6 +420,9 @@ article_records:
       Transit Intelligence Hub(PTIQ)로, 대중교통 기관의 실시간 모니터링, 운영 제어, 승객 소통 시스템을 하나의
       중앙 집중형 AI 플랫폼으로 통합하는 것을 목표로 한다. Google.org는 3년간의 프로젝트 기간 동안 자금 지원과 함께 자체
       엔지니어와 AI 제품 전문가의 무상 지원도 제공할 예정이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: PTIQ의 핵심 목표와 역할
         paragraphs:
@@ -443,9 +439,6 @@ article_records:
             Jinhua Zhao이며, Jim Aloisi MIT 강사가 프로그램 매니저를 맡는다.
         source_urls:
           - https://news.mit.edu/2026/mit-transit-lab-to-develop-ai-platform-public-transit-agencies-0930
-    papers: []
-    relations: []
-    topic_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     kind: 사건 뉴스
     region: 해외
@@ -459,6 +452,9 @@ article_records:
     lead: National Laboratory of the Rockies(NLR)는 2026년 9월 30일, 적응형 전력망 복구 및 대응을 위한
       운영 솔루션 REORG가 Holy Cross Energy 본사에서 현장 시험을 완료했다고 밝혔다. Holy Cross Energy는
       2018년 Lake Christine 산불이 단일 송전선을 위협한 이후 NLR과 함께 REORG 개발을 추진했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: REORG의 작동 방식
         paragraphs:
@@ -476,9 +472,6 @@ article_records:
           - NLR은 Holy Cross Energy 본사 현장 실험에서 REORG가 계획된 결과에 따라 전력을 복구했다고 보고했다.
         source_urls:
           - https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
-    papers: []
-    relations: []
-    topic_ids: []
   - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
     kind: 사건 뉴스
     region: 해외
@@ -492,6 +485,9 @@ article_records:
     lead: SK하이닉스는 9월 30일 공개한 AI 인프라 해설에서 데이터센터 냉각을 서버·랙의 열을 제거하는 단계와 회수한 열을 시설 밖으로
       전달하는 단계로 설명했다. 고밀도 AI 시스템에서는 열 발생원에 더 가까운 곳에서 열을 제거하는 액체 냉각과 near-junction
       cooling 방식이 활용된다고 설명했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 냉각과 시스템 효율
         paragraphs:
@@ -509,9 +505,6 @@ article_records:
             랙을 30kW 미만이라고 답했으며, 일부 캐비닛은 100kW를 초과하는 것으로 보고됐다.
         source_urls:
           - https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
     kind: 사건 뉴스
     region: 국내
@@ -526,6 +519,9 @@ article_records:
       심근병증 환자 202명의 유전정보와 임상 경과를 분석했다. 전체 환자 중 64명(31.7%)에서 질환 발생에 영향을 줄 수 있는
       유전자 변이가 확인됐으며, LMNA 변이는 심장이식·사망 및 부정맥 위험과, TNNT2 변이는 상대적으로 많은 심장기능 회복 사례와
       연관됐다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 연구 대상 및 데이터 출처
         paragraphs:
@@ -542,9 +538,6 @@ article_records:
             소개했다.
         source_urls:
           - https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
     event_id: 8fac3ce4d39c6ea9
@@ -591,21 +584,21 @@ article_reviews:
   - title: Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
     event_id: 28543c78d1a0a3ec
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-09
-    concept_ids: []
   - title: IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
     event_id: 1e78f5fd4a5acdc8
     review_status: verified
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
     concept_ids: []
-  - title: Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
+  - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
     event_id: 926dd2776aef7b1b
     review_status: verified
-    published_at: 2026-09-30
-    reviewed_at: 2026-10-12
     concept_ids: []
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-01
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     event_id: f89187a6288f099b
     review_status: verified
@@ -627,45 +620,45 @@ article_reviews:
   - title: NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
     event_id: 086bdbb3792ca8d9
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
     event_id: a930c8de646354b3
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
     event_id: e3728daf1bd4be8b
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-06
-    concept_ids: []
   - title: MIT Transit Lab, Google.org Impact Challenge 선정…PTIQ 개발에 210만 달러 지원
     event_id: 17f635e65de87807
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: NLR, 전력망 복구 시스템 REORG 현장 시험 완료…발전기 가동·SCADA실 우선 공급
     event_id: ce1e21d4581adaee
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-07
-    concept_ids: []
   - title: SK하이닉스, AI 데이터센터 전력·냉각 설계 해설
     event_id: 677a5b5535577a74
     review_status: verified
-    published_at: 2026-09-30
-    reviewed_at: 2026-10-13
     concept_ids: []
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-08
   - title: 국립보건연구원, 한국인 확장성 심근병증 유전자 변이와 임상 경과 분석
     event_id: 0921db2a3ce05bb8
     review_status: verified
-    published_at: 2026-09-30
-    reviewed_at: 2026-10-13
     concept_ids: []
+    published_at: 2026-09-30
+    reviewed_at: 2026-10-08
 ---
 
 # 이번 호 표지
@@ -830,19 +823,15 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 
 
-## Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작
+## Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
 
 **분야:** 에너지·기후기술
 **테마:** 생산·공급망
 **보조 테마:** 사업·고객
 **세부 태그:** 설비 투자, 수주·계약
-**기업·기관:** Ørsted, Playa Lakes Joint Venture (PLJV), First Solar
+**기업·기관:** Ørsted, First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고 발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될 것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기 전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는 Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로 예상했으며, 상업운전은 2027년 말로 전망했다. [S10]
-
-### 패널 조달
-
-Ørsted는 Blackwater Solar용 태양광 패널을 미국 제조업체 First Solar에서 조달했다고 밝혔다. [S10]
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다. [S10]
 
 ## Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
 
@@ -890,8 +879,6 @@ HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·�
 
 NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 표면용 5G·Wi-Fi 6 통신 시스템 개발 계약을 Modulate Space Corporation에 수여했다고 발표했다. 고정가격 계약 규모는 약 3,800만 달러다. 실험실 시연 과제의 수행 기간은 2028년 1월 31일까지, 달 표면 통합 네트워크·비행 시연 과제는 2028년 12월 31일까지다. 두 과제는 미래 달 기지의 표면 운영을 지원할 표준 기반 통신 기술을 개발하는 데 초점을 맞춘다. [S14]
 
-
-
 ## Rocket Lab, Synspective SAR 위성 20회 추가 발사 계약
 
 **분야:** 우주·기초과학
@@ -901,8 +888,6 @@ NASA는 9월 30일 미국 클리블랜드 Glenn Research Center를 위한 달 �
 **기업·기관:** Rocket Lab, Synspective
 
 Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Synspective와 신규 Electron 발사 20회의 다년 계약을 체결했다고 발표했다. StriX 합성개구레이더(SAR) 위성 20기를 Launch Complex 1에서 태양동기궤도로 보내며, 발사는 2028\~2031년에 매년 진행할 예정이다. 회사는 이번 계약으로 Synspective를 위한 Electron 총 발사 계약이 47회가 됐으며, 단일 계약 기준 Electron의 최대 상업 발사 계약이라고 밝혔다. [S15]
-
-
 
 ## Roche, 페네브루티닙 신약 신청 FDA 우선심사 접수
 
@@ -1053,7 +1038,7 @@ SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
+- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html

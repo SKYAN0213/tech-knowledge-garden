@@ -83,14 +83,14 @@ article_reviews:
     event_id: 1618822b0726a28a
     review_status: verified
     published_at: 2026-07-28
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-09
     concept_ids:
       - supply-chain
   - title: GitHub Actions, 악성 의심 워크플로를 승인 전 실행 보류
     event_id: 7e9257b6dba23518
     review_status: verified
     published_at: 2026-07-28
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-09
     concept_ids:
       - supply-chain
 ---

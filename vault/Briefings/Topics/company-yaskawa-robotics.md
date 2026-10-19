@@ -2,7 +2,7 @@
 title: 야스카와 로봇 사업의 실적과 전망
 type: briefing-topic
 topic_id: company-yaskawa-robotics
-date: 2026-10-16
+date: 2026-10-19
 description: 10월 9일 발표한 3~8월 로봇 부문 매출은 118,404백만 엔으로 전년 동기 대비 0.7% 감소했고 영업이익은
   5,974백만 엔으로 43.3% 감소했다. 회사는 일본 ERP 전환의 생산·출하 영향과 유럽 구조개편 일시 비용을 설명했다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-yaskawa-robotics.md

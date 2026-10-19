@@ -112,19 +112,19 @@ article_reviews:
     event_id: db9d0913513df69e
     review_status: verified
     published_at: 2026-07-27
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: GitHub, Copilot 앱 접근 정책을 CLI와 분리
     event_id: bbabde57472042d3
     review_status: verified
     published_at: 2026-07-27
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: Copilot 앱·클라우드 에이전트에 기업 관리 설정 확대
     event_id: beab8f92f6eeb134
     review_status: verified
     published_at: 2026-07-27
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 

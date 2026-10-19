@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-16
+date: 2026-10-19
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,7 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/191df632635f9786|NVIDIA·Cisco, 차세대 AI 팩토리용 USFP 발표 계획 공개]] · 2026-10-19
 - [[News/f6ac2c1b54a5d56a|야스카와, 반기 매출 9.8% 증가…로봇 부문 영업이익은 43.3% 감소]] · 2026-10-16
 - [[News/ae1a66253e644962|이노스페이스·인세라, 2027년 이노샛에서 레이저 광통신 실증 추진]] · 2026-10-16
 - [[News/6129483e4257e705|FDA, Anktiva 병용 허가를 고등급 유두상 단독 방광암으로 확대]] · 2026-10-16
@@ -118,7 +119,7 @@ generated_by: tech-knowledge-garden
 - [[News/3cfdb073a82debc3|ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표]] · 2026-10-01
 - [[News/f795c88cad060d16|Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개]] · 2026-10-01
 - [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]] · 2026-10-01
-- [[News/926dd2776aef7b1b|Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작]] · 2026-10-01
+- [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]] · 2026-10-01
 - [[News/1e78f5fd4a5acdc8|IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계]] · 2026-10-01
 - [[News/28543c78d1a0a3ec|Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획]] · 2026-10-01
 - [[News/20af87012182fbd4|Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표]] · 2026-10-01
@@ -128,19 +129,12 @@ generated_by: tech-knowledge-garden
 - [[News/294333117691a99b|Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가]] · 2026-10-01
 - [[News/a82ab8c2c2f14be9|DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개]] · 2026-10-01
 - [[News/8fac3ce4d39c6ea9|OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약]] · 2026-10-01
-- [[News/81d5b6aebc2eb93b|움직임의 흐름 읽는 반도체 기술 개발]] · 2026-09-30
-- [[News/0f6e29456a9ff768|공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의]] · 2026-09-30
-- [[News/d68cbb31349ae1a7|알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성]] · 2026-09-30
-- [[News/126635115c76bf5f|근육 세포로 움직이는 얇은 수영 로봇 설계 발표]] · 2026-09-30
-- [[News/cdc600a0d8ffa349|구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험]] · 2026-09-30
-- [[News/b208f191c6cdf5c1|arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안]] · 2026-09-30
-- [[News/f44e650da992b3ee|Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사]] · 2026-09-30
 - [[News/6d4b8f87819e0cb1|NASA, 단일 연료탱크로 화학·전기 추진을 시험할 6U CubeSat 지상시험 완료]] · 2026-09-30
 - [[News/96690c067704a88d|ASEC, 거래소 사칭 페이스북 광고 통한 JSCEAL 유포 확인…국내 PC 약 1,500대 감염]] · 2026-09-30
 - [[News/21c224b7f1e72026|ESA Juice, 지구 근접비행으로 목성행 경로 20도 변경]] · 2026-09-30
 - [[News/d2674c5a4f395eda|FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인]] · 2026-09-30
 - [[News/6362665d03f77e72|삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급]] · 2026-09-30
-- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
+- [[News/53172edb0c5fef70|Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여]] · 2026-09-30
 - [[News/8a3306a5bb75996e|미 에너지부, 26개 주 전력망 사업 31건에 19억 달러 지원 추진]] · 2026-09-30
 - [[News/bad3d5636979c1ec|IFR 집계: 공장 산업용 로봇 가동 재고 500만대, 2025년 설치 60만대 돌파]] · 2026-09-30
 - [[News/783ed5a89f40a298|SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시]] · 2026-09-30
@@ -156,7 +150,7 @@ generated_by: tech-knowledge-garden
 - [[News/8eef4c45f7f30411|LG에너지솔루션 ESS, NVIDIA DSX Ready 요건 충족]] · 2026-09-23
 - [[News/3742191de5126dd0|Cadence, 설계 사양을 RTL로 만드는 에이전트 공개…4분기 제한 제공]] · 2026-09-23
 - [[News/c2d62bc474a75d21|Intrinsic 로봇 경진대회, 실제 케이블 삽입 시험에서 두 팀 성공률 100%]] · 2026-09-23
-- [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]] · 2026-09-23
+- [[News/94d03e7f8181fafd|LS일렉트릭, 부산 공장에 Spot 2대 정식 운용…열화상·환경 점검]] · 2026-09-23
 - [[News/c2a48879e9e88507|네이버클라우드, DB·서버 접근 통제 서비스 DSAC 출시]] · 2026-09-23
 - [[News/f73f3c73e2cee66d|Proofpoint, 데이터·AI 보안을 묶는 세 가지 에이전트 발표]] · 2026-09-23
 - [[News/48f3b502c43f955e|VAST, 데이터·모델을 보호하는 DataEnclave 공개…출하는 내년 1분기]] · 2026-09-23
@@ -172,9 +166,6 @@ generated_by: tech-knowledge-garden
 - [[News/a49bfbd297aaeae9|Navitas, Magnachip에 500만달러 지분 투자 계약]] · 2026-09-22
 - [[News/d37e6feb52f811ed|삼성전자, 광주 HVAC 공장 착공…2,400억원 투자·2028년 가동 계획]] · 2026-09-22
 - [[News/43924fdd4d64f158|CXMT, G5 D램 공정과 24Gb LPDDR5X 두 제품 양산 발표]] · 2026-09-21
-- [[News/b0ca57e570da44cc|KAIST 공동 연구진, 두 종류 초박막 반도체용 터널링 주입기 개발]] · 2026-09-20
-- [[News/d56b87bf0ad247f9|구글, 코드 변경마다 AI 보안 검사…오픈소스 Mantis 공개]] · 2026-09-20
-- [[News/6e9415b20331e0b7|Anthropic·Accenture, 프런티어 AI 독립 평가 파트너십 발표…Faculty 주도]] · 2026-09-20
 - [[News/43dbd3fe6cdd4fcf|두산로보틱스, 권영민 사장 신임 CEO로 선임]] · 2026-09-20
 - [[News/c8c055684e1b9e3a|Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료]] · 2026-09-20
 - [[News/21e5701b8e5bea51|Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표]] · 2026-09-20
@@ -191,8 +182,6 @@ generated_by: tech-knowledge-garden
 - [[News/845ee65994660acf|NASA 과학기구 BOOP!, 4시간 29분 비행하며 탐사 장비 시험]] · 2026-09-14
 - [[News/18ebc7c21cf04849|삼성자산운용, 생성형 AI 정보 유출 감시 시스템 구축 추진]] · 2026-09-14
 - [[News/9935b37c854178f3|현대차그룹, 엔비디아 기반 2028년·자체 AI 기반 2029년 양산 목표 제시]] · 2026-09-14
-- [[News/73424d904c85be55|Y Combinator의 Garry Tan, 미국 AI 연구소의 프런티어 모델 증류 지지]] · 2026-09-13
-- [[News/e0a07521cdf8fed3|Anthropic, AI 속도 조절 3단계 제안…외부 평가자 상시 접근 약속]] · 2026-09-13
 - [[News/67402935155ca6d3|RubyGems, 5월 악성 패키지 500개 이상 제거한 사건의 조사 결과 공개]] · 2026-09-13
 - [[News/eb739a02acad3ab9|FANUC, 도면에서 용접 조건·동작 생성하는 AI Welding Agent 개발]] · 2026-09-13
 - [[News/902d86854fec2b7d|HD현대로보틱스, 에이딘에 130억 원 투자…로봇손·표면가공 공동 개발]] · 2026-09-13
@@ -217,7 +206,6 @@ generated_by: tech-knowledge-garden
 - [[News/e0f75446731d598c|OpenAI 수석과학자, 추론 과정 감시에 대한 의존의 한계를 설명]] · 2026-09-07
 - [[News/3784d7aba9718af9|연구를 돕는 AI, 성공률 옆에 사람 개입률을 놓다]] · 2026-09-07
 - [[News/741b58198e7087a0|OpenAI, 에이전트 위키 사건 인정…미스얼라인먼트 공개 기준 마련 추진]] · 2026-09-06
-- [[News/7fd12243f203b819|연구진, OpenAI 식별자 에이전트의 위키 평가 협업 추적…회사 소속은 미확인]] · 2026-09-05
 - [[News/c96e7378059165d6|GitHub, 사용자 신원 없이 저장소 스타 이력을 조회하는 API 공개]] · 2026-09-05
 - [[News/cf45e2be25e062a0|GitHub Copilot, GPT-6 Astra를 유료 플랜에 순차 제공]] · 2026-09-05
 - [[News/13cebc4d5ec60b11|CodeQL 2.26.4, Go 1.27과 GitHub Actions 보안 탐지 개선]] · 2026-09-04
@@ -334,6 +322,8 @@ generated_by: tech-knowledge-garden
 - [[News/90b363febceab42d|MCP 참조 서버 2026.7.4, 메모리 그래프 리소스·구독 기능 반영]] · 2026-07-05
 - [[News/af17286f6e6b237f|Claude Code 2.1.201, Sonnet 5 세션의 시스템 메시지 처리 변경]] · 2026-07-04
 - [[News/3c9c826b5f004bf4|Claude Code 2.1.200, 권한 기본값과 백그라운드 세션 복구 수정]] · 2026-07-04
+- [[News/22b7694194445ab2|Midjourney, 물탱크형 초음파 스캐너 제작 영상 공개]] · 2026-07-04
+- [[News/88ecdef43c05f6e5|Anthropic, 소외 질환 치료제 개발 계획 밝혀…생명과학 인력·실험실 확충]] · 2026-07-04
 - [[News/199f1aeef5f0463c|Claude Code 2.1.199, 부분 작업 보존·백그라운드 에이전트 오류 수정]] · 2026-07-03
 - [[News/b435ebb16bb8038a|Vercel AI SDK 7.0.14, 실험적 스트리밍 음성 전사 지원 추가]] · 2026-07-03
 - [[News/bfeae69131afd34f|AWS, 다중 턴 에이전트 강화학습의 환경·보상·평가 설계 지침 공개]] · 2026-07-03
@@ -343,7 +333,31 @@ generated_by: tech-knowledge-garden
 - [[News/c2ff68732c7e19e0|Vercel AI SDK, Vertex AI용 Gemini Interactions 호출 추가]] · 2026-07-02
 - [[News/e456906813d94efb|GitHub, 기업 밖 공개 콘텐츠의 비밀정보 유출 감시 프리뷰 공개]] · 2026-07-02
 - [[News/4f2226d872abe871|NVIDIA, AI 클라우드에 수익 공유·신용 지원 조달 모델 도입]] · 2026-07-02
+- [[News/363e3382634f9bd2|Vercel ai@7.0.10, MCP 도구 호출에 maxRetries 추가]] · 2026-07-02
+- [[News/33188d7720dd69d5|AWS, Bedrock 모델 사양·가격·지역을 비교하는 오픈소스 Model Profiler 소개]] · 2026-07-02
+- [[News/1d209c5581795359|Cloudflare, AI 크롤러 제어 확대…9월 차단 정책·콘텐츠 과금 계획 공개]] · 2026-07-02
+- [[News/51a5467090ea3ba3|AWS가 설명한 AgentCore Memory 검색: 속성 조건으로 기억 후보를 먼저 좁힌다]] · 2026-07-02
+- [[News/8cd92561a8c8a996|AWS, A2A 게이트웨이 참조 구현 공개…검색·권한·라우팅 통합]] · 2026-07-02
+- [[News/451e3eb01190ca14|AWS, GovCloud Bedrock에 GPT OSS·Nemotron 모델 제공]] · 2026-07-02
+- [[News/968e3850e2856545|@ai-sdk/harness 1.0.12 정식 출시, activeTools 기반 필터링 기능 추가]] · 2026-07-02
+- [[News/d5905aa4e0792ac5|NVIDIA, 미국 AI 인프라 생산 계획과 제조 파트너 정리]] · 2026-07-02
 - [[News/b3b1b85723aa6104|AWS, Fable 5 보호 조치 설명…Anthropic은 7월 1일 재제공 계획]] · 2026-07-01
+- [[News/d2b47e5ca2b10e4d|ScarfBench, Java 프레임워크 이전을 빌드·배포·동작으로 평가]] · 2026-07-01
+- [[News/e9569f49d8c366f5|AWS, Bedrock 추론의 분산·대체 모델·계정 격리 패턴 정리]] · 2026-07-01
+- [[News/f535a00948c7870e|AWS, Bedrock 모델 구독을 여러 계정에 배포하는 절차 설명]] · 2026-07-01
+- [[News/bdba36a697d4b5d2|AWS, AG-UI로 에이전트와 화면을 연결하는 구현 예제 공개]] · 2026-07-01
+- [[News/7f08bb6a05ab97c5|GitHub, 오픈소스 라이선스 준수 기능 공개 프리뷰 제공]] · 2026-07-01
+- [[News/a4de6520a9d0e1a1|GitHub, 커버리지 기준에 따른 PR 병합 보호 공개 프리뷰]] · 2026-07-01
+- [[News/cfac3368216d4743|Google, Gemini Spark macOS 베타 출시]] · 2026-07-01
+- [[News/51316e8a2b80cf8a|Google, Nano Banana 2 Lite 출시·Omni Flash 개발자 공개]] · 2026-07-01
+- [[News/f1b1af2379f935af|NVIDIA, Claude Science의 BioNeMo 연구 도구 연동과 공개 베타 소개]] · 2026-07-01
+- [[News/d396cbbb60fa5355|AWS, Bedrock과 Claude Platform에 Sonnet 5 제공]] · 2026-07-01
+- [[News/5ff450f1bd547f3e|GitHub, Copilot에 Claude Sonnet 5 순차 제공]] · 2026-07-01
+- [[News/2783ddb1c4c5abed|OKX, AI 에이전트가 서비스를 고용하고 결제하는 시장 공개]] · 2026-07-01
+- [[News/d6adaabeb707b608|AWS, 고객 현장에 AI 엔지니어를 투입하는 전담 조직 출범]] · 2026-07-01
+- [[News/a5ac4346ca76b814|NVIDIA, 결함 검사·도시 영상·작업 검증용 비전 AI 구현 지침 공개]] · 2026-07-01
+- [[News/c12b394bcd713139|GitHub, 오래된 Dependabot 보안 알림을 CSV 보관으로 전환 예고]] · 2026-07-01
+- [[News/c54465745fc299ec|GitHub, Dependabot의 npm 설정 추론 중단…scope를 우선 적용]] · 2026-07-01
 - [[News/940d319c8ef1fe0c|AI SDK 7.0.8, 비디오 생성에 프레임 이미지·참조 입력 옵션 추가]] · 2026-06-30
 - [[News/a3d36f8b621698a5|Claude Code v2.1.196, 조직 모델 설정·MCP 승인·백그라운드 복구 개선]] · 2026-06-30
 - [[News/2987e3b3c79a3a0a|Google·Public First, 영국 직장 내 AI 활용 비율 73% 보고]] · 2026-06-30
@@ -357,11 +371,54 @@ generated_by: tech-knowledge-garden
 - [[News/65854015519164e0|AWS, AgentCore 실행 추적으로 무한 루프·도구 오류를 찾는 절차 공개]] · 2026-06-30
 - [[News/6c26cbb466f80e14|GitHub, 저장소 이슈 생성을 쓰기 권한 보유자로 제한하는 설정 추가]] · 2026-06-30
 - [[News/3ab1311f879e64a8|GitHub Copilot, Claude Opus 4.8 fast mode 프리뷰 확대]] · 2026-06-30
-- [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산라인 이탈 발표…산업용 G2]] · 2026-06-29
+- [[News/1cc54e7c1a9f8b9e|Rocket Lab, Iridium 인수 계약…기업가치 약 80억 달러]] · 2026-06-30
+- [[News/ef9ac98c9d795aaf|Proception, 22자유도 로봇 손 첫 출하…1,100만 달러 시드 투자]] · 2026-06-30
+- [[News/b1cc8f230329467a|Omen AI, 냉각수 분광센서 사업에 3,100만 달러 시리즈A 유치]] · 2026-06-30
+- [[News/e32b6bfc0436d5b8|Palantir·NVIDIA, 미국 정부용 Nemotron 자체 운영 환경 발표]] · 2026-06-30
+- [[News/946d307c203886f8|GLM-5.2 보안 평가 공개…IDOR 탐지 F1 39%, 조사 과제 28/59]] · 2026-06-29
+- [[News/1b13fe6ad15a6b39|Ford, 숙련 엔지니어 350명 채용…AI 품질관리 보완]] · 2026-06-29
+- [[News/642dca497b289b98|LineShine, TOP500 1위…CPU로 HPL 2.198 엑사플롭/초]] · 2026-06-29
+- [[News/13b1053481f6a8a0|Suno Spark, 독립 아티스트 지원…참여 조건도 보도]] · 2026-06-29
+- [[News/74d1c92a38ffbb1a|AGIBOT, 15,000번째 로봇 생산 발표…G2 공장 검사 사례 공개]] · 2026-06-29
 - [[News/e9d913994a1de60c|吉翼智能, 첫 산업·서비스 로봇과 Z-1 모델 공개]] · 2026-06-28
+- [[News/dfcf3c7896d1cdb3|Apple, CXMT 메모리 구매 허용 요청 보도]] · 2026-06-28
 - [[News/ef404a41d1e5901f|Direct Drive Tech, 바퀴·다리형 TITA의 설계와 사양 소개]] · 2026-06-28
+- [[News/9cafba394397a09a|Anthropic Mythos 5, 승인된 보안·인프라 조직에 접근 재개 허용 보도]] · 2026-06-27
 - [[News/f3c67caad8443881|GitHub, MAI-Code-1-Flash를 Copilot Business·Enterprise에 정식 제공]] · 2026-06-27
+- [[News/e0f27b504657fd4a|AWS, S3 PDF를 MCP 도구로 읽는 구현 예제 공개]] · 2026-06-27
+- [[News/90489b85fa53d76c|GitHub Desktop 3.6, 워크트리·Copilot 병합 충돌 해결 지원]] · 2026-06-27
 - [[News/bef8ee041d7dc1a0|DEEPX·Sixfab, Raspberry Pi 5용 NPU 보드 공개]] · 2026-06-26
+- [[News/c8dc21c33120d411|에이전트의 자연어 지침을 Cedar 정책으로 변환하는 연구 공개]] · 2026-06-26
+- [[News/9a64fae68418e394|LLM 초안의 의미 변화로 중단 시점 찾기…HotpotQA 60문항 실험]] · 2026-06-26
+- [[News/c4cfe0d77202509b|이력서의 자격 정보 없는 자기 홍보 문구가 LLM 채용 순위를 바꾼 실험]] · 2026-06-26
+- [[News/c6535d8abed89b4e|모델 응답 선택형 결합의 정확도 상한을 공동 실패율로 설명한 연구]] · 2026-06-26
+- [[News/7b363c1ebde197cd|GitHub Copilot CLI·VS Code, 기업이 지정한 플러그인 마켓만 허용]] · 2026-06-26
+- [[News/0c70c8e30a8ac7bb|GitHub Copilot 코드 리뷰, 조직별 분석 깊이 설정과 파일 탐색 도구 변경]] · 2026-06-26
+- [[News/647c2e3213a766f3|AWS, 데이터 검색·SQL 실행 단계별 권한을 적용하는 에이전트 구조 제시]] · 2026-06-26
+- [[News/ee6b75b19b24b4a6|AWS, 여러 계정의 Health 이벤트를 MCP로 조회하는 Chaplin 구조 공개]] · 2026-06-26
+- [[News/39d2586b9983dec7|GitHub Enterprise Cloud, 팀 구성원을 비용센터에 자동 귀속]] · 2026-06-26
+- [[News/ab71eec2510201da|npm, 중요 계정의 이메일 변경·복구 코드 사용 뒤 72시간 읽기 전용 보호]] · 2026-06-26
+- [[News/d0057cdfb747d0c0|GitHub Actions, 같은 작업 안에서 단계 병렬 실행 지원]] · 2026-06-26
+- [[News/cea0a4cfbb6e7a28|로봇 행동 궤적을 먼저 학습해 VLA에 옮기는 두 단계 연구 공개]] · 2026-06-26
+- [[News/bd280179fb026f84|자기 증류 모델의 평균 정답률과 답변 다양성을 따로 비교한 연구]] · 2026-06-26
+- [[News/09b46ad807916591|RL 학습 모델과 기준 모델의 확률비로 에이전트 진행을 평가하는 연구]] · 2026-06-26
+- [[News/d68af779b2d48755|Microsoft, Talos 유전체 재분석 결과 소개…4,735명에서 추가 진단 확인]] · 2026-06-26
+- [[News/ad312ce435987076|NVIDIA, Transformers v5 기반 NeMo AutoModel 학습 구조와 MoE 비교 공개]] · 2026-06-26
+- [[News/71522d4915be298f|Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개]] · 2026-06-26
+- [[News/83a8d71c767e86f0|GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가]] · 2026-06-26
+- [[News/d9ba5ead7fa4b5a5|GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일]] · 2026-06-26
+- [[News/5f6807aa79d170e1|OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적]] · 2026-06-26
+- [[News/78dd55bd3d76bf5e|OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획]] · 2026-06-26
+- [[News/97a064f78df2cd59|RAG 개인정보 보호 연구, 검색 문서를 세 에이전트로 오프라인 재작성]] · 2026-06-24
+- [[News/56038683d388c83d|Grad Detect 연구, 추론 중 기울기 패턴으로 환각·답변 유보를 예측]] · 2026-06-24
+- [[News/99963ac111426254|코딩 에이전트 탐지 연구, 저장소 파일·커밋·계정 신호를 함께 대조]] · 2026-06-24
+- [[News/2e297cf400e7d42e|Transformers.js, 해시로 모델 파일을 공유하는 Cross-Origin Storage 실험 소개]] · 2026-06-24
+- [[News/b0d7df1028b033f7|Hugging Face, AI 초안·PR 대조·사람 검토로 huggingface_hub 주간 릴리스 구성]] · 2026-06-24
+- [[News/c8a787a9fe2a8772|Microsoft, Copilot 대화에 SPFx 업무 화면을 띄우는 SharePoint Copilot Apps 소개]] · 2026-06-24
+- [[News/b58cbd8dc63e6f59|AWS, AgentCore 공동 인프라에서 고객 데이터·메모리·비용을 나누는 예제 공개]] · 2026-06-24
+- [[News/2c0ff8cab504703e|OpenAI, Appia Foundation의 AI 표준·평가 기준 공동 개발 참여 소개]] · 2026-06-24
+- [[News/aefdd93cd28250ac|GitHub Copilot 앱, 사용자 키와 로컬 모델로 에이전트 세션 실행 지원]] · 2026-06-24
+- [[News/64748ac3266300d1|Anthropic, Slack 채널에서 작업을 맡기는 Claude Tag 베타 공개]] · 2026-06-24
 - [[News/172674afcb8f94fb|OpenAI·Trail of Bits, 오픈소스 유지보수자를 위한 Patch the Planet 소개]] · 2026-06-23
 - [[News/88ca535a278fef4f|OpenAI, Daybreak 확대와 Codex Security·GPT-5.5-Cyber 업데이트 발표]] · 2026-06-23
 - [[News/2253bdfec0d930ce|LangChain 설문, 관측 도구와 에이전트 평가 도입 현황 공개]] · 2026-06-23

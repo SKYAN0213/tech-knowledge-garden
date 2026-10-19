@@ -115,11 +115,11 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 ### 에너지·기후기술 · 4건
 
-#### [[News/926dd2776aef7b1b|Ørsted, 뉴멕시코 첫 사업 Blackwater Solar 건설 시작]]
+#### [[News/926dd2776aef7b1b|Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수]]
 
-생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · Playa Lakes Joint Venture (PLJV) · First Solar
+생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 200 MW Blackwater Solar 건설을 시작했다고 발표했으며, 이는 회사의 뉴멕시코주 첫 프로젝트다. Ørsted는 사업지 인근 습지 복원·보전을 위해 Playa Lakes Joint Venture(PLJV)에 10만 달러를 지원한다고 발표했고, 회사는 뉴멕시코주 멜로스 인근 8.8에이커 플라야 보전에 도움이 될 것이라고 밝혔다. 회사 발표에 따르면 Blackwater Solar는 뉴멕시코의 증가하는 산업용 전력 수요를 뒷받침할 장기 전력구매계약으로 지원되며, 연간 발전량은 SPP 권역에서 5만6천 가구가 1년간 사용하는 양을 초과할 것으로 제시됐다. Ørsted는 Blackwater Solar가 운영 기간 동안 Roosevelt County에 거의 1,800만 달러의 재산세 수입을 제공할 것으로 예상했으며, 상업운전은 2027년 말로 전망했다.
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
 
 #### [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]]
 
@@ -204,7 +204,7 @@ Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Syn
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
+- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html

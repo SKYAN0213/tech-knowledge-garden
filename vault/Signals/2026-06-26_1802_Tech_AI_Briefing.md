@@ -3,13 +3,13 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/06/2026-06-26_1802_Tech_AI_Briefing
 date: 2026-06-26
-reviewed: 2026-09-30
+reviewed: 2026-10-09
 review_basis: primary-research
 observations:
   - id: 20260930-deepx-edge-npu
     topic_id: performance-path
     event_id: bef8ee041d7dc1a0
-    event_date: 2026-06-26
+    event_date: 2026-06-26T03:30:00-04:00
     stance: context
     change: DEEPX와 Sixfab이 Raspberry Pi 5용 NPU 보드와 모델 컴파일·배포 SDK를 발표했다.
     meaning: 엣지 추론용 가속기와 개발 도구를 한 보드 경로에 묶는 제품 사례가 추가됐다.

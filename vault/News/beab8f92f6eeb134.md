@@ -9,7 +9,7 @@ event_id: beab8f92f6eeb134
 review_status: verified
 concept_ids: []
 published_at: 2026-07-27
-reviewed_at: 2026-10-05
+reviewed_at: 2026-10-10
 source_url: https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/
 sources:
   - https://github.blog/changelog/2026-07-27-enterprise-managed-settings-now-apply-to-the-github-copilot-app/

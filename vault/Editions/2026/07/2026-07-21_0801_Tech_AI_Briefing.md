@@ -6,7 +6,6 @@ date: 2026-07-21
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -129,7 +128,7 @@ article_reviews:
     event_id: 80bba25e13259f42
     review_status: verified
     published_at: 2026-07-21
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-07-20T09:00:14-07:00
@@ -137,7 +136,7 @@ article_reviews:
     event_id: e6ab1f9b9683cfdd
     review_status: verified
     published_at: 2026-07-21
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-07-20T11:24:14-07:00
@@ -145,10 +144,8 @@ article_reviews:
     event_id: 426d91706ebf17e3
     review_status: verified
     published_at: 2026-07-20
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
-    date_kind: source-publication-time
-    source_published_at: 2026-07-20T06:01:24-07:00
 ---
 
 # 이번 호 표지

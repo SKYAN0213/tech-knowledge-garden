@@ -48,6 +48,9 @@ article_records:
     lead: OpenAI는 7월 29일 GPT-5.6 Sol의 ARC-AGI-3 공개 과제 평가에서 추론 보존과 문맥 압축을 함께 적용한 결과를
       공개했다. 회사에 따르면 공식 실행기의 점수는 13.3%였고, 두 설정을 적용한 실행기에서는 38.3%를 기록했다. 같은 실험에서
       출력 토큰은 약 6분의 1로 줄었다고 보고했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 게임 규칙을 익히는 능력과 행동 효율
         paragraphs:
@@ -63,9 +66,6 @@ article_records:
             단위가 다르다.
         source_urls:
           - https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: OpenAI, 대학 연구자 10만 명에 무료 AI 도구 지원 계획 발표
     kind: 사건 뉴스
     region: 해외
@@ -110,6 +110,9 @@ article_records:
     lead: OpenAI는 7월 29일 GPT-5.6의 효율을 모델 학습, 추론 서버, Codex·ChatGPT Work 실행기에서 개선한 방법을
       공개했다. 회사는 GPU 커널 개선을 합쳐 종단 간 모델 서빙 비용을 20% 줄였고, 초안 모델 개선으로 토큰 생성 효율을 15%
       이상 높였다고 보고했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 요청 배분과 GPU 커널
         paragraphs:
@@ -137,9 +140,6 @@ article_records:
             제한한다.
         source_urls:
           - https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: GitHub Copilot 코드리뷰, agent skills·MCP 정식 지원
     kind: 사건 뉴스
     region: 해외
@@ -179,7 +179,7 @@ article_records:
       who: GitHub
       when: 2026-07-29 발표, 2026-08-26 시행
       where: 미기재
-      what: Copilot Business·Enterprise 전역 기본 허용 정책 발표 및 시행
+      what: Copilot Business·Enterprise 정식 모델 기본 허용 정책 발표(2026-08-26 시행 예정)
       how: 관리자 개별 활성화 대신 기본 허용으로 정책 변경, opt-out 설정 제공
       why: 미기재
     lead: GitHub는 7월 29일 Copilot Business·Enterprise에서 정식 모델을 기본 허용하는 전역 정책을 발표했다.
@@ -205,39 +205,39 @@ article_reviews:
   - title: OpenAI, 추론 보존·문맥 압축으로 ARC-AGI-3 점수 약 3배 높여
     event_id: 265c6a0134aba9b6
     review_status: verified
-    published_at: 2026-07-29
-    reviewed_at: 2026-10-05
     concept_ids:
       - evaluation
       - context-compaction
+    published_at: 2026-07-29
+    reviewed_at: 2026-10-09
   - title: OpenAI, 대학 연구자 10만 명에 무료 AI 도구 지원 계획 발표
     event_id: 47da73cdc4f72b4c
     review_status: verified
     published_at: 2026-07-29
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
   - title: OpenAI, GPT-5.6 서빙과 에이전트 실행기의 효율 개선 공개
     event_id: eb71f165025c2507
     review_status: verified
-    published_at: 2026-07-29
-    reviewed_at: 2026-10-05
     concept_ids:
       - inference
       - kv-cache
       - prompt-caching
       - speculative-decoding
+    published_at: 2026-07-29
+    reviewed_at: 2026-10-09
   - title: GitHub Copilot 코드리뷰, agent skills·MCP 정식 지원
     event_id: 05746085e97d8c7d
     review_status: verified
     published_at: 2026-07-29
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids:
       - mcp
   - title: GitHub, Copilot 기업용 새 모델 기본 허용 정책 8월 26일 시행 예고
     event_id: 37ab4b1c66029ac0
     review_status: verified
     published_at: 2026-07-29
-    reviewed_at: 2026-10-05
+    reviewed_at: 2026-10-10
     concept_ids: []
 ---
 

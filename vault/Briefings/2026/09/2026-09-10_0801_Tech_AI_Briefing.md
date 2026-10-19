@@ -62,6 +62,6 @@ GitHub는 9월 9일 비밀정보 경보가 남아 있는 풀 리퀘스트(PR)의
 ## 출처
 
 - [S1] https://openai.com/index/gpt-6-astra-next-generation-work/
-- [S2] https://openai.com/news/rss.xml
-- [S3] https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/
-- [S4] https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/
+- [S2] https://github.blog/changelog/2026-09-09-enterprise-managed-permissions-for-github-copilot-agent-operations/
+- [S3] https://github.blog/changelog/2026-09-09-block-pull-requests-with-exposed-secrets-from-merging/
+- [S4] https://openai.com/news/rss.xml

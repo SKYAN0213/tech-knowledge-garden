@@ -3,7 +3,7 @@ schema_version: tech-signals/v1
 type: trend-observations
 edition: Editions/2026/08/2026-08-26_0802_Tech_AI_Briefing
 date: 2026-08-26
-reviewed: 2026-09-28
+reviewed: 2026-10-09
 review_basis: saved-coverage
 observations:
   - id: performance-chip
@@ -14,6 +14,7 @@ observations:
     meaning: 서로 다른 성능 지표를 합치지 않고 각 모델·비교 시스템·명목 8k/1k STP·정격 전력 조건을 붙여 읽는다.
     limit: OpenAI가 선택한 세 모델과 비교 시스템의 시험이며 전력당 수치는 공표된 칩 정격 전력 기준이다.
     next_check: 회사가 발표한 2026년 말 자체 인프라 배치 계획의 실제 진행 단계와 적용 모델을 확인한다.
+    event_date: 2026-08-25
 ---
 
 # 2026-08-26 트렌드 기록

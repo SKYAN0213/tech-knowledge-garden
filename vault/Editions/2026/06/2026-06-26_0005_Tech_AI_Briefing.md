@@ -1,13 +1,21 @@
 ---
 title: Tech & AI Briefing - 00:05
-date: 2026-06-26
 time: 00:05
+type: briefing
+tags:
+  - AI
+  - TechBriefing
+  - Obsidian
+schema_version: tech-ai-magazine/v2
+date: 2026-06-26
 timezone: Asia/Seoul
 coverage_start: 2026-06-24T07:00:00+09:00
 coverage_end: 2026-06-26T00:05:00+09:00
-type: briefing
-source_count: 16
-new_items_count: 9
+editorial_format: six-w/v1
+briefing_format: sector-five/v1
+theme_format: news-themes/v1
+source_count: 11
+new_items_count: 10
 linked_knowledge_notes:
   - AI Inference Infrastructure
   - AI Agents
@@ -15,250 +23,686 @@ linked_knowledge_notes:
   - Agent Evaluation and Observability
   - AI for Scientific Discovery
   - Vision-Language-Action Models
-tags:
-  - AI
-  - TechBriefing
-  - Obsidian
+  - Knowledge/AI Systems/AI Agents
+knowledge_notes_created: []
+knowledge_notes_updated: []
+headlines:
+  - OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
+  - OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적
+  - GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일
+  - GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가
+  - Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개
+article_records:
+  - title: OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: OpenAI와 Broadcom은 2026년 6월 24일(한국시간), 대규모 언어 모델의 추론을 위해 설계한 가속기 Jalapeño를
+      공개했다. Broadcom 발표에 따르면 엔지니어링 시제품은 연구실에서 목표 주파수·전력으로 모델 작업을 실행하고 있으며, 여러
+      세대에 걸친 플랫폼의 초기 배치는 2026년 말까지 진행할 계획이다.
+    explanations:
+      - heading: 칩과 시스템의 역할
+        paragraphs:
+          - OpenAI는 모델·커널·서빙 구조에 맞춰 칩을 설계하고, Broadcom은 실리콘 구현·네트워킹을, Celestica는
+            보드·랙·시스템 통합을 맡는다. 설계는 데이터 이동을 줄이고 연산·메모리·네트워크 자원의 균형을 맞추는 방향이다.
+        source_urls:
+          - https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-unveil-llm-optimized-intelligence-processor
+      - heading: 개발 기간과 초기 평가
+        paragraphs:
+          - 양사는 초기 설계부터 제조용 설계 확정인 테이프아웃까지 9개월이 걸렸으며, 설계·최적화 일부에 OpenAI 모델을
+            활용했다고 밝혔다. 시제품 공개와 데이터센터 배치 계획은 별개 단계다.
+          - 와트당 성능 개선은 초기 시험에 근거한 회사의 설명이다. 최종 성능 측정은 진행 중이며 구체적 기술 보고서를 추후 공개할
+            예정이라고 밝혔다.
+        source_urls:
+          - https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-unveil-llm-optimized-intelligence-processor
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-25
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: OpenAI는 2026년 6월 25일 Codex 사용 기록으로 에이전트의 업무 활용을 조사한 경제 연구를 소개했다.
+      개인·조직·OpenAI 내부 사용을 구분하고, 여러 도구를 쓰며 장시간 진행하는 위임 작업과 비개발자의 사용 변화를 분석했다.
+    explanations:
+      - heading: 작업 시간 지표의 뜻
+        paragraphs:
+          - 회사는 2026년 5월 개인 사용자 표본의 80.6%가 사람이 30분 이상 걸릴 것으로 추정한 요청을 한 번 이상 했다고
+            밝혔다. 이는 사용자 비율이며 전체 요청의 비율이 아니다.
+          - 시간은 실제 절약 시간을 측정한 값이 아니라 Codex 대화를 읽은 판정용 언어 모델의 추정이다. 개인 사용자 중 무작위
+            0.1% 표본의 질의를 사용했다.
+        source_urls:
+          - https://openai.com/index/how-agents-are-transforming-work/
+      - heading: 직무를 넘나드는 사용
+        paragraphs:
+          - OpenAI 내부의 업무 부서에서 생성한 Codex 결과 중 4분의 1 이상은 엔지니어링·코딩 작업으로 분류됐다. 이
+            지표는 결과 토큰과 추정 직무를 비교한 것이며 회사 밖 전체 근로자의 생산성 측정은 아니다.
+        source_urls:
+          - https://openai.com/index/how-agents-are-transforming-work/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-25
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: GitHub는 2026년 6월 25일(한국시간), Copilot Free·Student 요금제의 모델 선택을 자동 선택으로 통일한다고
+      발표했다. 작업별 모델을 자동으로 선택하며, 해당 요금제에서는 자동 선택이 기본이자 유일한 선택 방식이 된다.
+    explanations:
+      - heading: 접근 범위와 표시 변경
+        paragraphs:
+          - 자동 선택은 여러 모델 계열을 이용하지만 요금제 제한을 따른다. GitHub는 Microsoft가 출시한 모델의
+            Preview 표시도 제거한다고 밝혔다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-24-changes-to-model-selection-for-free-and-student-plans/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-25
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: GitHub는 2026년 6월 25일(한국시간), 계정 침해나 자격증명 탈취에 대응하는 기업 계정의 일괄 회수 기능을 발표했다. 기업
+      소유자와 Manage enterprise credentials 권한을 가진 구성원은 특정 사용자 또는 기업 전체의 자격증명에 조치할
+      수 있다.
+    explanations:
+      - heading: 인증 해제와 삭제의 범위
+        paragraphs:
+          - 개인 액세스 토큰·SSH 키·OAuth 토큰의 기업 SSO 승인을 회수할 수 있다. 토큰·SSH 키 자체의 삭제는
+            Enterprise Managed Users 계정에만 제공하며, 조직별 SSO 승인 목록·회수는 조직 REST API로
+            지원한다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-24-self-service-credential-revocation-for-incident-response/
+      - heading: 본인 회수와 감사 기록
+        paragraphs:
+          - 개별 기업 구성원은 Settings의 Credentials에서 자신의 자격증명 수를 확인하고 토큰·키를 하나씩 처리하지
+            않고 일괄 회수·삭제할 수 있다. 기업 소유자와 해당 사용자는 감사 로그·이메일 알림에서 조치 내용을 확인한다.
+        source_urls:
+          - https://github.blog/changelog/2026-06-24-self-service-credential-revocation-for-incident-response/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: Hugging Face는 2026년 6월 24일(한국시간), Slack에서 코드·로그·데이터를 조회하고 작업을 요청하는 내부 도구
+      Moon Bot의 구조를 공개했다. Pi 코딩 에이전트 SDK와 Kubernetes 실행 환경을 사용하며, 대화와 도구 호출 기록을
+      Hugging Face Buckets에 저장해 재시작 뒤에도 작업을 이어간다.
+    explanations:
+      - heading: 스레드별 작업과 기억
+        paragraphs:
+          - Slack 스레드마다 독립적인 에이전트 세션을 생성한다. 도구 호출 결과까지 담은 JSONL 파일과 스레드·세션의 대응표를
+            저장하고, 이어지는 메시지에서 필요한 세션을 내려받는다.
+          - 응답 Markdown과 세션 기록에 연결되는 버튼을 Slack에 제공한다. 과거 상호작용 기록은 별도 기억 도구로
+            검색하며, Markdown 스킬은 CLI 사용법과 코드베이스 관례를 전달한다.
+        source_urls:
+          - https://huggingface.co/blog/huggingface/moon-bot
+      - heading: 사용한 SDK
+        paragraphs:
+          - Moon Bot의 코딩 SDK는 Pi다. 별도로 인용한 Pipecat은 실시간 음성·멀티모달 에이전트를 만드는 Python
+            프레임워크다.
+        source_urls:
+          - https://github.com/pipecat-ai/pipecat
+          - https://huggingface.co/blog/huggingface/moon-bot
+      - heading: 권한과 쓰기 경로
+        paragraphs:
+          - Okta 그룹으로 사용자의 접근 등급을 결정하고 등급마다 별도 Linux 사용자와 자격증명 환경을 둔다. 외부 서비스 키는
+            프록시가 서버 측에서 삽입하고, 에이전트 실행 환경에는 원래 키를 전달하지 않는다.
+          - PR·이슈 쓰기는 에이전트의 셸이 아니라 봇 프로세스의 전용 도구가 수행한다. 이 경로에서 짧은 유효기간의 GitHub
+            App 토큰을 사용하고 에이전트 도구 호출에는 토큰을 노출하지 않는다.
+        source_urls:
+          - https://huggingface.co/blog/huggingface/moon-bot
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: NVIDIA, Transformers v5 기반 NeMo AutoModel 학습 구조와 MoE 비교 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-25
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: NVIDIA는 2026년 6월 25일(한국시간) Hugging Face에 NeMo AutoModel의 전문가 혼합 모델 학습 구조와
+      성능 비교를 공개했다. Transformers v5의 모델 로딩 API를 유지하면서 전문가 병렬화, 통신·연산 결합과 최적화 커널을
+      추가하는 방식이다.
+    explanations:
+      - heading: 모델과 체크포인트 호환
+        paragraphs:
+          - NeMoAutoModelForCausalLM은 Transformers의 AutoModelForCausalLM을 상속한다.
+            모델 종류에 따라 최적화 구현이나 기본 Hugging Face 경로를 사용하고 저장 결과는 표준 Hugging Face
+            체크포인트 형식을 유지한다.
+        source_urls:
+          - https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
+      - heading: 속도 비교의 실행 조건
+        paragraphs:
+          - 단일 노드 비교는 H100 80GB GPU 8개, 시퀀스 길이 4,096, 로컬 배치 크기 1에서 진행했다. NeMo는
+            전문가 병렬화 크기 8과 균등 라우팅 게이트를 사용했고, Transformers v5는 같은 더미 토큰에 기본 라우터를
+            적용했다.
+          - NVIDIA는 Qwen3-30B-A3B와 Nemotron 3 Nano 30B-A3B에서 최적화한 v5 대비 약
+            3.4~3.7배 높은 학습 처리량과 29~32% 적은 GPU 메모리를 보고했다. 라우팅 방식이 다른 해당 학습 비교
+            결과다.
+        source_urls:
+          - https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
+      - heading: 전문가 병렬화의 역할
+        paragraphs:
+          - 전문가 가중치를 GPU에 나누고 DeepEP로 토큰 전달과 전문가 계산을 겹친다. NeMo에서는 전문가 병렬화와 데이터
+            병렬화를 별도 축으로 구성한다.
+        source_urls:
+          - https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: Microsoft, Talos 유전체 재분석 결과 소개…4,735명에서 추가 진단 확인
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: Microsoft Research는 2026년 6월 24일(한국시간), 희귀질환의 기존 유전체 데이터를 반복 재분석하는 오픈소스 도구
+      Talos의 연구 결과를 소개했다. 새로운 유전자·질병 관계나 변이 판정 근거를 반영해 후보를 추리고, 반복 실행에서는 지난 분석
+      이후 근거가 바뀐 변이만 전문가 검토에 올리는 구조다.
+    explanations:
+      - heading: 새 근거와 환자 조건의 결합
+        paragraphs:
+          - PanelApp Australia에서 유전자·질병 관계와 유전 방식을, ClinVar에서 변이의 병원성 정보를 읽는다.
+            가족 구조와 이용 가능한 환자 표현형으로 후보를 추가로 좁힌다.
+        source_urls:
+          - https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
+      - heading: 검증 집단과 실제 재분석 집단
+        paragraphs:
+          - ACG·RGP 검증 집단은 합계 1,089명의 발단자를 포함한다. ACG 부모·자녀 조합에서 분석 범위 안의 기존 진단
+            90%를 회수했고, RGP 조합에서는 54건 중 47건을 회수했다고 연구진은 밝혔다.
+          - 별도의 미진단 4,735명 재분석 집단에서 238명에게 241개의 새로운 진단이 나왔고 추가 진단 수율은 5.1%였다.
+            원인일 가능성이 있는 변이는 이후 인증 검사실에서 병원성 또는 병원성 가능 변이로 확인됐다.
+        source_urls:
+          - https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
+      - heading: 월별 반복 실행
+        paragraphs:
+          - 29회의 월별 재분석에서는 새로 검토할 변이가 평균적으로 환자 200명당 1개였다고 보고했다. 공개 데이터베이스의 새
+            근거부터 진단까지 걸린 시간은 평균 32일이었다.
+        source_urls:
+          - https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
+    papers: []
+    relations: []
+    topic_ids: []
+  - title: RL 학습 모델과 기준 모델의 확률비로 에이전트 진행을 평가하는 연구
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 연구진은 2026년 6월 24일 arXiv에 에이전트의 단계별 진행을 평가하는 progress advantage 연구를 사전공개했다.
+      강화학습으로 사후 학습한 정책과 기준 정책의 로그 확률비를 이용해, 별도 보상 모델 학습 없이 단계별 평가 신호를 얻는 방법을
+      제시했다.
+    explanations:
+      - heading: 방법과 비교 대상
+        paragraphs:
+          - 저자들은 확률적 마르코프 의사결정 과정에서 최적 어드밴티지와 연결되는 신호를 유도했다. 실행 중 추가 계산, 불확실성
+            정량화, 실패 원인 배정의 세 응용을 시험했다.
+          - 초록은 5개 벤치마크와 4개 모델 계열에서 신뢰도 기반 비교 방법 및 별도로 학습한 보상 모델보다 나은 결과를 보고한다.
+            작업별 추가 보상 모델 학습이 필요 없는 신호라는 점을 강조했다.
+        source_urls:
+          - https://arxiv.org/abs/2606.26080v1
+    papers:
+      - work_id: arxiv-2606-26080
+        identifiers:
+          - arxiv:2606.26080v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2606.26080v1
+    relations: []
+    topic_ids: []
+  - title: 자기 증류 모델의 평균 정답률과 답변 다양성을 따로 비교한 연구
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 연구진은 2026년 6월 24일 arXiv에 샘플 정답 시범을 사용하는 온폴리시 자기 증류의 출력 다양성 연구를 사전공개했다. 한
+      모델이 교사와 학생을 맡고 교사가 정답 시범을 문맥으로 받아 학생 출력에 피드백을 주는 방식에서, 답변을 더 생성해도 정답률이 잘
+      늘지 않는 현상을 분석했다.
+    explanations:
+      - heading: 학습 신호와 출력 집중
+        paragraphs:
+          - 저자들은 시범과 학생 출력의 점별 조건부 상호정보량으로 학습 후 분포가 기울어지는 구조를 설명했다. 같은 정도로 맞는 답들
+            사이의 확률 차이가 커져 기존에 우세한 응답 방식에 출력이 집중될 수 있다고 제시했다.
+        source_urls:
+          - https://arxiv.org/abs/2606.26091v1
+      - heading: 실험에서 구분한 성능
+        paragraphs:
+          - 제어된 그래프 경로 찾기와 과학 질의응답 시험에서 평균 성능은 강화학습과 비슷하거나 높았지만 기능·의미 다양성은 낮았다고
+            초록은 보고한다. 여러 전략이 필요한 분포 밖 조건에서는 실패가 나타났다.
+        source_urls:
+          - https://arxiv.org/abs/2606.26091v1
+    papers:
+      - work_id: arxiv-2606-26091
+        identifiers:
+          - arxiv:2606.26091v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2606.26091v1
+    relations: []
+    topic_ids: []
+  - title: 로봇 행동 궤적을 먼저 학습해 VLA에 옮기는 두 단계 연구 공개
+    kind: 사건 뉴스
+    region: 해외
+    facts:
+      who: 미기재
+      when: 2026-06-24
+      where: 미기재
+      what: 미기재
+      how: 미기재
+      why: 미기재
+    lead: 연구진은 2026년 6월 24일 arXiv에 서로 다른 로봇 형태의 행동 궤적을 먼저 학습하는 시각·언어·행동 모델 연구를
+      사전공개했다. 영상·언어와 행동을 한꺼번에 학습하기 전에 행동 모듈에 시간적 움직임 구조를 학습시키고, 그 결과를 VLA 학습으로
+      옮기는 방법이다.
+    explanations:
+      - heading: 행동 학습과 시각·언어 정렬
+        paragraphs:
+          - 첫 단계는 영상·언어 토큰 없이 행동 궤적만으로 가벼운 플로 매칭 인코더·디코더를 학습한다. 두 번째 단계는 디코더
+            재사용과 초기 잠재 표현 증류로 시각·언어 특징을 행동 표현에 정렬한다.
+          - 학습한 인코더는 상태·행동 이력을 하나의 시간 문맥 토큰으로 압축하는 역할도 맡는다.
+        source_urls:
+          - https://arxiv.org/abs/2606.26095v1
+      - heading: 보고된 로봇 시험
+        paragraphs:
+          - 초록은 시뮬레이션과 실제 환경의 13개 형태 간 작업에서 행동 사전학습 없는 VLA보다 빠른 수렴과 높은 성공률을
+            보고한다. 실제 환경의 데이터 부족 조건에서도 성능이 개선됐으며, 첫 단계 행동 데이터를 늘리면 후속 VLA 성능이
+            좋아졌다고 밝혔다.
+        source_urls:
+          - https://arxiv.org/abs/2606.26095v1
+    papers:
+      - work_id: arxiv-2606-26095
+        identifiers:
+          - arxiv:2606.26095v1
+        access: 초록
+        status: 사전공개
+        evidence_url: https://arxiv.org/abs/2606.26095v1
+    relations: []
+    topic_ids: []
+article_reviews:
+  - title: OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
+    event_id: 78dd55bd3d76bf5e
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T09:00:48-04:00
+  - title: OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적
+    event_id: 5f6807aa79d170e1
+    review_status: verified
+    published_at: 2026-06-25
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - agents
+    date_kind: source-publication-day
+    source_published_at: 2026-06-25
+  - title: GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일
+    event_id: d9ba5ead7fa4b5a5
+    review_status: verified
+    published_at: 2026-06-25
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T09:28:36-07:00
+  - title: GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가
+    event_id: 83a8d71c767e86f0
+    review_status: verified
+    published_at: 2026-06-25
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T09:47:20-07:00
+  - title: Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개
+    event_id: 71522d4915be298f
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids:
+      - agents
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T07:33:01.646Z
+  - title: NVIDIA, Transformers v5 기반 NeMo AutoModel 학습 구조와 MoE 비교 공개
+    event_id: ad312ce435987076
+    review_status: verified
+    published_at: 2026-06-25
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T16:00:13.165Z
+  - title: Microsoft, Talos 유전체 재분석 결과 소개…4,735명에서 추가 진단 확인
+    event_id: d68af779b2d48755
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-time
+    source_published_at: 2026-06-24T14:00:14+00:00
+  - title: RL 학습 모델과 기준 모델의 확률비로 에이전트 진행을 평가하는 연구
+    event_id: 09b46ad807916591
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-day
+    source_published_at: 2026-06-24
+  - title: 자기 증류 모델의 평균 정답률과 답변 다양성을 따로 비교한 연구
+    event_id: bd280179fb026f84
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-day
+    source_published_at: 2026-06-24
+  - title: 로봇 행동 궤적을 먼저 학습해 VLA에 옮기는 두 단계 연구 공개
+    event_id: cea0a4cfbb6e7a28
+    review_status: verified
+    published_at: 2026-06-24
+    reviewed_at: 2026-10-09
+    concept_ids: []
+    date_kind: source-publication-day
+    source_published_at: 2026-06-24
 ---
 
-# Executive Summary
+# 이번 호 표지
 
-- OpenAI와 Broadcom은 LLM 추론용 커스텀 칩 `Jalapeno`를 공개했습니다. 왜 중요한가: frontier AI 비용 병목이 학습뿐 아니라 대규모 추론 인프라로 이동하고 있습니다. 실무 영향: 모델 선택은 가격, latency, chip supply, inference platform roadmap까지 함께 봐야 합니다.
-- OpenAI는 Codex 사용 데이터를 바탕으로 agentic work의 경제적 잠재력을 측정한 연구 글을 공개했습니다. 왜 중요한가: 에이전트를 "데모"가 아니라 실제 업무 단위로 측정하려는 흐름입니다. 실무 영향: 사내 에이전트 도입도 task duration, role coverage, repeat usage 같은 지표를 함께 잡아야 합니다.
-- GitHub는 Free/Student plan의 모델 선택 제한과 Copilot coding agent의 credential revocation 후속 조치를 공지했습니다. 왜 중요한가: coding agent 제품은 모델 라우팅과 보안 회수 정책을 동시에 운영해야 합니다. 실무 영향: 팀 도입 시 plan별 모델 접근, 토큰/비용, credential lifecycle을 확인해야 합니다.
-- Hugging Face는 Slack-native coding agent Moon Bot과 NVIDIA NeMo AutoModel fine-tuning 흐름을 공개했습니다. 왜 중요한가: 에이전트 UX는 Slack 같은 업무 surface로 들어가고, open model fine-tuning은 Transformers 친화적 고성능 경로로 정리되고 있습니다. 실무 영향: 자동화 UX와 모델 학습 인프라를 분리해서 설계할 수 있습니다.
-- Microsoft Research와 Nature Medicine은 Talos 기반 자동 유전체 재분석 결과를 공개했습니다. 왜 중요한가: AI/자동화가 과학 지식 업데이트를 환자 진단 워크플로에 반복 반영하는 사례입니다. 실무 영향: RAG와 지식 업데이트 자동화도 "새 지식만 반환"하는 specificity-first 설계가 중요합니다.
+OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
 
-# Major News
+# 차례
 
-## OpenAI와 Broadcom, LLM 추론 최적화 칩 Jalapeno 공개
+- OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
+- OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적
+- GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일
+- GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가
+- Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개
 
-요약
+# 커버 스토리
 
-OpenAI와 Broadcom은 LLM 추론을 위해 설계한 커스텀 AI accelerator `Jalapeno`를 공개했습니다. OpenAI 글은 9개월 tape-out, OpenAI 모델을 활용한 설계 가속, multi-generation inference platform 구축을 핵심으로 설명합니다. Broadcom의 공식 발표도 "LLM-optimized intelligence processor"라는 방향을 확인합니다.
+없음
 
-핵심 포인트
+# 뉴스 데스크
 
-- 확인된 사실: 이 발표는 LLM inference workload에 맞춘 전용 칩과 플랫폼 로드맵을 다룹니다.
-- 확인된 사실: OpenAI는 chip design 자체에도 OpenAI 모델을 활용했다고 설명합니다.
-- 분석: 대형 AI 기업은 API 서비스뿐 아니라 inference hardware stack까지 수직 통합하려는 압력이 커지고 있습니다.
+## OpenAI·Broadcom, LLM 추론 칩 Jalapeño 시제품 공개…연말 초기 배치 계획
 
-실무 영향
+**분야:** 반도체·컴퓨팅
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 신제품
+**기업·기관:** OpenAI, Broadcom, Celestica
 
-- AI 서비스 비용을 예측할 때 GPU 가격만 보는 접근은 점점 불충분합니다.
-- enterprise AI 도입에서는 model quality와 함께 provider의 추론 공급망, latency, 가격 안정성을 확인해야 합니다.
-- 커스텀 ASIC은 특정 workload에는 유리할 수 있지만 범용성, 공급 일정, 생태계 호환성은 별도 검증이 필요합니다.
+OpenAI와 Broadcom은 2026년 6월 24일(한국시간), 대규모 언어 모델의 추론을 위해 설계한 가속기 Jalapeño를 공개했다. Broadcom 발표에 따르면 엔지니어링 시제품은 연구실에서 목표 주파수·전력으로 모델 작업을 실행하고 있으며, 여러 세대에 걸친 플랫폼의 초기 배치는 2026년 말까지 진행할 계획이다. [S1]
 
-출처
+### 칩과 시스템의 역할
 
-- https://openai.com/index/openai-broadcom-jalapeno-inference-chip/
-- https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-unveil-llm-optimized-intelligence-processor
+OpenAI는 모델·커널·서빙 구조에 맞춰 칩을 설계하고, Broadcom은 실리콘 구현·네트워킹을, Celestica는 보드·랙·시스템 통합을 맡는다. 설계는 데이터 이동을 줄이고 연산·메모리·네트워크 자원의 균형을 맞추는 방향이다. [S1]
 
-## OpenAI, Codex 기반 agentic work 경제 연구 공개
+### 개발 기간과 초기 평가
 
-요약
+양사는 초기 설계부터 제조용 설계 확정인 테이프아웃까지 9개월이 걸렸으며, 설계·최적화 일부에 OpenAI 모델을 활용했다고 밝혔다. 시제품 공개와 데이터센터 배치 계획은 별개 단계다.
 
-OpenAI는 "How agents are transforming work"에서 Codex의 경제적 잠재력을 측정하는 연구를 소개했습니다. 보도자료성 주장보다 중요한 점은 agent usage를 실제 업무 시간, 역할, 반복 사용, delegation pattern으로 보려는 시도입니다.
+와트당 성능 개선은 초기 시험에 근거한 회사의 설명이다. 최종 성능 측정은 진행 중이며 구체적 기술 보고서를 추후 공개할 예정이라고 밝혔다. [S1]
 
-핵심 포인트
+## OpenAI, Codex 업무 연구 공개…긴 작업 요청과 비개발자 사용 추적
 
-- 확인된 사실: OpenAI는 Codex를 frontier agentic work 사례로 놓고 경제 연구 관점에서 분석했습니다.
-- 확인된 사실: Axios 보도는 OpenAI, Columbia, Duke, University of Pennsylvania 연구진의 보고서를 인용하며, 일부 opt-in 사용자 표본에서 Codex 요청이 경험자 30분 이상 업무에 해당한다고 평가된 비율을 언급했습니다.
-- 분석: 에이전트 성과 측정은 "정답률"만으로 부족하고, 실제 절감된 업무 단위와 재사용성까지 봐야 합니다.
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** OpenAI
 
-실무 영향
+OpenAI는 2026년 6월 25일 Codex 사용 기록으로 에이전트의 업무 활용을 조사한 경제 연구를 소개했다. 개인·조직·OpenAI 내부 사용을 구분하고, 여러 도구를 쓰며 장시간 진행하는 위임 작업과 비개발자의 사용 변화를 분석했다. [S2]
 
-- 개인/팀 자동화도 "몇 번 썼는가"보다 "어떤 업무 단위를 위임했는가"를 기록해야 합니다.
-- non-developer workflow까지 확장되는지 보려면 역할별 작업 유형과 실패 유형을 분리해야 합니다.
-- 외부 보도 수치는 표본/방법론 제약이 있으므로 일반화하지 않고 추적 지표 후보로만 보는 것이 안전합니다.
+### 작업 시간 지표의 뜻
 
-출처
+회사는 2026년 5월 개인 사용자 표본의 80.6%가 사람이 30분 이상 걸릴 것으로 추정한 요청을 한 번 이상 했다고 밝혔다. 이는 사용자 비율이며 전체 요청의 비율이 아니다.
 
-- https://openai.com/index/how-agents-are-transforming-work/
-- https://www.axios.com/2026/06/25/codex-agents-growth-openai
+시간은 실제 절약 시간을 측정한 값이 아니라 Codex 대화를 읽은 판정용 언어 모델의 추정이다. 개인 사용자 중 무작위 0.1% 표본의 질의를 사용했다. [S2]
 
-## GitHub, Free/Student 모델 선택과 credential revocation 운영 변경 공지
+### 직무를 넘나드는 사용
 
-요약
+OpenAI 내부의 업무 부서에서 생성한 Codex 결과 중 4분의 1 이상은 엔지니어링·코딩 작업으로 분류됐다. 이 지표는 결과 토큰과 추정 직무를 비교한 것이며 회사 밖 전체 근로자의 생산성 측정은 아니다. [S2]
 
-GitHub는 2026-06-24 changelog에서 Free와 Student plan의 모델 선택 변경을 공지했습니다. 같은 날짜 보안 changelog에서는 Copilot coding agent가 credential revocation과 관련해 어떻게 대응하는지 설명했습니다.
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
-핵심 포인트
+## GitHub Copilot Free·Student, 모델 수동 선택 대신 자동 선택으로 통일
 
-- 확인된 사실: Free/Student plan의 모델 선택은 plan 정책과 비용 통제의 일부로 조정됩니다.
-- 확인된 사실: Copilot coding agent는 credential revocation 이후 작업 수행 경계를 다뤄야 합니다.
-- 분석: agent product는 모델 접근 정책과 보안 credential lifecycle을 product UX 안에서 계속 조정하게 됩니다.
+**분야:** 소프트웨어·클라우드
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 변경
+**기업·기관:** GitHub
 
-실무 영향
+GitHub는 2026년 6월 25일(한국시간), Copilot Free·Student 요금제의 모델 선택을 자동 선택으로 통일한다고 발표했다. 작업별 모델을 자동으로 선택하며, 해당 요금제에서는 자동 선택이 기본이자 유일한 선택 방식이 된다. [S3]
 
-- coding agent를 업무에 넣을 때 plan별 모델 접근 제한과 fallback behavior를 확인해야 합니다.
-- credential이 회수되었을 때 agent가 어떤 작업을 중단하고 어떤 trace를 남기는지 점검해야 합니다.
-- 비용을 낮추려는 plan 정책이 품질/latency/agent reliability에 영향을 줄 수 있습니다.
+### 접근 범위와 표시 변경
 
-출처
+자동 선택은 여러 모델 계열을 이용하지만 요금제 제한을 따른다. GitHub는 Microsoft가 출시한 모델의 Preview 표시도 제거한다고 밝혔다. [S3]
 
-- https://github.blog/changelog/2026-06-24-changes-to-model-selection-for-free-and-student-plans/
-- https://github.blog/changelog/2026-06-24-copilot-coding-agent-and-credential-revocation/
+## GitHub, 기업 계정의 토큰·SSH 키를 일괄 회수하는 기능 추가
 
-## Hugging Face, Slack-native coding agent Moon Bot 공개
+**분야:** 사이버보안
+**테마:** 제품·서비스
+**보조 테마:** 없음
+**세부 태그:** 기능 추가
+**기업·기관:** GitHub
 
-요약
+GitHub는 2026년 6월 25일(한국시간), 계정 침해나 자격증명 탈취에 대응하는 기업 계정의 일괄 회수 기능을 발표했다. 기업 소유자와 Manage enterprise credentials 권한을 가진 구성원은 특정 사용자 또는 기업 전체의 자격증명에 조치할 수 있다. [S4]
 
-Hugging Face는 내부 도구 Moon Bot을 소개했습니다. Moon Bot은 Slack에서 issue, bug, PR review 같은 작업을 넘기고, Hugging Face Buckets를 작업 저장소로 쓰는 Slack-native coding agent입니다. Pi coding agent SDK는 open source라고 설명합니다.
+### 인증 해제와 삭제의 범위
 
-핵심 포인트
+개인 액세스 토큰·SSH 키·OAuth 토큰의 기업 SSO 승인을 회수할 수 있다. 토큰·SSH 키 자체의 삭제는 Enterprise Managed Users 계정에만 제공하며, 조직별 SSO 승인 목록·회수는 조직 REST API로 지원한다. [S4]
 
-- 확인된 사실: Moon Bot은 Slack을 agent 작업 요청 surface로 사용합니다.
-- 확인된 사실: Hugging Face는 Buckets를 agent workspace/state 저장 경로로 설명합니다.
-- 분석: 이전 브리핑의 Claude Tag와 같은 방향이지만, 이번 항목은 coding workflow와 artifact storage 설계가 더 직접적입니다.
+### 본인 회수와 감사 기록
 
-실무 영향
+개별 기업 구성원은 Settings의 Credentials에서 자신의 자격증명 수를 확인하고 토큰·키를 하나씩 처리하지 않고 일괄 회수·삭제할 수 있다. 기업 소유자와 해당 사용자는 감사 로그·이메일 알림에서 조치 내용을 확인한다. [S4]
 
-- 사내 agent UX는 별도 포털보다 Slack/Teams thread 안에서 시작되는 형태가 자연스럽습니다.
-- agent workspace를 어디에 두고, 어떤 산출물을 남길지 정하지 않으면 재현성과 감사가 약해집니다.
-- Obsidian 브리핑 자동화도 source, draft, final note, exclusion decision을 분리해 남기면 운영 품질이 올라갑니다.
+## Hugging Face, Slack 대화와 작업 기록을 이어가는 내부 Moon Bot 구조 공개
 
-출처
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 구현·운영 지침
+**기업·기관:** Hugging Face
 
-- https://huggingface.co/blog/huggingface/moon-bot
-- https://github.com/pipecat-ai/pipecat
+Hugging Face는 2026년 6월 24일(한국시간), Slack에서 코드·로그·데이터를 조회하고 작업을 요청하는 내부 도구 Moon Bot의 구조를 공개했다. Pi 코딩 에이전트 SDK와 Kubernetes 실행 환경을 사용하며, 대화와 도구 호출 기록을 Hugging Face Buckets에 저장해 재시작 뒤에도 작업을 이어간다. [S5] [S6]
 
-## NVIDIA/Hugging Face, NeMo AutoModel fine-tuning 경로 소개
+### 스레드별 작업과 기억
 
-요약
+Slack 스레드마다 독립적인 에이전트 세션을 생성한다. 도구 호출 결과까지 담은 JSONL 파일과 스레드·세션의 대응표를 저장하고, 이어지는 메시지에서 필요한 세션을 내려받는다.
 
-Hugging Face의 NVIDIA 글은 NeMo AutoModel을 사용해 Hugging Face 모델 fine-tuning을 더 빠르게 실행하는 경로를 설명했습니다. 핵심은 Transformers 사용자 경험을 유지하면서 Megatron-core 기반 고성능 경로로 이동할 수 있게 하는 것입니다.
+응답 Markdown과 세션 기록에 연결되는 버튼을 Slack에 제공한다. 과거 상호작용 기록은 별도 기억 도구로 검색하며, Markdown 스킬은 CLI 사용법과 코드베이스 관례를 전달한다. [S5]
 
-핵심 포인트
+### 사용한 SDK
 
-- 확인된 사실: NeMo AutoModel은 Hugging Face Hub 모델을 native하게 지원하고, fine-tuning과 고성능 학습 경로를 연결합니다.
-- 확인된 사실: 공식 글은 import 변경 수준의 낮은 전환 비용과 3배 이상 속도 향상을 주장합니다.
-- 분석: open model 운영의 병목은 모델 선택보다 training/fine-tuning runtime, multi-GPU 효율, 데이터 파이프라인으로 이동하고 있습니다.
+Moon Bot의 코딩 SDK는 Pi다. 별도로 인용한 Pipecat은 실시간 음성·멀티모달 에이전트를 만드는 Python 프레임워크다. [S6] [S5]
 
-실무 영향
+### 권한과 쓰기 경로
 
-- 개인/팀 모델 실험은 Transformers 호환성을 유지하면서 성능 경로를 확보하는 도구를 우선 검토할 수 있습니다.
-- 성능 수치는 workload와 hardware에 따라 달라지므로 직접 benchmark가 필요합니다.
-- open model fine-tuning 자동화에는 dataset version, eval, checkpoint, cost trace를 함께 남겨야 합니다.
+Okta 그룹으로 사용자의 접근 등급을 결정하고 등급마다 별도 Linux 사용자와 자격증명 환경을 둔다. 외부 서비스 키는 프록시가 서버 측에서 삽입하고, 에이전트 실행 환경에는 원래 키를 전달하지 않는다.
 
-출처
+PR·이슈 쓰기는 에이전트의 셸이 아니라 봇 프로세스의 전용 도구가 수행한다. 이 경로에서 짧은 유효기간의 GitHub App 토큰을 사용하고 에이전트 도구 호출에는 토큰을 노출하지 않는다. [S5]
 
-- https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
-- https://github.com/NVIDIA-NeMo/Automodel
+**개념:** [[Knowledge/AI Systems/AI Agents]]
 
-## Talos, 희귀질환 유전체 재분석을 반복 자동화하는 사례로 공개
+## NVIDIA, Transformers v5 기반 NeMo AutoModel 학습 구조와 MoE 비교 공개
 
-요약
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** NVIDIA
 
-Microsoft Research와 Nature Medicine은 Talos를 사용한 희귀질환 유전체 데이터 자동 재분석 사례를 소개했습니다. Talos는 ClinVar, PanelApp Australia 같은 동적으로 업데이트되는 지식원을 활용해 새롭게 actionable해진 후보 변이를 반환하는 open-source 도구입니다.
+NVIDIA는 2026년 6월 25일(한국시간) Hugging Face에 NeMo AutoModel의 전문가 혼합 모델 학습 구조와 성능 비교를 공개했다. Transformers v5의 모델 로딩 API를 유지하면서 전문가 병렬화, 통신·연산 결합과 최적화 커널을 추가하는 방식이다. [S7]
 
-핵심 포인트
+### 모델과 체크포인트 호환
 
-- 확인된 사실: Talos는 주기적으로 실행되어 새 gene-disease association과 variant classification을 반영합니다.
-- 확인된 사실: Nature Medicine 논문은 validation cohort에서 Talos의 성능을 평가했습니다.
-- 분석: 이것은 단순 AI 요약이 아니라, 지식 업데이트가 누적될수록 기존 데이터를 재해석하는 "continuous reanalysis" 패턴입니다.
+NeMoAutoModelForCausalLM은 Transformers의 AutoModelForCausalLM을 상속한다. 모델 종류에 따라 최적화 구현이나 기본 Hugging Face 경로를 사용하고 저장 결과는 표준 Hugging Face 체크포인트 형식을 유지한다. [S7]
 
-실무 영향
+### 속도 비교의 실행 조건
 
-- RAG와 지식 베이스 자동화도 전체 재요약보다 "새 근거로 바뀐 결론만 반환"하는 설계가 유용합니다.
-- expert reviewer 시간이 병목일 때는 recall만 높이는 것보다 specificity와 actionable output이 중요합니다.
-- 의료/과학 도메인에서는 자동화 결과가 임상 판단을 대체하지 않고 전문가 검토 큐를 개선하는 방식이어야 합니다.
+단일 노드 비교는 H100 80GB GPU 8개, 시퀀스 길이 4,096, 로컬 배치 크기 1에서 진행했다. NeMo는 전문가 병렬화 크기 8과 균등 라우팅 게이트를 사용했고, Transformers v5는 같은 더미 토큰에 기본 라우터를 적용했다.
 
-출처
+NVIDIA는 Qwen3-30B-A3B와 Nemotron 3 Nano 30B-A3B에서 최적화한 v5 대비 약 3.4\~3.7배 높은 학습 처리량과 29\~32% 적은 GPU 메모리를 보고했다. 라우팅 방식이 다른 해당 학습 비교 결과다. [S7]
 
-- https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
-- https://www.nature.com/articles/s41591-026-04477-5
-- https://github.com/populationgenomics/talos
+### 전문가 병렬화의 역할
 
-# Important Papers
+전문가 가중치를 GPU에 나누고 DeepEP로 토큰 전달과 전문가 계산을 겹친다. NeMo에서는 전문가 병렬화와 데이터 병렬화를 별도 축으로 구성한다. [S7]
 
-## Neglected Free Lunch from Post-training: Progress Advantage for LLM Agents
+## Microsoft, Talos 유전체 재분석 결과 소개…4,735명에서 추가 진단 확인
 
-- 논문 제목: Neglected Free Lunch from Post-training: Progress Advantage for LLM Agents
-- 저자: Changdae Oh, Wendi Li, Seongheon Park, Samuel Yeh, Tanwi Mallick, Sharon Li
-- 기관: arXiv metadata에는 소속이 별도 노출되지 않음
-- 제출 시각: 2026-06-24 17:54:08 UTC
-- 핵심 아이디어: RL post-training 과정에서 생기는 policy/reference log-probability ratio를 agent step-level scoring 신호로 쓰는 `progress advantage`를 제안합니다.
-- 주요 결과: test-time scaling, uncertainty quantification, failure attribution에서 confidence baseline과 dedicated reward model보다 낫다고 보고합니다.
-- 실무 적용 가능성: agent가 긴 작업을 수행할 때 중간 단계의 진전 여부, 실패 원인, 불확실성을 추적하는 보조 신호로 연구 가치가 있습니다.
-- 한계: arXiv preprint이며, 실제 production agent에 넣으려면 모델 접근성, 비용, latency, benchmark 편향을 별도 검증해야 합니다.
-- 원문 링크: https://arxiv.org/abs/2606.26080
+**분야:** 바이오·의료기술
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** Microsoft
 
-## On-Policy Self-Distillation with Sampled Demonstrations Reduces Output Diversity
+Microsoft Research는 2026년 6월 24일(한국시간), 희귀질환의 기존 유전체 데이터를 반복 재분석하는 오픈소스 도구 Talos의 연구 결과를 소개했다. 새로운 유전자·질병 관계나 변이 판정 근거를 반영해 후보를 추리고, 반복 실행에서는 지난 분석 이후 근거가 바뀐 변이만 전문가 검토에 올리는 구조다. [S8]
 
-- 논문 제목: On-Policy Self-Distillation with Sampled Demonstrations Reduces Output Diversity
-- 저자: Andrei Liviu Nicolicioiu, Mohammad Pezeshki, Aaron Courville
-- 기관: arXiv metadata에는 소속이 별도 노출되지 않음
-- 제출 시각: 2026-06-24 17:59:02 UTC
-- 핵심 아이디어: correct demonstration을 조건으로 하는 on-policy self-distillation이 pass@1을 높일 수 있지만 rollout diversity를 줄이고 pass@k curve를 평평하게 만들 수 있음을 분석합니다.
-- 주요 결과: graph path-finding과 science QA benchmark에서 평균 성능은 높아도 다양한 해결 전략이 필요한 out-of-distribution 상황에서 실패할 수 있다고 보고합니다.
-- 실무 적용 가능성: coding agent나 reasoning agent를 fine-tune할 때 단일 정답 스타일로 mode collapse가 생기지 않는지 확인해야 합니다.
-- 한계: task와 모델 범위가 제한될 수 있으며, 실제 소프트웨어 작업에서 diversity 손실이 어떤 실패로 나타나는지 추가 검증이 필요합니다.
-- 원문 링크: https://arxiv.org/abs/2606.26091
+### 새 근거와 환자 조건의 결합
 
-## Learning Action Priors for Cross-embodiment Robot Manipulation
+PanelApp Australia에서 유전자·질병 관계와 유전 방식을, ClinVar에서 변이의 병원성 정보를 읽는다. 가족 구조와 이용 가능한 환자 표현형으로 후보를 추가로 좁힌다. [S8]
 
-- 논문 제목: Learning Action Priors for Cross-embodiment Robot Manipulation
-- 저자: Dong Jing, Tianqi Zhang, Jiaqi Liu, Jinman Zhao, Zelong Sun, Li Erran Li, Zhiwu Lu, Mingyu Ding
-- 기관: arXiv metadata에는 소속이 별도 노출되지 않음
-- 제출 시각: 2026-06-24 17:59:56 UTC
-- 핵심 아이디어: Vision-Language-Action 모델에서 action module이 물리적 motion prior 없이 처음부터 학습되는 문제를 줄이기 위해 action trajectory 기반 선행 학습과 latent distillation을 사용합니다.
-- 주요 결과: 13개 cross-embodiment task에서 더 빠른 수렴, 더 높은 성공률, data-scarce real-world task 성능 개선을 보고합니다.
-- 실무 적용 가능성: 로봇 foundation model 연구에서 언어/시각 backbone만 키우는 접근보다 action prior와 history compression이 중요하다는 신호입니다.
-- 한계: arXiv preprint이며, robot morphology, sensor setup, 실험 task 범위 밖 일반화는 별도 검증이 필요합니다.
-- 원문 링크: https://arxiv.org/abs/2606.26095
+### 검증 집단과 실제 재분석 집단
 
-# Open Source & Tools
+ACG·RGP 검증 집단은 합계 1,089명의 발단자를 포함한다. ACG 부모·자녀 조합에서 분석 범위 안의 기존 진단 90%를 회수했고, RGP 조합에서는 54건 중 47건을 회수했다고 연구진은 밝혔다.
 
-- 프로젝트: NVIDIA NeMo AutoModel
-- 설명: Hugging Face 모델을 Transformers 친화적으로 fine-tune하면서 고성능 Megatron-core 경로로 이동할 수 있게 하는 training/fine-tuning toolkit입니다.
-- GitHub: https://github.com/NVIDIA-NeMo/Automodel
-- Star 증가 추세: 추세 확인 불가
-- 활용 가능성: open model fine-tuning 실험을 빠르게 시작하고, 성능이 필요할 때 분산 학습 경로로 확장하는 기준선으로 검토할 수 있습니다.
+별도의 미진단 4,735명 재분석 집단에서 238명에게 241개의 새로운 진단이 나왔고 추가 진단 수율은 5.1%였다. 원인일 가능성이 있는 변이는 이후 인증 검사실에서 병원성 또는 병원성 가능 변이로 확인됐다. [S8]
 
-- 프로젝트: Moon Bot / Pipecat
-- 설명: Hugging Face 내부 Slack-native coding agent 사례와, real-time voice/multimodal agent framework인 Pipecat입니다.
-- GitHub: https://github.com/pipecat-ai/pipecat
-- Star 증가 추세: 추세 확인 불가
-- 활용 가능성: Slack/voice/thread 기반 agent UX와 agent workspace 설계를 비교할 때 참고할 수 있습니다.
+### 월별 반복 실행
 
-- 프로젝트: Talos
-- 설명: 희귀질환 유전체 데이터의 반복 재분석을 위한 open-source variant prioritisation 도구입니다.
-- GitHub: https://github.com/populationgenomics/talos
-- Star 증가 추세: 추세 확인 불가
-- 활용 가능성: 지식 업데이트가 있을 때 기존 데이터를 다시 평가하고, 새롭게 actionable한 후보만 전문가에게 올리는 자동화 설계에 참고할 수 있습니다.
+29회의 월별 재분석에서는 새로 검토할 변이가 평균적으로 환자 200명당 1개였다고 보고했다. 공개 데이터베이스의 새 근거부터 진단까지 걸린 시간은 평균 32일이었다. [S8]
 
-# Industry Analysis
+## RL 학습 모델과 기준 모델의 확률비로 에이전트 진행을 평가하는 연구
 
-분석입니다. 아래 해석은 위 출처에서 확인된 사실을 연결한 것이며, 확인된 사실 자체와 구분합니다.
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** 없음
 
-- 현재 기술 트렌드 분석: 이번 구간의 공통점은 "agent와 AI가 실제 운영 시스템으로 편입될 때 필요한 하부 구조"입니다. OpenAI/Broadcom은 추론 칩, GitHub는 모델 접근/credential 회수 정책, Hugging Face는 Slack-native agent workspace, NVIDIA/Hugging Face는 fine-tuning runtime, Talos는 지식 업데이트 기반 재분석을 보여줍니다.
-- 시장 영향: AI 경쟁은 모델 API 품질만이 아니라 inference supply, plan policy, training stack, agent UX, regulated-domain specificity로 확장됩니다. 가격과 보안 정책이 제품 경험을 직접 바꾸는 구간이 늘어납니다.
-- 향후 전망: 에이전트 도입 조직은 "좋은 모델을 붙였다"에서 멈추지 않고, 어떤 작업 단위를 위임했는지, 어떤 권한으로 실행했는지, 어떤 결과만 사람에게 올렸는지를 기록해야 합니다. 특히 scientific/medical workflow는 자동화가 전문가를 대체하기보다 검토 큐의 품질을 높이는 방향이 더 현실적입니다.
+연구진은 2026년 6월 24일 arXiv에 에이전트의 단계별 진행을 평가하는 progress advantage 연구를 사전공개했다. 강화학습으로 사후 학습한 정책과 기준 정책의 로그 확률비를 이용해, 별도 보상 모델 학습 없이 단계별 평가 신호를 얻는 방법을 제시했다. [S9]
 
-# Actionable Insights
+### 방법과 비교 대상
 
-- 업무 자동화: Slack/Teams 기반 에이전트를 만들 때 thread UX, workspace 저장소, credential 회수 시 중단 동작, audit trail을 먼저 정의합니다.
-- AI 활용: Codex류 agent는 사용 횟수보다 "30분 이상 업무를 맡겼는가", "재시도 없이 완료했는가", "비개발 업무에도 반복 사용되는가"로 효과를 측정합니다.
-- 개발 생산성: Free/Student/Team/Enterprise plan별 모델 접근이 다르면 agent 결과도 달라질 수 있으므로, 팀 표준 모델과 fallback policy를 문서화합니다.
-- 연구 개발: agent fine-tuning 또는 post-training에서는 평균 점수뿐 아니라 diversity, pass@k, failure attribution을 같이 봅니다.
-- 개인 프로젝트: 이 Obsidian 자동화는 Talos처럼 "이전 브리핑 이후 새롭게 actionable한 변화만 반환"하는 구조를 유지합니다. 전체 재요약보다 cutoff, exclusion, source list가 품질을 좌우합니다.
+저자들은 확률적 마르코프 의사결정 과정에서 최적 어드밴티지와 연결되는 신호를 유도했다. 실행 중 추가 계산, 불확실성 정량화, 실패 원인 배정의 세 응용을 시험했다.
+
+초록은 5개 벤치마크와 4개 모델 계열에서 신뢰도 기반 비교 방법 및 별도로 학습한 보상 모델보다 나은 결과를 보고한다. 작업별 추가 보상 모델 학습이 필요 없는 신호라는 점을 강조했다. [S9]
+
+## 자기 증류 모델의 평균 정답률과 답변 다양성을 따로 비교한 연구
+
+**분야:** AI
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** 없음
+
+연구진은 2026년 6월 24일 arXiv에 샘플 정답 시범을 사용하는 온폴리시 자기 증류의 출력 다양성 연구를 사전공개했다. 한 모델이 교사와 학생을 맡고 교사가 정답 시범을 문맥으로 받아 학생 출력에 피드백을 주는 방식에서, 답변을 더 생성해도 정답률이 잘 늘지 않는 현상을 분석했다. [S10]
+
+### 학습 신호와 출력 집중
+
+저자들은 시범과 학생 출력의 점별 조건부 상호정보량으로 학습 후 분포가 기울어지는 구조를 설명했다. 같은 정도로 맞는 답들 사이의 확률 차이가 커져 기존에 우세한 응답 방식에 출력이 집중될 수 있다고 제시했다. [S10]
+
+### 실험에서 구분한 성능
+
+제어된 그래프 경로 찾기와 과학 질의응답 시험에서 평균 성능은 강화학습과 비슷하거나 높았지만 기능·의미 다양성은 낮았다고 초록은 보고한다. 여러 전략이 필요한 분포 밖 조건에서는 실패가 나타났다. [S10]
+
+## 로봇 행동 궤적을 먼저 학습해 VLA에 옮기는 두 단계 연구 공개
+
+**분야:** 로봇·제조
+**테마:** 연구·기술
+**보조 테마:** 없음
+**세부 태그:** 연구 소개
+**기업·기관:** 없음
+
+연구진은 2026년 6월 24일 arXiv에 서로 다른 로봇 형태의 행동 궤적을 먼저 학습하는 시각·언어·행동 모델 연구를 사전공개했다. 영상·언어와 행동을 한꺼번에 학습하기 전에 행동 모듈에 시간적 움직임 구조를 학습시키고, 그 결과를 VLA 학습으로 옮기는 방법이다. [S11]
+
+### 행동 학습과 시각·언어 정렬
+
+첫 단계는 영상·언어 토큰 없이 행동 궤적만으로 가벼운 플로 매칭 인코더·디코더를 학습한다. 두 번째 단계는 디코더 재사용과 초기 잠재 표현 증류로 시각·언어 특징을 행동 표현에 정렬한다.
+
+학습한 인코더는 상태·행동 이력을 하나의 시간 문맥 토큰으로 압축하는 역할도 맡는다. [S11]
+
+### 보고된 로봇 시험
+
+초록은 시뮬레이션과 실제 환경의 13개 형태 간 작업에서 행동 사전학습 없는 VLA보다 빠른 수렴과 높은 성공률을 보고한다. 실제 환경의 데이터 부족 조건에서도 성능이 개선됐으며, 첫 단계 행동 데이터를 늘리면 후속 VLA 성능이 좋아졌다고 밝혔다. [S11]
+
+# 리서치 노트
+
+없음
+
+# 도구 상자
+
+없음
+
+# 흐름 읽기
+
+없음
+
+# 오늘의 적용
+
+없음
+
+# 개념 색인
+
+없음
 
 # Source List
 
-- https://openai.com/index/openai-broadcom-jalapeno-inference-chip/
-- https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-unveil-llm-optimized-intelligence-processor
-- https://openai.com/index/how-agents-are-transforming-work/
-- https://www.axios.com/2026/06/25/codex-agents-growth-openai
-- https://github.blog/changelog/2026-06-24-changes-to-model-selection-for-free-and-student-plans/
-- https://github.blog/changelog/2026-06-24-copilot-coding-agent-and-credential-revocation/
-- https://huggingface.co/blog/huggingface/moon-bot
-- https://github.com/pipecat-ai/pipecat
-- https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
-- https://github.com/NVIDIA-NeMo/Automodel
-- https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
-- https://www.nature.com/articles/s41591-026-04477-5
-- https://github.com/populationgenomics/talos
-- https://arxiv.org/abs/2606.26080
-- https://arxiv.org/abs/2606.26091
-- https://arxiv.org/abs/2606.26095
+- [S1] https://investors.broadcom.com/news-releases/news-release-details/openai-and-broadcom-unveil-llm-optimized-intelligence-processor
+- [S2] https://openai.com/index/how-agents-are-transforming-work/
+- [S3] https://github.blog/changelog/2026-06-24-changes-to-model-selection-for-free-and-student-plans/
+- [S4] https://github.blog/changelog/2026-06-24-self-service-credential-revocation-for-incident-response/
+- [S5] https://huggingface.co/blog/huggingface/moon-bot
+- [S6] https://github.com/pipecat-ai/pipecat
+- [S7] https://huggingface.co/blog/nvidia/accelerating-fine-tuning-nvidia-nemo-automodel
+- [S8] https://www.microsoft.com/en-us/research/blog/talos-scaling-rare-disease-diagnosis-with-automated-iterative-genomic-reanalysis/
+- [S9] https://arxiv.org/abs/2606.26080v1
+- [S10] https://arxiv.org/abs/2606.26091v1
+- [S11] https://arxiv.org/abs/2606.26095v1

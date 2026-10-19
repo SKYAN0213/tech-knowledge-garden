@@ -53,10 +53,10 @@ article_records:
     lead: OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다고 발표했다. 하나의 모델이
       입력과 출력 음성을 함께 처리하며, 깊은 추론과 도구 호출은 연결된 백엔드 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로
       말투·속도·대화 스타일을 조정하고 전화 예약이나 고객 지원 같은 음성 서비스에 적용할 수 있다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원
     kind: 사건 뉴스
     region: 해외
@@ -70,6 +70,9 @@ article_records:
     lead: GitHub는 9월 10일 모든 요금제에 GitHub Actions의 cache-mode 설정을 정식 제공한다고 발표했다. 워크플로
       또는 작업 단위에서 캐시 읽기, 읽기·쓰기, 쓰기 전용, 접근 차단 중 하나를 선택할 수 있다. 작업 단위 설정이 우선하며, 재사용
       워크플로는 호출자가 부여한 캐시 권한을 초과할 수 없다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 이벤트별 기본 권한
         paragraphs:
@@ -83,9 +86,6 @@ article_records:
             GitHub는 이 경우 캐시 오염 위험이 커질 수 있다고 설명하며 쓰기 권한에 대한 경고를 표시한다.
         source_urls:
           - https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: KUKA, 1.5톤 자율 지게차 KMF 1500P-CB 공개…12월 인도 예정
     kind: 사건 뉴스
     region: 해외
@@ -99,6 +99,9 @@ article_records:
     lead: KUKA는 9월 10일 최대 1,500kg의 팔레트와 컨테이너를 운반하는 자율 지게차 KMF 1500P-CB를 발표했다.
       개방형·폐쇄형 팔레트를 취급하고 최대 3m까지 들어 올리며, 9월부터 전 세계 주문을 받고 12월 인도를 시작할 예정이다. 2027년
       1분기에는 좁은 공간의 개방형 팔레트 작업을 위한 PS 모델을 추가할 계획이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 운반에 팔레트 인수·적재 기능을 더하다
         paragraphs:
@@ -108,9 +111,6 @@ article_records:
             배터리이며 접촉식 충전을 사용한다.
         source_urls:
           - https://www.kuka.com/en-sg/company/press/news/2026/09/kuka-mobile-forklift-launch
-    papers: []
-    relations: []
-    topic_ids: []
   - title: DeepSeek V4.1-Flash, 입력·출력 계산을 나눈 5,520억 매개변수 모델 공개
     kind: 사건 뉴스
     region: 해외
@@ -148,6 +148,9 @@ article_records:
     lead: NVIDIA와 Palantir는 9월 10일 엔비디아의 공급망 운영에 맞춤형 AI 체계를 먼저 도입한다고 발표했다. Palantir
       Foundry·AIP의 업무 데이터 위에 NVIDIA Nemotron 모델을 결합하고, cuOpt로 자재 배분의 제약과 대안을
       계산하는 구조다. AI는 행동과 대안을 제안하며 최종 결정은 공급망 담당자가 맡는다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 업무 데이터·언어 모델·최적화 계산의 역할
         paragraphs:
@@ -158,9 +161,6 @@ article_records:
             유지하면서 사내 인프라나 클라우드에 배치할 수 있다는 구상이다.
         source_urls:
           - https://nvidianews.nvidia.com/news/nvidia-and-palantir-bring-sovereign-intelligence-to-critical-supply-chains
-    papers: []
-    relations: []
-    topic_ids: []
   - title: OpenAI, 회사 데이터와 지표 정의를 연결하는 ChatGPT Work Data agent 공개
     kind: 사건 뉴스
     region: 해외
@@ -198,21 +198,21 @@ article_reviews:
   - title: OpenAI, 동시에 듣고 말하는 GPT-Live-1을 API로 제공
     event_id: b8a75fb67d817922
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-10
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원
     event_id: 688d14b85e07a8db
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-10
     reviewed_at: 2026-10-09
-    concept_ids: []
   - title: KUKA, 1.5톤 자율 지게차 KMF 1500P-CB 공개…12월 인도 예정
     event_id: 2fa2d03292bbcc0d
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-10
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: DeepSeek V4.1-Flash, 입력·출력 계산을 나눈 5,520억 매개변수 모델 공개
     event_id: 90208487c77211d8
     review_status: verified
@@ -223,9 +223,9 @@ article_reviews:
   - title: NVIDIA·Palantir, 엔비디아 공급망에 맞춤형 AI와 제약 최적화 도입
     event_id: c705d902c5bf7a4a
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-10
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: OpenAI, 회사 데이터와 지표 정의를 연결하는 ChatGPT Work Data agent 공개
     event_id: 6a886414536a09e3
     review_status: verified
@@ -233,6 +233,7 @@ article_reviews:
     reviewed_at: 2026-10-10
     concept_ids:
       - agents
+source_marker_format: preserved-retrospective/v1
 ---
 
 # 이번 호 표지
@@ -274,8 +275,6 @@ OpenAI는 9월 10일 Codex의 실행 관리 기능을 제공하는 Agents API를
 **기업·기관:** OpenAI
 
 OpenAI는 9월 10일 동시에 듣고 말할 수 있는 음성 모델 GPT-Live-1을 API로 출시했다고 발표했다. 하나의 모델이 입력과 출력 음성을 함께 처리하며, 깊은 추론과 도구 호출은 연결된 백엔드 텍스트 모델에 위임할 수 있다. 개발자는 시스템 프롬프트로 말투·속도·대화 스타일을 조정하고 전화 예약이나 고객 지원 같은 음성 서비스에 적용할 수 있다. [S2]
-
-
 
 ## GitHub Actions, 작업별 캐시 읽기·쓰기 권한 설정 지원
 
@@ -319,13 +318,13 @@ CB는 균형추를 사용하는 카운터밸런스 구조를 뜻한다. KUKA는 
 **세부 태그:** 신제품, 새로운 방법, 비용 절감
 **기업·기관:** DeepSeek
 
-DeepSeek은 9월 10일 이미지 이해를 기본 지원하는 V4.1-Flash를 API에 공개했다. 총 5,520억 개 매개변수를 가진 MoE 모델로, 입력 처리에는 80억 개, 출력 생성에는 160억 개를 활성화하는 비대칭 구조를 사용한다. 회사는 이전 세대 대비 KV 캐시에 필요한 HBM 용량을 4분의 1, SSD 저장공간을 8분의 1로 줄였다고 밝혔다. [S5]
+DeepSeek은 9월 10일 이미지 이해를 기본 지원하는 V4.1-Flash를 API에 공개했다. 총 5,520억 개 매개변수를 가진 MoE 모델로, 입력 처리에는 80억 개, 출력 생성에는 160억 개를 활성화하는 비대칭 구조를 사용한다. 회사는 이전 세대 대비 KV 캐시에 필요한 HBM 용량을 4분의 1, SSD 저장공간을 8분의 1로 줄였다고 밝혔다. [S8]
 
 ### 전체 크기와 한 번에 쓰는 계산량은 다르다
 
 5,520억 개는 모델 전체의 매개변수 수다. 이번 모델은 읽는 단계와 답을 생성하는 단계의 활성 규모를 다르게 설계했다. 따라서 5,520억 개와 80억·160억 개는 서로 다른 대상을 나타내는 수치다.
 
-DeepSeek이 제시한 HBM·SSD 절감 수치는 KV 캐시의 이전 세대 대비 저장 요구량에 관한 회사 발표다. [S5]
+DeepSeek이 제시한 HBM·SSD 절감 수치는 KV 캐시의 이전 세대 대비 저장 요구량에 관한 회사 발표다. [S8]
 
 **개념:** [[Knowledge/AI Systems/KV Cache]]
 
@@ -389,6 +388,6 @@ OpenAI는 9월 10일 기업 데이터에 질문하고 분석 결과를 대시보
 - [S2] https://openai.com/index/introducing-gpt-live-1-in-the-api/
 - [S3] https://github.blog/changelog/2026-09-10-control-github-actions-cache-access-with-cache-mode/
 - [S4] https://www.kuka.com/en-sg/company/press/news/2026/09/kuka-mobile-forklift-launch
-- [S5] https://www.deepseek.com/en/news/deepseek-v4-1-flash
 - [S6] https://nvidianews.nvidia.com/news/nvidia-and-palantir-bring-sovereign-intelligence-to-critical-supply-chains
 - [S7] https://openai.com/index/put-data-to-work/
+- [S8] https://www.deepseek.com/en/news/deepseek-v4-1-flash

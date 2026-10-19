@@ -23,9 +23,9 @@ generated_by: tech-knowledge-garden
 
 OpenAI는 한국시간 9월 23일(원문 게시일 9월 22일) GPT-6 Sol과 Luna를 공개하고 API와 ChatGPT Work·Codex에 제공한다고 밝혔다. API의 100만 토큰당 입력·출력 가격은 Sol이 각각 2달러·10달러, Luna가 0.10달러·0.50달러다. 비교표에 제시한 이전 GPT-5.6 프로모션 가격은 Sol이 4달러·20달러, Luna가 0.20달러·1.20달러다.
 
-### [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]]
+### [[News/94d03e7f8181fafd|LS일렉트릭, 부산 공장에 Spot 2대 정식 운용…열화상·환경 점검]]
 
-LS ELECTRIC은 2026년 9월 22일 보스턴 다이내믹스의 4족 보행로봇 Spot을 부산사업장에 도입했다고 밝혔다. 현대오토에버와 7월부터 약 2개월간 시험 운용한 뒤 Spot 2대를 정식 운용 중이다. 회사는 생산설비 모니터링과 품질·안전 관리에 활용한다고 설명했다. 보도자료는 변압기 공정 점검과 주요 설비 예지보전, 부산사업장 데이터를 활용한 AI 분석 및 국내외 생산기지 확대 계획을 제시했다.
+LS ELECTRIC은 9월 22일 부산사업장에서 Boston Dynamics의 사족보행 로봇 Spot 2대를 정식 운용하고 있다고 밝혔다. 현대오토에버와 7월부터 약 두 달간 시험한 뒤 생산설비 모니터링·품질관리·안전관리 업무에 도입했다. 회사는 부산에서 수집한 운영 데이터를 바탕으로 AI 분석 모델을 구축하고 국내외 주요 생산기지로 적용을 확대할 계획이다.
 
 ### [[News/3742191de5126dd0|Cadence, 설계 사양을 RTL로 만드는 에이전트 공개…4분기 제한 제공]]
 
@@ -89,11 +89,11 @@ Cadence는 한국시간 2026년 9월 22일 자연어 설계 사양에서 RTL 코
 
 ### 로봇·제조 · 2건
 
-#### [[News/94d03e7f8181fafd|LS ELECTRIC, 부산사업장에 Spot 2대 운용…예지보전 확대 계획]]
+#### [[News/94d03e7f8181fafd|LS일렉트릭, 부산 공장에 Spot 2대 정식 운용…열화상·환경 점검]]
 
-연구·기술 · 실증·재현 · LS ELECTRIC · Boston Dynamics · 현대오토에버
+사업·고객 · 고객 도입 · LS ELECTRIC · Boston Dynamics
 
-LS ELECTRIC은 2026년 9월 22일 보스턴 다이내믹스의 4족 보행로봇 Spot을 부산사업장에 도입했다고 밝혔다. 현대오토에버와 7월부터 약 2개월간 시험 운용한 뒤 Spot 2대를 정식 운용 중이다. 회사는 생산설비 모니터링과 품질·안전 관리에 활용한다고 설명했다. 보도자료는 변압기 공정 점검과 주요 설비 예지보전, 부산사업장 데이터를 활용한 AI 분석 및 국내외 생산기지 확대 계획을 제시했다.
+LS ELECTRIC은 9월 22일 부산사업장에서 Boston Dynamics의 사족보행 로봇 Spot 2대를 정식 운용하고 있다고 밝혔다. 현대오토에버와 7월부터 약 두 달간 시험한 뒤 생산설비 모니터링·품질관리·안전관리 업무에 도입했다. 회사는 부산에서 수집한 운영 데이터를 바탕으로 AI 분석 모델을 구축하고 국내외 주요 생산기지로 적용을 확대할 계획이다.
 
 #### [[News/c2d62bc474a75d21|Intrinsic 로봇 경진대회, 실제 케이블 삽입 시험에서 두 팀 성공률 100%]]
 
@@ -142,13 +142,12 @@ Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 �
 ## 출처
 
 - [S1] https://openai.com/index/introducing-gpt-6-sol-and-luna/
-- [S2] https://openai.com/news/rss.xml
-- [S3] https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives
-- [S4] https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure
-- [S5] https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security
-- [S6] https://navercorp.com/media/pressReleasesDetail?seq=10034680
-- [S7] https://lsholdings.co.kr/ko/media/news/306c38774167465a5137683163335633354a6952646459724d77734f74753645
-- [S8] https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge
+- [S2] https://www.nutanix.com/press-releases/2026/nutanix-acquires-ryax-technologies-to-help-customers-accelerate-agentic-ai-initiatives
+- [S3] https://www.vastdata.com/press-releases/vast-data-introduces-dataenclave-to-bring-leading-ai-models-and-enterprise-data-together-on-trusted-infrastructure
+- [S4] https://www.proofpoint.com/us/newsroom/press-releases/proofpoint-breaks-down-divide-between-data-security-and-ai-security
+- [S5] https://navercorp.com/media/pressReleasesDetail?seq=10034680
+- [S6] https://lsholdings.co.kr/ko/media/news/306c38774167465a5137683163335633354a6952646459724d77734f74753645
+- [S7] https://www.intrinsic.ai/blog/posts/ai-for-industry-challenge
 - [S9] https://fwnbc.marketminute.com/article/bizwire-2026-9-22-cadence-expands-chipstack-ai-super-agent-with-a-new-agent-for-rtl-generation-and-early-ppa-optimization
 - [S10] https://lgcorp.com/media/release/30596
 - [S11] https://www.prweb.com/releases/pila-energy-launches-first-plug-in-path-to-home-battery-storage-in-new-york-city-302886178.html
@@ -157,3 +156,4 @@ Envisagenics는 9월 22일 베링거인겔하임과 고형암 치료 표적을 �
 - [S14] https://envisagenics.com/news/envisagenics-and-boehringer-ingelheim-enter-multi-target-collaboration-to-develop-first-in-class-precision-therapies-based-on-rna-splicing-derived-targets-for-hard-to-treat-cancers
 - [S15] https://www.cshl.edu/envisagenics-and-biogen-partner-for-rna-splicing-research/
 - [S16] https://envisagenics.com/about
+- [S17] https://openai.com/news/rss.xml

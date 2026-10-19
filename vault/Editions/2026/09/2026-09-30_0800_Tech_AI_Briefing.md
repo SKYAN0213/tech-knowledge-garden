@@ -9,8 +9,8 @@ coverage_end: 2026-09-29T23:17:13.068Z
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
-source_count: 22
-new_items_count: 21
+source_count: 15
+new_items_count: 14
 linked_knowledge_notes: []
 knowledge_notes_created: []
 knowledge_notes_updated: []
@@ -75,9 +75,6 @@ article_records:
     lead: Anthropic은 9월 23일 Claude로 DNA 데이터를 분석하고 실험을 진행하는 생명과학 연구 그룹과 자체 연구실을 공개했다.
       회사에 따르면 약 950개 에이전트가 21시간 동안 2억 1,000만 토큰을 사용한 탐색에 이어 연구진이 ART라는 역전사효소 관련
       계열을 분석·보고했다. ART의 주요 기능을 확인하는 실험은 계속 진행 중이다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 후보 탐색과 연구실 검증의 분담
         paragraphs:
@@ -92,6 +89,9 @@ article_records:
             수 없다.
         source_urls:
           - https://www.anthropic.com/news/claude-discovers-novel-enzyme-system
+    papers: []
+    relations: []
+    topic_ids: []
   - title: Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
     kind: 사건 뉴스
     region: 해외
@@ -105,9 +105,6 @@ article_records:
     lead: Microsoft는 9월 25일 Copilot의 Home·Code·Autopilot 작업공간과 Word·Excel·PowerPoint
       통합을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 9월 말 비공개 프리뷰로
       확대할 계획이다. Code는 GitHub Copilot 기술을 바탕으로 자연어로 앱과 자동화를 만드는 기능으로 소개됐다.
-    papers: []
-    relations: []
-    topic_ids: []
     explanations:
       - heading: 대화·작업 위임과 Office 파일 편집
         paragraphs:
@@ -116,6 +113,9 @@ article_records:
             Office 앱과 동기화하는 기능도 함께 소개했다.
         source_urls:
           - https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/
+    papers: []
+    relations: []
+    topic_ids: []
   - title: Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정
     kind: 사건 뉴스
     region: 국내
@@ -130,10 +130,10 @@ article_records:
       사업에는 단독 글로벌 공급사, SK텔레콤 사업에는 주 공급사로 참여하며 10월부터 조선소·석유화학 시설에 5G SA 사설망을 구축해
       실증할 계획이다. 실증 사례로 영암 조선소 용접·도장 로봇과 인천 석유화학 시설의 위험지역 순찰 로봇을 제시했지만 아직 현장 성과가
       발표된 것은 아니다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    explanations: []
   - title: Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
     kind: 사건 뉴스
     region: 해외
@@ -149,10 +149,10 @@ article_records:
       사용을 확인해 접근 차단·정책 변경을 할 수 있다. 클립보드에 복사되기 전에 민감한 자료를 차단하는 기능은 제공 예정이며, 모바일의
       파일 다운로드·붙여넣기·화면 캡처·공유 통제 확대도 설명했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는
       것은 아니다.
+    explanations: []
     papers: []
     relations: []
     topic_ids: []
-    explanations: []
   - title: SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
     kind: 사건 뉴스
     region: 국내
@@ -218,33 +218,22 @@ article_records:
           - SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로그램(GRIP) 재원을 사용한다.
         source_urls:
           - https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
-  - title: Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여
+  - title: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
     kind: 사건 뉴스
     region: 해외
     facts:
       who: Lakewood-Amedex Biotherapeutics
-      when: 2026년 9월 24일 발표; 주요 데이터는 2027년 1분기 공개 예상
-      where: 미기재
-      what: 감염성 당뇨발 궤양 환자 대상 Nu-3 2a상에서 첫 환자 투여
-      how: 다기관·단일 맹검 용량 탐색 시험에서 Nu-3 겔 2%, 5%, 10%를 평가
-      why: 미기재
-    lead: Lakewood-Amedex Biotherapeutics는 2026년 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 하는 Nu-3
-      2a상 임상시험에서 첫 환자에게 투여했다고 발표했다. 진행 중인 시험은 제1형 또는 제2형 당뇨병이 있고 경증 감염성 당뇨발 궤양이
-      있는 성인을 대상으로 하며, Nu-3 겔 2%, 5%, 10%의 안전성과 유효성을 평가한다. 회사는 2a상 주요 데이터를 2027년
-      1분기에 공개할 것으로 예상한다고 밝혔다. 회사는 2a상 이후 서로 다른 Nu-3 겔 농도를 하루 한 번 또는 두 번 투여해 위약과
-      비교하는 2b상 시험을 계획하고 있다.
+      when: 2026-09-24 회사 IR 게시
+      where: 미국 다기관 임상시험
+      what: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
+      how: Nu-3 국소 젤의 감염성 당뇨발 궤양 대상 용량 탐색 2a상 첫 환자 투여
+      why: 상처 감염에 대한 비항생제 국소 치료 후보의 임상 평가
+    lead: Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고
+      발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요
+      자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다.
     papers: []
     relations: []
     topic_ids: []
-    explanations:
-      - heading: 임상시험 설계와 평가 항목
-        paragraphs:
-          - 회사는 이 2a상 시험을 여러 기관에서 진행하는 단일 맹검 용량 탐색 연구로 설계했다고 밝혔다. 시험은 Nu-3가 미생물
-            부담을 줄이고 감염을 해소하는지 평가한다.
-          - 회사는 상처 치료와 족부 임상 연구를 전문으로 하는 계약 연구 기관 Professional Education and
-            Research Institute LLC(PERI)가 시험을 관리하고 있다고 밝혔다.
-        source_urls:
-          - https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html
   - title: 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
     kind: 사건 뉴스
     region: 국내
@@ -380,148 +369,6 @@ article_records:
     relations: []
     topic_ids: []
     explanations: []
-  - title: Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: Rocket Lab, Synspective
-      when: 2026년 9월 26일
-      where: 뉴질랜드 Rocket Lab Launch Complex 1
-      what: Electron의 ‘Owlright Owlright Owlright’ 전용 발사와 13번째 StriX 위성 배치
-      how: StriX 위성을 559km 저궤도에 직접 배치
-      why: Synspective의 합성개구레이더 영상 위성군 확장
-    lead: Rocket Lab은 2026년 9월 26일 뉴질랜드에서 지구 관측 위성 운영사 Synspective를 위한 Electron 전용
-      임무를 발사했다. ‘Owlright Owlright Owlright’ 임무는 현지 시각 오후 12시 39분 NZST에 Rocket
-      Lab Launch Complex 1에서 출발해 13번째 StriX 위성을 559km 저궤도에 배치했다. 회사는 이번 발사가
-      Electron의 97번째이자 2026년 18번째였고, 다년 파트너십 동안 StriX 위성 13기 모두를 궤도에 배치하며 100%
-      임무 성공을 거뒀다고 밝혔다.
-    explanations:
-      - heading: SAR 영상 위성군 확대
-        paragraphs:
-          - Synspective의 합성개구레이더(SAR) 위성군은 지표를 고해상도로 촬영하며, 회사 보도자료는 전천후·주야간 영상
-            제공을 특성으로 소개했다.
-        source_urls:
-          - https://rocketlabcorp.com/updates/mission-success-rocket-lab-launches-97th-electron-mission/
-      - heading: 10년 말까지 추가 발사 일정
-        paragraphs:
-          - Rocket Lab은 나머지 Synspective 위성군을 10년 말까지 배치하기 위한 추가 14회 발사가 일정에 남아
-            있다고 밝혔다.
-        source_urls:
-          - https://rocketlabcorp.com/updates/mission-success-rocket-lab-launches-97th-electron-mission/
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: AlignOPSD 연구 저자
-      when: 2026년 9월 27일 arXiv 등록
-      where: arXiv
-      what: 장기 에이전트용 의사결정 정렬 온폴리시 자기증류 방법 AlignOPSD
-      how: 학생 응답을 기능적으로 일치하는 문맥에서 재평가하고, 가변 길이 결정 구간에 결과 기반 credit을 배분
-      why: 시간 단위로 정렬한 교사 신호가 여러 단계에 걸친 학생 결정과 맞지 않을 수 있는 문제
-    lead: 2026년 9월 27일 arXiv에 등록된 프리프린트는 장기 에이전트의 온폴리시 자기증류에서 교사 신호와 학생 결정의 시점·시간
-      범위가 어긋나는 문제를 ‘Decision--Timestamp Mismatch’로 정의했다. 저자들은 형제 rollout의 기능적으로
-      일치하는 문맥에서 같은 학생 응답을 재평가하는 단계와, 가변 길이 결정 구간에 결과 기반 credit을 배분하는 Semi-Markov
-      계층형 할당을 결합한 AlignOPSD를 제안했다. 프리프린트는 Qwen2.5-3B와 Qwen2.5-7B를
-      ALFWorld·WebShop·Search-QA에서 평가했고, 저자들은 8개 백본·집계 지표 비교 모두에서 GRPO와
-      StepOPSD를 앞섰으며 GRPO보다 5.5~8.7% 개선하고 여섯 비교에서 1위를 기록했다고 보고했다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: TechCrunch가 보도한 Google·Flipkart 시험
-      when: TechCrunch 보도 당시 진행 중이며, 더 넓은 출시는 10월 후반 계획으로 취재원이 전했다.
-      where: 인도
-      what: Gemini와 Google AI Mode에서 Flipkart 상품을 직접 구매하는 초기 시험
-      how: 일부 상품 목록의 Buy 버튼이 AI 인터페이스 안에서 Flipkart 결제로 연결된다. TechCrunch가 관찰한 결제 흐름은
-        Flipkart 브랜드를 사용하며, 이전에 구글이 시연한 Google 호스팅 결제와 달라 보인다. 작동 기술은 확인되지 않았다.
-      why: 미기재
-    lead: 2026년 9월 26일 보도에서 TechCrunch는 구글이 인도에서 Gemini와 AI Mode를 통해 Flipkart 상품을 직접
-      구매하는 초기 시험을 시작했다고 전했다. TechCrunch가 관찰한 시험에서는 일부 상품 목록의 Buy 버튼이 사용자를 AI
-      인터페이스 안에서 Flipkart 결제로 연결하며, 시험 대상은 일부 사용자와 제한된 상품 선택에 그친다. 취재원 한 명은 구글이 이
-      경험을 10월 후반에 더 넓게 출시할 계획이라고 TechCrunch에 전했다. TechCrunch가 본 Flipkart 브랜드 결제
-      흐름은 이전에 구글이 시연한 Google 호스팅 결제와 달라 보였으며, 시험을 구동하는 기술은 확인되지 않았다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 근육 세포로 움직이는 얇은 수영 로봇 설계 발표
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: 연구팀과 연구자들
-      when: 2026년 9월 29일
-      where: 미기재
-      what: 얇은 근육 세포 구동 수영 로봇 설계 발표
-      how: 빛에 반응하는 근육 세포가 덮인 지느러미를 빛으로 자극해 물속에서 움직이고 방향과 속도를 제어한다.
-      why: 미기재
-    lead: 연구팀은 2026년 9월 29일 얇은 근육 세포 구동 수영 로봇 설계를 발표했다. 로봇은 껌 막대 정도 크기의 젤 필름 골격과 빛에
-      반응하도록 유전적으로 조작된 근육 세포 지느러미로 구성됐다. 연구자들은 양쪽 지느러미에 빛을 번갈아 비추는 간격을 조절해 로봇의
-      방향과 속도를 제어할 수 있다고 설명했다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성
-    kind: 사건 뉴스
-    region: 해외
-    facts:
-      who: 연구진
-      when: 2026년 9월 29일
-      where: 미기재
-      what: 알고리즘 모노컬처의 반론을 평가하고, 정보적 에코 챔버의 경향을 수학적으로 증명했으며, 채용 알고리즘 앙상블의 가능성을 제시했다.
-      how: 체계적 평가와 수학적 증명
-      why: 미기재
-    lead: 2026년 9월 29일 공개된 연구에서 연구진은 알고리즘 모노컬처에 대한 주요 반론을 체계적으로 평가하고, 체계적 배제를 포함한 여러
-      주장이 모든 형태의 모노컬처에 반대하는 결정적 근거는 아니라고 결론지었다. 연구진은 모노컬처가 탐색을 방해할 수 있는 정보적 에코
-      챔버를 만든다는 점을 수학적으로 증명했다. 채용에서는 모노컬처가 최고의 후보자가 일자리를 얻을 가능성을 낮출 수 있지만, 연구진은
-      여러 채용 알고리즘을 하나의 “ensemble”로 묶으면 이 한계를 극복할 수 있다고 보였다. 연구진에 따르면 이 방식은 때로 여러
-      기업이 서로 다른 알고리즘을 쓰는 폴리컬처만큼, 또는 그보다 더 나은 성과를 낼 수 있다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의
-    kind: 사건 뉴스
-    region: 국내
-    facts:
-      who: 공공기관·금융기관 등을 사칭하는 해킹메일
-      when: 2026년 9월 29일 공개
-      where: 미기재
-      what: 개인정보 탈취와 모바일 악성앱 설치를 유도하는 해킹메일이 지속적으로 유포되고 있다.
-      how: ‘범죄 연루’, ‘법규 위반’, ‘개인정보 유출 피해 보상’ 등의 키워드로 피싱사이트 접속과 모바일 악성앱 설치를 유도한다.
-      why: 피해 예방을 위해 주의가 필요하다.
-    lead: 2026년 9월 29일 공개된 보고에 따르면 공공기관과 금융기관 등을 사칭해 개인정보를 탈취하거나 모바일 악성앱 설치를 유도하는
-      해킹메일이 지속적으로 유포되고 있다. 이메일은 ‘범죄 연루’, ‘법규 위반’, ‘개인정보 유출 피해 보상’ 등의 문구로 피싱사이트
-      접속과 모바일 악성앱 설치를 유도한다. 보고는 이 같은 메일로 인한 피해가 발생하지 않도록 주의를 당부했다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
-  - title: 움직임의 흐름 읽는 반도체 기술 개발
-    kind: 사건 뉴스
-    region: 국내
-    facts:
-      who: 한국 연구진; 권지민 교수 연구팀과 UNIST·POSTECH 연구진
-      when: 2026년 9월 29일
-      where: 미기재
-      what: 반응 속도가 다른 반도체 소자를 여러 층으로 쌓아 변화의 흐름을 함께 읽는 기술 개발
-      how: 이온을 담은 소재를 단단한 얇은 막으로 만들고, 이를 이용해 반응 속도가 다른 반도체 소자를 여러 층으로 적층
-      why: 향후 착용형 소형 기기에서 움직임과 몸의 신호를 분석하는 데 활용될 수 있음
-    lead: 한국 연구진은 2026년 9월 29일, 반응 속도가 다른 반도체를 여러 층으로 쌓아 방금 일어난 변화와 앞선 변화를 함께 읽는 기술을
-      개발했다고 밝혔다. 권지민 교수 연구팀은 UNIST·POSTECH 연구진과 함께 이온을 담은 소재를 단단한 얇은 막으로 만들고, 이를
-      이용해 반응 속도가 다른 반도체 소자를 여러 층으로 쌓는 데 성공했다고 밝혔다. 연구진은 이 기술이 향후 몸에 붙이거나 착용하는 작은
-      기기가 움직임과 몸의 신호를 분석하는 데 활용될 수 있다고 설명했다.
-    explanations: []
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: 삼성 6개 계열사, AI 인프라 기업 Helix에 10억 미국 달러 투자 발표
     event_id: 171333c4eead9c69
@@ -532,27 +379,27 @@ article_reviews:
   - title: Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고
     event_id: ef1b3a4772eab837
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
     event_id: 295f6ca27b06224b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정
     event_id: 461333ec2270a664
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
     event_id: 280289462980857d
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
+    concept_ids: []
   - title: SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
     event_id: 783ed5a89f40a298
     review_status: verified
@@ -571,12 +418,12 @@ article_reviews:
     concept_ids: []
     published_at: 2026-09-24
     reviewed_at: 2026-09-30
-  - title: Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여
+  - title: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
     event_id: 53172edb0c5fef70
     review_status: verified
     concept_ids: []
     published_at: 2026-09-24
-    reviewed_at: 2026-10-12
+    reviewed_at: 2026-09-30
   - title: 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
     event_id: 6362665d03f77e72
     review_status: verified
@@ -607,50 +454,6 @@ article_reviews:
     concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-10-10
-  - title: Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사
-    event_id: f44e650da992b3ee
-    review_status: verified
-    published_at: 2026-09-26
-    reviewed_at: 2026-10-14
-    concept_ids: []
-    date_kind: source-stated-event-date
-    source_published_at: null
-  - title: arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안
-    event_id: b208f191c6cdf5c1
-    review_status: verified
-    published_at: 2026-09-27
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: 구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험
-    event_id: cdc600a0d8ffa349
-    review_status: verified
-    published_at: 2026-09-26
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: 근육 세포로 움직이는 얇은 수영 로봇 설계 발표
-    event_id: 126635115c76bf5f
-    review_status: verified
-    published_at: 2026-09-29
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: 알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성
-    event_id: d68cbb31349ae1a7
-    review_status: verified
-    published_at: 2026-09-29
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: 공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의
-    event_id: 0f6e29456a9ff768
-    review_status: verified
-    published_at: 2026-09-29
-    reviewed_at: 2026-10-14
-    concept_ids: []
-  - title: 움직임의 흐름 읽는 반도체 기술 개발
-    event_id: 81d5b6aebc2eb93b
-    review_status: verified
-    published_at: 2026-09-29
-    reviewed_at: 2026-10-14
-    concept_ids: []
 ---
 
 # 이번 호 표지
@@ -737,6 +540,8 @@ Home은 Chat과 작업 위임용 Cowork를 모으며, Autopilot은 사용자가 
 
 삼성전자는 9월 23일 KT·SK텔레콤의 정부 Hyper AI Network 사업에 AI RAN 공급 계약을 맺었다고 발표했다. KT 사업에는 단독 글로벌 공급사, SK텔레콤 사업에는 주 공급사로 참여하며 10월부터 조선소·석유화학 시설에 5G SA 사설망을 구축해 실증할 계획이다. 실증 사례로 영암 조선소 용접·도장 로봇과 인천 석유화학 시설의 위험지역 순찰 로봇을 제시했지만 아직 현장 성과가 발표된 것은 아니다. [S5]
 
+
+
 ## Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
 
 **분야:** 사이버보안
@@ -746,6 +551,8 @@ Home은 Chat과 작업 위임용 Cowork를 모으며, Autopilot은 사용자가 
 **기업·기관:** Google Cloud
 
 Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터 보호 기능을 발표했다. IT 관리자는 trusted tester 프로그램에서 회사가 검토한 AI Skills를 배포하고, 개선된 보고서에서 생성형 AI·SaaS 사용을 확인해 접근 차단·정책 변경을 할 수 있다. 클립보드에 복사되기 전에 민감한 자료를 차단하는 기능은 제공 예정이며, 모바일의 파일 다운로드·붙여넣기·화면 캡처·공유 통제 확대도 설명했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는 것은 아니다. [S6]
+
+
 
 ## SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
 
@@ -787,7 +594,7 @@ SK하이닉스가 설명한 설계는 기존 단일 칩 컨트롤러의 기능�
 
 SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로그램(GRIP) 재원을 사용한다. [S9]
 
-## Lakewood-Amedex, 감염성 당뇨발 궤양 Nu-3 2a상 첫 환자 투여
+## Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
 
 **분야:** 바이오·의료기술
 **테마:** 연구·기술
@@ -795,13 +602,9 @@ SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로�
 **세부 태그:** 실증·재현
 **기업·기관:** Lakewood-Amedex Biotherapeutics
 
-Lakewood-Amedex Biotherapeutics는 2026년 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 하는 Nu-3 2a상 임상시험에서 첫 환자에게 투여했다고 발표했다. 진행 중인 시험은 제1형 또는 제2형 당뇨병이 있고 경증 감염성 당뇨발 궤양이 있는 성인을 대상으로 하며, Nu-3 겔 2%, 5%, 10%의 안전성과 유효성을 평가한다. 회사는 2a상 주요 데이터를 2027년 1분기에 공개할 것으로 예상한다고 밝혔다. 회사는 2a상 이후 서로 다른 Nu-3 겔 농도를 하루 한 번 또는 두 번 투여해 위약과 비교하는 2b상 시험을 계획하고 있다. [S10]
+Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다. [S10]
 
-### 임상시험 설계와 평가 항목
-
-회사는 이 2a상 시험을 여러 기관에서 진행하는 단일 맹검 용량 탐색 연구로 설계했다고 밝혔다. 시험은 Nu-3가 미생물 부담을 줄이고 감염을 해소하는지 평가한다.
-
-회사는 상처 치료와 족부 임상 연구를 전문으로 하는 계약 연구 기관 Professional Education and Research Institute LLC(PERI)가 시험을 관리하고 있다고 밝혔다. [S10]
+첫 환자 투여는 시험 개시를 의미하며 안전성·유효성 결과는 아직 나오지 않았다. 회사가 밝힌 데이터 공개 시점도 계획이고, 환자 수·용량군 결과와 후속 임상 진행은 추후 자료로 확인해야 한다. [S10]
 
 ## 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
 
@@ -889,96 +692,6 @@ ASEC는 암호화폐 거래소 프로그램을 공식 웹사이트에서만 다�
 
 NASA는 9월 25일 미국 앨라배마주 Marshall Space Flight Center에서 ASCENT 이중 모드 추진 실증용 6U CubeSat의 회전·열진공·누설 지상시험을 마쳤다고 발표했다. 이 위성은 하나의 무독성 추진제 탱크를 고추력 연소 엔진과 저추력 전기분무 추진기에 함께 연결한다. NASA는 캘리포니아주 Vandenberg Space Force Base에서 SpaceX Falcon 9에 탑재해 10월 1일 이후 발사할 예정이라고 밝혔다. [S15]
 
-## Rocket Lab, Electron으로 Synspective 13번째 StriX 위성 발사
-
-**분야:** 우주·기초과학
-**테마:** 사업·고객
-**보조 테마:** 없음
-**세부 태그:** 고객 도입
-**기업·기관:** Rocket Lab, Synspective
-
-Rocket Lab은 2026년 9월 26일 뉴질랜드에서 지구 관측 위성 운영사 Synspective를 위한 Electron 전용 임무를 발사했다. ‘Owlright Owlright Owlright’ 임무는 현지 시각 오후 12시 39분 NZST에 Rocket Lab Launch Complex 1에서 출발해 13번째 StriX 위성을 559km 저궤도에 배치했다. 회사는 이번 발사가 Electron의 97번째이자 2026년 18번째였고, 다년 파트너십 동안 StriX 위성 13기 모두를 궤도에 배치하며 100% 임무 성공을 거뒀다고 밝혔다. [S16]
-
-### SAR 영상 위성군 확대
-
-Synspective의 합성개구레이더(SAR) 위성군은 지표를 고해상도로 촬영하며, 회사 보도자료는 전천후·주야간 영상 제공을 특성으로 소개했다. [S16]
-
-### 10년 말까지 추가 발사 일정
-
-Rocket Lab은 나머지 Synspective 위성군을 10년 말까지 배치하기 위한 추가 14회 발사가 일정에 남아 있다고 밝혔다. [S16]
-
-## arXiv 프리프린트, 장기 에이전트용 정렬 증류법 AlignOPSD 제안
-
-**분야:** AI
-**테마:** 연구·기술
-**보조 테마:** 없음
-**세부 태그:** 연구 소개, 새로운 방법, 성능 개선
-**기업·기관:** 없음
-
-2026년 9월 27일 arXiv에 등록된 프리프린트는 장기 에이전트의 온폴리시 자기증류에서 교사 신호와 학생 결정의 시점·시간 범위가 어긋나는 문제를 ‘Decision--Timestamp Mismatch’로 정의했다. 저자들은 형제 rollout의 기능적으로 일치하는 문맥에서 같은 학생 응답을 재평가하는 단계와, 가변 길이 결정 구간에 결과 기반 credit을 배분하는 Semi-Markov 계층형 할당을 결합한 AlignOPSD를 제안했다. 프리프린트는 Qwen2.5-3B와 Qwen2.5-7B를 ALFWorld·WebShop·Search-QA에서 평가했고, 저자들은 8개 백본·집계 지표 비교 모두에서 GRPO와 StepOPSD를 앞섰으며 GRPO보다 5.5\~8.7% 개선하고 여섯 비교에서 1위를 기록했다고 보고했다. [S17]
-
-
-
-## 구글, 인도서 Gemini·AI Mode 통한 Flipkart 직접구매 시험
-
-**분야:** AI
-**테마:** 제품·서비스
-**보조 테마:** 없음
-**세부 태그:** 기능 추가
-**기업·기관:** Google, Flipkart
-
-2026년 9월 26일 보도에서 TechCrunch는 구글이 인도에서 Gemini와 AI Mode를 통해 Flipkart 상품을 직접 구매하는 초기 시험을 시작했다고 전했다. TechCrunch가 관찰한 시험에서는 일부 상품 목록의 Buy 버튼이 사용자를 AI 인터페이스 안에서 Flipkart 결제로 연결하며, 시험 대상은 일부 사용자와 제한된 상품 선택에 그친다. 취재원 한 명은 구글이 이 경험을 10월 후반에 더 넓게 출시할 계획이라고 TechCrunch에 전했다. TechCrunch가 본 Flipkart 브랜드 결제 흐름은 이전에 구글이 시연한 Google 호스팅 결제와 달라 보였으며, 시험을 구동하는 기술은 확인되지 않았다. [S18]
-
-
-
-## 근육 세포로 움직이는 얇은 수영 로봇 설계 발표
-
-**분야:** 로봇·제조
-**테마:** 연구·기술
-**보조 테마:** 없음
-**세부 태그:** 연구 소개
-**기업·기관:** 없음
-
-연구팀은 2026년 9월 29일 얇은 근육 세포 구동 수영 로봇 설계를 발표했다. 로봇은 껌 막대 정도 크기의 젤 필름 골격과 빛에 반응하도록 유전적으로 조작된 근육 세포 지느러미로 구성됐다. 연구자들은 양쪽 지느러미에 빛을 번갈아 비추는 간격을 조절해 로봇의 방향과 속도를 제어할 수 있다고 설명했다. [S19]
-
-
-
-## 알고리즘 모노컬처, 탐색 제약과 채용 앙상블의 가능성
-
-**분야:** AI
-**테마:** 연구·기술
-**보조 테마:** 없음
-**세부 태그:** 연구 소개, 새로운 방법
-**기업·기관:** 없음
-
-2026년 9월 29일 공개된 연구에서 연구진은 알고리즘 모노컬처에 대한 주요 반론을 체계적으로 평가하고, 체계적 배제를 포함한 여러 주장이 모든 형태의 모노컬처에 반대하는 결정적 근거는 아니라고 결론지었다. 연구진은 모노컬처가 탐색을 방해할 수 있는 정보적 에코 챔버를 만든다는 점을 수학적으로 증명했다. 채용에서는 모노컬처가 최고의 후보자가 일자리를 얻을 가능성을 낮출 수 있지만, 연구진은 여러 채용 알고리즘을 하나의 “ensemble”로 묶으면 이 한계를 극복할 수 있다고 보였다. 연구진에 따르면 이 방식은 때로 여러 기업이 서로 다른 알고리즘을 쓰는 폴리컬처만큼, 또는 그보다 더 나은 성과를 낼 수 있다. [S20]
-
-
-
-## 공공기관·금융기관 사칭 해킹메일 유포 지속…피해 주의
-
-**분야:** 사이버보안
-**테마:** 위험·사고
-**보조 테마:** 없음
-**세부 태그:** 보안 사고
-**기업·기관:** 없음
-
-2026년 9월 29일 공개된 보고에 따르면 공공기관과 금융기관 등을 사칭해 개인정보를 탈취하거나 모바일 악성앱 설치를 유도하는 해킹메일이 지속적으로 유포되고 있다. 이메일은 ‘범죄 연루’, ‘법규 위반’, ‘개인정보 유출 피해 보상’ 등의 문구로 피싱사이트 접속과 모바일 악성앱 설치를 유도한다. 보고는 이 같은 메일로 인한 피해가 발생하지 않도록 주의를 당부했다. [S21]
-
-
-
-## 움직임의 흐름 읽는 반도체 기술 개발
-
-**분야:** 반도체·컴퓨팅
-**테마:** 연구·기술
-**보조 테마:** 없음
-**세부 태그:** 연구 소개, 새로운 방법
-**기업·기관:** UNIST, POSTECH
-
-한국 연구진은 2026년 9월 29일, 반응 속도가 다른 반도체를 여러 층으로 쌓아 방금 일어난 변화와 앞선 변화를 함께 읽는 기술을 개발했다고 밝혔다. 권지민 교수 연구팀은 UNIST·POSTECH 연구진과 함께 이온을 담은 소재를 단단한 얇은 막으로 만들고, 이를 이용해 반응 속도가 다른 반도체 소자를 여러 층으로 쌓는 데 성공했다고 밝혔다. 연구진은 이 기술이 향후 몸에 붙이거나 착용하는 작은 기기가 움직임과 몸의 신호를 분석하는 데 활용될 수 있다고 설명했다. [S22]
-
-
-
 # 리서치 노트
 
 없음
@@ -1010,16 +723,9 @@ Rocket Lab은 나머지 Synspective 위성군을 10년 말까지 배치하기 �
 - [S7] https://news.skhynix.com/en/tsmc-oip-conference-2026/
 - [S8] https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally
 - [S9] https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
-- [S10] https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html
+- [S10] https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers
 - [S11] https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector
 - [S12] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
 - [S13] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S14] https://asec.ahnlab.com/ko/95643/
 - [S15] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
-- [S16] https://rocketlabcorp.com/updates/mission-success-rocket-lab-launches-97th-electron-mission/
-- [S17] https://arxiv.org/abs/2609.33391
-- [S18] https://techcrunch.com/2026/09/26/google-tests-buying-from-walmart-owned-flipkart-through-gemini-and-ai-mode-in-india/
-- [S19] https://news.mit.edu/2026/powered-by-muscle-cells-paper-thin-robot-swims-through-watery-maze-0929
-- [S20] https://news.mit.edu/2026/algorithmic-monoculture-effects-depend-on-details-0929
-- [S21] https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=2&categoryCode=&nttId=72202
-- [S22] https://news.kaist.ac.kr/researchnews/html/news/?mode=V&mng_no=67670&GotoPage=1

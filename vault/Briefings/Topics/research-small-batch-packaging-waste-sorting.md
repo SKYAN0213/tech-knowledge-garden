@@ -2,7 +2,7 @@
 title: 소량 배치 포장 폐기물 분류용 협동로봇 작업대
 type: briefing-topic
 topic_id: research-small-batch-packaging-waste-sorting
-date: 2026-10-16
+date: 2026-10-19
 description: 2026-10-09 공개된 논문은 협동로봇·RGB-D·컨베이어·ROS 2를 통합한 모듈형 작업대를 세 포장재 범주의
   통제된 실험실 조건에서 검증했다. SAM + MobileNetV2 지각 파이프라인은 정확도 0.93, 정밀도 0.93, 재현율 0.92,
   F1 0.92를 보고했다. 별도 200회 조작 시험에서 grasp 성공은 184/200, 종단 간 분류 성공은 178/200이었다. 5.73

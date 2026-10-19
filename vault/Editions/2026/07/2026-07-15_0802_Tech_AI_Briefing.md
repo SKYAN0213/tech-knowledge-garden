@@ -6,7 +6,6 @@ date: 2026-07-15
 timezone: Asia/Seoul
 coverage_start: null
 coverage_end: null
-historical_coverage: unrecorded/v1
 editorial_format: six-w/v1
 briefing_format: sector-five/v1
 theme_format: news-themes/v1
@@ -79,11 +78,11 @@ article_records:
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: GitHub, Dependabot
+      who: GitHub
       when: 2026-07-15
-      where: github.com, GitHub Enterprise Server
-      what: Dependabot 버전 업데이트 풀 리퀘스트 생성 전 3일 대기 기간 도입
-      how: 레지스트리 등록 후 3일 경과 시 PR 생성, 보안 업데이트는 즉시 생성, .github/dependabot.yml로 설정 가능
+      where: github.com; GitHub Enterprise Server 적용은 3.23에서 예정
+      what: 일반 버전 업데이트 PR에 최소 3일의 기본 대기 기간 도입
+      how: 레지스트리 공개 뒤 기본 대기, 보안 업데이트는 즉시 생성, cooldown 옵션으로 변경·해제 가능
       why: 미기재
     lead: GitHub가 2026년 7월 15일(한국시간) Dependabot의 일반 버전 업데이트 기본값을 바꿨다. 새 릴리스가 패키지
       레지스트리에 공개된 뒤 최소 3일이 지나야 업데이트 풀 리퀘스트(PR)를 생성한다. 보안 업데이트 PR은 기존처럼 즉시 생성한다.
@@ -103,7 +102,7 @@ article_reviews:
     event_id: 27d181b6a4903b28
     review_status: verified
     published_at: 2026-07-15
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-07-14T12:12:48-07:00
@@ -111,15 +110,13 @@ article_reviews:
     event_id: fe469724f5828fb0
     review_status: verified
     published_at: 2026-07-14
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
-    date_kind: source-publication-time
-    source_published_at: 2026-07-14T05:54:12-07:00
   - title: Dependabot, 일반 버전 업데이트 PR을 최소 3일 뒤 생성
     event_id: 55f3f57477bf071c
     review_status: verified
     published_at: 2026-07-15
-    reviewed_at: 2026-10-07
+    reviewed_at: 2026-10-10
     concept_ids: []
     date_kind: source-publication-time
     source_published_at: 2026-07-14T09:42:59-07:00

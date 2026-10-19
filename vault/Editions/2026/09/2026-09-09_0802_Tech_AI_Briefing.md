@@ -67,6 +67,9 @@ article_records:
       활성화했다고 공지했다. 패키지 설정에서 저장소에 부여한 읽기 권한을 Dependabot의 GITHUB_TOKEN이 재사용한다. 6월
       최초 제공 후 npm 패키지 경로 충돌로 철회했던 기능으로, 재활성화 버전에서는 명시적인 레지스트리 인증과 기존 경로를 우선하고 자동
       인증을 보조 수단으로 사용한다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 패키지에서 읽기 권한을 부여
         paragraphs:
@@ -81,9 +84,6 @@ article_records:
             전달한다. GitHub Packages 중 Dependabot이 지원하는 모든 생태계에 적용된다.
         source_urls:
           - https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries/
-    papers: []
-    relations: []
-    topic_ids: []
 article_reviews:
   - title: OpenAI, 나비에–스토크스 문제의 증명안과 Lean 형식화 공개
     event_id: 2c827cba158d2f26
@@ -100,9 +100,9 @@ article_reviews:
   - title: Dependabot, 개인 토큰 없이 비공개 GitHub Packages 접근 지원
     event_id: 33eecf1d106431d9
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-08
     reviewed_at: 2026-10-09
-    concept_ids: []
 ---
 
 # 이번 호 표지
