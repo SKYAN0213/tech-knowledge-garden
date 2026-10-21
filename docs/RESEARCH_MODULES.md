@@ -569,3 +569,7 @@ KUKA·TD SYNNEX의 2026-10-07 공동 발표 영문/독문과 공식 AMR 기술 �
 공통 storageAction의 자식 입력은 완성된 권한600 임시 정규파일 fd로 전달한다. 실제 native 읽기 전용 추적에서 재현한 stdin 소켓 EOF 대기를 제거하기 위한 경계이며, 수집·모델 요청·저장 승인이나 timeout 정책을 바꾸지 않는다. fd와 임시 파일은 성공·오류 모두 정리한다.
 
 중단된 `.storage/mutation.lock`의 회수는 독립 storage CLI `recover-mutation-lock`만 명시 제공한다. 정확한 root·원문 SHA·PID·operator·reason 및 현재 ESRCH 검증을 요구하며 원문/회수 영수증을 보존한다. 회수 guard는 프로세스 종료로 해제되는 OS 잠금이다. 살아있는 PID·unknown·바뀐 원문이나 파일 identity는 회수하지 않는다. MCP storage/자동 planner는 이 action을 호출할 수 없다. 구체적 절차는 DRIVE_STORAGE의 대량 복원/잠금 회수 절을 따른다.
+
+### worker 종료 관측의 현재 증거
+
+worker 조회는 `kill(pid,0)`과 같은 `ps` snapshot의 kernel 상태·전체 command를 확인한다. 초기 존재 조회 후 프로세스가 사라져 ps가 실패하거나 argv가 일치하지 않으면 존재를 한 번 더 조회하고 ESRCH만 종료 증거로 사용한다. 커널 상태 Z와 Linux의 X는 쓰기를 수행할 수 없는 종료 상태다. command 문자열의 `defunct`나 Darwin의 X 부가 flag만으로 종료를 추정하지 않는다. 살아 있는 다른 PID/job, 권한 오류, 불명·잘못된 출력은 계속 `worker_status_unknown`으로 남기며 잠금을 회수하지 않는다. job 인자는 공백·문자열 끝 경계까지 일치해야 하므로 다른 job의 ID 접두어와 혼동하지 않는다. 프로세스 조회 후의 native 최종 상태 재검증도 유지한다.

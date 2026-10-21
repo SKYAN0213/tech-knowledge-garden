@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-native-storage-recovery-20261022-v1/receipt.json",
-    "sha256": "18dbf29bb9301fbfb0cdfc9886e9bf0031b9479133db5c868575bbe9a5e5438d"
+    "path": ".local/research/development-releases/tkg-worker-exit-observation-20261022-v1/receipt.json",
+    "sha256": "31f3c9ab2b9e964b6bfa1c3856c43edc23e1ef2c5387620ad643cafcecd21166"
   },
   "recovery": {
     "automatic_retry": false,

@@ -7422,3 +7422,13 @@ MCP server fixture에 자체 cold policy가 없어 상위 운영 catalog를 상�
 입력 fd의 정규파일/권한/offset·완전한 큰 JSON·성공/실패 cleanup과 원래 stdout/stderr 보존의 재현2건이 수정 후 통과했다. 현재 전체 Garden2,135개가 fail/cancel/skip0으로 통과했다. 같은 fsync-heavy fixture를 병렬 실행한 별도 관련 묶음은 소유 테스트 프로세스만 확인해 중단하고 중단 기록을 보존했으며, 이 중단을 통과로 집계하지 않는다. 최종 전체 검사에는 storage40개와 MCP26개가 모두 포함된다.
 
 실제 native 회수 영수증과 원 잠금 SHA를 읽어 확인한 뒤 보존한173개 입력/55묶음을 명시 재개했다.125,784경로를 확인·commit하고7,549,666,860bytes를 새로 복원했으며 원래 성공314묶음은 다시 처리하지 않았다. 최초 누락167,140경로/10,099,103,584bytes의 독립 전량 SHA 대조도 불일치0이다. 검증 catalog298,783경로 전체의 누락0,잠금없음,Drive metadata·32GiB정책·이전실패기록 불변과 여유58,042,048,512bytes를 확인했다. 실제 수용 근거는 `.local/research/connector-hydrate-bounded-resume-20261022/regular-fd-acceptance-v2/acceptance.json`이다.
+
+### 19.536 worker 소멸·zombie와 job 인자 관측 경계 (2026-10-22)
+
+실제 Actions39654872204는2,135개 중2,134개가 통과하고 종료 worker 복구1개가 `worker_status_unknown`으로 실패했다. 해당 검사는 완료 결과가 있는 state를 finishing/pid:null로 바꾼 뒤 기존 launch.pid를 조회한다. 실제 CI에는 ps snapshot이 없어 원래 실패가 소멸 경합인지 zombie였는지는 단정하지 않는다. 초기 kill0 후 ps 시점의 소멸과, 현재 Mac에서 kill0가 성공하면서 ps가 Z인 미회수 자식 상태를 각각 재현했다.
+
+ps에서 kernel 상태와 전체 argv를 같은 snapshot으로 읽고 Z 및 Linux X만 종료 상태로 사용한다. ps 실패·미일치 뒤 현재 ESRCH만 종료 증거로 허용하며 살아 있는 PID 재사용, EPERM/unknown, 잘못된 출력은 계속 차단한다. Darwin의 X flag와 live argv의 defunct 문자는 종료 근거가 아니다. 다른 job ID 접두어를 같은 worker로 보는 문제도 재현해 인자 경계를 명시했다. 기존 상태 재검증·승인·시간 제한은 유지한다.
+
+수정 전 종료 관측 회귀12개 중11개와 별도 job 접두어 회귀가 실패했다. 현재 관련54개가 fail/cancel0으로 통과했고 실제 Mac 자식의 zombie 관측도 확인했다. Linux 실기 판단은 새 Actions에서 별도 확인한다. 전체 검사·새 manifest·현재 관문 근거는 `.local/research/development-releases/tkg-worker-exit-observation-20261022-v1/`에 보존하며, Drive242원문 일치 capture와 완료한 오늘 수집 계획·기존 실제 Luna 결과는 다시 만들지 않는다.
+
+현재 코드의 최종 전체 Garden2,151개가 fail/cancel/skip0으로 통과했다. 이 개발 검증과 현재 manifest의 운영 허용, 실제 Linux Actions 및 오늘 회차의 Drive/발행/공개/WebsiteData 검증은 별도 근거로 기록한다.

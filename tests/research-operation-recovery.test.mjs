@@ -3,7 +3,8 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { spawnSync } from "node:child_process"
+import { once } from "node:events"
+import { spawn, spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import {
   readOperationGate,
@@ -274,7 +275,7 @@ test("a wide process-table read keeps a live worker with a long CI command line 
   fs.mkdirSync(bin)
   fs.writeFileSync(
     path.join(bin, "ps"),
-    `#!/bin/sh\nif [ "$1" = "-ww" ]; then\n  printf '%s\\n' '${worker} --repo ${repo} --root ${f.root} --job ${id}'\nelse\n  printf '%s\\n' '${worker} --repo ${repo} --root ${f.root}'\nfi\n`,
+    `#!/bin/sh\nif [ "$1" = "-ww" ]; then\n  printf '%s\\n' 'S ${worker} --repo ${repo} --root ${f.root} --job ${id}'\nelse\n  printf '%s\\n' 'S ${worker} --repo ${repo} --root ${f.root}'\nfi\n`,
     { mode: 0o700 },
   )
   const code = `import { moduleJobStatus } from ${JSON.stringify(new URL("../scripts/research/module-runtime.mjs", import.meta.url).href)}; const ctx=JSON.parse(process.argv[1]); const id=process.argv[2]; console.log(JSON.stringify(moduleJobStatus(ctx,id)));`
@@ -327,13 +328,24 @@ test("a live PID with an unmatched command line stays unknown and cannot be resu
 for (const finalState of ["completed", "failed", "waiting_for_reasoning", "waiting_for_storage"]) {
   for (const probe of ["ESRCH", "EPERM", "unmatched"]) {
     test(`status observes ${finalState} saved during a ${probe} worker probe`, async (t) => {
-      const f = nativeFixture(t), id = `module-race-${finalState}-${probe}`
-      const complete = await submitModuleJob(f.ctx, "collection", "inventory", {}, {
-        jobId: id, background: false,
-      })
+      const f = nativeFixture(t),
+        id = `module-race-${finalState}-${probe}`
+      const complete = await submitModuleJob(
+        f.ctx,
+        "collection",
+        "inventory",
+        {},
+        {
+          jobId: id,
+          background: false,
+        },
+      )
       const statePath = `module-jobs/${id}/state.json`
-      const final = { ...readJSON(f.root, statePath), state: finalState,
-        error: finalState === "failed" ? "missing-review" : null }
+      const final = {
+        ...readJSON(f.root, statePath),
+        state: finalState,
+        error: finalState === "failed" ? "missing-review" : null,
+      }
       atomicWrite(f.root, statePath, { ...final, state: "running", pid: process.pid })
       const originalKill = process.kill
       let probed = false
@@ -361,7 +373,8 @@ for (const finalState of ["completed", "failed", "waiting_for_reasoning", "waiti
 
 for (const transition of ["active", "invalid-sha", "foreign-context"]) {
   test(`a worker probe keeps ${transition} fail closed`, async (t) => {
-    const f = nativeFixture(t), id = `module-race-${transition}`
+    const f = nativeFixture(t),
+      id = `module-race-${transition}`
     await submitModuleJob(f.ctx, "collection", "inventory", {}, { jobId: id, background: false })
     const statePath = `module-jobs/${id}/state.json`
     const final = readJSON(f.root, statePath)
@@ -393,3 +406,210 @@ for (const transition of ["active", "invalid-sha", "foreign-context"]) {
     }
   })
 }
+
+function workerProbeFixture(t, id, pid = process.pid) {
+  const f = nativeFixture(t)
+  const input = { job_id: id, module: "collection", operation: "inventory", context: f.ctx }
+  const state = {
+    schema: "research-module-job/v1",
+    job_id: id,
+    input_sha256: sha256(JSON.stringify(input)),
+    state: "finishing",
+    pid: null,
+    attempt: 1,
+  }
+  atomicWrite(f.root, `module-jobs/${id}/input.json`, input)
+  atomicWrite(f.root, `module-jobs/${id}/state.json`, state)
+  atomicWrite(f.root, `module-jobs/${id}/launch.json`, { pid })
+  return { ...f, id, pid, state }
+}
+
+const probeCases = [
+  {
+    name: "vanished after failed ps",
+    ps: null,
+    second: "ESRCH",
+    expected: "interrupted",
+    calls: 2,
+  },
+  {
+    name: "vanished after unmatched ps",
+    ps: "S node unrelated",
+    second: "ESRCH",
+    expected: "interrupted",
+    calls: 2,
+  },
+  {
+    name: "permission denied after failed ps",
+    ps: null,
+    second: "EPERM",
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "unknown error after failed ps",
+    ps: null,
+    second: "EIO",
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "still alive after failed ps",
+    ps: null,
+    second: null,
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "another live job with the same ID prefix",
+    ps: "S MATCHED_WORKER-extra",
+    second: null,
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "reused live PID",
+    ps: "Ss node unrelated",
+    second: null,
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "defunct text in live argv",
+    ps: "S node --label <defunct>",
+    second: null,
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "malformed stat",
+    ps: "Zombie node",
+    second: null,
+    expected: "worker_status_unknown",
+    calls: 2,
+  },
+  {
+    name: "kernel zombie with flags",
+    ps: "  Z+   [node] <defunct>",
+    second: null,
+    expected: "interrupted",
+    calls: 1,
+  },
+  {
+    name: "Linux kernel dead",
+    ps: "X [node]",
+    platform: "linux",
+    second: null,
+    expected: "interrupted",
+    calls: 1,
+  },
+  { name: "missing stat", ps: "", second: null, expected: "worker_status_unknown", calls: 2 },
+  {
+    name: "Darwin debug flag on a live worker",
+    ps: "SX MATCHED_WORKER",
+    platform: "darwin",
+    second: null,
+    expected: "finishing",
+    calls: 1,
+  },
+  {
+    name: "Linux flags on a live worker",
+    ps: "Sl+ MATCHED_WORKER",
+    platform: "linux",
+    second: null,
+    expected: "finishing",
+    calls: 1,
+  },
+  {
+    name: "initial EPERM",
+    ps: "Z [node]",
+    initial: "EPERM",
+    second: "ESRCH",
+    expected: "worker_status_unknown",
+    calls: 1,
+  },
+]
+for (const example of probeCases) {
+  test(`worker visibility handles ${example.name} using observed process evidence`, (t) => {
+    const f = workerProbeFixture(t, "module-process-evidence")
+    const bin = path.join(f.root, "probe-bin")
+    fs.mkdirSync(bin)
+    fs.writeFileSync(
+      path.join(bin, "ps"),
+      example.ps === null
+        ? "#!/bin/sh\nexit 1\n"
+        : `#!/bin/sh\nif [ "$5" != "stat=" ] || [ "$6" != "-o" ] || [ "$7" != "command=" ]; then printf '%s\\n' 'malformed old ps contract'; exit 0; fi\nprintf '%s\\n' '${example.ps?.replace("MATCHED_WORKER", path.join(repo, "scripts/research-module-worker.mjs") + " --job " + f.id)}'\n`,
+      { mode: 0o700 },
+    )
+    const code = `import { moduleJobStatus } from ${JSON.stringify(new URL("../scripts/research/module-runtime.mjs", import.meta.url).href)}; const ctx=JSON.parse(process.argv[1]); const example=JSON.parse(process.argv[2]); if(example.platform)Object.defineProperty(process,"platform",{value:example.platform});let probes=0;process.kill=()=>{probes++;const code=probes===1?example.initial:example.second;if(code)throw Object.assign(Error(code),{code});return true};const status=moduleJobStatus(ctx,"module-process-evidence");console.log(JSON.stringify({status,probes}));`
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", code, JSON.stringify(f.ctx), JSON.stringify(example)],
+      {
+        encoding: "utf8",
+        env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH },
+      },
+    )
+    assert.equal(result.status, 0, result.stderr)
+    const { status, probes } = JSON.parse(result.stdout)
+    assert.equal(status.state, example.expected)
+    assert.equal(probes, example.calls)
+    assert.equal(
+      status.worker_alive,
+      example.expected === "interrupted" ? false : example.expected === "finishing" ? true : null,
+    )
+    assert.equal(status.resume_available, example.expected === "interrupted")
+    assert.equal(status.recovery.automatic_retry, false)
+    assert.equal(readJSON(f.root, `module-jobs/${f.id}/state.json`).state, "finishing")
+    assert.equal(fs.existsSync(path.join(f.root, `module-jobs/${f.id}/attempts`)), false)
+  })
+}
+
+test(
+  "native zombie workers cannot remain writers while their parent has not reaped them",
+  {
+    skip: !["linux", "darwin"].includes(process.platform),
+  },
+  async (t) => {
+    const program = `import ctypes,json,os,sys
+pid=os.fork()
+if pid==0:os._exit(0)
+try:
+ if hasattr(os,"waitid"):os.waitid(os.P_PID,pid,os.WEXITED|os.WNOWAIT)
+ else:
+  libc=ctypes.CDLL(None,use_errno=True);waitid=libc.waitid;waitid.argtypes=[ctypes.c_int,ctypes.c_uint,ctypes.c_void_p,ctypes.c_int];info=ctypes.create_string_buffer(256)
+  if waitid(1,pid,ctypes.byref(info),os.WEXITED|os.WNOWAIT)!=0:raise OSError(ctypes.get_errno(),"waitid failed")
+ print(json.dumps({"pid":pid}),flush=True)
+ sys.stdin.readline()
+finally:os.waitpid(pid,0)`
+    const child = spawn("python3", ["-u", "-c", program], { stdio: ["pipe", "pipe", "pipe"] })
+    let stderr = ""
+    child.stderr.on("data", (data) => {
+      stderr += data
+    })
+    const ready = await new Promise((resolve, reject) => {
+      child.stdout.once("data", (data) => resolve(JSON.parse(data.toString())))
+      child.once("error", reject)
+      child.once("exit", (code) => reject(Error(`Zombie fixture exited ${code}: ${stderr}`)))
+    })
+    try {
+      const f = workerProbeFixture(t, "module-native-zombie", ready.pid)
+      assert.doesNotThrow(() => process.kill(ready.pid, 0))
+      const native = spawnSync(
+        "ps",
+        ["-ww", "-p", String(ready.pid), "-o", "stat=", "-o", "command="],
+        { encoding: "utf8" },
+      )
+      assert.equal(native.status, 0, native.stderr)
+      assert.match(native.stdout.trim(), /^Z/)
+      const status = moduleJobStatus(f.ctx, f.id)
+      assert.equal(status.state, "interrupted")
+      assert.equal(status.worker_alive, false)
+      assert.equal(status.recovery.automatic_retry, false)
+    } finally {
+      const exited = once(child, "exit")
+      child.stdin.end("reap\n")
+      await exited
+    }
+  },
+)

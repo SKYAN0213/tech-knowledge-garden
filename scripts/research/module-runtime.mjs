@@ -307,27 +307,42 @@ function checkedInput(ctx, id, { requireContext = true } = {}) {
     throw Error("Module job input or context changed")
   return { input, state }
 }
+function processPresent(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return error.code === "ESRCH" ? false : null
+  }
+}
 function workerAlive(ctx, id, state) {
   const launch = readJSON(ctx.root, base(id) + "launch.json")
   const pid = state.state === "running" ? state.pid : launch?.pid
   if (!Number.isInteger(pid) || pid <= 0) return false
+  const present = processPresent(pid)
+  if (present !== true) return present
   try {
-    process.kill(pid, 0)
-  } catch (error) {
-    return error.code === "ESRCH" ? false : null
-  }
-  try {
-    // CI runners have long checkout paths and no terminal width. Ask ps for
-    // untruncated argv so a live worker is not mistaken for an exited one.
-    const command = execFileSync("ps", ["-ww", "-p", String(pid), "-o", "command="], {
+    // Read kernel state and untruncated argv in one snapshot. A zombie still
+    // passes kill(pid, 0), but cannot write or retain its original command line.
+    const output = execFileSync("ps", ["-ww", "-p", String(pid), "-o", "stat=", "-o", "command="], {
       encoding: "utf8",
     })
-    // A live but unmatched PID may be reused or have an unobservable argv; it is not proof of exit.
-    return command.includes(worker) && command.includes(`--job ${id}`) ? true : null
+    const states = process.platform === "darwin" ? "IRSTUZ" : "DIRSTtWXZ"
+    const observed = output
+      .trim()
+      .match(new RegExp(String.raw`^([${states}][+<>AELNSVWXsl]*)[ \t]+([\s\S]+)$`))
+    if (observed) {
+      const [, status, command] = observed
+      if (status[0] === "Z" || (process.platform === "linux" && status[0] === "X")) return false
+      const jobArgument = new RegExp(String.raw`(?:^|\s)--job\s+${id}(?=\s|$)`)
+      if (command.includes(worker) && jobArgument.test(command)) return true
+    }
   } catch {
-    // An inaccessible process table does not establish that the writer exited.
-    return null
+    // ps failure is not exit evidence; only a fresh ESRCH can establish that
+    // the worker vanished after the initial successful existence probe.
   }
+  // Live/reused PIDs, EPERM, malformed output and inaccessible argv stay unknown.
+  return processPresent(pid) === false ? false : null
 }
 export function moduleJobStatus(ctx, id) {
   let { input, state } = checkedInput(ctx, id)
@@ -338,7 +353,9 @@ export function moduleJobStatus(ctx, id) {
     // Only a freshly validated native state can supersede an uncertain probe.
     const latest = checkedInput(ctx, id)
     if (
-      ["completed", "failed", "waiting_for_reasoning", "waiting_for_storage"].includes(latest.state.state)
+      ["completed", "failed", "waiting_for_reasoning", "waiting_for_storage"].includes(
+        latest.state.state,
+      )
     ) {
       input = latest.input
       state = latest.state
