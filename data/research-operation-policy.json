@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-worker-exit-observation-20261022-v1/receipt.json",
-    "sha256": "31f3c9ab2b9e964b6bfa1c3856c43edc23e1ef2c5387620ad643cafcecd21166"
+    "path": ".local/research/development-releases/tkg-unpublished-reuse-20261022-v1/receipt.json",
+    "sha256": "790e39df89cf5668c95655322de9a14ffe8128b1812f32cf44743c1a304d6911"
   },
   "recovery": {
     "automatic_retry": false,

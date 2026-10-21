@@ -232,7 +232,8 @@ function poolCandidate(ctx, planRef, plan, event, inventory) {
       body_sha256: sha256(body),
     })),
     already_featured:
-      event.action === "reuse" ||
+      (event.action === "reuse" &&
+        inventory.articles.some((article) => article.id === event.prior?.event_id)) ||
       (event.action === "write" &&
         !event.prior &&
         related.some((a) => a.urls.some((url) => urls.has(canonicalURL(url))))) ||

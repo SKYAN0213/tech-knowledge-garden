@@ -179,6 +179,74 @@ test("curation source/novelty gates beat high scores and unknown assessments rem
   assert.equal(readJSON(f.root, "curation/queue.json").plans.length, 1)
 })
 
+test("an approved unpublished article can be curated once through its exact reuse lineage", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "vault")
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+  })
+  const original = f.review.events.find((event) => event.action === "write")
+  const primary = f.sources[0].parsed
+  const proof = primary.blocks[0]
+  const reuse = {
+    ...original,
+    group_id: "approved-unpublished-reuse",
+    action: "reuse",
+    prior_run: "writer",
+    prior_matches: ["identity_marker", "event_action"].map((aspect) => ({
+      aspect,
+      parse_id: primary.parse_id,
+      block_id: proof.block_id,
+      quote: proof.text,
+      primary_block_id: proof.block_id,
+      primary_quote: proof.text,
+      conclusion: "The exact approved original describes the same contract and action",
+    })),
+  }
+  const planned = await plan(f, "approved-unpublished-reuse-plan", [reuse])
+  const p = await pool(f, "approved-unpublished-first-feature", [planned])
+  assert.equal(p.value.candidates[0].already_featured, false)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  const selection = await choose(f, p)
+  const advanced = await advanceCuration(f.ctx, {
+    run_id: "approved-unpublished-first-feature-workflow",
+    selection_path: selection.path,
+    selection_sha256: selection.sha256,
+    execute: true,
+    max_items: 4,
+  })
+  assert.equal(advanced.status, "complete")
+  assert.deepEqual(advanced.approved_runs, ["writer"])
+  assert.equal(advanced.model_calls, 0)
+  assert.equal(advanced.article_writes, 0)
+  const approved = loadCurrentApproval(f.root, "writer", { vault: f.ctx.vault })
+  fs.mkdirSync(path.join(f.ctx.vault, "News"), { recursive: true })
+  fs.writeFileSync(
+    path.join(f.ctx.vault, "News", approved.article.event_id + ".md"),
+    noteText(
+      {
+        type: "news",
+        event_id: approved.article.event_id,
+        title: approved.article.title,
+        date: "2026-10-12",
+        published_at: "2026-09-27",
+        review_status: "verified",
+        sources: approved.article.source_urls,
+      },
+      approved.article.record.lead,
+    ),
+  )
+  const after = await pool(f, "approved-reuse-already-public", [planned])
+  assert.equal(after.value.candidates[0].already_featured, true)
+  await review(f, after, [rating(f, after.value.candidates[0], 5)])
+  const second = loadCurationSelection(f.ctx, ref(await choose(f, after)))
+  assert.equal(second.selected.length, 0)
+  assert.equal(second.held[0].reason, "ineligible_or_no_new_information")
+})
+
 test("the same reviewed identity is held once across plans even when JSON field order differs", async (t) => {
   const f = setup(t)
   const repeated = {

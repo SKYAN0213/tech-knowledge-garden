@@ -144,6 +144,8 @@ Codex 위임의 컨텍스트 상한은131072토큰으로 분리한다. 현재 �
 | `publication`    | `prepare`, `status`, `request_delivery`, `deliver`, `delivery_receipt`, `delivery_status`, `fallback`, `shadow_basis`, `shadow_record`, `shadow_status` | native 승인 인계·예약 invocation·비교 검토·raw capture → 고정 전달 요청·운영 비교·실제 검증 상태 |
 | `reasoning`      | `pending`, `read`, `submit`, `execute`                                                    | 원문·역할·출력 Schema로 고정한 요청 → Codex 또는 Ollama의 검증된 정형 결과             |
 
+승인된 미발행 기사는 원문·정확한 prior 승인 run을 대조한 `classification.review`의 `reuse`로 재사용할 수 있다. curation의 `already_featured`는 승인 자체가 아니라 canonical 발행 이력에 그 사건 ID가 있는지 확인한다. 같은 편집 점수에서는 정확한 native 승인 재사용을 새 writer보다 먼저 선택하며, 중요도 점수·반복 페널티·분야 상한·동일 사건 중복 검사는 유지한다. 실제 발행 이력에 있는 `reuse`는 다시 선정하지 않는다.
+
 12개 모듈·65개 작업이다. 기본 MCP와 현재 Codex 등록은 공통 도구5개로 같은 작업들을 호출한다. 명시적 상세 모드는 작업65개와 공통 조회/상태/결과/재개4개를 합친69개다. `classification.inspect`는 기존 후보 장부의 URL/본문/제목 관계 후보를 조회하고 `classification.queue`는 기존 처리 큐의 계획을 저장한다. 새 사건 중심 흐름은 `extract → review → curation.prepare/evaluate/select → selection.prepare`다. `plan`은 모델 없이 메타데이터와 원문 접근을 제공한다. 분류·큐레이션의 모델 출력은 미검토 후보이며 작성/기사 승인을 만들지 않는다.
 
 `knowledge.project`는 검토된 native 승인을 입력으로 기존 온톨로지를 투영한다. 후보의 공동 등장으로 개념 노드나 관계를 생성하지 않는다. 실제 Knowledge·Signals·TrendTopics 갱신과 기존 운영 수용 조건은 원래 승인·반영 경로를 따른다.

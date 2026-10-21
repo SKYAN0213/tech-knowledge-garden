@@ -38,6 +38,39 @@ const item = (id, score, sector = "AI") => ({
 })
 const candidate = (id, who) => ({ candidate_id: id, identity_key: id, identity: { who } })
 
+test("equal-score approved reuse wins over another writer for the same event without changing scores", () => {
+  const candidates = [
+    { ...candidate("a", "A"), identity_key: "same-event", action: "write" },
+    {
+      ...candidate("z", "A"),
+      identity_key: "same-event",
+      action: "reuse",
+      prior: { run_id: "approved" },
+    },
+  ]
+  const selected = (scores, rows = candidates) =>
+    selectBriefingComposition(
+      [item("a", scores[0]), item("z", scores[1])],
+      rows,
+      new Map(),
+      policy,
+      limits,
+    )
+  const result = selected([80, 80])
+  assert.equal(result.selected[0].candidate_id, "z")
+  assert.equal(result.selected[0].score, 80)
+  assert.equal(result.held[0].reason, "event_identity_collision_requires_review")
+  assert.equal(result.composition.importance_scores_changed, false)
+  assert.equal(selected([81, 80]).selected[0].candidate_id, "a")
+  assert.equal(
+    selected(
+      [80, 80],
+      candidates.map((c) => ({ ...c, prior: null })),
+    ).selected[0].candidate_id,
+    "a",
+  )
+})
+
 test("briefing composition reduces same-organization repetition only inside a close importance band", () => {
   const rows = [item("a", 95), item("b", 91), item("c", 89)]
   const result = selectBriefingComposition(

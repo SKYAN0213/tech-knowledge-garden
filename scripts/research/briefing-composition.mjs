@@ -90,10 +90,20 @@ export function readBriefingCompositionPolicy(ctx) {
 // or technology/market growth claims. Only reviewed semantic information units
 // can justify holding an otherwise eligible event for repeated briefing content.
 export function selectBriefingComposition(ranked, candidates, profiles, policy, limits) {
-  const remaining = [...ranked].sort(
-    (a, b) => b.score - a.score || a.candidate_id.localeCompare(b.candidate_id),
-  )
   const byId = new Map(candidates.map((c) => [c.candidate_id, c]))
+  // Reuse is a native approved article, not proof of prior publication. At
+  // equal editorial scores prefer its completed work over another writer;
+  // score bands, repetition penalties and duplicate-event checks still apply.
+  const approvedReuse = (item) => {
+    const candidate = byId.get(item.candidate_id)
+    return candidate?.action === "reuse" && candidate.prior?.run_id ? 1 : 0
+  }
+  const remaining = [...ranked].sort(
+    (a, b) =>
+      b.score - a.score ||
+      approvedReuse(b) - approvedReuse(a) ||
+      a.candidate_id.localeCompare(b.candidate_id),
+  )
   const selected = [],
     held = [],
     decisions = []
@@ -154,6 +164,7 @@ export function selectBriefingComposition(ranked, candidates, profiles, policy, 
       (a, b) =>
         repeatPenalty(a) - repeatPenalty(b) ||
         b.score - a.score ||
+        approvedReuse(b) - approvedReuse(a) ||
         a.candidate_id.localeCompare(b.candidate_id),
     )
     const picked = alternatives[0],
