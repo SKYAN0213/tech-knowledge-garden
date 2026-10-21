@@ -12273,3 +12273,12 @@ RESEARCH_MODULES의 input/v2 계약을 따른다. 동일한 전체 `material_ids
 `search_plan`은 사건 제안과 큐레이션이 함께 사용한다. Codex 정책의131072 컨텍스트를 native 요청과 원문 배치 계획에 동일하게 전달한다. 로컬/Ollama 및 직접 API 상한은32768로 유지한다. 긴 과거 기사 대조도 모든 비교 기사 ID·본문·출력 Schema를 그대로 보존하고 출력 토큰과 template 여유를 계산한다. 상한을 넘으면 기존처럼 명시적으로 나누며 원문이나 이력을 조용히 버리지 않는다. 현재 호스트의 Luna272000 context 메타데이터는 구현 선택의 근거이며 API 측정값이나 발행 성공 증거로 표시하지 않는다.
 
 설정·구현이 달라졌으므로 기존 실패 job에 새 정책 지문을 덮어쓰지 않는다. 같은 회차·검토 계획·원문을 새 job에서 사용하고, 실제 Luna의 exact request SHA 결과를 원래 새 job에 제출·재개한다. 결과는 미검토 점수 제안이며 분야·신규성·원문 지지 여부를 별도 검토한다. 전체 검사와 실제 요청의 제출·재개를 확인한 뒤 새 개발 manifest를 고정한다.
+
+
+## 521. worker 종료 경합과 운영 원문 캐시 유지 (2026-10-22)
+
+상태 조회는 활성 worker 탐지 후 native state를 다시 검증한다. 조회 사이에 기록된 completed/failed/waiting_for_reasoning/waiting_for_storage만 그대로 반환하며, 활성 상태의 조회 권한 오류는 여전히 종료 증거가 아니다. 동일 입력/정책/구현일 때만 기존 job을 재개한다. 코드가 바뀐 과거 job은 보존하고 검증된 선행 결과를 새 job에서 재사용한다.
+
+현재 canonical `.local/.storage/policy.json`은32GiB이며 실제 약20.3GB 작업 집합을 수용한다. 2GiB로 되돌리면 완료 worker의 native trim이 복원한 검증 원문을 곧바로 지워 연속 저장 대기가 생길 수 있다. 용량은 기존 storage enable 입력으로 조정하며, 무조건적인 잠금 삭제나 원문 재수집으로 해결하지 않는다. 동일 Drive ID/ZIP SHA가 검증된 로컬 package는 native hydrate에 재사용한다.
+
+운영 저장소 아래에 만드는 테스트 fixture에는 자체 `.storage/policy.json`의 `enabled:false` 경계를 먼저 만든다. 상위 정책을 끄거나 환경 전체의 저장 검사를 우회하지 않는다. 테스트가 운영 catalog를 열고 worker 정리와 복원을 경합하게 해서는 안 된다. 실제 Drive 보관과 승인·발행 검사는 기존 계약을 유지한다.

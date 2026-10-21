@@ -7396,3 +7396,14 @@ Signals의 사실 추적도 조회별 immutable reader를 재사용한다. 사�
 회귀는 긴 이력의 전체 요청 읽기·제출·재사용과 로컬/API 상한 보존을 포함한다. 현재 판본의 전체 검사·실제 Luna 제출/재개 및 새 개발 완료 근거는 `.local/research/development-releases/tkg-codex-context-20261022-v1/`에 고정한다. 정규 회차의 Drive·사이트·공개·WebsiteData 성공은 별도 실제 readback으로 확인한다.
 
 최종 전체 Garden 검사2,097개가 통과했다. 실제159,560자/3페이지 GitHub 이력 대조와81,398자/2페이지 AWS 이력 대조를 native read로 끝까지 읽어 실제 Luna에 전달하고, 지정 JSON을 submit한 뒤 같은 새 job을 완료했다. 이 결과는 점수 제안으로 보존했으며 원문 미확인 조건과 분야 오분류는 별도 편집 검토 대상으로 남긴다. 현재 필요한89개 보관 묶음의49,168경로/5,717,110,519bytes와 뒤따른6개 묶음의3,230경로/480,801,357bytes를 native hydrate로 복원해 내용 SHA를 확인했다. 오늘 회차의 발행 성공과는 별개다.
+
+
+### 19.534 worker 종료 조회 경합과 테스트 저장소 격리 (2026-10-22)
+
+실제 Actions의 원문 검토 누락 실패 job이 `worker_status_unknown`으로 관찰되는 경합을 재현했다. 활성 상태를 읽은 뒤 프로세스 조회 중 worker가 최종 상태를 저장하고 종료할 수 있으므로, 조회 후 현재 입력/상태를 다시 검증해 native 완료·실패·추론 대기·저장 대기만 반영한다. 여전히 활성인 EPERM/불명 프로세스, 바뀐 입력 SHA·현재 context는 실패 폐쇄를 유지하며 대체 실행·잠금 회수를 하지 않는다.
+
+MCP server fixture에 자체 cold policy가 없어 상위 운영 catalog를 상속하는 두 번째 원인을 확인했다. 기존 다른 fixture와 같은 `enabled:false` 경계만 추가했다. 새 프로세스에서 쓰기와 worker 정리가 상위 catalog를 열지 않는 회귀 및 경계 없는 대조군을 확인했다. 시간 제한·기대 상태·승인 검사를 완화하지 않았다.
+
+운영 캐시2GiB가 약20.3GB의 검증 원문 작업 집합보다 작아 실제 worker 완료 때 복원 자료를 다시 비우는 반복도 확인했다. 외장 볼륨 여유 공간을 확인해 기존 저장 모듈의32GiB 운영값을 적용했다. 원 Drive ID/묶음·member SHA를 유지하며 로컬에 이미 받은 검증 ZIP을 native hydrate로 재사용한다. 실제 세 개 완료 job 뒤 원문 SHA 불변은 `.local/research/cache-retention-acceptance-20261022.json`에 보존한다.
+
+실패 재현12건 뒤 복구 회귀25개 및 MCP26개가 통과했다. 최종 통합 검사와 manifest·완료 근거는 `.local/research/development-releases/tkg-worker-storage-boundary-20261022-v1/`에 기록한다. 오늘 회차의 실제 Drive·발행·공개·WebsiteData 결과는 별도 확인한다.

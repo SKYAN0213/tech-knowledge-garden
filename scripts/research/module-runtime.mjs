@@ -330,9 +330,21 @@ function workerAlive(ctx, id, state) {
   }
 }
 export function moduleJobStatus(ctx, id) {
-  const { input, state } = checkedInput(ctx, id)
-  const alive =
-    ["queued", "running", "finishing"].includes(state.state) && workerAlive(ctx, id, state)
+  let { input, state } = checkedInput(ctx, id)
+  const active = ["queued", "running", "finishing"].includes(state.state)
+  let alive = active && workerAlive(ctx, id, state)
+  if (active) {
+    // The worker can save its final state and exit during the process probe.
+    // Only a freshly validated native state can supersede an uncertain probe.
+    const latest = checkedInput(ctx, id)
+    if (
+      ["completed", "failed", "waiting_for_reasoning", "waiting_for_storage"].includes(latest.state.state)
+    ) {
+      input = latest.input
+      state = latest.state
+      alive = false
+    }
+  }
   const status = {
     ...state,
     module: input.module,

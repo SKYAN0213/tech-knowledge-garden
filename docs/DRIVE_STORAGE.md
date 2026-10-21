@@ -10,7 +10,7 @@ cold 모드의 런타임은 Node22.13 이상(내장 SQLite)과 Python3.9 이상�
 
 `enable` 뒤 공통 `safePath/readJSON`은 사본이 없는 자료를 새 소식 없음/빈 JSON으로 처리하지 않고 `STORAGE_PENDING`을 반환한다. 독립 worker와 MCP는 `waiting_for_storage` 및 정확한 파일 ID/판본 해시를 남긴다. 연결된 Drive 도구로 해당 파일을 받아 `hydrate`한 뒤 원래 job을 명시 재개한다. 모델을 다시 돌리거나 사실/편집 승인을 새로 만드는 단계가 아니다. 기존5개 MCP 도구의 `research_execute`에서 `module: collection`, `operation: storage`를 사용한다. 새 외부 도구·예약·유료 API는 도입하지 않는다.
 
-`evict`는 SHA가 그대로이며 원격 보관이 검증된 사본만 지운다. 기본 payload 캐시 상한은2GiB이며 완료 worker 뒤 같은 정책을 적용한다. 변경 파일·미보관 자료·현재 native lock이 있는 작업은 유지한다. 새 공통 원본 쓰기는 목록에 기록하고 다음 `prepare/pending`의 Drive 보관 대상으로 남는다. 기존 연결과 아래 로컬 OAuth adapter를 선택할 수 있다. 둘 다 사용할 수 없으면 다운로드 대기를 유지한다.
+`evict`는 SHA가 그대로이며 원격 보관이 검증된 사본만 지운다. 기본 payload 캐시 상한은2GiB이며 완료 worker 뒤 같은 정책을 적용한다. 현재 정규 저장소는 검증 원문 작업 집합 약20.3GB보다 작은 상한 때문에 복원 직후 재삭제되는 현상을 확인하여, 기존 `enable` 계약으로32GiB(`cache_bytes: 34359738368`)를 명시했다. 이는 공간 예약이 아니며 외장 볼륨 여유 공간을 확인해 적용한 운영 설정이다. 테스트 fixture는 자체 `enabled:false` 경계를 두어 운영 catalog·정리 정책을 상속하지 않는다. 변경 파일·미보관 자료·현재 native lock이 있는 작업은 유지한다. 새 공통 원본 쓰기는 목록에 기록하고 다음 `prepare/pending`의 Drive 보관 대상으로 남는다. 기존 연결과 아래 로컬 OAuth adapter를 선택할 수 있다. 둘 다 사용할 수 없으면 다운로드 대기를 유지한다.
 
 이번 전환은 payload298,204파일/19,300,370,522bytes를46,073개 내용으로 분류하고 기존197개 Drive archive와 신규118ZIP(2,039,105,075bytes)을 연결했다. 기존 archive/직접 ZIP512등록 모두 원격 검증을 마쳤다. 새118ZIP은 실제 다운로드와 각 member SHA를 확인했다. 복구용25,488,820bytes 목록은 [Drive catalog](https://drive.google.com/file/d/1-11OghUBQ3yQNjk6huzfHWbhMYDJnzq5/view)에 보관하고 원격 gzip SHA·298,204파일/58,023object/512bundle을 대조했다. object에는 참조되지 않는 보관 내용도 포함되므로46,073과 다른 수량이다.
 

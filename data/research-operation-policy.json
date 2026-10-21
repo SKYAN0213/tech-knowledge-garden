@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-codex-context-20261022-v1/receipt.json",
-    "sha256": "40ba75ef62569b3d3325cfc7c260a6a8278973362c4c2abbba8f157a51222d89"
+    "path": ".local/research/development-releases/tkg-worker-storage-boundary-20261022-v1/receipt.json",
+    "sha256": "653b95ea7d267c960c0ea1feaed511eec46b803e772509abe45d0536cba328b0"
   },
   "recovery": {
     "automatic_retry": false,

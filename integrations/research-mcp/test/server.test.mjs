@@ -14,10 +14,15 @@ import { checkResearchMCP } from "../check.mjs"
 import { createResearchServer, researchServerCatalog } from "../server.mjs"
 
 const repo = fs.realpathSync(fileURLToPath(new URL("../../../", import.meta.url)))
-function fixture(t) {
-  fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
-  const root = fs.mkdtempSync(path.join(repo, ".local/research/mcp-module-test-"))
+function fixture(t, parent = path.join(repo, ".local/research")) {
+  fs.mkdirSync(parent, { recursive: true })
+  const root = fs.mkdtempSync(path.join(parent, "mcp-module-test-"))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  fs.mkdirSync(path.join(root, ".storage"))
+  fs.writeFileSync(
+    path.join(root, ".storage/policy.json"),
+    JSON.stringify({ schema: "research-cold-storage/v1", root, enabled: false }),
+  )
   return { ctx: moduleContext({ repo, root }), root }
 }
 
@@ -443,4 +448,39 @@ test("operation-scoped MCP discovers selected contracts and denies disabled exec
     () => researchServerCatalog({ modules: ["collection"], operations: ["knowledge.status"] }),
     /operation selection/,
   )
+})
+
+test("MCP fixture storage boundary blocks an enabled ancestor for writes and worker trim", (t) => {
+  const parent = fs.realpathSync(fs.mkdtempSync(path.join(repo, ".local/research/mcp-storage-ancestor-")))
+  t.after(() => fs.rmSync(parent, { recursive: true, force: true }))
+  fs.mkdirSync(path.join(parent, ".storage"))
+  fs.writeFileSync(path.join(parent, ".storage/policy.json"), JSON.stringify({
+    schema: "research-cold-storage/v1", root: parent, enabled: false,
+  }))
+  // An inherited catalog must never be opened or mutated by this fixture.
+  const catalog = path.join(parent, ".storage/catalog.sqlite")
+  const sentinel = Buffer.from("ancestor catalog must remain untouched")
+  fs.writeFileSync(catalog, sentinel)
+  const { root } = fixture(t, parent)
+  fs.writeFileSync(path.join(parent, ".storage/policy.json"), JSON.stringify({
+    schema: "research-cold-storage/v1", root: parent, enabled: true,
+  }))
+  // Use a fresh process so an earlier disabled-policy cache cannot mask inheritance.
+  const code = `import { atomicWrite } from ${JSON.stringify(new URL("../../../scripts/research/run-state.mjs", import.meta.url).href)}; import { trimColdStorage } from ${JSON.stringify(new URL("../../../scripts/research/cold-storage.mjs", import.meta.url).href)}; const root=process.argv[1]; atomicWrite(root,"local-result.json",{status:"fixture"}); console.log(JSON.stringify(trimColdStorage(root)));`
+  const observed = spawnSync(process.execPath, ["--input-type=module", "-e", code, root], {
+    encoding: "utf8",
+  })
+  assert.equal(observed.status, 0, observed.stderr)
+  assert.equal(JSON.parse(observed.stdout), null)
+  const unbounded = path.join(parent, "without-storage-boundary")
+  fs.mkdirSync(unbounded)
+  const inherited = spawnSync(process.execPath, ["--input-type=module", "-e", code, unbounded], {
+    encoding: "utf8",
+  })
+  assert.notEqual(inherited.status, 0)
+  assert.match(inherited.stderr, /not a database/)
+  assert.deepEqual(fs.readFileSync(catalog), sentinel)
+  assert.deepEqual(fs.readdirSync(path.join(parent, ".storage")).sort(), ["catalog.sqlite", "policy.json"])
+  assert.deepEqual(fs.readdirSync(path.join(root, ".storage")), ["policy.json"])
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, "local-result.json"))).status, "fixture")
 })

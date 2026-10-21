@@ -323,3 +323,73 @@ test("a live PID with an unmatched command line stays unknown and cannot be resu
   assert.equal(observed.after.attempt, complete.attempt)
   assert.equal(readJSON(f.root, `module-jobs/${id}/state.json`).state, "running")
 })
+
+for (const finalState of ["completed", "failed", "waiting_for_reasoning", "waiting_for_storage"]) {
+  for (const probe of ["ESRCH", "EPERM", "unmatched"]) {
+    test(`status observes ${finalState} saved during a ${probe} worker probe`, async (t) => {
+      const f = nativeFixture(t), id = `module-race-${finalState}-${probe}`
+      const complete = await submitModuleJob(f.ctx, "collection", "inventory", {}, {
+        jobId: id, background: false,
+      })
+      const statePath = `module-jobs/${id}/state.json`
+      const final = { ...readJSON(f.root, statePath), state: finalState,
+        error: finalState === "failed" ? "missing-review" : null }
+      atomicWrite(f.root, statePath, { ...final, state: "running", pid: process.pid })
+      const originalKill = process.kill
+      let probed = false
+      try {
+        process.kill = () => {
+          probed = true
+          atomicWrite(f.root, statePath, final)
+          if (probe !== "unmatched") throw Object.assign(Error(probe), { code: probe })
+          return true
+        }
+        const observed = moduleJobStatus(f.ctx, id)
+        assert.equal(probed, true)
+        assert.equal(observed.state, finalState)
+        assert.equal(observed.worker_alive, false)
+        assert.equal(observed.resume_available, finalState !== "completed")
+        assert.equal(observed.error, final.error)
+        assert.equal(observed.attempt, complete.attempt)
+        assert.equal(fs.existsSync(path.join(f.root, `module-jobs/${id}/attempts`)), false)
+      } finally {
+        process.kill = originalKill
+      }
+    })
+  }
+}
+
+for (const transition of ["active", "invalid-sha", "foreign-context"]) {
+  test(`a worker probe keeps ${transition} fail closed`, async (t) => {
+    const f = nativeFixture(t), id = `module-race-${transition}`
+    await submitModuleJob(f.ctx, "collection", "inventory", {}, { jobId: id, background: false })
+    const statePath = `module-jobs/${id}/state.json`
+    const final = readJSON(f.root, statePath)
+    atomicWrite(f.root, statePath, { ...final, state: "running", pid: process.pid })
+    const originalKill = process.kill
+    try {
+      process.kill = () => {
+        if (transition === "invalid-sha") {
+          atomicWrite(f.root, statePath, { ...final, input_sha256: "invalid" })
+        } else if (transition === "foreign-context") {
+          const inputPath = `module-jobs/${id}/input.json`
+          const input = readJSON(f.root, inputPath)
+          input.context.repo = f.root
+          atomicWrite(f.root, inputPath, input)
+          atomicWrite(f.root, statePath, { ...final, input_sha256: sha256(JSON.stringify(input)) })
+        }
+        throw Object.assign(Error("permission denied"), { code: "EPERM" })
+      }
+      if (transition === "active") {
+        const observed = moduleJobStatus(f.ctx, id)
+        assert.equal(observed.state, "worker_status_unknown")
+        assert.equal(observed.worker_alive, null)
+        assert.equal(observed.resume_available, false)
+      } else {
+        assert.throws(() => moduleJobStatus(f.ctx, id), /input or context changed/)
+      }
+    } finally {
+      process.kill = originalKill
+    }
+  })
+}
