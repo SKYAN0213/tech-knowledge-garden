@@ -188,6 +188,27 @@ test("an approved unpublished article can be curated once through its exact reus
     schema: "research-candidates/v1",
     candidates: [],
   })
+  atomicWrite(
+    f.ctx.vault,
+    "Editions/previous.md",
+    noteText(
+      {
+        type: "briefing",
+        schema_version: "tech-ai-magazine/v2",
+        editorial_format: "six-w/v1",
+        briefing_format: "sector-five/v1",
+        theme_format: "news-themes/v1",
+        article_records: [],
+        article_reviews: [],
+        headlines: [],
+        date: "2026-10-11",
+        coverage_start: "2026-10-09T15:00:00Z",
+        coverage_end: "2026-10-10T15:00:00Z",
+      },
+      "## 오늘의 주요 소식\n\n",
+    ),
+  )
+  const notes = await approvedPublicationNotes(f, "unpublished-reuse-notes")
   const original = f.review.events.find((event) => event.action === "write")
   const primary = f.sources[0].parsed
   const proof = primary.blocks[0]
@@ -217,12 +238,48 @@ test("an approved unpublished article can be curated once through its exact reus
     selection_sha256: selection.sha256,
     execute: true,
     max_items: 4,
+    note_review_runs: [notes.run],
   })
   assert.equal(advanced.status, "complete")
   assert.deepEqual(advanced.approved_runs, ["writer"])
   assert.equal(advanced.model_calls, 0)
   assert.equal(advanced.article_writes, 0)
   const approved = loadCurrentApproval(f.root, "writer", { vault: f.ctx.vault })
+  const handoff = loadDailyPublicationSelection(f.root, advanced.publication_handoff.path, {
+    vault: f.ctx.vault,
+  })
+  assert.deepEqual(handoff.approvedRuns, ["writer"])
+  assert.deepEqual(handoff.knowledgeRuns, [notes.run])
+  const spec = {
+    schema: "research-private-edition/v1",
+    intent: "private_slice",
+    key: "2026-10-12_0800_Tech_AI_Briefing",
+    date: "2026-10-12",
+    coverage_start: "2026-10-10T15:00:00Z",
+    coverage_end: "2026-10-11T15:00:00Z",
+  }
+  const preview = loadPreviewPublicationInputs(f.root, "first-feature-preview", [], {
+    vault: f.ctx.vault,
+    publicationHandoff: advanced.publication_handoff.path,
+    editionSpec: spec,
+  })
+  assert.deepEqual(preview.newEditionRuns, ["writer"])
+  assert.deepEqual(preview.knowledgeRuns, [notes.run])
+  assert.deepEqual(preview.approvals[0].files, approved.files)
+  const projected = newEditionProjections(
+    f.ctx.vault,
+    [preview.approvals[0].article],
+    spec,
+    [],
+    new Map(),
+    {
+      root: f.root,
+      curation: preview.curation,
+    },
+  )
+  assert.deepEqual(projected[0].event_ids, [approved.article.event_id])
+  assert.equal(parseNote(projected[0].content).meta.date, "2026-10-12")
+  assert.ok(projected[0].content.includes("2026-09-27"))
   fs.mkdirSync(path.join(f.ctx.vault, "News"), { recursive: true })
   fs.writeFileSync(
     path.join(f.ctx.vault, "News", approved.article.event_id + ".md"),
@@ -245,6 +302,13 @@ test("an approved unpublished article can be curated once through its exact reus
   const second = loadCurationSelection(f.ctx, ref(await choose(f, after)))
   assert.equal(second.selected.length, 0)
   assert.equal(second.held[0].reason, "ineligible_or_no_new_information")
+  // Delivery readbacks still use the original frozen selection after import.
+  assert.deepEqual(
+    loadDailyPublicationSelection(f.root, advanced.publication_handoff.path, {
+      vault: f.ctx.vault,
+    }).approvedRuns,
+    ["writer"],
+  )
 })
 
 test("the same reviewed identity is held once across plans even when JSON field order differs", async (t) => {

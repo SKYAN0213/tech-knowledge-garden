@@ -184,9 +184,10 @@ export async function advanceCuration(
       curation: selectionRef,
       workflow_input: ref(ctx.root, base + "input.json"),
       briefing_date: selection.briefing_date,
-      children: result.publication_handoffs.filter(
-        (child) => readJSON(ctx.root, child.path)?.approved_runs?.length,
-      ),
+      children: result.publication_handoffs.filter((child) => {
+        const handoff = readJSON(ctx.root, child.path)
+        return handoff?.approved_runs?.length || handoff?.reused_runs?.length
+      }),
       candidate_published: false,
     })
     result.status = errors.length ? "partial" : finalStatus

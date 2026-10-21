@@ -40,7 +40,7 @@ import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
 import { loadPreviewSourceAlternatives } from "./preview-source-alternatives.mjs"
 import { loadCurationSelection } from "./curation.mjs"
-import { checkedPlan, loadSelectedEvent } from "./event-pipeline.mjs"
+import { checkedPlan, loadSelectedEvent, reuseEventArticle } from "./event-pipeline.mjs"
 import { assertEditorialCoverage } from "./editorial-completeness.mjs"
 
 const approvalFiles = [
@@ -486,9 +486,11 @@ export function newEditionProjections(
       : existing.at(-1).meta.coverage_end !== spec.coverage_start ||
         existing.at(-1).meta.date >= spec.date)
   )
-    throw Error(backfill
-      ? "Historical backfill requires a missing past day and actual later research cutoff"
-      : "New edition must continue the latest authority cutoff")
+    throw Error(
+      backfill
+        ? "Historical backfill requires a missing past day and actual later research cutoff"
+        : "New edition must continue the latest authority cutoff",
+    )
   const destination = `Editions/${spec.date.slice(0, 4)}/${spec.date.slice(5, 7)}/${spec.key}.md`
   if (fs.existsSync(path.join(vault, destination)))
     throw Error("New-edition destination already exists")
@@ -510,6 +512,19 @@ export function newEditionProjections(
       throw Error("Curated first-feature date differs from the new briefing")
     for (const item of selected.selected) {
       const plan = checkedPlan({ root }, item.execution.plan, item.execution.group_id)
+      const event = plan.events.find((row) => row.group_id === item.execution.group_id)
+      if (event.action === "reuse") {
+        const reused = reuseEventArticle(
+          { root, vault },
+          {
+            plan_path: item.execution.plan.path,
+            plan_sha256: item.execution.plan.sha256,
+            group_id: item.execution.group_id,
+          },
+        )
+        carried.set(reused.article.event_id, JSON.stringify(reused.article))
+        continue
+      }
       const binding = readJSON(
         root,
         `event-plans/${plan.run_id}/selections/${item.execution.group_id}.json`,

@@ -517,7 +517,7 @@ export async function prepareEventPublicationHandoff(ctx, p) {
     }
     if (!same(readJSON(ctx.root, base + "latest.json"), latest))
       atomicWrite(ctx.root, base + "latest.json", latest)
-    return publicationState(selection, { ...handoff, run_id: p.run_id })
+    return publicationState(selection, { ...handoff, run_id: p.run_id }, workflow)
   })
 }
 
@@ -539,11 +539,13 @@ function loadEventPublicationSelection(root, relative, bytes, selection, vault) 
   const workflow = pinnedJSON(root, selection.workflow.snapshot)
   const current = eventSelection({ root, vault }, input, workflow, selection.workflow)
   if (!same(selection, current)) throw Error("Event handoff differs from exact native approvals")
+  const authoringRows = publicationAuthoringRows(selection, workflow)
   return {
-    approvedRuns: [...new Set(selection.approved_runs.map((row) => row.approved_run))],
-    knowledgeRuns: requiredKnowledgeRuns(selection),
+    approvedRuns: [...new Set(authoringRows.map((row) => row.approved_run))],
+    knowledgeRuns: requiredKnowledgeRuns(selection, authoringRows),
     reference: { path: relative, sha256: sha256(bytes), run_id: selection.run_id },
     selection,
+    workflow,
   }
 }
 
@@ -573,19 +575,34 @@ export function eventPublicationStatus(ctx, { run_id }) {
     selection,
     ctx.vault,
   )
-  return publicationState(selection, loaded.reference)
+  return publicationState(selection, loaded.reference, loaded.workflow)
 }
 
-function publicationState(selection, reference) {
-  const approvedRuns = [...new Set(selection.approved_runs.map((row) => row.approved_run))]
+function publicationAuthoringRows(selection, workflow) {
+  // eventSelection has checked every selected curated group against its pinned
+  // unpublished history, source identity and exact native approval. A reuse is
+  // then a first publication of that approval, without another model or writer.
+  // Use that frozen decision after import too; current history has now changed.
+  // An uncurated reuse retains its existing reference-only semantics.
+  return workflow.curation
+    ? [...selection.approved_runs, ...selection.reused_runs]
+    : selection.approved_runs
+}
+
+function publicationState(selection, reference, workflow) {
+  const authoringRows = publicationAuthoringRows(selection, workflow)
+  const approvedRuns = [...new Set(authoringRows.map((row) => row.approved_run))]
   return {
     run_id: selection.run_id,
-    status: selection.status,
+    status:
+      approvedRuns.length && selection.status === "no_authoring_changes"
+        ? "approval_ready"
+        : selection.status,
     workflow_status: selection.workflow_status,
     collection_status: selection.collection_status,
     publication_handoff: reference,
     approved_runs: approvedRuns,
-    knowledge_runs: requiredKnowledgeRuns(selection),
+    knowledge_runs: requiredKnowledgeRuns(selection, authoringRows),
     reused_runs: [...new Set(selection.reused_runs.map((row) => row.approved_run))],
     excluded_groups: selection.excluded_groups,
     public_input_ready: approvedRuns.length > 0,
@@ -601,12 +618,10 @@ function publicationState(selection, reference) {
   }
 }
 
-function requiredKnowledgeRuns(selection) {
+function requiredKnowledgeRuns(selection, authoringRows) {
   return [
     ...new Set([
-      ...selection.approved_runs.flatMap((row) =>
-        row.knowledge_approvals.map((note) => note.approval_run),
-      ),
+      ...authoringRows.flatMap((row) => row.knowledge_approvals.map((note) => note.approval_run)),
       ...(selection.note_review_runs || []).map((ref) => ref.run),
     ]),
   ]

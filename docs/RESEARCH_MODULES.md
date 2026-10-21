@@ -411,7 +411,7 @@ Signals의 `event_date`는 정확한 원문 게시일을 유지한다. 선택적
 
 `research.mjs preview --publication-handoff <반환된 path>`는 v3의 정확한 `knowledge_runs`를 자동 전달한다. 별도 명시한 지식 승인과 중복된 필수 run은 한 번만 전달하되, 사용자가 명시적으로 중복한 입력은 기존 관문에서 거부한다. `loadPreviewPublicationInputs`는 같은 native 승인/정의 검증을 읽기 전용으로 수행하며 vault 복사·빌드·원격 작업을 하지 않는다.
 
-승인된 write/update/correction만 새 작성 입력이다. reuse는 이전 승인 참조, defer/검토 대기/실패는 제외 상태로 남는다. `approval_ready/partial_approval_ready`는 로컬 입력 준비이며 Drive 저장·공개 발행·정규 운영 완료가 아니다. 신규 회차와 소급 수정이 섞이면 `group_ids` 또는 기존 CLI의 `--group`으로 각각의 authoring 인계를 준비한다. [실제 전달 관문](DRIVE_STORAGE.md#사건-중심-승인-결과의-로컬-발행-인계)을 유지한다.
+승인된 write/update/correction은 새 작성 입력이다. reuse는 이전 승인 참조를 보존한다. 명시 큐레이션이 고정한 발행 이력에서 미발행임을 검증한 reuse는 해당 승인 원고를 처음 발행할 authoring 입력에도 포함한다. reuse만 있는 child와 그 용어 승인도 합친 handoff·미리보기까지 보존하며 모델·원고·사건 ID·원 발표일을 다시 만들지 않는다. 기발행 reuse는 큐레이션에서 제외하고, 큐레이션 없는 reuse는 기존 참조 전용 동작을 유지한다. Drive import 뒤에도 고정된 선정 근거로 인계를 읽어 현재 발행 이력 변화가 완료 readback을 무효화하지 않게 한다. defer/검토 대기/실패는 제외 상태로 남는다. `approval_ready/partial_approval_ready`는 로컬 입력 준비이며 Drive 저장·공개 발행·정규 운영 완료가 아니다. 신규 회차와 소급 수정이 섞이면 `group_ids` 또는 기존 CLI의 `--group`으로 각각의 authoring 인계를 준비한다. [실제 전달 관문](DRIVE_STORAGE.md#사건-중심-승인-결과의-로컬-발행-인계)을 유지한다.
 
 ## 저장·재개·성능
 
