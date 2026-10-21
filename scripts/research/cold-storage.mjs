@@ -158,7 +158,13 @@ export function coldStorageManifestMatches(base, manifest) {
         current.catalog.name !== expected.catalog.name ||
         current.catalog.modified_time !== expected.catalog.modified_time ||
         current.catalog.mtime_ns !== expected.catalog.mtime_ns ||
-        current.catalog.verified_at !== expected.catalog.verified_at ||
+        // Re-reading the same bound package strengthens its proof. It must not
+        // invalidate semantic scan caches solely because verification is newer.
+        (current.catalog.verified_at !== expected.catalog.verified_at &&
+          (!expected.catalog.verified ||
+            !Number.isFinite(Date.parse(expected.catalog.verified_at)) ||
+            !Number.isFinite(Date.parse(current.catalog.verified_at)) ||
+            Date.parse(current.catalog.verified_at) < Date.parse(expected.catalog.verified_at))) ||
         current.catalog.verified !== expected.catalog.verified
       )
         return false

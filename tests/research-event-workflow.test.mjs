@@ -305,6 +305,107 @@ test("minimal source-grounded event proposals are paged, unreviewed and reused w
   assert.equal(fs.existsSync(safePath(f.root, "runs/auto-events/draft.json")), false)
 })
 
+test("event proposal pagination preserves every page and reports the whole edition frontier", async (t) => {
+  const f = editionFixture(t),
+    provider = fakeProvider({ events: true })
+  const p = {
+    run_id: "paged-events",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    max_items: 1,
+  }
+  const first = await extractEditionEventProposals(f.ctx, p, { baseProvider: provider })
+  const second = await extractEditionEventProposals(
+    f.ctx,
+    { ...p, offset: first.next_offset },
+    { baseProvider: provider },
+  )
+  const firstPageBytes = fs.readFileSync(safePath(f.root, first.page_result.path))
+  assert.equal(first.overall.processed_material_ids.length, 1)
+  assert.equal(first.overall.remaining_material_ids.length, 3)
+  assert.equal(readJSON(f.root, "event-proposals/paged-events/result.json"), null)
+  let result = second
+  while (result.next_offset !== null) {
+    result = await extractEditionEventProposals(
+      f.ctx,
+      { ...p, offset: result.next_offset },
+      { baseProvider: provider },
+    )
+  }
+  assert.equal(result.overall.processed_material_ids.length, 4)
+  assert.deepEqual(result.overall.remaining_material_ids, [])
+  assert.equal(result.overall.next_offset, null)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, first.page_result.path)), firstPageBytes)
+  const complete = readJSON(f.root, "event-proposals/paged-events/result.json")
+  assert.equal(complete.processed_material_ids.length, 4)
+  assert.equal(complete.proposals.length, 8)
+  assert.equal(complete.writer_allowed, false)
+  assert.ok(complete.proposals.every((event) => event.review_status === "unreviewed"))
+  const calls = provider.calls
+  const repeated = await extractEditionEventProposals(f.ctx, p, { baseProvider: provider })
+  assert.equal(provider.calls, calls)
+  assert.equal(repeated.model_calls, 0)
+  assert.deepEqual(repeated.overall.remaining_material_ids, [])
+  await assert.rejects(
+    extractEditionEventProposals(
+      f.ctx,
+      { ...p, material_ids: [first.processed_material_ids[0]] },
+      { baseProvider: provider },
+    ),
+    /input changed/,
+  )
+})
+
+test("a failed proposal page remains visible after later pages complete and clears only on explicit retry", async (t) => {
+  const f = editionFixture(t),
+    provider = fakeProvider({ events: true })
+  const original = provider.structured.bind(provider)
+  let fail = true
+  provider.structured = async (request) => {
+    if (fail && JSON.parse(request.messages[1].content)[0].title.endsWith("0")) {
+      const error = Error("controlled first-page timeout")
+      error.name = "TimeoutError"
+      throw error
+    }
+    return original(request)
+  }
+  const ids = f.sources
+    .slice(0, 2)
+    .map(
+      (source) =>
+        f.report.materials.find(
+          (material) => material.source_version_id === source.document.source_version_id,
+        ).id,
+    )
+  const p = {
+    run_id: "paged-failure",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    material_ids: ids,
+    max_items: 1,
+  }
+  const first = await extractEditionEventProposals(f.ctx, p, { baseProvider: provider })
+  assert.equal(first.failures.length, 1)
+  const second = await extractEditionEventProposals(
+    f.ctx,
+    { ...p, offset: first.next_offset },
+    { baseProvider: provider },
+  )
+  assert.equal(second.status, "partial")
+  assert.equal(second.failures[0].material_id, ids[0])
+  assert.deepEqual(second.overall.remaining_material_ids, [ids[0]])
+  assert.equal(second.overall.next_offset, 0)
+  assert.equal(readJSON(f.root, "event-proposals/paged-failure/result.json"), null)
+  fail = false
+  const resumed = await extractEditionEventProposals(f.ctx, p, {
+    baseProvider: provider,
+    retry_failed: true,
+  })
+  assert.deepEqual(resumed.failures, [])
+  assert.deepEqual(resumed.overall.remaining_material_ids, [])
+  assert.equal(readJSON(f.root, "event-proposals/paged-failure/result.json").proposals.length, 4)
+})
+
 test("one IR source shares fact-only extraction across selected events while preserving the complete parse", async (t) => {
   const f = editionFixture(t),
     provider = fakeProvider()

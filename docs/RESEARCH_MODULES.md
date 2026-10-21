@@ -366,11 +366,15 @@ Signals의 `event_date`는 정확한 원문 게시일을 유지한다. 선택적
 
 `evidence.extract`는 기존 native 추출·검증기를 사용한다. 동일 판정 계획에서 선택한 사건들이 공유하는 원문의 블록 범위를 합쳐 **사실만 한 번** 추출하고, 사건마다 그 범위 안의 사실을 연결한다. 전문 parse는 보존하며 모델에는 선택한 블록만 공급한다. 다른 사건까지 걸친 사실은 비공개 범위 검토 대상으로 남긴다. 원문 내용·발표일·정확한 인용이 같은 기존 승인 사실도 새 사실 검토를 거쳐 재사용한다. 원문/parse·블록·정책·코드 SHA가 달라지면 캐시를 자동 승인 근거로 사용하지 않는다.
 
-최소 사건 추출은 `search_plan`, 사실 추출은 `fact_extract`, 기사는 `article_write` 역할의 기존 모델 정책을 따른다. 현재 모두 `gemma4:31b-mlx`다. 원문의 숫자가 아닌 지역·제품명을 수치로 추출한 경우 등은 비공개 후보 문제로 보존한다. 구조 검사 성공을 사실 확인으로 올리지 않는다.
+최소 사건 추출은 `search_plan`, 사실 추출은 `fact_extract`, 기사는 `article_write` 역할의 기존 모델 정책을 따른다. 정규 Codex 경로는 `data/research-model-policy-codex.json`의 `gpt-6-luna` 요청을 사용한다. 원문의 숫자가 아닌 지역·제품명을 수치로 추출한 경우 등은 비공개 후보 문제로 보존한다. 구조 검사 성공을 사실 확인으로 올리지 않는다.
 
 ## 회차 진행과 기존 자동화 연결
 
 `edition.advance`는 판정 계획이 없으면 `relationship_review`에서 멈춘다. `execute/propose=true`일 때만 최소 사건 추출 모델을 호출한다. `offset/max_items`로 다음 페이지를 처리하며 회차 자료 전체를 한 모델 입력에 넣지 않는다. 검토된 계획이 있으면 선별 → 공유 사실 추출 → 사실 검토 → 기사 작성 → 편집/수정 승인 → 온톨로지의 순서로 진행한다.
+
+사건 제안의 `input/v2`는 회차·전체 요청 자료 순서·정책·구현 SHA를 고정한다. 페이지 범위는 별도의 불변 `pages/<sha>.json`에 기록한다. 같은 run에서 `next_offset`을 전달해 다음 페이지를 처리하며 `overall`과 checksummed `progress.json`은 앞 페이지의 완료 결과·실패·전체 잔량을 보존한다. `overall.next_offset`은 처음 남은 자료 위치다. 실패한 자료는 명시 재개하고, 완료 페이지 재조회는 모델을 다시 호출하지 않는다. 전체 자료가 처리된 뒤에만 집계 `result.json`을 저장한다. 모든 제안은 계속 `unreviewed`, `writer_allowed: false`다. 이전 v1 입력이나 정책·구현이 달라진 run은 덮어쓰지 않고 새 job에서 검증된 선행 결과를 참조한다.
+
+`collection.daily`의 `drive_snapshot_file`은 저장소 상대 경로다. 정규 계획·수집에는 최신 전수 Drive snapshot을 이 입력으로 전달한다. 독립 CLI의 대응 옵션은 `--drive-snapshot`이며 같은 native 검증기를 사용한다. 원격 원고와 작업본이 다르거나 snapshot이 오래되면 새 계획을 만들기 전에 거부한다. 이미 저장된 계획의 입력을 다른 snapshot으로 바꾸지 않는다.
 
 `fact_reviews`, `editorial_reviews`, `revision_reviews`는 `group_id`를 키로 하는 저장소 상대 검토 파일 경로 객체다. 사실 검토가 없으면 `fact_review`, 편집 검토가 없으면 `editorial_review`에서 멈춘다. GPT도 MCP로 원문을 읽고 이 파일을 작성한 뒤 진행할 수 있다. 검토 자료 없이 자동 승인하지 않는다. 사실 검토 파일의 native 배열 이름은 `claims`다.
 

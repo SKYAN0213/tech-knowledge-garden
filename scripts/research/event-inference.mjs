@@ -134,10 +134,10 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
   const policy = policyFor(ctx),
     settings = resolveRolePolicy(policy, "search_plan")
   const input = {
-    schema: "research-event-proposal-input/v1",
+    schema: "research-event-proposal-input/v2",
     run_id: p.run_id,
     edition: editionRef,
-    material_ids: materialIds,
+    material_ids: requested,
     policy_sha256: sha256(JSON.stringify(policy)),
     dependencies: codeHash(),
   }
@@ -158,6 +158,40 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
       )
         throw Error("Event proposal progress binding changed")
     }
+    const materialResults = new Map(
+      (previousProgress?.material_results || []).map((row) => [row.material_id, row]),
+    )
+    const outstandingFailures = new Map(
+      (previousProgress?.failures || []).map((row) => [row.material_id, row]),
+    )
+    // Validate the saved frontier before using another page or aggregating earlier results.
+    for (const [id, ref] of materialResults) {
+      const material = eligible.find((m) => m.id === id)
+      const cached = readJSON(ctx.root, ref.path)
+      if (
+        !requested.includes(id) ||
+        !material ||
+        !cached ||
+        ref.path !== `runs/${ref.run}/event-proposals.json` ||
+        ref.sha256 !== sha256(fs.readFileSync(safePath(ctx.root, ref.path))) ||
+        cached.result_sha256 !== sha256(JSON.stringify(cached.result)) ||
+        cached.binding.parse_id !== material.parse_id ||
+        cached.binding.source_body_sha256 !== material.body_sha256 ||
+        !same(cached.binding.dependencies, input.dependencies) ||
+        !same(cached.binding.settings, settings)
+      )
+        throw Error("Event proposal saved material binding changed")
+    }
+    const frontier = () => ({
+      processed_material_ids: requested.filter((id) => materialResults.has(id)),
+      remaining_material_ids: requested.filter((id) => !materialResults.has(id)),
+      failures: requested
+        .filter((id) => outstandingFailures.has(id))
+        .map((id) => outstandingFailures.get(id)),
+      material_results: requested
+        .filter((id) => materialResults.has(id))
+        .map((id) => materialResults.get(id)),
+    })
     const proposals = [],
       cache = [],
       failures = []
@@ -357,14 +391,26 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
           requires_explicit_resume: true,
         })
       }
+      const completed = cache.find((row) => row.material_id === materialId)
+      if (completed) {
+        const resultPath = `runs/${completed.run}/event-proposals.json`
+        materialResults.set(materialId, {
+          material_id: materialId,
+          run: completed.run,
+          path: resultPath,
+          sha256: sha256(fs.readFileSync(safePath(ctx.root, resultPath))),
+        })
+        outstandingFailures.delete(materialId)
+      } else {
+        outstandingFailures.set(
+          materialId,
+          failures.find((row) => row.material_id === materialId),
+        )
+      }
       const progress = {
-        schema: "research-event-proposal-progress/v1",
+        schema: "research-event-proposal-progress/v2",
         input_sha256: sha256(JSON.stringify(input)),
-        processed_material_ids: cache.map((c) => c.material_id),
-        failures,
-        remaining_material_ids: materialIds.filter(
-          (id) => !cache.some((c) => c.material_id === id),
-        ),
+        ...frontier(),
         writer_allowed: false,
       }
       const bytes = JSON.stringify(progress),
@@ -372,31 +418,64 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
       save(ctx.root, attemptPath, progress)
       atomicWrite(ctx.root, progressPath, { ...progress, checksum_sha256: sha256(bytes) })
     }
+    const overall = frontier()
+    overall.next_offset = overall.remaining_material_ids.length
+      ? requested.indexOf(overall.remaining_material_ids[0])
+      : null
+    const pageResult = !failures.length
+      ? save(
+          ctx.root,
+          `event-proposals/${p.run_id}/pages/${sha256(JSON.stringify([offset, materialIds]))}.json`,
+          {
+            schema: "research-event-proposal-page/v1",
+            input_sha256: sha256(JSON.stringify(input)),
+            edition: editionRef,
+            offset,
+            material_ids: materialIds,
+            proposals,
+            writer_allowed: false,
+          },
+        )
+      : null
     const output = {
       schema: "research-edition-event-proposals/v2",
       edition: editionRef,
-      status: failures.length ? "partial" : "relationship_review",
+      status: overall.failures.length ? "partial" : "relationship_review",
       writer_allowed: false,
       proposals,
       cache,
       processed_material_ids: cache.map((c) => c.material_id),
-      remaining_material_ids: [
-        ...failures.map((f) => f.material_id),
-        ...requested.slice(offset + materialIds.length),
-      ],
-      failures,
-      ...(failures.length ? { progress_path: progressPath, requires_explicit_resume: true } : {}),
+      remaining_material_ids: overall.remaining_material_ids,
+      failures: overall.failures,
+      overall,
+      page_result: pageResult,
+      progress_path: progressPath,
+      ...(overall.failures.length ? { requires_explicit_resume: true } : {}),
       next_offset:
         offset + materialIds.length < requested.length ? offset + materialIds.length : null,
       model_calls: [...cache, ...failures].reduce((n, c) => n + c.model_calls, 0),
       candidate_published: false,
     }
-    // A resumed call can report cache hits while the original persisted result remains immutable.
+    // Pages and the completed edition are immutable; retries only update the checked frontier.
     const prior = readJSON(ctx.root, `event-proposals/${p.run_id}/result.json`)
-    if (prior && !same(prior.proposals, output.proposals))
-      throw Error("Stored proposal output changed")
-    if (!prior && !failures.length)
-      save(ctx.root, `event-proposals/${p.run_id}/result.json`, output)
+    if (!overall.remaining_material_ids.length) {
+      const allProposals = overall.material_results.flatMap((ref) =>
+        readJSON(ctx.root, ref.path).result.map((event) => ({
+          ...event,
+          material_id: ref.material_id,
+          review_status: "unreviewed",
+        })),
+      )
+      if (prior && !same(prior.proposals, allProposals))
+        throw Error("Stored proposal output changed")
+      if (!prior)
+        save(ctx.root, `event-proposals/${p.run_id}/result.json`, {
+          ...output,
+          proposals: allProposals,
+          processed_material_ids: overall.processed_material_ids,
+          cache: overall.material_results,
+        })
+    }
     return output
   })
 }

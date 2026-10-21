@@ -21,6 +21,7 @@ import {
 } from "../scripts/research/evidence-review-packet.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { seoulPublicationDay } from "../scripts/research/dates.mjs"
 import { validateEvidence } from "../scripts/research/claims.mjs"
 import { main } from "../scripts/research.mjs"
 import { loadProcessedSourceResult } from "../scripts/research/processed-source-result.mjs"
@@ -1039,7 +1040,7 @@ test("new processing reuses corrected prose and history without inheriting appro
       analysis_checked: true,
       event_id: "1234567890abcdef",
       published_at: "2026-10-02",
-      reviewed_at: new Date().toISOString().slice(0, 10),
+      reviewed_at: seoulPublicationDay(new Date().toISOString()),
       region: "해외",
     }),
   )

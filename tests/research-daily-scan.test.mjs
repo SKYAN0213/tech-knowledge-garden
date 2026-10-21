@@ -698,6 +698,65 @@ test("daily scan proof rejects changed local bytes and falls back to raw verific
   )
 })
 
+test("reverifying identical Drive bytes keeps cold daily evidence reusable without hydrating it", (t) => {
+  const root = temporary(t),
+    runId = "daily-20260922-proof-reverification"
+  const { body_path } = writeStoredEmptyScan(root, runId, {
+    channel_id: "fanuc-en",
+    since: "2026-09-20",
+    until_exclusive: "2026-09-23",
+    url: "https://example.com/proof-reverification",
+    body: Buffer.from("verified listing bytes\n".repeat(5000)),
+  })
+  const state = {
+    covered: [
+      { since: "2026-09-20", until_exclusive: "2026-09-22", source_run: runId, kind: "daily_scan" },
+    ],
+  }
+  const bundles = coldStoreFixture(root, { evict: false })
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  const proofRoot = path.join(root, "daily/scan-verifications", runId)
+  const originalProofs = fs.readdirSync(proofRoot)
+  storageAction(root, "evict", { cache_bytes: 0 })
+  const db = new (require("node:sqlite").DatabaseSync)(path.join(root, ".storage/catalog.sqlite"))
+  const before = db.prepare("SELECT id,verified_at,modified_time FROM bundles").all()
+  for (const bundle of bundles) {
+    const binding = before.find((row) => row.id === bundle.id)
+    storageAction(root, "verify", {
+      bundle_id: bundle.id,
+      download_path: bundle.local_path,
+      metadata: {
+        id: `drive-${bundle.id}`,
+        title: bundle.name,
+        mime_type: "application/zip",
+        size: String(bundle.bytes),
+        parent_ids: ["private-parent"],
+        modified_time: binding.modified_time,
+        shared: false,
+      },
+      observed_at: new Date().toISOString(),
+    })
+  }
+  const after = db.prepare("SELECT id,verified_at FROM bundles").all()
+  assert.ok(
+    after.every(
+      (row) =>
+        Date.parse(row.verified_at) >
+        Date.parse(before.find((old) => old.id === row.id).verified_at),
+    ),
+  )
+  assert.equal(verifyDailyCoverageEvidence(root, "fanuc-en", state), true)
+  assert.equal(fs.existsSync(path.join(root, body_path)), false)
+  assert.deepEqual(fs.readdirSync(proofRoot), originalProofs)
+  // A lost or rolled-back proof still cannot authorize an evicted payload.
+  db.prepare("UPDATE bundles SET verified_at=?").run("2000-01-01T00:00:00Z")
+  db.close()
+  assert.throws(
+    () => verifyDailyCoverageEvidence(root, "fanuc-en", state),
+    (error) => error.code === "STORAGE_PENDING",
+  )
+})
+
 test("supplemental coverage revalidates its reconciliation receipt when scan bytes are cold", (t) => {
   const root = temporary(t)
   const scanRun = "supplemental-proof-scan"

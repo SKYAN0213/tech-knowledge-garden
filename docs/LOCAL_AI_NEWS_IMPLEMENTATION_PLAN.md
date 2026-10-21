@@ -7378,3 +7378,13 @@ Signals의 사실 추적도 조회별 immutable reader를 재사용한다. 사�
 서로 다른35개 표적(개발/복구14·GPT/회차/발행 재개11·큐레이션5·발행 경계5)이 최종 통과했다. 실패 재현과 변경된 소비 경로만 추가 확인했고 전체 suite/build는 반복하지 않았다. 실제5도구·12모듈66작업 MCP의 parsing/progress와 GPT의 read→submit→read/재개→완료 재사용, 기존2승인 발행 인계, 실제 Drive ZIP/member 복원과 원 승인 불변을 확인했다. 새 공개 기사·정규 성공 회수·commit/push·사이트 배포는0이다.
 
 비공개 종료 근거는 `.local/research/development-close-20261016/`와 `.local/research/development-releases/gpt-connected-drive-20261016-v1/receipt.json`에 있다. 완료 영수증 SHA는 `453d78580c848e3cade577e5cf3308216123438184afa48778e2d78ffb465c09`, manifest SHA는 `d9abf8ee68f16895568e4033387f6b77c114fe9bdf1d093f6948a02788cbdd6d`다. 구현 목록·검토·완료 기록을 합친80,967bytes의 [Drive 종료 packet](https://drive.google.com/file/d/10QlXF8MhRip0MgHl0Om5kHyZx0n5DNq2/view)은 비공개 Research에1회 보관하고 실제 raw SHA `0066232fe04626a33c96254db6bdd4af259f4515e87704b299f8bc26dc00e2fb`를 확인했다. 전체 payload/프로젝트를 다시 ZIP 보관하지 않았다.
+
+### 19.532 정규 분류 페이지 재개와 Drive 입력 누락 수정 (2026-10-22)
+
+사용자 요청에 따라 다음 페이지가 첫 페이지의 불변 입력과 충돌하는 결함을 재현했다. run 입력은 전체 자료 목록에 고정하고 페이지 결과·전체 진행 상태를 분리했다. 실패·미처리 자료를 페이지 밖으로 넘겨도 보존하며 전체 완료 전 집계 결과를 생성하지 않는다. 완료 원문과 승인·이전 job은 덮어쓰지 않는다. `collection.daily`에는 기존 독립 CLI와 같은 Drive snapshot 인자를 연결했다.
+
+완료 기준: 페이지 이동·완료 재사용·전체 잔량·원문 변조 차단 회귀, 기존 모듈/예산 회귀, 릴리스 후보 전체 검사, 현재 구현 manifest에 맞는 개발 관문 재등록이다. 실제 일일 발행은 별도로 원문 대조·native 선정/승인·Drive raw readback·기존 publisher·공개 회차/RSS/digest·WebsiteData readback을 확인한다. 개발 검사 통과를 발행 성공이나 다음 예약 성공으로 집계하지 않는다. 비공개 실행 증거는 `.local/research/development-releases/tkg-edition-pagination-20261022-v1/`에 보존한다.
+
+실제 재개에서 같은 Drive 묶음의 `verified_at` 갱신만으로 이전 수집 검증을 무효화하는 추가 원인을 재현했다. 파일/내용/묶음 SHA·ID·부모·원격 수정 시각이 같은 경우 더 최근의 실제 raw 검증 시각을 허용한다. 더 오래된 검증·근거 상실·원본 변경은 계속 차단한다. 최종 검증과 개발 완료 근거는 후속 `tkg-edition-pagination-20261022-v2`에 고정하며 v1과 최초 실패는 보존한다. 실제 대기 job이 요청한 정확한65개 묶음/2,127경로는 기존 connector와 native hydrate로 복구하고 원문을 재수집하지 않는다.
+
+개발 판본 v2의 전체 Garden 검사2,095개가 통과했고 현재452구현 파일 manifest와 완료 영수증을 결속해 Codex 정규 관문 true를 확인했다. 실제 복원과 오늘 회차의 원고·Drive·발행 검증은 이어 진행하며 개발 종료를 오늘 회차 발행 성공으로 집계하지 않는다.

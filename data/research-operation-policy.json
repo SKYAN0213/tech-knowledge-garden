@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-worker-status-unknown-recovery-20261019-v1/receipt.json",
-    "sha256": "3190cde31c83ccfef6d39533403de5b34a06dfa11e45a504f0a0953334fe0976"
+    "path": ".local/research/development-releases/tkg-edition-pagination-20261022-v2/receipt.json",
+    "sha256": "48ecdf5b0aa18402bc4fa88d17c2bc1573a35b81a336ba09cb2b8a4b8b0e3ff6"
   },
   "recovery": {
     "automatic_retry": false,

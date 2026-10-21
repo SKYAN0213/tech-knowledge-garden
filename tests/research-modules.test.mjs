@@ -92,6 +92,29 @@ test("module contract rejects shell flags, traversal, inherited required fields 
   await assert.rejects(() => executeModule(ctx, "collection", "constructor", {}), /Unknown/)
 })
 
+test("daily module forwards a repo-scoped Drive snapshot to native verification before planning", async (t) => {
+  const { ctx, root } = fixture(t)
+  const snapshot = path.relative(ctx.repo, path.join(root, "invalid-drive-snapshot.json"))
+  fs.writeFileSync(path.join(ctx.repo, snapshot), JSON.stringify({ complete: false }))
+  await assert.rejects(
+    executeModule(ctx, "collection", "daily", {
+      run_id: "drive-preflight",
+      mode: "plan-only",
+      drive_snapshot_file: snapshot,
+    }),
+    /Drive snapshot verification failed/,
+  )
+  assert.equal(readJSON(root, "daily/runs/drive-preflight/plan.json"), null)
+  await assert.rejects(
+    executeModule(ctx, "collection", "daily", {
+      run_id: "drive-preflight",
+      mode: "plan-only",
+      drive_snapshot_file: "../outside.json",
+    }),
+    /escapes/,
+  )
+})
+
 test("collection input remains partial and unreviewed proposals cannot call a writer", async (t) => {
   const f = editionFixture(t)
   const result = await executeModule(f.ctx, "edition", "read", {
@@ -252,16 +275,44 @@ test("changed original evidence and verified facts from another event are blocke
 })
 
 test("completed jobs from a former checkout do not block new work and foreign live owners stay protected", async (t) => {
-  const { ctx, root } = fixture(t), id = "module-historical"
-  const input = { job_id: id, context: { ...ctx, repo: ctx.repo + "-previous", root: ctx.root + "-previous" } }
-  const state = { schema: "research-module-job/v1", job_id: id, input_sha256: sha256(JSON.stringify(input)), state: "completed" }
+  const { ctx, root } = fixture(t),
+    id = "module-historical"
+  const input = {
+    job_id: id,
+    context: { ...ctx, repo: ctx.repo + "-previous", root: ctx.root + "-previous" },
+  }
+  const state = {
+    schema: "research-module-job/v1",
+    job_id: id,
+    input_sha256: sha256(JSON.stringify(input)),
+    state: "completed",
+  }
   atomicWrite(root, `module-jobs/${id}/input.json`, input)
   atomicWrite(root, `module-jobs/${id}/state.json`, state)
-  const result = await submitModuleJob(ctx, "collection", "inventory", {}, { jobId: "module-new-location", background: false })
+  const result = await submitModuleJob(
+    ctx,
+    "collection",
+    "inventory",
+    {},
+    { jobId: "module-new-location", background: false },
+  )
   assert.equal(result.state, "completed")
   assert.throws(() => moduleJobStatus(ctx, id), /context changed/)
-  atomicWrite(root, `module-jobs/${id}/state.json`, { ...state, state: "running", pid: process.pid })
-  await assert.rejects(submitModuleJob(ctx, "collection", "inventory", {}, { jobId: "module-protect-owner", background: false }), /context changed/)
+  atomicWrite(root, `module-jobs/${id}/state.json`, {
+    ...state,
+    state: "running",
+    pid: process.pid,
+  })
+  await assert.rejects(
+    submitModuleJob(
+      ctx,
+      "collection",
+      "inventory",
+      {},
+      { jobId: "module-protect-owner", background: false },
+    ),
+    /context changed/,
+  )
   assert.deepEqual(readJSON(root, `module-jobs/${id}/input.json`), input)
 })
 

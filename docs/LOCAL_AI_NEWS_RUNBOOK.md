@@ -12259,3 +12259,11 @@ CURRENT_BUILD19.516과 RESEARCH_MODULES의 계약을 따른다. 기존 validatio
 완료 preview를 prepare/release가 소비할 때 generation checkpoint/input hash와 새 consumer 구현 SHA를 구분한다. 현재 승인·canonical projection·출력 bytes를 확인하고 renderer를 재호출하지 않는다. 기존 manifest·원 실패·상태 파일은 고치지 않는다. 실제 v2의 전달3파일/26,294bytes는 비공개 staged 상태이며 upload/release 승인과 별개다.
 
 next_actions의 user_decisions는 기존08시 재개와 선택한 native/legacy 경로의 명시 결정, external_requirements는 fresh Drive raw·정규 complete 수집·같은 invocation 비교·공개/복귀 근거다. local_requirements는 아직 필요한 비공개 준비, failures는 보존 오류다. 기존 global ledger가 충돌을 알리면 과거 작업을 재발행하거나 같은 요청을 다시 전송하지 않는다. 조건을 만족한 실제 비교만7회에 산입한다.
+
+## 519. 사건 제안 페이지를 이어 처리하기 (2026-10-22)
+
+RESEARCH_MODULES의 input/v2 계약을 따른다. 동일한 전체 `material_ids`·회차·정책·구현으로 `offset=next_offset`을 전달한다. 현재 페이지 출력만 보고 전체 완료로 표시하지 않고 `overall.remaining_material_ids`, `overall.failures`, `overall.next_offset`을 읽는다. 불변 페이지 결과와 원문 cache의 SHA를 확인한 진행 상태가 전체 재개 위치다. 실패한 자료는 원인 확인 후 명시적으로 재개하며 완료 자료를 재집필하지 않는다.
+
+첫 페이지 v1 입력이나 이전 구현의 완료 job을 수정하지 않는다. 새 구현에서는 새 job/run을 사용하고 앞서 완료한 원문·검토 결과를 정확한 참조로 재사용한다. 정규 `collection.daily`에는 새 전수 Drive 원본 대조에서 얻은 `drive_snapshot_file`을 전달한다. 저장된 계획의 snapshot이 다르면 새 계획을 만들고 검증된 수집 결과를 재사용한다. 기존04시 예약·계정 Luna·native 승인·Drive/발행 관문은 유지한다.
+
+같은 Drive 묶음의 실제 raw 재검증은 catalog의 `verified_at`을 전진시킬 수 있다. 내용 SHA·Drive ID/부모·묶음 크기·원격 수정 시각이 같은 경우 기존 scan proof를 유지한다. 검증 시각 역행이나 다른 원본·묶음·위치는 기존처럼 복원 대기로 전환한다. 다운로드는 저장 job의 정확한 묶음 ID/SHA를 사용하며 native `hydrate`가 경로별 bytes를 검증한다. 완료된 복원은 반복 다운로드하지 않는다.
