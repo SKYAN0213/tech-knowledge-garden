@@ -7,6 +7,8 @@ import { sha256 } from "../../../scripts/research/contracts.mjs"
 import { moduleContext } from "../../../scripts/research/module-runtime.mjs"
 import { connectResearchClient, readOperatorCheckpoint, runLocalOperator } from "../operator.mjs"
 
+import { isolatedMCPFixtureParent } from "./storage-fixture.mjs"
+
 const repo = fs.realpathSync(fileURLToPath(new URL("../../../", import.meta.url)))
 const object = (properties = {}, required = []) => ({
   type: "object",
@@ -149,8 +151,7 @@ const catalog = {
 }
 
 function fixture(t, run = "fixture-operator") {
-  fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
-  const root = fs.mkdtempSync(path.join(repo, ".local/research/operator-test-"))
+  const root = fs.mkdtempSync(path.join(isolatedMCPFixtureParent(repo), "operator-test-"))
   fs.mkdirSync(path.join(root, ".storage"))
   fs.writeFileSync(
     path.join(root, ".storage/policy.json"),

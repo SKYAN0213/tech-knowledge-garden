@@ -13,8 +13,10 @@ import {
 import { checkResearchMCP } from "../check.mjs"
 import { createResearchServer, researchServerCatalog } from "../server.mjs"
 
+import { isolatedMCPFixtureParent } from "./storage-fixture.mjs"
+
 const repo = fs.realpathSync(fileURLToPath(new URL("../../../", import.meta.url)))
-function fixture(t, parent = path.join(repo, ".local/research")) {
+function fixture(t, parent = isolatedMCPFixtureParent(repo)) {
   fs.mkdirSync(parent, { recursive: true })
   const root = fs.mkdtempSync(path.join(parent, "mcp-module-test-"))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
@@ -451,20 +453,32 @@ test("operation-scoped MCP discovers selected contracts and denies disabled exec
 })
 
 test("MCP fixture storage boundary blocks an enabled ancestor for writes and worker trim", (t) => {
-  const parent = fs.realpathSync(fs.mkdtempSync(path.join(repo, ".local/research/mcp-storage-ancestor-")))
+  const parent = fs.realpathSync(
+    fs.mkdtempSync(path.join(isolatedMCPFixtureParent(repo), "mcp-storage-ancestor-")),
+  )
   t.after(() => fs.rmSync(parent, { recursive: true, force: true }))
   fs.mkdirSync(path.join(parent, ".storage"))
-  fs.writeFileSync(path.join(parent, ".storage/policy.json"), JSON.stringify({
-    schema: "research-cold-storage/v1", root: parent, enabled: false,
-  }))
+  fs.writeFileSync(
+    path.join(parent, ".storage/policy.json"),
+    JSON.stringify({
+      schema: "research-cold-storage/v1",
+      root: parent,
+      enabled: false,
+    }),
+  )
   // An inherited catalog must never be opened or mutated by this fixture.
   const catalog = path.join(parent, ".storage/catalog.sqlite")
   const sentinel = Buffer.from("ancestor catalog must remain untouched")
   fs.writeFileSync(catalog, sentinel)
   const { root } = fixture(t, parent)
-  fs.writeFileSync(path.join(parent, ".storage/policy.json"), JSON.stringify({
-    schema: "research-cold-storage/v1", root: parent, enabled: true,
-  }))
+  fs.writeFileSync(
+    path.join(parent, ".storage/policy.json"),
+    JSON.stringify({
+      schema: "research-cold-storage/v1",
+      root: parent,
+      enabled: true,
+    }),
+  )
   // Use a fresh process so an earlier disabled-policy cache cannot mask inheritance.
   const code = `import { atomicWrite } from ${JSON.stringify(new URL("../../../scripts/research/run-state.mjs", import.meta.url).href)}; import { trimColdStorage } from ${JSON.stringify(new URL("../../../scripts/research/cold-storage.mjs", import.meta.url).href)}; const root=process.argv[1]; atomicWrite(root,"local-result.json",{status:"fixture"}); console.log(JSON.stringify(trimColdStorage(root)));`
   const observed = spawnSync(process.execPath, ["--input-type=module", "-e", code, root], {
@@ -480,7 +494,96 @@ test("MCP fixture storage boundary blocks an enabled ancestor for writes and wor
   assert.notEqual(inherited.status, 0)
   assert.match(inherited.stderr, /not a database/)
   assert.deepEqual(fs.readFileSync(catalog), sentinel)
-  assert.deepEqual(fs.readdirSync(path.join(parent, ".storage")).sort(), ["catalog.sqlite", "policy.json"])
+  assert.deepEqual(fs.readdirSync(path.join(parent, ".storage")).sort(), [
+    "catalog.sqlite",
+    "policy.json",
+  ])
   assert.deepEqual(fs.readdirSync(path.join(root, ".storage")), ["policy.json"])
   assert.equal(JSON.parse(fs.readFileSync(path.join(root, "local-result.json"))).status, "fixture")
+})
+
+test("large late fixture writer after cleanup cannot inherit the production sibling catalog", (t) => {
+  const sandbox = fs.mkdtempSync(path.join(isolatedMCPFixtureParent(repo), "sandbox-"))
+  t.after(() => fs.rmSync(sandbox, { recursive: true, force: true }))
+  const production = path.join(sandbox, ".local")
+  fs.mkdirSync(production)
+  const native = new URL("../../../scripts/research/cold-storage.py", import.meta.url)
+  const initialize = spawnSync(
+    process.env.RESEARCH_STORAGE_PYTHON || "python3",
+    [fileURLToPath(native), "prepare", "--root", production],
+    { input: JSON.stringify({ minimum_payload_bytes: 32768 }), encoding: "utf8" },
+  )
+  assert.equal(initialize.status, 0, initialize.stderr)
+  const policyPath = path.join(production, ".storage/policy.json")
+  const policy = JSON.parse(fs.readFileSync(policyPath))
+  fs.writeFileSync(policyPath, JSON.stringify({ ...policy, enabled: true }))
+  const rows = () => {
+    const result = spawnSync(
+      process.env.RESEARCH_STORAGE_PYTHON || "python3",
+      [
+        "-c",
+        "import sqlite3,json,sys,pathlib;db=sqlite3.connect(sys.argv[1]);print(json.dumps(db.execute('SELECT path,sha256,bytes,mode,mtime_ns,scope,cached_at FROM files ORDER BY path').fetchall()));db.close()",
+        path.join(production, ".storage/catalog.sqlite"),
+      ],
+      { encoding: "utf8" },
+    )
+    assert.equal(result.status, 0, result.stderr)
+    return JSON.parse(result.stdout)
+  }
+  const code = `import { atomicWrite } from ${JSON.stringify(new URL("../../../scripts/research/run-state.mjs", import.meta.url).href)}; import { trimColdStorage } from ${JSON.stringify(new URL("../../../scripts/research/cold-storage.mjs", import.meta.url).href)}; atomicWrite(process.argv[1],"module-jobs/module-mcp-inventory/result.json",Buffer.alloc(271211,65)); console.log(JSON.stringify(trimColdStorage(process.argv[1])));`
+  const lateWrite = (root) =>
+    spawnSync(process.execPath, ["--input-type=module", "-e", code, root], { encoding: "utf8" })
+  // Control reproduces the actual old topology after its disabled child is removed.
+  const legacy = path.join(production, "research/mcp-module-test-ABC123")
+  fs.mkdirSync(path.join(legacy, ".storage"), { recursive: true })
+  fs.writeFileSync(
+    path.join(legacy, ".storage/policy.json"),
+    JSON.stringify({ schema: "research-cold-storage/v1", root: legacy, enabled: false }),
+  )
+  fs.rmSync(legacy, { recursive: true })
+  const inherited = lateWrite(legacy)
+  assert.equal(inherited.status, 0, inherited.stderr)
+  assert.equal(rows().length, 1)
+  const before = rows()
+  // New helper creates an isolated sibling, with a disabled parent that survives child cleanup.
+  const parent = isolatedMCPFixtureParent(sandbox)
+  const isolated = fs.mkdtempSync(path.join(parent, "mcp-module-test-"))
+  fs.mkdirSync(path.join(isolated, ".storage"))
+  fs.writeFileSync(
+    path.join(isolated, ".storage/policy.json"),
+    JSON.stringify({ schema: "research-cold-storage/v1", root: isolated, enabled: false }),
+  )
+  fs.rmSync(isolated, { recursive: true })
+  const protectedWrite = lateWrite(isolated)
+  assert.equal(protectedWrite.status, 0, protectedWrite.stderr)
+  assert.equal(JSON.parse(protectedWrite.stdout), null)
+  assert.equal(
+    fs.statSync(path.join(isolated, "module-jobs/module-mcp-inventory/result.json")).size,
+    271211,
+  )
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(parent, ".storage/policy.json"))).enabled,
+    false,
+  )
+  assert.deepEqual(rows(), before)
+  // A same-named directory deeper in real source data is not reserved.
+  const legitimate = "research/local-ai/documents/research-test-fixtures/body.bin"
+  fs.mkdirSync(path.dirname(path.join(production, legitimate)), { recursive: true })
+  const original = Buffer.alloc(32768, 66)
+  fs.writeFileSync(path.join(production, legitimate), original)
+  // Explicit ancestor inventory must also ignore only its dedicated fixture branch.
+  const prepared = spawnSync(
+    process.env.RESEARCH_STORAGE_PYTHON || "python3",
+    [fileURLToPath(native), "prepare", "--root", production],
+    { input: JSON.stringify({}), encoding: "utf8" },
+  )
+  assert.equal(prepared.status, 0, prepared.stderr)
+  const after = rows()
+  assert.equal(after.length, before.length + 1)
+  assert.ok(after.some((row) => row[0] === legitimate))
+  assert.deepEqual(
+    after.filter((row) => row[0] !== legitimate),
+    before,
+  )
+  assert.deepEqual(fs.readFileSync(path.join(production, legitimate)), original)
 })

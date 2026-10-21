@@ -884,9 +884,9 @@ export async function executePublicationDelivery(
   } = {},
 ) {
   const input = loadRequest(ctx, p.run_id)
-  const waitMs = p.wait_ms ?? 60000
-  if (!Number.isSafeInteger(waitMs) || waitMs < 1 || waitMs > 60000)
-    throw Error("Connector wait must be bounded to 1..60000 ms")
+  const waitMs = p.wait_ms ?? 300000
+  if (!Number.isSafeInteger(waitMs) || waitMs < 1 || waitMs > 600000)
+    throw Error("Connector wait must be bounded to 1..600000 ms")
   if (!["authoring", "publication"].includes(p.stage))
     throw Error("Explicit delivery stage required")
   if (

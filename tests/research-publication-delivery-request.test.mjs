@@ -177,6 +177,43 @@ test("durable connector receipt reaches the native raw-byte verifier and complet
   )
 })
 
+for (const explicit of [false, true])
+  test(`connector capture preserves raw verification after ninety seconds with ${explicit ? "explicit ten-minute" : "default five-minute"} budget`, async (t) => {
+    const f = await deliveryFixture(t)
+    await requestPublicationDelivery(f.ctx, f.request)
+    const parameters = { ...f.deliver, execution_id: explicit ? "ten-minute" : "five-minute" }
+    if (explicit) parameters.wait_ms = 600000
+    else delete parameters.wait_ms
+    assert.doesNotThrow(() =>
+      validateArguments(parameters, publication.operations.deliver.inputSchema, f.ctx),
+    )
+    const clock = { value: Date.now() }
+    const execution = executePublicationDelivery(f.ctx, parameters, { now: () => clock.value })
+    try {
+      const event = await pending(f)
+      assert.equal(
+        Date.parse(event.expires_at),
+        Math.min(
+          clock.value + (explicit ? 600000 : 300000),
+          Date.parse(event.native_intent.expires_at),
+        ),
+      )
+      clock.value += 90000
+      assert.ok(Date.parse(event.expires_at) > clock.value)
+      await submitPublicationDeliveryReceipt(
+        f.ctx,
+        response(f, event, f.capture("captures/delayed-raw.json", true)),
+      )
+      const result = await execution
+      assert.equal(result.native.status, "verified_complete")
+      assert.equal(result.native.created_intents.length, 1)
+      assert.equal(publicationDeliveryStatus(f.ctx, f.request).drive_verified, true)
+    } finally {
+      clock.value += 600001
+      await execution.catch(() => {})
+    }
+  })
+
 test("lost connector response preserves the native intent and reconciles actual bytes without a second request", async (t) => {
   const f = await deliveryFixture(t)
   await requestPublicationDelivery(f.ctx, f.request)
@@ -280,7 +317,7 @@ test("exact release/hash/stage and bounded schemas reject implicit approvals, pa
     /already verified authoring/,
   )
   await assert.rejects(
-    executePublicationDelivery(f.ctx, { ...f.deliver, wait_ms: 60001 }),
+    executePublicationDelivery(f.ctx, { ...f.deliver, wait_ms: 600001 }),
     /bounded/,
   )
   const previewPath = "runs/reader/preview-manifest.json"

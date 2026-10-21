@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-reuse-publication-routing-20261022-v1/receipt.json",
-    "sha256": "12fafbac72b9e070a23ecc3a5e7ce38bcaba42122544cc7af7e8fdaf5b50a948"
+    "path": ".local/research/development-releases/tkg-runtime-storage-hardening-20261022-v1/receipt.json",
+    "sha256": "2032ceb7ce8667ed1fbe08c3bb0672505f375823f7f4165d79a51721d70cabd5"
   },
   "recovery": {
     "automatic_retry": false,

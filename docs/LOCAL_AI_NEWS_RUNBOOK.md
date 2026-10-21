@@ -12295,3 +12295,13 @@ Drive ZIP은 connector가 읽은 실제 bytes와 기존 정확한 ID/SHA를 검�
 ## 523. worker 소멸과 미회수 종료 상태 조회 (2026-10-22)
 
 kernel Z 또는 Linux X는 종료 관측이다. kill0 성공 뒤 ps가 실패하거나 argv가 일치하지 않을 때는 재조회한 ESRCH만 종료 증거이며, 권한·조회 불명은 계속 보류한다. 살아 있는 다른 job, 잘못된 stat, command의 defunct 문자와 Darwin 부가 X flag는 종료로 바꾸지 않는다. exact job 인자 경계를 대조하고 조회 사이에 저장된 native 최종 상태를 다시 읽는다. 이 관측이 종료를 확인하더라도 기존 명시 resume/잠금 회수 계약과 입력·정책·구현 SHA 검증은 그대로 적용한다.
+
+## 524. 미발행 승인 재사용과 저장·긴 원고의 운영 복구 (2026-10-22)
+
+오늘 브리핑은 승인된 미발행 기사까지 포함한13건으로 발행했다. 콘텐츠 commit은 `207333c951467364cf9090d9af459f9ad459473a`, 실제 Pages 실행은 `39677897788`이다. 작성 원본245개의 Drive raw bytes·로컬 일치,13기사의 공개 페이지·RSS·GitHub digest, 원문 ZIP28개와 WebsiteData11파일을 각각 확인했다. 원격 완료 native receipt는 `runs/publication-daily-20261022-curation-v11/remote-delivery/receipt.json`에 있다. 코드 검증과 이 실제 발행 결과를 구분한다. 수집의19개 접근 미완료 창은 그대로 보존했으며 정규 완전 수집·첫7회 관찰 횟수를 올리지 않았다.
+
+MCP fixture는 지속적인 비활성 상위 정책이 있는 `.local/research-test-fixtures/guard-*/`로 옮겼다. 늦은 worker가 자식 폴더를 다시 만들어도 운영 저장 정책을 상속하지 않는다. native inventory는 root 바로 아래의 예약된 fixture 폴더만 제외한다. 과거의 누락된 테스트 결과 metadata33행은 명시 CLI 복구로 제거했고, 비대상316808행·보호 파일91개·기존 보관 object/request·32GiB 정책의 보존과 기존 prepare 입력의 성공을 확인했다. 관리 CLI의 manifest·실제 프로세스 조회·원문/보관 결과 거부·트랜잭션·commit marker는 `RESEARCH_MODULES.md`의 계약을 따른다.
+
+connector 응답 대기는 기본5분·최대10분으로 맞추고 native intent의 더 이른 만료를 계속 적용한다. 기존 실행 재개에는 원래 대기값을 명시한다. `article_write`만32768 컨텍스트로 늘렸으며 실제 Luna/high에 전체 검증 사실·인용·Schema를 전달했다. 과거 한도에서 거부되는 실제 입력을 새 비공개 writer에서 처리하고 중요 사실15개를 모두 보존한 native 초안·체크포인트 재사용을 확인했다. 기존 실패와 실제 발행 원고는 유지했고 검증용 초안을 승인·발행하지 않았다.
+
+통합 검증은 Garden2156/2156, MCP27/27, 실제 CLI·프로세스·중단 복구 Python13/13이다. 새 Python 검사는 기존 Pages workflow에도 연결했다. 비공개 근거는 `.local/research/development-releases/tkg-runtime-storage-hardening-20261022-v1/`, 운영 metadata 복구와 추가 보관의 정확한 입력·readback은 `.local/research/cold-fixture-repair-operational-20261022-v1/`에 보존한다. 기존 파일 ID가 있는 보관 묶음은 실제 메타데이터와 기존 raw 검증 근거를 대조해 재사용하고, 원격 ID가 없는 정확한 pending ZIP만 업로드·raw 다운로드·native member 검증한다. 불명확한 쓰기는 같은 ID를 확인하고 반복 업로드하지 않는다.

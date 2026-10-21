@@ -218,6 +218,238 @@ def recover_mutation_lock(root, p):
         os.close(guard_fd)
 
 
+
+# Direct CLI only. Neither collection.storage nor the planner offers this action.
+def repair_missing_fixture_records(root, p):
+    import subprocess
+    if p.get("expected_root") != str(root):
+        raise ValueError("Exact repair root required")
+    settings = policy(root)
+    if settings.get("schema") != SCHEMA or settings.get("root") != str(root):
+        raise ValueError("Repair storage policy root changed")
+    if any(not isinstance(p.get(k), str) or not p[k].strip() for k in ("operator", "reason")):
+        raise ValueError("Repair requires explicit operator and reason")
+    operation = p.get("operation_id", "")
+    if not re.fullmatch(r"[a-f0-9]{32}", operation):
+        raise ValueError("Exact fresh repair operation ID required")
+    def encoded(value):
+        return (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    def digest(value):
+        return hashlib.sha256(encoded(value)).hexdigest()
+    manifest_ref = p.get("manifest", {})
+    manifest_path = safe(root, manifest_ref.get("path"))
+    if not isinstance(manifest_ref.get("sha256"), str) or not HASH.fullmatch(manifest_ref["sha256"]):
+        raise ValueError("Pinned repair manifest SHA required")
+    def regular_bytes(file):
+        fd = os.open(str(file), os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as stream:
+            info = os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise ValueError("Repair evidence must be a regular unaliased file")
+            return stream.read()
+    manifest_bytes = regular_bytes(manifest_path)
+    if hashlib.sha256(manifest_bytes).hexdigest() != manifest_ref["sha256"]:
+        raise ValueError("Repair manifest changed")
+    manifest = json.loads(manifest_bytes)
+    rows = manifest.get("rows")
+    keys = {"path", "sha256", "bytes", "mode", "mtime_ns", "scope", "cached_at"}
+    if (manifest.get("schema") != "research-missing-fixture-repair/v1" or
+        manifest.get("root") != str(root) or not isinstance(rows, list) or not rows or
+        len(rows) > 1000 or manifest.get("expected_count") != len(rows) or
+        any(not isinstance(r, dict) or set(r) != keys for r in rows) or
+        rows != sorted(rows, key=lambda r: r["path"]) or
+        len({r["path"] for r in rows}) != len(rows) or
+        manifest.get("rowset_sha256") != digest(rows)):
+        raise ValueError("Exact sorted complete repair rowset required")
+    pattern = re.compile(r"^research/(mcp-module-test-[A-Za-z0-9]{6})/module-jobs/(module-mcp-(?:inventory|compact-inventory|check-[a-f0-9-]{36}))/result\.json$")
+    scopes = set()
+    for row in rows:
+        matched = pattern.fullmatch(row["path"])
+        if not matched or not HASH.fullmatch(row["sha256"]) or type(row["bytes"]) is not int or row["bytes"] < 0:
+            raise ValueError("Repair is limited to exact deleted MCP fixture result metadata")
+        scopes.add("research/" + matched[1])
+    def fsync_directory(directory):
+        fd = os.open(str(directory), os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    owners = manifest.get("owners")
+    if not isinstance(owners, list) or {o.get("scope") for o in owners} != scopes or len(owners) != len(scopes):
+        raise ValueError("Every exact fixture scope requires pinned native owner evidence")
+    owner_checks = []
+    for owner in owners:
+        scope_path = safe(root, owner["scope"])
+        if owner.get("identity") == "owner_identity_unavailable":
+            if scope_path.exists():
+                raise ValueError("Unavailable historical owner only allowed for absent fixture scope")
+            owner_checks.append({"scope": owner["scope"], "identity": "owner_identity_unavailable"})
+            continue
+        pid = owner.get("pid")
+        if type(pid) is not int or pid <= 0:
+            raise ValueError("Exact retained fixture owner PID required")
+        proof = owner.get("state", {})
+        raw = regular_bytes(safe(root, proof.get("path")))
+        state = json.loads(raw)
+        job_ids = {pattern.fullmatch(r["path"])[2] for r in rows if r["path"].startswith(owner["scope"] + "/")}
+        job = state.get("job_id")
+        if (hashlib.sha256(raw).hexdigest() != proof.get("sha256") or state.get("schema") != "research-module-job/v1" or
+            state.get("pid") != pid or job not in job_ids or
+            proof["path"] != owner["scope"] + "/module-jobs/" + job + "/state.json" or
+            not any(r["sha256"] == state.get("result", {}).get("sha256") and r["path"] == owner["scope"] + "/module-jobs/" + job + "/result.json" for r in rows)):
+            raise ValueError("Retained fixture owner evidence does not bind native job/PID/result")
+        check = {"scope": owner["scope"], "identity": "retained_native_owner", "pid": pid, "state": proof}
+        input_ref = owner.get("input")
+        if input_ref:
+            input_raw = regular_bytes(safe(root, input_ref["path"]))
+            native_input = json.loads(input_raw)
+            if (hashlib.sha256(input_raw).hexdigest() != input_ref["sha256"] or
+                native_input.get("schema") != "research-module-job-input/v1" or
+                native_input.get("job_id") != job or
+                native_input.get("context", {}).get("root") != str(scope_path) or
+                state.get("input_sha256") != hashlib.sha256(json.dumps(native_input, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()):
+                raise ValueError("Retained fixture input binding changed")
+            check["input"] = input_ref
+        owner_checks.append(check)
+    process_evidence = []
+    def writers_absent():
+        live, _ = active_native_locks(root)
+        if live:
+            raise ValueError("Native writer locks present; repair refused")
+        scan = subprocess.run(["ps", "-axww", "-o", "pid=,stat=,command="], capture_output=True, text=True, timeout=10, check=True)
+        lines = [line for line in scan.stdout.splitlines() if line.strip()]
+        if scan.stderr.strip() or not lines or any(not re.match(r"^\s*[0-9]+\s+[A-Za-z+<>=NsLlXsWwZzIitpRrDUuHVv-]+\s+\S", line) for line in lines):
+            raise ValueError("Process visibility unknown")
+        related_native = []
+        for line in lines:
+            pid, process_state, command = line.strip().split(None, 2)
+            if int(pid) == os.getpid():
+                continue
+            if re.search(r"(?:<unknown>|<access denied>|^\?+$|\[permission denied\])", command, re.IGNORECASE):
+                raise ValueError("Incomplete process argv visibility")
+            if any(str(root / scope) in command for scope in scopes):
+                raise ValueError("Fixture scope writer still visible")
+            if re.search(r"(?:integrations/research-mcp/(?:test|operator)|(?:server|operator)\.test\.mjs|(?:^|/)node(?:\s+[^\n]*)?\s--test(?:\s|$)|(?:^|/)npm\s+(?:run\s+)?test(?:[:\s]|$))", command):
+                raise ValueError("MCP fixture test parent/operator is active")
+            if re.search(r"research-mcp|research/module-worker|research-module", command):
+                related_native.append({"pid": int(pid), "state": process_state,
+                                       "argv_sha256": hashlib.sha256(command.encode()).hexdigest()})
+        process_evidence.append({"argv": ["ps", "-axww", "-o", "pid=,stat=,command="],
+                                 "stdout_sha256": hashlib.sha256(scan.stdout.encode()).hexdigest(),
+                                 "row_count": len(lines), "status": scan.returncode,
+                                 "stderr_bytes": len(scan.stderr.encode()), "related_native": related_native,
+                                 "checked_at": now(), "matching_scope_writers": 0, "matching_test_parents": 0})
+        for owner in owner_checks:
+            if owner["identity"] == "owner_identity_unavailable":
+                if safe(root, owner["scope"]).exists():
+                    raise ValueError("Deleted fixture scope was recreated")
+                continue
+            try:
+                os.kill(owner["pid"], 0)
+            except ProcessLookupError:
+                continue
+            except OSError as error:
+                raise ValueError("Fixture owner visibility unknown") from error
+            raise ValueError("Fixture owner still alive or PID reused")
+    db_path = safe(root, CONTROL + "/catalog.sqlite")
+    info = db_path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise ValueError("Repair catalog must be a regular unaliased existing file")
+    for suffix in ("-wal", "-shm"):
+        sidecar = safe(root, CONTROL + "/catalog.sqlite" + suffix)
+        if sidecar.exists():
+            side_info = sidecar.lstat()
+            if not stat.S_ISREG(side_info.st_mode) or side_info.st_nlink != 1:
+                raise ValueError("Repair catalog sidecar is aliased")
+    # Caller holds the existing mutation.lock before opening this existing DB.
+    db = sqlite3.connect(db_path.as_uri() + "?mode=rw", uri=True, timeout=0)
+    db.row_factory = sqlite3.Row
+    key = "missing-fixture-repair:" + operation
+    relative = CONTROL + "/fixture-metadata-repairs/" + operation
+    directory = safe(root, relative)
+    try:
+        marker = db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
+        if p.get("readback_only") is True:
+            if not marker:
+                raise ValueError("No committed repair marker")
+            before_raw = regular_bytes(safe(root, relative + "/before.json"))
+            value = json.loads(marker[0])
+            if value["manifest_sha256"] != manifest_ref["sha256"] or value["before_sha256"] != hashlib.sha256(before_raw).hexdigest():
+                raise ValueError("Repair commit evidence changed")
+            if any(db.execute("SELECT 1 FROM files WHERE path=?", (r["path"],)).fetchone() for r in rows):
+                raise ValueError("Committed repair paths were recreated; inspect explicitly")
+            readback = {"status": "committed_readback", "commit_marker": value, "receipt_directory": relative, "checked_at": now()}
+            immutable_bytes(directory / ("readback-" + uuid.uuid4().hex + ".json"), encoded(readback))
+            fsync_directory(directory)
+            return readback
+        if marker or directory.exists():
+            raise ValueError("Prior repair attempt exists; preserve it and use explicit readback")
+        def validate():
+            if digest_file(manifest_path) != manifest_ref["sha256"] or policy(root) != settings:
+                raise ValueError("Repair manifest or policy changed")
+            current = db_path.lstat()
+            if (current.st_dev, current.st_ino, current.st_nlink) != (info.st_dev, info.st_ino, 1):
+                raise ValueError("Repair catalog identity changed")
+            writers_absent()
+            for owner in owner_checks:
+                for proof in [owner[k] for k in ("state", "input") if k in owner]:
+                    if hashlib.sha256(regular_bytes(safe(root, proof["path"]))).hexdigest() != proof["sha256"]:
+                        raise ValueError("Fixture owner proof changed")
+            for row in rows:
+                target = safe(root, row["path"])
+                if target.exists():
+                    raise ValueError("Repair payload exists; preserve it")
+                actual = db.execute("SELECT path,sha256,bytes,mode,mtime_ns,scope,cached_at FROM files WHERE path=?", (row["path"],)).fetchone()
+                if not actual or dict(actual) != row:
+                    raise ValueError("Repair catalog row changed")
+                if db.execute("SELECT 1 FROM objects WHERE sha256=?", (row["sha256"],)).fetchone() or db.execute("SELECT 1 FROM requests WHERE path=? OR sha256=?", (row["path"], row["sha256"])).fetchone():
+                    raise ValueError("Archived or requested payload cannot be repaired")
+        db.execute("BEGIN IMMEDIATE")
+        validate()
+        directory.mkdir(parents=True, mode=0o700)
+        counts_before = {table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0] for table in ("files", "objects", "bundles", "requests")}
+        before = {"counts": counts_before, "schema": "research-fixture-metadata-repair-before/v1", "operation_id": operation,
+                  "root": str(root), "operator": p["operator"], "reason": p["reason"], "manifest": manifest_ref,
+                  "rows": rows, "rowset_sha256": digest(rows), "policy": settings,
+                  "schema_sql": [dict(r) for r in db.execute("SELECT type,name,sql FROM sqlite_master ORDER BY type,name")],
+                  "owners": owner_checks, "owner_probe": "ESRCH for retained owners only; historical identity unavailable for absent scopes", "process_evidence": process_evidence.copy(), "checked_at": now()}
+        before_bytes = encoded(before)
+        immutable_bytes(directory / "input.json", encoded(p))
+        immutable_bytes(directory / "manifest.json", manifest_bytes)
+        immutable_bytes(directory / "before.json", before_bytes)
+        for durable in (directory, directory.parent, safe(root, CONTROL)):
+            fsync_directory(durable)
+        validate()
+        immutable_bytes(directory / "precommit-process-evidence.json", encoded(process_evidence))
+        fsync_directory(directory)
+        deleted = 0
+        for row in rows:
+            deleted += db.execute("DELETE FROM files WHERE path IS ? AND sha256 IS ? AND bytes IS ? AND mode IS ? AND mtime_ns IS ? AND scope IS ? AND cached_at IS ?", tuple(row[k] for k in ("path", "sha256", "bytes", "mode", "mtime_ns", "scope", "cached_at"))).rowcount
+        if deleted != len(rows):
+            raise ValueError("Repair rowcount changed; rollback required")
+        counts_after = {table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0] for table in counts_before}
+        if any(counts_after[t] != counts_before[t] - (deleted if t == "files" else 0) for t in counts_before):
+            raise ValueError("Repair changed unrelated catalog counts")
+        value = {"counts_before": counts_before, "counts_after": counts_after, "schema": "research-fixture-metadata-repair-commit/v1", "operation_id": operation,
+                 "manifest_sha256": manifest_ref["sha256"], "rowset_sha256": digest(rows),
+                 "before_sha256": hashlib.sha256(before_bytes).hexdigest(), "deleted": deleted, "committed_at": now()}
+        db.execute("INSERT INTO meta(key,value) VALUES(?,?)", (key, encoded(value).decode()))
+        db.commit()
+        remaining = [r["path"] for r in rows if db.execute("SELECT 1 FROM files WHERE path=?", (r["path"],)).fetchone()]
+        if remaining:
+            raise ValueError("Repair readback changed after commit; inspect marker")
+        receipt = {"status": "repaired", "commit_marker": value, "before": relative + "/before.json",
+                   "remaining_target_rows": 0, "receipt_at": now()}
+        immutable_bytes(directory / "receipt.json", encoded(receipt))
+        fsync_directory(directory)
+        return {**receipt, "receipt_path": relative + "/receipt.json"}
+    except BaseException:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def policy(root):
     path = safe(root, CONTROL + "/policy.json")
     return json.loads(path.read_text()) if path.exists() else {"schema": SCHEMA, "enabled": False,
@@ -287,7 +519,11 @@ def inventory(root, db, p):
         raise ValueError("Active native locks; retain working data: " + ", ".join(live[:8]))
     count, total, changed = 0, 0, 0
     for directory, dirs, names in os.walk(root, followlinks=False):
-        dirs[:] = [d for d in dirs if d not in EXCLUDED and not (Path(directory) / d).is_symlink()]
+        # The dedicated test branch has durable disabled guards for late writers.
+        # An explicit inventory must not bypass those guards and archive test payloads.
+        dirs[:] = [d for d in dirs if d not in EXCLUDED and
+                   not (Path(directory) == root and d == "research-test-fixtures") and
+                   not (Path(directory) / d).is_symlink()]
         for name in names:
             path = Path(directory) / name
             if path.is_symlink():
@@ -714,7 +950,7 @@ def import_catalog(root, db, p):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
+    parser.add_argument("action", choices=["repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
     parser.add_argument("--root", required=True)
     args = parser.parse_args()
     requested_root = Path(os.path.abspath(args.root))
@@ -724,6 +960,13 @@ def main():
         if requested_root != root:
             raise ValueError("Symlink in storage recovery root")
         print(json.dumps(recover_mutation_lock(root, p), ensure_ascii=False))
+        return
+    if args.action == "repair-missing-fixture-records":
+        if requested_root != root:
+            raise ValueError("Symlink in storage repair root")
+        with exclusive(root):
+            result = repair_missing_fixture_records(root, p)
+        print(json.dumps(result, ensure_ascii=False))
         return
     db = connect(root)
     try:

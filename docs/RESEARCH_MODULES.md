@@ -415,6 +415,14 @@ Signals의 `event_date`는 정확한 원문 게시일을 유지한다. 선택적
 
 ## 저장·재개·성능
 
+`publication.deliver`의 비동기 worker는 connector의 실제 파일 저장·raw readback을 기본300000ms, 명시 `wait_ms`로 최대600000ms까지 기다린다. 기존 native authoring/remote writer의 같은 상한을 사용하며 원격 원본 관측·write intent의 유효 시각이 더 이르면 그 시각에 종료한다. MCP/CLI 호출자는 job ID를 받고 결과를 조회한다. 기다리는 시간은 발행 완료 시각이 아니다. 제한을 넘긴 실행·원래 intent는 보존하고 동일 ID의 실제 bytes를 먼저 대조해 적용된 쓰기를 재사용한다. 완료 영수증에는 실제 raw 증거를 제출하며 성공 boolean이나 시간 연장으로 검증을 대신하지 않는다.
+
+구독형 Codex의 `article_write` 컨텍스트는32768이며 출력4096·template 여유를 따로 확보한다. 긴 검증 사실·원문 인용·출력 Schema를 모두 실제 직렬화한 요청으로 검사한다. `fact_extract/concept_write`, 로컬/Ollama와 직접 API 정책은 기존값을 유지한다. 초과 입력을 자르거나 사실·조건을 빼지 않으며 정책 SHA가 바뀌면 새 native job/run에 검증된 원문·사실 결과를 재사용한다.
+
+MCP 검사의 임시 root는 `.local/research-test-fixtures/guard-<임의값>/` 아래에 둔다. 자식 worker의 늦은 결과가 생겨도 상위의 `enabled:false` 정책이 남으며 운영 저장 inventory는 root 바로 아래의 예약된 `research-test-fixtures` 폴더를 제외한다. 실제 원문 내부에서 같은 이름을 사용한 하위 폴더는 계속 보관한다. 검사 root를 운영 `research/` 안에 만들거나 운영 저장 정책을 상속시키지 않는다.
+
+과거 검사 root가 이미 사라져 운영 카탈로그에 결과 metadata만 남았을 때는 관리자가 `research-storage.mjs repair-missing-fixture-records --root .local --input <JSON>`을 명시 호출한다. 입력에는 정확한 `expected_root`, `operator`, `reason`, 고유한32자리16진수 `operation_id`, root 상대 `manifest.path`·`manifest.sha256`가 필요하다. manifest는 허용된 과거 MCP 검사 결과의 모든 행 값·정렬된 rowset SHA·기록된 owner 근거를 고정한다. native CLI가 실제 payload 부재, 보관 object/request 부재, 전체 프로세스 조회 및 활동 writer 부재, 남은 owner state/PID를 두 번 확인하고 해당 행만 트랜잭션으로 제거한다. 원문·파싱·승인 기사·보관된 결과와 조회 불확실성은 거부한다. 자동 호출·일반 prepare의 누락 무시·자동 잠금 회수는 허용하지 않는다. 원 입력·before/after·commit marker를 보존하며 commit 이후 응답이 끊겼으면 같은 입력에 `readback_only:true`로 실제 결과를 확인한다.
+
 모듈은 native source/parse/검토/승인 저장소를 공유한다. 새 파일은 비공개 실행 계획과 참조이며 원문·지식의 중복 저장소가 아니다.
 
 ```text

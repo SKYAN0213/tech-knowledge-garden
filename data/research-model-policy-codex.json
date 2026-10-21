@@ -26,7 +26,7 @@
     "article_write": {
       "model": "gpt-6-luna",
       "think": "high",
-      "num_ctx": 16384,
+      "num_ctx": 32768,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
       "total_timeout_ms": 600000,

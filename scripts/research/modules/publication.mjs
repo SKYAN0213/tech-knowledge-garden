@@ -95,7 +95,7 @@ export const module = {
           retry_publish: { type: "boolean" },
           actions_run: { type: "string", pattern: "^[0-9]+$", maxLength: 30 },
           deployment_commit: { type: "string", pattern: "^[a-f0-9]{40}$" },
-          wait_ms: integer(1, 60000),
+          wait_ms: integer(1, 600000),
         },
         ["run_id", "execution_id", "stage", "release_path", "release_sha256"],
       ),

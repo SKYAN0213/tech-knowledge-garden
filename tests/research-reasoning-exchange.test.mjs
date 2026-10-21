@@ -25,7 +25,11 @@ import {
 } from "../scripts/research/reasoning-tasks.mjs"
 import { readJSON, atomicWrite, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
-import { Ollama, DEFAULT_LOCAL_OLLAMA_MODEL } from "../scripts/research/ollama.mjs"
+import {
+  Ollama,
+  DEFAULT_LOCAL_OLLAMA_MODEL,
+  structuredRequestBudget,
+} from "../scripts/research/ollama.mjs"
 
 const repo = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)))
 const policy = JSON.parse(fs.readFileSync(path.join(repo, "data/research-model-policy-codex.json")))
@@ -37,6 +41,42 @@ const schema = {
 }
 const requestOf = (f, task) =>
   JSON.parse(readReasoningTask(f.root, { ...task, limit: 64000 }).chunk)
+
+test("Codex article policy preserves complete long facts and schema beyond the old writing ceiling", async (t) => {
+  const f = fixture(t)
+  const run = "exchange-long-reviewed-article"
+  assert.equal(policy.roles.article_write.num_ctx, 32768)
+  assert.equal(policy.roles.article_write.model, "gpt-6-luna")
+  assert.equal(policy.roles.article_write.think, "high")
+  const messages = [
+    { role: "user", content: "Exact reviewed condition and original quotation. ".repeat(650) },
+  ]
+  const input = { model: "gpt-6-luna", messages, schema }
+  assert.equal(structuredRequestBudget({ ...input, num_ctx: 16384 }).fits, false)
+  assert.equal(structuredRequestBudget({ ...input, num_ctx: 32768 }).fits, true)
+  const scoped = await prepareRoleProvider(
+    createModelProvider(policy, "article_write", { root: f.root, run }),
+    policy,
+    "article_write",
+    { root: f.root, run },
+  )
+  await assert.rejects(scoped.structured(input), (e) => e.code === "REASONING_PENDING")
+  const [task] = reasoningTasks(f.root, { run_id: run }).tasks
+  let text = "",
+    offset = 0
+  do {
+    const page = readReasoningTask(f.root, { ...task, offset, limit: 64000 })
+    text += page.chunk
+    offset = page.next_offset
+  } while (offset !== null)
+  const packet = JSON.parse(text)
+  assert.equal(packet.input.num_ctx, 32768)
+  assert.deepEqual(packet.input.messages, messages)
+  assert.deepEqual(packet.input.schema, schema)
+  assert.equal(task.requested_model, "gpt-6-luna")
+  assert.equal(task.requested_thinking, "high")
+  assert.equal(packet.input.num_predict, policy.roles.article_write.num_predict)
+})
 
 test("Codex preserves a complete long history comparison beyond the local context ceiling", async (t) => {
   const f = fixture(t)
