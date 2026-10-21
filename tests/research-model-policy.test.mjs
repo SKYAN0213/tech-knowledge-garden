@@ -27,6 +27,15 @@ const policy = (settings = {}) => ({
   schema: "model-execution-policy/v1",
   roles: { article_write: { ...role, ...settings } },
 })
+
+test("Codex role context admits subscription input without widening local or API limits", () => {
+  const codex = { provider: "codex", model: "gpt-6-luna", num_ctx: 131072 }
+  assert.equal(validateModelPolicy(policy(codex)).roles.article_write.num_ctx, 131072)
+  for (const provider of ["ollama", "openai"])
+    assert.throws(() => validateModelPolicy(policy({ ...codex, provider })), /budget out of range/)
+  for (const num_ctx of [131073, 272000, "131072"])
+    assert.throws(() => validateModelPolicy(policy({ ...codex, num_ctx })), /budget out of range/)
+})
 const schema = {
   type: "object",
   additionalProperties: false,

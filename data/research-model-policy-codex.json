@@ -4,7 +4,7 @@
     "search_plan": {
       "model": "gpt-6-luna",
       "think": "medium",
-      "num_ctx": 16384,
+      "num_ctx": 131072,
       "num_predict": 4096,
       "call_timeout_ms": 300000,
       "total_timeout_ms": 1800000,

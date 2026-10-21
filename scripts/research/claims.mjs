@@ -1,7 +1,11 @@
 import { assertParse, assertSchema, extractionSchema, sha256, sourceId } from "./contracts.mjs"
 import { parseResearchDate, samePublicationDate, assertReviewDate } from "./dates.mjs"
 import { modelSourceDates } from "./source-context.mjs"
-import { DEFAULT_LOCAL_OLLAMA_MODEL, structuredRequestBudget } from "./ollama.mjs"
+import {
+  DEFAULT_LOCAL_OLLAMA_MODEL,
+  CODEX_STRUCTURED_CONTEXT_LIMIT,
+  structuredRequestBudget,
+} from "./ollama.mjs"
 
 export function extractionCandidateKey(
   documents,
@@ -432,6 +436,7 @@ export function describeExtractionCoverage(claims, parses, extractionScope = "fu
 // Keep whole source blocks and their original identities. An oversized block
 // needs an explicit parser decision rather than silent text truncation.
 export function extractionBudget({
+  provider,
   num_ctx = 16384,
   input_char_budget = num_ctx * 2,
   num_predict = 4096,
@@ -447,7 +452,7 @@ export function extractionBudget({
   )
     throw Error("Unknown evidence quote mode")
   for (const [name, value, minimum, maximum] of [
-    ["num_ctx", num_ctx, 4096, 32768],
+    ["num_ctx", num_ctx, 4096, provider === "codex" ? CODEX_STRUCTURED_CONTEXT_LIMIT : 32768],
     ["input_char_budget", input_char_budget, 4096, num_ctx * 2],
     ["num_predict", num_predict, 128, 8192],
     ["call_timeout_ms", call_timeout_ms, 1, 3600000],
@@ -644,6 +649,10 @@ export function articleMetadataContext(parses) {
 
 export function planExtractionBatches(parses, options = {}) {
   assertParseSet(parses)
+  const requestBudget = (request) =>
+    structuredRequestBudget(request, {
+      maxContextTokens: options.provider === "codex" ? CODEX_STRUCTURED_CONTEXT_LIMIT : 32768,
+    })
   const {
     num_ctx,
     input_char_budget,
@@ -747,13 +756,13 @@ export function planExtractionBatches(parses, options = {}) {
       request.messages[1].content !== JSON.stringify(sections)
     )
       throw Error("Actual role request must preserve exact source sections and configured budget")
-    structuredRequestBudget(request)
+    requestBudget(request)
     return request
   }
-  const chars = (request) => structuredRequestBudget(request).input_chars
+  const chars = (request) => requestBudget(request).input_chars
   const limit = Math.min(
     input_char_budget,
-    structuredRequestBudget({
+    requestBudget({
       messages: [{ role: "user", content: "" }],
       schema: {},
       num_ctx,
@@ -815,7 +824,7 @@ export function planExtractionBatches(parses, options = {}) {
   const batches = requests.map((request, index) => ({
     batch_id: `${String(index + 1).padStart(3, "0")}-${sha256(JSON.stringify(request)).slice(0, 16)}`,
     input_chars: chars(request),
-    request_budget: structuredRequestBudget(request),
+    request_budget: requestBudget(request),
     block_keys: JSON.parse(request.messages[1].content).flatMap((p) =>
       p.blocks.map((b) => b.block_key),
     ),

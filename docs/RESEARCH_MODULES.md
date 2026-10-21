@@ -121,6 +121,8 @@ CLI가 직접 읽는 설정·검토 매핑·Drive snapshot·회사 검토 파일
 
 ### 역할별 실제 요청 예산
 
+Codex 위임의 컨텍스트 상한은131072토큰으로 분리한다. 현재 호스트의 `gpt-6-luna` 메타데이터(context272000) 범위에서 `data/research-model-policy-codex.json`의 `search_plan`에131072 예산을 명시해 긴 기존 기사 대조를 그대로 전달한다. 로컬/Ollama 및 직접 API의32768 상한은 유지한다. 메시지·Schema·출력 여유를 포함한 기존 admission 추정, 요청 SHA, 초과 시 거부, 원문 무절삭과 실제 검토 계약도 유지한다. 설정 변경 전 실패 job은 보존하고 새 job에서 같은 고정 회차·원문을 재사용한다.
+
 로컬 요청은 실제 system/user 메시지와 전송 Schema의 직렬화 크기, 출력 토큰, template 여유를 함께 계산한다. 문자 기반 admission 추정과 API가 보고한 토큰을 구분하며 전체 context 사용 가능성을 인증하지 않는다. 서버의 원문 자동 절삭과 context 이동을 비활성화하고 초과 요청은 생성 전에 거부한다. 추출은 해당 역할의 실제 request factory로 분할하며 원문 블록과 조건을 잘라 맞추지 않는다. 작성에 필요한 검토 사실과 상세가 초과하면 명시 분할/재개 대상으로 남긴다.
 
 완료한 batch·응답은 정확한 입력/모델/정책 참조로 재사용하고, 미완료 batch와 원 실패는 checkpoint에 남긴다. 공유 실행 창이 줄어들면 새 call의 timeout도 남은 시간으로 제한한다. 실제 `TimeoutError/AbortError`의 read-only `DOMException.code`는 원 오류·부분 stream·비용 기록을 보존하는 writable wrapper로 변환한다. 잘못된 JSON, schema 위반, 출력 길이 종료, 미완료 stream을 성공으로 저장하지 않는다.

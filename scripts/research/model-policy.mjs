@@ -6,6 +6,7 @@ import { atomicWrite, readJSON, safePath } from "./run-state.mjs"
 import {
   validateLocalOllamaURL,
   assertStructuredRequestBudget,
+  CODEX_STRUCTURED_CONTEXT_LIMIT,
   modelFailureWithCode,
 } from "./ollama.mjs"
 
@@ -69,7 +70,7 @@ function roleSettings(role, input) {
     total_timeout_ms: input.total_timeout_ms ?? (role === "fact_extract" ? 900000 : 600000),
   }
   for (const [key, min, max] of [
-    ["num_ctx", 4096, 32768],
+    ["num_ctx", 4096, provider === "codex" ? CODEX_STRUCTURED_CONTEXT_LIMIT : 32768],
     ["num_predict", 128, 8192],
     ["call_timeout_ms", 1, 3600000],
     ["total_timeout_ms", 1, 7200000],
@@ -341,7 +342,9 @@ export async function prepareRoleProvider(
       num_predict: settings.num_predict,
       temperature: settings.temperature,
     }
-    const requestBudget = assertStructuredRequestBudget(configured)
+    const requestBudget = assertStructuredRequestBudget(configured, {
+      maxContextTokens: settings.provider === "codex" ? CODEX_STRUCTURED_CONTEXT_LIMIT : 32768,
+    })
     const requestFingerprint = sha256(
       JSON.stringify({
         binding: executionPolicy.fingerprint,

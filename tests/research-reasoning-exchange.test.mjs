@@ -38,6 +38,41 @@ const schema = {
 const requestOf = (f, task) =>
   JSON.parse(readReasoningTask(f.root, { ...task, limit: 64000 }).chunk)
 
+test("Codex preserves a complete long history comparison beyond the local context ceiling", async (t) => {
+  const f = fixture(t)
+  const p = structuredClone(policy)
+  p.roles.search_plan.num_ctx = 131072
+  const run = "exchange-long-history"
+  const scoped = await prepareRoleProvider(
+    createModelProvider(p, "search_plan", { root: f.root, run }),
+    p,
+    "search_plan",
+    { root: f.root, run },
+  )
+  const messages = [{ role: "user", content: "Original historical evidence. ".repeat(3000) }]
+  const input = { model: "gpt-6-luna", messages, schema }
+  await assert.rejects(scoped.structured(input), (e) => e.code === "REASONING_PENDING")
+  const [task] = reasoningTasks(f.root, { run_id: run }).tasks
+  let text = "",
+    offset = 0
+  do {
+    const page = readReasoningTask(f.root, { ...task, offset, limit: 64000 })
+    text += page.chunk
+    offset = page.next_offset
+  } while (offset !== null)
+  const packet = JSON.parse(text)
+  assert.equal(packet.input.num_ctx, 131072)
+  assert.deepEqual(packet.input.messages, messages)
+  assert.deepEqual(packet.input.schema, schema)
+  await submitReasoningResult(f.root, {
+    ...task,
+    executor: "codex",
+    model: "gpt-6-luna",
+    output: { answer: "history compared" },
+  })
+  assert.deepEqual((await scoped.structured(input)).output, { answer: "history compared" })
+})
+
 test("all five roles delegate identical bound input, wait without generation reservations, and reuse Codex results", async (t) => {
   const f = fixture(t)
   for (const role of MODEL_ROLES) {
@@ -61,13 +96,19 @@ test("all five roles delegate identical bound input, wait without generation res
     assert.deepEqual(packet.input.messages, input.messages)
     assert.deepEqual(packet.input.schema, schema)
     await assert.rejects(
-      submitReasoningResult(f.root, { ...task, executor: "codex", model: "gpt-6-luna", output: { wrong: 1 } }),
+      submitReasoningResult(f.root, {
+        ...task,
+        executor: "codex",
+        model: "gpt-6-luna",
+        output: { wrong: 1 },
+      }),
     )
     await assert.rejects(
       submitReasoningResult(f.root, {
         ...task,
         request_sha256: "a".repeat(64),
-        executor: "codex", model: "gpt-6-luna",
+        executor: "codex",
+        model: "gpt-6-luna",
         output: { answer: "factory lines" },
       }),
       /hash/,
@@ -90,7 +131,8 @@ test("all five roles delegate identical bound input, wait without generation res
     await assert.rejects(
       submitReasoningResult(f.root, {
         ...task,
-        executor: "codex", model: "gpt-6-luna",
+        executor: "codex",
+        model: "gpt-6-luna",
         output: { answer: "overwrite" },
       }),
       /immutable/,
@@ -108,8 +150,10 @@ test("legacy generic Codex tasks preserve their original model-independent resul
     input: { schema, messages: [{ role: "user", content: "Preserved original input" }] },
   })
   await submitReasoningResult(f.root, {
-    task_id: task.task_id, request_sha256: task.request_sha256,
-    executor: "codex", output: { answer: "legacy result" },
+    task_id: task.task_id,
+    request_sha256: task.request_sha256,
+    executor: "codex",
+    output: { answer: "legacy result" },
   })
   assert.equal(readReasoningTask(f.root, task).status, "completed")
 })
@@ -281,7 +325,12 @@ test("native classification worker waits, accepts source-bound Codex input, resu
       },
     ],
   }
-  await executeModule(f.ctx, "reasoning", "submit", { ...task, executor: "codex", model: "gpt-6-luna", output })
+  await executeModule(f.ctx, "reasoning", "submit", {
+    ...task,
+    executor: "codex",
+    model: "gpt-6-luna",
+    output,
+  })
   const completed = await resumeModuleJob(f.ctx, job.job_id, { background: false })
   assert.equal(completed.state, "completed")
   const result = JSON.parse(readModuleResult(f.ctx, job.job_id, { limit: 64000 }).chunk).data
@@ -327,7 +376,12 @@ test("native selected facts and article writing use Codex through the same evide
           })),
         ),
       }
-      await submitReasoningResult(f.root, { ...error.reasoning_task, executor: "codex", model: "gpt-6-luna", output })
+      await submitReasoningResult(f.root, {
+        ...error.reasoning_task,
+        executor: "codex",
+        model: "gpt-6-luna",
+        output,
+      })
     }
   }
   const run = f.selectedParameters.run_id,
@@ -386,7 +440,12 @@ test("native selected facts and article writing use Codex through the same evide
       },
     ],
   }
-  await submitReasoningResult(f.root, { ...task, executor: "codex", model: "gpt-6-luna", output: draft })
+  await submitReasoningResult(f.root, {
+    ...task,
+    executor: "codex",
+    model: "gpt-6-luna",
+    output: draft,
+  })
   await executeModule(f.ctx, "writing", "draft", f.selectedParameters)
   const saved = readJSON(f.root, `runs/${run}/draft.json`)
   assert.equal(saved.provenance.executor, "codex")
@@ -445,7 +504,12 @@ test("changed role policies cannot resume a pending model job and altered stored
   request.input.messages[0].content = "tampered source"
   atomicWrite(f.root, relative, request)
   await assert.rejects(
-    submitReasoningResult(f.root, { ...task, executor: "codex", model: "gpt-6-luna", output: { events: [] } }),
+    submitReasoningResult(f.root, {
+      ...task,
+      executor: "codex",
+      model: "gpt-6-luna",
+      output: { events: [] },
+    }),
     /hash changed/,
   )
 })

@@ -245,6 +245,7 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
           if (!contentBlocks.length)
             throw Error("No event-reading blocks outside corporate boilerplate")
           const plan = planExtractionBatches([parse], {
+            provider: settings.provider,
             num_ctx: settings.num_ctx,
             num_predict: settings.num_predict,
             input_char_budget: Math.min(20000, settings.num_ctx * 2),

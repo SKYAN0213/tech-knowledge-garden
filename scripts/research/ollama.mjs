@@ -6,12 +6,16 @@ const sharedLocalDispatcher = () => (localDispatcher ??= new Agent())
 
 export const DEFAULT_LOCAL_OLLAMA_URL = "http://127.0.0.1:11434"
 export const DEFAULT_LOCAL_OLLAMA_MODEL = "gemma4:31b-mlx"
+export const CODEX_STRUCTURED_CONTEXT_LIMIT = 131072
 
 // This is an admission estimate, not a tokenizer measurement. Count the actual
 // message/schema serialization and reserve output plus chat-template space.
 // The local request also disables server truncation/context shifting; an
 // underestimated token count must fail instead of dropping source conditions.
-export function structuredRequestBudget({ messages, schema, num_ctx = 8192, num_predict = 4096 }) {
+export function structuredRequestBudget(
+  { messages, schema, num_ctx = 8192, num_predict = 4096 },
+  { maxContextTokens = 32768 } = {},
+) {
   if (
     !Array.isArray(messages) ||
     !messages.length ||
@@ -21,7 +25,10 @@ export function structuredRequestBudget({ messages, schema, num_ctx = 8192, num_
     Array.isArray(schema) ||
     !Number.isInteger(num_ctx) ||
     num_ctx < 4096 ||
-    num_ctx > 32768 ||
+    num_ctx > maxContextTokens ||
+    !Number.isInteger(maxContextTokens) ||
+    maxContextTokens < 4096 ||
+    maxContextTokens > CODEX_STRUCTURED_CONTEXT_LIMIT ||
     !Number.isInteger(num_predict) ||
     num_predict < 128 ||
     num_predict > 8192
@@ -47,8 +54,8 @@ export function structuredRequestBudget({ messages, schema, num_ctx = 8192, num_
   }
 }
 
-export function assertStructuredRequestBudget(request) {
-  const budget = structuredRequestBudget(request)
+export function assertStructuredRequestBudget(request, options) {
+  const budget = structuredRequestBudget(request, options)
   if (!budget.fits) {
     const error = Error(
       "Actual prompt/schema exceeds context budget after output reserve; split explicitly",
