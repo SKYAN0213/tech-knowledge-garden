@@ -12282,3 +12282,12 @@ RESEARCH_MODULES의 input/v2 계약을 따른다. 동일한 전체 `material_ids
 현재 canonical `.local/.storage/policy.json`은32GiB이며 실제 약20.3GB 작업 집합을 수용한다. 2GiB로 되돌리면 완료 worker의 native trim이 복원한 검증 원문을 곧바로 지워 연속 저장 대기가 생길 수 있다. 용량은 기존 storage enable 입력으로 조정하며, 무조건적인 잠금 삭제나 원문 재수집으로 해결하지 않는다. 동일 Drive ID/ZIP SHA가 검증된 로컬 package는 native hydrate에 재사용한다.
 
 운영 저장소 아래에 만드는 테스트 fixture에는 자체 `.storage/policy.json`의 `enabled:false` 경계를 먼저 만든다. 상위 정책을 끄거나 환경 전체의 저장 검사를 우회하지 않는다. 테스트가 운영 catalog를 열고 worker 정리와 복원을 경합하게 해서는 안 된다. 실제 Drive 보관과 승인·발행 검사는 기존 계약을 유지한다.
+
+
+## 522. 대량 복원 중단의 동일 입력 재개 (2026-10-22)
+
+Drive ZIP은 connector가 읽은 실제 bytes와 기존 정확한 ID/SHA를 검증해 재사용한다. hydrate의 경로 목록은 공통 실행기가 최대1,000개씩 native 호출하며 각 호출 후 commit한다. implicit pending도 처음 고른 경로만 포함한다. 중간 실패는 `.storage/hydration-attempts/`의 입력·완료·첫 실패를 확인하고 원인을 해결한 뒤 같은 원문·묶음·경로를 명시 재개한다. 큰 입력을 한 번에 Python에 넘기거나 시간 한도만 늘리지 않는다.
+
+자식 Python이 DB 연결 전에 `json.load`에서 대기하면 DB 잠금으로 단정하지 않는다. 실제 입력/출력과 정지 위치를 격리 사본·쓰기 불가 추적으로 구분한다. 공통 storageAction은 입력을 완전히 쓴 권한600 임시 정규파일 fd로 전달해 EOF를 고정하고 성공·실패 뒤 정리한다. 실패 기록은 유지하며 수정된 입력 전달 경계의 검사와 원인 해결을 확인한 뒤 명시 재개한다.
+
+저장 잠금의 실제 PID/원문 SHA와 root를 확인하고 소유 프로세스가 종료된 경우에만 독립 `recover-mutation-lock` CLI에 그 값을 명시한다. 원문/회수 영수증을 readback한 뒤 중단된 입력을 이어간다. 원문은 직접 삭제하지 않으며 조회 불가·권한 오류·살아있는 프로세스에서는 회수하지 않는다. 운영자는 정확한 원래 잠금과 실패 기록을 보존한다. 회수 프로세스가 중단돼도 지속 guard inode의 OS 잠금은 종료 시 해제되며, 명시 회수의 동일 검증을 다시 적용한다. 기존 성공 묶음/승인/원문은 재생성하지 않는다.

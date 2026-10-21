@@ -189,3 +189,14 @@ compact MCP의 `research_execute`에 `module: publication`과 아래 `operation`
 요청은 `runs/<run>/publication-delivery/input.json`, release 연결은 `binding.json`, 각 실행·대기·응답은 `executions/<execution_id>/`에 저장한다. 같은 execution ID/입력의 완료 결과는 재사용하여 외부 단계를 반복하지 않는다. `research_job_status/result`는 worker 완료와 native 상태를 구분한다. 부분 결과나 source snapshot 대기는 새 입력과 명시적 새 execution ID로 이어간다. 실패/중단 후에는 먼저 기존 writer·publisher intent와 실제 bytes/receipt를 대조하고 잠금 소유권을 확인한다. `resume_intent`, `retry_publish`, `resume_remote_intent`는 기존 명시 재개 조건에서만 사용한다. 미확정 create는 새 요청으로 바꾸지 않는다. connector 호출 자체가 전송되지 않았음을 운영자가 확인한 경우에만 정확한 `resume_intent`와 `connector_call_not_dispatched: true`를 사용하며, 원래 writer 종료·동일 승인/작업·의도 이후의 완전한 안정 목록이 native 검증된 때 같은 intent를 재개하고 해당 확인을 durable resumption record에 남긴다.
 
 `drive_verified`, `public_verified`, `website_data_verified`, `source_archive_verified`는 각각의 native proof에서 판정한다. `remote_current_verified`는 저장 receipt 조회에서 false이며 정규 운영 회차도 자동 집계하지 않는다. 2026-10-10 개발 묶음은 저장 KUKA/AMR 승인 입력과 작은 웹/RSS/GitHub 생성 결과의 일치만 확인했고 Drive 업로드·Git push·공개 배포는 실행하지 않았다.
+
+
+## 대량 복원과 명시적 저장소 잠금 회수 (2026-10-22)
+
+기존 storageAction과 storage CLI의 hydrate는 명시한 경로와 생략 시 고른 pending 경로를 모두 같은 exact 목록으로 고정하고, native 호출마다 최대1,000경로로 나누어 검증·commit한다. 각 묶음에서 ZIP 전체 SHA/크기·bundle/member·경로 SHA와 로컬 변경 보존 검사를 유지한다. Python 단독 호출도1,000경로 초과를 거부한다. 대량 입력의 완료·부분 실패 근거는 `.storage/hydration-attempts/<id>/`에 보존하며 최초 실패에서 멈춘다. 완료된 원문·묶음과 검증한 로컬 ZIP을 재사용하고 동일 실패를 자동 반복하지 않는다.
+
+별도로 실제 읽기 전용 추적에서 Node 동기 자식 호출의 stdin 소켓이 간헐적으로 EOF를 전달하지 않아 Python `json.load`가 DB 연결 전 대기하는 현상을 확인했다. 공통 storageAction은 완전히 쓴 권한600 임시 정규파일의 읽기 fd를 stdin으로 전달해 입력 범위와 EOF를 고정한다. 임시 fd/파일은 성공·실패 모두 정리하고 기존 시간 제한은 유지한다. 입력 전달 실패와 DB·payload 복원 실패를 구분하며, 큰 입력이라는 추정만으로 시간 한도를 늘리거나 같은 실패를 재시도하지 않는다.
+
+`.storage/mutation.lock`의 소유 프로세스 종료를 확인한 운영자는 직접 storage CLI의 `recover-mutation-lock`을 명시 실행한다. 입력은 `expected_root`(실제 canonical .local 경로), `expected_lock_sha256`, `expected_pid`, `operator`, `reason`을 모두 요구한다. CLI가 정책 root·잠금 원문/파일 identity·현재 ESRCH를 검증하고 원문과 prepared/완료 영수증을 `.storage/mutation-lock-recoveries/<id>/`에 보존한다. alive·권한 오류/unknown·변경된 잠금·symlink/hardlink는 회수하지 않는다. `mutation-recovery.lock`은 지속 inode의 OS 잠금이므로 회수 프로세스 종료 시 OS가 해제한다. 파일을 임의 삭제하지 않는다. 회수는 MCP/자동 planner의 storage action에 노출하지 않으며 자동 실행하지 않는다.
+
+명령은 `node scripts/research-storage.mjs recover-mutation-lock --root .local --input <정확한 비공개 검토 입력>`이다. 출력의 receipt 경로와 원문 SHA를 실제 readback한 뒤 중단된 정확한 hydrate 입력을 이어간다. 소유 프로세스 조회 실패를 종료 증거로 대신하지 않는다.

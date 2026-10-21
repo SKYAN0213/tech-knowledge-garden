@@ -26,5 +26,6 @@ try {
   console.log(JSON.stringify(result, null, 2))
 } catch (error) {
   console.error(error.message)
+  if (error.storage_failure) console.error(JSON.stringify(error.storage_failure))
   process.exitCode = 1
 }

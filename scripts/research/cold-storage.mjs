@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import os from "node:os"
 import crypto from "node:crypto"
 import { createRequire } from "node:module"
 import { execFileSync } from "node:child_process"
@@ -329,18 +330,93 @@ export function resolveColdStorageRead(base, target) {
 }
 
 export function storageAction(root, action, parameters = {}) {
-  const result = execFileSync(
-    process.env.RESEARCH_STORAGE_PYTHON || "python3",
-    [runner, action, "--root", path.resolve(root)],
-    {
-      input: JSON.stringify(parameters),
-      encoding: "utf8",
-      maxBuffer: 128 * 1024 ** 2,
-      timeout: ["prepare", "evict", "export", "import"].includes(action) ? 30 * 60 * 1000 : 120000,
-    },
-  )
-  roots.clear()
-  return JSON.parse(result)
+  if (action === "hydrate") {
+    let paths = parameters.paths
+    if (!Array.isArray(paths) || !paths.length) {
+      paths = storageAction(root, "pending")
+        .downloads.filter((entry) => entry.bundle_id === parameters.bundle_id)
+        .map((entry) => entry.path)
+      if (!paths.length) throw Error("Explicit paths or pending download requests required")
+      parameters = { ...parameters, paths }
+    }
+    if (paths.length > 1000) {
+      const relative = ".storage/hydration-attempts/" + crypto.randomUUID()
+      const { target: directory } = safeBasePath(root, relative)
+      fs.mkdirSync(directory, { recursive: true })
+      const save = (name, data) =>
+        fs.writeFileSync(path.join(directory, name), JSON.stringify(data, null, 2) + "\n", {
+          flag: "wx",
+          mode: 0o600,
+        })
+      save("input.json", { ...parameters, paths })
+      const aggregate = { restored: 0, bytes: 0, paths: [] }
+      for (let offset = 0; offset < paths.length; offset += 1000) {
+        const name = String(offset / 1000 + 1).padStart(6, "0")
+        const batch = { ...parameters, paths: paths.slice(offset, offset + 1000) }
+        save(name + "-input.json", batch)
+        try {
+          const result = storageAction(root, action, batch)
+          save(name + "-result.json", result)
+          aggregate.restored += result.restored
+          aggregate.bytes += result.bytes
+          aggregate.paths.push(...result.paths)
+        } catch (error) {
+          const partial = { ...aggregate, attempt_path: relative, failed_offset: offset }
+          save(name + "-failure.json", {
+            ...partial,
+            message: error.message,
+            code: error.code || null,
+            stdout: error.stdout?.toString() || null,
+            stderr: error.stderr?.toString() || null,
+          })
+          error.hydration_partial = partial
+          error.message += "\nHydration stopped after committed batches; evidence: " + relative
+          throw error
+        }
+      }
+      save("result.json", aggregate)
+      return aggregate
+    }
+  }
+  // A regular descriptor gives Python json.load a definite EOF. Large JSON
+  // sent through execFileSync's stdin socket can otherwise stall before connect.
+  const temporary = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "garden-storage-input-"))
+  let inputFd
+  try {
+    const input = path.join(temporary, "input.json")
+    fs.writeFileSync(input, JSON.stringify(parameters), { flag: "wx", mode: 0o600 })
+    inputFd = fs.openSync(input, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW)
+    const result = execFileSync(
+      process.env.RESEARCH_STORAGE_PYTHON || "python3",
+      [runner, action, "--root", path.resolve(root)],
+      {
+        stdio: [inputFd, "pipe", "pipe"],
+        encoding: "utf8",
+        maxBuffer: 128 * 1024 ** 2,
+        timeout: ["prepare", "evict", "export", "import"].includes(action)
+          ? 30 * 60 * 1000
+          : 120000,
+      },
+    )
+    roots.clear()
+    return JSON.parse(result)
+  } catch (error) {
+    if (error.stdout !== undefined || error.stderr !== undefined)
+      error.storage_failure = {
+        schema: "research-storage-native-failure/v1",
+        action,
+        root: path.resolve(root),
+        code: error.code || null,
+        status: error.status ?? null,
+        signal: error.signal || null,
+        stdout: error.stdout?.toString() || "",
+        stderr: error.stderr?.toString() || "",
+      }
+    throw error
+  } finally {
+    if (inputFd !== undefined) fs.closeSync(inputFd)
+    fs.rmSync(temporary, { recursive: true, force: true })
+  }
 }
 
 export function trimColdStorage(base, ignorePid = process.pid) {

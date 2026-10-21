@@ -7407,3 +7407,18 @@ MCP server fixture에 자체 cold policy가 없어 상위 운영 catalog를 상�
 운영 캐시2GiB가 약20.3GB의 검증 원문 작업 집합보다 작아 실제 worker 완료 때 복원 자료를 다시 비우는 반복도 확인했다. 외장 볼륨 여유 공간을 확인해 기존 저장 모듈의32GiB 운영값을 적용했다. 원 Drive ID/묶음·member SHA를 유지하며 로컬에 이미 받은 검증 ZIP을 native hydrate로 재사용한다. 실제 세 개 완료 job 뒤 원문 SHA 불변은 `.local/research/cache-retention-acceptance-20261022.json`에 보존한다.
 
 실패 재현12건 뒤 복구 회귀25개 및 MCP26개가 통과했다. 최종 통합 검사와 manifest·완료 근거는 `.local/research/development-releases/tkg-worker-storage-boundary-20261022-v1/`에 기록한다. 오늘 회차의 실제 Drive·발행·공개·WebsiteData 결과는 별도 확인한다.
+
+
+### 19.535 대량 hydrate의 시간 제한과 저장소 잠금 회수 (2026-10-22)
+
+실제70,653경로의 native hydrate가120초 자식 프로세스 한도에서 중단되고 `.storage/mutation.lock`을 남긴 문제를 확인했다. 원문 파일은 atomic 검증 후65,767개 생성됐으나 해당 묶음의 DB commit은 확인되지 않았으며 최초 실패/부분 manifest를 보존했다. 기존 잠금에는 PID/시작 시각만 있고 이를 회수하는 storage CLI 계약이 없어 직접 삭제하지 않았다.
+
+명시적 root·잠금 SHA·PID·operator·reason과 현재 ESRCH를 검증하는 독립 CLI 회수 기능을 추가했다. 원본과 prepared/완료 영수증을 durable 저장하며, guard는 지속 inode의 OS 잠금으로 중단 시 자동 해제된다. MCP/자동 planner에는 회수 action을 노출하지 않았다. hydrate는 공통 storageAction에서 명시/implicit pending 목록을 고정하고 native 호출마다 최대1,000경로로 나누어 commit·합산한다. 기존120초 한도·ZIP/member/source SHA·변경파일 보존 검사를 유지한다. 최초 오류에 부분 완료를 기록하고 멈추며 같은 실패를 자동 반복하지 않는다.
+
+실패 재현 뒤 관련 표적38개가 통과했다. live/EPERM/unknown/잠금변경·symlink/hardlink/동시회수·회수중강제종료·대량/implicit 분할·부분commit/재개·묶음사이ZIP변경·새pending범위유입·MCP회수거부를 확인했다. 실제 복구 수용과 전체 검사·정확한 새 manifest는 `.local/research/development-releases/tkg-native-storage-recovery-20261022-v1/`에 기록한다. 현재원문/기사의 승인과 오늘 회차 발행은 별도 native 관문을 유지한다.
+
+실제 첫1,000경로 호출에서도 별개의 대기가 발생했다. 같은238MB catalog·실제 ZIP·입력/본문을 복제한 격리 사본에서는 정상 완료했으며, 실제 root의 쓰기 불가 추적에서 Python이 `json.load(sys.stdin)`의 EOF를 기다리는 위치를 확인했다. 공통 자식 입력을 완성된 임시 정규파일 fd로 바꾸어 소켓 종료 신호에 의존하지 않게 했다. 원래70,653경로 실패와 첫 bounded 실패는 각각 보존하며 시간 한도·자동 재시도·해시 검증을 완화하지 않는다.
+
+입력 fd의 정규파일/권한/offset·완전한 큰 JSON·성공/실패 cleanup과 원래 stdout/stderr 보존의 재현2건이 수정 후 통과했다. 현재 전체 Garden2,135개가 fail/cancel/skip0으로 통과했다. 같은 fsync-heavy fixture를 병렬 실행한 별도 관련 묶음은 소유 테스트 프로세스만 확인해 중단하고 중단 기록을 보존했으며, 이 중단을 통과로 집계하지 않는다. 최종 전체 검사에는 storage40개와 MCP26개가 모두 포함된다.
+
+실제 native 회수 영수증과 원 잠금 SHA를 읽어 확인한 뒤 보존한173개 입력/55묶음을 명시 재개했다.125,784경로를 확인·commit하고7,549,666,860bytes를 새로 복원했으며 원래 성공314묶음은 다시 처리하지 않았다. 최초 누락167,140경로/10,099,103,584bytes의 독립 전량 SHA 대조도 불일치0이다. 검증 catalog298,783경로 전체의 누락0,잠금없음,Drive metadata·32GiB정책·이전실패기록 불변과 여유58,042,048,512bytes를 확인했다. 실제 수용 근거는 `.local/research/connector-hydrate-bounded-resume-20261022/regular-fd-acceptance-v2/acceptance.json`이다.

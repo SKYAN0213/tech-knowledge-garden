@@ -14,6 +14,7 @@ import stat
 import tempfile
 import zipfile
 import gzip
+import uuid
 
 CONTROL = ".storage"
 SCHEMA = "research-cold-storage/v1"
@@ -110,6 +111,111 @@ def exclusive(root):
     finally:
         os.close(fd)
         path.unlink()
+
+
+def immutable_bytes(path, data):
+    fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(fd, "wb") as out:
+        out.write(data)
+        out.flush()
+        os.fsync(out.fileno())
+
+
+def recover_mutation_lock(root, p):
+    if p.get("expected_root") != str(root):
+        raise ValueError("Expected storage root does not match")
+    configured = policy(root)
+    if configured.get("schema") != SCHEMA or configured.get("root") != str(root):
+        raise ValueError("Storage policy root changed")
+    expected_sha = p.get("expected_lock_sha256")
+    expected_pid = p.get("expected_pid")
+    if not isinstance(expected_sha, str) or not HASH.fullmatch(expected_sha):
+        raise ValueError("Exact expected mutation lock SHA required")
+    if type(expected_pid) is not int or expected_pid <= 0:
+        raise ValueError("Exact expected mutation lock PID required")
+    for key in ("operator", "reason"):
+        if not isinstance(p.get(key), str) or not p[key].strip():
+            raise ValueError("Mutation lock recovery requires operator and reason")
+    lock = safe(root, CONTROL + "/mutation.lock")
+    guard = safe(root, CONTROL + "/mutation-recovery.lock")
+    # A persistent guard inode uses an OS lock, released even if recovery is killed.
+    # Never unlink it: another process may already be waiting on the same inode.
+    import fcntl
+    guard_fd = os.open(str(guard), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        guard_stat = os.fstat(guard_fd)
+        if not stat.S_ISREG(guard_stat.st_mode) or guard_stat.st_nlink != 1:
+            raise ValueError("Mutation recovery guard must be a regular unaliased file")
+        fcntl.flock(guard_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        def guard_unchanged():
+            current = safe(root, CONTROL + "/mutation-recovery.lock").lstat()
+            if (current.st_dev, current.st_ino, current.st_nlink) != (guard_stat.st_dev, guard_stat.st_ino, 1):
+                raise ValueError("Mutation recovery guard changed; preserving owner lock")
+        guard_unchanged()
+        fd = os.open(str(lock), os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as source:
+            original_stat = os.fstat(source.fileno())
+            if not stat.S_ISREG(original_stat.st_mode) or original_stat.st_nlink != 1:
+                raise ValueError("Mutation lock must be a regular unaliased file")
+            original = source.read()
+        record = json.loads(original)
+        if hashlib.sha256(original).hexdigest() != expected_sha or record.get("pid") != expected_pid:
+            raise ValueError("Mutation lock identity does not match expected SHA/PID")
+        if type(record.get("pid")) is not int or not isinstance(record.get("started_at"), str):
+            raise ValueError("Mutation lock identity is malformed")
+        timestamp(record["started_at"])
+        try:
+            os.kill(expected_pid, 0)
+        except ProcessLookupError:
+            pass
+        except OSError as error:
+            raise ValueError("Mutation lock owner visibility unknown; preserving lock") from error
+        else:
+            raise ValueError("Mutation lock owner is still running; preserving lock")
+        def unchanged():
+            guard_unchanged()
+            current = safe(root, CONTROL + "/mutation.lock")
+            with os.fdopen(os.open(str(current), os.O_RDONLY | os.O_NOFOLLOW), "rb") as source:
+                current_stat = os.fstat(source.fileno())
+                if (current_stat.st_dev, current_stat.st_ino, current_stat.st_mtime_ns, current_stat.st_size) != (original_stat.st_dev, original_stat.st_ino, original_stat.st_mtime_ns, original_stat.st_size) or source.read() != original:
+                    raise ValueError("Mutation lock changed during recovery; preserving lock")
+        unchanged()
+        relative = CONTROL + "/mutation-lock-recoveries/" + uuid.uuid4().hex
+        directory = safe(root, relative)
+        directory.mkdir(parents=True)
+        original_path = relative + "/original.lock"
+        immutable_bytes(safe(root, original_path), original)
+        receipt = {"schema": "research-storage-mutation-lock-recovery/v1", "root": str(root),
+                   "expected_pid": expected_pid, "original_lock_sha256": expected_sha,
+                   "original_lock_text": original.decode("utf-8"), "original_lock": record,
+                   "original_lock_path": original_path, "operator": p["operator"], "reason": p["reason"],
+                   "verification": {"kill_probe": "ESRCH", "identity_unchanged": True}, "checked_at": now()}
+        immutable_bytes(directory / "prepared.json", (json.dumps(receipt) + "\n").encode())
+        for durable in (directory, directory.parent, safe(root, CONTROL)):
+            directory_fd = os.open(str(durable), os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        unchanged()
+        lock.unlink()
+        control_fd = os.open(str(safe(root, CONTROL)), os.O_RDONLY)
+        try:
+            os.fsync(control_fd)
+        finally:
+            os.close(control_fd)
+        receipt.update(status="recovered", recovered_at=now())
+        receipt_path = relative + "/receipt.json"
+        immutable_bytes(safe(root, receipt_path), (json.dumps(receipt) + "\n").encode())
+        directory_fd = os.open(str(directory), os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        return {"status": "recovered", "receipt_path": receipt_path, "expected_pid": expected_pid,
+                "original_lock_sha256": expected_sha}
+    finally:
+        os.close(guard_fd)
 
 
 def policy(root):
@@ -372,6 +478,8 @@ def hydrate(root, db, p):
         paths = [r[0] for r in db.execute("SELECT path FROM requests WHERE bundle_id=? AND status='pending'", (bundle["id"],))]
     if not paths:
         raise ValueError("Explicit paths or pending download requests required")
+    if len(paths) > 1000:
+        raise ValueError("Hydration native batch exceeds 1000 paths; use the storage CLI")
     restored, size = [], 0
     archive = zipfile.ZipFile(source) if bundle["kind"] == "zip" else None
     try:
@@ -606,11 +714,17 @@ def import_catalog(root, db, p):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
+    parser.add_argument("action", choices=["recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
     parser.add_argument("--root", required=True)
     args = parser.parse_args()
-    root = Path(args.root).resolve(strict=True)
+    requested_root = Path(os.path.abspath(args.root))
+    root = requested_root.resolve(strict=True)
     p = json.load(__import__("sys").stdin)
+    if args.action == "recover-mutation-lock":
+        if requested_root != root:
+            raise ValueError("Symlink in storage recovery root")
+        print(json.dumps(recover_mutation_lock(root, p), ensure_ascii=False))
+        return
     db = connect(root)
     try:
         if args.action in {"status", "pending"}:

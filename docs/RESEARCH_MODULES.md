@@ -560,3 +560,12 @@ KUKA·TD SYNNEX의 2026-10-07 공동 발표 영문/독문과 공식 AMR 기술 �
 ### 기사 처리 모델 고정 (2026-10-16)
 
 개발은 Sol, 기본 Codex 추론 다섯 역할은 `gpt-6-luna`다. `reasoning.pending/read`의 `requested_model`·`requested_thinking`으로 실행 대상을 확인한다. 실제 Luna에서 실행한 결과만 `reasoning.submit`에 `executor: codex`, `model: gpt-6-luna`로 제출한다. 이 값은 호출자 선언이며 서버가 실제 모델 실행을 자동 증명하거나 시작하지 않는다. 명시 모델 요청의 모델 누락/불일치는 저장 전에 거부한다. 기존 generic `codex` 요청/완료 결과는 변경하지 않으며, 명시적인 Ollama 교체의 실제 실행 모델 기록과 승인 경계도 유지한다. 모델 변경 후 옛 run의 바인딩을 수정하지 않고 새 run을 사용한다.
+
+
+### 저장 복원 묶음과 mutation-lock 회수
+
+`collection.storage hydrate`와 독립 storage CLI는 동일 storageAction의 최대1,000경로 native 묶음을 사용한다. 생략한 paths도 조회한 exact pending 목록에 고정하며 이후 새 요청을 섞지 않는다. 각 묶음은 기존 ZIP/member/파일 SHA 검증 후 commit하고 최초 실패에서 부분 근거를 보존한다. 원래 MCP paths 상한과 승인/모델 경계는 유지한다.
+
+공통 storageAction의 자식 입력은 완성된 권한600 임시 정규파일 fd로 전달한다. 실제 native 읽기 전용 추적에서 재현한 stdin 소켓 EOF 대기를 제거하기 위한 경계이며, 수집·모델 요청·저장 승인이나 timeout 정책을 바꾸지 않는다. fd와 임시 파일은 성공·오류 모두 정리한다.
+
+중단된 `.storage/mutation.lock`의 회수는 독립 storage CLI `recover-mutation-lock`만 명시 제공한다. 정확한 root·원문 SHA·PID·operator·reason 및 현재 ESRCH 검증을 요구하며 원문/회수 영수증을 보존한다. 회수 guard는 프로세스 종료로 해제되는 OS 잠금이다. 살아있는 PID·unknown·바뀐 원문이나 파일 identity는 회수하지 않는다. MCP storage/자동 planner는 이 action을 호출할 수 없다. 구체적 절차는 DRIVE_STORAGE의 대량 복원/잠금 회수 절을 따른다.
