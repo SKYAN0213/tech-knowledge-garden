@@ -4,6 +4,7 @@
 
 ## 누적 주제
 
+- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 12건 · 0개 원칙
 - [산업용 로봇의 현장 재학습과 운전 수명주기](topics/industrial-robot-learning-lifecycle.md) — 원문 1건 · 0개 원칙
 - [야스카와 로봇 사업의 실적과 전망](topics/company-yaskawa-robotics.md) — 원문 1건 · 0개 원칙
 - [소량 배치 포장 폐기물 분류용 협동로봇 작업대](topics/research-small-batch-packaging-waste-sorting.md) — 원문 1건 · 0개 원칙
@@ -11,7 +12,6 @@
 - [쌓인 옷감의 로봇 집기](topics/research-stacked-fabric-grasping.md) — 원문 1건 · 0개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 11건 · 0개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 10건 · 0개 원칙
-- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 11건 · 0개 원칙
 - [삼성 계열사의 AI 인프라 투자와 공급 참여](topics/company-samsung-ai-infrastructure.md) — 원문 1건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 8건 · 1개 원칙
 - [Envisagenics의 RNA 표적 연구 사업화](topics/venture-envisagenics.md) — 원문 1건 · 0개 원칙
@@ -28,6 +28,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-10-22 · 0800](2026/10/2026-10-22_0800_Tech_AI_Briefing.md) — 2026-10-22 IT · AI · 로보틱스
 - [2026-10-19 · 0800](2026/10/2026-10-19_0800_Tech_AI_Briefing.md) — 2026-10-19 IT · AI · 로보틱스
 - [2026-10-16 · 0800](2026/10/2026-10-16_0800_Tech_AI_Briefing.md) — 2026-10-16 IT · AI · 로보틱스
 - [2026-10-15 · 0800](2026/10/2026-10-15_0800_Tech_AI_Briefing.md) — 2026-10-15 IT · AI · 로보틱스

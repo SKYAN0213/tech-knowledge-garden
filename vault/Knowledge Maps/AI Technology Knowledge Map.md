@@ -3,8 +3,8 @@ title: AI Technology Knowledge Map
 type: map
 status: active
 created: 2026-06-23
-updated: 2026-10-09
-last_reviewed: 2026-10-09
+updated: 2026-10-22
+last_reviewed: 2026-10-22
 tags:
   - AI
   - KnowledgeMap
@@ -50,6 +50,7 @@ tags:
 - [[Knowledge/Software Engineering/Code Coverage|코드 커버리지]]
 - [[Knowledge/Software Engineering/Insecure Direct Object Reference|IDOR]]
 - [[Knowledge/Software Engineering/Software Supply Chain Security|소프트웨어 공급망 보안]]
+- [[Knowledge/Van der Waals Contact|반데르발스 접촉]]
 
 ## 연결 관계
 

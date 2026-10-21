@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-19
+date: 2026-10-22
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,19 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/529d2e7d05c74354|근육세포로 움직이는 얇은 수영 로봇, 물속 미로 통과]] · 2026-10-22
+- [[News/9bc45fc6d834b861|알고리즘 단일화의 영향, 채용 모형에서는 경쟁과 정확도에 따라 달라]] · 2026-10-22
+- [[News/2ebead9795db380f|SnSe2 하나로 두 종류 초박막 반도체에 전기 공급]] · 2026-10-22
+- [[News/070a089cb7248528|KAIST 연구팀, 이온 기억 활용한 다중 시간 스케일 반도체 구현]] · 2026-10-22
+- [[News/363698bbe819db64|FDA, 처방약 동반 앱의 라벨·제출 기준 최종 가이던스 발표]] · 2026-10-22
+- [[News/943689901d5ca840|Amazon Bedrock, Anthropic Claude 전 모델에 structured outputs 지원]] · 2026-10-22
+- [[News/95a85dcae7f4e627|ABB, Mitsubishi Electric 저압 배전 사업 합작사 설립 계획 발표]] · 2026-10-22
+- [[News/8afb583c311c8278|AWS, Trainium용 PyTorch 백엔드 TorchNeuron 공개 베타 출시]] · 2026-10-22
+- [[News/d2f4c2d99fe6839a|GitHub, npm 패키지 방화벽 공개 미리보기 제공]] · 2026-10-22
+- [[News/47061ab25aa38c9d|NVIDIA, 안전한 AI 에이전트용 OpenShell 참조 아키텍처 발표]] · 2026-10-22
+- [[News/e6174bc977b43ae3|FDA, 간경변 없는 일부 만성 B형 간염 성인에 Hibsago 승인]] · 2026-10-22
+- [[News/5bea65bf865dbdec|NASA, 라이다 데이터 공백 줄일 CASALS 개발]] · 2026-10-22
+- [[News/92c2ab7943efed29|KAIST, 가시광선·연속 흐름 결합 무인 합성 플랫폼 구축]] · 2026-10-22
 - [[News/191df632635f9786|NVIDIA·Cisco, 차세대 AI 팩토리용 USFP 발표 계획 공개]] · 2026-10-19
 - [[News/f6ac2c1b54a5d56a|야스카와, 반기 매출 9.8% 증가…로봇 부문 영업이익은 43.3% 감소]] · 2026-10-16
 - [[News/ae1a66253e644962|이노스페이스·인세라, 2027년 이노샛에서 레이저 광통신 실증 추진]] · 2026-10-16

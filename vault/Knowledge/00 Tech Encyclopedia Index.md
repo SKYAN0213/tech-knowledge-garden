@@ -6,7 +6,7 @@ schema_version: tech-encyclopedia/v2
 status: navigation
 domain: Technology
 created: 2026-08-24
-updated: 2026-10-09
+updated: 2026-10-22
 aliases:
   - Tech Encyclopedia
   - 기술 백과사전
@@ -123,6 +123,10 @@ tags:
 ### Research Methods
 
 - [[Knowledge/Research Methods/High Performance Linpack|HPL]]
+
+### Semiconductor Engineering
+
+- [[Knowledge/Van der Waals Contact|반데르발스 접촉]]
 
 ## 개념 경계
 
