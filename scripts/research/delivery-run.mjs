@@ -51,6 +51,9 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
       const selection = latest?.actions_selection_path
         ? readJSON(root, latest.actions_selection_path)
         : null
+      const pendingFailure = latest?.pending_failure_path
+        ? readJSON(root, latest.pending_failure_path)
+        : null
       if (
         publication.status === "invalid" ||
         input.schema !== "research-delivery-input/v1" ||
@@ -65,7 +68,18 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
         (latest?.actions_selection_path &&
           (!latest.actions_selection_path.startsWith(base + "/actions-selection") ||
             selection?.actions_run !== latest.actions_run ||
-            selection?.commit !== latest.deployment_commit))
+            selection?.commit !== latest.deployment_commit)) ||
+        (latest?.pending_actions_run !== undefined &&
+          (latest.status !== "deployment_observation_failed" ||
+            !/^\d+$/.test(latest.pending_actions_run) ||
+            !/^[a-f0-9]{40}$/.test(latest.pending_deployment_commit || "") ||
+            latest.pending_failure_path !==
+              `${base}/deployment-attempts/${latest.actions_run}/failed-checkpoint.json` ||
+            sha256(JSON.stringify(pendingFailure)) !== latest.pending_failure_sha256 ||
+            pendingFailure?.status !== "deployment_failed" ||
+            pendingFailure?.actions_run !== latest.actions_run ||
+            pendingFailure?.deployment_commit !== latest.deployment_commit ||
+            pendingFailure?.input_sha256 !== latest.input_sha256))
       )
         throw Error("Invalid delivery checkpoint")
       const remoteDelivery = inspectRemoteDelivery(root, input.run_id)
@@ -301,20 +315,31 @@ export async function deliverApprovedPublication({
     let deployment = readJSON(root, operation + "/deployment.json")
     if (deployment) reused.push("deployment")
     while (!deployment) {
+      let retryFailure = null
       try {
         const latestCheckpoint = readJSON(root, base + "/latest.json")
+        if (
+          latestCheckpoint?.status === "deployment_observation_failed" &&
+          latestCheckpoint.pending_actions_run &&
+          (actionsRun !== latestCheckpoint.pending_actions_run ||
+            requestedDeploymentCommit !== latestCheckpoint.pending_deployment_commit)
+        )
+          throw Error("Pinned deployment selection changed: resume the exact pending retry")
         let selectionPath =
             latestCheckpoint?.actions_selection_path || base + "/actions-selection.json",
-          selection = readJSON(root, selectionPath),
-          retryFailure = null
+          selection = readJSON(root, selectionPath)
         if (
           selection &&
           (selection.commit !== deploymentCommit ||
             (selection.base_commit || publication.commit) !== publication.commit ||
             (actionsRun && selection.actions_run !== actionsRun))
         ) {
+          const pendingRetry =
+            latestCheckpoint?.status === "deployment_observation_failed" &&
+            latestCheckpoint.pending_actions_run === actionsRun &&
+            latestCheckpoint.pending_deployment_commit === requestedDeploymentCommit
           if (
-            latestCheckpoint?.status !== "deployment_failed" ||
+            (latestCheckpoint?.status !== "deployment_failed" && !pendingRetry) ||
             latestCheckpoint.input_sha256 !== sha256(JSON.stringify(input)) ||
             latestCheckpoint.actions_run !== selection.actions_run ||
             (latestCheckpoint.deployment_commit !== undefined &&
@@ -340,6 +365,9 @@ export async function deliverApprovedPublication({
           const failedCheckpointPath =
               base + "/deployment-attempts/" + selection.actions_run + "/failed-checkpoint.json",
             retryPath = base + "/actions-selection-attempts/" + actionsRun + ".json",
+            previousFailure = pendingRetry
+              ? readJSON(root, failedCheckpointPath)
+              : latestCheckpoint,
             proposed = {
               schema: "research-deployment-selection-attempt/v1",
               run_id: run,
@@ -349,12 +377,24 @@ export async function deliverApprovedPublication({
               previous_selection_path: selectionPath,
               previous_selection_sha256: sha256(JSON.stringify(selection)),
               previous_failure_path: failedCheckpointPath,
-              previous_failure_sha256: sha256(JSON.stringify(latestCheckpoint)),
+              previous_failure_sha256: sha256(JSON.stringify(previousFailure)),
             }
+          if (
+            !previousFailure ||
+            previousFailure.status !== "deployment_failed" ||
+            previousFailure.actions_run !== selection.actions_run ||
+            previousFailure.deployment_commit !== selection.commit ||
+            previousFailure.input_sha256 !== sha256(JSON.stringify(input)) ||
+            (pendingRetry &&
+              (latestCheckpoint.pending_failure_path !== failedCheckpointPath ||
+                latestCheckpoint.pending_failure_sha256 !==
+                  sha256(JSON.stringify(previousFailure))))
+          )
+            throw Error("Pinned deployment selection changed: original failure record is invalid")
           const savedRetry = readJSON(root, retryPath)
           if (savedRetry && JSON.stringify(savedRetry) !== JSON.stringify(proposed))
             throw Error("Conflicting failed-deployment retry selection")
-          retryFailure = { path: failedCheckpointPath, checkpoint: latestCheckpoint }
+          retryFailure = { path: failedCheckpointPath, checkpoint: previousFailure }
           selectionPath = retryPath
           selection = savedRetry || proposed
         }
@@ -409,6 +449,12 @@ export async function deliverApprovedPublication({
         }
         if (selection) {
           if (!/^\d+$/.test(selection.actions_run)) throw Error("Invalid deployment identity")
+          if (retryFailure) {
+            const previous = readJSON(root, retryFailure.path)
+            if (previous && JSON.stringify(previous) !== JSON.stringify(retryFailure.checkpoint))
+              throw Error("Failed deployment checkpoint changed")
+            if (!previous) atomicCreate(root, retryFailure.path, retryFailure.checkpoint)
+          }
           const observation = JSON.parse(
             await execute(
               "gh",
@@ -437,12 +483,6 @@ export async function deliverApprovedPublication({
             )
           )
             throw Error("Unrecognized deployment state")
-          if (retryFailure) {
-            const previous = readJSON(root, retryFailure.path)
-            if (previous && JSON.stringify(previous) !== JSON.stringify(retryFailure.checkpoint))
-              throw Error("Failed deployment checkpoint changed")
-            if (!previous) atomicCreate(root, retryFailure.path, retryFailure.checkpoint)
-          }
           const savedSelection = readJSON(root, selectionPath)
           if (savedSelection && JSON.stringify(savedSelection) !== JSON.stringify(selection))
             throw Error("Pinned deployment selection changed")
@@ -476,6 +516,15 @@ export async function deliverApprovedPublication({
         // Do not expose command stderr, tokens, signed URLs or source bodies.
         return checkpoint("deployment_observation_failed", publication, {
           ...selectionCheckpoint(),
+          ...(retryFailure
+            ? {
+                conclusion: retryFailure.checkpoint.conclusion,
+                pending_actions_run: actionsRun,
+                pending_deployment_commit: deploymentCommit,
+                pending_failure_path: retryFailure.path,
+                pending_failure_sha256: sha256(JSON.stringify(retryFailure.checkpoint)),
+              }
+            : {}),
           next_action: "Check GitHub availability and resume the same delivery run",
         })
       }

@@ -260,20 +260,74 @@ test("failed deployment resumes on an explicit descendant run without replacing 
       }
       assert.equal(file, "gh")
       assert.deepEqual(args.slice(0, 3), ["run", "view", "456"])
+      throw Error("GitHub unavailable during retry observation")
+    },
+    fetchImpl,
+  })
+
+  const pendingPath = "runs/operation/delivery/latest.json",
+    pending = JSON.parse(fs.readFileSync(path.join(f.root, pendingPath), "utf8"))
+  assert.equal(result.status, "deployment_observation_failed")
+  assert.equal(pending.actions_run, "123")
+  assert.equal(pending.actions_selection_path, "runs/operation/delivery/actions-selection.json")
+  assert.equal(pending.pending_actions_run, "456")
+  assert.equal(pending.pending_deployment_commit, deploymentCommit)
+  assert.deepEqual(
+    JSON.parse(
+      fs.readFileSync(
+        path.join(f.root, "runs/operation/delivery/deployment-attempts/123/failed-checkpoint.json"),
+        "utf8",
+      ),
+    ),
+    failedCheckpoint,
+  )
+  assert.equal(
+    deliveryCheckpointStatus(f.root, { runs: [publicationOperationStatus(f.options)] }).runs[0]
+      .status,
+    "deployment_observation_failed",
+  )
+
+  await assert.rejects(
+    deliverApprovedPublication({
+      ...options(f),
+      actionsRun: "457",
+      deploymentCommit,
+      execute: async () => JSON.stringify(deployment),
+      fetchImpl,
+    }),
+    /selection changed/,
+  )
+
+  const resumed = await deliverApprovedPublication({
+    ...options(f),
+    actionsRun: "456",
+    deploymentCommit,
+    execute: async (file, args) => {
+      if (file === "git") {
+        assert.deepEqual(args, [
+          "merge-base",
+          "--is-ancestor",
+          initialSelection.commit,
+          deploymentCommit,
+        ])
+        return f.git(...args)
+      }
+      assert.equal(file, "gh")
+      assert.deepEqual(args.slice(0, 3), ["run", "view", "456"])
       return JSON.stringify(deployment)
     },
     fetchImpl,
   })
+  assert.equal(resumed.status, "public_bytes_verified")
 
   const retrySelectionPath = "runs/operation/delivery/actions-selection-attempts/456.json",
     failedRecordPath = "runs/operation/delivery/deployment-attempts/123/failed-checkpoint.json",
     retrySelection = JSON.parse(fs.readFileSync(path.join(f.root, retrySelectionPath), "utf8")),
     failedRecord = JSON.parse(fs.readFileSync(path.join(f.root, failedRecordPath), "utf8")),
     latest = JSON.parse(fs.readFileSync(failedCheckpointPath, "utf8"))
-  assert.equal(result.status, "public_bytes_verified")
-  assert.equal(result.actions_run, "456")
-  assert.equal(result.deployment_commit, deploymentCommit)
-  assert.equal(result.actions_selection_path, retrySelectionPath)
+  assert.equal(resumed.actions_run, "456")
+  assert.equal(resumed.deployment_commit, deploymentCommit)
+  assert.equal(resumed.actions_selection_path, retrySelectionPath)
   assert.equal(publicationOperationStatus(f.options).status, "public_bytes_verified")
   assert.equal(
     deliveryCheckpointStatus(f.root, { runs: [publicationOperationStatus(f.options)] }).runs[0]
