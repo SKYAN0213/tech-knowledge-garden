@@ -1,0 +1,29 @@
+{
+  "schema": "semantic-common-fixtures/v1",
+  "files": {
+    "garden.json": {
+      "bytes": 6674,
+      "sha256": "56d542a9177b360b5ed22b2e998b17eec21cf28f85b7ed1cb7c69e537f1ded9b"
+    },
+    "invalid-cases.json": {
+      "bytes": 4194,
+      "sha256": "ea6b2c9d3d5c1263e54b970cae1d094e618c7c37bbb245061f04420eda19c5e8"
+    },
+    "normalization.json": {
+      "bytes": 415,
+      "sha256": "748e8be43c6a4da89bd1655ea61bd423ffe0ecc6f93c7b5575d246ec5e375114"
+    },
+    "partial.json": {
+      "bytes": 7883,
+      "sha256": "e602b72f44235f3d456fe183a23d866aeef3eb5b65f23ffc711b47c4ef49a334"
+    },
+    "sources/crlf-nfd.txt": {
+      "bytes": 115,
+      "sha256": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de"
+    },
+    "wiki.json": {
+      "bytes": 11963,
+      "sha256": "bae2c5aa83dd1e9ab7b61e64360e1573633681a8fa9d17ec20a4a9c2603c3e99"
+    }
+  }
+}

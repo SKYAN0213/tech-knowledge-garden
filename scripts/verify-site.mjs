@@ -5,7 +5,7 @@ import { fromHtml } from "hast-util-from-html"
 import RSSParser from "rss-parser"
 import { walk, editions, extractArticles } from "./garden.mjs"
 import { briefingLibrary, githubIssue, digestPath, GITHUB } from "./briefings.mjs"
-import { relatedNews, learningKinds } from "../web/graph-model.mjs"
+import { relatedNews, learningKinds, articleRelationRoles } from "../web/graph-model.mjs"
 export const collect = (node, pred, acc = []) => {
   if (pred(node)) acc.push(node)
   for (const c of node.children || []) collect(c, pred, acc)
@@ -90,7 +90,7 @@ export async function verifySite(
     articleIds = new Set(graph.articles.map((n) => n.id)),
     pairs = new Set()
   if (
-    graph.schema !== "learning-connections/v3" ||
+    graph.schema !== "learning-connections/v4" ||
     ids.size !== graph.nodes.length ||
     articleIds.size !== graph.articles.length
   )
@@ -102,13 +102,14 @@ export async function verifySite(
       /^(news|keyword):/.test(n.id) ||
       !n.slug ||
       !n.definition?.trim() ||
-      !n.learningReason?.trim() ||
       !learningKinds.includes(n.learningKind) ||
       !n.sources?.length ||
       !n.sources.every((u) => /^https:\/\//.test(u))
     )
       errors.push("Node is not a reviewed learning term " + n.id)
     else resolve(base + n.slug, path.join(root, "index.html"))
+    if (Object.hasOwn(n, "learningReason"))
+      errors.push("Internal learning-term review exposed in graph " + n.id)
     for (const article of relatedNews(graph, n.id))
       if (!articleIds.has(article.id) || article.distance > 2)
         errors.push("Unrelated news destination " + n.id)
@@ -119,11 +120,15 @@ export async function verifySite(
       new Set(article.termIds).size !== article.termIds.length ||
       article.termIds.length !== article.matches.length ||
       !article.termIds.every((id) => ids.has(id)) ||
-      !article.matches.every(
-        (m) =>
-          article.termIds.includes(m.termId) &&
-          (m.basis === "editorial" || (m.basis === "mention" && m.matched)),
-      )
+      !article.matches.every((m) => {
+        if (!article.termIds.includes(m.termId)) return false
+        if (m.basis === "editorial") return m.role === "untyped"
+        return (
+          m.basis === "semantic_review" &&
+          articleRelationRoles.includes(m.role) &&
+          m.role !== "untyped"
+        )
+      })
     )
       errors.push("Invalid article term association " + article.id)
   }

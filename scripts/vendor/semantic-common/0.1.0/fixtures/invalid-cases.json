@@ -1,0 +1,262 @@
+[
+  {
+    "name": "duplicate ID",
+    "path": [
+      "records",
+      1,
+      "id"
+    ],
+    "value": "article:0000000000000001"
+  },
+  {
+    "name": "native identity collision",
+    "path": [
+      "records",
+      3,
+      "native_id"
+    ],
+    "value": "article:0000000000000001"
+  },
+  {
+    "name": "unknown keys",
+    "path": [
+      "records",
+      0,
+      "approval_payload"
+    ],
+    "value": "forbidden"
+  },
+  {
+    "name": "unregistered version",
+    "path": [
+      "contract_version"
+    ],
+    "value": "1.0.0"
+  },
+  {
+    "name": "namespace coercion",
+    "path": [
+      "relations",
+      0,
+      "predicate"
+    ],
+    "value": "wiki:about"
+  },
+  {
+    "name": "association direction coercion",
+    "path": [
+      "relations",
+      1,
+      "directed"
+    ],
+    "value": true
+  },
+  {
+    "name": "none promoted to links",
+    "path": [
+      "records",
+      0,
+      "review",
+      "semantic"
+    ],
+    "value": "reviewed_none"
+  },
+  {
+    "name": "missing treated as reviewed",
+    "path": [
+      "records",
+      3,
+      "review",
+      "semantic"
+    ],
+    "value": "reviewed_links"
+  },
+  {
+    "name": "normalized quote forbidden",
+    "path": [
+      "evidence",
+      0,
+      "quote"
+    ],
+    "value": "정확한 오차는 +0.5 V, 감소 -2.0%, 증가 +2.0%다."
+  },
+  {
+    "name": "source bytes mismatch",
+    "path": [
+      "evidence",
+      0,
+      "source_bytes_sha256"
+    ],
+    "value": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+    "name": "path escape",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "path"
+    ],
+    "value": "../secret.md"
+  },
+  {
+    "name": "credential URL",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://user:password@example.org/private"
+  },
+  {
+    "name": "unsafe URL list",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "urls"
+    ],
+    "value": [
+      "file:///private"
+    ]
+  },
+  {
+    "name": "trailing hash newline",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "bytes_sha256"
+    ],
+    "value": "0000000000000000000000000000000000000000000000000000000000000000\n"
+  },
+  {
+    "name": "verified without evidence",
+    "path": [
+      "records",
+      1,
+      "review",
+      "evidence"
+    ],
+    "value": "verified"
+  },
+  {
+    "name": "complete with omissions",
+    "path": [
+      "coverage",
+      "omissions"
+    ],
+    "value": [
+      {
+        "record_id": null,
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "dangling edge",
+    "path": [
+      "relations",
+      0,
+      "target_id"
+    ],
+    "value": "absent"
+  },
+  {
+    "name": "boolean cannot be string",
+    "path": [
+      "relations",
+      0,
+      "directed"
+    ],
+    "value": "true"
+  },
+  {
+    "name": "role target cannot be article",
+    "path": [
+      "records",
+      1,
+      "kind"
+    ],
+    "value": "article"
+  },
+  {
+    "name": "unicode blank reason NEL",
+    "path": [
+      "relations",
+      0,
+      "reason"
+    ],
+    "value": ""
+  },
+  {
+    "name": "unicode blank reason BOM",
+    "path": [
+      "relations",
+      0,
+      "reason"
+    ],
+    "value": "﻿"
+  },
+  {
+    "name": "URL unicode NEL",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://example.org/"
+  },
+  {
+    "name": "URL unicode BOM",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://example.org/﻿"
+  },
+  {
+    "name": "URL percent host",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://%zz.org/a"
+  },
+  {
+    "name": "URL invalid IPv4",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://999.999.999.999/a"
+  },
+  {
+    "name": "URL two trailing dots",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://example.org../a"
+  },
+  {
+    "name": "URL three trailing dots",
+    "path": [
+      "records",
+      0,
+      "provenance",
+      "url"
+    ],
+    "value": "https://example.org.../a"
+  }
+]

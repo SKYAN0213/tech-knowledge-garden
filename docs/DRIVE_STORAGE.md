@@ -20,6 +20,51 @@ cold 모드의 런타임은 Node22.13 이상(내장 SQLite)과 Python3.9 이상�
 
 내장 임시 공간 부족 때문에 이번 전송·표적 검사에는 외장 `.local/.storage/tmp`를 사용했다. 연구 자료는 외장 저장소에 있으며 모델/런타임·코드·작은 운영 기록은 유지한다. 현재 결과와 증거는 빌드19.528과 `.local/research/drive-cold-store-20261014/`에서 확인한다.
 
+## 모듈 worker의 저장소 lock 경계
+
+지원되는 `collection.storage`의 `prepare`와 `evict`는 실행 중인 worker의 `process.pid`만 내부적으로 전달해 자기 lock을 제외한다. 공개 인자 schema에 `ignore_pid`나 owner/PID 선택 기능을 추가하지 않으며, context의 owner 주장도 사용하지 않는다. 다른 live owner와 probe 확인 불가·손상 JSON·non-object 또는 양의 정수가 아닌 PID(missing/null/string/bool/0/negative)는 unknown owner로 보존·차단한다. 종료가 ESRCH로 확인된 기존 run/source의 held scope 보호도 유지한다. lock을 삭제하거나 자동 회수하지 않는다.
+
+기존 `scripts/research-storage.mjs ACTION --root .local` 직접 CLI 경로는 유지한다. 모듈의 자기 lock 처리와 malformed owner 보호를 추가한 것이며 Drive 실행·원본 복원·과거299 재실행 또는 일반 guard 완화를 허용하지 않는다.
+
+## 고정된 과거 Native 시험 row 복구 후보 (2026-10-24)
+
+`cold-storage.py repair-missing-native-fixture-records`는 D2 iteration6의 synthetic `tmp/knowledge-integration-*`에서 유래한 **정확한 299개 catalog row·99개 내용·113개 scope**만 다루는 직접 CLI용 Python action이다. 범용 누락 파일 정리나 payload 복원이 아니다. 기존 `repair-missing-fixture-records`의 MCP result 경로 제한은 그대로이며, 새 action을 MCP·planner 허용 목록에 추가하지 않는다. Node CLI의 기존 일반 action 전달 경로를 사용해도 같은 Python 검증을 거친다. 구현·격리 회귀 통과를 실제 catalog 복구나 Q0 승인으로 간주하지 않는다.
+
+```sh
+python3 scripts/research/cold-storage.py repair-missing-native-fixture-records \
+  --root /absolute/private-root < /absolute/reviewed-parameters.json
+```
+
+입력은 `expected_root`, `operator`, `reason`, 32자리 hex `operation_id`, `{path, sha256}` 형식의 `manifest`와 `review`, 선택적인 boolean `readback_only`만 받는다. manifest는 `research-missing-native-fixture-repair/v1`이며 동일 `operation_id`와 root·policy **원본 bytes SHA**·현재 files/objects/bundles/requests 개수·정렬한 sqlite schema SHA에 결속한다. 전체 정렬 row를 담고 rowset SHA는 `9f6a5a3bb1b464f5c4154d9b2cb04212e9ef351e366a231047703a1aa552f6e1`이어야 한다. 일부 row·다른 해시·다른 경로·scope·개수는 새 manifest로 재해시해도 허용하지 않는다. schema/rowset digest의 encoding은 UTF-8 JSON, `ensure_ascii=False`, 정렬 key, 구분자 `,`/`:`, 마지막 LF다.
+
+manifest의 `rowset_evidence`는 동결 D2 감사 원본 SHA `e73bb0622622acac4c683d72217e52940bde802ad8bf294852456d57ddef5830`에, `checks`는 원래 iteration6 `checks.json` SHA `113ce50fb79dc44b69286edf3bc370ebba4b793d8ff4cafa7c6d6775c794a8cf` 및 각 terminal log에 묶인다. `recovery_evidence`는 조사한 범위에서 일치 사본 0건인 D2 exact-SHA 조사 결과 원본 `4db20767131cf4b136e55030294608474fa9f0e65c1291651b967c9f10e40c48`에 묶이며 전역 부재를 뜻하지 않는다. manifest와 별도의 `research-native-fixture-repair-review/v1` Q0 기록은 `approve_exact299_native_fixture_metadata_repair` 결정·정확한 operation_id/root/manifest 및 실제 실행 Python source SHA를 요구한다. review에 비어 있지 않은 사유가 있어야 하며, 테스트가 만든 review 형태 입력은 실제 독립 Q0 검토가 아니다.
+
+이 과거 cohort에는 owner PID가 보존되지 않았다. manifest/review 모두 `historical_owner_identity: "not_retained"`, `historical_owner_termination_proven: false`를 명시해야 한다. Q0가 `accept_absent_scopes_and_fresh_process_visibility: true`로 이 한계를 검토해야 한다. 성공·실패를 포함한 기록된 검사 종료는 **과거 owner PID의 ESRCH나 종료 확인이 아니다**. 실제 실행은 113개 scope와 대상 파일의 부재, 빈 원tmp, 현재 `ps`의 argv 가시성과 대상 scope writer 및 Node/npm test parent 부재를 transaction 전·commit 직전에 새로 확인한다. 가시성 불명·scope 재생성·살아 있는 writer·기존 mutation lock을 자동 무시하거나 회수하지 않는다.
+
+과거 fixture owner와 별개로, 보존해야 하는 다른 Native lock이 이미 있을 수 있다. revision23의 manifest는 전체 현재 집합을 path순 `preserved_inactive_native_locks` 배열로 고정한다. 각 항목은 `{path, sha256, pid, probe: "ESRCH"}`이며 Q0는 그 canonical digest를 `preserved_inactive_native_locks_sha256`에 명시해야 한다. 실행은 실제 lock 집합이 승인 목록과 정확히 같은지, 각 원본이 unaliased regular file인지, raw SHA와 JSON PID가 맞는지, 실제 `os.kill(pid,0)`가 ESRCH이고 완전한 `ps` 목록에도 해당 PID가 없는지 매번 확인한다. inode·mtime·bytes도 최초 관측과 재대조한다. 새 lock·변경·가시성 불명·EPERM·살아 있거나 재사용된 PID는 거부한다. 검증된 inactive lock도 삭제·회수·수정하지 않고 원본 bytes와 관측만 복구 증거에 보존한다. 이 확인을 역사 fixture PID의 종료 증명으로 사용하지 않는다.
+
+대상 SHA가 다른 catalog 경로에 연결됐거나 objects/requests가 path·SHA를 참조하면 거부한다. 운영 참조 검사는 root 아래 `research/local-ai`와 `local-ai` 각각의 `reasoning-tasks`, `runs`, `event-workflows`, `module-jobs`에 있는 JSON/JSONL 제어 파일을 읽는다. 대상 prefix/내용 SHA 참조, genuine 제어 경로의 symlink, 아래 고정57 형식 계약 밖의 손상된 JSON, catalog에 있으나 로컬에서 읽을 수 없는 제어 파일은 거부하며 hydrate하지 않는다. 없는 alternate root는 기존처럼 빈 범위이며 오류를 무시한 전체 조회 성공으로 표시하지 않는다.
+
+revision24의 manifest는 `historical_reference_formats: {path, sha256}`로 비공개 `research-native-fixture-historical-reference-formats/v1` 근거 원본 SHA `63295e766520c5a381be6405ea2df7c5fc21d04370911fb0fd7fd7ecfd593b80`를 고정한다. 운영 상수로 고정한 이 원본은 정확한 path·raw SHA·bytes·format의 정렬57개 목록과 rules를 포함한다. manifest와 Q0 모두 그 files vector의 digest `8260d46e421c87c823ebf0a5b8c11e4ae8e01583ae4aae1f3009d22629d5e053`를 `historical_reference_formats_files_sha256`에 결속해야 한다. 일부/추가/중복 목록·다른 root/rules·미승인 형식은 새 manifest로 재해시해도 허용하지 않는다.
+
+허용되는 참조 감사 형식은 `empty_bytes` 42개(정확0byte), `json_value_stream` 14개(표준 JSON 값과 ASCII space/tab/CR/LF만 전체 소비), `json_with_literal_trailing_newline` 1개(정확한 JSON 하나와 마지막 literal `5c6e` 2byte)다. 디코딩한 모든 key/value와 중복 key의 앞선 값까지 대상 참조를 검사한다. 비표준 상수·일반 Unicode 공백·unknown suffix·일반 꼬리 허용은 없다. 57개 전부의 존재·raw SHA·bytes와 형식을 삭제 전·commit 직전·명시 readback에 확인하고 원본 사본 및 형식별 census를 비공개 불변 증거에 보존한다. 원57개 파일을 수정하거나 Native authority/승인 JSON parser·승인 유효성을 완화하지 않는다. census도 `reference_inspection_only`, `original_native_JSON_valid: false`, parser 변경·승인 유효성 승격 false를 명시한다. 실제 적용에는 새 source/manifest/Q0와 독립 운영 검증이 필요하다.
+
+revision25의 manifest는 `reference_hardlinks: {path, sha256}`로 비공개 `research-native-fixture-reference-hardlink-groups/v1` 근거 raw SHA `b3fc8f6c77e47612cc07470708d782ac7a8fb7ad3e1053f6d166ed71bfdb69c6`를 고정한다. manifest와 Q0 모두 정렬한 groups digest `3c9639f52819b7daf3695544acaecbd60f7b7d2067eb4a77f20a9f433dc0283b`를 `reference_hardlinks_groups_sha256`에 명시한다. 정확3개 inode 그룹·각2경로·총6개 genuine JSON control만 허용하며 모든 그룹은 path·SHA·bytes·device/inode/nlink·mtime/ctime·mode가 완전히 고정된다. 같은 그룹의 두 경로는 같은 inode/내용/metadata여야 하고 실제 nlink는 열거된 경로 수2와 같아야 한다.
+
+일반 근거·manifest·policy·checks·review·DB·lock·derived proof의 `nlink=1` 제한은 유지한다. 별도의 제어 읽기 경로가 승인6개만 전후 `lstat/fstat`과 raw SHA/bytes를 대조하고, 각 alias의 모든 JSON key/value·중복 key의 이전값까지 검사한다. 원본 사본·전체 그룹 identity를 불변 증거와 census에 넣고 전체 참조 조회 끝·commit 직전·명시 readback에 재대조한다. 새/유실/부분 그룹·미승인 alias·외부 세 번째 링크·symlink·identity/bytes 변경은 거부한다. 파일 복사 치환·unlink·rewrite·정규화는 수행하지 않는다. 이전 실패·operative 검토를 보존하며 새 source/manifest/Q0와 새 operation_id 검토 뒤에만 실제 동작을 별도로 수행한다.
+
+`preview.mjs`가 만드는 `runs/<run>/preview-workspace`는 코드·노트·renderer 사본이다. 그 안의 의존성 symlink를 따라가거나 복사된 코드를 Native 제어로 세지 않는다. 제외는 임의 `node_modules` 이름 기준이 아니다. manifest의 path순 `derived_preview_workspaces`는 각 정확한 경로와 바깥 `preview/state.json`, `preview/workspace.json`의 `{path, sha256}`를 담아야 한다. 실제 `research-run/v1`의 run_id·완료 workspace stage·result_path·normalized result_hash 연결을 검증한다. Q0는 목록 digest인 `derived_preview_workspaces_sha256`와 `reference_scope: "native-controls-with-derived-preview-separation/v1"`를 별도로 승인해야 한다. manifest도 같은 reference_scope를 명시한다. 새/누락된 derived 집합·변조된 계약/SHA·동명 다른 위치·workspace root alias는 거부한다. workspace 바깥의 preview state/result/manifest 등 실제 제어는 계속 감사한다. 내부 코드 사본 전체의 내용 무결성이나 참조 부재를 승인한 것은 아니다.
+
+감사한 control 경로/해시와 실제 derived 경로 집합을 census로 보존하고 commit 전 및 readback에 재대조한다. 등록된 derived 작업 사본이 cold라는 사실은 genuine control 누락과 구별한다. genuine control이 cold/불가시라면 fail closed 상태를 유지하고, 운영자가 기존 검증 catalog의 정상 hydrate를 별도 수행한 뒤 manifest/Q0를 새 상태에 맞춰 검토해야 한다. 이 열거된 경계 밖의 모든 역사·외부 참조가 없다는 주장은 아니다.
+
+공통 mutation lock과 `BEGIN IMMEDIATE` 안에서 row·policy·schema·근거를 재확인한다. `.storage/native-fixture-metadata-repairs/<operation_id>/`에 대상 row, schema SQL, policy, 원본 manifest/입력/Q0 review, checks/log, 프로세스 관측을 불변 파일로 fsync한 뒤에만 exact row 삭제를 수행한다. 전체 DB binary backup은 만들지 않는다. 비대상 files와 objects/bundles/requests/meta/확장 table·schema 및 `sqlite_sequence`·통계 table 등 persistent SQLite 내부 값은 논리 SHA로 전후 대조하며 trigger의 비대상 변경도 rollback한다. native payload·Drive object·요청·policy를 삭제하거나 바꾸지 않는다.
+
+Native 복구는 commit marker의 정확한 예상 bytes를 `commit-intent.json`으로 먼저 fsync한다. marker INSERT의 trigger가 끝난 직후와 DB commit 직후에 같은 값이 존재하는지 확인한 뒤에만 성공 receipt를 쓴다. marker 삭제·변조는 commit 전에 rollback하며, 준비된 intent만으로 commit을 증명하지 않는다. 명시 readback도 실제 DB marker와 보존된 intent의 bytes 일치를 요구한다.
+
+동일 operation 재호출은 다시 삭제하지 않는다. commit 뒤 receipt 전에 중단됐다면 기존 입력에 `readback_only: true`를 더해 같은 DB commit marker와 before SHA, 대상 row 부재, 비대상 내용 및 Native census를 확인하고 새 readback 증거만 쓴다. commit 전 중단은 SQLite rollback 및 기존 시도 보존 상태이며 성공으로 바꾸지 않는다. 남은 mutation lock은 정확한 실제 PID/SHA·종료 근거를 사용한 기존 별도 `recover-mutation-lock` 경계를 따른다.
+
+격리 회귀는 `python3 -m unittest discover -s tests -p 'test_research_*fixture_metadata_repair.py' -v`로 실행한다. 정규 Node/MCP suite가 종료된 상태에서 실행해야 한다. 공개 fixture는 row·SHA·mtime·root·checks/log를 새로 생성하는 합성 profile이며 역사 catalog metadata를 포함하지 않는다. 성공 경로는 테스트 프로세스와 자식 wrapper에서만 cohort 상수를 합성값으로 교체하고 같은 validator·SQLite transaction·실제 `ps`를 실행한다. 운영 코드에는 환경변수·CLI 우회 옵션을 추가하지 않으며, 변경하지 않은 운영 CLI가 합성 입력을 거부하는 검사도 유지한다. 실제 고정 역사 cohort의 CLI 성공·즉시 readback은 비공개 manifest와 독립 Q0 검토를 거치는 별도 운영 검증이다. 공개 회귀의 review 형태 입력·성공은 그 승인을 대체하지 않는다.
+
 ## 독립 로컬 Drive OAuth (2026-10-16)
 
 `scripts/research-drive.mjs`는 Codex 커넥터 없이 cold payload와 복구 catalog를 읽고 보관한다. Google Desktop OAuth·127.0.0.1 임의 포트·PKCE S256·state 검증을 사용한다. 추가 SDK·유료 API·예약은 없다. GPT와 로컬 모델은 같은 `collection.storage`를 호출하고 인증은 adapter가 담당한다. 작성 원고의 승인·release와 실제 사이트 배포는 기존 관문을 따른다. 이 adapter가 정규 운영을 시작하거나 원고를 임의 승인하지 않는다.
@@ -189,7 +234,6 @@ compact MCP의 `research_execute`에 `module: publication`과 아래 `operation`
 요청은 `runs/<run>/publication-delivery/input.json`, release 연결은 `binding.json`, 각 실행·대기·응답은 `executions/<execution_id>/`에 저장한다. 같은 execution ID/입력의 완료 결과는 재사용하여 외부 단계를 반복하지 않는다. `research_job_status/result`는 worker 완료와 native 상태를 구분한다. 부분 결과나 source snapshot 대기는 새 입력과 명시적 새 execution ID로 이어간다. 실패/중단 후에는 먼저 기존 writer·publisher intent와 실제 bytes/receipt를 대조하고 잠금 소유권을 확인한다. `resume_intent`, `retry_publish`, `resume_remote_intent`는 기존 명시 재개 조건에서만 사용한다. 미확정 create는 새 요청으로 바꾸지 않는다. connector 호출 자체가 전송되지 않았음을 운영자가 확인한 경우에만 정확한 `resume_intent`와 `connector_call_not_dispatched: true`를 사용하며, 원래 writer 종료·동일 승인/작업·의도 이후의 완전한 안정 목록이 native 검증된 때 같은 intent를 재개하고 해당 확인을 durable resumption record에 남긴다.
 
 `drive_verified`, `public_verified`, `website_data_verified`, `source_archive_verified`는 각각의 native proof에서 판정한다. `remote_current_verified`는 저장 receipt 조회에서 false이며 정규 운영 회차도 자동 집계하지 않는다. 2026-10-10 개발 묶음은 저장 KUKA/AMR 승인 입력과 작은 웹/RSS/GitHub 생성 결과의 일치만 확인했고 Drive 업로드·Git push·공개 배포는 실행하지 않았다.
-
 
 ## 대량 복원과 명시적 저장소 잠금 회수 (2026-10-22)
 

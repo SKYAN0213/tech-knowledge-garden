@@ -7,6 +7,7 @@ import crypto from "node:crypto"
 import { once } from "node:events"
 import { spawn, spawnSync } from "node:child_process"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
+import { moduleContext, submitModuleJob } from "../scripts/research/module-runtime.mjs"
 import { storageAction } from "../scripts/research/cold-storage.mjs"
 import { safePath, readJSON, atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { packageResearchArchive } from "../scripts/research/archive.mjs"
@@ -894,3 +895,318 @@ sys.exit(7)
     else process.env.RESEARCH_STORAGE_PYTHON = oldPython
   }
 })
+
+function storageWorkerFixture(t, { eviction = false } = {}) {
+  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "storage-module-worker-")))
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
+  fs.mkdirSync(path.join(repo, "data"))
+  for (const name of [
+    "research-source-channels.json",
+    "research-model-policy.json",
+    "research-model-policy-codex.json",
+  ]) {
+    fs.copyFileSync(new URL("../data/" + name, import.meta.url), path.join(repo, "data", name))
+  }
+  const root = path.join(repo, ".local")
+  const relative = "research/local-ai/documents/worker-original/body.bin"
+  const body = Buffer.from("synthetic module storage evidence.\n".repeat(4000))
+  fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true })
+  fs.writeFileSync(path.join(root, relative), body)
+  const ctx = moduleContext({ repo, root: ".local/research/local-ai" })
+  if (eviction) {
+    storageAction(root, "prepare", { parent_id: "synthetic-parent" })
+    const bundle = storageAction(root, "pending").uploads[0]
+    storageAction(root, "verify", {
+      bundle_id: bundle.id,
+      metadata: {
+        id: "synthetic-file",
+        title: bundle.name,
+        mime_type: "application/zip",
+        size: String(bundle.bytes),
+        parent_ids: ["synthetic-parent"],
+        modified_time: new Date().toISOString(),
+        shared: false,
+      },
+      observed_at: new Date().toISOString(),
+      download_path: bundle.local_path,
+    })
+    storageAction(root, "enable")
+  }
+  return { repo, root, ctx, body, relative }
+}
+
+async function storageWorkerJob(t, f, action) {
+  const jobId = "module-storage-" + action + "-" + crypto.randomUUID()
+  const lock = path.join(f.ctx.root, "locks/module-worker-" + jobId + ".json")
+  await submitModuleJob(
+    f.ctx,
+    "collection",
+    "storage",
+    { action, ...(action === "evict" ? { cache_bytes: 0 } : {}) },
+    { jobId },
+  )
+  let owner, state
+  const deadline = Date.now() + 20000
+  while (Date.now() < deadline) {
+    state = readJSON(f.ctx.root, "module-jobs/" + jobId + "/state.json")
+    if (state?.state === "running" && fs.existsSync(lock))
+      owner = JSON.parse(fs.readFileSync(lock, "utf8"))
+    if (["completed", "failed"].includes(state?.state) && !fs.existsSync(lock)) break
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+  assert.ok(["completed", "failed"].includes(state?.state), "module worker must finish")
+  assert.ok(owner && Number.isInteger(owner.pid), "observe the actual worker-owned lock")
+  assert.equal(owner.pid, state.pid)
+  assert.equal(fs.existsSync(lock), false, "worker must release its own lock normally")
+  const exitDeadline = Date.now() + 5000
+  let alive = true
+  while (alive && Date.now() < exitDeadline) {
+    try {
+      process.kill(state.pid, 0)
+    } catch (error) {
+      if (error.code === "ESRCH") alive = false
+      else throw error
+    }
+    if (alive) await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+  assert.equal(alive, false, "owned worker must exit before fixture cleanup")
+  const result = state.result ? readJSON(f.ctx.root, state.result.path) : null
+  const input = readJSON(f.ctx.root, "module-jobs/" + jobId + "/input.json")
+  assert.equal(Object.hasOwn(input.parameters, "ignore_pid"), false)
+  assert.equal(Object.hasOwn(result?.data || {}, "ignore_pid"), false)
+  return { state, result, jobId, lockRelative: path.relative(f.root, lock) }
+}
+
+async function foreignStorageOwner(t, f) {
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" })
+  await once(child, "spawn")
+  t.after(async () => {
+    if (child.exitCode === null) {
+      child.kill("SIGTERM")
+      await once(child, "exit")
+    }
+  })
+  const file = path.join(f.ctx.root, "locks/module-worker-foreign.json")
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  const bytes = Buffer.from(
+    JSON.stringify({ pid: child.pid, owner: "synthetic-foreign-live" }) + "\n",
+  )
+  fs.writeFileSync(file, bytes)
+  return { child, file, bytes, relative: path.relative(f.root, file) }
+}
+
+for (const action of ["prepare", "evict"]) {
+  test("collection storage worker: " + action + " excludes only its own actual lock", async (t) => {
+    const f = storageWorkerFixture(t, { eviction: action === "evict" })
+    const { state, result } = await storageWorkerJob(t, f, action)
+    assert.equal(state.state, "completed", state.error)
+    if (action === "prepare") {
+      const uploads = storageAction(f.root, "pending").uploads
+      assert.equal(result.data.inventoried_files, 1)
+      assert.equal(result.data.new_packages, 1)
+      assert.equal(storageAction(f.root, "status").files, 1)
+      assert.equal(uploads.length, 1)
+      const bundle = uploads[0]
+      const observed = spawnSync(
+        process.env.RESEARCH_STORAGE_PYTHON || "python3",
+        [
+          "-c",
+          "import zipfile,hashlib,json,sys;z=zipfile.ZipFile(sys.argv[1]);print(json.dumps({n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist()}))",
+          path.join(f.root, bundle.local_path),
+        ],
+        { encoding: "utf8", timeout: 10000 },
+      )
+      assert.equal(observed.status, 0, observed.stderr)
+      assert.deepEqual(JSON.parse(observed.stdout), { ["objects/" + hash(f.body)]: hash(f.body) })
+      assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+    } else {
+      assert.equal(result.data.evicted, 1)
+      assert.equal(fs.existsSync(path.join(f.root, f.relative)), false)
+    }
+  })
+
+  test("collection storage worker: " + action + " preserves a different live owner", async (t) => {
+    const f = storageWorkerFixture(t, { eviction: action === "evict" })
+    const other = await foreignStorageOwner(t, f)
+    const { state, result, lockRelative } = await storageWorkerJob(t, f, action)
+    if (action === "prepare") {
+      assert.equal(state.state, "failed")
+      assert.match(state.error, /Active native locks/)
+      assert.ok(state.error.includes(other.relative))
+      assert.equal(state.error.includes(lockRelative), false)
+    } else {
+      assert.equal(state.state, "completed", state.error)
+      assert.equal(result.data.evicted, 0)
+      assert.ok(result.data.held_by_active_locks.includes(other.relative))
+      assert.equal(result.data.held_by_active_locks.includes(lockRelative), false)
+    }
+    assert.deepEqual(fs.readFileSync(other.file), other.bytes)
+    assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+    process.kill(other.child.pid, 0)
+  })
+
+  test(
+    "collection storage worker: " + action + " preserves an unreadable unknown owner",
+    async (t) => {
+      const f = storageWorkerFixture(t, { eviction: action === "evict" })
+      const file = path.join(f.ctx.root, "locks/module-worker-unreadable.json")
+      const relative = path.relative(f.root, file)
+      fs.mkdirSync(path.dirname(file), { recursive: true })
+      const bytes = Buffer.from("{unreadable synthetic owner\n")
+      fs.writeFileSync(file, bytes)
+      const { state, result, lockRelative } = await storageWorkerJob(t, f, action)
+      if (action === "prepare") {
+        assert.equal(state.state, "failed")
+        assert.ok(state.error.includes(relative))
+        assert.equal(state.error.includes(lockRelative), false)
+      } else {
+        assert.equal(state.state, "completed", state.error)
+        assert.equal(result.data.evicted, 0)
+        assert.ok(result.data.held_by_active_locks.includes(relative))
+        assert.equal(result.data.held_by_active_locks.includes(lockRelative), false)
+      }
+      assert.deepEqual(fs.readFileSync(file), bytes)
+      assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+    },
+  )
+
+  test(
+    "collection storage worker: " + action + " cannot trust forged context ownership",
+    async (t) => {
+      const f = storageWorkerFixture(t, { eviction: action === "evict" })
+      const other = await foreignStorageOwner(t, f)
+      const forged = {
+        ...f.ctx,
+        pid: other.child.pid,
+        worker_pid: other.child.pid,
+        owner_pid: other.child.pid,
+        owner: { pid: other.child.pid },
+      }
+      if (action === "prepare")
+        await assert.rejects(
+          executeModule(forged, "collection", "storage", { action }),
+          /Active native locks/,
+        )
+      else {
+        const result = await executeModule(forged, "collection", "storage", {
+          action,
+          cache_bytes: 0,
+        })
+        assert.equal(result.evicted, 0)
+        assert.ok(result.held_by_active_locks.includes(other.relative))
+      }
+      assert.deepEqual(fs.readFileSync(other.file), other.bytes)
+      assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+    },
+  )
+}
+
+test("collection storage worker: caller PID and owner fields remain outside the public schema", async (t) => {
+  const f = storageWorkerFixture(t)
+  storageAction(f.root, "status")
+  const before = fs.readFileSync(path.join(f.root, ".storage/catalog.sqlite"))
+  for (const action of ["prepare", "evict"]) {
+    for (const field of ["ignore_pid", "pid", "worker_pid", "owner_pid", "owner"]) {
+      await assert.rejects(
+        executeModule(f.ctx, "collection", "storage", { action, [field]: process.pid }),
+        new RegExp(field),
+      )
+    }
+  }
+  assert.deepEqual(fs.readFileSync(path.join(f.root, ".storage/catalog.sqlite")), before)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+})
+
+for (const action of ["prepare", "evict"]) {
+  test(
+    "collection storage worker: " +
+      action +
+      " fails closed on malformed PID and nonobject owner records",
+    async (t) => {
+      for (const [label, record] of [
+        ["missing", {}],
+        ["null", { pid: null }],
+        ["string", { pid: "12345" }],
+        ["bool", { pid: true }],
+        ["zero", { pid: 0 }],
+        ["negative", { pid: -1 }],
+        ["array", []],
+        ["number", 7],
+        ["null-record", null],
+      ]) {
+        await t.test(label, async (t) => {
+          const f = storageWorkerFixture(t, { eviction: action === "evict" })
+          const file = path.join(f.ctx.root, "locks/module-worker-unknown-" + label + ".json")
+          const relative = path.relative(f.root, file)
+          fs.mkdirSync(path.dirname(file), { recursive: true })
+          const bytes = Buffer.from(JSON.stringify(record) + "\n")
+          fs.writeFileSync(file, bytes)
+          const { state, result, lockRelative } = await storageWorkerJob(t, f, action)
+          if (action === "prepare") {
+            assert.equal(state.state, "failed")
+            assert.match(state.error, /Active native locks/)
+            assert.ok(state.error.includes(relative))
+            assert.equal(state.error.includes(lockRelative), false)
+          } else {
+            assert.equal(state.state, "completed", state.error)
+            assert.equal(result.data.evicted, 0)
+            assert.ok(result.data.held_by_active_locks.includes(relative))
+            assert.equal(result.data.held_by_active_locks.includes(lockRelative), false)
+          }
+          assert.deepEqual(fs.readFileSync(file), bytes)
+          assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+        })
+      }
+    },
+  )
+}
+
+for (const action of ["prepare", "evict"]) {
+  test("collection storage worker: " + action + " preserves stale ESRCH run scopes", async (t) => {
+    const f = storageWorkerFixture(t, { eviction: action === "evict" })
+    const heldPath = "research/local-ai/runs/stale-held/original.bin"
+    const heldBody = Buffer.from("preserved stale run evidence.\n".repeat(3000))
+    fs.mkdirSync(path.dirname(path.join(f.root, heldPath)), { recursive: true })
+    fs.writeFileSync(path.join(f.root, heldPath), heldBody)
+    if (action === "evict") {
+      storageAction(f.root, "prepare", { parent_id: "synthetic-parent" })
+      for (const bundle of storageAction(f.root, "pending").uploads) {
+        storageAction(f.root, "verify", {
+          bundle_id: bundle.id,
+          metadata: {
+            id: "synthetic-stale-file",
+            title: bundle.name,
+            mime_type: "application/zip",
+            size: String(bundle.bytes),
+            parent_ids: ["synthetic-parent"],
+            modified_time: new Date().toISOString(),
+            shared: false,
+          },
+          observed_at: new Date().toISOString(),
+          download_path: bundle.local_path,
+        })
+      }
+    }
+    const child = spawn(process.execPath, ["-e", ""], { stdio: "ignore" })
+    await once(child, "exit")
+    assert.throws(
+      () => process.kill(child.pid, 0),
+      (error) => error.code === "ESRCH",
+    )
+    const file = path.join(f.ctx.root, "locks/run-stale-held.json")
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    const bytes = Buffer.from(
+      JSON.stringify({ pid: child.pid, owner: "synthetic-exited-owner" }) + "\n",
+    )
+    fs.writeFileSync(file, bytes)
+    const { state, result } = await storageWorkerJob(t, f, action)
+    assert.equal(state.state, "completed", state.error)
+    if (action === "prepare") assert.equal(result.data.inventoried_files, 1)
+    else {
+      assert.equal(result.data.evicted, 1)
+      assert.equal(fs.existsSync(path.join(f.root, f.relative)), false)
+    }
+    assert.deepEqual(fs.readFileSync(file), bytes)
+    assert.deepEqual(fs.readFileSync(path.join(f.root, heldPath)), heldBody)
+  })
+}

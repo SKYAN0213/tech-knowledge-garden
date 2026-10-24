@@ -1,0 +1,381 @@
+{
+  "schema": "semantic-bundle/v1",
+  "contract_version": "0.1.0",
+  "source": {
+    "id": "fixture-wiki",
+    "project": "wiki"
+  },
+  "normalization": "nfc-lf-space/v1",
+  "coverage": {
+    "status": "complete",
+    "inventory": "complete",
+    "omissions": []
+  },
+  "records": [
+    {
+      "id": "urn:wiki:synthetic-0",
+      "native_id": "urn:wiki:synthetic-0",
+      "kind": "document",
+      "title": "urn:wiki:synthetic-0",
+      "text": "위키 합성 정의 0",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "16c8c793f5daaabfae726ab72c73d8f7630811e29039a2f2d54f1d27a6ca8f44",
+        "revision": "16c8c793f5daaabfae726ab72c73d8f7630811e29039a2f2d54f1d27a6ca8f44",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "16c8c793f5daaabfae726ab72c73d8f7630811e29039a2f2d54f1d27a6ca8f44"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-1",
+      "native_id": "urn:wiki:synthetic-1",
+      "kind": "concept",
+      "title": "urn:wiki:synthetic-1",
+      "text": "위키 합성 정의 1",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "365e1f66ce4b77d253e7947c98af203821c1e7a739907b17dd4e635c60554792",
+        "revision": "365e1f66ce4b77d253e7947c98af203821c1e7a739907b17dd4e635c60554792",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "365e1f66ce4b77d253e7947c98af203821c1e7a739907b17dd4e635c60554792"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-2",
+      "native_id": "urn:wiki:synthetic-2",
+      "kind": "entity",
+      "title": "urn:wiki:synthetic-2",
+      "text": "위키 합성 정의 2",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "e6eb8fa62e3aeb274c355a3fefab5d9a9cc809752183f4137cf6ffd5e30aafb0",
+        "revision": "e6eb8fa62e3aeb274c355a3fefab5d9a9cc809752183f4137cf6ffd5e30aafb0",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "e6eb8fa62e3aeb274c355a3fefab5d9a9cc809752183f4137cf6ffd5e30aafb0"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-3",
+      "native_id": "urn:wiki:synthetic-3",
+      "kind": "entity",
+      "title": "urn:wiki:synthetic-3",
+      "text": "위키 합성 정의 3",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "c3c570814cfebe1957e5d55191faa61c4efef57acd69042e4923752872bfd782",
+        "revision": "c3c570814cfebe1957e5d55191faa61c4efef57acd69042e4923752872bfd782",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "c3c570814cfebe1957e5d55191faa61c4efef57acd69042e4923752872bfd782"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-4",
+      "native_id": "urn:wiki:synthetic-4",
+      "kind": "event",
+      "title": "urn:wiki:synthetic-4",
+      "text": "위키 합성 정의 4",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "03112d1564714758e941b4f97c5c93f82a8850c4cb69e5b2d181b8948482d625",
+        "revision": "03112d1564714758e941b4f97c5c93f82a8850c4cb69e5b2d181b8948482d625",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "03112d1564714758e941b4f97c5c93f82a8850c4cb69e5b2d181b8948482d625"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-5",
+      "native_id": "urn:wiki:synthetic-5",
+      "kind": "procedure",
+      "title": "urn:wiki:synthetic-5",
+      "text": "위키 합성 정의 5",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "9fe7dc0ad413e2d0ec654367684ab84d89dbc7f6bf594fdfc695861084059afd",
+        "revision": "9fe7dc0ad413e2d0ec654367684ab84d89dbc7f6bf594fdfc695861084059afd",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "9fe7dc0ad413e2d0ec654367684ab84d89dbc7f6bf594fdfc695861084059afd"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:synthetic-6",
+      "native_id": "urn:wiki:synthetic-6",
+      "kind": "procedure",
+      "title": "urn:wiki:synthetic-6",
+      "text": "위키 합성 정의 6",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "d9632c5103c4ea016e259df16789505ad90b90df1fa38255c1067b5abcfd6f9e",
+        "revision": "d9632c5103c4ea016e259df16789505ad90b90df1fa38255c1067b5abcfd6f9e",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "d9632c5103c4ea016e259df16789505ad90b90df1fa38255c1067b5abcfd6f9e"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "urn:wiki:broader",
+      "native_id": "urn:wiki:broader",
+      "kind": "concept",
+      "title": "urn:wiki:broader",
+      "text": "더 넓은 합성 개념",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "50f903b3b39f4a3688ef629cf4736bc8cebd59431699b6df8c1e2a576824df62",
+        "revision": "50f903b3b39f4a3688ef629cf4736bc8cebd59431699b6df8c1e2a576824df62",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "50f903b3b39f4a3688ef629cf4736bc8cebd59431699b6df8c1e2a576824df62"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "private",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    }
+  ],
+  "relations": [
+    {
+      "id": "wiki-about",
+      "native_id": "wiki-about",
+      "source_id": "urn:wiki:synthetic-0",
+      "target_id": "urn:wiki:synthetic-1",
+      "predicate": "wiki:about",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "about",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    },
+    {
+      "id": "wiki-broader",
+      "native_id": "wiki-broader",
+      "source_id": "urn:wiki:synthetic-1",
+      "target_id": "urn:wiki:broader",
+      "predicate": "wiki:broader",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "broader",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    },
+    {
+      "id": "wiki-instance_of",
+      "native_id": "wiki-instance_of",
+      "source_id": "urn:wiki:synthetic-2",
+      "target_id": "urn:wiki:synthetic-1",
+      "predicate": "wiki:instance_of",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "instance_of",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    },
+    {
+      "id": "wiki-part_of",
+      "native_id": "wiki-part_of",
+      "source_id": "urn:wiki:synthetic-2",
+      "target_id": "urn:wiki:synthetic-3",
+      "predicate": "wiki:part_of",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "part_of",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    },
+    {
+      "id": "wiki-depends_on",
+      "native_id": "wiki-depends_on",
+      "source_id": "urn:wiki:synthetic-5",
+      "target_id": "urn:wiki:synthetic-6",
+      "predicate": "wiki:depends_on",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "depends_on",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    }
+  ],
+  "evidence": []
+}

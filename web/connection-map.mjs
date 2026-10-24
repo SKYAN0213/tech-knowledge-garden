@@ -8,6 +8,12 @@ const el = (tag, attrs = {}, text) => {
   return node
 }
 const kindName = { concept: "전문 용어" }
+const relationRoleName = {
+  topic: "핵심 주제",
+  application: "적용",
+  comparison_evaluation: "비교·평가",
+  context_background: "배경 연결",
+}
 let graphRequest
 export async function mountConnections(root) {
   const base = document.body.dataset.base || "",
@@ -157,6 +163,10 @@ export async function mountConnections(root) {
           { class: "story-via" },
           article.distance === 1 ? article.via : article.via + " 연결",
         ),
+      )
+    if (showVia && relationRoleName[article.relationRole])
+      row.append(
+        el("span", { class: "story-relation-role" }, relationRoleName[article.relationRole]),
       )
     return row
   }

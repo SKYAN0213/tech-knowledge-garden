@@ -4,7 +4,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import test from "node:test"
-import { nonContentChanges } from "../scripts/publication-state.mjs"
+import { nonContentChanges, publicationContentPaths } from "../scripts/publication-state.mjs"
 
 test("publication preflight allows generated content but blocks source and untracked changes", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "garden-publish-preflight-"))
@@ -27,7 +27,15 @@ test("publication preflight allows generated content but blocks source and untra
     write("digest/briefing.md", "updated\n")
     write("data/catalog.json", '{"updated":true}\n')
     write("data/drive-source-state.json", "{}\n")
+    // Git classification only; this fixture is not an accepted semantic index.
+    write("data/article-semantic-review-index.json", '{"fixture":true}\n')
     assert.equal(nonContentChanges(root), "")
+    assert.ok(publicationContentPaths.includes("data/article-semantic-review-index.json"))
+    git("add", "data/article-semantic-review-index.json")
+    assert.equal(nonContentChanges(root), "")
+    write("data/unapproved-config.json", "{}\n")
+    assert.match(nonContentChanges(root), /data\/unapproved-config\.json/)
+    fs.rmSync(path.join(root, "data/unapproved-config.json"))
 
     write("scripts/generate.mjs", "export const version = 2\n")
     assert.match(nonContentChanges(root), /scripts\/generate\.mjs/)

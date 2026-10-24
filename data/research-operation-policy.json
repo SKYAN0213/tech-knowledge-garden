@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-runtime-storage-hardening-20261022-v1/receipt.json",
-    "sha256": "2032ceb7ce8667ed1fbe08c3bb0672505f375823f7f4165d79a51721d70cabd5"
+    "path": ".local/research/development-releases/tkg-oversized-input-auto-segmentation-20261025-v2/receipt.json",
+    "sha256": "acd1531e11af561d7645efd44d81bb7d47c3826fd360dffcaa622be3cb8f0d05"
   },
   "recovery": {
     "automatic_retry": false,

@@ -35,6 +35,8 @@ Research에는 분야 × 기술·제품/기업·운영 × 국내/해외 32행을
 
 논문의 사전공개·정식 출판은 내용과 저자·공식 연결을 검토한 뒤 같은 work_id에 식별자를 추가한다. 제목 유사도만으로 합치지 않는다. 새로운 사건의 URL ID는 유지하므로 후속 출판 소식과 논문 자체의 동일성은 별개다. 현재 소속을 과거 소속으로 덮어쓰지 않는다. 소급 재검토에서 나중에 확인한 관계의 `as_of`는 원 기사 발표일로 소급하지 않는다. 원 기사 `published_at`, 관계 확인 시점 `as_of`, 재검토일 `reviewed_at`을 따로 보존하며 관계 확인 시점은 명시 심층·기사 검토일보다 미래일 수 없다.
 
+JATS 논문의 DOI는 본문·원주소에 없더라도 같은 source version의 선택된 native parse(`jats-xml`, `frontiers-jats/v1`)가 `article-meta/article-id`에서 추출한 `metadata.doi`와 DOI형 `metadata.identifiers`가 일치하면 identity 근거로 쓴다. 비교에는 대소문자와 바깥 공백만 정규화하며 검토 식별자는 고쳐 쓰지 않는다. 두 필드의 부재·잘못된 DOI 형식·불일치·`doi_candidates` 충돌은 거부하고, 다른 metadata 문자열이나 본문 참고문헌의 DOI로 보충하지 않는다. 일반 기사에서는 명시한 parse, 심층·출판 근거에서는 참조 claim이 실제 사용한 parse에만 결속한다. 다른 source version·미사용 parse의 DOI는 빌려 쓰지 않는다. 이 identity 확인은 claim 검증·전문 열람 범위·출판 상태 검토를 대신하지 않으며, HTML/arXiv 및 정확한 HTTPS URL 식별자의 기존 검증을 유지한다.
+
 원고의 `headlines`에는 실제 기사 제목 3~5개를 편집 순서대로 적는다. 기사가 3개 미만이면 모두, 빈 회차면 []다. 심층을 생략하면 `deep_skip_reason`에 근거 부족·접근 제한 등 실제 사유를 적는다. 사유는 취재용이며 RSS를 운영 안내로 채우지 않는다.
 
 ## 하루 심층 1건

@@ -202,10 +202,18 @@ export function verifyReviewedConceptOutputs(workspace, approvals) {
       const slug = slugifyFilePath(source.path)
       const eventId = approval.article.event_id
       const graphArticle = graph.articles.find((a) => a.id === "news:" + eventId)
+      const reviewedRole =
+        approval.concept_review.schema === "reviewed-article-concepts/v2" ? link.role : null
       if (
         !node ||
         node.slug !== slug ||
-        !graphArticle?.matches.some((m) => m.termId === link.concept_id && m.basis === "editorial")
+        !graphArticle?.matches.some(
+          (m) =>
+            m.termId === link.concept_id &&
+            (reviewedRole
+              ? m.basis === "semantic_review" && m.role === reviewedRole
+              : m.basis === "editorial" && m.role === "untyped"),
+        )
       )
         throw Error("Reviewed specialist assignment missing from reader graph")
       const termTree = fromHtml(fs.readFileSync(safePath(workspace, `public/${slug}.html`), "utf8"))
@@ -751,9 +759,19 @@ export async function verifyRetrospectiveOutputs(
       graph.nodes.some((n) => n.id === id),
     )
     const mapArticle = graph.articles.find((a) => a.id === "news:" + article.event_id)
+    const reviewedRoles = new Map(
+      (article.article_review.concept_links || []).map((link) => [link.concept_id, link.role]),
+    )
     if (
       mapConcepts.some(
-        (id) => !mapArticle?.matches.some((m) => m.termId === id && m.basis === "editorial"),
+        (id) =>
+          !mapArticle?.matches.some(
+            (match) =>
+              match.termId === id &&
+              (reviewedRoles.has(id)
+                ? match.basis === "semantic_review" && match.role === reviewedRoles.get(id)
+                : match.basis === "editorial" && match.role === "untyped"),
+          ),
       )
     )
       throw Error("Reviewed article concept missing from the generated map: " + article.event_id)

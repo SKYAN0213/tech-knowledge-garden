@@ -76,7 +76,13 @@ export const module = {
       (ctx, { action, ...parameters }) =>
         remoteStorageActions.includes(action)
           ? driveStorageAction(ctx.repo, path.join(ctx.repo, ".local"), action, parameters)
-          : storageAction(path.join(ctx.repo, ".local"), action, parameters),
+          : storageAction(
+              path.join(ctx.repo, ".local"),
+              action,
+              ["prepare", "evict"].includes(action)
+                ? { ...parameters, ignore_pid: process.pid }
+                : parameters,
+            ),
       { network: true },
     ),
     inquiries: operation(

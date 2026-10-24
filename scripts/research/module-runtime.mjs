@@ -219,6 +219,11 @@ function inputFingerprint(moduleId) {
           : moduleId === "knowledge"
             ? [
                 "knowledge-workflow.mjs",
+                "article-semantic-review.mjs",
+                "concept-candidate-index.mjs",
+                "semantic-review-metrics.mjs",
+                "article-concept-review.mjs",
+                "../../data/research-semantic-retrieval-policy.json",
                 "knowledge-explorer.mjs",
                 "knowledge-explorer-view.mjs",
                 "editorial-completeness.mjs",
@@ -231,6 +236,7 @@ function inputFingerprint(moduleId) {
                 "ontology-knowledge.mjs",
                 "ontology.mjs",
                 "knowledge-links.mjs",
+                "claims.mjs",
                 "ontology-trends.mjs",
                 "knowledge-editor.mjs",
                 "note-review.mjs",
@@ -243,6 +249,10 @@ function inputFingerprint(moduleId) {
                 "openai.mjs",
                 "run-state.mjs",
                 "../research.mjs",
+                "../knowledge.mjs",
+                "../explanations.mjs",
+                "../../web/graph-model.mjs",
+                "../../web/article-semantic-index.mjs",
               ]
             : moduleId === "parsing"
               ? [

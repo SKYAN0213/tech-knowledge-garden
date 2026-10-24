@@ -1,3 +1,5 @@
+import { articleRelationRoles as semanticRelationRoles } from "./article-semantic-index.mjs"
+
 // The map contains reviewed learning terms. News is attached data, never another node.
 export const normalizeTerm = (value) =>
   String(value).normalize("NFC").toLocaleLowerCase("en-US").replace(/\s+/g, " ").trim()
@@ -27,6 +29,7 @@ export const learningKinds = [
   "metric",
   "security",
 ]
+export const articleRelationRoles = [...semanticRelationRoles, "untyped"]
 export function isLearningTerm(node) {
   const review = node.mapReview
   if (!review) return false
@@ -52,11 +55,18 @@ export function assembleGraph(concepts, articles, associations = []) {
   const all = new Map(concepts.map((n) => [n.id, n]))
   if (all.size !== concepts.length) throw Error("Duplicate concept identity")
   const selected = concepts.filter(isLearningTerm)
-  const nodes = selected.map(({ path, keywords, mapReview, ...n }) => ({
-    ...n,
+  // Explicit public fields keep future private source/retrieval metadata out of the map.
+  const nodes = selected.map((n) => ({
+    id: n.id,
+    label: n.label,
+    title: n.title,
+    ...(n.group !== undefined ? { group: n.group } : {}),
+    aliases: [...n.aliases],
+    slug: n.slug,
+    definition: n.definition,
+    sources: [...n.sources],
     kind: "concept",
-    learningKind: mapReview.kind,
-    learningReason: mapReview.reason,
+    learningKind: n.mapReview.kind,
   }))
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const termNames = new Map()
@@ -80,19 +90,72 @@ export function assembleGraph(concepts, articles, associations = []) {
       edge.connections.push({ kind: "confirmed", reason: a.reason, evidence: a.evidence || [] })
   }
   const articleIds = new Set()
-  const publicArticles = articles.map(({ text, conceptIds, ...article }) => {
+  const publicArticles = articles.map((article) => {
     if (articleIds.has(article.id)) throw Error("Duplicate article identity")
     articleIds.add(article.id)
-    if (conceptIds.some((id) => !all.has(id))) throw Error("Unknown article concept")
-    const matches = []
-    for (const n of nodes) {
-      if (conceptIds.includes(n.id)) matches.push({ termId: n.id, basis: "editorial" })
-      else {
-        const name = [n.label, n.title, ...n.aliases].find((name) => mentions(text, name))
-        if (name) matches.push({ termId: n.id, basis: "mention", matched: name })
-      }
+    const status = article.semanticReviewStatus
+    if (
+      status !== undefined &&
+      !["reviewed_links", "reviewed_none", "legacy_untyped", "unreviewed"].includes(status)
+    )
+      throw Error("Invalid article semantic review status")
+    const conceptIds =
+        status === "unreviewed" ? [] : article.conceptIds === undefined ? [] : article.conceptIds,
+      conceptLinks =
+        status === "unreviewed"
+          ? []
+          : article.conceptLinks === undefined
+            ? []
+            : article.conceptLinks
+    if (!Array.isArray(conceptIds) || conceptIds.some((id) => !all.has(id)))
+      throw Error("Unknown article concept")
+    if (!Array.isArray(conceptLinks)) throw Error("Article concept links must be an array")
+    if (status === "reviewed_none" && (conceptIds.length || conceptLinks.length))
+      throw Error("Reviewed-empty article cannot retain concept assignments")
+    if (status === "reviewed_links" && !conceptLinks.length)
+      throw Error("Reviewed-linked article requires semantic concept links")
+    const linkedIds = new Set(),
+      matches = []
+    for (const link of conceptLinks) {
+      if (
+        !link ||
+        !all.has(link.conceptId) ||
+        !semanticRelationRoles.includes(link.role) ||
+        linkedIds.has(link.conceptId)
+      )
+        throw Error("Invalid reviewed article concept relation")
+      const claims = link.evidenceClaimIds
+      if (
+        claims !== undefined &&
+        (!Array.isArray(claims) ||
+          !claims.length ||
+          claims.some((id) => typeof id !== "string" || !id.trim()) ||
+          new Set(claims).size !== claims.length)
+      )
+        throw Error("Invalid reviewed article evidence claim references")
+      linkedIds.add(link.conceptId)
+      // A reviewed relation can target a readable note excluded from the learning map.
+      if (!byId.has(link.conceptId)) continue
+      matches.push({
+        termId: link.conceptId,
+        basis: "semantic_review",
+        role: link.role,
+        ...(claims !== undefined ? { evidenceClaimIds: [...claims] } : {}),
+      })
     }
-    return { ...article, termIds: matches.map((m) => m.termId), matches }
+    for (const n of nodes)
+      if (conceptIds.includes(n.id) && !linkedIds.has(n.id))
+        matches.push({ termId: n.id, basis: "editorial", role: "untyped" })
+    return {
+      id: article.id,
+      title: article.title,
+      date: article.date,
+      description: article.description,
+      slug: article.slug,
+      ...(status !== undefined ? { semanticReviewStatus: status } : {}),
+      termIds: matches.map((m) => m.termId),
+      matches,
+    }
   })
   const edges = [...pairs.values()]
     .sort((a, b) =>
@@ -104,7 +167,7 @@ export function assembleGraph(concepts, articles, associations = []) {
     n.size = 4 + Math.sqrt(n.degree) * 0.65
   }
   return {
-    schema: "learning-connections/v3",
+    schema: "learning-connections/v4",
     nodes: nodes.sort((a, b) => a.id.localeCompare(b.id, "en")),
     edges,
     articles: publicArticles,
@@ -138,16 +201,24 @@ export function relatedNews(data, selectedId) {
   const found = []
   for (const article of data.articles) {
     const direct = article.matches.find((m) => m.termId === selectedId)
-    if (direct)
+    if (direct) {
+      const rank = {
+        topic: 10,
+        application: 20,
+        comparison_evaluation: 30,
+        context_background: 40,
+        untyped: 50,
+      }[direct.role]
       found.push({
         ...article,
         distance: 1,
         via: nodes.get(selectedId).label,
-        rank: direct.basis === "editorial" ? 10 : 20,
+        relationRole: direct.role,
+        rank,
       })
-    else {
+    } else {
       const bridge = article.termIds.find((id) => neighbors.has(id))
-      if (bridge) found.push({ ...article, distance: 2, via: nodes.get(bridge).label, rank: 30 })
+      if (bridge) found.push({ ...article, distance: 2, via: nodes.get(bridge).label, rank: 60 })
     }
   }
   return found.sort(

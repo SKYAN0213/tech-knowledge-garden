@@ -182,6 +182,19 @@ export function approvedArticle(draftRecord, claims, documents, review, parses =
       published_at: review.published_at,
       reviewed_at: review.reviewed_at,
       concept_ids: review.concept_ids || [],
+      ...(review.concept_review?.schema === "article-concept-review/v2"
+        ? {
+            semantic_review_status: review.concept_review.outcome,
+            ...(review.concept_review.outcome === "reviewed_links"
+              ? {
+                  concept_links: review.concept_review.assignments.map((assignment) => ({
+                    concept_id: assignment.concept_id,
+                    role: assignment.role,
+                  })),
+                }
+              : {}),
+          }
+        : {}),
       ...eventDate,
     },
     ...(review.retrospective_review
@@ -373,6 +386,27 @@ export function editionProjection(
     throw Error("Legacy preservation requires an existing historical edition")
   const byId = new Map(articles.map((a) => [a.event_id, a]))
   const priorById = new Map(old.map((a) => [a.id, a]))
+  const editionPath = `Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`
+  const articleRecord = (article) => {
+    const prior = priorById.get(article.event_id)?.editorial
+    if (!prior) return article.record
+    const hasNextCheck = Object.hasOwn(prior, "next_check")
+    if (
+      Object.hasOwn(article.record, "next_check") &&
+      (!hasNextCheck ||
+        JSON.stringify(article.record.next_check) !== JSON.stringify(prior.next_check))
+    )
+      throw Error("Private next_check must retain its existing event and edition value")
+    if (!hasNextCheck) return article.record
+    if (
+      typeof existing.file !== "string" ||
+      (existing.file !== editionPath && !existing.file.endsWith("/" + editionPath))
+    )
+      throw Error("Private next_check requires the exact existing edition path")
+    // One approval can replace appearances in several Editions. Keep each
+    // appearance's private follow-up without mutating that shared approval.
+    return { ...article.record, next_check: structuredClone(prior.next_check) }
+  }
   const conceptPaths = (article) => {
     if (article.concept_paths) return article.concept_paths
     return (article.article_review.concept_ids || []).map((id) => {
@@ -484,7 +518,7 @@ export function editionProjection(
           }
         : {}),
     headlines,
-    article_records: articles.filter((a) => a.record).map((a) => a.record),
+    article_records: articles.filter((a) => a.record).map(articleRecord),
     article_reviews: articles.map((a) => a.article_review),
   }
   const preservedBody = (a) =>
@@ -570,7 +604,7 @@ export function editionProjection(
     (usedSources.map(([key, url]) => `- [${key}] ${url}`).join("\n") || "없음") +
     "\n"
   const issue = {
-    file: `vault/Editions/${date.slice(0, 4)}/${date.slice(5, 7)}/${key}.md`,
+    file: `vault/${editionPath}`,
     meta,
     body,
   }

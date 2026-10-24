@@ -2,7 +2,7 @@
 
 수집 단위는 출처와 원문 판본이고, 작성 단위는 선별된 사건이다. 독립 CLI와 MCP가 같은 JSON Schema·모듈 함수·native 실행기를 사용한다. 출처별 crawler나 별도 지식 DB를 새로 만들지 않는다.
 
-현재12모듈67작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
+현재12모듈72작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
 
 ### 미완료 수집 보완
 
@@ -139,16 +139,40 @@ Codex 위임의 컨텍스트 상한은131072토큰으로 분리한다. 현재 �
 | `selection`      | `prepare`, `reuse`                                                                        | 검토된 사건 계획 → 선별 원문 묶음·기존 승인 원고 재사용                                |
 | `evidence`       | `extract`, `inspect`, `review`                                                            | 선별 참조·저장 원문·명시적 사실 대조 → 추출/검토 사실                                  |
 | `writing`        | `draft`, `correct`                                                                        | 선별 참조·검증 사실·정확한 교정 파일 → 초안·상세 설명·교정 이력                        |
-| `knowledge`      | `explore`, `draft`, `project`, `index`, `read`, `review`, `connections`, `sync`, `status`            | 전문용어 근거·승인 run → 용어 초안·온톨로지·분할 조회·검토 영수증·지속 연결 checkpoint |
+| `knowledge`      | `explore`, `draft`, `project`, `index`, `read`, `review`, `connections`, `sync`, `status`, `semantic_prepare`, `semantic_status`, `semantic_retry`, `semantic_resume`, `semantic_export` | 전문용어 근거·승인 run·전체 공개 기사 → 용어 초안·온톨로지·분할 조회·검토 영수증·지속 연결 checkpoint·기사 의미 검토 색인 |
 | `validation`     | `completeness`, `progress`, `evaluation_prepare`, `evaluation_read`, `evaluation_import`, `evaluation_audit`, `scan`, `reader`, `approve` | 계획 SHA·고정 원문·명시 사람/편집 검토 → WBS·독립 검토 묶음·실제 완료 수·native 승인 |
 | `publication`    | `prepare`, `status`, `request_delivery`, `deliver`, `delivery_receipt`, `delivery_status`, `fallback`, `shadow_basis`, `shadow_record`, `shadow_status` | native 승인 인계·예약 invocation·비교 검토·raw capture → 고정 전달 요청·운영 비교·실제 검증 상태 |
 | `reasoning`      | `pending`, `read`, `submit`, `execute`                                                    | 원문·역할·출력 Schema로 고정한 요청 → Codex 또는 Ollama의 검증된 정형 결과             |
 
 승인된 미발행 기사는 원문·정확한 prior 승인 run을 대조한 `classification.review`의 `reuse`로 재사용할 수 있다. curation의 `already_featured`는 승인 자체가 아니라 canonical 발행 이력에 그 사건 ID가 있는지 확인한다. 같은 편집 점수에서는 정확한 native 승인 재사용을 새 writer보다 먼저 선택하며, 중요도 점수·반복 페널티·분야 상한·동일 사건 중복 검사는 유지한다. 실제 발행 이력에 있는 `reuse`는 다시 선정하지 않는다.
 
-12개 모듈·65개 작업이다. 기본 MCP와 현재 Codex 등록은 공통 도구5개로 같은 작업들을 호출한다. 명시적 상세 모드는 작업65개와 공통 조회/상태/결과/재개4개를 합친69개다. `classification.inspect`는 기존 후보 장부의 URL/본문/제목 관계 후보를 조회하고 `classification.queue`는 기존 처리 큐의 계획을 저장한다. 새 사건 중심 흐름은 `extract → review → curation.prepare/evaluate/select → selection.prepare`다. `plan`은 모델 없이 메타데이터와 원문 접근을 제공한다. 분류·큐레이션의 모델 출력은 미검토 후보이며 작성/기사 승인을 만들지 않는다.
+12개 모듈·72개 작업이다. 기본 MCP와 현재 Codex 등록은 공통 도구5개로 같은 작업들을 호출한다. 명시적 상세 모드는 작업72개와 공통 조회/상태/결과/재개4개를 합친76개다. `classification.inspect`는 기존 후보 장부의 URL/본문/제목 관계 후보를 조회하고 `classification.queue`는 기존 처리 큐의 계획을 저장한다. 새 사건 중심 흐름은 `extract → review → curation.prepare/evaluate/select → selection.prepare`다. `plan`은 모델 없이 메타데이터와 원문 접근을 제공한다. 분류·큐레이션의 모델 출력은 미검토 후보이며 작성/기사 승인을 만들지 않는다.
 
 `knowledge.project`는 검토된 native 승인을 입력으로 기존 온톨로지를 투영한다. 후보의 공동 등장으로 개념 노드나 관계를 생성하지 않는다. 실제 Knowledge·Signals·TrendTopics 갱신과 기존 운영 수용 조건은 원래 승인·반영 경로를 따른다.
+
+`knowledge.semantic_prepare/status/resume/export`는 공개 기사 전체의 의미 연결을 재검토하는 별도 workflow다. `semantic_prepare`는 공개 기사를 정확히 일치하는 native 승인, 검증 claim, 현재 검토된 개념 registry와 대조해 전체 inventory를 고정한다. 각 `waiting_for_reasoning` 작업은 `evidence_compare` 요청이며 Codex 구독 `gpt-6-luna` 정책만 허용한다. 연결 담당자는 `reasoning.pending/read`로 원문 입력·출력 Schema·모델 설정을 끝까지 읽고 정확한 `task_id/request_sha256` 결과만 `reasoning.submit`으로 제출한다. 제출 시 요청에 고정된 사건 ID, 공개 주장 ID와 개념 ID, 중복 관계, 결과 상태를 사전 대조하므로 다른 기사 응답이나 알 수 없는 참조가 불변 결과로 저장되지 않는다. `semantic_resume`은 모델 결과를 다시 검증하고 claim·승인·기사·개념·정책 지문에 바인딩된 영수증을 기록한다. `semantic_status`는 요청 대기(`waiting_for_reasoning`), 결과 도착 후 영수증 대기(`result_ready`), 연결 있음(`reviewed_links`), 연결 없음(`reviewed_none`), 저장 대기와 차단을 구분한다. `semantic_export`는 현재 공개 기사의 전체 대기열이 완료된 경우에만 색인을 생성한다. 정확히 같은 입력과 영수증은 다음 일일 workflow에서 재사용하고 변경·신규 기사만 큐에 추가한다.
+
+`semantic_prepare`의 선택 인수 `event_ids`는 전체 inventory를 유지한 채 해당 페이지에서 요청할 기사만 제한한다. `pilot_review_refs`는 연구 root 상대 `{path, sha256}` 목록으로, full-registry Luna 검토 영수증과 native 승인·공개 주장·원문 블록을 실제 대조한 별도 `semantic-retrieval-review/v1` 검토를 고정한다. refs를 추가하거나 바꿀 때는 새 workflow ID를 사용한다. 원시 모델 응답이나 기존 `concept_ids`만으로 파일럿 정답을 만들지 않는다. 전체 기사 완료 전 export 관문은 그대로 적용한다.
+
+부분 workflow에서 완료한 일반 private 의미 검토는 `completed_review_refs`의 연구 root 상대 `{path, sha256}` 목록으로 새 workflow에 넘긴다. `semantic_status/resume`의 완료 항목은 원 영수증의 `receipt_ref`를 반환한다. 원 workflow의 해당 inventory 행·선택 기록·전체 요청·응답·영수증을 검증하고 현재 기사 raw/public SHA, native 승인·검증 주장, 개념 registry, 정책과 전체 추론 입력이 정확히 같을 때만 재사용한다. 이전 workflow의 다른 기사까지 현재 상태로 재구성하지 않는다. 원 task·request·result·검토 시각·workflow·영수증 참조는 보존하며, 바뀐 입력만 새 요청을 만든다. 이 refs는 별도 full-registry 파일럿 정답 검토를 대신하지 않는다. 위조·충돌 참조는 거부하고 보관 중인 정확한 원본은 `STORAGE_PENDING`으로 기다린다. 생략과 빈 목록은 기존 입력을 유지하며, 고정 refs가 바뀌면 새 workflow를 사용한다. 전체 현재 기사 완료 전 export는 계속 차단한다.
+
+같은 공개 기사와 일치하는 유효 native 승인이 여러 개면 자동으로 최신 판본을 선택하지 않는다. `approval_selection_refs`는 실제 대조자가 작성한 `semantic-native-approval-selection/v1`의 연구 root 상대 `{path, sha256}` 목록이다. 공개 파일·공개문 지문, 선택 run의 원본 파일 묶음, 유효 후보 전체, 대조 근거 파일과 실제 검토자·시각·이유를 고정한다. 선택은 의미 검토 입력을 정하며 새 사실·기사 승인이나 발행을 수행하지 않는다. 선택되지 않은 모호함은 계속 차단하고 선택 원본이 보관 중이면 정확한 해당 바이트를 기다린다. 고정 refs·후보·근거가 바뀌면 새 workflow로 재개하며 기존 영수증과 원본은 보존한다.
+
+`semantic_prepare.full_registry_event_ids`는 지정한 공개 기사만 현재 검토된 전체 개념 registry로 검토하게 한다. 요청 생성 대상을 고르는 `event_ids`와 독립적이다. 예를 들어 `event_ids`가 A이고 확대 목록이 B이면 이번 페이지에는 A의 요청만 만들고, B의 전체 개념 선택은 같은 inventory에 고정해 이후 요청에서 사용한다. 전역 검색 정책·순위·top12·개념 정의 및 다른 기사의 실제 입력은 바꾸지 않는다.
+
+확대 목록이 비어 있지 않으면 `full_registry_review_refs`에 `{event_id, path, sha256}` 근거를 함께 전달한다. `path`는 연구 root 상대 경로이며 각 확대 event에 하나 이상의 근거가 필요하다. 실제 원문 대조 finding과 요청 이유를 기록한 파일의 bytes SHA를 inventory에 고정하고, selection과 기사 요청에는 해당 event의 refs만 넣어 다른 기사를 추가로 확대해도 기존 입력을 유지한다. status/resume/retry/export와 C7 원 workflow 검증에서 다시 확인한다. 파일은 JSON이나 Markdown 등 원본 bytes로 검증하며 그 내용을 실행하거나 승인으로 해석하지 않는다. 이 refs는 확대 경위의 기록이고 `pilot_review_refs`, 사실·기사 승인, 관계 확정 또는 source-gold를 대신하지 않는다. 원문 finding과 D0 요청/별도 검토 기록을 실제 파일과 SHA로 연결해야 한다.
+
+두 확대 인수를 생략하거나 새 workflow에서 모두 `[]`로 지정하면 이전 selection·전체 요청·inventory의 직렬화를 유지한다. 기존 workflow에서 생략하면 고정한 값을 유지하고, 이미 고정한 확대 목록이나 refs를 바꾸려면 새 workflow ID가 필요하다. 중복 event/path·잘못된 ID·공개 inventory 밖 event·근거 없는 확대·확대 없는 근거·다른 event의 refs·SHA 변경은 거부한다. 기존 workflow에 새 필드가 없어도 재구성할 수 있다. C7는 원 완료 source의 확대 문맥을 원 workflow에서 읽으며, 현재 workflow의 확대 목록을 옛 shortlist 검증에 적용하지 않는다.
+
+부분 검토 후 범위를 넓힐 때는 원 native 요청·결과·영수증을 보존하고, 새 workflow에 완료 항목의 정확한 `completed_review_refs`를 넘긴다. 지정 기사만 전체 입력 SHA가 달라져 새 검토가 필요하고, 입력이 같은 다른 기사는 원 task/request/result/검토 시각/receipt_ref를 재사용한다. 실제 Luna 검토와 native 제출은 별도 단계이며, 새 전체 검토가 다시 `reviewed_none`일 수도 있다. 이후 workflow에는 status가 반환한 현재 영수증 refs를 쓰고 같은 event의 옛/새 영수증을 동시에 넣지 않는다. 전체 공개 기사 완료 전 export 관문은 유지한다.
+
+retry 뒤 export한 공개 검토를 재사용할 때는 원 workflow가 가리키는 활성 prepared 요청으로 영수증을 검증한다. 최초의 잘못된 결과도 불변 원본으로 보존하지만, 이를 현재 검토 결과로 다시 사용하지 않는다.
+
+검색 축약 평가는 최소 24개 본 기사(4개 분야군에서 각각 2개 이상)와 별도 8개 모호함·동음이의어·연결 없음 검토를 요구한다. v3 평가의 엄격한 `recall@12 ≥ 0.95`와 실제 개념 설명 bytes 중앙값 60% 이상 절감을 함께 확인하며, 근거 부족·저신호·임베딩 불가는 전체 registry로 돌아간다. 비공개 성능 관측은 결과·요청 지문과 별도로 보관한다. 측정하지 못한 모델 시간은 `null`로 남기며 cold/warm 중앙값·p95와 입력 절감률을 구분한다.
+
+과거 구현에서 저장된 결과가 exact request에는 바인딩됐지만 의미 출력의 사건 ID 또는 공개 claim 참조 검증을 통과하지 못하면 `semantic_retry`를 그 사건에 명시 실행한다. 이 작업은 원 요청·결과를 수정하지 않고, 같은 기사·승인·개념·정책 입력과 모델 설정을 유지한 새 `gpt-6-luna` 요청을 추가한다. 새 요청도 기존 `reasoning.pending/read → reasoning.submit → semantic_resume` 경로를 거치며, 자동 재시도는 하지 않고 최대 세 번의 retry 영수증을 보존한다. 요청 바인딩·결과 무결성·원문 입력이 불일치하면 새 요청을 만들지 않고 실패시킨다.
+
+이 결과는 사이트의 기사-개념 관계 데이터다. 모델 응답 자체는 사실·편집·기사·release 승인이 아니다. 간접 관계·새 개념은 조사 후보로 기록하고 지도 연결에 반영하지 않는다. `reviewed_none`도 전체 확인을 끝낸 유효한 결과다. 개발 완료 gate가 닫혀 있으면 prepare/export를 거부하며 실제 전체 기사 backfill은 이 코딩·테스트만으로 완료 처리되지 않는다.
 
 새 작성 요청의 리드·설명·분석 `claim_ids`는 제공된 실제 ID의 enum·중복 금지·개수 상한으로 제한한다. 응답의 ID를 자동 교정하지 않으며 과거 generic Schema와 draft fingerprint는 유지한다. 육하원칙의 표시일은 검증된 원문 시각을 한국 날짜로 계산하고, 알려진 원문 날짜를 초안의 `facts.when`으로 대체하지 않는다. 참조 형식이 맞아도 리드 반복·근거 범위·단위·계획/완료 조건은 기존 편집 검토를 통과해야 한다.
 

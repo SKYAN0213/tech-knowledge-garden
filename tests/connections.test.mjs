@@ -100,7 +100,7 @@ test("verified fixed concept IDs reach map news without promoting excluded terms
   assert.ok(!graph.nodes.some((n) => n.id === "excluded"))
   assert.ok(!graph.articles.some((a) => a.id === "news:removed"))
   assert.equal(relatedNews(graph, "explicit")[0].id, "news:verified")
-  assert.equal(relatedNews(graph, "explicit")[0].rank, 10)
+  assert.equal(relatedNews(graph, "explicit")[0].rank, 50)
   write("verified", "verified", ["explicit"], ["Knowledge/explicit", "Knowledge/legacy"])
   assert.equal(buildGraph(vault).articles.find((a) => a.id === "news:verified").matches.length, 2)
   write("verified", "verified", ["unknown"])
@@ -231,7 +231,7 @@ test("An included learning term requires a meaningful review, definition, page a
   ])
     assert.throws(() => assembleGraph([{ ...n, ...patch }], []), /learning-term|Learning term/)
 })
-test("Reviewed aliases attach articles without creating duplicate keyword nodes", () => {
+test("Exact term mentions remain unlinked until an article relation is reviewed", () => {
   const n = {
     ...concept("kv-cache", ["메모리", "속도"]),
     label: "KV 캐시",
@@ -250,19 +250,15 @@ test("Reviewed aliases attach articles without creating duplicate keyword nodes"
   assert.equal(data.nodes.length, 1)
   assert.deepEqual(
     data.articles.map((a) => a.termIds),
-    [["kv-cache"], ["kv-cache"], [], []],
+    [[], [], [], []],
   )
-  assert.ok(
-    data.articles
-      .slice(0, 2)
-      .every((a) => a.matches[0].basis === "mention" && a.matches[0].matched),
-  )
+  assert.ok(data.articles.every((a) => a.matches.length === 0))
   assert.throws(
     () => assembleGraph([n, { ...concept("other"), aliases: ["kv cache"] }], []),
     /Ambiguous learning term/,
   )
 })
-test("Related news ranks explicit assignments, then approved-name mentions, then one confirmed neighboring term", () => {
+test("Related news ranks direct reviewed assignments before one confirmed neighboring term", () => {
   const data = assembleGraph(
     [concept("a", ["shared"]), concept("b"), concept("c")],
     [
@@ -280,10 +276,10 @@ test("Related news ranks explicit assignments, then approved-name mentions, then
   const news = relatedNews(data, "a")
   assert.deepEqual(
     news.map((n) => n.id),
-    ["news:direct", "news:mention", "news:related"],
+    ["news:direct", "news:related"],
   )
-  assert.equal(news[2].via, "b")
-  assert.equal(news[2].distance, 2)
+  assert.equal(news[1].via, "b")
+  assert.equal(news[1].distance, 2)
   assert.deepEqual(relatedNews(data, "news:direct"), [])
   assert.deepEqual(relatedNews(data, "unknown"), [])
 })
@@ -299,28 +295,22 @@ test("Legacy article and specialized keyword links resolve to a reviewed term, w
   for (const id of [null, "", "keyword:책임", "unknown", "news:without"])
     assert.equal(resolveFocus(data, id), null)
 })
-test("Published map contains reviewed terms with definitions, and genuine article mentions connect newly explained terms", () => {
+test("Published map contains reviewed terms and only reviewed article relations", () => {
   const data = buildGraph(),
     knowledge = readKnowledge()
-  assert.equal(data.schema, "learning-connections/v3")
+  assert.equal(data.schema, "learning-connections/v4")
   assert.deepEqual(
     new Set(data.nodes.map((n) => n.id)),
     new Set(knowledge.nodes.filter(isLearningTerm).map((n) => n.id)),
   )
   assert.ok(
     data.nodes.every(
-      (n) => n.kind === "concept" && n.definition && n.slug && n.learningReason && n.sources.length,
+      (n) => n.kind === "concept" && n.definition && n.slug && n.learningKind && n.sources.length,
     ),
   )
   assert.ok(data.nodes.every((n) => !/^(keyword|news):/.test(n.id)))
   assert.ok(!data.nodes.some((n) => ["책임", "상태", "가격", "허용", "근거"].includes(n.label)))
-  for (const [term, articleId] of [
-    ["kv-cache", "19af374b78b369cd"],
-    ["oidc", "322b7c88af36f3ac"],
-    ["latency-percentiles", "46fcf5bb7b99520f"],
-  ])
-    assert.ok(data.articles.find((a) => a.id === "news:" + articleId).termIds.includes(term), term)
-  assert.ok(relatedNews(data, "agents")[0].termIds.includes("agents"))
+  assert.ok(data.articles.every((article) => article.matches.every((match) => match.role)))
   // The source-reviewed TimesFM rewrite has neither a term assignment nor
   // an exact zero-shot name/alias; retain the term without a stale news link.
   assert.ok(
@@ -330,6 +320,40 @@ test("Published map contains reviewed terms with definitions, and genuine articl
   assert.ok(!data.articles.find((a) => a.id === "news:b32e9b8471353987").termIds.includes("mcp"))
   assert.equal(data.counts.news, data.articles.length)
   assert.equal(data.counts.linkedNews, data.articles.filter((a) => a.termIds.length).length)
+})
+test("Role-aware reviewed relations rank topic, application, comparison, and background", () => {
+  const data = assembleGraph(
+    [concept("a")],
+    [
+      article("background", [], "", "2026-09-13"),
+      {
+        ...article("application", [], "", "2026-09-12"),
+        conceptLinks: [{ conceptId: "a", role: "application" }],
+      },
+      {
+        ...article("comparison", [], "", "2026-09-11"),
+        conceptLinks: [{ conceptId: "a", role: "comparison_evaluation" }],
+      },
+      {
+        ...article("topic", [], "", "2026-09-10"),
+        conceptLinks: [{ conceptId: "a", role: "topic" }],
+      },
+      {
+        ...article("context", [], "", "2026-09-09"),
+        conceptLinks: [{ conceptId: "a", role: "context_background" }],
+      },
+    ],
+  )
+  const news = relatedNews(data, "a")
+  assert.deepEqual(
+    news.map((row) => [row.id, row.relationRole]),
+    [
+      ["news:topic", "topic"],
+      ["news:application", "application"],
+      ["news:comparison", "comparison_evaluation"],
+      ["news:context", "context_background"],
+    ],
+  )
 })
 test("Empty and isolated graph layouts remain finite without introducing synthetic links", () => {
   assert.deepEqual(layoutGraph({ nodes: [], edges: [] }), [])

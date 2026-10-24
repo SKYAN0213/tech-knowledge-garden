@@ -25,6 +25,13 @@ import {
   projectEvidenceOntology,
   assertEvidenceOntology,
 } from "../ontology.mjs"
+import {
+  prepareArticleSemanticReviews,
+  retryInvalidArticleSemanticReview,
+  resumeArticleSemanticReviews,
+  articleSemanticReviewStatus,
+  exportArticleSemanticReviewIndex,
+} from "../article-semantic-review.mjs"
 
 const hash = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const json = (ctx, file) => JSON.parse(fs.readFileSync(repoFile(ctx, file)))
@@ -213,6 +220,138 @@ export const module = {
       ),
       (ctx, p) => readKnowledgeWorkflow(ctx.root, p.workflow_id, p),
       { readOnly: true },
+    ),
+    semantic_prepare: operation(
+      "전체 공개 기사와 정확히 일치하는 native 승인 원문을 고정하고, 검증 사실을 근거로 한 Luna 의미 검토 요청만 만든다. 개발 완료 관문 전에는 대기한다.",
+      schema(
+        {
+          workflow_id: id,
+          offset: integer(0, 1000000),
+          limit: integer(1, 100),
+          event_ids: {
+            ...list({ type: "string", pattern: "^[a-f0-9]{16}$" }, 1000),
+            uniqueItems: true,
+          },
+          pilot_review_refs: list(
+            schema({ path: file("root"), sha256: hash }, ["path", "sha256"]),
+            1000,
+            0,
+          ),
+          approval_selection_refs: list(
+            schema({ path: file("root"), sha256: hash }, ["path", "sha256"]),
+            1000,
+            0,
+          ),
+          completed_review_refs: list(
+            schema({ path: file("root"), sha256: hash }, ["path", "sha256"]),
+            1000,
+            0,
+          ),
+          full_registry_event_ids: {
+            ...list({ type: "string", pattern: "^[a-f0-9]{16}$" }, 1000, 0),
+            uniqueItems: true,
+          },
+          full_registry_review_refs: list(
+            schema(
+              {
+                event_id: { type: "string", pattern: "^[a-f0-9]{16}$" },
+                path: file("root"),
+                sha256: hash,
+              },
+              ["event_id", "path", "sha256"],
+            ),
+            1000,
+            0,
+          ),
+        },
+        ["workflow_id"],
+      ),
+      (ctx, p) =>
+        prepareArticleSemanticReviews({
+          root: ctx.root,
+          vault: ctx.vault,
+          repo: ctx.repo,
+          policyFile: ctx.policy,
+          workflowId: p.workflow_id,
+          offset: p.offset,
+          limit: p.limit,
+          eventIds: p.event_ids,
+          pilotReviewRefs: p.pilot_review_refs,
+          approvalSelectionRefs: p.approval_selection_refs,
+          completedReviewRefs: p.completed_review_refs,
+          fullRegistryEventIds: p.full_registry_event_ids,
+          fullRegistryReviewRefs: p.full_registry_review_refs,
+        }),
+      { model: true },
+    ),
+    semantic_status: operation(
+      "고정한 기사별 의미 검토 inventory와 정확한 추론 요청·영수증 상태를 읽는다. 원문, 요청, 승인, 공개 자료를 수정하지 않는다.",
+      schema(
+        {
+          workflow_id: id,
+          offset: integer(0, 1000000),
+          limit: integer(1, 100),
+        },
+        ["workflow_id"],
+      ),
+      (ctx, p) =>
+        articleSemanticReviewStatus({
+          root: ctx.root,
+          vault: ctx.vault,
+          repo: ctx.repo,
+          policyFile: ctx.policy,
+          workflowId: p.workflow_id,
+          offset: p.offset,
+          limit: p.limit,
+        }),
+      { readOnly: true },
+    ),
+    semantic_retry: operation(
+      "잘못된 불변 의미 검토 결과를 덮어쓰지 않고, 같은 고정 기사·승인·개념·정책 입력에 새 추론 요청을 만든다.",
+      schema({ workflow_id: id, event_id: { type: "string", pattern: "^[a-f0-9]{16}$" } }, [
+        "workflow_id",
+        "event_id",
+      ]),
+      (ctx, p) =>
+        retryInvalidArticleSemanticReview({
+          root: ctx.root,
+          vault: ctx.vault,
+          repo: ctx.repo,
+          policyFile: ctx.policy,
+          workflowId: p.workflow_id,
+          eventId: p.event_id,
+        }),
+      { model: true },
+    ),
+    semantic_resume: operation(
+      "같은 inventory의 완료된 Codex gpt-6-luna 결과만 검증해 기사별 의미 검토 영수증으로 고정한다. 새 모델 호출이나 승인·배포는 하지 않는다.",
+      schema({ workflow_id: id, offset: integer(0, 1000000), limit: integer(1, 100) }, [
+        "workflow_id",
+      ]),
+      (ctx, p) =>
+        resumeArticleSemanticReviews({
+          root: ctx.root,
+          vault: ctx.vault,
+          repo: ctx.repo,
+          policyFile: ctx.policy,
+          workflowId: p.workflow_id,
+          offset: p.offset,
+          limit: p.limit,
+        }),
+      { model: true },
+    ),
+    semantic_export: operation(
+      "모든 공개 기사의 native 승인과 의미 검토가 완료된 뒤 해시 고정 검토 색인을 생성한다. 이 자료는 로컬 사이트 빌드 입력일 뿐 배포나 기사 승인이 아니다.",
+      schema({ workflow_id: id }, ["workflow_id"]),
+      (ctx, p) =>
+        exportArticleSemanticReviewIndex({
+          root: ctx.root,
+          vault: ctx.vault,
+          repo: ctx.repo,
+          policyFile: ctx.policy,
+          workflowId: p.workflow_id,
+        }),
+      { model: true },
     ),
   },
 }

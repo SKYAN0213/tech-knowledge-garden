@@ -112,7 +112,10 @@ const paperIdentityText = (document, parses) =>
   [
     document.original_url,
     ...parses
-      .filter((p) => p.source_version_id === document.source_version_id)
+      .filter(
+        (p) =>
+          p.source_version_id === document.source_version_id && p.source_id === document.source_id,
+      )
       .flatMap((p) => p.blocks.map((b) => b.text)),
   ].join("\n")
 const containsPaperIdentifier = (value, identifier) => {
@@ -121,6 +124,52 @@ const containsPaperIdentifier = (value, identifier) => {
     .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   return new RegExp(`(?<![a-z0-9._-])${literal}(?![a-z0-9._-])`, "i").test(value)
 }
+const normalizedJATSDOI = (value) =>
+  typeof value === "string" && /^10\.\d{4,9}\/\S+$/.test(value.trim())
+    ? paperKey("doi:" + value.trim())
+    : null
+function jatsPaperDOI(parse) {
+  // The native producer reads article-meta/article-id, not bibliography DOI
+  // strings. It emits doi_candidates instead of doi on conflicting values.
+  const metadata = parse.metadata
+  if (
+    parse.parser?.version !== "frontiers-jats/v1" ||
+    !metadata ||
+    Object.hasOwn(metadata, "doi_candidates") ||
+    !Array.isArray(metadata.identifiers)
+  )
+    return null
+  const doi = normalizedJATSDOI(metadata.doi)
+  const identifiers = metadata.identifiers.filter(
+    (item) => typeof item?.type === "string" && item.type.trim().toLowerCase() === "doi",
+  )
+  return doi &&
+    identifiers.length &&
+    identifiers.every((item) => normalizedJATSDOI(item.value) === doi)
+    ? doi
+    : null
+}
+function containsSourcePaperIdentifier(document, parses, identifier) {
+  const bound = parses.filter(
+    (p) => p.source_version_id === document.source_version_id && p.source_id === document.source_id,
+  )
+  if (!bound.length) return false
+  const jats = bound.filter((p) => p.parser?.id === "jats-xml")
+  if (identifier.startsWith("doi:") && jats.length)
+    return jats.every((p) => jatsPaperDOI(p) === paperKey(identifier))
+  return containsPaperIdentifier(paperIdentityText(document, bound), identifier)
+}
+const paperEvidenceParses = (document, parses, claims) =>
+  parses.filter((p) =>
+    claims.some((c) =>
+      c.evidence.some(
+        (e) =>
+          e.source_version_id === document.source_version_id &&
+          e.source_id === document.source_id &&
+          e.parse_id === p.parse_id,
+      ),
+    ),
+  )
 function assertURLPaperIdentifiers(paper, document) {
   const urls = paper.identifiers.filter((value) => value.startsWith("url:"))
   for (const identifier of urls) {
@@ -218,7 +267,7 @@ export function assertArticlePaperReview(review, claims, parses, documents, arti
         throw Error("Peer-reviewed arXiv paper requires publisher evidence")
     }
     assertURLPaperIdentifiers(paper, doc)
-    if (paper.identifiers.some((i) => !containsPaperIdentifier(paperIdentityText(doc, [parse]), i)))
+    if (paper.identifiers.some((i) => !containsSourcePaperIdentifier(doc, [parse], i)))
       throw Error("Paper identifier missing from the selected source")
     if (paper.publication_source_version_id) {
       const publisher = documents.find(
@@ -234,7 +283,14 @@ export function assertArticlePaperReview(review, claims, parses, documents, arti
         !["captured", "not_modified"].includes(publisher.fetch_status) ||
         /(^|\.)arxiv\.org$/.test(new URL(publisher.original_url).hostname) ||
         !dois.length ||
-        dois.some((i) => !containsPaperIdentifier(paperIdentityText(publisher, parses), i))
+        dois.some(
+          (i) =>
+            !containsSourcePaperIdentifier(
+              publisher,
+              paperEvidenceParses(publisher, parses, publisherClaims),
+              i,
+            ),
+        )
       )
         throw Error("Paper publication status requires used publisher evidence of the same DOI")
       for (const claim of publisherClaims) assertVerifiedClaim(claim, parses)
@@ -465,18 +521,14 @@ function validateInput(input, claims, parses, documents) {
     )
       throw Error("Paper analysis requires reviewed full-text evidence")
     assertURLPaperIdentifiers(paper, doc)
-    const content = [
-      doc.original_url,
-      ...parses
-        .filter((p) => p.source_version_id === source.source_version_id)
-        .flatMap((p) => p.blocks.map((b) => b.text)),
-    ]
-      .join("\n")
-      .toLowerCase()
+    const paperParses = paperEvidenceParses(
+      doc,
+      parses,
+      paper.claim_ids.map((id) => byId.get(id)),
+    )
     if (
       paper.identifiers.some(
-        (identifier) =>
-          !content.includes(identifier.replace(/^(doi:|arxiv:|url:)/, "").toLowerCase()),
+        (identifier) => !containsSourcePaperIdentifier(doc, paperParses, identifier),
       )
     )
       throw Error("Paper identifier missing from its source")

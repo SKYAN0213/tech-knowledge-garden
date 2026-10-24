@@ -1,3 +1,26 @@
+## 538. 2026-10-24 회차 발행 대상 고정과 초과 입력 실패 처리
+
+이번 요청의 이벤트·발행 대상 범위는 frozen edition `.local/research/local-ai/editions/daily-20261024-independent-edition-v2/materials.json` 중 추출 입력 `daily-20261024-remaining115-events-v1`에 명시된 원문 115개다. 이 범위는 edition이나 일일 수집 전체의 소재 수를 뜻하지 않는다. 원래 edition, 추출 입력·진행 파일, 실패 run은 수정하지 않는다. 검증한 대상 묶음은 [target-set.json](../.local/research/local-ai/event-target-sets/daily-20261024-remaining114-publication-v1/target-set.json), 실행 검증은 [verification.json](../.local/research/local-ai/event-target-sets/daily-20261024-remaining114-publication-v1/verification.json), 검토용 색인은 [review-index.md](../.local/research/local-ai/event-target-sets/daily-20261024-remaining114-publication-v1/review-index.md)다. 이 묶음에는 발행 전체 경로로 보낼 원문 114개와 검토 전 사건 후보 984개가 있다. 원문 2개는 후보가 0개여도 대상 목록에서 누락하지 않는다. 이는 기사 984건이나 승인·발행 완료를 뜻하지 않는다.
+
+재현 가능한 묶음 생성과 예외 검토 명령은 다음과 같다. 첫 명령은 frozen edition, 추출 입력·진행 체크섬, 114개 결과 바이트, 원문 parse, 모든 사건 인용을 다시 대조한 뒤 불변 대상 묶음을 만든다. 두 번째 명령은 실패 원문 블록 지문을 읽어 검토 색인과 예외 처리안을 만든다. 같은 입력으로 재실행하면 동일 바이트를 확인하고, 바뀐 입력이나 결과가 있으면 기존 파일을 덮지 않고 실패한다.
+
+```sh
+node .local/research/local-ai/event-target-sets/daily-20261024-remaining114-publication-v1/build-target-set.mjs
+node .local/research/local-ai/event-target-sets/daily-20261024-remaining114-publication-v1/prepare-review-packet.mjs
+```
+
+표준 발행 흐름은 `정착된 native collection report → edition.freeze → classification.extract(페이지별 재개) → 검증된 대상 묶음 → classification.review(사건 관계·중복·기존 기사 비교) → edition.advance(선별·사실 추출/검토·작성·편집 승인·지식 연결) → publication.prepare/status → 명시 delivery 요청 → Drive 원본 SHA 확인 → publish workflow → 공개 페이지/RSS/drive-sync/WebsiteData readback`이다. `edition.advance`가 승인된 계획 이후의 반복 실행과 체크포인트를 자동화한다. 관계 판정, 사실 검토, 편집 승인, 명시 발행은 원문과 결과를 확인하는 관문으로 유지한다. run 상태·이벤트 후보 수·검토용 색인만으로 기사 승인이나 공개 발행을 선언하지 않는다.
+
+현재 실패 1건은 KISA의 “MS 10월 보안 위협에 따른 정기 보안 업데이트 권고”다. 기존 run은 모델 요청 전 `MODEL_INPUT_BUDGET_EXCEEDED`로 멈췄고, 본문·parse와 109,526자 `block-0005`의 SHA, CVE 1,417개를 확인했다. 이벤트 계획기는 실제 역할 프롬프트·JSON Schema·출력 예산을 포함해 요청 크기를 계산한 뒤 긴 일반 블록을 공백·문장 경계의 연속 조각으로 나눈다. 각 조각은 원 `block_id`, UTF-16 문자 오프셋, 조각 SHA와 순번을 보존한다. 조각 전체를 순서대로 잇는 회귀 검증으로 원문을 대조한다. 단일 조각조차 예산에 들어가지 않으면 모델 요청 전에 실패를 남기며, 원문을 자르거나 성공으로 표시하지 않는다.
+
+이벤트 제안 범위에서 CVE 참고표를 제외하는 조건도 구조로 한정한다. 긴 `table` 블록, 바로 앞의 참고/부록 제목, 제품·CVE ID·제목 열, 고유하고 정규식에 맞는 모든 ID, 파싱 표와 본문 텍스트의 완전 일치, 원문 위치 해시가 모두 있어야 `structured_cve_reference_appendix`로 분류한다. 제외 계획에는 제목 블록·열·행 수·표 해시·본문 해시·ID 수와 ID 목록 해시를 남긴다. 길이, CVE 개수 또는 다른 요약 문단의 존재만으로는 본문을 제외하지 않는다. 일반 CVE 포함 문단은 전부 무손실 분할 대상이며, 전체 사실 추출 단계도 기존 원문과 parse를 그대로 사용한다.
+
+KISA 계획은 `minimal-event-candidate-scope/v2`에서 요약·제품 영향 등 5개 블록, 1개 요청, 3,099자다. 구조 검증된 참고표는 `block-0005`, 109,526자·1,417개 ID, SHA `eca2e28b884be3e8e980fad6ca47c3e0305e36ce4109cf4214518545ab885fff`로 계획에 고정됐다. 원 실패 run과 기존 edition은 보존하고, KISA만 담은 새 run `daily-20261024-kisa-overflow-auto-v1`에서 Native 요청·결과를 완료했다. 결과는 사건 제안 1건이며 `relationship_review` / `unreviewed` 상태다. `writer_allowed:false`, `candidate_published:false`이므로 사실·편집 승인이나 발행으로 승격하지 않았다. 이후 처리는 기존 완료 SHA 체크포인트를 재사용하고 실제 실패·변경 항목만 대상으로 한다. 114개 전체 검토, 전체 수집 재실행, 전체 테스트 재실행은 하지 않는다.
+
+[D0 수집 기록](../.local/research/parallel-semantic-20261023-v1/operations/daily-20261024-v1/D0-completion.json)은 전체 정기 회차 완료가 아니다: 처리 ordinal 108개, 새 창 99개 성공·6개 미완료, 후속 창 3개 미실행, 이전 실패 경로의 새 계획 창 24개 미실행이다. 따라서 이 115개 대상 집합을 일일 수집 전체로 확장해 해석하지 않는다. 공개 발행은 별도 관계·사실·편집 승인, Drive 원본 SHA 대조, 성공 배포와 공개 페이지/RSS/drive-sync/WebsiteData readback이 각각 있어야 완료로 기록한다.
+
+사용자 후속 지시는 보존할 실패 1건과 이어서 처리할 잔여 55건을 구분한다. 불변 `remaining114-publication-v1` 대상 묶음은 전체 114건을 가리키므로 잔여 55건과 같은 범위로 간주하지 않는다. 재개 전 현재 Native 체크포인트에서 미완료 대상만 자동 산출하고, 정확한 55개 ID·기존 job/run·입력 SHA를 별도 불변 frontier로 고정한다. 완료 결과는 재사용하고 보존 실패 1건은 자동 포함·재시도하지 않는다. 이 frontier가 기존 Native 체크포인트로 확정되지 않으면 전수 검토나 전체 재실행 대신 범위 확인에서 멈춘다.
+
 ## 537. 개발 Sol·기사 처리 GPT-6 Luna와 누락일 (2026-10-16)
 
 기본 정책의 search_plan/fact_extract/article_write/concept_write/evidence_compare는 모두 `gpt-6-luna`다. 탐색 계획은 medium, 나머지는 high다. 구현은 Sol에서 계속하며 앱의 전역 모델을 바꾸지 않는다. 기존04시 heartbeat의 시각·대상·상태를 보존하고 기사 처리만 실제 Luna에 위임한다.
@@ -6023,6 +6046,8 @@ node --test tests/research-contracts.test.mjs tests/editorial.test.mjs tests/art
 ### 동작과 경계
 
 시스템 문서의 claim JSON 예시를 읽어 `extractionSchema`에 직접 검증한다. 저장 envelope와 모델 요청 payload를 구별하며, 추출 모델 스키마에 없는 `subject_id`·`date_precision`은 보내지 않는다. 기사 metadata의 unknown key는 top-level과 6W facts, explanations, papers, relations에서 거부한다. `editorialMeta`는 공개 allowlist만 내보내므로 `next_check` 및 추가 운영 노트가 공개 News frontmatter/search에 추가되지 않는다. `articleReview`는 알려진 비공개 `reason`·`private_notes`를 공개 projection에서 제외하고 다른 미등록 필드를 거부한다.
+
+부분 소급의 수정 기사도 `editionProjection`에서 같은 기존 Edition의 event ID로 결속한 `article_records.next_check`를 정확히 보존한다. 제목·배열 위치로 다른 기사의 값을 빌리지 않으며, 대상 Edition 경로가 다르거나 수정 record에 다른 값이 주입되면 거부한다. 같은 승인을 여러 Edition에 적용할 때 각 등장 원고의 값·부재를 따로 유지하고 승인 객체는 수정하지 않는다. 이 보존은 `next_check`에만 한정하며 이전 공개 분석 등 다른 metadata를 병합하지 않는다. 새 draft key나 본문 문단으로 후속 지시를 전달하지 않는다. Edition의 비공개 작성 metadata만 보존하고 공개 News/frontmatter·본문은 기존 `editorialMeta` allowlist를 계속 사용한다.
 
 GET은 기본 세 번이며 429/5xx에만 재시도한다. Retry-After 또는 exponential delay는 60초를 넘지 않는다. POST 검색 endpoint는 한 번 요청한다. 403/404/410, 차단, 파싱 실패를 빈 기사로 치환하지 않고 새 관측·대체 출처·새 parse로 분기한다. 이전 전체 목록은 새 기사 검토에서 재조회한다.
 

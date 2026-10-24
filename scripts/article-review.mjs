@@ -22,6 +22,8 @@ export function articleReview(edition, title, fallbackId) {
     "event_id",
     "review_status",
     "concept_ids",
+    "concept_links",
+    "semantic_review_status",
     "published_at",
     "reviewed_at",
     "date_kind",
@@ -52,6 +54,43 @@ export function articleReview(edition, title, fallbackId) {
     throw Error("Invalid concept IDs")
   if (r.review_status !== "verified" && r.concept_ids.length)
     throw Error("Only verified articles may add concept evidence")
+  if (r.concept_links !== undefined) {
+    const roles = ["topic", "application", "comparison_evaluation", "context_background"]
+    if (
+      !Array.isArray(r.concept_links) ||
+      r.concept_links.some(
+        (link) =>
+          !link ||
+          Object.keys(link).some((key) => !["concept_id", "role"].includes(key)) ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(link.concept_id || "") ||
+          !roles.includes(link.role),
+      ) ||
+      new Set(r.concept_links.map((link) => link.concept_id)).size !== r.concept_links.length ||
+      !["reviewed_links", "reviewed_none"].includes(r.semantic_review_status) ||
+      (r.semantic_review_status === "reviewed_links" &&
+        JSON.stringify(r.concept_links.map((link) => link.concept_id)) !==
+          JSON.stringify(r.concept_ids)) ||
+      (r.semantic_review_status === "reviewed_none" &&
+        (r.concept_ids.length || r.concept_links.length))
+    )
+      throw Error("Role-based article links must match the semantic review outcome")
+  }
+  if (
+    r.semantic_review_status !== undefined &&
+    (r.review_status !== "verified" ||
+      !["reviewed_links", "reviewed_none"].includes(r.semantic_review_status))
+  )
+    throw Error("Invalid semantic article review status")
+  if (
+    r.semantic_review_status === "reviewed_links" &&
+    (!r.concept_links?.length || !r.concept_ids.length)
+  )
+    throw Error("Reviewed article links require role-based relations")
+  if (
+    r.semantic_review_status === "reviewed_none" &&
+    (r.concept_ids.length || r.concept_links?.length)
+  )
+    throw Error("Reviewed-empty article cannot contain concept links")
   if (
     r.date_kind !== undefined ||
     r.source_published_at !== undefined ||
@@ -85,6 +124,10 @@ export function articleReview(edition, title, fallbackId) {
     event_id: r.event_id,
     review_status: r.review_status,
     concept_ids: r.concept_ids,
+    ...(r.concept_links !== undefined ? { concept_links: r.concept_links } : {}),
+    ...(r.semantic_review_status !== undefined
+      ? { semantic_review_status: r.semantic_review_status }
+      : {}),
     ...(r.published_at ? { published_at: r.published_at } : {}),
     ...(r.reviewed_at ? { reviewed_at: r.reviewed_at } : {}),
     ...(r.date_kind ? { date_kind: r.date_kind, source_published_at: r.source_published_at } : {}),

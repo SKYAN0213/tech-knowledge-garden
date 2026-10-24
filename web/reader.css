@@ -589,6 +589,15 @@ dialog input {
   color: #a0c5b4;
   font-size: 11px;
 }
+.story-relation-role {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border: 1px solid #354b4e;
+  border-radius: 999px;
+  color: #c2d7d1;
+  font-size: 10px;
+}
 .connection-legend {
   display: flex;
   gap: 16px;

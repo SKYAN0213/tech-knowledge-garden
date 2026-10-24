@@ -1,0 +1,22 @@
+{
+  "schema": "semantic-candidate-retrieval-policy/v1",
+  "enabled": true,
+  "purpose": "candidate_retrieval_only",
+  "provider": "local_ollama_embedding",
+  "model": "qwen3-embedding:8b",
+  "top_k": 12,
+  "rrf_k": 60,
+  "minimum_top_cosine": 0.15,
+  "minimum_top_lexical_score": 0.75,
+  "minimum_median_concept_payload_reduction": 0.6,
+  "pilot": {
+    "minimum_articles": 24,
+    "minimum_recall_at_12": 0.95,
+    "minimum_strata": 4,
+    "minimum_articles_per_stratum": 2,
+    "minimum_challenge_articles": 8,
+    "required_challenge_kinds": ["ambiguous", "homonym", "reviewed_none"]
+  },
+  "uncertain_retrieval": "full_registry_fallback",
+  "keyword_candidates": "private_unreviewed_metadata"
+}

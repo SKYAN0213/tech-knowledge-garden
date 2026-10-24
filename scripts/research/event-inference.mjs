@@ -111,8 +111,144 @@ function proposalSchema(keys) {
   }
 }
 
-// Minimal event proposals never acquire fact/editorial authority. Read all original
-// blocks in bounded batches; cache independently of edition and writer names.
+function cveReferenceAppendix(block, heading) {
+  if (
+    block.kind !== "table" ||
+    block.text.length <= 20000 ||
+    !Array.isArray(block.rows) ||
+    block.rows.length < 65 ||
+    !heading
+  )
+    return null
+
+  const isReferenceHeading =
+    /\b(?:appendix|reference|register|vulnerability\s+(?:list|summary|register|table)|cve\s+(?:list|register|table))\b|(?:참고\s*(?:자료|부록|목록)|(?:CVE|취약점).{0,12}(?:목록|리스트|등록부|요약\s*정보|부록))/iu
+  if (!isReferenceHeading.test(heading.text)) return null
+
+  const header = block.rows[0]
+  if (!Array.isArray(header) || header.some((cell) => typeof cell !== "string")) return null
+  const cveColumn = header.findIndex((cell) =>
+      /^(?:cve\s*(?:id|number|no\.?|identifier|번호|식별자))$/iu.test(
+        cell.trim().normalize("NFKC").replace(/\s+/gu, " "),
+      ),
+    ),
+    productColumn = header.findIndex((cell) =>
+      /^(?:product(?:\s+category)?|component|제품(?:\s*(?:카테고리|군))?)$/iu.test(
+        cell.trim().normalize("NFKC").replace(/\s+/gu, " "),
+      ),
+    ),
+    titleColumn = header.findIndex((cell) =>
+      /^(?:title|description|details?|cve\s*(?:title|제목|설명)|취약점(?:\s*(?:제목|내용))?|설명)$/iu.test(
+        cell.trim().normalize("NFKC").replace(/\s+/gu, " "),
+      ),
+    )
+  if (
+    cveColumn < 0 ||
+    productColumn < 0 ||
+    titleColumn < 0 ||
+    new Set([cveColumn, productColumn, titleColumn]).size !== 3
+  )
+    return null
+
+  const rows = block.rows.slice(1)
+  if (rows.some((row) => !Array.isArray(row) || row.length !== header.length)) return null
+  if (rows.some((row) => row.some((cell) => typeof cell !== "string"))) return null
+  const identifiers = rows.map((row) => row[cveColumn])
+  if (
+    identifiers.some((identifier) => !/^CVE-\d{4}-\d{4,}$/u.test(identifier)) ||
+    new Set(identifiers).size !== identifiers.length
+  )
+    return null
+
+  const textIdentifiers = [...block.text.matchAll(/\bCVE-\d{4}-\d{4,}\b/gu)].map(
+    (match) => match[0],
+  )
+  if (
+    textIdentifiers.length !== identifiers.length ||
+    textIdentifiers.some((identifier, index) => identifier !== identifiers[index]) ||
+    block.rows.map((row) => row.join(" ")).join(" ") !== block.text ||
+    block.locator?.text_hash !== sha256(block.text)
+  )
+    return null
+
+  return {
+    identifiers,
+    structure_evidence: {
+      schema: "structured-cve-reference-table/v1",
+      heading_block_id: heading.block_id,
+      heading_text_sha256: sha256(heading.text),
+      table_kind: block.kind,
+      headers: header,
+      row_count: block.rows.length,
+      data_row_count: rows.length,
+      columns: { product: productColumn, cve_id: cveColumn, title: titleColumn },
+      rows_sha256: sha256(JSON.stringify(block.rows)),
+    },
+  }
+}
+
+function eventProposalBlockScope(parse) {
+  const contentBlocks = parse.blocks.filter(
+    (b) => !/^(?:About\s+(?:[A-Z]|the\s+)|Über\s+|회사\s*소개|기업\s*소개)/u.test(b.text),
+  )
+  const cveRegisters = contentBlocks.flatMap((block) => {
+    const index = parse.blocks.indexOf(block),
+      evidence = cveReferenceAppendix(block, parse.blocks[index - 1])
+    return evidence ? [{ block, ...evidence }] : []
+  })
+  const excludedIds = new Set(cveRegisters.map(({ block }) => block.block_id)),
+    included = contentBlocks.filter((block) => !excludedIds.has(block.block_id))
+  if (!included.length) throw Error("No event-reading blocks outside corporate boilerplate")
+  return {
+    included,
+    excluded: cveRegisters.map(({ block, identifiers, structure_evidence }) => ({
+      block_id: block.block_id,
+      reason: "structured_cve_reference_appendix",
+      char_count: block.text.length,
+      text_sha256: sha256(block.text),
+      identifier_count: identifiers.length,
+      identifiers_sha256: sha256(JSON.stringify(identifiers)),
+      structure_evidence,
+    })),
+  }
+}
+
+export function planEventProposalBatches(parse, settings) {
+  const blockScope = eventProposalBlockScope(parse),
+    plan = planExtractionBatches([parse], {
+      provider: settings.provider,
+      num_ctx: settings.num_ctx,
+      num_predict: settings.num_predict,
+      input_char_budget: Math.min(20000, settings.num_ctx * 2),
+      facts_per_batch: 6,
+      max_blocks_per_batch: 8,
+      block_scope: [
+        { parse_id: parse.parse_id, block_ids: blockScope.included.map((b) => b.block_id) },
+      ],
+      request_factory: (context) => ({
+        model: settings.model,
+        think: settings.think,
+        num_ctx: settings.num_ctx,
+        num_predict: settings.num_predict,
+        schema: proposalSchema(context.flatMap((d) => d.blocks.map((b) => b.block_key))),
+        messages: [
+          {
+            role: "system",
+            content:
+              "Extract minimal event candidates from the ORIGINAL source blocks or exact segments identified in them. Return who, concrete action, object, announcement/event date, effective date, exact contract/product/paper identifier when explicit, quantities with exact conditions, and source block keys. Separate distinct actions in an IR report. Keep plans, execution and company claims distinct. Ignore navigation, corporate boilerplate and speculation. Do not write articles, explanations or market predictions. Null for absent dates/identifiers. These are UNREVIEWED proposals, never verified facts. Return [] when no event occurs in this batch.",
+          },
+          { role: "user", content: JSON.stringify(context) },
+        ],
+      }),
+    })
+  plan.scope.event_scope_version = "minimal-event-candidate-scope/v2"
+  plan.scope.documents[0].excluded_source_blocks = blockScope.excluded
+  return plan
+}
+
+// Minimal event proposals never acquire fact/editorial authority. Read every
+// original block in bounded, lossless segments; cache independently of edition
+// and writer names.
 export async function extractEditionEventProposals(ctx, p, options = {}) {
   const { baseProvider } = options
   const execution = executionOptions(options)
@@ -200,18 +336,29 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
         parse = readJSON(ctx.root, `parses/${source.material.parse_id}/parse.json`)
       if (!parse || !same(parse.blocks, source.blocks))
         throw Error("Proposal parse identity changed")
-      const binding = {
-        stage: "minimal_events/v1",
-        parse_id: parse.parse_id,
-        source_version_id: parse.source_version_id,
-        source_body_sha256: source.material.body_sha256,
-        parse_sha256: sha256(JSON.stringify(parse)),
-        settings,
-        dependencies: input.dependencies,
-      }
-      const cacheRun = "ev-prop-" + sha256(JSON.stringify(binding)).slice(0, 40)
-      const before = attemptCount(ctx, cacheRun, "search_plan")
+      let plan, proposalPlan, binding, cacheRun
+      let before = 0
       try {
+        plan = planEventProposalBatches(parse, settings)
+        proposalPlan = {
+          scope: plan.scope,
+          batches: plan.batches.map(({ request, ...batch }) => ({
+            ...batch,
+            request_sha256: sha256(JSON.stringify(request)),
+          })),
+        }
+        binding = {
+          stage: "minimal_events/v1",
+          parse_id: parse.parse_id,
+          source_version_id: parse.source_version_id,
+          source_body_sha256: source.material.body_sha256,
+          parse_sha256: sha256(JSON.stringify(parse)),
+          proposal_plan_sha256: sha256(JSON.stringify(proposalPlan)),
+          settings,
+          dependencies: input.dependencies,
+        }
+        cacheRun = "ev-prop-" + sha256(JSON.stringify(binding)).slice(0, 40)
+        before = attemptCount(ctx, cacheRun, "search_plan")
         await withLock(ctx.root, "event-cache-" + cacheRun, async () => {
           const cached = readJSON(ctx.root, `runs/${cacheRun}/event-proposals.json`)
           if (cached) {
@@ -239,44 +386,7 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
             baseProvider,
             execution,
           )
-          const contentBlocks = parse.blocks.filter(
-            (b) => !/^(?:About\s+(?:[A-Z]|the\s+)|Über\s+|회사\s*소개|기업\s*소개)/u.test(b.text),
-          )
-          if (!contentBlocks.length)
-            throw Error("No event-reading blocks outside corporate boilerplate")
-          const plan = planExtractionBatches([parse], {
-            provider: settings.provider,
-            num_ctx: settings.num_ctx,
-            num_predict: settings.num_predict,
-            input_char_budget: Math.min(20000, settings.num_ctx * 2),
-            facts_per_batch: 6,
-            max_blocks_per_batch: 8,
-            block_scope: [
-              { parse_id: parse.parse_id, block_ids: contentBlocks.map((b) => b.block_id) },
-            ],
-            request_factory: (context) => ({
-              model: settings.model,
-              think: settings.think,
-              num_ctx: settings.num_ctx,
-              num_predict: settings.num_predict,
-              schema: proposalSchema(context.flatMap((d) => d.blocks.map((b) => b.block_key))),
-              messages: [
-                {
-                  role: "system",
-                  content:
-                    "Extract minimal event candidates from the ORIGINAL source blocks. Return who, concrete action, object, announcement/event date, effective date, exact contract/product/paper identifier when explicit, quantities with exact conditions, and source block keys. Separate distinct actions in an IR report. Keep plans, execution and company claims distinct. Ignore navigation, corporate boilerplate and speculation. Do not write articles, explanations or market predictions. Null for absent dates/identifiers. These are UNREVIEWED proposals, never verified facts. Return [] when no event occurs in this batch.",
-                },
-                { role: "user", content: JSON.stringify(context) },
-              ],
-            }),
-          })
-          save(ctx.root, `runs/${cacheRun}/event-proposal-plan.json`, {
-            scope: plan.scope,
-            batches: plan.batches.map(({ request, ...batch }) => ({
-              ...batch,
-              request_sha256: sha256(JSON.stringify(request)),
-            })),
-          })
+          save(ctx.root, `runs/${cacheRun}/event-proposal-plan.json`, proposalPlan)
           const events = [],
             seen = new Set()
           for (const batch of plan.batches) {
@@ -290,8 +400,11 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
             for (const event of result.output.events) {
               const refs = event.block_keys.map((key) => {
                 const ref = plan.blocks.get(key),
-                  block = parse.blocks.find((b) => b.block_id === ref.block_id)
-                return { ...ref, quote: block.text }
+                  contextBlock = context
+                    .flatMap((document) => document.blocks)
+                    .find((block) => block.block_key === key)
+                if (!ref || !contextBlock) throw Error("Unknown event proposal source segment")
+                return { ...ref, quote: contextBlock.text }
               })
               const quantityProblems = []
               for (const quantity of event.quantities) {
@@ -351,24 +464,24 @@ export async function extractEditionEventProposals(ctx, p, options = {}) {
           (!error.model_budget && !["TimeoutError", "AbortError"].includes(error.name))
         )
           throw error
-        const statePath = `runs/${cacheRun}/state.json`,
-          state = readJSON(ctx.root, statePath)
-        const planPath = `runs/${cacheRun}/event-proposal-plan.json`,
-          batchPlan = readJSON(ctx.root, planPath)
+        const statePath = cacheRun ? `runs/${cacheRun}/state.json` : null,
+          state = statePath ? readJSON(ctx.root, statePath) : null,
+          planPath = cacheRun ? `runs/${cacheRun}/event-proposal-plan.json` : null,
+          batchPlan = planPath ? readJSON(ctx.root, planPath) : null
         failures.push({
           material_id: materialId,
           source_version_id: parse.source_version_id,
           parse_id: parse.parse_id,
           source_body_sha256: source.material.body_sha256,
-          parse_sha256: binding.parse_sha256,
-          run: cacheRun,
+          parse_sha256: binding?.parse_sha256 ?? sha256(JSON.stringify(parse)),
+          run: cacheRun ?? null,
           error: error.message,
           code: error.code ?? "MODEL_CALL_TIMEOUT",
-          model_calls: attemptCount(ctx, cacheRun, "search_plan") - before,
+          model_calls: cacheRun ? attemptCount(ctx, cacheRun, "search_plan") - before : 0,
           ...(error.model_budget ? { model_budget: error.model_budget } : {}),
           extraction_checkpoint: {
-            state_path: statePath,
-            ...(batchPlan
+            ...(statePath ? { state_path: statePath } : {}),
+            ...(batchPlan && planPath
               ? {
                   plan_path: planPath,
                   plan_sha256: sha256(fs.readFileSync(safePath(ctx.root, planPath))),

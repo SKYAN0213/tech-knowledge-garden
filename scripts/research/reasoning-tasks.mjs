@@ -50,6 +50,71 @@ function assertExecutorModel(request, { executor, model }) {
   if (executor === "codex" && requested && requested !== "codex" && model !== requested)
     throw Error("Reasoning executor model must match requested model: " + requested)
 }
+function assertArticleSemanticProposalBinding(request, output) {
+  const proposalSchemas = request.input?.schema?.properties?.schema?.enum || []
+  if (
+    request.role !== "evidence_compare" ||
+    !proposalSchemas.includes("article-semantic-proposal/v2")
+  )
+    return
+
+  const context = request.input?.context,
+    article = context?.article,
+    claims = context?.verified_public_claims,
+    concepts = context?.reviewed_concept_registry
+  if (
+    !/^[a-f0-9]{16}$/.test(article?.event_id || "") ||
+    !Array.isArray(claims) ||
+    !Array.isArray(concepts)
+  )
+    throw Error("Bound semantic article, claim and concept context required")
+  if (output.event_id !== article.event_id)
+    throw Error("Semantic result event ID does not match its bound article")
+
+  const claimIds = new Set(claims.map((claim) => claim?.claim_id)),
+    conceptIds = new Set(concepts.map((concept) => concept?.concept_id)),
+    relations = [...output.links, ...output.relation_candidates],
+    seenConcepts = new Set()
+  if (
+    claimIds.size !== claims.length ||
+    [...claimIds].some((id) => typeof id !== "string" || !id) ||
+    conceptIds.size !== concepts.length ||
+    [...conceptIds].some((id) => typeof id !== "string" || !id)
+  )
+    throw Error("Distinct bound semantic claim and concept IDs required")
+  if (
+    (output.outcome === "reviewed_none" && output.links.length > 0) ||
+    (output.outcome === "reviewed_links" && output.links.length === 0)
+  )
+    throw Error("Semantic review outcome does not match its confirmed links")
+
+  const assertClaimReferences = (claimReferences) => {
+    if (new Set(claimReferences).size !== claimReferences.length)
+      throw Error("Semantic result repeats an evidence claim")
+    for (const claimId of claimReferences) {
+      if (!claimIds.has(claimId))
+        throw Error("Semantic result cites a claim outside its bound public article")
+    }
+  }
+  for (const relation of relations) {
+    if (!conceptIds.has(relation.concept_id))
+      throw Error("Semantic result cites a concept outside its bound registry")
+    if (seenConcepts.has(relation.concept_id))
+      throw Error("Semantic result repeats a concept across links and candidates")
+    seenConcepts.add(relation.concept_id)
+    assertClaimReferences(relation.evidence_claim_ids)
+  }
+  for (const candidate of output.concept_candidates)
+    assertClaimReferences(candidate.evidence_claim_ids)
+  const keywordCandidates = new Set()
+  for (const candidate of output.keyword_candidates) {
+    const key = candidate.keyword.normalize("NFKC").toLocaleLowerCase("en").trim()
+    if (keywordCandidates.has(key))
+      throw Error("Semantic result repeats an article keyword candidate")
+    keywordCandidates.add(key)
+    assertClaimReferences(candidate.evidence_claim_ids)
+  }
+}
 export class ReasoningPending extends Error {
   constructor(request) {
     super("Reasoning result required: " + request.task_id)
@@ -86,7 +151,10 @@ export function reasoningTasks(root, { offset = 0, limit = 40, run_id } = {}) {
     .filter((r) => !run_id || r.run === run_id)
     .filter((r) => !completed(root, r))
     .map(({ task_id, request_sha256, run, role, binding }) => ({
-      task_id, request_sha256, run, role,
+      task_id,
+      request_sha256,
+      run,
+      role,
       requested_model: binding.settings?.model ?? null,
       requested_thinking: binding.settings?.think ?? null,
     }))
@@ -140,6 +208,7 @@ export async function submitReasoningResult(root, parameters) {
     const request = load(root, task_id, request_sha256),
       value = bounded(output)
     assertSchema(value, request.input.schema)
+    assertArticleSemanticProposalBinding(request, value)
     assertExecutorModel(request, { executor, model })
     const prior = completed(root, request)
     if (prior) {

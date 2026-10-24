@@ -232,6 +232,95 @@ export class Ollama {
       thinking: show.thinking,
     }
   }
+  // Embeddings are limited to retrieval and never use the generation endpoint.
+  // Keep this contract separate from structured()/chat role execution.
+  async embed({
+    model,
+    inputs,
+    metadata: pinnedMetadata,
+    expected_digest,
+    expected_dimensions,
+    timeout_ms = this.timeout,
+  } = {}) {
+    if (
+      typeof model !== "string" ||
+      !model.trim() ||
+      model !== model.trim() ||
+      /:cloud$/.test(model) ||
+      !Array.isArray(inputs) ||
+      inputs.length < 1 ||
+      inputs.length > 64 ||
+      inputs.some((input) => typeof input !== "string" || !input.trim() || input.length > 20000) ||
+      !/^[a-f0-9]{64}$/.test(expected_digest || "") ||
+      (expected_dimensions !== undefined &&
+        (!Number.isSafeInteger(expected_dimensions) || expected_dimensions < 2)) ||
+      !Number.isInteger(timeout_ms) ||
+      timeout_ms <= 0 ||
+      timeout_ms > 3600000
+    )
+      throw Error("Bounded local embedding-only request required")
+    const batch = [...inputs],
+      metadata = pinnedMetadata ?? (await this.metadata(model, { timeout_ms }))
+    if (
+      metadata?.model !== model ||
+      !Array.isArray(metadata.capabilities) ||
+      !metadata.capabilities.includes("embedding") ||
+      metadata.digest !== expected_digest ||
+      (metadata.endpoint !== undefined && validateLocalOllamaURL(metadata.endpoint) !== this.url)
+    )
+      throw Error("Pinned local embedding model capability/digest required")
+    // /api/embed returns a model name, not its digest. Check the installed tag
+    // on both sides of each batch so cached metadata cannot hide a retag.
+    const assertInstalledDigest = async () => {
+      const tags = await this.json("/api/tags", undefined, { timeout_ms }),
+        matches = Array.isArray(tags.models)
+          ? tags.models.filter((entry) => entry.name === model || entry.model === model)
+          : []
+      if (matches.length !== 1 || matches[0].digest !== expected_digest)
+        throw Error("Pinned local embedding model capability/digest changed")
+    }
+    await assertInstalledDigest()
+    const response = await this.json(
+      "/api/embed",
+      { model, input: batch, truncate: false, keep_alive: this.keepAlive },
+      { timeout_ms },
+    )
+    await assertInstalledDigest()
+    if (
+      response.model !== model ||
+      !Array.isArray(response.embeddings) ||
+      response.embeddings.length !== batch.length
+    )
+      throw Error("Embedding response identity/count mismatch")
+    const dimensions = response.embeddings[0]?.length
+    if (
+      !Number.isInteger(dimensions) ||
+      dimensions < 2 ||
+      (expected_dimensions !== undefined && dimensions !== expected_dimensions) ||
+      response.embeddings.some(
+        (vector) =>
+          !Array.isArray(vector) ||
+          vector.length !== dimensions ||
+          vector.some((value) => !Number.isFinite(value)) ||
+          !Number.isFinite(Math.hypot(...vector)) ||
+          Math.hypot(...vector) === 0,
+      )
+    )
+      throw Error("Finite, non-zero, dimension-consistent embeddings required")
+    return {
+      model,
+      digest: expected_digest,
+      runtime: metadata.runtime,
+      dimensions,
+      vectors: response.embeddings,
+      total_duration: Number.isSafeInteger(response.total_duration)
+        ? response.total_duration
+        : null,
+      prompt_eval_count: Number.isSafeInteger(response.prompt_eval_count)
+        ? response.prompt_eval_count
+        : null,
+    }
+  }
   async streamedChat(request, { timeout_ms, on_progress }) {
     if (!Number.isInteger(timeout_ms) || timeout_ms <= 0)
       throw Error("Local model call time budget exceeded")

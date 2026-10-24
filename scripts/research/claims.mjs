@@ -433,8 +433,8 @@ export function describeExtractionCoverage(claims, parses, extractionScope = "fu
   }
 }
 
-// Keep whole source blocks and their original identities. An oversized block
-// needs an explicit parser decision rather than silent text truncation.
+// Oversized source blocks are split into exact, source-bound excerpts below;
+// the parse itself always retains the complete original block.
 export function extractionBudget({
   provider,
   num_ctx = 16384,
@@ -668,7 +668,7 @@ export function planExtractionBatches(parses, options = {}) {
     throw Error("No readable source for claims")
   const metadataParse = articleMetadataContext(parses)
   const blocks = new Map()
-  const input = parses.map((p, n) => ({
+  const originalInput = parses.map((p, n) => ({
     document: n + 1,
     title: p.title,
     ...(metadataParse
@@ -698,7 +698,7 @@ export function planExtractionBatches(parses, options = {}) {
       ]
     }),
   }))
-  if (input.some((document) => !document.blocks.length))
+  if (originalInput.some((document) => !document.blocks.length))
     throw Error("Extraction scope selected no source blocks")
   const factRequestFor = (sections) => {
     const schema = structuredClone(extractionSchema)
@@ -771,7 +771,7 @@ export function planExtractionBatches(parses, options = {}) {
   )
   const oversizedBlock = () => {
     const error = Error(
-      "Source block exceeds actual prompt/schema/output budget; reparse explicitly without truncation",
+      "Source segment cannot fit the actual prompt/schema/output budget without truncation",
     )
     error.code = "MODEL_INPUT_BUDGET_EXCEEDED"
     error.model_budget = {
@@ -784,15 +784,123 @@ export function planExtractionBatches(parses, options = {}) {
     return error
   }
   const requests = []
-  const all = requestFor(input)
   const metadataInput = metadataParse
-    ? input.find((p) => p.source_role === "article_metadata")
+    ? originalInput.find((p) => p.source_role === "article_metadata")
     : null
   const withMetadata = (sections) => (metadataInput ? [metadataInput, ...sections] : sections)
   const blockLimit = max_blocks_per_batch ?? Infinity
   const bodyBlockLimit = blockLimit - (metadataInput?.blocks.length || 0)
   if (metadataInput && bodyBlockLimit < 1)
     throw Error("Article metadata and one body block must fit the extraction block budget")
+  const splitBlock = (document, block) => {
+    const source = blocks.get(block.block_key)
+    if (!source) throw Error("Extraction source block binding missing")
+    const text = block.text,
+      segmentDigits = Math.max(3, String(text.length).length),
+      fits = (start, end) =>
+        chars(
+          requestFor(
+            withMetadata([
+              {
+                ...document,
+                blocks: [
+                  {
+                    ...block,
+                    block_key: `${block.block_key}c${"9".repeat(segmentDigits)}`,
+                    text: text.slice(start, end),
+                    source_segment: {
+                      sequence: text.length,
+                      count: text.length,
+                      offset_unit: "utf16_code_unit",
+                      offset_start: text.length,
+                      offset_end: text.length,
+                      text_sha256: "0".repeat(64),
+                    },
+                  },
+                ],
+              },
+            ]),
+          ),
+        ) <= limit,
+      spans = []
+    let start = 0
+    while (start < text.length) {
+      let low = start + 1,
+        high = text.length,
+        best = start
+      while (low <= high) {
+        let middle = Math.floor((low + high) / 2)
+        if (
+          middle < text.length &&
+          middle > start &&
+          /[\uDC00-\uDFFF]/u.test(text[middle]) &&
+          /[\uD800-\uDBFF]/u.test(text[middle - 1])
+        )
+          middle--
+        if (middle <= start) {
+          low++
+          continue
+        }
+        if (fits(start, middle)) {
+          best = middle
+          low = middle + 1
+        } else high = middle - 1
+      }
+      if (best <= start) throw oversizedBlock()
+      // Prefer a natural boundary near the largest fitting end. Include the
+      // delimiter in the preceding excerpt so concatenating excerpts is lossless.
+      const minimumNaturalEnd = start + Math.floor((best - start) * 0.6)
+      let naturalEnd = 0
+      for (let index = start; index < best; index++) {
+        const character = text[index]
+        if (/\s/u.test(character)) naturalEnd = index + 1
+        if (
+          /[.!?。！？]/u.test(character) &&
+          (index + 1 === text.length || /\s/u.test(text[index + 1]))
+        )
+          naturalEnd = index + 1
+      }
+      const end = naturalEnd >= minimumNaturalEnd ? naturalEnd : best
+      spans.push({ start, end })
+      start = end
+    }
+    if (spans.length < 2) return [block]
+    return spans.map(({ start: offset_start, end: offset_end }, index) => {
+      const segmentText = text.slice(offset_start, offset_end),
+        block_key = `${block.block_key}c${String(index + 1).padStart(3, "0")}`,
+        source_segment = {
+          sequence: index + 1,
+          count: spans.length,
+          offset_unit: "utf16_code_unit",
+          offset_start,
+          offset_end,
+          text_sha256: sha256(segmentText),
+        }
+      blocks.set(block_key, { ...source, source_segment })
+      return { ...block, block_key, text: segmentText, source_segment }
+    })
+  }
+  const input = [
+    ...(metadataInput ? [metadataInput] : []),
+    ...originalInput
+      .filter((document) => document !== metadataInput)
+      .map((document) => ({
+        ...document,
+        blocks: document.blocks.flatMap((block) =>
+          chars(requestFor(withMetadata([{ ...document, blocks: [block] }]))) <= limit
+            ? [block]
+            : splitBlock(document, block),
+        ),
+      })),
+  ]
+  if (
+    metadataInput &&
+    metadataInput.blocks.some(
+      (block) => chars(requestFor([{ ...metadataInput, blocks: [block] }])) > limit,
+    )
+  )
+    throw oversizedBlock()
+  const all = requestFor(input)
   // Each source gets a separate bounded fact budget. A bundle fitting in one
   // context must not let its first document consume every extraction slot,
   // losing the dated comparison or independent institutional evidence.
@@ -819,8 +927,18 @@ export function planExtractionBatches(parses, options = {}) {
       if (section.length)
         requests.push(requestFor(withMetadata([{ ...document, blocks: section }])))
     }
-  if (requests.length > 64)
-    throw Error("Extraction exceeds 64 batches; narrow source run explicitly")
+  if (requests.length > 64) {
+    const error = Error("Extraction exceeds 64 batches; narrow source run explicitly")
+    error.code = "MODEL_BATCH_LIMIT_EXCEEDED"
+    error.model_budget = {
+      input_char_limit: limit,
+      planned_batches: requests.length,
+      max_batches: 64,
+      request_sent: false,
+      requires_explicit_resume: true,
+    }
+    throw error
+  }
   const batches = requests.map((request, index) => ({
     batch_id: `${String(index + 1).padStart(3, "0")}-${sha256(JSON.stringify(request)).slice(0, 16)}`,
     input_chars: chars(request),

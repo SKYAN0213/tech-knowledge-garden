@@ -1,0 +1,213 @@
+{
+  "schema": "semantic-bundle/v1",
+  "contract_version": "0.1.0",
+  "source": {
+    "id": "fixture-garden",
+    "project": "garden"
+  },
+  "normalization": "nfc-lf-space/v1",
+  "coverage": {
+    "status": "complete",
+    "inventory": "complete",
+    "omissions": []
+  },
+  "records": [
+    {
+      "id": "article:0000000000000001",
+      "native_id": "article:0000000000000001",
+      "kind": "article",
+      "title": "article:0000000000000001",
+      "text": "# 가속기\r\n정확한 오차는 ±0.5 V, 감소 -2.0%, 증가 +2.0%다.\r\né와 é는 검색만 정규화한다.\r\n",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de",
+        "revision": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "reviewed_links",
+        "evidence": "verified",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "published",
+        "native_status": "reviewed_links"
+      },
+      "evidence_ids": [
+        "exact-quote"
+      ]
+    },
+    {
+      "id": "concept:cache-memory",
+      "native_id": "concept:cache-memory",
+      "kind": "concept",
+      "title": "캐시",
+      "text": "캐시는 지연을 줄이는 저장 구조다.",
+      "scope": "공개 합성 시험",
+      "aliases": [
+        "cache",
+        "캐시"
+      ],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "2aee6873254b3312037bbc39200840a579d55b45df9d8313d7ea3153b16cff11",
+        "revision": "2aee6873254b3312037bbc39200840a579d55b45df9d8313d7ea3153b16cff11",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "2aee6873254b3312037bbc39200840a579d55b45df9d8313d7ea3153b16cff11"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "published",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "concept:cache-finance",
+      "native_id": "concept:cache-finance",
+      "kind": "concept",
+      "title": "캐시",
+      "text": "같은 표제인 현금 계정이다.",
+      "scope": "재무",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "dfa23ab3d2e9c05b4cf9b882c8fea3d13ad2527ccffc26dba60b3f8b8abbc069",
+        "revision": "dfa23ab3d2e9c05b4cf9b882c8fea3d13ad2527ccffc26dba60b3f8b8abbc069",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "dfa23ab3d2e9c05b4cf9b882c8fea3d13ad2527ccffc26dba60b3f8b8abbc069"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "unreviewed",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "published",
+        "native_status": "unreviewed"
+      },
+      "evidence_ids": []
+    },
+    {
+      "id": "article:none",
+      "native_id": "article:none",
+      "kind": "article",
+      "title": "article:none",
+      "text": "명시 검토 후 연결 없음",
+      "scope": "공개 합성 시험",
+      "aliases": [],
+      "provenance": {
+        "path": "News/synthetic.md",
+        "url": "https://example.org/fixture",
+        "urls": [
+          "https://example.org/fixture",
+          "https://example.org/second"
+        ],
+        "bytes_sha256": "d7889ef8f8aef566ad49dd570e5a30e2f551edbe08529a56f8ff6558e778acc4",
+        "revision": "d7889ef8f8aef566ad49dd570e5a30e2f551edbe08529a56f8ff6558e778acc4",
+        "fingerprints": [
+          {
+            "profile": "fixture-native/v1",
+            "value": "d7889ef8f8aef566ad49dd570e5a30e2f551edbe08529a56f8ff6558e778acc4"
+          }
+        ]
+      },
+      "review": {
+        "semantic": "reviewed_none",
+        "evidence": "declared",
+        "currentness": "current",
+        "application": "not_applied",
+        "publication": "published",
+        "native_status": "reviewed_none"
+      },
+      "evidence_ids": []
+    }
+  ],
+  "relations": [
+    {
+      "id": "article-topic",
+      "native_id": "article-topic",
+      "source_id": "article:0000000000000001",
+      "target_id": "concept:cache-memory",
+      "predicate": "garden:topic",
+      "directed": true,
+      "status": "declared",
+      "basis": "explicit",
+      "native_type": "topic",
+      "native_directed": true,
+      "native_basis": "source",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": [
+        "exact-quote"
+      ]
+    },
+    {
+      "id": "native-associated",
+      "native_id": "native-associated",
+      "source_id": "concept:cache-memory",
+      "target_id": "concept:cache-finance",
+      "predicate": "garden:associated",
+      "directed": false,
+      "status": "declared",
+      "basis": "inferred",
+      "native_type": "compared_with",
+      "native_directed": true,
+      "native_basis": "inference",
+      "native_evidence_ids": [
+        "native-claim-±0.5"
+      ],
+      "reason": "합성 원문에 명시된 관계를 그대로 보존한다.",
+      "evidence_ids": []
+    }
+  ],
+  "evidence": [
+    {
+      "id": "exact-quote",
+      "native_id": "native-block-1",
+      "record_id": "article:0000000000000001",
+      "source_native_id": "article:0000000000000001",
+      "source_revision": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de",
+      "source_bytes_sha256": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de",
+      "quote": "정확한 오차는 ±0.5 V, 감소 -2.0%, 증가 +2.0%다.",
+      "locator": {
+        "kind": "line",
+        "value": "2"
+      },
+      "verification": "verified"
+    }
+  ]
+}

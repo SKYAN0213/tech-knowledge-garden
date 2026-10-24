@@ -14,6 +14,7 @@ export const publicationContentPaths = [
   "vault/briefing.xml",
   "digest",
   "data/catalog.json",
+  "data/article-semantic-review-index.json",
   "data/drive-source-state.json",
 ]
 

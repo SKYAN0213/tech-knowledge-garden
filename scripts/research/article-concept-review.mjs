@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { parseNote, sections } from "../garden.mjs"
-import { sha256 } from "./contracts.mjs"
+import { assertSchema, sha256 } from "./contracts.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import {
@@ -10,19 +10,219 @@ import {
   assertConceptConflicts,
   assertPreservedConceptIdentities,
 } from "./knowledge-links.mjs"
-import {
-  loadReferencedNoteApproval,
-  loadHistoricalNoteApproval,
-} from "./note-review.mjs"
+import { loadReferencedNoteApproval, loadHistoricalNoteApproval } from "./note-review.mjs"
 import { safePath, readJSON } from "./run-state.mjs"
 import { learningKinds } from "../../web/graph-model.mjs"
 
 const checks = ["definition_read", "article_source_read", "relationship_checked", "aliases_checked"]
+const relationRoles = ["topic", "application", "comparison_evaluation", "context_background"]
 const exactKeys = (value, allowed) =>
   value &&
   typeof value === "object" &&
   !Array.isArray(value) &&
   Object.keys(value).every((key) => allowed.includes(key))
+
+export const SEMANTIC_RETRIEVAL_REVIEW_SCHEMA = "semantic-retrieval-review/v1"
+
+const hashSchema = { type: "string", pattern: "^[a-f0-9]{64}$" }
+const sourceRefKeys = [
+  "source_url",
+  "source_version_id",
+  "parse_id",
+  "block_id",
+  "block_sha256",
+  "exact_verified_quote",
+]
+const sourceRefSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: sourceRefKeys,
+  properties: Object.assign(
+    Object.create(null),
+    Object.fromEntries(
+      sourceRefKeys.map((key) => [
+        key,
+        key === "block_sha256" ? hashSchema : { type: "string", minLength: 1 },
+      ]),
+    ),
+  ),
+}
+const artifactRefSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["path", "sha256"],
+  properties: Object.assign(Object.create(null), {
+    path: { type: "string", minLength: 1 },
+    sha256: hashSchema,
+  }),
+}
+
+export const semanticRetrievalReviewSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schema",
+    "event_id",
+    "article_public_sha256",
+    "approved_run",
+    "approval_files_sha256",
+    "concept_registry_sha256",
+    "case_kind",
+    "challenge_kind",
+    "semantic_review",
+    "outcome",
+    "reviewer",
+    "reviewed_at",
+    "reason",
+    "article_source_read",
+    "concept_registry_read",
+    "aliases_checked",
+    "public_claim_ids",
+    "links",
+    "source_comparisons",
+  ],
+  properties: Object.assign(Object.create(null), {
+    schema: { type: "string", enum: [SEMANTIC_RETRIEVAL_REVIEW_SCHEMA] },
+    event_id: { type: "string", pattern: "^[a-f0-9]{16}$" },
+    article_public_sha256: hashSchema,
+    approved_run: { type: "string", pattern: "^[A-Za-z0-9_-]{1,160}$" },
+    approval_files_sha256: hashSchema,
+    concept_registry_sha256: hashSchema,
+    case_kind: { type: "string", enum: ["pilot", "challenge"] },
+    challenge_kind: { enum: [null, "ambiguous", "homonym", "reviewed_none"] },
+    semantic_review: {
+      type: "object",
+      additionalProperties: false,
+      required: ["workflow_id", "receipt"],
+      properties: Object.assign(Object.create(null), {
+        workflow_id: { type: "string", pattern: "^[A-Za-z0-9_-]{1,100}$" },
+        receipt: artifactRefSchema,
+      }),
+    },
+    outcome: { type: "string", enum: ["reviewed_links", "reviewed_none"] },
+    reviewer: { type: "string", minLength: 1, maxLength: 300 },
+    reviewed_at: { type: "string", minLength: 1 },
+    reason: { type: "string", minLength: 10, maxLength: 2000 },
+    article_source_read: { type: "boolean", enum: [true] },
+    concept_registry_read: { type: "boolean", enum: [true] },
+    aliases_checked: { type: "boolean", enum: [true] },
+    public_claim_ids: {
+      type: "array",
+      minItems: 1,
+      items: { type: "string", minLength: 1 },
+    },
+    links: {
+      type: "array",
+      maxItems: 32,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["concept_id", "role", "reason", "evidence_claim_ids"],
+        properties: Object.assign(Object.create(null), {
+          concept_id: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          role: { type: "string", enum: relationRoles },
+          reason: { type: "string", minLength: 10, maxLength: 1000 },
+          evidence_claim_ids: {
+            type: "array",
+            minItems: 1,
+            items: { type: "string", minLength: 1 },
+          },
+        }),
+      },
+    },
+    source_comparisons: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["claim_id", "source_refs", "comparison"],
+        properties: Object.assign(Object.create(null), {
+          claim_id: { type: "string", minLength: 1 },
+          source_refs: { type: "array", minItems: 1, items: sourceRefSchema },
+          comparison: { type: "string", minLength: 10, maxLength: 4000 },
+        }),
+      },
+    },
+  }),
+}
+
+// This validates a caller-authored source comparison. It never creates reviewer
+// decisions or changes the native article/concept approvals or the Luna result.
+export function assertSemanticRetrievalSourceReview(
+  review,
+  { article, approvalFilesSha256, concepts, claims, receipt },
+) {
+  assertSchema(review, semanticRetrievalReviewSchema, "$semantic_retrieval_review")
+  const publicIds = claims.map((claim) => claim.claim_id),
+    sameIds = (left, right) =>
+      new Set(left).size === left.length &&
+      JSON.stringify([...left].sort()) === JSON.stringify([...right].sort())
+  if (
+    review.event_id !== article.event_id ||
+    review.article_public_sha256 !== article.public_sha256 ||
+    review.approved_run !== receipt.approved_run ||
+    review.approval_files_sha256 !== approvalFilesSha256 ||
+    review.concept_registry_sha256 !== concepts.sha256 ||
+    !review.reviewer.trim() ||
+    review.reason.trim().length < 10 ||
+    !sameIds(review.public_claim_ids, publicIds)
+  )
+    throw Error(
+      "Pilot source review must match the exact article, approval, registry and public claims",
+    )
+  if (
+    (review.case_kind === "pilot" && review.challenge_kind !== null) ||
+    (review.case_kind === "challenge" && review.challenge_kind === null) ||
+    (review.outcome === "reviewed_links" && !review.links.length) ||
+    (review.outcome === "reviewed_none" &&
+      (review.links.length ||
+        review.case_kind !== "challenge" ||
+        review.challenge_kind !== "reviewed_none")) ||
+    (review.challenge_kind === "reviewed_none" && review.outcome !== "reviewed_none")
+  )
+    throw Error(
+      "Pilot source review requires linked pilot labels or an explicit reviewed-none challenge",
+    )
+  assertReviewDate(review.reviewed_at, { notBefore: [receipt.reviewed_at, article.published_at] })
+  const publicSet = new Set(publicIds),
+    conceptIds = new Set(concepts.concepts.map((concept) => concept.concept_id)),
+    linkIds = review.links.map((link) => link.concept_id)
+  if (new Set(linkIds).size !== linkIds.length)
+    throw Error("Distinct pilot source review concept links required")
+  for (const link of review.links)
+    if (
+      !conceptIds.has(link.concept_id) ||
+      link.reason.trim().length < 10 ||
+      new Set(link.evidence_claim_ids).size !== link.evidence_claim_ids.length ||
+      link.evidence_claim_ids.some((id) => !publicSet.has(id))
+    )
+      throw Error(
+        "Pilot concept links require distinct current concepts and verified public claim evidence",
+      )
+  if (
+    !sameIds(
+      review.source_comparisons.map((row) => row.claim_id),
+      publicIds,
+    )
+  )
+    throw Error("Every public claim needs exactly one pilot source comparison")
+  const refKey = (ref) => JSON.stringify(sourceRefKeys.map((key) => ref[key]))
+  for (const comparison of review.source_comparisons) {
+    const claim = claims.find((item) => item.claim_id === comparison.claim_id),
+      expected = claim.evidence.map(refKey).sort(),
+      actual = comparison.source_refs.map(refKey).sort()
+    if (
+      comparison.comparison.trim().length < 10 ||
+      new Set(actual).size !== actual.length ||
+      JSON.stringify(actual) !== JSON.stringify(expected)
+    )
+      throw Error(
+        "Pilot source comparison requires every exact native source version, block SHA and quote",
+      )
+  }
+  return review
+}
 
 export function historicalCanonicalContent(
   root,
@@ -72,8 +272,7 @@ function approvedCurrentReplacement(root, path, expectedSha, current, approvedNo
     const note = verified.approval.notes.find((entry) => entry.path === path)
     if (note && note.content === offered.content) replacements.push(note)
   }
-  if (replacements.length > 1)
-    throw Error("Distinct approved specialist note replacement required")
+  if (replacements.length > 1) throw Error("Distinct approved specialist note replacement required")
   return replacements[0]?.content ?? null
 }
 
@@ -97,16 +296,51 @@ export function evaluateArticleConceptReview(
   )
     throw Error("Distinct specialist concept IDs required")
   if (!ids.length && !review) return null
+  const version = review?.schema === "article-concept-review/v2" ? 2 : 1
+  const reviewedNone = version === 2 && review.outcome === "reviewed_none"
+  if (version === 2)
+    assertReviewDate(review.reviewed_at, {
+      notBefore: [article.article_review.reviewed_at, article.article_review.published_at],
+    })
   if (
-    !exactKeys(review, ["schema", "assignments"]) ||
-    review.schema !== "article-concept-review/v1" ||
+    !exactKeys(
+      review,
+      version === 1
+        ? ["schema", "assignments"]
+        : [
+            "schema",
+            "outcome",
+            "reason",
+            "reviewer",
+            "reviewed_at",
+            "article_source_read",
+            "concept_registry_read",
+            "aliases_checked",
+            "assignments",
+          ],
+    ) ||
+    !["article-concept-review/v1", "article-concept-review/v2"].includes(review.schema) ||
+    (version === 2 &&
+      (!["reviewed_links", "reviewed_none"].includes(review.outcome) ||
+        typeof review.reason !== "string" ||
+        review.reason.trim().length < 10 ||
+        typeof review.reviewer !== "string" ||
+        !review.reviewer.trim() ||
+        review.article_source_read !== true ||
+        review.concept_registry_read !== true ||
+        review.aliases_checked !== true ||
+        !review.reviewed_at)) ||
     !Array.isArray(review.assignments) ||
-    !review.assignments.length ||
     review.assignments.length > 32 ||
+    (version === 1 && !review.assignments.length) ||
+    (reviewedNone && (ids.length || review.assignments.length)) ||
+    (version === 2 && !reviewedNone && !review.assignments.length) ||
+    (version === 2 && review.outcome === "reviewed_links" && !ids.length) ||
+    (version === 2 && review.outcome === "reviewed_none" && ids.length) ||
     JSON.stringify(review.assignments.map((a) => a?.concept_id)) !== JSON.stringify(ids) ||
     JSON.stringify(article.article_review.concept_ids) !== JSON.stringify(ids)
   )
-    throw Error("Explicit article concept assignments required for every selected ID")
+    throw Error("Explicit article concept assignments or reviewed-empty result required")
   const publicIDs = new Set(
     [
       ...draft.draft.lead,
@@ -132,6 +366,7 @@ export function evaluateArticleConceptReview(
     if (
       !exactKeys(assignment, [
         "concept_id",
+        ...(version === 2 ? ["role"] : []),
         "status",
         "reason",
         "reviewer",
@@ -140,9 +375,11 @@ export function evaluateArticleConceptReview(
         "note",
         ...checks,
       ]) ||
+      (version === 2 && !relationRoles.includes(assignment.role)) ||
       checks.some((key) => assignment[key] !== true) ||
       typeof assignment.reviewer !== "string" ||
       !assignment.reviewer.trim() ||
+      (version === 2 && assignment.reviewer !== review.reviewer) ||
       typeof assignment.reason !== "string" ||
       assignment.reason.trim().length < 10 ||
       !exactKeys(assignment.note, ["path", "sha256", "approval_run"]) ||
@@ -273,8 +510,18 @@ export function evaluateArticleConceptReview(
     review.assignments,
     selected,
   )
+  if (version === 2 && links.some((link) => !link.role))
+    throw Error("Role-based article concept review required")
   return {
-    schema: "reviewed-article-concepts/v1",
+    schema: `reviewed-article-concepts/v${version}`,
+    ...(version === 2
+      ? {
+          outcome: review.outcome,
+          reason: review.reason,
+          reviewer: review.reviewer,
+          reviewed_at: review.reviewed_at,
+        }
+      : {}),
     event_id: article.event_id,
     draft_id: draft.draft_id,
     editorial_decision_sha256: sha256(JSON.stringify(decision)),

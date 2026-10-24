@@ -1,6 +1,7 @@
 import fs from "node:fs"
-import os from "node:os"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { isolatedMCPFixtureParent } from "../../integrations/research-mcp/test/storage-fixture.mjs"
 import { noteText } from "../../scripts/garden.mjs"
 import { sha256, sourceId } from "../../scripts/research/contracts.mjs"
 import { recordFactReview } from "../../scripts/research/claims.mjs"
@@ -13,9 +14,18 @@ import {
 import { draftFingerprint } from "../../scripts/research/editor.mjs"
 import { approvedArticle } from "../../scripts/research/publish-adapter.mjs"
 
-export async function knowledgeFixture(t, { nativeJob = false } = {}) {
-  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "knowledge-integration-"))),
+export async function knowledgeFixture(
+  t,
+  { nativeJob = false, fixtureRepo = fileURLToPath(new URL("../../", import.meta.url)) } = {},
+) {
+  const parent = isolatedMCPFixtureParent(fixtureRepo),
+    repo = fs.realpathSync(fs.mkdtempSync(path.join(parent, "knowledge-integration-"))),
     root = nativeJob ? path.join(repo, "native") : repo
+  fs.mkdirSync(path.join(repo, ".storage"))
+  fs.writeFileSync(
+    path.join(repo, ".storage/policy.json"),
+    JSON.stringify({ schema: "research-cold-storage/v1", root: repo, enabled: false }),
+  )
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
   const vault = path.join(root, "vault"),
     ctx = { root, vault, repo }
@@ -91,6 +101,7 @@ export async function knowledgeFixture(t, { nativeJob = false } = {}) {
       schema_version: "tech-encyclopedia/v2",
       concept_id: id,
       label: id,
+      keywords: [id],
       last_reviewed: "2026-09-26",
       aliases: [],
       verified_sources: [url],

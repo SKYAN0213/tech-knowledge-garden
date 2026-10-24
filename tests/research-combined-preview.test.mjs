@@ -51,9 +51,7 @@ test("rendered-prose verification compares inline-code content without Markdown 
 })
 
 test("concept history binds a visible localized date to the exact linked article", () => {
-  const workspace = fs.mkdtempSync(
-      path.join(process.cwd(), ".local/research/concept-history-"),
-    ),
+  const workspace = fs.mkdtempSync(path.join(process.cwd(), ".local/research/concept-history-")),
     eventId = "0123456789abcdef",
     date = "2026-09-01",
     sourceURL = "https://example.org/source",
@@ -71,7 +69,12 @@ test("concept history binds a visible localized date to the exact linked article
       "public/knowledge-graph.json",
       JSON.stringify({
         nodes: [{ id: "test-term", slug }],
-        articles: [{ id: "news:" + eventId, matches: [{ termId: "test-term", basis: "editorial" }] }],
+        articles: [
+          {
+            id: "news:" + eventId,
+            matches: [{ termId: "test-term", basis: "editorial", role: "untyped" }],
+          },
+        ],
       }),
     )
     write(
@@ -111,22 +114,13 @@ test("curated preview keeps the handoff issue and retrospective approvals in sep
 })
 
 test("curated preview rejects overlapping, duplicate, or unbound retrospective runs", () => {
-  assert.throws(
-    () => curated({ retrospectiveRuns: ["new-one"] }),
-    /must be disjoint/,
-  )
+  assert.throws(() => curated({ retrospectiveRuns: ["new-one"] }), /must be disjoint/)
   assert.throws(
     () => curated({ retrospectiveRuns: ["retro-one", "retro-one"] }),
     /Distinct native approval run IDs/,
   )
-  assert.throws(
-    () => curated({ curation: null }),
-    /curated new-edition handoff/,
-  )
-  assert.throws(
-    () => curated({ editionSpec: null }),
-    /curated new-edition handoff/,
-  )
+  assert.throws(() => curated({ curation: null }), /curated new-edition handoff/)
+  assert.throws(() => curated({ editionSpec: null }), /curated new-edition handoff/)
 })
 
 test("ordinary daily and retrospective previews retain their existing approval groups", () => {

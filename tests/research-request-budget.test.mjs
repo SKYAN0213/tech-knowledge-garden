@@ -8,7 +8,10 @@ import { planExtractionBatches, extractClaims } from "../scripts/research/claims
 import { writeDraft } from "../scripts/research/editor.mjs"
 import { prepareRoleProvider } from "../scripts/research/model-policy.mjs"
 import { createModelExecutionWindow } from "../scripts/research/model-provider.mjs"
-import { extractEditionEventProposals } from "../scripts/research/event-inference.mjs"
+import {
+  extractEditionEventProposals,
+  planEventProposalBatches,
+} from "../scripts/research/event-inference.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { RunState, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { editionFixture } from "./fixtures/research-event-fixtures.mjs"
@@ -201,10 +204,217 @@ test("role-specific request factory splits by its own schema and preserves every
       }),
     /preserve exact source/,
   )
-  assert.throws(
-    () => planExtractionBatches([source(1, 50000)]),
-    (e) => e.code === "MODEL_INPUT_BUDGET_EXCEEDED",
+})
+
+test("oversized source blocks become lossless, source-bound segments before requests", () => {
+  const original = source(1, 50000),
+    sourceBlock = original.blocks[0]
+  const sourceText = "😀🧭".repeat(1024) + sourceBlock.text
+  sourceBlock.text = sourceText
+  sourceBlock.locator.text_hash = sha256(sourceText)
+  const plan = planExtractionBatches([original], {
+      num_ctx: 8192,
+      num_predict: 1024,
+      input_char_budget: 12000,
+    }),
+    segments = plan.batches.flatMap((batch) => {
+      assert.ok(batch.input_chars <= plan.input_char_limit)
+      assert.equal(batch.request_budget.fits, true)
+      return JSON.parse(batch.request.messages[1].content).flatMap((document) =>
+        document.blocks.map((block) => ({
+          text: block.text,
+          ref: plan.blocks.get(block.block_key),
+        })),
+      )
+    })
+  assert.ok(segments.length > 1)
+  assert.ok(segments.every((segment) => segment.ref.block_id === original.blocks[0].block_id))
+  assert.ok(
+    segments.every((segment) => segment.ref.source_segment.text_sha256 === sha256(segment.text)),
   )
+  assert.ok(
+    segments.every((segment) => segment.ref.source_segment.offset_unit === "utf16_code_unit"),
+  )
+  assert.deepEqual(
+    segments.map((segment) => [
+      segment.ref.source_segment.offset_start,
+      segment.ref.source_segment.offset_end,
+    ]),
+    segments
+      .map((segment) => [
+        segment.ref.source_segment.offset_start,
+        segment.ref.source_segment.offset_end,
+      ])
+      .sort((a, b) => a[0] - b[0]),
+  )
+  assert.equal(segments[0].ref.source_segment.offset_start, 0)
+  assert.ok(
+    segments.every((segment) => {
+      const { offset_start, offset_end } = segment.ref.source_segment
+      return (
+        !(offset_start > 0 && /[\uDC00-\uDFFF]/u.test(sourceText[offset_start])) &&
+        !(offset_end < sourceText.length && /[\uDC00-\uDFFF]/u.test(sourceText[offset_end]))
+      )
+    }),
+  )
+  for (let index = 1; index < segments.length; index++)
+    assert.equal(
+      segments[index].ref.source_segment.offset_start,
+      segments[index - 1].ref.source_segment.offset_end,
+    )
+  assert.equal(segments.at(-1).ref.source_segment.offset_end, sourceText.length)
+  assert.equal(segments.map((segment) => segment.text).join(""), sourceText)
+})
+
+test("event proposal requests use the exact event schema while segmenting oversized sources", () => {
+  const parse = source(1, 50000),
+    sourceText = parse.blocks[0].text,
+    plan = planEventProposalBatches(parse, {
+      provider: "codex",
+      model,
+      think: false,
+      num_ctx: 8192,
+      num_predict: 1024,
+    }),
+    segments = plan.batches.flatMap((batch) => {
+      assert.ok(batch.input_chars <= plan.input_char_limit)
+      assert.equal(batch.request_budget.fits, true)
+      return JSON.parse(batch.request.messages[1].content).flatMap((document) =>
+        document.blocks.map((block) => ({
+          text: block.text,
+          ref: plan.blocks.get(block.block_key),
+        })),
+      )
+    })
+  assert.ok(plan.batches.every((batch) => batch.request.schema.properties.events))
+  assert.equal(segments.map((segment) => segment.text).join(""), sourceText)
+  assert.ok(segments.every((segment) => segment.ref.block_id === parse.blocks[0].block_id))
+  assert.equal(segments[0].ref.source_segment.offset_start, 0)
+  assert.equal(segments.at(-1).ref.source_segment.offset_end, sourceText.length)
+})
+
+test("event proposal keeps long CVE-rich prose as lossless segments beside a summary", () => {
+  const parse = source(1, 100),
+    summary =
+      "Monthly update summarizes affected products and security severity categories.".padEnd(
+        120,
+        " ",
+      ),
+    identifiers = Array.from({ length: 64 }, (_, index) => `CVE-2026-${10000 + index}`),
+    lead = "vendor completed emergency production deployment.",
+    tail = "actual factory shutdown and completed recovery.",
+    prefix = `${lead} ${identifiers.map((id) => `${id} production condition evidence`).join(" ")} `,
+    filler =
+      "Operations retained production conditions while response teams recorded system evidence. ",
+    bodyLength = 28600,
+    body =
+      prefix +
+      filler
+        .repeat(Math.ceil((bodyLength - prefix.length - tail.length) / filler.length))
+        .slice(0, bodyLength - prefix.length - tail.length) +
+      tail
+  parse.blocks[0].text = summary
+  parse.blocks[0].locator.text_hash = sha256(summary)
+  parse.blocks.push({
+    block_id: `${parse.parse_id}:b1`,
+    kind: "paragraph",
+    text: body,
+    locator: { text_hash: sha256(body) },
+  })
+  const plan = planEventProposalBatches(parse, {
+      provider: "codex",
+      model,
+      think: false,
+      num_ctx: 131072,
+      num_predict: 4096,
+    }),
+    segments = plan.batches.flatMap((batch) => {
+      assert.ok(batch.input_chars <= plan.input_char_limit)
+      assert.equal(batch.request_budget.fits, true)
+      return JSON.parse(batch.request.messages[1].content).flatMap((document) =>
+        document.blocks
+          .map((block) => ({ text: block.text, ref: plan.blocks.get(block.block_key) }))
+          .filter(({ ref }) => ref.block_id === parse.blocks[1].block_id),
+      )
+    }),
+    reassembled = segments.map(({ text }) => text).join("")
+  assert.equal(body.length, bodyLength)
+  assert.ok(plan.batches.length > 1)
+  assert.equal(plan.scope.event_scope_version, "minimal-event-candidate-scope/v2")
+  assert.equal(plan.scope.documents[0].excluded_block_count, 0)
+  assert.deepEqual(plan.scope.documents[0].excluded_source_blocks, [])
+  assert.ok(segments.length > 1)
+  assert.equal(reassembled, body)
+  assert.ok(reassembled.includes(lead))
+  assert.ok(reassembled.endsWith(tail))
+  assert.equal(segments[0].ref.source_segment.offset_start, 0)
+  assert.equal(segments.at(-1).ref.source_segment.offset_end, body.length)
+})
+
+test("event proposal excludes only structurally verified CVE reference tables", () => {
+  const parse = source(1, 100),
+    summary =
+      "Monthly security update announced with urgent fixes for Windows and Office, with product-level impact details.",
+    heading = "CVE reference appendix",
+    identifiers = Array.from({ length: 512 }, (_, index) => `CVE-2026-${10000 + index}`),
+    rows = [
+      ["Product category", "CVE ID", "CVE 제목"],
+      ...identifiers.map((id, index) => ["Product", id, `Vulnerability details ${index + 1}`]),
+    ],
+    appendixText = rows.map((row) => row.join(" ")).join(" ")
+  parse.blocks[0].text = summary
+  parse.blocks[0].locator.text_hash = sha256(summary)
+  parse.blocks.push(
+    {
+      block_id: `${parse.parse_id}:b1`,
+      kind: "paragraph",
+      text: heading,
+      locator: { text_hash: sha256(heading) },
+    },
+    {
+      block_id: `${parse.parse_id}:b2`,
+      kind: "table",
+      text: appendixText,
+      rows,
+      locator: { text_hash: sha256(appendixText) },
+    },
+  )
+  const plan = planEventProposalBatches(parse, {
+      provider: "codex",
+      model,
+      think: false,
+      num_ctx: 8192,
+      num_predict: 1024,
+    }),
+    included = plan.batches.flatMap((batch) =>
+      JSON.parse(batch.request.messages[1].content).flatMap((document) =>
+        document.blocks.map((block) => block.text),
+      ),
+    ),
+    [appendix] = plan.scope.documents[0].excluded_source_blocks
+  assert.deepEqual(included, [summary, heading])
+  assert.equal(plan.batches.length, 1)
+  assert.equal(plan.scope.documents[0].included_block_count, 2)
+  assert.equal(plan.scope.documents[0].excluded_block_count, 1)
+  assert.deepEqual(appendix, {
+    block_id: parse.blocks[2].block_id,
+    reason: "structured_cve_reference_appendix",
+    char_count: appendixText.length,
+    text_sha256: sha256(appendixText),
+    identifier_count: identifiers.length,
+    identifiers_sha256: sha256(JSON.stringify(identifiers)),
+    structure_evidence: {
+      schema: "structured-cve-reference-table/v1",
+      heading_block_id: parse.blocks[1].block_id,
+      heading_text_sha256: sha256(heading),
+      table_kind: "table",
+      headers: rows[0],
+      row_count: rows.length,
+      data_row_count: identifiers.length,
+      columns: { product: 0, cve_id: 1, title: 2 },
+      rows_sha256: sha256(JSON.stringify(rows)),
+    },
+  })
 })
 
 test("bounded extraction persists completed batch and resumes pending batches without another first call", async (t) => {

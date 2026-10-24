@@ -1,10 +1,15 @@
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { walk, parseNote, sections, noteText } from "./garden.mjs"
+import { walk, parseNote, sections, noteText, canonicalURL } from "./garden.mjs"
 import { slugifyFilePath } from "@quartz-community/utils"
 import { layoutGraph, edgeLabels } from "../web/layout.mjs"
 import { assembleGraph, isLearningTerm } from "../web/graph-model.mjs"
+import {
+  articlePublicFingerprint,
+  assertArticleSemanticReviewIndex,
+} from "../web/article-semantic-index.mjs"
+import { sha256 } from "./research/contracts.mjs"
 import { articleProse } from "./themes.mjs"
 const slug = (p) => slugifyFilePath(p + ".md")
 export function readKnowledge(vault = "vault") {
@@ -105,37 +110,116 @@ export function articleSearchText(body) {
     .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
     .replace(/\[S\d+\]/g, "")
 }
-export function buildGraph(vault = "vault") {
+export function buildGraph(vault = "vault", { semanticIndexFile } = {}) {
   const knowledge = readKnowledge(vault),
-    pathToId = new Map(knowledge.nodes.map((n) => [n.path, n.id]))
+    pathToId = new Map(knowledge.nodes.map((n) => [n.path, n.id])),
+    indexPath =
+      semanticIndexFile || path.resolve(vault, "..", "data/article-semantic-review-index.json"),
+    semanticIndex = fs.existsSync(indexPath)
+      ? assertArticleSemanticReviewIndex(JSON.parse(fs.readFileSync(indexPath, "utf8")))
+      : { schema: "article-semantic-review-index/v1", reviews: [] },
+    semanticReviews = new Map(semanticIndex.reviews.map((review) => [review.event_id, review]))
   const articles = walk(path.join(vault, "News"))
     .filter((f) => f.endsWith(".md"))
-    .map((f) => ({ file: f, ...parseNote(fs.readFileSync(f, "utf8")) }))
+    .map((f) => {
+      const bytes = fs.readFileSync(f)
+      return { file: f, bytes, ...parseNote(bytes.toString("utf8")) }
+    })
     .filter((n) => n.meta.type === "news" && n.meta.review_status !== "excluded")
     .map((n) => {
       const m = n.meta,
-        text = articleSearchText(n.body)
+        text = articleSearchText(n.body),
+        sourceURLs = Array.isArray(m.sources) ? m.sources : m.source_url ? [m.source_url] : [],
+        canonicalSources = [...new Set(sourceURLs.map(canonicalURL))].sort(),
+        eventId = m.event_id,
+        indexedReview = semanticReviews.get(eventId)
+      const publicSha = indexedReview
+        ? sha256(
+            articlePublicFingerprint({
+              event_id: eventId,
+              title: m.title,
+              published_at: m.published_at,
+              source_urls: canonicalSources,
+              prose: [m.title, text].filter(Boolean).join("\n"),
+            }),
+          )
+        : null
       for (const id of m.concept_ids || [])
         if (!knowledge.nodes.some((n) => n.id === id))
           throw Error("Unresolved reviewed concept: " + id)
+      let conceptIds,
+        conceptLinks = [],
+        semanticReviewStatus
+      if (indexedReview) {
+        if (m.review_status !== "verified" || indexedReview.article_public_sha256 !== publicSha)
+          throw Error("Article semantic review index no longer matches its verified public article")
+        const conceptsById = new Map(knowledge.nodes.map((node) => [node.id, node]))
+        conceptLinks = indexedReview.links.map((link) => {
+          const concept = conceptsById.get(link.concept_id),
+            noteFile = concept && path.join(vault, concept.path + ".md")
+          if (
+            !concept ||
+            `${concept.path}.md` !== link.concept_path ||
+            sha256(fs.readFileSync(noteFile)) !== link.concept_sha256
+          )
+            throw Error("Article semantic review index no longer matches its reviewed concept")
+          return {
+            conceptId: link.concept_id,
+            role: link.role,
+            evidenceClaimIds: [...link.evidence_claim_ids],
+          }
+        })
+        semanticReviewStatus = indexedReview.status
+        conceptIds = indexedReview.links.map((link) => link.concept_id)
+      } else if (m.review_status !== "verified") {
+        conceptIds = []
+        semanticReviewStatus = "unreviewed"
+      } else if (m.semantic_review_status !== undefined || m.concept_links !== undefined) {
+        const links = m.concept_links || [],
+          linkIds = links.map((link) => link.concept_id)
+        if (
+          m.semantic_review_status === "reviewed_links" &&
+          (!links.length || JSON.stringify(linkIds) !== JSON.stringify(m.concept_ids || []))
+        )
+          throw Error("Role-based article relations must match its approved concept IDs")
+        if (
+          m.semantic_review_status === "reviewed_none" &&
+          ((m.concept_ids || []).length || links.length)
+        )
+          throw Error("Reviewed-empty article cannot retain concept assignments")
+        if (!m.semantic_review_status)
+          throw Error("Native article concept links require an explicit semantic review outcome")
+        conceptLinks = links.map((link) => ({
+          conceptId: link.concept_id,
+          role: link.role,
+          ...(link.evidence_claim_ids ? { evidenceClaimIds: [...link.evidence_claim_ids] } : {}),
+        }))
+        conceptIds = linkIds
+        semanticReviewStatus = m.semantic_review_status
+      } else {
+        conceptIds = [
+          ...(m.review_status === "verified" ? m.concept_ids || [] : []),
+          ...(m.concepts || []).map((p) => {
+            if (!pathToId.has(p)) throw Error("Unresolved article concept: " + p)
+            return pathToId.get(p)
+          }),
+        ]
+      }
       return {
         id: "news:" + m.event_id,
         title: m.title,
         date: m.published_at || m.date,
         description: m.description || "",
         slug: slug(path.relative(vault, n.file).replace(/\.md$/, "")),
-        conceptIds: [
-          ...new Set([
-            ...(m.review_status === "verified" ? m.concept_ids || [] : []),
-            ...(m.concepts || []).map((p) => {
-              if (!pathToId.has(p)) throw Error("Unresolved article concept: " + p)
-              return pathToId.get(p)
-            }),
-          ]),
-        ],
+        conceptIds: [...new Set(conceptIds)],
+        conceptLinks,
+        ...(semanticReviewStatus ? { semanticReviewStatus } : {}),
         text: m.title + "\n" + (m.description || "") + "\n" + text,
       }
     })
+  const publicArticleIds = new Set(articles.map((article) => article.id.slice("news:".length)))
+  if (semanticIndex.reviews.some((review) => !publicArticleIds.has(review.event_id)))
+    throw Error("Article semantic review index contains an article no longer in the public vault")
   const graph = assembleGraph(knowledge.nodes, articles, knowledge.associations)
   graph.nodes = layoutGraph(graph)
   return {

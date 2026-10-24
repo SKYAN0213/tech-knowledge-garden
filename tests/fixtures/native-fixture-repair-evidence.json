@@ -1,0 +1,22 @@
+{
+  "schema": "fully-synthetic-native-fixture-repair-specimen/v1",
+  "seed": "public isolated repair example v1",
+  "source_root": "/synthetic/source-root",
+  "scope_prefix": "research/synthetic-native-fixture-cohort/tmp",
+  "scope_count": 113,
+  "row_count": 299,
+  "content_count": 99,
+  "mtime_start_ns": 1000000000,
+  "reference_hardlink_group_count": 3,
+  "reference_hardlink_paths_per_group": 2,
+  "historical_reference_format_counts": {
+    "empty_bytes": 42,
+    "json_value_stream": 14,
+    "json_with_literal_trailing_newline": 1
+  },
+  "logs": {
+    "synthetic-before.log": "synthetic completed failing check\n",
+    "synthetic-after.log": "synthetic completed passing check\n"
+  },
+  "historical_operational_metadata_included": false
+}

@@ -286,6 +286,7 @@ export function verifiedConceptLinks(article, assignments, concepts) {
       throw Error("Concept assignment references another event")
     return {
       concept_id: a.concept_id,
+      ...(a.role ? { role: a.role } : {}),
       path: concept.path,
       reason: a.reason,
       evidence: a.evidence,

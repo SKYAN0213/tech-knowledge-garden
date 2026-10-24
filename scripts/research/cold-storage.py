@@ -351,6 +351,70 @@ def repair_missing_fixture_records(root, p):
             except OSError as error:
                 raise ValueError("Fixture owner visibility unknown") from error
             raise ValueError("Fixture owner still alive or PID reused")
+    return _repair_missing_rows_transaction(
+        root, p, settings=settings, manifest_ref=manifest_ref, manifest_bytes=manifest_bytes,
+        rows=rows, owner_checks=owner_checks, process_evidence=process_evidence,
+        writers_absent=writers_absent)
+
+
+def _repair_encoded(value):
+    return (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode()
+
+
+def _repair_digest(value):
+    return hashlib.sha256(_repair_encoded(value)).hexdigest()
+
+
+def _repair_regular_bytes(file):
+    fd = os.open(str(file), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as stream:
+        info = os.fstat(stream.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError("Repair evidence must be a regular unaliased file")
+        return stream.read()
+
+
+def _repair_fsync_directory(directory):
+    fd = os.open(str(directory), os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _repair_catalog_fingerprints(db, rows, marker_key):
+    # Streaming logical hashes, not a whole-database backup. Include meta and
+    # extension tables so a trigger cannot change unrelated values unnoticed.
+    targets = {r["path"] for r in rows}
+    result = {"__schema__": {"sha256": _repair_digest([dict(r) for r in db.execute("SELECT type,name,sql FROM sqlite_master ORDER BY type,name")])}}
+    for entry in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"):
+        table = entry[0]
+        quoted = '"' + table.replace('"', '""') + '"'
+        columns = [r[1] for r in db.execute("PRAGMA table_info(" + quoted + ")")]
+        order = ",".join('"' + c.replace('"', '""') + '"' for c in columns)
+        h, count = hashlib.sha256(), 0
+        for row in db.execute("SELECT * FROM " + quoted + " ORDER BY " + order):
+            value = dict(row)
+            if (table == "files" and value.get("path") in targets) or (table == "meta" and value.get("key") == marker_key):
+                continue
+            # Persistent SQLite internals (including sqlite_sequence/stat*)
+            # are preservation data too. Encode BLOB values without loss.
+            value = {k: ({"sqlite_blob_sha256": hashlib.sha256(bytes(v)).hexdigest(), "bytes": len(v)}
+                         if isinstance(v, (bytes, bytearray, memoryview)) else v) for k, v in value.items()}
+            h.update(_repair_encoded(value))
+            count += 1
+        result[table] = {"rows": count, "sha256": h.hexdigest()}
+    return result
+
+
+def _repair_missing_rows_transaction(root, p, *, settings, manifest_ref, manifest_bytes,
+                                     rows, owner_checks, process_evidence, writers_absent,
+                                     native_contract=None):
+    # Shared durable engine only; caller-specific target/owner admission stays
+    # in each separate direct-CLI validator.
+    encoded, digest = _repair_encoded, _repair_digest
+    regular_bytes, fsync_directory = _repair_regular_bytes, _repair_fsync_directory
+    manifest_path = safe(root, manifest_ref["path"])
     db_path = safe(root, CONTROL + "/catalog.sqlite")
     info = db_path.lstat()
     if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
@@ -364,8 +428,11 @@ def repair_missing_fixture_records(root, p):
     # Caller holds the existing mutation.lock before opening this existing DB.
     db = sqlite3.connect(db_path.as_uri() + "?mode=rw", uri=True, timeout=0)
     db.row_factory = sqlite3.Row
-    key = "missing-fixture-repair:" + operation
-    relative = CONTROL + "/fixture-metadata-repairs/" + operation
+    if native_contract:
+        db.execute("PRAGMA synchronous=FULL")
+    operation = p["operation_id"]
+    key = ("missing-native-fixture-repair:" if native_contract else "missing-fixture-repair:") + operation
+    relative = CONTROL + ("/native-fixture-metadata-repairs/" if native_contract else "/fixture-metadata-repairs/") + operation
     directory = safe(root, relative)
     try:
         marker = db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
@@ -373,11 +440,27 @@ def repair_missing_fixture_records(root, p):
             if not marker:
                 raise ValueError("No committed repair marker")
             before_raw = regular_bytes(safe(root, relative + "/before.json"))
+            if native_contract:
+                intent = regular_bytes(directory / "commit-intent.json")
+                if marker[0] != intent.decode("utf-8"):
+                    raise ValueError("Native repair commit marker differs from its durable intent")
             value = json.loads(marker[0])
             if value["manifest_sha256"] != manifest_ref["sha256"] or value["before_sha256"] != hashlib.sha256(before_raw).hexdigest():
                 raise ValueError("Repair commit evidence changed")
             if any(db.execute("SELECT 1 FROM files WHERE path=?", (r["path"],)).fetchone() for r in rows):
                 raise ValueError("Committed repair paths were recreated; inspect explicitly")
+            if native_contract:
+                native_contract["evidence_check"]()
+                writers_absent()
+                native_contract["catalog_check"](db, committed=True)
+                expected_native = json.loads(before_raw)["native_fixture_evidence"]["operational_reference_audit"]
+                if native_contract["native_reference_audit"] != expected_native:
+                    raise ValueError("Operational native reference census changed since commit")
+                expected_locks = json.loads(before_raw)["native_fixture_evidence"]["inactive_native_lock_audit"]
+                if native_contract["inactive_native_lock_audit"] != expected_locks:
+                    raise ValueError("Preserved Native locks changed since commit")
+                if _repair_catalog_fingerprints(db, rows, key) != value["unrelated_catalog"]:
+                    raise ValueError("Unrelated catalog changed since native fixture commit")
             readback = {"status": "committed_readback", "commit_marker": value, "receipt_directory": relative, "checked_at": now()}
             immutable_bytes(directory / ("readback-" + uuid.uuid4().hex + ".json"), encoded(readback))
             fsync_directory(directory)
@@ -385,12 +468,16 @@ def repair_missing_fixture_records(root, p):
         if marker or directory.exists():
             raise ValueError("Prior repair attempt exists; preserve it and use explicit readback")
         def validate():
-            if digest_file(manifest_path) != manifest_ref["sha256"] or policy(root) != settings:
+            current_policy = json.loads(regular_bytes(safe(root, CONTROL + "/policy.json"))) if native_contract else policy(root)
+            if digest_file(manifest_path) != manifest_ref["sha256"] or current_policy != settings:
                 raise ValueError("Repair manifest or policy changed")
             current = db_path.lstat()
             if (current.st_dev, current.st_ino, current.st_nlink) != (info.st_dev, info.st_ino, 1):
                 raise ValueError("Repair catalog identity changed")
             writers_absent()
+            if native_contract:
+                native_contract["evidence_check"]()
+                native_contract["catalog_check"](db)
             for owner in owner_checks:
                 for proof in [owner[k] for k in ("state", "input") if k in owner]:
                     if hashlib.sha256(regular_bytes(safe(root, proof["path"]))).hexdigest() != proof["sha256"]:
@@ -408,15 +495,24 @@ def repair_missing_fixture_records(root, p):
         validate()
         directory.mkdir(parents=True, mode=0o700)
         counts_before = {table: db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0] for table in ("files", "objects", "bundles", "requests")}
+        unrelated = _repair_catalog_fingerprints(db, rows, key) if native_contract else None
         before = {"counts": counts_before, "schema": "research-fixture-metadata-repair-before/v1", "operation_id": operation,
                   "root": str(root), "operator": p["operator"], "reason": p["reason"], "manifest": manifest_ref,
                   "rows": rows, "rowset_sha256": digest(rows), "policy": settings,
                   "schema_sql": [dict(r) for r in db.execute("SELECT type,name,sql FROM sqlite_master ORDER BY type,name")],
                   "owners": owner_checks, "owner_probe": "ESRCH for retained owners only; historical identity unavailable for absent scopes", "process_evidence": process_evidence.copy(), "checked_at": now()}
+        if native_contract:
+            before["schema"] = "research-native-fixture-metadata-repair-before/v1"
+            before["native_fixture_evidence"] = native_contract["evidence"]
+            before["owner_probe"] = "Historical PID not retained; no ESRCH/termination claim. Exact absent scopes, terminal check records and fresh process visibility only."
+            before["unrelated_catalog"] = unrelated
         before_bytes = encoded(before)
         immutable_bytes(directory / "input.json", encoded(p))
         immutable_bytes(directory / "manifest.json", manifest_bytes)
         immutable_bytes(directory / "before.json", before_bytes)
+        if native_contract:
+            for name, data in native_contract["snapshots"].items():
+                immutable_bytes(directory / name, data)
         for durable in (directory, directory.parent, safe(root, CONTROL)):
             fsync_directory(durable)
         validate()
@@ -433,8 +529,31 @@ def repair_missing_fixture_records(root, p):
         value = {"counts_before": counts_before, "counts_after": counts_after, "schema": "research-fixture-metadata-repair-commit/v1", "operation_id": operation,
                  "manifest_sha256": manifest_ref["sha256"], "rowset_sha256": digest(rows),
                  "before_sha256": hashlib.sha256(before_bytes).hexdigest(), "deleted": deleted, "committed_at": now()}
-        db.execute("INSERT INTO meta(key,value) VALUES(?,?)", (key, encoded(value).decode()))
+        if native_contract:
+            after_unrelated = _repair_catalog_fingerprints(db, rows, key)
+            if after_unrelated != unrelated:
+                raise ValueError("Repair changed unrelated catalog values; rollback required")
+            value["schema"] = "research-native-fixture-metadata-repair-commit/v1"
+            value["unrelated_catalog"] = after_unrelated
+            value["review"] = p["review"]
+        marker_payload = encoded(value)
+        if native_contract:
+            # Prepared intent is not proof of commit; the exact DB value must
+            # survive triggers and round-trip after commit before a receipt.
+            immutable_bytes(directory / "commit-intent.json", marker_payload)
+            fsync_directory(directory)
+        db.execute("INSERT INTO meta(key,value) VALUES(?,?)", (key, marker_payload.decode()))
+        if native_contract:
+            own_marker = db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
+            if not own_marker or own_marker[0] != marker_payload.decode():
+                raise ValueError("Native repair commit marker was deleted or changed; rollback required")
+        if native_contract and _repair_catalog_fingerprints(db, rows, key) != unrelated:
+            raise ValueError("Commit marker trigger changed unrelated catalog values; rollback required")
         db.commit()
+        if native_contract:
+            own_marker = db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
+            if not own_marker or own_marker[0] != marker_payload.decode():
+                raise ValueError("Native repair committed marker round-trip failed; inspect durable intent")
         remaining = [r["path"] for r in rows if db.execute("SELECT 1 FROM files WHERE path=?", (r["path"],)).fetchone()]
         if remaining:
             raise ValueError("Repair readback changed after commit; inspect marker")
@@ -448,6 +567,540 @@ def repair_missing_fixture_records(root, p):
         raise
     finally:
         db.close()
+
+
+
+# One historical D2 native fixture cohort, not a general metadata deletion API.
+NATIVE_FIXTURE_PREFIX = "research/parallel-semantic-20261023-v1/results/D2/iterations/iteration6-private-completed-receipt-reuse-20261023-v1/tmp"
+NATIVE_FIXTURE_CHECKS = NATIVE_FIXTURE_PREFIX.rsplit("/", 1)[0] + "/checks.json"
+NATIVE_FIXTURE_SOURCE_ROOT = "/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden/.local"
+NATIVE_FIXTURE_ROWSET_SHA = "9f6a5a3bb1b464f5c4154d9b2cb04212e9ef351e366a231047703a1aa552f6e1"
+NATIVE_FIXTURE_AUDIT_SHA = "e73bb0622622acac4c683d72217e52940bde802ad8bf294852456d57ddef5830"
+NATIVE_FIXTURE_CHECKS_SHA = "113ce50fb79dc44b69286edf3bc370ebba4b793d8ff4cafa7c6d6775c794a8cf"
+NATIVE_FIXTURE_RECOVERY_SHA = "4db20767131cf4b136e55030294608474fa9f0e65c1291651b967c9f10e40c48"
+NATIVE_FIXTURE_REFERENCE_SCOPE = "native-controls-with-derived-preview-separation/v1"
+NATIVE_FIXTURE_REFERENCE_FORMATS_SHA = "63295e766520c5a381be6405ea2df7c5fc21d04370911fb0fd7fd7ecfd593b80"
+NATIVE_FIXTURE_REFERENCE_HARDLINKS_SHA = "b3fc8f6c77e47612cc07470708d782ac7a8fb7ad3e1053f6d166ed71bfdb69c6"
+NATIVE_FIXTURE_REFERENCE_FORMAT_RULES = {
+    "empty_bytes": "Exactly zero bytes; no JSON value exists.",
+    "json_value_stream": "Consume all standard JSON values and inter-value JSON whitespace; inspect every key and value. No unknown trailing bytes.",
+    "json_with_literal_trailing_newline": "Exactly one complete standard JSON value followed by the two literal bytes 5c6e; inspect the complete JSON value. No general suffix tolerance.",
+}
+
+
+def _native_fixture_reference_values(raw, format_name="single_json"):
+    # Reference inspection only, never a Native authority/approval JSON reader.
+    # Keep every object pair, including overwritten duplicate keys/values.
+    def reject_constant(value):
+        raise ValueError("Nonstandard JSON constant in Native reference control: " + value)
+    decoder = json.JSONDecoder(
+        parse_constant=reject_constant,
+        object_pairs_hook=lambda pairs: [value for pair in pairs for value in pair])
+    if format_name == "empty_bytes":
+        if raw != b"":
+            raise ValueError("Pinned empty Native reference control is not exactly zero bytes")
+        return []
+    if format_name == "json_with_literal_trailing_newline":
+        if not raw.endswith(b"\\n"):
+            raise ValueError("Pinned Native reference control lacks its exact literal 5c6e tail")
+        raw = raw[:-2]
+    text = raw.decode("utf-8")
+    if format_name in ("single_json", "json_with_literal_trailing_newline"):
+        return [decoder.decode(text)]
+    if format_name != "json_value_stream":
+        raise ValueError("Unknown historical Native reference format")
+    values, offset = [], 0
+    while offset < len(text):
+        while offset < len(text) and text[offset] in " \t\r\n":
+            offset += 1
+        if offset == len(text):
+            break
+        value, offset = decoder.raw_decode(text, offset)
+        values.append(value)
+    if not values:
+        raise ValueError("Pinned Native JSON value stream has no JSON value")
+    return values
+
+
+def _derived_preview_reference_path(relative):
+    # preview.mjs creates only this derived code/vault renderer workspace;
+    # RunState and preview-manifest.json remain outside it and are controls.
+    return bool(re.fullmatch(r"(?:research/local-ai|local-ai)/runs/[^/]+/preview-workspace(?:/.*)?", relative))
+
+
+def _native_fixture_reference_hardlink_bytes(file, entry):
+    # Only the control census calls this after exact evidence/Q0/group admission.
+    # All evidence, policy, DB, lock and derived proofs retain nlink=1 readers.
+    expected = {k: entry[k] for k in ("device", "inode", "nlink", "bytes", "mtime_ns", "ctime_ns", "mode")}
+    def check(info):
+        actual = {"device": str(info.st_dev), "inode": str(info.st_ino), "nlink": info.st_nlink,
+                  "bytes": info.st_size, "mtime_ns": str(info.st_mtime_ns),
+                  "ctime_ns": str(info.st_ctime_ns), "mode": stat.S_IMODE(info.st_mode)}
+        if not stat.S_ISREG(info.st_mode) or actual != expected:
+            raise ValueError("Exact Native reference hardlink identity changed")
+    check(file.lstat())
+    fd = os.open(str(file), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as stream:
+        check(os.fstat(stream.fileno()))
+        raw = stream.read()
+        check(os.fstat(stream.fileno()))
+        check(file.lstat())
+    if len(raw) != entry["bytes"] or hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+        raise ValueError("Exact Native reference hardlink bytes/SHA changed")
+    return raw
+
+
+NATIVE_FIXTURE_REFERENCE_ROOTS = tuple(
+    prefix + "/" + name for prefix in ("research/local-ai", "local-ai")
+    for name in ("reasoning-tasks", "runs", "event-workflows", "module-jobs"))
+
+
+def repair_missing_native_fixture_records(root, p):
+    """Direct CLI only: exact299 historical synthetic metadata, never real payload."""
+    import subprocess
+    if set(p) - {"expected_root", "operator", "reason", "operation_id", "manifest", "review", "readback_only"}:
+        raise ValueError("Unknown native fixture repair parameter")
+    if p.get("expected_root") != str(root) or root.resolve(strict=True) != root:
+        raise ValueError("Exact unaliased native fixture repair root required")
+    if "readback_only" in p and type(p["readback_only"]) is not bool:
+        raise ValueError("Explicit boolean readback_only required")
+    if any(not isinstance(p.get(k), str) or not p[k].strip() for k in ("operator", "reason")):
+        raise ValueError("Explicit native fixture operator/reason required")
+    if not re.fullmatch(r"[a-f0-9]{32}", p.get("operation_id", "")):
+        raise ValueError("Fresh exact native fixture operation ID required")
+
+    snapshots, evidence_refs = {}, []
+    def pinned(ref, snapshot):
+        if not isinstance(ref, dict) or set(ref) != {"path", "sha256"} or not isinstance(ref["sha256"], str) or not HASH.fullmatch(ref["sha256"]):
+            raise ValueError("Exact native fixture evidence ref required")
+        raw = _repair_regular_bytes(safe(root, ref["path"]))
+        if hashlib.sha256(raw).hexdigest() != ref["sha256"]:
+            raise ValueError("Native fixture evidence SHA changed")
+        snapshots[snapshot] = raw
+        evidence_refs.append(dict(ref))
+        return json.loads(raw)
+
+    manifest_ref = p.get("manifest")
+    manifest = pinned(manifest_ref, "native-manifest.json")
+    policy_path = safe(root, CONTROL + "/policy.json")
+    policy_raw = _repair_regular_bytes(policy_path)
+    settings = json.loads(policy_raw)
+    if (settings.get("schema") != SCHEMA or settings.get("root") != str(root) or
+        manifest.get("schema") != "research-missing-native-fixture-repair/v1" or
+        manifest.get("root") != str(root) or manifest.get("operation_id") != p["operation_id"] or
+        manifest.get("policy_sha256") != hashlib.sha256(policy_raw).hexdigest() or
+        manifest.get("reference_scope") != NATIVE_FIXTURE_REFERENCE_SCOPE):
+        raise ValueError("Exact native fixture root/policy binding required")
+    rows = manifest.get("rows")
+    keys = {"path", "sha256", "bytes", "mode", "mtime_ns", "scope", "cached_at"}
+    if (not isinstance(rows, list) or len(rows) != 299 or manifest.get("expected_count") != 299 or
+        manifest.get("unique_content_count") != 99 or
+        any(not isinstance(r, dict) or set(r) != keys for r in rows) or
+        rows != sorted(rows, key=lambda r: r["path"]) or len({r["path"] for r in rows}) != 299 or
+        len({r["sha256"] for r in rows}) != 99 or
+        manifest.get("rowset_sha256") != NATIVE_FIXTURE_ROWSET_SHA or
+        _repair_digest(rows) != NATIVE_FIXTURE_ROWSET_SHA):
+        raise ValueError("Only the exact frozen299/99 native fixture rowset is admitted")
+    scopes = set()
+    pattern = re.compile("^" + re.escape(NATIVE_FIXTURE_PREFIX) + r"/(knowledge-integration-[A-Za-z0-9]{6})/(?:documents|local-ai|reasoning-tasks|runs)/.+$")
+    for row in rows:
+        matched = pattern.fullmatch(row["path"])
+        if not matched or not HASH.fullmatch(row["sha256"]) or type(row["bytes"]) is not int or row["bytes"] < 0:
+            raise ValueError("Native fixture path boundary changed")
+        safe(root, row["path"])
+        scopes.add(NATIVE_FIXTURE_PREFIX + "/" + matched[1])
+    if len(scopes) != 113:
+        raise ValueError("Exact113 historical fixture scopes required")
+
+    audit_ref = manifest.get("rowset_evidence")
+    if not isinstance(audit_ref, dict) or audit_ref.get("sha256") != NATIVE_FIXTURE_AUDIT_SHA:
+        raise ValueError("Frozen D2 rowset evidence required")
+    audit = pinned(audit_ref, "d2-rowset-evidence.json")
+    if (audit.get("schema") != "d2-missing-test-catalog-rowset/v1" or audit.get("audit_only") is not True or
+        audit.get("root") != NATIVE_FIXTURE_SOURCE_ROOT or audit.get("rows") != rows):
+        raise ValueError("D2 synthetic cohort evidence differs")
+    recovery_ref = manifest.get("recovery_evidence")
+    if not isinstance(recovery_ref, dict) or recovery_ref.get("sha256") != NATIVE_FIXTURE_RECOVERY_SHA:
+        raise ValueError("Frozen exact-SHA recovery investigation required")
+    recovery = pinned(recovery_ref, "d2-recovery-investigation.json")
+    if (recovery.get("schema") != "d2-missing-fixture-recovery-result/v1" or
+        recovery.get("status") != "read_only_diagnosis_complete_no_supported_repair" or
+        recovery.get("expected_unique_contents") != 99 or recovery.get("affected_paths") != 299 or
+        recovery.get("existing_raw_copies_found_in_checked_scope") != 0 or
+        recovery.get("actual_recovery_or_catalog_mutation") is not False):
+        raise ValueError("Exact bounded recovery investigation differs")
+    checks_ref = manifest.get("checks")
+    if checks_ref != {"path": NATIVE_FIXTURE_CHECKS, "sha256": NATIVE_FIXTURE_CHECKS_SHA}:
+        raise ValueError("Exact original iteration6 check ref required")
+    checks = pinned(checks_ref, "historical-checks.json")
+    if (checks.get("schema") != "tkg-d2-check-evidence/v1" or
+        checks.get("synthetic_fixture_submissions_only") is not True or checks.get("actual_model_calls") != 0 or
+        checks.get("operational_writes") != 0 or checks.get("canonical_native_runs_revalidated_in_iteration6") != 0 or
+        checks.get("tmpdir") != NATIVE_FIXTURE_SOURCE_ROOT + "/" + NATIVE_FIXTURE_PREFIX):
+        raise ValueError("Historical synthetic-only scope is not established")
+    terminal = checks.get("checks")
+    if not isinstance(terminal, list) or not terminal or any(type(c.get("exit_code")) is not int for c in terminal):
+        raise ValueError("Historical terminal check records required")
+    terminal_evidence = []
+    for i, check in enumerate(terminal):
+        if "log" in check:
+            name = check["log"]
+            if not isinstance(name, str) or "/" in name or name in ("", ".", ".."):
+                raise ValueError("Historical log path changed")
+            ref = {"path": NATIVE_FIXTURE_CHECKS.rsplit("/", 1)[0] + "/" + name, "sha256": check["log_sha256"]}
+            raw = _repair_regular_bytes(safe(root, ref["path"]))
+            if hashlib.sha256(raw).hexdigest() != ref["sha256"]:
+                raise ValueError("Historical terminal log changed")
+            snapshots["historical-log-%d.bin" % i] = raw
+            evidence_refs.append(ref)
+            terminal_evidence.append({"name": check["name"], "exit_code": check["exit_code"], "log": ref})
+    if manifest.get("historical_owner_identity") != "not_retained" or manifest.get("historical_owner_termination_proven") is not False:
+        raise ValueError("Historical PID limitation must be explicit; termination is not established")
+    formats_ref = manifest.get("historical_reference_formats")
+    if not isinstance(formats_ref, dict) or formats_ref.get("sha256") != NATIVE_FIXTURE_REFERENCE_FORMATS_SHA:
+        raise ValueError("Exact pinned historical Native reference-format evidence required")
+    formats_evidence = pinned(formats_ref, "historical-reference-formats.json")
+    format_files = formats_evidence.get("files")
+    if (formats_evidence.get("schema") != "research-native-fixture-historical-reference-formats/v1" or
+        formats_evidence.get("root") != NATIVE_FIXTURE_SOURCE_ROOT or
+        formats_evidence.get("expected_count") != 57 or
+        formats_evidence.get("rules") != NATIVE_FIXTURE_REFERENCE_FORMAT_RULES or
+        not isinstance(format_files, list) or len(format_files) != 57 or
+        any(not isinstance(x, dict) or set(x) != {"path", "sha256", "bytes", "format"} or
+            not isinstance(x.get("path"), str) or not isinstance(x.get("sha256"), str) or
+            not HASH.fullmatch(x["sha256"]) or type(x.get("bytes")) is not int or x["bytes"] < 0 or
+            not isinstance(x.get("format"), str) or x["format"] not in NATIVE_FIXTURE_REFERENCE_FORMAT_RULES for x in format_files) or
+        format_files != sorted(format_files, key=lambda x: x["path"]) or
+        len({x["path"] for x in format_files}) != 57 or
+        {name: sum(x["format"] == name for x in format_files) for name in NATIVE_FIXTURE_REFERENCE_FORMAT_RULES} !=
+        {"empty_bytes": 42, "json_value_stream": 14, "json_with_literal_trailing_newline": 1}):
+        raise ValueError("Exact sorted57 historical Native reference-format vector/rules required")
+    if manifest.get("historical_reference_formats_files_sha256") != _repair_digest(format_files):
+        raise ValueError("Pinned historical Native reference-format vector digest required")
+    declared_formats = {x["path"]: (i, x) for i, x in enumerate(format_files)}
+    for entry in format_files:
+        safe(root, entry["path"])
+        if (not entry["path"].endswith(".json") or _derived_preview_reference_path(entry["path"]) or
+            not any(entry["path"].startswith(prefix + "/") for prefix in NATIVE_FIXTURE_REFERENCE_ROOTS)):
+            raise ValueError("Historical reference-format file is outside genuine Native JSON controls")
+    hardlinks_ref = manifest.get("reference_hardlinks")
+    if not isinstance(hardlinks_ref, dict) or hardlinks_ref.get("sha256") != NATIVE_FIXTURE_REFERENCE_HARDLINKS_SHA:
+        raise ValueError("Exact pinned Native reference hardlink-group evidence required")
+    hardlinks_evidence = pinned(hardlinks_ref, "reference-hardlink-groups.json")
+    hardlink_groups = hardlinks_evidence.get("groups")
+    hardlink_keys = {"path", "sha256", "bytes", "device", "inode", "nlink", "mtime_ns", "ctime_ns", "mode"}
+    if (hardlinks_evidence.get("schema") != "research-native-fixture-reference-hardlink-groups/v1" or
+        hardlinks_evidence.get("root") != NATIVE_FIXTURE_SOURCE_ROOT or
+        hardlinks_evidence.get("expected_group_count") != 3 or hardlinks_evidence.get("expected_path_count") != 6 or
+        not isinstance(hardlink_groups, list) or len(hardlink_groups) != 3 or
+        any(not isinstance(group, list) or len(group) != 2 or
+            any(not isinstance(x, dict) or set(x) != hardlink_keys or not isinstance(x.get("path"), str) or
+                not isinstance(x.get("sha256"), str) or not HASH.fullmatch(x["sha256"]) or
+                type(x.get("bytes")) is not int or x["bytes"] < 0 or
+                type(x.get("nlink")) is not int or x["nlink"] != len(group) or
+                type(x.get("mode")) is not int or not 0 <= x["mode"] <= 0o7777 or
+                any(not isinstance(x.get(k), str) or not re.fullmatch(r"[0-9]+", x[k])
+                    for k in ("device", "inode", "mtime_ns", "ctime_ns")) for x in group)
+            for group in hardlink_groups)):
+        raise ValueError("Exact complete3/6 Native reference hardlink groups required")
+    hardlink_rows = [entry for group in hardlink_groups for entry in group]
+    if (hardlink_groups != sorted(hardlink_groups, key=lambda g: g[0]["path"]) or
+        any(group != sorted(group, key=lambda x: x["path"]) or
+            any({k: x[k] for k in hardlink_keys - {"path"}} !=
+                {k: group[0][k] for k in hardlink_keys - {"path"}} for x in group) for group in hardlink_groups) or
+        len({x["path"] for x in hardlink_rows}) != 6 or
+        len({(g[0]["device"], g[0]["inode"]) for g in hardlink_groups}) != 3 or
+        manifest.get("reference_hardlinks_groups_sha256") != _repair_digest(hardlink_groups)):
+        raise ValueError("Pinned complete Native reference hardlink identities/vector required")
+    declared_hardlinks = {x["path"]: (i, x) for i, x in enumerate(hardlink_rows)}
+    for entry in hardlink_rows:
+        safe(root, entry["path"])
+        if (not entry["path"].endswith(".json") or entry["path"] in declared_formats or
+            _derived_preview_reference_path(entry["path"]) or
+            not any(entry["path"].startswith(prefix + "/") for prefix in NATIVE_FIXTURE_REFERENCE_ROOTS)):
+            raise ValueError("Reference hardlink is outside the exact genuine control scope")
+    derived = manifest.get("derived_preview_workspaces")
+    if (not isinstance(derived, list) or
+        any(not isinstance(x, dict) or set(x) != {"path", "state", "workspace_result"} or
+            not isinstance(x.get("path"), str) for x in derived) or
+        derived != sorted(derived, key=lambda x: x["path"]) or
+        len({x["path"] for x in derived}) != len(derived)):
+        raise ValueError("Exact approved derived-preview contract set required")
+    approved_derived = {x["path"] for x in derived}
+    for i, entry in enumerate(derived):
+        matched = re.fullmatch(r"(research/local-ai|local-ai)/runs/([^/]+)/preview-workspace", entry["path"])
+        if not matched:
+            raise ValueError("Derived scope is outside the Native preview contract")
+        safe(root, entry["path"])
+        base, run = matched.groups()
+        state_path = base + "/runs/" + run + "/preview/state.json"
+        result_path = base + "/runs/" + run + "/preview/workspace.json"
+        if entry.get("state", {}).get("path") != state_path or entry.get("workspace_result", {}).get("path") != result_path:
+            raise ValueError("Derived preview evidence path changed")
+        state = pinned(entry["state"], "derived-state-%04d.json" % i)
+        result = pinned(entry["workspace_result"], "derived-workspace-%04d.json" % i)
+        stage = state.get("stages", {}).get("workspace", {})
+        native_result_hash = hashlib.sha256(json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+        if (state.get("schema") != "research-run/v1" or state.get("run_id") != run or
+            stage.get("status") != "complete" or stage.get("result_path") != "runs/" + run + "/preview/workspace.json" or
+            stage.get("result_hash") != native_result_hash):
+            raise ValueError("Derived Native preview workspace contract/hash chain differs")
+    preserved_locks = manifest.get("preserved_inactive_native_locks")
+    if (not isinstance(preserved_locks, list) or
+        any(not isinstance(x, dict) or set(x) != {"path", "sha256", "pid", "probe"} or
+            not isinstance(x.get("path"), str) or not isinstance(x.get("sha256"), str) or
+            not HASH.fullmatch(x["sha256"]) or type(x.get("pid")) is not int or x["pid"] <= 0 or
+            x.get("probe") != "ESRCH" for x in preserved_locks) or
+        preserved_locks != sorted(preserved_locks, key=lambda x: x["path"]) or
+        len({x["path"] for x in preserved_locks}) != len(preserved_locks)):
+        raise ValueError("Complete pinned inactive Native lock set required")
+    for entry in preserved_locks:
+        safe(root, entry["path"])
+        if not re.fullmatch(r"(?:locks|[^/]+/locks|research/[^/]+/locks)/[^/]+\.json", entry["path"]):
+            raise ValueError("Preserved Native lock path is outside the lock namespace")
+    first_inactive_locks = []
+    review = pinned(p.get("review"), "independent-review.json")
+    if (review.get("schema") != "research-native-fixture-repair-review/v1" or
+        review.get("reviewer") != "Q0" or review.get("decision") != "approve_exact299_native_fixture_metadata_repair" or
+        review.get("root") != str(root) or review.get("manifest") != manifest_ref or
+        review.get("operation_id") != p["operation_id"] or
+        review.get("preserved_inactive_native_locks_sha256") != _repair_digest(preserved_locks) or
+        review.get("reference_scope") != NATIVE_FIXTURE_REFERENCE_SCOPE or
+        review.get("derived_preview_workspaces_sha256") != _repair_digest(derived) or
+        review.get("historical_reference_formats_files_sha256") != _repair_digest(format_files) or
+        review.get("reference_hardlinks_groups_sha256") != _repair_digest(hardlink_groups) or
+        review.get("source_sha256") != digest_file(Path(__file__).resolve()) or
+        review.get("historical_owner_identity") != "not_retained" or
+        review.get("historical_owner_termination_proven") is not False or
+        review.get("accept_absent_scopes_and_fresh_process_visibility") is not True or
+        not isinstance(review.get("reason"), str) or not review["reason"].strip()):
+        raise ValueError("Exact independent Q0 source/manifest review required")
+    counts = manifest.get("expected_counts")
+    if not isinstance(counts, dict) or set(counts) != {"files", "objects", "bundles", "requests"} or any(type(v) is not int or v < 0 for v in counts.values()):
+        raise ValueError("Pinned catalog counts required")
+    if not isinstance(manifest.get("schema_sha256"), str) or not HASH.fullmatch(manifest["schema_sha256"]):
+        raise ValueError("Pinned catalog schema required")
+    target_hashes = {r["sha256"] for r in rows}
+    first_native_audit = []
+    process_evidence = []
+
+    def evidence_check():
+        if _repair_regular_bytes(policy_path) != policy_raw:
+            raise ValueError("Native fixture policy changed")
+        for ref in evidence_refs:
+            if hashlib.sha256(_repair_regular_bytes(safe(root, ref["path"]))).hexdigest() != ref["sha256"]:
+                raise ValueError("Native fixture evidence changed during repair")
+        if review["source_sha256"] != digest_file(Path(__file__).resolve()):
+            raise ValueError("Reviewed native fixture implementation changed")
+
+    def writers_absent():
+        for scope in scopes:
+            if safe(root, scope).exists():
+                raise ValueError("Historical native fixture scope exists or was recreated")
+        tmp = safe(root, NATIVE_FIXTURE_PREFIX)
+        if tmp.exists() and (not tmp.is_dir() or any(tmp.iterdir())):
+            raise ValueError("Historical native fixture tmp is not absent or empty")
+        lock_dirs = {root / "locks", *root.glob("*/locks"), *root.glob("research/*/locks")}
+        actual_paths = []
+        for lock_dir in lock_dirs:
+            safe(root, str(lock_dir.relative_to(root)))
+            actual_paths.extend(str(f.relative_to(root)) for f in lock_dir.glob("*.json"))
+        if sorted(actual_paths) != [x["path"] for x in preserved_locks]:
+            raise ValueError("Native lock set is new, missing or outside the exact Q0-preserved set")
+        observed_locks = []
+        for i, entry in enumerate(preserved_locks):
+            target = safe(root, entry["path"])
+            before_stat = target.lstat()
+            raw = _repair_regular_bytes(target)
+            after_stat = target.lstat()
+            identity = lambda st: {"dev": st.st_dev, "ino": st.st_ino, "size": st.st_size,
+                                   "mtime_ns": str(st.st_mtime_ns), "nlink": st.st_nlink}
+            if (identity(before_stat) != identity(after_stat) or
+                hashlib.sha256(raw).hexdigest() != entry["sha256"] or
+                type(json.loads(raw).get("pid")) is not int or json.loads(raw)["pid"] != entry["pid"]):
+                raise ValueError("Q0-preserved Native lock bytes/PID/identity changed")
+            try:
+                os.kill(entry["pid"], 0)
+            except ProcessLookupError:
+                pass
+            except OSError as error:
+                raise ValueError("Preserved Native owner visibility unknown; preserving lock") from error
+            else:
+                raise ValueError("Preserved Native owner is alive or its PID was reused")
+            observed_locks.append({**entry, "identity": identity(after_stat)})
+            snapshots["preserved-native-lock-%03d.json" % i] = raw
+        if first_inactive_locks and first_inactive_locks != observed_locks:
+            raise ValueError("Preserved inactive Native lock identity changed during repair")
+        if not first_inactive_locks:
+            first_inactive_locks.extend(observed_locks)
+        live, _ = active_native_locks(root)
+        if live:
+            raise ValueError("Native locks present; fixture repair refused")
+        scan = subprocess.run(["ps", "-axww", "-o", "pid=,stat=,command="], capture_output=True, text=True, timeout=10, check=True)
+        lines = [line for line in scan.stdout.splitlines() if line.strip()]
+        if scan.stderr.strip() or not lines or any(not re.match(r"^\s*[0-9]+\s+[A-Za-z+<>=NsLlXsWwZzIitpRrDUuHVv-]+\s+\S", line) for line in lines):
+            raise ValueError("Native fixture process visibility unknown")
+        visible_pids = {int(line.strip().split(None, 1)[0]) for line in lines}
+        if any(entry["pid"] in visible_pids for entry in preserved_locks):
+            raise ValueError("Preserved Native PID is visible despite ESRCH; inspect explicitly")
+        for line in lines:
+            pid, state, command = line.strip().split(None, 2)
+            if int(pid) == os.getpid():
+                continue
+            if re.search(r"(?:<unknown>|<access denied>|^\?+$|\[permission denied\])", command, re.I):
+                raise ValueError("Incomplete native fixture process argv visibility")
+            if (str(safe(root, NATIVE_FIXTURE_PREFIX)) in command or
+                str(Path(NATIVE_FIXTURE_SOURCE_ROOT) / NATIVE_FIXTURE_PREFIX) in command or
+                re.search(r"(?:^|/)node(?:\s+[^\n]*)?\s--test(?:\s|$)|(?:^|/)npm\s+(?:run\s+)?test(?:[:\s]|$)", command)):
+                raise ValueError("Native fixture writer/test parent still visible")
+        process_evidence.append({"argv": ["ps", "-axww", "-o", "pid=,stat=,command="],
+                                 "stdout_sha256": hashlib.sha256(scan.stdout.encode()).hexdigest(),
+                                 "row_count": len(lines), "status": scan.returncode, "stderr_bytes": 0,
+                                 "matching_scope_writers": 0, "matching_test_parents": 0,
+                                 "historical_owner_pid": None, "termination_proven": False,
+                                 "preserved_inactive_native_locks": observed_locks, "checked_at": now()})
+
+    def catalog_check(db, committed=False):
+        if not committed:
+            actual_counts = {t: db.execute("SELECT COUNT(*) FROM " + t).fetchone()[0] for t in counts}
+            schema = [dict(r) for r in db.execute("SELECT type,name,sql FROM sqlite_master ORDER BY type,name")]
+            if actual_counts != counts or _repair_digest(schema) != manifest["schema_sha256"]:
+                raise ValueError("Native fixture catalog counts/schema changed")
+            placeholders = ",".join("?" for _ in target_hashes)
+            related = [dict(r) for r in db.execute(
+                "SELECT path,sha256,bytes,mode,mtime_ns,scope,cached_at FROM files WHERE sha256 IN (" + placeholders + ") ORDER BY path", sorted(target_hashes))]
+            if related != rows:
+                raise ValueError("Exact299 rowset closure changed or unrelated content reference exists")
+        # Inspect operational reference-bearing JSON control trees. Never hydrate
+        # unavailable controls or claim global absence outside these named roots.
+        references, derived_workspaces, format_census, hardlink_census = [], set(), [], {}
+        needles = [NATIVE_FIXTURE_PREFIX, NATIVE_FIXTURE_SOURCE_ROOT + "/" + NATIVE_FIXTURE_PREFIX, *sorted(target_hashes)]
+        for relative in NATIVE_FIXTURE_REFERENCE_ROOTS:
+            directory = safe(root, relative)
+            if directory.exists():
+                if not directory.is_dir():
+                    raise ValueError("Operational native reference root is not a directory")
+                def walk_error(error):
+                    raise ValueError("Operational native reference tree visibility unknown") from error
+                for current, dirs, files in os.walk(directory, followlinks=False, onerror=walk_error):
+                    retained = []
+                    for name in dirs:
+                        child = Path(current) / name
+                        relative_child = str(child.relative_to(root))
+                        if _derived_preview_reference_path(relative_child):
+                            if relative_child not in approved_derived:
+                                raise ValueError("Unapproved derived preview scope appeared")
+                            if child.is_symlink() or not child.is_dir():
+                                raise ValueError("Derived preview workspace root is aliased or unknown")
+                            derived_workspaces.add(relative_child)
+                        elif child.is_symlink():
+                            raise ValueError("Operational native reference tree has symlinks")
+                        else:
+                            retained.append(name)
+                    dirs[:] = retained
+                    for name in sorted(files):
+                        if not name.endswith((".json", ".jsonl")):
+                            continue
+                        file = safe(root, str((Path(current) / name).relative_to(root)))
+                        path = str(file.relative_to(root))
+                        if path in declared_hardlinks:
+                            index, entry = declared_hardlinks[path]
+                            raw = _native_fixture_reference_hardlink_bytes(file, entry)
+                            snapshots["reference-hardlink-control-%03d.bin" % index] = raw
+                        else:
+                            raw = _repair_regular_bytes(file)
+                        raw_sha = hashlib.sha256(raw).hexdigest()
+                        if path in declared_formats:
+                            index, entry = declared_formats[path]
+                            if raw_sha != entry["sha256"] or len(raw) != entry["bytes"]:
+                                raise ValueError("Pinned historical Native reference-control bytes/SHA changed")
+                            values = _native_fixture_reference_values(raw, entry["format"])
+                            format_census.append({**entry, "decoded_value_count": len(values)})
+                            snapshots["historical-reference-control-%03d.bin" % index] = raw
+                        else:
+                            values = (_native_fixture_reference_values(raw) if name.endswith(".json") else
+                                      [value for line in raw.splitlines() if line.strip()
+                                       for value in _native_fixture_reference_values(line)])
+                        def inspect(value):
+                            if isinstance(value, str) and any(n in value for n in needles):
+                                raise ValueError("Operational native JSON refers to retired fixture content/path")
+                            if isinstance(value, dict):
+                                for k, v in value.items():
+                                    inspect(k); inspect(v)
+                            if isinstance(value, list):
+                                for v in value:
+                                    inspect(v)
+                        for value in values:
+                            inspect(value)
+                        if path in declared_hardlinks:
+                            hardlink_census[path] = {**declared_hardlinks[path][1],
+                                                    "decoded_value_count": len(values),
+                                                    "read_identity_verified": True}
+                        references.append({"path": path, "sha256": raw_sha})
+            for row in db.execute("SELECT path FROM files WHERE path LIKE ?", (relative + "/%",)):
+                if not row["path"].endswith((".json", ".jsonl")):
+                    continue
+                if _derived_preview_reference_path(row["path"]):
+                    # Catalogued derived copies can be cold; genuine outer
+                    # Native state/inputs/receipts are never skipped here.
+                    derived_root = row["path"].split("/preview-workspace", 1)[0] + "/preview-workspace"
+                    if derived_root not in approved_derived:
+                        raise ValueError("Unapproved catalogued derived preview scope")
+                    derived_workspaces.add(derived_root)
+                    continue
+                if row["path"].endswith((".json", ".jsonl")) and not safe(root, row["path"]).is_file():
+                    raise ValueError("Operational native reference control is unavailable")
+        if derived_workspaces != approved_derived:
+            raise ValueError("Approved derived preview scope set changed or disappeared")
+        if {x["path"] for x in format_census} != set(declared_formats):
+            raise ValueError("Pinned historical Native reference-format file is missing from the census")
+        if set(hardlink_census) != set(declared_hardlinks):
+            raise ValueError("Exact Native reference hardlink alias is missing from the census")
+        # A pair's link count accounts for all aliases only while every listed
+        # path still has the exact pinned inode. Recheck after the whole walk.
+        for entry in hardlink_rows:
+            _native_fixture_reference_hardlink_bytes(safe(root, entry["path"]), entry)
+        audit = {"roots": list(NATIVE_FIXTURE_REFERENCE_ROOTS), "reference_scope": NATIVE_FIXTURE_REFERENCE_SCOPE,
+                 "derived_preview_workspaces": sorted(derived_workspaces), "file_count": len(references),
+                 "historical_reference_formats": {"evidence": formats_ref, "files_sha256": _repair_digest(format_files),
+                     "purpose": "reference_inspection_only", "original_native_JSON_valid": False,
+                     "authority_parser_modified": False, "approval_validity_promoted": False,
+                     "file_count": len(format_census),
+                     "decoded_value_count": sum(x["decoded_value_count"] for x in format_census),
+                     "files": sorted(format_census, key=lambda x: x["path"])},
+                 "reference_hardlinks": {"evidence": hardlinks_ref, "groups_sha256": _repair_digest(hardlink_groups),
+                     "group_count": 3, "path_count": 6, "all_aliases_inspected": True,
+                     "purpose": "reference_inspection_only", "original_files_modified": False,
+                     "groups": [[hardlink_census[x["path"]] for x in group] for group in hardlink_groups]},
+                 "files_sha256": _repair_digest(sorted(references, key=lambda r: r["path"]))}
+        if first_native_audit and first_native_audit[0] != audit:
+            raise ValueError("Operational native reference census changed")
+        if not first_native_audit:
+            first_native_audit.append(audit)
+
+    owner_checks = [{"scope": scope, "identity": "owner_identity_unavailable"} for scope in sorted(scopes)]
+    snapshots["policy.json"] = policy_raw
+    evidence = {"rowset_evidence": audit_ref, "recovery_evidence": recovery_ref, "checks": checks_ref, "review": p["review"],
+                "historical_terminal_checks": terminal_evidence,
+                "historical_owner_identity": "not_retained", "historical_owner_termination_proven": False,
+                "operational_reference_roots": list(NATIVE_FIXTURE_REFERENCE_ROOTS),
+                "reference_scope": NATIVE_FIXTURE_REFERENCE_SCOPE,
+                "derived_preview_workspaces": derived,
+                "historical_reference_formats": formats_ref,
+                "historical_reference_formats_files_sha256": _repair_digest(format_files),
+                "reference_hardlinks": hardlinks_ref,
+                "reference_hardlinks_groups_sha256": _repair_digest(hardlink_groups),
+                "operational_reference_audit": first_native_audit,
+                "preserved_inactive_native_locks": preserved_locks,
+                "inactive_native_lock_audit": first_inactive_locks,
+                "scope_limit": "No global absence claim outside frozen rowset, catalog links and named native control trees"}
+    return _repair_missing_rows_transaction(
+        root, p, settings=settings, manifest_ref=manifest_ref, manifest_bytes=snapshots["native-manifest.json"],
+        rows=rows, owner_checks=owner_checks, process_evidence=process_evidence, writers_absent=writers_absent,
+        native_contract={"catalog_check": catalog_check, "evidence_check": evidence_check,
+                         "native_reference_audit": first_native_audit,
+                         "inactive_native_lock_audit": first_inactive_locks,
+                         "evidence": evidence, "snapshots": snapshots})
 
 
 def policy(root):
@@ -469,6 +1122,7 @@ def initialize(root, p):
 
 
 def active_native_locks(root, ignore_pid=None):
+    ignore_pid = ignore_pid if type(ignore_pid) is int and ignore_pid > 0 else None
     live, held = [], []
     directories = {root / "locks", *root.glob("*/locks"), *root.glob("research/*/locks")}
     for p in (p for directory in directories for p in directory.glob("*.json")):
@@ -476,9 +1130,9 @@ def active_native_locks(root, ignore_pid=None):
             continue
         try:
             record = json.loads(p.read_text())
-            pid = record.get("pid")
-            alive = False
-            if type(pid) is int and pid != ignore_pid:
+            pid = record.get("pid") if isinstance(record, dict) else None
+            alive = type(pid) is not int or pid <= 0
+            if not alive and pid != ignore_pid:
                 try:
                     os.kill(pid, 0)
                     alive = True
@@ -950,7 +1604,7 @@ def import_catalog(root, db, p):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
+    parser.add_argument("action", choices=["repair-missing-native-fixture-records", "repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
     parser.add_argument("--root", required=True)
     args = parser.parse_args()
     requested_root = Path(os.path.abspath(args.root))
@@ -961,11 +1615,12 @@ def main():
             raise ValueError("Symlink in storage recovery root")
         print(json.dumps(recover_mutation_lock(root, p), ensure_ascii=False))
         return
-    if args.action == "repair-missing-fixture-records":
+    if args.action in {"repair-missing-fixture-records", "repair-missing-native-fixture-records"}:
         if requested_root != root:
             raise ValueError("Symlink in storage repair root")
         with exclusive(root):
-            result = repair_missing_fixture_records(root, p)
+            repair = repair_missing_native_fixture_records if args.action == "repair-missing-native-fixture-records" else repair_missing_fixture_records
+            result = repair(root, p)
         print(json.dumps(result, ensure_ascii=False))
         return
     db = connect(root)
