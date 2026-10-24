@@ -979,7 +979,9 @@ export function mapExtractionBatch(output, batch, blocks) {
       const quote = useStoredQuote ? textByKey.get(evidence.block_key) : evidence.quote
       if (typeof quote !== "string" || !quote.trim())
         throw Error("Exact evidence source text required")
-      return { ...source, quote, support: evidence.support }
+      const sourceReference = { ...source }
+      delete sourceReference.source_segment
+      return { ...sourceReference, quote, support: evidence.support }
     })
   assertSchema(mapped, extractionSchema)
   return mapped.claims
@@ -1002,6 +1004,20 @@ export async function extractClaims(
 ) {
   const budget = extractionBudget(options)
   const plan = planExtractionBatches(parses, { ...budget, extraction_scope, block_scope })
+  const sourceSegments = [...plan.blocks].flatMap(([block_key, source]) =>
+    source.source_segment
+      ? [
+          {
+            block_key,
+            source_id: source.source_id,
+            source_version_id: source.source_version_id,
+            parse_id: source.parse_id,
+            block_id: source.block_id,
+            source_segment: source.source_segment,
+          },
+        ]
+      : [],
+  )
   if (
     max_model_calls !== undefined &&
     (!Number.isInteger(max_model_calls) || max_model_calls < 1 || max_model_calls > 64)
@@ -1082,6 +1098,7 @@ export async function extractClaims(
             batch_count: results.length,
           }),
       block_map_sha256: sha256(JSON.stringify([...plan.blocks])),
+      ...(sourceSegments.length ? { source_segments: sourceSegments } : {}),
       extraction_budget: budget,
       source_coverage:
         block_scope === null

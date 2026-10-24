@@ -13,6 +13,7 @@ import {
   recordPublicationPush,
 } from "../scripts/research/publication-operation.mjs"
 import { publicReadbackPlan } from "../scripts/research/public-readback.mjs"
+import { sha256 } from "../scripts/research/contracts.mjs"
 
 const proof = (f) => ({ ...f.deployment, workflowName: "Publish Garden" })
 const ready = (f) => [
@@ -204,6 +205,91 @@ test("failed deployment remains failed and network observation failure cannot be
     }),
     /selection changed/,
   )
+})
+
+test("failed deployment resumes on an explicit descendant run without replacing its failure record", async (t) => {
+  const f = await fixture(t)
+  await preparePublicationOperation({ ...f.options, releasePath: f.releasePath })
+  await recordPublicationPush({ ...f.options, pushPath: f.pushPath })
+  const failed = await deliverApprovedPublication({
+    ...options(f),
+    actionsRun: "123",
+    execute: async () => JSON.stringify({ ...proof(f), conclusion: "failure", jobs: [] }),
+  })
+  assert.equal(failed.status, "deployment_failed")
+  const initialSelectionPath = path.join(f.root, "runs/operation/delivery/actions-selection.json"),
+    failedCheckpointPath = path.join(f.root, "runs/operation/delivery/latest.json"),
+    initialSelection = JSON.parse(fs.readFileSync(initialSelectionPath, "utf8")),
+    failedCheckpoint = JSON.parse(fs.readFileSync(failedCheckpointPath, "utf8"))
+
+  f.put("scripts/worker-visibility-fix.mjs", "// Code-only continuation.\n")
+  f.git("add", "scripts/worker-visibility-fix.mjs")
+  f.git("commit", "-qm", "Fix worker visibility")
+  const deploymentCommit = f.git("rev-parse", "HEAD"),
+    deployment = {
+      ...proof(f),
+      headSha: deploymentCommit,
+      url: "https://github.com/SKYAN0213/tech-knowledge-garden/actions/runs/456",
+      workflowName: "Publish Garden",
+    },
+    plan = publicReadbackPlan({
+      repository: f.options.repository,
+      preview: f.preview,
+      commit: deploymentCommit,
+      deployment,
+    }),
+    fetchImpl = async (url) => {
+      const row = plan.files.find((file) => file.url === url)
+      return new Response(
+        fs.readFileSync(path.join(f.options.repository, row?.local || plan.reader_module.local)),
+      )
+    }
+  const result = await deliverApprovedPublication({
+    ...options(f),
+    actionsRun: "456",
+    deploymentCommit,
+    execute: async (file, args) => {
+      if (file === "git") {
+        assert.deepEqual(args, [
+          "merge-base",
+          "--is-ancestor",
+          initialSelection.commit,
+          deploymentCommit,
+        ])
+        return f.git(...args)
+      }
+      assert.equal(file, "gh")
+      assert.deepEqual(args.slice(0, 3), ["run", "view", "456"])
+      return JSON.stringify(deployment)
+    },
+    fetchImpl,
+  })
+
+  const retrySelectionPath = "runs/operation/delivery/actions-selection-attempts/456.json",
+    failedRecordPath = "runs/operation/delivery/deployment-attempts/123/failed-checkpoint.json",
+    retrySelection = JSON.parse(fs.readFileSync(path.join(f.root, retrySelectionPath), "utf8")),
+    failedRecord = JSON.parse(fs.readFileSync(path.join(f.root, failedRecordPath), "utf8")),
+    latest = JSON.parse(fs.readFileSync(failedCheckpointPath, "utf8"))
+  assert.equal(result.status, "public_bytes_verified")
+  assert.equal(result.actions_run, "456")
+  assert.equal(result.deployment_commit, deploymentCommit)
+  assert.equal(result.actions_selection_path, retrySelectionPath)
+  assert.equal(publicationOperationStatus(f.options).status, "public_bytes_verified")
+  assert.equal(
+    deliveryCheckpointStatus(f.root, { runs: [publicationOperationStatus(f.options)] }).runs[0]
+      .status,
+    "public_bytes_verified",
+  )
+  assert.deepEqual(JSON.parse(fs.readFileSync(initialSelectionPath, "utf8")), initialSelection)
+  assert.deepEqual(failedRecord, failedCheckpoint)
+  assert.equal(retrySelection.actions_run, "456")
+  assert.equal(retrySelection.commit, deploymentCommit)
+  assert.equal(
+    retrySelection.previous_selection_path,
+    "runs/operation/delivery/actions-selection.json",
+  )
+  assert.equal(retrySelection.previous_failure_sha256, sha256(JSON.stringify(failedCheckpoint)))
+  assert.equal(latest.actions_selection_path, retrySelectionPath)
 })
 
 test("delivery validates raw authoring and pinned release on every resume; status does not mutate or query", async (t) => {

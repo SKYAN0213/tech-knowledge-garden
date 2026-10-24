@@ -15,6 +15,7 @@ try {
       status: { type: "boolean", default: false },
       "retry-publish": { type: "boolean", default: false },
       "actions-run": { type: "string" },
+      "deployment-commit": { type: "string" },
       "wait-seconds": { type: "string", default: "0" },
       "authoring-root": { type: "string" },
       "source-snapshot": { type: "string" },
@@ -45,6 +46,7 @@ try {
     statusOnly: v.status,
     retryPublish: v["retry-publish"],
     actionsRun: v["actions-run"],
+    deploymentCommit: v["deployment-commit"],
     waitSeconds: Number(v["wait-seconds"]),
     remotePlanFile: v["remote-plan"],
     remoteAcquisitionFile: v["remote-acquisition"],
@@ -69,7 +71,12 @@ try {
     throw Error("Snapshot and exact source readback must be supplied together")
   if (
     v.status &&
-    (v.acquisition || v["source-snapshot"] || v["source-readback"] || v["resume-intent"])
+    (v.acquisition ||
+      v["source-snapshot"] ||
+      v["source-readback"] ||
+      v["resume-intent"] ||
+      v["actions-run"] ||
+      v["deployment-commit"])
   )
     throw Error("Status is read-only")
   if (!authoring && v["resume-intent"]) throw Error("Authoring connector session required")

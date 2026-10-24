@@ -48,6 +48,9 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
     try {
       const input = readJSON(root, base + "/input.json"),
         latest = readJSON(root, base + "/latest.json")
+      const selection = latest?.actions_selection_path
+        ? readJSON(root, latest.actions_selection_path)
+        : null
       if (
         publication.status === "invalid" ||
         input.schema !== "research-delivery-input/v1" ||
@@ -58,7 +61,11 @@ export function deliveryCheckpointStatus(root, publicationOperations) {
             latest.run_id !== input.run_id ||
             latest.input_sha256 !== sha256(JSON.stringify(input)) ||
             (latest.status === "public_bytes_verified" &&
-              publication.status !== "public_bytes_verified")))
+              publication.status !== "public_bytes_verified"))) ||
+        (latest?.actions_selection_path &&
+          (!latest.actions_selection_path.startsWith(base + "/actions-selection") ||
+            selection?.actions_run !== latest.actions_run ||
+            selection?.commit !== latest.deployment_commit))
       )
         throw Error("Invalid delivery checkpoint")
       const remoteDelivery = inspectRemoteDelivery(root, input.run_id)
@@ -173,6 +180,21 @@ export async function deliverApprovedPublication({
     if (!readJSON(root, base + "/input.json")) atomicCreate(root, base + "/input.json", input)
     const reused = [],
       performed = []
+    const previousDelivery = readJSON(root, base + "/latest.json")
+    let activeSelectionPath =
+        previousDelivery?.actions_selection_path ||
+        (readJSON(root, base + "/actions-selection.json")
+          ? base + "/actions-selection.json"
+          : null),
+      activeSelection = activeSelectionPath ? readJSON(root, activeSelectionPath) : null
+    const selectionCheckpoint = () =>
+      activeSelection && activeSelectionPath
+        ? {
+            actions_run: activeSelection.actions_run,
+            deployment_commit: activeSelection.commit,
+            actions_selection_path: activeSelectionPath,
+          }
+        : {}
     function checkpoint(status, publication, extra = {}) {
       const value = {
         schema: "research-delivery-checkpoint/v1",
@@ -223,6 +245,7 @@ export async function deliverApprovedPublication({
             })
           : null
       return checkpoint("public_bytes_verified", publication, {
+        ...selectionCheckpoint(),
         remote_delivery: remote,
         website_data_verified: remote?.website_data_verified === true,
         source_archive_verified: remote?.source_archive_verified === true,
@@ -279,14 +302,62 @@ export async function deliverApprovedPublication({
     if (deployment) reused.push("deployment")
     while (!deployment) {
       try {
-        let selection = readJSON(root, base + "/actions-selection.json")
+        const latestCheckpoint = readJSON(root, base + "/latest.json")
+        let selectionPath =
+            latestCheckpoint?.actions_selection_path || base + "/actions-selection.json",
+          selection = readJSON(root, selectionPath),
+          retryFailure = null
         if (
           selection &&
           (selection.commit !== deploymentCommit ||
             (selection.base_commit || publication.commit) !== publication.commit ||
             (actionsRun && selection.actions_run !== actionsRun))
-        )
-          throw Error("Pinned deployment selection changed")
+        ) {
+          if (
+            latestCheckpoint?.status !== "deployment_failed" ||
+            latestCheckpoint.input_sha256 !== sha256(JSON.stringify(input)) ||
+            latestCheckpoint.actions_run !== selection.actions_run ||
+            (latestCheckpoint.deployment_commit !== undefined &&
+              latestCheckpoint.deployment_commit !== selection.commit) ||
+            !latestCheckpoint.conclusion ||
+            latestCheckpoint.conclusion === "success" ||
+            !actionsRun ||
+            !requestedDeploymentCommit ||
+            actionsRun === selection.actions_run
+          )
+            throw Error("Pinned deployment selection changed")
+          if (deploymentCommit !== selection.commit) {
+            try {
+              await execute(
+                "git",
+                ["merge-base", "--is-ancestor", selection.commit, deploymentCommit],
+                repository,
+              )
+            } catch {
+              throw Error("Pinned deployment selection changed: retry must descend from failure")
+            }
+          }
+          const failedCheckpointPath =
+              base + "/deployment-attempts/" + selection.actions_run + "/failed-checkpoint.json",
+            retryPath = base + "/actions-selection-attempts/" + actionsRun + ".json",
+            proposed = {
+              schema: "research-deployment-selection-attempt/v1",
+              run_id: run,
+              commit: deploymentCommit,
+              base_commit: publication.commit,
+              actions_run: actionsRun,
+              previous_selection_path: selectionPath,
+              previous_selection_sha256: sha256(JSON.stringify(selection)),
+              previous_failure_path: failedCheckpointPath,
+              previous_failure_sha256: sha256(JSON.stringify(latestCheckpoint)),
+            }
+          const savedRetry = readJSON(root, retryPath)
+          if (savedRetry && JSON.stringify(savedRetry) !== JSON.stringify(proposed))
+            throw Error("Conflicting failed-deployment retry selection")
+          retryFailure = { path: failedCheckpointPath, checkpoint: latestCheckpoint }
+          selectionPath = retryPath
+          selection = savedRetry || proposed
+        }
         if (!selection) {
           let selected = actionsRun
           if (!selected) {
@@ -360,12 +431,29 @@ export async function deliverApprovedPublication({
             observation.url !== `https://github.com/${GITHUB}/actions/runs/${selection.actions_run}`
           )
             throw Error("Deployment identity differs from this publication")
-          if (!readJSON(root, base + "/actions-selection.json"))
-            atomicCreate(root, base + "/actions-selection.json", selection)
+          if (
+            !["queued", "in_progress", "requested", "waiting", "pending", "completed"].includes(
+              observation.status,
+            )
+          )
+            throw Error("Unrecognized deployment state")
+          if (retryFailure) {
+            const previous = readJSON(root, retryFailure.path)
+            if (previous && JSON.stringify(previous) !== JSON.stringify(retryFailure.checkpoint))
+              throw Error("Failed deployment checkpoint changed")
+            if (!previous) atomicCreate(root, retryFailure.path, retryFailure.checkpoint)
+          }
+          const savedSelection = readJSON(root, selectionPath)
+          if (savedSelection && JSON.stringify(savedSelection) !== JSON.stringify(selection))
+            throw Error("Pinned deployment selection changed")
+          if (!savedSelection) atomicCreate(root, selectionPath, selection)
+          activeSelection = selection
+          activeSelectionPath = selectionPath
+          const selected = selectionCheckpoint()
           if (observation.status === "completed") {
             if (observation.conclusion !== "success")
               return checkpoint("deployment_failed", publication, {
-                actions_run: selection.actions_run,
+                ...selected,
                 conclusion: observation.conclusion,
                 next_action: "Inspect the failed workflow; no automatic rerun or replacement",
               })
@@ -377,26 +465,22 @@ export async function deliverApprovedPublication({
             performed.push("deployment")
             break
           }
-          if (
-            !["queued", "in_progress", "requested", "waiting", "pending"].includes(
-              observation.status,
-            )
-          )
-            throw Error("Unrecognized deployment state")
         }
       } catch (error) {
         if (
-          /selection changed|identity differs|Unexpected|Invalid|Unrecognized|exact commit/.test(
+          /selection changed|selection|identity differs|Unexpected|Invalid|Unrecognized|exact commit/.test(
             error.message,
           )
         )
           throw error
         // Do not expose command stderr, tokens, signed URLs or source bodies.
         return checkpoint("deployment_observation_failed", publication, {
+          ...selectionCheckpoint(),
           next_action: "Check GitHub availability and resume the same delivery run",
         })
       }
       const pending = checkpoint("waiting_deployment", publication, {
+        ...selectionCheckpoint(),
         next_action: "Resume this delivery run; no new build or push",
       })
       if (now() >= deadline) return pending
@@ -404,7 +488,7 @@ export async function deliverApprovedPublication({
     }
 
     publication = publicationOperationStatus(options)
-    checkpoint("checking_public_bytes", publication)
+    checkpoint("checking_public_bytes", publication, selectionCheckpoint())
     try {
       await withGardenOperationLock(root, async () => {
         await verifyPublicReadback({
@@ -420,6 +504,7 @@ export async function deliverApprovedPublication({
       })
     } catch {
       return checkpoint("public_readback_failed", publication, {
+        ...selectionCheckpoint(),
         next_action:
           "Inspect native public-readback evidence and resume only after resolving the failure",
       })

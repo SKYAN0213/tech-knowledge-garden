@@ -884,18 +884,63 @@ test("claim extraction does not classify ongoing activity as completed", async (
   )
 })
 
-test("oversized blocks and invalid parse sets stop before any model request", async () => {
-  let calls = 0
+test("oversized blocks are segmented before model requests and invalid parse sets stop early", async () => {
+  const requests = []
   const model = {
-    structured: async () => {
-      calls++
-      throw Error("Unexpected model call")
+    structured: async (request) => {
+      requests.push(request)
+      return response(request)
     },
   }
-  await assert.rejects(extractClaims(model, [parse("large", 1, 40000)]), /Source block exceeds/)
+  const large = parse("large", 1, 40000),
+    result = await extractClaims(model, [large], { candidate_key: "large" }),
+    sentSegments = requests.flatMap((request) =>
+      JSON.parse(request.messages[1].content).flatMap((document) =>
+        document.blocks.map((block) => block.text),
+      ),
+    )
+  assert.ok(requests.length > 1)
+  assert.equal(result.batches.length, requests.length)
+  assert.ok(result.batches.every((batch) => batch.request_budget.fits))
+  assert.equal(sentSegments.join(""), large.blocks[0].text)
+  const sentByKey = new Map(
+      requests.flatMap((request) =>
+        JSON.parse(request.messages[1].content).flatMap((document) =>
+          document.blocks.map((block) => [block.block_key, block.text]),
+        ),
+      ),
+    ),
+    sourceSegments = result.provenance.source_segments
+  assert.ok(sourceSegments.length > 1)
+  assert.ok(
+    sourceSegments.every(
+      (segment) =>
+        segment.block_id === large.blocks[0].block_id &&
+        segment.source_segment.text_sha256 === sha256(sentByKey.get(segment.block_key)),
+    ),
+  )
+  const orderedSegments = sourceSegments
+    .map((segment) => segment.source_segment)
+    .sort((a, b) => a.offset_start - b.offset_start)
+  assert.equal(orderedSegments[0].offset_start, 0)
+  assert.equal(orderedSegments.at(-1).offset_end, large.blocks[0].text.length)
+  assert.deepEqual(
+    orderedSegments.map((segment) => segment.sequence),
+    orderedSegments.map((_, index) => index + 1),
+  )
+  assert.ok(orderedSegments.every((segment) => segment.count === orderedSegments.length))
+  for (let index = 1; index < orderedSegments.length; index++)
+    assert.equal(orderedSegments[index].offset_start, orderedSegments[index - 1].offset_end)
+  assert.ok(
+    result.claims.every((claim) =>
+      claim.evidence.every((evidence) => !Object.hasOwn(evidence, "source_segment")),
+    ),
+  )
+
+  const callsBeforeInvalidParses = requests.length
   await assert.rejects(extractClaims(model, [parse("dup"), parse("dup")]), /Unique source parse/)
   await assert.rejects(extractClaims(model, []), /Readable parses/)
-  assert.equal(calls, 0)
+  assert.equal(requests.length, callsBeforeInvalidParses)
 })
 
 test("model evidence cannot borrow a key from another batch", async () => {
