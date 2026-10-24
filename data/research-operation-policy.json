@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-oversized-input-auto-segmentation-20261025-v2/receipt.json",
-    "sha256": "acd1531e11af561d7645efd44d81bb7d47c3826fd360dffcaa622be3cb8f0d05"
+    "path": ".local/research/development-releases/tkg-oversized-input-auto-segmentation-20261025-v3/receipt.json",
+    "sha256": "eedf0aab921918d5bff8320e633b5a6acb7a09d3096bee6c57a3823f91004f81"
   },
   "recovery": {
     "automatic_retry": false,
