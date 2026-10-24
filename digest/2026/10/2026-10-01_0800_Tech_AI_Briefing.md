@@ -220,11 +220,15 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 자사의 주내 첫 사업인 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 미국 제조업체 First Solar의 패널을 조달했으며, 상업운전은 2027년 말로 계획됐다. 회사가 제시한 향후 연간 발전량은 Southwest Power Pool(SPP) 권역에서 56,000가구가 한 해 사용하는 양을 초과하는 수준이며, 현재 발전 실적이 아니다.
 
+##### 착공과 가동 계획
 
+이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다. 완공과 계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
 
-[us.orsted.com 원문](https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico)
+회사는 이 사업이 장기 전력구매계약을 바탕으로 뉴멕시코의 증가하는 산업용 전력 수요를 충족하는 데 도움이 될 것으로 설명했다.
+
+[prnewswire.com 원문](https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html)
 
 #### [Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정](https://skyan0213.github.io/tech-knowledge-garden/news/f89187a6288f099b)
 

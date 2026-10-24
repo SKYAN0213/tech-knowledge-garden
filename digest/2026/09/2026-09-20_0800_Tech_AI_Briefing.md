@@ -138,13 +138,13 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 
 제품·서비스 · 신제품 · Fujitsu
 
-Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
+Fujitsu는 9월 14일 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
 
 ##### CPU 판매와 완제품 출하 일정
 
 CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026회계연도 4분기 공급을 계획한다. 발표한 서버는 행렬 연산 가속·SVE2 벡터 연산과 Arm CCA의 메모리 보호 기능을 활용한다. 주문·판매를 받는 시점과 고객에게 하드웨어가 전달되는 시점은 서로 다르다.
 
-[global.fujitsu 원문](https://global.fujitsu/en-global/pr/news/2026/09/14-02)
+[jcnnewswire.com 원문](https://www.jcnnewswire.com/pressrelease/110030/3/Fujitsu-launches-made-in-Japan-next-generation-CPU-FUJITSU-MONAKA-and-Fujitsu-MONAKA-Server-for-sove)
 
 ### 로봇·제조 · 3건
 

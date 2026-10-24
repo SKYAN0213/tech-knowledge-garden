@@ -75,6 +75,9 @@ article_records:
     lead: Anthropic은 9월 23일 Claude로 DNA 데이터를 분석하고 실험을 진행하는 생명과학 연구 그룹과 자체 연구실을 공개했다.
       회사에 따르면 약 950개 에이전트가 21시간 동안 2억 1,000만 토큰을 사용한 탐색에 이어 연구진이 ART라는 역전사효소 관련
       계열을 분석·보고했다. ART의 주요 기능을 확인하는 실험은 계속 진행 중이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 후보 탐색과 연구실 검증의 분담
         paragraphs:
@@ -89,9 +92,6 @@ article_records:
             수 없다.
         source_urls:
           - https://www.anthropic.com/news/claude-discovers-novel-enzyme-system
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
     kind: 사건 뉴스
     region: 해외
@@ -105,6 +105,9 @@ article_records:
     lead: Microsoft는 9월 25일 Copilot의 Home·Code·Autopilot 작업공간과 Word·Excel·PowerPoint
       통합을 발표했다. Home과 Code는 Frontier 프로그램에 단계적으로 제공하고, Autopilot은 9월 말 비공개 프리뷰로
       확대할 계획이다. Code는 GitHub Copilot 기술을 바탕으로 자연어로 앱과 자동화를 만드는 기능으로 소개됐다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 대화·작업 위임과 Office 파일 편집
         paragraphs:
@@ -113,9 +116,6 @@ article_records:
             Office 앱과 동기화하는 기능도 함께 소개했다.
         source_urls:
           - https://news.microsoft.com/source/emea/2026/09/new-microsoft-copilot-brings-home-code-and-autopilot-together/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정
     kind: 사건 뉴스
     region: 국내
@@ -130,10 +130,10 @@ article_records:
       사업에는 단독 글로벌 공급사, SK텔레콤 사업에는 주 공급사로 참여하며 10월부터 조선소·석유화학 시설에 5G SA 사설망을 구축해
       실증할 계획이다. 실증 사례로 영암 조선소 용접·도장 로봇과 인천 석유화학 시설의 위험지역 순찰 로봇을 제시했지만 아직 현장 성과가
       발표된 것은 아니다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
     kind: 사건 뉴스
     region: 해외
@@ -149,10 +149,10 @@ article_records:
       사용을 확인해 접근 차단·정책 변경을 할 수 있다. 클립보드에 복사되기 전에 민감한 자료를 차단하는 기능은 제공 예정이며, 모바일의
       파일 다운로드·붙여넣기·화면 캡처·공유 통제 확대도 설명했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는
       것은 아니다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
     kind: 사건 뉴스
     region: 국내
@@ -223,14 +223,22 @@ article_records:
     region: 해외
     facts:
       who: Lakewood-Amedex Biotherapeutics
-      when: 2026-09-24 회사 IR 게시
-      where: 미국 다기관 임상시험
+      when: 2026-09-24 회사 발표
+      where: 미기재
       what: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
       how: Nu-3 국소 젤의 감염성 당뇨발 궤양 대상 용량 탐색 2a상 첫 환자 투여
-      why: 상처 감염에 대한 비항생제 국소 치료 후보의 임상 평가
+      why: 감염성 당뇨발 궤양 대상 국소 항균 후보의 임상 평가
     lead: Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고
       발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요
       자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다.
+    explanations:
+      - heading: 시험 설계와 후속 자료
+        paragraphs:
+          - 시험은 제1형 또는 제2형 당뇨병이 있는 성인의 경증 감염성 당뇨발 궤양을 대상으로 Nu-3 젤 2%, 5%, 10%
+            농도를 평가한다. 첫 환자 투여는 시험 개시를 의미하며 안전성·유효성 결과는 아직 나오지 않았다. 회사가 밝힌 데이터 공개
+            시점도 계획이고, 환자 수·용량군 결과와 후속 임상 진행은 추후 자료로 확인해야 한다.
+        source_urls:
+          - https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html
     papers: []
     relations: []
     topic_ids: []
@@ -379,27 +387,27 @@ article_reviews:
   - title: Anthropic, Claude 생명과학 연구실 공개…새 역전사효소 계열 보고
     event_id: ef1b3a4772eab837
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Microsoft Copilot, Home·Code·Autopilot과 Office 편집 통합 발표
     event_id: 295f6ca27b06224b
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Samsung, KT·SKT AI RAN 사업 계약…조선소 용접 로봇·석유화학 순찰 실증 예정
     event_id: 461333ec2270a664
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
     event_id: 280289462980857d
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-23
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
     event_id: 783ed5a89f40a298
     review_status: verified
@@ -421,9 +429,9 @@ article_reviews:
   - title: Lakewood-Amedex, 감염성 당뇨발 궤양 치료제 Nu-3 2a상 첫 환자 투여
     event_id: 53172edb0c5fef70
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-24
-    reviewed_at: 2026-09-30
+    reviewed_at: 2026-10-23
+    concept_ids: []
   - title: 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
     event_id: 6362665d03f77e72
     review_status: verified
@@ -454,6 +462,7 @@ article_reviews:
     concept_ids: []
     published_at: 2026-09-25
     reviewed_at: 2026-10-10
+source_marker_format: preserved-retrospective/v1
 ---
 
 # 이번 호 표지
@@ -540,8 +549,6 @@ Home은 Chat과 작업 위임용 Cowork를 모으며, Autopilot은 사용자가 
 
 삼성전자는 9월 23일 KT·SK텔레콤의 정부 Hyper AI Network 사업에 AI RAN 공급 계약을 맺었다고 발표했다. KT 사업에는 단독 글로벌 공급사, SK텔레콤 사업에는 주 공급사로 참여하며 10월부터 조선소·석유화학 시설에 5G SA 사설망을 구축해 실증할 계획이다. 실증 사례로 영암 조선소 용접·도장 로봇과 인천 석유화학 시설의 위험지역 순찰 로봇을 제시했지만 아직 현장 성과가 발표된 것은 아니다. [S5]
 
-
-
 ## Google Chrome Enterprise, 관리형 AI·데이터 유출 통제 기능 확대
 
 **분야:** 사이버보안
@@ -551,8 +558,6 @@ Home은 Chat과 작업 위임용 Cowork를 모으며, Autopilot은 사용자가 
 **기업·기관:** Google Cloud
 
 Google Cloud는 9월 23일 Chrome Enterprise의 관리형 AI 경험과 데이터 보호 기능을 발표했다. IT 관리자는 trusted tester 프로그램에서 회사가 검토한 AI Skills를 배포하고, 개선된 보고서에서 생성형 AI·SaaS 사용을 확인해 접근 차단·정책 변경을 할 수 있다. 클립보드에 복사되기 전에 민감한 자료를 차단하는 기능은 제공 예정이며, 모바일의 파일 다운로드·붙여넣기·화면 캡처·공유 통제 확대도 설명했다. 발표문에서 기능별 이용 단계가 달라 모든 통제가 즉시 일반 제공되는 것은 아니다. [S6]
-
-
 
 ## SK하이닉스, TSMC와 HBM5 패키징 검증 협력…OIP서 HBM4 전시
 
@@ -602,9 +607,11 @@ SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로�
 **세부 태그:** 실증·재현
 **기업·기관:** Lakewood-Amedex Biotherapeutics
 
-Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다. [S10]
+Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다. [S16]
 
-첫 환자 투여는 시험 개시를 의미하며 안전성·유효성 결과는 아직 나오지 않았다. 회사가 밝힌 데이터 공개 시점도 계획이고, 환자 수·용량군 결과와 후속 임상 진행은 추후 자료로 확인해야 한다. [S10]
+### 시험 설계와 후속 자료
+
+시험은 제1형 또는 제2형 당뇨병이 있는 성인의 경증 감염성 당뇨발 궤양을 대상으로 Nu-3 젤 2%, 5%, 10% 농도를 평가한다. 첫 환자 투여는 시험 개시를 의미하며 안전성·유효성 결과는 아직 나오지 않았다. 회사가 밝힌 데이터 공개 시점도 계획이고, 환자 수·용량군 결과와 후속 임상 진행은 추후 자료로 확인해야 한다. [S16]
 
 ## 삼성전자, 하나금융 인천 신사옥에 5G 특화망 솔루션 공급
 
@@ -723,9 +730,9 @@ NASA는 9월 25일 미국 앨라배마주 Marshall Space Flight Center에서 ASC
 - [S7] https://news.skhynix.com/en/tsmc-oip-conference-2026/
 - [S8] https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally
 - [S9] https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
-- [S10] https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers
 - [S11] https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector
 - [S12] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
 - [S13] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S14] https://asec.ahnlab.com/ko/95643/
 - [S15] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
+- [S16] https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html

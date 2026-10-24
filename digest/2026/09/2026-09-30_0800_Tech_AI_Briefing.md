@@ -218,9 +218,11 @@ SPARK 사업은 에너지부의 전력망 회복력·혁신 파트너십 프로�
 
 Lakewood-Amedex는 9월 24일 감염성 당뇨발 궤양 환자를 대상으로 한 Nu-3 2a상에서 첫 환자에게 투여했다고 발표했다. 임상은 여러 기관에서 진행하는 단일 눈가림 용량 탐색 시험이며 세 가지 농도의 국소 항균 젤을 평가한다. 회사는 주요 자료를 2027년 1분기 공개할 것으로 예상한다고 밝혔다.
 
+##### 시험 설계와 후속 자료
 
+시험은 제1형 또는 제2형 당뇨병이 있는 성인의 경증 감염성 당뇨발 궤양을 대상으로 Nu-3 젤 2%, 5%, 10% 농도를 평가한다. 첫 환자 투여는 시험 개시를 의미하며 안전성·유효성 결과는 아직 나오지 않았다. 회사가 밝힌 데이터 공개 시점도 계획이고, 환자 수·용량군 결과와 후속 임상 진행은 추후 자료로 확인해야 한다.
 
-[lakewoodamedex.investorroom.com 원문](https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers)
+[prnewswire.com 원문](https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html)
 
 #### [FDA, MCT8 결핍증 환자 말초 갑상선중독증 치료제 첫 승인](https://skyan0213.github.io/tech-knowledge-garden/news/d2674c5a4f395eda)
 

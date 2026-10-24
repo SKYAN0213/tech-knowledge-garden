@@ -91,7 +91,7 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 
 제품·서비스 · 신제품 · Fujitsu
 
-Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
+Fujitsu는 9월 14일 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
 
 ### 로봇·제조 · 3건
 
@@ -148,10 +148,10 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
 - [S6] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
 - [S7] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
-- [S8] https://global.fujitsu/en-global/pr/news/2026/09/14-02
 - [S9] https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/
 - [S10] https://www.navercorp.com/media/pressReleasesDetail?seq=10034661
 - [S11] https://www.roche.com/media/releases/med-cor-2026-09-17
 - [S13] https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
 - [S14] https://www.yna.co.kr/amp/view/AKR20260918151800003
 - [S15] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen
+- [S16] https://www.jcnnewswire.com/pressrelease/110030/3/Fujitsu-launches-made-in-Japan-next-generation-CPU-FUJITSU-MONAKA-and-Fujitsu-MONAKA-Server-for-sove

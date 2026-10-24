@@ -203,6 +203,9 @@ article_records:
     lead: 캐나다 사이버보안센터는 9월 17일 Cisco ISE와 ISE-PIC에 영향을 주는 취약점 3건에 대한 업데이트 적용을 권고했다.
       Cisco는 이 가운데 인증을 우회해 관리자 수준 접근으로 이어질 수 있는 CVE-2026-76460의 실제 악용을 확인했다. 미국
       CISA도 전날 이 취약점을 실제 악용 목록에 추가했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 설치 계열별 수정 버전 확인
         paragraphs:
@@ -211,9 +214,6 @@ article_records:
             설치 버전에 맞는 Cisco 안내를 확인해 패치와 침해 여부 점검을 진행해야 한다.
         source_urls:
           - https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Fujitsu, MONAKA CPU 판매는 11월·서버 출하는 내년 4월부터 예고
     kind: 사건 뉴스
     region: 해외
@@ -223,14 +223,10 @@ article_records:
       where: 글로벌 CPU, 일본·유럽 서버
       what: MONAKA CPU·서버 판매 계획 공개
       how: 2nm 코어와5nm 캐시·IO의3D결합
-      why: 데이터센터용 Arm 컴퓨팅 제품 공급
-    lead: Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터
-      시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과
-      8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차
-      진행할 예정이다.
-    papers: []
-    relations: []
-    topic_ids: []
+      why: 데이터센터용 CPU 제품 공급
+    lead: Fujitsu는 9월 14일 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다.
+      CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을
+      지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다.
     explanations:
       - heading: CPU 판매와 완제품 출하 일정
         paragraphs:
@@ -238,7 +234,10 @@ article_records:
             가속·SVE2 벡터 연산과 Arm CCA의 메모리 보호 기능을 활용한다. 주문·판매를 받는 시점과 고객에게 하드웨어가
             전달되는 시점은 서로 다르다.
         source_urls:
-          - https://global.fujitsu/en-global/pr/news/2026/09/14-02
+          - https://www.jcnnewswire.com/pressrelease/110030/3/Fujitsu-launches-made-in-Japan-next-generation-CPU-FUJITSU-MONAKA-and-Fujitsu-MONAKA-Server-for-sove
+    papers: []
+    relations: []
+    topic_ids: []
   - title: Teradyne Robotics, UR·MiR 영업을 총괄할 CCO 선임
     kind: 사건 뉴스
     region: 해외
@@ -294,6 +293,9 @@ article_records:
       충족했다고 발표했다. 이전 치료를 한 차례 이상 받은 환자에서 모수네투주맙·레날리도마이드 병용을 리툭시맙·레날리도마이드와 비교한
       시험이다. 회사는 질병 진행이나 사망까지의 기간인 무진행생존기간이 통계적으로 유의하게 개선됐다고 밝혔지만, 발표문에 구체적인 효과
       크기는 제시하지 않았다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 중간 결과와 허가 신청 구분
         paragraphs:
@@ -302,9 +304,6 @@ article_records:
             이번 발표 자체가 새 적응증 허가를 뜻하지 않는다.
         source_urls:
           - https://www.roche.com/media/releases/med-cor-2026-09-17
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료
     kind: 사건 뉴스
     region: 해외
@@ -319,6 +318,9 @@ article_records:
       1기를 572km 궤도로 발사했다. ‘Owl By The Dozen’ 임무는 Launch Complex 1에서 이뤄졌으며, 회사의
       전체 96번째이자 Synspective를 위한 12번째 발사다. 이 위성군은 합성개구레이더(SAR) 관측 데이터를 도시계획·기반시설
       감시·재난 대응에 제공한다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 이번 발사와 남은 계약 물량
         paragraphs:
@@ -327,9 +329,6 @@ article_records:
             물량이다.
         source_urls:
           - https://rocketlabcorp.com/missions/launches/owl-by-the-dozen
-    papers: []
-    relations: []
-    topic_ids: []
   - title: 두산로보틱스, 권영민 사장 신임 CEO로 선임
     kind: 사건 뉴스
     region: 국내
@@ -394,15 +393,17 @@ article_reviews:
   - title: 캐나다 사이버센터, 실제 악용 중인 Cisco ISE 취약점 패치 권고
     event_id: 60d190b7985f9093
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-17
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Fujitsu, MONAKA CPU 판매는 11월·서버 출하는 내년 4월부터 예고
     event_id: 6f3a6e0e59363e45
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-14
-    reviewed_at: 2026-09-20
+    reviewed_at: 2026-10-23
+    concept_ids: []
+    date_kind: source-stated-event-date
+    source_published_at: null
   - title: Teradyne Robotics, UR·MiR 영업을 총괄할 CCO 선임
     event_id: 2558745b2bfe7d79
     review_status: verified
@@ -418,15 +419,15 @@ article_reviews:
   - title: Roche, 재발성 여포성 림프종 3상에서 무진행생존기간 개선 발표
     event_id: 21e5701b8e5bea51
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-17
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Rocket Lab, Synspective 레이더 위성의 572km 궤도 발사 완료
     event_id: c8c055684e1b9e3a
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-19
     reviewed_at: 2026-10-10
-    concept_ids: []
     date_kind: source-stated-event-date
     source_published_at: null
   - title: 두산로보틱스, 권영민 사장 신임 CEO로 선임
@@ -578,11 +579,11 @@ AWS는 9월 18일 PrivateLink에 다른 VPC나 계정의 네트워크 구간에 
 **세부 태그:** 신제품
 **기업·기관:** Fujitsu
 
-Fujitsu는 9월 14일 Arm 기반 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다. [S8]
+Fujitsu는 9월 14일 FUJITSU-MONAKA CPU와 이를 탑재한 서버의 판매를 2026년 11월부터 시작한다고 발표했다. CPU는 2nm 코어와 5nm 캐시·입출력 부분을 3차원으로 결합하고, 최대 3.8GHz 동작과 8,800MT/s 메모리 전송을 지원한다. 일본·유럽의 1U·2U 서버 판매 개시와 별도로 실제 서버 출하는 2027년 4월부터 순차 진행할 예정이다. [S16]
 
 ### CPU 판매와 완제품 출하 일정
 
-CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026회계연도 4분기 공급을 계획한다. 발표한 서버는 행렬 연산 가속·SVE2 벡터 연산과 Arm CCA의 메모리 보호 기능을 활용한다. 주문·판매를 받는 시점과 고객에게 하드웨어가 전달되는 시점은 서로 다르다. [S8]
+CPU 단품은 서버 제조사와 데이터센터 운영자를 대상으로 2026회계연도 4분기 공급을 계획한다. 발표한 서버는 행렬 연산 가속·SVE2 벡터 연산과 Arm CCA의 메모리 보호 기능을 활용한다. 주문·판매를 받는 시점과 고객에게 하드웨어가 전달되는 시점은 서로 다르다. [S16]
 
 ## Teradyne Robotics, UR·MiR 영업을 총괄할 CCO 선임
 
@@ -681,10 +682,10 @@ Rocket Lab은 9월 19일 03시 22분 UTC에 Electron으로 일본 Synspective의
 - [S5] https://aws.amazon.com/about-aws/whats-new/2026/09/new-agentcore-runtime-generally-available/
 - [S6] https://aws.amazon.com/about-aws/whats-new/2026/9/privatelink-tunnel-endpoint/
 - [S7] https://www.cyber.gc.ca/en/alerts-advisories/al26-021-vulnerabilities-impacting-cisco-identity-services-engine-ise-cisco-ise-passive-identity-connector-ise-pic-cve-2026-20192-cve-2026-76423-cve-2026-76460
-- [S8] https://global.fujitsu/en-global/pr/news/2026/09/14-02
 - [S9] https://www.universal-robots.com/news-and-media/news-center/teradyne-robotics-appoints-jacob-pascual-pape-chief-commercial-officer/
 - [S10] https://www.navercorp.com/media/pressReleasesDetail?seq=10034661
 - [S11] https://www.roche.com/media/releases/med-cor-2026-09-17
 - [S13] https://www.doosanrobotics.com/en/about/promotion/news/doosan-robotics-appoints-youngmin-kwon-as-new-ceo
 - [S14] https://www.yna.co.kr/amp/view/AKR20260918151800003
 - [S15] https://rocketlabcorp.com/missions/launches/owl-by-the-dozen
+- [S16] https://www.jcnnewswire.com/pressrelease/110030/3/Fujitsu-launches-made-in-Japan-next-generation-CPU-FUJITSU-MONAKA-and-Fujitsu-MONAKA-Server-for-sove

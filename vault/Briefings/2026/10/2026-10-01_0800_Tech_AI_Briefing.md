@@ -119,7 +119,7 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 생산·공급망 · 사업·고객 · 설비 투자 · 수주·계약 · Ørsted · First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 자사의 주내 첫 사업인 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 미국 제조업체 First Solar의 패널을 조달했으며, 상업운전은 2027년 말로 계획됐다. 회사가 제시한 향후 연간 발전량은 Southwest Power Pool(SPP) 권역에서 56,000가구가 한 해 사용하는 양을 초과하는 수준이며, 현재 발전 실적이 아니다.
 
 #### [[News/f89187a6288f099b|Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정]]
 
@@ -204,7 +204,6 @@ Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Syn
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html
@@ -215,3 +214,4 @@ Rocket Lab은 미국 현지시간 9월 30일(한국시간 10월 1일) 일본 Syn
 - [S18] https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
 - [S19] https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
 - [S20] https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
+- [S21] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html

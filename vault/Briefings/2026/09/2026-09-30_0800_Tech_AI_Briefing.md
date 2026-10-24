@@ -156,9 +156,9 @@ NASA는 9월 25일 미국 앨라배마주 Marshall Space Flight Center에서 ASC
 - [S7] https://news.skhynix.com/en/tsmc-oip-conference-2026/
 - [S8] https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally
 - [S9] https://www.energy.gov/articles/energy-department-announces-speed-power-investments-across-26-states-lower-electricity
-- [S10] https://lakewoodamedex.investorroom.com/2026-09-24-Lakewood-Amedex-Biotherapeutics-Announces-First-Patient-Dosed-in-Phase-2a-Clinical-Trial-of-Nu-3-for-Infected-Diabetic-Foot-Ulcers
 - [S11] https://news.samsung.com/global/samsung-sk-telecom-and-hana-financial-group-buildkoreas-first-private-5g-smart-office-in-the-financial-sector
 - [S12] https://www.fda.gov/news-events/press-announcements/fda-approves-first-treatment-mct8-deficiency
 - [S13] https://www.esa.int/Science_Exploration/Space_Science/Juice/Successful_Earth_flyby_improves_Juice_s_course_to_Jupiter
 - [S14] https://asec.ahnlab.com/ko/95643/
 - [S15] https://www.nasa.gov/directorates/rtmd/nasa-tests-dual-mode-propulsion-cubesat-ahead-of-launch/
+- [S16] https://www.prnewswire.com/news-releases/lakewood-amedex-biotherapeutics-announces-first-patient-dosed-in-phase-2a-clinical-trial-of-nu-3-for-infected-diabetic-foot-ulcers-302888387.html

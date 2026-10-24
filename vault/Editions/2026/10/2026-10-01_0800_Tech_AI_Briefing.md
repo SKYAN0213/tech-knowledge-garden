@@ -34,10 +34,10 @@ article_records:
     lead: OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께
       제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고,
       양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
     kind: 사건 뉴스
     region: 해외
@@ -51,6 +51,9 @@ article_records:
     lead: DigitalOcean은 10월 1일 Managed Agents 공개 프리뷰에 Agent Droplets를 도입했다. 월간 Pro는
       50달러, Team은 200달러이며 에이전트 사용료를 각각 15%와 20% 할인한다. 기존 에이전트 실행 도구를 전용
       microVM에서 이용하고 유휴 상태에는 자동으로 일시정지하는 방식이다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 실행 상태와 잔액 소진 후 재개
         paragraphs:
@@ -65,9 +68,6 @@ article_records:
             주기에 따로 청구된다. 월간 요금과 할인율만으로 전체 클라우드 비용이 고정된다고 볼 수 없다.
         source_urls:
           - https://www.digitalocean.com/blog/introducing-agent-droplets
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가
     kind: 사건 뉴스
     region: 해외
@@ -82,6 +82,9 @@ article_records:
       Graph·Bigtable·Managed Service for Apache Spark 지원을 추가했다. MCP 도구와 에이전트
       skills를 통해 기존 코딩 에이전트가 Google Cloud 데이터 제품을 사용하도록 하는 구성이다. 도구 묶음 자체는 무료지만
       실제 클라우드 서비스 사용에는 표준 요금이 적용된다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 사용자·서비스 계정 권한을 따르는 데이터 접근
         paragraphs:
@@ -96,9 +99,6 @@ article_records:
             안내한다. 에이전트가 이용한 클라우드 서비스의 사용료는 Data Agent Kit의 무료 제공과 별개다.
         source_urls:
           - https://cloud.google.com/blog/topics/developers-practitioners/data-agent-kit-is-now-ga-bring-google-data-cloud-to-any-coding-agent/
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
     kind: 사건 뉴스
     region: 해외
@@ -113,6 +113,9 @@ article_records:
       M4N·Z4D VM을 소개했다. 회사는 GKE Agent Substrate의 밀도가 일반 컨테이너 런타임보다 10배 높고 재개 시간은
       500밀리초 미만이라고 설명했다. M4N과 Z4D는 정식 제공됐으며 에이전트 격리 파일 작업공간을 연결하는 Filestore
       agent volumes는 프리뷰 접근 신청 단계다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 샌드박스 재개와 영구 작업공간
         paragraphs:
@@ -128,9 +131,6 @@ article_records:
             microVM 실행에 활용하는 VM이다. 해당 수치는 회사가 제시한 구성과 최대치 조건을 따른다.
         source_urls:
           - https://cloud.google.com/blog/topics/ai-infrastructure/whats-new-in-ai-infrastructure-this-month
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개
     kind: 사건 뉴스
     region: 해외
@@ -144,6 +144,9 @@ article_records:
     lead: Cisco는 9월 30일 Catalyst SD-WAN Manager API 인증 우회 취약점 CVE-2026-76504를 공개했다.
       영향받는 시스템에서는 인증되지 않은 원격 공격자가 관리자 권한으로 API에 접근할 수 있으며, Cisco PSIRT는 9월 실제
       악용을 인지했다고 밝혔다. 회사는 수정된 소프트웨어로 업그레이드할 것을 권고했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 수정 버전과 임시 부분 보호
         paragraphs:
@@ -157,9 +160,6 @@ article_records:
             온프레미스 환경에서 신뢰할 수 없는 네트워크의 접근을 제한하는 것은 완화 조치이며 소프트웨어 수정을 대체하지 않는다.
         source_urls:
           - https://www.cisco.com/c/en/us/support/docs/csa/cisco-sa-sdwan-webauth-xr8beuuU.html
-    papers: []
-    relations: []
-    topic_ids: []
   - title: AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고
     kind: 사건 뉴스
     region: 해외
@@ -174,6 +174,9 @@ article_records:
       rank 또는 네트워크 인접 공격자 조건에서 메모리 노출과 ASLR 우회, RCCL 프로세스 내 원격 코드 실행으로 이어질 가능성이
       있으며 CVSS 4.0 기본 점수는 7.7이다. 회사는 열거한 Instinct 제품에 ROCm 7.14 완화 버전을 적용할 것을
       권고했다.
+    papers: []
+    relations: []
+    topic_ids: []
     explanations:
       - heading: 공격 조건과 완화 버전
         paragraphs:
@@ -188,9 +191,6 @@ article_records:
             최초 공개일인 9월 30일과 정정일을 구분한다.
         source_urls:
           - https://www.amd.com/en/resources/product-security/bulletin/amd-sb-6033.html
-    papers: []
-    relations: []
-    topic_ids: []
   - title: Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
     kind: 사건 뉴스
     region: 해외
@@ -204,10 +204,10 @@ article_records:
     lead: Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은
       373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027
       회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
     kind: 사건 뉴스
     region: 해외
@@ -251,28 +251,36 @@ article_records:
     lead: IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류
       로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇
       설치·가동 재고와 같은 지표가 아니다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
     kind: 사건 뉴스
     region: 해외
     facts:
-      who: Ørsted Americas Onshore
+      who: Ørsted
       when: 2026-09-30 착공 발표; 상업운전은 2027년 말 목표
       where: 미국 뉴멕시코주 Roosevelt County
       what: Blackwater Solar 200MW 사업의 실제 건설 시작
       how: 장기 전력구매계약 기반으로 First Solar 패널 조달
-      why: 뉴멕시코 산업 전력수요 공급과 지역 재생에너지 확대
-    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고
-      발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다.
-      56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다.
+      why: 증가하는 뉴멕시코 산업용 전력 수요 대응
+    lead: Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 자사의 주내 첫 사업인 200MW Blackwater
+      Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 미국 제조업체 First Solar의 패널을 조달했으며,
+      상업운전은 2027년 말로 계획됐다. 회사가 제시한 향후 연간 발전량은 Southwest Power Pool(SPP) 권역에서
+      56,000가구가 한 해 사용하는 양을 초과하는 수준이며, 현재 발전 실적이 아니다.
+    explanations:
+      - heading: 착공과 가동 계획
+        paragraphs:
+          - 이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다. 완공과
+            계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
+          - 회사는 이 사업이 장기 전력구매계약을 바탕으로 뉴멕시코의 증가하는 산업용 전력 수요를 충족하는 데 도움이 될 것으로
+            설명했다.
+        source_urls:
+          - https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
     papers: []
     relations: []
     topic_ids: []
-    analysis_summary: 이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다.
-      완공과 계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
     next_check: 공사 진척, 계통 연결, 장기계약 인도 시점과 2027년 말 상업운전 달성 여부를 확인한다.
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     kind: 사건 뉴스
@@ -288,10 +296,10 @@ article_records:
       Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear
       Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과
       향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
     kind: 사건 뉴스
     region: 해외
@@ -306,10 +314,10 @@ article_records:
       지표를 공개했다. 3상 중간위험군 635명 분석에서 방사선 치료 병용군은 대조군보다 재발 또는 전립선암 사망 위험이 낮았다고 회사는
       보고했다(HR 0.59, 95% CI 0.41–0.84, p=0.0034). 2상 혈액 비교는 병용군 13명과 표준치료군 6명의 탐색
       분석이며, 대조군과의 정식 비교는 진행 중이다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
     kind: 사건 뉴스
     region: 해외
@@ -323,10 +331,10 @@ article_records:
     lead: HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS,
       CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새
       프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다.
-    explanations: []
     papers: []
     relations: []
     topic_ids: []
+    explanations: []
   - title: NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
     kind: 사건 뉴스
     region: 해외
@@ -542,45 +550,45 @@ article_reviews:
   - title: OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
     event_id: 8fac3ce4d39c6ea9
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
     event_id: a82ab8c2c2f14be9
     review_status: verified
+    concept_ids: []
     published_at: 2026-10-01
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Google Cloud Data Agent Kit 정식 제공…Bigtable·Spark 지원 추가
     event_id: 294333117691a99b
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개
     event_id: 72249bd53d8a5849
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Cisco Catalyst SD-WAN Manager API 인증 우회 취약점 공개
     event_id: 0b883a59e5850ce3
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고
     event_id: 2000861d5f1c75c8
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Micron, 2026 회계연도 매출 1,331억 9천만 달러 발표
     event_id: 20af87012182fbd4
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
     event_id: 28543c78d1a0a3ec
     review_status: verified
@@ -590,33 +598,33 @@ article_reviews:
   - title: IFR, 2025년 전문 서비스 로봇 출하 24% 증가 집계
     event_id: 1e78f5fd4a5acdc8
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
     event_id: 926dd2776aef7b1b
     review_status: verified
-    concept_ids: []
     published_at: 2026-09-30
-    reviewed_at: 2026-10-01
+    reviewed_at: 2026-10-23
+    concept_ids: []
   - title: Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
     event_id: f89187a6288f099b
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
     event_id: f795c88cad060d16
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
     event_id: 3cfdb073a82debc3
     review_status: verified
+    concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-10
-    concept_ids: []
   - title: NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
     event_id: 086bdbb3792ca8d9
     review_status: verified
@@ -659,6 +667,7 @@ article_reviews:
     concept_ids: []
     published_at: 2026-09-30
     reviewed_at: 2026-10-08
+source_marker_format: preserved-retrospective/v1
 ---
 
 # 이번 호 표지
@@ -688,8 +697,6 @@ OpenAI·Synopsys, 반도체 설계 특화 모델 공동 개발 계약
 **기업·기관:** OpenAI, Synopsys
 
 OpenAI와 Synopsys는 2026년 9월 30일 반도체 설계 특화 모델 GPT-Synopsys를 공동 개발하고 고객에게 함께 제공하는 다년 계약을 발표했다. OpenAI는 Synopsys의 전자설계자동화(EDA) 도구를 사용할 수 있도록 라이선스를 받고, 양사는 연구개발·시장 출시와 수익 배분에 협력한다. 초기 기술 협의는 시작됐지만 제품 출시일과 실제 설계 성과는 발표되지 않았다. [S1]
-
-
 
 ## DigitalOcean, 에이전트 실행·추론·저장을 묶은 Agent Droplets 공개
 
@@ -791,8 +798,6 @@ AMD는 10월 6일 제품 표의 CVE를 정정했다. 현재 표에는 본문과 
 
 Micron은 9월 30일, 9월 3일 종료한 2026 회계연도 매출이 1,331억 9천만 달러로 집계됐다고 발표했다. 전년도 매출은 373억 8천만 달러였으며, 이번 4분기 매출은 542억 3천만 달러로 직전 분기 414억 6천만 달러와 비교된다. 회사는 2027 회계연도 1분기 매출 가이던스를 615억 달러±15억 달러로 제시했다. [S7]
 
-
-
 ## Hitachi·FANUC, 이바라키 공장서 Physical AI 검증 후 공동 배치 계획
 
 **분야:** 로봇·제조
@@ -821,8 +826,6 @@ Hitachi Group 공장을 첫 적용 현장인 Customer Zero로 삼아 생산 현�
 
 IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만 대로 전년보다 24% 증가했다고 발표했다. 운송·물류 로봇은 117,500대로 21% 늘어 전문 서비스 로봇 출하의 47%를 차지했다. 이 집계는 전문 서비스 로봇 기준으로 산업용 로봇 설치·가동 재고와 같은 지표가 아니다. [S9]
 
-
-
 ## Ørsted, 미국 뉴멕시코 200MW 태양광 발전소 건설 착수
 
 **분야:** 에너지·기후기술
@@ -831,7 +834,13 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 **세부 태그:** 설비 투자, 수주·계약
 **기업·기관:** Ørsted, First Solar
 
-Ørsted는 9월 30일 뉴멕시코주 Roosevelt County의 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 First Solar의 미국산 패널을 사용하고, 상업운전은 2027년 말로 계획됐다. 56,000가구 상당의 연간 공급량은 회사 추정치로 현재 발전량이 아니다. [S10]
+Ørsted는 9월 30일 뉴멕시코주 Roosevelt County에서 자사의 주내 첫 사업인 200MW Blackwater Solar 건설을 시작했다고 발표했다. 장기 전력구매계약을 맺었으며 미국 제조업체 First Solar의 패널을 조달했으며, 상업운전은 2027년 말로 계획됐다. 회사가 제시한 향후 연간 발전량은 Southwest Power Pool(SPP) 권역에서 56,000가구가 한 해 사용하는 양을 초과하는 수준이며, 현재 발전 실적이 아니다. [S21]
+
+### 착공과 가동 계획
+
+이 사건은 사업 발표에서 실제 착공으로 진행된 프로젝트 단계 변화이며, 전력 수요와 패널 공급망을 함께 밝힌다. 완공과 계통 연결 전에는 계획된 발전용량이 전력망의 실제 공급량으로 계상되지 않는다.
+
+회사는 이 사업이 장기 전력구매계약을 바탕으로 뉴멕시코의 증가하는 산업용 전력 수요를 충족하는 데 도움이 될 것으로 설명했다. [S21]
 
 ## Deployable Energy, INL DOME서 1MWe 이동형 원자로 시험 대상으로 선정
 
@@ -843,8 +852,6 @@ IFR은 9월 30일 2025년 전 세계 전문 서비스 로봇 출하가 약 25만
 
 Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation Center가 Deployable Energy를 2027년 DOME 시험 대상으로 선정했다고 발표했다. 회사의 Nuclear Unity Battery는 1MWe급 경수 감속·헬륨 냉각 수송형 마이크로원자로이며, 이전에는 무전력 핵임계 달성을 보고했다. 선정과 향후 전출력 시험 계획은 전력망 공급이나 상업 운전을 의미하지 않는다. [S11]
 
-
-
 ## Candel, 전립선암 면역치료 후보의 장기 3상·초기 2상 면역 자료 공개
 
 **분야:** 바이오·의료기술
@@ -855,8 +862,6 @@ Idaho National Laboratory는 9월 30일 DOE 산하 National Reactor Innovation C
 
 Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상 중간위험군 분석과 PrTK05 2상 면역 지표를 공개했다. 3상 중간위험군 635명 분석에서 방사선 치료 병용군은 대조군보다 재발 또는 전립선암 사망 위험이 낮았다고 회사는 보고했다(HR 0.59, 95% CI 0.41–0.84, p=0.0034). 2상 혈액 비교는 병용군 13명과 표준치료군 6명의 탐색 분석이며, 대조군과의 정식 비교는 진행 중이다. [S12]
 
-
-
 ## ARPA-H, 적응형 임상시험 인프라 SURPASS 등 4개 프로그램 발표
 
 **분야:** 바이오·의료기술
@@ -866,8 +871,6 @@ Candel Therapeutics는 9월 30일 후보물질 아글라티마진의 PrTK03 3상
 **기업·기관:** HHS, ARPA-H
 
 HHS 산하 ARPA-H는 9월 30일 SURPASS와 임상시험 사이트·데이터·환자 지원을 위한 STACK, COMMONS, CINCH를 발표했다. SURPASS는 디지털 트윈 기반 시험 설계와 누적 데이터 실시간 분석, 시험 운영 자동화를 연구한다. 새 프로그램의 개발 계획이며 임상 기간 단축이나 치료제 승인 결과가 이미 확인된 것은 아니다. [S13]
-
-
 
 ## NASA, 달 표면 5G·Wi-Fi 6 통신 개발에 Modulate Space 계약
 
@@ -1038,7 +1041,6 @@ SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2
 - [S7] https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm
 - [S8] https://www.fanuc.co.jp/en/profile/pr/newsrelease/2026/notice20260930.html
 - [S9] https://ifr.org/ifr-press-releases/news/global-sales-of-professional-service-robots-surge-24-percent
-- [S10] https://us.orsted.com/news-archive/2026/09/orsted-begins-construction-on-blackwater-solar-in-new-mexico
 - [S11] https://inl.gov/news-release/deployable-energy-selected-to-test-its-nuclear-battery-at-dome/
 - [S12] https://ir.candeltx.com/news-releases/news-release-details/candel-therapeutics-announces-integrated-clinical-and-biomarker
 - [S13] https://www.hhs.gov/press-room/hhs-arpa-h-launch-surpass-modernize-clinical-trials.html
@@ -1049,3 +1051,4 @@ SK하이닉스 글이 인용한 IEA 추정에서 전 세계 데이터센터의 2
 - [S18] https://www.nlr.gov/news/detail/program/2026/as-local-power-grows-utilities-reorganize-for-resilience
 - [S19] https://news.skhynix.com/en/ai-infrastructure-insight-ep3/
 - [S20] https://nih.go.kr/ko/bbs/B0000130/view.do?nttId=13322&menuNo=300829&pageIndex=1
+- [S21] https://www.prnewswire.com/news-releases/orsted-begins-construction-on-blackwater-solar-in-new-mexico-and-announces-wetland-restoration-partnership-302894344.html
