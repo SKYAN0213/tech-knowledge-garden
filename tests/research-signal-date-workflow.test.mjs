@@ -261,15 +261,22 @@ test("Jiyi legacy date migration and workflow guard", async (t) => {
   atomicWrite(vault, before.relative, preserved.content)
 
   // The older publication value is already correct here. A different native
-  // event on the same URL supplies June 26; the workflow must reject that date.
+  // event on the same URL supplies June 26; reject it before note approval.
   const oldOther = signalMeta("1604", "2026-06-28"),
     otherBefore = put(oldOther),
     wrong = structuredClone(oldOther)
   wrong.reviewed = "2026-06-30"
   wrong.observations[0].occurred_at = "2026-06-26"
   const wrongDecision = decision(otherBefore, wrong, inputs)
-  await approveNoteReview(root, "jiyi-wrong-event-date", wrongDecision, { vault })
-  atomicWrite(vault, otherBefore.relative, wrongDecision.notes[0].content)
+  await assert.rejects(
+    approveNoteReview(root, "jiyi-wrong-event-date", wrongDecision, { vault }),
+    /exact verified effective_period from the same event/,
+  )
+  assert.equal(
+    fs.existsSync(path.join(root, "runs/jiyi-wrong-event-date/approved-notes.json")),
+    false,
+  )
+  assert.equal(fs.readFileSync(path.join(vault, otherBefore.relative), "utf8"), otherBefore.content)
   const graph = projectEvidenceOntology(inputs)
   atomicWrite(root, "graph.json", graph)
   atomicWrite(root, "basis.json", {
@@ -292,14 +299,13 @@ test("Jiyi legacy date migration and workflow guard", async (t) => {
   const accepted = synced.tasks.find(
       (row) => row.path === before.relative && row.kind === "signal",
     ),
-    rejected = synced.tasks.find(
+    unreviewed = synced.tasks.find(
       (row) => row.path === otherBefore.relative && row.kind === "signal",
     )
   assert.equal(accepted.status, "ready", accepted.reason)
   assert.equal(accepted.approval_run, "jiyi-corrected")
-  assert.equal(rejected.status, "blocked")
-  assert.equal(rejected.reason, "signal_occurrence_evidence_mismatch")
-  assert.match(rejected.observations[0].error, /same event/)
+  assert.equal(unreviewed.status, "review_pending")
+  assert.equal(unreviewed.reason, "current_note_review_required")
   assert.equal(synced.canonical_writes, 0)
   assert.equal(synced.approvals_created, false)
   assert.equal(synced.model_calls, 0)

@@ -3,8 +3,9 @@ import path from "node:path"
 import { canonicalURL, parseNote, walk } from "../garden.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
-import { assertReviewDate } from "./dates.mjs"
-import { assertSignalOccurredAt } from "./signal-dates.mjs"
+import { assertReviewDate, samePublicationDate } from "./dates.mjs"
+import { assertSignalDateMetadata, assertSignalOccurredAt } from "./signal-dates.mjs"
+import { loadCurrentApproval, loadHistoricalApproval } from "./preview.mjs"
 import { sha256 } from "./contracts.mjs"
 import { atomicWrite, assertAbsent, readJSON, safePath, RunState } from "./run-state.mjs"
 import {
@@ -62,6 +63,127 @@ export function loadReviewedNoteSource(root, run) {
   }
 }
 
+function signalEventBindings(root, facts, observations, vault, historical) {
+  // Preserve the source-only URL identity and exact publication precision.
+  const bindings = facts.flatMap(({ source, claim }) =>
+    claim.evidence.flatMap((e) => {
+      const doc = source.documents.find(
+        (d) => d.source_id === e.source_id && d.source_version_id === e.source_version_id,
+      )
+      return doc?.original_url && claim.published_at
+        ? [
+            {
+              event_id: sha256(canonicalURL(doc.original_url)).slice(0, 16),
+              event_date: claim.published_at,
+              claim,
+              source_run: source.run,
+            },
+          ]
+        : []
+    }),
+  )
+  const articles = []
+  if (!observations.length) return { bindings, articles }
+
+  for (const source of [...new Map(facts.map(({ source }) => [source.run, source])).values()]) {
+    if (!fs.existsSync(safePath(root, `runs/${source.run}/approved-article.json`))) continue
+    let approval
+    try {
+      // New/current notes require current canonical definitions. Historical
+      // lookups reuse the existing immutable approved-concept snapshot path;
+      // source bytes, article validation and exact approval pins still apply.
+      approval = historical
+        ? loadHistoricalApproval(root, source.run, { vault })
+        : loadCurrentApproval(root, source.run, { vault })
+    } catch (cause) {
+      throw Error("Signal evidence conflicts with the native article approval: " + cause.message, {
+        cause,
+      })
+    }
+    if (Object.entries(source.files).some(([name, hash]) => approval.files[name] !== hash))
+      throw Error("Signal source changed during article approval validation")
+    const bytes = fs.readFileSync(safePath(root, `runs/${source.run}/draft.json`))
+    if (sha256(bytes) !== approval.files["draft.json"])
+      throw Error("Signal article draft changed during approval validation")
+    const draft = JSON.parse(bytes).draft,
+      publicClaims = new Set([
+        ...draft.lead.flatMap((row) => row.claim_ids),
+        ...draft.explanations.flatMap((section) =>
+          section.paragraphs.flatMap((row) => row.claim_ids),
+        ),
+        ...(draft.analysis?.claim_ids || []),
+      ]),
+      article = approval.article,
+      urls = new Set(article.source_urls.map(canonicalURL))
+    articles.push(article)
+    const nativeBindings = []
+    for (const { source: selected, claim } of facts) {
+      if (
+        selected.run !== source.run ||
+        !publicClaims.has(claim.claim_id) ||
+        (claim.event_id && claim.event_id !== article.event_id) ||
+        !samePublicationDate(article.article_review.published_at, claim.published_at) ||
+        !claim.evidence.every((e) => {
+          const doc = source.documents.find(
+            (d) => d.source_id === e.source_id && d.source_version_id === e.source_version_id,
+          )
+          return doc?.original_url && urls.has(canonicalURL(doc.original_url))
+        })
+      )
+        continue
+      nativeBindings.push({
+        event_id: article.event_id,
+        event_date: article.article_review.published_at,
+        claim,
+        source_run: source.run,
+        approval_run: source.run,
+        approval_files: approval.files,
+      })
+    }
+    // An approved source can contain several independent events. Its URL must
+    // not assign another approved event's public claim to this observation.
+    // Keep the old URL/date path only when the approved identity agrees too.
+    for (let index = bindings.length - 1; index >= 0; index--)
+      if (
+        bindings[index].source_run === source.run &&
+        !nativeBindings.some(
+          (binding) =>
+            binding.event_id === bindings[index].event_id &&
+            binding.claim.claim_id === bindings[index].claim.claim_id,
+        )
+      )
+        bindings.splice(index, 1)
+    bindings.push(...nativeBindings)
+  }
+  return { bindings, articles }
+}
+
+function assertBoundSignalOccurredAt(observation, bindings, articles) {
+  assertSignalDateMetadata(observation, { articles })
+  const matching = bindings.filter(
+    (b) => b.event_id === observation.event_id && b.event_date === observation.event_date,
+  )
+  const supporting = matching.find(
+    ({ claim }) =>
+      (!claim.event_id || claim.event_id === observation.event_id) &&
+      ["reported", "completed", "in_progress"].includes(claim.event_state) &&
+      claim.effective_period === observation.occurred_at,
+  )
+  // A native article retains the source calendar day while a cited fact may
+  // retain its exact timestamp. Validate that public date above, then use the
+  // unmodified fact's publication value for the existing effective-day check.
+  const exact = supporting
+    ? {
+        ...observation,
+        event_date: supporting.claim.published_at,
+        ...(observation.source_published_at !== undefined
+          ? { source_published_at: supporting.claim.published_at }
+          : {}),
+      }
+    : observation
+  assertSignalOccurredAt(exact, { facts: matching, articles })
+}
+
 // The full replacement is approved against preserved authoring bytes and exact
 // reviewed source facts. This never writes the authority vault or publishes.
 export function evaluateNoteReview(root, decision, { vault = "vault", sourceVault = vault } = {}) {
@@ -101,6 +223,7 @@ function evaluateNoteReviewInternal(
     throw Error("Distinct canonical note replacements required")
   const runs = [...new Set(decision.notes.flatMap((n) => (n.evidence || []).map((e) => e.run_id)))]
   const sources = runs.map((r) => loadReviewedNoteSource(root, r))
+  const signalApprovalFiles = new Map()
   const approved = decision.notes.map((n) => {
     if (
       Object.keys(n).some(
@@ -269,21 +392,26 @@ function evaluateNoteReviewInternal(
       const ids = new Set(next.meta.observations.map((s) => s.id))
       if (!creating && (original.meta.observations || []).some((s) => !ids.has(s.id)))
         throw Error("Prior observations must be retained")
+      const { bindings, articles } =
+        creating || next.meta.observations.some((row) => row.occurred_at !== undefined)
+          ? signalEventBindings(root, facts, next.meta.observations, vault, historical)
+          : { bindings: [], articles: [] }
+      for (const observation of next.meta.observations) {
+        const matching = bindings.filter(
+          (b) => b.event_id === observation.event_id && b.event_date === observation.event_date,
+        )
+        // Source-only reviews keep their original three-file approval shape.
+        // Every consumed article approval is pinned, even if its ID is a URL ID.
+        for (const binding of matching)
+          if (binding.approval_run)
+            signalApprovalFiles.set(binding.approval_run, binding.approval_files)
+      }
       if (creating) {
         // An explicit, source-bound review may find no useful trend observation.
         // Missing review/evidence remains invalid; never manufacture a judgment.
         if (ids.size !== next.meta.observations.length)
           throw Error("New Signals review requires distinct source-bound observations")
-        const events = new Set(
-          facts.flatMap(({ source, claim }) =>
-            claim.evidence.flatMap((e) => {
-              const doc = source.documents.find((d) => d.source_version_id === e.source_version_id)
-              return doc?.original_url && claim.published_at
-                ? [sha256(canonicalURL(doc.original_url)).slice(0, 16) + ":" + claim.published_at]
-                : []
-            }),
-          ),
-        )
+        const events = new Set(bindings.map((b) => `${b.event_id}:${b.event_date}`))
         for (const observation of next.meta.observations)
           if (
             !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(observation.id || "") ||
@@ -297,9 +425,8 @@ function evaluateNoteReviewInternal(
               "New Signals observation needs a reviewed source event and complete judgment",
             )
       }
-      // Preserve the v1 publication contract and approval shape when absent.
-      // An article file only constrains this optional date; source-only fact
-      // review never becomes an article approval through this path.
+      // Source-only fact review never becomes an article approval. An actual
+      // article approval also constrains the same event's optional actual day.
       for (const observation of next.meta.observations) {
         if (observation.occurred_at === undefined) continue
         const prior = original?.meta.observations?.find((row) => row.id === observation.id)
@@ -319,18 +446,7 @@ function evaluateNoteReviewInternal(
               prior.source_published_at !== observation.source_published_at))
         )
           throw Error("Signal event identity and source publication date must be retained")
-        const articles = [...new Set(facts.map(({ source }) => source.run))]
-          .map((run) => readJSON(root, `runs/${run}/approved-article.json`))
-          .filter(Boolean)
-        const bound = facts.flatMap(({ source, claim }) =>
-          claim.evidence.flatMap((e) => {
-            const doc = source.documents.find((d) => d.source_version_id === e.source_version_id)
-            return doc?.original_url
-              ? [{ event_id: sha256(canonicalURL(doc.original_url)).slice(0, 16), claim }]
-              : []
-          }),
-        )
-        assertSignalOccurredAt(observation, { facts: bound, articles })
+        assertBoundSignalOccurredAt(observation, bindings, articles)
       }
     }
     return {
@@ -351,7 +467,10 @@ function evaluateNoteReviewInternal(
     reviewer: decision.reviewer,
     vault: path.resolve(sourceVault),
     notes: approved,
-    source_files: sources.map(({ run, files }) => ({ run, files })),
+    source_files: sources.map(({ run, files }) => ({
+      run,
+      files: { ...files, ...(signalApprovalFiles.get(run) || {}) },
+    })),
     candidate_published: false,
     drive_verified: false,
   }

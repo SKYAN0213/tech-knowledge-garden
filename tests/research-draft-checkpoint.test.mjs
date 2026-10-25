@@ -1,16 +1,18 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
-import os from "node:os"
 import path from "node:path"
 import { writeDraftCheckpoint } from "../scripts/research/draft-checkpoint.mjs"
 import { atomicWrite } from "../scripts/research/run-state.mjs"
 import { loadProcessedDraft } from "../scripts/research/processed-draft.mjs"
 import { correctDraft } from "../scripts/research/editor.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
+import { isolatedMCPFixtureParent } from "../integrations/research-mcp/test/storage-fixture.mjs"
 
 function fixture(t) {
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "model-draft-")))
+  const root = fs.realpathSync(
+    fs.mkdtempSync(path.join(isolatedMCPFixtureParent(process.cwd()), "model-draft-")),
+  )
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const claims = [
     {

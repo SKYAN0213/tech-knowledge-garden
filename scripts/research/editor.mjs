@@ -3,7 +3,7 @@ import { THEMES } from "../themes.mjs"
 import { sha256, assertSchema } from "./contracts.mjs"
 import { assertDeepDiveContext, deepClaimIds } from "./deep-dive.mjs"
 import { DEFAULT_LOCAL_OLLAMA_MODEL, assertStructuredRequestBudget } from "./ollama.mjs"
-import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
+import { parseResearchDate, seoulPublicationDay, assertReviewDate } from "./dates.mjs"
 import {
   assertCompletenessContext,
   inspectEditorialCompleteness,
@@ -117,6 +117,62 @@ export function assertDraftReferences(draft, claimIds, deepContext = null) {
 }
 export const draftFingerprint = (draft, deepContext = null) =>
   sha256(JSON.stringify(deepContext ? [draft, sha256(JSON.stringify(deepContext))] : draft))
+
+// This selects authoring input, never deletes or re-reviews stored facts. The
+// complete source/fact context must already carry an actual completeness review.
+export function selectAuthoringClaims(claims, options = {}) {
+  const verified = claims.filter((c) => c.review.status === "verified")
+  const scope = options.authoringScope
+  if (!scope) return verified
+  const context = options.completenessContext
+  if (options.provisional || options.deepContext || !context)
+    throw Error("Reviewed important authoring scope requires ordinary completed source review")
+  assertCompletenessContext(context, claims, {
+    documents: options.documents,
+    parses: options.parses,
+  })
+  const ids = verified.map((c) => c.claim_id)
+  const important = new Set(
+    context.review.fact_decisions.filter((d) => d.important).map((d) => d.claim_id),
+  )
+  const included = ids.filter((id) => important.has(id)),
+    excluded = ids.filter((id) => !important.has(id))
+  const fields = [
+    "schema",
+    "run_id",
+    "reviewer",
+    "reviewed_at",
+    "reason",
+    "claims_sha256",
+    "documents_sha256",
+    "parses_sha256",
+    "completeness_context_sha256",
+    "verified_claim_ids",
+    "included_claim_ids",
+    "excluded_claim_ids",
+  ]
+  if (
+    scope.schema !== "research-reviewed-important-authoring-scope/v1" ||
+    Object.keys(scope).some((k) => !fields.includes(k)) ||
+    !/^[A-Za-z0-9_-]{1,160}$/.test(scope.run_id || "") ||
+    ![scope.reviewer, scope.reviewed_at, scope.reason].every(
+      (x) => typeof x === "string" && x.trim(),
+    ) ||
+    scope.claims_sha256 !== context.input.claims_sha256 ||
+    scope.documents_sha256 !== context.input.documents_sha256 ||
+    scope.parses_sha256 !== context.input.parses_sha256 ||
+    scope.completeness_context_sha256 !== context.sha256 ||
+    !included.length ||
+    JSON.stringify(scope.verified_claim_ids) !== JSON.stringify(ids) ||
+    JSON.stringify(scope.included_claim_ids) !== JSON.stringify(included) ||
+    JSON.stringify(scope.excluded_claim_ids) !== JSON.stringify(excluded)
+  )
+    throw Error(
+      "Authoring scope must include every important fact and exclude exactly reviewed optional facts",
+    )
+  assertReviewDate(scope.reviewed_at, { notBefore: [context.review.reviewed_at] })
+  return verified.filter((c) => important.has(c.claim_id))
+}
 
 // A narrow restatement check, not a semantic novelty judgment. Keep numbers,
 // qualifiers, negation and substantive words; remove only Korean grammar and
@@ -343,6 +399,7 @@ export async function writeDraft(
     provisional = false,
     deepContext = null,
     completenessContext = null,
+    authoringScope = null,
     parses = [],
     documents = [],
     num_ctx = 16384,
@@ -350,15 +407,25 @@ export async function writeDraft(
   } = {},
 ) {
   if (deepContext && provisional) throw Error("Deep analysis cannot use provisional facts")
+  if (authoringScope && deepContext)
+    throw Error("Reviewed important authoring scope cannot replace a deep basis")
   if (completenessContext) {
     if (provisional) throw Error("Important facts require completed source review")
     assertCompletenessContext(completenessContext, claims, { documents, parses })
   }
   const usable = deepContext
     ? assertDeepDiveContext(deepContext, claims, parses, documents)
-    : claims.filter(
-        (c) => c.review.status === "verified" || (provisional && c.review.structural_pass),
-      )
+    : authoringScope
+      ? selectAuthoringClaims(claims, {
+          authoringScope,
+          completenessContext,
+          parses,
+          documents,
+          provisional,
+        })
+      : claims.filter(
+          (c) => c.review.status === "verified" || (provisional && c.review.structural_pass),
+        )
   if (!usable.length) throw Error("No supported facts for drafting")
   const claimIds = usable.map((claim) => claim.claim_id)
   if (
@@ -453,6 +520,7 @@ export async function writeDraft(
     draft,
     ...(deepContext ? { deep_context: structuredClone(deepContext) } : {}),
     ...(completenessContext ? { completeness_context: structuredClone(completenessContext) } : {}),
+    ...(authoringScope ? { authoring_scope: structuredClone(authoringScope) } : {}),
     claim_ids: usable.map((c) => c.claim_id),
     ...(result.artifacts ? { model_artifacts: result.artifacts } : {}),
     provenance: { ...result.provenance, request_budget: requestBudget },

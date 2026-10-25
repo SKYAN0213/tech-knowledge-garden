@@ -44,11 +44,20 @@ const normalizeSentence = (text) => text.normalize("NFC").replace(/\s+/g, " ").t
 // with incidental numbers elsewhere in an evidence block or another article.
 // This is a value/unit check, not a verdict on metric, period or causality.
 const ratePattern =
-  /(?<![\d.,eE])([+−-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*(%\s*(?:p|points?)|퍼센트\s*포인트|percentage\s+points?|percent\s+points?|%|퍼센트|percent)(?![a-z])/giu
+  /(?<![\d.,eE])([+−-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*(%\s*(?:p|points?|포인트)|퍼센트\s*포인트|(?:percentage|percent)[\s‐‑–-]+points?|pp|%|퍼센트|percent)(?![a-z])/giu
 function rateUnit(unit) {
-  const normalized = unit.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ")
+  const normalized = unit
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/[-‐‑–]/g, " ")
+    .replace(/\s+/g, " ")
   if (["%", "퍼센트", "percent"].includes(normalized)) return "percent"
-  if (/^(?:%\s*(?:p|points?)|퍼센트\s*포인트|(?:percent|percentage) points?)$/.test(normalized))
+  if (
+    /^(?:%\s*(?:p|points?|포인트)|퍼센트\s*포인트|(?:percent|percentage) points?|pp)$/.test(
+      normalized,
+    )
+  )
     return "percentage_point"
   return null
 }

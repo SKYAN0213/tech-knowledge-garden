@@ -607,3 +607,102 @@ KUKA·TD SYNNEX의 2026-10-07 공동 발표 영문/독문과 공식 AMR 기술 �
 ### worker 종료 관측의 현재 증거
 
 worker 조회는 `kill(pid,0)`과 같은 `ps` snapshot의 kernel 상태·전체 command를 확인한다. 초기 존재 조회 후 프로세스가 사라져 ps가 실패하거나 argv가 일치하지 않으면 존재를 한 번 더 조회하고 ESRCH만 종료 증거로 사용한다. 커널 상태 Z와 Linux의 X는 쓰기를 수행할 수 없는 종료 상태다. command 문자열의 `defunct`나 Darwin의 X 부가 flag만으로 종료를 추정하지 않는다. 살아 있는 다른 PID/job, 권한 오류, 불명·잘못된 출력은 계속 `worker_status_unknown`으로 남기며 잠금을 회수하지 않는다. job 인자는 공백·문자열 끝 경계까지 일치해야 하므로 다른 job의 ID 접두어와 혼동하지 않는다. 프로세스 조회 후의 native 최종 상태 재검증도 유지한다.
+
+## 명시적인 중요 사실 작성 범위와 미전송 입력 복구
+
+`writing.draft`의 기본 범위는 기존과 같은 전체 검증 사실이다. 예산 초과가
+자동으로 사실을 제외하거나 다른 모델·큰 문맥으로 전환시키지 않는다.
+정확한 원문과 전체 사실에 대한 실제 중요도 검토가 끝났을 때만 운영자가
+`authoring_scope_file`과 `authoring_scope_sha256`을 명시할 수 있다.
+직접 CLI는 `draft --authoring-scope FILE --authoring-scope-sha256 SHA`다.
+
+범위 파일 `research-reviewed-important-authoring-scope/v1`은 다음 키를 모두 가진다.
+`run_id`, `reviewer`, `reviewed_at`, `reason`, `claims_sha256`,
+`documents_sha256`, `parses_sha256`, `completeness_context_sha256`,
+`verified_claim_ids`, `included_claim_ids`, `excluded_claim_ids`.
+ID 배열은 전체 검증 사실의 원래 순서다. 포함은 실제 completeness 검토의
+`important:true` 전체와 정확히 같아야 하고, 제외는 `important:false` 전체와
+정확히 같아야 한다. 누락·추가·top-N·새 중요도 판단은 거부한다.
+
+이는 편집자의 원문 대조 중요도에 따른 **작성 입력의 명시적 선택**이다.
+전체 원문·검증 사실·중요도 검토를 삭제하거나 변경하지 않는다. 선택 사실의
+주체·행위·날짜·수치·조건·귀속과 직접 인용은 그대로 전달하고 출력 schema는
+선택된 정확한 기존 ID만 허용한다. 범위 파일의 실제 bytes와 SHA는
+`runs/RUN/authoring-scopes/SHA.json`에 불변 보관하고 frozen draft input에
+결합한다. 기본 전체 범위의 기존 messages/schema에는 이 포장을 추가하지 않는다.
+최종 산문의 중요 사실 보존·사실·편집·발행 승인은 각각 기존 관문을 거친다.
+
+이미 `model-draft-input.json`을 고정한 후 `MODEL_INPUT_BUDGET_EXCEEDED`로
+전송 전에 실패했다면 입력을 덮어쓰거나 삭제하지 않는다. 다른 구현으로
+기존 module job을 재시도하지 않고, 새 module job ID에 다음 둘을 명시한다.
+
+- `draft_input_migration_file`, `draft_input_migration_sha256`
+- 위의 정확한 `authoring_scope_file`, `authoring_scope_sha256`
+
+CLI 이름은 `--draft-input-migration FILE --draft-input-migration-sha256 SHA`다.
+이 파일은 `research-draft-input-migration-review/v1`이며 다음 키를 가진다.
+`run_id`, `reviewer`, `reviewed_at`, `reason`, `failed_job_id`,
+`old_input_sha256`(원 frozen input 파일의 **raw bytes SHA**),
+`failed_job_input_sha256`, `failed_job_state_sha256`(각 실패 job 파일의 raw SHA),
+`policy_sha256`(동일 모델 정책 파일 raw SHA), `claims_sha256`,
+`documents_sha256`, `parses_sha256`, `completeness_context_sha256`,
+`execution_policy_sha256`(기존 frozen input의 값),
+`authoring_scope_sha256`(범위 파일 raw SHA).
+
+Native는 실패 job의 동일 writer·정책·이전 구현 SHA와
+`failed`/예산 초과/`reasoning_task:null`을 확인한다. 원문·전체 사실·정책·모델
+metadata·completeness 결합은 같아야 하며 허용 구현 차이는 editor와
+checkpoint 두 파일뿐이다. 모델 role budget, 해당 writer의 reasoning request,
+초안·생성 결과·체크포인트·승인 중 하나라도 있으면 이관하지 않는다.
+
+성공한 준비 이관은 원래 `model-draft-input.json`과 실패 job 파일을 보존하고,
+원 bytes 및 실패 input/state 사본을 `draft-inputs/`에 추가한다. 새 frozen input도
+해시별 파일로 보관하며 `model-draft-input-migration.json`이 이전 입력·실패
+사본·새 입력·명시 범위를 연결한다. 중간 실패 후 동일 입력을 재조회하면
+동일 아카이브 bytes를 확인하고 이어간다. 완료된 generation은 자신의 역사적
+입력으로 재사용하며 migration하거나 승인 상태를 상속하지 않는다.
+
+이 변경의 운영 사용 전에는 현행 구현 release manifest와 개발 완료 관문을
+검토·고정해야 한다. 기존 semantic 결과는 정확한 역사적 요청·영수증 검증으로
+재사용하며, 이번 변경을 이유로 재호출하거나 과거 완료 근거를 새 실행으로
+표기하지 않는다. 표적 계약 테스트는 `.local/research-test-fixtures`의 disabled
+storage 아래에서 수행한다.
+
+명시 scope가 적용된 원고의 완료 재사용은 bound checkpoint와 전체 검토 사실로
+검증한다. 기존 per-source 비용 비교는 동일 사실 합집합을 전제로 하므로 이
+scope에 새 비용 비교 성공값을 만들지 않는다. `reader-quality`는 `%포인트`,
+`percentage-point`와 `pp`도 퍼센트포인트로 비교하며 `%`와는 구별한다.
+
+### 부분 수집과 선정 기사 발행의 구분
+
+`already_featured: false`와 공개 색인에 같은 ID가 없다는 사실만으로 신규 사건을
+확정하지 않는다. 서로 다른 URL·언어·보도일의 기사도 주체, 행위, 금액·기간과
+대상이 같으면 기존 사건일 수 있다. 현재 literal 이력 검색의 결과는 비교 후보이며
+완전한 사건 목록이 아니다. 검토 중 추가로 확인한 과거 기사와 원문은 정확한 ID·
+본문 SHA 및 대조 근거를 별도 감사 기록에 남긴다. 새 정보가 없는 동일 사건은
+기존 `curation.evaluate`의 실제 검토로 신규성 0·`new_information: false`를 저장하고,
+새 pool/selection에서 제외한다. 과거 고정 선정·원고·실패 기록을 덮어쓰지 않는다.
+
+수집 보고서가 `partial`이어도 원문·기사 검토를 마친 정확한 선정은 기존
+`private_slice` 미리보기와 `kind: curated` release로 발행할 수 있다. 이 경로의
+`coverage_complete`, `coverage_reviewed`, `new_operational_run`은 false이며,
+공개 페이지 readback만으로 정규 운영 성공이나 첫 7회 관찰에 합산하지 않는다.
+전체 수집 완료는 별도 수집 보고서와 scheduled 감사가 판정한다.
+
+현재 회차 원본의 `coverage_end`와 context의 `latest_cutoff`는 발행한 조사 구간의
+끝을 나타낸다. 이를 모든 경로의 수집이 끝난 전역 verified watermark로 해석하지
+않는다. 다음 수집 계획은 최근 7일, 경로별 연속 확인 구간, 보존된 모든 unresolved
+구간을 함께 사용한다. 부분 발행 뒤에도 실패·누락 창과 과거 미수록 후보를 보존하고,
+검증된 정규 성공 구간은 별도 완료 근거로 확인한다. 이전 daily run의 고정 edition이
+바뀌었다면 같은 입력인 것처럼 재개하지 말고 정확한 `collection.recover` 또는 새
+일일 계획에서 완료 자료를 재사용한다.
+
+### Signals의 승인 사건 ID와 원문 바인딩
+
+새 Signals는 기존 URL 기반 사건 ID와 함께 실제 Native 승인 기사의 사건 ID도
+사용할 수 있다. 후자는 현재 승인 로더가 검증한 기사·원문 판본·공개 원고에 쓰인
+claim 및 원 발표일과 모두 일치해야 한다. 노트 승인은 이 승인 파일들의 SHA도
+보존하므로 이후 기사·원고·편집 검토가 바뀌면 다시 검토한다. 파일 존재만으로
+승인을 신뢰하거나, 같은 URL의 다른 사건·원고에 쓰이지 않은 사실로 실제 발생일을
+빌려 쓰지 않는다. 역사 조회는 기존 역사 승인 검증기를 사용한다. 원문만 검토한
+URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 유지한다.

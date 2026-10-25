@@ -139,6 +139,10 @@ export async function main(argv = process.argv.slice(2)) {
       "evidence-think": { type: "string" },
       review: { type: "string" },
       "completeness-review": { type: "string" },
+      "draft-input-migration": { type: "string" },
+      "draft-input-migration-sha256": { type: "string" },
+      "authoring-scope": { type: "string" },
+      "authoring-scope-sha256": { type: "string" },
       "coverage-review": { type: "string" },
       provisional: { type: "boolean", default: false },
       "merge-backlog": { type: "boolean", default: false },
@@ -260,6 +264,21 @@ export async function main(argv = process.argv.slice(2)) {
     )
   if (v["completeness-review"] && !["draft", "process-source"].includes(command))
     throw Error("--completeness-review is only supported for reviewed source writing")
+  if (v["draft-input-migration"] && command !== "draft")
+    throw Error("--draft-input-migration is only supported for explicit draft recovery")
+  const draftInputFiles = {}
+  for (const flag of ["draft-input-migration", "authoring-scope"]) {
+    if (
+      (v[flag] || v[flag + "-sha256"]) &&
+      (command !== "draft" || !v[flag] || !/^[a-f0-9]{64}$/.test(v[flag + "-sha256"] || ""))
+    )
+      throw Error("Explicit draft file and exact SHA required: --" + flag)
+    if (v[flag]) {
+      draftInputFiles[flag] = fs.readFileSync(v[flag])
+      if (sha256(draftInputFiles[flag]) !== v[flag + "-sha256"])
+        throw Error("Draft review file bytes changed: --" + flag)
+    }
+  }
   if (v["coverage-review"] && command !== "approve")
     throw Error("--coverage-review is only supported for exact draft approval")
   const budgetFields = [
@@ -1944,6 +1963,19 @@ export async function main(argv = process.argv.slice(2)) {
           model: v.model,
           think: false,
           provisional: v.provisional,
+          ...(v["authoring-scope"]
+            ? {
+                authoringScope: JSON.parse(draftInputFiles["authoring-scope"]),
+                authoringScopeBytes: draftInputFiles["authoring-scope"],
+              }
+            : {}),
+          ...(v["draft-input-migration"]
+            ? {
+                draftInputMigration: JSON.parse(draftInputFiles["draft-input-migration"]),
+                draftInputMigrationBytes: draftInputFiles["draft-input-migration"],
+                modelPolicyFile: v["model-policy"],
+              }
+            : {}),
           deepContext,
           completenessContext: await bindEditorialCompleteness(
             root,

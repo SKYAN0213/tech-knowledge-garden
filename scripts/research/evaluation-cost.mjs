@@ -5,7 +5,7 @@ import { promisify } from "node:util"
 import { performance } from "node:perf_hooks"
 import { sha256 } from "./contracts.mjs"
 import { writeDraft } from "./editor.mjs"
-import { loadBoundDraftCheckpoint } from "./draft-checkpoint.mjs"
+import { loadBoundDraftCheckpoint, loadDraftInput } from "./draft-checkpoint.mjs"
 import { loadEvaluationSourceScope } from "./evaluation.mjs"
 import { validateEvidence } from "./claims.mjs"
 import { inspectReaderQuality } from "./reader-quality.mjs"
@@ -158,10 +158,12 @@ export async function measureFrozenWriterCost(root, writerRun) {
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(writerRun || ""))
     throw Error("Exact frozen writer run required")
   const base = `runs/${writerRun}/`,
-    { documents, parses } = loadEvaluationSourceScope(root, writerRun)
-  const claims = readJSON(root, base + "reviewed-claims.json")?.claims
-  const input = readJSON(root, base + "model-draft-input.json")
+    input = loadDraftInput(root, writerRun)
   if (!input) throw Error("Frozen model draft input required for historical comparison")
+  if (input.authoring_scope_sha256)
+    throw Error("Scoped authoring has no per-source cost baseline; inspect its bound checkpoint")
+  const { documents, parses } = loadEvaluationSourceScope(root, writerRun)
+  const claims = readJSON(root, base + "reviewed-claims.json")?.claims
   const options = {
     model: input.model,
     think: input.think,
@@ -540,7 +542,7 @@ export function inspectEvaluationWriterQuality(root, run, selectionFile, caseId)
   const source = loadEvaluationSourceScope(root, entry.source_run, entry.source_scope)
   const reviewed = readJSON(root, "runs/" + entry.source_run + "/reviewed-claims.json")
   const checkpoint = readJSON(root, "runs/" + run + "/model-draft-checkpoint.json")
-  const input = readJSON(root, "runs/" + run + "/model-draft-input.json")
+  const input = loadDraftInput(root, run)
   if (!checkpoint && !input)
     return inspectEditorialCandidate(
       root,
@@ -556,17 +558,24 @@ export function inspectEvaluationWriterQuality(root, run, selectionFile, caseId)
   const outputBytes = fs.readFileSync(safePath(root, checkpoint.output_path))
   if (sha256(outputBytes) !== checkpoint.output_sha256) throw Error("Native writer output changed")
   const record = JSON.parse(outputBytes)
-  const claims = reviewed.claims.filter((claim) => record.claim_ids.includes(claim.claim_id))
+  const claims = input.authoring_scope_sha256
+    ? reviewed.claims
+    : reviewed.claims.filter((claim) => record.claim_ids.includes(claim.claim_id))
   const versions = new Set(
     claims.flatMap((claim) => claim.evidence.map((e) => e.source_version_id)),
   )
-  const documents = source.documents.filter((document) => versions.has(document.source_version_id))
-  const parses = source.parses.filter((parse) => versions.has(parse.source_version_id))
+  const documents = input.authoring_scope_sha256
+    ? source.documents
+    : source.documents.filter((document) => versions.has(document.source_version_id))
+  const parses = input.authoring_scope_sha256
+    ? source.parses
+    : source.parses.filter((parse) => versions.has(parse.source_version_id))
   const native = loadBoundDraftCheckpoint(root, run, claims, {
     model: input.model,
     think: input.think,
     provisional: input.provisional,
     deepContext: record.deep_context || null,
+    completenessContext: record.completeness_context || null,
     documents,
     parses,
   })

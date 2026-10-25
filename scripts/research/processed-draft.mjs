@@ -1,9 +1,16 @@
 import fs from "node:fs"
 import { sha256, assertSchema } from "./contracts.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
-import { draftFingerprint, schemaForDraft, draftProblems, correctDraft } from "./editor.mjs"
+import {
+  draftFingerprint,
+  schemaForDraft,
+  draftProblems,
+  correctDraft,
+  selectAuthoringClaims,
+} from "./editor.mjs"
 import { assertDeepDiveContext } from "./deep-dive.mjs"
 import { assertCompletenessContext } from "./editorial-completeness.mjs"
+import { loadDraftInput, loadDraftAuthoringScope } from "./draft-checkpoint.mjs"
 
 // Validate the frozen model generation and each explicit correction. Resume
 // must preserve editorial work rather than overwrite it with model output.
@@ -25,7 +32,7 @@ export function loadProcessedDraftHistory(root, run, reviewed, documents, parses
   }
   const current = readJSON(root, base + "draft.json")
   const deepContext = readJSON(root, base + "deep-context.json")
-  const usable = deepContext
+  let usable = deepContext
     ? assertDeepDiveContext(deepContext, reviewed.claims, parses, documents)
     : reviewed.claims.filter((c) => c.review.status === "verified")
   if (!reference || !current) throw Error("Processing draft generation reference required")
@@ -33,7 +40,15 @@ export function loadProcessedDraftHistory(root, run, reviewed, documents, parses
     throw Error("Invalid draft generation run")
   const origin = `runs/${reference.run}/`
   const checkpoint = readJSON(root, origin + "model-draft-checkpoint.json")
-  const input = readJSON(root, origin + "model-draft-input.json")
+  const input = loadDraftInput(root, reference.run)
+  const authoringScope = loadDraftAuthoringScope(root, reference.run, input)
+  if (authoringScope)
+    usable = selectAuthoringClaims(reviewed.claims, {
+      authoringScope,
+      completenessContext: current.completeness_context,
+      documents,
+      parses,
+    })
   if (
     !checkpoint ||
     !input ||
@@ -61,6 +76,7 @@ export function loadProcessedDraftHistory(root, run, reviewed, documents, parses
       JSON.stringify(record.deep_context || null) !== JSON.stringify(deepContext || null) ||
       JSON.stringify(record.completeness_context || null) !== JSON.stringify(completenessContext) ||
       record.public_approved !== false ||
+      JSON.stringify(record.authoring_scope || null) !== JSON.stringify(authoringScope) ||
       JSON.stringify(record.claim_ids) !== JSON.stringify(usable.map((c) => c.claim_id)) ||
       JSON.stringify(record.problems) !==
         JSON.stringify(

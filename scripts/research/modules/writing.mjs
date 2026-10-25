@@ -10,17 +10,32 @@ export const module = {
   operations: {
     draft: operation(
       "선별된 사건의 원문 범위에 속한 검증 사실만 육하원칙 기사·상세 설명으로 작성한다. 검토된 다른 사건의 사실도 범위 밖이면 차단하며 기존 승인 관문을 유지한다.",
-      schema({ run_id: id, ...selectionReference, completeness_review_file: file() }, [
-        "run_id",
-        ...Object.keys(selectionReference),
-      ]),
+      schema(
+        {
+          run_id: id,
+          ...selectionReference,
+          completeness_review_file: file(),
+          draft_input_migration_file: file(),
+          draft_input_migration_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+          authoring_scope_file: file(),
+          authoring_scope_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        },
+        ["run_id", ...Object.keys(selectionReference)],
+      ),
       (ctx, p) => {
         loadSelectedEvent(ctx, p, { requireProcessed: true })
         return nativeResearch(
           ctx,
           "draft",
           p,
-          { run_id: "run", completeness_review_file: "completeness-review" },
+          {
+            run_id: "run",
+            completeness_review_file: "completeness-review",
+            draft_input_migration_file: "draft-input-migration",
+            draft_input_migration_sha256: "draft-input-migration-sha256",
+            authoring_scope_file: "authoring-scope",
+            authoring_scope_sha256: "authoring-scope-sha256",
+          },
           { model: true },
         )
       },
