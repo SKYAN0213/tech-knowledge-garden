@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-reviewed-important-writing-signals-20261025-v1/receipt.json",
-    "sha256": "ccfd09b4b82c735744e0736b620b7f83228e40f013440058e68da8ca0430f34f"
+    "path": ".local/research/development-releases/tkg-reader-semantic-projection-20261025-v1/receipt.json",
+    "sha256": "9ca421a2ec4c8582e2479b3a9792aa0a3c3c7ff2280637d6bfb6920320bd89dc"
   },
   "recovery": {
     "automatic_retry": false,

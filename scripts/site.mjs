@@ -18,8 +18,29 @@ import { knowledgeHubView, companiesView, weeklyView, termView } from "./reader-
 import { coverageDate } from "./time.mjs"
 import { articleDateLabel } from "./article-review.mjs"
 import { firstBriefingDates } from "../web/news-chronology.mjs"
+import { buildGraph } from "./knowledge.mjs"
 
 export const MAP = "Knowledge Maps/AI Technology Knowledge Map"
+// The graph builder validates the public article and concept byte bindings.
+// Reuse its assignments in every reader surface, including reviewed-empty rows.
+export function readerSemanticConcepts(graph) {
+  const allowed = new Set(graph.nodes.map((node) => node.id))
+  const byEvent = new Map()
+  for (const article of graph.articles) {
+    const eventId = article.id?.startsWith("news:") && article.id.slice(5)
+    if (!eventId || byEvent.has(eventId) || !Array.isArray(article.termIds) ||
+        new Set(article.termIds).size !== article.termIds.length ||
+        article.termIds.some((id) => !allowed.has(id)) ||
+        (article.semanticReviewStatus === "reviewed_none" && article.termIds.length))
+      throw Error("Invalid reader semantic concept projection")
+    byEvent.set(eventId, [...article.termIds])
+  }
+  return byEvent
+}
+export function withReaderSemanticConcepts(article, byEvent) {
+  // This is an in-memory reader projection; native approvals remain unchanged.
+  return { ...article, review: { ...article.review, concept_ids: [...(byEvent.get(article.id) || [])] } }
+}
 const staging = ".local/site-content"
 export const slug = (p) => slugifyFilePath(p.replace(/\.md$/, "") + ".md")
 export const readerDate = (meta) =>
@@ -109,8 +130,8 @@ export async function finish(output = "public", input = staging) {
   const notes = JSON.parse(fs.readFileSync(".local/site-notes.json"))
   const allIssues = editions("vault")
   const issueArticles = new Map(allIssues.map((i) => [i.slug, extractArticles(i)]))
-  const library = briefingLibrary("vault", allIssues, issueArticles)
-  const firstDates = firstBriefingDates([...issueArticles.values()].flat())
+  const graph = buildGraph("vault")
+  const semanticConcepts = readerSemanticConcepts(graph)
   const knowledge = notes
     .filter((n) => n.meta.entry_type === "concept")
     .map((n) => ({
@@ -123,8 +144,13 @@ export async function finish(output = "public", input = staging) {
       if (!k) throw Error("Missing reviewed keyword " + id)
       return { path: k.path, label: k.meta.label || k.meta.title }
     })
-  for (const items of issueArticles.values())
-    for (const a of items) a.conceptLinks = conceptLinks(a.review?.concept_ids)
+  for (const [issue, items] of issueArticles)
+    issueArticles.set(issue, items.map((article) => {
+      const projected = withReaderSemanticConcepts(article, semanticConcepts)
+      return { ...projected, conceptLinks: conceptLinks(projected.review.concept_ids) }
+    }))
+  const library = briefingLibrary("vault", allIssues, issueArticles)
+  const firstDates = firstBriefingDates([...issueArticles.values()].flat())
   const newsArticles = [
     ...new Map([...issueArticles.values()].flat().map((a) => [a.id, a])).values(),
   ].map((article) => ({ ...article, firstBriefingDate: firstDates.get(article.id) }))
@@ -142,7 +168,6 @@ export async function finish(output = "public", input = staging) {
       .concat("KUKA Group"),
   })
 
-  const graph = JSON.parse(fs.readFileSync(path.join(output, "knowledge-graph.json")))
   const learningTerms = new Set(graph.nodes.map((n) => n.id))
   const bySlug = new Map(notes.map((n) => [n.slug, n]))
   const rows = []
@@ -279,7 +304,7 @@ export async function finish(output = "public", input = staging) {
           (x) =>
             x.meta.type === "news" &&
             x.meta.review_status === "verified" &&
-            (x.meta.concept_ids || []).includes(n.meta.concept_id),
+            (semanticConcepts.get(x.meta.event_id) || []).includes(n.meta.concept_id),
         )
         .sort((a, b) => String(b.meta.published_at).localeCompare(String(a.meta.published_at)))
       if (readerKnowledge.terms.some((term) => term.concept_id === n.meta.concept_id))
@@ -295,7 +320,7 @@ export async function finish(output = "public", input = staging) {
     else if (n.path === "News/index") body = newsView(newsArticles, library.latest, href)
     else if (issue) body = issueView(issue, href, prefix, toHtml(article))
     else if (type === "news")
-      body = `<div class="article-meta"><a href="${href("News/index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(n.meta.concept_ids), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
+      body = `<div class="article-meta"><a href="${href("News/index")}">← 뉴스</a> · ${n.meta.published_at ? articleDateLabel(n.meta) : "브리핑"} <time datetime="${esc(date)}">${esc(date)}</time> · ${esc(publisher(n.meta.source_url))}</div><h1>${esc(meta.title)}</h1><div class="article-source-links">${articleSourceLinks(n.meta.sources)}</div>${articleTags({ conceptLinks: conceptLinks(semanticConcepts.get(n.meta.event_id) || []), sector: n.meta.sector, classification: n.meta.theme_format ? { theme: n.meta.theme, secondary_theme: n.meta.secondary_theme, event_tags: n.meta.event_tags, entities: n.meta.entities } : undefined }, href)}${toHtml(article)}`
     else if (isConcept && focus) body += embed(focus)
     const html = shell(
       isOverview ? "브리핑 · Tech Knowledge" : meta.title,
