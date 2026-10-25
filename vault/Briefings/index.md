@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-10-22
+date: 2026-10-25
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,16 +11,16 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
-- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 12건 · 원칙 0개
+- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 17건 · 원칙 0개
+- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 11건 · 원칙 1개
+- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 12건 · 원칙 0개
+- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 11건 · 원칙 0개
 - [[Briefings/Topics/industrial-robot-learning-lifecycle|산업용 로봇의 현장 재학습과 운전 수명주기]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-yaskawa-robotics|야스카와 로봇 사업의 실적과 전망]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-small-batch-packaging-waste-sorting|소량 배치 포장 폐기물 분류용 협동로봇 작업대]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-robco|RobCo의 투자와 미국 운영]] · 1건 · 원칙 0개
 - [[Briefings/Topics/research-stacked-fabric-grasping|쌓인 옷감의 로봇 집기]] · 1건 · 원칙 0개
-- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 11건 · 원칙 0개
-- [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 10건 · 원칙 0개
 - [[Briefings/Topics/company-samsung-ai-infrastructure|삼성 계열사의 AI 인프라 투자와 공급 참여]] · 1건 · 원칙 0개
-- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 8건 · 원칙 1개
 - [[Briefings/Topics/venture-envisagenics|Envisagenics의 RNA 표적 연구 사업화]] · 1건 · 원칙 0개
 - [[Briefings/Topics/grid-home-batteries|가정용 배터리의 전력망 공급 실적]] · 2건 · 원칙 0개
 - [[Briefings/Topics/company-magnachip-sic|Magnachip의 SiC 기술 이전과 사업화]] · 1건 · 원칙 0개
@@ -35,6 +35,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|2026-10-25 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-22_0800_Tech_AI_Briefing|2026-10-22 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-19_0800_Tech_AI_Briefing|2026-10-19 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-16_0800_Tech_AI_Briefing|2026-10-16 · 0800 브리핑]]

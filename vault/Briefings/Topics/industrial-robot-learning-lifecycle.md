@@ -2,7 +2,7 @@
 title: 산업용 로봇의 현장 재학습과 운전 수명주기
 type: briefing-topic
 topic_id: industrial-robot-learning-lifecycle
-date: 2026-10-22
+date: 2026-10-25
 description: ABB는 10월 15일 Fashion Inductor에 AI Robot Trainer를 통합했다. 회사 발표는 운전 중
   이상 감시에서 학습 데이터 생성과 셀별 재학습, 실제 로봇 배포까지 이어지는 흐름을 설명한다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/industrial-robot-learning-lifecycle.md

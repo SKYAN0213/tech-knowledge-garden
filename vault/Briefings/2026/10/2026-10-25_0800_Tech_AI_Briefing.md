@@ -1,0 +1,275 @@
+---
+title: 2026-10-25 · 아침 브리핑
+type: briefing-index
+date: 2026-10-25
+created: 2026-10-25
+modified: 2026-10-25
+description: 2026-10-25 IT · AI · 로보틱스
+coverage_start: 2026-10-21T20:01:17.938Z
+coverage_end: 2026-10-24T22:18:59.233Z
+item_count: 30
+edition: Editions/2026/10/2026-10-25_0800_Tech_AI_Briefing
+github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/2026/10/2026-10-25_0800_Tech_AI_Briefing.md
+cssclasses:
+  - garden-generated
+generated_by: tech-knowledge-garden
+---
+
+# 2026-10-25 · 아침 브리핑
+
+## 주요 소식
+
+### [[News/415fcd1e877744b8|Solidigm, 잠재적 IPO 검토 중단…생산능력 확충은 우선순위로 유지]]
+
+Solidigm은 2026년 10월 23일 잠재적 pre-IPO 및 IPO 방안의 검토를 중단하기로 결정했다고 밝혔다. Solidigm은 이번 결정이 성장 전망이나 자금 수요의 변화 때문은 아니며, 최근 자본시장 여건과 주가 추세를 고려해 IPO가 SK hynix와 기존 주주에게 가장 유익한 방안인지 재평가할 필요가 있었다고 설명했다. 회사는 생산능력 확대와 경쟁력 강화가 계속 중요한 우선순위라고 설명했다.
+
+### [[News/4c4435f5cbe49c5a|PHP 세션 취약점 CVE-2026-115560 임시 조치 권고]]
+
+2026년 10월 24일자 권고문은 PHP 세션 처리 과정의 원격 코드 실행 취약점 CVE-2026-115560에 대해 PHP 개발팀이 발표한 임시 조치를 안내했다. 이 취약점은 설정 파일의 session.serialize_handler가 php_binary 또는 php_serialize이고, session_start() 전에 ini_set()으로 해당 값을 php로 바꾸며, session.upload_progress.enabled가 활성화된 세 조건을 모두 충족할 때 영향을 받는다. 보안 업데이트가 아직 배포되지 않아, 권고문은 업데이트 전까지 php.ini나 PHP-FPM pool 설정 등에서 session.upload_progress.enabled=0으로 설정하고 모든 PHP 워커를 재시작하도록 안내했다. 영향받는 버전은 제조사 미공개 상태이며, 10월 21일 배포된 PHP 보안 업데이트 8.5.12, 8.4.27, 8.3.36, 8.2.35로도 해결되지 않고 차기 정기 업데이트에서 해결 버전이 배포될 예정이다.
+
+### [[News/a56b88dda9c225a2|NASA, SR-1 Freedom 핵전력 모듈 계약 진전…2028년 말 발사 계획]]
+
+NASA는 2026년 10월 20일 SR-1 Freedom 개발을 진전시키기 위한 주요 계약 조치에 파트너들과 상호 합의했다고 밝혔다. SR-1 Freedom은 지구 궤도를 넘어 심우주에서 핵전기 추진을 실증할 임무로, NASA는 2028년 말 Ingenuity 설계를 발전시킨 화성 헬리콥터 3대의 SkyFall 과학 임무를 함께 실어 발사할 계획이다.
+
+### [[News/f486af5a109b4006|MIT·톈진대, 3D 프린팅 센서 설계 소프트웨어 X-Hinges 소개]]
+
+MIT CSAIL과 톈진대 연구진은 2026년 10월 22일 센서와 움직임 설계를 3D 프린팅 물체에 통합하는 X-Hinges를 소개했다. X-Hinges는 센서 필라멘트가 강한 신호를 내고 배선 요소는 간섭을 피하도록 서로 다른 두 재료를 배치하며, 사용자는 압축·상하·좌우 중 최대 세 축의 움직임을 정해 굽힘 부위에 센서를 넣을 수 있다. 연구진은 손 크기에 맞춰 손가락 관절 굽힘을 기록하고 휴머노이드 손에 전달하는 장갑 등을 제작했지만, 출력물마다 전기 요소 배치가 조금씩 달라 같은 외형의 기기에서도 센서값이 달라지는 보정 문제가 남아 있다.
+
+### [[News/43436d5aea1b860e|Mandiant, BeyondTrust 원격 지원 취약점의 8월 말 제로데이 악용 정황 공개]]
+
+BeyondTrust는 2026년 10월 15일 BeyondTrust Remote Support 어플라이언스에 영향을 주는 CVE-2026-102764를 공개했으며, 취약점 악용에 성공하면 임의 파일을 업로드할 수 있다. Mandiant는 사고 대응 과정에서 ARMORY CASTLE이 2026년 8월 말 이 취약점을 제로데이로 악용한 증거를 확인했다고 밝혔다. 이 취약점은 지원되는 Remote Support 버전 26.2.3 이하에 영향을 주며, 인증되지 않은 원격 공격자가 어플라이언스에서 파일 작업을 수행해 호스트 제어권과 저장·중개된 자격 증명에 접근할 수 있다. Mandiant는 악용 기간 중 취약 버전으로 인터넷에 노출된 어플라이언스를 검토 전까지 침해 가능성이 있는 것으로 취급하고, 조직의 위험 허용도·침해 증거·운영 요구를 바탕으로 지원 업무 중단과 격리를 함께 고려하는 단계적 패치 우선 대응을 권고했다.
+
+
+
+## 분야별 브리핑
+
+### AI · 5건
+
+#### [[News/9def2f624f98553c|카카오, Kanana-2-vision-encoder Medium·Tiny 가중치 공개]]
+
+연구·기술 · 제품·서비스 · 연구 소개 · 새로운 방법 · 성능 개선 · 카카오
+
+카카오는 2026년 10월 21일 외부 비전 인코더 가중치에 의존하지 않고 자체 Kanana 언어모델의 가중치와 구조를 활용해 학습한 Kanana-2-vision-encoder를 소개했다. 카카오는 네 가지 라인업 중 Medium(4억 2,600만 파라미터)과 Tiny(9,800만 파라미터)의 가중치를 연구·개발과 상업적 활용이 가능한 Kanana-open 라이선스로 공개한다고 밝혔으며, 한국어 문서 이해와 이미지 기반 질의응답에 활용할 비전 언어모델 개발을 지원하는 것이 목적이라고 설명했다. 카카오는 같은 언어모델과 VLM 구조를 유지해 비전 인코더를 비교한 자체 평가에서, 약 4억 파라미터 규모의 Medium과 약 1억 규모의 Tiny가 각각 9개 영역 중 8개 영역의 비교 대상 최고점을 기록했다고 밝혔다. 카카오는 Kanana-o의 언어모델과 시각·음성 처리 모듈 등 구성 요소를 자체 개발 중이며, 비전 인코더 공개를 시작으로 나머지 요소도 순차 공개할 계획이라고 밝혔다.
+
+#### [[News/910aa2f8992b1ea1|GitHub Copilot 영향 대시보드에 업계 비교 기능 추가]]
+
+제품·서비스 · 사업·고객 · 기능 추가 · GitHub
+
+GitHub는 2026년 10월 22일 현지 기준 변경 안내에서 Copilot 영향 대시보드에 ‘Industry comparison’ 섹션이 추가됐다고 밝혔다. 참여 기업의 집계 벤치마크와 에이전트 우선·멀티 에이전트 사용자 비중 및 에이전트 사용자와 비에이전트 사용자의 풀 리퀘스트 병합률을 비교하는 기능으로, 참여는 기본 비활성화된 선택 사항이다.
+
+#### [[News/a93a584210e1e8b8|Amazon SageMaker AI, 서버리스 모델 맞춤화에 학습 세션 API 추가]]
+
+제품·서비스 · 기능 추가
+
+Amazon SageMaker AI는 2026년 10월 22일 서버리스 모델 맞춤화에 학습 세션 API를 지원한다고 발표했으며, 고객은 GPU 인프라를 직접 프로비저닝하거나 관리하지 않고 추가 학습(post-training) 알고리즘을 제어할 수 있다. 고객은 라이브 상태형 세션에서 자체 학습 루프와 연산 호출을 구성하고, SageMaker AI는 GPU 할당, 모델·LoRA 로딩, 분산 실행, 장애 복구, 체크포인트 저장과 보안을 처리한다. 요금은 처리 토큰 기준으로 부과돼 보상 점수 계산 같은 로컬 연산은 GPU 시간으로 청구되지 않으며, API는 미국 동부(버지니아 북부), 미국 서부(오리건), 아시아 태평양(뭄바이)에서 일반 제공된다.
+
+#### [[News/a2502ca44383293e|AWS, AgentCore Gateway에 Bedrock API와 모델 대체 라우팅 추가]]
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 2026년 10월 22일 Amazon Bedrock AgentCore Gateway의 추론 엔드포인트가 Amazon Bedrock InvokeModel 및 InvokeModelWithResponseStream API와 추론 트래픽용 모델 대체 라우팅을 지원한다고 밝혔다. AWS에 따르면 기본 목적지가 요청 제한, 용량 부족 또는 연결 불가 상태일 때 게이트웨이는 대체 모델이나 제공자로 요청을 라우팅해 클라이언트마다 별도의 재시도 로직을 구현할 필요를 줄인다. 이 기능은 중국을 제외하고 AgentCore Gateway를 제공하는 모든 AWS 리전에서 이용할 수 있다.
+
+#### [[News/acc181485daa8190|Amazon SageMaker AI, Muse Glimmer·Qwen3.8·Ministral 3 서버리스 맞춤화 지원]]
+
+제품·서비스 · 기능 추가 · Amazon
+
+Amazon은 2026년 10월 22일 Amazon SageMaker AI에서 Muse Glimmer, Qwen3.8 27B, Ministral 3 3B·8B·14B 모델의 기존 배포 지원에 더해 서버리스 맞춤화 지원을 추가했다고 발표했다. Amazon은 도메인과 업무 흐름에 맞춘 학습에 지도 미세 조정(SFT)·직접 선호도 최적화(DPO)·강화 미세 조정(RFT)을 사용할 수 있으며, 모델 적응 방식으로 저랭크 적응(LoRA) 또는 전체 미세 조정을 지원한다고 설명했다. Amazon은 사용자가 자체 데이터를 제공하면 SageMaker AI가 인프라 준비와 학습 오케스트레이션을 맡고, 사용자는 데이터와 평가에 집중하며 사용한 만큼 비용을 낸다고 설명했다. Amazon에 따르면 서버리스 맞춤화는 미국 동부(버지니아 북부), 미국 서부(오리건), 아시아 태평양(도쿄), 유럽(아일랜드)에서 이용할 수 있으며, SageMaker Studio의 Models 페이지, SageMaker Python SDK 또는 코딩 보조 도구와 함께 쓰는 Agent skills로 맞춤화 작업을 시작할 수 있다.
+
+### 소프트웨어·클라우드 · 5건
+
+#### [[News/7e048869ec70694c|AWS, OpenSearch Serverless에 S3용 지능형 수집 기능 제공]]
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 2026년 10월 22일 Amazon OpenSearch Serverless에 S3의 로그와 문서를 검색 가능한 콘텐츠로 바꾸는 완전 관리형 intelligent ingestion을 제공한다고 밝혔다. 이 기능은 JSON·NDJSON·JSON array 형식의 관측 로그와 구조화 데이터, PDF·Word·일반 텍스트·Markdown 파일을 지원한다. Amazon S3를 소스로 하는 Amazon OpenSearch Serverless (NextGen) 컬렉션에서 AWS 7개 리전에 제공되며, 마이그레이션·백필용 일회성 작업과 새 객체를 반영하는 수집 스트림을 지원한다.
+
+#### [[News/eff15a5a3696c82b|AWS, Megaport와 Interconnect 라스트마일 프리뷰 출시]]
+
+제품·서비스 · 신제품 · AWS · Megaport
+
+AWS는 2026년 10월 22일 Megaport와 함께 지사·데이터센터·원격지에서 AWS로 연결하는 완전 관리형 서비스 AWS Interconnect - last mile의 프리뷰를 출시했다. 프리뷰는 Megaport를 통해 미국 산호세(us-west-1)와 북버지니아(us-east-1) 대도시권에서 제공된다. 정식 출시(GA) 때는 AWS Console에서 대역폭을 1 Gbps에서 100 Gbps까지 동적으로 조정할 수 있도록 할 계획이다.
+
+#### [[News/c7b4abbe4976998d|AWS Transit Gateway·Cloud WAN, attachment에 관리형 1:1 NAT 추가]]
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 2026년 10월 23일 AWS Transit Gateway와 AWS Cloud WAN attachment에서 Regional Private NAT Gateway 통합을 통한 관리형 1:1 NAT를 제공한다고 발표했다. 이 기능으로 고객은 IP 주소 대역이 겹치는 사설 네트워크를 주소 변경이나 NAT 장비 배포, 반환 트래픽 규칙 작성 없이 연결할 수 있다. AWS는 두 서비스가 운영되는 모든 상용 리전에서 이 기능을 제공한다고 밝혔다.
+
+#### [[News/71d57daca4402dd1|AWS CloudFormation, 미완료 롤백 절차를 한 번에 끝내는 force rollback 추가]]
+
+제품·서비스 · 기능 추가 · AWS
+
+AWS는 2026년 10월 22일 일부 리소스가 자동으로 롤백되지 않을 때 CloudFormation의 force rollback으로 롤백 절차를 한 번의 작업으로 완료할 수 있다고 발표했다. 외부 변경 등으로 여전히 조치가 필요한 리소스는 기록되며, 사용자는 다음 배포 전에 이를 검토하고 해결해야 한다.
+
+#### [[News/16c7779781249595|GitHub Apps 기업 설치 GA…정책·보안·관리 API 지원 확대]]
+
+제품·서비스 · 기능 추가 · GitHub
+
+GitHub는 2026년 10월 23일 GitHub Apps의 기업 설치를 정식 제공(GA)하고, 기업·조직의 정책·보안·관리 API 지원을 확대했다고 발표했다. 지원 범위가 넓어지면서 더 많은 기업·조직 자동화에서 클래식 PAT를 GitHub Apps로 대체할 수 있게 됐다고 회사는 설명했다.
+
+### 사이버보안 · 5건
+
+#### [[News/4c4435f5cbe49c5a|PHP 세션 취약점 CVE-2026-115560 임시 조치 권고]]
+
+위험·사고 · 보안 사고 · PHP 개발팀
+
+2026년 10월 24일자 권고문은 PHP 세션 처리 과정의 원격 코드 실행 취약점 CVE-2026-115560에 대해 PHP 개발팀이 발표한 임시 조치를 안내했다. 이 취약점은 설정 파일의 session.serialize_handler가 php_binary 또는 php_serialize이고, session_start() 전에 ini_set()으로 해당 값을 php로 바꾸며, session.upload_progress.enabled가 활성화된 세 조건을 모두 충족할 때 영향을 받는다. 보안 업데이트가 아직 배포되지 않아, 권고문은 업데이트 전까지 php.ini나 PHP-FPM pool 설정 등에서 session.upload_progress.enabled=0으로 설정하고 모든 PHP 워커를 재시작하도록 안내했다. 영향받는 버전은 제조사 미공개 상태이며, 10월 21일 배포된 PHP 보안 업데이트 8.5.12, 8.4.27, 8.3.36, 8.2.35로도 해결되지 않고 차기 정기 업데이트에서 해결 버전이 배포될 예정이다.
+
+#### [[News/43436d5aea1b860e|Mandiant, BeyondTrust 원격 지원 취약점의 8월 말 제로데이 악용 정황 공개]]
+
+위험·사고 · 보안 사고 · BeyondTrust · Mandiant · GTIG
+
+BeyondTrust는 2026년 10월 15일 BeyondTrust Remote Support 어플라이언스에 영향을 주는 CVE-2026-102764를 공개했으며, 취약점 악용에 성공하면 임의 파일을 업로드할 수 있다. Mandiant는 사고 대응 과정에서 ARMORY CASTLE이 2026년 8월 말 이 취약점을 제로데이로 악용한 증거를 확인했다고 밝혔다. 이 취약점은 지원되는 Remote Support 버전 26.2.3 이하에 영향을 주며, 인증되지 않은 원격 공격자가 어플라이언스에서 파일 작업을 수행해 호스트 제어권과 저장·중개된 자격 증명에 접근할 수 있다. Mandiant는 악용 기간 중 취약 버전으로 인터넷에 노출된 어플라이언스를 검토 전까지 침해 가능성이 있는 것으로 취급하고, 조직의 위험 허용도·침해 증거·운영 요구를 바탕으로 지원 업무 중단과 격리를 함께 고려하는 단계적 패치 우선 대응을 권고했다.
+
+#### [[News/26cee6c8988b9fda|KRCERT, PHP2Shell 취약점 대응 위해 패치와 침해 흔적 점검 권고]]
+
+위험·사고 · 보안 사고
+
+KRCERT는 2026년 10월 22일 PHP에서 로그인 없이 외부 명령을 실행할 수 있는 CVE-2026-109618·CVE-2026-109619 취약점이 발견됐으며, 심각도는 CVSS 9.2라고 밝혔다. 권고문은 PHP 8.5.12, 8.4.27, 8.3.36, 8.2.35 이상을 해결 버전으로 제시하고, 호환성과 안정성을 검토한 뒤 패치를 적용하도록 안내했다. 이 취약점은 서버 메모리의 비밀번호·토큰·API 키를 유출시킬 수 있으며, 기록에 이상이 없더라도 안전이 보장되지는 않아 업데이트와 침해 점검, 인증정보 교체가 함께 권고됐다.
+
+#### [[News/22e9e157a17745fa|AOMEI 업데이트 서버, 5~10분씩 설정 변조돼 공급망 침해에 악용]]
+
+위험·사고 · 보안 사고 · Google Threat Intelligence Group · Mandiant · AOMEI Technology
+
+Google Threat Intelligence Group(GTIG)와 Mandiant는 2026년 10월 15일 보고서에서 2026년 4~7월 AOMEI Technology의 업데이트 인프라를 겨냥한 소프트웨어 공급망 침해 캠페인을 조사했다고 밝혔다. 공격자는 AOMEI 원본 서버의 설정을 반복해서 짧게 변조했으며, 각 변조 구간은 정상 설정으로 되돌아가기 전까지 5~10분간 이어졌다. 캠페인에는 CROSSROAD 다운로더와 SHINYROAD 백도어가 포함된 다단계 페이로드가 쓰였고, 보고서는 이를 UNC7017로 추적하는 위협 클러스터에 귀속했다. 보고서가 확인한 노출 구간은 5월 28일 05:40~05:50 UTC의 10분, 7월 16일 08:33~08:39 UTC의 6분, 7월 20일 10:35~10:40 UTC의 5분이었다.
+
+#### [[News/44a573496592b7c5|Next.js CVE-2026-96889 보안 업데이트 권고]]
+
+제품·서비스 · 오류 수정 · Vercel
+
+2026년 10월 20일자 권고문은 Next.js의 Use After Free 취약점 CVE-2026-96889와 이를 해결한 Vercel 보안 업데이트를 안내했다. 권고문 표의 첫 행은 15.5.28 미만을 영향 판본·15.5.28 이상을 해결 판본으로, 둘째 행은 16.4.1 미만을 영향 판본·16.4.1 이상을 해결 판본으로 제시한다. 영향을 받는 버전을 사용하는 이용자에게는 해결 방안에 따라 최신 버전으로 업데이트할 것을 권고했다.
+
+### 반도체·컴퓨팅 · 1건
+
+#### [[News/415fcd1e877744b8|Solidigm, 잠재적 IPO 검토 중단…생산능력 확충은 우선순위로 유지]]
+
+투자·기업거래 · 생산·공급망 · 자금 조달 검토 · Solidigm · SK hynix
+
+Solidigm은 2026년 10월 23일 잠재적 pre-IPO 및 IPO 방안의 검토를 중단하기로 결정했다고 밝혔다. Solidigm은 이번 결정이 성장 전망이나 자금 수요의 변화 때문은 아니며, 최근 자본시장 여건과 주가 추세를 고려해 IPO가 SK hynix와 기존 주주에게 가장 유익한 방안인지 재평가할 필요가 있었다고 설명했다. 회사는 생산능력 확대와 경쟁력 강화가 계속 중요한 우선순위라고 설명했다.
+
+### 로봇·제조 · 5건
+
+#### [[News/f486af5a109b4006|MIT·톈진대, 3D 프린팅 센서 설계 소프트웨어 X-Hinges 소개]]
+
+연구·기술 · 연구 소개 · 새로운 방법 · CSAIL · Tianjin University
+
+MIT CSAIL과 톈진대 연구진은 2026년 10월 22일 센서와 움직임 설계를 3D 프린팅 물체에 통합하는 X-Hinges를 소개했다. X-Hinges는 센서 필라멘트가 강한 신호를 내고 배선 요소는 간섭을 피하도록 서로 다른 두 재료를 배치하며, 사용자는 압축·상하·좌우 중 최대 세 축의 움직임을 정해 굽힘 부위에 센서를 넣을 수 있다. 연구진은 손 크기에 맞춰 손가락 관절 굽힘을 기록하고 휴머노이드 손에 전달하는 장갑 등을 제작했지만, 출력물마다 전기 요소 배치가 조금씩 달라 같은 외형의 기기에서도 센서값이 달라지는 보정 문제가 남아 있다.
+
+#### [[News/505559b9505a3cb0|PMO-DDPG, 자동차 점용접 궤적 계획에서 SAC 대비 지표 개선 보고]]
+
+연구·기술 · 새로운 방법 · 연구 소개
+
+2026년 10월 20일 공개된 논문은 자동차 점용접 협동로봇의 궤적 계획을 위해 PMO-DDPG를 제안했다. 논문은 Soft Actor-Critic(SAC) 기준으로 궤적 오차 66.4%, 충돌률 82.1%, 에너지 소비 15.5%, 사이클 시간 22.0%, 추론 지연 22.7%를 낮추고 성공률은 7.5퍼센트포인트 높였다고 보고했다. 동일 연구 내 5회 독립 학습 실행의 평균±표본표준편차는 궤적 오차 1.08±0.29 mm, 충돌률 1.2±0.5%, 에너지 3.65±0.28 kJ, 사이클 시간 3.87±0.25초, 성공률 94.6±1.8%, 추론 시간 21.5±1.6 ms였다. 저자들은 비전 유도 점용접 산업 시험 100회에서 밀리미터 미만 위치 정밀도와 반복 가능한 용접을 확인했다고 보고했으며, 방법 간 차이에 대한 공식 유의성 검정은 하지 않았다고 밝혔다.
+
+#### [[News/620ef05ef6350329|로봇 비행선으로 ALICE 검출기 동굴의 누설 자기장 측정]]
+
+연구·기술 · 연구 소개 · 실증·재현
+
+2026년 10월 16일 공개된 연구에서 연구진은 ALICE 검출기 동굴의 3차원 누설 자기장을 측정하기 위해 3축 Hall-effect 센서와 ArUco 마커 기반 시각 위치추정을 결합한 로봇 비행선을 제시했다. 자석을 명목 전류로 운전한 상태에서 센서 정확도와 위치추정 불확실성을 분리하는 정적 측정과 같은 계측 영역의 동적 비행 캠페인을 수행했으며, 정적 측정은 ArUco 마커 20곳에서 각각 30초간 진행됐다. 논문은 전자기 시뮬레이션과 측정값의 일치도를 횡방향 성분에서 R² 0.86–0.98, 수직 성분에서 R² 0.75–0.79로 보고했고, 수직 성분에는 0.65–1.12 mT의 체계적인 양의 편향이 있었다고 설명했다. 비행 시험은 ALICE 자석이 명목 전류로 작동하고 L3 솔레노이드와 전방 쌍극자가 모두 음극성인 상태에서 2026년 2월 4일과 5월 22일, 총 네 차례 진행됐다.
+
+#### [[News/18ad06131ba8857f|Agility Robotics, Digit 5 공개…사람 곁 작업과 물류 업무 겨냥]]
+
+제품·서비스 · 신제품 · Agility Robotics
+
+Agility Robotics는 2026년 10월 19일 Digit 5를 공개했으며, 회사는 이 로봇이 유용한 작업을 안전하고 경제적으로 대규모 수행하도록 설계됐다고 밝혔다. 공동창업자에 따르면 Digit 5는 23kg 상자를 높은 선반에 올리도록 설계됐고, 9분 충전으로 90분 작동하는 것이 목표이며, 회사는 Digit 4 EVT의 상업 배치에서 배운 점을 바탕으로 첫 10개 사용 사례에 맞춰 로봇을 처음부터 설계했다. 공동창업자는 Agility Robotics의 Salem 소재 RoboFab이 7만 제곱피트 규모로 연간 Digit 5를 1만 대 초과 생산할 수 있다고 설명했다. 공동창업자는 유럽 CE 규정 준수, 북미 UL 전기 안전 인증과 FCC 전자파 한계가 고객 현장 배치를 위한 필수 요구사항이었다고 설명했다.
+
+#### [[News/248eeecd73bfe4f1|Dream Labs, 9000만 달러 시드 투자 유치와 Dream API 공개]]
+
+제품·서비스 · 투자·기업거래 · 신제품 · 투자 유치 · Dream Labs · B Capital · Kindred Ventures · A.Capital · Unusual Ventures · SV Angel · Wing VC · Scribble VC
+
+2026년 10월 22일(한국시간) 보도에 따르면 Dream Labs는 시드 투자 9000만 달러를 유치하고, 로봇 카메라 영상과 영어 자연어 지시를 모터 명령으로 바꾸는 Dream API를 출시했다고 밝혔다. 회사는 Dream-1이 일상 작업을 수행하는 사람들의 영상으로 학습해 다음 상황과 로봇 동작을 예측하며, 제조사가 다른 로봇에서도 작동한다고 설명했다. Dream Labs에 따르면 Dream-1은 평행 그리퍼가 달린 양팔 로봇을 추가 데이터 없이 제어할 수 있고, 현재 물체 집기·놓기와 빨래 개기 같은 탁상 작업을 처리하며 바퀴형 이동 로봇과 손재주 로봇 지원은 계획 중이다.
+
+### 에너지·기후기술 · 1건
+
+#### [[News/85bd67089d446bba|파푸아뉴기니 산불 탄소 배출, 10월 중순 누적 동기 최고 추정]]
+
+위험·사고 · 안전 문제 · GFED · Wageningen University & Research · Papua New Guinea's National Weather Service · Global Forest Watch · University of California, Irvine
+
+NASA 지구관측소는 2026년 10월 22일, 가뭄과 강한 엘니뇨가 이어진 9~10월 뉴기니에서 산불이 번지고 연기가 수 주 동안 넓은 지역을 뒤덮었다고 전했다. GFED 추정에 따르면 파푸아뉴기니 산불의 탄소 배출량은 10월 17일까지 32메가톤에 가까워 연중 같은 시점 기준 역대 어느 해보다 많았고, 화재 과학자 귀도 판데르베르프는 2015년 연간 총량을 이미 크게 넘어섰으며 2026년이 1997년을 넘어 연간 최고치가 될 가능성이 매우 높다고 말했다. 인도네시아령 파푸아의 탄소 배출량은 35메가톤을 초과해 2015년과 1997년에 이어 세 번째로 높았다고 보고서는 밝혔다. 대기오염으로 항공편이 지연·취소되고 학교가 문을 닫았으며, 일부 지역 당국은 어린이와 고령자에게 마스크 착용을 권고했다.
+
+### 바이오·의료기술 · 5건
+
+#### [[News/7c2862a904efcaf3|FDA, 특정 국소 진행성 직장암에 Jemperli 단독요법 가속 승인]]
+
+정책·규제 · 연구·기술 · 인허가 · 연구 소개 · 미국 FDA · GSK · Memorial Sloan Kettering Cancer Center
+
+미국 FDA는 2026년 10월 19일, 이전 치료를 받지 않은 성인 중 FDA가 허가한 검사에서 dMMR 또는 MSI-H 종양이 확인된 2기 또는 3기 국소 진행성 직장암 환자의 Jemperli(dostarlimab-gxly) 단독 사용을 가속 승인했으며, 승인 수령자는 GSK다. 이 용법은 일부 환자에게 수술·방사선 치료·화학요법을 피할 선택지를 제공할 수 있지만, 승인은 AZUR-1 중간 결과에 근거하며 지속적인 임상적 이득을 입증하기 위한 후속 추적이 필요하다.
+
+#### [[News/f52873b716a974b4|MIT 등, 태아 머리 대칭을 반영한 MRI 모델 E(3)-Pose 개발]]
+
+연구·기술 · 연구 소개 · 새로운 방법 · MIT · Boston Children’s Hospital · Inria
+
+MIT News는 2026년 10월 19일 MIT·Boston Children’s Hospital·Inria 연구진이 움직이는 태아 머리를 영상화해 방사선 전문의가 살펴볼 고해상도 이미지를 얻도록 돕는 딥러닝 모델 E(3)-Pose를 개발하고 훈련했다고 소개했다. 이 모델은 태아 머리의 좌우 대칭을 신경망 구조에 내장해 뇌의 방향을 파악하기 쉽게 한다.
+
+#### [[News/54d80bfbb20da444|한국생명공학연구원, 항암 작용·영상 추적 결합 후보물질 BF-04 개발]]
+
+연구·기술 · 연구 소개 · 새로운 방법 · 한국생명공학연구원
+
+한국생명공학연구원 화학생물연구센터 성낙균 박사 연구팀은 2026년 10월 19일 항암 작용과 실시간 영상 진단을 결합하는 후보물질 BF-04를 개발했다고 밝혔다. 연구팀은 암세포·환자 유래 암 오가노이드·동물모델에서 이 물질을 평가했으며, 형광물질 또는 방사성 동위원소를 도입해 암 조직의 위치와 약물 분포를 영상으로 확인했다고 보고했다.
+
+#### [[News/9f4b8f91f73d0d47|로봇 심초음파 AI, 건강인 영상에서 위양성률 낮춘 도메인 적응 연구]]
+
+연구·기술 · 연구 소개 · 새로운 방법 · 실증·재현 · Waseda University · Cardiovascular Institute
+
+연구진은 2026년 10월 21일 공개된 논문에서 병원과 로봇 심초음파 영상의 특징을 정렬하는 적대적 도메인 적응 방법을 제안했다. 건강한 로봇 촬영 대상자에서 Normal-only DANN은 직접 전이보다 위양성률을 34.3%에서 10.7%로 낮췄지만, 병리 로봇 사례가 없어 민감도 평가와 임상 사용을 위한 검증은 남아 있다.
+
+#### [[News/98b4374cb5540bd0|Roche, IgA 신병증 임상 3상서 sefaxersen의 단백뇨 감소 결과 발표]]
+
+연구·기술 · 연구 소개 · Roche
+
+Roche는 2026년 10월 23일, 최적화된 표준 치료를 받는 원발성 IgA 신병증 성인 대상 3상 IMAgINATION 연구에서 시험 중인 sefaxersen이 위약 대비 37주 시점의 단백뇨를 24시간 소변 단백질-크레아티닌 비율(UPCR) 기준으로 43.1% 줄였다는 중간 결과를 발표했다. 신장 기능 변화는 눈가림 연구를 계속해 105주 시점의 추정 사구체여과율(eGFR)로 평가할 예정이다.
+
+### 우주·기초과학 · 3건
+
+#### [[News/a56b88dda9c225a2|NASA, SR-1 Freedom 핵전력 모듈 계약 진전…2028년 말 발사 계획]]
+
+연구·기술 · 연구 소개 · NASA · Sierra Lobo Inc. · Department of Energy (DOE) · Idaho National Laboratory
+
+NASA는 2026년 10월 20일 SR-1 Freedom 개발을 진전시키기 위한 주요 계약 조치에 파트너들과 상호 합의했다고 밝혔다. SR-1 Freedom은 지구 궤도를 넘어 심우주에서 핵전기 추진을 실증할 임무로, NASA는 2028년 말 Ingenuity 설계를 발전시킨 화성 헬리콥터 3대의 SkyFall 과학 임무를 함께 실어 발사할 계획이다.
+
+#### [[News/8cd5db7ee29aa1be|항우연, 누리호 단 조립 치공구 129종 순천으로 이송]]
+
+생산·공급망 · 조달 변경 · 한국항공우주연구원 · 한화에어로스페이스
+
+한국항공우주연구원은 2026년 10월 19일 누리호 단 조립용 치공구 129종을 한화에어로스페이스에 무상 대여하기 위해 순천 단조립장으로 이송했다고 밝혔다. 2027년 발사 예정인 누리호 비행모델 6호기부터 1·2·3단을 순천에서 각각 조립하고, 각 단을 해상으로 나로우주센터에 옮겨 결합한 뒤 발사 전 준비를 진행할 예정이다. 항우연은 장비 대여와 함께 기술 감리와 현장 기술 지원을 제공해 민간의 조립 역량 축적을 도울 계획이다.
+
+#### [[News/6d99be7dd6da2d15|항우연, 제7회 초소형위성 경연대회 7개 팀 최종 선정]]
+
+인력·조직 · 연구·기술 · 교육·훈련 · 연구 소개 · 한국항공우주연구원 · 우주항공청
+
+한국항공우주연구원은 2026년 10월 22일 제7회 초소형(큐브)위성 경연대회에서 초급 5개 팀과 고급 2개 팀, 총 7개 팀을 최종 선정했다고 밝혔다. 1차 심사에서 위성 임무와 기술 설계를 평가해 14개 팀을 선정한 뒤, 2차 심사에서 예비설계 서류·발표 평가를 거쳐 최종 팀을 확정했다. 선정팀은 설계 검토와 제작, 우주환경시험 등을 거쳐 비행모델을 개발할 예정이며, 우주항공청과 항우연은 기술·개발비를 지원하고 국내 발사체를 통한 발사 기회를 제공할 계획이다.
+
+
+
+## 출처
+
+- [S1] https://news.skhynix.com/en/fact-12/
+- [S2] https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72237
+- [S3] https://www.nasa.gov/centers-and-facilities/glenn/sr-1-freedom-advances-with-progress-on-nuclear-power-module/
+- [S4] https://news.mit.edu/2026/design-software-reimagines-everyday-objects-as-self-aware-devices-1022
+- [S5] https://cloud.google.com/blog/topics/threat-intelligence/armory-castle-exploits-beyondtrust/
+- [S6] https://www.fda.gov/news-events/press-announcements/fda-approves-immunotherapy-may-allow-certain-patients-rectal-cancer-avoid-chemotherapy-radiation-and
+- [S7] https://www.kari.re.kr/kor/article/ATCL87374b48c/18740
+- [S8] https://news.mit.edu/2026/teaching-ai-about-symmetry-could-make-prenatal-diagnosis-more-reliable-1019
+- [S9] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1939068/full
+- [S10] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1926428/full
+- [S11] https://spectrum.ieee.org/agility-robotics-digit-5-redesign
+- [S12] https://www.bioin.or.kr/rsrch_Rslt.do?num=317183&cmd=view&bid=research&cPage=1&listCnt=50
+- [S13] https://science.nasa.gov/earth/earth-observatory/fires-char-new-guinea/
+- [S14] https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2026.1900388/full
+- [S15] https://www.kari.re.kr/kor/article/ATCL87374b48c/18746
+- [S16] https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72230
+- [S17] https://tech.kakao.com/posts/840
+- [S18] https://www.roche.com/media/releases/med-cor-2026-10-23
+- [S19] https://cloud.google.com/blog/topics/threat-intelligence/investigating-ephemeral-supply-chain-tampering/
+- [S20] https://www.therobotreport.com/dream-labs-raises-90m-and-launches-dream-api/
+- [S21] https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=2&categoryCode=&nttId=72221
+- [S22] https://github.blog/changelog/2026-10-22-industry-comparisons-in-the-copilot-impact-dashboard
+- [S23] https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-opensearch-intelligent-ingestion-logs-documents-s3
+- [S24] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-announces-AWS-interconnect-last-mile-megaport-preview/
+- [S25] https://aws.amazon.com/about-aws/whats-new/2026/10/training-session-apis-on-sagemaker-ai
+- [S26] https://aws.amazon.com/about-aws/whats-new/2026/10/agentcore-gateway-invokemodel-fallback/
+- [S27] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-transit-gateway-cloud-wan-1-1-nat/
+- [S28] https://aws.amazon.com/about-aws/whats-new/2026/10/aws-cloudformation-cdk/
+- [S29] https://github.blog/changelog/2026-10-23-enterprise-installations-for-github-apps-generally-available
+- [S30] https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-sagemaker-muse-qwen-ministral/

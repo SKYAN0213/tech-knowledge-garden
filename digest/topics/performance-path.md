@@ -6,6 +6,14 @@ NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트�
 
 ## 사건 이력
 
+<a id="kanana-vision-conditional-performance-20261021"></a>
+
+### 2026-10-21 · [카카오, Kanana-2-vision-encoder Medium·Tiny 가중치 공개](https://skyan0213.github.io/tech-knowledge-garden/news/9def2f624f98553c)
+
+카카오는 2026년 10월 21일 외부 비전 인코더 가중치에 의존하지 않고 자체 Kanana 언어모델의 가중치와 구조를 활용해 학습한 Kanana-2-vision-encoder를 소개했다. 카카오는 네 가지 라인업 중 Medium(4억 2,600만 파라미터)과 Tiny(9,800만 파라미터)의 가중치를 연구·개발과 상업적 활용이 가능한 Kanana-open 라이선스로 공개한다고 밝혔으며, 한국어 문서 이해와 이미지 기반 질의응답에 활용할 비전 언어모델 개발을 지원하는 것이 목적이라고 설명했다. 카카오는 같은 언어모델과 VLM 구조를 유지해 비전 인코더를 비교한 자체 평가에서, 약 4억 파라미터 규모의 Medium과 약 1억 규모의 Tiny가 각각 9개 영역 중 8개 영역의 비교 대상 최고점을 기록했다고 밝혔다. 카카오는 Kanana-o의 언어모델과 시각·음성 처리 모듈 등 구성 요소를 자체 개발 중이며, 비전 인코더 공개를 시작으로 나머지 요소도 순차 공개할 계획이라고 밝혔다.
+
+[tech.kakao.com 원문](https://tech.kakao.com/posts/840) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+
 <a id="20261001-gke-agent-substrate"></a>
 
 ### 2026-09-30 · [Google Cloud, 에이전트 격리용 GKE Agent Substrate와 고속 저장 VM 공개](https://skyan0213.github.io/tech-knowledge-garden/news/72249bd53d8a5849)

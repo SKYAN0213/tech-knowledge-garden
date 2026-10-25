@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-22
+date: 2026-10-25
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,36 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/acc181485daa8190|Amazon SageMaker AI, Muse Glimmer·Qwen3.8·Ministral 3 서버리스 맞춤화 지원]] · 2026-10-25
+- [[News/16c7779781249595|GitHub Apps 기업 설치 GA…정책·보안·관리 API 지원 확대]] · 2026-10-25
+- [[News/71d57daca4402dd1|AWS CloudFormation, 미완료 롤백 절차를 한 번에 끝내는 force rollback 추가]] · 2026-10-25
+- [[News/c7b4abbe4976998d|AWS Transit Gateway·Cloud WAN, attachment에 관리형 1:1 NAT 추가]] · 2026-10-25
+- [[News/a2502ca44383293e|AWS, AgentCore Gateway에 Bedrock API와 모델 대체 라우팅 추가]] · 2026-10-25
+- [[News/a93a584210e1e8b8|Amazon SageMaker AI, 서버리스 모델 맞춤화에 학습 세션 API 추가]] · 2026-10-25
+- [[News/eff15a5a3696c82b|AWS, Megaport와 Interconnect 라스트마일 프리뷰 출시]] · 2026-10-25
+- [[News/7e048869ec70694c|AWS, OpenSearch Serverless에 S3용 지능형 수집 기능 제공]] · 2026-10-25
+- [[News/910aa2f8992b1ea1|GitHub Copilot 영향 대시보드에 업계 비교 기능 추가]] · 2026-10-25
+- [[News/44a573496592b7c5|Next.js CVE-2026-96889 보안 업데이트 권고]] · 2026-10-25
+- [[News/248eeecd73bfe4f1|Dream Labs, 9000만 달러 시드 투자 유치와 Dream API 공개]] · 2026-10-25
+- [[News/22e9e157a17745fa|AOMEI 업데이트 서버, 5~10분씩 설정 변조돼 공급망 침해에 악용]] · 2026-10-25
+- [[News/98b4374cb5540bd0|Roche, IgA 신병증 임상 3상서 sefaxersen의 단백뇨 감소 결과 발표]] · 2026-10-25
+- [[News/9def2f624f98553c|카카오, Kanana-2-vision-encoder Medium·Tiny 가중치 공개]] · 2026-10-25
+- [[News/26cee6c8988b9fda|KRCERT, PHP2Shell 취약점 대응 위해 패치와 침해 흔적 점검 권고]] · 2026-10-25
+- [[News/6d99be7dd6da2d15|항우연, 제7회 초소형위성 경연대회 7개 팀 최종 선정]] · 2026-10-25
+- [[News/9f4b8f91f73d0d47|로봇 심초음파 AI, 건강인 영상에서 위양성률 낮춘 도메인 적응 연구]] · 2026-10-25
+- [[News/85bd67089d446bba|파푸아뉴기니 산불 탄소 배출, 10월 중순 누적 동기 최고 추정]] · 2026-10-25
+- [[News/54d80bfbb20da444|한국생명공학연구원, 항암 작용·영상 추적 결합 후보물질 BF-04 개발]] · 2026-10-25
+- [[News/18ad06131ba8857f|Agility Robotics, Digit 5 공개…사람 곁 작업과 물류 업무 겨냥]] · 2026-10-25
+- [[News/620ef05ef6350329|로봇 비행선으로 ALICE 검출기 동굴의 누설 자기장 측정]] · 2026-10-25
+- [[News/505559b9505a3cb0|PMO-DDPG, 자동차 점용접 궤적 계획에서 SAC 대비 지표 개선 보고]] · 2026-10-25
+- [[News/f52873b716a974b4|MIT 등, 태아 머리 대칭을 반영한 MRI 모델 E(3)-Pose 개발]] · 2026-10-25
+- [[News/8cd5db7ee29aa1be|항우연, 누리호 단 조립 치공구 129종 순천으로 이송]] · 2026-10-25
+- [[News/7c2862a904efcaf3|FDA, 특정 국소 진행성 직장암에 Jemperli 단독요법 가속 승인]] · 2026-10-25
+- [[News/43436d5aea1b860e|Mandiant, BeyondTrust 원격 지원 취약점의 8월 말 제로데이 악용 정황 공개]] · 2026-10-25
+- [[News/f486af5a109b4006|MIT·톈진대, 3D 프린팅 센서 설계 소프트웨어 X-Hinges 소개]] · 2026-10-25
+- [[News/a56b88dda9c225a2|NASA, SR-1 Freedom 핵전력 모듈 계약 진전…2028년 말 발사 계획]] · 2026-10-25
+- [[News/4c4435f5cbe49c5a|PHP 세션 취약점 CVE-2026-115560 임시 조치 권고]] · 2026-10-25
+- [[News/415fcd1e877744b8|Solidigm, 잠재적 IPO 검토 중단…생산능력 확충은 우선순위로 유지]] · 2026-10-25
 - [[News/529d2e7d05c74354|근육세포로 움직이는 얇은 수영 로봇, 물속 미로 통과]] · 2026-10-22
 - [[News/9bc45fc6d834b861|알고리즘 단일화의 영향, 채용 모형에서는 경쟁과 정확도에 따라 달라]] · 2026-10-22
 - [[News/2ebead9795db380f|SnSe2 하나로 두 종류 초박막 반도체에 전기 공급]] · 2026-10-22

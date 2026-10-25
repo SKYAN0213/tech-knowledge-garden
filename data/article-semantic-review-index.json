@@ -764,6 +764,25 @@
       "links": []
     },
     {
+      "event_id": "16c7779781249595",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:03:29.079Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-af8a2b5bf6f269fbb3e65f56df88d6231ee0",
+      "semantic_input_sha256": "62f75986c9bc3ca52d7f0fad9dbe7b4677326382c68ca481e900465f2af6a521",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-6ab566c8aef7b547e239549f828cf551a9d456f6dd5047d7dd0ec483c9fcee66",
+      "request_sha256": "6ab566c8aef7b547e239549f828cf551a9d456f6dd5047d7dd0ec483c9fcee66",
+      "result_sha256": "6efb09f491feb4750e3955d16d09e962c3d7ef70068be39eaee54f4db41948e0",
+      "receipt_sha256": "dbc40ee70b05bdcd452b0851e19cdb495da7854fd9f53d6e8e58f125aadee3c4",
+      "article_public_sha256": "3f6a702e6120056336b21777e6811ff6962d01ad720e1fc657811fe35b2a5c9e",
+      "approval_files_sha256": "b43c0e745e8bc927b6b1410bc2b092331e6f7b9587a3451feeb138edbf6d606c",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "16e13c52f7cd02d4",
       "status": "reviewed_none",
       "reviewed_at": "2026-10-23T10:44:37.392Z",
@@ -867,6 +886,36 @@
           ],
           "concept_path": "Knowledge/AI Systems/Agent Observability.md",
           "concept_sha256": "5e13b8da1ff24395922870ebf77abbd94b443cde57cc9b1ec272c2826c34538d"
+        }
+      ]
+    },
+    {
+      "event_id": "18ad06131ba8857f",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:03:30.127Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-c1eed17bd5f6fa3c8a967844b59fce8c7868",
+      "semantic_input_sha256": "37d00ace18f9584a5c3119feff15e410cad529d4bf7399862c694cc7197db01a",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-2b62e5956bbc2b177ba0a8fc040114aae65bd324d9a8037a2313f6a70f3badac",
+      "request_sha256": "2b62e5956bbc2b177ba0a8fc040114aae65bd324d9a8037a2313f6a70f3badac",
+      "result_sha256": "74d4e7818f48952ffd6dfe8f76fa271da2c6300dcbb4a1d6e737341da238a6f2",
+      "receipt_sha256": "7746d892c5c69ab09d42d43709632d65a2890fb186985ac59a76181da7eb2c32",
+      "article_public_sha256": "875e66e092cae4cf945987ceb5b9be29c78547189b71f375ce2ef72f492b785b",
+      "approval_files_sha256": "88b5839f9ed63f30c7a0a14996753f37a01d3133477705d90512b7012e082095",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "machine-tending",
+          "role": "application",
+          "reason": "기사는 Digit 5의 로드맵에 머신 텐딩을 포함한다고 명시합니다. 원문 근거도 기계 작업을 Digit 5의 계획된 작업으로 제시합니다.",
+          "evidence_claim_ids": [
+            "c1e19a4592ded5870caefdda"
+          ],
+          "concept_path": "Knowledge/Robotics/Machine Tending.md",
+          "concept_sha256": "dd711f71c3f37d0cdac73eb3e3e80d887623760aff471dfeb092d3484f9c0bd6"
         }
       ]
     },
@@ -1377,6 +1426,69 @@
       "links": []
     },
     {
+      "event_id": "22e9e157a17745fa",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:03:31.202Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-16d786df23b5d71042c871be3ea6795f3b1f",
+      "semantic_input_sha256": "9a48fae3f5c86aba9ef3a4bcbedd00911985e56d37e4a9c458c47a7030093b35",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-79308393837902233f379d8f36b0bae55e2b6945b6204bd59fa3a3f0dd471737",
+      "request_sha256": "79308393837902233f379d8f36b0bae55e2b6945b6204bd59fa3a3f0dd471737",
+      "result_sha256": "fae3dbcecceb5225116bc452cc6294cfdeae21e52901b86f06dfc63c1c894b44",
+      "receipt_sha256": "9a4b98adecbb564c117d999867dddc60cc8bd47048f8fc83f8b3e2faa55ecaad",
+      "article_public_sha256": "a2fe4e54758d7c6804194a74e50cefb52e88e1eb1b03d2b76b54737920354648",
+      "approval_files_sha256": "a54dac24f478cfe8f204a353e42e37c3f7135aab9dc408d990589766b402de4f",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "supply-chain",
+          "role": "topic",
+          "reason": "The article describes attackers tampering with AOMEI’s update infrastructure to deliver malicious software, a direct software supply chain compromise.",
+          "evidence_claim_ids": [
+            "0b0547faaf63d8a0a73d9508",
+            "3362834636d8ee562c532660",
+            "f3e0e1b3277bc15a9f8a78b7"
+          ],
+          "concept_path": "Knowledge/Software Engineering/Software Supply Chain Security.md",
+          "concept_sha256": "701b8e3d2e8383b97c62f01bde57a1ab2ac0ac8530ddabbe9138a3274db1ab86"
+        }
+      ]
+    },
+    {
+      "event_id": "248eeecd73bfe4f1",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:03:53.768Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-e94240daeec9466f9797fe079700b695eab0",
+      "semantic_input_sha256": "4d94edc7abd6b8c9c42ad4a3320a940cbde4db8f534ebe940b83d37112a6841d",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-5152578674a92613120c2b033cfcbbccdbe5e02603d2c9a59d059099e549d203",
+      "request_sha256": "5152578674a92613120c2b033cfcbbccdbe5e02603d2c9a59d059099e549d203",
+      "result_sha256": "7005a712836757806b61127f9446bceb90923fb2b26c0c773c92fcc2505f5f44",
+      "receipt_sha256": "68f5190c65ab972509ec1f978619b0060e0597e2669c5f86566d5a20dcad8da9",
+      "article_public_sha256": "891b65b6f278f5e809ef78512c0ec666eeb92cf8312795b525e9d0a71343704c",
+      "approval_files_sha256": "942b644b86e2f28a45cac5e4a5edacfb5cd7abff67f976394ec80f681dca42ee",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "vla",
+          "role": "topic",
+          "reason": "Dream API는 로봇 카메라 영상과 자연어 지시를 모터 명령으로 변환하며, Dream-1은 일상 작업 영상으로 다음 상황과 로봇 동작을 예측한다고 설명됩니다. 이는 시각·언어 입력에서 로봇 행동을 생성하는 모델 계열과 직접 연결됩니다.",
+          "evidence_claim_ids": [
+            "20ef19ac62b4e084324c2ec3",
+            "6bec091da556a1bbe925e595"
+          ],
+          "concept_path": "Knowledge/AI Systems/Vision-Language-Action Models.md",
+          "concept_sha256": "617cf617b480e67b1f8ce3c63afdce2f1caf093a16330b2de2595a4dd2f7776b"
+        }
+      ]
+    },
+    {
       "event_id": "24beabc691ccd09b",
       "status": "reviewed_none",
       "reviewed_at": "2026-10-23T10:50:36.355Z",
@@ -1555,6 +1667,25 @@
       "receipt_sha256": "256673af9b5f24300d177643ac51af45b47b5ea537545d933fd3584dbf4513f9",
       "article_public_sha256": "331a7521eb48736147d60645a7972f0b6269afb1124493b7f50266312f03cc15",
       "approval_files_sha256": "6c2378b846c80080b3b888b5866c19adfca023924476c28332430406b64a1b66",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "26cee6c8988b9fda",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:03:54.864Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-d4ae57b0036afe6f1c9508567a1db4aa177f",
+      "semantic_input_sha256": "84467edb77190a2291204cabbb16608118a07d3a4c4a0dc7a92309a09fe3da27",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-4cd27de5ba84c2a0211658850e52eecdec9fac81450e255f9e5427eeaa426af5",
+      "request_sha256": "4cd27de5ba84c2a0211658850e52eecdec9fac81450e255f9e5427eeaa426af5",
+      "result_sha256": "9c3eef01cc63de41b31a783484bcab1d4c7c04e68dba5b091dd9f34809941df5",
+      "receipt_sha256": "2ada8d2c8ac2ddc0116393543a95c20c4c6864ff71e79edeefa005e9f59a95f4",
+      "article_public_sha256": "8e56473dbc89168d3018bb4717a2de0b9fa0c6672df0d637fcaae7f83c300294",
+      "approval_files_sha256": "1993d5470f226040b3463b7671e677464fd3ca6dbbf71617d36763a95eec1b8b",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -2920,6 +3051,25 @@
       ]
     },
     {
+      "event_id": "415fcd1e877744b8",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:00.527Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-b358b933891cc9f21c43c4a71acb0816b913",
+      "semantic_input_sha256": "5318baa70701820fc16fea161751f9bbc10cc91983549f450f4f245df218322c",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-13629ef548604965f8b740719dbf4144198856bea8d98eb896581a645bb963c1",
+      "request_sha256": "13629ef548604965f8b740719dbf4144198856bea8d98eb896581a645bb963c1",
+      "result_sha256": "ea65165c5fe2dc58e5ca87f33d5068e303506c732c6faa1098aa62c8ae2fea1a",
+      "receipt_sha256": "86556d944aaedbba84138ca186ddf52646e1fa4b3f7bb8e6865fc79daec31d1a",
+      "article_public_sha256": "a28bdc008251e2d7f240214eb03bc2a8382c9a405a13286129adc3c4b37be41a",
+      "approval_files_sha256": "2c6f91da988249424f73766510eef2b78cf14ccf4f8e44e5dbd2c0f33b3cf0dd",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "426d91706ebf17e3",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:21:56.890Z",
@@ -2949,6 +3099,25 @@
           "concept_sha256": "15bb4e45ff08fd29310787a479aefbdc6dbf00433349dbac2506d395e6624750"
         }
       ]
+    },
+    {
+      "event_id": "43436d5aea1b860e",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:05:47.808Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-b2443f3bfbd18de996ec621b791cb044664f",
+      "semantic_input_sha256": "ccf9cc1bff2dd37d874eaa34c2ec0000acd427415586faec5715c6d22374403f",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-96dfc1b137a4bde55260afa6ac5d213cef868d65f91ee408a133177ff201aaad",
+      "request_sha256": "96dfc1b137a4bde55260afa6ac5d213cef868d65f91ee408a133177ff201aaad",
+      "result_sha256": "1a7fca20b487e367348b95e087aefef0abe6a27804bf4a2794eb9fecc569190f",
+      "receipt_sha256": "87b2a6ac1a2d0813af32704c89f121e9117e291766cbb718c8cd199a391c5930",
+      "article_public_sha256": "79cf86e3a78fc332b86c1909172b4dfd829dfded2cd7c31f88aa042d7865246c",
+      "approval_files_sha256": "39a399b5ddc01ac1aeda119dedbdf893022e76fa1068c5e81f096cbc96055a32",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "43924fdd4d64f158",
@@ -2984,6 +3153,25 @@
       "receipt_sha256": "a980e133dbf74ac3c6b3291e49278d981b92157fd7f1fdd852101a7d11867e57",
       "article_public_sha256": "32d8916866dc8a95fb3e4533764e2d26105de399ef63c34486ba5f8623464d5f",
       "approval_files_sha256": "f78beed13bdb0e928e6e9bad6e80e6d73880985112884a2a02327ffab5a7749a",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "44a573496592b7c5",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:05:48.863Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-03929ae149ffbf3e25fcabeb167ee0198b94",
+      "semantic_input_sha256": "c68e97263002410d59618e026ca773f5ddae038cd5ac1d7ed2609c9ab8eea008",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-40ae536c88ddfbf254820b71f6aa13b200976a667c737bf99d9c74f4ced39e1c",
+      "request_sha256": "40ae536c88ddfbf254820b71f6aa13b200976a667c737bf99d9c74f4ced39e1c",
+      "result_sha256": "4742a93addcf48d02d499818310662d4595c3ad07e712a901f9107b981c8b5ad",
+      "receipt_sha256": "d7d299546105aa22188d9da4dcbd978bc25945a61433f63e79417ac2ef302c19",
+      "article_public_sha256": "86d6b571a30b47416ac80b4376fa6ae6a397b88f363f790c623aab792eb5209b",
+      "approval_files_sha256": "908588aebd22af518888320b636eddbf0cce67b87a0160bde151df44f0b0470c",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -3291,6 +3479,25 @@
       "links": []
     },
     {
+      "event_id": "4c4435f5cbe49c5a",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:05:49.955Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-255d68581c50ad3a850682e66623c12bf6cf",
+      "semantic_input_sha256": "a156d17dc7c2b02aa710a1688f6074a9040f2eb3a433485a9e6cbc94f33c6db9",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-0222812426bb5025c61776ea8b3869ad92cff394b632f7200a537ba0ec240228",
+      "request_sha256": "0222812426bb5025c61776ea8b3869ad92cff394b632f7200a537ba0ec240228",
+      "result_sha256": "9784f57dd22669babc99f5fba87f5edfc984550f21e3b04271d63df1730cf395",
+      "receipt_sha256": "ee7784b703f4a4d61032ce1364ddd4fda1dc5b57e27535946b26eda6ca271bd0",
+      "article_public_sha256": "25b6278c6ad8ec706f5cd44ad68bfe4e98b7e2985cab560b5e554259942ca165",
+      "approval_files_sha256": "461723c4827069ae3bb080dcd654545d9f258915289935a84c1627763922256e",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "4c4dce735e8ae75f",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:26:34.222Z",
@@ -3439,6 +3646,25 @@
           "concept_sha256": "36c9b1a1e2cca3a7d8de9783f69cb0c9559687f9855f065d2aa78fcc87fa25cd"
         }
       ]
+    },
+    {
+      "event_id": "505559b9505a3cb0",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:06:08.540Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-cbec8a4d67c51fc8e4162a0aa3c7c53dc40a",
+      "semantic_input_sha256": "b9a907d6b080540cc66b039ff6e8e451ffa7bdad4397905b678c7835b8e3013a",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-c074f3fa67cfa61d1af5ee8c2c4dc712add589e72c18504e261640ef5f6a21e1",
+      "request_sha256": "c074f3fa67cfa61d1af5ee8c2c4dc712add589e72c18504e261640ef5f6a21e1",
+      "result_sha256": "fb22e2f5452a7bb16312dad227fd8c8ff5bb76243778e29fbbe66d2c6acd5994",
+      "receipt_sha256": "0ccedb047d89b0ee05845784a024840ee6deaa63a91b711ade2e57f4f575beb2",
+      "article_public_sha256": "ecc3347eb3eaa3c13d385ea7ff0912677dc0b652860447475c6fcb816e52a064",
+      "approval_files_sha256": "4ff20731476cb2effe62526aca34b9285cd8452836c03632155d8eed86dc7b71",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "51316e8a2b80cf8a",
@@ -3668,6 +3894,25 @@
           "concept_sha256": "409d82cba1ad9eba842e357089afb45333eb09af9ee98aa70833224f7ce159fb"
         }
       ]
+    },
+    {
+      "event_id": "54d80bfbb20da444",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:06:09.632Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-dba8a4594c6dc86884056993303bc633ca5d",
+      "semantic_input_sha256": "fc6d623b0c045d941bc53e8df774afec83ded92ddc0e781a39b648e58b430f6d",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-e97c1224cea533ebfdda2c9daa9a188df0eaf6a030dd5d46934f725ca83a068b",
+      "request_sha256": "e97c1224cea533ebfdda2c9daa9a188df0eaf6a030dd5d46934f725ca83a068b",
+      "result_sha256": "9830581ff75fc3a51b98763c32b1abbff3958cf654c539fbde7a4f5e7539c32a",
+      "receipt_sha256": "3f84a726cb69335c34acd78c0c1cdf72194120338260141c7d13dd2ac5188954",
+      "article_public_sha256": "7764e3fb2c9ed0538471c55ab6aa1ea26c224c497ce2fdc82ca8f0d39f3b4f2b",
+      "approval_files_sha256": "fe3f57d6aebeb98b1ac50464832cafaae23f8c66640babd9bb459bbeff1019a4",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "559a10d0dfda2d93",
@@ -4042,6 +4287,25 @@
       "receipt_sha256": "9843f4956fcde06a5bff55b151f3755e833f2250f5780fcc4338e1ad1de1b782",
       "article_public_sha256": "44bbaaa1dcce3d2e34b2919abce6cfaaa26c0c3f4d27c77a9bf7fb99012505b5",
       "approval_files_sha256": "1ed54357966444c7b04d506057dc28a084a6af71c3798ba36540327bb066f28f",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "620ef05ef6350329",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:06:10.715Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-4ed791b046a22efa319170fb08c053580071",
+      "semantic_input_sha256": "1bcc10a6a3044a0ac0641d7a293c128fea9bfd73c9424d5221b73dd3179c6f1c",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-66a25d825369fd963654aa83abc904502597b75c5bdf5fbafe260720f9352dcc",
+      "request_sha256": "66a25d825369fd963654aa83abc904502597b75c5bdf5fbafe260720f9352dcc",
+      "result_sha256": "f39e532585a6696331813bd28eb07af639ebf0a28c4408a49b61741d6af0d14c",
+      "receipt_sha256": "19c46860e9f93da0e9d9b9e91c7998395131261135a6b2f53ab31afdc8b6fea2",
+      "article_public_sha256": "d34f56daa337e8c00a39f746709d9775485f02efe9d7bc6ec506fc0c59a87043",
+      "approval_files_sha256": "7e2799b5da22f2488ba8dcfa049774fa5cbbb654dc36a6ca04cc766f8e900c8a",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -4654,6 +4918,25 @@
       "links": []
     },
     {
+      "event_id": "6d99be7dd6da2d15",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:01.390Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-21c888549d132a043af171d448c8a9c350d7",
+      "semantic_input_sha256": "16abf2225c43fcfcb8611da0a63bd3c2e571e72d9543118cec62d37642b9256a",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-61782d6e47e202d8788d9c08115cff887a6514cd7480bdcf57664dc4e58e1db5",
+      "request_sha256": "61782d6e47e202d8788d9c08115cff887a6514cd7480bdcf57664dc4e58e1db5",
+      "result_sha256": "bcfe607e72024ef06a26ccdc59bfb385b369cb75aa48972b30e70e53f39cd260",
+      "receipt_sha256": "a18f84a0ec0329b266f8c08b69782079f7e61c2698817f65a7e0dfc19af24499",
+      "article_public_sha256": "88150a1cc448f639e4c69eddf41cab1bad58e49596c17b70dc53df294871b6ac",
+      "approval_files_sha256": "af3ea95b311032ed00db7afb800d84a0bf51f6b7f331f24edd2cbd8c687104a1",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "6e376a02cbe3c1ab",
       "status": "reviewed_none",
       "reviewed_at": "2026-10-23T15:45:01.699Z",
@@ -4741,6 +5024,36 @@
           ],
           "concept_path": "Knowledge/AI Systems/Agent Observability.md",
           "concept_sha256": "5e13b8da1ff24395922870ebf77abbd94b443cde57cc9b1ec272c2826c34538d"
+        }
+      ]
+    },
+    {
+      "event_id": "71d57daca4402dd1",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:08:17.561Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-328c2cd8fc8bb4e9360f9481444d84c0fcdd",
+      "semantic_input_sha256": "e33d4d1e8b9df52dbb59ac7d5bb9337d8052e04264733b7a7ffd7baac6c6003f",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-3a40788b67a46bc26c976d537481ae566fc86b474a0d564358de1881d50a6e6a",
+      "request_sha256": "3a40788b67a46bc26c976d537481ae566fc86b474a0d564358de1881d50a6e6a",
+      "result_sha256": "84b8c1f0719c6db5a7c4a0cc64928b0411e3f35ac4cd5f2a8857f6febed3ee2d",
+      "receipt_sha256": "247b6f2ff437d4de7f4b39424f8d3e62fe81875aeb10e5984fe0ac5796fb4873",
+      "article_public_sha256": "d4f7a01ce1dfd1d2bdbb9b9e2c7bd48299d463a027606f0ef3cc81b75257c610",
+      "approval_files_sha256": "d959ebabffc38c8191e2141622f9c053037f3e08fcd142fae1ef0a839b1acc1e",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "agents",
+          "role": "application",
+          "reason": "Force rollback can be used in AI agent workflows that operate with CloudFormation, as the source explicitly states.",
+          "evidence_claim_ids": [
+            "88a447682bed2babab18b50b"
+          ],
+          "concept_path": "Knowledge/AI Systems/AI Agents.md",
+          "concept_sha256": "409d82cba1ad9eba842e357089afb45333eb09af9ee98aa70833224f7ce159fb"
         }
       ]
     },
@@ -5138,6 +5451,25 @@
       "links": []
     },
     {
+      "event_id": "7c2862a904efcaf3",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:18.506Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-e1d28b343c03ce0568b56526d11763e1a0c3",
+      "semantic_input_sha256": "9ebfc42f5fe950542e8e9516d025654b9bfd797c81a6d8b7d38a9ef1e9f3c422",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-354a2653595ea819452885fc08841e52e7d5451123333b16bc38e883c9780998",
+      "request_sha256": "354a2653595ea819452885fc08841e52e7d5451123333b16bc38e883c9780998",
+      "result_sha256": "785d6faa43661b37579b9fc205868af834ce30edcab7bb0410189f5b85932db6",
+      "receipt_sha256": "50a7315fd7ec54a0edc3018600c94f259bc112b60e317954469f81f7ff6aaa5b",
+      "article_public_sha256": "95393af8df3130d791ef948d35e7228d26267dd0926756cd37867e00c31652d9",
+      "approval_files_sha256": "df8c6925495674f15d873e013de679f83a361d040e6d61803a33978f76f9836c",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "7cc23b8dc1f502f5",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:38:01.035Z",
@@ -5227,6 +5559,25 @@
           "concept_sha256": "eed9c8412e89d0acf720f42358371578ca7f0c027f1237b268d74405afca339d"
         }
       ]
+    },
+    {
+      "event_id": "7e048869ec70694c",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:31.549Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-d54f3cb0dd28406ef58d4c055b7925bbe8a0",
+      "semantic_input_sha256": "ee20a3b511c507b7d0ff44dbbb666832612cdac0590a8a66954d878fdf22ba32",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-90ac66a0c0944086857754144d90b7a5d1c72c93ef19c10dc44eb98af4540143",
+      "request_sha256": "90ac66a0c0944086857754144d90b7a5d1c72c93ef19c10dc44eb98af4540143",
+      "result_sha256": "081c9c7480b58702c051914f4c69fa51f02f8a20721ee22a7334a6e52421225d",
+      "receipt_sha256": "19f629dcc0e98601ed7b85a0ea63ad948a42d7ce7586e36d6938da1b03153e2d",
+      "article_public_sha256": "a7c578e9a76ce94311579f34c8e47efac210c47d7de7e4eff3a3345141b93ac4",
+      "approval_files_sha256": "b95cfdb4d45884966728f5be422cfd27602478bd69b5bd6d2b09b4795f2efbd6",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "7e9257b6dba23518",
@@ -5511,6 +5862,25 @@
       "links": []
     },
     {
+      "event_id": "85bd67089d446bba",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:32.589Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-a0f020e80a32af6211b3277c58d882a0159c",
+      "semantic_input_sha256": "2e4f4a8ed2749a92075ac34d186fc4e48df091780571c83a703700522e8d0be5",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-4f190eb971f8f55036625ac79a5780c3e4cb893919a7185427523a8f424d8a7b",
+      "request_sha256": "4f190eb971f8f55036625ac79a5780c3e4cb893919a7185427523a8f424d8a7b",
+      "result_sha256": "fa0c1e50ff03b5f93d6f646675e93488e4f67c8bea4fc1299e5e97a6ef953a5a",
+      "receipt_sha256": "55287deca2aab63ec385f4f7a475e33227aad3c1570cb6f6e3dd13ac9a488d28",
+      "article_public_sha256": "e61315a53889f13a0baf72112b275b39529988818b5e1123c25e9514ca58a811",
+      "approval_files_sha256": "89bb217d79d5256ca3d1f88821d44e0d5ef37d2815ae5e63c98cd1bdc3918e96",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "88ca535a278fef4f",
       "status": "reviewed_none",
       "reviewed_at": "2026-10-23T11:47:32.216Z",
@@ -5669,6 +6039,25 @@
       "receipt_sha256": "b4fde261fb2e9743fba65bc94a1efc028e48033c5d9e851e7249255226c319dc",
       "article_public_sha256": "50f36c7486cb5d288712a90a353d643b7bce51ca6d99e4cc729a45dfca4126fc",
       "approval_files_sha256": "ec9382b50d0bdbfaf6d1ec90953d5367463d39433d56409416d8d28667bde803",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "8cd5db7ee29aa1be",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:33.675Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-12bb38d8d7894e9dda94a4c4d6c0784ffbbe",
+      "semantic_input_sha256": "26c61d90cfd06c7a0db01226ff22b989e5fc242effab17ed2fba2b91b1d1c2dc",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-48a044d83973543a573f5456922de71c0f87cbd9da5d911a7545ee086fa03326",
+      "request_sha256": "48a044d83973543a573f5456922de71c0f87cbd9da5d911a7545ee086fa03326",
+      "result_sha256": "f1201573f6d26ac4ce9846eebeb845bb5ee513198ccbe3106b1ef4be81efc158",
+      "receipt_sha256": "07495f5b12507fc389f34f97880cdb3e057f92c5949fb465db1f5e8d02ffdb38",
+      "article_public_sha256": "00f585711aeed1645a91b39f2e3c015809111b6acd0e3bebd9f40220752ad5a2",
+      "approval_files_sha256": "65e260ec6d41ce94a0ba864c3207cf7b1276dab11ece382285bcacdfae4a18e7",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -5944,6 +6333,25 @@
           "concept_sha256": "701b8e3d2e8383b97c62f01bde57a1ab2ac0ac8530ddabbe9138a3274db1ab86"
         }
       ]
+    },
+    {
+      "event_id": "910aa2f8992b1ea1",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:50.404Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-8f045567529cbc7b6f659f7e85de220d7328",
+      "semantic_input_sha256": "3abdff372702d7876fa64744546f523fb311d3dabd94851ff3e9854b929ac48b",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-d59c961c4af251ccfc68b66437db8639933a539328d2e9cfad67a812b0ed787e",
+      "request_sha256": "d59c961c4af251ccfc68b66437db8639933a539328d2e9cfad67a812b0ed787e",
+      "result_sha256": "43749c4b1d7a7e88873b03bca5baf89758d3e811e7ab8701067a1735a5a469b3",
+      "receipt_sha256": "c64013065888ae61c498e298acfa744ad7d0f518ff2b9e8d6aa6fad03a6941db",
+      "article_public_sha256": "de44f119b5fe676f769911147bb4e9ca33182ebce3cbc0755a37ce3fcf05881f",
+      "approval_files_sha256": "2540ec4036dde3a18e3f1f540a3866c3698fce3a4bd328d7fa907107430dd408",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "9134151d2e3d9c03",
@@ -6307,6 +6715,37 @@
       "links": []
     },
     {
+      "event_id": "98b4374cb5540bd0",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:08:51.495Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-04e188689483617161332bbb52501ee07022",
+      "semantic_input_sha256": "9f757e2ddfd9fc97af229843508bc120fdced1717a1b5f11d5464b1ae65d9e28",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-f62d95269a97822676c15722bdc58ca6084fc9b3cff1690e049e82680086c4e5",
+      "request_sha256": "f62d95269a97822676c15722bdc58ca6084fc9b3cff1690e049e82680086c4e5",
+      "result_sha256": "4764cef677f32d308fc96f5ab6faa3e804d43361aa6374154cf54c4b0d621740",
+      "receipt_sha256": "0d6c17dce7c3a96ded21116dd998c49eaeee1135980e327ab975d16a6e20e5ee",
+      "article_public_sha256": "e3e7460eb0a9962fdb43cc679fc536c68ab7f96c1dcbf2bb80bb8a0329f397e2",
+      "approval_files_sha256": "df0d40ae10ff167fcdd6e0d681859c5ac2a225a5d61d2fec38b20596d27a618b",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "randomized-controlled-trial",
+          "role": "comparison_evaluation",
+          "reason": "기사는 참가자 459명을 sefaxersen 또는 위약에 1:1 무작위 배정한 연구와 위약 대비 단백뇨 결과를 설명합니다. 이는 무작위 대조 시험 개념에 해당합니다.",
+          "evidence_claim_ids": [
+            "6cc1c8384a586af4319c2e28",
+            "685cb5395d5b583a7fb5dccf"
+          ],
+          "concept_path": "Knowledge/Research Methods/Randomized Controlled Trial.md",
+          "concept_sha256": "4b80b7f8e6b67f4a4a79b277cf0b2aa99c5893915d02e97ab60efd1af3d767f5"
+        }
+      ]
+    },
+    {
       "event_id": "9935b37c854178f3",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:57:21.417Z",
@@ -6515,6 +6954,25 @@
       "links": []
     },
     {
+      "event_id": "9def2f624f98553c",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:08:52.587Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-a34cf2185f6b36c1015afd6c157cffc2eb25",
+      "semantic_input_sha256": "6fd81a664488de2183c5523f14b8819d1afbe41e13942b33ef42b5c6c21126c6",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-43bd888828551f8b591aeb2bb59eaaa315cc6bce387de28f30c9ba7f74e9cad6",
+      "request_sha256": "43bd888828551f8b591aeb2bb59eaaa315cc6bce387de28f30c9ba7f74e9cad6",
+      "result_sha256": "f0735e7a8d170c8fed7aa3cbc6f95fac4d221c7f0a39f4c1d08867600facd243",
+      "receipt_sha256": "2853b9406590af9b01406f863dbb582a6f3423d0a825026d427bc066f6d80d22",
+      "article_public_sha256": "6895cf1852eec8b8b1ffd226b64d2a8020147b7cb175687462cfed20069f9ddb",
+      "approval_files_sha256": "af9173c7b5e207f13b01762d30509cd4efd38687a3861990a36447173cf2bc58",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "9f43a79e9c23b1f3",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:57:27.428Z",
@@ -6543,6 +7001,25 @@
           "concept_sha256": "ca7255169647ac8278151954304bef3f7eed0fae35c19338baafa804f54a3866"
         }
       ]
+    },
+    {
+      "event_id": "9f4b8f91f73d0d47",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:08.324Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-0159e30ff06d5dad75f4175571bbb2ed8340",
+      "semantic_input_sha256": "21b943f4227b3c715c78be99a5e3636b5e2e67f3065891ee0643dac8a3753b04",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-d7a31e72692102ddc8b6e382ee60a36e088c1988c6497fd8ed966f25c8ab01ef",
+      "request_sha256": "d7a31e72692102ddc8b6e382ee60a36e088c1988c6497fd8ed966f25c8ab01ef",
+      "result_sha256": "a6b39d53d0481299c889cbcf72e08b8b67ba469220626161acedafa925098e4f",
+      "receipt_sha256": "e20ebf5cbc6f6a8fb2f22f49130c42aec40ef5a305a2827e0277f3327ae4c078",
+      "article_public_sha256": "aaf980c6bf57d7bcb54700402d2e17ee0ba0e6edbd5103ab1caccc6bde055aa0",
+      "approval_files_sha256": "194a4f66acd930ea4aeb97c62968a4cc9c19bfae2e65ec3fccbbd37d53832fd0",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "9fc8bc0338395f2d",
@@ -6590,6 +7067,36 @@
             "63f695872310ea977b2ba379",
             "85bf1e1874dd6160dd399a89",
             "d62cbcad2d1764ffb8bd27ec"
+          ],
+          "concept_path": "Knowledge/AI Systems/AI Inference Infrastructure.md",
+          "concept_sha256": "ca7255169647ac8278151954304bef3f7eed0fae35c19338baafa804f54a3866"
+        }
+      ]
+    },
+    {
+      "event_id": "a2502ca44383293e",
+      "status": "reviewed_links",
+      "reviewed_at": "2026-10-25T03:09:09.360Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-39afcf235ecd08124bccbf45380701847950",
+      "semantic_input_sha256": "b97808219bb02c3d1f71aa2f72747969ef66a947a75f270eb4c240dfee5df810",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-08d2adb23830f220b24236343cc8d060e548d577289ddda1a21f40d6c2adaaa6",
+      "request_sha256": "08d2adb23830f220b24236343cc8d060e548d577289ddda1a21f40d6c2adaaa6",
+      "result_sha256": "0866a1487c81546e0e65371cc060f40e3b7bbc063fa6e867432aa9a24d574f80",
+      "receipt_sha256": "adf3819028743315c86261114c0cba5e4c089b514b27dadaadfc4ffca2dc1190",
+      "article_public_sha256": "e179735866cc8cd5f3f74c33dd9f9f981dedd3f2cbe2de970f2f0431255a1f16",
+      "approval_files_sha256": "84b6bf0acb4146a5cd63e3515fe346b212aaece2c3d73cfb1094699fc440a423",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": [
+        {
+          "concept_id": "inference",
+          "role": "topic",
+          "reason": "기사에서 AgentCore Gateway의 추론 엔드포인트가 InvokeModel 계열 API와 추론 트래픽의 대체 모델 라우팅을 지원한다고 설명합니다. 이는 모델 요청을 실행하고 제공하는 AI 추론 인프라에 해당합니다.",
+          "evidence_claim_ids": [
+            "0a43019b153f1c7fd27ae4da"
           ],
           "concept_path": "Knowledge/AI Systems/AI Inference Infrastructure.md",
           "concept_sha256": "ca7255169647ac8278151954304bef3f7eed0fae35c19338baafa804f54a3866"
@@ -6712,6 +7219,25 @@
       "receipt_sha256": "2db7af264a9ec5d4dd2108b2b79aea1318eda37f3ab6830f4e3aa457eb133c74",
       "article_public_sha256": "171d4aa5c2c3d3c493df83496425682f03118a109429079085ae370c0d876ac2",
       "approval_files_sha256": "7a6655388fe7560b83e0dba0fa460ca04eb22fea9489ed2335ee473c0f208808",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "a56b88dda9c225a2",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:10.446Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-0be3e0c1fe3f6035da5e999700a2f7041284",
+      "semantic_input_sha256": "bca2081c307ae62dba4df72e563c7145999b20301334d36476e69ec5986ac21b",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-cc700accd74e8d0b8bebc53792fadfd3d6d85982b007a8db35e7593ea012168d",
+      "request_sha256": "cc700accd74e8d0b8bebc53792fadfd3d6d85982b007a8db35e7593ea012168d",
+      "result_sha256": "d94045c8cc468d2ef80f58b5826dc21c84a5d7b91b8527df419c6b7e0e838c44",
+      "receipt_sha256": "fe9746a2527a8c657f5f01efa7596834cd5ae04491be604fe5f79c79ff5415ac",
+      "article_public_sha256": "e7171de9ec29bc1435ad1655dbbc9575b977a84d85a04e9b74258746b3cdace4",
+      "approval_files_sha256": "18745914c3e50be5f6effa761de8286d213ba76ce9c776fa4ae1ab50b7a66768",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -7004,6 +7530,25 @@
       "links": []
     },
     {
+      "event_id": "a93a584210e1e8b8",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:27.588Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-0bb2ac098fef29d2685cb9e2012c76c0cb58",
+      "semantic_input_sha256": "4334cf546add7d0b0938964264b7e344ccb2c1a39432db5a4be43a4b3595fa9e",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-1c448543b82e5cf21061cb01087457d80a1d004d1c6728354776210d28adefb1",
+      "request_sha256": "1c448543b82e5cf21061cb01087457d80a1d004d1c6728354776210d28adefb1",
+      "result_sha256": "6f49286a41a29384cec61be8ece6fa55035b9be5d6a489048d48fc30c3165c49",
+      "receipt_sha256": "618396abdd28c250d63b07c3f9c5a54fdc465568c87c19b4c7484a482a15d45c",
+      "article_public_sha256": "0b59cd13c0b563341056447375bacc768c29fb0ec44382c739427aeae6b16294",
+      "approval_files_sha256": "39b4be4ffc0ac2ddbd1588adfba690b61b47e0ee206a5db876716090d776bd64",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "a9911e33a5a858b4",
       "status": "reviewed_links",
       "reviewed_at": "2026-10-23T11:59:58.154Z",
@@ -7137,6 +7682,25 @@
           "concept_sha256": "701b8e3d2e8383b97c62f01bde57a1ab2ac0ac8530ddabbe9138a3274db1ab86"
         }
       ]
+    },
+    {
+      "event_id": "acc181485daa8190",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:28.706Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-c3acabb91ca0d3434f6999cf41138ea6521e",
+      "semantic_input_sha256": "a13e0b6f75ac9ccb599d2e4969f6570bef96a70566de85a17feec4717ed314f7",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-0fbd1e3cbd1670af954eb507af131649751a83ba4c0ff78e95165cdfc79bcb9b",
+      "request_sha256": "0fbd1e3cbd1670af954eb507af131649751a83ba4c0ff78e95165cdfc79bcb9b",
+      "result_sha256": "8ff330cc9c3845f9daced74475c921ac343069205d937432d4787bc5cbf78887",
+      "receipt_sha256": "6c8d300ca2b022e751de38ba8d4cdc92b3fa3ed536310f7fe324c017d76c09b1",
+      "article_public_sha256": "e1ac67610c15b88a0bbd3cc6d979e71c1b2e817eca97284835244edafdcb9171",
+      "approval_files_sha256": "4508873dd0170e47359a080cb2f4348c01c10fd5de8aed0e286f14351273ec53",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
     },
     {
       "event_id": "ad312ce435987076",
@@ -8593,6 +9157,25 @@
       "receipt_sha256": "e7ddcc8adc977143d9e32a440f4103df4b12eece455584170a69aa73a60da41b",
       "article_public_sha256": "ebf70de2e4d572c7ae0f00ad97d59df10c747d1d13f690087058b9740958cbf5",
       "approval_files_sha256": "3ee845ac25aa734470a592ac341fcd23d55be50536a76e36f702781c26f1b9e0",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "c7b4abbe4976998d",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:29.800Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-994a48b3c9fdbf42861816b8b33b0ab2c657",
+      "semantic_input_sha256": "a146d0b7e3f6cb59344eab4d2950626a80563650affb80d6311cf66ef6236274",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-e8e0fd20e8cac617e014d8a2df66a98f830b87d171c201dbfb274f114697dc3b",
+      "request_sha256": "e8e0fd20e8cac617e014d8a2df66a98f830b87d171c201dbfb274f114697dc3b",
+      "result_sha256": "2684e3e0e61711e546605f04dc465f88f30e10e7db0bd5503b2fd99c6997d88e",
+      "receipt_sha256": "981d8f65588b53f38e11c6a88834f09aa6563cd84652363e3933b41bf3f10852",
+      "article_public_sha256": "3d06d32ea7f3848286ca07bfe2bd37fbce728f966ce59772096fae958bd8dfe0",
+      "approval_files_sha256": "9b4a0707f7392f4768fde80189c8733d31568a391625c0efe508ba82840bd83e",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []
@@ -10575,6 +11158,25 @@
       "links": []
     },
     {
+      "event_id": "eff15a5a3696c82b",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:47.132Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-d1752a3dd380ab93225eb2fac7b4e9dc2cb6",
+      "semantic_input_sha256": "49b095fdb63a4df30b2b03691f8aa123c087d13be428acc54794c69dfd22530f",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-a4f13511181ed7304b87863b7679a59ec69bee2df9a4735a9978367fd6e91856",
+      "request_sha256": "a4f13511181ed7304b87863b7679a59ec69bee2df9a4735a9978367fd6e91856",
+      "result_sha256": "437ded521f1c40012b37533af6f35287d92e0fd8db3c2a97005d3247d6aae7fc",
+      "receipt_sha256": "bf7cef5c760992187d8b89b6c0bf8361e11a10a076ca7b312a7bc08b4452c2aa",
+      "article_public_sha256": "f9f03368c1dd263561d644666e84c907e147b680de573772611c591feb5ca97e",
+      "approval_files_sha256": "3b717259b85f7636cdca249617450a3668cd2959a5d46717a95b6cf2dbd957cd",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
       "event_id": "f1a0f1f4964d636b",
       "status": "reviewed_none",
       "reviewed_at": "2026-10-23T12:36:04.133Z",
@@ -10792,6 +11394,44 @@
       "receipt_sha256": "2ab193918110f780d7fb383cb1c72b2b50a8b363b4719c71a48e28ea68359686",
       "article_public_sha256": "d9b5da7e446cf5078c37a3544ea50c253f662a16158e7f0088d5190bc0fb2fa8",
       "approval_files_sha256": "9449378ad712fd7e60fbebc3402c70fd334eea3fee94db7b69b376b7bdd0ef16",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "f486af5a109b4006",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:48.196Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-8b3d22d1d6a12241a0abc3f872384d2f2896",
+      "semantic_input_sha256": "21e65177b3bc690d70a954f7dd52bd08465590ca55941b597a47de5b3f8c676d",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-7c3f194cc37d7b983cdefd020d679b6c0ed4c5df1554a8638d8a7eec2ac18f55",
+      "request_sha256": "7c3f194cc37d7b983cdefd020d679b6c0ed4c5df1554a8638d8a7eec2ac18f55",
+      "result_sha256": "c502f4c45c8ec375db9618a011db4d0c7e389e01cc288d7e8d5e03c54151863f",
+      "receipt_sha256": "2969c6fe1f5527f95f9971b5c51a29f6b93b45230b6f95f435235ae49f0160c9",
+      "article_public_sha256": "b625db9d81c906689345bf0ad2e4b5e374e7da74d5f2407823dccfdae216b6a1",
+      "approval_files_sha256": "553d23237d123c6a7ff4aeae36f4ad3a99d7eacb69e05ab4d507a7327f763542",
+      "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
+      "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
+      "links": []
+    },
+    {
+      "event_id": "f52873b716a974b4",
+      "status": "reviewed_none",
+      "reviewed_at": "2026-10-25T03:09:49.283Z",
+      "workflow_id": "daily-20261025-new30-semantic-v2",
+      "approved_run": "event-2366b18b7b59a9758ae88c9fe6990cee2280",
+      "semantic_input_sha256": "1d24f20dd548d097734f7e6c37241238a738b3d85625bbdfd991060333417f23",
+      "executor": "codex",
+      "model": "gpt-6-luna",
+      "task_id": "reasoning-40ce91d71d270bfc1d33069dd548442d404acccf54e5bdcfe780f23f84254d86",
+      "request_sha256": "40ce91d71d270bfc1d33069dd548442d404acccf54e5bdcfe780f23f84254d86",
+      "result_sha256": "b2a6c4d751a938a836d9d95e3d99f9dec3786d1c7b78933459d0db4ad478ee70",
+      "receipt_sha256": "b5a553de6a1d3e58620be79440b5c0931633bb117f8330be47a045d50be09cd2",
+      "article_public_sha256": "7d2e6cf289ee9f70f9cacc5c5815755468731676f7114ededf3766628dab6d14",
+      "approval_files_sha256": "d542fc98172c36bebb61680099e14233d7d20818cd31e3a44738e29b22d515df",
       "concept_registry_sha256": "3f9eda2c5cba83bd2eb99e6ec06e57d908da336e9e1eefd26e7f38e26459affb",
       "policy_sha256": "26937e5cea5086d3e806325e762d7a993009fd45273c2476965da23a73e773d5",
       "links": []

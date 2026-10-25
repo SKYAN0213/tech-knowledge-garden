@@ -8,7 +8,7 @@
 
 npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.  9월30일 Data Agent Kit은 사용자·서비스 계정 권한 전파를 설명했지만, 같은 날 Cisco와 AMD는 각각 관리 API·RCCL 실행 경계 취약점을 공지했다. 통제 기능의 존재와 설치된 최소 권한·패치 안전성을 구분한다.
 
-2026-10-22까지 서로 다른 원문 12건 · 7일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-25까지 서로 다른 원문 17건 · 11일에 걸쳐 관측. 최근 7일 4건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -26,6 +26,45 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 
 기존 수록 기사 재정리 · 2026-10-09, 2026-10-10 검토. 아래 날짜는 기사 수록일이다.
 
+<a id="php-session-rce-20261024"></a>
+
+### 2026-10-24 · 반대·제약
+
+**10월24일 KRCERT 권고문은 PHP 세션 처리의 CVE-2026-115560 원격 코드 실행 취약점과 패치 전 임시 설정·워커 재시작을 안내했다.**
+
+실행 경계의 안전성은 설치한 판본뿐 아니라 실제 세션 설정과 실행 중인 워커에 달렸다는 제약 사례다. 기존 권한 통제 기능이 있다는 사실과 실제 안전한 실행을 구분하는 주제에 반대·제약 근거를 더한다.
+
+- 한계: 세 조건을 모두 충족할 때만 영향받는다: 설정 파일의 serialize handler가 php_binary 또는 php_serialize이고, session_start() 전 ini_set()으로 php로 바꾸며, upload_progress가 활성화된 경우다. 영향 판본은 미공개, 해결 판본은 미배포이며10월21일 PHP2Shell 보안 업데이트로도 해결되지 않는다. 임시 조치는 upload_progress=0과 모든 PHP 워커 재시작이다. 실제 악용이나 특정 서버 침해를 확인한 결과는 아니다.
+- 다음 확인: 공식 해결 판본의 배포와 해당 CVE 반영, 실제 웹 서비스의 세션 설정 및 재시작된 워커를 확인한다. PHP2Shell 대응과 이 CVE의 해결 여부를 따로 대조한다.
+- [PHP 세션 취약점 CVE-2026-115560 임시 조치 권고](https://skyan0213.github.io/tech-knowledge-garden/news/4c4435f5cbe49c5a) · [krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72237) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+- 2026-10-25 원문 검토
+
+<a id="github-enterprise-apps-ga-20261023"></a>
+
+### 2026-10-23 · 관측
+
+**GitHub가 enterprise 단위 GitHub Apps 설치를 정식 제공하고 거버넌스·보안·관리 API 권한을 확장해 더 많은 기업·조직 자동화에서 classic PAT를 대체할 수 있도록 했다.**
+
+기존 자격증명 목록 감사와 다른 변화로, 기업 자동화가 사용할 App 권한을 선택하는 경로가 넓어졌다. 권한별 Read/Write와 의존 권한을 따로 검토해야 한다는 기존 주제를 보강하지만, 실제 최소 권한 적용이나 사고 감소를 입증한 결과는 아니다.
+
+- 한계: 모든 PAT나 API가 대체된다는 발표가 아니다. 기업 조직·저장소 정책 접근에는 Enterprise settings의 Read가 필수이며, 새 권한과 기존 people·billing 권한의 API 추가 범위를 구분한다. App에서 필요한 권한을 선택해야 하고 GitHub Enterprise Server는 3.24에서 제공될 예정이다. 저장소 visibility 정책을 모든 비공개 본문 접근 권한으로 읽지 않는다.
+- 다음 확인: 실제 App이 요청·부여받은 Read/Write 및 Enterprise settings 의존 권한, 미선택 권한 호출의 거부, 기존 PAT 회수와 GHES 3.24의 실제 제공 범위를 확인한다.
+- [GitHub Apps 기업 설치 GA…정책·보안·관리 API 지원 확대](https://skyan0213.github.io/tech-knowledge-garden/news/16c7779781249595) · [GitHub 원문](https://github.blog/changelog/2026-10-23-enterprise-installations-for-github-apps-generally-available) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+- 2026-10-25 원문 검토
+
+<a id="php2shell-response-20261022"></a>
+
+### 2026-10-22 · 반대·제약
+
+**KRCERT는 로그인 없이 서버 명령을 실행할 수 있는 PHP2Shell CVE-2026-109618·109619와 메모리의 인증정보 유출 위험을 알리고 패치·실제 웹 서비스 재시작·침해 흔적 점검을 함께 권고했다.**
+
+패치 파일이나 명령줄의 버전 확인만으로 실제 서버의 실행 경계가 복구됐다고 볼 수 없다는 운영 조건을 더한다. 기존 자격증명 감사 관찰과도 달리 취약 실행 환경과 노출된 인증정보의 대응을 함께 묻는 사건이다.
+
+- 한계: 권고문이 제시한 해결 판본은 PHP8.5.12·8.4.27·8.3.36·8.2.35 이상이며 배포판 패치는 버전 문자열이 그대로일 수 있다. 재시작되지 않은 웹 서비스는 이전 코드가 남을 수 있고 컨테이너는 새 이미지 재배포가 필요하다. 임시 설정은 완전한 차단이 아니며 로그에 이상이 없다고 안전이 보장되지 않는다. 침해 대응 때는 업데이트·재시작 전에 메모리 등 증거를 먼저 보존해야 한다. 이 권고만으로 특정 서버 침해를 확정하지 않는다.
+- 다음 확인: 실제 웹 실행 판본과 패키지 CVE 변경 이력, 증거 보존 뒤 패치·재시작·컨테이너 재배포 및 노출 인증정보 교체 여부를 확인한다.
+- [KRCERT, PHP2Shell 취약점 대응 위해 패치와 침해 흔적 점검 권고](https://skyan0213.github.io/tech-knowledge-garden/news/26cee6c8988b9fda) · [krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72230) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+- 2026-10-25 원문 검토
+
 <a id="github-npm-package-firewall-20261021"></a>
 
 ### 2026-10-21 · 관측
@@ -38,6 +77,32 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 - 다음 확인: 실제 설정·직접 다운로드 경로·오탐 예외 권한과 감사 기록을 확인한다.
 - [GitHub, npm 패키지 방화벽 공개 미리보기 제공](https://skyan0213.github.io/tech-knowledge-garden/news/d2f4c2d99fe6839a) · [GitHub 원문](https://github.blog/changelog/2026-10-20-github-package-firewall-in-public-preview) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-22_0800_tech_ai_briefing)
 - 2026-10-22 원문 검토
+
+<a id="unc7017-aomei-config-execution-boundary"></a>
+
+### 2026-10-15 · 참고
+
+**GTIG와 Mandiant는 2026년 4~7월 AOMEI 업데이트 설정을 5~10분씩 변조해 정상 업데이트·팝업 흐름으로 악성코드를 전달·실행한 캠페인을 보고했다.**
+
+이 관측은 자동 업데이트가 원격 설정을 실행 지시로 받아들이는 경계를 검토할 구체적인 사례다. 보고서의 payload·설정 서명 검증 권고는 통제 지점을 전송 경로뿐 아니라 실행 전 검증까지 나눠 살펴보게 한다.
+
+- 한계: 가용 텔레메트리에 따른 소급 관측이며 추가 변조와 전체 피해 범위는 확정되지 않았다. 서명 검증 권고의 실제 도입이나 차단 성과를 확인한 보고는 아니다.
+- 다음 확인: 업데이트 설정과 실행 파일의 서명 검증 적용 여부, 변조창에 업데이트한 endpoint의 잔존 payload, 캐시 설정과 정확한 경보 시점의 네트워크 기록을 확인한다.
+- [AOMEI 업데이트 서버, 5~10분씩 설정 변조돼 공급망 침해에 악용](https://skyan0213.github.io/tech-knowledge-garden/news/22e9e157a17745fa) · [Google 원문](https://cloud.google.com/blog/topics/threat-intelligence/investigating-ephemeral-supply-chain-tampering/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+- 2026-10-25 원문 검토
+
+<a id="armory-castle-remote-support-root-credentials"></a>
+
+### 2026-10-15 · 참고
+
+**Mandiant는 ARMORY CASTLE이 2026년 8월 말 BeyondTrust Remote Support 취약점을 제로데이로 악용한 뒤 호스트 root 권한을 얻어 저장·중개 자격 증명에 접근할 수 있게 되고 내부 endpoint에 원격 지원 세션을 설정한 사례를 보고했다.**
+
+웹 서비스 계정, 호스트 root, 비밀정보, 내부 endpoint 사이의 권한 경계를 따로 확인할 근거다. 패치·호스트 재구축·자격 증명 교체와 재연결의 순서를 나눈 지침은 통제 기능의 존재와 실제 적용 상태를 구분한다는 기존 질문과 직접 연결된다.
+
+- 한계: 사고 대응 관측과 취약 버전·인터넷 노출 조건에 따른 대응 지침이다. 모든 설치의 침해나 모든 credential의 유출을 확정하지 않으며, 추가 통제는 패치를 대체하지 못한다.
+- 다음 확인: SaaS와 자체 호스팅의 패치 상태, 노출창의 세션·파일 전송 기록, 패치·재구축 뒤의 의존 순서 credential 교체와 재연결 전 검토 완료 여부를 확인한다.
+- [Mandiant, BeyondTrust 원격 지원 취약점의 8월 말 제로데이 악용 정황 공개](https://skyan0213.github.io/tech-knowledge-garden/news/43436d5aea1b860e) · [Google 원문](https://cloud.google.com/blog/topics/threat-intelligence/armory-castle-exploits-beyondtrust/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
+- 2026-10-25 원문 검토
 
 <a id="20261001-data-agent-permissions"></a>
 

@@ -2,7 +2,7 @@
 title: 에이전트의 실행 계층을 분리
 type: briefing-topic
 topic_id: agent-runtime
-date: 2026-10-22
+date: 2026-10-25
 description: 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준,
   격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI
   통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포
@@ -25,7 +25,7 @@ generated_by: tech-knowledge-garden
 
 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준, 격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI 통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포 계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개 사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로 묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 
-2026-10-22까지 서로 다른 원문 11건 · 9일에 걸쳐 관측. 최근 7일 0건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-25까지 서로 다른 원문 12건 · 10일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -42,6 +42,19 @@ generated_by: tech-knowledge-garden
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-10-10 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="agentcore-gateway-fallback-20261022"></span>
+
+### 2026-10-22 · 관측
+
+**AWS가 AgentCore Gateway 추론 엔드포인트에 Bedrock InvokeModel·InvokeModelWithResponseStream 지원과 조건부 모델·제공자 대체 라우팅을 추가했다.**
+
+이전 Runtime V2의 세션 메모리·스냅샷 시작 경로와 별개로 모델 호출의 실패 목적지 선택을 게이트웨이 실행 계층이 맡는 변화다. 모델 응답 밖의 실패 처리 책임을 별도 계층으로 제공한다는 기존 주제를 보강한다.
+
+- 한계: 사용자가 순서가 있는 대체 목적지와 요청 제한·서버 오류·응답 시간 초과 등의 전환 조건을 설정해야 하며, 회로 차단기는 실패 중인 목적지를 건너뛴다. 내부 여러 시도는 클라이언트 요청·응답 하나로 표현된다는 AWS 기능 설명이다. 실제 작업의 완료 품질·도구 부작용·권한 보존·전체 비용이나 가용성 개선률을 검증한 자료는 아니다. 중국을 제외한 AgentCore Gateway 제공 리전 범위다.
+- 다음 확인: 실제 설정에서 각 실패 조건의 전환과 최종 실패 처리, 목적지 변경 시 권한·문맥·출력 품질·전체 비용을 같은 작업으로 대조한다.
+- [[News/a2502ca44383293e|AWS, AgentCore Gateway에 Bedrock API와 모델 대체 라우팅 추가]] · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/agentcore-gateway-invokemodel-fallback/) · [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-10-25 원문 검토
 
 <span id="20261001-agent-droplets"></span>
 

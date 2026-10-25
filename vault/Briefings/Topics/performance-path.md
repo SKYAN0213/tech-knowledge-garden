@@ -2,7 +2,7 @@
 title: 성능 평가를 전체 실행 경로로
 type: briefing-topic
 topic_id: performance-path
-date: 2026-10-22
+date: 2026-10-25
 description: NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트워크·서빙 구성을 설명한다.
   9월15일 갱신 성능은 DeepSeek V4 Pro·AgentX에서 GB300 NVL72와 비교한 값이다. Model Connect는 지원
   모델의 체크포인트부터 TensorRT 엔진·전후처리·C++ 실행 자산까지 번들로 묶는 별도 배포 사례다.
@@ -19,6 +19,14 @@ NVIDIA의 Vera Rubin·Groq 3 LPX 자료는 GPU·LPU의 계산 역할과 네트�
 [[Briefings/index|← 브리핑]] · [GitHub 정리](https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/performance-path.md)
 
 ## 사건 이력
+
+<span id="kanana-vision-conditional-performance-20261021"></span>
+
+### 2026-10-21 · [[News/9def2f624f98553c|카카오, Kanana-2-vision-encoder Medium·Tiny 가중치 공개]]
+
+카카오는 2026년 10월 21일 외부 비전 인코더 가중치에 의존하지 않고 자체 Kanana 언어모델의 가중치와 구조를 활용해 학습한 Kanana-2-vision-encoder를 소개했다. 카카오는 네 가지 라인업 중 Medium(4억 2,600만 파라미터)과 Tiny(9,800만 파라미터)의 가중치를 연구·개발과 상업적 활용이 가능한 Kanana-open 라이선스로 공개한다고 밝혔으며, 한국어 문서 이해와 이미지 기반 질의응답에 활용할 비전 언어모델 개발을 지원하는 것이 목적이라고 설명했다. 카카오는 같은 언어모델과 VLM 구조를 유지해 비전 인코더를 비교한 자체 평가에서, 약 4억 파라미터 규모의 Medium과 약 1억 규모의 Tiny가 각각 9개 영역 중 8개 영역의 비교 대상 최고점을 기록했다고 밝혔다. 카카오는 Kanana-o의 언어모델과 시각·음성 처리 모듈 등 구성 요소를 자체 개발 중이며, 비전 인코더 공개를 시작으로 나머지 요소도 순차 공개할 계획이라고 밝혔다.
+
+[tech.kakao.com 원문](https://tech.kakao.com/posts/840) · [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|당일 브리핑]]
 
 <span id="20261001-gke-agent-substrate"></span>
 
