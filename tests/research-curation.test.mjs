@@ -896,6 +896,10 @@ async function approvedPublicationNotes(f, run) {
   const source = documents.find(
     (doc) => doc.source_version_id === claims[0].evidence[0].source_version_id,
   )
+  const article = loadCurrentApproval(f.root, "writer", { vault: f.ctx.vault }).article
+  // The final approved event can differ from the source URL's fallback identity.
+  // Keep this fixture on the same strict article binding as production Signals.
+  assert.notEqual(article.event_id, sha256(canonicalURL(source.original_url)).slice(0, 16))
   const notes = [
     {
       path: signal,
@@ -911,8 +915,8 @@ async function approvedPublicationNotes(f, run) {
             {
               id: "fixture-contract",
               topic_id: "fixture-contract",
-              event_id: sha256(canonicalURL(source.original_url)).slice(0, 16),
-              event_date: "2026-09-27",
+              event_id: article.event_id,
+              event_date: article.article_review.published_at,
               stance: "context",
               change: "Fixture Robotics와 Partner가 Contract-123 주문을 발표했다.",
               meaning: "계약 발표 이력에 연결한다.",
