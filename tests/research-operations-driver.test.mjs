@@ -282,3 +282,17 @@ test("completed batches consume their submitted model results before requesting 
   assert.equal(result.next_action.next_inputs[0].stage, "evidence")
   assert.equal(result.completed, false)
 })
+
+test("an explicit relationship review takes priority over optional extraction of the next page", () => {
+  const status = {
+    ...settled("module-page", 0),
+    status: "relationship_review",
+    next_inputs: [
+      { stage: "classification", required: ["plan_path", "plan_sha256"] },
+      { stage: "classification", offset: 20, required: ["offset", "execute"] },
+    ],
+  }
+  const next = operationalNextAction(status)
+  assert.equal(next.action, "review")
+  assert.deepEqual(next.next_inputs, status.next_inputs)
+})

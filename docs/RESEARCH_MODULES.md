@@ -813,6 +813,8 @@ node scripts/research-operations.mjs run --round operator-verification-ID --stag
 
 배치 정리 job은 모델 요청을 결과에 담은 채 완료될 수 있다. 이때 제어기는 회차/소유 job/SHA가 일치하는 모든 모델 결과가 제출됐는지 확인한 뒤 체크포인트에 결속한 후속 job으로 결과를 소비한다. 완료 job의 예전 페이지를 재조회하거나, 결과 소비 전 사실 검토 단계로 넘기지 않는다. 사실·편집 검토는 계속 별도 입력을 요구한다.
 
+관계 검토의 `plan_path/plan_sha256`와 선택적인 추출 다음 페이지가 함께 반환되면 명시적인 관계 검토를 먼저 처리한다. 전체 자료에 추가 모델 추출을 무조건 실행하지 않는다. 기존 검토·색인의 정확한 근거를 재사용하고 필요한 원문만 실제 읽어 관계 계획과 큐레이션을 제출한다. 추가 추출이 필요하면 반환한 offset/입력을 명시적으로 요청할 수 있다. 미배정 자료는 불변 회차의 `unassigned_material_ids`로 보존하며 검토 완료·제외로 표시하지 않는다.
+
 제어기의 `completed: true`는 native delivery에서 Drive 원본·공개 bytes·WebsiteData·원문 보관 receipt가 모두 검증되고 대기 중인 connector 쓰기가 없을 때만 반환한다. 원문 대조·의미 검토·release 승인은 자동 생성하지 않는다. 운영 제어 기록은 `operations/rounds/<회차>/controller.json`, 원래 단계별 기록은 기존 위치에 저장한다. 새로운 예약·유료 API·인증·프레임워크는 추가하지 않는다.
 
 `node scripts/research-operations.mjs scheduled-invocation`은 현재 정책의 예약 ID만 조회한다. 앱 도구가 heartbeat 실행 이력을 제공하지 않으므로 기존 Codex 데스크톱 `sqlite/codex-dev.db`의 `automations` 행을 SQLite `mode=ro`로 읽는다. `ACTIVE/heartbeat/target_thread_id/last_run_at`이 모두 있어야 하며, 마지막 실제 dispatch 시각과 예약 ID로 실행 ID를 고정한다. RRULE·다음 예정 시각만으로 실행 증거를 생성하지 않는다. DB가 없거나 schema가 달라지면 명확한 오류로 대기하며 새 예약·가짜 이벤트·다른 실행본으로 대체하지 않는다. 이 어댑터는 앱의 관측된 로컬 schema용이며 DB에는 쓰지 않는다.

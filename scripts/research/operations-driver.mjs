@@ -52,6 +52,12 @@ export function operationalNextAction(status, delivery = null) {
   if (status.status === "not_started" || status.status === "pinned") return { action: "advance" }
   if (status.status === "collection_pending") return { action: "advance", stage: "collection" }
   if (status.status === "collection_frozen") return { action: "advance", stage: "processing" }
+  if (
+    (status.next_inputs || []).some(
+      (row) => row.stage === "classification" && row.required?.includes("plan_path"),
+    )
+  )
+    return { action: "review", next_inputs: status.next_inputs }
   const continuation = (status.next_inputs || []).find(
     (x) => x.stage === "classification" && Number.isSafeInteger(x.offset),
   )
