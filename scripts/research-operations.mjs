@@ -51,7 +51,21 @@ try {
           JSON.stringify(successor.continuation) !== JSON.stringify(link.evidence)
         )
           throw Error("Operational continuation ownership changed")
-        checked(evidence.parent)
+        const parent = checked(evidence.parent)
+        const invocationIndex = args.indexOf("--invocation")
+        const shaIndex = args.indexOf("--invocation-sha256")
+        if (invocationIndex >= 0 || shaIndex >= 0) {
+          if (invocationIndex < 0 || shaIndex < 0)
+            throw Error("Exact invocation path and SHA required together")
+          const matches = (ref) =>
+            ref && args[invocationIndex + 1] === ref.path && args[shaIndex + 1] === ref.sha256
+          if (matches(parent.invocation)) {
+            if (!successor.invocation) throw Error("Successor invocation is missing")
+            args[invocationIndex + 1] = successor.invocation.path
+            args[shaIndex + 1] = successor.invocation.sha256
+          } else if (!matches(successor.invocation))
+            throw Error("Continuation invocation does not belong to this lineage")
+        }
         round = link.successor
       }
       args[index + 1] = round

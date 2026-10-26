@@ -809,6 +809,8 @@ node scripts/research-operations.mjs run --round operator-verification-ID --stag
 
 운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. 정리/모델/발행이 시작된 회차는 이 경로로 옮기지 않는다. 새 구간은 수동 복구이며 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라가며 결과에 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다. 데이터 수집을 처음부터 다시 하지 않는다.
 
+원 예약의 `next_command`로 재진입할 때는 launcher가 각 continuation의 부모 pin·체크포인트·후속 pin을 검증하고, 부모의 정확한 invocation path/SHA만 후속 실행의 저장 invocation으로 연결한다. 다른 회차의 invocation이나 반쪽 path/SHA는 거부한다. 원 예약 증거와 수동 복구 구분은 보존한다.
+
 제어기의 `completed: true`는 native delivery에서 Drive 원본·공개 bytes·WebsiteData·원문 보관 receipt가 모두 검증되고 대기 중인 connector 쓰기가 없을 때만 반환한다. 원문 대조·의미 검토·release 승인은 자동 생성하지 않는다. 운영 제어 기록은 `operations/rounds/<회차>/controller.json`, 원래 단계별 기록은 기존 위치에 저장한다. 새로운 예약·유료 API·인증·프레임워크는 추가하지 않는다.
 
 `node scripts/research-operations.mjs scheduled-invocation`은 현재 정책의 예약 ID만 조회한다. 앱 도구가 heartbeat 실행 이력을 제공하지 않으므로 기존 Codex 데스크톱 `sqlite/codex-dev.db`의 `automations` 행을 SQLite `mode=ro`로 읽는다. `ACTIVE/heartbeat/target_thread_id/last_run_at`이 모두 있어야 하며, 마지막 실제 dispatch 시각과 예약 ID로 실행 ID를 고정한다. RRULE·다음 예정 시각만으로 실행 증거를 생성하지 않는다. DB가 없거나 schema가 달라지면 명확한 오류로 대기하며 새 예약·가짜 이벤트·다른 실행본으로 대체하지 않는다. 이 어댑터는 앱의 관측된 로컬 schema용이며 DB에는 쓰지 않는다.
