@@ -15,6 +15,7 @@ import { listScanPolicyRecheckOptions } from "./list-scan-command.mjs"
 import { parseResearchDate } from "./dates.mjs"
 import { loadShadowCollectionInputs, loadShadowHandoffBasis } from "./shadow-collection-basis.mjs"
 import { DEFAULT_ROOT, atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
+import { collectionRecoveryRequest } from "./collection-resilience.mjs"
 
 export function sourceCollectionInventory({
   channels,
@@ -121,7 +122,8 @@ function checkedWindow(window) {
 function sourceFrontierObservation(root, declaration, held = false) {
   const id = declaration?.run_id
   if (!exactRun(id)) throw Error("Exact stored source run required")
-  const prefix = `runs/${id}/`, scan = storedListScan(root, id)
+  const prefix = `runs/${id}/`,
+    scan = storedListScan(root, id)
   const state = readJSON(root, prefix + "state.json")
   const basis = readJSON(root, prefix + "collection-basis.json")
   const archive = readJSON(root, prefix + "archive-reuse.json")
@@ -145,19 +147,29 @@ function sourceFrontierObservation(root, declaration, held = false) {
     !["window_scanned", "incomplete"].includes(scan.summary.status) ||
     (held && scan.summary.status !== "incomplete") ||
     (scan.summary.status === "incomplete" && !scan.summary.reason) ||
-    state?.schema !== "research-run/v1" || state.run_id !== id ||
+    state?.schema !== "research-run/v1" ||
+    state.run_id !== id ||
     state.input_hash !== sha256(JSON.stringify(input)) ||
     basis?.channel_id !== window.channel_id ||
-    (scan.summary.channel_config_sha256 && scan.summary.channel_config_sha256 !== basis.route_sha256) ||
+    (scan.summary.channel_config_sha256 &&
+      scan.summary.channel_config_sha256 !== basis.route_sha256) ||
     !Number.isFinite(Date.parse(state.started_at)) ||
-    !state.stages?.["collection-basis"] || !Object.keys(state.stages).length
+    !state.stages?.["collection-basis"] ||
+    !Object.keys(state.stages).length
   )
     throw Error("Stored frontier source input, status or window changed")
-  const pins = [], observations = []
+  const pins = [],
+    observations = []
   const addDocument = (value) => {
     if (!value || typeof value !== "object") return
-    if (typeof value.source_id === "string" && typeof value.original_url === "string" && typeof value.fetch_status === "string" && Number.isFinite(Date.parse(value.observed_at))) {
-      if (value.source_id !== sourceId(value.original_url)) throw Error("Stored frontier source observation identity changed")
+    if (
+      typeof value.source_id === "string" &&
+      typeof value.original_url === "string" &&
+      typeof value.fetch_status === "string" &&
+      Number.isFinite(Date.parse(value.observed_at))
+    ) {
+      if (value.source_id !== sourceId(value.original_url))
+        throw Error("Stored frontier source observation identity changed")
       observations.push(value)
       if (captured(value)) {
         assertStoredEvidence(root, [value], [])
@@ -166,7 +178,10 @@ function sourceFrontierObservation(root, declaration, held = false) {
       const policy = value.availability?.observation
       if (policy) {
         const pinned = ref(root, policy.path)
-        if (!/^source-policy\/observations\/[a-f0-9]{64}\.json$/.test(policy.path) || pinned.sha256 !== policy.sha256)
+        if (
+          !/^source-policy\/observations\/[a-f0-9]{64}\.json$/.test(policy.path) ||
+          pinned.sha256 !== policy.sha256
+        )
           throw Error("Stored frontier policy observation changed")
         pins.push(pinned)
       }
@@ -175,7 +190,9 @@ function sourceFrontierObservation(root, declaration, held = false) {
   }
   for (const [name, stage] of Object.entries(state.stages)) {
     if (
-      !/^[A-Za-z0-9_-]+$/.test(name) || stage.status !== "complete" || stage.result_path !== prefix + name + ".json" ||
+      !/^[A-Za-z0-9_-]+$/.test(name) ||
+      stage.status !== "complete" ||
+      stage.result_path !== prefix + name + ".json" ||
       !Number.isFinite(Date.parse(stage.finished_at)) ||
       sha256(JSON.stringify(readJSON(root, stage.result_path))) !== stage.result_hash
     )
@@ -183,28 +200,71 @@ function sourceFrontierObservation(root, declaration, held = false) {
     pins.push(ref(root, stage.result_path))
     addDocument(readJSON(root, stage.result_path))
   }
-  for (const file of ["state.json", "collection-basis.json", "collection-input.json", "list-scan.json", "documents.json", "parses.json", "candidates.json", "list-pages.json", "archive-reuse.json", "detail-repair-reuse.json", "source-recovery-reuse.json"])
+  for (const file of [
+    "state.json",
+    "collection-basis.json",
+    "collection-input.json",
+    "list-scan.json",
+    "documents.json",
+    "parses.json",
+    "candidates.json",
+    "list-pages.json",
+    "archive-reuse.json",
+    "detail-repair-reuse.json",
+    "source-recovery-reuse.json",
+  ])
     if (fs.existsSync(safePath(root, prefix + file))) pins.push(ref(root, prefix + file))
-  if (scan.documents.length || scan.parses.length) assertStoredEvidence(root, scan.documents, scan.parses)
+  if (scan.documents.length || scan.parses.length)
+    assertStoredEvidence(root, scan.documents, scan.parses)
   for (const document of [...scan.documents, ...scan.indexDocuments]) addDocument(document)
   for (const parsed of scan.parses) pins.push(ref(root, `parses/${parsed.parse_id}/parse.json`))
   if (scan.summary.status === "window_scanned") verifyStoredListScan(root, scan, window)
   else if (scan.candidates.length) verifyStoredPartialCandidates(root, scan, window)
   const listing = scan.summary.listing_source_version_id
-    ? observations.filter((document) => document.source_version_id === scan.summary.listing_source_version_id)
-    : scan.indexDocuments.length ? scan.indexDocuments : observations.filter((document) =>
-      document.original_url === scan.summary.listing_url ||
-      (scan.summary.pages || []).some((page) => page.source_version_id === document.source_version_id || page.url === document.original_url),
-    )
+    ? observations.filter(
+        (document) => document.source_version_id === scan.summary.listing_source_version_id,
+      )
+    : scan.indexDocuments.length
+      ? scan.indexDocuments
+      : observations.filter(
+          (document) =>
+            document.original_url === scan.summary.listing_url ||
+            (scan.summary.pages || []).some(
+              (page) =>
+                page.source_version_id === document.source_version_id ||
+                page.url === document.original_url,
+            ),
+        )
   const summaryObserved = scan.summary.observed_at
-  const listingObservations = [...new Map(listing.map((document) => [JSON.stringify([document.source_version_id, document.original_url, document.observed_at]), {
-    source_version_id: document.source_version_id || null, url: document.original_url, observed_at: document.observed_at,
-  }])).values()]
-  if (!listingObservations.length || (summaryObserved !== undefined && !listingObservations.some((document) => document.observed_at === summaryObserved)))
+  const listingObservations = [
+    ...new Map(
+      listing.map((document) => [
+        JSON.stringify([document.source_version_id, document.original_url, document.observed_at]),
+        {
+          source_version_id: document.source_version_id || null,
+          url: document.original_url,
+          observed_at: document.observed_at,
+        },
+      ]),
+    ).values(),
+  ]
+  if (
+    !listingObservations.length ||
+    (summaryObserved !== undefined &&
+      !listingObservations.some((document) => document.observed_at === summaryObserved))
+  )
     throw Error("Stored frontier listing observation is absent from native checkpoints: " + id)
-  const finishedAt = Object.values(state.stages).map((s) => s.finished_at).sort().at(-1)
+  const finishedAt = Object.values(state.stages)
+    .map((s) => s.finished_at)
+    .sort()
+    .at(-1)
   const requested = held ? checkedWindow(declaration.requested_window) : null
-  if (held && (requested.since !== window.since || requested.until_exclusive < window.until_exclusive || !declaration.reason))
+  if (
+    held &&
+    (requested.since !== window.since ||
+      requested.until_exclusive < window.until_exclusive ||
+      !declaration.reason)
+  )
     throw Error("Held frontier must preserve its original failed window and explicit resume scope")
   return {
     declaration,
@@ -218,31 +278,67 @@ function sourceFrontierObservation(root, declaration, held = false) {
     listing_observations: listingObservations,
     started_at: state.started_at,
     finished_at: finishedAt,
-    ...(held ? { requested_window: requested, hold_reason: declaration.reason, newly_executed: false } : {}),
+    ...(held
+      ? { requested_window: requested, hold_reason: declaration.reason, newly_executed: false }
+      : {}),
     evidence: [...new Map(pins.map((pin) => [pin.path, pin])).values()],
   }
 }
 
 function storedFrontierRegistry() {
-  const files = ["data/research-daily-routes.json", "data/research-source-channels.json", "data/research-watchlist.json", "data/research-acquisition.json", "data/research-source-recipes.json"]
-  const [daily, channels, watchlist, acquisition, recipes] = files.map((file) => JSON.parse(fs.readFileSync(file)))
+  const files = [
+    "data/research-daily-routes.json",
+    "data/research-source-channels.json",
+    "data/research-watchlist.json",
+    "data/research-acquisition.json",
+    "data/research-source-recipes.json",
+  ]
+  const [daily, channels, watchlist, acquisition, recipes] = files.map((file) =>
+    JSON.parse(fs.readFileSync(file)),
+  )
   const routes = registry(channels, watchlist, acquisition, recipes)
-  const activeIds = daily.routes.filter((r) => r.enabled).map((r) => r.channel_id).sort()
-  if (new Set(activeIds).size !== activeIds.length || activeIds.some((id) => !routes.some((r) => r.channel_id === id)))
+  const activeIds = daily.routes
+    .filter((r) => r.enabled)
+    .map((r) => r.channel_id)
+    .sort()
+  if (
+    new Set(activeIds).size !== activeIds.length ||
+    activeIds.some((id) => !routes.some((r) => r.channel_id === id))
+  )
     throw Error("Stored frontier registry is invalid")
-  return { active_route_ids: activeIds, evidence: files.map((file) => ({ path: file, sha256: sha256(fs.readFileSync(file)) })) }
+  return {
+    active_route_ids: activeIds,
+    evidence: files.map((file) => ({ path: file, sha256: sha256(fs.readFileSync(file)) })),
+  }
 }
 
 // Independent stored windows retain their native input and observation times.
 // They do not become seven-day daily-plan receipts or new source requests.
-export async function freezeStoredSourceFrontier({ root = DEFAULT_ROOT, runId, sourceRuns, heldSources = [] }) {
-  if (!exactRun(runId) || !Array.isArray(sourceRuns) || !sourceRuns.length || !Array.isArray(heldSources))
+export async function freezeStoredSourceFrontier({
+  root = DEFAULT_ROOT,
+  runId,
+  sourceRuns,
+  heldSources = [],
+}) {
+  if (
+    !exactRun(runId) ||
+    !Array.isArray(sourceRuns) ||
+    !sourceRuns.length ||
+    !Array.isArray(heldSources)
+  )
     throw Error("Exact stored source frontier inputs required")
   return withLock(root, "stored-frontier-" + runId, () => {
-    if (loadShadowCollectionInputs(root, runId)) throw Error("Daily plan and stored frontier inputs cannot share a run")
-    const path = frontierPath(runId), existing = readJSON(root, path)
+    if (loadShadowCollectionInputs(root, runId))
+      throw Error("Daily plan and stored frontier inputs cannot share a run")
+    const path = frontierPath(runId),
+      existing = readJSON(root, path)
     if (existing) {
-      if (JSON.stringify(existing.source_runs.map((row) => row.declaration)) !== JSON.stringify(sourceRuns) || JSON.stringify(existing.held_sources.map((row) => row.declaration)) !== JSON.stringify(heldSources))
+      if (
+        JSON.stringify(existing.source_runs.map((row) => row.declaration)) !==
+          JSON.stringify(sourceRuns) ||
+        JSON.stringify(existing.held_sources.map((row) => row.declaration)) !==
+          JSON.stringify(heldSources)
+      )
         throw Error("Stored frontier input changed; use a new run ID")
       buildStoredFrontierReport(root, runId, [])
       return { ...ref(root, path), reused: true }
@@ -251,57 +347,97 @@ export async function freezeStoredSourceFrontier({ root = DEFAULT_ROOT, runId, s
     const source_runs = sourceRuns.map((row) => sourceFrontierObservation(root, row))
     const held_sources = heldSources.map((row) => sourceFrontierObservation(root, row, true))
     const all = [...source_runs, ...held_sources]
-    if (new Set(all.map((r) => r.declaration.run_id)).size !== all.length || new Set(all.map((r) => keyOf(r.window))).size !== all.length || all.some((r) => !registration.active_route_ids.includes(r.window.channel_id)))
+    if (
+      new Set(all.map((r) => r.declaration.run_id)).size !== all.length ||
+      new Set(all.map((r) => keyOf(r.window))).size !== all.length ||
+      all.some((r) => !registration.active_route_ids.includes(r.window.channel_id))
+    )
       throw Error("Stored frontier needs unique native windows on registered active routes")
     const result = atomicCreate(root, path, {
-      schema: "research-stored-source-frontier/v1", run_id: runId,
-      frozen_at: new Date().toISOString(), registration, source_runs, held_sources,
-      source_requests_performed: 0, candidate_approved: false, candidate_published: false,
+      schema: "research-stored-source-frontier/v1",
+      run_id: runId,
+      frozen_at: new Date().toISOString(),
+      registration,
+      source_runs,
+      held_sources,
+      source_requests_performed: 0,
+      candidate_approved: false,
+      candidate_published: false,
     })
     return { ...result, reused: false }
   })
 }
 
 function buildStoredFrontierReport(root, runId, supplementalRuns) {
-  if (loadShadowCollectionInputs(root, runId)) throw Error("Daily plan and stored frontier inputs cannot share a run")
-  if (supplementalRuns.length) throw Error("Stored frontier supplemental inputs must be frozen separately")
-  const path = frontierPath(runId), input = readJSON(root, path)
-  if (input?.schema !== "research-stored-source-frontier/v1" || input.run_id !== runId || JSON.stringify(input.registration) !== JSON.stringify(storedFrontierRegistry()))
+  if (loadShadowCollectionInputs(root, runId))
+    throw Error("Daily plan and stored frontier inputs cannot share a run")
+  if (supplementalRuns.length)
+    throw Error("Stored frontier supplemental inputs must be frozen separately")
+  const path = frontierPath(runId),
+    input = readJSON(root, path)
+  if (
+    input?.schema !== "research-stored-source-frontier/v1" ||
+    input.run_id !== runId ||
+    JSON.stringify(input.registration) !== JSON.stringify(storedFrontierRegistry())
+  )
     throw Error("Frozen stored frontier registration changed")
   const sources = input.source_runs.map((row) => {
     const checked = sourceFrontierObservation(root, row.declaration)
-    if (JSON.stringify(checked) !== JSON.stringify(row)) throw Error("Frozen frontier source evidence changed")
+    if (JSON.stringify(checked) !== JSON.stringify(row))
+      throw Error("Frozen frontier source evidence changed")
     return checked
   })
   const held = input.held_sources.map((row) => {
     const checked = sourceFrontierObservation(root, row.declaration, true)
-    if (JSON.stringify(checked) !== JSON.stringify(row)) throw Error("Frozen held source evidence changed")
+    if (JSON.stringify(checked) !== JSON.stringify(row))
+      throw Error("Frozen held source evidence changed")
     return checked
   })
   const all = [...sources, ...held]
-  const unrepresented = input.registration.active_route_ids.filter((id) => !all.some((row) => row.window.channel_id === id))
+  const unrepresented = input.registration.active_route_ids.filter(
+    (id) => !all.some((row) => row.window.channel_id === id),
+  )
   const report = summarizeCollection({
     plan: { run_id: runId, windows: all.map((row) => row.window) },
     receipts: all.map((row) => ({
-      ...row.window, attempt_id: row.declaration.run_id, status: row.status, reason: row.reason,
+      ...row.window,
+      attempt_id: row.declaration.run_id,
+      status: row.status,
+      reason: row.reason,
       started_at: row.newly_executed === false ? null : row.started_at,
       finished_at: row.newly_executed === false ? null : row.finished_at,
-      ...(row.newly_executed === false ? {} : { timing_ms: { total: Date.parse(row.finished_at) - Date.parse(row.started_at) } }),
+      ...(row.newly_executed === false
+        ? {}
+        : { timing_ms: { total: Date.parse(row.finished_at) - Date.parse(row.started_at) } }),
     })),
-    scans: all.map((row) => ({ ...storedListScan(root, row.declaration.run_id), run_id: row.declaration.run_id, channel_id: row.window.channel_id })),
+    scans: all.map((row) => ({
+      ...storedListScan(root, row.declaration.run_id),
+      run_id: row.declaration.run_id,
+      channel_id: row.window.channel_id,
+    })),
     sizeOf: (file) => fs.statSync(safePath(root, file)).size,
   })
-  for (const material of report.materials) material.parse_sha256 = ref(root, material.parse_path).sha256
-  report.missing.push(...all.filter((row) => row.status === "incomplete").map((row) => ({
-    scan_run: row.declaration.run_id, channel_id: row.window.channel_id,
-    window: row.window, status: "incomplete", reason: row.reason, observed_at: row.observed_at,
-    held: row.newly_executed === false,
-  })))
+  for (const material of report.materials)
+    material.parse_sha256 = ref(root, material.parse_path).sha256
+  report.missing.push(
+    ...all
+      .filter((row) => row.status === "incomplete")
+      .map((row) => ({
+        scan_run: row.declaration.run_id,
+        channel_id: row.window.channel_id,
+        window: row.window,
+        status: "incomplete",
+        reason: row.reason,
+        observed_at: row.observed_at,
+        held: row.newly_executed === false,
+      })),
+  )
   return {
     ...report,
     status: unrepresented.length ? "partial" : report.status,
     acquisition_basis: {
-      kind: "stored-source-frontier", total_active_routes: input.registration.active_route_ids.length,
+      kind: "stored-source-frontier",
+      total_active_routes: input.registration.active_route_ids.length,
       newly_executed_routes: new Set(sources.map((row) => row.window.channel_id)).size,
       newly_executed_windows: sources.length,
       successful_new_windows: sources.filter((row) => row.status === "window_scanned").length,
@@ -313,7 +449,11 @@ function buildStoredFrontierReport(root, runId, supplementalRuns) {
       report_source_requests_performed: 0,
     },
     held_observations: held.map(({ evidence, input: _sourceInput, ...row }) => row),
-    evidence: [...new Map([ref(root, path), ...all.flatMap((row) => row.evidence)].map((pin) => [pin.path, pin])).values()],
+    evidence: [
+      ...new Map(
+        [ref(root, path), ...all.flatMap((row) => row.evidence)].map((pin) => [pin.path, pin]),
+      ).values(),
+    ],
   }
 }
 
@@ -359,7 +499,8 @@ export function summarizeCollection({
   const materials = new Map(),
     observations = new Map(),
     bodies = new Map(),
-    missing = []
+    missing = [],
+    pendingDetails = new Map()
   for (const scan of [...scans, ...supplemental]) {
     const listingVersions = new Set(scan.indexDocuments.map((row) => row.source_version_id))
     for (const document of [...scan.indexDocuments, ...scan.documents]) {
@@ -423,7 +564,32 @@ export function summarizeCollection({
           material.observations.push(observation)
       }
     }
-    for (const detail of scan.summary?.details || [])
+    for (const detail of scan.summary?.details || []) {
+      const window =
+        scan.summary?.window || plan.windows.find((w) => w.channel_id === scan.channel_id)
+      const key = JSON.stringify([
+        scan.channel_id,
+        window?.since,
+        window?.until_exclusive,
+        detail.url,
+      ])
+      if (["source_parsed_unreviewed", "public_access_excluded"].includes(detail.status))
+        pendingDetails.delete(key)
+      else
+        pendingDetails.set(key, {
+          scan_run: scan.run_id,
+          channel_id: scan.channel_id,
+          since: window?.since || null,
+          until_exclusive: window?.until_exclusive || null,
+          url: detail.url,
+          status: detail.status,
+          kind:
+            detail.status === "deferred_by_budget"
+              ? "budget_pending"
+              : /image|conflict|profile|parse/u.test(detail.status)
+                ? "source_review_required"
+                : "fetch_failure",
+        })
       if (!["source_parsed_unreviewed", "public_access_excluded"].includes(detail.status))
         missing.push({
           scan_run: scan.run_id,
@@ -432,7 +598,33 @@ export function summarizeCollection({
           status: detail.status,
           fetched: detail.fetched ?? null,
         })
+    }
   }
+  const pendingItems = [...pendingDetails.values()].filter(
+    (row) =>
+      !windows.some(
+        (w) =>
+          w.channel_id === row.channel_id &&
+          w.status === "window_scanned" &&
+          (!row.since || (w.since === row.since && w.until_exclusive === row.until_exclusive)),
+      ),
+  )
+  const pendingCount = (kind) =>
+    new Set(pendingItems.filter((r) => !kind || r.kind === kind).map((r) => r.url)).size
+  const heldSources = windows.flatMap((window) => {
+    if (window.status === "window_scanned") return []
+    const last = receipts.filter((r) => keyOf(r) === keyOf(window)).at(-1)
+    return last?.source_wait
+      ? [
+          {
+            channel_id: window.channel_id,
+            since: window.since,
+            until_exclusive: window.until_exclusive,
+            ...last.source_wait,
+          },
+        ]
+      : []
+  })
   const inRun = [...observations.values()].filter(
     (row) =>
       starts.length &&
@@ -463,6 +655,10 @@ export function summarizeCollection({
       unique_raw_bodies: bodies.size,
       recorded_document_observations: observations.size,
       recorded_in_run_document_observations: inRun.length,
+      pending_detail_urls: pendingCount(),
+      budget_pending_urls: pendingCount("budget_pending"),
+      review_pending_urls: pendingCount("source_review_required"),
+      held_source_routes: new Set(heldSources.map((r) => r.channel_id)).size,
     },
     timing: {
       wall_clock_ms:
@@ -497,6 +693,8 @@ export function summarizeCollection({
     routes,
     materials: [...materials.values()].sort((a, b) => a.id.localeCompare(b.id)),
     missing,
+    pending_items: pendingItems,
+    held_sources: heldSources,
     candidate_approved: false,
     candidate_published: false,
   }
@@ -504,7 +702,8 @@ export function summarizeCollection({
 
 export function buildCollectionReport({ root = DEFAULT_ROOT, runId, supplementalRuns = [] }) {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(runId || "")) throw Error("Exact daily run ID required")
-  if (readJSON(root, frontierPath(runId))) return buildStoredFrontierReport(root, runId, supplementalRuns)
+  if (readJSON(root, frontierPath(runId)))
+    return buildStoredFrontierReport(root, runId, supplementalRuns)
   const input = loadShadowCollectionInputs(root, runId)
   if (!input) throw Error("Frozen collection inputs required")
   const plan = readJSON(root, input.value.plan.path)
@@ -682,6 +881,7 @@ export async function saveCollectionReport(options) {
       counts: report.counts,
       timing: report.timing,
       resources: report.resources,
+      recovery_request: collectionRecoveryRequest(report, { path: file, sha256: sha256(bytes) }),
     }
   })
 }

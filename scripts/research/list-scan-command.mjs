@@ -34,7 +34,12 @@ export function createArchiveSourceReuse(
   channel,
   basis,
   window,
-  { now = Date.now(), fetchPolicy = fetchWithPolicy, detailRepair = false, policy_recheck_limit } = {},
+  {
+    now = Date.now(),
+    fetchPolicy = fetchWithPolicy,
+    detailRepair = false,
+    policy_recheck_limit,
+  } = {},
 ) {
   if (!/^[A-Za-z0-9_-]+$/.test(sourceRun || "")) throw Error("Exact archive source run required")
   const previous = readJSON(root, `runs/${sourceRun}/state.json`)
@@ -238,6 +243,7 @@ import { scanPaginatedABBRoute } from "./abb-scan.mjs"
 import { scanPaginatedURRoute } from "./ur-scan.mjs"
 import { scanFormHTMLRoute } from "./form-html-scan.mjs"
 import { intakeCompletedScan, intakePartialScan } from "./scan-completion.mjs"
+import { collectionSourceDecision, recordCollectionOutcome } from "./collection-resilience.mjs"
 
 // Used by the compatibility CLI, standalone collection CLI and daily runner.
 // Only acquisition code/settings bind collection checkpoints.
@@ -260,8 +266,13 @@ export async function executeListScan(v) {
   )
     throw Error("scan-list requires one --channel and a [--since, --until) day window")
   const root = v.root
-  if (v["recovery-source-run"] &&
-      (v["recovery-source-run"] === v.run || v["repair-source-run"] || v["reuse-source-run"] || v["reuse-listing-run"]))
+  if (
+    v["recovery-source-run"] &&
+    (v["recovery-source-run"] === v.run ||
+      v["repair-source-run"] ||
+      v["reuse-source-run"] ||
+      v["reuse-listing-run"])
+  )
     throw Error("Recovery requires a distinct source run without other reuse modes")
   if (v["merge-backlog"] && path.resolve(root) !== path.resolve(DEFAULT_ROOT))
     throw Error(
@@ -304,195 +315,256 @@ export async function executeListScan(v) {
     )
   const profiles = collectionArticleProfiles(channel, acquisition.article_profiles || [])
   const basis = collectionBasis(channel, profiles)
-  return withLock(root, "run-" + v.run, async () => {
-    const input = {
-      schema: "research-list-run-input/v2",
-      channel_id: channel.channel_id,
-      since: v.since,
-      until_exclusive: v.until,
-      reuse_listing_run: v["reuse-listing-run"] || null,
-      collection_basis: basis,
-      ...policyOptions,
-      ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
-      ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
-      ...(v["recovery-source-run"] ? { recovery_source_run: v["recovery-source-run"] } : {}),
-    }
-    const run = new RunState(root, v.run, input)
-    const previousInput = readJSON(root, `runs/${v.run}/collection-input.json`)
-    if (previousInput && JSON.stringify(previousInput) !== JSON.stringify(input))
-      throw Error("Stored collection input changed")
-    if (!previousInput) atomicWrite(root, `runs/${v.run}/collection-input.json`, input)
-    const fetcher = new SourceFetcher(root, { pdf_profiles: profiles, ...policyOptions })
-    await run.stage("collection-basis", basis, async () => basis)
-    const scanner =
-      channel.api_profile?.id === "wordpress-rest-posts-json-v1"
-        ? scanWordPressPostsRoute
-        : channel.api_profile?.id === "sec-submissions-json-v1"
-          ? scanSECSubmissionsRoute
-          : channel.api_profile?.id === "ur-news-center-json-pages-v1"
-            ? scanPaginatedURRoute
-            : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
-                  channel.api_profile?.id,
-                )
-              ? scanPaginatedHDRoute
-              : channel.api_profile?.id === "kuka-news-form-pages-v1"
-                ? scanPaginatedKUKARoute
-                : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
-                  ? scanPaginatedABBRoute
-                  : channel.api_profile?.id === "post-html-fragment-pages-v1"
-                    ? scanFormHTMLRoute
-                    : channel.api_profile
-                      ? null
-                      : channel.listing_profile?.pagination === "calendar-month"
-                        ? scanCalendarMonthRoute
-                        : channel.method === "rss" &&
-                            channel.listing_profile?.pagination === "bounded-feed"
-                          ? scanBoundedRSSRoute
-                          : channel.method === "html-list" &&
-                              channel.listing_profile?.pagination === "path-pages"
-                            ? scanPathPagesRoute
-                            : channel.method === "html-list" &&
-                                channel.listing_profile?.pagination === "single-page"
-                              ? scanSinglePageRoute
-                              : null
-    if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
-    if (v["reuse-listing-run"] && scanner !== scanSinglePageRoute)
-      throw Error("--reuse-listing-run is only supported for single-page HTML routes")
-    let listingEvidence = null,
-      listingReuseError = null
-    if (v["reuse-listing-run"]) {
-      try {
-        listingEvidence = loadReusableSinglePageListing(root, v["reuse-listing-run"], channel, {
-          since: v.since,
-          until_exclusive: v.until,
-        })
-      } catch (error) {
-        listingReuseError = error.message
-      }
-    }
-    const recovery = v["recovery-source-run"]
-      ? createRecoverySourceReuse(root, v["recovery-source-run"], channel, basis, { since: v.since, until: v.until })
-      : null
-    const repair = v["repair-source-run"]
-      ? createArchiveSourceReuse(
-          root,
-          v["repair-source-run"],
-          channel,
-          basis,
-          { since: v.since, until: v.until },
-          { now: Date.parse(run.state.started_at), detailRepair: true, ...policyOptions },
-        )
-      : null
-    let result = await scanner(
-      root,
-      run,
-      fetcher,
-      channel,
-      profiles,
-      {
-        since: v.since,
-        until: v.until,
-      },
-      {
-        listingEvidence,
-        listingReuseError,
-        ...(repair ? { fetchPolicy: repair.fetchPolicy } : {}),
-        ...(recovery ? { fetchPolicy: recovery.fetchPolicy, parse: recovery.parse, parseArticle: recovery.parse } : {}),
-      },
-    )
-    const archive = channel.listing_profile?.fallback_archive
+  return withLock(root, "collection-source-" + channel.channel_id, async () => {
+    const decision = collectionSourceDecision(root, channel.channel_id, basis)
+    const storedInput = readJSON(root, `runs/${v.run}/collection-input.json`)
+    const completed = readJSON(root, `runs/${v.run}/list-scan.json`)
     if (
-      channel.method === "rss" &&
-      result.summary?.reason === "feed_cutoff_not_reached" &&
-      archive
+      !decision.allowed &&
+      !(completed && JSON.stringify(storedInput?.collection_basis) === JSON.stringify(basis))
     ) {
-      const archiveChannel = rssArchiveChannel(channel)
-      const reuse = v["reuse-source-run"]
+      const error = Error("Collection source is waiting for its bounded probe")
+      error.code = "COLLECTION_SOURCE_WAIT"
+      error.source_wait = {
+        channel_id: channel.channel_id,
+        next_check_at: decision.next_check_at,
+        next_action: decision.next_action,
+      }
+      throw error
+    }
+    return withLock(root, "run-" + v.run, async () => {
+      const input = {
+        schema: "research-list-run-input/v2",
+        channel_id: channel.channel_id,
+        since: v.since,
+        until_exclusive: v.until,
+        reuse_listing_run: v["reuse-listing-run"] || null,
+        collection_basis: basis,
+        ...policyOptions,
+        ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
+        ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
+        ...(v["recovery-source-run"] ? { recovery_source_run: v["recovery-source-run"] } : {}),
+      }
+      const run = new RunState(root, v.run, input)
+      const previousInput = readJSON(root, `runs/${v.run}/collection-input.json`)
+      if (previousInput && JSON.stringify(previousInput) !== JSON.stringify(input))
+        throw Error("Stored collection input changed")
+      if (!previousInput) atomicWrite(root, `runs/${v.run}/collection-input.json`, input)
+      const fetcher = new SourceFetcher(root, { pdf_profiles: profiles, ...policyOptions })
+      await run.stage("collection-basis", basis, async () => basis)
+      const scanner =
+        channel.api_profile?.id === "wordpress-rest-posts-json-v1"
+          ? scanWordPressPostsRoute
+          : channel.api_profile?.id === "sec-submissions-json-v1"
+            ? scanSECSubmissionsRoute
+            : channel.api_profile?.id === "ur-news-center-json-pages-v1"
+              ? scanPaginatedURRoute
+              : ["hd-press-json-pages-v1", "hd-disclosure-json-pages-v1"].includes(
+                    channel.api_profile?.id,
+                  )
+                ? scanPaginatedHDRoute
+                : channel.api_profile?.id === "kuka-news-form-pages-v1"
+                  ? scanPaginatedKUKARoute
+                  : channel.api_profile?.id === "abb-newsbank-json-pages-v1"
+                    ? scanPaginatedABBRoute
+                    : channel.api_profile?.id === "post-html-fragment-pages-v1"
+                      ? scanFormHTMLRoute
+                      : channel.api_profile
+                        ? null
+                        : channel.listing_profile?.pagination === "calendar-month"
+                          ? scanCalendarMonthRoute
+                          : channel.method === "rss" &&
+                              channel.listing_profile?.pagination === "bounded-feed"
+                            ? scanBoundedRSSRoute
+                            : channel.method === "html-list" &&
+                                channel.listing_profile?.pagination === "path-pages"
+                              ? scanPathPagesRoute
+                              : channel.method === "html-list" &&
+                                  channel.listing_profile?.pagination === "single-page"
+                                ? scanSinglePageRoute
+                                : null
+      if (!scanner) throw Error("Unknown or unsupported listing route: " + channel.channel_id)
+      if (v["reuse-listing-run"] && scanner !== scanSinglePageRoute)
+        throw Error("--reuse-listing-run is only supported for single-page HTML routes")
+      let listingEvidence = null,
+        listingReuseError = null
+      if (v["reuse-listing-run"]) {
+        try {
+          listingEvidence = loadReusableSinglePageListing(root, v["reuse-listing-run"], channel, {
+            since: v.since,
+            until_exclusive: v.until,
+          })
+        } catch (error) {
+          listingReuseError = error.message
+        }
+      }
+      const recovery = v["recovery-source-run"]
+        ? createRecoverySourceReuse(root, v["recovery-source-run"], channel, basis, {
+            since: v.since,
+            until: v.until,
+          })
+        : null
+      const repair = v["repair-source-run"]
         ? createArchiveSourceReuse(
             root,
-            v["reuse-source-run"],
+            v["repair-source-run"],
             channel,
             basis,
-            {
-              since: v.since,
-              until: v.until,
-            },
-            { now: Date.parse(run.state.started_at), ...policyOptions },
+            { since: v.since, until: v.until },
+            { now: Date.parse(run.state.started_at), detailRepair: true, ...policyOptions },
           )
         : null
-      const fallback = await scanPathPagesRoute(
+      let result = await scanner(
         root,
         run,
         fetcher,
-        archiveChannel,
+        channel,
         profiles,
-        { since: v.since, until: v.until },
-        reuse || repair ? { fetchPolicy: (reuse || repair).fetchPolicy } : recovery ? { fetchPolicy: recovery.fetchPolicy, parse: recovery.parse } : {},
+        {
+          since: v.since,
+          until: v.until,
+        },
+        {
+          listingEvidence,
+          listingReuseError,
+          ...(repair ? { fetchPolicy: repair.fetchPolicy } : {}),
+          ...(recovery
+            ? {
+                fetchPolicy: recovery.fetchPolicy,
+                parse: recovery.parse,
+                parseArticle: recovery.parse,
+              }
+            : {}),
+        },
       )
-      if (reuse) preserveArchiveReuseReceipt(root, v.run, reuse)
-      fallback.summary.fallback = {
-        source: "bounded-feed",
-        reason: result.summary.reason,
-        archive_status: fallback.summary.status,
-        archive_reason: fallback.summary.reason,
+      const archive = channel.listing_profile?.fallback_archive
+      if (
+        channel.method === "rss" &&
+        result.summary?.reason === "feed_cutoff_not_reached" &&
+        archive
+      ) {
+        const archiveChannel = rssArchiveChannel(channel)
+        const reuse = v["reuse-source-run"]
+          ? createArchiveSourceReuse(
+              root,
+              v["reuse-source-run"],
+              channel,
+              basis,
+              {
+                since: v.since,
+                until: v.until,
+              },
+              { now: Date.parse(run.state.started_at), ...policyOptions },
+            )
+          : null
+        const fallback = await scanPathPagesRoute(
+          root,
+          run,
+          fetcher,
+          archiveChannel,
+          profiles,
+          { since: v.since, until: v.until },
+          reuse || repair
+            ? { fetchPolicy: (reuse || repair).fetchPolicy }
+            : recovery
+              ? { fetchPolicy: recovery.fetchPolicy, parse: recovery.parse }
+              : {},
+        )
+        if (reuse) preserveArchiveReuseReceipt(root, v.run, reuse)
+        fallback.summary.fallback = {
+          source: "bounded-feed",
+          reason: result.summary.reason,
+          archive_status: fallback.summary.status,
+          archive_reason: fallback.summary.reason,
+        }
+        result = {
+          ...fallback,
+          indexDocuments: [...(result.indexDocuments || []), ...(fallback.indexDocuments || [])],
+          documents: [...result.documents, ...fallback.documents],
+          parses: [...result.parses, ...fallback.parses],
+          candidates: fallback.candidates,
+        }
       }
-      result = {
-        ...fallback,
-        indexDocuments: [...(result.indexDocuments || []), ...(fallback.indexDocuments || [])],
-        documents: [...result.documents, ...fallback.documents],
-        parses: [...result.parses, ...fallback.parses],
-        candidates: fallback.candidates,
+      if (repair) {
+        preserveArchiveReuseReceipt(root, v.run, repair)
+        result.summary.detail_repair = {
+          source_run: v["repair-source-run"],
+          coverage_scope: "original_listing_observation",
+          fresh_listing_observation: false,
+        }
       }
-    }
-    if (repair) {
-      preserveArchiveReuseReceipt(root, v.run, repair)
-      result.summary.detail_repair = {
-        source_run: v["repair-source-run"],
-        coverage_scope: "original_listing_observation",
-        fresh_listing_observation: false,
+      if (recovery) {
+        const reference = preserveRecoverySourceReuse(root, v.run, recovery)
+        result.summary.source_recovery = {
+          source_run: v["recovery-source-run"],
+          reference,
+          coverage_reused: false,
+        }
       }
-    }
-    if (recovery) {
-      const reference = preserveRecoverySourceReuse(root, v.run, recovery)
-      result.summary.source_recovery = { source_run: v["recovery-source-run"], reference, coverage_reused: false }
-    }
-    atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
-    if (result.indexDocuments)
-      atomicWrite(root, `runs/${v.run}/list-pages.json`, result.indexDocuments)
-    atomicWrite(root, `runs/${v.run}/documents.json`, result.documents)
-    atomicWrite(root, `runs/${v.run}/parses.json`, result.parses)
-    atomicWrite(root, `runs/${v.run}/candidates.json`, result.candidates)
-    if (result.events)
-      atomicWrite(root, `runs/${v.run}/events.json`, {
-        schema: "research-scheduled-events/v1",
-        events: result.events,
-        candidate_published: false,
+      atomicWrite(root, `runs/${v.run}/list-scan.json`, result.summary)
+      if (result.indexDocuments)
+        atomicWrite(root, `runs/${v.run}/list-pages.json`, result.indexDocuments)
+      atomicWrite(root, `runs/${v.run}/documents.json`, result.documents)
+      atomicWrite(root, `runs/${v.run}/parses.json`, result.parses)
+      atomicWrite(root, `runs/${v.run}/candidates.json`, result.candidates)
+      if (result.events)
+        atomicWrite(root, `runs/${v.run}/events.json`, {
+          schema: "research-scheduled-events/v1",
+          events: result.events,
+          candidate_published: false,
+        })
+      const unavailable = []
+      const checkpoints = readJSON(root, `runs/${v.run}/state.json`)
+      for (const [name, stage] of Object.entries(checkpoints?.stages || {})) {
+        if (stage.status !== "complete" || !/^(?:listing-fetch|page-|detail-)/u.test(name)) continue
+        const document = readJSON(root, stage.result_path)
+        if (
+          !document?.fetch_status ||
+          ["captured", "not_modified", "deferred"].includes(document.fetch_status)
+        )
+          continue
+        if (sha256(JSON.stringify(document)) !== stage.result_hash)
+          throw Error("Source failure checkpoint changed")
+        unavailable.push(document)
+      }
+      const health = await recordCollectionOutcome(root, {
+        channel_id: channel.channel_id,
+        run_id: v.run,
+        basis,
+        result: { ...result, unavailable_sources: unavailable },
+        evidence: {
+          path: `runs/${v.run}/list-scan.json`,
+          sha256: sha256(fs.readFileSync(safePath(root, `runs/${v.run}/list-scan.json`))),
+        },
       })
-    const backlogMerge = v["merge-backlog"]
-      ? result.summary.status === "incomplete" &&
-        result.summary.reason === "detail_incomplete" &&
-        result.candidates.length
-        ? await intakePartialScan({
-            root,
-            result,
-            runId: v.run,
-            backlogFile: ".local/research/candidate-backlog.json",
-          })
-        : await intakeCompletedScan({
-            root,
-            result,
-            backlogFile: ".local/research/candidate-backlog.json",
-          })
-      : null
-    return {
-      channel_id: channel.channel_id,
-      status: result.summary.status,
-      reason: result.summary.reason,
-      candidates: result.candidates.length,
-      ...(result.summary.detail_repair ? { detail_repair: result.summary.detail_repair } : {}),
-      ...(result.events ? { events: result.events.length } : {}),
-      ...(backlogMerge ? { backlog_merge: backlogMerge } : {}),
-      candidate_published: false,
-    }
+      const backlogMerge = v["merge-backlog"]
+        ? result.summary.status === "incomplete" &&
+          result.summary.reason === "detail_incomplete" &&
+          result.candidates.length
+          ? await intakePartialScan({
+              root,
+              result,
+              runId: v.run,
+              backlogFile: ".local/research/candidate-backlog.json",
+            })
+          : await intakeCompletedScan({
+              root,
+              result,
+              backlogFile: ".local/research/candidate-backlog.json",
+            })
+        : null
+      return {
+        channel_id: channel.channel_id,
+        status: result.summary.status,
+        reason: result.summary.reason,
+        collection_health: health.health,
+        notification: health.notification,
+        candidates: result.candidates.length,
+        ...(result.summary.detail_repair ? { detail_repair: result.summary.detail_repair } : {}),
+        ...(result.events ? { events: result.events.length } : {}),
+        ...(backlogMerge ? { backlog_merge: backlogMerge } : {}),
+        candidate_published: false,
+      }
+    })
   })
 }

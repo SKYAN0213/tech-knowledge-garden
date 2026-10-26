@@ -11,6 +11,7 @@ import {
 } from "./run-state.mjs"
 import { dailyScan, DAILY_CONFIG } from "./daily-scan.mjs"
 import { saveCollectionReport } from "./collection-report.mjs"
+import { collectionRecoveryRequest } from "./collection-resilience.mjs"
 import { checkedEdition, checkedPlan, freezeEdition } from "./event-pipeline.mjs"
 import { advanceEventWorkflow } from "./event-workflow.mjs"
 import { loadCurationSelection } from "./curation.mjs"
@@ -269,6 +270,9 @@ export async function advanceRoundWorkflow(
           reference: edition.report,
           reused: true,
           counts: report.counts,
+          recovery_request: collectionRecoveryRequest(report, edition.report, {
+            round_id: p.run_id,
+          }),
         }
         stages.edition = { status: "frozen", reference: editionRef, reused: true }
       } else {
@@ -318,6 +322,7 @@ export async function advanceRoundWorkflow(
           reference: { path: reportRef.path, sha256: reportRef.sha256 },
           counts: report.counts,
           reused: !p.collect,
+          recovery_request: collectionRecoveryRequest(report, reportRef, { round_id: p.run_id }),
         }
         if (report.counts.pending_windows)
           return persist("collection_pending", {

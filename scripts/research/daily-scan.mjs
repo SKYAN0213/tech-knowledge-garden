@@ -7,6 +7,13 @@ import { registry, coverageGrid } from "./discovery.mjs"
 import { sha256, sourceId } from "./contracts.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { sourceFailureRetry, combineRetryFailures } from "./source-retry.mjs"
+import {
+  collectionSourceDecision,
+  checkedSourceWait,
+  readCollectionHealth,
+  collectionHealthInventory,
+} from "./collection-resilience.mjs"
+import { collectionBasis } from "./scan-basis.mjs"
 import { editorialInventory, reconcileEditorialContext } from "./editorial-context.mjs"
 import {
   DEFAULT_ROOT,
@@ -126,6 +133,7 @@ export function dailySourcePaths(configFile = DAILY_CONFIG) {
     "scripts/research/daily-plan.mjs",
     "scripts/research/daily-scan.mjs",
     "scripts/research/source-retry.mjs",
+    "scripts/research/collection-resilience.mjs",
     "scripts/research/source-access.mjs",
     "scripts/research/shadow-collection-basis.mjs",
     "scripts/pull-drive.py",
@@ -283,7 +291,7 @@ function readReusableDailyScanProof(root, runId, verifierSha256, expected, allow
   return null
 }
 
-function verifiedDailyScan(root, runId, expected, { allowLegacyCandidates = false } = {}) {
+export function verifiedDailyScan(root, runId, expected, { allowLegacyCandidates = false } = {}) {
   if (!/^[A-Za-z0-9_-]+$/.test(runId || "")) throw Error("Valid stored scan run required")
   const verifierSha256 = dailyCoverageVerifierSha256()
   const cached = readReusableDailyScanProof(
@@ -634,7 +642,7 @@ export async function reconcileSupplementalScan({
     if (scan.summary.status !== "window_scanned" || !scan.summary.window)
       throw Error("Only a completed stored scan can supplement daily coverage")
     verifyStoredListScan(root, scan, { channel_id: channelId, ...scan.summary.window })
-    const coverage = bootstrapCoverage(root, activeRoutes, readJSON(root, COVERAGE_FILE), {
+    const coverage = bootstrapCoverage(root, [route], readJSON(root, COVERAGE_FILE), {
       backlogFile,
       sameEventAliases: sourceAliases,
     })
@@ -976,6 +984,15 @@ function attemptId(plan, window, attempt) {
 }
 
 export function dailyRetryAssessment(root, receipt, { loadStored = storedListScan } = {}) {
+  if (receipt.source_wait) {
+    const wait = checkedSourceWait(root, receipt)
+    return {
+      state: "retryable",
+      kind: "source_probe_due",
+      source_wait: true,
+      next_check_at: wait.next_check_at,
+    }
+  }
   if (receipt.status === "blocked" && !receipt.scan_evidence)
     return { state: "awaiting_new_observation", kind: "blocked_window" }
   if (!receipt.scan_evidence) return combineRetryFailures([])
@@ -994,6 +1011,12 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
         : combineRetryFailures([])
     }
     const scan = loadStored(root, runId)
+    if (
+      receipt.scan_evidence.summary_sha256 &&
+      sha256(fs.readFileSync(safePath(root, `runs/${runId}/list-scan.json`))) !==
+        receipt.scan_evidence.summary_sha256
+    )
+      throw Error("Retry scan summary hash mismatch")
     if (
       scan.summary.channel_id !== receipt.channel_id ||
       scan.summary.window?.since !== receipt.since ||
@@ -1018,6 +1041,13 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
     }
     if (scan.documents?.length || scan.parses?.length)
       assertStoredEvidence(root, scan.documents, scan.parses)
+    if (scan.summary.next_listing_page)
+      return {
+        state: "retryable",
+        kind: "listing_batch_remaining",
+        continuation: true,
+        source_run: runId,
+      }
     const failures = []
     if (scan.summary.reason === "detail_incomplete" && Array.isArray(scan.summary.details)) {
       for (const detail of scan.summary.details.filter(
@@ -1052,8 +1082,17 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
     const nextChecks = sources
       .map((source) => Date.parse(source.availability?.next_check_at || ""))
       .filter(Number.isFinite)
+    const continuation = failures.some((failure) => failure.kind === "detail_batch_remaining")
     return {
-      ...combineRetryFailures(failures),
+      ...(continuation
+        ? {
+            state: "retryable",
+            kind: "detail_batch_remaining",
+            continuation: true,
+            remaining_details: failures.filter((f) => f.kind === "detail_batch_remaining").length,
+            other_failures: failures.filter((f) => f.kind !== "detail_batch_remaining"),
+          }
+        : combineRetryFailures(failures)),
       source_run: runId,
       ...(nextChecks.length
         ? { next_check_at: new Date(Math.max(...nextChecks)).toISOString() }
@@ -1065,6 +1104,7 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
 }
 
 function dailyRetryState(assessment, attempts, policy) {
+  if (assessment.continuation) return "retryable"
   if (assessment.state === "requires_repair") return "requires_repair"
   if (assessment.state === "awaiting_new_observation" && policy.blocked_requires_new_observation)
     return "awaiting_new_observation"
@@ -1090,7 +1130,8 @@ export function dailyRetryQueue(
       return []
     const last = attempts.at(-1)
     const assessment = dailyRetryAssessment(root, last, options)
-    const state = dailyRetryState(assessment, attempts.length, policy)
+    const failedAttempts = attempts.filter((r) => !r.source_wait && !r.continuation).length
+    const state = dailyRetryState(assessment, failedAttempts, policy)
     return [
       {
         channel_id: window.channel_id,
@@ -1098,8 +1139,10 @@ export function dailyRetryQueue(
         until_exclusive: window.until_exclusive,
         state,
         attempts: attempts.length,
+        failed_attempts: failedAttempts,
+        continuation_batches: attempts.filter((r) => r.continuation).length,
         attempts_remaining:
-          state === "retryable" ? policy.max_attempts_per_window - attempts.length : 0,
+          state === "retryable" ? Math.max(0, policy.max_attempts_per_window - failedAttempts) : 0,
         last_attempt_id: last.attempt_id,
         reason: last.reason || last.status,
         retry_assessment: assessment,
@@ -1134,6 +1177,7 @@ export function verifyDailyReceipts(
     )
       throw Error("Daily receipt identity does not match the stored plan")
     seen.add(receipt.attempt_id)
+    if (receipt.source_wait) checkedSourceWait(root, receipt)
     if (receipt.backlog_merge?.status === "merged_partial" && receipt.status !== "incomplete")
       throw Error("Partial candidate intake cannot complete or hide a failed window")
     if (!collectedCandidateReceipt(receipt)) continue
@@ -1250,6 +1294,16 @@ export async function executeDailyPlan({
   }
   let current = applyDailyReceipts(coverage, plan, receipts)
   const retryPolicy = plan.retry_policy || DEFAULT_DAILY_RETRY_POLICY
+  const sourceBases = new Map()
+  const sourceDecision = (channelId) => {
+    if (!readCollectionHealth(root, channelId)) return { allowed: true }
+    if (!sourceBases.has(channelId)) {
+      const channel = activeRoutes.find((r) => r.route.channel_id === channelId)?.route
+      const acquisition = JSON.parse(fs.readFileSync("data/research-acquisition.json"))
+      sourceBases.set(channelId, collectionBasis(channel, acquisition.article_profiles))
+    }
+    return collectionSourceDecision(root, channelId, sourceBases.get(channelId))
+  }
   atomicWrite(root, COVERAGE_FILE, current)
   const timingHint = dailyRouteTimingHint(root, plan.run_id)
   const pendingRoutes = [...Map.groupBy(plan.windows, (window) => window.channel_id).values()]
@@ -1296,13 +1350,16 @@ export async function executeDailyPlan({
         : null
       const lastAttempt = priorAttempts.at(-1)
       const repairSourceRun =
-        lastAttempt?.reason === "detail_incomplete" && lastAttempt.candidate_keys?.length
+        lastAttempt?.reason === "detail_incomplete" || lastAttempt?.continuation
           ? lastAttempt.attempt_id
           : null
       result = await scan(window, id, reusableReceipt?.attempt_id || null, repairSourceRun)
       scan_ms = Math.round(performance.now() - scanStarted)
       scanEvidence = {
         list_scan_run: id,
+        ...(fs.existsSync(safePath(root, `runs/${id}/list-scan.json`))
+          ? { summary_sha256: sha256(fs.readFileSync(safePath(root, `runs/${id}/list-scan.json`))) }
+          : {}),
         listing_source_version_id: result.summary.listing_source_version_id || null,
         index_documents: result.indexDocuments?.length || 0,
         documents: result.documents?.length || 0,
@@ -1413,6 +1470,11 @@ export async function executeDailyPlan({
       status: outcome.status,
       reason: outcome.reason,
       candidate_keys: outcome.candidates,
+      ...(result?.summary?.details?.some((d) => d.status === "deferred_by_budget") ||
+      result?.summary?.next_listing_page
+        ? { continuation: true }
+        : {}),
+      ...(outcome.source_wait ? { source_wait: outcome.source_wait } : {}),
       ...(scanEvidence ? { scan_evidence: scanEvidence } : {}),
       ...(outcome.mergeResult ? { backlog_merge: outcome.mergeResult } : {}),
       candidate_published: false,
@@ -1440,21 +1502,49 @@ export async function executeDailyPlan({
       if (stopped) return
       const priorAttempts = receipts.filter((receipt) => sameWindow(receipt, window))
       const lastAttempt = priorAttempts.at(-1)
+      const assessment = lastAttempt
+        ? dailyRetryAssessment(root, lastAttempt, { loadStored })
+        : null
+      const failedAttempts = priorAttempts.filter((r) => !r.source_wait && !r.continuation).length
       if (
         priorAttempts.some((receipt) => receipt.status === "window_scanned") ||
         hasSupplementalResultForWindow(root, coverage.routes[window.channel_id], window, {
           backlogFile,
           sameEventAliases,
         }) ||
-        priorAttempts.length >= retryPolicy.max_attempts_per_window ||
-        (lastAttempt &&
-          dailyRetryState(
-            dailyRetryAssessment(root, lastAttempt, { loadStored }),
-            priorAttempts.length,
-            retryPolicy,
-          ) !== "retryable")
+        (lastAttempt && dailyRetryState(assessment, failedAttempts, retryPolicy) !== "retryable")
       )
         continue
+      const decision = sourceDecision(window.channel_id)
+      if (!decision.allowed) {
+        const observation = decision.health.latest_observation.path
+        const held = {
+          window,
+          id: attemptId(plan, window, priorAttempts.length + 1),
+          started_at: new Date().toISOString(),
+          result: null,
+          scanEvidence: null,
+          status: "blocked",
+          reason: "source_cooling_down",
+          candidates: [],
+          scan_ms: 0,
+          verify_ms: null,
+          backlog_merge_ms: null,
+          source_wait: {
+            request_performed: false,
+            next_check_at: decision.next_check_at,
+            next_action: decision.next_action,
+            observation: {
+              path: observation,
+              sha256: sha256(fs.readFileSync(safePath(root, observation))),
+            },
+          },
+        }
+        const committed = commitQueue.then(() => commitOutcome(held))
+        commitQueue = committed.catch(() => {})
+        await committed
+        continue
+      }
       if (
         (maxWindows !== undefined && startedWindows >= maxWindows) ||
         (timeBudgetMs !== undefined && performance.now() - sliceStarted >= timeBudgetMs)
@@ -1502,6 +1592,7 @@ export async function executeDailyPlan({
   })
   const summary = {
     schema: "research-daily-summary/v1",
+    resilience: collectionHealthInventory(root),
     run_id: plan.run_id,
     status: routeResults.every((route) => route.status === "partial")
       ? "configured_routes_scanned"
@@ -1638,13 +1729,7 @@ export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
       window.until_exclusive,
     ]
     const route = activeRoutes.find((item) => item.route.channel_id === window.channel_id)?.route
-    if (
-      repairSourceRun &&
-      ["bounded-feed", "single-page", "path-pages", "calendar-month"].includes(
-        route?.listing_profile?.pagination,
-      )
-    )
-      args.push("--repair-source-run", repairSourceRun)
+    if (repairSourceRun) args.push("--recovery-source-run", repairSourceRun)
     else if (
       reuseListingRun &&
       route?.method === "html-list" &&

@@ -57,15 +57,11 @@ function kukaListingDay(row, locale) {
   const dateISO = row?.dateISO,
     apiMatch =
       typeof dateISO === "string"
-        ? /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|[+-]\d{2}:\d{2})$/.exec(
-            dateISO,
-          )
+        ? /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?(?:Z|[+-]\d{2}:\d{2})$/.exec(dateISO)
         : null,
     apiDay = apiMatch && validDay(apiMatch[1]) ? apiMatch[1] : null,
     labelMatch =
-      locale === "en-US"
-        ? /^([A-Z][a-z]+) (\d{1,2}), (\d{4})$/.exec(row?.date || "")
-        : null,
+      locale === "en-US" ? /^([A-Z][a-z]+) (\d{1,2}), (\d{4})$/.exec(row?.date || "") : null,
     labelMonth = englishMonths.get(labelMatch?.[1]),
     labelDay = labelMatch
       ? `${labelMatch[3]}-${String(labelMonth || 0).padStart(2, "0")}-${String(labelMatch[2]).padStart(2, "0")}`
@@ -90,6 +86,7 @@ export function kukaPageRequest(channel, offset) {
     !Number.isInteger(profile.max_details) ||
     profile.max_details < 1 ||
     profile.max_details > 100 ||
+    (profile.first_page_featured_items !== undefined && profile.first_page_featured_items !== 1) ||
     !["de-DE", "en-US"].includes(profile.sc_lang) ||
     !/^[A-F0-9]{32}$/.test(profile.context_id || "") ||
     !/^[A-F0-9]{32}$/.test(profile.captions_facet_id || "")
@@ -114,14 +111,17 @@ export function kukaPageRequest(channel, offset) {
 
 export function parseKUKAPage(payload, channel, offset) {
   const pageSize = channel.api_profile?.page_size,
-    total = payload?.count,
+    rawTotal = payload?.count,
+    featuredCount = offset === 0 ? channel.api_profile?.first_page_featured_items || 0 : 0,
+    total = rawTotal - featuredCount,
     rows = payload?.items
   if (
+    !Number.isInteger(rawTotal) ||
     !Number.isInteger(total) ||
     total < 0 ||
     !Array.isArray(rows) ||
     !Array.isArray(payload.facets) ||
-    rows.length !== Math.min(pageSize, Math.max(0, total - offset))
+    rows.length !== featuredCount + Math.min(pageSize, Math.max(0, total - offset))
   )
     throw Error("KUKA page count or items are incomplete")
   const pattern = new RegExp(channel.item_pattern),
@@ -142,7 +142,9 @@ export function parseKUKAPage(payload, channel, offset) {
       !title ||
       !day ||
       (sourceItemId !== undefined &&
-        (typeof sourceItemId !== "string" || sourceItemId.length < 1 || sourceItemId.length > 128)) ||
+        (typeof sourceItemId !== "string" ||
+          sourceItemId.length < 1 ||
+          sourceItemId.length > 128)) ||
       (sourceItemId && seenIds.has(sourceItemId))
     )
       throw Error("KUKA page item lacks a locale-matched URL, title or publication date")
@@ -157,7 +159,13 @@ export function parseKUKAPage(payload, channel, offset) {
       json_pointer: `/items/${index}`,
     }
   })
-  return { total, items }
+  return {
+    total,
+    items: items.slice(featuredCount),
+    ...(featuredCount
+      ? { featured_items: items.slice(0, featuredCount), raw_total: rawTotal }
+      : {}),
+  }
 }
 
 export async function scanPaginatedKUKARoute(
@@ -197,6 +205,7 @@ export async function scanPaginatedKUKARoute(
   let expectedTotal = null,
     previousDay = null,
     reachedBoundary = false
+  const featured = new Map()
   for (let page = 0; page < channel.api_profile.max_pages; page++) {
     const offset = page * channel.api_profile.page_size,
       request = kukaPageRequest(channel, offset)
@@ -233,14 +242,33 @@ export async function scanPaginatedKUKARoute(
       items: parsed.items.length,
       first_day: parsed.items[0]?.published_at || null,
       last_day: parsed.items.at(-1)?.published_at || null,
+      ...(parsed.featured_items
+        ? { featured_items: parsed.featured_items, raw_total: parsed.raw_total }
+        : {}),
     })
+    for (const item of parsed.featured_items || []) {
+      featured.set(item.url, item)
+      if (item.published_at >= since && item.published_at < until)
+        selected.push({
+          ...item,
+          listing_source_version_id: document.source_version_id,
+          discovered_at: document.observed_at,
+          discovery_method: "form-json-featured-item",
+        })
+    }
     for (const item of parsed.items) {
       if (seen.has(item.url) || (previousDay && item.published_at > previousDay))
         return incomplete("duplicate_or_unordered_page")
       seen.add(item.url)
       previousDay = item.published_at
+      const repeatedFeatured = featured.get(item.url)
+      if (
+        repeatedFeatured &&
+        (repeatedFeatured.text !== item.text || repeatedFeatured.published_at !== item.published_at)
+      )
+        return incomplete("featured_item_identity_conflict")
       if (item.published_at < since) reachedBoundary = true
-      if (item.published_at >= since && item.published_at < until)
+      if (!repeatedFeatured && item.published_at >= since && item.published_at < until)
         selected.push({
           ...item,
           listing_source_version_id: document.source_version_id,

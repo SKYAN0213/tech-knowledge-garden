@@ -75,13 +75,21 @@ test("KUKA form request binds locale and page cursor to its archived URL", () =>
   const englishRequest = kukaPageRequest(englishChannel, 0)
   assert.equal(new URL(englishRequest.url).searchParams.get("sc_lang"), "en-US")
   const englishRows = [englishItem("09/kuka-mobile-forklift-launch", "September 10, 2026")]
-  const parsedEnglish = parseKUKAPage({ count: 1, items: englishRows, facets: [] }, englishChannel, 0)
+  const parsedEnglish = parseKUKAPage(
+    { count: 1, items: englishRows, facets: [] },
+    englishChannel,
+    0,
+  )
   assert.equal(parsedEnglish.items[0].published_at, "2026-09-10")
   assert.equal(parsedEnglish.items[0].source_item_id, englishRows[0].itemId)
   assert.throws(
     () =>
       parseKUKAPage(
-        { count: 2, items: [englishRows[0], { ...englishRows[0], href: englishRows[0].href + "-duplicate" }], facets: [] },
+        {
+          count: 2,
+          items: [englishRows[0], { ...englishRows[0], href: englishRows[0].href + "-duplicate" }],
+          facets: [],
+        },
         englishChannel,
         0,
       ),
@@ -144,6 +152,39 @@ test("KUKA page rejects localized mismatches and missing rows", () => {
         0,
       ),
     /publication date/,
+  )
+})
+
+test("explicit KUKA first-page featured slot preserves the item separately from the dated page cursor", () => {
+  const ch = {
+    ...englishChannel,
+    api_profile: { ...englishChannel.api_profile, first_page_featured_items: 1 },
+  }
+  const featured = {
+    ...englishItem("09/featured", "September 9, 2026"),
+    itemId: "featured",
+    dateISO: "2026-09-09T02:00:00+02:00",
+  }
+  const first = {
+    ...englishItem("09/first", "September 11, 2026"),
+    itemId: "first",
+    dateISO: "2026-09-11T02:00:00+02:00",
+  }
+  const second = { ...englishItem("09/second", "September 10, 2026"), itemId: "second" }
+  const result = parseKUKAPage({ count: 5, items: [featured, first, second], facets: [] }, ch, 0)
+  assert.equal(result.total, 4)
+  assert.equal(result.raw_total, 5)
+  assert.equal(result.featured_items[0].source_item_id, "featured")
+  assert.equal(result.items[0].json_pointer, "/items/1")
+  assert.equal(result.items.length, 2)
+  assert.throws(
+    () =>
+      parseKUKAPage({ count: 5, items: [featured, first, second], facets: [] }, englishChannel, 0),
+    /count or items/,
+  )
+  assert.throws(
+    () => parseKUKAPage({ count: 5, items: [featured, first, second], facets: [] }, ch, 2),
+    /count or items/,
   )
 })
 

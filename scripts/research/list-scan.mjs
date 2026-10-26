@@ -10,12 +10,23 @@ import {
   hasBlockedPublicationMetadata,
 } from "./parser.mjs"
 import { parseResearchDate } from "./dates.mjs"
-import { reconcilePublicationDay, hasImagePublicationMetadata } from "./publication-date-reconciliation.mjs"
+import {
+  reconcilePublicationDay,
+  hasImagePublicationMetadata,
+} from "./publication-date-reconciliation.mjs"
 import { readJSON, safePath } from "./run-state.mjs"
 import { fetchWithPolicy } from "./source-policy.mjs"
-import { matchingAccessExclusion, rememberAccessExclusion, accessExclusionDetail, isCollectedDetail } from "./source-access.mjs"
+import {
+  matchingAccessExclusion,
+  rememberAccessExclusion,
+  accessExclusionDetail,
+  isCollectedDetail,
+} from "./source-access.mjs"
 import { collectionRoute } from "./scan-basis.mjs"
-import { matchingArticleImageReview, reviewedArticleImageParses } from "./article-image-review-cache.mjs"
+import {
+  matchingArticleImageReview,
+  reviewedArticleImageParses,
+} from "./article-image-review-cache.mjs"
 
 const singlePageConfigHash = (channel) => sha256(JSON.stringify(collectionRoute(channel)))
 const routeFetchOptions = (channel) => ({
@@ -402,11 +413,15 @@ export async function captureArticleBodyImages(
     const asset = fetchedImages.get(image.url)
     if (!asset) continue
     const options = { ...rule.parse_options, title: parsed.title }
-    const expectedReview = reviewedParses.find((p) => p.source_version_id === asset.source_version_id)
+    const expectedReview = reviewedParses.find(
+      (p) => p.source_version_id === asset.source_version_id,
+    )
     try {
       const extracted = reviewed
-        ? await run.stage("review-body-image-" + id, { document: asset, review: reviewed.reference }, () =>
-            structuredClone(expectedReview),
+        ? await run.stage(
+            "review-body-image-" + id,
+            { document: asset, review: reviewed.reference },
+            () => structuredClone(expectedReview),
           )
         : await run.stage("parse-body-image-" + id, { document: asset, options }, () =>
             parse(root, asset, options),
@@ -443,7 +458,10 @@ export async function collectWindowDetails(
   { fetchPolicy = fetchWithPolicy, parse = parseDocument, window } = {},
 ) {
   const batchSize = channel.detail_batch_size
-  if (batchSize !== undefined && (!Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > 500))
+  if (
+    batchSize !== undefined &&
+    (!Number.isSafeInteger(batchSize) || batchSize < 1 || batchSize > 500)
+  )
     throw Error("Detail batch size must be within 1..500")
   let requestedDetails = 0
   const rssTitlePolicy = channel.listing_profile?.rss_title_policy || "must_match"
@@ -467,9 +485,14 @@ export async function collectWindowDetails(
     details.push(detail)
     let supportingSources = []
     try {
-      const access = channel.access_policy === "public-only"
-        ? await run.stage("access-check-" + id, { access_policy: channel.access_policy, link }, () => ({ exclusion: matchingAccessExclusion(root, channel, link) }))
-        : { exclusion: null }
+      const access =
+        channel.access_policy === "public-only"
+          ? await run.stage(
+              "access-check-" + id,
+              { access_policy: channel.access_policy, link },
+              () => ({ exclusion: matchingAccessExclusion(root, channel, link) }),
+            )
+          : { exclusion: null }
       if (access.exclusion) {
         // Verify the immutable proof on every read, including resumed stages.
         const exclusion = matchingAccessExclusion(root, channel, link)
@@ -483,7 +506,12 @@ export async function collectWindowDetails(
       const document = await run.stage("detail-" + id, { url: link.url }, () => {
         const stored = fetchPolicy.hasStoredSource?.(link.url) === true
         if (!stored && batchSize !== undefined && requestedDetails >= batchSize)
-          return { original_url: link.url, fetch_status: "deferred", request_performed: false, reason: "detail_batch_limit" }
+          return {
+            original_url: link.url,
+            fetch_status: "deferred",
+            request_performed: false,
+            reason: "detail_batch_limit",
+          }
         if (!stored) requestedDetails++
         return fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel))
       })
@@ -585,7 +613,12 @@ export async function collectWindowDetails(
       }
       const articleDate = parseResearchDate(parsed.dates?.published_at)
       const listingDate = parseResearchDate(link.published_at)
-      const dateReconciliation = reconcilePublicationDay(link, parsed, window, channel.listing_profile?.publication_date_reconciliation)
+      const dateReconciliation = reconcilePublicationDay(
+        link,
+        parsed,
+        window,
+        channel.listing_profile?.publication_date_reconciliation,
+      )
       if (!articleDate || !listingDate || articleDate.day !== listingDate.day) {
         if (!dateReconciliation) {
           detail.status = "date_conflict"
@@ -607,12 +640,22 @@ export async function collectWindowDetails(
         documents.push(...assets.documents)
         parses.push(...assets.parses)
         detail.body_images = assets.images
-        if (assets.review_reference && assets.metadata && !assets.images.some((image) => image.parse_status === "failed")) {
+        if (
+          assets.review_reference &&
+          assets.metadata &&
+          !assets.images.some((image) => image.parse_status === "failed")
+        ) {
           const metadata = assets.metadata
-          const found = candidatesFromLinks([link], {
-            ...channel, method: link.discovery_method || channel.method,
-            source_version_id: link.listing_source_version_id, parse_id: link.listing_parse_id,
-          }, link.discovered_at)
+          const found = candidatesFromLinks(
+            [link],
+            {
+              ...channel,
+              method: link.discovery_method || channel.method,
+              source_version_id: link.listing_source_version_id,
+              parse_id: link.listing_parse_id,
+            },
+            link.discovered_at,
+          )
           if (found.length !== 1) {
             detail.status = "candidate_rejected"
             continue
@@ -624,12 +667,16 @@ export async function collectWindowDetails(
           detail.article_image_review = assets.review_reference
           detail.status = "source_parsed_unreviewed"
           candidates.push({
-            ...found[0], title: metadata.title,
+            ...found[0],
+            title: metadata.title,
             source_published_at: metadata.dates.published_at,
             article_source_version_id: document.source_version_id,
             article_parse_id: metadata.parse_id,
             article_observed_at: document.observed_at,
-            article_content_sha256: articleContentFingerprint(metadata, [metadata, ...assets.parses]),
+            article_content_sha256: articleContentFingerprint(metadata, [
+              metadata,
+              ...assets.parses,
+            ]),
             supporting_source_urls: assets.images.map((image) => image.url),
             article_image_review: assets.review_reference,
           })
@@ -638,7 +685,9 @@ export async function collectWindowDetails(
         // Unreviewed OCR never supplies an article body or numeric approval.
         detail.status = assets.images.some((image) => image.parse_status === "failed")
           ? "article_image_body_parse_failed"
-          : assets.review_error ? "article_image_review_invalid" : "article_image_body_requires_review"
+          : assets.review_error
+            ? "article_image_review_invalid"
+            : "article_image_body_requires_review"
         if (assets.review_error) detail.error = assets.review_error
         continue
       }
@@ -900,7 +949,12 @@ export async function collectWindowDetails(
       }
       candidates.push({
         ...found[0],
-        ...(dateReconciliation ? { source_published_at: articleDate.day, publication_date_reconciliation: dateReconciliation } : {}),
+        ...(dateReconciliation
+          ? {
+              source_published_at: articleDate.day,
+              publication_date_reconciliation: dateReconciliation,
+            }
+          : {}),
         ...(exactTitleMatch || link.listing_title_authoritative ? {} : { title: parsed.title }),
         article_source_version_id: document.source_version_id,
         article_parse_id: parsed.parse_id,
@@ -1019,15 +1073,16 @@ export async function scanSinglePageRoute(
   candidates.push(...inspected.candidates)
   details.push(...inspected.details)
   summary.status =
-    details.every(isCollectedDetail) &&
-    details.length === assessment.window_items
+    details.every(isCollectedDetail) && details.length === assessment.window_items
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
   summary.candidate_count = candidates.length
   if (channel.access_policy === "public-only") {
     summary.access_scope = "public-only"
-    summary.access_excluded_count = details.filter((detail) => detail.status === "public_access_excluded").length
+    summary.access_excluded_count = details.filter(
+      (detail) => detail.status === "public_access_excluded",
+    ).length
   }
   return { summary, documents, parses, candidates }
 }
@@ -1234,7 +1289,9 @@ export async function resolveYearlessArchiveDates(
       const id = sourceId(link.url)
       const exclusion = matchingAccessExclusion(root, channel, link)
       const document = await run.stage("detail-" + id, { url: link.url }, () =>
-        exclusion ? exclusion.proof.document : fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
+        exclusion
+          ? exclusion.proof.document
+          : fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel)),
       )
       if (!["captured", "not_modified"].includes(document.fetch_status))
         return { ...result, reason: "archive_date_source_" + document.fetch_status }
@@ -1253,7 +1310,8 @@ export async function resolveYearlessArchiveDates(
       const metadataOnly = hasBlockedPublicationMetadata(parsed)
       const imageMetadataOnly = hasImagePublicationMetadata(parsed)
       if (
-        (!metadataOnly && !imageMetadataOnly &&
+        (!metadataOnly &&
+          !imageMetadataOnly &&
           (parsed.status !== "extracted" ||
             !parsed.quality?.required_fields_present ||
             !parsed.blocks?.length)) ||
@@ -1263,7 +1321,14 @@ export async function resolveYearlessArchiveDates(
       )
         return { ...result, reason: "archive_article_date_missing_or_conflict" }
       if (metadataOnly)
-        await rememberAccessExclusion(root, channel, { ...link, published_at: date.day }, document, parsed, run.id)
+        await rememberAccessExclusion(
+          root,
+          channel,
+          { ...link, published_at: date.day },
+          document,
+          parsed,
+          run.id,
+        )
       const evidence = {
         url: link.url,
         listed_date_text: printed,
@@ -1303,6 +1368,14 @@ export async function scanPathPagesRoute(
   if (!validDay(since) || !validDay(until) || since >= until)
     throw Error("Path-pages scan requires an increasing [since, until) day window")
   const overlapPolicy = channel.listing_profile.page_overlap_policy
+  const pageBatchSize = channel.listing_profile.page_batch_size
+  if (
+    pageBatchSize !== undefined &&
+    (!Number.isSafeInteger(pageBatchSize) ||
+      pageBatchSize < 1 ||
+      pageBatchSize > channel.listing_profile.max_pages)
+  )
+    throw Error("Invalid bounded archive page batch")
   if (
     overlapPolicy !== undefined &&
     (!["adjacent-prefix", "identical-rows"].includes(overlapPolicy?.mode) ||
@@ -1338,9 +1411,21 @@ export async function scanPathPagesRoute(
   }
   let previousDate = null,
     reachedBoundary = false,
-    previousLinks = []
+    previousLinks = [],
+    newPageRequests = 0
   for (let pageNumber = 1; pageNumber <= channel.listing_profile.max_pages; pageNumber++) {
     const url = pathPageURL(channel, pageNumber)
+    const stored = fetchPolicy.hasStoredSource?.(url) === true
+    if (!stored && pageBatchSize !== undefined && newPageRequests >= pageBatchSize) {
+      summary.reason = "archive_page_budget_exhausted"
+      summary.next_listing_page = pageNumber
+      summary.pagination_progress = {
+        new_page_requests: newPageRequests,
+        cached_pages: pages.length - newPageRequests,
+      }
+      return { summary, indexDocuments, documents, parses, candidates }
+    }
+    if (!stored) newPageRequests++
     const page = { page: pageNumber, url, status: "incomplete" }
     pages.push(page)
     const document = await run.stage(`listing-fetch-page-${pageNumber}`, { channel, url }, () =>
@@ -1420,20 +1505,33 @@ export async function scanPathPagesRoute(
     if (overlapPolicy?.mode === "identical-rows") {
       const repeated = links.filter((link) => seenRecords.has(pathRecordKey(link)))
       if (repeated.length) {
-        if (repeated.length > overlapPolicy.max_items || repeated.length === links.length ||
-            repeated.some((link) => !previousLinks.some((prior) =>
-              canonicalURL(prior.url) === canonicalURL(link.url) &&
-              comparableTitle(prior.text) === comparableTitle(link.text) &&
-              prior.published_at === link.published_at && prior.listed_date_text === link.listed_date_text))) {
+        if (
+          repeated.length > overlapPolicy.max_items ||
+          repeated.length === links.length ||
+          repeated.some(
+            (link) =>
+              !previousLinks.some(
+                (prior) =>
+                  canonicalURL(prior.url) === canonicalURL(link.url) &&
+                  comparableTitle(prior.text) === comparableTitle(link.text) &&
+                  prior.published_at === link.published_at &&
+                  prior.listed_date_text === link.listed_date_text,
+              ),
+          )
+        ) {
           summary.reason = page.reason = "archive_duplicate_across_pages"
           return { summary, indexDocuments, documents, parses, candidates }
         }
         repeatedURLs = new Set(repeated.map((link) => canonicalURL(link.url)))
         summary.page_overlaps ||= []
         summary.page_overlaps.push({
-          mode: "identical-rows", previous_page: pageNumber - 1, page: pageNumber,
-          previous_parse_id: pages.at(-2).parse_id, parse_id: parsed.parse_id,
-          rule_id: channel.listing_profile.rule_id, urls: [...repeatedURLs],
+          mode: "identical-rows",
+          previous_page: pageNumber - 1,
+          page: pageNumber,
+          previous_parse_id: pages.at(-2).parse_id,
+          parse_id: parsed.parse_id,
+          rule_id: channel.listing_profile.rule_id,
+          urls: [...repeatedURLs],
         })
         page.overlap_items = repeated.length
       }
@@ -1471,7 +1569,9 @@ export async function scanPathPagesRoute(
         page.overlap_items = overlapCount
       }
     }
-    const novelLinks = links.slice(overlapCount).filter((link) => !repeatedURLs.has(canonicalURL(link.url)))
+    const novelLinks = links
+      .slice(overlapCount)
+      .filter((link) => !repeatedURLs.has(canonicalURL(link.url)))
     if (previousDate && novelLinks[0]?.published_at > previousDate) {
       page.reason = "archive_not_newest_first_across_pages"
       summary.reason = page.reason
@@ -1545,7 +1645,7 @@ export async function scanPathPagesRoute(
     summary.reason = "archive_cutoff_not_reached"
     return { summary, indexDocuments, documents, parses, candidates }
   }
-  if (selected.length > (channel.scan_max_details || 25)) {
+  if (selected.length > (channel.scan_max_details || 25) && !channel.detail_batch_size) {
     summary.reason = "detail_budget_exceeded"
     return { summary, indexDocuments, documents, parses, candidates }
   }
@@ -1566,17 +1666,20 @@ export async function scanPathPagesRoute(
     if (!parses.some((p) => p.parse_id === parsed.parse_id)) parses.push(parsed)
   candidates.push(...inspected.candidates)
   summary.details = inspected.details
-  summary.remaining_detail_count = inspected.details.filter((detail) => !isCollectedDetail(detail)).length
+  summary.remaining_detail_count = inspected.details.filter(
+    (detail) => !isCollectedDetail(detail),
+  ).length
   summary.candidate_count = candidates.length
   summary.status =
-    inspected.details.length === selected.length &&
-    inspected.details.every(isCollectedDetail)
+    inspected.details.length === selected.length && inspected.details.every(isCollectedDetail)
       ? "window_scanned"
       : "incomplete"
   summary.reason = summary.status === "window_scanned" ? null : "detail_incomplete"
   if (channel.access_policy === "public-only") {
     summary.access_scope = "public-only"
-    summary.access_excluded_count = inspected.details.filter((detail) => detail.status === "public_access_excluded").length
+    summary.access_excluded_count = inspected.details.filter(
+      (detail) => detail.status === "public_access_excluded",
+    ).length
   }
   return { summary, indexDocuments, documents, parses, candidates }
 }

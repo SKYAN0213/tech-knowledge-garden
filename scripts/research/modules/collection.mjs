@@ -20,6 +20,7 @@ import {
 import { auditSourceRoutes } from "../source-route-audit.mjs"
 import { executeListScan } from "../list-scan-command.mjs"
 import { recoverCollection } from "../collection-recovery.mjs"
+import { collectionHealthInventory } from "../collection-resilience.mjs"
 import { dailyScan } from "../daily-scan.mjs"
 import { executeTargetedSourceSearch } from "../source-targeted-search.mjs"
 import { executeCandidateFollowups } from "../source-followups.mjs"
@@ -108,15 +109,18 @@ export const module = {
           if (sha256(bytes) !== reference.sha256) throw Error("Source route review changed")
           review = JSON.parse(bytes)
         }
-        return sourceCollectionInventory({
-          channels: readConfig(ctx, "source-channels"),
-          watchlist: readConfig(ctx, "watchlist"),
-          acquisition: readConfig(ctx, "acquisition"),
-          recipes: readConfig(ctx, "source-recipes"),
-          daily: readConfig(ctx, "daily-routes"),
-          catalog: readConfig(ctx, "source-catalog"),
-          review,
-        })
+        return {
+          ...sourceCollectionInventory({
+            channels: readConfig(ctx, "source-channels"),
+            watchlist: readConfig(ctx, "watchlist"),
+            acquisition: readConfig(ctx, "acquisition"),
+            recipes: readConfig(ctx, "source-recipes"),
+            daily: readConfig(ctx, "daily-routes"),
+            catalog: readConfig(ctx, "source-catalog"),
+            review,
+          }),
+          resilience: collectionHealthInventory(ctx.root),
+        }
       },
       { readOnly: true },
     ),
@@ -177,6 +181,7 @@ export const module = {
           time_budget_ms: integer(1, 3600000),
           retry_incomplete: { type: "boolean" },
           build_report: { type: "boolean" },
+          reconcile_coverage: { type: "boolean" },
         },
         ["run_id", "mode"],
       ),
@@ -195,6 +200,8 @@ export const module = {
           timeBudgetMs: p.time_budget_ms,
           retryIncomplete: p.retry_incomplete,
           publishReport: p.build_report,
+          reconcileCoverage: p.reconcile_coverage,
+          backlogFile: ctx.backlog,
         }),
       { network: true },
     ),

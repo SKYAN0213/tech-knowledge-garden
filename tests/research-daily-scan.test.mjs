@@ -251,7 +251,7 @@ test("daily detail repair binds the failed attempt and takes precedence over adj
     "adjacent",
     "failed-a1",
   )
-  assert.deepEqual(calls[0].slice(-2), ["--repair-source-run", "failed-a1"])
+  assert.deepEqual(calls[0].slice(-2), ["--recovery-source-run", "failed-a1"])
   assert.equal(calls[0].includes("--reuse-listing-run"), false)
   routeConfig.listing_profile.pagination = "single-page"
   routeConfig.method = "html-list"
@@ -261,7 +261,7 @@ test("daily detail repair binds the failed attempt and takes precedence over adj
     "adjacent",
     "failed-html",
   )
-  assert.deepEqual(calls[1].slice(-2), ["--repair-source-run", "failed-html"])
+  assert.deepEqual(calls[1].slice(-2), ["--recovery-source-run", "failed-html"])
 })
 
 test("stored daily windows must match their frozen verified coverage basis", () => {
@@ -1761,11 +1761,13 @@ test("a verified independent scan advances only confirmed coverage and preserves
     ...supplemental,
     url: "https://example.com/independent",
   })
+  const unrelated = { baseline_run: "unavailable-other-baseline", covered: [], unresolved: [] }
   const previousFailure = Buffer.from('{"status":"blocked","reason":"old failure"}')
   atomicWrite(root, "daily/runs/old-run/receipts/old-attempt.json", previousFailure)
   const coverage = {
     schema: "research-daily-coverage/v1",
     routes: {
+      "route-hd-news-ko": unrelated,
       "fanuc-en": {
         baseline_run: "baseline",
         anchor_since: baseline.since,
@@ -1782,7 +1784,14 @@ test("a verified independent scan advances only confirmed coverage and preserves
       schema: "research-daily-routes/v1",
       lookback_days: 7,
       max_window_days: 7,
-      routes: [{ channel_id: "fanuc-en", enabled: true, baseline_run: "baseline" }],
+      routes: [
+        { channel_id: "fanuc-en", enabled: true, baseline_run: "baseline" },
+        {
+          channel_id: "route-hd-news-ko",
+          enabled: true,
+          baseline_run: "unavailable-other-baseline",
+        },
+      ],
     }),
   )
   let merges = 0
@@ -1803,6 +1812,10 @@ test("a verified independent scan advances only confirmed coverage and preserves
   assert.equal(reconciled.coverage_until, "2026-10-01")
   assert.equal(merges, 1)
   const updated = readJSON(root, "daily/route-coverage.json").routes["fanuc-en"]
+  assert.deepEqual(
+    readJSON(root, "daily/route-coverage.json").routes["route-hd-news-ko"],
+    unrelated,
+  )
   assert.equal(updated.last_contiguous_until, "2026-10-01")
   assert.deepEqual(updated.unresolved, [
     {

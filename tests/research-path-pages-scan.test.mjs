@@ -53,6 +53,60 @@ const parsed = (items, page = 1) => ({
 })
 const run = { stage: async (_name, _input, action) => action() }
 
+test("archive page slices reuse stored pages and continue until the real date boundary", async () => {
+  const ch = { ...channel, listing_profile: { ...channel.listing_profile, page_batch_size: 1 } }
+  const cached = new Map(),
+    requested = []
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    if (cached.has(url)) return cached.get(url)
+    requested.push(url)
+    const d = {
+      original_url: url,
+      fetch_status: "captured",
+      source_version_id: url + ":v1",
+      observed_at: "2026-09-30T00:00:00Z",
+    }
+    cached.set(url, d)
+    return d
+  }
+  fetchPolicy.hasStoredSource = (url) => cached.has(url)
+  const options = {
+    fetchPolicy,
+    parse: async (_r, d) => {
+      const n = Number(new URL(d.original_url).pathname.match(/page\/(\d+)/)[1])
+      return parsed(
+        [item(n === 1 ? "2026-09-30" : n === 2 ? "2026-09-28" : "2026-09-18", "item-" + n)],
+        n,
+      )
+    },
+    collectDetails: async (_r, _run, _f, _c, _p, selected) => ({
+      documents: [],
+      parses: [],
+      candidates: [],
+      details: selected.map((r) => ({ url: r.url, status: "source_parsed_unreviewed" })),
+    }),
+  }
+  const scan = () =>
+    scanPathPagesRoute(
+      "private",
+      run,
+      {},
+      ch,
+      [],
+      { since: "2026-09-23", until: "2026-10-01" },
+      options,
+    )
+  const first = await scan()
+  assert.equal(first.summary.status, "incomplete")
+  assert.equal(first.summary.next_listing_page, 2)
+  assert.equal((await scan()).summary.next_listing_page, 3)
+  const completed = await scan()
+  assert.equal(completed.summary.status, "window_scanned")
+  assert.equal(completed.summary.next_listing_page, undefined)
+  assert.equal(requested.length, 3)
+  assert.equal(new Set(requested).size, 3)
+})
+
 test("path-page assessment requires complete dated entries and archive categories", () => {
   const valid = parsed([item("2026-09-30", "new"), item("2026-09-21", "older")])
   assert.equal(assessPathPage(valid, channel).status, "page_scanned")
@@ -210,16 +264,54 @@ test("explicit adjacent-prefix policy deduplicates only matching last-to-first r
   assert.equal((await execute()).summary.reason, "archive_duplicate_across_pages")
 })
 test("bounded identical rows may change order across adjacent pages without losing new rows", async () => {
-  const c = { ...channel, listing_profile: { ...channel.listing_profile, page_overlap_policy: { mode: "identical-rows", max_items: 2 } } }
+  const c = {
+    ...channel,
+    listing_profile: {
+      ...channel.listing_profile,
+      page_overlap_policy: { mode: "identical-rows", max_items: 2 },
+    },
+  }
   const pages = new Map([
     [1, parsed([item("2026-09-30", "new"), item("2026-09-29", "a"), item("2026-09-29", "b")], 1)],
-    [2, parsed([item("2026-09-29", "b"), item("2026-09-29", "a"), item("2026-09-28", "newer"), item("2026-09-21", "boundary")], 2)],
+    [
+      2,
+      parsed(
+        [
+          item("2026-09-29", "b"),
+          item("2026-09-29", "a"),
+          item("2026-09-28", "newer"),
+          item("2026-09-21", "boundary"),
+        ],
+        2,
+      ),
+    ],
   ])
-  const execute = () => scanPathPagesRoute("unused", run, {}, c, [], { since: "2026-09-23", until: "2026-10-01" }, {
-    fetchPolicy: async (_r, _f, url) => ({ original_url: url, final_url: url, fetch_status: "captured", source_version_id: url + ":v1", observed_at: "2026-09-30T00:00:00Z" }),
-    parse: async (_r, d) => pages.get(Number(new URL(d.original_url).pathname.match(/page\/(\d+)/)[1])),
-    collectDetails: async (_r, _run, _f, _c, _p, links) => ({ documents: [], parses: [], candidates: links, details: links.map(() => ({ status: "source_parsed_unreviewed" })) }),
-  })
+  const execute = () =>
+    scanPathPagesRoute(
+      "unused",
+      run,
+      {},
+      c,
+      [],
+      { since: "2026-09-23", until: "2026-10-01" },
+      {
+        fetchPolicy: async (_r, _f, url) => ({
+          original_url: url,
+          final_url: url,
+          fetch_status: "captured",
+          source_version_id: url + ":v1",
+          observed_at: "2026-09-30T00:00:00Z",
+        }),
+        parse: async (_r, d) =>
+          pages.get(Number(new URL(d.original_url).pathname.match(/page\/(\d+)/)[1])),
+        collectDetails: async (_r, _run, _f, _c, _p, links) => ({
+          documents: [],
+          parses: [],
+          candidates: links,
+          details: links.map(() => ({ status: "source_parsed_unreviewed" })),
+        }),
+      },
+    )
   const result = await execute()
   assert.equal(result.summary.status, "window_scanned")
   assert.equal(result.candidates.length, 4)

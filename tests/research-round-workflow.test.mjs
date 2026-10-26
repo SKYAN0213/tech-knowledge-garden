@@ -405,6 +405,10 @@ test("settled partial collection freezes successes without erasing the failed wi
   assert.equal(result.collection_status, "partial")
   assert.equal(result.stages.collection.counts.incomplete_windows, 1)
   assert.equal(result.stages.collection.counts.pending_windows, 0)
+  const recovery = result.stages.collection.recovery_request
+  assert.equal(recovery.owner.round_id, p.run_id)
+  assert.equal(recovery.parameters.report_path, f.settled.path)
+  assert.equal(recovery.parameters.report_sha256, f.settled.sha256)
   assert.equal(f.calls.collector.length, 0)
   assert.equal(f.calls.freezer.length, 1)
   assert.equal(f.calls.events.length, 1)
@@ -421,6 +425,8 @@ test("settled partial collection freezes successes without erasing the failed wi
     "Explicit fixture original access failed",
   )
   assert.deepEqual(report.routes[0].windows[0].attempts, f.report.routes[0].windows[0].attempts)
+  const resumed = await advanceRoundWorkflow(f.ctx, p, f.dependencies)
+  assert.deepEqual(resumed.stages.collection.recovery_request, recovery)
 })
 
 test("one reviewed plan can be attached after relationship review and cannot be replaced", async (t) => {

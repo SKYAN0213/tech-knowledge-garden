@@ -12,6 +12,8 @@ import {
 import { RunState, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 import { storeParseArtifact } from "../scripts/research/parser.mjs"
+import { collectionBasis } from "../scripts/research/scan-basis.mjs"
+import { recordCollectionOutcome } from "../scripts/research/collection-resilience.mjs"
 
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "daily-retry-")))
@@ -155,6 +157,90 @@ test("common source retry distinguishes temporary failures from policy, access a
     "requires_repair",
   )
   assert.equal(combineRetryFailures([]).kind, "unclassified_legacy_failure")
+})
+
+test("a persisted source circuit settles held windows without a request, repeated receipt or false coverage", async (t) => {
+  const f = fixture(t)
+  const route = {
+    channel_id: "official",
+    allowed_hosts: ["example.com"],
+    method: "rss",
+    region: "해외",
+    axis: "기술·제품",
+    sectors: ["로봇·제조"],
+  }
+  const basis = collectionBasis(
+    route,
+    JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles,
+  )
+  for (const id of ["health1", "health2", "health3"]) {
+    const summary = {
+      schema: "research-list-scan/v1",
+      channel_id: "official",
+      status: "incomplete",
+      reason: "listing_blocked",
+    }
+    const file = `runs/${id}/list-scan.json`
+    atomicWrite(f.root, file, summary)
+    await recordCollectionOutcome(f.root, {
+      channel_id: "official",
+      run_id: id,
+      basis,
+      result: { summary },
+      evidence: { path: file, sha256: sha256(fs.readFileSync(path.join(f.root, file))) },
+    })
+  }
+  let calls = 0
+  const options = {
+    ...f,
+    activeRoutes: [{ route }],
+    coverage: {
+      schema: "research-daily-coverage/v1",
+      routes: {
+        official: {
+          anchor_since: f.window.since,
+          covered: [],
+          unresolved: [],
+          last_contiguous_until: f.window.since,
+        },
+      },
+    },
+    scan: async () => {
+      calls++
+      throw Error("Suspended source must not be requested")
+    },
+  }
+  const first = await executeDailyPlan(options)
+  assert.equal(first.receipts, 1)
+  assert.equal(first.retry_queue[0].state, "awaiting_retry_time")
+  assert.equal(first.retry_queue[0].failed_attempts, 0)
+  const second = await executeDailyPlan(options)
+  assert.equal(second.receipts, 1)
+  assert.equal(calls, 0)
+  assert.equal(
+    readJSON(f.root, "daily/route-coverage.json").routes.official.last_contiguous_until,
+    f.window.since,
+  )
+})
+
+test("remaining detail batches remain resumable past the failure cap even with an unrelated access review", async (t) => {
+  const { root, window, plan } = fixture(t),
+    receipts = []
+  for (let n = 1; n <= 3; n++) {
+    const id = `daily-retry_official_20261001_20261006_a${n}`
+    const scan = await storedFailure(root, window, id)
+    scan.summary.details.push({
+      url: "https://example.com/remaining",
+      status: "deferred_by_budget",
+    })
+    atomicWrite(root, `runs/${id}/list-scan.json`, scan.summary)
+    receipts.push({ ...receiptFor(plan, scan, id), continuation: true })
+  }
+  const queue = dailyRetryQueue(root, plan, receipts)
+  assert.equal(queue[0].state, "retryable")
+  assert.equal(queue[0].failed_attempts, 0)
+  assert.equal(queue[0].retry_assessment.remaining_details, 1)
+  assert.equal(queue[0].retry_assessment.other_failures[0].state, "awaiting_new_observation")
 })
 
 test("persisted authentication detail stays incomplete without an automatic second scan", async (t) => {

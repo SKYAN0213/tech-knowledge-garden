@@ -116,6 +116,36 @@ test("a later successful attempt resolves the window while original failed detai
   assert.equal(result.status, "collected")
   assert.equal(result.routes[0].windows[0].attempts.length, 2)
   assert.equal(result.missing[0].fetched, false)
+  assert.equal(result.counts.pending_detail_urls, 0)
+})
+
+test("active pending URLs are deduplicated and resolved details leave the queue while history stays intact", () => {
+  const f = fixture(),
+    first = f.scan("a"),
+    second = f.scan("a")
+  const one = "https://example.org/one",
+    two = "https://example.org/two"
+  first.summary.details = [
+    { url: one, status: "deferred_by_budget" },
+    { url: one, status: "deferred_by_budget" },
+    { url: two, status: "deferred_by_budget" },
+  ]
+  second.summary.details = [
+    { url: one, status: "source_parsed_unreviewed" },
+    { url: two, status: "deferred_by_budget" },
+  ]
+  const result = summarizeCollection({
+    ...f,
+    receipts: [f.receipt(0, "incomplete")],
+    scans: [first, second],
+  })
+  assert.equal(result.missing.length, 4)
+  assert.equal(result.counts.pending_detail_urls, 1)
+  assert.equal(result.counts.budget_pending_urls, 1)
+  assert.deepEqual(
+    result.pending_items.map((r) => r.url),
+    [two],
+  )
 })
 
 test("material reader rejects changed body, parse and report instead of serving stale evidence", (t) => {

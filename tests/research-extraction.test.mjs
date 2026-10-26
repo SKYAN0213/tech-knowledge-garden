@@ -16,6 +16,7 @@ import {
 import { factReviewPacket } from "../scripts/research/evidence-review-packet.mjs"
 import { atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { main } from "../scripts/research.mjs"
+import { planEventProposalBatches } from "../scripts/research/event-inference.mjs"
 
 function parse(id, count = 1, length = 50) {
   return {
@@ -33,6 +34,36 @@ function parse(id, count = 1, length = 50) {
     quality: { missing_pages: [] },
   }
 }
+
+test("oversized event input preserves every Korean paragraph and surrogate pair in bounded source segments", () => {
+  const source = parse("long-event")
+  const text = "제품 출시 조건과 수치 42를 그대로 보존합니다. 🤖\n".repeat(1800)
+  source.blocks[0].text = text
+  source.blocks[0].locator.text_hash = sha256(text)
+  const before = JSON.stringify(source)
+  const plan = planEventProposalBatches(source, {
+    provider: "codex",
+    model: "gpt-6-luna",
+    num_ctx: 131072,
+    num_predict: 4096,
+    think: false,
+  })
+  assert.ok(plan.batches.length > 1)
+  assert.ok(plan.batches.every((b) => b.input_chars <= 20000))
+  const blocks = plan.batches.flatMap((b) =>
+    JSON.parse(b.request.messages[1].content).flatMap((d) => d.blocks),
+  )
+  assert.equal(blocks.map((b) => b.text).join(""), text)
+  for (const block of blocks) {
+    assert.equal(block.source_segment.text_sha256, sha256(block.text))
+    assert.equal(
+      text.slice(block.source_segment.offset_start, block.source_segment.offset_end),
+      block.text,
+    )
+    assert.ok(!/[\uD800-\uDBFF]$/u.test(block.text))
+  }
+  assert.equal(JSON.stringify(source), before)
+})
 test("source-block evidence copies immutable source text without model quote generation", async () => {
   const source = parse("block-quote", 2)
   source.blocks[0].text = 'The company completed "CareBot". Features include future development.'

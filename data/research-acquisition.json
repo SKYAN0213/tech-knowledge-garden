@@ -3123,6 +3123,7 @@
       "sc_lang": "en-US",
       "context_id": "8EB48479F62C4292AC0D890B766155AD",
       "captions_facet_id": "891D284932A749069DF2E148B255CA6D",
+      "first_page_featured_items": 1,
       "page_size": 20,
       "max_pages": 15,
       "max_details": 25
@@ -3798,7 +3799,8 @@
       "fallback_archive": {
         "pagination": "path-pages",
         "url_template": "https://www.etnews.com/news/section.html?id1=04&id2=046&page={page}",
-        "max_pages": 24,
+        "max_pages": 100,
+        "page_batch_size": 10,
         "rule_id": "etnews-ai-archive-v1",
         "page_overlap_policy": {
           "mode": "identical-rows",
@@ -4681,7 +4683,8 @@
     "listing_profile": {
       "rule_id": "techcrunch-latest-dated-v1",
       "url_template": "https://techcrunch.com/latest/page/{page}/",
-      "max_pages": 10,
+      "max_pages": 100,
+      "page_batch_size": 10,
       "max_items": 500,
       "require_title_match": true,
       "scope": "Official latest-news archive, same-host dated articles including TechCrunch Events. Each complete requested window must reach an older dated record, with title/full-text publication-date agreement. The RSS20-item cutoff is not used as archive completeness."
