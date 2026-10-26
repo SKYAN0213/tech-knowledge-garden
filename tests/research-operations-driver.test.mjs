@@ -242,3 +242,43 @@ test("unknown worker, storage, model, native failure and publication receipts re
     "delivery",
   )
 })
+
+test("completed batches consume their submitted model results before requesting fact review", async (t) => {
+  const ctx = setup(t)
+  const request = { task_id: "reasoning-unit", request_sha256: "a".repeat(64) }
+  let current = {
+    ...settled("module-batch", 0),
+    status: "waiting_for_reasoning",
+    pending_reasoning: { total: 0 },
+    next_inputs: [{ stage: "reasoning", reasoning_task: request }],
+  }
+  let calls = 0,
+    reads = 0
+  const result = await driveOperationalRound(
+    ctx,
+    { run_id: "daily-unit" },
+    {
+      status: () => current,
+      readTask: (_root, ref) => {
+        reads++
+        assert.deepEqual(ref, request)
+        return { status: "completed", owner: { round_id: "daily-unit", job_id: "module-batch" } }
+      },
+      advance: async (_ctx, p) => {
+        calls++
+        assert.equal(p.stage, "processing")
+        current = {
+          ...settled("module-consumed", 0),
+          status: "review_pending",
+          next_inputs: [{ stage: "evidence", required: ["fact_reviews"] }],
+        }
+        return { status: "completed", job: { job_id: "module-consumed" } }
+      },
+    },
+  )
+  assert.equal(calls, 1)
+  assert.equal(reads, 1)
+  assert.equal(result.status, "requires_review")
+  assert.equal(result.next_action.next_inputs[0].stage, "evidence")
+  assert.equal(result.completed, false)
+})

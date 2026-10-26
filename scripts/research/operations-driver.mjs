@@ -31,6 +31,11 @@ export function operationalNextAction(status, delivery = null) {
     return { action: "reasoning", job_id: last.job_id, request: last.job.reasoning_task }
   if (status.pending_reasoning?.total)
     return { action: "reasoning", requests: status.pending_reasoning.tasks }
+  const submitted = (status.next_inputs || []).flatMap((row) =>
+    row.stage === "reasoning" && row.reasoning_task ? [row.reasoning_task] : [],
+  )
+  if (last?.job.state === "completed" && submitted.length)
+    return { action: "consume_reasoning", requests: submitted }
   if (delivery) {
     if (
       delivery.drive_verified &&
@@ -91,6 +96,7 @@ export async function driveOperationalRound(
     jobStatus = moduleJobStatus,
     wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     deliveryStatus = publicationDeliveryStatus,
+    readTask = readReasoningTask,
   } = {},
 ) {
   const run = p.run_id,
@@ -167,12 +173,32 @@ export async function driveOperationalRound(
         next.action === "reasoning" &&
         next.job_id &&
         next.request &&
-        readReasoningTask(ctx.root, next.request).status === "completed"
+        readTask(ctx.root, next.request).status === "completed"
       ) {
         const result = await advance(ctx, { run_id: run }, { resume: true, background: true })
         if (result.status === "no_progress")
           return save({ status: "no_progress", next_action: result })
         continue
+      }
+      if (next.action === "consume_reasoning") {
+        for (const request of next.requests) {
+          const checked = readTask(ctx.root, request)
+          if (
+            checked.owner?.round_id !== run ||
+            !current.commands.some((c) => c.job_id === checked.owner.job_id)
+          )
+            throw Error("Completed model result belongs to another operational round")
+          if (checked.status !== "completed")
+            return save({
+              status: "requires_reasoning",
+              next_action: { action: "reasoning", requests: next.requests },
+            })
+        }
+        // Batched workflows can settle their module job while returning owned
+        // model requests in its result. Consume those results in a successor;
+        // resubmitting the completed module job would only replay its old page.
+        next.action = "advance"
+        next.stage = "processing"
       }
       if (next.action === "advance" || next.action === "resume") {
         const fingerprint = sha256(
