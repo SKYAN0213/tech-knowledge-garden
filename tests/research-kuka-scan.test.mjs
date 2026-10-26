@@ -9,7 +9,11 @@ import {
   parseKUKAPage,
   scanPaginatedKUKARoute,
 } from "../scripts/research/kuka-scan.mjs"
-import { sha256 } from "../scripts/research/contracts.mjs"
+import { sha256, sourceId } from "../scripts/research/contracts.mjs"
+import { registry } from "../scripts/research/discovery.mjs"
+import { collectionBasis, collectionRoute } from "../scripts/research/scan-basis.mjs"
+import { RunState, atomicWrite } from "../scripts/research/run-state.mjs"
+import { executeListScan } from "../scripts/research/list-scan-command.mjs"
 
 const channel = {
   channel_id: "route-kuka-news-de",
@@ -57,6 +61,85 @@ const englishItem = (slug, date) => ({
   date,
   dateISO: "2026-09-10T09:52:00.0000000+02:00",
   href: `https://www.kuka.com/en-us/company/press/news/2026/${slug}`,
+})
+
+test("native collection wrapper replays a saved KUKA checkpoint and records source health", async (t) => {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "kuka-wrapper-")))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const config = (name) => JSON.parse(fs.readFileSync(`data/research-${name}.json`))
+  const acquisition = config("acquisition")
+  const route = collectionRoute(
+    registry(config("source-channels"), config("watchlist"), acquisition).find(
+      (r) => r.channel_id === "route-kuka-news-en",
+    ),
+  )
+  const basis = collectionBasis(route, acquisition.article_profiles)
+  const input = {
+    schema: "research-list-run-input/v2",
+    channel_id: route.channel_id,
+    since: "2026-10-25",
+    until_exclusive: "2026-10-26",
+    reuse_listing_run: null,
+    collection_basis: basis,
+  }
+  const run = new RunState(root, "failed-original", input)
+  atomicWrite(root, "runs/failed-original/collection-input.json", input)
+  await run.stage("collection-basis", basis, () => basis)
+  const url = kukaPageRequest(route, 0).url
+  const body = Buffer.from(
+    JSON.stringify({
+      count: 1,
+      items: [englishItem("09/featured", "September 10, 2026")],
+      facets: [],
+    }),
+  )
+  const id = sourceId(url),
+    digest = sha256(body),
+    body_path = `documents/${id}/${digest}/body.bin`
+  atomicWrite(root, body_path, body)
+  await run.stage("page-0", { url }, () => ({
+    source_id: id,
+    source_version_id: `${id}:${digest}`,
+    original_url: url,
+    final_url: url,
+    body_path,
+    body_sha256: digest,
+    fetch_status: "captured",
+    mime_type: "application/json",
+    observed_at: "2026-10-26T00:00:00Z",
+    policy_status: "checked",
+    policy: { allowed: true },
+  }))
+  atomicWrite(root, "runs/failed-original/list-scan.json", {
+    schema: "research-list-scan/v1",
+    channel_id: route.channel_id,
+    window: { since: input.since, until_exclusive: input.until_exclusive },
+    status: "incomplete",
+    reason: "page_parse_failed",
+  })
+  for (const name of ["documents", "parses", "candidates", "list-pages"])
+    atomicWrite(root, `runs/failed-original/${name}.json`, [])
+  const result = await executeListScan({
+    root,
+    run: "native-replay",
+    channel: [route.channel_id],
+    since: input.since,
+    until: input.until_exclusive,
+    "recovery-source-run": "failed-original",
+  })
+  assert.equal(result.status, "window_scanned")
+  assert.equal(result.collection_health.state, "healthy")
+  assert.equal(result.collection_health.last_run_id, "native-replay")
+  assert.equal(result.candidates, 0)
+  const repeated = await executeListScan({
+    root,
+    run: "native-replay",
+    channel: [route.channel_id],
+    since: input.since,
+    until: input.until_exclusive,
+    "recovery-source-run": "failed-original",
+  })
+  assert.equal(repeated.collection_health.sequence, result.collection_health.sequence)
 })
 
 test("KUKA form request binds locale and page cursor to its archived URL", () => {
