@@ -1,0 +1,524 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "enum": ["semantic-bundle/v1"]
+    },
+    "contract_version": {
+      "enum": ["0.1.0"]
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        },
+        "project": {
+          "enum": ["wiki", "garden"]
+        }
+      },
+      "required": ["id", "project"],
+      "additionalProperties": false
+    },
+    "normalization": {
+      "enum": ["nfc-lf-space/v1"]
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": ["complete", "partial", "unavailable"]
+        },
+        "omissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "required": ["record_id", "reason"],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 100000
+        },
+        "inventory": {
+          "enum": ["complete", "partial", "unavailable"]
+        }
+      },
+      "required": ["status", "omissions", "inventory"],
+      "additionalProperties": false
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      },
+      "minItems": 0,
+      "maxItems": 100000
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation"
+      },
+      "minItems": 0,
+      "maxItems": 100000
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "minItems": 0,
+      "maxItems": 100000
+    }
+  },
+  "required": [
+    "schema",
+    "contract_version",
+    "source",
+    "normalization",
+    "coverage",
+    "records",
+    "relations",
+    "evidence"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:semantic-bundle:v1:0.1.0",
+  "$defs": {
+    "record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "native_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "kind": {
+          "enum": [
+            "document",
+            "article",
+            "concept",
+            "entity",
+            "claim",
+            "event",
+            "procedure"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2000000
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "url": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "bytes_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "revision": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            "fingerprints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "value": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": ["profile", "value"],
+                "additionalProperties": false
+              },
+              "minItems": 0,
+              "maxItems": 100
+            },
+            "urls": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              },
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "path",
+            "url",
+            "bytes_sha256",
+            "revision",
+            "fingerprints",
+            "urls"
+          ],
+          "additionalProperties": false
+        },
+        "review": {
+          "type": "object",
+          "properties": {
+            "semantic": {
+              "enum": [
+                "unreviewed",
+                "reviewed_links",
+                "reviewed_none",
+                "insufficient",
+                "unavailable"
+              ]
+            },
+            "evidence": {
+              "enum": [
+                "unreviewed",
+                "declared",
+                "verified",
+                "insufficient",
+                "unavailable"
+              ]
+            },
+            "currentness": {
+              "enum": ["current", "stale", "unavailable"]
+            },
+            "application": {
+              "enum": ["not_applied", "applied", "unknown"]
+            },
+            "publication": {
+              "enum": [
+                "unapproved",
+                "approved",
+                "published",
+                "private",
+                "unknown"
+              ]
+            },
+            "native_status": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "semantic",
+            "evidence",
+            "currentness",
+            "application",
+            "publication",
+            "native_status"
+          ],
+          "additionalProperties": false
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        }
+      },
+      "required": [
+        "id",
+        "native_id",
+        "kind",
+        "title",
+        "text",
+        "scope",
+        "aliases",
+        "provenance",
+        "review",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "relation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "native_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "target_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "predicate": {
+          "enum": [
+            "wiki:about",
+            "wiki:broader",
+            "wiki:instance_of",
+            "wiki:part_of",
+            "wiki:depends_on",
+            "garden:topic",
+            "garden:application",
+            "garden:comparison_evaluation",
+            "garden:context_background",
+            "garden:associated"
+          ]
+        },
+        "directed": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": ["declared", "reviewed", "candidate", "rejected"]
+        },
+        "basis": {
+          "enum": ["explicit", "inferred", "unknown"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "minItems": 0,
+          "maxItems": 10000
+        },
+        "native_type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "native_directed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "native_basis": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "native_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "maxItems": 10000
+        }
+      },
+      "required": [
+        "id",
+        "native_id",
+        "source_id",
+        "target_id",
+        "predicate",
+        "directed",
+        "status",
+        "basis",
+        "reason",
+        "evidence_ids",
+        "native_type",
+        "native_directed",
+        "native_basis",
+        "native_evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "native_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "record_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_native_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "source_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "source_bytes_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000
+        },
+        "locator": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": ["text", "block", "page", "line"]
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            }
+          },
+          "required": ["kind", "value"],
+          "additionalProperties": false
+        },
+        "verification": {
+          "enum": [
+            "unreviewed",
+            "declared",
+            "verified",
+            "insufficient",
+            "unavailable"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "native_id",
+        "record_id",
+        "source_native_id",
+        "source_revision",
+        "source_bytes_sha256",
+        "quote",
+        "locator",
+        "verification"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-collection-resilience-20261026-v4/receipt.json",
-    "sha256": "c9f2f46cd7714f7640d36d51db9f951d2c48fac65b06ca4a19b5d4e57e62b8b1"
+    "path": ".local/research/development-releases/tkg-semantic-common-20261026-v5/receipt.json",
+    "sha256": "bb4d02667efe16bef8709fcde0db652a936801b869fe7d8487e068cd32ad73bb"
   },
   "recovery": {
     "automatic_retry": false,

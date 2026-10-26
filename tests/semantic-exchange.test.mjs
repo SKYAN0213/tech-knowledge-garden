@@ -12,6 +12,14 @@ import {
   loadBundle,
   validateBundle,
   normalizeSearch,
+  writeBundle,
+  VERSION,
+  CONTRACT_VERSION,
+  MAX_WATCH_EVENT_BYTES,
+} from "../scripts/vendor/semantic-common/0.1.1/semantic-common.mjs"
+import {
+  loadBundle as loadLegacyBundle,
+  writeBundle as writeLegacyBundle,
 } from "../scripts/vendor/semantic-common/0.1.0/semantic-common.mjs"
 import {
   publicFixture,
@@ -23,7 +31,7 @@ import {
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const cli = path.join(repo, "scripts/research/semantic-exchange.mjs")
-const vendor = path.join(repo, "scripts/vendor/semantic-common/0.1.0")
+const vendor = path.join(repo, "scripts/vendor/semantic-common/0.1.1")
 const sourceId = "synthetic-garden"
 const articleId = (id) => `garden:${sourceId}:article:${id.repeat(16)}`
 const run = (f, extra = {}) =>
@@ -133,6 +141,54 @@ test("unchanged inputs reuse every record and leave the atomic pointer untouched
     fs.statSync(path.join(f.output, "current.json"), { bigint: true }).mtimeNs,
     stat.mtimeNs,
   )
+})
+
+for (const folder of ["News", "Knowledge"])
+  test(`hidden Markdown in ${folder} participates in create, byte-change and delete snapshots`, async (t) => {
+    const f = publicFixture(t, { semanticIndex: false })
+    const before = await run(f)
+    const source =
+      folder === "News" ? f.writeArticle("7".repeat(16)) : f.writeConcept("hidden-scope")
+    const hidden = path.join(f.vault, folder, ".hidden.md")
+    fs.renameSync(source.file, hidden)
+    const created = await run(f)
+    const record = read(f).bundle.records.find((r) => r.provenance.path === folder + "/.hidden.md")
+    assert.ok(record)
+    assert.notEqual(created.source_snapshot_sha256, before.source_snapshot_sha256)
+    const stat = fs.statSync(hidden)
+    rewriteNote(hidden, (note) => {
+      note.body += "\n숨김 원문의 실제 bytes 변경을 확인한다.\n"
+    })
+    fs.utimesSync(hidden, stat.atime, stat.mtime)
+    const changed = await run(f)
+    const changedRecord = read(f).bundle.records.find((r) => r.id === record.id)
+    assert.notEqual(changed.source_snapshot_sha256, created.source_snapshot_sha256)
+    assert.equal(changedRecord.provenance.bytes_sha256, hash(fs.readFileSync(hidden)))
+    assert.notEqual(changedRecord.provenance.bytes_sha256, record.provenance.bytes_sha256)
+    const generation = read(f).pointer.bundle_id
+    const archived = path.join(f.output, "bundles", generation, "bundle.json")
+    const original = fs.readFileSync(archived)
+    fs.unlinkSync(hidden)
+    const deleted = await run(f)
+    assert.notEqual(deleted.source_snapshot_sha256, changed.source_snapshot_sha256)
+    assert.ok(!read(f).bundle.records.some((r) => r.id === record.id))
+    assert.deepEqual(fs.readFileSync(archived), original)
+    assert.ok(!JSON.stringify(read(f).bundle).includes(PRIVATE_SENTINEL))
+  })
+
+test("hidden directories remain outside both public input roots", async (t) => {
+  const f = publicFixture(t)
+  const baseline = await run(f),
+    current = pointer(f)
+  for (const folder of ["News", "Knowledge"]) {
+    const ignored = path.join(f.vault, folder, ".ignored")
+    fs.mkdirSync(ignored)
+    fs.writeFileSync(path.join(ignored, "unreadable.md"), Buffer.from([0xff]))
+  }
+  const result = await run(f)
+  assert.equal(result.status, "unchanged")
+  assert.equal(result.source_snapshot_sha256, baseline.source_snapshot_sha256)
+  assert.deepEqual(pointer(f), current)
 })
 
 test("unchanged public prose skips native normalization and projection work", async (t) => {
@@ -354,6 +410,7 @@ test("frozen artifact and shared fixtures are exact; generated bundles interoper
   const manifestBytes = fs.readFileSync(path.join(vendor, "artifact-manifest.json"))
   assert.equal(hash(manifestBytes), ARTIFACT_MANIFEST_SHA256)
   const manifest = JSON.parse(manifestBytes)
+  assert.equal(manifest.version, "0.1.1")
   for (const [relative, expected] of Object.entries(manifest.files)) {
     const bytes = fs.readFileSync(path.join(vendor, relative))
     assert.equal(hash(bytes), expected.sha256, relative)
@@ -373,6 +430,59 @@ test("frozen artifact and shared fixtures are exact; generated bundles interoper
   assert.deepEqual(JSON.parse(python.stdout), { records: 9, ok: true })
   const roundtrip = loadBundle(pythonOutput, { sourceId, requirePublic: true })
   assert.deepEqual(roundtrip.bundle, read(f).bundle)
+})
+
+test("library 0.1.1 preserves old Node and Python readers and immutable wire 0.1.0 generations", async (t) => {
+  const f = publicFixture(t)
+  const sourceBefore = treeHashes(f.root)
+  await run(f)
+  const current = read(f),
+    before = pointer(f)
+  assert.equal(VERSION, "0.1.1")
+  assert.equal(CONTRACT_VERSION, "0.1.0")
+  assert.equal(MAX_WATCH_EVENT_BYTES, 1048576)
+  assert.equal(current.manifest.contract_version, "0.1.0")
+  assert.deepEqual(
+    loadLegacyBundle(f.output, { sourceId, requirePublic: true }).bundle,
+    current.bundle,
+  )
+  const legacyOutput = path.join(f.directory, "legacy-exchange")
+  writeLegacyBundle(legacyOutput, current.bundle)
+  const legacyPointer = fs.readFileSync(path.join(legacyOutput, "current.json"))
+  assert.deepEqual(
+    loadBundle(legacyOutput, { sourceId, requirePublic: true }).bundle,
+    current.bundle,
+  )
+  writeBundle(legacyOutput, current.bundle)
+  assert.deepEqual(fs.readFileSync(path.join(legacyOutput, "current.json")), legacyPointer)
+  const code =
+    "import sys,json;sys.path.insert(0,sys.argv[1]);from semantic_common import VERSION,load_bundle;v=load_bundle(sys.argv[2],source_id=sys.argv[3],require_public=True);print(json.dumps({'version':VERSION,'contract':v['manifest']['contract_version']}))"
+  const oldPython = spawnSync(
+    "python3",
+    ["-c", code, path.join(repo, "scripts/vendor/semantic-common/0.1.0"), f.output, sourceId],
+    {
+      encoding: "utf8",
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+    },
+  )
+  assert.equal(oldPython.status, 0, oldPython.stderr)
+  assert.deepEqual(JSON.parse(oldPython.stdout), { version: "0.1.0", contract: "0.1.0" })
+  assert.deepEqual(pointer(f), before)
+  assert.deepEqual(treeHashes(f.root), sourceBefore)
+})
+
+test("vendored raw CRLF fixture is excluded from Git text normalization", () => {
+  const relative = "scripts/vendor/semantic-common/0.1.1/fixtures/sources/crlf-nfd.txt"
+  const bytes = fs.readFileSync(path.join(repo, relative))
+  assert.equal(bytes.length, 115)
+  assert.equal(bytes.toString("utf8").split("\r\n").length - 1, 3)
+  assert.equal(hash(bytes), "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de")
+  const attribute = spawnSync("git", ["check-attr", "text", "--", relative], {
+    cwd: repo,
+    encoding: "utf8",
+  })
+  assert.equal(attribute.status, 0, attribute.stderr)
+  assert.equal(attribute.stdout.trim(), relative + ": text: unset")
 })
 
 test("fixed CLI emits one JSON result, isolates synthetic index and redacts parser/IO failure details", (t) => {

@@ -777,6 +777,10 @@ job 상태의 `timing`은 최초 `submitted_at`, 각 시도의 `queued_at`, `sta
 
 활성화 뒤에는 운영 Git 작업공간에서 `node scripts/research-operations.mjs readiness`와 기존 `run/resume/status/relay` 명령을 사용한다. launcher는 활성 실행본의 seal을 검사한 뒤 그 실행본의 CLI/worker를 기존 작업공간 cwd에서 실행한다. 입력·원문·승인·Drive 상태와 Git publisher는 기존 작업공간에 유지한다. `executionRepo`는 실행 코드 위치이며 `repo`는 콘텐츠/Git 위치다. 회차 pin은 두 위치와 manifest를 모두 고정한다. 새로운 활성 실행본을 선택해도 기존 회차의 `--round` 재개는 그 회차에 고정한 실행본으로 전달된다. 코드가 바뀐 기존 job을 새로운 입력인 것처럼 재개하지 않는다.
 
+공통 시맨틱 산출물은 `scripts/vendor/semantic-common/` 아래의 규격 문서와 raw fixture를 포함해 모든 일반 파일을 구현 manifest에 고정한다. 설치 시14개 공통 산출물을 정확한 bytes로 복사하고 원래 SHA를 유지한다. raw CRLF나 규격 문서가 바뀌면 실행본의 개발 완료 관문도 무효화된다. 다른 경로의 일반 문서를 실행 코드에 포함시키지 않는다. 기존0.1.0 자산과 과거 실행본은 보존하며 새 버전은 별도 release ID로 승격한다.
+
+새 일일 수집을 시작할 때 회차의 기본 daily ID도 사용하므로 수동 회차 ID는 실제 한국 실행일의 `daily-YYYYMMDD-접미사` 형식으로 지정한다. 기존 report/edition을 재사용하는 검증과 구분하며, 잘못된 ID로 실패한 작업은 삭제하거나 같은 입력으로 반복하지 않는다.
+
 예약 실행 증거가 없는 실제 운영자 검증은 다음 순서로 시작한다.
 
 ```bash

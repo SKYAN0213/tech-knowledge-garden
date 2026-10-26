@@ -70,7 +70,14 @@ export function implementationFiles(repo) {
     if (stat.isDirectory()) {
       for (const name of fs.readdirSync(file).sort())
         if (!ignored.has(name) && !name.startsWith(".")) visit(`${relative}/${name}`)
-    } else if (stat.isFile() && extensions.has(path.extname(relative))) files.push(relative)
+    } else if (
+      stat.isFile() &&
+      (extensions.has(path.extname(relative)) ||
+        relative.startsWith("scripts/vendor/semantic-common/"))
+    ) {
+      // Frozen common artifacts require their exact specifications and raw fixtures too.
+      files.push(relative)
+    }
   }
   for (const root of sourceRoots) visit(root)
   for (const file of [

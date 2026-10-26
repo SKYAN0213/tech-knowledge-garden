@@ -13,7 +13,7 @@ import {
 } from "../../web/article-semantic-index.mjs"
 
 export const ARTIFACT_MANIFEST_SHA256 =
-  "a9946aa7e52ca36f35b431dbc5b261548df997f7ef628fbd4a0c97aa740b3c61"
+  "3f894b066246ac2e163b54e582068aa179bfa28baeed8563ae23f992d236a0fa"
 export const WATCH_INPUTS = Object.freeze({
   notes: ["News", "Knowledge"],
   extension: ".md",
@@ -21,7 +21,7 @@ export const WATCH_INPUTS = Object.freeze({
 })
 const selfFile = fileURLToPath(import.meta.url)
 const implementationRoot = path.resolve(path.dirname(selfFile), "../..")
-const vendorRoot = path.join(implementationRoot, "scripts/vendor/semantic-common/0.1.0")
+const vendorRoot = path.join(implementationRoot, "scripts/vendor/semantic-common/0.1.1")
 const sha = (data) => crypto.createHash("sha256").update(data).digest("hex")
 const compare = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 const serial = (value) => JSON.stringify(value)
@@ -179,7 +179,7 @@ async function commonRuntime() {
   const manifestBytes = boundedRead(path.join(vendorRoot, "artifact-manifest.json"))
   if (sha(manifestBytes) !== ARTIFACT_MANIFEST_SHA256) fail("COMMON_PIN_MISMATCH")
   const manifest = JSON.parse(manifestBytes)
-  if (manifest.schema !== "semantic-common-artifact/v1" || manifest.version !== "0.1.0")
+  if (manifest.schema !== "semantic-common-artifact/v1" || manifest.version !== "0.1.1")
     fail("COMMON_PIN_MISMATCH")
   for (const [relative, expected] of Object.entries(manifest.files)) {
     const file = path.resolve(vendorRoot, relative)

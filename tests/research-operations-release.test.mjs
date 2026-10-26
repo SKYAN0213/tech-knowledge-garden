@@ -28,7 +28,7 @@ import {
   checkedOperationalInvocation,
 } from "../scripts/research/schedule-contract.mjs"
 const repo = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)))
-async function setup(t) {
+async function setup(t, { commonAssets = false } = {}) {
   fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
   const base = fs.mkdtempSync(path.join(repo, ".local/research/operations-release-test-"))
   t.after(() => fs.rmSync(base, { recursive: true, force: true }))
@@ -51,6 +51,11 @@ async function setup(t) {
     path.join(source, "scripts/unit.mjs"),
     "// Unit only, never an operational release.\n",
   )
+  if (commonAssets) {
+    const vendor = "scripts/vendor/semantic-common/0.1.1"
+    fs.cpSync(path.join(repo, vendor), path.join(source, vendor), { recursive: true })
+    fs.writeFileSync(path.join(source, "scripts/unrelated.md"), "Not a runtime asset.\n")
+  }
   atomicCreate(source, ".local/research/proof.json", { unit_fixture_only: true })
   const proof = evidenceReference(source, ".local/research/proof.json")
   const review = atomicCreate(source, ".local/research/review.json", {
@@ -97,6 +102,36 @@ async function setup(t) {
     },
   }
 }
+test("installed release preserves and pins every frozen common asset, including raw CRLF and specifications", async (t) => {
+  const f = await setup(t, { commonAssets: true })
+  const vendor = "scripts/vendor/semantic-common/0.1.1"
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(f.runtime, ".local/.storage/releases/unit-operations-only/manifest.json"),
+    ),
+  )
+  const common = JSON.parse(fs.readFileSync(path.join(f.source, vendor, "artifact-manifest.json")))
+  for (const [relative, expected] of Object.entries(common.files)) {
+    const file = vendor + "/" + relative
+    assert.ok(
+      manifest.files.some((entry) => entry.path === file),
+      file,
+    )
+    assert.deepEqual(
+      fs.readFileSync(path.join(f.runtime, file)),
+      fs.readFileSync(path.join(f.source, file)),
+    )
+    assert.equal(evidenceReference(f.runtime, file).sha256, expected.sha256)
+  }
+  assert.ok(!manifest.files.some((entry) => entry.path === "scripts/unrelated.md"))
+  assert.equal(readOperationGate(f.runtime).status, "ready")
+  const raw = vendor + "/fixtures/sources/crlf-nfd.txt"
+  fs.chmodSync(path.join(f.runtime, raw), 0o644)
+  fs.writeFileSync(path.join(f.runtime, raw), "changed raw bytes\n")
+  const gate = readOperationGate(f.runtime)
+  assert.equal(gate.reason, "development_implementation_changed")
+  assert.equal(gate.changed_path, raw)
+})
 test("installed execution survives source edits; round pin is idempotent, duplicate execution and runtime drift fail closed", async (t) => {
   const f = await setup(t)
   fs.writeFileSync(path.join(f.source, "scripts/unit.mjs"), "// development changed\n")

@@ -1,0 +1,58 @@
+{
+  "schema": "semantic-common-artifact/v1",
+  "version": "0.1.1",
+  "files": {
+    "SPEC.md": {
+      "bytes": 8331,
+      "sha256": "221ccd85787a9ee8938abd37572aa44d51d648aa603ed0849b2974fdaaafaf60"
+    },
+    "WATCH_PROTOCOL.md": {
+      "bytes": 4258,
+      "sha256": "2fc14785741e98917fac9b84e1b3b02bd65a1df7694daa1666cd5122911ea86e"
+    },
+    "fixtures/garden.json": {
+      "bytes": 6674,
+      "sha256": "56d542a9177b360b5ed22b2e998b17eec21cf28f85b7ed1cb7c69e537f1ded9b"
+    },
+    "fixtures/invalid-cases.json": {
+      "bytes": 4194,
+      "sha256": "ea6b2c9d3d5c1263e54b970cae1d094e618c7c37bbb245061f04420eda19c5e8"
+    },
+    "fixtures/manifest.json": {
+      "bytes": 876,
+      "sha256": "ca1f37de2bc0a281d79236ab1c9c42c9c59992b1fdf5a965ef64f09f81e302a4"
+    },
+    "fixtures/normalization.json": {
+      "bytes": 415,
+      "sha256": "748e8be43c6a4da89bd1655ea61bd423ffe0ecc6f93c7b5575d246ec5e375114"
+    },
+    "fixtures/partial.json": {
+      "bytes": 7883,
+      "sha256": "e602b72f44235f3d456fe183a23d866aeef3eb5b65f23ffc711b47c4ef49a334"
+    },
+    "fixtures/sources/crlf-nfd.txt": {
+      "bytes": 115,
+      "sha256": "eb5e9d8f318868a19088cb2c207b86c920b9e5bd12ff1a8de80bc8fd887398de"
+    },
+    "fixtures/wiki.json": {
+      "bytes": 11963,
+      "sha256": "bae2c5aa83dd1e9ab7b61e64360e1573633681a8fa9d17ec20a4a9c2603c3e99"
+    },
+    "semantic-bundle.schema.json": {
+      "bytes": 12287,
+      "sha256": "65c152a0fb39527a474a969c1ba0028250539392ca3e7aa6b78a6d4b536395ba"
+    },
+    "semantic-common.mjs": {
+      "bytes": 15857,
+      "sha256": "841060f844c2c3e7d70b235a4f1532b67aeec3c7524ae90ea758661ba4de3dea"
+    },
+    "semantic-watch.mjs": {
+      "bytes": 10748,
+      "sha256": "727c5ad6519b73a675854641e617fb03c0ae9eecc535f052002cc39f2a8ad070"
+    },
+    "semantic_common.py": {
+      "bytes": 15750,
+      "sha256": "3dc60bd72e69236f0f1fc7789b54bb524603f21de145b907fca7cc59d10df8f3"
+    }
+  }
+}

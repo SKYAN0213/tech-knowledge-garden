@@ -21,7 +21,7 @@ node <registered_repo>/scripts/research/semantic-exchange.mjs export \
 | 검토 개념 registry                | `<vault>/Knowledge/**/*.md`                          |
 | 이미 존재하는 공개 의미 검토 색인 | `<vault>/../data/article-semantic-review-index.json` |
 
-별도 `--review-index`나 문서에서 읽은 명령·경로는 받지 않는다. 합성 Vault를 선택하면 정본의 의미 색인과 섞이지 않는다. 숨김 하위 디렉터리는 순회하지 않는다. symlink, hardlink, 일반 파일이 아닌 입력, 잘못된 UTF-8, 읽는 동안 바뀐 입력은 실패한다. 파일별 최대 4 MiB, 전체 입력 최대 64 MiB이며 의미 색인에는 전체 한도를 적용한다.
+별도 `--review-index`나 문서에서 읽은 명령·경로는 받지 않는다. 합성 Vault를 선택하면 정본의 의미 색인과 섞이지 않는다. `News`·`Knowledge` 안의 숨김 `.md` 파일도 입력에 포함하며 생성·실제 bytes 변경·삭제를 source snapshot에 반영한다. 숨김 하위 디렉터리는 순회하지 않는다. Wiki의 외부 TKG 입력 지문도 이 목록과 일치해야 하며 일반 Wiki의 숨김 경로 정책은 별개다. symlink, hardlink, 일반 파일이 아닌 입력, 잘못된 UTF-8, 읽는 동안 바뀐 입력은 실패한다. 파일별 최대 4 MiB, 전체 입력 최대 64 MiB이며 의미 색인에는 전체 한도를 적용한다.
 
 출력은 저장소와 선택 자료 트리의 바깥에 둔다. 위키 manager가 자체 state 아래의 bundle 디렉터리를 제공하고 단일 처리열을 소유한다. 감시 대상은 위 세 입력으로 한정하고 출력·로그·state·`.local`·`private.local`·`public`·`digest`를 입력에서 제외한다. 어댑터 자체는 감시·timer·반복 polling을 만들지 않는다.
 
@@ -63,16 +63,24 @@ stdout에는 JSON 결과 하나를 쓴다. `status=updated|unchanged`, `pointer`
 
 ## 고정 공통 artifact와 검증
 
-`scripts/vendor/semantic-common/0.1.0/`은 C0 candidate5의 13개 산출물과 artifact manifest 전체를 같은 bytes로 포함한다. 수동 분기하지 않는다.
+`scripts/vendor/semantic-common/0.1.1/`은 C0의 frozen candidate 13개 payload와 artifact manifest 전체를 같은 bytes로 포함한다. 소비자의 `.gitattributes`는 raw CRLF fixture에 `-text`를 적용한다. 공통 산출물을 수동 분기하지 않는다. 기존0.1.0 vendor와 과거 generation은 보존한다.
 
-- Artifact manifest SHA: `a9946aa7e52ca36f35b431dbc5b261548df997f7ef628fbd4a0c97aa740b3c61`
+- Artifact manifest SHA: `3f894b066246ac2e163b54e582068aa179bfa28baeed8563ae23f992d236a0fa`
 - Fixtures manifest SHA: `ca1f37de2bc0a281d79236ab1c9c42c9c59992b1fdf5a965ef64f09f81e302a4`
+
+라이브러리/산출물 버전은0.1.1이며 bundle·manifest의 `contract_version=0.1.0`과 `semantic-bundle/v1`은 유지한다. 기존 Node/Python0.1.0 reader와 이전 writer의 묶음을 양방향으로 읽는다. NDJSON의 UTF-8 한도1MiB(끝 LF 포함)와 초과 시 해당 root 재대조는 vendored `WATCH_PROTOCOL.md`를 따른다. 어댑터 자체는 watcher를 기동하지 않는다.
+
+공통 manifest와 어댑터 구현 pin이 바뀌므로 기존 Wiki 연결은 명시적 configure로 새 구현을 등록해야 한다. 기존 등록·current 포인터·검증 상태를 자동 갱신하지 않는다. 격리 개발판 반영은 TKG 정본 운영 실행본의 승격과 분리한다.
 
 전용 합성 시험은 다음 명령으로 실행한다.
 
 ```sh
 node --test tests/semantic-exchange.test.mjs
 ```
+
+2026-10-26의0.1.1 격리 개발판은 Node22.20.0과 Node26.4.0에서 전용24개 시험을 통과했다. 숨김 Markdown 생성·실제 bytes 변경·삭제와 숨김 디렉터리 제외, 이전 Node/Python reader 및0.1.0 writer와의 양방향 읽기, 과거 generation 불변, raw CRLF fixture의 Git `-text`를 확인했다. 운영 정본·기존 연결의 configure·승인·모델·Drive·배포·commit/push는 수행하지 않았다.
+
+같은 날 사용자의 최신판 운영 적용 요청으로 `tkg-semantic-common-20261026-v5`를 native 완료 관문을 거쳐 설치·활성화했다. 실행본에는 공통 라이브러리의 규격 문서와 raw fixture까지 고정한500개 파일이 포함된다. 설치본에서 실제 공개 자료495개·관계304개를 내보내고 같은 입력의 두 번째 실행에서495개 record를 전부 재사용했으며 current 포인터 bytes가 유지됐다. 원문·승인·기존0.1.0 자산을 보존했다. 검토 registry 밖의 관계 대상6건은 기존대로 partial 근거로 남기며 자동 승인하지 않는다. Wiki의 기존 등록 변경과 운영 Vault 활성화는 이 TKG 실행본 승격에 포함하지 않는다. 개발·설치·실제 실행의 정확한 SHA와 결과는 비공개 `.local/research/semantic-operations-adoption-20261026/`에 보존한다.
 
 2026-10-23 최신 candidate5의 증분 수정판을 기존 Node 22.20.0에서 19개 시험으로 검증했다. Python 3.9.6 reader/writer와 Node reader 왕복도 통과했다. 네 가지 역할·native 관계 보존, 미검토/none/partial 구분, raw/정규화 지문 분리, 시간 복원 후 실제 내용 변경, registry 무효화, rename/delete/recreate, 처리 중 변경, symlink/크기 제한, 손상 묶음, CLI 오류 누출 방지를 포함한다. 바뀌지 않은 기사 5개를 다시 export할 때 native 공개 본문 정규화가 0회임을 실제 호출 계수로 확인했다. fixture는 임시 합성 자료이며 model/네트워크/운영 승인을 호출하지 않는다.
 
