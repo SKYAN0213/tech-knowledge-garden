@@ -350,6 +350,7 @@ export async function advanceRoundWorkflow(
         stages.edition = { status: "frozen", reference: editionRef, reused: Boolean(frozen.reused) }
         persist("frozen")
       }
+      if (p.stop_after_collection) return persist("collection_frozen")
       const storedPlan = readJSON(ctx.root, base + "plan.json")
       planRef = suppliedPlan || storedPlan?.reference || null
       if (storedPlan && suppliedPlan && !same(storedPlan.reference, suppliedPlan))

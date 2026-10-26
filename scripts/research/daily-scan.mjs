@@ -37,6 +37,8 @@ import {
 } from "./scan-completion.mjs"
 import { loadSameEventSourceAliases } from "./candidate-source-alternative.mjs"
 import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evidence.mjs"
+import { recordCollectionDefect } from "./development-pending.mjs"
+import { currentRequestOwner } from "./request-ownership.mjs"
 export { verifyStoredListScan } from "./scan-evidence.mjs"
 
 import {
@@ -987,7 +989,9 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
     if (!state) {
       if (fs.existsSync(safePath(root, `runs/${runId}/list-scan.json`)))
         throw Error("Persisted retry scan has lost its checkpoints")
-      return receipt.status === "blocked" ? { state: "awaiting_new_observation", kind: "blocked_window" } : combineRetryFailures([])
+      return receipt.status === "blocked"
+        ? { state: "awaiting_new_observation", kind: "blocked_window" }
+        : combineRetryFailures([])
     }
     const scan = loadStored(root, runId)
     if (
@@ -1045,8 +1049,16 @@ export function dailyRetryAssessment(root, receipt, { loadStored = storedListSca
       if (!failures.length && scan.summary.status !== "window_scanned")
         failures.push({ state: "requires_repair", kind: "listing_or_configuration" })
     }
-    const nextChecks = sources.map((source) => Date.parse(source.availability?.next_check_at || "")).filter(Number.isFinite)
-    return { ...combineRetryFailures(failures), source_run: runId, ...(nextChecks.length ? { next_check_at: new Date(Math.max(...nextChecks)).toISOString() } : {}) }
+    const nextChecks = sources
+      .map((source) => Date.parse(source.availability?.next_check_at || ""))
+      .filter(Number.isFinite)
+    return {
+      ...combineRetryFailures(failures),
+      source_run: runId,
+      ...(nextChecks.length
+        ? { next_check_at: new Date(Math.max(...nextChecks)).toISOString() }
+        : {}),
+    }
   } catch (error) {
     return { state: "requires_repair", kind: "invalid_retry_evidence", error: error.message }
   }
@@ -1270,6 +1282,7 @@ export async function executeDailyPlan({
       scan_ms = 0,
       verify_ms = null,
       partialVerified = false
+    let failureCode = null
     try {
       const scanStarted = performance.now()
       const predecessor = plan.windows.find(
@@ -1324,6 +1337,7 @@ export async function executeDailyPlan({
       if (scanEvidence === null && scan_ms === 0)
         scan_ms = Math.round(performance.now() - attemptStarted)
       reason = error.message
+      failureCode = error.code || null
     }
     return {
       window,
@@ -1340,6 +1354,7 @@ export async function executeDailyPlan({
       backlog_merge_ms: null,
       mergeResult: null,
       partialVerified,
+      failureCode,
     }
   }
   const commitOutcome = async (outcome) => {
@@ -1356,6 +1371,7 @@ export async function executeDailyPlan({
         outcome.candidates = result.candidates.map((candidate) => candidate.key)
       } catch (error) {
         outcome.reason = error.message
+        outcome.failureCode = error.code || null
         outcome.status = "failed"
       } finally {
         outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
@@ -1373,6 +1389,7 @@ export async function executeDailyPlan({
         )
       } catch (error) {
         outcome.reason = error.message
+        outcome.failureCode = error.code || null
         outcome.status = "failed"
       } finally {
         outcome.backlog_merge_ms = Math.round(performance.now() - mergeStarted)
@@ -1400,10 +1417,23 @@ export async function executeDailyPlan({
       ...(outcome.mergeResult ? { backlog_merge: outcome.mergeResult } : {}),
       candidate_published: false,
     }
-    atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
+    const receiptRef = atomicCreate(root, `daily/runs/${plan.run_id}/receipts/${id}.json`, receipt)
     receipts.push(receipt)
     current = applyDailyReceipts(coverage, plan, receipts)
     atomicWrite(root, COVERAGE_FILE, current)
+    if (
+      currentRequestOwner()?.round_id &&
+      ["failed", "incomplete", "blocked"].includes(outcome.status)
+    )
+      recordCollectionDefect(root, {
+        run_id: plan.run_id,
+        attempt_id: id,
+        window,
+        receipt: receiptRef,
+        result,
+        error: { message: outcome.reason, code: outcome.failureCode },
+        assessment: dailyRetryAssessment(root, receipt, { loadStored }),
+      })
   }
   const runRoute = async (windows) => {
     for (const window of windows) {

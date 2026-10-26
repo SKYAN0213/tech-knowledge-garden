@@ -19,7 +19,9 @@ import uuid
 CONTROL = ".storage"
 SCHEMA = "research-cold-storage/v1"
 HASH = re.compile(r"^[a-f0-9]{64}$")
-EXCLUDED = {CONTROL, "node_modules", ".git", "runtime", "venv", ".venv", "__pycache__"}
+EXCLUSION_BYTES = (Path(__file__).resolve().parents[2] / "data/research-storage-exclusions.json").read_bytes()
+EXCLUSION_POLICY = json.loads(EXCLUSION_BYTES)
+EXCLUDED = set(EXCLUSION_POLICY["directories"])
 HOT_NAMES = {"state.json", "summary.json", "input.json", "manifest.json", "archive-manifest.json",
              "package-receipt.json", "drive-location.json", "drive-location-v2.json", "receipt.json",
              "candidate-backlog.json", "stdout.log", "stderr.log", "journal.jsonl", "verification.json"}
@@ -1157,9 +1159,16 @@ def scope_for(relative):
     return None
 
 
+def backup_excluded(relative):
+    parts = PurePosixPath(relative).parts
+    return (any(x in EXCLUDED or re.search(r"credential|oauth|secret", x, re.I) for x in parts) or
+            any(any(tuple(parts[i:i+len(sequence)]) == tuple(sequence) for i in range(len(parts)))
+                for sequence in EXCLUSION_POLICY["sequences"]))
+
+
 def eligible(relative, size, minimum):
     parts = PurePosixPath(relative).parts
-    if any(x in EXCLUDED for x in parts) or any("credential" in x.lower() or "oauth" in x.lower() or "secret" in x.lower() for x in parts):
+    if backup_excluded(relative):
         return False
     if parts[-1] in HOT_NAMES or parts[-1].startswith(".") or parts[-1].endswith((".tmp", ".lock")):
         return False
@@ -1171,11 +1180,11 @@ def inventory(root, db, p):
     live, held = active_native_locks(root, p.get("ignore_pid"))
     if live:
         raise ValueError("Active native locks; retain working data: " + ", ".join(live[:8]))
-    count, total, changed = 0, 0, 0
+    count, total, changed, seen = 0, 0, 0, set()
     for directory, dirs, names in os.walk(root, followlinks=False):
         # The dedicated test branch has durable disabled guards for late writers.
         # An explicit inventory must not bypass those guards and archive test payloads.
-        dirs[:] = [d for d in dirs if d not in EXCLUDED and
+        dirs[:] = [d for d in dirs if not backup_excluded(str((Path(directory) / d).relative_to(root))) and
                    not (Path(directory) == root and d == "research-test-fixtures") and
                    not (Path(directory) / d).is_symlink()]
         for name in names:
@@ -1186,8 +1195,9 @@ def inventory(root, db, p):
             st = path.stat()
             if not stat.S_ISREG(st.st_mode) or not eligible(rel, st.st_size, settings["minimum_payload_bytes"]) or any(rel == x or rel.startswith(x + "/") for x in held):
                 continue
+            seen.add(rel)
             old = db.execute("SELECT * FROM files WHERE path=?", (rel,)).fetchone()
-            if old and old["bytes"] == st.st_size and int(old["mtime_ns"]) == st.st_mtime_ns:
+            if not p.get("full_audit") and old and old["bytes"] == st.st_size and int(old["mtime_ns"]) == st.st_mtime_ns:
                 count += 1
                 total += st.st_size
                 continue
@@ -1195,6 +1205,13 @@ def inventory(root, db, p):
             after = path.stat()
             if (st.st_size, st.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
                 raise ValueError("Payload changed during inventory: " + rel)
+            # Re-reading unchanged bytes is an audit, not a cache admission.
+            # Preserve the original cache age and unrelated catalog rows.
+            if (old and old["sha256"] == sha and old["bytes"] == st.st_size and
+                    int(old["mtime_ns"]) == st.st_mtime_ns and old["mode"] == stat.S_IMODE(st.st_mode)):
+                count += 1
+                total += st.st_size
+                continue
             db.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?,?,?,?)",
                        (rel, sha, st.st_size, stat.S_IMODE(st.st_mode), str(st.st_mtime_ns), scope_for(rel), now()))
             count += 1
@@ -1203,7 +1220,12 @@ def inventory(root, db, p):
             if changed % 1000 == 0:
                 db.commit()
     db.commit()
+    missing = []
+    for row in db.execute("SELECT f.*,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id"):
+        if eligible(row["path"], row["bytes"], settings["minimum_payload_bytes"]) and row["path"] not in seen and not safe(root, row["path"]).exists() and not row["verified_at"]:
+            missing.append(row["path"])
     return {"inventoried_files": count, "payload_bytes": total, "updated": changed,
+            "missing_unarchived_paths": sorted(missing), "full_audit_complete": not missing,
             "protected_native_runs": held}
 
 
@@ -1250,7 +1272,13 @@ def pack(root, db, p):
     max_bytes = p.get("package_bytes", 64 * 1024 ** 2)
     if type(max_bytes) is not int or not 1024 <= max_bytes <= 128 * 1024 ** 2:
         raise ValueError("Invalid package budget")
-    rows = db.execute("SELECT f.* FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 WHERE o.sha256 IS NULL GROUP BY f.sha256 ORDER BY f.path").fetchall()
+    selected = set(p["selected_paths"]) if "selected_paths" in p else None
+    unique = {}
+    minimum = policy(root)["minimum_payload_bytes"]
+    for row in db.execute("SELECT f.* FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 WHERE o.sha256 IS NULL ORDER BY f.path"):
+        if eligible(row["path"], row["bytes"], minimum) and (selected is None or row["path"] in selected):
+            unique.setdefault(row["sha256"], row)
+    rows = list(unique.values())
     groups, group, size = [], [], 0
     for row in rows:
         if group and size + row["bytes"] > max_bytes:
@@ -1293,6 +1321,190 @@ def pack(root, db, p):
             if os.path.exists(temp):
                 os.unlink(temp)
     return {"new_packages": len(groups), "new_unique_objects": len(rows)}
+
+
+def install_archive_json(root, relative, value):
+    target = safe(root, relative)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    body = (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    if target.exists():
+        if target.read_bytes() != body:
+            raise ValueError("Immutable archive input/receipt changed")
+    else:
+        fd, name = tempfile.mkstemp(prefix=".archive-", dir=target.parent)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(body)
+                stream.flush()
+                os.fsync(stream.fileno())
+            try:
+                os.link(name, target)
+            except FileExistsError:
+                if target.read_bytes() != body:
+                    raise ValueError("Immutable archive input/receipt changed")
+        finally:
+            os.unlink(name)
+    return {"path": relative, "sha256": hashlib.sha256(body).hexdigest()}
+
+
+def archive_pinned(root, ref):
+    if not isinstance(ref, dict) or not HASH.fullmatch(ref.get("sha256", "")):
+        raise ValueError("Exact archive reference required")
+    body = safe(root, ref["path"]).read_bytes()
+    if hashlib.sha256(body).hexdigest() != ref["sha256"]:
+        raise ValueError("Archive manifest SHA changed")
+    return json.loads(body)
+
+
+def change_manifest(root, db, p):
+    if set(p) != {"run_id", "paths"} or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", p.get("run_id", "")):
+        raise ValueError("Change manifest needs an exact run ID and paths")
+    paths = p["paths"]
+    if not isinstance(paths, list) or len(paths) > 10000 or len(set(paths)) != len(paths):
+        raise ValueError("Bounded distinct changed paths required")
+    settings = policy(root)
+    files = []
+    for relative in sorted(paths):
+        target = safe(root, relative)
+        before = target.stat()
+        if not stat.S_ISREG(before.st_mode) or not eligible(relative, before.st_size, settings["minimum_payload_bytes"]):
+            raise ValueError("Changed path is outside archive selection: " + relative)
+        digest = digest_file(target)
+        after = target.stat()
+        if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
+            raise ValueError("Changed source mutated during manifest capture")
+        files.append({"path": relative, "sha256": digest, "bytes": before.st_size})
+    manifest = {"schema": "research-storage-change-manifest/v1", "root": str(root),
+                "run_id": p["run_id"], "files": files,
+                "exclusion_policy_sha256": hashlib.sha256(EXCLUSION_BYTES).hexdigest()}
+    digest = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
+    ref = install_archive_json(root, CONTROL + "/archive-changes/" + p["run_id"] + "/" + digest + ".json", manifest)
+    return {"manifest": ref, "changed_paths": len(files), "scope": "explicit_paths_only", "remote_writes": 0}
+
+
+def archive_preparation_status(root, db, run_id, finalize=False):
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", run_id or ""):
+        raise ValueError("Safe archive preparation ID required")
+    base = CONTROL + "/archive-preparations/" + run_id + "/"
+    manifest_path = safe(root, base + "manifest.json")
+    if not manifest_path.exists():
+        state = safe(root, base + "state.json")
+        return json.loads(state.read_bytes()) if state.exists() else {"status": "not_started", "run_id": run_id}
+    manifest = json.loads(manifest_path.read_bytes())
+    manifest_ref = {"path": base + "manifest.json", "sha256": digest_file(manifest_path)}
+    if manifest.get("root") != str(root) or manifest.get("run_id") != run_id:
+        raise ValueError("Archive preparation root changed")
+    input_value = archive_pinned(root, manifest["input"])
+    if input_value["exclusion_policy_sha256"] != hashlib.sha256(EXCLUSION_BYTES).hexdigest():
+        raise ValueError("Archive selection policy changed")
+    pending_bundles, verified, bundles = [], 0, {}
+    for row in manifest["files"]:
+        if backup_excluded(row["path"]):
+            raise ValueError("Archive manifest includes excluded cache/backup")
+        target = safe(root, row["path"])
+        stored = db.execute("SELECT * FROM files WHERE path=?", (row["path"],)).fetchone()
+        if not stored or stored["sha256"] != row["sha256"] or stored["bytes"] != row["bytes"]:
+            raise ValueError("Archive catalog changed since the frozen manifest")
+        bundle = db.execute("SELECT b.* FROM objects o JOIN bundles b ON o.bundle_id=b.id WHERE o.sha256=?", (row["sha256"],)).fetchone()
+        if target.exists():
+            if target.stat().st_size != row["bytes"] or digest_file(target) != row["sha256"]:
+                raise ValueError("Frozen archive source bytes changed")
+        elif not bundle or not bundle["verified_at"]:
+            raise ValueError("Missing unarchived source; preserve the preparation")
+        if bundle:
+            bundles[bundle["id"]] = {"bundle_id": bundle["id"], "sha256": bundle["sha256"],
+                "bytes": bundle["bytes"], "file_id": bundle["file_id"], "parent_id": bundle["parent_id"],
+                "raw_verified_at": bundle["verified_at"],
+                "next_action": "reuse_verified" if bundle["verified_at"] else "readback_same_target_before_resume" if bundle["file_id"] else "resume_existing_transfer_journal"}
+            verified += bool(bundle["verified_at"])
+    pending_bundles = [b for b in bundles.values() if not b["raw_verified_at"]]
+    ready = verified == len(manifest["files"]) and not pending_bundles
+    receipt_path = safe(root, base + "receipt.json")
+    receipt_ref = None
+    if ready and finalize and not receipt_path.exists():
+        install_archive_json(root, base + "receipt.json", {"schema": "research-storage-archive-receipt/v1",
+            "input": manifest["input"], "manifest": manifest_ref, "mode": manifest["mode"],
+            "files": len(manifest["files"]), "bundles": list(bundles.values()),
+            "verification": "existing_raw_readback" if manifest["files"] else "no_selected_payloads"})
+    if receipt_path.exists():
+        receipt = json.loads(receipt_path.read_bytes())
+        if receipt["manifest"] != manifest_ref or receipt["input"] != manifest["input"] or not ready:
+            raise ValueError("Archived receipt no longer matches its frozen scope")
+        receipt_ref = {"path": base + "receipt.json", "sha256": digest_file(receipt_path)}
+    status_value = "no_changes" if ready and not manifest["files"] else "verified" if receipt_ref else "verification_ready" if ready else "waiting_for_storage"
+    return {"status": status_value, "mode": manifest["mode"], "run_id": run_id,
+            "input": manifest["input"], "manifest": manifest_ref, "receipt": receipt_ref,
+            "scope": manifest["scope"], "files": len(manifest["files"]), "bundles": list(bundles.values()),
+            "remote_writes": 0, "domain_job_resumed": False, "regular_cutoff_advanced": False}
+
+
+def prepare_scoped_archive(root, db, p, mode):
+    allowed = {"run_id", "parent_id", "package_bytes", "ignore_pid"}
+    if mode == "daily_delta":
+        allowed |= {"changes_path", "changes_sha256"}
+    if set(p) - allowed or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", p.get("run_id", "")):
+        raise ValueError("Invalid scoped archive input")
+    settings = initialize(root, {})
+    live, held = active_native_locks(root, p.get("ignore_pid"))
+    if live:
+        raise ValueError("Active native locks; preserve archive preparation")
+    base = CONTROL + "/archive-preparations/" + p["run_id"] + "/"
+    source = None
+    if mode == "daily_delta":
+        source = {"path": p.get("changes_path"), "sha256": p.get("changes_sha256")}
+        changes = archive_pinned(root, source)
+        if changes.get("schema") != "research-storage-change-manifest/v1" or changes.get("root") != str(root) or changes.get("exclusion_policy_sha256") != hashlib.sha256(EXCLUSION_BYTES).hexdigest():
+            raise ValueError("Bound exact-path change manifest required")
+    params = {k: v for k, v in p.items() if k != "ignore_pid"}
+    input_ref = install_archive_json(root, base + "input.json", {"schema": "research-storage-archive-input/v1",
+        "root": str(root), "mode": mode, "parameters": params,
+        "implementation_sha256": digest_file(Path(__file__)),
+        "exclusion_policy_sha256": hashlib.sha256(EXCLUSION_BYTES).hexdigest()})
+    if safe(root, base + "manifest.json").exists():
+        manifest = json.loads(safe(root, base + "manifest.json").read_bytes())
+        if manifest["input"] != input_ref:
+            raise ValueError("Archive preparation input changed")
+        archive_preparation_status(root, db, p["run_id"])
+        pack(root, db, {**p, "selected_paths": [r["path"] for r in manifest["files"]]})
+        return archive_preparation_status(root, db, p["run_id"], finalize=True)
+    if mode == "full_audit":
+        audit = inventory(root, db, {"full_audit": True, "ignore_pid": p.get("ignore_pid")})
+        audit_bytes = json.dumps(audit, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+        audit_sha = hashlib.sha256(audit_bytes).hexdigest()
+        audit_ref = install_archive_json(root, base + "audits/" + audit_sha + ".json", audit)
+        if audit["missing_unarchived_paths"]:
+            result = {"status": "requires_repair", "mode": mode, "input": input_ref,
+                "audit": audit_ref, "missing_unarchived_paths": audit["missing_unarchived_paths"], "remote_writes": 0}
+            atomic_json(safe(root, base + "state.json"), result)
+            return result
+        import_legacy(root, db)
+        files = [{"path": r["path"], "sha256": r["sha256"], "bytes": r["bytes"]} for r in db.execute("SELECT * FROM files ORDER BY path")
+            if eligible(r["path"], r["bytes"], settings["minimum_payload_bytes"])]
+    else:
+        files = changes.get("files")
+        if not isinstance(files, list) or len(files) > 10000 or len({r["path"] for r in files}) != len(files):
+            raise ValueError("Bounded distinct delta files required")
+        for row in files:
+            target = safe(root, row["path"])
+            if not HASH.fullmatch(row.get("sha256", "")) or type(row.get("bytes")) is not int or row["bytes"] < 0 or not eligible(row["path"], row["bytes"], settings["minimum_payload_bytes"]):
+                raise ValueError("Delta includes cache/secret or invalid source identity")
+            if any(row["path"] == h or row["path"].startswith(h + "/") for h in held):
+                raise ValueError("Delta includes a native writer's held source")
+            before = target.stat()
+            if not stat.S_ISREG(before.st_mode) or before.st_size != row["bytes"] or digest_file(target) != row["sha256"]:
+                raise ValueError("Delta source SHA changed")
+            after = target.stat()
+            if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
+                raise ValueError("Delta source mutated during verification")
+            db.execute("INSERT OR REPLACE INTO files VALUES(?,?,?,?,?,?,?)", (row["path"], row["sha256"], row["bytes"], stat.S_IMODE(before.st_mode), str(before.st_mtime_ns), scope_for(row["path"]), now()))
+        db.commit()
+    install_archive_json(root, base + "manifest.json", {"schema": "research-storage-archive-manifest/v1",
+        "root": str(root), "run_id": p["run_id"], "mode": mode, "input": input_ref,
+        "scope": {"kind": "full_catalog_and_local_walk" if mode == "full_audit" else "exact_changed_paths", "changes": source,
+            **({"latest_audit": audit_ref} if mode == "full_audit" else {})},
+        "files": files})
+    pack(root, db, {**p, "selected_paths": [r["path"] for r in files]})
+    return archive_preparation_status(root, db, p["run_id"], finalize=True)
 
 
 def normalize_metadata(value):
@@ -1604,7 +1816,7 @@ def import_catalog(root, db, p):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["repair-missing-native-fixture-records", "repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
+    parser.add_argument("action", choices=["repair-missing-native-fixture-records", "repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "prepare-full", "prepare-delta", "change-manifest", "archive-status", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
     parser.add_argument("--root", required=True)
     args = parser.parse_args()
     requested_root = Path(os.path.abspath(args.root))
@@ -1623,14 +1835,35 @@ def main():
             result = repair(root, p)
         print(json.dumps(result, ensure_ascii=False))
         return
+    if args.action == "archive-status":
+        catalog_file = safe(root, CONTROL + "/catalog.sqlite")
+        if not catalog_file.exists():
+            print(json.dumps({"status": "not_started"}))
+            return
+        db = sqlite3.connect(catalog_file.as_uri() + "?mode=ro", uri=True)
+        db.row_factory = sqlite3.Row
+        try:
+            result = archive_preparation_status(root, db, p.get("run_id"))
+            print(json.dumps(result, ensure_ascii=False))
+        finally:
+            db.close()
+        return
     db = connect(root)
     try:
         if args.action in {"status", "pending"}:
             result = status(root, db, p) if args.action == "status" else pending(db)
         else:
             with exclusive(root):
-                if args.action == "prepare":
-                    result = inventory(root, db, p)
+                if args.action == "change-manifest":
+                    result = change_manifest(root, db, p)
+                elif args.action in {"prepare-full", "prepare-delta"}:
+                    if requested_root != root:
+                        raise ValueError("Symlink in archive preparation root")
+                    result = prepare_scoped_archive(root, db, p, "full_audit" if args.action == "prepare-full" else "daily_delta")
+                elif args.action == "prepare":
+                    result = inventory(root, db, {**p, "full_audit": True})
+                    if result["missing_unarchived_paths"]:
+                        raise ValueError("Full audit found missing unarchived payloads")
                     result["reused_legacy_bundles"] = import_legacy(root, db)
                     result.update(pack(root, db, p))
                     result.update(status(root, db))

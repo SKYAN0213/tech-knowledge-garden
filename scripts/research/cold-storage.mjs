@@ -5,6 +5,7 @@ import crypto from "node:crypto"
 import { createRequire } from "node:module"
 import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import { backupExcluded } from "./storage-selection.mjs"
 
 const require = createRequire(import.meta.url)
 const runner = fileURLToPath(new URL("./cold-storage.py", import.meta.url))
@@ -393,7 +394,7 @@ export function storageAction(root, action, parameters = {}) {
         stdio: [inputFd, "pipe", "pipe"],
         encoding: "utf8",
         maxBuffer: 128 * 1024 ** 2,
-        timeout: ["prepare", "evict", "export", "import"].includes(action)
+        timeout: ["prepare", "prepare-full", "prepare-delta", "evict", "export", "import"].includes(action)
           ? 30 * 60 * 1000
           : 120000,
       },
@@ -434,11 +435,7 @@ export function recordColdStorageWrite(base, target, digest, bytes) {
   const name = parts.at(-1)
   const i = parts.indexOf("preview-workspace")
   if (
-    parts.some(
-      (p) =>
-        ["runtime", "node_modules", ".git", "venv", ".venv", "__pycache__"].includes(p) ||
-        /credential|oauth|secret/i.test(p),
-    ) ||
+    backupExcluded(relative) ||
     hotNames.has(name) ||
     name.startsWith(".") ||
     /\.(tmp|lock)$/.test(name) ||

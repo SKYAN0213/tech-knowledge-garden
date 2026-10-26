@@ -3,6 +3,11 @@ import { sha256, assertSchema } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { Ollama, localOllamaURL } from "./ollama.mjs"
 import { resolveRolePolicy } from "./model-policy.mjs"
+import {
+  currentRequestOwner,
+  assertRequestOwner,
+  requestOwnerPending,
+} from "./request-ownership.mjs"
 
 const pattern = /^reasoning-[a-f0-9]{64}$/
 const base = (id) => {
@@ -28,6 +33,18 @@ function load(root, id, expected) {
   )
     throw Error("Reasoning request hash changed")
   return request
+}
+function assertActive(root, request) {
+  if (readJSON(root, base(request.task_id) + "retired.json"))
+    throw Error("Reasoning request is retired; preserve its evidence")
+  assertRequestOwner(root, request.owner)
+  if (
+    request.owner &&
+    currentRequestOwner()?.job_id !== request.owner.job_id &&
+    !completed(root, request) &&
+    !requestOwnerPending(root, request)
+  )
+    throw Error("Reasoning owner is not waiting for this exact request")
 }
 function completed(root, request) {
   const stored = readJSON(root, base(request.task_id) + "result.json")
@@ -122,19 +139,36 @@ export class ReasoningPending extends Error {
     this.reasoning_task = { task_id: request.task_id, request_sha256: request.request_sha256 }
   }
 }
-export function createReasoningTask(root, { run, role, binding, input }) {
+export function createReasoningTask(
+  root,
+  { run, role, binding, input, owner = currentRequestOwner() },
+) {
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "") || !role || !binding)
     throw Error("Bound run, role and model policy required")
-  const body = bounded({ schema: "research-reasoning-request/v1", run, role, binding, input })
+  if (owner) assertRequestOwner(root, owner)
+  const body = bounded({
+    schema: "research-reasoning-request/v1",
+    run,
+    role,
+    binding,
+    input,
+    ...(owner ? { owner } : {}),
+  })
   const request_sha256 = sha256(JSON.stringify(body)),
     task_id = "reasoning-" + request_sha256
   const request = { ...body, task_id, request_sha256 }
   const prior = readJSON(root, base(task_id) + "request.json")
   if (prior) load(root, task_id, request_sha256)
-  else atomicCreate(root, base(task_id) + "request.json", request)
+  else {
+    atomicCreate(root, base(task_id) + "request.json", request)
+    atomicCreate(root, base(task_id) + "created.json", {
+      request_sha256,
+      created_at: new Date().toISOString(),
+    })
+  }
   return request
 }
-export function reasoningTasks(root, { offset = 0, limit = 40, run_id } = {}) {
+export function reasoningTasks(root, { offset = 0, limit = 40, run_id, job_id, round_id } = {}) {
   if (
     !Number.isInteger(offset) ||
     offset < 0 ||
@@ -149,12 +183,27 @@ export function reasoningTasks(root, { offset = 0, limit = 40, run_id } = {}) {
     .sort()
     .map((id) => load(root, id))
     .filter((r) => !run_id || r.run === run_id)
+    .filter((r) => !job_id || r.owner?.job_id === job_id)
+    .filter((r) => !round_id || r.owner?.round_id === round_id)
+    // Unowned historical/experimental tasks require an exact run selection.
+    .filter((r) => r.owner || run_id)
+    .filter((r) => !r.owner || requestOwnerPending(root, r))
+    .filter((r) => {
+      try {
+        assertActive(root, r)
+        return true
+      } catch {
+        return false
+      }
+    })
     .filter((r) => !completed(root, r))
-    .map(({ task_id, request_sha256, run, role, binding }) => ({
+    .map(({ task_id, request_sha256, run, role, binding, owner }) => ({
       task_id,
       request_sha256,
       run,
       role,
+      ...(owner ? { owner } : {}),
+      state: "pending",
       requested_model: binding.settings?.model ?? null,
       requested_thinking: binding.settings?.think ?? null,
     }))
@@ -167,6 +216,7 @@ export function reasoningTasks(root, { offset = 0, limit = 40, run_id } = {}) {
 }
 export function readReasoningTask(root, { task_id, request_sha256, offset = 0, limit = 16000 }) {
   const request = load(root, task_id, request_sha256)
+  assertActive(root, request)
   if (
     !Number.isInteger(offset) ||
     offset < 0 ||
@@ -185,6 +235,7 @@ export function readReasoningTask(root, { task_id, request_sha256, offset = 0, l
     status: result ? "completed" : "reasoning_pending",
     requested_model: request.binding.settings?.model ?? null,
     requested_thinking: request.binding.settings?.think ?? null,
+    ...(request.owner ? { owner: request.owner } : {}),
     ...(result
       ? {
           result: {
@@ -207,12 +258,17 @@ export async function submitReasoningResult(root, parameters) {
   return withLock(root, task_id, async () => {
     const request = load(root, task_id, request_sha256),
       value = bounded(output)
+    assertActive(root, request)
     assertSchema(value, request.input.schema)
     assertArticleSemanticProposalBinding(request, value)
     assertExecutorModel(request, { executor, model })
     const prior = completed(root, request)
     if (prior) {
-      if (JSON.stringify(prior.output) !== JSON.stringify(value))
+      if (
+        JSON.stringify(prior.output) !== JSON.stringify(value) ||
+        prior.executor !== executor ||
+        prior.model !== model
+      )
         throw Error("Reasoning result is immutable; submit a new bound request")
       return { status: "completed", task_id, reused: true, public_approved: false }
     }
@@ -236,6 +292,7 @@ export async function submitReasoningResult(root, parameters) {
 }
 export async function executeReasoningTask(ctx, parameters, { provider } = {}) {
   const request = load(ctx.root, parameters.task_id, parameters.request_sha256)
+  assertActive(ctx.root, request)
   const prior = completed(ctx.root, request)
   if (prior) return { status: "completed", task_id: request.task_id, reused: true, model_calls: 0 }
   return withLock(ctx.root, "execute-" + request.task_id, async () => {
@@ -293,6 +350,74 @@ export async function executeReasoningTask(ctx, parameters, { provider } = {}) {
   })
 }
 
+const batchItems = (items) => {
+  if (
+    !Array.isArray(items) ||
+    items.length < 1 ||
+    items.length > 3 ||
+    new Set(items.map((item) => item.task_id)).size !== items.length
+  )
+    throw Error("One to three distinct bound reasoning requests required")
+  return items
+}
+export function readReasoningBatch(root, { requests }) {
+  return {
+    status: "batch_read",
+    results: batchItems(requests).map((p) => {
+      try {
+        return { task_id: p.task_id, status: "read", data: readReasoningTask(root, p) }
+      } catch (e) {
+        return { task_id: p.task_id, status: "rejected", error: e.message }
+      }
+    }),
+  }
+}
+export async function submitReasoningBatch(root, { results }) {
+  batchItems(results)
+  const settled = await Promise.allSettled(results.map((p) => submitReasoningResult(root, p)))
+  const rows = settled.map((row, i) =>
+    row.status === "fulfilled"
+      ? row.value
+      : { task_id: results[i].task_id, status: "rejected", error: row.reason.message },
+  )
+  const owners = new Set()
+  for (let i = 0; i < rows.length; i++)
+    if (rows[i].status === "completed") {
+      const request = load(root, results[i].task_id, results[i].request_sha256)
+      if (request.owner) owners.add(request.owner.job_id)
+    }
+  const ready = [...owners].filter((id) => {
+    const state = readJSON(root, `module-jobs/${id}/state.json`)
+    if (state?.state !== "waiting_for_reasoning" || !state.reasoning_task) return false
+    const request = load(root, state.reasoning_task.task_id, state.reasoning_task.request_sha256)
+    return (
+      request.owner?.job_id === id &&
+      !!completed(root, request) &&
+      reasoningTasks(root, { job_id: id }).total === 0
+    )
+  })
+  return {
+    status: rows.every((r) => r.status === "completed") ? "completed" : "partial",
+    results: rows,
+    ready_job_ids: ready,
+    jobs_resumed: false,
+  }
+}
+export async function retireReasoningTask(root, { task_id, request_sha256, reason }) {
+  if (!reason?.trim() || reason.length > 1000) throw Error("Retirement reason required")
+  return withLock(root, task_id, async () => {
+    const request = load(root, task_id, request_sha256)
+    if (completed(root, request)) throw Error("Completed reasoning evidence cannot be retired")
+    if (!readJSON(root, base(task_id) + "retired.json"))
+      atomicCreate(root, base(task_id) + "retired.json", {
+        task_id,
+        request_sha256,
+        reason,
+        retired_at: new Date().toISOString(),
+      })
+    return { status: "retired", task_id }
+  })
+}
 // An external executor receives the same source-bound prompt/schema as Ollama.
 // No API key, model checkpoint or factual approval is manufactured here.
 export class DelegatedReasoning {
@@ -320,11 +445,13 @@ export class DelegatedReasoning {
   }
   async prepareStructured(input) {
     const request = this.request(input)
+    assertActive(this.root, request)
     if (!completed(this.root, request)) throw new ReasoningPending(request)
   }
   async structured(input) {
     const request = this.request(input),
       result = completed(this.root, request)
+    assertActive(this.root, request)
     if (!result) throw new ReasoningPending(request)
     const transportRequest = {
       model: input.model,

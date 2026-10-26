@@ -44,6 +44,8 @@ def archive_member(manifest, item):
     value = PurePosixPath(relative)
     if value.is_absolute() or ".." in value.parts or "\\" in relative or str(value) != relative:
         raise ValueError("Invalid archive item path")
+    if _storage.backup_excluded(relative):
+        raise ValueError("Transport cache or backup is outside archive selection")
     if item.get("drive_root") == "Sources":
         if not re.fullmatch(r"documents/[a-f0-9]{20}/[a-f0-9]{64}/body\.bin", relative):
             raise ValueError("Source body path is outside the immutable source store")
@@ -89,11 +91,11 @@ def create_package(root, run_id):
         relative = item.get("path")
         if not isinstance(relative, str):
             raise ValueError("Archive item is missing its local path")
+        member = archive_member(manifest, item)
         source = safe_file(root, relative)
         data = source.read_bytes()
         if len(data) != item.get("bytes") or sha256(data) != item.get("sha256"):
             raise ValueError("Archive input changed after manifest: " + relative)
-        member = archive_member(manifest, item)
         if member in names:
             raise ValueError("Duplicate archive member path")
         names.add(member)

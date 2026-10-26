@@ -26,10 +26,13 @@ import {
   selectedFixture,
 } from "./fixtures/research-event-fixtures.mjs"
 
-test("twelve independently selectable modules share 72 strict operation contracts", () => {
+test("twelve independently selectable modules share 75 strict operation contracts", () => {
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 72)
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 75)
+  const reasoning = catalog.modules.find((m) => m.id === "reasoning").operations.map((o) => o.id)
+  for (const operation of ["read_batch", "submit_batch", "retire"])
+    assert.ok(reasoning.includes(operation))
   assert.deepEqual(
     moduleCatalog(["publication"]).modules[0].operations.map((operation) => ({
       name: operation.tool_name,

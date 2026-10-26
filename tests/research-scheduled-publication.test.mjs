@@ -96,14 +96,17 @@ async function scheduledFixture(t) {
   const edition = readJSON(f.root, f.editionRef.path)
   const editionRef = put(f.editionRef.path, { ...edition, report: reportRef })
   const invocation = {
-    schema: "research-scheduled-invocation/v1",
+    schema: "research-scheduled-invocation/v2",
     kind: "scheduled",
-    schedule_id: "tech-ai-briefing-08",
+    schedule_id: "tech-knowledge-garden-04",
     execution_id: "test-only-scheduled-execution",
     started_at: "2026-09-27T23:00:00Z",
     reason: "Test-only attributed scheduler evidence",
     evidence: put("scheduler-evidence.json", {
       fixture: true,
+      kind: "scheduled",
+      schedule_id: "tech-knowledge-garden-04",
+      started_at: "2026-09-27T23:00:00Z",
       execution_id: "test-only-scheduled-execution",
     }),
   }
@@ -144,6 +147,13 @@ test("scheduled native inputs require this execution's exact frozen material and
   const wrongDay = f.put("wrong-day-invocation.json", {
     ...f.invocation,
     started_at: "2026-09-26T23:00:00Z",
+    evidence: f.put("wrong-day-evidence.json", {
+      fixture: true,
+      kind: "scheduled",
+      schedule_id: f.invocation.schedule_id,
+      execution_id: f.invocation.execution_id,
+      started_at: "2026-09-26T23:00:00Z",
+    }),
   })
   assert.throws(
     () => loadScheduledPublicationInputs(f.ctx, { ...f.input, invocation: wrongDay }, f.selection),

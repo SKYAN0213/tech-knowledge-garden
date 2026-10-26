@@ -52,6 +52,7 @@ const policyPath = "data/research-operation-policy.json"
 export function executionIdentity(policy) {
   return {
     schema: policy.schema,
+    schedule_id: policy.schedule_id,
     default_executor: policy.default_executor,
     storage_backend: policy.storage_backend || "connected_drive",
     model_policies: policy.model_policies,
@@ -137,7 +138,7 @@ export function inspectDevelopmentCompletion(repo, ref, policy, { executor = "co
   if (
     manifest.schema !== "research-development-release/v1" ||
     manifest.release_id !== record.release_id ||
-    manifest.repo_root !== fs.realpathSync(repo) ||
+    !releaseRootMatches(repo, manifest, record.release_manifest) ||
     manifest.execution_identity_sha256 !== sha256(JSON.stringify(executionIdentity(policy)))
   )
     return { valid: false, reason: "development_policy_changed" }
@@ -155,6 +156,24 @@ export function inspectDevelopmentCompletion(repo, ref, policy, { executor = "co
   // and hashed at finalization; routine scheduling reads only this hot receipt
   // and implementation files, never hydrating or fetching news on its own.
   return { valid: true, record, manifest }
+}
+
+// Relocation is allowed only for a complete byte-verified installation of the
+// original reviewed release. The receipt and manifest themselves stay unchanged.
+function releaseRootMatches(repo, manifest, manifestRef) {
+  if (manifest.repo_root === fs.realpathSync(repo)) return true
+  const file = safePath(repo, ".local/.storage/runtime-release.json", { materialize: false })
+  if (!fs.existsSync(file)) return false
+  const installed = JSON.parse(fs.readFileSync(file))
+  return (
+    installed.schema === "research-runtime-installation/v1" &&
+    installed.repo_root === fs.realpathSync(repo) &&
+    installed.source_repo === manifest.repo_root &&
+    installed.release_id === manifest.release_id &&
+    installed.operation_policy_sha256 === sha256(bytes(repo, policyPath)) &&
+    installed.release_manifest.path === manifestRef.path &&
+    installed.release_manifest.sha256 === manifestRef.sha256
+  )
 }
 
 export async function finalizeDevelopmentRelease(repo, reviewRef) {

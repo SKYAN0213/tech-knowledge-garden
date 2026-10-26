@@ -1,0 +1,5 @@
+{
+  "schema": "research-storage-exclusions/v1",
+  "directories": [".storage", ".git", "node_modules", "runtime", "venv", ".venv", "__pycache__", "archive-staging", "backup-staging", "backups", "transfer-cache", "drive-transfer-cache", "drive-readback-cache", "backup-cache"],
+  "sequences": [["drive-sync", "staging"], ["drive-sync", "download-cache"]]
+}

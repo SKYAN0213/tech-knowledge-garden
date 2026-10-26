@@ -31,6 +31,7 @@ import { checkedEdition } from "./event-pipeline.mjs"
 import { loadShadowHandoffBasis } from "./shadow-collection-basis.mjs"
 import { seoulPublicationDay } from "./dates.mjs"
 import { loadPreviewPublicationInputs, privatePreview } from "./preview.mjs"
+import { checkedScheduledInvocation } from "./schedule-contract.mjs"
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 const validID = (id) => typeof id === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(id)
@@ -62,17 +63,23 @@ const requestEvents = (ctx, input) =>
   input.approved_runs.map((run) => readJSON(ctx.root, `runs/${run}/approved-article.json`).event_id)
 
 // This is an attributed capture of the existing scheduler execution, not a
-// new schedule or a claim inferred from an edition's nominal 08:00 timestamp.
-export function loadScheduledPublicationInputs(ctx, input, selection, { notAfter } = {}) {
+// new schedule or a claim inferred from an edition's nominal timestamp.
+export function loadScheduledPublicationInputs(
+  ctx,
+  input,
+  selection,
+  { notAfter, allowLegacy = false } = {},
+) {
   if (selection?.schema !== "research-daily-publication-handoff/v3")
     throw Error("Scheduled delivery requires the exact native event handoff")
-  const invocation = pinned(ctx, input.invocation)
+  const invocation = checkedScheduledInvocation(ctx, input.invocation, { notAfter, allowLegacy })
   const started = Date.parse(invocation.started_at)
   const end = notAfter === undefined ? Date.now() : Date.parse(notAfter)
   if (
-    invocation.schema !== "research-scheduled-invocation/v1" ||
+    !["research-scheduled-invocation/v1", "research-scheduled-invocation/v2"].includes(
+      invocation.schema,
+    ) ||
     invocation.kind !== "scheduled" ||
-    invocation.schedule_id !== "tech-ai-briefing-08" ||
     !validID(invocation.execution_id) ||
     !invocation.reason?.trim() ||
     !Number.isFinite(started) ||
@@ -81,7 +88,7 @@ export function loadScheduledPublicationInputs(ctx, input, selection, { notAfter
     !bytes(ctx, invocation.evidence.path).length ||
     sha256(bytes(ctx, invocation.evidence.path)) !== invocation.evidence.sha256
   )
-    throw Error("Exact attributed 08:00 scheduled invocation capture required")
+    throw Error("Exact attributed scheduled invocation capture required")
   const basis = loadShadowHandoffBasis(ctx.root, input.collection_basis)
   const plan = pinned(ctx, basis.plan)
   const summary = pinned(ctx, basis.summary)
@@ -153,7 +160,8 @@ function loadRequest(ctx, run) {
     throw Error("Delivery request differs from native approval selection")
   if (Boolean(input.invocation) !== Boolean(input.collection_basis))
     throw Error("Scheduled invocation and collection basis must be pinned together")
-  if (input.invocation) loadScheduledPublicationInputs(ctx, input, selection.selection)
+  if (input.invocation)
+    loadScheduledPublicationInputs(ctx, input, selection.selection, { allowLegacy: true })
   return input
 }
 

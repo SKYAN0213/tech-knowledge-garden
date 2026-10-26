@@ -15,6 +15,7 @@ import {
 } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
 import { moduleRecoveryPlan } from "./operation-policy.mjs"
+import { moduleJobTiming } from "./operations-timing.mjs"
 
 const defaultRepo = fileURLToPath(new URL("../../", import.meta.url))
 const worker = fileURLToPath(new URL("../research-module-worker.mjs", import.meta.url))
@@ -30,8 +31,26 @@ export function moduleContext({
   backlog,
   policy,
   maxActiveJobs = 4,
+  operationalRound,
+  executionRepo,
 } = {}) {
   repo = fs.realpathSync(repo)
+  const loadedRepo = fs.realpathSync(defaultRepo)
+  executionRepo = fs.realpathSync(
+    executionRepo ||
+      (fs.existsSync(path.join(loadedRepo, ".local/.storage/runtime-release.json"))
+        ? loadedRepo
+        : repo),
+  )
+  if (executionRepo !== repo && executionRepo !== loadedRepo)
+    throw Error("Module execution must use its loaded immutable runtime")
+  if (
+    operationalRound &&
+    (Object.keys(operationalRound).sort().join(",") !== "round_id,round_input_sha256" ||
+      !/^[A-Za-z0-9_-]{1,70}$/.test(operationalRound.round_id || "") ||
+      !/^[a-f0-9]{64}$/.test(operationalRound.round_input_sha256 || ""))
+  )
+    throw Error("Exact operational round identity required")
   for (const file of ["data/research-source-channels.json", "data/research-model-policy.json"])
     fs.accessSync(safePath(repo, file))
   const relative = (file) => path.resolve(repo, file)
@@ -47,6 +66,8 @@ export function moduleContext({
     ),
     policy: relative(policy || "data/research-model-policy-codex.json"),
     maxActiveJobs,
+    ...(executionRepo !== repo ? { executionRepo } : {}),
+    ...(operationalRound ? { operationalRound } : {}),
   }
   if (!Number.isInteger(maxActiveJobs) || maxActiveJobs < 1 || maxActiveJobs > 6)
     throw Error("Module concurrency must be between one and six")
@@ -276,6 +297,15 @@ function inputFingerprint(moduleId) {
         "cold-storage.py",
         "operation-policy.mjs",
         "development-release.mjs",
+        "request-ownership.mjs",
+        "schedule-contract.mjs",
+        "operations-release.mjs",
+        "operations-runtime.mjs",
+        "development-pending.mjs",
+        "operations-timing.mjs",
+        "operations-deployment.mjs",
+        "storage-selection.mjs",
+        "../../data/research-storage-exclusions.json",
         ...extra,
       ]),
     ].map((file) => [file, sha256(fs.readFileSync(new URL(file, import.meta.url)))]),
@@ -385,7 +415,11 @@ export function moduleJobStatus(ctx, id) {
     worker_alive: alive === null ? null : Boolean(alive),
     resume_available: alive === false && state.state !== "completed",
   }
-  return { ...status, recovery: moduleRecoveryPlan(status) }
+  return {
+    ...status,
+    timing: moduleJobTiming(ctx.root, state),
+    recovery: moduleRecoveryPlan(status),
+  }
 }
 function activeJobs(ctx) {
   const directory = safePath(ctx.root, "module-jobs")
@@ -482,6 +516,7 @@ export async function submitModuleJob(
       ...state,
       state: "queued",
       attempt: state.attempt + 1,
+      queued_at: new Date().toISOString(),
       pid: null,
       error: null,
       error_code: null,
@@ -553,11 +588,22 @@ async function submissionLock(root, action) {
 
 export async function resumeModuleJob(ctx, id, { background = true } = {}) {
   const { input } = checkedInput(ctx, id)
-  return submitModuleJob(ctx, input.module, input.operation, input.parameters, {
-    jobId: id,
-    resume: true,
-    background,
-  })
+  return submitModuleJob(
+    {
+      ...ctx,
+      ...(input.context.operationalRound
+        ? { operationalRound: input.context.operationalRound }
+        : {}),
+    },
+    input.module,
+    input.operation,
+    input.parameters,
+    {
+      jobId: id,
+      resume: true,
+      background,
+    },
+  )
 }
 export function readModuleResult(ctx, id, { offset = 0, limit = 16000 } = {}) {
   if (

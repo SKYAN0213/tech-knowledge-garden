@@ -2,7 +2,7 @@
 
 수집 단위는 출처와 원문 판본이고, 작성 단위는 선별된 사건이다. 독립 CLI와 MCP가 같은 JSON Schema·모듈 함수·native 실행기를 사용한다. 출처별 crawler나 별도 지식 DB를 새로 만들지 않는다.
 
-현재12모듈72작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
+현재12모듈75작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
 
 ### 미완료 수집 보완
 
@@ -706,3 +706,77 @@ claim 및 원 발표일과 모두 일치해야 한다. 노트 승인은 이 승�
 승인을 신뢰하거나, 같은 URL의 다른 사건·원고에 쓰이지 않은 사실로 실제 발생일을
 빌려 쓰지 않는다. 역사 조회는 기존 역사 승인 검증기를 사용한다. 원문만 검토한
 URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 유지한다.
+
+## 04시 회차의 고정 실행본과 운영 제어 (2026-10-25)
+
+개발 writer는 별도 worktree에서만 수정한다. 정규 회차는 원래 6개 개발 완료 근거를 통과한 실행본을 명시적으로 선택한다. 기존 예약 `tech-knowledge-garden-04`는 변경하지 않는다. 04:00은 시작 시각이며 발행 완료 시각이 아니다. 아래 명령은 기존 `research-module.mjs`의 진입점이며 운영 gate가 닫혀 있으면 수집·모델·Drive·작업 생성 전에 `development_pending`으로 반환한다.
+
+1. 검토된 저장소에서 `node scripts/research-module.mjs install-runtime --repo <검토된-repo> --destination <존재하지-않는-runtime-절대경로>`로 코드·설정·원래 완료 receipt/manifest를 복사한다. 원본 receipt의 root와 SHA는 보존하고 설치 seal로 실행 root를 바인딩한다. 이어 `activate-runtime --repo <운영-Git-작업공간> --destination <설치-runtime>`으로 기존 콘텐츠·작업 상태를 연결한다. 활성 writer·미확인 writer를 차단하고, publisher가 쓰는 작업공간의 모든 구현 SHA를 실행본과 대조한다. 기존 Node 의존성만 연결하고 기존 Python venv의 설치 버전을 고정 requirements와 검증한다. 의존성 설치·인증·콘텐츠 복사는 수행하지 않는다. 활성 포인터와 이전 판본은 `.local/.storage/active-runtime*.json`에 보존한다.
+2. 선택한 runtime에서 기존 scheduler의 **실제 실행 이벤트**를 연구 root에 보존한다. 새 invocation은 `research-scheduled-invocation/v2`, `kind: scheduled`, 정책의 `schedule_id`, 실제 `execution_id/started_at`, `reason`, 원 이벤트의 `evidence: {path, sha256}`를 요구한다. 원 이벤트의 kind/ID/시각과 일치해야 한다. 예약 설정 readback이나 명목 회차 시각으로 실행 증거를 만들지 않는다. v1/과거 08시 기록은 기존 저장 요청의 명시적 legacy 읽기에만 허용하며 새 회차·새 전달 요청에는 허용하지 않는다.
+3. `node scripts/research-module.mjs run --round <회차-ID> --stage collection --invocation <root-상대-invocation.json> --invocation-sha256 <SHA> --input <repo-상대-command.json> --background`로 시작한다. command는 `{"parameters":{"daily_run":"<일일-ID>","execute":true,"collection_max_windows":6,"collection_time_budget_ms":600000}}`처럼 기존 `edition.advance` 입력을 담는다. 같은 scheduler 실행은 한 회차만 소유한다. 회차는 release/정책/설치/실행 증거의 SHA와 job 입력을 고정하며 개발 원본의 변경을 받지 않는다. 수집은 기존 daily/core의 원문·parse·attempt를 재사용하고 불변 edition까지 저장한 뒤 멈춘다.
+4. `node scripts/research-module.mjs status --round <회차-ID>`는 파일만 읽는다. 단계·job 상태, 다음 입력, 소유 회차의 pending 3개와 시간 정보를 반환한다. `resume --round <회차-ID> --stage collection --background`는 저장 command의 동일 job을 재사용한다. 활성 writer 또는 worker 확인 불가는 대기하며 잠금을 자동 회수하지 않는다. 저장 복원 대기는 정확한 기존 Drive ID/raw bytes를 복원한 뒤 같은 job을 재개한다. 코드/정책/입력 SHA 변경과 외장 root 부재는 새 실행을 허용하지 않는다.
+5. 수집이 고정되면 `run --round <회차-ID> --stage processing --input <command.json> --background`로 기존 round workflow를 진행한다. command의 `parameters`에는 기존 `edition.advance`의 계획·curation·사실/편집 검토 참조를 전달한다. 승인 필요 상태를 자동 통과하지 않는다. 새로운 검토 입력은 새 command/job에 고정하며 완료 단계와 원래 근거를 재사용한다.
+6. `reasoning.pending`는 소유 job/SHA가 유효하고 해당 요청을 실제로 기다리는 작업만 전역 노출한다. unowned 과거 요청은 정확한 `run_id` 선택이 필요하다. `reasoning.read_batch`의 `requests`, `reasoning.submit_batch`의 `results`는 각각 최대3개이며 개별 SHA·모델·출력 Schema를 유지한다. 부분 실패는 성공 결과를 지우지 않는다. 폐기 요청은 `reasoning.retire`의 정확한 task/SHA/reason으로 불변 기록하고 읽기·제출·실행에서 차단한다. 회차 CLI `relay --round <ID> --input <JSON>`은 `{results:[...],resume_ready:true}`를 받아 준비된 소유 job만 한 번씩 순차 재개한다. 실제 Luna 실행은 기존 Codex 중계의 책임이다.
+7. 승인된 round publication handoff가 있어야 `run --round <ID> --stage publication --input <command.json>`을 실행한다. 첫 command는 `{"operation":"request_delivery","parameters":{"run_id":"<전달-ID>","collection_basis_path":"<정확한-기존-basis>","collection_basis_sha256":"<SHA>"}}`이며 handoff와 invocation은 프로그램이 채운다. `operation: deliver` 또는 `delivery_receipt` 후속 command는 기존 publication Schema의 정확한 release·실행·capture 인수를 받는다. 다른 회차의 전달 요청은 거부한다. 이 연결은 release 승인이나 원격 쓰기 성공을 생성하지 않는다.
+8. 실제 Drive 쓰기와 raw readback, CI, 공개 페이지·RSS·digest·WebsiteData의 기존 검증까지 통과한 영수증만 발행 완료 근거다. 회차 제어 상태의 `scheduled_runs_counted: 0`은 감사 실적 집계가 아니며, 불변 source 관문과 기존 발행 검증기를 대체하지 않는다.
+
+기존 출처별 병렬/요청 예산·제한된 재시도·원문/parse 재사용, 개념 후보 색인과 정확한 입력의 의미 검토 재사용, Drive 공통 전송과 동일 대상 raw readback 복구는 그대로 사용한다. 이번 변경은 별도 수집기·Drive 쓰기기를 추가하지 않는다.
+
+보관은 기존 `collection.storage` adapter를 사용한다. 전체 보관 점검은 `prepare-full`이며 catalog와 로컬 파일을 전수 대조하고, 누락된 미보관 원문은 `requires_repair`로 기록해 임의 삭제나 cutoff 전진을 막는다. 일일 변경분은 먼저 `change-manifest`에 `run_id`와 명시적 `paths`를 전달해 원문 SHA·크기·제외정책 SHA가 고정된 manifest를 만든다. 그 manifest의 정확한 path/SHA를 `prepare-delta`에 전달하면 전체 순회 없이 그 경로만 준비한다. 양쪽 모두 회차별 input/manifest/receipt를 보존하고 동일 입력 재개를 지원한다. 변경 입력은 기존 Drive raw-readback 검증 전까지 대기 상태이며 이 명령 자체가 원격 쓰기를 수행하지 않는다. 공유 제외 정책 `data/research-storage-exclusions.json`은 `.storage`, `node_modules`, 백업·전송 캐시, 인증·secret 경로와 등록된 경로 시퀀스를 inventory·선택·package 단계에서 제외한다. 전체 감사와 일일 delta는 상호 대체하지 않는다.
+
+정규 collection writer가 실패하면 그 attempt receipt와 저장된 source/parse 근거로 기존 `dailyRetryAssessment`를 계산한다. `requires_repair`인 파서·입력·구현 결함만 `.storage/development-pending`에 제한 크기·비밀값 제거·SHA 결속 snapshot으로 기록한다. 일시적 통신/429, 접근·정책 제한, `STORAGE_PENDING`은 기존 재시도·새 관측·Drive 복원 상태에 남고 개발 결함으로 오분류하거나 자동 재실행하지 않는다. `defects --round <ID>`는 읽기 전용 페이지 조회다. 이 큐는 운영 코드를 수정하지 않으며 사람이 별도 개발 작업으로 재현·수정해야 한다.
+
+`status --round <ID>`의 timing에는 요청 제출부터 worker 시작까지의 queue 대기, native 실행 경과, reasoning 요청 생성부터 제출 응답 기록까지의 외부 대기가 포함된다. reasoning별 값과 단계별 합계는 비동기 작업이 겹칠 수 있어 wall-clock 합계와 구분한다. 모델 실행·외부 전송·실제 검토 시간이 입력되지 않으면 `null`이다. `timing-replay --input <repo-relative.json> --sha256 <SHA>`는 같은 input/output SHA와 단계 집합의 타임스탬프 분류를 비교하지만 저장 trace만으로 실제 고정 입력을 재실행하지 않는다. 따라서 **제어 대기 50% 개선 기준과 첫 7회 단계별 운영 시간은 미검증**이며 운영 trace와 실제 발행 영수증을 쌓은 뒤 판정해야 한다.
+
+검증 범위는 로컬 표적 검사다. 코드/로컬 검증, 실제 연결, 발행, 정규 수집 완결성을 각각 판정한다. 실제 Drive 왕복, CI, 공개 페이지·RSS·digest·WebsiteData readback은 이 개발 세션에서 수행하지 않았다. 운영 관문이 통과하고 실행 증거가 확보된 뒤 실제 한 회차 발행으로 검증해야 한다.
+
+
+### 전체 보관 감사와 명시 변경분 보관
+
+`research-storage.mjs`의 `prepare-full --root <private-root> --input <JSON>`은 `{run_id,parent_id}`로 전체 로컬 walk와 catalog를 대조한다. 원문 SHA를 다시 검사하고, 누락된 미보관 파일은 `requires_repair`로 남겨 삭제·빈 기간으로 처리하지 않는다. 이미 원격 raw bytes가 검증된 cold 파일은 기존 catalog/묶음 바인딩을 유지한다. 원래 `prepare`도 전체 감사 경로이며 일일 delta로 부르지 않는다.
+
+일일 변경 경로를 알고 있는 프로그램은 `change-manifest`에 `{run_id,paths:["정확한/root/상대/body.bin"]}`를 전달한다. 반환한 `manifest.path/sha256`를 `prepare-delta`의 `{run_id,parent_id,changes_path,changes_sha256}`에 그대로 전달한다. delta는 이 경로의 원문 SHA만 확인하고 전체 `os.walk`를 수행하지 않는다. 임의의 과거 날짜나 파일 mtime으로 변경 범위를 추정하지 않는다. manifest 밖의 변경·삭제나 전체 수집 완결성은 전체 감사가 판단하며 delta 성공으로 cutoff를 전진시키지 않는다. `collection.storage`도 같은 action·필드를 사용한다.
+
+각 준비 ID는 `.storage/archive-preparations/<ID>/`의 input·manifest·receipt SHA에 바인딩된다. 같은 ID 재개는 같은 입력을 요구하며 원문의 변경·외장 root 부재·cache/secret/symlink·활성 writer를 거부한다. `archive-status`는 준비된 scope·bundle ID·다음 readback 조치를 조회한다. 기존 Drive 전송은 정확한 bundle ID로 별도 실행하고, 불확실한 쓰기는 기존 journal의 동일 ID/raw readback부터 복구한다. `verify` 후 같은 준비 action을 재개해야 최종 불변 receipt가 만들어진다. 준비나 timestamp/metadata만으로 원격 보관 성공을 만들지 않는다.
+
+공통 `research-storage-exclusions` 정책은 JS write 등록, Python inventory와 pack 선택, 기존 연구 archive/package 선택에 적용한다. `.storage`의 전송/결함 큐, 명시한 transfer/readback/backup 캐시, 생성한 archive-staging·backups, credentials/OAuth/secrets 및 의존성은 보관 대상으로 재포함하지 않는다. 기존 catalog의 제외 대상 행은 삭제하지 않으며 새 pack에서 제외한다. 동일 원문의 여러 경로는 기존 content SHA 객체 하나를 재사용한다. 원본 source-cache나 실제 첨부를 단순히 cache라는 문자열·ZIP 확장자로 버리지 않는다. 회귀는 `tests/research-storage-backup-exclusion.test.mjs`, `tests/research-storage-delta.test.mjs`와 기존 cold-storage/archive 검사에서 확인한다.
+
+### 개발 결함 인계와 시간 계측
+
+수집 단계는 기존 `dailyRetryAssessment.state === requires_repair`인 오류만 소유 round의 개발 결함으로 인계한다. 429·일시 네트워크·접근/정책 제한은 기존 retry/새 관측 상태에 남고, `STORAGE_PENDING`은 원래 복원 대기로 남는다. 일반 native worker의 실제 실패도 같은 결함 모듈로 기록하며 reasoning/storage 대기는 제외한다. 원문·실패 attempt·coverage는 그대로 보존한다.
+
+결함은 연구 root의 `.storage/development-pending/`에 `development_pending` 상태의 불변 issue로 저장한다. 소유 job/input SHA·실행 코드 식별자, 정정하지 않은 원문/plan/receipt snapshot과 재현 입력 참조를 보존한다. snapshot 총합은64MiB이며 초과 원문은 원래 경로·stream SHA를 `reference_only`로 기록한다. 원문 부재는 `unavailable`, 인증 파일은 `sensitive_excluded`이며 임의 원문 복원·GET은 하지 않는다. 재현/구현 metadata는 byte 상한과 재귀 비밀값 가림을 적용하고, 실제 job parameters는 input snapshot 참조로 전달한다. 큐 저장 실패는 `capture_failed`로 드러나며 원래 실패를 성공으로 바꾸지 않는다. `node scripts/research-module.mjs defects --root <연구-root> [--round ID]`로 읽는다. 조회는 job 재개·코드 수정·의존성 설치·운영 gate 승격을 하지 않는다.
+
+job 상태의 `timing`은 최초 `submitted_at`, 각 시도의 `queued_at`, `started_at`, `finished_at`과 `dispatch_wait_ms/native_execution_ms`를 제공한다. 재개 시 queue 대기는 새 `queued_at`부터 계산해 모델/사람을 기다린 시간을 dispatch 대기로 중복 집계하지 않는다. 완료된 시도는 기존 attempt snapshot에서 합산하며 동일 reasoning 요청은 한 번만 집계한다. 요청 생성 sidecar와 불변 결과의 제출 시각으로 계산한 `reasoning_external_wait_ms`는 Codex·모델·전송·사람의 혼합 대기다. 이를 실제 모델 실행 시간으로 부르지 않는다. 개별 `model_execution_ms/external_transport_ms/actual_review_ms`는 근거가 없으면 null이며, 과거 요청에 생성 시각이 없으면 mtime으로 보충하지 않는다. round의 단계 합계는 job 시간의 합이며 병렬 작업의 wall-clock 총시간과 구분한다.
+
+`node scripts/research-module.mjs timing-replay --root <연구-root> --input <repo-상대-JSON> --sha256 <SHA>`는 `research-control-timing-replay/v1` 입력을 읽는다. `fixed_input_sha256/expected_output_sha256`와 baseline/candidate의 `input_sha256/output_sha256`, `stages:[{stage,category,start_ms,end_ms}]`가 필요하며 category는 control/model/external/review다. 같은 단계·입력·결과만 비교하고 겹치는 모델/전송/검토 구간은 union으로 한 번만 제외한다. 결과는 `.storage/control-timing-replays/`에 불변 저장한다. 이는 저장 timestamp 재생이며 실제 이전 프로그램 실행을 대신하지 않는다. 합성 입력이50% 수치를 보이더라도 `fixed_input_replay_verified:false`, `control_wait_reduction:null`, `acceptance:actual_baseline_execution_required`를 유지한다.
+
+### 운영 작업공간 연결과 수동 검증 (2026-10-26)
+
+활성화 뒤에는 운영 Git 작업공간에서 `node scripts/research-operations.mjs readiness`와 기존 `run/resume/status/relay` 명령을 사용한다. launcher는 활성 실행본의 seal을 검사한 뒤 그 실행본의 CLI/worker를 기존 작업공간 cwd에서 실행한다. 입력·원문·승인·Drive 상태와 Git publisher는 기존 작업공간에 유지한다. `executionRepo`는 실행 코드 위치이며 `repo`는 콘텐츠/Git 위치다. 회차 pin은 두 위치와 manifest를 모두 고정한다. 새로운 활성 실행본을 선택해도 기존 회차의 `--round` 재개는 그 회차에 고정한 실행본으로 전달된다. 코드가 바뀐 기존 job을 새로운 입력인 것처럼 재개하지 않는다.
+
+예약 실행 증거가 없는 실제 운영자 검증은 다음 순서로 시작한다.
+
+```bash
+node scripts/research-operations.mjs manual-invocation --round operator-verification-ID --json '{"reason":"사용자 요청에 따른 운영 연결 검증"}'
+node scripts/research-operations.mjs run --round operator-verification-ID --stage collection --invocation operations/manual-invocations/operator-verification-ID.json --invocation-sha256 SHA --input COMMAND
+```
+
+수동 invocation은 프로그램이 실제 CLI 요청 시각을 기록한다. `kind: manual`, `origin: operator_cli`이며 scheduler ID를 가질 수 없다. 같은 ID는 같은 이유로만 재사용한다. 수동 실행은 예약 실행 증거와 정규 성공 횟수를 만들지 않는다. 수동 발행의 기존 승인 관문은 유지하며 scheduled collection 비교 관문을 임의로 생성하지 않는다.
+
+실제 connector fetch의 `file_uri`는 `node scripts/research-connector.mjs --root <private-root> --input -`의 stdin으로 전달한다. 입력은 `{file_uri,file_name,expected_sha256,expected_size,destination_name}`이다. 기존 도구가 반환한 HTTPS 스트림만 받아 `.storage/incoming`에 저장하고 실제 길이·SHA를 확인한다. signed URL은 영수증에 기록하지 않는다. 기존 동일 bytes는 네트워크 없이 재사용하며 충돌·과대 응답·SHA 오류·symlink는 차단한다. 이 명령은 transport 복사만 만들며 원격 보관 성공은 기존 `collection.storage verify/hydrate` 또는 authoring/remote-delivery raw 검증기가 판정한다. 전송 캐시는 보관 inventory에서 제외된다.
+
+운영 worker와 controller는 완료·실패·reasoning/storage 대기마다 `operations/rounds/<ID>/timing/<SHA>.json`에 회차/소유 job/input SHA·시도·단계별 시간 증거를 불변 저장한다. 첫 7개 실제 정규 회차도 같은 경로를 사용한다. 수동 검증과 과거 transcript 재생은 정규 회차에 포함하지 않는다.
+
+`timing-benchmark --input FILE --sha256 SHA`는 저장된 실제 unowned 요청/결과의 exact SHA와 두 구현 파일 SHA를 고정하고, 이전 코드의 개별 subprocess 제출과 새 코드의 최대3개 묶음 subprocess 제출을 실제 실행한다. 결과의 task/request/model/output SHA·개수와 중복 부재를 대조한다. 모델·통신·검토를 실행하지 않는 이 벤치마크는 **요청 제출 제어 구간**만 측정하며 전체 일일 회차 성능으로 확대하지 않는다. 합성 timestamp replay와 별도 schema/영수증을 사용한다.
+
+로컬 원문 파서 검사에는 운영 venv의 절대 `RESEARCH_PYTHON`을 사용한다. 별도 개발 worktree에 venv가 없다는 이유로 `spawn ... ENOENT`가 발생하면 새 의존성을 설치하거나 검사를 약화하지 말고 기존 검증된 interpreter를 명시한다. 활성 launcher는 이 경로를 자동 전달한다.
+
+
+### 기존 예약의 실제 실행 증거와 자동 시작
+
+`node scripts/research-operations.mjs scheduled-invocation`은 현재 정책의 예약 ID만 조회한다. 앱 도구가 heartbeat 실행 이력을 제공하지 않으므로 기존 Codex 데스크톱 `sqlite/codex-dev.db`의 `automations` 행을 SQLite `mode=ro`로 읽는다. `ACTIVE/heartbeat/target_thread_id/last_run_at`이 모두 있어야 하며, 마지막 실제 dispatch 시각과 예약 ID로 실행 ID를 고정한다. RRULE·다음 예정 시각만으로 실행 증거를 생성하지 않는다. DB가 없거나 schema가 달라지면 명확한 오류로 대기하며 새 예약·가짜 이벤트·다른 실행본으로 대체하지 않는다. 이 어댑터는 앱의 관측된 로컬 schema용이며 DB에는 쓰지 않는다.
+
+반환한 `next_command`를 그대로 실행한다. 최초 collection은 회차 ID를 daily ID로 사용하고 기본6창/10분의 기존 수집기를 호출한다. `--stage` 생략 시 저장 상태에 따라 collection/processing/publication을 프로그램이 선택한다. 새 processing 요청은 기존 원문 제안과 검토 관문을 준비하며 모델·사실·편집 승인을 자동 생성하지 않는다. 동일 command의 완료 결과는 재사용한다. 정규 발행 요청의 실제 frozen collection basis도 해당 daily 포인터에서 읽고 native 검증기에 전달한다. 명시 report/edition 입력의 수동 검증은 수집 네트워크를 재실행하지 않는다.
+
+최초7회 관찰은 미래 실제 예약 회차의 단계별 시간 기록이며, 과거 발행·수동 검증·시간 재생으로 횟수를 채우지 않는다. 새 실행본 승격은 기존 정규 회차의 writer와 발행을 마친 뒤 수행한다. 개발은 별도 worktree에 유지한다.

@@ -214,7 +214,7 @@ test("a delegated task can be handed to Ollama with its original schema and reus
     schema,
   }
   await assert.rejects(scoped.structured(input), (e) => e.code === "REASONING_PENDING")
-  const [task] = reasoningTasks(f.root).tasks
+  const [task] = reasoningTasks(f.root, { run_id: run }).tasks
   let calls = 0
   const local = new Ollama({
     fetchImpl: async (url, options) => {

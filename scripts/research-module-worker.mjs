@@ -6,6 +6,10 @@ import { atomicCreate, atomicWrite, readJSON, withLock } from "./research/run-st
 import { safePath } from "./research/run-state.mjs"
 import { sha256 } from "./research/contracts.mjs"
 import { trimColdStorage } from "./research/cold-storage.mjs"
+import { withRequestOwner } from "./research/request-ownership.mjs"
+import { inspectOperationalPin } from "./research/operations-release.mjs"
+import { recordJobDevelopmentFailure } from "./research/development-pending.mjs"
+import { recordOperationalJobTiming } from "./research/operations-timing.mjs"
 
 const { values } = parseArgs({
   options: { repo: { type: "string" }, root: { type: "string" }, job: { type: "string" } },
@@ -16,6 +20,13 @@ try {
   workerContext = initial
   const { input } = loadModuleJobForWorker(initial, values.job)
   const ctx = moduleContext(input.context)
+  workerContext = ctx
+  if (
+    ctx.operationalRound &&
+    sha256(JSON.stringify(inspectOperationalPin(ctx, ctx.operationalRound.round_id))) !==
+      ctx.operationalRound.round_input_sha256
+  )
+    throw Error("Operational worker round pin changed")
   if (process.cwd() !== ctx.repo) throw Error("Module worker must use the selected repository cwd")
   await withLock(ctx.root, "module-worker-" + values.job, async () => {
     const { state } = loadModuleJobForWorker(ctx, values.job)
@@ -44,7 +55,10 @@ try {
     }
     atomicWrite(ctx.root, base + "state.json", running)
     try {
-      const data = await executeModule(ctx, input.module, input.operation, input.parameters)
+      const data = await withRequestOwner(
+        { job_id: values.job, input_sha256: state.input_sha256, ...(ctx.operationalRound || {}) },
+        () => executeModule(ctx, input.module, input.operation, input.parameters),
+      )
       const envelope = {
         schema: "research-module-result/v1",
         input_sha256: running.input_sha256,
@@ -73,7 +87,7 @@ try {
       })
     } catch (error) {
       const latest = readJSON(ctx.root, base + "state.json")
-      atomicWrite(ctx.root, base + "state.json", {
+      const failure = {
         ...running,
         ...(latest?.state === "finishing" ? { result: latest.result } : {}),
         state:
@@ -88,11 +102,27 @@ try {
         error_code: error.code ?? null,
         ...(error.reasoning_task ? { reasoning_task: error.reasoning_task } : {}),
         ...(error.storage_request ? { storage_request: error.storage_request } : {}),
-      })
+      }
+      let captureError
+      if (!["REASONING_PENDING", "STORAGE_PENDING"].includes(error.code)) {
+        try {
+          failure.development_pending = recordJobDevelopmentFailure(ctx, input, running, error)
+        } catch (problem) {
+          captureError = problem
+          failure.development_pending = {
+            status: "capture_failed",
+            error: problem.message,
+            automatic_retry: false,
+          }
+        }
+      }
+      atomicWrite(ctx.root, base + "state.json", failure)
       console.error(error.message)
+      if (captureError) throw captureError
       if (!["REASONING_PENDING", "STORAGE_PENDING"].includes(error.code)) process.exitCode = 1
     }
   })
+  recordOperationalJobTiming(ctx, values.job)
   if (readJSON(ctx.root, `module-jobs/${values.job}/state.json`)?.state === "completed")
     trimColdStorage(ctx.root)
 } catch (error) {

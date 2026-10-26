@@ -45,6 +45,10 @@ export const module = {
             enum: [
               "status",
               "prepare",
+              "prepare-full",
+              "prepare-delta",
+              "change-manifest",
+              "archive-status",
               "verify",
               "hydrate",
               "evict",
@@ -56,6 +60,9 @@ export const module = {
             ],
           },
           regular: { type: "boolean" },
+          run_id: id,
+          changes_path: text,
+          changes_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
           limit: integer(1, 20),
           file_id: id,
           bundle_id: text,
@@ -79,7 +86,7 @@ export const module = {
           : storageAction(
               path.join(ctx.repo, ".local"),
               action,
-              ["prepare", "evict"].includes(action)
+              ["prepare", "prepare-full", "prepare-delta", "evict"].includes(action)
                 ? { ...parameters, ignore_pid: process.pid }
                 : parameters,
             ),

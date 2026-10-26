@@ -26,6 +26,7 @@ export const module = {
           report_path: file("root"),
           report_sha256: digest,
           collect: { type: "boolean" },
+          stop_after_collection: { type: "boolean" },
           collection_max_windows: integer(1, 500),
           collection_time_budget_ms: integer(1, 3600000),
           collection_config_file: file(),

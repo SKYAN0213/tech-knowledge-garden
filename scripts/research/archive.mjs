@@ -9,6 +9,7 @@ import { parseResearchDate } from "./dates.mjs"
 import { assertURL } from "./fetch.mjs"
 import { canonicalURL } from "../garden.mjs"
 import { assertRenderedCaptureEvidence } from "./browser.mjs"
+import { backupExcluded } from "./storage-selection.mjs"
 
 // Preserve the original capture and select only an independently stored,
 // byte-matching observation when its URL metadata needs reconciliation.
@@ -501,6 +502,7 @@ export function archiveManifest(root, runId) {
     for (const item of fs.readdirSync(folder, { withFileTypes: true })) {
       const file = path.join(folder, item.name)
       if (file === manifestPath) continue
+      if (backupExcluded(path.relative(root, file).split(path.sep).join("/"))) continue
       if (item.isSymbolicLink()) throw Error("Symlink in research archive")
       if (item.isDirectory()) walk(file)
       else {

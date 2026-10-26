@@ -634,8 +634,9 @@ test("existing collection.storage operation exposes local transfer actions", asy
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
   // Collection recovery is a separate operation; local Drive actions still
-  // share the existing storage operation.
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 72)
+  // share the existing storage operation. The three batch/retirement additions
+  // belong to reasoning, not extra storage operations.
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 75)
   assert.equal(
     catalog.modules.find((m) => m.id === "collection").operations.filter((o) => o.id === "storage")
       .length,
