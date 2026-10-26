@@ -503,7 +503,7 @@ export async function collectWindowDetails(
         Object.assign(detail, accessExclusionDetail(link, exclusion))
         continue
       }
-      const document = await run.stage("detail-" + id, { url: link.url }, () => {
+      const document = await run.stage("detail-" + id, { url: link.url }, async () => {
         const stored = fetchPolicy.hasStoredSource?.(link.url) === true
         if (!stored && batchSize !== undefined && requestedDetails >= batchSize)
           return {
@@ -512,8 +512,16 @@ export async function collectWindowDetails(
             request_performed: false,
             reason: "detail_batch_limit",
           }
-        if (!stored) requestedDetails++
-        return fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel))
+        let fetched
+        try {
+          fetched = await fetchPolicy(root, fetcher, link.url, routeFetchOptions(channel))
+          return fetched
+        } finally {
+          // A policy/cooldown read performs no HTTP request. Charging it would
+          // retry the same held URLs forever before reaching the next batch.
+          // An exception with an uncertain request outcome still uses a slot.
+          if (!stored && fetched?.request_performed !== false) requestedDetails++
+        }
       })
       detail.fetch_status = document.fetch_status
       if (document.fetch_status === "deferred" && document.reason === "detail_batch_limit") {

@@ -26,6 +26,8 @@ RSS 범위가 짧은 NDSoft 매체는 공통 `ndsoft-news-rss-archive-v1`에 매
 
 `deferred_by_budget`와 `next_listing_page`는 `budget_pending`이다. 복구의 `max_attempts`는 실패 재시도 상한이며, 계속 진행한 본문/목록 묶음을 제한하지 않는다. 각 호출의 `max_routes`·`time_budget_ms`와 출처별 본문 요청 상한은 그대로 적용한다. 이미지 본문·제목/날짜 충돌이 섞여 있어도 아직 요청하지 않은 본문은 계속 처리하고, 해당 원문의 OCR·대조·파서 보완만 별도 검토 대상으로 남긴다. 검토 없이 승인·발행하지 않는다.
 
+기존 접근 정책·cooldown 조회가 `request_performed: false`를 반환하면 새 본문 요청 상한을 소비하지 않는다. 같은 보류 URL이 매번 묶음 앞자리를 차지해 뒤의 정상 URL을 계속 미루는 일을 막는다. 결과가 불명확한 예외는 요청 시도로 계산하며 기존 실패 상태를 유지한다.
+
 전자신문 AI와 TechCrunch의 공식 archive는 총100페이지 안에서 새 목록을10페이지씩 요청한다. 다음 묶음은 저장된 목록·동일 옵션의 parse를 재사용하며 더 오래된 실제 게시일에 도달해야 날짜 창을 완료한다. 전체 상한에 도달해도 경계를 찾지 못하면 설정/범위 보완으로 남긴다. KUKA 영어 API는 실제 응답으로 확인한 첫 페이지의 고정 기사1개를 별도로 보존하고 일반 목록의 개수·날짜 순서를 검증한다. 이 예외는 해당 profile에만 선언하며 다른 API의 개수 불일치는 계속 거부한다.
 
 보고서의 `missing`은 과거 실패 기록을 유지한다. `pending_items`와 `pending_detail_urls/budget_pending_urls/review_pending_urls`는 최신 결과에서 남은 URL을 중복 제거해 집계하고, 해결된 항목은 현재 대기에서 제거한다. `held_sources`는 수집하지 못한 창과 점검 시각을 보존한다. `collection.inventory.resilience`와 일일 summary에서 출처 상태를 조회한다. 장애/대기 최초 발생·출처 격리·복구 때만 고유한 로컬 알림 event를 만들며, 같은 관측 재제출이나 같은 오류의 반복은 알림을 추가하지 않는다. 별도 메시지 전송·예약은 만들지 않는다.

@@ -20,7 +20,7 @@ import { reconcilePublicationDay } from "../scripts/research/publication-date-re
 import { module as collection } from "../scripts/research/modules/collection.mjs"
 import { validateArguments } from "../scripts/research/modules/contracts.mjs"
 
-async function fixture(t, { mismatch = false, unreadable = false } = {}) {
+async function fixture(t, { mismatch = false, unreadable = false, policyBlocked = false } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "collection-recovery-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const config = (name) => JSON.parse(fs.readFileSync(`data/research-${name}.json`))
@@ -64,6 +64,8 @@ async function fixture(t, { mismatch = false, unreadable = false } = {}) {
   )
   const fetchPolicy = async (_r, _f, url) => {
     requested.push(url)
+    if (policyBlocked && url.endsWith("/one"))
+      return { original_url: url, fetch_status: "policy_blocked", request_performed: false }
     return docs.get(url) || doc(url, "Original article " + url.split("/").at(-1))
   }
   const parse = async (_r, d) => {
@@ -175,6 +177,19 @@ async function fixture(t, { mismatch = false, unreadable = false } = {}) {
     reportSha256: sha256(fs.readFileSync(path.join(root, "report.json"))),
   }
 }
+
+test("a policy wait never consumes the new-request budget or starves later detail URLs", async (t) => {
+  const f = await fixture(t, { policyBlocked: true })
+  assert.equal(f.initial.candidates.length, 1)
+  const original = fs.readFileSync(path.join(f.root, "runs/initial/list-scan.json"))
+  const next = await f.scan({ run: "policy-continue", "recovery-source-run": "initial" })
+  assert.equal(next.candidates.length, 2)
+  assert.equal(next.summary.details.filter((d) => d.status === "deferred_by_budget").length, 0)
+  assert.equal(next.summary.details.find((d) => d.url.endsWith("/one")).status, "fetch_failed")
+  assert.equal(f.requested.filter((url) => url.endsWith("/two")).length, 1)
+  assert.equal(f.requested.filter((url) => url.endsWith("/three")).length, 1)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "runs/initial/list-scan.json")), original)
+})
 
 test("bounded recovery continues missing details without repeating requests, parses, candidates or original observations", async (t) => {
   const f = await fixture(t)
