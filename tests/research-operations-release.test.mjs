@@ -17,7 +17,9 @@ import {
   operationalRoundStatus,
   runOperationalRound,
 } from "../scripts/research/operations-runtime.mjs"
-import { atomicCreate } from "../scripts/research/run-state.mjs"
+import { atomicCreate, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { sha256 } from "../scripts/research/contracts.mjs"
+import { continueOperationalRound } from "../scripts/research/operations-continuation.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import {
   activateOperationsRuntime,
@@ -173,6 +175,157 @@ test("processing cannot start without a frozen collection handoff", async (t) =>
     runOperationalRound(f.ctx, { ...f.p, stage: "processing" }),
     /immutable collection handoff/,
   )
+})
+
+test("a settled collection slice creates a checkpoint-bound successor instead of replaying the completed job", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const command = {
+    stage: "collection",
+    module: "edition",
+    operation: "advance",
+    parameters: {
+      execute: true,
+      run_id: f.p.run_id,
+      round: true,
+      collect: true,
+      stop_after_collection: true,
+      daily_run: f.p.run_id,
+      collection_max_windows: 6,
+      collection_time_budget_ms: 600000,
+    },
+  }
+  const digest = sha256(JSON.stringify(command))
+  const job = "module-operation-" + digest.slice(0, 48)
+  const input = {
+    job_id: job,
+    module: "edition",
+    operation: "advance",
+    parameters: command.parameters,
+    context: f.ctx,
+  }
+  atomicCreate(f.root, `module-jobs/${job}/input.json`, input)
+  const result = atomicCreate(f.root, `module-jobs/${job}/result.json`, {
+    status: "collection_pending",
+  })
+  atomicCreate(f.root, `module-jobs/${job}/state.json`, {
+    job_id: job,
+    input_sha256: sha256(JSON.stringify(input)),
+    state: "completed",
+    attempt: 1,
+    result,
+    submitted_at: "2026-10-24T19:00:01Z",
+  })
+  atomicCreate(f.root, `operations/rounds/${f.p.run_id}/commands/${digest}.json`, {
+    ...command,
+    job_id: job,
+    submitted_at: "2026-10-24T19:00:01Z",
+  })
+  const checkpoint = {
+    status: "collection_pending",
+    stages: {
+      collection: {
+        counts: { pending_windows: 127 },
+        reference: { path: "report.json", sha256: "1".repeat(64) },
+      },
+    },
+    next_inputs: [{ stage: "collection", required: ["collect", "execute"] }],
+  }
+  atomicWrite(f.root, `round-workflows/${f.p.run_id}/latest.json`, checkpoint)
+  let submitted = 0
+  const next = await runOperationalRound(
+    f.ctx,
+    { run_id: f.p.run_id },
+    {
+      resume: true,
+      submit: async (context, module, operation, parameters, options) => {
+        submitted++
+        assert.equal(module, "edition")
+        assert.equal(operation, "advance")
+        assert.deepEqual(parameters, command.parameters)
+        const input = { job_id: options.jobId, module, operation, parameters, context }
+        atomicCreate(f.root, `module-jobs/${options.jobId}/input.json`, input)
+        const state = {
+          job_id: options.jobId,
+          state: "queued",
+          input_sha256: sha256(JSON.stringify(input)),
+        }
+        atomicCreate(f.root, `module-jobs/${options.jobId}/state.json`, state)
+        return state
+      },
+    },
+  )
+  assert.notEqual(next.job.job_id, job)
+  assert.equal(submitted, 1)
+  const commands = fs
+    .readdirSync(path.join(f.root, `operations/rounds/${f.p.run_id}/commands`))
+    .map((file) => readJSON(f.root, `operations/rounds/${f.p.run_id}/commands/${file}`))
+  const successor = commands.find((row) => row.job_id === next.job.job_id)
+  assert.equal(successor.continuation.previous_job.job_id, job)
+  assert.deepEqual(readJSON(f.root, successor.continuation.checkpoint.path), checkpoint)
+  assert.equal(readJSON(f.root, `module-jobs/${job}/state.json`).attempt, 1)
+  const saved = readJSON(f.root, `operations/rounds/${f.p.run_id}/commands/${digest}.json`)
+  assert.equal(saved.job_id, job)
+  // Simulate process termination after durable command creation but before dispatch.
+  for (const name of ["input.json", "state.json"])
+    fs.unlinkSync(path.join(f.root, `module-jobs/${next.job.job_id}/${name}`))
+  assert.equal(operationalRoundStatus(f.ctx, f.p.run_id).commands.at(-1).job.state, "not_submitted")
+  const redispatch = await runOperationalRound(
+    f.ctx,
+    { run_id: f.p.run_id },
+    {
+      resume: true,
+      submit: async (_ctx, _module, _operation, _parameters, options) => {
+        assert.equal(options.jobId, next.job.job_id)
+        const input = { job_id: options.jobId, context: _ctx }
+        atomicCreate(f.root, `module-jobs/${options.jobId}/input.json`, input)
+        atomicCreate(f.root, `module-jobs/${options.jobId}/state.json`, {
+          state: "queued",
+          input_sha256: sha256(JSON.stringify(input)),
+        })
+        return { job_id: options.jobId, state: "queued" }
+      },
+    },
+  )
+  assert.equal(redispatch.job.job_id, next.job.job_id)
+  fs.appendFileSync(path.join(f.root, successor.continuation.checkpoint.path), " ")
+  assert.throws(() => operationalRoundStatus(f.ctx, f.p.run_id), /continuation evidence changed/)
+})
+
+test("explicit continuation preserves the frozen parent, scheduler claim and original daily input; new segment is manual", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const parentPath = `operations/rounds/${f.p.run_id}/input.json`
+  const before = fs.readFileSync(path.join(f.root, parentPath))
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, {
+    status: "collection_pending",
+    input_sha256: sha256(JSON.stringify(workflow)),
+  })
+  const p = { run_id: f.p.run_id, successor: "unit-recovery", reason: "Explicit test recovery" }
+  const continuation = await continueOperationalRound(f.ctx, p)
+  assert.equal(continuation.status, "continuation_ready")
+  assert.equal(continuation.daily_run, "daily-original")
+  assert.equal(continuation.scheduled_runs_counted, 0)
+  assert.deepEqual(await continueOperationalRound(f.ctx, p), continuation)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, parentPath)), before)
+  const child = inspectOperationalPin(f.ctx, p.successor)
+  assert.equal(child.continuation.sha256, continuation.source.sha256)
+  assert.equal(checkedOperationalInvocation(f.ctx, child.invocation).kind, "manual")
+  assert.equal(fs.readdirSync(path.join(f.root, "operations/scheduled-executions")).length, 1)
+  await assert.rejects(
+    continueOperationalRound(f.ctx, { ...p, successor: "other-recovery" }),
+    /another continuation/,
+  )
+  const evidence = path.join(f.root, continuation.source.path)
+  fs.appendFileSync(evidence, " ")
+  assert.throws(() => inspectOperationalPin(f.ctx, p.successor), /evidence changed/)
 })
 
 test("activation binds the actual Git workspace and existing dependency trees without copying content", async (t) => {

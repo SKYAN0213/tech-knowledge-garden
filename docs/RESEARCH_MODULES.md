@@ -803,6 +803,14 @@ node scripts/research-operations.mjs run --round operator-verification-ID --stag
 
 ### 기존 예약의 실제 실행 증거와 자동 시작
 
+2026-10-27 자동 재개 계약: `scheduled-invocation`의 `next_command`는 이제 `drive --round ... --invocation ... --invocation-sha256 ...`다. `drive`는 foreground 제어기로서 기존 native job을 background로 제출한 뒤 해당 worker 종료를 기다리고, 완료 체크포인트에서 다음 수집 묶음과 처리 단계를 이어 간다. CLI의 실행 session이 살아 있으면 관리자는 그 session을 계속 기다린다. `running`, `controller_active`, `control_yield` 또는 단일 job의 `completed`는 일일 발행 완료가 아니다. `keep_turn_open: true`에서 예약 관리 turn을 성공/DONT_NOTIFY로 끝내지 않는다. 모델·실제 검토·Drive 요청은 정확한 소유 job과 SHA로 처리한 후 같은 `drive`를 재호출한다. 관문·연결·writer 확인 등의 실제 차단이 있으면 근거와 재개 요청을 남긴다.
+
+완료한 수집 job의 재조회가 다음 묶음을 막던 문제를 수정했다. `resume`은 완료 job과 결과를 유지하고, 현재 round 체크포인트의 불변 사본과 이전 결과 SHA에 결속한 후속 command/job을 생성한다. 제출 직전 종료되었으면 같은 command를 재전송하며 새 작업을 중복 생성하지 않는다. 진행이 없는 묶음은 반복하지 않고 `no_progress`로 원인 확인을 요구한다. 제어기는 자체 사망 lease만 명시 `drive` 재개에서 회수하며 native source·module·원격 writer 잠금을 임의 회수하지 않는다. worker 확인 불가도 대체 실행을 허용하지 않는다. 실행 중에는 해당 job만 조회하고 전체 manifest 검증은 단계 전환에서 수행한다.
+
+운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. 정리/모델/발행이 시작된 회차는 이 경로로 옮기지 않는다. 새 구간은 수동 복구이며 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라가며 결과에 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다. 데이터 수집을 처음부터 다시 하지 않는다.
+
+제어기의 `completed: true`는 native delivery에서 Drive 원본·공개 bytes·WebsiteData·원문 보관 receipt가 모두 검증되고 대기 중인 connector 쓰기가 없을 때만 반환한다. 원문 대조·의미 검토·release 승인은 자동 생성하지 않는다. 운영 제어 기록은 `operations/rounds/<회차>/controller.json`, 원래 단계별 기록은 기존 위치에 저장한다. 새로운 예약·유료 API·인증·프레임워크는 추가하지 않는다.
+
 `node scripts/research-operations.mjs scheduled-invocation`은 현재 정책의 예약 ID만 조회한다. 앱 도구가 heartbeat 실행 이력을 제공하지 않으므로 기존 Codex 데스크톱 `sqlite/codex-dev.db`의 `automations` 행을 SQLite `mode=ro`로 읽는다. `ACTIVE/heartbeat/target_thread_id/last_run_at`이 모두 있어야 하며, 마지막 실제 dispatch 시각과 예약 ID로 실행 ID를 고정한다. RRULE·다음 예정 시각만으로 실행 증거를 생성하지 않는다. DB가 없거나 schema가 달라지면 명확한 오류로 대기하며 새 예약·가짜 이벤트·다른 실행본으로 대체하지 않는다. 이 어댑터는 앱의 관측된 로컬 schema용이며 DB에는 쓰지 않는다.
 
 반환한 `next_command`를 그대로 실행한다. 최초 collection은 회차 ID를 daily ID로 사용하고 기본6창/10분의 기존 수집기를 호출한다. `--stage` 생략 시 저장 상태에 따라 collection/processing/publication을 프로그램이 선택한다. 새 processing 요청은 기존 원문 제안과 검토 관문을 준비하며 모델·사실·편집 승인을 자동 생성하지 않는다. 동일 command의 완료 결과는 재사용한다. 정규 발행 요청의 실제 frozen collection basis도 해당 daily 포인터에서 읽고 native 검증기에 전달한다. 명시 report/edition 입력의 수동 검증은 수집 네트워크를 재실행하지 않는다.

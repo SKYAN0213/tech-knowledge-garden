@@ -88,14 +88,13 @@ export function captureScheduledInvocation(ctx, { database } = {}) {
     next_command: [
       "node",
       "scripts/research-operations.mjs",
-      "run",
+      "drive",
       "--round",
       round_id,
       "--invocation",
       ref.path,
       "--invocation-sha256",
       ref.sha256,
-      "--background",
     ],
   }
 }

@@ -23,12 +23,44 @@ export function operationalRoundStatus(ctx, run) {
   const commands = fs.existsSync(directory)
     ? fs
         .readdirSync(directory)
+        .filter((file) => /^[a-f0-9]{64}\.json$/.test(file))
         .sort()
         .map((file) => {
           const command = readJSON(ctx.root, base + "commands/" + file)
-          return { ...command, job: moduleJobStatus(ctx, command.job_id) }
+          const identity = {
+            stage: command.stage,
+            module: command.module,
+            operation: command.operation,
+            parameters: command.parameters,
+            ...(command.continuation ? { continuation: command.continuation } : {}),
+          }
+          const digest = sha256(JSON.stringify(identity))
+          if (
+            file !== digest + ".json" ||
+            command.job_id !== "module-operation-" + digest.slice(0, 48)
+          )
+            throw Error("Operational command identity changed")
+          if (command.continuation) {
+            for (const ref of [
+              command.continuation.checkpoint,
+              command.continuation.previous_job.result,
+            ])
+              if (sha256(fs.readFileSync(safePath(ctx.root, ref.path))) !== ref.sha256)
+                throw Error("Operational continuation evidence changed")
+          }
+          const submitted = readJSON(ctx.root, `module-jobs/${command.job_id}/input.json`)
+          return {
+            ...command,
+            job: submitted
+              ? moduleJobStatus(ctx, command.job_id)
+              : {
+                  job_id: command.job_id,
+                  state: "not_submitted",
+                  worker_alive: false,
+                },
+          }
         })
-        .sort((a, b) => (a.job.submitted_at || "").localeCompare(b.job.submitted_at || ""))
+        .sort((a, b) => (a.submitted_at || "").localeCompare(b.submitted_at || ""))
     : []
   const round = readJSON(ctx.root, `round-workflows/${run}/latest.json`)
   return {
@@ -37,8 +69,10 @@ export function operationalRoundStatus(ctx, run) {
     run_id: run,
     release_id: input.release_id,
     started_at: input.started_at,
+    ...(input.continuation ? { continuation: input.continuation } : {}),
     stages: round?.stages || {},
     next_inputs: round?.next_inputs || [],
+    controller: readJSON(ctx.root, base + "controller.json"),
     commands,
     pending_reasoning: reasoningTasks(ctx.root, { round_id: run, limit: 3 }),
     timing: {
@@ -54,7 +88,11 @@ export function operationalRoundStatus(ctx, run) {
 
 // This controller submits existing module jobs; it never reimplements a native
 // schema, approval, publisher, Drive transfer or recovery validator.
-export async function runOperationalRound(ctx, p, { resume = false, background = true } = {}) {
+export async function runOperationalRound(
+  ctx,
+  p,
+  { resume = false, background = true, submit = submitModuleJob, resumeJob = resumeModuleJob } = {},
+) {
   const started = performance.now()
   const pinned = await pinOperationalRound(ctx, p)
   if (pinned.status !== "pinned") return pinned
@@ -65,7 +103,7 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
     ...p,
     stage:
       p.stage ||
-      (savedRound?.publication_handoff
+      (savedRound?.publication_handoff && savedRound?.stages?.events?.status === "complete"
         ? "publication"
         : savedRound?.edition
           ? "processing"
@@ -81,8 +119,32 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
     if (p.stage !== "collection" && !round?.edition)
       throw Error("Processing requires an immutable collection handoff")
     const module = p.stage === "publication" ? "publication" : "edition"
-    const prior =
+    let prior =
       resume && !p.parameters ? status.commands.filter((c) => c.stage === p.stage).at(-1) : null
+    let continuation = prior?.continuation
+    if (prior?.job.state === "completed") {
+      const checkpointPath = `round-workflows/${run}/latest.json`
+      const bytes = fs.readFileSync(safePath(ctx.root, checkpointPath))
+      const digest = sha256(bytes)
+      if (prior.continuation?.checkpoint.sha256 === digest)
+        return {
+          status: "no_progress",
+          run_id: run,
+          job: prior.job,
+          reason: "Completed command did not advance its checkpoint; inspect native next_inputs",
+        }
+      const snapshotPath = base + "checkpoints/" + digest + ".json"
+      if (!readJSON(ctx.root, snapshotPath)) atomicCreate(ctx.root, snapshotPath, bytes)
+      if (sha256(fs.readFileSync(safePath(ctx.root, snapshotPath))) !== digest)
+        throw Error("Operational continuation checkpoint changed")
+      const result = prior.job.result
+      if (!result || sha256(fs.readFileSync(safePath(ctx.root, result.path))) !== result.sha256)
+        throw Error("Completed operational result changed")
+      continuation = {
+        checkpoint: { path: snapshotPath, sha256: digest },
+        previous_job: { job_id: prior.job_id, result },
+      }
+    }
     const operation =
       prior?.operation ||
       (p.stage === "publication" ? p.operation || "request_delivery" : "advance")
@@ -92,6 +154,9 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
     )
       throw Error("Unsupported publication transition")
     const supplied = p.parameters || {}
+    const recovery = pinned.input.continuation && readJSON(ctx.root, pinned.input.continuation.path)
+    if (recovery && supplied.daily_run && supplied.daily_run !== recovery.daily_run)
+      throw Error("Continuation must reuse its original daily collection")
     const collect = p.stage === "collection" && !supplied.report_path && !supplied.edition_path
     let parameters =
       module === "edition"
@@ -107,7 +172,7 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
                   stop_after_collection: true,
                   ...(collect
                     ? {
-                        daily_run: supplied.daily_run || run,
+                        daily_run: supplied.daily_run || recovery?.daily_run || run,
                         ...(supplied.execute !== false
                           ? {
                               collection_max_windows: supplied.collection_max_windows || 6,
@@ -158,7 +223,13 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
           throw Error("Publication request must belong to this round's approved handoff")
       }
     }
-    const command = { stage: p.stage, module, operation, parameters }
+    const command = {
+      stage: p.stage,
+      module,
+      operation,
+      parameters,
+      ...(continuation ? { continuation } : {}),
+    }
     const digest = sha256(JSON.stringify(command)),
       job = "module-operation-" + digest.slice(0, 48)
     const commandPath = base + "commands/" + digest + ".json"
@@ -175,8 +246,8 @@ export async function runOperationalRound(ctx, p, { resume = false, background =
     const existing = readJSON(ctx.root, `module-jobs/${job}/input.json`)
     const result =
       existing && resume
-        ? await resumeModuleJob(jobContext, job, { background })
-        : await submitModuleJob(jobContext, module, operation, parameters, {
+        ? await resumeJob(jobContext, job, { background })
+        : await submit(jobContext, module, operation, parameters, {
             jobId: job,
             background,
           })

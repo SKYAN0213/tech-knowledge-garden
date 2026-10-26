@@ -102,10 +102,21 @@ export function inspectOperationalPin(ctx, run) {
     throw Error("Pinned operational execution changed; preserve this round")
   if (runtime !== ctx.repo) inspectRuntimeWorkspace(runtime, ctx.repo)
   checkedOperationalInvocation(ctx, input.invocation)
+  if (input.continuation) {
+    const continuation = checked(ctx.root, input.continuation)
+    if (continuation.successor !== run || continuation.release_id !== input.release_id)
+      throw Error("Operational continuation identity changed")
+    for (const ref of [continuation.parent, continuation.workflow, continuation.checkpoint])
+      checked(ctx.root, ref)
+    checkedOperationalInvocation(ctx, continuation.invocation)
+  }
   return input
 }
 
-export async function pinOperationalRound(ctx, { run_id, invocation_path, invocation_sha256 }) {
+export async function pinOperationalRound(
+  ctx,
+  { run_id, invocation_path, invocation_sha256, continuation },
+) {
   const runtime = executionRepository(ctx)
   const gate = readOperationGate(runtime)
   if (!gate.regular_execution_allowed) return { status: gate.status, operation_gate: gate }
@@ -118,6 +129,8 @@ export async function pinOperationalRound(ctx, { run_id, invocation_path, invoca
       (input.invocation.path !== invocation_path || input.invocation.sha256 !== invocation_sha256)
     )
       throw Error("Round invocation changed")
+    if (continuation && JSON.stringify(input.continuation) !== JSON.stringify(continuation))
+      throw Error("Round continuation changed")
     return { status: "pinned", input, reused: true }
   }
   const installed = readJSON(runtime, installationPath)
@@ -141,6 +154,7 @@ export async function pinOperationalRound(ctx, { run_id, invocation_path, invoca
       policy: evidenceReference(runtime, "data/research-operation-policy.json"),
       installation: evidenceReference(runtime, installationPath),
       invocation: invocationRef,
+      ...(continuation ? { continuation } : {}),
       started_at: invocation.started_at,
     }
     const claim = `operations/${invocation.kind}-executions/${sha256((invocation.schedule_id || "manual") + ":" + invocation.execution_id)}.json`

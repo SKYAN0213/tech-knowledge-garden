@@ -68,7 +68,7 @@ export function inspectRuntimeWorkspace(runtime, workspace) {
   return { runtime, workspace, release_id: gate.release_id, gate, installation }
 }
 
-function assertNoWriter(workspace) {
+export function assertNoOperationalWriter(workspace) {
   const root = path.join(workspace, ".local/research/local-ai")
   const jobs = path.join(root, "module-jobs")
   for (const name of fs.existsSync(jobs) ? fs.readdirSync(jobs) : []) {
@@ -88,6 +88,10 @@ function assertNoWriter(workspace) {
   }
   for (const file of ["locks/garden-operation.json", "locks/module-submit.json"])
     if (readJSON(root, file)) throw Error("Workspace lock requires explicit inspection: " + file)
+  const locks = path.join(root, "locks")
+  for (const file of fs.existsSync(locks) ? fs.readdirSync(locks) : [])
+    if (/^operations-(driver|control)-/.test(file))
+      throw Error("Operational controller requires explicit inspection: " + file)
 }
 
 export async function activateOperationsRuntime(runtime, workspace) {
@@ -95,7 +99,7 @@ export async function activateOperationsRuntime(runtime, workspace) {
   const root = path.join(checked.workspace, ".local/.storage")
   fs.mkdirSync(root, { recursive: true, mode: 0o700 })
   return withLock(root, "activate-runtime", async () => {
-    assertNoWriter(checked.workspace)
+    assertNoOperationalWriter(checked.workspace)
     const dependencies = []
     for (const relative of ["node_modules", "integrations/research-mcp/node_modules"]) {
       const existing = path.join(checked.workspace, relative),

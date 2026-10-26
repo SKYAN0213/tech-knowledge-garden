@@ -43,6 +43,8 @@ test("actual scheduler dispatch is read-only, idempotent and distinct from a nom
   assert.equal(sha256(fs.readFileSync(f.database)), before)
   assert.equal(ref.scheduled_runs_counted, 0)
   assert.ok(ref.next_command.includes(ref.round_id))
+  assert.equal(ref.next_command[2], "drive")
+  assert.equal(ref.next_command.includes("--background"), false)
 })
 test("configuration without an actual dispatch cannot manufacture an invocation", (t) => {
   const f = fixture(t, false)

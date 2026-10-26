@@ -19,9 +19,42 @@ try {
     if (active.workspace !== workspace) throw Error("Active runtime workspace changed")
     let runtime = active.runtime
     const index = args.indexOf("--round")
-    if (index >= 0) {
-      const round = args[index + 1]
+    if (index >= 0 && args[0] !== "continue") {
+      let round = args[index + 1]
       if (!/^[A-Za-z0-9_-]{1,70}$/.test(round || "")) throw Error("Safe round ID required")
+      const root = path.join(workspace, ".local/research/local-ai")
+      const visited = new Set()
+      while (fs.existsSync(path.join(root, `operations/rounds/${round}/continuation.json`))) {
+        if (visited.has(round) || visited.size >= 8) throw Error("Cyclic operational continuation")
+        visited.add(round)
+        const link = JSON.parse(
+          fs.readFileSync(path.join(root, `operations/rounds/${round}/continuation.json`)),
+        )
+        if (
+          !/^[A-Za-z0-9_-]{1,70}$/.test(link.successor || "") ||
+          link.evidence?.path !== `operations/rounds/${round}/continuation-evidence.json` ||
+          link.successor_pin?.path !== `operations/rounds/${link.successor}/input.json`
+        )
+          throw Error("Invalid operational continuation link")
+        const checked = (ref) => {
+          const bytes = fs.readFileSync(path.join(root, ref.path))
+          if (crypto.createHash("sha256").update(bytes).digest("hex") !== ref.sha256)
+            throw Error("Operational continuation evidence changed")
+          return JSON.parse(bytes)
+        }
+        const evidence = checked(link.evidence),
+          successor = checked(link.successor_pin)
+        if (
+          evidence.parent?.path !== `operations/rounds/${round}/input.json` ||
+          evidence.successor !== link.successor ||
+          successor.run_id !== link.successor ||
+          JSON.stringify(successor.continuation) !== JSON.stringify(link.evidence)
+        )
+          throw Error("Operational continuation ownership changed")
+        checked(evidence.parent)
+        round = link.successor
+      }
+      args[index + 1] = round
       const pinFile = path.join(
         workspace,
         `.local/research/local-ai/operations/rounds/${round}/input.json`,

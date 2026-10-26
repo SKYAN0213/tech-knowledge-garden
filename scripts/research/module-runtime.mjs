@@ -301,6 +301,8 @@ function inputFingerprint(moduleId) {
         "schedule-contract.mjs",
         "operations-release.mjs",
         "operations-runtime.mjs",
+        "operations-driver.mjs",
+        "operations-continuation.mjs",
         "development-pending.mjs",
         "operations-timing.mjs",
         "operations-deployment.mjs",

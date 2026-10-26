@@ -98,8 +98,11 @@ export async function moduleCLI(args, selectedModule) {
     return installOperationsRelease(ctx.repo, v.destination)
   }
   if (!selectedModule && v.round) {
-    if (positionals.length !== 1 || !["run", "resume", "status", "relay"].includes(positionals[0]))
-      throw Error("Use run/resume/status/relay --round ID")
+    if (
+      positionals.length !== 1 ||
+      !["run", "resume", "drive", "continue", "status", "relay"].includes(positionals[0])
+    )
+      throw Error("Use run/resume/drive/continue/status/relay --round ID")
     const { operationalRoundStatus, runOperationalRound, relayOperationalReasoning } =
       await import("./operations-runtime.mjs")
     if (positionals[0] === "status") {
@@ -114,6 +117,29 @@ export async function moduleCLI(args, selectedModule) {
         : {}
     if (positionals[0] === "relay")
       return relayOperationalReasoning(ctx, { ...parameters, run_id: v.round })
+    if (positionals[0] === "continue") {
+      if (
+        v.background ||
+        v.stage ||
+        v.invocation ||
+        v["invocation-sha256"] ||
+        Object.keys(parameters).some((key) => !["successor", "reason"].includes(key))
+      )
+        throw Error("continue accepts only the exact successor and reason")
+      const { continueOperationalRound } = await import("./operations-continuation.mjs")
+      return continueOperationalRound(ctx, { ...parameters, run_id: v.round })
+    }
+    if (positionals[0] === "drive") {
+      if (v.background || v.stage)
+        throw Error("drive manages saved stages in the foreground; keep the manager turn open")
+      const { driveOperationalRound } = await import("./operations-driver.mjs")
+      return driveOperationalRound(ctx, {
+        ...parameters,
+        run_id: v.round,
+        invocation_path: v.invocation,
+        invocation_sha256: v["invocation-sha256"],
+      })
+    }
     return runOperationalRound(
       ctx,
       {
