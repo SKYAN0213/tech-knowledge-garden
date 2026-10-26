@@ -171,7 +171,11 @@ export async function recoverCollection({
             throw Error("Recovery target differs from the frozen report")
           for (const proof of original.reference.evidence) {
             const expected = reportPins.get(proof.path)
-            if (!expected || expected.sha256 !== proof.sha256)
+            // Legacy daily reports pinned the summary/result arrays but not
+            // every failed-fetch checkpoint. readRecoverySource authenticates
+            // those originals now; the new immutable plan pins them below.
+            // They are new recovery evidence, never a historical approval.
+            if (expected && expected.sha256 !== proof.sha256)
               throw Error("Recovery source evidence differs from the report")
           }
           const sourceRun = sourceRuns[route.channel_id] || reportRun
@@ -214,6 +218,9 @@ export async function recoverCollection({
               ? { report_source_run: reportRun, report_source_reference: original.reference }
               : {}),
             source_reference: source.reference,
+            source_evidence_scope: original.reference.evidence.some((p) => !reportPins.has(p.path))
+              ? "report_plus_authenticated_native_checkpoints"
+              : "frozen_report",
             reason: source.summary.reason,
             action: actionFor(source.summary.reason),
             current_basis: bases.get(route.channel_id),

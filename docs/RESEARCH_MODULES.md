@@ -34,6 +34,8 @@ RSS 범위가 짧은 NDSoft 매체는 공통 `ndsoft-news-rss-archive-v1`에 매
 
 불완전 창이 있는 보고서와 회차의 collection 단계는 정확한 보고서 path/SHA에 묶인 `recovery_request`를 제공한다. Codex 중계는 해당 회차의 요청만 실행하고, 이후에는 결과의 `next_actions`를 사용한다. 기본 호출은2개 창·5분 예산이며 별도 전역 pending 큐를 만들지 않는다. `reconcile_coverage: true`이면 완료한 창만 기존 backlog·coverage 검증기로 반영한다. 다른 출처의 과거 baseline을 다시 검증하지 않으며, 실패 영수증·frozen edition·전체 발행 cutoff를 바꾸지 않는다.
 
+과거 일일 보고서에 실패한 요청의 세부 checkpoint 참조가 없으면, 첫 복구 계획에서 기존 native input·stage SHA와 실제 원문 bytes를 인증해 새 인계 근거로 고정한다. 보고서에 이미 있는 참조는 반드시 일치해야 한다. 추가 근거는 `report_plus_authenticated_native_checkpoints`로 표시하고 과거 보고서·승인 근거를 소급 수정하지 않는다.
+
 긴 모델 입력은 기존 실제 역할 request factory의 무손실 분할을 사용한다. 원문 블록을 수정하지 않고 UTF-16 범위·조각 SHA·원 block ID를 연결하며 문장/문단 경계를 우선한다. 전체 조각을 합치면 원문과 같아야 하고, 저장된 완료 batch 결과만 재사용한다. 모델 입력 한도 대기는 수집 실패와 구분한다.
 
 ## 기본 흐름

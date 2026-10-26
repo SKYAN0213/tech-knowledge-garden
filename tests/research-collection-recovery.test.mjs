@@ -202,6 +202,37 @@ test("bounded recovery continues missing details without repeating requests, par
   assert.equal(receipt.candidate_approved, false)
 })
 
+test("legacy daily reports acquire a new authenticated checkpoint handoff without rewriting the old report", async (t) => {
+  const f = await fixture(t)
+  const legacy = readJSON(f.root, f.reportPath)
+  legacy.evidence = legacy.evidence.filter((p) => p.path === "runs/initial/list-scan.json")
+  atomicWrite(f.root, "legacy-report.json", legacy)
+  const bytes = fs.readFileSync(path.join(f.root, "legacy-report.json"))
+  const options = {
+    ...f,
+    repo: process.cwd(),
+    runId: "legacy-recovery",
+    mode: "plan-only",
+    reportPath: "legacy-report.json",
+    reportSha256: sha256(bytes),
+  }
+  const plan = await recoverCollection(options)
+  assert.equal(
+    plan.targets[0].source_evidence_scope,
+    "report_plus_authenticated_native_checkpoints",
+  )
+  assert.ok(
+    plan.targets[0].source_reference.evidence.some((p) => p.path === "runs/initial/state.json"),
+  )
+  assert.deepEqual(fs.readFileSync(path.join(f.root, "legacy-report.json")), bytes)
+  const doc = f.docs.get(f.channel.url)
+  fs.appendFileSync(path.join(f.root, doc.body_path), "tampered")
+  await assert.rejects(
+    recoverCollection({ ...options, runId: "legacy-corrupted" }),
+    /hash mismatch/,
+  )
+})
+
 test("report recovery plans only incomplete windows and resume never repeats a completed native scan", async (t) => {
   const f = await fixture(t)
   const options = { ...f, repo: process.cwd(), runId: "recover", publishReport: false }
