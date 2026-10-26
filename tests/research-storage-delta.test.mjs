@@ -153,3 +153,27 @@ test("full audit detects missing unarchived bytes and can resume after exact res
   assert.equal(resumed.status, "waiting_for_storage")
   assert.equal(storageAction(f.root, "status").files, 1)
 })
+
+test("full audit retains a small previously admitted catalog obligation below the current scan threshold", (t) => {
+  const f = fixture(t),
+    relative = "documents/legacy-small/sample.bin"
+  const insert = spawnSync(
+    "python3",
+    [
+      "-c",
+      "import sqlite3,sys;db=sqlite3.connect(sys.argv[1]);db.execute('INSERT INTO files VALUES(?,?,?,?,?,?,?)',(sys.argv[2],sys.argv[3],3,384,'1',None,None));db.commit()",
+      path.join(f.root, ".storage/catalog.sqlite"),
+      relative,
+      sha256("old"),
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(insert.status, 0, insert.stderr)
+  const blocked = storageAction(f.root, "prepare-full", {
+    run_id: "small-missing",
+    parent_id: "unit-parent",
+  })
+  assert.equal(blocked.status, "requires_repair")
+  assert.deepEqual(blocked.missing_unarchived_paths, [relative])
+  assert.equal(storageAction(f.root, "status").files, 1)
+})

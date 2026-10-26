@@ -1222,7 +1222,7 @@ def inventory(root, db, p):
     db.commit()
     missing = []
     for row in db.execute("SELECT f.*,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id"):
-        if eligible(row["path"], row["bytes"], settings["minimum_payload_bytes"]) and row["path"] not in seen and not safe(root, row["path"]).exists() and not row["verified_at"]:
+        if not backup_excluded(row["path"]) and row["path"] not in seen and not safe(root, row["path"]).exists() and not row["verified_at"]:
             missing.append(row["path"])
     return {"inventoried_files": count, "payload_bytes": total, "updated": changed,
             "missing_unarchived_paths": sorted(missing), "full_audit_complete": not missing,
@@ -1274,9 +1274,10 @@ def pack(root, db, p):
         raise ValueError("Invalid package budget")
     selected = set(p["selected_paths"]) if "selected_paths" in p else None
     unique = {}
-    minimum = policy(root)["minimum_payload_bytes"]
     for row in db.execute("SELECT f.* FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 WHERE o.sha256 IS NULL ORDER BY f.path"):
-        if eligible(row["path"], row["bytes"], minimum) and (selected is None or row["path"] in selected):
+        # Admission size/hot-file rules apply when files enter the catalog.
+        # Existing admitted rows remain obligations, even below today's cutoff.
+        if not backup_excluded(row["path"]) and (selected is None or row["path"] in selected):
             unique.setdefault(row["sha256"], row)
     rows = list(unique.values())
     groups, group, size = [], [], 0
