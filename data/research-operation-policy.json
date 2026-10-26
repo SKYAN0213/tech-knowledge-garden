@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-collection-resilience-20261026-v1/receipt.json",
-    "sha256": "f1ae213acafe126267ca43c9f869ac6bce40135125a545cc69f91c155a02b81e"
+    "path": ".local/research/development-releases/tkg-collection-resilience-20261026-v2/receipt.json",
+    "sha256": "0b8a59e7de53da54b7aaea80a8db5368f5f9ddbf368a0fa1614e6eb0796d4d5f"
   },
   "recovery": {
     "automatic_retry": false,
