@@ -82,6 +82,8 @@ node --test tests/semantic-exchange.test.mjs
 
 같은 날 사용자의 최신판 운영 적용 요청으로 `tkg-semantic-common-20261026-v5`를 native 완료 관문을 거쳐 설치·활성화했다. 실행본에는 공통 라이브러리의 규격 문서와 raw fixture까지 고정한500개 파일이 포함된다. 설치본에서 실제 공개 자료495개·관계304개를 내보내고 같은 입력의 두 번째 실행에서495개 record를 전부 재사용했으며 current 포인터 bytes가 유지됐다. 원문·승인·기존0.1.0 자산을 보존했다. 검토 registry 밖의 관계 대상6건은 기존대로 partial 근거로 남기며 자동 승인하지 않는다. Wiki의 기존 등록 변경과 운영 Vault 활성화는 이 TKG 실행본 승격에 포함하지 않는다. 개발·설치·실제 실행의 정확한 SHA와 결과는 비공개 `.local/research/semantic-operations-adoption-20261026/`에 보존한다.
 
+후속 실제 수집에서 발견한 대규모 결함 근거 인계 문제를 수정해 `tkg-semantic-common-20261026-v6`로 승격했다. 공통0.1.1 산출물·wire0.1.0·producer와32개 import closure의 SHA는 그대로이며 수집 오류의 근거813개를 기존 snapshot 상한 안에서 index로 보존했다. 이 보완은 TKG 운영 결함 기록에 한정한다.
+
 2026-10-23 최신 candidate5의 증분 수정판을 기존 Node 22.20.0에서 19개 시험으로 검증했다. Python 3.9.6 reader/writer와 Node reader 왕복도 통과했다. 네 가지 역할·native 관계 보존, 미검토/none/partial 구분, raw/정규화 지문 분리, 시간 복원 후 실제 내용 변경, registry 무효화, rename/delete/recreate, 처리 중 변경, symlink/크기 제한, 손상 묶음, CLI 오류 누출 방지를 포함한다. 바뀌지 않은 기사 5개를 다시 export할 때 native 공개 본문 정규화가 0회임을 실제 호출 계수로 확인했다. fixture는 임시 합성 자료이며 model/네트워크/운영 승인을 호출하지 않는다.
 
 격리 worktree의 공개 데이터 사본을 한 번 읽어 기사 429건·검토 개념 36개·관계 102개를 export/load 검증했다. 전체 원본 목록은 complete, 의미 범위는 partial, 모든 기사는 unreviewed였고 앞뒤 source bytes가 같았다. 같은 입력의 두 번째 실행에서는 465개 record를 재사용했고 실제 공개 본문 정규화 0회와 current 포인터 bytes 불변을 확인했다. 일회성 출력은 정리했다. canonical 통합·위키 실제 이벤트 연동·운영 활성화·Windows 수용은 이 검사에 포함되지 않는다. D0가 canonical 반영 시점을 결정하며 import closure가 바뀌면 새 지문과 영향 시험으로 다시 확인한다.

@@ -214,6 +214,67 @@ test("429, policy and storage waits stay outside the developer queue while parse
     "development_pending",
   )
 })
+test("large collection failures keep every exact evidence reference without overflowing the snapshot path bound", (t) => {
+  const f = setup(t)
+  atomicCreate(f.root, "operations/rounds/large-round/input.json", { run_id: "large-round" })
+  const owner = {
+    ...f.owner,
+    round_id: "large-round",
+    round_input_sha256: sha256(
+      JSON.stringify(readJSON(f.root, "operations/rounds/large-round/input.json")),
+    ),
+  }
+  atomicCreate(f.root, "daily/runs/large-daily/plan.json", { fixture_only: true })
+  const receipt = atomicCreate(f.root, "daily/runs/large-daily/receipts/attempt.json", {
+    status: "incomplete",
+  })
+  const documents = [],
+    parses = []
+  for (let i = 0; i < 65; i++) {
+    const body_path = `documents/large-${i}/body.bin`,
+      parse_id = `large-${i}`
+    atomicCreate(f.root, body_path, `Exact source ${i}\r\n`)
+    atomicCreate(f.root, `parses/${parse_id}/parse.json`, {
+      fixture_only: true,
+      source_version_id: `v-${i}`,
+    })
+    documents.push({ body_path, source_version_id: `v-${i}`, fetch_status: "captured" })
+    parses.push({
+      parse_id,
+      source_version_id: `v-${i}`,
+      status: "failed",
+      quality: { required_fields_present: false },
+    })
+  }
+  atomicCreate(f.root, "runs/attempt/documents.json", documents)
+  const request = {
+    run_id: "large-daily",
+    attempt_id: "attempt",
+    window: { channel_id: "unit" },
+    receipt,
+    result: { documents, parses },
+    error: Error("Parser failure"),
+  }
+  const one = withRequestOwner(owner, () => recordCollectionDefect(f.root, request))
+  assert.equal(one.status, "development_pending")
+  assert.equal(withRequestOwner(owner, () => recordCollectionDefect(f.root, request)).reused, true)
+  const issues = developmentPendingStatus(f.root, { round_id: owner.round_id }).issues
+  assert.equal(issues.length, 1)
+  const issue = issues[0],
+    indexRef = issue.reproduction.evidence_index
+  assert.equal(indexRef.total_paths, 133)
+  assert.ok(issue.evidence.length <= 41)
+  const indexEvidence = issue.evidence.find((e) => e.path === indexRef.path)
+  assert.equal(indexEvidence.sha256, indexRef.sha256)
+  const index = JSON.parse(fs.readFileSync(safePath(f.root, indexEvidence.snapshot.path)))
+  assert.equal(index.files.length, indexRef.total_paths)
+  for (const row of index.files)
+    assert.equal(row.sha256, sha256(fs.readFileSync(safePath(f.root, row.path))))
+  assert.ok(index.files.some((row) => row.path === "documents/large-64/body.bin"))
+  assert.ok(index.files.some((row) => row.path === "parses/large-64/parse.json"))
+  fs.writeFileSync(safePath(f.root, indexEvidence.snapshot.path), "corrupted index")
+  assert.throws(() => developmentPendingStatus(f.root), /evidence changed/)
+})
 test("snapshot total is capped at 64 MiB and large sources keep their exact path and streamed SHA", (t) => {
   const f = setup(t),
     large = safePath(f.root, "large-source.bin")

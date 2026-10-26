@@ -8,6 +8,7 @@ import { sourceFailureRetry, combineRetryFailures } from "./source-retry.mjs"
 
 const queue = ".storage/development-pending/"
 const hash = /^[a-f0-9]{64}$/
+const maxEvidencePaths = 40
 const repo = fileURLToPath(new URL("../../", import.meta.url))
 const errorText = (value) =>
   String(value || "unknown failure")
@@ -68,7 +69,7 @@ export function recordDevelopmentDefect(
     !owner ||
     !/^[A-Za-z0-9_-]{1,100}$/.test(stage || "") ||
     !Array.isArray(evidence_paths) ||
-    evidence_paths.length > 40
+    evidence_paths.length > maxEvidencePaths
   )
     throw Error("Bound defect owner, stage and bounded evidence required")
   const jobPath = `module-jobs/${owner.job_id}/input.json`
@@ -279,14 +280,60 @@ export function recordCollectionDefect(
   for (const doc of documents) if (doc.body_path) paths.push(doc.body_path)
   for (const parsed of result?.parses || [])
     if (parsed.parse_id) paths.push(`parses/${parsed.parse_id}/parse.json`)
+  let evidence = [...new Set(paths)],
+    evidenceIndex = null
+  if (evidence.length > maxEvidencePaths) {
+    const files = evidence.map((relative) => {
+      const target = safePath(root, relative, { materialize: false })
+      if (relative.split("/").some((part) => /credential|oauth|secret/i.test(part)))
+        return { path: relative, availability: "sensitive_excluded", sha256: null }
+      if (!fs.existsSync(target))
+        return { path: relative, availability: "unavailable", sha256: null }
+      const before = fs.statSync(target)
+      if (!before.isFile()) throw Error("Defect evidence must be a regular file")
+      const digest = fileHash(target),
+        after = fs.statSync(target)
+      if (before.size !== after.size || before.mtimeMs !== after.mtimeMs)
+        throw Error("Defect evidence changed during capture")
+      return { path: relative, availability: "reference_only", sha256: digest, bytes: before.size }
+    })
+    const bytes = Buffer.from(
+      JSON.stringify({
+        schema: "research-collection-defect-evidence-index/v1",
+        files,
+        snapshot_path_limit: maxEvidencePaths,
+        remaining_paths: "exact source path/SHA references; original files remain preserved",
+      }) + "\n",
+    )
+    if (bytes.length > 8 * 1024 ** 2)
+      throw Error("Defect evidence index exceeds its metadata budget")
+    const digest = sha256(bytes),
+      relative = queue + "indexes/" + digest + ".json"
+    install(root, relative, bytes)
+    evidenceIndex = {
+      path: relative,
+      sha256: digest,
+      total_paths: evidence.length,
+      snapshotted_paths: maxEvidencePaths - 1,
+      reference_only_paths: evidence.length - maxEvidencePaths + 1,
+    }
+    evidence = [relative, ...evidence.slice(0, maxEvidencePaths - 1)]
+  }
   return recordDevelopmentDefect(
     { root, repo },
     {
       owner,
       stage: "collection",
       error,
-      reproduction: { run_id, attempt_id, window, receipt, assessment },
-      evidence_paths: [...new Set(paths)],
+      reproduction: {
+        run_id,
+        attempt_id,
+        window,
+        receipt,
+        assessment,
+        ...(evidenceIndex ? { evidence_index: evidenceIndex } : {}),
+      },
+      evidence_paths: evidence,
     },
   )
 }
