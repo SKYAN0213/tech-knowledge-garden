@@ -144,8 +144,21 @@ export function recordOperationalJobTiming(ctx, jobId) {
     scheduled_runs_counted: 0,
   }
   const relative = `operations/rounds/${round}/timing/${sha256(JSON.stringify(row))}.json`
-  if (!readJSON(ctx.root, relative)) atomicCreate(ctx.root, relative, row)
-  return { path: relative, sha256: sha256(fs.readFileSync(safePath(ctx.root, relative))) }
+  const expected = sha256(JSON.stringify(row, null, 2) + "\n")
+  try {
+    if (!readJSON(ctx.root, relative)) atomicCreate(ctx.root, relative, row)
+  } catch (error) {
+    if (
+      error.code !== "EEXIST" &&
+      error.message !== "New note destination already exists: " + relative
+    )
+      throw error
+    // The worker and its waiting controller may settle the same receipt together.
+    // Reuse only the exact immutable bytes installed by the winning writer.
+  }
+  if (sha256(fs.readFileSync(safePath(ctx.root, relative))) !== expected)
+    throw Error("Operational timing receipt bytes changed")
+  return { path: relative, sha256: expected }
 }
 
 function intervalTotal(intervals) {

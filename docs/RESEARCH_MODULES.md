@@ -796,6 +796,8 @@ node scripts/research-operations.mjs run --round operator-verification-ID --stag
 
 운영 worker와 controller는 완료·실패·reasoning/storage 대기마다 `operations/rounds/<ID>/timing/<SHA>.json`에 회차/소유 job/input SHA·시도·단계별 시간 증거를 불변 저장한다. 첫 7개 실제 정규 회차도 같은 경로를 사용한다. 수동 검증과 과거 transcript 재생은 정규 회차에 포함하지 않는다.
 
+worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하면 먼저 저장된 정확한 bytes/SHA를 재사용한다. 동일 경로의 bytes 변경과 다른 저장 오류는 계속 차단하며, 기록 경합 때문에 완료된 native 단계를 실패로 바꾸거나 다시 실행하지 않는다.
+
 `timing-benchmark --input FILE --sha256 SHA`는 저장된 실제 unowned 요청/결과의 exact SHA와 두 구현 파일 SHA를 고정하고, 이전 코드의 개별 subprocess 제출과 새 코드의 최대3개 묶음 subprocess 제출을 실제 실행한다. 결과의 task/request/model/output SHA·개수와 중복 부재를 대조한다. 모델·통신·검토를 실행하지 않는 이 벤치마크는 **요청 제출 제어 구간**만 측정하며 전체 일일 회차 성능으로 확대하지 않는다. 합성 timestamp replay와 별도 schema/영수증을 사용한다.
 
 로컬 원문 파서 검사에는 운영 venv의 절대 `RESEARCH_PYTHON`을 사용한다. 별도 개발 worktree에 venv가 없다는 이유로 `spawn ... ENOENT`가 발생하면 새 의존성을 설치하거나 검사를 약화하지 말고 기존 검증된 interpreter를 명시한다. 활성 launcher는 이 경로를 자동 전달한다.

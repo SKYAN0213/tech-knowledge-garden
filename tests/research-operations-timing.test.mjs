@@ -10,6 +10,7 @@ import {
   summarizeStageTiming,
   replayControlTiming,
   runControlTimingReplay,
+  recordOperationalJobTiming,
 } from "../scripts/research/operations-timing.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 const at = (n) => new Date(Date.UTC(2026, 9, 25, 0, 0, 0, n)).toISOString()
@@ -129,4 +130,52 @@ test("resume queue timing starts at the latest queue admission rather than the o
     measureJobTimestamps({ attempt: 2, submitted_at: at(0), started_at: at(950) }).dispatch_wait_ms,
     null,
   )
+})
+
+function settledTimingFixture(t) {
+  const f = fixture(t),
+    job = "module-timing-race",
+    operationalRound = { round_id: "timing-race" },
+    input = { module: "edition", parameters: {}, context: { operationalRound } }
+  f.ctx.operationalRound = operationalRound
+  atomicCreate(f.root, `module-jobs/${job}/input.json`, input)
+  atomicCreate(f.root, `module-jobs/${job}/state.json`, {
+    job_id: job,
+    input_sha256: sha256(JSON.stringify(input)),
+    state: "completed",
+    attempt: 1,
+    submitted_at: at(0),
+    started_at: at(10),
+    finished_at: at(20),
+  })
+  return { ...f, job }
+}
+
+test("concurrent timing receipt creation reuses the identical winning bytes", (t) => {
+  const f = settledTimingFixture(t),
+    expected = recordOperationalJobTiming(f.ctx, f.job),
+    file = safePath(f.root, expected.path),
+    bytes = fs.readFileSync(file),
+    exists = fs.existsSync
+  fs.unlinkSync(file)
+  let raced = false
+  t.mock.method(fs, "existsSync", (target) => {
+    if (target === file && !raced) {
+      raced = true
+      // Another writer wins after the initial absence observation.
+      fs.writeFileSync(file, bytes, { flag: "wx" })
+      return false
+    }
+    return exists(target)
+  })
+  assert.deepEqual(recordOperationalJobTiming(f.ctx, f.job), expected)
+  assert.equal(raced, true)
+  assert.deepEqual(fs.readFileSync(file), bytes)
+})
+
+test("an existing timing receipt with changed bytes cannot be reused", (t) => {
+  const f = settledTimingFixture(t),
+    expected = recordOperationalJobTiming(f.ctx, f.job)
+  fs.writeFileSync(safePath(f.root, expected.path), JSON.stringify({ changed: true }))
+  assert.throws(() => recordOperationalJobTiming(f.ctx, f.job), /timing receipt bytes changed/)
 })
