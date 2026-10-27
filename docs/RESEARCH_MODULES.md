@@ -832,3 +832,11 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 같은 계획의 다음 순위 기사를 처리할 때 앞선 기사의 대기·검토 상태를 `queued`로 덮어쓰지 않는다. 배열 순서와 선정 순위가 달라도 최신 전체 frontier에 부분 progress를 덧씌워 방문하지 않은 뒤쪽 상태를 보존한다. 최종 결과에는 모든 선정 기사의 정확한 요청 참조가 남으므로 완료된 batch job의 소유권 검증과 묶음 제출이 가능하다.
 
 모델 요청은 동일 회차의 source-bound run·role·실행 정책·전체 prompt·schema SHA로 `runs/<run>/delegated-requests/`에 불변 참조를 고정한다. 후속 dispatcher는 원 요청 ID·원 소유 job·실제 실행 모델·응답 근거를 유지해 완료 결과를 소비한다. 다른 회차의 미완료 요청이 소유권을 빌려주지 않으며, 완료된 source-bound 모델 단계는 종전의 정확한 입력 캐시로 재사용한다. 모델·원문·prompt·schema가 바뀌면 새 요청이며, 변조된 참조·폐기된 소유 job·아직 대기 근거가 없는 이전 요청은 계속 차단한다. 이 캐시는 사실 검토나 기사 승인을 생성하지 않는다.
+
+## 승인 이후 외부 쓰기 전의 실행본 복구와 발행 구성
+
+`continue --round ID --json`의 명시 `approved_handoff: true`는 모든 선정 기사가 native 승인되었지만 아직 release binding·전달 execution·발행 실행이 없는 회차만 새 수동 실행 구간에 인계한다. 기존 실행본·승인·실패·예약 증거를 보존하고 새 실행본에서 같은 edition·plan·selection·handoff SHA를 다시 검증한다. 외부 쓰기나 결과 불확실성이 시작된 회차는 이 경로로 옮기지 않는다.
+
+새 curated edition 사양의 선택적 `composition_review: {path,sha256}`는 private root의 `research-edition-composition-review/v1`에 연결한다. 실제 검토자가 모든 승인 기사 JSON SHA, 최종 분야, 관련 사건의 읽기 묶음과 구체적 관계 근거를 명시해야 한다. 원문·기사 본문·사건 ID와 승인 파일은 변경하지 않는다. 기존 `related-events/v1` 검증으로 각 분야 최대5개 읽기 항목·전체40개 상세기사 한도를 유지한다. 단순한 초과 회피를 위해 자동 재분류하거나 관계를 생성하지 않는다.
+
+Signals는 이미 명시 승인된 source-publication-time의 정확한 원문 시각이 가리키는 한국 발표일을 재사용한다. 일반 날짜나 source-only 판정에 시간대 변환을 새로 추측하지 않는다.

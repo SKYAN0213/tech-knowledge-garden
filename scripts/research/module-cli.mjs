@@ -123,9 +123,15 @@ export async function moduleCLI(args, selectedModule) {
         v.stage ||
         v.invocation ||
         v["invocation-sha256"] ||
-        Object.keys(parameters).some((key) => !["successor", "reason"].includes(key))
+        Object.keys(parameters).some(
+          (key) => !["successor", "reason", "approved_handoff"].includes(key),
+        ) ||
+        (parameters.approved_handoff !== undefined &&
+          typeof parameters.approved_handoff !== "boolean")
       )
-        throw Error("continue accepts only the exact successor and reason")
+        throw Error(
+          "continue accepts the exact successor, reason and explicit approved_handoff flag",
+        )
       const { continueOperationalRound } = await import("./operations-continuation.mjs")
       return continueOperationalRound(ctx, { ...parameters, run_id: v.round })
     }

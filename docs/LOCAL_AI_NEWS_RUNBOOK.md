@@ -12332,3 +12332,7 @@ MCP fixture는 지속적인 비활성 상위 정책이 있는 `.local/research-t
 connector 응답 대기는 기본5분·최대10분으로 맞추고 native intent의 더 이른 만료를 계속 적용한다. 기존 실행 재개에는 원래 대기값을 명시한다. `article_write`만32768 컨텍스트로 늘렸으며 실제 Luna/high에 전체 검증 사실·인용·Schema를 전달했다. 과거 한도에서 거부되는 실제 입력을 새 비공개 writer에서 처리하고 중요 사실15개를 모두 보존한 native 초안·체크포인트 재사용을 확인했다. 기존 실패와 실제 발행 원고는 유지했고 검증용 초안을 승인·발행하지 않았다.
 
 통합 검증은 Garden2156/2156, MCP27/27, 실제 CLI·프로세스·중단 복구 Python13/13이다. 새 Python 검사는 기존 Pages workflow에도 연결했다. 비공개 근거는 `.local/research/development-releases/tkg-runtime-storage-hardening-20261022-v1/`, 운영 metadata 복구와 추가 보관의 정확한 입력·readback은 `.local/research/cold-fixture-repair-operational-20261022-v1/`에 보존한다. 기존 파일 ID가 있는 보관 묶음은 실제 메타데이터와 기존 raw 검증 근거를 대조해 재사용하고, 원격 ID가 없는 정확한 pending ZIP만 업로드·raw 다운로드·native member 검증한다. 불명확한 쓰기는 같은 ID를 확인하고 반복 업로드하지 않는다.
+
+## 승인된 미발행 회차의 명시 복구
+
+자동 재개는 같은 고정 실행본과 저장 job을 우선 사용한다. 승인 뒤 미리보기 결함으로 실행본 교체가 필요하면 외부 쓰기가 시작되지 않은 경우에만 `approved_handoff: true`로 새 수동 구간을 만들고 같은 native 승인을 인계한다. 기존 회차를 덮어쓰거나 새 정규 실행으로 집계하지 않는다. 발행 구성에서 분야가 큐레이션 판단과 다르거나 한도에 걸리면 실제 관련 사건의 읽기 묶음·최종 분야만 원문 SHA에 결속해 검토한다. 변경 없는 원문·사실·문장을 다시 전부 검토하지 않는다. 분류와 관련 묶음은 `docs/RESEARCH_MODULES.md`의 composition_review 계약을 따른다.

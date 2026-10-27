@@ -3,7 +3,12 @@ import path from "node:path"
 import { canonicalURL, parseNote, walk } from "../garden.mjs"
 import { assertStoredEvidence } from "./parser.mjs"
 import { assertVerifiedClaim } from "./claims.mjs"
-import { assertReviewDate, samePublicationDate } from "./dates.mjs"
+import {
+  assertReviewDate,
+  parseResearchDate,
+  samePublicationDate,
+  seoulPublicationDay,
+} from "./dates.mjs"
 import { assertSignalDateMetadata, assertSignalOccurredAt } from "./signal-dates.mjs"
 import { loadCurrentApproval, loadHistoricalApproval } from "./preview.mjs"
 import { sha256 } from "./contracts.mjs"
@@ -118,11 +123,21 @@ function signalEventBindings(root, facts, observations, vault, historical) {
     articles.push(article)
     const nativeBindings = []
     for (const { source: selected, claim } of facts) {
+      const review = article.article_review
+      // loadCurrent/HistoricalApproval already validates the exact header,
+      // used claim and source parse behind this explicit timezone conversion.
+      // Ordinary source days and source-only bindings keep their existing rule.
+      const publicationMatches =
+        samePublicationDate(review.published_at, claim.published_at) ||
+        (review.date_kind === "source-publication-time" &&
+          parseResearchDate(review.source_published_at)?.precision === "timestamp" &&
+          samePublicationDate(review.source_published_at, claim.published_at) &&
+          seoulPublicationDay(review.source_published_at) === review.published_at)
       if (
         selected.run !== source.run ||
         !publicClaims.has(claim.claim_id) ||
         (claim.event_id && claim.event_id !== article.event_id) ||
-        !samePublicationDate(article.article_review.published_at, claim.published_at) ||
+        !publicationMatches ||
         !claim.evidence.every((e) => {
           const doc = source.documents.find(
             (d) => d.source_id === e.source_id && d.source_version_id === e.source_version_id,

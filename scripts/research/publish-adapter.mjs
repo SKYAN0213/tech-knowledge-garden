@@ -282,6 +282,7 @@ export function editionProjection(
     concept_paths_by_id = {},
     legacy_review = null,
     source_root,
+    briefingGroups = null,
   },
 ) {
   if (
@@ -506,17 +507,19 @@ export function editionProjection(
     knowledge_notes_updated: [],
     ...knowledge,
     ...navigation,
-    ...(legacy_review?.briefing_group_review
-      ? {
-          briefing_group_format: BRIEFING_GROUP_FORMAT,
-          briefing_groups: legacyBriefingGroups(legacy_review, articles),
-        }
-      : existing?.meta.briefing_groups
+    ...(briefingGroups
+      ? { briefing_group_format: BRIEFING_GROUP_FORMAT, briefing_groups: briefingGroups }
+      : legacy_review?.briefing_group_review
         ? {
-            briefing_group_format: existing.meta.briefing_group_format,
-            briefing_groups: structuredClone(existing.meta.briefing_groups),
+            briefing_group_format: BRIEFING_GROUP_FORMAT,
+            briefing_groups: legacyBriefingGroups(legacy_review, articles),
           }
-        : {}),
+        : existing?.meta.briefing_groups
+          ? {
+              briefing_group_format: existing.meta.briefing_group_format,
+              briefing_groups: structuredClone(existing.meta.briefing_groups),
+            }
+          : {}),
     headlines,
     article_records: articles.filter((a) => a.record).map(articleRecord),
     article_reviews: articles.map((a) => a.article_review),

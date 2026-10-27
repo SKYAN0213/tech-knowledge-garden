@@ -30,6 +30,7 @@ import { submitModuleJob } from "../scripts/research/module-runtime.mjs"
 import { readReasoningTask } from "../scripts/research/reasoning-tasks.mjs"
 import { atomicWrite, readJSON, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
+import { assertUnwrittenApprovedHandoff } from "../scripts/research/operations-continuation.mjs"
 import { noteText, parseNote, canonicalURL } from "../scripts/garden.mjs"
 
 function setup(t) {
@@ -268,6 +269,44 @@ test("an approved unpublished article can be curated once through its exact reus
   assert.deepEqual(preview.newEditionRuns, ["writer"])
   assert.deepEqual(preview.knowledgeRuns, [notes.run])
   assert.deepEqual(preview.approvals[0].files, approved.files)
+  const recoveryState = {
+    status: "complete",
+    edition: f.editionRef,
+    curation: preview.curation,
+    publication_handoff: advanced.publication_handoff,
+    canonical_writes: 0,
+    candidate_published: false,
+    stages: { events: { status: "complete" } },
+  }
+  assert.deepEqual(
+    assertUnwrittenApprovedHandoff(f.ctx, recoveryState, "parent"),
+    advanced.publication_handoff,
+  )
+  for (const patch of [
+    { canonical_writes: 1 },
+    { candidate_published: true },
+    { status: "review_pending" },
+    { curation: { ...preview.curation, sha256: "0".repeat(64) } },
+  ])
+    assert.throws(() =>
+      assertUnwrittenApprovedHandoff(f.ctx, { ...recoveryState, ...patch }, "parent"),
+    )
+  atomicWrite(f.root, "runs/parent-delivery/publication-delivery/binding.json", { unit_only: true })
+  assert.throws(
+    () => assertUnwrittenApprovedHandoff(f.ctx, recoveryState, "parent"),
+    /External publication/,
+  )
+  fs.unlinkSync(safePath(f.root, "runs/parent-delivery/publication-delivery/binding.json"))
+  atomicWrite(f.root, "runs/parent-delivery/publication-delivery/executions/partial/spec.json", {
+    unit_only: true,
+  })
+  assert.throws(
+    () => assertUnwrittenApprovedHandoff(f.ctx, recoveryState, "parent"),
+    /External publication/,
+  )
+  fs.rmSync(safePath(f.root, "runs/parent-delivery/publication-delivery/executions"), {
+    recursive: true,
+  })
   const projected = newEditionProjections(
     f.ctx.vault,
     [preview.approvals[0].article],

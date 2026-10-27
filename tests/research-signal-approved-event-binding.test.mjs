@@ -20,14 +20,20 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 // The source timestamp also deliberately crosses a Korean calendar boundary.
 function fixture(
   t,
-  { approved = true, claimEventId = null, urlIdentity = false, dayOnly = false } = {},
+  {
+    approved = true,
+    claimEventId = null,
+    urlIdentity = false,
+    dayOnly = false,
+    publicationTimeBasis = false,
+  } = {},
 ) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "signal-approved-event-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const vault = path.join(root, "vault")
   fs.mkdirSync(vault)
   const published = dayOnly ? "2026-09-22" : "2026-09-22T15:30:00-07:00",
-    articleDay = "2026-09-22",
+    articleDay = publicationTimeBasis ? "2026-09-23" : "2026-09-22",
     reviewed = "2026-09-24",
     url = "https://fixture.example/events",
     body = "Acme launched Alpha on 2026-09-20. Acme launched Beta on 2026-09-19."
@@ -52,7 +58,17 @@ function fixture(
         parse_id: pid,
         title: "Acme announcements",
         status: "extracted",
-        dates: { published_at: published, observed_at: doc.observed_at },
+        dates: {
+          published_at: published,
+          observed_at: doc.observed_at,
+          ...(publicationTimeBasis
+            ? {
+                precision: "timestamp",
+                profile_status: "matched",
+                basis: { type: "json-ld", dom_path: "/head/script", text: published },
+              }
+            : {}),
+        },
         quality: { missing_pages: [] },
         blocks: [{ block_id: `${pid}:b1`, text: body, locator: { text_hash: sha256(body) } }],
       }
@@ -138,6 +154,19 @@ function fixture(
         reviewed_at: reviewed,
         region: "해외",
         concept_ids: [],
+        ...(publicationTimeBasis
+          ? {
+              event_date_basis: {
+                kind: "source-publication-time",
+                source_id: sid,
+                source_version_id: version,
+                parse_id: pid,
+                claim_id: claim.claim_id,
+                source_published_at: published,
+                timezone: "Asia/Seoul",
+              },
+            }
+          : {}),
       }
     atomicWrite(root, doc.body_path, body)
     atomicWrite(root, `parses/${pid}/parse.json`, parse)
@@ -230,6 +259,33 @@ test("Signals create reuses the current approved event ID and article publicatio
   assert.equal(observation.event_date, f.first.articleDay)
   assert.equal(result.candidate_published, false)
   assert.equal(fs.existsSync(path.join(f.vault, result.notes[0].path)), false)
+})
+
+test("Signals reuse an explicitly approved KST publication day without changing source precision", (t) => {
+  const f = fixture(t, { publicationTimeBasis: true }),
+    originalClaims = fs.readFileSync(path.join(f.root, "runs/alpha/reviewed-claims.json")),
+    result = f.evaluate(),
+    observation = parseNote(result.notes[0].content).meta.observations[0]
+  assert.equal(observation.event_date, "2026-09-23")
+  assert.equal(observation.event_id, f.first.eventId)
+  assert.ok(result.source_files[0].files["approved-article.json"])
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "runs/alpha/reviewed-claims.json")),
+    originalClaims,
+  )
+  for (const input of [
+    f.decision({ date: "2026-09-22" }),
+    f.decision({ date: f.first.published }),
+    f.decision({ claimIds: [f.first.claims[1].claim_id] }),
+    f.decision({ evidence: [f.second] }),
+    f.decision({ evidence: [f.other] }),
+  ])
+    assert.throws(() => f.evaluate(input), /reviewed source event/)
+  const unconverted = fixture(t)
+  assert.throws(
+    () => unconverted.evaluate(unconverted.decision({ date: "2026-09-23" })),
+    /reviewed source event/,
+  )
 })
 
 test("approved event occurred_at uses its own cited claim without changing source timestamp", (t) => {

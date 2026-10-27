@@ -12,6 +12,7 @@ import { reasoningTasks, submitReasoningBatch } from "./reasoning-tasks.mjs"
 import { summarizeStageTiming, recordOperationalJobTiming } from "./operations-timing.mjs"
 import { executionRepository } from "./operations-deployment.mjs"
 import { checkedOperationalInvocation } from "./schedule-contract.mjs"
+import { assertUnwrittenApprovedHandoff } from "./operations-continuation.mjs"
 
 export function operationalRoundStatus(ctx, run) {
   const base = operationalBase(run)
@@ -155,6 +156,19 @@ export async function runOperationalRound(
       throw Error("Unsupported publication transition")
     const supplied = p.parameters || {}
     const recovery = pinned.input.continuation && readJSON(ctx.root, pinned.input.continuation.path)
+    if (recovery?.approved_handoff && module === "edition") {
+      const checkpoint = readJSON(ctx.root, recovery.checkpoint.path)
+      if (
+        sha256(fs.readFileSync(safePath(ctx.root, recovery.checkpoint.path))) !==
+        recovery.checkpoint.sha256
+      )
+        throw Error("Approved publication recovery checkpoint changed")
+      assertUnwrittenApprovedHandoff(
+        ctx,
+        checkpoint,
+        readJSON(ctx.root, recovery.parent.path).run_id,
+      )
+    }
     if (recovery && supplied.daily_run && supplied.daily_run !== recovery.daily_run)
       throw Error("Continuation must reuse its original daily collection")
     if (recovery?.processing && module === "edition") {

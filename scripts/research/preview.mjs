@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { reviewedEditionComposition } from "./edition-composition.mjs"
 import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
 import path from "node:path"
 import { spawn } from "node:child_process"
@@ -465,7 +466,16 @@ export function newEditionProjections(
     spec.schema !== "research-private-edition/v1" ||
     !["private_slice", "historical_backfill"].includes(spec.intent) ||
     Object.keys(spec).some(
-      (key) => !["schema", "intent", "key", "date", "coverage_start", "coverage_end"].includes(key),
+      (key) =>
+        ![
+          "schema",
+          "intent",
+          "key",
+          "date",
+          "coverage_start",
+          "coverage_end",
+          "composition_review",
+        ].includes(key),
     )
   )
     throw Error("Explicit private new-edition specification required")
@@ -598,9 +608,18 @@ export function newEditionProjections(
         throw Error("Duplicate canonical knowledge concept ID: " + meta.concept_id)
       conceptPaths[meta.concept_id] = notePath
     }
-  const projection = editionProjection(approvals, {
+  const composition =
+    spec.composition_review !== undefined
+      ? reviewedEditionComposition(root, spec.composition_review, {
+          spec,
+          curation,
+          articles: approvals,
+        })
+      : null
+  const projection = editionProjection(composition?.articles || approvals, {
     ...spec,
     concept_paths_by_id: conceptPaths,
+    ...(composition?.groups.length ? { briefingGroups: composition.groups } : {}),
   })
   return [{ ...projection, event_ids: approvals.map((a) => a.event_id) }]
 }

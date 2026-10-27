@@ -5,6 +5,55 @@ import { readOperationGate } from "./operation-policy.mjs"
 import { executionRepository, assertNoOperationalWriter } from "./operations-deployment.mjs"
 import { pinOperationalRound, operationalBase } from "./operations-release.mjs"
 import { checkedOperationalInvocation, captureManualInvocation } from "./schedule-contract.mjs"
+import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
+
+export function assertUnwrittenApprovedHandoff(ctx, state, run) {
+  if (
+    state?.status !== "complete" ||
+    !state.edition ||
+    !state.curation ||
+    !state.publication_handoff ||
+    state.canonical_writes !== 0 ||
+    state.candidate_published !== false ||
+    state.stages?.events?.status !== "complete"
+  )
+    throw Error("Publication recovery requires a complete approved, unwritten handoff")
+  checked(ctx.root, state.publication_handoff)
+  const handoff = loadDailyPublicationSelection(ctx.root, state.publication_handoff.path, {
+    vault: ctx.vault,
+  })
+  if (
+    !handoff.approvedRuns.length ||
+    JSON.stringify(handoff.curation) !== JSON.stringify(state.curation)
+  )
+    throw Error("Publication recovery must retain its exact curated approvals")
+  // A request alone has no external effects. Any release binding, execution or
+  // publication command beyond that request must remain on its original code.
+  const commands = safePath(ctx.root, operationalBase(run) + "commands", { materialize: false })
+  const deliveries = new Set([run + "-delivery"])
+  for (const name of fs.existsSync(commands) ? fs.readdirSync(commands) : []) {
+    if (!name.endsWith(".json")) continue
+    const command = readJSON(ctx.root, operationalBase(run) + "commands/" + name)
+    if (command.stage !== "publication") continue
+    if (command.operation !== "request_delivery")
+      throw Error("External publication execution cannot move to another release")
+    const id = command.parameters?.run_id
+    if (id) deliveries.add(id)
+  }
+  for (const id of deliveries) {
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) throw Error("Exact delivery identity required")
+    const delivery = `runs/${id}/publication-delivery/`
+    for (const file of ["binding.json", "latest.json"])
+      if (readJSON(ctx.root, delivery + file))
+        throw Error("External publication execution cannot move to another release")
+    const executions = safePath(ctx.root, delivery + "executions", { materialize: false })
+    if (fs.existsSync(executions) && fs.readdirSync(executions).length)
+      throw Error("External publication execution cannot move to another release")
+    if (readJSON(ctx.root, `runs/${id}/publication-operation/input.json`))
+      throw Error("External publication execution cannot move to another release")
+  }
+  return state.publication_handoff
+}
 
 function reference(root, file) {
   return { path: file, sha256: sha256(fs.readFileSync(safePath(root, file))) }
@@ -52,7 +101,12 @@ function requireUnreviewedSelection(ctx, state, run) {
 
 // An explicit, quiescent recovery creates a new execution segment. It never
 // replaces the old immutable pin, its jobs, its workflow or scheduler claim.
-export async function continueOperationalRound(ctx, { run_id, successor, reason }) {
+export async function continueOperationalRound(
+  ctx,
+  { run_id, successor, reason, approved_handoff = false },
+) {
+  if (typeof approved_handoff !== "boolean")
+    throw Error("Explicit boolean approved_handoff required")
   operationalBase(run_id)
   operationalBase(successor)
   if (run_id === successor || typeof reason !== "string" || !reason.trim() || reason.length > 1000)
@@ -91,8 +145,12 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       state.article_writes === 0 &&
       state.canonical_writes === 0 &&
       state.candidate_published === false
+    const approvedHandoff =
+      approved_handoff === true ? assertUnwrittenApprovedHandoff(ctx, state, run_id) : null
     if (
-      (!selectedHandoff && (!collectionOnly || workflow?.source?.kind !== "daily")) ||
+      (!selectedHandoff &&
+        !approvedHandoff &&
+        (!collectionOnly || workflow?.source?.kind !== "daily")) ||
       (collectionOnly && (state.event_workflow || state.publication_handoff))
     )
       throw Error(
@@ -117,18 +175,19 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       reference(ctx.repo, "data/research-model-policy-codex.json").sha256 !== workflow.policy.sha256
     )
       throw Error("Collection model policy changed")
-    const processing = selectedHandoff
-      ? {
-          edition: state.edition,
-          curation: state.curation,
-          ...(state.plan ? { plan: state.plan } : {}),
-        }
-      : null
+    const processing =
+      selectedHandoff || approvedHandoff
+        ? {
+            edition: state.edition,
+            curation: state.curation,
+            ...(state.plan ? { plan: state.plan } : {}),
+          }
+        : null
     if (processing) for (const ref of Object.values(processing)) checked(ctx.root, ref)
     if (processing) {
       if (checked(ctx.root, state.edition).daily_run !== origin.source.daily_run)
         throw Error("Selected handoff belongs to another daily collection")
-      requireUnreviewedSelection(ctx, state, run_id)
+      if (!approvedHandoff) requireUnreviewedSelection(ctx, state, run_id)
     }
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
@@ -141,6 +200,7 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       invocation: parent.invocation,
       daily_run: origin.source.daily_run,
       ...(processing ? { processing } : {}),
+      ...(approvedHandoff ? { approved_handoff: approvedHandoff } : {}),
       prior_release: parent.release_id,
       release_id: gate.release_id,
       successor,
