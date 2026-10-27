@@ -26,6 +26,8 @@ import { requestPublicationDelivery } from "../scripts/research/authoring-delive
 import { reviewEditionEvents } from "../scripts/research/event-pipeline.mjs"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
+import { submitModuleJob } from "../scripts/research/module-runtime.mjs"
+import { readReasoningTask } from "../scripts/research/reasoning-tasks.mjs"
 import { atomicWrite, readJSON, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { noteText, parseNote, canonicalURL } from "../scripts/garden.mjs"
@@ -654,7 +656,7 @@ test("a round drives selected events from multiple plans and exposes every owned
     p.value.candidates.map((candidate) => rating(f, candidate, 5)),
   )
   const chosen = await choose(f, p)
-  const result = await executeModule(f.ctx, "edition", "advance", {
+  const parameters = {
     run_id: "round-multi-owned",
     round: true,
     edition_path: f.editionRef.path,
@@ -666,12 +668,24 @@ test("a round drives selected events from multiple plans and exposes every owned
     execute: true,
     max_items: 2,
     max_model_calls: 2,
+  }
+  const job = await submitModuleJob(f.ctx, "edition", "advance", parameters, {
+    jobId: "module-round-multi-owned",
+    background: false,
   })
+  assert.equal(job.state, "completed")
+  const result = readJSON(f.root, job.result.path).data
   assert.equal(result.status, "waiting_for_reasoning")
   assert.ok(result.event_workflow.path.startsWith("curation/runs/"))
   const requests = result.next_inputs.filter((row) => row.stage === "reasoning")
   assert.equal(requests.length, 2)
   assert.ok(requests.every((row) => row.candidate_id && row.reasoning_task))
+  for (const row of requests) {
+    const task = readReasoningTask(f.root, row.reasoning_task)
+    assert.equal(task.status, "reasoning_pending")
+    assert.equal(task.owner.job_id, job.job_id)
+    assert.equal(task.owner.input_sha256, job.input_sha256)
+  }
   assert.equal(result.canonical_writes, 0)
   assert.equal(result.candidate_published, false)
 })
