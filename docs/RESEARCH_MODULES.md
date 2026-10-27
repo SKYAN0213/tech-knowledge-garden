@@ -840,3 +840,5 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 새 curated edition 사양의 선택적 `composition_review: {path,sha256}`는 private root의 `research-edition-composition-review/v1`에 연결한다. 실제 검토자가 모든 승인 기사 JSON SHA, 최종 분야, 관련 사건의 읽기 묶음과 구체적 관계 근거를 명시해야 한다. 원문·기사 본문·사건 ID와 승인 파일은 변경하지 않는다. 기존 `related-events/v1` 검증으로 각 분야 최대5개 읽기 항목·전체40개 상세기사 한도를 유지한다. 단순한 초과 회피를 위해 자동 재분류하거나 관계를 생성하지 않는다.
 
 Signals는 이미 명시 승인된 source-publication-time의 정확한 원문 시각이 가리키는 한국 발표일을 재사용한다. 일반 날짜나 source-only 판정에 시간대 변환을 새로 추측하지 않는다.
+
+승인 문장의 inline code는 일치하는 backtick 길이를 따라 그대로 렌더링한다. 일반 문장에만 밑줄·물결·해시를 escape하며, API 필드명 내부에 표시용 역슬래시를 삽입하지 않는다. native 승인·원문·문장 SHA는 유지하고 실제 렌더링의 문장/출처 대조를 통과해야 한다.

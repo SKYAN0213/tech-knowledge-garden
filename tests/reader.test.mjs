@@ -50,6 +50,25 @@ test("approved plain identifiers retain literal underscores through production M
   assert.deepEqual(formatting, [])
 })
 
+test("approved inline code preserves exact identifiers without visible escape characters", async () => {
+  const source =
+    "필드는 `totals_by_client`와 `request_count`다. ``literal `tick` #AI_~``도 보존한다. #AI와 1~2는 일반 문장이다."
+  const escaped = markdownProse(source)
+  assert.equal(markdownProse(escaped), escaped)
+  const processor = unified().use(remarkParse)
+  const tree = await processor.run(processor.parse(escaped))
+  const values = []
+  function visit(node) {
+    if (node.type === "inlineCode") values.push(node.value)
+    for (const child of node.children || []) visit(child)
+  }
+  visit(tree)
+  assert.deepEqual(values, ["totals_by_client", "request_count", "literal `tick` #AI_~"])
+  assert.ok(escaped.includes("\\#AI와 1\\~2"))
+  assert.equal(markdownProse("\\`unclosed_total"), "\\`unclosed\\_total")
+  assert.equal(markdownProse("`unclosed_total"), "`unclosed\\_total")
+})
+
 test("production Markdown preserves command flags, quotes and numeric punctuation", async () => {
   const config = YAML.parse(fs.readFileSync("quartz.config.yaml", "utf8"))
   const options = config.plugins.find(
