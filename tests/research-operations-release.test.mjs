@@ -328,6 +328,54 @@ test("explicit continuation preserves the frozen parent, scheduler claim and ori
   assert.throws(() => inspectOperationalPin(f.ctx, p.successor), /evidence changed/)
 })
 
+test("an explicit selected-handoff recovery pins a new manual segment and rejects changed or recollected inputs", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const parentPath = `operations/rounds/${f.p.run_id}/input.json`
+  const before = fs.readFileSync(path.join(f.root, parentPath))
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  const edition = atomicCreate(f.root, "unit-edition.json", { unit_only: true })
+  const curation = atomicCreate(f.root, "unit-selection.json", { unit_only: true })
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, {
+    status: "curation_ready",
+    input_sha256: sha256(JSON.stringify(workflow)),
+    edition,
+    curation,
+    article_writes: 0,
+    canonical_writes: 0,
+    candidate_published: false,
+  })
+  const p = {
+    run_id: f.p.run_id,
+    successor: "selected-recovery",
+    reason: "Recover the reviewed immutable selection",
+  }
+  const result = await continueOperationalRound(f.ctx, p)
+  const proof = readJSON(f.root, result.source.path)
+  assert.deepEqual(proof.processing, { edition, curation })
+  assert.deepEqual(fs.readFileSync(path.join(f.root, parentPath)), before)
+  const child = inspectOperationalPin(f.ctx, p.successor)
+  assert.equal(checkedOperationalInvocation(f.ctx, child.invocation).kind, "manual")
+  assert.equal(result.scheduled_runs_counted, 0)
+  for (const parameters of [
+    { collect: true },
+    { daily_run: "daily-original" },
+    { edition_path: "foreign.json" },
+    { curation_sha256: "a".repeat(64) },
+  ])
+    await assert.rejects(
+      runOperationalRound(f.ctx, { run_id: p.successor, stage: "collection", parameters }),
+      /Selected continuation/,
+    )
+  assert.equal(fs.existsSync(path.join(f.root, "module-jobs")), false)
+})
+
 test("activation binds the actual Git workspace and existing dependency trees without copying content", async (t) => {
   const f = await setup(t)
   for (const dir of ["node_modules", "integrations/research-mcp/node_modules"])

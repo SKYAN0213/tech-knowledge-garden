@@ -435,13 +435,39 @@ export class DelegatedReasoning {
     }
   }
   request(input) {
+    if (!/^[A-Za-z0-9_-]{1,160}$/.test(this.run || ""))
+      throw Error("Bound run, role and model policy required")
     const { on_progress, timeout_ms, ...content } = input
-    return createReasoningTask(this.root, {
+    const body = bounded({
+      schema: "research-reasoning-request/v1",
       run: this.run,
       role: this.role,
       binding: this.executionPolicy,
       input: content,
     })
+    // Dispatcher identity must not turn an unchanged model request into a new
+    // generation. Keep the original owner and its immutable response evidence.
+    const file = `runs/${this.run}/delegated-requests/${sha256(JSON.stringify(body))}.json`
+    const previous = readJSON(this.root, file)
+    if (previous) {
+      const request = load(this.root, previous.task_id, previous.request_sha256)
+      const { owner, task_id, request_sha256, ...stored } = request
+      if (JSON.stringify(stored) !== JSON.stringify(body))
+        throw Error("Delegated request binding changed")
+      assertActive(this.root, request)
+      return request
+    }
+    const request = createReasoningTask(this.root, {
+      run: this.run,
+      role: this.role,
+      binding: this.executionPolicy,
+      input: content,
+    })
+    atomicCreate(this.root, file, {
+      task_id: request.task_id,
+      request_sha256: request.request_sha256,
+    })
+    return request
   }
   async prepareStructured(input) {
     const request = this.request(input)

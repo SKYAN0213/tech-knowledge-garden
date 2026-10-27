@@ -243,6 +243,12 @@ export async function advanceEventWorkflow(
         continue
       }
       const priorRow = previousRows.get(event.group_id)
+      // Ranked curation visits one selected group at a time. Keep the other
+      // groups' exact checkpoints so their owned requests remain in the result.
+      if (p.curation_focus_group && p.curation_focus_group !== event.group_id) {
+        rows.push(priorRow || { ...row, status: "queued" })
+        continue
+      }
       if (p.execute && priorRow?.status === "failed" && !retryGroups.includes(event.group_id)) {
         failures.push({ group_id: event.group_id, error: priorRow.error })
         rows.push({ ...priorRow, retry_skipped: true })
@@ -273,7 +279,6 @@ export async function advanceEventWorkflow(
       }
       if (
         !p.execute ||
-        (p.curation_focus_group && p.curation_focus_group !== event.group_id) ||
         handled >= (p.max_items || 4) ||
         (p.max_model_calls !== undefined && modelCalls >= p.max_model_calls) ||
         clock() - started >= (p.time_budget_ms || 600000)

@@ -22,7 +22,9 @@ import {
   readReasoningTask,
   submitReasoningResult,
   executeReasoningTask,
+  DelegatedReasoning,
 } from "../scripts/research/reasoning-tasks.mjs"
+import { withRequestOwner } from "../scripts/research/request-ownership.mjs"
 import { readJSON, atomicWrite, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import {
@@ -41,6 +43,95 @@ const schema = {
 }
 const requestOf = (f, task) =>
   JSON.parse(readReasoningTask(f.root, { ...task, limit: 64000 }).chunk)
+
+test("a successor dispatcher consumes the original exact delegated response without generating another request", async (t) => {
+  const f = fixture(t)
+  const owner = (name) => {
+    const input = { job_id: "module-" + name, parameters: { run_id: "same-workflow" } }
+    const input_sha256 = sha256(JSON.stringify(input))
+    atomicWrite(f.root, `module-jobs/${input.job_id}/input.json`, input)
+    atomicWrite(f.root, `module-jobs/${input.job_id}/state.json`, {
+      state: "running",
+      input_sha256,
+    })
+    return { job_id: input.job_id, input_sha256 }
+  }
+  const first = owner("delegated-original"),
+    next = owner("delegated-successor")
+  const provider = new DelegatedReasoning({
+    root: f.root,
+    run: "stable-delegation",
+    role: "fact_extract",
+    settings: { model: "gpt-6-luna", think: "high" },
+  })
+  provider.executionPolicy = { settings: { model: "gpt-6-luna" } }
+  const input = {
+    model: "gpt-6-luna",
+    think: "high",
+    schema,
+    messages: [{ role: "user", content: "Exact original source" }],
+  }
+  let original
+  await assert.rejects(
+    withRequestOwner(first, () => provider.prepareStructured(input)),
+    (error) => {
+      original = error.reasoning_task
+      return error.code === "REASONING_PENDING"
+    },
+  )
+  atomicWrite(f.root, `module-jobs/${first.job_id}/state.json`, {
+    state: "waiting_for_reasoning",
+    input_sha256: first.input_sha256,
+    reasoning_task: original,
+  })
+  await submitReasoningResult(f.root, {
+    ...original,
+    executor: "codex",
+    model: "gpt-6-luna",
+    output: { answer: "Source verified" },
+  })
+  const response = await withRequestOwner(next, () => provider.structured(input))
+  assert.deepEqual(response.output, { answer: "Source verified" })
+  assert.equal(response.provenance.task_id, original.task_id)
+  assert.equal(fs.readdirSync(safePath(f.root, "reasoning-tasks")).length, 1)
+  await assert.rejects(
+    withRequestOwner(next, () =>
+      provider.prepareStructured({
+        ...input,
+        messages: [{ role: "user", content: "Changed original source" }],
+      }),
+    ),
+    (e) => e.code === "REASONING_PENDING",
+  )
+  atomicWrite(f.root, `module-jobs/${first.job_id}/retired.json`, {
+    reason: "Preserved discarded experiment",
+  })
+  assert.throws(() => provider.request(input), /owner job is retired/)
+})
+
+test("stable delegated references cannot be redirected to a different prompt", async (t) => {
+  const f = fixture(t)
+  const provider = new DelegatedReasoning({
+    root: f.root,
+    run: "stable-tamper",
+    role: "fact_extract",
+    settings: { model: "gpt-6-luna" },
+  })
+  provider.executionPolicy = { settings: { model: "gpt-6-luna" } }
+  const input = { model: "gpt-6-luna", schema, messages: [{ role: "user", content: "Original" }] }
+  const one = provider.request(input)
+  const two = provider.request({ ...input, messages: [{ role: "user", content: "Other source" }] })
+  const refs = fs.readdirSync(safePath(f.root, "runs/stable-tamper/delegated-requests"))
+  const file = refs.find(
+    (file) =>
+      readJSON(f.root, `runs/stable-tamper/delegated-requests/${file}`).task_id === one.task_id,
+  )
+  atomicWrite(f.root, `runs/stable-tamper/delegated-requests/${file}`, {
+    task_id: two.task_id,
+    request_sha256: two.request_sha256,
+  })
+  assert.throws(() => provider.request(input), /Delegated request binding changed/)
+})
 
 test("Codex article policy preserves complete long facts and schema beyond the old writing ceiling", async (t) => {
   const f = fixture(t)

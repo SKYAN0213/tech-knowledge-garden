@@ -605,6 +605,77 @@ test("curation preserves real Codex delegation task references instead of treati
   assert.equal(result.candidate_published, false)
 })
 
+test("curation retains every selected reasoning wait when ranked events share one plan", async (t) => {
+  const f = setup(t)
+  f.ctx.policy = path.join(f.ctx.repo, "data/research-model-policy-codex.json")
+  const second = { ...f.deferred, action: "write" }
+  const p = await pool(
+    f,
+    "codex-ranked-waits",
+    [await plan(f, "codex-ranked-plan", [f.event, second])],
+    2,
+  )
+  await review(
+    f,
+    p,
+    p.value.candidates.map((c) => rating(f, c, 5)),
+  )
+  const chosen = await choose(f, p)
+  const result = await advanceCuration(f.ctx, {
+    run_id: "codex-ranked-wait",
+    selection_path: chosen.path,
+    selection_sha256: chosen.sha256,
+    execute: true,
+    max_items: 2,
+    max_model_calls: 2,
+  })
+  assert.equal(result.rows.length, 2)
+  assert.deepEqual(
+    result.rows.map((r) => r.status),
+    ["waiting_for_reasoning", "waiting_for_reasoning"],
+  )
+  assert.equal(result.reasoning_tasks.length, 2)
+  assert.deepEqual(
+    new Set(result.reasoning_tasks.map((r) => r.group_id)),
+    new Set([f.event.group_id, second.group_id]),
+  )
+  assert.equal(result.candidate_published, false)
+})
+
+test("a round drives selected events from multiple plans and exposes every owned review boundary", async (t) => {
+  const f = setup(t)
+  f.ctx.policy = path.join(f.ctx.repo, "data/research-model-policy-codex.json")
+  const first = await plan(f, "round-multi-a", [f.event])
+  const second = await plan(f, "round-multi-b", [{ ...f.deferred, action: "write" }])
+  const p = await pool(f, "round-multi-selection", [first, second], 2)
+  await review(
+    f,
+    p,
+    p.value.candidates.map((candidate) => rating(f, candidate, 5)),
+  )
+  const chosen = await choose(f, p)
+  const result = await executeModule(f.ctx, "edition", "advance", {
+    run_id: "round-multi-owned",
+    round: true,
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: first.path,
+    plan_sha256: first.sha256,
+    curation_path: chosen.path,
+    curation_sha256: chosen.sha256,
+    execute: true,
+    max_items: 2,
+    max_model_calls: 2,
+  })
+  assert.equal(result.status, "waiting_for_reasoning")
+  assert.ok(result.event_workflow.path.startsWith("curation/runs/"))
+  const requests = result.next_inputs.filter((row) => row.stage === "reasoning")
+  assert.equal(requests.length, 2)
+  assert.ok(requests.every((row) => row.candidate_id && row.reasoning_task))
+  assert.equal(result.canonical_writes, 0)
+  assert.equal(result.candidate_published, false)
+})
+
 test("new MCP round stops for curation before creating writers", async (t) => {
   const f = setup(t),
     planned = await plan(f, "round-plan", [f.event])

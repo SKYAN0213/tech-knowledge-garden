@@ -157,6 +157,20 @@ export async function runOperationalRound(
     const recovery = pinned.input.continuation && readJSON(ctx.root, pinned.input.continuation.path)
     if (recovery && supplied.daily_run && supplied.daily_run !== recovery.daily_run)
       throw Error("Continuation must reuse its original daily collection")
+    if (recovery?.processing && module === "edition") {
+      if (supplied.daily_run || supplied.report_path || supplied.collect === true)
+        throw Error("Selected continuation must reuse its immutable edition")
+      for (const [name, ref] of Object.entries(recovery.processing)) {
+        if (
+          (supplied[name + "_path"] && supplied[name + "_path"] !== ref.path) ||
+          (supplied[name + "_sha256"] && supplied[name + "_sha256"] !== ref.sha256)
+        )
+          throw Error("Selected continuation handoff changed")
+        supplied[name + "_path"] = ref.path
+        supplied[name + "_sha256"] = ref.sha256
+      }
+      supplied.propose = false
+    }
     const collect = p.stage === "collection" && !supplied.report_path && !supplied.edition_path
     let parameters =
       module === "edition"

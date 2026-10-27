@@ -809,7 +809,7 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 
 완료한 수집 job의 재조회가 다음 묶음을 막던 문제를 수정했다. `resume`은 완료 job과 결과를 유지하고, 현재 round 체크포인트의 불변 사본과 이전 결과 SHA에 결속한 후속 command/job을 생성한다. 제출 직전 종료되었으면 같은 command를 재전송하며 새 작업을 중복 생성하지 않는다. 진행이 없는 묶음은 반복하지 않고 `no_progress`로 원인 확인을 요구한다. 제어기는 자체 사망 lease만 명시 `drive` 재개에서 회수하며 native source·module·원격 writer 잠금을 임의 회수하지 않는다. worker 확인 불가도 대체 실행을 허용하지 않는다. 실행 중에는 해당 job만 조회하고 전체 manifest 검증은 단계 전환에서 수행한다.
 
-운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. 정리/모델/발행이 시작된 회차는 이 경로로 옮기지 않는다. 새 구간은 수동 복구이며 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라가며 결과에 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다. 데이터 수집을 처음부터 다시 하지 않는다.
+운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. 추가로 `curation_ready`에서 원고·정본 쓰기·event workflow·발행 handoff가 아직 없는 경우에만 정확한 frozen edition·plan·selection SHA를 별도 수동 구간에 인계할 수 있다. 기존 모델 요청·검토·실패는 이전 소유 job에 남기며 덮어쓰지 않는다. 후속 실행은 고정 자료를 사용하고 재수집·다른 selection 주입을 거부한다. 새 구간은 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라가며 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다.
 
 원 예약의 `next_command`로 재진입할 때는 launcher가 각 continuation의 부모 pin·체크포인트·후속 pin을 검증하고, 부모의 정확한 invocation path/SHA만 후속 실행의 저장 invocation으로 연결한다. 다른 회차의 invocation이나 반쪽 path/SHA는 거부한다. 원 예약 증거와 수동 복구 구분은 보존한다.
 
@@ -823,4 +823,12 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 
 반환한 `next_command`를 그대로 실행한다. 최초 collection은 회차 ID를 daily ID로 사용하고 기본6창/10분의 기존 수집기를 호출한다. `--stage` 생략 시 저장 상태에 따라 collection/processing/publication을 프로그램이 선택한다. 새 processing 요청은 기존 원문 제안과 검토 관문을 준비하며 모델·사실·편집 승인을 자동 생성하지 않는다. 동일 command의 완료 결과는 재사용한다. 정규 발행 요청의 실제 frozen collection basis도 해당 daily 포인터에서 읽고 native 검증기에 전달한다. 명시 report/edition 입력의 수동 검증은 수집 네트워크를 재실행하지 않는다.
 
-최초7회 관찰은 미래 실제 예약 회차의 단계별 시간 기록이며, 과거 발행·수동 검증·시간 재생으로 횟수를 채우지 않는다. 새 실행본 승격은 기존 정규 회차의 writer와 발행을 마친 뒤 수행한다. 개발은 별도 worktree에 유지한다.
+최초7회 관찰은 미래 실제 예약 회차의 단계별 시간 기록이며, 과거 발행·수동 검증·시간 재생으로 횟수를 채우지 않는다. 새 실행본 승격은 기존 writer가 종료된 뒤 수행하며, 진행 중 회차의 pin을 교체하지 않는다. 개발은 별도 worktree에 유지한다.
+
+### 선정 처리의 자동 재개와 요청 보존
+
+여러 계획에서 선정된 기사도 `edition.advance`의 round 제어 안에서 기존 `curation.advance`를 실행한다. 소유 round/job/input SHA, candidate ID, 정확한 사실·완결성·편집·coverage 검토 요청과 최종 native handoff를 같은 상태 경로로 반환한다. 별도 날짜 스크립트나 전역 pending 목록으로 처리 순서를 조립하지 않는다. `execute: false`는 종전의 독립 모듈 인계 경계를 그대로 조회한다.
+
+같은 계획의 다음 순위 기사를 처리할 때 앞선 기사의 대기·검토 상태를 `queued`로 덮어쓰지 않는다. 최종 결과에는 모든 선정 기사의 정확한 요청 참조가 남으므로 완료된 batch job의 소유권 검증과 묶음 제출이 가능하다.
+
+모델 요청은 source-bound run·role·실행 정책·전체 prompt·schema SHA로 `runs/<run>/delegated-requests/`에 불변 참조를 고정한다. 후속 dispatcher는 원 요청 ID·원 소유 job·실제 실행 모델·응답 근거를 유지해 완료 결과를 소비한다. 모델·원문·prompt·schema가 바뀌면 새 요청이며, 변조된 참조·폐기된 소유 job·아직 대기 근거가 없는 이전 요청은 계속 차단한다. 이 캐시는 사실 검토나 기사 승인을 생성하지 않는다.

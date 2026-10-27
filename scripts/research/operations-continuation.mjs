@@ -43,19 +43,27 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
     for (const ref of [parent.completion, parent.manifest, parent.policy, parent.installation])
       checked(oldRuntime, ref)
     const originalInvocation = checkedOperationalInvocation(ctx, parent.invocation)
-    // Collection is the only safe automatic cross-release handoff. Pending
-    // model/review/delivery work must stay with its exact implementation.
+    // Recovery never changes an existing pin. A frozen selected handoff may
+    // start a separate manual segment; its original jobs and reviews stay put.
     const workflow = readJSON(ctx.root, `round-workflows/${run_id}/input.json`)
     const state = readJSON(ctx.root, `round-workflows/${run_id}/latest.json`)
+    const collectionOnly =
+      ["collection_pending", "collection_planned"].includes(state?.status) && !state.edition
+    const selectedHandoff =
+      state?.status === "curation_ready" &&
+      state.edition &&
+      state.curation &&
+      state.article_writes === 0 &&
+      state.canonical_writes === 0 &&
+      state.candidate_published === false
     if (
       workflow?.source?.kind !== "daily" ||
-      !["collection_pending", "collection_planned"].includes(state?.status) ||
-      state.edition ||
+      (!collectionOnly && !selectedHandoff) ||
       state.event_workflow ||
       state.publication_handoff
     )
       throw Error(
-        "Continuation requires a settled collection checkpoint before model or delivery work",
+        "Continuation requires a settled collection checkpoint or an unwritten selected handoff",
       )
     if (state.input_sha256 !== sha256(JSON.stringify(workflow)))
       throw Error("Original workflow input changed")
@@ -66,6 +74,14 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       reference(ctx.repo, "data/research-model-policy-codex.json").sha256 !== workflow.policy.sha256
     )
       throw Error("Collection model policy changed")
+    const processing = selectedHandoff
+      ? {
+          edition: state.edition,
+          curation: state.curation,
+          ...(state.plan ? { plan: state.plan } : {}),
+        }
+      : null
+    if (processing) for (const ref of Object.values(processing)) checked(ctx.root, ref)
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
       throw Error("Round already has another continuation")
@@ -76,6 +92,7 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       checkpoint: reference(ctx.root, `round-workflows/${run_id}/latest.json`),
       invocation: parent.invocation,
       daily_run: workflow.source.daily_run,
+      ...(processing ? { processing } : {}),
       prior_release: parent.release_id,
       release_id: gate.release_id,
       successor,
@@ -129,11 +146,21 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
         successor,
         "--json",
         JSON.stringify({
-          parameters: {
-            daily_run: source.daily_run,
-            collection_max_windows: 6,
-            collection_time_budget_ms: 300000,
-          },
+          parameters: processing
+            ? {
+                ...Object.fromEntries(
+                  Object.entries(processing).flatMap(([name, ref]) => [
+                    [name + "_path", ref.path],
+                    [name + "_sha256", ref.sha256],
+                  ]),
+                ),
+                propose: false,
+              }
+            : {
+                daily_run: source.daily_run,
+                collection_max_windows: 6,
+                collection_time_budget_ms: 300000,
+              },
         }),
       ],
     }

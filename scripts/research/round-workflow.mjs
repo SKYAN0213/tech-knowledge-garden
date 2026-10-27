@@ -15,6 +15,7 @@ import { collectionRecoveryRequest } from "./collection-resilience.mjs"
 import { checkedEdition, checkedPlan, freezeEdition } from "./event-pipeline.mjs"
 import { advanceEventWorkflow } from "./event-workflow.mjs"
 import { loadCurationSelection } from "./curation.mjs"
+import { advanceCuration } from "./curation-workflow.mjs"
 import {
   ontologyKnowledgeIndex,
   prepareKnowledgeReviewSelections,
@@ -71,7 +72,11 @@ function nextInputs(events) {
         : []),
     ]
   return (events.rows || []).flatMap((row) => {
-    const common = { group_id: row.group_id, writer_run: row.writer_run }
+    const common = {
+      group_id: row.group_id,
+      writer_run: row.writer_run,
+      ...(row.candidate_id ? { candidate_id: row.candidate_id } : {}),
+    }
     if (row.status === "fact_review")
       return [{ ...common, stage: "evidence", required: ["fact_reviews"] }]
     if (row.status === "completeness_review")
@@ -139,6 +144,7 @@ export async function advanceRoundWorkflow(
     reporter = saveCollectionReport,
     freezer = freezeEdition,
     eventProcessor = advanceEventWorkflow,
+    curationProcessor = advanceCuration,
     knowledgeProcessor = defaultKnowledge,
     publicationProcessor = prepareEventPublicationHandoff,
     baseProvider,
@@ -379,6 +385,7 @@ export async function advanceRoundWorkflow(
           ],
         })
       }
+      let curatedBatch = null
       if (curationRef) {
         const curated = loadCurationSelection(ctx, curationRef)
         stages.curation = {
@@ -387,18 +394,20 @@ export async function advanceRoundWorkflow(
           selected: curated.selected.length,
         }
         if (curated.batches.some((batch) => !same(batch.plan, planRef))) {
-          return persist("curation_ready", {
-            next_inputs: [
-              {
-                stage: "curation",
-                module: "curation",
-                operation: "advance",
-                selection_path: curationRef.path,
-                selection_sha256: curationRef.sha256,
-                required: ["run_id", "execute"],
-              },
-            ],
-          })
+          if (p.execute) curatedBatch = curated
+          else
+            return persist("curation_ready", {
+              next_inputs: [
+                {
+                  stage: "curation",
+                  module: "curation",
+                  operation: "advance",
+                  selection_path: curationRef.path,
+                  selection_sha256: curationRef.sha256,
+                  required: ["run_id", "execute"],
+                },
+              ],
+            })
         }
       }
       phase = "events"
@@ -411,11 +420,13 @@ export async function advanceRoundWorkflow(
       if (eventOptions && !same(eventOptions, currentOptions))
         throw Error("Round native impact inputs changed; use a new round")
       if (!eventOptions) atomicCreate(ctx.root, base + "event-options.json", currentOptions)
-      const eventRun = curationRef
-        ? "round-cur-" + sha256(JSON.stringify([p.run_id, planRef, curationRef])).slice(0, 48)
-        : "round-" +
-          p.run_id +
-          (planRef ? "-events-" + planRef.sha256.slice(0, 16) : "-proposal-" + (p.offset || 0))
+      const eventRun = curatedBatch
+        ? "round-curation-" + sha256(JSON.stringify([p.run_id, curationRef])).slice(0, 48)
+        : curationRef
+          ? "round-cur-" + sha256(JSON.stringify([p.run_id, planRef, curationRef])).slice(0, 48)
+          : "round-" +
+            p.run_id +
+            (planRef ? "-events-" + planRef.sha256.slice(0, 16) : "-proposal-" + (p.offset || 0))
       let events,
         reused = false
       const readOnlyResume =
@@ -446,11 +457,11 @@ export async function advanceRoundWorkflow(
         // bytes again without running collection, extraction or article writing.
         if (old.publication_handoff) {
           const handoff = checked(ctx.root, old.publication_handoff)
-          if (handoff.approved_runs.length)
+          if (approvals.size)
             loadDailyPublicationSelection(ctx.root, old.publication_handoff.path, {
               vault: ctx.vault,
             })
-          for (const row of [...handoff.approved_runs, ...(handoff.reused_runs || [])]) {
+          for (const row of [...(handoff.approved_runs || []), ...(handoff.reused_runs || [])]) {
             const approval = approvals.get(row.approved_run)
             if (
               !approval ||
@@ -464,38 +475,59 @@ export async function advanceRoundWorkflow(
         reused = true
       } else {
         persist("processing")
-        events = await eventProcessor(
-          ctx,
-          {
-            ...p,
-            ...(input.require_completeness !== undefined
-              ? { require_completeness: input.require_completeness }
-              : {}),
-            run_id: eventRun,
-            edition_path: editionRef.path,
-            edition_sha256: editionRef.sha256,
-            note_review_runs: currentOptions.note_review_runs,
-            ...(currentOptions.connection_review_run
-              ? { connection_review_run: currentOptions.connection_review_run }
-              : {}),
-            ...(planRef ? { plan_path: planRef.path, plan_sha256: planRef.sha256 } : {}),
-            ...(curationRef
-              ? { curation_path: curationRef.path, curation_sha256: curationRef.sha256 }
-              : {}),
-            ...(input.ontology_base
-              ? {
-                  ontology_path: input.ontology_base.path,
-                  ontology_sha256: input.ontology_base.sha256,
-                }
-              : {}),
-            propose: p.propose ?? true,
-            execute: Boolean(p.execute) && clock() - started < (p.time_budget_ms || 600000),
-            time_budget_ms: Math.max(1, (p.time_budget_ms || 600000) - (clock() - started)),
-          },
-          { clock, baseProvider },
-        )
+        events = curatedBatch
+          ? await curationProcessor(
+              ctx,
+              {
+                ...p,
+                run_id: eventRun,
+                selection_path: curationRef.path,
+                selection_sha256: curationRef.sha256,
+                note_review_runs: currentOptions.note_review_runs,
+                ...(input.require_completeness !== undefined
+                  ? { require_completeness: input.require_completeness }
+                  : {}),
+                time_budget_ms: Math.max(1, (p.time_budget_ms || 600000) - (clock() - started)),
+              },
+              { clock, baseProvider },
+            )
+          : await eventProcessor(
+              ctx,
+              {
+                ...p,
+                ...(input.require_completeness !== undefined
+                  ? { require_completeness: input.require_completeness }
+                  : {}),
+                run_id: eventRun,
+                edition_path: editionRef.path,
+                edition_sha256: editionRef.sha256,
+                note_review_runs: currentOptions.note_review_runs,
+                ...(currentOptions.connection_review_run
+                  ? { connection_review_run: currentOptions.connection_review_run }
+                  : {}),
+                ...(planRef ? { plan_path: planRef.path, plan_sha256: planRef.sha256 } : {}),
+                ...(curationRef
+                  ? { curation_path: curationRef.path, curation_sha256: curationRef.sha256 }
+                  : {}),
+                ...(input.ontology_base
+                  ? {
+                      ontology_path: input.ontology_base.path,
+                      ontology_sha256: input.ontology_base.sha256,
+                    }
+                  : {}),
+                propose: p.propose ?? true,
+                execute: Boolean(p.execute) && clock() - started < (p.time_budget_ms || 600000),
+                time_budget_ms: Math.max(1, (p.time_budget_ms || 600000) - (clock() - started)),
+              },
+              { clock, baseProvider },
+            )
       }
-      eventRef = reference(ctx.root, `event-workflows/${eventRun}/latest.json`)
+      eventRef = reference(
+        ctx.root,
+        curatedBatch
+          ? `curation/runs/${curatedBatch.run_id}/workflows/${eventRun}/latest.json`
+          : `event-workflows/${eventRun}/latest.json`,
+      )
       checked(ctx.root, eventRef)
       stages.events = { status: events.status, run_id: eventRun, reference: eventRef, reused }
       persist("events_checkpointed")
@@ -577,11 +609,13 @@ export async function advanceRoundWorkflow(
         reused && old.publication_handoff
           ? { publication_handoff: old.publication_handoff, status: old.stages.publication.status }
           : events.publication ||
-            (await publicationProcessor(ctx, {
-              run_id: "event-publication-" + sha256(eventRun).slice(0, 40),
-              workflow_path: eventRef.path,
-              workflow_sha256: eventRef.sha256,
-            }))
+            (curatedBatch
+              ? { publication_handoff: events.publication_handoff, status: events.status }
+              : await publicationProcessor(ctx, {
+                  run_id: "event-publication-" + sha256(eventRun).slice(0, 40),
+                  workflow_path: eventRef.path,
+                  workflow_sha256: eventRef.sha256,
+                }))
       publicationRef = publication.publication_handoff || events.publication_handoff
       if (publicationRef) checked(ctx.root, publicationRef)
       stages.publication = {
