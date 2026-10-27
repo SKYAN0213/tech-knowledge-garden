@@ -2,7 +2,7 @@
 title: AGIBOT 생산 규모와 산업 현장 배치
 type: briefing-topic
 topic_id: company-agibot
-date: 2026-10-25
+date: 2026-10-27
 description: AGIBOT은 2026-06-28에 15,000번째 로봇 생산과 G2의 태블릿 품질검사 약100시간 누적 라이브 운영을 발표했다.
 github_url: https://github.com/SKYAN0213/tech-knowledge-garden/blob/main/digest/topics/company-agibot.md
 cssclasses:

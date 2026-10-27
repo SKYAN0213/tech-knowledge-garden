@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-10-25
+date: 2026-10-27
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,9 +11,9 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
+- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 14건 · 원칙 1개
 - [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 17건 · 원칙 0개
-- [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 11건 · 원칙 1개
-- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 12건 · 원칙 0개
+- [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 13건 · 원칙 0개
 - [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 11건 · 원칙 0개
 - [[Briefings/Topics/industrial-robot-learning-lifecycle|산업용 로봇의 현장 재학습과 운전 수명주기]] · 1건 · 원칙 0개
 - [[Briefings/Topics/company-yaskawa-robotics|야스카와 로봇 사업의 실적과 전망]] · 1건 · 원칙 0개
@@ -35,6 +35,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/10/2026-10-27_0800_Tech_AI_Briefing|2026-10-27 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|2026-10-25 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-22_0800_Tech_AI_Briefing|2026-10-22 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-19_0800_Tech_AI_Briefing|2026-10-19 · 0800 브리핑]]

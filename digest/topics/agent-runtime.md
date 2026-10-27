@@ -8,7 +8,7 @@
 
 긴 작업 관리, 음성 대화와 샌드박스 복구가 별도 실행 계층으로 제공되고 있다. 실행을 맡길 수 있어도 완료 기준, 격리와 중단 조건은 업무에 맞게 검증해야 한다. 9월 22일 Nutanix의 Ryax 인수는 연산 배치 기술 확보이며 후속 NKP·NAI 통합 제품의 제공과 운영 개선 실적은 개발 계획이다. 9월 25일 Microsoft의 Copilot Autopilot 발표도 제한 배포 계획이다. 9월 30일 Google Cloud는 Data Agent Kit의 정식 제공과 GKE Agent Substrate의 격리·재개 사양을 설명했다. 10월 1일 DigitalOcean은 전용 microVM·호스팅 추론·저장·도구를 Agent Droplets 공개 프리뷰로 묶었다. 제공 단계와 과금 범위가 다르므로 실제 복구, 권한 경계, 완료 품질과 전체 비용은 별도로 확인한다.
 
-2026-10-25까지 서로 다른 원문 12건 · 10일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-10-27까지 서로 다른 원문 13건 · 10일에 걸쳐 관측. 최근 7일 2건 / 이전 7일 0건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -25,6 +25,19 @@
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-10-10 검토. 아래 날짜는 기사 수록일이다.
+
+<a id="aws-lambda-microvms-regional-expansion-20261022"></a>
+
+### 2026-10-22 · 관측
+
+**AWS는 Lambda MicroVMs를 홍콩·말레이시아·태국·스페인의 4개 추가 리전에 제공해 총 14개 AWS 리전으로 확대했다고 발표했다. 회사는 사용자 또는 작업별 VM 수준 격리, 거의 즉시 실행·재개, 상태 보존을 제공한다고 설명했다.**
+
+에이전트와 사용자 생성 코드를 위한 실행 계층이 전용 microVM 형태로 제공되는 사례에 지역 선택지가 추가됐다. 기존 agent-runtime 주제의 실행 격리·복구 책임과 제공 단계 구분을 보강한다.
+
+- 한계: 리전 수와 기능은 AWS 발표 내용이다. 이 자료는 실제 업무의 격리 강도, 재개 성공률, 운영 품질이나 비용을 검증하지 않는다. 14개는 Lambda MicroVMs 제공 리전 수이지 AWS 전체 리전 수가 아니다.
+- 다음 확인: 각 리전의 실제 제공 범위와 요금·제한을 확인하고, 동일 작업에서 격리 경계·상태 보존·중단 후 재개 및 전체 비용을 검증한다.
+- [AWS Lambda MicroVMs, 4개 리전 추가해 총 14개 리전으로 확대](https://skyan0213.github.io/tech-knowledge-garden/news/34740706294da23a) · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/lambda-microvms-4-additional-regions) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-27_0800_tech_ai_briefing)
+- 2026-10-27 원문 검토
 
 <a id="agentcore-gateway-fallback-20261022"></a>
 

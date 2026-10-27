@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-10-25
+date: 2026-10-27
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,38 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/62010757d4094148|SanaHeal, 외상 출혈 막는 생체접착 기술 승인…내년 수술 임상 계획]] · 2026-10-27
+- [[News/14ecf6392faef7f6|CodeQL, macOS 27·Xcode 27에서 빌드 추적 지원 제한]] · 2026-10-27
+- [[News/84192fca279a2150|KAIST·파네시아·Meta, ‘하나의 칩처럼 움직이는’ AI 데이터센터 구조 제시]] · 2026-10-27
+- [[News/55819207c0fce582|KAIST 라이보2, 배터리 교체 없이 42.195km 로봇 마라톤 완주]] · 2026-10-27
+- [[News/f16c8c9cc139d6a3|PHP2Shell 두 취약점, 인증 없는 원격 코드 실행 가능…CVSS v4.0 9.2]] · 2026-10-27
+- [[News/dc823a84aead0efd|AWS, 벵갈루루 인근 Direct Connect 위치에 100 Gbps 연결 확대]] · 2026-10-27
+- [[News/fecd4fc81fa8ed2e|GitHub, SCIM 계정 오삭제 원인 공개…영향 사용자 기록 복원과 재발 방지 조치]] · 2026-10-27
+- [[News/302c6b3f3f4c2777|GitHub Public monitoring에 경보 관리·데이터 레지던시 지원 추가]] · 2026-10-27
+- [[News/34740706294da23a|AWS Lambda MicroVMs, 4개 리전 추가해 총 14개 리전으로 확대]] · 2026-10-27
+- [[News/4e3efbae3e238940|GitHub Copilot 사용량 API, OpenCode 등 도구별 요청·토큰 집계 추가]] · 2026-10-27
+- [[News/d87d7041a1aa0451|KAIST 연구팀, 스마트폰 AI에 서버 지식을 재사용하는 CURE 개발]] · 2026-10-27
+- [[News/b6f4ac0ac649198c|ASEC, 불법 프로그램 위장 Rust 인포스틸러의 정보 탈취·추가 악성코드 기능 분석]] · 2026-10-27
+- [[News/8bbce2ffd63bf26a|KAIST, 전하 감지·자외선 집기를 한 소재에 묶은 '이오노그래스퍼' 발표]] · 2026-10-27
+- [[News/0807c5fe6fc54e81|ASEC, PHP2Shell 재현 공개…AhnLab EDR 탐지 사례 소개]] · 2026-10-27
+- [[News/287c89ed4faace42|NVIDIA, 자율주행 안전 근거 생성하는 Halos SAFE 평가 프레임워크 공개]] · 2026-10-27
+- [[News/42a359f45034b39b|Bolt, 유럽 로보택시 프로그램에 NVIDIA Alpamayo Stack 선택]] · 2026-10-27
+- [[News/5efbe553b645ac1d|NVIDIA, 반도체 테스트 용량 2027년까지 두 배 전망…KYEC 미국 시설 지원]] · 2026-10-27
+- [[News/1088bc333dad415a|NVIDIA·Amkor, 한국 인터포저 웨이퍼 생산능력 2028년 말까지 300% 초과 확대 목표]] · 2026-10-27
+- [[News/266f5cac1a0d84c3|NVIDIA, 공급망 파트너와 기판·패키징·테스트 생산능력 확대 계획]] · 2026-10-27
+- [[News/848f9f2cb5562643|NVIDIA DSX, AI 팩토리 전력·냉각 설계와 파트너 생태계 확대]] · 2026-10-27
+- [[News/2cf5a6f596cc6134|Agile Robots, NVIDIA 기술을 탑재한 휴머노이드 레퍼런스 Agile ONE SN 공개]] · 2026-10-27
+- [[News/5c3a57a7151e0d08|NVIDIA, Isaac 로봇 플랫폼에 런타임·학습 프레임워크·데이터 추가]] · 2026-10-27
+- [[News/441dfaee73727b5b|FDA, 신경과학 의료제품 개발 지원 프로그램 NAIN 출범]] · 2026-10-27
+- [[News/7d326b12c65a9b1c|삼성전기·엔비디아, FC-BGA 공급 파트너십…전용 생산시설 공동 투자]] · 2026-10-27
+- [[News/861b92e2e1b0937e|단일 참여자 EMG 연구, Baxter 로봇 팔로 사람 팔 동작 재현]] · 2026-10-27
+- [[News/56ea3dab09143eaf|삼성SDI, AOP와 ESS 솔루션 1GWh 공급 계약 체결]] · 2026-10-27
+- [[News/fc40e3e8c60e59ad|Anthropic, IPO용 S-1 SEC에 공개 제출…주식 수·가격 범위 미정]] · 2026-10-27
+- [[News/7d28c329b2eda07a|Roche, ESMO 2026에서 폐암·유방암 임상 데이터 발표 계획]] · 2026-10-27
+- [[News/1d942767a24e2ea1|GitHub, 저장소 push 이메일 알림 종료…자체 메일 발송 방식 안내]] · 2026-10-27
+- [[News/4ef26a1b298a6662|Roche, fenebrutinib·Ocrevus·Enspryng 다발성경화증 연구 결과 발표]] · 2026-10-27
+- [[News/63ab3559f77235d3|FDA, Roche Enspryng을 성인 갑상선안병증 치료제로 승인]] · 2026-10-27
+- [[News/1c9138dc3652d49c|GitHub Copilot 사용 지표, 조직이 설정한 사용자 지정 항목 이름 표시]] · 2026-10-27
 - [[News/acc181485daa8190|Amazon SageMaker AI, Muse Glimmer·Qwen3.8·Ministral 3 서버리스 맞춤화 지원]] · 2026-10-25
 - [[News/16c7779781249595|GitHub Apps 기업 설치 GA…정책·보안·관리 API 지원 확대]] · 2026-10-25
 - [[News/71d57daca4402dd1|AWS CloudFormation, 미완료 롤백 절차를 한 번에 끝내는 force rollback 추가]] · 2026-10-25
