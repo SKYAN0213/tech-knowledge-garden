@@ -184,11 +184,10 @@ export async function advanceEventWorkflow(
       approvedRuns = [],
       failures = []
     const previousRows = new Map(
-      (
-        readJSON(ctx.root, base + "progress.json")?.rows ||
-        readJSON(ctx.root, base + "latest.json")?.rows ||
-        []
-      ).map((row) => [row.group_id, row]),
+      [
+        ...(readJSON(ctx.root, base + "latest.json")?.rows || []),
+        ...(readJSON(ctx.root, base + "progress.json")?.rows || []),
+      ].map((row) => [row.group_id, row]),
     )
     let handled = 0,
       modelCalls = 0,

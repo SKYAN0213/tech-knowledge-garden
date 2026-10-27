@@ -133,6 +133,58 @@ test("stable delegated references cannot be redirected to a different prompt", a
   assert.throws(() => provider.request(input), /Delegated request binding changed/)
 })
 
+test("an unfinished delegated request cannot lend its owner to another operational round", (t) => {
+  const f = fixture(t)
+  const owner = (name, round) => {
+    const input = { job_id: "module-" + name }
+    const input_sha256 = sha256(JSON.stringify(input))
+    const roundInput = { run_id: round, unit_only: true }
+    atomicWrite(f.root, `operations/rounds/${round}/input.json`, roundInput)
+    atomicWrite(f.root, `module-jobs/${input.job_id}/input.json`, input)
+    atomicWrite(f.root, `module-jobs/${input.job_id}/state.json`, {
+      state: "running",
+      input_sha256,
+    })
+    return {
+      job_id: input.job_id,
+      input_sha256,
+      round_id: round,
+      round_input_sha256: sha256(JSON.stringify(roundInput)),
+    }
+  }
+  const first = owner("round-a-first", "round-a")
+  const next = owner("round-b-first", "round-b")
+  const successor = owner("round-b-successor", "round-b")
+  const provider = new DelegatedReasoning({
+    root: f.root,
+    run: "scoped-delegation",
+    role: "fact_extract",
+    settings: { model: "gpt-6-luna" },
+  })
+  provider.executionPolicy = { settings: { model: "gpt-6-luna" } }
+  const input = {
+    model: "gpt-6-luna",
+    schema,
+    messages: [{ role: "user", content: "Same source, distinct round ownership" }],
+  }
+  const a = withRequestOwner(first, () => provider.request(input))
+  atomicWrite(f.root, `module-jobs/${first.job_id}/state.json`, {
+    state: "waiting_for_reasoning",
+    input_sha256: first.input_sha256,
+    reasoning_task: a,
+  })
+  const b = withRequestOwner(next, () => provider.request(input))
+  assert.notEqual(a.task_id, b.task_id)
+  assert.deepEqual(b.owner, next)
+  atomicWrite(f.root, `module-jobs/${next.job_id}/state.json`, {
+    state: "waiting_for_reasoning",
+    input_sha256: next.input_sha256,
+    reasoning_task: b,
+  })
+  assert.equal(withRequestOwner(successor, () => provider.request(input)).task_id, b.task_id)
+  assert.equal(readJSON(f.root, `reasoning-tasks/${a.task_id}/result.json`), null)
+})
+
 test("Codex article policy preserves complete long facts and schema beyond the old writing ceiling", async (t) => {
   const f = fixture(t)
   const run = "exchange-long-reviewed-article"

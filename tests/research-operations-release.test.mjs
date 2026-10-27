@@ -340,8 +340,11 @@ test("an explicit selected-handoff recovery pins a new manual segment and reject
     policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
   }
   atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
-  const edition = atomicCreate(f.root, "unit-edition.json", { unit_only: true })
-  const curation = atomicCreate(f.root, "unit-selection.json", { unit_only: true })
+  const edition = atomicCreate(f.root, "unit-edition.json", {
+    unit_only: true,
+    daily_run: "daily-original",
+  })
+  const curation = atomicCreate(f.root, "unit-selection.json", { unit_only: true, selected: [] })
   atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, {
     status: "curation_ready",
     input_sha256: sha256(JSON.stringify(workflow)),
@@ -374,6 +377,122 @@ test("an explicit selected-handoff recovery pins a new manual segment and reject
       /Selected continuation/,
     )
   assert.equal(fs.existsSync(path.join(f.root, "module-jobs")), false)
+})
+
+test("pre-review extraction recovery follows the frozen daily lineage without changing either parent pin", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  const edition = atomicCreate(f.root, "lineage-edition.json", { daily_run: "daily-original" })
+  const curation = atomicCreate(f.root, "lineage-selection.json", { selected: [] })
+  const flags = {
+    edition,
+    curation,
+    article_writes: 0,
+    canonical_writes: 0,
+    candidate_published: false,
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, {
+    ...flags,
+    status: "curation_ready",
+    input_sha256: sha256(JSON.stringify(workflow)),
+  })
+  await continueOperationalRound(f.ctx, {
+    run_id: f.p.run_id,
+    successor: "lineage-child",
+    reason: "Explicit selected recovery",
+  })
+  const childInput = {
+    run_id: "lineage-child",
+    source: { kind: "edition", edition },
+    policy: workflow.policy,
+  }
+  atomicCreate(f.root, "round-workflows/lineage-child/input.json", childInput)
+  const event_workflow = atomicCreate(f.root, "lineage-wait.json", { rows: [], unit_only: true })
+  const publication_handoff = atomicCreate(f.root, "lineage-unwritten-handoff.json", {
+    unit_only: true,
+  })
+  atomicCreate(f.root, "round-workflows/lineage-child/latest.json", {
+    ...flags,
+    status: "waiting_for_reasoning",
+    input_sha256: sha256(JSON.stringify(childInput)),
+    event_workflow,
+    publication_handoff,
+  })
+  const before = fs.readFileSync(path.join(f.root, "operations/rounds/lineage-child/input.json"))
+  const next = await continueOperationalRound(f.ctx, {
+    run_id: "lineage-child",
+    successor: "lineage-next",
+    reason: "Explicit pre-review controller correction",
+  })
+  assert.equal(next.daily_run, "daily-original")
+  assert.equal(next.scheduled_runs_counted, 0)
+  assert.deepEqual(
+    fs.readFileSync(path.join(f.root, "operations/rounds/lineage-child/input.json")),
+    before,
+  )
+  assert.deepEqual(readJSON(f.root, next.source.path).processing, { edition, curation })
+})
+
+test("pre-review continuation rejects any reviewed writer and publication execution despite a stale queued row", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  const edition = atomicCreate(f.root, "guard-edition.json", { daily_run: "daily-original" })
+  const plan = atomicCreate(f.root, "guard-plan.json", {
+    run_id: "selected-plan",
+    events: [{ group_id: "selected-a", action: "write" }],
+  })
+  const curation = atomicCreate(f.root, "guard-selection.json", {
+    selected: [{ execution: { plan, group_id: "selected-a" } }],
+  })
+  atomicCreate(f.root, "event-plans/selected-plan/selections/selected-a.json", {
+    writer_run: "original-writer",
+  })
+  const event_workflow = atomicCreate(f.root, "guard-event-workflow.json", {
+    rows: [{ group_id: "selected-a", status: "queued" }],
+  })
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, {
+    status: "waiting_for_reasoning",
+    input_sha256: sha256(JSON.stringify(workflow)),
+    edition,
+    curation,
+    event_workflow,
+    article_writes: 0,
+    canonical_writes: 0,
+    candidate_published: false,
+  })
+  const p = {
+    run_id: f.p.run_id,
+    successor: "forbidden-child",
+    reason: "Explicit guarded recovery",
+  }
+  for (const name of ["reviewed-claims", "draft", "approved-article"]) {
+    const file = `runs/original-writer/${name}.json`
+    atomicCreate(f.root, file, { unit_only: true })
+    await assert.rejects(continueOperationalRound(f.ctx, p), /Reviewed or drafted/)
+    fs.unlinkSync(path.join(f.root, file))
+  }
+  atomicCreate(f.root, `operations/rounds/${f.p.run_id}/commands/publication.json`, {
+    stage: "publication",
+  })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /Publication work/)
+  assert.equal(
+    fs.existsSync(path.join(f.root, "operations/rounds/forbidden-child/input.json")),
+    false,
+  )
 })
 
 test("activation binds the actual Git workspace and existing dependency trees without copying content", async (t) => {

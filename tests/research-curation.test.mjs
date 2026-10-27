@@ -620,7 +620,7 @@ test("curation retains every selected reasoning wait when ranked events share on
   await review(
     f,
     p,
-    p.value.candidates.map((c) => rating(f, c, 5)),
+    p.value.candidates.map((c) => rating(f, c, c.group_id === f.event.group_id ? 4 : 5)),
   )
   const chosen = await choose(f, p)
   const result = await advanceCuration(f.ctx, {
@@ -642,6 +642,22 @@ test("curation retains every selected reasoning wait when ranked events share on
     new Set([f.event.group_id, second.group_id]),
   )
   assert.equal(result.candidate_published, false)
+  // The last ranked focus can finish before the end of the plan array. Its
+  // partial progress must overlay, rather than replace, the full saved frontier.
+  const replay = await advanceEventWorkflow(f.ctx, {
+    run_id: result.workflows[0].run_id,
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: result.workflows[0].plan.path,
+    plan_sha256: result.workflows[0].plan.sha256,
+    curation_path: chosen.path,
+    curation_sha256: chosen.sha256,
+    curation_focus_group: f.event.group_id,
+    execute: true,
+    require_completeness: true,
+    max_items: 1,
+  })
+  assert.equal(replay.reasoning_tasks.length, 2)
 })
 
 test("a round drives selected events from multiple plans and exposes every owned review boundary", async (t) => {

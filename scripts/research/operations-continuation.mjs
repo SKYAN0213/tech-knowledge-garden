@@ -15,6 +15,41 @@ function checked(root, ref) {
   return readJSON(root, ref.path)
 }
 
+function requireUnreviewedSelection(ctx, state, run) {
+  if (state.event_workflow) checked(ctx.root, state.event_workflow)
+  const selection = checked(ctx.root, state.curation)
+  if (!Array.isArray(selection.selected) || selection.selected.length > 40)
+    throw Error("Exact native selected handoff required")
+  for (const item of selection.selected) {
+    const plan = checked(ctx.root, item.execution?.plan)
+    const group = item.execution?.group_id
+    if (
+      !/^[A-Za-z0-9_-]{1,100}$/.test(plan.run_id || "") ||
+      !/^[A-Za-z0-9_-]{1,100}$/.test(group || "")
+    )
+      throw Error("Exact native selected group required")
+    const event = plan.events?.find((event) => event.group_id === group)
+    if (!event) throw Error("Selected group is missing from its original plan")
+    if (event.action === "reuse") continue
+    const binding = readJSON(ctx.root, `event-plans/${plan.run_id}/selections/${group}.json`)
+    if (!binding) continue
+    if (!/^[A-Za-z0-9_-]{1,160}$/.test(binding.writer_run || ""))
+      throw Error("Exact native selected writer required")
+    for (const name of ["reviewed-claims", "draft", "approved-article"])
+      if (readJSON(ctx.root, `runs/${binding.writer_run}/${name}.json`))
+        throw Error("Reviewed or drafted work must stay with its immutable execution")
+  }
+  const commands = safePath(ctx.root, operationalBase(run) + "commands", { materialize: false })
+  for (const name of fs.existsSync(commands) ? fs.readdirSync(commands) : [])
+    if (
+      name.endsWith(".json") &&
+      readJSON(ctx.root, operationalBase(run) + "commands/" + name)?.stage === "publication"
+    )
+      throw Error("Publication work cannot move to another execution")
+  if (readJSON(ctx.root, `runs/${run}-delivery/publication-delivery/input.json`))
+    throw Error("Publication work cannot move to another execution")
+}
+
 // An explicit, quiescent recovery creates a new execution segment. It never
 // replaces the old immutable pin, its jobs, its workflow or scheduler claim.
 export async function continueOperationalRound(ctx, { run_id, successor, reason }) {
@@ -50,25 +85,33 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
     const collectionOnly =
       ["collection_pending", "collection_planned"].includes(state?.status) && !state.edition
     const selectedHandoff =
-      state?.status === "curation_ready" &&
+      ["curation_ready", "waiting_for_reasoning"].includes(state?.status) &&
       state.edition &&
       state.curation &&
       state.article_writes === 0 &&
       state.canonical_writes === 0 &&
       state.candidate_published === false
     if (
-      workflow?.source?.kind !== "daily" ||
-      (!collectionOnly && !selectedHandoff) ||
-      state.event_workflow ||
-      state.publication_handoff
+      (!selectedHandoff && (!collectionOnly || workflow?.source?.kind !== "daily")) ||
+      (collectionOnly && (state.event_workflow || state.publication_handoff))
     )
       throw Error(
         "Continuation requires a settled collection checkpoint or an unwritten selected handoff",
       )
     if (state.input_sha256 !== sha256(JSON.stringify(workflow)))
       throw Error("Original workflow input changed")
-    const config = reference(ctx.repo, workflow.collection_config.path)
-    if (config.sha256 !== workflow.collection_config.sha256)
+    let origin = workflow,
+      originPin = parent,
+      depth = 0
+    while (origin.source?.kind !== "daily") {
+      if (++depth > 8 || !originPin.continuation)
+        throw Error("Exact original daily lineage required")
+      const link = checked(ctx.root, originPin.continuation)
+      origin = checked(ctx.root, link.workflow)
+      originPin = checked(ctx.root, link.parent)
+    }
+    const config = reference(ctx.repo, origin.collection_config.path)
+    if (config.sha256 !== origin.collection_config.sha256)
       throw Error("Collection configuration changed; explicit replan required")
     if (
       reference(ctx.repo, "data/research-model-policy-codex.json").sha256 !== workflow.policy.sha256
@@ -82,6 +125,11 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
         }
       : null
     if (processing) for (const ref of Object.values(processing)) checked(ctx.root, ref)
+    if (processing) {
+      if (checked(ctx.root, state.edition).daily_run !== origin.source.daily_run)
+        throw Error("Selected handoff belongs to another daily collection")
+      requireUnreviewedSelection(ctx, state, run_id)
+    }
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
       throw Error("Round already has another continuation")
@@ -91,7 +139,7 @@ export async function continueOperationalRound(ctx, { run_id, successor, reason 
       workflow: reference(ctx.root, `round-workflows/${run_id}/input.json`),
       checkpoint: reference(ctx.root, `round-workflows/${run_id}/latest.json`),
       invocation: parent.invocation,
-      daily_run: workflow.source.daily_run,
+      daily_run: origin.source.daily_run,
       ...(processing ? { processing } : {}),
       prior_release: parent.release_id,
       release_id: gate.release_id,

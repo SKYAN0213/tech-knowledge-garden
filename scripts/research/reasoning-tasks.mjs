@@ -447,7 +447,8 @@ export class DelegatedReasoning {
     })
     // Dispatcher identity must not turn an unchanged model request into a new
     // generation. Keep the original owner and its immutable response evidence.
-    const file = `runs/${this.run}/delegated-requests/${sha256(JSON.stringify(body))}.json`
+    const identity = { round_id: currentRequestOwner()?.round_id || null, request: body }
+    const file = `runs/${this.run}/delegated-requests/${sha256(JSON.stringify(identity))}.json`
     const previous = readJSON(this.root, file)
     if (previous) {
       const request = load(this.root, previous.task_id, previous.request_sha256)
