@@ -15,7 +15,7 @@ import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 function setup(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "tkg-driver-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  return { root }
+  return { root, repo: root }
 }
 const settled = (id, pending) => ({
   run_id: "daily-unit",

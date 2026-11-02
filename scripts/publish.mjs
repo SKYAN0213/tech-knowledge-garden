@@ -5,6 +5,8 @@ import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 import { pushAndVerify } from "./publication-receipt.mjs"
 import { assertNoUnresolvedAuthoringWrites } from "./research/authoring-execution.mjs"
 import { parseArgs } from "node:util"
+import { fileURLToPath } from "node:url"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 import {
   preparePublicationOperation,
   recordPublicationPush,
@@ -29,6 +31,8 @@ try {
     throw Error("Publication operation requires both --operation and --release")
   if (values.operation && !/^[A-Za-z0-9_-]{1,100}$/.test(values.operation))
     throw Error("Invalid publication operation ID")
+  const repo = fileURLToPath(new URL("../", import.meta.url))
+  assertRetiredWorkspaceFences(repo, repo)
   await withGardenOperationLock(DEFAULT_ROOT, async () => {
     assertNoUnresolvedAuthoringWrites(DEFAULT_ROOT)
     const branch = run("git", ["branch", "--show-current"])

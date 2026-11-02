@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 import { DEFAULT_ROOT, withGardenOperationLock } from "./research/run-state.mjs"
 import {
   preparePublicationOperation,
@@ -93,6 +94,10 @@ try {
     throw Error(
       "Use publication bind/deployment/public/status, handoff, request-delivery, delivery-status or shadow-basis/record/status with only that stage's exact evidence",
     )
+  if (!["status", "handoff-status", "delivery-status", "shadow-status"].includes(mode)) {
+    const repo = fileURLToPath(new URL("../", import.meta.url))
+    assertRetiredWorkspaceFences(repo, repo)
+  }
   const options = { root: v.root, run: v.run }
   let result
   if (localModes.includes(mode)) {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import crypto from "node:crypto"
+import { spawn } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { moduleCatalog, executeModule } from "../scripts/research/module-registry.mjs"
 import {
@@ -335,6 +336,53 @@ test("completed jobs from a former checkout do not block new work and foreign li
     /context changed/,
   )
   assert.deepEqual(readJSON(root, `module-jobs/${id}/input.json`), input)
+})
+
+test("a completed job retains its worker slot while its protected cleanup is running", async (t) => {
+  const { ctx, root } = fixture(t)
+  ctx.maxActiveJobs = 1
+  const id = "module-completed-cleanup"
+  const workerPath = path.join(repo, "scripts/research-module-worker.mjs")
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)", "--", workerPath, "--job", id])
+  await new Promise((resolve, reject) => {
+    child.once("spawn", resolve)
+    child.once("error", reject)
+  })
+  t.after(() => child.kill("SIGTERM"))
+  const input = { job_id: id, module: "collection", operation: "inventory", context: ctx }
+  const state = {
+    schema: "research-module-job/v1", job_id: id, input_sha256: sha256(JSON.stringify(input)),
+    state: "completed", pid: child.pid,
+  }
+  const lockPath = `locks/module-worker-${id}.json`
+  const lock = { owner: crypto.randomUUID(), pid: child.pid, started_at: new Date().toISOString() }
+  atomicWrite(root, `module-jobs/${id}/input.json`, input)
+  atomicWrite(root, `module-jobs/${id}/state.json`, state)
+  atomicWrite(root, `module-jobs/${id}/launch.json`, { pid: child.pid, job_id: id })
+  atomicWrite(root, lockPath, lock)
+
+  const duringCleanup = moduleJobStatus(ctx, id)
+  assert.equal(duringCleanup.state, "completed")
+  assert.equal(duringCleanup.worker_alive, true)
+  assert.equal(duringCleanup.recovery.action, "wait_for_current_worker")
+  await assert.rejects(
+    submitModuleJob(ctx, "collection", "inventory", {}, { jobId: "module-during-cleanup" }),
+    /capacity reached/,
+  )
+  atomicWrite(root, lockPath, { ...lock, pid: process.pid })
+  assert.equal(moduleJobStatus(ctx, id).worker_alive, null)
+  atomicWrite(root, lockPath, { ...lock, pid: 2147483646 })
+  assert.equal(moduleJobStatus(ctx, id).worker_alive, null)
+  atomicWrite(root, lockPath, lock)
+  const exited = new Promise((resolve) => child.once("exit", resolve))
+  child.kill("SIGTERM")
+  await exited
+  fs.unlinkSync(safePath(root, lockPath))
+  assert.equal(moduleJobStatus(ctx, id).worker_alive, false)
+  const next = await submitModuleJob(ctx, "collection", "inventory", {}, {
+    jobId: "module-after-cleanup", background: false,
+  })
+  assert.equal(next.state, "completed")
 })
 
 test("detached CLI worker persists results, pages by verified hash and reuses the same job without another attempt", async (t) => {

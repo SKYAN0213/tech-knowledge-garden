@@ -2,6 +2,7 @@ import fs from "node:fs"
 import { parseArgs } from "node:util"
 import { storageAction } from "./research/cold-storage.mjs"
 import { driveStorageAction, remoteStorageActions } from "./research/drive-storage.mjs"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 import { fileURLToPath } from "node:url"
 
 const { values, positionals } = parseArgs({
@@ -12,16 +13,14 @@ const { values, positionals } = parseArgs({
 try {
   if (positionals.length !== 1 || !values.root)
     throw Error("Use ACTION --root PRIVATE_ROOT [--input JSON_FILE]")
+  const repo = fileURLToPath(new URL("../", import.meta.url))
+  if (!["status", "pending", "archive-status", "remote-status"].includes(positionals[0]))
+    assertRetiredWorkspaceFences(repo, repo)
   const source =
     !values.input && process.stdin.isTTY ? "" : fs.readFileSync(values.input || 0, "utf8").trim()
   const parameters = source ? JSON.parse(source) : {}
   const result = remoteStorageActions.includes(positionals[0])
-    ? await driveStorageAction(
-        fileURLToPath(new URL("../", import.meta.url)),
-        values.root,
-        positionals[0],
-        parameters,
-      )
+    ? await driveStorageAction(repo, values.root, positionals[0], parameters)
     : storageAction(values.root, positionals[0], parameters)
   console.log(JSON.stringify(result, null, 2))
 } catch (error) {

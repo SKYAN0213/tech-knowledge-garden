@@ -16,7 +16,9 @@ import {
 import {
   operationalRoundStatus,
   runOperationalRound,
+  relayOperationalReasoning,
 } from "../scripts/research/operations-runtime.mjs"
+import { driveOperationalRound } from "../scripts/research/operations-driver.mjs"
 import { atomicCreate, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { continueOperationalRound } from "../scripts/research/operations-continuation.mjs"
@@ -24,13 +26,15 @@ import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import {
   activateOperationsRuntime,
   operationsReadiness,
+  assertNoOperationalWriter,
 } from "../scripts/research/operations-deployment.mjs"
 import {
   captureManualInvocation,
+  captureScheduledInvocation,
   checkedOperationalInvocation,
 } from "../scripts/research/schedule-contract.mjs"
 const repo = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)))
-async function setup(t, { commonAssets = false, rendererAssets = false } = {}) {
+async function setup(t, { commonAssets = false, rendererAssets = false, retiredWorkspace } = {}) {
   fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
   const base = fs.mkdtempSync(path.join(repo, ".local/research/operations-release-test-"))
   t.after(() => fs.rmSync(base, { recursive: true, force: true }))
@@ -45,6 +49,11 @@ async function setup(t, { commonAssets = false, rendererAssets = false } = {}) {
     "research-operation-policy.json",
   ])
     fs.copyFileSync(path.join(repo, "data", name), path.join(source, "data", name))
+  if (retiredWorkspace)
+    fs.writeFileSync(
+      path.join(source, "data/research-retired-workspaces.json"),
+      JSON.stringify({ schema: "research-retired-workspaces/v1", workspaces: [retiredWorkspace] }),
+    )
   fs.copyFileSync(
     path.join(repo, "docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md"),
     path.join(source, "docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md"),
@@ -59,10 +68,22 @@ async function setup(t, { commonAssets = false, rendererAssets = false } = {}) {
     fs.writeFileSync(path.join(source, "scripts/unrelated.md"), "Not a runtime asset.\n")
   }
   if (rendererAssets) {
-    for (const file of ["quartz.config.yaml", "quartz.config.default.yaml", "quartz.ts", ".quartz/plugins/index.ts", "quartz/static/icon.png", "quartz/static/og-image.png"]) {
+    for (const file of [
+      "quartz.config.yaml",
+      "quartz.config.default.yaml",
+      "quartz.ts",
+      ".quartz/plugins/index.ts",
+      "quartz/static/icon.png",
+      "quartz/static/og-image.png",
+    ]) {
       const target = path.join(source, file)
       fs.mkdirSync(path.dirname(target), { recursive: true })
-      fs.writeFileSync(target, file.endsWith(".png") ? Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]) : `renderer fixture: ${file}\n`)
+      fs.writeFileSync(
+        target,
+        file.endsWith(".png")
+          ? Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff])
+          : `renderer fixture: ${file}\n`,
+      )
     }
   }
   atomicCreate(source, ".local/research/proof.json", { unit_fixture_only: true })
@@ -111,11 +132,60 @@ async function setup(t, { commonAssets = false, rendererAssets = false } = {}) {
     },
   }
 }
+
+test("runtime cutover refuses the real submission lock and a terminal worker still cleaning up", async (t) => {
+  const f = await setup(t)
+  const root = path.join(f.source, ".local/research/local-ai")
+  atomicWrite(root, "locks/module-job-submit.json", { owner: "test", pid: process.pid })
+  assert.throws(() => assertNoOperationalWriter(f.source), /lock|submission/i)
+  fs.unlinkSync(path.join(root, "locks/module-job-submit.json"))
+  atomicWrite(root, "module-jobs/module-cleanup/state.json", {
+    job_id: "module-cleanup",
+    state: "completed",
+    pid: process.pid,
+  })
+  atomicWrite(root, "locks/module-worker-module-cleanup.json", { owner: "test", pid: process.pid })
+  assert.throws(() => assertNoOperationalWriter(f.source), /worker|writer/i)
+})
+
+test("activation serializes with submissions and only accepts the current process's exact held lock", async (t) => {
+  const f = await setup(t)
+  for (const dir of ["node_modules", "integrations/research-mcp/node_modules"])
+    fs.mkdirSync(path.join(f.source, dir), { recursive: true })
+  const root = path.join(f.source, ".local/research/local-ai")
+  const owner = "a8db0841-08ce-4ee9-b7a0-073055532e52"
+  atomicWrite(root, "locks/module-job-submit.json", { owner, pid: process.pid })
+  await assert.rejects(activateOperationsRuntime(f.runtime, f.source), /EEXIST|lock/i)
+  await assert.rejects(
+    activateOperationsRuntime(f.runtime, f.source, { ownedSubmission: "wrong-owner" }),
+    /submission lock/i,
+  )
+  assert.equal(
+    (await activateOperationsRuntime(f.runtime, f.source, { ownedSubmission: owner }))
+      .operational_ready,
+    true,
+  )
+  fs.unlinkSync(path.join(root, "locks/module-job-submit.json"))
+  await assert.rejects(
+    activateOperationsRuntime(f.runtime, f.source, { ownedSubmission: owner }),
+    /submission lock/i,
+  )
+})
 test("runtime installation and workspace activation bind actual renderer configuration bytes", async (t) => {
   const f = await setup(t, { rendererAssets: true })
-  const rendererFiles = ["quartz.config.yaml", "quartz.config.default.yaml", "quartz.ts", ".quartz/plugins/index.ts", "quartz/static/icon.png", "quartz/static/og-image.png"]
+  const rendererFiles = [
+    "quartz.config.yaml",
+    "quartz.config.default.yaml",
+    "quartz.ts",
+    ".quartz/plugins/index.ts",
+    "quartz/static/icon.png",
+    "quartz/static/og-image.png",
+  ]
   for (const file of rendererFiles)
-    assert.deepEqual(fs.readFileSync(path.join(f.runtime, file)), fs.readFileSync(path.join(f.source, file)))
+    assert.deepEqual(
+      fs.readFileSync(path.join(f.runtime, file)),
+      fs.readFileSync(path.join(f.source, file)),
+    )
   for (const dir of ["node_modules", "integrations/research-mcp/node_modules"])
     fs.mkdirSync(path.join(f.source, dir), { recursive: true })
   assert.equal((await activateOperationsRuntime(f.runtime, f.source)).operational_ready, true)
@@ -355,22 +425,103 @@ test("explicit continuation preserves the frozen parent, scheduler claim and ori
 test("a failed collection-only round can continue from its exact preserved partial report", async (t) => {
   const f = await setup(t)
   await pinOperationalRound(f.ctx, f.p)
-  const workflow = { run_id: f.p.run_id, source: { kind: "daily", daily_run: "daily-original" },
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
     collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
-    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json") }
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
   atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
-  const report = atomicCreate(f.root, "daily/failed-report.json", { schema: "research-collection-report/v1", daily_run: "daily-original", status: "partial", candidate_approved: false, candidate_published: false })
-  const state = { status: "partial", input_sha256: sha256(JSON.stringify(workflow)), article_writes: 0, canonical_writes: 0, candidate_published: false,
-    stages: { collection: { status: "failed", reference: report } }, next_inputs: [{ stage: "collection", error: "ENOSPC", required: ["resume"] }] }
+  const report = atomicCreate(f.root, "daily/failed-report.json", {
+    schema: "research-collection-report/v1",
+    daily_run: "daily-original",
+    status: "partial",
+    candidate_approved: false,
+    candidate_published: false,
+  })
+  const state = {
+    status: "partial",
+    input_sha256: sha256(JSON.stringify(workflow)),
+    article_writes: 0,
+    canonical_writes: 0,
+    candidate_published: false,
+    stages: { collection: { status: "failed", reference: report } },
+    next_inputs: [{ stage: "collection", error: "ENOSPC", required: ["resume"] }],
+  }
   const statePath = `round-workflows/${f.p.run_id}/latest.json`
   atomicCreate(f.root, statePath, { ...state, article_writes: 1 })
-  const p = { run_id: f.p.run_id, successor: "failed-recovery", reason: "Resume preserved collection failure" }
+  const p = {
+    run_id: f.p.run_id,
+    successor: "failed-recovery",
+    reason: "Resume preserved collection failure",
+  }
   await assert.rejects(continueOperationalRound(f.ctx, p), /continuation/i)
   atomicWrite(f.root, statePath, state)
   const result = await continueOperationalRound(f.ctx, p)
   assert.equal(result.status, "continuation_ready")
   assert.equal(result.daily_run, "daily-original")
   assert.equal(result.scheduled_runs_counted, 0)
+})
+
+test("a frozen uncurated edition continues without recollection or changing its partial report", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const workflow = {
+    run_id: f.p.run_id,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  const report = atomicCreate(f.root, "unit-partial-report.json", {
+    schema: "research-collection-report/v1", daily_run: "daily-original", status: "partial",
+    candidate_approved: false, candidate_published: false, counts: { pending_windows: 0 },
+  })
+  const edition = atomicCreate(f.root, "unit-frozen-edition.json", {
+    schema: "research-edition-materials/v1", daily_run: "daily-original", status: "partial",
+    report, candidate_approved: false, candidate_published: false,
+  })
+  const state = {
+    status: "collection_frozen", input_sha256: sha256(JSON.stringify(workflow)), edition,
+    article_writes: 0, canonical_writes: 0, candidate_published: false,
+    stages: { collection: { status: "partial", reference: report }, edition: { status: "frozen", reference: edition } },
+  }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/latest.json`, state)
+  atomicWrite(f.root, `round-workflows/${f.p.run_id}/latest.json`, { ...state, article_writes: 1 })
+  await assert.rejects(
+    continueOperationalRound(f.ctx, { run_id: f.p.run_id, successor: "frozen-recovery", reason: "Continue the frozen edition" }),
+    /Continuation requires/,
+  )
+  atomicWrite(f.root, `round-workflows/${f.p.run_id}/latest.json`, state)
+  const result = await continueOperationalRound(f.ctx, {
+    run_id: f.p.run_id, successor: "frozen-recovery", reason: "Continue the frozen edition",
+  })
+  assert.deepEqual(readJSON(f.root, result.source.path).processing, { edition })
+  const args = JSON.parse(result.next_command[result.next_command.indexOf("--json") + 1])
+  assert.equal(args.parameters.edition_path, edition.path)
+  assert.equal(args.parameters.edition_sha256, edition.sha256)
+  assert.notEqual(args.parameters.propose, false)
+  await assert.rejects(
+    runOperationalRound(f.ctx, { run_id: result.run_id, stage: "collection", parameters: { collect: true } }),
+    /Selected continuation/,
+  )
+  assert.equal(fs.existsSync(path.join(f.root, "module-jobs")), false)
+  atomicCreate(f.root, `round-workflows/${result.run_id}/latest.json`, { edition })
+  let seen
+  await runOperationalRound(f.ctx, { run_id: result.run_id, stage: "processing" }, {
+    submit: async (_ctx, module, operation, parameters, options) => {
+      seen = parameters
+      const input = { job_id: options.jobId, module, operation, parameters, context: _ctx }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/input.json`, input)
+      const state = { job_id: options.jobId, state: "queued", input_sha256: sha256(JSON.stringify(input)) }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/state.json`, state)
+      return state
+    },
+  })
+  assert.equal(seen.edition_path, edition.path)
+  assert.equal(seen.edition_sha256, edition.sha256)
+  assert.equal(seen.propose, true)
+  assert.equal(seen.collect, false)
 })
 
 test("an explicit selected-handoff recovery pins a new manual segment and rejects changed or recollected inputs", async (t) => {
@@ -597,4 +748,57 @@ test("activation refuses a live or unknown writer and manual captures never acce
     schedule_id: "tech-knowledge-garden-04",
   })
   assert.throws(() => checkedOperationalInvocation(ctx, ref), /Exact manual/)
+})
+
+test("activation, readiness, dispatch, continuation and relay require the retired-root fence", async (t) => {
+  const base = fs.realpathSync(
+    fs.mkdtempSync(path.join(repo, ".local/research/retired-fence-release-")),
+  )
+  const volume = path.join(base, "volume"),
+    retired = path.join(volume, "old")
+  const locks = path.join(retired, ".local/research/local-ai/locks")
+  const storage = path.join(retired, ".local/.storage")
+  fs.mkdirSync(locks, { recursive: true })
+  fs.mkdirSync(storage, { recursive: true })
+  for (const name of ["catalog.sqlite", "catalog.sqlite-wal", "catalog.sqlite-shm"]) {
+    const file = path.join(storage, name)
+    fs.writeFileSync(file, name === "catalog.sqlite-wal" ? "" : "unit")
+    fs.chmodSync(file, 0o444)
+  }
+  fs.chmodSync(storage, 0o555)
+  fs.chmodSync(locks, 0o555)
+  t.after(() => {
+    fs.chmodSync(locks, 0o755)
+    fs.chmodSync(storage, 0o755)
+    fs.rmSync(base, { recursive: true, force: true })
+  })
+  const f = await setup(t, { retiredWorkspace: { volume, workspace: retired } })
+  for (const dir of ["node_modules", "integrations/research-mcp/node_modules"])
+    fs.mkdirSync(path.join(f.source, dir), { recursive: true })
+  fs.chmodSync(locks, 0o755)
+  await assert.rejects(activateOperationsRuntime(f.runtime, f.source), /writable/)
+  assert.equal(fs.existsSync(path.join(f.source, ".local/.storage/active-runtime.json")), false)
+  await assert.rejects(pinOperationalRound(f.ctx, f.p), /writable/)
+  await assert.rejects(driveOperationalRound(f.ctx, f.p), /writable/)
+  await assert.rejects(
+    continueOperationalRound(f.ctx, { run_id: f.p.run_id, successor: "unit-next", reason: "unit" }),
+    /writable/,
+  )
+  await assert.rejects(
+    relayOperationalReasoning(f.ctx, { run_id: f.p.run_id, results: [] }),
+    /writable/,
+  )
+  assert.throws(() => captureScheduledInvocation(f.ctx), /writable/)
+  assert.equal(
+    fs.existsSync(path.join(f.root, `operations/rounds/${f.p.run_id}/input.json`)),
+    false,
+  )
+  fs.chmodSync(locks, 0o555)
+  assert.equal((await activateOperationsRuntime(f.runtime, f.source)).operational_ready, true)
+  assert.equal(operationsReadiness(f.source).retired_fence.status, "protected")
+  assert.equal((await pinOperationalRound(f.ctx, f.p)).status, "pinned")
+  fs.chmodSync(locks, 0o755)
+  assert.equal(operationsReadiness(f.source).status, "retired_root_fence_missing")
+  assert.equal(operationsReadiness(f.source).operational_ready, false)
+  assert.equal(operationalRoundStatus(f.ctx, f.p.run_id).status, "pinned")
 })

@@ -6,6 +6,7 @@ import { evidenceReference } from "./development-release.mjs"
 import { readOperationGate } from "./operation-policy.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 import { assertRequestOwner } from "./request-ownership.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 export const activeRuntimePath = ".local/.storage/active-runtime.json"
 export const executionRepository = (ctx) => ctx.executionRepo || ctx.repo
@@ -69,7 +70,10 @@ export function inspectRuntimeWorkspace(runtime, workspace) {
   return { runtime, workspace, release_id: gate.release_id, gate, installation }
 }
 
-export function assertNoOperationalWriter(workspace, { researchRoot, ownedRequest } = {}) {
+export function assertNoOperationalWriter(
+  workspace,
+  { researchRoot, ownedRequest, ownedSubmission } = {},
+) {
   const root = researchRoot || path.join(workspace, ".local/research/local-ai")
   if (
     researchRoot &&
@@ -102,49 +106,79 @@ export function assertNoOperationalWriter(workspace, { researchRoot, ownedReques
   }
   for (const file of ["locks/garden-operation.json", "locks/module-submit.json"])
     if (readJSON(root, file)) throw Error("Workspace lock requires explicit inspection: " + file)
+  const submission = readJSON(root, "locks/module-job-submit.json")
+  if (
+    (ownedSubmission &&
+      (!submission || submission.owner !== ownedSubmission || submission.pid !== process.pid)) ||
+    (!ownedSubmission && submission)
+  )
+    throw Error("Workspace submission lock requires explicit inspection")
   const locks = path.join(root, "locks")
   for (const file of fs.existsSync(locks) ? fs.readdirSync(locks) : [])
     if (/^operations-(driver|control)-/.test(file))
       throw Error("Operational controller requires explicit inspection: " + file)
+    else if (/^module-worker-.*\.json$/.test(file)) {
+      const owner = readJSON(root, `locks/${file}`)
+      if (file === `module-worker-${ownedRequest?.job_id}.json` && owner?.pid === process.pid)
+        continue
+      if (!Number.isSafeInteger(owner?.pid) || owner.pid <= 0)
+        throw Error("Unknown workspace worker lock: " + file)
+      try {
+        process.kill(owner.pid, 0)
+      } catch (error) {
+        if (error.code === "ESRCH") continue
+        throw Error("Unknown workspace worker lock: " + file)
+      }
+      throw Error("Active workspace worker lock: " + file)
+    }
 }
 
-export async function activateOperationsRuntime(runtime, workspace) {
+export async function activateOperationsRuntime(runtime, workspace, { ownedSubmission } = {}) {
   const checked = inspectRuntimeWorkspace(runtime, workspace)
+  assertRetiredWorkspaceFences(checked.runtime, checked.workspace)
   const root = path.join(checked.workspace, ".local/.storage")
   fs.mkdirSync(root, { recursive: true, mode: 0o700 })
   return withLock(root, "activate-runtime", async () => {
-    assertNoOperationalWriter(checked.workspace)
-    const dependencies = []
-    for (const relative of ["node_modules", "integrations/research-mcp/node_modules"]) {
-      const existing = path.join(checked.workspace, relative),
-        target = path.join(checked.runtime, relative)
-      if (!fs.statSync(existing, { throwIfNoEntry: false })?.isDirectory())
-        throw Error("Existing workspace dependencies required: " + relative)
-      fs.mkdirSync(path.dirname(target), { recursive: true })
-      if (!fs.lstatSync(target, { throwIfNoEntry: false })) fs.symlinkSync(existing, target, "dir")
-      if (
-        !fs.lstatSync(target).isSymbolicLink() ||
-        fs.realpathSync(target) !== fs.realpathSync(existing)
-      )
-        throw Error("Runtime dependency binding changed: " + relative)
-      dependencies.push({ path: relative, target: fs.realpathSync(existing) })
+    const researchRoot = path.join(checked.workspace, ".local/research/local-ai")
+    const activate = async (owner) => {
+      assertNoOperationalWriter(checked.workspace, { ownedSubmission: owner })
+      const dependencies = []
+      for (const relative of ["node_modules", "integrations/research-mcp/node_modules"]) {
+        const existing = path.join(checked.workspace, relative),
+          target = path.join(checked.runtime, relative)
+        if (!fs.statSync(existing, { throwIfNoEntry: false })?.isDirectory())
+          throw Error("Existing workspace dependencies required: " + relative)
+        fs.mkdirSync(path.dirname(target), { recursive: true })
+        if (!fs.lstatSync(target, { throwIfNoEntry: false }))
+          fs.symlinkSync(existing, target, "dir")
+        if (
+          !fs.lstatSync(target).isSymbolicLink() ||
+          fs.realpathSync(target) !== fs.realpathSync(existing)
+        )
+          throw Error("Runtime dependency binding changed: " + relative)
+        dependencies.push({ path: relative, target: fs.realpathSync(existing) })
+      }
+      const value = {
+        schema: "research-active-runtime/v1",
+        runtime: checked.runtime,
+        workspace: checked.workspace,
+        release_id: checked.release_id,
+        installation: evidenceReference(checked.runtime, ".local/.storage/runtime-release.json"),
+        dependencies,
+        python: pythonDependencies(checked.runtime, checked.workspace),
+      }
+      const prior = readJSON(checked.workspace, activeRuntimePath)
+      if (prior && JSON.stringify(prior) !== JSON.stringify(value)) {
+        const archive = `.local/.storage/active-runtime-history/${sha256(JSON.stringify(prior))}.json`
+        if (!readJSON(checked.workspace, archive)) atomicCreate(checked.workspace, archive, prior)
+      }
+      atomicWrite(checked.workspace, activeRuntimePath, value)
+      return operationsReadiness(checked.workspace)
     }
-    const value = {
-      schema: "research-active-runtime/v1",
-      runtime: checked.runtime,
-      workspace: checked.workspace,
-      release_id: checked.release_id,
-      installation: evidenceReference(checked.runtime, ".local/.storage/runtime-release.json"),
-      dependencies,
-      python: pythonDependencies(checked.runtime, checked.workspace),
-    }
-    const prior = readJSON(checked.workspace, activeRuntimePath)
-    if (prior && JSON.stringify(prior) !== JSON.stringify(value)) {
-      const archive = `.local/.storage/active-runtime-history/${sha256(JSON.stringify(prior))}.json`
-      if (!readJSON(checked.workspace, archive)) atomicCreate(checked.workspace, archive, prior)
-    }
-    atomicWrite(checked.workspace, activeRuntimePath, value)
-    return operationsReadiness(checked.workspace)
+    if (ownedSubmission) return activate(ownedSubmission)
+    return withLock(researchRoot, "module-job-submit", async () =>
+      activate(readJSON(researchRoot, "locks/module-job-submit.json").owner),
+    )
   })
 }
 
@@ -162,6 +196,20 @@ export function operationsReadiness(workspace) {
   )
     throw Error("Active runtime workspace binding changed")
   const checked = inspectRuntimeWorkspace(active.runtime, workspace)
+  let retiredFence
+  try {
+    retiredFence = assertRetiredWorkspaceFences(checked.runtime, checked.workspace)
+  } catch (error) {
+    if (error.code !== "RETIRED_ROOT_FENCE_MISSING") throw error
+    return {
+      status: "retired_root_fence_missing",
+      reason: error.message,
+      operational_ready: false,
+      runtime: checked.runtime,
+      workspace: checked.workspace,
+      release_id: checked.release_id,
+    }
+  }
   if (
     active.release_id !== checked.release_id ||
     evidenceReference(active.runtime, active.installation.path).sha256 !==
@@ -189,5 +237,6 @@ export function operationsReadiness(workspace) {
     release_id: active.release_id,
     schedule: "tech-knowledge-garden-04",
     production_cycle_counted: false,
+    ...(retiredFence.status === "not_configured" ? {} : { retired_fence: retiredFence }),
   }
 }

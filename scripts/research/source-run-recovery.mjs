@@ -62,7 +62,18 @@ export function readRecoverySource(root, runId) {
       ? { recovery_source_runs: recovery.source_runs.map((reference) => reference.source_run) }
       : recovery ? { recovery_source_run: recovery.source_run?.source_run } : {}),
   }))
-  const input = checkpointOnly ? declaredInput : inputs.find((value) => sha256(JSON.stringify(value)) === state?.input_hash)
+  // A stale listing may have been requested but explicitly skipped. In that
+  // case the summary correctly has no reused run, while the immutable input
+  // still names the attempted run. Reconstruct every other field as usual.
+  const skippedListingInputs =
+    typeof summary?.listing_reuse_skipped === "string" && summary.listing_reuse_skipped.trim() &&
+    !summary.listing_reused_from_run &&
+    /^[A-Za-z0-9_-]{1,100}$/.test(declaredInput?.reuse_listing_run || "")
+      ? inputs.map((value) => ({ ...value, reuse_listing_run: declaredInput.reuse_listing_run }))
+      : []
+  const input = checkpointOnly
+    ? declaredInput
+    : [...inputs, ...skippedListingInputs].find((value) => sha256(JSON.stringify(value)) === state?.input_hash)
   if (
     state?.schema !== "research-run/v1" || state.run_id !== runId || !input ||
     sha256(JSON.stringify(input)) !== state.input_hash ||

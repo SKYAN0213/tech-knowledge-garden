@@ -14,6 +14,7 @@ import { executionRepository } from "./operations-deployment.mjs"
 import { checkedOperationalInvocation } from "./schedule-contract.mjs"
 import { assertUnwrittenApprovedHandoff } from "./operations-continuation.mjs"
 import { verifyRelayHistory } from "./relay-ledger.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 export function operationalRoundStatus(ctx, run) {
   const base = operationalBase(run)
@@ -197,7 +198,7 @@ export async function runOperationalRound(
         supplied[name + "_path"] = ref.path
         supplied[name + "_sha256"] = ref.sha256
       }
-      supplied.propose = false
+      supplied.propose = !(recovery.processing.curation || recovery.processing.plan)
     }
     const collect = p.stage === "collection" && !supplied.report_path && !supplied.edition_path
     let parameters =
@@ -312,6 +313,7 @@ export async function runOperationalRound(
 }
 
 export async function relayOperationalReasoning(ctx, { run_id, results, resume_ready = false }) {
+  assertRetiredWorkspaceFences(executionRepository(ctx), ctx.repo)
   inspectOperationalPin(ctx, run_id)
   for (const result of results) {
     const request = readJSON(ctx.root, `reasoning-tasks/${result.task_id}/request.json`)

@@ -4,10 +4,12 @@ import os from "node:os"
 import { execFileSync } from "node:child_process"
 import { sha256 } from "./contracts.mjs"
 import { safePath, atomicCreate, readJSON } from "./run-state.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 // The app has no execution-history tool for thread heartbeats. Read only the
 // existing scheduler's last dispatch row; never infer a dispatch from RRULE.
 export function captureScheduledInvocation(ctx, { database } = {}) {
+  assertRetiredWorkspaceFences(ctx.executionRepo || ctx.repo, ctx.repo)
   const contract = scheduleContract(ctx.executionRepo || ctx.repo)
   database ||= path.join(
     process.env.CODEX_HOME || path.join(os.homedir(), ".codex"),

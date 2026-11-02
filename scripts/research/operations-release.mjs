@@ -6,6 +6,7 @@ import { evidenceReference, inspectDevelopmentCompletion } from "./development-r
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { checkedOperationalInvocation } from "./schedule-contract.mjs"
 import { executionRepository, inspectRuntimeWorkspace } from "./operations-deployment.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 const installationPath = ".local/.storage/runtime-release.json"
 export const operationalBase = (run) => {
@@ -121,6 +122,7 @@ export async function pinOperationalRound(
   const runtime = executionRepository(ctx)
   const gate = readOperationGate(runtime)
   if (!gate.regular_execution_allowed) return { status: gate.status, operation_gate: gate }
+  assertRetiredWorkspaceFences(runtime, ctx.repo)
   const base = operationalBase(run_id)
   const old = readJSON(ctx.root, base + "input.json")
   if (old) {

@@ -1,0 +1,9 @@
+{
+  "schema": "research-retired-workspaces/v1",
+  "workspaces": [
+    {
+      "volume": "/Volumes/X5Storage",
+      "workspace": "/Volumes/X5Storage/Projects/Personal/Apps/tech-knowledge-garden"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import {
 import { sha256 } from "./contracts.mjs"
 import { moduleRecoveryPlan } from "./operation-policy.mjs"
 import { moduleJobTiming } from "./operations-timing.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 const defaultRepo = fileURLToPath(new URL("../../", import.meta.url))
 const worker = fileURLToPath(new URL("../research-module-worker.mjs", import.meta.url))
@@ -310,6 +311,8 @@ function inputFingerprint(moduleId) {
         "development-pending.mjs",
         "operations-timing.mjs",
         "operations-deployment.mjs",
+        "retired-workspace-fence.mjs",
+        "../../data/research-retired-workspaces.json",
         "storage-selection.mjs",
         "../../data/research-storage-exclusions.json",
         ...extra,
@@ -390,10 +393,31 @@ function workerAlive(ctx, id, state) {
   // Live/reused PIDs, EPERM, malformed output and inaccessible argv stay unknown.
   return processPresent(pid) === false ? false : null
 }
+function terminalWorkerAlive(ctx, id, state) {
+  const lock = readJSON(ctx.root, `locks/module-worker-${id}.json`)
+  if (!lock) {
+    // Once the worker releases its lock, it has no further cleanup to write.
+    // Still report the exact process as alive until it has actually exited.
+    return workerAlive(ctx, id, state) === true
+  }
+  if (Number.isSafeInteger(lock.pid) && lock.pid > 0 && processPresent(lock.pid) === false)
+    // A stale lock alone is not enough: the recorded worker may still be
+    // alive under a different PID, or its identity may be unobservable.
+    return workerAlive(ctx, id, state) === false ? false : null
+  const launch = readJSON(ctx.root, base(id) + "launch.json")
+  if (
+    !Number.isSafeInteger(lock.pid) ||
+    lock.pid <= 0 ||
+    lock.pid !== launch?.pid ||
+    (Number.isSafeInteger(state.pid) && state.pid > 0 && state.pid !== lock.pid)
+  )
+    return null
+  return workerAlive(ctx, id, state)
+}
 export function moduleJobStatus(ctx, id) {
   let { input, state } = checkedInput(ctx, id)
   const active = ["queued", "running", "finishing"].includes(state.state)
-  let alive = active && workerAlive(ctx, id, state)
+  let alive = active ? workerAlive(ctx, id, state) : terminalWorkerAlive(ctx, id, state)
   if (active) {
     // The worker can save its final state and exit during the process probe.
     // Only a freshly validated native state can supersede an uncertain probe.
@@ -405,7 +429,7 @@ export function moduleJobStatus(ctx, id) {
     ) {
       input = latest.input
       state = latest.state
-      alive = false
+      alive = terminalWorkerAlive(ctx, id, state)
     }
   }
   const status = {
@@ -435,10 +459,14 @@ function activeJobs(ctx) {
     .filter(validJob)
     .flatMap((id) => {
       // Completed historical jobs can belong to the repository's former
-      // location. Verify their saved identity without treating them as live
-      // workers. A foreign queued/running owner still fails closed below.
+      // location. Only probe terminal jobs if a worker still owns cleanup.
+      // A foreign active or cleanup owner still fails closed below.
       const { state } = checkedInput(ctx, id, { requireContext: false })
-      if (!["queued", "running", "finishing"].includes(state.state)) return []
+      if (
+        !["queued", "running", "finishing"].includes(state.state) &&
+        !fs.existsSync(safePath(ctx.root, `locks/module-worker-${id}.json`))
+      )
+        return []
       return [moduleJobStatus(ctx, id)]
     })
     .filter((job) => job.worker_alive !== false)
@@ -599,6 +627,7 @@ export async function submitModuleJob(
 ) {
   const { operation } = moduleOperation(moduleId, operationId)
   validateArguments(parameters, operation.inputSchema, ctx)
+  assertRetiredWorkspaceFences(ctx.executionRepo || ctx.repo, ctx.repo)
   const dir = base(jobId)
   const input = {
     schema: "research-module-job-input/v1",
@@ -736,8 +765,12 @@ export async function submitModuleJob(
     }
   })
   if (!background) {
-    while (moduleJobStatus(ctx, jobId).worker_alive)
+    while (true) {
+      const alive = moduleJobStatus(ctx, jobId).worker_alive
+      if (alive === false) break
+      if (alive === null) throw Error("Module worker status unknown; preserve current worker")
       await new Promise((resolve) => setTimeout(resolve, 80))
+    }
   }
   return moduleJobStatus(ctx, jobId)
 }

@@ -211,6 +211,8 @@ v19 후보의 동일 입력 재생은 v13의 제어·검증 763,394.810ms에서
 
 미완료 수집이 요약을 기록한 뒤 집계 배열을 모두 저장하기 전에 중단된 경우에도 기존 요약과 남은 배열의 바이트를 보존한다. 같은 출처·날짜 창과 입력 SHA를 확인하고 완료된 native 체크포인트·원문·파싱 근거만 새 복구 run에 연결한다. 빠진 배열이나 coverage를 생성하지 않으며 `incomplete_checkpoints=true`, `coverage_reused=false`로 표시한다. 완료로 표시된 scan의 누락 배열, 잘못된 배열, 다른 창 또는 바뀐 체크포인트는 계속 거부한다.
 
+목록 재사용을 요청했지만 신선도 등으로 명시적으로 건너뛴 수집은 원래 입력의 요청 run과 요약의 재사용 결과가 다를 수 있다. 이 경우에도 저장된 입력 SHA와 나머지 수집 기준·창·체크포인트를 대조한다. 실제 재사용했다는 사실이나 coverage를 새로 만들지는 않는다.
+
 일일 보고서는 원문·후보 인계를 주장하지 않은 `failed` 시도의 집계 파일이 일부 없을 때 그 실패 영수증과 이유를 그대로 포함하고, 해당 부분 파일을 검증된 기사 근거로 취급하지 않는다. 다른 시도의 검증된 자료는 보고할 수 있다. 이미 완료됐거나 원문·후보 인계를 주장한 시도는 기존과 같이 필요한 모든 근거가 없으면 거부한다. 실패한 원본과 복구 대상은 그대로 유지한다.
 
 첫 요청은 `run_id`, `mode`, 보고서 참조를 주고 선택적으로 `channels`, `max_attempts`를 지정한다. 재개는 같은 `run_id`와 `mode: "resume"`이면 된다. `max_routes`(기본10), `time_budget_ms`(기본600000)는 호출별 새 경로 착수 제한이며 시작한 원문의 timeout은 별도다. `detail_batch_size`를 선언한 출처는 새 본문 요청만 묶음 예산을 소비한다. 저장된 원문과 동일 worker·parser·옵션의 완료된 파싱은 재사용하고, 원래의 partial/blocked 판정도 그대로 유지한다. 예산으로 미룬 본문은 다른 실패가 섞여 있어도 다음 묶음에서 처리한다. 일반 오류만 남았을 때의 재시도는 `retry_incomplete: true`로 명시하고 출처별 시도 상한을 유지한다.
@@ -293,6 +295,10 @@ authoring delivery 내부에서 connector write intent와 capture event가 만�
 일일 계획 검증은 보관된 coverage의 모든 참조 회차를 계속 확인한다. 첫 성공 검증은 실제로 읽은 scan artifact·원문·parse 및 parse 종속 경로와 검증기 코드 지문, 검증된 cold-storage/Drive 묶음 바인딩을 `daily/scan-verifications/<run>/<proof-sha>/verification.json`에 불변 저장한다. 이후에는 코드와 각 입력 SHA 또는 원격 묶음 식별이 그대로일 때만 이 영수증을 재사용한다. 파일·카탈로그·묶음·검증기 지문이 달라지거나 영수증이 손상되면 기존 원문 검증으로 되돌아간다. 첫 검증에서 cold payload가 필요하면 검증기는 본문·parse·OCR·이미지 parse 종속 경로를 순회하며 정확한 요청을 모아 `STORAGE_PENDING`으로 반환한다. 요청된 raw bytes만 검증·hydrate한 뒤 같은 계획을 재개한다. cold 증거가 완전히 복원되어야 영수증을 만들며, 누락 증거를 건너뛰거나 coverage를 완료로 표시하지 않는다.
 
 MCP는 기존5도구를 유지한다. `research_job_status`의 recovery는 구체적인 다음 행동과 자동 재시도 금지를 반환한다. `research_job_resume`은 입력/구현/정책 검증을 유지하며, 재개 직전에 이전 state와 SHA를 `module-jobs/<job>/attempts/<번호>-before-resume.json`에 불변 저장한다. 결과가 이미 저장된 worker는 정확한 결과를 복구하고 완료 모듈 호출을 반복하지 않는다. 로컬 운영자는 중단 지점을 조회하고, 원인을 해결한 native job이 완료된 뒤 자신의 `--resume`으로 이어간다.
+
+worker는 최종 결과를 저장한 뒤에도 시간 기록과 cold-storage 정리를 마칠 때까지 기존 잠금을 보유한다. 이때 `state=completed`는 결과 보존 상태이며 `worker_alive=true`와 `wait_for_current_worker`가 함께 반환될 수 있다. 소유자를 확인할 수 없는 잠금은 재개·대체하지 않는다. foreground 호출은 해당 worker의 실제 종료를 기다린다.
+
+실행본 활성화와 회차 인계는 실제 `module-job-submit` 잠금을 보유한 동안 진행하며, 다른 제출이나 남아 있는 worker 정리가 확인되면 대기한다. 부분 수집이라도 원래 보고서에 묶인 edition이 이미 고정됐고 선정·원고·공개 작업이 시작되지 않았다면 그 정확한 edition과 보고서 SHA를 새 실행 구간에 인계할 수 있다. 미완료 구간을 완료로 바꾸거나 수집을 다시 시작하지 않는다.
 
 Drive 인증은 기존 Codex/GPT 연결과 선택적인 로컬 OAuth adapter를 지원한다. 로컬 Desktop client를 등록하고 Google 동의를 마치면 supervisor가 collection.storage remote-pull/push/import를 명시 호출할 수 있다. 인증이 없거나 취소됐으면 waiting_for_storage를 유지한다. adapter는 실제 원격 metadata·raw bytes를 받아 기존 pending/verify/hydrate에 넘기며, 인증 설정을 모델에게 넘기거나 검증 metadata를 스스로 만들어 해결하지 않는다. 독립 CLI는 scripts/research-drive.mjs이고 실제 계정 최초 동의와 live 왕복은 코드·fixture 통과와 별도로 판정한다. [Ollama 도구 호출](https://docs.ollama.com/capabilities/tool-calling), [Google Drive 로컬 OAuth 예제](https://developers.google.com/workspace/drive/api/quickstart/python).
 
@@ -1108,3 +1114,8 @@ Signals는 이미 명시 승인된 source-publication-time의 정확한 원문 �
 `ready_items`와 현재 기사 frontier를 통해 준비된 결과만 반영한다. 다른 기사의 저장 대기가 슬롯을 계속 차지하지 않으며, 복원 요청의 실제 bytes와 SHA가 일치할 때만 해당 작업을 자동 재개한다. 승인된 기사 목록이 같더라도 승인·원문·개념 등 검증된 지식 투영 입력의 SHA가 바뀌면 이전 투영을 재사용하지 않는다.
 
 2026-11-02 운영 승격 사전 확인: 개발 완료된 `tkg-article-accel-20261102-r7`은 별도 불변 실행본으로 설치했고 새 외장 경로의 비활성 workspace에 517개 구현 파일과 기존 의존성을 결속해 준비 상태를 확인했다. 기존 v13 workspace 파일·정책·seal·active runtime의 보존본과 SHA 영수증은 통합 프로젝트의 `migration-evidence/2026-11-02-r7-inactive-workspace-backup/`에 있다. native MCP 초기화·도구 목록 검사는 모델·수집·Drive 호출 없는 로컬 검사다. 기존 미완료 회차는 이전 저장 루트와 실행본에 고정되어 있으며 새 경로에서의 조회·재개는 허용되지 않는다. 2026-11-02 21:28 사전 확인에서는 04시 예약과 MCP가 기존 v13을 가리켰고, 이후 사용자 지시로 기존 회차를 보존하며 새 회차의 r7 강제 전환을 진행했다. 실제 전환 결과는 통합 프로젝트의 `migration-evidence/2026-11-02-full-migration-plan.md`를 확인한다. 후보 준비 상태는 실제 발행 완료를 뜻하지 않는다.
+### 이전 운영 경로 보호 관문 (개발 후보)
+
+`data/research-retired-workspaces.json`에 명시된 이전 workspace는 새 회차의 pin·구동·재개·모델 결과 적용과 독립 저장·Drive 변경·발행 전에 검사한다. 마운트된 이전 경로의 native 잠금 디렉터리와 storage 디렉터리·catalog·SQLite sidecar가 현재 사용자에게 쓰기 불가이고 WAL이 비어 있어야 한다. 이전 잠금 소유자가 살아 있거나 소유 상태를 확인할 수 없는 경우도 차단한다. 볼륨 자체가 연결되지 않은 경우는 별도로 기록하며, 볼륨이 연결된 상태에서 workspace 또는 보호 파일이 없으면 차단한다. 설치된 새 실행본의 설정은 release manifest의 경로와 SHA에 고정된다. 상태 조회는 차단 상태에서도 유지한다.
+
+이 관문은 이전 native 경로의 보호를 검사하며 동일 사용자 권한의 임의 프로세스가 검사 직후 권한이나 파일을 바꾸는 경우까지 통제하지 않는다. 구회차 복구는 기존 절차대로 예약 일시 중지, 양쪽 writer·MCP와 SQLite 확인, 이전 보호 해제 후 원래 실행본에서 처리하고, 보호를 복구한 다음 새 정규 운영을 재개한다. 이전 실행본과 진행 중인 회차의 pin은 바꾸지 않는다. 이 문단은 아직 개발 후보의 계약이며 실제 적용 여부는 운영 증거에서 확인한다.

@@ -1,5 +1,7 @@
 import fs from "node:fs"
 import { parseArgs } from "node:util"
+import { fileURLToPath } from "node:url"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 import { connectorInput } from "./research/connector-input.mjs"
 import { DEFAULT_ROOT } from "./research/run-state.mjs"
 import { prepareAuthoringTransfer, compareAuthoringRemote } from "./research/authoring-transfer.mjs"
@@ -40,6 +42,10 @@ try {
     throw Error(
       "Use prepare, compare, release, capture, capture-source, reconcile-source, reconcile, write-session or status",
     )
+  if (positionals[0] !== "status") {
+    const repo = fileURLToPath(new URL("../", import.meta.url))
+    assertRetiredWorkspaceFences(repo, repo)
+  }
   if (values["reconcile-input"] && positionals[0] !== "reconcile-source")
     throw Error("Source reconciliation input requires reconcile-source")
   if (values["capture-run"] && positionals[0] !== "capture-source")

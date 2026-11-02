@@ -180,6 +180,34 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
   }
 }
 
+test("recovery authenticates a listing reuse request that the scan explicitly skipped", async (t) => {
+  const f = await fixture(t)
+  const prefix = "runs/initial/"
+  const input = readJSON(f.root, prefix + "collection-input.json")
+  input.reuse_listing_run = "earlier-listing"
+  const state = readJSON(f.root, prefix + "state.json")
+  state.input_hash = sha256(JSON.stringify(input))
+  const summary = readJSON(f.root, prefix + "list-scan.json")
+  delete summary.listing_reused_from_run
+  summary.listing_reuse_skipped = "Reusable listing observation is outside the freshness window"
+  atomicWrite(f.root, prefix + "collection-input.json", input)
+  atomicWrite(f.root, prefix + "state.json", state)
+  atomicWrite(f.root, prefix + "list-scan.json", summary)
+
+  const recovered = readRecoverySource(f.root, "initial")
+  assert.deepEqual(recovered.input, input)
+  assert.equal(recovered.reference.input_sha256, state.input_hash)
+  assert.equal(recovered.summary.listing_reuse_skipped, summary.listing_reuse_skipped)
+
+  atomicWrite(f.root, prefix + "collection-input.json", { ...input, reuse_listing_run: "tampered" })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+  atomicWrite(f.root, prefix + "collection-input.json", input)
+  atomicWrite(f.root, prefix + "list-scan.json", { ...summary, listing_reuse_skipped: "" })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+  atomicWrite(f.root, prefix + "list-scan.json", { ...summary, listing_reused_from_run: "another-listing" })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+})
+
 function addEarlierWindow(f) {
   const run = "earlier-window"
   fs.cpSync(path.join(f.root, "runs/initial"), path.join(f.root, "runs", run), { recursive: true })

@@ -1,9 +1,11 @@
 import { parseArgs } from "node:util"
+import { fileURLToPath } from "node:url"
 import fs from "node:fs"
 import { deliverAuthoringSession } from "./research/authoring-delivery.mjs"
 import { connectorInput } from "./research/connector-input.mjs"
 import { deliverApprovedPublication } from "./research/delivery-run.mjs"
 import { DEFAULT_ROOT, safePath } from "./research/run-state.mjs"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 
 try {
   const { values: v } = parseArgs({
@@ -30,6 +32,10 @@ try {
   })
   if (!/^\d+$/.test(v["wait-seconds"])) throw Error("Integer --wait-seconds required")
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(v.run || "")) throw Error("Exact delivery run ID required")
+  if (!v.status) {
+    const repo = fileURLToPath(new URL("../", import.meta.url))
+    assertRetiredWorkspaceFences(repo, repo)
+  }
   if (
     !/^\d+$/.test(v["connector-wait-ms"]) ||
     Number(v["connector-wait-ms"]) < 1 ||

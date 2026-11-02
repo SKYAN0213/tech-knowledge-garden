@@ -7,6 +7,7 @@ import { operationalRoundStatus, runOperationalRound } from "./operations-runtim
 import { moduleJobStatus } from "./module-runtime.mjs"
 import { readReasoningTask } from "./reasoning-tasks.mjs"
 import { publicationDeliveryStatus } from "./authoring-delivery-request.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 export function savedStorageRequestReady(root, request) {
   if (request?.schema !== "research-storage-download-request/v1" || typeof request.root !== "string" ||
@@ -141,6 +142,7 @@ export async function driveOperationalRound(
     storageReady = (request) => savedStorageRequestReady(ctx.root, request),
   } = {},
 ) {
+  assertRetiredWorkspaceFences(ctx.executionRepo || ctx.repo, ctx.repo)
   const run = p.run_id,
     base = operationalBase(run)
   const { parameters: initialParameters, ...control } = p

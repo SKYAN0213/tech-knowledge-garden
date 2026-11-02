@@ -10,6 +10,7 @@ import {
   recoverDriveLock,
 } from "./research/drive-auth.mjs"
 import { driveStorageAction } from "./research/drive-storage.mjs"
+import { assertRetiredWorkspaceFences } from "./research/retired-workspace-fence.mjs"
 
 const repo = fileURLToPath(new URL("../", import.meta.url))
 const usage = `Local Drive (development transfers are explicit; regular operation remains gated):
@@ -45,6 +46,7 @@ try {
   else {
     if (positionals.length !== 2) throw Error(usage)
     const [group, action] = positionals
+    if (action !== "status") assertRetiredWorkspaceFences(repo, repo)
     const root = path.resolve(repo, values.root || ".local")
     let result
     if (group === "auth") {

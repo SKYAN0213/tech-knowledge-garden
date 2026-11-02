@@ -6,6 +6,7 @@ import { executionRepository, assertNoOperationalWriter } from "./operations-dep
 import { pinOperationalRound, operationalBase } from "./operations-release.mjs"
 import { checkedOperationalInvocation, captureManualInvocation } from "./schedule-contract.mjs"
 import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
+import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 
 export function assertUnwrittenApprovedHandoff(ctx, state, run) {
   if (
@@ -114,9 +115,11 @@ export async function continueOperationalRound(
   const runtime = executionRepository(ctx)
   const gate = readOperationGate(runtime)
   if (!gate.regular_execution_allowed) return { ...gate, completed: false }
+  assertRetiredWorkspaceFences(runtime, ctx.repo)
   const base = operationalBase(run_id)
-  return withLock(ctx.root, "operational-round-continuation", async () => {
-    assertNoOperationalWriter(ctx.repo)
+  return withLock(ctx.root, "operational-round-continuation", async () => withLock(ctx.root, "module-job-submit", async () => {
+    const submissionOwner = readJSON(ctx.root, "locks/module-job-submit.json").owner
+    assertNoOperationalWriter(ctx.repo, { researchRoot: ctx.root, ownedSubmission: submissionOwner })
     const parent = readJSON(ctx.root, base + "input.json")
     if (
       !parent ||
@@ -155,6 +158,29 @@ export async function continueOperationalRound(
     }
     const collectionOnly =
       (["collection_pending", "collection_planned"].includes(state?.status) && !state.edition) || failedCollection
+    const frozenHandoff =
+      state?.status === "collection_frozen" && workflow?.source?.kind === "daily" &&
+      state.edition && !state.curation && !state.plan && !state.event_workflow &&
+      !state.publication_handoff && state.article_writes === 0 && state.canonical_writes === 0 &&
+      state.candidate_published === false
+    if (frozenHandoff) {
+      const edition = checked(ctx.root, state.edition)
+      const report = checked(ctx.root, state.stages?.collection?.reference)
+      if (edition.schema !== "research-edition-materials/v1" || edition.daily_run !== workflow.source.daily_run ||
+          edition.candidate_approved !== false || edition.candidate_published !== false ||
+          JSON.stringify(edition.report) !== JSON.stringify(state.stages.collection.reference) ||
+          JSON.stringify(state.stages?.edition?.reference) !== JSON.stringify(state.edition) ||
+          state.stages?.edition?.status !== "frozen" || report.schema !== "research-collection-report/v1" ||
+          report.daily_run !== workflow.source.daily_run || report.candidate_approved !== false ||
+          report.candidate_published !== false || !["partial", "complete"].includes(report.status) ||
+          edition.status !== report.status || state.stages.collection.status !== report.status ||
+          report.counts?.pending_windows !== 0)
+        throw Error("Exact frozen collection edition and report required")
+      const commandDir = safePath(ctx.root, base + "commands", { materialize: false })
+      const commands = fs.existsSync(commandDir) ? fs.readdirSync(commandDir).filter((name) => name.endsWith(".json")) : []
+      if (commands.some((name) => readJSON(ctx.root, base + "commands/" + name)?.stage !== "collection"))
+        throw Error("Frozen collection continuation cannot supersede later operational work")
+    }
     const selectedHandoff =
       ["curation_ready", "waiting_for_reasoning"].includes(state?.status) &&
       state.edition &&
@@ -165,7 +191,7 @@ export async function continueOperationalRound(
     const approvedHandoff =
       approved_handoff === true ? assertUnwrittenApprovedHandoff(ctx, state, run_id) : null
     if (
-      (!selectedHandoff &&
+      (!selectedHandoff && !frozenHandoff &&
         !approvedHandoff &&
         (!collectionOnly || workflow?.source?.kind !== "daily")) ||
       (collectionOnly && (state.event_workflow || state.publication_handoff))
@@ -193,10 +219,10 @@ export async function continueOperationalRound(
     )
       throw Error("Collection model policy changed")
     const processing =
-      selectedHandoff || approvedHandoff
+      selectedHandoff || frozenHandoff || approvedHandoff
         ? {
             edition: state.edition,
-            curation: state.curation,
+            ...(state.curation ? { curation: state.curation } : {}),
             ...(state.plan ? { plan: state.plan } : {}),
           }
         : null
@@ -204,7 +230,7 @@ export async function continueOperationalRound(
     if (processing) {
       if (checked(ctx.root, state.edition).daily_run !== origin.source.daily_run)
         throw Error("Selected handoff belongs to another daily collection")
-      if (!approvedHandoff) requireUnreviewedSelection(ctx, state, run_id)
+      if (selectedHandoff && !approvedHandoff) requireUnreviewedSelection(ctx, state, run_id)
     }
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
@@ -280,7 +306,7 @@ export async function continueOperationalRound(
                     [name + "_sha256", ref.sha256],
                   ]),
                 ),
-                propose: false,
+                ...(processing.curation || processing.plan ? { propose: false } : {}),
               }
             : {
                 daily_run: source.daily_run,
@@ -290,5 +316,5 @@ export async function continueOperationalRound(
         }),
       ],
     }
-  })
+  }))
 }
