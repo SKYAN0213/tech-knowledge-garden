@@ -155,7 +155,7 @@ async function verifyNativeShadowReview({ root, review, repository }) {
     throw Error("Scheduled native delivery request required")
   const ctx = { root, repo: repository, vault: request.vault }
   const selected = loadDailyPublicationSelection(root, request.handoff.path, { vault: ctx.vault })
-  const scheduled = loadScheduledPublicationInputs(ctx, request, selected.selection, {
+  const scheduled = loadScheduledPublicationInputs(ctx, request, selected, {
     notAfter: review.reviewed_at,
   })
   const day = scheduled.plan.kst_day
@@ -165,10 +165,13 @@ async function verifyNativeShadowReview({ root, review, repository }) {
     JSON.stringify(review.collection_basis) !== JSON.stringify(request.collection_basis) ||
     review.edition !==
       `Editions/${day.slice(0, 4)}/${day.slice(5, 7)}/${day}_0800_Tech_AI_Briefing.md` ||
-    scheduled.report.status !== "collected" ||
-    scheduled.report.counts.incomplete_windows !== 0 ||
-    scheduled.report.counts.pending_windows !== 0 ||
-    scheduled.report.missing.length !== 0 ||
+    scheduled.collections.some(
+      ({ report }) =>
+        report.status !== "collected" ||
+        report.counts.incomplete_windows !== 0 ||
+        report.counts.pending_windows !== 0 ||
+        report.missing.length !== 0,
+    ) ||
     pinned(root, scheduled.basis.handoff).incomplete_windows?.length !== 0
   )
     throw Error("Completed same-scope scheduled collection and exact native handoff required")
@@ -264,14 +267,14 @@ async function verifyNativeShadowReview({ root, review, repository }) {
     delivery_run: review.delivery_run,
     candidate_preview_run: preview.run_id,
     candidate_preview: review.candidate_preview,
-    events: selected.selection.approved_runs.map((row) => row.event_id),
+    events: scheduled.nativeRows.map((row) => row.event_id),
     delivery_request: review.delivery_request,
     invocation: request.invocation,
     collection_basis: request.collection_basis,
     handoff: request.handoff,
     legacy_release: legacy.input.release,
     models,
-    native_inputs: selected.selection.approved_runs,
+    native_inputs: scheduled.nativeRows,
     local_reader: reader,
     operational_promotion_verified: false,
   }

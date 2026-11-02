@@ -26,12 +26,30 @@ import {
   selectedFixture,
 } from "./fixtures/research-event-fixtures.mjs"
 
-test("twelve independently selectable modules share 75 strict operation contracts", () => {
+test("twelve independently selectable modules share 84 strict operation contracts", () => {
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 75)
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 84)
+  const historyRevalidation = catalog.modules.find((m) => m.id === "curation").operations.find((o) => o.id === "revalidate_history")
+  assert.equal(historyRevalidation.network, false)
+  assert.equal(historyRevalidation.model, false)
+  assert.deepEqual(historyRevalidation.inputSchema.required, ["pool_path", "pool_sha256"])
+  assert.ok(
+    catalog.modules
+      .find((m) => m.id === "validation")
+      .operations.some((o) => o.id === "revise_draft"),
+  )
   const reasoning = catalog.modules.find((m) => m.id === "reasoning").operations.map((o) => o.id)
-  for (const operation of ["read_batch", "submit_batch", "retire"])
+  for (const operation of [
+    "read_batch",
+    "submit_batch",
+    "retire",
+    "plan_relay",
+    "plan_relay_batch",
+    "relay_observe",
+    "relay_assign",
+    "relay_exit",
+  ])
     assert.ok(reasoning.includes(operation))
   assert.deepEqual(
     moduleCatalog(["publication"]).modules[0].operations.map((operation) => ({

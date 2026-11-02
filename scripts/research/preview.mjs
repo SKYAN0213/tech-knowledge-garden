@@ -43,6 +43,7 @@ import { loadPreviewSourceAlternatives } from "./preview-source-alternatives.mjs
 import { loadCurationSelection } from "./curation.mjs"
 import { checkedPlan, loadSelectedEvent, reuseEventArticle } from "./event-pipeline.mjs"
 import { assertEditorialCoverage } from "./editorial-completeness.mjs"
+import { memoizeVerifiedArtifact } from "./verified-inputs.mjs"
 
 const approvalFiles = [
   "draft.json",
@@ -57,13 +58,18 @@ const validRun = (run) => {
 }
 
 export function loadCurrentApproval(root, run, { vault = "vault", approvedNotes = [] } = {}) {
-  return readApproval(root, run, vault, false, approvedNotes)
+  return memoizeVerifiedArtifact(
+    "current-approval:" + JSON.stringify([root, run, vault, approvedNotes]),
+    () => readApproval(root, run, vault, false, approvedNotes),
+  )
 }
 
 // Evidence/history projections can read immutable approved concept snapshots.
 // Preview/publication still use loadCurrentApproval and current canonical gates.
 export function loadHistoricalApproval(root, run, { vault = "vault" } = {}) {
-  return readApproval(root, run, vault, true)
+  return memoizeVerifiedArtifact("historical-approval:" + JSON.stringify([root, run, vault]), () =>
+    readApproval(root, run, vault, true),
+  )
 }
 
 function readApproval(root, run, vault, historical, approvedNotes = []) {
@@ -459,7 +465,7 @@ export function newEditionProjections(
   spec,
   knowledgeNotes = [],
   sourceOriginals = new Map(),
-  { root, curation } = {},
+  { root, curation, publicationHandoff } = {},
 ) {
   if (
     !spec ||
@@ -564,6 +570,39 @@ export function newEditionProjections(
         throw Error("Curated first-feature approval has a different source selection")
       const approval = loadCurrentApproval(root, binding.writer_run, { vault })
       carried.set(approval.article.event_id, JSON.stringify(approval.article))
+    }
+    if (publicationHandoff) {
+      const bytes = fs.readFileSync(safePath(root, publicationHandoff.path))
+      if (sha256(bytes) !== publicationHandoff.sha256)
+        throw Error("Publication handoff evidence changed")
+      const revision = JSON.parse(bytes)
+      if (revision.schema === "research-curation-publication-revision/v1") {
+        // Only an exact native revision can replace the selected approval.
+        // Reloading verifies its original handoff and every correction lineage.
+        const resolved = loadDailyPublicationSelection(root, publicationHandoff.path, { vault })
+        if (
+          resolved.reference.sha256 !== publicationHandoff.sha256 ||
+          JSON.stringify(resolved.curation) !== JSON.stringify(curation)
+        )
+          throw Error("Publication handoff curation binding changed")
+        for (const correction of revision.corrections) {
+          const childBytes = fs.readFileSync(safePath(root, correction.handoff.path))
+          if (sha256(childBytes) !== correction.handoff.sha256)
+            throw Error("Publication handoff correction evidence changed")
+          const child = JSON.parse(childBytes)
+          const currentRun = child?.approved_runs?.[0]?.approved_run
+          if (!resolved.approvedRuns.includes(currentRun))
+            throw Error("Publication handoff correction is not selected")
+          const previous = loadCurrentApproval(root, correction.previous_run, { vault }).article
+          const current = loadCurrentApproval(root, currentRun, { vault }).article
+          if (
+            carried.get(previous.event_id) !== JSON.stringify(previous) ||
+            current.event_id !== previous.event_id
+          )
+            throw Error("Publication handoff correction differs from the frozen selection")
+          carried.set(current.event_id, JSON.stringify(current))
+        }
+      }
     }
   }
   for (const article of approvals) {
@@ -1273,7 +1312,7 @@ export function previewEditionProjections(
     editionSpec,
     notes,
     selected.sourceOriginals,
-    { root, curation: selected.curation },
+    { root, curation: selected.curation, publicationHandoff: selected.dailySelection },
   )
   const retrospective =
     retrospectiveArticles.length || legacyReviews.length

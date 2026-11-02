@@ -3,6 +3,13 @@ import path from "node:path"
 import crypto from "node:crypto"
 import { sha256 } from "./contracts.mjs"
 import { resolveColdStorageRead, recordColdStorageWrite } from "./cold-storage.mjs"
+import { currentRequestOwner } from "./request-ownership.mjs"
+import {
+  trackVerifiedPath,
+  invalidateVerifiedWrite,
+  verifiedJSON,
+  immutableJSONPath,
+} from "./verified-inputs.mjs"
 
 export const DEFAULT_ROOT = ".local/research/local-ai"
 export const GARDEN_OPERATION_LOCK = "garden-operation"
@@ -34,7 +41,9 @@ export function safePath(root, relative, { materialize = true } = {}) {
       throw Error("Symlink in private path")
   }
   if (activeSafePathTrace?.root === base) activeSafePathTrace.paths.add(relative)
-  return materialize ? resolveColdStorageRead(root, target) : target
+  const resolved = materialize ? resolveColdStorageRead(root, target) : target
+  trackVerifiedPath(resolved)
+  return resolved
 }
 export function assertAbsent(root, relative) {
   const file = safePath(root, relative)
@@ -46,6 +55,7 @@ export function assertAbsent(root, relative) {
 // appeared meanwhile. Never fall back to rename, which would replace that file.
 export function atomicCreate(root, relative, value) {
   const file = assertAbsent(root, relative)
+  invalidateVerifiedWrite(file)
   fs.mkdirSync(path.dirname(file), { recursive: true })
   assertAbsent(root, relative)
   const tmp = file + "." + crypto.randomUUID() + ".tmp"
@@ -78,6 +88,7 @@ export function atomicCreate(root, relative, value) {
 }
 export function atomicWrite(root, relative, value) {
   const file = safePath(root, relative, { materialize: false })
+  invalidateVerifiedWrite(file)
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const tmp = file + "." + crypto.randomUUID() + ".tmp"
   const data =
@@ -104,7 +115,10 @@ export function atomicWrite(root, relative, value) {
 }
 export function readJSON(root, relative) {
   const file = safePath(root, relative)
-  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null
+  if (!fs.existsSync(file)) return null
+  return immutableJSONPath(relative)
+    ? verifiedJSON(file)
+    : JSON.parse(fs.readFileSync(file, "utf8"))
 }
 export function acquireLock(root, name) {
   if (!/^[a-zA-Z0-9_.-]+$/.test(name)) throw Error("Invalid lock name")
@@ -113,9 +127,15 @@ export function acquireLock(root, name) {
   // Stale locks are never stolen implicitly. A killed process requires explicit recovery.
   const fd = fs.openSync(file, "wx", 0o600)
   const owner = crypto.randomUUID()
+  const requestOwner = currentRequestOwner()
   fs.writeFileSync(
     fd,
-    JSON.stringify({ owner, pid: process.pid, started_at: new Date().toISOString() }),
+    JSON.stringify({
+      owner,
+      pid: process.pid,
+      started_at: new Date().toISOString(),
+      ...(requestOwner ? { request_owner: requestOwner } : {}),
+    }),
   )
   fs.fsyncSync(fd)
   fs.closeSync(fd)
@@ -130,9 +150,10 @@ export function recoverLock(root, name, expectedOwner) {
     throw Error("Expected lock owner UUID required")
   const relative = `locks/${name}.json`,
     file = safePath(root, relative)
-  let current
+  let current, originalBytes
   try {
-    current = JSON.parse(fs.readFileSync(file, "utf8"))
+    originalBytes = fs.readFileSync(file)
+    current = JSON.parse(originalBytes)
   } catch (error) {
     if (error.code === "ENOENT") throw Error("Lock does not exist")
     throw Error("Lock record is unreadable; preserving it")
@@ -153,8 +174,10 @@ export function recoverLock(root, name, expectedOwner) {
       throw Error("Lock owner process is still running; preserving the lock")
     if (error.code !== "ESRCH") throw error
   }
-  const latest = JSON.parse(fs.readFileSync(file, "utf8"))
+  const latestBytes = fs.readFileSync(file)
+  const latest = JSON.parse(latestBytes)
   if (
+    !latestBytes.equals(originalBytes) ||
     latest.owner !== current.owner ||
     latest.pid !== current.pid ||
     latest.started_at !== current.started_at
@@ -235,7 +258,12 @@ export class RunState {
     } catch (e) {
       this.record(name, {
         ...record,
-        status: e.code === "REASONING_PENDING" ? "waiting_for_reasoning" : e.code === "STORAGE_PENDING" ? "waiting_for_storage" : "failed",
+        status:
+          e.code === "REASONING_PENDING"
+            ? "waiting_for_reasoning"
+            : e.code === "STORAGE_PENDING"
+              ? "waiting_for_storage"
+              : "failed",
         finished_at: new Date().toISOString(),
         error: e.message,
         ...(e.reasoning_task ? { reasoning_task: e.reasoning_task } : {}),

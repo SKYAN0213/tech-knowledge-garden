@@ -16,6 +16,9 @@ import { loadStoredSourceRun } from "../parser.mjs"
 import { assertProcessedFactReview } from "../evidence-review-packet.mjs"
 import { inspectReaderQuality } from "../reader-quality.mjs"
 import { prepareEditorialCompleteness } from "../editorial-completeness.mjs"
+import { runCombinedDraftCorrection } from "../combined-review.mjs"
+import { sha256 } from "../contracts.mjs"
+import { digest } from "../event-pipeline.mjs"
 import { approveSelectedEvent } from "../event-publication.mjs"
 import { PLAN_FILE, loadPlanProgress } from "../plan-progress.mjs"
 import { readOperationGate } from "../operation-policy.mjs"
@@ -27,6 +30,36 @@ import {
   importEvaluationHumanReview,
   auditEvaluationReviewPacket,
 } from "../evaluation-review-packet.mjs"
+
+// A bound independent finding can request a correction, never an approval.
+// The native correction validates the original source, review and result again.
+export async function reviseDraftFromReview(ctx, p, options = {}) {
+  const evidence = fs.readFileSync(safePath(ctx.root, p.revision_evidence_path))
+  if (sha256(evidence) !== p.revision_evidence_sha256)
+    throw Error("Exact editorial revision evidence SHA required")
+  const review = JSON.parse(fs.readFileSync(safePath(ctx.repo, p.review_file)))
+  const draft = readJSON(ctx.root, `runs/${p.run_id}/draft.json`)
+  if (
+    !draft ||
+    readJSON(ctx.root, `runs/${p.run_id}/approved-article.json`) ||
+    review.status !== "needs_revision" ||
+    review.draft_id !== draft.draft_id ||
+    !review.reviewer?.trim() ||
+    !review.reason?.trim() ||
+    !Number.isFinite(Date.parse(review.reviewed_at)) ||
+    Date.parse(review.reviewed_at) > Date.now()
+  )
+    throw Error("Exact unpublished draft and explicit current revision finding required")
+  return runCombinedDraftCorrection(
+    ctx,
+    {
+      run_id: p.run_id,
+      review_file: p.review_file,
+      revision_evidence: { path: p.revision_evidence_path, sha256: p.revision_evidence_sha256 },
+    },
+    options,
+  )
+}
 
 export const module = {
   id: "validation",
@@ -259,6 +292,19 @@ export const module = {
         return inspectReaderQuality(draft, reviewed.claims)
       },
       { readOnly: true },
+    ),
+    revise_draft: operation(
+      "원문과 현재 원고에 연결된 명시적 수정 판정을 작성 모델에 전달한다. 결과는 기존 검증과 독립 편집 재검토가 필요하며 승인·발행하지 않는다.",
+      schema(
+        {
+          run_id: id,
+          review_file: file(),
+          revision_evidence_path: file("root"),
+          revision_evidence_sha256: digest,
+        },
+        ["run_id", "review_file", "revision_evidence_path", "revision_evidence_sha256"],
+      ),
+      reviseDraftFromReview,
     ),
     approve: operation(
       "명시적인 편집 검토 파일을 기존 원문·사실·품질·전문용어 승인 관문에 전달한다. Drive·Git·공개 배포는 하지 않는다.",

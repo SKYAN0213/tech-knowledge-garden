@@ -12,6 +12,7 @@ import { saveSourceSelection } from "./source-selection.mjs"
 import { loadCurrentApproval, loadHistoricalApproval } from "./preview.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { schema, id, text, list, validateArguments, nativeResearch } from "./modules/contracts.mjs"
+import { verifiedJSON, memoizeVerifiedInput } from "./verified-inputs.mjs"
 
 export const digest = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const optionalText = { type: ["string", "null"], maxLength: 500 }
@@ -82,10 +83,9 @@ export const eventReviewSchema = schema(
 )
 
 function checkedJSON(root, reference) {
-  const bytes = fs.readFileSync(safePath(root, reference.path))
-  if (!/^[a-f0-9]{64}$/.test(reference.sha256 || "") || sha256(bytes) !== reference.sha256)
+  if (!/^[a-f0-9]{64}$/.test(reference.sha256 || ""))
     throw Error("Frozen pipeline input SHA-256 changed")
-  return JSON.parse(bytes)
+  return verifiedJSON(safePath(root, reference.path), reference.sha256)
 }
 function immutable(root, file, value) {
   const bytes = JSON.stringify(value, null, 2) + "\n"
@@ -95,6 +95,11 @@ function immutable(root, file, value) {
   return { path: file, sha256: sha256(bytes) }
 }
 export function checkedEdition(ctx, reference) {
+  return memoizeVerifiedInput(ctx, "edition:" + JSON.stringify(reference), () =>
+    checkedEditionUncached(ctx, reference),
+  )
+}
+function checkedEditionUncached(ctx, reference) {
   const edition = checkedJSON(ctx.root, reference)
   if (
     edition.schema !== "research-edition-materials/v1" ||
@@ -465,6 +470,11 @@ export async function reviewEditionEvents(
 }
 
 export function checkedPlan(ctx, reference, groupId) {
+  return memoizeVerifiedInput(ctx, "plan:" + JSON.stringify([reference, groupId]), () =>
+    checkedPlanUncached(ctx, reference, groupId),
+  )
+}
+function checkedPlanUncached(ctx, reference, groupId) {
   const plan = checkedJSON(ctx.root, reference)
   if (
     plan.schema !== "research-edition-event-plan/v1" ||
@@ -606,7 +616,12 @@ export async function prepareEventSelection(ctx, { run_id, plan_path, plan_sha25
   })
 }
 
-export function loadSelectedEvent(
+export function loadSelectedEvent(ctx, parameters, options = {}) {
+  return memoizeVerifiedInput(ctx, "selected-event:" + JSON.stringify([parameters, options]), () =>
+    loadSelectedEventUncached(ctx, parameters, options),
+  )
+}
+function loadSelectedEventUncached(
   ctx,
   { run_id, selection_path, selection_sha256 },
   { requireProcessed = false } = {},
@@ -645,24 +660,28 @@ export function loadSelectedEvent(
     const reviewed = readJSON(ctx.root, `runs/${run_id}/reviewed-claims.json`)
     if (!reviewed?.claims?.some((c) => c.review?.status === "verified"))
       throw Error("Selected event requires verified facts")
-    for (const claim of reviewed.claims.filter((c) => c.review?.status === "verified"))
-      if (
-        !claim.evidence?.length ||
-        claim.evidence.some(
-          (proof) =>
-            !selection.sources.some(
-              (source) =>
-                source.parse_id === proof.parse_id &&
-                source.source_version_id === proof.source_version_id &&
-                source.block_ids.includes(proof.block_id),
-            ),
-        )
-      )
-        throw Error(
-          "Verified writer facts are outside the selected event block scope; defer unrelated facts in the explicit review",
-        )
+    assertSelectedEventFactScope(selection, reviewed.claims)
   }
   return selection
+}
+
+export function assertSelectedEventFactScope(selection, claims) {
+  for (const claim of claims.filter((c) => c.review?.status === "verified"))
+    if (
+      !claim.evidence?.length ||
+      claim.evidence.some(
+        (proof) =>
+          !selection.sources.some(
+            (source) =>
+              source.parse_id === proof.parse_id &&
+              source.source_version_id === proof.source_version_id &&
+              source.block_ids.includes(proof.block_id),
+          ),
+      )
+    )
+      throw Error(
+        "Verified writer facts are outside the selected event block scope; defer unrelated facts in the explicit review",
+      )
 }
 
 export function reuseEventArticle(ctx, { plan_path, plan_sha256, group_id }) {

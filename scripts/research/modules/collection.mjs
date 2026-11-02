@@ -147,6 +147,7 @@ export const module = {
           until: day,
           repair_source_run: id,
           recovery_source_run: id,
+          recovery_source_runs: { ...list(id, 21), minItems: 2 },
           policy_recheck_limit: integer(0, 3),
         },
         ["run_id", "channel", "since", "until"],
@@ -160,6 +161,7 @@ export const module = {
           until: p.until,
           ...(p.repair_source_run ? { "repair-source-run": p.repair_source_run } : {}),
           ...(p.recovery_source_run ? { "recovery-source-run": p.recovery_source_run } : {}),
+          ...(p.recovery_source_runs ? { "recovery-source-runs": p.recovery_source_runs } : {}),
           ...(p.policy_recheck_limit !== undefined
             ? { "policy-recheck-limit": p.policy_recheck_limit }
             : {}),
@@ -177,6 +179,13 @@ export const module = {
           channels: list(id, 250),
           max_routes: integer(1, 250),
           source_runs: { type: "object", maxProperties: 250, additionalProperties: id },
+          source_windows: list(
+            schema(
+              { channel_id: id, since: day, until_exclusive: day, source_runs: { ...list(id, 20), minItems: 1 } },
+              ["channel_id", "since", "until_exclusive", "source_runs"],
+            ),
+            250,
+          ),
           max_attempts: integer(1, 10),
           time_budget_ms: integer(1, 3600000),
           retry_incomplete: { type: "boolean" },
@@ -195,6 +204,7 @@ export const module = {
           reportSha256: p.report_sha256,
           channels: p.channels,
           sourceRuns: p.source_runs,
+          sourceWindows: p.source_windows,
           maxRoutes: p.max_routes,
           maxAttempts: p.max_attempts,
           timeBudgetMs: p.time_budget_ms,

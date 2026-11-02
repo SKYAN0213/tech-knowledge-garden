@@ -8,6 +8,7 @@ import { once } from "node:events"
 import {
   driveOperationalRound,
   operationalNextAction,
+  savedStorageRequestReady,
 } from "../scripts/research/operations-driver.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 
@@ -22,6 +23,103 @@ const settled = (id, pending) => ({
   stages: { collection: { counts: { pending_windows: pending } } },
   next_inputs: [],
   commands: [{ stage: "collection", job_id: id, job: { state: "completed", worker_alive: false } }],
+})
+
+test("a ready article is consumed while independent articles still await reasoning; worker liveness wins", () => {
+  const request = { task_id: "reasoning-a", request_sha256: "a".repeat(64) }
+  const status = {
+    ...settled("module-ready", 0),
+    pending_reasoning: { total: 2, tasks: ["other"] },
+    ready_items: [{ candidate_id: "a", request_refs: [request] }],
+  }
+  assert.deepEqual(operationalNextAction(status), {
+    action: "consume_reasoning",
+    ready_items: status.ready_items,
+    requests: [request],
+  })
+  status.commands[0].job.worker_alive = true
+  assert.equal(operationalNextAction(status).action, "wait")
+  status.commands[0].job.worker_alive = null
+  assert.equal(operationalNextAction(status).action, "worker_status_unknown")
+})
+
+test("a storage request is ready only after exact local bytes have been restored", (t) => {
+  const ctx = setup(t)
+  const payload = Buffer.from("restored payload")
+  const stored = atomicWrite(ctx.root, "payload/source.bin", payload)
+  const request = { schema: "research-storage-download-request/v1", root: ctx.root, requests: [{ path: stored.path, sha256: stored.sha256, bytes: payload.length }], request_count: 1 }
+  assert.equal(savedStorageRequestReady(ctx.root, request), true)
+  fs.writeFileSync(path.join(ctx.root, stored.path), "changed")
+  assert.equal(savedStorageRequestReady(ctx.root, request), false)
+  assert.equal(savedStorageRequestReady(ctx.root, { ...request, root: path.dirname(ctx.root) }), false)
+})
+
+test("restored payloads may use the verified parent cold-storage root", (t) => {
+  const ctx = setup(t), child = path.join(ctx.root, "research/local-ai")
+  fs.mkdirSync(child, { recursive: true })
+  const bytes = Buffer.from("nested payload"), stored = atomicWrite(ctx.root, "research/local-ai/documents/a.bin", bytes)
+  atomicWrite(ctx.root, ".storage/policy.json", { schema: "research-cold-storage/v1", root: ctx.root, enabled: true })
+  const request = { schema: "research-storage-download-request/v1", root: ctx.root, requests: [{ path: stored.path, sha256: stored.sha256, bytes: bytes.length }], request_count: 1 }
+  assert.equal(savedStorageRequestReady(child, request), true)
+})
+
+test("the controller resumes a storage-held article after exact bytes return", async (t) => {
+  const ctx = setup(t), payload = Buffer.from("restored")
+  const stored = atomicWrite(ctx.root, "payload/source.bin", payload)
+  const request = { schema: "research-storage-download-request/v1", root: ctx.root, requests: [{ path: stored.path, sha256: stored.sha256, bytes: payload.length }], request_count: 1 }
+  let current = { ...settled("module-before-storage", 0), status: "partial", pending_reasoning: { total: 0 }, next_inputs: [{ stage: "storage", storage_request: request }] }
+  let calls = 0
+  const result = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current,
+    advance: async (_ctx, p) => {
+      calls++
+      assert.equal(p.stage, "processing")
+      current = { ...settled("module-after-storage", 0), status: "relationship_review", pending_reasoning: { total: 0 }, next_inputs: [{ stage: "classification", required: ["plan_path"] }] }
+      return { status: "completed", job: { job_id: "module-after-storage" } }
+    },
+  })
+  assert.equal(calls, 1)
+  assert.equal(result.status, "requires_review")
+})
+
+test("a repeated completed request stops even when timestamp-bound event references keep changing", async (t) => {
+  const ctx = setup(t),
+    request = { task_id: "reasoning-ready", request_sha256: "a".repeat(64) }
+  let advances = 0
+  let current = {
+    ...settled("module-original", 0),
+    stages: { events: { reference: { path: "current.json", sha256: "initial" } } },
+    ready_items: [{ candidate_id: "a", request_refs: [request] }],
+    pending_reasoning: { total: 2 },
+    next_inputs: [{ stage: "reasoning", reasoning_task: request }],
+  }
+  const result = await driveOperationalRound(
+    ctx,
+    { run_id: "daily-unit", max_steps: 5 },
+    {
+      status: () => current,
+      readTask: () => ({
+        status: "completed",
+        owner: { round_id: "daily-unit", job_id: "module-original" },
+      }),
+      advance: async () => {
+        const job_id = "module-next-" + ++advances
+        current = {
+          ...current,
+          stages: {
+            events: { reference: { path: "current.json", sha256: "timestamp-" + advances } },
+          },
+          commands: [
+            ...current.commands,
+            { stage: "processing", job_id, job: { state: "completed", worker_alive: false } },
+          ],
+        }
+        return { status: "completed", job: { job_id } }
+      },
+    },
+  )
+  assert.equal(result.status, "no_progress")
+  assert.equal(advances, 1)
 })
 
 test("driver drains successive slices and waits for the exact worker before processing; external reviews stay explicit", async (t) => {

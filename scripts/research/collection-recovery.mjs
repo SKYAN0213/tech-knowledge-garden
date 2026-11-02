@@ -3,12 +3,13 @@ import path from "node:path"
 import { registry } from "./discovery.mjs"
 import { collectionArticleProfiles, collectionBasis, collectionRoute } from "./scan-basis.mjs"
 import { executeListScan } from "./list-scan-command.mjs"
+import { validDay } from "./list-scan.mjs"
 import { readRecoverySource } from "./source-run-recovery.mjs"
 import { freezeStoredSourceFrontier, saveCollectionReport } from "./collection-report.mjs"
 import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evidence.mjs"
 import { storedListScan, verifiedDailyScan, reconcileSupplementalScan } from "./daily-scan.mjs"
 import { sha256 } from "./contracts.mjs"
-import { atomicWrite, readJSON, safePath, withLock, withGardenOperationLock } from "./run-state.mjs"
+import { atomicCreate, atomicWrite, readJSON, safePath, withLock, withGardenOperationLock } from "./run-state.mjs"
 import {
   collectionOutcome,
   collectionSourceDecision,
@@ -44,14 +45,40 @@ function recoveryMetadata(root, runId, reference) {
   }
   const state = load("state"),
     basis = load("collection-basis"),
-    summary = load("list-scan")
+    inputPath = `runs/${runId}/collection-input.json`,
+    summaryPath = `runs/${runId}/list-scan.json`,
+    input = pins.has(inputPath) ? load("collection-input") : {}
+  let summary
+  if (pins.has(summaryPath)) summary = load("list-scan")
+  else {
+    // An interrupted run may never have written a summary. Reconstruct only
+    // the same incomplete view authenticated when its plan was created.
+    if (
+      reference.incomplete_checkpoints !== true ||
+      reference.coverage_reused !== false ||
+      !pins.has(inputPath) ||
+      fs.existsSync(safePath(root, summaryPath, { materialize: false }))
+    )
+      throw Error("Recovery source summary changed or metadata is missing")
+    if (
+      input.schema !== "research-list-run-input/v2" ||
+      sha256(JSON.stringify(input)) !== state.input_hash ||
+      JSON.stringify(input.collection_basis) !== JSON.stringify(basis)
+    )
+      throw Error("Recovery source input changed")
+    summary = {
+      channel_id: input.channel_id,
+      window: { since: input.since, until_exclusive: input.until_exclusive },
+      status: "incomplete",
+      reason: "checkpoint_recovery",
+    }
+  }
   if (
     state.run_id !== runId ||
     state.input_hash !== reference.input_sha256 ||
     basis.channel_id !== summary.channel_id
   )
     throw Error("Recovery metadata identity differs")
-  const input = pins.has(`runs/${runId}/collection-input.json`) ? load("collection-input") : {}
   return { state, basis, summary, input, reference }
 }
 
@@ -64,6 +91,7 @@ export async function recoverCollection({
   reportSha256,
   channels,
   sourceRuns,
+  sourceWindows,
   maxRoutes = 10,
   maxAttempts,
   timeBudgetMs = 600000,
@@ -92,6 +120,7 @@ export async function recoverCollection({
       (!Array.isArray(channels) || new Set(channels).size !== channels.length))
   )
     throw Error("Bounded collection recovery inputs required")
+  const started = performance.now()
   const prefix = `collection-recovery/${runId}/`
   return withLock(root, "collection-recovery-" + runId, async () => {
     const existing = readJSON(root, prefix + "plan.json")
@@ -101,6 +130,8 @@ export async function recoverCollection({
       throw Error("Coverage reconciliation requires an explicit backlog")
     channels ??= existing?.channels || []
     sourceRuns ??= existing?.source_runs || {}
+    const hasSourceWindows = sourceWindows !== undefined || existing?.source_windows !== undefined
+    sourceWindows ??= existing?.source_windows || []
     if (
       !sourceRuns ||
       typeof sourceRuns !== "object" ||
@@ -111,6 +142,26 @@ export async function recoverCollection({
       )
     )
       throw Error("Exact checkpoint source overrides required")
+    if (
+      !Array.isArray(sourceWindows) ||
+      sourceWindows.length > 250 ||
+      new Set(sourceWindows.map((entry) => entry && keyOf(entry))).size !== sourceWindows.length ||
+      sourceWindows.some(
+        (entry) =>
+          !/^[A-Za-z0-9_-]{1,100}$/.test(entry?.channel_id || "") ||
+          !validDay(entry.since) ||
+          !validDay(entry.until_exclusive) ||
+          entry.since >= entry.until_exclusive ||
+          !Array.isArray(entry.source_runs) ||
+          entry.source_runs.length < 1 ||
+          entry.source_runs.length > 20 ||
+          new Set(entry.source_runs).size !== entry.source_runs.length ||
+          entry.source_runs.some((run) => !/^[A-Za-z0-9_-]{1,100}$/.test(run)),
+      )
+    )
+      throw Error("Distinct checkpoint overrides for exact source windows required")
+    if (sourceWindows.some((entry) => sourceRuns[entry.channel_id]))
+      throw Error("Choose either channel or window checkpoint overrides for each source")
     maxAttempts ??= existing?.max_attempts_per_route || 3
     if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 10)
       throw Error("Recovery attempts must be within 1..10")
@@ -140,18 +191,13 @@ export async function recoverCollection({
       acquisition,
       config("source-recipes"),
     )
-    const targets = report.routes.flatMap((route) =>
-      route.windows
-        .filter(
-          (window) =>
-            window.status === "incomplete" &&
-            (!channels.length || channels.includes(route.channel_id)),
-        )
-        .map((window) => {
+    const preparedFailures = new Map(),
+      resolvedDeferred = new Map()
+    const prepareTarget = (route, window, saved) => {
           const attempt = window.attempts.at(-1),
             reportRun = attempt.run_id
-          const saved = existing?.targets.find(
-            (t) => keyOf(t) === keyOf({ channel_id: route.channel_id, ...window }),
+          const override = sourceWindows.find(
+            (entry) => keyOf(entry) === keyOf({ channel_id: route.channel_id, ...window }),
           )
           const original = saved
             ? recoveryMetadata(
@@ -178,19 +224,34 @@ export async function recoverCollection({
             if (expected && expected.sha256 !== proof.sha256)
               throw Error("Recovery source evidence differs from the report")
           }
-          const sourceRun = sourceRuns[route.channel_id] || reportRun
-          const source =
-            sourceRun === reportRun
-              ? original
-              : saved
-                ? recoveryMetadata(root, sourceRun, saved.source_reference)
-                : readRecoverySource(root, sourceRun)
-          if (
-            source.summary.channel_id !== route.channel_id ||
-            source.summary.window.since !== window.since ||
-            source.summary.window.until_exclusive !== window.until_exclusive
-          )
-            throw Error("Checkpoint override must retain the exact report route and window")
+          const selectedRuns = saved
+            ? saved.source_runs || [saved.source_run]
+            : override?.source_runs || (sourceRuns[route.channel_id]
+                ? [sourceRuns[route.channel_id]]
+                : [...new Set(window.attempts.map((entry) => entry.run_id))])
+          if (!selectedRuns.length || selectedRuns.length > 20 ||
+              selectedRuns.some((id) => !/^[A-Za-z0-9_-]{1,100}$/.test(id || "")))
+            throw Error("Bounded recovery source history required")
+          const sources = selectedRuns.map((sourceRun, index) => {
+            const previous = saved?.source_references?.[index] ||
+              (selectedRuns.length === 1 ? saved?.source_reference : null)
+            const source = sourceRun === reportRun ? original : previous
+              ? recoveryMetadata(root, sourceRun, previous)
+              : readRecoverySource(root, sourceRun)
+            if (
+              source.summary.channel_id !== route.channel_id ||
+              source.summary.window.since !== window.since ||
+              source.summary.window.until_exclusive !== window.until_exclusive
+            )
+              throw Error("Checkpoint override must retain the exact report route and window")
+            for (const proof of source.reference.evidence) {
+              const expected = reportPins.get(proof.path)
+              if (expected && expected.sha256 !== proof.sha256)
+                throw Error("Recovery source evidence differs from the report")
+            }
+            return source
+          })
+          const sourceRun = selectedRuns[0], source = sources[0]
           const registered = routes.find((r) => r.channel_id === route.channel_id)
           if (
             !registered ||
@@ -213,17 +274,56 @@ export async function recoverCollection({
             since: window.since,
             until_exclusive: window.until_exclusive,
             source_run: sourceRun,
+            ...(selectedRuns.length > 1 ? {
+              source_runs: selectedRuns,
+              source_references: sources.map((entry) => entry.reference),
+            } : {}),
             source_policy_recheck_limit: source.input.policy_recheck_limit,
             ...(sourceRun !== reportRun
               ? { report_source_run: reportRun, report_source_reference: original.reference }
               : {}),
             source_reference: source.reference,
-            source_evidence_scope: original.reference.evidence.some((p) => !reportPins.has(p.path))
+            source_evidence_scope: sources.some((entry) => entry.reference.evidence.some((p) => !reportPins.has(p.path)))
               ? "report_plus_authenticated_native_checkpoints"
               : "frozen_report",
             reason: source.summary.reason,
             action: actionFor(source.summary.reason),
             current_basis: bases.get(route.channel_id),
+          }
+    }
+    const targets = report.routes.flatMap((route) =>
+      route.windows
+        .filter(
+          (window) =>
+            window.status === "incomplete" &&
+            (!channels.length || channels.includes(route.channel_id)),
+        )
+        .map((window) => {
+          const identity = { channel_id: route.channel_id, since: window.since, until_exclusive: window.until_exclusive }
+          const key = keyOf(identity)
+          const saved = existing?.targets.find((target) => keyOf(target) === key)
+          const override = sourceWindows.find((entry) => keyOf(entry) === key)
+          const placeholder = saved || {
+            ...identity,
+            source_run: override?.source_runs[0] || sourceRuns[route.channel_id] || window.attempts[0].run_id,
+            deferred_source: true,
+          }
+          try {
+            if (performance.now() - started >= timeBudgetMs)
+              throw Object.assign(Error("Recovery preparation time budget exhausted"), { code: "RECOVERY_BUDGET" })
+            const bindingPath = `${prefix}bindings/${sha256(key)}.json`
+            const binding = saved?.deferred_source ? readJSON(root, bindingPath) : null
+            const prepared = prepareTarget(route, window, binding || (saved?.deferred_source ? null : saved))
+            if (binding && JSON.stringify(prepared) !== JSON.stringify(binding))
+              throw Error("Recovery source binding changed")
+            if (saved?.deferred_source) {
+              resolvedDeferred.set(key, { bindingPath, prepared, existing: Boolean(binding) })
+              return saved
+            }
+            return prepared
+          } catch (error) {
+            preparedFailures.set(key, error)
+            return placeholder
           }
         }),
     )
@@ -231,15 +331,38 @@ export async function recoverCollection({
       throw Error("Recovery only accepts incomplete report routes")
     if (Object.keys(sourceRuns).some((id) => !targets.some((r) => r.channel_id === id)))
       throw Error("Checkpoint overrides only apply to incomplete recovery targets")
+    if (sourceWindows.some((entry) => !targets.some((target) => keyOf(target) === keyOf(entry))))
+      throw Error("Window checkpoint overrides only apply to incomplete recovery targets")
+    // With no independent target to continue, retain the legacy hard failure
+    // for invalid evidence. A temporary storage/owner wait remains resumable.
+    if (
+      targets.length && preparedFailures.size === targets.length &&
+      [...preparedFailures.values()].every((error) =>
+        error.code !== "STORAGE_PENDING" && error.code !== "RECOVERY_BUDGET" &&
+        !/native run owner/.test(error.message),
+      )
+    )
+      throw preparedFailures.values().next().value
     const input = {
       schema: "research-collection-recovery-plan/v1",
       run_id: runId,
       report: { path: reportPath, sha256: reportSha256 },
       channels,
       source_runs: sourceRuns,
+      ...(hasSourceWindows ? { source_windows: sourceWindows } : {}),
       max_attempts_per_route: maxAttempts,
       ...(reconcileCoverage ? { reconcile_coverage: true, backlog_file: backlogFile } : {}),
       implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
+      ...(!existing || existing.implementation_dependencies ? {
+        implementation_dependencies: Object.fromEntries([
+          "source-run-recovery.mjs", "list-scan-command.mjs", "scan-basis.mjs", "collection-report.mjs",
+        ].map((name) => [name, sha256(fs.readFileSync(new URL(name, import.meta.url)))])),
+      } : {}),
+      ...(!existing || existing.policy_dependencies ? {
+        policy_dependencies: Object.fromEntries([
+          "acquisition", "source-channels", "watchlist", "source-recipes",
+        ].map((name) => [name, sha256(fs.readFileSync(path.join(repo, `data/research-${name}.json`)))])),
+      } : {}),
       targets,
     }
     if (existing && JSON.stringify(existing) !== JSON.stringify(input))
@@ -253,11 +376,19 @@ export async function recoverCollection({
     }
     if (state.plan_sha256 !== sha256(JSON.stringify(input)))
       throw Error("Recovery state belongs to a different plan")
+    const waitingSources = [...preparedFailures].map(([key, error]) => ({
+      ...Object.fromEntries(Object.entries(targets.find((target) => keyOf(target) === key))
+        .filter(([name]) => ["channel_id", "since", "until_exclusive", "source_run"].includes(name))),
+      status: error.code === "STORAGE_PENDING" ? "waiting_for_storage" :
+        error.code === "RECOVERY_BUDGET" ? "budget_pending" :
+        /native run owner/.test(error.message) ? "source_busy" : "invalid_evidence",
+      error: { message: error.message, code: error.code || null,
+        ...(error.storage_request ? { storage_request: error.storage_request } : {}) },
+    }))
     if (mode === "plan-only")
-      return { ...input, status: "planned", candidate_approved: false, candidate_published: false }
-    const started = performance.now(),
-      executed = [],
-      waitingSources = [],
+      return { ...input, status: waitingSources.length ? "partial" : "planned", waiting_sources: waitingSources, candidate_approved: false, candidate_published: false }
+    const executed = [],
+      unverifiedCompleted = new Set(),
       notifications = []
     const reconcile = async (attempt) => {
       if (!reconcileCoverage || attempt.coverage_reconciliation) return
@@ -280,13 +411,26 @@ export async function recoverCollection({
       }
       atomicWrite(root, prefix + "state.json", state)
     }
-    for (const [index, target] of targets.entries()) {
+    for (const [index, plannedTarget] of targets.entries()) {
       if (executed.length >= maxRoutes || performance.now() - started >= timeBudgetMs) break
+      if (preparedFailures.has(keyOf(plannedTarget))) continue
+      const resolution = resolvedDeferred.get(keyOf(plannedTarget))
+      if (resolution && !resolution.existing) atomicCreate(root, resolution.bindingPath, resolution.prepared)
+      const target = resolution?.prepared || plannedTarget
       const attempts = state.attempts.filter((a) => a.window_key === keyOf(target)),
         last = attempts.at(-1)
       if (last?.status === "window_scanned") {
-        verifiedDailyScan(root, last.run_id, target)
-        await reconcile(last)
+        try {
+          verifiedDailyScan(root, last.run_id, target)
+          await reconcile(last)
+        } catch (error) {
+          unverifiedCompleted.add(keyOf(target))
+          waitingSources.push({ channel_id: target.channel_id, since: target.since,
+            until_exclusive: target.until_exclusive, source_run: last.run_id,
+            status: error.code === "STORAGE_PENDING" ? "waiting_for_storage" : "invalid_evidence",
+            error: { message: error.message, code: error.code || null,
+              ...(error.storage_request ? { storage_request: error.storage_request } : {}) } })
+        }
         continue
       }
       const failureAttempts = attempts.filter(
@@ -316,6 +460,9 @@ export async function recoverCollection({
               window_key: keyOf(target),
               run_id: `${runId}_r${index + 1}_a${attempts.length + 1}`,
               source_run: last?.run_id || target.source_run,
+              ...(target.source_runs?.length > 1 ? {
+                source_runs: [...new Set([...(last?.run_id ? [last.run_id] : []), ...target.source_runs])],
+              } : {}),
               status: "running",
             }
       if (last !== attempt) state.attempts.push(attempt)
@@ -327,7 +474,9 @@ export async function recoverCollection({
           channel: [target.channel_id],
           since: target.since,
           until: target.until_exclusive,
-          "recovery-source-run": attempt.source_run,
+          ...(attempt.source_runs?.length > 1
+            ? { "recovery-source-runs": attempt.source_runs }
+            : { "recovery-source-run": attempt.source_run }),
           "policy-recheck-limit": 0,
         })
         if (result.summary.status === "window_scanned")
@@ -380,12 +529,19 @@ export async function recoverCollection({
     const settled = state.attempts.filter((a) =>
       ["window_scanned", "incomplete"].includes(a.status),
     )
-    const reportable = settled.filter((a) => {
-      const native = readJSON(root, `runs/${a.run_id}/state.json`)
-      return (
-        native && Object.values(native.stages || {}).every((stage) => stage.status === "complete")
-      )
-    })
+    const reportable = [], unreported = []
+    for (const attempt of settled) {
+      try {
+        const native = readJSON(root, `runs/${attempt.run_id}/state.json`)
+        if (native && Object.values(native.stages || {}).every((stage) => stage.status === "complete"))
+          reportable.push(attempt)
+        else unreported.push({ run_id: attempt.run_id, reason: "unsettled_native_checkpoints" })
+      } catch (error) {
+        unreported.push({ run_id: attempt.run_id, reason: error.code === "STORAGE_PENDING" ? "waiting_for_storage" : "invalid_evidence",
+          error: { message: error.message, code: error.code || null,
+            ...(error.storage_request ? { storage_request: error.storage_request } : {}) } })
+      }
+    }
     if (publishReport && reportable.length) {
       try {
         const oldRuns = report.routes.flatMap((r) =>
@@ -414,11 +570,13 @@ export async function recoverCollection({
         await freezeStoredSourceFrontier({ root, runId: id, sourceRuns })
         updatedReport = await saveCollectionReport({ root, runId: id })
       } catch (error) {
-        if (error.code !== "STORAGE_PENDING") throw error
-        reportWait = { status: "waiting_for_storage", storage_request: error.storage_request }
+        reportWait = error.code === "STORAGE_PENDING"
+          ? { status: "waiting_for_storage", storage_request: error.storage_request }
+          : { status: "evidence_blocked", error: { message: error.message, code: error.code || null } }
       }
     }
     const completed = targets.filter((target) =>
+      !unverifiedCompleted.has(keyOf(target)) &&
       state.attempts.some((a) => a.window_key === keyOf(target) && a.status === "window_scanned"),
     ).length
     const coveragePending = reconcileCoverage
@@ -427,7 +585,7 @@ export async function recoverCollection({
       : 0
     const continuable = targets.filter((target) => {
       const last = state.attempts.filter((a) => a.window_key === keyOf(target)).at(-1)
-      if (waitingSources.some((s) => keyOf(s) === keyOf(target))) return false
+      if (waitingSources.some((s) => keyOf(s) === keyOf(target) && s.status !== "budget_pending")) return false
       return !last || last.continuable || (last.status === "running" && !last.error)
     })
     const coverageRunnable =
@@ -465,7 +623,10 @@ export async function recoverCollection({
               },
             ]
           : [],
-      required_actions: state.attempts.flatMap((attempt) => {
+      required_actions: [...waitingSources.filter((source) => source.status !== "budget_pending").map((source) => ({
+        channel_id: source.channel_id, since: source.since, until_exclusive: source.until_exclusive,
+        kind: source.status, error: source.error,
+      })), ...state.attempts.flatMap((attempt) => {
         const last = state.attempts.filter((a) => a.window_key === attempt.window_key).at(-1)
         if (last !== attempt) return []
         if (attempt.error || attempt.coverage_error)
@@ -488,7 +649,7 @@ export async function recoverCollection({
               },
             ]
           : []
-      }),
+      })],
       failure_attempts: state.attempts.filter(
         (a) => !["running", "window_scanned"].includes(a.status) && !a.continuable,
       ).length,
@@ -499,9 +660,7 @@ export async function recoverCollection({
         return last ? [{ run_id: last.run_id, policy_recheck_limit: 0 }] : []
       }),
       ...(reportWait ? { report_wait: reportWait } : {}),
-      unreported_attempts: settled
-        .filter((a) => !reportable.includes(a))
-        .map((a) => ({ run_id: a.run_id, reason: "unsettled_native_checkpoints" })),
+      unreported_attempts: unreported,
       candidate_approved: false,
       candidate_published: false,
     }

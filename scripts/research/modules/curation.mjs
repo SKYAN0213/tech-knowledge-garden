@@ -1,8 +1,10 @@
-import { operation, schema, id, file, day, integer, standalone } from "./contracts.mjs"
+import { operation, schema, id, file, day, integer, text, standalone } from "./contracts.mjs"
 import { digest } from "../event-pipeline.mjs"
-import { prepareCuration, evaluateCuration, selectCuration } from "../curation.mjs"
+import { prepareCuration, evaluateCuration, selectCuration, revalidateCurationHistory } from "../curation.mjs"
 import { advanceCuration } from "../curation-workflow.mjs"
 import { readCurationInsights, recordCurationFeedback } from "../curation-insights.mjs"
+import { recoverCurationCheckpoint } from "../curation-checkpoint-recovery.mjs"
+import { reviseCuratedPublicationHandoff } from "../daily-publication-handoff.mjs"
 
 const pool = { pool_path: file("root"), pool_sha256: digest }
 export const module = {
@@ -20,6 +22,54 @@ export const module = {
     "native writer/publication handoffs",
   ],
   operations: {
+    revalidate_history: operation(
+      "발행 원문 파일은 그대로이고 backlog만 바뀐 경우 고정된 모든 후보의 중복 판정을 확인한다. 기본은 점검만 하며 apply=true면 근거 영수증을 남긴다. 선정·점수·승인·발행은 바꾸지 않는다.",
+      schema({ ...pool, apply: { type: "boolean" } }, Object.keys(pool)),
+      revalidateCurationHistory,
+    ),
+    revise_handoff: operation(
+      "이미 고정된 선정의 승인 원고를 동일 사건의 검증된 정정본으로만 연결한다. 기존 선정·점수·승인을 보존하고 새 사건을 추가하거나 발행하지 않는다.",
+      schema(
+        {
+          run_id: id,
+          handoff_path: file("root"),
+          handoff_sha256: digest,
+          corrections: {
+            type: "array",
+            minItems: 1,
+            maxItems: 40,
+            items: schema(
+              {
+                previous_run: id,
+                handoff: schema({ path: file("root"), sha256: digest }, ["path", "sha256"]),
+              },
+              ["previous_run", "handoff"],
+            ),
+          },
+        },
+        ["run_id", "handoff_path", "handoff_sha256", "corrections"],
+      ),
+      reviseCuratedPublicationHandoff,
+    ),
+    recover_checkpoint: operation(
+      "일시 중단된 구형 실행의 실제 SHA 변경을 불변 발행 스냅샷·원 입력·현재 승인으로 검증한다. apply=false는 점검만 수행하고, 명시 apply는 실패 frontier metadata와 상위 참조만 복구한다. 원문·검토·승인·고정 입력을 바꾸거나 발행하지 않는다.",
+      schema(
+        {
+          run_id: id,
+          selection_path: file("root"),
+          selection_sha256: digest,
+          expected_parent_sha256: digest,
+          expected_children: { type: "object", additionalProperties: digest },
+          resume_input_file: file(),
+          resume_input_sha256: digest,
+          failed_job_id: id,
+          reason: text,
+          apply: { type: "boolean" },
+        },
+        ["run_id", "selection_path", "selection_sha256", "expected_parent_sha256", "reason"],
+      ),
+      recoverCurationCheckpoint,
+    ),
     prepare: operation(
       "오늘 관계 검토 계획과 이전 미수록 계획을 같은 후보 풀로 고정한다. 원문·판본·발표일을 유지하고 기존 기사 이력을 비교 입력으로 제공한다. 수집·추론·작성하지 않는다.",
       schema(
@@ -93,6 +143,7 @@ export const module = {
           execute: { type: "boolean" },
           max_items: integer(1, 40),
           require_completeness: { type: "boolean" },
+          review_mode: { type: "string", enum: ["separate/v1", "combined/v1"] },
           time_budget_ms: integer(1, 3600000),
           max_model_calls: integer(1, 64),
           retry_failed: { type: "boolean" },

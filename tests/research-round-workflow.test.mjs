@@ -5,7 +5,10 @@ import path from "node:path"
 import os from "node:os"
 import { execFileSync } from "node:child_process"
 import { editionFixture, selectedFixture } from "./fixtures/research-event-fixtures.mjs"
-import { advanceRoundWorkflow } from "../scripts/research/round-workflow.mjs"
+import {
+  advanceRoundWorkflow,
+  resolveCuratedRetryTargets,
+} from "../scripts/research/round-workflow.mjs"
 import { advanceEventWorkflow } from "../scripts/research/event-workflow.mjs"
 import { executeModule } from "../scripts/research/module-registry.mjs"
 import { recordFactReview } from "../scripts/research/claims.mjs"
@@ -30,6 +33,38 @@ const roundParameters = (f, run_id) => ({
   time_budget_ms: 10000,
 })
 const withPlan = (p, plan) => ({ ...p, plan_path: plan.path, plan_sha256: plan.sha256 })
+
+test("curated retries retain exact selected candidates and map an unambiguous legacy group", () => {
+  const selection = {
+    selected: [
+      { candidate_id: "a".repeat(64), execution: { group_id: "first" } },
+      { candidate_id: "b".repeat(64), execution: { group_id: "second" } },
+    ],
+  }
+  assert.deepEqual(
+    resolveCuratedRetryTargets(selection, {
+      retry_candidates: ["b".repeat(64)],
+      retry_groups: ["first"],
+    }),
+    ["a".repeat(64), "b".repeat(64)],
+  )
+  assert.throws(
+    () => resolveCuratedRetryTargets(selection, { retry_candidates: ["c".repeat(64)] }),
+    /selected candidate/,
+  )
+  assert.throws(
+    () => resolveCuratedRetryTargets(selection, { retry_groups: ["missing"] }),
+    /selected group/,
+  )
+  selection.selected[1].execution.group_id = "first"
+  assert.throws(
+    () => resolveCuratedRetryTargets(selection, { retry_groups: ["first"] }),
+    /ambiguous/,
+  )
+  assert.deepEqual(resolveCuratedRetryTargets(selection, { retry_candidates: ["b".repeat(64)] }), [
+    "b".repeat(64),
+  ])
+})
 
 function isolateContext(f) {
   const vault = path.join(f.root, "test-vault")

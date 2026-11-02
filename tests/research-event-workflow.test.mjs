@@ -226,6 +226,104 @@ test("completed and waiting events leave a bounded slot for the next selected ev
   }
 })
 
+test("a failed handoff commit preserves the preceding child SHA and its new progress for a safe retry", async (t) => {
+  const f = editionFixture(t),
+    provider = fakeProvider(),
+    plan = await twoEventPlan(f)
+  const p = {
+    run_id: "transactional-handoff",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    execute: true,
+    max_items: 1,
+  }
+  await advanceEventWorkflow(f.ctx, p, { baseProvider: provider })
+  const latest = `event-workflows/${p.run_id}/latest.json`,
+    before = fs.readFileSync(safePath(f.root, latest))
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, p, {
+      baseProvider: provider,
+      publicationPreparer: async () => {
+        throw Error("controlled handoff persistence failure")
+      },
+    }),
+    /controlled handoff persistence failure/,
+  )
+  assert.deepEqual(
+    fs.readFileSync(safePath(f.root, latest)),
+    before,
+    "a parent holding the previous SHA must remain valid after the child throws",
+  )
+  assert.equal(readJSON(f.root, `event-workflows/${p.run_id}/progress.json`).rows.length, 2)
+  const attempts = fs.readdirSync(
+    safePath(f.root, `event-workflows/${p.run_id}/checkpoint-failures`),
+  )
+  assert.equal(attempts.length, 1)
+  const receipt = readJSON(f.root, `event-workflows/${p.run_id}/checkpoint-failures/${attempts[0]}`)
+  assert.equal(receipt.rollback, "previous_checkpoint_restored")
+  assert.ok(receipt.attempted.sha256)
+  const resumed = await advanceEventWorkflow(f.ctx, p, { baseProvider: provider })
+  assert.equal(resumed.rows.length, 2)
+  assert.equal(resumed.failures.length, 0)
+})
+
+test("a failed first handoff preserves its attempted bytes without leaving an unowned latest checkpoint", async (t) => {
+  const f = editionFixture(t),
+    plan = await twoEventPlan(f)
+  const p = {
+    run_id: "first-handoff-failure",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    execute: false,
+    max_items: 1,
+  }
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, p, {
+      publicationPreparer: async () => {
+        throw Error("controlled first handoff failure")
+      },
+    }),
+    /controlled first handoff failure/,
+  )
+  assert.equal(readJSON(f.root, `event-workflows/${p.run_id}/latest.json`), null)
+  assert.ok(
+    fs.readdirSync(safePath(f.root, `event-workflows/${p.run_id}/checkpoint-outcomes`)).length,
+  )
+})
+
+test("checkpoint rollback never overwrites an unknown concurrent change", async (t) => {
+  const f = editionFixture(t),
+    plan = await twoEventPlan(f),
+    provider = fakeProvider()
+  const p = {
+    run_id: "handoff-foreign-change",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    execute: true,
+    max_items: 1,
+  }
+  await advanceEventWorkflow(f.ctx, p, { baseProvider: provider })
+  const latest = `event-workflows/${p.run_id}/latest.json`,
+    foreign = { marker: "unknown concurrent writer" }
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, p, {
+      baseProvider: provider,
+      publicationPreparer: async () => {
+        atomicWrite(f.root, latest, foreign)
+        throw Error("controlled conflicting handoff")
+      },
+    }),
+    (error) => error.code === "CHECKPOINT_ROLLBACK_CONFLICT",
+  )
+  assert.deepEqual(readJSON(f.root, latest), foreign)
+})
+
 test("failed events require explicit retry and do not starve another selected event", async (t) => {
   const f = editionFixture(t),
     provider = fakeProvider(),

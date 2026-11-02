@@ -131,6 +131,46 @@ test("ready receipt is invalidated by code bytes, added files and execution poli
   assert.throws(() => readOperationGate(f.root), /Invalid research operation policy/)
 })
 
+test("release pins the actual Quartz renderer entry points and configuration", async (t) => {
+  const f = fixture(t)
+  const files = [
+    "quartz.config.yaml",
+    "quartz.config.default.yaml",
+    "quartz.ts",
+    ".quartz/plugins/index.ts",
+  ]
+  for (const relative of files) {
+    const file = path.join(f.root, relative)
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, `fixture for ${relative}\n`)
+  }
+  await finalizeDevelopmentRelease(f.root, f.reviewRef())
+  for (const relative of files) {
+    const file = path.join(f.root, relative)
+    const original = fs.readFileSync(file)
+    fs.writeFileSync(file, "tampered renderer configuration\n")
+    const gate = readOperationGate(f.root)
+    assert.equal(gate.regular_execution_allowed, false, relative)
+    assert.equal(gate.changed_path, relative)
+    fs.writeFileSync(file, original)
+  }
+  assert.equal(readOperationGate(f.root).regular_execution_allowed, true)
+})
+
+test("release preserves and validates binary Quartz static assets", async (t) => {
+  const f = fixture(t)
+  const relative = "quartz/static/icon.png"
+  const file = path.join(f.root, relative)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  const original = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff])
+  fs.writeFileSync(file, original)
+  await finalizeDevelopmentRelease(f.root, f.reviewRef())
+  fs.writeFileSync(file, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xfe]))
+  assert.equal(readOperationGate(f.root).changed_path, relative)
+  fs.writeFileSync(file, original)
+  assert.equal(readOperationGate(f.root).regular_execution_allowed, true)
+})
+
 test("a ready GPT system cannot start the local operator or OAuth regular transfer", async (t) => {
   const f = fixture(t)
   await finalizeDevelopmentRelease(f.root, f.reviewRef())

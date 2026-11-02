@@ -9,11 +9,19 @@ import {
   eventWorkKey,
   reviewEditionEvents,
 } from "./event-pipeline.mjs"
-import { parseResearchDate, assertReviewDate } from "./dates.mjs"
+import {
+  parseResearchDate,
+  assertReviewDate,
+  samePublicationDate,
+  seoulPublicationDay,
+} from "./dates.mjs"
 import { readBacklog } from "../research-window.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 import { createModelProvider, createModelExecutionWindow } from "./model-provider.mjs"
 import { prepareRoleProvider, resolveRolePolicy } from "./model-policy.mjs"
+import { verifiedJSON, memoizeVerifiedInput, trackVerifiedPath } from "./verified-inputs.mjs"
+import { assertNoOperationalWriter } from "./operations-deployment.mjs"
+import { currentRequestOwner } from "./request-ownership.mjs"
 import {
   compositionProfileSchema,
   validateCompositionProfile,
@@ -48,8 +56,7 @@ const immutable = (root, file, value) => {
 function pinned(root, ref) {
   if (!ref || !/^[a-f0-9]{64}$/.test(ref.sha256 || ""))
     throw Error("Exact curation reference required")
-  if (reference(root, ref.path).sha256 !== ref.sha256) throw Error("Curation input SHA changed")
-  return readJSON(root, ref.path)
+  return verifiedJSON(safePath(root, ref.path), ref.sha256)
 }
 export function readCurationPolicy(ctx) {
   const value = JSON.parse(
@@ -91,7 +98,21 @@ export function readCurationPolicy(ctx) {
     throw Error("Invalid curation policy")
   return value
 }
+function trackEditionHistory(directory) {
+  trackVerifiedPath(directory)
+  if (!fs.existsSync(directory)) return
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name)
+    if (entry.isSymbolicLink()) throw Error("Curation publication history cannot follow symlinks")
+    if (entry.isDirectory()) {
+      if (!entry.name.startsWith(".")) trackEditionHistory(file)
+    } else if (entry.name.endsWith(".md")) trackVerifiedPath(file)
+  }
+}
 function history(ctx) {
+  // Only a verified invocation can reuse this history. Track the backlog and
+  // directory listings as well as existing files so additions invalidate it.
+  if (trackVerifiedPath(ctx.backlog)) trackEditionHistory(path.join(ctx.vault, "Editions"))
   const all = editions(ctx.vault)
   const files = all.map((e) => reference(ctx.vault, path.relative(ctx.vault, e.file)))
   const articles = new Map()
@@ -110,6 +131,7 @@ function history(ctx) {
     }
   const newsDir = safePath(ctx.vault, "News")
   const readNews = (directory) => {
+    trackVerifiedPath(directory)
     if (!fs.existsSync(directory)) return
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (entry.isSymbolicLink()) throw Error("Curation publication history cannot follow symlinks")
@@ -244,6 +266,114 @@ function poolCandidate(ctx, planRef, plan, event, inventory) {
   }
 }
 
+// Only the backlog may change under this narrow revalidation. Published files
+// must be byte-identical, and every frozen candidate's native featured test
+// must remain identical. No score, review, approval or selection is created.
+function backlogHistoryImpact(pool, current) {
+  if (!same(pool.history?.files, current.files))
+    throw Error("Published article history changed; prepare a new curation pool")
+  if (!Array.isArray(pool.candidates) || !Array.isArray(current.candidates))
+    throw Error("Exact curation candidate history required")
+  const articleIds = new Set(current.articles.map((article) => article.id))
+  const knownUrls = new Set()
+  for (const candidate of current.candidates) {
+    if (candidate.source_urls != null && !Array.isArray(candidate.source_urls))
+      throw Error("Exact candidate source URLs required")
+    const urls = (candidate.source_urls || []).map(canonicalURL)
+    if (articleIds.has(candidate.event_id)) for (const url of urls) knownUrls.add(url)
+  }
+  const changed = []
+  const ids = new Set()
+  for (const row of pool.candidates) {
+    if (
+      !row?.candidate_id || ids.has(row.candidate_id) ||
+      !Array.isArray(row.sources) || !Array.isArray(row.related_articles) ||
+      row.related_articles.some((article) => !Array.isArray(article.urls)) ||
+      typeof row.already_featured !== "boolean"
+    )
+      throw Error("Exact frozen curation candidate history required")
+    ids.add(row.candidate_id)
+    const urls = new Set(row.sources.map((source) => canonicalURL(source.url)))
+    const related = row.related_articles.some((article) =>
+      (article.urls || []).some((url) => urls.has(canonicalURL(url))),
+    )
+    const known = [...urls].some((url) => knownUrls.has(url))
+    const featured =
+      (row.action === "reuse" && articleIds.has(row.prior?.event_id)) ||
+      (row.action === "write" && !row.prior && (related || known))
+    if (featured !== row.already_featured) changed.push(row.candidate_id)
+  }
+  return changed
+}
+
+function historyRevalidationRecord(ref, pool, current) {
+  const files = [
+    new URL("./curation.mjs", import.meta.url),
+    new URL("../garden.mjs", import.meta.url),
+    new URL("../research-window.mjs", import.meta.url),
+    new URL("./contracts.mjs", import.meta.url),
+  ]
+  return {
+    schema: "research-curation-history-revalidation/v1",
+    pool: { path: ref.path, sha256: ref.sha256 },
+    previous_history_sha256: sha256(JSON.stringify(pool.history)),
+    current_history_sha256: sha256(JSON.stringify({ files: current.files, backlog_sha256: current.backlog_sha256 })),
+    previous_backlog_sha256: pool.history.backlog_sha256,
+    current_backlog_sha256: current.backlog_sha256,
+    policy_sha256: sha256(JSON.stringify(pool.policy)),
+    implementation_sha256: sha256(JSON.stringify(files.map((file) => sha256(fs.readFileSync(file))))),
+    candidates_sha256: sha256(JSON.stringify(pool.candidates)),
+    candidate_count: pool.candidates.length,
+    changed_candidates: 0,
+    candidate_approved: false,
+    candidate_published: false,
+  }
+}
+
+function historyRevalidationPath(pool, record) {
+  return `curation/runs/${pool.run_id}/history-revalidations/${sha256(JSON.stringify(record))}.json`
+}
+
+export async function revalidateCurationHistory(ctx, p) {
+  if (p.apply !== undefined && typeof p.apply !== "boolean")
+    throw Error("Explicit boolean history revalidation apply required")
+  const ref = { path: p.pool_path, sha256: p.pool_sha256 }
+  const initial = loadCurationPool(ctx, ref, { checkHistory: false, candidateIds: [] })
+  return withLock(ctx.root, "curation-history-" + initial.run_id, () => {
+    assertNoOperationalWriter(ctx.repo, {
+      researchRoot: ctx.root,
+      ownedRequest: currentRequestOwner(),
+    })
+    const pool = loadCurationPool(ctx, ref, { checkHistory: false, candidateIds: [] })
+    ctx = { ...pool.context, ...ctx, repo: ctx.repo || pool.context.repo, backlog: ctx.backlog || pool.context.backlog }
+    if (!same(pool.policy, readCurationPolicy(ctx)))
+      throw Error("Curation policy changed; prepare a new pool")
+    const current = history(ctx)
+    if (same(pool.history, { files: current.files, backlog_sha256: current.backlog_sha256 }))
+      return { status: "already_current", candidate_approved: false, candidate_published: false }
+    const changed = backlogHistoryImpact(pool, current)
+    if (changed.length)
+      throw Error("Curation candidate history changed; prepare a new pool")
+    if (p.apply !== true)
+      return {
+        status: "revalidation_ready",
+        candidate_count: pool.candidates.length,
+        changed_candidates: 0,
+        previous_backlog_sha256: pool.history.backlog_sha256,
+        current_backlog_sha256: current.backlog_sha256,
+        candidate_approved: false,
+        candidate_published: false,
+      }
+    const after = history(ctx)
+    if (!same({ files: current.files, backlog_sha256: current.backlog_sha256 },
+              { files: after.files, backlog_sha256: after.backlog_sha256 }))
+      throw Error("Curation history changed during revalidation")
+    const record = historyRevalidationRecord(ref, pool, after)
+    const saved = immutable(ctx.root, historyRevalidationPath(pool, record), record)
+    return { ...saved, status: "revalidated", changed_candidates: 0, candidate_approved: false, candidate_published: false }
+  })
+}
+
 // Persist references to existing reviewed events, never a second source/news DB.
 export async function prepareCuration(ctx, p) {
   const policy = readCurationPolicy(ctx)
@@ -349,11 +479,12 @@ export function loadCurationPool(ctx, ref, { checkHistory = true, candidateIds }
   if (checkHistory && !same(pool.policy, readCurationPolicy(ctx)))
     throw Error("Curation policy changed; prepare a new pool")
   const current = checkHistory ? history(ctx) : null
-  if (
-    checkHistory &&
-    !same(pool.history, { files: current.files, backlog_sha256: current.backlog_sha256 })
-  )
-    throw Error("Published article history changed; prepare a new curation pool")
+  if (checkHistory && !same(pool.history, { files: current.files, backlog_sha256: current.backlog_sha256 })) {
+    const record = historyRevalidationRecord(ref, pool, current)
+    const saved = readJSON(ctx.root, historyRevalidationPath(pool, record))
+    if (!saved || !same(saved, record) || backlogHistoryImpact(pool, current).length)
+      throw Error("Published article history changed; prepare a new curation pool")
+  }
   if (candidateIds !== undefined && !Array.isArray(candidateIds))
     throw Error("Exact distinct curation candidate scope required")
   const targets =
@@ -775,14 +906,21 @@ export async function selectCuration(ctx, p) {
         // still validates against the current vault and the exact source/date.
         const { loadCurrentApproval } = await import("./preview.mjs")
         const approval = loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
-        const expectedUrls = prior.sources.map((source) => canonicalURL(source.url)).sort()
-        const approvedUrls = (approval.article.source_urls || []).map(canonicalURL).sort()
+        const expectedUrls = new Set(prior.sources.map((source) => canonicalURL(source.url)))
+        const approvedUrls = (approval.article.source_urls || []).map(canonicalURL)
         const primary = sourcePacket(ctx, priorPlan, priorEvent, false).find(
           (source) => source.role === "primary",
         )
+        const articleReview = approval.article.article_review
+        const matchingDate =
+          samePublicationDate(articleReview?.published_at, primary?.published_at) ||
+          (articleReview?.date_kind === "source-publication-time" &&
+            samePublicationDate(articleReview.source_published_at, primary?.published_at) &&
+            articleReview.published_at === seoulPublicationDay(primary?.published_at))
         if (
-          !same(approvedUrls, expectedUrls) ||
-          approval.article.article_review?.published_at !== primary?.published_at
+          !approvedUrls.length ||
+          approvedUrls.some((url) => !expectedUrls.has(url)) ||
+          !matchingDate
         )
           throw Error("Existing curated promotion approval differs from its exact sources or date")
         item.execution = { plan: prior.plan, group_id: prior.group_id }
@@ -824,6 +962,11 @@ export async function selectCuration(ctx, p) {
   return { ...ref, selected: selected.length, held: held.length, reused: false }
 }
 export function loadCurationSelection(ctx, ref, options = {}) {
+  return memoizeVerifiedInput(ctx, "curation-selection:" + JSON.stringify([ref, options]), () =>
+    loadCurationSelectionUncached(ctx, ref, options),
+  )
+}
+function loadCurationSelectionUncached(ctx, ref, options = {}) {
   const selection = pinned(ctx.root, ref)
   if (
     selection.schema !== "research-curation-selection/v1" ||

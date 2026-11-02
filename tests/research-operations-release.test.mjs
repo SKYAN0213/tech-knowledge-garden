@@ -30,7 +30,7 @@ import {
   checkedOperationalInvocation,
 } from "../scripts/research/schedule-contract.mjs"
 const repo = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)))
-async function setup(t, { commonAssets = false } = {}) {
+async function setup(t, { commonAssets = false, rendererAssets = false } = {}) {
   fs.mkdirSync(path.join(repo, ".local/research"), { recursive: true })
   const base = fs.mkdtempSync(path.join(repo, ".local/research/operations-release-test-"))
   t.after(() => fs.rmSync(base, { recursive: true, force: true }))
@@ -57,6 +57,13 @@ async function setup(t, { commonAssets = false } = {}) {
     const vendor = "scripts/vendor/semantic-common/0.1.1"
     fs.cpSync(path.join(repo, vendor), path.join(source, vendor), { recursive: true })
     fs.writeFileSync(path.join(source, "scripts/unrelated.md"), "Not a runtime asset.\n")
+  }
+  if (rendererAssets) {
+    for (const file of ["quartz.config.yaml", "quartz.config.default.yaml", "quartz.ts", ".quartz/plugins/index.ts", "quartz/static/icon.png", "quartz/static/og-image.png"]) {
+      const target = path.join(source, file)
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      fs.writeFileSync(target, file.endsWith(".png") ? Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]) : `renderer fixture: ${file}\n`)
+    }
   }
   atomicCreate(source, ".local/research/proof.json", { unit_fixture_only: true })
   const proof = evidenceReference(source, ".local/research/proof.json")
@@ -104,6 +111,23 @@ async function setup(t, { commonAssets = false } = {}) {
     },
   }
 }
+test("runtime installation and workspace activation bind actual renderer configuration bytes", async (t) => {
+  const f = await setup(t, { rendererAssets: true })
+  const rendererFiles = ["quartz.config.yaml", "quartz.config.default.yaml", "quartz.ts", ".quartz/plugins/index.ts", "quartz/static/icon.png", "quartz/static/og-image.png"]
+  for (const file of rendererFiles)
+    assert.deepEqual(fs.readFileSync(path.join(f.runtime, file)), fs.readFileSync(path.join(f.source, file)))
+  for (const dir of ["node_modules", "integrations/research-mcp/node_modules"])
+    fs.mkdirSync(path.join(f.source, dir), { recursive: true })
+  assert.equal((await activateOperationsRuntime(f.runtime, f.source)).operational_ready, true)
+  for (const file of rendererFiles) {
+    const target = path.join(f.source, file)
+    const original = fs.readFileSync(target)
+    fs.writeFileSync(target, "changed renderer configuration\n")
+    assert.throws(() => operationsReadiness(f.source), /workspace implementation changed/)
+    fs.writeFileSync(target, original)
+  }
+  assert.equal(operationsReadiness(f.source).runtime, f.runtime)
+})
 test("installed release preserves and pins every frozen common asset, including raw CRLF and specifications", async (t) => {
   const f = await setup(t, { commonAssets: true })
   const vendor = "scripts/vendor/semantic-common/0.1.1"
@@ -326,6 +350,27 @@ test("explicit continuation preserves the frozen parent, scheduler claim and ori
   const evidence = path.join(f.root, continuation.source.path)
   fs.appendFileSync(evidence, " ")
   assert.throws(() => inspectOperationalPin(f.ctx, p.successor), /evidence changed/)
+})
+
+test("a failed collection-only round can continue from its exact preserved partial report", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const workflow = { run_id: f.p.run_id, source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json") }
+  atomicCreate(f.root, `round-workflows/${f.p.run_id}/input.json`, workflow)
+  const report = atomicCreate(f.root, "daily/failed-report.json", { schema: "research-collection-report/v1", daily_run: "daily-original", status: "partial", candidate_approved: false, candidate_published: false })
+  const state = { status: "partial", input_sha256: sha256(JSON.stringify(workflow)), article_writes: 0, canonical_writes: 0, candidate_published: false,
+    stages: { collection: { status: "failed", reference: report } }, next_inputs: [{ stage: "collection", error: "ENOSPC", required: ["resume"] }] }
+  const statePath = `round-workflows/${f.p.run_id}/latest.json`
+  atomicCreate(f.root, statePath, { ...state, article_writes: 1 })
+  const p = { run_id: f.p.run_id, successor: "failed-recovery", reason: "Resume preserved collection failure" }
+  await assert.rejects(continueOperationalRound(f.ctx, p), /continuation/i)
+  atomicWrite(f.root, statePath, state)
+  const result = await continueOperationalRound(f.ctx, p)
+  assert.equal(result.status, "continuation_ready")
+  assert.equal(result.daily_run, "daily-original")
+  assert.equal(result.scheduled_runs_counted, 0)
 })
 
 test("an explicit selected-handoff recovery pins a new manual segment and rejects changed or recollected inputs", async (t) => {

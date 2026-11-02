@@ -12,6 +12,7 @@ import {
   retireReasoningTask,
   submitReasoningResult,
   readReasoningTask,
+  readyArticleItems,
 } from "../scripts/research/reasoning-tasks.mjs"
 import { checkedScheduledInvocation } from "../scripts/research/schedule-contract.mjs"
 import fs from "node:fs"
@@ -89,6 +90,30 @@ test("pending excludes a changed owner input and requests cannot be submitted af
   assert.equal(reasoningTasks(f.root).total, 0)
   await assert.rejects(submitReasoningResult(f.root, a), /owner job input/)
   await assert.rejects(submitReasoningResult(f.root, b), /retired/)
+})
+
+test("partial article readiness preserves the original owner and excludes late or duplicate frontier results", async (t) => {
+  const f = fixture(t),
+    a = task(f, 1),
+    b = task(f, 2),
+    late = task(f, 3)
+  await submitReasoningResult(f.root, a)
+  await submitReasoningResult(f.root, late)
+  const rows = [
+    { candidate_id: "a", writer_run: "writer-a", reasoning_task: a },
+    { candidate_id: "b", writer_run: "writer-b", reasoning_task: b },
+    { candidate_id: "a", writer_run: "writer-a", reasoning_task: a },
+  ]
+  const ready = readyArticleItems(f.root, rows)
+  assert.equal(ready.length, 1)
+  assert.equal(ready[0].owner.job_id, "module-batch-1")
+  assert.equal(ready[0].candidate_id, "a")
+  assert.equal(readReasoningTask(f.root, b).status, "reasoning_pending")
+  assert.throws(() => readyArticleItems(f.root, rows, { round_id: "other-round" }), /another round/)
+  assert.throws(
+    () => readyArticleItems(f.root, [{ reasoning_task: { ...a, request_sha256: "0".repeat(64) } }]),
+    /hash changed/,
+  )
 })
 test("new schedule evidence binds real event fields; legacy requires an explicit read flag", (t) => {
   const f = fixture(t)

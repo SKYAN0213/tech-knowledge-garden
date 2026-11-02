@@ -70,8 +70,39 @@ export function loadScheduledPublicationInputs(
   selection,
   { notAfter, allowLegacy = false } = {},
 ) {
-  if (selection?.schema !== "research-daily-publication-handoff/v3")
-    throw Error("Scheduled delivery requires the exact native event handoff")
+  const direct = selection?.selection || selection
+  const curated = Array.isArray(selection?.nativeSelections)
+  let entries
+  if (curated) {
+    if (
+      !Array.isArray(selection.approvedRuns) ||
+      !selection.approvedRuns.length ||
+      new Set(selection.approvedRuns).size !== selection.approvedRuns.length ||
+      !selection.nativeSelections.length ||
+      selection.nativeSelections.some(
+        (item) =>
+          item?.schema !== "research-daily-publication-handoff/v3" ||
+          !Array.isArray(item.approved_runs),
+      )
+    )
+      throw Error("Scheduled delivery requires the exact native event handoff")
+    const expected = new Set(selection.approvedRuns)
+    entries = selection.nativeSelections
+      .map((native) => ({
+        selection: native,
+        rows: [...native.approved_runs, ...(native.reused_runs || [])].filter((row) =>
+          expected.has(row.approved_run),
+        ),
+      }))
+      .filter((entry) => entry.rows.length)
+    const runs = entries.flatMap((entry) => entry.rows.map((row) => row.approved_run))
+    if (runs.length !== expected.size || new Set(runs).size !== expected.size)
+      throw Error("Scheduled delivery requires each selected native approval exactly once")
+  } else {
+    if (direct?.schema !== "research-daily-publication-handoff/v3")
+      throw Error("Scheduled delivery requires the exact native event handoff")
+    entries = [{ selection: direct, rows: direct.approved_runs }]
+  }
   const invocation = checkedScheduledInvocation(ctx, input.invocation, { notAfter, allowLegacy })
   const started = Date.parse(invocation.started_at)
   const end = notAfter === undefined ? Date.now() : Date.parse(notAfter)
@@ -93,19 +124,10 @@ export function loadScheduledPublicationInputs(
   const plan = pinned(ctx, basis.plan)
   const summary = pinned(ctx, basis.summary)
   const receipts = pinned(ctx, basis.receipts)
-  const { edition, report } = checkedEdition(ctx, selection.edition)
   const matches = (ref, refs) =>
     refs?.some((row) => row.path === ref.path && row.sha256 === ref.sha256)
   if (
-    edition.daily_run !== basis.daily_run ||
-    report.daily_run !== basis.daily_run ||
-    !matches(input.collection_basis, report.evidence) ||
-    !matches(basis.acquisition_inputs, report.evidence) ||
-    !matches(basis.plan, report.evidence) ||
-    !matches(
-      { path: `daily/runs/${basis.daily_run}/summary.json`, sha256: basis.summary.sha256 },
-      report.evidence,
-    ) ||
+    (curated && selection.curation && selection.briefingDate !== plan.kst_day) ||
     plan.kst_day !== seoulPublicationDay(invocation.started_at) ||
     !Number.isFinite(Date.parse(plan.created_at)) ||
     Date.parse(plan.created_at) < started ||
@@ -120,24 +142,49 @@ export function loadScheduledPublicationInputs(
     )
   )
     throw Error("Native handoff must belong to this scheduled collection and frozen basis")
-  // The report records the then-live summary path. Its exact bytes are already
-  // retained in this handoff basis; a later handoff must not erase this evidence.
-  for (const article of selection.approved_runs)
-    for (const source of article.source_revisions)
-      if (
-        !report.materials.some(
-          (material) =>
-            material.source_version_id === source.source_version_id &&
-            material.parse_id === source.parse_id &&
-            material.observations.some(
-              (observation) =>
-                Date.parse(observation.observed_at) >= started &&
-                Date.parse(observation.observed_at) <= end,
-            ),
-        )
+  const collections = entries.map(({ selection: native, rows }) => {
+    const { edition, report } = checkedEdition(ctx, native.edition)
+    if (
+      edition.daily_run !== basis.daily_run ||
+      report.daily_run !== basis.daily_run ||
+      !matches(input.collection_basis, report.evidence) ||
+      !matches(basis.acquisition_inputs, report.evidence) ||
+      !matches(basis.plan, report.evidence) ||
+      !matches(
+        { path: `daily/runs/${basis.daily_run}/summary.json`, sha256: basis.summary.sha256 },
+        report.evidence,
       )
-        throw Error("Scheduled native article requires exact material observed in this execution")
-  return { invocation, basis, plan, summary, receipts, edition, report }
+    )
+      throw Error("Native handoff must belong to this scheduled collection and frozen basis")
+    // The report records the then-live summary path. Its exact bytes are already
+    // retained in this handoff basis; a later handoff must not erase this evidence.
+    for (const article of rows)
+      for (const source of article.source_revisions)
+        if (
+          !report.materials.some(
+            (material) =>
+              material.source_version_id === source.source_version_id &&
+              material.parse_id === source.parse_id &&
+              material.observations.some(
+                (observation) =>
+                  Date.parse(observation.observed_at) >= started &&
+                  Date.parse(observation.observed_at) <= end,
+              ),
+          )
+        )
+          throw Error("Scheduled native article requires exact material observed in this execution")
+    return { edition, report }
+  })
+  return {
+    invocation,
+    basis,
+    plan,
+    summary,
+    receipts,
+    ...collections[0],
+    collections,
+    nativeRows: entries.flatMap((entry) => entry.rows),
+  }
 }
 
 function loadRequest(ctx, run) {
@@ -160,8 +207,7 @@ function loadRequest(ctx, run) {
     throw Error("Delivery request differs from native approval selection")
   if (Boolean(input.invocation) !== Boolean(input.collection_basis))
     throw Error("Scheduled invocation and collection basis must be pinned together")
-  if (input.invocation)
-    loadScheduledPublicationInputs(ctx, input, selection.selection, { allowLegacy: true })
+  if (input.invocation) loadScheduledPublicationInputs(ctx, input, selection, { allowLegacy: true })
   return input
 }
 
@@ -408,7 +454,7 @@ export async function requestPublicationDelivery(ctx, p, { previewRunner = priva
         }
       : {}),
   }
-  if (input.invocation) loadScheduledPublicationInputs(ctx, input, selection.selection)
+  if (input.invocation) loadScheduledPublicationInputs(ctx, input, selection)
   return withLock(ctx.root, "publication-delivery-request-" + p.run_id, () =>
     withGardenOperationLock(ctx.root, async () => {
       const previous = readJSON(ctx.root, directory + "/input.json")

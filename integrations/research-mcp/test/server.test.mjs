@@ -12,6 +12,10 @@ import {
 } from "../../../scripts/research/module-runtime.mjs"
 import { checkResearchMCP } from "../check.mjs"
 import { createResearchServer, researchServerCatalog } from "../server.mjs"
+import { atomicCreate, atomicWrite } from "../../../scripts/research/run-state.mjs"
+import { sha256 } from "../../../scripts/research/contracts.mjs"
+import { withRequestOwner } from "../../../scripts/research/request-ownership.mjs"
+import { createReasoningTask } from "../../../scripts/research/reasoning-tasks.mjs"
 
 import { isolatedMCPFixtureParent } from "./storage-fixture.mjs"
 
@@ -78,6 +82,192 @@ function stdioClient(t, root, { modules, toolProfile, operations } = {}) {
     })
   return { child, rpc, state }
 }
+
+test("MCP plans an actor-bound relay from an exact native owner without submitting its request", async (t) => {
+  const { ctx, root } = fixture(t)
+  const job_id = "module-relay-native-owner"
+  const input = { job_id, parameters: { run_id: "mcp-relay" } }
+  const owner = { job_id, input_sha256: sha256(JSON.stringify(input)) }
+  atomicCreate(root, `module-jobs/${job_id}/input.json`, input)
+  atomicCreate(root, `module-jobs/${job_id}/state.json`, {
+    state: "running",
+    input_sha256: owner.input_sha256,
+  })
+  const request = withRequestOwner(owner, () =>
+    createReasoningTask(root, {
+      run: "article-a",
+      role: "evidence_compare",
+      binding: { settings: { model: "gpt-6-luna", think: "high" } },
+      input: {
+        messages: [
+          { role: "system", content: "review" },
+          { role: "user", content: '{"kind":"editorial"}' },
+        ],
+        schema: {
+          type: "object",
+          properties: { answer: { type: "string" } },
+          required: ["answer"],
+        },
+      },
+    }),
+  )
+  const ref = { task_id: request.task_id, request_sha256: request.request_sha256 }
+  const result = atomicCreate(root, `module-jobs/${job_id}/result.json`, {
+    schema: "research-module-result/v1",
+    input_sha256: owner.input_sha256,
+    data: { rows: [{ writer_run: "article-a", candidate_id: "candidate-a", reasoning_task: ref }] },
+  })
+  atomicWrite(root, `module-jobs/${job_id}/state.json`, {
+    state: "completed",
+    input_sha256: owner.input_sha256,
+    result,
+  })
+  const { child, rpc, state } = stdioClient(t, root, {
+    modules: ["reasoning"],
+    toolProfile: "detailed",
+  })
+  await rpc("initialize", {
+    protocolVersion: "2025-11-25",
+    capabilities: {},
+    clientInfo: { name: "relay-test", version: "1" },
+  })
+  child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n")
+  const tools = (await rpc("tools/list")).result.tools
+  const tool = tools.find((row) => row.name === "reasoning_plan_relay")
+  assert.ok(tool)
+  assert.equal(tool.annotations.readOnlyHint, true)
+  const planJob = "module-mcp-relay-plan"
+  const call = await rpc("tools/call", {
+    name: "reasoning_plan_relay",
+    arguments: {
+      ...ref,
+      job_id: planJob,
+      lanes: [
+        { id: 1, agent: "old-author", phase: "writing|article-a", busy: false, retiring: false },
+      ],
+      writers: [{ writer_run: "article-a", actors: ["old-author"] }],
+      reviewers: [],
+    },
+  })
+  assert.equal(call.result.isError, undefined)
+  let status
+  for (let i = 0; i < 120; i++) {
+    status = moduleJobStatus(ctx, planJob)
+    if (["completed", "failed"].includes(status.state)) break
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+  assert.equal(status.state, "completed", JSON.stringify({ status, stderr: state.stderr }))
+  const read = await rpc("tools/call", {
+    name: "research_job_result",
+    arguments: { job_id: planJob },
+  })
+  const plan = JSON.parse(read.result.structuredContent.chunk).data
+  assert.equal(plan.action, "rotate")
+  assert.equal(plan.phase_role, "final_review")
+  assert.equal(plan.writer_run, "article-a")
+  assert.deepEqual(plan.owner, owner)
+  const batchTool = tools.find((row) => row.name === "reasoning_plan_relay_batch")
+  assert.ok(batchTool)
+  assert.equal(batchTool.annotations.readOnlyHint, true)
+  const batchJob = "module-mcp-relay-batch-plan"
+  const batchCall = await rpc("tools/call", {
+    name: "reasoning_plan_relay_batch",
+    arguments: {
+      requests: [ref],
+      job_id: batchJob,
+      lanes: [
+        { id: 1, agent: "old-author", phase: "writing|article-a", busy: false, retiring: false },
+      ],
+      writers: [{ writer_run: "article-a", actors: ["old-author"] }],
+      reviewers: [],
+    },
+  })
+  assert.equal(batchCall.result.isError, undefined)
+  for (let i = 0; i < 120; i++) {
+    status = moduleJobStatus(ctx, batchJob)
+    if (["completed", "failed"].includes(status.state)) break
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+  assert.equal(status.state, "completed", JSON.stringify({ status, stderr: state.stderr }))
+  const batchRead = await rpc("tools/call", {
+    name: "research_job_result",
+    arguments: { job_id: batchJob },
+  })
+  const batchPlan = JSON.parse(batchRead.result.structuredContent.chunk).data
+  assert.equal(batchPlan.plans[0].action, "rotate")
+  assert.equal(batchPlan.plans[0].phase_role, "final_review")
+  assert.deepEqual(batchPlan.plans[0].owner, owner)
+  assert.equal(batchPlan.native_state_changed, false)
+  assert.equal(
+    fs.existsSync(path.join(root, `reasoning-tasks/${request.task_id}/result.json`)),
+    false,
+  )
+})
+
+test("MCP exposes the frozen-selection correction handoff with native input validation", async (t) => {
+  const { root } = fixture(t)
+  const { child, rpc } = stdioClient(t, root, { modules: ["curation"], toolProfile: "detailed" })
+  await rpc("initialize", {
+    protocolVersion: "2025-11-25",
+    capabilities: {},
+    clientInfo: { name: "curation-revision-test", version: "1" },
+  })
+  child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n")
+  const tools = (await rpc("tools/list")).result.tools
+  const historyRevalidation = tools.find((tool) => tool.name === "curation_revalidate_history")
+  assert.ok(historyRevalidation)
+  assert.deepEqual(historyRevalidation.inputSchema.required, ["pool_path", "pool_sha256"])
+  assert.equal(historyRevalidation.inputSchema.properties.apply.type, "boolean")
+  const operation = tools.find((tool) => tool.name === "curation_revise_handoff")
+  assert.ok(operation)
+  assert.deepEqual(operation.inputSchema.required, [
+    "run_id",
+    "handoff_path",
+    "handoff_sha256",
+    "corrections",
+  ])
+  const invalid = await rpc("tools/call", {
+    name: "curation_revise_handoff",
+    arguments: {
+      run_id: "invalid-revision",
+      handoff_path: "missing.json",
+      handoff_sha256: "a".repeat(64),
+      corrections: [],
+    },
+  })
+  assert.equal(invalid.result.isError, true)
+  assert.equal(
+    fs.existsSync(path.join(root, "curation/publication-revisions/invalid-revision")),
+    false,
+  )
+})
+
+test("MCP exposes revision findings with exact native evidence requirements", async (t) => {
+  const { root } = fixture(t)
+  const { child, rpc } = stdioClient(t, root, { modules: ["validation"], toolProfile: "detailed" })
+  await rpc("initialize", {
+    protocolVersion: "2025-11-25",
+    capabilities: {},
+    clientInfo: { name: "revision-finding-test", version: "1" },
+  })
+  child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n")
+  const operation = (await rpc("tools/list")).result.tools.find(
+    (tool) => tool.name === "validation_revise_draft",
+  )
+  assert.ok(operation)
+  assert.deepEqual(operation.inputSchema.required, [
+    "run_id",
+    "review_file",
+    "revision_evidence_path",
+    "revision_evidence_sha256",
+  ])
+  const invalid = await rpc("tools/call", {
+    name: "validation_revise_draft",
+    arguments: { run_id: "invalid-finding", review_file: "missing.json" },
+  })
+  assert.equal(invalid.result.isError, true)
+  assert.equal(fs.existsSync(path.join(root, "runs/invalid-finding")), false)
+})
 
 test("official SDK stdio MCP initializes, publishes shared schemas and completes an independently launched inventory job", async (t) => {
   const { ctx, root } = fixture(t)

@@ -3,6 +3,7 @@ import { sha256, assertSchema } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { Ollama, localOllamaURL } from "./ollama.mjs"
 import { resolveRolePolicy } from "./model-policy.mjs"
+import { boundRelayRound, checkedRelayAssignment } from "./relay-ledger.mjs"
 import {
   currentRequestOwner,
   assertRequestOwner,
@@ -58,6 +59,7 @@ function completed(root, request) {
     throw Error("Reasoning result binding changed")
   assertSchema(result.output, request.input.schema)
   assertExecutorModel(request, result)
+  checkedRelayAssignment(root, request, result.relay_assignment, { allowSettled: true })
   return stored
 }
 function assertExecutorModel(request, { executor, model }) {
@@ -214,6 +216,30 @@ export function reasoningTasks(root, { offset = 0, limit = 40, run_id, job_id, r
     next_offset: offset + limit < tasks.length ? offset + limit : null,
   }
 }
+
+// Only the current round frontier is executable. A held article or an older
+// owned request must not be redispatched just because it is globally pending.
+export function reasoningFrontier(root, { round_id, rows, limit = 3 }) {
+  if (!/^[A-Za-z0-9_-]{1,70}$/.test(round_id || "") || !Array.isArray(rows) ||
+      !Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+    throw Error("Exact bounded reasoning frontier required")
+  const seen = new Set(), tasks = []
+  for (const row of rows) {
+    const ref = row.stage === "reasoning" && row.reasoning_task
+    if (!ref || seen.has(ref.task_id)) continue
+    const request = load(root, ref.task_id, ref.request_sha256)
+    assertActive(root, request)
+    if (request.owner?.round_id !== round_id) throw Error("Reasoning frontier belongs to another round")
+    seen.add(ref.task_id)
+    if (completed(root, request)) continue
+    tasks.push({ task_id: request.task_id, request_sha256: request.request_sha256,
+      run: request.run, role: request.role, owner: request.owner, state: "pending",
+      requested_model: request.binding.settings?.model ?? null,
+      requested_thinking: request.binding.settings?.think ?? null })
+  }
+  return { status: "reasoning_pending", tasks: tasks.slice(0, limit), total: tasks.length,
+    next_offset: tasks.length > limit ? limit : null }
+}
 export function readReasoningTask(root, { task_id, request_sha256, offset = 0, limit = 16000 }) {
   const request = load(root, task_id, request_sha256)
   assertActive(root, request)
@@ -255,7 +281,9 @@ export function readReasoningTask(root, { task_id, request_sha256, offset = 0, l
 export async function submitReasoningResult(root, parameters) {
   const { task_id, request_sha256, output, executor, model = null } = parameters
   if (!["codex", "ollama"].includes(executor)) throw Error("Explicit reasoning executor required")
-  return withLock(root, task_id, async () => {
+  const initial = load(root, task_id, request_sha256)
+  const relayRound = boundRelayRound(root, initial)
+  const submit = () => withLock(root, task_id, async () => {
     const request = load(root, task_id, request_sha256),
       value = bounded(output)
     assertActive(root, request)
@@ -263,11 +291,13 @@ export async function submitReasoningResult(root, parameters) {
     assertArticleSemanticProposalBinding(request, value)
     assertExecutorModel(request, { executor, model })
     const prior = completed(root, request)
+    const relayAssignment = checkedRelayAssignment(root, request, parameters.relay_assignment, { allowSettled: Boolean(prior) })
     if (prior) {
       if (
         JSON.stringify(prior.output) !== JSON.stringify(value) ||
         prior.executor !== executor ||
-        prior.model !== model
+        prior.model !== model ||
+        JSON.stringify(prior.relay_assignment || null) !== JSON.stringify(relayAssignment)
       )
         throw Error("Reasoning result is immutable; submit a new bound request")
       return { status: "completed", task_id, reused: true, public_approved: false }
@@ -279,6 +309,7 @@ export async function submitReasoningResult(root, parameters) {
       output: value,
       executor,
       model,
+      ...(relayAssignment ? { relay_assignment: relayAssignment } : {}),
       submitted_at: new Date().toISOString(),
       attribution: "caller_declared",
       public_approved: false,
@@ -289,6 +320,7 @@ export async function submitReasoningResult(root, parameters) {
     })
     return { status: "completed", task_id, reused: false, public_approved: false }
   })
+  return relayRound ? withLock(root, "relay-round-" + relayRound, submit) : submit()
 }
 export async function executeReasoningTask(ctx, parameters, { provider } = {}) {
   const request = load(ctx.root, parameters.task_id, parameters.request_sha256)
@@ -374,7 +406,12 @@ export function readReasoningBatch(root, { requests }) {
 }
 export async function submitReasoningBatch(root, { results }) {
   batchItems(results)
-  const settled = await Promise.allSettled(results.map((p) => submitReasoningResult(root, p)))
+  const settled = []
+  // Result admission changes shared relay state; keep the native writer single.
+  for (const parameters of results) {
+    try { settled.push({ status: "fulfilled", value: await submitReasoningResult(root, parameters) }) }
+    catch (reason) { settled.push({ status: "rejected", reason }) }
+  }
   const rows = settled.map((row, i) =>
     row.status === "fulfilled"
       ? row.value
@@ -400,12 +437,61 @@ export async function submitReasoningBatch(root, { results }) {
     status: rows.every((r) => r.status === "completed") ? "completed" : "partial",
     results: rows,
     ready_job_ids: ready,
+    ready_items: [...owners]
+      .flatMap((id) => {
+        const input = readJSON(root, `module-jobs/${id}/input.json`)
+        const round = input?.context?.operationalRound?.round_id
+        if (!round) return []
+        const pin = readJSON(root, `operations/rounds/${round}/input.json`)
+        if (pin?.review_mode !== "combined/v1") return []
+        return readyArticleItems(
+          root,
+          readJSON(root, `round-workflows/${round}/latest.json`)?.next_inputs || [],
+          { round_id: round },
+        )
+      })
+      .filter(
+        (row, index, rows) =>
+          rows.findIndex(
+            (other) => other.request_refs[0].task_id === row.request_refs[0].task_id,
+          ) === index,
+      ),
     jobs_resumed: false,
   }
 }
+
+// Read only the current native article frontier. Do not search global pending
+// tasks or transfer a historical task's owner to a successor job.
+export function readyArticleItems(root, rows, { round_id } = {}) {
+  const result = [],
+    seen = new Set()
+  for (const row of rows) {
+    const task = row.reasoning_task
+    if (!task || seen.has(task.task_id)) continue
+    const request = load(root, task.task_id, task.request_sha256)
+    assertActive(root, request)
+    if (round_id && request.owner?.round_id !== round_id)
+      throw Error("Ready article request belongs to another round")
+    const done = completed(root, request)
+    if (!done) continue
+    seen.add(task.task_id)
+    result.push({
+      candidate_id: row.candidate_id || null,
+      group_id: row.group_id,
+      writer_run: row.writer_run || null,
+      stage: row.stage || "reasoning",
+      request_refs: [{ task_id: request.task_id, request_sha256: request.request_sha256 }],
+      ...(request.owner ? { owner: request.owner } : {}),
+      result_sha256: done.result_sha256,
+    })
+  }
+  return result
+}
 export async function retireReasoningTask(root, { task_id, request_sha256, reason }) {
   if (!reason?.trim() || reason.length > 1000) throw Error("Retirement reason required")
-  return withLock(root, task_id, async () => {
+  const initial = load(root, task_id, request_sha256)
+  const relayRound = boundRelayRound(root, initial)
+  const retire = () => withLock(root, task_id, async () => {
     const request = load(root, task_id, request_sha256)
     if (completed(root, request)) throw Error("Completed reasoning evidence cannot be retired")
     if (!readJSON(root, base(task_id) + "retired.json"))
@@ -417,6 +503,7 @@ export async function retireReasoningTask(root, { task_id, request_sha256, reaso
       })
     return { status: "retired", task_id }
   })
+  return relayRound ? withLock(root, "relay-round-" + relayRound, retire) : retire()
 }
 // An external executor receives the same source-bound prompt/schema as Ollama.
 // No API key, model checkpoint or factual approval is manufactured here.

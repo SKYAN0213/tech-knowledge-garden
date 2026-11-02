@@ -1,10 +1,37 @@
+import fs from "node:fs"
+import path from "node:path"
 import { sha256 } from "./contracts.mjs"
-import { acquireLock, recoverLock, atomicWrite, readJSON } from "./run-state.mjs"
+import { acquireLock, recoverLock, atomicWrite, readJSON, safePath } from "./run-state.mjs"
 import { operationalBase } from "./operations-release.mjs"
 import { operationalRoundStatus, runOperationalRound } from "./operations-runtime.mjs"
 import { moduleJobStatus } from "./module-runtime.mjs"
 import { readReasoningTask } from "./reasoning-tasks.mjs"
 import { publicationDeliveryStatus } from "./authoring-delivery-request.mjs"
+
+export function savedStorageRequestReady(root, request) {
+  if (request?.schema !== "research-storage-download-request/v1" || typeof request.root !== "string" ||
+      !Array.isArray(request.requests) || !request.requests.length) return false
+  let actualRoot, requestedRoot
+  try { actualRoot = fs.realpathSync(root); requestedRoot = fs.realpathSync(request.root) }
+  catch (error) { if (error.code === "ENOENT") return false; throw error }
+  if (actualRoot !== requestedRoot) {
+    if (!actualRoot.startsWith(requestedRoot + path.sep)) return false
+    const policyPath = safePath(requestedRoot, ".storage/policy.json", { materialize: false })
+    if (!fs.existsSync(policyPath)) return false
+    const policy = JSON.parse(fs.readFileSync(policyPath))
+    if (policy.schema !== "research-cold-storage/v1" || policy.root !== requestedRoot || policy.enabled !== true)
+      return false
+  }
+  for (const entry of request.requests) {
+    if (typeof entry.path !== "string" || !/^[a-f0-9]{64}$/.test(entry.sha256 || "")) return false
+    const file = safePath(requestedRoot, entry.path, { materialize: false })
+    if (file !== actualRoot && !file.startsWith(actualRoot + path.sep)) return false
+    const stat = fs.statSync(file, { throwIfNoEntry: false })
+    if (!stat?.isFile() || (entry.bytes !== undefined && stat.size !== entry.bytes)) return false
+    if (sha256(fs.readFileSync(file)) !== entry.sha256) return false
+  }
+  return true
+}
 
 // A completed module job is a slice, never a completed daily publication.
 // Only native delivery receipts can establish the latter.
@@ -27,10 +54,18 @@ export function operationalNextAction(status, delivery = null) {
     return { action: "resume", job_id: last.job_id }
   if (last?.job.state === "waiting_for_storage")
     return { action: "storage", job_id: last.job_id, request: last.job.storage_request }
+  if (status.ready_items?.length && last?.job.state === "completed")
+    return {
+      action: "consume_reasoning",
+      ready_items: status.ready_items,
+      requests: status.ready_items.flatMap((item) => item.request_refs),
+    }
   if (last?.job.state === "waiting_for_reasoning")
     return { action: "reasoning", job_id: last.job_id, request: last.job.reasoning_task }
   if (status.pending_reasoning?.total)
     return { action: "reasoning", requests: status.pending_reasoning.tasks }
+  const waitingStorage = (status.next_inputs || []).find((row) => row.stage === "storage")
+  if (waitingStorage) return { action: "storage", request: waitingStorage.storage_request, item: waitingStorage }
   const submitted = (status.next_inputs || []).flatMap((row) =>
     row.stage === "reasoning" && row.reasoning_task ? [row.reasoning_task] : [],
   )
@@ -103,6 +138,7 @@ export async function driveOperationalRound(
     wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     deliveryStatus = publicationDeliveryStatus,
     readTask = readReasoningTask,
+    storageReady = (request) => savedStorageRequestReady(ctx.root, request),
   } = {},
 ) {
   const run = p.run_id,
@@ -139,7 +175,8 @@ export async function driveOperationalRound(
   const file = base + "controller.json"
   const prior = readJSON(ctx.root, file)
   let progress = prior?.progress || null,
-    lastDispatched = prior?.last_dispatched_job || null
+    lastDispatched = prior?.last_dispatched_job || null,
+    lastReadyConsumption = prior?.last_ready_consumption || null
   const save = (value) => {
     const result = {
       schema: "research-operational-controller/v1",
@@ -150,6 +187,7 @@ export async function driveOperationalRound(
       keep_turn_open: true,
       progress,
       last_dispatched_job: lastDispatched,
+      last_ready_consumption: lastReadyConsumption,
       ...value,
     }
     atomicWrite(ctx.root, file, result)
@@ -175,6 +213,10 @@ export async function driveOperationalRound(
         step--
         continue
       }
+      if (next.action === "storage" && next.request && storageReady(next.request)) {
+        next.action = next.job_id ? "resume" : "advance"
+        if (!next.job_id) next.stage = "processing"
+      }
       if (
         next.action === "reasoning" &&
         next.job_id &&
@@ -198,8 +240,27 @@ export async function driveOperationalRound(
             return save({
               status: "requires_reasoning",
               next_action: { action: "reasoning", requests: next.requests },
+              ...(current.relay ? { relay: current.relay } : {}),
             })
         }
+        const readyFingerprint = sha256(
+          JSON.stringify(
+            next.requests
+              .map(({ task_id, request_sha256 }) => [task_id, request_sha256])
+              .sort((a, b) => a[0].localeCompare(b[0])),
+          ),
+        )
+        if (
+          lastReadyConsumption === readyFingerprint &&
+          lastDispatched === current.commands?.at(-1)?.job_id
+        )
+          return save({
+            status: "no_progress",
+            next_action: next,
+            reason:
+              "Native successor retained the same completed requests; no duplicate result consumption",
+          })
+        lastReadyConsumption = readyFingerprint
         // Batched workflows can settle their module job while returning owned
         // model requests in its result. Consume those results in a successor;
         // resubmitting the completed module job would only replay its old page.
@@ -258,6 +319,7 @@ export async function driveOperationalRound(
         keep_turn_open: next.action !== "complete",
         next_action: next,
         native_status: current.status,
+        ...(current.relay ? { relay: current.relay } : {}),
         stages: current.stages,
         continuation: current.continuation || null,
         next_command: ["node", "scripts/research-operations.mjs", "drive", "--round", run],

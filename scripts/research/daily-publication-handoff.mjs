@@ -44,6 +44,13 @@ function checkedNoteReferences(ctx, refs = []) {
 export function loadDailyPublicationSelection(root, relative, { vault = "vault" } = {}) {
   const bytes = fs.readFileSync(safePath(root, relative)),
     selection = JSON.parse(bytes)
+  if (selection.schema === "research-curation-publication-revision/v1") {
+    const resolved = resolveCuratedPublicationRevision(root, selection, vault)
+    return {
+      ...resolved,
+      reference: { path: relative, sha256: sha256(bytes), run_id: selection.run_id },
+    }
+  }
   if (selection.schema === "research-curation-publication-handoff/v1") {
     const input = pinnedJSON(root, selection.workflow_input)
     const curated = loadCurationSelection({ root, vault }, selection.curation, {
@@ -76,6 +83,10 @@ export function loadDailyPublicationSelection(root, relative, { vault = "vault" 
       knowledgeRuns,
       reference: { path: relative, sha256: sha256(bytes), run_id: selection.run_id },
       curation: selection.curation,
+      briefingDate: selection.briefing_date,
+      nativeSelections: children.flatMap((child) =>
+        child.selection ? [child.selection] : child.nativeSelections || [],
+      ),
     }
   }
   if (selection.schema === "research-daily-publication-handoff/v3") {
@@ -211,6 +222,139 @@ function nativeApproval(root, run, vault) {
     draft: readJSON(root, `runs/${run}/draft.json`),
     claims: readJSON(root, `runs/${run}/reviewed-claims.json`).claims,
   }
+}
+
+// A correction replaces one already selected event; it does not rerank the
+// edition or promote a new event into the frozen selection.
+function resolveCuratedPublicationRevision(root, revision, vault) {
+  if (
+    !validId(revision.run_id) ||
+    Object.keys(revision).sort().join() !== "corrections,original_handoff,run_id,schema" ||
+    Object.keys(revision.original_handoff || {})
+      .sort()
+      .join() !== "path,sha256" ||
+    !Array.isArray(revision.corrections) ||
+    !revision.corrections.length ||
+    revision.corrections.length > 40
+  )
+    throw Error("Exact curated publication revision required")
+  const originalRecord = pinnedJSON(root, revision.original_handoff)
+  if (originalRecord.schema !== "research-curation-publication-handoff/v1")
+    throw Error("Original frozen curated handoff required")
+  const original = loadDailyPublicationSelection(root, revision.original_handoff.path, { vault })
+  if (!original.curation || original.reference.sha256 !== revision.original_handoff.sha256)
+    throw Error("Original curated handoff binding changed")
+  const selection = loadCurationSelection({ root, vault }, original.curation, {
+    checkHistory: false,
+  })
+  const originalEvents = original.approvedRuns.map(
+    (run) => nativeApproval(root, run, vault).article.event_id,
+  )
+  if (
+    original.approvedRuns.length !== selection.selected.length ||
+    new Set(originalEvents).size !== selection.selected.length
+  )
+    throw Error("Every frozen selected event requires one distinct original approval")
+  const approvedRuns = [...original.approvedRuns]
+  const nativeSelections = [...(original.nativeSelections || [])]
+  const previousRuns = new Set(),
+    currentRuns = new Set(),
+    knowledgeRuns = new Set(original.knowledgeRuns)
+  for (const entry of revision.corrections) {
+    if (
+      Object.keys(entry || {})
+        .sort()
+        .join() !== "handoff,previous_run" ||
+      Object.keys(entry.handoff || {})
+        .sort()
+        .join() !== "path,sha256" ||
+      !validId(entry.previous_run) ||
+      previousRuns.has(entry.previous_run) ||
+      !original.approvedRuns.includes(entry.previous_run)
+    )
+      throw Error("Correction must target one distinct originally selected run")
+    const child = pinnedJSON(root, entry.handoff)
+    if (
+      child.schema !== "research-daily-publication-handoff/v3" ||
+      child.status !== "approval_ready" ||
+      child.workflow_status !== "complete" ||
+      child.candidate_published !== false ||
+      child.approved_runs?.length !== 1 ||
+      child.approved_runs[0].action !== "correction" ||
+      child.reused_runs?.length ||
+      child.excluded_groups?.length
+    )
+      throw Error("Complete single-event native correction handoff required")
+    const resolved = loadDailyPublicationSelection(root, entry.handoff.path, { vault })
+    if (resolved.reference.sha256 !== entry.handoff.sha256 || resolved.approvedRuns.length !== 1)
+      throw Error("Correction handoff binding changed")
+    const currentRun = resolved.approvedRuns[0]
+    if (resolved.selection) nativeSelections.push(resolved.selection)
+    if (currentRuns.has(currentRun) || original.approvedRuns.includes(currentRun))
+      throw Error("Correction must be a distinct new approved run")
+    const previous = nativeApproval(root, entry.previous_run, vault)
+    const current = nativeApproval(root, currentRun, vault)
+    const lineage = loadSelectedEventRevision(root, previous, current, { vault })
+    if (!lineage || pinnedJSON(root, lineage.receipt).action !== "correction")
+      throw Error("Exact native correction lineage required")
+    approvedRuns[approvedRuns.indexOf(entry.previous_run)] = currentRun
+    previousRuns.add(entry.previous_run)
+    currentRuns.add(currentRun)
+    for (const run of resolved.knowledgeRuns || []) knowledgeRuns.add(run)
+  }
+  if (
+    approvedRuns.length !== original.approvedRuns.length ||
+    new Set(approvedRuns).size !== approvedRuns.length
+  )
+    throw Error("Frozen selected event count changed")
+  return {
+    approvedRuns,
+    knowledgeRuns: [...knowledgeRuns],
+    curation: original.curation,
+    briefingDate: original.briefingDate,
+    nativeSelections,
+  }
+}
+
+// Creates only a local handoff. Both the original selection and every
+// correction are revalidated when the handoff is subsequently read.
+export async function reviseCuratedPublicationHandoff(ctx, p) {
+  if (!validId(p.run_id)) throw Error("Exact curated publication revision run required")
+  const { assertNoOperationalWriter } = await import("./operations-deployment.mjs")
+  const { currentRequestOwner } = await import("./request-ownership.mjs")
+  assertNoOperationalWriter(ctx.repo, {
+    researchRoot: ctx.root,
+    ownedRequest: currentRequestOwner(),
+  })
+  const revision = {
+    schema: "research-curation-publication-revision/v1",
+    run_id: p.run_id,
+    original_handoff: { path: p.handoff_path, sha256: p.handoff_sha256 },
+    corrections: p.corrections,
+  }
+  return withLock(ctx.root, "curation-publication-revision-" + p.run_id, async () => {
+    const resolved = resolveCuratedPublicationRevision(ctx.root, revision, ctx.vault)
+    const relative = `curation/publication-revisions/${p.run_id}/handoff.json`
+    const existing = readJSON(ctx.root, relative)
+    if (existing && !same(existing, revision)) throw Error("Curated revision run input changed")
+    if (!existing) atomicCreate(ctx.root, relative, revision)
+    const reference = fileReference(ctx.root, relative)
+    const checked = loadDailyPublicationSelection(ctx.root, relative, { vault: ctx.vault })
+    if (
+      checked.reference.sha256 !== reference.sha256 ||
+      !same(checked.approvedRuns, resolved.approvedRuns) ||
+      !same(checked.curation, resolved.curation)
+    )
+      throw Error("Curated revision changed at its storage boundary")
+    return {
+      status: "approval_ready",
+      publication_handoff: reference,
+      curation: resolved.curation,
+      approved_runs: resolved.approvedRuns,
+      corrections: revision.corrections.length,
+      candidate_published: false,
+    }
+  })
 }
 function approvalReference(root, approval) {
   const documents = readJSON(root, `runs/${approval.run}/documents.json`),

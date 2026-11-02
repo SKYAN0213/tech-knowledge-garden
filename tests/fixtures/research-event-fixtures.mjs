@@ -20,7 +20,13 @@ export function fixture(t) {
   // to GPT; an Ollama fixture must select its existing local policy explicitly.
   return { ctx: moduleContext({ repo, root, policy: "data/research-model-policy.json" }), root }
 }
-export function source(root, index, origin = "origin-" + index, publishedAt = "2026-09-27") {
+export function source(
+  root,
+  index,
+  origin = "origin-" + index,
+  publishedAt = "2026-09-27",
+  { independent = false } = {},
+) {
   const url = `https://fixture.example/article/${index}`,
     body = `Original test source ${index}`
   const sid = sourceId(url),
@@ -39,7 +45,7 @@ export function source(root, index, origin = "origin-" + index, publishedAt = "2
     body_path: `documents/${sid}/${body_sha256}/body.bin`,
   }
   const texts = [
-    `Fixture Robotics and Partner announced the Contract-123 robot order on 2026-09-27. Source ${index}.`,
+    `Fixture Robotics${independent ? " " + index : ""} and Partner announced the Contract-${independent ? 123 + index : 123} robot order on 2026-09-27. Source ${index}.`,
     "A different event in the same source concerns another customer and a later schedule.",
   ]
   const parsed = {
@@ -66,13 +72,16 @@ export function source(root, index, origin = "origin-" + index, publishedAt = "2
   atomicWrite(root, `runs/${origin}/parses.json`, [...parses, parsed])
   return { document, parsed, origin }
 }
-export function editionFixture(t, { differentDate = false } = {}) {
+export function editionFixture(
+  t,
+  { differentDate = false, independent = false, primaryPublishedAt = "2026-09-27" } = {},
+) {
   const f = fixture(t),
     sources = [
-      source(f.root, 0),
-      source(f.root, 1, "origin-1", differentDate ? "2026-09-28" : "2026-09-27"),
-      source(f.root, 2),
-      source(f.root, 3, "origin-0"),
+      source(f.root, 0, "origin-0", primaryPublishedAt, { independent }),
+      source(f.root, 1, "origin-1", differentDate ? "2026-09-28" : "2026-09-27", { independent }),
+      source(f.root, 2, "origin-2", "2026-09-27", { independent }),
+      source(f.root, 3, "origin-0", "2026-09-27", { independent }),
     ]
   const windows = [{ channel_id: "fixture", since: "2026-09-27", until_exclusive: "2026-09-28" }]
   const scans = sources.map((s) => ({
@@ -182,8 +191,8 @@ export function editionFixture(t, { differentDate = false } = {}) {
   }
   return { ...f, sources, report, editionRef, review, parameters }
 }
-export async function selectedFixture(t) {
-  const f = editionFixture(t),
+export async function selectedFixture(t, options) {
+  const f = editionFixture(t, options),
     plan = await executeModule(f.ctx, "classification", "review", f.parameters)
   const selection = await executeModule(f.ctx, "selection", "prepare", {
     run_id: "writer",

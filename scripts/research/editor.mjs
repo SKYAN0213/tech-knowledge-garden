@@ -301,6 +301,120 @@ export function draftProblems(draft, claims, deepContext = null, completenessCon
       problems.push("claim_needs_review")
     if (/[<>\n]/.test(s.text)) problems.push("invalid_reader_prose")
   }
+  // A date-only source does not establish Korean time. Require an explicit
+  // time-zone marker in the evidence of the claims cited by that sentence;
+  // do not manufacture a conversion or silently remove the qualifier.
+  const koreanTime = /한국\s*(?:표준\s*)?시간|\bKST\b|Korea(?:n)?\s+(?:standard\s+)?time/i
+  const koreanTimeEvidence =
+    /한국\s*(?:표준\s*)?시간|\bKST\b|Korea(?:n)?\s+(?:standard\s+)?time|\b(?:UTC|GMT)\s*\+\s*0?9(?::?00)?\b|\+09:00\b/i
+  const datesIn = (value) => {
+    const after = [
+      ...value.matchAll(
+        /(?:(20\d{2})\s*(?:년|[-/.])\s*)?(\d{1,2})\s*(?:월|[-/.])\s*(\d{1,2})\s*일?[^\d]{0,12}(?:한국\s*(?:표준\s*)?시간|\bKST\b|Korea(?:n)?\s+(?:standard\s+)?time)/gi,
+      ),
+    ]
+    const before = [
+      ...value.matchAll(
+        /(?:한국\s*(?:표준\s*)?시간|\bKST\b|Korea(?:n)?\s+(?:standard\s+)?time)[\s(（:]{0,8}(?:(20\d{2})\s*(?:년|[-/.])\s*)?(\d{1,2})\s*(?:월|[-/.])\s*(\d{1,2})\s*일?/gi,
+      ),
+    ]
+    return [...after, ...before].map(([, year, month, day]) => ({
+      year: year ? Number(year) : null,
+      month: Number(month),
+      day: Number(day),
+    }))
+  }
+  const sameDay = (left, right) =>
+    left.month === right.month && left.day === right.day && (!left.year || left.year === right.year)
+  const monthNames = [
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+  ]
+  const explicitEventDates = (quote) => {
+    const match = quote.match(
+      /\b(?:as of|effective|starting|since|from)\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})/i,
+    )
+    return match
+      ? [
+          {
+            year: Number(match[3]),
+            month: monthNames.indexOf(match[1].toLowerCase()) + 1,
+            day: Number(match[2]),
+          },
+        ]
+      : []
+  }
+  const supportsKoreanTime = (ids, value) => {
+    const cited = ids.map((id) => byId.get(id)).filter(Boolean)
+    const evidence = cited.flatMap((claim) => claim.evidence || [])
+    if (
+      evidence.some((item) => typeof item.quote === "string" && koreanTimeEvidence.test(item.quote))
+    )
+      return true
+    const dates = datesIn(value)
+    if (!dates.length) return false
+    // A source's publication timestamp does not establish the time zone of a
+    // separate date-only effective event such as "as of October 15".
+    const publicationTime =
+      /(?:한국\s*(?:표준\s*)?시간|\bKST\b)[^\d]{0,12}(?:20\d{2}\s*(?:년|[-/.])\s*)?\d{1,2}\s*(?:월|[-/.])\s*\d{1,2}\s*일?[^\d]{0,8}(?:게시|공지|발행|발표|공개)/i.test(
+        value,
+      ) ||
+      /(?:20\d{2}\s*(?:년|[-/.])\s*)?\d{1,2}\s*(?:월|[-/.])\s*\d{1,2}\s*일?[^\d]{0,12}(?:한국\s*(?:표준\s*)?시간|\bKST\b)[^\d]{0,8}(?:게시|공지|발행|발표|공개)/i.test(
+        value,
+      ) ||
+      /(?:게시|공지|발행|발표|공개)[^\d;.!?]{0,12}(?:20\d{2}\s*(?:년|[-/.])\s*)?\d{1,2}\s*(?:월|[-/.])\s*\d{1,2}\s*일?[^\d;.!?]{0,12}(?:한국\s*(?:표준\s*)?시간|\bKST\b)/i.test(
+        value,
+      )
+    if (
+      !publicationTime &&
+      evidence.some(
+        (item) =>
+          typeof item.quote === "string" &&
+          explicitEventDates(item.quote).some((event) =>
+            dates.some((date) => sameDay(date, event)),
+          ),
+      )
+    )
+      return false
+    return dates.every((date) =>
+      cited.some((claim) => {
+        const timestamp = claim.published_at
+        if (typeof timestamp !== "string" || !/T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp))
+          return false
+        const instant = Date.parse(timestamp)
+        if (!Number.isFinite(instant)) return false
+        const [year, month, day] = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Seoul",
+        })
+          .format(new Date(instant))
+          .split("-")
+          .map(Number)
+        return sameDay(date, { year, month, day })
+      }),
+    )
+  }
+  const usedIds = [...new Set(sentences.flatMap((sentence) => sentence.claim_ids))]
+  if (
+    sentences.some(
+      (sentence) =>
+        koreanTime.test(sentence.text) && !supportsKoreanTime(sentence.claim_ids, sentence.text),
+    ) ||
+    [draft.title, draft.facts.when, ...draft.explanations.map((section) => section.heading)].some(
+      (value) =>
+        typeof value === "string" && koreanTime.test(value) && !supportsKoreanTime(usedIds, value),
+    )
+  )
+    problems.push("unsupported_time_zone_qualification")
   const prose = [
     draft.title,
     ...sentences.map((s) => s.text),

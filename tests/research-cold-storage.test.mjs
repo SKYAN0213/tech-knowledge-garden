@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 import crypto from "node:crypto"
 import { once } from "node:events"
 import { spawn, spawnSync } from "node:child_process"
@@ -533,7 +534,7 @@ sys.exit(0)`
       [
         "-c",
         program,
-        new URL("../scripts/research/cold-storage.py", import.meta.url).pathname,
+        fileURLToPath(new URL("../scripts/research/cold-storage.py", import.meta.url)),
         f.root,
         JSON.stringify(f.parameters),
         probe,
@@ -634,7 +635,7 @@ function recoverCLI(f) {
     const child = spawn(
       process.execPath,
       [
-        new URL("../scripts/research-storage.mjs", import.meta.url).pathname,
+        fileURLToPath(new URL("../scripts/research-storage.mjs", import.meta.url)),
         "recover-mutation-lock",
         "--root",
         f.root,
@@ -866,7 +867,7 @@ sys.exit(7)
     const result = spawnSync(
       process.execPath,
       [
-        new URL("../scripts/research-storage.mjs", import.meta.url).pathname,
+        fileURLToPath(new URL("../scripts/research-storage.mjs", import.meta.url)),
         "status",
         "--root",
         f.root,

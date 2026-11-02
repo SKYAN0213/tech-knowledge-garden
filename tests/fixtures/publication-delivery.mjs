@@ -80,7 +80,12 @@ async function approve(f, run, selected = f.selectedParameters, revisionFile) {
     })),
   })
   await executeModule(f.ctx, "evidence", "review", { run_id: run, review_file })
-  const ids = claims.map((c) => c.claim_id)
+  const usedSources = f.usedSourceIndices?.map((index) => f.sources[index].document.source_id)
+  const ids = claims
+    .filter(
+      (claim) => !usedSources || claim.evidence.some((e) => usedSources.includes(e.source_id)),
+    )
+    .map((claim) => claim.claim_id)
   const draft = {
     title: "Fixture Robotics, Partner와 로봇 주문 발표",
     lead: [
@@ -149,6 +154,7 @@ async function approve(f, run, selected = f.selectedParameters, revisionFile) {
     ...(revisionFile ? { revision_file: revisionFile } : {}),
   })
 }
+export const approveDeliveryFixture = approve
 async function advance(f, workflow = "workflow", plan = f.plan, execute = true) {
   return advanceEventWorkflow(f.ctx, {
     run_id: workflow,
@@ -159,16 +165,17 @@ async function advance(f, workflow = "workflow", plan = f.plan, execute = true) 
     execute,
   })
 }
-async function ready(t) {
-  const f = await selectedFixture(t)
+async function ready(t, options = {}) {
+  const f = await selectedFixture(t, options)
+  f.usedSourceIndices = options.usedSourceIndices
   f.provider = provider()
   await approve(f, "writer")
   f.workflow = await advance(f)
   return f
 }
 
-export async function deliveryFixture(t) {
-  const f = await ready(t)
+export async function deliveryFixture(t, options) {
+  const f = await ready(t, options)
   const workflow = "event-workflows/workflow/latest.json"
   const handoff = await prepareEventPublicationHandoff(f.ctx, {
     run_id: "handoff",

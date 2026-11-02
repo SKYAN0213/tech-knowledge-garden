@@ -5,6 +5,7 @@ import { sha256 } from "./contracts.mjs"
 import { evidenceReference } from "./development-release.mjs"
 import { readOperationGate } from "./operation-policy.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { assertRequestOwner } from "./request-ownership.mjs"
 
 export const activeRuntimePath = ".local/.storage/active-runtime.json"
 export const executionRepository = (ctx) => ctx.executionRepo || ctx.repo
@@ -68,13 +69,26 @@ export function inspectRuntimeWorkspace(runtime, workspace) {
   return { runtime, workspace, release_id: gate.release_id, gate, installation }
 }
 
-export function assertNoOperationalWriter(workspace) {
-  const root = path.join(workspace, ".local/research/local-ai")
+export function assertNoOperationalWriter(workspace, { researchRoot, ownedRequest } = {}) {
+  const root = researchRoot || path.join(workspace, ".local/research/local-ai")
+  if (
+    researchRoot &&
+    (path.relative(workspace, root).startsWith("..") ||
+      fs.realpathSync(root) !== path.resolve(root))
+  )
+    throw Error("Exact workspace research root required")
+  if (ownedRequest) {
+    assertRequestOwner(root, ownedRequest)
+    const own = readJSON(root, `module-jobs/${ownedRequest.job_id}/state.json`)
+    if (own.state !== "running" || own.pid !== process.pid)
+      throw Error("Owned checkpoint recovery worker identity changed")
+  }
   const jobs = path.join(root, "module-jobs")
   for (const name of fs.existsSync(jobs) ? fs.readdirSync(jobs) : []) {
     if (!/^module-[A-Za-z0-9_-]{1,100}$/.test(name)) continue
     const state = readJSON(root, `module-jobs/${name}/state.json`)
     if (!["queued", "running", "finishing"].includes(state?.state)) continue
+    if (name === ownedRequest?.job_id) continue
     const launch = readJSON(root, `module-jobs/${name}/launch.json`)
     const pid = state.state === "running" ? state.pid : launch?.pid
     if (!Number.isSafeInteger(pid) || pid <= 0) throw Error("Unknown workspace writer: " + name)

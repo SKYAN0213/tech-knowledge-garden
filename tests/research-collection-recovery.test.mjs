@@ -101,6 +101,7 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
     })
   }
   const scan = async (v) => {
+    const recoveryRuns = v["recovery-source-runs"]
     const input = {
       schema: "research-list-run-input/v2",
       channel_id: channel.channel_id,
@@ -110,12 +111,13 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
       collection_basis: basis,
       policy_recheck_limit: 0,
       ...(v["recovery-source-run"] ? { recovery_source_run: v["recovery-source-run"] } : {}),
+      ...(recoveryRuns ? { recovery_source_runs: recoveryRuns } : {}),
     }
     const run = new RunState(root, v.run, input)
     atomicWrite(root, `runs/${v.run}/collection-input.json`, input)
     await run.stage("collection-basis", basis, () => basis)
-    const reuse = v["recovery-source-run"]
-      ? createRecoverySourceReuse(root, v["recovery-source-run"], channel, basis, window, {
+    const reuse = v["recovery-source-run"] || recoveryRuns
+      ? createRecoverySourceReuse(root, recoveryRuns || v["recovery-source-run"], channel, basis, window, {
           fetchPolicy,
           parse,
         })
@@ -177,6 +179,155 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
     reportSha256: sha256(fs.readFileSync(path.join(root, "report.json"))),
   }
 }
+
+function addEarlierWindow(f) {
+  const run = "earlier-window"
+  fs.cpSync(path.join(f.root, "runs/initial"), path.join(f.root, "runs", run), { recursive: true })
+  const input = readJSON(f.root, `runs/${run}/collection-input.json`)
+  input.since = "2026-10-03"
+  input.until_exclusive = "2026-10-10"
+  atomicWrite(f.root, `runs/${run}/collection-input.json`, input)
+  const state = readJSON(f.root, `runs/${run}/state.json`)
+  state.run_id = run
+  state.input_hash = sha256(JSON.stringify(input))
+  for (const stage of Object.values(state.stages))
+    if (stage.result_path) stage.result_path = stage.result_path.replace("runs/initial/", `runs/${run}/`)
+  atomicWrite(f.root, `runs/${run}/state.json`, state)
+  const summary = readJSON(f.root, `runs/${run}/list-scan.json`)
+  summary.window = { since: input.since, until_exclusive: input.until_exclusive }
+  atomicWrite(f.root, `runs/${run}/list-scan.json`, summary)
+  const source = readRecoverySource(f.root, run)
+  const report = readJSON(f.root, f.reportPath)
+  report.routes[0].windows.unshift({
+    since: input.since,
+    until_exclusive: input.until_exclusive,
+    status: "incomplete",
+    attempts: [{ run_id: run, status: "incomplete" }],
+  })
+  report.evidence.push(...source.reference.evidence)
+  atomicWrite(f.root, f.reportPath, report)
+  return { run, input, reportSha256: sha256(fs.readFileSync(path.join(f.root, f.reportPath))) }
+}
+
+test("window-specific checkpoint overrides do not leak to another window of the same source", async (t) => {
+  const f = await fixture(t), other = addEarlierWindow(f)
+  const override = "earlier-checkpoint"
+  fs.cpSync(path.join(f.root, "runs", other.run), path.join(f.root, "runs", override), { recursive: true })
+  const state = readJSON(f.root, `runs/${override}/state.json`)
+  state.run_id = override
+  for (const stage of Object.values(state.stages))
+    if (stage.result_path) stage.result_path = stage.result_path.replace(`runs/${other.run}/`, `runs/${override}/`)
+  atomicWrite(f.root, `runs/${override}/state.json`, state)
+  const plan = await recoverCollection({
+    ...f,
+    reportSha256: other.reportSha256,
+    runId: "window-overrides",
+    mode: "plan-only",
+    sourceWindows: [
+      { channel_id: f.channel.channel_id, since: other.input.since, until_exclusive: other.input.until_exclusive, source_runs: [override] },
+      { channel_id: f.channel.channel_id, since: f.window.since, until_exclusive: f.window.until, source_runs: ["initial"] },
+    ],
+  })
+  assert.deepEqual(plan.targets.map((target) => target.source_run), [override, "initial"])
+})
+
+test("an unavailable window preserves its error while another window continues", async (t) => {
+  const f = await fixture(t), other = addEarlierWindow(f)
+  atomicWrite(f.root, `locks/run-${other.run}.json`, { owner: "active" })
+  const result = await recoverCollection({
+    ...f,
+    reportSha256: other.reportSha256,
+    runId: "isolated-windows",
+    mode: "execute",
+    maxRoutes: 2,
+  })
+  assert.equal(result.status, "partial")
+  assert.ok(result.waiting_sources.some((row) => row.since === other.input.since))
+  assert.equal(result.attempts.length, 1)
+  assert.equal(result.attempts[0].source_run, "initial")
+  fs.unlinkSync(path.join(f.root, `locks/run-${other.run}.json`))
+  const resumed = await recoverCollection({
+    ...f,
+    reportSha256: other.reportSha256,
+    runId: "isolated-windows",
+    mode: "resume",
+    maxRoutes: 1,
+    scan: async () => { throw Error("Controlled source wait") },
+  })
+  assert.equal(resumed.attempts.at(-1).source_run, other.run)
+  assert.equal(resumed.attempts.at(-1).error.message, "Controlled source wait")
+  const savedPlan = readJSON(f.root, "collection-recovery/isolated-windows/plan.json")
+  assert.equal(savedPlan.targets[0].deferred_source, true)
+  assert.equal(fs.readdirSync(path.join(f.root, "collection-recovery/isolated-windows/bindings")).length, 1)
+})
+
+test("a preparation budget pause resumes without inventing a failed source attempt", async (t) => {
+  const f = await fixture(t)
+  const first = await recoverCollection({ ...f, runId: "budget-before-plan", mode: "execute", timeBudgetMs: 1 })
+  assert.equal(first.status, "partial")
+  assert.equal(first.attempts.length, 0)
+  assert.equal(first.waiting_sources[0].status, "budget_pending")
+  assert.equal(first.next_actions.length, 1)
+  const resumed = await recoverCollection({ ...f, runId: "budget-before-plan", mode: "resume", timeBudgetMs: 30000 })
+  assert.equal(resumed.attempts.length, 1)
+  assert.equal(resumed.attempts[0].source_run, "initial")
+})
+
+test("multiple authenticated attempts retain source provenance and reusable parses", async (t) => {
+  const f = await fixture(t)
+  await f.scan({ run: "additional-attempt", "recovery-source-run": "initial" })
+  const reuse = createRecoverySourceReuse(
+    f.root,
+    ["initial", "additional-attempt"],
+    f.channel,
+    f.basis,
+    f.window,
+  )
+  assert.deepEqual(reuse.reference.source_runs.map((source) => source.source_run), ["initial", "additional-attempt"])
+  assert.equal(reuse.available.size, 3)
+  const receiptRef = preserveRecoverySourceReuse(f.root, "multi-source", reuse)
+  const receipt = readJSON(f.root, receiptRef.path)
+  assert.equal(receipt.observation_times_preserved, true)
+  assert.equal(receipt.coverage_reused, false)
+  assert.equal(receipt.source_runs.length, 2)
+})
+
+test("window recovery uses every explicitly pinned checkpoint and preserves the combined receipt", async (t) => {
+  const f = await fixture(t)
+  await f.scan({ run: "additional-attempt", "recovery-source-run": "initial" })
+  const report = readJSON(f.root, f.reportPath)
+  report.routes[0].windows[0].attempts.push({ run_id: "additional-attempt", status: "incomplete" })
+  report.evidence.push(...readRecoverySource(f.root, "additional-attempt").reference.evidence)
+  atomicWrite(f.root, f.reportPath, report)
+  const result = await recoverCollection({
+    ...f,
+    reportSha256: sha256(fs.readFileSync(path.join(f.root, f.reportPath))),
+    runId: "combined-checkpoints",
+    mode: "execute",
+    sourceWindows: [{ channel_id: f.channel.channel_id, since: f.window.since, until_exclusive: f.window.until, source_runs: ["initial", "additional-attempt"] }],
+  })
+  assert.deepEqual(result.attempts[0].source_runs, ["initial", "additional-attempt"])
+  const source = readRecoverySource(f.root, result.attempts[0].run_id)
+  assert.equal(source.summary.status, "window_scanned")
+  assert.equal(readJSON(f.root, `runs/${result.attempts[0].run_id}/source-recovery-reuse.json`).source_runs.length, 2)
+})
+
+test("window recovery automatically reuses eligible earlier attempts from the frozen report", async (t) => {
+  const f = await fixture(t)
+  await f.scan({ run: "additional-attempt", "recovery-source-run": "initial" })
+  const report = readJSON(f.root, f.reportPath)
+  report.routes[0].windows[0].attempts.push({ run_id: "additional-attempt", status: "incomplete" })
+  report.evidence.push(...readRecoverySource(f.root, "additional-attempt").reference.evidence)
+  atomicWrite(f.root, f.reportPath, report)
+  const result = await recoverCollection({
+    ...f,
+    reportSha256: sha256(fs.readFileSync(path.join(f.root, f.reportPath))),
+    runId: "automatic-checkpoints",
+    mode: "execute",
+  })
+  assert.deepEqual(result.attempts[0].source_runs, ["initial", "additional-attempt"])
+  assert.equal(result.attempts[0].status, "window_scanned")
+})
 
 test("a policy wait never consumes the new-request budget or starves later detail URLs", async (t) => {
   const f = await fixture(t, { policyBlocked: true })
@@ -452,6 +603,21 @@ test("an unfinished native run retains hash-bound captured checkpoints across a 
   })
   assert.equal(plan.targets[0].source_run, "checkpoints")
   assert.equal(plan.targets[0].report_source_run, "initial")
+  const options = {
+    ...f,
+    runId: "checkpoint-plan",
+    mode: "resume",
+    sourceRuns: { "nvidia-press-releases": "checkpoints" },
+  }
+  // A previously absent summary is not part of the frozen plan. A later
+  // summary must not silently replace the original incomplete checkpoint.
+  atomicWrite(f.root, "runs/checkpoints/list-scan.json", f.initial.summary)
+  await assert.rejects(recoverCollection(options), /summary|metadata/)
+  fs.unlinkSync(path.join(dir, "list-scan.json"))
+  const resumed = await recoverCollection(options)
+  assert.equal(resumed.attempts.length, 1)
+  assert.equal(resumed.attempts[0].source_run, "checkpoints")
+  assert.equal(fs.existsSync(path.join(dir, "list-scan.json")), false)
   atomicWrite(f.root, "locks/run-checkpoints.json", {
     owner: "live-fixture-owner",
     pid: process.pid,
@@ -463,6 +629,76 @@ test("an unfinished native run retains hash-bound captured checkpoints across a 
     channel_id: "wrong",
   })
   assert.throws(() => readRecoverySource(f.root, "checkpoints"), /input|window/)
+  await assert.rejects(recoverCollection(options), /metadata changed|input changed/)
+})
+
+test("an interrupted incomplete aggregate reuses only authenticated native checkpoints", async (t) => {
+  const f = await fixture(t),
+    dir = path.join(f.root, "runs/initial"),
+    summary = fs.readFileSync(path.join(dir, "list-scan.json")),
+    documents = fs.readFileSync(path.join(dir, "documents.json"))
+  assert.equal(f.initial.summary.status, "incomplete")
+  fs.unlinkSync(path.join(dir, "parses.json"))
+  fs.unlinkSync(path.join(dir, "candidates.json"))
+
+  const source = readRecoverySource(f.root, "initial")
+  assert.equal(source.reference.incomplete_checkpoints, true)
+  assert.equal(source.reference.coverage_reused, false)
+  assert.equal(source.summary.reason, f.initial.summary.reason)
+  assert.ok(source.documents.length > 0)
+  const evidence = new Set(source.reference.evidence.map((item) => item.path))
+  assert.ok(evidence.has("runs/initial/list-scan.json"))
+  assert.ok(evidence.has("runs/initial/documents.json"))
+  assert.equal(evidence.has("runs/initial/parses.json"), false)
+  assert.equal(evidence.has("runs/initial/candidates.json"), false)
+  const next = await f.scan({ run: "after-interrupted-aggregate", "recovery-source-run": "initial" })
+  assert.ok(next.candidates.length > 0)
+  assert.deepEqual(fs.readFileSync(path.join(dir, "list-scan.json")), summary)
+  assert.deepEqual(fs.readFileSync(path.join(dir, "documents.json")), documents)
+  assert.equal(fs.existsSync(path.join(dir, "parses.json")), false)
+  assert.equal(fs.existsSync(path.join(dir, "candidates.json")), false)
+})
+
+test("an incomplete aggregate cannot hide a changed window, malformed array or checkpoint", async (t) => {
+  const f = await fixture(t),
+    base = "runs/initial/",
+    summary = readJSON(f.root, base + "list-scan.json"),
+    documents = readJSON(f.root, base + "documents.json"),
+    parses = readJSON(f.root, base + "parses.json"),
+    candidates = readJSON(f.root, base + "candidates.json")
+  fs.unlinkSync(path.join(f.root, base, "parses.json"))
+  atomicWrite(f.root, base + "candidates.json", { invalid: true })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /array|malformed/i)
+  atomicWrite(f.root, base + "candidates.json", candidates)
+  atomicWrite(f.root, base + "list-scan.json", {
+    ...summary,
+    window: { ...summary.window, since: "2026-01-01" },
+  })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/i)
+  atomicWrite(f.root, base + "list-scan.json", summary)
+  atomicWrite(f.root, base + "parses.json", parses)
+  fs.unlinkSync(path.join(f.root, base, "candidates.json"))
+  assert.ok(documents.length && parses.length)
+  atomicWrite(f.root, base + "documents.json", [{ ...documents[0], original_url: "https://changed.invalid/" }])
+  assert.throws(() => readRecoverySource(f.root, "initial"), /aggregate document differs/i)
+  atomicWrite(f.root, base + "documents.json", documents)
+  atomicWrite(f.root, base + "parses.json", [{ ...parses[0], title: "changed" }])
+  assert.throws(() => readRecoverySource(f.root, "initial"), /aggregate parse differs/i)
+  atomicWrite(f.root, base + "parses.json", parses)
+  const state = readJSON(f.root, base + "state.json"),
+    checkpoint = Object.entries(state.stages).find(([name]) => name.startsWith("detail-"))?.[1]
+  assert.ok(checkpoint?.result_path)
+  atomicWrite(f.root, checkpoint.result_path, { changed: true })
+  assert.throws(() => readRecoverySource(f.root, "initial"), /checkpoint hash changed/i)
+})
+
+test("a completed scan with a missing aggregate is not treated as incomplete recovery", async (t) => {
+  const f = await fixture(t),
+    base = "runs/initial/",
+    summary = readJSON(f.root, base + "list-scan.json")
+  atomicWrite(f.root, base + "list-scan.json", { ...summary, status: "window_scanned", reason: null })
+  fs.unlinkSync(path.join(f.root, base, "parses.json"))
+  assert.throws(() => readRecoverySource(f.root, "initial"), /missing|aggregate/i)
 })
 
 test("one unreadable article does not block later detail batches or repeat an identical partial parse", async (t) => {

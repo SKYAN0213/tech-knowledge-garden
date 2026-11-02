@@ -106,7 +106,8 @@ export function inspectOperationalPin(ctx, run) {
     const continuation = checked(ctx.root, input.continuation)
     if (continuation.successor !== run || continuation.release_id !== input.release_id)
       throw Error("Operational continuation identity changed")
-    for (const ref of [continuation.parent, continuation.workflow, continuation.checkpoint])
+    for (const ref of [continuation.parent, continuation.workflow, continuation.checkpoint,
+      ...(continuation.failed_collection_report ? [continuation.failed_collection_report] : [])])
       checked(ctx.root, ref)
     checkedOperationalInvocation(ctx, continuation.invocation)
   }
@@ -144,6 +145,13 @@ export async function pinOperationalRound(
   return withLock(ctx.root, "operational-round-pin", async () => {
     const input = {
       schema: "research-operational-round/v1",
+      review_mode: continuation
+        ? checked(ctx.root, checked(ctx.root, continuation).parent).review_mode || "separate/v1"
+        : "combined/v1",
+      ...(continuation
+        ? (checked(ctx.root, checked(ctx.root, continuation).parent).relay_provenance === "v1"
+            ? { relay_provenance: "v1" } : {})
+        : { relay_provenance: "v1" }),
       run_id,
       repository: fs.realpathSync(ctx.repo),
       ...(runtime !== ctx.repo ? { execution_repository: fs.realpathSync(runtime) } : {}),

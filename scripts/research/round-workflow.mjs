@@ -44,6 +44,30 @@ function pair(p, name) {
     throw Error("Exact round " + name + " path and SHA required together")
   return p[name + "_path"] ? { path: p[name + "_path"], sha256: p[name + "_sha256"] } : null
 }
+export function resolveCuratedRetryTargets(selection, p) {
+  const candidates = p.retry_candidates || [],
+    groups = p.retry_groups || []
+  if (
+    !Array.isArray(candidates) ||
+    !Array.isArray(groups) ||
+    new Set(candidates).size !== candidates.length ||
+    new Set(groups).size !== groups.length
+  )
+    throw Error("Distinct exact curated retry targets required")
+  const selected = new Set(selection.selected.map((row) => row.candidate_id))
+  if (candidates.some((id) => !selected.has(id))) throw Error("Retry requires a selected candidate")
+  const targets = new Set(candidates)
+  for (const group of groups) {
+    const matches = selection.selected.filter((row) => row.execution.group_id === group)
+    if (!matches.length) throw Error("Retry requires a selected group")
+    if (matches.length !== 1)
+      throw Error("Legacy retry group is ambiguous; use exact retry_candidates")
+    targets.add(matches[0].candidate_id)
+  }
+  return selection.selected
+    .filter((row) => targets.has(row.candidate_id))
+    .map((row) => row.candidate_id)
+}
 function nextInputs(events) {
   if (events.status === "relationship_review")
     return [
@@ -115,8 +139,22 @@ function nextInputs(events) {
           required: ["reasoning_result"],
         },
       ]
-    if (row.status === "failed")
-      return [{ ...common, stage: "events", error: row.error, required: ["retry_groups"] }]
+    if (row.status === "waiting_for_storage")
+      return [{ ...common, stage: "storage", storage_request: row.storage_request,
+        ...(row.blocked_reasoning_task ? { blocked_reasoning_task: row.blocked_reasoning_task } : {}),
+        required: ["storage", "resume"] }]
+    if (row.status === "failed") {
+      const field = row.candidate_id ? "retry_candidates" : "retry_groups"
+      return [
+        {
+          ...common,
+          stage: "events",
+          error: row.error,
+          required: [field],
+          next_input: { [field]: [row.candidate_id || row.group_id] },
+        },
+      ]
+    }
     if (row.status === "queued") return [{ ...common, stage: "events", required: ["execute"] }]
     return []
   })
@@ -214,6 +252,9 @@ export async function advanceRoundWorkflow(
       repo: fs.realpathSync(ctx.repo),
       vault: fs.realpathSync(ctx.vault),
       policy: { path: ctx.policy, sha256: sha256(fs.readFileSync(ctx.policy)) },
+      ...(p.review_mode !== undefined || previousInput?.review_mode !== undefined
+        ? { review_mode: p.review_mode ?? previousInput.review_mode }
+        : {}),
       ...(p.require_curation !== undefined || previousInput?.require_curation !== undefined
         ? { require_curation: p.require_curation ?? previousInput.require_curation }
         : {}),
@@ -433,6 +474,7 @@ export async function advanceRoundWorkflow(
         !p.execute &&
         !p.retry_failed &&
         !(p.retry_groups || []).length &&
+        !(p.retry_candidates || []).length &&
         ![
           p.fact_reviews,
           p.editorial_reviews,
@@ -475,6 +517,12 @@ export async function advanceRoundWorkflow(
         reused = true
       } else {
         persist("processing")
+        if (!curatedBatch && p.retry_candidates?.length)
+          throw Error("Candidate retries require an exact curated selection")
+        const retryTargets =
+          curatedBatch && (p.retry_groups?.length || p.retry_candidates?.length)
+            ? resolveCuratedRetryTargets(loadCurationSelection(ctx, curationRef), p)
+            : []
         events = curatedBatch
           ? await curationProcessor(
               ctx,
@@ -483,6 +531,8 @@ export async function advanceRoundWorkflow(
                 run_id: eventRun,
                 selection_path: curationRef.path,
                 selection_sha256: curationRef.sha256,
+                ...(retryTargets.length ? { retry_candidates: retryTargets } : {}),
+                ...(input.review_mode ? { review_mode: input.review_mode } : {}),
                 note_review_runs: currentOptions.note_review_runs,
                 ...(input.require_completeness !== undefined
                   ? { require_completeness: input.require_completeness }
@@ -500,6 +550,7 @@ export async function advanceRoundWorkflow(
                   : {}),
                 run_id: eventRun,
                 edition_path: editionRef.path,
+                ...(input.review_mode ? { review_mode: input.review_mode } : {}),
                 edition_sha256: editionRef.sha256,
                 note_review_runs: currentOptions.note_review_runs,
                 ...(currentOptions.connection_review_run

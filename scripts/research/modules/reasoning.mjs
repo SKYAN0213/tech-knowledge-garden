@@ -1,4 +1,4 @@
-import { operation, schema, id, integer, standalone } from "./contracts.mjs"
+import { operation, schema, id, integer, file, standalone } from "./contracts.mjs"
 import {
   reasoningTasks,
   readReasoningTask,
@@ -8,16 +8,114 @@ import {
   submitReasoningBatch,
   retireReasoningTask,
 } from "../reasoning-tasks.mjs"
+import { planRelayBatch, planRelayRequest } from "../relay-scheduling.mjs"
+import { recordRelayAssignment, recordRelayExit, recordRelayObservation } from "../relay-ledger.mjs"
 
 const task = { type: "string", pattern: "^reasoning-[a-f0-9]{64}$" }
 const hash = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const reference = { task_id: task, request_sha256: hash }
+const storedReference = schema({ path: file("root"), sha256: hash }, ["path", "sha256"])
+const actor = { type: "string", minLength: 1, maxLength: 200 }
+const actorHistory = {
+  type: "array",
+  maxItems: 100,
+  items: schema(
+    { writer_run: id, actors: { type: "array", maxItems: 100, uniqueItems: true, items: actor } },
+    ["writer_run", "actors"],
+  ),
+}
+const historyMap = (rows) => {
+  const result = Object.create(null)
+  for (const row of rows) {
+    if (Object.hasOwn(result, row.writer_run)) throw Error("Duplicate article actor history")
+    result[row.writer_run] = row.actors
+  }
+  return result
+}
+const lanes = {
+  type: "array",
+  minItems: 1,
+  maxItems: 3,
+  items: schema(
+    {
+      id: integer(1, 3),
+      agent: actor,
+      phase: { anyOf: [actor, { type: "null" }] },
+      busy: { anyOf: [{ type: "boolean" }, actor, { type: "null" }] },
+      retiring: { type: "boolean" },
+    },
+    ["id", "agent", "phase", "busy", "retiring"],
+  ),
+}
 export const module = {
   id: "reasoning",
   title: "추론 수행자 교체 모듈",
   inputs: ["exact source-bound reasoning task and output schema"],
   outputs: ["pending task", "validated executor result without factual approval"],
   operations: {
+    relay_observe: operation(
+      "Codex가 전달한 실행자 시작·종료 관측을 기록한다. 호스트가 실행자 신원을 인증했다는 의미는 아니다.",
+      schema({ round_id: id, event: { type: "string", enum: ["started", "completed"] }, agent: actor,
+        lane: integer(1, 3), generation: integer(1, 1000000), model: actor, thinking: actor,
+        observed_at: { type: "string", minLength: 1, maxLength: 64 }, evidence: storedReference },
+        ["round_id", "event", "agent", "lane", "generation", "observed_at"]),
+      (ctx, p) => recordRelayObservation(ctx.root, p),
+    ),
+    relay_assign: operation(
+      "현재 회차의 원 소유 기사 요청과 실행자·슬롯을 불변 기록한다. 실행자 식별은 호출자 선언으로 보존한다.",
+      schema({ ...reference, agent: actor, lane: integer(1, 3), generation: integer(1, 1000000), observation: storedReference },
+        [...Object.keys(reference), "agent", "lane", "generation", "observation"]),
+      (ctx, p) => recordRelayAssignment(ctx.root, p),
+    ),
+    relay_exit: operation(
+      "완료된 Codex 실행자 관측을 보존하고 같은 슬롯의 다음 실행자를 허용한다.",
+      schema({ round_id: id, agent: actor, lane: integer(1, 3), generation: integer(1, 1000000), observation: storedReference },
+        ["round_id", "agent", "lane", "generation", "observation"]),
+      (ctx, p) => recordRelayExit(ctx.root, p),
+    ),
+    plan_relay: operation(
+      "원 소유 job의 요청을 확인하고 실행자별 작성·검토 분리를 지키는 중계 배정을 제안한다.",
+      schema(
+        {
+          ...reference,
+          lanes,
+          writers: actorHistory,
+          reviewers: actorHistory,
+        },
+        [...Object.keys(reference), "lanes", "writers", "reviewers"],
+      ),
+      (ctx, p) =>
+        planRelayRequest(ctx.root, {
+          ...p,
+          writers: historyMap(p.writers),
+          reviewers: historyMap(p.reviewers),
+        }),
+      { readOnly: true },
+    ),
+    plan_relay_batch: operation(
+      "최대3개 소유 요청을 함께 확인해 기존 기사 검토 문맥을 우선 재사용하는 중계 배정을 제안한다.",
+      schema(
+        {
+          requests: {
+            type: "array",
+            minItems: 1,
+            maxItems: 3,
+            items: schema(reference, Object.keys(reference)),
+          },
+          lanes,
+          writers: actorHistory,
+          reviewers: actorHistory,
+        },
+        ["requests", "lanes", "writers", "reviewers"],
+      ),
+      (ctx, p) =>
+        planRelayBatch(ctx.root, {
+          ...p,
+          writers: historyMap(p.writers),
+          reviewers: historyMap(p.reviewers),
+        }),
+      { readOnly: true },
+    ),
     read_batch: operation(
       "최대3개 요청을 각 SHA와 페이지 범위로 읽는다.",
       schema(
@@ -51,6 +149,7 @@ export const module = {
                 output: {},
                 executor: { type: "string", enum: ["codex"] },
                 model: { type: "string", minLength: 1, maxLength: 200 },
+                relay_assignment: storedReference,
               },
               [...Object.keys(reference), "output", "executor", "model"],
             ),
@@ -97,6 +196,7 @@ export const module = {
           output: {},
           executor: { type: "string", enum: ["codex"] },
           model: { type: "string", minLength: 1, maxLength: 200 },
+          relay_assignment: storedReference,
         },
         [...Object.keys(reference), "output", "executor"],
       ),

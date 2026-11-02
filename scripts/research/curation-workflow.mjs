@@ -7,13 +7,20 @@ import { createModelExecutionWindow } from "./model-provider.mjs"
 import { projectEvidenceOntology, loadApprovedOntologyInput } from "./ontology.mjs"
 import { loadPublicationNoteReferences } from "./daily-publication-handoff.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { withVerifiedInputSession, assertVerifiedInputBoundary } from "./verified-inputs.mjs"
+import { readReasoningTask, readyArticleItems } from "./reasoning-tasks.mjs"
 
 const ref = (root, file) => ({ path: file, sha256: sha256(fs.readFileSync(safePath(root, file))) })
-export async function advanceCuration(
+export async function advanceCuration(ctx, p, options = {}) {
+  return withVerifiedInputSession(ctx, () => advanceCurationNative(ctx, p, options))
+}
+async function advanceCurationNative(
   ctx,
   p,
-  { baseProvider, eventProcessor = advanceEventWorkflow, clock = Date.now } = {},
+  { baseProvider, eventProcessor = advanceEventWorkflow, readTask = readReasoningTask, clock = Date.now } = {},
 ) {
+  if (p.review_mode !== undefined && !["separate/v1", "combined/v1"].includes(p.review_mode))
+    throw Error("Unknown article review mode")
   const selectionRef = { path: p.selection_path, sha256: p.selection_sha256 }
   const selection = loadCurationSelection(ctx, selectionRef)
   const noteReviewRuns = p.note_review_runs || []
@@ -24,6 +31,7 @@ export async function advanceCuration(
     run_id: p.run_id,
     selection: selectionRef,
     model_policy_sha256: sha256(fs.readFileSync(ctx.policy)),
+    ...(p.review_mode ? { review_mode: p.review_mode } : {}),
     ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
   }
   return withLock(ctx.root, "curation-workflow-" + p.run_id, async () => {
@@ -48,6 +56,62 @@ export async function advanceCuration(
         }),
       ),
       errors = []
+    const priorRows = [...workflows.values()].flatMap(
+      (w) =>
+        readJSON(ctx.root, w.workflow.path)?.rows.map((row) => ({
+          ...row,
+          origin_plan_path: w.plan.path,
+        })) || [],
+    )
+    const priorByKey = new Map([...priorRows].reverse().map((row) =>
+      [JSON.stringify([row.origin_plan_path, row.group_id]), row],
+    ))
+    const priorFor = (item) => priorByKey.get(JSON.stringify([item.execution.plan.path, item.execution.group_id]))
+    const blockedItems = new Map()
+    const recordBlocked = (item, error, prior) => {
+      const blocked = {
+        candidate_id: item.candidate_id,
+        group_id: item.execution.group_id,
+        ...(prior?.writer_run ? { writer_run: prior.writer_run } : {}),
+        status: error.code === "STORAGE_PENDING" ? "waiting_for_storage" : "failed",
+        error: error.message,
+        code: error.code || null,
+        ...(error.storage_request ? { storage_request: error.storage_request } : {}),
+        ...(prior?.reasoning_task ? { blocked_reasoning_task: prior.reasoning_task } : {}),
+      }
+      blockedItems.set(item.candidate_id, blocked)
+      errors.push(blocked)
+    }
+    const isPending = (item) => {
+      const row = priorFor(item)
+      if (!row?.reasoning_task) return false
+      try { return readTask(ctx.root, row.reasoning_task).status !== "completed" }
+      catch (error) {
+        recordBlocked(item, error, row)
+        activeArticles.delete(item.candidate_id)
+        return true
+      }
+    }
+    const settledArticle = (row) =>
+      ["approved", "reused", "failed", "deferred", "not_selected"].includes(row?.status)
+    // A completed response or an applied correction still owns its article
+    // slot until approval/failure. A local boundary is not a vacant model slot.
+    const activeArticles = new Set(
+      p.review_mode === "combined/v1"
+        ? selection.selected
+            .filter((item) => priorFor(item)?.writer_run && !settledArticle(priorFor(item)))
+            .map((item) => item.candidate_id)
+        : [],
+    )
+    const ordered =
+      p.review_mode === "combined/v1"
+        ? [...selection.selected].sort((a, b) => {
+            const score = (item) => {
+              return activeArticles.has(item.candidate_id) ? 0 : 1
+            }
+            return score(a) - score(b)
+          })
+        : selection.selected
     let handled = 0,
       writes = 0
     const save = (status) => {
@@ -68,10 +132,14 @@ export async function advanceCuration(
       atomicWrite(ctx.root, base + "latest.json", result)
       return result
     }
-    for (const item of selection.selected) {
+    for (const item of ordered) {
       // One native checkpoint can already contain every approved selected
       // group in this plan. Do not dispatch it again for each ranked item.
       if (workflows.get(item.execution.plan.path)?.status === "complete") continue
+      if (p.review_mode === "combined/v1") {
+        if (isPending(item)) continue
+        if (!activeArticles.has(item.candidate_id) && activeArticles.size >= 3) continue
+      }
       if (
         handled >= (p.max_items ?? 4) ||
         window.remainingMs() <= 0 ||
@@ -90,6 +158,7 @@ export async function advanceCuration(
         curation_focus_group: item.execution.group_id,
         execute: p.execute === true,
         require_completeness: requireCompleteness,
+        ...(p.review_mode ? { review_mode: p.review_mode } : {}),
         max_items: 1,
         time_budget_ms: Math.max(1, Math.floor(window.remainingMs())),
         max_model_calls: Math.max(1, (p.max_model_calls ?? 4) - window.model_calls),
@@ -122,14 +191,15 @@ export async function advanceCuration(
           workflow: ref(ctx.root, `event-workflows/${parameters.run_id}/latest.json`),
           publication_handoff: outcome.publication_handoff,
         })
+        if (p.review_mode === "combined/v1") {
+          const focused = outcome.rows?.find((row) => row.group_id === item.execution.group_id)
+          if (focused?.writer_run && !settledArticle(focused)) activeArticles.add(item.candidate_id)
+          else activeArticles.delete(item.candidate_id)
+        }
         handled += outcome.handled_items || 0
         writes += outcome.article_writes || 0
       } catch (error) {
-        errors.push({
-          candidate_id: item.candidate_id,
-          error: error.message,
-          code: error.code || null,
-        })
+        recordBlocked(item, error, priorFor(item))
       }
       save("processing")
     }
@@ -139,17 +209,21 @@ export async function advanceCuration(
     }))
     const outcomes = savedOutcomes.map((entry) => entry.value)
     const approved = [...new Set(outcomes.flatMap((w) => w.approved_runs || []))]
+    const selectedByKey = new Map([...selection.selected].reverse().map((item) =>
+      [JSON.stringify([item.execution.plan.path, item.execution.group_id]), item],
+    ))
     const rows = savedOutcomes.flatMap(({ workflow, value }) =>
       value.rows.flatMap((row) => {
-        const item = selection.selected.find(
-          (item) =>
-            item.execution.plan.path === workflow.plan.path &&
-            item.execution.group_id === row.group_id,
-        )
-        return item ? [{ ...row, origin_plan: workflow.plan, candidate_id: item.candidate_id }] : []
+        const item = selectedByKey.get(JSON.stringify([workflow.plan.path, row.group_id]))
+        return item ? [{ ...row, origin_plan: workflow.plan, candidate_id: item.candidate_id,
+          ...(blockedItems.has(item.candidate_id) ? { ...blockedItems.get(item.candidate_id), reasoning_task: undefined } : {}) }] : []
       }),
     )
+    for (const [candidateId, blocked] of blockedItems)
+      if (!rows.some((row) => row.candidate_id === candidateId)) rows.push(blocked)
+    const blockedTaskIds = new Set([...blockedItems.values()].map((row) => row.blocked_reasoning_task?.task_id).filter(Boolean))
     const reasoningTasks = outcomes.flatMap((w) => w.reasoning_tasks || [])
+      .filter((task) => !blockedTaskIds.has(task.task_id))
     const finalStatus =
       errors.length || outcomes.some((w) => w.status === "partial")
         ? "partial"
@@ -162,22 +236,41 @@ export async function advanceCuration(
     const result = save("processing")
     result.rows = rows
     result.reasoning_tasks = reasoningTasks
+    if (p.review_mode === "combined/v1") result.ready_items = readyArticleItems(ctx.root, rows)
     result.approved_runs = approved
     result.publication_handoffs = [...workflows.values()]
       .map((w) => w.publication_handoff)
       .filter(Boolean)
     if (approved.length) {
       try {
-        const graph = projectEvidenceOntology(
-          approved.map((run) => loadApprovedOntologyInput(ctx.root, run, { vault: ctx.vault })),
+        // A stable run ID does not guarantee that its approved files, source
+        // evidence or concept assignment still have the same bytes. Validate
+        // the actual inputs before reusing the previous projection.
+        const inputs = approved.map((run) =>
+          loadApprovedOntologyInput(ctx.root, run, { vault: ctx.vault }),
         )
-        result.ontology = atomicWrite(ctx.root, base + "ontology.json", graph)
+        result.ontology_input_sha256 = sha256(JSON.stringify(inputs))
+        const sameApprovals =
+          JSON.stringify(previous?.approved_runs || []) === JSON.stringify(approved)
+        if (
+          sameApprovals &&
+          previous?.ontology &&
+          previous.ontology_input_sha256 === result.ontology_input_sha256
+        ) {
+          if (ref(ctx.root, previous.ontology.path).sha256 !== previous.ontology.sha256)
+            throw Error("Saved curated ontology changed")
+          result.ontology = previous.ontology
+        } else {
+          const graph = projectEvidenceOntology(inputs)
+          result.ontology = atomicWrite(ctx.root, base + "ontology.json", graph)
+        }
       } catch (error) {
         errors.push({ stage: "knowledge", error: error.message, code: error.code || null })
       }
     }
     // Readable by the existing publication module: each child still undergoes
     // its native source/approval/selection checks before any authoring or release.
+    assertVerifiedInputBoundary()
     result.publication_handoff = atomicWrite(ctx.root, base + "publication-handoff.json", {
       schema: "research-curation-publication-handoff/v1",
       run_id: p.run_id,

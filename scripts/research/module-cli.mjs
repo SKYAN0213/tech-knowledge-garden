@@ -17,6 +17,7 @@ export async function moduleCLI(args, selectedModule) {
     strict: true,
     options: {
       repo: { type: "string" },
+      "execution-repo": { type: "string" },
       root: { type: "string" },
       vault: { type: "string" },
       backlog: { type: "string" },
@@ -29,6 +30,7 @@ export async function moduleCLI(args, selectedModule) {
       limit: { type: "string" },
       round: { type: "string" },
       stage: { type: "string" },
+      scope: { type: "string" },
       destination: { type: "string" },
       invocation: { type: "string" },
       "invocation-sha256": { type: "string" },
@@ -41,8 +43,18 @@ export async function moduleCLI(args, selectedModule) {
     vault: v.vault,
     backlog: v.backlog,
     policy: v.policy,
+    executionRepo: v["execution-repo"],
   })
   if (v.input && v.json) throw Error("Choose --input FILE or --json JSON")
+  if (!selectedModule && positionals[0] === "processing-drive") {
+    if (positionals.length !== 1 || !v.input || !v.sha256 || v.json || v.background)
+      throw Error("Use processing-drive --input FILE --sha256 SHA")
+    const { sha256 } = await import("./contracts.mjs")
+    const bytes = fs.readFileSync(safePath(ctx.repo, v.input))
+    if (sha256(bytes) !== v.sha256) throw Error("Processing drive input SHA changed")
+    const { driveArticleProcessingSession } = await import("./processing-session.mjs")
+    return driveArticleProcessingSession(ctx, JSON.parse(bytes))
+  }
   if (!selectedModule && positionals[0] === "scheduled-invocation") {
     if (positionals.length !== 1 || v.round || v.input || v.json || v.background)
       throw Error("Scheduled invocation uses only the configured scheduler's actual dispatch")
@@ -52,7 +64,12 @@ export async function moduleCLI(args, selectedModule) {
   if (!selectedModule && positionals[0] === "timing-benchmark") {
     if (positionals.length !== 1 || !v.input || !v.sha256 || v.json || v.background)
       throw Error("Use timing-benchmark --input FILE --sha256 SHA")
-    const { benchmarkReasoningControl } = await import("./operations-benchmark.mjs")
+    const { benchmarkReasoningControl, benchmarkArticleProcessing } =
+      await import("./operations-benchmark.mjs")
+    if (v.scope === "article_processing")
+      return benchmarkArticleProcessing(ctx, { path: v.input, sha256: v.sha256 })
+    if (v.scope && v.scope !== "reasoning_submission_control")
+      throw Error("Unknown timing benchmark scope")
     return benchmarkReasoningControl(ctx, { path: v.input, sha256: v.sha256 })
   }
   if (!selectedModule && positionals[0] === "readiness") {

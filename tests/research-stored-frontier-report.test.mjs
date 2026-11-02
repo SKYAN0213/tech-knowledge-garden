@@ -6,7 +6,7 @@ import path from "node:path"
 import { freezeStoredSourceFrontier, buildCollectionReport, saveCollectionReport, readCollectionMaterial } from "../scripts/research/collection-report.mjs"
 import { scanBoundedRSSRoute } from "../scripts/research/rss-scan.mjs"
 import { freezeEdition } from "../scripts/research/event-pipeline.mjs"
-import { freezeShadowCollectionInputs } from "../scripts/research/shadow-collection-basis.mjs"
+import { freezeShadowCollectionInputs, freezeShadowHandoffBasis } from "../scripts/research/shadow-collection-basis.mjs"
 import { RunState, atomicWrite } from "../scripts/research/run-state.mjs"
 import { sha256, sourceId } from "../scripts/research/contracts.mjs"
 
@@ -39,8 +39,137 @@ async function fixture(t) {
   const held = await make("old-held", "ieee-spectrum-robotics", true, true)
   const declaration = (row) => ({ run_id: row.run_id, ...(row.policy_recheck_limit === undefined ? {} : { policy_recheck_limit: row.policy_recheck_limit }) })
   const options = { root, runId: "daily-20261011-frontier-fixture", sourceRuns: [declaration(good), declaration(failed)], heldSources: [{ ...declaration(held), requested_window: { since: "2026-10-07", until_exclusive: "2026-10-12" }, reason: "No new permitted source input for the old failed interval" }] }
-  return { root, good, failed, held, options }
+  return { root, good, failed, held, options, make }
 }
+
+test("a failed unclaimed partial checkpoint does not prevent the other verified source from reaching the daily report", async (t) => {
+  const f = await fixture(t)
+  const runId = "daily-20261011-interrupted"
+  const goodChannel = "aws-whats-new-rss",
+    failedChannel = "google-cloud-threat-intelligence"
+  const suffix = "20261009_20261012_a1"
+  const goodId = `${runId}_${goodChannel}_${suffix}`,
+    failedId = `${runId}_${failedChannel}_${suffix}`
+  const good = await f.make(goodId, goodChannel, false)
+  const window = (channel_id) => ({
+    channel_id,
+    since: "2026-10-09",
+    until_exclusive: "2026-10-12",
+  })
+  const configFile = path.join(f.root, "daily-routes-fixture.json")
+  fs.writeFileSync(configFile, "{}")
+  const plan = {
+    schema: "research-daily-plan/v1",
+    run_id: runId,
+    config_sha256: sha256(`${configFile}:${sha256(fs.readFileSync(configFile))}`),
+    windows: [window(goodChannel), window(failedChannel)],
+  }
+  atomicWrite(f.root, `daily/runs/${runId}/plan.json`, plan)
+  await freezeShadowCollectionInputs({
+    root: f.root,
+    plan,
+    configFile,
+    sourcePaths: [configFile],
+    activeRoutes: [goodChannel, failedChannel],
+  })
+  const time = { started_at: "2026-10-11T01:00:00Z", finished_at: "2026-10-11T01:00:10Z" }
+  const receipts = [
+    {
+      schema: "research-daily-receipt/v1",
+      daily_run: runId,
+      ...window(goodChannel),
+      attempt_id: goodId,
+      ...time,
+      status: "window_scanned",
+      candidate_keys: good.scan.candidates.map((candidate) => candidate.key),
+      scan_evidence: {
+        list_scan_run: goodId,
+        listing_source_version_id: good.scan.summary.listing_source_version_id || null,
+        index_documents: good.scan.indexDocuments.length,
+        documents: good.scan.documents.length,
+        parses: good.scan.parses.length,
+      },
+      backlog_merge: { status: "merged" },
+    },
+    {
+      schema: "research-daily-receipt/v1",
+      daily_run: runId,
+      ...window(failedChannel),
+      attempt_id: failedId,
+      ...time,
+      status: "failed",
+      reason: "ENOSPC: no space left on device, write",
+      candidate_keys: [],
+      scan_evidence: null,
+      backlog_merge: null,
+    },
+  ]
+  for (const receipt of receipts)
+    atomicWrite(f.root, `daily/runs/${runId}/receipts/${receipt.attempt_id}.json`, receipt)
+  const partial = {
+    status: "incomplete",
+    reason: "detail_incomplete",
+    channel_id: failedChannel,
+    window: window(failedChannel),
+  }
+  atomicWrite(f.root, `runs/${failedId}/list-scan.json`, partial)
+  atomicWrite(f.root, `runs/${failedId}/documents.json`, [])
+  atomicWrite(f.root, `daily/runs/${runId}/summary.json`, {
+    schema: "research-daily-summary/v1",
+    run_id: runId,
+    receipts: receipts.length,
+  })
+  const backlogFile = path.join(f.root, "daily-backlog.json")
+  fs.writeFileSync(
+    backlogFile,
+    JSON.stringify({ schema: "research-candidates/v1", candidates: [] }),
+  )
+  const coverage = atomicWrite(f.root, "daily/route-coverage.json", { routes: {} })
+  const inputs = {
+    plan_sha256: sha256(fs.readFileSync(path.join(f.root, `daily/runs/${runId}/plan.json`))),
+    receipts_sha256: sha256(JSON.stringify(receipts)),
+    backlog_sha256: sha256(fs.readFileSync(backlogFile)),
+    daily_coverage_sha256: coverage.sha256,
+  }
+  const handoffPath = `daily/runs/${runId}/handoffs/${sha256(JSON.stringify(inputs))}.json`
+  atomicWrite(f.root, handoffPath, {
+    schema: "research-editorial-handoff/v1",
+    daily_run: runId,
+    inputs,
+  })
+  await freezeShadowHandoffBasis({
+    root: f.root,
+    dailyRun: runId,
+    handoffPath,
+    backlogFile,
+    receipts,
+  })
+  const report = buildCollectionReport({ root: f.root, runId })
+  assert.equal(report.status, "partial")
+  assert.equal(report.counts.collected_windows, 1)
+  assert.equal(report.counts.incomplete_windows, 1)
+  assert.ok(report.materials.length > 0)
+  assert.equal(
+    report.routes.find((route) => route.channel_id === failedChannel).windows[0].attempts[0].reason,
+    receipts[1].reason,
+  )
+  assert.ok(
+    report.evidence.some((ref) => ref.path === `daily/runs/${runId}/receipts/${failedId}.json`),
+  )
+  assert.equal(fs.existsSync(path.join(f.root, `runs/${failedId}/parses.json`)), false)
+  assert.deepEqual(
+    JSON.parse(fs.readFileSync(path.join(f.root, `runs/${failedId}/list-scan.json`))),
+    partial,
+  )
+  const claimedParses = path.join(f.root, `runs/${goodId}/parses.json`)
+  const goodParses = fs.readFileSync(claimedParses)
+  fs.unlinkSync(claimedParses)
+  assert.throws(
+    () => buildCollectionReport({ root: f.root, runId }),
+    /artifacts are missing or malformed/,
+  )
+  fs.writeFileSync(claimedParses, goodParses)
+})
 
 test("stored frontier feeds the native report and edition builder with failed and held observations still partial", async (t) => {
   const f = await fixture(t), original = fs.readFileSync(path.join(f.root, "runs/old-held/state.json"))

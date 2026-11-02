@@ -15,6 +15,7 @@ import { digestPath } from "../scripts/briefings.mjs"
 import * as deliveryModule from "../scripts/research/authoring-delivery-request.mjs"
 import * as collectionModule from "../scripts/research/daily-scan.mjs"
 import * as publicationModule from "../scripts/research/publication-operation.mjs"
+import { loadDailyPublicationSelection } from "../scripts/research/daily-publication-handoff.mjs"
 
 test("one legacy publication accepts a private native comparison, while native publication, old legacy evidence and repeated execution do not count", async (t) => {
   // Keep the repository's normal node --test command compatible. Experimental
@@ -70,6 +71,10 @@ test("one legacy publication accepts a private native comparison, while native p
       missing: [],
     },
   }
+  scheduled.collections = [{ report: scheduled.report }]
+  scheduled.nativeRows = loadDailyPublicationSelection(f.root, request.handoff.path, {
+    vault: f.ctx.vault,
+  }).selection.approved_runs
   let nativePublished = false
   let legacyPublicCalls = 0
   t.mock.module(

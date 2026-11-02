@@ -66,7 +66,9 @@ export function createArchiveSourceReuse(
     ...listScanPolicyRecheckOptions(policy_recheck_limit),
     ...(earlierReuse ? { reuse_source_run: earlierReuse.source_run?.source_run } : {}),
     ...(earlierRepair ? { repair_source_run: earlierRepair.source_run?.source_run } : {}),
-    ...(earlierRecovery ? { recovery_source_run: earlierRecovery.source_run?.source_run } : {}),
+    ...(earlierRecovery?.source_runs
+      ? { recovery_source_runs: earlierRecovery.source_runs.map((reference) => reference.source_run) }
+      : earlierRecovery ? { recovery_source_run: earlierRecovery.source_run?.source_run } : {}),
   }
   if (
     !previous ||
@@ -256,6 +258,15 @@ export function listScanPolicyRecheckOptions(value) {
 
 export async function executeListScan(v) {
   const policyOptions = listScanPolicyRecheckOptions(v["policy-recheck-limit"])
+  let recoveryRuns = v["recovery-source-runs"]
+  if (typeof recoveryRuns === "string") {
+    try { recoveryRuns = JSON.parse(recoveryRuns) }
+    catch { throw Error("Recovery source runs must be a JSON array") }
+  }
+  if (recoveryRuns && (!Array.isArray(recoveryRuns) || recoveryRuns.length < 2 ||
+      recoveryRuns.length > 21 || new Set(recoveryRuns).size !== recoveryRuns.length ||
+      recoveryRuns.some((id) => !/^[A-Za-z0-9_-]{1,100}$/.test(id))))
+    throw Error("Distinct bounded recovery source runs required")
   if (
     !/^[A-Za-z0-9_-]+$/.test(v.run || "") ||
     v.channel?.length !== 1 ||
@@ -267,8 +278,9 @@ export async function executeListScan(v) {
     throw Error("scan-list requires one --channel and a [--since, --until) day window")
   const root = v.root
   if (
-    v["recovery-source-run"] &&
-    (v["recovery-source-run"] === v.run ||
+    (v["recovery-source-run"] || recoveryRuns) &&
+    ((v["recovery-source-run"] && recoveryRuns) || v["recovery-source-run"] === v.run ||
+      recoveryRuns?.includes(v.run) ||
       v["repair-source-run"] ||
       v["reuse-source-run"] ||
       v["reuse-listing-run"])
@@ -344,6 +356,7 @@ export async function executeListScan(v) {
         ...(v["reuse-source-run"] ? { reuse_source_run: v["reuse-source-run"] } : {}),
         ...(v["repair-source-run"] ? { repair_source_run: v["repair-source-run"] } : {}),
         ...(v["recovery-source-run"] ? { recovery_source_run: v["recovery-source-run"] } : {}),
+        ...(recoveryRuns ? { recovery_source_runs: recoveryRuns } : {}),
       }
       const run = new RunState(root, v.run, input)
       const previousInput = readJSON(root, `runs/${v.run}/collection-input.json`)
@@ -398,8 +411,8 @@ export async function executeListScan(v) {
           listingReuseError = error.message
         }
       }
-      const recovery = v["recovery-source-run"]
-        ? createRecoverySourceReuse(root, v["recovery-source-run"], channel, basis, {
+      const recovery = v["recovery-source-run"] || recoveryRuns
+        ? createRecoverySourceReuse(root, recoveryRuns || v["recovery-source-run"], channel, basis, {
             since: v.since,
             until: v.until,
           })
@@ -496,7 +509,7 @@ export async function executeListScan(v) {
       if (recovery) {
         const reference = preserveRecoverySourceReuse(root, v.run, recovery)
         result.summary.source_recovery = {
-          source_run: v["recovery-source-run"],
+          ...(recoveryRuns ? { source_runs: recoveryRuns } : { source_run: v["recovery-source-run"] }),
           reference,
           coverage_reused: false,
         }

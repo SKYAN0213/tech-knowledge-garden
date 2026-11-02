@@ -192,6 +192,64 @@ test("scheduled native inputs require this execution's exact frozen material and
   assert.equal((await auditShadowOperations(f.root)).completed_runs, 0)
 })
 
+test("scheduled curated corrections validate each final native row against the same frozen collection", async (t) => {
+  const f = await scheduledFixture(t)
+  const prior = structuredClone(f.selection)
+  prior.approved_runs[0].approved_run = "previous-writer"
+  const corrected = structuredClone(f.selection)
+  corrected.approved_runs[0].approved_run = "corrected-writer"
+  const selected = {
+    approvedRuns: ["corrected-writer"],
+    nativeSelections: [prior, corrected],
+  }
+  const checked = loadScheduledPublicationInputs(f.ctx, f.input, selected, {
+    notAfter: "2026-09-28T02:00:00Z",
+  })
+  assert.equal(checked.plan.kst_day, "2026-09-28")
+  assert.deepEqual(
+    checked.nativeRows.map((row) => row.approved_run),
+    ["corrected-writer"],
+  )
+  const wrong = structuredClone(selected)
+  wrong.nativeSelections[1].approved_runs[0].source_revisions[0].source_version_id = "other"
+  assert.throws(
+    () => loadScheduledPublicationInputs(f.ctx, f.input, wrong),
+    /exact material observed in this execution/,
+  )
+  assert.throws(
+    () =>
+      loadScheduledPublicationInputs(f.ctx, f.input, { ...selected, approvedRuns: ["missing"] }),
+    /each selected native approval/,
+  )
+  assert.throws(
+    () =>
+      loadScheduledPublicationInputs(f.ctx, f.input, {
+        ...selected,
+        curation: { path: "selected", sha256: "a".repeat(64) },
+        briefingDate: "2026-09-29",
+      }),
+    /scheduled collection and frozen basis/,
+  )
+  assert.throws(
+    () =>
+      loadScheduledPublicationInputs(f.ctx, f.input, {
+        ...selected,
+        nativeSelections: [prior, corrected, corrected],
+      }),
+    /each selected native approval/,
+  )
+  const reused = structuredClone(corrected)
+  reused.reused_runs = reused.approved_runs
+  reused.approved_runs = []
+  assert.deepEqual(
+    loadScheduledPublicationInputs(f.ctx, f.input, {
+      approvedRuns: ["corrected-writer"],
+      nativeSelections: [prior, reused],
+    }).nativeRows.map((row) => row.approved_run),
+    ["corrected-writer"],
+  )
+})
+
 test("optional schedule pins keep the existing native request contract and an unbound request cannot count a review", async (t) => {
   const f = await deliveryFixture(t)
   const status = await requestPublicationDelivery(f.ctx, f.request)

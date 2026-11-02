@@ -156,6 +156,8 @@ function inputFingerprint(moduleId) {
         "event-workflow.mjs",
         "curation.mjs",
         "curation-workflow.mjs",
+        "combined-review.mjs",
+        "verified-inputs.mjs",
         "briefing-composition.mjs",
         "curation-insights.mjs",
         "editorial-completeness.mjs",
@@ -298,6 +300,8 @@ function inputFingerprint(moduleId) {
         "operation-policy.mjs",
         "development-release.mjs",
         "request-ownership.mjs",
+        "relay-ledger.mjs",
+        "relay-scheduling.mjs",
         "schedule-contract.mjs",
         "operations-release.mjs",
         "operations-runtime.mjs",
@@ -440,6 +444,152 @@ function activeJobs(ctx) {
     .filter((job) => job.worker_alive !== false)
 }
 
+// Recover only collection locks created by this exact interrupted worker.
+// Other rounds, legacy unbound locks, unknown owners, publication and Drive
+// locks remain untouched. Each original lock is recorded before removal.
+export function recoverInterruptedCollectionLocks(ctx, jobId) {
+  const { input, state } = checkedInput(ctx, jobId)
+  const owner = input.context.operationalRound
+  const params = input.parameters || {}
+  if (
+    input.module !== "edition" ||
+    input.operation !== "advance" ||
+    params.round !== true ||
+    params.collect !== true ||
+    params.stop_after_collection !== true ||
+    !owner ||
+    !/^[A-Za-z0-9_-]{1,70}$/.test(owner.round_id || "") ||
+    !/^[a-f0-9]{64}$/.test(owner.round_input_sha256 || "") ||
+    owner.round_id !== params.run_id ||
+    owner.round_id !== params.daily_run ||
+    state.state !== "running" ||
+    !Number.isSafeInteger(state.pid) ||
+    state.pid <= 0 ||
+    !Number.isFinite(Date.parse(state.started_at || ""))
+  )
+    throw Error("Exact interrupted collection job and round ownership required")
+  const pin = readJSON(ctx.root, `operations/rounds/${owner.round_id}/input.json`)
+  if (!pin || sha256(JSON.stringify(pin)) !== owner.round_input_sha256)
+    throw Error("Interrupted collection round ownership changed; preserve locks")
+  const expectedOwner = {
+    job_id: jobId,
+    input_sha256: state.input_sha256,
+    round_id: owner.round_id,
+    round_input_sha256: owner.round_input_sha256,
+  }
+  function assertWorkerGroupGone() {
+    if (processPresent(state.pid) !== false)
+      throw Error("Collection worker is active or unknown; preserve locks")
+    try {
+      process.kill(-state.pid, 0)
+      throw Error("Collection worker process group remains active; preserve locks")
+    } catch (error) {
+      if (error.code !== "ESRCH") throw error
+    }
+  }
+  assertWorkerGroupGone()
+  const directory = safePath(ctx.root, "locks")
+  const names = fs.existsSync(directory)
+    ? fs.readdirSync(directory).filter((name) => name.endsWith(".json"))
+    : []
+  const allow = (name) =>
+    name === `round-workflow-${owner.round_id}` ||
+    ["garden-operation", "daily-acquisition"].includes(name) ||
+    /^(?:collection-source|run)-[A-Za-z0-9_.-]+$/.test(name) ||
+    /^(?:source|source-policy|policy-watch)-[a-f0-9]{20}$/.test(name) ||
+    /^host-[a-f0-9]{32}$/.test(name)
+  const locks = []
+  for (const filename of names) {
+    const name = filename.slice(0, -5),
+      file = safePath(ctx.root, `locks/${filename}`)
+    let bytes, record
+    try {
+      bytes = fs.readFileSync(file)
+      record = JSON.parse(bytes)
+    } catch (error) {
+      if (error.code === "ENOENT") continue
+      throw Error("Unreadable lock ownership; preserve collection locks")
+    }
+    if (
+      !record ||
+      typeof record !== "object" ||
+      Array.isArray(record) ||
+      !Number.isSafeInteger(record.pid) ||
+      record.pid <= 0
+    )
+      throw Error("Unknown lock ownership; preserve collection locks")
+    if (record.pid !== state.pid) continue
+    const moduleLock = name === `module-worker-${jobId}`
+    const bound = record.request_owner
+    const ownerMatches =
+      bound &&
+      Object.keys(bound).sort().join(",") === Object.keys(expectedOwner).sort().join(",") &&
+      Object.entries(expectedOwner).every(([key, value]) => bound[key] === value)
+    const lockStarted = Date.parse(record.started_at || "")
+    if (
+      (!moduleLock && (!allow(name) || !ownerMatches)) ||
+      (moduleLock && bound && !ownerMatches) ||
+      !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(record.owner || "") ||
+      !Number.isFinite(lockStarted) ||
+      (moduleLock
+        ? !Number.isFinite(Date.parse(state.queued_at || "")) ||
+          lockStarted < Date.parse(state.queued_at) ||
+          lockStarted > Date.parse(state.started_at)
+        : lockStarted < Date.parse(state.started_at))
+    )
+      throw Error("Collection lock ownership is unknown or changed; preserve all locks")
+    locks.push({
+      name,
+      owner: record.owner,
+      sha256: sha256(bytes),
+      raw_base64: bytes.toString("base64"),
+    })
+  }
+  if (!locks.length) return { recovered: [], receipt: null }
+  locks.sort((a, b) => {
+    const weight = (name) =>
+      name === `module-worker-${jobId}`
+        ? 4
+        : name === "garden-operation"
+          ? 3
+          : name === "daily-acquisition"
+            ? 2
+            : name.startsWith("round-workflow-")
+              ? 1
+              : 0
+    return weight(a.name) - weight(b.name) || a.name.localeCompare(b.name)
+  })
+  const receipt = atomicCreate(
+    ctx.root,
+    `module-jobs/${jobId}/lock-recovery/${crypto.randomUUID()}.json`,
+    {
+      schema: "research-interrupted-collection-lock-recovery/v1",
+      job_id: jobId,
+      input_sha256: state.input_sha256,
+      round_id: owner.round_id,
+      round_input_sha256: owner.round_input_sha256,
+      worker_pid: state.pid,
+      worker_started_at: state.started_at,
+      observed_at: new Date().toISOString(),
+      locks,
+    },
+  )
+  assertWorkerGroupGone()
+  for (const lock of locks) {
+    const current = fs.readFileSync(safePath(ctx.root, `locks/${lock.name}.json`))
+    if (sha256(current) !== lock.sha256)
+      throw Error("Collection lock changed; preserve remaining locks")
+  }
+  for (const lock of locks) recoverLock(ctx.root, lock.name, lock.owner)
+  const result = atomicCreate(ctx.root, receipt.path.replace(/\.json$/, "-result.json"), {
+    schema: "research-interrupted-collection-lock-recovery-result/v1",
+    receipt,
+    recovered: locks.map((lock) => lock.name),
+    completed_at: new Date().toISOString(),
+  })
+  return { recovered: locks.map((lock) => lock.name), receipt, result }
+}
+
 export async function submitModuleJob(
   ctx,
   moduleId,
@@ -465,13 +615,10 @@ export async function submitModuleJob(
     const old = readJSON(ctx.root, dir + "input.json")
     if (old && JSON.stringify(old) !== JSON.stringify(input))
       throw Error("Module job input changed; use another job ID")
+    let priorStatus
     if (old) {
-      const status = moduleJobStatus(ctx, jobId)
-      if (status.state === "completed" || status.worker_alive !== false || !resume) return
-      // Only an explicit resume may recover this job's own dead worker lock.
-      // Native run/source locks are preserved for their existing recovery tools.
-      const lock = readJSON(ctx.root, `locks/module-worker-${jobId}.json`)
-      if (lock) recoverLock(ctx.root, "module-worker-" + jobId, lock.owner)
+      priorStatus = moduleJobStatus(ctx, jobId)
+      if (priorStatus.state === "completed" || priorStatus.worker_alive !== false || !resume) return
     } else if (resume) throw Error("No stored module job to resume")
     const active = activeJobs(ctx)
     if (active.length >= ctx.maxActiveJobs)
@@ -488,6 +635,35 @@ export async function submitModuleJob(
       active.some((job) => moduleOperation(job.module, job.operation).operation.network)
     )
       throw Error("A collection network module is already running; reuse or poll its job")
+    if (old && resume) {
+      // Only this exact job's dead worker lock may be recovered on resume.
+      const lock = readJSON(ctx.root, `locks/module-worker-${jobId}.json`)
+      let recovered = []
+      if (
+        lock &&
+        priorStatus.state === "interrupted" &&
+        priorStatus.pid &&
+        lock.pid !== priorStatus.pid
+      )
+        throw Error("Module worker lock ownership changed; preserve locks")
+      if (
+        priorStatus.state === "interrupted" &&
+        priorStatus.pid &&
+        readJSON(ctx.root, dir + "state.json")?.state === "running" &&
+        input.module === "edition" &&
+        input.operation === "advance" &&
+        input.parameters.round === true &&
+        input.parameters.collect === true &&
+        input.parameters.stop_after_collection === true &&
+        input.context.operationalRound
+      ) {
+        if (active.length)
+          throw Error("Another active or unknown worker; preserve collection locks")
+        recovered = recoverInterruptedCollectionLocks(ctx, jobId).recovered
+      }
+      if (lock && !recovered.includes("module-worker-" + jobId))
+        recoverLock(ctx.root, "module-worker-" + jobId, lock.owner)
+    }
     if (!old) {
       atomicCreate(ctx.root, dir + "input.json", input)
       atomicWrite(ctx.root, dir + "state.json", {

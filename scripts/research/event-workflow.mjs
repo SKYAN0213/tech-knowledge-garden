@@ -28,19 +28,124 @@ import { createModelExecutionWindow } from "./model-provider.mjs"
 import { writeSelectedEventDraft } from "./source-processing.mjs"
 import { curationGroupsForPlan } from "./curation.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
+import { runCombinedReview, runCombinedDraftCorrection } from "./combined-review.mjs"
 
 const ref = (root, path) => ({ path, sha256: sha256(fs.readFileSync(safePath(root, path))) })
-async function saveWorkflowResult(ctx, base, result) {
-  const workflowPath = base + "latest.json"
-  atomicWrite(ctx.root, workflowPath, result)
-  const workflow = ref(ctx.root, workflowPath)
-  const publication = await prepareEventPublicationHandoff(ctx, {
-    run_id: "event-publication-" + sha256(result.run_id).slice(0, 40),
-    workflow_path: workflow.path,
-    workflow_sha256: workflow.sha256,
+export function eventWorkflowFailures(rows) {
+  return rows
+    .filter((row) => row.status === "failed")
+    .map(({ group_id, error, code, model_budget, extraction_checkpoint }) => ({
+      group_id,
+      error,
+      ...(code ? { code } : {}),
+      ...(model_budget ? { model_budget } : {}),
+      ...(extraction_checkpoint ? { extraction_checkpoint } : {}),
+    }))
+}
+
+// An explicit metadata-only repair of a paused legacy frontier. No source,
+// draft, fact review, approval or immutable run input is replaced.
+export async function reconcileEventWorkflowCheckpoint(ctx, p) {
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(p.run_id || ""))
+    throw Error("Exact event recovery run required")
+  return withLock(ctx.root, "event-workflow-" + p.run_id, async () => {
+    const base = `event-workflows/${p.run_id}/`
+    if (
+      ref(ctx.root, base + "latest.json").sha256 !== p.expected_sha256 ||
+      ref(ctx.root, base + "input.json").sha256 !== p.expected_input_sha256
+    )
+      throw Error("Event recovery input or checkpoint changed")
+    const input = readJSON(ctx.root, base + "input.json"),
+      value = readJSON(ctx.root, base + "latest.json")
+    if (
+      value.schema !== "research-event-workflow/v1" ||
+      value.run_id !== p.run_id ||
+      JSON.stringify(value.edition) !== JSON.stringify(input.edition) ||
+      JSON.stringify(value.plan) !== JSON.stringify(input.plan) ||
+      JSON.stringify(value.curation || null) !== JSON.stringify(input.curation || null) ||
+      input.policy_sha256 !== sha256(fs.readFileSync(ctx.policy))
+    )
+      throw Error("Frozen event recovery bindings changed")
+    checkedPlan(ctx, input.plan)
+    const failures = eventWorkflowFailures(value.rows)
+    const corrected = { ...value, failures, ...(failures.length ? { status: "partial" } : {}) }
+    return saveWorkflowResult(ctx, base, corrected)
   })
-  // Keep the native checkpoint independent of the handoff that pins its bytes.
-  return { ...result, publication_handoff: publication.publication_handoff, publication }
+}
+async function saveWorkflowResult(
+  ctx,
+  base,
+  result,
+  publicationPreparer = prepareEventPublicationHandoff,
+) {
+  const workflowPath = base + "latest.json"
+  const previous = fs.existsSync(safePath(ctx.root, workflowPath, { materialize: false }))
+    ? fs.readFileSync(safePath(ctx.root, workflowPath))
+    : null
+  const snapshot = (bytes) => {
+    const file = base + "checkpoint-outcomes/" + sha256(bytes) + ".json"
+    if (!readJSON(ctx.root, file)) atomicCreate(ctx.root, file, bytes)
+    const saved = ref(ctx.root, file)
+    if (saved.sha256 !== sha256(bytes)) throw Error("Event checkpoint snapshot changed")
+    return saved
+  }
+  const predecessor = previous ? snapshot(previous) : null
+  const attempted = snapshot(Buffer.from(JSON.stringify(result, null, 2) + "\n"))
+  // Flush the complete frontier before its settled checkpoint. A stale prefix
+  // from an earlier focused slice must never overwrite a newer correction.
+  if (result.rows)
+    atomicWrite(ctx.root, base + "progress.json", {
+      rows: result.rows,
+      elapsed_ms: result.elapsed_ms,
+    })
+  try {
+    atomicWrite(ctx.root, workflowPath, result)
+    const workflow = ref(ctx.root, workflowPath)
+    if (workflow.sha256 !== attempted.sha256) throw Error("Event checkpoint changed before handoff")
+    const publication = await publicationPreparer(ctx, {
+      run_id: "event-publication-" + sha256(result.run_id).slice(0, 40),
+      workflow_path: workflow.path,
+      workflow_sha256: workflow.sha256,
+    })
+    // Keep the native checkpoint independent of the handoff that pins its bytes.
+    return { ...result, publication_handoff: publication.publication_handoff, publication }
+  } catch (error) {
+    const file = safePath(ctx.root, workflowPath, { materialize: false })
+    const observed = fs.existsSync(file) ? sha256(fs.readFileSync(file)) : null
+    let rollback = "checkpoint_unchanged"
+    if (observed === attempted.sha256) {
+      if (previous) {
+        atomicWrite(ctx.root, workflowPath, previous)
+        rollback = "previous_checkpoint_restored"
+      } else {
+        fs.unlinkSync(file)
+        rollback = "new_checkpoint_removed_attempt_preserved"
+      }
+    } else if (observed !== predecessor?.sha256 && !(observed === null && !previous)) {
+      rollback = "unknown_change_preserved"
+    }
+    const failure = {
+      schema: "research-event-workflow-checkpoint-failure/v1",
+      run_id: result.run_id,
+      input: ref(ctx.root, base + "input.json"),
+      attempted,
+      previous: predecessor,
+      observed_latest_sha256: observed,
+      rollback,
+      error: error.message,
+      code: error.code || null,
+      recorded_at: new Date().toISOString(),
+      source_or_approvals_modified: false,
+    }
+    const receipt = atomicCreate(
+      ctx.root,
+      base + "checkpoint-failures/" + sha256(JSON.stringify(failure)) + ".json",
+      failure,
+    )
+    error.checkpoint_failure = receipt
+    if (rollback === "unknown_change_preserved") error.code = "CHECKPOINT_ROLLBACK_CONFLICT"
+    throw error
+  }
 }
 function checkedMapping(ctx, map) {
   if (!map || typeof map !== "object" || Array.isArray(map))
@@ -54,8 +159,15 @@ function checkedMapping(ctx, map) {
 export async function advanceEventWorkflow(
   ctx,
   p,
-  { clock = Date.now, baseProvider, executionWindow: sharedWindow } = {},
+  {
+    clock = Date.now,
+    baseProvider,
+    executionWindow: sharedWindow,
+    publicationPreparer = prepareEventPublicationHandoff,
+  } = {},
 ) {
+  if (p.review_mode !== undefined && !["separate/v1", "combined/v1"].includes(p.review_mode))
+    throw Error("Unknown article review mode")
   for (const [value, maximum] of [
     [p.max_items ?? 4, 40],
     [p.time_budget_ms ?? 600000, 3600000],
@@ -133,6 +245,7 @@ export async function advanceEventWorkflow(
     edition: editionRef,
     plan: planRef,
     policy_sha256: sha256(fs.readFileSync(ctx.policy)),
+    ...(p.review_mode ? { review_mode: p.review_mode } : {}),
     ...(curationRef ? { curation: curationRef } : {}),
     ...(ontologyRef ? { ontology_base: ontologyRef } : {}),
     ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
@@ -178,14 +291,15 @@ export async function advanceEventWorkflow(
         article_writes: 0,
         candidate_published: false,
       }
-      return saveWorkflowResult(ctx, base, result)
+      return saveWorkflowResult(ctx, base, result, publicationPreparer)
     }
     const rows = [],
       approvedRuns = [],
       failures = []
+    const previousCheckpoint = readJSON(ctx.root, base + "latest.json")
     const previousRows = new Map(
       [
-        ...(readJSON(ctx.root, base + "latest.json")?.rows || []),
+        ...(previousCheckpoint?.rows || []),
         ...(readJSON(ctx.root, base + "progress.json")?.rows || []),
       ].map((row) => [row.group_id, row]),
     )
@@ -255,6 +369,7 @@ export async function advanceEventWorkflow(
       }
       if (
         p.execute &&
+        p.review_mode !== "combined/v1" &&
         priorRow?.writer_run &&
         !readJSON(ctx.root, `runs/${priorRow.writer_run}/approved-article.json`) &&
         ((priorRow.status === "fact_review" &&
@@ -323,21 +438,49 @@ export async function advanceEventWorkflow(
             retry_failed: retryGroups.includes(event.group_id),
           })
           modelCalls += extracted.model_calls
+          if (p.review_mode === "combined/v1" && !maps.fact[event.group_id]) {
+            const bundle = await runCombinedReview(
+              ctx,
+              { run_id, kind: "evidence", curation: curationRef },
+              { baseProvider, executionWindow },
+            )
+            maps.fact[event.group_id] = bundle.fact_review_file
+            maps.completeness[event.group_id] = bundle.completeness_review_file
+          }
           if (!maps.fact[event.group_id]) {
             rows.push({ ...row, status: "fact_review", extraction: extracted })
             atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
             continue
           }
-          await nativeResearch(
+          if (!readJSON(ctx.root, `runs/${run_id}/reviewed-claims.json`))
+            await nativeResearch(
+              ctx,
+              "review",
+              { run_id, review_file: maps.fact[event.group_id] },
+              { run_id: "run", review_file: "review" },
+            )
+        }
+        if (
+          p.review_mode === "combined/v1" &&
+          !readJSON(ctx.root, `runs/${run_id}/editorial-completeness/context.json`)
+        ) {
+          const bundle = await runCombinedReview(
             ctx,
-            "review",
-            { run_id, review_file: maps.fact[event.group_id] },
-            { run_id: "run", review_file: "review" },
+            { run_id, kind: "evidence", curation: curationRef },
+            { baseProvider, executionWindow },
           )
+          maps.completeness[event.group_id] = bundle.completeness_review_file
         }
         loadSelectedEvent(ctx, selectedParameters, { requireProcessed: true })
         if (!readJSON(ctx.root, `runs/${run_id}/draft.json`)) {
-          if (requireCompleteness && !maps.completeness[event.group_id]) {
+          if (
+            requireCompleteness &&
+            !maps.completeness[event.group_id] &&
+            !(
+              p.review_mode === "combined/v1" &&
+              readJSON(ctx.root, `runs/${run_id}/editorial-completeness/context.json`)
+            )
+          ) {
             await prepareEditorialCompleteness(ctx, { run_id })
             rows.push({
               ...row,
@@ -382,6 +525,43 @@ export async function advanceEventWorkflow(
         )
         if (requireCompleteness && priorRow?.requires_completeness && !needsCoverage)
           throw Error("New draft must bind the required important-fact review")
+        if (
+          p.review_mode === "combined/v1" &&
+          (!maps.editorial[event.group_id] || (needsCoverage && !maps.coverage[event.group_id]))
+        ) {
+          let bundle
+          do {
+            bundle = await runCombinedReview(
+              ctx,
+              { run_id, kind: "editorial", curation: curationRef },
+              { baseProvider, executionWindow },
+            )
+            if (bundle.needs_revision) {
+              const draftBefore = ref(ctx.root, `runs/${run_id}/draft.json`).sha256
+              const correction = await runCombinedDraftCorrection(
+                ctx,
+                {
+                  run_id,
+                  review_file: bundle.editorial_review_file,
+                  revision_evidence: bundle.revision_evidence,
+                  curation: curationRef,
+                },
+                { baseProvider, executionWindow },
+              )
+              if (
+                correction.status !== "review_disputed" &&
+                ref(ctx.root, `runs/${run_id}/draft.json`).sha256 === draftBefore
+              )
+                throw Error(
+                  "Independent correction did not change the native draft; preserve its review findings",
+                )
+            }
+            // The same bound model window and native role budget cap this
+            // loop. External Codex requests pause at their exact next task.
+          } while (bundle.needs_revision)
+          maps.editorial[event.group_id] = bundle.editorial_review_file
+          maps.coverage[event.group_id] = bundle.coverage_review_file
+        }
         if (!maps.editorial[event.group_id] || (needsCoverage && !maps.coverage[event.group_id])) {
           rows.push({
             ...row,
@@ -422,6 +602,16 @@ export async function advanceEventWorkflow(
             status: "waiting_for_reasoning",
             reasoning_task: error.reasoning_task,
           })
+        else if (
+          error.code === "MODEL_CALL_LIMIT" &&
+          executionWindow.model_calls >= (p.max_model_calls ?? Infinity)
+        )
+          rows.push({
+            ...row,
+            status: "queued",
+            slice_exhausted: true,
+            model_budget: error.model_budget,
+          })
         else {
           const details = {
             error: error.message,
@@ -438,16 +628,33 @@ export async function advanceEventWorkflow(
       atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
     }
     const runs = [...new Set(approvedRuns)]
+    // Focused slices retain failures belonging to other groups too. Their
+    // immutable handoff must describe exactly the failed rows it contains.
+    failures.splice(0, failures.length, ...eventWorkflowFailures(rows))
     let ontology = null,
       impact = []
     if (runs.length) {
       if (ontologyRef && ref(ctx.root, ontologyRef.path).sha256 !== ontologyRef.sha256)
         throw Error("Ontology input SHA changed")
-      const next = ontologyBase
-        ? extendEvidenceOntology(ctx.root, ontologyBase, runs, { vault: ctx.vault })
-        : projectEvidenceOntology(
-            runs.map((run) => loadApprovedOntologyInput(ctx.root, run, { vault: ctx.vault })),
-          )
+      const priorGraph = previousCheckpoint?.ontology
+        ? readJSON(ctx.root, previousCheckpoint.ontology.path)
+        : null
+      if (
+        priorGraph &&
+        ref(ctx.root, previousCheckpoint.ontology.path).sha256 !==
+          previousCheckpoint.ontology.sha256
+      )
+        throw Error("Previous event knowledge projection changed")
+      const newRuns = runs.filter((run) => !previousCheckpoint?.approved_runs?.includes(run))
+      const next = priorGraph
+        ? newRuns.length
+          ? extendEvidenceOntology(ctx.root, priorGraph, newRuns, { vault: ctx.vault })
+          : priorGraph
+        : ontologyBase
+          ? extendEvidenceOntology(ctx.root, ontologyBase, runs, { vault: ctx.vault })
+          : projectEvidenceOntology(
+              runs.map((run) => loadApprovedOntologyInput(ctx.root, run, { vault: ctx.vault })),
+            )
       const file = base + `ontology-${sha256(JSON.stringify(next))}.json`
       if (!readJSON(ctx.root, file)) atomicCreate(ctx.root, file, next)
       ontology = ref(ctx.root, file)
@@ -506,6 +713,6 @@ export async function advanceEventWorkflow(
       elapsed_ms: clock() - started,
       candidate_published: false,
     }
-    return saveWorkflowResult(ctx, base, result)
+    return saveWorkflowResult(ctx, base, result, publicationPreparer)
   })
 }

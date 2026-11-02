@@ -3,10 +3,12 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { spawnSync } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
+import { once } from "node:events"
 import { fileURLToPath } from "node:url"
 import { storageAction } from "../scripts/research/cold-storage.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
+import { executeModule } from "../scripts/research/module-registry.mjs"
 const native = fileURLToPath(new URL("../scripts/research/cold-storage.py", import.meta.url))
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-delta-test-")))
@@ -61,6 +63,127 @@ test("full audit freezes all aliases once, waits for raw verification and finali
     () => storageAction(f.root, "prepare-full", { ...input, parent_id: "changed" }),
     /Immutable/,
   )
+})
+
+test("archive status can read the WAL catalog after the last Node writer closes", (t) => {
+  const f = fixture(t)
+  f.write("documents/wal/body.bin", "A real archived source body. ".repeat(2000))
+  const input = { run_id: "wal-status", parent_id: "private-parent" }
+  assert.equal(storageAction(f.root, "prepare-full", input).status, "waiting_for_storage")
+  const catalog = path.join(f.root, ".storage/catalog.sqlite")
+  const writer = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      'const {DatabaseSync}=require("node:sqlite"); const db=new DatabaseSync(process.argv[1]); db.prepare("INSERT INTO meta(key,value) VALUES(?,?)").run("wal-probe","preserved"); db.close()',
+      catalog,
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(writer.status, 0, writer.stderr)
+  const result = storageAction(f.root, "archive-status", { run_id: input.run_id })
+  assert.equal(result.status, "waiting_for_storage")
+  assert.equal(result.remote_writes, 0)
+  assert.equal(result.regular_cutoff_advanced, false)
+})
+
+test("collection storage exposes archive status after the last Node WAL writer closes", async (t) => {
+  const repo = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-module-wal-")))
+  t.after(() => fs.rmSync(repo, { recursive: true, force: true }))
+  const root = path.join(repo, ".local")
+  fs.mkdirSync(path.join(root, "documents/wal"), { recursive: true })
+  fs.writeFileSync(path.join(root, "documents/wal/body.bin"), "An archived source. ".repeat(2000))
+  storageAction(root, "prepare")
+  const runId = "module-wal-status"
+  assert.equal(
+    storageAction(root, "prepare-full", { run_id: runId, parent_id: "private-parent" }).status,
+    "waiting_for_storage",
+  )
+  const writer = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      'const {DatabaseSync}=require("node:sqlite"); const db=new DatabaseSync(process.argv[1]); db.prepare("INSERT INTO meta(key,value) VALUES(?,?)").run("module-wal-probe","preserved"); db.close()',
+      path.join(root, ".storage/catalog.sqlite"),
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(writer.status, 0, writer.stderr)
+  const result = await executeModule({ repo, root }, "collection", "storage", {
+    action: "archive-status",
+    run_id: runId,
+  })
+  assert.equal(result.status, "waiting_for_storage")
+  assert.equal(result.remote_writes, 0)
+  assert.equal(result.regular_cutoff_advanced, false)
+})
+
+test("archive status fallback is query-only and does not retry unrelated SQLite errors", (t) => {
+  const f = fixture(t)
+  f.write("documents/fallback/body.bin", "An archived source body. ".repeat(2000))
+  const input = { run_id: "fallback-guard", parent_id: "private-parent" }
+  assert.equal(storageAction(f.root, "prepare-full", input).status, "waiting_for_storage")
+  const program = `import importlib.util,io,json,sqlite3,sys
+spec=importlib.util.spec_from_file_location("cold",sys.argv[1]); m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+root=sys.argv[2]; mode=sys.argv[3]; original=m.archive_preparation_status; attempts=[]
+def guarded(root,db,run_id,finalize=False):
+ attempts.append(db.execute("PRAGMA query_only").fetchone()[0])
+ if mode=="locked": raise sqlite3.OperationalError("database is locked")
+ if len(attempts)==1: raise sqlite3.OperationalError("unable to open database file")
+ try: db.execute("INSERT INTO meta(key,value) VALUES('readonly-probe','unexpected')")
+ except sqlite3.OperationalError as e: assert "readonly" in str(e).lower()
+ else: raise AssertionError("status fallback accepted a SQL write")
+ return original(root,db,run_id,finalize)
+m.archive_preparation_status=guarded
+sys.argv=["cold-storage.py","archive-status","--root",root];sys.stdin=io.StringIO(json.dumps({"run_id":"fallback-guard"}))
+try: m.main(); error=None
+except sqlite3.OperationalError as e: error=str(e)
+print(json.dumps({"attempts":attempts,"error":error}))`
+  const invoke = (mode) => {
+    const result = spawnSync("python3", ["-c", program, native, f.root, mode], {
+      encoding: "utf8",
+    })
+    assert.equal(result.status, 0, result.stderr)
+    return result.stdout.trim().split("\n").map(JSON.parse)
+  }
+  const fallback = invoke("fallback")
+  assert.equal(fallback[0].status, "waiting_for_storage")
+  assert.deepEqual(fallback[1], { attempts: [1, 1], error: null })
+  assert.deepEqual(invoke("locked"), [{ attempts: [1], error: "database is locked" }])
+})
+
+test("archive status sees committed WAL changes while another connection remains open", async (t) => {
+  const f = fixture(t),
+    relative = "documents/live-wal/body.bin"
+  f.write(relative, "An archived source body. ".repeat(2000))
+  const input = { run_id: "live-wal-status", parent_id: "private-parent" }
+  assert.equal(storageAction(f.root, "prepare-full", input).status, "waiting_for_storage")
+  const child = spawn(
+    process.execPath,
+    [
+      "-e",
+      'const {DatabaseSync}=require("node:sqlite"); const db=new DatabaseSync(process.argv[1]); db.prepare("UPDATE files SET sha256=? WHERE path=?").run("f".repeat(64),process.argv[2]); console.log("ready"); setInterval(()=>{},1000)',
+      path.join(f.root, ".storage/catalog.sqlite"),
+      relative,
+    ],
+    { stdio: ["ignore", "pipe", "pipe"] },
+  )
+  t.after(() => {
+    if (child.exitCode === null) child.kill("SIGTERM")
+  })
+  try {
+    await once(child.stdout, "data", { signal: AbortSignal.timeout(10000) })
+    assert.throws(
+      () => storageAction(f.root, "archive-status", { run_id: input.run_id }),
+      /Archive catalog changed since the frozen manifest/,
+    )
+  } finally {
+    if (child.exitCode === null) {
+      const exited = once(child, "exit")
+      child.kill("SIGTERM")
+      await exited
+    }
+  }
 })
 test("delta consumes exact bound paths without os.walk and reuses an already prepared content object", (t) => {
   const f = fixture(t),

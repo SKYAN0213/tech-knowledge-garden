@@ -16,6 +16,7 @@ import { parseResearchDate } from "./dates.mjs"
 import { loadShadowCollectionInputs, loadShadowHandoffBasis } from "./shadow-collection-basis.mjs"
 import { DEFAULT_ROOT, atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { collectionRecoveryRequest } from "./collection-resilience.mjs"
+import { verifiedJSON } from "./verified-inputs.mjs"
 
 export function sourceCollectionInventory({
   channels,
@@ -139,7 +140,9 @@ function sourceFrontierObservation(root, declaration, held = false) {
     ...listScanPolicyRecheckOptions(declaration.policy_recheck_limit),
     ...(archive ? { reuse_source_run: archive.source_run?.source_run } : {}),
     ...(repair ? { repair_source_run: repair.source_run?.source_run } : {}),
-    ...(recovery ? { recovery_source_run: recovery.source_run?.source_run } : {}),
+    ...(recovery?.source_runs
+      ? { recovery_source_runs: recovery.source_runs.map((reference) => reference.source_run) }
+      : recovery ? { recovery_source_run: recovery.source_run?.source_run } : {}),
   }
   const window = { channel_id: scan.summary.channel_id, ...checkedWindow(scan.summary.window) }
   if (
@@ -762,6 +765,26 @@ export function buildCollectionReport({ root = DEFAULT_ROOT, runId, supplemental
   }
   for (const receipt of receipts) {
     pins.push(ref(root, `daily/runs/${runId}/receipts/${receipt.attempt_id}.json`))
+    // A failed attempt can stop between writing its summary and its arrays.
+    // If it claimed no scan or candidates, keep the failure in the report and
+    // leave its uncommitted checkpoint for recovery rather than treating its
+    // partial files as source material or blocking other verified attempts.
+    const unclaimedFailure =
+      receipt.status === "failed" &&
+      !receipt.scan_evidence &&
+      !receipt.backlog_merge &&
+      Array.isArray(receipt.candidate_keys) &&
+      receipt.candidate_keys.length === 0
+    if (
+      unclaimedFailure &&
+      ["list-scan.json", "documents.json", "parses.json", "candidates.json"].some(
+        (file) =>
+          !fs.existsSync(
+            safePath(root, `runs/${receipt.attempt_id}/${file}`, { materialize: false }),
+          ),
+      )
+    )
+      continue
     if (!fs.existsSync(safePath(root, `runs/${receipt.attempt_id}/list-scan.json`))) {
       if (receipt.status === "window_scanned" || receipt.candidate_keys?.length)
         throw Error("Collected receipt lacks native source artifacts")
@@ -835,10 +858,14 @@ export function buildCollectionReport({ root = DEFAULT_ROOT, runId, supplemental
 // Cache only the hash-verified immutable report within one module invocation.
 // Source bodies/parses still undergo their native byte checks on every read.
 export function createCollectionMaterialReader({ root = DEFAULT_ROOT, reportPath, reportSha256 }) {
-  const bytes = fs.readFileSync(safePath(root, reportPath))
-  if (!/^[a-f0-9]{64}$/.test(reportSha256 || "") || sha256(bytes) !== reportSha256)
+  if (!/^[a-f0-9]{64}$/.test(reportSha256 || ""))
     throw Error("Exact collection report SHA-256 required")
-  const report = JSON.parse(bytes)
+  const report = verifiedJSON(
+    safePath(root, reportPath),
+    reportSha256,
+    undefined,
+    "Collection report SHA-256 changed",
+  )
   if (report.schema !== "research-collection-report/v1" || !Array.isArray(report.materials))
     throw Error("Stored collection report is invalid")
   const materials = new Map(report.materials.map((row) => [row.id, row]))

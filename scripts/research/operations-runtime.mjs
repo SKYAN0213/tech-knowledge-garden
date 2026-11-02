@@ -8,11 +8,12 @@ import {
   operationalBase,
 } from "./operations-release.mjs"
 import { moduleJobStatus, submitModuleJob, resumeModuleJob } from "./module-runtime.mjs"
-import { reasoningTasks, submitReasoningBatch } from "./reasoning-tasks.mjs"
+import { reasoningTasks, reasoningFrontier, submitReasoningBatch, readyArticleItems } from "./reasoning-tasks.mjs"
 import { summarizeStageTiming, recordOperationalJobTiming } from "./operations-timing.mjs"
 import { executionRepository } from "./operations-deployment.mjs"
 import { checkedOperationalInvocation } from "./schedule-contract.mjs"
 import { assertUnwrittenApprovedHandoff } from "./operations-continuation.mjs"
+import { verifyRelayHistory } from "./relay-ledger.mjs"
 
 export function operationalRoundStatus(ctx, run) {
   const base = operationalBase(run)
@@ -73,9 +74,22 @@ export function operationalRoundStatus(ctx, run) {
     ...(input.continuation ? { continuation: input.continuation } : {}),
     stages: round?.stages || {},
     next_inputs: round?.next_inputs || [],
+    ...(input.review_mode === "combined/v1"
+      ? {
+          ready_items: readyArticleItems(ctx.root, round?.next_inputs || [], { round_id: run }),
+        }
+      : {}),
     controller: readJSON(ctx.root, base + "controller.json"),
     commands,
-    pending_reasoning: reasoningTasks(ctx.root, { round_id: run, limit: 3 }),
+    pending_reasoning: input.review_mode === "combined/v1"
+      ? reasoningFrontier(ctx.root, { round_id: run, rows: round?.next_inputs || [], limit: 3 })
+      : reasoningTasks(ctx.root, { round_id: run, limit: 3 }),
+    ...(input.relay_provenance === "v1" ? { relay: {
+      policy: "v1", scope: "owned_article_requests", max_parallel_models: 3,
+      attribution: "caller_declared", host_authenticated: false,
+      observe_operation: "reasoning.relay_observe", assign_operation: "reasoning.relay_assign",
+      exit_operation: "reasoning.relay_exit", submission_field: "relay_assignment",
+    } } : {}),
     timing: {
       stages: summarizeStageTiming(commands),
       native_elapsed_ms: commands.reduce((n, c) => n + (c.job.elapsed_ms || 0), 0),
@@ -192,6 +206,7 @@ export async function runOperationalRound(
             execute: true,
             ...(p.stage === "processing" ? { propose: true } : {}),
             ...supplied,
+            ...(pinned.input.review_mode ? { review_mode: pinned.input.review_mode } : {}),
             run_id: run,
             round: true,
             ...(p.stage === "collection"
@@ -217,6 +232,7 @@ export async function runOperationalRound(
     if (prior) parameters = prior.parameters
     if (module === "publication") {
       if (!round.publication_handoff) throw Error("Approved publication handoff required")
+      if (pinned.input.relay_provenance === "v1") verifyRelayHistory(ctx.root, run)
       if (operation === "request_delivery") {
         const invocation = checkedOperationalInvocation(ctx, pinned.input.invocation)
         if (invocation.kind === "scheduled" && !parameters.collection_basis_path) {

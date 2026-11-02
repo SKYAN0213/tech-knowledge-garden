@@ -79,7 +79,7 @@ const validRun = (run) => {
   if (!/^[A-Za-z0-9_-]{1,160}$/.test(run || "")) throw Error("Exact completeness run required")
 }
 
-function sourceInput(claims, documents, parses) {
+export function editorialCompletenessInput(claims, documents, parses) {
   if (!Array.isArray(claims) || !Array.isArray(documents) || !Array.isArray(parses))
     throw Error("Exact reviewed facts, original documents and parses required")
   const verified = claims.filter((claim) => claim.review?.status === "verified")
@@ -121,10 +121,11 @@ function sourceInput(claims, documents, parses) {
     source_scope: sourceScope,
   }
 }
+const sourceInput = editorialCompletenessInput
 
 // Derive only necessary preservation checks from an already verified fact.
 // This does not decide that a fact is important or that a sentence conveys it.
-function factAspects(claim) {
+export function factAspects(claim) {
   return [
     "fact",
     ...(claim.numbers?.length ? ["numbers"] : []),
@@ -368,30 +369,35 @@ export function assertEditorialCoverage(record, claims, decision, { documents, p
     report.important_claim_ids.some((id) => !decision.coverage.some((row) => row.claim_id === id))
   )
     throw Error("Coverage review must identify this exact draft and every important fact")
-  const paragraphs = draftCoverageLocations(record.draft)
-  for (const row of decision.coverage) {
-    const requirement = record.completeness_context.review.fact_decisions.find(
-      (item) => item.claim_id === row.claim_id,
-    )
-    if (requirement.required_aspects.some((aspect) => !row.preserved_aspects.includes(aspect)))
-      throw Error("Explicit coverage review of conditions, numbers, state and attribution required")
-    const seen = new Set()
-    for (const location of row.locations) {
-      const paragraph = paragraphs.find((item) => item.location === location.location)
-      if (
-        !paragraph ||
-        !paragraph.claim_ids.includes(row.claim_id) ||
-        location.text_sha256 !== sha256(paragraph.text) ||
-        seen.has(location.location)
-      )
-        throw Error("Important fact coverage must cite exact reader paragraphs and their facts")
-      seen.add(location.location)
-    }
-  }
+  for (const row of decision.coverage) assertEditorialCoverageRow(record, row)
   assertReviewDate(decision.reviewed_at, {
     notBefore: [record.completeness_context.review.reviewed_at],
   })
   return { ...report, coverage_review_sha256: sha256(JSON.stringify(decision)) }
+}
+
+export function assertEditorialCoverageRow(record, row) {
+  assertSchema(row, completenessCoverageSchema.properties.coverage.items)
+  const paragraphs = draftCoverageLocations(record.draft)
+  const requirement = record.completeness_context.review.fact_decisions.find(
+    (item) => item.claim_id === row.claim_id,
+  )
+  if (!requirement?.important) throw Error("Coverage must refer to an important verified fact")
+  if (requirement.required_aspects.some((aspect) => !row.preserved_aspects.includes(aspect)))
+    throw Error("Explicit coverage review of conditions, numbers, state and attribution required")
+  const seen = new Set()
+  for (const location of row.locations) {
+    const paragraph = paragraphs.find((item) => item.location === location.location)
+    if (
+      !paragraph ||
+      !paragraph.claim_ids.includes(row.claim_id) ||
+      location.text_sha256 !== sha256(paragraph.text) ||
+      seen.has(location.location)
+    )
+      throw Error("Important fact coverage must cite exact reader paragraphs and their facts")
+    seen.add(location.location)
+  }
+  return row
 }
 
 export function loadEditorialCoverageFile(file, record, claims, options = {}) {

@@ -131,11 +131,17 @@ async function defaultResume(ctx, run, window) {
   for (const [flag, receipt] of [
     ["--reuse-source-run", reuse],
     ["--repair-source-run", repair],
-    ["--recovery-source-run", recovery],
+    ["--recovery-source-run", recovery?.source_runs ? null : recovery],
   ]) {
     if (!receipt) continue
     if (!safeId(receipt.source_run?.source_run)) throw Error("Invalid stored source reuse reference")
     reuseArgs.push(flag, receipt.source_run.source_run)
+  }
+  if (recovery?.source_runs) {
+    const runs = recovery.source_runs.map((reference) => reference.source_run)
+    if (runs.length < 2 || runs.length > 21 || new Set(runs).size !== runs.length || runs.some((id) => !safeId(id)))
+      throw Error("Invalid stored recovery source set")
+    reuseArgs.push("--recovery-source-runs", JSON.stringify(runs))
   }
   const output = execFileSync(
     process.execPath,

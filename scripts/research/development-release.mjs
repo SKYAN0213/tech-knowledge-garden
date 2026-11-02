@@ -73,9 +73,10 @@ export function implementationFiles(repo) {
     } else if (
       stat.isFile() &&
       (extensions.has(path.extname(relative)) ||
+        relative.startsWith("quartz/static/") ||
         relative.startsWith("scripts/vendor/semantic-common/"))
     ) {
-      // Frozen common artifacts require their exact specifications and raw fixtures too.
+      // Static renderer assets and frozen common artifacts require exact raw bytes too.
       files.push(relative)
     }
   }
@@ -85,6 +86,10 @@ export function implementationFiles(repo) {
     "package-lock.json",
     "quartz.config.ts",
     "quartz.layout.ts",
+    "quartz.config.yaml",
+    "quartz.config.default.yaml",
+    "quartz.ts",
+    ".quartz/plugins/index.ts",
     "tsconfig.json",
     ".github/workflows/publish.yaml",
     "integrations/research-worker/requirements.txt",

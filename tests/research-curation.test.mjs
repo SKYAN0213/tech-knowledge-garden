@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import { editionFixture } from "./fixtures/research-event-fixtures.mjs"
-import { deliveryFixture } from "./fixtures/publication-delivery.mjs"
+import { approveDeliveryFixture, deliveryFixture } from "./fixtures/publication-delivery.mjs"
 import {
   prepareCuration,
   evaluateCuration,
@@ -14,11 +14,19 @@ import {
   CURATION_METRICS,
 } from "../scripts/research/curation.mjs"
 import { advanceCuration } from "../scripts/research/curation-workflow.mjs"
-import { loadDailyPublicationSelection } from "../scripts/research/daily-publication-handoff.mjs"
+import { recoverCurationCheckpoint } from "../scripts/research/curation-checkpoint-recovery.mjs"
+import { assertNoOperationalWriter } from "../scripts/research/operations-deployment.mjs"
+import { withRequestOwner } from "../scripts/research/request-ownership.mjs"
+import {
+  loadDailyPublicationSelection,
+  prepareEventPublicationHandoff,
+  reviseCuratedPublicationHandoff,
+} from "../scripts/research/daily-publication-handoff.mjs"
 import {
   loadCurrentApproval,
   newEditionProjections,
   loadPreviewPublicationInputs,
+  previewEditionProjections,
 } from "../scripts/research/preview.mjs"
 import { advanceEventWorkflow } from "../scripts/research/event-workflow.mjs"
 import { approveNoteReview } from "../scripts/research/note-review.mjs"
@@ -27,14 +35,19 @@ import { reviewEditionEvents } from "../scripts/research/event-pipeline.mjs"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import { submitModuleJob } from "../scripts/research/module-runtime.mjs"
-import { readReasoningTask } from "../scripts/research/reasoning-tasks.mjs"
+import {
+  readReasoningTask,
+  createReasoningTask,
+  submitReasoningResult,
+} from "../scripts/research/reasoning-tasks.mjs"
 import { atomicWrite, readJSON, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { assertUnwrittenApprovedHandoff } from "../scripts/research/operations-continuation.mjs"
 import { noteText, parseNote, canonicalURL } from "../scripts/garden.mjs"
+import { withVerifiedInputSession, assertVerifiedInputBoundary } from "../scripts/research/verified-inputs.mjs"
 
-function setup(t) {
-  const f = editionFixture(t)
+function setup(t, options) {
+  const f = editionFixture(t, options)
   f.event = f.review.events.find((e) => e.action === "write")
   f.deferred = f.review.events.find((e) => e.action === "defer")
   f.ctx.vault = path.join(f.root, "vault")
@@ -167,6 +180,36 @@ test("curation reuses the exact approved writer selection when a deferred event 
       JSON.stringify([{ path: p.path, sha256: p.sha256 }, p.value.candidates[0].candidate_id]),
     ).slice(0, 40)
   assert.equal(readJSON(f.root, `event-plans/${promotionRun}/plan.json`), null)
+})
+
+test("curation reuses a native approval with unused selected sources and a timestamped primary", async (t) => {
+  const f = await deliveryFixture(t, {
+    primaryPublishedAt: "2026-09-27T03:29:09-07:00",
+    usedSourceIndices: [0, 1],
+  })
+  f.ctx.vault = path.join(f.root, "vault")
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+  })
+  const approved = loadCurrentApproval(f.root, "writer", { vault: f.ctx.vault }).article
+  assert.deepEqual(
+    approved.source_urls.map(canonicalURL).sort(),
+    f.sources
+      .slice(0, 2)
+      .map((source) => canonicalURL(source.document.original_url))
+      .sort(),
+  )
+  assert.equal(approved.article_review.published_at, "2026-09-27")
+  const original = f.review.events.find((event) => event.action === "write")
+  const deferred = { ...original, group_id: "subset-source-deferred", action: "defer" }
+  const planned = await plan(f, "subset-source-promotion", [deferred])
+  const p = await pool(f, "subset-source-pool", [planned], 1)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  const chosen = loadCurationSelection(f.ctx, ref(await choose(f, p)))
+  assert.deepEqual(chosen.selected[0].execution, { plan: ref(f.plan), group_id: original.group_id })
 })
 
 test("curation source/novelty gates beat high scores and unknown assessments remain queued", async (t) => {
@@ -439,6 +482,127 @@ test("changed history or original bytes require re-evaluation rather than reusin
   assert.throws(() => loadCurationSelection(f.ctx, chosen, { checkHistory: false }), /SHA|changed/)
 })
 
+test("an explicit history receipt reuses a frozen pool only when the backlog change affects no candidate", async (t) => {
+  const f = setup(t),
+    p = await pool(f, "history-revalidation", [await plan(f, "history-revalidation-plan", [f.event])])
+  await review(f, p, [rating(f, p.value.candidates[0])])
+  const chosen = ref(await choose(f, p)),
+    selectionBefore = fs.readFileSync(safePath(f.root, chosen.path)),
+    poolBefore = fs.readFileSync(safePath(f.root, p.path))
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+    changed: true,
+  })
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history changed/)
+  const preview = await executeModule(f.ctx, "curation", "revalidate_history", { pool_path: p.path, pool_sha256: p.sha256 })
+  assert.equal(preview.status, "revalidation_ready")
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history changed/)
+  const receipt = await executeModule(f.ctx, "curation", "revalidate_history", { pool_path: p.path, pool_sha256: p.sha256, apply: true })
+  assert.equal(receipt.status, "revalidated")
+  assert.equal(receipt.changed_candidates, 0)
+  assert.equal(receipt.candidate_approved, false)
+  assert.equal(loadCurationSelection(f.ctx, chosen).selected.length, 1)
+  const repeated = await executeModule(f.ctx, "curation", "revalidate_history", { pool_path: p.path, pool_sha256: p.sha256, apply: true })
+  assert.deepEqual(ref(repeated), ref(receipt))
+  assert.deepEqual(fs.readFileSync(safePath(f.root, chosen.path)), selectionBefore)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, p.path)), poolBefore)
+
+  const parsedPath = safePath(f.root, `parses/${p.value.candidates[0].sources[0].parse_id}/parse.json`)
+  const parsedBefore = fs.readFileSync(parsedPath)
+  const tampered = JSON.parse(parsedBefore)
+  tampered.blocks[0].text += " altered after revalidation"
+  fs.writeFileSync(parsedPath, JSON.stringify(tampered))
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /SHA|changed/)
+  fs.writeFileSync(parsedPath, parsedBefore)
+  assert.equal(loadCurationSelection(f.ctx, chosen).selected.length, 1)
+
+  const news = path.join(f.ctx.vault, "News")
+  fs.mkdirSync(news, { recursive: true })
+  const changedHistory = path.join(news, "new-after-revalidation.md")
+  fs.writeFileSync(changedHistory, noteText({ type: "news", event_id: "2222222222222222", title: "Later event", date: "2026-10-13", review_status: "verified" }, "Later evidence."))
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history changed/)
+  fs.unlinkSync(changedHistory)
+  assert.equal(loadCurationSelection(f.ctx, chosen).selected.length, 1)
+
+  atomicWrite(f.root, "candidate-backlog.json", { schema: "research-candidates/v1", candidates: [], changed: "again" })
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history changed/)
+  const latest = await executeModule(f.ctx, "curation", "revalidate_history", { pool_path: p.path, pool_sha256: p.sha256, apply: true })
+  assert.notEqual(latest.path, receipt.path)
+  assert.equal(loadCurationSelection(f.ctx, chosen).selected.length, 1)
+  const saved = readJSON(f.root, latest.path)
+  atomicWrite(f.root, latest.path, { ...saved, changed_candidates: 1 })
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history|revalidation/i)
+})
+
+test("history revalidation rejects an impacted candidate and never bypasses new publication evidence", async (t) => {
+  const { revalidateCurationHistory } = await import("../scripts/research/curation.mjs")
+  const f = setup(t),
+    news = path.join(f.ctx.vault, "News")
+  fs.mkdirSync(news, { recursive: true })
+  fs.writeFileSync(
+    path.join(news, "unrelated.md"),
+    noteText({ type: "news", event_id: "1111111111111111", title: "Earlier event", date: "2026-09-01", review_status: "verified", sources: ["https://example.invalid/unrelated"] }, "Previously published."),
+  )
+  const p = await pool(f, "history-impacted", [await plan(f, "history-impacted-plan", [f.event])])
+  assert.equal(p.value.candidates[0].already_featured, false)
+  await review(f, p, [rating(f, p.value.candidates[0])])
+  const chosen = ref(await choose(f, p))
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [{ key: "different-key", event_id: "1111111111111111", source_urls: [p.value.candidates[0].sources[0].url] }],
+  })
+  await assert.rejects(
+    revalidateCurationHistory(f.ctx, { pool_path: p.path, pool_sha256: p.sha256, apply: true }),
+    /candidate.*changed|history.*affect/i,
+  )
+  assert.throws(() => loadCurationSelection(f.ctx, chosen), /history changed/)
+  fs.writeFileSync(path.join(news, "new.md"), noteText({ type: "news", event_id: "2222222222222222", title: "New event", date: "2026-10-13", review_status: "verified" }, "New evidence."))
+  await assert.rejects(
+    revalidateCurationHistory(f.ctx, { pool_path: p.path, pool_sha256: p.sha256, apply: true }),
+    /published.*history.*changed/i,
+  )
+})
+
+test("verified selection notices backlog and nested publication changes before committing", async (t) => {
+  const f = setup(t),
+    p = await pool(f, "tracked-history", [await plan(f, "tracked-history-plan", [f.event])])
+  await review(f, p, [rating(f, p.value.candidates[0])])
+  const chosen = ref(await choose(f, p)),
+    backlogBefore = fs.readFileSync(f.ctx.backlog),
+    nested = path.join(f.ctx.vault, "News", "nested"),
+    editions = path.join(f.ctx.vault, "Editions", "2026", "10")
+  fs.mkdirSync(nested, { recursive: true })
+  fs.mkdirSync(editions, { recursive: true })
+  await withVerifiedInputSession(f.ctx, () => {
+    assert.equal(loadCurationSelection(f.ctx, chosen).selected.length, 1)
+    fs.writeFileSync(f.ctx.backlog, JSON.stringify({ schema: "research-candidates/v1", candidates: [], changed: true }))
+    assert.throws(() => assertVerifiedInputBoundary(), /changed before commit/)
+    fs.writeFileSync(f.ctx.backlog, backlogBefore)
+    const added = path.join(nested, "added.md")
+    fs.writeFileSync(added, noteText({ type: "news", event_id: "2222222222222222", title: "New event", date: "2026-10-13", review_status: "verified" }, "New evidence."))
+    assert.throws(() => assertVerifiedInputBoundary(), /changed before commit/)
+    fs.unlinkSync(added)
+    const edition = path.join(editions, "new.md")
+    fs.writeFileSync(edition, "---\ndate: 2026-10-13\n---\nNew edition.\n")
+    assert.throws(() => assertVerifiedInputBoundary(), /changed before commit/)
+    fs.unlinkSync(edition)
+    return {}
+  })
+})
+
+test("history revalidation refuses an active independent writer", async (t) => {
+  const f = setup(t),
+    p = await pool(f, "history-writer", [await plan(f, "history-writer-plan", [f.event])])
+  atomicWrite(f.root, "candidate-backlog.json", { schema: "research-candidates/v1", candidates: [], changed: true })
+  atomicWrite(f.root, "module-jobs/module-other/state.json", { state: "running", pid: process.pid })
+  await assert.rejects(
+    executeModule(f.ctx, "curation", "revalidate_history", { pool_path: p.path, pool_sha256: p.sha256, apply: true }),
+    /Active workspace writer/,
+  )
+  assert.throws(() => loadCurationPool(f.ctx, ref(p), { candidateIds: [] }), /history changed/)
+})
+
 test("reading selected articles does not reopen held candidates, while selected-source tampering still fails", async (t) => {
   const f = setup(t)
   const p = await pool(
@@ -619,6 +783,174 @@ test("curation dispatches only selected events to native extraction and resumes 
   assert.deepEqual(resumed.workflows[0].plan, ref(planned))
 })
 
+async function staleCheckpointFixture(t) {
+  const f = setup(t)
+  const p = await pool(f, "recovery-pool", [await plan(f, "recovery-plan", [f.event])], 1)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  const chosen = await choose(f, p)
+  const parameters = {
+    run_id: "recovery-workflow",
+    selection_path: chosen.path,
+    selection_sha256: chosen.sha256,
+    execute: true,
+  }
+  const provider = modelForFixture()
+  const first = await advanceCuration(f.ctx, parameters, { baseProvider: provider })
+  const parentPath = path.dirname(chosen.path) + "/workflows/" + parameters.run_id + "/latest.json"
+  const child = first.workflows[0]
+  const original = readJSON(f.root, child.workflow.path)
+  const inputPath = `event-workflows/${child.run_id}/input.json`
+  const inputBytes = fs.readFileSync(safePath(f.root, inputPath))
+  const parentBytes = fs.readFileSync(safePath(f.root, parentPath))
+  atomicWrite(f.root, child.workflow.path, {
+    ...original,
+    failures: [],
+    status: "review_pending",
+    rows: original.rows.map((r) =>
+      r.group_id === f.event.group_id
+        ? { ...r, status: "failed", error: "legacy checkpoint failure", code: "LEGACY_TEST" }
+        : r,
+    ),
+  })
+  const observed = sha256(fs.readFileSync(safePath(f.root, child.workflow.path)))
+  return {
+    ...f,
+    parameters,
+    provider,
+    parentPath,
+    parentBytes,
+    child,
+    inputPath,
+    inputBytes,
+    recovery: {
+      run_id: parameters.run_id,
+      selection_path: chosen.path,
+      selection_sha256: chosen.sha256,
+      expected_parent_sha256: sha256(parentBytes),
+      reason: "Authenticated legacy checkpoint unit repair",
+    },
+    observed,
+  }
+}
+
+test("legacy checkpoint recovery authenticates predecessor and resumes native work without repeated model calls", async (t) => {
+  const f = await staleCheckpointFixture(t)
+  const preview = await recoverCurationCheckpoint(f.ctx, f.recovery)
+  assert.equal(preview.status, "recovery_review_ready")
+  assert.deepEqual(fs.readFileSync(safePath(f.root, f.parentPath)), f.parentBytes)
+  assert.deepEqual(preview.next_input.expected_children, { [f.child.run_id]: f.observed })
+  const repaired = await recoverCurationCheckpoint(f.ctx, preview.next_input)
+  assert.equal(repaired.status, "reconciled")
+  const parent = readJSON(f.root, f.parentPath)
+  const child = readJSON(f.root, f.child.workflow.path)
+  assert.equal(child.failures[0].code, "LEGACY_TEST")
+  assert.equal(
+    parent.workflows[0].workflow.sha256,
+    sha256(fs.readFileSync(safePath(f.root, f.child.workflow.path))),
+  )
+  assert.deepEqual(fs.readFileSync(safePath(f.root, f.inputPath)), f.inputBytes)
+  assert.deepEqual(
+    (await recoverCurationCheckpoint(f.ctx, preview.next_input)).receipt,
+    repaired.receipt,
+  )
+  const calls = f.provider.calls
+  const resumed = await advanceCuration(f.ctx, repaired.next_actions[0].parameters, {
+    baseProvider: f.provider,
+  })
+  assert.equal(f.provider.calls, calls)
+  assert.equal(resumed.rows.find((r) => r.group_id === f.event.group_id).status, "fact_review")
+  const historical = await recoverCurationCheckpoint(f.ctx, preview.next_input)
+  assert.equal(historical.progress_changed_since_recovery, true)
+  assert.deepEqual(historical.next_actions, [])
+})
+
+test("legacy checkpoint recovery rejects unconfirmed SHA and corrupted predecessor without mutation", async (t) => {
+  const f = await staleCheckpointFixture(t)
+  await assert.rejects(
+    recoverCurationCheckpoint(f.ctx, {
+      ...f.recovery,
+      expected_parent_sha256: "0".repeat(64),
+    }),
+    /parent SHA changed/,
+  )
+  await assert.rejects(
+    recoverCurationCheckpoint(f.ctx, {
+      ...f.recovery,
+      apply: true,
+      expected_children: { [f.child.run_id]: "0".repeat(64) },
+    }),
+    /explicitly confirmed/,
+  )
+  const publication = readJSON(f.root, f.child.publication_handoff.path)
+  atomicWrite(f.root, publication.workflow.snapshot.path, { changed: true })
+  await assert.rejects(recoverCurationCheckpoint(f.ctx, f.recovery), /Recovery evidence changed/)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, f.parentPath)), f.parentBytes)
+  assert.equal(sha256(fs.readFileSync(safePath(f.root, f.child.workflow.path))), f.observed)
+})
+
+test("checkpoint recovery permits only its exact live owner and still blocks a second or unknown writer", async (t) => {
+  const f = setup(t),
+    job_id = "module-recovery-self",
+    input = { job_id, unit: true }
+  const input_sha256 = sha256(JSON.stringify(input))
+  atomicWrite(f.root, `module-jobs/${job_id}/input.json`, input)
+  atomicWrite(f.root, `module-jobs/${job_id}/state.json`, {
+    state: "running",
+    pid: process.pid,
+    input_sha256,
+  })
+  const owner = { job_id, input_sha256 }
+  const check = () =>
+    assertNoOperationalWriter(f.ctx.repo, { researchRoot: f.root, ownedRequest: owner })
+  assert.throws(
+    () => assertNoOperationalWriter(f.ctx.repo, { researchRoot: f.root }),
+    /Active workspace writer/,
+  )
+  await withRequestOwner(owner, async () => {
+    check()
+    atomicWrite(f.root, "module-jobs/module-other/state.json", {
+      state: "running",
+      pid: process.pid,
+    })
+    assert.throws(check, /Active workspace writer/)
+    atomicWrite(f.root, "module-jobs/module-other/state.json", { state: "queued" })
+    assert.throws(check, /Unknown workspace writer/)
+  })
+})
+
+test("legacy checkpoint recovery resumes after parent commit when the final receipt write is lost", async (t) => {
+  const f = await staleCheckpointFixture(t)
+  const preview = await recoverCurationCheckpoint(f.ctx, f.recovery)
+  const originalOpen = fs.openSync
+  let injected = false
+  fs.openSync = function (file, ...args) {
+    if (
+      !injected &&
+      String(file).includes("checkpoint-recoveries/") &&
+      /receipt\.json\./.test(String(file))
+    ) {
+      injected = true
+      throw Error("Injected lost recovery receipt")
+    }
+    return originalOpen.call(this, file, ...args)
+  }
+  try {
+    await assert.rejects(
+      recoverCurationCheckpoint(f.ctx, preview.next_input),
+      /Injected lost recovery receipt/,
+    )
+  } finally {
+    fs.openSync = originalOpen
+  }
+  assert.equal(injected, true)
+  const committed = fs.readFileSync(safePath(f.root, f.parentPath))
+  assert.notEqual(sha256(committed), f.recovery.expected_parent_sha256)
+  const recovered = await recoverCurationCheckpoint(f.ctx, preview.next_input)
+  assert.equal(recovered.status, "reconciled")
+  assert.deepEqual(fs.readFileSync(safePath(f.root, f.parentPath)), committed)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, f.inputPath)), f.inputBytes)
+})
+
 test("curation preserves real Codex delegation task references instead of treating reasoning wait as editorial review", async (t) => {
   const f = setup(t)
   f.ctx.policy = path.join(f.ctx.repo, "data/research-model-policy-codex.json")
@@ -676,6 +1008,12 @@ test("curation retains every selected reasoning wait when ranked events share on
     ["waiting_for_reasoning", "waiting_for_reasoning"],
   )
   assert.equal(result.reasoning_tasks.length, 2)
+  const checkpointPath = result.workflows[0].workflow.path
+  assert.deepEqual(
+    readJSON(f.root, checkpointPath.replace(/latest\.json$/, "progress.json")).rows,
+    readJSON(f.root, checkpointPath).rows,
+    "a settled focus flushes the complete frontier before another focus can overlay progress",
+  )
   assert.deepEqual(
     new Set(result.reasoning_tasks.map((r) => r.group_id)),
     new Set([f.event.group_id, second.group_id]),
@@ -697,6 +1035,153 @@ test("curation retains every selected reasoning wait when ranked events share on
     max_items: 1,
   })
   assert.equal(replay.reasoning_tasks.length, 2)
+})
+
+test("a corrected article retains its slot between requests while three other results cannot displace it", async (t) => {
+  const f = setup(t, { independent: true })
+  const events = f.sources.map((source, i) => ({
+    ...f.event,
+    group_id: "slot-event-" + i,
+    identity: {
+      ...f.event.identity,
+      who: "Fixture Robotics " + i,
+      object: "Contract-" + (123 + i),
+      external_id: "Contract-" + (123 + i),
+    },
+    materials: [
+      {
+        material_id: f.report.materials.find(
+          (m) => m.source_version_id === source.document.source_version_id,
+        ).id,
+        role: "primary",
+        block_ids: [source.parsed.blocks[0].block_id],
+        evidence: ["identity_marker", "event_action"].map((aspect) => ({
+          aspect,
+          block_id: source.parsed.blocks[0].block_id,
+          quote: source.parsed.blocks[0].text,
+        })),
+      },
+    ],
+  }))
+  const prepared = await pool(f, "reserved-slots", [await plan(f, "reserved-slot-plan", events)], 4)
+  await review(
+    f,
+    prepared,
+    prepared.value.candidates.map((c) => rating(f, c, 5)),
+  )
+  const chosen = await choose(f, prepared)
+  const selection = loadCurationSelection(f.ctx, ref(chosen))
+  assert.equal(selection.selected.length, 4)
+  const rows = events.map((e) => ({ group_id: e.group_id, action: "write", status: "queued" }))
+  const visits = new Map()
+  const dependencies = {
+    eventProcessor: async (_ctx, p) => {
+      const row = rows.find((r) => r.group_id === p.curation_focus_group)
+      const visit = (visits.get(row.group_id) || 0) + 1
+      visits.set(row.group_id, visit)
+      row.writer_run = "slot-writer-" + row.group_id
+      if (visit === 2) {
+        row.status = "editorial_review"
+        row.correction_applied = true
+        delete row.reasoning_task
+      } else {
+        const request = createReasoningTask(f.root, {
+          run: row.writer_run + "-" + visit,
+          role: "article_write",
+          binding: { settings: { model: "gpt-6-luna" } },
+          input: {
+            schema: {
+              type: "object",
+              required: ["answer"],
+              properties: { answer: { type: "string" } },
+            },
+          },
+        })
+        row.status = "waiting_for_reasoning"
+        row.reasoning_task = { task_id: request.task_id, request_sha256: request.request_sha256 }
+      }
+      const value = {
+        rows: structuredClone(rows),
+        status: "waiting_for_reasoning",
+        approved_runs: [],
+        handled_items: 1,
+      }
+      atomicWrite(f.root, `event-workflows/${p.run_id}/latest.json`, value)
+      return value
+    },
+  }
+  const parameters = {
+    run_id: "reserved-slot-workflow",
+    selection_path: chosen.path,
+    selection_sha256: chosen.sha256,
+    execute: true,
+    review_mode: "combined/v1",
+    max_items: 40,
+  }
+  const first = await advanceCuration(f.ctx, parameters, dependencies)
+  assert.equal(first.rows.filter((r) => r.reasoning_task).length, 3)
+  const winner = selection.selected[0],
+    fourth = selection.selected[3]
+  const request = first.rows.find((r) => r.candidate_id === winner.candidate_id).reasoning_task
+  await submitReasoningResult(f.root, {
+    ...request,
+    executor: "codex",
+    model: "gpt-6-luna",
+    output: { answer: "fixture-only source comparison" },
+  })
+  await advanceCuration(f.ctx, parameters, dependencies)
+  assert.equal(
+    visits.get(fourth.execution.group_id),
+    undefined,
+    "the corrected article still owns its slot",
+  )
+  const third = await advanceCuration(f.ctx, parameters, dependencies)
+  assert.equal(visits.get(winner.execution.group_id), 3)
+  assert.equal(visits.get(fourth.execution.group_id), undefined)
+  assert.equal(third.rows.filter((r) => r.reasoning_task).length, 3)
+})
+
+test("an article waiting for storage does not occupy another article's execution slot", async (t) => {
+  const f = setup(t, { independent: true })
+  const events = f.sources.map((source, i) => ({
+    ...f.event,
+    group_id: "held-event-" + i,
+    identity: { ...f.event.identity, who: "Held Robotics " + i, object: "Held-" + i, external_id: "Held-" + i },
+    materials: [{
+      material_id: f.report.materials.find((m) => m.source_version_id === source.document.source_version_id).id,
+      role: "primary", block_ids: [source.parsed.blocks[0].block_id],
+      evidence: ["identity_marker", "event_action"].map((aspect) => ({ aspect, block_id: source.parsed.blocks[0].block_id, quote: source.parsed.blocks[0].text })),
+    }],
+  }))
+  const prepared = await pool(f, "held-slots", [await plan(f, "held-slot-plan", events)], 4)
+  await review(f, prepared, prepared.value.candidates.map((c) => rating(f, c, 5)))
+  const chosen = await choose(f, prepared), selection = readJSON(f.root, chosen.path)
+  const rows = events.map((event) => ({ group_id: event.group_id, action: "write", status: "queued" }))
+  const visits = new Set()
+  const eventProcessor = async (_ctx, p) => {
+    const row = rows.find((entry) => entry.group_id === p.curation_focus_group)
+    visits.add(row.group_id)
+    row.writer_run = "held-writer-" + row.group_id
+    const request = createReasoningTask(f.root, { run: row.writer_run, role: "article_write", binding: { settings: { model: "gpt-6-luna" } }, input: { schema: { type: "object" } } })
+    row.status = "waiting_for_reasoning"
+    row.reasoning_task = { task_id: request.task_id, request_sha256: request.request_sha256 }
+    const value = { rows: structuredClone(rows), status: "waiting_for_reasoning", approved_runs: [], handled_items: 1 }
+    atomicWrite(f.root, `event-workflows/${p.run_id}/latest.json`, value)
+    return value
+  }
+  const parameters = { run_id: "held-workflow", selection_path: chosen.path, selection_sha256: chosen.sha256, execute: true, review_mode: "combined/v1", max_items: 40 }
+  const first = await advanceCuration(f.ctx, parameters, { eventProcessor })
+  const held = first.rows.find((row) => row.candidate_id === selection.selected[0].candidate_id)
+  const result = await advanceCuration(f.ctx, parameters, { eventProcessor, readTask: (root, task) => {
+    if (task.task_id === held.reasoning_task.task_id)
+      throw Object.assign(Error("Exact stored payload required"), { code: "STORAGE_PENDING", storage_request: { path: "documents/held/body.bin" } })
+    return readReasoningTask(root, task)
+  } })
+  assert.ok(visits.has(selection.selected[3].execution.group_id))
+  const waiting = result.rows.find((row) => row.candidate_id === held.candidate_id)
+  assert.equal(waiting.status, "waiting_for_storage")
+  assert.equal(waiting.storage_request.path, "documents/held/body.bin")
+  assert.equal(result.candidate_published, false)
 })
 
 test("a round drives selected events from multiple plans and exposes every owned review boundary", async (t) => {
@@ -768,8 +1253,23 @@ test("curation is independently callable through the same strict CLI/MCP module 
   const catalog = moduleCatalog(["curation"])
   assert.deepEqual(
     catalog.modules[0].operations.map((op) => op.id),
-    ["prepare", "evaluate", "select", "status", "feedback", "advance"],
+    [
+      "revalidate_history",
+      "revise_handoff",
+      "recover_checkpoint",
+      "prepare",
+      "evaluate",
+      "select",
+      "status",
+      "feedback",
+      "advance",
+    ],
   )
+  const recovery = catalog.modules[0].operations.find((op) => op.id === "recover_checkpoint")
+  assert.equal(recovery.readOnly, false)
+  assert.equal(recovery.model, false)
+  assert.equal(recovery.network, false)
+  assert.ok(recovery.inputSchema.required.includes("expected_parent_sha256"))
   assert.equal(catalog.modules[0].operations.find((op) => op.id === "status").readOnly, true)
   await assert.rejects(
     executeModule(f.ctx, "curation", "prepare", {
@@ -884,6 +1384,261 @@ test("sector budgets hold excess high-quality candidates without filling other s
   assert.equal(readJSON(f.root, "curation/queue.json").plans.length, 1)
 })
 
+test("a native correction replaces only its originally selected event without reranking", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "vault")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(
+    f.ctx.vault,
+    "Editions/previous.md",
+    noteText(
+      {
+        type: "briefing",
+        schema_version: "tech-ai-magazine/v2",
+        editorial_format: "six-w/v1",
+        briefing_format: "sector-five/v1",
+        theme_format: "news-themes/v1",
+        article_records: [],
+        article_reviews: [],
+        headlines: [],
+        date: "2026-10-11",
+        coverage_start: "2026-10-09T15:00:00Z",
+        coverage_end: "2026-10-10T15:00:00Z",
+      },
+      "## 오늘의 주요 소식\n\n",
+    ),
+  )
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  atomicWrite(f.root, "candidate-backlog.json", {
+    schema: "research-candidates/v1",
+    candidates: [],
+  })
+  const p = await pool(f, "frozen-revision-pool", [f.plan], 1)
+  const candidate = p.value.candidates.find((row) => row.group_id === "order")
+  await review(f, p, [rating(f, candidate, 5)])
+  const selected = await choose(f, p)
+  const original = await advanceCuration(f.ctx, {
+    run_id: "frozen-revision-original",
+    selection_path: selected.path,
+    selection_sha256: selected.sha256,
+    execute: false,
+  })
+  assert.deepEqual(original.approved_runs, ["writer"])
+  const previous = loadCurrentApproval(f.root, "writer", { vault: f.ctx.vault })
+  const decision = structuredClone(f.review)
+  decision.events = [decision.events.find((row) => row.group_id === "order")]
+  const event = decision.events[0]
+  event.action = "correction"
+  event.prior_run = "writer"
+  event.prior_matches = ["identity_marker", "event_action"].map((aspect) => ({
+    aspect,
+    parse_id: f.sources[0].parsed.parse_id,
+    block_id: f.sources[0].parsed.blocks[0].block_id,
+    quote: f.sources[0].parsed.blocks[0].text,
+    primary_block_id: f.sources[0].parsed.blocks[0].block_id,
+    primary_quote: f.sources[0].parsed.blocks[0].text,
+    conclusion: "The same original contract and action are explicitly corrected",
+  }))
+  atomicWrite(f.root, "revision-plan-review.json", decision)
+  const plan = await reviewEditionEvents(f.ctx, {
+    ...f.parameters,
+    run_id: "frozen-revision-plan",
+    review_file: path.relative(f.ctx.repo, safePath(f.root, "revision-plan-review.json")),
+  })
+  const eventSelection = await executeModule(f.ctx, "selection", "prepare", {
+    run_id: "corrected-writer",
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    group_id: "order",
+  })
+  const oldDraft = readJSON(f.root, "runs/writer/draft.json")
+  const priorIds = [
+    ...new Set(
+      [...oldDraft.draft.lead, ...oldDraft.draft.explanations.flatMap((e) => e.paragraphs)].flatMap(
+        (row) => row.claim_ids,
+      ),
+    ),
+  ]
+  await approveDeliveryFixture(
+    f,
+    eventSelection.writer_run,
+    {
+      run_id: eventSelection.writer_run,
+      selection_path: eventSelection.path,
+      selection_sha256: eventSelection.sha256,
+    },
+    (draft) => {
+      const relative = "frozen-revision-review.json"
+      atomicWrite(f.root, relative, {
+        schema: "research-event-revision-review/v1",
+        action: "correction",
+        prior_run: "writer",
+        current_run: eventSelection.writer_run,
+        event_id: previous.article.event_id,
+        selection_sha256: eventSelection.sha256,
+        prior_article_sha256: sha256(JSON.stringify(previous.article)),
+        draft_id: draft.draft_id,
+        reviewer: "test-independent-lineage-reader",
+        reason: "The same selected event was explicitly rechecked",
+        reviewed_at: "2026-09-29T02:00:00Z",
+        source_read: true,
+        prior_article_read: true,
+        final_prose_read: true,
+        identity_checked: true,
+        dates_checked: true,
+        numbers_checked: true,
+        changes: priorIds.map((id) => ({
+          prior_claim_id: id,
+          disposition: "retained",
+          current_claim_ids: [id],
+          reason: "The original fact and conditions remain unchanged",
+        })),
+      })
+      return path.relative(f.ctx.repo, safePath(f.root, relative))
+    },
+  )
+  await advanceEventWorkflow(f.ctx, {
+    run_id: "frozen-revision-event-workflow",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    execute: false,
+  })
+  const workflow = "event-workflows/frozen-revision-event-workflow/latest.json"
+  const corrected = await prepareEventPublicationHandoff(f.ctx, {
+    run_id: "frozen-revision-event-handoff",
+    workflow_path: workflow,
+    workflow_sha256: sha256(fs.readFileSync(safePath(f.root, workflow))),
+  })
+  const parameters = {
+    run_id: "frozen-revision-handoff",
+    handoff_path: original.publication_handoff.path,
+    handoff_sha256: original.publication_handoff.sha256,
+    corrections: [{ previous_run: "writer", handoff: ref(corrected.publication_handoff) }],
+  }
+  const revised = await executeModule(f.ctx, "curation", "revise_handoff", parameters)
+  assert.deepEqual(revised.approved_runs, [eventSelection.writer_run])
+  assert.deepEqual(revised.curation, ref(selected))
+  assert.equal(revised.candidate_published, false)
+  const loaded = loadDailyPublicationSelection(f.root, revised.publication_handoff.path, {
+    vault: f.ctx.vault,
+  })
+  assert.deepEqual(loaded.approvedRuns, [eventSelection.writer_run])
+  assert.deepEqual(loaded.curation, ref(selected))
+  assert.equal(loaded.briefingDate, "2026-10-12")
+  assert.ok(
+    loaded.nativeSelections.some((native) =>
+      native.approved_runs.some((row) => row.approved_run === eventSelection.writer_run),
+    ),
+    "the exact validated correction handoff must reach scheduled delivery",
+  )
+  assert.ok(
+    loaded.nativeSelections.some((native) =>
+      [...native.approved_runs, ...native.reused_runs].some((row) => row.approved_run === "writer"),
+    ),
+    "the original frozen handoff must remain available for lineage validation",
+  )
+  const previewInputs = loadPreviewPublicationInputs(f.root, "corrected-private-preview", [], {
+    vault: f.ctx.vault,
+    publicationHandoff: revised.publication_handoff.path,
+    editionSpec: {
+      schema: "research-private-edition/v1",
+      intent: "private_slice",
+      key: "2026-10-12_0800_Tech_AI_Briefing",
+      date: "2026-10-12",
+      coverage_start: "2026-10-10T15:00:00Z",
+      coverage_end: "2026-10-11T15:00:00Z",
+    },
+  })
+  assert.deepEqual(previewInputs.approvedRuns, [eventSelection.writer_run])
+  assert.deepEqual(previewInputs.curation, ref(selected))
+  const previewSpec = {
+    schema: "research-private-edition/v1",
+    intent: "private_slice",
+    key: "2026-10-12_0800_Tech_AI_Briefing",
+    date: "2026-10-12",
+    coverage_start: "2026-10-10T15:00:00Z",
+    coverage_end: "2026-10-11T15:00:00Z",
+  }
+  const projections = previewEditionProjections(f.ctx.vault, previewInputs, {
+    editionSpec: previewSpec,
+    root: f.root,
+  })
+  assert.deepEqual(projections[0].event_ids, [previous.article.event_id])
+  assert.throws(
+    () =>
+      previewEditionProjections(
+        f.ctx.vault,
+        { ...previewInputs, dailySelection: original.publication_handoff },
+        { editionSpec: previewSpec, root: f.root },
+      ),
+    /out-of-window/,
+  )
+  assert.throws(
+    () =>
+      previewEditionProjections(
+        f.ctx.vault,
+        {
+          ...previewInputs,
+          dailySelection: { ...previewInputs.dailySelection, sha256: "0".repeat(64) },
+        },
+        { editionSpec: previewSpec, root: f.root },
+      ),
+    /handoff.*changed/i,
+  )
+  assert.equal(sha256(fs.readFileSync(safePath(f.root, selected.path))), selected.sha256)
+  assert.equal(
+    sha256(fs.readFileSync(safePath(f.root, original.publication_handoff.path))),
+    original.publication_handoff.sha256,
+  )
+  assert.deepEqual(
+    (await reviseCuratedPublicationHandoff(f.ctx, parameters)).publication_handoff,
+    revised.publication_handoff,
+  )
+  await assert.rejects(
+    reviseCuratedPublicationHandoff(f.ctx, {
+      ...parameters,
+      run_id: "wrong-prior",
+      corrections: [{ ...parameters.corrections[0], previous_run: "unselected" }],
+    }),
+    /originally selected run/,
+  )
+  await assert.rejects(
+    reviseCuratedPublicationHandoff(f.ctx, {
+      ...parameters,
+      run_id: "duplicate-prior",
+      corrections: [...parameters.corrections, ...parameters.corrections],
+    }),
+    /distinct originally selected run/,
+  )
+  await assert.rejects(
+    reviseCuratedPublicationHandoff(f.ctx, {
+      ...parameters,
+      run_id: "wrong-handoff-sha",
+      handoff_sha256: "a".repeat(64),
+    }),
+    /evidence changed/,
+  )
+  const correctionFile = safePath(f.root, corrected.publication_handoff.path)
+  fs.appendFileSync(correctionFile, " ")
+  assert.throws(
+    () =>
+      loadDailyPublicationSelection(f.root, revised.publication_handoff.path, {
+        vault: f.ctx.vault,
+      }),
+    /evidence changed/,
+  )
+  assert.throws(
+    () =>
+      previewEditionProjections(f.ctx.vault, previewInputs, {
+        editionSpec: previewSpec,
+        root: f.root,
+      }),
+    /evidence changed/,
+  )
+})
+
 test("curated native approvals project knowledge and keep exact publication lineage after history changes", async (t) => {
   const f = await deliveryFixture(t)
   f.ctx.vault = path.join(f.root, "vault")
@@ -978,6 +1733,20 @@ test("curated native approvals project knowledge and keep exact publication line
   })
   assert.equal(repeated, 0)
   assert.equal(resumed.status, "complete")
+
+  // The approved run ID can remain the same while its source bytes change.
+  // Reusing the previous ontology in that case would retain stale file hashes.
+  const claimsFile = safePath(f.root, "runs/writer/reviewed-claims.json")
+  const originalClaims = fs.readFileSync(claimsFile)
+  fs.appendFileSync(claimsFile, " ")
+  const refreshed = await advanceCuration(f.ctx, parameters)
+  assert.equal(refreshed.status, "complete")
+  assert.notEqual(refreshed.ontology.sha256, resumed.ontology.sha256)
+  assert.notEqual(refreshed.ontology_input_sha256, resumed.ontology_input_sha256)
+  fs.writeFileSync(claimsFile, originalClaims)
+  const restored = await advanceCuration(f.ctx, parameters)
+  assert.equal(restored.status, "complete")
+  assert.equal(restored.ontology.sha256, resumed.ontology.sha256)
 
   // A later canonical publication changes current selection context, but the
   // pinned historical handoff remains readable under its original approval.

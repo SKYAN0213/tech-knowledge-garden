@@ -1,18 +1,225 @@
 # 조사 모듈과 MCP 실행 계약
 
+## 기사 처리 가속 계약 (2026-10-27)
+
+새 운영 pin은 `review_mode: combined/v1`을 고정한다. 필드가 없는 과거 pin은 개별 검토 방식이며, 계속 실행하는 회차는 부모의 방식을 유지한다. `curation.advance`와 `edition.advance`가 같은 필드를 사용한다. 기존 검토 파일·검증기·승인 기록은 유지한다.
+
+입력 검증의 메모리 캐시는 한 `advanceCuration` 호출에만 존재한다. 원문·파싱·계획·선정·기존 승인과 그 의존 파일을 SHA로 검증하고, 자체 쓰기가 영향을 주는 항목만 무효화한다. 저장 경계에서 다시 확인하며 새 프로세스는 처음부터 확인한다. 진행 상태·writer 소유권·worker 생존 여부·운영 관문은 캐시하지 않는다.
+
+통합 검토는 사실/중요도와 편집/중요 사실 보존의 두 Schema를 사용한다. 원문 전체와 정확한 판본·검토 입력은 불변 packet 및 무손실 페이지 manifest로 전달한다. 작성은 별도 `article_write` 실행이다. 명시적인 사실 판정으로 기존 검증기가 최종 claim ID를 계산한 후 중요도 판정을 매핑한다. 원응답, 매핑, 개별 검토와 적용 영수증을 보존하며, 잘못된 부분만 정확한 후속 요청으로 남긴다. 프로그램이 중요도·의미 판정·승인을 채우지 않는다.
+
+공유 원문에서 추출된 사실이 모두 다른 사건에 속해 현재 선정 사건의 claim이
+0건일 수도 있다. 이때 선정 참조 SHA, 기존 추출 입력과 provenance, 선택된
+원문·파싱 identity 및 원문에 속한 후보 ID가 모두 일치할 때만 빈 claim 범위의
+통합 사실 검토를 요청한다. 모델은 선정된 블록 안에서 근거를 직접 대조해 필요한
+추가 사실과 중요도를 명시한다. 기존 검증기가 출처·범위·ID를 계산·확인하며,
+검증 가능한 사실이 없으면 `SOURCE_REVIEW_EMPTY`로 남기고 승인하지 않는다.
+배정되지 않은 원래 claim 판정은 빈 범위만 명시적으로 보정하고 정상 추가 사실은
+보존한다. 원래 검토 시각이 유효하지 않으면 판정을 유지한 채 시각만 다시 요청한다.
+
+분할 편집 검토에서는 각 part가 배정된 중요 사실마다 `coverage_decisions`에
+`preserved` 또는 구체적 사유를 포함한 `needs_revision`을 명시한다. 인용이나
+형식적인 확인 표시만으로 사실이 보존됐다고 추론하지 않는다. 어느 part에서든
+수정이 필요하면 해당 모델의 판정과 원응답을 기존 편집 검토의 수정 요청 및 작성자
+보정 증거에 연결하고 승인을 차단한다. 판정이 빠지거나 불완전하면 그 claim만
+보충하며 다른 유효 판정을 보존한다. 배정 밖이거나 소유 사실을 특정할 수 없는
+판정은 차단한다. 결과의 기존 native 검토 파일 형식과 검증기는 유지한다.
+모델 요청에는 엄격한 사실별 판정 Schema를 제공한다. 소유권·입력 SHA·모델을
+검증하는 전송 계층은 잘못된 개별 판정도 원응답으로 보존할 수 있으며, 이를
+승인 근거로 취급하지 않고 해당 claim의 명시적 보정 후 다시 검증한다. 같은
+경계는 사실 판정·추가 사실·중요도에도 적용하며 claim을 특정할 수 없는 중요도
+판정은 차단한다.
+적용 판정에는 실제 원응답 또는 해당 claim의 보정 응답 경로와 SHA를 함께 남긴다.
+첫 part에서 수정이 필요해 중단해도 정확한 범위의 원응답에서 보존 판정과 본문
+위치·필수 항목이 각각 검증된 사실은 개별 근거 매핑에 보존한다. 부정·누락·잘못된
+개별 판정은 원본에만 남기며, 범위 밖 판정이 섞인 응답에서는 그 part의 판정을
+재사용하지 않는다. 어느 경우에도 승인을 만들지 않는다. 수정 후에는 이 검증된
+판정 중에서도 관련 문맥이 변하지 않은 경우에만 재사용한다.
+작성 보정 전과 결과 적용 전에는 판정별 원응답과 재사용 영수증 SHA도 다시 확인하며,
+같은 원응답을 가리키는 중복 참조는 한 번만 읽는다.
+
+초안 수정 후에는 전체 편집·개념 판정을 새로 요청하되, 직전 검토의 개별 본문
+보존 판정은 원문·파싱·선정·검토 사실·중요도·개념·모델 정책·구현 지문이
+정확히 같고 관련 독자 문맥이 변하지 않았을 때만 재사용한다. 제목·리드·공통
+메타데이터가 바뀌면 이전 보존 판정을 재사용하지 않으며, 관련 설명 절의 변경은
+그 절에 연결된 사실을 다시 검토한다. 기존 `preserved` 판정과 본문 위치가 실제
+원응답 및 native 검증과 일치해야 하며 부정·미검증·수리된 판정을 추정하지 않는다.
+불변 `coverage-reuse.json`에는 판정별 원응답·manifest·문맥 SHA와 직전 적용
+영수증을 남기고, 빈 재사용 계획도 고정한다. 중단 후에는 같은 요청 범위를 유지하고
+결과 적용 전에 모든 재사용 근거를 다시 검증한다. 이전 편집 승인은 재사용하지
+않으며 기존 본문 보존·승인 검증기를 그대로 통과해야 한다. 재검토할 사실이 없는
+빈 범위에 모델이 개별 판정을 추가하면 전체 편집 판정은 보존하고 빈 범위만 명시적
+후속 요청으로 바로잡는다. 범위 밖 판정이 계속 남으면 승인을 차단한다. 이 기능은 개발 후보에
+있으며 실제 모델 시험과 운영 승격은 아직 별도 판정이다.
+첫 편집 응답이 수정을 요구하더라도 원응답과 기존 개별 검증으로 입증된 보존
+판정은 유지할 수 있다. 승인에는 모든 중요 사실의 명시적 보존 판정이 필요하며,
+수정·이의 재검토의 시작과 적용 경계에서 연결된 원응답·재사용 영수증을 다시 확인한다.
+
+개발 중인 후속 packet은 모델에 원문 블록을 한 번 전달한다. 같은 원문 인용과
+반복 본문은 출처·판본·parse·block·UTF-16 범위와 SHA를 가진 무손실 참조로
+표현하며 출력에는 기존 Schema의 실제 인용문을 요구한다. 파싱 링크와 원고의
+반복 원문에도 같은 방식을 적용한다. 이전 작성 요청·응답은 모델 화면에서만
+제외하고 전체 native 입력으로 SHA와 함께 보존한다. 인용이 지정한 원문에 없으면
+참조를 만들어 내지 않고 그대로 남긴다. 변환 후 전체 입력을 되복원해 누락이
+없는지 확인하고, 결과 적용 전 원문·사실·원고·선정·정책과 native packet의
+변경을 다시 검사한다. 선정 참조와 해당 파일의 실제 SHA를 모두 고정한다.
+새로 검토 대상이 된 개념도 결과 적용 전에 확인하며, 검토 대상이 아닌 노트의
+추가는 기존 판정을 무효화하지 않는다. 이 변경은 새 후보의 실제 모델 시험과
+운영 적용 전이다.
+
+Codex 중계에서 원문 출력이 잘리면 더 작은 구간으로 나누어 실제 내용을 끝까지 읽는다. 파일 SHA·길이 대조나 출력 명령 자체는 본문 열람의 증거가 아니다. 미열람을 확인한 응답은 원본을 보존하되 유효한 검토나 승인 근거로 사용하지 않는다. 실제 원문 전체를 읽은 별도 검토와 기존 native 승인 검증기를 통과한 결과를 확인하고, 독립 감사에서도 해당 기사를 확인한다.
+
+초안 구조 사전검사의 보정 응답이 원고를 바꾸지 않으면 원고와 지적 SHA, 원래 모델 결정을 불변 실패 증거로 남기고 같은 지적에 대해서만 한 번 더 요청한다. 재요청은 실패 증거에 바인딩되며 중단 후에는 같은 요청을 재개한다. 증거가 바뀌거나 두 번 모두 보정되지 않으면 `DRAFT_PREFLIGHT_EXHAUSTED`로 중단하고 자동 승인하지 않는다.
+
+분할 사실 검토의 검토자 표기가 같은 모델명과 해당 추론 수준을 포함한 모델명으로 달라지면, 정확한 각 응답·요청 바인딩을 지정한 별도 모델 판정으로 동일 실행 모델인지 확인한다. 원응답과 판정별 사실·중요도는 재실행하지 않으며, 명시적인 동일성 판정과 적용 영수증을 보존한다. 다른 이름이나 확인 불가는 병합을 차단한다. 작성 전 검사에서 날짜만 명시된 `as of` 등의 사건에 근거 없는 한국시간 표기를 추가하면 수정 요청으로 남긴다. 출처의 실제 발행 시각이 시간대를 포함하고 한국 날짜 변환이 일치하는 경우는 보존하며, 그 발행 시각으로 별도 사건의 발생 시간대를 추측하지 않는다.
+
+추가 사실은 기존 `extractionSchema`와 검토된 `candidate_key`를 사용한다. 원문 evidence의 source/version/parse/block/quote를 명시하며 추출 단계의 임시 `block_key`를 쓰지 않는다. 추가 판정에는 reason·기존 검토 체크·선택적 OCR 근거만 허용하고 status를 넣지 않는다. native 오류에는 실제로 빠진 필드·허용 식별자를 연결한다. 보정 후에도 잘못된 추가 사실만 최대 한 차례 더 요청하고 정상 사실·추가 사실은 보존한다. 명시적인 omit만 제외하며, 해결되지 않으면 `SOURCE_ADDITIONS_REPAIR_EXHAUSTED`로 원응답과 실패를 남긴다.
+
+기존 사실의 재검토도 native 구조 오류와 빠진 명시적 검토 항목을 정확한 claim ID별로 전달한다. replacement는 기존 추출 Schema의 허용 필드만 사용하며, 계획/완료·인용 범위를 프로그램이 대신 수정하지 않는다. 정상 판정을 보존한 채 아직 잘못된 사실만 최대 2회 요청하고, 해결되지 않으면 `FACT_DECISIONS_REPAIR_EXHAUSTED`로 원응답·후속 응답·실패를 보존한다. 같은 프로세스 재진입은 저장된 응답을 재사용한다.
+
+분할 사실·중요도·본문 보존 검토와 편집 승인의 시각은 그 판정을 낸 저장 모델
+결과의 실제 완료 시각을 넘을 수 없다. 최초 검증에서 보정이 필요한 주장·원응답·
+오류를 고정해, 응답을 기다리는 동안 시계가 진행되어도 같은 명시적 보정을
+재사용한다. 추가 사실과 편집 승인에서 날짜만 잘못되면 해당 날짜만 다시 요청하고
+기존 정상 판정과 다른 기사의 진행은 유지한다. 분할 검토 시각은 시간대가 포함된
+실제 시각을 비교하며, 날짜만 있는 판정이 같은 한국 날짜에 섞이면 확인 가능한
+날짜 정밀도를 유지한다. 결과의 소유권이나 SHA를 확인할 수 없으면 복구가 아닌
+차단으로 남긴다.
+
+독립 편집 검토 전에 최종 승인과 같은 native draftProblems 전체 결과와 독자 구조 차단을 사용한다. 별도 허용 목록으로 일부 차단을 누락하지 않는다. 명칭·태그/주제·근거 참조·내부 ID·본문 형식·심층 역할 등 기존 차단 항목은 작성자에게 전달하고 연속 보정은 저장된 상태에서 최대 2회로 제한한다. `needs_revision`에는 구체적인 `reason`이 필요하며, 빠졌을 때는 해당 검토 이유만 모델에 보충 요청한다. 작성 보정은 `research-editorial-revision-evidence/v1`으로 최종 편집·본문 보존 판정, 원응답과 부분 보정 영수증을 함께 전달한다. 원고·선정·정책 지문과 각 참조 SHA가 같아야 실행하고, 해결된 과거 finding은 다시 적용하지 않는다.
+
+작성 보정의 검토 시각이 유효하지 않거나 위임 응답의 실제 제출 시각보다 늦으면 원응답과 최초 오류를 고정하고 해당 시각만 모델에 재확인한다. 이미 검증된 원고와 사실 판정은 그대로 유지하며, 재개할 때 현재 시각이 지나갔다는 이유로 최초 오류를 없애지 않는다. 두 차례의 명시적 보정도 유효하지 않으면 원고를 적용하지 않고 실패 근거를 보존한다. 독립 판단의 실행 시각은 해당 판단 응답에 연결한다.
+
+검토 사유가 다른 기사에 속하거나 정확한 원문과 모순될 때 작성자는 원고를 그대로 두고 `research-editorial-review-dispute/v1`을 제출할 수 있다. 원문·초안·부정 판정·수정 요청의 SHA를 함께 고정하며, 프로그램은 해당 편집 판정만 별도 Luna 요청으로 재검토한다. 기존 원응답·판정과 유효한 본문 보존 검토는 유지하고, 아직 읽지 않은 part만 이어서 요청한다. 재판정도 모든 기존 승인 검증기를 통과해야 한다. 반박은 승인이 아니며 원고를 바꾸거나 구조 차단을 우회할 수 없다. 같은 정확한 초안의 반박은 한 번으로 제한하고, 재판정 후에도 의견이 해결되지 않으면 `EDITORIAL_DISPUTE_EXHAUSTED`로 근거를 보존한다. 잘못된 검토를 통과시키기 위한 무의미한 문구 수정은 허용하지 않는다.
+
+처리 중 기사를 우선하고 빈 자리에 선정 순위의 다음 기사를 넣는다. 대기 중인 기사는 최대 3개이며 native 상태 변경은 기존 단일 worker가 수행한다. 응답 완료·원고 수정 직후에도 해당 기사의 자리를 유지하며, 수정된 원고는 바로 독립 재검토 요청으로 이어진다. 전체 진행 frontier를 완료 checkpoint보다 먼저 저장해 과거의 부분 스냅샷이 새 상태를 덮지 않게 한다. `ready_items`는 현재 기사 frontier의 완료 응답만 표시한다. 원 소유 job과 입력 SHA를 유지하고, 다른 기사의 미완료 응답 때문에 준비된 기사를 기다리지 않는다. successor가 같은 완료 요청을 그대로 반환하면 `no_progress`로 멈추며 시각·참조 SHA 변경만으로 다시 소비하지 않는다. 기존 job 단위 준비 상태의 의미는 바뀌지 않는다.
+
+Codex 중계는 `reasoning.plan_relay`에 정확한 대기 요청과 최대 3개의 실행 슬롯, 기사별 작성·검토 실행자 이력을 전달할 수 있다. 동시에 준비된 요청은 `reasoning.plan_relay_batch`에 최대 3개를 함께 전달한다. 프로그램은 각 원 소유 job의 불변 결과와 요청 SHA에서 기사·역할을 확인하고, 이미 같은 기사 단계의 원문을 읽은 실행자에게 연속 요청을 먼저 배정한 다음 나머지 요청의 순서를 유지한다. 독립 `validation.revise_draft` job이 모델을 기다릴 때는 결과 파일이 아직 없으므로 해당 job의 고정 입력·요청 SHA와 동일한 `run_id`를 확인해 기사와 역할을 결정한다. 다른 모듈, 다른 기사 또는 변경된 입력에는 적용하지 않는다. 따라서 앞선 다른 기사의 요청 때문에 재사용 가능한 검토 문맥을 교체하지 않는다. 사용 중이거나 종료 중인 슬롯은 배정하지 않는다. 같은 실행자가 한 기사의 작성과 독립 최종 검토를 모두 맡는 이력은 거부한다. 슬롯 번호가 같아도 종료가 확인된 뒤 새 실행자라면 별도로 판정한다. 교정 의도 분기 선택도 별도 검토 역할로 분류한다. 이 API는 배정 제안만 반환하며 요청 실행·결과 제출·승인을 하지 않는다. 전달된 실행자 이력은 호출자 진술이므로 실제 Codex 실행·종료 영수증을 별도로 보존해 대조해야 한다.
+
+`timing-benchmark --scope article_processing --input FILE --sha256 SHA`는 고정된 32건(신규 31 + 기존 승인 재사용 1)을 처리 전 상태로 복원해 v13과 후보 코드를 실제 실행한다. 저장 응답 재생은 실모델 실행으로 집계하지 않는다. 원문·기사·검토·승인의 전체 native 객체를 비교하고, 첫 쌍의 절감률이 45~55%이거나 외부 간섭이 감지되면 한 번 역순으로 추가 측정한다. 간섭된 쌍은 유효 측정에서 제외하며 유효한 두 쌍이 있으면 낮은 절감률을 적용한다. 기존 `reasoning_submission_control`과 과거 timestamp replay의 계약은 유지한다.
+재생 worker의 위치와 직접 실행 여부는 파일 URL을 실제 파일 경로로 변환해
+판정한다. 외장 볼륨 이름에 공백이나 `#`이 있어도 인코딩된 URL을 파일명으로
+오인하지 않는다.
+
+2026-10-29의 v28 고정 후보 재생은 동일 32건에 대해 v13 800,101.673ms,
+후보 52,437.718ms, 제어·검증 시간 감소 93.446%이며 native 결과가 일치했다.
+운영 writer 간섭과 모델 호출은 없었다. 실제 모델 실행 전체 시간의 직접 A/B는
+아니며, 실제 실행·독립 감사·운영 승격 여부는 별도 기록한다. 원 영수증은
+`article-acceleration-20261027/benchmark-result-v28.json`과
+`benchmark-v28-writer-observation.json`이다.
+
+연관 문맥에 묶인 개별 본문 보존 판정 재사용을 추가한 v29도 같은 32건 재생에서
+v13 809,460.185ms, 후보 60,009.156ms로 제어·검증 시간이 92.587% 감소했고
+native 결과가 일치했다. 운영 writer 간섭과 모델 호출은 없었다. 이 값은 실제
+모델 실행 전체 시간의 직접 A/B가 아니다. 별도의 31건 실제 Luna 처리와 기존 승인
+1건 재사용 시험은 첫 part의 유효 판정 반복 검토가 확인되어 완료 전 중단했다. 근거는 `benchmark-result-v29.json`,
+`benchmark-v29-writer-observation.json`, `v29-frozen-checks.json`이다.
+
+첫 part의 검증된 개별 보존 판정 재사용과 적용 경계 무결성을 보강한 v30은 동일
+32건 재생에서 v13 804,408.386ms, 후보 53,069.306ms로 제어·검증 시간이
+93.403% 감소했고 native 결과가 동등했다. 운영 writer 간섭과 모델 호출은 없었다.
+실제 Luna 시험은 시각 보정 후 중요도 보정이 이어지지 않는 결함을 확인해 32건
+완주 전에 중단했다. 독립 감사와 운영 승격은 미완료다. 근거는
+`benchmark-result-v30.json`, `v30-frozen-checks.json`, `live-v30/actual-start.json`,
+`live-v30/superseded-trial-status.json`이다.
+
+개발 후보는 동일 응답의 검토 시각과 중요도 항목이 모두 잘못된 경우 시각을 먼저
+명시적으로 보정하고, 원문 및 검토 시각과의 선후 관계까지 확인한 뒤 잘못된 사실만
+별도로 요청한다. 정상 사실 판정과 시각 보정 영수증은 재개 시 보존하며, 시각이
+여전히 유효하지 않으면 항목 보정으로 승인하지 않는다. 새 후보의 재생·실모델 및
+운영 관문은 별도 검증 중이다.
+
+격리 시험 사본의 원본 트리는 일반 파일과 디렉터리만 허용하며 사본을 만들기
+전후 심볼릭 링크와 특수 파일을 거부한다. macOS에서는 시스템 `cp -cR`의
+복사 중 공유 기능을 사용하고 다른 환경에서는 기존 일반 파일 복사를 사용한다.
+실제 새 시험 인스턴스는 복제가 일반 복사로 대체될 가능성까지 고려해 원본 트리
+크기와 2GiB의 추가 여유 공간이 모두 있을 때만 사본을 만든다. 인스턴스는 고정된
+fixture manifest에 기록된 파일의 SHA를 검사하며, 사본의 수정 격리는 별도 표적
+시험으로 확인한다. 파일 시스템의 공간은
+다른 프로세스가 동시에 사용할 수 있으므로 사전 확인 자체가 전체 시험의 성공이나
+공간 확보를 보증하지 않는다.
+
+v31 고정 후보는 같은 32건 저장 응답 재생에서 기존 806,515.366ms, 후보
+50,341.507ms로 제어·검증 시간이 93.758% 감소했으며 native 결과가 동등했다.
+모델 호출이나 운영 writer 간섭은 없었다. 실제 Luna 시험·독립 감사·운영 승격은
+별도 판정한다. 증거는 `benchmark-result-v31.json`, `v31-frozen-checks.json`과
+`benchmark-v31-writer-observation.json`이다.
+
+v32 고정 후보는 같은 32건 저장 응답 재생에서 기존 774,750.839ms, 후보
+55,255.158ms로 제어·검증 시간이 92.868% 줄었으며 native 기사·검토·승인
+결과가 동등했다. 운영 writer 간섭과 모델 호출은 없었다. 별도 실제 Luna 처리
+시험은 신규 승인 31건과 기존 승인 재사용 1건의 발행 인계 준비를 마쳤다.
+실행 모델은 최대 2개, native writer는 최대 1개였다. 중단 기간이 전체 경과에
+포함되므로 원 측정값과 재개 후 11,214,817ms를 구분하고 전체 활동 시간과
+실모델 직접 A/B 절감률은 미측정으로 남긴다. 32건의 최초 독립 감사는 6개
+기사에서 8개 지적이 나와 불합격이었고, 그 항목만 재판정해 5개 불인정·3개
+정정 필요로 확정했다. 해당 세 건만 새 근거 범위로 정정하고 각각 독립 감사를
+통과해 후속 판정은 `passed_after_resolution`이다. 최초 불합격 기록은 보존한다.
+정정된 인계와 네 관측의 독립 재검토를 적용한 시험용 미리보기에서는 32건 모두
+웹·RSS·digest에 연결됐다. 원래 v32에 미리보기 수정 한 파일만 더한 별도 후보로
+검증했으므로 현재 개발 트리 전체의 릴리스 검증이나 운영 승격을 뜻하지 않는다.
+이후 현재 고정 후보에서도 동일 승인 근거로 미리보기를 재생성해 32건의 웹·RSS·
+digest 본문 및 출처 일치를 확인했다. 공개 발행이나 브라우저 조작 검증은 아니다.
+근거는 `scratch/private-preview-final-20261102-r2-result.json`이다.
+근거는 `live-v32/private-preview-resolved-v32plus-grouped-v3-result.json`,
+`live-v32/independent-audit/adjudication/signals-review/applied.json`과
+`benchmark-result-v32.json`, `v32-frozen-checks.json`,
+`benchmark-v32-writer-observation.json`, `live-v32/measurement.json`과
+`live-v32/measurement-interruption-annotation-20261102.json`,
+`live-v32/independent-audit/summary.json` 및 `adjudication/summary.json`이다.
+
+후속 개발 후보는 고정 v32와 실행 파일 8개가 다르며 동일 32건을 별도 격리
+작업 공간에서 기존 방식부터 순서대로 재생했다. 제어·검증 시간은
+783,773.219ms에서 56,626.564ms로 92.775% 감소했고, 기사·출처·판정·승인
+결과는 일치했다. 이 비교는 저장 응답 재생이며 실모델 처리 시간의 직접 A/B가
+아니다. 기존 방식 실행과 동시에 발생한 작은 Drive 송수신 및 사전 정의된 CPU·
+writer 관측은 `scratch/article-accel-pair-annotation-20261102-r2.json`에 기록한다.
+
+v24 고정 후보는 같은 32건 저장 응답 재생에서 v13의 제어·검증
+776,346.352ms 대비 55,705.285ms로 92.825% 줄었으며 전체 native 결과가
+일치했다. 운영 writer 간섭은 관측되지 않았다. 이는 모델 호출 없는 재생 결과다.
+별도의 Luna/high 실모델 처리와 독립 원문 감사, 비공개 미리보기 및 운영 승격은
+그 결과를 각각 확인하기 전까지 완료로 간주하지 않는다. 증거는
+`article-acceleration-20261027/benchmark-result-v24.json`과
+`benchmark-v24-writer-observation.json`에 있다.
+
+시각 복구를 보완한 v26의 동일 입력 재생에서는 기존 765,933.133ms 대비
+60,196.403ms로 제어·검증 시간이 92.141% 감소했고 native 결과가 일치했다.
+운영 writer 간섭은 관측되지 않았다. 저장 응답 비교와 별개로 실제 Luna/high
+처리·독립 감사·비공개 미리보기를 검증하며, 모델 전체 시간의 직접 A/B 절감률은
+기존 방식의 실모델 재실행이 없으므로 계산하지 않는다.
+
+v19 후보의 동일 입력 재생은 v13의 제어·검증 763,394.810ms에서
+57,057.973ms로 92.526% 감소했고 native 결과가 일치했다. 측정 시 운영 writer
+간섭은 관측되지 않았다. 결과와 writer 관측은 각각
+`.local/research/article-acceleration-20261027/benchmark-result-v19.json`과
+`benchmark-v19-writer-observation.json`에 보존한다. 이 결과는 모델 시간을 제외한
+재생 비교다. 이후 실모델 시험에서 원문이 파싱·인용·이전 작성 요청에 중복
+포함된 결함을 발견해 v19 시험을 중단하고 부분 결과를 보존했다. 개발 트리의
+후속 수정에 대해서는 같은 입력의 재생과 실제 Luna 처리, 독립 감사를 다시
+확인해야 하며 v19 수치를 새 수정본의 성능이나 운영 승격 근거로 사용하지 않는다.
+
+비공개 실모델 검증은 `processing-drive --input FILE --sha256 SHA`의 저장 session으로 진행한다. 프로그램이 후속 curation job과 최대 3개의 요청을 생성하고 Codex는 그 요청만 중계한다. 시험 session은 발행을 허용하지 않는다. 요청 왕복 시간과 순수 모델 시간은 구분하며, 도구가 제공하지 않는 순수 모델 시간은 `null`이다. 기존 04시 예약·MCP 운영 승격은 성능·품질·복구·실모델 검증을 모두 통과한 후에만 수행한다.
+
 수집 단위는 출처와 원문 판본이고, 작성 단위는 선별된 사건이다. 독립 CLI와 MCP가 같은 JSON Schema·모듈 함수·native 실행기를 사용한다. 출처별 crawler나 별도 지식 DB를 새로 만들지 않는다.
 
-현재12모듈75작업이며 외부 MCP 기본 도구는5개다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
+개발 트리는 12모듈 81작업이며 외부 MCP 기본 도구는 5개다. 운영 실행본의 목록은 별도로 고정되어 있다. `collection.storage`는 `status/prepare/pending/verify/export/import/enable/hydrate/evict`와 로컬 OAuth의 `remote-status/remote-pull/remote-push/remote-import`를 같은 독립 `scripts/research-storage.mjs`로 제공한다. 저장 목록은 source/event/approval를 새 지식 DB로 복제하지 않고 기존 파일의 Drive 위치와 해시만 연결한다. cold 원문은 worker가 `waiting_for_storage`를 반환하며 기존 Drive 연결 또는 사전 인증된 로컬 adapter로 정확한 묶음을 받은 뒤 같은 job을 명시 재개한다. 로컬 planner는 보관 검증·정리 작업을 자율 실행할 수 없다. [Drive 보관 계약](DRIVE_STORAGE.md#독립-로컬-drive-oauth-2026-10-16)에 인증 설정·전송 재개·실제 검증 범위를 기록한다.
 
 ### 미완료 수집 보완
 
 `collection.recover`는 정확한 `report_path/report_sha256`에서 미완료 날짜 창만 골라 `plan-only → execute → resume`로 처리한다. 완료 출처를 다시 수집하지 않는다. 원래 실패 보고서·run을 보존하며 `base_report`와 보완한 창의 `report_sources`를 반환한다. 수집과 보고서 생성을 분리하므로 묶음마다 기존 전체 원문을 다시 검증하지 않는다. 필요한 범위의 `collection.report`를 한 번 생성해 다음 회차에 연결한다. 기존 전체와 통합한 보고서가 필요할 때만 `build_report: true`로 요청하며, 그 과정의 cold 자료 대기는 `report_wait`로 반환하고 완료 수집을 반복하지 않는다. 이미 고정한 브리핑 입력은 교체하지 않는다.
+
+미완료 수집이 요약을 기록한 뒤 집계 배열을 모두 저장하기 전에 중단된 경우에도 기존 요약과 남은 배열의 바이트를 보존한다. 같은 출처·날짜 창과 입력 SHA를 확인하고 완료된 native 체크포인트·원문·파싱 근거만 새 복구 run에 연결한다. 빠진 배열이나 coverage를 생성하지 않으며 `incomplete_checkpoints=true`, `coverage_reused=false`로 표시한다. 완료로 표시된 scan의 누락 배열, 잘못된 배열, 다른 창 또는 바뀐 체크포인트는 계속 거부한다.
+
+일일 보고서는 원문·후보 인계를 주장하지 않은 `failed` 시도의 집계 파일이 일부 없을 때 그 실패 영수증과 이유를 그대로 포함하고, 해당 부분 파일을 검증된 기사 근거로 취급하지 않는다. 다른 시도의 검증된 자료는 보고할 수 있다. 이미 완료됐거나 원문·후보 인계를 주장한 시도는 기존과 같이 필요한 모든 근거가 없으면 거부한다. 실패한 원본과 복구 대상은 그대로 유지한다.
 
 첫 요청은 `run_id`, `mode`, 보고서 참조를 주고 선택적으로 `channels`, `max_attempts`를 지정한다. 재개는 같은 `run_id`와 `mode: "resume"`이면 된다. `max_routes`(기본10), `time_budget_ms`(기본600000)는 호출별 새 경로 착수 제한이며 시작한 원문의 timeout은 별도다. `detail_batch_size`를 선언한 출처는 새 본문 요청만 묶음 예산을 소비한다. 저장된 원문과 동일 worker·parser·옵션의 완료된 파싱은 재사용하고, 원래의 partial/blocked 판정도 그대로 유지한다. 예산으로 미룬 본문은 다른 실패가 섞여 있어도 다음 묶음에서 처리한다. 일반 오류만 남았을 때의 재시도는 `retry_incomplete: true`로 명시하고 출처별 시도 상한을 유지한다.
 
 수집 설정·코드가 바뀌면 새 복구 ID를 만든다. `scan.recovery_source_run` 또는 독립 CLI `scan-list --recovery-source-run ID`는 바뀐 설정으로도 같은 출처·같은 창의 검증된 원문을 재사용한다. 원문 시각을 현재로 바꾸거나 과거 완료·승인을 승계하지 않는다. URL은 현재 허용 host 안이어야 한다. `STORAGE_PENDING`은 사이트 접근 실패로 기록하지 않고 정확한 Drive 묶음 요청과 같은 native run을 보존한다. 복원 후 같은 복구 ID를 재개한다.
 
 결과 파일을 쓰기 전에 중단된 수집도 `collection-input.json`과 native 체크포인트의 해시·원문을 검증해 재사용한다. 코드 수정 뒤에는 `source_runs: {"출처ID": "이전-native-run-ID"}`로 정확한 같은 창의 체크포인트를 지정할 수 있다. 활동 중인 run 소유자나 아직 실행 중인 단계는 재사용하지 않는다. 실패·보관 대기 단계는 새 완료로 바꾸지 않으며 `unreported_attempts`에 남긴다. 원문·파싱의 정상 단계를 다시 실행하지 않는다.
+
+복구 계획을 저장할 때 원래 요약이 없었던 경우 후속 `resume`은 고정된 입력·상태·수집 기준의 SHA를 다시 확인해 같은 미완료 보기만 재구성한다. 그 사이 요약 파일이 생기거나 입력이 바뀌면 이전 계획을 그대로 실행하지 않고 거부한다. 빠진 요약 파일을 원래 run에 쓰거나 수집 완료·coverage를 만들어내지 않는다.
 
 조건부 요청에 쓸 ETag/Last-Modified가 없는 cold HTTP 캐시는 과거 본문을 먼저 복원하지 않는다. 새로 받은 동일 해시의 응답은 정확한 bytes로 복원하고 과거 immutable 메타데이터는 보존한다. 304에 필요한 캐시와 실제 원문 검증은 기존 관문을 유지한다. 정책 점검 목록은 메타데이터로 고르고 선택한 정책만 원문을 확인한다. 검토 대기는 독자 화면·기사 본문에 출력하지 않는다.
 
@@ -52,6 +259,12 @@ node scripts/research/operation-policy.mjs status
 
 `development_pending`은 정상 대기이고 실패나 새 소식 없음이 아니다. `validation.progress`도 같은 `operation_gate`를 반환하며, WBS 비율만으로 운영을 허용하지 않는다. `phase: ready`와 비공개 `research-development-completion/v2`의 정확한 path/SHA·코드 manifest가 필요하다. GPT의 필수6개는 수집/파싱·큐레이션/작성·GPT 재개·Drive 복원 재개·발행 복구·표적 회귀다. 각 check는 passed와 실제 검토한 근거 path/SHA를 요구한다. finalize가 근거 bytes를 재대조하고 실제12/12 시스템 WBS·GPT 역할 정책을 확인한 뒤 구현/설정 파일 목록·SHA와 완료 영수증을 불변 저장한다. 상태 조회는 이 hot 영수증과 실제 코드 판본을 확인하며 큰 cold 원문을 매번 복원하지 않는다. 파일 추가/삭제·내용 또는 실행 설정 변경은 운영을 차단한다. 과거 v1 성공 문자열만으로 운영하지 않는다. 완료 근거는 사실·편집·release 승인을 대신하지 않으며 정규 발행 횟수는 별도다.
 
+실제 공개 렌더러가 사용하는 `quartz.config.yaml`, `quartz.config.default.yaml`,
+`quartz.ts`, `.quartz/plugins/index.ts`도 존재할 때 실행본 manifest와 설치본에
+포함한다. 공개 렌더러가 사용하는 `quartz/static/`의 이진 이미지 등 정적 자료도
+원본 바이트 그대로 포함한다. 각 파일이 설치 후 달라지거나 운영 작업공간의 바이트가 실행본과 다르면
+기존 활성화·상태 검사가 차단한다. 과거 영수증과 진행 중인 고정 회차는 수정하지 않는다.
+
 ```sh
 node scripts/research/operation-policy.mjs finalize --review .local/research/<review>.json --review-sha256 <exact-SHA>
 node scripts/research/operation-policy.mjs status --executor codex
@@ -64,16 +277,16 @@ finalize 검토 파일은 research-development-review/v1, executor codex, storag
 
 로컬 정규 실행에는 `npm run research:operator -- --regular ...`를 사용한다. 개발 대기이면 MCP 연결·모델·체크포인트를 만들기 전에 정상 종료한다. 상태 조회 같은 명시 개발 검증은 기존 `--modules/--operations` 범위에서 별도로 수행한다. 정규/개발 실행 목적은 저장 입력에 고정하므로 재개 시 목적을 바꿀 수 없다.
 
-| 관측 상태 | 다음 처리 |
-|---|---|
-| completed | 저장 결과의 SHA를 확인해 재사용; 같은 도구를 다시 실행하지 않음 |
-| waiting_for_reasoning | 정확한 task/request SHA를 읽어 Codex submit 또는 로컬 execute를 완료한 뒤 원 job 재개 |
-| waiting_for_storage | pending의 정확한 Drive ID/묶음 SHA로 hydrate 후 원 job 재개 |
-| 사실·편집·관계 검토 대기 | 원문을 실제 대조한 검토 결과를 기존 검증 경로에 제출; planner가 자체 승인하지 않음 |
-| failed / interrupted | 저장 오류·입력·worker·부분 결과를 확인하고 원인 해결 후 명시 재개 |
-| worker_status_unknown | 프로세스 조회 권한/수단을 복구하고 같은 job 재조회; 중복 실행·잠금 회수 금지 |
-| 입력·정책·구현 변경 | 원 job과 오류는 보존; 새 job에서 유효한 선행 결과를 재사용 |
-| 원격 쓰기 결과 불명 | 동일 대상 ID·raw bytes·receipt를 readback한 뒤 미적용 단계만 수행 |
+| 관측 상태                | 다음 처리                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| completed                | 저장 결과의 SHA를 확인해 재사용; 같은 도구를 다시 실행하지 않음                       |
+| waiting_for_reasoning    | 정확한 task/request SHA를 읽어 Codex submit 또는 로컬 execute를 완료한 뒤 원 job 재개 |
+| waiting_for_storage      | pending의 정확한 Drive ID/묶음 SHA로 hydrate 후 원 job 재개                           |
+| 사실·편집·관계 검토 대기 | 원문을 실제 대조한 검토 결과를 기존 검증 경로에 제출; planner가 자체 승인하지 않음    |
+| failed / interrupted     | 저장 오류·입력·worker·부분 결과를 확인하고 원인 해결 후 명시 재개                     |
+| worker_status_unknown    | 프로세스 조회 권한/수단을 복구하고 같은 job 재조회; 중복 실행·잠금 회수 금지          |
+| 입력·정책·구현 변경      | 원 job과 오류는 보존; 새 job에서 유효한 선행 결과를 재사용                            |
+| 원격 쓰기 결과 불명      | 동일 대상 ID·raw bytes·receipt를 readback한 뒤 미적용 단계만 수행                     |
 
 authoring delivery 내부에서 connector write intent와 capture event가 만들어지기 전에 발생한 `STORAGE_PENDING`은 실행 ID·입력 SHA를 고정한 `waiting_for_storage`로 보존한다. 정확히 요청한 파일의 SHA·크기를 복원한 뒤 같은 모듈 job과 execution ID를 재개한다. write intent 또는 connector event가 이미 생긴 경우에는 이 경로를 쓰지 않고 새 execution ID와 원격 readback으로 불확실 쓰기를 먼저 조정한다.
 
@@ -107,6 +320,10 @@ flowchart LR
 
 `curation.prepare`는 검토한 `plan` 참조와 대기 큐의 이전 계획을 같은 날짜의 불변 풀로 만든다. 원문·parse·블록을 복사하거나 다시 수집하지 않는다. 후보에 원 발표일, 원 사건 계획, 관련 canonical 기사 ID/본문 SHA, 실제 원 writer의 선택 참조를 연결한다. `curation/queue.json`은 기존 계획의 참조이며 별도 기사/지식 DB가 아니다. 오래된 후보를 지우지 않고 읽을 수 없는 이전 계획은 비공개 재검토 항목으로 남긴다.
 
+`curation.revalidate_history`는 기존 발행 파일이 정확히 같고 후보 backlog만 바뀐 경우에 한해 풀 전체 후보의 기존 수록 판정에 변화가 없는지 확인한다. 기본 호출은 점검만 하고, `apply: true`는 풀·이전과 현재 이력·정책·구현 SHA에 묶인 불변 근거를 남긴다. 다른 writer가 실행 중이거나 상태를 확인할 수 없으면 중단한다. 이후에도 원본·선정·정책과 해당 후보의 native 검증은 유지하며, 같은 실행 안에서 읽은 backlog와 발행 이력 디렉터리의 변경은 결과 저장 경계에서 확인한다. 발행 파일이나 후보 판정이 달라지면 기존처럼 새 풀이 필요하다. 이 작업은 점수·선정·승인·발행을 만들거나 경로 바인딩을 완화하지 않는다.
+
+이미 승인된 defer 사건을 다시 선택할 때 기존 native 승인과 writer의 원 선택·사건 ID·자료 판본을 검증한다. 승인 기사에 실제 인용된 출처는 모두 원 선택에 속해야 하지만, 선택된 보조 출처가 원고에서 인용되지 않았다는 이유만으로 재사용을 차단하지 않는다. 발표일은 기존 날짜 비교 규칙을 사용하며, 한국 발표일을 이용한 승인은 정확히 일치하는 원문 timestamp와 변환된 날짜를 함께 확인한다.
+
 `curation.evaluate`의 `execute: true`는 기존 `search_plan` 역할의 Gemma 또는 Codex 수행자로 점수 **제안**을 만든다. 검토된 사건의 정확한 원문 인용과 기존 기사 본문을 비교 입력으로 제공하고 역할별 실제 요청 예산을 적용한다. 원문 전체는 native 저장소에 남으며 이후 사실 추출에서 선정 블록을 그대로 읽는다. 제안은 `curation_review`로 대기한다. `review_file`을 사용하는 명시적 큐레이터 검토는 같은 원문 블록의 정확한 인용·기존 기사 전체 ID·다섯 조건·항목별0~5점/이유를 확인한다. `execute`와 `review_file`은 동시에 사용하지 않는다. 사실/기사 승인과 별도다.
 
 `curation.select`는 검토한 신규성30/영향25/구체성20/지식 가치15/시의성10을100점으로 환산한다. 최소70·우선85점, 분야5·전체40 상한이며 `max_articles`는 그 안에서 운영자가 정한다. 발표일만으로 감점하거나 기사 수를 채우지 않는다. 과거 미수록 고득점이 오늘 약한 후보보다 먼저 선정된다. 선택은 불변이므로 이후 점수 수정/정책·원문·기사 이력 변경은 새 `run_id`의 풀/선정을 사용한다. 변경되지 않은 점수 검토 판본은 재사용한다.
@@ -134,7 +351,11 @@ flowchart LR
 승인 결과의 온톨로지로 기존 지식 색인을 생성하며 선택적인 `knowledge_selections_file`, `trend_review_runs`, `connection_review_run`의 native 승인을 대조한다. 후속 지식/발행 준비가 실패해도 완료한 사건·색인 참조를 먼저 저장해 다음 실행에서 재사용한다. 재사용 때도 현재 원문·승인·인계 파일을 검증한다. 이 작업의 종점은 정확한 발행 준비 인계이며 정본 수정·Drive 전송·공개·정규 운영 횟수를 만들지 않는다.
 
 ```json
-{"module":"edition","operation":"advance","parameters":{"run_id":"system-round-20261011-v1","round":true,"execute":false}}
+{
+  "module": "edition",
+  "operation": "advance",
+  "parameters": { "run_id": "system-round-20261011-v1", "round": true, "execute": false }
+}
 ```
 
 독립 CLI는 `node scripts/research-core.mjs --round --run system-round-20261011-v1 --plan-only`다. 기본 경로는 스크립트의 저장소에서 해석하므로 다른 작업 디렉터리에서도 동일 회차를 읽는다. 최초 실행은 `--daily-run` 또는 `--report/--report-sha256` 또는 `--edition/--edition-sha256`를 연결하고, 새 검토를 소비할 때 `--resume`과 해당 검토 파일을 준다. `--max-model-calls`, `--retry-failed`, `--knowledge-selections`는 같은 native 계약으로 전달한다. 이전 고정 회차 모드와 legacy core는 유지하며 둘의 검토 인수를 혼합하지 않는다.
@@ -151,20 +372,20 @@ Codex 위임의 컨텍스트 상한은131072토큰으로 분리한다. 현재 �
 
 ## 모듈과 입력·출력
 
-| 모듈             | 독립 작업                                                                                 | 입력 → 출력                                                                            |
-| ---------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `collection`     | `inventory`, `audit`, `scan`, `daily`, `targeted`, `followups`, `report`, `inquiries`                    | 등록 경로·날짜 창·표적 질의·후속 링크 → 원문/parse/수집 영수증/회차 보고서              |
-| `parsing`        | `remember_image_review`, `inspect`, `bundle`, `reparse`                                   | 저장 원문·명시적 이미지 검토 → 검증한 parse·원문 묶음·검토 기록                        |
-| `edition`        | `freeze`, `read`, `advance`                                                               | 마감된 수집 보고서 → 고정 회차·사건 처리·검토 대기·승인 결과                           |
-| `classification` | `extract`, `plan`, `review`, `inspect`, `queue`                                           | 고정 회차·명시적 관계 검토 → 원문 기반 최소 후보·사건 계획                             |
-| `curation`       | `prepare`, `evaluate`, `select`, `advance`, `status`, `feedback`                                                | 검토한 오늘/이전 계획·기존 기사 이력 → 근거 있는 점수·선정 사건·native 작성/인계        |
-| `selection`      | `prepare`, `reuse`                                                                        | 검토된 사건 계획 → 선별 원문 묶음·기존 승인 원고 재사용                                |
-| `evidence`       | `extract`, `inspect`, `review`                                                            | 선별 참조·저장 원문·명시적 사실 대조 → 추출/검토 사실                                  |
-| `writing`        | `draft`, `correct`                                                                        | 선별 참조·검증 사실·정확한 교정 파일 → 초안·상세 설명·교정 이력                        |
+| 모듈             | 독립 작업                                                                                                                                                                                | 입력 → 출력                                                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `collection`     | `inventory`, `audit`, `scan`, `daily`, `targeted`, `followups`, `report`, `inquiries`                                                                                                    | 등록 경로·날짜 창·표적 질의·후속 링크 → 원문/parse/수집 영수증/회차 보고서                                                |
+| `parsing`        | `remember_image_review`, `inspect`, `bundle`, `reparse`                                                                                                                                  | 저장 원문·명시적 이미지 검토 → 검증한 parse·원문 묶음·검토 기록                                                           |
+| `edition`        | `freeze`, `read`, `advance`                                                                                                                                                              | 마감된 수집 보고서 → 고정 회차·사건 처리·검토 대기·승인 결과                                                              |
+| `classification` | `extract`, `plan`, `review`, `inspect`, `queue`                                                                                                                                          | 고정 회차·명시적 관계 검토 → 원문 기반 최소 후보·사건 계획                                                                |
+| `curation`       | `prepare`, `evaluate`, `select`, `advance`, `status`, `feedback`                                                                                                                         | 검토한 오늘/이전 계획·기존 기사 이력 → 근거 있는 점수·선정 사건·native 작성/인계                                          |
+| `selection`      | `prepare`, `reuse`                                                                                                                                                                       | 검토된 사건 계획 → 선별 원문 묶음·기존 승인 원고 재사용                                                                   |
+| `evidence`       | `extract`, `inspect`, `review`                                                                                                                                                           | 선별 참조·저장 원문·명시적 사실 대조 → 추출/검토 사실                                                                     |
+| `writing`        | `draft`, `correct`                                                                                                                                                                       | 선별 참조·검증 사실·정확한 교정 파일 → 초안·상세 설명·교정 이력                                                           |
 | `knowledge`      | `explore`, `draft`, `project`, `index`, `read`, `review`, `connections`, `sync`, `status`, `semantic_prepare`, `semantic_status`, `semantic_retry`, `semantic_resume`, `semantic_export` | 전문용어 근거·승인 run·전체 공개 기사 → 용어 초안·온톨로지·분할 조회·검토 영수증·지속 연결 checkpoint·기사 의미 검토 색인 |
-| `validation`     | `completeness`, `progress`, `evaluation_prepare`, `evaluation_read`, `evaluation_import`, `evaluation_audit`, `scan`, `reader`, `approve` | 계획 SHA·고정 원문·명시 사람/편집 검토 → WBS·독립 검토 묶음·실제 완료 수·native 승인 |
-| `publication`    | `prepare`, `status`, `request_delivery`, `deliver`, `delivery_receipt`, `delivery_status`, `fallback`, `shadow_basis`, `shadow_record`, `shadow_status` | native 승인 인계·예약 invocation·비교 검토·raw capture → 고정 전달 요청·운영 비교·실제 검증 상태 |
-| `reasoning`      | `pending`, `read`, `submit`, `execute`                                                    | 원문·역할·출력 Schema로 고정한 요청 → Codex 또는 Ollama의 검증된 정형 결과             |
+| `validation`     | `completeness`, `progress`, `evaluation_prepare`, `evaluation_read`, `evaluation_import`, `evaluation_audit`, `scan`, `reader`, `approve`                                                | 계획 SHA·고정 원문·명시 사람/편집 검토 → WBS·독립 검토 묶음·실제 완료 수·native 승인                                      |
+| `publication`    | `prepare`, `status`, `request_delivery`, `deliver`, `delivery_receipt`, `delivery_status`, `fallback`, `shadow_basis`, `shadow_record`, `shadow_status`                                  | native 승인 인계·예약 invocation·비교 검토·raw capture → 고정 전달 요청·운영 비교·실제 검증 상태                          |
+| `reasoning`      | `pending`, `read`, `submit`, `execute`                                                                                                                                                   | 원문·역할·출력 Schema로 고정한 요청 → Codex 또는 Ollama의 검증된 정형 결과                                                |
 
 승인된 미발행 기사는 원문·정확한 prior 승인 run을 대조한 `classification.review`의 `reuse`로 재사용할 수 있다. curation의 `already_featured`는 승인 자체가 아니라 canonical 발행 이력에 그 사건 ID가 있는지 확인한다. 같은 편집 점수에서는 정확한 native 승인 재사용을 새 writer보다 먼저 선택하며, 중요도 점수·반복 페널티·분야 상한·동일 사건 중복 검사는 유지한다. 실제 발행 이력에 있는 `reuse`는 다시 선정하지 않는다.
 
@@ -215,7 +436,16 @@ OpenAI를 명시 선택한 새 요청은 [공식 Structured Outputs 지원 목�
 기존 CLI `delivery-status`의 `overall_completion`도 같은 시스템 분모·completion_scope를 사용하고 이전 운영 상태는 별도 `operational_acceptance`로 제공한다. percent는 완료 행 비율(`percentage_basis: completed_wbs_rows`)이며 공수·품질·실제 운영 성공률이 아니다. 출력/원문/승인 관문은 이 WBS 변경으로 완화하지 않는다.
 
 ```json
-{"module":"validation","operation":"progress","parameters":{"plan_file":"docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md","workflow_id":"knowledge-linking-system","evaluation_packet_run":"evaluation-human-60-source-first-20261011-v1","publication_run_id":"parallel-publication-delivery-20261011-preview-v2"}}
+{
+  "module": "validation",
+  "operation": "progress",
+  "parameters": {
+    "plan_file": "docs/LOCAL_AI_NEWS_IMPLEMENTATION_PLAN.md",
+    "workflow_id": "knowledge-linking-system",
+    "evaluation_packet_run": "evaluation-human-60-source-first-20261011-v1",
+    "publication_run_id": "parallel-publication-delivery-20261011-preview-v2"
+  }
+}
 ```
 
 새 writer·source-bound editorial author·reader는 같은 사실 ID와 같은 내용어로 리드를 다시 쓰는 설명을 차단한다. 수치·부호·단위·부정·조건·별도 상세는 삭제하지 않으며 새 단어가 있다는 이유로 유효한 분석이라고 승인하지 않는다. 기존 draft fingerprint·draftProblems·native 승인은 유지한다. 저장된 개발 응답의 `evaluation quality` 조회는 wire `num_ctx`와 native API 관측을 비교하며 API 보고값이 맞아도 전체 사용 가능 context를 인증하지 않는다.
@@ -238,7 +468,7 @@ OpenAI를 명시 선택한 새 요청은 [공식 Structured Outputs 지원 목�
 
 다국어 또는 `registered-source` 질의는 설치된 기존 Yahoo provider를 명시 선택해 언어와 month 요청 범위를 유지한다. 영문 일반 탐색의 기존 경로는 유지한다. `primary_engines/provider_requests`로 선택·시각·loopback HTTP·빈 결과·provider 실패를 보존하며 loopback200을 upstream 원문 확보로 해석하지 않는다. DDG parser/Google403을 먼저 반복하거나 정책을 우회하지 않는다. 실제0후보는 coverage false이며 별도 사건/원문 검토가 필요하다.
 
-`collection.followups(run_id, mode, candidate_key?, parent_material_id?, parent_source_run?, handoff_file?, source_run?, target_urls?, limit?, inquiry_plan_path?, inquiry_plan_sha256?, question_id?)`는 부모 원문 블록에 있는 후속 링크만 계획하거나 수집한다. `mode`는 `plan-only/reuse/collect`, `limit`은1~8이다. 정확한 원문·parse·인용 위치를 고정하고 저장 원문을 우선 재사용한다. 추가 취득에서도 대상 robots·접근 정책은 유지하며 `policy_recheck_limit: 0`으로 관련 없는 기존 차단 출처 재확인을 실행하지 않는다. 직접 collect CLI의 `--policy-recheck-limit`은0~3으로 제한하고 미지정 시 기존 기본값을 유지한다. 후보와 원문은 별도 사실·사건·편집 검토를 거친다.
+`collection.followups(run_id, mode, candidate_key?, parent_material_id?, parent_source_run?, handoff_file?, source_run?, target_urls?, limit?, inquiry_plan_path?, inquiry_plan_sha256?, question_id?)`는 부모 원문 블록에 있는 후속 링크만 계획하거나 수집한다. `mode`는 `plan-only/reuse/collect`, `limit`은1~~8이다. 정확한 원문·parse·인용 위치를 고정하고 저장 원문을 우선 재사용한다. 추가 취득에서도 대상 robots·접근 정책은 유지하며 `policy_recheck_limit: 0`으로 관련 없는 기존 차단 출처 재확인을 실행하지 않는다. 직접 collect CLI의 `--policy-recheck-limit`은0~~3으로 제한하고 미지정 시 기존 기본값을 유지한다. 후보와 원문은 별도 사실·사건·편집 검토를 거친다.
 
 native 질문 경로는 `collection.inquiries`가 반환한 `followup_parents[].next_parameters`를 그대로 전달한다. `parent_material_id`와 질문 계획의 정확한 경로·SHA·질문 ID가 필요하며 candidate/handoff/부모 수집 run과 함께 사용할 수 없다. 현재 검토/관측에서 직접 인용한 부모 material의 원문 버전·parse·raw SHA를 대조한다. canonical 후보 등록이나 날짜·정체성 승인을 대신 생성하지 않는다. 입력 변경은 실패로 보존하고, 완료 plan-only를 재사용한다. 기본 compact5도구의 `research_execute`로 같은 모듈 작업을 호출한다. 오래 실행 중인 서버가 이전 계약을 노출하면 다음 MCP 연결에서 현재 코드를 읽어야 한다.
 
@@ -341,29 +571,29 @@ node scripts/research-module.mjs run collection report \
 
 뒤 단계는 앞 단계 결과의 정확한 `path`·`sha256`를 전달한다. 임의 run만으로 `evidence.extract`나 `writing.draft`를 호출할 수 없다.
 
-| 단계                           | 필수 입력                                                                                                                      |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `collection.scan`              | `run_id`, `channel`, `since`, `until`; 선택적 `policy_recheck_limit`0~3. 명시0은 이번 수집과 무관한 보류 정책 재확인을 하지 않음 |
+| 단계                           | 필수 입력                                                                                                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `collection.scan`              | `run_id`, `channel`, `since`, `until`; 선택적 `policy_recheck_limit`0~3. 명시0은 이번 수집과 무관한 보류 정책 재확인을 하지 않음                                                    |
 | `collection.report`            | `run_id`; 기존 일일 `supplement_runs` 또는 저장 출처별 `source_runs: [{run_id, policy_recheck_limit?}]`와 선택적 `held_sources`. 완료 원문·실패 창을 다시 취득하지 않고 정확히 고정 |
-| `edition.freeze`               | `run_id`, `report_path`, `report_sha256`                                                                                       |
-| `classification.plan`          | `edition_path`, `edition_sha256`                                                                                               |
-| `classification.extract`       | `run_id`, 위 회차 참조; 선택적으로 `material_ids`, `offset`, `max_items`                                                       |
-| `classification.review`        | `run_id`, 위 회차 참조, `review_file`                                                                                          |
-| `selection.prepare`            | `run_id`, `plan_path`, `plan_sha256`, `group_id`                                                                               |
-| `evidence.extract`             | 반환된 `writer_run`을 `run_id`로 사용, `selection_path`, `selection_sha256`                                                    |
-| `evidence.review`              | 동일 `run_id`, 원문 대조한 `review_file`                                                                                       |
-| `writing.draft`                | 동일 `run_id`, `selection_path`, `selection_sha256`                                                                            |
-| `validation.approve`           | 동일 `run_id`, 정확한 초안과 근거에 대응하는 `review_file`; 수정은 `revision_file` 추가                                        |
-| `edition.advance`              | `run_id`, 회차 참조; 판정 계획·그룹별 사실/편집/수정 검토 파일·기존 온톨로지 참조; 선택적 `connection_review_run`              |
-| `publication.prepare`          | `run_id`, `workflow_path`, `workflow_sha256`; 선택적으로 `group_ids`                                                           |
-| `publication.status`           | 인계 `run_id`; native 승인·원문을 다시 검사하는 읽기 전용 조회                                                                 |
-| `publication.request_delivery` | `run_id`, `handoff_path`, `handoff_sha256`; 선택적 `preview_run_id`, `edition_spec_path`·`edition_spec_sha256` 쌍              |
-| `publication.deliver`          | `run_id`, `execution_id`, `stage`, `release_path`, `release_sha256`; 단계별 acquisition/snapshot/readback의 root 상대 path·SHA |
-| `publication.delivery_receipt` | 같은 run/execution과 `event_id`, `acquisition_path`, `acquisition_sha256`; 실제 연결 도구 capture 제출                         |
-| `publication.delivery_status`  | `run_id`; 선택적 `source_capture_run`, `source_reconcile_run`. 전달 대기·Drive 원본의 시각/차이·전달 준비와 부족 근거를 각각 조회 |
-| `validation.progress`          | `plan_file`; 선택적 `workflow_id`, `evaluation_packet_run`, `publication_run_id`, `source_capture_run`, `source_reconcile_run` |
-| `knowledge.sync`               | `workflow_id`; 선택적으로 root 상대 `basis_file`·`article_links_file`, `max_items`0~256, 정확한 `recover_lock_owner`           |
-| `knowledge.status`             | `workflow_id`; 선택적으로 대기 상태 필터와 `offset`/`limit`1~100의 읽기 전용 조회                                              |
+| `edition.freeze`               | `run_id`, `report_path`, `report_sha256`                                                                                                                                            |
+| `classification.plan`          | `edition_path`, `edition_sha256`                                                                                                                                                    |
+| `classification.extract`       | `run_id`, 위 회차 참조; 선택적으로 `material_ids`, `offset`, `max_items`                                                                                                            |
+| `classification.review`        | `run_id`, 위 회차 참조, `review_file`                                                                                                                                               |
+| `selection.prepare`            | `run_id`, `plan_path`, `plan_sha256`, `group_id`                                                                                                                                    |
+| `evidence.extract`             | 반환된 `writer_run`을 `run_id`로 사용, `selection_path`, `selection_sha256`                                                                                                         |
+| `evidence.review`              | 동일 `run_id`, 원문 대조한 `review_file`                                                                                                                                            |
+| `writing.draft`                | 동일 `run_id`, `selection_path`, `selection_sha256`                                                                                                                                 |
+| `validation.approve`           | 동일 `run_id`, 정확한 초안과 근거에 대응하는 `review_file`; 수정은 `revision_file` 추가                                                                                             |
+| `edition.advance`              | `run_id`, 회차 참조; 판정 계획·그룹별 사실/편집/수정 검토 파일·기존 온톨로지 참조; 선택적 `connection_review_run`                                                                   |
+| `publication.prepare`          | `run_id`, `workflow_path`, `workflow_sha256`; 선택적으로 `group_ids`                                                                                                                |
+| `publication.status`           | 인계 `run_id`; native 승인·원문을 다시 검사하는 읽기 전용 조회                                                                                                                      |
+| `publication.request_delivery` | `run_id`, `handoff_path`, `handoff_sha256`; 선택적 `preview_run_id`, `edition_spec_path`·`edition_spec_sha256` 쌍                                                                   |
+| `publication.deliver`          | `run_id`, `execution_id`, `stage`, `release_path`, `release_sha256`; 단계별 acquisition/snapshot/readback의 root 상대 path·SHA                                                      |
+| `publication.delivery_receipt` | 같은 run/execution과 `event_id`, `acquisition_path`, `acquisition_sha256`; 실제 연결 도구 capture 제출                                                                              |
+| `publication.delivery_status`  | `run_id`; 선택적 `source_capture_run`, `source_reconcile_run`. 전달 대기·Drive 원본의 시각/차이·전달 준비와 부족 근거를 각각 조회                                                   |
+| `validation.progress`          | `plan_file`; 선택적 `workflow_id`, `evaluation_packet_run`, `publication_run_id`, `source_capture_run`, `source_reconcile_run`                                                      |
+| `knowledge.sync`               | `workflow_id`; 선택적으로 root 상대 `basis_file`·`article_links_file`, `max_items`0~256, 정확한 `recover_lock_owner`                                                                |
+| `knowledge.status`             | `workflow_id`; 선택적으로 대기 상태 필터와 `offset`/`limit`1~100의 읽기 전용 조회                                                                                                   |
 
 `publication.request_delivery.preview_run_id`를 지정하면 exact 승인 인계에서 비공개 미리보기를 생성해 기존 전달 요청에 연결한다. 새 회차 spec은 path·bytes SHA를 함께 명시하고, 소급 회차는 기존 인계의 회차를 사용한다. 요청·승인·지식 선택·준비 입력·산출 manifest·파일 SHA를 고정하며 완료 산출물은 다시 렌더링하지 않는다. `delivery_status`는 준비 상태와 Drive/공개 상태를 분리한다. 실패한 preview의 입력이나 실행 코드를 바꾸려면 새 request와 preview ID를 함께 사용하고 원 실패·원 선택·승인 계보는 보존한다.
 
@@ -487,7 +717,14 @@ MCP 검사의 임시 root는 `.local/research-test-fixtures/guard-<임의값>/` 
 node scripts/research-module.mjs resume --job module-failed-job --background
 ```
 
-실패·중단 작업은 위 명시 재개로만 다시 시작한다. 죽은 해당 **모듈 worker 잠금**만 소유자를 대조해 복구한다. native 수집·원고 잠금은 기존 복구 도구로 확인해야 하며 임의 삭제하지 않는다. 결과 저장 직후 상태 기록 전에 중단된 경우 저장 결과 SHA와 입력 바인딩을 대조해 복구한다.
+실패 작업은 위 명시 재개로 다시 시작한다. 중단된 정규 수집은 기존 controller가
+같은 job을 재개하며, 모듈 worker 잠금과 함께 **그 job이 소유한 수집 잠금**만
+복구한다. 새 worker는 잠금에 job·입력·회차 SHA를 기록한다. 잠금 회수 전에는
+동일 입력과 회차, worker PID와 프로세스 그룹 종료, 소유자를 대조하고 잠금 원본
+바이트와 SHA를 불변 영수증에 남긴다. 다른 worker가 활동 중이거나 소유권·생존
+상태가 불명확한 경우, 소유 메타데이터가 없는 과거 잠금, 발행·Drive 잠금은
+자동 회수하지 않는다. 기존 판본에 고정된 회차는 기존 복구 절차를 유지한다.
+결과 저장 직후 상태 기록 전에 중단된 경우 저장 결과 SHA와 입력 바인딩을 대조해 복구한다.
 
 기본 worker 상한은 4(설정 가능한 상한 6)다. 같은 연구 root에서 모델 작업은 1개, 네트워크 수집 작업은 1개로 제한한다. 수집기 내부의 기존 host별 제한·병렬 수집은 유지한다. 회차 보고서는 한 호출 안에서 한 번 읽어 색인화하고, 각 원본/parse는 해시 검증한다. 매 원문마다 전체 회차 JSON을 다시 읽거나, 선별 사건 한 개를 처리할 때 전체 사건을 다시 대조하지 않는다.
 
@@ -612,11 +849,9 @@ KUKA·TD SYNNEX의 2026-10-07 공동 발표 영문/독문과 공식 AMR 기술 �
 
 `research:core`와 `research-ontology.mjs knowledge-index/impact`는 `--connection-review-run`으로 기존 명시 관계 승인을 전달한다. 승인 path/SHA는 불변 입력에 포함되며 새 관계 승인이나 graph를 자동 생성하지 않는다. 과거 수집 receipt와 current code fingerprint는 구분한다. R1-e의 저장4개 checkpoint 확인은 현재 RunState의 완료 단계 재사용만 증명하고 현재 구현으로 전체 onboarding을 다시 인증한 것은 아니다.
 
-
 ### 기사 처리 모델 고정 (2026-10-16)
 
 개발은 Sol, 기본 Codex 추론 다섯 역할은 `gpt-6-luna`다. `reasoning.pending/read`의 `requested_model`·`requested_thinking`으로 실행 대상을 확인한다. 실제 Luna에서 실행한 결과만 `reasoning.submit`에 `executor: codex`, `model: gpt-6-luna`로 제출한다. 이 값은 호출자 선언이며 서버가 실제 모델 실행을 자동 증명하거나 시작하지 않는다. 명시 모델 요청의 모델 누락/불일치는 저장 전에 거부한다. 기존 generic `codex` 요청/완료 결과는 변경하지 않으며, 명시적인 Ollama 교체의 실제 실행 모델 기록과 승인 경계도 유지한다. 모델 변경 후 옛 run의 바인딩을 수정하지 않고 새 run을 사용한다.
-
 
 ### 저장 복원 묶음과 mutation-lock 회수
 
@@ -752,7 +987,6 @@ URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 
 
 검증 범위는 로컬 표적 검사다. 코드/로컬 검증, 실제 연결, 발행, 정규 수집 완결성을 각각 판정한다. 실제 Drive 왕복, CI, 공개 페이지·RSS·digest·WebsiteData readback은 이 개발 세션에서 수행하지 않았다. 운영 관문이 통과하고 실행 증거가 확보된 뒤 실제 한 회차 발행으로 검증해야 한다.
 
-
 ### 전체 보관 감사와 명시 변경분 보관
 
 `research-storage.mjs`의 `prepare-full --root <private-root> --input <JSON>`은 `{run_id,parent_id}`로 전체 로컬 walk와 catalog를 대조한다. 원문 SHA를 다시 검사하고, 누락된 미보관 파일은 `requires_repair`로 남겨 삭제·빈 기간으로 처리하지 않는다. 이미 원격 raw bytes가 검증된 cold 파일은 기존 catalog/묶음 바인딩을 유지한다. 원래 `prepare`도 전체 감사 경로이며 일일 delta로 부르지 않는다.
@@ -760,6 +994,13 @@ URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 
 일일 변경 경로를 알고 있는 프로그램은 `change-manifest`에 `{run_id,paths:["정확한/root/상대/body.bin"]}`를 전달한다. 반환한 `manifest.path/sha256`를 `prepare-delta`의 `{run_id,parent_id,changes_path,changes_sha256}`에 그대로 전달한다. delta는 이 경로의 원문 SHA만 확인하고 전체 `os.walk`를 수행하지 않는다. 임의의 과거 날짜나 파일 mtime으로 변경 범위를 추정하지 않는다. manifest 밖의 변경·삭제나 전체 수집 완결성은 전체 감사가 판단하며 delta 성공으로 cutoff를 전진시키지 않는다. `collection.storage`도 같은 action·필드를 사용한다.
 
 각 준비 ID는 `.storage/archive-preparations/<ID>/`의 input·manifest·receipt SHA에 바인딩된다. 같은 ID 재개는 같은 입력을 요구하며 원문의 변경·외장 root 부재·cache/secret/symlink·활성 writer를 거부한다. `archive-status`는 준비된 scope·bundle ID·다음 readback 조치를 조회한다. 기존 Drive 전송은 정확한 bundle ID로 별도 실행하고, 불확실한 쓰기는 기존 journal의 동일 ID/raw readback부터 복구한다. `verify` 후 같은 준비 action을 재개해야 최종 불변 receipt가 만들어진다. 준비나 timestamp/metadata만으로 원격 보관 성공을 만들지 않는다.
+
+일부 시스템 Python의 SQLite는 Node가 마지막 WAL 연결을 닫은 직후 읽기 전용
+catalog 조회에서 `unable to open database file`을 반환한다. `archive-status`는
+그 오류에 한해서만 기존 catalog를 `mode=rw`로 다시 열고 `query_only`를 강제해
+조회한다. 다른 오류는 재시도하지 않으며 새 DB 생성이나 `immutable`로 활성 WAL을
+무시하는 처리는 하지 않는다. 이 동작은 기존 준비·검증·원격 바이트 관문을 바꾸지
+않고, SQLite가 필요한 WAL/SHM 보조 파일을 관리할 수 있게 한다.
 
 공통 `research-storage-exclusions` 정책은 JS write 등록, Python inventory와 pack 선택, 기존 연구 archive/package 선택에 적용한다. `.storage`의 전송/결함 큐, 명시한 transfer/readback/backup 캐시, 생성한 archive-staging·backups, credentials/OAuth/secrets 및 의존성은 보관 대상으로 재포함하지 않는다. 기존 catalog의 제외 대상 행은 삭제하지 않으며 새 pack에서 제외한다. 동일 원문의 여러 경로는 기존 content SHA 객체 하나를 재사용한다. 원본 source-cache나 실제 첨부를 단순히 cache라는 문자열·ZIP 확장자로 버리지 않는다. 회귀는 `tests/research-storage-backup-exclusion.test.mjs`, `tests/research-storage-delta.test.mjs`와 기존 cold-storage/archive 검사에서 확인한다.
 
@@ -802,7 +1043,6 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 
 로컬 원문 파서 검사에는 운영 venv의 절대 `RESEARCH_PYTHON`을 사용한다. 별도 개발 worktree에 venv가 없다는 이유로 `spawn ... ENOENT`가 발생하면 새 의존성을 설치하거나 검사를 약화하지 말고 기존 검증된 interpreter를 명시한다. 활성 launcher는 이 경로를 자동 전달한다.
 
-
 ### 기존 예약의 실제 실행 증거와 자동 시작
 
 2026-10-27 자동 재개 계약: `scheduled-invocation`의 `next_command`는 이제 `drive --round ... --invocation ... --invocation-sha256 ...`다. `drive`는 foreground 제어기로서 기존 native job을 background로 제출한 뒤 해당 worker 종료를 기다리고, 완료 체크포인트에서 다음 수집 묶음과 처리 단계를 이어 간다. CLI의 실행 session이 살아 있으면 관리자는 그 session을 계속 기다린다. `running`, `controller_active`, `control_yield` 또는 단일 job의 `completed`는 일일 발행 완료가 아니다. `keep_turn_open: true`에서 예약 관리 turn을 성공/DONT_NOTIFY로 끝내지 않는다. 모델·실제 검토·Drive 요청은 정확한 소유 job과 SHA로 처리한 후 같은 `drive`를 재호출한다. 관문·연결·writer 확인 등의 실제 차단이 있으면 근거와 재개 요청을 남긴다.
@@ -842,3 +1082,29 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 Signals는 이미 명시 승인된 source-publication-time의 정확한 원문 시각이 가리키는 한국 발표일을 재사용한다. 일반 날짜나 source-only 판정에 시간대 변환을 새로 추측하지 않는다.
 
 승인 문장의 inline code는 일치하는 backtick 길이를 따라 그대로 렌더링한다. 일반 문장에만 밑줄·물결·해시를 escape하며, API 필드명 내부에 표시용 역슬래시를 삽입하지 않는다. native 승인·원문·문장 SHA는 유지하고 실제 렌더링의 문장/출처 대조를 통과해야 한다.
+
+### 구형 큐레이션 체크포인트의 검증된 복구
+
+`curation.recover_checkpoint`는 중단된 구형 실행의 상위 SHA와 실제 하위 결과가 달라진 경우에 사용한다. 정확한 selection·상위 SHA, 기존 발행 인계의 불변 하위 스냅샷, 원 입력·정책·plan과 현재 native 승인을 대조한다. 기본 `apply: false`는 다음 입력과 변경 대상을 반환하며 자료를 수정하지 않는다. `apply: true`에는 관측한 하위 run/SHA를 모두 명시해야 한다. 원문·사실·초안·검토·승인·고정 입력과 실패 attempt는 유지하고, 실패 행에서 재구성한 frontier metadata와 상위 참조만 저장한다. 알 수 없는 writer·동시 변경·불일치·승인 손실은 차단한다.
+
+`curation.revise_handoff`는 이미 고정된 선정에 속한 승인 원고를 같은 사건의 native 정정 원고로 연결한다. 원래 발행 인계와 각 정정 인계의 SHA, 이전·현재 승인, 명시적인 사건 정정 이력, 발표일과 사실 변경 근거를 확인하며 원래 선정·순서·점수를 다시 계산하지 않는다. 대상 밖 사건, 중복 대상, 미완료 정정 및 원고나 이력의 변경은 차단한다. 결과는 별도 불변 인계이며 재차 읽을 때도 원래 자료와 정정 자료를 검증한다. 이 작업 자체는 Drive 전송이나 공개 발행이 아니다.
+
+비공개 미리보기에서도 같은 정정 인계를 다시 검증한다. 원래 선정에 연결된 정확한 승인 원고와 정정본의 사건 ID가 일치하는 경우에만 정정본을 최초 소개 기사로 인정한다. 오래된 기사를 임의로 추가하거나 변경된 인계·원고를 통과시키지 않으며, 원래 선정·정정 이력과 분리된 공개 발행 검증은 그대로 유지한다.
+
+예약 발행에서는 선정 인계에 연결된 각 native 기사와 실제 예약 실행·동일 수집 인계·원문 관측을 함께 확인한다. 기존 선정을 수정한 경우에는 최종 기사만 정확히 한 번 선택하면서 원래 인계와 정정 이력도 보존한다. `validation.revise_draft`는 현재 미승인 원고와 SHA가 고정된 명시적 수정 판정을 기존 작성 모델에 전달한다. 수정 결과는 별도의 편집·중요 사실 검토를 거쳐야 하며 이 작업만으로 승인하거나 발행하지 않는다.
+
+하위 저장과 발행 인계 검증은 하나의 복구 경계다. 인계 검증 실패 시 자기 저장만 직전 바이트로 복원하고, 시도·이전 결과와 오류 영수증을 불변 보존한다. 체크포인트 복구도 중단 후 같은 입력으로 재개되며 완료 영수증은 이후 정상 진행과 구분해 남는다. 원래 실패 job과 준비된 검토 파일을 지정하면 원 입력과 일치하는지 확인한 뒤, 기존 고정 실행본의 정확한 candidate 재시도와 원 job 재개 순서를 반환한다. 이 기능은 기사 승인·실행본 승격·외부 발행 권한을 생성하지 않는다.
+
+통합 검토 보정에서 수정 원고와 검토 반박이 함께 나오면 최대2회의 명시 모델 선택(`keep_correction` 또는 `keep_dispute`)을 요구한다. 앞의 선택은 모델이 작성한 원고를 그대로 사용하고 새 독립 검토로 보내며, 뒤의 선택은 기존 원고 전체를 유지한 채 반박을 재평가한다. 원결정·선택·원응답·적용 SHA를 보존하며 프로그램이 서로 다른 판단을 합성하지 않는다.
+
+### 2026-11-02 수집 복구 격리와 기사 중계 이력
+
+`collection.recover`의 `source_windows`는 `{channel_id,since,until_exclusive,source_runs}` 배열로 같은 출처의 기간별 복구 원본을 지정한다. 각 원본의 경로·기간·입력과 저장 bytes를 확인하고, 같은 URL의 관측시각이 다른 판본 중 가장 최근에 검증된 원본을 사용한다. 파싱은 같은 원문 판본·파서 지문·입력 SHA가 일치할 때만 재사용하며 이전 시도의 수집 완결성을 상속하지 않는다. 기존 `source_runs` 계약과 기존 계획은 그대로 읽는다.
+
+시간 예산 소진, 출처 잠금, 저장 복원 대기와 근거 불일치는 기간별 `waiting_sources`에 구분해 남긴다. 실행 가능한 다른 기간은 계속 진행하고, 예산 때문에 아직 고정하지 못한 원본은 재개 시 구현·정책 지문을 확인한 별도 인계에 고정한다. 원래 보고서와 시도는 변경하지 않는다. `continue`는 발행·기사 쓰기가 시작되지 않은 수집 실패 회차도 정확한 부분 보고서와 기존 실행본을 확인한 뒤 새 실행 구간으로 인계할 수 있다. 현재 인계는 원래 저장 루트 안에서만 허용한다.
+
+새 회차의 `relay_provenance: v1`은 `reasoning.relay_observe`, `relay_assign`, `relay_exit`로 기사 요청의 원 소유 job·입력 SHA·실행자·슬롯·세대·모델 설정을 기록한다. 같은 기사에서 작성자와 최종 검토자를 분리하고, 실행자 종료 후 교체된 배정의 늦은 응답은 거부한다. 마지막 인계에서는 개별 배정과 관측의 bytes를 다시 검증한다. 이 관측의 실행자·모델 신원은 Codex 호출자가 선언한 값이며, 프로그램이 호스트에서 독립 인증한 값은 아니다. 기존 회차는 원래 중계 계약을 유지한다.
+
+`ready_items`와 현재 기사 frontier를 통해 준비된 결과만 반영한다. 다른 기사의 저장 대기가 슬롯을 계속 차지하지 않으며, 복원 요청의 실제 bytes와 SHA가 일치할 때만 해당 작업을 자동 재개한다. 승인된 기사 목록이 같더라도 승인·원문·개념 등 검증된 지식 투영 입력의 SHA가 바뀌면 이전 투영을 재사용하지 않는다.
+
+2026-11-02 운영 승격 사전 확인: 개발 완료된 `tkg-article-accel-20261102-r7`은 별도 불변 실행본으로 설치했고 새 외장 경로의 비활성 workspace에 517개 구현 파일과 기존 의존성을 결속해 준비 상태를 확인했다. 기존 v13 workspace 파일·정책·seal·active runtime의 보존본과 SHA 영수증은 통합 프로젝트의 `migration-evidence/2026-11-02-r7-inactive-workspace-backup/`에 있다. native MCP 초기화·도구 목록 검사는 모델·수집·Drive 호출 없는 로컬 검사다. 기존 미완료 회차는 이전 저장 루트와 실행본에 고정되어 있으며 새 경로에서의 조회·재개는 허용되지 않는다. 2026-11-02 21:28 사전 확인에서는 04시 예약과 MCP가 기존 v13을 가리켰고, 이후 사용자 지시로 기존 회차를 보존하며 새 회차의 r7 강제 전환을 진행했다. 실제 전환 결과는 통합 프로젝트의 `migration-evidence/2026-11-02-full-migration-plan.md`를 확인한다. 후보 준비 상태는 실제 발행 완료를 뜻하지 않는다.

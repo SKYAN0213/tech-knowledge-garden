@@ -1841,14 +1841,25 @@ def main():
         if not catalog_file.exists():
             print(json.dumps({"status": "not_started"}))
             return
-        db = sqlite3.connect(catalog_file.as_uri() + "?mode=ro", uri=True)
-        db.row_factory = sqlite3.Row
-        try:
-            result = archive_preparation_status(root, db, p.get("run_id"))
-            print(json.dumps(result, ensure_ascii=False))
-        finally:
-            db.close()
-        return
+        # Some SQLite builds cannot reopen a WAL database read-only immediately
+        # after the last Node connection closes its WAL/SHM sidecars. Retry only
+        # that open error with SQLite allowed to recreate its sidecars. mode=rw
+        # cannot create a missing catalog, and query_only forbids SQL mutations.
+        for mode in ("ro", "rw"):
+            db = None
+            try:
+                db = sqlite3.connect(catalog_file.as_uri() + "?mode=" + mode, uri=True)
+                db.row_factory = sqlite3.Row
+                db.execute("PRAGMA query_only=ON")
+                result = archive_preparation_status(root, db, p.get("run_id"))
+                print(json.dumps(result, ensure_ascii=False))
+                return
+            except sqlite3.OperationalError as error:
+                if mode != "ro" or str(error) != "unable to open database file":
+                    raise
+            finally:
+                if db is not None:
+                    db.close()
     db = connect(root)
     try:
         if args.action in {"status", "pending"}:

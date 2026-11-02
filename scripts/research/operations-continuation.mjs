@@ -136,8 +136,25 @@ export async function continueOperationalRound(
     // start a separate manual segment; its original jobs and reviews stay put.
     const workflow = readJSON(ctx.root, `round-workflows/${run_id}/input.json`)
     const state = readJSON(ctx.root, `round-workflows/${run_id}/latest.json`)
+    const failedCollection = state?.status === "partial" && !state.edition && !state.curation &&
+      !state.event_workflow && !state.publication_handoff && state.article_writes === 0 &&
+      state.canonical_writes === 0 && state.candidate_published === false &&
+      state.stages?.collection?.status === "failed" && state.stages.collection.reference &&
+      Array.isArray(state.next_inputs) && state.next_inputs.length > 0 &&
+      state.next_inputs.every((item) => item.stage === "collection" && item.required?.includes("resume"))
+    if (failedCollection) {
+      const report = checked(ctx.root, state.stages.collection.reference)
+      if (report.schema !== "research-collection-report/v1" || report.status !== "partial" ||
+          report.daily_run !== workflow?.source?.daily_run || report.candidate_approved !== false ||
+          report.candidate_published !== false)
+        throw Error("Exact preserved failed-collection report required")
+      const commandDir = safePath(ctx.root, base + "commands", { materialize: false })
+      const commands = fs.existsSync(commandDir) ? fs.readdirSync(commandDir).filter((name) => name.endsWith(".json")) : []
+      if (commands.some((name) => readJSON(ctx.root, base + "commands/" + name)?.stage !== "collection"))
+        throw Error("Failed collection continuation cannot supersede later operational work")
+    }
     const collectionOnly =
-      ["collection_pending", "collection_planned"].includes(state?.status) && !state.edition
+      (["collection_pending", "collection_planned"].includes(state?.status) && !state.edition) || failedCollection
     const selectedHandoff =
       ["curation_ready", "waiting_for_reasoning"].includes(state?.status) &&
       state.edition &&
@@ -197,6 +214,7 @@ export async function continueOperationalRound(
       parent: reference(ctx.root, base + "input.json"),
       workflow: reference(ctx.root, `round-workflows/${run_id}/input.json`),
       checkpoint: reference(ctx.root, `round-workflows/${run_id}/latest.json`),
+      ...(failedCollection ? { failed_collection_report: state.stages.collection.reference } : {}),
       invocation: parent.invocation,
       daily_run: origin.source.daily_run,
       ...(processing ? { processing } : {}),
