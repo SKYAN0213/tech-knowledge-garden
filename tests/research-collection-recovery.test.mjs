@@ -16,12 +16,17 @@ import {
   readRecoverySource,
 } from "../scripts/research/source-run-recovery.mjs"
 import { recoverCollection } from "../scripts/research/collection-recovery.mjs"
-import { freezeStoredSourceFrontier } from "../scripts/research/collection-report.mjs"
+import { saveRecoveredDailyReport } from "../scripts/research/recovered-daily-report.mjs"
+import { freezeEdition } from "../scripts/research/event-pipeline.mjs"
+import { freezeStoredSourceFrontier, saveCollectionReport } from "../scripts/research/collection-report.mjs"
+import { freezeShadowCollectionInputs, freezeShadowHandoffBasis } from "../scripts/research/shadow-collection-basis.mjs"
 import { reconcilePublicationDay } from "../scripts/research/publication-date-reconciliation.mjs"
 import { module as collection } from "../scripts/research/modules/collection.mjs"
 import { validateArguments } from "../scripts/research/modules/contracts.mjs"
+import { kstDay, shiftDay } from "../scripts/research/daily-plan.mjs"
+import { reconcileSupplementalScan } from "../scripts/research/daily-scan.mjs"
 
-async function fixture(t, { mismatch = false, unreadable = false, policyBlocked = false } = {}) {
+async function fixture(t, { mismatch = false, unreadable = false, policyBlocked = false, windowOverride } = {}) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "collection-recovery-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const config = (name) => JSON.parse(fs.readFileSync(`data/research-${name}.json`))
@@ -35,7 +40,7 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
     detail_batch_size: 1,
   }
   const basis = collectionBasis(channel, acquisition.article_profiles)
-  const window = { since: "2026-10-10", until: "2026-10-17" }
+  const window = windowOverride || { since: "2026-10-10", until: "2026-10-17" }
   const docs = new Map(),
     requested = [],
     parsed = []
@@ -50,7 +55,7 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
       final_url: url,
       body_path: `documents/${id}/${digest}/body.bin`,
       body_sha256: digest,
-      observed_at: "2026-10-16T00:00:00Z",
+      observed_at: new Date().toISOString(),
       fetch_status: "captured",
       policy_status: "checked",
       policy: { allowed: true },
@@ -103,11 +108,12 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
   }
   const scan = async (v) => {
     const recoveryRuns = v["recovery-source-runs"]
+    const scanWindow = { since: v.since || window.since, until: v.until || window.until }
     const input = {
       schema: "research-list-run-input/v2",
       channel_id: channel.channel_id,
-      since: window.since,
-      until_exclusive: window.until,
+      since: scanWindow.since,
+      until_exclusive: scanWindow.until,
       reuse_listing_run: null,
       collection_basis: basis,
       policy_recheck_limit: 0,
@@ -118,9 +124,10 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
     atomicWrite(root, `runs/${v.run}/collection-input.json`, input)
     await run.stage("collection-basis", basis, () => basis)
     const reuse = v["recovery-source-run"] || recoveryRuns
-      ? createRecoverySourceReuse(root, recoveryRuns || v["recovery-source-run"], channel, basis, window, {
+      ? createRecoverySourceReuse(root, recoveryRuns || v["recovery-source-run"], channel, basis, scanWindow, {
           fetchPolicy,
           parse,
+          ...(v["test-now"] ? { now: v["test-now"] } : {}),
         })
       : null
     const result = await scanBoundedRSSRoute(
@@ -129,7 +136,7 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
       {},
       channel,
       acquisition.article_profiles,
-      window,
+      scanWindow,
       {
         fetchPolicy: reuse?.fetchPolicy || fetchPolicy,
         parseArticle: reuse?.parse || parse,
@@ -459,6 +466,419 @@ test("report recovery plans only incomplete windows and resume never repeats a c
   )
   fs.appendFileSync(path.join(f.root, "report.json"), " ")
   await assert.rejects(recoverCollection({ ...options, mode: "resume" }), /report changed/)
+})
+
+test("completed windows remain partial when the requested aggregate report is blocked", async (t) => {
+  const f = await fixture(t)
+  const report = readJSON(f.root, f.reportPath)
+  report.routes.push({
+    channel_id: "unavailable-source",
+    windows: [{
+      since: "2026-10-10",
+      until_exclusive: "2026-10-17",
+      status: "incomplete",
+      attempts: [{ run_id: "blocked-before-scan", status: "blocked" }],
+    }],
+  })
+  atomicWrite(f.root, f.reportPath, report)
+  const options = {
+    ...f,
+    repo: process.cwd(),
+    runId: "blocked-aggregate",
+    reportSha256: sha256(fs.readFileSync(path.join(f.root, f.reportPath))),
+    channels: [f.channel.channel_id],
+    publishReport: true,
+  }
+  await recoverCollection({ ...options, mode: "execute" })
+  const result = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(result.counts.completed, 1)
+  assert.equal(result.report, null)
+  assert.equal(result.report_wait.status, "evidence_blocked")
+  assert.equal(result.status, "partial")
+  assert.ok(result.required_actions.some((item) => item.kind === "report_evidence_blocked"))
+  assert.deepEqual(readJSON(f.root, f.reportPath), report)
+})
+
+test("a partial successful scan waits for the window end and resumes the same recovery", async (t) => {
+  const tomorrow = shiftDay(kstDay(Date.now()), 1)
+  const f = await fixture(t, { windowOverride: { since: "2026-10-10", until: tomorrow } })
+  const past = { since: "2026-10-10", until: "2026-10-17" }
+  await f.scan({ run: "baseline-a1", ...past })
+  await f.scan({ run: "baseline-a2", ...past, "recovery-source-run": "baseline-a1" })
+  const baseline = await f.scan({ run: "baseline-a3", ...past, "recovery-source-run": "baseline-a2" })
+  assert.equal(baseline.summary.status, "window_scanned")
+  const routeConfig = path.join(f.root, "test-daily-routes.json")
+  fs.writeFileSync(routeConfig, JSON.stringify({ schema: "research-daily-routes/v1", lookback_days: 7,
+    max_window_days: 7, routes: [{ channel_id: f.channel.channel_id, enabled: true, baseline_run: "baseline-a3" }] }))
+  const backlog = path.join(f.root, "test-backlog.json")
+  fs.writeFileSync(backlog, JSON.stringify({ schema: "research-candidates/v1", candidates: [] }))
+  const due = Date.parse(`${tomorrow}T00:00:00+09:00`)
+  let instant = Date.now(), calls = 0, failRefresh = true
+  const options = { ...f, repo: process.cwd(), runId: "future-window", publishReport: false,
+    reconcileCoverage: true, backlogFile: backlog,
+    supplementalReconciler: (args) => reconcileSupplementalScan({ ...args, configFile: routeConfig,
+      merge: async () => ({ status: "merged", changed: false, same_event_aliases: [] }) }),
+    now: () => instant, scan: async (parameters) => {
+      calls++
+      if (instant >= due && failRefresh) throw Error("Controlled listing outage")
+      if (instant >= due) {
+        const previous = f.docs.get(f.channel.url)
+        f.docs.set(f.channel.url, { ...previous, observed_at: new Date(instant).toISOString() })
+      }
+      const result = await f.scan({ ...parameters, "test-now": instant })
+      if (instant >= due) {
+        const statePath = `runs/${parameters.run}/state.json`
+        const state = readJSON(f.root, statePath)
+        atomicWrite(f.root, statePath, { ...state, started_at: new Date(instant).toISOString() })
+      }
+      return result
+    } }
+  await recoverCollection({ ...options, mode: "execute" })
+  const partial = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(partial.status, "partial")
+  assert.equal(partial.counts.completed, 0)
+  assert.equal(partial.counts.coverage_pending, 1)
+  assert.ok(partial.attempts.at(-1).coverage_reconciliation?.reconciliation_run)
+  assert.ok(partial.required_actions.some((item) => item.kind === "window_not_yet_elapsed"))
+  assert.equal(partial.next_actions[0].not_before, new Date(due).toISOString())
+  const before = calls
+  const waiting = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(waiting.status, "partial")
+  assert.equal(calls, before)
+  instant = due + 60000
+  const failed = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(failed.status, "partial")
+  assert.equal(failed.counts.completed, 0)
+  assert.equal(failed.counts.remaining, 1)
+  assert.ok(failed.required_actions.some((item) => item.kind === "inspect_saved_error"))
+  const listingRequests = f.requested.filter((url) => url === f.channel.url).length
+  failRefresh = false
+  let completed = await recoverCollection({ ...options, mode: "resume" })
+  for (let i = 0; i < 4 && completed.status !== "complete"; i++)
+    completed = await recoverCollection({ ...options, mode: "resume" })
+  assert.ok(calls >= before + 2 && calls <= before + 5)
+  assert.equal(completed.status, "complete")
+  assert.equal(completed.counts.completed, 1)
+  const reconciledAttempts = completed.attempts.filter((attempt) => attempt.coverage_reconciliation)
+  assert.equal(reconciledAttempts.length, 2)
+  assert.notEqual(reconciledAttempts[0].coverage_reconciliation.reconciliation_run,
+    reconciledAttempts[1].coverage_reconciliation.reconciliation_run)
+  for (const attempt of reconciledAttempts) {
+    const receipt = readJSON(f.root, `daily/reconciliations/${attempt.coverage_reconciliation.reconciliation_run}.json`)
+    assert.equal(receipt.scan_run, attempt.run_id)
+    assert.equal(receipt.coverage_until, attempt.coverage_reconciliation.coverage_until)
+  }
+  assert.equal(f.requested.filter((url) => url === f.channel.url).length, listingRequests + 1)
+  const finalRun = completed.attempts.at(-1).run_id
+  const finalScan = readJSON(f.root, `runs/${finalRun}/list-scan.json`)
+  const listing = readJSON(f.root, `runs/${finalRun}/documents.json`)
+    .find((document) => document.source_version_id === finalScan.listing_source_version_id)
+  assert.ok(Date.parse(listing.observed_at) >= due)
+  const finishedCalls = calls
+  const again = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(again.status, "complete")
+  assert.equal(calls, finishedCalls)
+})
+
+test("a recovered daily report retains blocked receipts and adds only the completed window", async (t) => {
+  const f = await fixture(t)
+  const daily = "daily-fixture"
+  const selected = { channel_id: f.channel.channel_id, since: f.window.since,
+    until_exclusive: f.window.until }
+  const blocked = { channel_id: "unavailable-source", since: f.window.since,
+    until_exclusive: f.window.until }
+  const attemptId = (window) => `${daily}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a1`
+  const selectedId = attemptId(selected), blockedId = attemptId(blocked)
+  const configFile = path.join(f.root, "daily-config.json")
+  fs.writeFileSync(configFile, "{}")
+  const plan = { schema: "research-daily-plan/v1", run_id: daily,
+    config_sha256: sha256(`${configFile}:${sha256(fs.readFileSync(configFile))}`), windows: [selected, blocked] }
+  atomicWrite(f.root, `daily/runs/${daily}/plan.json`, plan)
+  await freezeShadowCollectionInputs({ root: f.root, plan, configFile, sourcePaths: [configFile],
+    activeRoutes: [selected.channel_id, blocked.channel_id] })
+  await f.scan({ run: selectedId })
+  const receipts = [
+    { ...selected, schema: "research-daily-receipt/v1", daily_run: daily, attempt_id: selectedId,
+      status: "failed", reason: "detail_incomplete", started_at: "2026-10-10T00:00:00Z",
+      finished_at: "2026-10-11T00:00:00Z", candidate_keys: [], candidate_published: false },
+    { ...blocked, schema: "research-daily-receipt/v1", daily_run: daily, attempt_id: blockedId,
+      status: "blocked", reason: "source_wait", started_at: "2026-10-10T00:00:00Z",
+      finished_at: "2026-10-11T00:00:00Z", candidate_keys: [], candidate_published: false },
+  ]
+  for (const receipt of receipts) {
+    const file = `daily/runs/${daily}/receipts/${receipt.attempt_id}.json`
+    atomicWrite(f.root, file, receipt)
+  }
+  atomicWrite(f.root, `daily/runs/${daily}/summary.json`, {
+    schema: "research-daily-summary/v1", run_id: daily, receipts: receipts.length,
+  })
+  const backlogFile = path.join(f.root, "daily-backlog.json")
+  fs.writeFileSync(backlogFile, JSON.stringify({ schema: "research-candidates/v1", candidates: [] }))
+  const coverage = atomicWrite(f.root, "daily/route-coverage.json", { routes: {} })
+  const inputs = { plan_sha256: sha256(fs.readFileSync(path.join(f.root, `daily/runs/${daily}/plan.json`))),
+    receipts_sha256: sha256(JSON.stringify(receipts)), backlog_sha256: sha256(fs.readFileSync(backlogFile)),
+    daily_coverage_sha256: coverage.sha256 }
+  const handoffPath = `daily/runs/${daily}/handoffs/${sha256(JSON.stringify(inputs))}.json`
+  atomicWrite(f.root, handoffPath, { schema: "research-editorial-handoff/v1", daily_run: daily, inputs })
+  await freezeShadowHandoffBasis({ root: f.root, dailyRun: daily, handoffPath, backlogFile, receipts })
+  const savedOriginal = await saveCollectionReport({ root: f.root, runId: daily })
+  const reportPath = savedOriginal.path
+  const report = readJSON(f.root, reportPath)
+  const original = fs.readFileSync(path.join(f.root, reportPath))
+  const options = { ...f, repo: process.cwd(), runId: "receipt-frontier",
+    reportPath, reportSha256: sha256(original), channels: [f.channel.channel_id], publishReport: true }
+  const initialPartial = await recoverCollection({ ...options, mode: "execute" })
+  assert.equal(initialPartial.status, "partial")
+  assert.ok(initialPartial.report)
+  assert.equal(readJSON(f.root, initialPartial.report.path).counts.incomplete_windows, 2)
+  assert.ok(readJSON(f.root, initialPartial.report.path).materials.some((material) =>
+    material.observations.some((observation) => observation.scan_run === initialPartial.attempts[0].run_id &&
+      observation.role === "article_candidate")))
+  const result = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(result.status, "complete")
+  assert.equal(result.counts.completed, 1)
+  const updated = readJSON(f.root, result.report.path)
+  assert.equal(updated.status, "partial")
+  assert.equal(updated.counts.collected_windows, 1)
+  assert.equal(updated.counts.incomplete_windows, 1)
+  assert.equal(updated.routes.find((r) => r.channel_id === blocked.channel_id).windows[0].attempts[0].status, "blocked")
+  assert.equal(updated.recovery.base_report.sha256, sha256(original))
+  assert.deepEqual(fs.readFileSync(path.join(f.root, reportPath)), original)
+
+  const planPath = path.join(f.root, "collection-recovery/receipt-frontier/plan.json")
+  const statePath = path.join(f.root, "collection-recovery/receipt-frontier/state.json")
+  const originalPlan = fs.readFileSync(planPath), originalState = fs.readFileSync(statePath)
+  const params = { run_id: "separate-report", recovery_run_id: "receipt-frontier",
+    report_path: reportPath, report_sha256: sha256(original), plan_sha256: sha256(originalPlan),
+    state_sha256: sha256(originalState) }
+  const op = collection.operations.report_recovery
+  validateArguments(params, op.inputSchema, { root: f.root, repo: process.cwd() })
+  const separate = await op.run({ root: f.root }, params)
+  assert.equal(separate.counts.collected_windows, 1)
+  assert.equal(readJSON(f.root, separate.path).recovery.source_recovery_run, "receipt-frontier")
+  const edition = await freezeEdition({ root: f.root }, { run_id: "recovered-edition",
+    report_path: separate.path, report_sha256: separate.sha256 })
+  assert.equal(edition.status, "partial")
+  assert.equal(edition.daily_run, daily)
+  assert.deepEqual(fs.readFileSync(planPath), originalPlan)
+  assert.deepEqual(fs.readFileSync(statePath), originalState)
+  await assert.rejects(op.run({ root: f.root }, { ...params, state_sha256: "a".repeat(64) }), /SHA changed/)
+  await assert.rejects(op.run({ root: f.root }, { ...params, run_id: params.recovery_run_id }), /separate/)
+
+  const completeAttempt = result.attempts.find((attempt) => attempt.status === "window_scanned")
+  const fakeBase = structuredClone(report)
+  assert.ok(fakeBase.materials.length > 0)
+  fakeBase.materials[0].roles = ["article_candidate"]
+  fakeBase.materials[0].observations.push({ scan_run: "foreign-unowned", channel_id: "foreign",
+    observed_at: "2026-10-16T00:00:00Z", role: "article_candidate" })
+  const fakeBytes = Buffer.from(JSON.stringify(fakeBase, null, 2) + "\n")
+  const fakeSha = sha256(fakeBytes)
+  const fakePath = `daily/runs/${daily}/collection-reports/${fakeSha}.json`
+  atomicWrite(f.root, fakePath, fakeBytes)
+  const fakePlan = { schema: "research-collection-recovery-plan/v1", run_id: "fake-frontier",
+    report: { path: fakePath, sha256: fakeSha },
+    targets: [{ ...selected, source_run: completeAttempt.source_run }] }
+  atomicWrite(f.root, "collection-recovery/fake-frontier/plan.json", fakePlan)
+  atomicWrite(f.root, "collection-recovery/fake-frontier/state.json", {
+    schema: "research-collection-recovery-state/v1", plan_sha256: sha256(JSON.stringify(fakePlan)),
+    attempts: [completeAttempt],
+  })
+  const fakeOverlay = await saveRecoveredDailyReport({ root: f.root, runId: "fake-frontier",
+    baseReport: { path: fakePath, sha256: fakeSha }, attempts: [completeAttempt] })
+  await assert.rejects(freezeEdition({ root: f.root }, { run_id: "fake-base-edition",
+    report_path: fakeOverlay.path, report_sha256: fakeOverlay.sha256 }), /settled native collection report/)
+
+  const omittedAttempt = { window_key: JSON.stringify([blocked.channel_id, blocked.since, blocked.until_exclusive]),
+    run_id: "partial-elsewhere", status: "incomplete" }
+  atomicWrite(f.root, "collection-recovery/fake-frontier/state.json", {
+    schema: "research-collection-recovery-state/v1", plan_sha256: sha256(JSON.stringify(fakePlan)),
+    attempts: [completeAttempt, omittedAttempt],
+  })
+  await assert.rejects(saveRecoveredDailyReport({ root: f.root, runId: "fake-frontier",
+    baseReport: { path: fakePath, sha256: fakeSha }, attempts: [completeAttempt] }),
+  /Recovery attempts.*partial-elsewhere/)
+
+  // A different window's verified partial candidates must be handed off,
+  // even when another window in the same recovery has completed.
+  const multiDaily = "multi-daily"
+  const second = { channel_id: selected.channel_id, since: "2026-10-11", until_exclusive: selected.until_exclusive }
+  const multiId = (window) => `${multiDaily}_${window.channel_id}_${window.since.replaceAll("-", "")}_${window.until_exclusive.replaceAll("-", "")}_a1`
+  const multiPlan = { schema: "research-daily-plan/v1", run_id: multiDaily,
+    config_sha256: sha256(`${configFile}:${sha256(fs.readFileSync(configFile))}`), windows: [selected, second] }
+  atomicWrite(f.root, `daily/runs/${multiDaily}/plan.json`, multiPlan)
+  await freezeShadowCollectionInputs({ root: f.root, plan: multiPlan, configFile,
+    sourcePaths: [configFile], activeRoutes: [selected.channel_id] })
+  await f.scan({ run: multiId(selected), since: selected.since, until: selected.until_exclusive })
+  await f.scan({ run: multiId(second), since: second.since, until: second.until_exclusive })
+  const multiReceipts = [selected, second].map((window) => ({ ...window,
+    schema: "research-daily-receipt/v1", daily_run: multiDaily, attempt_id: multiId(window),
+    status: "failed", reason: "detail_incomplete", started_at: "2026-10-10T00:00:00Z",
+    finished_at: "2026-10-11T00:00:00Z", candidate_keys: [], candidate_published: false }))
+  for (const receipt of multiReceipts)
+    atomicWrite(f.root, `daily/runs/${multiDaily}/receipts/${receipt.attempt_id}.json`, receipt)
+  atomicWrite(f.root, `daily/runs/${multiDaily}/summary.json`, {
+    schema: "research-daily-summary/v1", run_id: multiDaily, receipts: multiReceipts.length })
+  const multiInputs = { plan_sha256: sha256(fs.readFileSync(path.join(f.root, `daily/runs/${multiDaily}/plan.json`))),
+    receipts_sha256: sha256(JSON.stringify(multiReceipts)), backlog_sha256: sha256(fs.readFileSync(backlogFile)),
+    daily_coverage_sha256: coverage.sha256 }
+  const multiHandoff = `daily/runs/${multiDaily}/handoffs/${sha256(JSON.stringify(multiInputs))}.json`
+  atomicWrite(f.root, multiHandoff, { schema: "research-editorial-handoff/v1", daily_run: multiDaily, inputs: multiInputs })
+  await freezeShadowHandoffBasis({ root: f.root, dailyRun: multiDaily, handoffPath: multiHandoff,
+    backlogFile, receipts: multiReceipts })
+  const multiBase = await saveCollectionReport({ root: f.root, runId: multiDaily })
+  const partialScan = await f.scan({ run: "partial-second-window", since: second.since,
+    until: second.until_exclusive, "recovery-source-run": multiId(second) })
+  assert.equal(partialScan.summary.status, "incomplete")
+  const partialAttempt = { window_key: JSON.stringify([second.channel_id, second.since, second.until_exclusive]),
+    run_id: "partial-second-window", source_run: multiId(second), status: "incomplete",
+    reason: partialScan.summary.reason }
+  const combinedPlan = { schema: "research-collection-recovery-plan/v1", run_id: "combined-frontier",
+    report: { path: multiBase.path, sha256: multiBase.sha256 },
+    targets: [{ ...selected, source_run: completeAttempt.source_run }, { ...second, source_run: multiId(second) }] }
+  atomicWrite(f.root, "collection-recovery/combined-frontier/plan.json", combinedPlan)
+  atomicWrite(f.root, "collection-recovery/combined-frontier/state.json", {
+    schema: "research-collection-recovery-state/v1", plan_sha256: sha256(JSON.stringify(combinedPlan)),
+    attempts: [completeAttempt, partialAttempt] })
+  const combined = await saveRecoveredDailyReport({ root: f.root, runId: "combined-frontier",
+    baseReport: combinedPlan.report, attempts: [completeAttempt, partialAttempt] })
+  const combinedReport = readJSON(f.root, combined.path)
+  assert.equal(combinedReport.counts.collected_windows, 1)
+  assert.equal(combinedReport.counts.incomplete_windows, 1)
+  assert.ok(combinedReport.materials.some((material) => material.observations.some((observation) =>
+    observation.scan_run === partialAttempt.run_id && observation.role === "article_candidate")))
+  assert.ok(combinedReport.pending_items.some((item) => item.scan_run === partialAttempt.run_id))
+  const combinedEdition = await freezeEdition({ root: f.root }, { run_id: "combined-partial-edition",
+    report_path: combined.path, report_sha256: combined.sha256 })
+  assert.equal(combinedEdition.status, "partial")
+
+  const reconciliationRun = `clip-frontier_coverage_${sha256(completeAttempt.window_key).slice(0, 12)}`
+  const reconciliationPath = `daily/reconciliations/${reconciliationRun}.json`
+  const reconciliation = {
+    schema: "research-supplemental-coverage/v2", reconciliation_run: reconciliationRun,
+    scan_run: completeAttempt.run_id, channel_id: selected.channel_id, since: selected.since,
+    scan_until_exclusive: selected.until_exclusive, coverage_until: "2026-10-16", candidate_published: false,
+    reconciled_at: "2026-10-16T03:00:00.000Z",
+    candidate_keys: readJSON(f.root, `runs/${completeAttempt.run_id}/candidates.json`).map((c) => c.key),
+    backlog_merge: { status: "merged", same_event_aliases: [] },
+  }
+  atomicWrite(f.root, reconciliationPath, reconciliation)
+  const recoveryStatePath = "collection-recovery/receipt-frontier/state.json"
+  const recoveryState = readJSON(f.root, recoveryStatePath)
+  const clippedAttempt = { ...completeAttempt, coverage_reconciliation: { coverage_until: "2026-10-16" } }
+  atomicWrite(f.root, recoveryStatePath, { ...recoveryState, later_checkpoint: true })
+  const clipPlan = { schema: "research-collection-recovery-plan/v1", run_id: "clip-frontier",
+    report: { path: reportPath, sha256: sha256(original) },
+    targets: [{ ...selected, source_run: completeAttempt.source_run }],
+    reconcile_coverage: true, backlog_file: backlogFile }
+  atomicWrite(f.root, "collection-recovery/clip-frontier/plan.json", clipPlan)
+  const clipStatePath = "collection-recovery/clip-frontier/state.json"
+  const clipState = { schema: "research-collection-recovery-state/v1",
+    plan_sha256: sha256(JSON.stringify(clipPlan)), attempts: [clippedAttempt] }
+  atomicWrite(f.root, clipStatePath, clipState)
+  const repeatedEdition = await freezeEdition({ root: f.root }, { run_id: "recovered-edition-again",
+    report_path: separate.path, report_sha256: separate.sha256 })
+  assert.equal(repeatedEdition.status, "partial")
+  const forged = structuredClone(readJSON(f.root, separate.path))
+  forged.counts.collected_windows = 999
+  const forgedBytes = Buffer.from(JSON.stringify(forged, null, 2) + "\n")
+  const forgedSha = sha256(forgedBytes)
+  const forgedPath = `daily/runs/${daily}/collection-reports/${forgedSha}.json`
+  atomicWrite(f.root, forgedPath, forgedBytes)
+  await assert.rejects(freezeEdition({ root: f.root }, { run_id: "forged-edition",
+    report_path: forgedPath, report_sha256: forgedSha }), /native projection/)
+  const partial = await saveRecoveredDailyReport({ root: f.root, runId: "clip-frontier",
+    baseReport: { path: reportPath, sha256: sha256(original) },
+    attempts: [clippedAttempt] })
+  const partialReport = readJSON(f.root, partial.path)
+  assert.equal(partialReport.counts.collected_windows, 0)
+  assert.equal(partialReport.counts.incomplete_windows, 2)
+  assert.equal(partialReport.routes[0].windows[0].recovered_coverage.until_exclusive, "2026-10-16")
+  assert.equal(partialReport.routes[0].windows[0].recovered_coverage.full_window, false)
+  assert.ok(report.materials.every((material) => partialReport.materials.some((item) => item.id === material.id)))
+
+  let prematureScans = 0
+  const waitOptions = { ...f, repo: process.cwd(), runId: "partial-window-wait",
+    reportPath: partial.path, reportSha256: partial.sha256, channels: [f.channel.channel_id],
+    publishReport: false, now: () => Date.parse("2026-10-16T12:00:00+09:00"),
+    scan: async (parameters) => { prematureScans++; return f.scan(parameters) } }
+  const heldBody = path.join(f.root, f.docs.get(f.channel.url).body_path)
+  fs.renameSync(heldBody, heldBody + ".held")
+  const waitingPlan = await recoverCollection({ ...waitOptions, mode: "plan-only" })
+  assert.equal(waitingPlan.waiting_sources[0].status, "window_not_yet_elapsed")
+  assert.equal(waitingPlan.waiting_sources[0].next_check_at, "2026-10-16T15:00:00.000Z")
+  const waiting = await recoverCollection({ ...waitOptions, mode: "execute" })
+  assert.equal(waiting.counts.executed, 0)
+  assert.equal(waiting.waiting_sources[0].status, "window_not_yet_elapsed")
+  assert.equal(prematureScans, 0)
+  fs.renameSync(heldBody + ".held", heldBody)
+  const afterWindow = await recoverCollection({ ...waitOptions, mode: "resume",
+    now: () => Date.parse("2026-10-17T00:01:00+09:00") })
+  assert.equal(afterWindow.counts.executed, 1)
+  assert.equal(prematureScans, 1)
+  let settled = afterWindow
+  for (let i = 0; i < 4 && settled.status !== "complete"; i++)
+    settled = await recoverCollection({ ...waitOptions, mode: "resume",
+      now: () => Date.parse("2026-10-17T00:02:00+09:00") })
+  assert.equal(settled.status, "complete", JSON.stringify(settled))
+  const settledScans = prematureScans
+  const unchanged = await recoverCollection({ ...waitOptions, mode: "resume",
+    now: () => Date.parse("2026-10-17T00:03:00+09:00") })
+  assert.equal(unchanged.counts.executed, 0)
+  assert.equal(prematureScans, settledScans)
+
+  const nextBase = { path: partial.path, sha256: partial.sha256 }
+  const nextPlan = { schema: "research-collection-recovery-plan/v1", run_id: "next-frontier",
+    report: nextBase, targets: [{ ...selected, source_run: completeAttempt.run_id }] }
+  atomicWrite(f.root, "collection-recovery/next-frontier/plan.json", nextPlan)
+  atomicWrite(f.root, "collection-recovery/next-frontier/state.json", {
+    schema: "research-collection-recovery-state/v1", plan_sha256: sha256(JSON.stringify(nextPlan)),
+    attempts: [completeAttempt],
+  })
+  await assert.rejects(saveRecoveredDailyReport({ root: f.root, runId: "next-frontier",
+    baseReport: nextBase, attempts: [completeAttempt] }),
+  /incomplete original window/)
+  const nextScan = await f.scan({ run: "later-recovery", "recovery-source-run": completeAttempt.run_id })
+  assert.equal(nextScan.summary.status, "window_scanned")
+  const nextAttempt = { ...completeAttempt, run_id: "later-recovery", source_run: completeAttempt.run_id,
+    source_runs: undefined, coverage_reconciliation: undefined }
+  const savedNextAttempt = JSON.parse(JSON.stringify(nextAttempt))
+  atomicWrite(f.root, "collection-recovery/next-frontier/state.json", {
+    schema: "research-collection-recovery-state/v1", plan_sha256: sha256(JSON.stringify(nextPlan)),
+    attempts: [savedNextAttempt],
+  })
+  const next = await saveRecoveredDailyReport({ root: f.root, runId: "next-frontier",
+    baseReport: nextBase, attempts: [savedNextAttempt] })
+  const nextReport = readJSON(f.root, next.path)
+  assert.equal(nextReport.counts.collected_windows, 1)
+  assert.equal(nextReport.counts.incomplete_windows, 1)
+  assert.equal(nextReport.recovery.history.length, 2)
+  assert.equal(nextReport.routes[0].windows[0].attempts.length, 3)
+  assert.equal(nextReport.routes[1].windows[0].attempts[0].status, "blocked")
+
+  for (const invalid of [
+    { ...reconciliation, candidate_keys: [] },
+    { ...reconciliation, backlog_merge: { status: "failed", same_event_aliases: [] } },
+  ]) {
+    atomicWrite(f.root, reconciliationPath, invalid)
+    await assert.rejects(saveRecoveredDailyReport({ root: f.root, runId: "clip-frontier",
+      baseReport: { path: reportPath, sha256: sha256(original) }, attempts: [clippedAttempt] }),
+    /Supplemental coverage receipt/)
+  }
+  const extended = { ...clippedAttempt, coverage_reconciliation: { coverage_until: selected.until_exclusive } }
+  atomicWrite(f.root, clipStatePath, { ...clipState, attempts: [extended] })
+  atomicWrite(f.root, reconciliationPath, { ...reconciliation, coverage_until: selected.until_exclusive })
+  await assert.rejects(saveRecoveredDailyReport({ root: f.root, runId: "clip-frontier",
+    baseReport: { path: reportPath, sha256: sha256(original) }, attempts: [extended] }),
+  /Supplemental coverage receipt/)
+  atomicWrite(f.root, clipStatePath, clipState)
+  atomicWrite(f.root, reconciliationPath, reconciliation)
+  const pinnedDocs = path.join(f.root, `runs/${selectedId}/documents.json`)
+  fs.appendFileSync(pinnedDocs, " ")
+  await assert.rejects(saveRecoveredDailyReport({ root: f.root, runId: "clip-frontier",
+    baseReport: { path: reportPath, sha256: sha256(original) }, attempts: [clippedAttempt] }),
+  /evidence changed/)
+  await assert.rejects(freezeEdition({ root: f.root }, { run_id: "tampered-edition",
+    report_path: separate.path, report_sha256: separate.sha256 }), /evidence changed|settled native collection report/)
 })
 
 test("detail budget continuation does not consume the failure retry allowance", async (t) => {

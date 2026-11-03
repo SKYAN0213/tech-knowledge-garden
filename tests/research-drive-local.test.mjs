@@ -638,7 +638,8 @@ test("existing collection.storage operation exposes local transfer actions", asy
   // actor-bound planners and three relay provenance operations belong to
   // reasoning, and checkpoint repair and history revalidation to curation;
   // none adds a storage operation.
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 84)
+  // report_recovery adds an offline, SHA-bound report operation, not a storage action.
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 85)
   assert.ok(
     catalog.modules
       .find((m) => m.id === "curation")

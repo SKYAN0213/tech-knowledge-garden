@@ -20,6 +20,7 @@ import {
 import { auditSourceRoutes } from "../source-route-audit.mjs"
 import { executeListScan } from "../list-scan-command.mjs"
 import { recoverCollection } from "../collection-recovery.mjs"
+import { saveRecoveredDailyReport } from "../recovered-daily-report.mjs"
 import { collectionHealthInventory } from "../collection-resilience.mjs"
 import { dailyScan } from "../daily-scan.mjs"
 import { executeTargetedSourceSearch } from "../source-targeted-search.mjs"
@@ -338,6 +339,29 @@ export const module = {
             ),
         }),
       { network: true },
+    ),
+    report_recovery: operation(
+      "기존 복구 run의 검증된 완료 창을 원래 일일 보고서에 별도 보고서로 연결한다. 기존 run과 보고서는 변경하지 않으며 미완료·미래 구간을 보존한다.",
+      schema({
+        run_id: id,
+        recovery_run_id: id,
+        report_path: file("root"),
+        report_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        plan_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        state_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+      }, ["run_id", "recovery_run_id", "report_path", "report_sha256", "plan_sha256", "state_sha256"]),
+      async (ctx, p) => {
+        if (p.run_id === p.recovery_run_id) throw Error("A separate recovered report run is required")
+        const planPath = `collection-recovery/${p.recovery_run_id}/plan.json`
+        const statePath = `collection-recovery/${p.recovery_run_id}/state.json`
+        const plan = fs.readFileSync(safePath(ctx.root, planPath))
+        const state = fs.readFileSync(safePath(ctx.root, statePath))
+        if (sha256(plan) !== p.plan_sha256 || sha256(state) !== p.state_sha256)
+          throw Error("Recovered report plan or state SHA changed")
+        return saveRecoveredDailyReport({ root: ctx.root, runId: p.recovery_run_id, reportRunId: p.run_id,
+          baseReport: { path: p.report_path, sha256: p.report_sha256 }, attempts: JSON.parse(state).attempts,
+          expectedPlanSha: p.plan_sha256, expectedStateSha: p.state_sha256 })
+      },
     ),
     report: operation(
       "저장된 일일 회차 또는 명시한 출처별 수집 창의 원문·파싱·실행 시간·용량 목록을 고정한다. 원문·보류 실패의 기존 시각을 유지하며 다시 수집하지 않는다.",

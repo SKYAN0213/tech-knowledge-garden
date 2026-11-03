@@ -127,7 +127,7 @@ const editionReader = (ctx, edition) =>
 
 export async function freezeEdition(ctx, { run_id, report_path, report_sha256 }) {
   const reference = { path: report_path, sha256: report_sha256 }
-  return withLock(ctx.root, "edition-" + run_id, () => {
+  return withLock(ctx.root, "edition-" + run_id, async () => {
     const prior = readJSON(ctx.root, `editions/${run_id}/materials.json`)
     if (prior) {
       if (JSON.stringify(prior.report) !== JSON.stringify(reference))
@@ -162,13 +162,18 @@ export async function freezeEdition(ctx, { run_id, report_path, report_sha256 })
           supplementalIds.has(ref.path.split("/")[1]),
       )
       .map((ref) => ref.path.split("/")[1])
-    const rebuilt = buildCollectionReport({
-      root: ctx.root,
-      runId: report.daily_run,
-      supplementalRuns,
-    })
-    if (sha256(JSON.stringify(rebuilt)) !== sha256(JSON.stringify(report)))
-      throw Error("Collection report is not the settled native report")
+    if (report.recovery) {
+      const { verifyRecoveredDailyReport } = await import("./recovered-daily-report.mjs")
+      await verifyRecoveredDailyReport({ root: ctx.root, reference })
+    } else {
+      const rebuilt = buildCollectionReport({
+        root: ctx.root,
+        runId: report.daily_run,
+        supplementalRuns,
+      })
+      if (sha256(JSON.stringify(rebuilt)) !== sha256(JSON.stringify(report)))
+        throw Error("Collection report is not the settled native report")
+    }
     if (report.routes.some((route) => route.windows.some((window) => window.status === "pending")))
       throw Error("Attempt all planned collection windows before freezing an edition")
     const edition = {

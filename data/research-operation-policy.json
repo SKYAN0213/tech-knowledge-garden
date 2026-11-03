@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-article-accel-20261103-r13/receipt.json",
-    "sha256": "090a4509c060762e64e4807ea71b12e759ed5fb5fc38e73453be8e5b157035c4"
+    "path": ".local/research/development-releases/tkg-article-accel-20261103-r15/receipt.json",
+    "sha256": "be41b9e15c2e4e69bb084e1024be1b447a5b6a4b83c604677871a90ca0d2e6a7"
   },
   "recovery": {
     "automatic_retry": false,

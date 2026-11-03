@@ -27,10 +27,14 @@ import {
   selectedFixture,
 } from "./fixtures/research-event-fixtures.mjs"
 
-test("twelve independently selectable modules share 84 strict operation contracts", () => {
+test("twelve independently selectable modules share 85 strict operation contracts", () => {
   const catalog = moduleCatalog()
   assert.equal(catalog.modules.length, 12)
-  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 84)
+  assert.equal(catalog.modules.flatMap((m) => m.operations).length, 85)
+  const recoveryReport = catalog.modules.find((m) => m.id === "collection").operations.find((o) => o.id === "report_recovery")
+  assert.equal(recoveryReport.network, false)
+  assert.equal(recoveryReport.model, false)
+  assert.ok(recoveryReport.inputSchema.required.includes("state_sha256"))
   const historyRevalidation = catalog.modules.find((m) => m.id === "curation").operations.find((o) => o.id === "revalidate_history")
   assert.equal(historyRevalidation.network, false)
   assert.equal(historyRevalidation.model, false)

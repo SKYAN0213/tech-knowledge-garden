@@ -151,6 +151,31 @@ export function readRecoverySource(root, runId) {
   }
 }
 
+// An ended-window refresh must observe its listings after the window closed.
+// Do not certify unseen days with a reused listing or cached article response.
+export function recoveryListingObservedAt(source, scan) {
+  const listing = [
+    ...(scan.indexDocuments || []),
+    ...(scan.documents || []).filter((document) =>
+      document.source_version_id === scan.summary.listing_source_version_id),
+  ]
+  if (!listing.length || listing.some((document) => !Number.isFinite(Date.parse(document.observed_at))))
+    throw Error("Recovered scan has no valid listing observation")
+  return Math.min(...listing.map((document) => Date.parse(document.observed_at)))
+}
+
+export function verifyFreshRecoveryListing(source, scan, target) {
+  const end = Date.parse(`${target.until_exclusive}T00:00:00+09:00`)
+  if (!Number.isFinite(end) || Date.parse(source.state.started_at) < end ||
+      source.input.recovery_source_run || source.input.recovery_source_runs ||
+      source.input.reuse_listing_run || source.input.reuse_source_run || source.input.repair_source_run ||
+      source.summary.listing_reused_from_run)
+    throw Error("A finished-window refresh requires a new non-reused listing scan")
+  if (recoveryListingObservedAt(source, scan) < end)
+    throw Error("A finished-window refresh requires newly observed listing evidence")
+  return true
+}
+
 export function createRecoverySourceReuse(root, runId, channel, basis, window, {
   fetchPolicy = fetchWithPolicy, parse = parseDocument, now = Date.now(),
 } = {}) {

@@ -4,10 +4,12 @@ import { registry } from "./discovery.mjs"
 import { collectionArticleProfiles, collectionBasis, collectionRoute } from "./scan-basis.mjs"
 import { executeListScan } from "./list-scan-command.mjs"
 import { validDay } from "./list-scan.mjs"
-import { readRecoverySource } from "./source-run-recovery.mjs"
+import { readRecoverySource, recoveryListingObservedAt, verifyFreshRecoveryListing } from "./source-run-recovery.mjs"
 import { freezeStoredSourceFrontier, saveCollectionReport } from "./collection-report.mjs"
+import { saveRecoveredDailyReport } from "./recovered-daily-report.mjs"
 import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evidence.mjs"
 import { storedListScan, verifiedDailyScan, reconcileSupplementalScan } from "./daily-scan.mjs"
+import { kstDay } from "./daily-plan.mjs"
 import { sha256 } from "./contracts.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock, withGardenOperationLock } from "./run-state.mjs"
 import { inspectSavedStorageRequest } from "./storage-request.mjs"
@@ -19,6 +21,23 @@ import {
 } from "./collection-resilience.mjs"
 
 const keyOf = (row) => JSON.stringify([row.channel_id, row.since, row.until_exclusive])
+const windowEnd = (target) => Date.parse(`${target.until_exclusive}T00:00:00+09:00`)
+function scannedCoverage(root, attempt, target) {
+  const source = readRecoverySource(root, attempt.run_id)
+  if (!Number.isFinite(Date.parse(source.state.started_at)) || source.summary.status !== "window_scanned" ||
+      keyOf({ channel_id: source.summary.channel_id, ...source.summary.window }) !== keyOf(target))
+    throw Error("Recovered source has no valid scan start for its window")
+  const scan = storedListScan(root, attempt.run_id)
+  if (attempt.refresh_after_partial_run) verifyFreshRecoveryListing(source, scan, target)
+  const day = kstDay(source.state.started_at)
+  const listingDay = kstDay(recoveryListingObservedAt(source, scan))
+  if (attempt.coverage_reconciliation?.coverage_until && !validDay(attempt.coverage_reconciliation.coverage_until))
+    throw Error("Recovered source coverage date is invalid")
+  const until = [target.until_exclusive, day, listingDay, ...(attempt.coverage_reconciliation?.coverage_until
+    ? [attempt.coverage_reconciliation.coverage_until] : [])].sort()[0]
+  if (!validDay(until)) throw Error("Recovered source coverage date is invalid")
+  return until < target.since ? target.since : until
+}
 const actionFor = (reason) =>
   reason === "detail_incomplete"
     ? "repair_details"
@@ -108,6 +127,8 @@ export async function recoverCollection({
   publishReport = false,
   reconcileCoverage,
   backlogFile,
+  supplementalReconciler = reconcileSupplementalScan,
+  now = Date.now,
 }) {
   if (
     !/^[A-Za-z0-9_-]{1,70}$/.test(runId || "") ||
@@ -181,6 +202,33 @@ export async function recoverCollection({
     )
       throw Error("Stored collection report required")
     const reportPins = new Map(report.evidence.map((pin) => [pin.path, pin]))
+    const partialCoverageWait = (route, window) => {
+      const coverage = window.recovered_coverage
+      if (!coverage || coverage.full_window !== false) return null
+      const reportRun = window.attempts.at(-1)?.run_id
+      if (coverage.run_id !== reportRun || !validDay(coverage.until_exclusive) ||
+          coverage.until_exclusive < window.since || coverage.until_exclusive >= window.until_exclusive)
+        throw Error("Recovered partial coverage differs from its original window")
+      const history = report.recovery?.history || [report.recovery?.evidence]
+      if (!Array.isArray(history) || !history.length || history.length > 100)
+        throw Error("Recovered partial coverage lacks its report history")
+      const key = keyOf({ channel_id: route.channel_id, ...window })
+      let matched = false
+      for (const ref of history) {
+        const pinned = ref && reportPins.get(ref.path)
+        if (!pinned || pinned.sha256 !== ref.sha256) throw Error("Recovered coverage history is not pinned")
+        const bytes = fs.readFileSync(safePath(root, ref.path))
+        if (sha256(bytes) !== ref.sha256) throw Error("Recovered coverage history changed")
+        const snapshot = JSON.parse(bytes)
+        if (snapshot.schema !== "research-recovered-daily-evidence/v1" || !Array.isArray(snapshot.recovered))
+          throw Error("Recovered coverage history is invalid")
+        if (snapshot.recovered.some((item) => item.window_key === key && item.run_id === reportRun &&
+            item.coverage_until === coverage.until_exclusive && item.full_window === false)) matched = true
+      }
+      if (!matched) throw Error("Recovered partial coverage lacks its exact evidence")
+      return { next_check_at: new Date(`${window.until_exclusive}T00:00:00+09:00`).toISOString(),
+        next_action: "resume_after_window_end" }
+    }
     const checkedFailedReceipt = (route, window, attempt) => {
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(report.daily_run || "") ||
           !/^[A-Za-z0-9_-]{1,100}$/.test(attempt?.run_id || ""))
@@ -320,6 +368,7 @@ export async function recoverCollection({
             return source
           })
           const sourceRun = selectedRuns[0], source = sources[0]
+          const coverageWait = partialCoverageWait(route, window)
           return {
             channel_id: route.channel_id,
             since: window.since,
@@ -334,6 +383,7 @@ export async function recoverCollection({
               ? { report_source_run: reportRun, report_source_reference: original.reference }
               : {}),
             source_reference: source.reference,
+            ...(coverageWait ? { coverage_wait: coverageWait } : {}),
             source_evidence_scope: sources.some((entry) => entry.reference.evidence.some((p) => !reportPins.has(p.path)))
               ? "report_plus_authenticated_native_checkpoints"
               : "frozen_report",
@@ -360,6 +410,13 @@ export async function recoverCollection({
             deferred_source: true,
           }
           try {
+            const coverageWait = partialCoverageWait(route, window)
+            if (coverageWait && Date.parse(coverageWait.next_check_at) > now()) {
+              if (saved && JSON.stringify(saved.coverage_wait) !== JSON.stringify(coverageWait))
+                throw Error("Recovered coverage wait changed")
+              return saved || { ...identity, source_run: window.attempts.at(-1).run_id,
+                deferred_source: true, coverage_wait: coverageWait }
+            }
             if (performance.now() - started >= timeBudgetMs)
               throw Object.assign(Error("Recovery preparation time budget exhausted"), { code: "RECOVERY_BUDGET" })
             const bindingPath = `${prefix}bindings/${sha256(key)}.json`
@@ -406,7 +463,8 @@ export async function recoverCollection({
       implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       ...(!existing || existing.implementation_dependencies ? {
         implementation_dependencies: Object.fromEntries([
-          "source-run-recovery.mjs", "list-scan-command.mjs", "scan-basis.mjs", "collection-report.mjs", "storage-request.mjs",
+          "source-run-recovery.mjs", "list-scan-command.mjs", "scan-basis.mjs", "collection-report.mjs",
+          "recovered-daily-report.mjs", "daily-scan.mjs", "daily-plan.mjs", "storage-request.mjs",
         ].map((name) => [name, sha256(fs.readFileSync(new URL(name, import.meta.url)))])),
       } : {}),
       ...(!existing || existing.policy_dependencies ? {
@@ -438,7 +496,11 @@ export async function recoverCollection({
     }))
     if (mode === "plan-only") {
       for (const target of targets)
-        if (target.source_wait && Date.parse(target.source_wait.next_check_at) > Date.now())
+        if (target.coverage_wait && Date.parse(target.coverage_wait.next_check_at) > now())
+          waitingSources.push({ channel_id: target.channel_id, since: target.since,
+            until_exclusive: target.until_exclusive, status: "window_not_yet_elapsed",
+            next_check_at: target.coverage_wait.next_check_at, next_action: target.coverage_wait.next_action })
+        else if (target.source_wait && Date.parse(target.source_wait.next_check_at) > now())
           waitingSources.push({ channel_id: target.channel_id, since: target.since,
             until_exclusive: target.until_exclusive, status: "source_cooling_down",
             next_check_at: target.source_wait.next_check_at, next_action: target.source_wait.next_action })
@@ -450,14 +512,35 @@ export async function recoverCollection({
     const reconcile = async (attempt) => {
       if (!reconcileCoverage || attempt.coverage_reconciliation) return
       try {
+        const target = targets.find((item) => keyOf(item) === attempt.window_key)
+        const source = readRecoverySource(root, attempt.run_id)
+        const listingDay = kstDay(recoveryListingObservedAt(source, storedListScan(root, attempt.run_id)))
+        // Native reconciliation uses its own current date. Never let a later
+        // reconciliation turn an older, partial snapshot into later coverage.
+        if (!target || !Number.isFinite(Date.parse(source.state.started_at)))
+          throw Error("Reconciliation source start is invalid")
+        const reconciliationStarted = new Date(now()).toISOString()
+        if ((kstDay(source.state.started_at) < kstDay(reconciliationStarted) ||
+             listingDay < kstDay(reconciliationStarted)) &&
+            [kstDay(source.state.started_at), listingDay].sort()[0] < target.until_exclusive) return
+        const priorCompleted = state.attempts.slice(0, state.attempts.indexOf(attempt)).some((a) =>
+          a.window_key === attempt.window_key && a.status === "window_scanned")
+        const reconciliationRun = runId + "_coverage_" + sha256(attempt.window_key).slice(0, 12) +
+          (priorCompleted ? "_" + sha256(attempt.run_id).slice(0, 8) : "")
         attempt.coverage_reconciliation = await withGardenOperationLock(root, () =>
-          reconcileSupplementalScan({
+          supplementalReconciler({
             root,
             scanRun: attempt.run_id,
             backlogFile,
-            reconciliationRun: runId + "_coverage_" + sha256(attempt.window_key).slice(0, 12),
+            reconciliationRun,
+            now: reconciliationStarted,
           }),
         )
+        const receipt = readJSON(root, `daily/reconciliations/${reconciliationRun}.json`)
+        if (!receipt || receipt.scan_run !== attempt.run_id || !validDay(receipt.coverage_until))
+          throw Error("Reconciled scan has no matching saved coverage receipt")
+        attempt.coverage_reconciliation = { ...attempt.coverage_reconciliation,
+          coverage_until: receipt.coverage_until, reconciliation_run: reconciliationRun }
         delete attempt.coverage_error
       } catch (error) {
         attempt.coverage_error = {
@@ -476,10 +559,23 @@ export async function recoverCollection({
       const target = resolution?.prepared || plannedTarget
       const attempts = state.attempts.filter((a) => a.window_key === keyOf(target)),
         last = attempts.at(-1)
+      let rescanPartial = false
       if (last?.status === "window_scanned") {
         try {
           verifiedDailyScan(root, last.run_id, target)
-          await reconcile(last)
+          const until = scannedCoverage(root, last, target)
+          if (until < target.until_exclusive && now() >= windowEnd(target)) {
+            // A successful early scan cannot prove days that had not elapsed.
+            // Continue the same recovery with a new, explicitly linked scan.
+            rescanPartial = true
+          } else {
+            await reconcile(last)
+            if (until < target.until_exclusive)
+              waitingSources.push({ channel_id: target.channel_id, since: target.since,
+                until_exclusive: target.until_exclusive, source_run: last.run_id,
+                status: "window_not_yet_elapsed", next_check_at: new Date(windowEnd(target)).toISOString(),
+                next_action: "resume_after_window_end" })
+          }
         } catch (error) {
           unverifiedCompleted.add(keyOf(target))
           waitingSources.push({ channel_id: target.channel_id, since: target.since,
@@ -488,18 +584,25 @@ export async function recoverCollection({
             error: { message: error.message, code: error.code || null,
               ...(error.storage_request ? { storage_request: error.storage_request } : {}) } })
         }
-        continue
+        if (!rescanPartial) continue
       }
       const failureAttempts = attempts.filter(
-        (a) => a.status !== "running" && !a.continuable,
+        (a) => !["running", "window_scanned"].includes(a.status) && !a.continuable,
       ).length
       if (
         last &&
         last.status !== "running" &&
+        !rescanPartial &&
         ((!last.continuable && !retryIncomplete) || failureAttempts >= maxAttempts)
       )
         continue
-      if (target.source_wait && Date.parse(target.source_wait.next_check_at) > Date.now()) {
+      if (target.coverage_wait && Date.parse(target.coverage_wait.next_check_at) > now()) {
+        waitingSources.push({ channel_id: target.channel_id, since: target.since,
+          until_exclusive: target.until_exclusive, status: "window_not_yet_elapsed",
+          next_check_at: target.coverage_wait.next_check_at, next_action: target.coverage_wait.next_action })
+        continue
+      }
+      if (target.source_wait && Date.parse(target.source_wait.next_check_at) > now()) {
         waitingSources.push({ channel_id: target.channel_id, since: target.since,
           until_exclusive: target.until_exclusive, status: "source_cooling_down",
           next_check_at: target.source_wait.next_check_at, next_action: target.source_wait.next_action })
@@ -517,14 +620,18 @@ export async function recoverCollection({
         })
         continue
       }
+      const refreshAfter = rescanPartial ? last.run_id :
+        !last && target.coverage_wait && now() >= Date.parse(target.coverage_wait.next_check_at)
+          ? target.report_source_run || target.source_run : null
       const attempt =
         last?.status === "running"
           ? last
           : {
               window_key: keyOf(target),
               run_id: `${runId}_r${index + 1}_a${attempts.length + 1}`,
-              source_run: last?.run_id || target.source_run,
-              ...(target.source_runs?.length > 1 ? {
+              ...(refreshAfter ? { refresh_after_partial_run: refreshAfter } :
+                { source_run: last?.run_id || target.source_run }),
+              ...(!refreshAfter && target.source_runs?.length > 1 ? {
                 source_runs: [...new Set([...(last?.run_id ? [last.run_id] : []), ...target.source_runs])],
               } : {}),
               status: "running",
@@ -572,7 +679,10 @@ export async function recoverCollection({
           finished_at: new Date().toISOString(),
         })
         delete attempt.error
-        if (attempt.status === "window_scanned") await reconcile(attempt)
+        if (attempt.status === "window_scanned") {
+          scannedCoverage(root, attempt, target)
+          await reconcile(attempt)
+        }
       } catch (error) {
         // The native scan retains its settled stages for an explicit resume.
         attempt.error = {
@@ -608,6 +718,20 @@ export async function recoverCollection({
     }
     if (publishReport && reportable.length) {
       try {
+        const receiptOnly = report.routes.some((route) => route.windows.some((window) =>
+          window.attempts.some((attempt) =>
+            reportPins.has(`daily/runs/${report.daily_run}/receipts/${attempt.run_id}.json`) &&
+            !reportPins.has(`runs/${attempt.run_id}/list-scan.json`) && attempt.status !== "window_scanned",
+          ),
+        ))
+        const nativeDailyReport = input.report.path ===
+          `daily/runs/${report.daily_run}/collection-reports/${input.report.sha256}.json`
+        if (receiptOnly && nativeDailyReport && reportable.some((attempt) =>
+          ["window_scanned", "incomplete"].includes(attempt.status))) {
+          updatedReport = await saveRecoveredDailyReport({
+            root, runId, baseReport: input.report, attempts: reportable,
+          })
+        } else {
         // A frontier has one native observation per window. Keep the immutable
         // original report and recovery history, and project the latest attempt
         // for a repaired window into the new frontier rather than duplicating it.
@@ -642,20 +766,39 @@ export async function recoverCollection({
         const id = `${runId}_report_${sha256(JSON.stringify(sourceRuns)).slice(0, 10)}`
         await freezeStoredSourceFrontier({ root, runId: id, sourceRuns })
         updatedReport = await saveCollectionReport({ root, runId: id })
+        }
       } catch (error) {
         reportWait = error.code === "STORAGE_PENDING"
           ? { status: "waiting_for_storage", storage_request: error.storage_request }
           : { status: "evidence_blocked", error: { message: error.message, code: error.code || null } }
       }
     }
-    const completed = targets.filter((target) =>
-      !unverifiedCompleted.has(keyOf(target)) &&
-      state.attempts.some((a) => a.window_key === keyOf(target) && a.status === "window_scanned"),
-    ).length
-    const coveragePending = reconcileCoverage
-      ? state.attempts.filter((a) => a.status === "window_scanned" && !a.coverage_reconciliation)
-          .length
-      : 0
+    const partialCoverage = new Map(targets.flatMap((target) => {
+      const key = keyOf(target), last = state.attempts.filter((a) => a.window_key === key).at(-1)
+      if (last?.status !== "window_scanned") return []
+      try {
+        const until = scannedCoverage(root, last, target)
+        return until < target.until_exclusive ? [[key, { run_id: last.run_id, coverage_until: until,
+          until_exclusive: target.until_exclusive, next_check_at: new Date(windowEnd(target)).toISOString() }]] : []
+      } catch (error) {
+        unverifiedCompleted.add(key)
+        if (!waitingSources.some((source) => source.source_run === last.run_id))
+          waitingSources.push({ channel_id: target.channel_id, since: target.since,
+            until_exclusive: target.until_exclusive, source_run: last.run_id, status: "invalid_evidence",
+            error: { message: error.message, code: error.code || null } })
+        return []
+      }
+    }))
+    const completed = targets.filter((target) => {
+      const key = keyOf(target), last = state.attempts.filter((a) => a.window_key === key).at(-1)
+      return !unverifiedCompleted.has(key) && !partialCoverage.has(key) && last?.status === "window_scanned"
+    }).length
+    const coveragePending = partialCoverage.size + (reconcileCoverage
+      ? targets.filter((target) => {
+          const key = keyOf(target), last = state.attempts.filter((a) => a.window_key === key).at(-1)
+          return !partialCoverage.has(key) && last?.status === "window_scanned" && !last.coverage_reconciliation
+        }).length
+      : 0)
     const continuable = targets.filter((target) => {
       const last = state.attempts.filter((a) => a.window_key === keyOf(target)).at(-1)
       if (waitingSources.some((s) => keyOf(s) === keyOf(target) && s.status !== "budget_pending")) return false
@@ -664,12 +807,16 @@ export async function recoverCollection({
     const coverageRunnable =
       reconcileCoverage &&
       state.attempts.some(
-        (a) => a.status === "window_scanned" && !a.coverage_reconciliation && !a.coverage_error,
+        (a) => a.status === "window_scanned" && !partialCoverage.has(a.window_key) &&
+          !a.coverage_reconciliation && !a.coverage_error,
       )
     const result = {
       schema: "research-collection-recovery-result/v1",
       run_id: runId,
-      status: completed === targets.length && !coveragePending ? "complete" : "partial",
+      // A requested aggregate is part of the recovery result. Completed source
+      // windows do not make a missing or blocked report complete.
+      status: completed === targets.length && !coveragePending && (!publishReport || updatedReport)
+        ? "complete" : "partial",
       counts: {
         planned: targets.length,
         completed,
@@ -682,11 +829,14 @@ export async function recoverCollection({
       waiting_sources: waitingSources,
       notifications,
       next_actions:
-        continuable.length || coverageRunnable
+        continuable.length || coverageRunnable || partialCoverage.size
           ? [
               {
                 module: "collection",
                 operation: "recover",
+                ...(!continuable.length && !coverageRunnable && partialCoverage.size
+                  ? { not_before: [...partialCoverage.values()].map((item) => item.next_check_at).sort()[0] }
+                  : {}),
                 parameters: {
                   run_id: runId,
                   mode: "resume",
@@ -696,7 +846,18 @@ export async function recoverCollection({
               },
             ]
           : [],
-      required_actions: [...waitingSources.filter((source) => source.status !== "budget_pending").map((source) => ({
+      required_actions: [
+        ...[...partialCoverage.values()].map((item) => ({
+          ...item, kind: "window_not_yet_elapsed", next_action: "resume_after_window_end",
+        })),
+        ...(reportWait ? [{
+          kind: "report_" + reportWait.status,
+          next_action: reportWait.status === "waiting_for_storage"
+            ? "restore_exact_report_evidence" : "repair_report_frontier",
+          ...(reportWait.error ? { error: reportWait.error } : {}),
+          ...(reportWait.storage_request ? { storage_request: reportWait.storage_request } : {}),
+        }] : []),
+        ...waitingSources.filter((source) => source.status !== "budget_pending").map((source) => ({
         channel_id: source.channel_id, since: source.since, until_exclusive: source.until_exclusive,
         kind: source.status, error: source.error,
         ...(source.next_check_at ? { next_check_at: source.next_check_at, next_action: source.next_action } : {}),
