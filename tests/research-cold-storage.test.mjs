@@ -16,6 +16,38 @@ import { auditCurationFrontier } from "../scripts/research/operations-runtime.mj
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex")
+function catalogFiles(storageDir) {
+  // SQLite may create an empty WAL sidecar even for a read-only connection.
+  // Continue comparing the catalog and every WAL containing actual bytes.
+  return Object.fromEntries(
+    fs
+      .readdirSync(storageDir)
+      .filter((name) => /^catalog\.sqlite(?:-wal)?$/.test(name))
+      .filter(
+        (name) =>
+          name !== "catalog.sqlite-wal" || fs.statSync(path.join(storageDir, name)).size > 0,
+      )
+      .sort()
+      .map((name) => [name, fs.readFileSync(path.join(storageDir, name))]),
+  )
+}
+
+test("catalog comparison ignores only empty WAL sidecars", (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "garden-catalog-snapshot-"))
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
+  const db = path.join(directory, "catalog.sqlite"),
+    wal = db + "-wal"
+  fs.writeFileSync(db, "catalog")
+  const before = catalogFiles(directory)
+  fs.writeFileSync(wal, "")
+  assert.deepEqual(catalogFiles(directory), before)
+  fs.writeFileSync(wal, "uncheckpointed transaction")
+  assert.notDeepEqual(catalogFiles(directory), before)
+  fs.writeFileSync(wal, "")
+  fs.writeFileSync(db, "changed catalog")
+  assert.notDeepEqual(catalogFiles(directory), before)
+})
+
 function fixture(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "garden-storage-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
@@ -122,15 +154,7 @@ test("read-only frontier audit reports an evicted payload without recording a do
   const pendingBefore = storageAction(f.root, "pending").downloads
   assert.equal(pendingBefore.length, 0)
   const storageDir = path.join(f.root, ".storage")
-  const dbFiles = () =>
-    Object.fromEntries(
-      fs
-        .readdirSync(storageDir)
-        .filter((name) => /^catalog\.sqlite(?:-wal)?$/.test(name))
-        .sort()
-        .map((name) => [name, fs.readFileSync(path.join(storageDir, name))]),
-    )
-  const databaseBefore = dbFiles()
+  const databaseBefore = catalogFiles(storageDir)
   assert.throws(
     () => auditCurationFrontier(root, selection, selection),
     (error) =>
@@ -138,7 +162,7 @@ test("read-only frontier audit reports an evicted payload without recording a do
       error.storage_request.request_not_recorded === true &&
       error.storage_request.requests[0].sha256 === hash(f.body),
   )
-  assert.deepEqual(dbFiles(), databaseBefore)
+  assert.deepEqual(catalogFiles(storageDir), databaseBefore)
   assert.deepEqual(storageAction(f.root, "pending").downloads, pendingBefore)
   // Ordinary operational reads retain their existing explicit hydration request.
   assert.throws(
