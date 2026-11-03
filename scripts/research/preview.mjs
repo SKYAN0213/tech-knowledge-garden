@@ -44,6 +44,15 @@ import { loadCurationSelection } from "./curation.mjs"
 import { checkedPlan, eventWriterBinding, loadSelectedEvent, reuseEventArticle } from "./event-pipeline.mjs"
 import { assertEditorialCoverage } from "./editorial-completeness.mjs"
 import { memoizeVerifiedArtifact } from "./verified-inputs.mjs"
+import {
+  assertSharedPreviewRenderer,
+  copyFiles,
+  prepareSharedPreviewRenderer,
+  previewRendererSpec,
+  privatePreviewRuntimeEntries,
+} from "./preview-renderer-cache.mjs"
+
+export { copyFiles } from "./preview-renderer-cache.mjs"
 
 const approvalFiles = [
   "draft.json",
@@ -688,41 +697,6 @@ function assertFiles(directory, entries, message) {
 function assertSnapshot(directory, entries, message) {
   if (JSON.stringify(fingerprints(directory)) !== JSON.stringify(entries)) throw Error(message)
 }
-export function copyFiles(source, destination, entries) {
-  for (const entry of entries) {
-    const original = safePath(source, entry.path)
-    const bytes = fs.readFileSync(original)
-    if (sha256(bytes) !== entry.sha256) throw Error("Snapshot source changed during copy")
-    const file = safePath(destination, entry.path)
-    fs.mkdirSync(path.dirname(file), { recursive: true })
-    const tmp = file + "." + randomUUID() + ".tmp"
-    try {
-      // Reflinks keep independent writable files without duplicating every
-      // preview's runtime bytes. Node uses a normal copy when unsupported.
-      fs.copyFileSync(original, tmp, fs.constants.COPYFILE_FICLONE | fs.constants.COPYFILE_EXCL)
-      fs.chmodSync(tmp, 0o600)
-      if (sha256(fs.readFileSync(tmp)) !== entry.sha256)
-        throw Error("Snapshot source changed during copy")
-      const fd = fs.openSync(tmp, "r")
-      try {
-        fs.fsyncSync(fd)
-      } finally {
-        fs.closeSync(fd)
-      }
-      safePath(destination, entry.path)
-      fs.renameSync(tmp, file)
-      const dir = fs.openSync(path.dirname(file), "r")
-      try {
-        fs.fsyncSync(dir)
-      } finally {
-        fs.closeSync(dir)
-      }
-    } finally {
-      if (fs.existsSync(tmp)) fs.unlinkSync(tmp)
-    }
-  }
-}
-
 const textBlocks = new Set([
   "article",
   "aside",
@@ -1037,7 +1011,7 @@ function runtimeFiles(repo) {
   ).sort((a, b) => a.path.localeCompare(b.path))
 }
 
-async function execute(workspace, root, relativeLog, script, args = []) {
+async function execute(workspace, root, relativeLog, script, args = [], rendererBase = null) {
   relativeLog = relativeLog.replace(/\.log$/, `-attempt-${randomUUID()}.log`)
   const log = safePath(root, relativeLog)
   fs.mkdirSync(path.dirname(log), { recursive: true })
@@ -1045,7 +1019,8 @@ async function execute(workspace, root, relativeLog, script, args = []) {
     started = Date.now()
   try {
     await new Promise((resolve, reject) => {
-      const child = spawn(process.execPath, [script, ...args], {
+      const executable = rendererBase ? path.join(rendererBase, script) : script
+      const child = spawn(process.execPath, [executable, ...args], {
         cwd: workspace,
         stdio: ["ignore", fd, fd],
         env: { ...process.env, npm_config_offline: "true" },
@@ -1325,9 +1300,8 @@ export function previewEditionProjections(
   return [...newest, ...retrospective]
 }
 
-// Copy the trusted renderer and authoring vault into a private working directory.
-// Only installed dependencies are shared; Quartz caches and all generated output
-// belong to this copy. No model, Drive, Git or publication command is invoked.
+// Authoring and generated output remain private to the run. Renderer code is
+// shared only through an exact, sealed content-addressed snapshot.
 export async function privatePreview(
   root,
   run,
@@ -1371,6 +1345,7 @@ export async function privatePreview(
         : [],
     sourceFiles = fingerprints(vault),
     runtime = runtimeFiles(repo),
+    renderer = previewRendererSpec(repo, runtime),
     navigation = conceptIndexProjection(vault, notes),
     input = {
       schema: "private-reader-preview/v1",
@@ -1381,6 +1356,7 @@ export async function privatePreview(
         : {}),
       preview_implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       node_version: process.version,
+      renderer_layout: { schema: renderer.schema, base_id: renderer.base_id },
       approvals,
       knowledge,
       ...(editionSpec ? { edition_spec: editionSpec } : {}),
@@ -1419,19 +1395,8 @@ export async function privatePreview(
   const resumeWorkspace = ["running", "failed"].includes(state.state.stages.workspace?.status)
   const staged = await state.stage("workspace", input, () => {
     copyFiles(vault, path.join(workspace, "vault"), sourceFiles)
-    copyFiles(repo, workspace, runtime)
-    const dependencies = path.join(repo, "node_modules")
-    if (
-      !fs.existsSync(dependencies) ||
-      !fs.lstatSync(dependencies).isDirectory() ||
-      fs.realpathSync(dependencies) !== dependencies
-    )
-      throw Error("Installed local dependencies required")
-    const link = path.join(workspace, "node_modules")
-    if (fs.existsSync(link)) {
-      if (!fs.lstatSync(link).isSymbolicLink() || fs.realpathSync(link) !== dependencies)
-        throw Error("Unexpected private dependency path")
-    } else fs.symlinkSync(dependencies, link, "dir")
+    copyFiles(repo, workspace, privatePreviewRuntimeEntries(runtime))
+    const rendererCache = prepareSharedPreviewRenderer(root, repo, workspace, runtime)
     for (const projection of projections)
       atomicWrite(path.join(workspace, "vault"), projection.path, projection.content)
     for (const note of notes) {
@@ -1451,6 +1416,7 @@ export async function privatePreview(
     if (navigation)
       stageApprovedNote(path.join(workspace, "vault"), { ...navigation, operation: "replace" })
     return {
+      renderer_cache: rendererCache,
       knowledge: notes.map(({ path: notePath, sha256 }) => ({ path: notePath, sha256 })),
       editions: projections.map(({ path: notePath, content, event_ids }) => ({
         path: notePath,
@@ -1472,7 +1438,7 @@ export async function privatePreview(
       ),
     }
   })
-  assertFiles(workspace, runtime, "Private renderer changed")
+  const rendererBase = assertSharedPreviewRenderer(root, repo, workspace, runtime, staged.renderer_cache)
   assertFiles(path.join(workspace, "vault"), staged.authoring, "Private authoring input changed")
   for (const [name, script, args] of [
     ["refresh", "scripts/garden.mjs", ["refresh"]],
@@ -1483,7 +1449,7 @@ export async function privatePreview(
     ["verify", "scripts/verify-site.mjs", []],
   ]) {
     const result = await state.stage(name, { staged, runtime }, () =>
-      execute(workspace, root, `runs/${run}/preview/${name}.log`, script, args),
+      execute(workspace, root, `runs/${run}/preview/${name}.log`, script, args, rendererBase),
     )
     if (sha256(fs.readFileSync(safePath(root, result.log))) !== result.log_sha256)
       throw Error("Private preview command log changed")
@@ -1495,6 +1461,7 @@ export async function privatePreview(
     "Private renderer changed authoring inputs",
   )
   assertFiles(repo, runtime, "Original renderer changed during private preview")
+  assertSharedPreviewRenderer(root, repo, workspace, runtime, staged.renderer_cache)
   for (const approval of approvals)
     if (
       sha256(

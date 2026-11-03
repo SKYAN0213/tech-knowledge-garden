@@ -615,6 +615,15 @@ node scripts/research-module.mjs run collection report \
 
 `publication.request_delivery.preview_run_id`를 지정하면 exact 승인 인계에서 비공개 미리보기를 생성해 기존 전달 요청에 연결한다. 새 회차 spec은 path·bytes SHA를 함께 명시하고, 소급 회차는 기존 인계의 회차를 사용한다. 요청·승인·지식 선택·준비 입력·산출 manifest·파일 SHA를 고정하며 완료 산출물은 다시 렌더링하지 않는다. `delivery_status`는 준비 상태와 Drive/공개 상태를 분리한다. 실패한 preview의 입력이나 실행 코드를 바꾸려면 새 request와 preview ID를 함께 사용하고 원 실패·원 선택·승인 계보는 보존한다.
 
+새 비공개 미리보기는 렌더러 입력·Node 버전·설치된 의존성 경로와 공유 범위를
+SHA로 고정하고, 같은 입력의 읽기 전용 렌더러 사본을 research root의
+`runtime/preview-renderer-bases/<SHA>`에서 공유한다. 원고·웹 소스·Quartz 실행
+캐시·웹/RSS/digest 결과는 회차별 작업공간에 둔다. 공유 코드는 지정된 경로만
+연결하며 사용 전후 원본과 사본의 무결성을 확인한다. 백업에서 제외되는 공용
+캐시와 연결이 없으면 같은 입력 SHA를 검증해 재생성하고, 변경되거나 다른 곳을
+가리키면 중단한다. 원래 v1 미리보기 manifest와 출력 경로는 유지하며, 과거
+미리보기나 기존 승인·발행 기록은 이 변경으로 수정하지 않는다.
+
 `source_capture_run`을 지정한 조회는 이미 확보한 `drive-source/<run>/capture.json`의 정확한 source snapshot·raw receipt·파일 bytes를 검증하고 현재 작업본과 대조한다. 관측 후10분이 지나면 `freshness: stale`, 차이가 있으면 `working_copy_matches: false`로 반환한다. 읽기 전용 조회가 원격 파일을 다시 내려받거나 승인·전달을 만들지는 않는다. missing 또는 변경된 capture는 오류이며 미확인 원본을 확보됐다고 채우지 않는다. 기본 도구5개를 유지하며 현재 내부 작업은 목적별 보강을 포함한65개다.
 
 `source_reconcile_run`은 `drive-reconcile/<run>/reconciliation.json`의 원 capture·지식 checkpoint·native 승인·고정 전달 bytes를 읽는다. 기존 승인으로 재현한 파일 수와 실제 보류 파일·현재 작업본 차이를 분리하고 `stored_source_reconciliation`으로 반환한다. 과거 준비 시점의 구현 SHA와 현재 reader의 구현 SHA도 분리한다. 로컬 전달 준비가 완료돼도 stale 원본을 새 관측으로 바꾸거나 release·업로드를 허용하지 않는다. 전달 준비와 원격 적용은 다른 단계다.
