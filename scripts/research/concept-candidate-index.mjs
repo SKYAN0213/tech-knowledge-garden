@@ -240,6 +240,48 @@ function lexicalScores(query, index) {
   return [...scores].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "en"))
 }
 
+// A pre-approval article cannot use the approved-article embedding pilot as
+// evidence for reducing its review scope. These local hints only order the
+// reviewer's attention; the complete registry remains in the review packet.
+export function rankPreapprovalConceptHints({
+  query,
+  concepts,
+  limit = DEFAULT_CONCEPT_CANDIDATE_LIMIT,
+}) {
+  if (!Array.isArray(concepts) || !Number.isInteger(limit) || limit < 1 || limit > 64)
+    throw Error("Reviewed concept inventory and bounded hint limit required")
+  const ids = new Set(),
+    documents = concepts.map((concept) => {
+      if (!conceptIdPattern.test(concept.concept_id || "") || ids.has(concept.concept_id))
+        throw Error("Distinct reviewed concept IDs required for article hints")
+      ids.add(concept.concept_id)
+      const names = [concept.title, concept.label, ...(concept.aliases || [])]
+        .filter(nonempty)
+        .map(exactName)
+        .filter(Boolean)
+      return {
+        concept_id: concept.concept_id,
+        tokens: tokenize(conceptCandidateProfile(concept)),
+        exact_names: [...new Set(names)],
+      }
+    }),
+    text = typeof query === "string" ? query.trim() : "",
+    exact_match_ids = documents
+      .filter((document) => document.exact_names.some((name) => containsExactName(text, name)))
+      .map((document) => document.concept_id)
+      .sort(),
+    ranked_ids = text ? lexicalScores(text, { documents }).map(([id]) => id) : []
+  return {
+    schema: "research-preapproval-concept-hints/v1",
+    query_sha256: sha256(text),
+    total_concepts: documents.length,
+    exact_match_ids,
+    priority_ids: [...new Set([...exact_match_ids, ...ranked_ids.slice(0, limit)])],
+    mode: "priority_only_full_registry_required",
+    review_status: "unreviewed",
+  }
+}
+
 function cosine(left, right) {
   if (!Array.isArray(left) || left.length !== right.length || left.some((n) => !Number.isFinite(n)))
     throw Error("Query embedding does not match the pinned concept index")

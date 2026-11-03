@@ -96,6 +96,27 @@ export function memoizeVerifiedInput(ctx, key, operation) {
   return memoizeVerifiedArtifact(key, operation)
 }
 
+// Control-path timings are invocation-local observations, not model time or
+// persisted input identity. Missing stages are omitted instead of reported as 0.
+export function measureVerifiedInputStage(name, operation) {
+  if (!/^[a-z][a-z0-9_]{0,63}$/.test(name || "") || typeof operation !== "function")
+    throw Error("Named synchronous verified-input stage required")
+  const s = sessions.getStore()
+  if (!s) return operation()
+  const started = performance.now()
+  try {
+    const result = operation()
+    if (result && typeof result.then === "function")
+      throw Error("Verified-input stage must be synchronous")
+    return result
+  } finally {
+    const row = s.metrics.stages[name] || { calls: 0, elapsed_ms: 0 }
+    row.calls++
+    row.elapsed_ms += performance.now() - started
+    s.metrics.stages[name] = row
+  }
+}
+
 export function memoizeVerifiedArtifact(key, operation) {
   const s = sessions.getStore()
   if (!s) return operation()
@@ -158,6 +179,7 @@ export async function withVerifiedInputSession(ctx, operation) {
       boundary_checks: 0,
       boundary_ms: 0,
       validation_ms: 0,
+      stages: {},
     },
   }
   return sessions.run(s, async () => {

@@ -38,6 +38,12 @@ export function projectIntakeOntology(candidates, { sameEventAliases = new Map()
   if (!(sameEventAliases instanceof Map))
     throw Error("Validated same-event source aliases required")
   const nodes = []
+  const nodeIds = new Set()
+  const addNode = (node) => {
+    if (nodeIds.has(node.id)) return
+    nodeIds.add(node.id)
+    nodes.push(node)
+  }
   const relations = []
   const keys = new Set()
   const candidateByKey = new Map()
@@ -59,7 +65,7 @@ export function projectIntakeOntology(candidates, { sameEventAliases = new Map()
             ? "verified_from_source_receipt"
             : "valid"
           : "invalid"
-    nodes.push({
+    addNode({
       id: `candidate:${candidate.key}`,
       type: "Candidate",
       key: candidate.key,
@@ -97,24 +103,21 @@ export function projectIntakeOntology(candidates, { sameEventAliases = new Map()
       priorCandidates.add(candidate.key)
       urls.set(url, priorCandidates)
       const sourceId = `source:${url}`
-      if (!nodes.some((node) => node.id === sourceId))
-        nodes.push({ id: sourceId, type: "Source", url })
+      addNode({ id: sourceId, type: "Source", url })
       relations.push({ from: `candidate:${candidate.key}`, type: "discoveredAt", to: sourceId })
     }
     if (candidate.article_source_version_id) {
       const versionId = `source-version:${candidate.article_source_version_id}`
-      if (!nodes.some((node) => node.id === versionId))
-        nodes.push({
-          id: versionId,
-          type: "SourceVersion",
-          source_version_id: candidate.article_source_version_id,
-        })
+      addNode({
+        id: versionId,
+        type: "SourceVersion",
+        source_version_id: candidate.article_source_version_id,
+      })
       relations.push({ from: `candidate:${candidate.key}`, type: "observedVersion", to: versionId })
     }
     if (candidate.event_id) {
       const eventId = `event:${candidate.event_id}`
-      if (!nodes.some((node) => node.id === eventId))
-        nodes.push({ id: eventId, type: "Event", event_id: candidate.event_id })
+      addNode({ id: eventId, type: "Event", event_id: candidate.event_id })
       relations.push({
         from: `candidate:${candidate.key}`,
         type: "linkedEvent",

@@ -437,6 +437,14 @@ test("minimal source-grounded event proposals are paged, unreviewed and reused w
   assert.equal(provider.calls, count)
   assert.equal(again.model_calls, 0)
   assert.deepEqual(again.proposals, first.proposals)
+  const successor = await extractEditionEventProposals(
+    f.ctx,
+    { ...p, run_id: "auto-events-successor" },
+    { baseProvider: provider },
+  )
+  assert.equal(provider.calls, count)
+  assert.equal(successor.model_calls, 0)
+  assert.deepEqual(successor.proposals, first.proposals)
   assert.equal(fs.existsSync(safePath(f.root, "runs/auto-events/draft.json")), false)
 })
 

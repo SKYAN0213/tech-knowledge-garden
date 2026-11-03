@@ -3,6 +3,7 @@ import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { spawnSync } from "node:child_process"
 import {
   evidenceReference,
   finalizeDevelopmentRelease,
@@ -23,6 +24,7 @@ import { driveOperationalRound } from "../scripts/research/operations-driver.mjs
 import { atomicCreate, atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { continueOperationalRound } from "../scripts/research/operations-continuation.mjs"
+import { createReasoningTask, submitReasoningResult } from "../scripts/research/reasoning-tasks.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import {
   activateOperationsRuntime,
@@ -132,6 +134,63 @@ async function setup(t, { commonAssets = false, rendererAssets = false, retiredW
       invocation_sha256: invocation.sha256,
     },
   }
+}
+
+async function pendingProposalFixture(t) {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const run = f.p.run_id
+  const parent = readJSON(f.root, `operations/rounds/${run}/input.json`)
+  const workflow = {
+    run_id: run,
+    source: { kind: "daily", daily_run: "daily-original" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  atomicCreate(f.root, `round-workflows/${run}/input.json`, workflow)
+  const report = atomicCreate(f.root, "proposal-partial-report.json", {
+    schema: "research-collection-report/v1", daily_run: "daily-original", status: "partial",
+    candidate_approved: false, candidate_published: false, counts: { pending_windows: 0 },
+  })
+  const edition = atomicCreate(f.root, "proposal-frozen-edition.json", {
+    schema: "research-edition-materials/v1", daily_run: "daily-original", status: "partial",
+    report, candidate_approved: false, candidate_published: false,
+  })
+  const jobId = "module-event-proposal-fixture"
+  const parameters = { execute: true, propose: true, review_mode: "combined/v1",
+    run_id: run, round: true, collect: false }
+  const jobInput = { job_id: jobId, module: "edition", operation: "advance", parameters,
+    context: { operationalRound: { round_id: run, round_input_sha256: sha256(JSON.stringify(parent)) } } }
+  const jobInputSha = sha256(JSON.stringify(jobInput))
+  atomicCreate(f.root, `module-jobs/${jobId}/input.json`, jobInput)
+  const stopped = spawnSync(process.execPath, ["-e", ""], { stdio: "ignore" })
+  assert.equal(stopped.status, 0)
+  assert.ok(stopped.pid > 0)
+  const jobState = { job_id: jobId, input_sha256: jobInputSha,
+    state: "waiting_for_reasoning", pid: stopped.pid }
+  atomicCreate(f.root, `module-jobs/${jobId}/state.json`, jobState)
+  const owner = { job_id: jobId, input_sha256: jobInputSha,
+    round_id: run, round_input_sha256: sha256(JSON.stringify(parent)) }
+  const created = createReasoningTask(f.root, {
+    run: "ev-prop-" + "a".repeat(40), role: "search_plan",
+    binding: { settings: { model: "gpt-6-luna", provider: "codex", think: "medium" } },
+    input: { schema: { type: "object", required: ["events"],
+      properties: { events: { type: "array" } }, additionalProperties: false } },
+    owner,
+  })
+  const task = { task_id: created.task_id, request_sha256: created.request_sha256 }
+  atomicWrite(f.root, `module-jobs/${jobId}/state.json`, { ...jobState, reasoning_task: task })
+  atomicCreate(f.root, `operations/rounds/${run}/commands/proposal.json`, {
+    stage: "processing", module: "edition", operation: "advance", parameters, job_id: jobId,
+  })
+  const state = { status: "waiting_for_reasoning", input_sha256: sha256(JSON.stringify(workflow)),
+    edition, article_writes: 0, canonical_writes: 0, candidate_published: false,
+    stages: { collection: { status: "partial", reference: report },
+      edition: { status: "frozen", reference: edition },
+      events: { status: "waiting_for_reasoning", reasoning_task: task } },
+    next_inputs: [{ stage: "reasoning", reasoning_task: task, required: ["reasoning_result", "resume"] }] }
+  atomicCreate(f.root, `round-workflows/${run}/latest.json`, state)
+  return { ...f, run, parent, workflow, report, edition, jobId, jobInput, jobState, task, state }
 }
 
 test("runtime cutover refuses the real submission lock and a terminal worker still cleaning up", async (t) => {
@@ -614,6 +673,92 @@ test("a frozen uncurated edition continues without recollection or changing its 
   assert.equal(seen.edition_sha256, edition.sha256)
   assert.equal(seen.propose, true)
   assert.equal(seen.collect, false)
+})
+
+test("a stopped pending event proposal continues the same frozen edition and retires only its old request", async (t) => {
+  const f = await pendingProposalFixture(t)
+  const parentPath = `operations/rounds/${f.run}/input.json`
+  const originalParent = fs.readFileSync(path.join(f.root, parentPath))
+  const requestPath = `reasoning-tasks/${f.task.task_id}/request.json`
+  const originalRequest = fs.readFileSync(path.join(f.root, requestPath))
+  const parameters = { run_id: f.run, successor: "proposal-successor", reason: "Switch verified runtime" }
+  const result = await continueOperationalRound(f.ctx, parameters)
+  assert.equal(result.status, "continuation_ready")
+  assert.equal(result.daily_run, "daily-original")
+  assert.equal(result.scheduled_runs_counted, 0)
+  const continuation = readJSON(f.root, result.source.path)
+  const restart = readJSON(f.root, continuation.proposal_restart.path)
+  const retirement = readJSON(f.root, continuation.proposal_retirement.path)
+  assert.deepEqual(continuation.processing, { edition: f.edition })
+  assert.deepEqual(restart.task, f.task)
+  assert.deepEqual(restart.collection_report, f.report)
+  assert.equal(retirement.task_id, f.task.task_id)
+  assert.equal(retirement.reason, `Restart ${f.run} as ${parameters.successor}`)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, parentPath)), originalParent)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, requestPath)), originalRequest)
+  assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
+  assert.deepEqual(await continueOperationalRound(f.ctx, parameters), result)
+  await assert.rejects(submitReasoningResult(f.root, { ...f.task, output: { events: [] },
+    executor: "codex", model: "gpt-6-luna" }), /retired/)
+  const args = JSON.parse(result.next_command[result.next_command.indexOf("--json") + 1])
+  assert.equal(args.parameters.edition_path, f.edition.path)
+  assert.equal(args.parameters.edition_sha256, f.edition.sha256)
+  await assert.rejects(runOperationalRound(f.ctx, { run_id: result.run_id, stage: "collection",
+    parameters: { collect: true } }), /Selected continuation/)
+  atomicCreate(f.root, `round-workflows/${result.run_id}/latest.json`, { edition: f.edition })
+  let seen
+  await runOperationalRound(f.ctx, { run_id: result.run_id, stage: "processing" }, {
+    submit: async (_ctx, module, operation, values, options) => {
+      seen = values
+      const input = { job_id: options.jobId, module, operation, parameters: values, context: _ctx }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/input.json`, input)
+      const state = { job_id: options.jobId, state: "queued", input_sha256: sha256(JSON.stringify(input)) }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/state.json`, state)
+      return state
+    },
+  })
+  assert.equal(seen.edition_path, f.edition.path)
+  assert.equal(seen.edition_sha256, f.edition.sha256)
+  assert.equal(seen.propose, true)
+  assert.equal(seen.collect, false)
+})
+
+test("pending proposal restart rejects live workers, later work and completed old results", async (t) => {
+  const f = await pendingProposalFixture(t)
+  const p = { run_id: f.run, successor: "guarded-proposal", reason: "Switch verified runtime" }
+  const statePath = `module-jobs/${f.jobId}/state.json`
+  atomicWrite(f.root, statePath, { ...f.jobState, reasoning_task: f.task, pid: process.pid })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /worker is still alive/)
+  atomicWrite(f.root, statePath, { ...f.jobState, reasoning_task: f.task })
+  const extra = `operations/rounds/${f.run}/commands/publication.json`
+  atomicCreate(f.root, extra, { stage: "publication", job_id: "module-unrelated" })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /other operational work/)
+  fs.unlinkSync(path.join(f.root, extra))
+  const workflowState = `round-workflows/${f.run}/latest.json`
+  atomicWrite(f.root, workflowState, { ...f.state, article_writes: 1 })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /Continuation requires/)
+  atomicWrite(f.root, workflowState, f.state)
+  assert.equal(readJSON(f.root, `reasoning-tasks/${f.task.task_id}/retired.json`), null)
+  await submitReasoningResult(f.root, { ...f.task, output: { events: [] },
+    executor: "codex", model: "gpt-6-luna" })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /Completed event proposal/)
+  assert.equal(readJSON(f.root, `reasoning-tasks/${f.task.task_id}/retired.json`), null)
+})
+
+test("a continued event proposal detects changed original request, job or retirement evidence", async (t) => {
+  const f = await pendingProposalFixture(t)
+  const result = await continueOperationalRound(f.ctx, {
+    run_id: f.run, successor: "proposal-proof", reason: "Switch verified runtime",
+  })
+  const continuation = readJSON(f.root, result.source.path)
+  const restart = readJSON(f.root, continuation.proposal_restart.path)
+  for (const ref of [restart.request, restart.job_input, restart.job_state, continuation.proposal_retirement]) {
+    const file = path.join(f.root, ref.path), original = fs.readFileSync(file)
+    fs.appendFileSync(file, " ")
+    assert.throws(() => inspectOperationalPin(f.ctx, result.run_id), /evidence changed/)
+    fs.writeFileSync(file, original)
+  }
+  assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
 })
 
 test("an explicit selected-handoff recovery pins a new manual segment and rejects changed or recollected inputs", async (t) => {

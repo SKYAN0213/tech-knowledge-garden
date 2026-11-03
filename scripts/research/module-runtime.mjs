@@ -159,6 +159,7 @@ function inputFingerprint(moduleId) {
         "curation.mjs",
         "curation-workflow.mjs",
         "combined-review.mjs",
+        "concept-candidate-index.mjs",
         "verified-inputs.mjs",
         "briefing-composition.mjs",
         "curation-insights.mjs",
@@ -499,7 +500,9 @@ function recoverInterruptedWorkflowLocks(ctx, jobId, kind) {
     input.module !== "edition" ||
     input.operation !== "advance" ||
     params.round !== true ||
-    (collection ? params.collect !== true || params.stop_after_collection !== true : params.collect !== false) ||
+    (collection
+      ? params.collect !== true || params.stop_after_collection !== true
+      : params.collect !== false) ||
     !owner ||
     !/^[A-Za-z0-9_-]{1,70}$/.test(owner.round_id || "") ||
     !/^[a-f0-9]{64}$/.test(owner.round_input_sha256 || "") ||
@@ -518,10 +521,16 @@ function recoverInterruptedWorkflowLocks(ctx, jobId, kind) {
   if (!collection) {
     const manifest = partialRecoveryManifest({ ...ctx, operationalRound: owner })
     const launch = readJSON(ctx.root, `${base(jobId)}launch.json`)
-    if (!manifest || launch?.pid !== state.pid || launch.job_id !== jobId ||
-        launch.attempt !== state.attempt || !Number.isFinite(Date.parse(launch.launched_at || "")))
+    if (
+      !manifest ||
+      launch?.pid !== state.pid ||
+      launch.job_id !== jobId ||
+      launch.attempt !== state.attempt ||
+      !Number.isFinite(Date.parse(launch.launched_at || ""))
+    )
       throw Error("Exact interrupted partial recovery worker launch required; preserve locks")
-    curationRun = "round-curation-" + sha256(JSON.stringify([owner.round_id, manifest.selection])).slice(0, 48)
+    curationRun =
+      "round-curation-" + sha256(JSON.stringify([owner.round_id, manifest.selection])).slice(0, 48)
   }
   const expectedOwner = {
     job_id: jobId,
@@ -544,13 +553,15 @@ function recoverInterruptedWorkflowLocks(ctx, jobId, kind) {
   const names = fs.existsSync(directory)
     ? fs.readdirSync(directory).filter((name) => name.endsWith(".json"))
     : []
-  const allow = (name) => name === `round-workflow-${owner.round_id}` ||
+  const allow = (name) =>
+    name === `round-workflow-${owner.round_id}` ||
     (collection
       ? ["garden-operation", "daily-acquisition"].includes(name) ||
         /^(?:collection-source|run)-[A-Za-z0-9_.-]+$/.test(name) ||
         /^(?:source|source-policy|policy-watch)-[a-f0-9]{20}$/.test(name) ||
         /^host-[a-f0-9]{32}$/.test(name)
-      : name === `curation-workflow-${curationRun}` || name === "event-selection" ||
+      : name === `curation-workflow-${curationRun}` ||
+        name === "event-selection" ||
         /^event-workflow-cur-events-[a-f0-9]{40}$/.test(name) ||
         /^run-event-[a-f0-9]{36}$/.test(name) ||
         /^(?:event-cache-|run-)ev-facts-[a-f0-9]{40}$/.test(name) ||
@@ -721,13 +732,18 @@ export async function submitModuleJob(
         recovered = recoverInterruptedCollectionLocks(ctx, jobId).recovered
       }
       if (
-        priorStatus.state === "interrupted" && priorStatus.pid &&
+        priorStatus.state === "interrupted" &&
+        priorStatus.pid &&
         readJSON(ctx.root, dir + "state.json")?.state === "running" &&
-        input.module === "edition" && input.operation === "advance" &&
-        input.parameters.round === true && input.parameters.collect === false &&
-        input.context.operationalRound && partialRecoveryManifest(input.context)
+        input.module === "edition" &&
+        input.operation === "advance" &&
+        input.parameters.round === true &&
+        input.parameters.collect === false &&
+        input.context.operationalRound &&
+        partialRecoveryManifest(input.context)
       ) {
-        if (active.length) throw Error("Another active or unknown worker; preserve processing locks")
+        if (active.length)
+          throw Error("Another active or unknown worker; preserve processing locks")
         recovered = recoverInterruptedProcessingLocks(ctx, jobId).recovered
       }
       if (lock && !recovered.includes("module-worker-" + jobId))

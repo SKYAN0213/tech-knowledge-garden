@@ -4,6 +4,12 @@ import { sha256, assertSchema, extractionSchema } from "./contracts.mjs"
 import { recordFactReview, validateEvidence } from "./claims.mjs"
 import { loadStoredSourceRun } from "./parser.mjs"
 import { conceptRegistry } from "./knowledge-links.mjs"
+import { rankPreapprovalConceptHints } from "./concept-candidate-index.mjs"
+import {
+  memoizeVerifiedInput,
+  trackVerifiedPath,
+  measureVerifiedInputStage,
+} from "./verified-inputs.mjs"
 import { inspectReaderQuality, assertReaderQuality } from "./reader-quality.mjs"
 import { approvedArticle } from "./publish-adapter.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
@@ -418,6 +424,30 @@ function emptyExtractionBinding(
   return { candidate_key: input.candidate_key, extraction_input: ref(ctx.root, inputPath) }
 }
 
+function trackedConceptRegistry(ctx) {
+  return memoizeVerifiedInput(ctx, "combined-review-concept-registry", () => {
+    // Track both bytes and directory listings: an added, removed or renamed
+    // concept must invalidate the same invocation's cached registry as well.
+    function track(directory) {
+      if (!trackVerifiedPath(directory) || !fs.existsSync(directory)) return
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const file = path.join(directory, entry.name)
+        if (entry.isSymbolicLink()) throw Error("Symlink in verified concept registry")
+        if (entry.isDirectory()) {
+          if (!entry.name.startsWith(".")) track(file)
+        } else if (entry.name.endsWith(".md")) trackVerifiedPath(file)
+      }
+    }
+    track(path.join(ctx.vault, "Knowledge"))
+    return conceptRegistry(ctx.vault).map(({ path: p, meta }) => ({
+      path: p,
+      meta,
+      source_file: path.join(ctx.vault, p + ".md"),
+      source_sha256: sha256(fs.readFileSync(safePath(ctx.vault, p + ".md"))),
+    }))
+  })
+}
+
 function packet(ctx, run, kind, curation) {
   const { documents, parses } = loadStoredSourceRun(ctx.root, run)
   const extracted = readJSON(ctx.root, `runs/${run}/claims.json`)
@@ -436,13 +466,43 @@ function packet(ctx, run, kind, curation) {
     throw Error("Exact native article stage required for combined review")
   const concepts =
     kind === "editorial"
-      ? conceptRegistry(ctx.vault).map(({ path: p, meta }) => ({
-          path: p,
-          meta,
-          source_file: path.join(ctx.vault, p + ".md"),
-          source_sha256: sha256(fs.readFileSync(safePath(ctx.vault, p + ".md"))),
-        }))
+      ? measureVerifiedInputStage("semantic_registry_input", () => trackedConceptRegistry(ctx))
       : []
+  const publicClaimIds = draft
+    ? new Set(
+        [
+          ...(draft.draft.lead || []),
+          ...(draft.draft.explanations || []).flatMap((section) => section.paragraphs || []),
+          ...(draft.draft.analysis ? [draft.draft.analysis] : []),
+        ].flatMap((paragraph) => paragraph.claim_ids || []),
+      )
+    : new Set()
+  const conceptHints = draft
+    ? measureVerifiedInputStage("semantic_candidate_lookup", () =>
+        rankPreapprovalConceptHints({
+          query: [
+            draft.draft.title,
+            ...reviewed.claims
+              .filter(
+                (claim) =>
+                  publicClaimIds.has(claim.claim_id) && claim.review?.status === "verified",
+              )
+              .map((claim) => claim.statement),
+          ]
+            .filter((value) => typeof value === "string" && value.trim())
+            .join("\n"),
+          concepts: concepts.map(({ meta }) => ({
+            concept_id: meta.concept_id,
+            title: meta.title,
+            label: meta.label,
+            aliases: meta.aliases || [],
+            keywords: meta.keywords || [],
+            reason: meta.map_review?.reason,
+            kind: meta.map_review?.kind,
+          })),
+        }),
+      )
+    : null
   return {
     schema: "research-combined-review-input/v1",
     run_id: run,
@@ -451,6 +511,8 @@ function packet(ctx, run, kind, curation) {
     implementation: Object.fromEntries(
       [
         "combined-review.mjs",
+        "concept-candidate-index.mjs",
+        "verified-inputs.mjs",
         "claims.mjs",
         "editorial-completeness.mjs",
         "publish-adapter.mjs",
@@ -503,6 +565,7 @@ function packet(ctx, run, kind, curation) {
           ),
           completeness: inspectEditorialCompleteness(draft, reviewed.claims),
           concepts,
+          concept_candidate_hints: conceptHints,
           editorial_contract: {
             reader_review_policy: readerReviewPolicy,
             important_fact_reference_rule:
@@ -1831,7 +1894,7 @@ export async function runCombinedReview(
             "You are the independent Korean source and editorial reviewer. Read the complete immutable source-page manifest and every page using tools before deciding. Never approve from metadata alone. Verify all numbers, units, dates, comparison/availability conditions, plans versus completed actions, attribution, and important facts. Do not invent approvals. Reuse only exact unchanged source observations. Each request belongs only to its bound run, source, title and draft; never carry a finding or reason from another article. Return the exact schema. Evidence parts review every assigned original claim, may correct/reject it, and explicitly rate importance for each resulting VERIFIED claim. Only facts supported within selected_event.sources[].block_ids may be verified or added; defer or reject unrelated facts. Read the whole source to preserve context and conditions without widening that event scope. Only part zero may add up to twenty directly sourced missing facts, referenced as addition:0 etc. Additions use an existing native candidate_key and full source/version/parse/block/quote evidence, never block_key. Their decision contains reason and explicit review checks, never status. The native validator computes claim IDs; do not copy claim_id/schema/review into an addition. Editorial part zero supplies the existing native editorial approval decision including reader quality and a source-backed specialist concept review; other parts use null. All parts explicitly review assigned important facts against exact reader paragraph locations and hashes. If prose needs revision, return needs_revision in editorial_review; do not claim approval. The writer and reviewer are separate executions. Model policy and limits remain unchanged." +
             sourceReferencePolicy +
             (kind === "editorial"
-              ? " For every assigned important claim, give one explicit coverage_decisions entry: preserved with reason null only when its required source-backed meaning and conditions are actually present, otherwise needs_revision with the exact missing or incorrect detail and reader location in reason. A citation or a true meaning_checked flag alone does not establish preservation. A needs_revision decision includes every concrete required change and affected fact or prose location; never disguise an omission as preserved. " +
+              ? " Concept candidate hints are unreviewed search priorities only. Compare the entire supplied current concept registry and aliases before deciding, including for reviewed_none; never infer or approve a relationship from a hint. Read the complete selected concept note and cite the verified public claim as required. For every assigned important claim, give one explicit coverage_decisions entry: preserved with reason null only when its required source-backed meaning and conditions are actually present, otherwise needs_revision with the exact missing or incorrect detail and reader location in reason. A citation or a true meaning_checked flag alone does not establish preservation. A needs_revision decision includes every concrete required change and affected fact or prose location; never disguise an omission as preserved. " +
                 readerReviewPolicy +
                 (reuse
                   ? " Unassigned claim coverage has separately bound unchanged prior evidence. Do not issue coverage judgments for unassigned claims; part zero must still independently evaluate the entire current draft and explicitly approve it or report all current revision findings."

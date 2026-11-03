@@ -7,6 +7,7 @@ import {
   conceptCandidateGoldSha256,
   evaluateConceptCandidateRecall,
   rankConceptCandidates,
+  rankPreapprovalConceptHints,
   validateConceptCandidateEvaluation,
 } from "../scripts/research/concept-candidate-index.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
@@ -15,6 +16,27 @@ const dimension = 48
 const registrySha = sha256("reviewed concept registry")
 const embeddingDigest = "b".repeat(64)
 const retrievalPolicySha = sha256("semantic candidate policy")
+
+test("preapproval lexical hints preserve every exact alias and never approve or narrow the registry", () => {
+  const concepts = fixtureConcepts(),
+    result = rankPreapprovalConceptHints({
+      query: "Needle Alias와 zero-shot learning을 활용한 사례",
+      concepts,
+      limit: 1,
+    })
+  assert.equal(result.mode, "priority_only_full_registry_required")
+  assert.equal(result.review_status, "unreviewed")
+  assert.equal(result.total_concepts, concepts.length)
+  assert.deepEqual(result.exact_match_ids, ["concept-06", "concept-13"])
+  assert.ok(result.priority_ids.includes("concept-06"))
+  assert.ok(result.priority_ids.includes("concept-13"))
+  assert.equal(result.query_sha256, sha256("Needle Alias와 zero-shot learning을 활용한 사례"))
+  assert.deepEqual(rankPreapprovalConceptHints({ query: "", concepts }).priority_ids, [])
+  assert.throws(
+    () => rankPreapprovalConceptHints({ query: "x", concepts: [concepts[0], concepts[0]] }),
+    /Distinct reviewed concept IDs/,
+  )
+})
 
 function fixtureConcepts() {
   return Array.from({ length: 40 }, (_, index) => ({

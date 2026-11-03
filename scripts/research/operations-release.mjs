@@ -114,6 +114,47 @@ export function inspectOperationalPin(ctx, run, { readOnly = false } = {}) {
       ...(continuation.failed_collection_report ? [continuation.failed_collection_report] : []),
       ...(continuation.partial_restart ? [continuation.partial_restart] : [])])
       checked(ctx.root, ref)
+    if (Boolean(continuation.proposal_restart) !== Boolean(continuation.proposal_retirement))
+      throw Error("Event proposal continuation evidence is incomplete")
+    if (continuation.proposal_restart) {
+      const restart = checked(ctx.root, continuation.proposal_restart)
+      const retirement = checked(ctx.root, continuation.proposal_retirement)
+      const task = restart?.task
+      const parent = checked(ctx.root, continuation.parent)
+      if (
+        restart?.schema !== "research-event-proposal-restart/v1" ||
+        restart.successor !== run ||
+        JSON.stringify(restart.parent) !== JSON.stringify(continuation.parent) ||
+        JSON.stringify(restart.checkpoint) !== JSON.stringify(continuation.checkpoint) ||
+        JSON.stringify(restart.edition) !== JSON.stringify(continuation.processing?.edition) ||
+        !/^reasoning-[a-f0-9]{64}$/.test(task?.task_id || "") ||
+        restart.owner?.round_id !== parent.run_id ||
+        restart.retirement_reason !== `Restart ${parent.run_id} as ${run}` ||
+        restart.job_input?.path !== `module-jobs/${restart.owner?.job_id}/input.json` ||
+        restart.job_state?.path !== `module-jobs/${restart.owner?.job_id}/state.json` ||
+        continuation.proposal_retirement.path !== `reasoning-tasks/${task.task_id}/retired.json` ||
+        restart.request?.path !== `reasoning-tasks/${task.task_id}/request.json` ||
+        retirement?.task_id !== task.task_id ||
+        retirement.request_sha256 !== task.request_sha256 ||
+        retirement.reason !== restart.retirement_reason
+      )
+        throw Error("Event proposal continuation evidence changed")
+      const edition = checked(ctx.root, restart.edition)
+      checked(ctx.root, restart.collection_report)
+      const request = checked(ctx.root, restart.request)
+      const jobInput = checked(ctx.root, restart.job_input)
+      const jobState = checked(ctx.root, restart.job_state)
+      if (
+        JSON.stringify(edition.report) !== JSON.stringify(restart.collection_report) ||
+        request.request_sha256 !== task.request_sha256 ||
+        JSON.stringify(request.owner) !== JSON.stringify(restart.owner) ||
+        jobInput.job_id !== restart.owner.job_id ||
+        jobState.job_id !== restart.owner.job_id ||
+        jobState.state !== "waiting_for_reasoning" ||
+        JSON.stringify(jobState.reasoning_task) !== JSON.stringify(task)
+      )
+        throw Error("Event proposal continuation source changed")
+    }
     checkedOperationalInvocation(ctx, continuation.invocation)
   }
   return input

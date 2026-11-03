@@ -10,6 +10,7 @@ import {
   verifiedJSON,
   memoizeVerifiedInput,
   assertVerifiedInputBoundary,
+  measureVerifiedInputStage,
 } from "../scripts/research/verified-inputs.mjs"
 import { editionFixture } from "./fixtures/research-event-fixtures.mjs"
 import { checkedPlan } from "../scripts/research/event-pipeline.mjs"
@@ -41,6 +42,26 @@ test("one invocation reuses validated bytes, while a later invocation reads afre
   }))
   assert.equal(two.validation_statistics.json_reads, 1)
   assert.equal(two.validation_statistics.json_cache_hits, 0)
+})
+
+test("stage observations are local control time and do not pretend absent model time is zero", async (t) => {
+  const f = setup(t)
+  const result = await withVerifiedInputSession(f.ctx, () => {
+    assert.equal(
+      measureVerifiedInputStage("semantic_candidate_lookup", () => 7),
+      7,
+    )
+    assert.equal(
+      measureVerifiedInputStage("semantic_candidate_lookup", () => 8),
+      8,
+    )
+    return {}
+  })
+  assert.equal(result.validation_statistics.stages.semantic_candidate_lookup.calls, 2)
+  assert.ok(result.validation_statistics.stages.semantic_candidate_lookup.elapsed_ms >= 0)
+  assert.equal(result.validation_statistics.stages.model_execution, undefined)
+  const next = await withVerifiedInputSession(f.ctx, () => ({}))
+  assert.deepEqual(next.validation_statistics.stages, {})
 })
 
 test("same-size external tampering with restored mtime is rejected at commit", async (t) => {

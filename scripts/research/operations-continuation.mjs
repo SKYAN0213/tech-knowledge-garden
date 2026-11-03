@@ -141,6 +141,104 @@ export function partialRestartManifest(ctx, state, run, successor, replacementSe
     identity_review: selection.identity_review, items, settled_requests: pending }
 }
 
+function assertStoppedProcess(pid, description) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) throw Error(description + " status is unknown")
+  try {
+    process.kill(pid, 0)
+  } catch (error) {
+    if (error.code === "ESRCH") return
+    throw Error(description + " status is unknown")
+  }
+  throw Error(description + " is still alive")
+}
+
+// Only an unconsumed, stopped event-proposal request can be replaced when a
+// frozen edition moves to a new release. Completed responses stay on the old
+// job; previously completed content-addressed proposal results remain reusable.
+function pendingEventProposalRestart(ctx, state, run, successor, base) {
+  const rows = state.next_inputs
+  if (!Array.isArray(rows) || rows.length !== 1 || rows[0].stage !== "reasoning")
+    throw Error("Exactly one pending event proposal is required for this continuation")
+  const task = rows[0].reasoning_task
+  if (
+    !task ||
+    !/^reasoning-[a-f0-9]{64}$/.test(task.task_id || "") ||
+    !/^[a-f0-9]{64}$/.test(task.request_sha256 || "") ||
+    JSON.stringify(task) !== JSON.stringify(state.stages?.events?.reasoning_task)
+  )
+    throw Error("Exact pending event proposal request required")
+  const retirementReason = `Restart ${run} as ${successor}`
+  const requestStatus = restartReasoningStatus(ctx.root, {
+    ...task,
+    expected_round: run,
+    reason: retirementReason,
+  })
+  if (!["pending", "retired"].includes(requestStatus.status))
+    throw Error("Completed event proposal must remain with its original round")
+  const requestPath = `reasoning-tasks/${task.task_id}/request.json`
+  const request = readJSON(ctx.root, requestPath)
+  if (
+    request?.owner?.round_id !== run ||
+    !/^ev-prop-[a-f0-9]{40}$/.test(request.run || "") ||
+    request.role !== "search_plan" ||
+    !request.input?.schema?.properties?.events
+  )
+    throw Error("Only the original source-bound event proposal can be restarted")
+  assertRelayTaskQuiescent(ctx.root, run, task.task_id)
+  const jobId = request.owner.job_id
+  const inputPath = `module-jobs/${jobId}/input.json`
+  const statePath = `module-jobs/${jobId}/state.json`
+  const jobInput = readJSON(ctx.root, inputPath)
+  const jobState = readJSON(ctx.root, statePath)
+  if (
+    jobInput?.module !== "edition" ||
+    jobInput.operation !== "advance" ||
+    jobInput.parameters?.run_id !== run ||
+    jobInput.parameters.round !== true ||
+    jobInput.parameters.collect !== false ||
+    jobInput.parameters.propose !== true ||
+    jobInput.parameters.plan_path || jobInput.parameters.curation_path ||
+    jobInput.context?.operationalRound?.round_id !== run ||
+    jobInput.context.operationalRound.round_input_sha256 !== request.owner.round_input_sha256 ||
+    jobState?.state !== "waiting_for_reasoning" ||
+    JSON.stringify(jobState.reasoning_task) !== JSON.stringify(task)
+  )
+    throw Error("Exact stopped proposal owner job required")
+  assertStoppedProcess(jobState.pid, "Proposal worker")
+  const commandDir = safePath(ctx.root, base + "commands", { materialize: false })
+  const commands = fs.existsSync(commandDir)
+    ? fs.readdirSync(commandDir).filter((name) => name.endsWith(".json"))
+        .map((name) => readJSON(ctx.root, base + "commands/" + name))
+    : []
+  const processing = commands.filter((command) => command?.stage === "processing")
+  if (
+    commands.some((command) => !["collection", "processing"].includes(command?.stage)) ||
+    processing.length !== 1 ||
+    processing[0].job_id !== jobId ||
+    processing[0].module !== "edition" ||
+    processing[0].operation !== "advance" ||
+    JSON.stringify(processing[0].parameters) !== JSON.stringify(jobInput.parameters) ||
+    commands.some((command) => command.job_id !== jobId &&
+      readJSON(ctx.root, `module-jobs/${command.job_id}/state.json`)?.state === "waiting_for_reasoning")
+  )
+    throw Error("Proposal continuation cannot supersede other operational work")
+  for (const command of commands.filter((row) => row.stage === "collection")) {
+    const prior = readJSON(ctx.root, `module-jobs/${command.job_id}/state.json`)
+    if (!prior || !["completed", "failed"].includes(prior.state))
+      throw Error("Collection job is not settled for proposal continuation")
+    assertStoppedProcess(prior.pid, "Collection worker")
+  }
+  assertNoPublicationExecution(ctx, run)
+  return {
+    task,
+    owner: request.owner,
+    request: reference(ctx.root, requestPath),
+    job_input: reference(ctx.root, inputPath),
+    job_state: reference(ctx.root, statePath),
+    retirement_reason: retirementReason,
+  }
+}
+
 function requireUnreviewedSelection(ctx, state, run) {
   if (state.event_workflow) checked(ctx.root, state.event_workflow)
   const selection = checked(ctx.root, state.curation)
@@ -238,11 +336,16 @@ export async function continueOperationalRound(
     }
     const collectionOnly =
       (["collection_pending", "collection_planned"].includes(state?.status) && !state.edition) || failedCollection
+    const pendingProposal =
+      state?.status === "waiting_for_reasoning" && !state.curation && !state.plan &&
+      !state.event_workflow && !state.publication_handoff &&
+      state.stages?.events?.status === "waiting_for_reasoning"
     const frozenHandoff =
-      state?.status === "collection_frozen" && workflow?.source?.kind === "daily" &&
+      (state?.status === "collection_frozen" || pendingProposal) && workflow?.source?.kind === "daily" &&
       state.edition && !state.curation && !state.plan && !state.event_workflow &&
       !state.publication_handoff && state.article_writes === 0 && state.canonical_writes === 0 &&
       state.candidate_published === false
+    let proposalRestart = null
     if (frozenHandoff) {
       const edition = checked(ctx.root, state.edition)
       const report = checked(ctx.root, state.stages?.collection?.reference)
@@ -256,10 +359,16 @@ export async function continueOperationalRound(
           edition.status !== report.status || state.stages.collection.status !== report.status ||
           report.counts?.pending_windows !== 0)
         throw Error("Exact frozen collection edition and report required")
-      const commandDir = safePath(ctx.root, base + "commands", { materialize: false })
-      const commands = fs.existsSync(commandDir) ? fs.readdirSync(commandDir).filter((name) => name.endsWith(".json")) : []
-      if (commands.some((name) => readJSON(ctx.root, base + "commands/" + name)?.stage !== "collection"))
-        throw Error("Frozen collection continuation cannot supersede later operational work")
+      if (pendingProposal) {
+        if (approved_handoff || restart_partial)
+          throw Error("Event proposal restart cannot use another handoff mode")
+        proposalRestart = pendingEventProposalRestart(ctx, state, run_id, successor, base)
+      } else {
+        const commandDir = safePath(ctx.root, base + "commands", { materialize: false })
+        const commands = fs.existsSync(commandDir) ? fs.readdirSync(commandDir).filter((name) => name.endsWith(".json")) : []
+        if (commands.some((name) => readJSON(ctx.root, base + "commands/" + name)?.stage !== "collection"))
+          throw Error("Frozen collection continuation cannot supersede later operational work")
+      }
     }
     const selectedHandoff =
       ["curation_ready", "waiting_for_reasoning"].includes(state?.status) &&
@@ -336,6 +445,37 @@ export async function continueOperationalRound(
       if (!existing) atomicCreate(ctx.root, manifestPath, restart)
       restartRef = reference(ctx.root, manifestPath)
     }
+    let proposalRestartRef = null, proposalRetirementRef = null
+    if (proposalRestart) {
+      const manifestPath = base + `proposal-restarts/${successor}.json`
+      const proposal = {
+        schema: "research-event-proposal-restart/v1",
+        successor,
+        parent: reference(ctx.root, base + "input.json"),
+        checkpoint: reference(ctx.root, `round-workflows/${run_id}/latest.json`),
+        edition: state.edition,
+        collection_report: state.stages.collection.reference,
+        ...proposalRestart,
+      }
+      const existing = readJSON(ctx.root, manifestPath)
+      if (existing && JSON.stringify(existing) !== JSON.stringify(proposal))
+        throw Error("Event proposal restart evidence changed")
+      if (!existing) atomicCreate(ctx.root, manifestPath, proposal)
+      proposalRestartRef = reference(ctx.root, manifestPath)
+      const settled = await settleReasoningForRestart(ctx.root, {
+        ...proposalRestart.task,
+        expected_round: run_id,
+        reason: proposalRestart.retirement_reason,
+      })
+      if (settled.status !== "retired")
+        throw Error("Completed event proposal must remain with its original round")
+      proposalRetirementRef = reference(
+        ctx.root,
+        `reasoning-tasks/${proposalRestart.task.task_id}/retired.json`,
+      )
+      if (reference(ctx.root, `round-workflows/${run_id}/latest.json`).sha256 !== proposal.checkpoint.sha256)
+        throw Error("Event proposal checkpoint changed during continuation")
+    }
     const evidenceFile = base + "continuation-evidence.json"
     const source = {
       parent: reference(ctx.root, base + "input.json"),
@@ -347,6 +487,8 @@ export async function continueOperationalRound(
       ...(processing ? { processing } : {}),
       ...(approvedHandoff ? { approved_handoff: approvedHandoff } : {}),
       ...(restartRef ? { partial_restart: restartRef } : {}),
+      ...(proposalRestartRef ? { proposal_restart: proposalRestartRef } : {}),
+      ...(proposalRetirementRef ? { proposal_retirement: proposalRetirementRef } : {}),
       prior_release: parent.release_id,
       release_id: gate.release_id,
       successor,

@@ -14,6 +14,10 @@ import { withRequestOwner } from "../scripts/research/request-ownership.mjs"
 import { createReasoningTask, submitReasoningResult } from "../scripts/research/reasoning-tasks.mjs"
 import { assertSelectedEventFactScope } from "../scripts/research/event-pipeline.mjs"
 import { loadStoredSourceRun } from "../scripts/research/parser.mjs"
+import {
+  withVerifiedInputSession,
+  assertVerifiedInputBoundary,
+} from "../scripts/research/verified-inputs.mjs"
 import { reviseDraftFromReview } from "../scripts/research/modules/validation.mjs"
 import {
   reviewPacketPages,
@@ -270,6 +274,62 @@ function editorialOutput(p) {
     })),
   }
 }
+
+test("preapproval concept hints retain the complete registry and its source integrity boundary", async (t) => {
+  const f = await editorialSetup(t),
+    knowledge = path.join(f.ctx.vault, "Knowledge")
+  fs.mkdirSync(knowledge, { recursive: true })
+  for (const [id, label] of [
+    ["fixture-robotics", "Fixture Robotics"],
+    ["other-concept", "Other Concept"],
+  ]) {
+    fs.writeFileSync(
+      path.join(knowledge, id + ".md"),
+      noteText(
+        {
+          concept_id: id,
+          title: label,
+          label,
+          aliases: [],
+          keywords: [],
+          verified_sources: ["https://example.org/source"],
+          map_review: {
+            decision: "include",
+            kind: "method",
+            reason: "Reviewed specialist concept",
+          },
+        },
+        "## 한 문장 정의\nA source-reviewed fixture definition.\n",
+      ),
+    )
+  }
+  const prepared = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  assert.equal(prepared.packet.concepts.length, 2)
+  assert.equal(prepared.packet.concept_candidate_hints.mode, "priority_only_full_registry_required")
+  assert.equal(prepared.packet.concept_candidate_hints.review_status, "unreviewed")
+  assert.ok(prepared.packet.concept_candidate_hints.exact_match_ids.includes("fixture-robotics"))
+  const modelPacket = readJSON(f.root, readJSON(f.root, prepared.manifest.path).packet.path)
+  assert.equal(modelPacket.concepts.length, 2)
+  assertCombinedReviewSources(f.ctx, prepared)
+  const cached = await withVerifiedInputSession(f.ctx, () => {
+    assert.equal(
+      prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }).input_sha256,
+      prepared.input_sha256,
+    )
+    assert.equal(
+      prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }).input_sha256,
+      prepared.input_sha256,
+    )
+    const added = path.join(knowledge, "added.md")
+    fs.writeFileSync(added, "new concept")
+    assert.throws(() => assertVerifiedInputBoundary(), /changed before commit/)
+    fs.unlinkSync(added)
+    return {}
+  })
+  assert.ok(cached.validation_statistics.validation_cache_hits >= 1)
+  fs.appendFileSync(path.join(knowledge, "other-concept.md"), "Changed evidence.\n")
+  assert.throws(() => assertCombinedReviewSources(f.ctx, prepared), /Concept input changed/)
+})
 
 for (const variant of ["missing", "false"])
   test(`native editorial ${variant} checks are explicit in the schema and repaired without healthy fields`, async (t) => {

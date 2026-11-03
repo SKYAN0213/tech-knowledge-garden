@@ -1,6 +1,11 @@
 import { operation, schema, id, file, day, integer, text, standalone } from "./contracts.mjs"
 import { digest } from "../event-pipeline.mjs"
-import { prepareCuration, evaluateCuration, selectCuration, revalidateCurationHistory } from "../curation.mjs"
+import {
+  prepareCuration,
+  evaluateCuration,
+  selectCuration,
+  revalidateCurationHistory,
+} from "../curation.mjs"
 import { advanceCuration } from "../curation-workflow.mjs"
 import { readCurationInsights, recordCurationFeedback } from "../curation-insights.mjs"
 import { recoverCurationCheckpoint } from "../curation-checkpoint-recovery.mjs"
@@ -89,7 +94,7 @@ export const module = {
       prepareCuration,
     ),
     evaluate: operation(
-      "동일 원문·관련 과거 기사로 모델의 미검토 점수 제안을 만들거나 명시적 큐레이터 검토를 저장한다. 신규성·영향·구체성·지식 가치·현재 유효성의 근거를 검증하며 사실/기사 승인을 하지 않는다.",
+      "동일 원문·관련 과거 기사로 모델의 미검토 점수와 근거가 있는 사건 관계 후보를 제안하거나 명시적 큐레이터 검토를 저장한다. 후보는 후속·정정·상충·계획 이행의 미확정 단서이며 사실·관계·기사를 승인하지 않는다.",
       schema(
         {
           ...pool,
