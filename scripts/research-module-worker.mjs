@@ -128,8 +128,24 @@ try {
     // A terminal state records the result, but the worker still owns storage
     // until timing and cold-storage cleanup have both finished.
     recordOperationalJobTiming(ctx, values.job)
-    if (readJSON(ctx.root, `module-jobs/${values.job}/state.json`)?.state === "completed")
-      trimColdStorage(ctx.root)
+    const completed = readJSON(ctx.root, `module-jobs/${values.job}/state.json`)
+    if (completed?.state === "completed") {
+      const startedAt = new Date().toISOString(), started = performance.now()
+      let succeeded = false, configured = null
+      try {
+        configured = trimColdStorage(ctx.root) !== null
+        succeeded = true
+      } finally {
+        if (ctx.operationalRound) atomicWrite(ctx.root, `module-jobs/${values.job}/storage-cleanup.json`, {
+          schema: "research-storage-cleanup-timing/v1", job_id: values.job,
+          input_sha256: completed.input_sha256, attempt: completed.attempt,
+          started_at: startedAt, finished_at: new Date().toISOString(),
+          elapsed_ms: Math.round(performance.now() - started),
+          status: succeeded ? "completed" : "failed", configured,
+        })
+      }
+      recordOperationalJobTiming(ctx, values.job)
+    }
   })
 } catch (error) {
   console.error(error.message)

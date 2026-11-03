@@ -143,8 +143,66 @@ export function readRecoverySource(root, runId) {
   for (const document of captured.values())
     pins.push({ path: document.body_path, sha256: document.body_sha256 })
   for (const parsed of parses) pin(`parses/${parsed.parse_id}/parse.json`)
+  const dailyScope = recovery?.source_run?.daily_article_reuse
+  let dailyArticleReuseVerified = false
+  if (dailyScope && storedSummary) {
+    const pinnedJSON = (reference) => {
+      if (!reference?.path || !/^[a-f0-9]{64}$/.test(reference.sha256 || ""))
+        throw Error("Daily article reuse evidence is missing")
+      const bytes = fs.readFileSync(safePath(root, reference.path))
+      if (sha256(bytes) !== reference.sha256) throw Error("Daily article reuse evidence changed")
+      return JSON.parse(bytes)
+    }
+    const recoveryPath = prefix + "source-recovery-reuse.json"
+    if (typeof input.channel_id !== "string" || typeof input.since !== "string" ||
+        typeof input.until_exclusive !== "string") throw Error("Daily article reuse window is missing")
+    const suffix = `_${input.channel_id}_${input.since.replaceAll("-", "")}_${input.until_exclusive.replaceAll("-", "")}_a`
+    if (dailyScope.schema !== "research-daily-article-reuse/v1" ||
+        !/^[A-Za-z0-9_-]{1,100}$/.test(dailyScope.daily_run || "") ||
+        dailyScope.target_run !== runId || dailyScope.channel_id !== input.channel_id ||
+        !runId.startsWith(dailyScope.daily_run + suffix) ||
+        !/^[1-9][0-9]*$/.test(runId.slice((dailyScope.daily_run + suffix).length)) ||
+        dailyScope.source_run !== input.recovery_source_run ||
+        dailyScope.target_window?.since !== input.since ||
+        dailyScope.target_window?.until_exclusive !== input.until_exclusive ||
+        dailyScope.listing_reused !== false || dailyScope.coverage_reused !== false ||
+        dailyScope.max_age_ms !== 3600000 ||
+        dailyScope.plan?.path !== `daily/runs/${dailyScope.daily_run}/plan.json` ||
+        dailyScope.source_receipt?.path !== `daily/runs/${dailyScope.daily_run}/receipts/${dailyScope.source_run}.json` ||
+        summary.source_recovery?.source_run !== dailyScope.source_run ||
+        summary.source_recovery?.coverage_reused !== false ||
+        summary.source_recovery?.reference?.path !== recoveryPath ||
+        summary.source_recovery?.reference?.sha256 !== sha256(fs.readFileSync(safePath(root, recoveryPath))))
+      throw Error("Daily article reuse binding changed")
+    const plan = pinnedJSON(dailyScope.plan), receipt = pinnedJSON(dailyScope.source_receipt)
+    const originalSummary = fs.readFileSync(safePath(root, `runs/${dailyScope.source_run}/list-scan.json`))
+    const sourceSummary = JSON.parse(originalSummary)
+    const end = Date.parse(`${input.until_exclusive}T00:00:00+09:00`)
+    const started = Date.parse(state.started_at)
+    const hasWindow = (since, until) => Array.isArray(plan.windows) && plan.windows.some((row) =>
+      row.channel_id === input.channel_id && row.since === since && row.until_exclusive === until)
+    if (plan.run_id !== dailyScope.daily_run || receipt.schema !== "research-daily-receipt/v2" ||
+        receipt.daily_run !== dailyScope.daily_run ||
+        receipt.attempt_id !== dailyScope.source_run || receipt.channel_id !== input.channel_id ||
+        receipt.since !== sourceSummary.window?.since || receipt.until_exclusive !== sourceSummary.window?.until_exclusive ||
+        (receipt.since === input.since && receipt.until_exclusive === input.until_exclusive) ||
+        !["window_scanned", "incomplete"].includes(receipt.status) || receipt.status !== sourceSummary.status ||
+        receipt.scan_evidence?.list_scan_run !== dailyScope.source_run ||
+        receipt.scan_evidence?.summary_sha256 !== sha256(originalSummary) ||
+        !hasWindow(input.since, input.until_exclusive) || !hasWindow(receipt.since, receipt.until_exclusive) ||
+        !Number.isFinite(end) || !Number.isFinite(started) || started < end)
+      throw Error("Daily article reuse plan or observation changed")
+    const originals = new Map((sourceSummary.date_resolutions || []).map((row) => [row.url, row.source_version_id]))
+    if (!Array.isArray(recovery.reused_sources) || recovery.reused_sources.some((row) => {
+      const observed = Date.parse(row.observed_at)
+      return originals.get(row.url) !== row.source_version_id || !Number.isFinite(observed) ||
+        observed < end || observed > started + 60000 || started - observed > dailyScope.max_age_ms
+    })) throw Error("Daily article reuse observation changed")
+    dailyArticleReuseVerified = true
+  }
   return {
     state, basis, summary, input, documents: [...captured.values()], parseStages,
+    ...(dailyArticleReuseVerified ? { daily_article_reuse_verified: true } : {}),
     reference: { source_run: runId, input_sha256: state.input_hash,
       ...(checkpointOnly ? { incomplete_checkpoints: true, coverage_reused: false } : {}),
       evidence: [...new Map(pins.map((p) => [p.path, p])).values()] },
@@ -167,7 +225,7 @@ export function recoveryListingObservedAt(source, scan) {
 export function verifyFreshRecoveryListing(source, scan, target) {
   const end = Date.parse(`${target.until_exclusive}T00:00:00+09:00`)
   if (!Number.isFinite(end) || Date.parse(source.state.started_at) < end ||
-      source.input.recovery_source_run || source.input.recovery_source_runs ||
+      (source.input.recovery_source_run && !source.daily_article_reuse_verified) || source.input.recovery_source_runs ||
       source.input.reuse_listing_run || source.input.reuse_source_run || source.input.repair_source_run ||
       source.summary.listing_reused_from_run)
     throw Error("A finished-window refresh requires a new non-reused listing scan")
@@ -176,22 +234,88 @@ export function verifyFreshRecoveryListing(source, scan, target) {
   return true
 }
 
+// A daily plan may revisit the same article while covering different historical
+// windows. Only the article bytes can be reused; each target still fetches and
+// verifies its own listing and proves its own coverage.
+function dailyArticleReuseScope(root, previous, channel, basis, window, targetRun, now) {
+  const suffix = `_${channel.channel_id}_${window.since.replaceAll("-", "")}_${window.until.replaceAll("-", "")}_a`
+  const index = typeof targetRun === "string" ? targetRun.lastIndexOf(suffix) : -1
+  if (index < 1 || !/^[1-9][0-9]*$/.test(targetRun.slice(index + suffix.length)))
+    throw Error("Daily article reuse requires a bound target attempt")
+  const dailyRun = targetRun.slice(0, index)
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(dailyRun)) throw Error("Invalid daily reuse run")
+  const planPath = `daily/runs/${dailyRun}/plan.json`
+  const receiptPath = `daily/runs/${dailyRun}/receipts/${previous.state.run_id}.json`
+  const planBytes = fs.readFileSync(safePath(root, planPath))
+  const receiptBytes = fs.readFileSync(safePath(root, receiptPath))
+  const plan = JSON.parse(planBytes), receipt = JSON.parse(receiptBytes)
+  const sourceWindow = previous.summary.window
+  const hasWindow = (since, until) => Array.isArray(plan.windows) && plan.windows.some((row) =>
+    row.channel_id === channel.channel_id && row.since === since && row.until_exclusive === until)
+  const summaryPath = `runs/${previous.state.run_id}/list-scan.json`
+  if (plan.run_id !== dailyRun || receipt.schema !== "research-daily-receipt/v2" ||
+      receipt.daily_run !== dailyRun || receipt.attempt_id !== previous.state.run_id ||
+      receipt.channel_id !== channel.channel_id || receipt.since !== sourceWindow?.since ||
+      receipt.until_exclusive !== sourceWindow?.until_exclusive ||
+      !["window_scanned", "incomplete"].includes(receipt.status) ||
+      receipt.status !== previous.summary.status ||
+      receipt.scan_evidence?.list_scan_run !== previous.state.run_id ||
+      receipt.scan_evidence?.summary_sha256 !== sha256(fs.readFileSync(safePath(root, summaryPath))) ||
+      !hasWindow(receipt.since, receipt.until_exclusive) || !hasWindow(window.since, window.until))
+    throw Error("Daily article reuse requires a pinned receipt and plan")
+  if (JSON.stringify(previous.basis) !== JSON.stringify(basis))
+    throw Error("Daily article reuse requires an unchanged collection basis")
+  const end = Date.parse(`${window.until}T00:00:00+09:00`)
+  if (!Number.isFinite(end) || now < end)
+    throw Error("Daily article reuse requires a closed target window")
+  return {
+    schema: "research-daily-article-reuse/v1", daily_run: dailyRun,
+    target_run: targetRun, channel_id: channel.channel_id,
+    target_window: { since: window.since, until_exclusive: window.until },
+    source_run: previous.state.run_id,
+    plan: { path: planPath, sha256: sha256(planBytes) },
+    source_receipt: { path: receiptPath, sha256: sha256(receiptBytes) },
+    listing_reused: false, coverage_reused: false, max_age_ms: 3600000,
+  }
+}
+
 export function createRecoverySourceReuse(root, runId, channel, basis, window, {
-  fetchPolicy = fetchWithPolicy, parse = parseDocument, now = Date.now(),
+  fetchPolicy = fetchWithPolicy, parse = parseDocument, now = Date.now(), dailyTargetRun = null,
 } = {}) {
+  if (!Number.isFinite(now)) throw Error("Invalid recovery observation time")
   const ids = Array.isArray(runId) ? runId : [runId]
   if (!ids.length || ids.length > 21 || new Set(ids).size !== ids.length)
     throw Error("Distinct bounded recovery source runs required")
   const sources = ids.map((id) => readRecoverySource(root, id))
-  for (const previous of sources)
-    if (previous.summary.channel_id !== channel.channel_id ||
-        previous.summary.window?.since !== window.since || previous.summary.window?.until_exclusive !== window.until)
+  let dailyScope = null
+  for (const previous of sources) {
+    if (previous.summary.channel_id !== channel.channel_id)
       throw Error("Recovery source must prove the same route and window")
+    if (previous.summary.window?.since !== window.since || previous.summary.window?.until_exclusive !== window.until) {
+      if (!dailyTargetRun || sources.length !== 1)
+        throw Error("Recovery source must prove the same route and window")
+      dailyScope = dailyArticleReuseScope(root, previous, channel, basis, window, dailyTargetRun, now)
+    }
+  }
+  const listingURLs = dailyScope ? new Set([
+    channel.url, sources[0].summary.listing_url,
+    ...(sources[0].summary.pages || []).map((row) => row.url),
+  ].filter(Boolean)) : null
+  const template = dailyScope && channel.listing_profile?.fallback_archive?.url_template
+  const listingPattern = typeof template === "string" && template.includes("{page}")
+    ? new RegExp("^" + template.split("{page}")
+      .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[0-9]+") + "$") : null
+  const dailyArticles = dailyScope ? new Map((sources[0].summary.date_resolutions || [])
+    .filter((row) => !listingURLs.has(row.url) && !listingPattern?.test(row.url))
+    .map((row) => [row.url, row.source_version_id])) : null
+  const windowEnd = dailyScope ? Date.parse(`${window.until}T00:00:00+09:00`) : null
   const available = new Map(), used = new Map(), reusedParses = new Set()
   for (const document of sources.flatMap((source) => source.documents)) {
     if (document.policy_status !== "checked" || document.policy?.allowed !== true) continue
     const observed = Date.parse(document.observed_at)
     if (!Number.isFinite(observed) || observed > now + 60000) throw Error("Invalid recovery observation time")
+    if (dailyScope && (dailyArticles.get(document.original_url) !== document.source_version_id ||
+        observed < windowEnd || now - observed > dailyScope.max_age_ms)) continue
     // A changed route can stop using an old host; never extend today's allowlist.
     if (![document.original_url, document.final_url].every((url) => channel.allowed_hosts.includes(new URL(url).hostname))) continue
     assertURL(document.original_url, channel.allowed_hosts)
@@ -234,8 +358,11 @@ export function createRecoverySourceReuse(root, runId, channel, basis, window, {
   }
   const reference = Array.isArray(runId)
     ? { schema: "research-source-recovery-input-set/v1", source_runs: sources.map((source) => source.reference) }
-    : sources[0].reference
-  return { reference, available, used, reusedParses, fetchPolicy: fetch, parse: reparse }
+    : { ...sources[0].reference, ...(dailyScope ? { daily_article_reuse: dailyScope } : {}) }
+  const dailyParseStages = dailyScope ? new Map([...sources[0].parseStages.values()].map(({ stage, parsed }) =>
+    [`${stage.input_hash}:${parsed.source_version_id}`, parsed.parse_id])) : null
+  return { reference, available, used, reusedParses, fetchPolicy: fetch, parse: reparse,
+    ...(dailyScope ? { dailyParseStages } : {}) }
 }
 
 export function preserveRecoverySourceReuse(root, runId, reuse) {
@@ -252,6 +379,25 @@ export function preserveRecoverySourceReuse(root, runId, reuse) {
       throw Error("Recovery reused observation changed")
   }
   for (const [url, source] of reuse.used) sources.set(url, source)
+  // A resumed RunState may return completed checkpoints without invoking the
+  // reuse callbacks again. Preserve their exact authenticated provenance too.
+  if (reuse.reference.daily_article_reuse) {
+    const prefix = `runs/${runId}/`, state = readJSON(root, prefix + "state.json")
+    for (const [name, stage] of Object.entries(state?.stages || {})) {
+      if (stage.status !== "complete" || !/^(?:detail-|parse-)/.test(name)) continue
+      if (stage.result_path !== prefix + name + ".json") throw Error("Daily reuse checkpoint path changed")
+      const value = readJSON(root, stage.result_path)
+      if (!value || sha256(JSON.stringify(value)) !== stage.result_hash)
+        throw Error("Daily reuse checkpoint changed")
+      if (name.startsWith("detail-")) {
+        const original = reuse.available.get(value.original_url)
+        if (original && JSON.stringify(original) === JSON.stringify(value))
+          sources.set(value.original_url, { url: value.original_url,
+            source_version_id: value.source_version_id, observed_at: value.observed_at })
+      } else if (reuse.dailyParseStages?.get(`${stage.input_hash}:${value.source_version_id}`) === value.parse_id)
+        reuse.reusedParses.add(value.parse_id)
+    }
+  }
   const receipt = {
     schema: multi ? "research-source-recovery-reuse/v2" : "research-source-recovery-reuse/v1",
     ...(multi ? { source_runs: reuse.reference.source_runs } : { source_run: reuse.reference }),

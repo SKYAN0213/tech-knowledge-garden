@@ -14,6 +14,7 @@ import {
   createRecoverySourceReuse,
   preserveRecoverySourceReuse,
   readRecoverySource,
+  verifyFreshRecoveryListing,
 } from "../scripts/research/source-run-recovery.mjs"
 import { recoverCollection } from "../scripts/research/collection-recovery.mjs"
 import { saveRecoveredDailyReport } from "../scripts/research/recovered-daily-report.mjs"
@@ -128,8 +129,15 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
           fetchPolicy,
           parse,
           ...(v["test-now"] ? { now: v["test-now"] } : {}),
+          ...(v["daily-target-run"] ? { dailyTargetRun: v["daily-target-run"] } : {}),
         })
       : null
+    if (v["replayed-cached-article"]) {
+      const document = reuse.available.get(v["replayed-cached-article"])
+      assert.ok(document)
+      await run.stage("detail-" + sourceId(document.original_url),
+        { url: document.original_url }, () => document)
+    }
     const result = await scanBoundedRSSRoute(
       root,
       run,
@@ -142,7 +150,13 @@ async function fixture(t, { mismatch = false, unreadable = false, policyBlocked 
         parseArticle: reuse?.parse || parse,
       },
     )
-    if (reuse) preserveRecoverySourceReuse(root, v.run, reuse)
+    if (reuse) {
+      const reference = preserveRecoverySourceReuse(root, v.run, reuse)
+      if (reuse.reference.daily_article_reuse)
+        result.summary.source_recovery = {
+          source_run: v["recovery-source-run"], reference, coverage_reused: false,
+        }
+    }
     for (const [name, value] of Object.entries({
       "list-scan.json": result.summary,
       "documents.json": result.documents,
@@ -919,6 +933,89 @@ test("raw recovery accepts repaired selectors while rejecting changed checkpoint
   const doc = f.docs.get(f.channel.url)
   fs.appendFileSync(path.join(f.root, doc.body_path), "tampered")
   assert.throws(() => readRecoverySource(f.root, "initial"), /hash mismatch/)
+})
+
+test("daily historical windows reuse authenticated article bytes while fetching fresh listings", async (t) => {
+  const f = await fixture(t), dailyRun = "daily-overlap"
+  const channelId = f.channel.channel_id
+  const sourceId = `${dailyRun}_${channelId}_20261010_20261017_a1`
+  const targetId = `${dailyRun}_${channelId}_20261017_20261024_a1`
+  await f.scan({ run: sourceId })
+  const source = readRecoverySource(f.root, sourceId)
+  const article = source.documents.find((document) => document.original_url !== f.channel.url)
+  assert.ok(article)
+  const summaryPath = `runs/${sourceId}/list-scan.json`
+  const summary = readJSON(f.root, summaryPath)
+  const listingDocument = source.documents.find((document) => document.original_url === f.channel.url)
+  summary.date_resolutions = [
+    { url: article.original_url, source_version_id: article.source_version_id },
+    { url: f.channel.url, source_version_id: listingDocument.source_version_id },
+  ]
+  atomicWrite(f.root, summaryPath, summary)
+  const windows = [
+    { channel_id: channelId, since: "2026-10-10", until_exclusive: "2026-10-17" },
+    { channel_id: channelId, since: "2026-10-17", until_exclusive: "2026-10-24" },
+  ]
+  atomicWrite(f.root, `daily/runs/${dailyRun}/plan.json`, { run_id: dailyRun, windows })
+  atomicWrite(f.root, `daily/runs/${dailyRun}/receipts/${sourceId}.json`, {
+    schema: "research-daily-receipt/v2", daily_run: dailyRun, attempt_id: sourceId,
+    ...windows[0], status: summary.status, reason: summary.reason,
+    scan_evidence: { list_scan_run: sourceId, summary_sha256: sha256(fs.readFileSync(path.join(f.root, summaryPath))) },
+  })
+  const targetWindow = { since: windows[1].since, until: windows[1].until_exclusive }
+  const fetched = []
+  let parseCalls = 0
+  const fetchPolicy = async (_root, _fetcher, url) => {
+    fetched.push(url)
+    return { original_url: url, fetch_status: "fresh" }
+  }
+  const parse = async () => { parseCalls++; return { status: "fresh-parse" } }
+  const reuse = createRecoverySourceReuse(f.root, sourceId, f.channel, f.basis, targetWindow, {
+    dailyTargetRun: targetId, fetchPolicy, parse,
+  })
+  assert.equal(reuse.fetchPolicy.hasStoredSource(article.original_url), true)
+  assert.equal(reuse.fetchPolicy.hasStoredSource(f.channel.url), false)
+  assert.deepEqual(await reuse.fetchPolicy(f.root, {}, article.original_url, {}), article)
+  await reuse.fetchPolicy(f.root, {}, f.channel.url, {})
+  assert.deepEqual(fetched, [f.channel.url])
+  const profiles = JSON.parse(fs.readFileSync("data/research-acquisition.json")).article_profiles
+    .filter((profile) => new RegExp(profile.url_pattern).test(article.final_url))
+  assert.equal(profiles.length, 1)
+  const cached = await reuse.parse(f.root, article, profiles[0].options)
+  assert.equal(cached.source_version_id, article.source_version_id)
+  assert.equal(parseCalls, 0)
+  assert.equal((await reuse.parse(f.root, article, { ...profiles[0].options, language: "changed" })).status,
+    "fresh-parse")
+  assert.equal(parseCalls, 1)
+  assert.equal(reuse.reference.daily_article_reuse.coverage_reused, false)
+  assert.equal(reuse.reference.daily_article_reuse.listing_reused, false)
+  assert.throws(() => createRecoverySourceReuse(f.root, sourceId, f.channel, f.basis, targetWindow), /same route and window/)
+  assert.throws(() => createRecoverySourceReuse(f.root, sourceId, f.channel,
+    { ...f.basis, route_sha256: sha256("different") }, targetWindow, { dailyTargetRun: targetId }), /basis/)
+  assert.throws(() => createRecoverySourceReuse(f.root, sourceId, f.channel, f.basis, targetWindow,
+    { dailyTargetRun: targetId, now: NaN }), /Invalid recovery observation time/)
+  const openWindow = { channel_id: channelId, since: "2099-01-01", until_exclusive: "2099-01-02" }
+  atomicWrite(f.root, `daily/runs/${dailyRun}/plan.json`, { run_id: dailyRun, windows: [...windows, openWindow] })
+  assert.throws(() => createRecoverySourceReuse(f.root, sourceId, f.channel, f.basis,
+    { since: openWindow.since, until: openWindow.until_exclusive },
+    { dailyTargetRun: `${dailyRun}_${channelId}_20990101_20990102_a1` }), /closed target/)
+  atomicWrite(f.root, `daily/runs/${dailyRun}/plan.json`, { run_id: dailyRun, windows })
+  const expired = createRecoverySourceReuse(f.root, sourceId, f.channel, f.basis, targetWindow, {
+    dailyTargetRun: targetId, now: Date.parse(article.observed_at) + 3600001, fetchPolicy,
+  })
+  assert.equal(expired.fetchPolicy.hasStoredSource(article.original_url), false)
+  const scanned = await f.scan({ run: targetId, since: targetWindow.since, until: targetWindow.until,
+    "recovery-source-run": sourceId, "daily-target-run": targetId,
+    "replayed-cached-article": article.original_url })
+  assert.ok(readJSON(f.root, `runs/${targetId}/source-recovery-reuse.json`).reused_sources
+    .some((row) => row.url === article.original_url && row.source_version_id === article.source_version_id))
+  const recovered = readRecoverySource(f.root, targetId)
+  assert.equal(recovered.daily_article_reuse_verified, true)
+  assert.equal(verifyFreshRecoveryListing(recovered, scanned,
+    { until_exclusive: targetWindow.until }), true)
+  const receiptPath = path.join(f.root, `daily/runs/${dailyRun}/receipts/${sourceId}.json`)
+  fs.appendFileSync(receiptPath, " ")
+  assert.throws(() => readRecoverySource(f.root, targetId), /evidence changed/)
 })
 
 test("a storage wait preserves the native attempt and explicit payload request for resume", async (t) => {

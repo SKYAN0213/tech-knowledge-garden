@@ -415,7 +415,7 @@ export async function executeListScan(v) {
         ? createRecoverySourceReuse(root, recoveryRuns || v["recovery-source-run"], channel, basis, {
             since: v.since,
             until: v.until,
-          })
+          }, { dailyTargetRun: v.run, now: Date.parse(run.state.started_at) })
         : null
       const repair = v["repair-source-run"]
         ? createArchiveSourceReuse(

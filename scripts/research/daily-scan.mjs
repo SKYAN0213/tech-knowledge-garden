@@ -1353,7 +1353,30 @@ export async function executeDailyPlan({
         lastAttempt?.reason === "detail_incomplete" || lastAttempt?.continuation
           ? lastAttempt.attempt_id
           : null
-      result = await scan(window, id, reusableReceipt?.attempt_id || null, repairSourceRun)
+      // An interrupted attempt has already frozen its scan input. Do not select
+      // a different prior source merely because time or other receipts changed.
+      const inputFile = safePath(root, `runs/${id}/collection-input.json`, { materialize: false })
+      const savedInput = fs.existsSync(inputFile) ? JSON.parse(fs.readFileSync(inputFile)) : null
+      if (savedInput && (savedInput.schema !== "research-list-run-input/v2" ||
+          savedInput.channel_id !== window.channel_id || savedInput.since !== window.since ||
+          savedInput.until_exclusive !== window.until_exclusive || savedInput.recovery_source_runs ||
+          savedInput.reuse_source_run || savedInput.repair_source_run ||
+          (repairSourceRun && savedInput.recovery_source_run !== repairSourceRun)))
+        throw Error("Interrupted daily scan input changed")
+      const route = activeRoutes.find((item) => item.channel_id === window.channel_id)?.route
+      const closed = Date.now() >= Date.parse(`${window.until_exclusive}T00:00:00+09:00`)
+      const dailyArticleSource = savedInput ? (repairSourceRun ? null : savedInput.recovery_source_run || null) :
+        !repairSourceRun && closed && route?.method === "rss" &&
+        route.listing_profile?.fallback_archive?.article_date_resolution === "yearless-month-day"
+        ? [...receipts].reverse().find((receipt) => {
+            if (receipt.channel_id !== window.channel_id || sameWindow(receipt, window) ||
+                !["window_scanned", "incomplete"].includes(receipt.status) ||
+                !receipt.scan_evidence?.summary_sha256) return false
+            const summary = readJSON(root, `runs/${receipt.attempt_id}/list-scan.json`)
+            return Array.isArray(summary?.date_resolutions) && summary.date_resolutions.length > 0
+          })?.attempt_id || null : null
+      const listingSource = savedInput ? savedInput.reuse_listing_run || null : reusableReceipt?.attempt_id || null
+      result = await scan(window, id, listingSource, repairSourceRun, dailyArticleSource)
       scan_ms = Math.round(performance.now() - scanStarted)
       scanEvidence = {
         list_scan_run: id,
@@ -1714,7 +1737,7 @@ function summarizeDailyTiming(receipts, activeRoutes) {
 
 export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
   if (typeof runResearch !== "function") throw Error("Daily source runner is required")
-  return async (window, attempt, reuseListingRun, repairSourceRun) => {
+  return async (window, attempt, reuseListingRun, repairSourceRun, dailyArticleSourceRun) => {
     const args = [
       "scan-list",
       "--root",
@@ -1729,7 +1752,8 @@ export function createDailySourceScanner({ root, activeRoutes, runResearch }) {
       window.until_exclusive,
     ]
     const route = activeRoutes.find((item) => item.route.channel_id === window.channel_id)?.route
-    if (repairSourceRun) args.push("--recovery-source-run", repairSourceRun)
+    if (repairSourceRun || dailyArticleSourceRun)
+      args.push("--recovery-source-run", repairSourceRun || dailyArticleSourceRun)
     else if (
       reuseListingRun &&
       route?.method === "html-list" &&

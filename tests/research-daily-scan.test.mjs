@@ -264,6 +264,78 @@ test("daily detail repair binds the failed attempt and takes precedence over adj
   assert.deepEqual(calls[1].slice(-2), ["--recovery-source-run", "failed-html"])
 })
 
+test("closed historical windows reuse the previous daily article source across slices", async (t) => {
+  const { root, args } = slicedExecution(t, ["route-a"]), stored = new Map(), calls = []
+  args.activeRoutes = [{ channel_id: "route-a", route: {
+    ...route("route-a", "해외"), method: "rss", listing_profile: {
+      fallback_archive: { article_date_resolution: "yearless-month-day" },
+    },
+  } }]
+  args.scan = async (_window, id, _listing, repair, previousArticleSource) => {
+    calls.push({ id, repair, previousArticleSource })
+    const summary = { status: "window_scanned", date_resolutions: [{ url: "https://example.org/article" }] }
+    atomicWrite(root, `runs/${id}/list-scan.json`, summary)
+    const result = { summary, candidates: [{ key: id }] }
+    stored.set(id, result)
+    return result
+  }
+  args.loadStored = (_root, id) => stored.get(id)
+  await executeDailyPlan({ ...args, maxWindows: 1 })
+  await executeDailyPlan({ ...args, maxWindows: 1 })
+  assert.equal(calls.length, 2)
+  assert.equal(calls[0].previousArticleSource, null)
+  assert.equal(calls[1].previousArticleSource, calls[0].id)
+  assert.equal(calls[1].repair, null)
+})
+
+test("an interrupted daily attempt preserves the source choice frozen before the window closed", async (t) => {
+  const { root, args } = slicedExecution(t, ["route-a"]), stored = new Map(), calls = []
+  args.activeRoutes = [{ channel_id: "route-a", route: {
+    ...route("route-a", "해외"), method: "rss", listing_profile: {
+      fallback_archive: { article_date_resolution: "yearless-month-day" },
+    },
+  } }]
+  args.scan = async (_window, id, listing, repair, previousArticleSource) => {
+    calls.push({ id, listing, repair, previousArticleSource })
+    const summary = { status: "window_scanned", date_resolutions: [{ url: "https://example.org/article" }] }
+    atomicWrite(root, `runs/${id}/list-scan.json`, summary)
+    const result = { summary, candidates: [{ key: id }] }
+    stored.set(id, result)
+    return result
+  }
+  args.loadStored = (_root, id) => stored.get(id)
+  await executeDailyPlan({ ...args, maxWindows: 1 })
+  const id = `${args.plan.run_id}_route-a_20260924_20260928_a1`
+  atomicWrite(root, `runs/${id}/collection-input.json`, {
+    schema: "research-list-run-input/v2", channel_id: "route-a",
+    since: "2026-09-24", until_exclusive: "2026-09-28", reuse_listing_run: null,
+    collection_basis: {},
+  })
+  await executeDailyPlan({ ...args, maxWindows: 1 })
+  assert.equal(calls[1].id, id)
+  assert.equal(calls[1].previousArticleSource, null)
+  assert.equal(calls[1].listing, null)
+})
+
+test("daily scanner forwards the prior article source without replacing a same-window repair", async (t) => {
+  const root = temporary(t), calls = []
+  const scanner = createDailySourceScanner({
+    root, activeRoutes: [{ route: { channel_id: "official", method: "rss" } }],
+    runResearch: async (args) => {
+      calls.push(args)
+      const id = args[args.indexOf("--run") + 1]
+      atomicWrite(root, `runs/${id}/list-scan.json`, { status: "incomplete", channel_id: "official" })
+      for (const file of ["documents", "parses", "candidates", "list-pages"])
+        atomicWrite(root, `runs/${id}/${file}.json`, [])
+    },
+  })
+  const window = { channel_id: "official", since: "2026-10-01", until_exclusive: "2026-10-02" }
+  await scanner(window, "new-one", null, null, "previous-article-source")
+  await scanner(window, "new-two", null, "same-window-repair", "previous-article-source")
+  assert.deepEqual(calls[0].slice(-2), ["--recovery-source-run", "previous-article-source"])
+  assert.deepEqual(calls[1].slice(-2), ["--recovery-source-run", "same-window-repair"])
+})
+
 test("stored daily windows must match their frozen verified coverage basis", () => {
   const config = { lookback_days: 7, max_window_days: 7 }
   const activeRoutes = [

@@ -40,6 +40,16 @@ export function measureJobTimestamps(state, reasoning = []) {
 export function moduleJobTiming(root, state) {
   const tasks = new Map()
   const attempts = []
+  const cleanupFile = safePath(root, `module-jobs/${state.job_id}/storage-cleanup.json`, { materialize: false })
+  const recordedCleanup = fs.existsSync(cleanupFile) ? JSON.parse(fs.readFileSync(cleanupFile)) : null
+  const cleanup = recordedCleanup?.attempt === state.attempt ? recordedCleanup : null
+  if (cleanup && (cleanup.schema !== "research-storage-cleanup-timing/v1" ||
+      cleanup.job_id !== state.job_id || cleanup.input_sha256 !== state.input_sha256 ||
+      !["completed", "failed"].includes(cleanup.status) ||
+      !Number.isSafeInteger(cleanup.elapsed_ms) || cleanup.elapsed_ms < 0 ||
+      !Number.isFinite(Date.parse(cleanup.started_at)) ||
+      !Number.isFinite(Date.parse(cleanup.finished_at))))
+    throw Error("Storage cleanup timing binding changed")
   const include = (value) => {
     if (value?.reasoning_task) tasks.set(value.reasoning_task.task_id, value.reasoning_task)
   }
@@ -86,6 +96,8 @@ export function moduleJobTiming(root, state) {
     attempts: timings,
     dispatch_wait_ms: sum(timings.map((t) => t.dispatch_wait_ms)),
     native_execution_ms: sum(timings.map((t) => t.native_execution_ms)),
+    storage_cleanup_ms: cleanup?.elapsed_ms ?? null,
+    storage_cleanup_status: cleanup?.status ?? null,
   }
 }
 
@@ -99,6 +111,7 @@ export function summarizeStageTiming(commands) {
           jobs: jobs.length,
           dispatch_wait_ms: sum(jobs.map((j) => j?.dispatch_wait_ms)),
           native_execution_ms: sum(jobs.map((j) => j?.native_execution_ms)),
+          storage_cleanup_ms: sum(jobs.map((j) => j?.storage_cleanup_ms)),
           reasoning_external_wait_ms: sum(jobs.map((j) => j?.reasoning_external_wait_ms)),
           aggregation: "sum_of_job_durations_not_wall_clock",
           fixed_input_replay_verified: false,

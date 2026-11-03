@@ -999,6 +999,10 @@ URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 
 
 기존 출처별 병렬/요청 예산·제한된 재시도·원문/parse 재사용, 개념 후보 색인과 정확한 입력의 의미 검토 재사용, Drive 공통 전송과 동일 대상 raw readback 복구는 그대로 사용한다. 이번 변경은 별도 수집기·Drive 쓰기기를 추가하지 않는다.
 
+같은 일일 계획의 연도가 생략된 RSS 아카이브가 이미 종료된 다른 기간을 검사할 때에는, 직전 구간에서 실제 날짜를 확인한 기사에 한해 원문 판본과 일치하는 파싱을 재사용한다. 이전 구간의 일일 영수증·계획·출처 정책·구현 지문과 실제 원문 SHA를 확인하며, 대상 구간 종료 후 관찰한 지 1시간 이내인 자료만 쓴다. 새 RSS와 아카이브 목록은 다시 조회하고 제목·날짜·본문 검증과 대상 구간의 coverage 판정도 다시 수행한다. 목록이나 과거 coverage·승인을 재사용하지 않는다. 기존 관측 시각과 재사용 영수증을 보존하며, 원문이 없거나 바뀐 경우 기존 storage 대기·검증 실패 규칙을 따른다. 진행 중인 기간과 다른 회차는 이 경로를 사용하지 않는다.
+
+운영 job 시간에는 `storage_cleanup_ms`와 `storage_cleanup_status`가 별도로 기록된다. 결과 저장 이후에도 worker 잠금을 유지하는 기존 저장소 정리 시간이므로 모델 시간이나 기사 검토 시간으로 합산하지 않는다. 기록이 없는 과거 job은 `null`이며, 단계별 값은 job별 시간의 합이지 전체 경과 시간이 아니다.
+
 보관은 기존 `collection.storage` adapter를 사용한다. 전체 보관 점검은 `prepare-full`이며 catalog와 로컬 파일을 전수 대조하고, 누락된 미보관 원문은 `requires_repair`로 기록해 임의 삭제나 cutoff 전진을 막는다. 일일 변경분은 먼저 `change-manifest`에 `run_id`와 명시적 `paths`를 전달해 원문 SHA·크기·제외정책 SHA가 고정된 manifest를 만든다. 그 manifest의 정확한 path/SHA를 `prepare-delta`에 전달하면 전체 순회 없이 그 경로만 준비한다. 양쪽 모두 회차별 input/manifest/receipt를 보존하고 동일 입력 재개를 지원한다. 변경 입력은 기존 Drive raw-readback 검증 전까지 대기 상태이며 이 명령 자체가 원격 쓰기를 수행하지 않는다. 공유 제외 정책 `data/research-storage-exclusions.json`은 `.storage`, `node_modules`, 백업·전송 캐시, 인증·secret 경로와 등록된 경로 시퀀스를 inventory·선택·package 단계에서 제외한다. 전체 감사와 일일 delta는 상호 대체하지 않는다.
 
 정규 collection writer가 실패하면 그 attempt receipt와 저장된 source/parse 근거로 기존 `dailyRetryAssessment`를 계산한다. `requires_repair`인 파서·입력·구현 결함만 `.storage/development-pending`에 제한 크기·비밀값 제거·SHA 결속 snapshot으로 기록한다. 일시적 통신/429, 접근·정책 제한, `STORAGE_PENDING`은 기존 재시도·새 관측·Drive 복원 상태에 남고 개발 결함으로 오분류하거나 자동 재실행하지 않는다. `defects --round <ID>`는 읽기 전용 페이지 조회다. 이 큐는 운영 코드를 수정하지 않으며 사람이 별도 개발 작업으로 재현·수정해야 한다.

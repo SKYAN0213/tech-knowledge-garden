@@ -11,6 +11,7 @@ import {
   replayControlTiming,
   runControlTimingReplay,
   recordOperationalJobTiming,
+  moduleJobTiming,
 } from "../scripts/research/operations-timing.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 const at = (n) => new Date(Date.UTC(2026, 9, 25, 0, 0, 0, n)).toISOString()
@@ -150,6 +151,29 @@ function settledTimingFixture(t) {
   })
   return { ...f, job }
 }
+
+test("storage cleanup time is reported only for the exact completed job attempt", (t) => {
+  const f = settledTimingFixture(t)
+  const state = JSON.parse(fs.readFileSync(safePath(f.root, `module-jobs/${f.job}/state.json`)))
+  assert.equal(moduleJobTiming(f.root, state).storage_cleanup_ms, null)
+  const value = {
+    schema: "research-storage-cleanup-timing/v1", job_id: f.job,
+    input_sha256: state.input_sha256, attempt: state.attempt,
+    started_at: at(20), finished_at: at(45), elapsed_ms: 25,
+    status: "completed", configured: true,
+  }
+  const ref = atomicCreate(f.root, `module-jobs/${f.job}/storage-cleanup.json`, value)
+  const timing = moduleJobTiming(f.root, state)
+  assert.equal(timing.storage_cleanup_ms, 25)
+  assert.equal(timing.storage_cleanup_status, "completed")
+  assert.equal(summarizeStageTiming([
+    { stage: "processing", job: { timing } }, { stage: "processing", job: { timing } },
+  ]).processing.storage_cleanup_ms, 50)
+  fs.writeFileSync(safePath(f.root, ref.path), JSON.stringify({ ...value, attempt: 0 }))
+  assert.equal(moduleJobTiming(f.root, state).storage_cleanup_ms, null)
+  fs.writeFileSync(safePath(f.root, ref.path), JSON.stringify({ ...value, input_sha256: sha256("other") }))
+  assert.throws(() => moduleJobTiming(f.root, state), /cleanup timing binding changed/)
+})
 
 test("concurrent timing receipt creation reuses the identical winning bytes", (t) => {
   const f = settledTimingFixture(t),
