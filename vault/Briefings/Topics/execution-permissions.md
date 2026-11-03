@@ -2,7 +2,7 @@
 title: 실행·배포 권한을 경로별로 세분화
 type: briefing-topic
 topic_id: execution-permissions
-date: 2026-10-27
+date: 2026-11-03
 description: npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제
   설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한
   적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인
@@ -24,7 +24,7 @@ generated_by: tech-knowledge-garden
 
 npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.  9월30일 Data Agent Kit은 사용자·서비스 계정 권한 전파를 설명했지만, 같은 날 Cisco와 AMD는 각각 관리 API·RCCL 실행 경계 취약점을 공지했다. 통제 기능의 존재와 설치된 최소 권한·패치 안전성을 구분한다.
 
-2026-10-27까지 서로 다른 원문 17건 · 11일에 걸쳐 관측. 최근 7일 4건 / 이전 7일 2건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-11-03까지 서로 다른 원문 19건 · 12일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 5건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -41,6 +41,19 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 ## 관측 기록
 
 기존 수록 기사 재정리 · 2026-10-09, 2026-10-10 검토. 아래 날짜는 기사 수록일이다.
+
+<span id="sagemaker-role-based-project-designations-20261029"></span>
+
+### 2026-10-29 · 관측
+
+**AWS는 SageMaker Unified Studio에서 관리자 지정 역할별 권한 집합을 프로젝트 구성원에게 할당하는 custom designations를 추가했다. 권한은 도메인 수준에서 정의되며 프로젝트 작업별로 허용·거부된다.**
+
+Data Agent·노트북을 포함한 프로젝트 안에서 역할에 따라 실행 가능 작업을 분리하는 제품 기능이 추가됐다. 실행 경로별 권한 통제점을 추적하는 기존 주제를 보강한다.
+
+- 한계: 이는 AWS가 설명한 제품 기능이다. 고객 설정의 실제 최소 권한 적용, 우회 가능성, 운영 로그나 사고 감소 효과는 입증되지 않았다.
+- 다음 확인: Data Agent·노트북 등 작업별 실제 권한 판정과 상속·예외를 확인하고, 설정된 역할에서 허용·거부 경계와 로그를 검증한다.
+- [[News/072a6c62376316c6|Amazon SageMaker Unified Studio, 역할별 custom designations 지원]] · [aws.amazon.com 원문](https://aws.amazon.com/about-aws/whats-new/2026/10/sagemaker-custom-designations/) · [[Briefings/2026/11/2026-11-03_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-11-03 원문 검토
 
 <span id="php-session-rce-20261024"></span>
 
@@ -80,6 +93,19 @@ npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통�
 - 다음 확인: 실제 웹 실행 판본과 패키지 CVE 변경 이력, 증거 보존 뒤 패치·재시작·컨테이너 재배포 및 노출 인증정보 교체 여부를 확인한다.
 - [[News/26cee6c8988b9fda|KRCERT, PHP2Shell 취약점 대응 위해 패치와 침해 흔적 점검 권고]] · [krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72230) · [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|당일 브리핑]]
 - 2026-10-25 원문 검토
+
+<span id="github-cli-expiring-oauth-credentials-20261021"></span>
+
+### 2026-10-21 · 관측
+
+**GitHub CLI는 공개 프리뷰에서 선택형 만료 OAuth 자격 증명을 제공한다고 발표했다. 액세스 토큰은 짧게 만료되고 회전형 리프레시 토큰으로 필요할 때 갱신되며, HTTPS Git 자격 증명 헬퍼 구성 시 갱신을 처리한다고 설명했다.**
+
+자동화 도구의 자격 증명 수명과 갱신 경로에 대한 통제가 추가된 사례다. 실행 주체·자격 증명·정책 지점을 따로 점검한다는 기존 권한 추세와 맞닿는다.
+
+- 한계: 기능은 공개 프리뷰이며 opt-in이다. 토큰을 외부에 복사·저장한 경우의 관리와 실제 사용자 환경에서의 노출·악용 감소는 확인되지 않았다.
+- 다음 확인: 운영 중인 CLI·Git credential helper 설정 및 토큰 소비 위치를 확인하고, 만료·갱신·외부 보관 경로에서 자격 증명 노출과 실패 동작을 점검한다.
+- [[News/16e9261d8a8c087e|GitHub CLI, 만료형 자동 갱신 OAuth 자격 증명 공개 프리뷰]] · [GitHub 원문](https://github.blog/changelog/2026-10-21-github-cli-opt-in-to-expiring-auto-refreshing-oauth-tokens) · [[Briefings/2026/11/2026-11-03_0800_Tech_AI_Briefing|당일 브리핑]]
+- 2026-11-03 원문 검토
 
 <span id="github-npm-package-firewall-20261021"></span>
 
