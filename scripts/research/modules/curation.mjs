@@ -107,7 +107,7 @@ export const module = {
     ),
     select: operation(
       "근거·신규성·현재 유효성 조건을 통과한 후보의 점수를 유지하고 같은 우선순위·가까운 점수에서 반복/편중을 줄여 브리핑을 구성한다. 명시적으로 검토한 추가 정보와 하루·분야 상한을 적용하고 보류 후보를 보존한다.",
-      schema(pool, Object.keys(pool)),
+      schema({ ...pool, identity_review_file: file() }, Object.keys(pool)),
       selectCuration,
     ),
     status: operation(

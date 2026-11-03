@@ -1406,7 +1406,18 @@ async function reconcileEvidenceReviewers(
   )
   if (!mismatched.length) return null
   const allowed = new Set([settings.model, `${settings.model} (${String(settings.think)})`])
-  if (outputs.some((output) => !allowed.has(output.reviewer)))
+  const normalized = (value) =>
+    value
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/[-_\s]+/g, " ")
+      .trim()
+  const acceptedLabel = (value) =>
+    allowed.has(value) ||
+    (settings.provider === "codex" &&
+      typeof value === "string" &&
+      normalized(value) === `codex ${normalized(settings.model)} (independent evidence reviewer)`)
+  if (outputs.some((output) => !acceptedLabel(output.reviewer)))
     throw Error("Reviewer identity could not be reconciled to the bound model")
   const ids = mismatched.map((row) => row.part)
   const schema = object({

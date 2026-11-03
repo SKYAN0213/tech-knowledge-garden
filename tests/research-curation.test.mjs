@@ -417,6 +417,59 @@ test("the same reviewed identity is held once across plans even when JSON field 
   assert.equal(readJSON(f.root, "curation/queue.json").plans.length, 2)
 })
 
+test("an explicitly reviewed same-event pair is selected once without altering scores or source evidence", async (t) => {
+  const f = setup(t)
+  const variant = { ...structuredClone(f.event), group_id: "same-event-other-wording",
+    identity: { ...f.event.identity, object: "Contract 123 order" } }
+  const first = await plan(f, "pair-first", [f.event])
+  const second = await plan(f, "pair-second", [variant])
+  const unreviewed = await pool(f, "pair-unreviewed", [first, second])
+  assert.notEqual(unreviewed.value.candidates[0].identity_key, unreviewed.value.candidates[1].identity_key)
+  await review(f, unreviewed, unreviewed.value.candidates.map((c, i) => rating(f, c, i ? 5 : 4)))
+  assert.equal(loadCurationSelection(f.ctx, ref(await choose(f, unreviewed))).selected.length, 2)
+  const p = await pool(f, "pair-reviewed", [first, second])
+  const [preferred, alternate] = p.value.candidates
+  const evidence = [preferred, alternate].map((candidate) => {
+    const source = curationCandidatePacket(f.ctx, candidate).sources[0], block = source.blocks[0]
+    return { candidate_id: candidate.candidate_id, material_id: source.material_id,
+      block_id: block.block_id, quote: block.text }
+  })
+  const reviewFile = "pair-identity-review.json"
+  const identityReview = { schema: "research-curation-identity-review/v1", pool_sha256: p.sha256,
+    reviewer: "test-source-comparison", reviewed_at: new Date().toISOString(), pairs: [{
+      candidate_ids: [preferred.candidate_id, alternate.candidate_id],
+      preferred_candidate_id: preferred.candidate_id, verdict: "same_event",
+      reason: "Both original passages describe the same Contract-123 announcement; preserve the fuller source scope.",
+      evidence,
+    }] }
+  atomicWrite(f.root, reviewFile, identityReview)
+  const args = { pool_path: p.path, pool_sha256: p.sha256,
+    identity_review_file: path.relative(f.ctx.repo, path.join(f.root, reviewFile)) }
+  for (const [changed, expected] of [
+    [{ ...identityReview, pool_sha256: "0".repeat(64) }, /another pool/],
+    [{ ...identityReview, pairs: [{ ...identityReview.pairs[0], verdict: "different_event" }] }, /schema|const|verdict/i],
+    [{ ...identityReview, pairs: [{ ...identityReview.pairs[0], evidence: [evidence[0]] }] }, /schema|evidence|minItems/i],
+    [{ ...identityReview, pairs: [{ ...identityReview.pairs[0], evidence: [evidence[0], { ...evidence[1], quote: "not in the original" }] }] }, /exact original block/],
+    [{ ...identityReview, pairs: [identityReview.pairs[0], identityReview.pairs[0]] }, /distinct reviewed identity/i],
+  ]) {
+    atomicWrite(f.root, reviewFile, changed)
+    await assert.rejects(selectCuration(f.ctx, args), expected)
+  }
+  atomicWrite(f.root, reviewFile, identityReview)
+  const selectedRef = await selectCuration(f.ctx, args)
+  const selected = loadCurationSelection(f.ctx, ref(selectedRef))
+  assert.deepEqual(selected.selected.map((x) => x.candidate_id), [preferred.candidate_id])
+  assert.equal(selected.selected[0].score, 80)
+  assert.ok(selected.held.some((x) => x.candidate_id === alternate.candidate_id &&
+    x.reason === "reviewed_same_event" && x.score === 100))
+  assert.equal(selected.composition.importance_scores_changed, false)
+  assert.equal(selected.candidate_published, false)
+  assert.ok(selected.identity_review?.sha256)
+  assert.equal((await selectCuration(f.ctx, args)).reused, true)
+  atomicWrite(f.root, selected.identity_review.path, { ...identityReview, reviewer: "tampered" })
+  assert.throws(() => loadCurationSelection(f.ctx, ref(selectedRef)), /hash|changed|digest/i)
+})
+
 test("curation rejects unsupported evidence and fractional/out-of-range scores", async (t) => {
   const f = setup(t),
     p = await pool(f, "invalid", [await plan(f, "invalid-plan", [f.event])])

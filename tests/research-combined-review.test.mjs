@@ -3418,6 +3418,106 @@ test("a different or unresolved reviewer identity cannot be silently reconciled"
   assert.equal(readJSON(f.root, `runs/${f.run}/reviewed-claims.json`), null)
 })
 
+test("a bound Codex reviewer label requires explicit reconciliation without changing part decisions", async (t) => {
+  const f = setup(t),
+    calls = []
+  f.ctx.policy = path.join(f.root, "codex-model-policy.json")
+  atomicWrite(
+    f.root,
+    "codex-model-policy.json",
+    JSON.parse(fs.readFileSync("data/research-model-policy-codex.json")),
+  )
+  atomicWrite(f.root, `runs/${f.run}/claims.json`, {
+    claims: Array.from({ length: 13 }, (_, i) => ({
+      ...structuredClone(f.claim),
+      claim_id: "bound-label-" + i,
+    })),
+  })
+  const alias = "Codex GPT-6 Luna (independent evidence reviewer)"
+  const provider = {
+    metadata: fixtureMetadata,
+    structured: async (request) => {
+      const input = JSON.parse(request.messages[1].content)
+      calls.push(input.task)
+      if (input.task === "combined_review") {
+        const value = output(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "evidence" }))
+        value.part = input.part
+        value.reviewer = input.part ? alias : request.model
+        value.fact_review.claims = value.fact_review.claims.filter((r) =>
+          input.assigned_claim_ids.includes(r.claim_id),
+        )
+        value.important_facts = value.important_facts.filter((r) =>
+          input.assigned_claim_ids.includes(r.claim_ref),
+        )
+        return { output: value }
+      }
+      assert.equal(input.task, "combined_review_reviewer_reconciliation")
+      assert.equal(input.valid_decisions_retained, true)
+      return {
+        output: {
+          schema: "research-reviewer-reconciliation/v1",
+          input_sha256: input.input_sha256,
+          read_manifest_sha256: input.source_manifest.sha256,
+          reviewer: input.reference_reviewer,
+          reconciled_parts: [{ part: 1, original_reviewer: alias }],
+          same_bound_model: true,
+          reason:
+            "The explicit labels name the configured Codex model and preserve the review parts.",
+        },
+      }
+    },
+  }
+  const result = await runCombinedReview(
+    f.ctx,
+    { run_id: f.run, kind: "evidence" },
+    { baseProvider: provider },
+  )
+  assert.equal(calls.filter((x) => x === "combined_review").length, 2)
+  assert.equal(calls.filter((x) => x === "combined_review_reviewer_reconciliation").length, 1)
+  assert.equal(readJSON(f.root, result.response.path).outputs[1].reviewer, alias)
+  assert.equal(readJSON(f.root, `runs/${f.run}/reviewed-claims.json`).claims.length, 13)
+})
+
+test("a Codex reviewer label naming a different model remains blocked", async (t) => {
+  const f = setup(t)
+  f.ctx.policy = path.join(f.root, "codex-model-policy.json")
+  atomicWrite(
+    f.root,
+    "codex-model-policy.json",
+    JSON.parse(fs.readFileSync("data/research-model-policy-codex.json")),
+  )
+  atomicWrite(f.root, `runs/${f.run}/claims.json`, {
+    claims: Array.from({ length: 13 }, (_, i) => ({
+      ...structuredClone(f.claim),
+      claim_id: "different-bound-label-" + i,
+    })),
+  })
+  const provider = {
+    metadata: fixtureMetadata,
+    structured: async (request) => {
+      const input = JSON.parse(request.messages[1].content)
+      assert.equal(input.task, "combined_review")
+      const value = output(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "evidence" }))
+      value.part = input.part
+      value.reviewer = input.part
+        ? "Codex GPT-6 Astra (independent evidence reviewer)"
+        : request.model
+      value.fact_review.claims = value.fact_review.claims.filter((r) =>
+        input.assigned_claim_ids.includes(r.claim_id),
+      )
+      value.important_facts = value.important_facts.filter((r) =>
+        input.assigned_claim_ids.includes(r.claim_ref),
+      )
+      return { output: value }
+    },
+  }
+  await assert.rejects(
+    runCombinedReview(f.ctx, { run_id: f.run, kind: "evidence" }, { baseProvider: provider }),
+    /Reviewer identity could not be reconciled/,
+  )
+  assert.equal(readJSON(f.root, `runs/${f.run}/reviewed-claims.json`), null)
+})
+
 test("reviewer reconciliation rejects changed part evidence before recording native facts", async (t) => {
   const f = setup(t)
   const claims = Array.from({ length: 13 }, (_, i) => ({

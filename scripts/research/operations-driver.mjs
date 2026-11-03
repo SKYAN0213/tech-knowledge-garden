@@ -8,31 +8,8 @@ import { moduleJobStatus } from "./module-runtime.mjs"
 import { readReasoningTask } from "./reasoning-tasks.mjs"
 import { publicationDeliveryStatus } from "./authoring-delivery-request.mjs"
 import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
-
-export function savedStorageRequestReady(root, request) {
-  if (request?.schema !== "research-storage-download-request/v1" || typeof request.root !== "string" ||
-      !Array.isArray(request.requests) || !request.requests.length) return false
-  let actualRoot, requestedRoot
-  try { actualRoot = fs.realpathSync(root); requestedRoot = fs.realpathSync(request.root) }
-  catch (error) { if (error.code === "ENOENT") return false; throw error }
-  if (actualRoot !== requestedRoot) {
-    if (!actualRoot.startsWith(requestedRoot + path.sep)) return false
-    const policyPath = safePath(requestedRoot, ".storage/policy.json", { materialize: false })
-    if (!fs.existsSync(policyPath)) return false
-    const policy = JSON.parse(fs.readFileSync(policyPath))
-    if (policy.schema !== "research-cold-storage/v1" || policy.root !== requestedRoot || policy.enabled !== true)
-      return false
-  }
-  for (const entry of request.requests) {
-    if (typeof entry.path !== "string" || !/^[a-f0-9]{64}$/.test(entry.sha256 || "")) return false
-    const file = safePath(requestedRoot, entry.path, { materialize: false })
-    if (file !== actualRoot && !file.startsWith(actualRoot + path.sep)) return false
-    const stat = fs.statSync(file, { throwIfNoEntry: false })
-    if (!stat?.isFile() || (entry.bytes !== undefined && stat.size !== entry.bytes)) return false
-    if (sha256(fs.readFileSync(file)) !== entry.sha256) return false
-  }
-  return true
-}
+import { savedStorageRequestReady } from "./storage-request.mjs"
+export { savedStorageRequestReady } from "./storage-request.mjs"
 
 // A completed module job is a slice, never a completed daily publication.
 // Only native delivery receipts can establish the latter.

@@ -10,9 +10,11 @@ import { verifyStoredListScan, verifyStoredPartialCandidates } from "./scan-evid
 import { storedListScan, verifiedDailyScan, reconcileSupplementalScan } from "./daily-scan.mjs"
 import { sha256 } from "./contracts.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock, withGardenOperationLock } from "./run-state.mjs"
+import { inspectSavedStorageRequest } from "./storage-request.mjs"
 import {
   collectionOutcome,
   collectionSourceDecision,
+  checkedSourceWait,
   recordCollectionOutcome,
 } from "./collection-resilience.mjs"
 
@@ -179,6 +181,37 @@ export async function recoverCollection({
     )
       throw Error("Stored collection report required")
     const reportPins = new Map(report.evidence.map((pin) => [pin.path, pin]))
+    const checkedFailedReceipt = (route, window, attempt) => {
+      if (!/^[A-Za-z0-9_-]{1,100}$/.test(report.daily_run || "") ||
+          !/^[A-Za-z0-9_-]{1,100}$/.test(attempt?.run_id || ""))
+        throw Error("Recovery failed receipt identity is invalid")
+      const receiptPath = `daily/runs/${report.daily_run}/receipts/${attempt.run_id}.json`
+      const pin = reportPins.get(receiptPath)
+      if (!pin) throw Error("Recovery failed receipt is not pinned by the frozen report")
+      const bytes = fs.readFileSync(safePath(root, receiptPath))
+      if (sha256(bytes) !== pin.sha256) throw Error("Recovery failed receipt changed")
+      const receipt = JSON.parse(bytes)
+      if (!["research-daily-receipt/v1", "research-daily-receipt/v2"].includes(receipt.schema) ||
+          receipt.daily_run !== report.daily_run || receipt.attempt_id !== attempt.run_id ||
+          receipt.channel_id !== route.channel_id || receipt.since !== window.since ||
+          receipt.until_exclusive !== window.until_exclusive || receipt.status !== attempt.status ||
+          receipt.reason !== attempt.reason || receipt.candidate_published !== false ||
+          !["failed", "blocked"].includes(receipt.status))
+        throw Error("Recovery failed receipt differs from the frozen report")
+      return receipt
+    }
+    const checkStorageWaits = (source) => {
+      for (const stage of Object.values(source.state.stages || {})) {
+        if (stage.status !== "waiting_for_storage") continue
+        const request = stage.storage_request
+        const inspected = inspectSavedStorageRequest(root, request)
+        if (inspected.status === "invalid") throw Error("Saved recovery storage request is invalid or restored bytes differ")
+        if (inspected.status === "pending")
+          throw Object.assign(Error(stage.error || "Stored payload required"), {
+            code: "STORAGE_PENDING", storage_request: request,
+          })
+      }
+    }
     const bases = new Map()
     const acquisition = JSON.parse(
       fs.readFileSync(path.join(repo, "data/research-acquisition.json")),
@@ -191,11 +224,40 @@ export async function recoverCollection({
       acquisition,
       config("source-recipes"),
     )
+    const currentBasis = (channelId) => {
+      const registered = routes.find((r) => r.channel_id === channelId)
+      if (!registered || registered.collection_mode !== "automatic" ||
+          (registered.onboarding && !registered.onboarding.collection_enabled))
+        throw Error("Recovery cannot enable an inactive source")
+      if (!bases.has(channelId)) {
+        const channel = collectionRoute(registered)
+        bases.set(channelId, collectionBasis(
+          channel, collectionArticleProfiles(channel, acquisition.article_profiles), repo,
+        ))
+      }
+      return bases.get(channelId)
+    }
     const preparedFailures = new Map(),
       resolvedDeferred = new Map()
     const prepareTarget = (route, window, saved) => {
           const attempt = window.attempts.at(-1),
             reportRun = attempt.run_id
+          const pin = reportPins.get(`runs/${reportRun}/list-scan.json`)
+          const failedReceipt = pin ? null : checkedFailedReceipt(route, window, attempt)
+          if (failedReceipt?.source_wait) {
+            const wait = checkedSourceWait(root, failedReceipt)
+            if (!Number.isFinite(Date.parse(wait.next_check_at)) ||
+                typeof wait.next_action !== "string" || !wait.next_action.trim())
+              throw Error("Source wait requires an exact recheck time and action")
+            if (sourceRuns[route.channel_id] || sourceWindows.some((entry) =>
+              keyOf(entry) === keyOf({ channel_id: route.channel_id, ...window })))
+              throw Error("A source wait cannot claim an unrelated checkpoint override")
+            return { channel_id: route.channel_id, since: window.since,
+              until_exclusive: window.until_exclusive, source_run: null,
+              report_receipt: reportPins.get(`daily/runs/${report.daily_run}/receipts/${reportRun}.json`),
+              source_wait: wait, reason: failedReceipt.reason, action: "recheck_listing",
+              current_basis: currentBasis(route.channel_id) }
+          }
           const override = sourceWindows.find(
             (entry) => keyOf(entry) === keyOf({ channel_id: route.channel_id, ...window }),
           )
@@ -206,10 +268,12 @@ export async function recoverCollection({
                 saved.report_source_reference || saved.source_reference,
               )
             : readRecoverySource(root, reportRun)
-          const pin = reportPins.get(`runs/${reportRun}/list-scan.json`)
           if (
-            !pin ||
-            pin.sha256 !== sha256(fs.readFileSync(safePath(root, pin.path))) ||
+            (pin && pin.sha256 !== sha256(fs.readFileSync(safePath(root, pin.path)))) ||
+            (!pin && (failedReceipt.status !== "failed" ||
+              original.reference.incomplete_checkpoints !== true ||
+              original.reference.coverage_reused !== false ||
+              fs.existsSync(safePath(root, `runs/${reportRun}/list-scan.json`, { materialize: false })))) ||
             original.summary.channel_id !== route.channel_id ||
             original.summary.window.since !== window.since ||
             original.summary.window.until_exclusive !== window.until_exclusive
@@ -244,6 +308,10 @@ export async function recoverCollection({
               source.summary.window.until_exclusive !== window.until_exclusive
             )
               throw Error("Checkpoint override must retain the exact report route and window")
+            // The receipt-only original stopped before producing its listing;
+            // do not treat its missing bytes as an ordinary retryable scan.
+            // Independent override runs retain their existing partial reuse.
+            if (sourceRun === reportRun && !pin) checkStorageWaits(source)
             for (const proof of source.reference.evidence) {
               const expected = reportPins.get(proof.path)
               if (expected && expected.sha256 !== proof.sha256)
@@ -252,23 +320,6 @@ export async function recoverCollection({
             return source
           })
           const sourceRun = selectedRuns[0], source = sources[0]
-          const registered = routes.find((r) => r.channel_id === route.channel_id)
-          if (
-            !registered ||
-            registered.collection_mode !== "automatic" ||
-            (registered.onboarding && !registered.onboarding.collection_enabled)
-          )
-            throw Error("Recovery cannot enable an inactive source")
-          const channel = collectionRoute(registered)
-          if (!bases.has(route.channel_id))
-            bases.set(
-              route.channel_id,
-              collectionBasis(
-                channel,
-                collectionArticleProfiles(channel, acquisition.article_profiles),
-                repo,
-              ),
-            )
           return {
             channel_id: route.channel_id,
             since: window.since,
@@ -288,7 +339,7 @@ export async function recoverCollection({
               : "frozen_report",
             reason: source.summary.reason,
             action: actionFor(source.summary.reason),
-            current_basis: bases.get(route.channel_id),
+            current_basis: currentBasis(route.channel_id),
           }
     }
     const targets = report.routes.flatMap((route) =>
@@ -355,7 +406,7 @@ export async function recoverCollection({
       implementation_sha256: sha256(fs.readFileSync(new URL(import.meta.url))),
       ...(!existing || existing.implementation_dependencies ? {
         implementation_dependencies: Object.fromEntries([
-          "source-run-recovery.mjs", "list-scan-command.mjs", "scan-basis.mjs", "collection-report.mjs",
+          "source-run-recovery.mjs", "list-scan-command.mjs", "scan-basis.mjs", "collection-report.mjs", "storage-request.mjs",
         ].map((name) => [name, sha256(fs.readFileSync(new URL(name, import.meta.url)))])),
       } : {}),
       ...(!existing || existing.policy_dependencies ? {
@@ -385,8 +436,14 @@ export async function recoverCollection({
       error: { message: error.message, code: error.code || null,
         ...(error.storage_request ? { storage_request: error.storage_request } : {}) },
     }))
-    if (mode === "plan-only")
+    if (mode === "plan-only") {
+      for (const target of targets)
+        if (target.source_wait && Date.parse(target.source_wait.next_check_at) > Date.now())
+          waitingSources.push({ channel_id: target.channel_id, since: target.since,
+            until_exclusive: target.until_exclusive, status: "source_cooling_down",
+            next_check_at: target.source_wait.next_check_at, next_action: target.source_wait.next_action })
       return { ...input, status: waitingSources.length ? "partial" : "planned", waiting_sources: waitingSources, candidate_approved: false, candidate_published: false }
+    }
     const executed = [],
       unverifiedCompleted = new Set(),
       notifications = []
@@ -442,12 +499,19 @@ export async function recoverCollection({
         ((!last.continuable && !retryIncomplete) || failureAttempts >= maxAttempts)
       )
         continue
+      if (target.source_wait && Date.parse(target.source_wait.next_check_at) > Date.now()) {
+        waitingSources.push({ channel_id: target.channel_id, since: target.since,
+          until_exclusive: target.until_exclusive, status: "source_cooling_down",
+          next_check_at: target.source_wait.next_check_at, next_action: target.source_wait.next_action })
+        continue
+      }
       const decision = collectionSourceDecision(root, target.channel_id, target.current_basis)
       if (!decision.allowed) {
         waitingSources.push({
           channel_id: target.channel_id,
           since: target.since,
           until_exclusive: target.until_exclusive,
+          status: "source_cooling_down",
           next_check_at: decision.next_check_at,
           next_action: decision.next_action,
         })
@@ -476,7 +540,7 @@ export async function recoverCollection({
           until: target.until_exclusive,
           ...(attempt.source_runs?.length > 1
             ? { "recovery-source-runs": attempt.source_runs }
-            : { "recovery-source-run": attempt.source_run }),
+            : attempt.source_run ? { "recovery-source-run": attempt.source_run } : {}),
           "policy-recheck-limit": 0,
         })
         if (result.summary.status === "window_scanned")
@@ -544,18 +608,27 @@ export async function recoverCollection({
     }
     if (publishReport && reportable.length) {
       try {
-        const oldRuns = report.routes.flatMap((r) =>
-          r.windows.flatMap((w) => w.attempts.map((a) => a.run_id)),
-        )
         // A frontier has one native observation per window. Keep the immutable
         // original report and recovery history, and project the latest attempt
         // for a repaired window into the new frontier rather than duplicating it.
         const latest = new Map()
-        for (const id of oldRuns) {
-          const source = readRecoverySource(root, id)
-          latest.set(keyOf({ channel_id: source.summary.channel_id, ...source.summary.window }), id)
+        const repaired = new Map(reportable.map((attempt) => [attempt.window_key, attempt.run_id]))
+        for (const route of report.routes) for (const window of route.windows) {
+          const key = keyOf({ channel_id: route.channel_id, ...window })
+          if (repaired.has(key)) {
+            const id = repaired.get(key), source = readRecoverySource(root, id)
+            if (keyOf({ channel_id: source.summary.channel_id, ...source.summary.window }) !== key)
+              throw Error("Repaired frontier source differs from its original window")
+            latest.set(key, id)
+            continue
+          }
+          for (const attempt of window.attempts) {
+            const source = readRecoverySource(root, attempt.run_id)
+            if (keyOf({ channel_id: source.summary.channel_id, ...source.summary.window }) !== key)
+              throw Error("Original frontier source differs from its reported window")
+            latest.set(key, attempt.run_id)
+          }
         }
-        for (const attempt of reportable) latest.set(attempt.window_key, attempt.run_id)
         const runs = [...latest.values()]
         const sourceRuns = runs.map((id) => {
           const source = readRecoverySource(root, id)
@@ -626,6 +699,7 @@ export async function recoverCollection({
       required_actions: [...waitingSources.filter((source) => source.status !== "budget_pending").map((source) => ({
         channel_id: source.channel_id, since: source.since, until_exclusive: source.until_exclusive,
         kind: source.status, error: source.error,
+        ...(source.next_check_at ? { next_check_at: source.next_check_at, next_action: source.next_action } : {}),
       })), ...state.attempts.flatMap((attempt) => {
         const last = state.attempts.filter((a) => a.window_key === attempt.window_key).at(-1)
         if (last !== attempt) return []

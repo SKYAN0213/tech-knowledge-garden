@@ -16,6 +16,7 @@ import {
   readRecoverySource,
 } from "../scripts/research/source-run-recovery.mjs"
 import { recoverCollection } from "../scripts/research/collection-recovery.mjs"
+import { freezeStoredSourceFrontier } from "../scripts/research/collection-report.mjs"
 import { reconcilePublicationDay } from "../scripts/research/publication-date-reconciliation.mjs"
 import { module as collection } from "../scripts/research/modules/collection.mjs"
 import { validateArguments } from "../scripts/research/modules/contracts.mjs"
@@ -199,13 +200,24 @@ test("recovery authenticates a listing reuse request that the scan explicitly sk
   assert.equal(recovered.reference.input_sha256, state.input_hash)
   assert.equal(recovered.summary.listing_reuse_skipped, summary.listing_reuse_skipped)
 
+  const frontier = {
+    root: f.root,
+    runId: "skipped-listing-frontier",
+    sourceRuns: [{ run_id: "initial", policy_recheck_limit: 0 }],
+  }
+  const frozen = await freezeStoredSourceFrontier(frontier)
+  assert.equal(frozen.reused, false)
+
   atomicWrite(f.root, prefix + "collection-input.json", { ...input, reuse_listing_run: "tampered" })
   assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+  await assert.rejects(freezeStoredSourceFrontier(frontier), /input|window|evidence/)
   atomicWrite(f.root, prefix + "collection-input.json", input)
   atomicWrite(f.root, prefix + "list-scan.json", { ...summary, listing_reuse_skipped: "" })
   assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+  await assert.rejects(freezeStoredSourceFrontier(frontier), /input|window|evidence/)
   atomicWrite(f.root, prefix + "list-scan.json", { ...summary, listing_reused_from_run: "another-listing" })
   assert.throws(() => readRecoverySource(f.root, "initial"), /input|window/)
+  await assert.rejects(freezeStoredSourceFrontier(frontier), /input|window|evidence/)
 })
 
 function addEarlierWindow(f) {
@@ -685,6 +697,120 @@ test("an interrupted incomplete aggregate reuses only authenticated native check
   assert.deepEqual(fs.readFileSync(path.join(dir, "documents.json")), documents)
   assert.equal(fs.existsSync(path.join(dir, "parses.json")), false)
   assert.equal(fs.existsSync(path.join(dir, "candidates.json")), false)
+})
+
+test("a pinned failed daily receipt can resume its unsummarized storage checkpoint", async (t) => {
+  const f = await fixture(t)
+  const run = "initial", daily = "daily-test", base = `runs/${run}/`
+  for (const name of ["list-scan.json", "documents.json", "parses.json", "candidates.json", "list-pages.json"])
+    fs.unlinkSync(path.join(f.root, base + name))
+  const body = Buffer.from("restored original payload")
+  const request = {
+    schema: "research-storage-download-request/v1", root: f.root,
+    path: "documents/restored/body.bin", request_count: 1,
+    requests: [{ path: "documents/restored/body.bin", sha256: sha256(body), bytes: body.length }],
+  }
+  const native = new RunState(f.root, run, readJSON(f.root, base + "collection-input.json"))
+  await assert.rejects(native.stage("restoration-wait", {}, () => {
+    throw Object.assign(Error("Stored payload required"), { code: "STORAGE_PENDING", storage_request: request })
+  }), { code: "STORAGE_PENDING" })
+  const receiptPath = `daily/runs/${daily}/receipts/${run}.json`
+  const receipt = { schema: "research-daily-receipt/v2", daily_run: daily, attempt_id: run,
+    channel_id: f.channel.channel_id, since: f.window.since, until_exclusive: f.window.until,
+    status: "failed", reason: "Stored payload required", candidate_published: false }
+  atomicWrite(f.root, receiptPath, receipt)
+  const receiptSha = sha256(fs.readFileSync(path.join(f.root, receiptPath)))
+  const report = { schema: "research-collection-report/v1", daily_run: daily,
+    routes: [{ channel_id: f.channel.channel_id, windows: [{ channel_id: f.channel.channel_id,
+      since: f.window.since, until_exclusive: f.window.until, status: "incomplete",
+      attempts: [{ run_id: run, status: "failed", reason: receipt.reason }] }] }],
+    evidence: [{ path: receiptPath, sha256: receiptSha }] }
+  atomicWrite(f.root, "checkpoint-report.json", report)
+  const options = { ...f, reportPath: "checkpoint-report.json",
+    reportSha256: sha256(fs.readFileSync(path.join(f.root, "checkpoint-report.json"))),
+    runId: "receipt-checkpoint", mode: "plan-only" }
+  atomicWrite(f.root, receiptPath, { ...receipt, reason: "changed" })
+  await assert.rejects(recoverCollection({ ...options, runId: "tampered-receipt" }), /receipt changed/)
+  atomicWrite(f.root, receiptPath, receipt)
+  const waiting = await recoverCollection(options)
+  assert.equal(waiting.status, "partial")
+  assert.equal(waiting.waiting_sources[0].status, "waiting_for_storage")
+  assert.deepEqual(waiting.waiting_sources[0].error.storage_request, request)
+  atomicWrite(f.root, request.path, Buffer.alloc(body.length, 0))
+  await assert.rejects(recoverCollection({ ...options, mode: "resume" }), /restored bytes differ/)
+  atomicWrite(f.root, request.path, body)
+  const resumed = await recoverCollection({ ...options, mode: "resume" })
+  assert.equal(resumed.waiting_sources.length, 0)
+  assert.equal(resumed.attempts[0].source_run, run)
+  assert.equal(fs.existsSync(path.join(f.root, base + "list-scan.json")), false)
+  assert.equal(sha256(fs.readFileSync(path.join(f.root, receiptPath))), receiptSha)
+})
+
+test("a pinned source-cooling receipt remains a source wait without an invented scan", async (t) => {
+  const f = await fixture(t), daily = "daily-cooling", run = "cooling-attempt"
+  const after = { state: "cooling_down", next_check_at: "2099-01-01T00:00:00.000Z" }
+  const observation = { binding: { channel_id: f.channel.channel_id }, after }
+  const observationPath = `collection-health/observations/${"a".repeat(64)}.json`
+  const observationRef = atomicWrite(f.root, observationPath,
+    { ...observation, checksum_sha256: sha256(JSON.stringify(observation)) })
+  const receiptPath = `daily/runs/${daily}/receipts/${run}.json`
+  const receipt = { schema: "research-daily-receipt/v2", daily_run: daily, attempt_id: run,
+    channel_id: f.channel.channel_id, since: f.window.since, until_exclusive: f.window.until,
+    status: "blocked", reason: "source_cooling_down", candidate_published: false,
+    source_wait: { request_performed: false, next_check_at: after.next_check_at,
+      next_action: "recheck_access_policy", observation: observationRef } }
+  const receiptRef = atomicWrite(f.root, receiptPath, receipt)
+  const report = { schema: "research-collection-report/v1", daily_run: daily,
+    routes: [{ channel_id: f.channel.channel_id, windows: [{ channel_id: f.channel.channel_id,
+      since: f.window.since, until_exclusive: f.window.until, status: "incomplete",
+      attempts: [{ run_id: run, status: receipt.status, reason: receipt.reason }] }] }],
+    evidence: [receiptRef] }
+  const reportRef = atomicWrite(f.root, "cooling-report.json", report)
+  const options = { ...f, reportPath: reportRef.path, reportSha256: reportRef.sha256,
+    runId: "cooling-checkpoint", mode: "execute", scan: () => { throw Error("must not scan") } }
+  const planned = await recoverCollection({ ...options, runId: "cooling-plan", mode: "plan-only" })
+  assert.equal(planned.waiting_sources[0].status, "source_cooling_down")
+  assert.equal(planned.waiting_sources[0].next_check_at, after.next_check_at)
+  const waiting = await recoverCollection(options)
+  assert.equal(waiting.waiting_sources[0].status, "source_cooling_down")
+  assert.equal(waiting.waiting_sources[0].next_check_at, after.next_check_at)
+  assert.equal(waiting.attempts.length, 0)
+  assert.equal(fs.existsSync(path.join(f.root, `runs/${run}`)), false)
+  atomicWrite(f.root, observationPath, { ...observation, checksum_sha256: "changed" })
+  await assert.rejects(recoverCollection({ ...options, runId: "cooling-tampered" }), /observation changed/)
+
+  const invalidObservation = { binding: { channel_id: f.channel.channel_id },
+    after: { state: "cooling_down", next_check_at: "not-a-date" } }
+  const invalidRef = atomicWrite(f.root, observationPath,
+    { ...invalidObservation, checksum_sha256: sha256(JSON.stringify(invalidObservation)) })
+  const invalidReceiptRef = atomicWrite(f.root, receiptPath, { ...receipt, source_wait: {
+    ...receipt.source_wait, next_check_at: "not-a-date", observation: invalidRef } })
+  const invalidReportRef = atomicWrite(f.root, "cooling-invalid-report.json", { ...report, evidence: [invalidReceiptRef] })
+  await assert.rejects(recoverCollection({ ...options, runId: "cooling-invalid",
+    reportPath: invalidReportRef.path, reportSha256: invalidReportRef.sha256 }), /recheck time/)
+
+  const dueAfter = { state: "cooling_down", next_check_at: "2001-01-01T00:00:00.000Z" }
+  const dueObservation = { binding: { channel_id: f.channel.channel_id }, after: dueAfter }
+  const dueRef = atomicWrite(f.root, observationPath,
+    { ...dueObservation, checksum_sha256: sha256(JSON.stringify(dueObservation)) })
+  const dueReceipt = { ...receipt, source_wait: { ...receipt.source_wait,
+    next_check_at: dueAfter.next_check_at, observation: dueRef } }
+  const dueReceiptRef = atomicWrite(f.root, receiptPath, dueReceipt)
+  const dueReportRef = atomicWrite(f.root, "cooling-due-report.json", { ...report, evidence: [dueReceiptRef] })
+  let scans = 0
+  const due = await recoverCollection({ ...options, runId: "cooling-due",
+    reportPath: dueReportRef.path, reportSha256: dueReportRef.sha256,
+    publishReport: true,
+    scan: (parameters) => {
+      scans++
+      assert.equal(parameters["recovery-source-run"], undefined)
+      return f.scan(parameters)
+    } })
+  assert.equal(scans, 1)
+  assert.equal(due.attempts[0].source_run, null)
+  assert.equal(due.attempts[0].status, "incomplete")
+  assert.equal(due.report?.status, "partial")
+  assert.equal(due.report_wait, undefined)
 })
 
 test("an incomplete aggregate cannot hide a changed window, malformed array or checkpoint", async (t) => {

@@ -130,7 +130,8 @@ function sourceFrontierObservation(root, declaration, held = false) {
   const archive = readJSON(root, prefix + "archive-reuse.json")
   const repair = readJSON(root, prefix + "detail-repair-reuse.json")
   const recovery = readJSON(root, prefix + "source-recovery-reuse.json")
-  const input = {
+  const declaredInput = readJSON(root, prefix + "collection-input.json")
+  let input = {
     schema: "research-list-run-input/v2",
     channel_id: scan.summary.channel_id,
     since: scan.summary.window?.since,
@@ -143,6 +144,22 @@ function sourceFrontierObservation(root, declaration, held = false) {
     ...(recovery?.source_runs
       ? { recovery_source_runs: recovery.source_runs.map((reference) => reference.source_run) }
       : recovery ? { recovery_source_run: recovery.source_run?.source_run } : {}),
+  }
+  // A requested listing may have been explicitly skipped as stale. Preserve
+  // the requested run in the input fingerprint only when the complete native
+  // declaration and state hash authenticate it; no listing is treated as reused.
+  if (
+    typeof scan.summary.listing_reuse_skipped === "string" &&
+    scan.summary.listing_reuse_skipped.trim() &&
+    !scan.summary.listing_reused_from_run &&
+    exactRun(declaredInput?.reuse_listing_run)
+  ) {
+    const skipped = { ...input, reuse_listing_run: declaredInput.reuse_listing_run }
+    if (
+      JSON.stringify(skipped) === JSON.stringify(declaredInput) &&
+      sha256(JSON.stringify(skipped)) === state?.input_hash
+    )
+      input = skipped
   }
   const window = { channel_id: scan.summary.channel_id, ...checkedWindow(scan.summary.window) }
   if (

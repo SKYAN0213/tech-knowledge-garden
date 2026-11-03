@@ -654,6 +654,66 @@ function reviewedEvaluation(ctx, pool, row) {
     : null
 }
 
+// A source comparison is an explicit editorial decision, not a URL or name
+// heuristic. Both candidates retain their original ratings and citations.
+export function checkedIdentityReview(ctx, poolRef, pool, review) {
+  assertSchema(review, {
+    type: "object", additionalProperties: false,
+    required: ["schema", "pool_sha256", "reviewer", "reviewed_at", "pairs"],
+    properties: {
+      schema: { type: "string", enum: ["research-curation-identity-review/v1"] },
+      pool_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+      reviewer: { type: "string", minLength: 1, maxLength: 200, pattern: "\\S" },
+      reviewed_at: { type: "string", minLength: 1 },
+      pairs: { type: "array", minItems: 1, maxItems: 100, items: {
+        type: "object", additionalProperties: false,
+        required: ["candidate_ids", "preferred_candidate_id", "verdict", "reason", "evidence"],
+        properties: {
+          candidate_ids: { type: "array", minItems: 2, maxItems: 2, uniqueItems: true,
+            items: { type: "string", pattern: "^[a-f0-9]{64}$" } },
+          preferred_candidate_id: { type: "string", pattern: "^[a-f0-9]{64}$" },
+          verdict: { type: "string", enum: ["same_event"] },
+          reason: { type: "string", minLength: 1, maxLength: 2000, pattern: "\\S" },
+          evidence: { type: "array", minItems: 2, maxItems: 20, items: {
+            type: "object", additionalProperties: false,
+            required: ["candidate_id", "material_id", "block_id", "quote"],
+            properties: {
+              candidate_id: { type: "string", pattern: "^[a-f0-9]{64}$" },
+              material_id: { type: "string", minLength: 1 },
+              block_id: { type: "string", minLength: 1 },
+              quote: { type: "string", minLength: 8, maxLength: 4000 },
+            },
+          } },
+        },
+      } },
+    },
+  })
+  if (review.pool_sha256 !== poolRef.sha256) throw Error("Identity review belongs to another pool")
+  const used = new Set()
+  for (const pair of review.pairs) {
+    if (!pair.candidate_ids.includes(pair.preferred_candidate_id) ||
+        pair.candidate_ids.some((id) => used.has(id)))
+      throw Error("Distinct reviewed identity pairs and an exact preferred candidate are required")
+    const candidates = pair.candidate_ids.map((id) => pool.candidates.find((c) => c.candidate_id === id))
+    if (candidates.some((c) => !c)) throw Error("Identity review is outside the frozen pool")
+    for (const candidate of candidates) {
+      used.add(candidate.candidate_id)
+      const citations = pair.evidence.filter((e) => e.candidate_id === candidate.candidate_id)
+      if (!citations.length) throw Error("Identity review must cite each candidate")
+      const sources = curationCandidatePacket(ctx, candidate).sources
+      for (const cite of citations) {
+        const block = sources.find((s) => s.material_id === cite.material_id)?.blocks.find((b) => b.block_id === cite.block_id)
+        if (!block || !block.text.includes(cite.quote))
+          throw Error("Identity review evidence is outside the exact original block")
+      }
+      assertReviewDate(review.reviewed_at, { notBefore: candidate.sources.map((s) => s.published_at) })
+    }
+    if (pair.evidence.some((e) => !pair.candidate_ids.includes(e.candidate_id)))
+      throw Error("Identity review citation has an unrelated candidate")
+  }
+  return review
+}
+
 // A model proposes ratings; an explicit curator review records the decision.
 export async function evaluateCuration(ctx, p, { baseProvider } = {}) {
   const poolRef = { path: p.pool_path, sha256: p.pool_sha256 }
@@ -801,7 +861,18 @@ export async function selectCuration(ctx, p) {
   const old = readJSON(ctx.root, pathName)
   if (old) {
     loadCurationSelection(ctx, reference(ctx.root, pathName))
+    if (p.identity_review_file) {
+      const supplied = JSON.parse(fs.readFileSync(safePath(ctx.repo, p.identity_review_file)))
+      if (!old.identity_review || !same(pinned(ctx.root, old.identity_review), supplied))
+        throw Error("Curation identity review changed; use a new selection")
+    }
     return { ...reference(ctx.root, pathName), selected: old.selected.length, reused: true }
+  }
+  let identityReview = null, identityReviewRef = null
+  if (p.identity_review_file) {
+    identityReview = checkedIdentityReview(ctx, poolRef, pool,
+      JSON.parse(fs.readFileSync(safePath(ctx.repo, p.identity_review_file))))
+    identityReviewRef = immutable(ctx.root, `curation/runs/${pool.run_id}/identity-review.json`, identityReview)
   }
   const ranked = [],
     held = [],
@@ -845,6 +916,16 @@ export async function selectCuration(ctx, p) {
         reason: !eligible ? "ineligible_or_no_new_information" : "below_threshold",
       })
     else ranked.push(item)
+  }
+  for (const pair of identityReview?.pairs || []) {
+    const preferred = ranked.find((item) => item.candidate_id === pair.preferred_candidate_id)
+    const alternateId = pair.candidate_ids.find((id) => id !== pair.preferred_candidate_id)
+    const index = ranked.findIndex((item) => item.candidate_id === alternateId)
+    if (preferred && index >= 0) {
+      const [alternate] = ranked.splice(index, 1)
+      held.push({ ...alternate, reason: "reviewed_same_event",
+        preferred_candidate_id: pair.preferred_candidate_id })
+    }
   }
   const composed = selectBriefingComposition(
     ranked,
@@ -954,6 +1035,7 @@ export async function selectCuration(ctx, p) {
     held,
     batches,
     composition: composed.composition,
+    ...(identityReviewRef ? { identity_review: identityReviewRef } : {}),
     candidate_approved: false,
     candidate_published: false,
     first_featured_marked: false,
@@ -980,6 +1062,20 @@ function loadCurationSelectionUncached(ctx, ref, options = {}) {
     ...options,
     candidateIds: selection.selected.map((item) => item.candidate_id),
   })
+  if (selection.identity_review) {
+    if (selection.identity_review.path !== `curation/runs/${selection.run_id}/identity-review.json`)
+      throw Error("Curation identity review path changed")
+    const review = checkedIdentityReview(ctx, selection.pool, pool, pinned(ctx.root, selection.identity_review))
+    for (const pair of review.pairs) {
+      if (pair.candidate_ids.filter((id) => selection.selected.some((item) => item.candidate_id === id)).length > 1)
+        throw Error("Reviewed same event appears more than once")
+    }
+    for (const item of selection.held.filter((row) => row.reason === "reviewed_same_event"))
+      if (!review.pairs.some((pair) => pair.candidate_ids.includes(item.candidate_id) &&
+          pair.preferred_candidate_id === item.preferred_candidate_id && item.candidate_id !== pair.preferred_candidate_id))
+        throw Error("Curation duplicate hold differs from its reviewed identity")
+  } else if (selection.held.some((item) => item.reason === "reviewed_same_event"))
+    throw Error("Curation duplicate hold requires a pinned identity review")
   if (selection.composition) {
     const composition = selection.composition
     if (
