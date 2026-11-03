@@ -21,6 +21,10 @@ export function operationalNextAction(status, delivery = null) {
       job_id: active.job_id,
     }
   const last = status.commands?.at(-1)
+  if (last?.job.state === "failed" && last.job.error_code === "OWNED_CHILD_RETRY" &&
+      Number.isSafeInteger(last.job.attempt) && last.job.attempt < 3)
+    return { action: "resume", job_id: last.job_id, stage: last.stage,
+      reason: "resume_exact_owned_child_checkpoint" }
   if (last?.job.state === "failed")
     return {
       action: "failed",
@@ -29,17 +33,19 @@ export function operationalNextAction(status, delivery = null) {
       recovery: last.job.recovery,
     }
   if (last?.job.state === "interrupted" || last?.job.state === "not_submitted")
-    return { action: "resume", job_id: last.job_id }
+    return { action: "resume", job_id: last.job_id, stage: last.stage }
   if (last?.job.state === "waiting_for_storage")
-    return { action: "storage", job_id: last.job_id, request: last.job.storage_request }
+    return { action: "storage", job_id: last.job_id, stage: last.stage, request: last.job.storage_request }
   if (status.ready_items?.length && last?.job.state === "completed")
     return {
       action: "consume_reasoning",
       ready_items: status.ready_items,
       requests: status.ready_items.flatMap((item) => item.request_refs),
     }
+  if (last?.job.state === "completed" && status.pending_reasoning?.retired_tasks?.length)
+    return { action: "advance", stage: "processing", reason: "record_retired_article_request" }
   if (last?.job.state === "waiting_for_reasoning")
-    return { action: "reasoning", job_id: last.job_id, request: last.job.reasoning_task }
+    return { action: "reasoning", job_id: last.job_id, stage: last.stage, request: last.job.reasoning_task }
   if (status.pending_reasoning?.total)
     return { action: "reasoning", requests: status.pending_reasoning.tasks }
   const waitingStorage = (status.next_inputs || []).find((row) => row.stage === "storage")
@@ -202,7 +208,8 @@ export async function driveOperationalRound(
         next.request &&
         readTask(ctx.root, next.request).status === "completed"
       ) {
-        const result = await advance(ctx, { run_id: run }, { resume: true, background: true })
+        const result = await advance(ctx, { run_id: run, stage: next.stage },
+          { resume: true, background: true, expectedJobId: next.job_id })
         if (result.status === "no_progress")
           return save({ status: "no_progress", next_action: result })
         continue
@@ -280,6 +287,7 @@ export async function driveOperationalRound(
           {
             resume: current.status !== "not_started",
             background: true,
+            ...(next.action === "resume" ? { expectedJobId: next.job_id } : {}),
           },
         )
         if (result.operation_gate || ["development_pending", "no_progress"].includes(result.status))

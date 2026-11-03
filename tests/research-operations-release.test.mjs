@@ -15,6 +15,7 @@ import {
 } from "../scripts/research/operations-release.mjs"
 import {
   operationalRoundStatus,
+  auditCurationFrontier,
   runOperationalRound,
   relayOperationalReasoning,
 } from "../scripts/research/operations-runtime.mjs"
@@ -249,6 +250,91 @@ test("installed execution survives source edits; round pin is idempotent, duplic
   fs.writeFileSync(path.join(f.runtime, "scripts/unit.mjs"), "// tampered\n")
   assert.throws(() => operationalRoundStatus(f.ctx, f.p.run_id), /execution changed/)
 })
+test("a hash-bound old curation frontier reports missing selections and rejects changed children", async (t) => {
+  const f = await setup(t)
+  const first = { path: "plans/a.json", sha256: "a".repeat(64) }
+  const second = { path: "plans/b.json", sha256: "b".repeat(64) }
+  const selection = atomicWrite(f.root, "selection.json", { schema: "research-curation-selection/v1", selected: [
+    { candidate_id: "a", execution: { plan: first, group_id: "one" } },
+    { candidate_id: "b", execution: { plan: second, group_id: "two" } },
+  ] })
+  const child = atomicWrite(f.root, "child.json", { schema: "research-event-workflow/v1", run_id: "child",
+    plan: first, curation: selection, rows: [{ group_id: "one", status: "approved" }] })
+  const workflow = atomicWrite(f.root, "workflow.json", { schema: "research-curation-workflow/v1",
+    selection, workflows: [{ plan: first, run_id: "child", workflow: child }] })
+  const audit = auditCurationFrontier(f.root, selection, workflow)
+  assert.equal(audit.verification, "pinned_hashes_only")
+  assert.equal(audit.selected, 2)
+  assert.equal(audit.recorded, 1)
+  assert.equal(audit.missing[0].group_id, "two")
+  assert.equal(audit.missing[0].queue_reason, "batch_not_in_checkpoint")
+  atomicWrite(f.root, "child.json", { changed: true })
+  assert.throws(() => auditCurationFrontier(f.root, selection, workflow), /evidence changed/)
+})
+
+test("read-only status can inspect a pinned earlier runtime without permitting its execution", async (t) => {
+  const f = await setup(t)
+  const root = path.join(f.source, ".local/research/local-ai")
+  fs.mkdirSync(root, { recursive: true })
+  for (const file of ["scheduler-event.json", "invocation.json"])
+    fs.copyFileSync(path.join(f.root, file), path.join(root, file))
+  const original = { ...f.ctx, repo: f.source, root, executionRepo: f.runtime,
+    policy: path.join(f.source, "data/research-model-policy-codex.json") }
+  await pinOperationalRound(original, f.p)
+  fs.writeFileSync(path.join(f.source, "scripts/unit.mjs"), "// new operational release\n")
+  assert.throws(() => operationalRoundStatus(original, f.p.run_id), /workspace implementation changed/)
+  const current = { ...original, executionRepo: f.source }
+  const workflowInput = { run_id: f.p.run_id, source: "fixture" }
+  atomicWrite(root, `round-workflows/${f.p.run_id}/input.json`, workflowInput)
+  atomicWrite(root, `round-workflows/${f.p.run_id}/latest.json`,
+    { status: "partial", input_sha256: sha256(JSON.stringify(workflowInput)) })
+  const audit = operationalRoundStatus(current, f.p.run_id, { readOnly: true })
+  assert.equal(audit.status, "partial")
+  assert.equal(audit.audit_only, true)
+  assert.equal(audit.execution_readiness, "requires_explicit_continuation")
+  assert.throws(() => inspectOperationalPin(original, f.p.run_id), /workspace implementation changed/)
+  const command = { stage: "processing", module: "edition", operation: "advance", parameters: {} }
+  const digest = sha256(JSON.stringify(command)), job = "module-operation-" + digest.slice(0, 48)
+  atomicWrite(root, `operations/rounds/${f.p.run_id}/commands/${digest}.json`, { ...command, job_id: job })
+  const input = { job_id: job, module: command.module, operation: command.operation,
+    context: { repo: f.source, root } }
+  atomicWrite(root, `module-jobs/${job}/input.json`, input)
+  atomicWrite(root, `module-jobs/${job}/state.json`, { job_id: job, input_sha256: sha256(JSON.stringify(input)),
+    state: "completed", pid: process.pid })
+  atomicWrite(root, `module-jobs/${job}/launch.json`, { pid: process.pid })
+  const uncertain = operationalRoundStatus(current, f.p.run_id, { readOnly: true }).commands[0].job
+  assert.equal(uncertain.state, "worker_status_unknown")
+  assert.equal(uncertain.worker_alive, null)
+  assert.equal(uncertain.resume_available, false)
+  const queuedCommand = { ...command, parameters: { fixture: "queued-before-launch" } }
+  const queuedDigest = sha256(JSON.stringify(queuedCommand)), queuedJob = "module-operation-" + queuedDigest.slice(0, 48)
+  atomicWrite(root, `operations/rounds/${f.p.run_id}/commands/${queuedDigest}.json`, { ...queuedCommand, job_id: queuedJob })
+  const queuedInput = { ...input, job_id: queuedJob }
+  atomicWrite(root, `module-jobs/${queuedJob}/input.json`, queuedInput)
+  atomicWrite(root, `module-jobs/${queuedJob}/state.json`, { job_id: queuedJob,
+    input_sha256: sha256(JSON.stringify(queuedInput)), state: "queued", pid: null })
+  const queued = operationalRoundStatus(current, f.p.run_id, { readOnly: true }).commands
+    .find((entry) => entry.job_id === queuedJob).job
+  assert.equal(queued.state, "worker_status_unknown")
+  assert.equal(queued.worker_alive, null)
+  assert.equal(queued.resume_available, false)
+  atomicWrite(root, `module-jobs/${queuedJob}/state.json`, { job_id: queuedJob,
+    input_sha256: sha256(JSON.stringify(queuedInput)), state: "queued", attempt: 2, pid: null })
+  atomicWrite(root, `module-jobs/${queuedJob}/launch.json`, { job_id: queuedJob, attempt: 1, pid: 99999999 })
+  const previousAttempt = operationalRoundStatus(current, f.p.run_id, { readOnly: true }).commands
+    .find((entry) => entry.job_id === queuedJob).job
+  assert.equal(previousAttempt.state, "worker_status_unknown")
+  assert.equal(previousAttempt.worker_alive, null)
+  assert.equal(previousAttempt.resume_available, false)
+  assert.equal(previousAttempt.recovery.action, "restore_process_visibility")
+  atomicWrite(root, `round-workflows/${f.p.run_id}/input.json`, { ...workflowInput, changed: true })
+  assert.throws(() => operationalRoundStatus(current, f.p.run_id, { readOnly: true }), /workflow input changed/)
+  atomicWrite(root, `round-workflows/${f.p.run_id}/input.json`, workflowInput)
+  fs.chmodSync(path.join(f.runtime, "scripts/unit.mjs"), 0o644)
+  fs.writeFileSync(path.join(f.runtime, "scripts/unit.mjs"), "// old runtime tampered\n")
+  assert.throws(() => operationalRoundStatus(current, f.p.run_id, { readOnly: true }), /execution changed/)
+})
+
 test("existing module CLI exposes read-only round status and development hold without creating a run", async (t) => {
   const f = await setup(t)
   // Simulate an unpromoted source edit. The round must stop at the development
@@ -364,11 +450,17 @@ test("a settled collection slice creates a checkpoint-bound successor instead of
   for (const name of ["input.json", "state.json"])
     fs.unlinkSync(path.join(f.root, `module-jobs/${next.job.job_id}/${name}`))
   assert.equal(operationalRoundStatus(f.ctx, f.p.run_id).commands.at(-1).job.state, "not_submitted")
+  await assert.rejects(
+    runOperationalRound(f.ctx, { run_id: f.p.run_id, stage: "collection" },
+      { resume: true, expectedJobId: "module-wrong", submit: async () => { throw Error("must not submit") } }),
+    /resume job does not match/,
+  )
   const redispatch = await runOperationalRound(
     f.ctx,
     { run_id: f.p.run_id },
     {
       resume: true,
+      expectedJobId: next.job.job_id,
       submit: async (_ctx, _module, _operation, _parameters, options) => {
         assert.equal(options.jobId, next.job.job_id)
         const input = { job_id: options.jobId, context: _ctx }

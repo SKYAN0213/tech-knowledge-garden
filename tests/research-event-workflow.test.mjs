@@ -226,6 +226,43 @@ test("completed and waiting events leave a bounded slot for the next selected ev
   }
 })
 
+test("a curated child rechecks its exact checkpoint after acquiring the workflow lock", async (t) => {
+  const f = editionFixture(t),
+    plan = await twoEventPlan(f)
+  const p = {
+    run_id: "curation-checkpoint-race",
+    edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256,
+    plan_path: plan.path,
+    plan_sha256: plan.sha256,
+    execute: false,
+  }
+  await advanceEventWorkflow(f.ctx, p)
+  const latestPath = `event-workflows/${p.run_id}/latest.json`
+  const original = fs.readFileSync(safePath(f.root, latestPath))
+  const expected = { path: latestPath, sha256: sha256(original) }
+  const changed = { ...readJSON(f.root, latestPath), status: "partial" }
+  atomicWrite(f.root, latestPath, changed)
+  const before = fs.readFileSync(safePath(f.root, latestPath))
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, p, { expectedCurationCheckpoint: expected }),
+    /checkpoint changed before child lock/,
+  )
+  assert.deepEqual(fs.readFileSync(safePath(f.root, latestPath)), before)
+  atomicWrite(f.root, latestPath, original)
+  atomicWrite(f.root, `event-workflows/${p.run_id}/progress.json`, { rows: [] })
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, p, { expectedCurationCheckpoint: expected }),
+    /progress differs from its pinned checkpoint/,
+  )
+  const emptyRun = { ...p, run_id: "curation-orphan-child" }
+  atomicWrite(f.root, `event-workflows/${emptyRun.run_id}/progress.json`, { rows: [] })
+  await assert.rejects(
+    advanceEventWorkflow(f.ctx, emptyRun, { requireEmptyCurationCheckpoint: true }),
+    /existing child checkpoint/,
+  )
+})
+
 test("a failed handoff commit preserves the preceding child SHA and its new progress for a safe retry", async (t) => {
   const f = editionFixture(t),
     provider = fakeProvider(),

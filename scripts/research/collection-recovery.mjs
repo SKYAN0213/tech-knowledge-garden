@@ -810,6 +810,11 @@ export async function recoverCollection({
         (a) => a.status === "window_scanned" && !partialCoverage.has(a.window_key) &&
           !a.coverage_reconciliation && !a.coverage_error,
       )
+    const delayedCoverageChecks = [
+      ...[...partialCoverage.values()].map((item) => item.next_check_at),
+      ...waitingSources.filter((item) => item.status === "window_not_yet_elapsed")
+        .map((item) => item.next_check_at),
+    ].filter((value) => Number.isFinite(Date.parse(value))).sort()
     const result = {
       schema: "research-collection-recovery-result/v1",
       run_id: runId,
@@ -829,13 +834,13 @@ export async function recoverCollection({
       waiting_sources: waitingSources,
       notifications,
       next_actions:
-        continuable.length || coverageRunnable || partialCoverage.size
+        continuable.length || coverageRunnable || delayedCoverageChecks.length
           ? [
               {
                 module: "collection",
                 operation: "recover",
-                ...(!continuable.length && !coverageRunnable && partialCoverage.size
-                  ? { not_before: [...partialCoverage.values()].map((item) => item.next_check_at).sort()[0] }
+                ...(!continuable.length && !coverageRunnable && delayedCoverageChecks.length
+                  ? { not_before: delayedCoverageChecks[0] }
                   : {}),
                 parameters: {
                   run_id: runId,

@@ -226,6 +226,19 @@ export function verifyRelayHistory(root, round) {
 const exitPath = (round, { agent, lane, generation }) =>
   `operations/rounds/${round}/relay/exits/${sha256(JSON.stringify([agent, lane, generation]))}.json`
 
+// Call under the relay-round lock when changing a task's executable state.
+export function assertRelayTaskQuiescent(root, round, taskId) {
+  const history = verifyRelayHistory(root, round)
+  for (const entry of history.assignments.filter((item) => item.task_id === taskId)) {
+    const exit = readJSON(root, exitPath(round, entry))
+    if (!exit || exit.schema !== "research-relay-exit/v1" || exit.round_id !== round ||
+        exit.agent !== entry.agent || exit.lane !== entry.lane || exit.generation !== entry.generation)
+      throw Error("A prior reasoning relay actor has not exited")
+    checkObservation(root, exit.observation, { event: "completed", agent: entry.agent,
+      lane: entry.lane, generation: entry.generation })
+  }
+}
+
 export async function recordRelayObservation(
   root,
   { round_id, event, agent, lane, generation, model, thinking, observed_at, evidence },

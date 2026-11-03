@@ -75,3 +75,37 @@ test("scheduler re-entry follows a continuation with the successor invocation an
     /invocation|Command failed/i,
   )
 })
+
+test("status uses the active runtime for a pinned old round while drive keeps the old runtime", (t) => {
+  const workspace = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "tkg-status-launcher-")))
+  t.after(() => fs.rmSync(workspace, { recursive: true, force: true }))
+  const current = path.join(workspace, "current"), old = path.join(workspace, "old")
+  const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex")
+  const write = (relative, value) => {
+    const target = path.join(workspace, relative)
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    const bytes = Buffer.from(JSON.stringify(value))
+    fs.writeFileSync(target, bytes)
+    return { path: relative, sha256: hash(bytes) }
+  }
+  fs.mkdirSync(path.join(workspace, "scripts"))
+  fs.copyFileSync(new URL("../scripts/research-operations.mjs", import.meta.url),
+    path.join(workspace, "scripts/research-operations.mjs"))
+  for (const [directory, label] of [[current, "current"], [old, "old"]]) {
+    fs.mkdirSync(path.join(directory, "scripts"), { recursive: true })
+    fs.writeFileSync(path.join(directory, "scripts/research-module.mjs"),
+      `console.log(JSON.stringify({runtime:${JSON.stringify(label)}}))`)
+  }
+  const installation = write("current/.local/.storage/runtime-release.json", { fixture_only: true })
+  write("old/.local/.storage/runtime-release.json", { fixture_only: true })
+  write(".local/.storage/active-runtime.json", { workspace, runtime: current,
+    installation: { path: ".local/.storage/runtime-release.json", sha256: installation.sha256 } })
+  write(".local/research/local-ai/operations/rounds/old-round/input.json", {
+    run_id: "old-round", repository: workspace, execution_repository: old,
+  })
+  const command = (verb) => JSON.parse(execFileSync(process.execPath, [
+    path.join(workspace, "scripts/research-operations.mjs"), verb, "--round", "old-round",
+  ], { encoding: "utf8" }))
+  assert.equal(command("status").runtime, "current")
+  assert.equal(command("drive").runtime, "old")
+})

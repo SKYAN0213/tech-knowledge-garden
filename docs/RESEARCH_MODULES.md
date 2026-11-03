@@ -213,6 +213,8 @@ v19 후보의 동일 입력 재생은 v13의 제어·검증 763,394.810ms에서
 
 기존 일일 보고서에 미실행·차단 영수증이 있어 일반 저장 frontier로 만들 수 없다면, `collection.report_recovery`가 원 보고서와 복구 계획·상태의 정확한 SHA를 받아 별도 보고서를 생성한다. 원문을 다시 받거나 기존 보고서·run을 바꾸지 않는다. 고정된 영수증과 문서 메타데이터를 확인해 기존 자료와 실패를 보존하고, 완료 창과 별도로 native 부분 후보 검증을 통과한 미완료 창의 자료·대기 항목도 포함한다. 포함할 수 없는 실행 상태와 검증 실패는 숨기지 않고 명시적 차단으로 남긴다. 관측한 목록의 날짜 또는 scan 시작일이 창 종료일보다 이르면 더 이른 날짜까지만 기록한다. 창 종료 전에는 재수집을 기다리고, 종료 후에는 같은 복구의 새 scan으로 목록을 실제 다시 관측한다. 이때 최초 재조회는 이전 목록과 본문을 사용하지 않으며 이후 중단된 상세 처리만 새 관측에 결속해 재사용한다. 마지막 시도가 실패했으면 과거 부분 scan을 완료로 세지 않는다. 보충 coverage는 실제 동일 호출 시작 시각과 원래 scan·후보·병합 영수증을 확인한다. 새 edition에서는 원 일일 보고서를 기존 native 방식으로 재구성하고 불변 복구 상태와 원문을 검증한다. 기존 edition의 입력은 교체하지 않는다.
 
+부분 창의 복구 작업이 아직 첫 scan을 시작하지 않았어도 결과의 `next_actions`는 같은 작업의 `resume`과 `not_before`를 반환한다. 즉시 진행할 다른 창이 있다면 그 작업은 지연시키지 않는다. 이 재개 시각은 실행 요청이며 별도의 실행기가 호출하기 전에는 자동 재개가 완료된 증거가 아니다.
+
 미완료 수집이 요약을 기록한 뒤 집계 배열을 모두 저장하기 전에 중단된 경우에도 기존 요약과 남은 배열의 바이트를 보존한다. 같은 출처·날짜 창과 입력 SHA를 확인하고 완료된 native 체크포인트·원문·파싱 근거만 새 복구 run에 연결한다. 빠진 배열이나 coverage를 생성하지 않으며 `incomplete_checkpoints=true`, `coverage_reused=false`로 표시한다. 완료로 표시된 scan의 누락 배열, 잘못된 배열, 다른 창 또는 바뀐 체크포인트는 계속 거부한다.
 
 목록 재사용을 요청했지만 신선도 등으로 명시적으로 건너뛴 수집은 원래 입력의 요청 run과 요약의 재사용 결과가 다를 수 있다. 이 경우에도 저장된 입력 SHA와 나머지 수집 기준·창·체크포인트를 대조한다. 실제 재사용했다는 사실이나 coverage를 새로 만들지는 않는다.
@@ -331,6 +333,8 @@ flowchart LR
 ### 독립 큐레이션
 
 `curation.prepare`는 검토한 `plan` 참조와 대기 큐의 이전 계획을 같은 날짜의 불변 풀로 만든다. 원문·parse·블록을 복사하거나 다시 수집하지 않는다. 후보에 원 발표일, 원 사건 계획, 관련 canonical 기사 ID/본문 SHA, 실제 원 writer의 선택 참조를 연결한다. `curation/queue.json`은 기존 계획의 참조이며 별도 기사/지식 DB가 아니다. 오래된 후보를 지우지 않고 읽을 수 없는 이전 계획은 비공개 재검토 항목으로 남긴다.
+
+큐레이션 진행과 상태 조회는 선택 목록 전체를 저장된 자식 workflow와 대조한다. 현재 checkpoint에 계획 배치가 없다는 사실만으로 기존 writer 부재를 추정하지 않는다. native 계획·전역 및 계획별 writer binding과 저장된 writer·자식 checkpoint의 부재까지 확인한 경우에만 `queued`와 `batch_not_in_checkpoint`를 표시한다. 그 외와 이미 기록된 배치에서 선택 행이 빠진 경우는 실행 전에 `frontier_inconsistent`로 남겨 checkpoint 점검을 요구한다. 새 writer 생성 시에도 원 binding 잠금 안에서 부재를 재확인한다. SHA만 대조하는 상태 조회는 확인되지 않은 항목을 실행 가능으로 표시하지 않는다. 중복 후보는 거부하고, 이전 단일 사건 workflow만 지정한 조회는 그 workflow 범위로 유지한다.
 
 `curation.revalidate_history`는 기존 발행 파일이 정확히 같고 후보 backlog만 바뀐 경우에 한해 풀 전체 후보의 기존 수록 판정에 변화가 없는지 확인한다. 기본 호출은 점검만 하고, `apply: true`는 풀·이전과 현재 이력·정책·구현 SHA에 묶인 불변 근거를 남긴다. 다른 writer가 실행 중이거나 상태를 확인할 수 없으면 중단한다. 이후에도 원본·선정·정책과 해당 후보의 native 검증은 유지하며, 같은 실행 안에서 읽은 backlog와 발행 이력 디렉터리의 변경은 결과 저장 경계에서 확인한다. 발행 파일이나 후보 판정이 달라지면 기존처럼 새 풀이 필요하다. 이 작업은 점수·선정·승인·발행을 만들거나 경로 바인딩을 완화하지 않는다.
 
@@ -986,6 +990,8 @@ URL ID 경로는 기사 승인으로 승격하지 않으며 기존 바인딩을 
 2. 선택한 runtime에서 기존 scheduler의 **실제 실행 이벤트**를 연구 root에 보존한다. 새 invocation은 `research-scheduled-invocation/v2`, `kind: scheduled`, 정책의 `schedule_id`, 실제 `execution_id/started_at`, `reason`, 원 이벤트의 `evidence: {path, sha256}`를 요구한다. 원 이벤트의 kind/ID/시각과 일치해야 한다. 예약 설정 readback이나 명목 회차 시각으로 실행 증거를 만들지 않는다. v1/과거 08시 기록은 기존 저장 요청의 명시적 legacy 읽기에만 허용하며 새 회차·새 전달 요청에는 허용하지 않는다.
 3. `node scripts/research-module.mjs run --round <회차-ID> --stage collection --invocation <root-상대-invocation.json> --invocation-sha256 <SHA> --input <repo-상대-command.json> --background`로 시작한다. command는 `{"parameters":{"daily_run":"<일일-ID>","execute":true,"collection_max_windows":6,"collection_time_budget_ms":600000}}`처럼 기존 `edition.advance` 입력을 담는다. 같은 scheduler 실행은 한 회차만 소유한다. 회차는 release/정책/설치/실행 증거의 SHA와 job 입력을 고정하며 개발 원본의 변경을 받지 않는다. 수집은 기존 daily/core의 원문·parse·attempt를 재사용하고 불변 edition까지 저장한 뒤 멈춘다.
 4. `node scripts/research-module.mjs status --round <회차-ID>`는 파일만 읽는다. 단계·job 상태, 다음 입력, 소유 회차의 pending 3개와 시간 정보를 반환한다. `resume --round <회차-ID> --stage collection --background`는 저장 command의 동일 job을 재사용한다. 활성 writer 또는 worker 확인 불가는 대기하며 잠금을 자동 회수하지 않는다. 저장 복원 대기는 정확한 기존 Drive ID/raw bytes를 복원한 뒤 같은 job을 재개한다. 코드/정책/입력 SHA 변경과 외장 root 부재는 새 실행을 허용하지 않는다.
+
+읽기 전용 `status`는 현재 실행본에서 이전 회차의 원 pin·실행본·요청 근거를 확인할 수 있다. 다른 버전의 회차에는 `audit_only`와 `requires_explicit_continuation`을 표시하며, 선택·하위 checkpoint의 SHA만 대조해 누락 후보를 별도로 노출한다. 이 상태 조회는 기존 회차 실행을 허용하거나 승인 유효성을 대체하지 않는다. worker 소유 또는 현재 attempt의 시작 기록을 확인할 수 없으면 `worker_status_unknown`으로 둔다. 보관된 자료가 필요하면 catalog를 읽기 전용으로 조회하고 `request_not_recorded`를 표시하며 다운로드 요청은 생성하지 않는다.
 5. 수집이 고정되면 `run --round <회차-ID> --stage processing --input <command.json> --background`로 기존 round workflow를 진행한다. command의 `parameters`에는 기존 `edition.advance`의 계획·curation·사실/편집 검토 참조를 전달한다. 승인 필요 상태를 자동 통과하지 않는다. 새로운 검토 입력은 새 command/job에 고정하며 완료 단계와 원래 근거를 재사용한다.
 6. `reasoning.pending`는 소유 job/SHA가 유효하고 해당 요청을 실제로 기다리는 작업만 전역 노출한다. unowned 과거 요청은 정확한 `run_id` 선택이 필요하다. `reasoning.read_batch`의 `requests`, `reasoning.submit_batch`의 `results`는 각각 최대3개이며 개별 SHA·모델·출력 Schema를 유지한다. 부분 실패는 성공 결과를 지우지 않는다. 폐기 요청은 `reasoning.retire`의 정확한 task/SHA/reason으로 불변 기록하고 읽기·제출·실행에서 차단한다. 회차 CLI `relay --round <ID> --input <JSON>`은 `{results:[...],resume_ready:true}`를 받아 준비된 소유 job만 한 번씩 순차 재개한다. 실제 Luna 실행은 기존 Codex 중계의 책임이다.
 7. 승인된 round publication handoff가 있어야 `run --round <ID> --stage publication --input <command.json>`을 실행한다. 첫 command는 `{"operation":"request_delivery","parameters":{"run_id":"<전달-ID>","collection_basis_path":"<정확한-기존-basis>","collection_basis_sha256":"<SHA>"}}`이며 handoff와 invocation은 프로그램이 채운다. `operation: deliver` 또는 `delivery_receipt` 후속 command는 기존 publication Schema의 정확한 release·실행·capture 인수를 받는다. 다른 회차의 전달 요청은 거부한다. 이 연결은 release 승인이나 원격 쓰기 성공을 생성하지 않는다.
@@ -1065,6 +1071,10 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 
 운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. `curation_ready` 또는 사실 추출의 `waiting_for_reasoning`에서도 정확한 frozen edition·plan·selection SHA를 별도 수동 구간에 인계할 수 있다. 이때 선정된 각 native writer의 명시 사실 검토·draft·새 기사 승인, 정본 쓰기, publication command나 delivery 입력이 하나라도 있으면 거부한다. 오래된 queued row만 믿지 않고 원래 선정 binding을 확인한다. edition 입력인 복구 구간도 불변 부모 계보를 따라 원 daily/configuration을 대조한다. 기존 모델 요청·실패는 이전 소유 job에 남기며 덮어쓰지 않는다. 후속 실행은 고정 자료를 사용하고 재수집·다른 selection 주입을 거부한다. 새 구간은 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다.
 
+이미 일부 기사 검토가 진행된 `partial` 회차는 명시적 `restart_partial: {"selection_path":"...","selection_sha256":"..."}`를 함께 지정해 새 실행본으로 이어갈 수 있다. 원 선정과 같은 선정 또는 원문 대조 identity review가 결속된 새 선정을 사용하며, 원 선정에서 빠진 사건은 같은 사건의 검토 보류로만 허용한다. 외부 발행 실행과 활성 writer가 없음을 확인하고 기존 승인에는 원문·승인 SHA를 유지한다. 미완료 기사는 기존 writer와 실패를 남겨 둔 채 successor 전용 새 writer로 처리한다. 원 요청은 같은 잠금 안에서 미완료면 폐기 기록을 남기고 이미 완료됐다면 결과를 보존한 후 새 구간을 시작한다. 승인된 새 writer의 포인터도 원 binding을 덮어쓰지 않고 별도 불변 기록으로 만들며 다음 회차에 재검증해 사용한다. 같은 native job의 child 저장 중 중단은 해당 job과 기사에 결속된 producer 근거로 재개하며 재시도는 최대 두 번이다. 부분 handoff나 인계 생성은 공개 발행이 아니다.
+
+부분 successor의 기사 처리 worker가 종료된 경우에는 원 job·입력 SHA·회차 pin과 launch attempt, worker 및 프로세스 그룹의 종료를 확인한다. 소유자가 정확히 일치하는 내부 처리 잠금의 원본 bytes를 복구 영수증에 보존한 뒤에만 잠금을 해제하고 같은 단계·job을 재개한다. 처리 중단 직전 인계가 완성됐더라도 새 발행 job으로 바꾸지 않는다. 확인할 수 없는 worker, 바뀐 잠금, 다른 소유자와 외부 발행 잠금은 보존하고 대기한다.
+
 원 예약의 `next_command`로 재진입할 때는 launcher가 각 continuation의 부모 pin·체크포인트·후속 pin을 검증하고, 부모의 정확한 invocation path/SHA만 후속 실행의 저장 invocation으로 연결한다. 다른 회차의 invocation이나 반쪽 path/SHA는 거부한다. 원 예약 증거와 수동 복구 구분은 보존한다.
 
 배치 정리 job은 모델 요청을 결과에 담은 채 완료될 수 있다. 이때 제어기는 회차/소유 job/SHA가 일치하는 모든 모델 결과가 제출됐는지 확인한 뒤 체크포인트에 결속한 후속 job으로 결과를 소비한다. 완료 job의 예전 페이지를 재조회하거나, 결과 소비 전 사실 검토 단계로 넘기지 않는다. 사실·편집 검토는 계속 별도 입력을 요구한다.
@@ -1122,6 +1132,12 @@ Signals는 이미 명시 승인된 source-publication-time의 정확한 원문 �
 새 회차의 `relay_provenance: v1`은 `reasoning.relay_observe`, `relay_assign`, `relay_exit`로 기사 요청의 원 소유 job·입력 SHA·실행자·슬롯·세대·모델 설정을 기록한다. 같은 기사에서 작성자와 최종 검토자를 분리하고, 실행자 종료 후 교체된 배정의 늦은 응답은 거부한다. 마지막 인계에서는 개별 배정과 관측의 bytes를 다시 검증한다. 이 관측의 실행자·모델 신원은 Codex 호출자가 선언한 값이며, 프로그램이 호스트에서 독립 인증한 값은 아니다. 기존 회차는 원래 중계 계약을 유지한다.
 
 `ready_items`와 현재 기사 frontier를 통해 준비된 결과만 반영한다. 다른 기사의 저장 대기가 슬롯을 계속 차지하지 않으며, 복원 요청의 실제 bytes와 SHA가 일치할 때만 해당 작업을 자동 재개한다. 승인된 기사 목록이 같더라도 승인·원문·개념 등 검증된 지식 투영 입력의 SHA가 바뀌면 이전 투영을 재사용하지 않는다.
+
+기사 frontier의 명시 폐기 요청은 task·SHA·소유 job·폐기 기록을 검증한 뒤 `pending_reasoning.retired_tasks`에 사유와 함께 표시한다. 폐기 요청을 준비되거나 실행 가능한 결과로 취급하지 않고, 완료된 processing job의 다음 구간에서 해당 기사의 보류 상태를 기록해 다른 기사를 계속 처리한다. 폐기 기록이나 소유 근거가 변조되면 전체 조회를 차단한다. 기존 요청 읽기·제출 차단과 부분 회차 승계 계약은 유지한다.
+
+동일 사건의 명시 판정은 고정된 계획·원문 블록과 인용을 직접 검증한다. 이미 고정된 선정의 발행 인계를 읽을 때 이 판정 때문에 현재 backlog나 전체 기사 이력을 다시 읽지 않는다. 원문·판정 해시가 바뀌거나 인용이 원문 밖에 있으면 기존처럼 거부한다.
+
+부분 회차에서 원래 writer를 바꾸지 않고 새로 승인한 기사는 미리보기에서도 기존의 복구 writer 포인터를 통해 찾는다. 포인터의 원래 선정·승계 manifest·승인·원문 바인딩을 검증한 뒤에만 같은 선정의 최초 수록으로 인정한다. 원래 승인과 복구 승인이 충돌하거나 근거가 바뀌면 거부한다.
 
 2026-11-02 운영 승격 사전 확인: 개발 완료된 `tkg-article-accel-20261102-r7`은 별도 불변 실행본으로 설치했고 새 외장 경로의 비활성 workspace에 517개 구현 파일과 기존 의존성을 결속해 준비 상태를 확인했다. 기존 v13 workspace 파일·정책·seal·active runtime의 보존본과 SHA 영수증은 통합 프로젝트의 `migration-evidence/2026-11-02-r7-inactive-workspace-backup/`에 있다. native MCP 초기화·도구 목록 검사는 모델·수집·Drive 호출 없는 로컬 검사다. 기존 미완료 회차는 이전 저장 루트와 실행본에 고정되어 있으며 새 경로에서의 조회·재개는 허용되지 않는다. 2026-11-02 21:28 사전 확인에서는 04시 예약과 MCP가 기존 v13을 가리켰고, 이후 사용자 지시로 기존 회차를 보존하며 새 회차의 r7 강제 전환을 진행했다. 실제 전환 결과는 통합 프로젝트의 `migration-evidence/2026-11-02-full-migration-plan.md`를 확인한다. 후보 준비 상태는 실제 발행 완료를 뜻하지 않는다.
 ### 이전 운영 경로 보호 관문 (개발 후보)

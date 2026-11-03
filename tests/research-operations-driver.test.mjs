@@ -25,6 +25,33 @@ const settled = (id, pending) => ({
   commands: [{ stage: "collection", job_id: id, job: { state: "completed", worker_alive: false } }],
 })
 
+test("an owned child checkpoint failure resumes the same job with a strict retry bound", () => {
+  const status = { ...settled("module-owned", 0), commands: [{ stage: "processing",
+    job_id: "module-owned", job: { state: "failed", worker_alive: false,
+      error_code: "OWNED_CHILD_RETRY", attempt: 1 } }] }
+  assert.deepEqual(operationalNextAction(status), { action: "resume", job_id: "module-owned",
+    stage: "processing", reason: "resume_exact_owned_child_checkpoint" })
+  status.commands[0].job.attempt = 3
+  assert.equal(operationalNextAction(status).action, "failed")
+  status.commands[0].job.attempt = 1
+  status.commands[0].job.worker_alive = null
+  assert.equal(operationalNextAction(status).action, "worker_status_unknown")
+})
+
+test("interrupted or waiting work retains its original stage even after the handoff is complete", () => {
+  const status = { ...settled("module-interrupted", 0), status: "complete",
+    stages: { events: { status: "complete" }, publication: { reference: { path: "handoff" } } },
+    commands: [{ stage: "processing", job_id: "module-interrupted",
+      job: { state: "interrupted", worker_alive: false } }] }
+  assert.deepEqual(operationalNextAction(status), {
+    action: "resume", job_id: "module-interrupted", stage: "processing",
+  })
+  status.commands[0].job.state = "waiting_for_storage"
+  assert.equal(operationalNextAction(status).stage, "processing")
+  status.commands[0].job.state = "waiting_for_reasoning"
+  assert.equal(operationalNextAction(status).stage, "processing")
+})
+
 test("a ready article is consumed while independent articles still await reasoning; worker liveness wins", () => {
   const request = { task_id: "reasoning-a", request_sha256: "a".repeat(64) }
   const status = {

@@ -7,6 +7,7 @@ import {
   checkedPlan,
   loadSelectedEvent,
   eventWorkKey,
+  eventWriterBinding,
   reviewEditionEvents,
 } from "./event-pipeline.mjs"
 import {
@@ -213,7 +214,7 @@ function poolCandidate(ctx, planRef, plan, event, inventory) {
     (c.source_urls || []).some((url) => urls.has(canonicalURL(url))),
   )
   let execution = { plan: planRef, group_id: event.group_id }
-  const binding = readJSON(ctx.root, `event-work/${eventWorkKey(event)}/selection.json`)
+  const binding = eventWriterBinding(ctx, planRef, event, { globalOnly: true, useRecoveryScope: false })
   if (binding) {
     const selected = loadSelectedEvent(ctx, {
       run_id: binding.writer_run,
@@ -700,7 +701,11 @@ export function checkedIdentityReview(ctx, poolRef, pool, review) {
       used.add(candidate.candidate_id)
       const citations = pair.evidence.filter((e) => e.candidate_id === candidate.candidate_id)
       if (!citations.length) throw Error("Identity review must cite each candidate")
-      const sources = curationCandidatePacket(ctx, candidate).sources
+      // Identity citations are checked against the frozen event's original
+      // blocks; constructing the model packet also reads mutable history.
+      const plan = checkedPlan(ctx, candidate.origin_plan, candidate.group_id)
+      const event = plan.events.find((entry) => entry.group_id === candidate.group_id)
+      const sources = sourcePacket(ctx, plan, event)
       for (const cite of citations) {
         const block = sources.find((s) => s.material_id === cite.material_id)?.blocks.find((b) => b.block_id === cite.block_id)
         if (!block || !block.text.includes(cite.quote))
@@ -960,7 +965,8 @@ export async function selectCuration(ctx, p) {
       }
       immutable(ctx.root, relative, input)
       const workKey = eventWorkKey(promotedEvent)
-      const binding = readJSON(ctx.root, `event-work/${workKey}/selection.json`)
+      const binding = eventWriterBinding(ctx, item.origin_plan, promotedEvent,
+        { globalOnly: true, useRecoveryScope: false })
       if (binding) {
         const prior = loadSelectedEvent(
           ctx,
@@ -1161,4 +1167,36 @@ export function curationGroupsForPlan(ctx, ref, planRef, options = {}) {
   const selection = loadCurationSelection(ctx, ref, options)
   const batch = selection.batches.find((b) => same(b.plan, planRef))
   return batch?.group_ids || []
+}
+
+// A missing parent row alone never proves that its writer has not started.
+// Only a caller that checked the exact native bindings may mark an unrecorded
+// batch as an unstarted candidate.
+export function completeCurationFrontier(selection, rows, startedPlans, { unstartedCandidates = [] } = {}) {
+  const selected = new Set(selection.selected.map((item) => item.candidate_id))
+  const executions = new Set(selection.selected.map((item) =>
+    JSON.stringify([item.execution.plan, item.execution.group_id])))
+  if (selected.size !== selection.selected.length || executions.size !== selection.selected.length)
+    throw Error("Curation selection contains duplicate candidate or execution identities")
+  const seen = new Set()
+  for (const row of rows) {
+    if (!selected.has(row.candidate_id) || seen.has(row.candidate_id))
+      throw Error("Curation frontier contains an unknown or duplicate selected candidate")
+    seen.add(row.candidate_id)
+  }
+  const started = new Set(startedPlans.map((plan) => JSON.stringify(plan)))
+  const unstarted = new Set(unstartedCandidates)
+  return [
+    ...rows,
+    ...selection.selected.filter((item) => !seen.has(item.candidate_id)).map((item) => {
+      const exists = started.has(JSON.stringify(item.execution.plan))
+      return {
+        candidate_id: item.candidate_id,
+        group_id: item.execution.group_id,
+        origin_plan: item.execution.plan,
+        status: !exists && unstarted.has(item.candidate_id) ? "queued" : "frontier_inconsistent",
+        queue_reason: exists ? "checkpoint_row_absent" : "batch_not_in_checkpoint",
+      }
+    }),
+  ]
 }

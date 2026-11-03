@@ -9,6 +9,19 @@ import {
   readModuleResult,
 } from "./module-runtime.mjs"
 import { safePath } from "./run-state.mjs"
+import { withReadOnlyStorageReads } from "./cold-storage.mjs"
+
+function readOnlyStorageWait(error, run) {
+  if (error.code !== "STORAGE_PENDING" || !error.storage_request?.request_not_recorded) throw error
+  return {
+    status: "waiting_for_storage",
+    audit_only: true,
+    run_id: run,
+    reason: error.message,
+    storage_request: error.storage_request,
+    next_action: "restore_exact_archived_bytes_before_status",
+  }
+}
 
 export async function moduleCLI(args, selectedModule) {
   const { values: v, positionals } = parseArgs({
@@ -37,14 +50,24 @@ export async function moduleCLI(args, selectedModule) {
       sha256: { type: "string" },
     },
   })
-  const ctx = moduleContext({
+  const contextOptions = {
     repo: v.repo,
     root: v.root,
     vault: v.vault,
     backlog: v.backlog,
     policy: v.policy,
     executionRepo: v["execution-repo"],
-  })
+  }
+  const auditStatus = !selectedModule && positionals[0] === "status" && Boolean(v.round)
+  let ctx
+  try {
+    ctx = auditStatus
+      ? withReadOnlyStorageReads(() => moduleContext(contextOptions))
+      : moduleContext(contextOptions)
+  } catch (error) {
+    if (auditStatus) return readOnlyStorageWait(error, v.round)
+    throw error
+  }
   if (v.input && v.json) throw Error("Choose --input FILE or --json JSON")
   if (!selectedModule && positionals[0] === "processing-drive") {
     if (positionals.length !== 1 || !v.input || !v.sha256 || v.json || v.background)
@@ -125,7 +148,11 @@ export async function moduleCLI(args, selectedModule) {
     if (positionals[0] === "status") {
       if (v.json || v.input || v.stage || v.invocation || v.background)
         throw Error("Round status is read-only")
-      return operationalRoundStatus(ctx, v.round)
+      try {
+        return operationalRoundStatus(ctx, v.round, { readOnly: true })
+      } catch (error) {
+        return readOnlyStorageWait(error, v.round)
+      }
     }
     const parameters = v.json
       ? JSON.parse(v.json)
@@ -141,13 +168,13 @@ export async function moduleCLI(args, selectedModule) {
         v.invocation ||
         v["invocation-sha256"] ||
         Object.keys(parameters).some(
-          (key) => !["successor", "reason", "approved_handoff"].includes(key),
+          (key) => !["successor", "reason", "approved_handoff", "restart_partial"].includes(key),
         ) ||
         (parameters.approved_handoff !== undefined &&
           typeof parameters.approved_handoff !== "boolean")
       )
         throw Error(
-          "continue accepts the exact successor, reason and explicit approved_handoff flag",
+          "continue accepts the exact successor, reason and explicit recovery options",
         )
       const { continueOperationalRound } = await import("./operations-continuation.mjs")
       return continueOperationalRound(ctx, { ...parameters, run_id: v.round })

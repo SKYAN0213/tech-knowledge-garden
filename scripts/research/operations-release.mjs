@@ -79,9 +79,12 @@ export function installOperationsRelease(repo, destination) {
   }
 }
 
-export function inspectOperationalPin(ctx, run) {
-  const runtime = executionRepository(ctx)
+export function inspectOperationalPin(ctx, run, { readOnly = false } = {}) {
   const input = readJSON(ctx.root, operationalBase(run) + "input.json")
+  if (!input) throw Error("Pinned operational round required")
+  const runtime = readOnly
+    ? fs.realpathSync(input.execution_repository || input.repository)
+    : executionRepository(ctx)
   if (
     !input ||
     input.run_id !== run ||
@@ -101,14 +104,15 @@ export function inspectOperationalPin(ctx, run) {
     installation.release_id !== input.release_id
   )
     throw Error("Pinned operational execution changed; preserve this round")
-  if (runtime !== ctx.repo) inspectRuntimeWorkspace(runtime, ctx.repo)
+  if (!readOnly && runtime !== ctx.repo) inspectRuntimeWorkspace(runtime, ctx.repo)
   checkedOperationalInvocation(ctx, input.invocation)
   if (input.continuation) {
     const continuation = checked(ctx.root, input.continuation)
     if (continuation.successor !== run || continuation.release_id !== input.release_id)
       throw Error("Operational continuation identity changed")
     for (const ref of [continuation.parent, continuation.workflow, continuation.checkpoint,
-      ...(continuation.failed_collection_report ? [continuation.failed_collection_report] : [])])
+      ...(continuation.failed_collection_report ? [continuation.failed_collection_report] : []),
+      ...(continuation.partial_restart ? [continuation.partial_restart] : [])])
       checked(ctx.root, ref)
     checkedOperationalInvocation(ctx, continuation.invocation)
   }

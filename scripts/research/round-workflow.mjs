@@ -24,6 +24,7 @@ import {
 import { prepareTrendReviewRuns } from "./ontology-trends.mjs"
 import { assertEvidenceOntology } from "./ontology.mjs"
 import { loadCurrentApproval } from "./preview.mjs"
+import { partialRecoveryManifest } from "./replacement-scope.mjs"
 import {
   prepareEventPublicationHandoff,
   loadDailyPublicationSelection,
@@ -155,7 +156,10 @@ function nextInputs(events) {
         },
       ]
     }
-    if (row.status === "queued") return [{ ...common, stage: "events", required: ["execute"] }]
+    if (row.status === "frontier_inconsistent")
+      return [{ ...common, stage: "events", reason: row.queue_reason, required: ["inspect_saved_checkpoint"] }]
+    if (row.status === "queued") return [{ ...common, stage: "events",
+      ...(row.queue_reason ? { reason: row.queue_reason } : {}), required: ["execute"] }]
     return []
   })
 }
@@ -434,7 +438,7 @@ export async function advanceRoundWorkflow(
           reference: curationRef,
           selected: curated.selected.length,
         }
-        if (curated.batches.some((batch) => !same(batch.plan, planRef))) {
+        if (partialRecoveryManifest(ctx) || curated.batches.some((batch) => !same(batch.plan, planRef))) {
           if (p.execute) curatedBatch = curated
           else
             return persist("curation_ready", {

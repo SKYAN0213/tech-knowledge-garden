@@ -73,7 +73,7 @@ try {
         workspace,
         `.local/research/local-ai/operations/rounds/${round}/input.json`,
       )
-      if (fs.existsSync(pinFile)) {
+      if (fs.existsSync(pinFile) && args[0] !== "status") {
         const pin = JSON.parse(fs.readFileSync(pinFile))
         runtime = pin.execution_repository || pin.repository
       }

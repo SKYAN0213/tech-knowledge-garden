@@ -7,6 +7,11 @@ import { pinOperationalRound, operationalBase } from "./operations-release.mjs"
 import { checkedOperationalInvocation, captureManualInvocation } from "./schedule-contract.mjs"
 import { loadDailyPublicationSelection } from "./daily-publication-handoff.mjs"
 import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
+import { loadCurationSelection } from "./curation.mjs"
+import { checkedPlan, eventWorkKey, loadSelectedEvent, eventWriterBinding } from "./event-pipeline.mjs"
+import { loadCurrentApproval } from "./preview.mjs"
+import { restartReasoningStatus, settleReasoningForRestart } from "./reasoning-tasks.mjs"
+import { assertRelayTaskQuiescent } from "./relay-ledger.mjs"
 
 export function assertUnwrittenApprovedHandoff(ctx, state, run) {
   if (
@@ -28,8 +33,13 @@ export function assertUnwrittenApprovedHandoff(ctx, state, run) {
     JSON.stringify(handoff.curation) !== JSON.stringify(state.curation)
   )
     throw Error("Publication recovery must retain its exact curated approvals")
-  // A request alone has no external effects. Any release binding, execution or
-  // publication command beyond that request must remain on its original code.
+  assertNoPublicationExecution(ctx, run)
+  return state.publication_handoff
+}
+
+// A request alone has no external effects. Any release binding, execution or
+// publication command beyond that request must remain on its original code.
+function assertNoPublicationExecution(ctx, run) {
   const commands = safePath(ctx.root, operationalBase(run) + "commands", { materialize: false })
   const deliveries = new Set([run + "-delivery"])
   for (const name of fs.existsSync(commands) ? fs.readdirSync(commands) : []) {
@@ -53,7 +63,6 @@ export function assertUnwrittenApprovedHandoff(ctx, state, run) {
     if (readJSON(ctx.root, `runs/${id}/publication-operation/input.json`))
       throw Error("External publication execution cannot move to another release")
   }
-  return state.publication_handoff
 }
 
 function reference(root, file) {
@@ -63,6 +72,73 @@ function checked(root, ref) {
   if (!ref || reference(root, ref.path).sha256 !== ref.sha256)
     throw Error("Continuation evidence changed")
   return readJSON(root, ref.path)
+}
+
+export function partialRestartManifest(ctx, state, run, successor, replacementSelection) {
+  const original = loadCurationSelection(ctx, state.curation)
+  const selection = loadCurationSelection(ctx, replacementSelection)
+  if (selection.briefing_date !== original.briefing_date ||
+      (JSON.stringify(replacementSelection) !== JSON.stringify(state.curation) && !selection.identity_review))
+    throw Error("A source-reviewed replacement selection for the original briefing is required")
+  const selectedIds = new Set(selection.selected.map((item) => item.candidate_id))
+  for (const item of original.selected)
+    if (!selectedIds.has(item.candidate_id) && !selection.held.some((held) =>
+      held.candidate_id === item.candidate_id && held.reason === "reviewed_same_event" &&
+      selectedIds.has(held.preferred_candidate_id)))
+      throw Error("Partial recovery cannot omit an original selected event without identity review")
+  const seen = new Set(), items = []
+  for (const item of selection.selected) {
+    const plan = checkedPlan(ctx, item.execution.plan, item.execution.group_id)
+    const event = plan.events.find((entry) => entry.group_id === item.execution.group_id)
+    const workKey = eventWorkKey(event)
+    if (seen.has(workKey)) throw Error("Partial recovery selection contains duplicate events")
+    seen.add(workKey)
+    const paths = [`event-plans/${plan.run_id}/selections/${event.group_id}.json`,
+      `event-work/${workKey}/selection.json`]
+    const original_bindings = paths.map((file) => {
+      const absolute = safePath(ctx.root, file)
+      return { path: file, sha256: fs.existsSync(absolute) ? sha256(fs.readFileSync(absolute)) : null }
+    })
+    const binding = eventWriterBinding(ctx, item.execution.plan, event, { useRecoveryScope: false })
+    let writer_run = null, approval = null
+    if (event.action === "reuse") {
+      writer_run = event.prior?.run_id
+      if (!writer_run) throw Error("Exact existing reused approval required")
+      loadCurrentApproval(ctx.root, writer_run, { vault: ctx.vault })
+      approval = reference(ctx.root, `runs/${writer_run}/approved-article.json`)
+    } else if (binding) {
+      const selected = loadSelectedEvent(ctx, { run_id: binding.writer_run,
+        selection_path: binding.selection.path, selection_sha256: binding.selection.sha256 })
+      if (JSON.stringify(selected.plan) !== JSON.stringify(item.execution.plan) ||
+          selected.group_id !== item.execution.group_id)
+        throw Error("Partial recovery writer differs from its exact selected event")
+      if (readJSON(ctx.root, `runs/${binding.writer_run}/approved-article.json`)) {
+        loadSelectedEvent(ctx, { run_id: binding.writer_run, selection_path: binding.selection.path,
+          selection_sha256: binding.selection.sha256 }, { requireProcessed: true })
+        loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
+        writer_run = binding.writer_run
+        approval = reference(ctx.root, `runs/${writer_run}/approved-article.json`)
+      }
+    }
+    items.push({ candidate_id: item.candidate_id, plan: item.execution.plan,
+      group_id: item.execution.group_id, work_key: workKey,
+      action: approval ? "reuse" : "restart", original_bindings,
+      ...(writer_run ? { writer_run, approval } : {}) })
+  }
+  const pending = []
+  for (const row of state.next_inputs || []) {
+    const task = row.stage === "reasoning" && row.reasoning_task
+    if (!task || pending.some((entry) => entry.task_id === task.task_id)) continue
+    assertRelayTaskQuiescent(ctx.root, run, task.task_id)
+    restartReasoningStatus(ctx.root, { ...task, expected_round: run,
+      reason: `Restart ${run} as ${successor}` })
+    pending.push(task)
+  }
+  return { schema: "research-partial-restart/v1", successor,
+    parent: reference(ctx.root, operationalBase(run) + "input.json"),
+    checkpoint: reference(ctx.root, `round-workflows/${run}/latest.json`),
+    original_selection: state.curation, selection: replacementSelection,
+    identity_review: selection.identity_review, items, settled_requests: pending }
 }
 
 function requireUnreviewedSelection(ctx, state, run) {
@@ -104,10 +180,14 @@ function requireUnreviewedSelection(ctx, state, run) {
 // replaces the old immutable pin, its jobs, its workflow or scheduler claim.
 export async function continueOperationalRound(
   ctx,
-  { run_id, successor, reason, approved_handoff = false },
+  { run_id, successor, reason, approved_handoff = false, restart_partial },
 ) {
   if (typeof approved_handoff !== "boolean")
     throw Error("Explicit boolean approved_handoff required")
+  if (restart_partial && (typeof restart_partial !== "object" || Array.isArray(restart_partial) ||
+      Object.keys(restart_partial).sort().join(",") !== "selection_path,selection_sha256" ||
+      !/^[a-f0-9]{64}$/.test(restart_partial.selection_sha256 || "")))
+    throw Error("Exact replacement selection path and SHA required")
   operationalBase(run_id)
   operationalBase(successor)
   if (run_id === successor || typeof reason !== "string" || !reason.trim() || reason.length > 1000)
@@ -190,9 +270,17 @@ export async function continueOperationalRound(
       state.candidate_published === false
     const approvedHandoff =
       approved_handoff === true ? assertUnwrittenApprovedHandoff(ctx, state, run_id) : null
+    const partialHandoff = restart_partial && state?.status === "partial" && state.edition && state.curation &&
+      state.event_workflow && state.canonical_writes === 0 && state.candidate_published === false
+    if (restart_partial && (!partialHandoff || approved_handoff))
+      throw Error("Partial restart requires an unpublished, selected partial round")
+    if (partialHandoff) {
+      checked(ctx.root, state.event_workflow)
+      assertNoPublicationExecution(ctx, run_id)
+    }
     if (
       (!selectedHandoff && !frozenHandoff &&
-        !approvedHandoff &&
+        !approvedHandoff && !partialHandoff &&
         (!collectionOnly || workflow?.source?.kind !== "daily")) ||
       (collectionOnly && (state.event_workflow || state.publication_handoff))
     )
@@ -210,6 +298,7 @@ export async function continueOperationalRound(
       const link = checked(ctx.root, originPin.continuation)
       origin = checked(ctx.root, link.workflow)
       originPin = checked(ctx.root, link.parent)
+      if (partialHandoff) assertNoPublicationExecution(ctx, originPin.run_id)
     }
     const config = reference(ctx.repo, origin.collection_config.path)
     if (config.sha256 !== origin.collection_config.sha256)
@@ -219,10 +308,12 @@ export async function continueOperationalRound(
     )
       throw Error("Collection model policy changed")
     const processing =
-      selectedHandoff || frozenHandoff || approvedHandoff
+      selectedHandoff || frozenHandoff || approvedHandoff || partialHandoff
         ? {
             edition: state.edition,
-            ...(state.curation ? { curation: state.curation } : {}),
+            ...(state.curation ? { curation: partialHandoff
+              ? { path: restart_partial.selection_path, sha256: restart_partial.selection_sha256 }
+              : state.curation } : {}),
             ...(state.plan ? { plan: state.plan } : {}),
           }
         : null
@@ -235,6 +326,16 @@ export async function continueOperationalRound(
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
       throw Error("Round already has another continuation")
+    let restartRef = null, restart = null
+    if (partialHandoff) {
+      restart = partialRestartManifest(ctx, state, run_id, successor, processing.curation)
+      const manifestPath = base + `partial-restarts/${successor}.json`
+      const existing = readJSON(ctx.root, manifestPath)
+      if (existing && JSON.stringify(existing) !== JSON.stringify(restart))
+        throw Error("Partial recovery manifest changed")
+      if (!existing) atomicCreate(ctx.root, manifestPath, restart)
+      restartRef = reference(ctx.root, manifestPath)
+    }
     const evidenceFile = base + "continuation-evidence.json"
     const source = {
       parent: reference(ctx.root, base + "input.json"),
@@ -245,6 +346,7 @@ export async function continueOperationalRound(
       daily_run: origin.source.daily_run,
       ...(processing ? { processing } : {}),
       ...(approvedHandoff ? { approved_handoff: approvedHandoff } : {}),
+      ...(restartRef ? { partial_restart: restartRef } : {}),
       prior_release: parent.release_id,
       release_id: gate.release_id,
       successor,
@@ -260,6 +362,12 @@ export async function continueOperationalRound(
     for (const key of Object.keys(source))
       if (JSON.stringify(saved[key]) !== JSON.stringify(source[key]))
         throw Error("Continuation source changed")
+    // Retire the original requests before any successor pin can be driven.
+    // The manifest and original requests are immutable, so a partial failure
+    // can safely repeat the remaining retirements on the next continue call.
+    if (restart) for (const task of restart.settled_requests)
+      await settleReasoningForRestart(ctx.root, { ...task, expected_round: run_id,
+        reason: `Restart ${run_id} as ${successor}` })
     const invocation = captureManualInvocation(ctx, {
       execution_id: successor,
       reason: `Continue ${run_id}: ${reason}`.slice(0, 1000),

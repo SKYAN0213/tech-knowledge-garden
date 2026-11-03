@@ -2,6 +2,7 @@ import test from "node:test"
 import assert from "node:assert/strict"
 import fs from "node:fs"
 import path from "node:path"
+import { DatabaseSync } from "node:sqlite"
 import { editionFixture } from "./fixtures/research-event-fixtures.mjs"
 import { approveDeliveryFixture, deliveryFixture } from "./fixtures/publication-delivery.mjs"
 import {
@@ -11,9 +12,11 @@ import {
   loadCurationSelection,
   loadCurationPool,
   curationCandidatePacket,
+  completeCurationFrontier,
   CURATION_METRICS,
 } from "../scripts/research/curation.mjs"
 import { advanceCuration } from "../scripts/research/curation-workflow.mjs"
+import { readCurationInsights } from "../scripts/research/curation-insights.mjs"
 import { recoverCurationCheckpoint } from "../scripts/research/curation-checkpoint-recovery.mjs"
 import { assertNoOperationalWriter } from "../scripts/research/operations-deployment.mjs"
 import { withRequestOwner } from "../scripts/research/request-ownership.mjs"
@@ -31,7 +34,8 @@ import {
 import { advanceEventWorkflow } from "../scripts/research/event-workflow.mjs"
 import { approveNoteReview } from "../scripts/research/note-review.mjs"
 import { requestPublicationDelivery } from "../scripts/research/authoring-delivery-request.mjs"
-import { reviewEditionEvents } from "../scripts/research/event-pipeline.mjs"
+import { reviewEditionEvents, prepareEventSelection, eventWorkKey, eventWriterBinding,
+  publishRecoveredWriter } from "../scripts/research/event-pipeline.mjs"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import { submitModuleJob } from "../scripts/research/module-runtime.mjs"
@@ -39,12 +43,15 @@ import {
   readReasoningTask,
   createReasoningTask,
   submitReasoningResult,
+  settleReasoningForRestart,
 } from "../scripts/research/reasoning-tasks.mjs"
 import { atomicWrite, readJSON, safePath } from "../scripts/research/run-state.mjs"
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { assertUnwrittenApprovedHandoff } from "../scripts/research/operations-continuation.mjs"
+import { partialRestartManifest } from "../scripts/research/operations-continuation.mjs"
 import { noteText, parseNote, canonicalURL } from "../scripts/garden.mjs"
 import { withVerifiedInputSession, assertVerifiedInputBoundary } from "../scripts/research/verified-inputs.mjs"
+import { assertPartialRestartSettled, recoveryProducerPath } from "../scripts/research/replacement-scope.mjs"
 
 function setup(t, options) {
   const f = editionFixture(t, options)
@@ -426,7 +433,8 @@ test("an explicitly reviewed same-event pair is selected once without altering s
   const unreviewed = await pool(f, "pair-unreviewed", [first, second])
   assert.notEqual(unreviewed.value.candidates[0].identity_key, unreviewed.value.candidates[1].identity_key)
   await review(f, unreviewed, unreviewed.value.candidates.map((c, i) => rating(f, c, i ? 5 : 4)))
-  assert.equal(loadCurationSelection(f.ctx, ref(await choose(f, unreviewed))).selected.length, 2)
+  const originalSelection = await choose(f, unreviewed)
+  assert.equal(loadCurationSelection(f.ctx, ref(originalSelection)).selected.length, 2)
   const p = await pool(f, "pair-reviewed", [first, second])
   const [preferred, alternate] = p.value.candidates
   const evidence = [preferred, alternate].map((candidate) => {
@@ -459,6 +467,12 @@ test("an explicitly reviewed same-event pair is selected once without altering s
   const selectedRef = await selectCuration(f.ctx, args)
   const selected = loadCurationSelection(f.ctx, ref(selectedRef))
   assert.deepEqual(selected.selected.map((x) => x.candidate_id), [preferred.candidate_id])
+  // Publication loads a frozen selection with only root and vault; checking
+  // reviewed source citations must not depend on a current backlog path.
+  const publicationSelection = loadCurationSelection(
+    { root: f.root, vault: f.ctx.vault }, ref(selectedRef), { checkHistory: false },
+  )
+  assert.deepEqual(publicationSelection.selected, selected.selected)
   assert.equal(selected.selected[0].score, 80)
   assert.ok(selected.held.some((x) => x.candidate_id === alternate.candidate_id &&
     x.reason === "reviewed_same_event" && x.score === 100))
@@ -466,8 +480,70 @@ test("an explicitly reviewed same-event pair is selected once without altering s
   assert.equal(selected.candidate_published, false)
   assert.ok(selected.identity_review?.sha256)
   assert.equal((await selectCuration(f.ctx, args)).reused, true)
+  const chosenItem = selected.selected[0]
+  await prepareEventSelection(f.ctx, { run_id: "partial-old-writer", plan_path: chosenItem.execution.plan.path,
+    plan_sha256: chosenItem.execution.plan.sha256, group_id: chosenItem.execution.group_id })
+  const parent = "partial-old-round", successor = "partial-new-round"
+  const parentPin = { run_id: parent }
+  atomicWrite(f.root, `operations/rounds/${parent}/input.json`, parentPin)
+  const job = "module-partial-old-owner", jobInput = { job_id: job, module: "edition", operation: "advance" }
+  const inputSha = sha256(JSON.stringify(jobInput))
+  atomicWrite(f.root, `module-jobs/${job}/input.json`, jobInput)
+  atomicWrite(f.root, `module-jobs/${job}/state.json`, { job_id: job, input_sha256: inputSha, state: "running" })
+  const oldTask = createReasoningTask(f.root, { run: "partial-old-writer", role: "fact_extract",
+    binding: { settings: { model: "gpt-6-luna" } }, input: { schema: { type: "object" } },
+    owner: { job_id: job, input_sha256: inputSha, round_id: parent,
+      round_input_sha256: sha256(JSON.stringify(parentPin)) } })
+  const oldRef = { task_id: oldTask.task_id, request_sha256: oldTask.request_sha256 }
+  atomicWrite(f.root, `module-jobs/${job}/state.json`, { job_id: job, input_sha256: inputSha,
+    state: "waiting_for_reasoning", reasoning_task: oldRef })
+  const lateJob = "module-partial-late-owner", lateInput = { ...jobInput, job_id: lateJob }
+  const lateSha = sha256(JSON.stringify(lateInput))
+  atomicWrite(f.root, `module-jobs/${lateJob}/input.json`, lateInput)
+  atomicWrite(f.root, `module-jobs/${lateJob}/state.json`, { job_id: lateJob, input_sha256: lateSha, state: "running" })
+  const lateTask = createReasoningTask(f.root, { run: "partial-late-writer", role: "fact_extract",
+    binding: { settings: { model: "gpt-6-luna" } }, input: { schema: { type: "object" } },
+    owner: { job_id: lateJob, input_sha256: lateSha, round_id: parent,
+      round_input_sha256: sha256(JSON.stringify(parentPin)) } })
+  const lateRef = { task_id: lateTask.task_id, request_sha256: lateTask.request_sha256 }
+  atomicWrite(f.root, `module-jobs/${lateJob}/state.json`, { job_id: lateJob, input_sha256: lateSha,
+    state: "waiting_for_reasoning", reasoning_task: lateRef })
+  const state = { status: "partial", curation: ref(originalSelection),
+    next_inputs: [{ stage: "reasoning", reasoning_task: oldRef }, { stage: "reasoning", reasoning_task: lateRef }] }
+  atomicWrite(f.root, `round-workflows/${parent}/latest.json`, state)
+  const manifest = partialRestartManifest(f.ctx, state, parent, successor, ref(selectedRef))
+  assert.equal(manifest.items.length, 1)
+  assert.equal(manifest.items[0].action, "restart")
+  assert.equal(manifest.original_selection.sha256, originalSelection.sha256)
+  assert.equal(manifest.selection.sha256, selectedRef.sha256)
+  const unchangedSelection = partialRestartManifest(f.ctx, state, parent, successor, ref(originalSelection))
+  assert.equal(unchangedSelection.items.length, 2)
+  assert.equal(unchangedSelection.identity_review, undefined)
+  assert.deepEqual(manifest.settled_requests, [oldRef, lateRef])
+  const manifestRef = atomicWrite(f.root, "pair-restart-manifest.json", manifest)
+  const continuation = atomicWrite(f.root, "pair-restart-continuation.json", { successor,
+    parent: manifest.parent, checkpoint: manifest.checkpoint, processing: { curation: ref(selectedRef) },
+    partial_restart: manifestRef })
+  const successorPin = { run_id: successor, continuation }
+  atomicWrite(f.root, `operations/rounds/${successor}/input.json`, successorPin)
+  const restartCtx = { ...f.ctx, operationalRound: { round_id: successor,
+    round_input_sha256: sha256(JSON.stringify(successorPin)) } }
+  assert.throws(() => assertPartialRestartSettled(restartCtx), /must be settled/)
+  await settleReasoningForRestart(f.root, { ...oldRef, expected_round: parent,
+    reason: `Restart ${parent} as ${successor}` })
+  await submitReasoningResult(f.root, { ...lateRef, executor: "codex", model: "gpt-6-luna", output: {} })
+  const lateResult = await settleReasoningForRestart(f.root, { ...lateRef, expected_round: parent,
+    reason: `Restart ${parent} as ${successor}` })
+  assert.equal(lateResult.status, "completed")
+  assert.equal(readJSON(f.root, `reasoning-tasks/${lateRef.task_id}/retired.json`), null)
+  assert.doesNotThrow(() => assertPartialRestartSettled(restartCtx))
+  assert.deepEqual(partialRestartManifest(f.ctx, state, parent, successor, ref(selectedRef)), manifest)
   atomicWrite(f.root, selected.identity_review.path, { ...identityReview, reviewer: "tampered" })
   assert.throws(() => loadCurationSelection(f.ctx, ref(selectedRef)), /hash|changed|digest/i)
+  assert.throws(
+    () => loadCurationSelection({ root: f.root, vault: f.ctx.vault }, ref(selectedRef), { checkHistory: false }),
+    /hash|changed|digest/i,
+  )
 })
 
 test("curation rejects unsupported evidence and fractional/out-of-range scores", async (t) => {
@@ -1235,6 +1311,538 @@ test("an article waiting for storage does not occupy another article's execution
   assert.equal(waiting.status, "waiting_for_storage")
   assert.equal(waiting.storage_request.path, "documents/held/body.bin")
   assert.equal(result.candidate_published, false)
+})
+
+test("a missing row in an existing batch stays blocked instead of becoming an automatic retry", () => {
+  const first = { path: "plan-a", sha256: "a".repeat(64) }
+  const second = { path: "plan-b", sha256: "b".repeat(64) }
+  const third = { path: "plan-c", sha256: "c".repeat(64) }
+  const selection = { selected: [
+    { candidate_id: "a", execution: { plan: first, group_id: "a" } },
+    { candidate_id: "b", execution: { plan: second, group_id: "b" } },
+    { candidate_id: "c", execution: { plan: third, group_id: "c" } },
+  ] }
+  const saved = [{ candidate_id: "a", group_id: "a", status: "approved" }]
+  const rows = completeCurationFrontier(selection, saved, [first, second])
+  assert.equal(rows.find((row) => row.candidate_id === "b").status, "frontier_inconsistent")
+  assert.equal(rows.find((row) => row.candidate_id === "b").queue_reason, "checkpoint_row_absent")
+  assert.equal(rows.find((row) => row.candidate_id === "c").status, "frontier_inconsistent")
+  assert.equal(completeCurationFrontier(selection, saved, [first, second], { unstartedCandidates: ["c"] })
+    .find((row) => row.candidate_id === "c").status, "queued")
+  assert.throws(() => completeCurationFrontier(selection, [...saved, ...saved], [first]), /duplicate/)
+  assert.throws(() => completeCurationFrontier({ selected: [...selection.selected, selection.selected[0]] }, saved, [first]), /duplicate/)
+})
+
+test("a partially started selection exposes every unstarted batch without inventing approvals", async (t) => {
+  const f = setup(t)
+  f.ctx.policy = path.join(f.ctx.repo, "data/research-model-policy-codex.json")
+  const first = await plan(f, "frontier-multi-a", [f.event])
+  const second = await plan(f, "frontier-multi-b", [{ ...f.deferred, action: "write" }])
+  const p = await pool(f, "frontier-multi-selection", [first, second], 2)
+  await review(f, p, p.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const chosen = await choose(f, p)
+  const selection = loadCurationSelection(f.ctx, ref(chosen))
+  assert.equal(selection.selected.length, 2)
+  const job = await submitModuleJob(f.ctx, "edition", "advance", {
+    run_id: "frontier-multi-round", round: true,
+    edition_path: f.editionRef.path, edition_sha256: f.editionRef.sha256,
+    plan_path: first.path, plan_sha256: first.sha256,
+    curation_path: chosen.path, curation_sha256: chosen.sha256,
+    execute: true, max_items: 1, max_model_calls: 1,
+  }, { jobId: "module-frontier-multi", background: false })
+  assert.equal(job.state, "completed")
+  const result = readJSON(f.root, job.result.path).data
+  const workflow = readJSON(f.root, result.event_workflow.path)
+  assert.equal(workflow.rows.length, selection.selected.length)
+  assert.equal(workflow.rows.filter((row) => row.queue_reason === "batch_not_in_checkpoint").length, 1)
+  assert.equal(result.next_inputs.filter((row) => row.stage === "events" && row.required.includes("execute")).length, 1)
+  assert.equal(result.next_inputs.filter((row) => row.stage === "reasoning").length, 1)
+  assert.equal(workflow.approved_runs.length, 0)
+  const status = readCurationInsights(f.ctx, { selection_path: chosen.path, selection_sha256: chosen.sha256,
+    workflow_path: result.event_workflow.path, workflow_sha256: result.event_workflow.sha256 })
+  assert.equal(status.execution.selected_rows.length, selection.selected.length)
+  assert.equal(status.execution.selected_rows.filter((row) => row.queue_reason === "batch_not_in_checkpoint").length, 1)
+  assert.equal(status.execution.selected_rows.find((row) => row.queue_reason === "batch_not_in_checkpoint").status,
+    "frontier_inconsistent", "a hash-only insight does not verify native writer absence")
+  assert.equal(status.execution.selected_rows.filter((row) => row.status === "approved").length, 0)
+})
+
+for (const existingWriter of [false, true]) {
+  test(`resume blocks a missing started row and ${existingWriter ? "preserves an unrecorded writer" : "advances an independent unstarted batch"}`, async (t) => {
+    const f = setup(t)
+    const first = await plan(f, "resume-missing-a-" + existingWriter, [f.event])
+    const second = await plan(f, "resume-missing-b-" + existingWriter, [{ ...f.deferred, action: "write" }])
+    const p = await pool(f, "resume-missing-selection-" + existingWriter, [first, second], 2)
+    await review(f, p, p.value.candidates.map((candidate) => rating(f, candidate, 5)))
+    const chosen = await choose(f, p)
+    const selection = loadCurationSelection(f.ctx, ref(chosen))
+    const visits = []
+    const eventProcessor = async (_ctx, parameters) => {
+      visits.push(parameters.curation_focus_group)
+      const value = {
+        schema: "research-event-workflow/v1", run_id: parameters.run_id,
+        plan: { path: parameters.plan_path, sha256: parameters.plan_sha256 },
+        curation: ref(chosen), status: "partial", approved_runs: [], handled_items: 1,
+        rows: visits.length === 1 ? [] : [{ group_id: parameters.curation_focus_group, status: "queued" }],
+      }
+      atomicWrite(f.root, `event-workflows/${parameters.run_id}/latest.json`, value)
+      return value
+    }
+    const parameters = { run_id: "resume-missing-" + existingWriter, selection_path: chosen.path,
+      selection_sha256: chosen.sha256, execute: true, max_items: 1 }
+    const initial = await advanceCuration(f.ctx, parameters, { eventProcessor })
+    const absentStarted = initial.rows.find((row) => row.queue_reason === "checkpoint_row_absent")
+    const unrecorded = initial.rows.find((row) => row.queue_reason === "batch_not_in_checkpoint")
+    assert.ok(absentStarted && unrecorded)
+    if (existingWriter) {
+      const item = selection.selected.find((entry) => entry.candidate_id === unrecorded.candidate_id)
+      const selectedPlan = readJSON(f.root, item.execution.plan.path)
+      atomicWrite(f.root, `event-plans/${selectedPlan.run_id}/selections/${item.execution.group_id}.json`,
+        { writer_run: "existing-owned-writer", selection: { path: "existing-selection", sha256: "a".repeat(64) } })
+    }
+    const resumed = await advanceCuration(f.ctx, parameters, { eventProcessor })
+    assert.equal(visits.filter((group) => group === absentStarted.group_id).length, 1)
+    assert.equal(visits.filter((group) => group === unrecorded.group_id).length, existingWriter ? 0 : 1)
+    if (existingWriter) assert.equal(resumed.rows.find((row) => row.candidate_id === unrecorded.candidate_id).status,
+      "frontier_inconsistent")
+    assert.equal(resumed.rows.find((row) => row.candidate_id === absentStarted.candidate_id).status,
+      "frontier_inconsistent")
+  })
+}
+
+function independentFrontierEvents(f, prefix) {
+  return f.sources.slice(0, 3).map((source, i) => ({
+    ...f.event,
+    group_id: `${prefix}-${i}`,
+    identity: { ...f.event.identity, who: `Fixture Robotics ${i}`,
+      object: `Contract-${123 + i}`, external_id: `Contract-${123 + i}` },
+    materials: [{
+      material_id: f.report.materials.find((m) => m.source_version_id === source.document.source_version_id).id,
+      role: "primary", block_ids: [source.parsed.blocks[0].block_id],
+      evidence: ["identity_marker", "event_action"].map((aspect) => ({ aspect,
+        block_id: source.parsed.blocks[0].block_id, quote: source.parsed.blocks[0].text })),
+    }],
+  }))
+}
+
+test("a partial recovery creates a new writer and publishes its validated binding without replacing the original", async (t) => {
+  const f = setup(t)
+  f.provider = {
+    async metadata(model) { return { model, digest: sha256("fixture-model"), runtime: "fixture",
+      capabilities: ["completion"], thinking: { values: [false, "medium"] } } },
+    async structured(request) {
+      const docs = JSON.parse(request.messages[1].content)
+      return { output: { claims: docs.flatMap((d) => d.blocks.map((b) => ({
+        statement: "Fixture Robotics와 Partner가 2026년 9월 27일 Contract-123 로봇 주문을 발표했다.",
+        claim_kind: "fact", subject: "Fixture Robotics", event_state: "completed",
+        published_at: "2026-09-27", effective_period: null, numbers: [],
+        evidence: [{ block_key: b.block_key, support: "direct" }],
+      }))) }, provenance: { model: request.model, think: request.think,
+        digest: sha256("fixture-model"), prompt_sha256: sha256(JSON.stringify(request.messages)) } }
+    },
+  }
+  const planned = await plan(f, "partial-restart-plan", [f.event])
+  atomicWrite(f.ctx.vault, "Editions/previous.md", noteText({
+    type: "briefing", schema_version: "tech-ai-magazine/v2", editorial_format: "six-w/v1",
+    briefing_format: "sector-five/v1", theme_format: "news-themes/v1",
+    article_records: [], article_reviews: [], headlines: [], date: "2026-10-11",
+    coverage_start: "2026-10-09T15:00:00Z", coverage_end: "2026-10-10T15:00:00Z",
+  }, "## 오늘의 주요 소식\n\n"))
+  const curatedPool = await pool(f, "partial-restart-preview-pool", [planned], 1)
+  await review(f, curatedPool, curatedPool.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const curatedSelection = await choose(f, curatedPool)
+  const old = await prepareEventSelection(f.ctx, { run_id: "old-failed-writer", plan_path: planned.path,
+    plan_sha256: planned.sha256, group_id: f.event.group_id })
+  const native = readJSON(f.root, planned.path), event = native.events.find((entry) => entry.group_id === f.event.group_id)
+  const key = eventWorkKey(event), paths = [`event-plans/${native.run_id}/selections/${event.group_id}.json`,
+    `event-work/${key}/selection.json`]
+  const originals = paths.map((file) => ({ path: file, bytes: fs.readFileSync(safePath(f.root, file)) }))
+  const parent = atomicWrite(f.root, "operations/rounds/old/input.json", { run_id: "old" })
+  const checkpoint = atomicWrite(f.root, "round-workflows/old/latest.json", { status: "partial" })
+  const selection = ref(curatedSelection)
+  const successor = "new-recovery"
+  const manifest = atomicWrite(f.root, "recovery-manifest.json", { schema: "research-partial-restart/v1",
+    successor, parent, checkpoint, selection, settled_requests: [], items: [{ candidate_id: curatedPool.value.candidates[0].candidate_id, plan: ref(planned),
+      group_id: event.group_id, work_key: key, action: "restart",
+      original_bindings: originals.map(({ path: file, bytes }) => ({ path: file, sha256: sha256(bytes) })) }] })
+  const continuation = atomicWrite(f.root, "recovery-continuation.json", { successor, parent, checkpoint,
+    processing: { curation: selection }, partial_restart: manifest })
+  const pinValue = { run_id: successor, continuation }
+  atomicWrite(f.root, `operations/rounds/${successor}/input.json`, pinValue)
+  const ctx = { ...f.ctx, operationalRound: { round_id: successor, round_input_sha256: sha256(JSON.stringify(pinValue)) } }
+  const job = "module-test-replacement", jobInput = { job_id: job, module: "edition", operation: "advance" }
+  const owner = { job_id: job, input_sha256: sha256(JSON.stringify(jobInput)), ...ctx.operationalRound }
+  atomicWrite(f.root, `module-jobs/${job}/input.json`, jobInput)
+  atomicWrite(f.root, `module-jobs/${job}/state.json`, { job_id: job, input_sha256: owner.input_sha256, state: "running" })
+  const replacement = await withRequestOwner(owner, () => prepareEventSelection(ctx, { run_id: "unused-original-id", plan_path: planned.path,
+    plan_sha256: planned.sha256, group_id: event.group_id }))
+  assert.notEqual(replacement.writer_run, old.writer_run)
+  const again = await withRequestOwner(owner, () => prepareEventSelection(ctx, { run_id: "unused-original-id", plan_path: planned.path,
+    plan_sha256: planned.sha256, group_id: event.group_id }))
+  assert.equal(again.writer_run, replacement.writer_run)
+  for (const original of originals) assert.deepEqual(fs.readFileSync(safePath(f.root, original.path)), original.bytes)
+  await approveDeliveryFixture(f, replacement.writer_run, { run_id: replacement.writer_run,
+    selection_path: replacement.path, selection_sha256: replacement.sha256 })
+  const open = fs.openSync
+  let injected = false
+  try {
+    fs.openSync = function(file, ...args) {
+      if (!injected && String(file).endsWith("/locks/event-selection.json")) {
+        injected = true
+        fs.writeFileSync(safePath(f.root, originals[0].path), JSON.stringify({ writer_run: "concurrent-writer" }))
+      }
+      return open.call(this, file, ...args)
+    }
+    await assert.rejects(publishRecoveredWriter(ctx, ref(planned), event, replacement.writer_run),
+      /Original event writer binding changed/)
+  } finally {
+    fs.openSync = open
+    fs.writeFileSync(safePath(f.root, originals[0].path), originals[0].bytes)
+  }
+  assert.equal(injected, true)
+  assert.equal(fs.existsSync(safePath(f.root, `event-work/${key}/approved-recovery.json`)), false)
+  await publishRecoveredWriter(ctx, ref(planned), event, replacement.writer_run)
+  const preferred = eventWriterBinding(f.ctx, ref(planned), event, { globalOnly: true })
+  assert.equal(preferred.writer_run, replacement.writer_run)
+  const article = loadCurrentApproval(f.root, replacement.writer_run, { vault: f.ctx.vault }).article
+  const spec = { schema: "research-private-edition/v1", intent: "private_slice",
+    key: "2026-10-12_0800_Tech_AI_Briefing", date: "2026-10-12",
+    coverage_start: "2026-10-10T15:00:00Z", coverage_end: "2026-10-11T15:00:00Z" }
+  const projected = newEditionProjections(f.ctx.vault, [article], spec, [], new Map(), {
+    root: f.root, curation: selection,
+  })
+  assert.deepEqual(projected[0].event_ids, [article.event_id])
+  for (const original of originals) assert.deepEqual(fs.readFileSync(safePath(f.root, original.path)), original.bytes)
+  atomicWrite(f.root, `runs/${old.writer_run}/approved-article.json`, { fixture_conflict: true })
+  assert.throws(() => eventWriterBinding(f.ctx, ref(planned), event), /Conflicting original and recovery approvals/)
+})
+
+test("partial recovery reuses one native approval and advances a different event under a new writer", async (t) => {
+  const f = setup(t)
+  f.provider = {
+    async metadata(model) { return { model, digest: sha256("fixture-model"), runtime: "fixture",
+      capabilities: ["completion"], thinking: { values: [false, "medium"] } } },
+    async structured(request) {
+      const docs = JSON.parse(request.messages[1].content)
+      return { output: { claims: docs.flatMap((d) => d.blocks.map((b) => ({
+        statement: "Fixture Robotics와 Partner가 2026년 9월 27일 Contract-123 로봇 주문을 발표했다.",
+        claim_kind: "fact", subject: "Fixture Robotics", event_state: "completed",
+        published_at: "2026-09-27", effective_period: null, numbers: [],
+        evidence: [{ block_key: b.block_key, support: "direct" }],
+      }))) }, provenance: { model: request.model, think: request.think,
+        digest: sha256("fixture-model"), prompt_sha256: sha256(JSON.stringify(request.messages)) } }
+    },
+  }
+  const planned = await plan(f, "mixed-partial-restart", [f.event, { ...f.deferred, action: "write" }])
+  const paramsFor = (run, group) => ({ run_id: run, plan_path: planned.path, plan_sha256: planned.sha256, group_id: group })
+  const approved = await prepareEventSelection(f.ctx, paramsFor("mixed-approved", f.event.group_id))
+  await approveDeliveryFixture(f, approved.writer_run, { run_id: approved.writer_run,
+    selection_path: approved.path, selection_sha256: approved.sha256 })
+  const old = await prepareEventSelection(f.ctx, paramsFor("mixed-old-incomplete", f.deferred.group_id))
+  const prepared = await pool(f, "mixed-partial-pool", [planned], 2)
+  await review(f, prepared, prepared.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const chosen = await choose(f, prepared), selection = loadCurationSelection(f.ctx, ref(chosen))
+  const native = readJSON(f.root, planned.path), parent = atomicWrite(f.root, "mixed-parent.json", { run_id: "old" })
+  const checkpoint = atomicWrite(f.root, "mixed-checkpoint.json", { status: "partial" }), successor = "mixed-successor"
+  const items = selection.selected.map((item) => {
+    const event = native.events.find((entry) => entry.group_id === item.execution.group_id), key = eventWorkKey(event)
+    const original_bindings = [`event-plans/${native.run_id}/selections/${event.group_id}.json`,
+      `event-work/${key}/selection.json`].map((file) => ({ path: file, sha256: sha256(fs.readFileSync(safePath(f.root, file))) }))
+    return { candidate_id: item.candidate_id, plan: item.execution.plan, group_id: event.group_id,
+      work_key: key, original_bindings, ...(event.group_id === f.event.group_id
+        ? { action: "reuse", writer_run: approved.writer_run,
+          approval: { path: `runs/${approved.writer_run}/approved-article.json`,
+            sha256: sha256(fs.readFileSync(safePath(f.root, `runs/${approved.writer_run}/approved-article.json`))) } }
+        : { action: "restart" }) }
+  })
+  const manifest = atomicWrite(f.root, "mixed-manifest.json", { schema: "research-partial-restart/v1",
+    successor, parent, checkpoint, selection: ref(chosen), settled_requests: [], items })
+  const continuation = atomicWrite(f.root, "mixed-continuation.json", { successor, parent, checkpoint,
+    processing: { curation: ref(chosen) }, partial_restart: manifest })
+  const pin = { run_id: successor, continuation }
+  atomicWrite(f.root, `operations/rounds/${successor}/input.json`, pin)
+  f.ctx.policy = path.join(f.ctx.repo, "data/research-model-policy-codex.json")
+  const ctx = { ...f.ctx, operationalRound: { round_id: successor, round_input_sha256: sha256(JSON.stringify(pin)) } }
+  const job = "module-mixed-successor", jobInput = { job_id: job, module: "edition", operation: "advance" }
+  const owner = { job_id: job, input_sha256: sha256(JSON.stringify(jobInput)), ...ctx.operationalRound }
+  atomicWrite(f.root, `module-jobs/${job}/input.json`, jobInput)
+  atomicWrite(f.root, `module-jobs/${job}/state.json`, { job_id: job, input_sha256: owner.input_sha256,
+    state: "running", pid: process.pid })
+  const approvalPath = safePath(f.root, `runs/${approved.writer_run}/approved-article.json`)
+  const approvalBytes = fs.readFileSync(approvalPath)
+  fs.appendFileSync(approvalPath, " ")
+  const approvedEvent = native.events.find((event) => event.group_id === f.event.group_id)
+  assert.throws(() => eventWriterBinding(ctx, ref(planned), approvedEvent), /approval changed/)
+  fs.writeFileSync(approvalPath, approvalBytes)
+  const parameters = { run_id: "mixed-recovery-curation", selection_path: chosen.path,
+    selection_sha256: chosen.sha256, execute: true, review_mode: "combined/v1", max_items: 2, max_model_calls: 4 }
+  const runCuration = () => withRequestOwner(owner, () => advanceCuration(ctx, parameters))
+  const outcome = await runCuration()
+  assert.equal(outcome.rows.find((row) => row.group_id === f.event.group_id).status, "approved")
+  assert.ok(outcome.approved_runs.includes(approved.writer_run))
+  const pending = outcome.rows.find((row) => row.group_id === f.deferred.group_id)
+  assert.equal(pending.status, "waiting_for_reasoning")
+  assert.notEqual(pending.writer_run, old.writer_run)
+  const request = withRequestOwner(owner, () => readReasoningTask(f.root, { ...pending.reasoning_task, limit: 64000 }))
+  assert.equal(request.next_offset, null)
+  assert.match(JSON.parse(request.chunk).run, /^ev-facts-/)
+  assert.equal(readJSON(f.root, `event-plans/${native.run_id}/selections/${f.deferred.group_id}.json`).writer_run,
+    old.writer_run)
+  const parentPath = `curation/runs/${selection.run_id}/workflows/${parameters.run_id}/latest.json`
+  const savedParent = readJSON(f.root, parentPath), childPath = outcome.workflows[0].workflow.path
+  const progressPath = childPath.replace(/latest\.json$/, "progress.json")
+  const progress = readJSON(f.root, progressPath)
+  assert.deepEqual(progress.request_owner, owner)
+  const otherJob = "module-mixed-other", otherInput = { ...jobInput, job_id: otherJob }
+  const otherOwner = { ...owner, job_id: otherJob, input_sha256: sha256(JSON.stringify(otherInput)) }
+  atomicWrite(f.root, `module-jobs/${otherJob}/input.json`, otherInput)
+  atomicWrite(f.root, `module-jobs/${otherJob}/state.json`, { job_id: otherJob,
+    input_sha256: otherOwner.input_sha256, state: "running", pid: process.pid })
+  const childRun = outcome.workflows[0].run_id, childInput = readJSON(f.root, childPath.replace(/latest\.json$/, "input.json"))
+  atomicWrite(f.root, recoveryProducerPath(childRun, otherOwner, f.deferred.group_id), {
+    schema: "research-event-recovery-producer/v1", run_id: childRun, owner: otherOwner,
+    focus_group: f.deferred.group_id, input_sha256: sha256(JSON.stringify(childInput)),
+  })
+  const untouchedChild = fs.readFileSync(safePath(f.root, childPath))
+  atomicWrite(f.root, parentPath, { ...savedParent, workflows: [], rows: [], approved_runs: [], reasoning_tasks: [] })
+  const foreign = await withRequestOwner(otherOwner, () => advanceCuration(ctx, parameters))
+  assert.ok(!foreign.rows.some((row) => row.reasoning_task?.task_id === pending.reasoning_task.task_id))
+  assert.deepEqual(fs.readFileSync(safePath(f.root, childPath)), untouchedChild)
+  // Simulate a crash after an owned child saved progress but before the parent
+  // recorded its child reference. The exact original job must reuse the task.
+  atomicWrite(f.root, parentPath, { ...savedParent, workflows: [], rows: [], approved_runs: [], reasoning_tasks: [] })
+  atomicWrite(f.root, progressPath, { ...progress, rows: progress.rows.map((row) =>
+    row.group_id === f.deferred.group_id ? { ...row, resumed_fixture: true } : row) })
+  const resumed = await runCuration()
+  assert.equal(resumed.rows.find((row) => row.group_id === f.deferred.group_id).reasoning_task.task_id,
+    pending.reasoning_task.task_id)
+  assert.ok(resumed.approved_runs.includes(approved.writer_run))
+  const after = readJSON(f.root, parentPath)
+  atomicWrite(f.root, parentPath, { ...after, workflows: [], rows: [], approved_runs: [], reasoning_tasks: [] })
+  fs.unlinkSync(safePath(f.root, childPath))
+  const withoutLatest = await runCuration()
+  assert.equal(withoutLatest.rows.find((row) => row.group_id === f.deferred.group_id).reasoning_task.task_id,
+    pending.reasoning_task.task_id)
+  const parentBeforeAdvancedChild = readJSON(f.root, parentPath)
+  const childBefore = fs.readFileSync(safePath(f.root, childPath))
+  const oldChildSha = sha256(childBefore)
+  assert.equal(parentBeforeAdvancedChild.workflows[0].workflow.sha256, oldChildSha)
+  const childBase = childPath.replace(/latest\.json$/, "")
+  atomicWrite(f.root, `${childBase}checkpoint-outcomes/${oldChildSha}.json`, childBefore)
+  atomicWrite(f.root, childPath, { ...JSON.parse(childBefore), interrupted_fixture: true })
+  atomicWrite(f.root, parentPath, { ...parentBeforeAdvancedChild,
+    rows: parentBeforeAdvancedChild.rows.map((row) => row.group_id === f.deferred.group_id
+      ? { ...row, status: "frontier_inconsistent", queue_reason: "checkpoint_row_absent" } : row) })
+  const advancedChild = await runCuration()
+  assert.equal(advancedChild.rows.find((row) => row.group_id === f.deferred.group_id).reasoning_task.task_id,
+    pending.reasoning_task.task_id)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, `${childBase}checkpoint-outcomes/${oldChildSha}.json`)), childBefore)
+  const beforeFirstProgress = readJSON(f.root, parentPath)
+  atomicWrite(f.root, parentPath, { ...beforeFirstProgress, workflows: [], rows: [], approved_runs: [], reasoning_tasks: [] })
+  for (const file of ["input.json", "latest.json", "progress.json"]) fs.unlinkSync(safePath(f.root, childBase + file))
+  const beforeProgress = await runCuration()
+  assert.equal(beforeProgress.rows.find((row) => row.group_id === f.deferred.group_id).reasoning_task.task_id,
+    pending.reasoning_task.task_id)
+  let failAfterChild = true
+  const failingProcessor = async (...args) => {
+    const result = await advanceEventWorkflow(...args)
+    if (failAfterChild) { failAfterChild = false; throw Error("fixture parent handoff interruption") }
+    return result
+  }
+  const interruptedParameters = { ...parameters, run_id: "mixed-recovery-interrupted" }
+  const interruptedRun = () => withRequestOwner(owner, () =>
+    advanceCuration(ctx, interruptedParameters, { eventProcessor: failingProcessor }))
+  await assert.rejects(interruptedRun(), (error) => error.code === "OWNED_CHILD_RETRY")
+  const afterRetry = await interruptedRun()
+  assert.ok(afterRetry.approved_runs.includes(approved.writer_run))
+  assert.equal(afterRetry.rows.find((row) => row.group_id === f.deferred.group_id).reasoning_task.task_id,
+    pending.reasoning_task.task_id)
+  // A producer for one group cannot authorize adoption of another group's
+  // scoped writer created by a different job in the same plan.
+  const latestParent = readJSON(f.root, parentPath), latestChild = readJSON(f.root, childPath)
+  const childRows = latestChild.rows.map((row) => row.group_id === f.deferred.group_id
+    ? { group_id: row.group_id, action: row.action, status: "queued" } : row)
+  const resetChild = { ...latestChild, rows: childRows, reasoning_tasks: [], producer_owner: owner,
+    producer_focus_group: f.event.group_id, status: "partial" }
+  const resetRef = atomicWrite(f.root, childPath, resetChild)
+  atomicWrite(f.root, progressPath, { rows: childRows, elapsed_ms: 0, request_owner: owner,
+    producer_focus_group: f.event.group_id })
+  atomicWrite(f.root, parentPath, { ...latestParent, workflows: latestParent.workflows.map((row) =>
+    ({ ...row, workflow: resetRef, status: "partial" })), rows: latestParent.rows.map((row) =>
+      row.group_id === f.deferred.group_id ? { ...row, status: "queued", writer_run: undefined,
+        reasoning_task: undefined } : row), reasoning_tasks: [] })
+  const producerA = recoveryProducerPath(childRun, owner, f.event.group_id)
+  if (!readJSON(f.root, producerA)) atomicWrite(f.root, producerA, { schema: "research-event-recovery-producer/v1",
+    run_id: childRun, owner, focus_group: f.event.group_id, input_sha256: sha256(JSON.stringify(childInput)) })
+  const producerB = recoveryProducerPath(childRun, owner, f.deferred.group_id)
+  if (fs.existsSync(safePath(f.root, producerB))) fs.unlinkSync(safePath(f.root, producerB))
+  const eventB = native.events.find((event) => event.group_id === f.deferred.group_id)
+  const scopedPath = `event-work/${eventWorkKey(eventB)}/successors/${successor}.json`
+  const scopedBinding = readJSON(f.root, scopedPath)
+  atomicWrite(f.root, scopedPath, { ...scopedBinding, producer_owner: otherOwner })
+  const guarded = await runCuration()
+  const guardedB = guarded.rows.find((row) => row.group_id === f.deferred.group_id)
+  assert.equal(guardedB.status, "frontier_inconsistent")
+  assert.equal(guardedB.reasoning_task, undefined)
+  assert.equal(readJSON(f.root, scopedPath).producer_owner.job_id, otherOwner.job_id)
+})
+
+test("a new binding after another group was queued blocks the next slice", async (t) => {
+  const f = setup(t, { independent: true })
+  const events = independentFrontierEvents(f, "frontier-slice")
+  const first = await plan(f, "frontier-slice-first", [events[0]])
+  const second = await plan(f, "frontier-slice-second", events.slice(1))
+  const p = await pool(f, "frontier-slice-pool", [first, second], 3)
+  await review(f, p, p.value.candidates.map((candidate) =>
+    rating(f, candidate, candidate.group_id === events[0].group_id ? 5 : 4)))
+  const chosen = await choose(f, p), selection = loadCurationSelection(f.ctx, ref(chosen))
+  assert.equal(selection.selected[0].execution.group_id, events[0].group_id)
+  const visits = []
+  const eventProcessor = async (_ctx, parameters, options) => {
+    const group = parameters.curation_focus_group
+    visits.push({ group, guarded: options.unrecordedFocusMustBeUnbound })
+    const rows = group === events[0].group_id
+      ? [{ group_id: group, status: "deferred" }]
+      : events.slice(1).map((event) => ({ group_id: event.group_id,
+          status: event.group_id === group ? "failed" : "queued" }))
+    const value = { schema: "research-event-workflow/v1", run_id: parameters.run_id,
+      plan: { path: parameters.plan_path, sha256: parameters.plan_sha256 }, curation: ref(chosen),
+      status: group === events[0].group_id ? "complete" : "partial", rows, approved_runs: [], handled_items: 1 }
+    atomicWrite(f.root, `event-workflows/${parameters.run_id}/latest.json`, value)
+    return value
+  }
+  const parameters = { run_id: "frontier-slice-round", selection_path: chosen.path,
+    selection_sha256: chosen.sha256, execute: true, max_items: 1 }
+  await advanceCuration(f.ctx, parameters, { eventProcessor })
+  const secondSlice = await advanceCuration(f.ctx, parameters, { eventProcessor })
+  const target = selection.selected.find((item) => item.execution.plan.path === second.path &&
+    item.execution.group_id !== visits[1].group)
+  assert.equal(visits[1].guarded, true)
+  assert.equal(secondSlice.rows.find((row) => row.candidate_id === target.candidate_id).status, "queued")
+  const selectedPlan = readJSON(f.root, target.execution.plan.path)
+  atomicWrite(f.root, `event-plans/${selectedPlan.run_id}/selections/${target.execution.group_id}.json`,
+    { writer_run: "existing-slice-writer", selection: { path: "old-selection", sha256: "a".repeat(64) } })
+  const afterBinding = await advanceCuration(f.ctx, { ...parameters, max_items: 2 }, { eventProcessor })
+  assert.equal(visits.filter((visit) => visit.group === target.execution.group_id).length, 0)
+  assert.equal(afterBinding.rows.find((row) => row.candidate_id === target.candidate_id).status, "frontier_inconsistent")
+  await advanceCuration(f.ctx, { ...parameters, max_items: 2 }, { eventProcessor })
+  assert.equal(visits.filter((visit) => visit.group === target.execution.group_id).length, 0)
+})
+
+test("an evicted candidate binding waits without blocking an independent selected batch", async (t) => {
+  const f = setup(t, { independent: true })
+  const events = independentFrontierEvents(f, "frontier-cold")
+  const plans = await Promise.all(events.map((event, i) => plan(f, `frontier-cold-plan-${i}`, [event])))
+  const p = await pool(f, "frontier-cold-pool", plans, 3)
+  await review(f, p, p.value.candidates.map((candidate) =>
+    rating(f, candidate, candidate.group_id === events[0].group_id ? 5 : 4)))
+  const chosen = await choose(f, p), selection = loadCurationSelection(f.ctx, ref(chosen))
+  const target = selection.selected[1], independent = selection.selected[2]
+  const targetPlan = readJSON(f.root, target.execution.plan.path)
+  const relative = `event-plans/${targetPlan.run_id}/selections/${target.execution.group_id}.json`
+  const db = new DatabaseSync(path.join(f.root, ".storage/catalog.sqlite"))
+  db.exec(`CREATE TABLE files(path TEXT PRIMARY KEY,sha256 TEXT,bytes INTEGER,mode INTEGER,mtime_ns TEXT,scope TEXT,cached_at TEXT);
+    CREATE TABLE objects(sha256 TEXT PRIMARY KEY,bytes INTEGER,bundle_id TEXT,member TEXT);
+    CREATE TABLE bundles(id TEXT PRIMARY KEY,kind TEXT,sha256 TEXT,bytes INTEGER,local_path TEXT,file_id TEXT,parent_id TEXT,name TEXT,verified_at TEXT,modified_time TEXT,legacy_verified_at TEXT,legacy_receipt TEXT);
+    CREATE TABLE requests(id TEXT PRIMARY KEY,path TEXT,sha256 TEXT,bundle_id TEXT,created_at TEXT,status TEXT)`)
+  const digest = "a".repeat(64)
+  db.prepare("INSERT INTO files VALUES(?,?,?,?,?,?,?)").run(relative, digest, 1, 384, "1", null, null)
+  db.prepare("INSERT INTO objects VALUES(?,?,?,?)").run(digest, 1, "bundle", "object")
+  db.prepare("INSERT INTO bundles(id,sha256,bytes,file_id,verified_at) VALUES(?,?,?,?,?)")
+    .run("bundle", "b".repeat(64), 1, "fixture-file", "2026-11-03T00:00:00Z")
+  db.close()
+  fs.writeFileSync(path.join(f.root, ".storage/policy.json"), JSON.stringify({
+    schema: "research-cold-storage/v1", root: f.root, enabled: true, minimum_payload_bytes: 1000000000,
+  }))
+  await new Promise((resolve) => setTimeout(resolve, 1100)) // Expire the existing disabled-policy cache.
+  const visits = []
+  const eventProcessor = async (_ctx, parameters) => {
+    visits.push(parameters.curation_focus_group)
+    const value = { schema: "research-event-workflow/v1", run_id: parameters.run_id,
+      plan: { path: parameters.plan_path, sha256: parameters.plan_sha256 }, curation: ref(chosen),
+      status: "complete", rows: [{ group_id: parameters.curation_focus_group, status: "deferred" }],
+      approved_runs: [], handled_items: 1 }
+    atomicWrite(f.root, `event-workflows/${parameters.run_id}/latest.json`, value)
+    return value
+  }
+  const parameters = { run_id: "frontier-cold-round", selection_path: chosen.path,
+    selection_sha256: chosen.sha256, execute: true, max_items: 1 }
+  const first = await advanceCuration(f.ctx, parameters, { eventProcessor })
+  assert.equal(first.rows.find((row) => row.candidate_id === target.candidate_id).status, "waiting_for_storage")
+  assert.equal(first.rows.find((row) => row.candidate_id === independent.candidate_id).status, "queued")
+  const second = await advanceCuration(f.ctx, { ...parameters, max_items: 3 }, { eventProcessor })
+  assert.ok(visits.includes(independent.execution.group_id))
+  assert.equal(visits.includes(target.execution.group_id), false)
+  assert.equal(second.rows.find((row) => row.candidate_id === target.candidate_id).status, "waiting_for_storage")
+})
+
+test("an unrecorded batch does not adopt a nonfocus group's existing approval", async (t) => {
+  const f = setup(t, { independent: true })
+  const events = independentFrontierEvents(f, "frontier-nonfocus").slice(0, 2)
+  const reviewed = await plan(f, "frontier-nonfocus-plan", events)
+  const p = await pool(f, "frontier-nonfocus-pool", [reviewed], 2)
+  await review(f, p, p.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const chosen = await choose(f, p), selection = loadCurationSelection(f.ctx, ref(chosen))
+  const [focus, other] = selection.selected
+  const nativePlan = readJSON(f.root, reviewed.path)
+  atomicWrite(f.root, `event-plans/${nativePlan.run_id}/selections/${other.execution.group_id}.json`,
+    { writer_run: "other-owned-writer", selection: { path: "missing-selection.json", sha256: "a".repeat(64) } })
+  atomicWrite(f.root, "runs/other-owned-writer/approved-article.json", { fixture: true })
+  const parameters = { run_id: "frontier-nonfocus-native", edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256, plan_path: reviewed.path, plan_sha256: reviewed.sha256,
+    curation_path: chosen.path, curation_sha256: chosen.sha256,
+    curation_focus_group: focus.execution.group_id, execute: false }
+  const result = await advanceEventWorkflow(f.ctx, parameters, { unrecordedFocusMustBeUnbound: true })
+  assert.equal(result.rows.find((row) => row.group_id === other.execution.group_id).status, "queued")
+  assert.deepEqual(result.approved_runs, [])
+  await assert.rejects(advanceEventWorkflow(f.ctx, { ...parameters, run_id: "frontier-nonfocus-control" }))
+  const event = nativePlan.events.find((entry) => entry.group_id === focus.execution.group_id)
+  const bindingPath = `event-work/${eventWorkKey(event)}/selection.json`
+  atomicWrite(f.root, bindingPath, { writer_run: "racing-writer", selection: { path: "racing-selection", sha256: "b".repeat(64) } })
+  const before = fs.readFileSync(safePath(f.root, bindingPath))
+  await assert.rejects(prepareEventSelection(f.ctx, { run_id: "guarded-writer", plan_path: reviewed.path,
+    plan_sha256: reviewed.sha256, group_id: focus.execution.group_id }, { requireUnbound: true }),
+    /already has a writer binding/)
+  assert.deepEqual(fs.readFileSync(safePath(f.root, bindingPath)), before)
+})
+
+test("a guarded focus preserves an approval already recorded in the same child", async (t) => {
+  const f = setup(t)
+  f.provider = {
+    async metadata(model) { return { model, digest: sha256("fixture-model"), runtime: "fixture",
+      capabilities: ["completion"], thinking: { values: [false, "medium"] } } },
+    async structured(request) {
+      const docs = JSON.parse(request.messages[1].content)
+      return { output: { claims: docs.flatMap((d) => d.blocks.map((b) => ({
+        statement: "Fixture Robotics와 Partner가 2026년 9월 27일 Contract-123 로봇 주문을 발표했다.",
+        claim_kind: "fact", subject: "Fixture Robotics", event_state: "completed",
+        published_at: "2026-09-27", effective_period: null, numbers: [],
+        evidence: [{ block_key: b.block_key, support: "direct" }],
+      }))) }, provenance: { model: request.model, think: request.think,
+        digest: sha256("fixture-model"), prompt_sha256: sha256(JSON.stringify(request.messages)) } }
+    },
+  }
+  const reviewed = await plan(f, "frontier-preserved-approval", [f.event, { ...f.deferred, action: "write" }])
+  const selected = await prepareEventSelection(f.ctx, { run_id: "recorded-approval-writer",
+    plan_path: reviewed.path, plan_sha256: reviewed.sha256, group_id: f.event.group_id })
+  await approveDeliveryFixture(f, "recorded-approval-writer", { run_id: selected.writer_run,
+    selection_path: selected.path, selection_sha256: selected.sha256 })
+  const p = await pool(f, "frontier-preserved-pool", [reviewed], 2)
+  await review(f, p, p.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const chosen = await choose(f, p), selection = loadCurationSelection(f.ctx, ref(chosen))
+  const focus = selection.selected.find((item) => item.execution.group_id !== f.event.group_id)
+  const parameters = { run_id: "frontier-preserved-native", edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256, plan_path: reviewed.path, plan_sha256: reviewed.sha256,
+    curation_path: chosen.path, curation_sha256: chosen.sha256,
+    curation_focus_group: f.event.group_id, execute: false }
+  const first = await advanceEventWorkflow(f.ctx, parameters)
+  assert.deepEqual(first.approved_runs, ["recorded-approval-writer"])
+  const latestPath = `event-workflows/${parameters.run_id}/latest.json`
+  const expected = { path: latestPath, sha256: sha256(fs.readFileSync(safePath(f.root, latestPath))) }
+  const second = await advanceEventWorkflow(f.ctx, { ...parameters, curation_focus_group: focus.execution.group_id },
+    { unrecordedFocusMustBeUnbound: true, expectedCurationCheckpoint: expected })
+  assert.deepEqual(second.approved_runs, ["recorded-approval-writer"])
+  assert.equal(second.rows.find((row) => row.group_id === f.event.group_id).status, "approved")
 })
 
 test("a round drives selected events from multiple plans and exposes every owned review boundary", async (t) => {

@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import { sha256, assertSchema } from "./contracts.mjs"
-import { loadCurationPool, loadCurationSelection } from "./curation.mjs"
+import { completeCurationFrontier, loadCurationPool, loadCurationSelection } from "./curation.mjs"
 import { checkedPlan, loadSelectedEvent } from "./event-pipeline.mjs"
 import { assertReviewDate } from "./dates.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
@@ -170,12 +170,17 @@ export function readCurationInsights(ctx, p) {
       native.push(workflow)
     else throw Error("Exact curated native workflow required")
   }
-  const selectedGroups = new Set(
-    selection.selected.map((i) => JSON.stringify([i.execution.plan, i.execution.group_id])),
+  const selectedGroups = new Map(
+    selection.selected.map((i) => [JSON.stringify([i.execution.plan, i.execution.group_id]), i]),
   )
-  const rows = native.flatMap((w) =>
-    w.rows.filter((row) => selectedGroups.has(JSON.stringify([w.plan, row.group_id]))),
+  const nativeRows = native.flatMap((w) =>
+    w.rows.flatMap((row) => {
+      const item = selectedGroups.get(JSON.stringify([w.plan, row.group_id]))
+      return item ? [{ ...row, candidate_id: item.candidate_id, origin_plan: w.plan }] : []
+    }),
   )
+  const rows = workflow?.schema === "research-curation-workflow/v1"
+    ? completeCurationFrontier(selection, nativeRows, native.map((w) => w.plan)) : nativeRows
   const writers = [...new Set(rows.map((row) => row.writer_run).filter(Boolean))]
   const budgets = []
   for (const writer of writers) {
@@ -273,9 +278,12 @@ export function readCurationInsights(ctx, p) {
           model_calls_last_invocation: workflow.model_calls ?? null,
           article_writes_last_invocation: workflow.article_writes ?? null,
           reused_selected_writers: rows.filter((row) => row.reused || row.cached_stage).length,
-          selected_rows: rows.map(({ group_id, status, writer_run, reused, cached_stage }) => ({
+          selected_rows: rows.map(({ candidate_id, group_id, origin_plan, status, queue_reason, writer_run, reused, cached_stage }) => ({
+            candidate_id,
             group_id,
+            origin_plan,
             status,
+            ...(queue_reason ? { queue_reason } : {}),
             writer_run,
             reused: !!reused,
             cached_stage: !!cached_stage,

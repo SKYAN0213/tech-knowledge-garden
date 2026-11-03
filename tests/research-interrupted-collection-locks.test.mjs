@@ -305,3 +305,83 @@ test("the regular resume path recovers owned collection locks before starting th
   const receipts = fs.readdirSync(safePath(f.root, `module-jobs/${job}/lock-recovery`))
   assert.equal(receipts.filter((name) => name.endsWith("-result.json")).length, 1)
 })
+
+function partialRound(f, round) {
+  const parent = atomicWrite(f.root, "test-partial/parent.json", { run_id: "daily-parent" })
+  const checkpoint = atomicWrite(f.root, "test-partial/checkpoint.json", { status: "partial" })
+  const selection = { path: "test-partial/selection.json", sha256: "a".repeat(64) }
+  const manifest = atomicWrite(f.root, "test-partial/manifest.json", {
+    schema: "research-partial-restart/v1", successor: round, parent, checkpoint,
+    selection, items: [], settled_requests: [],
+  })
+  const continuation = atomicWrite(f.root, "test-partial/continuation.json", {
+    successor: round, parent, checkpoint, processing: { curation: selection }, partial_restart: manifest,
+  })
+  const pin = { run_id: round, continuation }
+  atomicWrite(f.root, `operations/rounds/${round}/input.json`, pin)
+  return { binding: { round_id: round, round_input_sha256: sha256(JSON.stringify(pin)) }, selection }
+}
+
+test("a killed partial-processing worker resumes the exact job and preserves lock receipts", async (t) => {
+  const f = fixture(t), round = "daily-processing-interrupted", job = "module-processing-interrupted"
+  const { binding, selection } = partialRound(f, round)
+  const ctx = { ...f.ctx, operationalRound: binding }
+  const params = { run_id: round, round: true, collect: false, execute: false }
+  const first = await submitModuleJob(ctx, "edition", "advance", params, { jobId: job, background: false })
+  assert.equal(first.state, "failed") // The synthetic release pin is deliberately not production-ready.
+  const old = readJSON(f.root, `module-jobs/${job}/state.json`)
+  const owner = { job_id: job, input_sha256: old.input_sha256, ...binding }
+  const curation = "round-curation-" + sha256(JSON.stringify([round, selection])).slice(0, 48)
+  const names = [`round-workflow-${round}`, `curation-workflow-${curation}`,
+    `event-workflow-cur-events-${"b".repeat(40)}`, "event-selection",
+    `event-cache-ev-facts-${"c".repeat(40)}`, `run-ev-facts-${"c".repeat(40)}`,
+    `run-sel-${"d".repeat(24)}-0`]
+  const runState = new URL("../scripts/research/run-state.mjs", import.meta.url).href
+  const ownership = new URL("../scripts/research/request-ownership.mjs", import.meta.url).href
+  const script = `import {acquireLock} from ${JSON.stringify(runState)}; import {withRequestOwner} from ${JSON.stringify(ownership)}; acquireLock(process.argv[1], 'module-worker-'+process.argv[3]); const started=new Date().toISOString(); withRequestOwner(JSON.parse(process.argv[2]), () => {for (const name of JSON.parse(process.argv[4])) acquireLock(process.argv[1],name)}); console.log(started); setInterval(()=>{},1000)`
+  const worker = spawn(process.execPath, ["--input-type=module", "-e", script, f.root,
+    JSON.stringify(owner), job, JSON.stringify(names)], { detached: true, stdio: ["ignore", "pipe", "pipe"] })
+  const exited = once(worker, "exit")
+  try {
+    const [ready] = await Promise.race([once(worker.stdout, "data"), exited.then(() => { throw Error("worker exited early") })])
+    const started = String(ready).trim()
+    atomicWrite(f.root, `module-jobs/${job}/state.json`, { ...old, state: "running", pid: worker.pid,
+      queued_at: old.queued_at, started_at: started })
+    atomicWrite(f.root, `module-jobs/${job}/launch.json`, { pid: worker.pid, job_id: job,
+      attempt: old.attempt, launched_at: new Date().toISOString() })
+    const original = fs.readFileSync(safePath(f.root, "locks/event-selection.json"))
+    process.kill(worker.pid, "SIGKILL")
+    await exited
+    const resumed = await resumeModuleJob(ctx, job, { background: false })
+    assert.equal(resumed.attempt, old.attempt + 1)
+    assert.equal(resumed.state, "failed") // Same synthetic pin still fails; no success is invented.
+    assert.doesNotMatch(resumed.error || "", /EEXIST/)
+    for (const name of [...names, `module-worker-${job}`])
+      assert.equal(fs.existsSync(safePath(f.root, `locks/${name}.json`)), false)
+    const dir = `module-jobs/${job}/lock-recovery/`
+    const receiptName = fs.readdirSync(safePath(f.root, dir)).find((name) => !name.endsWith("-result.json"))
+    const receipt = readJSON(f.root, dir + receiptName)
+    assert.equal(receipt.schema, "research-interrupted-processing-lock-recovery/v1")
+    assert.deepEqual(Buffer.from(receipt.locks.find((entry) => entry.name === "event-selection").raw_base64, "base64"), original)
+  } finally {
+    if (worker.exitCode === null && worker.signalCode === null) worker.kill("SIGKILL")
+  }
+})
+
+test("partial-processing recovery preserves all locks when an external or unbound lock is present", async (t) => {
+  const f = interrupted(t), { binding } = partialRound(f, f.round)
+  f.input.parameters = { run_id: f.round, round: true, collect: false }
+  f.input.context.operationalRound = binding
+  f.state.input_sha256 = sha256(JSON.stringify(f.input))
+  atomicWrite(f.root, `module-jobs/${f.job}/input.json`, f.input)
+  atomicWrite(f.root, `module-jobs/${f.job}/state.json`, f.state)
+  atomicWrite(f.root, `module-jobs/${f.job}/launch.json`, { pid: f.state.pid, job_id: f.job,
+    attempt: f.state.attempt, launched_at: f.state.started_at })
+  const owner = { job_id: f.job, input_sha256: f.state.input_sha256, ...binding }
+  const good = f.lock(`round-workflow-${f.round}`, { request_owner: owner })
+  const foreign = f.lock("publication-delivery-execute-example", { request_owner: owner })
+  const { recoverInterruptedProcessingLocks } = await import("../scripts/research/module-runtime.mjs")
+  assert.throws(() => recoverInterruptedProcessingLocks(f.ctx, f.job), /ownership|preserv/i)
+  assert.deepEqual(readJSON(f.root, `locks/round-workflow-${f.round}.json`), good)
+  assert.deepEqual(readJSON(f.root, "locks/publication-delivery-execute-example.json"), foreign)
+})

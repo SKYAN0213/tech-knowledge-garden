@@ -10,6 +10,7 @@ import { withRequestOwner } from "./research/request-ownership.mjs"
 import { inspectOperationalPin } from "./research/operations-release.mjs"
 import { recordJobDevelopmentFailure } from "./research/development-pending.mjs"
 import { recordOperationalJobTiming } from "./research/operations-timing.mjs"
+import { assertPartialRestartSettled } from "./research/replacement-scope.mjs"
 
 const { values } = parseArgs({
   options: { repo: { type: "string" }, root: { type: "string" }, job: { type: "string" } },
@@ -27,6 +28,7 @@ try {
       ctx.operationalRound.round_input_sha256
   )
     throw Error("Operational worker round pin changed")
+  if (ctx.operationalRound) assertPartialRestartSettled(ctx)
   if (process.cwd() !== ctx.repo) throw Error("Module worker must use the selected repository cwd")
   await withLock(ctx.root, "module-worker-" + values.job, async () => {
     await (async () => {
@@ -105,7 +107,7 @@ try {
           ...(error.storage_request ? { storage_request: error.storage_request } : {}),
         }
         let captureError
-        if (!["REASONING_PENDING", "STORAGE_PENDING"].includes(error.code)) {
+        if (!["REASONING_PENDING", "STORAGE_PENDING", "OWNED_CHILD_RETRY"].includes(error.code)) {
           try {
             failure.development_pending = recordJobDevelopmentFailure(ctx, input, running, error)
           } catch (problem) {

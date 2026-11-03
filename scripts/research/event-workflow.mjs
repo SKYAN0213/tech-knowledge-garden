@@ -4,6 +4,8 @@ import {
   checkedEdition,
   checkedPlan,
   prepareEventSelection,
+  eventWriterBinding,
+  publishRecoveredWriter,
   reuseEventArticle,
   loadSelectedEvent,
   proposeEditionEvents,
@@ -29,8 +31,13 @@ import { writeSelectedEventDraft } from "./source-processing.mjs"
 import { curationGroupsForPlan } from "./curation.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 import { runCombinedReview, runCombinedDraftCorrection } from "./combined-review.mjs"
+import { currentRequestOwner } from "./request-ownership.mjs"
+import { partialRecoveryManifest, recoveryProducerPath } from "./replacement-scope.mjs"
 
 const ref = (root, path) => ({ path, sha256: sha256(fs.readFileSync(safePath(root, path))) })
+const progressValue = (rows, elapsed_ms, focusGroup) => ({ rows, elapsed_ms,
+  ...(currentRequestOwner() ? { request_owner: currentRequestOwner() } : {}),
+  ...(focusGroup ? { producer_focus_group: focusGroup } : {}) })
 export function eventWorkflowFailures(rows) {
   return rows
     .filter((row) => row.status === "failed")
@@ -77,7 +84,10 @@ async function saveWorkflowResult(
   base,
   result,
   publicationPreparer = prepareEventPublicationHandoff,
+  focusGroup = null,
 ) {
+  if (partialRecoveryManifest(ctx) && currentRequestOwner() && focusGroup)
+    result = { ...result, producer_owner: currentRequestOwner(), producer_focus_group: focusGroup }
   const workflowPath = base + "latest.json"
   const previous = fs.existsSync(safePath(ctx.root, workflowPath, { materialize: false }))
     ? fs.readFileSync(safePath(ctx.root, workflowPath))
@@ -94,10 +104,7 @@ async function saveWorkflowResult(
   // Flush the complete frontier before its settled checkpoint. A stale prefix
   // from an earlier focused slice must never overwrite a newer correction.
   if (result.rows)
-    atomicWrite(ctx.root, base + "progress.json", {
-      rows: result.rows,
-      elapsed_ms: result.elapsed_ms,
-    })
+    atomicWrite(ctx.root, base + "progress.json", progressValue(result.rows, result.elapsed_ms, focusGroup))
   try {
     atomicWrite(ctx.root, workflowPath, result)
     const workflow = ref(ctx.root, workflowPath)
@@ -164,6 +171,11 @@ export async function advanceEventWorkflow(
     baseProvider,
     executionWindow: sharedWindow,
     publicationPreparer = prepareEventPublicationHandoff,
+    unrecordedFocusMustBeUnbound = false,
+    expectedCurationCheckpoint,
+    requireEmptyCurationCheckpoint = false,
+    recoverOwnedChild = false,
+    parentPinnedCheckpoint = false,
   } = {},
 ) {
   if (p.review_mode !== undefined && !["separate/v1", "combined/v1"].includes(p.review_mode))
@@ -255,6 +267,19 @@ export async function advanceEventWorkflow(
   }
   const base = `event-workflows/${p.run_id}/`
   return withLock(ctx.root, "event-workflow-" + p.run_id, async () => {
+    if (parentPinnedCheckpoint && !expectedCurationCheckpoint)
+      throw Error("Parent-pinned child recovery requires its exact checkpoint")
+    if (expectedCurationCheckpoint) {
+      if (
+        expectedCurationCheckpoint.path !== base + "latest.json" ||
+        ref(ctx.root, expectedCurationCheckpoint.path).sha256 !== expectedCurationCheckpoint.sha256
+      )
+        throw Error("Saved curated workflow checkpoint changed before child lock")
+    } else if (
+      requireEmptyCurationCheckpoint &&
+      ["input.json", "latest.json", "progress.json"].some((name) => readJSON(ctx.root, base + name))
+    )
+      throw Error("Unrecorded curated workflow has an existing child checkpoint")
     const previous = readJSON(ctx.root, base + "input.json")
     const requireCompleteness =
       p.require_completeness ??
@@ -262,6 +287,29 @@ export async function advanceEventWorkflow(
     if (requireCompleteness) input.require_completeness = true
     if (previous && JSON.stringify(previous) !== JSON.stringify(input))
       throw Error("Frozen event workflow changed; use a new run")
+    const owner = currentRequestOwner()
+    if (partialRecoveryManifest(ctx) && owner && p.curation_focus_group) {
+      const producerPath = recoveryProducerPath(p.run_id, owner, p.curation_focus_group)
+      const expected = { schema: "research-event-recovery-producer/v1", run_id: p.run_id,
+        owner, focus_group: p.curation_focus_group, input_sha256: sha256(JSON.stringify(input)) }
+      const producer = readJSON(ctx.root, producerPath)
+      if (producer && JSON.stringify(producer) !== JSON.stringify(expected))
+        throw Error("Recovery child producer changed")
+      if (recoverOwnedChild && !producer) throw Error("Exact recovery child producer is missing")
+      if (!producer) atomicCreate(ctx.root, producerPath, expected)
+      if (recoverOwnedChild) {
+        const savedProgress = readJSON(ctx.root, base + "progress.json")
+        const savedLatest = readJSON(ctx.root, base + "latest.json")
+        if (owner.round_id !== ctx.operationalRound?.round_id ||
+            (savedLatest && (JSON.stringify(owner) !== JSON.stringify(savedLatest.producer_owner) ||
+              savedLatest.producer_focus_group !== p.curation_focus_group) &&
+              !parentPinnedCheckpoint) ||
+            (savedProgress && (JSON.stringify(owner) !== JSON.stringify(savedProgress.request_owner) ||
+              savedProgress.producer_focus_group !== p.curation_focus_group) &&
+              (!parentPinnedCheckpoint || JSON.stringify(savedProgress.rows) !== JSON.stringify(savedLatest?.rows))))
+          throw Error("Orphan child recovery requires its exact current job owner")
+      }
+    } else if (recoverOwnedChild) throw Error("Partial recovery job owner required")
     if (!previous) atomicCreate(ctx.root, base + "input.json", input)
     const started = clock()
     const executionWindow =
@@ -291,17 +339,27 @@ export async function advanceEventWorkflow(
         article_writes: 0,
         candidate_published: false,
       }
-      return saveWorkflowResult(ctx, base, result, publicationPreparer)
+      return saveWorkflowResult(ctx, base, result, publicationPreparer, p.curation_focus_group)
     }
     const rows = [],
       approvedRuns = [],
       failures = []
     const previousCheckpoint = readJSON(ctx.root, base + "latest.json")
+    const previousProgress = readJSON(ctx.root, base + "progress.json")
+    if (
+      expectedCurationCheckpoint &&
+      previousProgress &&
+      JSON.stringify(previousProgress.rows) !== JSON.stringify(previousCheckpoint?.rows) &&
+      !recoverOwnedChild
+    )
+      throw Error(
+        "Curated child progress differs from its pinned checkpoint; inspect saved progress",
+      )
     const previousRows = new Map(
-      [
-        ...(previousCheckpoint?.rows || []),
-        ...(readJSON(ctx.root, base + "progress.json")?.rows || []),
-      ].map((row) => [row.group_id, row]),
+      [...(previousCheckpoint?.rows || []), ...(previousProgress?.rows || [])].map((row) => [
+        row.group_id,
+        row,
+      ]),
     )
     let handled = 0,
       modelCalls = 0,
@@ -310,6 +368,44 @@ export async function advanceEventWorkflow(
       const row = { group_id: event.group_id, action: event.action }
       if (curatedGroups && !curatedGroups.includes(event.group_id)) {
         rows.push({ ...row, status: "not_selected" })
+        continue
+      }
+      const priorRow = previousRows.get(event.group_id)
+      // When recovering an unrecorded batch, each missing candidate must be
+      // inspected separately before even an existing approval is reused.
+      if (
+        unrecordedFocusMustBeUnbound &&
+        p.curation_focus_group &&
+        p.curation_focus_group !== event.group_id
+      ) {
+        if (priorRow?.status === "approved") {
+          const binding = eventWriterBinding(ctx, planRef, event, { planOnly: true })
+          if (!binding || binding.writer_run !== priorRow.writer_run)
+            throw Error("Recorded approval writer binding changed")
+          const selected = loadSelectedEvent(
+            ctx,
+            {
+              run_id: binding.writer_run,
+              selection_path: binding.selection.path,
+              selection_sha256: binding.selection.sha256,
+            },
+            { requireProcessed: true },
+          )
+          if (
+            JSON.stringify(selected.plan) !== JSON.stringify(planRef) ||
+            selected.group_id !== event.group_id
+          )
+            throw Error("Recorded approval differs from its reviewed plan")
+          loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
+          await publishRecoveredWriter(ctx, planRef, event, binding.writer_run)
+          approvedRuns.push(binding.writer_run)
+        } else if (priorRow?.status === "reused") {
+          const reused = reuseEventArticle(ctx, { ...p, group_id: event.group_id })
+          if (reused.approved_run !== priorRow.approved_run)
+            throw Error("Recorded reused approval changed")
+          approvedRuns.push(reused.approved_run)
+        }
+        rows.push(priorRow || { ...row, status: "queued" })
         continue
       }
       if (event.action === "defer") {
@@ -324,10 +420,9 @@ export async function advanceEventWorkflow(
       }
       // Selection already owns the writer identity. Reuse its exact native
       // approval before quotas, without preparing another writer or model call.
-      const binding = readJSON(
-        ctx.root,
-        `event-plans/${plan.run_id}/selections/${event.group_id}.json`,
-      )
+      const binding = eventWriterBinding(ctx, planRef, event, { planOnly: true })
+      if (unrecordedFocusMustBeUnbound && event.group_id === p.curation_focus_group && binding)
+        throw Error("Unrecorded curation candidate already has a writer binding")
       if (binding && readJSON(ctx.root, `runs/${binding.writer_run}/approved-article.json`)) {
         const selected = loadSelectedEvent(
           ctx,
@@ -344,6 +439,7 @@ export async function advanceEventWorkflow(
         )
           throw Error("Completed event selection differs from its reviewed plan")
         const approval = loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
+        await publishRecoveredWriter(ctx, planRef, event, binding.writer_run)
         approvedRuns.push(binding.writer_run)
         rows.push({
           ...row,
@@ -355,7 +451,6 @@ export async function advanceEventWorkflow(
         })
         continue
       }
-      const priorRow = previousRows.get(event.group_id)
       // Ranked curation visits one selected group at a time. Keep the other
       // groups' exact checkpoints so their owned requests remain in the result.
       if (p.curation_focus_group && p.curation_focus_group !== event.group_id) {
@@ -401,11 +496,18 @@ export async function advanceEventWorkflow(
         continue
       }
       try {
-        const selected = await prepareEventSelection(ctx, {
-          ...p,
-          run_id: "event-" + sha256(JSON.stringify([planRef, event.group_id])).slice(0, 36),
-          group_id: event.group_id,
-        })
+        const selected = await prepareEventSelection(
+          ctx,
+          {
+            ...p,
+            run_id: "event-" + sha256(JSON.stringify([planRef, event.group_id])).slice(0, 36),
+            group_id: event.group_id,
+          },
+          {
+            requireUnbound:
+              unrecordedFocusMustBeUnbound && event.group_id === p.curation_focus_group,
+          },
+        )
         const run_id = selected.writer_run
         row.writer_run = run_id
         const selectedParameters = {
@@ -449,7 +551,7 @@ export async function advanceEventWorkflow(
           }
           if (!maps.fact[event.group_id]) {
             rows.push({ ...row, status: "fact_review", extraction: extracted })
-            atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
+            atomicWrite(ctx.root, base + "progress.json", progressValue(rows, clock() - started, p.curation_focus_group))
             continue
           }
           if (!readJSON(ctx.root, `runs/${run_id}/reviewed-claims.json`))
@@ -493,7 +595,7 @@ export async function advanceEventWorkflow(
               },
               review_input: "completeness_reviews",
             })
-            atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
+            atomicWrite(ctx.root, base + "progress.json", progressValue(rows, clock() - started, p.curation_focus_group))
             continue
           }
           const beforeCalls =
@@ -577,7 +679,7 @@ export async function advanceEventWorkflow(
             ],
             next_input: { module: "validation", operation: "reader", parameters: { run_id } },
           })
-          atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
+          atomicWrite(ctx.root, base + "progress.json", progressValue(rows, clock() - started, p.curation_focus_group))
           continue
         }
         const approved = await approveSelectedEvent(ctx, {
@@ -586,6 +688,7 @@ export async function advanceEventWorkflow(
           revision_file: maps.revision[event.group_id],
           coverage_review_file: maps.coverage[event.group_id],
         })
+        await publishRecoveredWriter(ctx, planRef, event, run_id)
         approvedRuns.push(run_id)
         rows.push({
           ...row,
@@ -625,7 +728,7 @@ export async function advanceEventWorkflow(
           rows.push({ ...row, status: "failed", ...details })
         }
       }
-      atomicWrite(ctx.root, base + "progress.json", { rows, elapsed_ms: clock() - started })
+      atomicWrite(ctx.root, base + "progress.json", progressValue(rows, clock() - started, p.curation_focus_group))
     }
     const runs = [...new Set(approvedRuns)]
     // Focused slices retain failures belonging to other groups too. Their
@@ -713,6 +816,6 @@ export async function advanceEventWorkflow(
       elapsed_ms: clock() - started,
       candidate_published: false,
     }
-    return saveWorkflowResult(ctx, base, result, publicationPreparer)
+    return saveWorkflowResult(ctx, base, result, publicationPreparer, p.curation_focus_group)
   })
 }

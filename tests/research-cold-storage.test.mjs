@@ -12,6 +12,8 @@ import { moduleContext, submitModuleJob } from "../scripts/research/module-runti
 import { storageAction } from "../scripts/research/cold-storage.mjs"
 import { safePath, readJSON, atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { packageResearchArchive } from "../scripts/research/archive.mjs"
+import { auditCurationFrontier } from "../scripts/research/operations-runtime.mjs"
+import { moduleCLI } from "../scripts/research/module-cli.mjs"
 
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex")
 function fixture(t) {
@@ -110,6 +112,82 @@ test("fresh private Drive parent and raw bytes are mandatory", (t) => {
       }),
     /Fresh remote/,
   )
+})
+
+test("read-only frontier audit reports an evicted payload without recording a download", (t) => {
+  const f = verified(t)
+  storageAction(f.root, "evict", { cache_bytes: 0 })
+  const root = path.join(f.root, "research/local-ai")
+  const selection = { path: "documents/a/body.bin", sha256: hash(f.body) }
+  const pendingBefore = storageAction(f.root, "pending").downloads
+  assert.equal(pendingBefore.length, 0)
+  const storageDir = path.join(f.root, ".storage")
+  const dbFiles = () =>
+    Object.fromEntries(
+      fs
+        .readdirSync(storageDir)
+        .filter((name) => /^catalog\.sqlite(?:-wal)?$/.test(name))
+        .sort()
+        .map((name) => [name, fs.readFileSync(path.join(storageDir, name))]),
+    )
+  const databaseBefore = dbFiles()
+  assert.throws(
+    () => auditCurationFrontier(root, selection, selection),
+    (error) =>
+      error.code === "STORAGE_PENDING" &&
+      error.storage_request.request_not_recorded === true &&
+      error.storage_request.requests[0].sha256 === hash(f.body),
+  )
+  assert.deepEqual(dbFiles(), databaseBefore)
+  assert.deepEqual(storageAction(f.root, "pending").downloads, pendingBefore)
+  // Ordinary operational reads retain their existing explicit hydration request.
+  assert.throws(
+    () => safePath(root, selection.path),
+    (error) =>
+      error.code === "STORAGE_PENDING" && error.storage_request.request_not_recorded === undefined,
+  )
+  assert.equal(storageAction(f.root, "pending").downloads.length, 1)
+})
+
+test("round status returns the exact evicted evidence without silently enqueueing it", async (t) => {
+  const f = verified(t)
+  storageAction(f.root, "evict", { cache_bytes: 0 })
+  fs.mkdirSync(path.join(f.root, "data"))
+  for (const name of [
+    "research-source-channels.json",
+    "research-model-policy.json",
+    "research-model-policy-codex.json",
+  ])
+    fs.copyFileSync(new URL("../data/" + name, import.meta.url), path.join(f.root, "data", name))
+  const relative = "research/local-ai/operations/rounds/status-cold/input.json"
+  const insert = spawnSync(
+    "python3",
+    [
+      "-c",
+      `import sqlite3,sys
+c=sqlite3.connect(sys.argv[1]);c.execute("INSERT INTO files(path,sha256,bytes,mode,mtime_ns,scope) SELECT ?,sha256,bytes,mode,mtime_ns,scope FROM files WHERE path=?",(sys.argv[2],sys.argv[3]));c.commit()`,
+      path.join(f.root, ".storage/catalog.sqlite"),
+      relative,
+      "research/local-ai/documents/a/body.bin",
+    ],
+    { encoding: "utf8" },
+  )
+  assert.equal(insert.status, 0, insert.stderr)
+  const result = await moduleCLI([
+    "status",
+    "--round",
+    "status-cold",
+    "--repo",
+    f.root,
+    "--root",
+    "research/local-ai",
+  ])
+  assert.equal(result.status, "waiting_for_storage")
+  assert.equal(result.audit_only, true)
+  assert.equal(result.storage_request.request_not_recorded, true)
+  assert.equal(result.storage_request.requests[0].path, relative)
+  assert.equal(result.storage_request.requests[0].sha256, hash(f.body))
+  assert.equal(storageAction(f.root, "pending").downloads.length, 0)
 })
 
 test("cold reads request the exact Drive object and restore the original bytes", (t) => {

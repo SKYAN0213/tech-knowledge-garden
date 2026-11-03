@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url)
 const runner = fileURLToPath(new URL("./cold-storage.py", import.meta.url))
 const roots = new Map()
 const databases = new Map()
+let readOnlyDepth = 0
 const sha = (value) => crypto.createHash("sha256").update(value).digest("hex")
 const hotNames = new Set([
   "state.json",
@@ -269,6 +270,20 @@ function catalog(root) {
   return databases.get(root)
 }
 
+// Audits must not enqueue Drive downloads merely by inspecting an evicted
+// file. The scope is synchronous so it cannot leak across independent jobs.
+export function withReadOnlyStorageReads(operation) {
+  readOnlyDepth++
+  try {
+    const result = operation()
+    if (result && typeof result.then === "function")
+      throw Error("Read-only storage scope must be synchronous")
+    return result
+  } finally {
+    readOnlyDepth--
+  }
+}
+
 export function resolveColdStorageRead(base, target) {
   const root = configuredRoot(base) || configuredRoot(path.dirname(target))
   if (!root) return target
@@ -276,58 +291,71 @@ export function resolveColdStorageRead(base, target) {
   if (!relative || relative.startsWith("../") || relative.startsWith(".storage/")) return target
   const existing = fs.statSync(target, { throwIfNoEntry: false })
   if (existing?.isFile()) return target
-  const db = catalog(root)
-  const scope = existing?.isDirectory() && path.basename(target) === "preview-workspace"
-  const rows = scope
-    ? db
-        .prepare(
-          "SELECT f.*,o.bundle_id,o.member,b.file_id,b.sha256 package_sha256,b.bytes package_bytes,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id WHERE f.scope=?",
-        )
-        .all(relative)
-    : db
-        .prepare(
-          "SELECT f.*,o.bundle_id,o.member,b.file_id,b.sha256 package_sha256,b.bytes package_bytes,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id WHERE f.path=?",
-        )
-        .all(relative)
-  const missing = rows.filter((row) => !fs.existsSync(path.join(root, row.path)))
-  const unverified = missing.find((row) => !row.verified_at)
-  if (unverified)
-    throw Error("Indexed payload is missing without a verified Drive copy: " + unverified.path)
-  if (!missing.length) {
-    if (!existing && db.prepare("SELECT path FROM files WHERE path=?").get(relative))
-      throw Error("Indexed payload is missing without a verified Drive copy: " + relative)
-    return target
+  let db, close = false
+  if (readOnlyDepth) {
+    const sqlite = require("node:sqlite")
+    const Database = sqlite.Database || sqlite.DatabaseSync
+    const file = path.join(root, ".storage/catalog.sqlite")
+    if (fs.lstatSync(file).isSymbolicLink()) throw Error("Symlink in storage catalog")
+    db = new Database(file, { readOnly: true })
+    close = true
+  } else db = catalog(root)
+  try {
+    const scope = existing?.isDirectory() && path.basename(target) === "preview-workspace"
+    const rows = scope
+      ? db
+          .prepare(
+            "SELECT f.*,o.bundle_id,o.member,b.file_id,b.sha256 package_sha256,b.bytes package_bytes,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id WHERE f.scope=?",
+          )
+          .all(relative)
+      : db
+          .prepare(
+            "SELECT f.*,o.bundle_id,o.member,b.file_id,b.sha256 package_sha256,b.bytes package_bytes,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id WHERE f.path=?",
+          )
+          .all(relative)
+    const missing = rows.filter((row) => !fs.existsSync(path.join(root, row.path)))
+    const unverified = missing.find((row) => !row.verified_at)
+    if (unverified)
+      throw Error("Indexed payload is missing without a verified Drive copy: " + unverified.path)
+    if (!missing.length) {
+      if (!existing && db.prepare("SELECT path FROM files WHERE path=?").get(relative))
+        throw Error("Indexed payload is missing without a verified Drive copy: " + relative)
+      return target
+    }
+    const created = new Date().toISOString()
+    const requests = []
+    const insert = readOnlyDepth ? null : db.prepare("INSERT OR REPLACE INTO requests VALUES(?,?,?,?,?,?)")
+    for (const row of missing) {
+      const id = sha(row.path + ":" + row.sha256)
+      if (insert) insert.run(id, row.path, row.sha256, row.bundle_id, created, "pending")
+      requests.push({
+        request_id: id,
+        path: row.path,
+        sha256: row.sha256,
+        bytes: row.bytes,
+        bundle_id: row.bundle_id,
+        file_id: row.file_id,
+        package_sha256: row.package_sha256,
+        package_bytes: row.package_bytes,
+        member: row.member,
+      })
+    }
+    const error = Error(readOnlyDepth
+      ? "Read-only audit requires archived bytes; no download request was recorded"
+      : "Drive payload download required; read collection.storage pending and hydrate exact requested bytes")
+    error.code = "STORAGE_PENDING"
+    error.storage_request = {
+      schema: "research-storage-download-request/v1",
+      root,
+      requests: requests.slice(0, 20),
+      request_count: requests.length,
+      path: relative,
+      ...(readOnlyDepth ? { request_not_recorded: true } : {}),
+    }
+    throw error
+  } finally {
+    if (close) db.close()
   }
-  const created = new Date().toISOString()
-  const requests = []
-  const insert = db.prepare("INSERT OR REPLACE INTO requests VALUES(?,?,?,?,?,?)")
-  for (const row of missing) {
-    const id = sha(row.path + ":" + row.sha256)
-    insert.run(id, row.path, row.sha256, row.bundle_id, created, "pending")
-    requests.push({
-      request_id: id,
-      path: row.path,
-      sha256: row.sha256,
-      bytes: row.bytes,
-      bundle_id: row.bundle_id,
-      file_id: row.file_id,
-      package_sha256: row.package_sha256,
-      package_bytes: row.package_bytes,
-      member: row.member,
-    })
-  }
-  const error = Error(
-    "Drive payload download required; read collection.storage pending and hydrate exact requested bytes",
-  )
-  error.code = "STORAGE_PENDING"
-  error.storage_request = {
-    schema: "research-storage-download-request/v1",
-    root,
-    requests: requests.slice(0, 20),
-    request_count: requests.length,
-    path: relative,
-  }
-  throw error
 }
 
 export function storageAction(root, action, parameters = {}) {

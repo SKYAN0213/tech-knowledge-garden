@@ -1,7 +1,9 @@
 import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
-import { checkedPlan } from "./event-pipeline.mjs"
-import { loadCurationSelection } from "./curation.mjs"
+import { checkedPlan, eventWorkKey, eventWriterBinding } from "./event-pipeline.mjs"
+import { partialRecoveryItem, partialRecoveryManifest, recoveryProducerPath } from "./replacement-scope.mjs"
+import { currentRequestOwner } from "./request-ownership.mjs"
+import { completeCurationFrontier, loadCurationSelection } from "./curation.mjs"
 import { advanceEventWorkflow } from "./event-workflow.mjs"
 import { createModelExecutionWindow } from "./model-provider.mjs"
 import { projectEvidenceOntology, loadApprovedOntologyInput } from "./ontology.mjs"
@@ -48,10 +50,51 @@ async function advanceCurationNative(
       now: clock,
     })
     const previous = readJSON(ctx.root, base + "latest.json")
+    const childRun = (item) => "cur-events-" + sha256(JSON.stringify([input, item.execution.plan])).slice(0, 40)
+    const owner = currentRequestOwner()
+    const ownedChild = (run, group, parentRef = null) => {
+      if (!partialRecoveryManifest(ctx) || !owner || owner.round_id !== ctx.operationalRound?.round_id)
+        return null
+      const producer = readJSON(ctx.root, recoveryProducerPath(run, owner, group))
+      if (!producer || producer.schema !== "research-event-recovery-producer/v1" ||
+          producer.run_id !== run || producer.focus_group !== group ||
+          JSON.stringify(producer.owner) !== JSON.stringify(owner)) return null
+      const childBase = `event-workflows/${run}/`
+      const childInput = readJSON(ctx.root, childBase + "input.json")
+      if (childInput && sha256(JSON.stringify(childInput)) !== producer.input_sha256)
+        throw Error("Owned child input differs from its producer")
+      const progress = readJSON(ctx.root, childBase + "progress.json")
+      const latestFile = safePath(ctx.root, childBase + "latest.json")
+      const latest = fs.existsSync(latestFile) ? readJSON(ctx.root, childBase + "latest.json") : null
+      const checkpoint = latest ? ref(ctx.root, childBase + "latest.json") : null
+      const parentPinned = checkpoint && parentRef?.path === checkpoint.path && parentRef.sha256 === checkpoint.sha256
+      if (latest && (JSON.stringify(latest.producer_owner) !== JSON.stringify(owner) ||
+          latest.producer_focus_group !== group) && !parentPinned)
+        return null
+      if (progress && (JSON.stringify(progress.request_owner) !== JSON.stringify(owner) ||
+          progress.producer_focus_group !== group) &&
+          (!parentPinned || JSON.stringify(progress.rows) !== JSON.stringify(latest?.rows))) return null
+      return { checkpoint, latest, progress }
+    }
+    const recoverablePlans = new Set()
     const workflows = new Map(
         (previous?.workflows || []).map((w) => {
-          if (ref(ctx.root, w.workflow.path).sha256 !== w.workflow.sha256)
-            throw Error("Saved curated workflow checkpoint changed")
+          const actual = ref(ctx.root, w.workflow.path)
+          if (actual.sha256 !== w.workflow.sha256) {
+            const latest = readJSON(ctx.root, w.workflow.path)
+            const focus = latest?.producer_focus_group
+            if (!selection.selected.some((item) => item.execution.plan.path === w.plan.path &&
+                item.execution.group_id === focus))
+              throw Error("Changed child is outside the selected recovery focus")
+            const child = ownedChild(w.run_id, focus)
+            const snapshot = `event-workflows/${w.run_id}/checkpoint-outcomes/${w.workflow.sha256}.json`
+            if (!child?.checkpoint || child.checkpoint.sha256 !== actual.sha256 ||
+                JSON.stringify(child.latest?.producer_owner) !== JSON.stringify(owner) ||
+                ref(ctx.root, snapshot).sha256 !== w.workflow.sha256)
+              throw Error("Saved curated workflow checkpoint changed")
+            recoverablePlans.add(w.plan.path)
+            return [w.plan.path, { ...w, workflow: actual, status: "owned_recovery" }]
+          }
           return [w.plan.path, w]
         }),
       ),
@@ -67,6 +110,49 @@ async function advanceCurationNative(
       [JSON.stringify([row.origin_plan_path, row.group_id]), row],
     ))
     const priorFor = (item) => priorByKey.get(JSON.stringify([item.execution.plan.path, item.execution.group_id]))
+    const checkpointBlocked = new Map((previous?.rows || [])
+      .filter((row) => row.status === "frontier_inconsistent")
+      .map((row) => [row.candidate_id, row]))
+    const initialPlans = new Set(workflows.keys())
+    const processedCandidates = new Set()
+    const unstarted = (item, { allowCurrentChild = false } = {}) => {
+      const plan = checkedPlan(ctx, item.execution.plan, item.execution.group_id)
+      const event = plan.events.find((entry) => entry.group_id === item.execution.group_id)
+      const recovery = partialRecoveryItem(ctx, item.execution.plan, item.execution.group_id, eventWorkKey(event))
+      if (recovery?.action === "reuse") {
+        if (event.action === "reuse") return event.prior?.run_id === recovery.writer_run
+        const binding = eventWriterBinding(ctx, item.execution.plan, event)
+        return binding?.writer_run === recovery.writer_run &&
+          ref(ctx.root, `runs/${recovery.writer_run}/approved-article.json`).sha256 === recovery.approval.sha256
+      }
+      const writer = recovery?.action === "restart" ? recovery.writer_run
+        : "event-" + sha256(JSON.stringify([item.execution.plan, item.execution.group_id])).slice(0, 36)
+      if (allowCurrentChild) {
+        const childRef = workflows.get(item.execution.plan.path)?.workflow
+        if (!childRef || ref(ctx.root, childRef.path).sha256 !== childRef.sha256) return false
+        const child = readJSON(ctx.root, childRef.path)
+        const matches = child?.rows?.filter((row) => row.group_id === item.execution.group_id) || []
+        if (matches.length !== 1 || matches[0].status !== "queued" || matches[0].writer_run ||
+            matches[0].reasoning_task) return false
+      }
+      const bindings = [
+        ...(recovery?.action === "restart" ? [recovery.binding_path] : [
+          `event-plans/${plan.run_id}/selections/${event.group_id}.json`,
+          `event-work/${eventWorkKey(event)}/selection.json`,
+        ]),
+        `event-selections/${writer}/input.json`,
+        `runs/${writer}/event-selection.json`,
+        ...(!allowCurrentChild ? [
+          `event-workflows/${childRun(item)}/input.json`,
+          `event-workflows/${childRun(item)}/latest.json`,
+          `event-workflows/${childRun(item)}/progress.json`,
+        ] : []),
+      ]
+      if (bindings.some((file) => readJSON(ctx.root, file))) return false
+      return ![`runs/${writer}`, `event-selections/${writer}`,
+        ...(!allowCurrentChild ? [`event-workflows/${childRun(item)}`] : [])]
+        .some((dir) => fs.existsSync(safePath(ctx.root, dir)))
+    }
     const blockedItems = new Map()
     const recordBlocked = (item, error, prior) => {
       const blocked = {
@@ -81,6 +167,25 @@ async function advanceCurationNative(
       }
       blockedItems.set(item.candidate_id, blocked)
       errors.push(blocked)
+    }
+    const safelyUnstarted = (item, options) => {
+      if (blockedItems.has(item.candidate_id)) return false
+      try { return unstarted(item, options) }
+      catch (error) {
+        if (error.code !== "STORAGE_PENDING") throw error
+        recordBlocked(item, error, priorFor(item))
+        return false
+      }
+    }
+    const ownedOrphan = (item) => ownedChild(childRun(item), item.execution.group_id,
+      workflows.get(item.execution.plan.path)?.workflow)
+    const ownedRetry = (item, error) => {
+      if (!item || !ownedOrphan(item)) return error
+      if (["STORAGE_PENDING", "REASONING_PENDING"].includes(error.code)) return error
+      const wrapped = Error("Owned child checkpoint needs the same native job to resume: " + error.message,
+        { cause: error })
+      wrapped.code = "OWNED_CHILD_RETRY"
+      return wrapped
     }
     const isPending = (item) => {
       const row = priorFor(item)
@@ -103,17 +208,35 @@ async function advanceCurationNative(
             .map((item) => item.candidate_id)
         : [],
     )
+    const ownedRecoveryItems = new Set()
+    if ((before || previous) && owner && partialRecoveryManifest(ctx)) {
+      for (const item of selection.selected) {
+        try {
+          const child = ownedOrphan(item), saved = workflows.get(item.execution.plan.path), prior = priorFor(item)
+          if (child && (!saved || recoverablePlans.has(item.execution.plan.path) ||
+              (child.progress?.producer_focus_group === item.execution.group_id &&
+                JSON.stringify(child.progress.rows) !== JSON.stringify(child.latest?.rows)) ||
+              (prior?.status === "queued" && !prior.writer_run &&
+                child.latest?.producer_focus_group !== item.execution.group_id)))
+            ownedRecoveryItems.add(item.candidate_id)
+        } catch (error) {
+          if (error.code !== "STORAGE_PENDING") throw error
+          recordBlocked(item, error, priorFor(item))
+        }
+      }
+    }
     const ordered =
-      p.review_mode === "combined/v1"
+      p.review_mode === "combined/v1" || ownedRecoveryItems.size
         ? [...selection.selected].sort((a, b) => {
             const score = (item) => {
-              return activeArticles.has(item.candidate_id) ? 0 : 1
+              return ownedRecoveryItems.has(item.candidate_id) ? -1 : activeArticles.has(item.candidate_id) ? 0 : 1
             }
             return score(a) - score(b)
           })
         : selection.selected
     let handled = 0,
-      writes = 0
+      writes = 0,
+      lastOwnedItem = null
     const save = (status) => {
       const result = {
         schema: "research-curation-workflow/v1",
@@ -129,26 +252,51 @@ async function advanceCurationNative(
         candidate_approved: false,
         candidate_published: false,
       }
-      atomicWrite(ctx.root, base + "latest.json", result)
+      try { atomicWrite(ctx.root, base + "latest.json", result) }
+      catch (error) { throw ownedRetry(lastOwnedItem, error) }
       return result
     }
     for (const item of ordered) {
-      // One native checkpoint can already contain every approved selected
-      // group in this plan. Do not dispatch it again for each ranked item.
-      if (workflows.get(item.execution.plan.path)?.status === "complete") continue
-      if (p.review_mode === "combined/v1") {
-        if (isPending(item)) continue
-        if (!activeArticles.has(item.candidate_id) && activeArticles.size >= 3) continue
+      let orphan = null
+      if (ownedRecoveryItems.has(item.candidate_id)) {
+        try { orphan = ownedOrphan(item) }
+        catch (error) {
+          if (error.code !== "STORAGE_PENDING") throw error
+          recordBlocked(item, error, priorFor(item))
+          continue
+        }
       }
+      if (checkpointBlocked.has(item.candidate_id) && !orphan) continue
       if (
         handled >= (p.max_items ?? 4) ||
         window.remainingMs() <= 0 ||
         window.model_calls >= (p.max_model_calls ?? 4)
       )
         break
+      // A saved parent checkpoint can be missing work that already wrote a
+      // child checkpoint or writer. Never dispatch such a candidate based on
+      // the missing parent row alone.
+      const recoveryBoundary = Boolean(before || previous)
+      const missingPrior = recoveryBoundary && !priorFor(item)
+      if (missingPrior && initialPlans.has(item.execution.plan.path) && !orphan) continue
+      const prior = priorFor(item)
+      const inspectUnrecorded = Boolean(missingPrior ||
+        (recoveryBoundary && prior?.status === "queued" && !prior.writer_run))
+      if (inspectUnrecorded && !orphan && !safelyUnstarted(item, { allowCurrentChild: workflows.has(item.execution.plan.path) })) continue
+      const scopedPlan = inspectUnrecorded ? checkedPlan(ctx, item.execution.plan, item.execution.group_id) : null
+      const scopedEvent = scopedPlan?.events.find((entry) => entry.group_id === item.execution.group_id)
+      const recoveryItem = scopedEvent && partialRecoveryItem(ctx, item.execution.plan,
+        item.execution.group_id, eventWorkKey(scopedEvent))
+      // One native checkpoint can already contain every approved selected
+      // group in this plan. Do not dispatch it again for each ranked item.
+      if (workflows.get(item.execution.plan.path)?.status === "complete" && !recoverablePlans.has(item.execution.plan.path)) continue
+      if (p.review_mode === "combined/v1") {
+        if (!orphan && isPending(item)) continue
+        if (!activeArticles.has(item.candidate_id) && activeArticles.size >= 3) continue
+      }
       const plan = checkedPlan(ctx, item.execution.plan)
       const parameters = {
-        run_id: "cur-events-" + sha256(JSON.stringify([input, item.execution.plan])).slice(0, 40),
+        run_id: childRun(item),
         edition_path: plan.edition.path,
         edition_sha256: plan.edition.sha256,
         plan_path: item.execution.plan.path,
@@ -183,7 +331,13 @@ async function advanceCurationNative(
           baseProvider,
           clock,
           executionWindow: window,
+          unrecordedFocusMustBeUnbound: Boolean(inspectUnrecorded && !orphan && recoveryItem?.action !== "reuse"),
+          expectedCurationCheckpoint: workflows.get(item.execution.plan.path)?.workflow || orphan?.checkpoint,
+          parentPinnedCheckpoint: Boolean(workflows.has(item.execution.plan.path)),
+          requireEmptyCurationCheckpoint: !workflows.has(item.execution.plan.path) && !orphan,
+          recoverOwnedChild: Boolean(orphan),
         })
+        lastOwnedItem = item
         workflows.set(item.execution.plan.path, {
           plan: item.execution.plan,
           run_id: parameters.run_id,
@@ -191,6 +345,8 @@ async function advanceCurationNative(
           workflow: ref(ctx.root, `event-workflows/${parameters.run_id}/latest.json`),
           publication_handoff: outcome.publication_handoff,
         })
+        recoverablePlans.delete(item.execution.plan.path)
+        processedCandidates.add(item.candidate_id)
         if (p.review_mode === "combined/v1") {
           const focused = outcome.rows?.find((row) => row.group_id === item.execution.group_id)
           if (focused?.writer_run && !settledArticle(focused)) activeArticles.add(item.candidate_id)
@@ -199,6 +355,9 @@ async function advanceCurationNative(
         handled += outcome.handled_items || 0
         writes += outcome.article_writes || 0
       } catch (error) {
+        const recoverable = ownedRetry(item, error)
+        if (recoverable !== error || ["STORAGE_PENDING", "REASONING_PENDING"].includes(error.code) && ownedOrphan(item))
+          throw recoverable
         recordBlocked(item, error, priorFor(item))
       }
       save("processing")
@@ -212,24 +371,43 @@ async function advanceCurationNative(
     const selectedByKey = new Map([...selection.selected].reverse().map((item) =>
       [JSON.stringify([item.execution.plan.path, item.execution.group_id]), item],
     ))
-    const rows = savedOutcomes.flatMap(({ workflow, value }) =>
+    let rows = savedOutcomes.flatMap(({ workflow, value }) =>
       value.rows.flatMap((row) => {
         const item = selectedByKey.get(JSON.stringify([workflow.plan.path, row.group_id]))
         return item ? [{ ...row, origin_plan: workflow.plan, candidate_id: item.candidate_id,
           ...(blockedItems.has(item.candidate_id) ? { ...blockedItems.get(item.candidate_id), reasoning_task: undefined } : {}) }] : []
       }),
     )
+    rows = rows.map((row) => {
+      const item = selection.selected.find((candidate) => candidate.candidate_id === row.candidate_id)
+      const blocked = checkpointBlocked.get(row.candidate_id)
+      if (blocked && !processedCandidates.has(row.candidate_id))
+        return { ...row, status: "frontier_inconsistent", queue_reason: blocked.queue_reason }
+      if (previous && item && !processedCandidates.has(item.candidate_id) && row.status === "queued" &&
+          !row.writer_run &&
+          !safelyUnstarted(item, { allowCurrentChild: true }))
+        return blockedItems.has(item.candidate_id) ? { ...row, ...blockedItems.get(item.candidate_id) }
+          : { ...row, status: "frontier_inconsistent", queue_reason: "unrecorded_writer_or_checkpoint" }
+      return row
+    })
+    const recorded = new Set(rows.map((row) => row.candidate_id))
+    const unstartedCandidates = selection.selected.filter((item) =>
+      !recorded.has(item.candidate_id) && !workflows.has(item.execution.plan.path) && safelyUnstarted(item),
+    ).map((item) => item.candidate_id)
     for (const [candidateId, blocked] of blockedItems)
       if (!rows.some((row) => row.candidate_id === candidateId)) rows.push(blocked)
+    rows = completeCurationFrontier(selection, rows, [...workflows.values()].map((entry) => entry.plan),
+      { unstartedCandidates })
     const blockedTaskIds = new Set([...blockedItems.values()].map((row) => row.blocked_reasoning_task?.task_id).filter(Boolean))
     const reasoningTasks = outcomes.flatMap((w) => w.reasoning_tasks || [])
       .filter((task) => !blockedTaskIds.has(task.task_id))
     const finalStatus =
-      errors.length || outcomes.some((w) => w.status === "partial")
+      errors.length || outcomes.some((w) => w.status === "partial") ||
+      rows.some((row) => row.status === "frontier_inconsistent")
         ? "partial"
         : reasoningTasks.length || outcomes.some((w) => w.status === "waiting_for_reasoning")
           ? "waiting_for_reasoning"
-          : selection.batches.length === workflows.size &&
+          : selection.batches.length === workflows.size && !rows.some((row) => row.queue_reason === "batch_not_in_checkpoint") &&
               outcomes.every((w) => w.status === "complete")
             ? "complete"
             : "review_pending"
@@ -271,7 +449,7 @@ async function advanceCurationNative(
     // Readable by the existing publication module: each child still undergoes
     // its native source/approval/selection checks before any authoring or release.
     assertVerifiedInputBoundary()
-    result.publication_handoff = atomicWrite(ctx.root, base + "publication-handoff.json", {
+    try { result.publication_handoff = atomicWrite(ctx.root, base + "publication-handoff.json", {
       schema: "research-curation-publication-handoff/v1",
       run_id: p.run_id,
       curation: selectionRef,
@@ -282,10 +460,11 @@ async function advanceCurationNative(
         return handoff?.approved_runs?.length || handoff?.reused_runs?.length
       }),
       candidate_published: false,
-    })
+    }) } catch (error) { throw ownedRetry(lastOwnedItem, error) }
     result.status = errors.length ? "partial" : finalStatus
     result.failures = [...errors, ...outcomes.flatMap((w) => w.failures || [])]
-    atomicWrite(ctx.root, base + "latest.json", result)
+    try { atomicWrite(ctx.root, base + "latest.json", result) }
+    catch (error) { throw ownedRetry(lastOwnedItem, error) }
     return result
   })
 }

@@ -3,7 +3,7 @@ import { sha256, assertSchema } from "./contracts.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { Ollama, localOllamaURL } from "./ollama.mjs"
 import { resolveRolePolicy } from "./model-policy.mjs"
-import { boundRelayRound, checkedRelayAssignment } from "./relay-ledger.mjs"
+import { boundRelayRound, checkedRelayAssignment, assertRelayTaskQuiescent } from "./relay-ledger.mjs"
 import {
   currentRequestOwner,
   assertRequestOwner,
@@ -46,6 +46,23 @@ function assertActive(root, request) {
     !requestOwnerPending(root, request)
   )
     throw Error("Reasoning owner is not waiting for this exact request")
+}
+// A deliberately retired request remains evidence of a held article. It must
+// not be executed or make other current articles disappear from the frontier.
+function checkedRetirement(root, request) {
+  const retirement = readJSON(root, base(request.task_id) + "retired.json")
+  if (!retirement) return null
+  if (
+    retirement.task_id !== request.task_id ||
+    retirement.request_sha256 !== request.request_sha256 ||
+    typeof retirement.reason !== "string" || !retirement.reason.trim() || retirement.reason.length > 1000 ||
+    !Number.isFinite(Date.parse(retirement.retired_at || "")) ||
+    completed(root, request)
+  ) throw Error("Reasoning retirement evidence changed")
+  assertRequestOwner(root, request.owner)
+  if (request.owner && !requestOwnerPending(root, request))
+    throw Error("Retired reasoning owner no longer owns the exact request")
+  return retirement
 }
 function completed(root, request) {
   const stored = readJSON(root, base(request.task_id) + "result.json")
@@ -223,14 +240,20 @@ export function reasoningFrontier(root, { round_id, rows, limit = 3 }) {
   if (!/^[A-Za-z0-9_-]{1,70}$/.test(round_id || "") || !Array.isArray(rows) ||
       !Number.isSafeInteger(limit) || limit < 1 || limit > 100)
     throw Error("Exact bounded reasoning frontier required")
-  const seen = new Set(), tasks = []
+  const seen = new Set(), tasks = [], retiredTasks = []
   for (const row of rows) {
     const ref = row.stage === "reasoning" && row.reasoning_task
     if (!ref || seen.has(ref.task_id)) continue
     const request = load(root, ref.task_id, ref.request_sha256)
-    assertActive(root, request)
     if (request.owner?.round_id !== round_id) throw Error("Reasoning frontier belongs to another round")
     seen.add(ref.task_id)
+    const retirement = checkedRetirement(root, request)
+    if (retirement) {
+      retiredTasks.push({ task_id: request.task_id, request_sha256: request.request_sha256,
+        owner: request.owner, reason: retirement.reason, retired_at: retirement.retired_at })
+      continue
+    }
+    assertActive(root, request)
     if (completed(root, request)) continue
     tasks.push({ task_id: request.task_id, request_sha256: request.request_sha256,
       run: request.run, role: request.role, owner: request.owner, state: "pending",
@@ -238,7 +261,8 @@ export function reasoningFrontier(root, { round_id, rows, limit = 3 }) {
       requested_thinking: request.binding.settings?.think ?? null })
   }
   return { status: "reasoning_pending", tasks: tasks.slice(0, limit), total: tasks.length,
-    next_offset: tasks.length > limit ? limit : null }
+    next_offset: tasks.length > limit ? limit : null,
+    ...(retiredTasks.length ? { retired_tasks: retiredTasks } : {}) }
 }
 export function readReasoningTask(root, { task_id, request_sha256, offset = 0, limit = 16000 }) {
   const request = load(root, task_id, request_sha256)
@@ -469,9 +493,10 @@ export function readyArticleItems(root, rows, { round_id } = {}) {
     const task = row.reasoning_task
     if (!task || seen.has(task.task_id)) continue
     const request = load(root, task.task_id, task.request_sha256)
-    assertActive(root, request)
     if (round_id && request.owner?.round_id !== round_id)
       throw Error("Ready article request belongs to another round")
+    if (checkedRetirement(root, request)) continue
+    assertActive(root, request)
     const done = completed(root, request)
     if (!done) continue
     seen.add(task.task_id)
@@ -504,6 +529,43 @@ export async function retireReasoningTask(root, { task_id, request_sha256, reaso
     return { status: "retired", task_id }
   })
   return relayRound ? withLock(root, "relay-round-" + relayRound, retire) : retire()
+}
+
+export function restartReasoningStatus(root, { task_id, request_sha256, expected_round, reason }) {
+  const request = load(root, task_id, request_sha256)
+  assertRequestOwner(root, request.owner)
+  if (request.owner?.round_id !== expected_round) throw Error("Prior reasoning round changed")
+  const retired = readJSON(root, base(task_id) + "retired.json")
+  const result = completed(root, request)
+  if (retired) {
+    if (retired.task_id !== task_id || retired.request_sha256 !== request_sha256 ||
+        retired.reason !== reason || result)
+      throw Error("Prior reasoning retirement changed")
+    return { status: "retired", task_id }
+  }
+  if (result) return { status: "completed", task_id, result_sha256: result.result_sha256 }
+  assertActive(root, request)
+  return { status: "pending", task_id }
+}
+
+// Serialize late submissions, actor assignments and retirement with the same
+// native locks. A completed old result is retained and is never re-labelled.
+export async function settleReasoningForRestart(root, parameters) {
+  const { task_id, request_sha256, expected_round, reason } = parameters
+  if (!reason?.trim() || reason.length > 1000) throw Error("Retirement reason required")
+  const initial = load(root, task_id, request_sha256)
+  const relayRound = boundRelayRound(root, initial)
+  const settle = () => withLock(root, task_id, async () => {
+    if (relayRound) assertRelayTaskQuiescent(root, relayRound, task_id)
+    const status = restartReasoningStatus(root, parameters)
+    if (status.status !== "pending") return status
+    atomicCreate(root, base(task_id) + "retired.json", {
+      task_id, request_sha256, reason, retired_at: new Date().toISOString(),
+    })
+    return { status: "retired", task_id }
+  })
+  if (relayRound && relayRound !== expected_round) throw Error("Prior relay round changed")
+  return relayRound ? withLock(root, "relay-round-" + relayRound, settle) : settle()
 }
 // An external executor receives the same source-bound prompt/schema as Ollama.
 // No API key, model checkpoint or factual approval is manufactured here.

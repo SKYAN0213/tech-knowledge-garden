@@ -809,6 +809,7 @@ test("a recovered daily report retains blocked receipts and adds only the comple
   const waiting = await recoverCollection({ ...waitOptions, mode: "execute" })
   assert.equal(waiting.counts.executed, 0)
   assert.equal(waiting.waiting_sources[0].status, "window_not_yet_elapsed")
+  assert.equal(waiting.next_actions[0].not_before, "2026-10-16T15:00:00.000Z")
   assert.equal(prematureScans, 0)
   fs.renameSync(heldBody + ".held", heldBody)
   const afterWindow = await recoverCollection({ ...waitOptions, mode: "resume",

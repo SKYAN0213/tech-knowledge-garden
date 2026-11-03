@@ -41,7 +41,7 @@ import { parseResearchDate, seoulPublicationDay } from "./dates.mjs"
 import { evaluateArticleConceptReview } from "./article-concept-review.mjs"
 import { loadPreviewSourceAlternatives } from "./preview-source-alternatives.mjs"
 import { loadCurationSelection } from "./curation.mjs"
-import { checkedPlan, loadSelectedEvent, reuseEventArticle } from "./event-pipeline.mjs"
+import { checkedPlan, eventWriterBinding, loadSelectedEvent, reuseEventArticle } from "./event-pipeline.mjs"
 import { assertEditorialCoverage } from "./editorial-completeness.mjs"
 import { memoizeVerifiedArtifact } from "./verified-inputs.mjs"
 
@@ -549,10 +549,11 @@ export function newEditionProjections(
         carried.set(reused.article.event_id, JSON.stringify(reused.article))
         continue
       }
-      const binding = readJSON(
-        root,
-        `event-plans/${plan.run_id}/selections/${item.execution.group_id}.json`,
-      )
+      // A recovered writer has a separate, validated approval pointer; the
+      // original plan binding intentionally remains unchanged.
+      const binding = eventWriterBinding({ root, vault }, item.execution.plan, event, {
+        useRecoveryScope: false,
+      })
       if (!binding || !readJSON(root, `runs/${binding.writer_run}/approved-article.json`)) continue
       const native = loadSelectedEvent(
         { root },

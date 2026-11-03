@@ -13,6 +13,8 @@ import { loadCurrentApproval, loadHistoricalApproval } from "./preview.mjs"
 import { atomicCreate, readJSON, safePath, withLock } from "./run-state.mjs"
 import { schema, id, text, list, validateArguments, nativeResearch } from "./modules/contracts.mjs"
 import { verifiedJSON, memoizeVerifiedInput } from "./verified-inputs.mjs"
+import { partialRecoveryItem } from "./replacement-scope.mjs"
+import { currentRequestOwner, assertRequestOwner } from "./request-ownership.mjs"
 
 export const digest = { type: "string", pattern: "^[a-f0-9]{64}$" }
 const optionalText = { type: ["string", "null"], maxLength: 500 }
@@ -521,18 +523,137 @@ export function eventWorkKey(event) {
   )
 }
 
-export async function prepareEventSelection(ctx, { run_id, plan_path, plan_sha256, group_id }) {
+// An approved replacement is preferred only after its exact original source,
+// native approval and successor manifest have all been revalidated.
+export function eventWriterBinding(ctx, planRef, event,
+  { globalOnly = false, planOnly = false, useRecoveryScope = true } = {}) {
+  const key = eventWorkKey(event)
+  const recovery = useRecoveryScope ? partialRecoveryItem(ctx, planRef, event.group_id, key) : null
+  if (recovery?.action === "restart") {
+    const binding = readJSON(ctx.root, recovery.binding_path)
+    if (binding) {
+      if (binding.writer_run !== recovery.writer_run ||
+          binding.producer_owner?.round_id !== recovery.successor ||
+          binding.producer_owner?.round_input_sha256 !== ctx.operationalRound?.round_input_sha256)
+        throw Error("Partial recovery writer binding changed")
+      assertRequestOwner(ctx.root, binding.producer_owner)
+    }
+    return binding
+  }
+  const pointer = readJSON(ctx.root, `event-work/${key}/approved-recovery.json`)
+  if (pointer) {
+    if (pointer.schema !== "research-approved-recovery-writer/v1" || pointer.work_key !== key ||
+        !pointer.manifest || !pointer.selection || !pointer.approval || !pointer.successor)
+      throw Error("Approved recovery writer reference changed")
+    const manifestBytes = fs.readFileSync(safePath(ctx.root, pointer.manifest.path))
+    if (sha256(manifestBytes) !== pointer.manifest.sha256) throw Error("Recovery manifest changed")
+    const manifest = JSON.parse(manifestBytes)
+    const items = manifest.items?.filter((item) => item.work_key === key && item.action === "restart") || []
+    if (manifest.schema !== "research-partial-restart/v1" || manifest.successor !== pointer.successor ||
+        items.length !== 1 || pointer.writer_run !== "event-" +
+          sha256(JSON.stringify([items[0].plan, items[0].group_id, pointer.successor])).slice(0, 36))
+      throw Error("Approved recovery writer is outside its manifest")
+    const pin = readJSON(ctx.root, `operations/rounds/${pointer.successor}/input.json`)
+    if (!pin?.continuation) throw Error("Approved recovery round pin missing")
+    const continuation = checkedJSON(ctx.root, pin.continuation)
+    if (continuation.successor !== pointer.successor ||
+        JSON.stringify(continuation.partial_restart) !== JSON.stringify(pointer.manifest))
+      throw Error("Approved recovery round binding changed")
+    if (sha256(fs.readFileSync(safePath(ctx.root, pointer.approval.path))) !== pointer.approval.sha256 ||
+        pointer.approval.path !== `runs/${pointer.writer_run}/approved-article.json`)
+      throw Error("Approved recovery article changed")
+    const selected = loadSelectedEvent(ctx, { run_id: pointer.writer_run,
+      selection_path: pointer.selection.path, selection_sha256: pointer.selection.sha256 },
+    { requireProcessed: true })
+    const selectedPlan = checkedPlan(ctx, selected.plan, selected.group_id)
+    const selectedEvent = selectedPlan.events.find((row) => row.group_id === selected.group_id)
+    if (!selectedEvent || eventWorkKey(selectedEvent) !== key ||
+        JSON.stringify(selected.plan) !== JSON.stringify(items[0].plan) ||
+        selected.group_id !== items[0].group_id ||
+        (recovery?.action === "reuse" && recovery.writer_run !== pointer.writer_run))
+      throw Error("Approved recovery event identity changed")
+    loadCurrentApproval(ctx.root, pointer.writer_run, { vault: ctx.vault })
+    const currentPlan = checkedPlan(ctx, planRef, event.group_id)
+    for (const oldPath of [`event-work/${key}/selection.json`,
+      `event-plans/${currentPlan.run_id}/selections/${event.group_id}.json`]) {
+      const prior = readJSON(ctx.root, oldPath)
+      if (prior && prior.writer_run !== pointer.writer_run &&
+          readJSON(ctx.root, `runs/${prior.writer_run}/approved-article.json`))
+        throw Error("Conflicting original and recovery approvals require review")
+    }
+    return { writer_run: pointer.writer_run, selection: pointer.selection }
+  }
+  const plan = globalOnly ? null : checkedPlan(ctx, planRef, event.group_id)
+  const binding = (plan && readJSON(ctx.root, `event-plans/${plan.run_id}/selections/${event.group_id}.json`)) ||
+    (!planOnly && readJSON(ctx.root, `event-work/${key}/selection.json`)) || null
+  if (recovery?.action === "reuse" && binding?.writer_run !== recovery.writer_run)
+    throw Error("Preserved approval writer changed during partial recovery")
+  return binding
+}
+
+export async function publishRecoveredWriter(ctx, planRef, event, writerRun) {
+  const key = eventWorkKey(event)
+  let recovery = partialRecoveryItem(ctx, planRef, event.group_id, key)
+  if (recovery?.action !== "restart") return
+  if (writerRun !== recovery.writer_run) throw Error("Partial recovery writer changed")
+  return withLock(ctx.root, "event-selection", async () => {
+    recovery = partialRecoveryItem(ctx, planRef, event.group_id, key)
+    if (recovery?.action !== "restart" || recovery.writer_run !== writerRun)
+      throw Error("Partial recovery writer changed before selection lock")
+    const binding = readJSON(ctx.root, recovery.binding_path)
+    if (!binding || binding.writer_run !== writerRun) throw Error("Partial recovery binding missing")
+    const selected = loadSelectedEvent(ctx, { run_id: writerRun, selection_path: binding.selection.path,
+      selection_sha256: binding.selection.sha256 }, { requireProcessed: true })
+    if (JSON.stringify(selected.plan) !== JSON.stringify(planRef) || selected.group_id !== event.group_id)
+      throw Error("Partial recovery approval has another event")
+    loadCurrentApproval(ctx.root, writerRun, { vault: ctx.vault })
+    for (const prior of recovery.original_bindings || []) {
+      const existing = readJSON(ctx.root, prior.path)
+      if (existing && existing.writer_run !== writerRun &&
+          readJSON(ctx.root, `runs/${existing.writer_run}/approved-article.json`))
+        throw Error("Original event was approved during recovery")
+    }
+    const approvalPath = `runs/${writerRun}/approved-article.json`
+    const value = { schema: "research-approved-recovery-writer/v1", work_key: key,
+      successor: recovery.successor, manifest: recovery.manifest_reference,
+      writer_run: writerRun, selection: binding.selection,
+      approval: { path: approvalPath, sha256: sha256(fs.readFileSync(safePath(ctx.root, approvalPath))) } }
+    const pointerPath = `event-work/${key}/approved-recovery.json`
+    const prior = readJSON(ctx.root, pointerPath)
+    if (prior && JSON.stringify(prior) !== JSON.stringify(value))
+      throw Error("Another approved recovery writer already exists")
+    if (!prior) atomicCreate(ctx.root, pointerPath, value)
+  })
+}
+
+export async function prepareEventSelection(
+  ctx,
+  { run_id: requestedRun, plan_path, plan_sha256, group_id },
+  { requireUnbound = false } = {},
+) {
   const planRef = { path: plan_path, sha256: plan_sha256 },
     plan = checkedPlan(ctx, planRef, group_id)
   const event = plan.events.find((e) => e.group_id === group_id)
   if (!event || !["write", "update", "correction"].includes(event.action))
     throw Error("Only a reviewed write or revision event can be selected for a writer")
+  const key = eventWorkKey(event), recovery = partialRecoveryItem(ctx, planRef, group_id, key)
+  const run_id = recovery?.action === "restart" ? recovery.writer_run : requestedRun
+  const owner = currentRequestOwner()
+  if (recovery?.action === "restart") {
+    if (!owner || owner.round_id !== recovery.successor ||
+        owner.round_input_sha256 !== ctx.operationalRound?.round_input_sha256)
+      throw Error("Partial recovery writer requires its exact native job")
+    assertRequestOwner(ctx.root, owner)
+  }
   const input = { schema: "research-event-selection-input/v1", run_id, plan: planRef, group_id }
   return withLock(ctx.root, "event-selection", async () => {
-    const workKey = eventWorkKey(event)
+    const workKey = key
     const globalBindingFile = `event-work/${workKey}/selection.json`
-    const bindingFile = `event-plans/${plan.run_id}/selections/${group_id}.json`,
-      binding = readJSON(ctx.root, bindingFile) || readJSON(ctx.root, globalBindingFile)
+    const bindingFile = recovery?.action === "restart" ? recovery.binding_path
+      : `event-plans/${plan.run_id}/selections/${group_id}.json`
+    const binding = eventWriterBinding(ctx, planRef, event)
+    if (requireUnbound && binding)
+      throw Error("Unrecorded curation candidate already has a writer binding")
     if (binding) {
       const prior = loadSelectedEvent(ctx, {
         run_id: binding.writer_run,
@@ -552,6 +673,13 @@ export async function prepareEventSelection(ctx, { run_id, plan_path, plan_sha25
     const folder = `event-selections/${run_id}/`,
       pointer = `runs/${run_id}/event-selection.json`
     const priorInput = readJSON(ctx.root, folder + "input.json")
+    if (
+      requireUnbound &&
+      (priorInput ||
+        fs.existsSync(safePath(ctx.root, `runs/${run_id}`)) ||
+        fs.existsSync(safePath(ctx.root, `event-selections/${run_id}`)))
+    )
+      throw Error("Unrecorded curation candidate has existing writer evidence")
     if (!priorInput && fs.existsSync(safePath(ctx.root, `runs/${run_id}`)))
       throw Error("Preserve the existing run; choose a new event writer run ID")
     immutable(ctx.root, folder + "input.json", input)
@@ -607,8 +735,10 @@ export async function prepareEventSelection(ctx, { run_id, plan_path, plan_sha25
     }
     const result = immutable(ctx.root, folder + "selection.json", selection)
     immutable(ctx.root, pointer, result)
-    immutable(ctx.root, bindingFile, { writer_run: run_id, selection: result })
-    immutable(ctx.root, globalBindingFile, { writer_run: run_id, selection: result })
+    immutable(ctx.root, bindingFile, { writer_run: run_id, selection: result,
+      ...(recovery?.action === "restart" ? { producer_owner: owner } : {}) })
+    if (recovery?.action !== "restart")
+      immutable(ctx.root, globalBindingFile, { writer_run: run_id, selection: result })
     return {
       ...result,
       status: "selected",
@@ -690,10 +820,14 @@ export function assertSelectedEventFactScope(selection, claims) {
 }
 
 export function reuseEventArticle(ctx, { plan_path, plan_sha256, group_id }) {
-  const plan = checkedPlan(ctx, { path: plan_path, sha256: plan_sha256 }, group_id),
+  const planRef = { path: plan_path, sha256: plan_sha256 }
+  const plan = checkedPlan(ctx, planRef, group_id),
     event = plan.events.find((e) => e.group_id === group_id)
   if (event?.action !== "reuse" || !event.prior)
     throw Error("Exact reviewed reuse decision required")
+  const recovery = partialRecoveryItem(ctx, planRef, group_id, eventWorkKey(event))
+  if (recovery && (recovery.action !== "reuse" || recovery.writer_run !== event.prior.run_id))
+    throw Error("Partial recovery reused article changed")
   const approved = loadCurrentApproval(ctx.root, event.prior.run_id, { vault: ctx.vault })
   return {
     status: "approved_reused",

@@ -17,6 +17,7 @@ import { sha256 } from "./contracts.mjs"
 import { moduleRecoveryPlan } from "./operation-policy.mjs"
 import { moduleJobTiming } from "./operations-timing.mjs"
 import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
+import { partialRecoveryManifest } from "./replacement-scope.mjs"
 
 const defaultRepo = fileURLToPath(new URL("../../", import.meta.url))
 const worker = fileURLToPath(new URL("../research-module-worker.mjs", import.meta.url))
@@ -482,29 +483,46 @@ function activeJobs(ctx) {
 // Other rounds, legacy unbound locks, unknown owners, publication and Drive
 // locks remain untouched. Each original lock is recorded before removal.
 export function recoverInterruptedCollectionLocks(ctx, jobId) {
+  return recoverInterruptedWorkflowLocks(ctx, jobId, "collection")
+}
+
+export function recoverInterruptedProcessingLocks(ctx, jobId) {
+  return recoverInterruptedWorkflowLocks(ctx, jobId, "processing")
+}
+
+function recoverInterruptedWorkflowLocks(ctx, jobId, kind) {
   const { input, state } = checkedInput(ctx, jobId)
   const owner = input.context.operationalRound
   const params = input.parameters || {}
+  const collection = kind === "collection"
   if (
     input.module !== "edition" ||
     input.operation !== "advance" ||
     params.round !== true ||
-    params.collect !== true ||
-    params.stop_after_collection !== true ||
+    (collection ? params.collect !== true || params.stop_after_collection !== true : params.collect !== false) ||
     !owner ||
     !/^[A-Za-z0-9_-]{1,70}$/.test(owner.round_id || "") ||
     !/^[a-f0-9]{64}$/.test(owner.round_input_sha256 || "") ||
     owner.round_id !== params.run_id ||
-    owner.round_id !== params.daily_run ||
+    (collection && owner.round_id !== params.daily_run) ||
     state.state !== "running" ||
     !Number.isSafeInteger(state.pid) ||
     state.pid <= 0 ||
     !Number.isFinite(Date.parse(state.started_at || ""))
   )
-    throw Error("Exact interrupted collection job and round ownership required")
+    throw Error("Exact interrupted " + kind + " job and round ownership required")
   const pin = readJSON(ctx.root, `operations/rounds/${owner.round_id}/input.json`)
   if (!pin || sha256(JSON.stringify(pin)) !== owner.round_input_sha256)
     throw Error("Interrupted collection round ownership changed; preserve locks")
+  let curationRun
+  if (!collection) {
+    const manifest = partialRecoveryManifest({ ...ctx, operationalRound: owner })
+    const launch = readJSON(ctx.root, `${base(jobId)}launch.json`)
+    if (!manifest || launch?.pid !== state.pid || launch.job_id !== jobId ||
+        launch.attempt !== state.attempt || !Number.isFinite(Date.parse(launch.launched_at || "")))
+      throw Error("Exact interrupted partial recovery worker launch required; preserve locks")
+    curationRun = "round-curation-" + sha256(JSON.stringify([owner.round_id, manifest.selection])).slice(0, 48)
+  }
   const expectedOwner = {
     job_id: jobId,
     input_sha256: state.input_sha256,
@@ -526,12 +544,18 @@ export function recoverInterruptedCollectionLocks(ctx, jobId) {
   const names = fs.existsSync(directory)
     ? fs.readdirSync(directory).filter((name) => name.endsWith(".json"))
     : []
-  const allow = (name) =>
-    name === `round-workflow-${owner.round_id}` ||
-    ["garden-operation", "daily-acquisition"].includes(name) ||
-    /^(?:collection-source|run)-[A-Za-z0-9_.-]+$/.test(name) ||
-    /^(?:source|source-policy|policy-watch)-[a-f0-9]{20}$/.test(name) ||
-    /^host-[a-f0-9]{32}$/.test(name)
+  const allow = (name) => name === `round-workflow-${owner.round_id}` ||
+    (collection
+      ? ["garden-operation", "daily-acquisition"].includes(name) ||
+        /^(?:collection-source|run)-[A-Za-z0-9_.-]+$/.test(name) ||
+        /^(?:source|source-policy|policy-watch)-[a-f0-9]{20}$/.test(name) ||
+        /^host-[a-f0-9]{32}$/.test(name)
+      : name === `curation-workflow-${curationRun}` || name === "event-selection" ||
+        /^event-workflow-cur-events-[a-f0-9]{40}$/.test(name) ||
+        /^run-event-[a-f0-9]{36}$/.test(name) ||
+        /^(?:event-cache-|run-)ev-facts-[a-f0-9]{40}$/.test(name) ||
+        /^run-sel-[a-f0-9]{24}-(?:[0-9]+|bundle)$/.test(name) ||
+        /^event-publication-event-publication-[a-f0-9]{40}$/.test(name))
   const locks = []
   for (const filename of names) {
     const name = filename.slice(0, -5),
@@ -597,7 +621,7 @@ export function recoverInterruptedCollectionLocks(ctx, jobId) {
     ctx.root,
     `module-jobs/${jobId}/lock-recovery/${crypto.randomUUID()}.json`,
     {
-      schema: "research-interrupted-collection-lock-recovery/v1",
+      schema: `research-interrupted-${kind}-lock-recovery/v1`,
       job_id: jobId,
       input_sha256: state.input_sha256,
       round_id: owner.round_id,
@@ -616,7 +640,7 @@ export function recoverInterruptedCollectionLocks(ctx, jobId) {
   }
   for (const lock of locks) recoverLock(ctx.root, lock.name, lock.owner)
   const result = atomicCreate(ctx.root, receipt.path.replace(/\.json$/, "-result.json"), {
-    schema: "research-interrupted-collection-lock-recovery-result/v1",
+    schema: `research-interrupted-${kind}-lock-recovery-result/v1`,
     receipt,
     recovered: locks.map((lock) => lock.name),
     completed_at: new Date().toISOString(),
@@ -696,6 +720,16 @@ export async function submitModuleJob(
           throw Error("Another active or unknown worker; preserve collection locks")
         recovered = recoverInterruptedCollectionLocks(ctx, jobId).recovered
       }
+      if (
+        priorStatus.state === "interrupted" && priorStatus.pid &&
+        readJSON(ctx.root, dir + "state.json")?.state === "running" &&
+        input.module === "edition" && input.operation === "advance" &&
+        input.parameters.round === true && input.parameters.collect === false &&
+        input.context.operationalRound && partialRecoveryManifest(input.context)
+      ) {
+        if (active.length) throw Error("Another active or unknown worker; preserve processing locks")
+        recovered = recoverInterruptedProcessingLocks(ctx, jobId).recovered
+      }
       if (lock && !recovered.includes("module-worker-" + jobId))
         recoverLock(ctx.root, "module-worker-" + jobId, lock.owner)
     }
@@ -774,7 +808,9 @@ export async function submitModuleJob(
     while (true) {
       const alive = moduleJobStatus(ctx, jobId).worker_alive
       if (alive === false) break
-      if (alive === null) throw Error("Module worker status unknown; preserve current worker")
+      // Do not launch a replacement when the owner cannot be observed. Return
+      // the native recovery status so the controller can wait for visibility.
+      if (alive === null) return moduleJobStatus(ctx, jobId)
       await new Promise((resolve) => setTimeout(resolve, 80))
     }
   }
