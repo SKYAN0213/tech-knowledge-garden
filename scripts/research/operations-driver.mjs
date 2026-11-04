@@ -198,9 +198,18 @@ export async function driveOperationalRound(
         step--
         continue
       }
-      if (next.action === "storage" && next.request && storageReady(next.request)) {
-        next.action = next.job_id ? "resume" : "advance"
-        if (!next.job_id) next.stage = "processing"
+      if (next.action === "storage" && next.request) {
+        if (storageReady(next.request)) {
+          next.action = next.job_id ? "resume" : "advance"
+          if (!next.job_id) next.stage = "processing"
+        } else if (!next.job_id && (current.next_inputs || []).some((row) =>
+          row.stage === "events" && row.required?.includes("execute"))) {
+          // A row-level restore wait must not hold independent runnable items.
+          // A held native job, however, always keeps its original ownership.
+          next.action = "advance"
+          next.stage = "processing"
+          next.reason = "independent_work_while_storage_pending"
+        }
       }
       if (
         next.action === "reasoning" &&

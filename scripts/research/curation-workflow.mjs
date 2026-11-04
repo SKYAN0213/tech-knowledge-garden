@@ -2,6 +2,7 @@ import fs from "node:fs"
 import { sha256 } from "./contracts.mjs"
 import { checkedPlan, eventWorkKey, eventWriterBinding } from "./event-pipeline.mjs"
 import { partialRecoveryItem, partialRecoveryManifest, recoveryProducerPath } from "./replacement-scope.mjs"
+import { inspectSavedStorageRequest } from "./storage-request.mjs"
 import { currentRequestOwner } from "./request-ownership.mjs"
 import { completeCurationFrontier, loadCurationSelection } from "./curation.mjs"
 import { advanceEventWorkflow } from "./event-workflow.mjs"
@@ -197,8 +198,15 @@ async function advanceCurationNative(
         return true
       }
     }
+    const isStoragePending = (item) => {
+      const row = priorFor(item)
+      if (row?.status !== "waiting_for_storage") return false
+      const saved = inspectSavedStorageRequest(ctx.root, row.storage_request)
+      if (saved.status === "invalid") throw Error("Invalid saved article storage request")
+      return saved.status === "pending"
+    }
     const settledArticle = (row) =>
-      ["approved", "reused", "failed", "deferred", "not_selected"].includes(row?.status)
+      ["approved", "reused", "failed", "deferred", "not_selected", "waiting_for_storage"].includes(row?.status)
     // A completed response or an applied correction still owns its article
     // slot until approval/failure. A local boundary is not a vacant model slot.
     const activeArticles = new Set(
@@ -267,6 +275,7 @@ async function advanceCurationNative(
         }
       }
       if (checkpointBlocked.has(item.candidate_id) && !orphan) continue
+      if (isStoragePending(item)) continue
       if (
         handled >= (p.max_items ?? 4) ||
         window.remainingMs() <= 0 ||

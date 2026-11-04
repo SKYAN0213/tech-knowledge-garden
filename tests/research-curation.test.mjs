@@ -2103,6 +2103,46 @@ function independentFrontierEvents(f, prefix) {
   }))
 }
 
+test("a storage-held writer yields its article slot until the exact bytes return", async (t) => {
+  const f = setup(t, { independent: true }), events = independentFrontierEvents(f, "held-slot").slice(0, 2)
+  const plans = await Promise.all(events.map((event, i) => plan(f, `held-slot-plan-${i}`, [event])))
+  const prepared = await pool(f, "held-slot-pool", plans, 2)
+  await review(f, prepared, prepared.value.candidates.map((candidate) => rating(f, candidate, 5)))
+  const chosen = await choose(f, prepared), selection = loadCurationSelection(f.ctx, ref(chosen))
+  const held = selection.selected[0], other = selection.selected[1], bytes = Buffer.from("saved original")
+  const request = { schema: "research-storage-download-request/v1", root: f.root,
+    requests: [{ path: "documents/held-slot.bin", sha256: sha256(bytes), bytes: bytes.length }],
+    request_count: 1, path: "documents/held-slot.bin" }
+  const visits = []
+  const eventProcessor = async (_ctx, parameters) => {
+    visits.push(parameters.curation_focus_group)
+    const isHeld = parameters.curation_focus_group === held.execution.group_id
+    const missing = !fs.existsSync(path.join(f.root, "documents/held-slot.bin"))
+    const row = { group_id: parameters.curation_focus_group,
+      status: isHeld && missing ? "waiting_for_storage" : "deferred",
+      ...(isHeld && missing ? { writer_run: "retained-writer", storage_request: request } : {}) }
+    const value = { schema: "research-event-workflow/v1", run_id: parameters.run_id,
+      plan: { path: parameters.plan_path, sha256: parameters.plan_sha256 }, curation: ref(chosen),
+      status: isHeld && missing ? "review_pending" : "complete", rows: [row],
+      approved_runs: [], handled_items: 1 }
+    atomicWrite(f.root, `event-workflows/${parameters.run_id}/latest.json`, value)
+    return value
+  }
+  const parameters = { run_id: "held-slot-round", selection_path: chosen.path,
+    selection_sha256: chosen.sha256, execute: true, max_items: 1, review_mode: "combined/v1" }
+  await advanceCuration(f.ctx, parameters, { eventProcessor })
+  const second = await advanceCuration(f.ctx, parameters, { eventProcessor })
+  assert.deepEqual(visits, [held.execution.group_id, other.execution.group_id])
+  assert.equal(second.rows.find((row) => row.candidate_id === held.candidate_id).status, "waiting_for_storage")
+  atomicWrite(f.root, "documents/held-slot.bin", Buffer.from("wrong original"))
+  await assert.rejects(advanceCuration(f.ctx, parameters, { eventProcessor }), /Invalid saved article storage request/)
+  assert.equal(visits.length, 2)
+  atomicWrite(f.root, "documents/held-slot.bin", bytes)
+  const resumed = await advanceCuration(f.ctx, parameters, { eventProcessor })
+  assert.equal(visits.at(-1), held.execution.group_id)
+  assert.equal(resumed.rows.find((row) => row.candidate_id === held.candidate_id).status, "deferred")
+})
+
 test("a partial recovery creates a new writer and publishes its validated binding without replacing the original", async (t) => {
   const f = setup(t)
   f.provider = {

@@ -9,9 +9,13 @@ const segmenter = new Intl.Segmenter("ko", { granularity: "sentence" })
 export function readerSentences(text) {
   const result = []
   const normalized = text.normalize("NFC")
-  // A leading period in .NET is an identifier, not a Korean sentence end.
-  // Mask only that character while segmenting, then read the original span.
-  const segmentation = normalized.replace(/(?<=^|\s)\.(?=NET\b)/gu, "\uE000")
+  // Mask periods in a leading .NET identifier or a parenthesized geographic
+  // direction such as (N. California), then read the original span unchanged.
+  // Limit the latter to a complete parenthesized proper name so a real sentence
+  // beginning with an initial outside parentheses is still counted.
+  const segmentation = normalized
+    .replace(/(?<=^|\s)\.(?=NET\b)/gu, "\uE000")
+    .replace(/(\(\s*[NSEW])\.(?=\s+[A-Z][a-z]+(?:[\s-]+[A-Z][a-z]+)*\s*\))/gu, "$1\uE000")
   for (const part of segmenter.segment(segmentation)) {
     const original = normalized.slice(part.index, part.index + part.segment.length)
     // Unicode sentence rules can treat a period followed by lowercase Latin

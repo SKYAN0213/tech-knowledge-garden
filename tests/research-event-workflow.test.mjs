@@ -81,6 +81,41 @@ function fakeProvider({ events = false } = {}) {
     },
   }
 }
+
+test("an archived source wait keeps its exact request and lets other events proceed", async (t) => {
+  const f = editionFixture(t), plan = await twoEventPlan(f), base = fakeProvider()
+  const request = { schema: "research-storage-download-request/v1", root: f.root,
+    requests: [{ path: "documents/preserved/body.bin", sha256: "a".repeat(64), bytes: 1 }],
+    request_count: 1, path: "documents/preserved/body.bin" }
+  let pending = true
+  const provider = { ...base, metadata: async (...args) => {
+    if (pending) {
+      pending = false
+      const error = Error("Archived source requires its verified bytes")
+      error.code = "STORAGE_PENDING"
+      error.storage_request = request
+      throw error
+    }
+    return base.metadata(...args)
+  }, structured: (...args) => base.structured(...args) }
+  const parameters = { run_id: "archive-wait-isolation", edition_path: f.editionRef.path,
+    edition_sha256: f.editionRef.sha256, plan_path: plan.path, plan_sha256: plan.sha256,
+    execute: true, max_items: 2 }
+  const first = await advanceEventWorkflow(f.ctx, parameters, { baseProvider: provider })
+  const waiting = first.rows.find((row) => row.group_id === "order")
+  assert.equal(waiting.status, "waiting_for_storage")
+  assert.deepEqual(waiting.storage_request, request)
+  assert.equal(first.rows.find((row) => row.group_id === "another-customer").status, "fact_review")
+  assert.equal(first.failures.length, 0)
+  const handoff = readJSON(f.root, first.publication_handoff.path)
+  assert.equal(handoff.approved_runs.length, 0)
+  assert.ok(handoff.excluded_groups.some((row) => row.group_id === "order" && row.status === "waiting_for_storage"))
+  assert.equal(handoff.candidate_published, false)
+  const resumed = await advanceEventWorkflow(f.ctx, parameters, { baseProvider: provider })
+  assert.equal(resumed.rows.find((row) => row.group_id === "order").status, "fact_review")
+  assert.equal(resumed.rows.find((row) => row.group_id === "another-customer").status, "fact_review")
+  assert.equal(resumed.candidate_published, false)
+})
 const fileInRepo = (f, name, value) => {
   atomicWrite(f.root, name, value)
   return path.relative(f.ctx.repo, safePath(f.root, name))

@@ -109,6 +109,47 @@ test("the controller resumes a storage-held article after exact bytes return", a
   assert.equal(result.status, "requires_review")
 })
 
+test("a row waiting for storage does not block another ready article", async (t) => {
+  const ctx = setup(t), bytes = Buffer.from("exact archived payload")
+  const file = atomicWrite(ctx.root, "payload/archived.bin", bytes)
+  fs.unlinkSync(path.join(ctx.root, file.path))
+  const request = { schema: "research-storage-download-request/v1", root: ctx.root,
+    requests: [{ path: file.path, sha256: file.sha256, bytes: bytes.length }], request_count: 1 }
+  let current = { ...settled("module-before-archive", 0), status: "partial",
+    pending_reasoning: { total: 0 }, next_inputs: [
+      { stage: "storage", storage_request: request },
+      { stage: "events", required: ["execute"] },
+    ] }
+  let calls = 0
+  const result = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current,
+    advance: async (_ctx, p) => {
+      calls++
+      assert.equal(p.stage, "processing")
+      current = { ...settled("module-after-independent", 0), status: "partial",
+        pending_reasoning: { total: 0 }, next_inputs: [{ stage: "storage", storage_request: request }] }
+      return { status: "completed", job: { job_id: "module-after-independent" } }
+    },
+  })
+  assert.equal(calls, 1)
+  assert.equal(result.status, "requires_storage")
+  assert.equal(result.completed, false)
+})
+
+test("a native job waiting for storage is never replaced by an independent successor", async (t) => {
+  const ctx = setup(t), request = { schema: "research-storage-download-request/v1", root: ctx.root,
+    requests: [{ path: "payload/missing.bin", sha256: "a".repeat(64), bytes: 1 }], request_count: 1 }
+  const current = { ...settled("module-held-job", 0), status: "partial",
+    commands: [{ stage: "processing", job_id: "module-held-job", job: {
+      state: "waiting_for_storage", worker_alive: false, storage_request: request } }],
+    pending_reasoning: { total: 0 }, next_inputs: [{ stage: "events", required: ["execute"] }] }
+  const result = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current, advance: () => assert.fail("the original native job must remain the owner"),
+  })
+  assert.equal(result.status, "requires_storage")
+  assert.equal(result.next_action.job_id, "module-held-job")
+})
+
 test("a repeated completed request stops even when timestamp-bound event references keep changing", async (t) => {
   const ctx = setup(t),
     request = { task_id: "reasoning-ready", request_sha256: "a".repeat(64) }

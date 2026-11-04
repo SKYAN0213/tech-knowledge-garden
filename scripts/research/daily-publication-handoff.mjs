@@ -444,6 +444,7 @@ function eventSelection(ctx, input, workflow, workflowReference) {
       "editorial_review",
       "coverage_review",
       "waiting_for_reasoning",
+      "waiting_for_storage",
       "failed",
     ])
     const nativeRuns = []

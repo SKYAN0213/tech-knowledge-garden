@@ -705,6 +705,12 @@ export async function advanceEventWorkflow(
             status: "waiting_for_reasoning",
             reasoning_task: error.reasoning_task,
           })
+        else if (error.code === "STORAGE_PENDING" && error.storage_request)
+          rows.push({
+            ...row,
+            status: "waiting_for_storage",
+            storage_request: error.storage_request,
+          })
         else if (
           error.code === "MODEL_CALL_LIMIT" &&
           executionWindow.model_calls >= (p.max_model_calls ?? Infinity)

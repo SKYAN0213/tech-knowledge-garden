@@ -71,6 +71,18 @@ test("leading .NET identifiers retain the original prose without splitting a sen
     ".NET 로더를 분석했다.", "NET 표기는 그대로다.",
   ])
 })
+test("parenthesized geographic direction abbreviations do not create extra lead sentences", () => {
+  const first = "AWS는 10월 1일 US West (N. California) 리전에서 기능을 공개했다."
+  const sentences = [first, "사용자는 기능을 활성화할 수 있다.", "작은 파일을 압축한다.", "상태를 조회할 수 있다."]
+  assert.deepEqual(readerSentences(sentences.join(" ")), sentences)
+  assert.deepEqual(readerSentences("서울(S. Korea)에서 시작했다. 이어서 발표했다."), [
+    "서울(S. Korea)에서 시작했다.", "이어서 발표했다.",
+  ])
+  assert.equal(inspectReaderQuality(record({ lead: sentences.map((text) => row(text)) }), [claim]).lead_sentences, 4)
+  assert.deepEqual(readerSentences("기능을 공개했다. N. 다음 문장이다."), [
+    "기능을 공개했다.", "N.", "다음 문장이다.",
+  ])
+})
 test("Korean news sentences followed by lowercase technical names remain separate", () => {
   const prose =
     "GitHub는 7월 28일 악성 패키지 보고를 자동 반영한다고 발표했다. npm과 PyPI의 경보 범위가 넓어졌다."
