@@ -4,17 +4,21 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  # Candidate branch checks never enter the production Pages queue.
+  group: ${{ github.ref == 'refs/heads/main' && 'pages' || format('publish-validation-{0}', github.run_id) }}
   cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -22,30 +26,67 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - name: Inspect prior full CI evidence
+        id: development_ci
+        run: node scripts/publication-ci.mjs publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Refuse unsafe publication workspace
+        if: steps.development_ci.outputs.safe_to_publish != 'true'
+        run: exit 1
       - run: npm ci
-      - run: npm ci --prefix integrations/research-mcp --ignore-scripts --no-audit --no-fund
-      - run: npm test --prefix integrations/research-mcp
-      - run: python -m unittest discover -s tests -p 'test_research_*fixture_metadata_repair.py' -v
-      - run: python -m unittest discover -s tests -p 'test_*drive*.py' -v
-      - run: python -m unittest discover -s tests -p 'test_connector_snapshot.py' -v
-      - run: python -m unittest discover -s tests -p 'test_export_website_data.py' -v
-      - run: python -m pip install trafilatura==2.2.0 markdown-it-py==4.2.0 playwright==1.63.0 PyMuPDF==1.27.2.3
-      - name: Check PDF context and publisher profiles
+      - name: "Full: research MCP dependencies"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: npm ci --prefix integrations/research-mcp --ignore-scripts --no-audit --no-fund
+      - name: "Full: research MCP regression"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: npm test --prefix integrations/research-mcp
+      - name: "Full: fixture metadata repair"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m unittest discover -s tests -p 'test_research_*fixture_metadata_repair.py' -v
+      - name: "Full: storage capacity policy"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m unittest discover -s tests -p 'test_research_storage_capacity_policy.py' -v
+      - name: "Full: Drive regression"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m unittest discover -s tests -p 'test_*drive*.py' -v
+      - name: "Full: connector snapshot"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m unittest discover -s tests -p 'test_connector_snapshot.py' -v
+      - name: "Full: WebsiteData export"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m unittest discover -s tests -p 'test_export_website_data.py' -v
+      - name: "Full: Python dependencies"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m pip install trafilatura==2.2.0 markdown-it-py==4.2.0 playwright==1.63.0 PyMuPDF==1.27.2.3
+      - name: "Full: PDF context and publisher profiles"
+        if: steps.development_ci.outputs.mode != 'fast'
         run: |
           python -m unittest discover -s tests -p 'test_pdf_table_context.py' -v
           PYTHONPATH=tests python -m unittest test_research_worker.WorkerTests.test_pdf_sparse_section_divider_requires_an_exact_profile_match test_research_worker.WorkerTests.test_pdf_profiles_use_native_page_text_and_reject_ambiguous_dates test_research_worker.WorkerTests.test_pdf_publisher_date_normalization_preserves_source_and_rejects_conflicts -v
-      - run: python -m playwright install --with-deps chromium
-      - run: npm run test:garden
+      - name: "Full: browser dependencies"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: python -m playwright install --with-deps chromium
+      - name: "Full: garden regression"
+        if: steps.development_ci.outputs.mode != 'fast'
+        run: npm run test:garden
         env:
           RESEARCH_PYTHON: python
-      - run: npm run build
-      - run: node scripts/verify-site.mjs
+      - name: Validate content and build the site
+        run: npm run build
+      - name: Verify rendered site
+        run: node scripts/verify-site.mjs
+      - name: Recheck source after the build
+        run: node scripts/publication-ci.mjs check
       - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main'
       - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/main'
         with:
           path: public
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

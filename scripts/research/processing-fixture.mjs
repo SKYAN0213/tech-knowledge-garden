@@ -4,6 +4,8 @@ import { execFileSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import { sha256 } from "./contracts.mjs"
 import { recordFactReview } from "./claims.mjs"
+import { eventWorkKey } from "./event-pipeline.mjs"
+import { loadStoredSourceRun } from "./parser.mjs"
 import { safePath } from "./run-state.mjs"
 import { implementationFiles } from "./development-release.mjs"
 
@@ -11,6 +13,7 @@ const prefixes =
   /^(?:runs|parses|documents|event-plans|event-selections|event-work|editions|daily|curation|context|baselines|candidate-approvals|source-index)\//
 const read = (file) => JSON.parse(fs.readFileSync(file))
 const hash = (file) => sha256(fs.readFileSync(file))
+const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b)
 function copyFile(source, destination) {
   const stat = fs.lstatSync(source)
   if (!stat.isFile() || stat.isSymbolicLink()) throw Error("Fixture requires regular source files")
@@ -209,6 +212,14 @@ export function prepareProcessingFixture({
     const a = articleRuns.find((a) => a.candidate_id === item.candidate_id)
     if (!a?.writer_run) throw Error("Every fixed article needs its original writer identity")
     if (item.action === "reuse") {
+      const planRef = item.execution.plan
+      if (!/^[a-f0-9]{64}$/.test(planRef.sha256 || "") || hash(safePath(sourceRoot, planRef.path)) !== planRef.sha256)
+        throw Error("Fixture selected reuse plan changed")
+      const plan = read(safePath(sourceRoot, planRef.path))
+      const events = plan.events?.filter((event) => event.group_id === item.execution.group_id) || []
+      if (a.action !== "reuse" || events.length !== 1 || events[0].action !== "reuse" ||
+          events[0].prior?.run_id !== a.writer_run)
+        throw Error("Fixture selected reuse no longer identifies its prior writer")
       priorRun(a.writer_run)
       continue
     }
@@ -400,6 +411,165 @@ export function materializeProcessingCode(source, destination) {
   return receipt
 }
 
+// Only a newly copied private case reaches this function. Preserve every
+// original byte in a SHA-bound backup before removing its prior writer binds.
+function resetPrivateWriterBindings(root, destination, original, fixture) {
+  if (original.schema !== "research-processing-fixture/v1" || !Array.isArray(original.files) ||
+      !Array.isArray(original.articles) || !original.selection?.path ||
+      hash(safePath(root, original.selection.path)) !== original.selection.sha256)
+    throw Error("Exact processing fixture selection required for writer reset")
+  const selection = read(safePath(root, original.selection.path))
+  if (!Array.isArray(selection.selected) || selection.selected.length !== original.articles.length)
+    throw Error("Exact processing fixture article composition required")
+  const inventory = new Map(original.files.map((file) => [file.path, file]))
+  if (inventory.size !== original.files.length || new Set(original.articles.map((a) => a.candidate_id)).size !== original.articles.length ||
+      new Set(original.articles.map((a) => a.writer_run)).size !== original.articles.length)
+    throw Error("Distinct fixture inventory and writer identities required")
+  const expected = [], reuse = [], keys = new Set(), targetPaths = new Set(), freshWriters = new Set()
+  for (const item of selection.selected) {
+    const article = original.articles.find((a) => a.candidate_id === item.candidate_id)
+    if (!article || article.action !== item.action || !/^[A-Za-z0-9_-]+$/.test(article.writer_run || ""))
+      throw Error("Fixture selected article identity changed")
+    const planPath = item.execution?.plan?.path
+    if (!planPath || !inventory.has(planPath) || hash(safePath(root, planPath)) !== item.execution.plan.sha256)
+      throw Error("Fixture selected plan changed")
+    const plan = read(safePath(root, planPath)),
+      events = plan.events?.filter((event) => event.group_id === item.execution.group_id) || []
+    if (events.length !== 1) throw Error("Exact fixture selected event required")
+    const event = events[0], workKey = eventWorkKey(event)
+    if (keys.has(workKey)) throw Error("Fixture event binding is shared with another selected article")
+    keys.add(workKey)
+    if (item.action === "reuse") {
+      if (event.action !== "reuse" || event.prior?.run_id !== article.writer_run)
+        throw Error("Fixture selected reuse no longer identifies its prior writer")
+      const approvalPath = `runs/${article.writer_run}/approved-article.json`, approval = inventory.get(approvalPath)
+      if (!approval || hash(safePath(root, approvalPath)) !== approval.sha256)
+        throw Error("Fixture reused approval changed")
+      reuse.push({ candidate_id: item.candidate_id, writer_run: article.writer_run, approval })
+      continue
+    }
+    const writer = "event-" + sha256(JSON.stringify([item.execution.plan, item.execution.group_id])).slice(0, 36)
+    if (writer !== article.writer_run || !["write", "update", "correction"].includes(event.action))
+      throw Error("Fixture writer differs from its deterministic selected event")
+    freshWriters.add(writer)
+    const files = [
+      `runs/${writer}/event-selection.json`,
+      `event-selections/${writer}/input.json`,
+      `event-selections/${writer}/selection.json`,
+      `event-plans/${plan.run_id}/selections/${event.group_id}.json`,
+      `event-work/${workKey}/selection.json`,
+    ].map((relative) => {
+      const file = inventory.get(relative)
+      if (!file || !/^[a-f0-9]{64}$/.test(file.sha256 || "") || hash(safePath(root, relative)) !== file.sha256 || targetPaths.has(relative))
+        throw Error("Fixture writer binding is missing, changed or shared: " + relative)
+      targetPaths.add(relative)
+      return { path: relative, sha256: file.sha256, backup_path: `.local/writer-binding-backup/${relative}` }
+    })
+    const pointer = read(safePath(root, files[0].path)), input = read(safePath(root, files[1].path)),
+      selected = read(safePath(root, files[2].path)), planBinding = read(safePath(root, files[3].path)),
+      globalBinding = read(safePath(root, files[4].path))
+    const expectedInput = { schema: "research-event-selection-input/v1", run_id: writer,
+      plan: item.execution.plan, group_id: event.group_id }
+    if (!equal(input, expectedInput) || pointer.path !== files[2].path || pointer.sha256 !== files[2].sha256 ||
+        selected.schema !== "research-event-selection/v1" || selected.run_id !== writer ||
+        !equal(selected.plan, item.execution.plan) || selected.group_id !== event.group_id ||
+        !equal(selected.sources, event.sources) || !equal(selected.identity, event.identity) ||
+        !equal(selected.existing_event, event.prior) || selected.action !== event.action ||
+        planBinding.writer_run !== writer || !equal(planBinding.selection, pointer) ||
+        globalBinding.writer_run !== writer || !equal(globalBinding.selection, pointer) ||
+        !equal(loadStoredSourceRun(root, selected.source_run).identity, selected.source_identity))
+      throw Error("Fixture writer binding or stored source identity changed")
+    for (const [dir, names] of [[`runs/${writer}`, ["event-selection.json"]],
+      [`event-selections/${writer}`, ["input.json", "selection.json"]],
+      [`event-work/${workKey}`, ["selection.json"]]])
+      if (!equal(fs.readdirSync(safePath(root, dir)).sort(), names))
+        throw Error("Fixture writer directory contains other or unrecoverable data: " + dir)
+    expected.push({ candidate_id: item.candidate_id, writer_run: writer, plan: item.execution.plan,
+      group_id: event.group_id, source_run: selected.source_run, source_identity: selected.source_identity,
+      work_key: workKey, files })
+  }
+  if (expected.length !== original.fresh_articles || reuse.length !== original.preserved_reuse)
+    throw Error("Fixture fresh and reused article counts changed")
+  // A reference from another native binding is evidence of shared ownership.
+  const expectedByWorkKey = new Map(expected.map((entry) => [entry.work_key, entry]))
+  for (const file of original.files) {
+    if (/^event-plans\/[^/]+\/plan\.json$/.test(file.path)) {
+      const other = read(safePath(root, file.path))
+      if (!Array.isArray(other.events)) throw Error("Fixture event plan is malformed")
+      for (const event of other.events) {
+        const owner = expectedByWorkKey.get(eventWorkKey(event))
+        if (owner && (owner.plan.path !== file.path || owner.group_id !== event.group_id))
+          throw Error("Fixture writer event is shared with another plan: " + file.path)
+      }
+    }
+    if (!/^(?:event-plans\/[^/]+\/selections\/[^/]+\.json|event-work\/[^/]+\/selection\.json|runs\/[^/]+\/event-selection\.json)$/.test(file.path) || targetPaths.has(file.path)) continue
+    const value = read(safePath(root, file.path))
+    if (freshWriters.has(value.writer_run) || expected.some((entry) => value.path === entry.files[2].path))
+      throw Error("Fixture writer binding is shared with another article: " + file.path)
+  }
+  for (const entry of expected) for (const file of entry.files) {
+    const backup = safePath(destination, file.backup_path)
+    copyFile(safePath(root, file.path), backup)
+    if (hash(backup) !== file.sha256) throw Error("Fixture writer recovery backup changed")
+  }
+  const planPath = ".local/processing-writer-reset-plan.json", planFile = safePath(destination, planPath)
+  fs.writeFileSync(planFile, JSON.stringify({ schema: "research-private-writer-reset-plan/v1", fixture,
+    root, expected, reused_approvals: reuse }, null, 2) + "\n", { flag: "wx", mode: 0o600 })
+  const planRef = { path: planPath, sha256: hash(planFile) }
+  for (const entry of expected) {
+    for (const file of entry.files) {
+      if (hash(safePath(root, file.path)) !== file.sha256 || hash(safePath(destination, file.backup_path)) !== file.sha256)
+        throw Error("Fixture writer binding changed before reset")
+      fs.unlinkSync(safePath(root, file.path))
+    }
+    for (const dir of [`runs/${entry.writer_run}`, `event-selections/${entry.writer_run}`, `event-work/${entry.work_key}`])
+      fs.rmdirSync(safePath(root, dir))
+  }
+  if (expected.some((entry) => entry.files.some((file) => fs.existsSync(safePath(root, file.path)))))
+    throw Error("Fixture writer reset did not finish")
+  const resultPath = ".local/processing-writer-reset.json", resultFile = safePath(destination, resultPath)
+  fs.writeFileSync(resultFile, JSON.stringify({ schema: "research-private-writer-reset/v1", status: "reset",
+    plan: planRef, fixture, removed_files: expected.reduce((n, entry) => n + entry.files.length, 0),
+    preserved_reused_approvals: reuse.length }, null, 2) + "\n", { flag: "wx", mode: 0o600 })
+  return { path: resultPath, sha256: hash(resultFile) }
+}
+
+// Re-created native binds must match the backed-up bytes and the original
+// parsed-source identity. A subset can be checked for a private live sample.
+export function verifyProcessingFixtureBindings(instance, { candidate_ids } = {}) {
+  const root = instance.root, repo = instance.repo, resetRef = instance.writer_reset
+  if (!resetRef || hash(safePath(repo, resetRef.path)) !== resetRef.sha256)
+    throw Error("Private writer reset receipt changed")
+  const reset = read(safePath(repo, resetRef.path))
+  if (reset.schema !== "research-private-writer-reset/v1" || reset.status !== "reset" ||
+      !equal(reset.fixture, instance.fixture) || hash(safePath(repo, reset.plan.path)) !== reset.plan.sha256)
+    throw Error("Private writer reset plan changed")
+  const plan = read(safePath(repo, reset.plan.path))
+  if (plan.schema !== "research-private-writer-reset-plan/v1" || plan.root !== root || !equal(plan.fixture, instance.fixture))
+    throw Error("Private writer reset root or fixture changed")
+  const ids = candidate_ids === undefined ? plan.expected.map((entry) => entry.candidate_id) : candidate_ids
+  if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length ||
+      ids.some((id) => plan.expected.filter((entry) => entry.candidate_id === id).length !== 1))
+    throw Error("Exact private writer verification candidates required")
+  const verified = []
+  for (const entry of plan.expected.filter((value) => ids.includes(value.candidate_id))) {
+    for (const file of entry.files) {
+      if (hash(safePath(repo, file.backup_path)) !== file.sha256 || hash(safePath(root, file.path)) !== file.sha256)
+        throw Error("Regenerated writer binding or its recovery backup changed: " + file.path)
+    }
+    if (!equal(loadStoredSourceRun(root, entry.source_run).identity, entry.source_identity))
+      throw Error("Regenerated writer source identity changed")
+    verified.push({ candidate_id: entry.candidate_id, writer_run: entry.writer_run,
+      binding_sha256: entry.files.map(({ path, sha256 }) => ({ path, sha256 })),
+      source_identity: entry.source_identity })
+  }
+  for (const item of plan.reused_approvals)
+    if (hash(safePath(root, item.approval.path)) !== item.approval.sha256)
+      throw Error("Preserved prior approval changed")
+  return { schema: "research-private-writer-verification/v1", reset: resetRef,
+    verified_count: verified.length, preserved_reused_approvals: plan.reused_approvals.length, verified }
+}
+
 export function instantiateProcessingFixture(
   manifest,
   destination,
@@ -408,6 +578,14 @@ export function instantiateProcessingFixture(
   if (fs.existsSync(destination)) throw Error("Fresh benchmark case directory required")
   const original = read(manifest.path)
   if (hash(manifest.path) !== manifest.sha256) throw Error("Processing fixture manifest changed")
+  if (!live) {
+    const oracle = original.oracle
+    const stat = typeof oracle?.path === "string" && path.isAbsolute(oracle.path)
+      ? fs.lstatSync(oracle.path, { throwIfNoEntry: false }) : null
+    if (!stat?.isFile() || stat.isSymbolicLink() || !/^[a-f0-9]{64}$/.test(oracle?.sha256 || "") ||
+        hash(oracle.path) !== oracle.sha256)
+      throw Error("Processing fixture oracle changed")
+  }
   copyFixtureTree(original.seed, destination, { reserveBytes: 2 * 1024 * 1024 * 1024 })
   const execution = materializeProcessingCode(executionRepo, destination)
   const root = path.join(destination, ".local/research/local-ai"),
@@ -424,6 +602,7 @@ export function instantiateProcessingFixture(
     ])
       if (fs.existsSync(safePath(root, `runs/${a.writer_run}/${name}`)))
         throw Error("A fresh processing case cannot start with completed article output")
+  const writerReset = resetPrivateWriterBindings(root, destination, original, manifest)
   const poolPath = safePath(root, original.original_pool.path),
     pool = read(poolPath)
   pool.context = {
@@ -441,7 +620,12 @@ export function instantiateProcessingFixture(
     path.join(root, ".storage/policy.json"),
     JSON.stringify({ schema: "research-cold-storage/v1", root, enabled: false }),
   )
-  if (!live) copyFile(original.oracle.path, path.join(destination, ".local/replay-oracle.json"))
+  if (!live) {
+    const copiedOracle = path.join(destination, ".local/replay-oracle.json")
+    copyFile(original.oracle.path, copiedOracle)
+    if (hash(copiedOracle) !== original.oracle.sha256)
+      throw Error("Processing fixture oracle changed during copy")
+  }
   const binding = {
     schema: "research-processing-fixture-instance/v1",
     fixture: manifest,
@@ -471,6 +655,8 @@ export function instantiateProcessingFixture(
     },
     imported_completed_new_articles: 0,
     imported_replay_oracle: !live,
+    writer_reset: writerReset,
+    ...(!live ? { replay_oracle_sha256: original.oracle.sha256 } : {}),
   }
   fs.writeFileSync(
     path.join(destination, ".local/processing-instance.json"),

@@ -2,18 +2,98 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import { sha256 } from "./contracts.mjs"
+import { verifyProcessingFixtureBindings } from "./processing-fixture.mjs"
 
 const read = (file) => JSON.parse(fs.readFileSync(file))
 const clone = (value) => structuredClone(value)
 const key = (request) =>
   sha256(JSON.stringify({ messages: request.messages, schema: request.schema }))
+const publicationDateAnchor = "Publication date comes only from dates.published_at, otherwise null."
+const publicationDateAddition = " The publication date is the source document's publication date. Assign an event or announcement date only when its exact source evidence supports it."
+const historicalWriterPromptSHA = "f74222b5517a2fc6b792253fcf24e934a05b8d557d199a9059077f5c3a73cbb6"
+const currentWriterPromptSHA = "21b11ec67daa04fc8a0fb51ce38d172536e55d6619b72bd034cc7febca0e936a"
+
+function historicalReplayBindingMatches(exchange, request, role, expectedRole) {
+  if (role !== expectedRole || exchange.role !== role ||
+      !Array.isArray(exchange.request?.messages) || exchange.request.messages.length !== 2 ||
+      !Array.isArray(request.messages) || request.messages.length !== 2 ||
+      exchange.request.messages[0]?.role !== "system" || request.messages[0]?.role !== "system" ||
+      exchange.request.messages[1]?.role !== "user" || request.messages[1]?.role !== "user" ||
+      JSON.stringify(exchange.request.messages[1]) !== JSON.stringify(request.messages[1]) ||
+      JSON.stringify(exchange.request.schema) !== JSON.stringify(request.schema) ||
+      typeof exchange.run !== "string" || !exchange.run ||
+      typeof exchange.source?.path !== "string" || !exchange.source.path ||
+      !/^[a-f0-9]{64}$/.test(exchange.source?.sha256 || "") ||
+      typeof exchange.source?.attempt_id !== "string" || !exchange.source.attempt_id ||
+      exchange.output === undefined ||
+      typeof exchange.request.messages[0].content !== "string" ||
+      typeof request.messages[0].content !== "string")
+    return false
+  return JSON.stringify({ ...exchange.request.messages[0], content: "" }) ===
+    JSON.stringify({ ...request.messages[0], content: "" })
+}
+
+// Only historically observed prompt changes are mapped. They strengthened
+// date attribution, so the replay receipt must never claim that the older
+// response was generated or independently reviewed under the current prompt.
+function historicalDatePromptMatch(exchange, request, role) {
+  if (!historicalReplayBindingMatches(exchange, request, role, "fact_extract")) return false
+  const original = exchange.request.messages[0].content
+  if (original.split(publicationDateAnchor).length !== 2)
+    return false
+  const changed = original.replace(publicationDateAnchor, publicationDateAnchor + publicationDateAddition)
+  return JSON.stringify({ ...exchange.request.messages[0], content: changed }) ===
+    JSON.stringify(request.messages[0])
+}
+
+function historicalWriterPromptMatch(exchange, request, role) {
+  return historicalReplayBindingMatches(exchange, request, role, "article_write") &&
+    sha256(exchange.request.messages[0].content) === historicalWriterPromptSHA &&
+    sha256(request.messages[0].content) === currentWriterPromptSHA
+}
+
+// These count successful replay-provider responses, not new model calls,
+// attempted calls outside the provider, or verified application of a repair.
+export function summarizeReplayObservations(telemetry, rows) {
+  if (!Array.isArray(telemetry?.requests) || !Array.isArray(rows))
+    throw Error("Replay requests and selected result rows required")
+  const tasks = new Map(), roles = new Map()
+  let unspecifiedTasks = 0, unspecifiedRoles = 0
+  for (const request of telemetry.requests) {
+    if (typeof request.task === "string" && request.task) tasks.set(request.task, (tasks.get(request.task) || 0) + 1)
+    else unspecifiedTasks++
+    if (typeof request.role === "string" && request.role) roles.set(request.role, (roles.get(request.role) || 0) + 1)
+    else unspecifiedRoles++
+  }
+  return {
+    schema: "research-replay-observed-counts/v1",
+    successful_replayed_requests: telemetry.requests.length,
+    requests_by_role: Object.fromEntries(roles),
+    requests_without_role: unspecifiedRoles,
+    requests_by_native_task: Object.fromEntries(tasks),
+    requests_without_native_task: unspecifiedTasks,
+    combined_review_repair_requests: tasks.get("combined_review_repair") || 0,
+    correction_time_repair_requests: tasks.get("combined_review_correction_time_repair") || 0,
+    writer_correction_requests: tasks.get("combined_review_correction") || 0,
+    selected_approved_reuse: rows.every((row) => typeof row.action === "string" && typeof row.status === "string")
+      ? rows.filter((row) => row.action === "reuse" && row.status === "reused").length : null,
+    coverage_decisions_reused: null,
+    applied_writer_corrections: null,
+    failed_or_unobserved_requests: null,
+    scope: "successful saved-response replay only; no live model calls, independent review, or verified repair application is implied",
+  }
+}
 
 // This adapter is deliberately restricted to recorded-response experiments.
 // It cannot be selected by the operational provider factory.
 export function recordedProcessingProvider(instance, oracle, telemetry) {
   if (instance.live || !instance.imported_replay_oracle)
     throw Error("Replay oracle forbidden in live processing")
-  const exchanges = new Map(oracle.exchanges.map((e) => [key(e.request), e]))
+  const exchanges = new Map()
+  for (const exchange of oracle.exchanges) {
+    const fingerprint = key(exchange.request)
+    exchanges.set(fingerprint, [...(exchanges.get(fingerprint) || []), exchange])
+  }
   const articles = new Map(oracle.articles.map((a) => [a.writer_run, a]))
   return {
     metadata: async (model) => ({
@@ -27,7 +107,8 @@ export function recordedProcessingProvider(instance, oracle, telemetry) {
       const began = performance.now(),
         input = JSON.parse(request.messages[1].content)
       let output,
-        transformation = null
+        transformation = null,
+        replayEvidence = null
       if (input.task === "combined_review") {
         const a = articles.get(input.run_id)
         if (!a) throw Error("No historical article for combined replay")
@@ -130,7 +211,14 @@ export function recordedProcessingProvider(instance, oracle, telemetry) {
         delete output.draft_id
         transformation = "historical native writer correction response"
       } else {
-        const found = exchanges.get(key(request))
+        const role = this.executionPolicy?.role
+        const exact = (exchanges.get(key(request)) || []).filter((entry) => entry.role === role)
+        const transformed = exact.length ? [] : oracle.exchanges.filter((entry) =>
+          historicalDatePromptMatch(entry, request, role) || historicalWriterPromptMatch(entry, request, role),
+        )
+        if (exact.length > 1 || transformed.length > 1)
+          throw Error("Ambiguous recorded model request; replay requires one exact historical response")
+        const found = exact[0] || transformed[0]
         if (!found) {
           const diagnostic = path.join(instance.repo, ".local/unmatched-replay-request.json")
           fs.writeFileSync(
@@ -140,13 +228,28 @@ export function recordedProcessingProvider(instance, oracle, telemetry) {
           throw Error("No exact recorded model request; diagnostic: " + diagnostic)
         }
         output = clone(found.output)
+        if (transformed.length) {
+          transformation = role === "article_write"
+            ? "historical writer replay: publication date is now distinguished from announcement and event dates; the saved response was not generated or verified under the current prompt"
+            : "historical fact extraction replay: publication date and event date prompt guidance was added; the saved response was not generated or verified under the current prompt"
+          replayEvidence = {
+            original_request_sha256: key(found.request),
+            original_output_sha256: sha256(JSON.stringify(found.output)),
+            original_source: clone(found.source),
+            original_system_prompt_sha256: sha256(found.request.messages[0].content),
+            current_system_prompt_sha256: sha256(request.messages[0].content),
+            current_prompt_validated: false,
+          }
+        }
       }
       telemetry.requests.push({
         role: this.executionPolicy?.role || null,
+        task: typeof input.task === "string" && input.task ? input.task : null,
         request_sha256: key(request),
         output_sha256: sha256(JSON.stringify(output)),
         transformation,
         model_execution: false,
+        ...(replayEvidence || {}),
       })
       telemetry.provider_ms += performance.now() - began
       return {
@@ -159,7 +262,8 @@ export function recordedProcessingProvider(instance, oracle, telemetry) {
           done: true,
           done_reason: "recorded_replay",
         },
-        provenance: { runtime: "recorded-replay/v1", actual_model_execution: false },
+        provenance: { runtime: "recorded-replay/v1", actual_model_execution: false,
+          ...(replayEvidence ? { replay_transformation: { reason: transformation, ...replayEvidence } } : {}) },
       }
     },
   }
@@ -168,11 +272,15 @@ export function recordedProcessingProvider(instance, oracle, telemetry) {
 export async function runRecordedProcessingCase({
   code_repo,
   instance,
+  review_repair_mode,
   mode,
   retry_candidates = [],
 }) {
   if (!["separate/v1", "combined/v1"].includes(mode) || instance.live)
     throw Error("Explicit replay mode required")
+  if (review_repair_mode !== undefined &&
+      (review_repair_mode !== "components/v1" || mode !== "combined/v1"))
+    throw Error("Bound combined review repair mode required")
   const load = (name) =>
     import(pathToFileURL(path.join(code_repo, "scripts/research/" + name)).href)
   const [{ moduleContext }, { advanceCuration }, { nativeResearch }] = await Promise.all([
@@ -201,6 +309,7 @@ export async function runRecordedProcessingCase({
     time_budget_ms: 3600000,
     ...(retry_candidates.length ? { retry_candidates } : {}),
     ...(mode === "combined/v1" ? { review_mode: mode } : {}),
+    ...(review_repair_mode ? { review_repair_mode } : {}),
     fact_reviews: {},
     completeness_reviews: {},
     editorial_reviews: {},
@@ -277,6 +386,7 @@ export async function runRecordedProcessingCase({
     result.rows.some((r) => !["approved", "reused"].includes(r.status))
   )
     throw Error("All 32 native approvals and publication handoff required")
+  const writerVerification = verifyProcessingFixtureBindings(instance)
   const artifacts = result.rows.map((row) => {
     const writer = row.writer_run || row.approved_run
     return {
@@ -308,6 +418,8 @@ export async function runRecordedProcessingCase({
     prior_reuse: 1,
     private_native_approvals: 31,
     production_approvals: 0,
+    writer_binding_verification: writerVerification,
+    observed_counts: summarizeReplayObservations(telemetry, result.rows),
     telemetry,
     publication_handoff: result.publication_handoff,
     artifacts,
@@ -320,6 +432,7 @@ export async function runRecordedProcessingCase({
     wall_ms,
     control_validation_ms: receipt.control_validation_ms,
     requests: telemetry.requests.length,
+    observed_counts: receipt.observed_counts,
   }
 }
 

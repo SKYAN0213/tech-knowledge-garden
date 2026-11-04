@@ -257,6 +257,7 @@ export async function recoverCurationCheckpoint(ctx, p) {
       execute: true,
       require_completeness: input.require_completeness === true,
       ...(input.review_mode ? { review_mode: input.review_mode } : {}),
+      ...(input.review_repair_mode ? { review_repair_mode: input.review_repair_mode } : {}),
       ...(targets.length ? { retry_candidates: targets } : {}),
     }
     const nextActions = [

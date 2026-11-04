@@ -45,7 +45,9 @@ export function moduleJobTiming(root, state) {
   const cleanup = recordedCleanup?.attempt === state.attempt ? recordedCleanup : null
   if (cleanup && (cleanup.schema !== "research-storage-cleanup-timing/v1" ||
       cleanup.job_id !== state.job_id || cleanup.input_sha256 !== state.input_sha256 ||
-      !["completed", "failed"].includes(cleanup.status) ||
+      !["completed", "failed", "skipped", "blocked"].includes(cleanup.status) ||
+      (["skipped", "blocked"].includes(cleanup.status) &&
+        (typeof cleanup.reason !== "string" || !cleanup.reason.trim())) ||
       !Number.isSafeInteger(cleanup.elapsed_ms) || cleanup.elapsed_ms < 0 ||
       !Number.isFinite(Date.parse(cleanup.started_at)) ||
       !Number.isFinite(Date.parse(cleanup.finished_at))))
@@ -96,8 +98,14 @@ export function moduleJobTiming(root, state) {
     attempts: timings,
     dispatch_wait_ms: sum(timings.map((t) => t.dispatch_wait_ms)),
     native_execution_ms: sum(timings.map((t) => t.native_execution_ms)),
-    storage_cleanup_ms: cleanup?.elapsed_ms ?? null,
+    storage_cleanup_ms: cleanup && ["completed", "failed"].includes(cleanup.status)
+      ? cleanup.elapsed_ms : null,
+    storage_cleanup_decision_ms: cleanup && ["skipped", "blocked"].includes(cleanup.status)
+      ? cleanup.elapsed_ms : null,
     storage_cleanup_status: cleanup?.status ?? null,
+    storage_cleanup_reason: cleanup?.reason ?? null,
+    storage_cleanup_trigger: cleanup?.trigger ?? null,
+    storage_cleanup_next_check_at: cleanup?.next_check_at ?? null,
   }
 }
 
@@ -105,13 +113,25 @@ export function summarizeStageTiming(commands) {
   return Object.fromEntries(
     [...new Set(commands.map((c) => c.stage))].map((stage) => {
       const jobs = commands.filter((c) => c.stage === stage).map((c) => c.job.timing)
+      const starts = jobs.map((job) => job?.started_at).filter((value) => Number.isFinite(Date.parse(value || "")))
+      const ends = jobs.map((job) => job?.finished_at).filter((value) => Number.isFinite(Date.parse(value || "")))
+      const first = starts.length === jobs.length ? starts.toSorted((a, b) => Date.parse(a) - Date.parse(b))[0] : null
+      const last = ends.length === jobs.length ? ends.toSorted((a, b) => Date.parse(a) - Date.parse(b)).at(-1) : null
+      const measuredCleanup = jobs.map((job) => job?.storage_cleanup_ms).filter((value) => Number.isFinite(value))
       return [
         stage,
         {
           jobs: jobs.length,
+          first_started_at: first,
+          last_finished_at: last,
+          observed_span_ms: duration(first, last),
           dispatch_wait_ms: sum(jobs.map((j) => j?.dispatch_wait_ms)),
           native_execution_ms: sum(jobs.map((j) => j?.native_execution_ms)),
           storage_cleanup_ms: sum(jobs.map((j) => j?.storage_cleanup_ms)),
+          storage_cleanup_observed_ms: measuredCleanup.length ? measuredCleanup.reduce((a, b) => a + b, 0) : null,
+          storage_cleanup_measured_jobs: measuredCleanup.length,
+          storage_cleanup_skipped_jobs: jobs.filter((job) => job?.storage_cleanup_status === "skipped").length,
+          storage_cleanup_blocked_jobs: jobs.filter((job) => job?.storage_cleanup_status === "blocked").length,
           reasoning_external_wait_ms: sum(jobs.map((j) => j?.reasoning_external_wait_ms)),
           aggregation: "sum_of_job_durations_not_wall_clock",
           fixed_input_replay_verified: false,
@@ -119,6 +139,68 @@ export function summarizeStageTiming(commands) {
       ]
     }),
   )
+}
+
+// Durations come from the exact saved native publication receipt. Do not
+// retrieve GitHub here or treat an unverified timestamp as deployment proof.
+export function summarizeDeliveryTiming(root, delivery) {
+  const execution = delivery?.execution
+  const partial = {
+    status: "not_available",
+    last_delivery_execution_ms: duration(execution?.started_at, execution?.completed_at),
+    ci_observed_span_ms: null, build_ms: null, deploy_ms: null,
+    authoring_verified_at: null, remote_verified_at: null, pure_network_ms: null,
+  }
+  const run = delivery?.publication?.run_id
+  if (!run) return partial
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(run)) throw Error("Exact publication timing run required")
+  const base = `runs/${run}/publication-operation/`
+  const proof = readJSON(root, base + "public.json")
+  if (!proof) return partial
+  const input = readJSON(root, base + "input.json"), deployment = readJSON(root, base + "deployment.json")
+  if (!input || !deployment || proof.schema !== "research-publication-operation-readback/v1" ||
+      proof.status !== "public_bytes_verified" || proof.input_sha256 !== sha256(JSON.stringify(input)) ||
+      proof.deployment_sha256 !== sha256(JSON.stringify(deployment)) ||
+      proof.commit !== delivery.publication.commit || deployment.headSha !== proof.commit ||
+      deployment.headBranch !== "main" || deployment.status !== "completed" || deployment.conclusion !== "success")
+    throw Error("Publication deployment timing binding changed")
+  const readbackRef = proof.readback
+  if (!readbackRef?.path || !/^[a-f0-9]{64}$/.test(readbackRef.sha256 || ""))
+    throw Error("Publication timing readback reference missing")
+  const readbackBytes = fs.readFileSync(safePath(root, readbackRef.path))
+  if (sha256(readbackBytes) !== readbackRef.sha256) throw Error("Publication timing readback changed")
+  const readback = JSON.parse(readbackBytes)
+  if (readback.schema !== "publication-readback-receipt/v1" || readback.commit !== proof.commit ||
+      readback.verified !== true || readback.status !== "public_artifact_bytes_verified")
+    throw Error("Publication timing readback binding changed")
+  const jobs = Array.isArray(deployment.jobs) ? deployment.jobs : []
+  const one = (names) => {
+    const matches = jobs.filter((job) => names.includes(job.name) && job.status === "completed" && job.conclusion === "success")
+    return matches.length === 1 ? matches[0] : null
+  }
+  const build = one(["build", "sync"]), deploy = one(["deploy"])
+  const authoringRef = delivery.authoring?.execution
+  let authoringAt = null
+  if (authoringRef) {
+    const bytes = fs.readFileSync(safePath(root, authoringRef.path))
+    if (sha256(bytes) !== authoringRef.sha256) throw Error("Authoring timing receipt changed")
+    const authoring = JSON.parse(bytes)
+    if (authoring.drive_verified === true && Number.isFinite(Date.parse(authoring.observed_at)))
+      authoringAt = authoring.observed_at
+  }
+  let remoteAt = null
+  const remoteRef = delivery.remote_delivery?.receipt
+  if (remoteRef && delivery.remote_delivery.status === "remote_delivery_complete") {
+    const bytes = fs.readFileSync(safePath(root, remoteRef.path))
+    if (sha256(bytes) !== remoteRef.sha256) throw Error("Remote delivery timing receipt changed")
+    remoteAt = delivery.remote_delivery.observed_at || null
+  }
+  return { ...partial, status: "verified", commit: proof.commit,
+    ci_observed_span_ms: duration(build?.startedAt, deploy?.completedAt),
+    build_ms: duration(build?.startedAt, build?.completedAt),
+    deploy_ms: duration(deploy?.startedAt, deploy?.completedAt),
+    authoring_verified_at: authoringAt,
+    remote_verified_at: remoteAt }
 }
 
 export function recordOperationalJobTiming(ctx, jobId) {

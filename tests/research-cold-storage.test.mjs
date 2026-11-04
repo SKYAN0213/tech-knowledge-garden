@@ -8,8 +8,10 @@ import crypto from "node:crypto"
 import { once } from "node:events"
 import { spawn, spawnSync } from "node:child_process"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
-import { moduleContext, submitModuleJob } from "../scripts/research/module-runtime.mjs"
-import { storageAction } from "../scripts/research/cold-storage.mjs"
+import { moduleContext, submitModuleJob, resumeModuleJob } from "../scripts/research/module-runtime.mjs"
+import { storageAction, trimColdStorage } from "../scripts/research/cold-storage.mjs"
+import { moduleRecoveryPlan } from "../scripts/research/operation-policy.mjs"
+import { isReadOnlyHydrationCapacity } from "../scripts/research/storage-capacity.mjs"
 import { safePath, readJSON, atomicWrite, RunState } from "../scripts/research/run-state.mjs"
 import { packageResearchArchive } from "../scripts/research/archive.mjs"
 import { auditCurationFrontier } from "../scripts/research/operations-runtime.mjs"
@@ -91,6 +93,57 @@ function verified(t) {
   storageAction(f.root, "enable")
   return f
 }
+
+test("automatic storage cleanup performs one exact sweep and skips repeated in-budget checks", (t) => {
+  const f = verified(t)
+  const first = storageAction(f.root, "evict-if-due")
+  assert.equal(first.status, "completed")
+  assert.equal(first.reason, "no_previous_sweep")
+  const second = storageAction(f.root, "evict-if-due")
+  assert.equal(second.status, "skipped")
+  assert.equal(second.reason, "within_budget")
+  assert.equal(second.eviction, undefined)
+  assert.ok(second.next_check_at)
+  const age = spawnSync("python3", ["-c", `import datetime,sqlite3,sys
+c=sqlite3.connect(sys.argv[1]); c.execute("UPDATE meta SET value=? WHERE key=?",((datetime.datetime.now(datetime.timezone.utc)-datetime.timedelta(hours=2)).isoformat(),"automatic_evict_last_completed_at"));c.commit()`, path.join(f.root, ".storage/catalog.sqlite")], { encoding: "utf8" })
+  assert.equal(age.status, 0, age.stderr)
+  const overdue = storageAction(f.root, "evict-if-due")
+  assert.equal(overdue.status, "completed")
+  assert.equal(overdue.reason, "interval_elapsed")
+})
+
+test("a live native lock blocks an automatic sweep without marking it complete", (t) => {
+  const f = verified(t)
+  const lock = path.join(f.root, "research/local-ai/locks/source-live.json")
+  fs.mkdirSync(path.dirname(lock), { recursive: true })
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid }))
+  const held = storageAction(f.root, "evict-if-due")
+  assert.equal(held.status, "blocked")
+  assert.equal(held.reason, "active_native_locks")
+  assert.equal(held.eviction.held_by_active_locks.length, 1)
+  fs.unlinkSync(lock)
+  const next = storageAction(f.root, "evict-if-due")
+  assert.equal(next.status, "completed")
+  assert.equal(next.reason, "no_previous_sweep")
+})
+
+test("controller rechecks the exact verified hydration need before resuming", (t) => {
+  const f = verified(t)
+  storageAction(f.root, "evict", { cache_bytes: 0 })
+  const rel = "research/local-ai/documents/a/body.bin"
+  const need = { schema: "research-storage-capacity-need/v1", root: f.root,
+    bundle_id: f.bundle.id, paths: [rel], required_free_bytes: 10 * 1024 ** 3 + f.body.length,
+    additional_cache_bytes: f.body.length, required_cache_bytes: f.body.length, cache_limit_bytes: 2 * 1024 ** 3 }
+  const checked = trimColdStorage(f.root, process.pid, need)
+  assert.equal(checked.status, "completed")
+  assert.equal(checked.required_free_bytes, need.required_free_bytes)
+  assert.equal(checked.additional_cache_bytes, f.body.length)
+  assert.equal(checked.cache_limit_bytes, need.cache_limit_bytes)
+  assert.ok(checked.free_bytes_after >= checked.required_free_bytes)
+  assert.equal(fs.existsSync(path.join(f.root, rel)), false)
+  assert.throws(() => trimColdStorage(f.root, process.pid, { ...need, root: path.dirname(f.root) }),
+    /Exact capacity need and storage root required/)
+})
 
 test("storage deduplicates equal bytes across original paths without changing evidence", (t) => {
   const f = fixture(t)
@@ -1016,9 +1069,10 @@ function storageWorkerFixture(t, { eviction = false } = {}) {
   fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true })
   fs.writeFileSync(path.join(root, relative), body)
   const ctx = moduleContext({ repo, root: ".local/research/local-ai" })
+  let bundle
   if (eviction) {
     storageAction(root, "prepare", { parent_id: "synthetic-parent" })
-    const bundle = storageAction(root, "pending").uploads[0]
+    bundle = storageAction(root, "pending").uploads[0]
     storageAction(root, "verify", {
       bundle_id: bundle.id,
       metadata: {
@@ -1035,27 +1089,157 @@ function storageWorkerFixture(t, { eviction = false } = {}) {
     })
     storageAction(root, "enable")
   }
-  return { repo, root, ctx, body, relative }
+  return { repo, root, ctx, body, relative, bundle }
 }
+
+test("native storage capacity wait retains the exact job without inventing a Drive request", async (t) => {
+  const f = storageWorkerFixture(t, { eviction: true })
+  storageAction(f.root, "evict", { cache_bytes: 0 })
+  const wrapper = path.join(f.repo, "capacity-python")
+  const need = { schema: "research-storage-capacity-need/v1", root: f.root,
+    bundle_id: f.bundle.id, paths: [f.relative], required_free_bytes: 10 * 1024 ** 3 + f.body.length,
+    additional_cache_bytes: f.body.length, required_cache_bytes: f.body.length, cache_limit_bytes: 2 * 1024 ** 3 }
+  const failure = JSON.stringify({ error: "active native locks", code: "STORAGE_CAPACITY_LOCKED", capacity_need: need })
+  fs.writeFileSync(wrapper, `#!/usr/bin/python3
+import os,sys
+if len(sys.argv)>2 and sys.argv[2]=="hydrate":
+ print(${JSON.stringify(failure)},file=sys.stderr);sys.exit(1)
+os.execvp("python3",["python3",*sys.argv[1:]])
+`, { mode: 0o755 })
+  const oldPython = process.env.RESEARCH_STORAGE_PYTHON
+  const jobId = "module-storage-capacity-wait"
+  let waiting
+  try {
+    process.env.RESEARCH_STORAGE_PYTHON = wrapper
+    waiting = await submitModuleJob(f.ctx, "collection", "storage", {
+      action: "hydrate", bundle_id: f.bundle.id, download_path: f.bundle.local_path, paths: [f.relative],
+    }, { jobId, background: false })
+  } finally {
+    if (oldPython === undefined) delete process.env.RESEARCH_STORAGE_PYTHON
+    else process.env.RESEARCH_STORAGE_PYTHON = oldPython
+  }
+  assert.equal(waiting.state, "waiting_for_storage", waiting.error)
+  assert.equal(waiting.error_code, "STORAGE_CAPACITY_LOCKED")
+  assert.equal(waiting.capacity_recovery.schema, "research-storage-capacity-wait/v1")
+  assert.equal(waiting.capacity_recovery.code, waiting.error_code)
+  assert.equal(waiting.capacity_recovery.job_id, jobId)
+  assert.equal(waiting.capacity_recovery.input_sha256, waiting.input_sha256)
+  assert.equal(waiting.capacity_recovery.uncertain_write, false)
+  assert.deepEqual(waiting.capacity_recovery.need, need)
+  assert.equal(waiting.capacity_recovery.need_sha256, hash(JSON.stringify(need)))
+  assert.equal(waiting.storage_request ?? null, null)
+  assert.equal(waiting.development_pending ?? null, null)
+  assert.equal(waiting.recovery.action, "check_storage_capacity_then_resume")
+  assert.equal(fs.existsSync(path.join(f.root, f.relative)), false)
+  const resumed = await resumeModuleJob(f.ctx, jobId, { background: false })
+  assert.equal(resumed.state, "completed", resumed.error)
+  assert.equal(resumed.attempt, waiting.attempt + 1)
+  assert.equal(resumed.capacity_recovery ?? null, null)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, f.relative)), f.body)
+  const before = readJSON(f.ctx.root, `module-jobs/${jobId}/attempts/000001-before-resume.json`)
+  assert.equal(before.state.capacity_recovery.code, waiting.error_code)
+})
+
+test("capacity recovery refuses a changed job, input, code or missing reason", () => {
+  const job = { job_id: "module-capacity", input_sha256: "a".repeat(64),
+    state: "waiting_for_storage", worker_alive: false, error_code: "STORAGE_CAPACITY_LOCKED" }
+  const need = { schema: "research-storage-capacity-need/v1", root: "/tmp/tkg/.local", bundle_id: "bundle-1",
+    paths: ["research/local-ai/runs/r1/body.bin"], required_free_bytes: 10 * 1024 ** 3 + 4,
+    additional_cache_bytes: 4, required_cache_bytes: 4, cache_limit_bytes: 32 * 1024 ** 3 }
+  const capacity = { schema: "research-storage-capacity-wait/v1", code: job.error_code,
+    reason: "active owner", job_id: job.job_id, input_sha256: job.input_sha256, uncertain_write: false,
+    need, need_sha256: hash(JSON.stringify(need)) }
+  assert.equal(moduleRecoveryPlan({ ...job, capacity_recovery: capacity }).action,
+    "check_storage_capacity_then_resume")
+  assert.equal(moduleRecoveryPlan({ ...job, capacity_recovery: { ...capacity, uncertain_write: true } }).action,
+    "readback_uncertain_write_then_check_capacity")
+  assert.equal(moduleRecoveryPlan({ ...job, capacity_recovery: { ...capacity, need: {}, need_sha256: "0".repeat(64) } }).action,
+    "inspect_invalid_capacity_evidence")
+  assert.equal(moduleRecoveryPlan({ ...job, capacity_recovery: { ...capacity, need: null, need_sha256: null } }).action,
+    "inspect_missing_capacity_need")
+  for (const changed of [{ ...need, root: "relative" }, { ...need, paths: ["../other"] },
+    { ...need, paths: [...need.paths, ...need.paths] }, { ...need, bundle_id: "../other" }])
+    assert.equal(moduleRecoveryPlan({ ...job, capacity_recovery: { ...capacity, need: changed,
+      need_sha256: hash(JSON.stringify(changed)) } }).action, "inspect_invalid_capacity_evidence")
+  for (const changed of [{ ...capacity, job_id: "module-other" },
+    { ...capacity, input_sha256: "b".repeat(64) },
+    { ...capacity, code: "STORAGE_CAPACITY_UNKNOWN" }, { ...capacity, reason: "" }]) {
+    const plan = moduleRecoveryPlan({ ...job, capacity_recovery: changed })
+    assert.equal(plan.action, "inspect_invalid_capacity_evidence")
+    assert.equal(plan.resume_after_resolution, false)
+  }
+})
+
+test("remote-pull capacity recovery is read-only only for its exact hydrate failure", (t) => {
+  const f = storageWorkerFixture(t, { eviction: true })
+  const input = { module: "collection", operation: "storage", context: { repo: f.repo },
+    parameters: { action: "remote-pull", bundle_id: f.bundle.id } }
+  const error = { code: "STORAGE_CAPACITY_LOCKED",
+    storage_failure: { action: "hydrate", code: "STORAGE_CAPACITY_LOCKED", root: f.root },
+    storage_capacity_need: { schema: "research-storage-capacity-need/v1", root: f.root, bundle_id: f.bundle.id,
+      paths: [f.relative], required_free_bytes: 10 * 1024 ** 3 + f.body.length,
+      additional_cache_bytes: f.body.length, required_cache_bytes: f.body.length, cache_limit_bytes: 2 * 1024 ** 3 } }
+  assert.equal(isReadOnlyHydrationCapacity(input, error), true)
+  for (const changed of [
+    { ...error, code: "ENOSPC" },
+    { ...error, storage_failure: { ...error.storage_failure, action: "remote-pull" } },
+    { ...error, storage_failure: { ...error.storage_failure, root: f.repo } },
+    { ...error, storage_capacity_need: { ...error.storage_capacity_need, bundle_id: "other" } },
+    { ...error, storage_capacity_need: null },
+  ]) assert.equal(isReadOnlyHydrationCapacity(input, changed), false)
+  assert.equal(isReadOnlyHydrationCapacity({ ...input,
+    parameters: { ...input.parameters, action: "remote-push" } }, error), false)
+})
 
 async function storageWorkerJob(t, f, action) {
   const jobId = "module-storage-" + action + "-" + crypto.randomUUID()
   const lock = path.join(f.ctx.root, "locks/module-worker-" + jobId + ".json")
-  await submitModuleJob(
-    f.ctx,
-    "collection",
-    "storage",
-    { action, ...(action === "evict" ? { cache_bytes: 0 } : {}) },
-    { jobId },
-  )
+  // Keep the real child inside the native storage call until its actual
+  // worker-owned lock has been observed. Fast workers can otherwise remove
+  // the lock before submitModuleJob returns on a busy host.
+  const wrapper = path.join(f.repo, "observe-worker-python")
+  const gate = path.join(f.repo, "release-worker-test-gate")
+  const previousPython = process.env.RESEARCH_STORAGE_PYTHON
+  const previousTestPython = process.env.TKG_TEST_STORAGE_PYTHON
+  const previousTestGate = process.env.TKG_TEST_STORAGE_GATE
+  fs.writeFileSync(wrapper, `#!/usr/bin/env python3
+import os,sys,time
+gate=os.environ["TKG_TEST_STORAGE_GATE"]
+deadline=time.monotonic()+20
+while not os.path.exists(gate) and time.monotonic()<deadline: time.sleep(0.01)
+if not os.path.exists(gate): sys.exit("worker observation gate timed out")
+os.execvp(os.environ["TKG_TEST_STORAGE_PYTHON"],[os.environ["TKG_TEST_STORAGE_PYTHON"],*sys.argv[1:]])
+`, { mode: 0o755 })
+  process.env.RESEARCH_STORAGE_PYTHON = wrapper
+  process.env.TKG_TEST_STORAGE_PYTHON = previousPython || "python3"
+  process.env.TKG_TEST_STORAGE_GATE = gate
   let owner, state
-  const deadline = Date.now() + 20000
-  while (Date.now() < deadline) {
-    state = readJSON(f.ctx.root, "module-jobs/" + jobId + "/state.json")
-    if (state?.state === "running" && fs.existsSync(lock))
-      owner = JSON.parse(fs.readFileSync(lock, "utf8"))
-    if (["completed", "failed"].includes(state?.state) && !fs.existsSync(lock)) break
-    await new Promise((resolve) => setTimeout(resolve, 10))
+  try {
+    await submitModuleJob(
+      f.ctx,
+      "collection",
+      "storage",
+      { action, ...(action === "evict" ? { cache_bytes: 0 } : {}) },
+      { jobId },
+    )
+    const deadline = Date.now() + 20000
+    while (Date.now() < deadline) {
+      state = readJSON(f.ctx.root, "module-jobs/" + jobId + "/state.json")
+      if (!owner && state?.state === "running" && fs.existsSync(lock)) {
+        owner = JSON.parse(fs.readFileSync(lock, "utf8"))
+        fs.writeFileSync(gate, "observed\n")
+      }
+      if (["completed", "failed"].includes(state?.state) && !fs.existsSync(lock)) break
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    }
+  } finally {
+    if (!fs.existsSync(gate)) fs.writeFileSync(gate, "released\n")
+    if (previousPython === undefined) delete process.env.RESEARCH_STORAGE_PYTHON
+    else process.env.RESEARCH_STORAGE_PYTHON = previousPython
+    if (previousTestPython === undefined) delete process.env.TKG_TEST_STORAGE_PYTHON
+    else process.env.TKG_TEST_STORAGE_PYTHON = previousTestPython
+    if (previousTestGate === undefined) delete process.env.TKG_TEST_STORAGE_GATE
+    else process.env.TKG_TEST_STORAGE_GATE = previousTestGate
   }
   assert.ok(["completed", "failed"].includes(state?.state), "module worker must finish")
   assert.ok(owner && Number.isInteger(owner.pid), "observe the actual worker-owned lock")

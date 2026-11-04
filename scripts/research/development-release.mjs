@@ -92,6 +92,7 @@ export function implementationFiles(repo) {
     ".quartz/plugins/index.ts",
     "tsconfig.json",
     ".github/workflows/publish.yaml",
+    ".github/workflows/drive-sync.yaml",
     "integrations/research-worker/requirements.txt",
   ])
     if (fs.existsSync(safePath(repo, file, { materialize: false }))) files.push(file)

@@ -8,6 +8,7 @@ import { atomicCreate, atomicWrite, readJSON, safePath } from "../scripts/resear
 import { withRequestOwner } from "../scripts/research/request-ownership.mjs"
 import { createReasoningTask, reasoningFrontier } from "../scripts/research/reasoning-tasks.mjs"
 import { verifyRelayHistory } from "../scripts/research/relay-ledger.mjs"
+import { summarizeRelayTiming } from "../scripts/research/relay-timing.mjs"
 
 function articleRequests(t) {
   const f = fixture(t),
@@ -112,6 +113,8 @@ test("bound rounds persist writer identity and reject a missing assignment on su
     generation: 1,
     observation: authorStart,
   })
+  const savedAssignment = readJSON(f.root, assigned.assignment.path)
+  assert.ok(Number.isFinite(Date.parse(savedAssignment.assigned_at)))
   const submitted = await executeModule(f.ctx, "reasoning", "submit", {
     ...f.write,
     executor: "codex",
@@ -123,6 +126,19 @@ test("bound rounds persist writer identity and reject a missing assignment on su
   const result = readJSON(f.root, `reasoning-tasks/${f.write.task_id}/result.json`)
   assert.deepEqual(result.relay_assignment, assigned.assignment)
   assert.equal(result.attribution, "caller_declared")
+  const observedTiming = summarizeRelayTiming(f.root, f.round.run_id)
+  assert.equal(observedTiming.requests.length, 1)
+  assert.equal(observedTiming.requests[0].task_id, f.write.task_id)
+  assert.ok(Number.isFinite(observedTiming.requests[0].queue_wait_ms))
+  assert.ok(Number.isFinite(observedTiming.requests[0].request_round_trip_ms))
+  assert.equal(observedTiming.requests[0].model_execution_ms, null)
+  assert.equal(observedTiming.articles[0].candidate_id, "candidate-a")
+  assert.equal(observedTiming.articles[0].request_count, 1)
+  const resultPath = safePath(f.root, `reasoning-tasks/${f.write.task_id}/result.json`)
+  const resultBytes = fs.readFileSync(resultPath)
+  fs.writeFileSync(resultPath, JSON.stringify({ ...result, submitted_at: "2020-01-01T00:00:00Z" }))
+  assert.throws(() => summarizeRelayTiming(f.root, f.round.run_id), /result binding changed/)
+  fs.writeFileSync(resultPath, resultBytes)
   const proposed = await executeModule(f.ctx, "reasoning", "plan_relay", {
     ...f.review,
     lanes: [{ id: 1, agent: "author-a", phase: null, busy: false, retiring: false }],

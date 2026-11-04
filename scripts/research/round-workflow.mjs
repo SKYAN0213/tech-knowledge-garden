@@ -259,6 +259,9 @@ export async function advanceRoundWorkflow(
       ...(p.review_mode !== undefined || previousInput?.review_mode !== undefined
         ? { review_mode: p.review_mode ?? previousInput.review_mode }
         : {}),
+      ...(p.review_repair_mode !== undefined || previousInput?.review_repair_mode !== undefined
+        ? { review_repair_mode: p.review_repair_mode ?? previousInput.review_repair_mode }
+        : {}),
       ...(p.require_curation !== undefined || previousInput?.require_curation !== undefined
         ? { require_curation: p.require_curation ?? previousInput.require_curation }
         : {}),
@@ -270,6 +273,9 @@ export async function advanceRoundWorkflow(
         ? { ontology_base: ontology || previousInput.ontology_base }
         : {}),
     }
+    if (input.review_repair_mode !== undefined &&
+        (input.review_repair_mode !== "components/v1" || input.review_mode !== "combined/v1"))
+      throw Error("Bound combined review repair mode required")
     if (previousInput && !same(previousInput, input))
       throw Error("Round inputs changed; use a new round")
     if (input.ontology_base) checked(ctx.root, input.ontology_base)
@@ -537,6 +543,7 @@ export async function advanceRoundWorkflow(
                 selection_sha256: curationRef.sha256,
                 ...(retryTargets.length ? { retry_candidates: retryTargets } : {}),
                 ...(input.review_mode ? { review_mode: input.review_mode } : {}),
+                ...(input.review_repair_mode ? { review_repair_mode: input.review_repair_mode } : {}),
                 note_review_runs: currentOptions.note_review_runs,
                 ...(input.require_completeness !== undefined
                   ? { require_completeness: input.require_completeness }
@@ -555,6 +562,7 @@ export async function advanceRoundWorkflow(
                 run_id: eventRun,
                 edition_path: editionRef.path,
                 ...(input.review_mode ? { review_mode: input.review_mode } : {}),
+                ...(input.review_repair_mode ? { review_repair_mode: input.review_repair_mode } : {}),
                 edition_sha256: editionRef.sha256,
                 note_review_runs: currentOptions.note_review_runs,
                 ...(currentOptions.connection_review_run

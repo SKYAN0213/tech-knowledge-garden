@@ -4,6 +4,7 @@
 import argparse
 import contextlib
 import datetime as dt
+import errno
 import hashlib
 import json
 import os
@@ -18,6 +19,9 @@ import uuid
 
 CONTROL = ".storage"
 SCHEMA = "research-cold-storage/v1"
+CACHE_FREE_RESERVE_BYTES = 10 * 1024 ** 3
+AUTOMATIC_EVICT_INTERVAL = dt.timedelta(hours=1)
+AUTOMATIC_EVICT_LAST = "automatic_evict_last_completed_at"
 HASH = re.compile(r"^[a-f0-9]{64}$")
 EXCLUSION_BYTES = (Path(__file__).resolve().parents[2] / "data/research-storage-exclusions.json").read_bytes()
 EXCLUSION_POLICY = json.loads(EXCLUSION_BYTES)
@@ -25,6 +29,13 @@ EXCLUDED = set(EXCLUSION_POLICY["directories"])
 HOT_NAMES = {"state.json", "summary.json", "input.json", "manifest.json", "archive-manifest.json",
              "package-receipt.json", "drive-location.json", "drive-location-v2.json", "receipt.json",
              "candidate-backlog.json", "stdout.log", "stderr.log", "journal.jsonl", "verification.json"}
+
+
+class StorageCapacityError(ValueError):
+    def __init__(self, code, message, need=None):
+        super().__init__(message)
+        self.storage_code = code
+        self.capacity_need = need
 
 
 def now():
@@ -1113,6 +1124,11 @@ def policy(root):
 
 def initialize(root, p):
     value = policy(root)
+    # Disabled legacy/fixture guard policies may predate these optional fields.
+    # Apply the established defaults only when explicitly initializing storage;
+    # never replace a previously configured cache limit.
+    value.setdefault("cache_bytes", 2 * 1024 ** 3)
+    value.setdefault("minimum_payload_bytes", 32768)
     for key in ["cache_bytes", "minimum_payload_bytes"]:
         if key in p:
             if type(p[key]) is not int or p[key] < 0:
@@ -1569,6 +1585,187 @@ def pending(db):
             "uploads": [dict(r) for r in db.execute("SELECT id,kind,sha256,bytes,local_path,file_id,parent_id,name,legacy_verified_at FROM bundles WHERE verified_at IS NULL ORDER BY id")]}
 
 
+def volume_free_bytes(root):
+    try:
+        info = os.statvfs(root)
+        if info.f_frsize <= 0 or info.f_bavail < 0:
+            return None
+        return info.f_bavail * info.f_frsize
+    except OSError:
+        return None
+
+
+def cached_bytes_estimate(db):
+    value = db.execute("SELECT COALESCE(SUM(bytes),0) FROM files WHERE cached_at IS NOT NULL").fetchone()[0]
+    if type(value) is not int or value < 0:
+        raise ValueError("Invalid cached payload size")
+    return value
+
+
+def hydration_budget(root, db, bundle, paths, check_existing=False):
+    if not isinstance(paths, list) or not paths or len(paths) > 1000 or any(not isinstance(rel, str) for rel in paths):
+        raise ValueError("Exact bounded hydration paths required")
+    unique = list(dict.fromkeys(paths))
+    added_cache = missing = required_cache = 0
+    for rel in unique:
+        row = db.execute("SELECT f.*,o.member FROM files f JOIN objects o ON f.sha256=o.sha256 WHERE f.path=? AND o.bundle_id=?", (rel, bundle["id"])).fetchone()
+        if not row:
+            raise ValueError("Requested path is not bound to this bundle")
+        if type(row["bytes"]) is not int or row["bytes"] < 0:
+            raise ValueError("Invalid hydrated payload size")
+        required_cache += row["bytes"]
+        target = safe(root, rel)
+        if target.exists():
+            if check_existing and digest_file(target) != row["sha256"]:
+                raise ValueError("Preserve changed local payload: " + rel)
+        else:
+            missing += row["bytes"]
+        if not row["cached_at"]:
+            added_cache += row["bytes"]
+    return unique, added_cache, missing, required_cache
+
+
+def hydration_need(root, bundle, paths, limit, added, missing, required):
+    return {"schema": "research-storage-capacity-need/v1", "root": str(root),
+            "bundle_id": bundle["id"], "paths": paths,
+            "required_free_bytes": CACHE_FREE_RESERVE_BYTES + missing,
+            "additional_cache_bytes": added, "required_cache_bytes": required,
+            "cache_limit_bytes": limit}
+
+
+def automatic_evict(root, db, p):
+    settings = policy(root)
+    if not settings["enabled"]:
+        raise ValueError("Enable verified read-through before evicting")
+    limit = settings["cache_bytes"]
+    if type(limit) is not int or limit < 0:
+        raise ValueError("Invalid storage budget")
+    need = p.get("capacity_need")
+    bundle = None
+    protected = []
+    added, missing, required = 0, 0, 0
+    if need is not None:
+        keys = {"schema", "root", "bundle_id", "paths", "required_free_bytes",
+                "additional_cache_bytes", "required_cache_bytes", "cache_limit_bytes"}
+        if not isinstance(need, dict) or set(need) != keys or need["schema"] != "research-storage-capacity-need/v1" or need["root"] != str(root):
+            raise ValueError("Exact capacity need and storage root required")
+        if not isinstance(need["bundle_id"], str) or not need["bundle_id"] or \
+                not isinstance(need["paths"], list) or not need["paths"] or \
+                any(not isinstance(rel, str) for rel in need["paths"]) or \
+                len(set(need["paths"])) != len(need["paths"]) or \
+                any(type(need[key]) is not int or need[key] < 0 for key in ("required_free_bytes", "additional_cache_bytes", "required_cache_bytes", "cache_limit_bytes")) or \
+                need["required_free_bytes"] < CACHE_FREE_RESERVE_BYTES or need["cache_limit_bytes"] != limit or \
+                need["additional_cache_bytes"] > need["required_cache_bytes"]:
+            raise ValueError("Invalid capacity need binding")
+        bundle = db.execute("SELECT * FROM bundles WHERE id=? AND verified_at IS NOT NULL", (need["bundle_id"],)).fetchone()
+        if not bundle:
+            raise ValueError("Capacity need requires the original verified bundle")
+        protected, added, missing, required = hydration_budget(root, db, bundle, need["paths"], check_existing=True)
+    required_free = CACHE_FREE_RESERVE_BYTES + missing
+    estimate = cached_bytes_estimate(db)
+    free = volume_free_bytes(root)
+    current = dt.datetime.now(dt.timezone.utc)
+    entry = db.execute("SELECT value FROM meta WHERE key=?", (AUTOMATIC_EVICT_LAST,)).fetchone()
+    previous = None
+    if entry:
+        try:
+            previous = timestamp(entry["value"])
+            if previous > current:
+                previous = None
+        except (TypeError, ValueError):
+            pass
+    if required > limit:
+        return {"status": "blocked", "reason": "cache_limit_batch", "configured": True,
+                "estimated_cache_bytes": estimate, "cache_limit_bytes": limit,
+                "required_free_bytes": required_free, "additional_cache_bytes": added,
+                "required_cache_bytes": required, "free_bytes": free,
+                "reserve_bytes": CACHE_FREE_RESERVE_BYTES}
+    if free is None:
+        reason = "free_space_unknown"
+    elif free < required_free:
+        reason = "low_free_space"
+    elif estimate + added >= limit:
+        reason = "cache_limit"
+    elif previous is None:
+        reason = "no_previous_sweep"
+    elif current - previous >= AUTOMATIC_EVICT_INTERVAL:
+        reason = "interval_elapsed"
+    else:
+        return {"status": "skipped", "reason": "within_budget", "configured": True,
+                "estimated_cache_bytes": estimate, "cache_limit_bytes": limit,
+                "free_bytes": free, "reserve_bytes": CACHE_FREE_RESERVE_BYTES,
+                "required_free_bytes": required_free, "additional_cache_bytes": added,
+                "required_cache_bytes": required,
+                "next_check_at": (previous + AUTOMATIC_EVICT_INTERVAL).isoformat()}
+    params = {"ignore_pid": p.get("ignore_pid")}
+    if need is not None:
+        params.update(cache_bytes=max(0, limit - added), protected_paths=protected)
+    if free is not None and free < required_free:
+        params["free_bytes_needed"] = required_free - free
+    result = evict(root, db, params)
+    if result.get("held_by_active_locks"):
+        return {"status": "blocked", "reason": "active_native_locks", "configured": True,
+                "trigger": reason, "estimated_cache_bytes": estimate, "cache_limit_bytes": limit,
+                "free_bytes": free, "reserve_bytes": CACHE_FREE_RESERVE_BYTES,
+                "required_free_bytes": required_free, "additional_cache_bytes": added,
+                "required_cache_bytes": required, "eviction": result}
+    completed_at = now()
+    db.execute("INSERT OR REPLACE INTO meta(key,value) VALUES(?,?)", (AUTOMATIC_EVICT_LAST, completed_at))
+    db.commit()
+    after = volume_free_bytes(root)
+    if bundle is not None:
+        _, added, missing, required = hydration_budget(root, db, bundle, protected, check_existing=True)
+        required_free = CACHE_FREE_RESERVE_BYTES + missing
+    after_cache = cached_bytes_estimate(db)
+    trigger = reason
+    result_status = "completed"
+    if after is None:
+        result_status, reason = "blocked", "free_space_unknown"
+    elif after < required_free:
+        result_status, reason = "blocked", "insufficient_capacity"
+    elif after_cache + added > limit:
+        result_status, reason = "blocked", "cache_limit_unresolved"
+    elif reason == "free_space_unknown":
+        reason = "free_space_recovered"
+    return {"status": result_status, "reason": reason, "trigger": trigger, "configured": True,
+            "estimated_cache_bytes": estimate, "cache_limit_bytes": limit,
+            "cache_bytes_after": after_cache, "required_free_bytes": required_free,
+            "additional_cache_bytes": added, "required_cache_bytes": required,
+            "free_bytes": free, "free_bytes_after": after, "reserve_bytes": CACHE_FREE_RESERVE_BYTES,
+            "next_check_at": (timestamp(completed_at) + AUTOMATIC_EVICT_INTERVAL).isoformat(),
+            "eviction": result}
+
+
+def hydration_admission(root, db, bundle, paths, p):
+    settings = policy(root)
+    limit = settings["cache_bytes"]
+    if type(limit) is not int or limit < 0:
+        raise ValueError("Invalid storage budget")
+    unique, added, missing, required = hydration_budget(root, db, bundle, paths)
+    need = hydration_need(root, bundle, unique, limit, added, missing, required)
+    if required > limit:
+        raise StorageCapacityError("STORAGE_CACHE_LIMIT", "Hydration batch exceeds the cache limit", need)
+    free = volume_free_bytes(root)
+    if free is None:
+        raise StorageCapacityError("STORAGE_CAPACITY_UNKNOWN", "Cannot verify free space before hydration", need)
+    estimate = cached_bytes_estimate(db)
+    if estimate + added > limit or free < CACHE_FREE_RESERVE_BYTES + missing:
+        if not settings["enabled"]:
+            raise StorageCapacityError("STORAGE_CAPACITY_UNAVAILABLE", "Storage capacity requires verified cache eviction", need)
+        hydration_budget(root, db, bundle, unique, check_existing=True)
+        needed = max(0, CACHE_FREE_RESERVE_BYTES + missing - free)
+        result = evict(root, db, {"ignore_pid": p.get("ignore_pid"),
+                                  "cache_bytes": max(0, limit - added),
+                                  "free_bytes_needed": needed, "protected_paths": unique})
+        if result.get("held_by_active_locks"):
+            raise StorageCapacityError("STORAGE_CAPACITY_LOCKED", "Hydration capacity blocked by active native locks", need)
+        _, added, missing, required = hydration_budget(root, db, bundle, unique, check_existing=True)
+        need = hydration_need(root, bundle, unique, limit, added, missing, required)
+        free = volume_free_bytes(root)
+        if free is None or free < CACHE_FREE_RESERVE_BYTES + missing or cached_bytes_estimate(db) + added > limit:
+            raise StorageCapacityError("STORAGE_CAPACITY_INSUFFICIENT", "Insufficient verified cache space for hydration", need)
+
+
 def hydrate(root, db, p):
     bundle = db.execute("SELECT * FROM bundles WHERE id=? AND verified_at IS NOT NULL", (p["bundle_id"],)).fetchone()
     if not bundle:
@@ -1583,6 +1780,7 @@ def hydrate(root, db, p):
         raise ValueError("Explicit paths or pending download requests required")
     if len(paths) > 1000:
         raise ValueError("Hydration native batch exceeds 1000 paths; use the storage CLI")
+    hydration_admission(root, db, bundle, paths, p)
     restored, size = [], 0
     archive = zipfile.ZipFile(source) if bundle["kind"] == "zip" else None
     try:
@@ -1634,6 +1832,13 @@ def evict(root, db, p):
     limit = p.get("cache_bytes", policy(root)["cache_bytes"])
     if type(limit) is not int or limit < 0:
         raise ValueError("Invalid cache limit")
+    needed = p.get("free_bytes_needed", 0)
+    protected = p.get("protected_paths", [])
+    if type(needed) is not int or needed < 0 or not isinstance(protected, list):
+        raise ValueError("Invalid protected eviction scope")
+    for rel in protected:
+        safe(root, rel)
+    protected = set(protected)
     rows = db.execute("SELECT f.*,b.verified_at FROM files f LEFT JOIN objects o ON f.sha256=o.sha256 LEFT JOIN bundles b ON o.bundle_id=b.id WHERE f.cached_at IS NOT NULL").fetchall()
     candidates, total = [], 0
     for row in rows:
@@ -1643,8 +1848,10 @@ def evict(root, db, p):
             continue
         st = path.stat()
         total += st.st_size
-        if row["verified_at"] and st.st_size == row["bytes"] and st.st_mtime_ns == int(row["mtime_ns"]) and not any(row["path"].startswith(x + "/") for x in held):
+        if row["path"] not in protected and row["verified_at"] and st.st_size == row["bytes"] and st.st_mtime_ns == int(row["mtime_ns"]) and not any(row["path"].startswith(x + "/") for x in held):
             candidates.append((st.st_atime_ns, row, path))
+    if needed:
+        limit = min(limit, max(0, total - needed))
     removed, freed, skipped = 0, 0, 0
     for _, row, path in sorted(candidates, key=lambda t: t[0]):
         if total <= limit:
@@ -1817,7 +2024,7 @@ def import_catalog(root, db, p):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["repair-missing-native-fixture-records", "repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "prepare-full", "prepare-delta", "change-manifest", "archive-status", "verify", "hydrate", "evict", "pending", "enable", "export", "import"])
+    parser.add_argument("action", choices=["repair-missing-native-fixture-records", "repair-missing-fixture-records", "recover-mutation-lock", "status", "prepare", "prepare-full", "prepare-delta", "change-manifest", "archive-status", "verify", "hydrate", "evict", "evict-if-due", "pending", "enable", "export", "import"])
     parser.add_argument("--root", required=True)
     args = parser.parse_args()
     requested_root = Path(os.path.abspath(args.root))
@@ -1883,6 +2090,8 @@ def main():
                     result = verify(root, db, p)
                 elif args.action == "hydrate":
                     result = hydrate(root, db, p)
+                elif args.action == "evict-if-due":
+                    result = automatic_evict(root, db, p)
                 elif args.action == "enable":
                     if not db.execute("SELECT COUNT(*) FROM bundles WHERE verified_at IS NOT NULL").fetchone()[0]:
                         raise ValueError("Verify remote bundles before enabling read-through")
@@ -1904,5 +2113,10 @@ if __name__ == "__main__":
     try:
         main()
     except (ValueError, OSError, sqlite3.Error, zipfile.BadZipFile) as error:
-        print(json.dumps({"error": str(error)}), file=__import__("sys").stderr)
+        code = getattr(error, "storage_code", None)
+        if code is None and isinstance(error, OSError) and error.errno == errno.ENOSPC:
+            code = "ENOSPC"
+        need = getattr(error, "capacity_need", None)
+        print(json.dumps({"error": str(error), **({"code": code} if code else {}),
+                          **({"capacity_need": need} if need else {})}), file=__import__("sys").stderr)
         raise SystemExit(1)

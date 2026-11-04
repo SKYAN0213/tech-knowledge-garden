@@ -391,6 +391,162 @@ for (const variant of ["missing", "false"])
     )
   })
 
+test("components mode combines independent invalid editorial fields and coverage time without replacing valid judgments", async (t) => {
+  const f = await editorialSetup(t), calls = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, {
+    baseProvider: {
+      metadata: fixtureMetadata,
+      structured: async (request) => {
+        const input = JSON.parse(request.messages[1].content)
+        calls.push(input)
+        const valid = editorialOutput(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }))
+        if (input.task === "combined_review") {
+          valid.editorial_review.numbers_checked = false
+          valid.coverage_reviewed_at = null
+          return { output: valid }
+        }
+        assert.equal(input.component, "components-part-0")
+        assert.deepEqual(input.invalid_components, ["editorial_review", "coverage_reviewed_at"])
+        return { output: {
+          editorial_review: { numbers_checked: true },
+          coverage_reviewed_at: "2026-10-26",
+        } }
+      },
+    },
+  })
+  assert.equal(result.needs_revision, false)
+  assert.equal(calls.length, 2)
+  const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const application = readJSON(f.root, p.base + "application.json")
+  assert.equal(application.coverage_decision_mapping.length, f.ids.length)
+  assert.deepEqual(readJSON(f.root, application.coverage.path).coverage, editorialOutput(p).coverage)
+  await assert.rejects(runCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }, {
+    baseProvider: { metadata: fixtureMetadata, structured: async () => { throw Error("must not run") } },
+  }), /Run input changed/)
+})
+
+test("a partial grouped repair preserves valid siblings and repairs only the remaining component", async (t) => {
+  const f = await editorialSetup(t), calls = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    calls.push(input.component || input.task)
+    const valid = editorialOutput(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }))
+    if (input.task === "combined_review") {
+      valid.editorial_review.numbers_checked = false
+      valid.coverage_reviewed_at = null
+      return { output: valid }
+    }
+    if (input.component === "components-part-0")
+      return { output: { editorial_review: { numbers_checked: true }, coverage_reviewed_at: null } }
+    assert.equal(input.component, "coverage_reviewed_at-part-0")
+    return { output: { coverage_reviewed_at: "2026-10-26" } }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(calls, ["combined_review", "components-part-0", "coverage_reviewed_at-part-0"])
+  const prepared = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const application = readJSON(f.root, prepared.base + "application.json")
+  const grouped = application.repairs.find((row) => row.path.endsWith("-application.json"))
+  assert.ok(grouped)
+  assert.deepEqual(readJSON(f.root, grouped.path).accepted, ["editorial_review"])
+  assert.deepEqual(readJSON(f.root, grouped.path).pending, ["coverage_reviewed_at"])
+})
+
+test("legacy reviews keep separate component repairs when the mode is absent", async (t) => {
+  const f = await editorialSetup(t), calls = []
+  const result = await runCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }, {
+    baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+      const input = JSON.parse(request.messages[1].content)
+      calls.push(input.component || input.task)
+      const valid = editorialOutput(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }))
+      if (input.task === "combined_review") {
+        valid.editorial_review.numbers_checked = false
+        valid.coverage_reviewed_at = null
+        return { output: valid }
+      }
+      if (input.component === "editorial_review-part-0")
+        return { output: { editorial_review: { numbers_checked: true } } }
+      assert.equal(input.component, "coverage_reviewed_at-part-0")
+      return { output: { coverage_reviewed_at: "2026-10-26" } }
+    } },
+  })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(calls, ["combined_review", "editorial_review-part-0", "coverage_reviewed_at-part-0"])
+})
+
+test("components mode combines invalid importance and its date only after fact decisions are valid", async (t) => {
+  const f = setup(t), calls = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "evidence", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    calls.push(input.component || input.task)
+    const valid = output(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "evidence" }))
+    if (input.task === "combined_review") {
+      valid.important_facts = null
+      valid.importance_reviewed_at = null
+      return { output: valid }
+    }
+    assert.equal(input.component, "components-part-0")
+    return { output: { important_facts: valid.important_facts, importance_reviewed_at: valid.importance_reviewed_at } }
+  } } })
+  assert.ok(result.fact_review_file && result.completeness_review_file)
+  assert.deepEqual(calls, ["combined_review", "components-part-0"])
+})
+
+test("group-repaired coverage decisions retain their actual response source", async (t) => {
+  const f = await editorialSetup(t), calls = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    calls.push(input.component || input.task)
+    const valid = editorialOutput(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }))
+    if (input.task === "combined_review") {
+      valid.editorial_review.numbers_checked = false
+      valid.coverage_decisions = null
+      return { output: valid }
+    }
+    assert.equal(input.component, "components-part-0")
+    return { output: { editorial_review: { numbers_checked: true }, coverage_decisions: valid.coverage_decisions } }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(calls, ["combined_review", "components-part-0"])
+  const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const app = readJSON(f.root, p.base + "application.json")
+  for (const row of app.coverage_decision_mapping) {
+    assert.match(row.response.path, /repair-components-part-0-/)
+    assert.ok(readJSON(f.root, row.response.path).output.coverage_decisions.some((value) => value.claim_id === row.claim_id))
+  }
+})
+
+test("an oversized grouped repair falls back to individual lossless repairs", async (t) => {
+  const f = await editorialSetup(t), calls = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    let input = JSON.parse(request.messages[1].content)
+    if (input.repair_input_file) input = JSON.parse(fs.readFileSync(input.repair_input_file, "utf8"))
+    calls.push(input.component || input.task)
+    const valid = editorialOutput(prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }))
+    if (input.task === "combined_review") {
+      valid.editorial_review.numbers_checked = false
+      valid.editorial_review.reason = "x".repeat(21000)
+      valid.coverage_reviewed_at = null
+      return { output: valid }
+    }
+    if (input.component === "editorial_review-part-0")
+      return { output: { editorial_review: { numbers_checked: true } } }
+    assert.equal(input.component, "coverage_reviewed_at-part-0")
+    return { output: { coverage_reviewed_at: "2026-10-26" } }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(calls, ["combined_review", "editorial_review-part-0", "coverage_reviewed_at-part-0"])
+})
+
 test("a negative editorial decision retains the historical minimal revision contract without approval fields", async (t) => {
   const f = await editorialSetup(t)
   let calls = 0
@@ -534,7 +690,7 @@ test("a later split coverage part can explicitly require revision without approv
   assert.equal(readJSON(f.root, `runs/${f.run}/approved-article.json`), null)
 })
 
-async function revisedCoverageFixture(t, { changeLead = false } = {}) {
+async function revisedCoverageFixture(t, { changeLead = false, repairFirstDecision = false, groupFirstDecision = false, repairFirstCoverage = false, groupFirstCoverage = false, repairFirstTime = false, groupFirstTime = false } = {}) {
   const f = await editorialSetup(t, { claimCount: 15 })
   const draftRecord = structuredClone(f.record)
   draftRecord.draft.lead[0].claim_ids = f.ids.slice(0, 12)
@@ -544,13 +700,42 @@ async function revisedCoverageFixture(t, { changeLead = false } = {}) {
   const prepared = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
   const first = await runCombinedReview(
     f.ctx,
-    { run_id: f.run, kind: "editorial" },
+    { run_id: f.run, kind: "editorial", ...((groupFirstDecision || groupFirstCoverage || groupFirstTime) ? { review_repair_mode: "components/v1" } : {}) },
     {
       baseProvider: {
         metadata: fixtureMetadata,
         structured: async (request) => {
           const input = JSON.parse(request.messages[1].content)
           const value = editorialOutput(prepared)
+          if (input.task === "combined_review_repair") {
+            if (groupFirstTime) {
+              assert.equal(input.component, "components-part-0")
+              return { output: { editorial_review: { numbers_checked: true }, coverage_reviewed_at: "2026-10-26" } }
+            }
+            if (repairFirstTime) {
+              assert.equal(input.component, "coverage_reviewed_at-part-0")
+              return { output: { coverage_reviewed_at: "2026-10-26" } }
+            }
+            if (groupFirstCoverage) {
+              assert.equal(input.component, "components-part-0")
+              return { output: { editorial_review: { numbers_checked: true },
+                coverage: value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id)) } }
+            }
+            if (repairFirstCoverage) {
+              assert.equal(input.component, "coverage-part-0")
+              return { output: { coverage: value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id)) } }
+            }
+            if (groupFirstDecision) {
+              assert.equal(input.component, "components-part-0")
+              return { output: { editorial_review: { numbers_checked: true },
+                coverage_decisions: value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id)) } }
+            }
+            assert.equal(input.component, "coverage-decisions-part-0")
+            assert.deepEqual(input.assigned_claim_ids, [f.ids[1]])
+            return { output: { coverage_decisions: value.coverage_decisions.filter(
+              (row) => row.claim_id === f.ids[1],
+            ) } }
+          }
           value.part = input.part
           if (input.part) value.editorial_review = null
           value.coverage = value.coverage.filter((row) =>
@@ -567,6 +752,22 @@ async function revisedCoverageFixture(t, { changeLead = false } = {}) {
                   }
                 : row,
             )
+          if (repairFirstDecision && input.part === 0)
+            value.coverage_decisions = value.coverage_decisions.filter((row) => row.claim_id !== f.ids[1])
+          if (groupFirstDecision && input.part === 0) {
+            value.editorial_review.numbers_checked = false
+            value.coverage_decisions = null
+          }
+          if (repairFirstCoverage && input.part === 0) value.coverage = null
+          if (repairFirstTime && input.part === 0) value.coverage_reviewed_at = null
+          if (groupFirstTime && input.part === 0) {
+            value.editorial_review.numbers_checked = false
+            value.coverage_reviewed_at = null
+          }
+          if (groupFirstCoverage && input.part === 0) {
+            value.editorial_review.numbers_checked = false
+            value.coverage = null
+          }
           return { output: value }
         },
       },
@@ -602,6 +803,234 @@ async function revisedCoverageFixture(t, { changeLead = false } = {}) {
   )
   return { f, prepared, first }
 }
+
+test("a previously repaired, source-bound positive coverage decision survives an unrelated correction", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { repairFirstDecision: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  const original = before.coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.match(original.response.path, /repair-coverage-decisions-part-0-/)
+  const calls = []
+  const second = await runCombinedReview(f.ctx, { run_id: f.run, kind: "editorial", review_repair_mode: "components/v1" }, {
+    baseProvider: {
+      metadata: fixtureMetadata,
+      structured: async (request) => {
+        const input = JSON.parse(request.messages[1].content)
+        calls.push(input)
+        const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+        const value = editorialOutput(current)
+        value.part = input.part
+        value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+        value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+        return { output: value }
+      },
+    },
+  })
+  assert.equal(second.needs_revision, false)
+  assert.deepEqual(calls.map((input) => input.assigned_claim_ids), [f.ids.slice(12)])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping
+    .find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.deepEqual(reused.response, original.response)
+})
+
+test("tampered repair evidence cannot authorize a reused coverage decision", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { repairFirstDecision: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  const original = before.coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  const name = path.basename(original.response.path)
+  const receipt = before.repairs.find((row) => row.path.endsWith("/" + name))
+  assert.ok(receipt)
+  const record = readJSON(f.root, receipt.path)
+  record.request_sha256 = "0".repeat(64)
+  atomicWrite(f.root, receipt.path, record)
+  await assert.rejects(() => runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async () => { throw Error("must not run") } } }),
+  /Prior coverage repair receipt changed/)
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  assert.equal(readJSON(f.root, current.base + "editorial-review.json"), null)
+})
+
+test("a grouped repaired decision is reused only with its original source and accepted repair receipt", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { groupFirstDecision: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  const original = before.coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.match(original.response.path, /repair-components-part-0-/)
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [f.ids.slice(12)])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.deepEqual(reused.response, original.response)
+  assert.ok(reused.repair_receipt && reused.repair_application && reused.source_response)
+})
+
+test("a previously repaired coverage row is reused with its exact model and original decision evidence", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { repairFirstCoverage: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  assert.ok(before.repairs.some((row) => /repair-coverage-part-0-/.test(row.path)))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [f.ids.slice(12)])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.coverage_response && reused.coverage_repair_receipt)
+})
+
+test("a separately repaired coverage review time remains bound when its judgments are reused", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { repairFirstTime: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  assert.ok(before.repairs.some((row) => /repair-coverage_reviewed_at-part-0-/.test(row.path)))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [f.ids.slice(12)])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.time_response && reused.time_repair_receipt)
+})
+
+test("a grouped repaired coverage time retains its source response and accepted-component proof", async (t) => {
+  const { f } = await revisedCoverageFixture(t, { groupFirstTime: true })
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [f.ids.slice(12)])
+  const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, p.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.time_response && reused.time_repair_receipt && reused.time_repair_application)
+})
+
+test("a changed repaired coverage time blocks reuse before any new model call", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { repairFirstTime: true })
+  const app = readJSON(f.root, prepared.base + "application.json")
+  const ref = app.repairs.find((row) => /repair-coverage_reviewed_at-part-0-/.test(row.path))
+  const receipt = readJSON(f.root, ref.path)
+  const response = readJSON(f.root, receipt.result.path)
+  response.output.coverage_reviewed_at = "2026-10-25"
+  atomicWrite(f.root, receipt.result.path, response)
+  await assert.rejects(() => runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async () => { throw Error("must not run") } } }),
+  /Prior coverage time result changed/)
+})
+
+test("a grouped repaired coverage row keeps both the response and component-application proof", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { groupFirstCoverage: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  assert.ok(before.repairs.some((row) => /repair-components-part-0-.*-application\.json$/.test(row.path)))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [f.ids.slice(12)])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.coverage_response && reused.coverage_repair_receipt && reused.coverage_repair_application)
+})
+
+test("a changed shared lead still invalidates previously repaired coverage", async (t) => {
+  const { f } = await revisedCoverageFixture(t, { repairFirstDecision: true, changeLead: true })
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    if (input.part) value.editorial_review = null
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes.flat(), f.ids)
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  assert.deepEqual(readJSON(f.root, current.base + "coverage-reuse.json").judgments, [])
+})
+
+test("tampering with a grouped repair receipt blocks the original decision's reuse", async (t) => {
+  const { f, prepared } = await revisedCoverageFixture(t, { groupFirstDecision: true })
+  const before = readJSON(f.root, prepared.base + "application.json")
+  const grouped = before.repairs.find((row) => row.path.includes("repair-components-part-0-") && row.path.endsWith("-application.json"))
+  assert.ok(grouped)
+  const record = readJSON(f.root, grouped.path)
+  record.accepted = []
+  atomicWrite(f.root, grouped.path, record)
+  await assert.rejects(() => runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async () => { throw Error("must not run") } } }),
+  /Prior grouped repair application changed/)
+})
 
 test("a correction reuses only unchanged, source-bound coverage while independently reviewing the changed draft", async (t) => {
   const { f } = await revisedCoverageFixture(t)
@@ -844,7 +1273,7 @@ test("a first-part revision retains independently valid positive coverage and re
   )
 })
 
-async function allReusableCoverageFixture(t) {
+async function allReusableCoverageFixture(t, { repairOne = false, repairTime = false } = {}) {
   const f = await editorialSetup(t, { claimCount: 16, nonImportantLast: true })
   const draftRecord = structuredClone(f.record)
   draftRecord.draft.lead[0].claim_ids = f.ids.slice(0, 15)
@@ -859,6 +1288,16 @@ async function allReusableCoverageFixture(t) {
       const value = editorialOutput(
         prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }),
       )
+      if (input.task === "combined_review_repair") {
+        if (repairTime) {
+          assert.equal(input.component, "coverage-date-0")
+          return { output: { reviewed_at: "2026-10-26" } }
+        }
+        assert.equal(input.component, "coverage")
+        assert.deepEqual(input.assigned_claim_ids, [f.ids[1]])
+        return { output: { coverage: value.coverage.filter((row) => row.claim_id === f.ids[1]),
+          revision_required: false, reason: "Source-bound restored coverage", reviewed_at: "2026-10-26" } }
+      }
       value.part = input.part
       if (input.part) value.editorial_review = null
       value.coverage = value.coverage.filter((row) =>
@@ -867,6 +1306,8 @@ async function allReusableCoverageFixture(t) {
       value.coverage_decisions = value.coverage_decisions.filter((row) =>
         input.assigned_claim_ids.includes(row.claim_id),
       )
+      if (repairOne && input.part === 0) value.coverage[1].preserved_aspects = ["fact"]
+      if (repairTime && input.part === 0) value.coverage_reviewed_at = "2099-01-01"
       return { output: value }
     },
   }
@@ -900,8 +1341,96 @@ async function allReusableCoverageFixture(t) {
       },
     },
   )
-  return { f, provider }
+  return { f, provider, prepared }
 }
+
+test("a source-bound individual coverage repair remains reusable after an unrelated writer correction", async (t) => {
+  const { f, prepared } = await allReusableCoverageFixture(t, { repairOne: true })
+  const prior = readJSON(f.root, prepared.base + "application.json")
+  assert.ok(prior.repairs.some((row) => /repair-coverage-[a-f0-9]{16}\.json$/.test(row.path)))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [[]])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.coverage_response && reused.coverage_repair_receipt)
+})
+
+test("a native corrected coverage time remains bound to the retained coverage rows", async (t) => {
+  const { f, prepared } = await allReusableCoverageFixture(t, { repairTime: true })
+  const prior = readJSON(f.root, prepared.base + "application.json")
+  assert.ok(prior.repairs.some((row) => /repair-coverage-date-0-/.test(row.path)))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [[]])
+  const current = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+  const reused = readJSON(f.root, current.base + "application.json").coverage_decision_mapping.find((row) => row.claim_id === f.ids[1])
+  assert.equal(reused.reused, true)
+  assert.ok(reused.time_response && reused.time_repair_receipt)
+})
+
+test("tampered individual coverage repair bytes cannot be reused", async (t) => {
+  const { f, prepared } = await allReusableCoverageFixture(t, { repairOne: true })
+  const prior = readJSON(f.root, prepared.base + "application.json")
+  const ref = prior.repairs.find((row) => /repair-coverage-[a-f0-9]{16}\.json$/.test(row.path))
+  const receipt = readJSON(f.root, ref.path)
+  const result = readJSON(f.root, receipt.result.path)
+  result.output.coverage[0].reason += " altered"
+  atomicWrite(f.root, receipt.result.path, result)
+  await assert.rejects(() => runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async () => { throw Error("must not run") } } }),
+  /Prior coverage row model result changed/)
+})
+
+test("missing repair request provenance rechecks only the affected fact", async (t) => {
+  const { f, prepared } = await allReusableCoverageFixture(t, { repairOne: true })
+  const prior = readJSON(f.root, prepared.base + "application.json")
+  const receiptRef = prior.repairs.find((row) => /repair-coverage-[a-f0-9]{16}\.json$/.test(row.path))
+  const receipt = readJSON(f.root, receiptRef.path)
+  const modelRun = receipt.result.path.split("/")[1]
+  fs.unlinkSync(path.join(f.root, `runs/${modelRun}/model-policy/evidence_compare/budget.json`))
+  const scopes = []
+  const result = await runCombinedReview(f.ctx, {
+    run_id: f.run, kind: "editorial", review_repair_mode: "components/v1",
+  }, { baseProvider: { metadata: fixtureMetadata, structured: async (request) => {
+    const input = JSON.parse(request.messages[1].content)
+    scopes.push(input.assigned_claim_ids)
+    const p = prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" })
+    const value = editorialOutput(p)
+    value.part = input.part
+    value.coverage = value.coverage.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    value.coverage_decisions = value.coverage_decisions.filter((row) => input.assigned_claim_ids.includes(row.claim_id))
+    return { output: value }
+  } } })
+  assert.equal(result.needs_revision, false)
+  assert.deepEqual(scopes, [[f.ids[1]]])
+})
 
 test("a change outside all important-fact contexts still gets a fresh whole-draft decision", async (t) => {
   const { f, provider } = await allReusableCoverageFixture(t)

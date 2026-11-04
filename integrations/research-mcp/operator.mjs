@@ -749,9 +749,13 @@ export async function runLocalOperator(options, dependencies = {}) {
           state.state = "waiting_for_storage"
           state.handoff = {
             state: response.state,
-            storage_request: response.storage_request,
-            next_action:
-              "Hydrate the exact Drive payload with collection.storage remote-pull (pre-authorized local OAuth) or the connected Drive tool, then continue this operator checkpoint.",
+            storage_request: response.storage_request ?? null,
+            capacity_recovery: response.capacity_recovery ?? null,
+            next_action: response.capacity_recovery
+              ? response.capacity_recovery.uncertain_write
+                ? "Read back the uncertain remote write, then check storage capacity before continuing the same checkpoint."
+                : "Check storage capacity and active owners, then continue the same checkpoint after capacity is verified."
+              : "Hydrate the exact Drive payload with collection.storage remote-pull (pre-authorized local OAuth) or the connected Drive tool, then continue this operator checkpoint.",
           }
           saveState(ctx, state)
           return false
@@ -777,12 +781,17 @@ export async function runLocalOperator(options, dependencies = {}) {
                 error: status.error ?? null,
                 reasoning_task: status.reasoning_task ?? null,
                 storage_request: status.storage_request ?? null,
+                capacity_recovery: status.capacity_recovery ?? null,
                 recovery: status.recovery ?? null,
                 next_action:
                   status.state === "waiting_for_reasoning"
                     ? "Read the exact reasoning task; submit a Codex result or invoke reasoning.execute, then explicitly resume the original job."
                     : status.state === "waiting_for_storage"
-                      ? "Read collection.storage pending; explicitly use remote-pull with pre-authorized local OAuth or the connected Drive tool for the exact file ID, hydrate verified bytes, then resume this job."
+                      ? status.capacity_recovery
+                        ? status.capacity_recovery.uncertain_write
+                          ? "Read back the uncertain remote write, then check storage capacity before resuming the same job."
+                          : "Check storage capacity and active owners, then resume the same job and input after capacity is verified."
+                        : "Read collection.storage pending; explicitly use remote-pull with pre-authorized local OAuth or the connected Drive tool for the exact file ID, hydrate verified bytes, then resume this job."
                       : status.state === "worker_status_unknown"
                         ? "Restore worker visibility and recheck this job; preserve its lock and do not launch a replacement while liveness is unknown."
                         : "Inspect the saved native error and input; fix the cause before explicitly resuming the native job.",

@@ -148,8 +148,22 @@ export async function moduleCLI(args, selectedModule) {
     if (positionals[0] === "status") {
       if (v.json || v.input || v.stage || v.invocation || v.background)
         throw Error("Round status is read-only")
+      if (v.scope && v.scope !== "timing") throw Error("Unknown round status scope")
       try {
-        return operationalRoundStatus(ctx, v.round, { readOnly: true })
+        const status = operationalRoundStatus(ctx, v.round, { readOnly: true })
+        if (!v.scope) return status
+        const { summarizeRelayTiming } = await import("./relay-timing.mjs")
+        const { articleTimingStatus } = await import("./article-timing.mjs")
+        const { summarizeDeliveryTiming } = await import("./operations-timing.mjs")
+        const start = Date.parse(status.started_at || "")
+        const end = status.controller?.completed === true ? Date.parse(status.controller.observed_at || "") : NaN
+        const articles = withReadOnlyStorageReads(() => articleTimingStatus(ctx.root, v.round, status.commands))
+        return { ...status, timing: { ...status.timing,
+          round_observed_elapsed_ms: Number.isFinite(start) && Number.isFinite(end) && end >= start ? end - start : null,
+          relay: withReadOnlyStorageReads(() => summarizeRelayTiming(ctx.root, v.round)),
+          articles,
+          delivery: withReadOnlyStorageReads(() => summarizeDeliveryTiming(ctx.root,
+            status.controller?.next_action?.delivery)) } }
       } catch (error) {
         return readOnlyStorageWait(error, v.round)
       }

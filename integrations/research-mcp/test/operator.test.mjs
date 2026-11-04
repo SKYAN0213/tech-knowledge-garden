@@ -175,6 +175,7 @@ function fakeClient({
   loseResponse = false,
   badHash = false,
   detailed = false,
+  capacityRecovery = null,
 } = {}) {
   const calls = []
   const bytes = JSON.stringify(data, null, 2) + "\n"
@@ -218,6 +219,10 @@ function fakeClient({
           ...(controls.state === "failed" ? { error: "Original source failed" } : {}),
           ...(controls.state === "waiting_for_reasoning"
             ? { reasoning_task: { task_id: "reasoning-task-1", request_sha256: "b".repeat(64) } }
+            : {}),
+          ...(controls.state === "waiting_for_storage" && capacityRecovery
+            ? { capacity_recovery: capacityRecovery,
+                recovery: { action: "check_storage_capacity_then_resume" } }
             : {}),
         })
       }
@@ -488,6 +493,21 @@ test("a lost submission response resumes by looking up the original job instead 
   )
   assert.equal(continued.state, "completed")
   assert.equal(client.calls.filter((call) => call.name === "research_execute").length, 1)
+})
+
+test("a storage capacity wait is surfaced separately from a Drive hydration request", async (t) => {
+  const capacity = { schema: "research-storage-capacity-wait/v1", code: "STORAGE_CAPACITY_LOCKED",
+    reason: "An active writer prevents safe cleanup" }
+  const client = fakeClient({ state: "waiting_for_storage", capacityRecovery: capacity })
+  const paused = await runLocalOperator(fixture(t, "capacity-pause"), {
+    client, planner: sequence(inventory),
+  })
+  assert.equal(paused.state, "waiting_for_storage")
+  assert.deepEqual(paused.handoff.capacity_recovery, capacity)
+  assert.equal(paused.handoff.storage_request, null)
+  assert.match(paused.handoff.next_action, /capacity/i)
+  assert.doesNotMatch(paused.handoff.next_action, /remote-pull|Drive/i)
+  assert.equal(client.calls.some((call) => call.name === "research_job_resume"), false)
 })
 
 test("reasoning and editorial review pauses preserve exact task IDs and do not authorize automatic approval", async (t) => {

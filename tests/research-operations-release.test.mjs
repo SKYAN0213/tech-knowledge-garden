@@ -374,6 +374,7 @@ test("installed execution survives source edits; round pin is idempotent, duplic
     /already belongs/,
   )
   assert.equal(inspectOperationalPin(f.ctx, f.p.run_id).release_id, "unit-operations-only")
+  assert.equal(inspectOperationalPin(f.ctx, f.p.run_id).review_repair_mode, "components/v1")
   const before = fs.readdirSync(f.root, { recursive: true }).sort()
   const status = operationalRoundStatus(f.ctx, f.p.run_id)
   assert.equal(status.status, "pinned")
@@ -489,6 +490,43 @@ test("processing cannot start without a frozen collection handoff", async (t) =>
     runOperationalRound(f.ctx, { ...f.p, stage: "processing" }),
     /immutable collection handoff/,
   )
+})
+
+test("a new round freezes its repair mode and refuses an override before dispatch", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  await assert.rejects(runOperationalRound(f.ctx, {
+    run_id: f.p.run_id, stage: "collection", parameters: { review_repair_mode: "other" },
+  }, { submit: async () => { throw Error("must not dispatch") } }), /differs from the frozen round/)
+  let seen
+  await runOperationalRound(f.ctx, { run_id: f.p.run_id, stage: "collection" }, {
+    submit: async (context, module, operation, parameters, options) => {
+      seen = parameters
+      const input = { job_id: options.jobId, module, operation, parameters, context }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/input.json`, input)
+      const state = { job_id: options.jobId, state: "queued", input_sha256: sha256(JSON.stringify(input)) }
+      atomicCreate(f.root, `module-jobs/${options.jobId}/state.json`, state)
+      return state
+    },
+  })
+  assert.equal(seen.review_mode, "combined/v1")
+  assert.equal(seen.review_repair_mode, "components/v1")
+})
+
+test("a legacy pinned round keeps its absent repair mode and rejects changing it", async (t) => {
+  const f = await setup(t)
+  await pinOperationalRound(f.ctx, f.p)
+  const inputPath = `operations/rounds/${f.p.run_id}/input.json`
+  const input = readJSON(f.root, inputPath)
+  delete input.review_repair_mode
+  atomicWrite(f.root, inputPath, input)
+  const before = fs.readFileSync(path.join(f.root, inputPath))
+  const pinned = await pinOperationalRound(f.ctx, f.p)
+  assert.equal(pinned.reused, true)
+  assert.equal(Object.hasOwn(pinned.input, "review_repair_mode"), false)
+  await assert.rejects(runOperationalRound(f.ctx, { run_id: f.p.run_id, stage: "collection",
+    parameters: { review_repair_mode: "components/v1" } }), /differs from the frozen round/)
+  assert.deepEqual(fs.readFileSync(path.join(f.root, inputPath)), before)
 })
 
 test("a settled collection slice creates a checkpoint-bound successor instead of replaying the completed job", async (t) => {
@@ -637,6 +675,7 @@ test("explicit continuation preserves the frozen parent, scheduler claim and ori
   assert.deepEqual(fs.readFileSync(path.join(f.root, parentPath)), before)
   const child = inspectOperationalPin(f.ctx, p.successor)
   assert.equal(child.continuation.sha256, continuation.source.sha256)
+  assert.equal(child.review_repair_mode, "components/v1")
   assert.equal(checkedOperationalInvocation(f.ctx, child.invocation).kind, "manual")
   assert.equal(fs.readdirSync(path.join(f.root, "operations/scheduled-executions")).length, 1)
   await assert.rejects(

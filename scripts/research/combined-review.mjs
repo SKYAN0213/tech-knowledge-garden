@@ -28,7 +28,7 @@ import {
   completenessCoverageSchema,
   draftCoverageLocations,
 } from "./editorial-completeness.mjs"
-import { prepareRoleProvider, resolveRolePolicy } from "./model-policy.mjs"
+import { prepareRoleProvider, resolveRolePolicy, loadRoleBudget } from "./model-policy.mjs"
 import { createModelProvider } from "./model-provider.mjs"
 import { nativeResearch } from "./modules/contracts.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, RunState } from "./run-state.mjs"
@@ -345,6 +345,9 @@ function readEditorialDispute(ctx, prepared) {
     evidence.response,
     ...evidence.repairs,
     ...(mapping || []).map((row) => row?.response),
+    ...(mapping || []).flatMap((row) => [row?.source_response, row?.repair_receipt, row?.repair_application,
+      row?.coverage_response, row?.coverage_repair_receipt, row?.coverage_repair_application,
+      row?.time_response, row?.time_repair_receipt, row?.time_repair_application].filter(Boolean)),
     ...(evidence.coverage_reuse ? [evidence.coverage_reuse] : []),
   ]
   for (const r of new Map(
@@ -1082,7 +1085,191 @@ function readBoundPriorReview(ctx, runId, inputSHA) {
   return { base, manifest, manifestReference, nativeReference, packet }
 }
 
-function reusableEditorialCoverage(ctx, prepared) {
+function assertPriorRepairRequest(ctx, { origin, modelRun, receipt, stage, result, partRef, budgetCache }) {
+  let ledger = budgetCache.get(modelRun)
+  if (!budgetCache.has(modelRun)) {
+    const file = safePath(ctx.root, `runs/${modelRun}/model-policy/evidence_compare/budget.json`, { materialize: false })
+    ledger = fs.existsSync(file) ? loadRoleBudget(ctx.root, modelRun, "evidence_compare") : null
+    budgetCache.set(modelRun, ledger)
+  }
+  // Older records without the request ledger cannot prove a repair. Leave
+  // just that claim for fresh review rather than manufacturing provenance.
+  if (!ledger) return false
+  if (!same(ledger.binding, result.provenance?.model_policy))
+    throw Error("Prior repair model binding changed")
+  const matchingResults = ledger.attempts.filter((attempt) => attempt.status === "complete" && same(attempt.result, result))
+  if (!matchingResults.length) return false
+  const matches = matchingResults.filter((attempt) => {
+    const request = attempt.request
+    if (!request || !Array.isArray(request.messages)) return false
+    return sha256(JSON.stringify({ model: request.model, messages: request.messages, schema: request.schema })) === stage.input_hash
+  })
+  if (matches.length > 1) return false
+  if (!matches.length) throw Error("Prior repair request evidence changed")
+  let input = JSON.parse(matches[0].request.messages[1].content)
+  if (input.repair_input_file) {
+    const relative = path.relative(ctx.root, input.repair_input_file)
+    const bytes = fs.readFileSync(safePath(ctx.root, relative))
+    if (sha256(bytes) !== input.repair_input_sha256) throw Error("Prior repair input changed")
+    input = JSON.parse(bytes)
+  }
+  if (input.task !== "combined_review_repair" || input.run_id !== origin.packet.run_id ||
+      input.component !== receipt.component || input.input_sha256 !== origin.manifest.input_sha256 ||
+      !same(input.assigned_claim_ids, receipt.assigned_claim_ids) ||
+      input.source_manifest?.sha256 !== origin.manifestReference.sha256 ||
+      input.source_manifest?.file !== safePath(ctx.root, origin.manifestReference.path) ||
+      (input.original_result && !same(input.original_result, partRef)))
+    throw Error("Prior repair request binding changed")
+  return { input }
+}
+
+function assertPriorReviewState(modelRun, modelState, origin) {
+  const base = { kind: "editorial", input_sha256: origin.manifest.input_sha256,
+    manifest: origin.manifestReference }
+  const hashes = [sha256(JSON.stringify(base)), sha256(JSON.stringify({ ...base, review_repair_mode: "components/v1" }))]
+  if (modelState?.schema !== "research-run/v1" || modelState.run_id !== modelRun || !hashes.includes(modelState.input_hash))
+    throw Error("Prior repaired review input binding changed")
+}
+
+function priorCoverageTime(ctx, { origin, prepared, app, appResponse, coverage, mapping, modelRun, modelState, partRef, partResult, allowRepaired, budgetCache }) {
+  const sourceTime = { state: { directory: `runs/${modelRun}/`, state: modelState }, stage: "part-" + mapping.part }
+  try {
+    assertSavedReviewTime(ctx, sourceTime, partResult.output.coverage_reviewed_at,
+      [prepared.packet.draft.completeness_context.review.reviewed_at])
+    return { reviewed_at: partResult.output.coverage_reviewed_at, timeSource: sourceTime }
+  } catch (error) {
+    if (error.code !== "CORRECTION_TIME_INVALID") throw error
+  }
+  if (!allowRepaired) return null
+  assertPriorReviewState(modelRun, modelState, origin)
+  // The part itself must still be an attributable, completed source review;
+  // only its coverage timestamp may come from a separately recorded repair.
+  try { assertSavedReviewTime(ctx, sourceTime, partResult.output.reviewed_at) }
+  catch (error) { if (error.code !== "CORRECTION_TIME_INVALID") throw error; return null }
+  const pattern = /^repair-(?:coverage_reviewed_at-part-\d+|components-part-\d+|coverage-date-\d+)-[a-f0-9]{16}\.json$/
+  const refs = mapping.time_repair_receipt ? [mapping.time_repair_receipt] : (app.repairs || []).filter((entry) =>
+    entry?.path?.startsWith(origin.base + "repair-results/") && pattern.test(path.basename(entry.path)))
+  const found = []
+  for (const receiptRef of refs) {
+    if (!receiptRef?.path?.startsWith(origin.base + "repair-results/") || !pattern.test(path.basename(receiptRef.path)))
+      throw Error("Prior coverage time repair reference changed")
+    const receipt = checkedReviewReference(ctx.root, receiptRef, "Prior coverage time repair receipt changed")
+    const grouped = receipt.component === "components-part-" + mapping.part
+    const direct = receipt.component === "coverage_reviewed_at-part-" + mapping.part
+    const late = /^coverage-date-\d+$/.test(receipt.component || "")
+    if (!grouped && !direct && !late) continue
+    if (!Array.isArray(receipt.assigned_claim_ids)) continue
+    const stageName = repairStageName(receipt.component, receipt.assigned_claim_ids)
+    const resultPath = `runs/${modelRun}/${stageName}.json`
+    if (receiptRef.path !== origin.base + "repair-results/" + stageName + ".json" ||
+        receipt.input_sha256 !== origin.manifest.input_sha256 || receipt.raw_response_preserved !== true ||
+        receipt.result?.path !== resultPath || (mapping.time_response && !same(mapping.time_response, receipt.result)))
+      throw Error("Prior coverage time repair binding changed")
+    const result = checkedReviewReference(ctx.root, receipt.result, "Prior coverage time result changed")
+    const stage = modelState?.stages?.[stageName]
+    if (stage?.status !== "complete" || stage.result_path !== resultPath ||
+        stage.input_hash !== receipt.request_sha256 || stage.result_hash !== sha256(JSON.stringify(result)) ||
+        !same(result.provenance?.model_policy, partResult.provenance?.model_policy) ||
+        result.provenance?.model_policy?.role !== "evidence_compare")
+      throw Error("Prior coverage time repair checkpoint changed")
+    const proof = assertPriorRepairRequest(ctx, { origin, modelRun, receipt, stage, result, partRef, budgetCache })
+    if (!proof) continue
+    let applicationRef = null
+    if (grouped) {
+      const applicationPath = origin.base + "repair-results/" + stageName + "-application.json"
+      applicationRef = mapping.time_repair_application || (app.repairs || []).find((entry) => entry.path === applicationPath)
+      if (!applicationRef || applicationRef.path !== applicationPath) continue
+      const application = checkedReviewReference(ctx.root, applicationRef, "Prior grouped coverage time application changed")
+      if (application.schema !== "research-component-repair-application/v1" ||
+          application.input_sha256 !== origin.manifest.input_sha256 || !same(application.original_result, partRef) ||
+          !same(application.result, receipt.result) || !Array.isArray(application.accepted) ||
+          !application.accepted.includes("coverage_reviewed_at") || !Array.isArray(application.pending) || application.pending.includes("coverage_reviewed_at"))
+        throw Error("Prior grouped coverage time application changed")
+    }
+    const value = late ? result.output?.reviewed_at : result.output?.coverage_reviewed_at
+    const applied = mapping.time_repair_receipt ? mapping.time_reviewed_at
+      : late ? coverage.reviewed_at : appResponse.outputs?.[mapping.part]?.coverage_reviewed_at
+    if (value !== applied || (late && proof.input.retained_coverage_sha256 !== sha256(JSON.stringify(coverage.coverage)))) continue
+    const timeSource = { state: { directory: `runs/${modelRun}/`, state: modelState }, stage: stageName }
+    try {
+      assertSavedReviewTime(ctx, timeSource, value, [prepared.packet.draft.completeness_context.review.reviewed_at])
+      found.push({ reviewed_at: value, timeSource, time_response: receipt.result, time_repair_receipt: receiptRef,
+        time_reviewed_at: value, ...(applicationRef ? { time_repair_application: applicationRef } : {}) })
+    } catch (error) { if (error.code !== "CORRECTION_TIME_INVALID") throw error }
+  }
+  return found.length === 1 ? found[0] : null
+}
+
+// A coverage row can come from a later exact repair while the independent
+// preservation decision came from the original part (or another repair).
+// Reuse only a uniquely identifiable row whose raw result, application and
+// model checkpoint remain bound to the original source and decision.
+function priorCoverageRow(ctx, { origin, prepared, app, mapping, id, expected, modelRun, modelState, partRef, partResult, allowRepaired, budgetCache, timeEvidence }) {
+  const raw = Array.isArray(partResult.output?.coverage) ? partResult.output.coverage : []
+  const original = raw.filter((row) => row?.claim_id === id)
+  if (original.length === 1 && same(original[0], expected))
+    return { coverage: original[0], ...timeEvidence }
+  if (!allowRepaired) return null
+  assertPriorReviewState(modelRun, modelState, origin)
+  const allowed = /^repair-(?:coverage(?:-part-\d+|-followup-\d+)?|components-part-\d+)-[a-f0-9]{16}\.json$/
+  const refs = mapping.coverage_repair_receipt ? [mapping.coverage_repair_receipt] : (app.repairs || []).filter((entry) =>
+    entry?.path?.startsWith(origin.base + "repair-results/") && allowed.test(path.basename(entry.path)))
+  const found = []
+  for (const receiptRef of refs) {
+    if (!receiptRef?.path?.startsWith(origin.base + "repair-results/") || !allowed.test(path.basename(receiptRef.path)))
+      throw Error("Prior coverage row repair reference changed")
+    const receipt = checkedReviewReference(ctx.root, receiptRef, "Prior coverage row repair receipt changed")
+    if (!Array.isArray(receipt.assigned_claim_ids) || !receipt.assigned_claim_ids.includes(id)) continue
+    if (!["coverage", "coverage-part-" + mapping.part, "components-part-" + mapping.part].includes(receipt.component) &&
+        !/^coverage-followup-\d+$/.test(receipt.component || "")) continue
+    const stageName = repairStageName(receipt.component, receipt.assigned_claim_ids)
+    if (receiptRef.path !== origin.base + "repair-results/" + stageName + ".json")
+      throw Error("Prior coverage row repair stage changed")
+    const resultPath = `runs/${modelRun}/${stageName}.json`
+    if (receipt.input_sha256 !== origin.manifest.input_sha256 || receipt.raw_response_preserved !== true ||
+        receipt.result?.path !== resultPath ||
+        (mapping.coverage_response && !same(mapping.coverage_response, receipt.result)))
+      throw Error("Prior coverage row repair binding changed")
+    const result = checkedReviewReference(ctx.root, receipt.result, "Prior coverage row model result changed")
+    const stage = modelState?.stages?.[stageName]
+    if (stage?.status !== "complete" || stage.result_path !== resultPath ||
+        stage.input_hash !== receipt.request_sha256 || stage.result_hash !== sha256(JSON.stringify(result)) ||
+        !same(result.provenance?.model_policy, partResult.provenance?.model_policy) ||
+        result.provenance?.model_policy?.role !== "evidence_compare")
+      throw Error("Prior coverage row repair checkpoint changed")
+    if (!assertPriorRepairRequest(ctx, { origin, modelRun, receipt, stage, result, partRef, budgetCache })) continue
+    let applicationRef = null
+    if (receipt.component === "components-part-" + mapping.part) {
+      const applicationPath = origin.base + "repair-results/" + stageName + "-application.json"
+      applicationRef = mapping.coverage_repair_application || (app.repairs || []).find((entry) => entry.path === applicationPath)
+      if (!applicationRef || applicationRef.path !== applicationPath) continue
+      const application = checkedReviewReference(ctx.root, applicationRef, "Prior grouped coverage repair application changed")
+      if (application.schema !== "research-component-repair-application/v1" ||
+          application.input_sha256 !== origin.manifest.input_sha256 || !same(application.original_result, partRef) ||
+          !same(application.result, receipt.result) || !Array.isArray(application.accepted) ||
+          !application.accepted.includes("coverage") || !Array.isArray(application.pending) || application.pending.includes("coverage"))
+        throw Error("Prior grouped coverage repair application changed")
+    }
+    const rows = Array.isArray(result.output?.coverage) ? result.output.coverage.filter((row) => row?.claim_id === id) : []
+    if (rows.length !== 1 || !same(rows[0], expected)) continue
+    try {
+      assertEditorialCoverageRow(origin.packet.draft, rows[0])
+      assertEditorialCoverageRow(prepared.packet.draft, rows[0])
+      const reviewTime = result.output.reviewed_at || timeEvidence.reviewed_at
+      const repairTime = { state: { directory: `runs/${modelRun}/`, state: modelState }, stage: stageName }
+      assertSavedReviewTime(ctx, repairTime, reviewTime, [prepared.packet.draft.completeness_context.review.reviewed_at])
+      found.push({ ...timeEvidence, coverage: rows[0], reviewed_at: reviewTime, timeSource: repairTime,
+        coverage_response: receipt.result, coverage_repair_receipt: receiptRef,
+        ...(applicationRef ? { coverage_repair_application: applicationRef } : {}) })
+    } catch (error) {
+      if (error.code === "REVIEW_TIME_BINDING_INVALID") throw error
+      // Missing/invalid source row or review time is not reusable evidence.
+    }
+  }
+  return found.length === 1 ? found[0] : null
+}
+
+function reusableEditorialCoverage(ctx, prepared, { allowRepaired = false } = {}) {
   const previousDraft = prepared.packet.draft.previous_draft_id
   if (!previousDraft || previousDraft === prepared.packet.draft.draft_id) return null
   const directory = `runs/${prepared.run_id}/review-bundles/editorial/`
@@ -1114,7 +1301,7 @@ function reusableEditorialCoverage(ctx, prepared) {
     !same(app.manifest, prior.manifestReference)
   )
     throw Error("Prior coverage application binding changed")
-  checkedReviewReference(ctx.root, app.response, "Prior combined response changed")
+  const appResponse = checkedReviewReference(ctx.root, app.response, "Prior combined response changed")
   checkedReviewReference(ctx.root, app.editorial, "Prior editorial decision changed")
   const coverage = checkedReviewReference(ctx.root, app.coverage, "Prior coverage decision changed")
   if (
@@ -1124,6 +1311,7 @@ function reusableEditorialCoverage(ctx, prepared) {
     throw Error("Prior coverage draft binding changed")
   const origins = new Map([[candidate.name, prior]])
   const modelResults = new Map()
+  const budgetCache = new Map()
   const rows = []
   for (const id of prepared.packet.completeness.important_claim_ids) {
     if (
@@ -1144,6 +1332,106 @@ function reusableEditorialCoverage(ctx, prepared) {
       continue
     const mapping = mappings[0],
       resultPath = mapping.response?.path || ""
+    const repairedMatch = /^runs\/(bundle-[a-f0-9]{40})\/(repair-(?:coverage-decisions-(?:part|followup)|components-part)-(\d+)-[a-f0-9]{16})\.json$/.exec(resultPath)
+    if (repairedMatch && allowRepaired) {
+      if (Number(repairedMatch[3]) !== mapping.part) continue
+      // A repaired decision and the corresponding coverage row are separate
+      // model outputs. Both must retain their exact stage and native receipt.
+      const manifestPath = mapping.origin_manifest?.path || prior.manifestReference.path
+      const originMatch = /^runs\/([^/]+)\/review-bundles\/editorial\/([a-f0-9]{64})\/manifest\.json$/.exec(manifestPath)
+      if (!originMatch || originMatch[1] !== prepared.run_id) continue
+      let origin = origins.get(originMatch[2])
+      if (!origin) {
+        origin = readBoundPriorReview(ctx, prepared.run_id, originMatch[2])
+        origins.set(originMatch[2], origin)
+      }
+      if (mapping.origin_manifest && !same(mapping.origin_manifest, origin.manifestReference))
+        throw Error("Prior repaired coverage manifest changed")
+      const expectedRun = "bundle-" + sha256(JSON.stringify([prepared.run_id, "editorial", origin.manifest.input_sha256])).slice(0, 40)
+      if (repairedMatch[1] !== expectedRun) throw Error("Prior repaired coverage run changed")
+      const receiptPath = origin.base + "repair-results/" + repairedMatch[2] + ".json"
+      const receiptRef = mapping.repair_receipt || (app.repairs || []).find((entry) => entry.path === receiptPath)
+      if (!receiptRef || receiptRef.path !== receiptPath) continue
+      const receipt = checkedReviewReference(ctx.root, receiptRef, "Prior coverage repair receipt changed")
+      const result = checkedReviewReference(ctx.root, mapping.response, "Prior coverage model result changed")
+      const modelState = readJSON(ctx.root, `runs/${expectedRun}/state.json`)
+      assertPriorReviewState(expectedRun, modelState, origin)
+      const stage = modelState?.stages?.[repairedMatch[2]]
+      const partStage = "part-" + mapping.part
+      const partPath = `runs/${expectedRun}/${partStage}.json`
+      const partRef = mapping.source_response || ref(ctx.root, partPath)
+      if (partRef.path !== partPath) throw Error("Prior repaired coverage source changed")
+      const partResult = checkedReviewReference(ctx.root, partRef, "Prior coverage source result changed")
+      const sourceStage = modelState?.stages?.[partStage]
+      const grouped = receipt.component === "components-part-" + mapping.part
+      const applicationPath = origin.base + "repair-results/" + repairedMatch[2] + "-application.json"
+      const repairApplicationRef = grouped
+        ? mapping.repair_application || (app.repairs || []).find((entry) => entry.path === applicationPath)
+        : null
+      if (grouped && (!repairApplicationRef || repairApplicationRef.path !== applicationPath)) continue
+      const repairApplication = grouped
+        ? checkedReviewReference(ctx.root, repairApplicationRef, "Prior grouped repair application changed")
+        : null
+      if (
+        !Array.isArray(receipt.assigned_claim_ids) ||
+        !receipt.assigned_claim_ids.includes(id) ||
+        !["coverage-decisions-part-" + mapping.part, "coverage-decisions-followup-" + mapping.part, "components-part-" + mapping.part].includes(receipt.component) ||
+        repairStageName(receipt.component, receipt.assigned_claim_ids) !== repairedMatch[2] ||
+        receipt.input_sha256 !== origin.manifest.input_sha256 ||
+        receipt.raw_response_preserved !== true || !same(receipt.result, mapping.response) ||
+        stage?.status !== "complete" || stage.result_path !== resultPath ||
+        stage.input_hash !== receipt.request_sha256 || stage.result_hash !== sha256(JSON.stringify(result)) ||
+        sourceStage?.status !== "complete" || sourceStage.result_path !== partPath ||
+        sourceStage.result_hash !== sha256(JSON.stringify(partResult)) ||
+        !same(result.provenance?.model_policy, partResult.provenance?.model_policy) ||
+        result.provenance?.model_policy?.role !== "evidence_compare" ||
+        (grouped && (repairApplication.schema !== "research-component-repair-application/v1" ||
+          repairApplication.input_sha256 !== origin.manifest.input_sha256 ||
+          !same(repairApplication.original_result, partRef) ||
+          !same(repairApplication.result, mapping.response) ||
+          !Array.isArray(repairApplication.accepted) || !repairApplication.accepted.includes("coverage_decisions") ||
+          !Array.isArray(repairApplication.pending) || repairApplication.pending.includes("coverage_decisions")))
+      ) throw Error("Prior coverage repair checkpoint changed")
+      if (!assertPriorRepairRequest(ctx, { origin, modelRun: expectedRun, receipt, stage, result, partRef, budgetCache })) continue
+      const source = partResult.output,
+        repaired = result.output
+      if (
+        source?.schema !== "research-editorial-review-bundle/v1" ||
+        source.input_sha256 !== origin.manifest.input_sha256 ||
+        source.read_manifest_sha256 !== origin.manifestReference.sha256 ||
+        source.part !== mapping.part || source.reviewer !== mapping.reviewer ||
+        source.source_read !== true || source.all_relevant_facts_checked !== true
+      ) throw Error("Prior coverage model binding changed")
+      const repairTime = { state: { directory: `runs/${expectedRun}/`, state: modelState }, stage: repairedMatch[2] }
+      const timeEvidence = priorCoverageTime(ctx, { origin, prepared, app, appResponse, coverage, mapping,
+        modelRun: expectedRun, modelState, partRef, partResult, allowRepaired, budgetCache })
+      if (!timeEvidence) continue
+      try {
+        assertSavedReviewTime(ctx, repairTime, timeEvidence.reviewed_at, [prepared.packet.draft.completeness_context.review.reviewed_at])
+      } catch (error) {
+        if (error.code !== "CORRECTION_TIME_INVALID") throw error
+        continue
+      }
+      if (!same(coverageReuseBinding(origin.packet), coverageReuseBinding(prepared.packet)) ||
+          !same(coverageClaimContext(origin.packet.draft.draft, id), coverageClaimContext(prepared.packet.draft.draft, id))) continue
+      const decisions = (repaired?.coverage_decisions || []).filter((row) => row.claim_id === id)
+      if (decisions.length !== 1 || decisions[0].decision !== "preserved" || decisions[0].reason !== null) continue
+      const coverageEvidence = priorCoverageRow(ctx, { origin, prepared, app, mapping, id,
+        expected: coverageRows[0], modelRun: expectedRun, modelState, partRef, partResult, allowRepaired, budgetCache, timeEvidence })
+      if (!coverageEvidence) continue
+      try {
+        assertSchema(decisions[0], object({ claim_id: fixed(id), decision: fixed("preserved"), reason: { type: "null" } }))
+        assertEditorialCoverageRow(origin.packet.draft, coverageEvidence.coverage)
+        assertEditorialCoverageRow(prepared.packet.draft, coverageEvidence.coverage)
+      } catch { continue }
+      rows.push({ claim_id: id, ...coverageEvidence, decision: decisions[0], part: mapping.part,
+        reviewer: mapping.reviewer, response: mapping.response,
+        source_response: partRef, repair_receipt: receiptRef,
+        ...(repairApplicationRef ? { repair_application: repairApplicationRef } : {}),
+        origin_manifest: origin.manifestReference, origin_native_packet: origin.nativeReference,
+        context_sha256: sha256(JSON.stringify(coverageClaimContext(prepared.packet.draft.draft, id))) })
+      continue
+    }
     const match = /^runs\/(bundle-[a-f0-9]{40})\/(part-(\d+))\.json$/.exec(resultPath)
     // Individually repaired coverage can be re-reviewed until its own exact
     // source-row provenance is available; never assume the repaired judgment.
@@ -1181,22 +1469,12 @@ function reusableEditorialCoverage(ctx, prepared) {
         state: { directory: `runs/${match[1]}/`, state: modelState },
         stage: match[2],
       }
-      let validTime = true
-      try {
-        assertSavedReviewTime(ctx, timeSource, output.coverage_reviewed_at, [
-          prepared.packet.draft.completeness_context.review.reviewed_at,
-        ])
-      } catch (error) {
-        if (error.code !== "CORRECTION_TIME_INVALID") throw error
-        validTime = false
-      }
-      cached = { output, origin, timeSource, validTime, response: mapping.response }
+      cached = { output, origin, timeSource, response: mapping.response, result, modelState, modelRun: match[1] }
       modelResults.set(resultPath, cached)
     }
     if (!same(cached.response, mapping.response) || cached.output.reviewer !== mapping.reviewer)
       throw Error("Prior coverage model attribution changed")
-    const { output, origin, timeSource, validTime } = cached
-    if (!validTime) continue
+    const { output, origin } = cached
     if (
       !same(coverageReuseBinding(origin.packet), coverageReuseBinding(prepared.packet)) ||
       !same(
@@ -1206,33 +1484,32 @@ function reusableEditorialCoverage(ctx, prepared) {
     )
       continue
     const decisions = (output.coverage_decisions || []).filter((row) => row.claim_id === id)
-    const originalRows = (output.coverage || []).filter((row) => row.claim_id === id)
-    if (
-      decisions.length !== 1 ||
-      originalRows.length !== 1 ||
-      decisions[0].decision !== "preserved" ||
-      decisions[0].reason !== null ||
-      !same(originalRows[0], coverageRows[0])
-    )
+    if (decisions.length !== 1 || decisions[0].decision !== "preserved" || decisions[0].reason !== null)
       continue
+    const timeEvidence = priorCoverageTime(ctx, { origin, prepared, app, appResponse, coverage, mapping,
+      modelRun: cached.modelRun, modelState: cached.modelState, partRef: mapping.response,
+      partResult: cached.result, allowRepaired, budgetCache })
+    if (!timeEvidence) continue
+    const coverageEvidence = priorCoverageRow(ctx, { origin, prepared, app, mapping, id,
+      expected: coverageRows[0], modelRun: cached.modelRun, modelState: cached.modelState,
+      partRef: mapping.response, partResult: cached.result, allowRepaired, budgetCache, timeEvidence })
+    if (!coverageEvidence) continue
     try {
-      assertEditorialCoverageRow(origin.packet.draft, originalRows[0])
-      assertEditorialCoverageRow(prepared.packet.draft, originalRows[0])
+      assertEditorialCoverageRow(origin.packet.draft, coverageEvidence.coverage)
+      assertEditorialCoverageRow(prepared.packet.draft, coverageEvidence.coverage)
     } catch {
       continue
     }
     rows.push({
       claim_id: id,
-      coverage: originalRows[0],
+      ...coverageEvidence,
       decision: decisions[0],
       part: mapping.part,
       reviewer: mapping.reviewer,
-      reviewed_at: output.coverage_reviewed_at,
       response: mapping.response,
       origin_manifest: origin.manifestReference,
       origin_native_packet: origin.nativeReference,
       context_sha256: sha256(JSON.stringify(coverageClaimContext(prepared.packet.draft.draft, id))),
-      timeSource,
     })
   }
   if (!rows.length) return null
@@ -1391,6 +1668,7 @@ async function repairComponent(
   error,
   supporting = {},
   admissionSchema = schema,
+  { inlineOnly = false } = {},
 ) {
   const input = {
     task: "combined_review_repair",
@@ -1417,6 +1695,9 @@ async function repairComponent(
     schema,
   }
   if (JSON.stringify(request).length > 20000) {
+    // Combining is an optimization only. If its complete, bound input cannot
+    // fit, retain the existing individual lossless repair path.
+    if (inlineOnly) return null
     const saved = save(
       ctx.root,
       prepared.base + "repair-input-" + sha256(JSON.stringify(input)) + ".json",
@@ -1766,9 +2047,11 @@ async function preflightDraft(ctx, prepared, curation, options) {
 
 export async function runCombinedReview(
   ctx,
-  { run_id, kind, curation },
+  { run_id, kind, curation, review_repair_mode },
   { baseProvider, executionWindow } = {},
 ) {
+  if (review_repair_mode !== undefined && review_repair_mode !== "components/v1")
+    throw Error("Unknown combined review repair mode")
   let prepared = prepareCombinedReview(ctx, { run_id, kind, curation })
   if (kind === "editorial")
     prepared = await preflightDraft(ctx, prepared, curation, { baseProvider, executionWindow })
@@ -1788,6 +2071,7 @@ export async function runCombinedReview(
     kind,
     input_sha256: prepared.input_sha256,
     manifest: prepared.manifest,
+    ...(review_repair_mode ? { review_repair_mode } : {}),
   })
   const dispute = kind === "editorial" ? readEditorialDispute(ctx, prepared) : null
   const assertDisputeIntegrity = () => {
@@ -1817,7 +2101,7 @@ export async function runCombinedReview(
     kind === "editorial" ? readJSON(ctx.root, reviewBase + "coverage-reuse.json") : null
   const reuse =
     kind === "editorial" && !dispute && priorReusePlan?.judgments?.length !== 0
-      ? reusableEditorialCoverage(ctx, prepared)
+      ? reusableEditorialCoverage(ctx, prepared, { allowRepaired: review_repair_mode === "components/v1" })
       : null
   const reuseValue = (value) => ({
     schema: "research-editorial-coverage-reuse/v1",
@@ -1837,7 +2121,7 @@ export async function runCombinedReview(
   const reuseReceipt = reuse ? reusePlan : null
   const assertReuseIntegrity = () => {
     if (!reuse) return
-    const current = reusableEditorialCoverage(ctx, prepared)
+    const current = reusableEditorialCoverage(ctx, prepared, { allowRepaired: review_repair_mode === "components/v1" })
     if (
       !current ||
       !same(reuseValue(current), reuseValue(reuse)) ||
@@ -1976,6 +2260,7 @@ export async function runCombinedReview(
       throw Error("Combined request admission exceeds 20000 characters")
     const result = await state.stage("part-" + i, request, () => model.structured(request))
     let output = result.output
+    let topLevelDecisionSource = { state, stage: "part-" + i }
     const timeSource = {
       importance_reviewed_at: { state, stage: "part-" + i },
       coverage_reviewed_at: { state, stage: "part-" + i },
@@ -2006,21 +2291,116 @@ export async function runCombinedReview(
         kind === "evidence"
           ? ["fact_review", "important_facts", "importance_reviewed_at"]
           : ["editorial_review", "coverage", "coverage_reviewed_at", "coverage_decisions"]
-      for (const component of components) {
+      const describe = (component) => {
         const selectedSchema =
           component === "editorial_review" && i === 0
             ? editorialDecisionSchema(prepared, output[component]?.status)
             : admissionSchema.properties[component]
         try {
           assertSchema(output[component], selectedSchema)
+          return null
         } catch (componentError) {
           const fields =
             component === "editorial_review" && i === 0
               ? invalidEditorialFields(output[component], selectedSchema)
               : []
-          const componentSchema = fields.length
-            ? object(Object.fromEntries(fields.map((key) => [key, selectedSchema.properties[key]])))
-            : selectedSchema
+          return {
+            component,
+            selectedSchema,
+            fields,
+            error: componentError,
+            componentSchema: fields.length
+              ? object(Object.fromEntries(fields.map((key) => [key, selectedSchema.properties[key]])))
+              : selectedSchema,
+          }
+        }
+      }
+      if (review_repair_mode === "components/v1" && !dispute) {
+        const invalid = components.map(describe).filter(Boolean)
+        let independent = []
+        if (kind === "evidence") {
+          // Importance depends on the fact decisions. Only group importance
+          // and its timestamp after the original fact review is valid.
+          if (!invalid.some((item) => item.component === "fact_review"))
+            independent = invalid.filter((item) =>
+              ["important_facts", "importance_reviewed_at"].includes(item.component),
+            )
+        } else {
+          const editorial = invalid.find((item) => item.component === "editorial_review")
+          if (
+            editorial &&
+            ["approved", "needs_revision"].includes(output.editorial_review?.status) &&
+            !editorial.fields.includes("status") &&
+            !editorial.fields.includes("draft_id")
+          ) {
+            independent = [editorial]
+            // Coverage values and decisions can depend on each other. Pick
+            // only one, with its review timestamp grouped only if neither is
+            // being changed in the same request.
+            const coverage = invalid.find((item) => item.component === "coverage") ||
+              invalid.find((item) => item.component === "coverage_decisions")
+            if (coverage) independent.push(coverage)
+            else {
+              const date = invalid.find((item) => item.component === "coverage_reviewed_at")
+              if (date) independent.push(date)
+            }
+          }
+        }
+        if (independent.length > 1) {
+          const component = "components-part-" + i
+          const original = ref(ctx.root, state.directory + `part-${i}.json`)
+          const partial = object(Object.fromEntries(independent.map((item) => [item.component, {}])), [])
+          const repaired = await repairComponent(
+            ctx, prepared, state, model, settings, component, scopes[i], partial,
+            Object.fromEntries(independent.map((item) => [item.component, output[item.component] ?? null])),
+            Error("Independent components need explicit source-backed repair"),
+            {
+              invalid_components: independent.map((item) => item.component),
+              native_component_schemas: Object.fromEntries(independent.map((item) =>
+                [item.component, item.componentSchema])),
+              invalid_editorial_fields: independent.find((item) => item.component === "editorial_review")?.fields || [],
+              original_result: original,
+              validation_errors: Object.fromEntries(independent.map((item) => [item.component, item.error.message])),
+              native_contract: "Repair only the listed independent components, each using its exact native schema. Preserve all other original judgments. Each check and decision must be explicit, source-backed, and associated with this exact manifest; do not infer approval.",
+            }, partial, { inlineOnly: true },
+          )
+          if (repaired) {
+            if (ref(ctx.root, original.path).sha256 !== original.sha256)
+              throw Error("Original combined result changed during component repair")
+            assertCombinedReviewSources(ctx, prepared)
+            const accepted = []
+            for (const item of independent) {
+              try {
+                assertSchema(repaired[item.component], item.componentSchema)
+                output = item.fields.length
+                  ? { ...output, [item.component]: { ...output[item.component], ...repaired[item.component] } }
+                  : { ...output, [item.component]: repaired[item.component] }
+                if (item.component in timeSource &&
+                    (item.component !== "editorial_review" || !item.fields.length || item.fields.includes("reviewed_at")))
+                  timeSource[item.component] = { state, stage: repairStageName(component, scopes[i]) }
+                if (item.component === "coverage_decisions")
+                  topLevelDecisionSource = { state, stage: repairStageName(component, scopes[i]) }
+                accepted.push(item.component)
+              } catch {
+                // A malformed sibling stays pending for the original exact
+                // per-component repair; valid siblings are not requested again.
+              }
+            }
+            save(ctx.root, prepared.base + "repair-results/" + repairStageName(component, scopes[i]) + "-application.json", {
+              schema: "research-component-repair-application/v1",
+              input_sha256: prepared.input_sha256,
+              original_result: original,
+              result: ref(ctx.root, state.directory + repairStageName(component, scopes[i]) + ".json"),
+              accepted,
+              pending: independent.map((item) => item.component).filter((name) => !accepted.includes(name)),
+            })
+          }
+        }
+      }
+      for (const component of components) {
+        const item = describe(component)
+        if (item) {
+          const { fields, componentSchema, error: componentError } = item
           const repaired = await repairComponent(
             ctx,
             prepared,
@@ -2044,6 +2424,8 @@ export async function runCombinedReview(
           output = fields.length
             ? { ...output, [component]: { ...output[component], ...repaired[component] } }
             : { ...output, ...repaired }
+          if (component === "coverage_decisions")
+            topLevelDecisionSource = { state, stage: repairStageName(component + "-part-" + i, scopes[i]) }
           if (
             component in timeSource &&
             (component !== "editorial_review" || !fields.length || fields.includes("reviewed_at"))
@@ -2209,7 +2591,7 @@ export async function runCombinedReview(
           }
         }
       }
-      accept(original, expected, { state, stage: "part-" + i })
+      accept(original, expected, topLevelDecisionSource)
       let pending = expected.filter((id) => !kept.has(id))
       for (let attempt = 0; pending.length && attempt < 2; attempt++) {
         const assigned = [...pending],
@@ -2954,6 +3336,16 @@ export async function runCombinedReview(
         reviewer: row.reviewer,
         ...row.decision,
         response: row.response,
+        ...(row.source_response ? { source_response: row.source_response } : {}),
+        ...(row.repair_receipt ? { repair_receipt: row.repair_receipt } : {}),
+        ...(row.repair_application ? { repair_application: row.repair_application } : {}),
+        ...(row.coverage_response ? { coverage_response: row.coverage_response } : {}),
+        ...(row.coverage_repair_receipt ? { coverage_repair_receipt: row.coverage_repair_receipt } : {}),
+        ...(row.coverage_repair_application ? { coverage_repair_application: row.coverage_repair_application } : {}),
+        ...(row.time_response ? { time_response: row.time_response } : {}),
+        ...(row.time_repair_receipt ? { time_repair_receipt: row.time_repair_receipt } : {}),
+        ...(row.time_repair_application ? { time_repair_application: row.time_repair_application } : {}),
+        ...(row.time_reviewed_at ? { time_reviewed_at: row.time_reviewed_at } : {}),
         reused: true,
         origin_manifest: row.origin_manifest,
         previous_application: reuse.previous_application,
@@ -3366,6 +3758,9 @@ export async function runCombinedDraftCorrection(
     const mapping = evidence.coverage_decision_mapping
     const extraRefs = [
       ...(Array.isArray(mapping) ? mapping.map((row) => row?.response) : []),
+      ...(Array.isArray(mapping) ? mapping.flatMap((row) => [row?.source_response, row?.repair_receipt, row?.repair_application,
+        row?.coverage_response, row?.coverage_repair_receipt, row?.coverage_repair_application,
+        row?.time_response, row?.time_repair_receipt, row?.time_repair_application].filter(Boolean)) : []),
       ...(evidence.coverage_reuse ? [evidence.coverage_reuse] : []),
     ]
     const references = [

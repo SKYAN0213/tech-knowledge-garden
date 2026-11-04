@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 import { safePath } from "./run-state.mjs"
 import { sha256 } from "./contracts.mjs"
+import { isStorageCapacityCode, isStorageCapacityNeed } from "./storage-capacity.mjs"
 import {
   GPT_DEVELOPMENT_CHECKS,
   inspectDevelopmentCompletion,
@@ -123,6 +124,25 @@ export function moduleRecoveryPlan(job) {
       action: "resolve_exact_reasoning_task_then_resume",
       resume_after_resolution: true,
     }
+  if (job.state === "waiting_for_storage" && isStorageCapacityCode(job.error_code)) {
+    const capacity = job.capacity_recovery
+    if (capacity?.schema !== "research-storage-capacity-wait/v1" ||
+        capacity.code !== job.error_code || capacity.job_id !== job.job_id ||
+        capacity.input_sha256 !== job.input_sha256 ||
+        typeof capacity.uncertain_write !== "boolean" ||
+        typeof capacity.reason !== "string" || !capacity.reason)
+      return { ...common, action: "inspect_invalid_capacity_evidence", resume_after_resolution: false }
+    if ((capacity.need || capacity.need_sha256) && (!isStorageCapacityNeed(capacity.need) ||
+        !/^[a-f0-9]{64}$/.test(capacity.need_sha256 || "") ||
+        sha256(JSON.stringify(capacity.need)) !== capacity.need_sha256))
+      return { ...common, action: "inspect_invalid_capacity_evidence", resume_after_resolution: false }
+    if (!capacity.uncertain_write && !capacity.need)
+      return { ...common, action: "inspect_missing_capacity_need", resume_after_resolution: false }
+    return { ...common, action: capacity.uncertain_write
+      ? "readback_uncertain_write_then_check_capacity" : "check_storage_capacity_then_resume",
+      resume_after_resolution: true,
+      capacity_recovery: capacity }
+  }
   if (job.state === "waiting_for_storage")
     return { ...common, action: "hydrate_exact_payload_then_resume", resume_after_resolution: true }
   return {

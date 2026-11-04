@@ -182,13 +182,28 @@ export function compareProcessingArtifacts(baseline, candidate) {
   }
 }
 
+// Version 1 is the original separate-versus-combined benchmark. Version 2
+// compares two releases using the same combined processing contract.
+export function articleBenchmarkModes(input) {
+  if (input?.schema === "research-article-processing-benchmark/v1")
+    return { baseline: "separate/v1", candidate: "combined/v1" }
+  if (input?.schema === "research-article-processing-benchmark/v2") {
+    if (input.baseline?.mode !== "combined/v1" || input.candidate?.mode !== "combined/v1")
+      throw Error("Both incremental benchmark implementations must use combined/v1")
+    if ([input.baseline, input.candidate].some((code) =>
+      code.review_repair_mode !== undefined && code.review_repair_mode !== "components/v1"))
+      throw Error("Unsupported incremental review repair mode")
+    return { baseline: input.baseline.mode, candidate: input.candidate.mode }
+  }
+  throw Error("Unsupported article benchmark input schema")
+}
+
 export async function benchmarkArticleProcessing(ctx, p) {
   const file = safePath(ctx.repo, p.path),
     bytes = fs.readFileSync(file)
   if (sha256(bytes) !== p.sha256) throw Error("Article benchmark input SHA changed")
   const input = JSON.parse(bytes)
   if (
-    input.schema !== "research-article-processing-benchmark/v1" ||
     !input.fixture ||
     !input.baseline ||
     !input.candidate ||
@@ -196,6 +211,17 @@ export async function benchmarkArticleProcessing(ctx, p) {
     fs.existsSync(input.destination)
   )
     throw Error("Fresh, explicitly frozen article benchmark input required")
+  const modes = articleBenchmarkModes(input)
+  const incremental = input.schema === "research-article-processing-benchmark/v2"
+  if (incremental &&
+      (typeof input.guard_workspace !== "string" || !path.isAbsolute(input.guard_workspace) ||
+        fs.realpathSync(input.guard_workspace) !== input.guard_workspace))
+    throw Error("Exact production workspace is required for incremental benchmark writer checks")
+  const assertWritersIdle = () => {
+    assertNoOperationalWriter(ctx.repo)
+    if (incremental && input.guard_workspace !== fs.realpathSync(ctx.repo))
+      assertNoOperationalWriter(input.guard_workspace)
+  }
   const fixtureBytes = fs.readFileSync(input.fixture.path)
   if (sha256(fixtureBytes) !== input.fixture.sha256) throw Error("Article fixture SHA changed")
   const fixture = JSON.parse(fixtureBytes)
@@ -208,16 +234,17 @@ export async function benchmarkArticleProcessing(ctx, p) {
   for (const code of [input.baseline, input.candidate])
     if (processingCodeFingerprint(code.repo).sha256 !== code.sha256)
       throw Error("Frozen processing implementation changed")
-  assertNoOperationalWriter(ctx.repo)
+  assertWritersIdle()
   fs.mkdirSync(input.destination, { recursive: false })
   const run = async (label, code, mode) => {
-    assertNoOperationalWriter(ctx.repo)
+    assertWritersIdle()
     const instance = instantiateProcessingFixture(
       input.fixture,
       path.join(input.destination, label),
       { executionRepo: code.repo },
     )
-    const config = { code_repo: code.repo, instance, mode }
+    const config = { code_repo: code.repo, instance, mode,
+      ...(incremental && code.review_repair_mode ? { review_repair_mode: code.review_repair_mode } : {}) }
     const configFile = path.join(input.destination, label + ".json")
     fs.writeFileSync(configFile, JSON.stringify(config, null, 2) + "\n")
     const worker = new URL("processing-replay.mjs", import.meta.url)
@@ -278,7 +305,7 @@ export async function benchmarkArticleProcessing(ctx, p) {
     if (sha256(receiptBytes) !== result.sha256) throw Error("Replay result changed")
     if (processingCodeFingerprint(code.repo).sha256 !== code.sha256)
       throw Error("Implementation changed during replay")
-    assertNoOperationalWriter(ctx.repo)
+    assertWritersIdle()
     return { ...result, observations, interference, value: JSON.parse(receiptBytes) }
   }
   const pairs = []
@@ -289,7 +316,7 @@ export async function benchmarkArticleProcessing(ctx, p) {
       results[label] = await run(
         `pair-${pairs.length + 1}-${label}`,
         input[label],
-        label === "baseline" ? "separate/v1" : "combined/v1",
+        modes[label],
       )
     const comparison = compareProcessingArtifacts(results.baseline.value, results.candidate.value)
     if (!comparison.equivalent) {
@@ -310,11 +337,12 @@ export async function benchmarkArticleProcessing(ctx, p) {
     return paired
   }
   const first = await pair(false)
-  if ((first.reduction >= 0.45 && first.reduction <= 0.55) || first.interference) await pair(true)
+  if ((!incremental && first.reduction >= 0.45 && first.reduction <= 0.55) || first.interference)
+    await pair(true)
   const valid = pairs.filter((p) => p.valid)
   const reduction = valid.length ? Math.min(...valid.map((p) => p.reduction)) : null
   const receipt = {
-    schema: "research-article-processing-benchmark-result/v1",
+    schema: `research-article-processing-benchmark-result/${incremental ? "v2" : "v1"}`,
     input_sha256: p.sha256,
     fixture: input.fixture,
     baseline: input.baseline,
@@ -325,8 +353,9 @@ export async function benchmarkArticleProcessing(ctx, p) {
     fresh: 31,
     prior_reuse: 1,
     control_validation_reduction: reduction,
-    acceptance:
-      reduction === null ? "no_valid_measurement" : reduction >= 0.5 ? "passed" : "below_target",
+    acceptance: reduction === null ? "no_valid_measurement" : incremental ? "compared" :
+      reduction >= 0.5 ? "passed" : "below_target",
+    ...(incremental ? { review_modes: modes, guarded_workspace: input.guard_workspace } : {}),
     output_equivalent: true,
     model_calls: 0,
     external_calls: 0,

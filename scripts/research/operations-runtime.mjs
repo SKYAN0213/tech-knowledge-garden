@@ -266,6 +266,9 @@ export async function runOperationalRound(
     )
       throw Error("Unsupported publication transition")
     const supplied = p.parameters || {}
+    if (Object.hasOwn(supplied, "review_repair_mode") &&
+        supplied.review_repair_mode !== pinned.input.review_repair_mode)
+      throw Error("Operational review repair mode differs from the frozen round")
     const recovery = pinned.input.continuation && readJSON(ctx.root, pinned.input.continuation.path)
     if (recovery?.approved_handoff && module === "edition") {
       const checkpoint = readJSON(ctx.root, recovery.checkpoint.path)
@@ -304,6 +307,7 @@ export async function runOperationalRound(
             ...(p.stage === "processing" ? { propose: true } : {}),
             ...supplied,
             ...(pinned.input.review_mode ? { review_mode: pinned.input.review_mode } : {}),
+            ...(pinned.input.review_repair_mode ? { review_repair_mode: pinned.input.review_repair_mode } : {}),
             run_id: run,
             round: true,
             ...(p.stage === "collection"

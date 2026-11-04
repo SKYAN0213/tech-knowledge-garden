@@ -149,6 +149,7 @@ export const module = {
           max_items: integer(1, 40),
           require_completeness: { type: "boolean" },
           review_mode: { type: "string", enum: ["separate/v1", "combined/v1"] },
+          review_repair_mode: { type: "string", enum: ["components/v1"] },
           time_budget_ms: integer(1, 3600000),
           max_model_calls: integer(1, 64),
           retry_failed: { type: "boolean" },

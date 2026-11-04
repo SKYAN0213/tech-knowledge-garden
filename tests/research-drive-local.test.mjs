@@ -18,6 +18,7 @@ import {
 import { LocalDriveClient } from "../scripts/research/drive-client.mjs"
 import { driveStorageAction } from "../scripts/research/drive-storage.mjs"
 import { storageAction } from "../scripts/research/cold-storage.mjs"
+import { isReadOnlyHydrationCapacity } from "../scripts/research/storage-capacity.mjs"
 import { safePath } from "../scripts/research/run-state.mjs"
 import { executeModule, moduleCatalog } from "../scripts/research/module-registry.mjs"
 
@@ -577,6 +578,56 @@ test("isolated cold storage archives, verifies raw ZIP members, restores exact f
   await driveStorageAction(fresh.repo, fresh.root, "remote-pull", {}, api)
   assert.deepEqual(fs.readFileSync(path.join(fresh.root, relative)), body)
   assert.equal(api.uploads.length, 2, "one archive and one catalog; pulls never create Drive files")
+})
+
+test("remote-pull preserves a capacity-blocked verified ZIP and resumes without another media download", async (t) => {
+  const f = await connected(t), api = driveFixture()
+  const relative = "research/local-ai/documents/original/body.bin"
+  const body = Buffer.from("source bytes preserved across the capacity wait\n".repeat(2000))
+  fs.mkdirSync(path.dirname(path.join(f.root, relative)), { recursive: true })
+  fs.writeFileSync(path.join(f.root, relative), body)
+  storageAction(f.root, "prepare", { parent_id: "archive-parent" })
+  const pushed = await driveStorageAction(f.repo, f.root, "remote-push", {}, api)
+  storageAction(f.root, "enable")
+  storageAction(f.root, "evict", { cache_bytes: 0 })
+  assert.throws(() => safePath(f.root, relative), (error) => error.code === "STORAGE_PENDING")
+  const wrapper = path.join(f.repo, "capacity-python")
+  fs.writeFileSync(wrapper, `#!/usr/bin/python3
+import json,os,sqlite3,sys
+if len(sys.argv)>2 and sys.argv[2]=="hydrate":
+ p=json.load(sys.stdin);root=os.path.realpath(sys.argv[sys.argv.index("--root")+1]);db=sqlite3.connect(os.path.join(root,".storage/catalog.sqlite"));paths=list(dict.fromkeys(p["paths"]));required=sum(db.execute("SELECT bytes FROM files WHERE path=?",(x,)).fetchone()[0] for x in paths);limit=json.load(open(os.path.join(root,".storage/policy.json")))["cache_bytes"]
+ need={"schema":"research-storage-capacity-need/v1","root":root,"bundle_id":p["bundle_id"],"paths":paths,"required_free_bytes":10*1024**3+required,"additional_cache_bytes":required,"required_cache_bytes":required,"cache_limit_bytes":limit}
+ print(json.dumps({"error":"active native locks","code":"STORAGE_CAPACITY_LOCKED","capacity_need":need}),file=sys.stderr);sys.exit(1)
+os.execvp("python3",["python3",*sys.argv[1:]])
+`, { mode: 0o755 })
+  let mediaReads = 0
+  const monitored = { ...api, fetchImpl: async (input, init) => {
+    if (new URL(input).searchParams.get("alt") === "media") mediaReads++
+    return api.fetchImpl(input, init)
+  } }
+  const oldPython = process.env.RESEARCH_STORAGE_PYTHON
+  let failure
+  try {
+    process.env.RESEARCH_STORAGE_PYTHON = wrapper
+    await assert.rejects(driveStorageAction(f.repo, f.root, "remote-pull", {}, monitored), (error) => {
+      failure = error
+      return error.code === "STORAGE_CAPACITY_LOCKED"
+    })
+  } finally {
+    if (oldPython === undefined) delete process.env.RESEARCH_STORAGE_PYTHON
+    else process.env.RESEARCH_STORAGE_PYTHON = oldPython
+  }
+  assert.equal(mediaReads, 1)
+  assert.equal(isReadOnlyHydrationCapacity({ module: "collection", operation: "storage",
+    context: { repo: f.repo }, parameters: { action: "remote-pull" } }, failure), true)
+  assert.deepEqual(failure.storage_capacity_need.paths, [relative])
+  assert.equal(failure.storage_capacity_need.bundle_id, pushed.results[0].bundle_id)
+  assert.equal(fs.existsSync(path.join(f.root, relative)), false)
+  const resumed = await driveStorageAction(f.repo, f.root, "remote-pull", {}, monitored)
+  assert.equal(resumed.status, "hydrated")
+  assert.equal(mediaReads, 1, "verified raw ZIP is reused after the capacity wait")
+  assert.deepEqual(fs.readFileSync(path.join(f.root, relative)), body)
+  assert.equal(api.uploads.length, 2, "read-only pulls do not write to Drive")
 })
 
 test("regular transfers hold before credentials or network; setup errors retain pending input", async (t) => {

@@ -23,6 +23,7 @@ export const module = {
           require_curation: { type: "boolean" },
           require_completeness: { type: "boolean" },
           review_mode: { type: "string", enum: ["separate/v1", "combined/v1"] },
+          review_repair_mode: { type: "string", enum: ["components/v1"] },
           daily_run: id,
           report_path: file("root"),
           report_sha256: digest,

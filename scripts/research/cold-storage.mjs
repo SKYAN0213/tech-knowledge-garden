@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import { isStorageCapacityCode, isStorageCapacityNeed } from "./storage-capacity.mjs"
 import path from "node:path"
 import os from "node:os"
 import crypto from "node:crypto"
@@ -360,6 +361,9 @@ export function resolveColdStorageRead(base, target) {
 
 export function storageAction(root, action, parameters = {}) {
   if (action === "hydrate") {
+    // The native operation owns only its own process lock. Never trust an
+    // externally supplied PID when checking capacity or preserving other locks.
+    parameters = { ...parameters, ignore_pid: process.pid }
     let paths = parameters.paths
     if (!Array.isArray(paths) || !paths.length) {
       paths = storageAction(root, "pending")
@@ -422,7 +426,7 @@ export function storageAction(root, action, parameters = {}) {
         stdio: [inputFd, "pipe", "pipe"],
         encoding: "utf8",
         maxBuffer: 128 * 1024 ** 2,
-        timeout: ["prepare", "prepare-full", "prepare-delta", "evict", "export", "import"].includes(action)
+        timeout: ["prepare", "prepare-full", "prepare-delta", "evict", "evict-if-due", "export", "import"].includes(action)
           ? 30 * 60 * 1000
           : 120000,
       },
@@ -430,6 +434,24 @@ export function storageAction(root, action, parameters = {}) {
     roots.clear()
     return JSON.parse(result)
   } catch (error) {
+    // Preserve the native capacity failure class without interpreting a
+    // generic subprocess failure or an arbitrary stderr message as success.
+    if (typeof error.stderr === "string") {
+      try {
+        const native = JSON.parse(error.stderr.trim().split(/\r?\n/).at(-1))
+        if (isStorageCapacityCode(native.code)) {
+          error.code = native.code
+          const need = native.capacity_need
+          if (action === "hydrate" && isStorageCapacityNeed(need) &&
+              need.root === fs.realpathSync(root) && need.bundle_id === parameters.bundle_id &&
+              Array.isArray(need.paths) && Array.isArray(parameters.paths) &&
+              JSON.stringify(need.paths) === JSON.stringify([...new Set(parameters.paths)]))
+            error.storage_capacity_need = need
+        }
+      } catch {
+        // The exact original stderr remains available in storage_failure.
+      }
+    }
     if (error.stdout !== undefined || error.stderr !== undefined)
       error.storage_failure = {
         schema: "research-storage-native-failure/v1",
@@ -448,9 +470,11 @@ export function storageAction(root, action, parameters = {}) {
   }
 }
 
-export function trimColdStorage(base, ignorePid = process.pid) {
+export function trimColdStorage(base, ignorePid = process.pid, capacityNeed = undefined) {
   const root = configuredRoot(base)
-  return root ? storageAction(root, "evict", { ignore_pid: ignorePid }) : null
+  return root ? storageAction(root, "evict-if-due", {
+    ignore_pid: ignorePid, ...(capacityNeed ? { capacity_need: capacityNeed } : {}),
+  }) : null
 }
 
 export function recordColdStorageWrite(base, target, digest, bytes) {

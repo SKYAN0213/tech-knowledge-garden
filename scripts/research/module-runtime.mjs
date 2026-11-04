@@ -158,6 +158,7 @@ function inputFingerprint(moduleId) {
         "event-workflow.mjs",
         "curation.mjs",
         "curation-workflow.mjs",
+        "article-timing.mjs",
         "combined-review.mjs",
         "concept-candidate-index.mjs",
         "verified-inputs.mjs",
@@ -306,6 +307,7 @@ function inputFingerprint(moduleId) {
         `modules/${moduleId}.mjs`,
         "cold-storage.mjs",
         "cold-storage.py",
+        "storage-capacity.mjs",
         "operation-policy.mjs",
         "development-release.mjs",
         "request-ownership.mjs",
@@ -793,6 +795,7 @@ export async function submitModuleJob(
       error_code: null,
       reasoning_task: null,
       storage_request: null,
+      capacity_recovery: null,
     })
     const out = fs.openSync(safePath(ctx.root, dir + "stdout.log"), "a", 0o600)
     const err = fs.openSync(safePath(ctx.root, dir + "stderr.log"), "a", 0o600)

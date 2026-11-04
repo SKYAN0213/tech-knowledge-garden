@@ -9,11 +9,13 @@ import { readReasoningTask } from "./reasoning-tasks.mjs"
 import { publicationDeliveryStatus } from "./authoring-delivery-request.mjs"
 import { assertRetiredWorkspaceFences } from "./retired-workspace-fence.mjs"
 import { savedStorageRequestReady } from "./storage-request.mjs"
+import { trimColdStorage } from "./cold-storage.mjs"
+import { isStorageCapacityCode, isStorageCapacityNeed } from "./storage-capacity.mjs"
 export { savedStorageRequestReady } from "./storage-request.mjs"
 
 // A completed module job is a slice, never a completed daily publication.
 // Only native delivery receipts can establish the latter.
-export function operationalNextAction(status, delivery = null) {
+export function operationalNextAction(status, delivery = null, { capacityReady = false } = {}) {
   const active = status.commands?.find((c) => c.job.worker_alive !== false)
   if (active)
     return {
@@ -21,6 +23,37 @@ export function operationalNextAction(status, delivery = null) {
       job_id: active.job_id,
     }
   const last = status.commands?.at(-1)
+  if (last?.job.state === "waiting_for_storage" &&
+      (last.job.capacity_recovery || isStorageCapacityCode(last.job.error_code))) {
+    const evidence = last.job.capacity_recovery
+    if (!isStorageCapacityCode(last.job.error_code) ||
+        evidence?.schema !== "research-storage-capacity-wait/v1" ||
+        evidence.code !== last.job.error_code || evidence.job_id !== last.job_id ||
+        evidence.input_sha256 !== last.job.input_sha256 ||
+        typeof evidence.uncertain_write !== "boolean" ||
+        typeof evidence.reason !== "string" || !evidence.reason.trim())
+      return { action: "failed", job_id: last.job_id, error: "Invalid storage capacity recovery evidence" }
+    if ((evidence.need || evidence.need_sha256) &&
+        (!isStorageCapacityNeed(evidence.need) ||
+         sha256(JSON.stringify(evidence.need)) !== evidence.need_sha256))
+      return { action: "failed", job_id: last.job_id, error: "Invalid storage capacity need" }
+    const requiresResolution = evidence.uncertain_write ||
+      !evidence.need || ["ENOSPC", "STORAGE_CACHE_LIMIT", "STORAGE_CAPACITY_UNAVAILABLE"].includes(evidence.code)
+    return capacityReady && !requiresResolution
+      ? { action: "resume", job_id: last.job_id, stage: last.stage }
+      : { action: "storage_capacity", job_id: last.job_id, stage: last.stage,
+          reason: evidence.code, ...(requiresResolution ? { requires_resolution: true } : {}),
+          ...(evidence.uncertain_write ? { required_action: "readback_same_remote_target" } : {}),
+          ...(evidence.need ? { capacity_need: evidence.need } : {}) }
+  }
+  const cleanup = last?.job.timing
+  const cleanupCritical = cleanup?.storage_cleanup_status === "failed" ||
+    (cleanup?.storage_cleanup_status === "blocked" &&
+      (cleanup.storage_cleanup_reason !== "active_native_locks" ||
+        ["low_free_space", "cache_limit", "free_space_unknown"].includes(cleanup.storage_cleanup_trigger)))
+  if (cleanupCritical && !capacityReady)
+    return { action: "storage_capacity", job_id: last.job_id, stage: last.stage,
+      reason: cleanup.storage_cleanup_reason, trigger: cleanup.storage_cleanup_trigger || null }
   if (last?.job.state === "failed" && last.job.error_code === "OWNED_CHILD_RETRY" &&
       Number.isSafeInteger(last.job.attempt) && last.job.attempt < 3)
     return { action: "resume", job_id: last.job_id, stage: last.stage,
@@ -123,6 +156,7 @@ export async function driveOperationalRound(
     deliveryStatus = publicationDeliveryStatus,
     readTask = readReasoningTask,
     storageReady = (request) => savedStorageRequestReady(ctx.root, request),
+    checkCapacity = (root, need) => trimColdStorage(root, process.pid, need),
   } = {},
 ) {
   assertRetiredWorkspaceFences(ctx.executionRepo || ctx.repo, ctx.repo)
@@ -161,7 +195,8 @@ export async function driveOperationalRound(
   const prior = readJSON(ctx.root, file)
   let progress = prior?.progress || null,
     lastDispatched = prior?.last_dispatched_job || null,
-    lastReadyConsumption = prior?.last_ready_consumption || null
+    lastReadyConsumption = prior?.last_ready_consumption || null,
+    capacityReadyFor = null
   const save = (value) => {
     const result = {
       schema: "research-operational-controller/v1",
@@ -185,7 +220,13 @@ export async function driveOperationalRound(
       const delivery = readJSON(ctx.root, `runs/${deliveryRun}/publication-delivery/input.json`)
         ? deliveryStatus(ctx, { run_id: deliveryRun })
         : null
-      const next = operationalNextAction(current, delivery)
+      const lastJob = current.commands?.at(-1)
+      const capacityKey = sha256(JSON.stringify({ job_id: lastJob?.job_id,
+        input_sha256: lastJob?.job?.input_sha256,
+        capacity_recovery: lastJob?.job?.capacity_recovery,
+        cleanup: lastJob?.job?.timing && [lastJob.job.timing.storage_cleanup_status,
+          lastJob.job.timing.storage_cleanup_reason, lastJob.job.timing.storage_cleanup_trigger] }))
+      const next = operationalNextAction(current, delivery, { capacityReady: capacityReadyFor === capacityKey })
       if (next.action === "wait") {
         save({ status: "running", next_action: next, transitions: step })
         // Poll only the bound job while it is live. Full immutable manifest and
@@ -196,6 +237,39 @@ export async function driveOperationalRound(
           job = jobStatus(ctx, next.job_id)
         } while (job.worker_alive === true)
         step--
+        continue
+      }
+      if (next.action === "storage_capacity") {
+        if (next.requires_resolution)
+          return save({ status: "requires_storage_capacity", next_action: next,
+            next_command: ["node", "scripts/research-operations.mjs", "drive", "--round", run] })
+        let checked
+        try {
+          checked = await checkCapacity(ctx.root, next.capacity_need)
+        } catch (error) {
+          return save({ status: "requires_storage_capacity", next_action: { ...next,
+            capacity: { status: "blocked", reason: "capacity_check_failed",
+              error: error.message, error_code: error.code || null } },
+            next_command: ["node", "scripts/research-operations.mjs", "drive", "--round", run] })
+        }
+        const free = checked?.free_bytes_after ?? checked?.free_bytes
+        const estimate = checked?.cache_bytes_after ?? checked?.estimated_cache_bytes
+        const requiredFree = next.capacity_need ? checked?.required_free_bytes : checked?.reserve_bytes
+        const additional = next.capacity_need ? checked?.additional_cache_bytes : 0
+        const requiredCache = next.capacity_need ? checked?.required_cache_bytes : 0
+        const totalCache = estimate + additional
+        const safe = ["completed", "skipped"].includes(checked?.status) && checked?.configured === true &&
+          Number.isSafeInteger(free) && Number.isSafeInteger(checked.reserve_bytes) && free >= checked.reserve_bytes &&
+          Number.isSafeInteger(requiredFree) && requiredFree >= checked.reserve_bytes && free >= requiredFree &&
+          Number.isSafeInteger(estimate) && estimate >= 0 && Number.isSafeInteger(additional) && additional >= 0 &&
+          Number.isSafeInteger(totalCache) && Number.isSafeInteger(requiredCache) && requiredCache >= 0 &&
+          Number.isSafeInteger(checked.cache_limit_bytes) && totalCache <= checked.cache_limit_bytes &&
+          requiredCache <= checked.cache_limit_bytes
+        if (!safe)
+          return save({ status: "requires_storage_capacity", next_action: { ...next,
+            capacity: checked || { status: "blocked", reason: "capacity_unavailable" } },
+            next_command: ["node", "scripts/research-operations.mjs", "drive", "--round", run] })
+        capacityReadyFor = capacityKey
         continue
       }
       if (next.action === "storage" && next.request) {

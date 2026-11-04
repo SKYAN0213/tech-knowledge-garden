@@ -12,6 +12,7 @@ import { loadPublicationNoteReferences } from "./daily-publication-handoff.mjs"
 import { atomicCreate, atomicWrite, readJSON, safePath, withLock } from "./run-state.mjs"
 import { withVerifiedInputSession, assertVerifiedInputBoundary } from "./verified-inputs.mjs"
 import { readReasoningTask, readyArticleItems } from "./reasoning-tasks.mjs"
+import { openArticleTiming, observeArticleStart, observeArticleApproval } from "./article-timing.mjs"
 
 const ref = (root, file) => ({ path: file, sha256: sha256(fs.readFileSync(safePath(root, file))) })
 export async function advanceCuration(ctx, p, options = {}) {
@@ -24,6 +25,9 @@ async function advanceCurationNative(
 ) {
   if (p.review_mode !== undefined && !["separate/v1", "combined/v1"].includes(p.review_mode))
     throw Error("Unknown article review mode")
+  if (p.review_repair_mode !== undefined &&
+      (p.review_repair_mode !== "components/v1" || p.review_mode !== "combined/v1"))
+    throw Error("Bound combined review repair mode required")
   const selectionRef = { path: p.selection_path, sha256: p.selection_sha256 }
   const selection = loadCurationSelection(ctx, selectionRef)
   const noteReviewRuns = p.note_review_runs || []
@@ -35,6 +39,7 @@ async function advanceCurationNative(
     selection: selectionRef,
     model_policy_sha256: sha256(fs.readFileSync(ctx.policy)),
     ...(p.review_mode ? { review_mode: p.review_mode } : {}),
+    ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}),
     ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
   }
   return withLock(ctx.root, "curation-workflow-" + p.run_id, async () => {
@@ -45,6 +50,16 @@ async function advanceCurationNative(
     if (before && JSON.stringify(before) !== JSON.stringify(input))
       throw Error("Curated workflow changed; use a new run")
     if (!before) atomicCreate(ctx.root, base + "input.json", input)
+    // Timing is diagnostic only: it must never interfere with native recovery.
+    // A missing or damaged observation is exposed as unavailable by status.
+    const observe = (fn) => {
+      try { return fn() }
+      catch (error) { process.emitWarning("Article timing unavailable: " + error.message); return null }
+    }
+    const timing = observe(() => openArticleTiming(ctx, {
+      owner: currentRequestOwner(), inputPath: base + "input.json", selectionRef, selection,
+      created: !before, execute: p.execute === true,
+    }))
     const window = createModelExecutionWindow({
       time_budget_ms: p.time_budget_ms ?? 600000,
       max_model_calls: p.max_model_calls ?? 4,
@@ -316,6 +331,7 @@ async function advanceCurationNative(
         execute: p.execute === true,
         require_completeness: requireCompleteness,
         ...(p.review_mode ? { review_mode: p.review_mode } : {}),
+        ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}),
         max_items: 1,
         time_budget_ms: Math.max(1, Math.floor(window.remainingMs())),
         max_model_calls: Math.max(1, (p.max_model_calls ?? 4) - window.model_calls),
@@ -335,6 +351,8 @@ async function advanceCurationNative(
         parameters[name] = p[name]?.[item.candidate_id]
           ? { [item.execution.group_id]: p[name][item.candidate_id] }
           : {}
+      if (timing && p.execute === true) observe(() => observeArticleStart(timing, item.candidate_id,
+        new Date().toISOString()))
       try {
         const outcome = await eventProcessor(ctx, parameters, {
           baseProvider,
@@ -354,6 +372,20 @@ async function advanceCurationNative(
           workflow: ref(ctx.root, `event-workflows/${parameters.run_id}/latest.json`),
           publication_handoff: outcome.publication_handoff,
         })
+        if (timing) {
+          const checkpoint = workflows.get(item.execution.plan.path).workflow
+          const snapshot = { path: `event-workflows/${parameters.run_id}/checkpoint-outcomes/${checkpoint.sha256}.json`,
+            sha256: checkpoint.sha256 }
+          const selected = new Map(selection.selected.filter((candidate) =>
+            candidate.execution.plan.path === item.execution.plan.path)
+            .map((candidate) => [candidate.execution.group_id, candidate]))
+          for (const row of outcome.rows || []) {
+            const candidate = selected.get(row.group_id)
+            if (!candidate || !["approved", "reused"].includes(row.status)) continue
+            observe(() => observeArticleApproval(timing, candidate.candidate_id, parameters.run_id,
+              snapshot, new Date().toISOString()))
+          }
+        }
         recoverablePlans.delete(item.execution.plan.path)
         processedCandidates.add(item.candidate_id)
         if (p.review_mode === "combined/v1") {

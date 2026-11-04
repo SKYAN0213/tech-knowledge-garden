@@ -11,6 +11,7 @@ import {
   savedStorageRequestReady,
 } from "../scripts/research/operations-driver.mjs"
 import { atomicWrite, readJSON } from "../scripts/research/run-state.mjs"
+import { sha256 } from "../scripts/research/contracts.mjs"
 
 function setup(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "tkg-driver-")))
@@ -407,6 +408,120 @@ test("unknown worker, storage, model, native failure and publication receipts re
     operationalNextAction(s, { ...delivery, pending_request: { event: "unverified" } }).action,
     "delivery",
   )
+})
+
+const capacityNeed = (root) => ({ schema: "research-storage-capacity-need/v1", root,
+  bundle_id: "bundle-original", paths: ["payload/source.bin"], required_free_bytes: 10 * 1024 ** 3 + 4,
+  additional_cache_bytes: 4, required_cache_bytes: 4, cache_limit_bytes: 32 * 1024 ** 3 })
+
+test("storage capacity waits stay distinct from Drive downloads and resume the same job", (t) => {
+  const s = settled("module-capacity", 0)
+  const need = capacityNeed(setup(t).root)
+  s.commands[0].job = { job_id: "module-capacity", input_sha256: "a".repeat(64),
+    state: "waiting_for_storage", worker_alive: false, error_code: "STORAGE_CAPACITY_INSUFFICIENT",
+    capacity_recovery: { schema: "research-storage-capacity-wait/v1", code: "STORAGE_CAPACITY_INSUFFICIENT",
+      job_id: "module-capacity", input_sha256: "a".repeat(64), reason: "capacity low", uncertain_write: false,
+      need, need_sha256: sha256(JSON.stringify(need)) } }
+  assert.equal(operationalNextAction(s).action, "storage_capacity")
+  assert.deepEqual(operationalNextAction(s, null, { capacityReady: true }),
+    { action: "resume", job_id: "module-capacity", stage: "collection" })
+  s.commands[0].job.capacity_recovery.input_sha256 = "b".repeat(64)
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).action, "failed")
+  s.commands[0].job.capacity_recovery.input_sha256 = "a".repeat(64)
+  s.commands[0].job.capacity_recovery.need_sha256 = "f".repeat(64)
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).action, "failed")
+  s.commands[0].job.capacity_recovery.need_sha256 = sha256(JSON.stringify(need))
+  s.commands[0].job.error_code = s.commands[0].job.capacity_recovery.code = "STORAGE_CACHE_LIMIT"
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).requires_resolution, true)
+  s.commands[0].job.error_code = s.commands[0].job.capacity_recovery.code = "ENOSPC"
+  s.commands[0].job.capacity_recovery.uncertain_write = true
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).required_action,
+    "readback_same_remote_target")
+  s.commands[0].job.capacity_recovery.uncertain_write = false
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).requires_resolution, true)
+  delete s.commands[0].job.capacity_recovery.need
+  delete s.commands[0].job.capacity_recovery.need_sha256
+  s.commands[0].job.error_code = s.commands[0].job.capacity_recovery.code = "STORAGE_CAPACITY_INSUFFICIENT"
+  assert.equal(operationalNextAction(s, null, { capacityReady: true }).requires_resolution, true)
+  s.commands[0].job = { state: "completed", worker_alive: false, timing: {
+    storage_cleanup_status: "blocked", storage_cleanup_reason: "active_native_locks",
+    storage_cleanup_trigger: "interval_elapsed" } }
+  assert.notEqual(operationalNextAction(s).action, "storage_capacity")
+  s.commands[0].job.timing.storage_cleanup_trigger = "low_free_space"
+  assert.equal(operationalNextAction(s).action, "storage_capacity")
+  s.commands[0].job.timing.storage_cleanup_status = "failed"
+  assert.equal(operationalNextAction(s).action, "storage_capacity")
+})
+
+test("a hydration resumes only after fresh free-space and cache checks cover its exact need", async (t) => {
+  const ctx = setup(t), need = capacityNeed(ctx.root)
+  const current = { ...settled("module-capacity", 0), status: "partial" }
+  current.commands[0].job = { job_id: "module-capacity", input_sha256: "a".repeat(64),
+    state: "waiting_for_storage", worker_alive: false, error_code: "STORAGE_CAPACITY_INSUFFICIENT",
+    capacity_recovery: { schema: "research-storage-capacity-wait/v1", code: "STORAGE_CAPACITY_INSUFFICIENT",
+      job_id: "module-capacity", input_sha256: "a".repeat(64), reason: "capacity low", uncertain_write: false,
+      need, need_sha256: sha256(JSON.stringify(need)) } }
+  const valid = { status: "skipped", configured: true, free_bytes: 10 * 1024 ** 3 + 4,
+    reserve_bytes: 10 * 1024 ** 3, required_free_bytes: 10 * 1024 ** 3 + 4,
+    estimated_cache_bytes: 100, additional_cache_bytes: 4, required_cache_bytes: 4,
+    cache_limit_bytes: 32 * 1024 ** 3 }
+  for (const unavailable of [
+    { ...valid, free_bytes: valid.free_bytes - 1 },
+    { ...valid, estimated_cache_bytes: valid.cache_limit_bytes - 3 },
+    { ...valid, required_free_bytes: undefined },
+  ]) {
+    let checks = 0
+    const held = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+      status: () => current,
+      checkCapacity: (_root, exactNeed) => { checks++; assert.deepEqual(exactNeed, need); return unavailable },
+      advance: () => assert.fail("must not resume without enough verified capacity"),
+    })
+    assert.equal(held.status, "requires_storage_capacity")
+    assert.equal(checks, 1)
+  }
+  let calls = 0
+  const resumed = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current,
+    checkCapacity: (_root, exactNeed) => { assert.deepEqual(exactNeed, need); return valid },
+    advance: (_ctx, _parameters, options) => {
+      calls++
+      assert.equal(options.expectedJobId, "module-capacity")
+      current.commands[0].job = { state: "completed", worker_alive: false }
+      current.next_inputs = [{ required: ["fact_reviews"] }]
+      return { status: "completed", job: { job_id: "module-capacity" } }
+    },
+  })
+  assert.equal(calls, 1)
+  assert.equal(resumed.status, "requires_review")
+})
+
+test("a capacity check never advances when space is blocked, and continues after a fresh safe check", async (t) => {
+  const ctx = setup(t), current = { ...settled("module-capacity", 0), status: "fact_review",
+    next_inputs: [{ required: ["fact_reviews"] }] }
+  current.commands[0].job.timing = { storage_cleanup_status: "blocked",
+    storage_cleanup_reason: "insufficient_capacity" }
+  let checked = 0
+  const blocked = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current,
+    checkCapacity: () => { checked++; return { status: "blocked", reason: "insufficient_capacity" } },
+    advance: () => assert.fail("capacity blocked"),
+  })
+  assert.equal(blocked.status, "requires_storage_capacity")
+  assert.equal(checked, 1)
+  const checkFailed = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current, checkCapacity: () => { throw Error("catalog unavailable") },
+    advance: () => assert.fail("unverified capacity"),
+  })
+  assert.equal(checkFailed.status, "requires_storage_capacity")
+  assert.equal(checkFailed.next_action.capacity.error, "catalog unavailable")
+  const recovered = await driveOperationalRound(ctx, { run_id: "daily-unit" }, {
+    status: () => current,
+    checkCapacity: () => ({ status: "skipped", configured: true,
+      free_bytes: 20 * 1024 ** 3, reserve_bytes: 10 * 1024 ** 3,
+      estimated_cache_bytes: 1024, cache_limit_bytes: 32 * 1024 ** 3 }),
+    advance: () => assert.fail("review still required"),
+  })
+  assert.equal(recovered.status, "requires_review")
 })
 
 test("completed batches consume their submitted model results before requesting fact review", async (t) => {

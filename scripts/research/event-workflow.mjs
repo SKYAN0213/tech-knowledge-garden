@@ -180,6 +180,9 @@ export async function advanceEventWorkflow(
 ) {
   if (p.review_mode !== undefined && !["separate/v1", "combined/v1"].includes(p.review_mode))
     throw Error("Unknown article review mode")
+  if (p.review_repair_mode !== undefined &&
+      (p.review_repair_mode !== "components/v1" || p.review_mode !== "combined/v1"))
+    throw Error("Bound combined review repair mode required")
   for (const [value, maximum] of [
     [p.max_items ?? 4, 40],
     [p.time_budget_ms ?? 600000, 3600000],
@@ -258,6 +261,7 @@ export async function advanceEventWorkflow(
     plan: planRef,
     policy_sha256: sha256(fs.readFileSync(ctx.policy)),
     ...(p.review_mode ? { review_mode: p.review_mode } : {}),
+    ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}),
     ...(curationRef ? { curation: curationRef } : {}),
     ...(ontologyRef ? { ontology_base: ontologyRef } : {}),
     ...(noteRefs.length ? { note_review_runs: noteRefs } : {}),
@@ -543,7 +547,7 @@ export async function advanceEventWorkflow(
           if (p.review_mode === "combined/v1" && !maps.fact[event.group_id]) {
             const bundle = await runCombinedReview(
               ctx,
-              { run_id, kind: "evidence", curation: curationRef },
+              { run_id, kind: "evidence", curation: curationRef, ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}) },
               { baseProvider, executionWindow },
             )
             maps.fact[event.group_id] = bundle.fact_review_file
@@ -568,7 +572,7 @@ export async function advanceEventWorkflow(
         ) {
           const bundle = await runCombinedReview(
             ctx,
-            { run_id, kind: "evidence", curation: curationRef },
+            { run_id, kind: "evidence", curation: curationRef, ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}) },
             { baseProvider, executionWindow },
           )
           maps.completeness[event.group_id] = bundle.completeness_review_file
@@ -635,7 +639,7 @@ export async function advanceEventWorkflow(
           do {
             bundle = await runCombinedReview(
               ctx,
-              { run_id, kind: "editorial", curation: curationRef },
+              { run_id, kind: "editorial", curation: curationRef, ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}) },
               { baseProvider, executionWindow },
             )
             if (bundle.needs_revision) {

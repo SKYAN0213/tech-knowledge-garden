@@ -30,6 +30,8 @@ export async function driveArticleProcessingSession(
 ) {
   if (!/^[A-Za-z0-9_-]{1,70}$/.test(p.run_id || "") || p.review_mode !== "combined/v1")
     throw Error("Bound combined article processing session required")
+  if (p.review_repair_mode !== undefined && p.review_repair_mode !== "components/v1")
+    throw Error("Bound combined review repair mode required")
   const base = `processing-sessions/${p.run_id}/`
   const selectionBytes = fs.readFileSync(safePath(ctx.root, p.selection_path))
   if (sha256(selectionBytes) !== p.selection_sha256) throw Error("Processing session selection changed")
@@ -44,6 +46,7 @@ export async function driveArticleProcessingSession(
     run_id: p.run_id,
     selection: { path: p.selection_path, sha256: p.selection_sha256 },
     review_mode: p.review_mode,
+    ...(p.review_repair_mode ? { review_repair_mode: p.review_repair_mode } : {}),
     ...(!priorSession || priorSession.selected_count !== undefined ? { selected_count: selectedCount } : {}),
     model_policy_sha256: sha256(fs.readFileSync(ctx.policy)),
     implementation_sha256: sha256(
@@ -261,6 +264,7 @@ function sessionParameters(input) {
     selection_path: input.selection.path,
     selection_sha256: input.selection.sha256,
     review_mode: "combined/v1",
+    ...(input.review_repair_mode ? { review_repair_mode: input.review_repair_mode } : {}),
     require_completeness: true,
     execute: true,
     max_items: 40,

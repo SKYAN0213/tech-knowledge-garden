@@ -12,6 +12,7 @@ import {
   runControlTimingReplay,
   recordOperationalJobTiming,
   moduleJobTiming,
+  summarizeDeliveryTiming,
 } from "../scripts/research/operations-timing.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 const at = (n) => new Date(Date.UTC(2026, 9, 25, 0, 0, 0, n)).toISOString()
@@ -38,6 +39,12 @@ test("timestamp arithmetic keeps unavailable components null and measures zero e
   ])
   assert.equal(stages.collection.dispatch_wait_ms, 100)
   assert.equal(stages.collection.aggregation, "sum_of_job_durations_not_wall_clock")
+  assert.equal(stages.collection.observed_span_ms, 100)
+  assert.equal(stages.collection.first_started_at, at(50))
+  assert.equal(stages.collection.last_finished_at, at(150))
+  assert.equal(summarizeStageTiming([{ stage: "processing", job: { timing: {
+    started_at: at(10), finished_at: null,
+  } } }]).processing.observed_span_ms, null)
 })
 function replayInput() {
   const identity = { input_sha256: sha256("fixed input"), output_sha256: sha256("fixed output") }
@@ -173,6 +180,59 @@ test("storage cleanup time is reported only for the exact completed job attempt"
   assert.equal(moduleJobTiming(f.root, state).storage_cleanup_ms, null)
   fs.writeFileSync(safePath(f.root, ref.path), JSON.stringify({ ...value, input_sha256: sha256("other") }))
   assert.throws(() => moduleJobTiming(f.root, state), /cleanup timing binding changed/)
+})
+
+test("skipped and blocked storage decisions are not counted as executed cleanup", (t) => {
+  const f = settledTimingFixture(t)
+  const state = JSON.parse(fs.readFileSync(safePath(f.root, `module-jobs/${f.job}/state.json`)))
+  const relative = `module-jobs/${f.job}/storage-cleanup.json`
+  const value = {
+    schema: "research-storage-cleanup-timing/v1", job_id: f.job,
+    input_sha256: state.input_sha256, attempt: state.attempt,
+    started_at: at(20), finished_at: at(45), elapsed_ms: 25,
+    status: "skipped", configured: true, reason: "within_budget",
+  }
+  atomicCreate(f.root, relative, value)
+  let timing = moduleJobTiming(f.root, state)
+  assert.equal(timing.storage_cleanup_ms, null)
+  assert.equal(timing.storage_cleanup_decision_ms, 25)
+  assert.equal(timing.storage_cleanup_status, "skipped")
+  assert.equal(timing.storage_cleanup_reason, "within_budget")
+  fs.writeFileSync(safePath(f.root, relative), JSON.stringify({ ...value, status: "blocked", reason: "active_owner" }))
+  timing = moduleJobTiming(f.root, state)
+  assert.equal(timing.storage_cleanup_ms, null)
+  assert.equal(timing.storage_cleanup_status, "blocked")
+  fs.writeFileSync(safePath(f.root, relative), JSON.stringify({ ...value, reason: "" }))
+  assert.throws(() => moduleJobTiming(f.root, state), /cleanup timing binding changed/)
+})
+
+test("delivery timing reads only the exact verified deployment and separates its last execution", (t) => {
+  const f = fixture(t), run = "timing-delivery", commit = "a".repeat(40)
+  const base = `runs/${run}/publication-operation/`
+  const input = { schema: "research-publication-operation/v1", run_id: run }
+  atomicCreate(f.root, base + "input.json", input)
+  const deployment = { status: "completed", conclusion: "success", headBranch: "main", headSha: commit,
+    jobs: [
+      { name: "build", status: "completed", conclusion: "success", startedAt: at(100), completedAt: at(300) },
+      { name: "deploy", status: "completed", conclusion: "success", startedAt: at(350), completedAt: at(400) },
+    ] }
+  const deploymentRef = atomicCreate(f.root, base + "deployment.json", deployment)
+  const readback = atomicCreate(f.root, `runs/${run}/public-readback/receipt.json`, {
+    schema: "publication-readback-receipt/v1", commit, verified: true,
+    status: "public_artifact_bytes_verified" })
+  atomicCreate(f.root, base + "public.json", { schema: "research-publication-operation-readback/v1",
+    status: "public_bytes_verified", commit, input_sha256: sha256(JSON.stringify(input)),
+    deployment_sha256: sha256(JSON.stringify(deployment)), readback })
+  const delivery = { run_id: run, publication: { run_id: run, commit, status: "public_bytes_verified" },
+    execution: { started_at: at(500), completed_at: at(800) } }
+  const timing = summarizeDeliveryTiming(f.root, delivery)
+  assert.equal(timing.ci_observed_span_ms, 300)
+  assert.equal(timing.build_ms, 200)
+  assert.equal(timing.deploy_ms, 50)
+  assert.equal(timing.last_delivery_execution_ms, 300)
+  assert.equal(timing.pure_network_ms, null)
+  fs.writeFileSync(safePath(f.root, deploymentRef.path), JSON.stringify({ ...deployment, headSha: "b".repeat(40) }))
+  assert.throws(() => summarizeDeliveryTiming(f.root, delivery), /deployment timing binding changed/)
 })
 
 test("concurrent timing receipt creation reuses the identical winning bytes", (t) => {

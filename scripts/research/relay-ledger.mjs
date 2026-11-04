@@ -101,6 +101,8 @@ function checkedAssignment(root, round, name) {
     body.schema !== "research-relay-assignment/v1" ||
     body.round_id !== round ||
     body.task_id !== match[1] ||
+    (body.assigned_at !== undefined &&
+      (typeof body.assigned_at !== "string" || !Number.isFinite(Date.parse(body.assigned_at)))) ||
     name !== assignmentName(body.task_id, body.agent, body.lane, body.generation) ||
     assignment_sha256 !== sha256(JSON.stringify(body))
   )
@@ -492,6 +494,7 @@ export async function recordRelayAssignment(
       generation,
       requested_model: planned.model,
       requested_thinking: planned.think,
+      assigned_at: new Date().toISOString(),
       observation,
       attribution: "caller_declared",
       sequence: history.assignments.length + 1,

@@ -93,6 +93,9 @@ export function inspectOperationalPin(ctx, run, { readOnly = false } = {}) {
     input.root !== fs.realpathSync(ctx.root)
   )
     throw Error("Pinned operational round required")
+  if (input.review_repair_mode !== undefined &&
+      (input.review_repair_mode !== "components/v1" || input.review_mode !== "combined/v1"))
+    throw Error("Pinned combined review repair mode changed")
   checked(runtime, input.completion)
   checked(runtime, input.manifest)
   checked(runtime, input.policy)
@@ -256,6 +259,10 @@ export async function pinOperationalRound(
       review_mode: continuation
         ? checked(ctx.root, checked(ctx.root, continuation).parent).review_mode || "separate/v1"
         : "combined/v1",
+      ...(continuation
+        ? (checked(ctx.root, checked(ctx.root, continuation).parent).review_repair_mode
+            ? { review_repair_mode: checked(ctx.root, checked(ctx.root, continuation).parent).review_repair_mode } : {})
+        : { review_repair_mode: "components/v1" }),
       ...(continuation
         ? (checked(ctx.root, checked(ctx.root, continuation).parent).relay_provenance === "v1"
             ? { relay_provenance: "v1" } : {})

@@ -56,6 +56,19 @@ test("session retains the deterministic writer and stops for a live or unknown w
   )
 })
 
+test("a processing session pins and passes the repair mode without changing legacy sessions", async (t) => {
+  const f = setup(t), p = { ...f.p, review_repair_mode: "components/v1" }
+  let seen
+  const deps = { submit: async (_ctx, _module, _operation, parameters) => {
+    seen = parameters
+    return { state: "running" }
+  } }
+  await driveArticleProcessingSession(f.ctx, p, deps)
+  assert.equal(seen.review_repair_mode, "components/v1")
+  assert.equal(readJSON(f.root, `processing-sessions/${p.run_id}/input.json`).review_repair_mode, "components/v1")
+  await assert.rejects(driveArticleProcessingSession(f.ctx, f.p, deps), /Frozen processing session changed/)
+})
+
 test("a failed article does not block another ready article or independent pending owners", async (t) => {
   const f = setup(t)
   let submits = 0

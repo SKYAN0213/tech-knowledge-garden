@@ -11,6 +11,7 @@ import { inspectOperationalPin } from "./research/operations-release.mjs"
 import { recordJobDevelopmentFailure } from "./research/development-pending.mjs"
 import { recordOperationalJobTiming } from "./research/operations-timing.mjs"
 import { assertPartialRestartSettled } from "./research/replacement-scope.mjs"
+import { isStorageCapacityCode, isReadOnlyHydrationCapacity } from "./research/storage-capacity.mjs"
 
 const { values } = parseArgs({
   options: { repo: { type: "string" }, root: { type: "string" }, job: { type: "string" } },
@@ -90,13 +91,15 @@ try {
         })
       } catch (error) {
         const latest = readJSON(ctx.root, base + "state.json")
+        const capacityWait = isStorageCapacityCode(error.code)
+        const readOnlyHydration = isReadOnlyHydrationCapacity(input, error)
         const failure = {
           ...running,
           ...(latest?.state === "finishing" ? { result: latest.result } : {}),
           state:
             error.code === "REASONING_PENDING"
               ? "waiting_for_reasoning"
-              : error.code === "STORAGE_PENDING"
+              : error.code === "STORAGE_PENDING" || capacityWait
                 ? "waiting_for_storage"
                 : "failed",
           finished_at: new Date().toISOString(),
@@ -105,9 +108,16 @@ try {
           error_code: error.code ?? null,
           ...(error.reasoning_task ? { reasoning_task: error.reasoning_task } : {}),
           ...(error.storage_request ? { storage_request: error.storage_request } : {}),
+          ...(capacityWait ? { capacity_recovery: {
+            schema: "research-storage-capacity-wait/v1", code: error.code,
+            reason: error.message, job_id: values.job, input_sha256: running.input_sha256,
+            uncertain_write: !readOnlyHydration,
+            ...(error.storage_capacity_need ? { need: error.storage_capacity_need,
+              need_sha256: sha256(JSON.stringify(error.storage_capacity_need)) } : {}),
+          } } : {}),
         }
         let captureError
-        if (!["REASONING_PENDING", "STORAGE_PENDING", "OWNED_CHILD_RETRY"].includes(error.code)) {
+        if (!capacityWait && !["REASONING_PENDING", "STORAGE_PENDING", "OWNED_CHILD_RETRY"].includes(error.code)) {
           try {
             failure.development_pending = recordJobDevelopmentFailure(ctx, input, running, error)
           } catch (problem) {
@@ -122,7 +132,7 @@ try {
         atomicWrite(ctx.root, base + "state.json", failure)
         console.error(error.message)
         if (captureError) throw captureError
-        if (!["REASONING_PENDING", "STORAGE_PENDING"].includes(error.code)) process.exitCode = 1
+        if (!capacityWait && !["REASONING_PENDING", "STORAGE_PENDING"].includes(error.code)) process.exitCode = 1
       }
     })()
     // A terminal state records the result, but the worker still owns storage
@@ -131,9 +141,11 @@ try {
     const completed = readJSON(ctx.root, `module-jobs/${values.job}/state.json`)
     if (completed?.state === "completed") {
       const startedAt = new Date().toISOString(), started = performance.now()
-      let succeeded = false, configured = null
+      let succeeded = false, outcome = null
       try {
-        configured = trimColdStorage(ctx.root) !== null
+        outcome = trimColdStorage(ctx.root)
+        if (outcome !== null && !["completed", "skipped", "blocked"].includes(outcome.status))
+          throw Error("Unexpected automatic storage cleanup result")
         succeeded = true
       } finally {
         if (ctx.operationalRound) atomicWrite(ctx.root, `module-jobs/${values.job}/storage-cleanup.json`, {
@@ -141,7 +153,13 @@ try {
           input_sha256: completed.input_sha256, attempt: completed.attempt,
           started_at: startedAt, finished_at: new Date().toISOString(),
           elapsed_ms: Math.round(performance.now() - started),
-          status: succeeded ? "completed" : "failed", configured,
+          status: succeeded ? outcome?.status || "skipped" : "failed",
+          reason: succeeded ? outcome?.reason || "not_configured" : "storage_cleanup_failed",
+          configured: succeeded ? outcome !== null : null,
+          ...(outcome ? Object.fromEntries(["trigger", "estimated_cache_bytes", "cache_limit_bytes", "cache_bytes_after",
+            "required_free_bytes", "additional_cache_bytes", "required_cache_bytes",
+            "free_bytes", "free_bytes_after", "reserve_bytes", "next_check_at"]
+            .filter((key) => key in outcome).map((key) => [key, outcome[key]])) : {}),
         })
       }
       recordOperationalJobTiming(ctx, values.job)
