@@ -416,8 +416,9 @@ test("a terminal worker lock disappearing during status read remains unknown", (
     const status = moduleJobStatus(ctx, id)
     assert.equal(removed, true)
     assert.equal(status.worker_alive, null)
-    assert.equal(status.state, "worker_status_unknown")
+    assert.equal(status.state, "completed")
     assert.equal(status.resume_available, false)
+    assert.equal(status.recovery.action, "restore_process_visibility")
   } finally {
     fs.readFileSync = originalRead
   }
@@ -435,8 +436,9 @@ test("a terminal job with an unidentifiable live PID is not treated as exited wh
   atomicWrite(root, `module-jobs/${id}/launch.json`, { pid: process.pid, job_id: id })
   const status = moduleJobStatus(ctx, id)
   assert.equal(status.worker_alive, null)
-  assert.equal(status.state, "worker_status_unknown")
+  assert.equal(status.state, "completed")
   assert.equal(status.resume_available, false)
+  assert.equal(status.recovery.action, "restore_process_visibility")
 })
 
 test("detached CLI worker persists results, pages by verified hash and reuses the same job without another attempt", async (t) => {

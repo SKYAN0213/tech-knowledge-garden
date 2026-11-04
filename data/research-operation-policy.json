@@ -15,8 +15,8 @@
     "ollama": "data/research-model-policy.json"
   },
   "development_completion": {
-    "path": ".local/research/development-releases/tkg-semantic-independent-20261104-r22h/receipt.json",
-    "sha256": "58b5c4f18c064a4b47f589074a919936e20b35d26b8a9430bc37077609e5163a"
+    "path": ".local/research/development-releases/tkg-semantic-independent-20261104-r22i/receipt.json",
+    "sha256": "7c85505116242b2257cbdd5c313fc33fbaadc18433b77c5a1d852f7801615e9a"
   },
   "recovery": {
     "automatic_retry": false,

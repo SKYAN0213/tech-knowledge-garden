@@ -351,7 +351,7 @@ MCP는 기존5도구를 유지한다. `research_job_status`의 recovery는 구�
 
 worker는 최종 결과를 저장한 뒤에도 시간 기록과 cold-storage 정리를 마칠 때까지 기존 잠금을 보유한다. 이때 `state=completed`는 결과 보존 상태이며 `worker_alive=true`와 `wait_for_current_worker`가 함께 반환될 수 있다. 소유자를 확인할 수 없는 잠금은 재개·대체하지 않는다. foreground 호출은 해당 worker의 실제 종료를 기다린다.
 
-종료 상태 조회 중 worker 잠금이 존재 확인과 읽기 사이에 사라지거나 잠금 해제 후 프로세스의 소유자를 확인할 수 없으면 `worker_status_unknown`으로 남긴다. 후속 조회에서 실제 종료가 확인되기 전에는 빈 슬롯으로 취급하지 않는다.
+종료 상태 조회 중 worker 잠금이 존재 확인과 읽기 사이에 사라지거나 잠금 해제 후 프로세스의 소유자를 확인할 수 없으면 저장된 최종 `state`와 별도로 `worker_alive=null`을 반환한다. 복구 동작은 `restore_process_visibility`이며 같은 job을 재개하거나 대체하지 않는다. 실행 중인 작업의 소유자를 확인할 수 없는 경우에는 `state=worker_status_unknown`으로 표시한다.
 
 실행본 활성화와 회차 인계는 실제 `module-job-submit` 잠금을 보유한 동안 진행하며, 다른 제출이나 남아 있는 worker 정리가 확인되면 대기한다. 부분 수집이라도 원래 보고서에 묶인 edition이 이미 고정됐고 선정·원고·공개 작업이 시작되지 않았다면 그 정확한 edition과 보고서 SHA를 새 실행 구간에 인계할 수 있다. 미완료 구간을 완료로 바꾸거나 수집을 다시 시작하지 않는다.
 

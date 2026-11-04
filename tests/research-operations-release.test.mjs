@@ -436,9 +436,10 @@ test("read-only status can inspect a pinned earlier runtime without permitting i
     state: "completed", pid: process.pid })
   atomicWrite(root, `module-jobs/${job}/launch.json`, { pid: process.pid })
   const uncertain = operationalRoundStatus(current, f.p.run_id, { readOnly: true }).commands[0].job
-  assert.equal(uncertain.state, "worker_status_unknown")
+  assert.equal(uncertain.state, "completed")
   assert.equal(uncertain.worker_alive, null)
   assert.equal(uncertain.resume_available, false)
+  assert.equal(uncertain.recovery.action, "restore_process_visibility")
   const queuedCommand = { ...command, parameters: { fixture: "queued-before-launch" } }
   const queuedDigest = sha256(JSON.stringify(queuedCommand)), queuedJob = "module-operation-" + queuedDigest.slice(0, 48)
   atomicWrite(root, `operations/rounds/${f.p.run_id}/commands/${queuedDigest}.json`, { ...queuedCommand, job_id: queuedJob })

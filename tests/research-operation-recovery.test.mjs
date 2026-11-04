@@ -346,6 +346,10 @@ for (const finalState of ["completed", "failed", "waiting_for_reasoning", "waiti
         state: finalState,
         error: finalState === "failed" ? "missing-review" : null,
       }
+      // Use this test process as a deterministically live, non-worker PID;
+      // the finished fixture worker can otherwise already be a zombie.
+      const launchPath = `module-jobs/${id}/launch.json`
+      atomicWrite(f.root, launchPath, { ...readJSON(f.root, launchPath), pid: process.pid })
       atomicWrite(f.root, statePath, { ...final, state: "running", pid: process.pid })
       const originalKill = process.kill
       let probed = false
@@ -359,8 +363,12 @@ for (const finalState of ["completed", "failed", "waiting_for_reasoning", "waiti
         const observed = moduleJobStatus(f.ctx, id)
         assert.equal(probed, true)
         assert.equal(observed.state, finalState)
-        assert.equal(observed.worker_alive, false)
-        assert.equal(observed.resume_available, finalState !== "completed")
+        // A saved final state survives a concurrent probe, but a permission
+        // error or an unmatched live PID still does not prove worker exit.
+        const exitConfirmed = probe === "ESRCH"
+        assert.equal(observed.worker_alive, exitConfirmed ? false : null)
+        assert.equal(observed.resume_available, exitConfirmed && finalState !== "completed")
+        if (!exitConfirmed) assert.equal(observed.recovery.action, "restore_process_visibility")
         assert.equal(observed.error, final.error)
         assert.equal(observed.attempt, complete.attempt)
         assert.equal(fs.existsSync(path.join(f.root, `module-jobs/${id}/attempts`)), false)

@@ -453,7 +453,7 @@ export function moduleJobStatus(ctx, id) {
     module: input.module,
     operation: input.operation,
     state:
-      alive === null
+      alive === null && ["queued", "running", "finishing"].includes(state.state)
         ? "worker_status_unknown"
         : ["queued", "running", "finishing"].includes(state.state) && !alive
           ? "interrupted"
