@@ -402,11 +402,19 @@ function workerAlive(ctx, id, state) {
   return processPresent(pid) === false ? false : null
 }
 function terminalWorkerAlive(ctx, id, state) {
-  const lock = readJSON(ctx.root, `locks/module-worker-${id}.json`)
+  let lock
+  try {
+    lock = readJSON(ctx.root, `locks/module-worker-${id}.json`)
+  } catch (error) {
+    // A worker can release the lock between its existence check and read.
+    // Re-observe later; this race does not prove that the worker exited.
+    if (error.code === "ENOENT") return null
+    throw error
+  }
   if (!lock) {
     // Once the worker releases its lock, it has no further cleanup to write.
-    // Still report the exact process as alive until it has actually exited.
-    return workerAlive(ctx, id, state) === true
+    // Preserve an uncertain process probe instead of treating it as exited.
+    return workerAlive(ctx, id, state)
   }
   if (Number.isSafeInteger(lock.pid) && lock.pid > 0 && processPresent(lock.pid) === false)
     // A stale lock alone is not enough: the recorded worker may still be

@@ -351,6 +351,8 @@ MCP는 기존5도구를 유지한다. `research_job_status`의 recovery는 구�
 
 worker는 최종 결과를 저장한 뒤에도 시간 기록과 cold-storage 정리를 마칠 때까지 기존 잠금을 보유한다. 이때 `state=completed`는 결과 보존 상태이며 `worker_alive=true`와 `wait_for_current_worker`가 함께 반환될 수 있다. 소유자를 확인할 수 없는 잠금은 재개·대체하지 않는다. foreground 호출은 해당 worker의 실제 종료를 기다린다.
 
+종료 상태 조회 중 worker 잠금이 존재 확인과 읽기 사이에 사라지거나 잠금 해제 후 프로세스의 소유자를 확인할 수 없으면 `worker_status_unknown`으로 남긴다. 후속 조회에서 실제 종료가 확인되기 전에는 빈 슬롯으로 취급하지 않는다.
+
 실행본 활성화와 회차 인계는 실제 `module-job-submit` 잠금을 보유한 동안 진행하며, 다른 제출이나 남아 있는 worker 정리가 확인되면 대기한다. 부분 수집이라도 원래 보고서에 묶인 edition이 이미 고정됐고 선정·원고·공개 작업이 시작되지 않았다면 그 정확한 edition과 보고서 SHA를 새 실행 구간에 인계할 수 있다. 미완료 구간을 완료로 바꾸거나 수집을 다시 시작하지 않는다.
 
 Drive 인증은 기존 Codex/GPT 연결과 선택적인 로컬 OAuth adapter를 지원한다. 로컬 Desktop client를 등록하고 Google 동의를 마치면 supervisor가 collection.storage remote-pull/push/import를 명시 호출할 수 있다. 인증이 없거나 취소됐으면 waiting_for_storage를 유지한다. adapter는 실제 원격 metadata·raw bytes를 받아 기존 pending/verify/hydrate에 넘기며, 인증 설정을 모델에게 넘기거나 검증 metadata를 스스로 만들어 해결하지 않는다. 독립 CLI는 scripts/research-drive.mjs이고 실제 계정 최초 동의와 live 왕복은 코드·fixture 통과와 별도로 판정한다. [Ollama 도구 호출](https://docs.ollama.com/capabilities/tool-calling), [Google Drive 로컬 OAuth 예제](https://developers.google.com/workspace/drive/api/quickstart/python).

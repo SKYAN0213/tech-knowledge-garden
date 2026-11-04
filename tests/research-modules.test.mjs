@@ -389,6 +389,56 @@ test("a completed job retains its worker slot while its protected cleanup is run
   assert.equal(next.state, "completed")
 })
 
+test("a terminal worker lock disappearing during status read remains unknown", (t) => {
+  const { ctx, root } = fixture(t)
+  const id = "module-terminal-lock-race"
+  const input = { job_id: id, module: "collection", operation: "inventory", context: ctx }
+  atomicWrite(root, `module-jobs/${id}/input.json`, input)
+  atomicWrite(root, `module-jobs/${id}/state.json`, {
+    schema: "research-module-job/v1", job_id: id,
+    input_sha256: sha256(JSON.stringify(input)), state: "completed", pid: process.pid,
+  })
+  atomicWrite(root, `module-jobs/${id}/launch.json`, { pid: process.pid, job_id: id })
+  const lockPath = safePath(root, `locks/module-worker-${id}.json`)
+  atomicWrite(root, `locks/module-worker-${id}.json`, {
+    owner: crypto.randomUUID(), pid: process.pid, started_at: new Date().toISOString(),
+  })
+  const originalRead = fs.readFileSync
+  let removed = false
+  fs.readFileSync = function (file, ...args) {
+    if (file === lockPath && !removed) {
+      removed = true
+      fs.unlinkSync(lockPath)
+    }
+    return originalRead.call(this, file, ...args)
+  }
+  try {
+    const status = moduleJobStatus(ctx, id)
+    assert.equal(removed, true)
+    assert.equal(status.worker_alive, null)
+    assert.equal(status.state, "worker_status_unknown")
+    assert.equal(status.resume_available, false)
+  } finally {
+    fs.readFileSync = originalRead
+  }
+})
+
+test("a terminal job with an unidentifiable live PID is not treated as exited when its lock is absent", (t) => {
+  const { ctx, root } = fixture(t)
+  const id = "module-terminal-unknown-pid"
+  const input = { job_id: id, module: "collection", operation: "inventory", context: ctx }
+  atomicWrite(root, `module-jobs/${id}/input.json`, input)
+  atomicWrite(root, `module-jobs/${id}/state.json`, {
+    schema: "research-module-job/v1", job_id: id,
+    input_sha256: sha256(JSON.stringify(input)), state: "completed", pid: process.pid,
+  })
+  atomicWrite(root, `module-jobs/${id}/launch.json`, { pid: process.pid, job_id: id })
+  const status = moduleJobStatus(ctx, id)
+  assert.equal(status.worker_alive, null)
+  assert.equal(status.state, "worker_status_unknown")
+  assert.equal(status.resume_available, false)
+})
+
 test("detached CLI worker persists results, pages by verified hash and reuses the same job without another attempt", async (t) => {
   const { ctx, root } = fixture(t)
   const completed = await submitModuleJob(
