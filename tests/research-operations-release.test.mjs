@@ -25,6 +25,9 @@ import { atomicCreate, atomicWrite, readJSON } from "../scripts/research/run-sta
 import { sha256 } from "../scripts/research/contracts.mjs"
 import { continueOperationalRound } from "../scripts/research/operations-continuation.mjs"
 import { createReasoningTask, submitReasoningResult } from "../scripts/research/reasoning-tasks.mjs"
+import { editionFixture } from "./fixtures/research-event-fixtures.mjs"
+import { executeModule } from "../scripts/research/module-registry.mjs"
+import { advanceRoundWorkflow } from "../scripts/research/round-workflow.mjs"
 import { moduleCLI } from "../scripts/research/module-cli.mjs"
 import {
   activateOperationsRuntime,
@@ -191,6 +194,77 @@ async function pendingProposalFixture(t) {
     next_inputs: [{ stage: "reasoning", reasoning_task: task, required: ["reasoning_result", "resume"] }] }
   atomicCreate(f.root, `round-workflows/${run}/latest.json`, state)
   return { ...f, run, parent, workflow, report, edition, jobId, jobInput, jobState, task, state }
+}
+
+async function curationRequiredFixture(t, { continued = false } = {}) {
+  const f = await setup(t)
+  const source = editionFixture(t)
+  const reviewed = await executeModule(source.ctx, "classification", "review", source.parameters)
+  fs.cpSync(source.root, f.root, { recursive: true, force: false,
+    filter: (file) => !path.relative(source.root, file).split(path.sep).includes(".storage") })
+  await pinOperationalRound(f.ctx, f.p)
+  const run = f.p.run_id
+  const plan = { path: reviewed.path, sha256: reviewed.sha256 }
+  const edition = source.editionRef
+  const origin = {
+    run_id: run,
+    source: { kind: "daily", daily_run: "daily-fixture" },
+    collection_config: evidenceReference(f.runtime, "data/research-source-channels.json"),
+    policy: evidenceReference(f.runtime, "data/research-model-policy-codex.json"),
+  }
+  if (continued) {
+    const originalPin = atomicCreate(f.root, "operations/rounds/unit-origin/input.json", { run_id: "unit-origin" })
+    const originalWorkflow = atomicCreate(f.root, "round-workflows/unit-origin/input.json", origin)
+    const link = atomicCreate(f.root, "operations/rounds/unit-origin/continuation-evidence.json", {
+      parent: originalPin, workflow: originalWorkflow,
+    })
+    const parentPath = `operations/rounds/${run}/input.json`
+    atomicWrite(f.root, parentPath, { ...readJSON(f.root, parentPath), continuation: link })
+  }
+  const workflow = continued ? { ...origin, source: { kind: "edition", edition } } : origin
+  atomicCreate(f.root, `round-workflows/${run}/input.json`, workflow)
+  const events = atomicCreate(f.root, "event-workflows/unit-events/latest.json", {
+    schema: "research-event-workflow/v1", run_id: "unit-events", status: "relationship_review",
+    edition, article_writes: 0, candidate_published: false,
+  })
+  const snapshot = atomicCreate(f.root, "runs/unit-handoff/event-publication/workflow.json",
+    readJSON(f.root, events.path))
+  const handoff = atomicCreate(f.root, "runs/unit-handoff/event-publication/handoff.json", {
+    schema: "research-daily-publication-handoff/v3", run_id: "unit-handoff",
+    workflow: { source: events, snapshot }, edition, plan: null, status: "relationship_review",
+    workflow_status: "relationship_review", approved_runs: [],
+    reused_runs: [], candidate_published: false, drive_verified: false, public_verified: false,
+  })
+  const state = {
+    status: "curation_required", input_sha256: sha256(JSON.stringify(workflow)), edition, plan,
+    event_workflow: events, publication_handoff: handoff,
+    article_writes: 0, canonical_writes: 0, candidate_published: false,
+    stages: { collection: { status: "partial", reference: source.report &&
+      readJSON(f.root, edition.path).report }, edition: { status: "frozen", reference: edition },
+      events: { status: "relationship_review", reference: events },
+      publication: { status: "relationship_review", reference: handoff },
+      curation: { status: "curation_required", plan } },
+    next_inputs: [{ stage: "curation", module: "curation", operation: "prepare", plans: [plan],
+      required: ["briefing_date", "reviewed_scores", "curation_path", "curation_sha256"] }],
+  }
+  atomicCreate(f.root, `round-workflows/${run}/latest.json`, state)
+  const parent = readJSON(f.root, `operations/rounds/${run}/input.json`)
+  const jobId = "module-curation-parent"
+  const parameters = { run_id: run, execute: true, round: true }
+  const jobInput = { job_id: jobId, module: "edition", operation: "advance", parameters,
+    context: { operationalRound: { round_id: run, round_input_sha256: sha256(JSON.stringify(parent)) } } }
+  const input = atomicCreate(f.root, `module-jobs/${jobId}/input.json`, jobInput)
+  const result = atomicCreate(f.root, `module-jobs/${jobId}/result.json`, { status: "curation_required" })
+  const stopped = spawnSync(process.execPath, ["-e", ""], { stdio: "ignore" })
+  assert.equal(stopped.status, 0)
+  const jobState = { job_id: jobId, state: "completed", pid: stopped.pid,
+    input_sha256: sha256(JSON.stringify(jobInput)), result }
+  const job = atomicCreate(f.root, `module-jobs/${jobId}/state.json`, jobState)
+  const command = atomicCreate(f.root, `operations/rounds/${run}/commands/processing.json`, {
+    stage: "processing", module: "edition", operation: "advance", parameters, job_id: jobId,
+  })
+  return { ...f, run, plan, edition, events, handoff, workflow, state,
+    job: { input, result, state: job, jobState, command } }
 }
 
 test("runtime cutover refuses the real submission lock and a terminal worker still cleaning up", async (t) => {
@@ -758,6 +832,82 @@ test("a continued event proposal detects changed original request, job or retire
     assert.throws(() => inspectOperationalPin(f.ctx, result.run_id), /evidence changed/)
     fs.writeFileSync(file, original)
   }
+  assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
+})
+
+test("a curation-required continuation keeps the exact reviewed plan, edition and parent evidence", async (t) => {
+  const f = await curationRequiredFixture(t)
+  const p = { run_id: f.run, successor: "curation-successor", reason: "Resume reviewed plan" }
+  const before = fs.readFileSync(path.join(f.root, `round-workflows/${f.run}/latest.json`))
+  const result = await continueOperationalRound(f.ctx, p)
+  assert.equal(result.status, "continuation_ready")
+  assert.equal(result.scheduled_runs_counted, 0)
+  const continuation = readJSON(f.root, result.source.path)
+  assert.deepEqual(continuation.processing, { edition: f.edition, plan: f.plan })
+  assert.deepEqual(fs.readFileSync(path.join(f.root, `round-workflows/${f.run}/latest.json`)), before)
+  assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
+  assert.deepEqual(await continueOperationalRound(f.ctx, p), result)
+  const args = JSON.parse(result.next_command[result.next_command.indexOf("--json") + 1])
+  assert.equal(args.parameters.plan_path, f.plan.path)
+  assert.equal(args.parameters.plan_sha256, f.plan.sha256)
+  assert.equal(args.parameters.edition_sha256, f.edition.sha256)
+  assert.equal(args.parameters.propose, false)
+  for (const ref of [f.plan, f.events, f.handoff, f.job.input, f.job.state, f.job.result, f.job.command]) {
+    const file = path.join(f.root, ref.path), original = fs.readFileSync(file)
+    fs.appendFileSync(file, " ")
+    assert.throws(() => inspectOperationalPin(f.ctx, result.run_id), /evidence changed/)
+    fs.writeFileSync(file, original)
+  }
+  assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  const resumed = await advanceRoundWorkflow(f.ctx, { run_id: result.run_id,
+    ...args.parameters, require_curation: true, execute: true })
+  assert.equal(resumed.status, "curation_required")
+  assert.deepEqual(resumed.next_inputs[0].plans, [f.plan])
+  assert.equal(resumed.article_writes, 0)
+  assert.equal(resumed.candidate_published, false)
+  for (const parameters of [
+    { collect: true }, { plan_path: "foreign.json" }, { plan_sha256: "a".repeat(64) },
+  ])
+    await assert.rejects(
+      runOperationalRound(f.ctx, { run_id: result.run_id, stage: "processing", parameters }),
+      /Selected continuation/,
+    )
+})
+
+test("a curation-required continuation rejects changed plan, pending work and publication writes", async (t) => {
+  const f = await curationRequiredFixture(t)
+  const statePath = `round-workflows/${f.run}/latest.json`
+  const p = { run_id: f.run, successor: "curation-guarded", reason: "Resume reviewed plan" }
+  for (const changed of [
+    { ...f.state, article_writes: 1 },
+    { ...f.state, canonical_writes: 1 },
+    { ...f.state, candidate_published: true },
+    { ...f.state, curation: { path: "other.json", sha256: "a".repeat(64) } },
+    { ...f.state, next_inputs: [{ stage: "reasoning", reasoning_task: { task_id: "pending" } }] },
+    { ...f.state, stages: { ...f.state.stages, curation: { status: "curation_required", plan: f.edition } } },
+  ]) {
+    atomicWrite(f.root, statePath, changed)
+    await assert.rejects(continueOperationalRound(f.ctx, p), /continuation|curation|required|evidence/i)
+  }
+  atomicWrite(f.root, statePath, f.state)
+  atomicWrite(f.root, f.job.state.path, { ...f.job.jobState, pid: process.pid })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /worker.*alive/i)
+  atomicWrite(f.root, f.job.state.path, f.job.jobState)
+  atomicCreate(f.root, `operations/rounds/${f.run}/commands/publication.json`, {
+    stage: "publication", operation: "advance", job_id: "module-unrelated",
+  })
+  await assert.rejects(continueOperationalRound(f.ctx, p), /publication/i)
+})
+
+test("a curation-required continuation follows the preserved daily lineage of an earlier continuation", async (t) => {
+  const f = await curationRequiredFixture(t, { continued: true })
+  const result = await continueOperationalRound(f.ctx, {
+    run_id: f.run, successor: "curation-nested", reason: "Resume reviewed plan",
+  })
+  assert.equal(result.daily_run, "daily-fixture")
+  assert.equal(result.scheduled_runs_counted, 0)
+  assert.deepEqual(readJSON(f.root, result.source.path).processing, { edition: f.edition, plan: f.plan })
   assert.equal(inspectOperationalPin(f.ctx, result.run_id).run_id, result.run_id)
 })
 

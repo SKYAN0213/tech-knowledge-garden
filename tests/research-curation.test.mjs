@@ -201,6 +201,77 @@ test("curation reuses the exact approved writer selection when a deferred event 
   assert.equal(readJSON(f.root, `event-plans/${promotionRun}/plan.json`), null)
 })
 
+test("curation resumes an exact unfinished promoted writer without treating it as approved", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "vault")
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(f.root, "candidate-backlog.json", { schema: "research-candidates/v1", candidates: [] })
+  const original = f.review.events.find((event) => event.action === "write")
+  const deferred = { ...original, group_id: "unfinished-deferred", action: "defer" }
+  const planned = await plan(f, "unfinished-deferred-plan", [deferred])
+  const p = await pool(f, "unfinished-deferred-pool", [planned], 1)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  fs.unlinkSync(safePath(f.root, "runs/writer/approved-article.json"))
+  fs.unlinkSync(safePath(f.root, "runs/writer/editorial-review.json"))
+  const selectedRef = await choose(f, p)
+  const selected = loadCurationSelection(f.ctx, ref(selectedRef))
+  assert.deepEqual(selected.selected[0].execution, { plan: ref(f.plan), group_id: original.group_id })
+  assert.equal(selected.candidate_approved, false)
+  assert.equal(readJSON(f.root, "runs/writer/approved-article.json"), null)
+  const advanced = await advanceCuration(f.ctx, {
+    run_id: "unfinished-deferred-workflow",
+    selection_path: selectedRef.path,
+    selection_sha256: selectedRef.sha256,
+    execute: false,
+  })
+  assert.equal(advanced.candidate_published, false)
+  assert.equal(readJSON(f.root, "runs/writer/approved-article.json"), null)
+})
+
+test("curation rejects a claimed approval with a missing editorial review", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "vault")
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(f.root, "candidate-backlog.json", { schema: "research-candidates/v1", candidates: [] })
+  const original = f.review.events.find((event) => event.action === "write")
+  const planned = await plan(f, "broken-approved-plan", [{ ...original, group_id: "broken-approved", action: "defer" }])
+  const p = await pool(f, "broken-approved-pool", [planned], 1)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  fs.unlinkSync(safePath(f.root, "runs/writer/editorial-review.json"))
+  await assert.rejects(choose(f, p), /editorial-review\.json/)
+  assert.notEqual(readJSON(f.root, "runs/writer/approved-article.json"), null)
+})
+
+test("curation does not treat a missing previously approved article as an unfinished writer", async (t) => {
+  const f = await deliveryFixture(t)
+  f.ctx.vault = path.join(f.root, "vault")
+  f.ctx.backlog = path.join(f.root, "candidate-backlog.json")
+  fs.mkdirSync(f.ctx.vault, { recursive: true })
+  atomicWrite(f.root, "candidate-backlog.json", { schema: "research-candidates/v1",
+    candidates: [{ approval: { approved_run: "writer" } }] })
+  const original = f.review.events.find((event) => event.action === "write")
+  const planned = await plan(f, "missing-approved-plan", [{ ...original, group_id: "missing-approved", action: "defer" }])
+  const p = await pool(f, "missing-approved-pool", [planned], 1)
+  await review(f, p, [rating(f, p.value.candidates[0], 5)])
+  fs.unlinkSync(safePath(f.root, "runs/writer/approved-article.json"))
+  await assert.rejects(choose(f, p), /approved article is missing/)
+})
+
+test("selection holds unreviewed candidates without reopening their unrelated source bodies", async (t) => {
+  const f = setup(t)
+  const planned = await plan(f, "unreviewed-source-plan", [f.event, f.deferred])
+  const p = await pool(f, "unreviewed-source-pool", [planned])
+  const reviewed = p.value.candidates.find((c) => c.group_id === f.event.group_id)
+  const unreviewed = p.value.candidates.find((c) => c.group_id === f.deferred.group_id)
+  await review(f, p, [rating(f, reviewed, 5)])
+  fs.unlinkSync(safePath(f.root, f.sources[3].document.body_path))
+  const selection = loadCurationSelection(f.ctx, ref(await choose(f, p)))
+  assert.equal(selection.selected[0].candidate_id, reviewed.candidate_id)
+  assert.ok(selection.held.some((row) => row.candidate_id === unreviewed.candidate_id && row.reason === "curator_review_required"))
+})
+
 test("curation reuses a native approval with unused selected sources and a timestamped primary", async (t) => {
   const f = await deliveryFixture(t, {
     primaryPublishedAt: "2026-09-27T03:29:09-07:00",

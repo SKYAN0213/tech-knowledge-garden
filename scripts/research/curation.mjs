@@ -1042,8 +1042,19 @@ async function evaluateCurationNative(ctx, p, { baseProvider } = {}) {
   return result
 }
 export async function selectCuration(ctx, p) {
-  const poolRef = { path: p.pool_path, sha256: p.pool_sha256 },
-    pool = loadCurationPool(ctx, poolRef)
+  const poolRef = { path: p.pool_path, sha256: p.pool_sha256 }
+  const snapshot = pinned(ctx.root, poolRef)
+  if (snapshot.schema !== "research-curation-pool/v1" || !Array.isArray(snapshot.candidates))
+    throw Error("Native curation pool required")
+  // Unreviewed candidates remain held. Their immutable pool entry is retained,
+  // but their source bodies need not be reopened until they receive a review.
+  const evaluations = new Map(snapshot.candidates.map((candidate) => [
+    candidate.candidate_id, reviewedEvaluation(ctx, snapshot, candidate),
+  ]))
+  const reviewedIds = snapshot.candidates.filter((candidate) =>
+    evaluations.get(candidate.candidate_id)?.record?.status === "reviewed"
+  ).map((candidate) => candidate.candidate_id)
+  const pool = loadCurationPool(ctx, poolRef, { candidateIds: reviewedIds })
   const pathName = `curation/runs/${pool.run_id}/selection.json`
   const old = readJSON(ctx.root, pathName)
   if (old) {
@@ -1074,7 +1085,7 @@ export async function selectCuration(ctx, p) {
     held = [],
     profiles = new Map()
   for (const candidate of pool.candidates) {
-    const reviewed = reviewedEvaluation(ctx, pool, candidate)
+    const reviewed = evaluations.get(candidate.candidate_id)
     const record = reviewed?.record
     if (!record || record.status !== "reviewed") {
       held.push({ candidate_id: candidate.candidate_id, reason: "curator_review_required" })
@@ -1136,6 +1147,7 @@ export async function selectCuration(ctx, p) {
   const selected = composed.selected
   held.push(...composed.held)
   const batches = []
+  let previouslyApprovedRuns
   for (const item of selected) {
     if (item.action === "defer") {
       const original = checkedPlan(ctx, item.origin_plan)
@@ -1185,27 +1197,39 @@ export async function selectCuration(ctx, p) {
         )
           throw Error("Existing curated promotion writer differs from the exact reviewed event")
 
-        // A prior native selection is reusable only while its approved article
-        // still validates against the current vault and the exact source/date.
-        const { loadCurrentApproval } = await import("./preview.mjs")
-        const approval = loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
-        const expectedUrls = new Set(prior.sources.map((source) => canonicalURL(source.url)))
-        const approvedUrls = (approval.article.source_urls || []).map(canonicalURL)
-        const primary = sourcePacket(ctx, priorPlan, priorEvent, false).find(
-          (source) => source.role === "primary",
-        )
-        const articleReview = approval.article.article_review
-        const matchingDate =
-          samePublicationDate(articleReview?.published_at, primary?.published_at) ||
-          (articleReview?.date_kind === "source-publication-time" &&
-            samePublicationDate(articleReview.source_published_at, primary?.published_at) &&
-            articleReview.published_at === seoulPublicationDay(primary?.published_at))
-        if (
-          !approvedUrls.length ||
-          approvedUrls.some((url) => !expectedUrls.has(url)) ||
-          !matchingDate
-        )
-          throw Error("Existing curated promotion approval differs from its exact sources or date")
+        // An unfinished writer keeps its original checkpoint; only an actual
+        // approval is eligible for reuse as an approved article.
+        if (fs.existsSync(safePath(ctx.root, `runs/${binding.writer_run}/approved-article.json`))) {
+          const { loadCurrentApproval } = await import("./preview.mjs")
+          const approval = loadCurrentApproval(ctx.root, binding.writer_run, { vault: ctx.vault })
+          const expectedUrls = new Set(prior.sources.map((source) => canonicalURL(source.url)))
+          const approvedUrls = (approval.article.source_urls || []).map(canonicalURL)
+          const primary = sourcePacket(ctx, priorPlan, priorEvent, false).find(
+            (source) => source.role === "primary",
+          )
+          const articleReview = approval.article.article_review
+          const matchingDate =
+            samePublicationDate(articleReview?.published_at, primary?.published_at) ||
+            (articleReview?.date_kind === "source-publication-time" &&
+              samePublicationDate(articleReview.source_published_at, primary?.published_at) &&
+              articleReview.published_at === seoulPublicationDay(primary?.published_at))
+          if (
+            !approvedUrls.length ||
+            approvedUrls.some((url) => !expectedUrls.has(url)) ||
+            !matchingDate
+          )
+            throw Error("Existing curated promotion approval differs from its exact sources or date")
+        } else {
+          // A persisted candidate approval cannot be reinterpreted as an
+          // unfinished writer merely because its approved article is missing.
+          if (!previouslyApprovedRuns) {
+            const backlog = readBacklog(ctx.backlog || pool.context.backlog)
+            if (!backlog) throw Error("Stored candidate backlog required")
+            previouslyApprovedRuns = new Set(backlog.candidates.map((row) => row.approval?.approved_run).filter(Boolean))
+          }
+          if (previouslyApprovedRuns.has(binding.writer_run))
+            throw Error("Existing curated promotion approved article is missing")
+        }
         item.execution = { plan: prior.plan, group_id: prior.group_id }
       } else {
         const promoted = await reviewEditionEvents(ctx, {

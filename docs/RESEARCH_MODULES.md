@@ -393,6 +393,10 @@ flowchart LR
 
 `curation.advance`는 점수 순서대로 원래 회차/계획의 선정 사건만 native 근거 추출·작성기로 보낸다. 이전 `defer`를 선정하면 같은 원문 회차에 새 명시 사건 판정을 남긴다. `max_items`, 시간, 모델 호출 예산을 공유하며 완료 원고와 다른 원 회차의 checkpoint를 재사용한다. `fact_reviews/editorial_reviews/revision_reviews`는 **candidate_id**별 파일 지도다. 여러 원 회차의 승인 인계는 하나의 `research-curation-publication-handoff/v1`로 합치되 각 native source/사실/편집 승인 검사는 유지한다.
 
+이전에 승격해 작성 중인 같은 사건은 원문·사건·선정 바인딩을 검증한 뒤 기존 작성 계획과 checkpoint로 이어간다. 승인 원고가 아직 없다면 이를 승인으로 취급하지 않고 기존 사실·편집 검토 관문을 기다린다. 승인 원고가 있는 경우에는 모든 승인 파일과 원문·발표일을 다시 검증하며, 승인 파일의 누락이나 충돌을 미완료 작성으로 숨기지 않는다.
+
+선정 시 평가가 없는 후보는 고정된 풀에 미검토 보류로 유지하고 관련 원문을 다시 열지 않는다. 실제 검토된 후보는 원문·계획·이력을 기존과 같이 재검증하며, 발행 이력과 고정 풀 SHA 검증은 모든 선정에서 유지한다.
+
 기사에 딸린 용어 승인 외에 이번 회차의 누적 기록을 발행할 때는 `curation.advance.note_review_runs`에 native 승인된 Signals/TrendTopics의 run ID를 명시한다. 승인·검토 파일의 SHA와 사실 근거를 다시 검증하고, 원 회차의 handoff에서 합친 `knowledgeRuns`를 최종 미리보기와 Drive 전송까지 보존한다. 기존 입력의 승인 목록이 달라지면 새 workflow/delivery ID로 진행하며, 완료된 기사와 모델 결과는 재사용한다.
 
 새 브리핑의 `privatePreview`는 이 인계와 명시적 `editionSpec`을 함께 받는다. 선정일이 브리핑 날짜와 같고 정확한 native 승인 원고일 때만 수집 구간 이전 미수록 사건의 첫 소개를 허용한다. 공개 기사/원문 중복, 미래 발표, 원문 관측 cutoff, 수록 이력 변경, 원고 변조는 차단한다. 브리핑 날짜와 원 발표일을 분리하고 기존 사건 ID를 유지한다. 과거 손상/정정 처리와 이미 발행한 기사의 재참조는 기존 경로를 따른다.
@@ -1128,6 +1132,8 @@ worker와 foreground 관리자가 같은 시간 영수증을 동시에 기록하
 완료한 수집 job의 재조회가 다음 묶음을 막던 문제를 수정했다. `resume`은 완료 job과 결과를 유지하고, 현재 round 체크포인트의 불변 사본과 이전 결과 SHA에 결속한 후속 command/job을 생성한다. 제출 직전 종료되었으면 같은 command를 재전송하며 새 작업을 중복 생성하지 않는다. 진행이 없는 묶음은 반복하지 않고 `no_progress`로 원인 확인을 요구한다. 제어기는 자체 사망 lease만 명시 `drive` 재개에서 회수하며 native source·module·원격 writer 잠금을 임의 회수하지 않는다. worker 확인 불가도 대체 실행을 허용하지 않는다. 실행 중에는 해당 job만 조회하고 전체 manifest 검증은 단계 전환에서 수행한다.
 
 운영 실행본 변경이 필요한 기존 수집 대기 회차는 활성 writer가 없을 때만 `continue --round <원회차> --json '{"successor":"<복구회차>","reason":"<명시 복구 사유>"}'`로 별도 실행 구간을 만든다. 원 pin·workflow·job·예약 claim은 변경하지 않고 원 daily plan과 코드/설정·입력 SHA를 대조한다. `curation_ready` 또는 사실 추출의 `waiting_for_reasoning`에서도 정확한 frozen edition·plan·selection SHA를 별도 수동 구간에 인계할 수 있다. 이때 선정된 각 native writer의 명시 사실 검토·draft·새 기사 승인, 정본 쓰기, publication command나 delivery 입력이 하나라도 있으면 거부한다. 오래된 queued row만 믿지 않고 원래 선정 binding을 확인한다. edition 입력인 복구 구간도 불변 부모 계보를 따라 원 daily/configuration을 대조한다. 기존 모델 요청·실패는 이전 소유 job에 남기며 덮어쓰지 않는다. 후속 실행은 고정 자료를 사용하고 재수집·다른 selection 주입을 거부한다. 새 구간은 정규 예약 실적으로 추가 집계하지 않는다. 원회차 ID로 launcher를 호출하면 검증된 continuation link를 따라 원 pin·체크포인트·실제 예약 증거의 계보를 보존한다.
+
+`curation_required`에서 선정 전 실행본 인계가 필요한 경우에도 같은 명시 `continue`를 사용한다. 원 collection report·frozen edition·원문 대조한 사건 계획과 검토·이전 사건 제안 및 비승인 인계 스냅샷을 SHA로 보존한다. 원 회차의 command·입력·완료 상태·결과가 해당 회차 소유이고 worker가 종료됐는지 확인하며, 진행 중인 선정·기사·정본·외부 발행이나 남은 요청이 있으면 거부한다. 후속 구간은 원 edition과 계획만 사용하고 큐레이션을 계속한다. 원 command나 증거가 변하면 후속 실행도 중단한다. 보존된 이전 큐레이션 평가가 정확히 일치하면 기존 평가 키로 재사용하며 승인과 발행은 별도 관문이다.
 
 이미 일부 기사 검토가 진행된 `partial` 회차는 명시적 `restart_partial: {"selection_path":"...","selection_sha256":"..."}`를 함께 지정해 새 실행본으로 이어갈 수 있다. 원 선정과 같은 선정 또는 원문 대조 identity review가 결속된 새 선정을 사용하며, 원 선정에서 빠진 사건은 같은 사건의 검토 보류로만 허용한다. 외부 발행 실행과 활성 writer가 없음을 확인하고 기존 승인에는 원문·승인 SHA를 유지한다. 미완료 기사는 기존 writer와 실패를 남겨 둔 채 successor 전용 새 writer로 처리한다. 원 요청은 같은 잠금 안에서 미완료면 폐기 기록을 남기고 이미 완료됐다면 결과를 보존한 후 새 구간을 시작한다. 승인된 새 writer의 포인터도 원 binding을 덮어쓰지 않고 별도 불변 기록으로 만들며 다음 회차에 재검증해 사용한다. 같은 native job의 child 저장 중 중단은 해당 job과 기사에 결속된 producer 근거로 재개하며 재시도는 최대 두 번이다. 부분 handoff나 인계 생성은 공개 발행이 아니다.
 

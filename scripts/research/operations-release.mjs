@@ -112,8 +112,69 @@ export function inspectOperationalPin(ctx, run, { readOnly = false } = {}) {
       throw Error("Operational continuation identity changed")
     for (const ref of [continuation.parent, continuation.workflow, continuation.checkpoint,
       ...(continuation.failed_collection_report ? [continuation.failed_collection_report] : []),
-      ...(continuation.partial_restart ? [continuation.partial_restart] : [])])
+      ...(continuation.partial_restart ? [continuation.partial_restart] : []),
+      ...(continuation.curation_restart ? [continuation.curation_restart] : [])])
       checked(ctx.root, ref)
+    if (continuation.curation_restart) {
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+      const restart = checked(ctx.root, continuation.curation_restart)
+      const checkpoint = checked(ctx.root, continuation.checkpoint)
+      const parent = checked(ctx.root, continuation.parent)
+      if (
+        restart.schema !== "research-curation-required-restart/v1" || restart.successor !== run ||
+        !same(restart.parent, continuation.parent) || !same(restart.checkpoint, continuation.checkpoint) ||
+        !same(restart.edition, continuation.processing?.edition) ||
+        !same(restart.plan, continuation.processing?.plan) ||
+        !same(restart.edition, checkpoint.edition) || !same(restart.plan, checkpoint.plan) ||
+        !same(restart.report, checkpoint.stages?.collection?.reference) ||
+        !same(restart.event_workflow, checkpoint.event_workflow) ||
+        !same(restart.publication_handoff, checkpoint.publication_handoff) ||
+        checkpoint.status !== "curation_required" || checkpoint.curation ||
+        checkpoint.article_writes !== 0 || checkpoint.canonical_writes !== 0 ||
+        checkpoint.candidate_published !== false ||
+        restart.checkpoint.path !== `round-workflows/${parent.run_id}/latest.json` ||
+        !Array.isArray(restart.jobs) ||
+        readJSON(ctx.root, `round-workflows/${parent.run_id}/curation.json`)
+      ) throw Error("Curation continuation evidence changed")
+      const commandBase = operationalBase(parent.run_id) + "commands/"
+      const commandDir = safePath(ctx.root, commandBase, { materialize: false })
+      const currentCommands = (fs.existsSync(commandDir) ? fs.readdirSync(commandDir) : [])
+        .filter((name) => name.endsWith(".json")).sort().map((name) => commandBase + name)
+      if (!same(currentCommands, restart.jobs.map((job) => job.command?.path)))
+        throw Error("Curation continuation command evidence changed")
+      for (const job of restart.jobs) {
+        const command = checked(ctx.root, job.command)
+        const input = checked(ctx.root, job.input)
+        const state = checked(ctx.root, job.state)
+        checked(ctx.root, job.result)
+        const base = `module-jobs/${command.job_id}/`
+        if (
+          !["collection", "processing"].includes(command.stage) ||
+          job.input.path !== base + "input.json" || job.state.path !== base + "state.json" ||
+          job.result.path !== base + "result.json" || !same(job.result, state.result) ||
+          state.state !== "completed" || state.job_id !== command.job_id ||
+          input.job_id !== command.job_id || state.input_sha256 !== sha256(JSON.stringify(input)) ||
+          input.context?.operationalRound?.round_id !== parent.run_id ||
+          input.context.operationalRound.round_input_sha256 !== sha256(JSON.stringify(parent)) ||
+          input.module !== command.module || input.operation !== command.operation ||
+          !same(input.parameters, command.parameters)
+        ) throw Error("Curation continuation job evidence changed")
+      }
+      const edition = checked(ctx.root, restart.edition)
+      checked(ctx.root, restart.report)
+      const plan = checked(ctx.root, restart.plan)
+      checked(ctx.root, restart.review)
+      const events = checked(ctx.root, restart.event_workflow)
+      const handoff = checked(ctx.root, restart.publication_handoff)
+      const snapshot = checked(ctx.root, restart.event_snapshot)
+      if (
+        !same(edition.report, restart.report) || !same(plan.edition, restart.edition) ||
+        !same(plan.review, restart.review) || !same(events, snapshot) ||
+        !same(handoff.workflow?.source, restart.event_workflow) ||
+        !same(handoff.workflow?.snapshot, restart.event_snapshot) ||
+        restart.event_snapshot.sha256 !== restart.event_workflow.sha256
+      ) throw Error("Curation continuation source evidence changed")
+    }
     if (Boolean(continuation.proposal_restart) !== Boolean(continuation.proposal_retirement))
       throw Error("Event proposal continuation evidence is incomplete")
     if (continuation.proposal_restart) {

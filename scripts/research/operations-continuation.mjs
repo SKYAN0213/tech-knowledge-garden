@@ -74,6 +74,99 @@ function checked(root, ref) {
   return readJSON(root, ref.path)
 }
 
+// A reviewed relationship plan can move only before selection, article or
+// external publication work. The earlier proposal handoff is diagnostic;
+// it is not an approved publication and must remain tied to its exact bytes.
+export function curationRequiredRestart(ctx, state, run, successor) {
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+  const next = state.next_inputs
+  if (
+    state.status !== "curation_required" || !state.edition || !state.plan || state.curation ||
+    !state.event_workflow || !state.publication_handoff || state.article_writes !== 0 ||
+    state.canonical_writes !== 0 || state.candidate_published !== false ||
+    state.stages?.curation?.status !== "curation_required" ||
+    !same(state.stages.curation.plan, state.plan) ||
+    !same(state.stages?.edition?.reference, state.edition) ||
+    state.stages.edition.status !== "frozen" ||
+    !same(state.stages?.events?.reference, state.event_workflow) ||
+    state.stages.events.status !== "relationship_review" ||
+    !same(state.stages?.publication?.reference, state.publication_handoff) ||
+    state.stages.publication.status !== "relationship_review" ||
+    !Array.isArray(next) || next.length !== 1 || next[0].stage !== "curation" ||
+    next[0].module !== "curation" || next[0].operation !== "prepare" ||
+    !same(next[0].plans, [state.plan]) || !Array.isArray(next[0].required) ||
+    !["briefing_date", "reviewed_scores", "curation_path", "curation_sha256"].every(
+      (name) => next[0].required.includes(name),
+    )
+  ) throw Error("Exact unwritten curation-required continuation required")
+  assertNoPublicationExecution(ctx, run)
+  if (readJSON(ctx.root, `round-workflows/${run}/curation.json`))
+    throw Error("Curation continuation already has a saved selection")
+  const parent = readJSON(ctx.root, operationalBase(run) + "input.json")
+  const commandBase = operationalBase(run) + "commands/"
+  const commandDir = safePath(ctx.root, commandBase, { materialize: false })
+  const jobs = []
+  for (const name of (fs.existsSync(commandDir) ? fs.readdirSync(commandDir) : []).sort()) {
+    if (!name.endsWith(".json")) continue
+    const command = readJSON(ctx.root, commandBase + name)
+    if (!["collection", "processing"].includes(command?.stage) ||
+        !/^module-[A-Za-z0-9_-]{1,100}$/.test(command.job_id || ""))
+      throw Error("Curation continuation contains other operational work")
+    const jobBase = `module-jobs/${command.job_id}/`
+    const input = readJSON(ctx.root, jobBase + "input.json")
+    const job = readJSON(ctx.root, jobBase + "state.json")
+    if (!input || !job || job.state !== "completed" || job.job_id !== command.job_id ||
+        input.job_id !== command.job_id || job.input_sha256 !== sha256(JSON.stringify(input)) ||
+        input.context?.operationalRound?.round_id !== run ||
+        input.context.operationalRound.round_input_sha256 !== sha256(JSON.stringify(parent)) ||
+        input.module !== command.module || input.operation !== command.operation ||
+        !same(input.parameters, command.parameters) || job.result?.path !== jobBase + "result.json")
+      throw Error("Curation continuation requires completed owned jobs")
+    assertStoppedProcess(job.pid, "Curation continuation worker")
+    checked(ctx.root, job.result)
+    jobs.push({ command: reference(ctx.root, commandBase + name),
+      input: reference(ctx.root, jobBase + "input.json"),
+      state: reference(ctx.root, jobBase + "state.json"), result: job.result })
+  }
+  const plan = checkedPlan(ctx, state.plan)
+  const edition = checked(ctx.root, state.edition)
+  const reportRef = state.stages?.collection?.reference
+  const report = checked(ctx.root, reportRef)
+  const events = checked(ctx.root, state.event_workflow)
+  const handoff = checked(ctx.root, state.publication_handoff)
+  const snapshot = handoff?.workflow?.snapshot
+  const captured = checked(ctx.root, snapshot)
+  if (
+    !same(plan.edition, state.edition) || !same(edition.report, reportRef) ||
+    edition.schema !== "research-edition-materials/v1" ||
+    report.schema !== "research-collection-report/v1" ||
+    edition.daily_run !== report.daily_run || edition.status !== report.status ||
+    !["partial", "complete"].includes(report.status) || report.counts?.pending_windows !== 0 ||
+    edition.candidate_approved !== false || edition.candidate_published !== false ||
+    report.candidate_approved !== false || report.candidate_published !== false ||
+    state.stages.collection.status !== report.status ||
+    events.schema !== "research-event-workflow/v1" || events.status !== "relationship_review" ||
+    !same(events.edition, state.edition) || events.article_writes !== 0 ||
+    events.candidate_published !== false || !same(events, captured) ||
+    handoff.schema !== "research-daily-publication-handoff/v3" ||
+    handoff.status !== "relationship_review" || handoff.workflow_status !== "relationship_review" ||
+    !same(handoff.workflow?.source, state.event_workflow) ||
+    snapshot.sha256 !== state.event_workflow.sha256 || !same(handoff.edition, state.edition) ||
+    handoff.plan !== null || !Array.isArray(handoff.approved_runs) || handoff.approved_runs.length ||
+    !Array.isArray(handoff.reused_runs) || handoff.reused_runs.length ||
+    handoff.candidate_published !== false || handoff.drive_verified !== false ||
+    handoff.public_verified !== false
+  ) throw Error("Curation continuation source evidence changed")
+  return {
+    schema: "research-curation-required-restart/v1", successor,
+    parent: reference(ctx.root, operationalBase(run) + "input.json"),
+    checkpoint: reference(ctx.root, `round-workflows/${run}/latest.json`),
+    edition: state.edition, report: reportRef, plan: state.plan, review: plan.review,
+    event_workflow: state.event_workflow, publication_handoff: state.publication_handoff,
+    event_snapshot: snapshot, jobs,
+  }
+}
+
 export function partialRestartManifest(ctx, state, run, successor, replacementSelection) {
   const original = loadCurationSelection(ctx, state.curation)
   const selection = loadCurationSelection(ctx, replacementSelection)
@@ -377,6 +470,8 @@ export async function continueOperationalRound(
       state.article_writes === 0 &&
       state.canonical_writes === 0 &&
       state.candidate_published === false
+    const curationHandoff = state?.status === "curation_required" && !approved_handoff &&
+      !restart_partial ? curationRequiredRestart(ctx, state, run_id, successor) : null
     const approvedHandoff =
       approved_handoff === true ? assertUnwrittenApprovedHandoff(ctx, state, run_id) : null
     const partialHandoff = restart_partial && state?.status === "partial" && state.edition && state.curation &&
@@ -388,7 +483,7 @@ export async function continueOperationalRound(
       assertNoPublicationExecution(ctx, run_id)
     }
     if (
-      (!selectedHandoff && !frozenHandoff &&
+      (!selectedHandoff && !frozenHandoff && !curationHandoff &&
         !approvedHandoff && !partialHandoff &&
         (!collectionOnly || workflow?.source?.kind !== "daily")) ||
       (collectionOnly && (state.event_workflow || state.publication_handoff))
@@ -417,7 +512,7 @@ export async function continueOperationalRound(
     )
       throw Error("Collection model policy changed")
     const processing =
-      selectedHandoff || frozenHandoff || approvedHandoff || partialHandoff
+      selectedHandoff || frozenHandoff || approvedHandoff || partialHandoff || curationHandoff
         ? {
             edition: state.edition,
             ...(state.curation ? { curation: partialHandoff
@@ -435,7 +530,15 @@ export async function continueOperationalRound(
     const existingLink = readJSON(ctx.root, base + "continuation.json")
     if (existingLink && (existingLink.successor !== successor || existingLink.reason !== reason))
       throw Error("Round already has another continuation")
-    let restartRef = null, restart = null
+    let restartRef = null, restart = null, curationRestartRef = null
+    if (curationHandoff) {
+      const manifestPath = base + `curation-restarts/${successor}.json`
+      const existing = readJSON(ctx.root, manifestPath)
+      if (existing && JSON.stringify(existing) !== JSON.stringify(curationHandoff))
+        throw Error("Curation continuation evidence changed")
+      if (!existing) atomicCreate(ctx.root, manifestPath, curationHandoff)
+      curationRestartRef = reference(ctx.root, manifestPath)
+    }
     if (partialHandoff) {
       restart = partialRestartManifest(ctx, state, run_id, successor, processing.curation)
       const manifestPath = base + `partial-restarts/${successor}.json`
@@ -487,6 +590,7 @@ export async function continueOperationalRound(
       ...(processing ? { processing } : {}),
       ...(approvedHandoff ? { approved_handoff: approvedHandoff } : {}),
       ...(restartRef ? { partial_restart: restartRef } : {}),
+      ...(curationRestartRef ? { curation_restart: curationRestartRef } : {}),
       ...(proposalRestartRef ? { proposal_restart: proposalRestartRef } : {}),
       ...(proposalRetirementRef ? { proposal_retirement: proposalRetirementRef } : {}),
       prior_release: parent.release_id,
