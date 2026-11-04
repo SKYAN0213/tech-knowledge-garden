@@ -315,6 +315,31 @@ test("curation source/novelty gates beat high scores and unknown assessments rem
   assert.equal(readJSON(f.root, "curation/queue.json").plans.length, 1)
 })
 
+test("scoped curation preserves the existing global backlog without adding temporary plans", async (t) => {
+  const f = setup(t)
+  const existing = await plan(f, "backlog-existing", [f.event])
+  await pool(f, "backlog-existing-pool", [existing])
+  const queuePath = safePath(f.root, "curation/queue.json")
+  const originalQueue = fs.readFileSync(queuePath)
+  const scoped = await plan(f, "backlog-scoped", [f.deferred])
+
+  const prepared = await prepareCuration(f.ctx, {
+    run_id: "backlog-scoped-pool",
+    briefing_date: "2026-10-12",
+    plans: [ref(scoped)],
+    include_backlog: false,
+    max_articles: 40,
+  })
+  const selectedPool = loadCurationPool(f.ctx, ref(prepared))
+  assert.deepEqual(selectedPool.candidates.map((candidate) => candidate.group_id), [f.deferred.group_id])
+  assert.deepEqual(fs.readFileSync(queuePath), originalQueue)
+
+  const later = await pool(f, "backlog-later-pool", [scoped])
+  assert.deepEqual(new Set(later.value.candidates.map((candidate) => candidate.group_id)),
+    new Set([f.event.group_id, f.deferred.group_id]))
+  assert.equal(readJSON(f.root, "curation/queue.json").plans.length, 2)
+})
+
 test("an approved unpublished article can be curated once through its exact reuse lineage", async (t) => {
   const f = await deliveryFixture(t)
   f.ctx.vault = path.join(f.root, "vault")

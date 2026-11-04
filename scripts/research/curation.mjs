@@ -508,7 +508,10 @@ export async function prepareCuration(ctx, p) {
       candidate_published: false,
     }
     const result = immutable(ctx.root, file, pool)
-    atomicWrite(ctx.root, "curation/queue.json", { schema: queue.schema, plans: refs })
+    // A scoped selection must not replace the durable backlog with its subset.
+    // Its explicit plans remain pinned by the pool and can be queued separately.
+    if (input.include_backlog)
+      atomicWrite(ctx.root, "curation/queue.json", { schema: queue.schema, plans: refs })
     return {
       ...result,
       candidates: candidates.length,

@@ -61,6 +61,9 @@ test("writer receives exact source days, explicit KST instants and no observatio
   })
   assert.match(request.messages[0].content, /facts\.when에만/)
   assert.match(request.messages[0].content, /수집일·검토일로 발표일을 채우지 않는다/)
+  assert.match(request.messages[0].content, /publication_date는 원문 게시일/)
+  assert.match(request.messages[0].content, /기업 발표일이나 사건 발생일로 추정하지 않는다/)
+  assert.match(request.messages[0].content, /사건 날짜는 검토된 원문 근거가 있을 때만/)
 })
 
 test("direct inference and planning use the installed MLX default and preserve explicit model overrides", async (t) => {

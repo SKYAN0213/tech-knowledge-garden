@@ -442,6 +442,8 @@ test("a later split coverage part can explicitly require revision without approv
         structured: async (request) => {
           const input = JSON.parse(request.messages[1].content)
           calls.push(input)
+          assert.match(request.messages[0].content, /Source publication time does not by itself establish the date/)
+          assert.match(request.messages[0].content, /report unsupported event or announcement dates for revision/)
           assert.equal(input.task, "combined_review", "valid parts must not be re-requested")
           const value = editorialOutput(
             prepareCombinedReview(f.ctx, { run_id: f.run, kind: "editorial" }),

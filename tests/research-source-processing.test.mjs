@@ -330,6 +330,8 @@ function fixture(
       let output
       const data = JSON.parse(request.messages[1].content)
       if (role === "fact_extract") {
+        assert.match(request.messages[0].content, /publication date is the source document's publication date/)
+        assert.match(request.messages[0].content, /event or announcement date only when its exact source evidence/)
         output = {
           claims: [
             {
