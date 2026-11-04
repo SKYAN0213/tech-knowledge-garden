@@ -1,7 +1,7 @@
 ---
 title: 뉴스
 type: index
-date: 2026-11-03
+date: 2026-11-04
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -9,6 +9,20 @@ generated_by: tech-knowledge-garden
 
 # 뉴스
 
+- [[News/e8714b6e92372564|Citrix社, NetScaler ADC·NetScaler Gateway 보안 업데이트 발표]] · 2026-11-04
+- [[News/3fd65cee720d5cd1|Citrix, NetScaler ADC·Gateway 취약점 보안 업데이트 발표]] · 2026-11-04
+- [[News/029fd35f2725429f|Sherry Turkle, 챗봇에 관한 새 책 연구 위해 Brian 인터뷰]] · 2026-11-04
+- [[News/515d9901e719ac4b|Amazon EMR, EKS 추가 요금 30% 인하]] · 2026-11-04
+- [[News/fc0f3649da8ff8b7|Amazon Connect, 연결된 AWS 리전 간 지속 채팅 지원]] · 2026-11-04
+- [[News/90afba4889547cba|위너스일렉, 헥사로보틱스 웨어러블 로봇 독점 OEM 생산 계약 체결]] · 2026-11-04
+- [[News/5db254bba9714999|파워오토로보틱스, 삼성전자 이동로봇 특허 무상 이전받아 i-Series 고도화 추진]] · 2026-11-04
+- [[News/78609e8817eb7915|KT클라우드, 50㎿ 안산 AI 데이터센터 착공 발표]] · 2026-11-04
+- [[News/535f751ae0b16579|설문 응답 자동차 부품사 71% “3년 안에 로봇 사업 추진 계획”]] · 2026-11-04
+- [[News/13c1c7f5d05eb943|AGCO·애질리티 로보틱스, 제조 현장 휴머노이드 적용 상업 계약]] · 2026-11-04
+- [[News/3cf405b5f732cd6c|AWS Glue Data Catalog, 캘리포니아 북부 리전서 Iceberg 테이블 자동 최적화 지원]] · 2026-11-04
+- [[News/d9b10fa33542cbf8|홍범식 LG유플러스 대표, 해킹 은폐 의혹 사실이면 책임…위약금 면제는 확답 안 해]] · 2026-11-04
+- [[News/7350bde2e810d2d6|아우디, 잉골슈타트 공장서 휴머노이드 물류 PoC 착수]] · 2026-11-04
+- [[News/22dce65552ff7174|Quest Diagnostics, 환자 정보 유출 확인…세부 정보 조사 중]] · 2026-11-04
 - [[News/ea4b5ca409eaacf7|Amazon OpenSearch Serverless, 검색·벡터 컬렉션 기본 새로 고침 간격 5초로 단축]] · 2026-11-03
 - [[News/16e9261d8a8c087e|GitHub CLI, 만료형 자동 갱신 OAuth 자격 증명 공개 프리뷰]] · 2026-11-03
 - [[News/6bf7a8d9db150f97|안랩, PHP 식별 결과 ‘약 11만 개’의 집계 기준과 해석 범위 설명]] · 2026-11-03

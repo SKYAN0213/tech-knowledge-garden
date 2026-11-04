@@ -4,8 +4,9 @@
 
 ## 누적 주제
 
-- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 19건 · 0개 원칙
+- [실행·배포 권한을 경로별로 세분화](topics/execution-permissions.md) — 원문 21건 · 0개 원칙
 - [AI 사용량과 성과를 분리해 측정](topics/evaluation.md) — 원문 16건 · 1개 원칙
+- [제조업의 로봇 도입 계획과 현장 실증](topics/manufacturing-robot-adoption.md) — 원문 3건 · 0개 원칙
 - [에이전트의 실행 계층을 분리](topics/agent-runtime.md) — 원문 13건 · 0개 원칙
 - [성능 평가를 전체 실행 경로로](topics/performance-path.md) — 원문 11건 · 0개 원칙
 - [산업용 로봇의 현장 재학습과 운전 수명주기](topics/industrial-robot-learning-lifecycle.md) — 원문 2건 · 0개 원칙
@@ -28,6 +29,7 @@
 
 ## 날짜별 브리핑
 
+- [2026-11-04 · 0800](2026/11/2026-11-04_0800_Tech_AI_Briefing.md) — 2026-11-04 IT · AI · 로보틱스
 - [2026-11-03 · 0800](2026/11/2026-11-03_0800_Tech_AI_Briefing.md) — 2026-11-03 IT · AI · 로보틱스
 - [2026-10-27 · 0800](2026/10/2026-10-27_0800_Tech_AI_Briefing.md) — 2026-10-27 IT · AI · 로보틱스
 - [2026-10-25 · 0800](2026/10/2026-10-25_0800_Tech_AI_Briefing.md) — 2026-10-25 IT · AI · 로보틱스

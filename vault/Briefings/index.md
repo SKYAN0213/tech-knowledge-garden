@@ -1,7 +1,7 @@
 ---
 title: 브리핑
 type: index
-date: 2026-11-03
+date: 2026-11-04
 cssclasses:
   - garden-generated
 generated_by: tech-knowledge-garden
@@ -11,8 +11,9 @@ generated_by: tech-knowledge-garden
 
 ## 누적 주제
 
-- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 19건 · 원칙 0개
+- [[Briefings/Topics/execution-permissions|실행·배포 권한을 경로별로 세분화]] · 21건 · 원칙 0개
 - [[Briefings/Topics/evaluation|AI 사용량과 성과를 분리해 측정]] · 16건 · 원칙 1개
+- [[Briefings/Topics/manufacturing-robot-adoption|제조업의 로봇 도입 계획과 현장 실증]] · 3건 · 원칙 0개
 - [[Briefings/Topics/agent-runtime|에이전트의 실행 계층을 분리]] · 13건 · 원칙 0개
 - [[Briefings/Topics/performance-path|성능 평가를 전체 실행 경로로]] · 11건 · 원칙 0개
 - [[Briefings/Topics/industrial-robot-learning-lifecycle|산업용 로봇의 현장 재학습과 운전 수명주기]] · 2건 · 원칙 0개
@@ -35,6 +36,7 @@ generated_by: tech-knowledge-garden
 
 ## 날짜별 브리핑
 
+- [[Briefings/2026/11/2026-11-04_0800_Tech_AI_Briefing|2026-11-04 · 0800 브리핑]]
 - [[Briefings/2026/11/2026-11-03_0800_Tech_AI_Briefing|2026-11-03 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-27_0800_Tech_AI_Briefing|2026-10-27 · 0800 브리핑]]
 - [[Briefings/2026/10/2026-10-25_0800_Tech_AI_Briefing|2026-10-25 · 0800 브리핑]]

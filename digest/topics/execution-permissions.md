@@ -8,7 +8,7 @@
 
 npm 배포 신원, 에이전트 작업, PR 병합, 캐시 접근에 각각 통제 지점이 추가됐다. 제어 기능이 존재하는 것과 실제 설정이 안전하게 적용된 것은 구분해야 한다. 9월21일 GitHub의 자격증명 목록 내보내기는 감사 입력을 추가했지만 토큰 폐기나 최소 권한 적용은 별도 조치다. 9월22일 네이버 DSAC 출시와 Proofpoint 연말 기능 예고는 제공 단계가 다르다. 접근 정책·로그·사람 승인 적용은 별도 운영 검증이 필요하다.  9월30일 Data Agent Kit은 사용자·서비스 계정 권한 전파를 설명했지만, 같은 날 Cisco와 AMD는 각각 관리 API·RCCL 실행 경계 취약점을 공지했다. 통제 기능의 존재와 설치된 최소 권한·패치 안전성을 구분한다.
 
-2026-11-03까지 서로 다른 원문 19건 · 12일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 5건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
+2026-11-04까지 서로 다른 원문 21건 · 14일에 걸쳐 관측. 최근 7일 1건 / 이전 7일 3건. 수집한 기사에 한정한 기록이며 미정리 기간을 포함한다.
 
 ## 다음 확인
 
@@ -130,6 +130,19 @@ Data Agent·노트북을 포함한 프로젝트 안에서 역할에 따라 실�
 - [Mandiant, BeyondTrust 원격 지원 취약점의 8월 말 제로데이 악용 정황 공개](https://skyan0213.github.io/tech-knowledge-garden/news/43436d5aea1b860e) · [Google 원문](https://cloud.google.com/blog/topics/threat-intelligence/armory-castle-exploits-beyondtrust/) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-25_0800_tech_ai_briefing)
 - 2026-10-25 원문 검토
 
+<a id="citrix-netscaler-buffer-boundary-update-20261012"></a>
+
+### 2026-10-12 · 관측
+
+**KISA는 NetScaler ADC·Gateway의 CVE-2026-107406 취약점을 해결하는 Citrix 보안 업데이트와 영향 버전 사용자 대상 업데이트 권고를 공지했다.**
+
+이전 NetScaler 공지와 별개의 취약점·공지 사례로, 제품별 영향 버전과 패치 이력을 이어서 확인할 근거다.
+
+- 한계: 공지와 권고는 실제 시스템의 취약 여부나 업데이트 완료를 뜻하지 않는다.
+- 다음 확인: 해당 CVE의 영향 버전·수정 버전 및 설치 환경의 패치 상태를 확인한다.
+- [Citrix社, NetScaler ADC·NetScaler Gateway 보안 업데이트 발표](https://skyan0213.github.io/tech-knowledge-garden/news/e8714b6e92372564) · [krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=1&categoryCode=&nttId=72212) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/11/2026-11-04_0800_tech_ai_briefing)
+- 2026-11-04 원문 검토
+
 <a id="20261001-data-agent-permissions"></a>
 
 ### 2026-09-30 · 관측
@@ -168,6 +181,19 @@ Data Agent·노트북을 포함한 프로젝트 안에서 역할에 따라 실�
 - 다음 확인: 대상 Instinct 제품과 RCCL 설치 버전, ROCm 7.14 적용 및 악용·침해 근거를 확인한다.
 - [AMD ROCm RCCL 입력 검증 취약점, 원격 코드 실행 가능성 보고](https://skyan0213.github.io/tech-knowledge-garden/news/2000861d5f1c75c8) · [amd.com 원문](https://www.amd.com/en/resources/product-security/bulletin/amd-sb-6033.html) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/10/2026-10-01_0800_tech_ai_briefing)
 - 2026-10-10 원문 검토
+
+<a id="citrix-netscaler-security-update-20260929"></a>
+
+### 2026-09-29 · 관측
+
+**KISA 공지는 Citrix가 NetScaler ADC·Gateway 취약점을 해결하는 업데이트를 발표했고 영향 버전 사용자에게 최신 버전 적용을 권고했다고 전했다.**
+
+실행·배포 경계의 취약점 관리에는 제품 기능뿐 아니라 영향 버전 식별과 패치 적용 확인이 필요하다는 기존 주제에 제품 사례를 더한다.
+
+- 한계: 공지는 취약점과 업데이트 권고를 확인한다. 개별 설치의 영향 여부, 패치 적용, 악용 여부나 사고 감소는 확인되지 않았다.
+- 다음 확인: CVE-2026-88771~88778의 영향 버전과 Citrix 수정 버전, 실제 설치·패치 상태를 대조한다.
+- [Citrix, NetScaler ADC·Gateway 취약점 보안 업데이트 발표](https://skyan0213.github.io/tech-knowledge-garden/news/3fd65cee720d5cd1) · [krcert.or.kr 원문](https://www.krcert.or.kr/kr/bbs/view.do?searchCnd=&bbsId=B0000133&searchWrd=&menuNo=205020&pageIndex=2&categoryCode=&nttId=72201) · [당일 브리핑](https://skyan0213.github.io/tech-knowledge-garden/briefings/2026/11/2026-11-04_0800_tech_ai_briefing)
+- 2026-11-04 원문 검토
 
 <a id="20260923-proofpoint-execution-permissions"></a>
 
